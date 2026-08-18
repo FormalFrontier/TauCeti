@@ -22,7 +22,14 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest, and to the image pr-build.yml uses: the sandboxed run
+    # below enforces a wall-clock per-module deadline, so main and the merge gate should not be
+    # judging the same modules on different hardware.
+    runs-on: ubuntu-24.04
+    # A bound on the whole job. The sandbox confines a process tree but does not end it, so a
+    # detached child can outlive the landrun call and keep writing to .lake; this caps what any
+    # resulting stall can cost. Normal runs are around 15 to 20 minutes.
+    timeout-minutes: 90
     # Read by publish-lake-cache below, the only job that ever holds the upload secret.
     # Neither output reveals the secret's value or whether it is set, and neither is trusted
     # there: `staged` only decides whether that job runs at all, and `reported-toolchain` is
@@ -30,6 +37,14 @@ jobs:
     outputs:
       staged: ${{ steps.stage.outputs.staged }}
       reported-toolchain: ${{ steps.stage.outputs.toolchain }}
+    env:
+      # Lake artifact-cache knobs, off by default. The "Configure the Lake artifact cache" step
+      # flips these on (and sets LAKE_CACHE_DIR) only when the public endpoints are installed as
+      # repo variables. Declared here so the landrun build's `--env` list always has a defined
+      # value to pass, exactly as in pr-build.yml.
+      LAKE_ARTIFACT_CACHE: ""
+      LAKE_RESTORE_ARTIFACTS: ""
+      LAKE_CACHE_DIR: ""
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,6 +133,40 @@ jobs:
             lake exe cache get!
           fi
 
+      # Ahead of the sandboxed build, not after it. `lake exe cache clean` configures the
+      # workspace, and configuring elaborates each dependency's Lake config; at least one of
+      # those is a lakefile.lean living under .lake/packages, which the sandboxed build can
+      # write. Running it afterwards would elaborate whatever was left there, outside the
+      # sandbox. Nothing between here and the build needs the pruned store.
+      #
+      # Main is the sole publisher. PR and merge-group builds restore these trusted snapshots
+      # but never save, so candidate code cannot populate a cache consumed by later builds.
+      # GitHub cache keys are immutable; an exact restore needs no redundant save, while a
+      # prefix restore is extended with the newly downloaded hashes under the exact current key.
+      # Pruning is essential: without it, every prefix restore would carry all old pins forward
+      # and each immutable snapshot would grow monotonically. If pruning itself breaks, leave main
+      # green but skip publication rather than saving an unbounded snapshot.
+      - name: Prune Mathlib's download cache to the current pin
+        id: mathlib_ltar_prune
+        if: ${{ steps.mathlib_ltar_restore.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        run: lake exe cache clean
+
+      - name: Save Mathlib's compressed download cache
+        if: ${{ steps.mathlib_ltar_restore.outputs.cache-hit != 'true' && steps.mathlib_ltar_prune.outcome == 'success' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.mathlib_ltar_restore.outputs.cache-dir }}/*.ltar
+          key: ${{ steps.mathlib_ltar_restore.outputs.cache-primary-key }}
+
+      # Also ahead of the build, matching pr-build.yml: this lint derives Mathlib's namespaces
+      # from .lake/packages/mathlib, which the sandboxed build can write. Run afterwards, an
+      # elaborating module could edit those sources so the lint stops recognising the
+      # namespace that would have caught it.
+      - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
+        run: python3 scripts/lint-dot-notation.py
+
       # --- Lake artifact-cache restore (dormant until configured) --------------------
       # Restore TauCeti's OWN oleans before building, exactly as pr-build.yml does. Without
       # this, the post-merge run recompiled the whole library from scratch on every push,
@@ -167,82 +216,144 @@ jobs:
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
         run: bash scripts/lake-cache-get.sh .
 
+      # Everything above this point either runs no repository code or is a textual check. From
+      # here the job elaborates TauCeti, and Lean executes code at elaboration time, so the rest
+      # of the checking goes inside landrun.
+      #
+      # One caveat inherited from pr-build.yml, so that "offline" below is read for what it is:
+      # landrun's network rules come from Landlock's TCP bind/connect rights, so they deny classic
+      # TCP, which is what the self-test probes, but not UDP. Confinement of the FILESYSTEM is the
+      # property this step relies on, and that is enforced.
+      #
+      # The version and checksum are duplicated from pr-build.yml and nightly-verify.yml on
+      # purpose, with scripts/test_landrun_pin.py keeping the copies honest. pr-build.yml sits on
+      # the merge queue's critical path and runs from the BASE definition under
+      # pull_request_target, so a shared composite action could not be exercised by the PR that
+      # introduced it, and a mistake in one would redden every PR build.
+      - name: Install landrun (pinned + checksum) and self-test (fail closed)
+        env:
+          LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
+          LANDRUN_VER: v0.1.14
+        run: |
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/Zouuup/landrun/releases/download/${LANDRUN_VER}/landrun-linux-amd64" -o landrun
+          echo "${LANDRUN_SHA256}  landrun" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"; install -m 0755 landrun "$HOME/.local/bin/landrun"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          landrun --version || true
+          # Prove the sandbox enforces before trusting it: run works, out-of-tree write denied,
+          # /dev/shm write denied, network denied without the flag.
+          set +e
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo ok' >/dev/null 2>&1; ok=$?
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /etc/landrun-probe' >/dev/null 2>&1; wr=$?
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /dev/shm/landrun-probe' >/dev/null 2>&1; shm=$?
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          set -e
+          echo "self-test: run=$ok write=$wr shm=$shm net=$net (nonzero = denied for w/shm/net)"
+          if [ $ok -ne 0 ] || [ $wr -eq 0 ] || [ $shm -eq 0 ] || [ $net -eq 0 ]; then
+            echo "::error::landrun not enforcing (run=$ok write=$wr shm=$shm net=$net); refusing to run code under it"; exit 1
+          fi
+
+      # The same trusted read-only wrapper pr-build.yml uses: it routes every compiler process
+      # through a wall-clock watchdog, so one pathological module cannot burn the job's whole
+      # budget. sandbox-build.sh requires it.
+      - name: Prepare trusted read-only Lean watchdog toolchain
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          real_lean=$(elan which lean)
+          watchdog="$RUNNER_TEMP/lean-watchdog-toolchain"
+          bash scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
+          echo "WATCHDOG_TOOLCHAIN=$watchdog" >> "$GITHUB_ENV"
+
       # No aggregator check: the root TauCeti.lean is intentionally empty and imports nothing.
       # The build globs every TauCeti/ module directly, so nothing depends on a root that
       # re-exports the library.
-      - name: Build
+      #
+      # The build, both audits and both elaborating lints now come from scripts/sandbox-build.sh,
+      # the very script pr-build.yml runs for PR sources, under the same sandbox: offline, writes
+      # confined to .lake, and $GITHUB_ENV, $GITHUB_PATH, $HOME and $RUNNER_TEMP all outside the
+      # mount set, so nothing elaborated here can steer a later step of this job. That is what the
+      # staging step below relies on to be worth trusting at all.
+      #
+      # Sharing the script also makes main and the merge gate enforce identically, which brings
+      # `--iofail` (fail on any info-level diagnostic) and the watchdog deadline to main. For a
+      # TauCeti-only commit that changes nothing: it arrived through a merge-group pr-build which
+      # already applied both to the same tree, on the same runner image. A human-merged
+      # infrastructure commit skips the queue, so it is the one case where this could newly go
+      # red, which is the correct direction for a check to be wrong in.
+      # The dependency Lake configs, recorded before anything elaborates. $RUNNER_TEMP is
+      # outside every sandbox here, so what lands in it cannot be rewritten from inside one.
+      - name: Record the dependency Lake configs
+        run: |
+          set -euo pipefail
+          bash scripts/hash-dep-configs.sh > "$RUNNER_TEMP/dep-configs.before"
+          echo "recorded $(wc -l < "$RUNNER_TEMP/dep-configs.before") dependency config files"
+
+      - name: Build, audit and lint under landrun, offline
         env:
-          # Restore only from the locally-populated $LAKE_CACHE_DIR the step above filled;
-          # never let the build itself reach a remote cache service. Same rule as the
-          # sandboxed build in pr-build.yml and as the publish step below.
+          # Restore only from the locally-populated $LAKE_CACHE_DIR the fetch step filled; never
+          # let the build itself reach a remote cache service. The sandbox is offline regardless.
           LAKE_NO_CACHE: "true"
-        run: lake build
+        run: |
+          set -euo pipefail
+          # Created out here: landrun errors on a mount path that does not exist, and the
+          # sandbox cannot create its own writable roots.
+          mkdir -p .lake/tmp
+          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          # `.lake` is granted as a whole, deliberately, and after trying not to. Keeping
+          # `.lake/packages` read-only would protect the dependencies' Lake configs, which
+          # configuring the workspace elaborates. It is not achievable: Lake writes a `.hash`
+          # sidecar next to every traced input, and those are scattered through the package
+          # sources rather than confined to build directories. A dry run failed on
+          # `.lake/packages/proofwidgets/widget/package-lock.json.hash`. Carving a read-only hole
+          # inside a `--rw` does not work either: Landlock unions permissions, so a nested
+          # `--rox` grants nothing back, verified against the pinned binary in both orderings.
+          #
+          # What stands in its place is an ordering invariant, stated precisely because the loose
+          # version is false: every workspace-configuring `lake` invocation AFTER untrusted
+          # elaboration begins is sandboxed. Three run unrestricted before it, and only before it,
+          # against the checked-out root config and freshly fetched pinned dependencies:
+          # `lake exe cache get`, `lake exe cache clean`, and the `lake cache get` inside
+          # scripts/lake-cache-get.sh. The dependency-config tripwire after the build is a canary
+          # for crude edits, not an integrity boundary, and cannot license adding a fourth.
+          landrun --rox /usr --rox /etc \
+            --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
+            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
+            --rox "$PWD" \
+            --rw "$PWD/.lake" \
+            --env PATH --env HOME --env CI \
+            --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
+            --env WATCHDOG_TOOLCHAIN \
+            -- bash -euxo pipefail -c 'exec bash scripts/sandbox-build.sh'
 
-      # Main is the sole publisher. PR and merge-group builds restore these trusted snapshots
-      # but never save, so candidate code cannot populate a cache consumed by later builds.
-      # GitHub cache keys are immutable; an exact restore needs no redundant save, while a
-      # prefix restore is extended with the newly downloaded hashes under the exact current key.
-      # Pruning is essential: without it, every prefix restore would carry all old pins forward
-      # and each immutable snapshot would grow monotonically. If pruning itself breaks, leave main
-      # green but skip publication rather than saving an unbounded snapshot.
-      - name: Prune Mathlib's download cache to the current pin
-        id: mathlib_ltar_prune
-        if: ${{ steps.mathlib_ltar_restore.outputs.cache-hit != 'true' }}
-        continue-on-error: true
-        run: lake exe cache clean
 
-      - name: Save Mathlib's compressed download cache
-        if: ${{ steps.mathlib_ltar_restore.outputs.cache-hit != 'true' && steps.mathlib_ltar_prune.outcome == 'success' }}
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ steps.mathlib_ltar_restore.outputs.cache-dir }}/*.ltar
-          key: ${{ steps.mathlib_ltar_restore.outputs.cache-primary-key }}
-
-      # Axiom audit (replaces the old textual no-sorry grep). Inspects the built
-      # TauCeti environment and rejects any axiom outside {propext, Classical.choice,
-      # Quot.sound}, catching sorry/admit (sorryAx), native_decide (Lean.ofReduceBool),
-      # and home-rolled axioms, including ones reaching in through imports.
-      - name: Axiom audit (TauCeti/ uses only allowlisted axioms)
-        env:
-          LAKE_NO_CACHE: "true"
-        run: lake exe axioms
-
-      # Module-system audit. Inspects the built TauCeti `.olean`s and rejects any module that
-      # did not opt into the Lean module system (a leading `module`). It reads each module's
-      # `ModuleData.isModule` flag from the compiled artifact, so it cannot be fooled by a
-      # `module` appearing in a comment or string the way a textual grep could.
-      - name: Module-system audit (every TauCeti/ file opts into `module`)
-        env:
-          LAKE_NO_CACHE: "true"
-        run: lake exe module-system
-
-      # Environment lint. Elaborates a generated driver importing every TauCeti/
-      # module and runs Mathlib's default `#lint` set minus docBlame (simpNF,
-      # checkType, synTaut, ...) plus a module-system-reliable docstring scan (the
-      # docBlame linter is blind across module boundaries; see the script header),
-      # comparing linter-qualified violations against the grandfathered baseline in
-      # scripts/lint-baseline.txt: new violations fail, fixed baseline entries print
-      # a ratchet reminder. `@[nolint <linter>]` applications must be accounted for
-      # in scripts/lint-nolints-allowlist.txt, per (linter, declaration) pair.
-      # PR-time enforcement runs inside the
-      # landrun sandbox in pr-build.yml (this lint executes the linted code); this
-      # post-merge run is the health check on main, like the audits above.
-      - name: Environment lint (default linters + docstring scan vs grandfathered baseline)
-        env:
-          LAKE_NO_CACHE: "true"
-        run: bash scripts/lint-env.sh
-
-      - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
-        run: python3 scripts/lint-dot-notation.py
-
-      # Source style lint. The wrapper validates one complete TauCeti/** source list, applies
-      # Mathlib's copyright/Authors checks directly (the empty TauCeti.lean root is exempt), and
-      # generates an import-all module under .lake/ for lint-style's text-based checks. This is
-      # deliberately narrower than the command header linter's unrelated import and module-doc
-      # checks; the empty root makes that command linter skip every library module at this pin.
-      - name: Source style lint (copyright headers + text linters)
-        run: bash scripts/lint-style.sh
+      # The axiom audit, the module-system audit, the environment lint and the source style lint
+      # all moved into the sandboxed run above: each of them elaborates or executes TauCeti code,
+      # so each belongs inside landrun rather than beside it. scripts/sandbox-build.sh is where
+      # they live now, and it is the same file pr-build.yml runs, so main and the merge gate
+      # cannot drift on which checks a commit has to pass.
+      #
+      # This one stays outside on purpose: it is a textual scan of the sources that neither
+      # elaborates nor executes them, exactly as in pr-build.yml.
+      # A tripwire, not an integrity boundary, and worth naming as such. `.lake` has to be
+      # writable for Lake to trace at all, so an elaborating module can reach the dependency
+      # configs. This catches a crude persistent edit to one of the config files the manifest
+      # names. It does NOT catch a poisoned cached `lakefile.olean`, a helper `.lean` imported by
+      # a lakefile, or a modify-run-restore sequence, and it says nothing about what a detached
+      # child does after it runs. It exists so that a future unsandboxed `lake` added to this job
+      # fails noisily rather than inheriting the problem in silence; it is not permission to add
+      # one. It runs again after staging for the same reason.
+      - name: Check the dependency Lake configs were not modified
+        run: |
+          set -euo pipefail
+          bash scripts/hash-dep-configs.sh > "$RUNNER_TEMP/dep-configs.after"
+          if ! diff -u "$RUNNER_TEMP/dep-configs.before" "$RUNNER_TEMP/dep-configs.after"; then
+            echo "::error::a dependency's Lake config changed during the sandboxed build; configuring the workspace elaborates these, so treat this as code trying to leave the sandbox"
+            exit 1
+          fi
+          echo "dependency Lake configs unchanged"
 
       # --- Lake artifact-cache publish (dormant until configured) ---------------------
       # Publish TauCeti's OWN oleans (root-package only) to the Lake cache, so pr-build can
@@ -251,16 +362,17 @@ jobs:
       # Mathlib stays on `lake exe cache get`. See pr-build.yml for the consuming side.
       #
       # The upload is split across two jobs, and the split is the security boundary rather
-      # than a convenience. THIS job runs `lake build` unsandboxed, as the runner user, on
-      # whatever landed on main, and Lean executes code at elaboration time: `run_cmd`,
-      # `initialize` and macro-time IO are all unrestricted, since the scope, import-boundary
-      # and set_option guards are textual scans. Such code can therefore rewrite
-      # `$HOME/.elan/bin/lake`, prepend a directory of its own to every later step's PATH
-      # through `$GITHUB_PATH`, or set LD_PRELOAD or BASH_ENV for every later step through
-      # `$GITHUB_ENV`. A secret given to any later step of this job is a secret given to code
-      # that landed on main, whatever that step does with it. So this job only stages the
-      # artifacts, and publish-lake-cache below, a fresh runner with no checkout, no
-      # workspace and no project code, is the only place the key exists.
+      # than a convenience. THIS job elaborates whatever landed on main, and Lean executes code
+      # at elaboration time: `run_cmd`, `initialize` and macro-time IO are all unrestricted,
+      # since the scope, import-boundary and set_option guards are textual scans. That
+      # elaboration is now confined to landrun, so it can no longer rewrite `$HOME/.elan/bin/lake`
+      # or reach `$GITHUB_PATH` and `$GITHUB_ENV` to set PATH, LD_PRELOAD or BASH_ENV for later
+      # steps. It can still write all of `.lake`, and landrun confines a process tree rather than
+      # ending it, so a detached child may keep writing there after the sandbox returns. The
+      # staged tree is therefore hostile input on both sides of the job boundary, and a secret
+      # given to any later step of this job would still be a secret handed to code that landed on
+      # main. So this job only stages the artifacts, and publish-lake-cache below, a fresh runner
+      # with no checkout, no workspace and no project code, is the only place the key exists.
       - name: Configure the Lake cache staging (no-op unless the S3 endpoints are set)
         id: cachecfg
         env:
@@ -278,39 +390,62 @@ jobs:
             echo "::notice::Lake cache upload not configured, skipping (set the LAKE_CACHE_ARTIFACT_ENDPOINT / LAKE_CACHE_REVISION_ENDPOINT repo variables and the LAKE_CACHE_KEY secret to enable)"
           fi
 
-      - name: Stage TauCeti's oleans for the publish job
-        id: stage
+      # Inside landrun, like the build, and for the same reason: every `lake` invocation
+      # configures the workspace, and configuring elaborates each dependency's Lake config. At
+      # least one of those is a lakefile.lean under .lake/packages, which the sandboxed build can
+      # write. Packing outside the sandbox would hand whatever was left there to an unrestricted
+      # runner with $GITHUB_ENV, $GITHUB_PATH, $RUNNER_TEMP and the network in reach, which would
+      # give back everything sandboxing the build just bought. The staged tree therefore lands
+      # under .lake and is read out by the trusted step below.
+      - name: Stage TauCeti's oleans under landrun, offline
         if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
         env:
           # Restated at step level, and the same values the restore step sets job-wide when the
           # public endpoints are configured, so staging works either way: with the restore on,
-          # the health-check build already packed these artifacts; with it off, the pack below
-          # is what puts them in the cache directory for `lake cache stage` to find.
+          # the build already packed these artifacts; with it off, the pack inside is what puts
+          # them in the cache directory for `lake cache stage` to find.
           LAKE_ARTIFACT_CACHE: "true"
           LAKE_RESTORE_ARTIFACTS: "true"
-          # Don't download during the packing build — we only want to PUT, not GET. (The
-          # S3 host needs SigV4 even for reads, so an anonymous GET here would 403 anyway.)
+          # Only PUT later, never GET here. (The S3 host needs SigV4 even for reads, so an
+          # anonymous GET would 403 anyway.) The sandbox is offline regardless.
           LAKE_NO_CACHE: "true"
           LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         run: |
-          # Pack the already-built oleans into the local Lake cache (no recompile, since the
-          # health-check build above left matching traces), emit the root-package
-          # input->output mappings, then copy exactly the artifacts those mappings name into
-          # a staging directory, alongside a copy of the mappings themselves. `lake cache
-          # stage` reads no credential and contacts no network.
-          lake build >/dev/null
-          lake build --no-build -o .lake/outputs.jsonl
-          echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
-          lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
+          set -euo pipefail
+          rm -rf .lake/staging && mkdir -p .lake/staging
+          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          # Same narrowing as the build, plus one writable directory of its own for the staged
+          # tree, so nothing here needs `.lake` as a whole either.
+          landrun --rox /usr --rox /etc \
+            --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
+            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
+            --rox "$PWD" \
+            --rw "$PWD/.lake" \
+            --env PATH --env HOME --env CI \
+            --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
+            --env WATCHDOG_TOOLCHAIN \
+            -- bash -euxo pipefail -c 'exec bash scripts/stage-lake-cache.sh'
+
+      # Trusted, and touches no `lake`. lakefile.toml sits outside the sandbox's writable mount,
+      # so these two checks read what the repository actually says. Everything from .lake is
+      # attacker-choosable and is treated that way: the tree itself is validated by
+      # publish-lake-cache before Lake sees it, and the toolchain string is pattern-checked here
+      # before it can reach $GITHUB_OUTPUT, since a newline in it would let staged code inject
+      # further step outputs.
+      - name: Read the staged tree and report it to the publish job
+        id: stage
+        if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
+        run: |
+          set -euo pipefail
           # `lake cache put-staged` does not configure the workspace, which is precisely what
           # keeps project code out of the publish job, so it cannot derive the toolchain and
           # platform halves of the upload scope. The publish job supplies them from the pin
           # instead, which is right only while the package config keeps the two assumptions
-          # below. Check them here, where the workspace does exist: `platformIndependent` is
-          # what makes Lake leave the platform out of the scope (put-staged's default), while
-          # `fixedToolchain` or `bootstrap` would make Lake leave the toolchain out of it (which
-          # put-staged is told to include). Either silent mismatch would publish under a scope
-          # pr-build's `lake cache get --service ... --repo` never reads, i.e. a cache never hit.
+          # below. `platformIndependent` is what makes Lake leave the platform out of the scope
+          # (put-staged's default), while `fixedToolchain` or `bootstrap` would make Lake leave
+          # the toolchain out of it (which put-staged is told to include). Either silent mismatch
+          # would publish under a scope pr-build's `lake cache get --service ... --repo` never
+          # reads, i.e. a cache never hit.
           if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
             echo "::error::lakefile.toml no longer sets platformIndependent = true; publish-lake-cache must now pass --platform to lake cache put-staged"
             exit 1
@@ -319,24 +454,58 @@ jobs:
             echo "::error::lakefile.toml now sets fixedToolchain or bootstrap; Lake drops the toolchain from the scope for such a package, so publish-lake-cache must stop passing --toolchain"
             exit 1
           fi
-          # `lake env` reports the workspace's own view of the toolchain, which is exactly the
-          # `Env.toolchain` Lake scopes an upload by. The publish job does not take this on
-          # faith: it reads lean-toolchain itself and fails if the two disagree. Reporting it
-          # anyway turns a disagreement into a loud failure instead of a silent wrong scope.
-          TOOLCHAIN="$(lake env printenv ELAN_TOOLCHAIN || true)"
-          if [ -z "$TOOLCHAIN" ]; then
-            echo "::error::could not determine the Lean toolchain that scopes the cache upload"
+          # The staged tree comes out of the sandbox, so it is hostile input here and not only
+          # in publish-lake-cache. Validate shape and size BEFORE anything follows a path in it:
+          # a FIFO or a device left in place of a file would otherwise block a read for the rest
+          # of the job, and a symlink would be followed out of the tree.
+          STAGING=.lake/staging/cache-staging
+          if find "$STAGING" -mindepth 2 -print -quit | grep -q .; then
+            echo "::error::the staged tree is nested; expected a flat directory of artifacts"
+            exit 1
+          fi
+          if find "$STAGING" -mindepth 1 ! -type f -print -quit | grep -q .; then
+            echo "::error::the staged tree holds an entry that is not a regular file"
+            exit 1
+          fi
+          entries=$(find "$STAGING" -mindepth 1 -type f | wc -l)
+          bytes=$(du -sb "$STAGING" | cut -f1)
+          echo "staged $entries files, $bytes bytes"
+          # Roughly thirty times the observed normal output, so this bounds a runaway without
+          # tripping on ordinary growth.
+          if [ "$entries" -gt 50000 ] || [ "$bytes" -gt 2147483648 ]; then
+            echo "::error::the staged tree is implausibly large ($entries files, $bytes bytes)"
+            exit 1
+          fi
+          if [ ! -s "$STAGING/outputs.jsonl" ]; then
+            echo "::error::the sandboxed staging step produced no mappings"
+            exit 1
+          fi
+          # Read defensively before reading at all: this path is attacker-choosable, so a FIFO
+          # or a device node here would make an ordinary `head` block until the job timeout, and a
+          # symlink would be followed out of the tree. Require a small regular file, then take the
+          # first line of a bounded read. The publish job still cross-checks the value against the
+          # lean-toolchain pin it reads for itself; this is about what may enter $GITHUB_OUTPUT.
+          TC=.lake/staging/toolchain.txt
+          if [ -L "$TC" ] || [ ! -f "$TC" ] || [ "$(stat -c %s "$TC")" -gt 4096 ]; then
+            echo "::error::the staged toolchain file is missing, not a regular file, or too large"
+            exit 1
+          fi
+          TOOLCHAIN="$(head -c 200 "$TC" | head -n 1)"
+          if ! printf '%s' "$TOOLCHAIN" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._:+/-]{0,99}$'; then
+            echo "::error::the staged toolchain string is missing or not a plain toolchain name"
             exit 1
           fi
           printf 'toolchain=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
           echo "staged=true" >> "$GITHUB_OUTPUT"
+
 
       - name: Hand the staged oleans to the publish job
         if: ${{ steps.stage.outputs.staged == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: lake-cache-staging
-          path: ${{ runner.temp }}/lake-cache-staging
+          # Under .lake, because the sandboxed staging step could not write anywhere else.
+          path: .lake/staging/cache-staging
           if-no-files-found: error
           # Long enough to inspect a failed publish, short enough not to accumulate a
           # 60 MB artifact per push to main.

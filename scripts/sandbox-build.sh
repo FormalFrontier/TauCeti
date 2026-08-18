@@ -14,7 +14,9 @@
 # so this script cannot be swapped out to escape the sandbox, even though it elaborates
 # the PR's (untrusted) TauCeti/ code, which is the whole reason it runs under landrun.
 #
-# cwd on entry is the trusted `base` checkout, with the PR's TauCeti/ already overlaid.
+# cwd on entry is the workspace to check. pr-build.yml runs this in the trusted `base` checkout
+# with the PR's TauCeti/ overlaid; ci.yml runs it in main's own checkout after a merge. Every path
+# below is relative to that cwd, so nothing here depends on which caller it is.
 set -euxo pipefail
 
 export TMPDIR="$PWD/.lake/tmp"
