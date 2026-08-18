@@ -6,7 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Conjugation
+public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Comap
 
 /-!
 # Normal Hopf ideals
@@ -27,7 +29,10 @@ Normal Hopf ideals are closed under arbitrary suprema.
 ## Main declarations
 
 * `TauCeti.HopfIdeal.IsNormal`: stability under the coordinate conjugation action.
+* `TauCeti.HopfIdeal.isNormal_bot`: the zero Hopf ideal is normal.
 * `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
+* `TauCeti.HopfIdeal.IsNormal.comap_of_bijective`: normality is preserved by pullback along a
+  bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
   subgroup on points over every commutative value algebra.
 
@@ -79,6 +84,12 @@ theorem IsNormal.conjugation_mem {I : HopfIdeal R H} (hI : I.IsNormal) {x : H} (
     HopfAlgebra.conjugationAlgHom (R := R) (H := H) x ∈
       rightTensorIdeal (R := R) (H := H) I.toIdeal :=
   (isNormal_iff_conjugation_mem I).mp hI hx
+
+/-- The zero Hopf ideal cuts out the whole affine group, hence is normal. -/
+@[simp]
+theorem isNormal_bot : (⊥ : HopfIdeal R H).IsNormal := by
+  rw [isNormal_def, bot_toIdeal, Ideal.map_bot]
+  exact bot_le
 
 /-- An arbitrary supremum of normal Hopf ideals is normal. -/
 theorem isNormal_iSup {i : Sort*} {I : i → HopfIdeal R H} (hI : ∀ j, (I j).IsNormal) :
@@ -165,5 +176,46 @@ theorem isNormal_iff_quotientPointsSubgroup_normal
     fun hnormal => isNormal_of_quotientPointsSubgroup_normal H I (hnormal _)⟩
 
 end CommHopfAlgCat
+
+namespace HopfIdeal
+
+variable {R : Type u} [CommRing R]
+variable {H K : Type v} [CommRing H] [CommRing K]
+variable [HopfAlgebra R H] [HopfAlgebra R K]
+
+/-- Pulling a normal Hopf ideal back along a bijective bialgebra morphism preserves normality. -/
+theorem IsNormal.comap_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal) (f : H →ₐc[R] K)
+    (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
+    (I.comap f hsurj).IsNormal := by
+  apply (CommHopfAlgCat.isNormal_iff_quotientPointsSubgroup_normal
+    (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
+  intro A
+  let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
+  let E := AlgHom.mapDomainMulEquiv (A := A) e
+  have hmem (g : HopfAlgebra.points (R := R) (H := K) A) :
+      E g ∈ CommHopfAlgCat.quotientPointsSubgroup
+          (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
+        g ∈ CommHopfAlgCat.quotientPointsSubgroup
+          (_root_.CommHopfAlgCat.of R K) I A := by
+    rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
+      CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+    constructor
+    · intro hg y hy
+      obtain ⟨x, rfl⟩ := hsurj y
+      exact hg x (mem_comap.mpr hy)
+    · intro hg x hx
+      exact hg (f x) (mem_comap.mp hx)
+  constructor
+  intro n hn g
+  have hn' : E.symm n ∈ CommHopfAlgCat.quotientPointsSubgroup
+      (_root_.CommHopfAlgCat.of R K) I A := by
+    rw [← hmem]
+    simpa using hn
+  have hconj := (CommHopfAlgCat.quotientPointsSubgroup_normal
+    (_root_.CommHopfAlgCat.of R K) I hI A).conj_mem (E.symm n) hn' (E.symm g)
+  rw [← hmem] at hconj
+  simpa using hconj
+
+end HopfIdeal
 
 end TauCeti
