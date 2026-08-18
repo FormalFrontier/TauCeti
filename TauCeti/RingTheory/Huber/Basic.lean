@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -52,6 +53,9 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   Tate-ring form is `TauCeti.Huber.IsTateRing.exists_hasBasis_nhds_zero`.
 * `TauCeti.Huber.IsHuberRing.of_discreteTopology`: a discrete ring is Huber, the first of the
   roadmap's Layer-0 examples.
+* `TauCeti.Huber.exists_sum_eq_of_mem_span_mul`: pure algebra, stated here because it is what
+  finite generation of an ideal of definition is used through — an element of `(G) * K`, for a
+  finite family `G`, is a `K`-linear combination of `G` itself.
 
 ## Provenance
 
@@ -80,6 +84,37 @@ public section
 open Filter Pointwise Topology
 
 namespace TauCeti.Huber
+
+section SpanMul
+
+variable {R : Type*} [CommSemiring R]
+
+/-- An element of `(G) * K` is a `K`-linear combination of the finite family `G`.
+
+This is Mathlib's `Submodule.mem_ideal_smul_span_iff_exists_sum'` in the form the Huber theory
+uses it: a `Finset.sum` over `G` itself, with cofactors given by a function on all of `R`, rather
+than a `Finsupp` on the subtype `↥G`. It is what bounds, uniformly in `k`, the number of terms
+needed to write an element of `Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`, both in Wedhorn Remark 6.8
+(`TauCeti.RingTheory.Huber.Completion`) and in the identification of the neighbourhood subgroups
+of `A⟨X⟩_T` with the powers of one finitely generated ideal
+(`TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition`). -/
+theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
+    (hb : b ∈ Ideal.span (G : Set R) * K) :
+    ∃ c : R → R, (∀ z, c z ∈ K) ∧ ∑ z ∈ G, z * c z = b := by
+  classical
+  -- Present `(G) * K` as `K • span (id '' G)`, so that the coefficients are handed to us.
+  rw [mul_comm, ← Ideal.smul_eq_mul, ← Set.image_id (G : Set R)] at hb
+  obtain ⟨a, ha, rfl⟩ := (Submodule.mem_ideal_smul_span_iff_exists_sum' _ _ _ _).mp hb
+  -- Extend the coefficients from `G` to all of `R` by zero.
+  refine ⟨fun z ↦ if h : z ∈ G then a ⟨z, h⟩ else 0, fun z ↦ ?_, ?_⟩
+  · dsimp only
+    split_ifs
+    exacts [ha _, K.zero_mem]
+  · rw [Finsupp.sum_fintype _ _ (by simp),
+      ← Finset.sum_finset_coe (fun z ↦ z * if h : z ∈ G then a ⟨z, h⟩ else 0) G]
+    exact Finset.sum_congr rfl fun i _ ↦ by simp [Finset.mem_coe.mp i.2, mul_comm]
+
+end SpanMul
 
 /-- A *pair of definition* `(A₀, I)` for a topological ring `A`: an open subring `A₀` together
 with a finitely generated ideal `I` of `A₀` whose adic topology is the subspace topology.
@@ -192,6 +227,52 @@ theorem mem_idealImage (P : PairOfDefinition A) (n : ℕ) {x : A} :
     x ∈ P.idealImage n ↔
       ∃ y ∈ (P.idealOfDefinition ^ n : Ideal P.ringOfDefinition), (y : A) = x := by
   simp [idealImage]
+
+/-- The images of the powers of the ideal of definition are nested. -/
+theorem idealImage_anti (P : PairOfDefinition A) {m n : ℕ} (h : m ≤ n) :
+    P.idealImage n ≤ P.idealImage m := by
+  intro x hx
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
+  exact (P.mem_idealImage m).mpr ⟨y, Ideal.pow_le_pow_right h hy, rfl⟩
+
+/-- `Iⁿ ⊆ A` lies in the ring of definition. -/
+theorem idealImage_le_ringOfDefinition (P : PairOfDefinition A) (n : ℕ) :
+    P.idealImage n ≤ P.ringOfDefinition.toAddSubgroup := by
+  intro x hx
+  obtain ⟨y, -, rfl⟩ := (P.mem_idealImage n).mp hx
+  exact y.2
+
+/-- `Iⁿ ⊆ A` absorbs multiplication by an element of the ring of definition. -/
+theorem mul_mem_idealImage (P : PairOfDefinition A) {n : ℕ} {a x : A}
+    (ha : a ∈ P.ringOfDefinition) (hx : x ∈ P.idealImage n) : a * x ∈ P.idealImage n := by
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
+  exact (P.mem_idealImage n).mpr ⟨⟨a, ha⟩ * y, Ideal.mul_mem_left _ _ hy, by push_cast; ring⟩
+
+/-- The images of the powers of the ideal of definition multiply: `Iᵃ · Iᵇ ⊆ Iᵃ⁺ᵇ`. -/
+theorem mul_mem_idealImage_add (P : PairOfDefinition A) {a b : ℕ} {x y : A}
+    (hx : x ∈ P.idealImage a) (hy : y ∈ P.idealImage b) : x * y ∈ P.idealImage (a + b) := by
+  obtain ⟨u, hu, rfl⟩ := (P.mem_idealImage a).mp hx
+  obtain ⟨v, hv, rfl⟩ := (P.mem_idealImage b).mp hy
+  exact (P.mem_idealImage (a + b)).mpr
+    ⟨u * v, (pow_add P.idealOfDefinition a b).symm ▸ Ideal.mul_mem_mul hu hv, by push_cast; ring⟩
+
+/-- **One coefficient, decomposed.** An element of `Iⁿ⁺¹ ⊆ A` is a combination of a finite
+generating set `G` of `I` with cofactors in `Iⁿ`. -/
+theorem exists_sum_eq_of_mem_idealImage_succ (P : PairOfDefinition A)
+    {G : Finset P.ringOfDefinition}
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) (n : ℕ) {x : A}
+    (hx : x ∈ P.idealImage (n + 1)) :
+    ∃ c : P.ringOfDefinition → A,
+      (∀ z, c z ∈ P.idealImage n) ∧ ∑ z ∈ G, (z : A) * c z = x := by
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage (n + 1)).mp hx
+  have hy' : y ∈ Ideal.span (G : Set P.ringOfDefinition) * P.idealOfDefinition ^ n := by
+    rw [hG, ← pow_succ']
+    exact hy
+  obtain ⟨c, hc, hsum⟩ := exists_sum_eq_of_mem_span_mul G (P.idealOfDefinition ^ n) hy'
+  refine ⟨fun z ↦ (c z : A), fun z ↦ (P.mem_idealImage n).mpr ⟨c z, hc z, rfl⟩, ?_⟩
+  rw [← hsum]
+  push_cast
+  rfl
 
 /-- The ideal `I · A` of `A` generated by the ideal of definition `I ⊆ A₀`. This is core data of
 a pair of definition; `TauCeti/RingTheory/Huber/OpenIdeal.lean` characterises the open ideals of
