@@ -77,22 +77,9 @@ variable (R : Type u) [Ring R] (X : GradedObject ℤ (ModuleCat.{v} R))
 abbrev gradedObjectPiece (p : ℤ) : Submodule R (⨁ q : ℤ, X q) :=
   LinearMap.range (DirectSum.lof R ℤ (fun q ↦ X q) p)
 
-/-- Membership in the degree-`p` copy means being the canonical inclusion of an element of the
-`p`-th component. -/
-theorem mem_gradedObjectPiece (p : ℤ) (z : ⨁ q : ℤ, X q) :
-    z ∈ gradedObjectPiece R X p ↔
-      ∃ x : X p, DirectSum.lof R ℤ (fun q ↦ X q) p x = z :=
-  Iff.rfl
-
 /-- A component of a graded object is linearly equivalent to its copy in the external direct sum. -/
 noncomputable abbrev gradedObjectPieceEquiv (p : ℤ) : X p ≃ₗ[R] gradedObjectPiece R X p :=
   LinearEquiv.ofInjective (DirectSum.lof R ℤ (fun q ↦ X q) p) (DirectSum.of_injective _)
-
-@[simp]
-theorem coe_gradedObjectPieceEquiv (p : ℤ) (x : X p) :
-    ((gradedObjectPieceEquiv R X p x : gradedObjectPiece R X p) : ⨁ q : ℤ, X q) =
-      DirectSum.lof R ℤ (fun q ↦ X q) p x :=
-  LinearEquiv.ofInjective_apply _ x
 
 private noncomputable abbrev gradedObjectPiecesEquiv :
     (⨁ p : ℤ, X p) ≃ₗ[R] (⨁ p : ℤ, gradedObjectPiece R X p) :=
@@ -135,18 +122,12 @@ theorem ofGradedObject_piece (p : ℤ) :
     (ofGradedObject R X).piece p = gradedObjectPiece R X p :=
   (rfl)
 
-@[simp]
-theorem ofGradedObject_toGradedObject_apply (p : ℤ) :
-    (ofGradedObject R X).toGradedObject p = ModuleCat.of R (gradedObjectPiece R X p) :=
-  (rfl)
-
 /-- Recovering the graded-object presentation of the canonical internal grading returns the
 original graded object degreewise. -/
 noncomputable def ofGradedObjectToGradedObjectIso :
     (ofGradedObject R X).toGradedObject ≅ X := by
   apply GradedObject.isoMk
   intro p
-  rw [ofGradedObject_toGradedObject_apply]
   exact (gradedObjectPieceEquiv R X p).symm.toModuleIso
 
 end OfGradedObject
