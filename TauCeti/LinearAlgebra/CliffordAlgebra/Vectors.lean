@@ -153,7 +153,7 @@ theorem ι_ne_one [Nontrivial R] (m : M) : ι Q m ≠ 1 := by
   exact one_ne_zero ∘ And.right
 
 /-- **The vectors of a Clifford algebra are disjoint from its scalars.** Together with
-`CliffordAlgebra.filtration_one`, which writes the first step of the degree filtration as
+`TauCeti.Algebra.wordFiltration_one`, which writes the first step of the degree filtration as
 `1 ⊔ LinearMap.range (ι Q)`, this is what makes that step a direct sum of `R` and `M`; see
 `CliffordAlgebra.filtrationOneEquiv`. -/
 theorem ι_range_disjoint_one :
@@ -217,7 +217,8 @@ theorem scalarAddVector_apply (x : R × M) :
 omit [Invertible (2 : R)] in
 /-- The scalars and the vectors span exactly the first step of the degree filtration. -/
 theorem range_scalarAddVector : LinearMap.range (scalarAddVector Q) = filtration Q 1 := by
-  rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range, ← filtration_one]
+  rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range,
+    ← TauCeti.Algebra.wordFiltration_one]
 
 /-- A scalar and a vector summing to zero both vanish, the scalars and the vectors being disjoint
 (`CliffordAlgebra.ι_range_disjoint_one`). -/
@@ -231,7 +232,7 @@ theorem scalarAddVector_injective : Function.Injective (scalarAddVector Q) := by
     Submodule.prod_bot]
 
 /-- **The first step of the degree filtration is `R ⊕ M`.** The scalars and the vectors span it
-(`CliffordAlgebra.filtration_one`) and meet only in `0`
+(`TauCeti.Algebra.wordFiltration_one`) and meet only in `0`
 (`CliffordAlgebra.ι_range_disjoint_one`), so together they parametrize it faithfully. -/
 noncomputable def filtrationOneEquiv : (R × M) ≃ₗ[R] filtration Q 1 :=
   (LinearEquiv.ofInjective _ (scalarAddVector_injective Q)).trans
