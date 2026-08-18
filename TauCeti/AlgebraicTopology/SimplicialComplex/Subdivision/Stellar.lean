@@ -32,9 +32,10 @@ occurs. A face is either
 
 Phrasing the second clause through `ρ ∪ σ ∈ K` rather than through an explicit join keeps the
 whole construction on the original vertex type, so starrings can be iterated. The face collection
-is downward closed with no hypothesis at all on `σ` or `v`; the hypotheses appear only in the
-theorems, and they are always the same two: `σ` is a face, and `v` is *fresh*, meaning `{v}` is
-not a face of `K` (equivalently, by `notMem_of_singleton_notMem`, that `v` occurs in no face).
+is downward closed with no hypothesis at all on `σ` or `v`. For a genuine stellar move, the
+intended hypotheses are that `σ` is a face and that `v` is *fresh*, meaning `{v}` is not a face of
+`K` (equivalently, by `notMem_of_singleton_notMem`, that `v` occurs in no face); individual
+theorems state only the assumptions they need.
 
 Stellar subdivision is the combinatorial substitute for a general subdivision that layer 11 of the
 geometric-topology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`) needs before
@@ -314,8 +315,7 @@ theorem finite_faces_stellarSubdivision (hfin : K.faces.Finite) :
 
 When `K` is its own closed star at `σ` — the case of a simplex starred at its top face — every
 face can absorb the new vertex, so the subdivision is a cone with apex `v`. Since a finite cone
-collapses to its apex, this exhibits the starred simplex as a collapsible complex, matching the
-geometric fact that a subdivided ball is collapsible. -/
+collapses to its apex, this proves that this stellar subdivision of a simplex is collapsible. -/
 
 /-- Starring a complex that is its own closed star at `σ` produces a cone with apex the new
 vertex. -/
