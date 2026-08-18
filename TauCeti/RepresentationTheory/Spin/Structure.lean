@@ -48,10 +48,13 @@ construction.
 The direction of the argument is worth recording: the spin module is built first and the structure
 theorem is derived *from* it.
 
-The odd-dimensional case is not proved here. There `finrank L = 1`, the count gives
-`finrank (CliffordAlgebra Q) = 2 * (2 ^ l) ^ 2`, and `TauCeti.spinAction` has a kernel: the
-Clifford algebra is a product of two matrix algebras and the action factors through one central
-idempotent. Identifying that splitting is separate work.
+The odd-dimensional case is not proved here. There `finrank L = 1` and the count gives
+`finrank (CliffordAlgebra Q) = 2 * (2 ^ l) ^ 2`, so `TauCeti.spinAction` cannot be injective. Away
+from characteristic two the centre of the Clifford algebra of a nondegenerate odd-dimensional form
+is a quadratic étale algebra over `K`, so over a separably closed field it is `K × K`, the Clifford
+algebra is a product of two matrix algebras, and the action factors through one of the two central
+idempotents. Over a general field that centre can be a field, and then there is no such product
+decomposition. Identifying the splitting is separate work.
 
 ## Main definitions
 
