@@ -8,6 +8,8 @@ module
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.Subrepresentation
 public import Mathlib.RingTheory.SimpleModule.Rank
+import TauCeti.RingTheory.Semisimple.DoubleCentralizer
+import TauCeti.RingTheory.Semisimple.Schur
 
 /-!
 # Criteria for irreducibility
@@ -48,6 +50,8 @@ irreducible by.
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
   algebra map exhausts the endomorphisms is irreducible.
+* `Representation.asAlgebraHom_surjective_of_isIrreducible`: over an algebraically closed field,
+  every finite-dimensional irreducible representation exhausts the endomorphisms.
 * `TauCeti.Representation.exists_isAtom_le`: every nonzero finite-dimensional subrepresentation
   contains an atom, so the atom criterion always has something to apply to.
 * `TauCeti.Representation.exists_isAtom`: in particular a nonzero finite-dimensional
@@ -185,6 +189,42 @@ theorem isIrreducible_of_asAlgebraHom_surjective [Nontrivial V] (ρ : Representa
   obtain ⟨r, rfl⟩ := h T
   refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
   rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
+
+open scoped MonoidAlgebra in
+/-- **Burnside density theorem.** The monoid algebra of a finite-dimensional irreducible
+representation over an algebraically closed field exhausts the full endomorphism algebra.
+
+Jacobson density gives all endomorphisms linear over the representation's commuting endomorphism
+ring. Schur's lemma identifies that ring with the base field, so these are exactly the
+`k`-linear endomorphisms. -/
+theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
+    [IsAlgClosed k] [FiniteDimensional k V]
+    (ρ : Representation k G V) (hρ : ρ.IsIrreducible) :
+    Function.Surjective ρ.asAlgebraHom := by
+  have : ρ.IsIrreducible := hρ
+  have : IsSimpleModule k[G] ρ.asModule := inferInstance
+  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] ρ.asModule
+  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Module.Finite (Module.End k[G] ρ.asModule) ρ.asModule :=
+    finite_end_of_smulCommClass (R := k[G]) (M := ρ.asModule) k
+  intro T
+  let T' : Module.End (Module.End k[G] ρ.asModule) ρ.asModule :=
+    { toFun := T
+      map_add' := T.map_add
+      map_smul' := fun f x ↦ by
+        -- The commuting-endomorphism action is function application by definition; expose that
+        -- equality so the scalar description supplied by Schur's lemma can be rewritten.
+        change T (f x) = f (T x)
+        rw [← endAlgEquivSelfOfIsSimpleModule_smul (k := k) (A := k[G]) f x,
+          ← endAlgEquivSelfOfIsSimpleModule_smul (k := k) (A := k[G]) f (T x)]
+        exact T.map_smul _ _ }
+  obtain ⟨a, ha⟩ :=
+    Module.Finite.toModuleEnd_moduleEnd_surjective (R := k[G]) (M := ρ.asModule) T'
+  refine ⟨a, LinearMap.ext fun x ↦ ?_⟩
+  have hx := LinearMap.congr_fun ha (ρ.asModuleEquiv.symm x)
+  -- `asModule` is a type synonym, and its comparison with `V` is the identity equivalence.
+  dsimp [Representation.asModuleEquiv, T'] at hx
+  exact hx
 
 /-! ### Atoms exist in finite dimensions -/
 

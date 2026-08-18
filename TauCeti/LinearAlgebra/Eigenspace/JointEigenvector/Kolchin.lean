@@ -5,29 +5,28 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Trace
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Unipotent
-public import TauCeti.RepresentationTheory.Irreducible
-public import TauCeti.RingTheory.Semisimple.DoubleCentralizer
-public import TauCeti.RingTheory.Semisimple.Schur
+public import Mathlib.RepresentationTheory.Basic
+import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
+import Mathlib.LinearAlgebra.Dual.Lemmas
+import Mathlib.LinearAlgebra.TensorProduct.Basis
+import TauCeti.LinearAlgebra.Trace.Nondegenerate
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Kolchin's common fixed vector theorem
 
 This file proves the linear-algebraic core of Kolchin's theorem: a group acting by unipotent
-automorphisms on a nonzero finite-dimensional vector space over an algebraically closed field has
-a common nonzero fixed vector. No commutativity or finiteness assumption is made on the group.
+automorphisms on a nonzero finite-dimensional vector space over a field has a common nonzero fixed
+vector. No commutativity or finiteness assumption is made on the group.
 
-The proof first chooses a minimal nonzero invariant subspace. Burnside density identifies the
-group algebra on this irreducible subspace with the full endomorphism algebra. For each group
-element `g`, unipotence makes the trace of `(g - 1)h` vanish for every group element `h`, hence for
-every endomorphism. Nondegeneracy of the trace pairing forces `g - 1 = 0` on the irreducible
-subspace, so every nonzero vector in it is fixed.
+Over an algebraically closed field, the proof chooses a minimal nonzero invariant subspace and uses
+Burnside density together with the nondegenerate trace pairing to show that every group element is
+the identity there. Over an arbitrary field, extend scalars to an algebraic closure and descend a
+fixed tensor by applying a base-field linear functional to its scalar coefficients.
 
 ## Main results
 
-* `Representation.asAlgebraHom_surjective_of_isIrreducible`: Burnside density for a
-  finite-dimensional irreducible representation over an algebraically closed field.
 * `TauCeti.exists_common_fixed_vector_of_forall_isUnipotent`: Kolchin's common fixed vector
   theorem.
 * `TauCeti.exists_fixed_submodule_finrank_eq_one_of_forall_isUnipotent`: the equivalent fixed-line
@@ -43,121 +42,17 @@ public section
 
 namespace TauCeti
 
-open scoped MonoidAlgebra
+open scoped MonoidAlgebra TensorProduct
 
 universe u v w
 
 noncomputable section
 
-namespace LinearMap
-
-variable {K : Type u} {V : Type v}
-variable [CommRing K] [AddCommGroup V] [Module K V]
-
-/-- The trace pairing on the endomorphisms of a finite-dimensional vector space is nondegenerate:
-an endomorphism whose product with every endomorphism has zero trace is zero. -/
-theorem eq_zero_of_trace_mul_eq_zero [Module.Free K V] [Module.Finite K V]
-    (f : Module.End K V)
-    (h : ∀ g : Module.End K V, _root_.LinearMap.trace K V (f * g) = 0) : f = 0 := by
-  let b := Module.Free.chooseBasis K V
-  apply (_root_.LinearMap.toMatrixAlgEquiv b).injective
-  apply Matrix.ext_iff_trace_mul_right.mpr
-  intro Y
-  have hY := h ((_root_.LinearMap.toMatrixAlgEquiv b).symm Y)
-  rw [_root_.LinearMap.trace_eq_matrix_trace K b] at hY
-  change (((_root_.LinearMap.toMatrixAlgEquiv b)
-    (f * (_root_.LinearMap.toMatrixAlgEquiv b).symm Y)).trace = 0) at hY
-  simpa only [map_mul, AlgEquiv.apply_symm_apply, map_zero, zero_mul, Matrix.trace_zero] using hY
-
-end LinearMap
-
-namespace GeneralLinearGroup
-
-variable {K : Type u} {V : Type v}
-variable [CommRing K] [IsReduced K] [AddCommGroup V] [Module K V]
-
-/-- A unipotent automorphism has trace equal to the dimension of its space. -/
-theorem IsUnipotent.trace_eq_finrank [Module.Free K V] [Module.Finite K V]
-    {g : _root_.LinearMap.GeneralLinearGroup K V}
-    (hg : _root_.LinearMap.GeneralLinearGroup.IsUnipotent g) :
-    _root_.LinearMap.trace K V (g : Module.End K V) = (Module.finrank K V : K) := by
-  have hnil := _root_.LinearMap.isNilpotent_trace_of_isNilpotent
-    ((_root_.LinearMap.GeneralLinearGroup.isUnipotent_def g).mp hg)
-  rw [map_sub, _root_.LinearMap.trace_one] at hnil
-  exact sub_eq_zero.mp hnil.eq_zero
-
-end GeneralLinearGroup
-
-namespace Representation
-
 variable {K : Type u} {G : Type w} {V : Type v}
-variable [Field K] [IsAlgClosed K] [Monoid G] [AddCommGroup V] [Module K V]
+variable [Field K] [Group G] [AddCommGroup V] [Module K V]
 
-/-- **Burnside density theorem.** The monoid algebra of a finite-dimensional irreducible
-representation over an algebraically closed field exhausts the full endomorphism algebra.
-
-Jacobson density gives all endomorphisms linear over the representation's commuting endomorphism
-ring. Schur's lemma identifies that ring with the base field, so these are exactly the
-`K`-linear endomorphisms. -/
-theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible [FiniteDimensional K V]
-    (ρ : Representation K G V) (hρ : ρ.IsIrreducible) :
-    Function.Surjective ρ.asAlgebraHom := by
-  have : ρ.IsIrreducible := hρ
-  have : IsSimpleModule K[G] ρ.asModule := inferInstance
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial K[G] ρ.asModule
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
-  have : Module.Finite (Module.End K[G] ρ.asModule) ρ.asModule :=
-    finite_end_of_smulCommClass (R := K[G]) (M := ρ.asModule) K
-  intro T
-  let T' : Module.End (Module.End K[G] ρ.asModule) ρ.asModule :=
-    { toFun := T
-      map_add' := T.map_add
-      map_smul' := fun f x ↦ by
-        change T (f x) = f (T x)
-        rw [← endAlgEquivSelfOfIsSimpleModule_smul (k := K) (A := K[G]) f x,
-          ← endAlgEquivSelfOfIsSimpleModule_smul (k := K) (A := K[G]) f (T x)]
-        exact T.map_smul _ _ }
-  obtain ⟨a, ha⟩ :=
-    Module.Finite.toModuleEnd_moduleEnd_surjective (R := K[G]) (M := ρ.asModule) T'
-  refine ⟨a, LinearMap.ext fun x ↦ ?_⟩
-  have hx := LinearMap.congr_fun ha (ρ.asModuleEquiv.symm x)
-  -- `asModule` is a type synonym, and its comparison with `V` is the identity equivalence.
-  dsimp [Representation.asModuleEquiv, T'] at hx
-  exact hx
-
-end Representation
-
-namespace GeneralLinearGroup
-
-variable {K : Type u} {G : Type w} {V : Type v}
-variable [CommRing K] [Group G] [AddCommGroup V] [Module K V]
-
-/-- Unipotence is inherited by the restriction of a group representation to an invariant
-subspace. -/
-theorem IsUnipotent.subrepresentation {ρ : Representation K G V} (S : Subrepresentation ρ)
-    (g : G) (hg : _root_.LinearMap.GeneralLinearGroup.IsUnipotent (ρ.asGroupHom g)) :
-    _root_.LinearMap.GeneralLinearGroup.IsUnipotent (S.toRepresentation.asGroupHom g) := by
-  rw [_root_.LinearMap.GeneralLinearGroup.isUnipotent_def] at hg ⊢
-  rw [Representation.asGroupHom_apply] at hg
-  let hmap : Set.MapsTo ((ρ g : Module.End K V) - (1 : Module.End K V))
-      S.toSubmodule S.toSubmodule := by
-    intro x hx
-    exact S.toSubmodule.sub_mem (S.apply_mem_toSubmodule g hx) hx
-  have hrestrict := Module.End.isNilpotent.restrict hmap hg
-  convert hrestrict using 1
-  ext x
-  -- Restriction to a subrepresentation uses the original action on underlying vectors.
-  rfl
-
-end GeneralLinearGroup
-
-variable {K : Type u} {G : Type w} {V : Type v}
-variable [Field K] [IsAlgClosed K] [Group G] [AddCommGroup V] [Module K V]
-
-/-- **Kolchin's common fixed vector theorem.** If every element of a group acts unipotently on a
-nonzero finite-dimensional vector space over an algebraically closed field, then the group fixes a
-nonzero vector. -/
-theorem exists_common_fixed_vector_of_forall_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+private theorem exists_common_fixed_vector_of_forall_isUnipotent_of_isAlgClosed
+    [IsAlgClosed K] [FiniteDimensional K V] [Nontrivial V]
     (ρ : Representation K G V)
     (hunipotent : ∀ g, LinearMap.GeneralLinearGroup.IsUnipotent (ρ.asGroupHom g)) :
     ∃ v : V, v ≠ 0 ∧ ∀ g, ρ g v = v := by
@@ -191,6 +86,66 @@ theorem exists_common_fixed_vector_of_forall_isUnipotent [FiniteDimensional K V]
   refine ⟨x, fun h ↦ hx (Subtype.ext h), fun g ↦ ?_⟩
   have hfixed := LinearMap.congr_fun (htrivial g) x
   exact congrArg Subtype.val hfixed
+
+/-- **Kolchin's common fixed vector theorem.** If every element of a group acts unipotently on a
+nonzero finite-dimensional vector space over a field, then the group fixes a nonzero vector. -/
+theorem exists_common_fixed_vector_of_forall_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+    (ρ : Representation K G V)
+    (hunipotent : ∀ g, LinearMap.GeneralLinearGroup.IsUnipotent (ρ.asGroupHom g)) :
+    ∃ v : V, v ≠ 0 ∧ ∀ g, ρ g v = v := by
+  let A := AlgebraicClosure K
+  let W := A ⊗[K] V
+  let _ : Nontrivial W := Module.nontrivial_of_finrank_pos (by
+    rw [Module.finrank_baseChange]
+    exact Module.finrank_pos)
+  let ρA : Representation A G W :=
+    { toFun := fun g ↦ (ρ g).baseChange A
+      map_one' := by simp only [map_one, LinearMap.baseChange_one]
+      map_mul' := fun g h ↦ by
+        rw [map_mul]
+        exact LinearMap.baseChange_mul (ρ g) (ρ h) }
+  have hunipotentA (g : G) :
+      LinearMap.GeneralLinearGroup.IsUnipotent (ρA.asGroupHom g) := by
+    rw [LinearMap.GeneralLinearGroup.isUnipotent_def, Representation.asGroupHom_apply]
+    change IsNilpotent ((ρ g).baseChange A - 1)
+    have hg : IsNilpotent (ρ g - 1) := by
+      simpa only [LinearMap.GeneralLinearGroup.isUnipotent_def,
+        Representation.asGroupHom_apply] using hunipotent g
+    rw [← LinearMap.baseChange_one (A := A) K V, ← LinearMap.baseChange_sub]
+    exact hg.map (Module.End.baseChangeHom K A V)
+  obtain ⟨w, hw, hfixed⟩ :=
+    exists_common_fixed_vector_of_forall_isUnipotent_of_isAlgClosed ρA hunipotentA
+  let b := Module.Free.chooseBasis K V
+  have hwrepr : (b.baseChange A).repr w ≠ 0 := fun h ↦
+    hw ((b.baseChange A).repr.map_eq_zero_iff.mp h)
+  obtain ⟨i, hi⟩ := Finsupp.ne_iff.mp hwrepr
+  rw [Finsupp.coe_zero, Pi.zero_apply] at hi
+  obtain ⟨phi, hphi⟩ := Module.Projective.exists_dual_ne_zero K hi
+  let descend : W →ₗ[K] V := TensorProduct.lift ((LinearMap.lsmul K V).comp phi)
+  have descend_repr (x : W) (j) :
+      b.repr (descend x) j = phi ((b.baseChange A).repr x j) := by
+    induction x using TensorProduct.induction_on with
+    | zero => simp
+    | tmul a x =>
+        change b.repr (phi a • x) j = _
+        simp [mul_comm]
+    | add x y hx hy => simp [hx, hy]
+  have descend_baseChange (f : Module.End K V) (x : W) :
+      descend (f.baseChange A x) = f (descend x) := by
+    induction x using TensorProduct.induction_on with
+    | zero => simp
+    | tmul a x =>
+        change phi a • f x = f (phi a • x)
+        simp
+    | add x y hx hy => simp [hx, hy]
+  refine ⟨descend w, ?_, fun g ↦ ?_⟩
+  · intro hzero
+    apply hphi
+    rw [← descend_repr w i, hzero]
+    simp
+  · rw [← descend_baseChange]
+    change descend (ρA g w) = descend w
+    rw [hfixed]
 
 /-- Under Kolchin's hypotheses, the common fixed vectors contain a one-dimensional subspace. -/
 theorem exists_fixed_submodule_finrank_eq_one_of_forall_isUnipotent

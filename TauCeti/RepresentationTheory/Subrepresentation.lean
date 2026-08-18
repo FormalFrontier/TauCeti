@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RepresentationTheory.Subrepresentation
 public import Mathlib.RingTheory.SimpleModule.Basic
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # The underlying module of a subrepresentation
@@ -42,6 +43,7 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
+* `TauCeti.GeneralLinearGroup.IsUnipotent.subrepresentation`
 -/
 
 public section
@@ -112,3 +114,27 @@ theorem isSimpleModule_asSubmodule_iff {σ : Subrepresentation ρ} :
 end AsSubmodule
 
 end Subrepresentation
+
+namespace TauCeti.GeneralLinearGroup
+
+variable {K G V : Type*} [CommRing K] [Group G] [AddCommGroup V] [Module K V]
+
+/-- Unipotence is inherited by the restriction of a group representation to an invariant
+subspace. -/
+theorem IsUnipotent.subrepresentation {ρ : Representation K G V} (S : Subrepresentation ρ)
+    (g : G) (hg : _root_.LinearMap.GeneralLinearGroup.IsUnipotent (ρ.asGroupHom g)) :
+    _root_.LinearMap.GeneralLinearGroup.IsUnipotent (S.toRepresentation.asGroupHom g) := by
+  rw [_root_.LinearMap.GeneralLinearGroup.isUnipotent_def] at hg ⊢
+  rw [Representation.asGroupHom_apply] at hg
+  let hmap : Set.MapsTo ((ρ g : Module.End K V) - (1 : Module.End K V))
+      S.toSubmodule S.toSubmodule := by
+    intro x hx
+    exact S.toSubmodule.sub_mem (S.apply_mem_toSubmodule g hx) hx
+  have hrestrict := Module.End.isNilpotent.restrict hmap hg
+  convert hrestrict using 1
+  ext x
+  -- Restricting the representation and restricting its endomorphism are definitionally the same
+  -- action on the subtype, but the two constructions have no comparison lemma in the API.
+  rfl
+
+end TauCeti.GeneralLinearGroup
