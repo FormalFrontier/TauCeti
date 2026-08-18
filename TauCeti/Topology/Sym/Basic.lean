@@ -138,31 +138,33 @@ theorem isOpenEmbedding_map {f : α → β} (hf : IsOpenEmbedding f) :
   .of_continuous_injective_isOpenMap (continuous_map hf.continuous)
     (Sym.map_injective hf.injective n) (isOpenMap_map hf.isOpenMap)
 
+omit [TopologicalSpace α] in
+/-- Concatenation of unordered tuples read on ordered ones: it is presented by `Fin.append`, as an
+equality of maps out of pairs of ordered tuples. -/
+private theorem append_comp_prodMap_ofFn :
+    (fun p : Sym α n × Sym α m => p.1.append p.2) ∘ Prod.map ofFn ofFn =
+      ofFn ∘ fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
+  funext p
+  obtain ⟨f, g⟩ := p
+  exact (ofFn_fin_append f g).symm
+
 /-- Concatenation of two symmetric-power points is continuous. -/
 @[continuity, fun_prop]
 theorem continuous_append :
     Continuous fun p : Sym α n × Sym α m => p.1.append p.2 := by
-  have hcomp : (fun p : Sym α n × Sym α m => p.1.append p.2) ∘ Prod.map ofFn ofFn =
-      ofFn ∘ fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
-    funext p
-    obtain ⟨f, g⟩ := p
-    exact (ofFn_fin_append f g).symm
-  rw [← (isOpenQuotientMap_ofFn.prodMap isOpenQuotientMap_ofFn).continuous_comp_iff, hcomp]
+  rw [← (isOpenQuotientMap_ofFn.prodMap isOpenQuotientMap_ofFn).continuous_comp_iff,
+    append_comp_prodMap_ofFn]
   exact continuous_ofFn.comp (Fin.continuous_append n m)
 
 /-- Concatenation of two symmetric-power points is an open map. -/
 theorem isOpenMap_append :
     IsOpenMap fun p : Sym α n × Sym α m => p.1.append p.2 := by
-  have hcomp : (fun p : Sym α n × Sym α m => p.1.append p.2) ∘ Prod.map ofFn ofFn =
-      ofFn ∘ fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
-    funext p
-    obtain ⟨f, g⟩ := p
-    exact (ofFn_fin_append f g).symm
   have hcoe : ⇑(Fin.appendHomeomorph (X := α) n m) =
       fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
     funext q i
     simp
-  rw [(isOpenQuotientMap_ofFn.prodMap isOpenQuotientMap_ofFn).isOpenMap_iff, hcomp, ← hcoe]
+  rw [(isOpenQuotientMap_ofFn.prodMap isOpenQuotientMap_ofFn).isOpenMap_iff,
+    append_comp_prodMap_ofFn, ← hcoe]
   exact isOpenMap_ofFn.comp (Fin.appendHomeomorph n m).isOpenMap
 
 /-! ### Separation and compactness -/

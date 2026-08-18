@@ -68,6 +68,7 @@ theorem appendSubtype_eq_append_map :
 
 /-- Concatenating the unordered tuples presented by two ordered ones is the unordered tuple
 presented by their concatenation `Fin.append`. -/
+@[simp]
 theorem appendSubtype_ofFn (f : Fin n → U) (g : Fin m → V) :
     appendSubtype U V n m (ofFn f, ofFn g) =
       ofFn (Fin.append (fun i => (f i : α)) fun j => (g j : α)) := by
@@ -199,7 +200,7 @@ theorem mem_range_ofFn_map {X : Fin n → Type*} (f : ∀ i, X i → α)
   classical
   constructor
   · rintro ⟨x, rfl⟩ i
-    let a : Fin n → α := fun j => f j (x j)
+    set a : Fin n → α := fun j => f j (x j)
     have ha : Function.Injective a := by
       intro j k hjk
       by_contra hne
@@ -221,8 +222,6 @@ theorem mem_range_ofFn_map {X : Fin n → Type*} (f : ∀ i, X i → α)
         simpa [hji] using hj.symm
       · rintro rfl
         exact ⟨_root_.Sym.mem_coe.2 (mem_ofFn.2 ⟨i, rfl⟩), Set.mem_range_self (x i)⟩
-    change Multiset.card
-      (Multiset.filter (· ∈ Set.range (f i)) (ofFn a : Multiset α)) = 1
     rw [hfilter]
     simp
   · intro hcount
