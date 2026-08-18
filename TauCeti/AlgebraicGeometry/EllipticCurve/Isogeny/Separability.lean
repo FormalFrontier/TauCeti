@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -42,8 +43,9 @@ this file names those two parts and records that they multiply to the degree.
   whole degree in the separable part.
 * `TauCeti.Isogeny.separableDegree_eq_one_of_isPurelyInseparable` and
   `TauCeti.Isogeny.inseparableDegree_eq_degree_of_isPurelyInseparable`: the purely inseparable
-  case. No declaration consumes these yet; they are the shape the roadmap's Frobenius milestone
-  ("`π_q`, purely inseparable of degree `q`") will need.
+  case, consumed by `separableDegree_frobeniusIsogeny` and
+  `inseparableDegree_frobeniusIsogeny` for the roadmap's Frobenius milestone
+  ("`π_q`, purely inseparable of degree `q`").
 * `TauCeti.Isogeny.separableDegree_eq_one_iff_isPurelyInseparable` and
   `TauCeti.Isogeny.inseparableDegree_eq_one_iff_isSeparable`:
   the biconditional forms, for a consumer holding a computed degree rather than an assumed class.

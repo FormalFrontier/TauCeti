@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -12,7 +13,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup
 
 Combining the product formula for fundamental groups
 (`TauCeti.FundamentalGroup.prodMulEquiv`, `…piMulEquiv`) with the circle computation
-`π₁(AddCircle p) ≃* Multiplicative ℤ` (`TauCeti.AddCircle.fundamentalGroupMulEquivZero`)
+`π₁(AddCircle p) ≃* Multiplicative ℤ` (`AddCircle.fundamentalGroupMulEquivZero`)
 gives the fundamental group of a torus. For a finite product of circles this is the free
 abelian group `(Multiplicative ℤ)ᵏ`; in particular the standard two-torus
 `AddCircle p × AddCircle q` has fundamental group `Multiplicative ℤ × Multiplicative ℤ`.
@@ -22,17 +23,15 @@ This realises the universal-covers roadmap Stage 4 "applications" target `π_n(T
 
 ## Main declarations
 
-* `TauCeti.AddCircle.prodFundamentalGroupMulEquiv`:
+* `AddCircle.prodFundamentalGroupMulEquiv`:
   `π₁(AddCircle p × AddCircle q, (x, y)) ≃* Multiplicative ℤ × Multiplicative ℤ`.
-* `TauCeti.AddCircle.piFundamentalGroupMulEquiv`:
+* `AddCircle.piFundamentalGroupMulEquiv`:
   `π₁(Π i, AddCircle (p i), x) ≃* Π i, Multiplicative ℤ`, the fundamental group of a torus.
-* `TauCeti.AddCircle.prodFundamentalGroupMulEquivZero`,
-  `TauCeti.AddCircle.piFundamentalGroupMulEquivZero`: the basepoint-`0` specialisations.
+* `AddCircle.prodFundamentalGroupMulEquivZero`,
+  `AddCircle.piFundamentalGroupMulEquivZero`: the basepoint-`0` specialisations.
 -/
 
 public section
-
-namespace TauCeti
 
 open Path.Homotopic
 
@@ -49,7 +48,7 @@ def prodFundamentalGroupMulEquiv {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
     (ex : ((↑) : ℝ → AddCircle p) ⁻¹' {x}) (ey : ((↑) : ℝ → AddCircle q) ⁻¹' {y}) :
     FundamentalGroup (AddCircle p × AddCircle q) (x, y) ≃*
       Multiplicative ℤ × Multiplicative ℤ :=
-  (FundamentalGroup.prodMulEquiv x y).trans
+  (TauCeti.FundamentalGroup.prodMulEquiv x y).trans
     ((fundamentalGroupMulEquiv p hp ex).prodCongr (fundamentalGroupMulEquiv q hq ey))
 
 @[simp]
@@ -63,7 +62,7 @@ theorem prodFundamentalGroupMulEquiv_apply {p q : ℝ} (hp : p ≠ 0) (hq : q �
         fundamentalGroupMulEquiv q hq ey
           (FundamentalGroup.map (ContinuousMap.snd : C(AddCircle p × AddCircle q, _)) (x, y) γ)) :=
   congrArg ((fundamentalGroupMulEquiv p hp ex).prodCongr (fundamentalGroupMulEquiv q hq ey))
-    (FundamentalGroup.prodMulEquiv_apply x y γ)
+    (TauCeti.FundamentalGroup.prodMulEquiv_apply x y γ)
 
 @[simp]
 theorem prodFundamentalGroupMulEquiv_symm_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
@@ -73,7 +72,7 @@ theorem prodFundamentalGroupMulEquiv_symm_apply {p q : ℝ} (hp : p ≠ 0) (hq :
     (prodFundamentalGroupMulEquiv hp hq ex ey).symm mn =
       prod ((fundamentalGroupMulEquiv p hp ex).symm mn.1)
         ((fundamentalGroupMulEquiv q hq ey).symm mn.2) :=
-  FundamentalGroup.prodMulEquiv_symm_apply x y
+  TauCeti.FundamentalGroup.prodMulEquiv_symm_apply x y
     (((fundamentalGroupMulEquiv p hp ex).prodCongr (fundamentalGroupMulEquiv q hq ey)).symm mn)
 
 /-- The fundamental group of a torus `Π i, AddCircle (p i)`, based at any point `x` with chosen
@@ -84,7 +83,7 @@ loop. -/
 def piFundamentalGroupMulEquiv {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0)
     {x : ∀ i, AddCircle (p i)} (e : ∀ i, ((↑) : ℝ → AddCircle (p i)) ⁻¹' {x i}) :
     FundamentalGroup (∀ i, AddCircle (p i)) x ≃* ∀ _ : ι, Multiplicative ℤ :=
-  (FundamentalGroup.piMulEquiv x).trans
+  (TauCeti.FundamentalGroup.piMulEquiv x).trans
     (MulEquiv.piCongrRight fun i => fundamentalGroupMulEquiv (p i) (hp i) (e i))
 
 @[simp]
@@ -95,14 +94,14 @@ theorem piFundamentalGroupMulEquiv_apply {ι : Type*} {p : ι → ℝ} (hp : ∀
       fundamentalGroupMulEquiv (p i) (hp i) (e i)
         (FundamentalGroup.map (ContinuousMap.eval i) x γ) :=
   congrArg (fundamentalGroupMulEquiv (p i) (hp i) (e i))
-    (FundamentalGroup.piMulEquiv_apply x γ i)
+    (TauCeti.FundamentalGroup.piMulEquiv_apply x γ i)
 
 @[simp]
 theorem piFundamentalGroupMulEquiv_symm_apply {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0)
     {x : ∀ i, AddCircle (p i)} (e : ∀ i, ((↑) : ℝ → AddCircle (p i)) ⁻¹' {x i})
     (n : ∀ _ : ι, Multiplicative ℤ) : (piFundamentalGroupMulEquiv hp e).symm n =
       pi fun i => (fundamentalGroupMulEquiv (p i) (hp i) (e i)).symm (n i) :=
-  FundamentalGroup.piMulEquiv_symm_apply x
+  TauCeti.FundamentalGroup.piMulEquiv_symm_apply x
     ((MulEquiv.piCongrRight fun i => fundamentalGroupMulEquiv (p i) (hp i) (e i)).symm n)
 
 /-- The fundamental group of the two-torus `AddCircle p × AddCircle q`, based at `(0, 0)`, is
@@ -159,5 +158,3 @@ theorem piFundamentalGroupMulEquivZero_symm_apply {ι : Type*} {p : ι → ℝ}
 end AddCircle
 
 end
-
-end TauCeti

@@ -15,16 +15,16 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Bivector
 
 A Clifford algebra is an associative algebra, so its commutator makes it a Lie algebra. Inside it
 the **quadratic elements** — the span of the half-normalized commutators
-`TauCeti.CliffordAlgebra.bivector Q a b` of two generators — are closed under the bracket,
+`CliffordAlgebra.bivector Q a b` of two generators — are closed under the bracket,
 and this file equips them with the resulting `LieSubalgebra` structure.
 
 Closure is a two-line consequence of the action-normalization identity
-`TauCeti.CliffordAlgebra.bivector_lie_ι`, which says that a Clifford bivector brackets a
+`CliffordAlgebra.bivector_lie_ι`, which says that a Clifford bivector brackets a
 generator to the infinitesimal rotation `x ↦ polar Q b x • a - polar Q a x • b`. Because bracketing
 with a fixed element is a derivation for the associative product, the bracket of two Clifford
 bivectors is obtained by rotating each of the two generators of the second one in turn, so it is
 again a sum of two Clifford bivectors
-(`TauCeti.CliffordAlgebra.lie_bivector_bivector`).
+(`CliffordAlgebra.lie_bivector_bivector`).
 
 Nothing here needs the quadratic form to be nondegenerate, the module to be finite-dimensional, or
 the base to be a field: the statements hold over any commutative ring in which `2` is invertible.
@@ -32,7 +32,7 @@ The identification of this subalgebra with `𝔰𝔬(V, Q)` — Mathlib's
 `skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)` — does need those hypotheses, and is not
 proved here; the bridging fact this file does supply is that a quadratic element brackets every
 generator back into the generators
-(`TauCeti.CliffordAlgebra.lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra`), which is what makes
+(`CliffordAlgebra.lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra`), which is what makes
 that comparison map exist at all.
 
 Following Mathlib's `Mathlib/Algebra/Lie/SkewAdjoint.lean`, the Lie ring structure on an
@@ -43,23 +43,23 @@ scope.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra`: the quadratic elements of `CliffordAlgebra Q`,
+* `CliffordAlgebra.quadraticLieSubalgebra`: the quadratic elements of `CliffordAlgebra Q`,
   as a Lie subalgebra under the commutator bracket.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.lie_bivector_bivector`: the bracket of two Clifford
+* `CliffordAlgebra.lie_bivector_bivector`: the bracket of two Clifford
   bivectors, as a sum of two Clifford bivectors.
-* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem`: the
+* `CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem`: the
   universal property of the underlying submodule, from which the containments below are read off.
-* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_le_evenOdd_zero`,
-  `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_le_even` and
-  `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_le_filtration_two`: the quadratic elements are
+* `CliffordAlgebra.quadraticLieSubalgebra_le_evenOdd_zero`,
+  `CliffordAlgebra.quadraticLieSubalgebra_le_even` and
+  `CliffordAlgebra.quadraticLieSubalgebra_le_filtration_two`: the quadratic elements are
   even and have filtration degree at most two.
-* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_eq_range` and
-  `TauCeti.CliffordAlgebra.mem_quadraticLieSubalgebra_iff`: they are exactly the image of
-  `⋀[R]^2 M` under `TauCeti.CliffordAlgebra.bivectorExterior`.
-* `TauCeti.CliffordAlgebra.lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra`: bracketing with a
+* `CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_eq_range` and
+  `CliffordAlgebra.mem_quadraticLieSubalgebra_iff`: they are exactly the image of
+  `⋀[R]^2 M` under `CliffordAlgebra.bivectorExterior`.
+* `CliffordAlgebra.lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra`: bracketing with a
   quadratic element preserves the generators.
 
 ## References
@@ -70,11 +70,8 @@ scope.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -139,7 +136,7 @@ private theorem lie_mem_span {x y : CliffordAlgebra Q}
 
 /-- **The quadratic elements of a Clifford algebra**, as a Lie subalgebra of `CliffordAlgebra Q`
 under the commutator bracket: the `R`-span of the Clifford bivectors
-`TauCeti.CliffordAlgebra.bivector Q a b`.
+`CliffordAlgebra.bivector Q a b`.
 
 Unlike a transported bracket on `⋀[R]^2 M`, this is a subobject of the Clifford algebra itself, so
 it needs no scoped instances beyond the local `LieRing.ofAssociativeRing` on an associative ring. -/
@@ -185,7 +182,7 @@ theorem quadraticLieSubalgebra_le_filtration_two :
 
 /-- **The quadratic elements are the image of the second exterior power.** This is the sense in
 which the Lie subalgebra realizes `⋀[R]^2 M` inside the Clifford algebra; the map itself is
-`TauCeti.CliffordAlgebra.bivectorExterior`. -/
+`CliffordAlgebra.bivectorExterior`. -/
 theorem quadraticLieSubalgebra_toSubmodule_eq_range :
     (quadraticLieSubalgebra Q).toSubmodule = LinearMap.range (bivectorExterior Q) :=
   le_antisymm
@@ -196,7 +193,7 @@ theorem quadraticLieSubalgebra_toSubmodule_eq_range :
 
 /-- **Membership in the quadratic elements**: an element of the Clifford algebra is quadratic
 exactly when it is in the image of `⋀[R]^2 M` under
-`TauCeti.CliffordAlgebra.bivectorExterior`. -/
+`CliffordAlgebra.bivectorExterior`. -/
 @[simp]
 theorem mem_quadraticLieSubalgebra_iff {x : CliffordAlgebra Q} :
     x ∈ quadraticLieSubalgebra Q ↔ x ∈ LinearMap.range (bivectorExterior Q) := by
@@ -221,5 +218,3 @@ theorem lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra {x : CliffordAlgebra Q
 end CommRing
 
 end CliffordAlgebra
-
-end TauCeti
