@@ -199,13 +199,13 @@ theorem cliffordEquivMatrix_apply {l : ℕ} (hV : finrank K V = 2 * l)
 
 /-- **An even-dimensional polarized Clifford algebra is a simple ring.** The Fock action identifies
 it with the endomorphism algebra of its nonzero finite-dimensional spinor module. -/
-theorem isSimpleRing (P : SpinPolarizationData Q) (h : Even (finrank K V)) :
+theorem isSimpleRing_cliffordAlgebra (P : SpinPolarizationData Q) (h : Even (finrank K V)) :
     IsSimpleRing (CliffordAlgebra Q) :=
   IsSimpleRing.of_ringEquiv (cliffordEquivEnd P h).symm.toRingEquiv inferInstance
 
 /-- **An even-dimensional polarized Clifford algebra has center the base field.** The Fock action
 identifies it with the endomorphism algebra of its spinor module. -/
-theorem isCentral (P : SpinPolarizationData Q) (h : Even (finrank K V)) :
+theorem isCentral_cliffordAlgebra (P : SpinPolarizationData Q) (h : Even (finrank K V)) :
     Algebra.IsCentral K (CliffordAlgebra Q) :=
   Algebra.IsCentral.of_algEquiv K _ _ (cliffordEquivEnd P h).symm
 
@@ -248,7 +248,8 @@ separably closed field is a simple ring**, being the endomorphism algebra of its
 theorem isSimpleRing_of_even_finrank (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
     IsSimpleRing (CliffordAlgebra Q) := by
   let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  exact SpinPolarizationData.isSimpleRing (SpinPolarizationData.ofNondegenerate Q hQ) hV
+  exact SpinPolarizationData.isSimpleRing_cliffordAlgebra
+    (SpinPolarizationData.ofNondegenerate Q hQ) hV
 
 /-- **The Clifford algebra of a nondegenerate quadratic form on an even-dimensional space over a
 separably closed field has center the base field**: it is the endomorphism algebra of the spinor
@@ -257,6 +258,7 @@ it a central simple algebra over `F`, split by construction. -/
 theorem isCentral_of_even_finrank (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
     Algebra.IsCentral F (CliffordAlgebra Q) := by
   let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  exact SpinPolarizationData.isCentral (SpinPolarizationData.ofNondegenerate Q hQ) hV
+  exact SpinPolarizationData.isCentral_cliffordAlgebra
+    (SpinPolarizationData.ofNondegenerate Q hQ) hV
 
 end CliffordAlgebra
