@@ -33,6 +33,12 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         groups = check.load_registry(root / "TauCeti/mathlib-shims.json", root)
         self.assertEqual(groups[0].declarations,
                          ("Complex.exists_bijOn_unitBall_map_eq_zero",))
+        self.assertFalse(groups[0].landing_sentinel)
+        self.assertTrue(groups[1].landing_sentinel)
+        unit = check.groups_by_source(groups)[pathlib.Path(
+            "TauCeti/RingTheory/DedekindDomain/SInteger/Unit.lean")]
+        self.assertEqual(unit.declarations, ("Set.unit_fg",))
+        self.assertFalse(unit.landing_sentinel)
         check.validate_registry_coverage(groups, root / "TauCeti")
 
     def test_double_coset_exact_entry_derives_the_whole_vendored_surface(self):
