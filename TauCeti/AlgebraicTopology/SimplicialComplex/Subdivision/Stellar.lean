@@ -13,9 +13,11 @@ public import TauCeti.AlgebraicTopology.SimplicialComplex.Simplex.Link
 # Stellar subdivision at a face
 
 *Starring* a complex `K` at one of its faces `σ`, with a fresh vertex `v`, replaces the closed
-star of `σ` by the cone with apex `v` on the boundary of that closed star. Geometrically it
-subdivides `K` without moving its polyhedron: the interior of `σ` is coned off from the new
-vertex placed inside it.
+star of `σ` by the cone with apex `v` on the boundary of that closed star. It is the combinatorial
+model of the geometric move in which a new vertex placed in the interior of `σ` cones off the
+boundary of the closed star; suitably realized, the source and the target of that move are
+PL-homeomorphic, but nothing of the kind is asserted here, since the construction below supplies
+no placement of `v` (see the paragraph on realizations).
 
 This file builds that move for `PreAbstractSimplicialComplex`, Mathlib's downward-closed
 collections of nonempty finite faces. The precomplex type is the right home: a starring changes
@@ -36,10 +38,10 @@ not a face of `K` (equivalently, by `notMem_of_singleton_notMem`, that `v` occur
 
 Stellar subdivision is the combinatorial substitute for a general subdivision that layer 11 of the
 geometric-topology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`) needs before
-combinatorial spheres and balls can be defined: those are complexes that become isomorphic to the
-standard simplex boundary, respectively the standard simplex, *after subdivision*, and the
-barycentric subdivision alone (`Subdivision.Basic`) is too rigid to serve, since it cannot be
-applied at a single face. The definition and the standard-model computations follow
+combinatorial spheres and balls can be defined: those are complexes that are PL-homeomorphic,
+*after subdivision*, to the boundary of the standard simplex, respectively to the standard
+simplex, and the barycentric subdivision alone (`Subdivision.Basic`) is too rigid to serve, since
+it cannot be applied at a single face. The definition and the standard-model computations follow
 Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 2 (starring and stellar
 moves).
 
@@ -209,6 +211,7 @@ the cone with apex `v` on that boundary, which is the geometric description of t
 
 /-- The faces of a stellar subdivision missing the new vertex form exactly the deletion of the
 starred face. -/
+@[simp]
 theorem deletion_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
     deletion (stellarSubdivision K σ v) {v} = deletion K σ := by
   refine SetLike.ext fun τ => ?_
@@ -230,6 +233,7 @@ theorem deletion_le_stellarSubdivision (hv : ({v} : Finset ι) ∉ K) :
 the starred face, namely `closedStar K σ ⊓ deletion K σ`: the faces `ρ` with `ρ ∪ σ` a face of `K`
 that do not themselves contain `σ`. This is the combinatorial form of "`v` is coned off over
 `∂σ ∗ link K σ`". -/
+@[simp]
 theorem link_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
     link (stellarSubdivision K σ v) {v} = closedStar K σ ⊓ deletion K σ := by
   have hunion : ∀ ω : Finset ι, ω ∪ {v} = insert v ω := fun ω => by
@@ -252,6 +256,7 @@ theorem link_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
 vertices as the face `τ.erase v ∪ σ` of `K` it comes from, because `σ` contributes a vertex
 outside `τ.erase v`; conversely a face of `K` containing `σ` is matched by exchanging one vertex
 of `σ` for the new vertex. -/
+@[simp]
 theorem dimension_stellarSubdivision (hv : ({v} : Finset ι) ∉ K) (hσ : σ ∈ K) :
     dimension (stellarSubdivision K σ v) = dimension K := by
   have hσne : σ.Nonempty := (K.isRelLowerSet_faces hσ).1
