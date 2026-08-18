@@ -61,8 +61,8 @@ The quiver structure is carried as an *explicit argument* rather than as an inst
 recursion changes it: the vertex type is fixed and the arrows are reversed, so the recursion is on
 the `Quiver` structure `TauCeti.Quiver.reflectAt`, not on a type synonym like
 `TauCeti.Quiver.Reflect`, whose iteration would change the type at each step and so leave the
-range of structural recursion. `TauCeti.Quiver.fintypeHomReflectAt` carries arrow-finiteness along
-with it.
+range of structural recursion. The existing `TauCeti.Quiver.instFintypeReflectHom` carries
+arrow-finiteness along with it.
 
 A consequence is that two `Quiver` structures on one vertex type occur in the same statement, and
 the one in scope as a local instance is not always the intended one. Every statement below
@@ -98,20 +98,6 @@ open _root_.TauCeti.Quiver
 
 universe u v w x
 
-namespace Quiver
-
-variable {V : Type v}
-
-/-- The arrows of a reflected quiver structure are finite in number when those of the given one
-are: they are the arrows of `TauCeti.Quiver.reflectHom`. -/
-@[instance_reducible]
-noncomputable def fintypeHomReflectAt (q : _root_.Quiver.{w} V)
-    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) (i a b : V) :
-    Fintype (@_root_.Quiver.Hom V (reflectAt q i) a b) :=
-  @instFintypeReflectHom V q hq i a b
-
-end Quiver
-
 /-! ### The composite of the reflection functors along a sink-admissible list -/
 
 /-- **The composite of the reflection functors along a sink-admissible list.** Each entry of the
@@ -133,7 +119,7 @@ noncomputable def reflectionFunctorList (k : Type u) {V : Type v} [fld : Field k
       letI := q
       letI := hq
       exact reflectionFunctor i (Quiver.isSinkAdmissible_cons.mp hl).1 ⋙
-        reflectionFunctorList k l (Quiver.reflectAt q i) (Quiver.fintypeHomReflectAt q hq i)
+        reflectionFunctorList k l (Quiver.reflectAt q i) (@instFintypeReflectHom V q hq i)
           (Quiver.isSinkAdmissible_cons.mp hl).2
 
 variable {k : Type u} {V : Type v} [fld : Field k] [fV : Fintype V]
@@ -151,7 +137,7 @@ theorem reflectionFunctorList_cons (i : V) (l : List V) (q : _root_.Quiver.{w} V
     (hl : Quiver.IsSinkAdmissible q (i :: l)) :
     reflectionFunctorList.{u, v, w, x} k (i :: l) q hq hl
       = @reflectionFunctor k V fld q fV hq i (Quiver.isSinkAdmissible_cons.mp hl).1 ⋙
-        reflectionFunctorList k l (Quiver.reflectAt q i) (Quiver.fintypeHomReflectAt q hq i)
+        reflectionFunctorList k l (Quiver.reflectAt q i) (@instFintypeReflectHom V q hq i)
           (Quiver.isSinkAdmissible_cons.mp hl).2 :=
   rfl
 
@@ -170,7 +156,7 @@ theorem isZero_reflectionFunctorList_obj :
       let : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b) := hq
       rw [reflectionFunctorList_cons]
       refine isZero_reflectionFunctorList_obj l (Quiver.reflectAt q i)
-        (Quiver.fintypeHomReflectAt q hq i) (Quiver.isSinkAdmissible_cons.mp hl).2
+        (@instFintypeReflectHom V q hq i) (Quiver.isSinkAdmissible_cons.mp hl).2
         ((reflectionFunctor i (Quiver.isSinkAdmissible_cons.mp hl).1).obj M) ?_
       rw [reflectionFunctor_obj]
       exact isZero_reflectRep M (Quiver.isSinkAdmissible_cons.mp hl).1 fun a _ ↦
@@ -178,33 +164,22 @@ theorem isZero_reflectionFunctorList_obj :
 
 /-! ### The simple reflections do not see the orientation -/
 
-/-- Reflecting the quiver structure at a vertex changes no simple reflection on dimension
-vectors: these are built from the polarized Tits form, which depends only on the underlying graph.
-This is `TauCeti.vertexPreReflection_reflect_apply` read on the iterating form
-`TauCeti.Quiver.reflectAt`. -/
-theorem vertexPreReflection_reflectAt [DecidableEq V] (q : _root_.Quiver.{w} V)
-    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) (i j : V) :
-    @vertexPreReflection V (Quiver.reflectAt q i) fV (Quiver.fintypeHomReflectAt q hq i) _ j
-      = @vertexPreReflection V q fV hq _ j := by
-  let : _root_.Quiver.{w} V := q
-  let : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b) := hq
-  refine LinearMap.ext fun d ↦ funext fun t ↦ ?_
-  exact vertexPreReflection_reflect_apply (V := V) i j d t
-
 /-- The composite of the simple reflections along a word is unchanged by reflecting the quiver
-structure at a vertex, by `TauCeti.vertexPreReflection_reflectAt` at each letter. This is what
+structure at a vertex, by `TauCeti.vertexPreReflection_reflect_apply` at each letter. This is what
 lets the Coxeter transformation of the original quiver be read off a composite of reflection
 functors, whose successive stages act on the dimension vectors of successively reflected
 quivers. -/
 theorem vertexPreReflectionList_reflectAt [DecidableEq V] (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) (i : V) (l : List V) :
-    @vertexPreReflectionList V (Quiver.reflectAt q i) fV (Quiver.fintypeHomReflectAt q hq i) _ l
+    @vertexPreReflectionList V (Quiver.reflectAt q i) fV (@instFintypeReflectHom V q hq i) _ l
       = @vertexPreReflectionList V q fV hq _ l := by
   induction l with
   | nil => rw [vertexPreReflectionList_nil, vertexPreReflectionList_nil]
   | cons j l ih =>
-    rw [vertexPreReflectionList_cons, vertexPreReflectionList_cons, ih,
-      vertexPreReflection_reflectAt]
+    rw [vertexPreReflectionList_cons, vertexPreReflectionList_cons, ih]
+    congr 1
+    refine LinearMap.ext fun d ↦ funext fun t ↦ ?_
+    exact vertexPreReflection_reflect_apply (V := V) i j d t
 
 /-! ### The action on an indecomposable representation -/
 
@@ -236,7 +211,7 @@ theorem indecomposable_and_dimVector_reflectionFunctorList_or_isZero [DecidableE
       obtain ⟨hi, hl'⟩ := Quiver.isSinkAdmissible_cons.mp hl
       have key : (reflectionFunctorList.{u, v, w, x} k (i :: l) q hq hl).obj M
           = (reflectionFunctorList k l (Quiver.reflectAt q i)
-              (Quiver.fintypeHomReflectAt q hq i) hl').obj (reflectRep M hi) := by
+              (@instFintypeReflectHom V q hq i) hl').obj (reflectRep M hi) := by
         rw [reflectionFunctorList_cons]
         exact congrArg _ (reflectionFunctor_obj i hi M)
       rw [key]
@@ -246,15 +221,15 @@ theorem indecomposable_and_dimVector_reflectionFunctorList_or_isZero [DecidableE
             = @vertexPreReflection V q fV hq _ i fun j ↦ (@dimVector k V fld q M j : ℤ) :=
           dimVector_reflectRep M hi (fun e ↦ hfd e.1) hs
         rcases indecomposable_and_dimVector_reflectionFunctorList_or_isZero l
-            (Quiver.reflectAt q i) (Quiver.fintypeHomReflectAt q hq i) hl' (reflectRep M hi)
+            (Quiver.reflectAt q i) (@instFintypeReflectHom V q hq i) hl' (reflectRep M hi)
             (indecomposable_reflectRep hi hM hs)
             (finiteDimensional_reflectRep_obj M hi hfd) with ⟨h1, h2⟩ | h
         · refine Or.inl ⟨h1, ?_⟩
           calc (fun j : V ↦ (@dimVector k V fld (Quiver.reflectList q (i :: l))
                 ((reflectionFunctorList k l (Quiver.reflectAt q i)
-                  (Quiver.fintypeHomReflectAt q hq i) hl').obj (reflectRep M hi)) j : ℤ))
+                  (@instFintypeReflectHom V q hq i) hl').obj (reflectRep M hi)) j : ℤ))
               = @vertexPreReflectionList V (Quiver.reflectAt q i) fV
-                  (Quiver.fintypeHomReflectAt q hq i) _ l
+                  (@instFintypeReflectHom V q hq i) _ l
                   (fun j : V ↦
                     (@dimVector k V fld (Quiver.reflectAt q i) (reflectRep M hi) j : ℤ)) := h2
             _ = @vertexPreReflectionList V q fV hq _ l
@@ -266,7 +241,7 @@ theorem indecomposable_and_dimVector_reflectionFunctorList_or_isZero [DecidableE
                   (vertexPreReflectionList_apply_cons V i l _).symm
         · exact Or.inr h
       · exact Or.inr (isZero_reflectionFunctorList_obj l (Quiver.reflectAt q i)
-          (Quiver.fintypeHomReflectAt q hq i) hl' (reflectRep M hi)
+          (@instFintypeReflectHom V q hq i) hl' (reflectRep M hi)
           (isZero_reflectRep M hi hsub))
 
 /-! ### The Coxeter functor -/
