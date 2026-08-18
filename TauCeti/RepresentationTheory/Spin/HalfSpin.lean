@@ -52,8 +52,9 @@ single vector to a general Clifford element is Mathlib's `CliffordAlgebra.evenOd
 
 Nothing here needs a field, a nondegeneracy hypothesis, or a finite dimension: like
 `TauCeti.spinAction` itself, everything holds over the commutative ring the polarization data
-lives over. Irreducibility of the half-spin summands, their dimensions and their highest weights
-belong to the complex theory and are not proved here.
+lives over. Their dimensions, which need a field and a finite dimension, are counted in
+`TauCeti/RepresentationTheory/Spin/Dimension.lean`; irreducibility of the half-spin summands and
+their highest weights belong to the complex theory and are not proved here.
 
 ## Main definitions
 
