@@ -28,6 +28,8 @@ the conjugation formula against a root subgroup come out.
 ## Main definitions
 
 * `TauCeti.torusCharacter`: the value at `s : κ → Rˣ` of the character `μ : κ → ℤ` of `𝔾ₘ^κ`.
+* `TauCeti.weylReflectTorusPoint`: the multiplicative reflection of split-torus points dual to a
+  reflection of their character lattice.
 * `TauCeti.basisDiagonal`: the automorphism scaling each basis vector by a prescribed unit.
 * `TauCeti.basisDiagonalHom`: the resulting homomorphism from `ι → Rˣ`.
 * `TauCeti.basisWeightTorus`: the homomorphism from `κ → Rˣ` determined by a weight function.
@@ -37,6 +39,8 @@ the conjugation formula against a root subgroup come out.
 * `TauCeti.basisDiagonal_apply_of_repr_eq_zero`: a diagonal automorphism acts by a single scalar
   on any vector whose coordinates are supported where that scalar is attained.
 * `TauCeti.basisWeightTorus_apply_of_repr_eq_zero`: the special case for a weight vector.
+* `TauCeti.torusCharacter_weylReflectTorusPoint`: evaluation at a reflected point agrees with
+  evaluation of the reflected character.
 
 ## References
 
@@ -119,6 +123,68 @@ theorem torusCharacter_zsmul (s : κ → Rˣ) (μ : κ → ℤ) (z : ℤ) :
 theorem torusCharacter_mul (s t : κ → Rˣ) (μ : κ → ℤ) :
     torusCharacter (s * t) μ = torusCharacter s μ * torusCharacter t μ := by
   simp [torusCharacter, mul_zpow, prod_mul_distrib]
+
+/-- At a point supported on the single coordinate `c`, a character is the `μ c`-th power of the
+value there: the other coordinates contribute the factor `1`. -/
+@[simp] theorem torusCharacter_mulSingle [DecidableEq κ] (c : κ) (z : Rˣ) (μ : κ → ℤ) :
+    torusCharacter (Pi.mulSingle c z) μ = z ^ μ c := by
+  rw [torusCharacter, prod_eq_single c (fun j _ hj => by rw [Pi.mulSingle_eq_of_ne hj, one_zpow])
+    fun hc => absurd (mem_univ c) hc, Pi.mulSingle_eq_same]
+
+/-! ## Reflections of split-torus points -/
+
+section Reflect
+
+variable [DecidableEq κ]
+
+/-- The multiplicative reflection `s_α` on points of the split torus `𝔾ₘ^κ`. Here `c` is the
+Cartan index of the coroot `α^∨`; the reflection divides the `c`-th coordinate of a point `s` by
+the value `α(s)` and leaves the others unchanged. -/
+def weylReflectTorusPoint (α : κ → ℤ) (c : κ) : (κ → Rˣ) →* (κ → Rˣ) where
+  toFun s := s * Pi.mulSingle c (torusCharacter s α)⁻¹
+  map_one' := by simp
+  map_mul' s t := by
+    simp only [torusCharacter_mul, mul_inv_rev, Pi.mulSingle_mul]
+    ac_rfl
+
+/-- The reflected torus point as a coordinatewise product. -/
+theorem weylReflectTorusPoint_apply (α : κ → ℤ) (c : κ) (s : κ → Rˣ) :
+    weylReflectTorusPoint α c s = s * Pi.mulSingle c (torusCharacter s α)⁻¹ :=
+  (rfl)
+
+/-- At the coroot coordinate, the reflected point is divided by the root character. -/
+@[simp]
+theorem weylReflectTorusPoint_apply_same (α : κ → ℤ) (c : κ) (s : κ → Rˣ) :
+    weylReflectTorusPoint α c s c = s c * (torusCharacter s α)⁻¹ := by
+  rw [weylReflectTorusPoint_apply]
+  simp
+
+/-- Away from the coroot coordinate, the reflected point is unchanged. -/
+@[simp]
+theorem weylReflectTorusPoint_apply_of_ne (α : κ → ℤ) {c j : κ} (hcj : j ≠ c)
+    (s : κ → Rˣ) : weylReflectTorusPoint α c s j = s j := by
+  rw [weylReflectTorusPoint_apply]
+  simp [hcj]
+
+/-- **The reflected point computes the reflected character.** The character `μ` takes at the
+reflected point the value that `μ - μ(c) α`, the reflection `s_α μ`, takes at the original one. -/
+@[simp]
+theorem torusCharacter_weylReflectTorusPoint (α : κ → ℤ) (c : κ) (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter (weylReflectTorusPoint α c s) μ = torusCharacter s (μ - μ c • α) := by
+  rw [weylReflectTorusPoint_apply, torusCharacter_mul, torusCharacter_mulSingle,
+    torusCharacter_sub, torusCharacter_zsmul, inv_zpow, div_eq_mul_inv]
+
+/-- **The reflection of points is an involution**, as soon as the root takes the value two at its
+own coroot. -/
+theorem weylReflectTorusPoint_weylReflectTorusPoint (α : κ → ℤ) {c : κ} (hαc : α c = 2)
+    (s : κ → Rˣ) : weylReflectTorusPoint α c (weylReflectTorusPoint α c s) = s := by
+  have hneg : α - α c • α = -α := by rw [hαc]; module
+  have hchar : torusCharacter (weylReflectTorusPoint α c s) α = (torusCharacter s α)⁻¹ := by
+    rw [torusCharacter_weylReflectTorusPoint, hneg, torusCharacter_neg]
+  rw [weylReflectTorusPoint_apply, hchar, inv_inv, weylReflectTorusPoint_apply, mul_assoc,
+    ← Pi.mulSingle_mul, inv_mul_cancel, Pi.mulSingle_one, mul_one]
+
+end Reflect
 
 /-- The family of characters attached to a weight function, as a homomorphism from the points of
 the split torus `𝔾ₘ^κ` to families of units indexed by the basis. -/
