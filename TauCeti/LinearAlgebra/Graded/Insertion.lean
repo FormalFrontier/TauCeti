@@ -167,12 +167,10 @@ theorem koszulSign_eq_negOnePow {α : Type uα} [Fintype α] (q : ℤ) (d : α �
     koszulSign (R := R) q d = (((q * ∑ i, d i).negOnePow : ℤ) : R) := by
   simp [koszulSign]
 
-@[simp]
 theorem koszulSign_zero_degree {α : Type uα} [Fintype α] (d : α → ℤ) :
     koszulSign (R := R) 0 d = 1 := by
   simp [koszulSign]
 
-@[simp]
 theorem koszulSign_empty (q : ℤ) (d : Fin 0 → ℤ) :
     koszulSign (R := R) q d = 1 := by
   simp [koszulSign]
