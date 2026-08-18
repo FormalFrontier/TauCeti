@@ -89,20 +89,26 @@ This is the total variation `eVariationOn γ (Set.Icc a b)`, packaged with the a
 noncomputable def curveELength (γ : ℝ → X) (a b : ℝ) : ℝ≥0∞ :=
   eVariationOn γ (Icc a b)
 
-theorem curveELength_eq_eVariationOn (γ : ℝ → X) (a b : ℝ) :
+/-- The length of a curve is Mathlib's total variation: `curveELength γ a b` is
+`eVariationOn γ (Set.Icc a b)`.
+
+This is the elimination API of `curveELength`, whose body is not `@[expose]`d: no other module
+unfolds it, so this is the equation to rewrite with to reach the `eVariationOn` API. -/
+theorem curveELength_def (γ : ℝ → X) (a b : ℝ) :
     curveELength γ a b = eVariationOn γ (Icc a b) :=
   (rfl)
 
--- The equation above is the elimination API of `curveELength`: the body is not `@[expose]`d, so
--- no other module unfolds it. The parentheses in `(rfl)` are the module system's -- a bare `rfl`,
--- whose proof term is exported, fails with "not a definitional equality", while the parenthesised
--- form elaborates inside this module, where the body is visible.
+-- The parentheses in `(rfl)` above are the module system's -- a bare `rfl`, whose proof term is
+-- exported, fails with "not a definitional equality", while the parenthesised form elaborates
+-- inside this module, where the body is visible.
 
+@[simp]
 theorem curveELength_eq_zero_of_le (γ : ℝ → X) {a b : ℝ} (hba : b ≤ a) :
     curveELength γ a b = 0 :=
   eVariationOn.subsingleton γ (subsingleton_Icc_of_ge hba)
 
-@[simp]
+-- Not `@[simp]`: `simp` already closes this goal through `curveELength_eq_zero_of_le`, and the
+-- `simpNF` linter rejects the redundant attribute.
 theorem curveELength_self (γ : ℝ → X) (a : ℝ) : curveELength γ a a = 0 :=
   curveELength_eq_zero_of_le γ le_rfl
 
@@ -128,14 +134,14 @@ theorem curveELength_mono (γ : ℝ → X) {a b c d : ℝ} (hca : c ≤ a) (hbd 
 /-- Length is additive along a subdivision of the parameter interval. -/
 theorem curveELength_add (γ : ℝ → X) {a b c : ℝ} (hab : a ≤ b) (hbc : b ≤ c) :
     curveELength γ a b + curveELength γ b c = curveELength γ a c := by
-  simpa only [curveELength_eq_eVariationOn, univ_inter] using
+  simpa only [curveELength_def, univ_inter] using
     eVariationOn.Icc_add_Icc γ (s := univ) hab hbc (mem_univ b)
 
 /-- Length is invariant under a monotone reparametrisation of the parameter interval. -/
 theorem curveELength_comp_of_monotoneOn (γ : ℝ → X) {φ : ℝ → ℝ} {a b c d : ℝ}
     (hφ : MonotoneOn φ (Icc a b)) (himg : φ '' Icc a b = Icc c d) :
     curveELength (γ ∘ φ) a b = curveELength γ c d := by
-  rw [curveELength_eq_eVariationOn, curveELength_eq_eVariationOn,
+  rw [curveELength_def, curveELength_def,
     eVariationOn.comp_eq_of_monotoneOn γ φ hφ, himg]
 
 /-- Every parameter interval can be rescaled affinely to `[0, 1]` without changing the length of
@@ -319,7 +325,7 @@ length of every piece. -/
 theorem IsGeodesicSegment.curveELength_le (h : IsGeodesicSegment γ x y) {a b : ℝ}
     (ha : a ∈ Icc (0 : ℝ) 1) (hb : b ∈ Icc (0 : ℝ) 1) :
     curveELength γ a b ≤ ENNReal.ofReal ((b - a) * dist x y) := by
-  rw [curveELength_eq_eVariationOn, eVariationOn]
+  rw [curveELength_def, eVariationOn]
   refine iSup_le ?_
   rintro ⟨n, u, hu, hus⟩
   have key : ∀ i : ℕ, edist (γ (u (i + 1))) (γ (u i))
