@@ -220,20 +220,6 @@ theorem signedOneSlot_apply {M : Type uM} {N : Type uN} [AddCommMonoid M] [Modul
       Sum.elim (fun _ ↦ g fun j ↦ x (.inr (.inl j))) (fun i ↦ x (.inr (.inr i)))) :=
   by rw [signedOneSlot, smul_apply, oneSlot_apply]
 
-/-- On inputs whose prefix has the supplied degrees `d`, signed one-slot substitution has the
-coefficient `(-1) ^ (q * ∑ i, d i)`. -/
-theorem signedOneSlot_apply_of_mem {M : Type uM} {N : Type uN}
-    [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
-    {σM : Type*} [SetLike σM M] {α : Type uα} [Fintype α] {β : Type uβ} {γ : Type uγ}
-    (A : α → ℤ → σM) (q : ℤ) (d : α → ℤ)
-    (f : MultilinearMap R (fun _ : α ⊕ (Unit ⊕ γ) ↦ M) N)
-    (g : MultilinearMap R (fun _ : β ↦ M) M) (x : α ⊕ (β ⊕ γ) → M)
-    (_hx : ∀ i, x (.inl i) ∈ A i (d i)) :
-    signedOneSlot q d f g x = (((q * ∑ i, d i).negOnePow : ℤ) : R) •
-      f (Sum.elim (fun i ↦ x (.inl i)) <|
-        Sum.elim (fun _ ↦ g fun j ↦ x (.inr (.inl j))) (fun i ↦ x (.inr (.inr i)))) := by
-  rw [signedOneSlot_apply, koszulSign_eq_negOnePow]
-
 end SignedOneSlot
 
 end Signed
