@@ -193,13 +193,6 @@ end Bilinear
 
 variable [FiniteDimensional K L]
 
-omit [FiniteDimensional K L] [LieAlgebra.IsKilling K L] in
-/-- The commutator of two canonical Lie generators of `U(L)` is the generator of their bracket. -/
-theorem ι_mul_sub_mul_ι (x y : L) :
-    ι K x * ι K y - ι K y * ι K x = ι K (⁅x, y⁆ : L) := by
-  simpa using TauCeti.UniversalEnvelopingAlgebra.mul_sub_mul_eq_map_ι_lie
-    (AlgHom.id K (UniversalEnvelopingAlgebra K L)) x y
-
 variable (K L) in
 /-- Multiplying two canonical Lie generators of `U(L)`, as a `K`-bilinear map.  This is the
 bilinear map that turns the invariance of `∑ᵢ xᵢ ⊗ yᵢ` into the centrality of the Casimir
@@ -239,13 +232,15 @@ theorem ι_mul_casimirElement (z : L) :
   set b := Module.finBasis K L with hb
   rw [← sub_eq_zero, casimirElement_eq_sum b, Finset.mul_sum, Finset.sum_mul,
     ← Finset.sum_sub_distrib]
+  have hcomm : ∀ x y : L, ι K x * ι K y - ι K y * ι K x = ι K (⁅x, y⁆ : L) := fun x y ↦ by
+    simpa using TauCeti.UniversalEnvelopingAlgebra.mul_sub_mul_eq_map_ι_lie
+      (AlgHom.id K (UniversalEnvelopingAlgebra K L)) x y
   have step : ∀ i, ι K z * (ι K (b i) * ι K (killingDualBasis b i))
       - ι K (b i) * ι K (killingDualBasis b i) * ι K z
       = genMul K L ⁅z, b i⁆ (killingDualBasis b i)
         + genMul K L (b i) ⁅z, killingDualBasis b i⁆ := by
     intro i
-    rw [genMul_apply, genMul_apply, ← ι_mul_sub_mul_ι z (b i),
-      ← ι_mul_sub_mul_ι z (killingDualBasis b i)]
+    rw [genMul_apply, genMul_apply, ← hcomm z (b i), ← hcomm z (killingDualBasis b i)]
     noncomm_ring
   rw [sum_congr rfl fun i _ ↦ step i, Finset.sum_add_distrib]
   exact sum_apply_lie_killingDualBasis_add_eq_zero (genMul K L) b z
