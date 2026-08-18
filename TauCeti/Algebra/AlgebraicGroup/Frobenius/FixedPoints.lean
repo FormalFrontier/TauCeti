@@ -83,15 +83,16 @@ variable {A : Type v} [CommRing A] [ExpChar A p]
 
 /-- A point is fixed by the `p ^ n`-power Frobenius exactly when every one of its values lies in
 the Frobenius-fixed subring of the value algebra. -/
+@[simp]
 theorem iterateFrobeniusPoints_eq_self_iff {f : WithConv (H →ₐ[ℤ] A)} :
-    iterateFrobeniusPoints p n f = f ↔ ∀ h : H, f.ofConv h ∈ frobeniusFixedSubring A p n := by
+    iterateFrobeniusPoints p n f = f ↔ ∀ h : H, f.ofConv h ^ p ^ n = f.ofConv h := by
   constructor
   · intro hf h
-    rw [mem_frobeniusFixedSubring, ← iterateFrobeniusPoints_apply_apply p n f h, hf]
+    rw [← iterateFrobeniusPoints_apply_apply p n f h, hf]
   · intro hf
     refine WithConv.ofConv_injective (AlgHom.ext fun h => ?_)
     rw [iterateFrobeniusPoints_apply_apply]
-    exact mem_frobeniusFixedSubring.mp (hf h)
+    exact hf h
 
 /-- The corestriction of a point all of whose values are Frobenius-fixed to a point valued in the
 Frobenius-fixed subring. Private: the public interface is `frobeniusFixedInclusion` together with
@@ -155,9 +156,11 @@ theorem range_frobeniusFixedInclusion :
   rw [MonoidHom.mem_range, mem_fixedSubgroup, iterateFrobeniusPoints_eq_self_iff]
   constructor
   · rintro ⟨g, rfl⟩ h
-    exact (g.ofConv h).2
+    simpa only [frobeniusFixedInclusion_apply_apply] using
+      mem_frobeniusFixedSubring.mp (g.ofConv h).2
   · intro hf
-    refine ⟨toConv (corestrictFrobeniusFixed p n f.ofConv hf), ?_⟩
+    refine ⟨toConv (corestrictFrobeniusFixed p n f.ofConv fun h =>
+      mem_frobeniusFixedSubring.mpr (hf h)), ?_⟩
     refine WithConv.ofConv_injective (AlgHom.ext fun h => ?_)
     rw [frobeniusFixedInclusion_apply_apply, ofConv_toConv, coe_corestrictFrobeniusFixed_apply]
 
@@ -221,7 +224,8 @@ theorem fixedSubgroup_iterateFrobeniusPoints_le_of_dvd {m k : ℕ} (hmk : m ∣ 
     fixedSubgroup (iterateFrobeniusPoints p m (H := H) (A := A)) ≤
       fixedSubgroup (iterateFrobeniusPoints p k) := fun _ hf =>
   (iterateFrobeniusPoints_eq_self_iff p k).mpr fun h =>
-    frobeniusFixedSubring_le_of_dvd hmk ((iterateFrobeniusPoints_eq_self_iff p m).mp hf h)
+    mem_frobeniusFixedSubring.mp (frobeniusFixedSubring_le_of_dvd hmk
+      (mem_frobeniusFixedSubring.mpr ((iterateFrobeniusPoints_eq_self_iff p m).mp hf h)))
 
 variable {B : Type w} [CommRing B] [ExpChar B p]
 
