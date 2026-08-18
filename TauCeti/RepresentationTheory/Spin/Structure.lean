@@ -24,9 +24,7 @@ A polarization of a quadratic space `(V, Q)` splits it as `W ⊕ W' ⊕ L` and m
 algebra `S = ⋀·W` a module over `CliffordAlgebra Q` — the Fock model `TauCeti.spinAction`. That
 action is always *onto* `Module.End K S` when `W` is finite free
 (`TauCeti.spinAction_surjective`): every endomorphism of `S` is a polynomial in the creation and
-annihilation operators. Its simple-module consequence is recorded beside it as
-`TauCeti.eq_bot_or_eq_top_of_spinAction_invariant` in
-`TauCeti/RepresentationTheory/Spin/Representation.lean`.
+annihilation operators.
 
 This file proves the **structure theorem**, which is a dimension count. Deforming a quadratic form
 deforms the multiplication of its Clifford algebra and leaves the size alone, so
@@ -47,9 +45,8 @@ field of characteristic different from two, this specializes to the field-level 
 the centrality of the Clifford algebra there — so it is a central simple algebra, split by
 construction.
 
-The direction of the argument is worth recording, because the reverse is tempting and unavailable:
-the spin module is built first and the structure theorem is derived *from* it. Nothing here uses
-the structure theorem to prove the spin module simple.
+The direction of the argument is worth recording: the spin module is built first and the structure
+theorem is derived *from* it.
 
 The odd-dimensional case is not proved here. There `finrank L = 1`, the count gives
 `finrank (CliffordAlgebra Q) = 2 * (2 ^ l) ^ 2`, and `TauCeti.spinAction` has a kernel: the
@@ -80,7 +77,7 @@ idempotent. Identifying that splitting is separate work.
   algebra, and the dimension count that makes the action an isomorphism.
 * C. Chevalley, *The Algebraic Theory of Spinors* (1954), Chapter II.
 * [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
-  Layer 1, "The even-dimensional case", and Layer 4, "Irreducibility".
+  Layer 1, "The even-dimensional case".
 -/
 
 public section
