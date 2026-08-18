@@ -14,10 +14,11 @@ public import Mathlib.FieldTheory.Relrank
 /-!
 # The relative Frobenius isogeny
 
-Over a field `F` of exponential characteristic `p`, raising to the `p`-th power is a ring
+Over a field `F` of positive exponential characteristic `p`, raising to the `p`-th power is a ring
 endomorphism of `F` but not an `F`-algebra map, so it does not turn a Weierstrass curve into an
-endomorphism of itself unless `F` is a prime field. What it does give is a map to the **Frobenius
-twist** `W⁽ᵖ⁾`, the curve whose `a`-invariants are the `p`-th powers of those of `W`: Mathlib's
+endomorphism of itself unless `F` is a prime field. In characteristic zero, `p = 1` and this map is
+the identity. In either case it gives a map to the **Frobenius twist** `W⁽ᵖ⁾`, the curve whose
+`a`-invariants are the `p`-th powers of those of `W`: Mathlib's
 `W.map (frobenius F p)`, with `WeierstrassCurve.map_a₁` and its siblings for the coefficient
 description and `WeierstrassCurve.map_map` for iteration. The **relative Frobenius**
 `F_{W/F} : W → W⁽ᵖ⁾` is then an honest `F`-morphism, the one that reads `(x, y) ↦ (xᵖ, yᵖ)` on
@@ -125,8 +126,7 @@ private theorem eval₂_relativeFrobenius_eq_zero :
       (frobenius W.CoordinateRing p).comp (AdjoinRoot.of W.polynomial) := by
     refine Polynomial.ringHom_ext (fun a ↦ ?_) ?_ <;> simp [frobenius_def, ← map_pow]
   rw [WeierstrassCurve.Affine.map_polynomial, Polynomial.eval₂_map, hcomp,
-    show (AdjoinRoot.root W.polynomial ^ p)
-      = frobenius W.CoordinateRing p (AdjoinRoot.root W.polynomial) from rfl,
+    ← frobenius_def,
     ← Polynomial.hom_eval₂, AdjoinRoot.eval₂_root, map_zero]
 
 /-- **The relative Frobenius on coordinate rings**: the `F`-algebra map out of the coordinate ring
