@@ -77,6 +77,7 @@ instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
 Naturality in the coefficient sheaf follows from `CategoryTheory.Sheaf.H.equiv₀_naturality`
 and `CategoryTheory.Sheaf.H.equiv₀_symm_naturality`, applied to `isTerminalTop` and the
 underlying sheaf morphism. -/
+@[expose]
 def cohomologyZeroEquiv (M : X.Modules) :
     Cohomology M 0 ≃+ Γ(M, ⊤) :=
   CategoryTheory.Sheaf.H.equiv₀
