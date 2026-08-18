@@ -33,6 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # This job elaborates every TauCeti module, and Lean runs code at elaboration time.
+          # Without this, checkout leaves an http.extraheader carrying GITHUB_TOKEN in the
+          # workspace .git/config for the whole job, within reach of that code. Nothing here
+          # needs it: no step calls the GitHub API or pushes, `lake exe cache get` talks to
+          # Mathlib's own server, scripts/lake-cache-get.sh does anonymous GETs, and
+          # `lake cache get` reads the local revision from .git without authenticating.
+          persist-credentials: false
           # Enough history for `lake cache get` to backtrack to a recently-published
           # ancestor commit (its `--max-revs`) when the tip itself has no mapping yet.
           # Harmless (just a slightly deeper fetch) when the cache is off.
