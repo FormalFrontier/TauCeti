@@ -10,6 +10,7 @@ public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 public import Mathlib.RingTheory.Bialgebra.Convolution
 public import Mathlib.RepresentationTheory.Basic
+public import TauCeti.LinearAlgebra.End.ScalarExtension
 
 /-!
 # The points action of a comodule
@@ -93,12 +94,8 @@ lemma rTensor_comp_endOfPoint (φ : A →ₐ[R] A') (g : H →ₐ[R] A) :
         LinearMap.rTensor V φ.toLinearMap := by
   have hsmul : ∀ (a : A) (z : A ⊗[R] V),
       LinearMap.rTensor V φ.toLinearMap (a • z) =
-        φ a • LinearMap.rTensor V φ.toLinearMap z := by
-    intro a z
-    induction z using TensorProduct.induction_on with
-    | zero => simp
-    | tmul x v => simp [TensorProduct.smul_tmul', smul_eq_mul, map_mul]
-    | add x y hx hy => simp [smul_add, hx, hy]
+        φ a • LinearMap.rTensor V φ.toLinearMap z :=
+    fun a z ↦ TauCeti.rTensor_algHom_smul φ a z
   have hcol : LinearMap.rTensor V φ.toLinearMap ∘ₗ
       (TensorProduct.comm R V A).toLinearMap ∘ₗ LinearMap.lTensor V g.toLinearMap =
       (TensorProduct.comm R V A').toLinearMap ∘ₗ

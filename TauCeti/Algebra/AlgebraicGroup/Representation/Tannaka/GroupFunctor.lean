@@ -57,9 +57,11 @@ section Functor
 variable (R : Type u) [CommRing R]
 variable (H : Type v) [Semiring H] [Bialgebra R H]
 
--- `@[expose]` is required, not incidental: without the body, the coercion
--- `↑((tensorAutFunctor R H).obj A)` does not reduce to `Aut (...)`, so
--- `tensorAutFunctor_map_apply` below cannot even be stated, let alone proved.
+-- `@[expose]` is required, not incidental, and matches `HopfAlgebra.pointsFunctor` and
+-- `GeneralLinear.scalarExtensionAutomorphismsFunctor`: without the body, the coercion
+-- `↑((tensorAutFunctor R H).obj A)` does not reduce to `Aut (...)`, so neither
+-- `tensorAutFunctor_map_apply` nor the component lemmas for the natural isomorphism below
+-- can be stated, let alone proved.
 /-- The tensor-automorphism group functor of a bialgebra: a commutative `R`-algebra `A` is
 sent to the group of tensor automorphisms of scalar extension to `A` on the finite
 `H`-comodules, and a morphism of value algebras acts by base change of components. -/

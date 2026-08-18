@@ -20,7 +20,7 @@ the monoidal structure on finite comodules.
 
 The base-changed family is natural in the comodule, is the identity at the tensor unit, and is
 compatible with the tensor comparison, because base change of endomorphisms
-(`TauCeti.Module.End.mapValue`) preserves each of those. Feeding it to
+(`Module.End.mapValue`) preserves each of those. Feeding it to
 `TauCeti.Tannaka.monoidalAutOfComponents` produces the base-changed tensor automorphism.
 
 Compatibility with the point action is `tensorAutMapValue_fgPointTensorIso`: pushing a point

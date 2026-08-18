@@ -64,7 +64,7 @@ theorem rTensor_algHom_smul (f : A →ₐ[R] B) (a : A) (z : A ⊗[R] M) :
   | tmul x m => simp [TensorProduct.smul_tmul', smul_eq_mul, map_mul]
   | add x y hx hy => simp [smul_add, hx, hy]
 
-/-- The comparison maps of scalar extensions intertwine the tensor comparisons
+/-- On pure tensors, the comparison maps of scalar extensions intertwine the tensor comparisons
 `(A ⊗ M) ⊗[A] (A ⊗ N) ≃ A ⊗ (M ⊗ N)` for the two value algebras. -/
 theorem distribBaseChange_symm_rTensor_tmul (f : A →ₐ[R] B) (u : A ⊗[R] M) (v : A ⊗[R] N) :
     (TensorProduct.AlgebraTensorModule.distribBaseChange R B M N).symm
@@ -235,12 +235,8 @@ theorem baseChange_comp_mapValue (f : A →ₐ[R] B) (u : M →ₗ[R] N)
   have hm := LinearMap.congr_fun h (1 ⊗ₜ[R] m)
   have hcomm : ∀ z : A ⊗[R] M,
       u.baseChange B (LinearMap.rTensor M f.toLinearMap z) =
-        LinearMap.rTensor N f.toLinearMap (u.baseChange A z) := by
-    intro z
-    induction z using TensorProduct.induction_on with
-    | zero => simp
-    | tmul a m => simp
-    | add z₁ z₂ h₁ h₂ => simp only [map_add, h₁, h₂]
+        LinearMap.rTensor N f.toLinearMap (u.baseChange A z) :=
+    fun z ↦ (LinearMap.rTensor_baseChange f z u).symm
   simp only [LinearMap.liftBaseChangeEquiv_symm_apply, LinearMap.coe_comp, Function.comp_apply,
     mapValue_tmul, one_smul, LinearMap.baseChange_tmul] at hm ⊢
   rw [hcomm, hm]
