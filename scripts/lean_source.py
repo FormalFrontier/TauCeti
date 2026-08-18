@@ -131,6 +131,8 @@ def _skip_horizontal(text: str, position: int) -> int:
 
 
 def skip_balanced(text: str, position: int) -> int:
+    """Return the position after the balanced delimiter group starting at ``position``."""
+
     if position >= len(text) or text[position] not in PAIRS:
         return position
     stack = [PAIRS[text[position]]]
@@ -166,6 +168,8 @@ def _command_prefix(text: str, line_start: int) -> tuple[int, str] | None:
 
 
 def top_level_colon(group: str) -> int | None:
+    """Find the first colon outside nested delimiter groups, excluding ``:=``."""
+
     depth = 0
     for i, char in enumerate(group):
         if char in OPENERS:
