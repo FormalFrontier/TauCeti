@@ -24,8 +24,6 @@ exactly the same length, so neither infimum can be smaller than the other.
 
 ## Main results
 
-* `TauCeti.Manifold.pathELength_comp_lineMap`: the affine parametrization of `[a, b]` by `[0, 1]`
-  preserves `Manifold.pathELength`.
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.exists_contMDiff_pathELength_eq`: **corner smoothing**,
   every piecewise `C¹` path has a globally `C¹` path on `[0, 1]` with the same endpoints and the
   same length.
@@ -64,21 +62,6 @@ variable
   [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
   {γ : ℝ → M} {a b : ℝ}
 
-/-- Reading a path on `[a, b]` through the affine parametrization of `[a, b]` by `[0, 1]` does
-not change its length. -/
-theorem pathELength_comp_lineMap (hab : a ≤ b)
-    (hγ : MDifferentiableOn 𝓘(ℝ, ℝ) I γ (Icc a b)) :
-    Manifold.pathELength I (γ ∘ (ContinuousAffineMap.lineMap (R := ℝ) a b)) 0 1 =
-      Manifold.pathELength I γ a b := by
-  have key := Manifold.pathELength_comp_of_monotoneOn (I := I) (γ := γ)
-    (f := ContinuousAffineMap.lineMap (R := ℝ) a b) (a := 0) (b := 1) zero_le_one
-    (by
-      rw [ContinuousAffineMap.coe_lineMap_eq]
-      exact (AffineMap.lineMap_mono hab).monotoneOn _)
-    (ContinuousAffineMap.lineMap (R := ℝ) a b).differentiableOn
-    (by simpa [ContinuousAffineMap.coe_lineMap_eq] using hγ)
-  simpa [ContinuousAffineMap.coe_lineMap_eq] using key
-
 /-- A `C¹` path on a compact interval admits a globally `C¹` path on `[0, 1]` with the same
 endpoints and the same length. This is the single-piece case of corner smoothing; the
 reparametrization is affine, so it changes neither the endpoints nor the length. -/
@@ -101,7 +84,16 @@ theorem exists_contMDiff_pathELength_eq_of_le (hab : a ≤ b)
   · simpa [hf, ContinuousAffineMap.coe_lineMap_eq] using hη₀
   · simpa [hf, ContinuousAffineMap.coe_lineMap_eq] using hη₁
   · rw [hlen, hf]
-    exact pathELength_comp_lineMap hab (hγ.mdifferentiableOn one_ne_zero)
+    have key := Manifold.pathELength_comp_of_monotoneOn (I := I) (γ := γ)
+      (f := ContinuousAffineMap.lineMap (R := ℝ) a b) (a := 0) (b := 1) zero_le_one
+      (by
+        rw [ContinuousAffineMap.coe_lineMap_eq]
+        exact (AffineMap.lineMap_mono hab).monotoneOn _)
+      (ContinuousAffineMap.lineMap (R := ℝ) a b).differentiableOn
+      (by
+        simpa [ContinuousAffineMap.coe_lineMap_eq] using
+          hγ.mdifferentiableOn one_ne_zero)
+    simpa [ContinuousAffineMap.coe_lineMap_eq] using key
 
 /-- **Corner smoothing along an explicit partition.** A path which is `C¹` on every piece of a
 finite ordered partition is replaced by a globally `C¹` path on `[0, 1]` with the same endpoints
