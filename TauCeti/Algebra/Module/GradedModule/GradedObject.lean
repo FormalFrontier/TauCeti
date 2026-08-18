@@ -135,9 +135,10 @@ corresponding copy in the external direct sum. -/
 @[simp]
 theorem ofGradedObjectToGradedObjectIso_hom_app (p : ℤ) :
     (ofGradedObjectToGradedObjectIso R X).hom p =
-      eqToHom (by
-        change ModuleCat.of R ((ofGradedObject R X).piece p) = _
-        rw [ofGradedObject_piece]) ≫
+      eqToHom (show (ofGradedObject R X).toGradedObject p =
+        ModuleCat.of R (gradedObjectPiece R X p) from
+          congrArg (fun N : Submodule R (⨁ q : ℤ, X q) ↦ ModuleCat.of R N)
+            (ofGradedObject_piece R X p)) ≫
         (gradedObjectPieceEquiv R X p).symm.toModuleIso.hom := by
   rfl
 
@@ -147,10 +148,10 @@ copy in the external direct sum. -/
 theorem ofGradedObjectToGradedObjectIso_inv_app (p : ℤ) :
     (ofGradedObjectToGradedObjectIso R X).inv p =
       (gradedObjectPieceEquiv R X p).symm.toModuleIso.inv ≫
-        eqToHom (by
-          change ModuleCat.of R (gradedObjectPiece R X p) =
-            ModuleCat.of R ((ofGradedObject R X).piece p)
-          rw [ofGradedObject_piece]) := by
+        eqToHom (show ModuleCat.of R (gradedObjectPiece R X p) =
+          (ofGradedObject R X).toGradedObject p from
+            (congrArg (fun N : Submodule R (⨁ q : ℤ, X q) ↦ ModuleCat.of R N)
+              (ofGradedObject_piece R X p)).symm) := by
   rfl
 
 end OfGradedObject
