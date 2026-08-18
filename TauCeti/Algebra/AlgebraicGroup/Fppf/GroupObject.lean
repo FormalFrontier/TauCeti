@@ -114,14 +114,6 @@ noncomputable def pointsPresheafGrp (H : _root_.CommHopfAlgCat.{u} R) :
   groupFunctorGrp
     (HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u})
 
-/-- Unfold the points-presheaf group object to the group object associated to its group-valued
-functor. -/
-theorem pointsPresheafGrp_eq (H : _root_.CommHopfAlgCat.{u} R) :
-    pointsPresheafGrp H =
-      groupFunctorGrp
-        (HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u}) := by
-  rw [pointsPresheafGrp.eq_1]
-
 /-- The fppf sheaf of points, regarded as a group object in type-valued sheaves.
 
 This form is canonically the sheafification of the group-valued points presheaf. Since that
@@ -133,15 +125,6 @@ noncomputable def pointsFppfGroupObject (H : _root_.CommHopfAlgCat.{u} R) :
     Functor.Monoidal.ofChosenFiniteProducts _
   exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.obj
     (pointsPresheafGrp H)
-
-/-- Unfold the fppf points group object to the image of its presheaf group object under
-sheafification. -/
-theorem pointsFppfGroupObject_eq (H : _root_.CommHopfAlgCat.{u} R) :
-    pointsFppfGroupObject H =
-      let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
-      let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts F
-      F.mapGrp.obj (pointsPresheafGrp H) := by
-  rw [pointsFppfGroupObject.eq_1]
 
 /-- The underlying sheaf of `pointsFppfGroupObject` is canonically the universe lift of the
 existing group-valued points sheaf `HopfAlgebra.pointsFppfSheaf`. -/

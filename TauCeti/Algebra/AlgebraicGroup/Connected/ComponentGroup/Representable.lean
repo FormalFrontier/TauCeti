@@ -399,7 +399,7 @@ noncomputable def componentPointwiseQuotientPresheafGrpIso
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
       (isNormal_identityComponentHopfIdeal H)) ≪≫
     CommHopfAlgCat.groupFunctorGrpIso e' ≪≫
-      eqToIso (CommHopfAlgCat.pointsPresheafGrp_eq
+      eqToIso (CommHopfAlgCat.pointsPresheafGrp.eq_1
         (CommHopfAlgCat.of k
           (ConstantGroup.coordinateRing k
             (ConnectedComponents (PrimeSpectrum H))))).symm
@@ -433,7 +433,7 @@ noncomputable def componentGroupFppfGroupObjectIso
     (presheafToSheaf
       (CommAlgCat.fppfTopology k) (Type (u + 1))).mapGrp.mapIso
         (componentPointwiseQuotientPresheafGrpIso H) ≪≫
-      eqToIso (CommHopfAlgCat.pointsFppfGroupObject_eq
+      eqToIso (CommHopfAlgCat.pointsFppfGroupObject.eq_1
         (CommHopfAlgCat.of k
           (ConstantGroup.coordinateRing k
             (ConnectedComponents (PrimeSpectrum H))))).symm
