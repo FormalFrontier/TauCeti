@@ -22,8 +22,6 @@ Hodge component `H^{p,n-p}`.
 
 ## Main declarations
 
-* `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
-  complexification models.
 * `TauCeti.Hodge.HodgeStructure.Hom`: morphisms of integral pure Hodge structures of a fixed weight.
 * `TauCeti.Hodge.HodgeStructure.Hom.id` and `Hom.comp`: identity and composition.
 * `TauCeti.Hodge.HodgeStructure.Hom.map_conjF_le`: morphisms preserve the conjugate filtration.
@@ -48,80 +46,6 @@ variable [AddCommGroup W₁] [Module ℂ W₁]
 variable [AddCommGroup W₂] [Module ℂ W₂]
 variable [AddCommGroup W₃] [Module ℂ W₃]
 variable {ι₁ : V₁ →ₗ[ℤ] W₁} {ι₂ : V₂ →ₗ[ℤ] W₂} {ι₃ : V₃ →ₗ[ℤ] W₃}
-
-/-- The complexification of an integral linear map between abstract complexification models.
-Its value on a lattice vector is computed by `IsBaseChange.lift_eq`. -/
-noncomputable def integralMapToComplex (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
-    (f : V₁ →ₗ[ℤ] V₂) : W₁ →ₗ[ℂ] W₂ :=
-  h₁.lift (ι₂ ∘ₗ f)
-
-/-- Complexification sends the identity integral map to the identity complex map. -/
-@[simp]
-theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
-    integralMapToComplex h₁ ι₁ (LinearMap.id : V₁ →ₗ[ℤ] V₁) = LinearMap.id :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification sends the zero integral map to the zero complex map. -/
-@[simp]
-theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) :
-    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification preserves addition of integral linear maps. -/
-@[simp]
-theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
-    (f g : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (f + g) =
-      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification preserves negation of integral linear maps. -/
-@[simp]
-theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
-    (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification preserves subtraction of integral linear maps. -/
-@[simp]
-theorem integralMapToComplex_sub (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
-    (f g : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (f - g) =
-      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification preserves natural-number multiples of integral linear maps. -/
-@[simp]
-theorem integralMapToComplex_nsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℕ)
-    (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification preserves integer multiples of integral linear maps. -/
-@[simp]
-theorem integralMapToComplex_zsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℤ)
-    (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
-
-/-- Complexification preserves composition of integral linear maps. -/
-theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁) (h₂ : IsBaseChange ℂ ι₂)
-    (ι₃ : V₃ →ₗ[ℤ] W₃) (f : V₁ →ₗ[ℤ] V₂) (g : V₂ →ₗ[ℤ] V₃) :
-    integralMapToComplex h₁ ι₃ (g ∘ₗ f) =
-      integralMapToComplex h₂ ι₃ g ∘ₗ integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq, h₂.lift_eq]
-
-/-- The complexification of an integral map commutes with lattice-induced conjugation. -/
-@[simp]
-theorem integralMapToComplex_commutes_conj (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) (x : W₁) :
-    integralMapToComplex h₁ ι₂ f (latticeConj h₁ x) =
-      latticeConj h₂ (integralMapToComplex h₁ ι₂ f x) := by
-  induction x using h₁.inductionOn with
-  | zero => simp
-  | tmul x => simp [integralMapToComplex, h₁.lift_eq]
-  | smul z x hx => simp [hx]
-  | add x y hx hy => simp [hx, hy]
 
 namespace HodgeStructure
 
@@ -156,7 +80,7 @@ noncomputable instance : CoeFun (Hom source target) fun _ ↦ W₁ → W₂ :=
 /-- A Hodge morphism acts on integral vectors by its underlying integral map. -/
 @[simp]
 theorem apply_ι (f : Hom source target) (x : V₁) : f (ι₁ x) = ι₂ (f.toIntLinearMap x) :=
-  h₁.lift_eq (ι₂ ∘ₗ f.toIntLinearMap) x
+  integralMapToComplex_apply_ι h₁ ι₂ f.toIntLinearMap x
 
 /-- Two Hodge morphisms are equal when their integral maps agree on every vector. -/
 @[ext]
@@ -245,11 +169,8 @@ theorem comp_toIntLinearMap (g : Hom target third) (f : Hom source target) :
 @[simp]
 theorem comp_apply (g : Hom target third) (f : Hom source target) (x : W₁) :
     g.comp f x = g (f x) := by
-  change integralMapToComplex h₁ ι₃ (g.comp f).toIntLinearMap x =
-    integralMapToComplex h₂ ι₃ g.toIntLinearMap
-      (integralMapToComplex h₁ ι₂ f.toIntLinearMap x)
-  rw [comp_toIntLinearMap,
-    integralMapToComplex_comp h₁ h₂ ι₃ f.toIntLinearMap g.toIntLinearMap]
+  simp only [toLinearMap, comp_toIntLinearMap]
+  rw [integralMapToComplex_comp h₁ h₂ ι₃]
   rfl
 
 /-- Left identity law for Hodge morphisms. -/
@@ -369,48 +290,40 @@ theorem zsmul_toIntLinearMap (k : ℤ) (f : Hom source target) :
 /-- The zero Hodge morphism acts as zero on complex vectors. -/
 @[simp]
 theorem zero_apply (x : W₁) : (0 : Hom source target) x = 0 := by
-  change integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) x = 0
-  rw [integralMapToComplex_zero]
-  rfl
+  simp only [toLinearMap, zero_toIntLinearMap,
+    integralMapToComplex_zero, LinearMap.zero_apply]
 
 /-- Addition of Hodge morphisms is pointwise addition on complex vectors. -/
 @[simp]
 theorem add_apply (f g : Hom source target) (x : W₁) : (f + g) x = f x + g x := by
-  change integralMapToComplex h₁ ι₂ (f.toIntLinearMap + g.toIntLinearMap) x =
-    integralMapToComplex h₁ ι₂ f.toIntLinearMap x +
-      integralMapToComplex h₁ ι₂ g.toIntLinearMap x
-  rw [integralMapToComplex_add, LinearMap.add_apply]
+  simp only [toLinearMap, add_toIntLinearMap,
+    integralMapToComplex_add, LinearMap.add_apply]
 
 /-- Negation of Hodge morphisms is pointwise negation on complex vectors. -/
 @[simp]
 theorem neg_apply (f : Hom source target) (x : W₁) : (-f) x = -f x := by
-  change integralMapToComplex h₁ ι₂ (-f.toIntLinearMap) x =
-    -integralMapToComplex h₁ ι₂ f.toIntLinearMap x
-  rw [integralMapToComplex_neg, LinearMap.neg_apply]
+  simp only [toLinearMap, neg_toIntLinearMap,
+    integralMapToComplex_neg, LinearMap.neg_apply]
 
 /-- Subtraction of Hodge morphisms is pointwise subtraction on complex vectors. -/
 @[simp]
 theorem sub_apply (f g : Hom source target) (x : W₁) : (f - g) x = f x - g x := by
-  change integralMapToComplex h₁ ι₂ (f.toIntLinearMap - g.toIntLinearMap) x =
-    integralMapToComplex h₁ ι₂ f.toIntLinearMap x -
-      integralMapToComplex h₁ ι₂ g.toIntLinearMap x
-  rw [integralMapToComplex_sub, LinearMap.sub_apply]
+  simp only [toLinearMap, sub_toIntLinearMap,
+    integralMapToComplex_sub, LinearMap.sub_apply]
 
 /-- Natural-number multiples of Hodge morphisms are evaluated pointwise on complex vectors. -/
 @[simp]
 theorem nsmul_apply (k : ℕ) (f : Hom source target) (x : W₁) :
     (k • f) x = k • f x := by
-  change integralMapToComplex h₁ ι₂ (k • f.toIntLinearMap) x =
-    k • integralMapToComplex h₁ ι₂ f.toIntLinearMap x
-  rw [integralMapToComplex_nsmul, LinearMap.smul_apply]
+  simp only [toLinearMap, nsmul_toIntLinearMap,
+    integralMapToComplex_nsmul, LinearMap.smul_apply]
 
 /-- Integer multiples of Hodge morphisms are evaluated pointwise on complex vectors. -/
 @[simp]
 theorem zsmul_apply (k : ℤ) (f : Hom source target) (x : W₁) :
     (k • f) x = k • f x := by
-  change integralMapToComplex h₁ ι₂ (k • f.toIntLinearMap) x =
-    k • integralMapToComplex h₁ ι₂ f.toIntLinearMap x
-  rw [integralMapToComplex_zsmul, LinearMap.smul_apply]
+  simp only [toLinearMap, zsmul_toIntLinearMap,
+    integralMapToComplex_zsmul, LinearMap.smul_apply]
 
 /-- Composition is additive in the morphism applied second. -/
 @[simp]
