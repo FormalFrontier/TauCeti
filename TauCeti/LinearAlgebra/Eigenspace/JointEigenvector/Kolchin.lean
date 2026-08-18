@@ -118,8 +118,11 @@ theorem _root_.Representation.exists_common_fixed_vector_of_isUnipotent
   let ρA := _root_.Representation.baseChange A ρ
   have hunipotentA (g : G) : IsNilpotent (ρA g - 1) := by
     simp only [ρA, _root_.Representation.baseChange_apply]
-    rw [← LinearMap.baseChange_one (A := A) K V, ← LinearMap.baseChange_sub]
-    exact (hunipotent g).map (Module.End.baseChangeHom K A V)
+    have hbase (f : Module.End K V) :
+        (Module.End.baseChangeHom K A V) f = f.baseChange A := rfl
+    have h := (hunipotent g).map (Module.End.baseChangeHom K A V)
+    rw [map_sub, map_one, hbase] at h
+    exact h
   obtain ⟨w, hw, hfixed⟩ :=
     _root_.Representation.exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed
       ρA hunipotentA

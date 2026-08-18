@@ -40,19 +40,19 @@ variable {R : Type u} {A : Type v} [CommSemiring R] [CommSemiring A] [Algebra R 
 variable [AddCommMonoid V] [Module R V]
 
 /-- Extend the scalars of a representation by base-changing each linear endomorphism. -/
-@[expose] def _root_.Representation.baseChange (A : Type v) [CommSemiring A] [Algebra R A]
-    (ρ : _root_.Representation R G V) : _root_.Representation A G (A ⊗[R] V) where
-  toFun g := (ρ g).baseChange A
-  map_one' := by simp only [map_one, LinearMap.baseChange_one]
-  map_mul' g h := by
-    rw [map_mul]
-    exact LinearMap.baseChange_mul (ρ g) (ρ h)
+def _root_.Representation.baseChange (A : Type v) [CommSemiring A] [Algebra R A]
+    (ρ : _root_.Representation R G V) : _root_.Representation A G (A ⊗[R] V) :=
+  ((Module.End.baseChangeHom R A V :
+      Module.End R V →ₐ[R] Module.End A (A ⊗[R] V)) :
+    Module.End R V →* Module.End A (A ⊗[R] V)).comp ρ
 
 /-- The action of a base-changed representation is the base change of the original action. -/
 @[simp]
 theorem _root_.Representation.baseChange_apply (ρ : _root_.Representation R G V) (g : G) :
     _root_.Representation.baseChange A ρ g = (ρ g).baseChange A :=
-  rfl
+  by
+    rw [_root_.Representation.baseChange, MonoidHom.comp_apply]
+    rfl
 
 end BaseChange
 

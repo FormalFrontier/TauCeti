@@ -54,11 +54,11 @@ universe u v w
 noncomputable section
 
 variable {K : Type u} {V : Type v} {ι : Type w}
-variable [Field K] [AddCommGroup V] [Module K V]
 
 /-- A nonzero vector fixed by a family of endomorphisms spans a one-dimensional submodule fixed
 pointwise by that family. -/
 theorem exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector
+    [DivisionRing K] [AddCommGroup V] [Module K V]
     (f : ι → Module.End K V) (h : ∃ v : V, v ≠ 0 ∧ ∀ i, f i v = v) :
     ∃ p : Submodule K V, Module.finrank K p = 1 ∧ ∀ i, ∀ x ∈ p, f i x = x := by
   obtain ⟨v, hv, hfixed⟩ := h
@@ -66,6 +66,8 @@ theorem exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector
   rw [Submodule.mem_span_singleton] at hx
   obtain ⟨a, rfl⟩ := hx
   simp [hfixed]
+
+variable [Field K] [AddCommGroup V] [Module K V]
 
 /-- A pairwise-commuting family of triangularizable endomorphisms of a nonzero finite-dimensional
 vector space has a joint eigenvector. -/

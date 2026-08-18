@@ -41,7 +41,6 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
-* `Subrepresentation.coe_toRepresentation_apply`
 * `Subrepresentation.toRepresentation_apply`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
@@ -79,12 +78,6 @@ is. -/
 lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
     ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
   simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
-
-/-- The action on a subrepresentation, coerced to the ambient module, is the original action. -/
-@[simp]
-theorem coe_toRepresentation_apply (S : Subrepresentation ρ) (g : G) (x : S.toSubmodule) :
-    ((S.toRepresentation g x : S.toSubmodule) : W) = ρ g (x : W) :=
-  rfl
 
 /-- The action on a subrepresentation is the restriction of the original action. -/
 theorem toRepresentation_apply (S : Subrepresentation ρ) (g : G) :
