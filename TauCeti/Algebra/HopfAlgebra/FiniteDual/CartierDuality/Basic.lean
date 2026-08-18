@@ -266,8 +266,10 @@ theorem dualMap_evalIso_hom (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)
     (evalIso (dual H)).symm).mp (dualMap_evalIso_inv H)
 
 /-- Double-dual evaluation at the finite dual of `H` undoes the dualized double-dual evaluation
-of `H`. -/
-theorem dualMap_evalIso_inv_comp (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+of `H`. This is `isInvolutiveDual_dualFunctor` written with `dualMap` and `evalIso` in place of
+`dualFunctor` and `evalNatIso`; it is private because the public content is
+`dualMap_evalIso_inv`. -/
+private theorem dualMap_evalIso_inv_comp (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
     dualMap (evalIso H).inv ≫ (evalIso (dual H)).inv = 𝟙 (dual H) := by
   rw [dualMap_evalIso_inv, Iso.hom_inv_id]
 
