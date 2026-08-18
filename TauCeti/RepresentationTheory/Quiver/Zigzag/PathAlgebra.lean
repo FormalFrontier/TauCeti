@@ -67,7 +67,6 @@ variable {V : Type u} (G : SimpleGraph V)
 /-! ### Short paths in a doubled quiver -/
 
 /-- The length-one path of the doubled quiver along an adjacency. -/
-@[expose]
 def arrowPath {i j : V} (h : G.Adj i j) : _root_.Quiver.Path (vertex G i) (vertex G j) :=
   (arrow G h).toPath
 
@@ -80,7 +79,6 @@ theorem length_arrowPath {i j : V} (h : G.Adj i j) : (arrowPath G h).length = 1 
 
 /-- The backtrack at `i` along an edge to `j`: the length-two path which traverses the edge and
 returns along it. -/
-@[expose]
 def backtrackPath {i j : V} (h : G.Adj i j) : _root_.Quiver.Path (vertex G i) (vertex G i) :=
   (arrowPath G h).comp (arrowPath G h.symm)
 
@@ -305,7 +303,7 @@ theorem linearIndependent_vertexIdempotent_ofArrow_backtrackElem
         = ⇑(pathAlgebraBasis k (DoubledQuiver G)) ∘ shortPathIndex G := by
     funext x
     rcases x with v | d | d <;>
-      simp [shortPathIndex, vertexIdempotent_eq_single, ofPath_eq_single, arrowPath,
+      simp [shortPathIndex, vertexIdempotent_eq_single, ofPath_eq_single, arrowPath_eq_toPath,
         backtrackElem_eq_ofPath]
   rw [hfam]
   exact (pathAlgebraBasis k (DoubledQuiver G)).linearIndependent.comp _
