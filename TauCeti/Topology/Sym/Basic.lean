@@ -9,6 +9,7 @@ public import Mathlib.Topology.Compactness.Compact
 public import Mathlib.Topology.Constructions
 public import Mathlib.Topology.Separation.Hausdorff
 public import TauCeti.Data.Sym.Basic
+import Mathlib.Topology.Homeomorph.Lemmas
 
 /-!
 # The symmetric power of a topological space
@@ -39,6 +40,8 @@ facts about it used below.
   `TauCeti.Sym.isOpenEmbedding_map`: the `n`-th symmetric power of a continuous, open, or open
   embedding map is again one; in particular the symmetric power of an open subspace is an open
   subspace of the symmetric power.
+* `TauCeti.Sym.continuous_append` and `TauCeti.Sym.isOpenMap_append`: concatenation of symmetric
+  powers is continuous and open.
 * `TauCeti.Sym.instCompactSpace` and `TauCeti.Sym.instT2Space`: the symmetric power of a compact
   space is compact, and that of a Hausdorff space is Hausdorff.
 
@@ -56,7 +59,7 @@ namespace TauCeti
 
 namespace Sym
 
-variable {α β : Type*} {n : ℕ}
+variable {α β : Type*} {m n : ℕ}
 
 /-! ### The fibres of the quotient map -/
 
@@ -118,22 +121,14 @@ theorem isOpenQuotientMap_ofFn : IsOpenQuotientMap (ofFn : (Fin n → α) → Sy
 @[continuity, fun_prop]
 theorem continuous_map {f : α → β} (hf : Continuous f) :
     Continuous (Sym.map f : Sym α n → Sym β n) := by
-  rw [continuous_iff_comp_ofFn]
-  have hcomp : (Sym.map f : Sym α n → Sym β n) ∘ ofFn = ofFn ∘ fun g : Fin n → α => f ∘ g := by
-    funext g
-    simp
-  rw [hcomp]
-  exact continuous_ofFn.comp (continuous_pi fun i => hf.comp (continuous_apply i))
+  rw [continuous_iff_comp_ofFn, map_comp_ofFn]
+  exact continuous_ofFn.comp (Continuous.piMap fun _ => hf)
 
 /-- The symmetric power of an open map is open: the quotient map onto the symmetric power is open,
 and postcomposition by an open map is open on ordered tuples. -/
 theorem isOpenMap_map {f : α → β} (hf : IsOpenMap f) :
     IsOpenMap (Sym.map f : Sym α n → Sym β n) := by
-  have hcomp : (Sym.map f : Sym α n → Sym β n) ∘ ofFn = ofFn ∘ Pi.map fun _ : Fin n => f := by
-    funext g
-    simp only [Function.comp_apply, map_ofFn]
-    rfl
-  rw [isOpenQuotientMap_ofFn.isOpenMap_iff, hcomp]
+  rw [isOpenQuotientMap_ofFn.isOpenMap_iff, map_comp_ofFn]
   exact isOpenMap_ofFn.comp (IsOpenMap.piMap (fun _ => hf) (by simp))
 
 /-- The symmetric power of an open embedding is an open embedding: the `n`-th symmetric power of
@@ -142,6 +137,33 @@ theorem isOpenEmbedding_map {f : α → β} (hf : IsOpenEmbedding f) :
     IsOpenEmbedding (Sym.map f : Sym α n → Sym β n) :=
   .of_continuous_injective_isOpenMap (continuous_map hf.continuous)
     (Sym.map_injective hf.injective n) (isOpenMap_map hf.isOpenMap)
+
+/-- Concatenation of two symmetric-power points is continuous. -/
+@[continuity, fun_prop]
+theorem continuous_append :
+    Continuous fun p : Sym α n × Sym α m => p.1.append p.2 := by
+  have hcomp : (fun p : Sym α n × Sym α m => p.1.append p.2) ∘ Prod.map ofFn ofFn =
+      ofFn ∘ fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
+    funext p
+    obtain ⟨f, g⟩ := p
+    exact (ofFn_fin_append f g).symm
+  rw [← (isOpenQuotientMap_ofFn.prodMap isOpenQuotientMap_ofFn).continuous_comp_iff, hcomp]
+  exact continuous_ofFn.comp (Fin.continuous_append n m)
+
+/-- Concatenation of two symmetric-power points is an open map. -/
+theorem isOpenMap_append :
+    IsOpenMap fun p : Sym α n × Sym α m => p.1.append p.2 := by
+  have hcomp : (fun p : Sym α n × Sym α m => p.1.append p.2) ∘ Prod.map ofFn ofFn =
+      ofFn ∘ fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
+    funext p
+    obtain ⟨f, g⟩ := p
+    exact (ofFn_fin_append f g).symm
+  have hcoe : ⇑(Fin.appendHomeomorph (X := α) n m) =
+      fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2 := by
+    funext q i
+    simp
+  rw [(isOpenQuotientMap_ofFn.prodMap isOpenQuotientMap_ofFn).isOpenMap_iff, hcomp, ← hcoe]
+  exact isOpenMap_ofFn.comp (Fin.appendHomeomorph n m).isOpenMap
 
 /-! ### Separation and compactness -/
 

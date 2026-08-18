@@ -7,15 +7,17 @@ module
 
 public import Mathlib.Data.Multiset.Filter
 public import TauCeti.Data.Sym.Basic
+import Mathlib.Data.List.FinRange
 
 /-!
 # Splitting an unordered tuple along two disjoint sets
 
-An unordered `(n + m)`-tuple of points of `α` all of whose points lie in `U ∪ V`, with `U` and `V`
-disjoint, is the same thing as a pair consisting of an unordered `n`-tuple of points of `U` and an
-unordered `m`-tuple of points of `V`: the two parts are recovered from the tuple by filtering on
-membership in `U`. This file constructs the map `TauCeti.Sym.appendSubtype` in one direction and
-proves that it is injective with the expected range.
+An unordered `(n + m)`-tuple of points of `α` all of whose points lie in `U ∪ V`, with exactly `n`
+of them in `U` and with `U` and `V` disjoint, is the same thing as a pair consisting of an unordered
+`n`-tuple of points of `U` and an unordered `m`-tuple of points of `V`: the two parts are recovered
+from the tuple by filtering on membership in `U`. This file constructs the map
+`TauCeti.Sym.appendSubtype` in one direction and proves that it is injective with the expected
+range.
 
 Nothing here is topological. `TauCeti/Topology/Sym/Disjoint.lean` upgrades the same map to an open
 embedding when `U` and `V` are open, which is what presents a symmetric power as a product of
@@ -25,14 +27,14 @@ smaller symmetric powers near a tuple with repeated points.
 
 * `TauCeti.Sym.appendSubtype`: an unordered `n`-tuple of points of `U` and an unordered `m`-tuple
   of points of `V`, concatenated into an unordered `(n + m)`-tuple of points of `α`, with
-  `TauCeti.Sym.appendSubtype_ofFn` and `TauCeti.Sym.appendSubtype_comp_ofFn` reading it on
-  ordered tuples.
+  `TauCeti.Sym.appendSubtype_ofFn` reading it on ordered tuples.
 * `TauCeti.Sym.appendSubtype_injective`: for disjoint `U` and `V` the concatenation determines
   both of its parts.
 * `TauCeti.Sym.mem_range_appendSubtype`: its range consists of the tuples supported in `U ∪ V`
   with exactly `n` points in `U`.
-* `TauCeti.Sym.ofFn_val_injective`: the ordered tuples with `i`-th point in `U i`, for a pairwise
-  disjoint family `U`, are determined by the unordered tuples they present.
+* `TauCeti.Sym.ofFn_map_injective`: ordered tuples mapped into pairwise disjoint ranges are
+  determined by the unordered tuples they present, with `TauCeti.Sym.mem_range_ofFn_map`
+  describing those unordered tuples.
 -/
 
 public section
@@ -56,25 +58,20 @@ theorem coe_appendSubtype (p : Sym U n × Sym V m) :
       (p.1 : Multiset U).map Subtype.val + (p.2 : Multiset V).map Subtype.val := by
   simp [appendSubtype, Sym.coe_append, Sym.coe_map]
 
+/-- Concatenation along subtypes factors through the two maps on symmetric powers followed by
+ordinary concatenation. -/
+theorem appendSubtype_eq_append_map :
+    appendSubtype U V n m = (fun p : Sym α n × Sym α m => p.1.append p.2) ∘
+      Prod.map (Sym.map (Subtype.val : U → α)) (Sym.map (Subtype.val : V → α)) := by
+  funext p
+  exact Sym.coe_injective (by simp [coe_appendSubtype, Sym.coe_append, Sym.coe_map])
+
 /-- Concatenating the unordered tuples presented by two ordered ones is the unordered tuple
 presented by their concatenation `Fin.append`. -/
-@[simp]
 theorem appendSubtype_ofFn (f : Fin n → U) (g : Fin m → V) :
     appendSubtype U V n m (ofFn f, ofFn g) =
       ofFn (Fin.append (fun i => (f i : α)) fun j => (g j : α)) := by
   simp [appendSubtype, Function.comp_def]
-
-/-- The same statement as `TauCeti.Sym.appendSubtype_ofFn` read as an equality of maps out of the
-pairs of ordered tuples, which is the form the quotient topology consumes. -/
-theorem appendSubtype_comp_ofFn :
-    appendSubtype U V n m ∘ Prod.map ofFn ofFn =
-      ofFn ∘ (fun q : (Fin n → α) × (Fin m → α) => Fin.append q.1 q.2) ∘
-        Prod.map (Pi.map fun _ : Fin n => (Subtype.val : U → α))
-          (Pi.map fun _ : Fin m => (Subtype.val : V → α)) := by
-  funext p
-  obtain ⟨f, g⟩ := p
-  simp only [Function.comp_apply, Prod.map_apply, appendSubtype_ofFn, ofFn_fin_append]
-  rfl
 
 /-- Every point of a concatenated tuple lies in one of the two sets. -/
 theorem mem_union_of_mem_appendSubtype {a : α} {p : Sym U n × Sym V m}
@@ -88,7 +85,8 @@ theorem mem_union_of_mem_appendSubtype {a : α} {p : Sym U n × Sym V m}
 
 /-- Filtering a concatenation on membership in `U` recovers its first part, the second part
 contributing nothing because it is supported in the disjoint set `V`. -/
-theorem filter_mem_map_val_add [DecidablePred (· ∈ U)] (h : Disjoint U V) (s : Multiset U)
+private theorem filter_mem_map_val_add [DecidablePred (· ∈ U)] (h : Disjoint U V)
+    (s : Multiset U)
     (t : Multiset V) :
     Multiset.filter (· ∈ U) (s.map Subtype.val + t.map Subtype.val) = s.map Subtype.val := by
   have hs : Multiset.filter (· ∈ U) (s.map Subtype.val) = s.map Subtype.val :=
@@ -145,11 +143,21 @@ theorem exists_appendSubtype_eq [DecidablePred (· ∈ U)] {w : Sym α (n + m)}
       rw [← Multiset.card_add, hAB]
       exact w.2
     omega
-  refine ⟨(⟨A.attach.map fun x => ⟨x.1, hAU x.1 x.2⟩, ?_⟩,
-    ⟨B.attach.map fun x => ⟨x.1, hBV x.1 x.2⟩, ?_⟩), Sym.coe_injective ?_⟩
-  · simpa using hA
-  · simpa using hB
-  · simpa [Multiset.map_map, Function.comp_def, Multiset.attach_map_val] using hAB
+  have hArange : (⟨A, hA⟩ : Sym α n) ∈ Set.range (Sym.map (Subtype.val : U → α)) :=
+    (mem_range_map Subtype.val).2 fun a ha =>
+      ⟨⟨a, hAU a (_root_.Sym.mem_coe.2 ha)⟩, rfl⟩
+  have hBrange : (⟨B, hB⟩ : Sym α m) ∈ Set.range (Sym.map (Subtype.val : V → α)) :=
+    (mem_range_map Subtype.val).2 fun a ha =>
+      ⟨⟨a, hBV a (_root_.Sym.mem_coe.2 ha)⟩, rfl⟩
+  obtain ⟨s, hs⟩ := hArange
+  obtain ⟨t, ht⟩ := hBrange
+  refine ⟨(s, t), Sym.coe_injective ?_⟩
+  rw [coe_appendSubtype]
+  have hs' : (s : Multiset U).map Subtype.val = A := by
+    simpa [Sym.coe_map] using congrArg (fun z : Sym α n => (z : Multiset α)) hs
+  have ht' : (t : Multiset V).map Subtype.val = B := by
+    simpa [Sym.coe_map] using congrArg (fun z : Sym α m => (z : Multiset α)) ht
+  rw [hs', ht', hAB]
 
 /-- The range of concatenation along a disjoint pair of sets: the unordered tuples supported in
 `U ∪ V` with exactly `n` of their points in `U`. -/
@@ -161,20 +169,91 @@ theorem mem_range_appendSubtype [DecidablePred (· ∈ U)] (h : Disjoint U V) {w
   rintro ⟨p, rfl⟩
   exact ⟨fun a ha => mem_union_of_mem_appendSubtype ha, card_filter_mem_appendSubtype h p⟩
 
-/-! ### Tuples with one point in each of pairwise disjoint sets -/
+/-! ### Tuples mapped into pairwise disjoint ranges -/
 
-/-- An ordered tuple whose `i`-th point lies in `U i`, for a pairwise disjoint family `U`, is
-determined by the unordered tuple it presents: a permutation matching the two tuples must fix every
-index, since disjoint sets share no point. -/
-theorem ofFn_val_injective {U : Fin n → Set α} (h : Pairwise (Function.onFun Disjoint U)) :
-    Function.Injective fun f : (i : Fin n) → U i => ofFn fun i => (f i : α) := by
-  intro f g hfg
-  obtain ⟨σ, hσ⟩ := ofFn_eq_ofFn_iff.1 hfg
-  have hval : ∀ i, (f (σ i) : α) = (g i : α) := fun i => congrFun hσ i
+/-- An ordered tuple mapped pointwise into pairwise disjoint ranges is determined by the unordered
+tuple it presents. A permutation matching two such tuples must fix every index. -/
+theorem ofFn_map_injective {X : Fin n → Type*} (f : ∀ i, X i → α)
+    (hf : ∀ i, Function.Injective (f i))
+    (h : Pairwise (Function.onFun Disjoint fun i => Set.range (f i))) :
+    Function.Injective fun x : ∀ i, X i => ofFn fun i => f i (x i) := by
+  intro x y hxy
+  obtain ⟨σ, hσ⟩ := ofFn_eq_ofFn_iff.1 hxy
+  have hval : ∀ i, f (σ i) (x (σ i)) = f i (y i) := fun i => congrFun hσ i
   have hfix : ∀ i, σ i = i := fun i => by
     by_contra hne
-    exact Set.disjoint_left.1 (h hne) (hval i ▸ (f (σ i)).2) (g i).2
-  exact funext fun i => Subtype.ext (by rw [← hval i, hfix i])
+    exact Set.disjoint_left.1 (h hne) (Set.mem_range_self (x (σ i)))
+      ⟨y i, (hval i).symm⟩
+  exact funext fun i => hf i <|
+    (congrArg (fun j => f j (x j)) (hfix i)).symm.trans (hval i)
+
+attribute [local instance] Classical.propDecidable
+
+/-- The range of ordered tuples mapped pointwise into pairwise disjoint ranges consists exactly of
+the unordered tuples having one point in each range. -/
+theorem mem_range_ofFn_map {X : Fin n → Type*} (f : ∀ i, X i → α)
+    (h : Pairwise (Function.onFun Disjoint fun i => Set.range (f i))) {w : Sym α n} :
+    w ∈ Set.range (fun x : ∀ i, X i => ofFn fun i => f i (x i)) ↔
+      ∀ i, Multiset.card
+        (Multiset.filter (· ∈ Set.range (f i)) (w : Multiset α)) = 1 := by
+  classical
+  constructor
+  · rintro ⟨x, rfl⟩ i
+    let a : Fin n → α := fun j => f j (x j)
+    have ha : Function.Injective a := by
+      intro j k hjk
+      by_contra hne
+      exact Set.disjoint_left.1 (h hne) (Set.mem_range_self (x j))
+        ⟨x k, hjk.symm⟩
+    have hnodup : (ofFn a : Multiset α).Nodup := by
+      rw [coe_ofFn]
+      exact List.nodup_ofFn.2 ha
+    have hfilter : Multiset.filter (· ∈ Set.range (f i)) (ofFn a : Multiset α) = {a i} := by
+      apply (Multiset.Nodup.ext (hnodup.filter _) (Multiset.nodup_singleton _)).2
+      intro b
+      rw [Multiset.mem_filter, Multiset.mem_singleton]
+      constructor
+      · rintro ⟨hb, hbi⟩
+        obtain ⟨j, hj⟩ := mem_ofFn.1 (_root_.Sym.mem_coe.1 hb)
+        have hji : j = i := by
+          by_contra hne
+          exact Set.disjoint_left.1 (h hne) ⟨x j, hj⟩ hbi
+        simpa [hji] using hj.symm
+      · rintro rfl
+        exact ⟨_root_.Sym.mem_coe.2 (mem_ofFn.2 ⟨i, rfl⟩), Set.mem_range_self (x i)⟩
+    change Multiset.card
+      (Multiset.filter (· ∈ Set.range (f i)) (ofFn a : Multiset α)) = 1
+    rw [hfilter]
+    simp
+  · intro hcount
+    have hex : ∀ i, ∃ a, a ∈ w ∧ a ∈ Set.range (f i) := by
+      intro i
+      have hpos : 0 < Multiset.card
+          (Multiset.filter (· ∈ Set.range (f i)) (w : Multiset α)) := by
+        rw [hcount i]
+        exact Nat.zero_lt_succ 0
+      obtain ⟨a, ha⟩ := Multiset.card_pos_iff_exists_mem.1 hpos
+      exact ⟨a, (_root_.Sym.mem_coe.1 (Multiset.mem_filter.1 ha).1),
+        (Multiset.mem_filter.1 ha).2⟩
+    choose a ha using hex
+    have haw : ∀ i, a i ∈ w := fun i => (ha i).1
+    have har : ∀ i, a i ∈ Set.range (f i) := fun i => (ha i).2
+    have hainj : Function.Injective a := by
+      intro i j hij
+      by_contra hne
+      exact Set.disjoint_left.1 (h hne) (har i) (hij.symm ▸ har j)
+    choose x hx using har
+    have hnodup : (↑(List.ofFn a) : Multiset α).Nodup := List.nodup_ofFn.2 hainj
+    have hle : (↑(List.ofFn a) : Multiset α) ≤ (w : Multiset α) :=
+      (Multiset.le_iff_subset hnodup).2 fun b hb => by
+        rw [← coe_ofFn] at hb
+        obtain ⟨i, hi⟩ := mem_ofFn.1 (_root_.Sym.mem_coe.1 hb)
+        exact _root_.Sym.mem_coe.2 (hi ▸ haw i)
+    have heq : (↑(List.ofFn a) : Multiset α) = (w : Multiset α) :=
+      Multiset.eq_of_le_of_card_le hle (by simp)
+    have hofa : ofFn a = w := Sym.coe_injective (by simpa using heq)
+    refine ⟨x, ?_⟩
+    exact (congrArg ofFn (funext hx)).trans hofa
 
 end Sym
 
