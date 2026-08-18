@@ -19,15 +19,15 @@ separably closed field.
 
 ## Main definitions and results
 
-* `TauCeti.CliffordAlgebra.spinDoubleCoverOfSurjective` packages any surjective Spin action as a
+* `CliffordAlgebra.spinDoubleCoverOfSurjective` packages any surjective Spin action as a
   group extension.
-* `TauCeti.CliffordAlgebra.spinDoubleCover` packages
+* `CliffordAlgebra.spinDoubleCover` packages
   `1 → ZMod 2 → Spin(Q) → SO(Q) → 1` as a group extension.
-* `TauCeti.CliffordAlgebra.spinDoubleCoverOfSurjective_inl_ofAdd_one` and
-  `TauCeti.CliffordAlgebra.spinDoubleCoverOfSurjective_rightHom` characterize the generic
+* `CliffordAlgebra.spinDoubleCoverOfSurjective_inl_ofAdd_one` and
+  `CliffordAlgebra.spinDoubleCoverOfSurjective_rightHom` characterize the generic
   extension.
-* `TauCeti.CliffordAlgebra.spinDoubleCover_inl_ofAdd_one` and
-  `TauCeti.CliffordAlgebra.spinDoubleCover_rightHom` characterize the separably closed case.
+* `CliffordAlgebra.spinDoubleCover_inl_ofAdd_one` and
+  `CliffordAlgebra.spinDoubleCover_rightHom` characterize the separably closed case.
 
 ## References
 
@@ -39,9 +39,10 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -111,4 +112,4 @@ theorem spinDoubleCover_rightHom [IsSepClosed K]
     (spinDoubleCover Q hQ).rightHom = spinToSpecialOrthogonal Q := by
   rw [spinDoubleCover_def, spinDoubleCoverOfSurjective_rightHom]
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

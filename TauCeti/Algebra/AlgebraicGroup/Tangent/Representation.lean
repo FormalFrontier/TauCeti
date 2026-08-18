@@ -26,12 +26,12 @@ its corresponding comodule, and, after choosing a finite basis, the coordinate m
 
 ## Main declarations
 
-* `TauCeti.Derivation.mapValue_tangentScalarExtensionEquiv`: scalar extension of tangent vectors
+* `Derivation.mapValue_tangentScalarExtensionEquiv`: scalar extension of tangent vectors
   is natural in the coefficient algebra.
-* `TauCeti.Derivation.adjointPointRepresentation`: the adjoint action on the base Lie algebra as a
+* `Derivation.adjointPointRepresentation`: the adjoint action on the base Lie algebra as a
   natural point representation.
-* `TauCeti.Derivation.adjointComodule`: the corresponding right `H`-comodule.
-* `TauCeti.Derivation.adjointCoordinateBialgHom`: the coordinate morphism of the adjoint
+* `Derivation.adjointComodule`: the corresponding right `H`-comodule.
+* `Derivation.adjointCoordinateBialgHom`: the coordinate morphism of the adjoint
   representation in a finite basis.
 
 ## References
@@ -47,7 +47,9 @@ public section
 open CategoryTheory TensorProduct WithConv
 open scoped TensorProduct
 
-namespace TauCeti.Derivation
+namespace Derivation
+
+open TauCeti
 
 universe u v
 
@@ -342,4 +344,4 @@ theorem adjointCoordinateBialgHom_antipode_X {n : ℕ}
   unfold adjointCoordinateBialgHom
   exact Comodule.coordinateBialgHom_antipode_X b i j
 
-end TauCeti.Derivation
+end Derivation

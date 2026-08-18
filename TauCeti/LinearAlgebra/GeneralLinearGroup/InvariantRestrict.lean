@@ -16,12 +16,12 @@ extension of the subgroup, compatibly with further scalar extension.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.invariantRestrict`: restriction to an invariant additive subgroup.
-* `TauCeti.GeneralLinearGroup.baseChangeInvariantRestrictUnit`: the induced automorphism after
+* `AddEquiv.invariantRestrict`: restriction to an invariant additive subgroup.
+* `AddEquiv.baseChangeInvariantRestrictUnit`: the induced automorphism after
   scalar extension.
-* `TauCeti.GeneralLinearGroup.baseChangeInvariantRestrictUnit_pow_eq_one`: transport of an
+* `AddEquiv.baseChangeInvariantRestrictUnit_pow_eq_one`: transport of an
   exponent bound to scalar extensions.
-* `TauCeti.GeneralLinearGroup.mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit`:
+* `AddEquiv.mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit`:
   compatibility with further scalar extension.
 -/
 
@@ -29,7 +29,7 @@ public section
 
 open CategoryTheory TensorProduct
 
-namespace TauCeti.GeneralLinearGroup
+namespace AddEquiv
 
 universe u v w
 
@@ -141,16 +141,16 @@ theorem baseChangeInvariantRestrictUnit_pow_eq_one (θ : V ≃+ V) (M : S)
 theorem mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit
     {A B : CommAlgCat.{w} ℤ} (θ : V ≃+ V) (M : S) (hθ : ∀ v, θ v ∈ M ↔ v ∈ M)
     (φ : A ⟶ B) :
-    GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ
+    TauCeti.GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ
         (baseChangeInvariantRestrictUnit (R := A) θ M hθ) =
       baseChangeInvariantRestrictUnit (R := B) θ M hθ := by
-  refine (GeneralLinear.eq_mapScalarExtensionAutomorphisms_of_apply_scalarExtensionMap_eq
+  refine (TauCeti.GeneralLinear.eq_mapScalarExtensionAutomorphisms_of_apply_scalarExtensionMap_eq
     φ _ _ fun z => ?_).symm
   induction z using TensorProduct.induction_on with
   | zero => simp
   | tmul a m =>
-      rw [GeneralLinear.scalarExtensionMap_tmul, val_baseChangeInvariantRestrictUnit_tmul,
-        val_baseChangeInvariantRestrictUnit_tmul, GeneralLinear.scalarExtensionMap_tmul]
+      rw [TauCeti.GeneralLinear.scalarExtensionMap_tmul, val_baseChangeInvariantRestrictUnit_tmul,
+        val_baseChangeInvariantRestrictUnit_tmul, TauCeti.GeneralLinear.scalarExtensionMap_tmul]
   | add z w hz hw => rw [map_add, map_add, map_add, map_add, hz, hw]
 
-end TauCeti.GeneralLinearGroup
+end AddEquiv

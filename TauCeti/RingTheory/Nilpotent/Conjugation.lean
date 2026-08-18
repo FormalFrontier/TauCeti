@@ -119,10 +119,10 @@ theorem baseChange_invariantRestrict_baseChangeExp (M : S) (hθ : ∀ v, θ v �
     (hxy : ∀ v, θ (x • v) = y • θ v)
     (hx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     {k : ℕ} (hkx : x ^ k = 0) (hky : y ^ k = 0) (t : R) (z : R ⊗[ℤ] M) :
-    (GeneralLinearGroup.invariantRestrict θ.toAddEquiv M hθ).baseChange ℤ R M M
+    (θ.toAddEquiv.invariantRestrict M hθ).baseChange ℤ R M M
         (baseChangeExp x M hx t z) =
       baseChangeExp y M (dividedPower_smul_mem_of_intertwines θ M hθ hxy hx) t
-        ((GeneralLinearGroup.invariantRestrict θ.toAddEquiv M hθ).baseChange ℤ R M M z) := by
+        ((θ.toAddEquiv.invariantRestrict M hθ).baseChange ℤ R M M z) := by
   induction z using TensorProduct.induction_on with
   | zero => simp
   | tmul r v =>
@@ -133,8 +133,8 @@ theorem baseChange_invariantRestrict_baseChangeExp (M : S) (hθ : ∀ v, θ v �
       rw [LinearEquiv.baseChange_tmul]
       congr 1
       refine Subtype.ext ?_
-      rw [GeneralLinearGroup.coe_invariantRestrict_apply, coe_integralDividedPower_apply,
-        coe_integralDividedPower_apply, GeneralLinearGroup.coe_invariantRestrict_apply]
+      rw [AddEquiv.coe_invariantRestrict_apply, coe_integralDividedPower_apply,
+        coe_integralDividedPower_apply, AddEquiv.coe_invariantRestrict_apply]
       convert apply_dividedPower_smul_of_intertwines θ.toLinearMap hxy n (v : V) using 1 <;> rfl
   | add z w hz hw => rw [map_add, map_add, map_add, map_add, hz, hw]
 
