@@ -37,6 +37,11 @@ SELF_DECLARED_VENDORING = re.compile(
 SELF_DECLARED_PORT = re.compile(
     r"\b(?:this\s+)?copy\b.{0,80}\bdeleted\b.{0,80}\bMathlib\b", re.IGNORECASE | re.DOTALL
 )
+SELF_DECLARED_UPSTREAM_REFACTOR = re.compile(
+    r"\bupstream\b.{0,500}\bshould\b.{0,160}\b(?:refactored|deleted)\b"
+    r"|\bshould\b.{0,160}\b(?:refactored|deleted)\b.{0,160}\bupstream\b",
+    re.IGNORECASE | re.DOTALL,
+)
 NEGATED_SELF_DECLARATION = re.compile(
     r"(?:\*{1,2})?(?:\brather\s+than|\bnot)(?:\*{1,2})?\s+"
     r"(?:an?\s+)?(?:\*{1,2})?\s*$",
@@ -151,7 +156,8 @@ def find_self_declared_shims(source_root: pathlib.Path) -> set[pathlib.Path]:
         else:
             if SELF_DECLARED_OBSOLESCENCE.search(text) is not None \
                     or SELF_DECLARED_VENDORING.search(text) is not None \
-                    or SELF_DECLARED_PORT.search(text) is not None:
+                    or SELF_DECLARED_PORT.search(text) is not None \
+                    or SELF_DECLARED_UPSTREAM_REFACTOR.search(text) is not None:
                 found.add(source.relative_to(repo_root))
     return found
 

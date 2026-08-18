@@ -104,6 +104,21 @@ class ExpiredMathlibShimTests(unittest.TestCase):
                 {pathlib.Path("TauCeti/New.lean")},
             )
 
+    def test_upstream_refactor_obligation_is_a_self_declaration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(
+                "Coordinated with the upstream Mathlib effort. Should a canonical theorem land "
+                "upstream, this file should be refactored onto it.",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                check.find_self_declared_shims(source_root),
+                {pathlib.Path("TauCeti/New.lean")},
+            )
+
     def test_bold_negation_is_not_a_self_declaration(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)

@@ -33,10 +33,11 @@ source discharges the obligation. Moving declarations is also allowed when the n
 source preserves the inherited probes. Merely deleting probes, or changing an exact entry into an
 audit-only sentinel while its inherited surface remains, is rejected.
 
-The prose scan is one-way. A source that calls itself a temporary Mathlib shim must be registered,
-but removing that process narrative does not remove an existing registry obligation. Keep the
-entry and its note synchronized with the source's actual upstream relationship; attribution in
-either location is not disposable process prose.
+The prose scan is one-way. A source that calls itself a temporary Mathlib shim, or says its
+surface should be deleted or refactored onto future upstream API, must be registered. Removing
+that process narrative does not remove an existing registry obligation. Keep the entry and its
+note synchronized with the source's actual upstream relationship; attribution in either location
+is not disposable process prose.
 
 ## Exit codes
 
