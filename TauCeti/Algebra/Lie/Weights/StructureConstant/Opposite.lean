@@ -42,8 +42,6 @@ property of the structure constants alone.
 * `TauCeti.IsSl2System.structureConstant_mul_structureConstant_neg_neg`: the product identity.
 * `TauCeti.IsSl2System.structureConstant_neg_neg_eq_neg_iff`: the Chevalley-involution symmetry
   holds exactly when the constant is `±(p + 1)`.
-* `TauCeti.IsSl2System.structureConstant_eq_natCast_or_eq_neg_natCast_of_neg_neg`: the
-  integrality consequence of that symmetry, with no Chevalley involution in the hypotheses.
 
 ## References
 
@@ -168,21 +166,6 @@ theorem structureConstant_neg_neg_eq_neg_iff :
     apply mul_left_cancel₀ hne
     rw [hmul, ← h]
     ring
-
-/-- A normalised root-vector system whose opposite structure constants are negatives of each other
-has the integral Chevalley structure constants `±(p + 1)`.
-
-This is the conclusion of
-`TauCeti.IsChevalleySystem.structureConstant_eq_natCast_or_eq_neg_natCast` with the Chevalley
-involution replaced by the single sign equation it implies. -/
-theorem structureConstant_eq_natCast_or_eq_neg_natCast_of_neg_neg
-    (hneg : hx.structureConstant (-α) (-β) (-γ) hγ.neg (by
-        rw [Weight.coe_neg, Weight.coe_neg, Weight.coe_neg, hαβ]
-        abel) =
-      -hx.structureConstant α β γ hγ hαβ) :
-    hx.structureConstant α β γ hγ hαβ = ((chainBotCoeff α β + 1 : ℕ) : K) ∨
-      hx.structureConstant α β γ hγ hαβ = -((chainBotCoeff α β + 1 : ℕ) : K) :=
-  (hx.structureConstant_neg_neg_eq_neg_iff α β γ hα hβ hγ hαβ).1 hneg
 
 end IsSl2System
 
