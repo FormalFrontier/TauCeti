@@ -30,6 +30,10 @@ their supports compatibly with the Cartan matrices.
 
 ## Main results
 
+* `TauCeti.equivOfCartanMatrixEq_indexEquiv_apply`: the isomorphism constructed from a Cartan
+  matrix relabelling carries each simple-root index according to that relabelling.
+* `TauCeti.map_equivOfCartanMatrixEq`: transporting the first base along that isomorphism gives
+  the second base exactly.
 * `TauCeti.nonempty_equiv_of_hasCartanType`: **two root systems carrying bases of the same Cartan
   type are isomorphic.**
 
@@ -51,6 +55,76 @@ variable {ι ι₂ R M N M₂ N₂ : Type*} [CommRing R]
   [CharZero R] [IsDomain R] [Finite ι] [Finite ι₂]
   [P.IsRootSystem] [P.IsCrystallographic] [P.IsReduced]
   [P₂.IsRootSystem] [P₂.IsCrystallographic] [P₂.IsReduced]
+
+/-- The root-index equivalence constructed from a relabelling of equal Cartan matrices restricts
+to that relabelling on the chosen simple roots.
+
+Mathlib constructs the equivalence on all root indices by transporting the roots through the
+linear equivalence between the two simple-root bases. This theorem exposes the resulting value on
+a simple root, so consumers do not have to unfold that construction. -/
+@[simp] theorem equivOfCartanMatrixEq_indexEquiv_apply (b : P.Base) (b₂ : P₂.Base)
+    (e : b.support ≃ b₂.support)
+    (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
+    (i : b.support) :
+    (b.equivOfCartanMatrixEq b₂ e he).indexEquiv i = e i := by
+  apply P₂.root.injective
+  rw [← (b.equivOfCartanMatrixEq b₂ e he).root_weightMap_apply]
+  -- Expose the basis equivalence used internally by `equivOfCartanMatrixEq`; its public
+  -- `Basis.equiv_apply` equation then identifies the image without unfolding either basis.
+  change b.toWeightBasis.equiv b₂.toWeightBasis e (P.root i) = P₂.root (e i)
+  rw [← b.toWeightBasis_apply i, Module.Basis.equiv_apply, b₂.toWeightBasis_apply]
+
+/-- The covariant inverse coweight equivalence constructed from equal Cartan matrices sends a
+chosen simple coroot to the simple coroot selected by the supplied relabelling. -/
+@[simp] theorem equivOfCartanMatrixEq_coweightEquiv_symm_apply_coroot
+    (b : P.Base) (b₂ : P₂.Base) (e : b.support ≃ b₂.support)
+    (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
+    (i : b.support) :
+    (_root_.RootPairing.Equiv.coweightEquiv P P₂
+      (b.equivOfCartanMatrixEq b₂ e he)).symm (P.coroot i) = P₂.coroot (e i) := by
+  let E := b.equivOfCartanMatrixEq b₂ e he
+  have hindex : E.indexEquiv.symm (e i) = i := by
+    rw [← equivOfCartanMatrixEq_indexEquiv_apply b b₂ e he i]
+    exact E.indexEquiv.symm_apply_apply i
+  apply (_root_.RootPairing.Equiv.coweightEquiv P P₂ E).injective
+  rw [LinearEquiv.apply_symm_apply, _root_.RootPairing.Equiv.coweightEquiv_apply]
+  simpa only [hindex] using
+    (_root_.RootPairing.Hom.coroot_coweightMap_apply P P₂ (e i) E.toHom).symm
+
+omit [CharZero R] [IsDomain R] [Finite ι] [P.IsRootSystem] [P.IsCrystallographic]
+  [P.IsReduced] in
+/-- A base of a fixed root pairing is determined by its support. All remaining fields assert
+propositions about that support, so proof irrelevance identifies them once the supports agree. -/
+private theorem rootPairingBase_eq_of_support_eq (b c : P.Base)
+    (h : b.support = c.support) : b = c := by
+  cases b with
+  | mk s hsRoot hsCoroot hsPos hsPosCoroot =>
+    cases c with
+    | mk t htRoot htCoroot htPos htPosCoroot =>
+      dsimp only at h
+      subst t
+      rfl
+
+/-- Transporting a base along the root-system equivalence constructed from equal Cartan matrices
+gives the target base exactly. Thus the construction remembers the supplied simple-root
+relabelling as an equivalence of based root systems. -/
+@[simp] theorem map_equivOfCartanMatrixEq (b : P.Base) (b₂ : P₂.Base)
+    (e : b.support ≃ b₂.support)
+    (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j) :
+    b.map (b.equivOfCartanMatrixEq b₂ e he) = b₂ := by
+  classical
+  apply rootPairingBase_eq_of_support_eq
+  rw [b.support_map_eq]
+  ext j
+  simp only [Finset.mem_image]
+  constructor
+  · rintro ⟨i, hi, rfl⟩
+    rw [equivOfCartanMatrixEq_indexEquiv_apply b b₂ e he ⟨i, hi⟩]
+    exact (e ⟨i, hi⟩).property
+  · intro hj
+    let i := e.symm ⟨j, hj⟩
+    refine ⟨i, i.property, ?_⟩
+    simp [i]
 
 /-- **Two root systems carrying bases of the same Cartan type are isomorphic.** This is the
 rigidity half of the Cartan-Killing classification: the Dynkin type is not merely an invariant of a

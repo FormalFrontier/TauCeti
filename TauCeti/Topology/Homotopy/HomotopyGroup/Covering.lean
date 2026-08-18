@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -39,11 +40,11 @@ cover".
 
 ## Main declarations
 
-* `TauCeti.GenLoop.map_homotopic_iff`: postcomposition with a covering map reflects (and
+* `GenLoop.map_homotopic_iff`: postcomposition with a covering map reflects (and
   preserves) homotopy of generalized loops.
-* `TauCeti.GenLoop.map_surjective`: in dimension `≥ 2`, every generalized loop in the base
+* `GenLoop.map_surjective`: in dimension `≥ 2`, every generalized loop in the base
   lifts to a generalized loop in the total space based at a prescribed point of the fibre.
-* `TauCeti.HomotopyGroup.map_injective`, `TauCeti.HomotopyGroup.map_surjective`: the induced
+* `HomotopyGroup.map_injective`, `HomotopyGroup.map_surjective`: the induced
   map on homotopy classes.
 * `TauCeti.IsCoveringMap.homotopyGroupMulEquiv`: the isomorphism
   `HomotopyGroup N E e ≃* HomotopyGroup N X (p e)` for `[Nontrivial N]`.
@@ -59,8 +60,6 @@ covering-space API in `Mathlib.Topology.Homotopy.Lifting` and
 
 public section
 
-namespace TauCeti
-
 open scoped unitInterval Topology Topology.Homotopy
 
 variable {N X E : Type*} [TopologicalSpace X] [TopologicalSpace E] {p : E → X} {e : E}
@@ -71,7 +70,7 @@ namespace GenLoop
 generalized loops in the total space: two generalized loops based at `e` are homotopic
 relative to the cube boundary if and only if their postcompositions with `p` are.
 
-The reverse implication is `TauCeti.GenLoop.map_homotopic` and needs no hypothesis on `p`;
+The reverse implication is `GenLoop.map_homotopic` and needs no hypothesis on `p`;
 the forward implication lifts the homotopy, using that both generalized loops take the value
 `e` at the corner `0` of the cube. -/
 @[simp]
@@ -79,9 +78,9 @@ theorem map_homotopic_iff [Nonempty N] (hp : IsCoveringMap p) {F G : Ω^ N E e} 
     _root_.GenLoop.Homotopic (map ⟨p, hp.continuous⟩ rfl F) (map ⟨p, hp.continuous⟩ rfl G) ↔
       _root_.GenLoop.Homotopic F G :=
   (hp.homotopicRel_iff_comp (f₀ := (F : C(I^N, E))) (f₁ := (G : C(I^N, E)))
-    ⟨0, zero_mem_cubeBoundary,
-      (_root_.GenLoop.boundary F 0 zero_mem_cubeBoundary).trans
-        (_root_.GenLoop.boundary G 0 zero_mem_cubeBoundary).symm⟩).symm
+    ⟨0, TauCeti.zero_mem_cubeBoundary,
+      (_root_.GenLoop.boundary F 0 TauCeti.zero_mem_cubeBoundary).trans
+        (_root_.GenLoop.boundary G 0 TauCeti.zero_mem_cubeBoundary).symm⟩).symm
 
 /-- Every generalized loop in the base of a covering map lifts, in dimensions `≥ 2`, to a
 generalized loop in the total space based at any prescribed point `e` of the fibre.
@@ -108,7 +107,7 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) (f : Ω^ N X (p e))
       prop' := fun t a ha =>
         _root_.GenLoop.boundary f _ (Cube.insertAt_boundary i (Or.inr ha)) }
   let QRel : cE.HomotopyRel cE (Cube.boundary { j // j ≠ i }) :=
-    hp.liftHomotopyRel qRel ⟨0, zero_mem_cubeBoundary, rfl⟩
+    hp.liftHomotopyRel qRel ⟨0, TauCeti.zero_mem_cubeBoundary, rfl⟩
       (funext fun _ => rfl) (funext fun _ => rfl)
   let P : Ω (Ω^ { j // j ≠ i } E e) _root_.GenLoop.const :=
     { toContinuousMap :=
@@ -150,6 +149,8 @@ theorem map_surjective [Nontrivial N] (hp : IsCoveringMap p) :
   exact ⟨⟦F⟧, by rw [map_mk, hF]⟩
 
 end HomotopyGroup
+
+namespace TauCeti
 
 /-- **A covering map induces an isomorphism on homotopy groups in dimensions `≥ 2`.**
 
