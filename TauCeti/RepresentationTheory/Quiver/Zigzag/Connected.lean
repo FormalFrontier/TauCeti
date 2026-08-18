@@ -29,6 +29,8 @@ definition and decomposition of zigzag algebras.
 
 ## Main results
 
+* `TauCeti.DoubledQuiver.pathToWalk_walkToPath` and `TauCeti.DoubledQuiver.walkToPath_pathToWalk`:
+  the two conversions are mutually inverse.
 * `TauCeti.DoubledQuiver.reachable_iff`: graph and doubled-quiver reachability agree.
 * `TauCeti.DoubledQuiver.preconnected_iff_isStronglyConnected`: graph preconnectedness is strong
   connectivity of the doubled quiver.
@@ -91,6 +93,74 @@ theorem walkToPath_toWalk {i j : V} (h : G.Adj i j) :
     walkToPath G h.toWalk = (arrow G h).toPath := by
   simp [SimpleGraph.Adj.toWalk]
 
+/-- Converting the empty doubled-quiver path gives the empty graph walk. -/
+@[simp]
+theorem pathToWalk_nil (i : V) :
+    pathToWalk G (Quiver.Path.nil : Quiver.Path (vertex G i) (vertex G i)) =
+      (SimpleGraph.Walk.nil : G.Walk i i) := by
+  unfold pathToWalk
+  simp [pathToWalkAux]
+
+private theorem pathToWalkAux_comp {i j k : DoubledQuiver G} (p : Quiver.Path i j)
+    (q : Quiver.Path j k) :
+    pathToWalkAux G (p.comp q) = (pathToWalkAux G p).append (pathToWalkAux G q) := by
+  induction q with
+  | nil => simp [pathToWalkAux]
+  | cons q e ih => simp [pathToWalkAux, ih, SimpleGraph.Walk.append_assoc]
+
+/-- Converting composite doubled-quiver paths gives the appended graph walks. -/
+@[simp]
+theorem pathToWalk_comp {i j k : V} (p : Quiver.Path (vertex G i) (vertex G j))
+    (q : Quiver.Path (vertex G j) (vertex G k)) :
+    pathToWalk G (p.comp q) = (pathToWalk G p).append (pathToWalk G q) := by
+  unfold pathToWalk
+  rw [pathToWalkAux_comp, ← SimpleGraph.Walk.append_copy_copy]
+
+private theorem copy_toWalk {a b a' b' : V} (h : G.Adj a b) (h' : G.Adj a' b') (ha : a = a')
+    (hb : b = b') : h.toWalk.copy ha hb = h'.toWalk := by
+  subst ha
+  subst hb
+  rfl
+
+private theorem pathToWalkAux_toPath {i j : DoubledQuiver G} (e : i ⟶ j) :
+    pathToWalkAux G e.toPath = e.down.toWalk := by
+  simp [pathToWalkAux, Quiver.Hom.toPath]
+
+/-- Converting the one-arrow doubled-quiver path gives the one-edge graph walk. -/
+@[simp]
+theorem pathToWalk_toPath {i j : V} (h : G.Adj i j) :
+    pathToWalk G (arrow G h).toPath = h.toWalk := by
+  unfold pathToWalk
+  rw [pathToWalkAux_toPath]
+  exact copy_toWalk G _ h _ _
+
+/-- Turning a graph walk into a doubled-quiver path and back gives the original walk. -/
+@[simp]
+theorem pathToWalk_walkToPath {i j : V} (p : G.Walk i j) : pathToWalk G (walkToPath G p) = p := by
+  induction p with
+  | nil => simp
+  | cons h p ih => simp [ih, SimpleGraph.Adj.toWalk]
+
+private theorem toList_walkToPath_copy {a b a' b' : V} (p : G.Walk a b) (ha : a = a')
+    (hb : b = b') : (walkToPath G (p.copy ha hb)).toList = (walkToPath G p).toList := by
+  subst ha
+  subst hb
+  rfl
+
+private theorem toList_walkToPath_pathToWalkAux {i j : DoubledQuiver G} (p : Quiver.Path i j) :
+    (walkToPath G (pathToWalkAux G p)).toList = p.toList := by
+  induction p with
+  | nil => rfl
+  | cons p e ih => simp [pathToWalkAux, ih, Quiver.Hom.toPath]
+
+/-- Turning a doubled-quiver path into a graph walk and back gives the original path. -/
+@[simp]
+theorem walkToPath_pathToWalk {i j : V} (p : Quiver.Path (vertex G i) (vertex G j)) :
+    walkToPath G (pathToWalk G p) = p :=
+  Quiver.Path.toList_injective _ _ <| by
+    unfold pathToWalk
+    rw [toList_walkToPath_copy, toList_walkToPath_pathToWalkAux]
+
 /-- Turning a graph walk into a doubled-quiver path preserves its length. -/
 @[simp]
 theorem length_walkToPath {i j : V} (p : G.Walk i j) :
@@ -134,6 +204,23 @@ theorem reachable_iff_nonempty_symmetrify_path {i j : V} :
   · rintro ⟨p⟩
     exact ⟨(Quiver.Symmetrify.lift (Prefunctor.id (DoubledQuiver G))).mapPath p⟩
 
+/-- Reachability of two doubled-quiver vertices is graph reachability of the vertices they come
+from. -/
+theorem reachable_vertexEquiv_symm_iff (i j : DoubledQuiver G) :
+    G.Reachable ((vertexEquiv G).symm i) ((vertexEquiv G).symm j) ↔ Quiver.Reachable i j := by
+  simpa only [vertexEquiv_symm_apply] using
+    reachable_iff G (i := (vertexEquiv G).symm i) (j := (vertexEquiv G).symm j)
+
+/-- Two doubled-quiver vertices have the same weakly connected component exactly when the graph
+vertices they come from are reachable. -/
+theorem weaklyConnectedComponent_eq_iff (i j : DoubledQuiver G) :
+    (i : Quiver.WeaklyConnectedComponent (DoubledQuiver G)) = j ↔
+      G.Reachable ((vertexEquiv G).symm i) ((vertexEquiv G).symm j) := by
+  rw [Quiver.WeaklyConnectedComponent.eq]
+  simpa only [vertexEquiv_symm_apply] using
+    (reachable_iff_nonempty_symmetrify_path G (i := (vertexEquiv G).symm i)
+      (j := (vertexEquiv G).symm j)).symm
+
 /-- The connected components of a graph are the weakly connected components of its doubled
 quiver. -/
 def connectedComponentEquiv :
@@ -144,9 +231,7 @@ def connectedComponentEquiv :
   invFun := Quotient.lift
     (fun i => G.connectedComponentMk ((vertexEquiv G).symm i))
     fun i j h => SimpleGraph.ConnectedComponent.sound <|
-      (reachable_iff_nonempty_symmetrify_path G).2 <| by
-        change Nonempty (@Quiver.Path (Quiver.Symmetrify (DoubledQuiver G)) _ i j) at h
-        simpa only [vertexEquiv_symm_apply] using h
+      (weaklyConnectedComponent_eq_iff G i j).1 (Quotient.sound h)
   left_inv := by
     apply SimpleGraph.ConnectedComponent.ind
     intro i
@@ -154,10 +239,8 @@ def connectedComponentEquiv :
   right_inv := by
     apply Quotient.ind'
     intro i
-    apply (Quiver.WeaklyConnectedComponent.eq _ _).2
-    simpa only [vertexEquiv_symm_apply] using
-      (Nonempty.intro (Quiver.Path.nil :
-        @Quiver.Path (Quiver.Symmetrify (DoubledQuiver G)) _ i i))
+    refine (weaklyConnectedComponent_eq_iff G _ i).2 ?_
+    simpa only [vertexEquiv_symm_vertex] using SimpleGraph.Reachable.refl _
 
 @[simp]
 theorem connectedComponentEquiv_mk (i : V) :
@@ -174,11 +257,9 @@ theorem preconnected_iff_isStronglyConnected :
     G.Preconnected ↔ Quiver.IsStronglyConnected (DoubledQuiver G) := by
   constructor
   · intro h i j
-    change Quiver.Reachable i j
-    simpa only [vertexEquiv_symm_apply] using
-      (reachable_iff G).1 (h ((vertexEquiv G).symm i) ((vertexEquiv G).symm j))
+    exact ((reachable_vertexEquiv_symm_iff G i j).1 (h _ _)).elim fun p => ⟨p⟩
   · intro h i j
-    exact (reachable_iff G).2 (h (vertex G i) (vertex G j))
+    exact (reachable_iff G).2 ((h (vertex G i) (vertex G j)).elim Quiver.Path.reachable)
 
 /-- A graph is connected exactly when its doubled quiver is nonempty and strongly connected. -/
 theorem connected_iff :
