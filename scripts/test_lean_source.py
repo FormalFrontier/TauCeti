@@ -10,11 +10,18 @@ from lean_source import (
     declarations,
     include_commands,
     qualified_declarations,
+    strip_comments_and_strings,
     variable_bindings,
 )
 
 
 class LeanSourceTests(unittest.TestCase):
+    def test_primed_identifier_does_not_open_a_character_literal(self):
+        cleaned = strip_comments_and_strings(
+            "Homeomorph.prodAssoc F F' G' ''\ndef next := 1\n"
+        )
+        self.assertIn("def next", cleaned)
+
     def test_variable_bindings_retain_every_binder_kind(self):
         source = "variable (x : Nat) {y : Nat} ⦃z : Nat⦄ [i : Inhabited Nat]\n"
         [(position, bindings)] = variable_bindings(source)

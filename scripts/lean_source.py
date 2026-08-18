@@ -16,19 +16,27 @@ import re
 from collections.abc import Callable
 
 
-DECLARATION_KEYWORDS = {
+__all__ = [
+    "CLOSERS", "OPENERS", "Declaration", "Scope", "VariableBinding",
+    "declaration_returns_sort", "declarations", "include_commands", "namespace_components",
+    "qualified_declarations", "qualify", "scopes", "strip_comments_and_strings",
+    "top_level_arrow_parts", "top_level_colon", "update_scope", "variable_bindings",
+]
+
+
+_DECLARATION_KEYWORDS = {
     "abbrev", "class", "def", "inductive", "instance", "lemma", "opaque", "structure",
     "theorem",
 }
-MODIFIERS = {
+_MODIFIERS = {
     "local", "noncomputable", "nonrec", "partial", "private", "protected", "public", "scoped",
     "unsafe",
 }
-IDENTIFIER = re.compile(r"(?:_root_\.)?[\w']+(?:\.[\w']+)*")
-WORD = re.compile(r"[A-Za-z_][\w']*")
-PAIRS = {"(": ")", "[": "]", "{": "}", "⦃": "⦄"}
-OPENERS = set(PAIRS)
-CLOSERS = set(PAIRS.values())
+_IDENTIFIER = re.compile(r"(?:_root_\.)?[\w']+(?:\.[\w']+)*")
+_WORD = re.compile(r"[A-Za-z_][\w']*")
+_PAIRS = {"(": ")", "[": "]", "{": "}", "⦃": "⦄"}
+OPENERS = frozenset(_PAIRS)
+CLOSERS = frozenset(_PAIRS.values())
 
 
 @dataclasses.dataclass(frozen=True)
@@ -131,17 +139,17 @@ def _skip_horizontal(text: str, position: int) -> int:
     return position
 
 
-def skip_balanced(text: str, position: int) -> int:
+def _skip_balanced(text: str, position: int) -> int:
     """Return the position after the balanced delimiter group starting at ``position``."""
 
-    if position >= len(text) or text[position] not in PAIRS:
+    if position >= len(text) or text[position] not in _PAIRS:
         return position
-    stack = [PAIRS[text[position]]]
+    stack = [_PAIRS[text[position]]]
     position += 1
     while position < len(text) and stack:
         char = text[position]
-        if char in PAIRS:
-            stack.append(PAIRS[char])
+        if char in _PAIRS:
+            stack.append(_PAIRS[char])
         elif char == stack[-1]:
             stack.pop()
         position += 1
@@ -152,18 +160,18 @@ def _command_prefix(text: str, line_start: int) -> tuple[int, str] | None:
     """Return the declaration keyword position and keyword for a command at ``line_start``."""
     position = _skip_horizontal(text, line_start)
     while text.startswith("@[", position):
-        position = skip_balanced(text, position + 1)
+        position = _skip_balanced(text, position + 1)
         while position < len(text) and text[position].isspace():
             position += 1
 
     while True:
-        match = WORD.match(text, position)
-        if not match or match.group() not in MODIFIERS:
+        match = _WORD.match(text, position)
+        if not match or match.group() not in _MODIFIERS:
             break
         position = _skip_horizontal(text, match.end())
 
-    match = WORD.match(text, position)
-    if match and match.group() in DECLARATION_KEYWORDS:
+    match = _WORD.match(text, position)
+    if match and match.group() in _DECLARATION_KEYWORDS:
         return position, match.group()
     return None
 
@@ -190,7 +198,7 @@ def _declaration_tail(text: str, position: int) -> tuple[tuple[str, ...], str]:
         position = _skip_horizontal(text, position)
         if text.startswith(":=", position):
             break
-        word = WORD.match(text, position)
+        word = _WORD.match(text, position)
         if word and word.group() == "where":
             break
         char = text[position]
@@ -200,7 +208,7 @@ def _declaration_tail(text: str, position: int) -> tuple[tuple[str, ...], str]:
             while header_end < len(text):
                 if text.startswith(":=", header_end) and depth == 0:
                     break
-                next_word = WORD.match(text, header_end)
+                next_word = _WORD.match(text, header_end)
                 if next_word and next_word.group() == "where" and depth == 0:
                     break
                 current = text[header_end]
@@ -213,7 +221,7 @@ def _declaration_tail(text: str, position: int) -> tuple[tuple[str, ...], str]:
                 header_end += 1
             return tuple(binders), text[start:header_end]
         if char in OPENERS:
-            end = skip_balanced(text, position)
+            end = _skip_balanced(text, position)
             group = text[position + 1:end - 1]
             if char == "(" and top_level_colon(group) is not None:
                 binders.append(group)
@@ -243,9 +251,9 @@ def declarations(text: str) -> list[Declaration]:
             position = _skip_horizontal(code, keyword_position + len(keyword))
             name: str | None = None
             if keyword == "instance" and code.startswith("(priority", position):
-                position = _skip_horizontal(code, skip_balanced(code, position))
+                position = _skip_horizontal(code, _skip_balanced(code, position))
             if keyword != "instance" or (position < len(code) and code[position] not in "({[:"):
-                match = IDENTIFIER.match(code, position)
+                match = _IDENTIFIER.match(code, position)
                 if match:
                     name = match.group()
                     position = match.end()
@@ -286,7 +294,7 @@ def variable_bindings(text: str) -> list[tuple[int, list[VariableBinding]]]:
         while position < len(body):
             if body[position] in OPENERS:
                 opener = body[position]
-                end = skip_balanced(body, position)
+                end = _skip_balanced(body, position)
                 group = body[position + 1:end - 1]
                 colon = top_level_colon(group)
                 if colon is not None:
@@ -319,7 +327,7 @@ def include_commands(text: str) -> list[tuple[int, str, set[str], bool]]:
         position = 0
         while position < len(body):
             if body[position] in OPENERS:
-                position = skip_balanced(body, position)
+                position = _skip_balanced(body, position)
                 continue
             name = re.match(r"[\w']+", body[position:])
             if name is not None:
@@ -354,11 +362,11 @@ def top_level_arrow_parts(text: str) -> list[str]:
     return parts
 
 
-def expression_returns_sort(text: str) -> bool:
+def _expression_returns_sort(text: str) -> bool:
     """Whether a result expression syntactically ends in ``Prop``, ``Sort``, or ``Type``."""
 
     expression = text.strip()
-    while expression.startswith("(") and skip_balanced(expression, 0) == len(expression):
+    while expression.startswith("(") and _skip_balanced(expression, 0) == len(expression):
         expression = expression[1:-1].strip()
 
     if expression.startswith(("∀", "Π")):
@@ -369,12 +377,12 @@ def expression_returns_sort(text: str) -> bool:
             elif char in CLOSERS:
                 depth -= 1
             elif char == "," and depth == 0:
-                return expression_returns_sort(expression[position + 1:])
+                return _expression_returns_sort(expression[position + 1:])
         return False
 
     parts = top_level_arrow_parts(expression)
     if len(parts) > 1:
-        return expression_returns_sort(parts[-1])
+        return _expression_returns_sort(parts[-1])
     return re.match(r"(?:Prop|Sort|Type)\b", expression) is not None
 
 
@@ -386,7 +394,7 @@ def declaration_returns_sort(declaration: Declaration) -> bool:
     if declaration.keyword not in {"abbrev", "def", "opaque"}:
         return False
     colon = top_level_colon(declaration.header)
-    return colon is not None and expression_returns_sort(declaration.header[colon + 1:])
+    return colon is not None and _expression_returns_sort(declaration.header[colon + 1:])
 
 
 def update_scope(stack: list[Scope], kind: str, name: str | None) -> None:
@@ -405,6 +413,22 @@ def update_scope(stack: list[Scope], kind: str, name: str | None) -> None:
             if stack[index].matches(name):
                 del stack[index:]
                 break
+
+
+def namespace_components(stack: list[Scope]) -> list[str]:
+    """Flatten the namespace components contributed by a scope stack."""
+
+    return [component for scope in stack for component in scope.components]
+
+
+def qualify(name: str, stack: list[Scope]) -> str:
+    """Qualify ``name`` against ``stack``, respecting an explicit ``_root_.`` prefix."""
+
+    if name.startswith("_root_."):
+        parts = name.removeprefix("_root_.").split(".")
+    else:
+        parts = [*namespace_components(stack), *name.split(".")]
+    return ".".join(parts)
 
 
 def qualified_declarations(
@@ -436,11 +460,5 @@ def qualified_declarations(
         assert isinstance(declaration, Declaration)
         if declaration.name is None or (keep is not None and not keep(declaration)):
             continue
-        declaration_name = declaration.name
-        namespaces = [component for scope in stack for component in scope.components]
-        if declaration_name.startswith("_root_."):
-            parts = declaration_name.removeprefix("_root_.").split(".")
-        else:
-            parts = [*namespaces, *declaration_name.split(".")]
-        found.add(".".join(parts))
+        found.add(qualify(declaration.name, stack))
     return found

@@ -414,10 +414,6 @@ end TauCeti
         self.assertEqual(result, 2)
         self.assertIn("Mathlib source directory not found", stderr.getvalue())
 
-    def test_primed_identifier_does_not_open_a_character_literal(self):
-        cleaned = lint.strip_comments_and_strings("Homeomorph.prodAssoc F F' G' ''\ndef next := 1\n")
-        self.assertIn("def next", cleaned)
-
     def test_main_rejects_new_and_reports_ratchetable_findings(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)

@@ -30,10 +30,10 @@ from lean_source import (
     declaration_returns_sort,
     declarations,
     include_commands,
+    namespace_components,
     qualified_declarations,
+    qualify,
     scopes,
-    skip_balanced,
-    strip_comments_and_strings,
     top_level_colon,
     top_level_arrow_parts,
     update_scope,
@@ -50,9 +50,6 @@ ORGANISATIONAL = {
 }
 
 OWN_DECLARATION_KEYWORDS = {"abbrev", "class", "def", "inductive", "opaque", "structure"}
-NAMESPACE = re.compile(
-    r"(?m)^(?:(?:public|private|protected|noncomputable)\s+)*namespace\s+([\w'.]+)"
-)
 TOP_LEVEL_CONNECTIVES = ("->", "→", "⟶", "⥤", "≃", "≅", "×", "⊕", "⊗", "↪", "↠")
 
 # Common type notations whose underlying receiver type is not visible as an identifier in the
@@ -148,9 +145,9 @@ def mathlib_namespaces(root: pathlib.Path) -> set[str]:
         raw = path.read_text(errors="ignore")
         if "namespace" not in raw:
             continue
-        text = strip_comments_and_strings(raw)
-        for match in NAMESPACE.finditer(text):
-            names.update(part for part in match.group(1).split(".") if part != "_root_")
+        for _, kind, name in scopes(raw):
+            if kind == "namespace" and name is not None:
+                names.update(part for part in name.split(".") if part != "_root_")
     return names
 
 
@@ -305,12 +302,16 @@ def find_violations(
                 else:
                     included_names.difference_update(names)
             one_shot_includes.clear()
-            namespaces = [component for scope in stack for component in scope.components]
+            namespaces = namespace_components(stack)
             if not namespaces or namespaces[0] != "TauCeti":
                 continue
-            if declaration.name is not None and declaration.name.startswith("_root_."):
-                continue
-            name_prefix = declaration.name.split(".")[:-1] if declaration.name else []
+            if declaration.name is not None:
+                declaration_path = qualify(declaration.name, stack).split(".")
+                if declaration_path[:len(namespaces)] != namespaces:
+                    continue
+                name_prefix = declaration_path[len(namespaces):-1]
+            else:
+                name_prefix = []
             candidate_path = [*namespaces, *name_prefix]
             candidates = [namespace for index, namespace in enumerate(candidate_path[1:], start=1)
                           if namespace in mathlib_namespace_names
@@ -339,7 +340,7 @@ def find_violations(
                 declared_name = f"<anonymous instance {digest}>"
             else:
                 declared_name = declaration.name
-            qualified_name = ".".join([*namespaces, declared_name])
+            qualified_name = qualify(declared_name, stack)
             line = text.count("\n", 0, declaration.position) + 1
             findings.append(Finding(path, line, qualified_name))
 
