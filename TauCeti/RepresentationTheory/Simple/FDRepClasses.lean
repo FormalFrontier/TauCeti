@@ -31,8 +31,6 @@ bijections; see `TauCeti.coe_simpleFDRepClassesEquivSimpleModuleClasses` for the
 
 ## Main results
 
-* `TauCeti.mk_eq_toSkeleton`: a skeleton class presented by a representative, the form the
-  quotient eliminators leave, is that representative's `CategoryTheory.toSkeleton`.
 * `TauCeti.SimpleFDRepClasses`: the isomorphism classes of simple objects of `FDRep k G`.
 * `TauCeti.toSkeleton_eq_toSkeleton_iff_nonempty_iso`: two simple objects have the same class
   exactly when they are isomorphic in `FDRep k G`, rather than merely in the full subcategory.
@@ -51,20 +49,6 @@ namespace TauCeti
 open scoped MonoidAlgebra
 
 universe u v
-
-section Skeleton
-
-variable {C : Type u} [Category.{v} C]
-
-/-- **A representative names its own class in the skeleton.** `CategoryTheory.Skeleton` is the
-quotient of the objects by isomorphism, so `Quotient.ind` and `Quotient.lift`, its eliminators,
-leave goals phrased with `Quotient.mk`, whereas the skeleton API is phrased with
-`CategoryTheory.toSkeleton`. Mathlib carries no lemma of this shape because the two are the same
-function by definition; naming it keeps proofs from appealing to that definition in passing. -/
-theorem mk_eq_toSkeleton (X : C) : (⟦X⟧ : Skeleton C) = toSkeleton X :=
-  rfl
-
-end Skeleton
 
 variable (k : Type u) (G : Type v) [Field k] [Monoid G]
 

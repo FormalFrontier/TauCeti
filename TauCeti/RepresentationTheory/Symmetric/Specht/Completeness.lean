@@ -220,7 +220,8 @@ theorem spechtModuleFDRepClass_bijective :
       (FDRep.simple_iff_isIrreducible X.obj).mp hX
     obtain ⟨μ, hμ⟩ := exists_nonempty_equiv_spechtModule X.obj.ρ
     refine ⟨μ, ?_⟩
-    rw [spechtModuleFDRepClass_def, mk_eq_toSkeleton, toSkeleton_eq_toSkeleton_iff_nonempty_iso]
+    change spechtModuleFDRepClass μ = toSkeleton X
+    rw [spechtModuleFDRepClass_def, toSkeleton_eq_toSkeleton_iff_nonempty_iso]
     exact ⟨(nonempty_fdRepIso_iff.mpr hμ).some.symm⟩
 
 /-- **The categorical classification of the irreducible rational representations of the symmetric
@@ -273,7 +274,9 @@ theorem coe_simpleFDRepClassesEquivSimpleModuleClasses :
     have : Simple X.obj := hX
     -- Name the partition of `X`, so that both sides are evaluated at a Specht module.
     obtain ⟨μ, hμ, -⟩ := existsUnique_nonempty_iso_spechtModule X.obj
-    rw [mk_eq_toSkeleton, (toSkeleton_eq_toSkeleton_iff_nonempty_iso hX inferInstance).mpr hμ]
+    change simpleFDRepClassesEquivSimpleModuleClasses n (toSkeleton X) =
+      SimpleFDRepClasses.toSimpleSubmoduleClasses (toSkeleton X)
+    rw [(toSkeleton_eq_toSkeleton_iff_nonempty_iso hX inferInstance).mpr hμ]
     simp [simpleFDRepClassesEquivSimpleModuleClasses]
 
 end Categorical
