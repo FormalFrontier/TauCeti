@@ -150,7 +150,6 @@ theorem coordinateBaseChangeAlgEquiv_tmul_coordinateRingMap
 
 /-- Base change carries each localized generic matrix entry to the corresponding generic entry
 over the new base. -/
-@[simp]
 theorem coordinateBaseChangeAlgEquiv_tmul_X (i j : Fin n) :
     coordinateBaseChangeAlgEquiv R K n
         (1 ⊗ₜ[R] coordinateRingMap R n (MvPolynomial.X (i, j))) =
