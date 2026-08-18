@@ -705,6 +705,7 @@ theorem content_benderKnuth_of_ne (T : SemistandardYoungTableau μ) (v : ℕ) (h
 
 /-- **The Bender-Knuth involution exchanges the multiplicities of `v` and `v + 1`** and fixes every
 other one. -/
+@[simp]
 theorem content_benderKnuth (T : SemistandardYoungTableau μ) (v x : ℕ) :
     content (benderKnuth T v) x = content T (Equiv.swap v (v + 1) x) := by
   rcases eq_or_ne x v with rfl | hx
