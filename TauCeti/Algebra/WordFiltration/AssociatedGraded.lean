@@ -238,6 +238,7 @@ theorem gradedMul_assoc (f : M →ₗ[R] A) (i j k : ℕ)
               rw [gradedMul_apply_mk f i j x y, gradedMul_apply_mk f j k y z]
               conv_rhs => rw [gradedMul_apply_mk]
               apply gradedMul_mk_eq_cast f (Nat.add_assoc i j k)
+              -- Expose the subtype coercions before applying ambient associativity.
               change ((x : A) * y) * z - x * (y * z) ∈
                 wordFiltrationPrevious f (i + (j + k))
               rw [mul_assoc, sub_self]
@@ -457,6 +458,7 @@ theorem gradedAlgebraMap₀_commutes (f : M →ₗ[R] A) (r : R) (k : ℕ)
       conv_rhs => rw [gradedMul_apply_mk]
       apply gradedMul_mk_eq_cast f
         ((Nat.zero_add k).trans (Nat.add_zero k).symm)
+      -- Expose ambient elements, the form in which scalar commutation is stated.
       change algebraMap R (A) r * (x : A) -
           x * algebraMap R (A) r ∈ wordFiltrationPrevious f (k + 0)
       rw [Algebra.commutes, sub_self]
@@ -511,12 +513,29 @@ noncomputable instance gradedGAlgebra {f : M →ₗ[R] A} :
       congrArg (cast (congrArg (GradedPiece f) (Nat.zero_add k).symm))
         (gradedAlgebraMap₀_mul f r k x)
 
+/-- The graded scalar-map field is the named degree-zero scalar map. -/
+@[simp] theorem gradedGAlgebra_toFun {f : M →ₗ[R] A} (r : R) :
+    (gradedGAlgebra (f := f)).toFun r = gradedAlgebraMap₀ f r := rfl
+
 /-- The direct sum of homogeneous filtration pieces inherits its associated-graded
 ring structure. -/
 noncomputable instance associatedGradedRing {f : M →ₗ[R] A} :
     Ring (AssociatedGraded f) := by
   letI : ∀ k, AddCommGroup (GradedPiece f k) := fun _ => inferInstance
   infer_instance
+
+/-- The degree-zero homogeneous unit generates the unit of the associated graded. -/
+@[simp] theorem associatedGraded_of_gradedOne {f : M →ₗ[R] A} :
+    DirectSum.of (GradedPiece f) 0 (gradedOne f) = (1 : AssociatedGraded f) := by
+  change DirectSum.of (GradedPiece f) 0 (gradedOne f) =
+    DirectSum.of (GradedPiece f) 0 (GradedMonoid.GOne.one : GradedPiece f 0)
+  rw [gradedGOne_one]
+
+/-- The degree-zero homogeneous scalar class generates its scalar in the associated graded. -/
+@[simp] theorem associatedGraded_of_gradedAlgebraMap₀ {f : M →ₗ[R] A} (r : R) :
+    DirectSum.of (GradedPiece f) 0 (gradedAlgebraMap₀ f r) =
+      algebraMap R (AssociatedGraded f) r := by
+  rw [DirectSum.algebraMap_apply, gradedGAlgebra_toFun]
 
 /-- The product of two homogeneous generators in the associated graded is their named
 homogeneous product. -/

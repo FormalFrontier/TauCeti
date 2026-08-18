@@ -217,8 +217,9 @@ theorem scalarAddVector_apply (x : R × M) :
 omit [Invertible (2 : R)] in
 /-- The scalars and the vectors span exactly the first step of the degree filtration. -/
 theorem range_scalarAddVector : LinearMap.range (scalarAddVector Q) = filtration Q 1 := by
-  rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range,
-    ← TauCeti.Algebra.wordFiltration_one]
+  rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range]
+  -- The Clifford filtration is the reducible alias of the generic word filtration.
+  exact (TauCeti.Algebra.wordFiltration_one (ι Q)).symm
 
 /-- A scalar and a vector summing to zero both vanish, the scalars and the vectors being disjoint
 (`CliffordAlgebra.ι_range_disjoint_one`). -/
