@@ -84,6 +84,7 @@ noncomputable def kostantGeneratedBaseChangeIdeal :
 
 /-- The specialized base-changed defining ideal is the generic base change of the ideal defining
 the Chevalley carrier over `ℤ`. -/
+@[simp]
 theorem kostantGeneratedBaseChangeIdeal_def :
     kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A =
       CommHopfAlgCat.baseChangeHopfIdeal
@@ -103,18 +104,6 @@ noncomputable def kostantGeneratedBaseChangeIso :
           (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) :=
   CommHopfAlgCat.quotientBaseChangeIso (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
 
-private theorem mkQuotient_comp_kostantGeneratedBaseChangeIso_hom_def :
-    CommHopfAlgCat.mkQuotient
-          (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-          (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A) ≫
-        (kostantGeneratedBaseChangeIso e h ρ M hM hnil b A).hom =
-      CommHopfAlgCat.baseChangeMap
-        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) := by
-  unfold kostantGeneratedBaseChangeIdeal kostantGeneratedBaseChangeIso
-  exact CommHopfAlgCat.mkQuotient_comp_quotientBaseChangeIso_hom (K := A)
-    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
-
 /-- The specialized identification of the base-changed carrier is compatible with the quotient
 morphism presenting the carrier over `ℤ`. -/
 @[simp]
@@ -125,8 +114,10 @@ theorem mkQuotient_comp_kostantGeneratedBaseChangeIso_hom :
         (kostantGeneratedBaseChangeIso e h ρ M hM hnil b A).hom =
       CommHopfAlgCat.baseChangeMap
         (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) :=
-  mkQuotient_comp_kostantGeneratedBaseChangeIso_hom_def e h ρ M hM hnil b A
+          (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) := by
+  unfold kostantGeneratedBaseChangeIdeal kostantGeneratedBaseChangeIso
+  exact CommHopfAlgCat.mkQuotient_comp_quotientBaseChangeIso_hom (K := A)
+    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
 
 /-- The `i`th base-changed root-subgroup coordinate map, factored through the base change of the
 Chevalley carrier: the base change of the factorization over `ℤ`, read through the presentation of
