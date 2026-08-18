@@ -119,6 +119,7 @@ theorem continuous_normalRay : Continuous normalRay := by
 
 /-- A point of the one-dimensional half-space model vanishes exactly when its normal coordinate
 does. -/
+@[simp]
 theorem eq_zero_iff {t : EuclideanHalfSpace 1} : t = 0 ↔ t.1 0 = 0 := by
   refine ⟨fun h ↦ by rw [h]; rfl, fun h ↦ ?_⟩
   rw [← normalRay_normalCoord t, h, normalRay_zero]
@@ -238,14 +239,15 @@ theorem image_source_inter_boundary (h : IsProductCollarChart k φ V ε) :
       h.target_eq ▸ φ.map_source hy
     exact ⟨hmem.1, EuclideanHalfSpace.eq_zero_iff.2 ((h.mem_boundary_iff y hy).1 hyb)⟩
   · rintro ⟨hp1, hp2⟩
+    rw [Set.mem_singleton_iff] at hp2
     have hp : p ∈ φ.target := by
       rw [h.target_eq]
       refine ⟨hp1, ?_⟩
-      rw [show p.2 = 0 from hp2]
+      rw [hp2]
       exact EuclideanHalfSpace.zero_mem_normalIio h.height_pos
     refine ⟨φ.symm p, ⟨φ.map_target hp, ?_⟩, φ.right_inv hp⟩
-    rw [h.mem_boundary_iff _ (φ.map_target hp), φ.right_inv hp, show p.2 = 0 from hp2]
-    rfl
+    rw [h.mem_boundary_iff _ (φ.map_target hp), φ.right_inv hp, hp2]
+    exact EuclideanHalfSpace.val_zero_apply
 
 /-- The boundary points of the source of a product collar chart, as a subtype, are homeomorphic
 to its base. -/
@@ -254,7 +256,12 @@ def homeomorphBase (h : IsProductCollarChart k φ V ε) :
   (φ.homeomorphOfImageSubsetSource inter_subset_left h.image_source_inter_boundary).trans
     ((Homeomorph.Set.prod V ({0} : Set (EuclideanHalfSpace 1))).trans (Homeomorph.prodUnique _ _))
 
-/-- The identification of the boundary part with the base is the tangential coordinate. -/
+/-- The identification of the boundary part with the base is the tangential coordinate.
+
+Proved by `rfl` for want of a usable evaluation lemma for `Homeomorph.Set.prod`: the
+`@[simps]`-generated `Homeomorph.Set.prod_apply` is stated for the subtype
+`{p // p.1 ∈ V ∧ p.2 ∈ {0}}`, which does not unify with the `↥(V ×ˢ {0})` occurring here, so
+neither `simp` nor `rw` can fire it and the composite has to be evaluated definitionally. -/
 @[simp]
 theorem coe_homeomorphBase (h : IsProductCollarChart k φ V ε)
     (y : ↥(φ.source ∩ (𝓡∂ (n + 1)).boundary M)) : (h.homeomorphBase y : _) = (φ y).1 := (rfl)
@@ -267,7 +274,10 @@ def homeomorphProd (h : IsProductCollarChart k φ V ε) :
       (Homeomorph.Set.prod V (EuclideanHalfSpace.normalIio ε))).trans
     (h.homeomorphBase.symm.prodCongr (Homeomorph.refl _))
 
-/-- The second component of the local collar is the normal coordinate. -/
+/-- The second component of the local collar is the normal coordinate.
+
+Proved by `rfl` for the same reason as `coe_homeomorphBase`: `Homeomorph.Set.prod_apply` does
+not match the `↥(V ×ˢ EuclideanHalfSpace.normalIio ε)` this composite passes through. -/
 @[simp]
 theorem coe_homeomorphProd_snd (h : IsProductCollarChart k φ V ε) (y : ↥φ.source) :
     ((h.homeomorphProd y).2 : EuclideanHalfSpace 1) = (φ y).2 := (rfl)
@@ -275,6 +285,7 @@ theorem coe_homeomorphProd_snd (h : IsProductCollarChart k φ V ε) (y : ↥φ.s
 /-- **The first component of the local collar is the boundary retraction**: in coordinates it
 sets the normal coordinate to zero. Together with `coe_homeomorphProd_snd` this pins the
 homeomorphism down: it is the chart, read in the box. -/
+@[simp]
 theorem map_homeomorphProd_fst (h : IsProductCollarChart k φ V ε) (y : ↥φ.source) :
     φ ((h.homeomorphProd y).1 : M) = ((φ y).1, 0) := by
   have hmem : ((φ y).1, (0 : EuclideanHalfSpace 1)) ∈ φ.target := by
@@ -320,10 +331,12 @@ theorem exists_isProductCollarChart_of_mem_boundary (hk : k ≠ 0) {x : M}
   have hcoe : ⇑φ = ⇑(collarChart e) := by simp [hφ]
   have hcoe_symm : ⇑φ.symm = ⇑(collarChart e).symm := by simp [hφ]
   have hsource : φ.source = (collarChart e).source ∩ collarChart e ⁻¹' (V ×ˢ
-      EuclideanHalfSpace.normalIio ε) := rfl
+      EuclideanHalfSpace.normalIio ε) := by
+    simp [hφ]
   have htarget : φ.target = V ×ˢ EuclideanHalfSpace.normalIio ε := by
     have hinter : φ.target =
-        (collarChart e).target ∩ (V ×ˢ EuclideanHalfSpace.normalIio ε) := rfl
+        (collarChart e).target ∩ (V ×ˢ EuclideanHalfSpace.normalIio ε) := by
+      simp [hφ]
     rw [hinter, inter_eq_self_of_subset_right hBsub]
   have hxφ : x ∈ φ.source := by
     refine hsource ▸ ⟨hxs, hxV, ?_⟩
