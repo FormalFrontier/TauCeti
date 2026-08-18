@@ -14,10 +14,12 @@ Composing the simple reflections of a finite quiver `Q` at the successive vertic
 `l = [i₁, …, iₙ]` gives the endomorphism `sᵢₙ ∘ ⋯ ∘ sᵢ₁` of the dimension-vector lattice `Q → ℤ`.
 The Coxeter transformation is the case of a word listing every vertex exactly once, taken in a
 sink-admissible order; it is the numerical shadow of the Coxeter functor, the composite of the
-Bernstein-Gelfand-Ponomarev reflection functors at `i₁, …, iₙ`: each reflection functor acts on
-dimension vectors by the simple reflection at its vertex
-(`TauCeti.dimVector_reflectRep_of_indecomposable`), and reflecting the quiver itself changes
-neither the polarized Tits form nor the simple reflections built from it
+Bernstein-Gelfand-Ponomarev reflection functors at `i₁, …, iₙ`. On an indecomposable representation
+other than the vertex simple at the current sink, and when the source spaces of the incoming arrows
+are finite-dimensional, each reflection functor acts on dimension vectors by the simple reflection
+at its vertex (`TauCeti.dimVector_reflectRep_of_indecomposable`); the excluded vertex simple is
+annihilated instead. Reflecting the quiver itself changes neither the polarized Tits form nor the
+simple reflections built from it
 (`TauCeti.vertexPreReflection_reflect_apply`), so the successive reflections may all be read in
 the original quiver.
 
