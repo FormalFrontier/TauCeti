@@ -463,10 +463,11 @@ lemma mapEquiv_symm_apply (e : C ≌ D)
 
 /-- The additive homomorphism underlying equivalence invariance is the functorial map. -/
 @[simp]
-lemma mapEquiv_toAddMonoidHom (e : C ≌ D)
+lemma coe_mapEquiv (e : C ≌ D)
     (h : ∀ r ∈ relsC, freeMap e.functor r ∈ AddSubgroup.closure relsD)
     (h' : ∀ r ∈ relsD, freeMap e.inverse r ∈ AddSubgroup.closure relsC) :
-    (mapEquiv e h h').toAddMonoidHom = map e.functor h :=
+    ((mapEquiv e h h' : PresentedK0 relsC ≃+ PresentedK0 relsD) :
+        PresentedK0 relsC →+ PresentedK0 relsD) = map e.functor h :=
   hom_ext fun X => by
     change mapEquiv e h h' (of X) = map e.functor h (of X)
     rw [mapEquiv_apply, map_of]
@@ -479,11 +480,8 @@ lemma mapEquiv_refl :
         (freeMap_id_preserves (relsC := relsC)))
       (by simpa only [CategoryTheory.Equivalence.refl_inverse] using
         (freeMap_id_preserves (relsC := relsC))) =
-        AddEquiv.refl (PresentedK0 relsC) := by
-  apply AddEquiv.toAddMonoidHom_injective
-  change _ = AddMonoidHom.id (PresentedK0 relsC)
-  rw [mapEquiv_toAddMonoidHom]
-  simpa only [CategoryTheory.Equivalence.refl_functor] using (map_id (relsC := relsC))
+        AddEquiv.refl (PresentedK0 relsC) :=
+  AddEquiv.toAddMonoidHom_injective <| hom_ext fun X => by simp
 
 /-- Equivalence invariance respects composition of equivalences. -/
 lemma mapEquiv_trans {E : Type u''} [Category.{v''} E] [EssentiallySmall.{w''} E]
