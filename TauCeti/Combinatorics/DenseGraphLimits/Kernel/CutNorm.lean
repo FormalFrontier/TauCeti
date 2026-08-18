@@ -8,6 +8,7 @@ module
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Measure.FiniteMeasure
 
 /-!
 # The cut norm of a symmetric kernel
@@ -150,8 +151,9 @@ end SymmKernel
 /-- The set form of the cut norm: the supremum of the absolute kernel integrals over measurable
 rectangles. -/
 noncomputable def cutNormSet [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :=
+  let ν : FiniteMeasure Ω := ⟨μ, inferInstance⟩
   ⨆ (S : Set Ω) (_ : MeasurableSet S) (T : Set Ω) (_ : MeasurableSet T),
-    |K.rectIntegral μ S T|
+    |K.rectIntegral (ν : Measure Ω) S T|
 
 /-- The cut norm of a symmetric kernel: the supremum over measurable sets `S` and `T` of the
 absolute integral over `S × T`. -/
