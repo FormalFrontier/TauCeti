@@ -28,8 +28,6 @@ unsuspended operations `mₙ`.
 
 ## Main results
 
-* `TauCeti.isInternal_comp_symm`: an internal decomposition stays internal after reindexing the
-  degrees along an equivalence.
 * `TauCeti.InternalGrading.isHomogeneous_id_shift`: the suspension map has degree `-c`.
 
 ## References
@@ -43,43 +41,14 @@ namespace TauCeti
 
 universe u v
 
-/-- Reindexing an internal direct-sum decomposition along an equivalence of index types again
-gives an internal decomposition: the reindexing only permutes the summands. -/
-theorem isInternal_comp_symm {ι : Type*} {κ : Type*} [DecidableEq ι] [DecidableEq κ]
-    {M : Type*} {σ : Type*} [AddCommMonoid M] [SetLike σ M] [AddSubmonoidClass σ M]
-    {A : ι → σ} (h : DirectSum.IsInternal A) (e : ι ≃ κ) :
-    DirectSum.IsInternal fun k ↦ A (e.symm k) := by
-  have hcomp : (DirectSum.coeAddMonoidHom A).comp
-      (DirectSum.equivCongrLeft (β := fun i ↦ (A i : Type _)) e).symm.toAddMonoidHom =
-      DirectSum.coeAddMonoidHom fun k ↦ A (e.symm k) := by
-    refine DirectSum.addHom_ext' fun k ↦ AddMonoidHom.ext fun y ↦ ?_
-    simp only [AddMonoidHom.coe_comp, Function.comp_apply, AddEquiv.coe_toAddMonoidHom,
-      DirectSum.coeAddMonoidHom_of]
-    rw [← DirectSum.equivCongrLeft_of (β := fun i ↦ (A i : Type _)) e k y,
-      AddEquiv.symm_apply_apply, DirectSum.coeAddMonoidHom_of]
-  have hbij : Function.Bijective (DirectSum.coeAddMonoidHom fun k ↦ A (e.symm k)) := by
-    rw [← hcomp]
-    simpa only [AddMonoidHom.coe_comp, AddEquiv.coe_toAddMonoidHom] using
-      h.comp (AddEquiv.bijective _)
-  exact hbij
-
 namespace InternalGrading
 
 variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
 
-/-- Two internal gradings of the same module are equal as soon as their homogeneous pieces
-agree. -/
-@[ext]
-theorem ext : ∀ {G H : InternalGrading R M}, (∀ p, G.piece p = H.piece p) → G = H
-  | ⟨_, _⟩, ⟨_, _⟩, h => by
-    obtain rfl := funext h
-    rfl
-
 /-- The shift of an internal grading by `c`: its degree-`p` piece is the degree-`(p + c)` piece of
 the original grading. The underlying module is unchanged. -/
-@[expose]
 def shift (G : InternalGrading R M) (c : ℤ) : InternalGrading R M where
-  piece := Graded.shift G.piece c
+  piece := fun p ↦ G.piece (p + c)
   isInternal :=
     isInternal_comp_symm G.isInternal
       ⟨fun p ↦ p - c, fun p ↦ p + c, fun p ↦ by ring, fun p ↦ by ring⟩
@@ -87,12 +56,7 @@ def shift (G : InternalGrading R M) (c : ℤ) : InternalGrading R M where
 @[simp]
 theorem shift_piece (G : InternalGrading R M) (c p : ℤ) :
     (G.shift c).piece p = G.piece (p + c) :=
-  rfl
-
-/-- The pieces of a shifted internal grading are the shifted family of pieces. -/
-theorem shift_piece_eq (G : InternalGrading R M) (c : ℤ) :
-    (G.shift c).piece = Graded.shift G.piece c :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem shift_zero (G : InternalGrading R M) : G.shift 0 = G := by
@@ -108,14 +72,19 @@ theorem shift_shift (G : InternalGrading R M) (c d : ℤ) :
 /-- The suspension map `s : A ⟶ sA` is the identity of the underlying module and has degree `-c`
 from an internal grading to its shift by `c`. -/
 theorem isHomogeneous_id_shift (G : InternalGrading R M) (c : ℤ) :
-    LinearMap.IsHomogeneous (LinearMap.id : M →ₗ[R] M) G.piece (G.shift c).piece (-c) :=
-  LinearMap.isHomogeneous_id_shift G.piece c
+    LinearMap.IsHomogeneous (LinearMap.id : M →ₗ[R] M) G.piece (G.shift c).piece (-c) := by
+  rw [LinearMap.isHomogeneous_def]
+  intro p x hx
+  have hpc : p + -c + c = p := by ring
+  simpa only [_root_.LinearMap.id_coe, id_eq, shift_piece, hpc] using hx
 
 /-- The unsuspension map `s⁻¹ : sA ⟶ A` is the identity of the underlying module and has
 degree `c` from the shift by `c` back to the original internal grading. -/
 theorem isHomogeneous_id_unshift (G : InternalGrading R M) (c : ℤ) :
-    LinearMap.IsHomogeneous (LinearMap.id : M →ₗ[R] M) (G.shift c).piece G.piece c :=
-  LinearMap.isHomogeneous_id_unshift G.piece c
+    LinearMap.IsHomogeneous (LinearMap.id : M →ₗ[R] M) (G.shift c).piece G.piece c := by
+  rw [LinearMap.isHomogeneous_def]
+  intro p x hx
+  simpa only [_root_.LinearMap.id_coe, id_eq, shift_piece] using hx
 
 end InternalGrading
 

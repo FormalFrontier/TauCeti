@@ -41,8 +41,8 @@ original one.
 ## Main results
 
 * `TauCeti.LinearMap.isHomogeneous_shift_source_iff`, `TauCeti.LinearMap.isHomogeneous_shift_iff`,
-  and `TauCeti.LinearMap.isHomogeneous_shift_target_iff`: shifting the source lowers the degree of
-  a linear map, shifting the target raises it, and shifting both leaves it unchanged.
+  and `TauCeti.LinearMap.isHomogeneous_shift_target_iff`: shifting the source raises the degree of
+  a linear map, shifting the target lowers it, and shifting both leaves it unchanged.
 * `TauCeti.LinearMap.isHomogeneous_id_shift`: the suspension map has degree `-c`.
 * `TauCeti.MultilinearMap.isHomogeneous_shift_iff`: shifting the inputs by `c` and the target by
   `r` changes the degree of a multilinear map by `r - ∑ i, c i`.
@@ -68,11 +68,10 @@ variable {ι : Type uι} {σM : Type*}
 /-- The shift of a family of graded pieces by `c`: the degree-`p` piece of `Graded.shift 𝒜 c` is
 the degree-`(p + c)` piece of `𝒜`. This is the cochain regrading `X[c]ᵖ = X^{p + c}`; the case
 `c = 1` is the suspension `sA` of the `A∞` conventions. -/
-@[expose]
 def shift [Add ι] (𝒜 : ι → σM) (c : ι) : ι → σM := fun p ↦ 𝒜 (p + c)
 
 @[simp]
-theorem shift_apply [Add ι] (𝒜 : ι → σM) (c p : ι) : shift 𝒜 c p = 𝒜 (p + c) := rfl
+theorem shift_apply [Add ι] (𝒜 : ι → σM) (c p : ι) : shift 𝒜 c p = 𝒜 (p + c) := (rfl)
 
 @[simp]
 theorem shift_zero [AddZeroClass ι] (𝒜 : ι → σM) : shift 𝒜 0 = 𝒜 := by
@@ -95,7 +94,7 @@ variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN} {σM σN : Ty
   [Semiring R] [AddMonoid ι] [AddCommMonoid M] [AddCommMonoid N]
   [Module R M] [Module R N] [SetLike σM M] [SetLike σN N]
 
-/-- Shifting the target grading by `c` raises the degree of a homogeneous linear map by `c`. -/
+/-- Shifting the target grading by `c` lowers the degree of a homogeneous linear map by `c`. -/
 theorem isHomogeneous_shift_target_iff {f : M →ₗ[R] N} {𝒜 : ι → σM} {ℬ : ι → σN} {q c : ι} :
     IsHomogeneous f 𝒜 (Graded.shift ℬ c) q ↔ IsHomogeneous f 𝒜 ℬ (q + c) := by
   simp only [isHomogeneous_def, Graded.shift_apply, add_assoc]
@@ -116,7 +115,7 @@ variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN} {σM σN : Ty
   [Semiring R] [AddCommGroup ι] [AddCommMonoid M] [AddCommMonoid N]
   [Module R M] [Module R N] [SetLike σM M] [SetLike σN N]
 
-/-- Shifting the source grading by `c` lowers the degree of a homogeneous linear map by `c`. -/
+/-- Shifting the source grading by `c` raises the degree of a homogeneous linear map by `c`. -/
 theorem isHomogeneous_shift_source_iff {f : M →ₗ[R] N} {𝒜 : ι → σM} {ℬ : ι → σN} {q c : ι} :
     IsHomogeneous f (Graded.shift 𝒜 c) ℬ q ↔ IsHomogeneous f 𝒜 ℬ (q - c) := by
   rw [isHomogeneous_def, isHomogeneous_def]
