@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
-public import TauCeti.LinearAlgebra.End.ScalarExtension
+import TauCeti.LinearAlgebra.End.ScalarExtension
 public import Mathlib.RingTheory.Bialgebra.Convolution
 public import Mathlib.RepresentationTheory.Basic
 
