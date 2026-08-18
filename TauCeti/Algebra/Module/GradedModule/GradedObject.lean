@@ -78,12 +78,20 @@ abbrev gradedObjectPiece (p : ℤ) : Submodule R (⨁ q : ℤ, X q) :=
   LinearMap.range (DirectSum.lof R ℤ (fun q ↦ X q) p)
 
 /-- A component of a graded object is linearly equivalent to its copy in the external direct sum. -/
-noncomputable abbrev gradedObjectPieceEquiv (p : ℤ) : X p ≃ₗ[R] gradedObjectPiece R X p :=
+noncomputable def gradedObjectPieceEquiv (p : ℤ) : X p ≃ₗ[R] gradedObjectPiece R X p :=
   LinearEquiv.ofInjective (DirectSum.lof R ℤ (fun q ↦ X q) p) (DirectSum.of_injective _)
 
-private noncomputable abbrev gradedObjectPiecesEquiv :
+/-- The canonical component equivalence agrees with the direct-sum inclusion. -/
+@[simp]
+theorem gradedObjectPieceEquiv_apply (p : ℤ) (x : X p) :
+    ((gradedObjectPieceEquiv R X p x : gradedObjectPiece R X p) : ⨁ q : ℤ, X q) =
+      DirectSum.lof R ℤ (fun q ↦ X q) p x := by
+  rw [gradedObjectPieceEquiv]
+  exact LinearEquiv.ofInjective_apply _ x
+
+private noncomputable def gradedObjectPiecesEquiv :
     (⨁ p : ℤ, X p) ≃ₗ[R] (⨁ p : ℤ, gradedObjectPiece R X p) :=
-  DFinsupp.mapRange.linearEquiv fun p ↦ gradedObjectPieceEquiv R X p
+  DirectSum.congrLinearEquiv fun p ↦ gradedObjectPieceEquiv R X p
 
 private theorem gradedObjectPiecesEquiv_symm_eq_coeLinearMap :
     (gradedObjectPiecesEquiv R X).symm.toLinearMap =
@@ -97,15 +105,13 @@ private theorem gradedObjectPiecesEquiv_symm_eq_coeLinearMap :
   obtain ⟨y, hy⟩ := x.property
   have hx : x = gradedObjectPieceEquiv R X p y := by
     apply Subtype.ext
+    rw [gradedObjectPieceEquiv_apply]
     exact hy.symm
   rw [← hy, hx]
-  rw [DFinsupp.mapRange.linearEquiv_apply]
-  apply DFinsupp.ext
-  intro i
-  by_cases h : p = i
-  · subst i
-    simp [DirectSum.lof_eq_of]
-  · simp [DirectSum.lof_eq_of, DirectSum.of_apply, h]
+  change _ = (DirectSum.congrLinearEquiv fun p ↦ gradedObjectPieceEquiv R X p).toLinearMap
+    (DirectSum.lof R ℤ (fun q ↦ X q) p y)
+  rw [DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
+  rfl
 
 /-- The external direct sum of a graded object carries the internal grading by its canonical
 component copies. -/
