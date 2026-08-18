@@ -103,27 +103,27 @@ theorem occCount_comp_succ_add_zero [DecidableEq α] {n : ℕ} (w : Fin (n + 1) 
   rfl
 
 /-- Summing the transitions out of `a` counts the positions carrying `a` other than the last one.
-The index set `S` only has to exhaust the letters actually used by `w`. -/
+The index set `S` only has to contain the successors of transitions in `w`. -/
 theorem sum_transitionCount_right {n : ℕ} (w : Fin (n + 1) → α) {S : Finset α}
-    (hS : ∀ i, w i ∈ S) (a : α) :
+    (hS : ∀ i : Fin n, w i.succ ∈ S) (a : α) :
     ∑ b ∈ S, transitionCount w a b = occCount (w ∘ Fin.castSucc) a := by
   classical
   rw [occCount_eq_card_filter,
     card_eq_sum_card_fiberwise (f := fun i : Fin n => w i.succ) (t := S)
-      fun i _ => hS i.succ]
+      fun i _ => hS i]
   refine sum_congr rfl fun b _ => ?_
   rw [transitionCount_eq_card_filter, filter_filter]
   rfl
 
 /-- Summing the transitions into `a` counts the positions carrying `a` other than the first one.
-The index set `S` only has to exhaust the letters actually used by `w`. -/
+The index set `S` only has to contain the predecessors of transitions in `w`. -/
 theorem sum_transitionCount_left {n : ℕ} (w : Fin (n + 1) → α) {S : Finset α}
-    (hS : ∀ i, w i ∈ S) (b : α) :
+    (hS : ∀ i : Fin n, w i.castSucc ∈ S) (b : α) :
     ∑ a ∈ S, transitionCount w a b = occCount (w ∘ Fin.succ) b := by
   classical
   rw [occCount_eq_card_filter,
     card_eq_sum_card_fiberwise (f := fun i : Fin n => w i.castSucc) (t := S)
-      fun i _ => hS i.castSucc]
+      fun i _ => hS i]
   refine sum_congr rfl fun a _ => ?_
   rw [transitionCount_eq_card_filter, filter_filter]
   exact congrArg _ (filter_congr fun i _ => by simp [and_comm])
@@ -137,10 +137,12 @@ theorem occCount_eq_of_transitionCount_eq {n : ℕ} {u v : Fin (n + 1) → α} (
   have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
   have hSv : ∀ i, v i ∈ S := fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))
   have hout : occCount (u ∘ Fin.castSucc) a = occCount (v ∘ Fin.castSucc) a := by
-    rw [← sum_transitionCount_right u hSu a, ← sum_transitionCount_right v hSv a]
+    rw [← sum_transitionCount_right u (fun i => hSu i.succ) a,
+      ← sum_transitionCount_right v (fun i => hSv i.succ) a]
     exact sum_congr rfl fun b _ => h a b
   have hin : occCount (u ∘ Fin.succ) a = occCount (v ∘ Fin.succ) a := by
-    rw [← sum_transitionCount_left u hSu a, ← sum_transitionCount_left v hSv a]
+    rw [← sum_transitionCount_left u (fun i => hSu i.castSucc) a,
+      ← sum_transitionCount_left v (fun i => hSv i.castSucc) a]
     exact sum_congr rfl fun c _ => h c a
   have hu_last := occCount_comp_castSucc_add_last u a
   have hu_zero := occCount_comp_succ_add_zero u a
@@ -171,15 +173,16 @@ theorem exists_perm_comp_of_transitionCount_eq {n : ℕ} {u v : Fin (n + 1) → 
   exists_perm_comp_of_occCount_eq (occCount_eq_of_transitionCount_eq h0 h)
 
 /-- **A product of transition weights along a word is a function of its transition counts.** The
-index set `S` only has to exhaust the letters actually used by `w`. -/
+index set `S` only has to contain both endpoints of every transition in `w`. -/
 theorem prod_transitionCount {M : Type*} [CommMonoid M] {n : ℕ} (w : Fin (n + 1) → α)
-    {S : Finset α} (hS : ∀ i, w i ∈ S) (p : α → α → M) :
+    {S : Finset α} (hS : ∀ i : Fin n, w i.castSucc ∈ S ∧ w i.succ ∈ S)
+    (p : α → α → M) :
     ∏ i : Fin n, p (w i.castSucc) (w i.succ) =
       ∏ ab ∈ S ×ˢ S, p ab.1 ab.2 ^ transitionCount w ab.1 ab.2 := by
   classical
   rw [← prod_fiberwise_of_maps_to (s := (univ : Finset (Fin n))) (t := S ×ˢ S)
       (g := fun i : Fin n => (w i.castSucc, w i.succ))
-      (fun i _ => mem_product.2 ⟨hS _, hS _⟩) fun i => p (w i.castSucc) (w i.succ)]
+      (fun i _ => mem_product.2 (hS i)) fun i => p (w i.castSucc) (w i.succ)]
   refine prod_congr rfl fun ab _ => ?_
   have hval : ∀ i ∈ filter (fun i : Fin n => (w i.castSucc, w i.succ) = ab) univ,
       p (w i.castSucc) (w i.succ) = p ab.1 ab.2 := fun i hi => by

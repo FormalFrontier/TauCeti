@@ -134,27 +134,6 @@ theorem markovExchangeable_iff [Countable α] [MeasurableSingletonClass α]
   ⟨fun h => ⟨h.aemeasurable, fun n u v => h.prefixLaw_singleton_eq n u v⟩,
     fun h => MarkovExchangeable.intro h.1 h.2⟩
 
-/-- Under finite exchangeability at `n`, rearranging a path leaves its probability unchanged. -/
-theorem ExchangeableAt.prefixLaw_singleton_comp [MeasurableSingletonClass α]
-    {μ : Measure Ω} {X : ℕ → Ω → α} {n : ℕ} (h : ExchangeableAt μ X n)
-    (hX : ∀ i, AEMeasurable (X i) μ) (w : Fin n → α) (σ : Equiv.Perm (Fin n)) :
-    prefixLaw μ X n {w ∘ σ} = prefixLaw μ X n {w} := by
-  have hmeas : Measurable fun x : Fin n → α => fun i => x (σ⁻¹ i) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply (σ⁻¹ i)
-  have hmap : (prefixLaw μ X n).map (fun x : Fin n → α => fun i => x (σ⁻¹ i)) =
-      prefixLaw μ X n := by
-    conv_lhs => rw [prefixLaw_def]
-    rw [map_blockLaw_reindex μ (fun i : Fin n => i.val) (fun i => σ⁻¹ i) fun j => hX j.val]
-    exact h σ⁻¹
-  conv_rhs => rw [← hmap]
-  rw [Measure.map_apply hmeas (measurableSet_singleton w)]
-  congr 1
-  ext x
-  simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, Function.comp_apply]
-  refine ⟨fun hx j => ?_, fun hx i => ?_⟩
-  · simpa using hx (σ⁻¹ j)
-  · simpa using hx (σ i)
-
 /-- **An exchangeable process is Markov exchangeable.** Two paths with a common start and common
 transition counts are rearrangements of each other, so exchangeability already equates them. -/
 theorem Exchangeable.markovExchangeable [Countable α] [MeasurableSingletonClass α]
@@ -164,7 +143,7 @@ theorem Exchangeable.markovExchangeable [Countable α] [MeasurableSingletonClass
   intro n u v h0 hcount
   obtain ⟨σ, hσ⟩ := exists_perm_comp_of_transitionCount_eq h0 hcount
   rw [← hσ]
-  exact (h (n + 1)).prefixLaw_singleton_comp hX v σ
+  exact (h (n + 1)).prefixLaw_singleton_comp (fun i => hX i.val) v σ
 
 /-- **A Markov chain is Markov exchangeable.** The hypothesis is the defining product form of the
 finite-dimensional laws of a Markov chain: an initial weight `p₀` at the starting state times the
@@ -183,15 +162,10 @@ theorem markovExchangeable_of_prefixLaw_singleton_eq [Countable α] [MeasurableS
   set S : Finset α := image u univ ∪ image v univ
   have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
   have hSv : ∀ i, v i ∈ S := fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))
-  rw [h n u, h n v, h0, prod_transitionCount u hSu p, prod_transitionCount v hSv p]
+  rw [h n u, h n v, h0,
+    prod_transitionCount u (fun i : Fin n => ⟨hSu i.castSucc, hSu i.succ⟩) p,
+    prod_transitionCount v (fun i : Fin n => ⟨hSv i.castSucc, hSv i.succ⟩) p]
   exact congrArg _ (prod_congr rfl fun ab _ => by rw [hcount ab.1 ab.2])
-
-/-- The prefix laws of a path law are the prefix laws of the process. -/
-theorem prefixLaw_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α} (hX : ∀ i, AEMeasurable (X i) μ)
-    (n : ℕ) : prefixLaw (pathLaw μ X) (fun n (x : ℕ → α) => x n) n = prefixLaw μ X n := by
-  rw [prefixLaw_def, blockLaw_def,
-    ← map_prefixProj_pathLaw μ (aemeasurable_pi_lambda (fun ω => fun i => X i ω) hX) n]
-  rfl
 
 /-- **The process-level and path-law formulations of Markov exchangeability agree.** -/
 theorem markovExchangeable_pathLaw_iff [Countable α] [MeasurableSingletonClass α]
