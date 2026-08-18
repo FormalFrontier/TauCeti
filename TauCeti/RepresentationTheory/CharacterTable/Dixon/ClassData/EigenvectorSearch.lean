@@ -25,9 +25,9 @@ is the unique normalization of its common eigenvector.
 
 This is the bridge between the generic finite-field search in
 `TauCeti.LinearAlgebra.Matrix.JointEigenvalueSearch` and the reduced central-character table in the
-Dixon--Schneider pipeline.  Nothing here counts the output; that the search has exactly one row per
-conjugacy class needs the good-prime structure theorem and is
-`TauCeti.ClassData.card_centralCharacterSearch`.
+Dixon--Schneider pipeline. Nothing here counts the output. Under a general splitting hypothesis the
+count is `TauCeti.ClassData.card_centralCharacterSearch`; its good-prime specialization is
+`TauCeti.ClassData.card_centralCharacterSearch_of_isGoodDixonPrime`.
 
 ## Main definitions
 
@@ -149,42 +149,30 @@ theorem isModularEigenrow_iff_isClassEigenrow (v : Fin d.numClasses → F) :
     simpa only [equivConjClasses_apply, reindexModularRow_classOf,
       d.structureConstant_eq] using hij
 
-omit [CommRing F] in
-private theorem reindexModularRow_classOf_comp (v : ConjClasses G → F) :
-    d.reindexModularRow (fun i => v (d.classOf i)) = v := by
-  funext C
-  obtain ⟨i, rfl⟩ := d.equivConjClasses.surjective C
-  rw [d.equivConjClasses_apply, d.reindexModularRow_classOf]
-
 /-- **Renumbering matches the normalized numbered eigenrows with the normalized class-indexed
 ones**, bundling `TauCeti.ClassData.reindexModularRow` and
 `TauCeti.ClassData.isModularEigenrow_iff_isClassEigenrow` as an equivalence.  It is what carries a
 count of the class-indexed eigenrows over to the output of the executable search. -/
 def modularEigenrowEquiv :
     {a : Fin d.numClasses → F // a (d.index 1) = 1 ∧ d.IsModularEigenrow a} ≃
-      {v : ConjClasses G → F // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} where
-  toFun a := ⟨d.reindexModularRow a, by
-    rw [← d.classOf_index (1 : G), d.reindexModularRow_classOf,
-      ← d.isModularEigenrow_iff_isClassEigenrow]
-    exact a.2⟩
-  invFun v := ⟨fun i => (v : ConjClasses G → F) (d.classOf i), by
-    constructor
-    · change (v : ConjClasses G → F) (d.classOf (d.index 1)) = 1
-      rw [d.classOf_index]
-      exact v.2.1
-    · rw [d.isModularEigenrow_iff_isClassEigenrow, d.reindexModularRow_classOf_comp]
-      exact v.2.2⟩
-  left_inv a := Subtype.ext <| funext fun i =>
-    d.reindexModularRow_classOf (a : Fin d.numClasses → F) i
-  right_inv v := Subtype.ext (d.reindexModularRow_classOf_comp (v : ConjClasses G → F))
+      {v : ConjClasses G → F // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} :=
+  (d.equivConjClasses.arrowCongr (Equiv.refl F)).subtypeEquiv fun a =>
+    and_congr
+      (by
+        rw [← d.classOf_index (1 : G)]
+        exact iff_of_eq (congrArg (· = 1) (d.reindexModularRow_classOf a (d.index 1))).symm)
+      (d.isModularEigenrow_iff_isClassEigenrow a)
 
 @[simp]
 theorem coe_modularEigenrowEquiv
     (a : {a : Fin d.numClasses → F // a (d.index 1) = 1 ∧ d.IsModularEigenrow a}) :
     (d.modularEigenrowEquiv a : ConjClasses G → F) =
       d.reindexModularRow (a : Fin d.numClasses → F) := by
-  unfold modularEigenrowEquiv
-  rfl
+  funext C
+  obtain ⟨i, rfl⟩ := d.equivConjClasses.surjective C
+  simp only [modularEigenrowEquiv, Equiv.subtypeEquiv_apply, Equiv.arrowCongr_apply,
+    Function.comp_apply, Equiv.refl_apply, Equiv.symm_apply_apply]
+  rw [d.equivConjClasses_apply, d.reindexModularRow_classOf]
 
 /-- Applying the inverse renumbering equivalence at a numbered class recovers the corresponding
 class-indexed entry. -/
@@ -194,8 +182,10 @@ theorem modularEigenrowEquiv_symm_apply
     (i : Fin d.numClasses) :
     (d.modularEigenrowEquiv.symm v : Fin d.numClasses → F) i =
       (v : ConjClasses G → F) (d.classOf i) := by
-  unfold modularEigenrowEquiv
-  rfl
+  simp only [modularEigenrowEquiv, Equiv.subtypeEquiv_symm, Equiv.subtypeEquiv_apply,
+    Equiv.arrowCongr_symm, Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_symm,
+    Equiv.refl_apply]
+  rw [Equiv.symm_symm, d.equivConjClasses_apply]
 
 /-- The numbered modular class matrix belonging to the identity conjugacy class is the identity
 matrix.  This is `TauCeti.classMultMatrix_mk_one`, renumbered. -/
@@ -312,9 +302,9 @@ theorem mem_centralCharacterSearch {a : Fin d.numClasses → F} :
 executable search is equivalent to being the values on numbered class sums of an algebra
 homomorphism from the centre of `F[G]` to `F`.
 
-This statement does not require the good-prime hypothesis.  At a good Dixon prime the structure
-theorem supplies exactly `d.numClasses` such homomorphisms; that cardinality result is the next
-stage of the solver. -/
+This statement does not require the good-prime hypothesis. The exact count under a general
+splitting hypothesis is `TauCeti.ClassData.card_centralCharacterSearch`; at a good Dixon prime it is
+`TauCeti.ClassData.card_centralCharacterSearch_of_isGoodDixonPrime`. -/
 theorem mem_centralCharacterSearch_iff_exists_algHom {a : Fin d.numClasses → F} :
     a ∈ d.centralCharacterSearch ↔
       ∃ φ : Subalgebra.center F (MonoidAlgebra F G) →ₐ[F] F,

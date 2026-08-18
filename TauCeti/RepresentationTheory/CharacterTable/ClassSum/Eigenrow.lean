@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Algebra.Pi
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.MultiplicationMatrix
+import TauCeti.Algebra.Algebra.Pi
 import Mathlib.Algebra.Algebra.Bilinear
 import Mathlib.LinearAlgebra.Basis.Bilinear
 
@@ -266,10 +266,11 @@ section Split
 
 variable [Nontrivial k] [NoZeroDivisors k]
 
-/-- **A split centre has one normalized common left eigenrow per conjugacy class.** If the centre
-of `k[G]` is `k`-algebra isomorphic to the algebra of `k`-valued functions on the conjugacy
-classes, then the class-multiplication matrices have exactly one normalized common left eigenrow
-for each class, obtained by transporting the coordinate evaluations of that product decomposition.
+/-- **A split centre has as many normalized common left eigenrows as conjugacy classes.** If the
+centre of `k[G]` is `k`-algebra isomorphic to the algebra of `k`-valued functions on the conjugacy
+classes, transporting the coordinate evaluations of that product decomposition gives a
+non-canonical bijection between those two types. The bijection records only their cardinalities and
+does not associate a specified eigenrow to a given conjugacy class.
 
 The hypothesis is what makes the count come out: over a field that fails to split the centre some
 of the characters of `Z(k[G])` take values in proper extensions of `k` instead, and are invisible

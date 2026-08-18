@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Prime
 public import TauCeti.RepresentationTheory.CharacterTable.FiniteField
+public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 
 /-!
 # The good-prime structure theorem
@@ -35,6 +36,8 @@ arbitrary finite coefficient field satisfying those two conditions; `ZMod p` has
   `TauCeti.IsGoodDixonPrime.nonempty_center_algEquiv_pi`: **the good-prime structure theorem**,
   `Z(ZMod p [G]) ≃ₐ[ZMod p] (ConjClasses G → ZMod p)`, indexed by the conjugacy classes and by
   `Fin r` respectively.
+* `TauCeti.IsGoodDixonPrime.card_normalized_isClassEigenrow`: at a good Dixon prime there are as
+  many normalized common left eigenrows as conjugacy classes.
 
 ## References
 
@@ -99,6 +102,23 @@ theorem nonempty_center_algEquiv_conjClasses (hp : IsGoodDixonPrime G p) :
   have := hp.finite
   obtain ⟨hcard, hexp⟩ := hp.splitting_hypotheses
   exact TauCeti.nonempty_center_algEquiv_conjClasses hcard hexp
+
+/-- **At a good Dixon prime there are as many normalized common left eigenrows as conjugacy
+classes.** This is the good-prime structure theorem
+`TauCeti.IsGoodDixonPrime.nonempty_center_algEquiv_conjClasses` read through the identification of
+the normalized common left eigenrows with the characters of the centre.
+
+It is the modular counterpart of `TauCeti.card_normalized_isClassEigenrow`, which counts the
+eigenrows over an algebraically closed field; the point of the Burnside--Dixon--Schneider algorithm
+is that the count survives the passage to the small field `ZMod p`, where the eigenrows can actually
+be searched for. -/
+theorem card_normalized_isClassEigenrow [Fintype G] [DecidableEq G]
+    (hp : IsGoodDixonPrime G p) :
+    Nat.card {v : ConjClasses G → ZMod p //
+        v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} = Nat.card (ConjClasses G) := by
+  have := hp.fact_prime
+  exact TauCeti.card_normalized_isClassEigenrow_of_nonempty_center_algEquiv
+    hp.nonempty_center_algEquiv_conjClasses
 
 /-- The good-prime structure theorem with the factors indexed by `Fin r` rather than by the
 conjugacy classes themselves: the shape in which the finite-field linear algebra of the

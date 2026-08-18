@@ -9,7 +9,7 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Eigenv
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Structure
 
 /-!
-# The modular central-character search finds one row per conjugacy class
+# Counting the modular central-character search
 
 `TauCeti.ClassData.centralCharacterSearch` is the executable simultaneous eigenvalue search of the
 Burnside--Dixon--Schneider algorithm: it returns the `Finset` of normalized common left eigenrows of
@@ -35,14 +35,16 @@ search returns.
 
 ## Main results
 
-* `TauCeti.IsGoodDixonPrime.card_normalized_isClassEigenrow`: at a good Dixon prime the
-  class-multiplication matrices have exactly one normalized common left eigenrow over `ZMod p` per
-  conjugacy class of `G`.
-* `TauCeti.ClassData.card_centralCharacterSearch`: the executable search returns
-  `d.numClasses` rows over any coefficient field splitting the centre -- in particular it is
-  nonempty (`TauCeti.ClassData.centralCharacterSearch_nonempty`) -- and
+* `TauCeti.ClassData.nonempty_conjClasses_equiv_centralCharacterSearch`: under a splitting
+  hypothesis, there exists a non-canonical bijection between the conjugacy classes and the returned
+  rows.
+* `TauCeti.ClassData.card_centralCharacterSearch`: the executable search returns `d.numClasses`
+  rows over any coefficient field splitting the centre, and
   `TauCeti.ClassData.card_centralCharacterSearch_of_isGoodDixonPrime` reads that off a good Dixon
   prime.
+* `TauCeti.ClassData.centralCharacterSearch_nonempty`: the trivial central character ensures that
+  the search is nonempty over any coefficient field, without a splitting hypothesis.
+
 ## Implementation notes
 
 The general results are stated over an arbitrary finite coefficient field `F` with the splitting of
@@ -71,38 +73,16 @@ namespace TauCeti
 
 variable {G : Type*} [Group G] [Fintype G] [DecidableEq G]
 
-/-! ### The count at a good Dixon prime -/
-
-namespace IsGoodDixonPrime
-
-variable {p : ℕ}
-
-/-- **At a good Dixon prime there is one normalized common left eigenrow per conjugacy class.**
-This is the good-prime structure theorem
-`TauCeti.IsGoodDixonPrime.nonempty_center_algEquiv_conjClasses` read through the identification of
-the normalized common left eigenrows with the characters of the centre.
-
-It is the modular counterpart of `TauCeti.card_normalized_isClassEigenrow`, which counts the
-eigenrows over an algebraically closed field; the point of the Burnside--Dixon--Schneider algorithm
-is that the count survives the passage to the small field `ZMod p`, where the eigenrows can actually
-be searched for. -/
-theorem card_normalized_isClassEigenrow (hp : IsGoodDixonPrime G p) :
-    Nat.card {v : ConjClasses G → ZMod p //
-        v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} = Nat.card (ConjClasses G) := by
-  have := hp.fact_prime
-  exact card_normalized_isClassEigenrow_of_nonempty_center_algEquiv
-    hp.nonempty_center_algEquiv_conjClasses
-
-end IsGoodDixonPrime
-
 /-! ### The count for the executable search -/
 
 namespace ClassData
 
 variable (d : ClassData G) {F : Type*} [Field F] [Fintype F] [DecidableEq F]
 
-/-- **The executable search returns one row per conjugacy class**, as an explicit enumeration of its
-output by the conjugacy classes, whenever the coefficient field splits the centre of `F[G]`. -/
+/-- **When the coefficient field splits the centre of `F[G]`, there exists a bijection between the
+conjugacy classes and the rows returned by the executable search.** The bijection is non-canonical
+and records only the equality of the two cardinalities; it does not associate a specified row to a
+given conjugacy class. -/
 theorem nonempty_conjClasses_equiv_centralCharacterSearch
     (h : Nonempty (Subalgebra.center F (MonoidAlgebra F G) ≃ₐ[F] (ConjClasses G → F))) :
     Nonempty (ConjClasses G ≃
@@ -125,14 +105,16 @@ theorem card_centralCharacterSearch
     ← Nat.card_congr (d.nonempty_conjClasses_equiv_centralCharacterSearch h).some,
     ← d.numClasses_eq_card_conjClasses]
 
-/-- **The executable central-character search never comes back empty** over a coefficient field
-splitting the centre: a group has at least one conjugacy class, hence at least one central
-character, and the search finds it. -/
-theorem centralCharacterSearch_nonempty
-    (h : Nonempty (Subalgebra.center F (MonoidAlgebra F G) ≃ₐ[F] (ConjClasses G → F))) :
+/-- **The executable central-character search never comes back empty.** The augmentation character
+of the group algebra restricts to an algebra homomorphism on its centre, and its normalized
+eigenrow therefore belongs to the search. No splitting hypothesis is needed. -/
+theorem centralCharacterSearch_nonempty :
     (d.centralCharacterSearch (F := F)).Nonempty := by
-  rw [← Finset.card_pos, d.card_centralCharacterSearch h, d.numClasses_eq_card_conjClasses]
-  exact Nat.card_pos
+  refine ⟨d.modularEigenrowEquiv.symm
+    (algHomEquivEigenrow ((MonoidAlgebra.lift F F G (1 : G →* F)).comp
+      (Subalgebra.center F (MonoidAlgebra F G)).val)), ?_⟩
+  rw [d.mem_centralCharacterSearch]
+  exact (d.modularEigenrowEquiv.symm _).2
 
 /-- **The executable central-character search over `ZMod p` returns exactly `r` rows at a good
 Dixon prime**, the form in which the modular phase of the Burnside--Dixon--Schneider algorithm
