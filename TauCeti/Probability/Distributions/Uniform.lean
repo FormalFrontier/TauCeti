@@ -141,14 +141,17 @@ Mathlib's `MeasureTheory.pdf.uniformPDF` is `ℝ≥0∞`-valued; this is the rea
 `uniformPDF_eq_ofReal_uniformPDFReal` relates the two. -/
 def uniformPDFReal (a b x : ℝ) : ℝ := if x ∈ Set.Ioc a b then (b - a)⁻¹ else 0
 
+/-- Inside the interval the real-valued density is the reciprocal of its length. -/
 @[simp]
 theorem uniformPDFReal_of_mem {a b x : ℝ} (hx : x ∈ Set.Ioc a b) :
     uniformPDFReal a b x = (b - a)⁻¹ := by simp [uniformPDFReal, hx]
 
+/-- Outside the interval the real-valued density vanishes. -/
 @[simp]
 theorem uniformPDFReal_of_notMem {a b x : ℝ} (hx : x ∉ Set.Ioc a b) :
     uniformPDFReal a b x = 0 := by simp [uniformPDFReal, hx]
 
+/-- The real-valued uniform density is measurable. -/
 theorem measurable_uniformPDFReal {a b : ℝ} : Measurable (uniformPDFReal a b) := by
   unfold uniformPDFReal
   exact measurable_const.ite measurableSet_Ioc measurable_const
@@ -167,6 +170,7 @@ theorem uniformPDF_eq_ofReal_uniformPDFReal {a b : ℝ} (x : ℝ) :
   · rw [uniformPDFReal_of_notMem hx, ENNReal.ofReal_zero]
     simp [hx]
 
+/-- Mathlib's uniform density on `Set.Ioc a b`, against `volume`, is measurable. -/
 theorem measurable_uniformPDF_Ioc_volume {a b : ℝ} :
     Measurable fun x => pdf.uniformPDF (Set.Ioc a b) x volume := by
   unfold pdf.uniformPDF
