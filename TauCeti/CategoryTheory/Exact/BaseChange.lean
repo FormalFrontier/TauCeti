@@ -34,7 +34,8 @@ extension-closed subcategories inherit axiom E1.
 
 * `TauCeti.ExactStructure.conflation_cobaseChange` and
   `TauCeti.ExactStructure.conflation_baseChange`: base and cobase change of a conflation along an
-  admissible morphism is a conflation.
+  arbitrary morphism is a conflation; the inflation or deflation in the original conflation is
+  the admissible morphism being pushed out or pulled back.
 * `TauCeti.ExactStructure.conflation_comp_of_isPushout` and
   `TauCeti.ExactStructure.conflation_comp_of_isPullback`: the cokernel of a composite of
   inflations, and the kernel of a composite of deflations, computed as a pushout resp. pullback.
@@ -64,7 +65,7 @@ variable (S : ShortComplex C) {X' Q : C} {u : S.X₁ ⟶ X'} {v : S.X₂ ⟶ Q} 
 
 /-- The morphism `Q ⟶ S.X₃` out of a cobase change of `S.f` along `u`, induced by `S.g` on the
 one summand and by `0` on the other. -/
-@[expose] noncomputable def cobaseChangeπ (sq : IsPushout S.f u v w) : Q ⟶ S.X₃ :=
+noncomputable def cobaseChangeπ (sq : IsPushout S.f u v w) : Q ⟶ S.X₃ :=
   sq.desc S.g 0 (by simp [S.zero])
 
 @[reassoc (attr := simp)]
@@ -77,16 +78,21 @@ theorem inr_cobaseChangeπ (sq : IsPushout S.f u v w) : w ≫ cobaseChangeπ S s
 
 /-- The cobase change of a short complex `S` along `u : S.X₁ ⟶ X'`: the short complex
 `X' ⟶ Q ⟶ S.X₃` attached to a pushout square of `S.f` along `u`. -/
-@[expose] noncomputable def cobaseChange (sq : IsPushout S.f u v w) : ShortComplex C :=
+noncomputable def cobaseChange (sq : IsPushout S.f u v w) : ShortComplex C :=
   ShortComplex.mk w (cobaseChangeπ S sq) (by simp)
 
-@[simp] theorem cobaseChange_X₁ (sq : IsPushout S.f u v w) : (cobaseChange S sq).X₁ = X' := rfl
-@[simp] theorem cobaseChange_X₂ (sq : IsPushout S.f u v w) : (cobaseChange S sq).X₂ = Q := rfl
-@[simp] theorem cobaseChange_X₃ (sq : IsPushout S.f u v w) : (cobaseChange S sq).X₃ = S.X₃ := rfl
-@[simp] theorem cobaseChange_f (sq : IsPushout S.f u v w) : (cobaseChange S sq).f = w := rfl
+/-- The defining equation for `cobaseChange`. -/
+theorem cobaseChange_def (sq : IsPushout S.f u v w) :
+    cobaseChange S sq = ShortComplex.mk w (cobaseChangeπ S sq) (by simp) := (rfl)
+
+@[simp] theorem cobaseChange_X₁ (sq : IsPushout S.f u v w) : (cobaseChange S sq).X₁ = X' := (rfl)
+@[simp] theorem cobaseChange_X₂ (sq : IsPushout S.f u v w) : (cobaseChange S sq).X₂ = Q := (rfl)
+@[simp] theorem cobaseChange_X₃ (sq : IsPushout S.f u v w) : (cobaseChange S sq).X₃ = S.X₃ := (rfl)
+@[simp] theorem cobaseChange_f (sq : IsPushout S.f u v w) : HEq (cobaseChange S sq).f w :=
+  (HEq.rfl)
 
 @[simp] theorem cobaseChange_g (sq : IsPushout S.f u v w) :
-    (cobaseChange S sq).g = cobaseChangeπ S sq := rfl
+    HEq (cobaseChange S sq).g (cobaseChangeπ S sq) := (HEq.rfl)
 
 end CobaseChange
 
@@ -96,7 +102,7 @@ variable (S : ShortComplex C) {Z' Q : C} {u : Z' ⟶ S.X₃} {v : Q ⟶ S.X₂} 
 
 /-- The morphism `S.X₁ ⟶ Q` into a base change of `S.g` along `u`, induced by `S.f` on the one
 factor and by `0` on the other. -/
-@[expose] noncomputable def baseChangeι (sq : IsPullback v w S.g u) : S.X₁ ⟶ Q :=
+noncomputable def baseChangeι (sq : IsPullback v w S.g u) : S.X₁ ⟶ Q :=
   sq.lift S.f 0 (by simp [S.zero])
 
 @[reassoc (attr := simp)]
@@ -109,16 +115,21 @@ theorem baseChangeι_snd (sq : IsPullback v w S.g u) : baseChangeι S sq ≫ w =
 
 /-- The base change of a short complex `S` along `u : Z' ⟶ S.X₃`: the short complex
 `S.X₁ ⟶ Q ⟶ Z'` attached to a pullback square of `S.g` along `u`. -/
-@[expose] noncomputable def baseChange (sq : IsPullback v w S.g u) : ShortComplex C :=
+noncomputable def baseChange (sq : IsPullback v w S.g u) : ShortComplex C :=
   ShortComplex.mk (baseChangeι S sq) w (by simp)
 
-@[simp] theorem baseChange_X₁ (sq : IsPullback v w S.g u) : (baseChange S sq).X₁ = S.X₁ := rfl
-@[simp] theorem baseChange_X₂ (sq : IsPullback v w S.g u) : (baseChange S sq).X₂ = Q := rfl
-@[simp] theorem baseChange_X₃ (sq : IsPullback v w S.g u) : (baseChange S sq).X₃ = Z' := rfl
-@[simp] theorem baseChange_g (sq : IsPullback v w S.g u) : (baseChange S sq).g = w := rfl
+/-- The defining equation for `baseChange`. -/
+theorem baseChange_def (sq : IsPullback v w S.g u) :
+    baseChange S sq = ShortComplex.mk (baseChangeι S sq) w (by simp) := (rfl)
+
+@[simp] theorem baseChange_X₁ (sq : IsPullback v w S.g u) : (baseChange S sq).X₁ = S.X₁ := (rfl)
+@[simp] theorem baseChange_X₂ (sq : IsPullback v w S.g u) : (baseChange S sq).X₂ = Q := (rfl)
+@[simp] theorem baseChange_X₃ (sq : IsPullback v w S.g u) : (baseChange S sq).X₃ = Z' := (rfl)
+@[simp] theorem baseChange_g (sq : IsPullback v w S.g u) : HEq (baseChange S sq).g w :=
+  (HEq.rfl)
 
 @[simp] theorem baseChange_f (sq : IsPullback v w S.g u) :
-    (baseChange S sq).f = baseChangeι S sq := rfl
+    HEq (baseChange S sq).f (baseChangeι S sq) := (HEq.rfl)
 
 end BaseChange
 

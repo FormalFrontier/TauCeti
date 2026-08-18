@@ -131,7 +131,7 @@ variable (E : ExactStructure C) (P : ObjectProperty C)
 
 /-- The conflations induced on a full subcategory: the short complexes of the subcategory whose
 image in the ambient category is a conflation. -/
-def conflationClassFullSubcategory : ConflationClass P.FullSubcategory where
+private def conflationClassFullSubcategory : ConflationClass P.FullSubcategory where
   Conflation S := E.Conflation (S.map P.ι)
   isKernelCokernelPair _ hS := (E.isKernelCokernelPair _ hS).of_map P.ι
   isClosedUnderIsomorphisms :=
@@ -140,13 +140,13 @@ def conflationClassFullSubcategory : ConflationClass P.FullSubcategory where
 variable {E P}
 
 @[simp]
-theorem conflationClassFullSubcategory_conflation (S : ShortComplex P.FullSubcategory) :
+private theorem conflationClassFullSubcategory_conflation (S : ShortComplex P.FullSubcategory) :
     (E.conflationClassFullSubcategory P).Conflation S ↔ E.Conflation (S.map P.ι) :=
   Iff.rfl
 
 /-- A short complex of the subcategory admitting a splitting is a conflation of the induced
 class, because a splitting is carried to a splitting by the additive inclusion functor. -/
-theorem conflation_fullSubcategory_of_splitting {S : ShortComplex P.FullSubcategory}
+private theorem conflation_fullSubcategory_of_splitting {S : ShortComplex P.FullSubcategory}
     (s : S.Splitting) : (E.conflationClassFullSubcategory P).Conflation S :=
   E.conflation_of_splitting (s.map P.ι)
 
@@ -155,7 +155,7 @@ section ZeroObject
 variable [P.ContainsZero]
 
 /-- E0 for the induced class: identity morphisms are inflations. -/
-theorem isInflation_id_fullSubcategory (X : P.FullSubcategory) :
+private theorem isInflation_id_fullSubcategory (X : P.FullSubcategory) :
     (E.conflationClassFullSubcategory P).IsInflation (𝟙 X) :=
   (ConflationClass.isInflation_iff _ _).mpr ⟨0, 0, by simp,
     conflation_fullSubcategory_of_splitting
@@ -163,7 +163,7 @@ theorem isInflation_id_fullSubcategory (X : P.FullSubcategory) :
         inferInstance (isZero_zero _))⟩
 
 /-- E0op for the induced class: identity morphisms are deflations. -/
-theorem isDeflation_id_fullSubcategory (X : P.FullSubcategory) :
+private theorem isDeflation_id_fullSubcategory (X : P.FullSubcategory) :
     (E.conflationClassFullSubcategory P).IsDeflation (𝟙 X) :=
   (ConflationClass.isDeflation_iff _ _).mpr ⟨0, 0, by simp,
     conflation_fullSubcategory_of_splitting
@@ -176,7 +176,7 @@ end ZeroObject
 /-- E1 for the induced class: a composite of inflations is an inflation. This is where extension
 closure is needed — the cokernel of the composite is an extension of the two cokernels, by the
 Noether conflation `TauCeti.ExactStructure.exists_conflation_comp`. -/
-theorem isInflation_comp_fullSubcategory (hP : E.IsExtensionClosed P)
+private theorem isInflation_comp_fullSubcategory (hP : E.IsExtensionClosed P)
     {X Y W : P.FullSubcategory} (i : X ⟶ Y) (j : Y ⟶ W)
     (hi : (E.conflationClassFullSubcategory P).IsInflation i)
     (hj : (E.conflationClassFullSubcategory P).IsInflation j) :
@@ -190,7 +190,7 @@ theorem isInflation_comp_fullSubcategory (hP : E.IsExtensionClosed P)
   simpa using hc
 
 /-- E1op for the induced class: a composite of deflations is a deflation. -/
-theorem isDeflation_comp_fullSubcategory (hP : E.IsExtensionClosed P)
+private theorem isDeflation_comp_fullSubcategory (hP : E.IsExtensionClosed P)
     {W Y Z : P.FullSubcategory} (q : W ⟶ Y) (p : Y ⟶ Z)
     (hq : (E.conflationClassFullSubcategory P).IsDeflation q)
     (hp : (E.conflationClassFullSubcategory P).IsDeflation p) :
@@ -209,7 +209,8 @@ the subcategory, and the cobase-changed morphism is again an inflation.
 The pushout is computed in the ambient category; extension closure is what places it back in the
 subcategory, since by `TauCeti.ExactStructure.conflation_cobaseChange` it is an extension of the
 cokernel of the inflation by the target of the arbitrary morphism. -/
-theorem exists_isPushout_fullSubcategory (hP : E.IsExtensionClosed P) {X Y T : P.FullSubcategory}
+private theorem exists_isPushout_fullSubcategory (hP : E.IsExtensionClosed P)
+    {X Y T : P.FullSubcategory}
     {i : X ⟶ Y} (hi : (E.conflationClassFullSubcategory P).IsInflation i) (f : X ⟶ T) :
     ∃ (Q : P.FullSubcategory) (v : Y ⟶ Q) (w : T ⟶ Q),
       IsPushout i f v w ∧ (E.conflationClassFullSubcategory P).IsInflation w := by
@@ -220,6 +221,7 @@ theorem exists_isPushout_fullSubcategory (hP : E.IsExtensionClosed P) {X Y T : P
   have sqC : IsPushout (P.ι.map i) (P.ι.map f) (pushout.inl (P.ι.map i) (P.ι.map f))
       (pushout.inr (P.ι.map i) (P.ι.map f)) := IsPushout.of_hasPushout _ _
   have hconf := E.conflation_cobaseChange hS' sqC
+  rw [cobaseChange_def ((ShortComplex.mk i p hip).map P.ι) sqC] at hconf
   refine ⟨⟨_, hP.prop_X₂ hconf T.property Z.property⟩,
     ObjectProperty.homMk (pushout.inl _ _), ObjectProperty.homMk (pushout.inr _ _),
     IsPushout.of_map_of_faithful P.ι sqC, (ConflationClass.isInflation_iff _ _).mpr
@@ -229,7 +231,8 @@ theorem exists_isPushout_fullSubcategory (hP : E.IsExtensionClosed P) {X Y T : P
 
 /-- E2op for the induced class: a pullback of a deflation along an arbitrary morphism exists
 inside the subcategory, and the base-changed morphism is again a deflation. -/
-theorem exists_isPullback_fullSubcategory (hP : E.IsExtensionClosed P) {Y Z T : P.FullSubcategory}
+private theorem exists_isPullback_fullSubcategory (hP : E.IsExtensionClosed P)
+    {Y Z T : P.FullSubcategory}
     {p : Y ⟶ Z} (hp : (E.conflationClassFullSubcategory P).IsDeflation p) (f : T ⟶ Z) :
     ∃ (Q : P.FullSubcategory) (v : Q ⟶ Y) (w : Q ⟶ T),
       IsPullback v w p f ∧ (E.conflationClassFullSubcategory P).IsDeflation w := by
@@ -241,6 +244,7 @@ theorem exists_isPullback_fullSubcategory (hP : E.IsExtensionClosed P) {Y Z T : 
       (pullback.snd (P.ι.map p) (P.ι.map f)) (P.ι.map p) (P.ι.map f) :=
     IsPullback.of_hasPullback _ _
   have hconf := E.conflation_baseChange hS' sqC
+  rw [baseChange_def ((ShortComplex.mk i p hip).map P.ι) sqC] at hconf
   refine ⟨⟨_, hP.prop_X₂ hconf X.property T.property⟩,
     ObjectProperty.homMk (pullback.fst _ _), ObjectProperty.homMk (pullback.snd _ _),
     IsPullback.of_map_of_faithful P.ι sqC, (ConflationClass.isDeflation_iff _ _).mpr
@@ -288,6 +292,7 @@ variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts] (hP : E.IsExtensionClo
 
 /-- A short complex of the subcategory is a conflation of the induced exact structure exactly
 when its image in the ambient category is a conflation. -/
+@[simp]
 theorem fullSubcategory_conflation_iff (S : ShortComplex P.FullSubcategory) :
     (E.fullSubcategory P hP).Conflation S ↔ E.Conflation (S.map P.ι) :=
   Iff.rfl
