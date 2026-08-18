@@ -111,9 +111,9 @@ private theorem exists_isProjectiveLimit_of_finite [Finite ι]
   have hrestrict : I.restrict ∘ E =
       Finset.restrict₂ (Finset.subset_univ I) := by
     funext x i
-    change E x i = x ⟨i, Finset.mem_univ (i : ι)⟩
-    exact MeasurableEquiv.piCongrLeft_apply_apply
-      (β := X) e x ⟨i, Finset.mem_univ (i : ι)⟩
+    simpa [Function.comp_apply, Finset.restrict_def, Finset.restrict₂_def, E, e] using
+      MeasurableEquiv.piCongrLeft_apply_apply
+        (β := X) e x ⟨i, Finset.mem_univ (i : ι)⟩
   rw [hrestrict, hP Finset.univ I (Finset.subset_univ I)]
 
 /-- An infinite countable projective family is realized by enumerating its coordinates and
