@@ -94,7 +94,7 @@ theorem mem_valuationSubring_iff_ord_nonneg (v : _root_.Valuation F ℤᵐ⁰) {
     f ∈ v.valuationSubring ↔ 0 ≤ ord v f := by
   rcases eq_or_ne f 0 with rfl | hf
   · simp
-  · rw [show f ∈ v.valuationSubring ↔ v f ≤ 1 from Iff.rfl,
+  · rw [_root_.Valuation.mem_valuationSubring_iff,
       valuation_eq_exp_neg_ord v hf, ← WithZero.exp_zero, WithZero.exp_le_exp]
     omega
 
@@ -132,17 +132,6 @@ theorem ord_add_eq_min_of_ord_ne (v : _root_.Valuation F ℤᵐ⁰) {f g : F}
   rw [valuation_eq_exp_neg_ord v hf, valuation_eq_exp_neg_ord v hg,
     valuation_eq_exp_neg_ord v hfg, exp_max, WithZero.exp_inj] at hsum
   omega
-
-/-- The additive order on nonzero field elements, as an additive homomorphism. -/
-noncomputable def ordAddMonoidHom (v : _root_.Valuation F ℤᵐ⁰) : Additive Fˣ →+ ℤ where
-  toFun f := ord v ((Additive.toMul f : Fˣ) : F)
-  map_zero' := by simp
-  map_add' f g := ord_mul v (Units.ne_zero _) (Units.ne_zero _)
-
-@[simp]
-theorem ordAddMonoidHom_apply (v : _root_.Valuation F ℤᵐ⁰) (f : Additive Fˣ) :
-    ordAddMonoidHom v f = ord v ((Additive.toMul f : Fˣ) : F) :=
-  (rfl)
 
 /-- Surjectivity of `v` makes its value group the whole of `ℤᵐ⁰`. -/
 theorem valueGroup_eq_top_of_surjective (v : _root_.Valuation F ℤᵐ⁰)
@@ -233,6 +222,8 @@ theorem valuationSubring_ne_top_of_surjective (v : _root_.Valuation F ℤᵐ⁰)
 /-- Two equivalent normalized `ℤᵐ⁰`-valuations are equal. -/
 theorem eq_of_isEquiv_of_surjective {v w : _root_.Valuation F ℤᵐ⁰}
     (hv : Function.Surjective v) (hw : Function.Surjective w) (h : v.IsEquiv w) : v = w := by
+  -- Equivalence identifies the valuation rings, so it preserves the sign and vanishing
+  -- of the associated additive orders.
   have hmem : ∀ f : F, 0 ≤ ord v f ↔ 0 ≤ ord w f := fun f => by
     rw [← mem_valuationSubring_iff_ord_nonneg v, ← mem_valuationSubring_iff_ord_nonneg w]
     exact h.le_one_iff_le_one
@@ -244,6 +235,7 @@ theorem eq_of_isEquiv_of_surjective {v w : _root_.Valuation F ℤᵐ⁰}
     have h₁ := hmem f
     have h₂ := hle f
     omega
+  -- Choose order-one elements for both normalized valuations and compare their orders.
   obtain ⟨t, ht⟩ := ord_surjective v hv 1
   obtain ⟨s, hs⟩ := ord_surjective w hw 1
   have ht0 : t ≠ 0 := fun h' => by simp [h'] at ht
@@ -256,6 +248,8 @@ theorem eq_of_isEquiv_of_surjective {v w : _root_.Valuation F ℤᵐ⁰}
     have h₁ := (hmem s).mpr (by omega)
     have h₂ := (hzero s).not.mpr (by omega)
     omega
+  -- Dividing `s` by the appropriate power of `t` has order zero for both valuations;
+  -- this forces the chosen `v`-uniformizer `t` to have `w`-order one.
   have hone : ord w t = 1 := by
     have hst : ord v (s / t ^ ord v s) = 0 := by
       rw [ord_div_zpow v hs0 ht0, ht]
@@ -263,6 +257,8 @@ theorem eq_of_isEquiv_of_surjective {v w : _root_.Valuation F ℤᵐ⁰}
     have hW := (hzero _).mp hst
     rw [ord_div_zpow w hs0 ht0, hs] at hW
     nlinarith [htW, hsV]
+  -- Removing the `v`-order of an arbitrary nonzero element now shows that both orders,
+  -- and hence both valuations, agree pointwise.
   refine _root_.Valuation.ext fun f => ?_
   rcases eq_or_ne f 0 with rfl | hf
   · simp
