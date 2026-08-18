@@ -402,6 +402,12 @@ instance : IsScalarTower k P.integers F :=
 evaluation map `f ↦ f(P)` is `IsLocalRing.residue P.integers`. -/
 noncomputable abbrev ResidueField : Type v := IsLocalRing.ResidueField P.integers
 
+/-- Evaluation at a place vanishes exactly on elements of positive valuation. -/
+@[simp]
+theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
+    IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by
+  rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_valuation_lt_one]
+
 noncomputable instance : Algebra k P.ResidueField :=
   ((IsLocalRing.residue P.integers).comp (algebraMap k P.integers)).toAlgebra
 
