@@ -90,7 +90,7 @@ theorem markovExchangeable_iff {μ : Measure Ω} {X : ℕ → Ω → α} :
   Iff.rfl
 
 /-- Under finite exchangeability at `n`, rearranging a path leaves its probability unchanged. -/
-theorem ExchangeableAt.prefixLaw_singleton_comp [Countable α] [MeasurableSingletonClass α]
+theorem ExchangeableAt.prefixLaw_singleton_comp [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} {n : ℕ} (h : ExchangeableAt μ X n)
     (hX : ∀ i, AEMeasurable (X i) μ) (w : Fin n → α) (σ : Equiv.Perm (Fin n)) :
     prefixLaw μ X n {w ∘ σ} = prefixLaw μ X n {w} := by
@@ -112,7 +112,7 @@ theorem ExchangeableAt.prefixLaw_singleton_comp [Countable α] [MeasurableSingle
 
 /-- **An exchangeable process is Markov exchangeable.** Two paths with a common start and common
 transition counts are rearrangements of each other, so exchangeability already equates them. -/
-theorem Exchangeable.markovExchangeable [Countable α] [MeasurableSingletonClass α]
+theorem Exchangeable.markovExchangeable [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} (h : Exchangeable μ X) (hX : ∀ i, AEMeasurable (X i) μ) :
     MarkovExchangeable μ X := by
   intro n u v h0 hcount
