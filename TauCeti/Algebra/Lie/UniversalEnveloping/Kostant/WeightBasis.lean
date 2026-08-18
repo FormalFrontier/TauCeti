@@ -128,12 +128,11 @@ theorem eq_zero_of_isCartanWeightVector_of_sum_eq_zero {s : Finset (κ → ℤ)}
           (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j))) (μ j) :=
       iSupIndep_iInf_eigenspace fun j =>
         ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j))
-    change iSupIndep fun μ : κ → ℤ =>
-      ⨅ j : κ, Module.End.eigenspace
-        (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j))) ((μ j : ℚ))
-    exact hind'.comp fun μ ν hμν => by
-      ext j
-      exact_mod_cast congr_fun hμν j
+    suffices iSupIndep (fun μ : κ → ℤ => jointWeightSpace h ρ μ) by simpa only
+    simpa only [jointWeightSpace, Function.comp_def] using
+      hind'.comp fun μ ν hμν => by
+        ext j
+        exact_mod_cast congr_fun hμν j
   exact (iSupIndep_iff_finsetSum_eq_zero_imp_eq_zero _).1 hind s w
     (fun l hl => (mem_jointWeightSpace_iff h ρ).2 (hw l hl)) hsum l₀ hl₀
 
