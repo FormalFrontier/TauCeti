@@ -122,24 +122,4 @@ theorem comp_commutatorAlgHom {A : Type w} [CommSemiring A] [Algebra R A]
           (toConv (phi.comp Algebra.TensorProduct.includeLeft))
           (toConv (phi.comp Algebra.TensorProduct.includeRight))
 
-/-- The commutator with the identity in the first variable is the identity point. -/
-@[simp]
-theorem productMap_one_id_comp_commutatorAlgHom :
-    (Algebra.TensorProduct.productMap
-        (1 : WithConv (H →ₐ[R] H)).ofConv (AlgHom.id R H)).comp
-      (commutatorAlgHom (R := R) (H := H)) =
-        (1 : WithConv (H →ₐ[R] H)).ofConv := by
-  simpa using productMap_comp_commutatorAlgHom (R := R) (H := H)
-    (1 : WithConv (H →ₐ[R] H)) (toConv (AlgHom.id R H))
-
-/-- The commutator with the identity in the second variable is the identity point. -/
-@[simp]
-theorem productMap_id_one_comp_commutatorAlgHom :
-    (Algebra.TensorProduct.productMap
-        (AlgHom.id R H) (1 : WithConv (H →ₐ[R] H)).ofConv).comp
-      (commutatorAlgHom (R := R) (H := H)) =
-        (1 : WithConv (H →ₐ[R] H)).ofConv := by
-  simpa using productMap_comp_commutatorAlgHom (R := R) (H := H)
-    (toConv (AlgHom.id R H)) (1 : WithConv (H →ₐ[R] H))
-
 end TauCeti.HopfAlgebra
