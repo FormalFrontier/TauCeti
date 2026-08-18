@@ -85,6 +85,15 @@ jobs:
       # series by walking every commit, so a shallow checkout would truncate the charts.
       - uses: actions/checkout@v4
         with:
+          # Same reasoning as ci.yml's build checkout, and it matters more here: this job
+          # elaborates TauCeti twice (the doc-gen4 build and the examples build), and the token
+          # this workflow grants carries `pages: write` and `id-token: write`, not just
+          # `contents: read`. Left in the workspace .git/config, it would be readable by code
+          # running at elaboration time, which could then publish to the project's Pages site.
+          # Nothing in this job authenticates to GitHub: the only git command is a clone of the
+          # public roadmap repository, the history this checkout fetches is used locally, and the
+          # branch update lives in the separate advance-docgen-ref job with its own GH_TOKEN.
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Clone the roadmap repository (full history, for its chart)

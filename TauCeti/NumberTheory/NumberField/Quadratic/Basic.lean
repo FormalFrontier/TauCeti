@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,18 +21,19 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 
 ## Main results
 
-* `TauCeti.NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
-* `TauCeti.NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
-* `TauCeti.NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
-* `TauCeti.NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
-* `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
-* `TauCeti.NumberField.not_isSquare_radicand`: the radicand is not a rational square.
-* `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
-* `TauCeti.NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
-* `TauCeti.NumberField.discr_one_halfGen`: the discriminant of `{1, (1+θ)/2}` over `ℚ` is `d`.
+* `NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
+* `NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
+* `NumberField.gen_sq`: the integral generator squares to the radicand in `𝓞 K`.
+* `NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
+* `NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
+* `NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `NumberField.not_isSquare_radicand`: the radicand is not a rational square.
+* `NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
+* `NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
+* `NumberField.discr_one_halfGen`: the discriminant of `{1, (1+θ)/2}` over `ℚ` is `d`.
 
 The trace and discriminant computations reuse the generic quadratic-extension API
-`TauCeti.NumberField.trace_eq_zero_of_sq_ratCast` and
+`NumberField.trace_eq_zero_of_sq_ratCast` and
 `TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap` from `TauCeti.FieldTheory.Trace`.
 -/
 
@@ -40,7 +42,7 @@ public section
 open Polynomial NumberField Module
 open scoped Matrix
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
@@ -61,16 +63,20 @@ theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
     minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
 
 omit [NumberField K] in
+/-- The integral generator squares to the radicand: `θ² = d` in `𝓞 K`. -/
+@[simp] theorem gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
+  have hae := minpoly.aeval ℤ θ
+  rw [hmin] at hae
+  have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
+    simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
+  linear_combination h2
+
+omit [NumberField K] in
 /-- The generator squares to the radicand in `K`: `θ² = d`. -/
 @[simp] theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℤ K d := by
-  have h : θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
-    have hae := minpoly.aeval ℤ θ
-    rw [hmin] at hae
-    have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
-      simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
-    linear_combination h2
-  have := congrArg (algebraMap (𝓞 K) K) h
+  have := congrArg (algebraMap (𝓞 K) K) (gen_sq hmin)
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
 omit [NumberField K] in
@@ -138,4 +144,4 @@ theorem discr_one_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d)
   rw [hP, Algebra.discr_of_matrix_mulVec, discr_one_gen hmin hgen, Matrix.det_fin_two_of]
   push_cast; ring
 
-end TauCeti.NumberField
+end NumberField

@@ -123,12 +123,40 @@ noncomputable abbrev componentGroupPoints (H : FiniteTypeCommHopfAlgCat.{u, u} k
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
     (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k)
 
+/-- Locally expose the group structure carried by the bundled rational component group. -/
+noncomputable local instance componentGroupPointsGroup
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) : Group (componentGroupPoints H) :=
+  (componentGroupPoints H).str
+
 /-- The quotient homomorphism from rational points to the rational pointwise component group. -/
 noncomputable def componentGroupPointsMk (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k) ⟶ componentGroupPoints H :=
   CommHopfAlgCat.pointwiseQuotientMk H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
     (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k)
+
+/-- The quotient homomorphism from rational points to the rational component group is
+surjective. -/
+theorem componentGroupPointsMk_surjective (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    Function.Surjective (componentGroupPointsMk H) := by
+  unfold componentGroupPointsMk
+  exact CommHopfAlgCat.pointwiseQuotientMk_surjective H.obj
+    (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k)
+
+/-- A rational point maps to the identity of the rational component group exactly when it lies
+in the identity-component subgroup. -/
+@[simp]
+theorem componentGroupPointsMk_eq_one_iff (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (g : HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k)) :
+    componentGroupPointsMk H g = 1 ↔
+      g ∈ CommHopfAlgCat.quotientPointsSubgroup H.obj
+        (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+        (CommAlgCat.of k k) := by
+  unfold componentGroupPointsMk
+  exact CommHopfAlgCat.pointwiseQuotientMk_eq_one_iff H.obj
+    (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k) g
 
 /-- A rational point belongs to `H⁰(k)` exactly when its kernel point belongs to the identity
 component of `Spec H`. -/
@@ -293,6 +321,15 @@ noncomputable def componentGroupPointsEquivConnectedComponents
   Equiv.ofBijective (componentGroupPointsToConnectedComponents H)
     ⟨componentGroupPointsToConnectedComponents_injective H,
       componentGroupPointsToConnectedComponents_surjective H⟩
+
+/-- The canonical equivalence from the rational pointwise component group is the component map
+on elements. -/
+@[simp]
+theorem componentGroupPointsEquivConnectedComponents_apply
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (q : componentGroupPoints H) :
+    componentGroupPointsEquivConnectedComponents H q =
+      componentGroupPointsToConnectedComponents H q :=
+  (rfl)
 
 /-- The rational pointwise component group of a finite-type affine group over an algebraically
 closed field is finite. -/

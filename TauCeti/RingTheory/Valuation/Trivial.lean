@@ -18,13 +18,13 @@ the support map of the valuation spectrum.
 
 ## Main definitions
 
-* `TauCeti.Valuation.trivialValuation 𝔭` : The trivial valuation attached to a prime
+* `Valuation.trivialValuation 𝔭` : The trivial valuation attached to a prime
   ideal `𝔭`, with values in any linearly ordered commutative monoid with zero `Γ₀`
   (the valuation-spectrum section specializes it to `WithZero (Multiplicative ℤ)`).
 
 ## Main results
 
-* `TauCeti.Valuation.trivialValuation_eq_zero_iff` : The trivial valuation vanishes exactly
+* `Valuation.trivialValuation_eq_zero_iff` : The trivial valuation vanishes exactly
   on `𝔭`.
 
 ## References
@@ -34,7 +34,7 @@ the support map of the valuation spectrum.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
 variable {A : Type*} [CommRing A] {Γ₀ : Type*} [LinearOrderedCommMonoidWithZero Γ₀]
 
@@ -68,4 +68,4 @@ lemma trivialValuation_eq_one_iff [Nontrivial Γ₀] {𝔭 : Ideal A} [𝔭.IsPr
   rw [trivialValuation_apply]
   split <;> simp_all
 
-end TauCeti.Valuation
+end Valuation

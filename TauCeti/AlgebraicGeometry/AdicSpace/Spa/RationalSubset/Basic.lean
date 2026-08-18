@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+import TauCeti.RingTheory.Valuation.CofinalIdeal.Greatest
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
 
 /-!
@@ -18,7 +19,7 @@ For a finite numerator set `T` and a denominator `s`, the rational subset is the
 `spa A⁺` of the basic open `Spv(A)(T/s)`:
 
 ```text
-R(T/s) = {v ∈ spa A⁺ ; v(t) ≤ v(s) ≠ 0 for every t ∈ T} = spa A⁺ ∩ Spv(A)(T/s).
+R(T/s) = {v ∈ spa A⁺ | v(t) ≤ v(s) ≠ 0 for every t ∈ T} = spa A⁺ ∩ Spv(A)(T/s).
 ```
 
 As with `spa` itself, the definition is stated for arbitrary data: no hypothesis relates the
@@ -70,6 +71,12 @@ layer deferred above.
   relatively open in the subspace `spa A⁺`.
 * `TauCeti.ValuationSpectrum.rationalSubset_inter` : the intersection identity above — the
   set-level half of Remark 7.30(5).
+* `TauCeti.ValuationSpectrum.exists_refinement_of_subset` : the re-presentation step of Wedhorn
+  §8.2 — from `R(T'/s') ⊆ R(T/s)`, a presentation `R(T''/(s · s'))` of the smaller subset whose
+  denominator has each original denominator as a factor and whose numerators contain `t · s'` for
+  `t ∈ T` and `t' · s` for `t' ∈ T'`. Constructing a restriction map needs one further, algebraic
+  input beyond these, the standing `HasDenominatorPower` hypothesis for the new pair, which this
+  file does not supply.
 * `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top` : a finite set
   generating the unit ideal gives a standard rational cover, the forward implication of
   Corollary 7.53.
@@ -195,6 +202,36 @@ theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s�
   rw [rationalSubset_def, rationalSubset_def, rationalSubset_def, ← basicOpenFinset_inter]
   exact (Set.inter_inter_distrib_left _ _ _).symm
 
+/-! ### Re-presenting a contained rational subset -/
+
+open scoped Classical Pointwise in
+/-- **A containment of rational subsets yields a presentation of the smaller one over the product
+denominator.** If `R(T'/s') ⊆ R(T/s)` then `R(T'/s')` has a presentation `R(T''/(s · s'))` whose
+numerators contain `t · s'` for every `t ∈ T` and `t' · s` for every `t' ∈ T'`.
+
+The denominator is the point: it is divisible by `s`, so in a localisation presented by this pair
+`s` is invertible by construction, and each numerator condition makes the fractions of one of the
+two original presentations distinguished fractions of the new one. Those are the *set-level* inputs
+a restriction map `A⟨T/s⟩ → A⟨T''/(s · s')⟩` is built from, and this is the re-presentation step of
+Wedhorn §8.2.
+
+**They are not by themselves enough to construct that map.** A presentation also carries the
+standing hypothesis `HasDenominatorPower` for the new pair, an algebraic obligation about the ideal
+of definition that this file does not supply — nothing here mentions coordinate rings at all.
+
+Both numerator conditions are given rather than only the one for `T`, because discharging that
+standing hypothesis for a product denominator needs the fractions of *each* factor; a consumer
+holding one alone could not use it. -/
+theorem exists_refinement_of_subset (Aplus : Subring A) (T T' : Finset A) (s s' : A)
+    (h : rationalSubset Aplus T' s' ⊆ rationalSubset Aplus T s) :
+    ∃ T'' : Finset A, rationalSubset Aplus T' s' = rationalSubset Aplus T'' (s * s')
+      ∧ (∀ t ∈ T, t * s' ∈ T'') ∧ ∀ t' ∈ T', t' * s ∈ T'' :=
+  ⟨insert s T * insert s' T', by rw [← rationalSubset_inter, Set.inter_eq_right.mpr h],
+    fun _ ht ↦ Finset.mul_mem_mul (Finset.mem_insert_of_mem ht) (Finset.mem_insert_self s' T'),
+    fun t' ht' ↦ by
+      rw [mul_comm t' s]
+      exact Finset.mul_mem_mul (Finset.mem_insert_self s T) (Finset.mem_insert_of_mem ht')⟩
+
 /-- Generalization of the pointwise forward implication of Wedhorn Corollary 7.53 (which assumes
 a complete Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if `T`
 generates the unit ideal of `A`, then every point `v ∈ spa Aplus` belongs to the standard rational
@@ -202,23 +239,13 @@ subset `R(T/s)` for some `s ∈ T`. -/
 theorem mem_rationalSubset_of_span_eq_top_of_mem_spa (Aplus : Subring A) {T : Finset A}
     (hT : Ideal.span (T : Set A) = ⊤) {v : Spv A} (hv : v ∈ spa Aplus) :
     ∃ s ∈ T, v ∈ rationalSubset Aplus T s := by
-  have hT_ne : T.Nonempty := by
-    by_contra h_empty
-    rw [Finset.not_nonempty_iff_eq_empty.mp h_empty, Finset.coe_empty, Ideal.span_empty] at hT
-    have h1 : (1 : A) ∈ (⊥ : Ideal A) := hT ▸ Submodule.mem_top
-    rw [Ideal.mem_bot] at h1
-    exact v.toValuativeRel.not_vle_one_zero (h1 ▸ v.toValuativeRel.vle_refl 0)
-  obtain ⟨s, hs, hmax'⟩ := Finset.exists_max_image T v.valuation hT_ne
+  obtain ⟨s, hs, hs0, hmax'⟩ :=
+    Valuation.exists_mem_max_restrict_ne_zero (v := v.valuation) (I := (⊤ : Ideal A))
+      hT rfl (a₀ := 1) Submodule.mem_top (by simp)
   have hmax : ∀ t ∈ T, v.toValuativeRel.vle t s := fun t ht ↦
-    (valuation_le_iff v t s).mp (hmax' t ht)
-  refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun h_zero ↦ ?_⟩⟩
-  have h_supp : (T : Set A) ⊆ (v.supp : Set A) := fun t ht ↦
-    (mem_supp_iff v t).mpr (v.toValuativeRel.vle_trans (hmax t ht) h_zero)
-  have h_top_supp : Ideal.span (T : Set A) ≤ v.supp := Ideal.span_le.mpr h_supp
-  rw [hT] at h_top_supp
-  have h1 : (1 : A) ∈ v.supp := h_top_supp Submodule.mem_top
-  have h1_vle : v.toValuativeRel.vle 1 0 := (mem_supp_iff v 1).mp h1
-  exact v.toValuativeRel.not_vle_one_zero h1_vle
+    (valuation_le_iff v t s).mp (v.valuation.restrict_le_iff.mp (hmax' t ht))
+  refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun hzero ↦ ?_⟩⟩
+  exact hs0 (by simpa using (valuation_le_iff v s 0).mpr hzero)
 
 /-- Generalization of the forward implication of Wedhorn Corollary 7.53 (which assumes a complete
 Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if a finite set

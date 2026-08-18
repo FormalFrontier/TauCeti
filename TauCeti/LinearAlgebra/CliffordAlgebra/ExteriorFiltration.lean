@@ -22,9 +22,9 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.exteriorPower_succ_disjoint_zero_form_filtration`: degree `k + 1` is
+* `CliffordAlgebra.exteriorPower_succ_disjoint_zero_form_filtration`: degree `k + 1` is
   disjoint from the lower zero-form filtration.
-* `TauCeti.CliffordAlgebra.zeroFormFiltrationQuotientEquivExteriorPower`: the successive
+* `CliffordAlgebra.zeroFormFiltrationQuotientEquivExteriorPower`: the successive
   zero-form filtration quotient is the degree `k + 1` exterior power.
 
 ## References
@@ -35,14 +35,13 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
 
-namespace TauCeti
-
 namespace CliffordAlgebra
+
+open TauCeti.Algebra.wordFiltration
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
@@ -94,9 +93,9 @@ private theorem zero_form_filtration_succ_eq_exteriorPower_sup (k : ℕ) :
 
 /-- The successive zero-form Clifford filtration quotient is the degree `k + 1` exterior power. -/
 noncomputable def zeroFormFiltrationQuotientEquivExteriorPower (k : ℕ) :
-    FiltrationGradedPiece (0 : QuadraticForm R M) (k + 1) ≃ₗ[R] ⋀[R]^(k + 1) M :=
+    GradedPiece (ι (0 : QuadraticForm R M)) (k + 1) ≃ₗ[R] ⋀[R]^(k + 1) M :=
   (Submodule.quotEquivOfEq _ _
-    (filtrationPreviousRestricted_succ (0 : QuadraticForm R M) k)).trans
+    (previousRestricted_succ (ι (0 : QuadraticForm R M)) k)).trans
     (quotientEquivOfEqSup _ _ _ (zero_form_filtration_succ_eq_exteriorPower_sup k)
       (exteriorPower_succ_disjoint_zero_form_filtration k))
 
@@ -111,7 +110,7 @@ theorem zeroFormFiltrationQuotientEquivExteriorPower_symm_apply (k : ℕ)
   rw [zeroFormFiltrationQuotientEquivExteriorPower, LinearEquiv.trans_symm,
     LinearEquiv.trans_apply, quotientEquivOfEqSup_symm_apply]
   apply (Submodule.quotEquivOfEq _ _
-    (filtrationPreviousRestricted_succ (0 : QuadraticForm R M) k)).injective
+    (previousRestricted_succ (ι (0 : QuadraticForm R M)) k)).injective
   rw [LinearEquiv.apply_symm_apply, Submodule.quotEquivOfEq_mk]
 
 /-- The quotient equivalence sends the canonical class of a degree `k + 1` exterior element to
@@ -126,5 +125,3 @@ theorem zeroFormFiltrationQuotientEquivExteriorPower_apply (k : ℕ)
     LinearEquiv.apply_symm_apply]
 
 end CliffordAlgebra
-
-end TauCeti
