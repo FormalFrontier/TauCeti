@@ -88,6 +88,18 @@ theorem mem_comap {I : HopfIdeal R K} {f : H →ₐc[R] K} {hf : Function.Surjec
   rw [← mem_toIdeal, comap_toIdeal, Ideal.mem_comap]
   exact mem_toIdeal
 
+/-- The inverse image is the kernel of the composite with the quotient morphism. -/
+theorem comap_eq_kerOfSurjective (I : HopfIdeal R K) (f : H →ₐc[R] K)
+    (hf : Function.Surjective f) :
+    I.comap f hf =
+      kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
+        (by
+          rw [BialgHom.coe_comp]
+          exact (Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) := by
+  ext h
+  rw [mem_comap, mem_kerOfSurjective, BialgHom.comp_apply,
+    Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem, mem_toIdeal]
+
 /-- Inverse image of Hopf ideals is monotone. -/
 theorem comap_mono (f : H →ₐc[R] K) (hf : Function.Surjective f)
     {I J : HopfIdeal R K} (hIJ : I ≤ J) : I.comap f hf ≤ J.comap f hf := by
