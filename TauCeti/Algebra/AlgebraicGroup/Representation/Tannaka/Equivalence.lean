@@ -9,11 +9,18 @@ public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Reconstructi
 import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Morphism
 
 /-!
-# Tannakian reconstruction for affine group schemes
+# Pointwise Tannakian reconstruction for commutative Hopf algebras
 
 Let `H` be a commutative Hopf algebra over a field `k`, and let `A` be a commutative
 `k`-algebra. This file identifies the `A`-valued points of `H` with the tensor automorphisms of
 scalar extension on finite-dimensional `H`-comodules.
+
+The identification here is for one fixed value algebra `A`; naturality in `A`, and hence the
+statement identifying the two functors of points, is in
+`TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.GroupFunctor`. Nothing in this file is
+stated in terms of affine group schemes: the reconstruction is at the level of the coordinate
+Hopf algebra, and passing to `TauCeti.AffineGroupSchemeCat` goes through the anti-equivalence in
+`TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence`.
 
 The remaining inverse direction in the reconstruction theorem is detected by matrix
 coefficients. For a finite comodule `M`, every coefficient map is a comodule morphism from `M`
@@ -28,8 +35,8 @@ functional used to reconstruct the point, and the scalar-extended dual separates
   the point action.
 * `TauCeti.Tannaka.endOfPoint_reconstructedPoint`: a reconstructed point acts through the
   corresponding tensor-automorphism component.
-* `TauCeti.Tannaka.fgPointTensorIsoEquiv`: the Tannakian equivalence between algebra-valued
-  points and tensor automorphisms of finite-comodule scalar extension.
+* `TauCeti.Tannaka.fgPointTensorIsoEquiv`: the Tannakian equivalence, for a fixed value algebra,
+  between algebra-valued points and tensor automorphisms of finite-comodule scalar extension.
 
 ## References
 
