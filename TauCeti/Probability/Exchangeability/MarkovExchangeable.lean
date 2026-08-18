@@ -72,26 +72,28 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **Markov exchangeability**, Diaconis and Freedman's partial exchangeability: two finite paths
-with the same starting state and the same transition counts are equally likely. The countability
-and measurable-singleton conjuncts restrict this singleton-mass formulation to discrete state
-spaces, where it is non-vacuous and determines the finite-path laws. -/
+/-- **Markov exchangeability**, Diaconis and Freedman's partial exchangeability: a measurable
+process has equally likely finite paths whenever they have the same starting state and the same
+transition counts. The countability and measurable-singleton conjuncts restrict this
+singleton-mass formulation to discrete state spaces, where it is non-vacuous and determines the
+finite-path laws. -/
 def MarkovExchangeable (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
-  Countable α ∧ MeasurableSingletonClass α ∧
+  Countable α ∧ MeasurableSingletonClass α ∧ (∀ i, AEMeasurable (X i) μ) ∧
     ∀ (n : ℕ) (u v : Fin (n + 1) → α), u 0 = v 0 →
       (∀ a b, transitionCount u a b = transitionCount v a b) →
         prefixLaw μ X (n + 1) {u} = prefixLaw μ X (n + 1) {v}
 
-/-- Constructor from discrete-state instances and invariance under paths with equal transition
-counts. -/
+/-- Constructor from discrete-state instances, coordinatewise a.e. measurability, and invariance
+under paths with equal transition counts. -/
 theorem MarkovExchangeable.intro [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX : ∀ i, AEMeasurable (X i) μ)
     (h : ∀ (n : ℕ) (u v : Fin (n + 1) → α), u 0 = v 0 →
       (∀ a b, transitionCount u a b = transitionCount v a b) →
         prefixLaw μ X (n + 1) {u} = prefixLaw μ X (n + 1) {v}) :
     MarkovExchangeable μ X := by
   rw [MarkovExchangeable]
-  exact ⟨inferInstance, inferInstance, h⟩
+  exact ⟨inferInstance, inferInstance, hX, h⟩
 
 /-- The state space of a Markov exchangeable process is countable. -/
 theorem MarkovExchangeable.countable {μ : Measure Ω} {X : ℕ → Ω → α}
@@ -105,6 +107,12 @@ theorem MarkovExchangeable.measurableSingletonClass {μ : Measure Ω} {X : ℕ �
   rw [MarkovExchangeable] at h
   exact h.2.1
 
+/-- Every coordinate of a Markov exchangeable process is a.e. measurable. -/
+theorem MarkovExchangeable.aemeasurable {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : MarkovExchangeable μ X) (i : ℕ) : AEMeasurable (X i) μ := by
+  rw [MarkovExchangeable] at h
+  exact h.2.2.1 i
+
 /-- Paths with the same starting state and transition counts have the same probability under a
 Markov exchangeable process. -/
 theorem MarkovExchangeable.prefixLaw_singleton_eq {μ : Measure Ω} {X : ℕ → Ω → α}
@@ -112,17 +120,19 @@ theorem MarkovExchangeable.prefixLaw_singleton_eq {μ : Measure Ω} {X : ℕ →
     (hcount : ∀ a b, transitionCount u a b = transitionCount v a b) :
     prefixLaw μ X (n + 1) {u} = prefixLaw μ X (n + 1) {v} := by
   rw [MarkovExchangeable] at h
-  exact h.2.2 n u v h0 hcount
+  exact h.2.2.2 n u v h0 hcount
 
 /-- Simp normal form for `MarkovExchangeable`. -/
 @[simp]
 theorem markovExchangeable_iff [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} :
     MarkovExchangeable μ X ↔
-      ∀ (n : ℕ) (u v : Fin (n + 1) → α), u 0 = v 0 →
-        (∀ a b, transitionCount u a b = transitionCount v a b) →
-          prefixLaw μ X (n + 1) {u} = prefixLaw μ X (n + 1) {v} :=
-  ⟨fun h n u v => h.prefixLaw_singleton_eq n u v, MarkovExchangeable.intro⟩
+      (∀ i, AEMeasurable (X i) μ) ∧
+        ∀ (n : ℕ) (u v : Fin (n + 1) → α), u 0 = v 0 →
+          (∀ a b, transitionCount u a b = transitionCount v a b) →
+            prefixLaw μ X (n + 1) {u} = prefixLaw μ X (n + 1) {v} :=
+  ⟨fun h => ⟨h.aemeasurable, fun n u v => h.prefixLaw_singleton_eq n u v⟩,
+    fun h => MarkovExchangeable.intro h.1 h.2⟩
 
 /-- Under finite exchangeability at `n`, rearranging a path leaves its probability unchanged. -/
 theorem ExchangeableAt.prefixLaw_singleton_comp [MeasurableSingletonClass α]
@@ -150,7 +160,7 @@ transition counts are rearrangements of each other, so exchangeability already e
 theorem Exchangeable.markovExchangeable [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} (h : Exchangeable μ X) (hX : ∀ i, AEMeasurable (X i) μ) :
     MarkovExchangeable μ X := by
-  refine MarkovExchangeable.intro ?_
+  refine MarkovExchangeable.intro hX ?_
   intro n u v h0 hcount
   obtain ⟨σ, hσ⟩ := exists_perm_comp_of_transitionCount_eq h0 hcount
   rw [← hσ]
@@ -162,12 +172,13 @@ transition weights `p` along the path. Only the product form matters, not that `
 probability kernel. -/
 theorem markovExchangeable_of_prefixLaw_singleton_eq [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX : ∀ i, AEMeasurable (X i) μ)
     (p₀ : α → ℝ≥0∞) (p : α → α → ℝ≥0∞)
     (h : ∀ (n : ℕ) (w : Fin (n + 1) → α),
       prefixLaw μ X (n + 1) {w} = p₀ (w 0) * ∏ i : Fin n, p (w i.castSucc) (w i.succ)) :
     MarkovExchangeable μ X := by
   classical
-  refine MarkovExchangeable.intro ?_
+  refine MarkovExchangeable.intro hX ?_
   intro n u v h0 hcount
   set S : Finset α := image u univ ∪ image v univ
   have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
@@ -187,7 +198,17 @@ theorem markovExchangeable_pathLaw_iff [Countable α] [MeasurableSingletonClass 
     {μ : Measure Ω} {X : ℕ → Ω → α}
     (hX : ∀ i, AEMeasurable (X i) μ) :
     MarkovExchangeable (pathLaw μ X) (fun n (x : ℕ → α) => x n) ↔ MarkovExchangeable μ X := by
-  simp only [markovExchangeable_iff, prefixLaw_pathLaw hX]
+  constructor
+  · intro h
+    refine MarkovExchangeable.intro hX ?_
+    intro n u v h0 hcount
+    rw [← prefixLaw_pathLaw hX]
+    exact h.prefixLaw_singleton_eq n u v h0 hcount
+  · intro h
+    refine MarkovExchangeable.intro (fun i => (measurable_pi_apply i).aemeasurable) ?_
+    intro n u v h0 hcount
+    rw [prefixLaw_pathLaw hX]
+    exact h.prefixLaw_singleton_eq n u v h0 hcount
 
 end Probability
 

@@ -212,7 +212,8 @@ theorem threeCycle_prefixLaw_singleton (n : ℕ) (w : Fin (n + 1) → ZMod 3) :
 probabilities factor through the transition counts. With `threeCycle_not_exchangeable`, this
 separates `MarkovExchangeable` from `Exchangeable`. -/
 theorem threeCycle_markovExchangeable : MarkovExchangeable threeCycleMeasure threeCycle :=
-  markovExchangeable_of_prefixLaw_singleton_eq (fun _ => 3⁻¹)
+  markovExchangeable_of_prefixLaw_singleton_eq (fun _ => Measurable.of_discrete.aemeasurable)
+    (fun _ => 3⁻¹)
     (fun a b => if b = a + 1 then 1 else 0) threeCycle_prefixLaw_singleton
 
 end Probability
