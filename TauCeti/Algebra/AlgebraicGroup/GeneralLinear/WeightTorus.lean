@@ -122,8 +122,23 @@ private theorem weightTorus_hom (wt : Fin N → κ → ℤ) :
 
 end Construction
 
-variable [Fintype κ]
 variable {A : Type u} [CommRing A] [Algebra R A]
+
+/-- Precomposition by the weight-torus coordinate morphism first restricts a character along the
+weight map and then embeds the resulting diagonal-torus point into `GL_N`. -/
+@[simp]
+theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite κ] (wt : Fin N → κ → ℤ)
+    (p : HopfAlgebra.points
+      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) (CommAlgCat.of R A)) :
+    (CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap wt)).app (CommAlgCat.of R A) p =
+      diagonalTorusPoints
+        (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
+  rw [← mapPointsFunctor_diagonalTorusCoordinateMap_app]
+  apply WithConv.ofConv_injective
+  ext x
+  rfl
+
+variable [Fintype κ]
 
 /-- On scheme-valued points, the weight torus is the diagonal matrix whose `i`-th diagonal entry
 is the value of the character `wt i`. -/
