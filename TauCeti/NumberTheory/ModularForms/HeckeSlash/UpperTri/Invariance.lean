@@ -15,8 +15,7 @@ public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Sum
 `UpperTri/Periodic.lean` shows it preserves invariance under the single matrix `T`. That is far
 short of an operator: to act on `M_k(Γ₁(N))` the sum has to preserve invariance under the whole
 group. This file proves that it does, **provided `p` divides the level** — the case in which the
-`p` representatives above are already a full left-coset decomposition of the double coset, so no
-further representative is needed.
+factorisation below closes on the `p` upper-triangular representatives.
 
 ## The permutation
 
@@ -41,9 +40,10 @@ has the *same* `Gamma0Map` value as `γ`; and if `γ ∈ Γ₁(N)` then `γ' ∈
 on `f` is only ever used at matrices congruent to `γ` in the relevant sense, which is what lets
 the nebentypus version below carry a fixed character.
 
-⚠ `p ∣ N` is essential, not a convenience. At `p ∤ N` the double coset has one further left
-coset, represented by `!![p, 0; 0, 1]` up to a `Γ₀(N)` twist, and the sum over the upper-triangular
-representatives alone is *not* invariant.
+⚠ `p ∣ N` is essential to the equivariance proved here, not a convenience. When `p` is prime and
+`p ∤ N`, the classical double coset has one further left coset, represented by
+`!![p, 0; 0, 1]` up to a `Γ₀(N)` twist, and the sum over the upper-triangular representatives
+alone is *not* invariant.
 
 ## Main definitions
 
@@ -78,21 +78,20 @@ namespace HeckeRing.GL2
 
 variable {N p : ℕ}
 
-/-- **The offset permutation attached to `γ ∈ Γ₀(N)`**, `j ↦ d b + j d² mod p`, where
-`γ = !![a, b; c, d]`. It is the unique solution in `[0, p)` of `a j' ≡ b + j d (mod p)`, written
-using the inverse `d` of `a` modulo `p` so that no inversion appears in the definition. -/
+/-- **The offset map**, `j ↦ d b + j d² mod p`, where `γ = !![a, b; c, d]`. -/
 def upperTriShift (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) : Fin p :=
   ⟨((γ 1 1 * γ 0 1 + (j : ℕ) * (γ 1 1 * γ 1 1) : ℤ) : ZMod p).val, ZMod.val_lt _⟩
 
 /-- The defining congruence of `upperTriShift`, in `ZMod p`. -/
-lemma upperTriShift_intCast (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) :
+@[simp] lemma upperTriShift_intCast (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) :
     (((upperTriShift p γ j : ℕ) : ℤ) : ZMod p)
       = ((γ 1 1 * γ 0 1 + (j : ℕ) * (γ 1 1 * γ 1 1) : ℤ) : ZMod p) := by
   rw [Int.cast_natCast]
   exact ZMod.natCast_rightInverse _
 
-/-- **The offset permutation is a bijection.** Two offsets with the same shift differ by an
-element killed by `d²`, which is invertible modulo `p`. -/
+/-- **The offset map is a bijection.** Under the stated hypotheses, `d` is the inverse of `a`
+modulo `p`, so the map gives the unique solution in `[0, p)` of `a j' ≡ b + j d (mod p)`.
+Two offsets with the same shift differ by an element killed by the unit `d²`. -/
 lemma upperTriShift_bijective [NeZero p] (hpN : p ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
     Function.Bijective (upperTriShift p γ) := by
   refine Finite.injective_iff_bijective.mp fun j j' hjj ↦ ?_
@@ -101,8 +100,7 @@ lemma upperTriShift_bijective [NeZero p] (hpN : p ∣ N) {γ : SL(2, ℤ)} (hγ 
   simp only [upperTriShift_intCast] at h
   push_cast at h
   have hud : IsUnit ((γ 1 1 : ℤ) : ZMod p) :=
-    IsUnit.of_mul_eq_one _ (show ((γ 1 1 : ℤ) : ZMod p) * ((γ 0 0 : ℤ) : ZMod p) = 1 by
-      linear_combination had)
+    IsUnit.of_mul_eq_one _ (by simpa [mul_comm] using had)
   have hcancel : ((j : ℕ) : ZMod p) = ((j' : ℕ) : ZMod p) :=
     (hud.mul hud).mul_left_inj.mp (by linear_combination h)
   exact Fin.val_injective (by
@@ -163,6 +161,7 @@ theorem exists_mem_Gamma0_upperTriRep_mul [NeZero p] (hpN : p ∣ N) {γ : SL(2,
     linear_combination hdet + (γ 1 0 : ℤ) * hb'
   refine ⟨⟨_, hdet'⟩, Gamma0_mem.mpr ?_, ?_,
     upperTriRep_mul_mapGL_eq _ _ _ _ rfl hb'.symm rfl rfl⟩
+  -- Unfold the two relevant projections of the explicitly displayed `SL(2, ℤ)` witness.
   · change (((p : ℤ) * γ 1 0 : ℤ) : ZMod N) = 0
     rw [Int.cast_mul, hcN, mul_zero]
   · change (((γ 1 1 - γ 1 0 * ((upperTriShift p γ j : ℕ) : ℤ) : ℤ)) : ZMod N) = _
@@ -174,13 +173,12 @@ theorem exists_mem_Gamma0_upperTriRep_mul [NeZero p] (hpN : p ∣ N) {γ : SL(2,
 only at matrices of `Γ₀(N)` with the same lower-right entry modulo `N` as `γ`, which is all the
 factorisation ever produces; the scalar `u` is left free so that the two corollaries below —
 `Γ₁(N)`-invariance and nebentypus transport — are both instances. -/
-theorem heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 (k : ℤ) [NeZero N] (hpN : p ∣ N)
+theorem heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 (k : ℤ) [NeZero p] (hpN : p ∣ N)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) {f : ℍ → ℂ} {u : ℂ}
     (hf : ∀ δ ∈ Gamma0 N, ((δ 1 1 : ℤ) : ZMod N) = ((γ 1 1 : ℤ) : ZMod N) →
       f ∣[k] (mapGL ℚ δ : GL (Fin 2) ℚ) = u • f) :
     heckeSlashUpperTri k p f ∣[k] (mapGL ℚ γ : GL (Fin 2) ℚ)
       = u • heckeSlashUpperTri k p f := by
-  have : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   rw [heckeSlashUpperTri_def, SlashAction.sum_slash, Finset.smul_sum]
   have key : ∀ j : Fin p,
       (f ∣[k] (upperTriRep p j : GL (Fin 2) ℚ)) ∣[k] (mapGL ℚ γ : GL (Fin 2) ℚ)
@@ -195,20 +193,20 @@ theorem heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 (k : ℤ) [NeZero N] (hpN :
 
 /-- **The upper-triangular sum preserves `Γ₁(N)`-invariance at `p ∣ N`** — the invariance that
 turns it into an operator on `M_k(Γ₁(N))`. -/
-theorem heckeSlashUpperTri_slash_mapGL_of_mem_Gamma1 (k : ℤ) [NeZero N] (hpN : p ∣ N)
+theorem heckeSlashUpperTri_slash_mapGL_of_mem_Gamma1 (k : ℤ) [NeZero p] (hpN : p ∣ N)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N) {f : ℍ → ℂ}
     (hf : ∀ δ ∈ Gamma1 N, f ∣[k] (mapGL ℚ δ : GL (Fin 2) ℚ) = f) :
     heckeSlashUpperTri k p f ∣[k] (mapGL ℚ γ : GL (Fin 2) ℚ) = heckeSlashUpperTri k p f := by
-  have h11 : ((γ 1 1 : ℤ) : ZMod N) = 1 := (mem_Gamma1_iff_mem_Gamma0.mp hγ).2
+  have h11 : ((γ 1 1 : ℤ) : ZMod N) = 1 := (mem_Gamma1_iff.mp hγ).2
   have h := heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 (u := 1) k hpN
     (Gamma1_in_Gamma0 N hγ) (f := f) fun δ hδ hd ↦ by
-      rw [hf δ (mem_Gamma1_iff_mem_Gamma0.mpr ⟨hδ, hd.trans h11⟩), one_smul]
+      rw [hf δ (mem_Gamma1_iff.mpr ⟨hδ, hd.trans h11⟩), one_smul]
   rwa [one_smul] at h
 
 /-- **The upper-triangular sum preserves the nebentypus at `p ∣ N`**: if `f` transforms under
 `Γ₀(N)` by the character `χ`, so does `heckeSlashUpperTri k p f`. This is the function-level
 statement behind the fact that the operator preserves `M_k(N, χ)`. -/
-theorem heckeSlashUpperTri_slash_mapGL_of_nebentypus (k : ℤ) [NeZero N] (hpN : p ∣ N)
+theorem heckeSlashUpperTri_slash_mapGL_of_nebentypus (k : ℤ) [NeZero p] (hpN : p ∣ N)
     (χ : (ZMod N)ˣ →* ℂˣ) (γ : ↥(Gamma0 N)) {f : ℍ → ℂ}
     (hf : ∀ δ : ↥(Gamma0 N), f ∣[k] (mapGL ℚ (δ : SL(2, ℤ)) : GL (Fin 2) ℚ)
       = (↑(χ ((Gamma0Map N).toHomUnits δ)) : ℂ) • f) :

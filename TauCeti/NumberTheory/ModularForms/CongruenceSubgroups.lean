@@ -43,7 +43,7 @@ infrastructure independent of the diamond operators.
 * `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`,
   `CongruenceSubgroup.Gamma_le_Gamma_of_dvd`: all three families are antitone in the level,
   `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
-* `CongruenceSubgroup.mem_Gamma1_iff_mem_Gamma0`: `Γ₁(N)` is cut out inside `Γ₀(N)` by the
+* `CongruenceSubgroup.mem_Gamma1_iff`: `Γ₁(N)` is cut out inside `Γ₀(N)` by the
   single congruence `d ≡ 1`.
 * `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
   unit upper-left entry modulo `N`.
@@ -123,7 +123,7 @@ lies in `Γ₀(N)` and its lower-right entry is `1` modulo `N`; the congruence `
 `CongruenceSubgroup.Gamma1_mem` also asks for is then forced by the determinant. This is the
 form in which membership is checked whenever a construction produces a `Γ₀(N)` matrix and
 controls only its lower-right entry. -/
-theorem mem_Gamma1_iff_mem_Gamma0 {γ : SL(2, ℤ)} :
+theorem mem_Gamma1_iff {γ : SL(2, ℤ)} :
     γ ∈ Gamma1 N ↔ γ ∈ Gamma0 N ∧ ((γ 1 1 : ℤ) : ZMod N) = 1 :=
   ⟨fun h ↦ ⟨Gamma1_in_Gamma0 N h, (Gamma1_mem N γ).mp h |>.2.1⟩,
     fun ⟨h₀, h₁⟩ ↦ (Gamma1_mem N γ).mpr ((Gamma1_to_Gamma0_mem ⟨γ, h₀⟩).mp h₁)⟩
@@ -143,8 +143,8 @@ level**: the determinant identity `ad - bc = 1` with the `bc` term killed by `M 
 theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M N : ℕ} (hMN : M ∣ N)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
     ((γ 0 0 : ℤ) : ZMod M) * ((γ 1 1 : ℤ) : ZMod M) = 1 := by
-  have h := congrArg (Int.cast : ℤ → ZMod M)
-    (show γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 from Matrix.det_fin_two γ.1 ▸ γ.2)
+  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
+  have h := congrArg (Int.cast : ℤ → ZMod M) hdet
   push_cast at h
   rw [intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hMN hγ] at h
   linear_combination h
