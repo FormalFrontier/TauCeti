@@ -168,9 +168,13 @@ private theorem componentPointLiftAlgHom_comp_componentCoordinateMap
   have hq : q.ofConv x = qFun (ConstantGroup.functionAlgEquiv k C x) := by
     dsimp only [qFun, AlgHom.comp_apply, AlgEquiv.toAlgHom_apply]
     rw [AlgEquiv.symm_apply_apply]
-  rw [hq]
-  change (∑ D, qFun (Pi.single D 1) * algebraMap k A
-      (ConstantGroup.functionAlgEquiv k C x D)) = _
+  have hqFun_sum :
+      (∑ D, q.ofConv ((ConstantGroup.functionAlgEquiv k C).symm (Pi.single D 1)) *
+          algebraMap k A (ConstantGroup.functionAlgEquiv k C x D)) =
+        ∑ D, qFun (Pi.single D 1) *
+          algebraMap k A (ConstantGroup.functionAlgEquiv k C x D) := by
+    rfl
+  rw [hqFun_sum, hq]
   let f := ConstantGroup.functionAlgEquiv k C x
   calc
     (∑ D, qFun (Pi.single D 1) * algebraMap k A (f D)) =
