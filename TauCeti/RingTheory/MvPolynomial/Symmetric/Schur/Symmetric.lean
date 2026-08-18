@@ -139,7 +139,7 @@ theorem isSymmetric_diagramSchurPoly (N : ℕ) (R : Type*) [CommSemiring R] (μ 
   intro e
   match N with
   | 0 =>
-    rw [show e = 1 from Equiv.ext fun i => i.elim0]
+    rw [Subsingleton.elim e 1]
     simp
   | M + 1 =>
     have hmem : e ∈ Submonoid.closure
@@ -158,9 +158,8 @@ theorem isSymmetric_diagramSchurPoly (N : ℕ) (R : Type*) [CommSemiring R] (μ 
 private theorem isSymmetric_rename {σ τ : Type*} {p : MvPolynomial τ R} (hp : p.IsSymmetric)
     (e : τ ≃ σ) : (rename e p).IsSymmetric := by
   intro f
-  rw [rename_rename,
-    show (⇑f ∘ ⇑e) = ⇑e ∘ ⇑(e.trans (f.trans e.symm)) from funext fun t => by simp,
-    ← rename_rename, hp]
+  have hcomp : (⇑f ∘ ⇑e) = ⇑e ∘ ⇑(e.trans (f.trans e.symm)) := funext fun t => by simp
+  rw [rename_rename, hcomp, ← rename_rename, hp]
 
 /-- **Schur polynomials are symmetric**, on an arbitrary finite alphabet.  This is what makes
 `TauCeti.schurPoly` independent of the ordering of the alphabet chosen to define it. -/

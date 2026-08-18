@@ -27,11 +27,11 @@ row.  Writing `a i = rowCountLt T i v`, `n i = rowCountLt T i (v + 1)` and
 `Finset.Ico (a i) (b i)`, split at `n i`.
 
 A filling with the same entries outside those blocks is then the same thing as a choice of a new
-splitting point `cut i` in each row, and `SemistandardYoungTableau.recut` builds it.  Exactly two
-inequalities per row make the result semistandard again — this is
-`SemistandardYoungTableau.IsCut` — and together with `a i ≤ cut i ≤ b i` they place `cut i` in the
-interval `[max (a i) (b (i + 1)), min (b i) (a (i - 1))]`, which contains `n i`.  The Bender-Knuth
-involution is the reflection of that interval in its midpoint,
+splitting point `cut i` in each row, and `SemistandardYoungTableau.recut` builds it.  Two
+inequalities per row beyond `a i ≤ cut i ≤ b i` are enough to make the result semistandard again —
+this is `SemistandardYoungTableau.IsCut`, a sufficient condition — and together they place `cut i`
+in the interval `[max (a i) (b (i + 1)), min (b i) (a (i - 1))]`, which contains `n i`.  The
+Bender-Knuth involution is the reflection of that interval in its midpoint,
 `SemistandardYoungTableau.bkCut`, and being a reflection is what makes it an involution: the
 interval is unchanged by a recut, because its endpoints depend only on `a` and `b`, which a recut
 does not move.
@@ -59,7 +59,7 @@ does not move.
   Layer 7.
 -/
 
-@[expose] public section
+public section
 
 namespace SemistandardYoungTableau
 
@@ -158,11 +158,17 @@ theorem not_inBlock_of_notMem {T : SemistandardYoungTableau μ} {v i j : ℕ}
 /-! ### Recutting a block -/
 
 /-- **The recut condition**: a family of splitting points, one per row, produces a semistandard
-filling exactly when each `cut i` lies inside the block of row `i` and no vertically adjacent pair
-of a `v` above a `v + 1` is broken.  The last two clauses say the latter: such a pair sits in the
-columns of `Finset.Ico (rowCountLt T i v) (rowCountLt T (i + 1) (v + 2))`, so its `v` keeps its
-letter when `cut i` is at least the right endpoint, and its `v + 1` keeps its letter when
-`cut (i + 1)` is at most the left one. -/
+filling — `SemistandardYoungTableau.recut` — as soon as each `cut i` lies inside the block of row
+`i` and no vertically adjacent pair of a `v` above a `v + 1` is broken.  The last two clauses say
+the latter: such a pair sits in the columns of
+`Finset.Ico (rowCountLt T i v) (rowCountLt T (i + 1) (v + 2))`, so its `v` keeps its letter when
+`cut i` is at least the right endpoint, and its `v + 1` keeps its letter when `cut (i + 1)` is at
+most the left one.
+
+This is a sufficient condition, not a necessary one: a row whose block is empty carries no letter
+that a recut can move, so the recut filling ignores `cut i` there while the condition still pins it
+down.  Every family of splitting points used here — the tableau's own, and the reflected ones of
+`SemistandardYoungTableau.bkCut` — satisfies it. -/
 structure IsCut (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) : Prop where
   /-- The splitting point of a row is at least the start of its block. -/
   le_cut (i : ℕ) : rowCountLt T i v ≤ cut i
@@ -288,7 +294,7 @@ def recut (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (hcut 
 
 @[simp]
 theorem recut_apply (hcut : IsCut T v cut) (i j : ℕ) :
-    recut T v cut hcut i j = recutEntry T v cut i j := rfl
+    recut T v cut hcut i j = recutEntry T v cut i j := (rfl)
 
 /-- A recut moves no letter into or out of the block, so the two tableaux have the same blocks. -/
 theorem inBlock_recut (hcut : IsCut T v cut) (i j : ℕ) :
@@ -583,7 +589,7 @@ def benderKnuth (T : SemistandardYoungTableau μ) (v : ℕ) : SemistandardYoungT
   recut T v (bkCut T v) (isCut_bkCut T v)
 
 theorem benderKnuth_apply (T : SemistandardYoungTableau μ) (v i j : ℕ) :
-    benderKnuth T v i j = recutEntry T v (bkCut T v) i j := rfl
+    benderKnuth T v i j = recutEntry T v (bkCut T v) i j := (rfl)
 
 /-- The involution writes no letter other than the ones already there and the two it exchanges. -/
 theorem benderKnuth_apply_eq_or (T : SemistandardYoungTableau μ) (v i j : ℕ) :
