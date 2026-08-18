@@ -148,11 +148,20 @@ jobs:
             --out-dir web/static_files \
           || echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
 
-      - name: Install elan
+      # Pinned leanprover/elan release, verified by SHA-256, rather than whatever the installer
+      # URL serves at the moment of the request; this elan chooses the toolchain that builds the
+      # documentation this job deploys. scripts/test_elan_pin.py keeps the copies of the pin honest.
+      - name: Install elan (pinned + checksum)
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
         run: |
-          curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
-          chmod +x elan-init.sh
-          ./elan-init.sh -y --default-toolchain none
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       # --- API documentation (doc-gen4), normally built every three hours ----------------
