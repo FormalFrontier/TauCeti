@@ -49,7 +49,8 @@ variable [AddCommGroup W₂] [Module ℂ W₂]
 variable [AddCommGroup W₃] [Module ℂ W₃]
 variable {ι₁ : V₁ →ₗ[ℤ] W₁} {ι₂ : V₂ →ₗ[ℤ] W₂} {ι₃ : V₃ →ₗ[ℤ] W₃}
 
-/-- The complexification of an integral linear map between abstract complexification models. -/
+/-- The complexification of an integral linear map between abstract complexification models.
+Its value on a lattice vector is computed by `IsBaseChange.lift_eq`. -/
 noncomputable def integralMapToComplex (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f : V₁ →ₗ[ℤ] V₂) : W₁ →ₗ[ℂ] W₂ :=
   h₁.lift (ι₂ ∘ₗ f)
