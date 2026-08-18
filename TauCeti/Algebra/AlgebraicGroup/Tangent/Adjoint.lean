@@ -30,10 +30,10 @@ computation appears; inverses come from the group of points.
 
 ## Main declarations
 
-* `TauCeti.Derivation.adDerivation`: the conjugate of a tangent vector by a point.
-* `TauCeti.Derivation.toConv_coe_adDerivation`: that conjugate as the convolution product
+* `Derivation.adDerivation`: the conjugate of a tangent vector by a point.
+* `Derivation.toConv_coe_adDerivation`: that conjugate as the convolution product
   `g ⋆ d ⋆ g⁻¹`, the form the algebraic manipulations use.
-* `TauCeti.Derivation.adRepresentation`: the adjoint action, as a representation of
+* `Derivation.adRepresentation`: the adjoint action, as a representation of
   the convolution group of points on the tangent space.
 
 Compatibility of the action with the Lie bracket needs the Lie structure and so lives in
@@ -52,11 +52,9 @@ finite-projectivity hypothesis on the conormal module and is not attempted here.
 
 public section
 
-namespace TauCeti
-
 namespace Derivation
 
-open _root_.Coalgebra WithConv TensorProduct
+open TauCeti _root_.Coalgebra WithConv TensorProduct
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
   [CommSemiring B] [Algebra R B]
@@ -211,5 +209,3 @@ lemma adRepresentation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra 
   rfl
 
 end Derivation
-
-end TauCeti
