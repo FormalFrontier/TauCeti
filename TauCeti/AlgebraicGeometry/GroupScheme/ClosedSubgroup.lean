@@ -65,12 +65,12 @@ instance (priority := 900) mono_of_isClosedImmersion_underlying {X : Scheme.{u}}
   change Mono f.hom.hom.left
   infer_instance
 
-/-- A closed immersion of group schemes is injective on points over every scheme above the base.
+/-- A monomorphism of underlying schemes is injective on points over every scheme above the base.
 
 The map on points is postcomposition with the group-scheme morphism. Its injectivity is the
-functor-of-points form of the fact that a closed immersion is a monomorphism. -/
-theorem pointsMap_injective_of_isClosedImmersion {X : Scheme.{u}}
-    {G K : Grp (Over X)} (f : G ⟶ K) [IsClosedImmersion f.hom.hom.left]
+functor-of-points form of the defining cancellation property of a monomorphism. -/
+theorem pointsMap_injective_of_mono {X : Scheme.{u}}
+    {G K : Grp (Over X)} (f : G ⟶ K) [Mono f.hom.hom.left]
     (T : Over X) : Function.Injective (IsMonHom.monoidHom f.hom.hom T) := by
   intro p q hpq
   apply Over.OverMorphism.ext
