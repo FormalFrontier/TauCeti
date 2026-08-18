@@ -11,6 +11,7 @@ public import Mathlib.RingTheory.DedekindDomain.AdicValuation
 public import Mathlib.RingTheory.DedekindDomain.Factorization
 import Mathlib.RingTheory.DedekindDomain.FiniteAdeleRing
 import Mathlib.RingTheory.DedekindDomain.SelmerGroup
+import TauCeti.RingTheory.Valuation.Discrete.Order
 
 /-!
 # The order system of a Dedekind domain
@@ -48,10 +49,10 @@ We do *not* claim the weighted-degree-zero property here: for a general Dedekind
 only for proper curves over a field (and number fields with the archimedean places included),
 and is later geometric input.
 
-This reuses Mathlib's `IsDedekindDomain.HeightOneSpectrum.valuationOfNeZero` (the multiplicative
-`v`-adic valuation `Kˣ →* Multiplicative ℤ`, whose multiplicativity `adicOrd` inherits), the
-`WithZero.log` logarithm on `ℤᵐ⁰`, and `IsDedekindDomain.HeightOneSpectrum.Support.finite`
-(finiteness of the support of a rational function); no external mathematics is vendored.
+This reuses Mathlib's `IsDedekindDomain.HeightOneSpectrum.valuation`, the shared additive order
+`TauCeti.Valuation.ordAddMonoidHom`, and
+`IsDedekindDomain.HeightOneSpectrum.Support.finite` (finiteness of the support of a rational
+function); no external mathematics is vendored.
 -/
 
 public section
@@ -71,11 +72,10 @@ variable (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K]
 /-- The order of vanishing `ord_v(f) = -log v(f)` of a nonzero rational function `f : Kˣ` at a
 height-one prime `v` of a Dedekind domain `R`, as a homomorphism `Additive Kˣ →+ ℤ`. It is the
 additive, sign-flipped form of Mathlib's multiplicative valuation
-`IsDedekindDomain.HeightOneSpectrum.valuationOfNeZero v : Kˣ →* Multiplicative ℤ`; the sign is
-chosen so that a uniformizer at `v` has order `+1` (a simple zero) and a pole has negative
-order. -/
+`IsDedekindDomain.HeightOneSpectrum.valuation K v : Valuation K ℤᵐ⁰`; the sign is chosen so
+that a uniformizer at `v` has order `+1` (a simple zero) and a pole has negative order. -/
 noncomputable def adicOrd (v : HeightOneSpectrum R) : Additive Kˣ →+ ℤ :=
-  -MonoidHom.toAdditiveLeft (v.valuationOfNeZero (K := K))
+  TauCeti.Valuation.ordAddMonoidHom (v.valuation K)
 
 variable {R K}
 
@@ -98,9 +98,7 @@ function is `(Additive.toMul u : Kˣ) : K`. The minus sign makes a uniformizer h
 @[simp]
 lemma adicOrd_apply (v : HeightOneSpectrum R) (u : Additive Kˣ) :
     adicOrd R K v u = -WithZero.log (v.valuation K ((Additive.toMul u : Kˣ) : K)) := by
-  rw [adicOrd, AddMonoidHom.neg_apply, MonoidHom.coe_toAdditiveLeft, Function.comp_apply,
-    Function.comp_apply, ← valuationOfNeZero_eq]
-  rfl
+  rw [adicOrd, TauCeti.Valuation.ordAddMonoidHom_apply, TauCeti.Valuation.ord_def]
 
 /-- The computational form of `adicOrd` applied to `Additive.ofMul u` for a multiplicative unit
 `u : Kˣ`: it is the sign-flipped logarithm `-log v(u)` of the `v`-adic valuation of `u : K`. -/
