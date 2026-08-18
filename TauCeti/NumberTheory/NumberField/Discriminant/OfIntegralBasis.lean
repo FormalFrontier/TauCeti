@@ -19,21 +19,21 @@ More usefully, this holds for any `ℚ`-basis `b` of `K` consisting of algebraic
 `ℤ`-span inside `𝒪_K` is everything: exhibiting such a spanning integral basis and evaluating
 its discriminant computes `d_K` on the nose. This is the exact-attainment half of the effective
 discriminant bound `|d_K| ≤ |disc b|`
-(`TauCeti.NumberField.abs_discr_le_of_basis_isIntegral`), which is strict exactly when the span
+(`NumberField.abs_discr_le_of_basis_isIntegral`), which is strict exactly when the span
 has index `m > 1` (then `disc b = m² · d_K`). It also drives concrete discriminant computations,
 e.g. `{1, i}` is a `ℤ`-basis of the Gaussian integers and `disc {1, i} = -4` gives `d_{ℚ(i)} = -4`.
 
 ## Main results
 
-* `TauCeti.NumberField.discr_eq_of_integralBasis`: for a `ℤ`-basis `c` of `𝒪_K`, the rational
+* `NumberField.discr_eq_of_integralBasis`: for a `ℤ`-basis `c` of `𝒪_K`, the rational
   discriminant of its image in `K` equals `d_K`.
-* `TauCeti.NumberField.discr_eq_of_basis_isIntegral_of_span_eq_top`: the same, phrased for a
+* `NumberField.discr_eq_of_basis_isIntegral_of_span_eq_top`: the same, phrased for a
   `ℚ`-basis `b` of algebraic integers whose `ℤ`-span (inside `𝒪_K`) is everything.
-* `TauCeti.NumberField.abs_discr_eq_of_basis_isIntegral_of_span_eq_top`: the matching
+* `NumberField.abs_discr_eq_of_basis_isIntegral_of_span_eq_top`: the matching
   `|d_K| = |disc b|`, the equality companion of `abs_discr_le_of_basis_isIntegral`.
-* `TauCeti.NumberField.discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int`: the consumer
+* `NumberField.discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int`: the consumer
   form that turns an evaluated integer basis discriminant into `d_K` exactly, with
-  `TauCeti.NumberField.natAbs_discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int` its
+  `NumberField.natAbs_discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int` its
   `natAbs` corollary.
 
 ## Provenance
@@ -41,7 +41,7 @@ e.g. `{1, i}` is a `ℤ`-basis of the Gaussian integers and `disc {1, i} = -4` g
 No formal code is vendored. The equality is assembled from Mathlib's
 `Algebra.discr_localizationLocalization` and `NumberField.discr_eq_discr`; the `ℚ`-basis form
 constructs the `ℤ`-basis of `𝒪_K` from the spanning hypothesis. It is the exact-attainment
-companion of the migrated Layer-1 bound `TauCeti.NumberField.abs_discr_le_of_basis_isIntegral`,
+companion of the migrated Layer-1 bound `NumberField.abs_discr_le_of_basis_isIntegral`,
 whose source attribution (kim-em/erdos-unit-distance) is in
 `TauCeti/NumberTheory/EffectiveBounds/Discriminant/Basic.lean`.
 -/
@@ -51,7 +51,7 @@ public section
 open Module
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -128,4 +128,4 @@ theorem natAbs_discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int
     (NumberField.discr K).natAbs = d.natAbs := by
   rw [discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int b hb hspan hd]
 
-end TauCeti.NumberField
+end NumberField

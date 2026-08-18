@@ -17,9 +17,9 @@ extension.
 
 ## Main results
 
-* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`: a negative square forces total
+* `NumberField.isTotallyComplex_of_sq_ratCast_of_neg`: a negative square forces total
   complexity.
-* `TauCeti.NumberField.IsUnramifiedAtInfinitePlaces_of_isTotallyComplex`: a totally complex base is
+* `NumberField.IsUnramifiedAtInfinitePlaces_of_isTotallyComplex`: a totally complex base is
   unramified at all infinite places of any extension.
 -/
 
@@ -27,7 +27,7 @@ public section
 
 open NumberField NumberField.InfinitePlace
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -58,4 +58,4 @@ lemma IsUnramifiedAtInfinitePlaces_of_isTotallyComplex {k K : Type*} [Field k] [
     rw [InfinitePlace.isUnramified_iff]
     exact Or.inr (IsTotallyComplex.isComplex _)
 
-end TauCeti.NumberField
+end NumberField

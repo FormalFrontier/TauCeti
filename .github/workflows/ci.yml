@@ -156,6 +156,14 @@ jobs:
       - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
         run: python3 scripts/lint-dot-notation.py
 
+      # Source style lint. The wrapper validates one complete TauCeti/** source list, applies
+      # Mathlib's copyright/Authors checks directly (the empty TauCeti.lean root is exempt), and
+      # generates an import-all module under .lake/ for lint-style's text-based checks. This is
+      # deliberately narrower than the command header linter's unrelated import and module-doc
+      # checks; the empty root makes that command linter skip every library module at this pin.
+      - name: Source style lint (copyright headers + text linters)
+        run: bash scripts/lint-style.sh
+
       # --- Lake artifact-cache publish (dormant until configured) ---------------------
       # Publish TauCeti's OWN oleans (root-package only) to the Lake cache, so pr-build can
       # fetch them and recompile only a PR's changed modules instead of the whole library.

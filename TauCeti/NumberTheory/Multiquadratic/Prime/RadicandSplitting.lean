@@ -26,11 +26,11 @@ splitting of an odd prime away from `2` and `3` is equivalent to both Legendre s
 
 ## Main results
 
-* `TauCeti.NumberField.ncard_primesOver_sqrt_primes_iff`: complete splitting in
+* `NumberField.ncard_primesOver_sqrt_primes_iff`: complete splitting in
   `ℚ(√pᵢ : i)` is equivalent to `legendreSym q (pᵢ) = 1` for every `i`.
-* `TauCeti.NumberField.ncard_primesOver_sqrt_two_three_iff`: the concrete
+* `NumberField.ncard_primesOver_sqrt_two_three_iff`: the concrete
   `ℚ(√2, √3)` worked-example form.
-* `TauCeti.NumberField.ncard_primesOver_sqrt_two_three_iff_mod_eight`: the same criterion
+* `NumberField.ncard_primesOver_sqrt_two_three_iff_mod_eight`: the same criterion
   with the `√2` condition expanded as `q ≡ 1, 7 (mod 8)`.
 -/
 
@@ -38,7 +38,7 @@ public section
 
 open Ideal Module NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -68,8 +68,8 @@ private theorem forall_legendreSym_two_three_eq_one_iff_mod_eight {q : ℕ} [Fac
     (htwo : q ≠ 2) : (∀ i : Fin 2, legendreSym q ((![2, 3] : Fin 2 → ℕ) i : ℤ) = 1) ↔
       (q % 8 = 1 ∨ q % 8 = 7) ∧ legendreSym q (3 : ℤ) = 1 := by
   simp only [Fin.forall_fin_two]
-  simpa [Multiquadratic.evenPrimeDiscriminantRadicand_eight] using
-    (Multiquadratic.legendreSym_evenPrimeDiscriminantRadicand_eight_eq_one_iff
+  simpa [TauCeti.Multiquadratic.evenPrimeDiscriminantRadicand_eight] using
+    (TauCeti.Multiquadratic.legendreSym_evenPrimeDiscriminantRadicand_eight_eq_one_iff
       (q := q) htwo).and Iff.rfl
 
 /-- **Complete splitting for `ℚ(√2, √3)`.** Let `K` be generated over `ℚ` by square roots of
@@ -99,4 +99,4 @@ theorem ncard_primesOver_sqrt_two_three_iff_mod_eight (r : Fin 2 → K)
     (fun i => by fin_cases i <;> simp [htwo, hthree])
   exact h.trans (forall_legendreSym_two_three_eq_one_iff_mod_eight htwo)
 
-end TauCeti.NumberField
+end NumberField
