@@ -161,6 +161,28 @@ noncomputable def finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
       (CommRingCat.of R)).congrFullSubcategory
         (finiteTypeAffineGroupSchemeProperty_inverseImage R)
 
+namespace finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
+
+/-- Restricting the finite-type anti-equivalence to full subcategories and then including the
+target is naturally isomorphic to first including the source and then applying the finite-type
+anti-equivalence. This records the underlying-functor interface of `opEquivalence`, `trans`, and
+`congrFullSubcategory` for further restrictions. -/
+noncomputable def congrFullSubcategoryFunctorCompιIso
+    (R : Type u) [CommRing R]
+    (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} R))
+    (Q : ObjectProperty (FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)))
+    [Q.IsClosedUnderIsomorphisms]
+    (h : Q.inverseImage
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor = P.op) :
+    ((ObjectProperty.opEquivalence P).symm.trans
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).congrFullSubcategory
+          h)).functor ⋙ Q.ι ≅
+      P.ι.op ⋙
+        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor :=
+  Iso.refl _
+
+end finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
+
 /-- The forward restricted equivalence followed by the finite-type inclusion is definitionally
 the unrestricted equivalence applied after forgetting the finite-type proof. This private
 isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and

@@ -91,29 +91,8 @@ theorem smooth_of_reductiveAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : reductiveAffineGroupSchemeProperty k G) :
     Smooth G.obj.obj.X.hom := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  have hH : (smoothCommHopfAlgProperty k).op H₀ :=
-    (smoothCommHopfAlgProperty_iff H₀.unop).mpr
-      ((reductiveAffineGroupSchemeProperty_iff k G).mp hG |>.smooth)
-  rw [← smoothAffineGroupSchemeProperty_inverseImage k] at hH
-  let eSpec :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat
-          (CommRingCat.of k)).functor.obj H₀ :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H ≪≫
-        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-          (CommRingCat.of k)).app H₀).symm)
-  have hEF : smoothAffineGroupSchemeProperty (CommRingCat.of k)
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso eSpec.symm hH
-  exact (smoothAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).mp <|
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-        (E.counitIso.app G)) hEF
+  exact (smooth_iff_algebraSmooth_coordinate k G).mpr
+    ((reductiveAffineGroupSchemeProperty_iff k G).mp hG).smooth
 
 /-- Objects of `ReductiveAffineGroupSchemeCat k` have smooth structural morphism. -/
 instance (k : Type u) [Field k] (G : ReductiveAffineGroupSchemeCat k) :
@@ -180,7 +159,9 @@ private noncomputable def
       (forget₂ (ReductiveCommHopfAlgCat.{u} k)
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  Iso.refl _
+  finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.congrFullSubcategoryFunctorCompιIso
+    k (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
+    (reductiveAffineGroupSchemeProperty_inverseImage k)
 
 /-- The forward reductive anti-equivalence, followed by the inclusions into finite-type affine
 group schemes and affine group schemes, is Mathlib's `hopfSpec` after forgetting the reductivity
