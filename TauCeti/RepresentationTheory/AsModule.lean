@@ -131,6 +131,7 @@ theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
       have i := fdRepIsoOfAsModuleLinearEquiv
         (Representation.asModuleLinearEquivOfEquiv φ)
       -- `FDRep.of_ρ_eq_self` records the definitional object identifications here.
+      rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
       exact ⟨i⟩
 
 end TauCeti
