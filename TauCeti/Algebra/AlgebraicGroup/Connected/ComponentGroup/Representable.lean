@@ -33,8 +33,9 @@ the desired representability.
   surjective on points over every test algebra.
 * `TauCeti.FiniteTypeCommHopfAlgCat.componentPointwiseQuotientMulEquiv`: the pointwise quotient by
   the identity component is the constant component group.
-* `TauCeti.FiniteTypeCommHopfAlgCat.componentGroupFppfSheafIso`: the fppf component-group quotient
-  is represented by the finite constant group scheme.
+* `TauCeti.FiniteTypeCommHopfAlgCat.componentGroupFppfGroupObjectIso`: the fppf component-group
+  quotient is represented by the finite constant group scheme, compatibly with its group
+  structure.
 
 ## References
 
@@ -165,6 +166,8 @@ private theorem componentPointLiftAlgHom_comp_componentCoordinateMap
     exact h
   simp_rw [hrepresentative]
   have hq : q.ofConv x = qFun (ConstantGroup.functionAlgEquiv k C x) := by
+    -- `qFun` inserts the inverse of `functionAlgEquiv`; unfold that local wrapper once so the
+    -- public inverse law of the algebra equivalence can rewrite the argument.
     change q.ofConv x = q.ofConv
       ((ConstantGroup.functionAlgEquiv k C).symm (ConstantGroup.functionAlgEquiv k C x))
     rw [AlgEquiv.symm_apply_apply]
@@ -210,6 +213,8 @@ theorem componentPointsHom_surjective
   apply ofConv_injective
   ext x
   rw [componentPointsHom_apply, ofConv_toConv, AlgHom.comp_apply]
+  -- The point and Hopf-morphism wrappers both have `AlgHom` as their stable application API;
+  -- expose those definitionally equal maps before using `componentCoordinateHom_apply`.
   change componentPointLiftAlgHom H A q ((componentCoordinateHom H).hom x) = q.ofConv x
   rw [componentCoordinateHom_apply]
   exact AlgHom.congr_fun (componentPointLiftAlgHom_comp_componentCoordinateMap H A q) x
@@ -220,6 +225,9 @@ private theorem quotientPointsSubgroup_identityComponent_eq_componentPointsHom_k
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A =
       (componentPointsHom H A).ker := by
   ext g
+  -- Membership in the bundled kernel unfolds to equality with the convolution identity, while
+  -- `componentPointsHom_apply` exposes its underlying algebra map. Restate that wrapper boundary
+  -- once so the two public kernel lemmas below apply.
   change g ∈ CommHopfAlgCat.quotientPointsSubgroup H.obj
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A ↔
     toConv (g.ofConv.comp (componentCoordinateHom H).hom.toAlgHom) = 1
@@ -280,6 +288,8 @@ theorem componentPointwiseQuotientMulEquiv_mk
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
       (isNormal_identityComponentHopfIdeal H) A
   rw [CommHopfAlgCat.pointwiseQuotientMk_apply]
+  -- `pointwiseQuotientMk_apply` exposes the raw `QuotientGroup.mk`; display that definitional
+  -- quotient carrier so the two first-isomorphism-theorem application lemmas can rewrite.
   change componentPointwiseQuotientMulEquiv H A
       (QuotientGroup.mk g) = componentPointsHom H A g
   rw [componentPointwiseQuotientMulEquiv, MulEquiv.trans_apply,
@@ -287,6 +297,7 @@ theorem componentPointwiseQuotientMulEquiv_mk
     TauCeti.QuotientGroup.quotientKerEquivOfSurjective_apply_mk]
 
 /-- The component morphism on points commutes with extension of the value algebra. -/
+@[simp]
 theorem mapPoints_componentPointsHom
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) {A B : CommAlgCat.{u} k} (f : A ⟶ B)
     (g : HopfAlgebra.points (R := k) (H := H) A) :
@@ -329,6 +340,9 @@ noncomputable def componentPointwiseQuotientNatIso
       obtain ⟨g, rfl⟩ := CommHopfAlgCat.pointwiseQuotientMk_surjective H.obj
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
         (isNormal_identityComponentHopfIdeal H) A q
+      -- The categorical composites evaluate through their `.hom` fields, definitionally giving
+      -- the displayed quotient and points maps. Expose that application boundary before using
+      -- the public naturality lemmas for those maps.
       change componentPointwiseQuotientMulEquiv H B
           (CommHopfAlgCat.mapPointwiseQuotient H.obj
             (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
@@ -356,6 +370,8 @@ noncomputable def componentPointwiseQuotientNatIso
               (H := ConstantGroup.coordinateRing k
                 (ConnectedComponents (PrimeSpectrum H))) f ≫
             eqToHom (HopfAlgebra.pointsFunctor_obj B).symm := by
+      -- Both `eqToHom`s transport along the defining object equalities of `pointsFunctor`; after
+      -- those stable transports are displayed, naturality is definitionally the same map.
       rfl
     simpa only [Iso.trans_hom, eqToIso.hom,
       CommHopfAlgCat.pointwiseQuotientFunctor_map,
@@ -367,6 +383,28 @@ noncomputable def componentPointwiseQuotientNatIso
         eqToHom (HopfAlgebra.pointsFunctor_obj B).symm) hbare
 
 /-- Before sheafification, the pointwise component quotient and the constant component group are
+isomorphic as group objects in type-valued presheaves on the affine fppf site. -/
+noncomputable def componentPointwiseQuotientPresheafGrpIso
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    CommHopfAlgCat.pointwiseQuotientPresheafGrp H.obj
+        (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+        (isNormal_identityComponentHopfIdeal H) ≅
+      CommHopfAlgCat.pointsPresheafGrp
+        (CommHopfAlgCat.of k
+          (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))) := by
+  let e := Functor.isoWhiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
+    (componentPointwiseQuotientNatIso H)
+  let e' := Functor.isoWhiskerRight e GrpCat.uliftFunctor.{u + 1, u}
+  exact eqToIso (CommHopfAlgCat.pointwiseQuotientPresheafGrp_eq H.obj
+      (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+      (isNormal_identityComponentHopfIdeal H)) ≪≫
+    CommHopfAlgCat.groupFunctorGrpIso e' ≪≫
+      eqToIso (CommHopfAlgCat.pointsPresheafGrp_eq
+        (CommHopfAlgCat.of k
+          (ConstantGroup.coordinateRing k
+            (ConnectedComponents (PrimeSpectrum H))))).symm
+
+/-- Before sheafification, the pointwise component quotient and the constant component group are
 isomorphic as type-valued presheaves on the affine fppf site. -/
 noncomputable def componentPointwiseQuotientPresheafIso
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
@@ -375,15 +413,27 @@ noncomputable def componentPointwiseQuotientPresheafIso
         (isNormal_identityComponentHopfIdeal H)).X ≅
       (CommHopfAlgCat.pointsPresheafGrp
         (CommHopfAlgCat.of k
-          (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))))).X := by
-  let e := Functor.isoWhiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
-    (componentPointwiseQuotientNatIso H)
-  let e' := Functor.isoWhiskerRight e GrpCat.uliftFunctor.{u + 1, u}
-  exact eqToIso (CommHopfAlgCat.pointwiseQuotientPresheafGrp_X_eq H.obj
+          (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))))).X :=
+  (Grp.forget _).mapIso (componentPointwiseQuotientPresheafGrpIso H)
+
+/-- The fppf component-group quotient is represented by the finite constant group scheme,
+compatibly with multiplication, the unit, and inversion. -/
+noncomputable def componentGroupFppfGroupObjectIso
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    componentGroupFppfSheaf H ≅
+      CommHopfAlgCat.pointsFppfGroupObject
+        (CommHopfAlgCat.of k
+          (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))) := by
+  let _ : (presheafToSheaf
+      (CommAlgCat.fppfTopology k) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  exact eqToIso (CommHopfAlgCat.fppfQuotientSheaf_eq H.obj
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
       (isNormal_identityComponentHopfIdeal H)) ≪≫
-    Functor.isoWhiskerRight e' (forget GrpCat.{u + 1}) ≪≫
-      eqToIso (CommHopfAlgCat.pointsPresheafGrp_X_eq
+    (presheafToSheaf
+      (CommAlgCat.fppfTopology k) (Type (u + 1))).mapGrp.mapIso
+        (componentPointwiseQuotientPresheafGrpIso H) ≪≫
+      eqToIso (CommHopfAlgCat.pointsFppfGroupObject_eq
         (CommHopfAlgCat.of k
           (ConstantGroup.coordinateRing k
             (ConnectedComponents (PrimeSpectrum H))))).symm
@@ -395,19 +445,7 @@ noncomputable def componentGroupFppfSheafIso
     (componentGroupFppfSheaf H).X ≅
       (CommHopfAlgCat.pointsFppfGroupObject
         (CommHopfAlgCat.of k
-          (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))))).X := by
-  let _ : (presheafToSheaf
-      (CommAlgCat.fppfTopology k) (Type (u + 1))).Monoidal :=
-    Functor.Monoidal.ofChosenFiniteProducts _
-  exact eqToIso (CommHopfAlgCat.fppfQuotientSheaf_X_eq H.obj
-      (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-      (isNormal_identityComponentHopfIdeal H)) ≪≫
-    (presheafToSheaf
-      (CommAlgCat.fppfTopology k) (Type (u + 1))).mapIso
-        (componentPointwiseQuotientPresheafIso H) ≪≫
-    eqToIso (CommHopfAlgCat.pointsFppfGroupObject_X_eq
-      (CommHopfAlgCat.of k
-        (ConstantGroup.coordinateRing k
-          (ConnectedComponents (PrimeSpectrum H))))).symm
+          (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))))).X :=
+  (Grp.forget _).mapIso (componentGroupFppfGroupObjectIso H)
 
 end TauCeti.FiniteTypeCommHopfAlgCat
