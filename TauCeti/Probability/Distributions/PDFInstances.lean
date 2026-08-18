@@ -54,7 +54,8 @@ families; the Gaussian and Cauchy `ℝ≥0∞` versions already exist and are re
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 1 — connecting Mathlib's
   continuous families to `HasPDF` and identifying `pdf X P`. Item 2 (the Radon–Nikodym derivatives)
-  and item 4 (parameter measurability) are separate targets and are not built here.
+  is a separate target and is not built here; item 4 (parameter measurability) is
+  `TauCeti/Probability/Distributions/Measurability.lean`.
 -/
 
 public section

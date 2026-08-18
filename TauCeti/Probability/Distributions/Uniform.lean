@@ -53,7 +53,10 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
   endpoints;
 * `mgf_id_uniformMeasure_zero` and `mgf_id_uniformMeasure` — the moment generating function, split
   at the removable singularity `t = 0`;
-* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
+* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one;
+* `measurable_uniformMeasure` — the family is measurable in its endpoints, so it can be used as a
+  kernel. The other families' parameter measurability is in
+  `TauCeti/Probability/Distributions/Measurability.lean`.
 
 ## Implementation
 
@@ -65,9 +68,9 @@ side condition.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — the cumulant generating function, the characteristic function, and
-  parameter measurability — are not built here.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3, together with the
+  uniform case of item 4. The remaining targets of item 3 — the cumulant generating function and
+  the characteristic function — are not built here.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -355,6 +358,32 @@ theorem map_uniformMeasure_affine {a b : ℝ} (hab : a < b) :
   rw [h01, ← preimage_affine_Ioc hab, ← Measure.restrict_map hmeas measurableSet_Ioc,
     map_volume_affine (ne_of_gt hba), abs_of_pos hba, Measure.restrict_smul,
     uniformMeasure_eq_smul, ENNReal.ofReal_inv_of_pos hba]
+
+/-! ### Measurability in the endpoints -/
+
+/-- Mathlib's uniform density on `Set.Ioc a b` is measurable jointly in the two endpoints and the
+point.
+
+This is the input `MeasureTheory.measurable_withDensity` needs; `measurable_uniformPDF_Ioc_volume`
+fixes the endpoints and is too weak for it. -/
+theorem measurable_uniformPDF_uncurry :
+    Measurable fun q : (ℝ × ℝ) × ℝ => pdf.uniformPDF (Set.Ioc q.1.1 q.1.2) q.2 volume := by
+  have hset : MeasurableSet {q : (ℝ × ℝ) × ℝ | q.2 ∈ Set.Ioc q.1.1 q.1.2} := by
+    simpa only [Set.mem_Ioc, Set.ofPred_and] using
+      (measurableSet_lt measurable_fst.fst measurable_snd).inter
+        (measurableSet_le measurable_snd measurable_fst.snd)
+  simp only [pdf.uniformPDF_ite, Real.volume_Ioc]
+  exact Measurable.ite hset (by fun_prop) measurable_const
+
+/-- **The uniform family is measurable in its endpoints.**
+
+With `MeasureTheory.Measure` carrying the Giry measurable structure, this is what lets a uniform law
+with random endpoints be assembled into a `ProbabilityTheory.Kernel`. No `a < b` hypothesis: on a
+degenerate interval the value is the zero measure, which is where the map is constant. -/
+@[fun_prop]
+theorem measurable_uniformMeasure : Measurable fun p : ℝ × ℝ => uniformMeasure p.1 p.2 := by
+  simp only [uniformMeasure_eq_withDensity]
+  exact measurable_withDensity (μ := volume) measurable_uniformPDF_uncurry
 
 end Probability
 
