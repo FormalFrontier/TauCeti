@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
-public import TauCeti.Algebra.WordFiltration.AssociatedGraded
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.FiltrationGradedEquiv
 
@@ -246,8 +244,9 @@ private theorem filtrationGradedPieceToExteriorDirectSum_mul {i j : ℕ}
     (x : GradedPiece (ι Q) i) (y : GradedPiece (ι Q) j) :
     filtrationGradedPieceToExteriorDirectSum Q (i + j) (GradedMonoid.GMul.mul x y) =
       filtrationGradedPieceToExteriorDirectSum Q i x *
-        filtrationGradedPieceToExteriorDirectSum Q j y := by
+      filtrationGradedPieceToExteriorDirectSum Q j y := by
   rw [gradedGMul_mul]
+  -- Unfold the piece maps to compare their homogeneous direct-sum generators.
   change DirectSum.of (fun n : ℕ => ⋀[R]^n M) (i + j)
       (filtrationGradedPieceEquivExteriorPower Q (i + j) (gradedMul (ι Q) i j x y)) =
     DirectSum.of (fun n : ℕ => ⋀[R]^n M) i
@@ -258,7 +257,7 @@ private theorem filtrationGradedPieceToExteriorDirectSum_mul {i j : ℕ}
   rfl
 
 private noncomputable def filtrationAssociatedGradedToExteriorDirectSum :
-    associatedGraded (ι Q) →ₐ[R] ⨁ n : ℕ, ⋀[R]^n M :=
+    AssociatedGraded (ι Q) →ₐ[R] ⨁ n : ℕ, ⋀[R]^n M :=
   DirectSum.toAlgebra R (GradedPiece (ι Q))
     (filtrationGradedPieceToExteriorDirectSum Q)
     (filtrationGradedPieceToExteriorDirectSum_one Q)
@@ -283,7 +282,7 @@ private theorem filtrationAssociatedGradedToExteriorDirectSum_bijective :
         (filtrationGradedPieceEquivExteriorPower Q n x) = e.toLinearMap (DirectSum.of _ n x)
     rw [DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_of]
     rfl
-  have he_apply (x : associatedGraded (ι Q)) :
+  have he_apply (x : AssociatedGraded (ι Q)) :
       filtrationAssociatedGradedToExteriorDirectSum Q x = e x :=
     LinearMap.congr_fun he x
   constructor
@@ -297,7 +296,7 @@ private theorem filtrationAssociatedGradedToExteriorDirectSum_bijective :
 
 /-- The associated graded of the Clifford filtration is the exterior algebra. -/
 noncomputable def filtrationAssociatedGradedEquivExterior :
-    associatedGraded (ι Q) ≃ₐ[R] ExteriorAlgebra R M :=
+    AssociatedGraded (ι Q) ≃ₐ[R] ExteriorAlgebra R M :=
   (AlgEquiv.ofBijective (filtrationAssociatedGradedToExteriorDirectSum Q)
     (filtrationAssociatedGradedToExteriorDirectSum_bijective Q)).trans
       (DirectSum.decomposeAlgEquiv (fun n : ℕ => ⋀[R]^n M)).symm

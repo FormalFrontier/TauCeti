@@ -121,11 +121,6 @@ theorem filtration_eq_pow (Q : QuadraticForm R M) (k : ℕ) :
     filtration Q k = (1 ⊔ LinearMap.range (ι Q)) ^ k :=
   TauCeti.Algebra.wordFiltration_eq_pow (ι Q) k
 
-/-- The Clifford filtration carries Mathlib's bundled ring-filtration structure. -/
-instance instIsRingFiltration (Q : QuadraticForm R M) :
-    IsRingFiltration (filtration Q) (wordFiltrationPrevious (ι Q)) :=
-  TauCeti.Algebra.wordFiltration.instIsRingFiltration (ι Q)
-
 variable (Q : QuadraticForm R M)
 
 /-- A product of at most `k` generators lies in the `k`-th step of the filtration. This is the
@@ -145,10 +140,6 @@ theorem filtration_le_iff {k : ℕ} {p : Submodule R (CliffordAlgebra Q)} :
 of them whenever `i ≤ j`. -/
 theorem filtration_mono : Monotone (filtration Q) :=
   TauCeti.Algebra.wordFiltration_mono (ι Q)
-
-/-- `1` is the empty product of generators, so it lies in every step of the filtration. -/
-theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k :=
-  TauCeti.Algebra.one_mem_wordFiltration (ι Q) k
 
 /-- Scalars lie in every step of the filtration, being multiples of the empty product. -/
 theorem algebraMap_mem_filtration (r : R) (k : ℕ) :
@@ -182,18 +173,6 @@ element of the `j`-th step lies in the `i + j`-th step. -/
 theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i)
     (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) :=
   TauCeti.Algebra.mul_mem_wordFiltration (ι Q) hx hy
-
-/-- Multiplication preserves a strict degree drop in the left factor of the Clifford filtration. -/
-theorem mul_mem_filtrationPrevious_left {i j : ℕ} {x y : CliffordAlgebra Q}
-    (hx : x ∈ wordFiltrationPrevious (ι Q) i) (hy : y ∈ filtration Q j) :
-    x * y ∈ wordFiltrationPrevious (ι Q) (i + j) :=
-  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left (ι Q) hx hy
-
-/-- Multiplication preserves a strict degree drop in the right factor of the Clifford filtration. -/
-theorem mul_mem_filtrationPrevious_right {i j : ℕ} {x y : CliffordAlgebra Q}
-    (hx : x ∈ filtration Q i) (hy : y ∈ wordFiltrationPrevious (ι Q) j) :
-    x * y ∈ wordFiltrationPrevious (ι Q) (i + j) :=
-  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right (ι Q) hx hy
 
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
@@ -579,6 +558,7 @@ theorem fg_filtration [Module.Finite R M] (k : ℕ) : (filtration Q k).FG := by
     exact (Module.finite_def.1 ‹Module.Finite R M›).map _
   induction k with
   | zero =>
+    -- Unfold the reducible Clifford alias so the generic degree-zero equation can rewrite.
     change (wordFiltration (ι Q) 0).FG
     rw [wordFiltration_zero, Submodule.one_eq_span]
     exact Submodule.fg_span_singleton 1
