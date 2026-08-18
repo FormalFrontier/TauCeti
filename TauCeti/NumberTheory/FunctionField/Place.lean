@@ -233,7 +233,7 @@ element for `P` is (Stichtenoth, Theorem 1.1.6). -/
 theorem transcendental_of_ord_ne_zero {f : F} (hf : P.ord f ≠ 0) : Transcendental k f :=
   fun h => hf (P.ord_eq_zero_of_isAlgebraic h)
 
-/-- The constant field `k̃ = algebraicClosure k F` is contained in the valuation ring of every
+/-- The constant field `algebraicClosure k F` is contained in the valuation ring of every
 place: constants are everywhere regular. -/
 theorem mem_integers_of_mem_algebraicClosure {f : F} (hf : f ∈ algebraicClosure k F) :
     f ∈ P.integers := by
