@@ -8,23 +8,23 @@ module
 public import Mathlib.Geometry.Manifold.Riemannian.PathELength
 
 /-!
-# Smoothing corners without changing Riemannian path length
+# Smooth paths with prescribed Riemannian path length
 
-A `C¹` path on `[0, 1]` can be reparametrized so that it is constant near both endpoints. The
-reparametrized path is globally `C¹`, has the same endpoints, and has exactly the same
-`Manifold.pathELength`. Consequently, two `C¹` path segments with a common endpoint can be joined
-to a globally `C¹` path whose length is the sum of their lengths. This is the basic corner-smoothing
-step used to compare piecewise-`C¹` and `C¹` definitions of Riemannian distance.
+For a `C¹` path on `[0, 1]`, there exists a globally `C¹` path that is constant near both
+endpoints, has the same endpoints, and has exactly the same `Manifold.pathELength`. For two `C¹`
+paths with a common endpoint, there likewise exists a globally `C¹` path between their outer
+endpoints whose length is the sum of their lengths. These are the basic existential properties
+needed to compare piecewise-`C¹` and `C¹` definitions of Riemannian distance.
 
 The construction uses Mathlib's `Real.smoothTransition` and
 `Manifold.pathELength_comp_of_monotoneOn`. No new notion of path length is introduced.
 
 ## Main results
 
-* `TauCeti.exists_contMDiff_pathELength_eq`: flatten a `C¹` path near both endpoints without
-  changing its endpoints or length.
-* `TauCeti.exists_contMDiff_pathELength_eq_add`: smooth the common corner of two `C¹` path
-  segments, preserving the sum of their lengths.
+* `TauCeti.exists_contMDiff_pathELength_eq`: obtain a globally `C¹` path, constant near its
+  endpoints, with the same endpoints and length as a given `C¹` path.
+* `TauCeti.exists_contMDiff_pathELength_eq_add`: obtain a globally `C¹` path between the outer
+  endpoints of two compatible `C¹` paths, with length equal to the sum of their lengths.
 
 ## References
 
@@ -47,8 +47,8 @@ variable
   [∀ x : M, ENorm (TangentSpace I x)]
   [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
 
-/-- A `C¹` path on `[0, 1]` admits a globally `C¹` reparametrization which is constant near both
-endpoints and has exactly the same length. -/
+/-- A `C¹` path on `[0, 1]` admits a globally `C¹` path which is constant near both endpoints,
+has the same endpoints, and has exactly the same length. -/
 theorem exists_contMDiff_pathELength_eq {γ : ℝ → M} (hγ : ContMDiffOn 𝓘(ℝ, ℝ) I 1 γ (Icc 0 1)) :
     ∃ η : ℝ → M,
       ContMDiff 𝓘(ℝ, ℝ) I 1 η ∧
@@ -96,9 +96,9 @@ theorem exists_contMDiff_pathELength_eq {γ : ℝ → M} (hγ : ContMDiffOn 𝓘
       norm_num at ht ⊢
       linarith]
 
-/-- Two `C¹` paths on `[0, 1]` whose endpoints match can be joined after flattening their common
-corner. The resulting path is globally `C¹`, is constant near its outer endpoints, and its length
-is the sum of the two original lengths. -/
+/-- Given two `C¹` paths on `[0, 1]` whose endpoints match, there is a globally `C¹` path with
+their outer endpoints which is constant near those endpoints and whose length is the sum of the
+two original lengths. -/
 theorem exists_contMDiff_pathELength_eq_add {γ₁ γ₂ : ℝ → M}
     (hγ₁ : ContMDiffOn 𝓘(ℝ, ℝ) I 1 γ₁ (Icc 0 1))
     (hγ₂ : ContMDiffOn 𝓘(ℝ, ℝ) I 1 γ₂ (Icc 0 1)) (h₁₂ : γ₁ 1 = γ₂ 0) :
