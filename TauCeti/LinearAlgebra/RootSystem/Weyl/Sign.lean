@@ -148,34 +148,25 @@ change the sign. -/
 theorem weylSign_ofIdx (i : ι) :
     weylSign P b (RootPairing.weylGroup.ofIdx P i) = -1 := by
   obtain ⟨j, hj, v, hv⟩ := exists_mem_support_weylGroupToPerm_eq b i
-  rw [← hv, RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj, map_mul, map_mul, map_inv,
-    weylSign_ofIdx_of_mem_support P b hj, mul_right_comm, mul_inv_cancel, one_mul]
+  rw [← hv, RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj]
+  simp [weylSign_ofIdx_of_mem_support P b hj]
 
 /-- **A word of `n` letters spells an element of sign `(-1) ^ n`.** In particular all the words
 spelling one element have the same length parity, which is the well-definedness that
 `TauCeti.length_modEq_length_of_wordProd_eq` records at the level of inversion counts. -/
+@[simp]
 theorem weylSign_wordProd (l : List b.support) :
     weylSign P b (wordProd P b l) = (-1) ^ l.length := by
   rw [weylSign_apply, neg_one_pow_eq_of_modEq (ncard_inversions_wordProd_modEq_length P b l)]
 
-/-- Appending a reflection flips the sign. For a simple reflection this is the multiplicative
-form of the exchange step `TauCeti.ncard_inversions_mul_ofIdx`, which moves the inversion count by
-exactly one; here the reflecting root need not be simple. -/
-theorem weylSign_mul_ofIdx (w : P.weylGroup) (i : ι) :
-    weylSign P b (w * RootPairing.weylGroup.ofIdx P i) = - weylSign P b w := by
-  rw [map_mul, weylSign_ofIdx, mul_neg, mul_one]
-
-/-- Prefixing a reflection flips the sign. -/
-theorem weylSign_ofIdx_mul (i : ι) (w : P.weylGroup) :
-    weylSign P b (RootPairing.weylGroup.ofIdx P i * w) = - weylSign P b w := by
-  rw [map_mul, weylSign_ofIdx, neg_one_mul]
-
 /-- **The sign is trivial exactly on the elements with an even number of inversions.** -/
+@[simp]
 theorem weylSign_eq_one_iff (w : P.weylGroup) :
     weylSign P b w = 1 ↔ Even (inversions P b w).ncard := by
   rw [weylSign_apply, neg_one_pow_eq_one_iff_even intUnits_neg_one_ne_one]
 
 /-- **The sign is `-1` exactly on the elements with an odd number of inversions.** -/
+@[simp]
 theorem weylSign_eq_neg_one_iff (w : P.weylGroup) :
     weylSign P b w = -1 ↔ Odd (inversions P b w).ncard := by
   rw [weylSign_apply, neg_one_pow_eq_neg_one_iff_odd intUnits_neg_one_ne_one]
@@ -235,6 +226,7 @@ variable [P.IsRootSystem]
 
 /-- **The longest element has sign `(-1) ^ |Φ⁺|`**: it inverts every positive root, so its
 inversion count is the number of positive roots. -/
+@[simp]
 theorem weylSign_longestElement :
     weylSign P b (longestElement P b) = (-1) ^ (posRoots P b).ncard := by
   rw [weylSign_apply, ncard_inversions_longestElement]
