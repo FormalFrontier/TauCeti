@@ -192,9 +192,7 @@ theorem stellarSubdivision_ne_self (hvσ : v ∉ σ) (hσ : σ ∈ K) :
 theorem stellarSubdivision_empty (K : PreAbstractSimplicialComplex ι) (v : ι) :
     stellarSubdivision K (∅ : Finset ι) v = ⊥ := by
   refine eq_bot_iff.mpr fun τ hτ => ?_
-  change τ ∈ stellarSubdivision K ∅ v at hτ
-  rw [mem_stellarSubdivision_iff] at hτ
-  rcases hτ with ⟨-, -, h⟩ | ⟨-, h, -⟩
+  rcases mem_stellarSubdivision_iff.mp hτ with ⟨-, -, h⟩ | ⟨-, h, -⟩
   · exact absurd (Finset.empty_subset τ) h
   · exact absurd (Finset.empty_subset _) h
 
@@ -310,9 +308,7 @@ theorem finite_faces_stellarSubdivision (hfin : K.faces.Finite) :
   have hsub : (stellarSubdivision K σ v).faces ⊆
       K.faces ∪ ⋃ ω ∈ K.faces, (insert v '' (ω.powerset : Set (Finset ι))) := by
     intro τ hτ
-    change τ ∈ stellarSubdivision K σ v at hτ
-    rw [mem_stellarSubdivision_iff] at hτ
-    rcases hτ with ⟨-, hτK, -⟩ | ⟨hvτ, -, hτK⟩
+    rcases mem_stellarSubdivision_iff.mp hτ with ⟨-, hτK, -⟩ | ⟨hvτ, -, hτK⟩
     · exact Or.inl hτK
     · exact Or.inr (Set.mem_biUnion hτK ⟨τ.erase v,
         Finset.mem_coe.mpr (Finset.mem_powerset.mpr Finset.subset_union_left),
