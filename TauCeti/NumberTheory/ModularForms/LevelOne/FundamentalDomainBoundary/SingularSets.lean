@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -266,6 +267,23 @@ theorem im_pos_of_mem_verticalSingularSet {S : Finset ℍ} {s : ℂ}
   simp only [verticalSingularSet, Finset.mem_union, Finset.mem_image, Finset.mem_filter] at hs
   rcases hs with ((⟨p, -, rfl⟩ | ⟨p, -, rfl⟩) | ⟨p, -, rfl⟩) | ⟨p, -, rfl⟩ <;>
     simpa using p.2
+
+/-- Every arc excision centre sits below the ceiling: it has unit norm, and the imaginary
+part is bounded by the norm. -/
+theorem im_lt_of_mem_arcSingularSet {S : Finset ℍ} {s : ℂ} {H : ℝ}
+    (hs : s ∈ arcSingularSet S) (hH : 1 < H) : s.im < H := by
+  have h1 : s.im ≤ ‖s‖ := Complex.im_le_norm s
+  rw [norm_eq_one_of_mem_arcSingularSet hs] at h1
+  linarith
+
+/-- Every union excision centre sits below the ceiling: arc points by their unit norm,
+vertical points by the height bound on their source set. -/
+theorem im_lt_of_mem_arcSingularSet_union_verticalSingularSet {S : Finset ℍ} {s : ℂ} {H : ℝ}
+    (hH : 1 < H) (hHgt : ∀ p ∈ S, (p : ℂ).im < H)
+    (hs : s ∈ arcSingularSet S ∪ verticalSingularSet S) : s.im < H := by
+  rcases Finset.mem_union.mp hs with h | h
+  · exact im_lt_of_mem_arcSingularSet h hH
+  · exact im_lt_of_mem_verticalSingularSet h hHgt
 
 end ModularForm
 

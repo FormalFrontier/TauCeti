@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -50,9 +51,13 @@ target `quiverRepEquivalence` itself, of which this file is the object-and-morph
   `p` from `a` to `b`.
 * `TauCeti.vertexComponentMap k f v`: the restriction of a `kQ`-linear map to the components at
   `v`.
+* `TauCeti.vertexProjection k M v`: the projection `x ↦ eᵥ • x` of `M` onto its component at `v`,
+  the decomposition `M = ⨁ᵥ eᵥ M` read one vertex at a time.
 
 ## Main results
 
+* `TauCeti.sum_coe_vertexProjection`: the vertex projections of `x` sum back to `x`, the vertex
+  idempotents summing to `1`.
 * `TauCeti.isInternal_vertexComponent`: `M = ⨁ᵥ eᵥ M`, with
   `TauCeti.coe_ofBijective_coeLinearMap_symm_apply_vertexComponent` reading off the component of
   `x` at `v` as `eᵥ • x`.
@@ -181,6 +186,50 @@ theorem pathMap_cons {a b c : Q} (p : _root_.Quiver.Path a b) (f : b ⟶ c) :
   rw [← _root_.Quiver.Path.comp_toPath_eq_cons, pathMap_comp]
 
 end Component
+
+section Projection
+
+variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v} Q] [Finite Q]
+variable (M : Type*) [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q) M]
+  [IsScalarTower k (pathAlgebra k Q) M]
+
+/-- **The projection of a module onto a vertex component**, `x ↦ eᵥ • x`. It reads the
+decomposition `M = ⨁ᵥ eᵥ M` (`TauCeti.isInternal_vertexComponent`) one vertex at a time; the facts
+about it that matter are that its values sum to the identity
+(`TauCeti.sum_coe_vertexProjection`) and that it is the identity on the component at `v` and zero
+on the component at any other vertex. -/
+noncomputable def vertexProjection (v : Q) : M →ₗ[k] vertexComponent k M v where
+  toFun x := ⟨(vertexIdempotent k v : pathAlgebra k Q) • x, by
+    -- the vertex idempotent is the trivial path at `v`, which lands in the component at `v`
+    rw [vertexIdempotent_eq_single, ← ofPath_eq_single]
+    exact ofPath_smul_mem_vertexComponent _root_.Quiver.Path.nil x⟩
+  map_add' x y := Subtype.ext (smul_add _ x y)
+  map_smul' r x := Subtype.ext (smul_comm (vertexIdempotent k v : pathAlgebra k Q) r x)
+
+@[simp]
+theorem coe_vertexProjection_apply (v : Q) (x : M) :
+    (vertexProjection k M v x : M) = (vertexIdempotent k v : pathAlgebra k Q) • x :=
+  (rfl)
+
+variable {k M}
+
+/-- **The vertex projections sum to the identity**, because the vertex idempotents sum to `1`. -/
+theorem sum_coe_vertexProjection [Fintype Q] (x : M) :
+    ∑ v : Q, (vertexProjection k M v x : M) = x := by
+  simp only [coe_vertexProjection_apply, ← Finset.sum_smul, ← one_def, one_smul]
+
+/-- The projection at `v` fixes the component at `v`. -/
+theorem coe_vertexProjection_apply_of_mem {v : Q} {x : M} (hx : x ∈ vertexComponent k M v) :
+    (vertexProjection k M v x : M) = x := by
+  rw [coe_vertexProjection_apply, vertexIdempotent_smul_eq_self_of_mem_vertexComponent hx]
+
+/-- The projection at `u` kills the component at any other vertex. -/
+theorem coe_vertexProjection_apply_eq_zero_of_ne {u v : Q} (h : u ≠ v) {x : M}
+    (hx : x ∈ vertexComponent k M v) : (vertexProjection k M u x : M) = 0 := by
+  rw [coe_vertexProjection_apply, ← vertexIdempotent_smul_eq_self_of_mem_vertexComponent hx,
+    smul_smul, vertexIdempotent_mul_vertexIdempotent_of_ne h, zero_smul]
+
+end Projection
 
 section Naturality
 

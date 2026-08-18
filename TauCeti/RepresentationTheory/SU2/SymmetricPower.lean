@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
 public import TauCeti.RepresentationTheory.SU2.Basic
+import TauCeti.Algebra.GroupWithZero.Units.Basic
 import TauCeti.RingTheory.MvPolynomial.Symmetric.Complete
 
 /-!
@@ -121,12 +122,9 @@ theorem character_symPower_torusHom_zpow (z : Circle) :
     (symPower d).character (torusHom z)
       = ∑ i ∈ range (d + 1), (z : ℂ) ^ (2 * (i : ℤ) - d) := by
   rw [character_symPower_torusHom]
-  refine sum_congr rfl fun i hi => ?_
-  have hi' : (i : ℕ) ≤ d := Nat.lt_succ_iff.mp (mem_range.mp hi)
-  -- the weight `2i - d` is the exponent of `z` minus the exponent of `z⁻¹`
-  have hexp : 2 * (i : ℤ) - d = (i : ℤ) - ((d - i : ℕ) : ℤ) := by omega
-  rw [hexp, zpow_sub₀ (Circle.coe_ne_zero z), zpow_natCast, zpow_natCast, inv_pow,
-    div_eq_mul_inv]
+  -- the diagonal entries `z` and `z⁻¹` contribute `i` and `d - i` factors to the `i`-th monomial
+  exact sum_congr rfl fun i hi =>
+    pow_mul_inv_pow_eq_zpow₀ (Circle.coe_ne_zero z) (Nat.lt_succ_iff.mp (mem_range.mp hi))
 
 /-- **The weight string in exponential coordinates.**  Writing the torus element as
 `diag(e^{iθ}, e^{-iθ})`, the character of `Symᵈ(ℂ²)` is `∑ᵢ e^{i(2i-d)θ}`: the classical

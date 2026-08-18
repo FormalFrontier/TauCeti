@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -16,16 +17,17 @@ import TauCeti.NumberTheory.ModularForms.FiniteZeros
 # The vanishing order on `SL(2, ℤ)`-orbits
 
 The vanishing order of a level-one modular form is constant on `SL(2, ℤ)`-orbits of `ℍ`,
-so it descends to the orbit space (`TauCeti.ModularForm.orderOfVanishingOnOrbit`), and for a nonzero
-form only finitely many orbits carry nonzero order — the summation index of the valence
-formula. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.Orbits`.
+so it descends to the orbit space (`TauCeti.ModularForm.orderOfVanishingOnOrbit`), and only
+finitely many orbits carry nonzero order — the summation index of the valence formula. No
+nonvanishing hypothesis is needed: the zero form has order `0` on every orbit, so its support is
+empty. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.Orbits`.
 
 ## Main declarations
 
 * `TauCeti.ModularForm.orderOfVanishingOnOrbit`: the order descended to
   `MulAction.orbitRel.Quotient SL(2, ℤ) ℍ`.
-* `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnOrbit`: finite support on orbits for a
-  nonzero form.
+* `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnOrbit`: finite support on orbits, the
+  zero form having empty support.
 * `TauCeti.ModularForm.sum_orderOfVanishingAt_eq_finsum_orbit`: a divisor sum over an arbitrary
   index set, reindexed over the orbits its points represent, given that the index-to-orbit
   composite is injective.
@@ -65,9 +67,8 @@ def orderOfVanishingOnOrbit [SlashInvariantFormClass F 𝒮ℒ k]
     have hg' : g • b = _ := hg
     rw [← hg', MulAction.compHom_smul_def,
       orderOfVanishingAt_smul f (γ := Matrix.SpecialLinearGroup.mapGL ℝ g)
-        (MonoidHom.mem_range.mpr ⟨g, rfl⟩) (by
-          rw [← Matrix.GeneralLinearGroup.val_det_apply, Matrix.SpecialLinearGroup.det_mapGL]
-          exact one_pos) b]
+        (MonoidHom.mem_range.mpr ⟨g, rfl⟩)
+        (det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨g, rfl⟩)) b]
 
 /-- Evaluating the descended order on the orbit of `p` recovers the vanishing order at
 `p`. -/
@@ -77,11 +78,11 @@ lemma orderOfVanishingOnOrbit_mk [SlashInvariantFormClass F 𝒮ℒ k] (p : ℍ)
   unfold orderOfVanishingOnOrbit
   rfl
 
-/-- For a nonzero level-one form, only finitely many orbits carry nonzero order. -/
-lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) : (orderOfVanishingOnOrbit f).HasFiniteSupport :=
+/-- Only finitely many orbits of a level-one form carry nonzero order. -/
+lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] (f : F) :
+    (orderOfVanishingOnOrbit f).HasFiniteSupport :=
   -- the `rfl` pattern rewrites `q` to `⟦p⟧`, after which `orderOfVanishingOnOrbit_mk` fires
-  (finite_zeros_in_fd hf).of_surjOn Quotient.mk'' fun q hq ↦
+  (finite_zeros_in_fd (f := f)).of_surjOn Quotient.mk'' fun q hq ↦
     (ModularGroup.exists_rep_mem_fd q).imp fun p ⟨rfl, hfd⟩ ↦ ⟨⟨hfd, by simpa using hq⟩, rfl⟩
 
 /-- A divisor sum reindexed over the orbits its points represent. The index set is arbitrary,
@@ -174,14 +175,13 @@ abbrev NonEllipticOrbit : Type :=
   {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ //
     q ≠ Quotient.mk'' I ∧ q ≠ Quotient.mk'' ρ}
 
-/-- For a nonzero level-one form only finitely many non-elliptic orbits carry nonzero order:
-the finite support of `orderOfVanishingOnOrbit`, restricted along the inclusion of the
-non-elliptic orbits. -/
-lemma hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+/-- Only finitely many non-elliptic orbits of a level-one form carry nonzero order: the finite
+support of `orderOfVanishingOnOrbit`, restricted along the inclusion of the non-elliptic
+orbits. -/
+lemma hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic [ModularFormClass F 𝒮ℒ k] (f : F) :
     Function.HasFiniteSupport fun q : NonEllipticOrbit ↦ orderOfVanishingOnOrbit f q.val :=
   Function.HasFiniteSupport.fun_comp_of_injective Subtype.val_injective
-    (hasFiniteSupport_orderOfVanishingOnOrbit hf)
+    (hasFiniteSupport_orderOfVanishingOnOrbit f)
 
 end ModularForm
 

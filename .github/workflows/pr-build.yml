@@ -241,6 +241,9 @@ jobs:
           cp -a gate/scripts/perf base/scripts/perf
           cp gate/scripts/sandbox-build.sh base/scripts/sandbox-build.sh
           cp gate/scripts/lint-env.sh base/scripts/lint-env.sh
+          cp gate/scripts/lint-style.sh base/scripts/lint-style.sh
+          cp gate/scripts/source-modules.sh base/scripts/source-modules.sh
+          cp gate/scripts/HeaderStyle.lean base/scripts/HeaderStyle.lean
 
       - name: Checkout merge-base config (trusted ancestor — only to scope the PR's pin delta)
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
@@ -357,6 +360,24 @@ jobs:
             echo "::error::landrun not enforcing (run=$ok write=$wr shm=$shm net=$net); refusing to run PR code"; exit 1
           fi
 
+      # Restore only Mathlib's compressed, content-addressed `.ltar` download store from a
+      # trusted main publisher. This workflow is restore-only: neither fork PRs nor merge-group
+      # candidates can publish cache contents. For a validated pin bump the expressions hash the
+      # already-overlaid files under base/, so an exact new-pin snapshot is preferred. A
+      # Mathlib-only bump can fall back to the newest same-toolchain main snapshot; a toolchain
+      # bump misses both keys and refetches from Mathlib's server. `lake exe cache get` below
+      # remains authoritative and downloads every applicable hash that is still absent. The
+      # workflow-pinned local action credits the corresponding Mathlib design and owns the key
+      # namespace shared with ci.yml. This is separate from the much larger `./.lake` cache.
+      - name: Restore Mathlib's compressed download cache from main
+        if: ${{ env.INFRA != '1' }}
+        uses: ./gate/.github/actions/restore-mathlib-ltars
+        with:
+          # The action's default cache directory is outside base/, which is later mounted into
+          # landrun. Although MATHLIB_CACHE_DIR is job-wide, landrun's explicit `--env` allowlist
+          # excludes it and the cache directory is not mounted, so the sandbox never receives it.
+          project-dir: base
+
       # `lake exe cache get` runs the `cache` exe built from the pinned Mathlib, unsandboxed,
       # with network (to download oleans) but deliberately NO token in env. For a normal PR that
       # is the trusted base Mathlib. For a validated bump it is the PR's Mathlib pin — which
@@ -373,7 +394,10 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ( cd base && lake exe cache get ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"
+          if ! ( cd base && lake exe cache get ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"; then
+            echo "::warning::lake exe cache get failed; forcing a full refetch"
+            ( cd base && lake exe cache get! ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"
+          fi
           mkdir -p base/.lake/tmp
 
       # Backstop to bump-guard's step 2b, measuring the thing itself rather than a proxy.
@@ -403,6 +427,12 @@ jobs:
             exit 1
           fi
           echo "Mathlib cache is complete at the bump target."
+
+      # Text-only trusted lint: inspect the overlaid PR sources after Mathlib's source tree is
+      # available. It does not elaborate or execute the untrusted TauCeti code.
+      - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
+        if: ${{ env.INFRA != '1' }}
+        run: (cd base && python3 scripts/lint-dot-notation.py)
 
       # Enable Lake's built-in artifact cache for the build below ONLY when the public read
       # endpoints are configured (repo variables). Until then this is a no-op: LAKE_*

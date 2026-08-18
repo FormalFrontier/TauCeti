@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -287,23 +288,23 @@ theorem map_comap_of_surjective (J : HopfIdeal R K) (f : H →ₐc[R] K)
 
 /-- Along a surjective morphism, inverse image after image is the join with the kernel. -/
 theorem comap_map_of_surjective (I : HopfIdeal R H) (f : H →ₐc[R] K)
-    (hf : Function.Surjective f) : (I.map f).comap f hf = I ⊔ ker f hf :=
+    (hf : Function.Surjective f) : (I.map f).comap f hf = I ⊔ kerOfSurjective f hf :=
   ext fun x => by
     rw [← mem_toIdeal, comap_toIdeal, map_toIdeal,
       Ideal.comap_map_of_surjective (f : H →+* K) hf, ← mem_toIdeal, sup_toIdeal,
-      ker_toIdeal, RingHom.ker_eq_comap_bot]
+      kerOfSurjective_toIdeal, RingHom.ker_eq_comap_bot]
     exact Iff.rfl
 
 /-- The image vanishes exactly on Hopf ideals contained in the kernel Hopf ideal: the
 surjective bundled form of `TauCeti.HopfIdeal.map_eq_bot_iff`. -/
 theorem map_eq_bot_iff_le_ker (I : HopfIdeal R H) (f : H →ₐc[R] K)
-    (hf : Function.Surjective f) : I.map f = ⊥ ↔ I ≤ ker f hf := by
+    (hf : Function.Surjective f) : I.map f = ⊥ ↔ I ≤ kerOfSurjective f hf := by
   rw [map_eq_bot_iff]
   constructor
   · intro h x hx
-    exact (mem_ker f hf).mpr (RingHom.mem_ker.mp (h (mem_toIdeal.mpr hx)))
+    exact (mem_kerOfSurjective f hf).mpr (RingHom.mem_ker.mp (h (mem_toIdeal.mpr hx)))
   · intro h x hx
-    exact RingHom.mem_ker.mpr ((mem_ker f hf).mp (h (mem_toIdeal.mp hx)))
+    exact RingHom.mem_ker.mpr ((mem_kerOfSurjective f hf).mp (h (mem_toIdeal.mp hx)))
 
 end Adjunction
 

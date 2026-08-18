@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -301,6 +302,13 @@ noncomputable def f4SimplyConnectedRootDatum :
   rw [← RootPairing.root_coroot_eq_pairing]
   simp
 
+/-- Every Cartan integer between roots of the pinned type `F₄` datum has absolute value at most
+two. -/
+theorem abs_pairing_f4SimplyConnectedRootDatum_le_two (i j : Fin 48) :
+    |f4SimplyConnectedRootDatum.pairing i j| ≤ 2 := by
+  simp only [f4SimplyConnectedRootDatum_pairing]
+  decide +revert
+
 /-- Reflection in the root of index `i` permutes the root indices of the pinned `F4` datum by the
 explicit table `f4ReflectionIndex i`. -/
 @[simp] lemma f4SimplyConnectedRootDatum_reflectionPerm (i j : Fin 48) :
@@ -349,12 +357,8 @@ indices, which carry the simple roots. -/
 def f4Support : Finset (Fin 48) := simpleSupport (Fin.castAdd_injective 4 44)
 
 /-- The support of the base consists exactly of the four indices below `4`. -/
-@[simp] lemma mem_f4Support {i : Fin 48} : i ∈ f4Support ↔ (i : ℕ) < 4 := by
-  rw [f4Support, mem_simpleSupport]
-  constructor
-  · rintro ⟨k, rfl⟩
-    simpa only [Fin.val_castAdd] using k.isLt
-  · exact fun hi => ⟨⟨i, hi⟩, Fin.ext rfl⟩
+@[simp] lemma mem_f4Support {i : Fin 48} : i ∈ f4Support ↔ (i : ℕ) < 4 :=
+  mem_simpleSupport_iff_lt (Fin.castAdd_injective 4 44) (fun _ ↦ Fin.val_castAdd 44 _)
 
 /-- The coefficients of the positive `F4` roots in the ordered simple-root basis. -/
 private def f4RootCoefficients : Fin 24 → Fin 4 → ℕ := ![

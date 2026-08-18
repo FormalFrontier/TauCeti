@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -35,7 +36,8 @@ Beyond the definition and the existence theorem, the file records what a system 
 triple at each root, the resulting nonvanishing and the identification of each root space as the
 line it spans, the Cartan relation `⁅β^∨, x α⁆ = α(β^∨) • x α`, the grading `⁅x α, x β⁆ ∈ L₍α+β₎`
 with its vanishing when `α + β` is not a root, that the root vectors together with `H` span `L`,
-and that two systems differ by scalars `c α` subject to `c α * c (-α) = 1`.
+the Killing pairing of opposite normalized root vectors, and that two systems differ by scalars
+`c α` subject to `c α * c (-α) = 1`.
 
 ## What this is not
 
@@ -57,6 +59,8 @@ defined once the root vectors are.
 * `TauCeti.exists_isSl2System`: such a family exists.
 * `TauCeti.IsSl2System.isSl2Triple`: `(α^∨, x α, x (-α))` is an `sl₂` triple.
 * `TauCeti.IsSl2System.toSubmodule_rootSpace_eq_span`: `x α` spans the root space of `α`.
+* `TauCeti.IsSl2System.killingForm_root_neg_eq`: the Killing pairing of opposite normalized root
+  vectors is `2 / α((cartanEquivDual H)⁻¹ α)`.
 * `TauCeti.IsSl2System.lie_coroot`: the Cartan relation.
 * `TauCeti.IsSl2System.lie_mem_rootSpace_add` and
   `TauCeti.IsSl2System.lie_eq_zero_of_rootSpace_add_eq_bot`: the root grading of the bracket.
@@ -120,6 +124,20 @@ theorem isSl2Triple (hα : α.IsNonZero) : IsSl2Triple (coroot α : L) (x α) (x
 
 /-- A root vector of a normalised family is nonzero, being the `e` of an `sl₂` triple. -/
 theorem ne_zero (hα : α.IsNonZero) : x α ≠ 0 := (hx.isSl2Triple α hα).e_ne_zero
+
+/-- The Killing pairing of opposite vectors in a normalised root-vector system is
+`2 / α((cartanEquivDual H)⁻¹ α)`. -/
+theorem killingForm_root_neg_eq (hα : α.IsNonZero) :
+    killingForm K L (x α) (x (-α)) =
+      2 * (α ((cartanEquivDual H).symm α))⁻¹ := by
+  have hdual : ((cartanEquivDual H).symm α : L) ≠ 0 := by
+    simpa only [ne_eq, ZeroMemClass.coe_eq_zero] using fun hzero ↦
+      root_apply_cartanEquivDual_symm_ne_zero hα (by rw [hzero, map_zero])
+  rw [← (smul_left_injective K hdual).eq_iff]
+  rw [← lie_eq_killingForm_smul_of_mem_rootSpace_of_mem_rootSpace_neg
+    (hx.mem_rootSpace α) (hx.mem_rootSpace (-α)), hx.lie_neg α hα, coroot]
+  rw [← Nat.cast_smul_eq_nsmul K, smul_smul, Submodule.coe_smul_of_tower]
+  norm_num
 
 /-- A root vector of a normalised family spans its root space. -/
 theorem toSubmodule_rootSpace_eq_span (hα : α.IsNonZero) :

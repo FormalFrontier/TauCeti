@@ -152,28 +152,25 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       MeasureTheory.volume a b :=
     fun _ hε => intervalIntegrable_inv_sub_truncated h_imm.continuousOn
       h_imm.isPiecewiseC1On.intervalIntegrable_deriv hε
-  rcases T.eq_empty_or_nonempty with hT_empty | -
-  · refine cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint hab.le T ?_ ?_ ?_ ?_ h_int_tr
-      ?_ (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
-        fun t _ => one_pos)
-    all_goals simp [hT_empty]
-  · choose! R hR_pos _ _ _ _ _ _ h_spec using
-      fun t₀ (ht₀ : t₀ ∈ T) =>
-        exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
-    -- one radius serving every crossing at once, below each per-crossing radius `R t`
-    obtain ⟨ρ, hρ_pos, h_endpts, h_pair, hρ_le_R⟩ :=
-      exists_common_window_radius_le h_Ioo R hR_pos
-    refine cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint hab.le T (fun _ => hρ_pos.le)
-      (fun t ht => by linarith [(h_endpts t ht).1])
-      (fun t ht => by linarith [(h_endpts t ht).2])
-      (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le)
-      h_int_tr
-      (fun t₀ ht₀ => ⟨_, h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
-        (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
-        fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
-          (h_pair t₀ ht₀) h_complete ht h_eq⟩)
-      (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
-        fun t _ => hρ_pos)
+  choose! R hR_pos _ _ _ _ _ _ h_spec using
+    fun t₀ (ht₀ : t₀ ∈ T) =>
+      exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
+  -- one radius serving every crossing at once, below each per-crossing radius `R t`; no case
+  -- split on `T` is needed, since this supplies a radius when there are no crossings and every
+  -- window hypothesis below is a `∀` over `T`
+  obtain ⟨ρ, hρ_pos, h_endpts, h_pair, hρ_le_R⟩ :=
+    exists_common_window_radius_le h_Ioo R hR_pos
+  exact cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint hab.le T (fun _ => hρ_pos.le)
+    (fun t ht => by linarith [(h_endpts t ht).1])
+    (fun t ht => by linarith [(h_endpts t ht).2])
+    (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le)
+    h_int_tr
+    (fun t₀ ht₀ => ⟨_, h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
+      (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
+      fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
+        (h_pair t₀ ht₀) h_complete ht h_eq⟩)
+    (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
+      fun t _ => hρ_pos)
 
 end TauCeti.Contour
 

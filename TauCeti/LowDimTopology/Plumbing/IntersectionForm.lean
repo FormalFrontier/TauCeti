@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
+public import Mathlib.LinearAlgebra.Matrix.Adjugate
 public import Mathlib.LinearAlgebra.Matrix.Notation
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import Mathlib.LinearAlgebra.Matrix.PosDef
@@ -54,6 +56,13 @@ of Seifert-fibred examples), with edge multiplicities a later refinement.
   framing negative.
 * `TauCeti.PlumbingGraph.intersectionForm_self_add`: a symmetric-pairing expansion for the
   intersection form on a sum.
+* `TauCeti.PlumbingGraph.intersectionForm_self_smul`: the self-pairing scales by the square of the
+  multiplier.
+* `TauCeti.PlumbingGraph.intersectionForm_single_right_eq_mulVec_apply`: pairing against a basis
+  sphere
+  reads off one coordinate of the matrix-vector product.
+* `TauCeti.PlumbingGraph.intersectionForm_adjugate_mulVec_right`: pairing against the covector
+  `adjugate A *ᵥ k` computes `det A` times the linear form `⟪k, -⟫`.
 
 ## References
 
@@ -186,6 +195,13 @@ theorem intersectionForm_self_add (x y : V → ℤ) :
     rw [P.intersectionForm_isSymm.eq y x]
     ring
 
+/-- The self-pairing of a rescaled lattice point scales by the square of the multiplier: the
+intersection form is quadratic along every ray through the origin. -/
+theorem intersectionForm_self_smul (c : ℤ) (x : V → ℤ) :
+    P.intersectionForm (c • x) (c • x) = c ^ 2 * P.intersectionForm x x := by
+  simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+  ring
+
 /-- The intersection pairing of a lattice point against a basis sphere is the corresponding column
 sum of the intersection matrix. -/
 theorem intersectionForm_single_right (x : V → ℤ) (v : V) :
@@ -203,6 +219,31 @@ theorem sum_intersectionMatrix_mulVec_mul (m x : V → ℤ) :
     ∑ v, (P.intersectionMatrix.mulVec m) v * x v = P.intersectionForm x m := by
   rw [intersectionForm, Matrix.toBilin'_apply']
   exact dotProduct_comm _ _
+
+/-- The intersection pairing of a lattice point against a basis sphere is the corresponding
+coordinate of the matrix-vector product `A x`: this is how a single coordinate of `A x` is read
+off as a pairing, so that facts about the form transfer to the coordinates. -/
+theorem intersectionForm_single_right_eq_mulVec_apply (x : V → ℤ) (v : V) :
+    P.intersectionForm x (Pi.single v 1) = P.intersectionMatrix.mulVec x v := by
+  rw [P.intersectionForm_single_right x v, Matrix.mulVec_apply_eq_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [P.intersectionMatrix_isSymm.apply i v, mul_comm]
+
+/-- Pairing a lattice point against the covector `adjugate A *ᵥ k` computes `det A` times the
+linear form `⟪k, -⟫`.
+
+This is the integral substitute for "`k` is `A` applied to a rational vector": multiplying by the
+adjugate clears the denominators, at the cost of the factor `det A`. -/
+theorem intersectionForm_adjugate_mulVec_right (k x : V → ℤ) :
+    P.intersectionForm x (P.intersectionMatrix.adjugate.mulVec k) =
+      P.intersectionMatrix.det * ∑ v, k v * x v := by
+  rw [← P.sum_intersectionMatrix_mulVec_mul (P.intersectionMatrix.adjugate.mulVec k) x]
+  have hmul : P.intersectionMatrix.mulVec (P.intersectionMatrix.adjugate.mulVec k) =
+      P.intersectionMatrix.det • k := by
+    rw [Matrix.mulVec_mulVec, Matrix.mul_adjugate, Matrix.smul_mulVec, Matrix.one_mulVec]
+  rw [hmul, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun v _ => by
+    rw [Pi.smul_apply, smul_eq_mul, mul_assoc]
 
 /-- The intersection pairing of a lattice point against a finite sum of basis spheres, as a sum of
 the individual column sums. -/

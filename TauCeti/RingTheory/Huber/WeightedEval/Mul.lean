@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,7 +20,7 @@ property, since it speaks about individual series. The packaging as a ring homom
 `weightedEval_mul` below, and its continuity is `TauCeti.Huber.continuous_weightedEvalHom` in
 `WeightedEval/Continuous.lean`. The uniqueness of the extension, which is what makes 5.50
 *universal*, is `TauCeti.Huber.weightedRestrictedSubring_ringHom_ext_of_continuous` in
-`WeightedRestrictedSeries.lean`, and `WeightedEval/UniversalProperty.lean` states 5.50 itself.
+`WeightedRestrictedSeries/Basic.lean`, and `WeightedEval/UniversalProperty.lean` states 5.50 itself.
 
 The argument is the Cauchy product, and Mathlib supplies it:
 `Summable.tsum_mul_tsum_eq_tsum_sum_antidiagonal` turns a product of sums into a sum over

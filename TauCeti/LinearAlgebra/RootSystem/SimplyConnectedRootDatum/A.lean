@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -285,6 +286,7 @@ private def typeAPairEquiv (n : ℕ) : TypeAIndex n ≃ Fin n × Fin (n + 1) whe
 private def typeAIndexEquiv (n : ℕ) : TypeAIndex n ≃ Fin (n * (n + 1)) :=
   (typeAPairEquiv n).trans finProdFinEquiv
 
+/-- Reflection in the root indexed by `k`, transported to the pinned enumeration. -/
 private def typeAReflectionPerm (n : ℕ) (k : Fin (n * (n + 1))) :
     Fin (n * (n + 1)) ≃ Fin (n * (n + 1)) :=
   ((typeAIndexEquiv n).symm.trans
@@ -331,6 +333,10 @@ def typeASimplyConnectedRootDatum (n : ℕ) :
   reflectionPerm_root := typeAReflectionPerm_root
   reflectionPerm_coroot := typeAReflectionPerm_coroot
 
+/-- The pinned pairing of type `Aₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeASimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeASimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 private lemma root_typeASimplyConnectedRootDatum (k : Fin (n * (n + 1))) :
     (typeASimplyConnectedRootDatum n).root k = typeAPairRoot ((typeAIndexEquiv n).symm k) :=
   rfl
@@ -343,6 +349,20 @@ private lemma pairing_typeASimplyConnectedRootDatum (k l : Fin (n * (n + 1))) :
     (typeASimplyConnectedRootDatum n).pairing k l =
       (typeASimplyConnectedRootDatum n).root k ⬝ᵥ (typeASimplyConnectedRootDatum n).coroot l :=
   rfl
+
+/-- The root--coroot pairing of the pinned type `A` datum is symmetric. -/
+theorem pairing_typeASimplyConnectedRootDatum_comm (k l : Fin (n * (n + 1))) :
+    (typeASimplyConnectedRootDatum n).pairing k l =
+      (typeASimplyConnectedRootDatum n).pairing l k := by
+  rw [pairing_typeASimplyConnectedRootDatum, pairing_typeASimplyConnectedRootDatum,
+    root_typeASimplyConnectedRootDatum, root_typeASimplyConnectedRootDatum,
+    coroot_typeASimplyConnectedRootDatum, coroot_typeASimplyConnectedRootDatum,
+    typeAPairing, typeAPairing]
+  rw [ite_eq_comm ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.1,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.2,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.1,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.2]
+  ring
 
 /-- The `i`-th simple root of type `Aₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeASimpleIndex (n : ℕ) (i : Fin n) : Fin (n * (n + 1)) :=
@@ -482,12 +502,8 @@ private abbrev typeASimpleSupport (n : ℕ) : Finset (Fin (n * (n + 1))) :=
   simpleSupport (typeASimpleIndex_injective (n := n))
 
 private lemma mem_typeASimpleSupport {k : Fin (n * (n + 1))} :
-    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n := by
-  rw [typeASimpleSupport, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    simpa only [typeASimpleIndex_val] using i.isLt
-  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext rfl⟩
+    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeASimpleIndex_injective (n := n)) (fun _ ↦ typeASimpleIndex_val _)
 
 private lemma image_root_typeASimpleSupport :
     (typeASimplyConnectedRootDatum n).root '' (typeASimpleSupport n : Set (Fin (n * (n + 1)))) =

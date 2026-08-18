@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Algebra.Group.Commutator
 public import Mathlib.GroupTheory.FreeGroup.Basic
+public import Mathlib.GroupTheory.FreeGroup.CyclicallyReduced
 
 /-!
 # Auditable relator expressions
@@ -119,6 +120,18 @@ theorem toWord_mul {α : Type*} (r s : Relator α) :
 theorem toWord_pow {α : Type*} (r : Relator α) (n : ℕ) :
     (Relator.pow r n).toWord = (List.replicate n r.toWord).flatten := by
   rw [toWord]
+
+/-- A power of a relator compiles to a cyclically reduced word as soon as its base does.
+
+Published relators are often a single large power, and checking the base is much cheaper than
+checking the expansion: the base of the longest `TauCeti.Sporadic.co1Presentation` relator has
+nine letters where its expansion has three hundred and fifty-one.
+`TauCeti.isCyclicallyReduced_toWord_coxeterRelator` is the case of a base with two letters. -/
+theorem isCyclicallyReduced_toWord_pow {α : Type*} {r : Relator α}
+    (h : FreeGroup.IsCyclicallyReduced r.toWord) (n : ℕ) :
+    FreeGroup.IsCyclicallyReduced (Relator.pow r n).toWord := by
+  rw [toWord_pow]
+  exact h.flatten_replicate n
 
 /-- Compilation of a commutator. -/
 @[simp]

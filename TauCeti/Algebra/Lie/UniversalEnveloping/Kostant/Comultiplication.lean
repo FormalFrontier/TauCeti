@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,16 +24,16 @@ The canonical map
 kostantForm e h ⊗[ℤ] kostantForm e h → U(L) ⊗[ℚ] U(L)
 ```
 
-sends a pure tensor to the pure tensor of its two underlying elements. Its range is
-`kostantTensorForm e h`. The coefficient-one coproduct formulas for divided powers and generalized
-binomial coefficients show that the rational comultiplication of every element of the Kostant form
-lies in this range. The restriction is packaged as `kostantFormComul`.
+sends a pure tensor to the pure tensor of its two underlying elements. It is injective because a
+subring of a rational algebra is torsion-free, hence flat over `ℤ`; this is the general theorem
+`TauCeti.Subring.tensorSquareMap_injective`. Its range is `kostantTensorForm e h`, so it gives the
+equivalence `kostantTensorEquiv` between the integral tensor square and that range.
 
-Using the range rather than identifying it with the integral tensor product is deliberate. That
-identification requires injectivity of the canonical map, which is part of the integral PBW and
-base-change work still in progress. The range statement proved here is exactly the integrality
-statement independent of that injectivity: every rational coproduct has an integral tensor
-representative, and no representative is chosen.
+The coefficient-one coproduct formulas for divided powers and generalized binomial coefficients
+show that the rational comultiplication of every element of the Kostant form lies in this range.
+Transporting the range-valued restriction back through `kostantTensorEquiv` gives the canonical
+integral coproduct `kostantFormComul : U_ℤ →ₐ[ℤ] U_ℤ ⊗[ℤ] U_ℤ`. Thus integrality now means an
+actual algebra homomorphism, rather than only the existence of an integral tensor representative.
 
 The counit has no such issue. It sends every positive generator to zero and hence the entire form
 to the integer-cast subring of `ℚ`. The map `kostantFormCounit` is its canonical restriction to
@@ -43,13 +43,19 @@ to the integer-cast subring of `ℚ`. The map `kostantFormCounit` is its canonic
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTensorMap`: the canonical map from the integral
   tensor square to the rational tensor square.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTensorMap_injective`: the canonical tensor map is
+  injective.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTensorForm`: the range of that map.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTensorEquiv`: the equivalence from the integral tensor
+  square onto that range.
 * `TauCeti.UniversalEnvelopingAlgebra.comul_mem_kostantTensorForm`: the rational coproduct of an
   element of the Kostant form has an integral tensor representative.
 * `TauCeti.UniversalEnvelopingAlgebra.counit_mem_bot_of_mem_kostantForm`: the rational counit of an
   element of the Kostant form is an integer.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantFormComul`: the rational comultiplication restricted
-  to the integral tensor form.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantFormComul`: the canonical integral comultiplication.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantFormComul_dividedPower` and
+  `TauCeti.UniversalEnvelopingAlgebra.kostantFormComul_ringChoose`: its formulas on the
+  generators of the Kostant form.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormCounit`: the counit of the Kostant form, valued
   in `ℤ`.
 
@@ -97,8 +103,8 @@ theorem kostantTensorMap_tmul (e : ι → L) (h : κ → L) (x y : kostantForm e
 /-- The integral tensor form inside the rational tensor square: the range of the canonical map
 from `kostantForm e h ⊗[ℤ] kostantForm e h`.
 
-This range formulation records existence of an integral tensor representative without assuming
-injectivity of the canonical map. -/
+This range is the codomain of the rational restriction; `kostantTensorEquiv` below identifies it
+with the integral tensor square. -/
 noncomputable def kostantTensorForm (e : ι → L) (h : κ → L) : Subring (U ⊗[ℚ] U) :=
   TauCeti.Subring.tensorSquareRange ℚ (kostantForm e h)
 
@@ -146,29 +152,119 @@ theorem comul_mem_kostantTensorForm (e : ι → L) (h : κ → L) {a : U}
           tmul_mem_kostantTensorForm e h (ringChoose_mem_kostantForm e h j ij.1)
             (ringChoose_mem_kostantForm e h j ij.2)⟩ ha
 
--- The rational comultiplication restricted to the integral tensor form.
+-- The rational comultiplication restricted to the range of the integral tensor square.
 private noncomputable def kostantFormComulRingHom (e : ι → L) (h : κ → L) :
     kostantForm e h →+* kostantTensorForm e h :=
   (Bialgebra.comulAlgHom ℚ U).toRingHom.restrict (kostantForm e h) (kostantTensorForm e h)
     fun _ ha => comul_mem_kostantTensorForm e h ha
 
-/-- The comultiplication of the Kostant form, with codomain restricted to the integral tensor form
-inside the rational tensor square. -/
-noncomputable def kostantFormComul (e : ι → L) (h : κ → L) :
+private noncomputable def kostantFormComulRange (e : ι → L) (h : κ → L) :
     kostantForm e h →ₐ[ℤ] kostantTensorForm e h :=
   (kostantFormComulRingHom e h).toIntAlgHom
 
-/-- The restricted comultiplication agrees with the rational bialgebra comultiplication on
-underlying elements. -/
-@[simp]
-theorem coe_kostantFormComul_apply (e : ι → L) (h : κ → L) (a : kostantForm e h) :
-    (kostantFormComul e h a : U ⊗[ℚ] U) = Coalgebra.comul (R := ℚ) (a : U) := by
-  rw [kostantFormComul, RingHom.toIntAlgHom_apply, kostantFormComulRingHom]
+private theorem coe_kostantFormComulRange_apply (e : ι → L) (h : κ → L)
+    (a : kostantForm e h) :
+    (kostantFormComulRange e h a : U ⊗[ℚ] U) = Coalgebra.comul (R := ℚ) (a : U) := by
+  rw [kostantFormComulRange, RingHom.toIntAlgHom_apply, kostantFormComulRingHom]
   simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
     Bialgebra.comulAlgHom_apply] using
     RingHom.coe_restrict_apply (Bialgebra.comulAlgHom ℚ U).toRingHom
       (kostantForm e h) (kostantTensorForm e h)
       (fun _ ha => comul_mem_kostantTensorForm e h ha) a
+
+/-- The canonical map from the integral tensor square of a Kostant form to the rational tensor
+square of its enveloping algebra is injective. -/
+theorem kostantTensorMap_injective (e : ι → L) (h : κ → L) :
+    Function.Injective (kostantTensorMap e h) := by
+  simpa only [kostantTensorMap] using
+    TauCeti.Subring.tensorSquareMap_injective (kostantForm e h)
+
+/-- The canonical equivalence from the integral tensor square of a Kostant form onto its image in
+the rational tensor square. -/
+noncomputable def kostantTensorEquiv (e : ι → L) (h : κ → L) :
+    kostantForm e h ⊗[ℤ] kostantForm e h ≃ₐ[ℤ] kostantTensorForm e h :=
+  TauCeti.Subring.tensorSquareEquivRange (kostantForm e h)
+
+/-- The tensor equivalence acts by the canonical map into the rational tensor square. -/
+@[simp]
+theorem coe_kostantTensorEquiv_apply (e : ι → L) (h : κ → L)
+    (t : kostantForm e h ⊗[ℤ] kostantForm e h) :
+    (kostantTensorEquiv e h t : U ⊗[ℚ] U) = kostantTensorMap e h t := by
+  exact TauCeti.Subring.coe_tensorSquareEquivRange_apply (kostantForm e h) t
+
+/-- The integral comultiplication of a Kostant form. It is the unique algebra homomorphism whose
+composition with `kostantTensorMap` is the rational enveloping-algebra comultiplication. -/
+noncomputable def kostantFormComul (e : ι → L) (h : κ → L) :
+    kostantForm e h →ₐ[ℤ] kostantForm e h ⊗[ℤ] kostantForm e h :=
+  (kostantTensorEquiv e h).symm.toAlgHom.comp (kostantFormComulRange e h)
+
+/-- The integral comultiplication becomes the rational enveloping-algebra comultiplication under
+the canonical tensor embedding. -/
+@[simp]
+theorem kostantTensorMap_kostantFormComul_apply (e : ι → L) (h : κ → L)
+    (a : kostantForm e h) :
+    kostantTensorMap e h (kostantFormComul e h a) =
+      Coalgebra.comul (R := ℚ) (a : U) := by
+  rw [kostantFormComul, AlgHom.comp_apply]
+  calc
+    kostantTensorMap e h
+        ((kostantTensorEquiv e h).symm (kostantFormComulRange e h a)) =
+        (kostantTensorEquiv e h
+          ((kostantTensorEquiv e h).symm (kostantFormComulRange e h a)) : U ⊗[ℚ] U) :=
+      (coe_kostantTensorEquiv_apply e h _).symm
+    _ = (kostantFormComulRange e h a : U ⊗[ℚ] U) :=
+      congrArg Subtype.val
+        ((kostantTensorEquiv e h).apply_symm_apply (kostantFormComulRange e h a))
+    _ = _ := coe_kostantFormComulRange_apply e h a
+
+/-- The integral comultiplication is uniquely determined by its agreement with the rational
+enveloping-algebra comultiplication. -/
+theorem kostantFormComul_unique (e : ι → L) (h : κ → L)
+    (f : kostantForm e h →ₐ[ℤ] kostantForm e h ⊗[ℤ] kostantForm e h)
+    (hf : ∀ a, kostantTensorMap e h (f a) = Coalgebra.comul (R := ℚ) (a : U)) :
+    f = kostantFormComul e h := by
+  ext a
+  apply kostantTensorMap_injective e h
+  rw [hf, kostantTensorMap_kostantFormComul_apply]
+
+/-- The integral coproduct of a divided power is the coefficient-one antidiagonal sum. -/
+@[simp]
+theorem kostantFormComul_dividedPower (e : ι → L) (h : κ → L) (i : ι) (n : ℕ) :
+    kostantFormComul e h
+        ⟨Associative.dividedPower n
+            ((UniversalEnvelopingAlgebra.mkAlgHom ℚ L) ((TensorAlgebra.ι ℚ) (e i))),
+          by simpa only [UniversalEnvelopingAlgebra.ι_apply] using
+            dividedPower_mem_kostantForm e h i n⟩ =
+      ∑ ij ∈ Finset.antidiagonal n,
+        (⟨Associative.dividedPower ij.1 (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)),
+            dividedPower_mem_kostantForm e h i ij.1⟩ : kostantForm e h) ⊗ₜ[ℤ]
+          (⟨Associative.dividedPower ij.2 (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)),
+            dividedPower_mem_kostantForm e h i ij.2⟩ : kostantForm e h) := by
+  apply kostantTensorMap_injective e h
+  rw [kostantTensorMap_kostantFormComul_apply]
+  simp only [← UniversalEnvelopingAlgebra.ι_apply]
+  rw [comul_ι_dividedPower]
+  simp only [map_sum, kostantTensorMap_tmul]
+
+/-- The integral coproduct of a generalized Cartan binomial is the coefficient-one antidiagonal
+sum. -/
+@[simp]
+theorem kostantFormComul_ringChoose (e : ι → L) (h : κ → L) (j : κ) (n : ℕ) :
+    kostantFormComul e h
+        ⟨Ring.choose
+            ((UniversalEnvelopingAlgebra.mkAlgHom ℚ L) ((TensorAlgebra.ι ℚ) (h j))) n,
+          by simpa only [UniversalEnvelopingAlgebra.ι_apply] using
+            ringChoose_mem_kostantForm e h j n⟩ =
+      ∑ ij ∈ Finset.antidiagonal n,
+        (⟨Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) ij.1,
+            ringChoose_mem_kostantForm e h j ij.1⟩ : kostantForm e h) ⊗ₜ[ℤ]
+          (⟨Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) ij.2,
+            ringChoose_mem_kostantForm e h j ij.2⟩ : kostantForm e h) := by
+  apply kostantTensorMap_injective e h
+  rw [kostantTensorMap_kostantFormComul_apply]
+  simp only [← UniversalEnvelopingAlgebra.ι_apply]
+  rw [comul_ι_choose]
+  simp only [map_sum, kostantTensorMap_tmul]
 
 /-! ## The integral counit -/
 

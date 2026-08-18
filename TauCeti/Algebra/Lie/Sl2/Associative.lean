@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Module
+import Mathlib.Tactic.NoncommRing
 
 /-!
 # `sl₂` commutation relations in an associative algebra
@@ -54,9 +56,13 @@ algebra; a genuine `IsSl2Triple` supplies them through its bracket fields.
   divided-power forms, in which the structure constants are units `±1`.
 * `TauCeti.Sl2.h_mul_dividedPower_f` and `TauCeti.Sl2.h_mul_dividedPower_e`: moving a Cartan
   element past a divided power translates it by `∓2n`.
+* `TauCeti.Sl2.dividedPower_succ_e_mul_f` and `TauCeti.Sl2.dividedPower_succ_f_mul_e`: the
+  reversed-product forms, with the Cartan factor on the left.
 * `TauCeti.Sl2.ι_e_mul_dividedPower_succ_ι_f` and
   `TauCeti.Sl2.ι_f_mul_dividedPower_succ_ι_e`: the two divided-power relations in a universal
   enveloping algebra over `ℚ`.
+* `TauCeti.Sl2.dividedPower_succ_ι_e_mul_ι_f` and
+  `TauCeti.Sl2.dividedPower_succ_ι_f_mul_ι_e`: their reversed-product specializations.
 
 ## Roadmap
 
@@ -199,6 +205,29 @@ theorem f_mul_dividedPower_succ_e (hef : E * F - F * E = H)
   rw [dividedPower_def, dividedPower_def, mul_smul_comm, f_mul_e_pow_succ hef hhe, smul_sub,
     smul_mul_assoc, smul_mul_assoc, inv_factorial_succ_nsmul]
 
+/-- The reversed-product form of `f_mul_dividedPower_succ_e`:
+`E⁽ⁿ⁺¹⁾ F = F E⁽ⁿ⁺¹⁾ + (H - n) E⁽ⁿ⁾`. This is the orientation that occurs as the
+one-lowering-vector case of the full Kostant straightening formula. -/
+theorem dividedPower_succ_e_mul_f (hef : E * F - F * E = H)
+    (hhe : H * E - E * H = 2 • E) (n : ℕ) :
+    dividedPower (n + 1) E * F =
+      F * dividedPower (n + 1) E + (H - n) * dividedPower n E := by
+  have hs := f_mul_dividedPower_succ_e hef hhe n
+  have hmove := h_mul_dividedPower_e hhe n
+  have hncomm := (Nat.cast_commute n (dividedPower n E)).eq
+  noncomm_ring [hs, hmove, hncomm]
+
+/-- The reversed-product form of `e_mul_dividedPower_succ_f`:
+`F⁽ⁿ⁺¹⁾ E = E F⁽ⁿ⁺¹⁾ - (H + n) F⁽ⁿ⁾`. -/
+theorem dividedPower_succ_f_mul_e (hef : E * F - F * E = H)
+    (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
+    dividedPower (n + 1) F * E =
+      E * dividedPower (n + 1) F - (H + n) * dividedPower n F := by
+  have hs := e_mul_dividedPower_succ_f hef hhf n
+  have hmove := h_mul_dividedPower_f hhf n
+  have hncomm := (Nat.cast_commute n (dividedPower n F)).eq
+  noncomm_ring [hs, hmove, hncomm]
+
 end DividedPowers
 
 section UniversalEnveloping
@@ -249,6 +278,28 @@ theorem ι_f_mul_dividedPower_succ_ι_e (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆
     ι ℚ f * dividedPower (n + 1) (ι ℚ e) =
       dividedPower (n + 1) (ι ℚ e) * ι ℚ f - dividedPower n (ι ℚ e) * (ι ℚ h + n) :=
   f_mul_dividedPower_succ_e (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_e_sub_mul ℚ hhe) n
+
+/-- The reversed-product form of `ι_f_mul_dividedPower_succ_ι_e`:
+`e⁽ⁿ⁺¹⁾ f = f e⁽ⁿ⁺¹⁾ + (h - n) e⁽ⁿ⁾`. This is the orientation that occurs as the
+one-lowering-vector case of the full Kostant straightening formula. -/
+theorem dividedPower_succ_ι_e_mul_ι_f (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+    (n : ℕ) :
+    dividedPower (n + 1) (ι ℚ e) * ι ℚ f =
+      ι ℚ f * dividedPower (n + 1) (ι ℚ e) +
+        (ι ℚ h - n) * dividedPower n (ι ℚ e) :=
+  dividedPower_succ_e_mul_f
+    (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_e_sub_mul ℚ hhe) n
+
+/-- The reversed-product form of `ι_e_mul_dividedPower_succ_ι_f`:
+`f⁽ⁿ⁺¹⁾ e = e f⁽ⁿ⁺¹⁾ - (h + n) f⁽ⁿ⁾`. -/
+theorem dividedPower_succ_ι_f_mul_ι_e (hef : ⁅e, f⁆ = h)
+    (hhf : ⁅h, f⁆ = -(2 • f))
+    (n : ℕ) :
+    dividedPower (n + 1) (ι ℚ f) * ι ℚ e =
+      ι ℚ e * dividedPower (n + 1) (ι ℚ f) -
+        (ι ℚ h + n) * dividedPower n (ι ℚ f) :=
+  dividedPower_succ_f_mul_e
+    (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_f_sub_mul ℚ hhf) n
 
 end UniversalEnvelopingRat
 

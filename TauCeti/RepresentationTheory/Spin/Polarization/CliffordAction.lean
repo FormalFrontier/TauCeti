@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -44,8 +45,10 @@ here. Everything holds over an arbitrary commutative ring, since
 `TauCeti.SpinPolarizationData` already carries the isotropy and pairing that the relation needs;
 no invertibility of `2` is used.
 
-Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, the restriction to
-`spinGroup Q`, and the half-spin summands are not proved here.
+Surjectivity of `TauCeti.spinAction` onto `Module.End K S` when `P.W` is finite free, and its
+restriction to `pinGroup Q` and `spinGroup Q`, are in
+`TauCeti/RepresentationTheory/Spin/Representation.lean`; the half-spin summands are in
+`TauCeti/RepresentationTheory/Spin/HalfSpin.lean`.
 
 ## Main definitions
 
@@ -158,7 +161,7 @@ vanish — `ExteriorAlgebra.ι_sq_zero` for creation and
 it is the identity, by `CliffordAlgebra.involute_involute`, which is what makes the remainder
 coordinate contribute `Q z` rather than `0`. Parity anticommutes with each of the other two, by
 `CliffordAlgebra.involute_ι` through `map_mul` and by
-`TauCeti.CliffordAlgebra.involute_contractLeft`. The sixth term, the creation–annihilation
+`CliffordAlgebra.involute_contractLeft`. The sixth term, the creation–annihilation
 anticommutator, is the only one that sees the polarization and the only nonzero one among the
 three; it is recorded here. -/
 
@@ -208,7 +211,7 @@ theorem cliffordOperator_sq (v : V) :
     ← mul_assoc, ExteriorAlgebra.ι_sq_zero, zero_mul,
     CliffordAlgebra.contractLeft_ι_mul, CliffordAlgebra.contractLeft_contractLeft,
     map_mul, CliffordAlgebra.involute_ι, neg_mul,
-    TauCeti.CliffordAlgebra.involute_contractLeft,
+    CliffordAlgebra.involute_contractLeft,
     CliffordAlgebra.involute_involute, P.pairingEquiv_apply]
   module
 

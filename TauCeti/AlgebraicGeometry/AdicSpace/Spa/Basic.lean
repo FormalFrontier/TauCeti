@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.RingTheory.Valuation.Integral
 public import TauCeti.AlgebraicGeometry.AdicSpace.Cont.Basic
 
 /-!
@@ -17,7 +18,7 @@ For a subring `A⁺` of a commutative ring `A` with a topology, `spa A⁺` is th
 points of `Spv A` that are sub-unit on `A⁺`:
 
 ```text
-spa A⁺ = {v ∈ cont A ; v(a) ≤ 1 for every a ∈ A⁺}.
+spa A⁺ = {v ∈ cont A | v(a) ≤ 1 for every a ∈ A⁺}.
 ```
 
 This is stated for arbitrary data — the file assumes `[TopologicalSpace A]` and nothing
@@ -47,15 +48,22 @@ it; the subspace form here needs no such comparison.)
   module boundary, so these two are the exported interface.
 * `TauCeti.ValuationSpectrum.spa_antitone` : the spectrum shrinks as the plus ring grows. Its
   inclusion into `Cont A` is `spa_def ▸ Set.inter_subset_left`.
+* `TauCeti.ValuationSpectrum.spa_integralClosure` : replacing the plus ring by its integral
+  closure leaves `Spa` unchanged.
+* `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
+  commutative ring `A` with separately continuous addition, then `Spa(A, A⁺) = ∅` for any plus
+  ring `A⁺` (the `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1)).
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23 and Proposition 7.49.
 -/
 
 public section
 
 namespace TauCeti.ValuationSpectrum
+
+open Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
@@ -87,6 +95,38 @@ theorem mem_spa_iff (Aplus : Subring A) (v : Spv A) :
 theorem spa_antitone : Antitone (spa (A := A)) := fun _ _ hle ↦ by
   rw [spa_def, spa_def]
   exact Set.inter_subset_inter_right _ fun _ hv a ha ↦ hv a (hle ha)
+
+/-- Replacing a subring by its integral closure does not change the sub-unit valuation locus. -/
+@[simp]
+theorem spa_integralClosure (R : Subring A) :
+    spa (integralClosure R A).toSubring = spa R := by
+  ext v
+  rw [mem_spa_iff, mem_spa_iff]
+  refine and_congr_right fun _ ↦ ⟨fun h r hr ↦ ?_, fun h x hx ↦ ?_⟩
+  · exact h r (algebraMap_mem (integralClosure R A) ⟨r, hr⟩)
+  · let φ : R →+* v.valuation.integer :=
+      R.subtype.codRestrict v.valuation.integer fun r ↦ by
+        rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff]
+        exact h r r.2
+    rw [Subalgebra.mem_toSubring, mem_integralClosure_iff] at hx
+    have hint : IsIntegral v.valuation.integer x :=
+      hx.map_of_comp_eq φ (RingHom.id A) (by ext r; rfl)
+    have hxint := (Valuation.integer.integers v.valuation).mem_of_integral hint
+    rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
+    exact hxint
+
+section SeparatelyContinuousAdd
+
+variable [SeparatelyContinuousAdd A]
+
+/-- **The `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1).** If
+`1 ∈ closure {0}` in a commutative ring `A` with separately continuous addition, then
+`Spa (A, A⁺) = ∅` for any plus ring `A⁺`. -/
+theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
+    (h : (1 : A) ∈ closure ({0} : Set A)) : spa Aplus = ∅ := by
+  rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
+
+end SeparatelyContinuousAdd
 
 end TauCeti.ValuationSpectrum
 

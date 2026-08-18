@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,11 +21,10 @@ linear equivalence with the exterior algebra.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
@@ -162,10 +162,12 @@ theorem exists_eq_algebraMap_of_contractLeft_eq_zero (Q : QuadraticForm K M)
   simpa only [y, r, equivExterior_algebraMap] using
     eq_algebraMap_of_all_contractLeft_eq_zero b y hycontract
 
-/-- An even Clifford element that commutes with every generating vector is a scalar. -/
-theorem exists_eq_algebraMap_of_mem_even_of_commute
+/-- A Clifford element that graded-commutes with every generating vector is a scalar. Here
+`involute x * ι v = ι v * x` is the uniform equation combining commutation of the even part
+with anticommutation of the odd part. -/
+theorem exists_eq_algebraMap_of_involute_mul_ι_eq_ι_mul
     (Q : QuadraticForm K M) (hQ : Q.Nondegenerate) (x : CliffordAlgebra Q)
-    (hx_even : x ∈ even Q) (hx_comm : ∀ v : M, Commute x (ι Q v)) :
+    (hx : ∀ v : M, involute x * ι Q v = ι Q v * x) :
     ∃ r : K, x = algebraMap K (CliffordAlgebra Q) r := by
   let B : LinearMap.BilinForm K M := QuadraticMap.associated Q
   have hB : B.Nondegenerate := by
@@ -176,6 +178,16 @@ theorem exists_eq_algebraMap_of_mem_even_of_commute
   have htoDual : B.toDual hB v = Q.associated v :=
     LinearMap.ext fun w ↦ (LinearMap.BilinForm.toDual_def hB).trans (by rfl)
   rw [htoDual]
-  exact contractLeft_associated_eq_zero_of_commute_of_mem_even Q hx_even hx_comm v
+  apply (isUnit_of_invertible (2 : K)).smul_eq_zero.mp
+  rw [two_smul_contractLeft_associated Q, hx v, sub_self]
 
-end TauCeti.CliffordAlgebra
+/-- An even Clifford element that commutes with every generating vector is a scalar. -/
+theorem exists_eq_algebraMap_of_mem_even_of_commute
+    (Q : QuadraticForm K M) (hQ : Q.Nondegenerate) (x : CliffordAlgebra Q)
+    (hx_even : x ∈ even Q) (hx_comm : ∀ v : M, Commute x (ι Q v)) :
+    ∃ r : K, x = algebraMap K (CliffordAlgebra Q) r := by
+  apply exists_eq_algebraMap_of_involute_mul_ι_eq_ι_mul Q hQ x
+  intro v
+  rw [involute_eq_of_mem_even hx_even, (hx_comm v).eq]
+
+end CliffordAlgebra

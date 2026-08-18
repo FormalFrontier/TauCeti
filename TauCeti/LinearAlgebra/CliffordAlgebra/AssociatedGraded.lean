@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,21 +25,21 @@ Its graded-algebra packaging adapts the pattern in Mathlib's
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.filtrationAssociatedGraded Q`: the direct sum
+* `CliffordAlgebra.filtrationAssociatedGraded Q`: the direct sum
   `⨁ k, FiltrationGradedPiece Q k` of the homogeneous pieces.
-* `TauCeti.CliffordAlgebra.filtrationGradedMul`: the product of two homogeneous pieces, induced by
+* `CliffordAlgebra.filtrationGradedMul`: the product of two homogeneous pieces, induced by
   Clifford multiplication through `filtration_mul`.
-* `TauCeti.CliffordAlgebra.filtrationGradedOne` and
-  `TauCeti.CliffordAlgebra.filtrationGradedAlgebraMap₀`: the degree-zero unit and the degree-zero
+* `CliffordAlgebra.filtrationGradedOne` and
+  `CliffordAlgebra.filtrationGradedAlgebraMap₀`: the degree-zero unit and the degree-zero
   image of a scalar.
 
 ## Main results
 
 * The graded structure instances assembling those pieces:
-  `TauCeti.CliffordAlgebra.filtrationGradedGOne`, `filtrationGradedGMul`,
+  `CliffordAlgebra.filtrationGradedGOne`, `filtrationGradedGMul`,
   `filtrationGradedGMonoid`, `filtrationGradedGRing`, `filtrationGradedGSemiring` and
   `filtrationGradedGAlgebra`, culminating in
-  `TauCeti.CliffordAlgebra.filtrationAssociatedGradedRing`, the ring structure on the direct sum.
+  `CliffordAlgebra.filtrationAssociatedGradedRing`, the ring structure on the direct sum.
 
 ## Implementation notes
 
@@ -53,12 +54,9 @@ synthesizable.
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -475,5 +473,3 @@ noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
   infer_instance
 
 end CliffordAlgebra
-
-end TauCeti

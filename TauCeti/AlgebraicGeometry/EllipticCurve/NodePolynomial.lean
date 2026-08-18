@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -143,6 +144,15 @@ lemma discrim_map_nodePolynomial (φ : A →+* B) (W : WeierstrassCurve A) :
   simp only [discrim, map_add, map_sub, map_mul, map_neg, map_pow, map_ofNat] at h ⊢
   linear_combination h
 
+/-- A power of the constant polynomial `u⁻¹` absorbs any smaller power of the constant
+polynomial `u`. -/
+private lemma C_inv_pow_mul_C_pow (u : Aˣ) (m n : ℕ) :
+    Polynomial.C (↑u⁻¹ : A) ^ (m + n) * Polynomial.C (↑u : A) ^ n
+      = Polynomial.C (↑u⁻¹ : A) ^ m := by
+  have hCu : Polynomial.C (↑u⁻¹ : A) * Polynomial.C (↑u : A) = 1 := by
+    rw [← Polynomial.C_mul, u.inv_mul, Polynomial.C_1]
+  rw [pow_add, mul_assoc, pow_mul_pow_eq_one n hCu, mul_one]
+
 /-- Under a change of variables `C = (u, r, s, t)`, the node polynomial transforms by the affine
 substitution `T ↦ u T + s` and the unit scalar `u⁻⁶` — reflecting that the tangent slopes `λ`
 transform as `λ ↦ (λ - s)/u`. Over a field this makes splitting invariant; see
@@ -150,33 +160,23 @@ transform as `λ ↦ (λ - s)/u`. Over a field this makes splitting invariant; s
 lemma variableChange_nodePolynomial (W : WeierstrassCurve A) (C : VariableChange A) :
     (C • W).nodePolynomial = .C ((↑C.u⁻¹ : A) ^ 6)
       * W.nodePolynomial.comp (.C (↑C.u : A) * .X + .C C.s) := by
-  -- `ring` cannot see that `u⁻¹` inverts `u`, so the two cancellations it needs are supplied as
-  -- hypotheses and fed to `linear_combination`: `e2` corrects the `X²` coefficient, where the
-  -- scalar `u⁻⁶` meets the `u²` from `(uX + s)²`, and `e1` the `X` coefficient, where it meets a
-  -- single `u`.
-  have hu : (↑C.u⁻¹ : A) * (↑C.u : A) = 1 := C.u.inv_mul
-  have e2 : (↑C.u⁻¹ : A) ^ 6 * (↑C.u : A) ^ 2 = (↑C.u⁻¹ : A) ^ 4 := by
-    linear_combination ((↑C.u⁻¹ : A) ^ 4 * ((↑C.u⁻¹ : A) * (↑C.u : A) + 1)) * hu
-  have e1 : (↑C.u⁻¹ : A) ^ 6 * (↑C.u : A) = (↑C.u⁻¹ : A) ^ 5 := by
-    linear_combination ((↑C.u⁻¹ : A) ^ 5) * hu
+  -- `ring` treats `↑u` and `↑u⁻¹` as unrelated constants, so the two cancellations it needs are
+  -- supplied to `linear_combination`: `e2` corrects the `X²` coefficient, where the scalar `u⁻⁶`
+  -- meets the `u²` from `(uX + s)²`, and `e1` the `X` coefficient, where it meets a single `u`.
+  have e2 := C_inv_pow_mul_C_pow C.u 4 2
+  have e1 := C_inv_pow_mul_C_pow C.u 5 1
   have hc₄ : Polynomial.C W.c₄ = Polynomial.C W.b₂ ^ 2 - 24 * Polynomial.C W.b₄ := by
     rw [c₄]
     simp only [Polynomial.C_sub, Polynomial.C_mul, Polynomial.C_pow, map_ofNat]
-  have e2p : (Polynomial.C (↑C.u⁻¹ : A)) ^ 6 * (Polynomial.C (↑C.u : A)) ^ 2
-      = (Polynomial.C (↑C.u⁻¹ : A)) ^ 4 := by
-    rw [← Polynomial.C_pow, ← Polynomial.C_pow, ← Polynomial.C_mul, e2, Polynomial.C_pow]
-  have e1p : (Polynomial.C (↑C.u⁻¹ : A)) ^ 6 * Polynomial.C (↑C.u : A)
-      = (Polynomial.C (↑C.u⁻¹ : A)) ^ 5 := by
-    rw [← Polynomial.C_pow, ← Polynomial.C_mul, e1, Polynomial.C_pow]
   simp only [nodePolynomial, variableChange_a₁, variableChange_a₂, variableChange_c₄,
     variableChange_b₂, variableChange_b₄, variableChange_b₆, Polynomial.mul_comp,
     Polynomial.add_comp, Polynomial.sub_comp, Polynomial.C_comp, Polynomial.X_comp, pow_two,
     mul_add, add_mul, mul_sub, sub_mul, Polynomial.C_mul, Polynomial.C_add, Polynomial.C_sub,
     Polynomial.C_pow, map_ofNat, Polynomial.ofNat_comp]
   -- the `r`-shift contributes `c₄` through `variableChange_a₂`, in expanded form
-  linear_combination (-Polynomial.C W.c₄ * Polynomial.X ^ 2) * e2p
+  linear_combination (-Polynomial.C W.c₄ * Polynomial.X ^ 2) * e2
     + (-(2 * Polynomial.C W.c₄ * Polynomial.C C.s + Polynomial.C W.a₁ * Polynomial.C W.c₄)
-        * Polynomial.X) * e1p
+        * Polynomial.X) * e1
     + (-3 * Polynomial.C (↑C.u⁻¹ : A) ^ 6 * Polynomial.C C.r) * hc₄
 
 /-- **Invariance of the node polynomial's splitting under change of variables.** Since a change of

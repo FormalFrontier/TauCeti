@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -285,6 +286,52 @@ theorem intervalIntegrable_excised_deriv_smul_logDeriv_comp_ofComplex_fdBoundary
   rw [sub_sub_self] at hp
   linear_combination -hp
 
+/-- The excised weight term is invariant under the arc reflection `t ↦ 4 - t`: the excision
+test is invariant by `excised_fdBoundary_arc_reflection_iff`, and the contour's own
+logarithmic derivative is the constant `π/6 · I` on the whole open arc. -/
+private lemma excised_weight_fdBoundary_arc_four_sub {H : ℝ} {S : Finset ℂ} {ε : ℝ} {t : ℝ}
+    (hnorm : ∀ s ∈ S, ‖s‖ = 1) (hinv : ∀ s ∈ S, -1 / s ∈ S) (ht : t ∈ Ioo (1 : ℝ) 3) :
+    (if ∃ s ∈ S, ‖fdBoundary H (4 - t) - s‖ ≤ ε then 0
+      else -((k : ℂ) * logDeriv (fdBoundary H) (4 - t))) =
+    if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0 else -((k : ℂ) * logDeriv (fdBoundary H) t) := by
+  have h4t : 4 - t ∈ Ioo (1 : ℝ) 3 := ⟨by linarith [ht.2], by linarith [ht.1]⟩
+  rw [logDeriv_fdBoundary_arc ht, logDeriv_fdBoundary_arc h4t]
+  exact if_congr (excised_fdBoundary_arc_reflection_iff ⟨ht.1.le, ht.2.le⟩ hnorm hinv) rfl rfl
+
+/-- Integrating the pointwise pairing over `[1, 3]`: the direct and reflected excised
+integrands sum to the excised weight term.
+
+The pointwise identity is only assumed on the first half. It is symmetric under `t ↦ 4 - t`,
+so on the second half it follows from the first through
+`excised_weight_fdBoundary_arc_four_sub`; the reflection's fixed point `t = 2` and the
+endpoint `t = 3` are null, which is why this is an almost-everywhere congruence. -/
+private lemma intervalIntegral_excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg
+    [SlashInvariantFormClass F Γ k] (f : F)
+    (hS : ModularGroup.S ∈ Γ) {H : ℝ} {S : Finset ℂ} {ε : ℝ} (hnorm : ∀ s ∈ S, ‖s‖ = 1)
+    (hinv : ∀ s ∈ S, -1 / s ∈ S)
+    (hd : ∀ t ∈ Ioo (1 : ℝ) 2, ¬(∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε) →
+      DifferentiableAt ℂ (⇑f ∘ ofComplex) (fdBoundary H t))
+    (hne : ∀ t ∈ Ioo (1 : ℝ) 2, ¬(∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε) →
+      (⇑f ∘ ofComplex) (fdBoundary H t) ≠ 0) :
+    (∫ t in (1 : ℝ)..3, ((if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0
+        else deriv (fdBoundary H) t • logDeriv (⇑f ∘ ofComplex) (fdBoundary H t)) +
+      (if ∃ s ∈ S, ‖fdBoundary H (4 - t) - s‖ ≤ ε then 0
+        else deriv (fdBoundary H) (4 - t) • logDeriv (⇑f ∘ ofComplex) (fdBoundary H (4 - t))))) =
+      ∫ t in (1 : ℝ)..3, (if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0
+        else -((k : ℂ) * logDeriv (fdBoundary H) t)) := by
+  refine intervalIntegral.integral_congr_ae ?_
+  filter_upwards [volume.ae_ne (2 : ℝ), volume.ae_ne (3 : ℝ)] with t ht2 ht3 htI
+  rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 3)] at htI
+  have ht13 : t ∈ Ioo (1 : ℝ) 3 := ⟨htI.1, htI.2.lt_of_ne ht3⟩
+  rcases ht2.lt_or_gt with h2 | h2
+  · exact excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht13 hnorm hinv
+      (hd t ⟨ht13.1, h2⟩) (hne t ⟨ht13.1, h2⟩)
+  · have hu : 4 - t ∈ Ioo (1 : ℝ) 2 := ⟨by linarith [ht13.2], by linarith⟩
+    have h := excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS
+      ⟨hu.1, by linarith [hu.2]⟩ hnorm hinv (hd _ hu) (hne _ hu)
+    rw [sub_sub_self (4 : ℝ) t, excised_weight_fdBoundary_arc_four_sub hnorm hinv ht13] at h
+    exact (add_comm _ _).trans h
+
 /-- **The excised arc integral collapses to the weight term.** Integrating the pointwise pairing
 over `[1, 3]`, where the reflection `t ↦ 4 - t` maps the interval to itself, the excised arc
 integral is `-k/2` times the excised integral of the contour's own logarithmic derivative.
@@ -321,82 +368,21 @@ theorem two_mul_intervalIntegral_excised_deriv_smul_logDeriv_comp_ofComplex_fdBo
   have hrefl : (∫ t in (1 : ℝ)..3, G (4 - t)) = ∫ t in (1 : ℝ)..3, G t := by
     have h := intervalIntegral.integral_comp_sub_left (a := (1 : ℝ)) (b := 3) (d := (4 : ℝ)) G
     rwa [h43, h41] at h
-  -- The excision test cuts out a measurable set: a finite union of preimages of closed balls
-  -- under the continuous contour.
-  -- The excised weight is bounded, hence integrable on the first half.
-  have hWc : ∀ c : ℂ, IntervalIntegrable
-      (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) volume 1 2 :=
-    fun c => intervalIntegrable_excised_const c 1 2
-  -- On the arc the contour's logarithmic derivative is constant, so the excised weight is one
-  -- of those bounded models.
-  have hWint : IntervalIntegrable
-      (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ)
-        else -((k : ℂ) * logDeriv (fdBoundary H) t)) volume 1 2 :=
-    (hWc (-((k : ℂ) * (((Real.pi / 6 : ℝ) : ℂ) * Complex.I)))).congr_uIoo fun t ht => by
-      rw [Set.uIoo_of_le (by norm_num : (1 : ℝ) ≤ 2)] at ht
-      have ht3 : t ∈ Ioo (1 : ℝ) 3 := ⟨ht.1, by linarith [ht.2]⟩
-      by_cases hc : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε
-      · simp [hc]
-      · simp [hc, logDeriv_fdBoundary_arc ht3]
-  -- The pairing rewrites the reflected integrand as weight minus direct, so integrability on
-  -- the second half is derived rather than assumed.
-  have hreflint12 : IntervalIntegrable (fun t => G (4 - t)) volume 1 2 :=
-    (hWint.sub hint).congr_uIoo fun t ht => by
-      rw [Set.uIoo_of_le (by norm_num : (1 : ℝ) ≤ 2)] at ht
-      have ht3 : t ∈ Ioo (1 : ℝ) 3 := ⟨ht.1, by linarith [ht.2]⟩
-      have hp := excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht3
-        hnorm hinv (hd t ht) (hne t ht)
-      rw [hG]
-      linear_combination -hp
-  have hint23 : IntervalIntegrable G volume 2 3 := by
-    have h := hreflint12.comp_sub_left 4
-    rw [(by norm_num : (4 : ℝ) - 1 = 3), (by norm_num : (4 : ℝ) - 2 = 2)] at h
-    simpa only [sub_sub_self] using h.symm
-  have hint13 : IntervalIntegrable G volume 1 3 := hint.trans hint23
+  -- Integrability on `[2, 3]` is not assumed: the pairing gives it from the `[1, 2]` half.
+  have hint13 : IntervalIntegrable G volume 1 3 :=
+    hint.trans <| intervalIntegrable_excised_deriv_smul_logDeriv_comp_ofComplex_fdBoundarySegment3
+      f hS hnorm hinv hd hne hint
   have hintrefl : IntervalIntegrable (fun t => G (4 - t)) volume 1 3 := by
     have h := hint13.comp_sub_left 4
     rw [h43, h41] at h
     exact h.symm
-  -- The weight term is itself reflection-invariant: the excision test is, by
-  -- `excised_fdBoundary_arc_reflection_iff`, and the contour's own logarithmic derivative is
-  -- the constant `π/6 · I` on the whole open arc.
-  have hweight : ∀ t ∈ Ioo (1 : ℝ) 3,
-      (if ∃ s ∈ S, ‖fdBoundary H (4 - t) - s‖ ≤ ε then 0
-        else -((k : ℂ) * logDeriv (fdBoundary H) (4 - t))) =
-      (if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0
-        else -((k : ℂ) * logDeriv (fdBoundary H) t)) := by
-    intro t ht
-    have h4t : 4 - t ∈ Ioo (1 : ℝ) 3 := ⟨by linarith [ht.2], by linarith [ht.1]⟩
-    have hsymm := excised_fdBoundary_arc_reflection_iff (H := H) (S := S) (ε := ε)
-      ⟨ht.1.le, ht.2.le⟩ hnorm hinv
-    by_cases hc : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε
-    · rw [ite_eq_left hc, ite_eq_left (hsymm.mpr hc)]
-    · rw [ite_eq_right hc, ite_eq_right fun h => hc (hsymm.mp h), logDeriv_fdBoundary_arc ht,
-        logDeriv_fdBoundary_arc h4t]
-  -- Add the pointwise pairing over the interval. It is only assumed on the first half: the
-  -- identity is symmetric under `t ↦ 4 - t`, so on the second half it follows from the first
-  -- through `hweight`. The two fixed points `t = 2, 3` are null, hence the a.e. congruence.
+  -- Stated against `G` rather than taken raw from the lemma: `set` leaves `hsum`'s own
+  -- statement spelled out, and the `integral_add` rewrite below is phrased in `G`.
   have hsum : (∫ t in (1 : ℝ)..3, (G t + G (4 - t))) =
       ∫ t in (1 : ℝ)..3, (if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0
-        else -((k : ℂ) * logDeriv (fdBoundary H) t)) := by
-    refine intervalIntegral.integral_congr_ae ?_
-    have h23 : ∀ᵐ t : ℝ, t ≠ 2 ∧ t ≠ 3 := by
-      filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (2 : ℝ)),
-        compl_mem_ae_iff.mpr (measure_singleton (3 : ℝ))] with t h2 h3 using ⟨h2, h3⟩
-    filter_upwards [h23] with t ht2 htI
-    have ht3 : t ∈ Ioo (1 : ℝ) 3 := by
-      rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 3)] at htI
-      exact ⟨htI.1, lt_of_le_of_ne htI.2 ht2.2⟩
-    rcases lt_or_gt_of_ne ht2.1 with h2 | h2
-    · exact excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht3 hnorm hinv
-        (hd t ⟨ht3.1, h2⟩) (hne t ⟨ht3.1, h2⟩)
-    · have hu : 4 - t ∈ Ioo (1 : ℝ) 2 := ⟨by linarith [ht3.2], by linarith⟩
-      have hu3 : 4 - t ∈ Ioo (1 : ℝ) 3 := ⟨hu.1, by linarith [hu.2]⟩
-      have h := excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS hu3
-        hnorm hinv (hd _ hu) (hne _ hu)
-      rw [sub_sub_self (4 : ℝ) t, hweight t ht3] at h
-      rw [hG]
-      linear_combination h
+        else -((k : ℂ) * logDeriv (fdBoundary H) t)) :=
+    intervalIntegral_excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg
+      f hS hnorm hinv hd hne
   rw [intervalIntegral.integral_add hint13 hintrefl, hrefl] at hsum
   rw [two_mul, hsum, ← intervalIntegral.integral_const_mul]
   refine intervalIntegral.integral_congr fun t _ => ?_

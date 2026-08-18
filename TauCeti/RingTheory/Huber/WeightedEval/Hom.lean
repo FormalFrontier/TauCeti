@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,9 +19,9 @@ needs.
 Its continuity is `TauCeti.Huber.continuous_weightedEvalHom` in `WeightedEval/Continuous.lean`.
 The uniqueness that makes 5.50 a *universal* property is
 `TauCeti.Huber.weightedRestrictedSubring_ringHom_ext_of_continuous` in
-`WeightedRestrictedSeries.lean`; `WeightedEval/UniversalProperty.lean` puts the two together, and
-its `∃!` statement identifies this homomorphism as the only continuous one with these values on
-the generators.
+`WeightedRestrictedSeries/Basic.lean`; `WeightedEval/UniversalProperty.lean` puts the two
+together, and its `∃!` statement identifies this homomorphism as the only continuous one
+with these values on the generators.
 
 ## Main definitions
 

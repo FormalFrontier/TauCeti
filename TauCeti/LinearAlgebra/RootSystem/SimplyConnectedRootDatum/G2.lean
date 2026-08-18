@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import TauCeti.LinearAlgebra.RootSystem.Positive
+public import Mathlib.LinearAlgebra.RootSystem.Reduced
 
 public section
 
@@ -39,6 +41,7 @@ also make the reflection-stability axioms of `RootPairing` decidable finite calc
   `g2SimplyConnectedRootDatum_pairing` the lemmas that expose them.
 * Its `RootPairing.IsRootSystem` instance records that the roots and the coroots span their
   lattices; coroot spanning is the simply connected condition.
+* Its `RootPairing.IsReduced` instance rules out nontrivial scalar multiples among the roots.
 * `TauCeti.DynkinType.g2SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2` pins that numbering
   entrywise: on the two base indices the Cartan integers are the Bourbaki matrix `!![2, -1; -3, 2]`.
@@ -75,6 +78,18 @@ def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
   inj' := by decide
+
+/-- The simple roots of `G2` sit at the first two indices, where they are the rows of its
+Bourbaki-numbered Cartan matrix. -/
+@[simp] lemma g2Root_castAdd (i : Fin 2) :
+    g2Root (Fin.castAdd 10 i) = CartanMatrix.G₂ᵀ i := by
+  fin_cases i <;> decide
+
+/-- The simple coroots of `G2` sit at the first two indices, where they are the standard basis of
+the cocharacter lattice. -/
+@[simp] lemma g2Coroot_castAdd (i : Fin 2) :
+    g2Coroot (Fin.castAdd 10 i) = Pi.single i 1 := by
+  fin_cases i <;> decide
 
 /-- The permutation table for reflection in each of the twelve `G2` roots. -/
 private def g2ReflectionIndex : Fin 12 → Fin 12 → Fin 12 := ![
@@ -147,6 +162,23 @@ fundamental-weight and simple-coroot bases being dual to one another. -/
 tabulated root and coroot coordinates. -/
 @[simp] lemma g2SimplyConnectedRootDatum_pairing (i j : Fin 12) :
     g2SimplyConnectedRootDatum.pairing i j = g2Root i ⬝ᵥ g2Coroot j := (rfl)
+
+/-- The pinned simply connected root datum of type `G₂` is reduced. -/
+instance instIsReducedG2SimplyConnectedRootDatum : g2SimplyConnectedRootDatum.IsReduced := by
+  constructor
+  intro i j hdependent
+  have hproduct :
+      g2SimplyConnectedRootDatum.pairing i j * g2SimplyConnectedRootDatum.pairing j i = 4 := by
+    simpa only [RootPairing.coxeterWeight] using
+      (g2SimplyConnectedRootDatum.coxeterWeight_eq_four_iff_not_linearIndependent.mpr hdependent)
+  have htable : ∀ i j : Fin 12,
+      (g2Root i ⬝ᵥ g2Coroot j) * (g2Root j ⬝ᵥ g2Coroot i) = 4 →
+        g2Root i = g2Root j ∨ g2Root i = -g2Root j := by
+    decide
+  have hproduct' :
+      (g2Root i ⬝ᵥ g2Coroot j) * (g2Root j ⬝ᵥ g2Coroot i) = 4 := by
+    simpa only [g2SimplyConnectedRootDatum_pairing] using hproduct
+  simpa only [g2SimplyConnectedRootDatum_root] using htable i j hproduct'
 
 private lemma span_g2Root_eq_top : span ℤ (range g2Root) = ⊤ := by
   apply top_unique

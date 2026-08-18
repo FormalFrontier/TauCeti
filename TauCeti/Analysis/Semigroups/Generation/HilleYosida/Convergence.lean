@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -12,7 +13,8 @@ public import TauCeti.Analysis.Semigroups.Generation.HilleYosida.Approximation
 This file assembles the two halves of the exponent-zero, general-`M` Hille--Yosida construction
 that are already available: the uniform bound `‖exp (t A_lambda)‖ ≤ M` on the Yosida exponentials
 proved in `TauCeti/Analysis/Semigroups/Generation/HilleYosida/Approximation.lean`, and the
-convergence `A_lambda x -> A x` proved in `TauCeti/Analysis/Semigroups/Generation/Yosida.lean`
+convergence `A_lambda x -> A x` proved in
+`TauCeti/Analysis/Semigroups/Generation/Yosida/Basic.lean`
 from the resolvent bound alone. Together they say that for a densely defined operator whose
 resolvent powers at `lambda > 0` satisfy
 
@@ -28,11 +30,12 @@ estimate be spread over the whole space by density. The comparison estimate cont
 bound, and is the reason the Hille--Yosida hypotheses are not weakened to a bound on `R(lambda, A)`
 alone.
 
-Completeness then turns this Cauchy property into a candidate pointwise limit family. Later
-arguments must establish its semigroup structure and growth bound `(0, M)`, and identify its
-generator as `A`; these are the remaining steps of the generation theorem. The reduction of the
-general growth exponent to zero is
-`TauCeti.LinearPMap.hilleYosida_zero_of`.
+Completeness then turns this Cauchy property into a candidate pointwise limit family.
+`TauCeti.Semigroups.hilleYosidaLimitSemigroup` in
+`TauCeti/Analysis/Semigroups/Generation/HilleYosida/Limit.lean` packages this family into a
+strongly continuous semigroup and establishes its growth bound `(0, M)`. Its generator is
+identified as `A`, and the reduction from a general growth exponent is reversed, in
+`TauCeti/Analysis/Semigroups/Generation/HilleYosida/Generation.lean`.
 
 ## Main results
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -41,10 +42,10 @@ consumes one.
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 3** — the martingale-free
   standard-Borel de Finetti route, `deFinetti_viaL2`.
-* The integration step was previously duplicated: it lived privately in
-  `DeFinetti/JointRectangle.lean` for the prefix selection, and was reimplemented here. #2958
-  extracted it as `measure_inter_blockCylinder_eq_setLIntegral_of_condExp`, which both routes now
-  call; this file no longer carries its own copy.
+* The integration step is shared, not route-specific:
+  `measure_inter_blockCylinder_eq_setLIntegral_of_condExp` in
+  `DeFinetti/DirectingMeasure/BlockCylinder.lean` serves both this route and the prefix selection
+  in `DeFinetti/JointRectangle.lean`.
 -/
 
 public section

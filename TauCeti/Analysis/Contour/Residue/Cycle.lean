@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -49,6 +50,9 @@ here and not there.
 
 * `TauCeti.Contour.PolarPartDecomposition.intervalIntegral_deriv_smul_polarPart` — the contour
   integral of a polar part around such a curve is `2πi · n_s(γ) · Res_s f`.
+* `PolarPartDecomposition.intervalIntegral_deriv_smul_eq_analyticRemainder_add_sum` — the residue
+  sum splits off the contour integral without any null-homology hypothesis, the analytic
+  remainder's integral being left standing.
 * `PolarPartDecomposition.intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue` — the
   residue theorem for a fixed decomposition, assuming nothing about `f` beyond it.
 * `TauCeti.Contour.classicalResidueTheorem_nullHomologous` — the residue theorem for an arbitrary
@@ -128,22 +132,27 @@ theorem intervalIntegral_deriv_smul_polarPart (decomp : PolarPartDecomposition f
   rw [hsplit, Finset.sum_congr rfl fun k _ => hval k, decomp.sum_ite_coeff_eq_residue_mul s]
   ring
 
-/-- **The residue theorem for a fixed polar-part decomposition.** Once `f` is presented on `U` as
-an analytic remainder plus finite Laurent tails at the points of `S`, a closed null-homologous
-piecewise-`C¹` curve in `U` avoiding `S` integrates to the winding-weighted residue sum. This is
-the sum of the two preceding facts: the remainder contributes nothing
-(`intervalIntegral_deriv_smul_analyticRemainder_eq_zero`) and the tail at `s` contributes
-`2πi · n_s(γ) · Res_s f` (`intervalIntegral_deriv_smul_polarPart`).
+/-- **Splitting the contour integral off the residue sum.** Once `f` is presented on `U` as an
+analytic remainder plus finite Laurent tails at the points of `S`, a closed piecewise-`C¹` curve in
+`U` avoiding `S` integrates to the remainder's integral plus the winding-weighted residue sum: the
+tail at `s` contributes `2πi · n_s(γ) · Res_s f` by `intervalIntegral_deriv_smul_polarPart`.
+
+No null-homology is assumed here, so the remainder's integral is left standing; discharging it is
+what `intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue` does for a null-homologous
+curve. Keeping the two steps apart lets a cycle whose *generators* need not be null-homologous —
+only the cycle as a whole — sum this identity over its support
+(`TauCeti.Contour.Cycle.integral_eq_analyticRemainder_add_sum`).
 
 Nothing is assumed about `f` beyond the decomposition itself: no differentiability or meromorphy
 hypothesis appears, a decomposition already carrying everything the argument uses. When `decomp`
 is obtained from `ofMeromorphic`, those hypotheses were consumed there. -/
-theorem intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue
-    (decomp : PolarPartDecomposition f S U) (hU : IsOpen U) {γ : ℝ → ℂ} {a b : ℝ}
+theorem intervalIntegral_deriv_smul_eq_analyticRemainder_add_sum
+    (decomp : PolarPartDecomposition f S U) {γ : ℝ → ℂ} {a b : ℝ}
     (hγ : IsPiecewiseC1On γ a b) (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
-    (hoff : ∀ t ∈ uIcc a b, γ t ∉ (↑S : Set ℂ)) (hnull : IsNullHomologous γ a b U) :
+    (hoff : ∀ t ∈ uIcc a b, γ t ∉ (↑S : Set ℂ)) :
     ∫ t in a..b, deriv γ t • f (γ t)
-      = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s := by
+      = (∫ t in a..b, deriv γ t • decomp.analyticRemainder (γ t))
+        + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s := by
   classical
   have hcont : ContinuousOn γ (uIcc a b) := hγ.continuousOn
   have hderiv : IntervalIntegrable (fun t => deriv γ t) volume a b := hγ.intervalIntegrable_deriv
@@ -173,12 +182,26 @@ theorem intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue
     rw [decomp.f_eq (γ t) ⟨hγU t ht, hoff t ht⟩, smul_add, Finset.smul_sum]
   rw [intervalIntegral.integral_congr hf_eq, intervalIntegral.integral_add hrem_int hsum_int,
     intervalIntegral.integral_finsetSum hpol_int,
-    decomp.intervalIntegral_deriv_smul_analyticRemainder_eq_zero hU hγ hγU hclosed hnull,
-    zero_add, Finset.sum_congr rfl fun s _ =>
+    Finset.sum_congr rfl fun s _ =>
       decomp.intervalIntegral_deriv_smul_polarPart s hγ hclosed (hne s),
     Finset.mul_sum, ← Finset.sum_attach S
       fun s => 2 * (Real.pi : ℂ) * Complex.I * (windingNumber γ a b s * residue f s)]
-  exact Finset.sum_congr rfl fun s _ => by ring
+  exact congrArg _ (Finset.sum_congr rfl fun s _ => by ring)
+
+/-- **The residue theorem for a fixed polar-part decomposition.** Once `f` is presented on `U` as
+an analytic remainder plus finite Laurent tails at the points of `S`, a closed null-homologous
+piecewise-`C¹` curve in `U` avoiding `S` integrates to the winding-weighted residue sum. This is
+the sum of the two preceding facts: the remainder contributes nothing
+(`intervalIntegral_deriv_smul_analyticRemainder_eq_zero`) and the tails contribute the residue sum
+(`intervalIntegral_deriv_smul_eq_analyticRemainder_add_sum`). -/
+theorem intervalIntegral_deriv_smul_eq_sum_windingNumber_mul_residue
+    (decomp : PolarPartDecomposition f S U) (hU : IsOpen U) {γ : ℝ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
+    (hoff : ∀ t ∈ uIcc a b, γ t ∉ (↑S : Set ℂ)) (hnull : IsNullHomologous γ a b U) :
+    ∫ t in a..b, deriv γ t • f (γ t)
+      = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s := by
+  rw [decomp.intervalIntegral_deriv_smul_eq_analyticRemainder_add_sum hγ hγU hclosed hoff,
+    decomp.intervalIntegral_deriv_smul_analyticRemainder_eq_zero hU hγ hγU hclosed hnull, zero_add]
 
 end PolarPartDecomposition
 

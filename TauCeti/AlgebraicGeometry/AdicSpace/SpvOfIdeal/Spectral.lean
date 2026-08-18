@@ -8,7 +8,7 @@ module
 public import Mathlib.Topology.Spectral.Hom
 public import TauCeti.AlgebraicGeometry.AdicSpace.RestrictToIdeal
 public import TauCeti.AlgebraicGeometry.AdicSpace.PatchPresentation
-import TauCeti.Topology.Spectral.SpectralMap
+public import TauCeti.Topology.Spectral.SpectralMap
 import TauCeti.Topology.Spectral.PatchCriterion
 
 /-!
@@ -20,7 +20,7 @@ Wedhorn gives `Spv (A, I)` the subspace topology of `Spv A` (§7.1, after (7.1.1
 spectral with the sets
 
 ```text
-Spv (A, I)(T/s) = { v ∈ Spv (A, I) ; v(t) ≤ v(s) ≠ 0 for all t ∈ T },   I ⊆ √(T · A)
+Spv (A, I)(T/s) = { v ∈ Spv (A, I) | v(t) ≤ v(s) ≠ 0 for all t ∈ T },   I ⊆ √(T · A)
 ```
 
 as a generating family. (Wedhorn states them as a basis of quasi-compact opens, and that is what
@@ -125,7 +125,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open Set Topology TopologicalSpace TauCeti TauCeti.Valuation MonoidWithZeroHom
+open Set Topology TopologicalSpace TauCeti Valuation MonoidWithZeroHom
 
 variable {A : Type*} [CommRing A]
 

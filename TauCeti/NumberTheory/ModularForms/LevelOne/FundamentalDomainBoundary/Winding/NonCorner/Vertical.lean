@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -99,8 +100,7 @@ private lemma fdBoundary_sub_of_mem_Icc_three_four (hre : w.re = -(1 / 2))
   · rw [Complex.sub_im, Complex.mul_I_im, Complex.ofReal_re]
     rcases eq_or_lt_of_le hs.1 with h3 | h3
     · rw [← h3, fdBoundary_apply_three]
-      have hρ : ((UpperHalfPlane.ρ : ℂ)).im = Real.sqrt 3 / 2 := by simp [UpperHalfPlane.ρ]
-      rw [hρ]
+      rw [rho_im]
       ring
     · rw [im_fdBoundary_of_le_four h3 hs.2]
 
@@ -509,12 +509,7 @@ theorem hasCauchyPVAt_fdBoundary_vertical (hre : w.re = 2⁻¹ ∨ w.re = -(2⁻
     rcases hre with h | h
     · exact truncated_integral_spec_right h him_lo himH hε.1 h1 ha hc hv
     · exact truncated_integral_spec_left h him_lo himH hε.1 h1 ha hc hv
-  refine Contour.hasCauchyPVAt_iff.mpr ⟨?_, ?_⟩
-  · filter_upwards [hIoo] with ε hε
-    exact (hspec ε hε).1
-  · refine Tendsto.congr' ?_ tendsto_const_nhds
-    filter_upwards [hIoo] with ε hε
-    exact ((hspec ε hε).2).symm
+  exact Contour.HasCauchyPVAt.of_tendsto tendsto_const_nhds (eventually_of_mem hIoo hspec)
 
 /-- **The winding number of the boundary contour at a vertical-edge point is `-1/2`**: the
 point sits on an open vertical edge, and the principal-value normalization sees exactly half

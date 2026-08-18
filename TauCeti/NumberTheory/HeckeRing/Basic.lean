@@ -183,14 +183,29 @@ lemma mk_out_mul_injective (Γ₁ Γ₂ : Subgroup G) (g : G) :
   simpa [mul_assoc] using hij
 
 open scoped Pointwise in
-/-- The conjugation criterion for the stabilizer subgroup indexing `DecompQuotient`: an
-element of the stabilizer conjugates into `H` under `g`. -/
-lemma conj_mem_of_stabilizer {H : Subgroup G} (g : G)
-    (n : (ConjAct.toConjAct g • H).subgroupOf H) : g⁻¹ * (n : G) * g ∈ H := by
+/-- The conjugation criterion for the stabilizer subgroup indexing `DecompQuotient`: an element
+of `(ConjAct.toConjAct g • H₂).subgroupOf H₁` conjugates by `g` into `H₂`. -/
+lemma conj_mem_of_stabilizer {H₁ H₂ : Subgroup G} (g : G)
+    (n : (ConjAct.toConjAct g • H₂).subgroupOf H₁) : g⁻¹ * (n : G) * g ∈ H₂ := by
   have hn := n.2
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def] at hn
   simpa [ConjAct.ofConjAct_toConjAct] using hn
+
+/-- Equality of classes in `DecompQuotient H₁ H₂ g` gives the conjugation relation between their
+representatives: `u₁⁻¹ u₂` lies in the stabilizer indexing the decomposition, so conjugating it
+by `g` lands in `H₂`.
+
+Note the two subgroups play different roles: the representatives live in `H₁`, which indexes the
+quotient, while the conclusion lands in `H₂`, which is the one being conjugated. They coincide in
+the common case `DecompQuotient H H g`. -/
+-- Reach for this whenever a class equality `⟦u₁⟧ = ⟦u₂⟧` has to become a membership:
+-- `QuotientGroup.eq` supplies the stabilizer membership and `conj_mem_of_stabilizer` does the
+-- conjugation, so unfolding `QuotientGroup.leftRel` by hand duplicates both.
+lemma conj_mem_of_mk_eq {H₁ H₂ : Subgroup G} (g : G) {u₁ u₂ : H₁}
+    (h : (QuotientGroup.mk u₁ : DecompQuotient H₁ H₂ g) = QuotientGroup.mk u₂) :
+    g⁻¹ * ((u₁ : G)⁻¹ * u₂) * g ∈ H₂ :=
+  conj_mem_of_stabilizer g ⟨_, QuotientGroup.eq.mp h⟩
 
 end DoubleCoset
 

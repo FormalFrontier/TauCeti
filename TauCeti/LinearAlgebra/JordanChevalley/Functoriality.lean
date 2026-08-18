@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -25,17 +26,17 @@ representation of an affine algebraic group.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
+* `LinearMap.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
   under linear conjugation.
-* `TauCeti.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
+* `LinearMap.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
   conjugation within the general linear group.
-* `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
+* `LinearMap.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
   equivariant under linear conjugation.
-* `TauCeti.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
-  `TauCeti.GeneralLinearGroup.unipotentPart_congrLinearEquiv`: the two factor formulas.
-* `TauCeti.GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq`: intertwiners commute with
+* `LinearMap.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
+  `LinearMap.GeneralLinearGroup.unipotentPart_congrLinearEquiv`: the two factor formulas.
+* `LinearMap.GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq`: intertwiners commute with
   semisimple factors.
-* `TauCeti.GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq`: intertwiners commute with
+* `LinearMap.GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq`: intertwiners commute with
   unipotent factors.
 
 ## References
@@ -45,11 +46,9 @@ representation of an affine algebraic group.
 
 public section
 
-namespace TauCeti
+open Polynomial
 
-open LinearMap Polynomial
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open _root_.Module
 
@@ -216,6 +215,4 @@ end Intertwining
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup
