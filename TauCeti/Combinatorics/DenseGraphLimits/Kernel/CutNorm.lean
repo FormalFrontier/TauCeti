@@ -29,7 +29,8 @@ pointwise algebra happens before integration; a later layer proves invariance un
 
 * `TauCeti.DenseGraphLimits.SymmKernel.rectIntegral` is the integral of a kernel over a rectangle.
 * `TauCeti.DenseGraphLimits.cutNorm` is the supremum of the absolute rectangle integrals.
-* `TauCeti.DenseGraphLimits.cutNormSet` is the textbook set-form name for the same quantity.
+* `TauCeti.DenseGraphLimits.cutNormSet` is the separately roadmap-pinned textbook set-form name for
+  the same quantity.
 
 ## Main results
 
@@ -163,8 +164,9 @@ noncomputable def cutNorm (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
 variable [IsFiniteMeasure μ]
 
 omit [IsFiniteMeasure μ] in
-/-- The cut norm is definitionally its measurable-set form.  This is not a `simp` lemma: `cutNorm`
-is the normal form that the rest of the API, and hence the `simp` set, is stated in. -/
+/-- The cut norm is definitionally its separately roadmap-pinned measurable-set form.  This is not
+a `simp` lemma: `cutNorm` is the normal form that the rest of the API, and hence the `simp` set, is
+stated in. -/
 theorem cutNorm_eq_cutNormSet (K : SymmKernel Ω μ) : cutNorm μ K = cutNormSet μ K := (rfl)
 
 omit [IsFiniteMeasure μ] in
