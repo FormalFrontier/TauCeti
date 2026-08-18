@@ -34,8 +34,7 @@ is the special case that matters downstream.
   (pseudo)metric space structures of a preconnected Riemannian manifold, refining
   `PseudoEMetricSpace.ofRiemannianMetric` and `EMetricSpace.ofRiemannianMetric`; both satisfy
   `IsRiemannianManifold I M`.
-* `TauCeti.IsRiemannianManifold.edist_le_pathELength` and
-  `TauCeti.IsRiemannianManifold.dist_le_toReal_pathELength`: the ambient distance of a Riemannian
+* `TauCeti.IsRiemannianManifold.dist_le_toReal_pathELength`: the ambient distance of a Riemannian
   manifold, read through `IsRiemannianManifold.out`, is bounded by the length of any `C¹` path.
 
 ## References
@@ -43,6 +42,9 @@ is the special case that matters downstream.
 * [Geodesics, the exponential map, and the Hopf–Rinow theorem roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md),
   Layer 0, "Distance compatibility and finiteness".
 * M. P. do Carmo, *Riemannian Geometry*, Birkhäuser, 1992, Ch. 7 §2, Def. 2.4.
+* `Mathlib/Geometry/Manifold/Riemannian/Basic.lean` (S. Gouëzel):
+  `PseudoEMetricSpace.ofRiemannianMetric`, `EMetricSpace.ofRiemannianMetric`, and their
+  `IsRiemannianManifold` instances, which the (pseudo)metric constructions here adapt.
 -/
 
 public section
@@ -65,14 +67,12 @@ section Finiteness
 variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
 
-/-- A point at finite Riemannian distance from `x` lies in the connected component of `x`: it is
-joined to `x` by a `C¹`, hence continuous, path. -/
-theorem mem_connectedComponent_of_riemannianEDist_lt_top {x y : M}
-    (h : riemannianEDist I x y < ⊤) : y ∈ connectedComponent x := by
+/-- Two points at finite Riemannian distance are joined by a path: a `C¹` path witnessing any
+strict upper bound on the distance is in particular continuous. -/
+theorem joined_of_riemannianEDist_lt_top {x y : M} (h : riemannianEDist I x y < ⊤) :
+    Joined x y := by
   obtain ⟨γ, hγ0, hγ1, hγ, -⟩ := exists_lt_of_riemannianEDist_lt h
-  have hpre : IsPreconnected (γ '' Icc 0 1) := isPreconnected_Icc.image γ hγ.continuousOn
-  exact hpre.subset_connectedComponent ⟨0, left_mem_Icc.2 zero_le_one, hγ0⟩
-    ⟨1, right_mem_Icc.2 zero_le_one, hγ1⟩
+  exact (JoinedIn.ofLine (F := univ) hγ.continuousOn hγ0 hγ1 (subset_univ _)).joined
 
 variable [IsManifold I 1 M] [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)]
 
@@ -119,16 +119,9 @@ variable (I) in
 component of `x`. -/
 theorem riemannianEDist_lt_top_iff_mem_connectedComponent {x y : M} :
     riemannianEDist I x y < ⊤ ↔ y ∈ connectedComponent x :=
-  ⟨mem_connectedComponent_of_riemannianEDist_lt_top,
+  ⟨fun h ↦ pathComponent_subset_component x (joined_of_riemannianEDist_lt_top h),
     riemannianEDist_lt_top_of_isPreconnected I isPreconnected_connectedComponent
       mem_connectedComponent⟩
-
-variable (I) in
-/-- The Riemannian distance from `x` to `y` is finite exactly when `y` lies in the connected
-component of `x`. -/
-theorem riemannianEDist_ne_top_iff_mem_connectedComponent {x y : M} :
-    riemannianEDist I x y ≠ ⊤ ↔ y ∈ connectedComponent x := by
-  rw [← lt_top_iff_ne_top, riemannianEDist_lt_top_iff_mem_connectedComponent I]
 
 variable (I) in
 /-- On a preconnected manifold, the Riemannian distance between any two points is finite. -/
@@ -138,6 +131,7 @@ theorem riemannianEDist_lt_top [PreconnectedSpace M] (x y : M) : riemannianEDist
 variable (I) in
 /-- On a preconnected manifold, the Riemannian distance between any two points is finite. This is
 the hypothesis needed to turn `EMetricSpace.ofRiemannianMetric` into a genuine metric space. -/
+@[aesop (rule_sets := [finiteness]) safe apply, simp]
 theorem riemannianEDist_ne_top [PreconnectedSpace M] (x y : M) : riemannianEDist I x y ≠ ⊤ :=
   (riemannianEDist_lt_top I x y).ne
 
@@ -146,47 +140,6 @@ end Finiteness
 end Manifold
 
 namespace IsRiemannianManifold
-
-section PseudoEMetric
-
-variable {M : Type*} [PseudoEMetricSpace M] [ChartedSpace H M]
-  [RiemannianBundle (fun x : M ↦ TangentSpace I x)] [IsRiemannianManifold I M]
-
-variable (I) in
-/-- In a Riemannian manifold, the ambient extended distance is bounded above by the length of any
-`C¹` path between the two points. -/
-theorem edist_le_pathELength {γ : ℝ → M} {a b : ℝ} {x y : M} (hγ : CMDiff[Icc a b] 1 γ)
-    (ha : γ a = x) (hb : γ b = y) (hab : a ≤ b) : edist x y ≤ pathELength I γ a b := by
-  rw [IsRiemannianManifold.out (I := I) x y]
-  exact riemannianEDist_le_pathELength hγ ha hb hab
-
-variable (I) in
-/-- In a Riemannian manifold, any bound `r` on the ambient extended distance from `x` to `y` is
-witnessed by a `C¹` path on `[0, 1]` of length `< r`. -/
-theorem exists_pathELength_lt_of_edist_lt {x y : M} {r : ℝ≥0∞} (hr : edist x y < r) :
-    ∃ γ : ℝ → M, γ 0 = x ∧ γ 1 = y ∧ CMDiff[Icc 0 1] 1 γ ∧ pathELength I γ 0 1 < r := by
-  rw [IsRiemannianManifold.out (I := I) x y] at hr
-  exact exists_lt_of_riemannianEDist_lt hr
-
-variable [IsManifold I 1 M] [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)]
-
-variable (I) in
-include I in
-/-- In a Riemannian manifold, the ambient extended distance from `x` to `y` is finite exactly when
-`y` lies in the connected component of `x`. -/
-theorem edist_lt_top_iff_mem_connectedComponent {x y : M} :
-    edist x y < ⊤ ↔ y ∈ connectedComponent x := by
-  rw [IsRiemannianManifold.out (I := I) x y,
-    Manifold.riemannianEDist_lt_top_iff_mem_connectedComponent I]
-
-variable (I) in
-include I in
-/-- In a preconnected Riemannian manifold, the ambient extended distance is never `∞`. -/
-theorem edist_ne_top [PreconnectedSpace M] (x y : M) : edist x y ≠ ⊤ := by
-  rw [IsRiemannianManifold.out (I := I) x y]
-  exact Manifold.riemannianEDist_ne_top I x y
-
-end PseudoEMetric
 
 section PseudoMetric
 
@@ -205,8 +158,8 @@ above by the length of any `C¹` path of finite length between the two points. -
 theorem dist_le_toReal_pathELength {γ : ℝ → M} {a b : ℝ} {x y : M} (hγ : CMDiff[Icc a b] 1 γ)
     (ha : γ a = x) (hb : γ b = y) (hab : a ≤ b) (h : pathELength I γ a b ≠ ⊤) :
     dist x y ≤ (pathELength I γ a b).toReal := by
-  rw [dist_edist]
-  exact ENNReal.toReal_mono h (edist_le_pathELength I hγ ha hb hab)
+  rw [dist_edist, IsRiemannianManifold.out (I := I) x y]
+  exact ENNReal.toReal_mono h (riemannianEDist_le_pathELength hγ ha hb hab)
 
 variable (I) in
 /-- In a Riemannian manifold whose ambient distance is an ordinary one, any bound `r` on the
@@ -214,8 +167,8 @@ distance from `x` to `y` is witnessed by a `C¹` path on `[0, 1]` of length `< E
 theorem exists_pathELength_lt_of_dist_lt {x y : M} {r : ℝ} (hr : dist x y < r) :
     ∃ γ : ℝ → M, γ 0 = x ∧ γ 1 = y ∧ CMDiff[Icc 0 1] 1 γ ∧
       pathELength I γ 0 1 < ENNReal.ofReal r := by
-  refine exists_pathELength_lt_of_edist_lt I ?_
-  rw [edist_dist]
+  apply exists_lt_of_riemannianEDist_lt
+  rw [← IsRiemannianManifold.out (I := I) x y, edist_dist]
   exact (ENNReal.ofReal_lt_ofReal_iff (dist_nonneg.trans_lt hr)).2 hr
 
 end PseudoMetric
@@ -231,7 +184,11 @@ variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 variable (I M) in
 /-- The pseudometric space structure associated to a Riemannian metric on a preconnected manifold,
 obtained from `PseudoEMetricSpace.ofRiemannianMetric` now that the extended distance is known to be
-finite. As for the extended version, the topology is defeq to the original one. -/
+finite. As for the extended version, the topology is defeq to the original one.
+
+This should only be used when constructing data in specific situations. To develop the theory, one
+should rather assume that there is an already existing pseudometric space structure, satisfying
+additionally the predicate `IsRiemannianManifold I M`. -/
 @[reducible] def PseudoMetricSpace.ofRiemannianMetric [RegularSpace M] [PreconnectedSpace M] :
     PseudoMetricSpace M :=
   letI : PseudoEMetricSpace M := .ofRiemannianMetric I M
