@@ -161,6 +161,7 @@ theorem mem_corestrictOrderIso_symm (e : C ≃ₗc[R] D)
     m ∈ (corestrictOrderIso e).symm W ↔ m ∈ W :=
   by
     let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    -- Expose subcomodule membership as submodule membership so the carrier lemma can rewrite it.
     change m ∈ (corestrictSymm e W).toSubmodule ↔ m ∈ W.toSubmodule
     rw [corestrictSymm_toSubmodule]
 
