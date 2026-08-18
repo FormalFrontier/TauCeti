@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -15,7 +16,7 @@ This file collects reusable trace facts for finite field extensions.
 
 ## Main results
 
-* `TauCeti.NumberField.trace_eq_zero_of_sq_ratCast`: the number-field
+* `NumberField.trace_eq_zero_of_sq_ratCast`: the number-field
   specialization saying that `x² ∈ ℚ`, `x ∉ ℚ` implies `Tr x = 0`.
 * `TauCeti.Algebra.trace_eq_zero_of_sq_algebraMap_of_not_mem_range`: the corresponding
   trace-vanishing statement for any finite field extension.
@@ -107,6 +108,8 @@ theorem discr_one_elem_eq_of_sq_algebraMap {x : L} {a : F} (hfin : finrank F L =
 
 end Algebra
 
+end TauCeti
+
 namespace NumberField
 
 /-- In a number field, an irrational element whose square is rational has trace zero. -/
@@ -115,8 +118,4 @@ theorem trace_eq_zero_of_sq_ratCast {K : Type*} [Field K] [NumberField K]
     Algebra.trace ℚ K x = 0 :=
   TauCeti.Algebra.trace_eq_zero_of_sq_algebraMap_of_not_mem_range hx2 hx
 
-/-- Deprecated compatibility alias for the old NumberField helper name. -/
-@[deprecated TauCeti.NumberField.trace_eq_zero_of_sq_ratCast (since := "2026-06-20")]
-alias trace_eq_zero_of_sq_ratCast_of_not_mem_range := trace_eq_zero_of_sq_ratCast
-
-end TauCeti.NumberField
+end NumberField

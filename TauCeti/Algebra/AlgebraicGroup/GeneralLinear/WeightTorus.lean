@@ -32,6 +32,8 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
 ## Main declarations
 
 * `TauCeti.GeneralLinear.weightCharacterMap`: the homomorphism on character lattices.
+* `TauCeti.GeneralLinear.weightTorusCoordinateMap`: the coordinate Hopf-algebra morphism of the
+  represented weight torus.
 * `TauCeti.GeneralLinear.weightTorus`: the represented morphism `𝔾ₘ^κ → GL_N`.
 * `TauCeti.GeneralLinear.schemePointsMulEquiv_weightTorus`: its diagonal matrix on
   scheme-valued points.
@@ -78,6 +80,16 @@ theorem weightCharacterMap_ofAdd_single (wt : Fin N → κ → ℤ) (i : Fin N) 
   apply congrArg Multiplicative.ofAdd
   simp
 
+/-- The coordinate Hopf-algebra morphism of the weight torus. It first restricts functions on
+`GL_N` to its diagonal torus, then applies the group-algebra map induced by the prescribed
+weights. Its direction is opposite to the represented group-scheme morphism. -/
+noncomputable def weightTorusCoordinateMap (wt : Fin N → κ → ℤ) :
+    coordinateHopfAlgebra R N ⟶
+      (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj :=
+  diagonalTorusCoordinateMap ≫
+    (DiagonalizableGroup.coordinateMap R
+      (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom
+
 /-- The group-scheme morphism from a split torus to `GL_N` prescribed by a family of weights.
 It factors through the diagonal torus: the `i`-th diagonal entry is the character `wt i`. -/
 noncomputable def weightTorus (wt : Fin N → κ → ℤ) :
@@ -85,6 +97,21 @@ noncomputable def weightTorus (wt : Fin N → κ → ℤ) :
   DiagonalizableGroup.groupSchemeMap R
       (FGCommGrpCat.ofHom (weightCharacterMap wt)) ≫
     diagonalTorus
+
+/-- The weight torus is relative spectrum applied contravariantly to its coordinate morphism,
+transported across the named presentations of the split torus and `GL_N`. -/
+theorem weightTorus_def (wt : Fin N → κ → ℤ) :
+    weightTorus (R := R) wt =
+      eqToHom (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ)) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (weightTorusCoordinateMap wt).op ≫
+        eqToHom (groupScheme_def R N).symm := by
+  rw [weightTorus, DiagonalizableGroup.groupSchemeMap_def, diagonalTorus_def]
+  unfold weightTorusCoordinateMap
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  slice_lhs 2 3 =>
+    rw [← (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map_comp]
+  rfl
 
 private theorem weightTorus_hom (wt : Fin N → κ → ℤ) :
     (weightTorus (R := R) wt).hom.hom =
