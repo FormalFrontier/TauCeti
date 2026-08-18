@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 public import TauCeti.KnotTheory.Grid.Differential.Square.Intermediates
 public import TauCeti.KnotTheory.Grid.Rectangle.Swap
 
@@ -16,12 +17,11 @@ intermediate state and a second rectangle from that state to `z`. When the two r
 disjoint pairs of side columns, their column transpositions commute. They may therefore be applied
 in the opposite order, through a different intermediate state.
 
-This file packages such a two-step factorization as `GridRectangleDecomposition` and constructs
-its reordered factorization. The first reordered rectangle has exactly the toroidal domain of the
-old second rectangle, and conversely for the second. In particular, both marking-avoidance
-conditions are preserved. Reordering is an involution and changes the intermediate state, giving
-the fixed-point-free pairing needed in the disjoint-side case of the eventual rectangle
-juxtaposition argument.
+This file reorders such a `GridRectangleDecomposition`. The first reordered rectangle has exactly
+the toroidal domain of the old second rectangle, and conversely for the second. In particular,
+both marking-avoidance conditions are preserved. Reordering is an involution and changes the
+intermediate state, giving the fixed-point-free pairing needed in the disjoint-side case of the
+eventual rectangle juxtaposition argument.
 
 This is purely the orientation and domain bookkeeping. Empty-rectangle transfer needs the
 geometric case split controlling how the two domains meet; the overlapping and annular cases also
@@ -29,7 +29,6 @@ remain separate parts of the square-zero proof.
 
 ## Main definitions
 
-* `TauCeti.GridRectangleDecomposition`: two composable oriented grid rectangles.
 * `TauCeti.GridRectangleDecomposition.HasDisjointSides`: the two side-column pairs are disjoint.
 * `TauCeti.GridRectangleDecomposition.commute`: apply two rectangles with disjoint side columns
   in the opposite order.
@@ -38,8 +37,8 @@ remain separate parts of the square-zero proof.
 
 * `TauCeti.GridRectangleDecomposition.commute_first_toGridRectangle` and
   `commute_second_toGridRectangle`: reordering exchanges the two toroidal domains.
-* `TauCeti.GridRectangleDecomposition.commute_first_avoidsMarkings_iff` and
-  `commute_second_avoidsMarkings_iff`: reordering preserves the marking-avoidance conditions.
+* `TauCeti.GridRectangleDecomposition.avoidsMarkings_commute_first_iff` and
+  `avoidsMarkings_commute_second_iff`: reordering preserves the marking-avoidance conditions.
 * `TauCeti.GridRectangleDecomposition.commute_commute`: reordering twice is the identity.
 * `TauCeti.GridRectangleDecomposition.commute_middle_ne`: the intermediate state changes.
 
@@ -55,41 +54,9 @@ public section
 
 namespace TauCeti
 
-/-- A decomposition of a two-step rectangle domain from `x` to `z` through an intermediate grid
-state. -/
-structure GridRectangleDecomposition {n : ℕ} (x z : GridState n) where
-  /-- The grid state between the two rectangle moves. -/
-  middle : GridState n
-  /-- The first oriented rectangle, from the source to the intermediate state. -/
-  first : GridRectangleBetween x middle
-  /-- The second oriented rectangle, from the intermediate state to the target. -/
-  second : GridRectangleBetween middle z
-
 namespace GridRectangleDecomposition
 
 variable {n : ℕ} {x z : GridState n}
-
-/-- Two rectangle decompositions are equal when their intermediate states and ordered side
-columns agree. -/
-@[ext]
-theorem ext {D E : GridRectangleDecomposition x z} (hmiddle : D.middle = E.middle)
-    (hfirstLeft : D.first.left = E.first.left)
-    (hfirstRight : D.first.right = E.first.right)
-    (hsecondLeft : D.second.left = E.second.left)
-    (hsecondRight : D.second.right = E.second.right) : D = E := by
-  cases D with
-  | mk Dmiddle Dfirst Dsecond =>
-      cases E with
-      | mk Emiddle Efirst Esecond =>
-          dsimp only at hmiddle
-          subst Emiddle
-          have hfirst : Dfirst = Efirst :=
-            GridRectangleBetween.eq_of_sides hfirstLeft hfirstRight
-          subst Efirst
-          have hsecond : Dsecond = Esecond :=
-            GridRectangleBetween.eq_of_sides hsecondLeft hsecondRight
-          subst Esecond
-          rfl
 
 /-- The two rectangles in a decomposition use disjoint pairs of side columns. -/
 def HasDisjointSides (D : GridRectangleDecomposition x z) : Prop :=
@@ -237,7 +204,7 @@ theorem commute_second_toGridRectangle (D : GridRectangleDecomposition x z)
 
 /-- Reordering preserves the marking-avoidance condition on the first domain. -/
 @[simp]
-theorem commute_first_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
+theorem avoidsMarkings_commute_first_iff (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) (G : GridDiagram n) :
     (D.commute h).first.AvoidsMarkings G ↔ D.second.AvoidsMarkings G := by
   unfold GridRectangleBetween.AvoidsMarkings
@@ -245,14 +212,14 @@ theorem commute_first_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
 
 /-- Reordering preserves the marking-avoidance condition on the second domain. -/
 @[simp]
-theorem commute_second_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
+theorem avoidsMarkings_commute_second_iff (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) (G : GridDiagram n) :
     (D.commute h).second.AvoidsMarkings G ↔ D.first.AvoidsMarkings G := by
   unfold GridRectangleBetween.AvoidsMarkings
   rw [D.commute_second_toGridRectangle h]
 
 /-- The reordered decomposition again has disjoint side-column pairs. -/
-theorem commute_hasDisjointSides (D : GridRectangleDecomposition x z)
+theorem hasDisjointSides_commute (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) : (D.commute h).HasDisjointSides := by
   rw [HasDisjointSides]
   simpa only [commute_first_left, commute_first_right, commute_second_left,
@@ -262,13 +229,8 @@ theorem commute_hasDisjointSides (D : GridRectangleDecomposition x z)
 decomposition. -/
 @[simp]
 theorem commute_commute (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
-    (D.commute h).commute (D.commute_hasDisjointSides h) = D := by
-  apply ext
-  · simpa [commute] using D.first.target_eq_swapColumns.symm
-  · simp
-  · simp
-  · simp
-  · simp
+    (D.commute h).commute (D.hasDisjointSides_commute h) = D := by
+  ext <;> simp
 
 private theorem sidePairs_ne (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
     s(D.first.left, D.first.right) ≠ s(D.second.left, D.second.right) := by
