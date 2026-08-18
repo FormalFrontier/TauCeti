@@ -191,6 +191,7 @@ theorem isoMk_inv_hom_τ₃ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ 
 
 /-- A morphism of conflations is an isomorphism exactly when its three components are
 isomorphisms. -/
+@[simp]
 theorem isIso_iff {S T : E.ConflationCategory} (a : S ⟶ T) :
     IsIso a ↔ IsIso a.hom.τ₁ ∧ IsIso a.hom.τ₂ ∧ IsIso a.hom.τ₃ := by
   rw [← ObjectProperty.isIso_hom_iff]
@@ -226,12 +227,6 @@ theorem opEquivalence_functor_obj_obj (E : ConflationClass C)
 theorem opEquivalence_inverse_obj_unop_obj (E : ConflationClass C)
     (S : E.op.ConflationCategory) :
     ((opEquivalence E).inverse.obj S).unop.obj = S.obj.unop := (rfl)
-
-/-- `opEquivalence` is the canonical composite of the opposite-property equivalence and the
-short-complex opposite equivalence restricted to conflations. -/
-theorem opEquivalence_eq (E : ConflationClass C) : opEquivalence E =
-    (ObjectProperty.opEquivalence E.Conflation).symm.trans
-      ((ShortComplex.opEquiv C).congrFullSubcategory (op_conflation_inverseImage E)) := (rfl)
 
 end Opposite
 
@@ -330,7 +325,8 @@ theorem mapCompιIso_inv_app [F.Additive] (hF : E.IsConflationExact E' F)
 
 /-- Mapping conflations by the identity functor gives the identity functor. -/
 theorem map_id : map (ExactStructure.IsConflationExact.id (E := E)) =
-    Functor.id E.ConflationCategory := (rfl)
+    Functor.id E.ConflationCategory :=
+  CategoryTheory.Functor.hext (fun _ ↦ rfl) (fun _ _ _ ↦ by rfl)
 
 /-- The functor on conflations induced by the identity functor is naturally isomorphic to the
 identity functor. -/
@@ -338,15 +334,12 @@ def mapIdIso : map (ExactStructure.IsConflationExact.id (E := E)) ≅
     Functor.id E.ConflationCategory :=
   eqToIso map_id
 
-/-- `mapIdIso` is the canonical isomorphism associated to `map_id`. -/
-@[simp]
-theorem mapIdIso_eq_eqToIso : mapIdIso (E := E) = eqToIso map_id := (rfl)
-
 /-- Mapping conflations by a composite is the same functor as mapping successively. -/
 theorem map_comp {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H) :
-    map (hF.comp hH) = map hF ⋙ map hH := (rfl)
+    map (hF.comp hH) = map hF ⋙ map hH :=
+  CategoryTheory.Functor.hext (fun _ ↦ rfl) (fun _ _ _ ↦ by rfl)
 
 /-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
 def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
@@ -354,13 +347,6 @@ def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
     : map (hF.comp hH) ≅ map hF ⋙ map hH :=
   eqToIso (map_comp hF hH)
-
-/-- `mapCompIso` is the canonical isomorphism associated to `map_comp`. -/
-@[simp]
-theorem mapCompIso_eq_eqToIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
-    [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
-    (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H) :
-    mapCompIso hF hH = eqToIso (map_comp hF hH) := (rfl)
 
 /-- A natural isomorphism between conflation-exact functors induces a natural isomorphism between
 their functors on conflations. -/
