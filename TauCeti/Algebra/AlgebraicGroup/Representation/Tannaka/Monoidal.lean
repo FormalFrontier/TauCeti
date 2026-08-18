@@ -351,6 +351,17 @@ theorem scalarExtensionComponentGL_coe
       scalarExtensionComponent R H A η M := by
   simp [scalarExtensionComponentGL]
 
+/-- The inverse of a transported component is the transported component of the inverse tensor
+automorphism. -/
+@[simp]
+theorem scalarExtensionComponentGL_inv
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (M : FGComoduleCat.{u, v, u} R H) :
+    (scalarExtensionComponentGL R H A η M)⁻¹ =
+      scalarExtensionComponentGL R H A η⁻¹ M := by
+  apply Units.ext
+  rfl
+
 /-- The transported component of a tensor automorphism at the tensor unit is the identity:
 this is the unit half of the monoidal condition. -/
 @[simp]

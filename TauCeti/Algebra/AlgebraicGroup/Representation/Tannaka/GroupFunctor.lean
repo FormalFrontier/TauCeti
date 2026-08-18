@@ -57,50 +57,29 @@ section Functor
 variable (R : Type u) [CommRing R]
 variable (H : Type v) [Semiring H] [Bialgebra R H]
 
-/-- The construction data for the tensor-automorphism group functor, together with opaque
-object and map witnesses. -/
-structure TensorAutFunctorData where
-  /-- The tensor-automorphism group functor. -/
-  functor : CommAlgCat.{u} R ⥤ GrpCat.{max (u + 1) v}
-  /-- Identification of a functor value with the corresponding tensor-automorphism group. -/
-  obj_eq : ∀ A : CommAlgCat.{u} R,
-    functor.obj A = GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
-  /-- The functor map is the base-change homomorphism, heterogeneously across `obj_eq`. -/
-  map_heq : ∀ {A B : CommAlgCat.{u} R} (φ : A ⟶ B),
-    HEq (functor.map φ) (GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom))
-
-/-- The tensor-automorphism functor and its object and map witnesses. -/
-noncomputable def tensorAutFunctorData : TensorAutFunctorData R H where
-  functor :=
-    { obj A := GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
-      map {A B} φ := GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom)
-      map_id A := by
-        refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
-        simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_id,
-          GrpCat.hom_id, MonoidHom.id_apply]
-        exact tensorAutMapValue_id R H A η
-      map_comp {A B C} φ ψ := by
-        refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
-        simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_comp,
-          GrpCat.hom_comp, MonoidHom.coe_comp, Function.comp_apply]
-        exact tensorAutMapValue_comp R H A B C φ.hom ψ.hom η }
-  obj_eq _ := rfl
-  map_heq {A B} φ := by
-    change HEq (GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom)) _
-    rfl
-
 /-- The tensor-automorphism group functor of a bialgebra: a commutative `R`-algebra `A` is
 sent to the group of tensor automorphisms of scalar extension to `A` on the finite
 `H`-comodules, and a morphism of value algebras acts by base change of components. -/
-noncomputable abbrev tensorAutFunctor : CommAlgCat.{u} R ⥤ GrpCat.{max (u + 1) v} :=
-  (tensorAutFunctorData R H).functor
+noncomputable def tensorAutFunctor : CommAlgCat.{u} R ⥤ GrpCat.{max (u + 1) v} where
+  obj A := GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+  map {A B} φ := GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom)
+  map_id A := by
+    refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
+    simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_id, GrpCat.hom_id,
+      MonoidHom.id_apply]
+    exact tensorAutMapValue_id R H A η
+  map_comp {A B C} φ ψ := by
+    refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
+    simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_comp,
+      GrpCat.hom_comp, MonoidHom.coe_comp, Function.comp_apply]
+    exact tensorAutMapValue_comp R H A B C φ.hom ψ.hom η
 
 /-- The tensor-automorphism functor sends an algebra to its group of tensor automorphisms. -/
 @[simp]
 theorem tensorAutFunctor_obj (A : CommAlgCat.{u} R) :
     (tensorAutFunctor R H).obj A =
       GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :=
-  (tensorAutFunctorData R H).obj_eq A
+  by rw [tensorAutFunctor]
 
 /-- The tensor-automorphism functor acts on morphisms by base change of components. This is the
 morphism-level form, stated with the object transports so that it stays in `simp` normal form
@@ -114,7 +93,7 @@ theorem tensorAutFunctor_map {A B : CommAlgCat.{u} R} (φ : A ⟶ B) :
           eqToHom (tensorAutFunctor_obj R H B).symm := by
   apply (conj_eqToHom_iff_heq _ _ (tensorAutFunctor_obj R H A)
     (tensorAutFunctor_obj R H B)).2
-  exact (tensorAutFunctorData R H).map_heq φ
+  rw [tensorAutFunctor]
 
 /-- Applying the tensor-automorphism functor map to an explicitly transported tensor
 automorphism is base change of that automorphism. -/
@@ -124,6 +103,9 @@ theorem tensorAutFunctor_map_transport_apply {A B : CommAlgCat.{u} R} (φ : A �
         ((tensorAutFunctor R H).map φ (eqToHom (tensorAutFunctor_obj R H A).symm η)) =
       tensorAutMapValue R H A B φ.hom η := by
   rw [tensorAutFunctor_map]
+  -- The map lemma exposes a composite between propositionally identified group objects. To
+  -- evaluate it at `η`, state the full chain of object transports explicitly; the two inverse
+  -- pairs then cancel before the bundled base-change homomorphism's application lemma applies.
   change
     (eqToHom (tensorAutFunctor_obj R H A).symm ≫
       eqToHom (tensorAutFunctor_obj R H A) ≫

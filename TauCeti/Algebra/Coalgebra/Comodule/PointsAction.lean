@@ -11,7 +11,6 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 public import TauCeti.LinearAlgebra.End.ScalarExtension
 public import Mathlib.RingTheory.Bialgebra.Convolution
 public import Mathlib.RepresentationTheory.Basic
-public import TauCeti.LinearAlgebra.End.ScalarExtension
 
 /-!
 # The points action of a comodule

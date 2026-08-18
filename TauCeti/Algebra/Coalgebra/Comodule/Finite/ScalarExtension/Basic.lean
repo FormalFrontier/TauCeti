@@ -8,7 +8,6 @@ module
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.ScalarExtension
-public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 
 /-!
 # Scalar extension of comodules
@@ -143,6 +142,74 @@ theorem autOfComponents_inv_app
         (F M).toLinearEquiv.toModuleIsoₛ.inv ≫
           eqToHom (scalarExtensionFunctor_obj R C A M).symm := by
   simp [autOfComponents]
+
+/-- The pointwise product of two natural families of automorphisms is natural. -/
+theorem autOfComponents_mul_natural
+    (F G : ∀ M : FGComoduleCat.{u, v, w} R C,
+      LinearMap.GeneralLinearGroup A (A ⊗[R] M))
+    (hF : ∀ {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N),
+      f.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
+        (F N : Module.End A (A ⊗[R] N)) ∘ₗ f.hom.toLinearMap.baseChange A)
+    (hG : ∀ {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N),
+      f.hom.toLinearMap.baseChange A ∘ₗ (G M : Module.End A (A ⊗[R] M)) =
+        (G N : Module.End A (A ⊗[R] N)) ∘ₗ f.hom.toLinearMap.baseChange A)
+    {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N) :
+    f.hom.toLinearMap.baseChange A ∘ₗ (F M * G M : Module.End A (A ⊗[R] M)) =
+      (F N * G N : Module.End A (A ⊗[R] N)) ∘ₗ
+        f.hom.toLinearMap.baseChange A := by
+  apply LinearMap.ext
+  intro m
+  simp only [LinearMap.comp_apply, Module.End.mul_apply]
+  have hFm := LinearMap.congr_fun (hF f) ((G M : Module.End A (A ⊗[R] M)) m)
+  have hGm := LinearMap.congr_fun (hG f) m
+  exact hFm.trans (congrArg (F N : Module.End A (A ⊗[R] N)) hGm)
+
+/-- Assembly by `autOfComponents` preserves pointwise multiplication. -/
+theorem autOfComponents_mul
+    (F G : ∀ M : FGComoduleCat.{u, v, w} R C,
+      LinearMap.GeneralLinearGroup A (A ⊗[R] M))
+    (hF : ∀ {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N),
+      f.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
+        (F N : Module.End A (A ⊗[R] N)) ∘ₗ f.hom.toLinearMap.baseChange A)
+    (hG : ∀ {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N),
+      f.hom.toLinearMap.baseChange A ∘ₗ (G M : Module.End A (A ⊗[R] M)) =
+        (G N : Module.End A (A ⊗[R] N)) ∘ₗ f.hom.toLinearMap.baseChange A) :
+    autOfComponents R C A F hF * autOfComponents R C A G hG =
+      autOfComponents R C A (fun M ↦ F M * G M)
+        (autOfComponents_mul_natural R C A F G hF hG) := by
+  apply Aut.ext
+  apply NatTrans.ext
+  funext M
+  change
+    (autOfComponents R C A G hG).hom.app M ≫
+        (autOfComponents R C A F hF).hom.app M = _
+  simp only [autOfComponents_hom_app, Category.assoc]
+  rw [cancel_epi]
+  simp only [← Category.assoc]
+  rw [cancel_mono]
+  simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id,
+    LinearEquiv.toModuleIsoₛ_hom]
+  apply SemimoduleCat.hom_ext
+  simp only [SemimoduleCat.hom_comp, SemimoduleCat.hom_ofHom,
+    LinearMap.GeneralLinearGroup.toLinearEquiv_mul, LinearEquiv.coe_toLinearMap_mul,
+    Module.End.mul_eq_comp]
+
+/-- Pointwise equal natural families assemble to the same automorphism. -/
+theorem autOfComponents_congr
+    (F G : ∀ M : FGComoduleCat.{u, v, w} R C,
+      LinearMap.GeneralLinearGroup A (A ⊗[R] M))
+    (hF : ∀ {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N),
+      f.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
+        (F N : Module.End A (A ⊗[R] N)) ∘ₗ f.hom.toLinearMap.baseChange A)
+    (hG : ∀ {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N),
+      f.hom.toLinearMap.baseChange A ∘ₗ (G M : Module.End A (A ⊗[R] M)) =
+        (G N : Module.End A (A ⊗[R] N)) ∘ₗ f.hom.toLinearMap.baseChange A)
+    (h : ∀ M, F M = G M) :
+    autOfComponents R C A F hF = autOfComponents R C A G hG := by
+  apply Aut.ext
+  apply NatTrans.ext
+  funext M
+  simp only [autOfComponents_hom_app, h M]
 
 end FGComoduleCat
 

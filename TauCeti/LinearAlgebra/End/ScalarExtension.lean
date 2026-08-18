@@ -66,7 +66,8 @@ theorem rTensor_algHom_smul (f : A →ₐ[R] B) (a : A) (z : A ⊗[R] M) :
 
 /-- On pure tensors, the comparison maps of scalar extensions intertwine the tensor comparisons
 `(A ⊗ M) ⊗[A] (A ⊗ N) ≃ A ⊗ (M ⊗ N)` for the two value algebras. -/
-theorem distribBaseChange_symm_rTensor_tmul (f : A →ₐ[R] B) (u : A ⊗[R] M) (v : A ⊗[R] N) :
+private theorem distribBaseChange_symm_rTensor_tmul
+    (f : A →ₐ[R] B) (u : A ⊗[R] M) (v : A ⊗[R] N) :
     (TensorProduct.AlgebraTensorModule.distribBaseChange R B M N).symm
         (LinearMap.rTensor M f.toLinearMap u ⊗ₜ[B] LinearMap.rTensor N f.toLinearMap v) =
       LinearMap.rTensor (M ⊗[R] N) f.toLinearMap
