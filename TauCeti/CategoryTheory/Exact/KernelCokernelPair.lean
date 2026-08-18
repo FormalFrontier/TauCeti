@@ -188,27 +188,9 @@ is what makes a full subcategory inherit the kernel–cokernel pairs of its ambi
 universal properties only have to be tested against objects of the subcategory. -/
 theorem of_map {D : Type u'} [Category.{v'} D] [HasZeroMorphisms D] (F : C ⥤ D)
     [F.PreservesZeroMorphisms] [F.Full] [F.Faithful] (h : IsKernelCokernelPair (S.map F)) :
-    IsKernelCokernelPair S := by
-  have hmono : Mono S.f := F.mono_of_mono_map h.mono_f
-  have hepi : Epi S.g := F.epi_of_epi_map h.epi_g
-  have key₁ : ∀ (A : C) (k : A ⟶ S.X₂), k ≫ S.g = 0 → ∃ l : A ⟶ S.X₁, l ≫ S.f = k := by
-    intro A k hk
-    have h' := congrArg F.map hk
-    simp only [F.map_comp, F.map_zero] at h'
-    obtain ⟨l, hl⟩ : ∃ l : F.obj A ⟶ F.obj S.X₁, l ≫ F.map S.f = F.map k :=
-      ⟨h.lift (F.map k) h', h.lift_f _ _⟩
-    exact ⟨F.preimage l, F.map_injective (by rw [F.map_comp, F.map_preimage]; exact hl)⟩
-  have key₂ : ∀ (A : C) (k : S.X₂ ⟶ A), S.f ≫ k = 0 → ∃ l : S.X₃ ⟶ A, S.g ≫ l = k := by
-    intro A k hk
-    have h' := congrArg F.map hk
-    simp only [F.map_comp, F.map_zero] at h'
-    obtain ⟨l, hl⟩ : ∃ l : F.obj S.X₃ ⟶ F.obj A, F.map S.g ≫ l = F.map k :=
-      ⟨h.desc (F.map k) h', h.g_desc _ _⟩
-    exact ⟨F.preimage l, F.map_injective (by rw [F.map_comp, F.map_preimage]; exact hl)⟩
-  exact ⟨⟨KernelFork.IsLimit.ofι' _ _ fun {A} k hk =>
-      ⟨(key₁ A k hk).choose, (key₁ A k hk).choose_spec⟩⟩,
-    ⟨CokernelCofork.IsColimit.ofπ' _ _ fun {A} k hk =>
-      ⟨(key₂ A k hk).choose, (key₂ A k hk).choose_spec⟩⟩⟩
+    IsKernelCokernelPair S :=
+  ⟨⟨isLimitOfReflects F ((isLimitMapConeForkEquiv' F S.zero).symm h.fIsKernel)⟩,
+    ⟨isColimitOfReflects F ((isColimitMapCoconeCoforkEquiv' F S.zero).symm h.gIsCokernel)⟩⟩
 
 /-- A short complex whose first morphism is an isomorphism and whose last object is zero is a
 kernel–cokernel pair: an isomorphism is an inflation. -/

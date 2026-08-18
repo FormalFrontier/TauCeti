@@ -201,9 +201,8 @@ theorem conflation_comp_of_isPushout {X Y Z W V Q : C} {i : X ⟶ Y} {p : Y ⟶ 
   have hp : Epi p := hpair₁.epi_g
   have hij : E.IsInflation (i ≫ j) :=
     E.isInflation_comp i j (E.isInflation_f h₁) (E.isInflation_f h₂)
-  have hc : Epi c := ⟨fun {T} k l hkl => sq.hom_ext hkl (by
-    rw [← cancel_epi p, ← Category.assoc, ← Category.assoc, ← sq.w, Category.assoc,
-      Category.assoc, hkl])⟩
+  have hc : Epi c := ⟨fun {T} k l hkl => sq.hom_ext hkl <| (cancel_epi p).1 <| by
+    simp only [← reassoc_of% sq.w, hkl]⟩
   have key : ∀ (T : C) (t : W ⟶ T), (i ≫ j) ≫ t = 0 → ∃ s : Q ⟶ T, c ≫ s = t := fun T t ht => by
     have hu : i ≫ j ≫ t = 0 := by rw [← Category.assoc]; exact ht
     exact ⟨sq.desc t (hpair₁.desc (j ≫ t) hu) (hpair₁.g_desc (j ≫ t) hu).symm, by simp⟩
@@ -224,9 +223,8 @@ theorem conflation_comp_of_isPullback {X Y Z W V Q : C} {i : X ⟶ Y} {p : Y ⟶
   have hi : Mono i := hpair₁.mono_f
   have hqp : E.IsDeflation (q ≫ p) :=
     E.isDeflation_comp q p (E.isDeflation_g h₂) (E.isDeflation_g h₁)
-  have hc : Mono c := ⟨fun {T} k l hkl => sq.hom_ext hkl (by
-    rw [← cancel_mono i, Category.assoc, Category.assoc, ← sq.w, ← Category.assoc,
-      ← Category.assoc, hkl])⟩
+  have hc : Mono c := ⟨fun {T} k l hkl => sq.hom_ext hkl <| (cancel_mono i).1 <| by
+    simp only [Category.assoc, ← sq.w, reassoc_of% hkl]⟩
   have key : ∀ (T : C) (t : T ⟶ W), t ≫ q ≫ p = 0 → ∃ l : T ⟶ Q, l ≫ c = t := fun T t ht => by
     have hu : (t ≫ q) ≫ p = 0 := by rw [Category.assoc]; exact ht
     exact ⟨sq.lift t (hpair₁.lift (t ≫ q) hu) (hpair₁.lift_f (t ≫ q) hu).symm, by simp⟩
