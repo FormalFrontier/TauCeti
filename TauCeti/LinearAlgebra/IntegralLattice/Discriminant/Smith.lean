@@ -28,13 +28,15 @@ the normalized invariant-factor statement is consequently later work.
 ## Main declarations
 
 * `TauCeti.IntegralLattice.discriminantSmithCoeff`: the nonzero integral diagonal coefficients.
-* `TauCeti.IntegralLattice.discriminantSmithFactor`: their nonzero absolute values.
+* `TauCeti.IntegralLattice.discriminantSmithCoeffNatAbs`: their nonzero absolute values.
 * `TauCeti.IntegralLattice.discriminantGroupSmithEquiv`: the discriminant group as a product of
   cyclic groups of those orders.
+* `TauCeti.IntegralLattice.discriminantGroupSmithEquiv_mk_apply`: that equivalence reads off the
+  Smith coordinates of a representative.
 * `TauCeti.IntegralLattice.discriminantSmithTopBasis_toMatrix`: the inclusion is diagonal in the
   Smith bases.
-* `TauCeti.IntegralLattice.prod_discriminantSmithFactor`: the product of the cyclic orders is the
-  lattice discriminant.
+* `TauCeti.IntegralLattice.prod_discriminantSmithCoeffNatAbs`: the product of the cyclic orders
+  is the lattice discriminant.
 
 ## References
 
@@ -97,15 +99,16 @@ theorem discriminantSmithCoeff_ne_zero (L : IntegralLattice V) [L.IsNondegenerat
   Submodule.smithNormalFormCoeffs_ne_zero (L.dualCarrierBasis b)
     L.finrank_carrierInDual_eq_dualCarrier i
 
-/-- The positive order of the cyclic discriminant-group factor indexed by `i`. -/
-noncomputable def discriminantSmithFactor (L : IntegralLattice V) [L.IsNondegenerate]
+/-- The absolute value of the Smith coefficient indexed by `i`, i.e. the positive order of the
+cyclic discriminant-group factor it contributes. -/
+noncomputable def discriminantSmithCoeffNatAbs (L : IntegralLattice V) [L.IsNondegenerate]
     {ι : Type v} [Finite ι] (b : Basis ι ℤ L) (i : ι) : ℕ :=
   (L.discriminantSmithCoeff b i).natAbs
 
 /-- Every cyclic factor in the Smith decomposition has nonzero order. -/
-theorem discriminantSmithFactor_ne_zero (L : IntegralLattice V) [L.IsNondegenerate]
+theorem discriminantSmithCoeffNatAbs_ne_zero (L : IntegralLattice V) [L.IsNondegenerate]
     {ι : Type v} [Finite ι] (b : Basis ι ℤ L) (i : ι) :
-    L.discriminantSmithFactor b i ≠ 0 :=
+    L.discriminantSmithCoeffNatAbs b i ≠ 0 :=
   Int.natAbs_ne_zero.mpr (L.discriminantSmithCoeff_ne_zero b i)
 
 /-- The basis vector of the embedded carrier is its Smith coefficient times the corresponding
@@ -127,41 +130,49 @@ theorem discriminantSmithTopBasis_toMatrix (L : IntegralLattice V) [L.IsNondegen
         ((↑) ∘ L.discriminantSmithCarrierBasis b) =
       Matrix.diagonal (L.discriminantSmithCoeff b) := by
   ext i j
-  rw [Basis.toMatrix_apply, Function.comp_apply,
-    L.coe_discriminantSmithCarrierBasis_apply, map_smul,
-    Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one]
-  by_cases hij : i = j
-  · subst j
-    simp
-  · simp [hij]
+  simp +contextual [Basis.toMatrix_apply, L.coe_discriminantSmithCarrierBasis_apply,
+    Matrix.diagonal_apply, Finsupp.single_apply, eq_comm]
 
 open Classical in
 /-- The discriminant group is a product of cyclic groups whose orders are the absolute values of
 the Smith diagonal coefficients. -/
 noncomputable def discriminantGroupSmithEquiv (L : IntegralLattice V) [L.IsNondegenerate]
     {ι : Type v} [Finite ι] (b : Basis ι ℤ L) :
-    L.DiscriminantGroup ≃+ ∀ i, ZMod (L.discriminantSmithFactor b i) :=
+    L.DiscriminantGroup ≃+ ∀ i, ZMod (L.discriminantSmithCoeffNatAbs b i) :=
   L.carrierInDual.quotientEquivPiZMod (L.dualCarrierBasis b)
     L.finrank_carrierInDual_eq_dualCarrier
 
 open Classical in
+/-- The Smith decomposition sends the class of `x` to its coordinates in the ambient Smith basis,
+each read modulo the corresponding cyclic order.
+
+This characterizes `discriminantGroupSmithEquiv` on quotient representatives, so consumers never
+need to unfold Mathlib's choice-based Smith construction. -/
+@[simp]
+theorem discriminantGroupSmithEquiv_mk_apply (L : IntegralLattice V) [L.IsNondegenerate]
+    {ι : Type v} [Finite ι] (b : Basis ι ℤ L) (x : L.dualCarrier) (i : ι) :
+    L.discriminantGroupSmithEquiv b (Submodule.Quotient.mk x) i =
+      (((L.discriminantSmithTopBasis b).repr x i : ℤ) :
+        ZMod (L.discriminantSmithCoeffNatAbs b i)) := (rfl)
+
+open Classical in
 /-- The order of the discriminant group is the product of the orders of its Smith cyclic
 factors. -/
-theorem natCard_discriminantGroup_eq_prod_discriminantSmithFactor
+theorem natCard_discriminantGroup_eq_prod_discriminantSmithCoeffNatAbs
     (L : IntegralLattice V) [L.IsNondegenerate] {ι : Type v} [Fintype ι]
     (b : Basis ι ℤ L) :
-    Nat.card L.DiscriminantGroup = ∏ i, L.discriminantSmithFactor b i := by
-  let (i : ι) : NeZero (L.discriminantSmithFactor b i) :=
-    ⟨L.discriminantSmithFactor_ne_zero b i⟩
+    Nat.card L.DiscriminantGroup = ∏ i, L.discriminantSmithCoeffNatAbs b i := by
+  let (i : ι) : NeZero (L.discriminantSmithCoeffNatAbs b i) :=
+    ⟨L.discriminantSmithCoeffNatAbs_ne_zero b i⟩
   rw [Nat.card_congr (L.discriminantGroupSmithEquiv b).toEquiv, Nat.card_pi]
   simp only [Nat.card_zmod]
 
 open Classical in
 /-- The product of the Smith cyclic-factor orders is the lattice discriminant. -/
-theorem prod_discriminantSmithFactor (L : IntegralLattice V) [L.IsNondegenerate]
+theorem prod_discriminantSmithCoeffNatAbs (L : IntegralLattice V) [L.IsNondegenerate]
     {ι : Type v} [Fintype ι] (b : Basis ι ℤ L) :
-    ∏ i, L.discriminantSmithFactor b i = L.discriminant := by
-  rw [← L.natCard_discriminantGroup_eq_prod_discriminantSmithFactor b,
+    ∏ i, L.discriminantSmithCoeffNatAbs b i = L.discriminant := by
+  rw [← L.natCard_discriminantGroup_eq_prod_discriminantSmithCoeffNatAbs b,
     L.natCard_discriminantGroup]
 
 open Classical in
@@ -178,8 +189,8 @@ theorem associated_prod_discriminantSmithCoeff_gramDet
     (∏ i, L.discriminantSmithCoeff b i).natAbs =
         ∏ i, (L.discriminantSmithCoeff b i).natAbs :=
       map_prod Int.natAbsHom _ Finset.univ
-    _ = ∏ i, L.discriminantSmithFactor b i := rfl
-    _ = L.discriminant := L.prod_discriminantSmithFactor b
+    _ = ∏ i, L.discriminantSmithCoeffNatAbs b i := rfl
+    _ = L.discriminant := L.prod_discriminantSmithCoeffNatAbs b
     _ = (L.gramDet b).natAbs := L.discriminant_eq_natAbs_gramDet b
 
 end TauCeti.IntegralLattice
