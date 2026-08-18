@@ -26,10 +26,9 @@ with no distinguished endpoint. Rather than pick a representative, `edgeFactor` 
 graphon is. Choosing an orientation would work numerically but would leave every later proof
 carrying a well-definedness obligation that the `Sym2.lift` formulation discharges once.
 
-**The empty cases are not special-cased.** With no edges the product is empty and equals `1`, and
-`μ^{V(F)}` is a probability measure, so `t(F, W) = 1` — including when `V(F)` itself is empty, where
-`Measure.pi` over an empty index is the Dirac measure on the unique function. Nothing here needs a
-nonempty-carrier hypothesis.
+**The empty cases are not special-cased.** The empty product is `1`, and the probability-measure
+instance for `Measure.pi` makes its integral `1`, including when the vertex type is empty. Nothing
+here needs a nonempty-carrier hypothesis.
 
 ## Main definitions
 
@@ -99,11 +98,19 @@ theorem measurable_edgeFactor (W : Graphon Ω μ) (e : Sym2 V) :
     exact W.measurable.comp h
 
 /-- The **homomorphism density** `t(F, W)`: the integral, over vertex assignments, of the product of
-`W` along the edges of `F`. -/
+`W` along the edges of `F`.
+
+Use `homDensity_def` to unfold; the body is not exposed. -/
 def homDensity (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graphon Ω μ) : ℝ :=
   ∫ x, ∏ e ∈ F.edgeFinset, edgeFactor W x e ∂(Measure.pi fun _ : V => μ)
 
 variable (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graphon Ω μ)
+
+/-- The defining integral of `homDensity`. The definition's body is not exposed, so this is the
+lemma downstream modules should rewrite with. -/
+theorem homDensity_def :
+    homDensity F W =
+      ∫ x, ∏ e ∈ F.edgeFinset, edgeFactor W x e ∂(Measure.pi fun _ : V => μ) := (rfl)
 
 /-- The integrand of `homDensity` is measurable. -/
 theorem measurable_homDensity_integrand :
