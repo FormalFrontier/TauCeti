@@ -7,7 +7,6 @@ module
 
 public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 public import TauCeti.KnotTheory.Grid.Differential.Square.Intermediates
-public import TauCeti.KnotTheory.Grid.Rectangle.Swap
 
 /-!
 # Reordering rectangle decompositions with disjoint side columns
