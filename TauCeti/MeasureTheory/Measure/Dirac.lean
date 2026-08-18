@@ -18,15 +18,13 @@ under that weaker hypothesis, which is the one a.e.-measurable interfaces such a
 
 ## Main results
 
-* `TauCeti.Measure.map_dirac_of_aemeasurable` — the Dirac pushforward formula for a map that is
+* `Measure.map_dirac_of_aemeasurable` — the Dirac pushforward formula for a map that is
   only a.e. measurable.
 -/
 
 public section
 
 open MeasureTheory
-
-namespace TauCeti
 
 namespace Measure
 
@@ -45,5 +43,3 @@ theorem map_dirac_of_aemeasurable {x : X} (hT : AEMeasurable T (Measure.dirac x)
   rw [Measure.map_congr hT.ae_eq_mk, Measure.map_dirac' hT.measurable_mk, ← hx]
 
 end Measure
-
-end TauCeti

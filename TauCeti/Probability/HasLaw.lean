@@ -13,7 +13,7 @@ public import TauCeti.MeasureTheory.Measure.Dirac
 A map has almost no freedom on a Dirac measure: since `Measure.dirac x` sees only the point `x`,
 the law of `T` under `Measure.dirac x` is the Dirac measure at `T x`, and nothing else. This file
 records that in the language of `ProbabilityTheory.HasLaw`, whose a.e.-measurability hypothesis is
-exactly what `TauCeti.Measure.map_dirac_of_aemeasurable` asks for.
+exactly what `Measure.map_dirac_of_aemeasurable` asks for.
 
 ## Main results
 
@@ -42,8 +42,8 @@ value. The a.e. measurability is exactly what `ProbabilityTheory.HasLaw` already
 theorem hasLaw_dirac_source_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     HasLaw T ν (Measure.dirac x) ↔ ν = Measure.dirac (T x) := by
   refine ⟨fun h ↦ ?_, fun h ↦ ⟨hT, ?_⟩⟩
-  · rw [← h.map_eq, TauCeti.Measure.map_dirac_of_aemeasurable hT]
-  · rw [TauCeti.Measure.map_dirac_of_aemeasurable hT, h]
+  · rw [← h.map_eq, Measure.map_dirac_of_aemeasurable hT]
+  · rw [Measure.map_dirac_of_aemeasurable hT, h]
 
 /-- **A Dirac source admits no non-Dirac law.** No map at all pushes a Dirac measure onto a
 measure that is not itself a Dirac measure: a map carries its own a.e. measurability along with

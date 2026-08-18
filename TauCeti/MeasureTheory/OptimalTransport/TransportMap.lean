@@ -23,19 +23,19 @@ Kantorovich plan induced by the Monge map `T`.
 
 ## Main definitions
 
-* `TauCeti.Measure.graphPlan` — the plan `μ.map fun x ↦ (x, T x)` induced by `T`.
+* `Measure.graphPlan` — the plan `μ.map fun x ↦ (x, T x)` induced by `T`.
 
 ## Main results
 
-* `TauCeti.Measure.fst_graphPlan` and `TauCeti.Measure.snd_graphPlan` — the first marginal of a
+* `Measure.fst_graphPlan` and `Measure.snd_graphPlan` — the first marginal of a
   graph plan is `μ` whenever `T` is `μ`-a.e. measurable, and its second marginal is `μ.map T`;
   when `ProbabilityTheory.HasLaw T ν μ` holds the second one is `ν`
-  (`TauCeti.Measure.snd_graphPlan_of_hasLaw`), so every Monge map induces a Kantorovich plan;
-* `TauCeti.Measure.lintegral_graphPlan` — integrating against a graph plan is integrating
+  (`Measure.snd_graphPlan_of_hasLaw`), so every Monge map induces a Kantorovich plan;
+* `Measure.lintegral_graphPlan` — integrating against a graph plan is integrating
   `x ↦ f (x, T x)`, the identity turning a Kantorovich cost into a Monge cost;
-* `TauCeti.Measure.eq_graphPlan_iff` — a plan is the graph plan of `T` exactly when it is
+* `Measure.eq_graphPlan_iff` — a plan is the graph plan of `T` exactly when it is
   concentrated on the graph of `T`: this is the intrinsic description of deterministic plans;
-* `TauCeti.Measure.graphPlan_eq_graphPlan_iff` — two maps induce the same plan exactly when they
+* `Measure.graphPlan_eq_graphPlan_iff` — two maps induce the same plan exactly when they
   agree `μ`-a.e., so a transport map is pinned down by its plan only up to a null set.
 
 That the Monge problem is genuinely infeasible for some data — a Dirac source can only be
@@ -72,8 +72,6 @@ open MeasureTheory ProbabilityTheory Set
 
 open scoped ENNReal
 
-namespace TauCeti
-
 namespace Measure
 
 universe u v w
@@ -84,15 +82,15 @@ variable [MeasurableSpace X] [MeasurableSpace Y] [MeasurableSpace Z]
 /-- The **graph plan** of a map `T : X → Y` over a measure `μ` on `X`: the pushforward of `μ`
 along `x ↦ (x, T x)`, that is, the measure on `X × Y` carried by the graph of `T`.
 
-Its second marginal is `μ.map T` (`TauCeti.Measure.snd_graphPlan`), and its first marginal is `μ`
-as soon as `T` is `μ`-a.e. measurable (`TauCeti.Measure.fst_graphPlan`); for such a `T` this is
+Its second marginal is `μ.map T` (`Measure.snd_graphPlan`), and its first marginal is `μ`
+as soon as `T` is `μ`-a.e. measurable (`Measure.fst_graphPlan`); for such a `T` this is
 the Kantorovich plan induced by the Monge map `T`. -/
 def graphPlan (T : X → Y) (μ : Measure X) : Measure (X × Y) :=
   μ.map fun x ↦ (x, T x)
 
 variable {T S : X → Y} {μ : Measure X} {ν : Measure Y}
 
-/-- The defining equation of `TauCeti.Measure.graphPlan`. -/
+/-- The defining equation of `Measure.graphPlan`. -/
 theorem graphPlan_def (T : X → Y) (μ : Measure X) : graphPlan T μ = μ.map fun x ↦ (x, T x) :=
   (rfl)
 
@@ -159,7 +157,7 @@ theorem hasLaw_iff_snd_graphPlan_eq (hT : AEMeasurable T μ) :
   exact ⟨fun h ↦ h.map_eq, fun h ↦ ⟨hT, h⟩⟩
 
 /-- The second marginal of the graph plan of a transport map from `μ` to `ν` is `ν`; together
-with `TauCeti.Measure.fst_graphPlan` this is the passage from a Monge map to a Kantorovich
+with `Measure.fst_graphPlan` this is the passage from a Monge map to a Kantorovich
 plan. -/
 theorem snd_graphPlan_of_hasLaw (hT : HasLaw T ν μ) : (graphPlan T μ).snd = ν := by
   rw [snd_graphPlan, hT.map_eq]
@@ -307,5 +305,3 @@ theorem graphPlan_eq_graphPlan_iff [MeasurableEq Y] (hT : AEMeasurable T μ)
   exact graphPlan_ae_snd_eq hS
 
 end Measure
-
-end TauCeti
