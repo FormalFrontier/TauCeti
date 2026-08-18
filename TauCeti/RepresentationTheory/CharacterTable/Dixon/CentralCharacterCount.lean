@@ -5,9 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Dihedral
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.EigenvectorSearch
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Dihedral
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Structure
 
 /-!
@@ -45,9 +43,6 @@ search returns.
   nonempty (`TauCeti.ClassData.centralCharacterSearch_nonempty`) -- and
   `TauCeti.ClassData.card_centralCharacterSearch_of_isGoodDixonPrime` reads that off a good Dixon
   prime.
-* `TauCeti.card_centralCharacterSearch_dihedralClassData_four`: the worked example -- the search for
-  the dihedral group of order `8` at the certified prime `5` returns exactly `5` rows.
-
 ## Implementation notes
 
 The general results are stated over an arbitrary finite coefficient field `F` with the splitting of
@@ -55,10 +50,6 @@ the centre as an explicit hypothesis, rather than over `ZMod p` with a good Dixo
 splitting is the only thing the count uses, and stating it that way keeps the argument free of the
 arithmetic conditions in `TauCeti.IsGoodDixonPrime`, which enter only through
 `TauCeti.ClassData.card_centralCharacterSearch_of_isGoodDixonPrime`.
-
-`TauCeti.card_centralCharacterSearch_dihedralClassData_four` supplies `Fact (Nat.Prime 5)` inside
-its own statement: `ZMod 5` is a field only in the presence of that instance, and Mathlib carries
-standing instances of `Fact (Nat.Prime _)` for `2` and `3` alone.
 
 ## References
 
@@ -152,21 +143,5 @@ theorem card_centralCharacterSearch_of_isGoodDixonPrime {p : ℕ} [Fact p.Prime]
   d.card_centralCharacterSearch hp.nonempty_center_algEquiv_conjClasses
 
 end ClassData
-
-/-! ### The worked example -/
-
-/-- **The modular central-character search for the dihedral group of order `8` returns exactly five
-rows**, one for each of its five conjugacy classes, at the certified good Dixon prime `5`.
-
-Since the rows of the search are exactly the normalized common left eigenrows
-(`TauCeti.ClassData.mem_centralCharacterSearch`), this says that the five characters of
-`Z(ZMod 5 [D₄])` are all found: none of them is lost to the reduction modulo `5`, and no spurious
-row is returned. It is the acceptance test the roadmap asks for at this stage of the algorithm. -/
-theorem card_centralCharacterSearch_dihedralClassData_four :
-    haveI : Fact (Nat.Prime 5) := ⟨Nat.prime_five⟩
-    ((dihedralClassData 4).centralCharacterSearch (F := ZMod 5)).card = 5 := by
-  have : Fact (Nat.Prime 5) := ⟨Nat.prime_five⟩
-  rw [(dihedralClassData 4).card_centralCharacterSearch_of_isGoodDixonPrime
-    isGoodDixonPrime_dihedralGroup_four_five, numClasses_dihedralClassData_four]
 
 end TauCeti

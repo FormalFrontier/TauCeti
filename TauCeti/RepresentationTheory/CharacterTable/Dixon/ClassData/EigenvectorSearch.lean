@@ -149,6 +149,18 @@ theorem isModularEigenrow_iff_isClassEigenrow (v : Fin d.numClasses → F) :
     simpa only [equivConjClasses_apply, reindexModularRow_classOf,
       d.structureConstant_eq] using hij
 
+omit [CommRing F] in
+private theorem arrowCongr_eq_reindexModularRow (a : Fin d.numClasses → F) :
+    d.equivConjClasses.arrowCongr (Equiv.refl F) a = d.reindexModularRow a := by
+  funext C
+  obtain ⟨i, rfl⟩ := d.equivConjClasses.surjective C
+  calc
+    (d.equivConjClasses.arrowCongr (Equiv.refl F) a) (d.equivConjClasses i) = a i := by
+      simp only [Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_apply,
+        Equiv.symm_apply_apply]
+    _ = d.reindexModularRow a (d.classOf i) := (d.reindexModularRow_classOf a i).symm
+    _ = d.reindexModularRow a (d.equivConjClasses i) := by rw [equivConjClasses_apply]
+
 /-- **Renumbering matches the normalized numbered eigenrows with the normalized class-indexed
 ones**, bundling `TauCeti.ClassData.reindexModularRow` and
 `TauCeti.ClassData.isModularEigenrow_iff_isClassEigenrow` as an equivalence.  It is what carries a
@@ -157,16 +169,16 @@ def modularEigenrowEquiv :
     {a : Fin d.numClasses → F // a (d.index 1) = 1 ∧ d.IsModularEigenrow a} ≃
       {v : ConjClasses G → F // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} :=
   (d.equivConjClasses.arrowCongr (Equiv.refl F)).subtypeEquiv fun a => by
-    have hcoe : d.equivConjClasses.arrowCongr (Equiv.refl F) a = d.reindexModularRow a := (rfl)
-    rw [hcoe, ← d.classOf_index (1 : G), d.reindexModularRow_classOf,
+    rw [d.arrowCongr_eq_reindexModularRow, ← d.classOf_index (1 : G),
+      d.reindexModularRow_classOf,
       d.isModularEigenrow_iff_isClassEigenrow]
 
 @[simp]
 theorem coe_modularEigenrowEquiv
     (a : {a : Fin d.numClasses → F // a (d.index 1) = 1 ∧ d.IsModularEigenrow a}) :
     (d.modularEigenrowEquiv a : ConjClasses G → F) =
-      d.reindexModularRow (a : Fin d.numClasses → F) :=
-  (rfl)
+      d.reindexModularRow (a : Fin d.numClasses → F) := by
+  exact d.arrowCongr_eq_reindexModularRow (a : Fin d.numClasses → F)
 
 /-- The numbered modular class matrix belonging to the identity conjugacy class is the identity
 matrix.  This is `TauCeti.classMultMatrix_mk_one`, renumbered. -/

@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.SpecificGroups.Dihedral
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Prime
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.CentralCharacterCount
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Dihedral
 
 /-!
 # Dixon prime data for the small dihedral groups
@@ -21,6 +21,8 @@ with `3` as its primitive sixth root.
 
 * `TauCeti.dihedralGroupFourDixonPrimeData`: Dixon prime data for `DihedralGroup 4`.
 * `TauCeti.dihedralGroupThreeDixonPrimeData`: Dixon prime data for `DihedralGroup 3`.
+* `TauCeti.card_centralCharacterSearch_dihedralClassData_four`: the modular central-character
+  search for the dihedral group of order `8` returns exactly five rows at the certified prime `5`.
 
 ## References
 
@@ -89,5 +91,24 @@ theorem dihedralGroupThreeDixonPrimeData_p : dihedralGroupThreeDixonPrimeData.p 
 `3`. -/
 @[simp]
 theorem dihedralGroupThreeDixonPrimeData_root : dihedralGroupThreeDixonPrimeData.root = 3 := rfl
+
+/-! ### The central-character search acceptance test -/
+
+/-- **The modular central-character search for the dihedral group of order `8` returns exactly five
+rows**, one for each of its five conjugacy classes, at the certified good Dixon prime `5`.
+
+Since the rows of the search are exactly the normalized common left eigenrows
+(`TauCeti.ClassData.mem_centralCharacterSearch`), this says that the five characters of
+`Z(ZMod 5 [D₄])` are all found: none of them is lost to the reduction modulo `5`, and no spurious
+row is returned. It is the acceptance test the roadmap asks for at this stage of the algorithm.
+
+The statement supplies `Fact (Nat.Prime 5)` locally because `ZMod 5` is a field only in the
+presence of that instance. -/
+theorem card_centralCharacterSearch_dihedralClassData_four :
+    haveI : Fact (Nat.Prime 5) := ⟨Nat.prime_five⟩
+    ((dihedralClassData 4).centralCharacterSearch (F := ZMod 5)).card = 5 := by
+  have : Fact (Nat.Prime 5) := ⟨Nat.prime_five⟩
+  rw [(dihedralClassData 4).card_centralCharacterSearch_of_isGoodDixonPrime
+    isGoodDixonPrime_dihedralGroup_four_five, numClasses_dihedralClassData_four]
 
 end TauCeti

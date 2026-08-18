@@ -289,9 +289,10 @@ the cardinality form of `TauCeti.nonempty_conjClasses_equiv_normalized_isClassEi
 
 This is the count the Burnside--Dixon--Schneider eigenvector search needs in order to know that it
 has found every central character. Over an algebraically closed field in which `|G|` is invertible
-the same count is `TauCeti.card_normalized_isClassEigenrow`, which is not a special case of this
-one but a by-product of a finer statement: there the eigenrows are matched with the *irreducible
-representations* of `G` (`TauCeti.finEquivEigenrow`), not merely counted. -/
+the same count could be derived as a special case here. The existing theorem
+`TauCeti.card_normalized_isClassEigenrow` is retained because it is a by-product of the finer
+`TauCeti.finEquivEigenrow`, which matches the eigenrows with the *irreducible representations* of
+`G`, rather than merely counting them. -/
 theorem card_normalized_isClassEigenrow_of_nonempty_center_algEquiv
     (h : Nonempty (Subalgebra.center k (MonoidAlgebra k G) ≃ₐ[k] (ConjClasses G → k))) :
     Nat.card {v : ConjClasses G → k // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} =
