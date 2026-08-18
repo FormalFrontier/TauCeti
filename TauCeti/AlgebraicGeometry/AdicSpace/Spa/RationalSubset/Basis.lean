@@ -46,6 +46,9 @@ the basis arguments uses it.
 * `TauCeti.ValuationSpectrum.isCompact_of_mem_spaRationalFamily`: every member of the family is
   quasi-compact. Each result also has an `_of_pairOfDefinition` form for use with a specified
   pair of definition.
+* `TauCeti.ValuationSpectrum.exists_finite_spaRationalFamily_refinement`: every open cover of a
+  member of the family admits a finite refinement by members of the family — the two results
+  above combined, and the form a sheaf criterion on this basis consumes.
 * `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_isTateRing_of_isOpen`: over a Tate
   ring, if a finite set `T` generates an open ideal, then the standard rational subsets cover
   `spa Aplus` (Wedhorn Corollary 7.53 specialization).
@@ -254,6 +257,37 @@ theorem isCompact_of_mem_spaRationalFamily [IsHuberRing A] {Aplus : Subring A}
     {U : Set (spa Aplus)} (hU : U ∈ spaRationalFamily Aplus) : IsCompact U :=
   (IsHuberRing.nonempty_pairOfDefinition (A := A)).elim
     fun P ↦ isCompact_of_mem_spaRationalFamily_of_pairOfDefinition P hU
+
+/-! ### Finite rational refinements -/
+
+/-- **Every open cover of a rational subset admits a finite refinement by rational subsets.**
+This is the previous two results combined: being a basis shrinks each point's cover member to a
+rational neighbourhood, and quasi-compactness then keeps finitely many of them. It is the shape a
+sheaf criterion on the rational basis consumes, where the cover is arbitrary but the Čech complex
+must be built from the basis itself.
+
+The two-step argument follows AINTLIB's `exists_finite_rational_refinement_huber` and its Tate-only
+`exists_finite_rational_refinement` (branch `dev/adic-spaces`, commit `37bbdaeb`, Apache 2.0), in
+`projects/AdicSpaces/Adic spaces/RestrictedLimitSheaf.lean`. Two differences: quasi-compactness is a
+hypothesis there and is discharged here by `isCompact_of_mem_spaRationalFamily`; and the conclusion
+there is a `Finset` of a bundled index type over `RationalLocData`, whereas this states a finite
+subfamily of `spaRationalFamily` with the containment as a side condition, matching the vocabulary
+this file already uses. -/
+theorem exists_finite_spaRationalFamily_refinement [IsHuberRing A] {Aplus : Subring A}
+    {U : Set (spa Aplus)} (hU : U ∈ spaRationalFamily Aplus) {ι : Type*}
+    (V : ι → Set (spa Aplus)) (hVopen : ∀ i, IsOpen (V i)) (hcover : U ⊆ ⋃ i, V i) :
+    ∃ 𝒲 ⊆ spaRationalFamily Aplus, 𝒲.Finite ∧ (∀ W ∈ 𝒲, ∃ i, W ⊆ V i) ∧ U ⊆ ⋃₀ 𝒲 := by
+  have hcov : U ⊆ ⋃ W ∈ {W ∈ spaRationalFamily Aplus | ∃ i, W ⊆ V i}, W := by
+    intro x hx
+    obtain ⟨i, hi⟩ := Set.mem_iUnion.mp (hcover hx)
+    obtain ⟨W, hWmem, hxW, hWV⟩ :=
+      (isTopologicalBasis_spaRationalFamily Aplus).exists_subset_of_mem_open hi (hVopen i)
+    exact Set.mem_biUnion ⟨hWmem, i, hWV⟩ hxW
+  obtain ⟨𝒲, h𝒲G, h𝒲fin, h𝒲cov⟩ :=
+    (isCompact_of_mem_spaRationalFamily hU).elim_finite_subcover_image
+      (fun W hW ↦ (isTopologicalBasis_spaRationalFamily Aplus).isOpen hW.1) hcov
+  exact ⟨𝒲, fun W hW ↦ (h𝒲G hW).1, h𝒲fin, fun W hW ↦ (h𝒲G hW).2,
+    by simpa [Set.sUnion_eq_biUnion] using h𝒲cov⟩
 
 /-! ### Standard rational covers -/
 
