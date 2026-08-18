@@ -259,25 +259,11 @@ every piece. -/
 theorem IsGeodesicSegment.eVariationOn_le (h : IsGeodesicSegment γ x y) {a b : ℝ}
     (ha : a ∈ Icc (0 : ℝ) 1) (hb : b ∈ Icc (0 : ℝ) 1) :
     eVariationOn γ (Icc a b) ≤ ENNReal.ofReal ((b - a) * dist x y) := by
-  rw [eVariationOn]
-  refine iSup_le ?_
-  rintro ⟨n, u, hu, hus⟩
-  have key : ∀ i : ℕ, edist (γ (u (i + 1))) (γ (u i))
-      = ENNReal.ofReal ((u (i + 1) - u i) * dist x y) := by
-    intro i
-    have hi : u i ∈ Icc (0 : ℝ) 1 := Icc_subset_Icc ha.1 hb.2 (hus i)
-    have hi' : u (i + 1) ∈ Icc (0 : ℝ) 1 := Icc_subset_Icc ha.1 hb.2 (hus (i + 1))
-    rw [edist_dist, h.dist_eq _ hi' _ hi,
-      abs_of_nonneg (sub_nonneg.2 (hu (Nat.le_succ i)))]
-  simp only [key]
-  rw [← ENNReal.ofReal_sum_of_nonneg fun i _ =>
-    mul_nonneg (sub_nonneg.2 (hu (Nat.le_succ i))) dist_nonneg]
-  refine ENNReal.ofReal_le_ofReal ?_
-  rw [← Finset.sum_mul, Finset.sum_range_sub fun i => u i]
-  refine mul_le_mul_of_nonneg_right ?_ dist_nonneg
-  have h0 : a ≤ u 0 := (hus 0).1
-  have hn : u n ≤ b := (hus n).2
-  linarith
+  have hmaps : MapsTo id (Icc a b) (Icc (0 : ℝ) 1) := fun _ ht => Icc_subset_Icc ha.1 hb.2 ht
+  have h' := h.lipschitzOnWith.comp_eVariationOn_le hmaps
+  rw [eVariationOn_id_Icc, ENNReal.ofNNReal_toNNReal] at h'
+  rw [ENNReal.ofReal_mul' dist_nonneg, mul_comm]
+  simpa using h'
 
 /-- A geodesic segment realises the distance between any two of its points. -/
 theorem IsGeodesicSegment.eVariationOn_eq_edist (h : IsGeodesicSegment γ x y) {a b : ℝ}
