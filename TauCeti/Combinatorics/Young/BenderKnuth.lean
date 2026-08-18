@@ -606,7 +606,7 @@ private theorem benderKnuth_apply_of_inBlock (T : SemistandardYoungTableau μ) (
   recut_apply_of_inBlock (isCut_bkCut T v) h
 
 /-- Outside the block, the involution leaves the entry alone. -/
-private theorem benderKnuth_apply_of_not_inBlock (T : SemistandardYoungTableau μ) (v : ℕ)
+theorem benderKnuth_apply_of_not_inBlock (T : SemistandardYoungTableau μ) (v : ℕ)
     {i j : ℕ} (h : ¬ T.InBlock v i j) : benderKnuth T v i j = T i j :=
   recut_apply_of_not_inBlock (isCut_bkCut T v) h
 
