@@ -100,14 +100,17 @@ theorem measurable_edgeFactor (W : Graphon Ω μ) (e : Sym2 V) :
 /-- The **homomorphism density** `t(F, W)`: the integral, over vertex assignments, of the product of
 `W` along the edges of `F`.
 
-Use `homDensity_def` to unfold; the body is not exposed. -/
+Outside this module, use `homDensity_def` to unfold `homDensity`; its definition is intentionally
+not exposed across module boundaries. -/
 def homDensity (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graphon Ω μ) : ℝ :=
   ∫ x, ∏ e ∈ F.edgeFinset, edgeFactor W x e ∂(Measure.pi fun _ : V => μ)
 
 variable (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graphon Ω μ)
 
-/-- The defining integral of `homDensity`. The definition's body is not exposed, so this is the
-lemma downstream modules should rewrite with. -/
+/-- The defining integral of `homDensity`.
+
+Outside this module, use this to unfold `homDensity`; its definition is intentionally not exposed
+across module boundaries, so `rfl` will not do it. -/
 theorem homDensity_def :
     homDensity F W =
       ∫ x, ∏ e ∈ F.edgeFinset, edgeFactor W x e ∂(Measure.pi fun _ : V => μ) := (rfl)
