@@ -21,13 +21,13 @@ they are phrased in terms of, and proves that a geodesic space is a length space
 ## The length of a curve
 
 The length of a curve `γ : ℝ → X` over a parameter interval `[a, b]` is the supremum of the sums
-`∑ i, edist (γ (u (i + 1))) (γ (u i))` over finite increasing families `u` in `[a, b]`, which is
-exactly Mathlib's total variation `eVariationOn γ (Set.Icc a b)`. `TauCeti.curveELength` names
-that specialisation. Two conventions are inherited deliberately:
+`∑ i, edist (γ (u (i + 1))) (γ (u i))` over finite increasing families `u` in `[a, b]`. This is
+exactly Mathlib's total variation `eVariationOn γ (Set.Icc a b)`, which this file uses directly.
+Two conventions are inherited deliberately:
 
 * curves are functions on all of `ℝ`, read on a parameter interval, rather than functions on a
-  subtype. This is the convention of `Manifold.pathELength I γ a b`, the Riemannian length that
-  `curveELength` is to be compared against, and it avoids subtype juggling in the API;
+  subtype. This is the convention of `Manifold.pathELength I γ a b`, the Riemannian length to be
+  compared against, and it avoids subtype juggling in the API;
 * the value is an extended nonnegative real, since a continuous curve can have infinite length.
 
 Mathlib's bundled `Path x y` is bridged to this convention in both directions, by
@@ -37,11 +37,10 @@ Mathlib's bundled `Path x y` is bridged to this convention in both directions, b
 
 The infimum defining a length space must range over *continuous* curves. Dropping continuity makes
 every metric space a length space: the two-valued curve which is `x` on `[0, 1)` and `y` at `1`
-already has length `edist x y`, by `TauCeti.edist_le_curveELength`.
+already has length `edist x y`, by `eVariationOn.edist_le`.
 
 ## Main definitions
 
-* `TauCeti.curveELength γ a b` — the length of the curve `γ` on the parameter interval `[a, b]`.
 * `TauCeti.IsCurveJoining γ x y` — `γ` is continuous on `[0, 1]` and runs from `x` to `y` there.
 * `TauCeti.IsGeodesicSegment γ x y` — `γ` parametrises a shortest curve from `x` to `y`
   proportionally to arclength on `[0, 1]`.
@@ -50,12 +49,12 @@ already has length `edist x y`, by `TauCeti.edist_le_curveELength`.
 
 ## Main results
 
-* `TauCeti.curveELength_comp_affine` and `TauCeti.exists_isCurveJoining_of_continuousOn` — the
-  parameter interval `[0, 1]` is no loss of generality.
-* `TauCeti.IsGeodesicSegment.curveELength_eq_edist` — a geodesic segment realises the distance
+* `TauCeti.exists_isCurveJoining_of_continuousOn` shows that the parameter interval `[0, 1]` is no
+  loss of generality.
+* `TauCeti.IsGeodesicSegment.eVariationOn_eq_edist` — a geodesic segment realises the distance
   between any two of its points, and in particular between its endpoints.
 * `TauCeti.IsGeodesicSpace.toIsLengthSpace` — a geodesic space is a length space; there the
-  infimum is attained, by `TauCeti.IsGeodesicSpace.exists_curveELength_eq`.
+  infimum is attained, by `TauCeti.IsGeodesicSpace.exists_eVariationOn_eq`.
 * `TauCeti.IsLengthSpace.pathConnectedSpace` — a nonempty length space with finite distances is
   path connected.
 * `TauCeti.instIsGeodesicSpace` — a real seminormed space is a geodesic space, its geodesic
@@ -73,91 +72,6 @@ namespace TauCeti
 open Set
 
 open scoped ENNReal
-
-/-! ### The length of a curve -/
-
-section CurveELength
-
-variable {X : Type*} [PseudoEMetricSpace X]
-
-/-- The length of the curve `γ : ℝ → X` on the parameter interval `[a, b]`: the supremum of the
-sums `∑ i, edist (γ (u (i + 1))) (γ (u i))` over finite increasing families `u` in `[a, b]`.
-
-This is the total variation `eVariationOn γ (Set.Icc a b)`, packaged with the argument shape of
-`Manifold.pathELength I γ a b` so that the two lengths can be compared. It vanishes when
-`b ≤ a`. -/
-noncomputable def curveELength (γ : ℝ → X) (a b : ℝ) : ℝ≥0∞ :=
-  eVariationOn γ (Icc a b)
-
-/-- The length of a curve is Mathlib's total variation: `curveELength γ a b` is
-`eVariationOn γ (Set.Icc a b)`.
-
-This is the elimination API of `curveELength`, whose body is not `@[expose]`d: no other module
-unfolds it, so this is the equation to rewrite with to reach the `eVariationOn` API. -/
-theorem curveELength_def (γ : ℝ → X) (a b : ℝ) :
-    curveELength γ a b = eVariationOn γ (Icc a b) :=
-  (rfl)
-
--- The parentheses in `(rfl)` above are the module system's -- a bare `rfl`, whose proof term is
--- exported, fails with "not a definitional equality", while the parenthesised form elaborates
--- inside this module, where the body is visible.
-
-@[simp]
-theorem curveELength_eq_zero_of_le (γ : ℝ → X) {a b : ℝ} (hba : b ≤ a) :
-    curveELength γ a b = 0 :=
-  eVariationOn.subsingleton γ (subsingleton_Icc_of_ge hba)
-
--- Not `@[simp]`: `simp` already closes this goal through `curveELength_eq_zero_of_le`, and the
--- `simpNF` linter rejects the redundant attribute.
-theorem curveELength_self (γ : ℝ → X) (a : ℝ) : curveELength γ a a = 0 :=
-  curveELength_eq_zero_of_le γ le_rfl
-
-theorem curveELength_congr {γ γ' : ℝ → X} {a b : ℝ} (h : EqOn γ γ' (Icc a b)) :
-    curveELength γ a b = curveELength γ' a b :=
-  eVariationOn.congr h
-
-@[simp]
-theorem curveELength_const (x : X) (a b : ℝ) : curveELength (fun _ : ℝ => x) a b = 0 := by
-  refine eVariationOn.constant_on ?_
-  rintro _ ⟨s, -, rfl⟩ _ ⟨t, -, rfl⟩
-  rfl
-
-/-- Any two points of a curve are at most its length apart. -/
-theorem edist_le_curveELength (γ : ℝ → X) {a b s t : ℝ} (hs : s ∈ Icc a b) (ht : t ∈ Icc a b) :
-    edist (γ s) (γ t) ≤ curveELength γ a b :=
-  eVariationOn.edist_le γ hs ht
-
-theorem curveELength_mono (γ : ℝ → X) {a b c d : ℝ} (hca : c ≤ a) (hbd : b ≤ d) :
-    curveELength γ a b ≤ curveELength γ c d :=
-  eVariationOn.mono γ (Icc_subset_Icc hca hbd)
-
-/-- Length is additive along a subdivision of the parameter interval. -/
-theorem curveELength_add (γ : ℝ → X) {a b c : ℝ} (hab : a ≤ b) (hbc : b ≤ c) :
-    curveELength γ a b + curveELength γ b c = curveELength γ a c := by
-  simpa only [curveELength_def, univ_inter] using
-    eVariationOn.Icc_add_Icc γ (s := univ) hab hbc (mem_univ b)
-
-/-- Length is invariant under a monotone reparametrisation of the parameter interval. -/
-theorem curveELength_comp_of_monotoneOn (γ : ℝ → X) {φ : ℝ → ℝ} {a b c d : ℝ}
-    (hφ : MonotoneOn φ (Icc a b)) (himg : φ '' Icc a b = Icc c d) :
-    curveELength (γ ∘ φ) a b = curveELength γ c d := by
-  rw [curveELength_def, curveELength_def,
-    eVariationOn.comp_eq_of_monotoneOn γ φ hφ, himg]
-
-/-- Every parameter interval can be rescaled affinely to `[0, 1]` without changing the length of
-the curve read on it. This is what makes the choice of `[0, 1]` in `TauCeti.IsCurveJoining` and
-`TauCeti.IsGeodesicSegment` no loss of generality. -/
-theorem curveELength_comp_affine (γ : ℝ → X) {a b : ℝ} (hab : a ≤ b) :
-    curveELength (fun t => γ ((b - a) * t + a)) 0 1 = curveELength γ a b := by
-  rcases hab.eq_or_lt with rfl | hlt
-  · simp
-  · have hpos : (0 : ℝ) < b - a := sub_pos.2 hlt
-    have hmono : MonotoneOn (fun t : ℝ => (b - a) * t + a) (Icc 0 1) :=
-      fun _ _ _ _ hst => by nlinarith
-    refine curveELength_comp_of_monotoneOn γ hmono ?_
-    simpa using Set.image_affine_Icc' hpos a 0 1
-
-end CurveELength
 
 /-! ### Curves joining two points -/
 
@@ -177,9 +91,9 @@ structure IsCurveJoining (γ : ℝ → X) (x y : X) : Prop where
 
 /-- A joining curve is at least as long as the distance between the points it joins. -/
 theorem IsCurveJoining.edist_le (h : IsCurveJoining γ x y) :
-    edist x y ≤ curveELength γ 0 1 := by
+    edist x y ≤ eVariationOn γ (Icc 0 1) := by
   simpa only [h.source, h.target] using
-    edist_le_curveELength γ (left_mem_Icc.2 zero_le_one) (right_mem_Icc.2 zero_le_one)
+    eVariationOn.edist_le γ (left_mem_Icc.2 zero_le_one) (right_mem_Icc.2 zero_le_one)
 
 /-- The extension to `ℝ` of a bundled path is a joining curve. -/
 theorem isCurveJoining_extend (γ : Path x y) : IsCurveJoining γ.extend x y where
@@ -192,11 +106,26 @@ to `[0, 1]` without changing its length. This is how curves produced on other pa
 enter the length-space condition below. -/
 theorem exists_isCurveJoining_of_continuousOn {a b : ℝ} (hab : a ≤ b)
     (hγ : ContinuousOn γ (Icc a b)) (ha : γ a = x) (hb : γ b = y) :
-    ∃ γ' : ℝ → X, IsCurveJoining γ' x y ∧ curveELength γ' 0 1 = curveELength γ a b := by
+    ∃ γ' : ℝ → X, IsCurveJoining γ' x y ∧
+      eVariationOn γ' (Icc 0 1) = eVariationOn γ (Icc a b) := by
   have hmaps : MapsTo (fun t : ℝ => (b - a) * t + a) (Icc 0 1) (Icc a b) := by
     rintro t ⟨ht0, ht1⟩
     constructor <;> nlinarith
-  refine ⟨fun t => γ ((b - a) * t + a), ⟨?_, ?_, ?_⟩, curveELength_comp_affine γ hab⟩
+  have hlen : eVariationOn (fun t => γ ((b - a) * t + a)) (Icc 0 1) =
+      eVariationOn γ (Icc a b) := by
+    rcases hab.eq_or_lt with rfl | hlt
+    · simp only [sub_self, zero_mul, zero_add]
+      rw [eVariationOn.subsingleton γ (subsingleton_Icc_of_ge le_rfl)]
+      refine eVariationOn.constant_on (f := fun _ : ℝ => γ a) (s := Icc 0 1) ?_
+      rintro _ ⟨s, -, rfl⟩ _ ⟨t, -, rfl⟩
+      rfl
+    · have hpos : (0 : ℝ) < b - a := sub_pos.2 hlt
+      have hmono : MonotoneOn (fun t : ℝ => (b - a) * t + a) (Icc 0 1) :=
+        fun _ _ _ _ hst => by nlinarith
+      rw [show (fun t => γ ((b - a) * t + a)) = γ ∘ fun t => (b - a) * t + a by rfl,
+        eVariationOn.comp_eq_of_monotoneOn γ _ hmono]
+      exact congrArg (eVariationOn γ) (by simpa using Set.image_affine_Icc' hpos a 0 1)
+  refine ⟨fun t => γ ((b - a) * t + a), ⟨?_, ?_, ?_⟩, hlen⟩
   · exact hγ.comp (by fun_prop) hmaps
   · simpa using ha
   · simpa using hb
@@ -221,36 +150,37 @@ lengths of the continuous curves joining them. -/
 class IsLengthSpace (X : Type*) [PseudoEMetricSpace X] : Prop where
   /-- The distance between two points is the infimum of the lengths of the curves joining them. -/
   edist_eq_iInf (x y : X) :
-    edist x y = ⨅ (γ : ℝ → X) (_ : IsCurveJoining γ x y), curveELength γ 0 1
+    edist x y = ⨅ (γ : ℝ → X) (_ : IsCurveJoining γ x y), eVariationOn γ (Icc 0 1)
 
 /-- One half of the length-space condition holds in any space: no curve joining `x` to `y` is
 shorter than `edist x y`. -/
-theorem edist_le_iInf_curveELength (x y : X) :
-    edist x y ≤ ⨅ (γ : ℝ → X) (_ : IsCurveJoining γ x y), curveELength γ 0 1 :=
+theorem edist_le_iInf_eVariationOn (x y : X) :
+    edist x y ≤ ⨅ (γ : ℝ → X) (_ : IsCurveJoining γ x y), eVariationOn γ (Icc 0 1) :=
   le_iInf₂ fun _ h => h.edist_le
 
 /-- To check that a space is a length space it suffices to produce, for every pair of points and
 every bound strictly above their distance, a joining curve shorter than that bound. -/
-theorem IsLengthSpace.of_exists_curveELength_lt
+theorem IsLengthSpace.of_exists_eVariationOn_lt
     (h : ∀ (x y : X) (c : ℝ≥0∞), edist x y < c →
-      ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ curveELength γ 0 1 < c) :
+      ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ eVariationOn γ (Icc 0 1) < c) :
     IsLengthSpace X where
   edist_eq_iInf x y := by
-    refine le_antisymm (edist_le_iInf_curveELength x y) ?_
+    refine le_antisymm (edist_le_iInf_eVariationOn x y) ?_
     by_contra hcon
     obtain ⟨γ, hγ, hlt⟩ := h x y _ (not_le.1 hcon)
     exact absurd (iInf₂_le γ hγ) (not_le.2 hlt)
 
 /-- In a length space, joining curves of length arbitrarily close to the distance exist. -/
-theorem IsLengthSpace.exists_curveELength_lt [IsLengthSpace X] {c : ℝ≥0∞} (hc : edist x y < c) :
-    ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ curveELength γ 0 1 < c := by
+theorem IsLengthSpace.exists_eVariationOn_lt [IsLengthSpace X] {c : ℝ≥0∞}
+    (hc : edist x y < c) :
+    ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ eVariationOn γ (Icc 0 1) < c := by
   simp only [IsLengthSpace.edist_eq_iInf x y, iInf_lt_iff, exists_prop] at hc
   exact hc
 
 /-- Any two points of a length space with finite distances are joined by a continuous curve. -/
 theorem IsLengthSpace.joined {X : Type*} [PseudoMetricSpace X] [IsLengthSpace X] (x y : X) :
     Joined x y := by
-  obtain ⟨γ, hγ, -⟩ := IsLengthSpace.exists_curveELength_lt (x := x) (y := y) (c := ⊤)
+  obtain ⟨γ, hγ, -⟩ := IsLengthSpace.exists_eVariationOn_lt (x := x) (y := y) (c := ⊤)
     (edist_lt_top x y)
   exact hγ.joined
 
@@ -261,11 +191,12 @@ theorem IsLengthSpace.pathConnectedSpace {X : Type*} [PseudoMetricSpace X] [IsLe
     [Nonempty X] : PathConnectedSpace X :=
   ⟨‹Nonempty X›, IsLengthSpace.joined⟩
 
-/-- The metric form of `TauCeti.IsLengthSpace.exists_curveELength_lt`. -/
-theorem IsLengthSpace.exists_curveELength_lt_ofReal {X : Type*} [PseudoMetricSpace X]
+/-- The metric form of `TauCeti.IsLengthSpace.exists_eVariationOn_lt`. -/
+theorem IsLengthSpace.exists_eVariationOn_lt_ofReal {X : Type*} [PseudoMetricSpace X]
     [IsLengthSpace X] {x y : X} {r : ℝ} (hr : dist x y < r) :
-    ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ curveELength γ 0 1 < ENNReal.ofReal r := by
-  refine IsLengthSpace.exists_curveELength_lt ?_
+    ∃ γ : ℝ → X, IsCurveJoining γ x y ∧
+      eVariationOn γ (Icc 0 1) < ENNReal.ofReal r := by
+  refine IsLengthSpace.exists_eVariationOn_lt ?_
   rw [edist_dist]
   exact ENNReal.ofReal_lt_ofReal_iff_of_nonneg dist_nonneg |>.2 hr
 
@@ -320,12 +251,12 @@ theorem IsGeodesicSegment.reverse (h : IsGeodesicSegment γ x y) :
     rw [h.dist_eq _ hs' _ ht', dist_comm y x, sub_sub_sub_cancel_left, abs_sub_comm]
 
 /-- No piece of a geodesic segment is longer than the affine bound its parametrisation predicts.
-The reverse inequality is `TauCeti.edist_le_curveELength`, so the two together identify the
-length of every piece. -/
-theorem IsGeodesicSegment.curveELength_le (h : IsGeodesicSegment γ x y) {a b : ℝ}
+The reverse inequality is `eVariationOn.edist_le`, so the two together identify the length of
+every piece. -/
+theorem IsGeodesicSegment.eVariationOn_le (h : IsGeodesicSegment γ x y) {a b : ℝ}
     (ha : a ∈ Icc (0 : ℝ) 1) (hb : b ∈ Icc (0 : ℝ) 1) :
-    curveELength γ a b ≤ ENNReal.ofReal ((b - a) * dist x y) := by
-  rw [curveELength_def, eVariationOn]
+    eVariationOn γ (Icc a b) ≤ ENNReal.ofReal ((b - a) * dist x y) := by
+  rw [eVariationOn]
   refine iSup_le ?_
   rintro ⟨n, u, hu, hus⟩
   have key : ∀ i : ℕ, edist (γ (u (i + 1))) (γ (u i))
@@ -346,18 +277,18 @@ theorem IsGeodesicSegment.curveELength_le (h : IsGeodesicSegment γ x y) {a b : 
   linarith
 
 /-- A geodesic segment realises the distance between any two of its points. -/
-theorem IsGeodesicSegment.curveELength_eq_edist (h : IsGeodesicSegment γ x y) {a b : ℝ}
+theorem IsGeodesicSegment.eVariationOn_eq_edist (h : IsGeodesicSegment γ x y) {a b : ℝ}
     (ha : a ∈ Icc (0 : ℝ) 1) (hb : b ∈ Icc (0 : ℝ) 1) (hab : a ≤ b) :
-    curveELength γ a b = edist (γ a) (γ b) := by
+    eVariationOn γ (Icc a b) = edist (γ a) (γ b) := by
   refine le_antisymm ?_
-    (edist_le_curveELength γ (left_mem_Icc.2 hab) (right_mem_Icc.2 hab))
+    (eVariationOn.edist_le γ (left_mem_Icc.2 hab) (right_mem_Icc.2 hab))
   rw [edist_dist, h.dist_eq a ha b hb, abs_sub_comm, abs_of_nonneg (sub_nonneg.2 hab)]
-  exact h.curveELength_le ha hb
+  exact h.eVariationOn_le ha hb
 
 /-- A geodesic segment from `x` to `y` has length `edist x y`. -/
-theorem IsGeodesicSegment.curveELength_eq (h : IsGeodesicSegment γ x y) :
-    curveELength γ 0 1 = edist x y := by
-  rw [h.curveELength_eq_edist (left_mem_Icc.2 zero_le_one) (right_mem_Icc.2 zero_le_one)
+theorem IsGeodesicSegment.eVariationOn_eq (h : IsGeodesicSegment γ x y) :
+    eVariationOn γ (Icc 0 1) = edist x y := by
+  rw [h.eVariationOn_eq_edist (left_mem_Icc.2 zero_le_one) (right_mem_Icc.2 zero_le_one)
     zero_le_one, h.source, h.target]
 
 /-- A *geodesic space* is a space in which any two points are joined by a geodesic segment. -/
@@ -366,16 +297,16 @@ class IsGeodesicSpace (X : Type*) [PseudoMetricSpace X] : Prop where
   exists_isGeodesicSegment (x y : X) : ∃ γ : ℝ → X, IsGeodesicSegment γ x y
 
 /-- In a geodesic space the infimum defining the length-space condition is attained. -/
-theorem IsGeodesicSpace.exists_curveELength_eq [IsGeodesicSpace X] (x y : X) :
-    ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ curveELength γ 0 1 = edist x y := by
+theorem IsGeodesicSpace.exists_eVariationOn_eq [IsGeodesicSpace X] (x y : X) :
+    ∃ γ : ℝ → X, IsCurveJoining γ x y ∧ eVariationOn γ (Icc 0 1) = edist x y := by
   obtain ⟨γ, hγ⟩ := IsGeodesicSpace.exists_isGeodesicSegment x y
-  exact ⟨γ, hγ.isCurveJoining, hγ.curveELength_eq⟩
+  exact ⟨γ, hγ.isCurveJoining, hγ.eVariationOn_eq⟩
 
 /-- **A geodesic space is a length space.** -/
 instance IsGeodesicSpace.toIsLengthSpace [IsGeodesicSpace X] : IsLengthSpace X where
   edist_eq_iInf x y := by
-    obtain ⟨γ, hγ, hlen⟩ := IsGeodesicSpace.exists_curveELength_eq x y
-    exact le_antisymm (edist_le_iInf_curveELength x y) (hlen ▸ iInf₂_le γ hγ)
+    obtain ⟨γ, hγ, hlen⟩ := IsGeodesicSpace.exists_eVariationOn_eq x y
+    exact le_antisymm (edist_le_iInf_eVariationOn x y) (hlen ▸ iInf₂_le γ hγ)
 
 end Geodesic
 
