@@ -145,8 +145,8 @@ noncomputable def cutNormSet (K : SymmKernel Ω μ) : ℝ :=
 weak-regularity APIs use. -/
 noncomputable def cutNorm (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
 
-/-- The cut norm agrees with its measurable-set form. -/
-@[simp]
+/-- The cut norm agrees with its measurable-set form.  This is not a `simp` lemma: `cutNorm` is
+the normal form that the rest of the API, and hence the `simp` set, is stated in. -/
 theorem cutNorm_eq_cutNormSet (K : SymmKernel Ω μ) : cutNorm μ K = cutNormSet μ K := (rfl)
 
 private theorem rectIntegral_bound_nonneg (K : SymmKernel Ω μ) :
