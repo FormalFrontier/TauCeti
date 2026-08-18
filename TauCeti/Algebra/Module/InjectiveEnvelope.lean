@@ -55,8 +55,10 @@ as an extension target; it is automatic whenever `R` and that module live in the
 * `TauCeti.isInjectiveEnvelope_id`: an injective module is its own injective envelope.
 * `TauCeti.isInjectiveEnvelope_iff_forall_injective`: an embedding into an injective module is an
   injective envelope exactly when it is an essential monomorphism.
-* `TauCeti.IsEssential.exists_injective`: every embedding of `M` into an injective module receives
-  an essential extension of `M`, in particular an injective envelope, by an embedding.
+* `TauCeti.IsEssential.exists_injective`: a given embedding of `M` with essential range maps, by an
+  embedding, into every embedding of `M` into an injective module. When its own target is moreover
+  injective — that is, when the given embedding is an injective envelope — this is the universal
+  property of the envelope.
 * `TauCeti.IsInjectiveEnvelope.bijective_of_comp_eq` and
   `TauCeti.IsInjectiveEnvelope.exists_linearEquiv`: **uniqueness**, first as bijectivity of any
   comparison map between two envelopes and then as the existence of an isomorphism under `M`.

@@ -35,7 +35,7 @@ essential along **any** linear map (`TauCeti.IsEssential.comap`, the analogue of
 
 ## Main results
 
-* `TauCeti.isEssential_iff`: the definition, restated so that essentiality can be proved
+* `TauCeti.isEssential_iff`: the definition, restated so that essentiality can be proved and used
   downstream.
 * `TauCeti.isEssential_top`, `TauCeti.IsEssential.mono`, `TauCeti.isEssential_inf_iff`: the
   essential submodules of `M` are closed upwards and under binary infima, and contain `⊤`.
@@ -81,16 +81,11 @@ any submodule `K` with `N ⊓ K = ⊥` is already `⊥`. -/
 def IsEssential (N : Submodule R M) : Prop :=
   ∀ K : Submodule R M, N ⊓ K = ⊥ → K = ⊥
 
-/-- Essentiality, restated: this is the introduction rule for `TauCeti.IsEssential`, whose body is
-not exposed outside this module. -/
+/-- Essentiality, restated. The body of `TauCeti.IsEssential` is not exposed outside this module,
+so this is the interface through which essentiality is both proved and used. -/
 theorem isEssential_iff {N : Submodule R M} :
     IsEssential N ↔ ∀ K : Submodule R M, N ⊓ K = ⊥ → K = ⊥ :=
   (Iff.rfl)
-
-/-- The defining property of an essential submodule, in the shape it is consumed in. -/
-theorem IsEssential.eq_bot_of_inf_eq_bot {N K : Submodule R M} (hN : IsEssential N)
-    (h : N ⊓ K = ⊥) : K = ⊥ :=
-  hN K h
 
 /-- The whole module is essential in itself. -/
 @[simp]
@@ -102,7 +97,7 @@ theorem isEssential_top : IsEssential (⊤ : Submodule R M) := by
 theorem IsEssential.mono {N N' : Submodule R M} (hN : IsEssential N) (h : N ≤ N') :
     IsEssential N' := by
   intro K hK
-  refine hN.eq_bot_of_inf_eq_bot (le_bot_iff.mp ?_)
+  refine isEssential_iff.mp hN _ (le_bot_iff.mp ?_)
   rw [← hK]
   exact inf_le_inf_right K h
 
@@ -110,7 +105,7 @@ theorem IsEssential.mono {N N' : Submodule R M} (hN : IsEssential N) (h : N ≤ 
 theorem IsEssential.inf {N N' : Submodule R M} (hN : IsEssential N) (hN' : IsEssential N') :
     IsEssential (N ⊓ N') := by
   intro K hK
-  refine hN'.eq_bot_of_inf_eq_bot (hN.eq_bot_of_inf_eq_bot ?_)
+  refine isEssential_iff.mp hN' _ (isEssential_iff.mp hN _ ?_)
   rwa [← inf_assoc]
 
 /-- An infimum of two submodules is essential exactly when both of them are. -/
@@ -125,7 +120,7 @@ that `⊤ = ⊥`. -/
 theorem isEssential_bot_iff : IsEssential (⊥ : Submodule R M) ↔ Subsingleton M := by
   refine ⟨fun h => (Submodule.subsingleton_iff R).mp (subsingleton_iff_bot_eq_top.mp ?_),
     fun _ K _ => Subsingleton.elim K ⊥⟩
-  exact (h.eq_bot_of_inf_eq_bot (by simp)).symm
+  exact (isEssential_iff.mp h _ (by simp)).symm
 
 /-- The zero submodule is not essential in a nonzero module. -/
 theorem not_isEssential_bot [Nontrivial M] : ¬ IsEssential (⊥ : Submodule R M) := fun h =>
@@ -143,7 +138,7 @@ theorem IsEssential.comap {N : Submodule R M₂} (hN : IsEssential N) (f : M →
   rw [Submodule.eq_bot_iff] at hK
   -- The image of `K` meets `N` only in `0`, hence vanishes, ...
   have hmap : K.map f = ⊥ := by
-    refine hN.eq_bot_of_inf_eq_bot ((Submodule.eq_bot_iff _).mpr fun y hy => ?_)
+    refine isEssential_iff.mp hN _ ((Submodule.eq_bot_iff _).mpr fun y hy => ?_)
     obtain ⟨x, hxK, rfl⟩ := hy.2
     rw [hK x ⟨hy.1, hxK⟩, map_zero]
   -- ... so `K` lies in the kernel, which is contained in the preimage of `N`.
@@ -162,10 +157,10 @@ theorem IsEssential.map {N : Submodule R M} (hN : IsEssential N) {f : M →ₗ[R
   rw [Submodule.eq_bot_iff] at hK
   -- Upstairs, `N` meets the preimage of `K` only in `0`, so that preimage vanishes, ...
   have hcomap : K.comap f = ⊥ := by
-    refine hN.eq_bot_of_inf_eq_bot ((Submodule.eq_bot_iff _).mpr fun x hx => ?_)
+    refine isEssential_iff.mp hN _ ((Submodule.eq_bot_iff _).mpr fun x hx => ?_)
     exact hf (by simpa using hK (f x) ⟨Submodule.mem_map_of_mem hx.1, hx.2⟩)
   -- ... hence `K` meets the range of `f` only in `0`, and the range is essential.
-  refine hrange.eq_bot_of_inf_eq_bot ((Submodule.eq_bot_iff _).mpr fun y hy => ?_)
+  refine isEssential_iff.mp hrange _ ((Submodule.eq_bot_iff _).mpr fun y hy => ?_)
   obtain ⟨x, hx⟩ := hy.1
   have hx0 : x = 0 :=
     (Submodule.eq_bot_iff _).mp hcomap x (Submodule.mem_comap.mpr (by rw [hx]; exact hy.2))
@@ -191,7 +186,7 @@ theorem IsEssential.atom_le {N a : Submodule R M} (hN : IsEssential N) (ha : IsA
   -- Otherwise `N ⊓ a` is strictly below the atom `a`, hence `⊥`, contradicting essentiality.
   have hlt : N ⊓ a < a :=
     lt_of_le_of_ne inf_le_right fun heq => hle ((le_of_eq heq.symm).trans inf_le_left)
-  exact ha.1 (hN.eq_bot_of_inf_eq_bot (ha.2 _ hlt))
+  exact ha.1 (isEssential_iff.mp hN _ (ha.2 _ hlt))
 
 /-- Conversely, when every nonzero submodule of `M` contains a simple one, a submodule containing
 every simple submodule is essential. -/
@@ -227,7 +222,7 @@ theorem IsEssential.injective_of_injective_comp {M₃ : Type*} [AddCommGroup M�
     (hhf : Function.Injective (h ∘ₗ f)) : Function.Injective h := by
   rw [← LinearMap.ker_eq_bot]
   -- A nonzero element of the kernel would come from a nonzero element killed by `h ∘ₗ f`.
-  refine hf.eq_bot_of_inf_eq_bot ((Submodule.eq_bot_iff _).mpr fun y hy => ?_)
+  refine isEssential_iff.mp hf _ ((Submodule.eq_bot_iff _).mpr fun y hy => ?_)
   obtain ⟨x, hx⟩ := hy.1
   have hy2 : h y = 0 := hy.2
   have hx0 : x = 0 := hhf (by simp [LinearMap.comp_apply, hx, hy2])
