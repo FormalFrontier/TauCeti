@@ -29,7 +29,7 @@ invariant vector of `Hom(B, Coind_φ A)` is a morphism `B ⟶ Coind_φ A`, and a
 isomorphism of representations itself is not upstream, and it is not a formal consequence of the
 adjunction: `Representation.coind` is carved out of the functions `H → A`, so the map has to be
 produced by hand and shown to land in the equivariant ones. That is what this file does, over an
-arbitrary commutative ring, for a homomorphism of groups rather than only a subgroup inclusion.
+arbitrary commutative semiring, for a homomorphism of groups rather than only a subgroup inclusion.
 
 The two directions are
 
@@ -83,15 +83,25 @@ output for `Representation.coind` stops at the `LinearMap.restrict` carrying the
 rewriting through that restriction leaves the goal ill-typed at `implicit` transparency; both sides
 are already definitionally the displayed formulas, so supplying the one genuine equation is enough.
 
+`TauCeti.coindProjection_hom_naturality` is the one statement here that is left to definitional
+equality. Mathlib exposes no evaluation rule for the action of `Rep.ihom` on morphisms:
+`Rep.ihom_map` states the value as a `Rep.ofHom`, and `Rep.hom_ofHom` cannot strip it because
+`(Rep.ihom A).obj B` is not syntactically of the form `Rep.of _`, so `simp` gets no further than the
+`Rep.ofHom` on either side. The comparison `TauCeti.resCoindToHom_eq_coindProjectionHom`, by
+contrast, does have an evaluation rule upstream (`Rep.resCoindToHom_hom_apply_coe`) and is proved
+through it.
+
 The formula is contravariantly functorial in `B` as well; Mathlib packages that variance of the
 internal hom as `CategoryTheory.MonoidalClosed.internalHom`, built from the mates construction
 `MonoidalClosed.pre`. The naturality recorded here is the covariant one, in the `Rep k G` argument,
 which is the variable the functorial statement `coindProjectionNatIso` is about.
 
 The `Representation`-level constructions are universe-polymorphic in `k`, `G`, `H` and the two
-carrier modules. The `Rep k H` layer keeps the source group `G` free but places `H` and both carrier
-modules in the universe of `k`: `Rep.coind φ` raises the module universe by that of `H`, and
-`Rep.ihom` compares its result with a representation of `H` in a single universe.
+carrier modules, and ask only for a commutative semiring and additive commutative monoids. The
+`Rep k H` layer keeps the source group `G` free but places `H` and both carrier modules in the
+universe of `k`, and needs a commutative ring because `Rep` does: `Rep.coind φ` raises the module
+universe by that of `H`, and `Rep.ihom` compares its result with a representation of `H` in a
+single universe.
 
 ## References
 
@@ -111,8 +121,8 @@ universe u v v' w w'
 
 section Linear
 
-variable {k : Type u} {G : Type v} {H : Type v'} [CommRing k] [Group G] [Group H] (φ : G →* H)
-  {A : Type w} {B : Type w'} [AddCommGroup A] [Module k A] [AddCommGroup B] [Module k B]
+variable {k : Type u} {G : Type v} {H : Type v'} [CommSemiring k] [Group G] [Group H] (φ : G →* H)
+  {A : Type w} {B : Type w'} [AddCommMonoid A] [Module k A] [AddCommMonoid B] [Module k B]
   (ρ : Representation k G A) (τ : Representation k H B)
 
 /-- The forward map of the dual projection formula, `F ↦ (b ↦ (h ↦ F h (τ h b)))`. Feeding `τ h b`
@@ -184,6 +194,20 @@ noncomputable def coindProjectionEquiv :
         rw [← Module.End.mul_apply, ← map_mul, mul_inv_cancel_right]
       exact congrArg (fun x => F.1 (h * h₀) x) hb.symm)
 
+/-- `TauCeti.coindProjectionEquiv` is `TauCeti.coindProjectionHom` in the forward direction; the
+element-level rule is `TauCeti.coindProjectionHom_apply_coe`. -/
+@[simp]
+theorem coindProjectionEquiv_toLinearMap :
+    (coindProjectionEquiv φ ρ τ).toLinearMap = coindProjectionHom φ ρ τ :=
+  (rfl)
+
+/-- `TauCeti.coindProjectionEquiv` is `TauCeti.coindProjectionInv` in the backward direction; the
+element-level rule is `TauCeti.coindProjectionInv_apply_coe`. -/
+@[simp]
+theorem coindProjectionEquiv_symm_toLinearMap :
+    (coindProjectionEquiv φ ρ τ).symm.toLinearMap = coindProjectionInv φ ρ τ :=
+  (rfl)
+
 /-- An intertwiner `f : Res_φ B ⟶ A`, viewed as a vector of `Coind_φ (Hom(Res_φ B, A))`: it is
 `G`-equivariant, so the constant function `H → (B →ₗ[k] A)` at `f` satisfies the twisted
 equivariance defining the coinduced module. -/
@@ -216,12 +240,14 @@ noncomputable def coindProjection :
 
 /-- The forward direction of `TauCeti.coindProjection` is `TauCeti.coindProjectionHom`; the
 element-level rule is `TauCeti.coindProjectionHom_apply_coe`. -/
+@[simp]
 theorem coindProjection_hom_hom_toLinearMap :
     (coindProjection φ X Y).hom.hom.toLinearMap = coindProjectionHom φ X.ρ Y.ρ :=
   (rfl)
 
 /-- The backward direction of `TauCeti.coindProjection` is `TauCeti.coindProjectionInv`; the
 element-level rule is `TauCeti.coindProjectionInv_apply_coe`. -/
+@[simp]
 theorem coindProjection_inv_hom_toLinearMap :
     (coindProjection φ X Y).inv.hom.toLinearMap = coindProjectionInv φ X.ρ Y.ρ :=
   (rfl)
@@ -230,6 +256,11 @@ theorem coindProjection_inv_hom_toLinearMap :
 theorem coindProjection_hom_naturality {X X' : Rep.{u} k G} (f : X ⟶ X') (Y : Rep.{u} k H) :
     (Rep.coindFunctor k φ).map ((Rep.ihom (Rep.res φ Y)).map f) ≫ (coindProjection φ X' Y).hom
       = (coindProjection φ X Y).hom ≫ (Rep.ihom Y).map ((Rep.coindFunctor k φ).map f) :=
+  -- Both composites send `F` to `b ↦ (h ↦ f (F h (Y.ρ h b)))`: postcomposing with `f` inside the
+  -- coinduced internal hom and postcomposing with `Coind_φ f` after the projection are the same
+  -- operation. `Rep.ihom` exposes no evaluation rule for its action on morphisms — `Rep.ihom_map`
+  -- states the value as a `Rep.ofHom`, which `Rep.hom_ofHom` cannot strip because `(Rep.ihom A).obj
+  -- B` is not syntactically of the form `Rep.of _` — so the last step is definitional.
   Rep.hom_ext (Representation.IntertwiningMap.ext (LinearMap.ext fun _ =>
     LinearMap.ext fun _ => Subtype.ext (funext fun _ => (rfl))))
 
@@ -247,8 +278,10 @@ restriction of `TauCeti.coindProjection` to the constant vectors, and the adjunc
 the formula rather than reproved by it. -/
 theorem resCoindToHom_eq_coindProjectionHom (f : Rep.res φ Y ⟶ X) :
     (Rep.resCoindToHom φ Y X f).hom.toLinearMap
-      = coindProjectionHom φ X.ρ Y.ρ (coindConst φ X.ρ Y.ρ f.hom) :=
-  (rfl)
+      = coindProjectionHom φ X.ρ Y.ρ (coindConst φ X.ρ Y.ρ f.hom) := by
+  ext b h
+  simp only [IntertwiningMap.coe_toLinearMap, Rep.resCoindToHom_hom_apply_coe, Rep.res_obj_ρ,
+    coindProjectionHom_apply_coe, coindConst_coe_apply]
 
 end Rep
 
