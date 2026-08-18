@@ -180,6 +180,9 @@ theorem autOfComponents_mul
   apply Aut.ext
   apply NatTrans.ext
   funext M
+  -- `Aut.ext` exposes the hom natural transformation, but multiplication of automorphisms is
+  -- defined by reverse composition. Reduce that wrapper and its component projection once;
+  -- the public component lemma then exposes the underlying linear maps.
   change
     (autOfComponents R C A G hG).hom.app M ≫
         (autOfComponents R C A F hF).hom.app M = _
