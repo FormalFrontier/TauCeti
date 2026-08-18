@@ -44,7 +44,7 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.subtype`
 * `Subrepresentation.subtype_injective`
 * `Subrepresentation.subtype_eq_zero_iff`
-* `Subrepresentation.surjective_subtype_iff`
+* `Subrepresentation.subtype_surjective_iff`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
 -/
@@ -98,7 +98,7 @@ lemma toLinearMap_subtype (ρ' : Subrepresentation ρ) :
 
 /-- The inclusion of a subrepresentation is injective. -/
 theorem subtype_injective (ρ' : Subrepresentation ρ) : Function.Injective ρ'.subtype :=
-  fun _ _ h ↦ Subtype.ext (by simpa using h)
+  ρ'.toSubmodule.subtype_injective
 
 /-- The inclusion of a subrepresentation is zero exactly when the subrepresentation is zero. -/
 @[simp]
@@ -115,17 +115,16 @@ theorem subtype_eq_zero_iff (ρ' : Subrepresentation ρ) : ρ'.subtype = 0 ↔ �
 
 /-- The inclusion of a subrepresentation is surjective exactly when the subrepresentation is the
 whole representation. -/
-theorem surjective_subtype_iff (ρ' : Subrepresentation ρ) :
+theorem subtype_surjective_iff (ρ' : Subrepresentation ρ) :
     Function.Surjective ρ'.subtype ↔ ρ' = ⊤ := by
+  -- Expose the underlying submodule inclusion so its range API applies directly.
+  change Function.Surjective ρ'.toSubmodule.subtype ↔ ρ' = ⊤
+  rw [← LinearMap.range_eq_top, Submodule.range_subtype]
   constructor
   · intro h
-    apply top_unique
-    intro y _
-    obtain ⟨x, rfl⟩ := h y
-    exact x.property
+    exact toSubmodule_injective (h.trans toSubmodule_top.symm)
   · rintro rfl
-    intro y
-    exact ⟨⟨y, Submodule.mem_top⟩, rfl⟩
+    exact toSubmodule_top
 
 /-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
 original group-algebra action. -/

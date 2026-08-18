@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.CategoryTheory.Skeletal
+public import TauCeti.RepresentationTheory.AsModule
 public import TauCeti.RepresentationTheory.Simple.Basic
 public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
 
@@ -55,33 +56,58 @@ theorem toSkeleton_eq_toSkeleton_iff_nonempty_iso {C : Type*} [Category C]
 
 end CategoryTheory.ObjectProperty
 
-namespace FDRep
+namespace CategoryTheory
 
-universe u v
+universe u v w
 
-variable (k : Type u) (G : Type v) [Field k] [Monoid G]
+namespace Skeleton
 
-/-- Being simple, as a property of the objects of `FDRep k G`. -/
-abbrev simpleObjects : ObjectProperty (FDRep k G) := fun X => Simple X
+/-- To prove a property of every object-isomorphism class, it suffices to prove it on the class of
+each object. -/
+@[elab_as_elim]
+theorem ind {C : Type u} [Category.{v} C] {motive : Skeleton C → Prop}
+    (h : ∀ X : C, motive (toSkeleton X)) (c : Skeleton C) : motive c := by
+  exact Quotient.ind h c
 
-instance : (simpleObjects k G).IsClosedUnderIsomorphisms where
+/-- Define a function on object-isomorphism classes from an isomorphism-invariant function on
+objects. -/
+noncomputable def lift {C : Type u} [Category.{v} C] {α : Sort w} (f : C → α)
+    (h : ∀ X Y : C, Nonempty (X ≅ Y) → f X = f Y) : Skeleton C → α :=
+  Quotient.lift f fun X Y e ↦ h X Y e
+
+@[simp]
+theorem lift_toSkeleton {C : Type u} [Category.{v} C] {α : Sort w} (f : C → α)
+    (h : ∀ X Y : C, Nonempty (X ≅ Y) → f X = f Y) (X : C) :
+    lift f h (toSkeleton X) = f X := by
+  simp [lift]
+
+end Skeleton
+
+/-- Simplicity is preserved under isomorphism, so simple objects form an isomorphism-closed full
+subcategory. -/
+instance simple_isClosedUnderIsomorphisms {C : Type u} [Category.{v} C]
+    [Limits.HasZeroMorphisms C] :
+    ObjectProperty.IsClosedUnderIsomorphisms (Simple : ObjectProperty C) where
   of_iso e h := by
     let _ := h
     exact Simple.of_iso e.symm
 
-end FDRep
+end CategoryTheory
 
 namespace TauCeti
 
 open scoped MonoidAlgebra
 
-universe u v
+universe u v w
 
-variable (k : Type u) (G : Type v) [Field k] [Monoid G]
+section Ring
+
+variable (k : Type u) (G : Type v) [Ring k] [Monoid G]
 
 /-- **The isomorphism classes of simple objects of `FDRep k G`**: the skeleton of the full
 subcategory they span. -/
-abbrev SimpleFDRepClasses : Type _ := Skeleton (FDRep.simpleObjects k G).FullSubcategory
+abbrev SimpleFDRepClasses : Type _ :=
+  Skeleton (ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
 
 variable {k G}
 
@@ -89,13 +115,15 @@ namespace SimpleFDRepClasses
 
 /-- The isomorphism class of a simple object of `FDRep k G`. -/
 def mk (X : FDRep k G) [Simple X] : SimpleFDRepClasses k G :=
-  toSkeleton (⟨X, inferInstance⟩ : (FDRep.simpleObjects k G).FullSubcategory)
+  toSkeleton (⟨X, inferInstance⟩ :
+    ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
 
 /-- Two simple objects have the same class exactly when they are isomorphic. -/
 @[simp]
 theorem mk_eq_mk_iff (X Y : FDRep k G) [Simple X] [Simple Y] :
     mk X = mk Y ↔ Nonempty (X ≅ Y) :=
-  ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso (FDRep.simpleObjects k G) _ _
+  ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso
+    (Simple : ObjectProperty (FDRep k G)) _ _
 
 /-- To prove a property of every simple-object class, it suffices to prove it on the class of each
 simple object. -/
@@ -103,9 +131,8 @@ simple object. -/
 theorem ind {motive : SimpleFDRepClasses k G → Prop}
     (h : ∀ (X : FDRep k G) (hX : Simple X), motive (@mk k G _ _ X hX))
     (c : SimpleFDRepClasses k G) :
-    motive c := by
-  refine Quotient.ind (fun X ↦ ?_) c
-  exact h X.obj X.property
+    motive c :=
+  Skeleton.ind (fun X ↦ h X.obj X.property) c
 
 /-- Define a function on simple-object classes from an isomorphism-invariant function on simple
 objects. -/
@@ -113,10 +140,10 @@ noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
     (h : ∀ (X Y : FDRep k G) (hX : Simple X) (hY : Simple Y),
       Nonempty (X ≅ Y) → f X hX = f Y hY) :
     SimpleFDRepClasses k G → α :=
-  Quotient.lift
+  Skeleton.lift
     (fun X ↦ f X.obj X.property)
     fun X Y e ↦ h X.obj Y.obj X.property Y.property
-      ⟨(FDRep.simpleObjects k G).ι.mapIso e.some⟩
+      ⟨(ObjectProperty.ι (Simple : ObjectProperty (FDRep k G))).mapIso e.some⟩
 
 @[simp]
 theorem lift_mk {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
@@ -124,6 +151,16 @@ theorem lift_mk {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
       Nonempty (X ≅ Y) → f X hX = f Y hY)
     (X : FDRep k G) [Simple X] : lift f h (mk X) = f X inferInstance := by
   simp [lift, mk]
+
+end SimpleFDRepClasses
+
+end Ring
+
+namespace SimpleFDRepClasses
+
+section Field
+
+variable {k : Type u} {G : Type v} [Field k] [Monoid G]
 
 /-- **The isomorphism class of the `k[G]`-module a simple object of `FDRep k G` carries.** Over a
 semisimple group algebra this compares the categorical classification with the module-level one of
@@ -133,18 +170,28 @@ noncomputable def toSimpleSubmoduleClasses [IsSemisimpleRing k[G]] :
   lift
     (fun X hX ↦
       let _ := hX
+      let _ : _root_.Representation.IsIrreducible X.ρ :=
+        (FDRep.simple_iff_isIrreducible X).mp hX
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ))
     fun X Y hX hY h ↦ by
       let _ := hX
       let _ := hY
+      let _ : _root_.Representation.IsIrreducible X.ρ :=
+        (FDRep.simple_iff_isIrreducible X).mp hX
+      let _ : _root_.Representation.IsIrreducible Y.ρ :=
+        (FDRep.simple_iff_isIrreducible Y).mp hY
       exact simpleModuleClass_eq_iff.mpr
         (Representation.nonempty_equiv_iff.mp (nonempty_fdRepIso_iff.mp h))
 
 @[simp]
 theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Simple X] :
     toSimpleSubmoduleClasses (mk X) =
+      let _ : _root_.Representation.IsIrreducible X.ρ :=
+        (FDRep.simple_iff_isIrreducible X).mp inferInstance
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
   lift_mk _ _ X
+
+end Field
 
 end SimpleFDRepClasses
 

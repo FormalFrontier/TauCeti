@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Category.ModuleCat.Simple
+public import Mathlib.RepresentationTheory.FDRep
 public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RepresentationTheory.Rep.Iso
-public import TauCeti.RepresentationTheory.AsModule
 public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
@@ -73,7 +73,7 @@ instance Rep.simple_of_isIrreducible {k : Type u} {G : Type v} [Field k] [Monoid
     (A : Rep.{w} k G) [Representation.IsIrreducible A.ρ] : Simple A :=
   (Rep.simple_iff_isIrreducible A).mpr ‹_›
 
-instance Rep.isIrreducible_of_simple {k : Type u} {G : Type v} [Field k] [Monoid G]
+theorem Rep.isIrreducible_of_simple {k : Type u} {G : Type v} [Field k] [Monoid G]
     (A : Rep.{w} k G) [Simple A] : Representation.IsIrreducible A.ρ :=
   (Rep.simple_iff_isIrreducible A).mp ‹_›
 
@@ -104,7 +104,7 @@ private theorem repOfHom_subtype_eq_zero_iff : Rep.ofHom W.subtype = 0 ↔ W = �
 subrepresentation is everything. -/
 private theorem epi_repOfHom_subtype_iff : Epi (Rep.ofHom W.subtype) ↔ W = ⊤ := by
   rw [Rep.epi_iff_surjective]
-  exact W.surjective_subtype_iff
+  exact W.subtype_surjective_iff
 
 end Inclusion
 
@@ -176,7 +176,7 @@ instance FDRep.simple_of_isIrreducible (X : FDRep k G)
     [Representation.IsIrreducible X.ρ] : Simple X :=
   (FDRep.simple_iff_isIrreducible X).mpr ‹_›
 
-instance FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
+theorem FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
     Representation.IsIrreducible X.ρ :=
   (FDRep.simple_iff_isIrreducible X).mp ‹_›
 
