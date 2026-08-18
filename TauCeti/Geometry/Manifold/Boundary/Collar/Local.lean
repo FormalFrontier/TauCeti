@@ -48,10 +48,6 @@ boundary, which is what Hirsch's bump-function argument does and what this file 
   is the boundary retraction, in coordinates the map setting the normal coordinate to zero.
 * `TauCeti.exists_homeomorph_prod_Ico_of_mem_boundary`: **a boundary point has a neighbourhood
   `U` homeomorphic to `(U ∩ ∂M) × [0, ε)`**, the local collar neighbourhood.
-* `TauCeti.boundary_subset_closure_interior` and `TauCeti.dense_interior`: a boundary point is a
-  limit of interior points along a collar ray, so **the interior is dense**. Density of the
-  interior is listed as a TODO in Mathlib's `Geometry/Manifold/IsManifold/InteriorBoundary.lean`;
-  it is proved here for the half-space model, where the collar rays are available.
 
 ## Implementation notes
 
@@ -359,55 +355,5 @@ theorem exists_homeomorph_prod_Ico_of_mem_boundary (hk : k ≠ 0) {x : M}
   exact ⟨φ.source, ε, φ.open_source, hxφ, h.height_pos,
     ⟨h.homeomorphProd.trans
       ((Homeomorph.refl _).prodCongr (EuclideanHalfSpace.homeomorphNormalIio ε))⟩⟩
-
-/-- **A boundary point is a limit of interior points**: it is the endpoint of the collar ray
-`r ↦ φ.symm (v, r)` of a product collar chart, every other point of which has a nonvanishing
-normal coordinate. -/
-theorem boundary_subset_closure_interior (hk : k ≠ 0) :
-    (𝓡∂ (n + 1)).boundary M ⊆ closure ((𝓡∂ (n + 1)).interior M) := by
-  intro x hx
-  obtain ⟨φ, V, ε, hxφ, h⟩ := exists_isProductCollarChart_of_mem_boundary hk hx
-  have hx0 : (φ x).2 = 0 := EuclideanHalfSpace.eq_zero_iff.2 ((h.mem_boundary_iff x hxφ).1 hx)
-  have hxV : (φ x).1 ∈ V := (h.target_eq ▸ φ.map_source hxφ).1
-  -- the collar ray through `x`, defined as long as the normal coordinate stays below `ε`
-  have hmemt : ∀ r : ℝ, r < ε → ((φ x).1, EuclideanHalfSpace.normalRay r) ∈ φ.target := by
-    intro r hr
-    rw [h.target_eq]
-    refine ⟨hxV, ?_⟩
-    rw [EuclideanHalfSpace.mem_normalIio, EuclideanHalfSpace.normalRay_coe_apply]
-    exact max_lt hr h.height_pos
-  have hray0 : φ.symm ((φ x).1, EuclideanHalfSpace.normalRay 0) = x := by
-    have hfst : ((φ x).1, EuclideanHalfSpace.normalRay 0) = φ x := by
-      rw [EuclideanHalfSpace.normalRay_zero, ← hx0]
-    rw [hfst]
-    exact φ.left_inv hxφ
-  -- the ray tends to `x` as the normal coordinate tends to `0` from above
-  have htend : Filter.Tendsto (fun r : ℝ ↦ φ.symm ((φ x).1, EuclideanHalfSpace.normalRay r))
-      (𝓝[>] (0 : ℝ)) (𝓝 x) := by
-    have hinner : Filter.Tendsto (fun r : ℝ ↦ ((φ x).1, EuclideanHalfSpace.normalRay r))
-        (𝓝 (0 : ℝ)) (𝓝 ((φ x).1, EuclideanHalfSpace.normalRay 0)) :=
-      (continuousAt_const.prodMk
-        EuclideanHalfSpace.continuous_normalRay.continuousAt).tendsto
-    have houter := (φ.continuousAt_symm (hmemt 0 h.height_pos)).tendsto
-    rw [hray0] at houter
-    exact (houter.comp hinner).mono_left nhdsWithin_le_nhds
-  refine mem_closure_of_tendsto htend ?_
-  filter_upwards [Ioo_mem_nhdsGT h.height_pos] with r hr
-  have hrt := hmemt r hr.2
-  have hsrc : φ.symm ((φ x).1, EuclideanHalfSpace.normalRay r) ∈ φ.source := φ.map_target hrt
-  rw [← ModelWithCorners.compl_boundary]
-  intro hb
-  rw [h.mem_boundary_iff _ hsrc, φ.right_inv hrt, EuclideanHalfSpace.normalRay_coe_apply,
-    max_eq_left hr.1.le] at hb
-  exact absurd hb (ne_of_gt hr.1)
-
-/-- **The interior of a manifold with boundary is dense.** For a `C^k` manifold modeled on a
-Euclidean half-space, `k ≠ 0`: a point is either an interior point or, by
-`TauCeti.boundary_subset_closure_interior`, a limit of interior points along a collar ray. -/
-theorem dense_interior (hk : k ≠ 0) : Dense ((𝓡∂ (n + 1)).interior M) := by
-  intro x
-  rcases (𝓡∂ (n + 1)).isInteriorPoint_or_isBoundaryPoint x with hxi | hxb
-  · exact subset_closure hxi
-  · exact boundary_subset_closure_interior hk hxb
 
 end TauCeti
