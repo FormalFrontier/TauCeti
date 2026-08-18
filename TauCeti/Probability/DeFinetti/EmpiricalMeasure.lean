@@ -72,18 +72,17 @@ recovered, almost surely, as the limit of the empirical frequencies of the proce
 
 The directing measure is thus not merely asserted to exist: each of its values is the pathwise
 limit of an explicit statistic of the process. The null set depends on the set tested, as it must.
-The weak-topology form of the same statement, testing against bounded continuous functions, needs a
-compatible Polish topology on `α` and is not proved here. -/
+The weak-topology form of the same statement, testing against bounded continuous functions
+simultaneously, is `deFinetti_empiricalMeasure` below, which additionally assumes a compatible
+Polish topology on `α` and its Borel σ-algebra. -/
 theorem deFinetti_tendsto_empiricalMeasure_apply [StandardBorelSpace α] [Nonempty α]
-    [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
+    [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, AEMeasurable (X n) μ) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν ∧
       ∀ B : Set α, MeasurableSet B → ∀ᵐ ω ∂μ, Tendsto
         (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) B).toReal) atTop
         (𝓝 (((ν ω : Measure α) B).toReal)) := by
-  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX fun n => (hX_meas n).aemeasurable)
-    |>.exists_directing
-  exact ⟨ν, hν, fun B hB =>
-    hν.tendsto_empiricalMeasure_apply_ae (fun i => (hX_meas i).aemeasurable) hB⟩
+  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
+  exact ⟨ν, hν, fun B hB => hν.tendsto_empiricalMeasure_apply_ae hX_meas hB⟩
 
 /-- **De Finetti's theorem in empirical-measure form.** An exchangeable process valued in a
 nonempty Polish space, with its Borel σ-algebra, has a directing measure that is almost surely the

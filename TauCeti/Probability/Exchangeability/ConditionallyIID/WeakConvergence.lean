@@ -68,9 +68,10 @@ measure, almost surely.** The convergence is in the topology of convergence in d
 `ProbabilityMeasure α`, and the null set is one and the same for every test function.
 
 This is the measure-valued form of `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae`, which
-gives the same limit one measurable set at a time. It is not a formal consequence of that
-statement: the null set there may be chosen after the fixed set, and no null set works for every
-measurable set simultaneously. -/
+gives the same limit one measurable set at a time. It does not follow by interchanging the
+quantifiers there, since no null set serves every measurable set at once; second countability is
+what makes countably many instances suffice, through
+`ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall`. -/
 theorem ConditionallyIIDWith.tendsto_empiricalMeasure_ae [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ n, AEMeasurable (X n) μ) :
     ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => empiricalMeasure (fun i => X i ω) n) atTop (𝓝 (ν ω)) := by
