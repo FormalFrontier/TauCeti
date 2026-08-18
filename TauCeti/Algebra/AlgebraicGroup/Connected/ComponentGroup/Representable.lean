@@ -380,7 +380,7 @@ noncomputable def componentPointwiseQuotientPresheafGrpIso
   let e := Functor.isoWhiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
     (componentPointwiseQuotientNatIso H)
   let e' := Functor.isoWhiskerRight e GrpCat.uliftFunctor.{u + 1, u}
-  exact eqToIso (CommHopfAlgCat.pointwiseQuotientPresheafGrp_eq H.obj
+  exact eqToIso (CommHopfAlgCat.pointwiseQuotientPresheafGrp_def H.obj
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
       (isNormal_identityComponentHopfIdeal H)) ≪≫
     CommHopfAlgCat.groupFunctorGrpIso e' ≪≫
@@ -412,7 +412,7 @@ noncomputable def componentGroupFppfGroupObjectIso
   let _ : (presheafToSheaf
       (CommAlgCat.fppfTopology k) (Type (u + 1))).Monoidal :=
     Functor.Monoidal.ofChosenFiniteProducts _
-  exact eqToIso (CommHopfAlgCat.fppfQuotientSheaf_eq H.obj
+  exact eqToIso (CommHopfAlgCat.fppfQuotientSheaf_def H.obj
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
       (isNormal_identityComponentHopfIdeal H)) ≪≫
     (presheafToSheaf

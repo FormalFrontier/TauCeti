@@ -79,7 +79,7 @@ noncomputable def pointwiseQuotientPresheafGrp
 
 /-- Unfold the pointwise quotient presheaf group object to the group object associated to its
 group-valued functor. -/
-theorem pointwiseQuotientPresheafGrp_eq
+theorem pointwiseQuotientPresheafGrp_def
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     pointwiseQuotientPresheafGrp H I hI =
       groupFunctorGrp
@@ -151,7 +151,7 @@ noncomputable def fppfQuotientSheaf (H : _root_.CommHopfAlgCat.{u} R)
 
 /-- Unfold the fppf quotient group object to the image of its pointwise presheaf group object
 under sheafification. -/
-theorem fppfQuotientSheaf_eq (H : _root_.CommHopfAlgCat.{u} R)
+theorem fppfQuotientSheaf_def (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     fppfQuotientSheaf H I hI =
       let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
