@@ -23,7 +23,7 @@ factorisation monoid of ideals leaves
 
 `(θ) = ∏_{p ∣ d} 𝔭_p`.
 
-This is the one relation of genus theory. The classes `[𝔭_p]` of the ramified primes are
+This is an explicit relation of genus theory. The classes `[𝔭_p]` of the ramified primes are
 `2`-torsion (`NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`), so they span an
 elementary-`2` subgroup of `Cl(𝓞 K)`, a priori of order at most `2 ^ t` with `t` the number
 of ramified primes (`ncard_ramifiedPrimes_eq_card`). The identity above says that the product of
@@ -123,8 +123,11 @@ theorem span_singleton_eq_prod_primeFactors (hmin : minpoly ℤ θ = X ^ 2 - C d
       Ideal.span {algebraMap ℤ (𝓞 K) (d.natAbs : ℤ)} := by
     rcases Int.natAbs_eq d with h | h
     · rw [← h]
-    · rw [show algebraMap ℤ (𝓞 K) d = -algebraMap ℤ (𝓞 K) (d.natAbs : ℤ) by
-        rw [← map_neg]; exact congrArg _ h, Ideal.span_singleton_neg]
+    · have hmap_neg : algebraMap ℤ (𝓞 K) d =
+          -algebraMap ℤ (𝓞 K) (d.natAbs : ℤ) := by
+        rw [← map_neg]
+        exact congrArg _ h
+      rw [hmap_neg, Ideal.span_singleton_neg]
   -- Hence both sides have the same square.
   have key : Ideal.span {θ} ^ 2 = (∏ p ∈ d.natAbs.primeFactors, P p) ^ 2 := by
     rw [← Finset.prod_pow, Finset.prod_congr rfl hsq, Ideal.prod_span_singleton, hprod,
@@ -148,7 +151,7 @@ theorem exists_span_singleton_eq_prod_primeFactors (hmin : minpoly ℤ θ = X ^ 
 
 variable (Q : ℕ → (Ideal (𝓞 K))⁰)
 
-/-- **The one relation of genus theory.** In `Cl(𝓞 K)` for `K = ℚ(√d)` with `d` squarefree, the
+/-- **An explicit relation of genus theory.** In `Cl(𝓞 K)` for `K = ℚ(√d)` with `d` squarefree, the
 product of the classes of the primes above the prime factors of `d` is trivial: their product is
 the principal ideal `(θ)` by `span_singleton_eq_prod_primeFactors`.
 
@@ -227,8 +230,8 @@ private theorem classGroupMk0_sq_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
 class.** For a subset `S` of the prime factors of `d`, the class of `∏_{p ∈ S} 𝔭_p` equals the
 class of the complementary
 product `∏_{p ∉ S} 𝔭_p`. This is `prod_classGroupMk0_eq_one` combined with the `2`-torsion of the
-individual classes, and it is the concrete form of "the ramified primes span an elementary-2
-subgroup with one relation". -/
+individual classes, and it is the concrete form of an explicit relation among the generators of
+the elementary-2 subgroup spanned by the ramified-prime classes. -/
 theorem prod_classGroupMk0_eq_prod_sdiff (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d)
     (hprime : ∀ p ∈ d.natAbs.primeFactors, (Q p : Ideal (𝓞 K)).IsPrime)
@@ -334,10 +337,12 @@ theorem natCard_closure_image_classGroupMk0_le (hmin : minpoly ℤ θ = X ^ 2 - 
     let _ := hprime p hp
     let _ := hover p hp
     exact classGroupMk0_sq_eq_one Q hmin hgen (hram p hp)
-  rw [show Nat.card (Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (↑s : Set ℕ))) =
-      (↑(Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (↑s : Set ℕ))) :
-        Set (ClassGroup (𝓞 K))).ncard from Nat.card_coe_set_eq _,
-    closure_image_eq_image_powerset s _ hsq]
+  have hcard_closure :
+      Nat.card (Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (↑s : Set ℕ))) =
+        (↑(Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (↑s : Set ℕ))) :
+          Set (ClassGroup (𝓞 K))).ncard :=
+    Nat.card_coe_set_eq _
+  rw [hcard_closure, closure_image_eq_image_powerset s _ hsq]
   exact ncard_image_prod_classGroupMk0_le Q hmin hgen hsf hram hprime hover hs hd
 
 end TauCeti.Multiquadratic
