@@ -30,6 +30,8 @@ theory counts, while the objects being classified are representations.
 * `TauCeti.fdRepIsoOfAsModuleLinearEquiv`: over a commutative ring, and for module-finite carriers,
   such an isomorphism of modules is an isomorphism of the objects of `FDRep k G` that the
   representations name.
+* `FDRep.of_ρ_eq_self`: rebundling the representation carried by an object of `FDRep k G`
+  returns that object.
 * `TauCeti.nonempty_fdRepIso_iff`: the two notions of isomorphism agree on `FDRep k G`, so a
   classification proved for representations reads off as a classification of objects.
 -/
@@ -108,13 +110,25 @@ noncomputable def fdRepIsoOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ
   (CategoryTheory.forget₂ (FDRep k G) (Rep k G)).preimageIso
     (Rep.mkIso (Representation.equivOfAsModuleLinearEquiv f))
 
+/-- Rebundling the representation carried by an object of `FDRep k G` returns that object. -/
+theorem _root_.FDRep.of_ρ_eq_self (X : FDRep k G) : FDRep.of X.ρ = X := rfl
+
 /-- **The two notions of isomorphism agree on `FDRep k G`.** Two objects are isomorphic exactly when
 the representations they carry are equivalent, so a classification of representations up to
 equivalence is a classification of the objects of `FDRep k G` up to isomorphism. -/
 theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
     Nonempty (X ≅ Y) ↔ Nonempty (_root_.Representation.Equiv X.ρ Y.ρ) :=
-  ⟨fun ⟨i⟩ => ⟨_root_.Representation.equivOfIso
-      ((CategoryTheory.forget₂ (FDRep k G) (Rep k G)).mapIso i)⟩,
-    fun ⟨φ⟩ => ⟨fdRepIsoOfAsModuleLinearEquiv (Representation.asModuleLinearEquivOfEquiv φ)⟩⟩
+  by
+    constructor
+    · rintro ⟨i⟩
+      have e := _root_.Representation.equivOfIso
+        ((CategoryTheory.forget₂ (FDRep k G) (Rep k G)).mapIso i)
+      rw [FDRep.forget₂_ρ, FDRep.forget₂_ρ] at e
+      exact ⟨e⟩
+    · rintro ⟨φ⟩
+      have i := fdRepIsoOfAsModuleLinearEquiv
+        (Representation.asModuleLinearEquivOfEquiv φ)
+      rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
+      exact ⟨i⟩
 
 end TauCeti

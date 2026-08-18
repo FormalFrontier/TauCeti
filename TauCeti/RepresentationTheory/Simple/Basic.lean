@@ -38,9 +38,10 @@ inclusion is a monomorphism which is nonzero exactly when the subrepresentation 
 isomorphism exactly when the subrepresentation is everything. Simplicity of the object therefore
 says precisely that the lattice of subrepresentations is `{⊥, ⊤}` with `⊥ ≠ ⊤`.
 
-Both equivalences are also supplied as instances in each direction, so a statement proved in one
-language applies in the other without a rewrite. The type of isomorphism classes of simple objects
-that a categorical classification statement is valued in is `TauCeti.SimpleFDRepClasses`, in
+The irreducible-to-simple directions are registered as instances. The converse directions are the
+theorems `Rep.isIrreducible_of_simple` and `FDRep.isIrreducible_of_simple`. The type of isomorphism
+classes of simple objects that a categorical classification statement is valued in is
+`TauCeti.SimpleFDRepClasses`, in
 `TauCeti.RepresentationTheory.Simple.FDRepClasses`; it is Mathlib's `CategoryTheory.Skeleton` of
 the full subcategory of simple objects.
 
@@ -48,7 +49,11 @@ the full subcategory of simple objects.
 
 * `Rep.simple_iff_isIrreducible`: an object of `Rep k G` is simple exactly when the
   representation it carries is irreducible.
+* `Rep.simple_of_isIrreducible` and `Rep.isIrreducible_of_simple`: the two directions as an
+  instance and a theorem, respectively.
 * `FDRep.simple_iff_isIrreducible`: the same for `FDRep k G`.
+* `FDRep.simple_of_isIrreducible` and `FDRep.isIrreducible_of_simple`: the corresponding instance
+  and theorem for `FDRep`.
 -/
 
 public section
@@ -113,6 +118,8 @@ end Inclusion
 `Rep k G` is `Rep.ofHom W.subtype`, which is where its properties are read off. -/
 private noncomputable def subInclusion (X : FDRep k G) (W : Subrepresentation X.ρ) :
     FDRep.of W.toRepresentation ⟶ X :=
+  -- `FDRep.of` and `forget₂` preserve the carried representations definitionally here, so the
+  -- source and target of this preimage are the objects displayed in the type.
   (forget₂ (FDRep k G) (Rep k G)).preimage (Rep.ofHom W.subtype)
 
 private theorem map_subInclusion (X : FDRep k G) (W : Subrepresentation X.ρ) :
@@ -168,8 +175,12 @@ theorem FDRep.simple_iff_isIrreducible (X : FDRep k G) :
     have : Nontrivial (Subrepresentation X.ρ) := ⟨⟨⊥, ⊤, hbot⟩⟩
     exact ⟨fun W => (em (W = ⊥)).imp id (key W).mpr⟩
   · intro _
+    have hirr : Representation.IsIrreducible
+        ((forget₂ (FDRep k G) (Rep k G)).obj X).ρ := by
+      rw [FDRep.forget₂_ρ]
+      exact ‹Representation.IsIrreducible X.ρ›
     have : Simple ((forget₂ (FDRep k G) (Rep k G)).obj X) :=
-      (Rep.simple_iff_isIrreducible _).mpr ‹_›
+      (Rep.simple_iff_isIrreducible _).mpr hirr
     exact Functor.simple_of_simple_obj (forget₂ (FDRep k G) (Rep k G)) X
 
 instance FDRep.simple_of_isIrreducible (X : FDRep k G)
@@ -179,5 +190,12 @@ instance FDRep.simple_of_isIrreducible (X : FDRep k G)
 theorem FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
     Representation.IsIrreducible X.ρ :=
   (FDRep.simple_iff_isIrreducible X).mp ‹_›
+
+/-- The module carried by a simple object of `FDRep k G` is a simple module over the group
+algebra. -/
+instance FDRep.isSimpleModule_asModule_of_simple (X : FDRep k G) [Simple X] :
+    IsSimpleModule k[G] (_root_.Representation.asModule X.ρ) :=
+  (Representation.irreducible_iff_isSimpleModule_asModule X.ρ).mp
+    (FDRep.isIrreducible_of_simple X)
 
 end FDRep

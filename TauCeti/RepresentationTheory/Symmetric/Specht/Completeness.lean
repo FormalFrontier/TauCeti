@@ -235,7 +235,7 @@ theorem existsUnique_nonempty_iso_spechtModule (X : FDRep ℚ (Equiv.Perm (Fin n
 /-- The partition a Specht module's class names is the partition it was built from: the `symm`
 companion of `TauCeti.partitionEquivSimpleFDRepClasses_apply`. -/
 @[simp]
-theorem partitionEquivSimpleFDRepClasses_symm_mk (μ : n.Partition) :
+theorem partitionEquivSimpleFDRepClasses_symm_mk_spechtModule (μ : n.Partition) :
     (partitionEquivSimpleFDRepClasses n).symm
       (SimpleFDRepClasses.mk (spechtModule μ)) = μ := by
   rw [← spechtModuleFDRepClass_def, ← partitionEquivSimpleFDRepClasses_apply,

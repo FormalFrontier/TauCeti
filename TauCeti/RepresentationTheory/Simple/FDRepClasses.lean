@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.CategoryTheory.Skeletal
+public import TauCeti.CategoryTheory.Simple
+public import TauCeti.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.AsModule
 public import TauCeti.RepresentationTheory.Simple.Basic
 public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
@@ -43,56 +44,6 @@ public section
 open CategoryTheory
 
 attribute [local instance] isIsomorphicSetoid
-
-namespace CategoryTheory.ObjectProperty
-
-/-- Two objects of a full subcategory define the same point of its skeleton exactly when the
-underlying objects are isomorphic. -/
-theorem toSkeleton_eq_toSkeleton_iff_nonempty_iso {C : Type*} [Category C]
-    (P : ObjectProperty C) {X Y : C} (hX : P X) (hY : P Y) :
-    toSkeleton (⟨X, hX⟩ : P.FullSubcategory) = toSkeleton ⟨Y, hY⟩ ↔ Nonempty (X ≅ Y) := by
-  rw [CategoryTheory.toSkeleton_eq_toSkeleton_iff]
-  exact ⟨fun ⟨e⟩ ↦ ⟨P.ι.mapIso e⟩, fun ⟨e⟩ ↦ ⟨ObjectProperty.isoMk _ e⟩⟩
-
-end CategoryTheory.ObjectProperty
-
-namespace CategoryTheory
-
-universe u v w
-
-namespace Skeleton
-
-/-- To prove a property of every object-isomorphism class, it suffices to prove it on the class of
-each object. -/
-@[elab_as_elim]
-theorem ind {C : Type u} [Category.{v} C] {motive : Skeleton C → Prop}
-    (h : ∀ X : C, motive (toSkeleton X)) (c : Skeleton C) : motive c := by
-  exact Quotient.ind h c
-
-/-- Define a function on object-isomorphism classes from an isomorphism-invariant function on
-objects. -/
-noncomputable def lift {C : Type u} [Category.{v} C] {α : Sort w} (f : C → α)
-    (h : ∀ X Y : C, Nonempty (X ≅ Y) → f X = f Y) : Skeleton C → α :=
-  Quotient.lift f fun X Y e ↦ h X Y e
-
-@[simp]
-theorem lift_toSkeleton {C : Type u} [Category.{v} C] {α : Sort w} (f : C → α)
-    (h : ∀ X Y : C, Nonempty (X ≅ Y) → f X = f Y) (X : C) :
-    lift f h (toSkeleton X) = f X := by
-  simp [lift]
-
-end Skeleton
-
-/-- Simplicity is preserved under isomorphism, so simple objects form an isomorphism-closed full
-subcategory. -/
-instance simple_isClosedUnderIsomorphisms {C : Type u} [Category.{v} C]
-    [Limits.HasZeroMorphisms C] :
-    ObjectProperty.IsClosedUnderIsomorphisms (Simple : ObjectProperty C) where
-  of_iso e h := by
-    let _ := h
-    exact Simple.of_iso e.symm
-
-end CategoryTheory
 
 namespace TauCeti
 
@@ -170,24 +121,16 @@ noncomputable def toSimpleSubmoduleClasses [IsSemisimpleRing k[G]] :
   lift
     (fun X hX ↦
       let _ := hX
-      let _ : _root_.Representation.IsIrreducible X.ρ :=
-        (FDRep.simple_iff_isIrreducible X).mp hX
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ))
     fun X Y hX hY h ↦ by
       let _ := hX
       let _ := hY
-      let _ : _root_.Representation.IsIrreducible X.ρ :=
-        (FDRep.simple_iff_isIrreducible X).mp hX
-      let _ : _root_.Representation.IsIrreducible Y.ρ :=
-        (FDRep.simple_iff_isIrreducible Y).mp hY
       exact simpleModuleClass_eq_iff.mpr
         (Representation.nonempty_equiv_iff.mp (nonempty_fdRepIso_iff.mp h))
 
 @[simp]
 theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Simple X] :
     toSimpleSubmoduleClasses (mk X) =
-      let _ : _root_.Representation.IsIrreducible X.ρ :=
-        (FDRep.simple_iff_isIrreducible X).mp inferInstance
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
   lift_mk _ _ X
 
