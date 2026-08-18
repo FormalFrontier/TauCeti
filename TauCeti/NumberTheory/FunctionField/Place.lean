@@ -409,9 +409,9 @@ instance : IsScalarTower k P.integers P.ResidueField :=
   .of_algebraMap_eq fun _ => rfl
 
 @[simp]
-theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
-    IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by
-  rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_valuation_lt_one]
+theorem not_isUnit_iff_valuation_lt_one {f : P.integers} :
+    ¬IsUnit f ↔ P.valuation (f : F) < 1 :=
+  Valuation.Integer.not_isUnit_iff_valuation_lt_one
 
 /-- The **degree** `deg P = [F_P : k]` of a place (Stichtenoth, Definition 1.1.14). Its
 finiteness, which guards the junk value of `Module.finrank`, holds whenever `F/k` is a function
