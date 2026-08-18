@@ -23,7 +23,7 @@ underlying module of `CliffordAlgebra Q` is as free, and as large, as the exteri
 
 This file records that. Over a commutative ring in which `2` is invertible, `CliffordAlgebra Q` is a
 free `R`-module whenever `M` is, with an explicit basis
-`TauCeti.CliffordAlgebra.basis Q b : Basis (Finset I) R (CliffordAlgebra Q)` attached to a basis `b`
+`CliffordAlgebra.basis Q b : Basis (Finset I) R (CliffordAlgebra Q)` attached to a basis `b`
 of `M` indexed by a linearly ordered `I`, and it is finite of rank `2 ^ finrank R M` whenever `M` is
 finite free. The `2 ^ n` is `∑ₖ (n choose k)` (`finrank_eq_sum_choose`), the count that a
 degree-graded argument would produce one exterior power at a time; here it is the count of subsets
@@ -59,27 +59,27 @@ separate milestone.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.basis`: the basis of `CliffordAlgebra Q` indexed by the finite subsets of
+* `CliffordAlgebra.basis`: the basis of `CliffordAlgebra Q` indexed by the finite subsets of
   the index set of a basis of `M`, over a ring in which `2` is invertible.
-* `TauCeti.CliffordAlgebra.mulRightιEquiv`: right multiplication by a vector whose norm is a unit,
+* `CliffordAlgebra.mulRightιEquiv`: right multiplication by a vector whose norm is a unit,
   as a linear automorphism of the Clifford algebra, and
-  `TauCeti.CliffordAlgebra.evenOddEquivAddOne`, the isomorphism between consecutive halves of the
+  `CliffordAlgebra.evenOddEquivAddOne`, the isomorphism between consecutive halves of the
   `ℤ/2`-grading that it restricts to.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.rank_eq_rank_exteriorAlgebra` and
-  `TauCeti.CliffordAlgebra.finrank_eq_finrank_exteriorAlgebra`: the rank of `CliffordAlgebra Q`
+* `CliffordAlgebra.rank_eq_rank_exteriorAlgebra` and
+  `CliffordAlgebra.finrank_eq_finrank_exteriorAlgebra`: the rank of `CliffordAlgebra Q`
   is the rank of `ExteriorAlgebra R M`. The right-hand sides do not mention `Q`, so this is the
   statement that the size of a Clifford algebra does not depend on the quadratic form.
-* `TauCeti.CliffordAlgebra.instFree` and `TauCeti.CliffordAlgebra.instFinite`: the Clifford algebra
+* `CliffordAlgebra.instFree` and `CliffordAlgebra.instFinite`: the Clifford algebra
   of a free module is free, and of a finite free module is finite.
-* `TauCeti.CliffordAlgebra.finrank_eq_two_pow`: `finrank R (CliffordAlgebra Q) = 2 ^ finrank R M`,
-  with `TauCeti.CliffordAlgebra.finrank_eq_sum_choose` the same count as a sum of binomial
+* `CliffordAlgebra.finrank_eq_two_pow`: `finrank R (CliffordAlgebra Q) = 2 ^ finrank R M`,
+  with `CliffordAlgebra.finrank_eq_sum_choose` the same count as a sum of binomial
   coefficients.
-* `TauCeti.CliffordAlgebra.map_evenOdd_mulRightιEquiv`: multiplying by a vector whose norm is a
+* `CliffordAlgebra.map_evenOdd_mulRightιEquiv`: multiplying by a vector whose norm is a
   unit exchanges the two halves of the `ℤ/2`-grading.
-* `TauCeti.CliffordAlgebra.finrank_evenOdd` and `TauCeti.CliffordAlgebra.finrank_even`: over a
+* `CliffordAlgebra.finrank_evenOdd` and `CliffordAlgebra.finrank_even`: over a
   field in which `2` is invertible, each half of the grading, and in particular the even
   subalgebra, has dimension `2 ^ (finrank K V - 1)`.
 
@@ -92,13 +92,13 @@ separate milestone.
 
 public section
 
-open Module CliffordAlgebra
+open Module
 
 universe u v w
 
-namespace TauCeti
-
 namespace CliffordAlgebra
+
+open TauCeti
 
 section CommRing
 
@@ -286,5 +286,3 @@ theorem finrank_even [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0) :
 end Field
 
 end CliffordAlgebra
-
-end TauCeti

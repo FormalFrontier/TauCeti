@@ -7,8 +7,8 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Grading
--- Private: `TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
--- `TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one` are used only inside a proof.
+-- Private: `CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
+-- `CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one` are used only inside a proof.
 import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 
 /-!
@@ -31,14 +31,14 @@ map, so `evenOdd Q (i + 1)` and `evenOdd Q (i - 1)` are the same submodule; the 
 names the first.
 
 The parity statement is proved by induction over the grading; its base case is read off by
-`TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
-`TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`, which are general facts about the
+`CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
+`CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`, which are general facts about the
 grading and live with it.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd`: **contraction shifts the parity**.
-* `TauCeti.CliffordAlgebra.involute_contractLeft`: `involute (d ⌋ x) = -(d ⌋ involute x)`.
+* `CliffordAlgebra.contractLeft_mem_evenOdd`: **contraction shifts the parity**.
+* `CliffordAlgebra.involute_contractLeft`: `involute (d ⌋ x) = -(d ⌋ involute x)`.
 
 ## References
 
@@ -48,11 +48,10 @@ grading and live with it.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   {Q : QuadraticForm R M}
@@ -104,4 +103,4 @@ theorem contractLeft_mem_evenOdd (d : Module.Dual R M) {i : ZMod 2} {x : Cliffor
     rw [add_comm]
     exact SetLike.mul_mem_graded (ι_mem_evenOdd_one Q m₁) h₁
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra
