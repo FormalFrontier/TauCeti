@@ -43,27 +43,23 @@ open CategoryTheory
 
 attribute [local instance] isIsomorphicSetoid
 
-namespace TauCeti
-
-open scoped MonoidAlgebra
-
-universe u v
-
-variable (k : Type u) (G : Type v) [Field k] [Monoid G]
-
-namespace ObjectProperty
+namespace CategoryTheory.ObjectProperty
 
 /-- Two objects of a full subcategory define the same point of its skeleton exactly when the
 underlying objects are isomorphic. -/
 theorem toSkeleton_eq_toSkeleton_iff_nonempty_iso {C : Type*} [Category C]
-    (P : CategoryTheory.ObjectProperty C) {X Y : C} (hX : P X) (hY : P Y) :
+    (P : ObjectProperty C) {X Y : C} (hX : P X) (hY : P Y) :
     toSkeleton (⟨X, hX⟩ : P.FullSubcategory) = toSkeleton ⟨Y, hY⟩ ↔ Nonempty (X ≅ Y) := by
   rw [CategoryTheory.toSkeleton_eq_toSkeleton_iff]
-  exact ⟨fun ⟨e⟩ ↦ ⟨P.ι.mapIso e⟩, fun ⟨e⟩ ↦ ⟨CategoryTheory.ObjectProperty.isoMk _ e⟩⟩
+  exact ⟨fun ⟨e⟩ ↦ ⟨P.ι.mapIso e⟩, fun ⟨e⟩ ↦ ⟨ObjectProperty.isoMk _ e⟩⟩
 
-end ObjectProperty
+end CategoryTheory.ObjectProperty
 
 namespace FDRep
+
+universe u v
+
+variable (k : Type u) (G : Type v) [Field k] [Monoid G]
 
 /-- Being simple, as a property of the objects of `FDRep k G`. -/
 abbrev simpleObjects : ObjectProperty (FDRep k G) := fun X => Simple X
@@ -74,6 +70,14 @@ instance : (simpleObjects k G).IsClosedUnderIsomorphisms where
     exact Simple.of_iso e.symm
 
 end FDRep
+
+namespace TauCeti
+
+open scoped MonoidAlgebra
+
+universe u v
+
+variable (k : Type u) (G : Type v) [Field k] [Monoid G]
 
 /-- **The isomorphism classes of simple objects of `FDRep k G`**: the skeleton of the full
 subcategory they span. -/

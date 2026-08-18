@@ -46,9 +46,9 @@ the full subcategory of simple objects.
 
 ## Main results
 
-* `TauCeti.Rep.simple_iff_isIrreducible`: an object of `Rep k G` is simple exactly when the
+* `Rep.simple_iff_isIrreducible`: an object of `Rep k G` is simple exactly when the
   representation it carries is irreducible.
-* `TauCeti.FDRep.simple_iff_isIrreducible`: the same for `FDRep k G`.
+* `FDRep.simple_iff_isIrreducible`: the same for `FDRep k G`.
 -/
 
 public section
@@ -58,8 +58,6 @@ open CategoryTheory
 open scoped MonoidAlgebra
 
 universe u v w
-
-namespace TauCeti
 
 /-- **An object of `Rep k G` is simple exactly when the representation it carries is
 irreducible.** Both sides say that the `k[G]`-module the object carries is simple: the left-hand
@@ -183,5 +181,3 @@ instance FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
   (FDRep.simple_iff_isIrreducible X).mp ‹_›
 
 end FDRep
-
-end TauCeti

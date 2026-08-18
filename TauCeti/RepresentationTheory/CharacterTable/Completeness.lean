@@ -54,7 +54,7 @@ The irreducibles are produced on the coordinate spaces `Fin n → k` rather than
 `FDRep k G`, because a Wedderburn block is a matrix algebra acting on its column space, and because
 `FDRep k G` carries only representations on types in the universe of `k`. The
 `Representation`-level statements are the ones the rest of the theory uses; a consumer holding a
-simple object of `FDRep k G` reaches them through `TauCeti.FDRep.simple_iff_isIrreducible`.
+simple object of `FDRep k G` reaches them through `FDRep.simple_iff_isIrreducible`.
 
 ## References
 
@@ -63,7 +63,7 @@ This implements the completeness and second-orthogonality items of Layer 3 of th
 at the `Representation` level. Its `Suggested.lean` pins them as `irreducibleCharacters_span`, over
 the simple objects of `FDRep k G`, and `char_column_orthogonality`, over the `ℂ`-valued character
 table; the statements below are the prerequisites those two are read off from, together with the
-dictionary `TauCeti.FDRep.simple_iff_isIrreducible` between `CategoryTheory.Simple` in `FDRep k G`
+dictionary `FDRep.simple_iff_isIrreducible` between `CategoryTheory.Simple` in `FDRep k G`
 and `Representation.IsIrreducible`, and neither roadmap name is claimed here.
 See I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.18 and Corollary 2.14, or
 J.-P. Serre, *Linear Representations of Finite Groups*, Sections 2.5 and 6.4.
@@ -273,7 +273,7 @@ This is the `Representation`-level form, spanning by the characters of the irred
 representations on the coordinate spaces `Fin n → k` that the Wedderburn blocks produce. It is a
 prerequisite for, and not the same statement as, the roadmap's `irreducibleCharacters_span`, which
 spans by the characters of the simple objects of `FDRep k G`: passing between the two needs
-`TauCeti.FDRep.simple_iff_isIrreducible` and a comparison of the two spanning sets, which is not
+`FDRep.simple_iff_isIrreducible` and a comparison of the two spanning sets, which is not
 done here. -/
 theorem le_span_irreducibleCharacters :
     ClassFunction k G ≤ Submodule.span k

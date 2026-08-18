@@ -42,7 +42,7 @@ stated nonzero scalar -- does not follow from the sandwich calculation alone (ov
 element `e₁₂` sandwiches to a line and squares to zero), and is not proved here.
 
 The statement is made at the `Representation` level, as elsewhere in this repository; the `FDRep`
-mirror is available through `TauCeti.FDRep.simple_iff_isIrreducible`, but the ideal `ℚ[Sₙ] c_t` is
+mirror is available through `FDRep.simple_iff_isIrreducible`, but the ideal `ℚ[Sₙ] c_t` is
 not packaged as an object of `FDRep ℚ Sₙ` here, so there is nothing to mirror it onto.
 
 On the one-row and the one-column shape the Specht ideal is a line, by the dimension count of
