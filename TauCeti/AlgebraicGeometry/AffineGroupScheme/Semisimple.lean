@@ -216,7 +216,14 @@ private noncomputable def
       (forget₂ (SemisimpleCommHopfAlgCat.{u} k)
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  Iso.refl _
+  Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft
+      (ObjectProperty.opEquivalence (semisimpleCommHopfAlgProperty k)).symm.functor
+      ((semisimpleAffineGroupSchemeProperty k).liftCompιIso _ _) ≪≫
+    (Functor.associator _ _ _).symm ≪≫
+    Functor.isoWhiskerRight
+      ((semisimpleCommHopfAlgProperty k).op.liftCompιIso _ _)
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor
 
 /-- The forward semisimple anti-equivalence, followed by the inclusions into finite-type affine
 group schemes and affine group schemes, is Mathlib's `hopfSpec` after forgetting semisimplicity
