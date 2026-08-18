@@ -16,7 +16,7 @@ public import TauCeti.RingTheory.Valuation.Continuous.Basic
 directions that need no Huber-ring hypothesis.**
 
 Topological nilpotence sends the powers of `a` into every neighbourhood of `0`, so as soon as a
-ball `{x ; v x < γ}` is a neighbourhood of `0`, some power `v a ^ n` drops below `γ` — the shared
+ball `{x | v x < γ}` is a neighbourhood of `0`, some power `v a ^ n` drops below `γ` — the shared
 step `exists_pow_lt_of_isTopologicallyNilpotent`. Two different hypotheses put a ball in `𝓝 0`
 — continuity of `v`, or a full characteristic group together with the unit ball being a
 neighbourhood of `0` — and this file records the bounds Theorem 7.10 asks for under each. They
@@ -35,7 +35,7 @@ are *not* the same statement and do not need the same hypotheses.
 Cofinality quantifies over `Γ_v`, the subgroup of the codomain *generated* by the attained
 values, so a general `γ` is a **ratio** `v r / v t`, which need not be attained. That is what
 `Valuation.IsContinuous.isOpen_lt_div` supplies, and it is why the continuity route reaches for
-the ratio form of continuity rather than the attained-value one: `{x ; v x < γ}` has to be a
+the ratio form of continuity rather than the attained-value one: `{x | v x < γ}` has to be a
 neighbourhood of `0` for the ratios too before topological nilpotence can be applied to it.
 Mathlib's `Valuation.exists_div_eq_of_unit` is what puts a general element of `Γ_v` in that
 form. The characteristic-group route instead bounds `γ` below by an attained inverse
@@ -100,11 +100,11 @@ theorem exists_pow_lt_of_isTopologicallyNilpotent {v : Valuation A Γ₀} {γ : 
 /-- **The second conjunct of Wedhorn Theorem 7.10.** A continuous valuation is `< 1` at every
 topologically nilpotent element.
 
-The threshold `1` is the attained value `v 1`, so the ball `{x ; v x < 1}` is open straight from
+The threshold `1` is the attained value `v 1`, so the ball `{x | v x < 1}` is open straight from
 the definition of continuity: nothing relates the topology to the ring operations, and the
 codomain is only a monoid.
 
-`Nontrivial Γ₀` is not decoration. If `0 = 1` in `Γ₀` then `Γ₀` is trivial, every `{x ; v x < v b}`
+`Nontrivial Γ₀` is not decoration. If `0 = 1` in `Γ₀` then `Γ₀` is trivial, every `{x | v x < v b}`
 is empty and so open, and the conclusion `v a < 1` reads `0 < 0`; a group codomain rules this out
 by fiat, a monoid one does not. -/
 theorem IsContinuous.lt_one_of_isTopologicallyNilpotent {v : Valuation A Γ₀}
@@ -119,7 +119,7 @@ variable {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]
 
 /-- **Wedhorn Remark 7.11(1), the direction that holds for any topological ring.** A continuous
 valuation has cofinal values at every topologically nilpotent element: the powers of `a` are
-eventually inside each ball `{x ; v x < γ}`, and continuity is what makes that ball open.
+eventually inside each ball `{x | v x < γ}`, and continuity is what makes that ball open.
 
 A general `γ ∈ Γ_v` is a ratio `v r / v t` of attained values, which need not be attained, so
 the ball is opened by `IsContinuous.isOpen_lt_div` — whence `[ContinuousConstSMul Aᵐᵒᵖ A]`,
@@ -140,7 +140,7 @@ theorem IsContinuous.cofinalValue_of_isTopologicallyNilpotent [ContinuousConstSM
   exact ⟨n, by rw [← map_pow, Valuation.restrict_lt_iff_lt_embedding, hemb, map_pow]; exact hn⟩
 
 /-- **Full characteristic group makes every topologically nilpotent value cofinal**, given that
-the open unit ball `{a ; v a < 1}` is a neighbourhood of `0`.
+the open unit ball `{a | v a < 1}` is a neighbourhood of `0`.
 
 This is the sibling of `IsContinuous.cofinalValue_of_isTopologicallyNilpotent` with continuity
 replaced by `Γ_v = cΓ_v` plus the one ball it actually uses. It is the `Γ_v = cΓ_v` branch of
