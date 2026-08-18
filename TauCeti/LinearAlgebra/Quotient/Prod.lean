@@ -6,14 +6,12 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Dimension.Finite
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.Quotient.Basic
 
 /-!
-# Products of submodules and their quotients
+# Quotients by products of submodules
 
-A product submodule `p.prod q ≤ M × N` is, as a module, the product `p × q`, and the quotient by
-it is the product of the two quotients:
+The quotient by a product submodule is the product of the two quotients:
 
 `(M × N) ⧸ p.prod q ≃ₗ (M ⧸ p) × (N ⧸ q)`.
 
@@ -23,7 +21,6 @@ which is the form module-theoretic consumers need. There is no submodule form up
 
 ## Main declarations
 
-* `Submodule.prodEquiv`: `↥(p.prod q) ≃ₗ p × q`.
 * `Submodule.quotientProdEquiv`: `(M × N) ⧸ p.prod q ≃ₗ (M ⧸ p) × (N ⧸ q)`.
 * `Submodule.finrank_quotient_prod`: the ranks of the quotients add.
 -/
@@ -31,35 +28,6 @@ which is the form module-theoretic consumers need. There is no submodule form up
 public section
 
 namespace Submodule
-
-section Subtype
-
-variable {R M N : Type*} [Semiring R] [AddCommMonoid M] [AddCommMonoid N]
-variable [Module R M] [Module R N]
-
-/-- A product submodule, as a module, is the product of the two submodules.
-
-This is the module refinement of `AddSubgroup.prodEquiv`, and is stated here over an arbitrary
-semiring and additive commutative monoids, where that additive-group statement does not apply. -/
-def prodEquiv (p : Submodule R M) (q : Submodule R N) : ↥(p.prod q) ≃ₗ[R] p × q where
-  toFun x := (⟨x.1.1, x.2.1⟩, ⟨x.1.2, x.2.2⟩)
-  invFun x := ⟨(x.1.1, x.2.1), x.1.2, x.2.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-
-@[simp]
-theorem prodEquiv_apply (p : Submodule R M) (q : Submodule R N) (x : ↥(p.prod q)) :
-    prodEquiv p q x = (⟨x.1.1, x.2.1⟩, ⟨x.1.2, x.2.2⟩) :=
-  (rfl)
-
-@[simp]
-theorem prodEquiv_symm_apply (p : Submodule R M) (q : Submodule R N) (x : p × q) :
-    (prodEquiv p q).symm x = ⟨(x.1.1, x.2.1), x.1.2, x.2.2⟩ :=
-  (rfl)
-
-end Subtype
 
 section Quotient
 
@@ -111,9 +79,11 @@ theorem quotientProdEquiv_symm_apply_mk
 
 /-- The quotient by a product of submodules has rank the sum of the two quotients' ranks. -/
 @[simp]
-theorem finrank_quotient_prod {R M N : Type*} [DivisionRing R] [AddCommGroup M] [AddCommGroup N]
-    [Module R M] [Module R N] (p : Submodule R M) (q : Submodule R N)
-    [FiniteDimensional R (M ⧸ p)] [FiniteDimensional R (N ⧸ q)] :
+theorem finrank_quotient_prod {R M N : Type*} [Ring R] [AddCommGroup M] [AddCommGroup N]
+    [Module R M] [Module R N] [StrongRankCondition R]
+    (p : Submodule R M) (q : Submodule R N)
+    [Module.Free R (M ⧸ p)] [Module.Free R (N ⧸ q)]
+    [Module.Finite R (M ⧸ p)] [Module.Finite R (N ⧸ q)] :
     Module.finrank R ((M × N) ⧸ p.prod q)
       = Module.finrank R (M ⧸ p) + Module.finrank R (N ⧸ q) := by
   rw [(quotientProdEquiv p q).finrank_eq, Module.finrank_prod]

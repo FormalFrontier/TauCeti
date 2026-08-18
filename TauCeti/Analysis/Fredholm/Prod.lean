@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Fredholm.Index
 public import TauCeti.LinearAlgebra.Quotient.Prod
+public import TauCeti.LinearAlgebra.Submodule.Prod
 
 /-!
 # Products of Fredholm operators
