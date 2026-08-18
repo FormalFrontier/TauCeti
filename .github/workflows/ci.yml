@@ -23,8 +23,27 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Read by publish-lake-cache below, the only job that ever holds the upload secret.
+    # Neither output reveals the secret's value or whether it is set, and neither is trusted
+    # there: `staged` only decides whether that job runs at all, and `reported-toolchain` is
+    # cross-checked against the pin that job reads for itself.
+    outputs:
+      staged: ${{ steps.stage.outputs.staged }}
+      reported-toolchain: ${{ steps.stage.outputs.toolchain }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # This job elaborates every TauCeti module, and Lean runs code at elaboration time.
+          # Without this, checkout leaves an http.extraheader carrying GITHUB_TOKEN in the
+          # workspace .git/config for the whole job, within reach of that code. Nothing here
+          # needs it: no step calls the GitHub API or pushes, `lake exe cache get` talks to
+          # Mathlib's own server, scripts/lake-cache-get.sh does anonymous GETs, and
+          # `lake cache get` reads the local revision from .git without authenticating.
+          persist-credentials: false
+          # Enough history for `lake cache get` to backtrack to a recently-published
+          # ancestor commit (its `--max-revs`) when the tip itself has no mapping yet.
+          # Harmless (just a slightly deeper fetch) when the cache is off.
+          fetch-depth: 100
 
       - name: Infrastructure policy unit tests
         run: |
@@ -38,6 +57,7 @@ jobs:
           python3 scripts/pr_status/test_zulip.py
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
+          python3 scripts/test_landrun_pin.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
 
@@ -98,10 +118,64 @@ jobs:
             lake exe cache get!
           fi
 
+      # --- Lake artifact-cache restore (dormant until configured) --------------------
+      # Restore TauCeti's OWN oleans before building, exactly as pr-build.yml does. Without
+      # this, the post-merge run recompiled the whole library from scratch on every push,
+      # spending about 49 minutes to reproduce oleans the merge-queue build had produced
+      # minutes earlier. Because the publisher is serialized, that capped publication at
+      # roughly one snapshot an hour while several commits an hour were landing, and the
+      # permanently stale snapshot is what pushed merge-queue builds onto the roughly
+      # 55 minute cold-cache path.
+      # No-op until the LAKE_CACHE_*_PUBLIC repo variables are set, as on the consuming side.
+      - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: |
+          if [ -n "$PUBLIC_ARTIFACT_ENDPOINT" ] && [ -n "$PUBLIC_REVISION_ENDPOINT" ]; then
+            {
+              echo "LAKE_CACHE_DIR=$GITHUB_WORKSPACE/.lake/cache"
+              echo "LAKE_ARTIFACT_CACHE=true"
+              echo "LAKE_RESTORE_ARTIFACTS=true"
+              echo "TAUCETI_CACHE_ENABLED=1"
+            } >> "$GITHUB_ENV"
+            echo "::notice::Lake artifact cache enabled — restoring TauCeti's oleans and building incrementally"
+          else
+            echo "::notice::Lake artifact cache not configured — building TauCeti/ from scratch (set the LAKE_CACHE_*_PUBLIC repo variables to enable)"
+          fi
+
+      # Anonymous GETs from the PUBLIC read host, the same trusted, publisher-built data
+      # pr-build restores. The shared script discards a partial fetch rather than keeping it;
+      # see its header.
+      #
+      # What this does NOT establish: that a restored module matches what a compile of the
+      # checked-out source would produce. Lake keys artifacts by an input hash that is a single
+      # UInt64 and explicitly not cryptographic (Lake/Build/Trace.lean carries a TODO to replace
+      # it), so content addressing is a deduplication scheme here, not an integrity guarantee.
+      # Restoring on main also gives up main's former role as the one build that took nothing on
+      # faith. nightly-verify.yml reinstates it on a daily cadence: it rebuilds from source with the
+      # cache off and compares the resulting oleans byte for byte against a cache-restored build of
+      # the same commit. That is a detector, not an equivalent guarantee, and its own header spells
+      # out the exposure window it leaves. The two are a pair; do not enable this restore without
+      # that nightly running.
+      - name: Fetch TauCeti's own oleans from the Lake cache
+        if: ${{ env.TAUCETI_CACHE_ENABLED == '1' }}
+        env:
+          # Passed under non-LAKE_ names so Lake never sees the deprecated endpoint
+          # environment variables; the script hands it the endpoints through a `--service` config.
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: bash scripts/lake-cache-get.sh .
+
       # No aggregator check: the root TauCeti.lean is intentionally empty and imports nothing.
       # The build globs every TauCeti/ module directly, so nothing depends on a root that
       # re-exports the library.
       - name: Build
+        env:
+          # Restore only from the locally-populated $LAKE_CACHE_DIR the step above filled;
+          # never let the build itself reach a remote cache service. Same rule as the
+          # sandboxed build in pr-build.yml and as the publish step below.
+          LAKE_NO_CACHE: "true"
         run: lake build
 
       # Main is the sole publisher. PR and merge-group builds restore these trusted snapshots
@@ -130,6 +204,8 @@ jobs:
       # Quot.sound}, catching sorry/admit (sorryAx), native_decide (Lean.ofReduceBool),
       # and home-rolled axioms, including ones reaching in through imports.
       - name: Axiom audit (TauCeti/ uses only allowlisted axioms)
+        env:
+          LAKE_NO_CACHE: "true"
         run: lake exe axioms
 
       # Module-system audit. Inspects the built TauCeti `.olean`s and rejects any module that
@@ -137,6 +213,8 @@ jobs:
       # `ModuleData.isModule` flag from the compiled artifact, so it cannot be fooled by a
       # `module` appearing in a comment or string the way a textual grep could.
       - name: Module-system audit (every TauCeti/ file opts into `module`)
+        env:
+          LAKE_NO_CACHE: "true"
         run: lake exe module-system
 
       # Environment lint. Elaborates a generated driver importing every TauCeti/
@@ -151,6 +229,8 @@ jobs:
       # landrun sandbox in pr-build.yml (this lint executes the linted code); this
       # post-merge run is the health check on main, like the audits above.
       - name: Environment lint (default linters + docstring scan vs grandfathered baseline)
+        env:
+          LAKE_NO_CACHE: "true"
         run: bash scripts/lint-env.sh
 
       - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
@@ -167,45 +247,245 @@ jobs:
       # --- Lake artifact-cache publish (dormant until configured) ---------------------
       # Publish TauCeti's OWN oleans (root-package only) to the Lake cache, so pr-build can
       # fetch them and recompile only a PR's changed modules instead of the whole library.
-      # Runs only once the upload credential + S3 endpoints are installed; until then these
-      # two steps are skipped and main's health check is unchanged. Mathlib's oleans are
-      # never uploaded: `-o` records only root-package outputs, and Mathlib stays on
-      # `lake exe cache get`. See pr-build.yml for the consuming side.
-      - name: Configure the Lake cache upload (no-op unless secret + S3 endpoints are set)
+      # Mathlib's oleans are never uploaded: `-o` records only root-package outputs, and
+      # Mathlib stays on `lake exe cache get`. See pr-build.yml for the consuming side.
+      #
+      # The upload is split across two jobs, and the split is the security boundary rather
+      # than a convenience. THIS job runs `lake build` unsandboxed, as the runner user, on
+      # whatever landed on main, and Lean executes code at elaboration time: `run_cmd`,
+      # `initialize` and macro-time IO are all unrestricted, since the scope, import-boundary
+      # and set_option guards are textual scans. Such code can therefore rewrite
+      # `$HOME/.elan/bin/lake`, prepend a directory of its own to every later step's PATH
+      # through `$GITHUB_PATH`, or set LD_PRELOAD or BASH_ENV for every later step through
+      # `$GITHUB_ENV`. A secret given to any later step of this job is a secret given to code
+      # that landed on main, whatever that step does with it. So this job only stages the
+      # artifacts, and publish-lake-cache below, a fresh runner with no checkout, no
+      # workspace and no project code, is the only place the key exists.
+      - name: Configure the Lake cache staging (no-op unless the S3 endpoints are set)
         id: cachecfg
         env:
-          LAKE_CACHE_KEY_RAW: ${{ secrets.LAKE_CACHE_KEY }}
+          # The secret is deliberately not referenced anywhere in this job, not even to test
+          # whether it is set. The endpoints alone decide whether staging runs; the publish
+          # job skips with a notice if the key turns out to be missing.
           S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
           S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
         run: |
-          if [ -n "$LAKE_CACHE_KEY_RAW" ] && [ -n "$S3_ARTIFACT_ENDPOINT" ] && [ -n "$S3_REVISION_ENDPOINT" ]; then
+          if [ -n "$S3_ARTIFACT_ENDPOINT" ] && [ -n "$S3_REVISION_ENDPOINT" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Lake cache upload configured — publishing TauCeti's oleans"
+            echo "::notice::Lake cache upload configured; staging TauCeti's oleans"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Lake cache upload not configured — skipping (set the LAKE_CACHE_KEY secret and the LAKE_CACHE_ARTIFACT_ENDPOINT / LAKE_CACHE_REVISION_ENDPOINT repo variables to enable)"
+            echo "::notice::Lake cache upload not configured, skipping (set the LAKE_CACHE_ARTIFACT_ENDPOINT / LAKE_CACHE_REVISION_ENDPOINT repo variables and the LAKE_CACHE_KEY secret to enable)"
           fi
 
-      - name: Publish TauCeti's oleans to the Lake cache
+      - name: Stage TauCeti's oleans for the publish job
+        id: stage
         if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
         env:
+          # Restated at step level, and the same values the restore step sets job-wide when the
+          # public endpoints are configured, so staging works either way: with the restore on,
+          # the health-check build already packed these artifacts; with it off, the pack below
+          # is what puts them in the cache directory for `lake cache stage` to find.
           LAKE_ARTIFACT_CACHE: "true"
           LAKE_RESTORE_ARTIFACTS: "true"
           # Don't download during the packing build — we only want to PUT, not GET. (The
           # S3 host needs SigV4 even for reads, so an anonymous GET here would 403 anyway.)
           LAKE_NO_CACHE: "true"
           LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
+        run: |
+          # Pack the already-built oleans into the local Lake cache (no recompile, since the
+          # health-check build above left matching traces), emit the root-package
+          # input->output mappings, then copy exactly the artifacts those mappings name into
+          # a staging directory, alongside a copy of the mappings themselves. `lake cache
+          # stage` reads no credential and contacts no network.
+          lake build >/dev/null
+          lake build --no-build -o .lake/outputs.jsonl
+          echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
+          lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
+          # `lake cache put-staged` does not configure the workspace, which is precisely what
+          # keeps project code out of the publish job, so it cannot derive the toolchain and
+          # platform halves of the upload scope. The publish job supplies them from the pin
+          # instead, which is right only while the package config keeps the two assumptions
+          # below. Check them here, where the workspace does exist: `platformIndependent` is
+          # what makes Lake leave the platform out of the scope (put-staged's default), while
+          # `fixedToolchain` or `bootstrap` would make Lake leave the toolchain out of it (which
+          # put-staged is told to include). Either silent mismatch would publish under a scope
+          # pr-build's `lake cache get --service ... --repo` never reads, i.e. a cache never hit.
+          if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+            echo "::error::lakefile.toml no longer sets platformIndependent = true; publish-lake-cache must now pass --platform to lake cache put-staged"
+            exit 1
+          fi
+          if grep -Eq '^[[:space:]]*(fixedToolchain|bootstrap)[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+            echo "::error::lakefile.toml now sets fixedToolchain or bootstrap; Lake drops the toolchain from the scope for such a package, so publish-lake-cache must stop passing --toolchain"
+            exit 1
+          fi
+          # `lake env` reports the workspace's own view of the toolchain, which is exactly the
+          # `Env.toolchain` Lake scopes an upload by. The publish job does not take this on
+          # faith: it reads lean-toolchain itself and fails if the two disagree. Reporting it
+          # anyway turns a disagreement into a loud failure instead of a silent wrong scope.
+          TOOLCHAIN="$(lake env printenv ELAN_TOOLCHAIN || true)"
+          if [ -z "$TOOLCHAIN" ]; then
+            echo "::error::could not determine the Lean toolchain that scopes the cache upload"
+            exit 1
+          fi
+          printf 'toolchain=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+          echo "staged=true" >> "$GITHUB_OUTPUT"
+
+      - name: Hand the staged oleans to the publish job
+        if: ${{ steps.stage.outputs.staged == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lake-cache-staging
+          path: ${{ runner.temp }}/lake-cache-staging
+          if-no-files-found: error
+          # Long enough to inspect a failed publish, short enough not to accumulate a
+          # 60 MB artifact per push to main.
+          retention-days: 1
+          # The staged files are already-compressed `.ltar` archives; recompressing them
+          # burns CPU on both ends and saves nothing.
+          compression-level: 0
+
+  # The only job that ever holds LAKE_CACHE_KEY. It checks out exactly one file and nothing
+  # else, and has no Lake workspace and no dependencies, so no code from this repository, and
+  # none from Mathlib either, runs anywhere in it: `lake cache put-staged` is documented as not
+  # configuring the workspace and therefore not executing arbitrary user code. Everything else
+  # it consumes arrives from the build job, whose every output code that landed on main could
+  # have chosen, so nothing from there is trusted without a check.
+  publish-lake-cache:
+    needs: build
+    if: ${{ needs.build.outputs.staged == 'true' }}
+    runs-on: ubuntu-latest
+    # No GITHUB_TOKEN scopes at all: downloading an artifact from the same run uses the
+    # Actions runtime token, and nothing else here talks to the GitHub API.
+    permissions: {}
+    steps:
+      # Exactly one file, and deliberately not the one the build job reported. Which toolchain
+      # this job installs and runs decides which `lake` binary handles the key, so it must come
+      # from the repository rather than from a job that executed code which landed on main:
+      # that job can rewrite lean-toolchain on disk, or poison a later step through $GITHUB_ENV
+      # and $GITHUB_PATH, so anything it reports is attacker-chosen. lean-toolchain itself is a
+      # Lake pin: bump-guard only lets it move forward along leanprover/lean4 releases without a
+      # human, and the build job above already installed and ran whatever it names, so reading
+      # it here adds no trust that main's build did not already extend.
+      - name: Check out the toolchain pin, and nothing else
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: lean-toolchain
+          sparse-checkout-cone-mode: false
+
+      - name: Download the staged oleans
+        uses: actions/download-artifact@v4
+        with:
+          name: lake-cache-staging
+          path: ${{ runner.temp }}/lake-cache-staging
+
+      - name: Check the staged tree before pointing Lake at it
+        env:
+          STAGING: ${{ runner.temp }}/lake-cache-staging
+        run: |
+          # `lake cache put-staged` uploads `<staging dir>/<name>` for every artifact the
+          # mappings file names, and it parses a name as "<hash>.<everything after the first
+          # dot>" without checking that the join stays inside the staging directory. The job
+          # that produced this tree ran code that landed on main, so both the names and the
+          # tree are attacker-chosen: a name such as `0.art/../../../proc/self/environ` would
+          # otherwise have Lake read this job's environment, the key included, and PUT it
+          # into a publicly readable bucket. Artifact names are flat `<hash>.<ext>` files, so
+          # require exactly that, and require the tree to be a flat directory of regular files
+          # so no name can resolve through a symlink either.
+          if find "$STAGING" -mindepth 2 -print -quit | grep -q .; then
+            echo "::error::the staged tree is nested; expected a flat directory of artifacts"
+            exit 1
+          fi
+          if find "$STAGING" -mindepth 1 ! -type f -print -quit | grep -q .; then
+            echo "::error::the staged tree holds an entry that is not a regular file"
+            exit 1
+          fi
+          python3 - "$STAGING/outputs.jsonl" <<'PY'
+          import json, re, sys
+
+          # A Lake artifact name: a content hash, then dot-separated extension components.
+          NAME = re.compile(r"\A[0-9A-Za-z]+(\.[0-9A-Za-z]+)*\Z")
+
+          def check(value, lineno):
+              """Reject any string that is not a plain artifact name.
+
+              Lake reads artifact descriptors out of arbitrarily nested JSON, so recurse
+              over everything and hold every string to the same shape rather than trying
+              to predict which positions become file names.
+              """
+              if isinstance(value, str):
+                  if not NAME.match(value):
+                      sys.exit(f"::error::{path} line {lineno}: {value!r} is not a plain artifact name")
+              elif isinstance(value, list):
+                  for item in value:
+                      check(item, lineno)
+              elif isinstance(value, dict):
+                  for key, item in value.items():
+                      check(key, lineno)
+                      check(item, lineno)
+
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as handle:
+              for lineno, line in enumerate(handle, start=1):
+                  # The first line carries the map's schema version, not an artifact name.
+                  if lineno > 1:
+                      check(json.loads(line), lineno)
+          PY
+
+      - name: Install elan and the pinned toolchain
+        id: toolchain
+        env:
+          REPORTED: ${{ needs.build.outputs.reported-toolchain }}
+        run: |
+          TOOLCHAIN="$(cat lean-toolchain)"
+          # Refuse anything that is not a leanprover/lean4 release name. `elan toolchain
+          # install owner/repo:tag` fetches from that repository's releases, so an unconstrained
+          # name would choose which `lake` binary later handles the key. bump-guard enforces the
+          # same shape on the pin; this repeats it rather than relying on it.
+          case "$TOOLCHAIN" in
+            leanprover/lean4:[A-Za-z0-9]*) ;;
+            *) echo "::error::lean-toolchain names '$TOOLCHAIN', which is not a leanprover/lean4 release"; exit 1 ;;
+          esac
+          # The upload scope must be the toolchain the artifacts were actually built with. The
+          # pin is what the build job's elan resolved, so the two agree unless something moved
+          # underneath the build; say so rather than publish under a scope pr-build never reads.
+          if [ "$TOOLCHAIN" != "$REPORTED" ]; then
+            echo "::error::the build job built with '$REPORTED' but lean-toolchain pins '$TOOLCHAIN'"
+            exit 1
+          fi
+          # elan's installer is fetched unpinned, exactly as pr-build.yml and lean-action fetch
+          # it, so elan's distribution and the named Lean release are in this job's trust base
+          # the same way they are in every other job here. That is a project-wide assumption
+          # about leanprover's release channel, not one this split introduces: the build job
+          # installs elan the same way and runs the same toolchain over the whole library.
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
+          chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          "$HOME/.elan/bin/elan" toolchain install "$TOOLCHAIN"
+          printf 'name=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the staged oleans to the Lake cache
+        env:
           # Passed under non-LAKE_ names so Lake never sees the deprecated endpoint
           # environment variables; we hand it the endpoints through a `--service` config.
           S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
           S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
           LAKE_CACHE_KEY_RAW: ${{ secrets.LAKE_CACHE_KEY }}
+          # The pinned toolchain, read from the repository above. Lake takes ELAN_TOOLCHAIN as
+          # its `Env.toolchain`, which is also the string it scopes uploads by, and elan's `lake`
+          # shim takes it as which toolchain to run.
+          ELAN_TOOLCHAIN: ${{ steps.toolchain.outputs.name }}
+          STAGING: ${{ runner.temp }}/lake-cache-staging
         run: |
-          export PATH="$HOME/.elan/bin:$PATH"
-          # curl --user wants "<ACCESS_KEY_ID>:<SECRET>"; trim trailing whitespace and mask
-          # it so it never lands in the log. LAKE_CACHE_KEY (the upload secret) stays an
-          # env var; only the endpoints move to the --service config below.
-          KEY="$(printf %s "$LAKE_CACHE_KEY_RAW" | sed -e 's/[[:space:]]*$//')"
+          if [ -z "$LAKE_CACHE_KEY_RAW" ]; then
+            echo "::notice::the LAKE_CACHE_KEY secret is not set; the staged oleans were not published"
+            exit 0
+          fi
+          # curl --user wants "<ACCESS_KEY_ID>:<SECRET>"; trim trailing whitespace and mask it
+          # so it never lands in the log. The trim is bash parameter expansion rather than a
+          # pipe through `sed`, so no external program sits between the secret and Lake.
+          KEY="$LAKE_CACHE_KEY_RAW"
+          KEY="${KEY%"${KEY##*[![:space:]]}"}"
           echo "::add-mask::$KEY"; export LAKE_CACHE_KEY="$KEY"
           # Define the authenticated S3 service in a Lake system config and select it with
           # `--service` (the env-var form of endpoint config is deprecated).
@@ -219,13 +499,9 @@ jobs:
           revisionEndpoint = "$S3_REVISION_ENDPOINT"
           TOML
           export LAKE_CONFIG="$CFG"
-          # Pack the already-built oleans into the local Lake cache (no recompile — the
-          # health-check build above left matching traces), emit the root-package
-          # input->output mappings, then upload just those artifacts (SigV4 PUT to S3).
-          # `lake cache put` configures the workspace, so the revision (this main commit)
-          # and the toolchain/platform scope are detected automatically and match what
-          # pr-build's `lake cache get --service ... --repo` derives.
-          lake build >/dev/null
-          lake build --no-build -o .lake/outputs.jsonl
-          echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
-          lake cache put .lake/outputs.jsonl --service tauceti-r2 --repo TauCetiProject/TauCeti
+          # `--rev` names the commit the build job built, since there is no working tree to
+          # detect it from. That option, `--toolchain`, and the deliberately absent
+          # `--platform` reproduce byte for byte the scope `lake cache put` derived from the
+          # workspace, and so the scope pr-build's `lake cache get --service ... --repo` reads.
+          lake cache put-staged "$STAGING" --service tauceti-r2 \
+            --repo TauCetiProject/TauCeti --rev "$GITHUB_SHA" --toolchain "$ELAN_TOOLCHAIN"

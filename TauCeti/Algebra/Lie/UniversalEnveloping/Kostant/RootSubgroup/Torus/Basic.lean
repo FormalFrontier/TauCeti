@@ -55,6 +55,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   integral operator on a Kostant-stable subgroup — the pinning's `X_α`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
   points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusSubgroup`: the image of that torus in the general
+  linear group of the base-changed lattice.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`: the same action in matrix coordinates.
 
 ## Main results
@@ -302,6 +304,25 @@ noncomputable def kostantTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     (κ → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp
     (basisWeightTorus (b.baseChange A) wt)
+
+/-- The image of the split weight torus in the general linear group of the base-changed lattice. -/
+noncomputable def kostantTorusSubgroup (A : Type*) [CommRing A] [Algebra ℤ A] :
+    Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) :=
+  (kostantTorusPoints M b wt A).range
+
+-- The public defining equation below cannot itself be `rfl`: the module does not expose the body
+-- of `kostantTorusSubgroup`, so the proof is delegated to this private helper.
+omit [Module ℚ V] in
+private theorem kostantTorusSubgroup_eq_range_def (A : Type*) [CommRing A] [Algebra ℤ A] :
+    kostantTorusSubgroup M b wt A = (kostantTorusPoints M b wt A).range :=
+  rfl
+
+omit [Module ℚ V] in
+/-- The defining equation of `kostantTorusSubgroup`: it is the range of the torus points
+homomorphism, so Mathlib's `MonoidHom.mem_range` characterizes its elements. -/
+theorem kostantTorusSubgroup_eq_range (A : Type*) [CommRing A] [Algebra ℤ A] :
+    kostantTorusSubgroup M b wt A = (kostantTorusPoints M b wt A).range :=
+  kostantTorusSubgroup_eq_range_def M b wt A
 
 section Pointwise
 
