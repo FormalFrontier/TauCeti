@@ -16,8 +16,10 @@ homogeneous linear or multilinear map.
 The shift of a family `𝒜` by `c` is the regrading `Graded.shift 𝒜 c` whose degree-`p` piece is
 `𝒜 (p + c)`; this is the cochain shift `X[c]ᵖ = X^{p + c}`, and at `c = 1` it is the suspension
 `sA` of the `A∞` conventions. Suspension does not move any element: the canonical map
-`s : A ⟶ sA` is the identity of the underlying module, and all of its content is the degree `-1`
-recorded by `LinearMap.isHomogeneous_id_shift`.
+`s : A ⟶ sA` and its inverse are the two directions of `Graded.suspensionEquiv`, the identity
+equivalence of the underlying module. All of their content is in the degrees recorded by
+`LinearMap.isHomogeneous_suspensionEquiv` and
+`LinearMap.isHomogeneous_suspensionEquiv_symm`.
 
 The main result is the degree translation for multilinear maps. A map of degree `q` after shifting
 the `i`-th input grading by `c i` and the target grading by `r` has degree
@@ -37,13 +39,17 @@ original one.
 ## Main definitions
 
 * `TauCeti.Graded.shift`: the shift of a family of graded pieces.
+* `TauCeti.Graded.suspensionEquiv`: the canonical equivalence between the underlying modules of
+  a grading and its suspension; its inverse is unsuspension.
 
 ## Main results
 
 * `TauCeti.LinearMap.isHomogeneous_shift_source_iff`, `TauCeti.LinearMap.isHomogeneous_shift_iff`,
   and `TauCeti.LinearMap.isHomogeneous_shift_target_iff`: shifting the source raises the degree of
   a linear map, shifting the target lowers it, and shifting both leaves it unchanged.
-* `TauCeti.LinearMap.isHomogeneous_id_shift`: the suspension map has degree `-c`.
+* `TauCeti.LinearMap.isHomogeneous_suspensionEquiv` and
+  `TauCeti.LinearMap.isHomogeneous_suspensionEquiv_symm`: for a shift by `c`, the forward map has
+  degree `-c` and the inverse has degree `c`; at `c = 1` these are suspension and unsuspension.
 * `TauCeti.MultilinearMap.isHomogeneous_shift_iff`: shifting the inputs by `c` and the target by
   `r` translates degree `q` in the shifted gradings to degree `q + r - ∑ i, c i` in the original
   gradings.
@@ -86,6 +92,26 @@ theorem shift_shift [AddSemigroup ι] (𝒜 : ι → σM) (c d : ι) :
   funext p
   simp [add_assoc]
 
+section Suspension
+
+variable (R : Type uR) (M : Type uM) [Semiring R] [AddCommMonoid M] [Module R M]
+
+/-- The canonical suspension/unsuspension equivalence on the underlying module. Its forward map
+is suspension and its inverse is unsuspension; the grading change and their respective degrees are
+recorded by `LinearMap.isHomogeneous_suspensionEquiv` and
+`LinearMap.isHomogeneous_suspensionEquiv_symm`. -/
+def suspensionEquiv : M ≃ₗ[R] M := LinearEquiv.refl R M
+
+@[simp]
+theorem suspensionEquiv_apply (x : M) : suspensionEquiv R M x = x := by
+  simp [suspensionEquiv]
+
+@[simp]
+theorem suspensionEquiv_symm_apply (x : M) : (suspensionEquiv R M).symm x = x := by
+  simp [suspensionEquiv]
+
+end Suspension
+
 end Graded
 
 namespace LinearMap
@@ -97,17 +123,19 @@ variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN} {σM σN : Ty
   [Module R M] [Module R N] [SetLike σM M] [SetLike σN N]
 
 /-- Shifting the target grading by `c` lowers the degree of a homogeneous linear map by `c`. -/
+@[simp]
 theorem isHomogeneous_shift_target_iff {f : M →ₗ[R] N} {𝒜 : ι → σM} {ℬ : ι → σN} {q c : ι} :
     IsHomogeneous f 𝒜 (Graded.shift ℬ c) q ↔ IsHomogeneous f 𝒜 ℬ (q + c) := by
   simp only [isHomogeneous_def, Graded.shift_apply, add_assoc]
 
-/-- The unsuspension map `s⁻¹ : sA ⟶ A` is the identity of the underlying module and has
-degree `c` for the shift by `c`. -/
-theorem isHomogeneous_id_unshift (𝒜 : ι → σM) (c : ι) :
-    IsHomogeneous (LinearMap.id : M →ₗ[R] M) (Graded.shift 𝒜 c) 𝒜 c := by
+/-- The inverse of `Graded.suspensionEquiv`, viewed as unsuspension from the shift by `c`, is
+homogeneous of degree `c`. -/
+theorem isHomogeneous_suspensionEquiv_symm (𝒜 : ι → σM) (c : ι) :
+    IsHomogeneous (Graded.suspensionEquiv R M).symm.toLinearMap (Graded.shift 𝒜 c) 𝒜 c := by
   rw [isHomogeneous_def]
   intro p x hx
-  simpa only [_root_.LinearMap.id_coe, id_eq, Graded.shift_apply] using hx
+  simpa only [_root_.LinearEquiv.coe_toLinearMap, Graded.suspensionEquiv_symm_apply,
+    Graded.shift_apply] using hx
 
 end AddMonoid
 
@@ -118,6 +146,7 @@ variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN} {σM σN : Ty
   [Module R M] [Module R N] [SetLike σM M] [SetLike σN N]
 
 /-- Shifting the source grading by `c` raises the degree of a homogeneous linear map by `c`. -/
+@[simp]
 theorem isHomogeneous_shift_source_iff {f : M →ₗ[R] N} {𝒜 : ι → σM} {ℬ : ι → σN} {q c : ι} :
     IsHomogeneous f (Graded.shift 𝒜 c) ℬ q ↔ IsHomogeneous f 𝒜 ℬ (q - c) := by
   rw [isHomogeneous_def, isHomogeneous_def]
@@ -144,14 +173,15 @@ section AddGroup
 variable {R : Type uR} {ι : Type uι} {M : Type uM} {σM : Type*}
   [Semiring R] [AddGroup ι] [AddCommMonoid M] [Module R M] [SetLike σM M]
 
-/-- The suspension map `s : A ⟶ sA` is the identity of the underlying module and has degree `-c`
-for the shift by `c`. At `c = 1` this is the degree `-1` map of the `A∞` conventions. -/
-theorem isHomogeneous_id_shift (𝒜 : ι → σM) (c : ι) :
-    IsHomogeneous (LinearMap.id : M →ₗ[R] M) 𝒜 (Graded.shift 𝒜 c) (-c) := by
+/-- The forward map of `Graded.suspensionEquiv`, viewed as the shift by `c`, is homogeneous of
+degree `-c`. At `c = 1` this is the degree `-1` suspension map of the `A∞` conventions. -/
+theorem isHomogeneous_suspensionEquiv (𝒜 : ι → σM) (c : ι) :
+    IsHomogeneous (Graded.suspensionEquiv R M).toLinearMap 𝒜 (Graded.shift 𝒜 c) (-c) := by
   rw [isHomogeneous_def]
   intro p x hx
   have hpc : p + -c + c = p := by simp [add_assoc]
-  simpa only [_root_.LinearMap.id_coe, id_eq, Graded.shift_apply, hpc] using hx
+  simpa only [_root_.LinearEquiv.coe_toLinearMap, Graded.suspensionEquiv_apply,
+    Graded.shift_apply, hpc] using hx
 
 end AddGroup
 
@@ -164,6 +194,7 @@ variable {R : Type uR} {S : Type*} {ι : Type uι} {M : Type uM} {N : Type uN} {
 
 /-- Shifting the target grading by `c` shifts the submodule of homogeneous linear maps of
 degree `q` to the one of degree `q + c`. -/
+@[simp]
 theorem homogeneousSubmodule_shift_target (𝒜 : ι → σM) (ℬ : ι → σN) (q c : ι) :
     homogeneousSubmodule (R := R) (S := S) 𝒜 (Graded.shift ℬ c) q =
       homogeneousSubmodule 𝒜 ℬ (q + c) := by
@@ -187,6 +218,7 @@ variable {R : Type uR} {ι : Type uι} {κ : Type uκ}
 
 /-- A multilinear map of degree `q` after shifting the `i`-th input grading by `c i` and the target
 grading by `r` has degree `q + r - ∑ i, c i` in the original gradings. -/
+@[simp]
 theorem isHomogeneous_shift_iff {f : MultilinearMap R M N} {𝒜 : (i : κ) → ι → σM i}
     {ℬ : ι → σN} {q r : ι} {c : κ → ι} :
     IsHomogeneous f (fun i ↦ Graded.shift (𝒜 i) (c i)) (Graded.shift ℬ r) q ↔
@@ -239,7 +271,7 @@ theorem isHomogeneous_suspension_fin_iff {n : ℕ} {f : MultilinearMap R (fun _ 
     {𝒜 : ℤ → σM} :
     IsHomogeneous f (fun _ ↦ Graded.shift 𝒜 1) (Graded.shift 𝒜 1) 1 ↔
       IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - n) := by
-  simpa using isHomogeneous_suspension_iff (f := f) (𝒜 := 𝒜)
+  simp
 
 end Suspension
 
