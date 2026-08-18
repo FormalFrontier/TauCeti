@@ -47,13 +47,23 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti.SymmetricAlgebra
+namespace TauCeti
 
 universe u v w
 
 variable {k : Type u} {K : Type v} {M : Type w}
 variable [CommSemiring k] [CommSemiring K] [Algebra k K]
 variable [AddCommMonoid M] [Module k M]
+
+/-- The algebra map from the symmetric algebra on the scalar-extended module back to the scalar
+extension of the original symmetric algebra. -/
+private noncomputable def symmetricAlgebraToScalarTensor :
+    _root_.SymmetricAlgebra K (K ⊗[k] M) →ₐ[K]
+      K ⊗[k] _root_.SymmetricAlgebra k M :=
+  _root_.SymmetricAlgebra.lift <|
+    LinearMap.baseChange K (_root_.SymmetricAlgebra.ι k M)
+
+namespace SymmetricAlgebra
 
 /-- The algebra map from the scalar extension of the symmetric algebra to the symmetric algebra
 on the scalar-extended module. -/
@@ -65,14 +75,6 @@ private noncomputable def fromScalarTensor :
     _root_.SymmetricAlgebra.lift <|
       (_root_.SymmetricAlgebra.ι K (K ⊗[k] M)).restrictScalars k ∘ₗ
         TensorProduct.mk k K M 1
-
-/-- The algebra map from the symmetric algebra on the scalar-extended module back to the scalar
-extension of the original symmetric algebra. -/
-private noncomputable def toScalarTensor :
-    _root_.SymmetricAlgebra K (K ⊗[k] M) →ₐ[K]
-      K ⊗[k] _root_.SymmetricAlgebra k M :=
-  _root_.SymmetricAlgebra.lift <|
-    LinearMap.baseChange K (_root_.SymmetricAlgebra.ι k M)
 
 @[simp]
 private theorem fromScalarTensor_tmul_ι (s : K) (m : M) :
@@ -87,24 +89,24 @@ private theorem fromScalarTensor_tmul_ι (s : K) (m : M) :
 
 @[simp]
 private theorem toScalarTensor_ι_tmul (s : K) (m : M) :
-    toScalarTensor (k := k) (K := K) (M := M)
+    symmetricAlgebraToScalarTensor (k := k) (K := K) (M := M)
         (_root_.SymmetricAlgebra.ι K (K ⊗[k] M) (s ⊗ₜ[k] m)) =
       s ⊗ₜ[k] _root_.SymmetricAlgebra.ι k M m := by
-  simp [toScalarTensor]
+  simp [symmetricAlgebraToScalarTensor]
 
 private theorem toScalarTensor_comp_fromScalarTensor :
-    (toScalarTensor (k := k) (K := K) (M := M)).comp
+    (symmetricAlgebraToScalarTensor (k := k) (K := K) (M := M)).comp
         (fromScalarTensor (k := k) (K := K) (M := M)) = AlgHom.id K _ := by
   apply Algebra.TensorProduct.ext
   · apply AlgHom.ext
     intro s
-    simp [fromScalarTensor, toScalarTensor, Algebra.smul_def,
+    simp [fromScalarTensor, symmetricAlgebraToScalarTensor, Algebra.smul_def,
       Algebra.TensorProduct.algebraMap_apply]
   · apply _root_.SymmetricAlgebra.algHom_ext
     apply LinearMap.ext
     intro m
     have h :
-        toScalarTensor (k := k) (K := K) (M := M)
+        symmetricAlgebraToScalarTensor (k := k) (K := K) (M := M)
             (fromScalarTensor (k := k) (K := K) (M := M)
               (1 ⊗ₜ[k] _root_.SymmetricAlgebra.ι k M m)) =
           1 ⊗ₜ[k] _root_.SymmetricAlgebra.ι k M m := by
@@ -113,13 +115,13 @@ private theorem toScalarTensor_comp_fromScalarTensor :
 
 private theorem fromScalarTensor_comp_toScalarTensor :
     (fromScalarTensor (k := k) (K := K) (M := M)).comp
-        (toScalarTensor (k := k) (K := K) (M := M)) = AlgHom.id K _ := by
+        (symmetricAlgebraToScalarTensor (k := k) (K := K) (M := M)) = AlgHom.id K _ := by
   apply _root_.SymmetricAlgebra.algHom_ext
   apply LinearMap.ext
   intro z
   suffices h :
       fromScalarTensor (k := k) (K := K) (M := M)
-          (toScalarTensor (k := k) (K := K) (M := M)
+          (symmetricAlgebraToScalarTensor (k := k) (K := K) (M := M)
             (_root_.SymmetricAlgebra.ι K (K ⊗[k] M) z)) =
         _root_.SymmetricAlgebra.ι K (K ⊗[k] M) z by
     exact h
@@ -134,7 +136,7 @@ private noncomputable def scalarTensorAlgEquiv :
       _root_.SymmetricAlgebra K (K ⊗[k] M) :=
   AlgEquiv.ofAlgHom
     (fromScalarTensor (k := k) (K := K) (M := M))
-    (toScalarTensor (k := k) (K := K) (M := M))
+    (symmetricAlgebraToScalarTensor (k := k) (K := K) (M := M))
     (fromScalarTensor_comp_toScalarTensor (k := k) (K := K) (M := M))
     (toScalarTensor_comp_fromScalarTensor (k := k) (K := K) (M := M))
 
@@ -290,4 +292,6 @@ theorem scalarTensorBialgEquiv_tmul_one (s : K) :
         (K ⊗[k] _root_.SymmetricAlgebra k M) ≃ₐ[K]
           _root_.SymmetricAlgebra K (K ⊗[k] M)) s
 
-end TauCeti.SymmetricAlgebra
+end SymmetricAlgebra
+
+end TauCeti
