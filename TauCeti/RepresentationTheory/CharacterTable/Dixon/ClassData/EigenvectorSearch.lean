@@ -150,16 +150,11 @@ theorem isModularEigenrow_iff_isClassEigenrow (v : Fin d.numClasses → F) :
       d.structureConstant_eq] using hij
 
 omit [CommRing F] in
-private theorem arrowCongr_eq_reindexModularRow (a : Fin d.numClasses → F) :
-    d.equivConjClasses.arrowCongr (Equiv.refl F) a = d.reindexModularRow a := by
+private theorem reindexModularRow_classOf_comp (v : ConjClasses G → F) :
+    d.reindexModularRow (fun i => v (d.classOf i)) = v := by
   funext C
   obtain ⟨i, rfl⟩ := d.equivConjClasses.surjective C
-  calc
-    (d.equivConjClasses.arrowCongr (Equiv.refl F) a) (d.equivConjClasses i) = a i := by
-      simp only [Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_apply,
-        Equiv.symm_apply_apply]
-    _ = d.reindexModularRow a (d.classOf i) := (d.reindexModularRow_classOf a i).symm
-    _ = d.reindexModularRow a (d.equivConjClasses i) := by rw [equivConjClasses_apply]
+  rw [d.equivConjClasses_apply, d.reindexModularRow_classOf]
 
 /-- **Renumbering matches the normalized numbered eigenrows with the normalized class-indexed
 ones**, bundling `TauCeti.ClassData.reindexModularRow` and
@@ -167,18 +162,40 @@ ones**, bundling `TauCeti.ClassData.reindexModularRow` and
 count of the class-indexed eigenrows over to the output of the executable search. -/
 def modularEigenrowEquiv :
     {a : Fin d.numClasses → F // a (d.index 1) = 1 ∧ d.IsModularEigenrow a} ≃
-      {v : ConjClasses G → F // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} :=
-  (d.equivConjClasses.arrowCongr (Equiv.refl F)).subtypeEquiv fun a => by
-    rw [d.arrowCongr_eq_reindexModularRow, ← d.classOf_index (1 : G),
-      d.reindexModularRow_classOf,
-      d.isModularEigenrow_iff_isClassEigenrow]
+      {v : ConjClasses G → F // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} where
+  toFun a := ⟨d.reindexModularRow a, by
+    rw [← d.classOf_index (1 : G), d.reindexModularRow_classOf,
+      ← d.isModularEigenrow_iff_isClassEigenrow]
+    exact a.2⟩
+  invFun v := ⟨fun i => (v : ConjClasses G → F) (d.classOf i), by
+    constructor
+    · change (v : ConjClasses G → F) (d.classOf (d.index 1)) = 1
+      rw [d.classOf_index]
+      exact v.2.1
+    · rw [d.isModularEigenrow_iff_isClassEigenrow, d.reindexModularRow_classOf_comp]
+      exact v.2.2⟩
+  left_inv a := Subtype.ext <| funext fun i =>
+    d.reindexModularRow_classOf (a : Fin d.numClasses → F) i
+  right_inv v := Subtype.ext (d.reindexModularRow_classOf_comp (v : ConjClasses G → F))
 
 @[simp]
 theorem coe_modularEigenrowEquiv
     (a : {a : Fin d.numClasses → F // a (d.index 1) = 1 ∧ d.IsModularEigenrow a}) :
     (d.modularEigenrowEquiv a : ConjClasses G → F) =
       d.reindexModularRow (a : Fin d.numClasses → F) := by
-  exact d.arrowCongr_eq_reindexModularRow (a : Fin d.numClasses → F)
+  unfold modularEigenrowEquiv
+  rfl
+
+/-- Applying the inverse renumbering equivalence at a numbered class recovers the corresponding
+class-indexed entry. -/
+@[simp]
+theorem modularEigenrowEquiv_symm_apply
+    (v : {v : ConjClasses G → F // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v})
+    (i : Fin d.numClasses) :
+    (d.modularEigenrowEquiv.symm v : Fin d.numClasses → F) i =
+      (v : ConjClasses G → F) (d.classOf i) := by
+  unfold modularEigenrowEquiv
+  rfl
 
 /-- The numbered modular class matrix belonging to the identity conjugacy class is the identity
 matrix.  This is `TauCeti.classMultMatrix_mk_one`, renumbered. -/

@@ -56,8 +56,8 @@ arithmetic conditions in `TauCeti.IsGoodDixonPrime`, which enter only through
 This is the cardinality result Layer 6 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
 asks of "The good-prime structure theorem": that the reduced class-multiplication matrices have
-exactly `r` distinct algebra homomorphisms, so that the eigenvector search terminates in
-one-dimensional common eigenspaces.
+exactly `r` distinct algebra homomorphisms. This count is an input to the subsequent refinement of
+the eigenvector search into one-dimensional common eigenspaces.
 
 * J. D. Dixon, *High speed computation of group characters*, Numerische Mathematik 10 (1967),
   446--450.
