@@ -21,6 +21,13 @@ SPEC.loader.exec_module(check)
 
 
 class ExpiredMathlibShimTests(unittest.TestCase):
+    def self_declared(self, text: str) -> set[pathlib.Path]:
+        with tempfile.TemporaryDirectory() as temporary:
+            source_root = pathlib.Path(temporary) / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(text, encoding="utf-8")
+            return check.find_self_declared_shims(source_root)
+
     def test_registry_covers_self_declarations_one_way(self):
         root = SCRIPT.parent.parent
         groups = check.load_registry(root / "TauCeti/mathlib-shims.json", root)
@@ -53,81 +60,33 @@ class ExpiredMathlibShimTests(unittest.TestCase):
                 check.validate_registry_coverage((), source_root)
 
     def test_negated_temporary_shim_is_not_a_self_declaration(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source_root = root / "TauCeti"
-            source_root.mkdir()
-            (source_root / "New.lean").write_text(
-                "This is new formalization rather than a temporary shim.", encoding="utf-8"
-            )
-            self.assertEqual(check.find_self_declared_shims(source_root), set())
+        self.assertEqual(
+            self.self_declared("This is new formalization rather than a temporary shim."), set()
+        )
 
     def test_explicit_mathlib_deletion_is_a_self_declaration(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source_root = root / "TauCeti"
-            source_root.mkdir()
-            (source_root / "New.lean").write_text(
-                "When Mathlib bumps past the upstream PR, this file is deleted outright.",
-                encoding="utf-8",
-            )
-            self.assertEqual(
-                check.find_self_declared_shims(source_root),
-                {pathlib.Path("TauCeti/New.lean")},
-            )
+        self.assertEqual(self.self_declared(
+            "When Mathlib bumps past the upstream PR, this file is deleted outright."
+        ), {pathlib.Path("TauCeti/New.lean")})
 
     def test_vendored_migrate_and_delete_is_a_self_declaration(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source_root = root / "TauCeti"
-            source_root.mkdir()
-            (source_root / "New.lean").write_text(
-                "Vendored from mathlib4#1; migrate to Mathlib and delete this file when it merges.",
-                encoding="utf-8",
-            )
-            self.assertEqual(
-                check.find_self_declared_shims(source_root),
-                {pathlib.Path("TauCeti/New.lean")},
-            )
+        self.assertEqual(self.self_declared(
+            "Vendored from mathlib4#1; migrate to Mathlib and delete this file when it merges."
+        ), {pathlib.Path("TauCeti/New.lean")})
 
     def test_ported_copy_deleted_for_mathlib_is_a_self_declaration(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source_root = root / "TauCeti"
-            source_root.mkdir()
-            (source_root / "New.lean").write_text(
-                "This copy is deleted in favour of the Mathlib declarations once the PR lands.",
-                encoding="utf-8",
-            )
-            self.assertEqual(
-                check.find_self_declared_shims(source_root),
-                {pathlib.Path("TauCeti/New.lean")},
-            )
+        self.assertEqual(self.self_declared(
+            "This copy is deleted in favour of the Mathlib declarations once the PR lands."
+        ), {pathlib.Path("TauCeti/New.lean")})
 
     def test_upstream_refactor_obligation_is_a_self_declaration(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source_root = root / "TauCeti"
-            source_root.mkdir()
-            (source_root / "New.lean").write_text(
-                "Coordinated with the upstream Mathlib effort. Should a canonical theorem land "
-                "upstream, this file should be refactored onto it.",
-                encoding="utf-8",
-            )
-            self.assertEqual(
-                check.find_self_declared_shims(source_root),
-                {pathlib.Path("TauCeti/New.lean")},
-            )
+        self.assertEqual(self.self_declared(
+            "Coordinated with the upstream Mathlib effort. Should a canonical theorem land "
+            "upstream, this file should be refactored onto it."
+        ), {pathlib.Path("TauCeti/New.lean")})
 
     def test_bold_negation_is_not_a_self_declaration(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source_root = root / "TauCeti"
-            source_root.mkdir()
-            (source_root / "New.lean").write_text(
-                "This is **not** a temporary shim.", encoding="utf-8"
-            )
-            self.assertEqual(check.find_self_declared_shims(source_root), set())
+        self.assertEqual(self.self_declared("This is **not** a temporary shim."), set())
 
     def test_registry_rejects_missing_source_and_malformed_target(self):
         with tempfile.TemporaryDirectory() as temporary:
