@@ -179,7 +179,15 @@ noncomputable def congrFullSubcategoryFunctorCompιIso
           h)).functor ⋙ Q.ι ≅
       P.ι.op ⋙
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor :=
-  Iso.refl _
+  Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
+      (Q.liftCompιIso
+        (P.op.ι ⋙ (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor)
+        _) ≪≫
+    (Functor.associator _ _ _).symm ≪≫
+    Functor.isoWhiskerRight
+      (P.op.liftCompιIso P.ι.op (fun X => X.unop.property))
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor
 
 end finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
 

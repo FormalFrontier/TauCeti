@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
 
 /-!
