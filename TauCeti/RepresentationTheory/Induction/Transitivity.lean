@@ -55,8 +55,9 @@ there it is the forward isomorphism that the counits compute, and the inverse th
   `TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`: **induction in stages on representatives**,
   the two directions of the isomorphism computed on the generators of the induced representation.
 * `TauCeti.Rep.eq_indFunctorCompIso_hom_app`: those formulas pin the isomorphism down. A morphism
-  of representations sending `⟦1 ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` to `⟦1 ⊗ₜ a⟧` *is* the induction-in-stages
-  isomorphism, which is how a comparison map built by hand is identified with the adjoint one.
+  of representations sending `⟦1 ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` to `⟦1 ⊗ₜ a⟧` for every `a : A` *is* the
+  induction-in-stages isomorphism, which is how a comparison map built by hand is identified with
+  the adjoint one.
 * `TauCeti.Rep.coindFunctorCompIso_hom_app_hom_apply_apply` and
   `TauCeti.Rep.coindFunctorCompIso_inv_app_hom_apply_apply_apply`: **coinduction in stages on
   functions**, the dual formulas.
@@ -259,10 +260,10 @@ lemma indFunctorCompIso_hom_app_hom_apply_mk_mk (φ : G →* H) (ψ : H →* K)
   rw [← hinv]
   exact congrArg (fun f => Rep.Hom.hom f _) ((indFunctorCompIso φ ψ).inv_hom_id_app A)
 
-/-- **The induction-in-stages isomorphism is determined by one value.** A morphism of
-`K`-representations `Ind_ψ (Ind_φ A) ⟶ Ind_{ψφ} A` sending `⟦1 ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` to `⟦1 ⊗ₜ a⟧` is the
-induction-in-stages isomorphism. This is how a comparison map built by hand is identified with the
-adjoint one produced by `TauCeti.Rep.indFunctorCompIso`. -/
+/-- **The induction-in-stages isomorphism is determined by its values on the generators.** A
+morphism of `K`-representations `Ind_ψ (Ind_φ A) ⟶ Ind_{ψφ} A` sending `⟦1 ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` to
+`⟦1 ⊗ₜ a⟧` for every `a : A` is the induction-in-stages isomorphism. This is how a comparison map
+built by hand is identified with the adjoint one produced by `TauCeti.Rep.indFunctorCompIso`. -/
 lemma eq_indFunctorCompIso_hom_app (φ : G →* H) (ψ : H →* K) (A : _root_.Rep.{max u v w x} k G)
     {f : (_root_.Rep.indFunctor.{max u v w x} k φ ⋙
         _root_.Rep.indFunctor.{max u v w x} k ψ).obj A ⟶
