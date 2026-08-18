@@ -203,21 +203,27 @@ that the weight has disappeared: the automorphy factor of each representative is
 whatever `k` is, and the `p` cancels against the number of offsets. -/
 @[simp]
 theorem qExpansion_coeff_heckeSlashUpperTri (hp : 0 < p) {f : ℍ → ℂ}
-    (hfper : Periodic (f ∘ ofComplex) 1) (hfhol : MDiff f) (hfbdd : IsBoundedAtImInfty f)
+    (hfper : ∀ x : ℂ, f (ofComplex (x + 1)) = f (ofComplex x))
+    (hfhol : MDiff f) (hfbdd : IsBoundedAtImInfty f)
     (m : ℕ) :
-    (qExpansion 1 (heckeSlashUpperTri k p f)).coeff m = (qExpansion 1 f).coeff (p * m) :=
-  (TauCeti.UpperHalfPlane.qExpansion_coeff_unique one_pos
-    (analyticAt_cuspFunction_heckeSlashUpperTri k p hfper hfhol hfbdd)
-    (hasSum_qExpansion_heckeSlashUpperTri k p hp hfper hfhol hfbdd) m).symm
+    (qExpansion 1 (heckeSlashUpperTri k p f)).coeff m = (qExpansion 1 f).coeff (p * m) := by
+  have hfper' : Periodic (f ∘ ofComplex) 1 := by
+    simpa only [Periodic, comp_apply] using hfper
+  exact (TauCeti.UpperHalfPlane.qExpansion_coeff_unique one_pos
+    (analyticAt_cuspFunction_heckeSlashUpperTri k p hfper' hfhol hfbdd)
+    (hasSum_qExpansion_heckeSlashUpperTri k p hp hfper' hfhol hfbdd) m).symm
 
 /-- `qExpansion_coeff_heckeSlashUpperTri` as an identity of power series: the upper-triangular
 sum extracts the subseries of `f` supported on the multiples of `p`, reindexed. -/
 theorem qExpansion_heckeSlashUpperTri (hp : 0 < p) {f : ℍ → ℂ}
     (hfper : Periodic (f ∘ ofComplex) 1) (hfhol : MDiff f) (hfbdd : IsBoundedAtImInfty f) :
     qExpansion 1 (heckeSlashUpperTri k p f)
-      = PowerSeries.mk fun m ↦ (qExpansion 1 f).coeff (p * m) :=
-  PowerSeries.ext fun m ↦ by
-    rw [qExpansion_coeff_heckeSlashUpperTri k p hp hfper hfhol hfbdd m, PowerSeries.coeff_mk]
+      = PowerSeries.mk fun m ↦ (qExpansion 1 f).coeff (p * m) := by
+  have hfper' : ∀ x : ℂ, f (ofComplex (x + 1)) = f (ofComplex x) := by
+    simpa only [Periodic, comp_apply] using hfper
+  exact PowerSeries.ext fun m ↦ by
+    rw [qExpansion_coeff_heckeSlashUpperTri k p hp hfper' hfhol hfbdd m,
+      PowerSeries.coeff_mk]
 
 /-- **The coefficient formula for a bundled modular form**, the shape Layer 2(b) consumes: for
 `f` a modular form of weight `k` on a group with `1` among its strict periods — every
@@ -229,9 +235,11 @@ theorem qExpansion_coeff_heckeSlashUpperTri' {F : Type*} [FunLike F ℍ ℂ]
     (hp : 0 < p) (f : F) (m : ℕ) :
     (qExpansion 1 (heckeSlashUpperTri k p f)).coeff m = (qExpansion 1 f).coeff (p * m) :=
   have : Fact (IsCusp OnePoint.infty Γ) := ⟨Γ.isCusp_of_mem_strictPeriods one_pos hΓ⟩
+  have hfper : ∀ x : ℂ, f (ofComplex (x + 1)) = f (ofComplex x) := by
+    simpa only [Periodic, comp_apply, Complex.ofReal_one] using
+      SlashInvariantFormClass.periodic_comp_ofComplex f hΓ
   qExpansion_coeff_heckeSlashUpperTri k p hp
-    (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ) (ModularFormClass.holo f)
-    (ModularFormClass.bdd_at_infty f) m
+    hfper (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f) m
 
 end HeckeRing.GL2
 
