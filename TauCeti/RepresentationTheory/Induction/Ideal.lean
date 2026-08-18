@@ -57,9 +57,9 @@ namespace TauCeti
 
 namespace ClassFunction
 
-universe u
+universe u v
 
-variable {k G : Type u} [Field k] [Group G] [Finite G]
+variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G]
 
 variable (k G) in
 /-- The set of class functions on `G` induced from a virtual character of a subgroup satisfying
