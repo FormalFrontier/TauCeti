@@ -41,7 +41,7 @@ variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 variable [AddCommMonoid N] [Module R N]
 
 /-- Mutually inverse comodule morphisms identify the lattices of subcomodules by taking images. -/
-@[expose] def mapOrderIso [Comodule R C N]
+def mapOrderIso [Comodule R C N]
     (f : Comodule.Hom R C M N) (g : Comodule.Hom R C N M)
     (hgf : g.comp f = Comodule.Hom.id R C M)
     (hfg : f.comp g = Comodule.Hom.id R C N) :
@@ -49,15 +49,18 @@ variable [AddCommMonoid N] [Module R N]
   toFun A := A.map f
   invFun A := A.map g
   left_inv A := by
-    change (A.map f).map g = A
+    dsimp only
     rw [map_map, hgf, map_id]
   right_inv A := by
-    change (A.map g).map f = A
+    dsimp only
     rw [map_map, hfg, map_id]
   map_rel_iff' := by
     intro A B
     constructor
     · intro h
+      -- While constructing the `OrderIso`, this field sees coercions through the partially built
+      -- `Equiv`. Its application lemmas can only be stated after the definition is complete, so
+      -- expose precisely the fresh `toFun` projection here.
       change A.map f ≤ B.map f at h
       have hg := map_mono g h
       change (A.map f).map g ≤ (B.map f).map g at hg
@@ -66,9 +69,29 @@ variable [AddCommMonoid N] [Module R N]
       change A.map f ≤ B.map f
       exact map_mono f h
 
+/-- The forward correspondence induced by mutually inverse comodule morphisms is image under the
+forward morphism. -/
+@[simp]
+theorem mapOrderIso_apply [Comodule R C N]
+    (f : Comodule.Hom R C M N) (g : Comodule.Hom R C N M)
+    (hgf : g.comp f = Comodule.Hom.id R C M)
+    (hfg : f.comp g = Comodule.Hom.id R C N) (A : Subcomodule R C M) :
+    mapOrderIso f g hgf hfg A = A.map f :=
+  (rfl)
+
+/-- The inverse correspondence induced by mutually inverse comodule morphisms is image under the
+inverse morphism. -/
+@[simp]
+theorem mapOrderIso_symm_apply [Comodule R C N]
+    (f : Comodule.Hom R C M N) (g : Comodule.Hom R C N M)
+    (hgf : g.comp f = Comodule.Hom.id R C M)
+    (hfg : f.comp g = Comodule.Hom.id R C N) (A : Subcomodule R C N) :
+    (mapOrderIso f g hgf hfg).symm A = A.map g :=
+  (rfl)
+
 /-- Transporting a comodule along a linear equivalence identifies its subcomodule lattice with
 the original one. -/
-@[expose] def transportOrderIso (e : M ≃ₗ[R] N) :
+def transportOrderIso (e : M ≃ₗ[R] N) :
     letI : Comodule R C N := Comodule.Transport e
     Subcomodule R C M ≃o Subcomodule R C N := by
   letI : Comodule R C N := Comodule.Transport e
@@ -81,7 +104,7 @@ the original one. -/
 theorem transportOrderIso_apply (e : M ≃ₗ[R] N) (A : Subcomodule R C M) :
     letI : Comodule R C N := Comodule.Transport e
     transportOrderIso e A = A.map (Comodule.transportToHom e) :=
-  rfl
+  (rfl)
 
 /-- The inverse transport correspondence is image under the inverse transport equivalence. -/
 @[simp]
@@ -89,7 +112,7 @@ theorem transportOrderIso_symm_apply (e : M ≃ₗ[R] N)
     (A : letI : Comodule R C N := Comodule.Transport e; Subcomodule R C N) :
     letI : Comodule R C N := Comodule.Transport e
     (transportOrderIso e).symm A = A.map (Comodule.transportInvHom e) :=
-  rfl
+  (rfl)
 
 /-- The forward transport correspondence maps the underlying submodule along the linear
 equivalence. -/

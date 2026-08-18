@@ -82,6 +82,8 @@ private theorem corestrict_symm_instance_eq (e : C ≃ₗc[R] D) :
     Comodule.Corestrict e.symm.toCoalgHom = (inferInstance : Comodule R C M) := by
   let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
   apply Comodule.ext
+  -- `Comodule.ext` presents the goal through the inferred instance projection. Unfolding that
+  -- projection is necessary to expose the named corestriction coaction lemmas used below.
   change Comodule.corestrictCoact e.symm.toCoalgHom = Comodule.coact
   rw [← Comodule.corestrictCoact_comp e.toCoalgHom e.symm.toCoalgHom]
   have hcomp : e.symm.toCoalgHom.comp e.toCoalgHom = CoalgHom.id R C := by
@@ -108,9 +110,7 @@ def corestrictSymm (e : C ≃ₗc[R] D)
         (TensorProduct.map W.carrier.subtype (LinearMap.id : C →ₗ[R] C)) := by
       let _ : Comodule R C M := instDouble
       have hmem' := W'.coact_mem hm
-      change instDouble.coact m ∈ LinearMap.range
-        (TensorProduct.map W'.toSubmodule.subtype (LinearMap.id : C →ₗ[R] C)) at hmem'
-      rw [show W'.toSubmodule = W.toSubmodule by
+      rw [show W'.carrier = W.carrier by
         exact corestrict_toSubmodule e.symm.toCoalgHom W] at hmem'
       exact hmem'
     rw [congrArg (fun rho : Comodule R C M => rho.coact) h] at hmem
