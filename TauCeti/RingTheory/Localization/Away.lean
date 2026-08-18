@@ -35,6 +35,7 @@ Huber namespace, alongside `TauCeti/RingTheory/Localization/DenIdeal.lean`.
 * `TauCeti.Localization.divBy_mul_cancel_left` and
   `TauCeti.Localization.divBy_mul_cancel_right`: `(s · t)/s = t` and `(t · s)/s = t`.
 * `TauCeti.Localization.divBy_self`: `s/s = 1`.
+* `TauCeti.Localization.divBy_one_right`: `t/1 = t`, the trivial denominator.
 * `TauCeti.Localization.divBy_mul_divBy_of_eq_mul`: for `s = u * r`, the fraction `(a · b)/s`
   splits as `(a · r)/s · (b · u)/s`, each half carrying one factor of the denominator.
 * `TauCeti.Localization.awayLift_divBy`: the comparison map to a localisation at a multiple
@@ -199,5 +200,23 @@ theorem awayLift_divBy {V W : Type*} [CommSemiring V] [CommSemiring W] [Algebra 
     IsLocalization.Away.lift u hu (divBy a u : V) = (divBy (a * r) w : W) := by
   rw [divBy_def, IsLocalization.Away.lift, IsLocalization.lift_mk'_spec, ← divBy_mul,
     show u * (a * r) = a * w by rw [hw]; ring, divBy_mul_cancel_right]
+
+/-! ### The trivial denominator
+
+A ring is its own localisation away from `1`, and there the fraction `t/1` is `t`. This is the
+degenerate presentation `(T, 1)`, which the adic structure presheaf uses to present the whole
+adic spectrum. -/
+
+/-- **A ring is its own localisation away from `1`**: `1` is already a unit and the identity is
+bijective. -/
+instance isLocalizationAwayOne (R : Type*) [CommSemiring R] : IsLocalization.Away (1 : R) R :=
+  IsLocalization.away_of_isUnit_of_bijective _ isUnit_one (Equiv.refl _).bijective
+
+/-- **Dividing by `1` is the structure map**: `t/1 = t`. The denominator-one companion of
+`divBy_one`, which is about the numerator. -/
+@[simp]
+theorem divBy_one_right {V : Type*} [CommSemiring V] [Algebra A V] [IsLocalization.Away (1 : A) V]
+    (a : A) : (divBy a 1 : V) = algebraMap A V a := by
+  simpa using divBy_mul_cancel_left (S := V) a 1
 
 end TauCeti.Localization
