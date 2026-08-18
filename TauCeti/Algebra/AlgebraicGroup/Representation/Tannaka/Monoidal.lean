@@ -24,9 +24,9 @@ the action preserves the tensor product and tensor unit, and therefore packages 
 automorphism of the corresponding bundled lax monoidal functor. Over a principal ideal domain,
 when `H` is free as an `R`-module, this map from points to tensor automorphisms is injective.
 
-The generic assembly of a natural family of linear automorphisms into an automorphism of scalar
-extension is in `TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension.Basic`. This file adds
-the tensor-unit and tensor comparisons that make it a tensor automorphism.
+Assembling an automorphism of scalar extension from a natural family of linear automorphisms is
+`TauCeti.FGComoduleCat.autOfComponents`, which needs only the coalgebra structure; adding the
+tensor-unit and tensor comparisons upgrades it to a tensor automorphism here.
 
 This is the faithful direction of the tensor-automorphism formulation of Tannakian
 reconstruction. The converse, recovering a point from every tensor automorphism, remains a

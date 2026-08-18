@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.ScalarExtension
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
@@ -22,12 +23,17 @@ FGComoduleCat R C ⥤ SemimoduleCat A,    M ↦ A ⊗[R] M.
 
 No finiteness or bialgebra structure is needed for the construction.
 
+An automorphism of this functor is the same data as a family of `A`-linear automorphisms of the
+scalar extensions that is natural in the comodule, and `autOfComponents` assembles one from the
+other. Nothing beyond the coalgebra structure enters, and the value algebra need not be
+commutative.
+
 ## Main declarations
 
 * `TauCeti.FGComoduleCat.scalarExtensionFunctor`: its restriction to finitely generated
   comodules.
-* `TauCeti.FGComoduleCat.autOfComponents`: assembles a natural family of automorphisms into an
-  automorphism of the scalar-extension functor.
+* `TauCeti.FGComoduleCat.autOfComponents`: a natural family of linear automorphisms as an
+  automorphism of that functor.
 -/
 
 public section
@@ -73,8 +79,8 @@ theorem scalarExtensionFunctor_map {M N : FGComoduleCat.{u, v, w} R C} (f : M �
           eqToHom (scalarExtensionFunctor_obj R C A N).symm :=
   ComoduleCat.scalarExtensionFunctor_map R C A f.hom
 
-/-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules,
-natural in the comodule, as an automorphism of the scalar-extension functor. -/
+/-- A family of `A`-linear automorphisms of the scalar extensions of the finitely generated
+comodules, natural in the comodule, as an automorphism of the scalar-extension functor. -/
 noncomputable def autOfComponents
     (F : ∀ M : FGComoduleCat.{u, v, w} R C, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
     (hnat : ∀ {M N : FGComoduleCat.{u, v, w} R C} (g : M ⟶ N),
@@ -86,6 +92,9 @@ noncomputable def autOfComponents
       ((F M).toLinearEquiv.toModuleIsoₛ.trans
         (eqToIso (scalarExtensionFunctor_obj R C A M).symm)))
     (fun {M N} g ↦ by
+      -- `NatIso.ofComponents` hides the component isomorphism; reduce it once so that its
+      -- naturality can be proved through the public scalar-extension and linear-equivalence
+      -- APIs, then cancel the object transports against those in the functor's action.
       change
         (scalarExtensionFunctor R C A).map g ≫
             eqToHom (scalarExtensionFunctor_obj R C A N) ≫
@@ -105,8 +114,8 @@ noncomputable def autOfComponents
       apply SemimoduleCat.hom_ext
       exact (hnat g).symm)
 
-/-- The hom component of `autOfComponents` is the specified linear automorphism, transported to
-the object chosen by the scalar-extension functor. -/
+/-- The component of the automorphism assembled from a natural family of linear automorphisms is
+that family, transported to the object chosen by the scalar-extension functor. -/
 @[simp]
 theorem autOfComponents_hom_app
     (F : ∀ M : FGComoduleCat.{u, v, w} R C, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
@@ -120,8 +129,8 @@ theorem autOfComponents_hom_app
           eqToHom (scalarExtensionFunctor_obj R C A M).symm := by
   simp [autOfComponents]
 
-/-- The inverse component of `autOfComponents` is the inverse of the specified linear
-automorphism, transported to the object chosen by the scalar-extension functor. -/
+/-- The inverse component of the automorphism assembled from a natural family of linear
+automorphisms is the inverse family, transported the same way. -/
 @[simp]
 theorem autOfComponents_inv_app
     (F : ∀ M : FGComoduleCat.{u, v, w} R C, LinearMap.GeneralLinearGroup A (A ⊗[R] M))

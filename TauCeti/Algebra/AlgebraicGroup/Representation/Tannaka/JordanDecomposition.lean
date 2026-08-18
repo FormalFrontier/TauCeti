@@ -128,7 +128,7 @@ private theorem fgPointFactor_mul_natural
   have hψm := LinearMap.congr_fun (hψ f) m
   exact hφm.trans (congrArg (φ N : Module.End K (K ⊗[k] N)) hψm)
 
-private theorem fgPointFactorNatIso_mul
+private theorem autOfComponents_mul
     (φ ψ : ∀ M : FGComoduleCat.{u, v, w} k H,
       LinearMap.GeneralLinearGroup K (K ⊗[k] M))
     (hφ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
@@ -137,8 +137,7 @@ private theorem fgPointFactorNatIso_mul
     (hψ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
       (f.hom.toLinearMap.baseChange K).comp (ψ M : Module.End K (K ⊗[k] M)) =
         (ψ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K)) :
-    FGComoduleCat.autOfComponents k H K φ hφ *
-        FGComoduleCat.autOfComponents k H K ψ hψ =
+    FGComoduleCat.autOfComponents k H K φ hφ * FGComoduleCat.autOfComponents k H K ψ hψ =
       FGComoduleCat.autOfComponents k H K (fun M ↦ φ M * ψ M)
         (fgPointFactor_mul_natural k H K φ ψ hφ hψ) := by
   apply Aut.ext
@@ -160,7 +159,7 @@ private theorem fgPointFactorNatIso_mul
     LinearMap.GeneralLinearGroup.toLinearEquiv_mul, LinearEquiv.coe_toLinearMap_mul,
     Module.End.mul_eq_comp]
 
-private theorem fgPointFactorNatIso_congr
+private theorem autOfComponents_congr
     (φ ψ : ∀ M : FGComoduleCat.{u, v, w} k H,
       LinearMap.GeneralLinearGroup K (K ⊗[k] M))
     (hφ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
@@ -170,8 +169,7 @@ private theorem fgPointFactorNatIso_congr
       (f.hom.toLinearMap.baseChange K).comp (ψ M : Module.End K (K ⊗[k] M)) =
         (ψ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K))
     (h : ∀ M, φ M = ψ M) :
-    FGComoduleCat.autOfComponents k H K φ hφ =
-      FGComoduleCat.autOfComponents k H K ψ hψ := by
+    FGComoduleCat.autOfComponents k H K φ hφ = FGComoduleCat.autOfComponents k H K ψ hψ := by
   apply Aut.ext
   apply NatTrans.ext
   funext M
@@ -258,8 +256,8 @@ theorem commute_fgPointSemisimplePartNatIso_fgPointUnipotentPartNatIso
       (fgPointUnipotentPartNatIso k H K g) := by
   rw [commute_iff_eq]
   rw [fgPointSemisimplePartNatIso, fgPointUnipotentPartNatIso,
-    fgPointFactorNatIso_mul, fgPointFactorNatIso_mul]
-  apply fgPointFactorNatIso_congr
+    autOfComponents_mul, autOfComponents_mul]
+  apply autOfComponents_congr
   intro M
   exact (GeneralLinearGroup.commute_semisimplePart_unipotentPart
     (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))).eq
@@ -272,7 +270,7 @@ theorem fgPointSemisimplePartNatIso_mul_fgPointUnipotentPartNatIso
     fgPointSemisimplePartNatIso k H K g * fgPointUnipotentPartNatIso k H K g =
       fgPointNatIsoHom k H K g := by
   rw [fgPointSemisimplePartNatIso, fgPointUnipotentPartNatIso,
-    fgPointFactorNatIso_mul]
+    autOfComponents_mul]
   apply Aut.ext
   apply NatTrans.ext
   funext M
