@@ -60,6 +60,7 @@ jobs:
           python3 scripts/test_landrun_pin.py
           python3 scripts/test_elan_pin.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
+          PYTHONPATH=scripts python3 scripts/test_lean_source.py
           python3 scripts/test_lint_dot_notation.py
 
       # The two-library split is build convenience, not a trust boundary.
