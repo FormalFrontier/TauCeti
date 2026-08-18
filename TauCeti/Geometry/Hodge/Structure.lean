@@ -81,6 +81,12 @@ theorem conjF_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.conjF p = (hs.F p).map ω.toEquiv.toLinearMap :=
   (rfl)
 
+/-- The conjugate of the Hodge filtration is decreasing. -/
+theorem conjF_antitone (hs : HodgeStructureOn W ω n) : Antitone hs.conjF :=
+  fun p q hpq ↦ by
+    rw [hs.conjF_def, hs.conjF_def]
+    exact Submodule.map_mono (hs.F_antitone hpq)
+
 /-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
 @[simp]
 theorem mem_conjF_iff (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) :

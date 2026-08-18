@@ -16,8 +16,9 @@ operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubm
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves, nor how it interacts with membership.
 This file adds the five missing counterparts, in the same shape. It also records that the
-group-algebra action on a subrepresentation coerces to the original action, and that a
-subrepresentation is minimal exactly when the `A[G]`-submodule it carries is simple.
+representation action on a subrepresentation is the restriction of the original action, that the
+group-algebra action coerces to the original action, and that a subrepresentation is minimal
+exactly when the `A[G]`-submodule it carries is simple.
 
 They are stated at the typeclasses `Subrepresentation` itself asks for, so they apply wherever
 the abstraction does. The `⊥` and `⊤` lemmas let proofs about extreme subrepresentations avoid
@@ -40,6 +41,7 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
+* `Subrepresentation.toRepresentation_apply`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
 -/
@@ -76,6 +78,11 @@ is. -/
 lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
     ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
   simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
+
+/-- The action on a subrepresentation is the restriction of the original action. -/
+theorem toRepresentation_apply (S : Subrepresentation ρ) (g : G) :
+    S.toRepresentation g = (ρ g).restrict (S.apply_mem_toSubmodule g) :=
+  rfl
 
 /-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
 original group-algebra action. -/
