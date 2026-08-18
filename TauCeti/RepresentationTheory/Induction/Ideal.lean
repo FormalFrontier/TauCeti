@@ -167,55 +167,6 @@ theorem range_subtype_comp_indVirtualCharacterDirectSumAddHom :
       AddSubgroup.subtype_apply] using
       indVirtualCharacterAddHom_apply_coe (k := k) (G := G) S' ψ'
 
-/-! ### Rational scalar extension -/
-
-variable (k G) in
-/-- The direct-sum induction map after extension of scalars from `ℤ` to `ℚ`. -/
-noncomputable def indVirtualCharacterDirectSumBaseChangeRat (P : Subgroup G → Prop) :
-    (ℚ ⊗[ℤ] DirectSum {S : Subgroup G // P S}
-      (fun S ↦ ↑(virtualCharacters k (S : Subgroup G)))) →ₗ[ℚ]
-      (ℚ ⊗[ℤ] ↑(virtualCharacters k G)) :=
-  (indVirtualCharacterDirectSumAddHom k G P).toIntLinearMap.baseChange ℚ
-
-/-- Rationalized induction sends a pure tensor to the tensor of its induced component. -/
-@[simp]
-theorem indVirtualCharacterDirectSumBaseChangeRat_tmul (P : Subgroup G → Prop) (q : ℚ)
-    (x : DirectSum {S : Subgroup G // P S}
-      (fun S ↦ ↑(virtualCharacters k (S : Subgroup G)))) :
-    indVirtualCharacterDirectSumBaseChangeRat k G P (q ⊗ₜ[ℤ] x) =
-      q ⊗ₜ[ℤ] indVirtualCharacterDirectSumAddHom k G P x := by
-  rw [indVirtualCharacterDirectSumBaseChangeRat, LinearMap.baseChange_tmul,
-    AddMonoidHom.coe_toIntLinearMap]
-
-/-- A nonzero uniform integral multiplier in the induced subgroup makes rationalized induction
-surjective. -/
-theorem indVirtualCharacterDirectSumBaseChangeRat_surjective (P : Subgroup G → Prop) (n : ℕ)
-    (hn : n ≠ 0) (h : ∀ f ∈ virtualCharacters k G, n • f ∈ indVirtualCharacters k G P) :
-    Function.Surjective (indVirtualCharacterDirectSumBaseChangeRat k G P) := by
-  classical
-  intro z
-  induction z using TensorProduct.induction_on with
-  | zero => exact ⟨0, map_zero _⟩
-  | add x y hx hy =>
-      obtain ⟨x', rfl⟩ := hx
-      obtain ⟨y', rfl⟩ := hy
-      exact ⟨x' + y', map_add _ _ _⟩
-  | tmul q f =>
-      have hf := h (f : G → k) f.2
-      rw [← range_subtype_comp_indVirtualCharacterDirectSumAddHom] at hf
-      obtain ⟨x, hx⟩ := AddMonoidHom.mem_range.mp hf
-      have hx' : indVirtualCharacterDirectSumAddHom k G P x = n • f := Subtype.ext hx
-      refine ⟨((q / (n : ℚ)) ⊗ₜ[ℤ] x), ?_⟩
-      rw [indVirtualCharacterDirectSumBaseChangeRat_tmul, hx']
-      rw [← Nat.cast_smul_eq_nsmul ℤ, TensorProduct.tmul_smul]
-      rw [← Int.cast_smul_eq_zsmul ℚ]
-      have hnq : (n : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
-      have hscalar : (((n : ℤ) : ℚ)) • (q / (n : ℚ)) = q := by
-        rw [smul_eq_mul]
-        field_simp
-        ac_rfl
-      exact congrArg (fun a : ℚ ↦ a ⊗ₜ[ℤ] f) hscalar
-
 /-- **The induced virtual characters form an ideal of the virtual-character ring.**  For a virtual
 character `f` of `G` and a virtual character `ψ` of a subgroup `S` of the family, the projection
 formula rewrites `f · Ind_S^G ψ` as `Ind_S^G ((Res_S f) · ψ)`, and `(Res_S f) · ψ` is again a
@@ -236,6 +187,56 @@ theorem mul_mem_indVirtualCharacters {f u : G → k} (hf : f ∈ virtualCharacte
     rw [AddSubgroup.mem_comap, AddMonoidHom.coe_mulLeft, hproj]
     exact indClassFun_mem_indVirtualCharacters hS hres
   exact hle hu
+
+/-! ### Rational scalar extension -/
+
+variable (k G) in
+/-- The direct-sum induction map after extension of scalars from `ℤ` to `ℚ`. -/
+noncomputable def indVirtualCharacterDirectSumBaseChangeRat (P : Subgroup G → Prop) :
+    (ℚ ⊗[ℤ] DirectSum {S : Subgroup G // P S}
+      (fun S ↦ ↑(virtualCharacters k (S : Subgroup G)))) →ₗ[ℚ]
+      (ℚ ⊗[ℤ] ↑(virtualCharacters k G)) :=
+  (indVirtualCharacterDirectSumAddHom k G P).toIntLinearMap.baseChange ℚ
+
+/-- Rationalized induction sends a pure tensor to the tensor of its induced component. -/
+@[simp]
+theorem indVirtualCharacterDirectSumBaseChangeRat_tmul (P : Subgroup G → Prop) (q : ℚ)
+    (x : DirectSum {S : Subgroup G // P S}
+      (fun S ↦ ↑(virtualCharacters k (S : Subgroup G)))) :
+    indVirtualCharacterDirectSumBaseChangeRat k G P (q ⊗ₜ[ℤ] x) =
+      q ⊗ₜ[ℤ] indVirtualCharacterDirectSumAddHom k G P x := by
+  rw [indVirtualCharacterDirectSumBaseChangeRat, LinearMap.baseChange_tmul,
+    AddMonoidHom.coe_toIntLinearMap]
+
+/-- A nonzero multiple of the trivial character in the induced subgroup makes rationalized
+induction surjective. -/
+theorem indVirtualCharacterDirectSumBaseChangeRat_surjective (P : Subgroup G → Prop) (n : ℕ)
+    (hn : n ≠ 0) (h : n • (1 : G → k) ∈ indVirtualCharacters k G P) :
+    Function.Surjective (indVirtualCharacterDirectSumBaseChangeRat k G P) := by
+  classical
+  intro z
+  induction z using TensorProduct.induction_on with
+  | zero => exact ⟨0, map_zero _⟩
+  | add x y hx hy =>
+      obtain ⟨x', rfl⟩ := hx
+      obtain ⟨y', rfl⟩ := hy
+      exact ⟨x' + y', map_add _ _ _⟩
+  | tmul q f =>
+      have hf : n • (f : G → k) ∈ indVirtualCharacters k G P := by
+        simpa [nsmul_eq_mul, mul_comm] using mul_mem_indVirtualCharacters f.2 h
+      rw [← range_subtype_comp_indVirtualCharacterDirectSumAddHom] at hf
+      obtain ⟨x, hx⟩ := AddMonoidHom.mem_range.mp hf
+      have hx' : indVirtualCharacterDirectSumAddHom k G P x = n • f := Subtype.ext hx
+      refine ⟨((q / (n : ℚ)) ⊗ₜ[ℤ] x), ?_⟩
+      rw [indVirtualCharacterDirectSumBaseChangeRat_tmul, hx']
+      rw [← Nat.cast_smul_eq_nsmul ℤ, TensorProduct.tmul_smul]
+      rw [← Int.cast_smul_eq_zsmul ℚ]
+      have hnq : (n : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
+      have hscalar : (((n : ℤ) : ℚ)) • (q / (n : ℚ)) = q := by
+        rw [smul_eq_mul]
+        field_simp
+        ac_rfl
+      exact congrArg (fun a : ℚ ↦ a ⊗ₜ[ℤ] f) hscalar
 
 /-- **An induction theorem is a single membership.**  The virtual characters induced from a family
 of subgroups exhaust `R(G)` exactly when the constant function `1`, the character of the trivial
