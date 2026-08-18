@@ -182,6 +182,28 @@ def validate_registry_coverage(groups: Sequence[ShimGroup], source_root: pathlib
         )
 
 
+def validate_local_declarations(groups: Sequence[ShimGroup], repo_root: pathlib.Path) -> None:
+    """Require every ratchet key to name a declaration in its registered sources."""
+
+    invalid: list[tuple[ShimGroup, tuple[str, ...]]] = []
+    for group in groups:
+        declared: set[str] = set()
+        for source in group.sources:
+            declared.update(source_declarations(repo_root / source))
+        missing = tuple(sorted(set(group.local_declarations) - declared))
+        if missing:
+            invalid.append((group, missing))
+    if invalid:
+        rendered = "\n".join(
+            f"  {', '.join(map(str, group.sources))}: {', '.join(missing)}"
+            for group, missing in invalid
+        )
+        raise ValueError(
+            "registered local_declarations are absent from their tracked sources:\n"
+            f"{rendered}"
+        )
+
+
 def groups_by_source(groups: Sequence[ShimGroup]) -> dict[pathlib.Path, ShimGroup]:
     """Expand registry groups into their unique source-file keys."""
 
@@ -485,6 +507,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         groups = load_registry(manifest, repo_root)
         validate_registry_coverage(groups, repo_root / "TauCeti")
+        validate_local_declarations(groups, repo_root)
         base_groups: tuple[ShimGroup, ...] = ()
         if args.base_manifest is not None:
             if not args.base_manifest.is_file():

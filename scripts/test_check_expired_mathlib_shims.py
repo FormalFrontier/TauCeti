@@ -36,6 +36,7 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             ))
             self.assertLessEqual(set(group.local_declarations), declared)
         check.validate_registry_coverage(groups, root / "TauCeti")
+        check.validate_local_declarations(groups, root)
 
     def test_new_self_declaration_requires_registry_entry(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -157,6 +158,35 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             }]), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "require local_declarations"):
                 check.load_registry(manifest, root)
+
+    def test_registered_local_surface_must_exist_in_tracked_sources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source = pathlib.Path("TauCeti/Old.lean")
+            (root / source).parent.mkdir()
+            (root / source).write_text(
+                "lemma actualShim : True := by trivial\n", encoding="utf-8"
+            )
+            group = check.ShimGroup(
+                (source,), ("Upstream.done",), (), "exact replacement",
+                local_declarations=("misspelledShim",),
+            )
+            with self.assertRaisesRegex(ValueError, "misspelledShim"):
+                check.validate_local_declarations((group,), root)
+
+    def test_registered_local_surface_may_be_split_across_group_sources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            first = pathlib.Path("TauCeti/First.lean")
+            second = pathlib.Path("TauCeti/Second.lean")
+            (root / first).parent.mkdir()
+            (root / first).write_text("lemma firstShim : True := by trivial\n", encoding="utf-8")
+            (root / second).write_text("lemma secondShim : True := by trivial\n", encoding="utf-8")
+            group = check.ShimGroup(
+                (first, second), ("Upstream.done",), (), "exact replacement",
+                local_declarations=("firstShim", "secondShim"),
+            )
+            check.validate_local_declarations((group,), root)
 
     def test_base_registry_obligation_is_ratcheted_until_local_surface_moves(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -282,7 +312,9 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             source_root = root / "TauCeti"
             source_root.mkdir()
             (source_root / "Old.lean").write_text(
-                "This is a temporary Mathlib shim.", encoding="utf-8"
+                "This is a temporary Mathlib shim.\n"
+                "lemma oldShim : True := by trivial\n",
+                encoding="utf-8",
             )
             manifest = source_root / "mathlib-shims.json"
             manifest.write_text(json.dumps([{

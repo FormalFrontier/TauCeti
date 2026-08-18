@@ -245,8 +245,8 @@ jobs:
           cp gate/scripts/source-modules.sh base/scripts/source-modules.sh
           cp gate/scripts/HeaderStyle.lean base/scripts/HeaderStyle.lean
 
-      - name: Checkout merge-base config (trusted ancestor — only to scope the PR's pin delta)
-        if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
+      - name: Checkout merge-base config (trusted ancestor)
+        if: ${{ env.INFRA != '1' }}
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.mergebase }}
@@ -296,13 +296,23 @@ jobs:
             echo "::error::symlinks are not allowed under TauCeti/"; exit 1
           fi
           test -d pr/TauCeti && test ! -L pr/TauCeti
-          # Preserve the base branch's obligations before overlaying the AI-owned registry. The
-          # trusted checker ratchets these against the PR copy below: a source may add obligations,
-          # but may not drop a base probe while the tracked source still exists at that path.
+          # Preserve the obligations the PR actually inherited before overlaying the AI-owned
+          # registry. Comparing with the merge base (not today's base tip) keeps unrelated source
+          # PRs from inheriting registry edits that landed after they branched.
           base_shims="$RUNNER_TEMP/base-mathlib-shims.json"
-          if [ -f base/TauCeti/mathlib-shims.json ]; then
-            cp base/TauCeti/mathlib-shims.json "$base_shims"
+          if [ -f mergebase/TauCeti/mathlib-shims.json ]; then
+            cp mergebase/TauCeti/mathlib-shims.json "$base_shims"
             echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+            echo "SHIM_CHECK=1" >> "$GITHUB_ENV"
+          elif [ -f pr/TauCeti/mathlib-shims.json ]; then
+            # A PR that introduces the registry has no inherited obligations, but its entries are
+            # all new and must still be checked. An older PR containing neither copy predates the
+            # mechanism and is left alone until it rebases onto a registry-bearing main.
+            printf '[]\n' > "$base_shims"
+            echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+            echo "SHIM_CHECK=1" >> "$GITHUB_ENV"
+          else
+            echo "SHIM_CHECK=0" >> "$GITHUB_ENV"
           fi
           rm -rf base/TauCeti
           cp -a pr/TauCeti base/TauCeti
@@ -343,7 +353,7 @@ jobs:
       # TauCeti/ lets a worker add or remove entries in the same autonomous source PR as the shim.
       - name: Temporary Mathlib shims have machine-checkable expiry targets
         id: shim_coverage
-        if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
+        if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' && env.SHIM_CHECK == '1' }}
         continue-on-error: true
         run: |
           set +e
@@ -538,7 +548,7 @@ jobs:
       # path first. Only concrete replacements block; broader sentinels remain audit warnings.
       - name: Migrate shims whose exact replacements exist in pinned Mathlib
         id: shim_expiry
-        if: ${{ always() && env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
+        if: ${{ always() && env.INFRA != '1' && env.OUT_OF_SCOPE != '1' && env.SHIM_CHECK == '1' }}
         continue-on-error: true
         run: |
           set +e
@@ -602,16 +612,16 @@ jobs:
           fi
           post_status bump-guard "$bg_state" "$bg_desc"
 
-          # build: the real sandboxed-build result ONLY — never a policy verdict. The build now runs even
-          # for an out-of-scope PR (its TauCeti/ is overlaid onto the trusted base and built), so a red
-          # `build` always means the code did not compile or an audit/lint failed, and fix-ci can trust
-          # it. It is reported as not-run only when we genuinely could not build: an indeterminate file
-          # list (INFRA), an unvalidated pin bump (BUMP_BAD — the overlay would need the PR's pins), or a
-          # diff guard that failed closed (TOO_LARGE / DIFF_UNKNOWN both exit before the build). Those
-          # post a failure so this required check still blocks merge; the reason lives in `scope` below.
+          # build: the actionable verdict consumed by the autonomous bump/fix-ci workers. It includes
+          # the real sandboxed build plus shim metadata and exact-expiry failures that those workers can
+          # repair. It is reported as not-run only when we genuinely could not build: an indeterminate
+          # file list (INFRA), an unvalidated pin bump (BUMP_BAD — the overlay would need the PR's pins),
+          # or a diff guard that failed closed (TOO_LARGE / DIFF_UNKNOWN both exit before the build).
           if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
+          elif [ "${{ steps.build.outcome }}" = "failure" ]; then
+            state=failure; desc="sandboxed build, audit, or simp-NF lint failed"
           elif { [ -n "${{ env.SHIM_COVERAGE_RC }}" ] \
                  && [ "${{ env.SHIM_COVERAGE_RC }}" != "0" ]; } \
                || [ "${{ steps.shim_coverage.outcome }}" = "failure" ]; then
@@ -649,10 +659,6 @@ jobs:
             sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
-          elif { [ -n "${{ env.SHIM_COVERAGE_RC }}" ] \
-                 && [ "${{ env.SHIM_COVERAGE_RC }}" != "0" ]; } \
-               || [ "${{ steps.shim_coverage.outcome }}" = "failure" ]; then
-            sc_state=failure; sc_desc="temporary Mathlib shim prose lacks trusted expiry metadata"
           else
             sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
           fi
