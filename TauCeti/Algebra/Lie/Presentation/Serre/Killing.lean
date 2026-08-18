@@ -134,8 +134,8 @@ theorem rootSpace_sub_eq_bot_of_base (b : (rootSystem H).Base) {i j : ↥b.suppo
   simp only [LieSubalgebra.root, Finset.mem_filter, Finset.mem_univ, true_and]
   exact fun hc ↦ hχ0 hc
 
-/-- The pairing of two simple roots is the corresponding entry of the Cartan matrix of the base. -/
-theorem apply_coroot_eq_cartanMatrix (b : (rootSystem H).Base) (i j : ↥b.support) :
+/-- The corresponding entry of the Cartan matrix of the base is the pairing of two simple roots. -/
+theorem cartanMatrix_eq_apply_coroot (b : (rootSystem H).Base) (i j : ↥b.support) :
     ((b.cartanMatrix j i : ℤ) : K) =
       ((j : H.root) : Weight K H L) (coroot ((i : H.root) : Weight K H L)) := by
   have h := (rootSystem H).algebraMap_pairingIn ℤ (j : H.root) (i : H.root)
@@ -164,18 +164,18 @@ theorem isSerreSystem_coroot (b : (rootSystem H).Base) {e f : ↥b.support → L
   lie_H_E i j := by
     rw [Matrix.transpose_apply, ← LieSubalgebra.coe_bracket_of_module,
       lie_eq_smul_of_mem_rootSpace (he j), ← Int.cast_smul_eq_zsmul K,
-      apply_coroot_eq_cartanMatrix b i j, rootSystem_coroot_apply]
+      cartanMatrix_eq_apply_coroot b i j, rootSystem_coroot_apply]
   lie_H_F i j := by
     rw [Matrix.transpose_apply, ← LieSubalgebra.coe_bracket_of_module,
       lie_eq_smul_of_mem_rootSpace (hf j), ← Int.cast_smul_eq_zsmul K,
-      apply_coroot_eq_cartanMatrix b i j, rootSystem_coroot_apply, Pi.neg_apply, neg_smul]
+      cartanMatrix_eq_apply_coroot b i j, rootSystem_coroot_apply, Pi.neg_apply, neg_smul]
   ad_pow_lie_E_E i j := by
     rcases eq_or_ne i j with rfl | hij
     · simp
     have hn : ((b.cartanMatrixᵀ i j : ℤ) : K) =
         ((j : H.root) : Weight K H L) (coroot ((i : H.root) : Weight K H L)) := by
       rw [Matrix.transpose_apply]
-      exact apply_coroot_eq_cartanMatrix b i j
+      exact cartanMatrix_eq_apply_coroot b i j
     exact ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot (H.isNonZero_coe_root _)
       (rootSpace_sub_eq_bot_of_base b hij.symm) hn (he i) (he j)
   ad_pow_lie_F_F i j := by
@@ -192,7 +192,7 @@ theorem isSerreSystem_coroot (b : (rootSystem H).Base) {e f : ↥b.support → L
     have hn : ((b.cartanMatrixᵀ i j : ℤ) : K) =
         (-((j : H.root) : Weight K H L)) (coroot (-((i : H.root) : Weight K H L))) := by
       rw [coroot_neg, Weight.coe_neg, Pi.neg_apply, map_neg, neg_neg, Matrix.transpose_apply]
-      exact apply_coroot_eq_cartanMatrix b i j
+      exact cartanMatrix_eq_apply_coroot b i j
     exact ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot
       (Weight.isNonZero_neg.2 (H.isNonZero_coe_root _)) hsub hn hx hy
 
