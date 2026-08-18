@@ -122,8 +122,11 @@ theorem exists_isCurveJoining_of_continuousOn {a b : ℝ} (hab : a ≤ b)
     · have hpos : (0 : ℝ) < b - a := sub_pos.2 hlt
       have hmono : MonotoneOn (fun t : ℝ => (b - a) * t + a) (Icc 0 1) :=
         fun _ _ _ _ hst => by nlinarith
-      rw [show (fun t => γ ((b - a) * t + a)) = γ ∘ fun t => (b - a) * t + a by rfl,
-        eVariationOn.comp_eq_of_monotoneOn γ _ hmono]
+      have hcomp : (fun t => γ ((b - a) * t + a)) =
+          γ ∘ fun t => (b - a) * t + a := by
+        funext t
+        rfl
+      rw [hcomp, eVariationOn.comp_eq_of_monotoneOn γ _ hmono]
       exact congrArg (eVariationOn γ) (by simpa using Set.image_affine_Icc' hpos a 0 1)
   refine ⟨fun t => γ ((b - a) * t + a), ⟨?_, ?_, ?_⟩, hlen⟩
   · exact hγ.comp (by fun_prop) hmaps
