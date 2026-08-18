@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Relations
-public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
+public import TauCeti.CategoryTheory.Monoidal.Mon
 
 /-!
 # Chevalley relations in the generated Kostant group scheme
@@ -70,13 +70,6 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable (A : Type) [CommRing A]
 
-private theorem kostantRootSubgroupToGenerated_comp_ι_hom (i : I) :
-    (kostantRootSubgroupToGenerated e h ρ M hM hnil b i).hom.hom ≫
-        (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom =
-      (kostantRootSubgroup e h ρ M hM i (hnil i) b).hom.hom :=
-  congrArg (fun f => f.hom.hom)
-    (kostantRootSubgroupToGenerated_comp_ι e h ρ M hM hnil b i)
-
 /-- Represented Kostant root subgroups attached to commuting root vectors commute as points of
 the generated group scheme over every commutative value ring. -/
 theorem commute_kostantRootSubgroupToGenerated {i j : I} (hij : ⁅e i, e j⁆ = 0)
@@ -85,22 +78,21 @@ theorem commute_kostantRootSubgroupToGenerated {i j : I} (hij : ⁅e i, e j⁆ =
     Commute
       (p ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b i).hom.hom)
       (q ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b j).hom.hom) := by
-  rw [commute_iff_eq]
-  apply pointsMap_injective_of_mono
-    (kostantGeneratedGroupSchemeι e h ρ M hM hnil b) _
-  rw [map_mul, map_mul]
-  simp only [IsMonHom.monoidHom_apply, Category.assoc,
-    kostantRootSubgroupToGenerated_comp_ι_hom]
-  apply (GeneralLinear.schemePointsMulEquiv n A).injective
-  simpa only [map_mul] using
+  have : Mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom :=
+    Over.mono_of_mono_left _
+  apply Commute.of_map (monoidHom_injective_of_mono
+    (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom _)
+  simp only [IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
+    kostantRootSubgroupToGenerated_comp_ι]
+  exact Commute.of_map (GeneralLinear.schemePointsMulEquiv n A).injective
     (commute_schemePointsMulEquiv_kostantRootSubgroup
-      e h ρ M hM b A hij (hnil i) (hnil j) p q).eq
+      e h ρ M hM b A hij (hnil i) (hnil j) p q)
 
 /-- **The class-two Chevalley commutator relation inside the generated Kostant group scheme.**
 Suppose `⁅eᵢ, eⱼ⁆ = c • eₖ`, with `eₖ` commuting with both `eᵢ` and `eⱼ`. If the additive
 parameter of `r` is `c` times the product of those of `p` and `q`, then the commutator of the
 factored `i`- and `j`-root points is the factored `k`-root point at `r`. -/
-theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq_of_parameter_eq
+theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq
     {i j k : I} {c : ℤ}
     (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
     (p q r : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
@@ -111,11 +103,13 @@ theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq_of_parameter_
     ⁅p ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b i).hom.hom,
       q ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b j).hom.hom⁆ =
       r ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b k).hom.hom := by
-  apply pointsMap_injective_of_mono
-    (kostantGeneratedGroupSchemeι e h ρ M hM hnil b) _
+  have : Mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom :=
+    Over.mono_of_mono_left _
+  apply monoidHom_injective_of_mono
+    (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom _
   rw [map_commutatorElement]
-  simp only [IsMonHom.monoidHom_apply, Category.assoc,
-    kostantRootSubgroupToGenerated_comp_ι_hom]
+  simp only [IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
+    kostantRootSubgroupToGenerated_comp_ι]
   apply (GeneralLinear.schemePointsMulEquiv n A).injective
   simpa only [map_commutatorElement] using
     commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq
@@ -123,7 +117,7 @@ theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq_of_parameter_
 
 /-- The class-two Chevalley commutator relation inside the generated group scheme, with the
 third point written explicitly at parameter `c` times the product of the first two parameters. -/
-theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq
+theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq'
     {i j k : I} {c : ℤ}
     (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
     (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
@@ -135,7 +129,7 @@ theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq
             (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p) *
               Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A q)))) ≫
         (kostantRootSubgroupToGenerated e h ρ M hM hnil b k).hom.hom :=
-  commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq_of_parameter_eq
+  commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq
     e h ρ M hM b hnil A hij hik hjk p q _
       (congrArg Multiplicative.toAdd
         ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
