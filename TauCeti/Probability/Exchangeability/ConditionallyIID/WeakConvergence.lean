@@ -69,7 +69,7 @@ measure, almost surely.** The convergence is in the topology of convergence in d
 
 This is the measure-valued form of `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae`, which
 gives the same limit one measurable set at a time. It is not a formal consequence of that
-statement: the fixed set there may be chosen after the null set, and no null set works for every
+statement: the null set there may be chosen after the fixed set, and no null set works for every
 measurable set simultaneously. -/
 theorem ConditionallyIIDWith.tendsto_empiricalMeasure_ae [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ n, AEMeasurable (X n) μ) :
