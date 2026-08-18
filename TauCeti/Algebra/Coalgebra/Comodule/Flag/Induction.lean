@@ -94,10 +94,19 @@ private theorem fixedSpan_coact [Module.Flat k H] (v : M)
   change coact (R := k) (C := H) (M := M) (x : M) = (x : M) ⊗ₜ[k] (1 : H)
   rw [← ha, map_smul, hv, TensorProduct.smul_tmul']
 
+omit [One H] in
+/-- A subcomodule and its exposed underlying submodule have the same dimension: both subtype the
+same carrier. -/
+private theorem finrank_toSubmodule (N : Subcomodule k H M) :
+    finrank k N.toSubmodule = finrank k N :=
+  rfl
+
 /-- The subcomodule spanned by a nonzero fixed vector has dimension one. -/
 private theorem fixedSpan_finrank (v : M)
     (hv : coact (R := k) (C := H) (M := M) v = v ⊗ₜ[k] (1 : H)) (hv₀ : v ≠ 0) :
     finrank k (fixedSpan v hv) = 1 := by
+  rw [← finrank_toSubmodule]
+  -- Expose the carrier chosen by `fixedSpan`, namely the singleton span.
   change finrank k (k ∙ v) = 1
   exact finrank_span_singleton hv₀
 
@@ -143,7 +152,7 @@ theorem exists_basis_coefficientMatrix_isUpperUnitriangular_of_fixed_vectors
           -- Unfold the local quotient abbreviation so the generic finrank bound applies.
           change finrank k (M ⧸ L.toSubmodule) < d
           have hsum := Module.finrank_quotient_add_finrank_le L.toSubmodule
-          have hLto : finrank k L.toSubmodule = 1 := hLfinrank
+          have hLto : finrank k L.toSubmodule = 1 := (finrank_toSubmodule L).trans hLfinrank
           rw [hLto, hdim] at hsum
           omega
         obtain ⟨n, bQ, hbQ⟩ := ih (finrank k Q) hQdim (M := Q) rfl
