@@ -38,8 +38,8 @@ remain separate parts of the square-zero proof.
 
 * `TauCeti.GridRectangleDecomposition.commute_first_toGridRectangle` and
   `commute_second_toGridRectangle`: reordering exchanges the two toroidal domains.
-* `TauCeti.GridRectangleDecomposition.commute_avoidsMarkings_iff`: reordering preserves both
-  marking-avoidance conditions.
+* `TauCeti.GridRectangleDecomposition.commute_first_avoidsMarkings_iff` and
+  `commute_second_avoidsMarkings_iff`: reordering preserves the marking-avoidance conditions.
 * `TauCeti.GridRectangleDecomposition.commute_commute`: reordering twice is the identity.
 * `TauCeti.GridRectangleDecomposition.commute_middle_ne`: the intermediate state changes.
 
@@ -54,27 +54,6 @@ Chapter 4.6.
 public section
 
 namespace TauCeti
-
-namespace GridRectangleBetween
-
-variable {n : ℕ} {x y : GridState n}
-
-/-- The unordered finite set of side columns of an oriented grid rectangle. -/
-def sideColumns (R : GridRectangleBetween x y) : Finset (Fin n) :=
-  {R.left, R.right}
-
-/-- Membership in the side-column set of an oriented grid rectangle. -/
-@[simp]
-theorem mem_sideColumns (R : GridRectangleBetween x y) (c : Fin n) :
-    c ∈ R.sideColumns ↔ c = R.left ∨ c = R.right := by
-  simp [sideColumns]
-
-/-- An oriented grid rectangle has exactly two side columns. -/
-@[simp]
-theorem card_sideColumns (R : GridRectangleBetween x y) : R.sideColumns.card = 2 := by
-  simp [sideColumns, R.left_ne_right]
-
-end GridRectangleBetween
 
 /-- A decomposition of a two-step rectangle domain from `x` to `z` through an intermediate grid
 state. -/
@@ -226,6 +205,7 @@ theorem commute_middle (D : GridRectangleDecomposition x z) (h : D.HasDisjointSi
     rfl
 
 /-- Reordering exchanges the first toroidal rectangle with the old second rectangle. -/
+@[simp]
 theorem commute_first_toGridRectangle (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) :
     (D.commute h).first.toGridRectangle = D.second.toGridRectangle := by
@@ -242,6 +222,7 @@ theorem commute_first_toGridRectangle (D : GridRectangleDecomposition x z)
     GridRectangleBetween.top, hleft, hright]
 
 /-- Reordering exchanges the second toroidal rectangle with the old first rectangle. -/
+@[simp]
 theorem commute_second_toGridRectangle (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) :
     (D.commute h).second.toGridRectangle = D.first.toGridRectangle := by
@@ -255,6 +236,7 @@ theorem commute_second_toGridRectangle (D : GridRectangleDecomposition x z)
     Equiv.swap_apply_of_ne_of_ne hll hlr, Equiv.swap_apply_of_ne_of_ne hrl hrr]
 
 /-- Reordering preserves the marking-avoidance condition on the first domain. -/
+@[simp]
 theorem commute_first_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) (G : GridDiagram n) :
     (D.commute h).first.AvoidsMarkings G ↔ D.second.AvoidsMarkings G := by
@@ -262,18 +244,12 @@ theorem commute_first_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
   rw [D.commute_first_toGridRectangle h]
 
 /-- Reordering preserves the marking-avoidance condition on the second domain. -/
+@[simp]
 theorem commute_second_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
     (h : D.HasDisjointSides) (G : GridDiagram n) :
     (D.commute h).second.AvoidsMarkings G ↔ D.first.AvoidsMarkings G := by
   unfold GridRectangleBetween.AvoidsMarkings
   rw [D.commute_second_toGridRectangle h]
-
-/-- Reordering preserves both marking-avoidance conditions and exchanges their order. -/
-theorem commute_avoidsMarkings_iff (D : GridRectangleDecomposition x z)
-    (h : D.HasDisjointSides) (G : GridDiagram n) :
-    ((D.commute h).first.AvoidsMarkings G ∧ (D.commute h).second.AvoidsMarkings G) ↔
-      D.second.AvoidsMarkings G ∧ D.first.AvoidsMarkings G := by
-  rw [D.commute_first_avoidsMarkings_iff h, D.commute_second_avoidsMarkings_iff h]
 
 /-- The reordered decomposition again has disjoint side-column pairs. -/
 theorem commute_hasDisjointSides (D : GridRectangleDecomposition x z)
