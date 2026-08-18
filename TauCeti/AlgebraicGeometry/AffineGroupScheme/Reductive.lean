@@ -105,21 +105,8 @@ theorem geometricallyConnected_of_reductiveAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : reductiveAffineGroupSchemeProperty k G) :
     GeometricallyConnected G.obj.obj.X.hom := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  let e : G.obj.obj ≅ (hopfSpec (CommRingCat.of k)).obj H₀ :=
-    ((affineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-        (E.counitIso.app G))).symm ≪≫
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H
-  let : MorphismProperty.RespectsIso
-      (@GeometricallyConnected : MorphismProperty Scheme.{u}) :=
-    MorphismProperty.IsStableUnderBaseChange.respectsIso
-  apply (MorphismProperty.over_iso_iff
-    (@GeometricallyConnected : MorphismProperty Scheme.{u}) ((Grp.forget _).mapIso e)).mpr
-  exact (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec k H₀.unop).mp
+  apply geometricallyConnected_of_geometricallyConnectedCommHopfAlgProperty_inverse k G
+  exact
     ((reductiveAffineGroupSchemeProperty_iff k G).mp hG |>.geometricallyConnected)
 
 /-- Objects of `ReductiveAffineGroupSchemeCat k` have geometrically connected structural
