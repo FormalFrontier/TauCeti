@@ -24,19 +24,22 @@ class ExpiredMathlibShimTests(unittest.TestCase):
     def test_registry_covers_self_declarations_one_way(self):
         root = SCRIPT.parent.parent
         groups = check.load_registry(root / "TauCeti/mathlib-shims.json", root)
-        tracked = {source for group in groups for source in group.sources}
-        self.assertLessEqual(check.find_self_declared_shims(root / "TauCeti"), tracked)
         self.assertEqual(groups[0].declarations,
                          ("Complex.exists_bijOn_unitBall_map_eq_zero",))
-        for group in groups:
-            if group.speculative or group.landing_sentinel:
-                continue
-            declared = set().union(*(
-                check.source_declarations(root / source) for source in group.sources
-            ))
-            self.assertLessEqual(set(group.local_declarations), declared)
         check.validate_registry_coverage(groups, root / "TauCeti")
-        check.validate_local_declarations(groups, root)
+
+    def test_double_coset_exact_entry_derives_the_whole_vendored_surface(self):
+        root = SCRIPT.parent.parent
+        source = pathlib.Path("TauCeti/GroupTheory/DoubleCoset/Basic.lean")
+        groups = check.load_registry(root / "TauCeti/mathlib-shims.json", root)
+        group = check.groups_by_source(groups)[source]
+        self.assertFalse(group.speculative or group.landing_sentinel)
+        self.assertLessEqual({
+            "DoubleCoset.doubleCoset_eq_iUnion_leftCosets",
+            "DoubleCoset.conjAct_smul_mul_right_of_mem_normalizer",
+            "DoubleCoset.subgroupOf_conjAct_smul_mul_right_of_mem_normalizer",
+            "DoubleCoset.subgroupOf_conjAct_smul_mul_left_of_mem_normalizer",
+        }, check.source_declarations(root / source))
 
     def test_new_self_declaration_requires_registry_entry(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -118,6 +121,7 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             manifest.write_text(json.dumps([{
                 "sources": ["TauCeti/Missing.lean"],
                 "declarations": ["not a Lean name"],
+                "note": "invalid target fixture",
             }]), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "invalid declaration"):
                 check.load_registry(manifest, root)
@@ -129,11 +133,12 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             manifest.write_text(json.dumps([{
                 "sources": ["TauCeti/../Outside.lean"],
                 "declarations": ["Future.name"],
+                "note": "invalid path fixture",
             }]), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "TauCeti/.*path"):
                 check.load_registry(manifest, root)
 
-    def test_exact_declaration_probe_requires_local_surface(self):
+    def test_registry_requires_durable_context_note(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
             (root / "TauCeti").mkdir()
@@ -143,93 +148,63 @@ class ExpiredMathlibShimTests(unittest.TestCase):
                 "sources": ["TauCeti/Old.lean"],
                 "declarations": ["Upstream.done"],
             }]), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "require local_declarations"):
+            with self.assertRaisesRegex(ValueError, "note must be a non-empty string"):
                 check.load_registry(manifest, root)
 
-    def test_exact_module_probe_requires_local_surface(self):
+    def test_base_registry_obligation_allows_deletion_and_tracked_rehome(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
-            (root / "TauCeti").mkdir()
-            (root / "TauCeti/Old.lean").touch()
-            manifest = root / "manifest.json"
-            manifest.write_text(json.dumps([{
-                "sources": ["TauCeti/Old.lean"],
-                "modules": ["Mathlib.New"],
-            }]), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "require local_declarations"):
-                check.load_registry(manifest, root)
-
-    def test_registered_local_surface_must_exist_in_tracked_sources(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            source = pathlib.Path("TauCeti/Old.lean")
-            (root / source).parent.mkdir()
-            (root / source).write_text(
-                "lemma actualShim : True := by trivial\n", encoding="utf-8"
-            )
-            group = check.ShimGroup(
-                (source,), ("Upstream.done",), (), "exact replacement",
-                local_declarations=("misspelledShim",),
-            )
-            with self.assertRaisesRegex(ValueError, "misspelledShim"):
-                check.validate_local_declarations((group,), root)
-
-    def test_registered_local_surface_may_be_split_across_group_sources(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            first = pathlib.Path("TauCeti/First.lean")
-            second = pathlib.Path("TauCeti/Second.lean")
-            (root / first).parent.mkdir()
-            (root / first).write_text("lemma firstShim : True := by trivial\n", encoding="utf-8")
-            (root / second).write_text("lemma secondShim : True := by trivial\n", encoding="utf-8")
-            group = check.ShimGroup(
-                (first, second), ("Upstream.done",), (), "exact replacement",
-                local_declarations=("firstShim", "secondShim"),
-            )
-            check.validate_local_declarations((group,), root)
-
-    def test_base_registry_obligation_is_ratcheted_until_local_surface_moves(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
+            base_root = root / "base"
             source = pathlib.Path("TauCeti/Old.lean")
             (root / source).parent.mkdir()
             (root / source).write_text("lemma oldShim : True := by trivial\n", encoding="utf-8")
-            base = check.ShimGroup(
-                (source,), ("Upstream.done",), (), "base",
-                local_declarations=("oldShim",),
+            (base_root / source).parent.mkdir(parents=True)
+            (base_root / source).write_text(
+                "lemma oldShim : True := by trivial\n", encoding="utf-8"
             )
+            base = check.ShimGroup((source,), ("Upstream.done",), (), "base")
             with self.assertRaisesRegex(ValueError, "base shim obligations"):
-                check.validate_registry_ratchet((), (base,), root)
+                check.validate_registry_ratchet((), (base,), root, base_root)
             kept = check.ShimGroup(
-                (source,), ("Upstream.done", "Future.more"), (), "kept",
-                local_declarations=("oldShim",),
+                (source,), ("Upstream.done", "Future.more"), (), "kept"
             )
-            check.validate_registry_ratchet((kept,), (base,), root)
+            check.validate_registry_ratchet((kept,), (base,), root, base_root)
             weakened = check.ShimGroup(
-                (source,), ("Upstream.done",), (), "weakened", landing_sentinel=True,
-                local_declarations=("oldShim",),
+                (source,), ("Upstream.done",), (), "weakened", landing_sentinel=True
             )
             with self.assertRaisesRegex(ValueError, "audit-only sentinel"):
-                check.validate_registry_ratchet((weakened,), (base,), root)
-            moved = root / "TauCeti/Moved.lean"
+                check.validate_registry_ratchet((weakened,), (base,), root, base_root)
+            moved_source = pathlib.Path("TauCeti/Moved.lean")
+            moved = root / moved_source
             (root / source).rename(moved)
+            moved_group = check.dataclasses.replace(base, sources=(moved_source,))
+            check.validate_registry_ratchet((moved_group,), (base,), root, base_root)
             with self.assertRaisesRegex(ValueError, "base shim obligations"):
-                check.validate_registry_ratchet((), (base,), root)
+                check.validate_registry_ratchet((), (base,), root, base_root)
             moved.unlink()
-            (root / source).touch()
-            (root / source).write_text("lemma stillUseful : True := by trivial\n", encoding="utf-8")
-            check.validate_registry_ratchet((), (base,), root)
+            check.validate_registry_ratchet((), (base,), root, base_root)
+
+    def test_landing_sentinel_obligation_discharges_when_source_is_deleted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            base_root = root / "base"
+            source = pathlib.Path("TauCeti/Old.lean")
+            (root / "TauCeti").mkdir()
+            (base_root / source).parent.mkdir(parents=True)
+            (base_root / source).write_text(
+                "lemma oldShim : True := by trivial\n", encoding="utf-8"
+            )
+            base = check.ShimGroup(
+                (source,), ("Upstream.sentinel",), (), "audit", landing_sentinel=True
+            )
+            check.validate_registry_ratchet((), (base,), root, base_root)
 
     def test_only_new_or_changed_groups_ignores_unchanged_base_entries(self):
         one = pathlib.Path("TauCeti/One.lean")
         two = pathlib.Path("TauCeti/Two.lean")
-        base = check.ShimGroup(
-            (one,), ("Upstream.one",), (), "base", local_declarations=("one",)
-        )
+        base = check.ShimGroup((one,), ("Upstream.one",), (), "base")
         unchanged = check.dataclasses.replace(base, note="note edits are not new obligations")
-        added = check.ShimGroup(
-            (two,), ("Upstream.two",), (), "added", local_declarations=("two",)
-        )
+        added = check.ShimGroup((two,), ("Upstream.two",), (), "added")
         self.assertEqual(check.only_new_or_changed_groups((unchanged, added), (base,)), (added,))
 
     def test_probe_round_trip(self):
@@ -323,7 +298,6 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             manifest.write_text(json.dumps([{
                 "sources": ["TauCeti/Old.lean"],
                 "declarations": ["Upstream.done"],
-                "local_declarations": ["oldShim"],
                 "note": "exact replacement",
             }]), encoding="utf-8")
             common = ["--repo-root", str(root), "--manifest", str(manifest)]
@@ -334,6 +308,14 @@ class ExpiredMathlibShimTests(unittest.TestCase):
     def test_unexpected_checker_failure_is_infrastructure_not_migration(self):
         with mock.patch.object(check, "load_registry", side_effect=OSError("bad bytes")):
             self.assertEqual(check.main([]), 2)
+
+    def test_workflow_uses_merge_base_and_scopes_feature_probes(self):
+        workflow = (SCRIPT.parent.parent / ".github/workflows/pr-build.yml").read_text()
+        self.assertIn("cp mergebase/TauCeti/mathlib-shims.json", workflow)
+        self.assertNotIn("cp base/TauCeti/mathlib-shims.json", workflow)
+        self.assertIn('[ "${BUMP:-0}" = "1" ] || args+=(--only-new)', workflow)
+        self.assertIn('--base-root "$BASE_SHIM_ROOT"', workflow)
+        self.assertIn("env.SHIM_CHECK == '1'", workflow)
 
 if __name__ == "__main__":
     unittest.main()

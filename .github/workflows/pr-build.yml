@@ -303,6 +303,7 @@ jobs:
           if [ -f mergebase/TauCeti/mathlib-shims.json ]; then
             cp mergebase/TauCeti/mathlib-shims.json "$base_shims"
             echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+            echo "BASE_SHIM_ROOT=$(realpath mergebase)" >> "$GITHUB_ENV"
             echo "SHIM_CHECK=1" >> "$GITHUB_ENV"
           elif [ -f pr/TauCeti/mathlib-shims.json ]; then
             # A PR that introduces the registry has no inherited obligations, but its entries are
@@ -310,6 +311,7 @@ jobs:
             # mechanism and is left alone until it rebases onto a registry-bearing main.
             printf '[]\n' > "$base_shims"
             echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+            echo "BASE_SHIM_ROOT=$(realpath mergebase)" >> "$GITHUB_ENV"
             echo "SHIM_CHECK=1" >> "$GITHUB_ENV"
           else
             echo "SHIM_CHECK=0" >> "$GITHUB_ENV"
@@ -358,7 +360,9 @@ jobs:
         run: |
           set +e
           args=(--coverage-only)
-          [ -z "${BASE_SHIM_REGISTRY:-}" ] || args+=(--base-manifest "$BASE_SHIM_REGISTRY")
+          [ -z "${BASE_SHIM_REGISTRY:-}" ] || args+=(
+            --base-manifest "$BASE_SHIM_REGISTRY" --base-root "$BASE_SHIM_ROOT"
+          )
           (cd base && python3 scripts/check-expired-mathlib-shims.py "${args[@]}")
           rc=$?
           echo "SHIM_COVERAGE_RC=$rc" >> "$GITHUB_ENV"
@@ -554,7 +558,7 @@ jobs:
           set +e
           args=(--fail-on-available)
           if [ -n "${BASE_SHIM_REGISTRY:-}" ]; then
-            args+=(--base-manifest "$BASE_SHIM_REGISTRY")
+            args+=(--base-manifest "$BASE_SHIM_REGISTRY" --base-root "$BASE_SHIM_ROOT")
             [ "${BUMP:-0}" = "1" ] || args+=(--only-new)
           fi
           (cd base && python3 scripts/check-expired-mathlib-shims.py "${args[@]}")

@@ -1,6 +1,6 @@
 [
   {
-    "note": "Mathlib PR #33505 landing sentinel; its private prerequisites may not replace every tracked declaration",
+    "note": "Coordinated with mathlib4#33505 (urkud), https://github.com/leanprover-community/mathlib4/pull/33505; its private prerequisites may not replace every tracked declaration",
     "landing_sentinel": true,
     "sources": [
       "TauCeti/Analysis/Complex/BranchLogRoot.lean",
@@ -30,7 +30,7 @@
     ]
   },
   {
-    "note": "Disc-automorphism group and parametrisation; upstream target is not named yet",
+    "note": "Disc-automorphism work coordinated with mathlib4#33505 (urkud), https://github.com/leanprover-community/mathlib4/pull/33505; a replacement target is not named yet",
     "speculative": true,
     "landing_sentinel": true,
     "sources": [
@@ -46,7 +46,7 @@
     ]
   },
   {
-    "note": "mathlib4#40791 landing sentinel; preserve or re-home mem_unit_iff, unit_mono, unit_fg_of_units, and algebraMap_unitEmptyEquivUnits_apply",
+    "note": "Adapted from mathlib4#40791 (vvvv-ops), https://github.com/leanprover-community/mathlib4/pull/40791, with the unit_fg argument from EllipticCurves/Mathlib/SelmerGroup.lean (Michael Stoll), https://github.com/MichaelStollBayreuth/EllipticCurves; preserve or re-home mem_unit_iff, unit_mono, unit_fg_of_units, and algebraMap_unitEmptyEquivUnits_apply",
     "landing_sentinel": true,
     "sources": [
       "TauCeti/RingTheory/DedekindDomain/SInteger/Unit.lean"
@@ -59,297 +59,111 @@
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41253",
+    "note": "Vendored from mathlib4#41253 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41253",
     "sources": [
       "TauCeti/GroupTheory/DoubleCoset/Basic.lean"
     ],
     "declarations": [
       "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
-    ],
-    "local_declarations": [
-      "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41253",
+    "note": "Coset vocabulary partially vendored from mathlib4#41253 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41253; degree section ported from AINTLIB LeanModularForms/HeckeRIngs/AbstractHeckeRing/Degree.lean (Chris Birkbeck), https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/Basic.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Basic"
-    ],
-    "local_declarations": [
-      "HeckeCoset.toSet",
-      "HeckeCoset.rep",
-      "HeckeCoset.mk_rep",
-      "HeckeCoset.eq_iff",
-      "HeckeCoset.toSet_mk",
-      "HeckeCoset.toSet_eq_doubleCoset_rep",
-      "HeckeCoset.toSet_injective",
-      "HeckeCoset.rep_mem",
-      "HeckeCoset.mk_eq_mk_of_mem",
-      "HeckeCoset.map",
-      "HeckeCoset.map_mk",
-      "HeckeCoset.map_id",
-      "HeckeCoset.map_map",
-      "HeckeCoset.induction",
-      "HeckeCoset.induction₂",
-      "HeckeCoset.toSet_one",
-      "HeckeCoset.rep_one_mem",
-      "DoubleCoset.DecompQuotient",
-      "DoubleCoset.mk_out_mul_injective",
-      "DoubleCoset.conj_mem_of_stabilizer",
-      "DoubleCoset.conj_mem_of_mk_eq",
-      "IsHeckeTriple.mem_of_mem_doubleCoset",
-      "HeckeCoset.degree",
-      "HeckeCoset.degree_eq_relIndex",
-      "HeckeCoset.degree_mk",
-      "HeckeCoset.degree_one",
-      "HeckeCoset.degree_eq_natCard_decompQuotient",
-      "HeckeCoset.degree_eq_card_decompQuotient",
-      "HeckeCoset.degree_pos",
-      "HeckeCosetModule.single",
-      "HeckeCosetModule.sum_single_index",
-      "HeckeCosetModule.single_apply",
-      "HeckeCosetModule.single_zero",
-      "HeckeCosetModule.sum_single",
-      "HeckeCosetModule.single_add",
-      "HeckeCosetModule.induction_linear",
-      "HeckeCosetModule.instModule",
-      "HeckeCosetModule.smul_single_one",
-      "HeckeCosetModule.mem_support_iff",
-      "HeckeCosetModule.notMem_support_iff",
-      "HeckeCosetModule.sum_def",
-      "HeckeCosetModule.sum_apply",
-      "HeckeCosetModule.zero_apply",
-      "HeckeCosetModule.add_apply",
-      "HeckeCosetModule.smul_apply",
-      "HeckeCosetModule.sum_smul_index"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41254",
+    "note": "Vendored from mathlib4#41254 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41254; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/Multiplicity/Basic.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Multiplicity"
-    ],
-    "local_declarations": [
-      "DoubleCoset.subsingleton_decompQuotient",
-      "DoubleCoset.subsingleton_decompQuotient_of_mem",
-      "DoubleCoset.multiplicity",
-      "DoubleCoset.multiplicity_def",
-      "DoubleCoset.snd_eq_of_fst_eq",
-      "DoubleCoset.fst_eq_of_mul_snd_mem",
-      "HeckeCoset.mulMapOf",
-      "HeckeCoset.mulMap",
-      "HeckeCoset.mulMap_eq_mulMapOf",
-      "HeckeCoset.mulMapOf_eq_mk",
-      "HeckeCoset.mulMap_eq_mk",
-      "HeckeCoset.mulMapOf_eq_of_mk_eq",
-      "HeckeCoset.mulMap_eq_of_mk_eq"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41255",
+    "note": "Vendored from mathlib4#41255 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41255; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/Multiplicity/Unit.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.MultiplicityUnit"
-    ],
-    "local_declarations": [
-      "DoubleCoset.exists_fibre_of_mem_right",
-      "DoubleCoset.exists_fibre_of_mem_left",
-      "DoubleCoset.multiplicity_eq_one_iff_of_mem_right",
-      "DoubleCoset.multiplicity_eq_one_iff_of_mem_left",
-      "HeckeCoset.mulMapOf_one_right",
-      "HeckeCoset.mulMap_one_right",
-      "HeckeCoset.mulMapOf_one_left",
-      "HeckeCoset.mulMap_one_left",
-      "HeckeCoset.multiplicity_mul_one",
-      "HeckeCoset.multiplicity_one_mul"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41256",
+    "note": "Vendored from mathlib4#41256 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41256; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/Multiplicity/Support.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.MultiplicitySupport"
-    ],
-    "local_declarations": [
-      "DoubleCoset.multiplicity_ne_zero_iff",
-      "HeckeCoset.mem_image_mulMap_iff"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41277",
+    "note": "Vendored from mathlib4#41277 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41277; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/Multiplication.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Multiplication"
-    ],
-    "local_declarations": [
-      "HeckeCosetModule.structureConstants",
-      "HeckeCosetModule.structureConstants_apply",
-      "HeckeCosetModule.support_structureConstants_subset",
-      "HeckeCosetModule.mul",
-      "HeckeCosetModule.mul_eq_sum",
-      "HeckeCosetModule.instMulHeckeRing",
-      "HeckeCosetModule.mul_def",
-      "HeckeCosetModule.mul_single_single",
-      "HeckeCosetModule.single_mul_single",
-      "HeckeCosetModule.mul_single_single_of_mulMap_eq",
-      "HeckeCosetModule.mul_add",
-      "HeckeCosetModule.add_mul",
-      "HeckeCosetModule.zero_mul",
-      "HeckeCosetModule.mul_zero",
-      "HeckeCosetModule.instNonUnitalNonAssocSemiringHeckeRing"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41279",
+    "note": "Vendored from mathlib4#41279 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41279; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/One.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.One"
-    ],
-    "local_declarations": [
-      "HeckeCosetModule.multiplicity_one_right_eq_zero",
-      "HeckeCosetModule.multiplicity_one_left_eq_zero",
-      "HeckeCosetModule.structureConstants_one_right",
-      "HeckeCosetModule.structureConstants_one_left",
-      "HeckeCosetModule.instOneHeckeRing",
-      "HeckeCosetModule.one_def",
-      "HeckeCosetModule.one_mul",
-      "HeckeCosetModule.mul_one",
-      "HeckeCosetModule.instNonAssocSemiringHeckeRing"
     ]
   },
   {
-    "note": "Vendored from open mathlib4#41328",
+    "note": "Vendored from mathlib4#41328 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41328; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/NumberTheory/HeckeRing/Associativity.lean"
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Associativity"
-    ],
-    "local_declarations": [
-      "DoubleCoset.nat_card_prod_setOf",
-      "DoubleCoset.nat_card_setOf_eq_sum",
-      "DoubleCoset.mul_mem_doubleCoset_iff",
-      "DoubleCoset.nat_card_fiber",
-      "DoubleCoset.multiplicity_eq_card_filter",
-      "DoubleCoset.multiplicity_mul_left",
-      "DoubleCoset.multiplicity_mul_right",
-      "DoubleCoset.multiplicity_doubleCoset_congr",
-      "HeckeCoset.sum_ite_mem_multiplicity",
-      "HeckeCoset.sum_image_mulMap_multiplicity_right",
-      "HeckeCoset.sum_multiplicity_eq_card",
-      "HeckeCoset.sum_image_mulMap_multiplicity_left",
-      "HeckeCoset.sum_multiplicity_assoc",
-      "HeckeCosetModule.smul_mul",
-      "HeckeCosetModule.single_mul",
-      "HeckeCosetModule.mul_single",
-      "HeckeCosetModule.mul_assoc_single",
-      "HeckeCosetModule.mul_assoc",
-      "HeckeCosetModule.instSemiringHeckeRing",
-      "HeckeCosetModule.instRingHeckeRing"
     ]
   },
   {
-    "note": "Ported from open mathlib4#38009",
+    "note": "Ported from mathlib4#38009 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/38009",
     "sources": [
       "TauCeti/AlgebraicGeometry/AdicSpace/ValuationSpectrum.lean"
     ],
     "modules": [
       "Mathlib.RingTheory.Valuation.ValuationSpectrum"
-    ],
-    "local_declarations": [
-      "TauCeti.ValuationSpectrum",
-      "TauCeti.ValuationSpectrum.ext'",
-      "TauCeti.ValuationSpectrum.ofValuation",
-      "TauCeti.ValuationSpectrum.ofValuation_eq_of_isEquiv",
-      "TauCeti.ValuationSpectrum.basicOpen",
-      "TauCeti.ValuationSpectrum.mem_basicOpen_iff",
-      "TauCeti.ValuationSpectrum.basicOpen_mul_subset",
-      "TauCeti.ValuationSpectrum.basicOpen_one",
-      "TauCeti.ValuationSpectrum.basicOpen_self",
-      "TauCeti.ValuationSpectrum.basicOpen_one_right",
-      "TauCeti.ValuationSpectrum.instTopologicalSpace",
-      "TauCeti.ValuationSpectrum.isOpen_basicOpen",
-      "TauCeti.ValuationSpectrum.instTopologicalSpace_eq_generateFrom",
-      "TauCeti.ValuationSpectrum.vle_iff_mem_basicOpen_or",
-      "TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vlt_one",
-      "TauCeti.ValuationSpectrum.comap",
-      "TauCeti.ValuationSpectrum.comap_vle",
-      "TauCeti.ValuationSpectrum.comap_vlt",
-      "TauCeti.ValuationSpectrum.comap_ofValuation",
-      "TauCeti.ValuationSpectrum.comap_preimage_basicOpen",
-      "TauCeti.ValuationSpectrum.continuous_comap",
-      "TauCeti.ValuationSpectrum.comap_id",
-      "TauCeti.ValuationSpectrum.comap_comp",
-      "TauCeti.ValuationSpectrum.comap_injective",
-      "TauCeti.ValuationSpectrum.supp",
-      "TauCeti.ValuationSpectrum.mem_supp_iff",
-      "TauCeti.ValuationSpectrum.instIsPrimeSupp",
-      "TauCeti.ValuationSpectrum.vle_ofValuation",
-      "TauCeti.ValuationSpectrum.supp_ofValuation",
-      "TauCeti.ValuationSpectrum.valuation",
-      "TauCeti.ValuationSpectrum.valuation_le_iff",
-      "TauCeti.ValuationSpectrum.valuation_lt_iff",
-      "TauCeti.ValuationSpectrum.supp_eq_valuation_supp",
-      "TauCeti.ValuationSpectrum.ofValuation_valuation",
-      "TauCeti.ValuationSpectrum.isEquiv_valuation_ofValuation",
-      "TauCeti.ValuationSpectrum.self_le_supp_comap",
-      "TauCeti.ValuationSpectrum.quotientLift",
-      "TauCeti.ValuationSpectrum.comap_quotientLift",
-      "TauCeti.ValuationSpectrum.quotientLift_comap",
-      "TauCeti.ValuationSpectrum.quotientMk_comap_range",
-      "TauCeti.ValuationSpectrum.isEmbedding_comap_quotientMk",
-      "TauCeti.ValuationSpectrum.localizationComapSection",
-      "TauCeti.ValuationSpectrum.comap_localizationComapSection",
-      "TauCeti.ValuationSpectrum.submonoid_le_supp_primeCompl_comap_algebraMap",
-      "TauCeti.ValuationSpectrum.localization_comap_range",
-      "TauCeti.ValuationSpectrum.suppFun",
-      "TauCeti.ValuationSpectrum.suppFun_asIdeal",
-      "TauCeti.ValuationSpectrum.suppFun_preimage_basicOpen",
-      "TauCeti.ValuationSpectrum.continuous_suppFun",
-      "TauCeti.ValuationSpectrum.suppFun_comap",
-      "TauCeti.ValuationSpectrum.trivialSection",
-      "TauCeti.ValuationSpectrum.trivialSection_vle_iff",
-      "TauCeti.ValuationSpectrum.suppFun_trivialSection",
-      "TauCeti.ValuationSpectrum.trivialSection_preimage_basicOpen",
-      "TauCeti.ValuationSpectrum.continuous_trivialSection",
-      "TauCeti.ValuationSpectrum.suppFun_surjective",
-      "TauCeti.ValuationSpectrum.basicOpenFinset",
-      "TauCeti.ValuationSpectrum.mem_basicOpenFinset_iff",
-      "TauCeti.ValuationSpectrum.basicOpenFinset_subset_basicOpen",
-      "TauCeti.ValuationSpectrum.basicOpenFinset_eq_biInter",
-      "TauCeti.ValuationSpectrum.isOpen_basicOpenFinset",
-      "TauCeti.ValuationSpectrum.basicOpenFinset_insert_self",
-      "TauCeti.ValuationSpectrum.basicOpenFinset_inter"
     ]
   },
   {
-    "note": "Exact theorem from open mathlib4#38009",
+    "note": "Exact theorem from mathlib4#38009 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/38009",
     "sources": [
       "TauCeti/RingTheory/Valuation/ValuativeRel/Basic.lean"
     ],
     "declarations": [
       "ValuativeRel.not_vle_zero_of_isUnit"
-    ],
-    "local_declarations": [
-      "TauCeti.ValuativeRel.not_vle_zero_of_isUnit"
     ]
   },
   {
-    "note": "Exact comap API from open mathlib4#38009",
+    "note": "Exact comap API from mathlib4#38009 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/38009",
     "sources": [
       "TauCeti/RingTheory/Valuation/ValuativeRel/Comap.lean"
     ],
@@ -358,13 +172,6 @@
     ],
     "modules": [
       "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"
-    ],
-    "local_declarations": [
-      "TauCeti.ValuativeRel.comap",
-      "TauCeti.ValuativeRel.comap_vle",
-      "TauCeti.ValuativeRel.comap_vlt",
-      "TauCeti.ValuativeRel.comap_id",
-      "TauCeti.ValuativeRel.comap_comp"
     ]
   }
 ]

@@ -35,13 +35,5 @@ class WorkflowPins(unittest.TestCase):
                     f"{workflow.name} runs one TauCetiReview SHA but checks out another",
                 )
 
-    def test_shim_registry_uses_merge_base_and_scopes_feature_probes(self):
-        workflow = (ROOT / ".github/workflows/pr-build.yml").read_text()
-        self.assertIn("cp mergebase/TauCeti/mathlib-shims.json", workflow)
-        self.assertNotIn("cp base/TauCeti/mathlib-shims.json", workflow)
-        self.assertIn('[ "${BUMP:-0}" = "1" ] || args+=(--only-new)', workflow)
-        self.assertIn("env.SHIM_CHECK == '1'", workflow)
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """Report tracked Tau Ceti shims whose replacement exists in pinned Mathlib.
 
-The registry in ``TauCeti/mathlib-shims.json`` is AI-owned metadata kept out of module docstrings.
-Each entry names one or more Tau Ceti source files and a concrete Mathlib declaration or module.
-Exact replacements and broader landing sentinels carry different guidance. The default invocation
-is report-only; ``--fail-on-available`` turns an exact finding into an autonomous PR gate that
-hands the source or bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean
-environment is always an infrastructure error.
+The registry in ``TauCeti/mathlib-shims.json`` is AI-owned metadata kept out of module docstrings;
+its schema and blocking policy are documented in ``docs/mathlib-shim-registry.md``. Exact
+replacements and broader landing sentinels carry different guidance. The default invocation is
+report-only; ``--fail-on-available`` turns an exact finding into an autonomous PR gate that hands
+the source or bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean environment
+is always an infrastructure error.
 """
 
 from __future__ import annotations
 
 import argparse
 import dataclasses
-import functools
-import importlib.util
 import json
 import os
 import pathlib
@@ -22,6 +20,8 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable, Sequence
+
+from lean_source import qualified_declarations, strip_comments_and_strings
 
 
 DECLARATION = re.compile(r"[^\W\d][\w']*(?:\.[^\W\d][\w']*)*")
@@ -54,7 +54,6 @@ class ShimGroup:
     note: str
     speculative: bool = False
     landing_sentinel: bool = False
-    local_declarations: tuple[str, ...] = ()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -77,7 +76,7 @@ def _string_list(value: object, field: str, entry: int) -> tuple[str, ...]:
 def load_registry(
     path: pathlib.Path, repo_root: pathlib.Path, *, require_sources: bool = True
 ) -> tuple[ShimGroup, ...]:
-    """Read and validate the shim registry, including every tracked source path."""
+    """Validate schema and paths; use ``require_sources=False`` for a historical base registry."""
 
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -94,14 +93,11 @@ def load_registry(
         sources_raw = _string_list(item.get("sources"), "sources", index)
         declarations = _string_list(item.get("declarations", []), "declarations", index)
         modules = _string_list(item.get("modules", []), "modules", index)
-        local_declarations = _string_list(
-            item.get("local_declarations", []), "local_declarations", index
-        )
         note = item.get("note", "")
         speculative = item.get("speculative", False)
         landing_sentinel = item.get("landing_sentinel", False)
-        if not isinstance(note, str):
-            raise ValueError(f"entry {index}: note must be a string")
+        if not isinstance(note, str) or not note.strip():
+            raise ValueError(f"entry {index}: note must be a non-empty string")
         if not isinstance(speculative, bool):
             raise ValueError(f"entry {index}: speculative must be a boolean")
         if not isinstance(landing_sentinel, bool):
@@ -113,9 +109,6 @@ def load_registry(
         for declaration in declarations:
             if DECLARATION.fullmatch(declaration) is None:
                 raise ValueError(f"entry {index}: invalid declaration name {declaration!r}")
-        for declaration in local_declarations:
-            if DECLARATION.fullmatch(declaration) is None:
-                raise ValueError(f"entry {index}: invalid local declaration name {declaration!r}")
         for module in modules:
             if MODULE.fullmatch(module) is None:
                 raise ValueError(f"entry {index}: invalid Mathlib module name {module!r}")
@@ -132,14 +125,8 @@ def load_registry(
                 raise ValueError(f"entry {index}: tracked source does not exist: {source}")
             seen_sources.add(source)
             sources.append(source)
-        if (declarations or modules) and not speculative and not landing_sentinel \
-                and not local_declarations:
-            raise ValueError(
-                f"entry {index}: exact probes require local_declarations"
-            )
         groups.append(ShimGroup(
             tuple(sources), declarations, modules, note, speculative, landing_sentinel,
-            local_declarations,
         ))
     return tuple(groups)
 
@@ -182,91 +169,26 @@ def validate_registry_coverage(groups: Sequence[ShimGroup], source_root: pathlib
         )
 
 
-def validate_local_declarations(groups: Sequence[ShimGroup], repo_root: pathlib.Path) -> None:
-    """Require every ratchet key to name a declaration in its registered sources."""
-
-    invalid: list[tuple[ShimGroup, tuple[str, ...]]] = []
-    for group in groups:
-        declared: set[str] = set()
-        for source in group.sources:
-            declared.update(source_declarations(repo_root / source))
-        missing = tuple(sorted(set(group.local_declarations) - declared))
-        if missing:
-            invalid.append((group, missing))
-    if invalid:
-        rendered = "\n".join(
-            f"  {', '.join(map(str, group.sources))}: {', '.join(missing)}"
-            for group, missing in invalid
-        )
-        raise ValueError(
-            "registered local_declarations are absent from their tracked sources:\n"
-            f"{rendered}"
-        )
-
-
 def groups_by_source(groups: Sequence[ShimGroup]) -> dict[pathlib.Path, ShimGroup]:
     """Expand registry groups into their unique source-file keys."""
 
     return {source: group for group in groups for source in group.sources}
 
 
-@functools.cache
-def lean_source_parser():
-    """Load the trusted command-level Lean parser shared with the dot-notation lint."""
-
-    path = pathlib.Path(__file__).with_name("lint-dot-notation.py")
-    spec = importlib.util.spec_from_file_location("tauceti_lint_dot_notation", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"could not load Lean source parser: {path}")
-    parser = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = parser
-    spec.loader.exec_module(parser)
-    return parser
-
-
 def source_declarations(path: pathlib.Path) -> set[str]:
     """Return fully qualified command-level declaration names from one Lean source."""
 
-    parser = lean_source_parser()
     text = path.read_text(encoding="utf-8")
-    code = parser.strip_comments_and_strings(text)
-    events: list[tuple[int, str, object]] = [
-        (position, "scope", (kind, name)) for position, kind, name in parser.scopes(text)
-    ]
-    events.extend(
-        (declaration.position, "declaration", declaration)
-        for declaration in parser.declarations(text)
-    )
-    events.extend(
-        (match.start(), "compatibility", match.group("name"))
+    code = strip_comments_and_strings(text)
+    extra_declarations = (
+        (match.start(), match.group("name"))
         for match in re.finditer(
             r"(?m)^\s*(?:public\s+|private\s+|protected\s+)?(?:alias|axiom)\s+"
             r"(?P<name>[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*)",
             code,
         )
     )
-    events.sort(key=lambda event: event[0])
-    stack: list[object] = []
-    found: set[str] = set()
-    for _, kind, payload in events:
-        if kind == "scope":
-            scope_kind, name = payload
-            parser._update_scope(stack, scope_kind, name)
-            continue
-        if kind == "compatibility":
-            declaration_name = payload
-        else:
-            declaration = payload
-            if declaration.name is None:
-                continue
-            declaration_name = declaration.name
-        namespaces = [component for scope in stack for component in scope.components]
-        if declaration_name.startswith("_root_."):
-            parts = declaration_name.removeprefix("_root_.").split(".")
-        else:
-            parts = [*namespaces, *declaration_name.split(".")]
-        found.add(".".join(parts))
-    return found
+    return qualified_declarations(text, extra_declarations=extra_declarations)
 
 
 def tree_declarations(source_root: pathlib.Path) -> set[str]:
@@ -279,39 +201,63 @@ def tree_declarations(source_root: pathlib.Path) -> set[str]:
 
 
 def validate_registry_ratchet(
-    groups: Sequence[ShimGroup], base_groups: Sequence[ShimGroup], repo_root: pathlib.Path
+    groups: Sequence[ShimGroup], base_groups: Sequence[ShimGroup], repo_root: pathlib.Path,
+    base_root: pathlib.Path,
 ) -> None:
-    """Keep a base obligation until its registered local shim surface is removed."""
+    """Keep inherited probes while their base source surface remains tracked or live."""
 
     current = groups_by_source(groups)
     weakened: list[pathlib.Path] = []
     declared: set[str] | None = None
-    for source, base in groups_by_source(base_groups).items():
-        candidate = current.get(source)
-        flags_weakened = candidate is not None and (
+    current_surfaces: dict[pathlib.Path, set[str]] = {}
+
+    def covers(candidate: ShimGroup, base: ShimGroup) -> bool:
+        flags_preserved = not (
             (not base.speculative and candidate.speculative)
             or (not base.landing_sentinel and candidate.landing_sentinel)
         )
-        probes_weakened = candidate is None or (
-            not set(base.declarations) <= set(candidate.declarations)
-            or not set(base.modules) <= set(candidate.modules)
+        probes_preserved = (
+            set(base.declarations) <= set(candidate.declarations)
+            and set(base.modules) <= set(candidate.modules)
         )
-        if flags_weakened:
-            weakened.append(source)
-        elif probes_weakened:
-            if not base.local_declarations:
+        return flags_preserved and probes_preserved
+
+    def current_surface(source: pathlib.Path) -> set[str]:
+        if source not in current_surfaces:
+            path = repo_root / source
+            current_surfaces[source] = source_declarations(path) if path.is_file() else set()
+        return current_surfaces[source]
+
+    for base in base_groups:
+        rehomed_surface: set[str] | None = None
+        for source in base.sources:
+            candidate = current.get(source)
+            if candidate is not None and covers(candidate, base):
+                continue
+            if (repo_root / source).is_file():
                 weakened.append(source)
                 continue
+            base_path = base_root / source
+            if not base_path.is_file():
+                raise ValueError(f"base registry source does not exist under --base-root: {source}")
             if declared is None:
                 declared = tree_declarations(repo_root / "TauCeti")
-            if declared.intersection(base.local_declarations):
+            live_surface = source_declarations(base_path).intersection(declared)
+            if live_surface and rehomed_surface is None:
+                covering_groups = tuple(candidate for candidate in groups if covers(candidate, base))
+                rehomed_surface = set().union(*(
+                    current_surface(current_source)
+                    for candidate in covering_groups
+                    for current_source in candidate.sources
+                )) if covering_groups else set()
+            if live_surface and not live_surface <= rehomed_surface:
                 weakened.append(source)
     if weakened:
         rendered = "\n".join(f"  {source}" for source in sorted(weakened))
         raise ValueError(
-            "base shim obligations were weakened while their registered local surface remains; "
-            "migrate the local declarations (or delete/re-home a file-wide module shim) before "
-            "removing its probes or changing it to an audit-only sentinel:\n"
+            "base shim obligations were weakened while their inherited source surface remains; "
+            "migrate/delete that surface, or re-home it under an entry preserving the probes, "
+            "before removing probes or changing an exact entry to an audit-only sentinel:\n"
             f"{rendered}"
         )
 
@@ -327,7 +273,6 @@ def only_new_or_changed_groups(
             group.modules,
             group.speculative,
             group.landing_sentinel,
-            group.local_declarations,
         )
 
     base = groups_by_source(base_groups)
@@ -488,6 +433,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--manifest", type=pathlib.Path)
     parser.add_argument("--base-manifest", type=pathlib.Path,
                         help="trusted base registry whose live obligations may not be weakened")
+    parser.add_argument("--base-root", type=pathlib.Path,
+                        help="checkout containing --base-manifest's inherited source files")
     parser.add_argument("--mathlib-root", type=pathlib.Path)
     parser.add_argument("--lake-root", type=pathlib.Path)
     parser.add_argument("--coverage-only", action="store_true",
@@ -508,7 +455,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         groups = load_registry(manifest, repo_root)
         validate_registry_coverage(groups, repo_root / "TauCeti")
-        validate_local_declarations(groups, repo_root)
         base_groups: tuple[ShimGroup, ...] = ()
         if args.base_manifest is not None:
             if not args.base_manifest.is_file():
@@ -516,7 +462,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             base_groups = load_registry(
                 args.base_manifest.resolve(), repo_root, require_sources=False
             )
-            validate_registry_ratchet(groups, base_groups, repo_root)
+            base_root = (args.base_root or repo_root).resolve()
+            validate_registry_ratchet(groups, base_groups, repo_root, base_root)
         if args.coverage_only:
             print("check-expired-mathlib-shims: registry covers all self-declared shims")
             return 0
