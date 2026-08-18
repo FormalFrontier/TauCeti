@@ -76,23 +76,41 @@ def quotientProdEquiv (p : Submodule R M) (q : Submodule R N) :
     (QuotientAddGroup.prodAddEquiv p.toAddSubgroup q.toAddSubgroup)
     (by rintro r ⟨x⟩; rfl)
 
-@[simp]
-theorem quotientProdEquiv_mk (p : Submodule R M) (q : Submodule R N) (x : M × N) :
-    quotientProdEquiv p q (Submodule.Quotient.mk x) =
-      (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2) :=
-  by
+/- `Submodule.Quotient` is definitionally the corresponding additive quotient, but their inferred
+additive structures are not interchangeable at rewrite transparency. Mathlib therefore has no
+typed equality that directly transports the two `prodAddEquiv` computation lemmas to submodule
+quotients. Isolate that unavoidable definitional conversion here, once for both directions; the
+public lemmas below depend only on this named bridge. -/
+private theorem quotientProdEquiv_mk_bridge (p : Submodule R M) (q : Submodule R N) :
+    (∀ x : M × N,
+      quotientProdEquiv p q (Submodule.Quotient.mk x) =
+        (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2)) ∧
+    (∀ (x : M) (y : N),
+      (quotientProdEquiv p q).symm (Submodule.Quotient.mk x, Submodule.Quotient.mk y) =
+        Submodule.Quotient.mk (x, y)) := by
+  constructor
+  · intro x
     convert QuotientAddGroup.prodAddEquiv_apply p.toAddSubgroup q.toAddSubgroup
       (Quotient.mk'' x) using 1 <;> rfl
-
-@[simp]
-theorem quotientProdEquiv_symm_mk (p : Submodule R M) (q : Submodule R N) (x : M) (y : N) :
-    (quotientProdEquiv p q).symm (Submodule.Quotient.mk x, Submodule.Quotient.mk y) =
-      Submodule.Quotient.mk (x, y) :=
-  by
+  · intro x y
     convert QuotientAddGroup.prodAddEquiv_symm_apply p.toAddSubgroup q.toAddSubgroup
       (Quotient.mk'' x, Quotient.mk'' y) using 1 <;> rfl
 
+@[simp]
+theorem quotientProdEquiv_apply_mk (p : Submodule R M) (q : Submodule R N) (x : M × N) :
+    quotientProdEquiv p q (Submodule.Quotient.mk x) =
+      (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2) :=
+  (quotientProdEquiv_mk_bridge p q).1 x
+
+@[simp]
+theorem quotientProdEquiv_symm_apply_mk
+    (p : Submodule R M) (q : Submodule R N) (x : M) (y : N) :
+    (quotientProdEquiv p q).symm (Submodule.Quotient.mk x, Submodule.Quotient.mk y) =
+      Submodule.Quotient.mk (x, y) :=
+  (quotientProdEquiv_mk_bridge p q).2 x y
+
 /-- The quotient by a product of submodules has rank the sum of the two quotients' ranks. -/
+@[simp]
 theorem finrank_quotient_prod {R M N : Type*} [DivisionRing R] [AddCommGroup M] [AddCommGroup N]
     [Module R M] [Module R N] (p : Submodule R M) (q : Submodule R N)
     [FiniteDimensional R (M ⧸ p)] [FiniteDimensional R (N ⧸ q)] :

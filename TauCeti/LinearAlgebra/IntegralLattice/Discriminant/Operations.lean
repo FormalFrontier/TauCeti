@@ -8,6 +8,7 @@ module
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.OrthogonalSum
 public import TauCeti.LinearAlgebra.IntegralLattice.Scaling
+public import TauCeti.LinearAlgebra.Quotient.Prod
 
 /-!
 # Discriminant forms under orthogonal sums and negation
@@ -127,23 +128,6 @@ theorem map_carrierInDual_orthogonalSum (L : IntegralLattice V) (M : IntegralLat
   rw [orthogonalSum_carrier, Submodule.mem_prod]
   rfl
 
-private def quotientProdLinearEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
-    ((L.dualCarrier × M.dualCarrier) ⧸
-        L.carrierInDual.prod M.carrierInDual) ≃ₗ[ℤ]
-      L.DiscriminantGroup × M.DiscriminantGroup :=
-  { QuotientAddGroup.prodAddEquiv L.carrierInDual.toAddSubgroup
-      M.carrierInDual.toAddSubgroup with
-    map_smul' := fun n x ↦ by
-      exact map_zsmul
-        (QuotientAddGroup.prodAddEquiv L.carrierInDual.toAddSubgroup
-          M.carrierInDual.toAddSubgroup) n x }
-
-private theorem quotientProdLinearEquiv_mk (L : IntegralLattice V) (M : IntegralLattice W)
-    (x : L.dualCarrier × M.dualCarrier) :
-    L.quotientProdLinearEquiv M (Submodule.Quotient.mk x) =
-      (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2) := by
-  rfl
-
 /-- The discriminant group of an orthogonal sum is canonically the product of the discriminant
 groups of its summands. -/
 def discriminantGroupOrthogonalSumEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -151,7 +135,8 @@ def discriminantGroupOrthogonalSumEquiv (L : IntegralLattice V) (M : IntegralLat
       L.DiscriminantGroup × M.DiscriminantGroup :=
   (Submodule.Quotient.equiv (L.orthogonalSum M).carrierInDual
       (L.carrierInDual.prod M.carrierInDual) (L.orthogonalSumDualCarrierEquiv M)
-      (L.map_carrierInDual_orthogonalSum M)).trans (quotientProdLinearEquiv L M)
+      (L.map_carrierInDual_orthogonalSum M)).trans
+    (Submodule.quotientProdEquiv L.carrierInDual M.carrierInDual)
 
 /-- The orthogonal-sum discriminant-group equivalence maps a representative to the pair of its
 component classes. -/
@@ -163,7 +148,7 @@ theorem discriminantGroupOrthogonalSumEquiv_mk (L : IntegralLattice V) (M : Inte
         Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).2) := by
   rw [discriminantGroupOrthogonalSumEquiv, LinearEquiv.trans_apply]
   rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply,
-    quotientProdLinearEquiv_mk]
+    Submodule.quotientProdEquiv_apply_mk]
   congr 1
 
 /-- The product equivalence of discriminant groups is an isometry from the discriminant pairing
