@@ -68,12 +68,6 @@ namespace ConflationCategory
 
 variable {E : ExactStructure C}
 
-/-- Construct an object of the conflation category from a distinguished short complex. -/
-def mk (S : ShortComplex C) (hS : E.Conflation S) : E.ConflationCategory := ⟨S, hS⟩
-
-@[simp]
-theorem mk_obj (S : ShortComplex C) (hS : E.Conflation S) : (mk S hS).obj = S := (rfl)
-
 /-- The fully faithful inclusion of the category of conflations into the category of short
 complexes. -/
 abbrev ι (E : ExactStructure C) : E.ConflationCategory ⥤ ShortComplex C :=
@@ -92,124 +86,44 @@ abbrev π₃ (E : ExactStructure C) : E.ConflationCategory ⥤ C :=
   ι E ⋙ ShortComplex.π₃
 
 /-- The first arrow of every conflation, as a natural transformation. -/
-def f (E : ExactStructure C) : π₁ E ⟶ π₂ E where
-  app S := S.obj.f
-  naturality := fun {S T} φ ↦ by
-    -- Unwrap the induced-category morphism to use the first square of the short-complex map.
-    change φ.hom.τ₁ ≫ T.obj.f = S.obj.f ≫ φ.hom.τ₂
-    exact φ.hom.comm₁₂
-
-@[simp]
-theorem f_app (E : ExactStructure C) (S : E.ConflationCategory) : (f E).app S = S.obj.f :=
-  (rfl)
+abbrev f (E : ExactStructure C) : π₁ E ⟶ π₂ E :=
+  Functor.whiskerLeft (ι E) ShortComplex.π₁Toπ₂
 
 /-- The second arrow of every conflation, as a natural transformation. -/
-def g (E : ExactStructure C) : π₂ E ⟶ π₃ E where
-  app S := S.obj.g
-  naturality := fun {S T} φ ↦ by
-    -- Unwrap the induced-category morphism to use the second square of the short-complex map.
-    change φ.hom.τ₂ ≫ T.obj.g = S.obj.g ≫ φ.hom.τ₃
-    exact φ.hom.comm₂₃
-
-@[simp]
-theorem g_app (E : ExactStructure C) (S : E.ConflationCategory) : (g E).app S = S.obj.g :=
-  (rfl)
+abbrev g (E : ExactStructure C) : π₂ E ⟶ π₃ E :=
+  Functor.whiskerLeft (ι E) ShortComplex.π₂Toπ₃
 
 /-- The two natural transformations carried by the universal conflation compose to zero. -/
 @[reassoc (attr := simp)]
 theorem f_comp_g (E : ExactStructure C) : f E ≫ g E = 0 := by
+  rw [← Functor.whiskerLeft_comp, ShortComplex.π₁Toπ₂_comp_π₂Toπ₃]
   ext S
-  -- Evaluation of the natural transformations leaves the underlying short-complex equation.
-  change S.obj.f ≫ S.obj.g = 0
-  exact S.obj.zero
-
-/-- A conflation is, in particular, a kernel--cokernel pair. -/
-theorem isKernelCokernelPair (S : E.ConflationCategory) : IsKernelCokernelPair S.obj :=
-  E.isKernelCokernelPair S.obj S.property
-
-/-- The first arrow of a conflation is an inflation. -/
-theorem isInflation_f (S : E.ConflationCategory) : E.IsInflation S.obj.f :=
-  E.isInflation_f S.property
-
-/-- The second arrow of a conflation is a deflation. -/
-theorem isDeflation_g (S : E.ConflationCategory) : E.IsDeflation S.obj.g :=
-  E.isDeflation_g S.property
+  simp
 
 /-- The first arrow of a conflation is a monomorphism. -/
 instance mono_f (S : E.ConflationCategory) : Mono S.obj.f :=
-  S.isKernelCokernelPair.mono_f
+  (E.isKernelCokernelPair S.obj S.property).mono_f
 
 /-- The second arrow of a conflation is an epimorphism. -/
 instance epi_g (S : E.ConflationCategory) : Epi S.obj.g :=
-  S.isKernelCokernelPair.epi_g
+  (E.isKernelCokernelPair S.obj S.property).epi_g
 
 /-- Construct a morphism of conflations from three maps making the two squares commute. -/
+@[expose, simps!]
 def homMk {S T : E.ConflationCategory} (τ₁ : S.obj.X₁ ⟶ T.obj.X₁)
     (τ₂ : S.obj.X₂ ⟶ T.obj.X₂) (τ₃ : S.obj.X₃ ⟶ T.obj.X₃)
     (comm₁₂ : τ₁ ≫ T.obj.f = S.obj.f ≫ τ₂ := by cat_disch)
     (comm₂₃ : τ₂ ≫ T.obj.g = S.obj.g ≫ τ₃ := by cat_disch) : S ⟶ T :=
   ObjectProperty.homMk (ShortComplex.homMk τ₁ τ₂ τ₃ comm₁₂ comm₂₃)
 
-@[simp]
-theorem homMk_hom_τ₁ {S T : E.ConflationCategory} (τ₁ : S.obj.X₁ ⟶ T.obj.X₁)
-    (τ₂ : S.obj.X₂ ⟶ T.obj.X₂) (τ₃ : S.obj.X₃ ⟶ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (homMk τ₁ τ₂ τ₃ comm₁₂ comm₂₃).hom.τ₁ = τ₁ := (rfl)
-
-@[simp]
-theorem homMk_hom_τ₂ {S T : E.ConflationCategory} (τ₁ : S.obj.X₁ ⟶ T.obj.X₁)
-    (τ₂ : S.obj.X₂ ⟶ T.obj.X₂) (τ₃ : S.obj.X₃ ⟶ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (homMk τ₁ τ₂ τ₃ comm₁₂ comm₂₃).hom.τ₂ = τ₂ := (rfl)
-
-@[simp]
-theorem homMk_hom_τ₃ {S T : E.ConflationCategory} (τ₁ : S.obj.X₁ ⟶ T.obj.X₁)
-    (τ₂ : S.obj.X₂ ⟶ T.obj.X₂) (τ₃ : S.obj.X₃ ⟶ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (homMk τ₁ τ₂ τ₃ comm₁₂ comm₂₃).hom.τ₃ = τ₃ := (rfl)
-
-/-- Two morphisms of conflations are equal when their three components are equal. -/
-@[ext]
-theorem hom_ext {S T : E.ConflationCategory} (a b : S ⟶ T)
-    (h₁ : a.hom.τ₁ = b.hom.τ₁) (h₂ : a.hom.τ₂ = b.hom.τ₂)
-    (h₃ : a.hom.τ₃ = b.hom.τ₃) : a = b := by
-  apply ObjectProperty.hom_ext
-  exact ShortComplex.hom_ext _ _ h₁ h₂ h₃
-
 /-- Construct an isomorphism of conflations from compatible isomorphisms of the three terms. -/
+@[expose, simps!]
 def isoMk {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
     (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃)
     (comm₁₂ : e₁.hom ≫ T.obj.f = S.obj.f ≫ e₂.hom := by cat_disch)
     (comm₂₃ : e₂.hom ≫ T.obj.g = S.obj.g ≫ e₃.hom := by cat_disch) : S ≅ T :=
   ObjectProperty.isoMk (fun S : ShortComplex C ↦ E.Conflation S)
     (ShortComplex.isoMk e₁ e₂ e₃ comm₁₂ comm₂₃)
-
-@[simp]
-theorem isoMk_hom_hom_τ₁ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
-    (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (isoMk e₁ e₂ e₃ comm₁₂ comm₂₃).hom.hom.τ₁ = e₁.hom := (rfl)
-
-@[simp]
-theorem isoMk_hom_hom_τ₂ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
-    (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (isoMk e₁ e₂ e₃ comm₁₂ comm₂₃).hom.hom.τ₂ = e₂.hom := (rfl)
-
-@[simp]
-theorem isoMk_hom_hom_τ₃ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
-    (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (isoMk e₁ e₂ e₃ comm₁₂ comm₂₃).hom.hom.τ₃ = e₃.hom := (rfl)
-
-@[simp]
-theorem isoMk_inv_hom_τ₁ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
-    (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (isoMk e₁ e₂ e₃ comm₁₂ comm₂₃).inv.hom.τ₁ = e₁.inv := (rfl)
-
-@[simp]
-theorem isoMk_inv_hom_τ₂ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
-    (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (isoMk e₁ e₂ e₃ comm₁₂ comm₂₃).inv.hom.τ₂ = e₂.inv := (rfl)
-
-@[simp]
-theorem isoMk_inv_hom_τ₃ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ T.obj.X₁)
-    (e₂ : S.obj.X₂ ≅ T.obj.X₂) (e₃ : S.obj.X₃ ≅ T.obj.X₃) (comm₁₂) (comm₂₃) :
-    (isoMk e₁ e₂ e₃ comm₁₂ comm₂₃).inv.hom.τ₃ = e₃.inv := (rfl)
 
 /-- A morphism of conflations is an isomorphism exactly when its three components are
 isomorphisms. -/
@@ -227,57 +141,27 @@ variable {E' : ExactStructure D} {F G : C ⥤ D}
 /-- A conflation-exact functor induces a functor between the corresponding categories of
 conflations. -/
 def map [F.Additive] (hF : E.IsConflationExact E' F) :
-    E.ConflationCategory ⥤ E'.ConflationCategory where
-  obj S := mk (S.obj.map F) (hF.map_conflation S.property)
-  map a := ObjectProperty.homMk (F.mapShortComplex.map a.hom)
-
-@[simp]
-theorem map_obj_obj [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : ((map hF).obj S).obj = S.obj.map F := (rfl)
+    E.ConflationCategory ⥤ E'.ConflationCategory :=
+  ObjectProperty.lift _ (ι E ⋙ F.mapShortComplex) fun S ↦ hF.map_conflation S.property
 
 /-- After forgetting that its objects are conflations, the induced functor is the ordinary
 componentwise map on short complexes. -/
 def mapCompιIso [F.Additive] (hF : E.IsConflationExact E' F) :
     map hF ⋙ ι E' ≅ ι E ⋙ F.mapShortComplex :=
-  Iso.refl _
+  ObjectProperty.liftCompιIso _ _ _
 
 /-- The functor on conflations induced by the identity functor is naturally isomorphic to the
 identity. -/
 def mapIdIso : map (ExactStructure.IsConflationExact.id (E := E)) ≅
     Functor.id E.ConflationCategory :=
-  NatIso.ofComponents (fun S ↦
-    ObjectProperty.isoMk (fun T : ShortComplex C ↦ E.Conflation T) (Iso.refl S.obj))
-    (by
-      intro S T a
-      apply ObjectProperty.hom_ext
-      apply ShortComplex.hom_ext
-      -- The two functors agree componentwise after forgetting the conflation proofs.
-      · change (Functor.id C).map a.hom.τ₁ ≫ 𝟙 _ = 𝟙 _ ≫ a.hom.τ₁
-        simp
-      · change (Functor.id C).map a.hom.τ₂ ≫ 𝟙 _ = 𝟙 _ ≫ a.hom.τ₂
-        simp
-      · change (Functor.id C).map a.hom.τ₃ ≫ 𝟙 _ = 𝟙 _ ≫ a.hom.τ₃
-        simp)
+  Iso.refl _
 
 /-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
 def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H) :
     map (hF.comp hH) ≅ map hF ⋙ map hH :=
-  NatIso.ofComponents (fun S ↦
-    ObjectProperty.isoMk (fun T : ShortComplex K ↦ E''.Conflation T)
-      (Iso.refl ((S.obj.map F).map H)))
-    (by
-      intro S T a
-      apply ObjectProperty.hom_ext
-      apply ShortComplex.hom_ext
-      -- The two functors agree componentwise after forgetting the conflation proofs.
-      · change (F ⋙ H).map a.hom.τ₁ ≫ 𝟙 _ = 𝟙 _ ≫ H.map (F.map a.hom.τ₁)
-        simp
-      · change (F ⋙ H).map a.hom.τ₂ ≫ 𝟙 _ = 𝟙 _ ≫ H.map (F.map a.hom.τ₂)
-        simp
-      · change (F ⋙ H).map a.hom.τ₃ ≫ 𝟙 _ = 𝟙 _ ≫ H.map (F.map a.hom.τ₃)
-        simp)
+  Iso.refl _
 
 /-- A natural isomorphism between conflation-exact functors induces a natural isomorphism between
 their functors on conflations. -/
@@ -307,30 +191,22 @@ section Opposite
 /-- Taking opposites sends a conflation contravariantly to a conflation in the opposite exact
 structure. -/
 noncomputable def opFunctor (E : ExactStructure C) :
-    E.ConflationCategoryᵒᵖ ⥤ E.op.ConflationCategory where
-  obj S := mk S.unop.obj.op ((E.op_conflation_op_iff S.unop.obj).mpr S.unop.property)
-  map a := ObjectProperty.homMk (ShortComplex.opMap a.unop.hom)
-
-@[simp]
-theorem opFunctor_obj_obj (E : ExactStructure C) (S : E.ConflationCategoryᵒᵖ) :
-    ((opFunctor E).obj S).obj = S.unop.obj.op := (rfl)
+    E.ConflationCategoryᵒᵖ ⥤ E.op.ConflationCategory :=
+  ObjectProperty.lift _ ((ι E).op ⋙ ShortComplex.opFunctor C)
+    fun S ↦ (E.op_conflation_op_iff S.unop.obj).mpr S.unop.property
 
 /-- Forgetting the conflation proof after taking opposites recovers Mathlib's opposite functor on
 short complexes. -/
 noncomputable def opFunctorCompιIso (E : ExactStructure C) :
     opFunctor E ⋙ ι E.op ≅ (ι E).op ⋙ ShortComplex.opFunctor C :=
-  Iso.refl _
+  ObjectProperty.liftCompιIso _ _ _
 
 /-- Un-oppositing sends a conflation in the opposite exact structure contravariantly back to the
 original conflation category. -/
 noncomputable def unopFunctor (E : ExactStructure C) :
-    E.op.ConflationCategory ⥤ E.ConflationCategoryᵒᵖ where
-  obj S := Opposite.op (mk S.obj.unop ((E.op_conflation S.obj).mp S.property))
-  map a := (ObjectProperty.homMk (ShortComplex.unopMap a.hom)).op
-
-@[simp]
-theorem unopFunctor_obj_unop_obj (E : ExactStructure C) (S : E.op.ConflationCategory) :
-    ((unopFunctor E).obj S).unop.obj = S.obj.unop := (rfl)
+    E.op.ConflationCategory ⥤ E.ConflationCategoryᵒᵖ :=
+  (ObjectProperty.lift _ (ι E.op ⋙ ShortComplex.unopFunctor C).leftOp
+    fun S ↦ (E.op_conflation S.unop.obj).mp S.unop.property).rightOp
 
 /-- Forgetting the conflation proof after un-oppositing recovers Mathlib's un-opposite functor on
 short complexes. -/
