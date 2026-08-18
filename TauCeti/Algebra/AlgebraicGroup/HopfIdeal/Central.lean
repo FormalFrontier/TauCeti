@@ -96,15 +96,6 @@ theorem isCentral_iSup_of_isCentral {ι : Sort*} {I : ι → HopfIdeal R H} {j :
     (hj : (I j).IsCentral) : (⨆ i, I i).IsCentral :=
   hj.mono (le_sSup (Set.mem_range_self j))
 
-/-- The coordinate morphism of conjugation, as a point, written with the underlying algebra maps
-of the two tensor-factor inclusions. -/
-private theorem toConv_conjugationAlgHom' :
-    toConv (HopfAlgebra.conjugationAlgHom (R := R) (H := H)) =
-      toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
-          toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) *
-        (toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)))⁻¹ := by
-  simpa using HopfAlgebra.toConv_conjugationAlgHom (R := R) (H := H)
-
 /-- **The whole group is central exactly when its coordinate Hopf algebra is cocommutative.**
 The zero Hopf ideal cuts out all of `Spec H`, so its centrality says that conjugation is trivial,
 which for the convolution group of points is commutativity. -/
@@ -125,13 +116,20 @@ theorem isCentral_bot_iff_isCocomm :
     rw [he]
     simp
   rw [hiff]
+  have hconj :
+      toConv (HopfAlgebra.conjugationAlgHom (R := R) (H := H)) =
+        toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
+            toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) *
+          (toConv
+            (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)))⁻¹ := by
+    simpa using HopfAlgebra.toConv_conjugationAlgHom (R := R) (H := H)
   constructor
   · intro he
     refine mul_inv_eq_iff_eq_mul.mp ?_
-    rw [← toConv_conjugationAlgHom', he]
+    rw [← hconj, he]
   · intro hc
     exact WithConv.toConv_injective
-      ((toConv_conjugationAlgHom').trans (mul_inv_eq_iff_eq_mul.mpr hc))
+      (hconj.trans (mul_inv_eq_iff_eq_mul.mpr hc))
 
 end HopfIdeal
 

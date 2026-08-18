@@ -218,15 +218,6 @@ private theorem comm_toAlgHom_comp_includeRight :
   ext x
   simp
 
-/-- The convolution product of the two tensor-factor points of `H` is the comultiplication.
-This is `TauCeti.Bialgebra.comulPoint_eq_include_mul` with the bialgebra inclusions replaced by
-their underlying algebra maps. -/
-theorem convMul_includeLeft_includeRight :
-    toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
-        toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) =
-      toConv (_root_.Bialgebra.comulAlgHom R H) := by
-  simpa using (Bialgebra.comulPoint_eq_include_mul (R := R) (H := H)).symm
-
 /-- The convolution product of the two tensor-factor points, taken in the other order, is the
 comultiplication followed by the flip of the tensor factors. -/
 theorem convMul_includeRight_includeLeft :
@@ -237,7 +228,11 @@ theorem convMul_includeRight_includeLeft :
   have key := map_mul (AlgHom.mapValue (H := H) (Algebra.TensorProduct.comm R H H).toAlgHom)
     (toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)))
     (toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)))
-  rw [convMul_includeLeft_includeRight] at key
+  rw [show
+    toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
+        toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) =
+      toConv (_root_.Bialgebra.comulAlgHom R H) by
+        simpa using (Bialgebra.comulPoint_eq_include_mul (R := R) (H := H)).symm] at key
   rw [AlgHom.mapValue_apply, AlgHom.mapValue_apply, AlgHom.mapValue_apply, ofConv_toConv,
     ofConv_toConv, ofConv_toConv, comm_toAlgHom_comp_includeLeft,
     comm_toAlgHom_comp_includeRight] at key
@@ -251,7 +246,12 @@ theorem commute_includeLeft_includeRight_iff_isCocomm :
     Commute (toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)))
         (toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H))) ↔
       _root_.Coalgebra.IsCocomm R H := by
-  rw [commute_iff_eq, convMul_includeLeft_includeRight, convMul_includeRight_includeLeft]
+  rw [commute_iff_eq, show
+    toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
+        toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) =
+      toConv (_root_.Bialgebra.comulAlgHom R H) by
+        simpa using (Bialgebra.comulPoint_eq_include_mul (R := R) (H := H)).symm,
+    convMul_includeRight_includeLeft]
   constructor
   · intro h
     refine ⟨LinearMap.ext fun x ↦ ?_⟩
