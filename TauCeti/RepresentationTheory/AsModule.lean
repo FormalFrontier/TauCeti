@@ -123,12 +123,13 @@ theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
     · rintro ⟨i⟩
       have e := _root_.Representation.equivOfIso
         ((CategoryTheory.forget₂ (FDRep k G) (Rep k G)).mapIso i)
+      -- Transport the equivalence along the forgetful functor's representation comparison.
       rw [FDRep.forget₂_ρ, FDRep.forget₂_ρ] at e
       exact ⟨e⟩
     · rintro ⟨φ⟩
       have i := fdRepIsoOfAsModuleLinearEquiv
         (Representation.asModuleLinearEquivOfEquiv φ)
-      rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
+      -- `FDRep.of_ρ_eq_self` records the definitional object identifications here.
       exact ⟨i⟩
 
 end TauCeti

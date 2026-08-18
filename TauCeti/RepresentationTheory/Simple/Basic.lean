@@ -20,8 +20,8 @@ representation-theoretic arguments of this repository are phrased.
 `CategoryTheory.Simple X` says that `X` is nonzero and every monomorphism `f` into `X` satisfies
 `IsIso f ↔ f ≠ 0`; it is the notion in which the categorical machinery is phrased -- Schur's lemma
 `FDRep.finrank_hom_simple_simple`, the characters of simple objects, semisimple categories. Neither
-Mathlib nor this repository related the two, and several files here say so and stop at the
-`Representation` level. This file supplies the dictionary.
+Mathlib nor this repository previously related the two, which is why several files here stopped at
+the `Representation` level. This file supplies the dictionary.
 
 Over `Rep k G` the dictionary is bookkeeping. `Rep k G` is equivalent to the category of
 `k[G]`-modules (`Rep.equivalenceModuleMonoidAlgebra`), an equivalence transports simplicity in both
@@ -71,13 +71,15 @@ side across `Rep.equivalenceModuleMonoidAlgebra`, the right-hand side across
 theorem Rep.simple_iff_isIrreducible {k : Type u} {G : Type v} [Field k] [Monoid G]
     (A : Rep.{w} k G) : Simple A ↔ Representation.IsIrreducible A.ρ := by
   rw [Representation.irreducible_iff_isSimpleModule_asModule,
-    ← simple_iff_isSimpleModule (R := k[G]) (M := A.ρ.asModule)]
+    ← simple_iff_isSimpleModule' (ModuleCat.of k[G] A.ρ.asModule)]
   exact (simple_obj_iff (Rep.toModuleMonoidAlgebra (k := k) (G := G)) A).symm
 
+/-- An irreducible representation is a simple object of `Rep k G`. -/
 instance Rep.simple_of_isIrreducible {k : Type u} {G : Type v} [Field k] [Monoid G]
     (A : Rep.{w} k G) [Representation.IsIrreducible A.ρ] : Simple A :=
   (Rep.simple_iff_isIrreducible A).mpr ‹_›
 
+/-- A simple object of `Rep k G` carries an irreducible representation. -/
 theorem Rep.isIrreducible_of_simple {k : Type u} {G : Type v} [Field k] [Monoid G]
     (A : Rep.{w} k G) [Simple A] : Representation.IsIrreducible A.ρ :=
   (Rep.simple_iff_isIrreducible A).mp ‹_›
@@ -183,10 +185,12 @@ theorem FDRep.simple_iff_isIrreducible (X : FDRep k G) :
       (Rep.simple_iff_isIrreducible _).mpr hirr
     exact Functor.simple_of_simple_obj (forget₂ (FDRep k G) (Rep k G)) X
 
+/-- An irreducible finite-dimensional representation is a simple object of `FDRep k G`. -/
 instance FDRep.simple_of_isIrreducible (X : FDRep k G)
     [Representation.IsIrreducible X.ρ] : Simple X :=
   (FDRep.simple_iff_isIrreducible X).mpr ‹_›
 
+/-- A simple object of `FDRep k G` carries an irreducible representation. -/
 theorem FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
     Representation.IsIrreducible X.ρ :=
   (FDRep.simple_iff_isIrreducible X).mp ‹_›

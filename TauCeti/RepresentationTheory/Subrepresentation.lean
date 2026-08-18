@@ -42,6 +42,8 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
 * `Subrepresentation.subtype`
+* `Subrepresentation.coe_subtype`
+* `Subrepresentation.toLinearMap_subtype`
 * `Subrepresentation.subtype_injective`
 * `Subrepresentation.range_subtype`
 * `Subrepresentation.ker_subtype`
@@ -91,47 +93,50 @@ def subtype (ρ' : Subrepresentation ρ) :
   toLinearMap := ρ'.toSubmodule.subtype
   isIntertwining' _ := by ext; rfl
 
+/-- The inclusion of a subrepresentation acts by the subtype coercion. -/
 @[simp]
 lemma coe_subtype (ρ' : Subrepresentation ρ) : ⇑ρ'.subtype = Subtype.val := by rfl
 
+/-- The linear map underlying the inclusion is the submodule subtype map. -/
 @[simp]
 lemma toLinearMap_subtype (ρ' : Subrepresentation ρ) :
     ρ'.subtype.toLinearMap = ρ'.toSubmodule.subtype := by rfl
 
 /-- The inclusion of a subrepresentation is injective. -/
 theorem subtype_injective (ρ' : Subrepresentation ρ) : Function.Injective ρ'.subtype :=
-  fun _ _ h ↦ ρ'.toSubmodule.subtype_injective h
+  by
+    rw [coe_subtype]
+    exact ρ'.toSubmodule.subtype_injective
 
 /-- The range of the inclusion of a subrepresentation is that subrepresentation. -/
 @[simp]
 theorem range_subtype (ρ' : Subrepresentation ρ) : ρ'.subtype.range = ρ' := by
   apply toSubmodule_injective
-  exact Submodule.range_subtype (R := A) (M := W) (p := ρ'.toSubmodule)
+  rw [Representation.IntertwiningMap.range_toSubmodule, toLinearMap_subtype,
+    Submodule.range_subtype]
 
 /-- The kernel of the inclusion of a subrepresentation is zero. -/
 @[simp]
 theorem ker_subtype (ρ' : Subrepresentation ρ) : ρ'.subtype.ker = ⊥ := by
   apply toSubmodule_injective
-  exact Submodule.ker_subtype (R := A) (M := W) (p := ρ'.toSubmodule)
+  rw [Representation.IntertwiningMap.ker_toSubmodule, toLinearMap_subtype, Submodule.ker_subtype,
+    toSubmodule_bot]
 
 /-- The inclusion of a subrepresentation is zero exactly when the subrepresentation is zero. -/
 @[simp]
 theorem subtype_eq_zero_iff (ρ' : Subrepresentation ρ) : ρ'.subtype = 0 ↔ ρ' = ⊥ := by
   constructor
   · intro h
-    have hlin : ρ'.toSubmodule.subtype = 0 := by
-      simpa only [toLinearMap_subtype, Representation.IntertwiningMap.zero_toLinearMap] using
-        congrArg Representation.IntertwiningMap.toLinearMap h
     apply toSubmodule_injective
-    rw [← Submodule.range_subtype (R := A) (M := W) (p := ρ'.toSubmodule),
-      LinearMap.range_eq_bot.mpr hlin, toSubmodule_bot]
+    rw [toSubmodule_bot, Submodule.eq_bot_iff]
+    intro x hx
+    simpa only [coe_subtype, Representation.IntertwiningMap.coe_zero, Pi.zero_apply] using
+      DFunLike.congr_fun h (⟨x, hx⟩ : ρ'.toSubmodule)
   · rintro rfl
-    have hlin : (⊥ : Subrepresentation ρ).subtype.toLinearMap =
-        (0 : Representation.IntertwiningMap
-          (⊥ : Subrepresentation ρ).toRepresentation ρ).toLinearMap := by
-      rw [toLinearMap_subtype, Representation.IntertwiningMap.zero_toLinearMap,
-        ← LinearMap.range_eq_bot, Submodule.range_subtype, toSubmodule_bot]
-    exact Representation.IntertwiningMap.toLinearMap_injective _ _ hlin
+    apply Representation.IntertwiningMap.ext
+    rw [toLinearMap_subtype, Representation.IntertwiningMap.zero_toLinearMap]
+    ext x
+    exact (Submodule.mem_bot A).mp x.2
 
 /-- The inclusion of a subrepresentation is surjective exactly when the subrepresentation is the
 whole representation. -/
@@ -139,12 +144,17 @@ theorem subtype_surjective_iff (ρ' : Subrepresentation ρ) :
     Function.Surjective ρ'.subtype ↔ ρ' = ⊤ := by
   constructor
   · intro h
-    rw [← range_subtype ρ']
     apply toSubmodule_injective
-    exact (LinearMap.range_eq_top.mpr h).trans toSubmodule_top.symm
+    rw [toSubmodule_top, ← Submodule.range_subtype ρ'.toSubmodule]
+    apply LinearMap.range_eq_top.mpr
+    rw [Submodule.coe_subtype]
+    simpa only [coe_subtype] using h
   · intro h
-    apply LinearMap.range_eq_top.mp
-    exact congrArg toSubmodule ((range_subtype ρ').trans h)
+    have hrange : ρ'.toSubmodule.subtype.range = ⊤ := by
+      rw [Submodule.range_subtype]
+      exact (congrArg toSubmodule h).trans toSubmodule_top
+    rw [coe_subtype, ← Submodule.coe_subtype]
+    exact LinearMap.range_eq_top.mp hrange
 
 /-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
 original group-algebra action. -/

@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.Simple
 public import TauCeti.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.AsModule
 public import TauCeti.RepresentationTheory.Simple.Basic

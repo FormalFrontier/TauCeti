@@ -41,9 +41,9 @@ attached to `a = 1` is itself nonzero -- that is, whether `c_t * c_t = (n! / f^�
 stated nonzero scalar -- does not follow from the sandwich calculation alone (over `M₂(ℚ)` the
 element `e₁₂` sandwiches to a line and squares to zero), and is not proved here.
 
-The statement is made at the `Representation` level, as elsewhere in this repository; the `FDRep`
-mirror is available through `FDRep.simple_iff_isIrreducible`, but the ideal `ℚ[Sₙ] c_t` is
-not packaged as an object of `FDRep ℚ Sₙ` here, so there is nothing to mirror it onto.
+The statement is made at the `Representation` level. Its `FDRep` mirror is
+`Simple (spechtIdealFDRep t)`, which follows from `FDRep.simple_iff_isIrreducible` and the
+irreducibility theorem below.
 
 On the one-row and the one-column shape the Specht ideal is a line, by the dimension count of
 `TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Extremes`, so on those shapes this theorem is

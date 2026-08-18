@@ -37,9 +37,10 @@ corresponding classification over `ℂ` will need.
 
 The classification is stated in each of the three languages a consumer may already be working in:
 the isomorphism classes of simple `ℚ[Sₙ]`-modules, the irreducible representations, and the simple
-objects of `FDRep ℚ Sₙ`. In the last two it is stated as a `∃!`, since the partition attached to an
-irreducible representation is what the classification is usually quoted as producing, and the
-comparison of the first and the last is
+objects of `FDRep ℚ Sₙ`. Each language has a `∃!` form, since the partition attached to a simple
+module or irreducible representation is what the classification is usually quoted as producing;
+the module and `FDRep` languages additionally have explicit bijections. The comparison of those
+two bijections is
 `TauCeti.coe_simpleFDRepClassesEquivSimpleModuleClasses`: the bijection between the two targets that
 the two classifications assemble to is the map sending a simple object to the module it carries, so
 the readings agree.
