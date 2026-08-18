@@ -24,12 +24,14 @@ is the sense in which the essential-image condition makes an envelope *minimal*,
 it is `TauCeti.isInjectiveEnvelope_iff_forall_injective`: the envelopes of `M` are exactly the
 essential monomorphisms from `M` into an injective module.
 
-The first fact is that an injective envelope maps into every embedding into an injective module: if
-`Q'` is injective and `g : M →ₗ[R] Q'` is injective, then `g` factors as `h ∘ₗ f` with
-`h : Q →ₗ[R] Q'` **injective** (`TauCeti.IsInjectiveEnvelope.exists_injective`). The second is that
-an injective envelope is unique: any two injective envelopes of `M` differ by a linear equivalence
-commuting with the structure maps (`TauCeti.IsInjectiveEnvelope.exists_linearEquiv`). Uniqueness is
-what makes "the" injective envelope a well-defined object.
+The first fact is that an essential extension maps into every embedding into an injective module:
+if `Q'` is injective and `g : M →ₗ[R] Q'` is injective, then `g` factors as `h ∘ₗ f` with
+`h : Q →ₗ[R] Q'` **injective** (`TauCeti.IsEssential.exists_injective`, stated at the
+essential-monomorphism level its proof uses and specialized to an envelope through
+`TauCeti.IsInjectiveEnvelope.isEssential_range`). The second is that an injective envelope is
+unique: any two injective envelopes of `M` differ by a linear equivalence commuting with the
+structure maps (`TauCeti.IsInjectiveEnvelope.exists_linearEquiv`). Uniqueness is what makes "the"
+injective envelope a well-defined object.
 
 *Existence* of injective envelopes is a separate matter, and is not proved here; nothing below
 assumes it, every statement being conditional on an envelope being given. Over a finite-dimensional
@@ -53,26 +55,26 @@ as an extension target; it is automatic whenever `R` and that module live in the
 * `TauCeti.isInjectiveEnvelope_id`: an injective module is its own injective envelope.
 * `TauCeti.isInjectiveEnvelope_iff_forall_injective`: an embedding into an injective module is an
   injective envelope exactly when it is an essential monomorphism.
-* `TauCeti.IsInjectiveEnvelope.exists_injective`: every embedding of `M` into an injective module
-  receives an injective envelope of `M`, by an embedding.
+* `TauCeti.IsEssential.exists_injective`: every embedding of `M` into an injective module receives
+  an essential extension of `M`, in particular an injective envelope, by an embedding.
 * `TauCeti.IsInjectiveEnvelope.bijective_of_comp_eq` and
   `TauCeti.IsInjectiveEnvelope.exists_linearEquiv`: **uniqueness**, first as bijectivity of any
   comparison map between two envelopes and then as the existence of an isomorphism under `M`.
 * `TauCeti.IsInjectiveEnvelope.comp`: precomposing an injective envelope with an embedding that
   itself has essential range again gives an injective envelope.
-* `TauCeti.IsInjectiveEnvelope.atom_le`: the range of an injective envelope contains every simple
-  submodule of the ambient module.
 * `TauCeti.isInjectiveEnvelope_subtype_iff`: the concrete family of envelopes, `N ↪ Q` is an
   injective envelope of a submodule `N` of an injective `Q` exactly when `N` is essential; over an
-  atomic submodule lattice `TauCeti.isInjectiveEnvelope_subtype_iff_forall_atom_le` reads this off
-  the simple submodules.
+  atomic submodule lattice `TauCeti.isEssential_iff_forall_atom_le` reads this off the simple
+  submodules.
 
 ## References
 
 This implements the injective-envelope half of the "projective covers and injective envelopes"
 bullet of Layer 3 of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`
 ("dually `injectiveEnvelope M`"), whose projective half is
-`TauCeti/Algebra/Module/ProjectiveCover.lean`.
+`TauCeti/Algebra/Module/ProjectiveCover.lean`. As on the projective side, the bullet is not
+discharged by this file: existence of envelopes, and hence a canonical `injectiveEnvelope M`
+chosen by it, remains.
 
 See I. Assem, D. Simson, A. Skowroński, *Elements of the Representation Theory of Associative
 Algebras, Vol. 1*, Section I.5, and T. Y. Lam, *Lectures on Modules and Rings*, §3.
@@ -122,25 +124,31 @@ theorem isInjectiveEnvelope_iff_forall_injective [Module.Injective R Q] {f : M �
   rw [← isEssential_range_iff_forall_injective hf]
   exact ⟨fun henv => henv.isEssential_range, fun hess => ⟨‹_›, hf, hess⟩⟩
 
-/-- **An injective envelope maps into every embedding into an injective module.** An embedding of
-`M` into an injective module receives an injective envelope of `M`, by an embedding. -/
-theorem IsInjectiveEnvelope.exists_injective [Small.{w'} R] {Q' : Type w'} [AddCommGroup Q']
-    [Module R Q'] [Module.Injective R Q'] {f : M →ₗ[R] Q} (hf : IsInjectiveEnvelope f)
+/-- **An essential embedding maps into every embedding into an injective module.** An embedding
+`f : M →ₗ[R] Q` with essential range receives every embedding of `M` into an injective module, by
+an embedding. Injectivity of `Q` plays no part, so this holds of any essential extension of `M`;
+applied through `TauCeti.IsInjectiveEnvelope.isEssential_range` it is the universal property of the
+injective envelope. -/
+theorem IsEssential.exists_injective [Small.{w'} R] {Q' : Type w'} [AddCommGroup Q']
+    [Module R Q'] [Module.Injective R Q'] {f : M →ₗ[R] Q}
+    (hrange : IsEssential (LinearMap.range f)) (hf : Function.Injective f)
     {g : M →ₗ[R] Q'} (hg : Function.Injective g) :
     ∃ h : Q →ₗ[R] Q', h ∘ₗ f = g ∧ Function.Injective h := by
-  obtain ⟨h, hh⟩ := Module.Injective.extension_property R Q' M Q f hf.injective g
-  exact ⟨h, hh, hf.isEssential_range.injective_of_injective_comp (by rw [hh]; exact hg)⟩
+  obtain ⟨h, hh⟩ := Module.Injective.extension_property R Q' M Q f hf g
+  exact ⟨h, hh, hrange.injective_of_injective_comp (by rw [hh]; exact hg)⟩
 
-/-- **Uniqueness of the injective envelope, in comparison-map form.** A map between the targets of
-two injective envelopes of `M` that commutes with the structure maps is automatically an
-isomorphism. -/
+/-- **Uniqueness of the injective envelope, in comparison-map form.** A map from the target of an
+injective envelope of `M` to an essential extension of `M` that commutes with the structure maps is
+automatically an isomorphism; the target need only be an essential extension, not itself an
+envelope. -/
 theorem IsInjectiveEnvelope.bijective_of_comp_eq [Small.{w} R] {Q' : Type*} [AddCommGroup Q']
     [Module R Q'] {f : M →ₗ[R] Q} {f' : M →ₗ[R] Q'} (hf : IsInjectiveEnvelope f)
-    (hf' : IsInjectiveEnvelope f') {h : Q →ₗ[R] Q'} (hcomp : h ∘ₗ f = f') :
+    (hf'inj : Function.Injective f') (hf'range : IsEssential (LinearMap.range f'))
+    {h : Q →ₗ[R] Q'} (hcomp : h ∘ₗ f = f') :
     Function.Bijective h := by
   -- Injectivity is minimality of the source envelope.
   have hinj : Function.Injective h :=
-    hf.isEssential_range.injective_of_injective_comp (by rw [hcomp]; exact hf'.injective)
+    hf.isEssential_range.injective_of_injective_comp (by rw [hcomp]; exact hf'inj)
   refine ⟨hinj, ?_⟩
   -- For surjectivity, retract `h` using injectivity of its source.
   have hQ : Module.Injective R Q := hf.moduleInjective
@@ -148,7 +156,7 @@ theorem IsInjectiveEnvelope.bijective_of_comp_eq [Small.{w} R] {Q' : Type*} [Add
   -- The range of `h` contains the essential range of `f'`, so the same minimality makes the
   -- retraction injective, and an injective retraction of an embedding is a two-sided inverse.
   have hrange : IsEssential (LinearMap.range h) :=
-    hf'.isEssential_range.mono (by
+    hf'range.mono (by
       rw [← hcomp, LinearMap.range_comp]
       exact LinearMap.map_le_range)
   have hσinj : Function.Injective σ :=
@@ -165,7 +173,8 @@ theorem IsInjectiveEnvelope.exists_linearEquiv [Small.{w} R] [Small.{w'} R] {Q' 
     ∃ e : Q ≃ₗ[R] Q', (e : Q →ₗ[R] Q') ∘ₗ f = f' := by
   have hQ' : Module.Injective R Q' := hf'.moduleInjective
   obtain ⟨h, hh⟩ := Module.Injective.extension_property R Q' M Q f hf.injective f'
-  refine ⟨LinearEquiv.ofBijective h (hf.bijective_of_comp_eq hf' hh), ?_⟩
+  refine ⟨LinearEquiv.ofBijective h
+    (hf.bijective_of_comp_eq hf'.injective hf'.isEssential_range hh), ?_⟩
   ext m
   simpa using LinearMap.congr_fun hh m
 
@@ -181,12 +190,6 @@ theorem IsInjectiveEnvelope.comp {N : Type*} [AddCommGroup N] [Module R N] {f : 
     -- embedding with essential range are essential.
     rw [LinearMap.range_comp]
     exact hgrange.map hf.injective hf.isEssential_range
-
-/-- The range of an injective envelope contains every simple submodule of the ambient module, being
-essential. -/
-theorem IsInjectiveEnvelope.atom_le {f : M →ₗ[R] Q} (hf : IsInjectiveEnvelope f)
-    {a : Submodule R Q} (ha : IsAtom a) : a ≤ LinearMap.range f :=
-  hf.isEssential_range.atom_le ha
 
 /-! ### Submodules
 
@@ -204,13 +207,6 @@ theorem isInjectiveEnvelope_subtype_iff [Module.Injective R Q] {N : Submodule R 
     { moduleInjective := ‹_›
       injective := N.injective_subtype
       isEssential_range := by rwa [Submodule.range_subtype] }
-
-/-- Over an injective module with atomic submodule lattice the inclusion of a submodule is an
-injective envelope precisely when the submodule contains every simple submodule. -/
-theorem isInjectiveEnvelope_subtype_iff_forall_atom_le [Module.Injective R Q]
-    [IsAtomic (Submodule R Q)] {N : Submodule R Q} :
-    IsInjectiveEnvelope N.subtype ↔ ∀ a : Submodule R Q, IsAtom a → a ≤ N :=
-  isInjectiveEnvelope_subtype_iff.trans isEssential_iff_forall_atom_le
 
 end Basic
 
