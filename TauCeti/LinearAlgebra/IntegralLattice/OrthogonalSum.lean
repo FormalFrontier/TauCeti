@@ -109,8 +109,9 @@ theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLa
 
 /-- The carrier of an orthogonal sum is canonically the product of the carrier types.
 
-Unlike `Submodule.prodEquiv`, this targets the canonical integer-module structures on the lattice
-carrier types rather than the module structures inherited from their ambient submodules. -/
+This is written directly so its computation rules are definitional for the `ℤ`-module instances
+inferred on integral-lattice carrier types. Reusing `Submodule.prodEquiv` introduces different
+instance terms and loses the definitional computation rules below. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
     L.orthogonalSum M ≃ₗ[ℤ] L × M where
   toFun p :=

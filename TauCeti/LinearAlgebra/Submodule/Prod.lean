@@ -26,8 +26,7 @@ variable [Module R M] [Module R N]
 
 /-- A product submodule, as a module, is the product of the two submodules.
 
-This is the module refinement of `AddSubgroup.prodEquiv`, and is stated here over an arbitrary
-semiring and additive commutative monoids, where that additive-group statement does not apply. -/
+This is the linear refinement of `AddSubmonoid.prodEquiv`. -/
 def prodEquiv (p : Submodule R M) (q : Submodule R N) : ↥(p.prod q) ≃ₗ[R] p × q where
   toFun x := (⟨x.1.1, x.2.1⟩, ⟨x.1.2, x.2.2⟩)
   invFun x := ⟨(x.1.1, x.2.1), x.1.2, x.2.2⟩
