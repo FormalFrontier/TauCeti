@@ -317,8 +317,7 @@ ordinary componentwise image. -/
 @[simp]
 theorem mapCompιIso_hom_app [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : HEq ((mapCompιIso hF).hom.app S)
-      (𝟙 ((ConflationClass.ConflationCategory.ι E.toConflationClass ⋙
-        F.mapShortComplex).obj S)) := by
+      (𝟙 (F.mapShortComplex.obj S.obj)) := by
   exact heq_of_eq rfl
 
 /-- The inverse component of `mapCompιIso` is heterogeneously equal to the identity of the
@@ -326,8 +325,7 @@ ordinary componentwise image. -/
 @[simp]
 theorem mapCompιIso_inv_app [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : HEq ((mapCompιIso hF).inv.app S)
-      (𝟙 ((ConflationClass.ConflationCategory.ι E.toConflationClass ⋙
-        F.mapShortComplex).obj S)) := by
+      (𝟙 (F.mapShortComplex.obj S.obj)) := by
   exact heq_of_eq rfl
 
 /-- Mapping conflations by the identity functor gives the identity functor. -/
