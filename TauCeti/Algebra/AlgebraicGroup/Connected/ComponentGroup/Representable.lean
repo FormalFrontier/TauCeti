@@ -166,10 +166,7 @@ private theorem componentPointLiftAlgHom_comp_componentCoordinateMap
     exact h
   simp_rw [hrepresentative]
   have hq : q.ofConv x = qFun (ConstantGroup.functionAlgEquiv k C x) := by
-    -- `qFun` inserts the inverse of `functionAlgEquiv`; unfold that local wrapper once so the
-    -- public inverse law of the algebra equivalence can rewrite the argument.
-    change q.ofConv x = q.ofConv
-      ((ConstantGroup.functionAlgEquiv k C).symm (ConstantGroup.functionAlgEquiv k C x))
+    dsimp only [qFun, AlgHom.comp_apply, AlgEquiv.toAlgHom_apply]
     rw [AlgEquiv.symm_apply_apply]
   rw [hq]
   change (∑ D, qFun (Pi.single D 1) * algebraMap k A
