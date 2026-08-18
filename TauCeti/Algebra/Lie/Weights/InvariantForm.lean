@@ -142,15 +142,12 @@ theorem invForm_isSymm : (invForm (H := H)).IsSymm := by
   rw [invForm_apply_apply_eq_traceForm, invForm_apply_apply_eq_traceForm]
   exact ((traceForm_isSymm K H L).eq _ _).symm
 
-theorem invForm_comm (a b : Module.Dual K H) : invForm a b = invForm b a :=
-  (invForm_isSymm (H := H)).eq a b
-
 /-- Pairing a weight of the shape `cartanEquivDual H x` on the left evaluates the other weight at
 `x`; the left-hand companion of `TauCeti.invForm_cartanEquivDual_right`. -/
 @[simp]
 theorem invForm_cartanEquivDual_left (x : H) (a : Module.Dual K H) :
     invForm (cartanEquivDual H x) a = a x := by
-  rw [invForm_comm, invForm_cartanEquivDual_right]
+  rw [(invForm_isSymm (H := H)).eq, invForm_cartanEquivDual_right]
 
 /-- The form is non-degenerate, inheriting the non-degeneracy of the Killing form on `H`. -/
 theorem invForm_nondegenerate : (invForm (H := H)).Nondegenerate :=
@@ -222,7 +219,7 @@ noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
     simp only [LinearMap.flip_apply, rootSystem_toLinearMap_apply,
       rootSystem_coroot_apply, rootSystem_root_apply, map_sub, LinearMap.sub_apply, map_smul,
       LinearMap.smul_apply, smul_eq_mul]
-    rw [invForm_comm (i.1 : Module.Dual K H) b]
+    rw [(invForm_isSymm (H := H)).eq (i.1 : Module.Dual K H) b]
     linear_combination (b (coroot i.1) / 2) * ha + (a (coroot i.1) / 2) * hb
 
 @[simp]
