@@ -154,8 +154,9 @@ singularities are allowed to lie **on** `C`, where those weights are in general 
 the contour integral only exists as a principal value.
 
 Null-homology is asked of the cycle only, never of its generators, so the theorem covers the
-combinations that make cycles worth having: a difference of two loops around a hole of `U`,
-neither of them null-homologous, is. Its `S = ∅` case is the homology Cauchy theorem for cycles
+combinations that make cycles worth having: a difference of two homologous loops around a hole of
+`U`, neither of them null-homologous, is null-homologous. Its `S = ∅` case is the homology Cauchy
+theorem for cycles
 (`TauCeti.Contour.Cycle.homologyCauchyTheorem`), and its one-generator case is the single-curve
 theorem `TauCeti.Contour.hungerbuhlerWasem_residueTheorem`. Where the trace of `C` avoids `S`
 the principal value is an ordinary integral and the statement is the classical residue theorem

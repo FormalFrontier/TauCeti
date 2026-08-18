@@ -89,9 +89,8 @@ theorem hasCauchyPV_analyticRemainder_add_residue_sum {f : ℂ → ℂ} {S : Fin
   have h_rem : HasCauchyPV γ a b decomp.analyticRemainder
       (∫ t in a..b, deriv γ t • decomp.analyticRemainder (γ t)) := by
     have h0 := HasCauchyPV.of_integrable h_rem_int
-    rwa [show (∫ t in a..b, decomp.analyticRemainder (γ t) * deriv γ t)
-        = ∫ t in a..b, deriv γ t • decomp.analyticRemainder (γ t) from
-      intervalIntegral.integral_congr fun t _ => by rw [smul_eq_mul, mul_comm]] at h0
+    convert h0 using 1
+    exact intervalIntegral.integral_congr fun t _ => by rw [smul_eq_mul, mul_comm]
   have h_polar : ∀ s ∈ S.attach, HasCauchyPV γ a b (decomp.polarPart s)
       (2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b ↑s * residue f ↑s) := fun s _ =>
     (decomp.hasCauchyPVAt_polarPart s h_imm hab hclosed (h_interior s) (h_flat s)
