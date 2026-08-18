@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Category.CommHopfAlgCat
+public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.LinearlyReductive
 
 /-!
@@ -26,6 +27,8 @@ equivalent in characteristic zero.
 ## Main declarations
 
 * `TauCeti.linearlyReductiveCommHopfAlgProperty`: linear reductivity as an object property.
+* `TauCeti.linearlyReductiveCommHopfAlgProperty_monoidAlgebra`: every commutative group algebra
+  has the property.
 * `TauCeti.LinearlyReductiveCommHopfAlgCat`: the corresponding full subcategory.
 
 ## References
@@ -44,8 +47,9 @@ public section
 namespace TauCeti
 
 open CategoryTheory
+open scoped MonoidAlgebra
 
-universe u v w
+universe u v
 
 /-- The object property selecting commutative Hopf algebras for which every finite-dimensional
 comodule is completely reducible. It tests carriers in the base field's universe, which suffices
@@ -63,21 +67,21 @@ theorem linearlyReductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
       Coalgebra.IsLinearlyReductive.{u, v, u} k H :=
   Iff.rfl
 
-/-- A linearly reductive commutative Hopf algebra has completely reducible finite-dimensional
-comodules in every carrier universe. -/
-theorem linearlyReductiveCommHopfAlgProperty.isCompletelyReducible
-    (k : Type u) [Field k] {H : CommHopfAlgCat.{v} k}
-    (hH : linearlyReductiveCommHopfAlgProperty k H)
-    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k H V] [Module.Finite k V] :
-    Comodule.IsCompletelyReducible k H V :=
-  Coalgebra.IsLinearlyReductive.isCompletelyReducible k hH
-
 /-- Linear reductivity is invariant under isomorphism of commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
     (linearlyReductiveCommHopfAlgProperty.{u, v} k).IsClosedUnderIsomorphisms where
   of_iso e hH :=
     (Coalgebra.isLinearlyReductive_iff_of_coalgEquiv
       k (CommHopfAlgCat.ofIso e).toCoalgEquiv).mp hH
+
+/-- The monoid algebra of a commutative group is a linearly reductive commutative Hopf
+algebra. -/
+theorem linearlyReductiveCommHopfAlgProperty_monoidAlgebra
+    (k : Type u) [Field k] (G : Type v) [CommGroup G] :
+    linearlyReductiveCommHopfAlgProperty k
+      (CommHopfAlgCat.of k (MonoidAlgebra k G)) :=
+  (linearlyReductiveCommHopfAlgProperty_iff k _).2
+    (Coalgebra.isLinearlyReductive_monoidAlgebra k G)
 
 /-- The category of linearly reductive commutative Hopf algebras over a field. -/
 abbrev LinearlyReductiveCommHopfAlgCat (k : Type u) [Field k] :=

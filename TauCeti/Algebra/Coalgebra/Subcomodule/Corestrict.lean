@@ -77,30 +77,44 @@ theorem mem_corestrict (f : C →ₗc[R] D) (W : Subcomodule R C M) (m : M) :
     m ∈ W.corestrict f ↔ m ∈ W :=
   Iff.rfl
 
+private theorem corestrict_symm_instance_eq (e : C ≃ₗc[R] D) :
+    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    Comodule.Corestrict e.symm.toCoalgHom = (inferInstance : Comodule R C M) := by
+  let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+  apply Comodule.ext
+  change Comodule.corestrictCoact e.symm.toCoalgHom = Comodule.coact
+  rw [← Comodule.corestrictCoact_comp e.toCoalgHom e.symm.toCoalgHom]
+  have hcomp : e.symm.toCoalgHom.comp e.toCoalgHom = CoalgHom.id R C := by
+    ext c
+    simp
+  rw [hcomp, Comodule.corestrictCoact_id]
+
 /-- Pull a subcomodule of a corestricted comodule back along a coalgebra equivalence. -/
 def corestrictSymm (e : C ≃ₗc[R] D)
     (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
       Subcomodule R D M) : Subcomodule R C M :=
+  let instOriginal : Comodule R C M := inferInstance
   letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-  Subcomodule.ofSubmodule W.carrier fun m hm ↦ by
-    obtain ⟨t, ht⟩ := W.coact_mem hm
-    rw [Comodule.corestrict_coact_apply] at ht
-    refine ⟨TensorProduct.map LinearMap.id e.symm.toLinearMap t, ?_⟩
-    calc
-      _ = TensorProduct.map LinearMap.id e.symm.toLinearMap
-          (TensorProduct.map W.carrier.subtype LinearMap.id t) := by
-            simp [TensorProduct.map_map]
-      _ = TensorProduct.map LinearMap.id e.symm.toLinearMap
-          (TensorProduct.map LinearMap.id e.toLinearMap
-            (Comodule.coact (R := R) (C := C) (M := M) m)) :=
-        congrArg (TensorProduct.map LinearMap.id e.symm.toLinearMap) ht
-      _ = _ := by
-        have hinv : e.symm.toLinearMap.comp e.toLinearMap = LinearMap.id := by
-          ext c
-          simp
-        rw [TensorProduct.map_map]
-        rw [hinv]
-        simp
+  let instDouble : Comodule R C M := Comodule.Corestrict e.symm.toCoalgHom
+  let W' : @Subcomodule R C M _ _ _ _ _ _ instDouble := by
+    letI : Comodule R C M := instDouble
+    exact W.corestrict e.symm.toCoalgHom
+  have h : instDouble = instOriginal := by
+    let _ : Comodule R C M := instOriginal
+    exact corestrict_symm_instance_eq e
+  letI : Comodule R C M := instOriginal
+  Subcomodule.ofSubmodule W.carrier fun m hm => by
+    have hmem : instDouble.coact m ∈ LinearMap.range
+        (TensorProduct.map W.carrier.subtype (LinearMap.id : C →ₗ[R] C)) := by
+      let _ : Comodule R C M := instDouble
+      have hmem' := W'.coact_mem hm
+      change instDouble.coact m ∈ LinearMap.range
+        (TensorProduct.map W'.toSubmodule.subtype (LinearMap.id : C →ₗ[R] C)) at hmem'
+      rw [show W'.toSubmodule = W.toSubmodule by
+        exact corestrict_toSubmodule e.symm.toCoalgHom W] at hmem'
+      exact hmem'
+    rw [congrArg (fun rho : Comodule R C M => rho.coact) h] at hmem
+    exact hmem
 
 /-- Pulling a subcomodule back from a corestriction preserves its underlying submodule. -/
 @[simp]
@@ -112,6 +126,18 @@ theorem corestrictSymm_toSubmodule (e : C ≃ₗc[R] D)
   by
     ext m
     rfl
+
+/-- Membership is unchanged when pulling a subcomodule back from a corestriction. -/
+@[simp]
+theorem mem_corestrictSymm (e : C ≃ₗc[R] D)
+    (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+      Subcomodule R D M) (m : M) :
+    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    m ∈ corestrictSymm e W ↔ m ∈ W :=
+  by
+    let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    change m ∈ (corestrictSymm e W).toSubmodule ↔ m ∈ W.toSubmodule
+    rw [corestrictSymm_toSubmodule]
 
 /-- A coalgebra equivalence identifies the subcomodules of a comodule with those of its
 corestriction, without changing their underlying submodules. -/
@@ -144,6 +170,18 @@ theorem corestrictOrderIso_apply (e : C ≃ₗc[R] D) (W : Subcomodule R C M) :
     ext m
     rfl
 
+/-- The inverse order correspondence is pullback from the corestriction. -/
+@[simp]
+theorem corestrictOrderIso_symm_apply (e : C ≃ₗc[R] D)
+    (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+      Subcomodule R D M) :
+    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    (corestrictOrderIso e).symm W = corestrictSymm e W :=
+  by
+    let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    ext m
+    rfl
+
 /-- Membership is unchanged by the forward subcomodule correspondence. -/
 theorem mem_corestrictOrderIso (e : C ≃ₗc[R] D) (W : Subcomodule R C M) (m : M) :
     letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
@@ -153,7 +191,6 @@ theorem mem_corestrictOrderIso (e : C ≃ₗc[R] D) (W : Subcomodule R C M) (m :
     rw [corestrictOrderIso_apply, mem_corestrict]
 
 /-- Membership is unchanged by the inverse subcomodule correspondence. -/
-@[simp]
 theorem mem_corestrictOrderIso_symm (e : C ≃ₗc[R] D)
     (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
       Subcomodule R D M) (m : M) :
@@ -173,7 +210,6 @@ theorem corestrictOrderIso_apply_toSubmodule (e : C ≃ₗc[R] D)
   (rfl)
 
 /-- The inverse subcomodule correspondence preserves the underlying submodule. -/
-@[simp]
 theorem corestrictOrderIso_symm_apply_toSubmodule (e : C ≃ₗc[R] D)
     (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
       Subcomodule R D M) :

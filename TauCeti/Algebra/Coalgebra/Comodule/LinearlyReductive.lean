@@ -9,6 +9,7 @@ import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.Transport
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
+public import TauCeti.Algebra.Coalgebra.Subcomodule.Transport
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
 
 /-!
@@ -131,70 +132,19 @@ variable {V : Type w} {W : Type*}
 variable [AddCommMonoid V] [Module k V] [Comodule k C V]
 variable [AddCommMonoid W] [Module k W]
 
-/-- Transporting a comodule along a linear equivalence identifies its subcomodule lattice with
-the original one. -/
-private def transportSubcomoduleOrderIso (e : V ≃ₗ[k] W) :
-    letI : Comodule k C W := Transport e
-    Subcomodule k C V ≃o Subcomodule k C W := by
-  letI : Comodule k C W := Transport e
-  let f : Hom k C W V := transportInvHom e
-  let g : Hom k C V W := transportToHom e
-  exact
-    { toFun := fun A ↦ A.map g
-      invFun := fun A ↦ A.map f
-      left_inv := by
-        intro A
-        ext v
-        simp only [Subcomodule.mem_map]
-        constructor
-        · rintro ⟨w, ⟨v', hv', rfl⟩, h⟩
-          have hv'v : v' = v := by simpa [f, g] using h
-          exact hv'v ▸ hv'
-        · intro hv
-          refine ⟨g v, ⟨v, hv, rfl⟩, ?_⟩
-          simp [f, g]
-      right_inv := by
-        intro A
-        ext w
-        simp only [Subcomodule.mem_map]
-        constructor
-        · rintro ⟨v, ⟨w', hw', rfl⟩, h⟩
-          have hw'w : w' = w := by simpa [f, g] using h
-          exact hw'w ▸ hw'
-        · intro hw
-          refine ⟨f w, ⟨w, hw, rfl⟩, ?_⟩
-          simp [f, g]
-      map_rel_iff' := by
-        intro A B
-        constructor
-        · intro h v hv
-          have hgv : g v ∈ A.map g := Subcomodule.mem_map_of_mem g hv
-          rcases (Subcomodule.mem_map.mp (h hgv)) with ⟨b, hb, hbv⟩
-          have hbv' : b = v := e.injective (by simpa [g] using hbv)
-          exact hbv' ▸ hb
-        · exact Subcomodule.map_mono g }
-
 /-- Complete reducibility is invariant under transporting a comodule structure along a linear
 equivalence. -/
 theorem isCompletelyReducible_transport_iff (e : V ≃ₗ[k] W) :
     (letI : Comodule k C W := Transport e;
       IsCompletelyReducible k C W) ↔ IsCompletelyReducible k C V := by
   let _ : Comodule k C W := Transport e
-  let f : Hom k C W V := transportInvHom e
-  let g : Hom k C V W := transportToHom e
-  let Φ : Subcomodule k C V ≃o Subcomodule k C W := transportSubcomoduleOrderIso k e
+  let Φ : Subcomodule k C V ≃o Subcomodule k C W := Subcomodule.transportOrderIso e
   let E : Submodule k V ≃o Submodule k W := Submodule.orderIsoMapComap e
-  have hmap_f (A : Subcomodule k C W) :
-      (A.map f).toSubmodule = E.symm A.toSubmodule := by
-    simp only [Subcomodule.map_toSubmodule, f, transportInvHom_toLinearMap]
-    exact (Submodule.orderIsoMapComap_symm_apply' e A.toSubmodule).symm
-  have hmap_g (A : Subcomodule k C V) :
-      (A.map g).toSubmodule = E A.toSubmodule := by
-    simp only [Subcomodule.map_toSubmodule, g, transportToHom_toLinearMap,
-      E, Submodule.orderIsoMapComap_apply]
   constructor
-  · exact isCompletelyReducible_of_orderIso k Φ.symm E.symm hmap_f
-  · exact isCompletelyReducible_of_orderIso k Φ E hmap_g
+  · exact isCompletelyReducible_of_orderIso k Φ.symm E.symm
+      (Subcomodule.transportOrderIso_symm_apply_toSubmodule e)
+  · exact isCompletelyReducible_of_orderIso k Φ E
+      (Subcomodule.transportOrderIso_apply_toSubmodule e)
 
 end Transport
 

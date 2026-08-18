@@ -55,7 +55,8 @@ theorem linearlyReductiveAffineGroupSchemeProperty_groupScheme
     ⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩
   have hS : linearlyReductiveAffineGroupSchemeProperty k S :=
     (linearlyReductiveAffineGroupSchemeProperty_hopfSpec_iff k (coordinateRing k G).obj).2
-      (Coalgebra.isLinearlyReductive_monoidAlgebra k G)
+      ((linearlyReductiveCommHopfAlgProperty_iff k _).1
+        (linearlyReductiveCommHopfAlgProperty_monoidAlgebra k G))
   let e : S ≅ D :=
     (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
       (eqToIso (groupScheme_def k G).symm)
