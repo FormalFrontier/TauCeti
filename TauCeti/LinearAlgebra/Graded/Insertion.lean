@@ -39,9 +39,9 @@ the degrees of the outer and inner operations.
 
 public section
 
-namespace TauCeti
-
 open scoped BigOperators
+open TauCeti
+open MultilinearMap
 
 universe uR uα uβ uγ uM uN
 
@@ -114,6 +114,10 @@ theorem oneSlot_apply {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
 end OneSlot
 
+end MultilinearMap
+
+namespace TauCeti.MultilinearMap
+
 section Homogeneous
 
 variable {R : Type uR} {M : Type uM} {N : Type uN} {ι : Type*}
@@ -131,7 +135,7 @@ theorem IsHomogeneous.oneSlot {α : Type uα} {β : Type uβ} {γ : Type uγ}
     {D : ι → σM} {E : ι → σN} {p q : ι}
     (hf : IsHomogeneous f (Sum.elim A (Sum.elim (fun _ ↦ D) C)) E p)
     (hg : IsHomogeneous g B D q) :
-    IsHomogeneous (oneSlot f g) (Sum.elim A (Sum.elim B C)) E (q + p) := by
+    IsHomogeneous (f.oneSlot g) (Sum.elim A (Sum.elim B C)) E (q + p) := by
   rw [isHomogeneous_def]
   intro d x hx
   have hgx := hg.map_mem (fun i ↦ d (.inr (.inl i))) (fun i ↦ x (.inr (.inl i)))
@@ -151,6 +155,10 @@ theorem IsHomogeneous.oneSlot {α : Type uα} {β : Type uβ} {γ : Type uγ}
   ac_rfl
 
 end Homogeneous
+
+end TauCeti.MultilinearMap
+
+namespace MultilinearMap
 
 section Signed
 
@@ -190,7 +198,7 @@ def signedOneSlot {M : Type uM} {N : Type uN} [AddCommGroup M] [Module R M]
     (f : MultilinearMap R (fun _ : α ⊕ (Unit ⊕ γ) ↦ M) N)
     (g : MultilinearMap R (fun _ : β ↦ M) M) :
     MultilinearMap R (fun _ : α ⊕ (β ⊕ γ) ↦ M) N :=
-  koszulSign (R := R) q d • oneSlot f g
+  koszulSign (R := R) q d • f.oneSlot g
 
 @[simp]
 theorem signedOneSlot_apply {M : Type uM} {N : Type uN} [AddCommGroup M] [Module R M]
@@ -203,6 +211,10 @@ theorem signedOneSlot_apply {M : Type uM} {N : Type uN} [AddCommGroup M] [Module
   by rw [signedOneSlot, smul_apply, oneSlot_apply]
 
 end Signed
+
+end MultilinearMap
+
+namespace TauCeti.MultilinearMap
 
 section SignedHomogeneous
 
@@ -219,12 +231,10 @@ theorem IsHomogeneous.signedOneSlot {α : Type uα} {β : Type uβ} {γ : Type u
     {D : ℤ → σM} {E : ℤ → σN} {p q : ℤ} (d : α → ℤ)
     (hf : IsHomogeneous f (Sum.elim A (Sum.elim (fun _ ↦ D) C)) E p)
     (hg : IsHomogeneous g B D q) :
-    IsHomogeneous (signedOneSlot q d f g) (Sum.elim A (Sum.elim B C)) E (q + p) := by
-  rw [TauCeti.MultilinearMap.signedOneSlot]
+    IsHomogeneous (f.signedOneSlot q d g) (Sum.elim A (Sum.elim B C)) E (q + p) := by
+  rw [MultilinearMap.signedOneSlot]
   exact (hf.oneSlot hg).smul (koszulSign q d)
 
 end SignedHomogeneous
 
-end MultilinearMap
-
-end TauCeti
+end TauCeti.MultilinearMap
