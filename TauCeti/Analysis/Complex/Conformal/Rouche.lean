@@ -461,7 +461,7 @@ private lemma integral_deriv_smul_logDeriv_eq_of_norm_sub_lt
   have hcong : (∫ t in a..b, deriv γ t • logDeriv (fun w => g w / f w) (γ t))
       = ∫ t in a..b, (deriv γ t • logDeriv g (γ t) - deriv γ t • logDeriv f (γ t)) := by
     refine intervalIntegral.integral_congr fun t ht => ?_
-    rw [logDeriv_div _ (hgne t ht) (hfne t ht) (hga t ht).differentiableAt
+    rw [logDeriv_fun_div _ (hgne t ht) (hfne t ht) (hga t ht).differentiableAt
       (hfa t ht).differentiableAt, smul_sub]
   rw [hcong, intervalIntegral.integral_sub
     (Contour.intervalIntegrable_deriv_smul_logDeriv hγ hga hgne)
