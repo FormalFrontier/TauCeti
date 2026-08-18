@@ -75,9 +75,9 @@ open scoped ENNReal
 
 /-! ### Curves joining two points -/
 
-section IsCurveJoining
+section IsCurveJoiningTopological
 
-variable {X : Type*} [PseudoEMetricSpace X] {γ : ℝ → X} {x y : X}
+variable {X : Type*} [TopologicalSpace X] {γ : ℝ → X} {x y : X}
 
 /-- `IsCurveJoining γ x y` says that the curve `γ`, read on the parameter interval `[0, 1]`, is
 continuous and runs from `x` to `y`. -/
@@ -89,17 +89,30 @@ structure IsCurveJoining (γ : ℝ → X) (x y : X) : Prop where
   /-- A joining curve ends at `y`. -/
   target : γ 1 = y
 
-/-- A joining curve is at least as long as the distance between the points it joins. -/
-theorem IsCurveJoining.edist_le (h : IsCurveJoining γ x y) :
-    edist x y ≤ eVariationOn γ (Icc 0 1) := by
-  simpa only [h.source, h.target] using
-    eVariationOn.edist_le γ (left_mem_Icc.2 zero_le_one) (right_mem_Icc.2 zero_le_one)
-
 /-- The extension to `ℝ` of a bundled path is a joining curve. -/
 theorem isCurveJoining_extend (γ : Path x y) : IsCurveJoining γ.extend x y where
   continuousOn := γ.continuous_extend.continuousOn
   source := γ.extend_zero
   target := γ.extend_one
+
+/-- A joining curve restricts to a bundled path, so it witnesses `Joined`. -/
+theorem IsCurveJoining.joined (h : IsCurveJoining γ x y) : Joined x y :=
+  ⟨{ toFun := (Icc (0 : ℝ) 1).domRestrict γ
+     continuous_toFun := h.continuousOn.domRestrict
+     source' := h.source
+     target' := h.target }⟩
+
+end IsCurveJoiningTopological
+
+section IsCurveJoining
+
+variable {X : Type*} [PseudoEMetricSpace X] {γ : ℝ → X} {x y : X}
+
+/-- A joining curve is at least as long as the distance between the points it joins. -/
+theorem IsCurveJoining.edist_le (h : IsCurveJoining γ x y) :
+    edist x y ≤ eVariationOn γ (Icc 0 1) := by
+  simpa only [h.source, h.target] using
+    eVariationOn.edist_le γ (left_mem_Icc.2 zero_le_one) (right_mem_Icc.2 zero_le_one)
 
 /-- A continuous curve joining `x` to `y` on an arbitrary parameter interval can be renormalised
 to `[0, 1]` without changing its length. This is how curves produced on other parameter intervals
@@ -132,13 +145,6 @@ theorem exists_isCurveJoining_of_continuousOn {a b : ℝ} (hab : a ≤ b)
   · exact hγ.comp (by fun_prop) hmaps
   · simpa using ha
   · simpa using hb
-
-/-- A joining curve restricts to a bundled path, so it witnesses `Joined`. -/
-theorem IsCurveJoining.joined (h : IsCurveJoining γ x y) : Joined x y :=
-  ⟨{ toFun := (Icc (0 : ℝ) 1).domRestrict γ
-     continuous_toFun := h.continuousOn.domRestrict
-     source' := h.source
-     target' := h.target }⟩
 
 end IsCurveJoining
 
