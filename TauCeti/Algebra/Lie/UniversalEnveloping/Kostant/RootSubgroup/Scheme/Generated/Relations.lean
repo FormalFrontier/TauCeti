@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Relations
 public import TauCeti.CategoryTheory.Monoidal.Mon
 
@@ -117,6 +117,7 @@ theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq
 
 /-- The class-two Chevalley commutator relation inside the generated group scheme, with the
 third point written explicitly at parameter `c` times the product of the first two parameters. -/
+@[simp]
 theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq'
     {i j k : I} {c : ℤ}
     (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
