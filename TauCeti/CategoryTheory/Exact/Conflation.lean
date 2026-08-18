@@ -154,6 +154,9 @@ def mapCompιIso [F.Additive] (hF : E.IsConflationExact E' F) :
 identity. -/
 def mapIdIso : map (ExactStructure.IsConflationExact.id (E := E)) ≅
     Functor.id E.ConflationCategory :=
+  -- `ObjectProperty.lift` and `mapShortComplex` preserve identity functors strictly: the object
+  -- and morphism data on both sides are definitionally identical. This is the same intentional
+  -- definitional equality recorded by Mathlib's `ObjectProperty.liftCompιIso`.
   Iso.refl _
 
 /-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
@@ -161,6 +164,9 @@ def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H) :
     map (hF.comp hH) ≅ map hF ⋙ map hH :=
+  -- Functor composition, `mapShortComplex`, and the two successive full-subcategory lifts all
+  -- have the same object and morphism data on both sides, so this coherence is intentionally
+  -- strict rather than assembled from nontrivial component isomorphisms.
   Iso.refl _
 
 /-- A natural isomorphism between conflation-exact functors induces a natural isomorphism between
@@ -173,7 +179,10 @@ def mapIso [F.Additive] [G.Additive] (hF : E.IsConflationExact E' F)
       intro S T a
       apply ObjectProperty.hom_ext
       apply ShortComplex.hom_ext
-      -- Naturality in each term is exactly naturality of the original functor isomorphism.
+      -- The full-subcategory and short-complex extensionality lemmas leave three component goals.
+      -- There is no single rewrite lemma crossing both wrappers: `change` unfolds precisely the
+      -- `map` and `mapNatIso` component definitions above, after which each goal is the canonical
+      -- naturality equation for `e`.
       · change F.map a.hom.τ₁ ≫ e.hom.app T.obj.X₁ =
           e.hom.app S.obj.X₁ ≫ G.map a.hom.τ₁
         exact e.hom.naturality a.hom.τ₁
@@ -212,6 +221,9 @@ noncomputable def unopFunctor (E : ExactStructure C) :
 short complexes. -/
 noncomputable def unopFunctorCompιOpIso (E : ExactStructure C) :
     unopFunctor E ⋙ (ι E).op ≅ ι E.op ⋙ ShortComplex.unopFunctor C :=
+  -- The `.leftOp`/`.rightOp` round trip and the inclusion after `ObjectProperty.lift` have
+  -- definitionally identical object and morphism data. The intervening opposite wrappers prevent
+  -- applying `liftCompιIso` directly, so `Iso.refl` records that intentional strict equality.
   Iso.refl _
 
 end Opposite
