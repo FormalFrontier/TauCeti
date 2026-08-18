@@ -31,10 +31,9 @@ splitting point `cut i` in each row, and `SemistandardYoungTableau.recut` builds
 inequalities per row beyond `a i ≤ cut i ≤ b i` are enough to make the result semistandard again —
 this is `SemistandardYoungTableau.IsCut`, a sufficient condition — and together they place `cut i`
 in the interval `[max (a i) (b (i + 1)), min (b i) (a (i - 1))]`, which contains `n i`.  The
-Bender-Knuth involution is the reflection of that interval in its midpoint,
-`SemistandardYoungTableau.bkCut`, and being a reflection is what makes it an involution: the
-interval is unchanged by a recut, because its endpoints depend only on `a` and `b`, which a recut
-does not move.
+Bender-Knuth involution recuts each row at the reflection of `n i` in that interval, and being a
+reflection is what makes it an involution: the interval is unchanged by a recut, because its
+endpoints depend only on `a` and `b`, which a recut does not move.
 
 ## Main definitions
 
@@ -168,7 +167,7 @@ most the left one.
 This is a sufficient condition, not a necessary one: a row whose block is empty carries no letter
 that a recut can move, so the recut filling ignores `cut i` there while the condition still pins it
 down.  Every family of splitting points used here — the tableau's own, and the reflected ones of
-`SemistandardYoungTableau.bkCut` — satisfies it. -/
+`SemistandardYoungTableau.benderKnuth` — satisfies it. -/
 structure IsCut (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) : Prop where
   /-- The splitting point of a row is at least the start of its block. -/
   le_cut (i : ℕ) : rowCountLt T i v ≤ cut i
@@ -181,22 +180,22 @@ structure IsCut (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) 
 
 /-- The filling obtained from `T` by splitting the `v`/`(v + 1)` block of each row at a prescribed
 column. -/
-def recutEntry (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (i j : ℕ) : ℕ :=
+private def recutEntry (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (i j : ℕ) : ℕ :=
   if T.InBlock v i j then (if j < cut i then v else v + 1) else T i j
 
 /-- Outside the block, a recut entry is the old entry. -/
-theorem recutEntry_of_not_inBlock (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
+private theorem recutEntry_of_not_inBlock (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
     {i j : ℕ} (h : ¬ T.InBlock v i j) : recutEntry T v cut i j = T i j :=
   ite_eq_right h
 
 /-- Inside the block, a recut entry is `v` before the splitting point and `v + 1` after it. -/
-theorem recutEntry_of_inBlock (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
+private theorem recutEntry_of_inBlock (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
     {i j : ℕ} (h : T.InBlock v i j) :
     recutEntry T v cut i j = if j < cut i then v else v + 1 :=
   ite_eq_left h
 
 /-- A recut entry is either the old entry or one of the two letters being exchanged. -/
-theorem recutEntry_eq_or (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (i j : ℕ) :
+private theorem recutEntry_eq_or (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (i j : ℕ) :
     recutEntry T v cut i j = T i j ∨ recutEntry T v cut i j = v
       ∨ recutEntry T v cut i j = v + 1 := by
   by_cases h : T.InBlock v i j
@@ -208,7 +207,8 @@ theorem recutEntry_eq_or (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ 
 
 /-- A recut entry lies in the block exactly when the old one did: a recut moves letters within
 `{v, v + 1}` and moves nothing else. -/
-theorem inBlock_recutEntry_iff (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (i j : ℕ) :
+private theorem inBlock_recutEntry_iff (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
+    (i j : ℕ) :
     ((i, j) ∈ μ ∧ v ≤ recutEntry T v cut i j ∧ recutEntry T v cut i j ≤ v + 1)
       ↔ ((i, j) ∈ μ ∧ v ≤ T i j ∧ T i j ≤ v + 1) := by
   by_cases h : T.InBlock v i j
@@ -218,7 +218,7 @@ theorem inBlock_recutEntry_iff (T : SemistandardYoungTableau μ) (v : ℕ) (cut 
   · rw [recutEntry_of_not_inBlock T v cut h]
 
 /-- Recutting does not break a column between adjacent rows. -/
-theorem recutEntry_lt_succ (hcut : IsCut T v cut) {i j : ℕ}
+private theorem recutEntry_lt_succ (hcut : IsCut T v cut) {i j : ℕ}
     (hcell : ((i + 1, j) : ℕ × ℕ) ∈ μ) :
     recutEntry T v cut i j < recutEntry T v cut (i + 1) j := by
   have hcell' : ((i, j) : ℕ × ℕ) ∈ μ := μ.up_left_mem (Nat.le_succ i) le_rfl hcell
@@ -254,7 +254,7 @@ private theorem recutEntry_col_strict_aux (hcut : IsCut T v cut) (i j : ℕ) : �
     exact lt_trans (ih h') (recutEntry_lt_succ hcut h)
 
 /-- Recutting does not break a column. -/
-theorem recutEntry_col_strict (hcut : IsCut T v cut) {i₁ i₂ j : ℕ} (hi : i₁ < i₂)
+private theorem recutEntry_col_strict (hcut : IsCut T v cut) {i₁ i₂ j : ℕ} (hi : i₁ < i₂)
     (hcell : ((i₂, j) : ℕ × ℕ) ∈ μ) :
     recutEntry T v cut i₁ j < recutEntry T v cut i₂ j := by
   obtain ⟨d, rfl⟩ : ∃ d, i₂ = i₁ + d + 1 := ⟨i₂ - i₁ - 1, by omega⟩
@@ -262,7 +262,7 @@ theorem recutEntry_col_strict (hcut : IsCut T v cut) {i₁ i₂ j : ℕ} (hi : i
 
 /-- Recutting keeps rows weakly increasing.  No recut condition is needed: within a row the
 letters `v` come before the letters `v + 1` wherever the block is split. -/
-theorem recutEntry_row_weak (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
+private theorem recutEntry_row_weak (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ)
     {i j₁ j₂ : ℕ} (hj : j₁ < j₂)
     (hcell : ((i, j₂) : ℕ × ℕ) ∈ μ) :
     recutEntry T v cut i j₁ ≤ recutEntry T v cut i j₂ := by
@@ -292,12 +292,26 @@ def recut (T : SemistandardYoungTableau μ) (v : ℕ) (cut : ℕ → ℕ) (hcut 
   zeros' := fun hij => by
     rw [recutEntry_of_not_inBlock T v cut (not_inBlock_of_notMem hij), T.zeros hij]
 
+/-- The entries of a recut tableau: inside the block of a row, `v` before the splitting point and
+`v + 1` after it; everywhere else, the old entry. -/
 @[simp]
 theorem recut_apply (hcut : IsCut T v cut) (i j : ℕ) :
-    recut T v cut hcut i j = recutEntry T v cut i j := (rfl)
+    recut T v cut hcut i j =
+      if T.InBlock v i j then (if j < cut i then v else v + 1) else T i j := (rfl)
+
+/-- Inside the block, the entry of a recut tableau is `v` before the splitting point and `v + 1`
+after it. -/
+theorem recut_apply_of_inBlock (hcut : IsCut T v cut) {i j : ℕ} (h : T.InBlock v i j) :
+    recut T v cut hcut i j = if j < cut i then v else v + 1 :=
+  (recut_apply hcut i j).trans (ite_eq_left h)
+
+/-- Outside the block, the entry of a recut tableau is the old entry. -/
+theorem recut_apply_of_not_inBlock (hcut : IsCut T v cut) {i j : ℕ} (h : ¬ T.InBlock v i j) :
+    recut T v cut hcut i j = T i j :=
+  (recut_apply hcut i j).trans (ite_eq_right h)
 
 /-- A recut moves no letter into or out of the block, so the two tableaux have the same blocks. -/
-theorem inBlock_recut (hcut : IsCut T v cut) (i j : ℕ) :
+theorem inBlock_recut_iff (hcut : IsCut T v cut) (i j : ℕ) :
     (recut T v cut hcut).InBlock v i j ↔ T.InBlock v i j :=
   inBlock_recutEntry_iff T v cut i j
 
@@ -310,11 +324,11 @@ theorem rowCountLt_recut_of_le (hcut : IsCut T v cut) (i : ℕ) (hx : x ≤ v) :
   have hcell : ((i, j) : ℕ × ℕ) ∈ μ :=
     YoungDiagram.mem_iff_lt_rowLen.mpr (Finset.mem_range.mp hj)
   by_cases h : T.InBlock v i j
-  · rw [recut_apply, recutEntry_of_inBlock T v cut h]
+  · rw [recut_apply_of_inBlock hcut h]
     have := h.2
     refine iff_of_false ?_ (by omega)
     split <;> omega
-  · rw [recut_apply, recutEntry_of_not_inBlock T v cut h]
+  · rw [recut_apply_of_not_inBlock hcut h]
 
 /-- Above the block, a recut changes no row count. -/
 theorem rowCountLt_recut_of_ge (hcut : IsCut T v cut) (i : ℕ) (hx : v + 2 ≤ x) :
@@ -323,11 +337,11 @@ theorem rowCountLt_recut_of_ge (hcut : IsCut T v cut) (i : ℕ) (hx : v + 2 ≤ 
   have hcell : ((i, j) : ℕ × ℕ) ∈ μ :=
     YoungDiagram.mem_iff_lt_rowLen.mpr (Finset.mem_range.mp hj)
   by_cases h : T.InBlock v i j
-  · rw [recut_apply, recutEntry_of_inBlock T v cut h]
+  · rw [recut_apply_of_inBlock hcut h]
     have := h.2
     refine iff_of_true ?_ (by omega)
     split <;> omega
-  · rw [recut_apply, recutEntry_of_not_inBlock T v cut h]
+  · rw [recut_apply_of_not_inBlock hcut h]
 
 /-- **A recut is exactly a change of splitting point**: in the recut tableau, the block of row `i`
 is split at `cut i`. -/
@@ -342,11 +356,11 @@ theorem rowCountLt_recut_succ (hcut : IsCut T v cut) (i : ℕ) :
     · rintro ⟨hj, hlt⟩
       have hcell : ((i, j) : ℕ × ℕ) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hj
       by_cases h : T.InBlock v i j
-      · rw [recut_apply, recutEntry_of_inBlock T v cut h] at hlt
+      · rw [recut_apply_of_inBlock hcut h] at hlt
         by_contra hc
         rw [ite_eq_right (Nat.not_lt.mpr (Nat.not_lt.mp hc))] at hlt
         omega
-      · rw [recut_apply, recutEntry_of_not_inBlock T v cut h] at hlt
+      · rw [recut_apply_of_not_inBlock hcut h] at hlt
         have hnot : ¬(v ≤ T i j ∧ T i j ≤ v + 1) := fun hb => h ⟨hcell, hb⟩
         have hlow : j < rowCountLt T i v := (T.lt_rowCountLt_iff hj).mpr (by omega)
         exact lt_of_lt_of_le hlow (hcut.le_cut i)
@@ -355,9 +369,9 @@ theorem rowCountLt_recut_succ (hcut : IsCut T v cut) (i : ℕ) :
       have hcell : ((i, j) : ℕ × ℕ) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hjr
       refine ⟨hjr, ?_⟩
       by_cases h : T.InBlock v i j
-      · rw [recut_apply, recutEntry_of_inBlock T v cut h, ite_eq_left hj]
+      · rw [recut_apply_of_inBlock hcut h, ite_eq_left hj]
         omega
-      · rw [recut_apply, recutEntry_of_not_inBlock T v cut h]
+      · rw [recut_apply_of_not_inBlock hcut h]
         have hnot : ¬(v ≤ T i j ∧ T i j ≤ v + 1) := fun hb => h ⟨hcell, hb⟩
         have hhigh : j < rowCountLt T i (v + 2) :=
           lt_of_lt_of_le hj (le_trans (hcut.cut_le i) le_rfl)
@@ -377,9 +391,8 @@ theorem isCut_rowCountLt (T : SemistandardYoungTableau μ) (v : ℕ) :
 theorem recut_rowCountLt (T : SemistandardYoungTableau μ) (v : ℕ) :
     recut T v (fun i => rowCountLt T i (v + 1)) (isCut_rowCountLt T v) = T := by
   ext i j
-  rw [recut_apply]
   by_cases h : T.InBlock v i j
-  · rw [recutEntry_of_inBlock T v _ h]
+  · rw [recut_apply_of_inBlock (isCut_rowCountLt T v) h]
     have hcell := h.1
     have hjr := YoungDiagram.mem_iff_lt_rowLen.mp hcell
     have hiff := T.lt_rowCountLt_iff (x := v + 1) hjr
@@ -387,7 +400,7 @@ theorem recut_rowCountLt (T : SemistandardYoungTableau μ) (v : ℕ) :
     split
     · omega
     · omega
-  · exact recutEntry_of_not_inBlock T v _ h
+  · exact recut_apply_of_not_inBlock (isCut_rowCountLt T v) h
 
 /-- A recut condition for `T` is a recut condition for any recut of `T`: the constraints depend
 only on the row counts below and above the block, which a recut leaves alone. -/
@@ -402,13 +415,12 @@ theorem IsCut.recut {cut' : ℕ → ℕ} (hcut : IsCut T v cut) (hcut' : IsCut T
 theorem recut_recut {cut' : ℕ → ℕ} (hcut : IsCut T v cut) (hcut' : IsCut T v cut') :
     recut (recut T v cut hcut) v cut' (hcut.recut hcut') = recut T v cut' hcut' := by
   ext i j
-  rw [recut_apply, recut_apply]
   by_cases h : T.InBlock v i j
-  · rw [recutEntry_of_inBlock _ v cut' ((inBlock_recut hcut i j).mpr h),
-      recutEntry_of_inBlock T v cut' h]
-  · rw [recutEntry_of_not_inBlock _ v cut' (fun hc => h ((inBlock_recut hcut i j).mp hc)),
-      recutEntry_of_not_inBlock T v cut' h, recut_apply,
-      recutEntry_of_not_inBlock T v cut h]
+  · rw [recut_apply_of_inBlock (hcut.recut hcut') ((inBlock_recut_iff hcut i j).mpr h),
+      recut_apply_of_inBlock hcut' h]
+  · rw [recut_apply_of_not_inBlock (hcut.recut hcut')
+      (fun hc => h ((inBlock_recut_iff hcut i j).mp hc)),
+      recut_apply_of_not_inBlock hcut' h, recut_apply_of_not_inBlock hcut h]
 
 /-! ### The content of a recut tableau -/
 
@@ -424,19 +436,19 @@ theorem filter_recut_eq (hcut : IsCut T v cut) (i : ℕ) :
   · rintro ⟨hj, hv⟩
     have hcell : ((i, j) : ℕ × ℕ) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hj
     by_cases h : T.InBlock v i j
-    · rw [recut_apply, recutEntry_of_inBlock T v cut h] at hv
+    · rw [recut_apply_of_inBlock hcut h] at hv
       refine ⟨((T.inBlock_iff v hcell).mp h).1, ?_⟩
       by_contra hc
       rw [ite_eq_right hc] at hv
       omega
-    · rw [recut_apply, recutEntry_of_not_inBlock T v cut h] at hv
+    · rw [recut_apply_of_not_inBlock hcut h] at hv
       exact absurd ⟨hcell, hv.ge, hv.le.trans (Nat.le_succ v)⟩ h
   · rintro ⟨hlow, hhigh⟩
     have hj : j < μ.rowLen i := lt_of_lt_of_le hhigh hcl
     have hcell : ((i, j) : ℕ × ℕ) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hj
     have h : T.InBlock v i j :=
       (T.inBlock_iff v hcell).mpr ⟨hlow, lt_of_lt_of_le hhigh (hcut.cut_le i)⟩
-    exact ⟨hj, by rw [recut_apply, recutEntry_of_inBlock T v cut h, ite_eq_left hhigh]⟩
+    exact ⟨hj, by rw [recut_apply_of_inBlock hcut h, ite_eq_left hhigh]⟩
 
 /-- Inside a row, the cells of a recut tableau carrying the letter `v + 1` are those from the
 splitting point to the end of the block. -/
@@ -450,21 +462,20 @@ theorem filter_recut_eq_succ (hcut : IsCut T v cut) (i : ℕ) :
   · rintro ⟨hj, hv⟩
     have hcell : ((i, j) : ℕ × ℕ) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hj
     by_cases h : T.InBlock v i j
-    · rw [recut_apply, recutEntry_of_inBlock T v cut h] at hv
+    · rw [recut_apply_of_inBlock hcut h] at hv
       refine ⟨?_, ((T.inBlock_iff v hcell).mp h).2⟩
       by_contra hc
       rw [ite_eq_left (Nat.lt_of_not_le (fun hd => hc (Nat.le_of_not_lt fun he => hd.not_gt he)))]
         at hv
       omega
-    · rw [recut_apply, recutEntry_of_not_inBlock T v cut h] at hv
+    · rw [recut_apply_of_not_inBlock hcut h] at hv
       exact absurd ⟨hcell, by omega, by omega⟩ h
   · rintro ⟨hlow, hhigh⟩
     have hj : j < μ.rowLen i := lt_of_lt_of_le hhigh hbl
     have hcell : ((i, j) : ℕ × ℕ) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hj
     have h : T.InBlock v i j :=
       (T.inBlock_iff v hcell).mpr ⟨le_trans (hcut.le_cut i) hlow, hhigh⟩
-    exact ⟨hj, by rw [recut_apply, recutEntry_of_inBlock T v cut h,
-      ite_eq_right (Nat.not_lt.mpr hlow)]⟩
+    exact ⟨hj, by rw [recut_apply_of_inBlock hcut h, ite_eq_right (Nat.not_lt.mpr hlow)]⟩
 
 /-- A recut moves no letter other than `v` and `v + 1`. -/
 theorem content_recut_of_ne (hcut : IsCut T v cut) (hx : x ≠ v) (hx' : x ≠ v + 1) :
@@ -473,12 +484,12 @@ theorem content_recut_of_ne (hcut : IsCut T v cut) (hx : x ≠ v) (hx' : x ≠ v
   refine congrArg Finset.card (Finset.filter_congr fun c hc => ?_)
   obtain ⟨i, j⟩ := c
   by_cases h : T.InBlock v i j
-  · rw [recut_apply, recutEntry_of_inBlock T v cut h]
+  · rw [recut_apply_of_inBlock hcut h]
     have hb := h.2
     have hne : T i j ≠ x := by omega
     have hne' : (if j < cut i then v else v + 1) ≠ x := by split <;> omega
     exact iff_of_false hne' hne
-  · rw [recut_apply, recutEntry_of_not_inBlock T v cut h]
+  · rw [recut_apply_of_not_inBlock hcut h]
 
 /-- How often the letter `v` occurs in a recut tableau, counted row by row. -/
 theorem content_recut (hcut : IsCut T v cut) :
@@ -557,11 +568,12 @@ private theorem le_cutUpper (T : SemistandardYoungTableau μ) (v i : ℕ) :
 
 /-- **The Bender-Knuth splitting point**: the reflection, in the interval of admissible splitting
 points of row `i`, of the splitting point of `T` itself. -/
-def bkCut (T : SemistandardYoungTableau μ) (v i : ℕ) : ℕ :=
+private def bkCut (T : SemistandardYoungTableau μ) (v i : ℕ) : ℕ :=
   cutLower T v i + cutUpper T v i - rowCountLt T i (v + 1)
 
 /-- The Bender-Knuth splitting points are admissible. -/
-theorem isCut_bkCut (T : SemistandardYoungTableau μ) (v : ℕ) : IsCut T v (bkCut T v) where
+private theorem isCut_bkCut (T : SemistandardYoungTableau μ) (v : ℕ) :
+    IsCut T v (bkCut T v) where
   le_cut i := by
     have hlow := cutLower_le T v i
     have hhigh := le_cutUpper T v i
@@ -588,17 +600,25 @@ points. -/
 def benderKnuth (T : SemistandardYoungTableau μ) (v : ℕ) : SemistandardYoungTableau μ :=
   recut T v (bkCut T v) (isCut_bkCut T v)
 
-theorem benderKnuth_apply (T : SemistandardYoungTableau μ) (v i j : ℕ) :
-    benderKnuth T v i j = recutEntry T v (bkCut T v) i j := (rfl)
+/-- Inside the block, the involution writes `v` before its splitting point and `v + 1` after it. -/
+private theorem benderKnuth_apply_of_inBlock (T : SemistandardYoungTableau μ) (v : ℕ) {i j : ℕ}
+    (h : T.InBlock v i j) : benderKnuth T v i j = if j < bkCut T v i then v else v + 1 :=
+  recut_apply_of_inBlock (isCut_bkCut T v) h
+
+/-- Outside the block, the involution leaves the entry alone. -/
+private theorem benderKnuth_apply_of_not_inBlock (T : SemistandardYoungTableau μ) (v : ℕ)
+    {i j : ℕ} (h : ¬ T.InBlock v i j) : benderKnuth T v i j = T i j :=
+  recut_apply_of_not_inBlock (isCut_bkCut T v) h
 
 /-- The involution writes no letter other than the ones already there and the two it exchanges. -/
 theorem benderKnuth_apply_eq_or (T : SemistandardYoungTableau μ) (v i j : ℕ) :
     benderKnuth T v i j = T i j ∨ benderKnuth T v i j = v ∨ benderKnuth T v i j = v + 1 :=
   recutEntry_eq_or T v (bkCut T v) i j
 
-theorem inBlock_benderKnuth (T : SemistandardYoungTableau μ) (v i j : ℕ) :
+/-- The involution moves no letter into or out of the block, so it leaves the block alone. -/
+theorem inBlock_benderKnuth_iff (T : SemistandardYoungTableau μ) (v i j : ℕ) :
     (benderKnuth T v).InBlock v i j ↔ T.InBlock v i j :=
-  inBlock_recut (isCut_bkCut T v) i j
+  inBlock_recut_iff (isCut_bkCut T v) i j
 
 theorem rowCountLt_benderKnuth_of_le (T : SemistandardYoungTableau μ) (v i : ℕ) (hx : x ≤ v) :
     rowCountLt (benderKnuth T v) i x = rowCountLt T i x :=
@@ -608,13 +628,13 @@ theorem rowCountLt_benderKnuth_of_ge (T : SemistandardYoungTableau μ) (v i : �
     (hx : v + 2 ≤ x) : rowCountLt (benderKnuth T v) i x = rowCountLt T i x :=
   rowCountLt_recut_of_ge (isCut_bkCut T v) i hx
 
-theorem rowCountLt_benderKnuth_succ (T : SemistandardYoungTableau μ) (v i : ℕ) :
+private theorem rowCountLt_benderKnuth_succ (T : SemistandardYoungTableau μ) (v i : ℕ) :
     rowCountLt (benderKnuth T v) i (v + 1) = bkCut T v i :=
   rowCountLt_recut_succ (isCut_bkCut T v) i
 
 /-- The interval of admissible splitting points is unchanged by the involution: its endpoints are
 read off the row counts below and above the block, which the involution does not move. -/
-theorem bkCut_benderKnuth (T : SemistandardYoungTableau μ) (v i : ℕ) :
+private theorem bkCut_benderKnuth (T : SemistandardYoungTableau μ) (v i : ℕ) :
     bkCut (benderKnuth T v) v i = rowCountLt T i (v + 1) := by
   have hlow : cutLower (benderKnuth T v) v i = cutLower T v i := by
     unfold cutLower
@@ -638,15 +658,16 @@ theorem bkCut_benderKnuth (T : SemistandardYoungTableau μ) (v i : ℕ) :
 theorem benderKnuth_benderKnuth (T : SemistandardYoungTableau μ) (v : ℕ) :
     benderKnuth (benderKnuth T v) v = T := by
   ext i j
-  rw [benderKnuth_apply]
   by_cases h : T.InBlock v i j
-  · rw [recutEntry_of_inBlock _ v _ ((inBlock_benderKnuth T v i j).mpr h), bkCut_benderKnuth]
+  · rw [benderKnuth_apply_of_inBlock _ v ((inBlock_benderKnuth_iff T v i j).mpr h),
+      bkCut_benderKnuth]
     have hjr := YoungDiagram.mem_iff_lt_rowLen.mp h.1
     have hiff := T.lt_rowCountLt_iff (x := v + 1) hjr
     have := h.2
     split <;> omega
-  · rw [recutEntry_of_not_inBlock _ v _ (fun hc => h ((inBlock_benderKnuth T v i j).mp hc)),
-      benderKnuth_apply, recutEntry_of_not_inBlock T v _ h]
+  · rw [benderKnuth_apply_of_not_inBlock _ v
+      (fun hc => h ((inBlock_benderKnuth_iff T v i j).mp hc)),
+      benderKnuth_apply_of_not_inBlock T v h]
 
 theorem benderKnuth_involutive (μ : YoungDiagram) (v : ℕ) :
     Function.Involutive fun T : SemistandardYoungTableau μ => benderKnuth T v :=
