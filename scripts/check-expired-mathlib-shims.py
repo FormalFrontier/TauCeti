@@ -438,7 +438,8 @@ def markdown_summary(
         lines.append("No configured replacement target exists in the pinned dependency.")
         return "\n".join(lines) + "\n"
     disposition = (
-        "This PR is blocked until its worker migrates each affected source."
+        "Sources with exact replacements block this PR until its worker migrates them; "
+        "speculative and landing-sentinel rows remain audit-only."
         if blocking else "Audit each affected source; this report does not fail the build."
     )
     lines.extend([

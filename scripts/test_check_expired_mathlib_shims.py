@@ -263,7 +263,7 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             summary = check.markdown_summary((group,), available)
             self.assertIn("report does not fail the build", summary)
             blocking = check.markdown_summary((group,), available, blocking=True)
-            self.assertIn("PR is blocked until its worker migrates", blocking)
+            self.assertIn("Sources with exact replacements block this PR", blocking)
             self.assertIn("TauCeti/One.lean", summary)
             self.assertIn("test group", summary)
 
@@ -296,6 +296,9 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             pathlib.Path("TauCeti/Exact.lean"), ("declaration Upstream.exact",), "exact"
         )
         self.assertTrue(check.blocks_bump(exact))
+        mixed = check.markdown_summary((group,), (available[0], exact), blocking=True)
+        self.assertIn("landing-sentinel rows remain audit-only", mixed)
+        self.assertNotIn("migrates each affected source", mixed)
 
     def test_missing_mathlib_tree_rejects_module_checks(self):
         group = check.ShimGroup(
