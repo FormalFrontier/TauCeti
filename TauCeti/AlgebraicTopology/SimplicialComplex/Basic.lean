@@ -54,8 +54,7 @@ both. -/
 theorem mem_inf {ρ : Finset ι} : ρ ∈ K ⊓ L ↔ ρ ∈ K ∧ ρ ∈ L :=
   Iff.rfl
 
-/-- Every vertex of a face spans a face: complexes are downward closed, and a singleton inside a
-face is a nonempty subset of it. -/
+/-- Every vertex of a face spans a singleton face. -/
 theorem singleton_mem_of_mem (hσ : σ ∈ K) (hv : v ∈ σ) : ({v} : Finset ι) ∈ K :=
   (K.isRelLowerSet_faces hσ).2 (Finset.singleton_subset_iff.mpr hv) (Finset.singleton_nonempty v)
 

@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicTopology.SimplicialComplex.Collapse.Cone
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Dimension
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Simplex.Link
 
@@ -26,7 +25,8 @@ which vertices are used, since `σ` itself stops being a face while `v` becomes 
 The definition is the usual explicit description of the faces, split by whether the new vertex
 occurs. A face is either
 
-* a face of `K` that does *not* contain `σ` — that is, a face of the deletion `deletion K σ`; or
+* a face `τ` of `K` with `v ∉ τ` that does *not* contain `σ`; when `v` is fresh, these are the
+  faces of the deletion `deletion K σ`; or
 * `insert v ρ`, where `ρ` does not contain `σ` and `ρ ∪ σ` is a face of `K` — that is, `v` joined
   with a face of the boundary `∂σ ∗ link K σ` of the closed star.
 
@@ -73,11 +73,10 @@ same two pieces the geometric picture uses.
   star.
 * `PreAbstractSimplicialComplex.dimension_stellarSubdivision`: starring preserves the dimension.
 * `PreAbstractSimplicialComplex.finite_faces_stellarSubdivision`: starring preserves finiteness.
-* `PreAbstractSimplicialComplex.isCone_stellarSubdivision`: starring a complex that is its own
-  closed star at `σ` produces a cone with apex the new vertex; for a simplex this gives
-  `PreAbstractSimplicialComplex.link_stellarSubdivision_simplex`, that the starred simplex is the
-  cone on the simplex boundary, and hence
-  `PreAbstractSimplicialComplex.collapsible_stellarSubdivision_simplex`.
+* `PreAbstractSimplicialComplex.isCone_stellarSubdivision_of_closedStar_eq_self`: starring a
+  complex that is its own closed star at `σ` produces a cone with apex the new vertex; for a
+  simplex, `PreAbstractSimplicialComplex.link_stellarSubdivision_simplex_self` identifies the
+  link of that apex with the simplex boundary.
 -/
 
 public section
@@ -91,9 +90,10 @@ variable {ι : Type*} [DecidableEq ι] {K : PreAbstractSimplicialComplex ι} {V 
 
 /-- The **stellar subdivision** (or *starring*) of `K` at the face `σ`, using the new vertex `v`.
 
-Its faces are the faces of `K` not containing `σ`, together with the sets `insert v ρ` for which
-`ρ` does not contain `σ` and `ρ ∪ σ` is a face of `K`. Equivalently, the closed star of `σ` is
-removed and replaced by the cone with apex `v` on the boundary of that closed star.
+Its faces are the faces `τ` of `K` with `v ∉ τ` that do not contain `σ`, together with the sets
+`insert v ρ` for which `ρ` does not contain `σ` and `ρ ∪ σ` is a face of `K`. Under the intended
+freshness hypothesis, equivalently, the closed star of `σ` is removed and replaced by the cone
+with apex `v` on the boundary of that closed star.
 
 The intended hypotheses are that `σ` is a face of `K` and that `v` is fresh, i.e. `{v} ∉ K`; they
 are not part of the definition, and the degenerate values are pinned by
@@ -130,10 +130,12 @@ theorem mem_stellarSubdivision_iff :
 theorem mem_stellarSubdivision_iff_of_notMem (hvτ : v ∉ τ) :
     τ ∈ stellarSubdivision K σ v ↔ τ ∈ K ∧ ¬ σ ⊆ τ := by
   constructor
-  · rintro (⟨-, hτK, hτσ⟩ | ⟨hvτ', -, -⟩)
+  · intro hτ
+    rw [mem_stellarSubdivision_iff] at hτ
+    rcases hτ with ⟨-, hτK, hτσ⟩ | ⟨hvτ', -, -⟩
     · exact ⟨hτK, hτσ⟩
     · exact absurd hvτ' hvτ
-  · exact fun h => Or.inl ⟨hvτ, h.1, h.2⟩
+  · exact fun h => mem_stellarSubdivision_iff.mpr (Or.inl ⟨hvτ, h.1, h.2⟩)
 
 /-- A set containing the new vertex is a face of the stellar subdivision exactly when the rest of
 it is a face of the boundary of the closed star of `σ`: it must not contain `σ`, while its union
@@ -143,12 +145,15 @@ theorem insert_mem_stellarSubdivision_iff (hvρ : v ∉ ρ) :
     insert v ρ ∈ stellarSubdivision K σ v ↔ ¬ σ ⊆ ρ ∧ ρ ∪ σ ∈ K := by
   have herase : (insert v ρ).erase v = ρ := Finset.erase_insert hvρ
   constructor
-  · rintro (⟨hv', -, -⟩ | ⟨-, h₁, h₂⟩)
+  · intro h
+    rw [mem_stellarSubdivision_iff] at h
+    rcases h with ⟨hv', -, -⟩ | ⟨-, h₁, h₂⟩
     · exact absurd (Finset.mem_insert_self v ρ) hv'
     · rw [herase] at h₁ h₂
       exact ⟨h₁, h₂⟩
   · rintro ⟨h₁, h₂⟩
-    exact Or.inr ⟨Finset.mem_insert_self v ρ, by rwa [herase], by rwa [herase]⟩
+    exact mem_stellarSubdivision_iff.mpr
+      (Or.inr ⟨Finset.mem_insert_self v ρ, by rwa [herase], by rwa [herase]⟩)
 
 /-- The new vertex becomes a vertex of the stellar subdivision exactly when the starred set was a
 face to begin with. -/
@@ -157,10 +162,13 @@ theorem singleton_mem_stellarSubdivision_iff :
     ({v} : Finset ι) ∈ stellarSubdivision K σ v ↔ σ ∈ K := by
   have herase : ({v} : Finset ι).erase v = ∅ := Finset.erase_singleton v
   constructor
-  · rintro (⟨hv', -, -⟩ | ⟨-, -, h₂⟩)
+  · intro h
+    rw [mem_stellarSubdivision_iff] at h
+    rcases h with ⟨hv', -, -⟩ | ⟨-, -, h₂⟩
     · exact absurd (Finset.mem_singleton_self v) hv'
     · rwa [herase, Finset.empty_union] at h₂
   · intro h
+    apply mem_stellarSubdivision_iff.mpr
     refine Or.inr ⟨Finset.mem_singleton_self v, ?_, by rwa [herase, Finset.empty_union]⟩
     rw [herase]
     exact fun hsub => ((K.isRelLowerSet_faces h).1).ne_empty (Finset.subset_empty.mp hsub)
@@ -173,17 +181,19 @@ theorem self_notMem_stellarSubdivision (hvσ : v ∉ σ) : σ ∉ stellarSubdivi
   rw [mem_stellarSubdivision_iff_of_notMem hvσ]
   exact fun h => h.2 Finset.Subset.rfl
 
-/-- Starring a genuine face at a fresh vertex genuinely changes the complex. -/
-theorem stellarSubdivision_ne_self (hv : ({v} : Finset ι) ∉ K) (hσ : σ ∈ K) :
+/-- Starring a genuine face at a vertex outside that face genuinely changes the complex. -/
+theorem stellarSubdivision_ne_self (hvσ : v ∉ σ) (hσ : σ ∈ K) :
     stellarSubdivision K σ v ≠ K := by
   intro h
-  exact self_notMem_stellarSubdivision (notMem_of_singleton_notMem hv hσ) (by rw [h]; exact hσ)
+  exact self_notMem_stellarSubdivision hvσ (by rw [h]; exact hσ)
 
-/-- Starring at the empty set leaves nothing: every set contains `∅`, so no face survives. -/
+/-- Starring at the empty set gives the bottom precomplex. -/
 @[simp]
 theorem stellarSubdivision_empty (K : PreAbstractSimplicialComplex ι) (v : ι) :
     stellarSubdivision K (∅ : Finset ι) v = ⊥ := by
   refine eq_bot_iff.mpr fun τ hτ => ?_
+  change τ ∈ stellarSubdivision K ∅ v at hτ
+  rw [mem_stellarSubdivision_iff] at hτ
   rcases hτ with ⟨-, -, h⟩ | ⟨-, h, -⟩
   · exact absurd (Finset.empty_subset τ) h
   · exact absurd (Finset.empty_subset _) h
@@ -196,12 +206,15 @@ theorem stellarSubdivision_eq_self_of_notMem (hv : ({v} : Finset ι) ∉ K) (hσ
     (hσ : σ ∉ K) : stellarSubdivision K σ v = K := by
   refine SetLike.ext fun τ => ?_
   constructor
-  · rintro (⟨-, hτK, -⟩ | ⟨-, -, h₂⟩)
+  · intro hτ
+    rw [mem_stellarSubdivision_iff] at hτ
+    rcases hτ with ⟨-, hτK, -⟩ | ⟨-, -, h₂⟩
     · exact hτK
     · exact absurd ((K.isRelLowerSet_faces h₂).2 Finset.subset_union_right hσne) hσ
   · intro hτK
-    exact Or.inl ⟨notMem_of_singleton_notMem hv hτK, hτK,
-      fun hsub => hσ ((K.isRelLowerSet_faces hτK).2 hsub hσne)⟩
+    exact mem_stellarSubdivision_iff.mpr (Or.inl
+      ⟨notMem_of_singleton_notMem hv hτK, hτK,
+        fun hsub => hσ ((K.isRelLowerSet_faces hτK).2 hsub hσne)⟩)
 
 /-! ### The two pieces glued by a starring
 
@@ -237,10 +250,9 @@ that do not themselves contain `σ`. This is the combinatorial form of "`v` is c
 @[simp]
 theorem link_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
     link (stellarSubdivision K σ v) {v} = closedStar K σ ⊓ deletion K σ := by
-  have hunion : ∀ ω : Finset ι, ω ∪ {v} = insert v ω := fun ω => by
-    rw [Finset.union_comm, Finset.insert_eq]
   refine SetLike.ext fun ρ => ?_
-  rw [mem_link_nonempty, mem_inf, mem_closedStar_nonempty, mem_deletion, hunion ρ]
+  rw [mem_link_nonempty, mem_inf, mem_closedStar_nonempty, mem_deletion,
+    Finset.union_singleton v ρ]
   constructor
   · rintro ⟨hne, hdis, hmem⟩
     have hvρ : v ∉ ρ := Finset.disjoint_singleton_right.mp hdis
@@ -253,16 +265,14 @@ theorem link_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
 
 /-! ### Dimension and finiteness -/
 
-/-- **Starring preserves the dimension.** A face containing the new vertex has at most as many
-vertices as the face `τ.erase v ∪ σ` of `K` it comes from, because `σ` contributes a vertex
-outside `τ.erase v`; conversely a face of `K` containing `σ` is matched by exchanging one vertex
-of `σ` for the new vertex. -/
+/-- **Starring a nonempty set at a fresh vertex preserves the dimension.** -/
 @[simp]
-theorem dimension_stellarSubdivision (hv : ({v} : Finset ι) ∉ K) (hσ : σ ∈ K) :
+theorem dimension_stellarSubdivision (hv : ({v} : Finset ι) ∉ K) (hσne : σ.Nonempty) :
     dimension (stellarSubdivision K σ v) = dimension K := by
-  have hσne : σ.Nonempty := (K.isRelLowerSet_faces hσ).1
   refine le_antisymm (dimension_le_iff.mpr ?_) (dimension_le_iff.mpr ?_)
-  · rintro τ (⟨-, hτK, -⟩ | ⟨hvτ, hτσ, hτK⟩)
+  · intro τ hτ
+    rw [mem_stellarSubdivision_iff] at hτ
+    rcases hτ with ⟨-, hτK, -⟩ | ⟨hvτ, hτσ, hτK⟩
     · exact le_dimension hτK
     · obtain ⟨x, hxσ, hxτ⟩ := Finset.not_subset.mp hτσ
       have hpos : 1 ≤ τ.card := Finset.card_pos.mpr ⟨v, hvτ⟩
@@ -281,12 +291,8 @@ theorem dimension_stellarSubdivision (hv : ({v} : Finset ι) ∉ K) (hσ : σ �
       have hxτ : x ∈ τ := hsub hxσ
       have hvρ : v ∉ τ.erase x := fun h => hvτ (Finset.mem_of_mem_erase h)
       have hnotsub : ¬ σ ⊆ τ.erase x := fun h => Finset.notMem_erase x τ (h hxσ)
-      have hunion : τ.erase x ∪ σ = τ := by
-        refine Finset.Subset.antisymm (Finset.union_subset (Finset.erase_subset _ _) hsub)
-          fun y hy => ?_
-        by_cases hyx : y = x
-        · exact Finset.mem_union_right _ (hyx ▸ hxσ)
-        · exact Finset.mem_union_left _ (Finset.mem_erase.mpr ⟨hyx, hy⟩)
+      have hunion : τ.erase x ∪ σ = τ :=
+        (Finset.erase_union_of_mem hxσ τ).trans (Finset.union_eq_left.mpr hsub)
       have hmem : insert v (τ.erase x) ∈ stellarSubdivision K σ v :=
         (insert_mem_stellarSubdivision_iff hvρ).mpr ⟨hnotsub, by rw [hunion]; exact hτK⟩
       have hcard : (insert v (τ.erase x)).card = τ.card := by
@@ -303,7 +309,10 @@ theorem finite_faces_stellarSubdivision (hfin : K.faces.Finite) :
     (stellarSubdivision K σ v).faces.Finite := by
   have hsub : (stellarSubdivision K σ v).faces ⊆
       K.faces ∪ ⋃ ω ∈ K.faces, (insert v '' (ω.powerset : Set (Finset ι))) := by
-    rintro τ (⟨-, hτK, -⟩ | ⟨hvτ, -, hτK⟩)
+    intro τ hτ
+    change τ ∈ stellarSubdivision K σ v at hτ
+    rw [mem_stellarSubdivision_iff] at hτ
+    rcases hτ with ⟨-, hτK, -⟩ | ⟨hvτ, -, hτK⟩
     · exact Or.inl hτK
     · exact Or.inr (Set.mem_biUnion hτK ⟨τ.erase v,
         Finset.mem_coe.mpr (Finset.mem_powerset.mpr Finset.subset_union_left),
@@ -314,45 +323,40 @@ theorem finite_faces_stellarSubdivision (hfin : K.faces.Finite) :
 /-! ### Starring a closed star, and the standard model
 
 When `K` is its own closed star at `σ` — the case of a simplex starred at its top face — every
-face can absorb the new vertex, so the subdivision is a cone with apex `v`. Since a finite cone
-collapses to its apex, this proves that this stellar subdivision of a simplex is collapsible. -/
+face can absorb the new vertex, so the subdivision is a cone with apex `v`. -/
 
 /-- Starring a complex that is its own closed star at `σ` produces a cone with apex the new
 vertex. -/
-theorem isCone_stellarSubdivision (hσ : σ ∈ K) (hstar : closedStar K σ = K) :
+theorem isCone_stellarSubdivision_of_closedStar_eq_self (hσ : σ ∈ K)
+    (hstar : closedStar K σ = K) :
     IsCone (stellarSubdivision K σ v) v where
   apex_mem := singleton_mem_stellarSubdivision_iff.mpr hσ
   insert_mem τ hτ := by
-    rcases hτ with ⟨hvτ, hτK, hτσ⟩ | ⟨hvτ, h₁, h₂⟩
+    rcases mem_stellarSubdivision_iff.mp hτ with ⟨hvτ, hτK, hτσ⟩ | ⟨hvτ, -, -⟩
     · refine (insert_mem_stellarSubdivision_iff hvτ).mpr ⟨hτσ, ?_⟩
       have hmem : τ ∈ closedStar K σ := by rw [hstar]; exact hτK
       exact (mem_closedStar.mp hmem).2
     · rw [Finset.insert_eq_self.mpr hvτ]
-      exact Or.inr ⟨hvτ, h₁, h₂⟩
+      exact hτ
 
 /-- Starring a simplex at its whole vertex set produces a cone with apex the new vertex. -/
-theorem isCone_stellarSubdivision_simplex (hV : V.Nonempty) :
+theorem isCone_stellarSubdivision_simplex_self (hV : V.Nonempty) :
     IsCone (stellarSubdivision (simplex V) V v) v :=
-  isCone_stellarSubdivision (self_mem_simplex.mpr hV) (closedStar_simplex Finset.Subset.rfl)
+  isCone_stellarSubdivision_of_closedStar_eq_self (self_mem_simplex.mpr hV)
+    (closedStar_simplex Finset.Subset.rfl)
 
 /-- **The starred simplex is the cone on the simplex boundary**: the link of the new vertex is
 exactly `simplexBoundary V`. This is the standard model of the move, and pins the convention. -/
-theorem link_stellarSubdivision_simplex (hv : v ∉ V) :
+theorem link_stellarSubdivision_simplex_self (hv : v ∉ V) :
     link (stellarSubdivision (simplex V) V v) {v} = simplexBoundary V := by
   rw [link_stellarSubdivision_singleton fun h => hv (singleton_mem_simplex.mp h),
     closedStar_simplex Finset.Subset.rfl, deletion_simplex_self,
     inf_eq_right.mpr simplexBoundary_le_simplex]
 
-/-- A starred simplex is collapsible: it is a finite cone with apex the new vertex. -/
-theorem collapsible_stellarSubdivision_simplex (hV : V.Nonempty) :
-    Collapsible (stellarSubdivision (simplex V) V v) :=
-  (isCone_stellarSubdivision_simplex hV).collapsible
-    (finite_faces_stellarSubdivision (finite_faces_simplex V))
-
 /-- Starring a simplex at its whole vertex set leaves the dimension at `V.card - 1`. -/
-theorem dimension_stellarSubdivision_simplex (hv : v ∉ V) (hV : V.Nonempty) :
+theorem dimension_stellarSubdivision_simplex_self (hv : v ∉ V) (hV : V.Nonempty) :
     dimension (stellarSubdivision (simplex V) V v) = ((V.card - 1 : ℕ) : WithBot ℕ∞) := by
   rw [dimension_stellarSubdivision (fun h => hv (singleton_mem_simplex.mp h))
-    (self_mem_simplex.mpr hV), dimension_simplex hV]
+    hV, dimension_simplex hV]
 
 end PreAbstractSimplicialComplex
