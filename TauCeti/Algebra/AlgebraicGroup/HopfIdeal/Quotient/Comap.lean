@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Comap
 
 /-!
 # Inverse images of Hopf ideals along a quotient morphism

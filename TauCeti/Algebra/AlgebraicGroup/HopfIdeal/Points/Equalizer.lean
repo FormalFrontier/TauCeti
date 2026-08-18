@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Equalizer
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 
