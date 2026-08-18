@@ -206,6 +206,7 @@ theorem coordinateHopfAlgebraBaseChangeBialgEquiv_tmul
       coordinateHopfAlgebraAlgEquiv K n
         (coordinateRingBaseChangeAlgEquiv R K n
           (s ⊗ₜ[R] (coordinateHopfAlgebraAlgEquiv R n).symm x)) := by
+  -- `BialgEquiv.ofAlgEquiv` stores the supplied algebra equivalence as its underlying map.
   exact bundledCoordinateBaseChangeAlgEquiv_tmul R K n s x
 
 /-- On polynomial coordinates, the Hopf-algebra base-change equivalence extends coefficients and
@@ -230,6 +231,8 @@ theorem coordinateHopfAlgebraBaseChangeBialgEquiv_symm_coordinateRingMap
           (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) =
       1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p) := by
   apply (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm_apply_eq.mpr
+  -- `symm_apply_eq` exposes the forward map through its `MulEquiv` projection, whereas the
+  -- characteristic lemma below uses the coerced `BialgEquiv`; these maps are definitionally equal.
   change coordinateHopfAlgebraAlgEquiv K n
       (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p)) =
     coordinateHopfAlgebraBaseChangeBialgEquiv R K n
@@ -249,9 +252,17 @@ theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_X (i j : Fin n) :
   simpa using coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n
     (1 : K) (MvPolynomial.X (i, j))
 
+private theorem baseChange_antipode_one_tmul (x : coordinateHopfAlgebra R n) :
+    HopfAlgebra.antipode K ((1 : K) ⊗ₜ[R] x) =
+      (1 : K) ⊗ₜ[R] HopfAlgebra.antipode R x := by
+  rw [TensorProduct.antipode_def, TensorProduct.AlgebraTensorModule.map_tmul,
+    HopfAlgebra.antipode_one]
+
 /-- Base change carries each inverse localized generic matrix entry to the corresponding inverse
 entry over the new base. -/
-theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_nonsing_inv (i j : Fin n) :
+@[simp]
+theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_localizedGenericMatrix_inv_apply
+    (i j : Fin n) :
     coordinateHopfAlgebraBaseChangeBialgEquiv R K n
         (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
           ((localizedGenericMatrix R n)⁻¹ i j)) =
@@ -267,7 +278,7 @@ theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_nonsing_inv (i j : Fi
           (HopfAlgebra.antipode K
             (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
               (coordinateRingMap R n (MvPolynomial.X (i, j))))) := by
-      rfl
+      rw [baseChange_antipode_one_tmul]
     _ = HopfAlgebra.antipode K
           (coordinateHopfAlgebraBaseChangeBialgEquiv R K n
             (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
@@ -301,8 +312,9 @@ theorem coordinateHopfAlgebraBaseChangeIso_hom_apply
         (s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p)) =
       coordinateHopfAlgebraAlgEquiv K n
         (s • coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p)) := by
-  change coordinateHopfAlgebraBaseChangeBialgEquiv R K n
-      (s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p)) = _
+  simp only [coordinateHopfAlgebraBaseChangeIso, CategoryTheory.Iso.trans_hom,
+    CategoryTheory.comp_apply, CommHopfAlgCat.ofIsoSelf_hom, CommHopfAlgCat.isoMk_hom,
+    CategoryTheory.Iso.symm_hom, CommHopfAlgCat.ofIsoSelf_inv]
   exact coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p
 
 /-- The inverse categorical base-change isomorphism sends an extended polynomial coordinate back
@@ -315,6 +327,9 @@ theorem coordinateHopfAlgebraBaseChangeIso_inv_apply
         (coordinateHopfAlgebraAlgEquiv K n
           (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) =
       s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p) := by
+  -- The inverse of the categorical composite reduces to `ofHom` of the symmetric bialgebra
+  -- equivalence between two identity morphisms. Its coercion to a function is definitionally the
+  -- symmetric equivalence, but `ofHom_apply` is deliberately not a simp lemma.
   change s • (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm
       (coordinateHopfAlgebraAlgEquiv K n
         (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) = _
