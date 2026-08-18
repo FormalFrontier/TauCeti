@@ -122,9 +122,8 @@ private theorem dist_toAbs_algebraMap_pi {ι : Type*} (av : ι → AbsoluteValue
     (x y : K) :
     dist (WithAbs.toAbs (av i) y) (algebraMap K ((j : ι) → WithAbs (av j)) x i) =
       av i (x - y) := by
-  rw [dist_eq_norm, WithAbs.norm_eq_apply_ofAbs, WithAbs.ofAbs_sub, Pi.algebraMap_apply,
-    WithAbs.ofAbs_toAbs, WithAbs.algebraMap_right_apply, WithAbs.ofAbs_toAbs,
-    Algebra.algebraMap_self_apply, (av i).map_sub]
+  simpa [dist_eq_norm, WithAbs.norm_eq_apply_ofAbs, WithAbs.algebraMap_right_apply] using
+    (av i).map_neg (x - y)
 
 /-- Weak approximation for finitely many nontrivial, pairwise inequivalent discrete valuations,
 in open-ball form. -/
