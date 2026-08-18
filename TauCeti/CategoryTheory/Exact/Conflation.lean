@@ -7,38 +7,41 @@ module
 
 public import TauCeti.CategoryTheory.Exact.Functor
 public import TauCeti.CategoryTheory.Exact.Opposite
+public import Mathlib.CategoryTheory.ObjectProperty.Equivalence
+public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 
 /-!
 # The category of conflations
 
-For a fixed exact structure `E`, a conflation is not merely a proposition about a short complex:
+For a fixed conflation class `E`, a conflation is not merely a proposition about a short complex:
 conflations and commutative diagrams between them form a category. This file realizes that
 category as the full subcategory of `ShortComplex C` on the distinguished kernel--cokernel pairs.
-Consequently, a morphism of conflations is exactly a three-by-three commutative diagram, and an
-isomorphism of conflations is exactly such a diagram whose three vertical maps are isomorphisms.
+Consequently, a morphism of conflations is exactly a ladder of two commuting squares with three
+vertical maps, and an isomorphism of conflations is exactly such a ladder whose vertical maps are
+isomorphisms.
 
 The construction deliberately reuses Mathlib's category of short complexes. In particular,
 composition, identities, the preadditive structure, component functors, and the componentwise
 criterion for isomorphisms are inherited rather than duplicated.
 
 Conflation-exact functors induce functors between conflation categories. Naturally isomorphic
-conflation-exact functors induce naturally isomorphic functors, and passage to the opposite exact
-structure gives the expected contravariant functors on conflations.
+conflation-exact functors induce naturally isomorphic functors, and passage to the opposite
+conflation class gives the expected equivalence on conflations.
 
 ## Main definitions and results
 
-* `TauCeti.ExactStructure.ConflationCategory`: the full subcategory of distinguished short
+* `TauCeti.ConflationClass.ConflationCategory`: the full subcategory of distinguished short
   complexes.
-* `TauCeti.ExactStructure.ConflationCategory.homMk` and `.isoMk`: constructors for maps and
+* `TauCeti.ConflationClass.ConflationCategory.homMk` and `.isoMk`: constructors for maps and
   isomorphisms of conflations from their three components.
-* `TauCeti.ExactStructure.ConflationCategory.isIso_iff`: a map of conflations is an isomorphism
+* `TauCeti.ConflationClass.ConflationCategory.isIso_iff`: a map of conflations is an isomorphism
   exactly when all three components are isomorphisms.
 * `TauCeti.ExactStructure.ConflationCategory.map`: the functor induced by a conflation-exact
   functor.
-* `TauCeti.ExactStructure.ConflationCategory.mapIso`: natural-isomorphism invariance of the
+* `TauCeti.ExactStructure.ConflationCategory.mapNatIso`: natural-isomorphism invariance of the
   induced functor.
-* `TauCeti.ExactStructure.ConflationCategory.opFunctor` and `.unopFunctor`: the contravariant
-  functors supplied by the opposite exact structure.
+* `TauCeti.ConflationClass.ConflationCategory.opEquivalence`: the equivalence supplied by the
+  opposite conflation class.
 
 ## References
 
@@ -54,48 +57,48 @@ open CategoryTheory CategoryTheory.Limits
 
 universe v₁ v₂ u₁ u₂
 
-namespace ExactStructure
+namespace ConflationClass
 
-variable {C : Type u₁} [Category.{v₁} C] [Preadditive C] [HasZeroObject C]
-  [HasBinaryBiproducts C]
+variable {C : Type u₁} [Category.{v₁} C] [Preadditive C]
 
-/-- The category of conflations of an exact structure `E`. Its objects are distinguished short
+/-- The category of conflations of a conflation class `E`. Its objects are distinguished short
 complexes, and its morphisms are arbitrary morphisms of the underlying short complexes. -/
-abbrev ConflationCategory (E : ExactStructure C) :=
+abbrev ConflationCategory (E : ConflationClass C) :=
   ObjectProperty.FullSubcategory (fun S : ShortComplex C ↦ E.Conflation S)
 
 namespace ConflationCategory
 
-variable {E : ExactStructure C}
+variable {E : ConflationClass C}
 
 /-- The fully faithful inclusion of the category of conflations into the category of short
 complexes. -/
-abbrev ι (E : ExactStructure C) : E.ConflationCategory ⥤ ShortComplex C :=
+abbrev ι (E : ConflationClass C) : E.ConflationCategory ⥤ ShortComplex C :=
   ObjectProperty.ι (fun S : ShortComplex C ↦ E.Conflation S)
 
 /-- The left-object functor on the category of conflations. -/
-abbrev π₁ (E : ExactStructure C) : E.ConflationCategory ⥤ C :=
+abbrev π₁ (E : ConflationClass C) : E.ConflationCategory ⥤ C :=
   ι E ⋙ ShortComplex.π₁
 
 /-- The middle-object functor on the category of conflations. -/
-abbrev π₂ (E : ExactStructure C) : E.ConflationCategory ⥤ C :=
+abbrev π₂ (E : ConflationClass C) : E.ConflationCategory ⥤ C :=
   ι E ⋙ ShortComplex.π₂
 
 /-- The right-object functor on the category of conflations. -/
-abbrev π₃ (E : ExactStructure C) : E.ConflationCategory ⥤ C :=
+abbrev π₃ (E : ConflationClass C) : E.ConflationCategory ⥤ C :=
   ι E ⋙ ShortComplex.π₃
 
 /-- The first arrow of every conflation, as a natural transformation. -/
-abbrev f (E : ExactStructure C) : π₁ E ⟶ π₂ E :=
+abbrev π₁Toπ₂ (E : ConflationClass C) : π₁ E ⟶ π₂ E :=
   Functor.whiskerLeft (ι E) ShortComplex.π₁Toπ₂
 
 /-- The second arrow of every conflation, as a natural transformation. -/
-abbrev g (E : ExactStructure C) : π₂ E ⟶ π₃ E :=
+abbrev π₂Toπ₃ (E : ConflationClass C) : π₂ E ⟶ π₃ E :=
   Functor.whiskerLeft (ι E) ShortComplex.π₂Toπ₃
 
-/-- The two natural transformations carried by the universal conflation compose to zero. -/
+/-- The composite of the natural transformations `π₁Toπ₂ E` and `π₂Toπ₃ E` between the
+component functors is zero. -/
 @[reassoc (attr := simp)]
-theorem f_comp_g (E : ExactStructure C) : f E ≫ g E = 0 := by
+theorem π₁Toπ₂_comp_π₂Toπ₃ (E : ConflationClass C) : π₁Toπ₂ E ≫ π₂Toπ₃ E = 0 := by
   rw [← Functor.whiskerLeft_comp, ShortComplex.π₁Toπ₂_comp_π₂Toπ₃]
   ext S
   simp
@@ -132,6 +135,45 @@ theorem isIso_iff {S T : E.ConflationCategory} (a : S ⟶ T) :
   rw [← ObjectProperty.isIso_hom_iff]
   exact ShortComplex.isIso_iff a.hom
 
+section Opposite
+
+/-- The inverse image of opposite conflations under the short-complex opposite equivalence is
+the opposite of the original conflation property. -/
+theorem op_conflation_inverseImage (E : ConflationClass C) :
+    E.op.Conflation.inverseImage (ShortComplex.opEquiv C).functor = E.Conflation.op :=
+  by
+    ext S
+    rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.op_iff]
+    dsimp only [ShortComplex.opEquiv, ShortComplex.opFunctor]
+    exact E.op_conflation_op_iff S.unop
+
+/-- Taking opposites gives an equivalence from the opposite of the category of conflations to the
+category of conflations of the opposite conflation class. -/
+@[expose, simps!]
+noncomputable def opEquivalence (E : ConflationClass C) :
+    E.ConflationCategoryᵒᵖ ≌ E.op.ConflationCategory :=
+  (ObjectProperty.opEquivalence E.Conflation).symm.trans
+    ((ShortComplex.opEquiv C).congrFullSubcategory (op_conflation_inverseImage E))
+
+end Opposite
+
+end ConflationCategory
+
+end ConflationClass
+
+namespace ExactStructure
+
+variable {C : Type u₁} [Category.{v₁} C] [Preadditive C] [HasZeroObject C]
+  [HasBinaryBiproducts C]
+
+/-- The category of conflations of an exact structure. -/
+abbrev ConflationCategory (E : ExactStructure C) :=
+  E.toConflationClass.ConflationCategory
+
+namespace ConflationCategory
+
+variable {E : ExactStructure C}
+
 section Functor
 
 variable {D : Type u₂} [Category.{v₂} D] [Preadditive D] [HasZeroObject D]
@@ -140,38 +182,72 @@ variable {E' : ExactStructure D} {F G : C ⥤ D}
 
 /-- A conflation-exact functor induces a functor between the corresponding categories of
 conflations. -/
+@[expose, simps!]
 def map [F.Additive] (hF : E.IsConflationExact E' F) :
     E.ConflationCategory ⥤ E'.ConflationCategory :=
-  ObjectProperty.lift _ (ι E ⋙ F.mapShortComplex) fun S ↦ hF.map_conflation S.property
+  ObjectProperty.lift _ (ConflationClass.ConflationCategory.ι E.toConflationClass ⋙
+    F.mapShortComplex) fun S ↦ hF.map_conflation S.property
 
 /-- After forgetting that its objects are conflations, the induced functor is the ordinary
 componentwise map on short complexes. -/
+@[expose]
 def mapCompιIso [F.Additive] (hF : E.IsConflationExact E' F) :
-    map hF ⋙ ι E' ≅ ι E ⋙ F.mapShortComplex :=
+    map hF ⋙ ConflationClass.ConflationCategory.ι E'.toConflationClass ≅
+      ConflationClass.ConflationCategory.ι E.toConflationClass ⋙ F.mapShortComplex :=
   ObjectProperty.liftCompιIso _ _ _
 
-/-- The functor on conflations induced by the identity functor is naturally isomorphic to the
-identity. -/
+/-- The forward component of `mapCompιIso` is the identity. -/
+@[simp]
+theorem mapCompιIso_hom_app [F.Additive] (hF : E.IsConflationExact E' F)
+    (S : E.ConflationCategory) : (mapCompιIso hF).hom.app S = 𝟙 _ := rfl
+
+/-- The inverse component of `mapCompιIso` is the identity. -/
+@[simp]
+theorem mapCompιIso_inv_app [F.Additive] (hF : E.IsConflationExact E' F)
+    (S : E.ConflationCategory) : (mapCompιIso hF).inv.app S = 𝟙 _ := rfl
+
+/-- The functor on conflations induced by the identity functor is the identity on object and
+morphism data, so this is the identity isomorphism. -/
+@[expose]
 def mapIdIso : map (ExactStructure.IsConflationExact.id (E := E)) ≅
     Functor.id E.ConflationCategory :=
-  -- `ObjectProperty.lift` and `mapShortComplex` preserve identity functors strictly: the object
-  -- and morphism data on both sides are definitionally identical. This is the same intentional
-  -- definitional equality recorded by Mathlib's `ObjectProperty.liftCompιIso`.
   Iso.refl _
 
-/-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
+/-- The forward component of `mapIdIso` is the identity. -/
+@[simp]
+theorem mapIdIso_hom_app (S : E.ConflationCategory) : mapIdIso.hom.app S = 𝟙 S := rfl
+
+/-- The inverse component of `mapIdIso` is the identity. -/
+@[simp]
+theorem mapIdIso_inv_app (S : E.ConflationCategory) : mapIdIso.inv.app S = 𝟙 S := rfl
+
+/-- Mapping conflations by a composite and mapping successively have identical object and morphism
+data, so this is the identity isomorphism. -/
+@[expose]
 def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H) :
     map (hF.comp hH) ≅ map hF ⋙ map hH :=
-  -- Functor composition, `mapShortComplex`, and the two successive full-subcategory lifts all
-  -- have the same object and morphism data on both sides, so this coherence is intentionally
-  -- strict rather than assembled from nontrivial component isomorphisms.
   Iso.refl _
+
+/-- The forward component of `mapCompIso` is the identity. -/
+@[simp]
+theorem mapCompIso_hom_app {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
+    [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
+    (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
+    (S : E.ConflationCategory) : (mapCompIso hF hH).hom.app S = 𝟙 _ := rfl
+
+/-- The inverse component of `mapCompIso` is the identity. -/
+@[simp]
+theorem mapCompIso_inv_app {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
+    [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
+    (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
+    (S : E.ConflationCategory) : (mapCompIso hF hH).inv.app S = 𝟙 _ := rfl
 
 /-- A natural isomorphism between conflation-exact functors induces a natural isomorphism between
 their functors on conflations. -/
-def mapIso [F.Additive] [G.Additive] (hF : E.IsConflationExact E' F)
+@[expose, simps!]
+def mapNatIso [F.Additive] [G.Additive] (hF : E.IsConflationExact E' F)
     (hG : E.IsConflationExact E' G) (e : F ≅ G) : map hF ≅ map hG :=
   NatIso.ofComponents (fun S ↦
     ObjectProperty.isoMk (fun T : ShortComplex D ↦ E'.Conflation T) (S.obj.mapNatIso e))
@@ -179,54 +255,9 @@ def mapIso [F.Additive] [G.Additive] (hF : E.IsConflationExact E' F)
       intro S T a
       apply ObjectProperty.hom_ext
       apply ShortComplex.hom_ext
-      -- The full-subcategory and short-complex extensionality lemmas leave three component goals.
-      -- There is no single rewrite lemma crossing both wrappers: `change` unfolds precisely the
-      -- `map` and `mapNatIso` component definitions above, after which each goal is the canonical
-      -- naturality equation for `e`.
-      · change F.map a.hom.τ₁ ≫ e.hom.app T.obj.X₁ =
-          e.hom.app S.obj.X₁ ≫ G.map a.hom.τ₁
-        exact e.hom.naturality a.hom.τ₁
-      · change F.map a.hom.τ₂ ≫ e.hom.app T.obj.X₂ =
-          e.hom.app S.obj.X₂ ≫ G.map a.hom.τ₂
-        exact e.hom.naturality a.hom.τ₂
-      · change F.map a.hom.τ₃ ≫ e.hom.app T.obj.X₃ =
-          e.hom.app S.obj.X₃ ≫ G.map a.hom.τ₃
-        exact e.hom.naturality a.hom.τ₃)
+      all_goals exact e.hom.naturality _)
 
 end Functor
-
-section Opposite
-
-/-- Taking opposites sends a conflation contravariantly to a conflation in the opposite exact
-structure. -/
-noncomputable def opFunctor (E : ExactStructure C) :
-    E.ConflationCategoryᵒᵖ ⥤ E.op.ConflationCategory :=
-  ObjectProperty.lift _ ((ι E).op ⋙ ShortComplex.opFunctor C)
-    fun S ↦ (E.op_conflation_op_iff S.unop.obj).mpr S.unop.property
-
-/-- Forgetting the conflation proof after taking opposites recovers Mathlib's opposite functor on
-short complexes. -/
-noncomputable def opFunctorCompιIso (E : ExactStructure C) :
-    opFunctor E ⋙ ι E.op ≅ (ι E).op ⋙ ShortComplex.opFunctor C :=
-  ObjectProperty.liftCompιIso _ _ _
-
-/-- Un-oppositing sends a conflation in the opposite exact structure contravariantly back to the
-original conflation category. -/
-noncomputable def unopFunctor (E : ExactStructure C) :
-    E.op.ConflationCategory ⥤ E.ConflationCategoryᵒᵖ :=
-  (ObjectProperty.lift _ (ι E.op ⋙ ShortComplex.unopFunctor C).leftOp
-    fun S ↦ (E.op_conflation S.unop.obj).mp S.unop.property).rightOp
-
-/-- Forgetting the conflation proof after un-oppositing recovers Mathlib's un-opposite functor on
-short complexes. -/
-noncomputable def unopFunctorCompιOpIso (E : ExactStructure C) :
-    unopFunctor E ⋙ (ι E).op ≅ ι E.op ⋙ ShortComplex.unopFunctor C :=
-  -- The `.leftOp`/`.rightOp` round trip and the inclusion after `ObjectProperty.lift` have
-  -- definitionally identical object and morphism data. The intervening opposite wrappers prevent
-  -- applying `liftCompιIso` directly, so `Iso.refl` records that intentional strict equality.
-  Iso.refl _
-
-end Opposite
 
 end ConflationCategory
 
