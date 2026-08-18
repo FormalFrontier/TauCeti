@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.CliffordAlgebra.SpinGroup
 public import Mathlib.RepresentationTheory.Basic
 
 import TauCeti.LinearAlgebra.ExteriorAlgebra.End
+import Mathlib.RingTheory.SimpleModule.Basic
 
 /-!
 # The Spin-group representation on the exterior model
@@ -24,6 +25,8 @@ endomorphism of the exterior model.
   on the exterior model.
 * `TauCeti.spinAction_surjective` identifies the Fock action as onto the full endomorphism algebra
   when the first isotropic summand is finite free.
+* `TauCeti.eq_bot_or_eq_top_of_spinAction_invariant` says that the exterior model is a simple
+  Clifford module when the base ring is a field.
 
 ## References
 
@@ -86,5 +89,46 @@ theorem spinAction_surjective {Q : QuadraticForm K V} (P : SpinPolarizationData 
     apply LinearMap.ext
     intro s
     exact spinAction_ι_contract P y s
+
+section Field
+
+variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
+  {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+
+/-- **The spinor module is a simple Clifford module.** A submodule of `S = ⋀·W` carried into
+itself by the Fock action of every Clifford element is `⊥` or `⊤`: this is the irreducibility of
+the spinor representation of `CliffordAlgebra Q`.
+
+It is *not* irreducibility of the spin representation of the group. The spin group is much smaller
+than the Clifford algebra, and in even dimension the half-spin summands `TauCeti.spinPlus` and
+`TauCeti.spinMinus` are invariant under `TauCeti.spinRep`, so `S` splits as a representation of the
+group as soon as both summands are nonzero. What fails for them here is the invariance hypothesis:
+an odd Clifford element exchanges the two summands. -/
+theorem eq_bot_or_eq_top_of_spinAction_invariant [Module.Finite K P.W]
+    {N : Submodule K (ExteriorAlgebra K P.W)}
+    (hN : ∀ x : CliffordAlgebra Q, N.map (spinAction Q P x) ≤ N) : N = ⊥ ∨ N = ⊤ := by
+  let N' : Submodule (Module.End K (ExteriorAlgebra K P.W)) (ExteriorAlgebra K P.W) :=
+    { carrier := N
+      zero_mem' := N.zero_mem
+      add_mem' := N.add_mem
+      smul_mem' := by
+        intro f s hs
+        obtain ⟨x, rfl⟩ := spinAction_surjective P f
+        exact hN x (Submodule.mem_map.mpr ⟨s, hs, rfl⟩) }
+  rcases IsSimpleOrder.eq_bot_or_eq_top N' with h | h
+  · apply Or.inl
+    apply SetLike.ext'
+    change (N' : Set (ExteriorAlgebra K P.W)) =
+      ↑(⊥ : Submodule (Module.End K (ExteriorAlgebra K P.W)) (ExteriorAlgebra K P.W))
+    exact congrArg (fun M : Submodule (Module.End K (ExteriorAlgebra K P.W))
+      (ExteriorAlgebra K P.W) ↦ (M : Set (ExteriorAlgebra K P.W))) h
+  · apply Or.inr
+    apply SetLike.ext'
+    change (N' : Set (ExteriorAlgebra K P.W)) =
+      ↑(⊤ : Submodule (Module.End K (ExteriorAlgebra K P.W)) (ExteriorAlgebra K P.W))
+    exact congrArg (fun M : Submodule (Module.End K (ExteriorAlgebra K P.W))
+      (ExteriorAlgebra K P.W) ↦ (M : Set (ExteriorAlgebra K P.W))) h
+
+end Field
 
 end TauCeti

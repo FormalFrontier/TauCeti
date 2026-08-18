@@ -7,6 +7,9 @@ module
 
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 
+-- Private: `Subspace.dual_finrank_eq` is used only inside a proof.
+import Mathlib.LinearAlgebra.Dual.Lemmas
+
 /-!
 # Polarization data for quadratic spaces
 
@@ -17,6 +20,15 @@ scalar line.
 ## Main definition
 
 * `TauCeti.SpinPolarizationData` records the decomposition and its consumer-facing coordinates.
+
+## Main results
+
+* `TauCeti.SpinPolarizationData.finrank_eq_two_mul_finrank_W_add_finrank_line` and
+  `TauCeti.SpinPolarizationData.finrank_line_le_one` give the dimension bookkeeping of a
+  finite-dimensional polarization.
+* `TauCeti.SpinPolarizationData.line_eq_bot_of_even_finrank` and
+  `TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul` are its even-dimensional
+  consequences.
 
 ## References
 
@@ -114,6 +126,63 @@ theorem pairing_separatingRight {K : Type u} [CommRing K] {V : Type v}
   apply P.pairingEquiv.injective
   ext x
   simp only [P.pairingEquiv_apply, hy x, map_zero, LinearMap.zero_apply]
+
+section Dimension
+
+open Module
+
+variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
+  {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+
+/-! ### The dimensions of the three summands
+
+A polarization is a decomposition `V = W ⊕ W' ⊕ L` in which the polar form pairs `W` with `W'`
+perfectly and `L` sits inside the scalar line. The first fact makes the two isotropic summands
+equidimensional and the second bounds the remainder by one dimension, so the dimension of `V`
+determines the dimension of `W` up to the parity of `finrank V`. -/
+
+/-- **The two isotropic summands of a polarization have the same dimension.** The polar form
+identifies the second with the dual of the first, and a space and its dual have the same
+dimension. -/
+theorem finrank_W'_eq_finrank_W : finrank K P.W' = finrank K P.W := by
+  rw [P.pairingEquiv.finrank_eq, Subspace.dual_finrank_eq]
+
+/-- **The orthogonal remainder of a polarization is at most a line.** Its scalar coordinate
+`SpinPolarizationData.lineCoordinate` is injective into `K`, which is one-dimensional. -/
+theorem finrank_line_le_one : finrank K P.line ≤ 1 := by
+  have h := LinearMap.finrank_le_finrank_of_injective (f := P.lineCoordinate)
+    P.lineCoordinate_injective
+  simpa using h
+
+variable [FiniteDimensional K V]
+
+/-- **The dimension of a polarized quadratic space**: twice the dimension of the isotropic summand
+`W`, plus the dimension of the remainder. Together with `finrank_line_le_one` this pins
+`finrank W` to `finrank V / 2`. -/
+theorem finrank_eq_two_mul_finrank_W_add_finrank_line :
+    finrank K V = 2 * finrank K P.W + finrank K P.line := by
+  rw [← P.decompositionEquiv.finrank_eq, finrank_prod, finrank_prod, P.finrank_W'_eq_finrank_W]
+  ring
+
+/-- **In even dimension a polarization has no remainder.** The remainder is at most a line and
+carries the parity of `finrank V`, so an even-dimensional space forces it to vanish. This is the
+hypothesis under which the exterior parity of `⋀·W` splits the spin representation, in
+`TauCeti/RepresentationTheory/Spin/HalfSpin.lean`. -/
+theorem line_eq_bot_of_even_finrank (h : Even (finrank K V)) : P.line = ⊥ := by
+  obtain ⟨m, hm⟩ := h
+  have h₁ := P.finrank_line_le_one
+  have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
+  exact Submodule.finrank_eq_zero.1 (by omega)
+
+/-- **In even dimension the isotropic summand has half the dimension.** The isotropic summand `W`
+of a polarization of a `2l`-dimensional space has dimension `l`. -/
+theorem finrank_W_of_finrank_eq_two_mul {l : ℕ} (hV : finrank K V = 2 * l) :
+    finrank K P.W = l := by
+  have h₁ := P.finrank_line_le_one
+  have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
+  omega
+
+end Dimension
 
 end SpinPolarizationData
 
