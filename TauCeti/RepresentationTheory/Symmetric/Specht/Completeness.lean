@@ -202,6 +202,7 @@ theorem spechtModuleFDRepClass_bijective :
   constructor
   · intro μ ν h
     rw [spechtModuleFDRepClass_def, spechtModuleFDRepClass_def,
+      SimpleFDRepClasses.mk_eq_toSkeleton, SimpleFDRepClasses.mk_eq_toSkeleton,
       SimpleFDRepClasses.mk_eq_mk_iff] at h
     exact (spechtModule_iso_iff μ ν).mp h
   · refine SimpleFDRepClasses.ind (fun X hX ↦ ?_)
@@ -210,7 +211,8 @@ theorem spechtModuleFDRepClass_bijective :
       (FDRep.simple_iff_isIrreducible X).mp hX
     obtain ⟨μ, hμ⟩ := exists_nonempty_equiv_spechtModule X.ρ
     refine ⟨μ, ?_⟩
-    rw [spechtModuleFDRepClass_def, SimpleFDRepClasses.mk_eq_mk_iff]
+    rw [spechtModuleFDRepClass_def, SimpleFDRepClasses.mk_eq_toSkeleton,
+      SimpleFDRepClasses.mk_eq_toSkeleton, SimpleFDRepClasses.mk_eq_mk_iff]
     exact ⟨(nonempty_fdRepIso_iff.mpr hμ).some.symm⟩
 
 /-- **The categorical classification of the irreducible rational representations of the symmetric
@@ -263,7 +265,9 @@ theorem coe_simpleFDRepClassesEquivSimpleModuleClasses :
     let _ := hX
     -- Name the partition of `X`, so that both sides are evaluated at a Specht module.
     obtain ⟨μ, hμ, -⟩ := existsUnique_nonempty_iso_spechtModule X
+    rw [SimpleFDRepClasses.mk_eq_toSkeleton]
     rw [(SimpleFDRepClasses.mk_eq_mk_iff X (spechtModule μ)).mpr hμ]
+    rw [← SimpleFDRepClasses.mk_eq_toSkeleton (spechtModule μ)]
     rw [SimpleFDRepClasses.toSimpleSubmoduleClasses_mk]
     simp [-SimpleFDRepClasses.mk_eq_toSkeleton, simpleFDRepClassesEquivSimpleModuleClasses]
 

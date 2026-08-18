@@ -77,7 +77,11 @@ theorem mk_eq_toSkeleton (X : FDRep k G) [Simple X] :
 /-- Two simple objects have the same class exactly when they are isomorphic. -/
 @[simp]
 theorem mk_eq_mk_iff (X Y : FDRep k G) [Simple X] [Simple Y] :
-    mk X = mk Y ↔ Nonempty (X ≅ Y) :=
+    toSkeleton (⟨X, inferInstance⟩ :
+        ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G))) =
+      toSkeleton (⟨Y, inferInstance⟩ :
+        ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G))) ↔
+      Nonempty (X ≅ Y) :=
   ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso
     (Simple : ObjectProperty (FDRep k G)) _ _
 
@@ -102,7 +106,9 @@ noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G) [Simple X], α)
 
 @[simp]
 theorem lift_mk {α : Sort*} {f : ∀ (X : FDRep k G) [Simple X], α} {h}
-    (X : FDRep k G) [Simple X] : lift f h (mk X) = f X := (rfl)
+    (X : FDRep k G) [Simple X] :
+    lift f h (toSkeleton (⟨X, inferInstance⟩ :
+      ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))) = f X := (rfl)
 
 end SimpleFDRepClasses
 
@@ -128,7 +134,7 @@ noncomputable def toSimpleSubmoduleClasses [IsSemisimpleRing k[G]] :
 theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Simple X] :
     toSimpleSubmoduleClasses (mk X) =
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
-  by rw [toSimpleSubmoduleClasses, lift_mk]
+  by rw [mk_eq_toSkeleton, toSimpleSubmoduleClasses, lift_mk]
 
 end Field
 
