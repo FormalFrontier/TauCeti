@@ -24,10 +24,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # Read by publish-lake-cache below, the only job that ever holds the upload secret.
-    # Neither output reveals the secret's value or whether it is set.
+    # Neither output reveals the secret's value or whether it is set, and neither is trusted
+    # there: `staged` only decides whether that job runs at all, and `reported-toolchain` is
+    # cross-checked against the pin that job reads for itself.
     outputs:
       staged: ${{ steps.stage.outputs.staged }}
-      toolchain: ${{ steps.stage.outputs.toolchain }}
+      reported-toolchain: ${{ steps.stage.outputs.toolchain }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -301,8 +303,9 @@ jobs:
             exit 1
           fi
           # `lake env` reports the workspace's own view of the toolchain, which is exactly the
-          # `Env.toolchain` Lake scopes an upload by. Empty would silently scope the upload
-          # with no toolchain at all, so fail rather than publish somewhere nothing reads.
+          # `Env.toolchain` Lake scopes an upload by. The publish job does not take this on
+          # faith: it reads lean-toolchain itself and fails if the two disagree. Reporting it
+          # anyway turns a disagreement into a loud failure instead of a silent wrong scope.
           TOOLCHAIN="$(lake env printenv ELAN_TOOLCHAIN || true)"
           if [ -z "$TOOLCHAIN" ]; then
             echo "::error::could not determine the Lean toolchain that scopes the cache upload"
@@ -325,12 +328,12 @@ jobs:
           # burns CPU on both ends and saves nothing.
           compression-level: 0
 
-  # The only job that ever holds LAKE_CACHE_KEY. It has no checkout, no Lake workspace and no
-  # dependencies, so no code from this repository, and none from Mathlib either, runs
-  # anywhere in it: `lake cache put-staged` is documented as not configuring the workspace and
-  # therefore not executing arbitrary user code. Everything it uploads arrives as an artifact
-  # from the build job, whose contents code that landed on main could have chosen, so the
-  # staged tree is checked before Lake is pointed at it.
+  # The only job that ever holds LAKE_CACHE_KEY. It checks out exactly one file and nothing
+  # else, and has no Lake workspace and no dependencies, so no code from this repository, and
+  # none from Mathlib either, runs anywhere in it: `lake cache put-staged` is documented as not
+  # configuring the workspace and therefore not executing arbitrary user code. Everything else
+  # it consumes arrives from the build job, whose every output code that landed on main could
+  # have chosen, so nothing from there is trusted without a check.
   publish-lake-cache:
     needs: build
     if: ${{ needs.build.outputs.staged == 'true' }}
@@ -339,6 +342,20 @@ jobs:
     # Actions runtime token, and nothing else here talks to the GitHub API.
     permissions: {}
     steps:
+      # Exactly one file, and deliberately not the one the build job reported. Which toolchain
+      # this job installs and runs decides which `lake` binary handles the key, so it must come
+      # from the repository rather than from a job that executed code which landed on main:
+      # that job can rewrite lean-toolchain on disk, or poison a later step through $GITHUB_ENV
+      # and $GITHUB_PATH, so anything it reports is attacker-chosen. lean-toolchain itself is a
+      # Lake pin: bump-guard only lets it move forward along leanprover/lean4 releases without a
+      # human, and the build job above already installed and ran whatever it names, so reading
+      # it here adds no trust that main's build did not already extend.
+      - name: Check out the toolchain pin, and nothing else
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: lean-toolchain
+          sparse-checkout-cone-mode: false
+
       - name: Download the staged oleans
         uses: actions/download-artifact@v4
         with:
@@ -398,14 +415,32 @@ jobs:
                       check(json.loads(line), lineno)
           PY
 
-      - name: Install elan (no checkout, so no project code)
+      - name: Install elan and the pinned toolchain
+        id: toolchain
         env:
-          TOOLCHAIN: ${{ needs.build.outputs.toolchain }}
+          REPORTED: ${{ needs.build.outputs.reported-toolchain }}
         run: |
+          TOOLCHAIN="$(cat lean-toolchain)"
+          # Refuse anything that is not a leanprover/lean4 release name. `elan toolchain
+          # install owner/repo:tag` fetches from that repository's releases, so an unconstrained
+          # name would choose which `lake` binary later handles the key. bump-guard enforces the
+          # same shape on the pin; this repeats it rather than relying on it.
+          case "$TOOLCHAIN" in
+            leanprover/lean4:[A-Za-z0-9]*) ;;
+            *) echo "::error::lean-toolchain names '$TOOLCHAIN', which is not a leanprover/lean4 release"; exit 1 ;;
+          esac
+          # The upload scope must be the toolchain the artifacts were actually built with. The
+          # pin is what the build job's elan resolved, so the two agree unless something moved
+          # underneath the build; say so rather than publish under a scope pr-build never reads.
+          if [ "$TOOLCHAIN" != "$REPORTED" ]; then
+            echo "::error::the build job built with '$REPORTED' but lean-toolchain pins '$TOOLCHAIN'"
+            exit 1
+          fi
           curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
           chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
           "$HOME/.elan/bin/elan" toolchain install "$TOOLCHAIN"
+          printf 'name=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
 
       - name: Publish the staged oleans to the Lake cache
         env:
@@ -414,10 +449,10 @@ jobs:
           S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
           S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
           LAKE_CACHE_KEY_RAW: ${{ secrets.LAKE_CACHE_KEY }}
-          # There is no lean-toolchain file to read (there is no checkout), so name the
-          # toolchain the build job used. Lake takes ELAN_TOOLCHAIN as its `Env.toolchain`,
-          # which is also the string it scopes uploads by.
-          ELAN_TOOLCHAIN: ${{ needs.build.outputs.toolchain }}
+          # The pinned toolchain, read from the repository above. Lake takes ELAN_TOOLCHAIN as
+          # its `Env.toolchain`, which is also the string it scopes uploads by, and elan's `lake`
+          # shim takes it as which toolchain to run.
+          ELAN_TOOLCHAIN: ${{ steps.toolchain.outputs.name }}
           STAGING: ${{ runner.temp }}/lake-cache-staging
         run: |
           if [ -z "$LAKE_CACHE_KEY_RAW" ]; then

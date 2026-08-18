@@ -86,10 +86,18 @@ from an unmerged PR, which compiles only under landrun in `pr-build.yml`, with w
 
 So `build` runs `lake cache stage`, which needs no credential and touches no network, and hands
 the staging directory to `publish-lake-cache` as a workflow artifact: about 60 MB, one flat
-directory of `.ltar` files plus the mappings. That job has no checkout, no Lake workspace and no
-dependencies, so no code from this repository or from Mathlib runs anywhere in it, and it takes no
-`GITHUB_TOKEN` scopes. `lake cache put-staged` is the command for exactly this: it does not
-configure the workspace and so does not execute arbitrary user code.
+directory of `.ltar` files plus the mappings. That job checks out exactly one file and has no Lake
+workspace and no dependencies, so no code from this repository or from Mathlib runs anywhere in
+it, and it takes no `GITHUB_TOKEN` scopes. `lake cache put-staged` is the command for exactly
+this: it does not configure the workspace and so does not execute arbitrary user code.
+
+Nothing the build job reports is trusted there. The one file `publish-lake-cache` checks out is
+`lean-toolchain`, because which toolchain it installs decides which `lake` binary handles the key,
+and `elan toolchain install owner/repo:tag` fetches from that repository's releases. Taking that
+name from the build job would hand the choice straight back to code that landed on `main`, which
+can rewrite `lean-toolchain` on disk or poison the reporting step through `$GITHUB_ENV`. The pin
+is read from the repository instead, its shape is re-checked against `leanprover/lean4:` releases,
+and it must equal what the build job reports it built with.
 
 Because it does not configure the workspace, `put-staged` cannot derive the toolchain and platform
 halves of the upload scope, so the job passes `--rev` and `--toolchain` explicitly and relies on
