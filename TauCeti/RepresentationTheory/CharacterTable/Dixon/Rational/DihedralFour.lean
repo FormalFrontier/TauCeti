@@ -68,7 +68,7 @@ abbrev DihedralGroupFourClassIndex := Fin (dihedralClassData 4).numClasses
 /-- **The integral central-character table of the dihedral group of order eight.** Columns follow
 the numbering of `TauCeti.dihedralClassData 4`: identity, central rotation, one reflection class,
 the rotations of order four, and the other reflection class. -/
-@[expose] def dihedralGroupFourCentralCharacterTable :
+def dihedralGroupFourCentralCharacterTable :
     Matrix DihedralGroupFourClassIndex DihedralGroupFourClassIndex ℤ :=
   !![1,  1,  2,  2,  2;
      1,  1,  2, -2, -2;
@@ -76,10 +76,29 @@ the rotations of order four, and the other reflection class. -/
      1,  1, -2, -2,  2;
      1, -1,  0,  0,  0]
 
+/-- The entries of the integral central-character table. -/
+@[simp]
+theorem dihedralGroupFourCentralCharacterTable_apply (i j : DihedralGroupFourClassIndex) :
+    dihedralGroupFourCentralCharacterTable i j =
+      !![1,  1,  2,  2,  2;
+         1,  1,  2, -2, -2;
+         1,  1, -2,  2, -2;
+         1,  1, -2, -2,  2;
+         1, -1,  0,  0,  0] i j := by
+  rfl
+
 /-- The five displayed central-character rows reduced modulo the certified Dixon prime `5`. -/
-@[expose] def dihedralGroupFourModularCentralRows :
+def dihedralGroupFourModularCentralRows :
     Finset (DihedralGroupFourClassIndex → ZMod 5) :=
   Finset.univ.image fun i j => (dihedralGroupFourCentralCharacterTable i j : ZMod 5)
+
+/-- A modular row is displayed exactly when it is the reduction of a row of the integral table. -/
+@[simp]
+theorem mem_dihedralGroupFourModularCentralRows_iff
+    {a : DihedralGroupFourClassIndex → ZMod 5} :
+    a ∈ dihedralGroupFourModularCentralRows ↔
+      ∃ i, (fun j => (dihedralGroupFourCentralCharacterTable i j : ZMod 5)) = a := by
+  simp [dihedralGroupFourModularCentralRows]
 
 /-- Every displayed integral row is a simultaneous eigenrow of the integral class-multiplication
 matrices.  In particular, the modular verification below is the reduction of an honest
@@ -98,8 +117,8 @@ theorem dihedralGroupFour_isClassEigenrow (i : DihedralGroupFourClassIndex) :
   ((dihedralClassData 4).isModularEigenrow_iff_isClassEigenrow _).mp
     (dihedralGroupFour_isIntegralEigenrow i)
 
-/-- Every displayed reduction is normalized at the identity class and is a simultaneous eigenrow
-of the reduced class-multiplication matrices. -/
+/-- Every displayed reduction is a simultaneous eigenrow of the reduced class-multiplication
+matrices. -/
 theorem dihedralGroupFour_isModularEigenrow (i : DihedralGroupFourClassIndex) :
     (dihedralClassData 4).IsModularEigenrow
       (fun j => (dihedralGroupFourCentralCharacterTable i j : ZMod 5)) := by
@@ -140,7 +159,7 @@ theorem dihedralGroupFour_valMinAbs_centralCharacterTable
 
 /-- The signed integral rows obtained by applying `ZMod.valMinAbs` to the output of the modular
 search. -/
-@[expose] def dihedralGroupFourLiftedCentralRows :
+def dihedralGroupFourLiftedCentralRows :
     Finset (DihedralGroupFourClassIndex → ℤ) :=
   ((dihedralClassData 4).centralCharacterSearch (F := ZMod 5)).image
     fun a j => (a j).valMinAbs
@@ -157,30 +176,46 @@ theorem dihedralGroupFour_liftedCentralRows :
   funext j
   exact dihedralGroupFour_valMinAbs_centralCharacterTable i j
 
+/-- A lifted row occurs exactly when it is a row of the displayed integral table. -/
+@[simp]
+theorem mem_dihedralGroupFourLiftedCentralRows_iff
+    {a : DihedralGroupFourClassIndex → ℤ} :
+    a ∈ dihedralGroupFourLiftedCentralRows ↔
+      ∃ i, dihedralGroupFourCentralCharacterTable i = a := by
+  rw [dihedralGroupFour_liftedCentralRows]
+  simp
+
 /-- The degrees attached to the five central-character rows. -/
-@[expose] def dihedralGroupFourCharacterDegrees : DihedralGroupFourClassIndex → ℕ :=
+def dihedralGroupFourCharacterDegrees : DihedralGroupFourClassIndex → ℕ :=
   ![1, 1, 1, 1, 2]
 
-/-- The class sizes in the numbering used by the rational computation. -/
-@[expose] def dihedralGroupFourClassSizes : DihedralGroupFourClassIndex → ℕ :=
-  ![1, 1, 2, 2, 2]
-
-/-- The displayed class sizes agree with the class data computed from the group. -/
+/-- The degrees attached to the central-character rows, entrywise. -/
 @[simp]
-theorem dihedralGroupFour_card_classFinset (i : DihedralGroupFourClassIndex) :
-    ((dihedralClassData 4).classFinset i).card = dihedralGroupFourClassSizes i := by
-  fin_cases i <;> decide
+theorem dihedralGroupFourCharacterDegrees_apply (i : DihedralGroupFourClassIndex) :
+    dihedralGroupFourCharacterDegrees i = ![1, 1, 1, 1, 2] i := by
+  rfl
 
 /-- **The integral character table produced by the rational Dixon computation for the dihedral
 group of order eight.** The columns use the same class numbering as
 `TauCeti.dihedralGroupFourCentralCharacterTable`. -/
-@[expose] def dihedralGroupFourCharacterTable :
+def dihedralGroupFourCharacterTable :
     Matrix DihedralGroupFourClassIndex DihedralGroupFourClassIndex ℤ :=
   !![1,  1,  1,  1,  1;
      1,  1,  1, -1, -1;
      1,  1, -1,  1, -1;
      1,  1, -1, -1,  1;
      2, -2,  0,  0,  0]
+
+/-- The entries of the ordinary integral character table. -/
+@[simp]
+theorem dihedralGroupFourCharacterTable_apply (i j : DihedralGroupFourClassIndex) :
+    dihedralGroupFourCharacterTable i j =
+      !![1,  1,  1,  1,  1;
+         1,  1,  1, -1, -1;
+         1,  1, -1,  1, -1;
+         1,  1, -1, -1,  1;
+         2, -2,  0,  0,  0] i j := by
+  rfl
 
 /-- **Division-free conversion from central characters to ordinary characters.** For every row
 `i` and numbered conjugacy class `j`,
@@ -211,7 +246,6 @@ theorem dihedralGroupFour_characterTable_orthogonal (i j : DihedralGroupFourClas
     ∑ k, ((dihedralClassData 4).classFinset k).card *
         dihedralGroupFourCharacterTable i k * dihedralGroupFourCharacterTable j k =
       if i = j then Nat.card (DihedralGroup 4) else 0 := by
-  simp_rw [dihedralGroupFour_card_classFinset]
   rw [DihedralGroup.nat_card]
   fin_cases i <;> fin_cases j <;> decide
 
