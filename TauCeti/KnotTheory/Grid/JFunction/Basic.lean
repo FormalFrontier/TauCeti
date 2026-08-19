@@ -22,8 +22,7 @@ homology. For finite sets of grid points, `GridPoint.I s t` counts ordered pairs
 half-count.
 
 The API is deliberately point-set level: later grading definitions apply it to grid-state and
-marking point sets, and then extend it to the formal differences appearing in `M_O`, `M_X`,
-and `A`.
+marking point sets, which the Maslov and Alexander gradings are then assembled from.
 
 ## Main definitions
 
@@ -31,27 +30,23 @@ and `A`.
 * `TauCeti.GridPoint.I`: the ordered southwest pair count.
 * `TauCeti.GridPoint.JNum`: the numerator of the symmetrized `J`-function.
 * `TauCeti.GridPoint.J`: the rational-valued symmetrized `J`-function.
-* `TauCeti.GridPoint.JDiff`: the value of `J` on formal differences `s - a` and `t - b`.
-* `TauCeti.GridState.J`, `TauCeti.GridDiagram.JO`, and `TauCeti.GridDiagram.JX`: specialized
-  forms for grid states and markings.
+* `TauCeti.GridState.J`: the specialized form for a pair of grid states.
 
 ## Main results
 
 * `TauCeti.GridPoint.I_image_swap`, `TauCeti.GridPoint.J_image_swap`,
-  `TauCeti.GridPoint.JDiff_image_swap`, `TauCeti.GridState.J_transpose`: the southwest counts
-  and the `J`-function are invariant under reflecting the point sets across the diagonal.
+  `TauCeti.GridState.J_transpose`: the southwest counts and the `J`-function are invariant
+  under reflecting the point sets across the diagonal.
 * `TauCeti.GridPoint.I_image_rev`, `TauCeti.GridPoint.JNum_image_rev`,
-  `TauCeti.GridPoint.J_image_rev`, `TauCeti.GridPoint.JDiff_image_rev`,
-  `TauCeti.GridState.J_rotate`: reversing both coordinates of the point sets exchanges the two
-  arguments of the ordered count `I`, while the symmetrized `JNum`, `J`, and `JDiff` are
-  invariant.
-* `TauCeti.GridPoint.I_graph_eq_card`, `TauCeti.GridState.J_pointSet_eq_card`,
-  `TauCeti.GridDiagram.JO_eq_card`, `TauCeti.GridDiagram.JX_eq_card`: graph and marking
-  point-set `J`-pairings as column-index counts.
+  `TauCeti.GridPoint.J_image_rev`, `TauCeti.GridState.J_rotate`: reversing both coordinates of
+  the point sets exchanges the two arguments of the ordered count `I`, while the symmetrized
+  `JNum` and `J` are invariant.
+* `TauCeti.GridPoint.I_graph_eq_card`, `TauCeti.GridState.J_pointSet_eq_card`: graph point-set
+  `J`-pairings as column-index counts.
 
 ## References
 
-This supplies a prerequisite for `HeegaardFloer/README.md` in TauCetiRoadmap, Lane G.2,
+This supplies a prerequisite for `CombinatorialHeegaardFloer/README.md` in TauCetiRoadmap, Lane G.2,
 "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`; grading-change
 formulas across a rectangle." The definition follows Ozsváth--Stipsicz--Szabó, *Grid Homology
 for Knots and Links*, Chapter 3.2, where `J` is the symmetrization of the northeast/southwest
@@ -274,81 +269,6 @@ theorem J_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h :
   rw [← Finset.singleton_union, J_union_right]
   exact Finset.disjoint_singleton_left.mpr h
 
-/-- The bilinear extension of the grid `J`-function to formal differences of point sets.
-
-`JDiff s a t b` means `J(s - a, t - b)`, expanded as
-`J s t - J s b - J a t + J a b`. -/
-@[expose] def JDiff (s a t b : Finset (Fin n × Fin n)) : ℚ :=
-  GridPoint.J s t - GridPoint.J s b - GridPoint.J a t + GridPoint.J a b
-
-/-- The definition of `JDiff` as the expanded four-term formula. -/
-theorem JDiff_def (s a t b : Finset (Fin n × Fin n)) :
-    JDiff s a t b =
-      GridPoint.J s t - GridPoint.J s b - GridPoint.J a t + GridPoint.J a b :=
-  rfl
-
-/-- `JDiff` is symmetric in its two formal-difference inputs. -/
-theorem JDiff_comm (s a t b : Finset (Fin n × Fin n)) :
-    JDiff s a t b = JDiff t b s a := by
-  rw [JDiff, JDiff, GridPoint.J_comm t s, GridPoint.J_comm t a,
-    GridPoint.J_comm b s, GridPoint.J_comm b a]
-  ring
-
-/-- The formal difference of a point set with itself has zero `J`-pairing on the left. -/
-@[simp]
-theorem JDiff_self_left (s t b : Finset (Fin n × Fin n)) : JDiff s s t b = 0 := by
-  simp [JDiff]
-
-/-- The formal difference of a point set with itself has zero `J`-pairing on the right. -/
-@[simp]
-theorem JDiff_self_right (s a t : Finset (Fin n × Fin n)) : JDiff s a t t = 0 := by
-  rw [JDiff_comm, JDiff_self_left]
-
-/-- Pairing an ordinary point set with a formal difference is the corresponding difference of
-two `J`-values. -/
-@[simp]
-theorem JDiff_left_sub_empty (s t b : Finset (Fin n × Fin n)) :
-    JDiff s ∅ t b = GridPoint.J s t - GridPoint.J s b := by
-  simp [JDiff]
-
-/-- Pairing a formal difference with an ordinary point set is the corresponding difference of
-two `J`-values. -/
-@[simp]
-theorem JDiff_right_sub_empty (s a t : Finset (Fin n × Fin n)) :
-    JDiff s a t ∅ = GridPoint.J s t - GridPoint.J a t := by
-  simp [JDiff]
-
-/-- The self-pairing of `s - a` expanded in symmetric form. -/
-theorem JDiff_self_eq (s a : Finset (Fin n × Fin n)) :
-    JDiff s a s a = GridPoint.J s s - 2 * GridPoint.J s a + GridPoint.J a a := by
-  rw [JDiff, GridPoint.J_comm a s]
-  ring
-
-/-- The self-pairing `JDiff s a s a` is integer-valued: it is the cast of
-`I(s, s) - JNum(s, a) + I(a, a)`. The two `J`-self-pairings are integers by `J_self`, and the
-cross term `2 · J(s, a)` is the integer numerator `JNum(s, a)`, so every half cancels. This is the
-general fact underlying the integer-valuedness of the Maslov gradings. -/
-theorem JDiff_self_eq_intCast (s a : Finset (Fin n × Fin n)) :
-    JDiff s a s a = ((I s s : ℤ) - JNum s a + I a a : ℚ) := by
-  rw [JDiff_self_eq, J_self s, J_self a, J_def]
-  push_cast
-  ring
-
-/-- `JDiff` is additive in the left positive point set over disjoint unions. -/
-theorem JDiff_union_left {s₁ s₂ a t b : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    JDiff (s₁ ∪ s₂) a t b =
-      JDiff s₁ a t b + JDiff s₂ ∅ t b := by
-  rw [JDiff, JDiff, JDiff, GridPoint.J_union_left h, GridPoint.J_union_left h]
-  simp
-  ring
-
-/-- `JDiff` is additive in the right positive point set over disjoint unions. -/
-theorem JDiff_union_right {s a t₁ t₂ b : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    JDiff s a (t₁ ∪ t₂) b =
-      JDiff s a t₁ b + JDiff s a t₂ ∅ := by
-  rw [JDiff_comm s a (t₁ ∪ t₂) b, JDiff_union_left h,
-    JDiff_comm t₁ b s a, JDiff_comm t₂ ∅ s a]
-
 /-- The numerator of `J` on singleton point sets records whether either point is southwest of
 the other. -/
 @[simp]
@@ -455,14 +375,6 @@ theorem J_image_swap (s t : Finset (Fin n × Fin n)) :
     GridPoint.J (s.image Prod.swap) (t.image Prod.swap) = GridPoint.J s t := by
   rw [J_def, J_def, JNum_image_swap]
 
-/-- The bilinear `J`-function on formal differences is invariant under reflecting all four point
-sets across the diagonal. -/
-theorem JDiff_image_swap (s a t b : Finset (Fin n × Fin n)) :
-    JDiff (s.image Prod.swap) (a.image Prod.swap) (t.image Prod.swap) (b.image Prod.swap)
-      = JDiff s a t b := by
-  rw [JDiff_def, JDiff_def, J_image_swap, J_image_swap, J_image_swap,
-    J_image_swap]
-
 /-- Reversing both coordinates of both points of a pair exchanges the two endpoints of the strict
 southwest relation: it sends the column and row comparisons to their reverses. -/
 @[grind =]
@@ -515,14 +427,6 @@ theorem J_image_rev (s t : Finset (Fin n × Fin n)) :
     GridPoint.J (s.image (Prod.map Fin.rev Fin.rev)) (t.image (Prod.map Fin.rev Fin.rev))
       = GridPoint.J s t := by
   rw [J_def, J_def, JNum_image_rev]
-
-/-- The bilinear `J`-function on formal differences is invariant under reversing both coordinates
-of all four point sets. -/
-theorem JDiff_image_rev (s a t b : Finset (Fin n × Fin n)) :
-    JDiff (s.image (Prod.map Fin.rev Fin.rev)) (a.image (Prod.map Fin.rev Fin.rev))
-        (t.image (Prod.map Fin.rev Fin.rev)) (b.image (Prod.map Fin.rev Fin.rev))
-      = JDiff s a t b := by
-  rw [JDiff_def, JDiff_def, J_image_rev, J_image_rev, J_image_rev, J_image_rev]
 
 /-- The ordered southwest count of two graph point sets is the number of column pairs `c < d`
 where the source row precedes the target row. This graph-level statement does not require either
@@ -635,83 +539,5 @@ theorem card_filter_noninversion_add_card_filter_inversion (x : GridState n) :
   exact Finset.card_filter_add_card_filter_not _
 
 end GridState
-
-namespace GridDiagram
-
-variable {n : ℕ} (G : GridDiagram n)
-
-/-- The grid `J`-function against the `O`-markings of a grid diagram. -/
-@[expose] def JO (x : GridState n) : ℚ :=
-  GridPoint.J x.pointSet G.OSet
-
-/-- `JO` is the point-set `J`-function of a state against the `O`-markings. -/
-@[simp]
-theorem JO_def (x : GridState n) : GridDiagram.JO G x = GridPoint.J x.pointSet G.OSet :=
-  rfl
-
-/-- The grid `J`-function against the `X`-markings of a grid diagram. -/
-@[expose] def JX (x : GridState n) : ℚ :=
-  GridPoint.J x.pointSet G.XSet
-
-/-- `JX` is the point-set `J`-function of a state against the `X`-markings. -/
-@[simp]
-theorem JX_def (x : GridState n) : GridDiagram.JX G x = GridPoint.J x.pointSet G.XSet :=
-  rfl
-
-/-- The `O`-marking `J`-pairing as a column-index count. -/
-theorem JO_eq_card (x : GridState n) :
-    G.JO x =
-      (((Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ x p.1 < G.O p.2).card +
-        (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ G.O p.1 < x p.2).card : ℕ) :
-          ℚ) / 2 := by
-  rw [JO_def, OSet, GridPoint.J_def, GridState.JNum_pointSet_eq_card]
-
-/-- The `X`-marking `J`-pairing as a column-index count. -/
-theorem JX_eq_card (x : GridState n) :
-    G.JX x =
-      (((Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ x p.1 < G.X p.2).card +
-        (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ G.X p.1 < x p.2).card : ℕ) :
-          ℚ) / 2 := by
-  rw [JX_def, XSet, GridPoint.J_def, GridState.JNum_pointSet_eq_card]
-
-/-- `JO` is invariant under reflecting the diagram and state across the diagonal. -/
-theorem JO_transpose (x : GridState n) :
-    GridDiagram.JO G.transpose x.transpose = GridDiagram.JO G x := by
-  rw [JO_def, JO_def, GridState.transpose_pointSet, transpose_OSet, GridPoint.J_image_swap]
-
-/-- `JX` is invariant under reflecting the diagram and state across the diagonal. -/
-theorem JX_transpose (x : GridState n) :
-    GridDiagram.JX G.transpose x.transpose = GridDiagram.JX G x := by
-  rw [JX_def, JX_def, GridState.transpose_pointSet, transpose_XSet, GridPoint.J_image_swap]
-
-/-- `JO` is invariant under the half-turn rotation of the diagram and state. -/
-theorem JO_rotate (x : GridState n) :
-    GridDiagram.JO G.rotate x.rotate = GridDiagram.JO G x := by
-  rw [JO_def, JO_def, GridState.rotate_pointSet, rotate_OSet, GridPoint.J_image_rev]
-
-/-- `JX` is invariant under the half-turn rotation of the diagram and state. -/
-theorem JX_rotate (x : GridState n) :
-    GridDiagram.JX G.rotate x.rotate = GridDiagram.JX G x := by
-  rw [JX_def, JX_def, GridState.rotate_pointSet, rotate_XSet, GridPoint.J_image_rev]
-
-/-- The marking swap exchanges the `O`-marking `J`-pairing with the `X`-marking `J`-pairing. -/
-@[simp]
-theorem JO_swapMarkings (x : GridState n) : G.swapMarkings.JO x = G.JX x :=
-  rfl
-
-/-- The marking swap exchanges the `X`-marking `J`-pairing with the `O`-marking `J`-pairing. -/
-@[simp]
-theorem JX_swapMarkings (x : GridState n) : G.swapMarkings.JX x = G.JO x :=
-  rfl
-
-/-- `JO` may equivalently be read with the `O`-markings as the left input. -/
-theorem JO_comm (x : GridState n) : GridDiagram.JO G x = GridPoint.J G.OSet x.pointSet := by
-  rw [JO, GridPoint.J_comm]
-
-/-- `JX` may equivalently be read with the `X`-markings as the left input. -/
-theorem JX_comm (x : GridState n) : GridDiagram.JX G x = GridPoint.J G.XSet x.pointSet := by
-  rw [JX, GridPoint.J_comm]
-
-end GridDiagram
 
 end TauCeti

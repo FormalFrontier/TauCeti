@@ -188,14 +188,46 @@ private theorem card_filter_lt_split (P : Fin (n + 2) × Fin (n + 2) → Prop) [
   rw [← Finset.filter_filter, ← Finset.filter_filter]
   exact Finset.card_filter_add_card_filter_not _
 
+/-- Splitting the pairs of columns in weakly increasing order according to an auxiliary
+predicate. -/
+private theorem card_filter_le_split (P : Fin (n + 2) × Fin (n + 2) → Prop) [DecidablePred P] :
+    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2 ∧ P p).card
+        + (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2 ∧ ¬ P p).card
+      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card := by
+  rw [← Finset.filter_filter, ← Finset.filter_filter]
+  exact Finset.card_filter_add_card_filter_not _
+
+/-- The weakly increasing column pairs are the increasing ones together with the `n + 2`
+diagonal pairs. -/
+private theorem card_filter_le :
+    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card
+      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + (n + 2) := by
+  classical
+  have hsplit : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2)
+      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2) ∪
+        (Finset.univ : Finset (Fin (n + 2))).diag := by
+    ext p
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_diag,
+      le_iff_lt_or_eq]
+  have hdisj : Disjoint
+      (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2)
+      (Finset.univ : Finset (Fin (n + 2))).diag := by
+    rw [Finset.disjoint_left]
+    intro p hp hq
+    rw [Finset.mem_filter] at hp
+    rw [Finset.mem_diag] at hq
+    exact (ne_of_lt hp.2) hq.2
+  rw [hsplit, Finset.card_union_of_disjoint hdisj, Finset.diag_card, Finset.card_univ,
+    Fintype.card_fin]
+
 /-- A set of column pairs cut out by prescribing the second column as a function of the first,
-which is required to avoid the last column, has `n + 1` elements. -/
-private theorem card_filter_graph (f : Fin (n + 2) → Fin (n + 2)) :
+which is required to avoid one prescribed column, has `n + 1` elements. -/
+private theorem card_filter_graph (a : Fin (n + 2)) (f : Fin (n + 2) → Fin (n + 2)) :
     (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
-        p.1 ≠ Fin.last (n + 1) ∧ p.2 = f p.1).card = n + 1 := by
+        p.1 ≠ a ∧ p.2 = f p.1).card = n + 1 := by
   have himg : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
-        p.1 ≠ Fin.last (n + 1) ∧ p.2 = f p.1)
-      = (Finset.univ.filter fun c : Fin (n + 2) => c ≠ Fin.last (n + 1)).image
+        p.1 ≠ a ∧ p.2 = f p.1)
+      = (Finset.univ.filter fun c : Fin (n + 2) => c ≠ a).image
           fun c => (c, f c) := by
     ext ⟨a, b⟩
     simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_image, Prod.mk.injEq]
@@ -237,7 +269,7 @@ private theorem card_filter_lt_O_lt_X : (Finset.univ.filter fun p : Fin (n + 2) 
       refine ⟨h2 ▸ Fin.lt_last_iff_ne_last.mpr h1, ?_⟩
       rw [h2, finRotate_last]
       exact Fin.not_lt_zero p.1
-  have hcard := card_filter_graph n fun _ => Fin.last (n + 1)
+  have hcard := card_filter_graph n (Fin.last (n + 1)) fun _ => Fin.last (n + 1)
   rw [← hset] at hcard
   have hsplit := card_filter_lt_split n fun p => (unknot n).O p.1 < (unknot n).X p.2
   omega
@@ -266,7 +298,7 @@ private theorem card_filter_lt_X_lt_O : (Finset.univ.filter fun p : Fin (n + 2) 
     · rintro ⟨h1, h2⟩
       rw [h2]
       exact ⟨(lt_finRotate_iff_ne_last p.1).mpr h1, lt_irrefl _⟩
-  have hcard := card_filter_graph n (finRotate (n + 2))
+  have hcard := card_filter_graph n (Fin.last (n + 1)) (finRotate (n + 2))
   rw [← hset] at hcard
   have hsplit := card_filter_lt_split n fun p => (unknot n).X p.1 < (unknot n).O p.2
   omega
@@ -295,30 +327,97 @@ private theorem card_filter_lt_X_lt_X : (Finset.univ.filter fun p : Fin (n + 2) 
       refine ⟨h2 ▸ Fin.lt_last_iff_ne_last.mpr h1, ?_⟩
       rw [h2, finRotate_last]
       exact Fin.not_lt_zero _
-  have hcard := card_filter_graph n fun _ => Fin.last (n + 1)
+  have hcard := card_filter_graph n (Fin.last (n + 1)) fun _ => Fin.last (n + 1)
   rw [← hset] at hcard
   have hsplit := card_filter_lt_split n fun p => (unknot n).X p.1 < (unknot n).X p.2
   omega
 
-/-! ### The bigradings of the two marking states -/
-
-/-- The `X`-Maslov grading of the `O`-marking state of the standard unknot grid is the grid
-number. -/
-theorem maslovXℤ_unknot_O : (unknot n).maslovXℤ (unknot n).O = n + 2 := by
-  rw [maslovXℤ_eq_card]
-  have h1 := card_filter_lt_O_lt_O n
-  have h2 := card_filter_lt_O_lt_X n
-  have h3 := card_filter_lt_X_lt_O n
-  have h4 := card_filter_lt_X_lt_X n
+/-- Among the weakly increasing column pairs, exactly the `n + 1` pairs whose second column is
+the last one and whose first column is nonzero fail to place the `O` marking weakly southwest of
+the `X` marking, because the last `X` marking wraps around to row zero. -/
+private theorem card_filter_le_O_le_X :
+    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+        p.1 ≤ p.2 ∧ (unknot n).O p.1 ≤ (unknot n).X p.2).card
+      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + 1 := by
+  have hset : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+        p.1 ≤ p.2 ∧ ¬ ((unknot n).O p.1 ≤ (unknot n).X p.2))
+      = Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+        p.1 ≠ 0 ∧ p.2 = (fun _ => Fin.last (n + 1)) p.1 := by
+    refine Finset.filter_congr fun p _ => ?_
+    rw [unknot_O_apply, unknot_X_apply]
+    constructor
+    · rintro ⟨h1, h2⟩
+      have h1' : (p.1 : ℕ) ≤ (p.2 : ℕ) := h1
+      have h2' : (finRotate (n + 2) p.2 : ℕ) < (p.1 : ℕ) := Fin.not_le.mp h2
+      have hlast : p.2 = Fin.last (n + 1) := by
+        by_contra hne
+        rw [coe_finRotate_of_ne_last hne] at h2'
+        omega
+      rw [hlast, finRotate_last] at h2'
+      exact ⟨fun h0 => by simp [h0] at h2', hlast⟩
+    · rintro ⟨h1, h2⟩
+      have h1' : (p.1 : ℕ) ≠ 0 := fun h => h1 (Fin.ext h)
+      refine ⟨h2 ▸ Fin.le_last p.1, ?_⟩
+      rw [h2, finRotate_last, Fin.not_le, Fin.lt_def]
+      simpa using Nat.pos_of_ne_zero h1'
+  have hcard := card_filter_graph n 0 fun _ => Fin.last (n + 1)
+  rw [← hset] at hcard
+  have hsplit := card_filter_le_split n fun p => (unknot n).O p.1 ≤ (unknot n).X p.2
+  have hle := card_filter_le n
   omega
 
-/-- The `O`-Maslov grading of the `X`-marking state of the standard unknot grid is the grid
-number. Swapping the roles of the two marking states turns the count computed in
-`maslovXℤ_unknot_O` into this one, so no column-pair count has to be redone. -/
-theorem maslovOℤ_unknot_X : (unknot n).maslovOℤ (unknot n).X = n + 2 := by
-  have h := maslovXℤ_unknot_O n
-  rw [maslovXℤ_eq_card] at h
+/-- Among the weakly increasing column pairs, exactly the `n + 1` diagonal pairs away from the
+last column fail to place the `X` marking weakly southwest of the `O` marking, because the `X`
+marking of a column sits one row above its `O` marking. -/
+private theorem card_filter_le_X_le_O :
+    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+        p.1 ≤ p.2 ∧ (unknot n).X p.1 ≤ (unknot n).O p.2).card
+      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + 1 := by
+  have hset : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+        p.1 ≤ p.2 ∧ ¬ ((unknot n).X p.1 ≤ (unknot n).O p.2))
+      = Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) =>
+        p.1 ≠ Fin.last (n + 1) ∧ p.2 = (fun c => c) p.1 := by
+    refine Finset.filter_congr fun p _ => ?_
+    rw [unknot_O_apply, unknot_X_apply]
+    constructor
+    · rintro ⟨h1, h2⟩
+      have h1' : (p.1 : ℕ) ≤ (p.2 : ℕ) := h1
+      have h2' : (p.2 : ℕ) < (finRotate (n + 2) p.1 : ℕ) := Fin.not_le.mp h2
+      have hne : p.1 ≠ Fin.last (n + 1) := by
+        intro hlast
+        rw [hlast, finRotate_last, Fin.val_zero] at h2'
+        omega
+      rw [coe_finRotate_of_ne_last hne] at h2'
+      exact ⟨hne, Fin.ext (show (p.2 : ℕ) = (p.1 : ℕ) by omega)⟩
+    · rintro ⟨h1, h2⟩
+      have hp : p.2 = p.1 := h2
+      refine ⟨le_of_eq hp.symm, ?_⟩
+      rw [Fin.not_le, hp]
+      exact (lt_finRotate_iff_ne_last p.1).mpr h1
+  have hcard := card_filter_graph n (Fin.last (n + 1)) fun c => c
+  rw [← hset] at hcard
+  have hsplit := card_filter_le_split n fun p => (unknot n).X p.1 ≤ (unknot n).O p.2
+  have hle := card_filter_le n
+  omega
+
+/-! ### The bigradings of the two marking states -/
+
+/-- The `X`-Maslov grading of the `O`-marking state of the standard unknot grid vanishes. -/
+theorem maslovXℤ_unknot_O : (unknot n).maslovXℤ (unknot n).O = 0 := by
+  rw [maslovXℤ_eq_card]
+  have h1 := card_filter_lt_O_lt_O n
+  have h3 := card_filter_lt_X_lt_O n
+  have h4 := card_filter_lt_X_lt_X n
+  have h5 := card_filter_le_O_le_X n
+  omega
+
+/-- The `O`-Maslov grading of the `X`-marking state of the standard unknot grid vanishes. -/
+theorem maslovOℤ_unknot_X : (unknot n).maslovOℤ (unknot n).X = 0 := by
   rw [maslovOℤ_eq_card]
+  have h1 := card_filter_lt_O_lt_O n
+  have h2 := card_filter_lt_O_lt_X n
+  have h4 := card_filter_lt_X_lt_X n
+  have h5 := card_filter_le_X_le_O n
   omega
 
 /-- Twice the Alexander grading of the `X`-marking state of the standard unknot grid vanishes. -/
