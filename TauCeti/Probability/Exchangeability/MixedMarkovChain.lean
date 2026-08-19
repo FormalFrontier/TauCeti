@@ -12,7 +12,7 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 # Mixtures of Markov chains
 
 A process `X : ℕ → Ω → α` on a countable state space is a **mixture of Markov chains** when its
-finite path probabilities are an average of Markov-chain path probabilities: there is a random
+finite-path `μ`-masses are averages of Markov-chain path masses: there is a random
 initial law `ν : Ω → ProbabilityMeasure α` and a random transition matrix
 `κ : Ω → α → ProbabilityMeasure α` with
 
@@ -36,7 +36,7 @@ This is the class in the conclusion of the Diaconis–Freedman representation th
 Markov exchangeable process is a mixture of Markov chains. This file supplies the class together
 with the **easy direction** of that theorem, `MixedMarkovChainWith.markovExchangeable`: every
 mixture of Markov chains is Markov exchangeable. The mechanism is the one that makes the initial
-state together with the transition counts sufficient for a Markov-chain path probability — the
+state together with the transition counts sufficient for a Markov-chain path mass — the
 transition-product factor depends on the path only through its transition counts
 (`TauCeti.prod_transitionCount_congr`) — applied inside the mixing integral, where it holds
 pointwise in the mixing variable.
@@ -54,7 +54,7 @@ exchangeable and so not mixed i.i.d.
 ## Main results
 
 * `TauCeti.Probability.MixedMarkovChainWith.prefixLaw_singleton_eq_lintegral_prod_pow`: the
-  initial state and transition counts of a path are sufficient for its probability.
+  initial state and transition counts of a path are sufficient for its `μ`-mass.
 * `TauCeti.Probability.MixedMarkovChainWith.markovExchangeable`: a mixture of Markov chains is
   Markov exchangeable — the easy direction of Diaconis–Freedman.
 * `TauCeti.Probability.mixedMarkovChainWith_const`: a single Markov chain is the degenerate
@@ -86,7 +86,7 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- **A mixture of Markov chains** with a specified random initial law `ν` and random transition
-matrix `κ`: the probability of a finite path is the `μ`-average of the Markov-chain probability
+matrix `κ`: the `μ`-mass of a finite path is the `μ`-average of its Markov-chain path mass
 built from `ν ω` and `κ ω`. The countability and measurable-singleton conjuncts restrict this
 singleton-mass formulation to discrete state spaces, matching `MarkovExchangeable`, where it is
 non-vacuous and determines the finite path laws. -/
@@ -143,8 +143,8 @@ theorem MixedMarkovChainWith.measurable_transitionMatrix {μ : Measure Ω} {X : 
     (h : MixedMarkovChainWith μ X ν κ) (a : α) : Measurable fun ω => κ ω a :=
   h.2.2.2.2.1 a
 
-/-- The defining mixture identity: the probability of a finite path is the average of its
-Markov-chain probabilities. -/
+/-- The defining mixture identity: the `μ`-mass of a finite path is the `μ`-average of its
+Markov-chain path masses. -/
 @[grind =>]
 theorem MixedMarkovChainWith.prefixLaw_singleton {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} {κ : Ω → α → ProbabilityMeasure α}
@@ -215,7 +215,7 @@ theorem MixedMarkovChain.aemeasurable {μ : Measure Ω} {X : ℕ → Ω → α}
   exact h.aemeasurable i
 
 /-- **The initial state together with the transition counts of a path is sufficient for its
-probability.** Rewriting the mixture identity through `TauCeti.prod_transitionCount` replaces the
+`μ`-mass.** Rewriting the mixture identity through `TauCeti.prod_transitionCount` replaces the
 transition-product factor by a product of powers indexed by the transition counts; the index set
 `S` only has to contain the letters of the path. -/
 theorem MixedMarkovChainWith.prefixLaw_singleton_eq_lintegral_prod_pow {μ : Measure Ω}
