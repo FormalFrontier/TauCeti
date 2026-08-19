@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.Semisimple.Defs
 public import Mathlib.RingTheory.SimpleModule.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
@@ -89,6 +88,9 @@ module manufactured as a quotient of `U(L)` as a Lie module.
   `Representation.asAlgebraHom`, `Representation.asModule`,
   `Representation.asAlgebraHom_mem_of_forall_mem` and `Representation.mapSubmodule`, which this
   file follows for `U(L)` in place of `k[G]`.
+* `Mathlib/RepresentationTheory/Intertwining.lean` (Stepan Nesterov, Edison Xie):
+  `Representation.IntertwiningMap.equivLinearMapAsModule`, the group-algebra homomorphism
+  dictionary that `lieModuleHomEquiv` follows.
 * `Mathlib/RepresentationTheory/Irreducible.lean` and
   `Mathlib/RepresentationTheory/Semisimple.lean` (Stepan Nesterov): the source of the pattern by
   which the two corollaries below compose an order isomorphism of submodule lattices with
@@ -142,8 +144,8 @@ theorem asModule_smul_def (u : U) (m : M) :
 /-- The canonical Lie generators act through `TauCeti.UniversalEnvelopingAlgebra.asModule` by the
 Lie bracket. This is the compatibility hypothesis that the dictionary below consumes. -/
 theorem asModule_ι_smul (x : L) (m : M) :
-    (ι R x : U) • m = ⁅x, m⁆ := by
-  rw [asModule_smul_def, representation_ι, LieModule.toEnd_apply_apply]
+    (ι R x : U) • m = ⁅x, m⁆ :=
+  representation_ι_apply R L M x m
 
 /-- The `simp`-normal form of `TauCeti.UniversalEnvelopingAlgebra.asModule_ι_smul`, stated for the
 canonical generators as `simp` writes them. -/
@@ -302,7 +304,7 @@ theorem lieSubmoduleOrderIso_lieSpan
 /-- **Irreducibility of a Lie module is simplicity over the enveloping algebra.** -/
 theorem isIrreducible_iff_isSimpleModule
     (hcompat : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆) :
-    LieModule.IsIrreducible R L M ↔ IsSimpleModule U M :=
+    IsSimpleOrder (LieSubmodule R L M) ↔ IsSimpleModule U M :=
   (lieSubmoduleOrderIso hcompat).isSimpleOrder_iff.trans (isSimpleModule_iff U M).symm
 
 /-- **Complete reducibility is semisimplicity over the enveloping algebra**: every Lie submodule of

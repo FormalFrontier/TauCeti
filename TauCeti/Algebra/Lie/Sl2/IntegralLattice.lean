@@ -186,7 +186,9 @@ theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
     repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
   (TauCeti.UniversalEnvelopingAlgebra.representation_ι K
         (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n) x).trans
-    (LinearMap.ext fun v => lie_eq_rep_apply x v)
+    (LinearMap.ext fun v => by
+      rw [LieModule.toEnd_apply_apply]
+      exact lie_eq_rep_apply x v)
 
 /-- The `simp`-normal form of `repEnveloping_ι`, stated for the canonical generators as `simp`
 writes them: `ι K x` unfolds to `mkAlgHom K _ (TensorAlgebra.ι K x)`. -/

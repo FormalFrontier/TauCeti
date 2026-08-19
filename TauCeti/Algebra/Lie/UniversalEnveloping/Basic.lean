@@ -97,6 +97,12 @@ theorem representation_ι (x : L) :
     representation R L M (_root_.UniversalEnvelopingAlgebra.ι R x) = LieModule.toEnd R L M x :=
   _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
 
+/-- The representation on the Lie algebra itself acts on a canonical generator by the adjoint
+action. -/
+theorem representation_ι_ad (x : L) :
+    representation R L L (_root_.UniversalEnvelopingAlgebra.ι R x) = LieAlgebra.ad R L x :=
+  representation_ι R L L x
+
 /-- The `simp`-normal form of `TauCeti.UniversalEnvelopingAlgebra.representation_ι`, stated for
 the canonical generators as `simp` writes them. -/
 @[simp]
