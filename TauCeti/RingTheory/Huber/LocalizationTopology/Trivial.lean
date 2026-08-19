@@ -14,8 +14,8 @@ public import TauCeti.RingTheory.Huber.RingOfDefinition
 The rational subset `R(T/1)` of `Spa (A, A⁺)` is the whole adic spectrum whenever the numerators
 are sub-unit — in particular `R({1}/1) = Spa (A, A⁺)`, which is
 `TauCeti.ValuationSpectrum.rationalSubset_singleton_one`. Its coordinate ring is therefore the
-value the adic structure presheaf takes on *global sections*, and Wedhorn's Layer 3.5 statement
-`𝒪_X(X) ≅ A` for a complete Hausdorff pair says that nothing happens there.
+value the adic structure presheaf takes on *global sections*. The Tau Ceti AdicSpaces roadmap's
+Layer 3.5 target identifies this value with `A` for a complete Hausdorff pair.
 
 This file proves that, at the level of the localisation construction the presheaf is built from.
 Everything rests on one computation: for numerators lying in the ring of definition, the
@@ -33,12 +33,13 @@ topological rings.
 
 ## The hypothesis on the numerators
 
-The topology computations ask the numerators to lie in `P.ringOfDefinition`, not merely to be
-power-bounded. That is the honest hypothesis for a *fixed* pair of definition `P`: an element of
-`A°` outside `A₀` enlarges `D = A₀[T]` past `A₀`, and `locSubring P T 1 A = A₀` is then false. A
-finite power-bounded family can be adjoined to the pair first when this computation is needed.
-The universal-property identification with `A`, however, only requires the numerators themselves
-to be power-bounded and therefore does not change `P`.
+The exact subring and ideal computations ask the numerators to lie in `P.ringOfDefinition`, not
+merely to be power-bounded. That is the honest hypothesis for a *fixed* pair of definition `P`: an
+element of `A°` outside `A₀` enlarges `D = A₀[T]` past `A₀`, and `locSubring P T 1 A = A₀` is then
+false. The topology and uniformity computations only require the numerators to be power-bounded:
+adjoining a finite power-bounded family gives the same `D` and extended ideal as the localisation
+construction, and the enlarged pair still induces the original topology. The universal-property
+identification with `A` likewise does not change `P`.
 
 ## Main results
 
@@ -52,8 +53,6 @@ to be power-bounded and therefore does not change `P`.
   denominator `1` is the topology of `A`**, and
   `TauCeti.Huber.PairOfDefinition.locUniformSpace_denom_one` says the same of the uniformity, so
   `A⟨T/1⟩` is the Hausdorff completion of `A`.
-* `TauCeti.Huber.PairOfDefinition.locTopology_denom_one_adjoin`: the same topology computation for
-  an arbitrary finite family of power-bounded numerators, after enlarging the pair of definition.
 * `TauCeti.Huber.PairOfDefinition.toCompletionLoc_denom_one_bijective` and
   `TauCeti.Huber.PairOfDefinition.toCompletionLocEquivDenomOne`: **`𝒪_X(X) ≅ A`.** For `A`
   complete and Hausdorff the structure map `A → A⟨T/1⟩` is a ring isomorphism, and
@@ -88,8 +87,7 @@ and every localisation away from `1`. -/
 theorem hasDenominatorPower_denom_one (S : Type*) [CommRing S] [Algebra A S]
     [IsLocalization.Away (1 : A) S] : HasDenominatorPower P T 1 S := by
   refine (hasDenominatorPower_iff P T 1 S).mpr ⟨1, fun b _ ↦ ?_⟩
-  rw [show (divBy (b : A) 1 : S) = algebraMap A S b by
-    simpa using divBy_mul_cancel_left (A := A) (S := S) (b : A) 1]
+  rw [← one_mul (b : A), divBy_mul_cancel_left]
   exact algebraMap_mem_locSubring P T 1 S b.2
 
 variable (hT : ∀ t ∈ T, t ∈ P.ringOfDefinition)
@@ -102,8 +100,7 @@ fractions `t/1` are the numerators themselves, and those were assumed to lie in 
 theorem locSubring_denom_one : locSubring P T 1 A = P.ringOfDefinition := by
   refine le_antisymm ((locSubring_le_iff P T 1 A).mpr ⟨fun a ha ↦ ?_, fun t ht ↦ ?_⟩) fun a ha ↦ ?_
   · simpa using ha
-  · rw [show (divBy t 1 : A) = t by
-      simpa using divBy_mul_cancel_left (A := A) (S := A) t 1]
+  · rw [← one_mul t, divBy_mul_cancel_left]
     exact hT t ht
   · simpa using algebraMap_mem_locSubring P T 1 A ha
 
@@ -128,44 +125,89 @@ theorem locIdealImage_denom_one (n : ℕ) : locIdealImage P T 1 A n = P.idealIma
   · obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
     simpa using algebraMap_mem_locIdealImage P T 1 A hy
 
+end Topological
+
+section Topological
+
+variable [TopologicalSpace A] (P : PairOfDefinition A) (T : Finset A)
+
+private theorem locSubring_denom_one_powerBounded [IsTopologicalRing A]
+    (hTpb : ∀ t ∈ T, IsPowerBounded t) :
+    locSubring P T 1 A = (P.adjoin T hTpb).ringOfDefinition := by
+  rw [adjoin_ringOfDefinition]
+  refine le_antisymm ((locSubring_le_iff P T 1 A).mpr
+    ⟨fun a ha ↦ ?_, fun t ht ↦ ?_⟩) ?_
+  · simpa using P.le_adjoin T hTpb ha
+  · rw [← one_mul t, divBy_mul_cancel_left]
+    simpa using P.mem_adjoin_of_mem T hTpb ht
+  · rw [Subring.closure_le]
+    rintro a (ha | ha)
+    · simpa using algebraMap_mem_locSubring P T 1 A ha
+    · have ht := divBy_mem_locSubring P T 1 A ha
+      rw [← one_mul a, divBy_mul_cancel_left] at ht
+      exact ht
+
+private noncomputable def locSubringEquivAdjoin [IsTopologicalRing A]
+    (hTpb : ∀ t ∈ T, IsPowerBounded t) :
+    locSubring P T 1 A ≃+* (P.adjoin T hTpb).ringOfDefinition :=
+  RingEquiv.subringCongr (locSubring_denom_one_powerBounded P T hTpb)
+
+private theorem locIdeal_map_denom_one_powerBounded [IsTopologicalRing A]
+    (hTpb : ∀ t ∈ T, IsPowerBounded t) :
+    Ideal.map (locSubringEquivAdjoin P T hTpb).toRingHom (locIdeal P T 1 A) =
+      (P.adjoin T hTpb).idealOfDefinition := by
+  rw [locIdeal_def, Ideal.map_map, adjoin_idealOfDefinition]
+  congr 1
+  ext x
+  exact toLocSubring_apply P T 1 A x
+
+private theorem locIdealImage_denom_one_powerBounded [IsTopologicalRing A]
+    (hTpb : ∀ t ∈ T, IsPowerBounded t) (n : ℕ) :
+    locIdealImage P T 1 A n = (P.adjoin T hTpb).idealImage n := by
+  ext x
+  rw [mem_locIdealImage_iff, (P.adjoin T hTpb).mem_idealImage]
+  constructor
+  · rintro ⟨d, hd, rfl⟩
+    refine ⟨locSubringEquivAdjoin P T hTpb d, ?_, rfl⟩
+    have hd' : locSubringEquivAdjoin P T hTpb d ∈
+        Ideal.map (locSubringEquivAdjoin P T hTpb).toRingHom (locIdeal P T 1 A ^ n) :=
+      Ideal.mem_map_of_mem _ hd
+    rwa [Ideal.map_pow, locIdeal_map_denom_one_powerBounded P T hTpb] at hd'
+  · rintro ⟨q, hq, rfl⟩
+    have hq' : q ∈
+        Ideal.map (locSubringEquivAdjoin P T hTpb).toRingHom (locIdeal P T 1 A ^ n) := by
+      rwa [Ideal.map_pow, locIdeal_map_denom_one_powerBounded P T hTpb]
+    obtain ⟨d, hd, hed⟩ := (Ideal.mem_map_iff_of_surjective _
+      (locSubringEquivAdjoin P T hTpb).surjective).mp hq'
+    exact ⟨d, hd, congrArg Subtype.val hed⟩
+
 /-- **The localisation topology at the denominator `1` is the topology of `A`.**
 
-Both are ring topologies on `A` with the images of the powers of `I` as a neighbourhood basis of
-zero — for the left-hand side by `hasBasis_nhds_zero_locTopology` together with
-`locIdealImage_denom_one`, for the right-hand side by
-`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero` — so they are equal. -/
+The localisation's basic neighbourhoods are the ideal images for the pair obtained by adjoining
+the power-bounded numerators to `P`. That pair still defines the topology of `A`, so the two ring
+topologies are equal. -/
 @[simp]
-theorem locTopology_denom_one [IsTopologicalRing A] :
+theorem locTopology_denom_one [IsTopologicalRing A]
+    (hTpb : ∀ t ∈ T, IsPowerBounded t) :
     locTopology P T 1 A (hasDenominatorPower_denom_one P T A) = ‹TopologicalSpace A› := by
   have hbasis : (@nhds A (locTopology P T 1 A (hasDenominatorPower_denom_one P T A)) 0).HasBasis
-      (fun _ : ℕ ↦ True) fun n ↦ (P.idealImage n : Set A) := by
-    simpa only [locIdealImage_denom_one P T hT] using
+      (fun _ : ℕ ↦ True) fun n ↦ ((P.adjoin T hTpb).idealImage n : Set A) := by
+    simpa only [locIdealImage_denom_one_powerBounded P T hTpb] using
       hasBasis_nhds_zero_locTopology P T 1 A (hasDenominatorPower_denom_one P T A)
   have hgroup := @IsTopologicalRing.to_topologicalAddGroup A _
     (locTopology P T 1 A (hasDenominatorPower_denom_one P T A))
     (isTopologicalRing_locTopology P T 1 A (hasDenominatorPower_denom_one P T A))
   exact IsTopologicalAddGroup.ext hgroup inferInstance
-    (hbasis.eq_of_same_basis P.hasBasis_nhds_zero)
-
-omit hT in
-/-- **The trivial presentation over arbitrary power-bounded numerators.** A finite family of
-power-bounded elements need not lie in `A₀`, but it lies in the ring of definition of the enlarged
-pair `P.adjoin T hT`, so `locTopology_denom_one` applies there. The conclusion does not mention the
-pair, so this is the statement in full generality. -/
-@[simp]
-theorem locTopology_denom_one_adjoin [IsTopologicalRing A] (hTpb : ∀ t ∈ T, IsPowerBounded t) :
-    locTopology (P.adjoin T hTpb) T 1 A (hasDenominatorPower_denom_one (P.adjoin T hTpb) T A) =
-      ‹TopologicalSpace A› :=
-  locTopology_denom_one (P.adjoin T hTpb) T fun _ ht ↦ P.mem_adjoin_of_mem T hTpb ht
+    (hbasis.eq_of_same_basis (P.adjoin T hTpb).hasBasis_nhds_zero)
 
 end Topological
 
 section Uniform
 
 variable [UniformSpace A] [IsUniformAddGroup A] [IsTopologicalRing A] (P : PairOfDefinition A)
-  (T : Finset A) (hT : ∀ t ∈ T, t ∈ P.ringOfDefinition)
+  (T : Finset A) (hTpb : ∀ t ∈ T, IsPowerBounded t)
 
-include hT
+include hTpb
 
 /-- **The uniformity of the trivial presentation is the uniformity of `A`.** Both are the right
 uniformity of one and the same topological group topology, by `locTopology_denom_one` and
@@ -183,7 +225,7 @@ theorem locUniformSpace_denom_one :
   refine hloc.symm.trans (Eq.trans ?_ hamb)
   congr 1
   · rw [locUniformSpace_toTopologicalSpace]
-    exact locTopology_denom_one P T hT
+    exact locTopology_denom_one P T hTpb
   · exact proof_irrel_heq _ _
 
 end Uniform
@@ -251,8 +293,8 @@ theorem toCompletionLoc_denom_one_bijective :
     fun x ↦ ⟨_, toCompletionLoc_retraction_denom_one P T hTpb x⟩⟩
 
 /-- **`𝒪_X(X) ≅ A`.** For a complete Hausdorff `A` the structure map `A → A⟨T/1⟩` of the trivial
-presentation is a ring isomorphism — Wedhorn's identification of the global sections of the adic
-structure presheaf with the coordinate ring itself.
+presentation is a ring isomorphism, giving the global-sections identification targeted by Layer
+3.5 of the Tau Ceti AdicSpaces roadmap.
 
 The proof is the universal property, not the topology computation above. `A` is itself a complete
 Hausdorff target through which the identity factors, and `A⟨T/1⟩` admits at most one continuous
