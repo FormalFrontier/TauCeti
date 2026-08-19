@@ -159,13 +159,13 @@ theorem ofGradedObjectToGradedObjectIso_hom_apply (p : ℤ)
         ((ofGradedObjectToGradedObjectIso R X).hom p x) = x := by
   have hx : (ofGradedObjectToGradedObjectIso R X).inv p
       ((ofGradedObjectToGradedObjectIso R X).hom p x) = x := by
-    have hp : (ofGradedObjectToGradedObjectIso R X).hom p ≫
-        (ofGradedObjectToGradedObjectIso R X).inv p = 𝟙 _ :=
-      congrFun (ofGradedObjectToGradedObjectIso R X).hom_inv_id p
-    change ((ofGradedObjectToGradedObjectIso R X).hom p ≫
-      (ofGradedObjectToGradedObjectIso R X).inv p) x = x
-    rw [hp]
-    rfl
+    rw [← ModuleCat.comp_apply]
+    calc
+      _ = (𝟙 _ : (ofGradedObject R X).toGradedObject p ⟶
+          (ofGradedObject R X).toGradedObject p) x :=
+        congrArg (fun f ↦ f x)
+          ((ofGradedObjectToGradedObjectIso R X).hom_inv_id_eval p)
+      _ = x := ModuleCat.id_apply _ x
   calc
     _ = ((ofGradedObjectToGradedObjectIso R X).inv p
         ((ofGradedObjectToGradedObjectIso R X).hom p x) : ⨁ q : ℤ, X q) :=
