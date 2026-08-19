@@ -128,7 +128,8 @@ theorem mem_baseChange (L : Type*) [Field L] [Algebra K L] (I : TwoSidedIdeal A)
     x ∈ baseChange L I ↔ x ∈ (I.asIdeal.restrictScalars K).baseChange L := by
   simp [baseChange]
 
-private theorem baseChange_injective (L : Type*) [Field L] [Algebra K L] :
+/-- Scalar extension of two-sided ideals along a field extension is injective. -/
+theorem baseChange_injective (L : Type*) [Field L] [Algebra K L] :
     Function.Injective (baseChange L : TwoSidedIdeal A → TwoSidedIdeal (L ⊗[K] A)) := by
   intro I J h
   have hsub : (I.asIdeal.restrictScalars K).baseChange L =
