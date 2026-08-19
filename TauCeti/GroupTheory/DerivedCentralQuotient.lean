@@ -34,10 +34,21 @@ does nothing once it has succeeded: on a perfect group with trivial centre — i
 nonabelian simple group — it returns the group itself, and by Grün's lemma its output is centreless
 as soon as `[G, G]` is perfect, so a second application changes nothing.
 
+Two ways of comparing the output with another group are supplied, because the recipe names a group
+without describing it. Transport says that isomorphic groups have isomorphic derived central
+quotients, so the output depends only on the isomorphism class of `G`. Recognition says that a
+surjection from `[G, G]` onto a centreless group with central kernel *is* the derived central
+quotient; that is the shape in which the output is identified with a group given by some other
+construction, and it needs no description of `Z([G, G])`.
+
 ## Main definitions
 
 * `TauCeti.DerivedCentralQuotient`: the group `[G, G] / Z([G, G])`.
 * `TauCeti.DerivedCentralQuotient.lift`: the factorisation of a surjection onto a centreless group.
+* `TauCeti.DerivedCentralQuotient.mulEquivOfKerLeCenter`: the recognition isomorphism attached to a
+  surjection with central kernel onto a centreless group.
+* `TauCeti.commutatorCongr` and `TauCeti.DerivedCentralQuotient.congr`: transport of the derived
+  subgroup and of the derived central quotient along an isomorphism of groups.
 
 ## Main results
 
@@ -82,6 +93,46 @@ theorem isPerfect_of_not_isMulCommutative [IsSimpleGroup G] (h : ¬ IsMulCommuta
   exact h (center_eq_top_iff.mp hb)
 
 end IsSimpleGroup
+
+/-! ## Transporting the derived subgroup -/
+
+variable {G' G'' : Type*} [Group G'] [Group G'']
+
+/-- An isomorphism of groups carries the derived subgroup onto the derived subgroup. -/
+theorem Subgroup.map_commutator_eq_commutator (ψ : G ≃* G') :
+    (commutator G).map (ψ : G →* G') = commutator G' := by
+  rw [map_commutator_eq, MonoidHom.range_eq_top_of_surjective _ ψ.surjective]
+  rfl
+
+/-- The isomorphism of derived subgroups induced by an isomorphism of groups. -/
+def commutatorCongr (ψ : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') :=
+  (ψ.subgroupMap (commutator G)).trans
+    (MulEquiv.subgroupCongr (Subgroup.map_commutator_eq_commutator ψ))
+
+@[simp]
+theorem coe_commutatorCongr_apply (ψ : G ≃* G') (x : ↥(commutator G)) :
+    (commutatorCongr ψ x : G') = ψ (x : G) := by
+  simp only [commutatorCongr, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
+    MulEquiv.coe_subgroupMap_apply]
+
+@[simp]
+theorem coe_commutatorCongr_symm_apply (ψ : G ≃* G') (y : ↥(commutator G')) :
+    ((commutatorCongr ψ).symm y : G) = ψ.symm (y : G') := by
+  simp only [commutatorCongr, MulEquiv.symm_trans_apply, MulEquiv.subgroupCongr_symm_apply,
+    MulEquiv.subgroupMap_symm_apply]
+
+@[simp]
+theorem commutatorCongr_refl :
+    commutatorCongr (MulEquiv.refl G) = MulEquiv.refl ↥(commutator G) :=
+  MulEquiv.ext fun _ => Subtype.ext (by simp)
+
+theorem commutatorCongr_trans (ψ : G ≃* G') (χ : G' ≃* G'') :
+    (commutatorCongr ψ).trans (commutatorCongr χ) = commutatorCongr (ψ.trans χ) :=
+  MulEquiv.ext fun _ => Subtype.ext (by simp)
+
+theorem commutatorCongr_symm (ψ : G ≃* G') :
+    (commutatorCongr ψ).symm = commutatorCongr ψ.symm :=
+  MulEquiv.ext fun _ => Subtype.ext (by simp)
 
 /-! ## The derived subgroup modulo its centre -/
 
@@ -137,6 +188,42 @@ theorem lift_surjective {K : Type*} [Group K] (f : ↥(commutator G) →* K)
     (hf : Function.Surjective f) (hK : center K = ⊥) : Function.Surjective (lift f hf hK) :=
   QuotientGroup.lift_surjective_of_surjective _ f hf
     (TauCeti.MonoidHom.center_le_ker f hf hK)
+
+/-- The kernel of a surjection from `[G, G]` onto a centreless group is exactly the centre as soon
+as it is central at all: the centre always lies in it, so the two hypotheses meet. -/
+theorem ker_eq_center {K : Type*} [Group K] (f : ↥(commutator G) →* K)
+    (hf : Function.Surjective f) (hK : center K = ⊥)
+    (hker : f.ker ≤ center ↥(commutator G)) : f.ker = center ↥(commutator G) :=
+  le_antisymm hker (TauCeti.MonoidHom.center_le_ker f hf hK)
+
+/-- **Recognition of the derived central quotient.** A surjection from `[G, G]` onto a centreless
+group with central kernel *is* the derived central quotient.
+
+This is the shape in which the output of the recipe is identified with a group produced by some
+other construction: exhibiting a surjection from `[H, H]` onto that group whose kernel is central
+suffices, and no description of `Z([H, H])` itself is needed. The centreless hypothesis on the
+target cannot be dropped, since the identity of `[G, G]` has trivial, hence central, kernel. -/
+noncomputable def mulEquivOfKerLeCenter {K : Type*} [Group K] (f : ↥(commutator G) →* K)
+    (hf : Function.Surjective f) (hK : center K = ⊥)
+    (hker : f.ker ≤ center ↥(commutator G)) : DerivedCentralQuotient G ≃* K :=
+  (QuotientGroup.quotientMulEquivOfEq (ker_eq_center f hf hK hker).symm).trans
+    (QuotientGroup.quotientKerEquivOfSurjective f hf)
+
+@[simp]
+theorem mulEquivOfKerLeCenter_mk {K : Type*} [Group K] (f : ↥(commutator G) →* K)
+    (hf : Function.Surjective f) (hK : center K = ⊥)
+    (hker : f.ker ≤ center ↥(commutator G)) (x : ↥(commutator G)) :
+    mulEquivOfKerLeCenter f hf hK hker (x : DerivedCentralQuotient G) = f x := by
+  simp only [mulEquivOfKerLeCenter, MulEquiv.trans_apply, QuotientGroup.quotientMulEquivOfEq_mk]
+  exact QuotientGroup.kerLift_mk ..
+
+/-- The recognition isomorphism is the factorisation of `f` through the quotient, so it is the
+unique homomorphism compatible with the quotient map. -/
+theorem toMonoidHom_mulEquivOfKerLeCenter {K : Type*} [Group K] (f : ↥(commutator G) →* K)
+    (hf : Function.Surjective f) (hK : center K = ⊥)
+    (hker : f.ker ≤ center ↥(commutator G)) :
+    (mulEquivOfKerLeCenter f hf hK hker : DerivedCentralQuotient G →* K) = lift f hf hK :=
+  lift_unique f hf hK _ fun x => mulEquivOfKerLeCenter_mk f hf hK hker x
 
 /-! ### The recipe on groups it has already succeeded on -/
 
@@ -196,6 +283,40 @@ theorem mulEquivSelf_mk [Group.IsPerfect ↥(commutator G)]
     mulEquivSelf (G := G) (x : DerivedCentralQuotient (DerivedCentralQuotient G)) =
       (x : DerivedCentralQuotient G) :=
   mulEquivOfCenterEqBot_mk center_eq_bot x
+
+/-! ### Transport along an isomorphism -/
+
+/-- The derived central quotient transported along an isomorphism of groups.
+
+Both steps of the recipe are transported: the isomorphism restricts to the derived subgroups, and
+that restriction carries the centre of the one onto the centre of the other. So the recipe depends
+only on the isomorphism class of `G`. -/
+def congr (ψ : G ≃* G') : DerivedCentralQuotient G ≃* DerivedCentralQuotient G' :=
+  QuotientGroup.congr _ _ (commutatorCongr ψ)
+    (TauCeti.Subgroup.map_center_eq_center (commutatorCongr ψ))
+
+@[simp]
+theorem congr_mk (ψ : G ≃* G') (x : ↥(commutator G)) :
+    DerivedCentralQuotient.congr ψ (x : DerivedCentralQuotient G) =
+      (commutatorCongr ψ x : DerivedCentralQuotient G') := by
+  simp only [DerivedCentralQuotient.congr, QuotientGroup.congr_mk]
+
+@[simp]
+theorem congr_refl :
+    DerivedCentralQuotient.congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuotient G) :=
+  MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by simp
+
+theorem congr_trans (ψ : G ≃* G') (χ : G' ≃* G'') :
+    (DerivedCentralQuotient.congr ψ).trans (DerivedCentralQuotient.congr χ) =
+      DerivedCentralQuotient.congr (ψ.trans χ) :=
+  MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by
+    simp [← commutatorCongr_trans]
+
+theorem congr_symm (ψ : G ≃* G') :
+    (DerivedCentralQuotient.congr ψ).symm = DerivedCentralQuotient.congr ψ.symm :=
+  MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by
+    apply (DerivedCentralQuotient.congr ψ).injective
+    simp [← commutatorCongr_symm]
 
 end DerivedCentralQuotient
 
