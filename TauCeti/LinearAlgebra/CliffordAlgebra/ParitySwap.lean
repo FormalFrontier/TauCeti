@@ -39,8 +39,9 @@ grading.
 
 Both degenerate choices are useful. Taking `B = 0` recovers multiplication by an anisotropic
 vector, the classical reason a nondegenerate Clifford algebra has equidimensional halves; taking
-`Q = 0` — the exterior algebra, where *no* vector is anisotropic — leaves the contraction to do all
-the work, and `Q e - B e e = -B e e` is a unit as soon as `B e` does not annihilate `e`. That
+`Q = 0` — the exterior algebra, where *no* vector is anisotropic — keeps exterior multiplication
+by `e`, which on its own now squares to `0`, and has the contraction complement it: the combined
+operator squares to `Q e - B e e = -B e e`, a unit as soon as `B e` does not annihilate `e`. That
 second case is the one that was missing: it is what makes the two half-spin summands `⋀ᵉᵛᵉⁿ W` and
 `⋀ᵒᵈᵈ W` of a spinor module equidimensional.
 

@@ -200,7 +200,11 @@ theorem two_mul_finrank_evenOdd [Nontrivial V] [Module.Finite K (CliffordAlgebra
     Submodule.finrank_add_eq_of_isCompl (evenOdd_isCompl Q)
   have hswap : finrank K (evenOdd Q 0) = finrank K (evenOdd Q 1) := by
     obtain ⟨f⟩ := nonempty_evenOddEquivAddOne Q 0
-    rw [show (1 : ZMod 2) = 0 + 1 by decide]
+    -- `f` relates `evenOdd Q 0` to `evenOdd Q (0 + 1)`. Simplification does not close the gap to
+    -- `evenOdd Q 1`: the numerals of `ZMod 2` elaborate through `OfNat`, not `Zero.zero`/`One.one`,
+    -- so `zero_add` never matches the index. Name the index equation and rewrite the goal by it.
+    have hone : (1 : ZMod 2) = 0 + 1 := by decide
+    rw [hone]
     exact f.finrank_eq
   rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl <;> omega
 
