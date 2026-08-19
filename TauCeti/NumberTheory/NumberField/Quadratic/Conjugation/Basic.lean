@@ -28,7 +28,8 @@ classical genus theory this supports.
 ## Main definitions and results
 
 * `NumberField.quadraticConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`, with
-  `quadraticConj_gen` (`quadraticConj θ = -θ`) and `quadraticConj_involutive`.
+  `quadraticConj_gen` (`quadraticConj θ = -θ`), `quadraticConj_ne_one` and
+  `quadraticConj_involutive`.
 * `NumberField.ringOfIntegersQuadraticConj`: its restriction to a ring automorphism
   `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadraticConj`, `ringOfIntegersQuadraticConj_gen`, and
   `ringOfIntegersQuadraticConj_involutive`.
@@ -95,6 +96,18 @@ noncomputable def quadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
   rw [quadraticConj]
   nth_rewrite 1 [← quadraticPowerBasis_gen hgen]
   rw [PowerBasis.equivOfMinpoly_gen, quadraticPowerBasisNeg_gen]
+
+/-- **Quadratic conjugation is nontrivial**: it is not the identity, since it sends the nonzero
+generator `θ` to its negative `-θ`. -/
+theorem quadraticConj_ne_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : quadraticConj hmin hgen ≠ 1 := by
+  intro h
+  have hθ : (θ : K) = -(θ : K) := by
+    have := DFunLike.congr_fun h (θ : K)
+    rw [quadraticConj_gen, AlgEquiv.one_apply] at this
+    exact this.symm
+  have h2 : (θ : K) + (θ : K) = 0 := by nth_rewrite 2 [hθ]; ring
+  exact coe_gen_ne_zero hmin (add_self_eq_zero.mp h2)
 
 /-- Quadratic conjugation is an involution on `K` (applying it twice is the identity). -/
 @[simp] theorem quadraticConj_involutive (hmin : minpoly ℤ θ = X ^ 2 - C d)

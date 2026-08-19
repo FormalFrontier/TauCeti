@@ -18,6 +18,9 @@ For a quadratic number field `K = ℚ(√d)` with quadratic conjugation
 key fact that `I · σI` is principal for every ideal `I` of `𝓞 K`.  This is the hypothesis
 consumed by `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
+Along the way it records the elementwise norm identity
+`algebraMap_norm_eq_mul_quadraticConj`: `N(y) = y · σy`.
+
 The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
 `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
 extension of a principal `ℤ`-ideal is principal.  The zero ideal needs no separate treatment.
@@ -34,26 +37,9 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The generator `θ` of the quadratic field is nonzero: it is irrational (`gen_notMem_range`),
-whereas `0` is rational. -/
-private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := fun h0 =>
-  gen_notMem_range hmin ⟨0, by rw [map_zero, h0]⟩
-
-/-- Quadratic conjugation is a nontrivial automorphism: it does not equal the identity, since it
-sends the nonzero generator `θ` to its negative `-θ`. -/
-private theorem quadraticConj_ne_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : quadraticConj hmin hgen ≠ 1 := by
-  intro h
-  have hθ : (θ : K) = -(θ : K) := by
-    have := DFunLike.congr_fun h (θ : K)
-    rw [quadraticConj_gen, AlgEquiv.one_apply] at this
-    exact this.symm
-  have h2 : (θ : K) + (θ : K) = 0 := by nth_rewrite 2 [hθ]; ring
-  exact coe_gen_ne_zero hmin (add_self_eq_zero.mp h2)
-
-/-- The relative-norm generator `N(y) = y · σy`: applying `Algebra.norm ℚ` to `y` and coercing to
-`K` gives the product with its conjugate. -/
-private theorem norm_eq_mul_conj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- **The norm as a product with the conjugate.** Applying `Algebra.norm ℚ` to `y : K` and coercing
+back to `K` gives the product `y · σy` of `y` with its quadratic conjugate. -/
+theorem algebraMap_norm_eq_mul_quadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (y : K) :
     algebraMap ℚ K (Algebra.norm ℚ y) = y * quadraticConj hmin hgen y := by
   have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
@@ -70,8 +56,8 @@ private theorem algebraMap_intNorm_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
       = quadraticConj hmin hgen (algebraMap (𝓞 K) K x) := by
     simpa only [RingOfIntegers.coe_eq_algebraMap] using coe_ringOfIntegersQuadraticConj hmin hgen x
   apply RingOfIntegers.coe_injective
-  rw [map_mul, hσ, ← norm_eq_mul_conj hmin hgen, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K,
-    IsScalarTower.algebraMap_apply ℤ ℚ K]
+  rw [map_mul, hσ, ← algebraMap_norm_eq_mul_quadraticConj hmin hgen,
+    ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K, IsScalarTower.algebraMap_apply ℤ ℚ K]
   congr 1
   rw [Algebra.intNorm_eq_norm, algebraMap_int_eq, eq_intCast]
   exact Algebra.coe_norm_int x
