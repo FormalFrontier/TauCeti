@@ -233,7 +233,7 @@ theorem map_tmul_mem_kostantGeneratedGeneralLinearBaseChangeIdeal_of_mem (s : A)
 
 /-- The Chevalley carrier cut out inside `GLₙ` over `A` is the same closed subgroup scheme as the
 one cut out inside the base change of `GLₙ` over `ℤ`. -/
-noncomputable def kostantGeneratedGeneralLinearBaseChangePresentationIso :
+private noncomputable def kostantGeneratedGeneralLinearBaseChangePresentationIso :
     CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A n)
         (kostantGeneratedGeneralLinearBaseChangeIdeal e h ρ M hM hnil b A) ≅
       CommHopfAlgCat.quotient
@@ -246,7 +246,7 @@ noncomputable def kostantGeneratedGeneralLinearBaseChangePresentationIso :
 /-- Quotienting by the general-linear defining ideal over `A` and then transporting is the same as
 transporting first and then quotienting by the base-changed defining ideal. -/
 @[simp]
-theorem mkQuotient_comp_kostantGeneratedGeneralLinearBaseChangePresentationIso_hom :
+private theorem mkQuotient_comp_kostantGeneratedGeneralLinearBaseChangePresentationIso_hom :
     CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra A n)
           (kostantGeneratedGeneralLinearBaseChangeIdeal e h ρ M hM hnil b A) ≫
         (kostantGeneratedGeneralLinearBaseChangePresentationIso e h ρ M hM hnil b A).hom =
@@ -299,23 +299,6 @@ noncomputable def kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap
       (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b) ≫
     (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom
 
-/-- The root-subgroup map over `A` is obtained by base-changing the map over `ℤ` and transporting
-the source and target along their coordinate Hopf algebra base-change isomorphisms. -/
-theorem kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap_def
-    (e : I → L) (h : κ → L)
-    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
-    (M : AddSubgroup V)
-    (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
-    (i : I) (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
-    {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (A : Type*) [CommRing A] :
-    kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap e h ρ M hM i hnil b A =
-      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).inv ≫
-        CommHopfAlgCat.baseChangeMap
-          (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b) ≫
-        (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom := by
-  unfold kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap
-  rfl
-
 /-- The `i`th base-changed root subgroup over `A`, factored through the Chevalley carrier
 presented inside `GLₙ` over `A`. -/
 noncomputable def kostantRootSubgroupGeneralLinearBaseChangeGeneratedCoordinateMap (i : I) :
@@ -340,7 +323,7 @@ theorem mkQuotient_comp_kostantRootSubgroupGeneralLinearBaseChangeGeneratedCoord
     mkQuotient_comp_kostantGeneratedGeneralLinearBaseChangePresentationIso_hom, Category.assoc,
     ← Category.assoc (CommHopfAlgCat.mkQuotient _ _),
     mkQuotient_comp_kostantRootSubgroupBaseChangeGeneratedCoordinateMap,
-    kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap_def]
+    kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap]
 
 /-- Every root subgroup over `A` kills the general-linear defining ideal over `A`, so all of them
 land in the Chevalley carrier presented there. -/
@@ -355,7 +338,7 @@ theorem kostantGeneratedGeneralLinearBaseChangeIdeal_toIdeal_le_ker (i : I) :
       ((mem_kostantGeneratedGeneralLinearBaseChangeIdeal_iff
         e h ρ M hM hnil b A).mp hx))
   rw [RingHom.mem_ker] at hbase ⊢
-  rw [kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap_def]
+  rw [kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap]
   have hbase' :
       (CommHopfAlgCat.baseChangeMap
           (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).hom
