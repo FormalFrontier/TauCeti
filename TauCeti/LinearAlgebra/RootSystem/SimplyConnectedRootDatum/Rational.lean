@@ -8,7 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.BaseChange
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.NonSimplyLaced
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Reduced
 
 public section
@@ -32,8 +31,8 @@ unchanged, so the rational system realizes the same Dynkin type as the datum it 
 
 The rational system is also reduced and irreducible, which are the two remaining hypotheses of
 Geck's construction `RootPairing.GeckConstruction.lieAlgebra`, the construction turning this root
-system into the split semisimple Lie algebra whose Chevalley basis a Chevalley--Demazure group
-scheme is built from. The two are established by different routes, because neither is a formal
+system into a Lie algebra with the Chevalley basis from which a Chevalley--Demazure group scheme
+is built. The two are established by different routes, because neither is a formal
 consequence of the base change alone. Reducedness holds already over `ℤ`, where it is a property of
 the explicit root tables, and transports because the base change leaves every Cartan integer alone:
 two roots are linearly dependent exactly when their Coxeter weight is four, and that number is an
@@ -54,8 +53,6 @@ connectedness of the pinned Dynkin diagram.
 * `TauCeti.DynkinType.hasCartanType_rationalRootSystem`: the rational system realizes its own
   Dynkin type against the pinned numbering.
 * `TauCeti.DynkinType.pairingIn_rationalRootSystem`: its Cartan integers are those of the datum.
-* `TauCeti.DynkinType.isReduced_simplyConnectedRootDatum`: the pinned integral datum is reduced,
-  uniformly in the type.
 * `TauCeti.DynkinType.instIsReducedRationalRootSystem` and
   `TauCeti.DynkinType.instIsIrreducibleRationalRootSystem`: the rational system is reduced and
   irreducible.
@@ -163,13 +160,6 @@ instance instIsRootSystemRationalRootSystem : (t.rationalRootSystem ht).IsRootSy
 
 /-! ## The rational system is reduced and irreducible -/
 
-/-- **The pinned integral datum is reduced**, uniformly in the valid Dynkin type. The simply-laced
-and non-simply-laced halves are proved by different criteria, so this only joins them. -/
-theorem isReduced_simplyConnectedRootDatum : (t.simplyConnectedRootDatum ht).IsReduced := by
-  by_cases hs : t.IsSimplyLaced
-  · exact isReduced_simplyConnectedRootDatum_of_isSimplyLaced t ht hs
-  · exact isReduced_simplyConnectedRootDatum_of_not_isSimplyLaced t ht hs
-
 /-- **The rational system is reduced.** Over both `ℤ` and `ℚ` a pair of roots is linearly dependent
 exactly when its Coxeter weight is `4`, and the base change leaves the Coxeter weight alone, being
 an integer read off the pinned root tables. So dependence over `ℚ` reflects back to dependence over
@@ -239,9 +229,9 @@ through the Bourbaki numbering. This is what lets a construction stated against
 @[simp] theorem cartanMatrix_rationalBase (i j : Fin t.rank) :
     (t.rationalBase ht).cartanMatrix (t.simpleSupportEquiv ht i) (t.simpleSupportEquiv ht j) =
       t.cartanMatrix i j := by
-  change (t.rationalBase ht).cartanMatrixIn ℤ _ _ = _
-  rw [RootPairing.Base.cartanMatrixIn_def, coe_simpleSupportEquiv, coe_simpleSupportEquiv,
-    pairingIn_rationalRootSystem, pairingIn_simpleIndex]
+  rw [RootPairing.Base.cartanMatrix, RootPairing.Base.cartanMatrixIn_def,
+    coe_simpleSupportEquiv, coe_simpleSupportEquiv, pairingIn_rationalRootSystem,
+    pairingIn_simpleIndex]
 
 end
 

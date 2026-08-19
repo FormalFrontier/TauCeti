@@ -27,7 +27,7 @@ original one.
 * `LieAlgebra.Basis.reindex`: the basis obtained by renumbering the nodes along a bijection.
 -/
 
-@[expose] public section
+public section
 
 open Function Set
 
@@ -39,7 +39,6 @@ variable {ι ι' R L : Type*} [Fintype ι] [DecidableEq ι] [Fintype ι'] [Decid
 /-- **Renumber the nodes of a Lie algebra basis along a bijection.** The Cartan matrix is
 renumbered by `Matrix.submatrix`, and each of the three families of elements is precomposed with
 the bijection. -/
-@[simps -fullyApplied A h e f]
 def reindex (b : Basis ι H) (σ : ι' ≃ ι) : Basis ι' H where
   A := b.A.submatrix σ σ
   h := b.h ∘ σ
@@ -59,5 +58,33 @@ def reindex (b : Basis ι H) (σ : ι' ≃ ι) : Basis ι' H where
   lie_h_e i j := b.lie_h_e (σ i) (σ j)
   lie_h_f i j := b.lie_h_f (σ i) (σ j)
   lie_e_f_ne i j hij := b.lie_e_f_ne (σ i) (σ j) fun h => hij (σ.injective h)
+
+/-- Reindexing transports the Cartan matrix along the given equivalence. -/
+@[simp] theorem reindex_A (b : Basis ι H) (σ : ι' ≃ ι) :
+    (b.reindex σ).A = b.A.submatrix σ σ := by
+  ext i j
+  change b.A (σ i) (σ j) = _
+  rw [Matrix.submatrix_apply]
+
+/-- Reindexing precomposes the Cartan generators with the given equivalence. -/
+@[simp] theorem reindex_h (b : Basis ι H) (σ : ι' ≃ ι) :
+    (b.reindex σ).h = b.h ∘ σ := by
+  funext i
+  change b.h (σ i) = (b.h ∘ σ) i
+  rw [Function.comp_apply]
+
+/-- Reindexing precomposes the raising generators with the given equivalence. -/
+@[simp] theorem reindex_e (b : Basis ι H) (σ : ι' ≃ ι) :
+    (b.reindex σ).e = b.e ∘ σ := by
+  funext i
+  change b.e (σ i) = (b.e ∘ σ) i
+  rw [Function.comp_apply]
+
+/-- Reindexing precomposes the lowering generators with the given equivalence. -/
+@[simp] theorem reindex_f (b : Basis ι H) (σ : ι' ≃ ι) :
+    (b.reindex σ).f = b.f ∘ σ := by
+  funext i
+  change b.f (σ i) = (b.f ∘ σ) i
+  rw [Function.comp_apply]
 
 end LieAlgebra.Basis
