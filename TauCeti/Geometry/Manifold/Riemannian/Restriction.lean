@@ -41,12 +41,16 @@ variable
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The canonical identification between the tangent space of an open submanifold and the ambient
 tangent space. Both are Mathlib's type synonym for the common model vector space. -/
 noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
-    TangentSpace I x ≃L[ℝ] TangentSpace I (x : M) :=
-  ContinuousLinearEquiv.refl ℝ E
+    TangentSpace I x ≃L[ℝ] TangentSpace I (x : M) where
+  toFun v := v
+  invFun v := v
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  continuous_toFun := continuous_id
+  continuous_invFun := continuous_id
 
 @[simp]
 theorem tangentSpaceOpenEquiv_apply {U : Opens M} (x : U) (v : TangentSpace I x) :
@@ -62,7 +66,6 @@ variable
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Restrict a Riemannian metric on a tangent bundle to an open submanifold. -/
 noncomputable def restrictOpen
     (g : RiemannianMetric (fun x : M ↦ TangentSpace I x)) (U : Opens M) :
@@ -90,7 +93,6 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
   [IsManifold I 1 M]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Restrict a smooth Riemannian metric on a manifold to an open submanifold. -/
 noncomputable def restrictOpen
     (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M) :
@@ -239,7 +241,6 @@ noncomputable scoped instance instIsContMDiffRiemannianBundleOpen
   let g := riemannianMetricOpen (I := I) (n := n) U
   exact ⟨g.inner, g.contMDiff, fun _ _ _ ↦ rfl⟩
 
-set_option backward.isDefEq.respectTransparency false in
 omit [IsManifold I n M] in
 /-- The restricted Riemannian metric is the ambient metric under the canonical identification of
 tangent spaces. -/
