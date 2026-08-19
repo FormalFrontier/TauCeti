@@ -219,11 +219,13 @@ theorem of_isClosedImmersion_upperUnitriangularGroupScheme
         (eqToIso (UpperUnitriangular.groupScheme_def k (Fin n))))).isIso_hom
   let φ : (CommHopfAlgCat.of k (UpperUnitriangular.coordinateHopfAlgebra k (Fin n))) ⟶
       (CommHopfAlgCat.of k H) := (hF.preimage (f ≫ e)).unop
+  have hmap : F.map φ.op = f ≫ e := by
+    -- `φ` stores the unopposite of the preimage, so remove the resulting `op_unop` wrapper.
+    simpa only [φ, Quiver.Hom.op_unop] using hF.map_preimage (f ≫ e)
   apply geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective k φ
   · apply (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff
       (S := CommRingCat.of k) φ).mp
-    rw [show F.map φ.op = f ≫ e by
-      simpa only [φ, Quiver.Hom.op_unop] using hF.map_preimage (f ≫ e)]
+    rw [hmap]
     simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
     rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
     exact hclosed
