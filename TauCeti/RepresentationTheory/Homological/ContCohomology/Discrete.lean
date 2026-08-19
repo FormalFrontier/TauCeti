@@ -19,6 +19,9 @@ For a finite coefficient group, the kernel of the action is open and the action 
 action of a finite quotient. For an arbitrary discrete coefficient group, the corresponding
 statement holds one element at a time: every element is fixed by an open normal subgroup.
 
+This implements the Layer 0 “Openness” milestone of the human-authored roadmap at
+`TauCetiRoadmap/ProfiniteCohomology/README.md`.
+
 The latter statement is recorded both as an elementwise factorization of the orbit map and as the
 fact that the fixed-point subgroups over all open normal subgroups exhaust the coefficient group.
 These are the forms used by the finite-quotient system for continuous cohomology.
