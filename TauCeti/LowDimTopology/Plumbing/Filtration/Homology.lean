@@ -142,7 +142,7 @@ characteristic-weight sublevel complexes. -/
 noncomputable def latticeWeightSublevelHomologyCoconeIsColimit (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) :
     IsColimit (P.latticeWeightSublevelHomologyCocone k q) := by
-  let _ := homologicalComplexHomologyFunctor_preservesColimitsOfShape
+  let _ := homologicalComplexHomologyFunctor_preservesColimitsOfShape_int
     (R := PlumbingCoefficient) (ComplexShape.down ℕ) q
   exact isColimitOfPreserves
     (HomologicalComplex.homologyFunctor (ModuleCat PlumbingCoefficient)

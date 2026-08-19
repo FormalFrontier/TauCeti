@@ -23,11 +23,11 @@ unrelated universes. Mathlib's AB5 theorem supplies the exactness of these filte
 ## Main results
 
 * `TauCeti.moduleCat_hasExactColimitsOfShape_int`: integer-indexed colimits of modules are exact.
-* `TauCeti.shortComplexHomologyFunctor_preservesColimitsOfShape`: homology of short complexes
+* `TauCeti.shortComplexHomologyFunctor_preservesColimitsOfShape_int`: homology of short complexes
   preserves exact colimits.
-* `TauCeti.homologicalComplexShortComplexFunctor_preservesColimitsOfShape`: the short complex
+* `TauCeti.homologicalComplexShortComplexFunctor_preservesColimitsOfShape_int`: the short complex
   associated to a homological complex preserves colimits.
-* `TauCeti.homologicalComplexHomologyFunctor_preservesColimitsOfShape`: homology of homological
+* `TauCeti.homologicalComplexHomologyFunctor_preservesColimitsOfShape_int`: homology of homological
   complexes preserves exact colimits.
 
 ## Implementation notes
@@ -183,7 +183,7 @@ private noncomputable def shortComplexHomologyColimitCoconeIso
   exact shortComplexHomologyColimit_compatibility F j
 
 /-- Homology of short complexes of modules preserves integer-indexed colimits. -/
-theorem shortComplexHomologyFunctor_preservesColimitsOfShape :
+theorem shortComplexHomologyFunctor_preservesColimitsOfShape_int :
     PreservesColimitsOfShape J (ShortComplex.homologyFunctor (ModuleCat.{v} R)) where
   preservesColimit {F} :=
     preservesColimit_of_preserves_colimit_cocone
@@ -198,7 +198,7 @@ variable {I : Type*} (c : ComplexShape I) (q : I)
 
 /-- Sending a homological complex of modules to its short complex at one degree preserves
 integer-indexed colimits. -/
-theorem homologicalComplexShortComplexFunctor_preservesColimitsOfShape :
+theorem homologicalComplexShortComplexFunctor_preservesColimitsOfShape_int :
     PreservesColimitsOfShape J
       (HomologicalComplex.shortComplexFunctor (ModuleCat.{v} R) c q) where
   preservesColimit {F} := by
@@ -213,11 +213,11 @@ theorem homologicalComplexShortComplexFunctor_preservesColimitsOfShape :
 
 /-- Homology in any degree of a homological complex of modules preserves integer-indexed
 colimits. -/
-theorem homologicalComplexHomologyFunctor_preservesColimitsOfShape :
+theorem homologicalComplexHomologyFunctor_preservesColimitsOfShape_int :
     PreservesColimitsOfShape J
       (HomologicalComplex.homologyFunctor (ModuleCat.{v} R) c q) := by
-  let _ := shortComplexHomologyFunctor_preservesColimitsOfShape (R := R)
-  let _ := homologicalComplexShortComplexFunctor_preservesColimitsOfShape (R := R) c q
+  let _ := shortComplexHomologyFunctor_preservesColimitsOfShape_int (R := R)
+  let _ := homologicalComplexShortComplexFunctor_preservesColimitsOfShape_int (R := R) c q
   exact preservesColimitsOfShape_of_natIso
     (HomologicalComplex.homologyFunctorIso (ModuleCat.{v} R) c q).symm
 
