@@ -210,26 +210,32 @@ def comap (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Mea
   meas' := K.measurable.comp (hf.prodMap hf)
   bdd' := K.exists_bound.imp fun _ hC x y => hC (f x) (f y)
 
+/-- Pulling back a kernel evaluates it after applying the map to both arguments. -/
 @[simp]
 theorem comap_apply (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
     (x y : Ω') : K.comap f hf μ' x y = K (f x) (f y) := (rfl)
 
+/-- Pulling back the zero kernel gives the zero kernel. -/
 @[simp]
 theorem comap_zero (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
     (0 : SymmKernel Ω μ).comap f hf μ' = 0 := by ext; simp
 
+/-- Pullback distributes over addition of kernels. -/
 @[simp]
 theorem comap_add (K L : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
     (K + L).comap f hf μ' = K.comap f hf μ' + L.comap f hf μ' := by ext; simp
 
+/-- Pullback commutes with negation of kernels. -/
 @[simp]
 theorem comap_neg (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
     (-K).comap f hf μ' = -K.comap f hf μ' := by ext; simp
 
+/-- Pullback distributes over subtraction of kernels. -/
 @[simp]
 theorem comap_sub (K L : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
     (K - L).comap f hf μ' = K.comap f hf μ' - L.comap f hf μ' := by ext; simp
 
+/-- Pullback commutes with scalar multiplication of kernels. -/
 @[simp]
 theorem comap_smul (c : ℝ) (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f)
     (μ' : Measure Ω') : (c • K).comap f hf μ' = c • K.comap f hf μ' := by ext; simp
@@ -240,6 +246,7 @@ theorem comap_id (K : SymmKernel Ω μ) : K.comap id measurable_id μ = K := by
   ext; simp
 
 /-- Pullbacks compose contravariantly. -/
+@[simp]
 theorem comap_comap (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
     (g : Ω'' → Ω') (hg : Measurable g) (μ'' : Measure Ω'') :
     (K.comap f hf μ').comap g hg μ'' = K.comap (f ∘ g) (hf.comp hg) μ'' := by ext; simp

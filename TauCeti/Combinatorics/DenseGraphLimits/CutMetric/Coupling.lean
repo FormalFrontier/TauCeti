@@ -6,16 +6,16 @@ Authors: Claude
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Basic
-public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import TauCeti.MeasureTheory.Measure.Coupling
 
 /-!
-# Couplings of carriers, and the overlaid difference of two graphons
+# The overlaid difference of two graphons
 
-A **coupling** of two probability spaces `(Ω₁, μ₁)` and `(Ω₂, μ₂)` is a probability measure `π` on
-`Ω₁ × Ω₂` whose two marginals are `μ₁` and `μ₂`. Given a coupling, two graphons living on
-*different* carriers can be compared: read `U` through the first coordinate, read `W` through the
-second, and subtract. The result is the **overlaid difference kernel** `overlayDiff U W π`, a
-symmetric kernel on the coupled space `(Ω₁ × Ω₂, π)`.
+Given a coupling of two probability spaces, two graphons living on *different* carriers can be
+compared: read `U` through the first coordinate, read `W` through the second, and subtract. The
+result is the **overlaid difference kernel** `overlayDiff U W π`, a symmetric kernel on the coupled
+space `(Ω₁ × Ω₂, π)`. The carrier-independent coupling API lives in
+`TauCeti.MeasureTheory.Measure.Coupling`.
 
 These two objects are what makes the cut distance of the dense graph limit theory cross-carrier.
 `cutDist U W` is the infimum, over all couplings `π`, of the cut norm of `overlayDiff U W π`; the
@@ -24,14 +24,6 @@ object needs a standard Borel or atomless hypothesis, which is why the resulting
 *defined* on arbitrary probability carriers. That its triangle inequality also holds there is a
 separate result, proved by step-graphon approximation (Janson, Lemma 6.5) rather than by gluing
 couplings, and is not built here.
-
-**`IsCoupling` is a `Prop`, not a structure or a class.** A coupling of two given marginals is not
-canonical: the independent coupling `μ₁ ⊗ μ₂` and, on a common carrier, the diagonal coupling are
-both couplings of the same pair, and the cut distance minimizes over all of them. A typeclass would
-have instance resolution silently pick one. The predicate is stated with Mathlib's marginals
-`MeasureTheory.Measure.fst` and `MeasureTheory.Measure.snd`, matching the optimal transport
-gluing API of `TauCeti/MeasureTheory/OptimalTransport/Gluing.lean`, whose hypotheses and conclusions
-are phrased the same way, so a plan composed there is recognized as a coupling here by `rw`.
 
 **`overlayDiff` does not need the coupling hypothesis.** The measure argument of `SymmKernel` is a
 phantom parameter, so the kernel `fun p q => U p.1 q.1 - W p.2 q.2` is well-formed over *any*
@@ -42,22 +34,11 @@ hypotheses at all.
 
 ## Main definitions
 
-* `TauCeti.DenseGraphLimits.IsCoupling` — the predicate "`π` has marginals `μ₁` and `μ₂`";
-* `TauCeti.DenseGraphLimits.diagonalCoupling` — the coupling of a probability space with itself
-  carried by the diagonal;
 * `TauCeti.DenseGraphLimits.overlayDiff` — the overlaid difference kernel of two graphons on a
   coupling of their carriers.
 
 ## Main results
 
-* `isCoupling_prod` and `isCoupling_diagonalCoupling` — the independent and diagonal couplings;
-  the first is what makes the set `cutDist` minimizes over nonempty, and the two together show that
-  couplings of a given pair of marginals are not unique, which is why `IsCoupling` is a `Prop`;
-* `IsCoupling.isProbabilityMeasure` — a coupling of probability measures is one;
-* `IsCoupling.measurePreserving_fst` / `_snd` and `IsCoupling.integral_comp_fst` / `_snd` — the
-  marginal conditions as measure-preserving projections, and as the identity that an integrand
-  depending on one coordinate only integrates against `π` exactly as against that marginal;
-* `IsCoupling.swap` — a coupling of `μ₁, μ₂` swaps to one of `μ₂, μ₁`;
 * `overlayDiff_apply`, `abs_overlayDiff_apply_le_one` — the eliminator and the `[-1, 1]` bound;
 * `overlayDiff_swap` — swapping the two graphons negates the overlaid difference, up to the pullback
   along `Prod.swap`, for *any* two measures on the two products;
@@ -88,113 +69,7 @@ namespace TauCeti
 namespace DenseGraphLimits
 
 variable {Ω₁ Ω₂ : Type*} [MeasurableSpace Ω₁] [MeasurableSpace Ω₂]
-
-/-- A **coupling** of `μ₁` and `μ₂`: a measure on the product whose marginals are `μ₁` and `μ₂`.
-
-Deliberately a `Prop` rather than a structure or a class: a coupling of two given marginals is not
-canonical, and the cut distance minimizes over all of them. Use `isCoupling_iff` to unfold. -/
-def IsCoupling (μ₁ : Measure Ω₁) (μ₂ : Measure Ω₂) (π : Measure (Ω₁ × Ω₂)) : Prop :=
-  π.fst = μ₁ ∧ π.snd = μ₂
-
 variable {μ₁ : Measure Ω₁} {μ₂ : Measure Ω₂} {π : Measure (Ω₁ × Ω₂)}
-
-/-- The defining conditions of `IsCoupling`. The definition's body is not exposed, so this is the
-lemma downstream modules should rewrite with. -/
-theorem isCoupling_iff : IsCoupling μ₁ μ₂ π ↔ π.fst = μ₁ ∧ π.snd = μ₂ := (Iff.rfl)
-
-/-- The first marginal of a coupling. -/
-theorem IsCoupling.fst_eq (hπ : IsCoupling μ₁ μ₂ π) : π.fst = μ₁ := isCoupling_iff.1 hπ |>.1
-
-/-- The second marginal of a coupling. -/
-theorem IsCoupling.snd_eq (hπ : IsCoupling μ₁ μ₂ π) : π.snd = μ₂ := isCoupling_iff.1 hπ |>.2
-
-/-- The first projection out of a coupling is measure preserving. This is the marginal condition in
-the form the integral transfer below consumes, and the form the measure-preserving-map picture of
-the cut distance is stated in. -/
-theorem IsCoupling.measurePreserving_fst (hπ : IsCoupling μ₁ μ₂ π) :
-    MeasurePreserving Prod.fst π μ₁ :=
-  ⟨measurable_fst, hπ.fst_eq⟩
-
-/-- The second projection out of a coupling is measure preserving. -/
-theorem IsCoupling.measurePreserving_snd (hπ : IsCoupling μ₁ μ₂ π) :
-    MeasurePreserving Prod.snd π μ₂ :=
-  ⟨measurable_snd, hπ.snd_eq⟩
-
-/-- A coupling of probability measures is itself a probability measure.
-
-This is why the cut norm — which needs a finite measure to integrate against — may be applied to a
-kernel on the coupled space without a further hypothesis. -/
-theorem IsCoupling.isProbabilityMeasure [IsProbabilityMeasure μ₁] (hπ : IsCoupling μ₁ μ₂ π) :
-    IsProbabilityMeasure π :=
-  ⟨by rw [← Measure.fst_univ, hπ.fst_eq, measure_univ]⟩
-
-/-- The **independent coupling**: the product measure couples its two factors.
-
-Every pair of probability spaces therefore admits a coupling, so the infimum defining the cut
-distance is taken over a nonempty set. -/
-theorem isCoupling_prod (μ₁ : Measure Ω₁) (μ₂ : Measure Ω₂) [IsProbabilityMeasure μ₁]
-    [IsProbabilityMeasure μ₂] : IsCoupling μ₁ μ₂ (μ₁.prod μ₂) :=
-  isCoupling_iff.2 ⟨Measure.fst_prod, Measure.snd_prod⟩
-
-/-- Swapping the two coordinates of a coupling of `μ₁` and `μ₂` gives a coupling of `μ₂` and `μ₁`.
-
-Together with `overlayDiff_swap` this is what makes the cut distance symmetric. -/
-theorem IsCoupling.swap (hπ : IsCoupling μ₁ μ₂ π) : IsCoupling μ₂ μ₁ (π.map Prod.swap) :=
-  isCoupling_iff.2
-    ⟨by rw [Measure.fst_map_swap, hπ.snd_eq], by rw [Measure.snd_map_swap, hπ.fst_eq]⟩
-
-section Integral
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-
-/-- A function of the first coordinate integrates against a coupling as it does against the first
-marginal: an integrand that reads only one coordinate is blind to which coupling it is integrated
-against. (A homomorphism density is an integral over `Ω ^ V(F)` of a product of kernel values, so
-transporting one needs the iterated form of `measurePreserving_fst`, not this lemma.) -/
-theorem IsCoupling.integral_comp_fst (hπ : IsCoupling μ₁ μ₂ π) {f : Ω₁ → E}
-    (hf : AEStronglyMeasurable f μ₁) : ∫ p, f p.1 ∂π = ∫ x, f x ∂μ₁ := by
-  rw [← hπ.measurePreserving_fst.map_eq] at hf ⊢
-  exact (integral_map measurable_fst.aemeasurable hf).symm
-
-/-- A function of the second coordinate integrates against a coupling as it does against the second
-marginal. -/
-theorem IsCoupling.integral_comp_snd (hπ : IsCoupling μ₁ μ₂ π) {f : Ω₂ → E}
-    (hf : AEStronglyMeasurable f μ₂) : ∫ p, f p.2 ∂π = ∫ x, f x ∂μ₂ := by
-  rw [← hπ.measurePreserving_snd.map_eq] at hf ⊢
-  exact (integral_map measurable_snd.aemeasurable hf).symm
-
-end Integral
-
-section Diagonal
-
-variable {Ω : Type*} [MeasurableSpace Ω]
-
-/-- The **diagonal coupling** of a measure with itself: the pushforward of `μ` along `x ↦ (x, x)`.
-
-It is the coupling that reads two graphons on a common carrier at the *same* point: it couples `μ`
-with itself (`isCoupling_diagonalCoupling`), and the overlaid difference taken along it pulls back
-along the diagonal to the plain difference `U - W` (`comap_overlayDiff_diagonalCoupling`). Use
-`diagonalCoupling_apply` to compute it. -/
-def diagonalCoupling (μ : Measure Ω) : Measure (Ω × Ω) := μ.map fun x => (x, x)
-
-/-- The diagonal coupling of a measurable set is the measure of its diagonal slice. -/
-theorem diagonalCoupling_apply (μ : Measure Ω) {s : Set (Ω × Ω)} (hs : MeasurableSet s) :
-    diagonalCoupling μ s = μ {x | (x, x) ∈ s} := by
-  rw [diagonalCoupling, Measure.map_apply (measurable_id'.prodMk measurable_id') hs]
-  rfl
-
-/-- The diagonal coupling is a coupling of `μ` with itself. -/
-theorem isCoupling_diagonalCoupling (μ : Measure Ω) : IsCoupling μ μ (diagonalCoupling μ) :=
-  isCoupling_iff.2
-    ⟨by rw [diagonalCoupling, Measure.fst_map_prodMk measurable_id', Measure.map_id'],
-      by rw [diagonalCoupling, Measure.snd_map_prodMk measurable_id', Measure.map_id']⟩
-
-/-- The diagonal coupling of a probability measure is a probability measure. -/
-instance instIsProbabilityMeasureDiagonalCoupling (μ : Measure Ω) [IsProbabilityMeasure μ] :
-    IsProbabilityMeasure (diagonalCoupling μ) :=
-  (isCoupling_diagonalCoupling μ).isProbabilityMeasure
-
-end Diagonal
 
 section OverlayDiff
 
@@ -213,21 +88,12 @@ def overlayDiff (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π : Measur
     SymmKernel (Ω₁ × Ω₂) π :=
   U.toSymmKernel.comap Prod.fst measurable_fst π - W.toSymmKernel.comap Prod.snd measurable_snd π
 
-/-- The overlaid difference is the difference of the two coordinate pullbacks. Outside this module,
-use this to unfold `overlayDiff`. -/
-theorem overlayDiff_eq_comap_sub_comap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
-    (π : Measure (Ω₁ × Ω₂)) :
-    overlayDiff U W π =
-      U.toSymmKernel.comap Prod.fst measurable_fst π -
-        W.toSymmKernel.comap Prod.snd measurable_snd π := (rfl)
-
 /-- The overlaid difference evaluates as the difference of the two graphons read through the two
 coordinates. -/
 @[simp]
 theorem overlayDiff_apply (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π : Measure (Ω₁ × Ω₂))
     (p q : Ω₁ × Ω₂) : overlayDiff U W π p q = U p.1 q.1 - W p.2 q.2 := by
-  rw [overlayDiff_eq_comap_sub_comap]
-  simp
+  simp [overlayDiff]
 
 /-- The overlaid difference of two graphons takes values in `[-1, 1]`: it is a difference of two
 `[0, 1]`-valued functions. -/
