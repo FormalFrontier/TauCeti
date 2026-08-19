@@ -37,7 +37,8 @@ and the subfield ones about an arbitrary field of exponential characteristic `p`
 * `TauCeti.mem_frobeniusFixedSubring`: membership is the equation `a ^ p ^ n = a`.
 * `TauCeti.mem_frobeniusFixedSubring_mul_iff_iterate_eq`: at exponent `m * k`, membership is being
   fixed by the `k`-th iterate of the `p ^ m`-power Frobenius.
-* `TauCeti.frobeniusFixedSubring_zero`: the zeroth iterate fixes everything.
+* `TauCeti.frobeniusFixedSubring_zero` and `TauCeti.frobeniusFixedSubfield_zero`: the zeroth
+  iterate fixes everything.
 * `TauCeti.frobeniusFixedSubring_le_of_dvd` and `TauCeti.frobeniusFixedSubfield_le_of_dvd`: the
   fixed subrings and subfields grow along divisibility of the exponent, the inclusion
   `𝔽_{p ^ m} ⊆ 𝔽_{p ^ k}` in the motivating case.
@@ -157,6 +158,12 @@ variable (K p n)
 @[simp]
 theorem toSubring_frobeniusFixedSubfield :
     (frobeniusFixedSubfield K p n).toSubring = frobeniusFixedSubring K p n := (rfl)
+
+/-- The zeroth Frobenius iterate is the identity, so it fixes every element. -/
+@[simp]
+theorem frobeniusFixedSubfield_zero : frobeniusFixedSubfield K p 0 = ⊤ := by
+  ext a
+  simp
 
 variable {K p n}
 
