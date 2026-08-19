@@ -37,6 +37,9 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   `1 = ∑ᵥ eᵥ` exist.
 * `TauCeti.PathAlgebra.vertexIdempotent`: the idempotent `eᵥ` given by the trivial path at `v`.
 * `TauCeti.pathAlgebraBasis`: the paths of `Q` as a `k`-basis of `kQ`.
+* `TauCeti.PathAlgebra.liftAlgHom`: **the universal property of the path algebra**, extending an
+  assignment of elements of a `k`-algebra to the basis paths to an algebra homomorphism out of
+  `kQ`.
 
 ## Main results
 
@@ -684,6 +687,89 @@ theorem vertexIdempotent_mul_mul_vertexIdempotent (v : Q)
         zero_mul, Finsupp.single_eq_of_ne' hne, single_zero]
 
 end Basis
+
+/-! ### The universal property -/
+
+namespace PathAlgebra
+
+section Lift
+
+variable (k : Type w) {Q : Type u} {B : Type*} [CommSemiring k] [Quiver.{v} Q]
+  [Semiring B] [Algebra k B] (F : Quiver.TotalPath Q → B)
+
+/-- The `k`-linear map extending an assignment of algebra elements to the basis paths. Private:
+only its algebra-homomorphism upgrade `TauCeti.PathAlgebra.liftAlgHom` is public. -/
+private noncomputable def liftLinear : pathAlgebra k Q →ₗ[k] B :=
+  (pathAlgebraBasis k Q).constr k F
+
+private theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofPath x) = F x := by
+  have h := (pathAlgebraBasis k Q).constr_basis k F x
+  rwa [coe_pathAlgebraBasis] at h
+
+private theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
+    liftLinear k F (single x c) = c • F x := by
+  have hx : (single x c : pathAlgebra k Q) = c • ofPath x := by
+    rw [ofPath_eq_single, smul_single, mul_one]
+  rw [hx, map_smul, liftLinear_ofPath]
+
+variable (hcomp : ∀ {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path c a),
+    F ⟨a, b, p⟩ * F ⟨c, a, q⟩ = F ⟨c, b, q.comp p⟩)
+  (hzero : ∀ {x y : Quiver.TotalPath Q}, y.2.1 ≠ x.1 → F x * F y = 0)
+
+include hcomp hzero in
+private theorem liftLinear_mul (f g : pathAlgebra k Q) :
+    liftLinear k F (f * g) = liftLinear k F f * liftLinear k F g := by
+  induction f using PathAlgebra.induction_linear with
+  | zero => simp
+  | add f₁ f₂ h₁ h₂ => rw [add_mul, map_add, map_add, h₁, h₂, add_mul]
+  | single x c =>
+    induction g using PathAlgebra.induction_linear with
+    | zero => simp
+    | add g₁ g₂ h₁ h₂ => rw [mul_add, map_add, map_add, h₁, h₂, mul_add]
+    | single y d =>
+      obtain ⟨a, b, p⟩ := x
+      obtain ⟨c', a', q⟩ := y
+      by_cases hy : a' = a
+      · subst hy
+        rw [single_mul_single_of_comp, liftLinear_single, liftLinear_single, liftLinear_single,
+          smul_mul_smul_comm, hcomp]
+      · rw [single_mul_single_of_not_composable hy, map_zero, liftLinear_single, liftLinear_single,
+          smul_mul_smul_comm, hzero hy, smul_zero]
+
+variable [Finite Q]
+  (hone : ∀ [Fintype Q], ∑ v : Q, F ⟨v, v, _root_.Quiver.Path.nil⟩ = 1)
+
+include hone in
+private theorem liftLinear_one : liftLinear k F (1 : pathAlgebra k Q) = 1 := by
+  let _ := Fintype.ofFinite Q
+  rw [one_def, map_sum]
+  simp only [vertexIdempotent_eq_single, liftLinear_single, one_smul]
+  exact hone
+
+include hcomp hzero hone in
+/-- **The universal property of the path algebra**: an assignment `F` of elements of a `k`-algebra
+`B` to the basis paths extends to a `k`-algebra homomorphism `kQ →ₐ[k] B` as soon as it turns the
+three defining products of `kQ` into products in `B` — composable paths concatenate (`hcomp`,
+later factor first, as `TauCeti.PathAlgebra.single_mul_single_of_comp` multiplies them), paths that
+do not meet annihilate one another (`hzero`), and the trivial paths give a decomposition of the
+unit (`hone`), as `TauCeti.PathAlgebra.one_def` says of the vertex idempotents. -/
+noncomputable def liftAlgHom : pathAlgebra k Q →ₐ[k] B :=
+  AlgHom.ofLinearMap (liftLinear k F) (liftLinear_one k F hone) (liftLinear_mul k F hcomp hzero)
+
+/-- **The lift extends the assignment**: a basis path goes to the element it was assigned. -/
+@[simp]
+theorem liftAlgHom_ofPath (x : Quiver.TotalPath Q) :
+    liftAlgHom k F hcomp hzero hone (ofPath x) = F x :=
+  liftLinear_ofPath k F x
+
+/-- The lift is `k`-linear, so a scaled basis path scales the element it was assigned. -/
+theorem liftAlgHom_single (x : Quiver.TotalPath Q) (c : k) :
+    liftAlgHom k F hcomp hzero hone (single x c) = c • F x :=
+  liftLinear_single k F x c
+
+end Lift
+
+end PathAlgebra
 
 section DivisionRing
 
