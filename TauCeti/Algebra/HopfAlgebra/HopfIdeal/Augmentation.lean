@@ -24,6 +24,7 @@ induced morphism of affine group schemes (`TauCeti.CommHopfAlgCat.kernelHopfIdea
 * `TauCeti.HopfIdeal.augmentation`: the augmentation ideal as a Hopf ideal.
 * `TauCeti.HopfIdeal.mem_augmentation` and `TauCeti.HopfIdeal.augmentation_toIdeal`:
   characteristic API.
+* `TauCeti.HopfIdeal.le_augmentation`: every Hopf ideal is contained in the augmentation ideal.
 * `TauCeti.HopfIdeal.comap_augmentation`: the augmentation ideal is preserved by pullback
   along a surjective bialgebra morphism.
 * `TauCeti.HopfIdeal.counitBialgEquivOfAugmentationEqBot`: a Hopf algebra with zero
@@ -76,6 +77,10 @@ theorem augmentation_toIdeal :
   ext x
   rw [mem_toIdeal, mem_augmentation, RingHom.mem_ker]
   exact Iff.rfl
+
+/-- Every Hopf ideal is contained in the augmentation ideal. -/
+theorem le_augmentation (I : HopfIdeal R H) : I ≤ augmentation R H :=
+  fun _ hx ↦ (mem_augmentation R H).mpr (I.counit_eq_zero hx)
 
 variable {S : Type u} {K : Type v} {L : Type w}
 variable [CommRing S] [Ring K] [Ring L]

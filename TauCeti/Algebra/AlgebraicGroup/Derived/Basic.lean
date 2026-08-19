@@ -7,7 +7,9 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Commutator
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Order
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # The derived subgroup of an affine group scheme
@@ -22,8 +24,10 @@ H ⟶ H ⊗[R] H.
 ```
 
 The quotient by this ideal represents the smallest closed subgroup scheme of `G` containing the
-commutator image. Every algebra-valued commutator belongs to its subgroup of points. This makes
-the subgroup normal and makes the pointwise quotient commutative.
+commutator image. Every algebra-valued commutator belongs to its subgroup of points. Consequently,
+a normal closed subgroup contains the derived subgroup exactly when all of its algebra-valued
+point-group quotients are commutative. If the coordinate Hopf algebra is cocommutative, the
+derived subgroup is trivial.
 
 ## Main declarations
 
@@ -32,8 +36,10 @@ the subgroup normal and makes the pointwise quotient commutative.
 * `TauCeti.CommHopfAlgCat.commutator_mem_derivedPointsSubgroup`: every pointwise commutator lies
   in the derived subgroup.
 * `TauCeti.CommHopfAlgCat.isNormal_derivedDefiningIdeal`: the derived subgroup is normal.
-* `TauCeti.CommHopfAlgCat.isMulCommutative_derivedPointQuotient`: the quotient by derived points is
-  commutative.
+* `TauCeti.CommHopfAlgCat.le_derivedDefiningIdeal_iff_isMulCommutative_pointQuotient`: the
+  universal property of the derived closed subgroup.
+* `TauCeti.CommHopfAlgCat.derivedDefiningIdeal_eq_augmentation_of_isCocomm`: a commutative affine
+  group's derived subgroup is trivial.
 
 ## References
 
@@ -47,7 +53,7 @@ scheme-theoretic derived subgroup left outstanding by the Layer 5 solvability de
 public section
 
 open CategoryTheory WithConv
-open scoped commutatorElement
+open scoped commutatorElement TensorProduct
 
 namespace TauCeti.CommHopfAlgCat
 
@@ -128,25 +134,107 @@ theorem derivedPointsSubgroup_normal (H : _root_.CommHopfAlgCat.{v} R)
     (quotientPointsSubgroup H (derivedDefiningIdeal (R := R) H) A).mul_mem
       (commutator_mem_derivedPointsSubgroup H A g n) hn
 
+/-- Every Hopf ideal contained in the derived defining ideal is normal. -/
+theorem isNormal_of_le_derivedDefiningIdeal (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hID : I ≤ derivedDefiningIdeal (R := R) H) : I.IsNormal := by
+  rw [isNormal_iff_quotientPointsSubgroup_normal]
+  intro A
+  apply Subgroup.Normal.of_commutator_le
+  rw [commutator_eq_closure, Subgroup.closure_le]
+  rintro _ ⟨g, h, rfl⟩
+  exact mem_quotientPointsSubgroup_of_le H hID A
+    (commutator_mem_derivedPointsSubgroup H A g h)
+
 /-- The Hopf ideal defining the derived subgroup is normal. -/
 theorem isNormal_derivedDefiningIdeal (H : _root_.CommHopfAlgCat.{v} R) :
-    (derivedDefiningIdeal (R := R) H).IsNormal := by
-  rw [isNormal_iff_quotientPointsSubgroup_normal]
-  exact derivedPointsSubgroup_normal H
+    (derivedDefiningIdeal (R := R) H).IsNormal :=
+  isNormal_of_le_derivedDefiningIdeal H _ le_rfl
 
-/-- The quotient of the point group by the derived subgroup is commutative. -/
-theorem isMulCommutative_derivedPointQuotient (H : _root_.CommHopfAlgCat.{v} R)
-    (A : CommAlgCat.{w} R) :
-    let _ : (quotientPointsSubgroup H (derivedDefiningIdeal (R := R) H) A).Normal :=
-      derivedPointsSubgroup_normal H A
+/-- If a closed subgroup contains the derived subgroup, the corresponding quotient of every
+algebra-valued point group is commutative. -/
+theorem isMulCommutative_pointQuotient_of_le_derivedDefiningIdeal
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H)
+    (hID : I ≤ derivedDefiningIdeal (R := R) H) (A : CommAlgCat.{w} R) :
+    let _ : (quotientPointsSubgroup H I A).Normal :=
+      quotientPointsSubgroup_normal H I (isNormal_of_le_derivedDefiningIdeal H I hID) A
     IsMulCommutative
-      (HopfAlgebra.points (R := R) (H := H) A ⧸
-        quotientPointsSubgroup H (derivedDefiningIdeal (R := R) H) A) := by
-  let _ : (quotientPointsSubgroup H (derivedDefiningIdeal (R := R) H) A).Normal :=
-    derivedPointsSubgroup_normal H A
+      (HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A) := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I (isNormal_of_le_derivedDefiningIdeal H I hID) A
   rw [Subgroup.Normal.quotient_commutative_iff_commutator_le, commutator_eq_closure,
     Subgroup.closure_le]
   rintro _ ⟨g, h, rfl⟩
-  exact commutator_mem_derivedPointsSubgroup H A g h
+  exact mem_quotientPointsSubgroup_of_le H hID A
+    (commutator_mem_derivedPointsSubgroup H A g h)
+
+/-- A normal closed subgroup contains the derived subgroup exactly when all of the corresponding
+point-group quotients are commutative. The converse needs no point-separation or rational-point
+hypothesis. -/
+theorem le_derivedDefiningIdeal_iff_isMulCommutative_pointQuotient
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
+    I ≤ derivedDefiningIdeal (R := R) H ↔
+      ∀ A : CommAlgCat.{v} R,
+        let _ : (quotientPointsSubgroup H I A).Normal :=
+          quotientPointsSubgroup_normal H I hI A
+        IsMulCommutative
+          (HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A) := by
+  constructor
+  · intro hID A
+    exact isMulCommutative_pointQuotient_of_le_derivedDefiningIdeal H I hID A
+  · intro hquot
+    rw [le_derivedDefiningIdeal_iff]
+    intro x hx
+    rw [RingHom.mem_ker]
+    change HopfAlgebra.commutatorAlgHom (R := R) (H := H) x = 0
+    let A : CommAlgCat.{v} R := CommAlgCat.of R (H ⊗[R] H)
+    let g : HopfAlgebra.points (R := R) (H := H) A :=
+      toConv (Bialgebra.TensorProduct.includeLeft
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+    let h : HopfAlgebra.points (R := R) (H := H) A :=
+      toConv (Bialgebra.TensorProduct.includeRight
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+    let _ : (quotientPointsSubgroup H I A).Normal :=
+      quotientPointsSubgroup_normal H I hI A
+    have hcomm : _root_.commutator (HopfAlgebra.points (R := R) (H := H) A) ≤
+        quotientPointsSubgroup H I A :=
+      Subgroup.Normal.quotient_commutative_iff_commutator_le.mp (hquot A)
+    have hmem : ⁅g, h⁆ ∈ quotientPointsSubgroup H I A :=
+      Subgroup.commutator_le.mp hcomm g (Subgroup.mem_top g) h (Subgroup.mem_top h)
+    rw [mem_quotientPointsSubgroup_iff] at hmem
+    have hzero := hmem x hx
+    have hproduct : Algebra.TensorProduct.productMap g.ofConv h.ofConv =
+        AlgHom.id R (H ⊗[R] H) := by
+      simpa [g, h] using
+        (AffineGroup.Product.productMap_restrict (AlgHom.id R (H ⊗[R] H)))
+    have heval := DFunLike.congr_fun
+      (HopfAlgebra.productMap_comp_commutatorAlgHom g h) x
+    rw [hproduct] at heval
+    simpa only [A, AlgHom.comp_apply, AlgHom.id_apply] using heval.trans hzero
+
+section Commutative
+
+variable (H : Type v) [CommRing H] [_root_.HopfAlgebra R H]
+
+/-- The derived subgroup of a commutative affine group is trivial. For coordinate Hopf algebras,
+commutativity of the represented group is cocommutativity of the coalgebra structure. -/
+@[simp]
+theorem derivedDefiningIdeal_eq_augmentation_of_isCocomm [Coalgebra.IsCocomm R H] :
+    derivedDefiningIdeal (R := R) H = HopfIdeal.augmentation R H := by
+  apply le_antisymm
+  · exact (derivedDefiningIdeal (R := R) H).le_augmentation
+  · rw [le_derivedDefiningIdeal_iff]
+    intro x hx
+    have hx' : x ∈ HopfIdeal.augmentation R H := (HopfIdeal.mem_toIdeal).mp hx
+    rw [HopfIdeal.mem_augmentation] at hx'
+    rw [RingHom.mem_ker]
+    have hcommutator :
+        toConv (HopfAlgebra.commutatorAlgHom (R := R) (H := H)) = 1 := by
+      rw [HopfAlgebra.toConv_commutatorAlgHom]
+      exact commutatorElement_eq_one_iff_mul_comm.mpr (mul_comm _ _)
+    have heval := congrArg
+      (fun f : WithConv (H →ₐ[R] H ⊗[R] H) ↦ f.ofConv x) hcommutator
+    simpa [AlgHom.convOne_apply, hx'] using heval
+
+end Commutative
 
 end TauCeti.CommHopfAlgCat
