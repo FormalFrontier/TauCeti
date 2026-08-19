@@ -275,7 +275,6 @@ theorem weylRatio_one : weylRatio (R := R) hE hF 1 = 1 := by
 
 /-- The scaled Weyl element factors as its Weyl ratio times the Weyl element: the normal
 form `n_α(c) = h_α(c) n_α(1)`. -/
-@[simp]
 theorem weylUnitSMul_eq_weylRatio_mul (c : Rˣ) :
     weylUnitSMul (R := R) hE hF c = weylRatio hE hF c * weylUnit hE hF := by
   rw [weylRatio_def, inv_mul_cancel_right]
