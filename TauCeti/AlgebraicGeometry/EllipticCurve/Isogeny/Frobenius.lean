@@ -93,12 +93,9 @@ theorem frobeniusPullback_apply (x : W.CoordinateRing) :
 /-- **Frobenius maps the point at infinity to itself.** An element of the coordinate ring is a
 `q`-th root of its own pullback, so it is integral over the pulled-back copy. -/
 theorem mapsInfinity_frobeniusPullback : (frobeniusPullback W).MapsInfinity := by
-  rw [CoordinatePullback.mapsInfinity_iff]
-  let _ := (frobeniusPullback W).toRingHom.toAlgebra
-  intro x
-  refine IsIntegral.of_pow (n := Nat.card F) Nat.card_pos ?_
-  rw [← map_pow, ← frobeniusPullback_apply]
-  exact isIntegral_algebraMap
+  refine CoordinatePullback.mapsInfinity_of_pow (F := F) (n := Nat.card F)
+    (frobeniusPullback W) Nat.card_pos fun x ↦ ?_
+  exact ⟨x, by rw [frobeniusPullback_apply, map_pow]⟩
 
 /-- **The Frobenius isogeny** of a Weierstrass curve over a finite field. -/
 noncomputable def frobeniusIsogeny : Isogeny W W where

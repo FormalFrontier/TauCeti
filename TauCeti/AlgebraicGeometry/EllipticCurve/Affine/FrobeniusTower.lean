@@ -10,11 +10,12 @@ public import TauCeti.FieldTheory.RatFunc.Frobenius
 public import Mathlib.FieldTheory.Relrank
 
 /-!
-# The function field of a curve over its subfield of `q`-th powers
+# Power subfields of the function field of a Weierstrass curve
 
-Let `K` be a finite field with `q` elements and `W` a Weierstrass curve over `K`. This file
-computes the degree of the function field `K(W)` over its subfield `K(W)^q` of `q`-th powers: it
-is `q`.
+For any field `K`, exponent `n`, and Weierstrass curve `W`, this file packages the tower
+`K(x^n) ⊆ K(x) ⊆ K(W)` and computes `[K(W) : K(x^n)] = 2n`. For a finite field with `q`
+elements, it then compares this tower with the subfield `K(W)^q` of `q`-th powers and computes
+`[K(W) : K(W)^q] = q`.
 
 The argument runs through a third field. Inside `K(W)` sit the image of the rational function
 field `K(x)` and, inside that, the image `K(x^q)` of its own subfield of `q`-th powers, which lies
@@ -25,6 +26,8 @@ its relative degree. Comparing the two routes gives `2 · [K(W) : K(W)^q] = 2q`.
 
 ## Main results
 
+* `TauCeti.WeierstrassCurve.Affine.finrank_ratFuncPowRange`: for an arbitrary exponent `n`,
+  `[K(W) : K(x^n)] = 2 * n`.
 * `TauCeti.WeierstrassCurve.Affine.finrank_frobeniusRatFuncRange`: `[K(W) : K(x^q)] = 2 * q`.
 * `TauCeti.WeierstrassCurve.Affine.relfinrank_fieldRange_frobeniusAlgHom`: `[K(W)^q : K(x^q)] = 2`.
 * `TauCeti.WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`: `[K(W) : K(W)^q] = q`.
@@ -34,7 +37,7 @@ its relative degree. Comparing the two routes gives `2 · [K(W) : K(W)^q] = 2q`.
 `Isogeny.degree` — a `finrank` over a `fieldPullback.fieldRange` — is taken over, so a consumer
 needs no rewriting to reach it.
 
-No degree here needs `W` to be elliptic: they are degrees of `K(W)` over embedded subfields, and
+No degree here needs `W` to be elliptic: these are degrees of `K(W)` over embedded subfields, and
 the Weierstrass equation alone gives the power basis.
 
 ## Roadmap
@@ -88,6 +91,45 @@ namespace WeierstrassCurve.Affine
 
 variable {K : Type*} [Field K] (W : _root_.WeierstrassCurve.Affine K)
 
+/-! ### The general power tower -/
+
+/-- The image of `K(x^n)` inside `K(W)`. -/
+noncomputable def ratFuncPowRange (n : ℕ) : IntermediateField K W.FunctionField :=
+  (IntermediateField.adjoin K {(RatFunc.X : RatFunc K) ^ n}).map
+    (IsScalarTower.toAlgHom K (RatFunc K) W.FunctionField)
+
+/-- The defining equation of `ratFuncPowRange`, in the form used by `IntermediateField.map`
+lemmas. -/
+theorem ratFuncPowRange_eq_map (n : ℕ) :
+    ratFuncPowRange W n =
+      (IntermediateField.adjoin K {(RatFunc.X : RatFunc K) ^ n}).map
+        (IsScalarTower.toAlgHom K (RatFunc K) W.FunctionField) := by
+  rw [ratFuncPowRange]
+
+/-- `K(x^n)` sits inside `K(x)`, both read inside `K(W)`. -/
+theorem ratFuncPowRange_le_ratFuncRange (n : ℕ) :
+    ratFuncPowRange W n ≤ _root_.WeierstrassCurve.Affine.ratFuncRange W := by
+  rw [ratFuncPowRange_eq_map, _root_.WeierstrassCurve.Affine.ratFuncRange_eq_map]
+  exact IntermediateField.map_mono _ le_top
+
+/-- **`[K(x) : K(x^n)] = n`**, read inside `K(W)`. -/
+@[simp]
+theorem relfinrank_ratFuncPowRange (n : ℕ) :
+    relfinrank (ratFuncPowRange W n) (_root_.WeierstrassCurve.Affine.ratFuncRange W) = n := by
+  rw [ratFuncPowRange_eq_map, _root_.WeierstrassCurve.Affine.ratFuncRange_eq_map,
+    relfinrank_map_map, relfinrank_top_right, TauCeti.RatFunc.finrank_adjoin_X_pow]
+
+/-- **`[K(W) : K(x^n)] = 2n`.** -/
+@[simp]
+theorem finrank_ratFuncPowRange (n : ℕ) :
+    Module.finrank (ratFuncPowRange W n) W.FunctionField = 2 * n := by
+  have htower := relfinrank_mul_finrank_top (ratFuncPowRange_le_ratFuncRange W n)
+  rw [relfinrank_ratFuncPowRange W n,
+    _root_.WeierstrassCurve.Affine.finrank_ratFuncRange W] at htower
+  rw [← htower, Nat.mul_comm]
+
+/-! ### The finite-field Frobenius tower -/
+
 variable [Finite K]
 
 /-- The image of `K(x^q)`, the `q`-th powers of the rational function field, inside `K(W)`. -/
@@ -106,6 +148,13 @@ theorem frobeniusRatFuncRange_eq_map :
         (IsScalarTower.toAlgHom K (RatFunc K) W.FunctionField) := by
   rw [frobeniusRatFuncRange]
 
+/-- The finite-field Frobenius power range is the general `ratFuncPowRange` at exponent `q`. -/
+theorem frobeniusRatFuncRange_eq_ratFuncPowRange :
+    frobeniusRatFuncRange W = ratFuncPowRange W (Nat.card K) := by
+  let _ := Fintype.ofFinite K
+  rw [frobeniusRatFuncRange_eq_map, ratFuncPowRange_eq_map,
+    TauCeti.FiniteField.fieldRange_frobeniusAlgHom_ratFunc, Nat.card_eq_fintype_card]
+
 /-- An element of `K(W)` lies in the copy of `K(x^q)` exactly when it is the image there of a
 `q`-th power from the rational function field. -/
 @[simp]
@@ -119,8 +168,8 @@ theorem mem_frobeniusRatFuncRange {z : W.FunctionField} :
 /-- `K(x^q)` sits inside `K(x)`, both read inside `K(W)`: they are the images of `K(x)^q ≤ ⊤`. -/
 theorem frobeniusRatFuncRange_le_ratFuncRange :
     frobeniusRatFuncRange W ≤ _root_.WeierstrassCurve.Affine.ratFuncRange W := by
-  rw [frobeniusRatFuncRange_eq_map, _root_.WeierstrassCurve.Affine.ratFuncRange_eq_map]
-  exact IntermediateField.map_mono _ le_top
+  rw [frobeniusRatFuncRange_eq_ratFuncPowRange]
+  exact ratFuncPowRange_le_ratFuncRange W (Nat.card K)
 
 /-- **`[K(x) : K(x^q)] = q`**, read inside `K(W)`: the copy of the rational function field is of
 degree `q` over the copy of its subfield of `q`-th powers. Embedding `K(x)` into `K(W)` does not
@@ -129,19 +178,15 @@ change this relative degree. -/
 theorem relfinrank_frobeniusRatFuncRange :
     relfinrank (frobeniusRatFuncRange W) (_root_.WeierstrassCurve.Affine.ratFuncRange W) =
       Nat.card K := by
-  let _ := Fintype.ofFinite K
-  rw [frobeniusRatFuncRange_eq_map, _root_.WeierstrassCurve.Affine.ratFuncRange_eq_map,
-    relfinrank_map_map, relfinrank_top_right,
-    TauCeti.FiniteField.finrank_fieldRange_frobeniusAlgHom_ratFunc, Nat.card_eq_fintype_card]
+  rw [frobeniusRatFuncRange_eq_ratFuncPowRange]
+  exact relfinrank_ratFuncPowRange W (Nat.card K)
 
 /-- **`[K(W) : K(x^q)] = 2q`.** The tower `K(x^q) ⊆ K(x) ⊆ K(W)` has degrees `q` and `2`. -/
 @[simp]
 theorem finrank_frobeniusRatFuncRange :
     Module.finrank (frobeniusRatFuncRange W) W.FunctionField = 2 * Nat.card K := by
-  have htower := relfinrank_mul_finrank_top (frobeniusRatFuncRange_le_ratFuncRange W)
-  rw [relfinrank_frobeniusRatFuncRange W,
-    _root_.WeierstrassCurve.Affine.finrank_ratFuncRange W] at htower
-  rw [← htower, Nat.mul_comm]
+  rw [frobeniusRatFuncRange_eq_ratFuncPowRange]
+  exact finrank_ratFuncPowRange W (Nat.card K)
 
 /-- Raising to the `q`-th power commutes with embedding a rational function into `K(W)`. -/
 private theorem frobeniusAlgHom_comp_toAlgHom :
@@ -185,8 +230,8 @@ theorem relfinrank_fieldRange_frobeniusAlgHom :
     relfinrank (frobeniusRatFuncRange W)
       (_root_.FiniteField.frobeniusAlgHom K W.FunctionField).fieldRange = 2 := by
   let _ := Fintype.ofFinite K
-  rw [frobeniusRatFuncRange_eq_map_ratFuncRange W, AlgHom.fieldRange_eq_map, relfinrank_map_map,
-    relfinrank_top_right, _root_.WeierstrassCurve.Affine.finrank_ratFuncRange]
+  rw [frobeniusRatFuncRange_eq_map_ratFuncRange W,
+    _root_.WeierstrassCurve.Affine.relfinrank_map_ratFuncRange_fieldRange]
 
 /-- **`[K(W) : K(W)^q] = q`.** The tower `K(x^q) ⊆ K(W)^q ⊆ K(W)` has degrees `2` and
 `[K(W) : K(W)^q]`, with product `2q`. Stated over the field range of the `q`-power map itself,

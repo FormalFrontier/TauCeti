@@ -8,7 +8,8 @@ module
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
 public import Mathlib.LinearAlgebra.Dimension.Localization
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
-public import Mathlib.FieldTheory.RatFunc.Basic
+public import Mathlib.FieldTheory.RatFunc.AsPolynomial
+public import Mathlib.FieldTheory.Relrank
 import TauCeti.FieldTheory.IntermediateField.FieldRange
 
 /-!
@@ -28,6 +29,8 @@ rational function field that sits *inside* `R(W)` as an intermediate field.
 * `WeierstrassCurve.Affine.moduleFinite_coordinateRing`: the coordinate ring is a finite
   `R[X]`-module — the companion of Mathlib's `Module.Free` instance, which Mathlib has only as a
   lemma, so instance search cannot reach it.
+* `WeierstrassCurve.Affine.expChar_coordinateRing`: the coordinate ring has the same exponential
+  characteristic as the base ring.
 * `WeierstrassCurve.Affine.finrank_coordinateRing`: the coordinate ring's `Module.finrank` over
   `R[X]` is two, needing only `[Nontrivial R]` — which discharges the `StrongRankCondition R[X]`
   that `Module.finrank` wants, through `commRing_strongRankCondition`.
@@ -49,6 +52,8 @@ rational function field that sits *inside* `R(W)` as an intermediate field.
   comparing two subfields of `F(W)` — a tower, or a relative degree — needs; the two are related
   by `TauCeti.AlgHom.finrank_fieldRange`, since the copy and `RatFunc F` are isomorphic as fields
   acting on `F(W)`.
+* `WeierstrassCurve.Affine.relfinrank_map_ratFuncRange_fieldRange`: mapping the pair
+  `F(x) ⊆ F(W)` along a function-field embedding preserves its relative degree two.
 
 Exporting the algebra instance is safe here for the reason Mathlib withholds it in general: the
 collision is with the identity structure on `FractionRing R[X]`, and `R(W)` is a *quadratic*
@@ -104,6 +109,11 @@ namespace WeierstrassCurve.Affine
 section CommRing
 
 variable {R : Type*} [CommRing R] (W : WeierstrassCurve.Affine R)
+
+/-- The coordinate ring of a Weierstrass curve has the same exponential characteristic as its
+base ring. -/
+instance expChar_coordinateRing (p : ℕ) [ExpChar R p] : ExpChar W.CoordinateRing p :=
+  ExpChar.of_injective_algebraMap' R p
 
 /-- **The coordinate ring is a finite `R[X]`-module.** -/
 -- Mathlib registers `Module.Free R[X] R[W]` off the same basis (`Affine/Point.lean`) but not
@@ -173,6 +183,14 @@ theorem ratFuncRange_eq_map :
       (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField) :=
   AlgHom.fieldRange_eq_map _
 
+/-- The affine coordinate of `W`, read as the image of the rational function `X`. -/
+@[simp]
+theorem toAlgHom_ratFunc_X :
+    IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField _root_.RatFunc.X =
+      algebraMap F[X] W.FunctionField X := by
+  rw [IsScalarTower.toAlgHom_apply, ← _root_.RatFunc.algebraMap_X,
+    ← IsScalarTower.algebraMap_apply F[X] (RatFunc F) W.FunctionField]
+
 /-- An element of `F(W)` lies in the copy of the rational function field exactly when it is the
 image of a rational function. -/
 @[simp]
@@ -189,6 +207,15 @@ theorem finrank_ratFuncRange : Module.finrank (ratFuncRange W) W.FunctionField =
   (TauCeti.AlgHom.finrank_fieldRange (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField)
     fun z ↦ (IsScalarTower.toAlgHom_apply F (RatFunc F) W.FunctionField z).symm).trans
       (finrank_functionField W (RatFunc F))
+
+/-- **The image of `F(W')` has degree two over the image of `F(x)`.** Mapping the pair
+`F(x) ⊆ F(W')` along a function-field embedding preserves its relative degree. -/
+@[simp]
+theorem relfinrank_map_ratFuncRange_fieldRange (W' : WeierstrassCurve.Affine F)
+    (f : W'.FunctionField →ₐ[F] W.FunctionField) :
+    IntermediateField.relfinrank ((ratFuncRange W').map f) f.fieldRange = 2 := by
+  rw [AlgHom.fieldRange_eq_map, IntermediateField.relfinrank_map_map,
+    IntermediateField.relfinrank_top_right, finrank_ratFuncRange]
 
 end Field
 
