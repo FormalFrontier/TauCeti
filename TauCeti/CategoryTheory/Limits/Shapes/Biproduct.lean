@@ -12,8 +12,8 @@ public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Basic
 # Binary biproduct squares
 
 This file records generic categorical properties of binary biproducts. A biproduct map factors
-through the maps obtained by changing one summand at a time, and the squares obtained by adjoining
-an identity summand are pushouts or pullbacks.
+through the maps obtained by changing one summand at a time, the squares obtained by adjoining
+an identity summand are pushouts or pullbacks, and a zero summand may be deleted.
 -/
 
 public section
@@ -52,5 +52,33 @@ theorem isPullback_biprod_map_fst {X Y : C} (f : X ⟶ Y) (Z : C)
     (biprod.isoProd X Z).symm (Iso.refl X)
     (biprod.isoProd Y Z).symm (Iso.refl Y)
     (by simp) (by ext <;> simp) (by simp) (by simp)
+
+section Unitors
+
+variable [HasZeroObject C]
+
+open ZeroObject
+
+/-- The right unitor of the binary biproduct: a zero second summand may be deleted. -/
+@[expose, simps]
+noncomputable def biprodRightUnitor (X : C) [HasBinaryBiproduct X (0 : C)] : X ⊞ (0 : C) ≅ X where
+  hom := biprod.fst
+  inv := biprod.inl
+  hom_inv_id := by
+    refine biprod.hom_ext _ _ (by simp) ?_
+    simpa using ((isZero_zero C).eq_of_tgt 0 biprod.snd)
+  inv_hom_id := by simp
+
+/-- The left unitor of the binary biproduct: a zero first summand may be deleted. -/
+@[expose, simps]
+noncomputable def biprodLeftUnitor (X : C) [HasBinaryBiproduct (0 : C) X] : (0 : C) ⊞ X ≅ X where
+  hom := biprod.snd
+  inv := biprod.inr
+  hom_inv_id := by
+    refine biprod.hom_ext _ _ ?_ (by simp)
+    simpa using ((isZero_zero C).eq_of_tgt 0 biprod.fst)
+  inv_hom_id := by simp
+
+end Unitors
 
 end TauCeti
