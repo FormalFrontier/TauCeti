@@ -90,7 +90,7 @@ theorem symm_of_even (h : IsPolarization hℂ hs Q) (hn : Even n) (x y : V) : Q 
   simpa [Int.negOnePow_even n hn] using h.symm_weight x y
 
 /-- A polarization of an odd-weight Hodge structure is an antisymmetric form. -/
-theorem neg_of_odd (h : IsPolarization hℂ hs Q) (hn : Odd n) (x y : V) : Q y x = -Q x y := by
+theorem eq_neg_of_odd (h : IsPolarization hℂ hs Q) (hn : Odd n) (x y : V) : Q y x = -Q x y := by
   simpa [Int.negOnePow_odd n hn] using h.symm_weight x y
 
 /-- The flip of a polarizing form is its `(-1)^n`-multiple. -/
@@ -104,7 +104,8 @@ theorem complex_symm_weight (h : IsPolarization hℂ hs Q) (x y : Vℂ) :
   have hforms : (integralFormToComplex hℂ Q).flip =
       (n.negOnePow : ℤ) • integralFormToComplex hℂ Q := by
     rw [integralFormToComplex_flip, h.flip_eq, integralFormToComplex_zsmul]
-  simpa using DFunLike.congr_fun (DFunLike.congr_fun hforms x) y
+  have hxy := DFunLike.congr_fun (DFunLike.congr_fun hforms x) y
+  simpa only [LinearMap.BilinForm.flip_apply, LinearMap.smul_apply, zsmul_eq_mul] using hxy
 
 /-- The complexification of a polarizing form on a finite free lattice is nondegenerate. -/
 theorem complex_nondegenerate [Module.Free ℤ V] [Module.Finite ℤ V]
@@ -172,10 +173,35 @@ variable {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ} {hs : HodgeStructure hℂ n}
 noncomputable def Q (P : Polarization hℂ hs) : LinearMap.BilinForm ℂ Vℂ :=
   integralFormToComplex hℂ P.Qint
 
+/-- The complex form of a polarization obeys the weight symmetry. -/
+theorem Q_symm_weight (P : Polarization hℂ hs) (x y : Vℂ) :
+    P.Q y x = (n.negOnePow : ℤ) * P.Q x y :=
+  P.isPolarization.complex_symm_weight x y
+
+/-- The complex form of a polarization on a finite free lattice is nondegenerate. -/
+theorem Q_nondegenerate [Module.Free ℤ V] [Module.Finite ℤ V] (P : Polarization hℂ hs) :
+    LinearMap.BilinForm.Nondegenerate P.Q :=
+  P.isPolarization.complex_nondegenerate
+
+/-- The complex form of a polarization satisfies the first Hodge–Riemann relation. -/
+theorem Q_orthogonal (P : Polarization hℂ hs) (p : ℤ) {x y : Vℂ} (hx : x ∈ hs.F p)
+    (hy : y ∈ hs.F (n + 1 - p)) : P.Q x y = 0 :=
+  P.isPolarization.orthogonal p x hx y hy
+
+/-- The complex form of a polarization satisfies the second Hodge–Riemann relation. -/
+theorem Q_positive (P : Polarization hℂ hs) (p : ℤ) {x : Vℂ} (hx : x ∈ hs.piece p)
+    (hx0 : x ≠ 0) :
+    0 < Complex.I ^ (2 * p - n) * P.Q x (latticeConj hℂ x) :=
+  P.isPolarization.positive p x hx hx0
+
 /-- The complex form of a polarization restricts to the integral form on integral vectors. -/
 @[simp]
 theorem Q_ι (P : Polarization hℂ hs) (x y : V) : P.Q (ιℂ x) (ιℂ y) = (P.Qint x y : ℂ) :=
   integralFormToComplex_ι hℂ P.Qint x y
+
+/-- The complex bilinear form is the complexification of the integral form. -/
+theorem Q_def (P : Polarization hℂ hs) : P.Q = integralFormToComplex hℂ P.Qint :=
+  integralFormToComplex_unique hℂ P.Qint P.Q P.Q_ι
 
 /-- The complex form of a polarization takes conjugate values on conjugate arguments. -/
 @[simp]

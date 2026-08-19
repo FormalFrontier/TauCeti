@@ -66,11 +66,13 @@ theorem integralFormToComplex_unique (hℂ : IsBaseChange ℂ ιℂ) (Q : Linear
   simp [hB x y]
 
 /-- Complexification turns the flip of an integral form into the flip of the complexified form. -/
+@[simp]
 theorem integralFormToComplex_flip (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V) :
     (integralFormToComplex hℂ Q).flip = integralFormToComplex hℂ Q.flip :=
   integralFormToComplex_unique hℂ _ _ fun x y ↦ by simp
 
 /-- Complexification commutes with integer multiples of an integral form. -/
+@[simp]
 theorem integralFormToComplex_zsmul (hℂ : IsBaseChange ℂ ιℂ) (k : ℤ)
     (Q : LinearMap.BilinForm ℤ V) :
     integralFormToComplex hℂ (k • Q) = k • integralFormToComplex hℂ Q :=
