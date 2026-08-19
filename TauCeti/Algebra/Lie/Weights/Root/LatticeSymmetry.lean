@@ -107,8 +107,10 @@ theorem map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg :
 
 /-- Membership in the root--coroot span is invariant under a compatible signed root
 permutation. This is the form used when an ambient automorphism must be shown to preserve an
-admissible lattice. -/
-@[simp]
+admissible lattice.
+
+This is not a `simp` lemma: the permutation `σ` occurs only in the hypotheses, so `simp` could
+never infer it from the left-hand side. -/
 theorem map_mem_rootCorootSpan_iff (z : L) :
     g z ∈ rootCorootSpan x ↔ z ∈ rootCorootSpan x := by
   have hmap := map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg g σ hroot hcoroot
@@ -164,8 +166,10 @@ theorem map_chevalleyLieLattice_eq :
   rw [hx.chevalleyLieLattice_toSubmodule]
   exact map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg g σ hroot hcoroot
 
-/-- Membership in the Chevalley Lie lattice is invariant under the ambient Lie automorphism. -/
-@[simp]
+/-- Membership in the Chevalley Lie lattice is invariant under the ambient Lie automorphism.
+
+As for `map_mem_rootCorootSpan_iff`, this is not a `simp` lemma: `simp` cannot infer `σ` from the
+left-hand side, which it would in any case rewrite through `mem_chevalleyLieLattice_iff`. -/
 theorem map_mem_chevalleyLieLattice_iff (z : L) :
     g z ∈ hx.chevalleyLieLattice ↔ z ∈ hx.chevalleyLieLattice := by
   simp only [hx.mem_chevalleyLieLattice_iff]
