@@ -31,8 +31,7 @@ step past the top of the string the root space vanishes.
 Together with `TauCeti.serreLift` this presents `L` as a quotient of the Serre algebra of its own
 Cartan matrix, `TauCeti.exists_surjective_serreLift_of_base`. The corresponding statement for
 Mathlib's bundled `LieAlgebra.Basis` needs none of the hypotheses above and is proved by
-`sl₂`-strings instead, in `TauCeti/Algebra/Lie/Presentation/Serre/Basis.lean`; what this file adds
-about a basis is only that its generators are root vectors.
+`sl₂`-strings instead, in `TauCeti/Algebra/Lie/Presentation/Serre/Basis.lean`.
 
 Note that the Cartan matrix is transposed on the way: `TauCeti.IsSerreSystem` follows Serre's
 convention `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`, whereas `RootPairing.Base.cartanMatrix i j` is `⟨αᵢ, αⱼ∨⟩`.
@@ -51,8 +50,6 @@ convention `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`, whereas `RootPairing.Base.cartanM
   families generate `L`.
 * `TauCeti.exists_surjective_serreLift_of_base`: `L` is a quotient of the Serre algebra of its
   Cartan matrix, by a homomorphism sending `Hᵢ` to the simple coroot `αᵢ∨`.
-* `TauCeti.lieBasis_e_mem_rootSpace` and `TauCeti.lieBasis_f_mem_rootSpace`: the generators of a
-  `LieAlgebra.Basis` are root vectors for its simple roots.
 
 ## References
 
@@ -108,10 +105,7 @@ theorem ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot {α β : Weight K H L} (hα :
   rw [genWeightSpace_chainTopCoeff_add_one_nsmul_add (⇑α) β hα] at hmem
   have hzero : ((toEnd K L L x) ^ (chainTopCoeff (⇑α) β + 1)) y = 0 := by
     simpa using hmem
-  have hadt : ((ad K L) x : Module.End K L) = toEnd K L L x := by
-    ext z
-    simp
-  rw [hexp, Nat.add_sub_cancel, hadt]
+  rw [hexp, Nat.add_sub_cancel, show ((ad K L) x : Module.End K L) = toEnd K L L x from rfl]
   rw [pow_succ] at hzero
   simpa [Module.End.mul_apply] using hzero
 
@@ -211,25 +205,6 @@ theorem exists_isSerreSystem_of_base (b : (rootSystem H).Base) :
   · simpa [rootSystem_coroot_apply] using hsl2 i
   · simpa using he i
   · simpa using hf i
-
-/-! ## Root vectors of a Lie algebra basis -/
-
-section LieBasis
-
-variable {ι : Type*} [Fintype ι] (b : LieAlgebra.Basis ι H)
-
-omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
-/-- The raising generator `eᵢ` of a Lie algebra basis is a root vector for its simple root. -/
-theorem lieBasis_e_mem_rootSpace (i : ι) : b.e i ∈ rootSpace H (⇑(b.baseSupp i)) :=
-  (mem_genWeightSpace _ _ _).mpr fun x ↦ ⟨1, by simp⟩
-
-omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
-/-- The lowering generator `fᵢ` of a Lie algebra basis is a root vector for minus its simple
-root. -/
-theorem lieBasis_f_mem_rootSpace (i : ι) : b.f i ∈ rootSpace H (-⇑(b.baseSupp i)) :=
-  (mem_genWeightSpace _ _ _).mpr fun x ↦ ⟨1, by simp [← eq_neg_iff_add_eq_zero]⟩
-
-end LieBasis
 
 open scoped Classical in
 /-- **A split semisimple Lie algebra is a quotient of the Serre algebra of its Cartan matrix**,

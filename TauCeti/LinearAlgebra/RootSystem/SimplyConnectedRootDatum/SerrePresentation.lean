@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.Presentation.Serre.Automorphism
 public import TauCeti.Algebra.Lie.Presentation.Serre.Basis
-public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.ChevalleyInvolution
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra
 
 /-!
@@ -21,9 +20,9 @@ names the homomorphism between them, `TauCeti.DynkinType.serreLift`, and proves 
 
 The two carriers are the two ways a Chevalley--Demazure construction can name its Lie algebra: the
 presentation carries the generators and relations that the Kostant `ℤ`-form is written against,
-while Geck's matrices carry the root system and the nilpotency of the raising generators. A
-*named* comparison map is what a construction forbidden to invoke `Classical.choose` needs, and
-`TauCeti.exists_surjective_serreLift_of_lieBasis` supplies only the existence of one.
+while Geck's matrices carry the root system and the nilpotency of the raising generators. The
+named comparison map here specialises the universal map induced by a Lie algebra basis to the
+pinned Dynkin type, without invoking `Classical.choose`.
 
 The matrix is transposed on the way. `TauCeti.IsSerreSystem` follows Serre's convention
 `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`, whereas `LieAlgebra.Basis.lie_h_e` reads `⁅hⱼ, eᵢ⁆ = Aᵢⱼ eᵢ`, so the Cartan
@@ -44,11 +43,9 @@ generators and relations down.
 
 ## Main definitions
 
-* `TauCeti.DynkinType.serreLieAlgebra`: the Lie algebra presented by Serre's relations for the
+* `TauCeti.DynkinType.SerreLieAlgebra`: the Lie algebra presented by Serre's relations for the
   pinned Cartan matrix of a Dynkin type.
 * `TauCeti.DynkinType.serreLift`: the homomorphism from it onto the pinned split Lie algebra.
-* `TauCeti.DynkinType.chevalleyInvolution`: the signed Chevalley involution of the pinned split
-  Lie algebra, numbered by Bourbaki node.
 
 ## Main results
 
@@ -62,11 +59,7 @@ generators and relations down.
   `TauCeti.DynkinType.serreH_ne_zero` and `TauCeti.DynkinType.linearIndependent_serreH`: the
   pinned Serre generators do not collapse.
 * `TauCeti.DynkinType.nontrivial_serreLieAlgebra`: the presented algebra is nontrivial.
-* `TauCeti.DynkinType.chevalleyInvolution_lieBasis_h`,
-  `TauCeti.DynkinType.chevalleyInvolution_lieBasis_e` and
-  `TauCeti.DynkinType.chevalleyInvolution_lieBasis_f`: the Chevalley involution on the
-  Bourbaki-numbered generators.
-* `TauCeti.DynkinType.serreLift_comp_serreChevalleyInvolution`: the comparison map intertwines the
+* `TauCeti.DynkinType.serreLift_serreChevalleyInvolution`: the comparison map intertwines the
   two Chevalley involutions.
 
 ## References
@@ -118,7 +111,7 @@ matrix in the Bourbaki numbering.
 The matrix is transposed because `TauCeti.IsSerreSystem` follows Serre's convention
 `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`; see the module docstring. Validity of the type is not needed to write the
 presentation down, only to compare it with `TauCeti.DynkinType.lieAlgebra`. -/
-abbrev serreLieAlgebra : Type := Matrix.ToLieAlgebra ℚ t.cartanMatrixᵀ
+abbrev SerreLieAlgebra : Type := Matrix.ToLieAlgebra ℚ t.cartanMatrixᵀ
 
 /-- **The pinned Chevalley generators satisfy Serre's relations** for the transposed pinned Cartan
 matrix. -/
@@ -130,7 +123,7 @@ theorem isSerreSystem_lieBasis :
 /-- **The comparison map from the Serre presentation of a Dynkin type to its pinned split Lie
 algebra**, sending each Serre generator to the Chevalley generator with the same Bourbaki
 number. -/
-def serreLift : t.serreLieAlgebra →ₗ⁅ℚ⁆ t.lieAlgebra ht :=
+def serreLift : t.SerreLieAlgebra →ₗ⁅ℚ⁆ t.lieAlgebra ht :=
   _root_.TauCeti.serreLift (t.isSerreSystem_lieBasis ht)
 
 @[simp] theorem serreLift_serreH (i : Fin t.rank) :
@@ -147,7 +140,7 @@ def serreLift : t.serreLieAlgebra →ₗ⁅ℚ⁆ t.lieAlgebra ht :=
 
 /-- **The comparison map is the unique homomorphism sending the Serre generators to the pinned
 Chevalley generators.** -/
-theorem eq_serreLift {g : t.serreLieAlgebra →ₗ⁅ℚ⁆ t.lieAlgebra ht}
+theorem eq_serreLift {g : t.SerreLieAlgebra →ₗ⁅ℚ⁆ t.lieAlgebra ht}
     (hH : ∀ i, g (serreH ℚ t.cartanMatrixᵀ i) = (t.lieBasis ht).h i)
     (hE : ∀ i, g (serreE ℚ t.cartanMatrixᵀ i) = (t.lieBasis ht).e i)
     (hF : ∀ i, g (serreF ℚ t.cartanMatrixᵀ i) = (t.lieBasis ht).f i) :
@@ -168,84 +161,57 @@ rules it out, since a generator with a nonzero image is nonzero. -/
 include ht in
 /-- The pinned Serre raising generators are nonzero. -/
 theorem serreE_ne_zero (i : Fin t.rank) : serreE ℚ t.cartanMatrixᵀ i ≠ 0 := fun hi =>
-  ((t.lieBasis ht).sl2 i).e_ne_zero <| by rw [← t.serreLift_serreE ht i, hi, map_zero]
+  _root_.TauCeti.serreE_ne_zero (t.isSerreSystem_lieBasis ht)
+    ((t.lieBasis ht).sl2 i).e_ne_zero hi
 
 include ht in
 /-- The pinned Serre lowering generators are nonzero. -/
 theorem serreF_ne_zero (i : Fin t.rank) : serreF ℚ t.cartanMatrixᵀ i ≠ 0 := fun hi =>
-  ((t.lieBasis ht).sl2 i).f_ne_zero <| by rw [← t.serreLift_serreF ht i, hi, map_zero]
-
-include ht in
-/-- The pinned Serre Cartan generators are nonzero. -/
-theorem serreH_ne_zero (i : Fin t.rank) : serreH ℚ t.cartanMatrixᵀ i ≠ 0 := fun hi =>
-  ((t.lieBasis ht).sl2 i).h_ne_zero <| by rw [← t.serreLift_serreH ht i, hi, map_zero]
+  _root_.TauCeti.serreF_ne_zero (t.isSerreSystem_lieBasis ht)
+    ((t.lieBasis ht).sl2 i).f_ne_zero hi
 
 include ht in
 /-- **The pinned Serre Cartan generators are linearly independent**, since the Cartan generators of
 a `LieAlgebra.Basis` are. -/
 theorem linearIndependent_serreH : LinearIndependent ℚ (serreH ℚ t.cartanMatrixᵀ) := by
-  refine LinearIndependent.of_comp (t.serreLift ht).toLinearMap ?_
-  have : ⇑(t.serreLift ht).toLinearMap ∘ serreH ℚ t.cartanMatrixᵀ = (t.lieBasis ht).h :=
-    funext fun i => t.serreLift_serreH ht i
-  rw [this]
-  exact (t.lieBasis ht).linInd
+  exact _root_.TauCeti.linearIndependent_serreH (t.isSerreSystem_lieBasis ht)
+    (t.lieBasis ht).linInd
+
+include ht in
+/-- The pinned Serre Cartan generators are nonzero. -/
+theorem serreH_ne_zero (i : Fin t.rank) : serreH ℚ t.cartanMatrixᵀ i ≠ 0 :=
+  (t.linearIndependent_serreH ht).ne_zero i
 
 include ht in
 /-- The Serre presentation of a valid Dynkin type is nontrivial. -/
-theorem nontrivial_serreLieAlgebra : Nontrivial t.serreLieAlgebra :=
+theorem nontrivial_serreLieAlgebra : Nontrivial t.SerreLieAlgebra :=
   ⟨serreE ℚ t.cartanMatrixᵀ ⟨0, rank_pos ht⟩, 0, t.serreE_ne_zero ht _⟩
-
-/-! ## The Chevalley involution -/
-
-/-- **The Chevalley involution of the pinned split Lie algebra**: the automorphism
-`hᵢ ↦ -hᵢ`, `eᵢ ↦ -fᵢ`, `fᵢ ↦ -eᵢ` of `TauCeti.DynkinType.lieAlgebra`. It is
-`TauCeti.geckChevalleyInvolution` of the pinned rational base, read against the Bourbaki
-numbering. -/
-def chevalleyInvolution : t.lieAlgebra ht ≃ₗ⁅ℚ⁆ t.lieAlgebra ht :=
-  geckChevalleyInvolution (t.rationalBase ht)
-
--- The generator formulas for `TauCeti.geckChevalleyInvolution` are stated for the bundled
--- subtype elements, so each Bourbaki-numbered generator is first written in that shape.
-private theorem lieBasis_h_eq (i : Fin t.rank) : (t.lieBasis ht).h i =
-    ⟨RootPairing.GeckConstruction.h (t.simpleSupportEquiv ht i), h_mem_lieAlgebra _⟩ :=
-  Subtype.ext (t.coe_lieBasis_h ht i)
-
-private theorem lieBasis_e_eq (i : Fin t.rank) : (t.lieBasis ht).e i =
-    ⟨RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i), e_mem_lieAlgebra _⟩ :=
-  Subtype.ext (t.coe_lieBasis_e ht i)
-
-private theorem lieBasis_f_eq (i : Fin t.rank) : (t.lieBasis ht).f i =
-    ⟨RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i), f_mem_lieAlgebra _⟩ :=
-  Subtype.ext (t.coe_lieBasis_f ht i)
-
-@[simp] theorem chevalleyInvolution_lieBasis_h (i : Fin t.rank) :
-    t.chevalleyInvolution ht ((t.lieBasis ht).h i) = -(t.lieBasis ht).h i := by
-  rw [t.lieBasis_h_eq ht i]
-  exact geckChevalleyInvolution_h (t.rationalBase ht) (t.simpleSupportEquiv ht i)
-
-@[simp] theorem chevalleyInvolution_lieBasis_e (i : Fin t.rank) :
-    t.chevalleyInvolution ht ((t.lieBasis ht).e i) = -(t.lieBasis ht).f i := by
-  rw [t.lieBasis_e_eq ht i, t.lieBasis_f_eq ht i]
-  exact geckChevalleyInvolution_e (t.rationalBase ht) (t.simpleSupportEquiv ht i)
-
-@[simp] theorem chevalleyInvolution_lieBasis_f (i : Fin t.rank) :
-    t.chevalleyInvolution ht ((t.lieBasis ht).f i) = -(t.lieBasis ht).e i := by
-  rw [t.lieBasis_e_eq ht i, t.lieBasis_f_eq ht i]
-  exact geckChevalleyInvolution_f (t.rationalBase ht) (t.simpleSupportEquiv ht i)
-
-/-- The Chevalley involution of the pinned split Lie algebra is its own inverse. -/
-@[simp] theorem chevalleyInvolution_symm :
-    (t.chevalleyInvolution ht).symm = t.chevalleyInvolution ht :=
-  geckChevalleyInvolution_symm (t.rationalBase ht)
 
 /-- **The comparison map intertwines the two Chevalley involutions**: the signed exchange of the
 Serre generators is carried to the signed exchange of the pinned Chevalley generators. -/
-theorem serreLift_comp_serreChevalleyInvolution :
-    (t.serreLift ht).comp
-        (serreChevalleyInvolution ℚ t.cartanMatrixᵀ :
-          t.serreLieAlgebra →ₗ⁅ℚ⁆ t.serreLieAlgebra) =
-      (t.chevalleyInvolution ht : t.lieAlgebra ht →ₗ⁅ℚ⁆ t.lieAlgebra ht).comp (t.serreLift ht) :=
-  serre_hom_ext (fun i => by simp) (fun i => by simp) fun i => by simp
+theorem serreLift_serreChevalleyInvolution (x : t.SerreLieAlgebra) :
+    t.serreLift ht (serreChevalleyInvolution ℚ t.cartanMatrixᵀ x) =
+      t.chevalleyInvolution ht (t.serreLift ht x) := by
+  have hcomp :
+      (t.serreLift ht).comp
+          (serreChevalleyInvolution ℚ t.cartanMatrixᵀ :
+            t.SerreLieAlgebra →ₗ⁅ℚ⁆ t.SerreLieAlgebra) =
+        (t.chevalleyInvolution ht : t.lieAlgebra ht →ₗ⁅ℚ⁆ t.lieAlgebra ht).comp
+          (t.serreLift ht) :=
+    serre_hom_ext
+      (fun i => by
+        simp only [LieHom.comp_apply, LieEquiv.coe_coe, serreChevalleyInvolution_serreH, map_neg,
+          t.serreLift_serreH ht]
+        exact (t.chevalleyInvolution_lieBasis_h ht i).symm)
+      (fun i => by
+        simp only [LieHom.comp_apply, LieEquiv.coe_coe, serreChevalleyInvolution_serreE, map_neg,
+          t.serreLift_serreE ht, t.serreLift_serreF ht]
+        exact (t.chevalleyInvolution_lieBasis_e ht i).symm)
+      fun i => by
+        simp only [LieHom.comp_apply, LieEquiv.coe_coe, serreChevalleyInvolution_serreF, map_neg,
+          t.serreLift_serreE ht, t.serreLift_serreF ht]
+        exact (t.chevalleyInvolution_lieBasis_f ht i).symm
+  exact DFunLike.congr_fun hcomp x
 
 end
 

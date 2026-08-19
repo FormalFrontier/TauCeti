@@ -23,17 +23,17 @@ commute, `⁅eᵢ, fᵢ⁆ = hᵢ`, `⁅eᵢ, fⱼ⁆ = 0` for `i ≠ j`, and th
 so that the generators of a basis form a `TauCeti.IsSerreSystem` and the Lie algebra is a quotient
 of the Serre algebra of the transposed matrix of the basis.
 
-The only hypothesis beyond the basis is that the Lie algebra is Noetherian as a module over the
-coefficient field, which is what makes the `sl₂`-strings finite. In particular no Killing form,
-splitting Cartan subalgebra or triangularizability is assumed, and the argument never mentions a
-root system.
+The coefficient ring is a characteristic-zero integral domain, and the Lie algebra is torsion-free
+and Noetherian as a module over it, which is what makes the `sl₂`-strings finite. In particular no
+Killing form, splitting Cartan subalgebra or triangularizability is assumed, and the argument never
+mentions a root system.
 
 The proof is `sl₂` theory rather than root strings. For `i ≠ j` the vector `eⱼ` is primitive for
 the triple `(-hᵢ, fᵢ, eᵢ)` obtained from `LieAlgebra.Basis.sl2` by exchanging the raising and
 lowering generators, because `⁅fᵢ, eⱼ⁆ = 0`, and its eigenvalue for `-hᵢ` is `-Aⱼᵢ`. A primitive
 vector in a Noetherian module has a natural number as eigenvalue, so `-Aⱼᵢ` is one, and one further
-step along its string is zero. The same argument with the triple itself in place of its exchange
-handles the `f` family, `fⱼ` being primitive for `(hᵢ, eᵢ, fᵢ)`.
+step along its string is zero. The `f` family follows by applying the result for `e` to the
+symmetric basis, which exchanges `e` and `f` and negates `h`.
 
 Reading `-Aⱼᵢ` off `LieAlgebra.IsSl2Triple.HasPrimitiveVectorWith.exists_nat` rather than assuming
 it is why no sign condition on the off-diagonal entries of `LieAlgebra.Basis.A` is needed: that
@@ -45,8 +45,8 @@ it is why no sign condition on the off-diagonal entries of `LieAlgebra.Basis.A` 
   relations for the generators of a Lie algebra basis.
 * `TauCeti.isSerreSystem_lieBasis`: those generators form a Serre system for the transposed matrix
   of the basis.
-* `TauCeti.exists_surjective_serreLift_of_lieBasis`: the Lie algebra is a quotient of the Serre
-  algebra of that matrix.
+* `TauCeti.serreLift_lieBasis_surjective`: the homomorphism induced by those generators is
+  surjective.
 
 ## References
 
@@ -74,21 +74,16 @@ namespace TauCeti
 open LieAlgebra LieModule
 open scoped Matrix
 
-variable {ι K L : Type*} [Finite ι] [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
-  [IsNoetherian K L] {H : LieSubalgebra K L} (b : LieAlgebra.Basis ι H)
-
-omit [Finite ι] [CharZero K] [IsNoetherian K L] in
-/-- The adjoint action of an element is its action on the Lie algebra as a module. This is what
-lets an `sl₂`-string computation phrased with `LieModule.toEnd` be read as one about
-`LieAlgebra.ad`. -/
-private theorem ad_eq_toEnd (y : L) : ad K L y = toEnd K L L y :=
-  LinearMap.ext fun m => by simp
+variable {ι K L : Type*} [Finite ι] [CommRing K] [IsDomain K] [CharZero K] [LieRing L]
+  [LieAlgebra K L] [Module.IsTorsionFree K L] [IsNoetherian K L]
+  {H : LieSubalgebra K L} (b : LieAlgebra.Basis ι H)
 
 /-! ## Primitive vectors among the generators -/
 
-omit [CharZero K] [IsNoetherian K L] in
-/-- For `i ≠ j` the raising generator `eⱼ` is primitive for the `sl₂` triple of index `i` with its
-raising and lowering generators exchanged, of eigenvalue `-Aⱼᵢ`. -/
+omit [IsDomain K] [CharZero K] [Module.IsTorsionFree K L] [IsNoetherian K L] in
+/-- For `i ≠ j` the raising generator `eⱼ` is primitive of eigenvalue `-Aⱼᵢ` for the triple
+`(-hᵢ, fᵢ, eᵢ)` obtained from `LieAlgebra.Basis.sl2` by exchanging the raising and lowering
+generators and negating `hᵢ`. -/
 private theorem hasPrimitiveVectorWith_lieBasis_e {i j : ι} (hij : i ≠ j) :
     (b.sl2 i).symm.HasPrimitiveVectorWith (M := L) (b.e j) ((-b.A j i : ℤ) : K) where
   ne_zero := (b.sl2 j).e_ne_zero
@@ -97,19 +92,10 @@ private theorem hasPrimitiveVectorWith_lieBasis_e {i j : ι} (hij : i ≠ j) :
   lie_e := by
     rw [← lie_skew, b.lie_e_f_ne j i hij.symm, neg_zero]
 
-omit [CharZero K] [IsNoetherian K L] in
-/-- For `i ≠ j` the lowering generator `fⱼ` is primitive for the `sl₂` triple of index `i`, of
-eigenvalue `-Aⱼᵢ`. -/
-private theorem hasPrimitiveVectorWith_lieBasis_f {i j : ι} (hij : i ≠ j) :
-    (b.sl2 i).HasPrimitiveVectorWith (M := L) (b.f j) ((-b.A j i : ℤ) : K) where
-  ne_zero := (b.sl2 j).f_ne_zero
-  lie_h := by rw [b.lie_h_f j i, Int.cast_smul_eq_zsmul]
-  lie_e := b.lie_e_f_ne i j hij
-
 /-! ## The higher Serre relations -/
 
 omit [Finite ι] in
-/-- The string above a primitive vector of integer eigenvalue `n` stops after `n.toNat` steps.
+/-- The string below a primitive vector of integer eigenvalue `n` stops after `n.toNat` steps.
 This is the common core of the two higher Serre relations: `y` is the lowering generator of the
 triple being iterated and `m` the primitive vector. -/
 private theorem ad_pow_succ_toNat_eq_zero {x y z m : L} {ht : IsSl2Triple z x y} {n : ℤ}
@@ -118,7 +104,7 @@ private theorem ad_pow_succ_toNat_eq_zero {x y z m : L} {ht : IsSl2Triple z x y}
   obtain ⟨k, hk⟩ := P.exists_nat
   have hnk : n = (k : ℤ) := by exact_mod_cast hk
   have htn : n.toNat = k := by omega
-  rw [ad_eq_toEnd (K := K) y, htn]
+  rw [show ad K L y = toEnd K L L y from rfl, htn]
   exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
 
 /-- **The higher Serre relation on the raising generators of a Lie algebra basis.** -/
@@ -134,12 +120,7 @@ theorem ad_pow_lie_lieBasis_e_e (i j : ι) :
 /-- **The higher Serre relation on the lowering generators of a Lie algebra basis.** -/
 theorem ad_pow_lie_lieBasis_f_f (i j : ι) :
     ((ad K L (b.f i)) ^ (-b.Aᵀ i j).toNat) ⁅b.f i, b.f j⁆ = 0 := by
-  rcases eq_or_ne i j with rfl | hij
-  · simp
-  · have h0 := ad_pow_succ_toNat_eq_zero (K := K) (hasPrimitiveVectorWith_lieBasis_f b hij)
-    rw [pow_succ, Module.End.mul_apply, ad_apply] at h0
-    rw [Matrix.transpose_apply]
-    exact h0
+  simpa using ad_pow_lie_lieBasis_e_e b.symm i j
 
 /-! ## The Serre system and the presentation -/
 
@@ -156,12 +137,9 @@ theorem isSerreSystem_lieBasis : IsSerreSystem K b.Aᵀ b.h b.e b.f where
   ad_pow_lie_F_F := ad_pow_lie_lieBasis_f_f b
 
 open scoped Classical in
-/-- **A Lie algebra with a basis is a quotient of the Serre algebra of the transposed matrix of
-that basis**, by a homomorphism sending the generator `Hᵢ` to `hᵢ`. -/
-theorem exists_surjective_serreLift_of_lieBasis :
-    ∃ φ : Matrix.ToLieAlgebra K b.Aᵀ →ₗ⁅K⁆ L, Function.Surjective φ ∧
-      ∀ i, φ (serreH K b.Aᵀ i) = b.h i :=
-  ⟨serreLift (isSerreSystem_lieBasis b), serreLift_surjective _ b.span_ef,
-    fun i ↦ serreLift_serreH _ i⟩
+/-- **The homomorphism induced by the generators of a Lie algebra basis is surjective.** -/
+theorem serreLift_lieBasis_surjective :
+    Function.Surjective (serreLift (isSerreSystem_lieBasis b)) :=
+  serreLift_surjective _ b.span_ef
 
 end TauCeti
