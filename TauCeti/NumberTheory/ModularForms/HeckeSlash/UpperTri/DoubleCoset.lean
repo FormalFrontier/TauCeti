@@ -124,7 +124,6 @@ theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
 
 /-- **The `q`-expansion recurrence for the double-coset operator**: at `p ∣ N` its coefficient at
 `m` is the coefficient of the original form at `p m`. -/
-@[simp]
 theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
     (qExpansion 1 (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f)).coeff m
@@ -133,7 +132,6 @@ theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p
     qExpansion_coeff_heckeSlashUpperTriModularFormEnd]
 
 /-- **The `q`-expansion recurrence for the double-coset operator on cusp forms.** -/
-@[simp]
 theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
     (qExpansion 1 (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f)).coeff m
