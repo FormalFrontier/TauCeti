@@ -116,7 +116,9 @@ private theorem integralFormToRat_nondegenerate {Q : LinearMap.BilinForm ℤ V}
     have hv : v = 0 := hQ.1 v fun w ↦ by
       have h : Q.baseChange ℚ (s • x) (1 ⊗ₜ[ℤ] w) = 0 := by simp [hx]
       rw [hs] at h
-      change Q.baseChange ℚ (1 ⊗ₜ[ℤ] v) (1 ⊗ₜ[ℤ] w) = 0 at h
+      have hfv : f v = 1 ⊗ₜ[ℤ] v := rfl
+      rw [hfv] at h
+      rw [LinearMap.BilinForm.baseChange_tmul] at h
       have hc : (Q v w : ℚ) = 0 := by simpa using h
       exact_mod_cast hc
     rw [hv, map_zero] at hs
@@ -126,67 +128,60 @@ private theorem integralFormToRat_nondegenerate {Q : LinearMap.BilinForm ℤ V}
     have hv : v = 0 := hQ.2 v fun w ↦ by
       have h : Q.baseChange ℚ (1 ⊗ₜ[ℤ] w) (s • y) = 0 := by simp [hy]
       rw [hs] at h
-      change Q.baseChange ℚ (1 ⊗ₜ[ℤ] w) (1 ⊗ₜ[ℤ] v) = 0 at h
+      have hfv : f v = 1 ⊗ₜ[ℤ] v := rfl
+      rw [hfv] at h
+      rw [LinearMap.BilinForm.baseChange_tmul] at h
       have hc : (Q w v : ℚ) = 0 := by simpa using h
       exact_mod_cast hc
     rw [hv, map_zero] at hs
     exact (IsLocalizedModule.smul_injective f s) (by simpa using hs)
 
-private theorem rationalFormToComplex_nondegenerate {W : Type*} [AddCommGroup W] [Module ℚ W]
-    {B : LinearMap.BilinForm ℚ W} (hB : B.Nondegenerate) :
-    (B.baseChange ℂ).Nondegenerate := by
+private theorem rationalFormToComplex_separatingLeft {W : Type*} [AddCommGroup W] [Module ℚ W]
+    {B : LinearMap.BilinForm ℚ W} (hB : B.SeparatingLeft) :
+    (B.baseChange ℂ).SeparatingLeft := by
   classical
   let b := Module.Free.chooseBasis ℚ ℂ
   let e := TensorProduct.equivFinsuppOfBasisLeft (N := W) b
+  intro x hx
+  let c := e x
+  have hc : c = 0 := by
+    ext i
+    apply hB (c i)
+    intro w
+    have h := hx (1 ⊗ₜ[ℚ] w)
+    have hrepr : c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = x := by
+      calc
+        c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = e.symm c :=
+          (TensorProduct.equivFinsuppOfBasisLeft_symm_apply b c).symm
+        _ = x := by simp [c]
+    rw [← hrepr] at h
+    have hi := congrArg (fun z : ℂ ↦ b.repr z i) h
+    have hi' : (∑ j ∈ c.support, Finsupp.single j (B (c j) w)) i = 0 := by
+      simpa [Finsupp.sum] using hi
+    by_cases hic : i ∈ c.support
+    · have heval : (∑ j ∈ c.support, Finsupp.single j (B (c j) w)) i =
+          B (c i) w := by
+        simp [Finsupp.single_apply, hic]
+      exact heval ▸ hi'
+    · have hci : c i = 0 := Finsupp.notMem_support_iff.mp hic
+      simp [hci]
+  exact e.injective (by simpa [c] using hc)
+
+private theorem rationalFormToComplex_baseChange_flip {W : Type*} [AddCommGroup W] [Module ℚ W]
+    (B : LinearMap.BilinForm ℚ W) :
+    B.flip.baseChange ℂ = (B.baseChange ℂ).flip := by
+  ext z v
+  simp
+
+private theorem rationalFormToComplex_nondegenerate {W : Type*} [AddCommGroup W] [Module ℚ W]
+    {B : LinearMap.BilinForm ℚ W} (hB : B.Nondegenerate) :
+    (B.baseChange ℂ).Nondegenerate := by
   constructor
-  · intro x hx
-    let c := e x
-    have hc : c = 0 := by
-      ext i
-      apply hB.1 (c i)
-      intro w
-      have h := hx (1 ⊗ₜ[ℚ] w)
-      have hrepr : c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = x := by
-        calc
-          c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = e.symm c :=
-            (TensorProduct.equivFinsuppOfBasisLeft_symm_apply b c).symm
-          _ = x := by simp [c]
-      rw [← hrepr] at h
-      have hi := congrArg (fun z : ℂ ↦ b.repr z i) h
-      have hi' : (∑ j ∈ c.support, Finsupp.single j (B (c j) w)) i = 0 := by
-        simpa [Finsupp.sum] using hi
-      by_cases hic : i ∈ c.support
-      · have heval : (∑ j ∈ c.support, Finsupp.single j (B (c j) w)) i =
-            B (c i) w := by
-          simp [Finsupp.single_apply, hic]
-        exact heval ▸ hi'
-      · have hci : c i = 0 := Finsupp.notMem_support_iff.mp hic
-        simp [hci]
-    exact e.injective (by simpa [c] using hc)
-  · intro y hy
-    let c := e y
-    have hc : c = 0 := by
-      ext i
-      apply hB.2 (c i)
-      intro w
-      have h := hy (1 ⊗ₜ[ℚ] w)
-      have hrepr : c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = y := by
-        calc
-          c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = e.symm c :=
-            (TensorProduct.equivFinsuppOfBasisLeft_symm_apply b c).symm
-          _ = y := by simp [c]
-      rw [← hrepr] at h
-      have hi := congrArg (fun z : ℂ ↦ b.repr z i) h
-      have hi' : (∑ j ∈ c.support, Finsupp.single j (B w (c j))) i = 0 := by
-        simpa [Finsupp.sum] using hi
-      by_cases hic : i ∈ c.support
-      · have heval : (∑ j ∈ c.support, Finsupp.single j (B w (c j))) i =
-            B w (c i) := by
-          simp [Finsupp.single_apply, hic]
-        exact heval ▸ hi'
-      · have hci : c i = 0 := Finsupp.notMem_support_iff.mp hic
-        simp [hci]
-    exact e.injective (by simpa [c] using hc)
+  · exact rationalFormToComplex_separatingLeft hB.1
+  · have hBflip : B.flip.SeparatingLeft := fun y hy ↦ hB.2 y hy
+    have h := rationalFormToComplex_separatingLeft hBflip
+    rw [rationalFormToComplex_baseChange_flip] at h
+    exact h
 
 private theorem integralFormToCanonicalComplex_nondegenerate {Q : LinearMap.BilinForm ℤ V}
     (hQ : Q.Nondegenerate) : (Q.baseChange ℂ).Nondegenerate := by
@@ -207,7 +202,8 @@ theorem integralFormToComplex_nondegenerate (hℂ : IsBaseChange ℂ ιℂ)
   have hform : integralFormToComplex hℂ Q =
       LinearMap.BilinForm.congr hℂ.equiv (Q.baseChange ℂ) := by
     ext x y
-    rfl
+    simp only [integralFormToComplex, LinearMap.compl₁₂_apply,
+      LinearMap.BilinForm.congr_apply, LinearEquiv.coe_coe]
   rw [hform]
   exact LinearMap.BilinForm.Nondegenerate.congr hℂ.equiv
     (integralFormToCanonicalComplex_nondegenerate hQ)
