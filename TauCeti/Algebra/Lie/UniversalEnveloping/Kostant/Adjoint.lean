@@ -156,10 +156,10 @@ theorem ringChoose_ad_coroot_mem_chevalleyLieLattice (α : Weight ℚ H L) (n : 
 representation. -/
 theorem dividedPower_adjointRepresentation_mem (α : Weight ℚ H L) (n : ℕ) {y : L}
     (hy : y ∈ hx.chevalleyLieLattice) :
-    UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
+    UniversalEnvelopingAlgebra.representation ℚ L L
         (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α))) y ∈
       hx.chevalleyLieLattice := by
-  rw [Associative.map_dividedPower, UniversalEnvelopingAlgebra.adjointRepresentation_ι,
+  rw [Associative.map_dividedPower, UniversalEnvelopingAlgebra.representation_ι,
     Associative.dividedPower_def, LinearMap.smul_apply]
   exact hx.inv_factorial_smul_ad_pow_mem_chevalleyLieLattice α n hy
 
@@ -167,12 +167,12 @@ theorem dividedPower_adjointRepresentation_mem (α : Weight ℚ H L) (n : ℕ) {
 representation. -/
 theorem ringChoose_adjointRepresentation_mem (α : Weight ℚ H L) (n : ℕ) {y : L}
     (hy : y ∈ hx.chevalleyLieLattice) :
-    UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
+    UniversalEnvelopingAlgebra.representation ℚ L L
         (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (coroot α : L)) n) y ∈
       hx.chevalleyLieLattice := by
-  rw [Ring.map_choose (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+  rw [Ring.map_choose (UniversalEnvelopingAlgebra.representation ℚ L L)
     (_root_.UniversalEnvelopingAlgebra.ι ℚ (coroot α : L)) n,
-    UniversalEnvelopingAlgebra.adjointRepresentation_ι]
+    UniversalEnvelopingAlgebra.representation_ι]
   exact hx.ringChoose_ad_coroot_mem_chevalleyLieLattice α n hy
 
 /-- **The Chevalley lattice is an admissible lattice for the adjoint representation.** The Kostant
@@ -180,7 +180,7 @@ integral form of a Chevalley system stabilizes the `ℤ`-span of its root vector
 theorem chevalleyKostantForm_le_stabilizer :
     chevalleyKostantForm x ≤
       TauCeti.UniversalEnvelopingAlgebra.stabilizer
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+        (UniversalEnvelopingAlgebra.representation ℚ L L)
         hx.chevalleyLieLattice.toSubmodule :=
   TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_stabilizer _ _ _ _
     (fun α n _ hy => hx.dividedPower_adjointRepresentation_mem α n hy)
@@ -190,7 +190,7 @@ theorem chevalleyKostantForm_le_stabilizer :
 Chevalley lattice. -/
 theorem chevalleyKostantForm_apply_mem {u : _root_.UniversalEnvelopingAlgebra ℚ L}
     (hu : u ∈ chevalleyKostantForm x) {y : L} (hy : y ∈ hx.chevalleyLieLattice) :
-    UniversalEnvelopingAlgebra.adjointRepresentation ℚ L u y ∈ hx.chevalleyLieLattice :=
+    UniversalEnvelopingAlgebra.representation ℚ L L u y ∈ hx.chevalleyLieLattice :=
   (TauCeti.UniversalEnvelopingAlgebra.mem_stabilizer_iff _ _ u).1
     (hx.chevalleyKostantForm_le_stabilizer hu) y hy
 
@@ -199,7 +199,7 @@ theorem chevalleyKostantForm_apply_mem {u : _root_.UniversalEnvelopingAlgebra �
 noncomputable def chevalleyLatticeRep :
     chevalleyKostantForm x →ₐ[ℤ] Module.End ℤ hx.chevalleyLieLattice.toSubmodule :=
   TauCeti.UniversalEnvelopingAlgebra.kostantFormRep _ _
-    (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) _
+    (UniversalEnvelopingAlgebra.representation ℚ L L) _
     (fun α n _ hy => hx.dividedPower_adjointRepresentation_mem α n hy)
     (fun α n _ hy => hx.ringChoose_adjointRepresentation_mem α n hy)
 
@@ -207,7 +207,7 @@ noncomputable def chevalleyLatticeRep :
 theorem coe_chevalleyLatticeRep_apply (u : chevalleyKostantForm x)
     (y : hx.chevalleyLieLattice.toSubmodule) :
     ((hx.chevalleyLatticeRep u y : hx.chevalleyLieLattice.toSubmodule) : L) =
-      UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
+      UniversalEnvelopingAlgebra.representation ℚ L L
         (u : _root_.UniversalEnvelopingAlgebra ℚ L) (y : L) :=
   TauCeti.UniversalEnvelopingAlgebra.coe_kostantFormRep_apply _ _ _ _ _ _ u y
 
