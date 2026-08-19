@@ -23,8 +23,9 @@ This file identifies them, which is the roadmap's flagged *normalisation lemma*:
 
 `heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) = heckeSlashUpperTriModularFormEnd k hpN`,
 
-and likewise on cusp forms. The abstract operator therefore satisfies the classical recurrence
-`aₘ(Tₚ f) = a_{p m}(f)` and preserves each nebentypus space, both recorded below.
+and likewise on cusp forms. Everything already known about the classical operator — the
+recurrence `aₘ(Tₚ f) = a_{p m}(f)` on `q`-expansions, stability of each nebentypus space —
+transfers to the abstract one by rewriting with these two equalities, which are `simp` lemmas.
 
 ## How the two are matched
 
@@ -53,12 +54,6 @@ consumed.
 * `HeckeRing.GL2.heckeSlashGamma1ModularFormEnd_diagCosetGamma1`,
   `HeckeRing.GL2.heckeSlashGamma1CuspFormEnd_diagCosetGamma1`: **the normalisation lemma**, on
   `M_k(Γ₁(N))` and on `S_k(Γ₁(N))`.
-* `HeckeRing.GL2.qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1`,
-  `HeckeRing.GL2.qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1`: the abstract
-  operator sends `aₘ` to `a_{p m}`.
-* `HeckeRing.GL2.heckeSlashGamma1ModularFormEnd_diagCosetGamma1_mem_modFormCharSpace`,
-  `HeckeRing.GL2.heckeSlashGamma1CuspFormEnd_diagCosetGamma1_mem_cuspFormCharSpace`: it preserves
-  the nebentypus.
 
 ## Provenance
 
@@ -121,40 +116,6 @@ theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeSlashGamma1CuspFormEnd, coe_heckeSlashUpperTriCuspFormEnd,
       heckeSlashSum_diagCosetGamma1 k hpN f]
-
-/-- **The `q`-expansion recurrence for the double-coset operator**: at `p ∣ N` its coefficient at
-`m` is the coefficient of the original form at `p m`. -/
-theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f)).coeff m
-      = (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN,
-    qExpansion_coeff_heckeSlashUpperTriModularFormEnd]
-
-/-- **The `q`-expansion recurrence for the double-coset operator on cusp forms.** -/
-theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f)).coeff m
-      = (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN,
-    qExpansion_coeff_heckeSlashUpperTriCuspFormEnd]
-
-/-- **The double-coset operator preserves the nebentypus** at `p ∣ N`: it maps `M_k(N, χ)` into
-itself. -/
-theorem heckeSlashGamma1ModularFormEnd_diagCosetGamma1_mem_modFormCharSpace (hpN : p ∣ N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) :
-    heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f ∈ modFormCharSpace k χ := by
-  rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
-  exact heckeSlashUpperTriModularFormEnd_mem_modFormCharSpace k hpN χ hf
-
-/-- **The double-coset operator preserves the nebentypus on cusp forms** at `p ∣ N`. -/
-theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1_mem_cuspFormCharSpace (hpN : p ∣ N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ cuspFormCharSpace k χ) :
-    heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f ∈ cuspFormCharSpace k χ := by
-  rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
-  exact heckeSlashUpperTriCuspFormEnd_mem_cuspFormCharSpace k hpN χ hf
 
 end HeckeRing.GL2
 
