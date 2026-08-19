@@ -33,9 +33,10 @@ the pinned one.
 Nothing is claimed here about the Lie algebra beyond the relations carried by a
 `LieAlgebra.Basis`. In particular it is not asserted to be semisimple: Mathlib derives that from
 Geck's construction over an algebraically closed field, and `ℚ` is not one. The Cartan subalgebra
-is a Cartan subalgebra, which is what the basis does give, and the two facts a Chevalley--Demazure
-construction consumes next are recorded: the generators `e` and `f` are nilpotent as matrices, and
-they generate the whole Lie algebra.
+is a Cartan subalgebra, which is what the basis does give, and the one fact a Chevalley--Demazure
+construction consumes next that the basis does not already carry is recorded: the generators `e`
+and `f` are nilpotent as matrices. That they generate the whole Lie algebra is the `span_ef` field
+of `TauCeti.DynkinType.lieBasis`.
 
 ## Main definitions
 
@@ -56,7 +57,6 @@ they generate the whole Lie algebra.
 * `TauCeti.DynkinType.isNilpotent_coe_lieBasis_e` and
   `TauCeti.DynkinType.isNilpotent_coe_lieBasis_f`: the raising and lowering generators are
   nilpotent matrices.
-* `TauCeti.DynkinType.lieSpan_lieBasis_e_union_f`: they generate the Lie algebra.
 * `TauCeti.DynkinType.finrank_cartanSubalgebra`: the Cartan subalgebra has dimension `t.rank`.
 
 ## References
@@ -80,7 +80,6 @@ the numbered Chevalley generators that the Kostant `ℤ`-form of `TauCeti/Algebr
 
 namespace TauCeti.DynkinType
 
-open Set
 open RootPairing.GeckConstruction
 
 noncomputable section
@@ -101,18 +100,10 @@ explicit matrices `RootPairing.GeckConstruction.h`, `e` and `f` attached to the 
 def lieAlgebra : LieSubalgebra ℚ (Matrix (t.geckIndex ht) (t.geckIndex ht) ℚ) :=
   RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht)
 
-theorem lieAlgebra_def :
-    t.lieAlgebra ht = RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht) :=
-  rfl
-
 /-- The distinguished Cartan subalgebra of `TauCeti.DynkinType.lieAlgebra`, spanned by the
 diagonal matrices attached to the simple coroots. -/
 def cartanSubalgebra : LieSubalgebra ℚ (t.lieAlgebra ht) :=
   RootPairing.GeckConstruction.cartanSubalgebra' (t.rationalBase ht)
-
-theorem cartanSubalgebra_def :
-    t.cartanSubalgebra ht = RootPairing.GeckConstruction.cartanSubalgebra' (t.rationalBase ht) :=
-  rfl
 
 /-- **The Chevalley generators of the pinned Lie algebra, numbered by Bourbaki node.** This is
 Geck's basis, whose nodes are the support of the pinned base, renumbered along
@@ -156,17 +147,7 @@ theorem lie_lieBasis_h_f (i j : Fin t.rank) :
     ⁅(t.lieBasis ht).h j, (t.lieBasis ht).f i⁆ = -t.cartanMatrix i j • (t.lieBasis ht).f i := by
   rw [(t.lieBasis ht).lie_h_f, A_lieBasis]
 
-/-- Each numbered triple of generators is an `sl₂` triple. -/
-theorem isSl2Triple_lieBasis (i : Fin t.rank) :
-    IsSl2Triple ((t.lieBasis ht).h i) ((t.lieBasis ht).e i) ((t.lieBasis ht).f i) :=
-  (t.lieBasis ht).sl2 i
-
-/-- Raising and lowering generators at distinct nodes commute. -/
-theorem lie_lieBasis_e_f_of_ne {i j : Fin t.rank} (hij : i ≠ j) :
-    ⁅(t.lieBasis ht).e i, (t.lieBasis ht).f j⁆ = 0 :=
-  (t.lieBasis ht).lie_e_f_ne i j hij
-
-/-! ## Nilpotency and generation -/
+/-! ## Nilpotency -/
 
 /-- The raising generators are nilpotent matrices. This is the hypothesis under which the Kostant
 `ℤ`-form exponentiates them to root subgroups. -/
@@ -180,12 +161,6 @@ theorem isNilpotent_coe_lieBasis_f (i : Fin t.rank) :
     IsNilpotent ((t.lieBasis ht).f i : Matrix (t.geckIndex ht) (t.geckIndex ht) ℚ) := by
   rw [coe_lieBasis_f]
   exact isNilpotent_f _
-
-/-- **The numbered raising and lowering generators generate the pinned Lie algebra.** -/
-theorem lieSpan_lieBasis_e_union_f :
-    LieSubalgebra.lieSpan ℚ (t.lieAlgebra ht)
-      (range (t.lieBasis ht).e ∪ range (t.lieBasis ht).f) = ⊤ :=
-  (t.lieBasis ht).span_ef
 
 /-! ## The Cartan subalgebra -/
 
