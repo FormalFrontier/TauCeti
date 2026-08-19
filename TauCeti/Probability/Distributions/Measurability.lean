@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.SpecialFunctions.Gamma
 public import Mathlib.Probability.Distributions.Bernoulli
 public import Mathlib.Probability.Distributions.Beta
+public import Mathlib.Probability.Distributions.Binomial
 public import Mathlib.Probability.Distributions.Cauchy
 public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Distributions.Gaussian.Real
@@ -20,8 +21,9 @@ public import Mathlib.Probability.Distributions.Poisson.Basic
 
 A distribution is a family of measures indexed by its parameters, and `MeasureTheory.Measure α`
 carries the Giry measurable structure. This file proves parameter measurability for Mathlib's
-Gamma, exponential, Beta, Pareto, Gaussian, Cauchy, Poisson, geometric, and Bernoulli scalar laws,
-which is exactly what a consumer needs in order to package them as `ProbabilityTheory.Kernel`s.
+Gamma, exponential, Beta, Pareto, Gaussian, Cauchy, Poisson, geometric, Bernoulli and binomial
+scalar laws, which is exactly what a consumer needs in order to package them as
+`ProbabilityTheory.Kernel`s.
 
 ## Two mechanisms
 
@@ -34,6 +36,8 @@ per-parameter measurability Mathlib already provides -- `Real.Gamma` and
 
 The discrete families are weighted sums of Dirac measures, and are handled by the shared
 `measurable_sum_smul_dirac`, which evaluates such a measure on a set as a `tsum` of the weights.
+The binomial law is the finite such sum `ProbabilityTheory.binomial_eq_sum_dirac`, and is evaluated
+directly.
 
 Three families are defined by a case split at a degenerate parameter — `gaussianReal μ 0` and
 `cauchyMeasure x₀ 0` are Dirac measures, `geometricMeasure 0` is `Measure.dirac 0` — and their
@@ -45,18 +49,14 @@ itself measurable.
 * `measurable_gammaMeasure`, `measurable_expMeasure`, `measurable_betaMeasure`,
   `measurable_paretoMeasure`, `measurable_gaussianReal`, `measurable_cauchyMeasure` — the six
   continuous families of `TauCeti/Probability/Distributions/PDFInstances.lean`;
-* `measurable_poissonMeasure`, `measurable_geometricMeasure`, `measurable_bernoulliMeasure` — the
-  discrete families;
+* `measurable_poissonMeasure`, `measurable_geometricMeasure`, `measurable_bernoulliMeasure`,
+  `measurable_binomial` — the discrete families;
 * `measurable_beta` — the Beta normalizing constant `ProbabilityTheory.beta`, needed on the way and
   of independent interest;
 * `measurable_sum_smul_dirac` — the shared bridge for weighted sums of Dirac measures.
 
 The parameter measurability of `uniformMeasure` is `TauCeti.Probability.measurable_uniformMeasure`,
 in `TauCeti/Probability/Distributions/Uniform.lean`, next to that family's other results.
-
-`ProbabilityTheory.binomial` is not covered: it is defined as a pushforward of
-`ProbabilityTheory.setBernoulli`, itself a `comap` of `MeasureTheory.Measure.infinitePi`, and
-Mathlib has no measurability statement for an infinite product in its factors.
 
 ## References
 
@@ -189,18 +189,19 @@ theorem measurable_cauchyMeasure : Measurable fun p : ℝ × ℝ≥0 => cauchyMe
 
 /-! ### The discrete families -/
 
-/-- A weighted sum of Dirac measures is measurable in the weights.
+/-- A countable mixture of Dirac measures at fixed atoms `g i` is measurable in the weights.
 
 This is the discrete counterpart of `MeasureTheory.measurable_withDensity`: evaluating on a
-measurable set turns the measure into the sum `∑' n, f b n * 1_{n ∈ s}`, and a `tsum` of measurable
-functions is measurable. -/
-theorem measurable_sum_smul_dirac {β α : Type*} [MeasurableSpace β] [MeasurableSpace α]
-    [Countable α] {f : β → α → ℝ≥0∞}
-    (hf : ∀ n, Measurable fun b => f b n) :
-    Measurable fun b => Measure.sum fun n => f b n • Measure.dirac n := by
+measurable set turns the measure into the sum `∑' i, f b i * 1_{g i ∈ s}`, and a `tsum` of
+measurable functions is measurable. The atoms are indexed by a countable type of their own, so the
+ambient space `α` may be uncountable. -/
+theorem measurable_sum_smul_dirac {β ι α : Type*} [MeasurableSpace β] [MeasurableSpace α]
+    [Countable ι] {f : β → ι → ℝ≥0∞} {g : ι → α}
+    (hf : ∀ i, Measurable fun b => f b i) :
+    Measurable fun b => Measure.sum fun i => f b i • Measure.dirac (g i) := by
   refine Measure.measurable_measure.2 fun s hs => ?_
   simp only [Measure.sum_apply _ hs, Measure.smul_apply, smul_eq_mul, Measure.dirac_apply' _ hs]
-  exact Measurable.tsum fun n => (hf n).mul_const _
+  exact Measurable.tsum fun i => (hf i).mul_const _
 
 /-- **The Poisson family is measurable in its rate.**
 
@@ -226,6 +227,18 @@ theorem measurable_bernoulliMeasure {X : Type*} [MeasurableSpace X] (x y : X) :
     Measurable fun p : unitInterval => bernoulliMeasure x y p := by
   simp only [bernoulliMeasure]
   fun_prop
+
+/-- **The binomial family is measurable in its number of trials and its success probability.**
+
+`ProbabilityTheory.binomial_eq_sum_dirac` writes `Bin(n, p)` as a finite weighted sum of Dirac
+measures whose weights are polynomial in `p`, so each fibre `n` is measurable in `p`, and `ℕ` is
+countable and discrete. -/
+@[fun_prop]
+theorem measurable_binomial : Measurable fun q : ℕ × unitInterval => binomial q.1 q.2 := by
+  refine measurable_from_prod_countable_right fun n => Measure.measurable_measure.2 fun s hs => ?_
+  simp only [binomial_eq_sum_dirac, Measure.finsetSum_apply, Measure.smul_apply, smul_eq_mul,
+    Measure.dirac_apply' _ hs]
+  exact Finset.measurable_sum _ fun k _ => (by fun_prop : Measurable _).mul_const _
 
 end Probability
 
