@@ -103,7 +103,8 @@ theorem mem_dihedralGroupFourModularCentralRows_iff
 /-- Every displayed integral row is a simultaneous eigenrow of the integral class-multiplication
 matrices.  In particular, the modular verification below is the reduction of an honest
 characteristic-zero central character, rather than an eigenrow created by reduction. -/
-theorem dihedralGroupFour_isIntegralEigenrow (i : DihedralGroupFourClassIndex) :
+theorem isModularEigenrow_dihedralGroupFourCentralCharacterTable_int
+    (i : DihedralGroupFourClassIndex) :
     (dihedralClassData 4).IsModularEigenrow
       (fun j => dihedralGroupFourCentralCharacterTable i j) := by
   rw [(dihedralClassData 4).isModularEigenrow_iff]
@@ -111,15 +112,17 @@ theorem dihedralGroupFour_isIntegralEigenrow (i : DihedralGroupFourClassIndex) :
 
 /-- Reindexing a displayed integral row by the actual conjugacy classes gives a class-algebra
 eigenrow. -/
-theorem dihedralGroupFour_isClassEigenrow (i : DihedralGroupFourClassIndex) :
+theorem isClassEigenrow_dihedralGroupFourCentralCharacterTable
+    (i : DihedralGroupFourClassIndex) :
     IsClassEigenrow ((dihedralClassData 4).reindexModularRow
       fun j => dihedralGroupFourCentralCharacterTable i j) :=
   ((dihedralClassData 4).isModularEigenrow_iff_isClassEigenrow _).mp
-    (dihedralGroupFour_isIntegralEigenrow i)
+    (isModularEigenrow_dihedralGroupFourCentralCharacterTable_int i)
 
 /-- Every displayed reduction is a simultaneous eigenrow of the reduced class-multiplication
 matrices. -/
-theorem dihedralGroupFour_isModularEigenrow (i : DihedralGroupFourClassIndex) :
+theorem isModularEigenrow_dihedralGroupFourCentralCharacterTable_zmod
+    (i : DihedralGroupFourClassIndex) :
     (dihedralClassData 4).IsModularEigenrow
       (fun j => (dihedralGroupFourCentralCharacterTable i j : ZMod 5)) := by
   rw [(dihedralClassData 4).isModularEigenrow_iff]
@@ -141,7 +144,8 @@ theorem dihedralGroupFour_centralCharacterSearch :
   · rw [dihedralGroupFourModularCentralRows, Finset.image_subset_iff]
     intro i _
     rw [(dihedralClassData 4).mem_centralCharacterSearch]
-    exact ⟨by fin_cases i <;> decide, dihedralGroupFour_isModularEigenrow i⟩
+    exact ⟨by fin_cases i <;> decide,
+      isModularEigenrow_dihedralGroupFourCentralCharacterTable_zmod i⟩
   · rw [(dihedralClassData 4).card_centralCharacterSearch_of_isGoodDixonPrime
       isGoodDixonPrime_dihedralGroup_four_five,
       card_dihedralGroupFourModularCentralRows,
@@ -236,7 +240,7 @@ theorem dihedralGroupFour_degree_mul_centralCharacterTable
   fin_cases i <;> fin_cases j <;> decide
 
 /-- The displayed degrees are positive and divide the order of `DihedralGroup 4`. -/
-theorem dihedralGroupFour_characterDegrees_pos_dvd (i : DihedralGroupFourClassIndex) :
+theorem dihedralGroupFour_characterDegrees_pos_and_dvd (i : DihedralGroupFourClassIndex) :
     0 < dihedralGroupFourCharacterDegrees i ∧
       dihedralGroupFourCharacterDegrees i ∣ Nat.card (DihedralGroup 4) := by
   rw [DihedralGroup.nat_card]
