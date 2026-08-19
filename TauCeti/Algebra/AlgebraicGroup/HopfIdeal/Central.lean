@@ -262,6 +262,44 @@ namespace HopfIdeal
 
 variable {R : Type u} [CommRing R]
 
+/-- Pulling a central Hopf ideal back along a bijective bialgebra morphism preserves centrality.
+Contravariantly, an isomorphism of affine group schemes carries central closed subgroup schemes
+to central closed subgroup schemes. -/
+theorem IsCentral.comap_of_bijective {H K : Type v} [CommRing H] [CommRing K]
+    [HopfAlgebra R H] [HopfAlgebra R K] {I : HopfIdeal R K} (hI : I.IsCentral)
+    (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
+    (I.comap f hsurj).IsCentral := by
+  apply (CommHopfAlgCat.isCentral_iff_forall_isCentralPoint
+    (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
+  intro A g hg
+  let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
+  let E := AlgHom.mapDomainMulEquiv (A := A) e
+  have hmem (q : HopfAlgebra.points (R := R) (H := K) A) :
+      E q ∈ CommHopfAlgCat.quotientPointsSubgroup
+          (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
+        q ∈ CommHopfAlgCat.quotientPointsSubgroup
+          (_root_.CommHopfAlgCat.of R K) I A := by
+    rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
+      CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+    constructor
+    · intro hq y hy
+      obtain ⟨x, rfl⟩ := hsurj y
+      exact hq x (mem_comap.mpr hy)
+    · intro hq x hx
+      exact hq (f x) (mem_comap.mp hx)
+  have hg' : E.symm g ∈ CommHopfAlgCat.quotientPointsSubgroup
+      (_root_.CommHopfAlgCat.of R K) I A := by
+    rw [← hmem]
+    simpa using hg
+  have hcentral := CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup
+    (_root_.CommHopfAlgCat.of R K) I hI A hg'
+  have htransport :=
+    (HopfAlgebra.isCentralPoint_mapDomain_bialgEquiv_iff e (E.symm g)).mpr hcentral
+  have heq : AlgHom.mapDomain (A := A) e.toBialgHom (E.symm g) = g := by
+    exact E.apply_symm_apply g
+  rw [heq] at htransport
+  exact htransport
+
 /-- **A central Hopf ideal is normal.** Its points commute with every point of the ambient group
 over the same value algebra, so they form a normal subgroup there, and normality of a Hopf ideal
 is detected pointwise. -/
