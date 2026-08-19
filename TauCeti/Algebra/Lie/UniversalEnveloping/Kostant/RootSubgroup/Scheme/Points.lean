@@ -185,7 +185,6 @@ theorem kostantRootSubgroupGeneratedParam_apply
 
 /-- Forgetting the generated-carrier membership proof evaluates the matrix-valued root subgroup
 at the corresponding additive-group point. -/
-@[simp]
 theorem coe_kostantRootSubgroupGeneratedParam
     (A : Type) [CommRing A] (i : I) (t : Multiplicative A) :
     (kostantRootSubgroupGeneratedParam e h ρ M hM hnil b A i t :
@@ -213,7 +212,6 @@ theorem mapKostantGeneratedPointsSubgroup_kostantRootSubgroupGeneratedPoints
       map_kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b φ q
 
 /-- Naturality of the parameterized root subgroup in the generated carrier. -/
-@[simp]
 theorem mapKostantGeneratedPointsSubgroup_kostantRootSubgroupGeneratedParam
     (A : Type) [CommRing A] {B : Type} [CommRing B] (φ : A →+* B) (i : I)
     (t : Multiplicative A) :
