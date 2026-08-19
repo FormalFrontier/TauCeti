@@ -496,6 +496,20 @@ theorem lower_basis (i : Fin (n + 1)) (h : (i : ℕ) < n) :
       rw [dite_eq_left hj0, basis_apply, ite_eq_right h2, mul_zero]
     · rw [dite_eq_right hj0]
 
+/-- The lowering operator kills the lowest weight vector `vₙ`. This is the counterpart at the
+bottom of the string of `TauCeti.Sl2Std.raise_basis_zero`, and the case `i = n` that
+`TauCeti.Sl2Std.lower_basis` leaves out. -/
+theorem lower_basis_last : lower K n (basis K n (Fin.last n)) = 0 := by
+  funext j
+  rw [lower_apply, zero_apply]
+  by_cases hj0 : 0 < (j : ℕ)
+  · rw [dite_eq_left hj0, basis_apply, ite_eq_right, mul_zero]
+    intro hc
+    have := congrArg Fin.val hc
+    simp only [Fin.val_last] at this
+    omega
+  · rw [dite_eq_right hj0]
+
 /-- **The lowering operator walks `v₀` along the coordinate basis.** After `i` steps the highest
 weight vector has become `vᵢ`, scaled by the product `n(n - 1)⋯(n - i + 1)` of the coefficients
 picked up on the way. This is the weight string of `V(n)`, read in coordinates. -/

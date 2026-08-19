@@ -19,7 +19,11 @@ coordinate lattice, so both resulting root-subgroup morphisms are closed immersi
 
 * `TauCeti.Sl2Std.integralLatticeAddSubgroupBasis`: the coordinate basis of the standard integral
   lattice, viewed as an additive subgroup.
-* `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent.
+* `TauCeti.Sl2Std.repEnveloping_root_apply_basis`: each root operator exchanges the two
+  coordinate basis vectors in one direction and annihilates the other.
+* `TauCeti.Sl2Std.nilpotencyClass_repEnveloping_root` and
+  `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent, of class
+  exactly two.
 * `TauCeti.Sl2Std.exists_unit_rootStep_repEnveloping_one`: both root operators have a unit root
   step on the two-dimensional integral lattice.
 * `TauCeti.Sl2Std.isClosedImmersion_kostantRootSubgroup_one`: both associated root subgroups are
@@ -61,18 +65,49 @@ theorem coe_integralLatticeAddSubgroupBasis_apply (n : ℕ) (i : Fin (n + 1)) :
 
 local notation "b" => integralLatticeAddSubgroupBasis 1
 
-/-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent. -/
-theorem isNilpotent_repEnveloping_root (i : Fin 2) :
-    IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) := by
+/-- **The two root operators exchange the two integral basis vectors.** In the standard
+two-dimensional `sl₂` representation the raising operator sends `v₁` to `v₀` and kills `v₀`, and
+the lowering operator sends `v₀` to `v₁` and kills `v₁`; both index changes are `Fin.rev`. -/
+theorem repEnveloping_root_apply_basis (i s : Fin 2) :
+    ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : Sl2Std ℚ 1) =
+      if s = i.rev then (b i : Sl2Std ℚ 1) else 0 := by
   fin_cases i
   · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
       Matrix.cons_val_zero]
     rw [repEnveloping_ι_slFinTwoBasis]
-    exact ⟨2, raise_pow_eq_zero⟩
+    fin_cases s <;> simp [coe_integralLatticeAddSubgroupBasis_apply, raise_basis]
   · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
       Matrix.cons_val_one, Matrix.cons_val_fin_one]
     rw [repEnveloping_ι_slFinTwoBasis]
-    exact ⟨2, lower_pow_eq_zero⟩
+    fin_cases s
+    · simp [coe_integralLatticeAddSubgroupBasis_apply, lower_basis]
+    · simpa [coe_integralLatticeAddSubgroupBasis_apply] using lower_basis_last (K := ℚ) (n := 1)
+
+/-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent of
+class exactly two: their square vanishes, and they are themselves nonzero. -/
+theorem nilpotencyClass_repEnveloping_root (i : Fin 2) :
+    nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2 := by
+  refine nilpotencyClass_eq_succ_iff.mpr ⟨?_, ?_⟩
+  · fin_cases i
+    · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
+        Matrix.cons_val_zero]
+      rw [repEnveloping_ι_slFinTwoBasis]
+      exact raise_pow_eq_zero
+    · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
+        Matrix.cons_val_one, Matrix.cons_val_fin_one]
+      rw [repEnveloping_ι_slFinTwoBasis]
+      exact lower_pow_eq_zero
+  · rw [pow_one]
+    intro hzero
+    have hz := DFunLike.congr_fun hzero (b i.rev : Sl2Std ℚ 1)
+    rw [repEnveloping_root_apply_basis, ite_eq_left rfl,
+      coe_integralLatticeAddSubgroupBasis_apply] at hz
+    exact (basis ℚ 1).ne_zero i hz
+
+/-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent. -/
+theorem isNilpotent_repEnveloping_root (i : Fin 2) :
+    IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) :=
+  ⟨2, (nilpotencyClass_eq_succ_iff.mp (nilpotencyClass_repEnveloping_root i)).1⟩
 
 /-- Every root operator in the standard two-dimensional `sl₂` representation has a unit root
 step on the integral coordinate basis. For the raising operator the step is `v₁ ↦ v₀`; for
@@ -83,38 +118,11 @@ theorem exists_unit_rootStep_repEnveloping_one (i : Fin 2) :
         c • (b r : Sl2Std ℚ 1) ∧
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))
         (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : Sl2Std ℚ 1)) = 0 := by
-  fin_cases i
-  · refine ⟨0, 1, 1, isUnit_one, ?_, ?_⟩
-    · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
-        Matrix.cons_val_zero]
-      rw [repEnveloping_ι_slFinTwoBasis,
-        coe_integralLatticeAddSubgroupBasis_apply,
-        coe_integralLatticeAddSubgroupBasis_apply]
-      simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Matrix.cons_val_zero, one_smul]
-      rw [raise_basis]
-      norm_num
-    · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
-        Matrix.cons_val_zero]
-      rw [repEnveloping_ι_slFinTwoBasis,
-        coe_integralLatticeAddSubgroupBasis_apply]
-      have hz := DFunLike.congr_fun (raise_pow_eq_zero (K := ℚ) (n := 1)) (basis ℚ 1 1)
-      simpa [pow_two, Module.End.mul_apply] using hz
-  · refine ⟨1, 0, 1, isUnit_one, ?_, ?_⟩
-    · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
-        Matrix.cons_val_one, Matrix.cons_val_fin_one]
-      rw [repEnveloping_ι_slFinTwoBasis,
-        coe_integralLatticeAddSubgroupBasis_apply,
-        coe_integralLatticeAddSubgroupBasis_apply]
-      simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Matrix.cons_val_one,
-        Matrix.cons_val_zero, one_smul]
-      rw [lower_basis _ (by norm_num)]
-      norm_num
-    · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
-        Matrix.cons_val_one, Matrix.cons_val_fin_one]
-      rw [repEnveloping_ι_slFinTwoBasis,
-        coe_integralLatticeAddSubgroupBasis_apply]
-      have hz := DFunLike.congr_fun (lower_pow_eq_zero (K := ℚ) (n := 1)) (basis ℚ 1 0)
-      simpa [pow_two, Module.End.mul_apply] using hz
+  have hrev : i ≠ i.rev := by fin_cases i <;> decide
+  refine ⟨i, i.rev, 1, isUnit_one, ?_, ?_⟩
+  · rw [repEnveloping_root_apply_basis, ite_eq_left rfl, one_smul]
+  · rw [repEnveloping_root_apply_basis, ite_eq_left rfl, repEnveloping_root_apply_basis,
+      ite_eq_right hrev]
 
 /-- Both Kostant root subgroups in the standard two-dimensional integral `sl₂` representation
 are closed immersions. This is a nondegenerate instance of the general root-step criterion. -/
