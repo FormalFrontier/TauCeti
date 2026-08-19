@@ -13,8 +13,8 @@ public import TauCeti.Algebra.Bigraded.Basic
 
 Grid homology comes in a family of flavors whose blocked versions depend on the size of the
 grid rather than on the link alone: the fully blocked homology of an `n × n` grid diagram
-presenting a link `L` is the simply blocked grid homology of `L` tensored with
-`W^{⊗(n-1)}`, where `W` is the two-dimensional bigraded vector
+presenting an `ℓ`-component link `L` is the simply blocked grid homology of `L` tensored with
+`W^{⊗(n-ℓ)}`, where `W` is the two-dimensional bigraded vector
 space with one generator in bidegree `(0, 0)` and one in bidegree `(-1, -1)`. The link invariant
 is therefore not the bigraded vector space itself but its class modulo tensoring with copies of
 `W`. This file builds that quotient, together with the canonical representatives that make it
@@ -171,11 +171,6 @@ section StablyEquiv
 each with some number of copies of `W`. -/
 def IsStablyEquiv (P Q : Series) : Prop := ∃ i j : ℕ, P * W ^ i = Q * W ^ j
 
-/-- Stable equivalence is witnessed by stabilizing each series some number of times. -/
-theorem isStablyEquiv_iff {P Q : Series} :
-    IsStablyEquiv P Q ↔ ∃ i j : ℕ, P * W ^ i = Q * W ^ j := by
-  rfl
-
 /-- Stable equivalence is reflexive. -/
 @[refl]
 theorem isStablyEquiv_refl (P : Series) : IsStablyEquiv P P := ⟨0, 0, rfl⟩
@@ -213,7 +208,7 @@ def StableSeries : Type := Quotient stableSetoid
 def stableMk (P : Series) : StableSeries := Quotient.mk stableSetoid P
 
 /-- Prove a property of a stable series by proving it on every representative. -/
-protected theorem StableSeries.inductionOn {motive : StableSeries → Prop} (S : StableSeries)
+protected theorem StableSeries.induction_on {motive : StableSeries → Prop} (S : StableSeries)
     (mk : ∀ P, motive (stableMk P)) : motive S :=
   Quotient.inductionOn S mk
 
@@ -246,11 +241,6 @@ section Reduced
 /-- A bigraded vector space is reduced when it is not a nontrivial stabilization: the only way to
 write it as `Q ⊗ W` is with `Q = 0`. The zero series is reduced. -/
 def IsReduced (P : Series) : Prop := ∀ Q : Series, P = Q * W → Q = 0
-
-/-- A series is reduced exactly when every expression of it as a stabilization has zero
-unstabilized factor. -/
-theorem isReduced_iff {P : Series} : IsReduced P ↔ ∀ Q : Series, P = Q * W → Q = 0 := by
-  rfl
 
 /-- The zero series is reduced. -/
 theorem isReduced_zero : IsReduced (0 : Series) :=
@@ -320,6 +310,7 @@ is a stabilization. -/
 noncomputable def reducedRep (P : Series) : Series := (exists_isReduced P).choose
 
 /-- The reduced representative is reduced. -/
+@[simp]
 theorem isReduced_reducedRep (P : Series) : IsReduced (reducedRep P) :=
   (exists_isReduced P).choose_spec.1
 
@@ -333,6 +324,7 @@ theorem isStablyEquiv_reducedRep (P : Series) : IsStablyEquiv P (reducedRep P) :
   exact ⟨0, k, by simpa using hk⟩
 
 /-- A reduced series is its own reduced representative. -/
+@[simp]
 theorem reducedRep_eq_self {P : Series} (hP : IsReduced P) : reducedRep P = P := by
   obtain ⟨k, hk⟩ := exists_mul_W_pow_reducedRep P
   exact (isReduced_reducedRep P).eq_of_mul_W_pow_eq hP (i := k) (j := 0) (by simpa using hk.symm)
@@ -363,10 +355,16 @@ noncomputable def reduce : StableSeries → Series :=
 @[simp]
 theorem reduce_stableMk (P : Series) : reduce (stableMk P) = reducedRep P := (rfl)
 
+/-- The canonical representative of a stable class is reduced. -/
+@[simp]
+theorem isReduced_reduce (S : StableSeries) : IsReduced (reduce S) := by
+  induction S using StableSeries.induction_on with
+  | _ P => exact isReduced_reducedRep P
+
 /-- The canonical representative of a stable class lies in that class. -/
 @[simp]
 theorem stableMk_reduce (S : StableSeries) : stableMk (reduce S) = S := by
-  induction S using StableSeries.inductionOn with
+  induction S using StableSeries.induction_on with
   | _ P => exact (stableMk_eq_stableMk_iff.mpr (isStablyEquiv_reducedRep P)).symm
 
 /-- A stable class is determined by its canonical representative. -/
@@ -397,9 +395,7 @@ theorem reducedRep_W_pow (k : ℕ) : reducedRep (W ^ k) = 1 := by
 /-- The stable classes of finite-dimensional bigraded vector spaces are exactly the
 `W`-indivisible ones: reduction and inclusion are mutually inverse. -/
 noncomputable def stableEquivReduced : StableSeries ≃ {P : Series // IsReduced P} where
-  toFun S := ⟨reduce S, by
-    induction S using StableSeries.inductionOn with
-    | _ P => exact isReduced_reducedRep P⟩
+  toFun S := ⟨reduce S, isReduced_reduce S⟩
   invFun P := stableMk P.1
   left_inv S := by simp
   right_inv P := Subtype.ext (by simpa using reducedRep_eq_self P.2)
@@ -418,9 +414,9 @@ theorem euler_W : euler W = 1 - T (-1) := by
   rw [T, sub_eq_add_neg]
 
 /-- Stabilizing multiplies the Alexander-graded Euler characteristic by `1 - T⁻¹`. The blocked
-grid homology of an `n × n` grid therefore has Euler characteristic `(1 - T⁻¹)^(n-1)` times that
-of the link invariant it stabilizes, which is the discrepancy between the grid state sum and the
-Alexander polynomial. -/
+grid homology of an `n × n` grid presenting an `ℓ`-component link therefore has Euler
+characteristic `(1 - T⁻¹)^(n-ℓ)` times that of the link invariant it stabilizes, which is the
+discrepancy between the grid state sum and the Alexander polynomial. -/
 theorem euler_mul_W_pow (P : Series) (k : ℕ) :
     euler (P * W ^ k) = euler P * (1 - T (-1)) ^ k := by
   rw [map_mul, map_pow, euler_W]
