@@ -8,6 +8,7 @@ module
 public import TauCeti.CategoryTheory.Exact.Equivalence
 public import TauCeti.CategoryTheory.Exact.Split
 public import TauCeti.CategoryTheory.GrothendieckGroup.Presentation
+public import TauCeti.CategoryTheory.GrothendieckGroup.Split
 
 /-!
 # Exact `K₀` of a Quillen exact category
@@ -26,11 +27,9 @@ below is phrased in terms of objects and conflations of `C`.
 Exact `K₀` is monotone in the exact structure: an exact structure with more conflations imposes
 more relations, and `TauCeti.ExactK0.ofLE` is the resulting surjective comparison. The split
 exact structure is the smallest one (`TauCeti.ExactStructure.conflation_of_splitting`), so
-`TauCeti.ExactK0.fromSplit` compares its `K₀` with the exact `K₀` of an arbitrary exact structure
-on the same category. That source is split `K₀`, not merely a variant of it:
-`TauCeti.ExactK0.splitAdditiveInvariant` shows its universal property to be the one presented by
-the biproduct relations `[X ⊞ Z] = [X] + [Z]`. Both maps are characterized by their values on
-object classes, and both are natural in conflation-exact functors.
+`TauCeti.ExactK0.fromSplit` compares `TauCeti.SplitK0 C` with the exact `K₀` of an arbitrary exact
+structure on the same category. Both maps are characterized by their values on object classes,
+and both are natural in conflation-exact functors.
 
 ## Main definitions
 
@@ -44,11 +43,7 @@ object classes, and both are natural in conflation-exact functors.
   instance of the latter for a transported exact structure.
 * `TauCeti.ExactK0.ofLE` and `TauCeti.ExactK0.fromSplit`: the comparison induced by the identity
   functor towards an exact structure with more conflations, and its instance out of the split
-  exact structure.
-* `TauCeti.ExactK0.splitAdditiveInvariant`: an isomorphism-invariant, biproduct-additive function
-  is an additive invariant for the split exact structure, so the source of
-  `TauCeti.ExactK0.fromSplit` carries the universal property of the biproduct presentation of
-  split `K₀`.
+  Grothendieck group.
 
 ## Main results
 
@@ -414,59 +409,49 @@ theorem map_comp_ofLE {E₁' E₂' : ExactStructure D}
   hom_ext fun X => by
     rw [AddMonoidHom.comp_apply, AddMonoidHom.comp_apply, ofLE_of, map_of, map_of, ofLE_of]
 
-/-- **The biproduct presentation of split `K₀`.** A function on objects which is constant on
-isomorphism classes and additive on binary biproducts is automatically additive on the
-conflations of the split exact structure, because a split short complex is isomorphic to the
-biproduct one. With `TauCeti.ExactK0.of_biprod` for the converse direction and
-`TauCeti.ExactK0.liftEquiv` for the universal property, this identifies
-`ExactK0 (ExactStructure.split C)` with the group presented by the relations
-`[X ⊞ Z] = [X] + [Z]`: homomorphisms out of it correspond bijectively to isomorphism-invariant,
-biproduct-additive functions on objects. -/
-def splitAdditiveInvariant (obj : C → G) (map_iso : ∀ ⦃X Y : C⦄, (X ≅ Y) → obj X = obj Y)
-    (map_biprod : ∀ X Z : C, obj (X ⊞ Z) = obj X + obj Z) :
-    AdditiveInvariant (ExactStructure.split C) G where
-  obj := obj
-  map_iso := map_iso
-  map_conflation _ hS := by
-    obtain ⟨s⟩ := (ExactStructure.split_conflation _).mp hS
-    rw [map_iso s.isoBinaryBiproduct, map_biprod]
-
-omit [EssentiallySmall.{w} C] in
-@[simp]
-lemma splitAdditiveInvariant_obj (obj : C → G) (map_iso : ∀ ⦃X Y : C⦄, (X ≅ Y) → obj X = obj Y)
-    (map_biprod : ∀ X Z : C, obj (X ⊞ Z) = obj X + obj Z) (X : C) :
-    (splitAdditiveInvariant obj map_iso map_biprod).obj X = obj X := (rfl)
-
 variable (E) in
-/-- **The canonical comparison out of the split exact structure.** Its conflations are the split
-short complexes, which are conflations of every exact structure, so the identity functor induces
-a surjection from split `K₀` onto the exact `K₀` of any exact structure on the same additive
-category. The source is split `K₀` in the sense of the biproduct presentation, by
-`TauCeti.ExactK0.splitAdditiveInvariant` and `TauCeti.ExactK0.of_biprod`. -/
-noncomputable def fromSplit : ExactK0 (ExactStructure.split C) →+ ExactK0 E :=
-  ofLE fun _ hS => E.conflation_of_split_conflation hS
+/-- **The canonical comparison from split `K₀` to exact `K₀`.** It is induced by the class map,
+which respects biproduct relations because every exact structure contains the biproduct
+conflations. -/
+noncomputable def fromSplit : SplitK0 C →+ ExactK0 E :=
+  SplitK0.lift
+    { obj := fun X => of X
+      map_iso := fun _ _ e => of_congr e
+      map_biprod := of_biprod }
 
 @[simp]
-lemma fromSplit_of (X : C) : fromSplit E (of X) = (of X : ExactK0 E) :=
-  ofLE_of _ X
+lemma fromSplit_of (X : C) : fromSplit E (SplitK0.of X) = (of X : ExactK0 E) :=
+  SplitK0.lift_of _ X
 
 /-- The canonical comparison out of split `K₀` is the unique homomorphism preserving the classes
 of objects. -/
-theorem fromSplit_unique (f : ExactK0 (ExactStructure.split C) →+ ExactK0 E)
-    (hf : ∀ X : C, f (of X) = (of X : ExactK0 E)) : f = fromSplit E :=
-  ofLE_unique _ f hf
+theorem fromSplit_unique (f : SplitK0 C →+ ExactK0 E)
+    (hf : ∀ X : C, f (SplitK0.of X) = (of X : ExactK0 E)) : f = fromSplit E :=
+  SplitK0.hom_ext fun X => by rw [hf, fromSplit_of]
 
 /-- The canonical comparison out of split `K₀` is surjective: the classes of objects generate
 exact `K₀`, so the exact `K₀` of any exact structure is a quotient of split `K₀`. -/
-theorem fromSplit_surjective : Function.Surjective (fromSplit E) :=
-  ofLE_surjective _
+theorem fromSplit_surjective : Function.Surjective (fromSplit E) := by
+  intro x
+  induction x using ExactK0.induction_on with
+  | zero => exact ⟨0, map_zero _⟩
+  | of X => exact ⟨SplitK0.of X, fromSplit_of (E := E) X⟩
+  | add a b ha hb =>
+    obtain ⟨a', rfl⟩ := ha
+    obtain ⟨b', rfl⟩ := hb
+    exact ⟨a' + b', map_add _ _ _⟩
+  | neg a ha =>
+    obtain ⟨a', rfl⟩ := ha
+    exact ⟨-a', map_neg _ _⟩
 
 /-- The canonical comparison out of split `K₀` is natural in a conflation-exact functor: every
 additive functor is conflation-exact for the split exact structures. -/
 theorem map_comp_fromSplit (F : C ⥤ D) [F.Additive] (hF : E.IsConflationExact E' F) :
     (map F hF).comp (fromSplit E) =
-      (fromSplit E').comp (map F (ExactStructure.isConflationExact_split F)) :=
-  map_comp_ofLE _ _ F (ExactStructure.isConflationExact_split F) hF
+      (fromSplit E').comp (SplitK0.map F) :=
+  SplitK0.hom_ext fun X => by
+    rw [AddMonoidHom.comp_apply, AddMonoidHom.comp_apply, fromSplit_of, map_of,
+      SplitK0.map_of, fromSplit_of]
 
 end Comparison
 
