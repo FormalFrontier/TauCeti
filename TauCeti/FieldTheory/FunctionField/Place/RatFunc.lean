@@ -27,6 +27,7 @@ becomes the bijection `TauCeti.Place.ratFuncEquiv`.
 ## Main definitions
 
 * `TauCeti.Place.infty`: the place at infinity of `k(x)`.
+* `TauCeti.Place.inftyResidueFieldEquiv`: the identification of its residue field with `k`.
 * `TauCeti.Place.ratFuncEquiv`: the classification of the places of `k(x)`.
 
 ## Main results
@@ -171,15 +172,22 @@ theorem algebraMap_residueField_infty_surjective :
     (infty k).mem_maximalIdeal_iff_valuation_lt_one]
   exact hc
 
+/-- The canonical `k`-algebra equivalence from `k` to the residue field at infinity. -/
+def inftyResidueFieldEquiv : k ≃ₐ[k] (infty k).ResidueField :=
+  AlgEquiv.ofBijective (Algebra.ofId k (infty k).ResidueField)
+    ⟨(algebraMap k (infty k).ResidueField).injective,
+      algebraMap_residueField_infty_surjective k⟩
+
+@[simp]
+theorem inftyResidueFieldEquiv_apply (c : k) :
+    inftyResidueFieldEquiv k c = algebraMap k (infty k).ResidueField c :=
+  AlgEquiv.ofBijective_apply _ _ _
+
 /-- **The place at infinity is rational**: its residue field is `k`, so `deg P_∞ = 1`
 (Stichtenoth, Proposition 1.2.1(c)). -/
 @[simp]
 theorem degree_infty : (infty k).degree = 1 := by
-  have hbij : Function.Bijective (algebraMap k (infty k).ResidueField) :=
-    ⟨(algebraMap k (infty k).ResidueField).injective,
-      algebraMap_residueField_infty_surjective k⟩
-  rw [degree_eq_finrank,
-    ← (AlgEquiv.ofBijective (Algebra.ofId k (infty k).ResidueField) hbij).toLinearEquiv.finrank_eq,
+  rw [degree_eq_finrank, ← (inftyResidueFieldEquiv k).toLinearEquiv.finrank_eq,
     Module.finrank_self]
 
 /-! ### The finite places -/

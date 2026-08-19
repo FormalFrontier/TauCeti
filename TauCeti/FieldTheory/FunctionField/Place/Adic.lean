@@ -32,7 +32,8 @@ function field it produces the places of a chosen affine model.
 
 * `TauCeti.Place.adic_injective`: distinct height-one primes give distinct places.
 * `TauCeti.Place.adicResidueFieldEquiv`: the residue field of `Place.adic k F p` is `R ⧸ p`, as a
-  `k`-algebra; `TauCeti.Place.degree_adic` reads off the degree of the place.
+  `k`-algebra; `TauCeti.Place.adicResidueFieldEquiv_mk` computes this equivalence on quotient
+  representatives, and `TauCeti.Place.degree_adic` reads off the degree of the place.
 * `TauCeti.Place.ord_algebraMap_adic`: the order of `r : R` at the place is the multiplicity of
   `p` in `(r)`; `TauCeti.Place.isUniformizer_adic_algebraMap` specializes this to a generator of
   `p`, which is therefore a prime element for the place.
@@ -183,17 +184,32 @@ theorem adicResidueHom_surjective : Function.Surjective (adicResidueHom k F p) :
     (HeightOneSpectrum.valuation_eq_one_iff_notMem p (K := F)).mpr hs, inv_one, mul_one]
   exact (HeightOneSpectrum.valuation_lt_one_iff_mem p _).mpr hmem
 
+@[simp]
+theorem adicResidueHom_algebraMap (c : k) :
+    adicResidueHom k F p (algebraMap k R c) =
+      algebraMap k (adic k F p).ResidueField c := by
+  rw [adicResidueHom, RingHom.comp_apply]
+  have h : adicIntegersHom k F p (algebraMap k R c) =
+      algebraMap k (adic k F p).integers c :=
+    Subtype.ext (by rw [coe_adicIntegersHom, ← IsScalarTower.algebraMap_apply]; rfl)
+  rw [h]
+  rfl
+
 /-- **The residue field of an adic place is the residue field of its prime**: reduction at
 `adic k F p` identifies `R ⧸ p` with `F_P`, as `k`-algebras. -/
 def adicResidueFieldEquiv : (R ⧸ p.asIdeal) ≃ₐ[k] (adic k F p).ResidueField :=
   AlgEquiv.ofRingEquiv (f := (Ideal.quotEquivOfEq (ker_adicResidueHom k F p).symm).trans
     (RingHom.quotientKerEquivOfSurjective (adicResidueHom_surjective k F p)))
     fun c => by
-      have h : adicIntegersHom k F p (algebraMap k R c) = algebraMap k (adic k F p).integers c :=
-        Subtype.ext (by rw [coe_adicIntegersHom, ← IsScalarTower.algebraMap_apply]; rfl)
-      change IsLocalRing.residue _ (adicIntegersHom k F p (algebraMap k R c)) = _
-      rw [h]
-      rfl
+      simpa only [AlgEquiv.ofRingEquiv_apply, RingEquiv.trans_apply,
+        ← Ideal.Quotient.mk_algebraMap, Ideal.quotEquivOfEq_mk,
+        RingHom.quotientKerEquivOfSurjective_apply_mk] using adicResidueHom_algebraMap k F p c
+
+@[simp]
+theorem adicResidueFieldEquiv_mk (r : R) :
+    adicResidueFieldEquiv k F p (Ideal.Quotient.mk p.asIdeal r) = adicResidueHom k F p r := by
+  rw [adicResidueFieldEquiv, AlgEquiv.ofRingEquiv_apply, RingEquiv.trans_apply,
+    Ideal.quotEquivOfEq_mk, RingHom.quotientKerEquivOfSurjective_apply_mk]
 
 /-- The degree of an adic place is the degree of the residue field of its prime. -/
 theorem degree_adic : (adic k F p).degree = Module.finrank k (R ⧸ p.asIdeal) := by
