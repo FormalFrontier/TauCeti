@@ -30,7 +30,7 @@ arbitrary commutative coefficient algebra; it needs no antipode, finiteness, or 
   `Lie(Spec (H₁ ⊗[R] H₂)) ≃ Lie(Spec H₁) × Lie(Spec H₂)`.
 * `Derivation.tensorProductLieEquiv_apply`: its two components are restriction to the tensor
   factors.
-* `Derivation.algEquivSelf_tensorProductLieEquiv_symm_apply_tmul`: the inverse evaluated on a
+* `Derivation.tensorProductLieEquiv_symm_apply_tmul`: the inverse evaluated on a
   pure tensor.
 * `Derivation.finrank_tangent_tensorProduct`: for finite-dimensional tangent spaces over a field,
   tangent dimensions add over products.
@@ -95,6 +95,8 @@ private theorem tensorProductComponents_ofTensorProductComponents
   · simp only [tensorProductComponents, ofTensorProductComponents, LieHom.prod_apply,
       LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply, LinearMap.comp_apply,
       LinearMap.fst_apply, LinearMap.snd_apply]
+    -- The preceding simplification exposes the bundled maps' underlying derivations;
+    -- `change` records that definitional identification before using the functorial API.
     change derivationComp (B := B)
         (TauCeti.Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H₁) (H₂ := H₂))
         (derivationComp (B := B)
@@ -130,6 +132,7 @@ private theorem tensorProductComponents_ofTensorProductComponents
   · simp only [tensorProductComponents, ofTensorProductComponents, LieHom.prod_apply,
       LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply, LinearMap.comp_apply,
       LinearMap.fst_apply, LinearMap.snd_apply]
+    -- As in the first component, the bundled maps reduce definitionally to this composite.
     change derivationComp (B := B)
         (TauCeti.Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H₁) (H₂ := H₂))
         (derivationComp (B := B)
@@ -181,6 +184,8 @@ private theorem ofTensorProductComponents_tensorProductComponents
       simp only [ofTensorProductComponents, tensorProductComponents, LieHom.prod_apply,
         LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply,
         LinearMap.comp_apply, LinearMap.fst_apply, LinearMap.snd_apply]
+      -- The private linear-map wrappers are definitionally the displayed sum of composites;
+      -- restate that representation before evaluating it on the pure tensor.
       change
         (derivationComp (B := B)
               (TauCeti.Bialgebra.TensorProduct.projectLeft
@@ -243,6 +248,7 @@ theorem tensorProductLieEquiv_apply
         derivationComp (B := B)
           (TauCeti.Bialgebra.TensorProduct.includeRight
             (R := R) (H₁ := H₁) (H₂ := H₂)) d) := by
+  -- The forward function of the equivalence is definitionally `tensorProductComponents`.
   change tensorProductComponents d = _
   simp [tensorProductComponents]
 
@@ -258,12 +264,13 @@ theorem tensorProductLieEquiv_symm_apply
         derivationComp (B := B)
           (TauCeti.Bialgebra.TensorProduct.projectRight
             (R := R) (H₁ := H₁) (H₂ := H₂)) d.2 := by
+  -- The inverse function of the equivalence is definitionally `ofTensorProductComponents`.
   change ofTensorProductComponents d = _
   simp [ofTensorProductComponents]
 
 /-- On a pure tensor, the tangent vector assembled from `d` is the Leibniz sum
 `ε(h₂) • d.1 h₁ + ε(h₁) • d.2 h₂`. -/
-theorem algEquivSelf_tensorProductLieEquiv_symm_apply_tmul
+theorem tensorProductLieEquiv_symm_apply_tmul
     (d : _root_.Derivation R H₁ (Bialgebra.CounitAlgebra R H₁ B) ×
       _root_.Derivation R H₂ (Bialgebra.CounitAlgebra R H₂ B))
     (h₁ : H₁) (h₂ : H₂) :
