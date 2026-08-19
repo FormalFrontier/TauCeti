@@ -17,9 +17,10 @@ public import Mathlib.GroupTheory.MonoidLocalization.GrothendieckGroup
 The split Grothendieck group `TauCeti.SplitK0 C` of an essentially small additive category `C` is
 the free abelian group on the isomorphism classes of objects modulo the biproduct relations
 `[X ⊞ Y] = [X] + [Y]`. It is the universal recipient of an invariant which is constant on
-isomorphism classes and additive on binary biproducts, and it is the smallest of the categorical
-Grothendieck groups: any exact structure on `C` imposes at least these relations, because a
-biproduct short complex is a conflation of every exact structure.
+isomorphism classes and additive on binary biproducts. It is universal among the categorical
+Grothendieck groups of `C`: every other one is a quotient of it, since any exact structure imposes
+at least these relations because a biproduct short complex is a conflation of every exact
+structure.
 
 The construction is the presentation engine of
 `TauCeti/CategoryTheory/GrothendieckGroup/Presentation.lean` applied to the biproduct relations,
@@ -121,7 +122,7 @@ theorem of_biprod (X Y : C) : (of (X ⊞ Y) : SplitK0 C) = of X + of Y := by
 @[simp]
 theorem of_zero [HasZeroObject C] : (of (0 : C) : SplitK0 C) = 0 := by
   have h := of_biprod (0 : C) (0 : C)
-  rw [of_congr (biprodRightUnitor (0 : C))] at h
+  rw [of_congr (isoBiprodZero (isZero_zero C)).symm] at h
   exact add_eq_right.1 h.symm
 
 /-- The image of the class map generates split `K₀`. -/
@@ -234,19 +235,19 @@ lemma map_of (F : C ⥤ D) [F.Additive] (X : C) : map F (of X) = of (F.obj X) :=
 /-- `SplitK0.map` sends the identity functor to the identity homomorphism. -/
 @[simp]
 lemma map_id : map (𝟭 C) = AddMonoidHom.id (SplitK0 C) :=
-  hom_ext fun X => by rw [map_of, AddMonoidHom.id_apply]; rfl
+  PresentedK0.map_id _
 
 /-- `SplitK0.map` sends a composite of additive functors to the composite homomorphism. -/
 lemma map_comp {E : Type u''} [Category.{v''} E] [Preadditive E] [HasBinaryBiproducts E]
     [EssentiallySmall.{w''} E] (F : C ⥤ D) (G : D ⥤ E) [F.Additive] [G.Additive] :
     map (F ⋙ G) = (map G).comp (map F) :=
-  hom_ext fun X => by rw [map_of, AddMonoidHom.comp_apply, map_of, map_of]; rfl
+  PresentedK0.map_comp F G _ _ _
 
 /-- Objectwise isomorphic additive functors induce the same map; in particular naturally
 isomorphic ones do. -/
 lemma map_congr {F G : C ⥤ D} [F.Additive] [G.Additive]
     (h : ∀ X : C, Nonempty (F.obj X ≅ G.obj X)) : map F = map G :=
-  hom_ext fun X => by rw [map_of, map_of]; exact of_congr (h X).some
+  PresentedK0.map_congr h _ _
 
 /-- Invariance under additive equivalences. -/
 noncomputable def mapEquiv (e : C ≌ D) [e.functor.Additive] [e.inverse.Additive] :
@@ -268,7 +269,7 @@ lemma mapEquiv_symm_of (e : C ≌ D) [e.functor.Additive] [e.inverse.Additive] (
 @[simp]
 lemma mapEquiv_toAddMonoidHom (e : C ≌ D) [e.functor.Additive] [e.inverse.Additive] :
     ((mapEquiv e : SplitK0 C ≃+ SplitK0 D) : SplitK0 C →+ SplitK0 D) = map e.functor :=
-  hom_ext fun X => by rw [map_of]; exact mapEquiv_of e X
+  PresentedK0.mapEquiv_toAddMonoidHom e _ _
 
 end SplitK0
 
@@ -316,11 +317,11 @@ noncomputable instance : AddCommMonoid (ObjectCode C) where
   add_zero a := by
     obtain ⟨A, rfl⟩ := objectCode_surjective a
     rw [← objectCode_zeroObject, ← objectCode_biprod]
-    exact objectCode_congr (biprodRightUnitor A)
+    exact objectCode_congr (isoBiprodZero (isZero_zero C)).symm
   zero_add a := by
     obtain ⟨A, rfl⟩ := objectCode_surjective a
     rw [← objectCode_zeroObject, ← objectCode_biprod]
-    exact objectCode_congr (biprodLeftUnitor A)
+    exact objectCode_congr (isoZeroBiprod (isZero_zero C)).symm
 
 namespace SplitK0
 
@@ -350,9 +351,7 @@ private lemma grothendieckAddGroup_hom_ext {M : Type w} [AddCommMonoid M] {G : T
 private lemma grothendieckAddGroup_lift_of {M : Type w} [AddCommMonoid M] {G : Type*}
     [AddCommGroup G] (f : M →+ G) (m : M) :
     Algebra.GrothendieckAddGroup.lift f (Algebra.GrothendieckAddGroup.of m) = f m := by
-  have h := congrArg (fun k : M →+ G => k m)
-    (Algebra.GrothendieckAddGroup.lift.symm_apply_apply f)
-  rwa [Algebra.GrothendieckAddGroup.lift_symm_apply, AddMonoidHom.comp_apply] at h
+  simp [Algebra.GrothendieckAddGroup.lift]
 
 variable (C) in
 /-- The invariant sending an object to its isomorphism class, viewed in the group completion of
