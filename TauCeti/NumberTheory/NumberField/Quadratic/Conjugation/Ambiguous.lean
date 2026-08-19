@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.NumberTheory.NumberField.InfinitePlace
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.ClassGroup
-public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.TotallyComplex
 
 /-!
 # Ambiguous ideals of an imaginary quadratic field
@@ -23,15 +23,15 @@ the two notions of "ambiguous" match up:
 This is the descent step of the classical *ambiguous class number formula*, which counts the
 `2`-torsion of `Cl(𝓞 K)`: it replaces a count of ambiguous **classes** by a count of ambiguous
 **ideals**. The remaining step of that count — that an ambiguous ideal is, up to an extended
-rational ideal, a product of the ramified primes, whose classes already satisfy the relation
-`∏ 𝔭 = (θ)` of `TauCeti.Multiquadratic.prod_classGroupMk0_eq_one` — is not proved here; with it the
+rational ideal, a product of the ramified primes, which already satisfy the relation `∏ 𝔭 = (θ)` of
+`TauCeti.Multiquadratic.span_singleton_eq_prod_primeFactors` — is not proved here; with it the
 genus-theoretic bound `2-rank ≤ t - 1` of the Multiquadratic roadmap follows.
 
 The proof is Hilbert's Theorem 90 for the quadratic extension `K/ℚ`, in the elementary form
 available for a degree-two extension. If `[σJ] = [J]` then `(x) σJ = (y) J` for nonzero
 `x y : 𝓞 K`; conjugating and cancelling gives `(x σx) = (y σy)`, so `x σx` and `y σy` are
-associates. The unit relating them has norm the square of the rational `N(y) / N(x)`, and in an
-**imaginary** quadratic field the norm of a nonzero element is strictly positive
+associates. The unit relating them has norm the square of the rational `N(y) / N(x)`, and in a
+**totally complex** field the norm of a nonzero element is strictly positive
 (`NumberField.norm_pos_of_isTotallyComplex`), which forces `x σx = y σy` on the nose. Hilbert 90
 then produces `ε ≠ 0` with `x ε = y σε`, and `I = (ε) J` is an ambiguous ideal in `J`'s class. For a
 *real* quadratic field the positivity fails — that is exactly where the classical unit index
@@ -52,6 +52,8 @@ the classical ambiguous class number formula.
   quadratic conjugation, in the integral form `x ε = y σε`.
 * `NumberField.exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one`: a `2`-torsion ideal
   class of an imaginary quadratic field is the class of an ambiguous ideal.
+* `NumberField.sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self`: conversely, the
+  class of an ambiguous ideal is `2`-torsion.
 * `NumberField.sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`: the ambiguous classes
   are exactly the classes of ambiguous ideals.
 -/
@@ -89,12 +91,11 @@ theorem exists_ne_zero_mul_eq_mul_ringOfIntegersQuadraticConj
     linear_combination x * hnorm
 
 /-- Pushing an ideal forward twice along an involutive ring automorphism returns it. -/
-private theorem map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
-    (hf : Function.Involutive f) (I : Ideal R) : Ideal.map f (Ideal.map f I) = I :=
+private theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
+    (hf : Function.Involutive f) (I : Ideal R) : Ideal.map f (Ideal.map f I) = I := by
   have hcomp : (f : R →+* R).comp (f : R →+* R) = RingHom.id R := RingHom.ext hf
-  have h : Ideal.map (f : R →+* R) (Ideal.map (f : R →+* R) I) = I := by
-    rw [Ideal.map_map, hcomp, Ideal.map_id]
-  h
+  rw [← Ideal.map_coe (f := f) I, ← Ideal.map_coe (f := f) (Ideal.map (f : R →+* R) I),
+    Ideal.map_map, hcomp, Ideal.map_id]
 
 /-- **Two elements of an imaginary quadratic field with associated norms have equal norms.** If
 `x σx` and `y σy` are associates in `𝓞 K` then they are equal: their ratio is a unit whose norm is
@@ -108,23 +109,17 @@ private theorem mul_conj_eq_mul_conj_of_associated [IsTotallyComplex K]
     x * ringOfIntegersQuadraticConj hmin hgen x =
       y * ringOfIntegersQuadraticConj hmin hgen y := by
   obtain ⟨u, hu⟩ := hassoc
-  have hσalg : ∀ z : 𝓞 K, algebraMap (𝓞 K) K (ringOfIntegersQuadraticConj hmin hgen z)
-      = quadraticConj hmin hgen (algebraMap (𝓞 K) K z) := fun z => by
-    simpa only [RingOfIntegers.coe_eq_algebraMap] using coe_ringOfIntegersQuadraticConj hmin hgen z
-  -- Both products are the image of the field norm.
-  have hcoe : ∀ z : 𝓞 K, algebraMap (𝓞 K) K (z * ringOfIntegersQuadraticConj hmin hgen z) =
-      algebraMap ℚ K (Algebra.norm ℚ (algebraMap (𝓞 K) K z)) := fun z => by
-    rw [map_mul, hσalg, algebraMap_norm_eq_mul_quadraticConj hmin hgen]
   set nx := Algebra.norm ℚ (algebraMap (𝓞 K) K x) with hnx
   set ny := Algebra.norm ℚ (algebraMap (𝓞 K) K y) with hny
-  have hxpos : 0 < nx :=
-    norm_pos_of_isTotallyComplex hmin hgen (RingOfIntegers.coe_ne_zero_iff.mpr hx)
-  have hypos : 0 < ny :=
-    norm_pos_of_isTotallyComplex hmin hgen (RingOfIntegers.coe_ne_zero_iff.mpr hy)
+  have hxpos : 0 < nx := norm_pos_of_isTotallyComplex (RingOfIntegers.coe_ne_zero_iff.mpr hx)
+  have hypos : 0 < ny := norm_pos_of_isTotallyComplex (RingOfIntegers.coe_ne_zero_iff.mpr hy)
   -- Passing to `K`, the associating unit satisfies `nx · u = ny`.
   have hK : algebraMap ℚ K nx * algebraMap (𝓞 K) K (u : 𝓞 K) = algebraMap ℚ K ny := by
     have h := congrArg (algebraMap (𝓞 K) K) hu
-    rwa [map_mul, hcoe x, hcoe y] at h
+    rw [map_mul, ← algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj hmin hgen x,
+      ← algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj hmin hgen y] at h
+    rw [hnx, hny]
+    exact h
   -- The norm of a unit of `𝓞 K` is `±1`.
   have hnormu : Algebra.norm ℚ (algebraMap (𝓞 K) K (u : 𝓞 K)) = 1 ∨
       Algebra.norm ℚ (algebraMap (𝓞 K) K (u : 𝓞 K)) = -1 := by
@@ -146,7 +141,8 @@ private theorem mul_conj_eq_mul_conj_of_associated [IsTotallyComplex K]
     · rw [h] at hsq
       nlinarith
   apply RingOfIntegers.coe_injective
-  rw [hcoe x, hcoe y, ← hnx, ← hny, hnxny]
+  rw [← algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj hmin hgen x,
+    ← algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj hmin hgen y, ← hnx, ← hny, hnxny]
 
 /-- **Every ambiguous ideal class of an imaginary quadratic field is the class of an ambiguous
 ideal.** Let `K` be a totally complex quadratic number field with quadratic conjugation `σ`. A
@@ -183,7 +179,7 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one [IsTotallyCo
       Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K)) := by
     have h := congrArg (Ideal.map σ) hxy
     rwa [Ideal.map_mul, Ideal.map_mul, Ideal.map_span, Ideal.map_span, Set.image_singleton,
-      Set.image_singleton, map_map_of_involutive hinv] at h
+      Set.image_singleton, Ideal.map_map_of_involutive hinv] at h
   -- Multiplying the two identities and cancelling `σJ` leaves `(x σx) = (y σy)`.
   have hspan : Ideal.span {x * σ x} = Ideal.span ({y * σ y} : Set (𝓞 K)) := by
     refine mul_right_cancel₀ hJm0 ?_
@@ -216,8 +212,9 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one [IsTotallyCo
             rw [← Ideal.span_singleton_mul_span_singleton]; ring
   · exact ClassGroup.mk0_eq_mk0_iff.mpr ⟨1, ε, one_ne_zero, hε0, by simp⟩
 
-/-- **The class of an ambiguous ideal is `2`-torsion.** If quadratic conjugation fixes the ideal `I`
-then `I · σI = I²` is principal, so `[I]² = 1`. This is the easy direction of
+/-- **The class of an ambiguous ideal is `2`-torsion.** An ideal fixed by quadratic conjugation has
+a class fixed by the induced action on `Cl(𝓞 K)`, which is `2`-torsion because that action is
+inversion (`mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`). This is the easy direction of
 `sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`, and needs no hypothesis on the
 signature of `K`. -/
 theorem sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self
@@ -225,20 +222,19 @@ theorem sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self
     {I : (Ideal (𝓞 K))⁰}
     (hI : Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K)) =
       (I : Ideal (𝓞 K))) :
-    ClassGroup.mk0 I ^ 2 = 1 := by
-  obtain ⟨I, hI0⟩ := I
-  have hprin := isPrincipal_mul_map_ringOfIntegersQuadraticConj hmin hgen I
-  rw [hI, ← sq] at hprin
-  rw [← map_pow, SubmonoidClass.mk_pow I hI0 2, ClassGroup.mk0_eq_one_iff]
-  exact hprin
+    ClassGroup.mk0 I ^ 2 = 1 :=
+  (mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff hmin hgen (ClassGroup.mk0 I)).mp <| by
+    rw [ClassGroup.mulEquiv_mk0]
+    congr 1
+    exact Subtype.ext ((Ideal.map_coe (f := ringOfIntegersQuadraticConj hmin hgen)
+      (I : Ideal (𝓞 K))).trans hI)
 
 /-- **The ambiguous classes of an imaginary quadratic field are exactly the classes of ambiguous
 ideals.** For a totally complex quadratic number field, an ideal class is `2`-torsion — equivalently
 fixed by quadratic conjugation — precisely when it is represented by an ideal that conjugation
 fixes. This is the descent step of the ambiguous class number formula: it turns the count of
-`2`-torsion classes into a count of ambiguous ideals. Classifying those ideals — modulo the
-extended rational ideals they are products of the ramified primes — is a further step, not proved
-here. -/
+`2`-torsion classes into a count of ambiguous ideals. Classifying those ideals — modulo extended
+rational ideals, they are products of the ramified primes — is a further step, not proved here. -/
 theorem sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self [IsTotallyComplex K]
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (C : ClassGroup (𝓞 K)) :

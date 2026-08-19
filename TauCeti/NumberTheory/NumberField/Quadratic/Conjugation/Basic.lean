@@ -31,7 +31,8 @@ classical genus theory this supports.
   `quadraticConj_gen` (`quadraticConj θ = -θ`), `quadraticConj_ne_one` and
   `quadraticConj_involutive`.
 * `NumberField.ringOfIntegersQuadraticConj`: its restriction to a ring automorphism
-  `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadraticConj`, `ringOfIntegersQuadraticConj_gen`, and
+  `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadraticConj`,
+  `algebraMap_ringOfIntegersQuadraticConj`, `ringOfIntegersQuadraticConj_gen`, and
   `ringOfIntegersQuadraticConj_involutive`.
 -/
 
@@ -134,6 +135,15 @@ noncomputable def ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
     (ringOfIntegersQuadraticConj hmin hgen x : K) = quadraticConj hmin hgen (x : K) := by
   rw [ringOfIntegersQuadraticConj, RingOfIntegers.mapRingEquiv_apply, AlgEquiv.coe_ringEquiv]
+
+/-- Passing to `K` through `algebraMap`, `ringOfIntegersQuadraticConj x` is `quadraticConj` of the
+image of `x`. This is the `algebraMap` form of `coe_ringOfIntegersQuadraticConj`, the one consumed
+by the norm computations of `Quadratic/Conjugation/Norm.lean`. -/
+theorem algebraMap_ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
+    algebraMap (𝓞 K) K (ringOfIntegersQuadraticConj hmin hgen x)
+      = quadraticConj hmin hgen (algebraMap (𝓞 K) K x) := by
+  simpa only [RingOfIntegers.coe_eq_algebraMap] using coe_ringOfIntegersQuadraticConj hmin hgen x
 
 /-- Quadratic conjugation on `𝓞 K` sends the generator `θ` to `-θ`. -/
 @[simp] theorem ringOfIntegersQuadraticConj_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)

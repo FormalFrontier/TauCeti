@@ -18,8 +18,9 @@ For a quadratic number field `K = ℚ(√d)` with quadratic conjugation
 key fact that `I · σI` is principal for every ideal `I` of `𝓞 K`.  This is the hypothesis
 consumed by `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
-Along the way it records the elementwise norm identity
-`algebraMap_norm_eq_mul_quadraticConj`: `N(y) = y · σy`.
+Along the way it records the elementwise norm identities
+`algebraMap_norm_eq_mul_quadraticConj` (`N(y) = y · σy` for `y : K`) and
+`algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj` (its form for `y : 𝓞 K`).
 
 The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
 `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
@@ -46,17 +47,24 @@ theorem algebraMap_norm_eq_mul_quadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C 
   exact Algebra.IsQuadraticExtension.algebraMap_norm_eq_mul ℚ K
     (quadraticConj_ne_one hmin hgen) y
 
+/-- **The norm as a product with the conjugate, for an algebraic integer.** For `x : 𝓞 K`, the
+field norm of `x` is the image in `K` of the product `x · σx` of `x` with its quadratic conjugate.
+This is `algebraMap_norm_eq_mul_quadraticConj` transported along `algebraMap (𝓞 K) K`. -/
+theorem algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
+    algebraMap ℚ K (Algebra.norm ℚ (algebraMap (𝓞 K) K x))
+      = algebraMap (𝓞 K) K (x * ringOfIntegersQuadraticConj hmin hgen x) := by
+  rw [map_mul, algebraMap_ringOfIntegersQuadraticConj, algebraMap_norm_eq_mul_quadraticConj]
+
 /-- **Key norm identity.** For `x : 𝓞 K`, the extension of its integral norm equals `x · σx`, the
 product of `x` with its quadratic conjugate. -/
 private theorem algebraMap_intNorm_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
     algebraMap ℤ (𝓞 K) (Algebra.intNorm ℤ (𝓞 K) x)
       = x * ringOfIntegersQuadraticConj hmin hgen x := by
-  have hσ : algebraMap (𝓞 K) K (ringOfIntegersQuadraticConj hmin hgen x)
-      = quadraticConj hmin hgen (algebraMap (𝓞 K) K x) := by
-    simpa only [RingOfIntegers.coe_eq_algebraMap] using coe_ringOfIntegersQuadraticConj hmin hgen x
   apply RingOfIntegers.coe_injective
-  rw [map_mul, hσ, ← algebraMap_norm_eq_mul_quadraticConj hmin hgen,
+  rw [map_mul, algebraMap_ringOfIntegersQuadraticConj,
+    ← algebraMap_norm_eq_mul_quadraticConj hmin hgen,
     ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K, IsScalarTower.algebraMap_apply ℤ ℚ K]
   congr 1
   rw [Algebra.intNorm_eq_norm, algebraMap_int_eq, eq_intCast]
