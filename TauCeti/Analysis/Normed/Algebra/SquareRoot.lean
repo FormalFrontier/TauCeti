@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 public import Mathlib.Analysis.Calculus.FDeriv.Mul
+public import TauCeti.Analysis.Calculus.Bilinear
 
 /-!
 # Square roots near the identity in a Banach algebra
@@ -53,36 +54,19 @@ open scoped ContDiff
 
 namespace TauCeti
 
-/-- Doubling, as a continuous linear automorphism of a normed space over `ℝ`.  It is the
-derivative of squaring at the identity of a Banach algebra, and the inverse function theorem
-wants that derivative packaged as an equivalence; Mathlib has the linear-equivalence version
-`LinearEquiv.smulOfNeZero` and the homeomorphism version `Homeomorph.smulOfNeZero`, but not the
-continuous-linear one. -/
-@[expose]
-noncomputable def twoSmulEquiv (M : Type*) [NormedAddCommGroup M] [NormedSpace ℝ M] :
-    M ≃L[ℝ] M where
-  toLinearEquiv := LinearEquiv.smulOfNeZero ℝ M 2 two_ne_zero
-  continuous_toFun := continuous_const_smul _
-  continuous_invFun := continuous_const_smul _
-
-@[simp]
-theorem twoSmulEquiv_apply {M : Type*} [NormedAddCommGroup M] [NormedSpace ℝ M] (m : M) :
-    twoSmulEquiv M m = (2 : ℝ) • m := rfl
-
 variable (A : Type*) [NormedRing A] [NormedAlgebra ℝ A]
 
-/-- Squaring is smooth on a Banach algebra. -/
-theorem contDiff_mul_self : ContDiff ℝ ∞ (fun a : A ↦ a * a) := by fun_prop
-
-/-- The derivative of squaring at the identity of a Banach algebra is doubling. -/
-theorem hasStrictFDerivAt_mul_self_one :
-    HasStrictFDerivAt (fun a : A ↦ a * a) (twoSmulEquiv A : A →L[ℝ] A) 1 := by
-  have h := (hasStrictFDerivAt_id (𝕜 := ℝ) (1 : A)).mul' (hasStrictFDerivAt_id (𝕜 := ℝ) (1 : A))
-  have he : (id (1 : A) • ContinuousLinearMap.id ℝ A
-      + MulOpposite.op (id (1 : A)) • ContinuousLinearMap.id ℝ A)
-      = (twoSmulEquiv A : A →L[ℝ] A) := by
+private theorem hasStrictFDerivAt_mul_self_one :
+    HasStrictFDerivAt (fun a : A ↦ a * a)
+      ((ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A) :
+        A →L[ℝ] A) 1 := by
+  have h := TauCeti.ContinuousLinearMap.hasStrictFDerivAt_apply_self
+    (ContinuousLinearMap.mul ℝ A) 1
+  have he : (ContinuousLinearMap.mul ℝ A).flip 1 + ContinuousLinearMap.mul ℝ A 1 =
+      ((ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A) :
+        A →L[ℝ] A) := by
     ext a
-    simp [ContinuousLinearEquiv.coe_coe, two_smul]
+    simp [two_smul]
   rw [he] at h
   exact h
 
@@ -92,7 +76,8 @@ variable [CompleteSpace A]
 supplied by the inverse function theorem at `1`.  It is only meaningful near `1`; see
 `TauCeti.eventually_mul_self_sqrtNearOne`. -/
 noncomputable def sqrtNearOne : A → A :=
-  (hasStrictFDerivAt_mul_self_one A).localInverse (fun a : A ↦ a * a) (twoSmulEquiv A) 1
+  (hasStrictFDerivAt_mul_self_one A).localInverse (fun a : A ↦ a * a)
+    (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A) 1
 
 variable {A}
 
@@ -100,25 +85,35 @@ variable {A}
 @[simp]
 theorem sqrtNearOne_one : sqrtNearOne A 1 = 1 := by
   simpa [sqrtNearOne] using (hasStrictFDerivAt_mul_self_one A).localInverse_apply_image
-    (f := fun a : A ↦ a * a) (f' := twoSmulEquiv A) (a := 1)
+    (f := fun a : A ↦ a * a)
+    (f' := (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A))
+      (a := 1)
 
 /-- Near the identity, `TauCeti.sqrtNearOne` really produces a square root. -/
 theorem eventually_mul_self_sqrtNearOne :
     ∀ᶠ a in 𝓝 (1 : A), sqrtNearOne A a * sqrtNearOne A a = a := by
   simpa [sqrtNearOne] using (hasStrictFDerivAt_mul_self_one A).eventually_right_inverse
-    (f := fun a : A ↦ a * a) (f' := twoSmulEquiv A) (a := 1)
+    (f := fun a : A ↦ a * a)
+    (f' := (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A))
+      (a := 1)
 
 /-- Near the identity, an element is recovered from its square by `TauCeti.sqrtNearOne`.  This is
 the uniqueness half: two elements close to `1` with the same square are equal. -/
 theorem eventually_sqrtNearOne_mul_self :
     ∀ᶠ b in 𝓝 (1 : A), sqrtNearOne A (b * b) = b := by
   simpa [sqrtNearOne] using (hasStrictFDerivAt_mul_self_one A).eventually_left_inverse
-    (f := fun a : A ↦ a * a) (f' := twoSmulEquiv A) (a := 1)
+    (f := fun a : A ↦ a * a)
+    (f' := (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A))
+      (a := 1)
 
 /-- The square root near the identity is smooth at the identity. -/
 theorem contDiffAt_sqrtNearOne : ContDiffAt ℝ ∞ (sqrtNearOne A) 1 := by
-  have h := (contDiff_mul_self A).contDiffAt.to_localInverse
-    (f' := twoSmulEquiv A) (a := 1) (hasStrictFDerivAt_mul_self_one A).hasFDerivAt (by simp)
+  have hsquare : ContDiffAt ℝ ∞ (fun a : A ↦ a * a) 1 :=
+    (TauCeti.ContinuousLinearMap.contDiff_apply_self (n := ∞)
+      (ContinuousLinearMap.mul ℝ A)).contDiffAt
+  have h := hsquare.to_localInverse
+    (f' := (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A))
+      (a := 1) (hasStrictFDerivAt_mul_self_one A).hasFDerivAt (by simp)
   simpa [sqrtNearOne, ContDiffAt.localInverse] using h
 
 /-- The square root near the identity is continuous at the identity. -/

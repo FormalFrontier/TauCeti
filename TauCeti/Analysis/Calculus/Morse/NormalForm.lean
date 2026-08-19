@@ -8,8 +8,8 @@ module
 public import Mathlib.Analysis.Calculus.TaylorIntegral
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+public import TauCeti.Analysis.Calculus.Hadamard
 public import TauCeti.Analysis.Calculus.Morse.Basic
-public import TauCeti.Analysis.Calculus.ParametricIntegral
 public import TauCeti.Analysis.Normed.Algebra.SquareRoot
 
 /-!
@@ -112,23 +112,21 @@ weight is normalised so that the value at `v = 0` is the Hessian at `x` itself
 (`TauCeti.hessianAverage_zero`), while `TauCeti.map_add_eq_add_hessianAverage` says that
 `f (x + v)` differs from its first-order Taylor polynomial by `2⁻¹ * hessianAverage f x v v v`. -/
 def hessianAverage (f : E → ℝ) (x v : E) : E →L[ℝ] E →L[ℝ] ℝ :=
-  ∫ t in (0 : ℝ)..1, (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v)
+  segmentAverage (fun t ↦ 2 * (1 - t)) (fderiv ℝ (fderiv ℝ f)) x v
 
 /-- The averaged Hessian as an integral over the compact unit interval, the shape in which the
 regularity theorem for parametrised integrals applies to it. -/
 theorem hessianAverage_eq_integral_Icc (f : E → ℝ) (x : E) :
     hessianAverage f x = fun v ↦ ∫ t in Set.Icc (0 : ℝ) 1,
       (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v) := by
-  funext v
-  rw [hessianAverage, intervalIntegral.integral_of_le zero_le_one,
-    ← integral_Icc_eq_integral_Ioc]
+  exact segmentAverage_eq_integral_Icc _ _ _
 
 /-- At the basepoint the averaged Hessian is the Hessian: the weight `2 * (1 - t)` has integral
 `1` over the unit interval. -/
 @[simp]
 theorem hessianAverage_zero (f : E → ℝ) (x : E) :
     hessianAverage f x 0 = fderiv ℝ (fderiv ℝ f) x := by
-  simp only [hessianAverage, smul_zero, add_zero]
+  simp only [hessianAverage, segmentAverage, smul_zero, add_zero]
   have hI : (∫ t in (0 : ℝ)..1, 2 * (1 - t)) = 1 := by
     rw [intervalIntegral.integral_const_mul, intervalIntegral.integral_sub
       intervalIntegrable_const intervalIntegral.intervalIntegrable_id]
@@ -140,18 +138,9 @@ theorem hessianAverage_zero (f : E → ℝ) (x : E) :
 /-- The averaged Hessian of a smooth function depends smoothly on the direction. -/
 theorem contDiff_hessianAverage (hf : ContDiff ℝ ∞ f) (x : E) :
     ContDiff ℝ ∞ (hessianAverage f x) := by
-  rw [hessianAverage_eq_integral_Icc]
   have hd : ContDiff ℝ ∞ (fderiv ℝ (fderiv ℝ f)) :=
     (hf.fderiv_right (m := ∞) (by simp)).fderiv_right (m := ∞) (by simp)
-  refine contDiff_integral_Icc_of_contDiff ⊤
-    (fun v t ↦ (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v)) ?_
-  have h1 : ContDiff ℝ ∞ fun p : E × ℝ ↦ 2 * (1 - p.2) := by fun_prop
-  have h2 : ContDiff ℝ ∞ fun p : E × ℝ ↦ fderiv ℝ (fderiv ℝ f) (x + p.2 • p.1) :=
-    hd.comp (by fun_prop)
-  have := isBoundedSMul_clm (E := E)
-  have key : ContDiff ℝ ∞
-      fun p : E × ℝ ↦ (2 * (1 - p.2)) • fderiv ℝ (fderiv ℝ f) (x + p.2 • p.1) := h1.smul h2
-  exact key
+  exact (by fun_prop : ContDiff ℝ ∞ fun t : ℝ ↦ 2 * (1 - t)).contDiff_segmentAverage hd x
 
 private theorem continuous_hessianAverage_integrand (hf : ContDiff ℝ ∞ f) (x v : E) :
     Continuous fun t : ℝ ↦ (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v) := by
@@ -167,7 +156,8 @@ theorem hessianAverage_apply (hf : ContDiff ℝ ∞ f) (x v w w' : E) :
   have h1 := continuous_hessianAverage_integrand hf x v
   have h2 : Continuous fun t : ℝ ↦ ((2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v)) w :=
     (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w).continuous.comp h1
-  rw [hessianAverage, ContinuousLinearMap.intervalIntegral_apply (h1.intervalIntegrable 0 1) w,
+  rw [hessianAverage, segmentAverage,
+    ContinuousLinearMap.intervalIntegral_apply (h1.intervalIntegrable 0 1) w,
     ContinuousLinearMap.intervalIntegral_apply (h2.intervalIntegrable 0 1) w']
   simp
 
