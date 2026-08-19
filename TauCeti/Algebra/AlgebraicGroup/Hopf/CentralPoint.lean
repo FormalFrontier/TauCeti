@@ -35,7 +35,7 @@ commutative group functor exactly when `H` is cocommutative
 ## Main declarations
 
 * `TauCeti.HopfAlgebra.IsCentralPoint`: centrality of a point of the functor of points.
-* `TauCeti.HopfAlgebra.centre`: the central points as a subgroup of the group of points.
+* `TauCeti.HopfAlgebra.center`: the central points as a subgroup of the group of points.
 
 ## Main results
 
@@ -52,7 +52,7 @@ commutative group functor exactly when `H` is cocommutative
 * J. S. Milne, *Algebraic Groups* (2017), §1.k and §2.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
 
-This is a prerequisite for the centre `Z(G)` in Layer 6, "Reductive and semisimple groups", of
+This is a prerequisite for the center `Z(G)` in Layer 6, "Reductive and semisimple groups", of
 `TauCetiRoadmap/ReductiveGroups/README.md`.
 -/
 
@@ -136,32 +136,32 @@ theorem IsCentralPoint.inv {g : WithConv (H →ₐ[R] A)} (hg : IsCentralPoint g
   exact (hg φ h).inv_left
 
 variable (R H A) in
-/-- The **centre** of the functor of points, as a subgroup of the group of `A`-points.
+/-- The **center** of the functor of points, as a subgroup of the group of `A`-points.
 
 Its elements are the points that stay central after every change of value algebra, so the
-construction is natural in `A` (`TauCeti.HopfAlgebra.mapValue_mem_centre`). It is contained in,
-and in general strictly smaller than, the abstract centre of the group `G(A)`. -/
-@[expose] noncomputable def centre : Subgroup (WithConv (H →ₐ[R] A)) where
+construction is natural in `A` (`TauCeti.HopfAlgebra.mapValue_mem_center`). It is contained in,
+and in general strictly smaller than, the abstract center of the group `G(A)`. -/
+noncomputable def center : Subgroup (WithConv (H →ₐ[R] A)) where
   carrier := {g | IsCentralPoint g}
   mul_mem' hg hg' := IsCentralPoint.mul hg hg'
   one_mem' := isCentralPoint_one
   inv_mem' hg := IsCentralPoint.inv hg
 
 @[simp]
-theorem mem_centre {g : WithConv (H →ₐ[R] A)} : g ∈ centre R H A ↔ IsCentralPoint g :=
+theorem mem_center {g : WithConv (H →ₐ[R] A)} : g ∈ center R H A ↔ IsCentralPoint g :=
   Iff.rfl
 
-/-- The centre of the functor of points is contained in the abstract centre of the group of
+/-- The center of the functor of points is contained in the abstract center of the group of
 `A`-points. The inclusion is generally strict: an abstractly central point need not stay central
 over larger value algebras. -/
-theorem centre_le_center : centre R H A ≤ Subgroup.center (WithConv (H →ₐ[R] A)) :=
-  fun _ hg ↦ Subgroup.mem_center_iff.mpr fun h ↦ ((mem_centre.mp hg).commute h).symm
+theorem center_le_center : center R H A ≤ Subgroup.center (WithConv (H →ₐ[R] A)) :=
+  fun _ hg ↦ Subgroup.mem_center_iff.mpr fun h ↦ ((mem_center.mp hg).commute h).symm
 
-/-- The centre is natural in the value algebra. -/
-theorem mapValue_mem_centre {B : Type v} [CommRing B] [Algebra R B] (φ : A →ₐ[R] B)
-    {g : WithConv (H →ₐ[R] A)} (hg : g ∈ centre R H A) :
-    AlgHom.mapValue φ g ∈ centre R H B :=
-  (mem_centre.mp hg).mapValue φ
+/-- The center is natural in the value algebra. -/
+theorem mapValue_mem_center {B : Type v} [CommRing B] [Algebra R B] (φ : A →ₐ[R] B)
+    {g : WithConv (H →ₐ[R] A)} (hg : g ∈ center R H A) :
+    AlgHom.mapValue φ g ∈ center R H B :=
+  (mem_center.mp hg).mapValue φ
 
 end Group
 
@@ -228,11 +228,11 @@ theorem convMul_includeRight_includeLeft :
   have key := map_mul (AlgHom.mapValue (H := H) (Algebra.TensorProduct.comm R H H).toAlgHom)
     (toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)))
     (toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)))
-  rw [show
-    toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
-        toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) =
-      toConv (_root_.Bialgebra.comulAlgHom R H) by
-        simpa using (Bialgebra.comulPoint_eq_include_mul (R := R) (H := H)).symm] at key
+  simp only [← Bialgebra.TensorProduct.includeLeft_toAlgHom,
+    ← Bialgebra.TensorProduct.includeRight_toAlgHom] at key
+  rw [← Bialgebra.comulPoint_eq_include_mul] at key
+  simp only [Bialgebra.TensorProduct.includeLeft_toAlgHom,
+    Bialgebra.TensorProduct.includeRight_toAlgHom] at key
   rw [AlgHom.mapValue_apply, AlgHom.mapValue_apply, AlgHom.mapValue_apply, ofConv_toConv,
     ofConv_toConv, ofConv_toConv, comm_toAlgHom_comp_includeLeft,
     comm_toAlgHom_comp_includeRight] at key
@@ -246,12 +246,12 @@ theorem commute_includeLeft_includeRight_iff_isCocomm :
     Commute (toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)))
         (toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H))) ↔
       _root_.Coalgebra.IsCocomm R H := by
-  rw [commute_iff_eq, show
-    toConv (Algebra.TensorProduct.includeLeft (R := R) (S := R) (A := H) (B := H)) *
-        toConv (Algebra.TensorProduct.includeRight (R := R) (A := H) (B := H)) =
-      toConv (_root_.Bialgebra.comulAlgHom R H) by
-        simpa using (Bialgebra.comulPoint_eq_include_mul (R := R) (H := H)).symm,
-    convMul_includeRight_includeLeft]
+  simp only [← Bialgebra.TensorProduct.includeLeft_toAlgHom,
+    ← Bialgebra.TensorProduct.includeRight_toAlgHom]
+  rw [commute_iff_eq, ← Bialgebra.comulPoint_eq_include_mul]
+  simp only [Bialgebra.TensorProduct.includeLeft_toAlgHom,
+    Bialgebra.TensorProduct.includeRight_toAlgHom]
+  rw [convMul_includeRight_includeLeft]
   constructor
   · intro h
     refine ⟨LinearMap.ext fun x ↦ ?_⟩

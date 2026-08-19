@@ -28,7 +28,7 @@ normal, and the zero Hopf ideal — the one cutting out the whole group — is c
 
 Centrality is *upward* closed in the lattice of Hopf ideals, since a larger Hopf ideal cuts out a
 smaller closed subgroup. It is not closed downwards, so this file does not construct a smallest
-central Hopf ideal; the centre `Z(G)` as a closed subgroup scheme needs the extra work of
+central Hopf ideal; the center `Z(G)` as a closed subgroup scheme needs the extra work of
 producing a Hopf ideal from the cocommutativity defect of `H`.
 
 ## Main declarations
@@ -52,7 +52,7 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 
 The coordinate condition is the conjugation-triviality criterion for a central closed subgroup,
 and mirrors the normality criterion of `TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal`. This is
-a prerequisite for the centre `Z(G)` in Layer 6, "Reductive and semisimple groups", of
+a prerequisite for the center `Z(G)` in Layer 6, "Reductive and semisimple groups", of
 `TauCetiRoadmap/ReductiveGroups/README.md`.
 -/
 
@@ -79,13 +79,6 @@ def IsCentral (I : HopfIdeal R H) : Prop :=
   ∀ x : H, HopfAlgebra.conjugationAlgHom (R := R) (H := H) x -
       Algebra.TensorProduct.includeRight x ∈ leftTensorIdeal (R := R) (H := H) I.toIdeal
 
-/-- Centrality restated as the defining ideal membership. -/
-theorem isCentral_def (I : HopfIdeal R H) :
-    I.IsCentral ↔
-      ∀ x : H, HopfAlgebra.conjugationAlgHom (R := R) (H := H) x -
-        Algebra.TensorProduct.includeRight x ∈ leftTensorIdeal (R := R) (H := H) I.toIdeal :=
-  Iff.rfl
-
 /-- Centrality passes to larger Hopf ideals, which cut out smaller closed subgroups. -/
 theorem IsCentral.mono {I J : HopfIdeal R H} (hI : I.IsCentral) (hIJ : I ≤ J) : J.IsCentral :=
   fun x ↦ leftTensorIdeal_mono R H (toIdeal_le_toIdeal.mpr hIJ) (hI x)
@@ -101,7 +94,7 @@ The zero Hopf ideal cuts out all of `Spec H`, so its centrality says that conjug
 which for the convolution group of points is commutativity. -/
 theorem isCentral_bot_iff_isCocomm :
     (⊥ : HopfIdeal R H).IsCentral ↔ _root_.Coalgebra.IsCocomm R H := by
-  rw [isCentral_def, ← HopfAlgebra.commute_includeLeft_includeRight_iff_isCocomm R H,
+  rw [IsCentral, ← HopfAlgebra.commute_includeLeft_includeRight_iff_isCocomm R H,
     commute_iff_eq]
   have hzero : leftTensorIdeal (R := R) (H := H) (⊥ : HopfIdeal R H).toIdeal = ⊥ := by
     rw [bot_toIdeal, leftTensorIdeal_def, Ideal.map_bot]
@@ -229,11 +222,12 @@ theorem isCentral_iff_forall_isCentralPoint (H : _root_.CommHopfAlgCat.{v} R)
   ⟨fun hI A _ hg ↦ isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg,
     fun hcentral ↦ isCentral_of_isCentralPoint H I (hcentral _)⟩
 
-/-- The points cut out by a central Hopf ideal lie in the centre of the functor of points. -/
-theorem quotientPointsSubgroup_le_centre (H : _root_.CommHopfAlgCat.{v} R)
+/-- The points cut out by a central Hopf ideal lie in the center of the functor of points. -/
+theorem quotientPointsSubgroup_le_center (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsCentral) (A : CommAlgCat.{v} R) :
-    quotientPointsSubgroup H I A ≤ HopfAlgebra.centre R ↥H ↥A :=
-  fun _ hg ↦ isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg
+    quotientPointsSubgroup H I A ≤ HopfAlgebra.center R ↥H ↥A :=
+  fun _ hg ↦ HopfAlgebra.mem_center.mpr
+    (isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg)
 
 /-- A point killing the augmentation ideal is the identity point: the trivial subgroup has only
 the identity over every value algebra. -/
