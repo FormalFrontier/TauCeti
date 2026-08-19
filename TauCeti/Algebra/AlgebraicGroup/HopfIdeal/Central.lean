@@ -22,9 +22,10 @@ point of `G` in the sense of `TauCeti.HopfAlgebra.IsCentralPoint`. As for normal
 algebra suffices to detect it, namely `(H ⧸ I) ⊗[R] H`, which carries the tautological point of
 the subgroup together with the tautological point of the ambient group.
 
-Two immediate consequences record that the notion behaves as expected. A central Hopf ideal is
-normal, and the zero Hopf ideal — the one cutting out the whole group — is central exactly when
-`H` is cocommutative, that is, exactly when `G` is commutative.
+The main consequences record that the notion behaves as expected. A central Hopf ideal is normal,
+its closed subgroup has commutative point groups and cocommutative coordinate quotient, and the
+zero Hopf ideal — the one cutting out the whole group — is central exactly when `H` is
+cocommutative, that is, exactly when `G` is commutative.
 
 Centrality is *upward* closed in the lattice of Hopf ideals, since a larger Hopf ideal cuts out a
 smaller closed subgroup. It is not closed downwards, so this file does not construct a smallest
@@ -41,8 +42,6 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 * `TauCeti.CommHopfAlgCat.isCentral_iff_forall_isCentralPoint`: **a Hopf ideal is central exactly
   when the points it cuts out are central points over every value algebra.**
 * `TauCeti.HopfIdeal.IsCentral.isNormal`: a central Hopf ideal is normal.
-* `TauCeti.HopfIdeal.IsCentral.isMulCommutative_quotientPointsSubgroup`: the points of a central
-  closed subgroup form a commutative group.
 * `TauCeti.HopfIdeal.IsCentral.isCocomm_quotient`: the coordinate Hopf algebra of a central
   closed subgroup is cocommutative.
 * `TauCeti.HopfIdeal.isCentral_bot_iff_isCocomm`: the whole group is central exactly when the
@@ -276,37 +275,20 @@ theorem IsCentral.isNormal {H : _root_.CommHopfAlgCat.{v} R} {I : HopfIdeal R H}
     rw [← hcom.eq, mul_assoc, mul_inv_cancel, mul_one]
   rwa [this]
 
-/-- The algebra-valued points of a central closed subgroup form a commutative group. -/
-theorem IsCentral.isMulCommutative_quotientPointsSubgroup
-    {H : _root_.CommHopfAlgCat.{v} R} {I : HopfIdeal R H} (hI : I.IsCentral)
-    (A : CommAlgCat.{v} R) : IsMulCommutative (CommHopfAlgCat.quotientPointsSubgroup H I A) := by
-  rw [isMulCommutative_iff]
-  rintro ⟨g, hg⟩ ⟨h, _⟩
-  apply Subtype.ext
-  exact
-    ((CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg).commute h).eq
-
 /-- The coordinate Hopf algebra of a central closed subgroup is cocommutative. Equivalently,
 every central closed subgroup scheme is a commutative group scheme. -/
 theorem IsCentral.isCocomm_quotient {H : _root_.CommHopfAlgCat.{v} R}
     {I : HopfIdeal R H} (hI : I.IsCentral) :
     _root_.Coalgebra.IsCocomm R (CommHopfAlgCat.quotient H I) := by
-  rw [← isCentral_bot_iff_isCocomm]
-  rw [CommHopfAlgCat.isCentral_iff_forall_isCentralPoint]
-  intro A g _
-  rw [HopfAlgebra.isCentralPoint_def]
-  intro B _ _ φ h
-  rw [commute_iff_eq]
-  let B' : CommAlgCat.{v} R := CommAlgCat.of R B
-  let g' := AlgHom.mapValue φ g
-  have hg' : CommHopfAlgCat.quotientPointsHom H I B' g' ∈
-      CommHopfAlgCat.quotientPointsSubgroup H I B' :=
-    CommHopfAlgCat.quotientPointsHom_mem_quotientPointsSubgroup H I B' g'
-  have hcentral :=
-    CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup H I hI B' hg'
-  apply CommHopfAlgCat.quotientPointsHom_injective H I B'
+  rw [← HopfAlgebra.commute_includeLeft_includeRight_iff_isCocomm R
+    (CommHopfAlgCat.quotient H I), commute_iff_eq]
+  let A : CommAlgCat.{v} R := CommAlgCat.of R
+    (TensorProduct R (CommHopfAlgCat.quotient H I) (CommHopfAlgCat.quotient H I))
+  apply CommHopfAlgCat.quotientPointsHom_injective H I A
   simpa only [map_mul] using
-    (hcentral.commute (CommHopfAlgCat.quotientPointsHom H I B' h)).eq
+    ((HopfAlgebra.mem_center.mp
+      (CommHopfAlgCat.quotientPointsSubgroup_le_center H I hI A
+        (CommHopfAlgCat.quotientPointsHom_mem_quotientPointsSubgroup H I A _))).commute _).eq
 
 end HopfIdeal
 

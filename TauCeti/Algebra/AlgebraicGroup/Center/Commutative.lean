@@ -17,15 +17,15 @@ more general fact that the coordinate Hopf algebra of every central closed subgr
 cocommutative.
 
 The cocommutativity result supplies the commutative-group-object structure on the Hopf spectrum,
-which is bundled here as `centerCommGroupScheme`. Its underlying group scheme is canonically
-identified with the previously constructed `centerGroupScheme`.
+registered here on the canonical `centerGroupScheme` and transparently bundled as
+`centerCommGroupScheme`.
 
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.isCocomm_quotient_centerDefiningIdeal`: the coordinate Hopf algebra of
   the center is cocommutative.
-* `TauCeti.CommHopfAlgCat.isMulCommutative_centerPointsSubgroup`: the points of the center form a
-  commutative group.
+* `TauCeti.CommHopfAlgCat.isCommMonObj_centerGroupScheme`: the canonical center group scheme is a
+  commutative group object.
 * `TauCeti.CommHopfAlgCat.centerCommGroupScheme`: the center bundled as a commutative group
   scheme.
 
@@ -54,27 +54,19 @@ noncomputable instance isCocomm_quotient_centerDefiningIdeal
     _root_.Coalgebra.IsCocomm k (quotient H (centerDefiningIdeal H)) :=
   (isCentral_centerDefiningIdeal H).isCocomm_quotient
 
-/-- The algebra-valued points of the center form a commutative group. -/
-noncomputable instance isMulCommutative_centerPointsSubgroup
-    (H : _root_.CommHopfAlgCat.{v} k) (A : CommAlgCat.{v} k) :
-    IsMulCommutative (centerPointsSubgroup H A) :=
-  (isCentral_centerDefiningIdeal H).isMulCommutative_quotientPointsSubgroup A
-
 section Scheme
 
 open AlgebraicGeometry
 
-/-- The center of an affine group scheme, bundled as a commutative group scheme. -/
-noncomputable def centerCommGroupScheme (H : _root_.CommHopfAlgCat.{u} k) :
-    CommGrp (Over (Spec (CommRingCat.of k))) :=
-  centralSubgroupCommGroupScheme H (centerDefiningIdeal H) (isCentral_centerDefiningIdeal H)
+/-- The canonical center group scheme is a commutative group object. -/
+instance isCommMonObj_centerGroupScheme (H : _root_.CommHopfAlgCat.{u} k) :
+    IsCommMonObj (centerGroupScheme H).X :=
+  (isCentral_centerDefiningIdeal H).isCommMonObj_quotientSpec
 
-/-- Forgetting commutativity from the bundled center recovers the center group scheme. -/
-@[simp]
-theorem centerCommGroupScheme_toGrp (H : _root_.CommHopfAlgCat.{u} k) :
-    (centerCommGroupScheme H).toGrp = centerGroupScheme H :=
-  centralSubgroupCommGroupScheme_toGrp H (centerDefiningIdeal H)
-    (isCentral_centerDefiningIdeal H)
+/-- The center of an affine group scheme, bundled as a commutative group scheme. -/
+noncomputable abbrev centerCommGroupScheme (H : _root_.CommHopfAlgCat.{u} k) :
+    CommGrp (Over (Spec (CommRingCat.of k))) :=
+  CommGrp.mk (centerGroupScheme H).X
 
 end Scheme
 
