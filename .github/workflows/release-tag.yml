@@ -89,6 +89,7 @@ jobs:
       mathlib-rev: ${{ steps.check.outputs.mathlib-rev }}
       kind: ${{ steps.check.outputs.kind }}
       exact: ${{ steps.check.outputs.exact }}
+      platform-independent: ${{ steps.check.outputs.platform-independent }}
     steps:
       # main's copy, sparse to scripts/, and never the target's tree: the target must not
       # be placed on disk in a job whose output the publisher trusts.
@@ -122,6 +123,7 @@ jobs:
     outputs:
       staged: ${{ steps.stage.outputs.staged }}
       reported-toolchain: ${{ steps.stage.outputs.toolchain }}
+      reported-platform-independent: ${{ steps.stage.outputs.platform-independent }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -288,9 +290,17 @@ jobs:
           # `fixedToolchain` or `bootstrap` would make Lake leave the toolchain out of it (which
           # put-staged is told to include). Either silent mismatch would publish under a scope
           # pr-build's `lake cache get --service ... --repo` never reads, i.e. a cache never hit.
-          if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
-            echo "::error::lakefile.toml no longer sets platformIndependent = true; publish-lake-cache must now pass --platform to lake cache put-staged"
-            exit 1
+          # Where ci.yml fails, this reports. ci.yml only ever builds main, where the
+          # declaration is present and its absence would mean someone had removed it. A
+          # release build reaches commits from before TauCeti declared it at all, on
+          # 2026-07-27, and those are publishable: they just belong under the
+          # platform-scoped key their own consumers derive. The publish job passes
+          # --platform exactly when this says to.
+          if grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+            echo "platform-independent=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::this commit predates platformIndependent; publishing under a platform-scoped key"
+            echo "platform-independent=false" >> "$GITHUB_OUTPUT"
           fi
           if grep -Eq '^[[:space:]]*(fixedToolchain|bootstrap)[[:space:]]*=[[:space:]]*true' lakefile.toml; then
             echo "::error::lakefile.toml now sets fixedToolchain or bootstrap; Lake drops the toolchain from the scope for such a package, so publish-lake-cache must stop passing --toolchain"
@@ -463,10 +473,29 @@ jobs:
           TARGET_TOOLCHAIN: ${{ steps.toolchain.outputs.target }}
           STAGING: ${{ runner.temp }}/lake-cache-staging
           # From `resolve`, never from `build`: code in the target must not be able to
-          # choose the revision key its artifacts are published under.
+          # choose the revision key its artifacts are published under. The same goes for
+          # whether the scope carries a platform; `build` only reports it so a
+          # disagreement is loud.
           REV: ${{ needs.resolve.outputs.sha }}
+          PLATFORM_INDEPENDENT: ${{ needs.resolve.outputs.platform-independent }}
+          REPORTED_PLATFORM_INDEPENDENT: ${{ needs.build.outputs.reported-platform-independent }}
         run: |
           set -euo pipefail
+          if [ "$PLATFORM_INDEPENDENT" != "$REPORTED_PLATFORM_INDEPENDENT" ]; then
+            echo "::error::resolve read platformIndependent=$PLATFORM_INDEPENDENT from the lakefile but the build reported $REPORTED_PLATFORM_INDEPENDENT"
+            exit 1
+          fi
+          # A platform-scoped upload has to name the triple its consumer will derive, and
+          # this runner is the machine that built the artifacts, so it is the one to ask.
+          PLATFORM_ARGS=()
+          if [ "$PLATFORM_INDEPENDENT" != "true" ]; then
+            case "$(uname -s)/$(uname -m)" in
+              Linux/x86_64) TRIPLE=x86_64-unknown-linux-gnu ;;
+              *) echo "::error::no known Lean target triple for $(uname -s)/$(uname -m); a platform-scoped release cannot be published from this runner"; exit 1 ;;
+            esac
+            PLATFORM_ARGS=(--platform "$TRIPLE")
+            echo "::notice::publishing under the platform-scoped key for $TRIPLE"
+          fi
           # Unlike ci.yml, a missing key FAILS here. That workflow stays green in an
           # unconfigured repository because a post-merge health check should; here it would
           # let the tag job publish a tag with nothing behind it.
@@ -492,7 +521,8 @@ jobs:
           TOML
           export LAKE_CONFIG="$CFG"
           elan run "$UPLOADER_TOOLCHAIN" lake cache put-staged "$STAGING" --service tauceti-r2 \
-            --repo TauCetiProject/TauCeti --rev "$REV" --toolchain "$TARGET_TOOLCHAIN"
+            --repo TauCetiProject/TauCeti --rev "$REV" --toolchain "$TARGET_TOOLCHAIN" \
+            "${PLATFORM_ARGS[@]}"
 
       # A published tag claims a complete cache, so read it back before anything claims it.
       # This also catches a partial upload, which `put-staged` alone would not report.
@@ -510,8 +540,10 @@ jobs:
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
           TARGET_TOOLCHAIN: ${{ steps.toolchain.outputs.target }}
           REV: ${{ needs.resolve.outputs.sha }}
+          PLATFORM_INDEPENDENT: ${{ needs.resolve.outputs.platform-independent }}
         run: |
           set -euo pipefail
+          TRIPLE=x86_64-unknown-linux-gnu
           if [ -z "$PUBLIC_ARTIFACT_ENDPOINT" ] || [ -z "$PUBLIC_REVISION_ENDPOINT" ]; then
             echo "::error::the public read endpoints are not configured, so the publish cannot be verified"
             exit 1
@@ -519,7 +551,13 @@ jobs:
           # The scope segment Lake writes: `/` becomes `--` and `:` becomes `---`.
           scope="${TARGET_TOOLCHAIN//\//--}"
           scope="${scope//:/---}"
-          url="$PUBLIC_REVISION_ENDPOINT/TauCetiProject/TauCeti/tc/$scope/$REV.jsonl"
+          # A platform-dependent package's key carries `pt/<triple>/` before `tc/`, which
+          # is exactly what its consumer's own `lake cache get --repo` asks for.
+          prefix="TauCetiProject/TauCeti"
+          if [ "$PLATFORM_INDEPENDENT" != "true" ]; then
+            prefix="$prefix/pt/$TRIPLE"
+          fi
+          url="$PUBLIC_REVISION_ENDPOINT/$prefix/tc/$scope/$REV.jsonl"
           echo "reading back $url"
           curl -fsS "$url" -o "$RUNNER_TEMP/revision.jsonl" \
             || { echo "::error::no revision mapping was published at $url"; exit 1; }

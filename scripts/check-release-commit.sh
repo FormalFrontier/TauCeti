@@ -198,8 +198,15 @@ fi
 # platform-scoped publish before it can be tagged. See docs/toolchain-tags.md.
 contents "$REPO" "lakefile.toml" "$SHA" "$WORK/lakefile" \
   || fail "cannot read lakefile.toml at $SHA"
-grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' "$WORK/lakefile" \
-  || fail "the lakefile at $SHA does not declare platformIndependent = true, so Lake would scope its cache upload by platform while the publish job scopes it without one; that release needs a platform-scoped publish, which this workflow does not do"
+if grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' "$WORK/lakefile"; then
+  PLATFORM_INDEPENDENT=true
+else
+  # TauCeti only declared `platformIndependent` on 2026-07-27, and every release older
+  # than that is platform-scoped. That is publishable, it just has to be published under
+  # the scope such a consumer reads: `<repo>/pt/<triple>/tc/<toolchain>/<rev>`.
+  PLATFORM_INDEPENDENT=false
+  note "the lakefile at $SHA does not declare platformIndependent; this release publishes under a platform-scoped key"
+fi
 if grep -Eq '^[[:space:]]*(fixedToolchain|bootstrap)[[:space:]]*=[[:space:]]*true' "$WORK/lakefile"; then
   fail "the lakefile at $SHA sets fixedToolchain or bootstrap, so Lake drops the toolchain from the upload scope while the publish job supplies one"
 fi
@@ -225,4 +232,5 @@ emit "toolchain=$TOOLCHAIN"
 emit "mathlib-rev=$M"
 emit "kind=$KIND"
 emit "exact=$EXACT"
+emit "platform-independent=$PLATFORM_INDEPENDENT"
 echo "RELEASE-COMMIT: PASS -- $SHA is Tau Ceti's $RELEASE release commit ($KIND, exact=$EXACT)"

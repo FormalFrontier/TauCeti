@@ -71,12 +71,56 @@ class StagingBlock(unittest.TestCase):
             found[path.name] = matches[0]
         return found
 
-    def test_the_staging_body_is_identical(self):
+    def test_the_staging_commands_are_identical(self):
+        """The commands that decide WHAT is staged must not drift.
+
+        An explicit list rather than the whole body, because the two publishers
+        legitimately differ on exactly one point: `ci.yml` FAILS when the lakefile does
+        not declare `platformIndependent`, since it only ever builds main, where its
+        absence would mean someone had removed it, while `release-tag.yml` reaches commits
+        from before TauCeti declared it at all and publishes those under the
+        platform-scoped key their own consumers derive. Listing the essential lines keeps
+        that one difference from being a licence for any other."""
+        essential = [
+            "lake build >/dev/null",
+            "lake build --no-build -o .lake/outputs.jsonl",
+            'echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"',
+            'lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"',
+            'TOOLCHAIN="$(lake env printenv ELAN_TOOLCHAIN || true)"',
+            "printf 'toolchain=%s\\n' \"$TOOLCHAIN\" >> \"$GITHUB_OUTPUT\"",
+            'echo "staged=true" >> "$GITHUB_OUTPUT"',
+        ]
         found = self.matched(STAGE, "staging")
-        first, second = list(found.values())
-        self.assertEqual(first, second,
-                         "ci.yml and release-tag.yml stage differently; the upload scope and "
-                         "the set of staged artifacts must be decided the same way in both")
+        for name, block in found.items():
+            lines = [line.strip() for line in block.splitlines()]
+            for line in essential:
+                with self.subTest(workflow=name, line=line):
+                    self.assertIn(line, lines)
+
+    def test_the_lake_commands_are_the_same_set(self):
+        # Anything invoking `lake` inside the staging block decides what ends up staged, so
+        # neither publisher may gain or lose one without the other.
+        found = self.matched(STAGE, "staging")
+        sets = []
+        for block in found.values():
+            sets.append(sorted(line.strip() for line in block.splitlines()
+                               if line.strip().startswith("lake ")))
+        self.assertEqual(sets[0], sets[1])
+
+    def test_both_publishers_still_guard_the_toolchain_scope(self):
+        # `fixedToolchain` or `bootstrap` would make Lake drop the toolchain from the scope
+        # while both publishers pass --toolchain, so neither may stop checking for them.
+        for path in PUBLISHERS:
+            self.assertIn("fixedToolchain|bootstrap", body(path), path.name)
+
+    def test_only_the_release_publisher_can_scope_by_platform(self):
+        # ci.yml publishes main, which always declares platformIndependent; if it ever grew
+        # a --platform path that would mean main had stopped declaring it, and the assertion
+        # that catches that is the thing being bypassed.
+        ci, release = (body(p) for p in PUBLISHERS)
+        self.assertIn("--platform", release)
+        self.assertNotIn('--platform "', ci)
+        self.assertNotIn("PLATFORM_ARGS", ci)
 
     def test_the_staged_tree_validation_is_identical(self):
         found = self.matched(VALIDATE, "staged-tree validation")
@@ -121,10 +165,11 @@ class UploadScope(unittest.TestCase):
                 self.assertIn("--service tauceti-r2", call)
                 self.assertIn("--repo TauCetiProject/TauCeti", call)
                 self.assertIn("--toolchain", call)
-                # `platformIndependent = true` is what makes Lake leave the platform out of
-                # the scope, and the staging step asserts it. Passing --platform here would
-                # publish under a scope pr-build's `lake cache get` never reads.
-                self.assertNotIn("--platform", call)
+        # ci.yml must never pass a platform: main declares `platformIndependent = true`, so
+        # a platform in the scope is one `pr-build`'s `lake cache get --repo` never reads.
+        # release-tag.yml passes it only through an array that is empty for such a target.
+        calls = dict(self.invocations())
+        self.assertNotIn("--platform", calls["ci.yml"])
 
     def test_the_release_publisher_names_a_revision_explicitly(self):
         # ci.yml may take the revision from the run; the release publisher must not, because
