@@ -105,7 +105,7 @@ variable {F : G →* G} {F' : G' →* G'}
 
 The equation is not symmetric in `ψ` and `ψ.symm`, so this is what makes the transport of the fixed
 subgroup two-sided. -/
-theorem MulEquiv.symm_comp_eq_comp_symm (ψ : G ≃* G')
+theorem _root_.MulEquiv.symm_comp_eq_comp_symm (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
     (ψ.symm : G' →* G).comp F' = F.comp (ψ.symm : G' →* G) := by
   ext y
@@ -115,7 +115,7 @@ theorem MulEquiv.symm_comp_eq_comp_symm (ψ : G ≃* G')
 variable {G'' : Type*} [Group G''] {F'' : G'' →* G''}
 
 /-- Intertwining relations compose. -/
-theorem MulEquiv.trans_comp_eq_comp_trans {ψ : G ≃* G'} {χ : G' ≃* G''}
+theorem _root_.MulEquiv.trans_comp_eq_comp_trans {ψ : G ≃* G'} {χ : G' ≃* G''}
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G'))
     (hχ : (χ : G' →* G'').comp F' = F''.comp (χ : G' →* G'')) :
     ((ψ.trans χ : G ≃* G'') : G →* G'').comp F = F''.comp ((ψ.trans χ : G ≃* G'') : G →* G'') := by
@@ -182,25 +182,25 @@ A consumer usually has an isomorphism `ψ : G ≃* G'` and an endomorphism of `G
 with `F'` exactly when `F'` is that conjugate. -/
 
 /-- The endomorphism of `G'` obtained by conjugating an endomorphism of `G` by an isomorphism. -/
-def MulEquiv.endCongr (ψ : G ≃* G') : (G →* G) ≃ (G' →* G') :=
+def _root_.MulEquiv.endCongr (ψ : G ≃* G') : (G →* G) ≃ (G' →* G') :=
   (MulEquiv.monoidHomCongrLeftEquiv (N := G) ψ).trans (MulEquiv.monoidHomCongrRightEquiv ψ)
 
 @[simp]
-theorem MulEquiv.endCongr_apply (ψ : G ≃* G') (F : G →* G) (y : G') :
+theorem _root_.MulEquiv.endCongr_apply (ψ : G ≃* G') (F : G →* G) (y : G') :
     MulEquiv.endCongr ψ F y = ψ (F (ψ.symm y)) := by
   simp only [MulEquiv.endCongr, Equiv.trans_apply, MulEquiv.monoidHomCongrLeftEquiv_apply,
     MulEquiv.monoidHomCongrRightEquiv_apply, MonoidHom.coe_comp, Function.comp_apply,
     MulEquiv.coe_toMonoidHom]
 
 /-- An isomorphism intertwines an endomorphism with its own conjugate. -/
-theorem MulEquiv.comp_eq_endCongr_comp (ψ : G ≃* G') (F : G →* G) :
+theorem _root_.MulEquiv.comp_eq_endCongr_comp (ψ : G ≃* G') (F : G →* G) :
     (ψ : G →* G').comp F = (MulEquiv.endCongr ψ F).comp (ψ : G →* G') := by
   ext x
   simp
 
 /-- An isomorphism intertwines `F` with `F'` exactly when `F'` is the conjugate of `F`, so no
 generality is lost by conjugating. -/
-theorem MulEquiv.comp_eq_comp_iff_eq_endCongr (ψ : G ≃* G') :
+theorem _root_.MulEquiv.comp_eq_comp_iff_eq_endCongr (ψ : G ≃* G') :
     (ψ : G →* G').comp F = F'.comp (ψ : G →* G') ↔ MulEquiv.endCongr ψ F = F' := by
   refine ⟨fun h => MonoidHom.ext fun y => ?_, fun h => h ▸ MulEquiv.comp_eq_endCongr_comp ψ F⟩
   simpa using DFunLike.congr_fun h (ψ.symm y)
