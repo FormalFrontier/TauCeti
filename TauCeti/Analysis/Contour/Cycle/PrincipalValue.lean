@@ -107,7 +107,12 @@ def HasCauchyPV (C : Cycle) (f : ℂ → ℂ) (v : ℂ) : Prop :=
   CauchyPVExists C f ∧ cauchyPV f C = v
 
 /-- `Cycle.HasCauchyPV` unfolded into its two clauses — existence along every curve of the
-canonical support, and the value — so consumers need not unfold the definition. -/
+canonical support, and the value — so consumers need not unfold the definition.
+
+Deliberately not `@[simp]`: it unfolds the predicate, so it would take the left-hand sides of
+`hasCauchyPV_of_iff`, `hasCauchyPV_zero` and `hasCauchyPV_neg_iff` out of simp-normal form.
+Those three are the normal forms `simp` should reach for — on a generator, on `0`, and under
+negation — and they carry the `@[simp]` annotation instead. -/
 theorem hasCauchyPV_iff {v : ℂ} :
     HasCauchyPV C f v ↔ CauchyPVExists C f ∧ cauchyPV f C = v := Iff.rfl
 
