@@ -17,7 +17,7 @@ public import TauCeti.KnotTheory.Grid.Rotation
 # The grid `J`-function
 
 This file adds the finite point-pair count used in the Maslov and Alexander gradings of grid
-homology. For finite sets of grid points, `GridPoint.Icount r s t` counts the ordered pairs
+homology. For finite sets of grid points, `GridPoint.ICount r s t` counts the ordered pairs
 `(p, q) ∈ s × t` with `r p q`; `GridPoint.I s t` is its value at the strict southwest relation,
 and `GridPoint.J s t` is the symmetrized half-count. Keeping the count parametric in the
 relation lets the pairing against markings at the centres of their squares
@@ -29,12 +29,12 @@ marking point sets, which the Maslov and Alexander gradings are then assembled f
 ## Main definitions
 
 * `TauCeti.GridPoint.IsSouthWest`: the strict southwest relation on grid squares.
-* `TauCeti.GridPoint.Icount`: the ordered count of pairs of grid points related by a given
+* `TauCeti.GridPoint.ICount`: the ordered count of pairs of grid points related by a given
   decidable relation.
-* `TauCeti.GridPoint.I`: the ordered southwest pair count, `Icount` at the strict southwest
+* `TauCeti.GridPoint.I`: the ordered southwest pair count, `ICount` at the strict southwest
   relation.
-* `TauCeti.GridPoint.JNumCount`, `TauCeti.GridPoint.JCount`: the two-relation numerator and its
-  rational half, shared by the strict and marking pairings.
+* `TauCeti.GridPoint.JNumCount`, `TauCeti.GridPoint.JCount`: the relation-parametric numerator
+  and its rational half, shared by the strict and marking pairings.
 * `TauCeti.GridPoint.JNum`: the numerator of the symmetrized `J`-function.
 * `TauCeti.GridPoint.J`: the rational-valued symmetrized `J`-function.
 * `TauCeti.GridState.J`: the specialized form for a pair of grid states.
@@ -105,75 +105,75 @@ theorem not_isSouthWest_swap {p q : Fin n × Fin n} (h : IsSouthWest p q) :
 are the strict southwest relation `GridPoint.IsSouthWest`, giving the `J`-function of this file,
 and the weak product order, giving the pairing of grid points against markings sitting at the
 centres of their squares. -/
-def Icount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+def ICount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
     (s t : Finset (Fin n × Fin n)) : ℕ :=
   ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => r pq.1 pq.2).card
 
 variable (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
 
 /-- The ordered relation count as the cardinality of the filtered product of point sets. -/
-theorem Icount_def (s t : Finset (Fin n × Fin n)) :
-    Icount r s t =
+theorem ICount_def (s t : Finset (Fin n × Fin n)) :
+    ICount r s t =
       ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => r pq.1 pq.2).card :=
-  by simp only [Icount]
+  by simp only [ICount]
 
 /-- The ordered relation count is zero when the left point set is empty. -/
 @[simp]
-theorem Icount_empty_left (s : Finset (Fin n × Fin n)) : Icount r ∅ s = 0 := by
-  simp [Icount]
+theorem ICount_empty_left (s : Finset (Fin n × Fin n)) : ICount r ∅ s = 0 := by
+  simp [ICount]
 
 /-- The ordered relation count is zero when the right point set is empty. -/
 @[simp]
-theorem Icount_empty_right (s : Finset (Fin n × Fin n)) : Icount r s ∅ = 0 := by
-  simp [Icount]
+theorem ICount_empty_right (s : Finset (Fin n × Fin n)) : ICount r s ∅ = 0 := by
+  simp [ICount]
 
 /-- The ordered relation count of singleton point sets records the single comparison. -/
 @[simp]
-theorem Icount_singleton_singleton (p q : Fin n × Fin n) :
-    Icount r {p} {q} = if r p q then 1 else 0 := by
-  simp only [Icount, Finset.singleton_product_singleton, Finset.filter_singleton]
+theorem ICount_singleton_singleton (p q : Fin n × Fin n) :
+    ICount r {p} {q} = if r p q then 1 else 0 := by
+  simp only [ICount, Finset.singleton_product_singleton, Finset.filter_singleton]
   by_cases h : r p q
   · simp only [h, ite_true, Finset.card_singleton]
   · simp only [h, ite_false, Finset.card_empty]
 
 /-- The ordered relation count is additive in the left point set over disjoint unions. -/
-theorem Icount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    Icount r (s₁ ∪ s₂) t = Icount r s₁ t + Icount r s₂ t := by
-  dsimp [Icount]
+theorem ICount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
+    ICount r (s₁ ∪ s₂) t = ICount r s₁ t + ICount r s₂ t := by
+  dsimp [ICount]
   rw [Finset.union_product, Finset.filter_union, Finset.card_union_of_disjoint]
   exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inl h))
 
 /-- The ordered relation count is additive in the right point set over disjoint unions. -/
-theorem Icount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    Icount r s (t₁ ∪ t₂) = Icount r s t₁ + Icount r s t₂ := by
-  dsimp [Icount]
+theorem ICount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
+    ICount r s (t₁ ∪ t₂) = ICount r s t₁ + ICount r s t₂ := by
+  dsimp [ICount]
   rw [Finset.product_union, Finset.filter_union, Finset.card_union_of_disjoint]
   exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inr h))
 
 /-- The ordered relation count after inserting a fresh point on the left. -/
-theorem Icount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    Icount r (insert p s) t = Icount r {p} t + Icount r s t := by
-  rw [← Finset.singleton_union, Icount_union_left]
+theorem ICount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
+    ICount r (insert p s) t = ICount r {p} t + ICount r s t := by
+  rw [← Finset.singleton_union, ICount_union_left]
   exact Finset.disjoint_singleton_left.mpr h
 
 /-- The ordered relation count after inserting a fresh point on the right. -/
-theorem Icount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    Icount r s (insert p t) = Icount r s {p} + Icount r s t := by
-  rw [← Finset.singleton_union, Icount_union_right]
+theorem ICount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
+    ICount r s (insert p t) = ICount r s {p} + ICount r s t := by
+  rw [← Finset.singleton_union, ICount_union_right]
   exact Finset.disjoint_singleton_left.mpr h
 
 /-- The ordered relation count is monotone in its left point set. -/
-theorem Icount_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
-    Icount r s₁ t ≤ Icount r s₂ t := by
-  dsimp [Icount]
+theorem ICount_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
+    ICount r s₁ t ≤ ICount r s₂ t := by
+  dsimp [ICount]
   exact Finset.card_le_card fun pq hpq => by
     simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
     exact ⟨⟨h hpq.1.1, hpq.1.2⟩, hpq.2⟩
 
 /-- The ordered relation count is monotone in its right point set. -/
-theorem Icount_mono_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : t₁ ⊆ t₂) :
-    Icount r s t₁ ≤ Icount r s t₂ := by
-  dsimp [Icount]
+theorem ICount_mono_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : t₁ ⊆ t₂) :
+    ICount r s t₁ ≤ ICount r s t₂ := by
+  dsimp [ICount]
   exact Finset.card_le_card fun pq hpq => by
     simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
     exact ⟨⟨hpq.1.1, h hpq.1.2⟩, hpq.2⟩
@@ -186,10 +186,10 @@ private theorem prodMap_swap_injective :
 
 /-- The ordered relation count of a relation invariant under the diagonal reflection is invariant
 under reflecting both point sets across the diagonal. -/
-theorem Icount_image_swap (hr : ∀ p q : Fin n × Fin n, r p.swap q.swap ↔ r p q)
+theorem ICount_image_swap (hr : ∀ p q : Fin n × Fin n, r p.swap q.swap ↔ r p q)
     (s t : Finset (Fin n × Fin n)) :
-    Icount r (s.image Prod.swap) (t.image Prod.swap) = Icount r s t := by
-  rw [Icount_def, Icount_def, ← Finset.prodMap_image_product Prod.swap Prod.swap s t,
+    ICount r (s.image Prod.swap) (t.image Prod.swap) = ICount r s t := by
+  rw [ICount_def, ICount_def, ← Finset.prodMap_image_product Prod.swap Prod.swap s t,
     Finset.filter_image, Finset.card_image_of_injective _ prodMap_swap_injective]
   congr 1
   exact Finset.filter_congr fun pq _ => hr pq.1 pq.2
@@ -197,8 +197,8 @@ theorem Icount_image_swap (hr : ∀ p q : Fin n × Fin n, r p.swap q.swap ↔ r 
 /-- The ordered relation count of two graph point sets counts the column pairs whose two
 prescribed grid points are related. This graph-level statement does not require either row
 assignment to be a permutation. -/
-theorem Icount_graph_eq_card (f g : Fin n → Fin n) :
-    Icount r (Finset.univ.image fun c : Fin n => (c, f c))
+theorem ICount_graph_eq_card (f g : Fin n → Fin n) :
+    ICount r (Finset.univ.image fun c : Fin n => (c, f c))
         (Finset.univ.image fun c : Fin n => (c, g c)) =
       (Finset.univ.filter fun p : Fin n × Fin n => r (p.1, f p.1) (p.2, g p.2)).card := by
   classical
@@ -206,7 +206,7 @@ theorem Icount_graph_eq_card (f g : Fin n → Fin n) :
     fun _ _ h => congrArg Prod.fst h
   have hfg : Function.Injective (fun c : Fin n => (c, g c)) :=
     fun _ _ h => congrArg Prod.fst h
-  rw [Icount_def,
+  rw [ICount_def,
     ← Finset.prodMap_image_product (fun c : Fin n => (c, f c)) (fun c : Fin n => (c, g c)),
     Finset.filter_image, Finset.card_image_of_injective _ (hff.prodMap hfg),
     Finset.univ_product_univ]
@@ -214,14 +214,14 @@ theorem Icount_graph_eq_card (f g : Fin n → Fin n) :
 
 /-- The ordered count of pairs `(p, q) ∈ s × t` with `p` strictly southwest of `q`. -/
 @[expose] def I (s t : Finset (Fin n × Fin n)) : ℕ :=
-  Icount IsSouthWest s t
+  ICount IsSouthWest s t
 
 /-- The ordered southwest count as the cardinality of the filtered product of point sets. -/
 theorem I_def (s t : Finset (Fin n × Fin n)) :
     I s t =
       ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) =>
         IsSouthWest pq.1 pq.2).card :=
-  Icount_def IsSouthWest s t
+  ICount_def IsSouthWest s t
 
 /-- Membership in the finite set counted by `GridPoint.I`. -/
 theorem mem_filter_product_isSouthWest (s t : Finset (Fin n × Fin n))
@@ -234,18 +234,18 @@ theorem mem_filter_product_isSouthWest (s t : Finset (Fin n × Fin n))
 /-- The ordered southwest count is zero when the left point set is empty. -/
 @[simp]
 theorem I_empty_left (s : Finset (Fin n × Fin n)) : I ∅ s = 0 :=
-  Icount_empty_left _ s
+  ICount_empty_left _ s
 
 /-- The ordered southwest count is zero when the right point set is empty. -/
 @[simp]
 theorem I_empty_right (s : Finset (Fin n × Fin n)) : I s ∅ = 0 :=
-  Icount_empty_right _ s
+  ICount_empty_right _ s
 
 /-- The ordered southwest count of singleton point sets is one exactly for a southwest pair. -/
 @[simp]
 theorem I_singleton_singleton (p q : Fin n × Fin n) :
     I {p} {q} = if IsSouthWest p q then 1 else 0 :=
-  Icount_singleton_singleton _ p q
+  ICount_singleton_singleton _ p q
 
 /-- No point contributes a southwest pair with itself. -/
 theorem I_singleton_self (p : Fin n × Fin n) : I {p} {p} = 0 := by
@@ -254,142 +254,148 @@ theorem I_singleton_self (p : Fin n × Fin n) : I {p} {p} = 0 := by
 /-- The ordered southwest count is additive in the left point set over disjoint unions. -/
 theorem I_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
     I (s₁ ∪ s₂) t = I s₁ t + I s₂ t :=
-  Icount_union_left _ h
+  ICount_union_left _ h
 
 /-- The ordered southwest count is additive in the right point set over disjoint unions. -/
 theorem I_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
     I s (t₁ ∪ t₂) = I s t₁ + I s t₂ :=
-  Icount_union_right _ h
+  ICount_union_right _ h
 
 /-- The ordered southwest count after inserting a fresh point on the left. -/
 theorem I_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
     I (insert p s) t = I {p} t + I s t :=
-  Icount_insert_left _ h
+  ICount_insert_left _ h
 
 /-- The ordered southwest count after inserting a fresh point on the right. -/
 theorem I_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
     I s (insert p t) = I s {p} + I s t :=
-  Icount_insert_right _ h
+  ICount_insert_right _ h
 
-/-- The numerator formed from two directed relation counts. The first relation compares the left
-point set to the right one, while the second compares the right point set to the left one. -/
-def JNumCount (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
-    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) : ℕ :=
-  Icount r₁ s t + Icount r₂ t s
+/-- The numerator formed from a variable directed relation count and the reverse strict southwest
+count. This is the common shape of the strict point pairing and the point-to-marking pairing. -/
+def JNumCount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r] (s t : Finset (Fin n × Fin n)) : ℕ :=
+  ICount r s t + I t s
 
-/-- The rational pairing obtained by halving a two-relation numerator. -/
-def JCount (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
-    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) : ℚ :=
-  ((JNumCount r₁ r₂ s t : ℕ) : ℚ) / 2
+/-- The rational pairing obtained by halving a relation-parametric numerator. -/
+def JCount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r] (s t : Finset (Fin n × Fin n)) : ℚ :=
+  ((JNumCount r s t : ℕ) : ℚ) / 2
 
-/-- A two-relation numerator is the sum of its two directed counts. -/
-theorem JNumCount_def (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
-    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) :
-    JNumCount r₁ r₂ s t = Icount r₁ s t + Icount r₂ t s := by
+/-- A relation-parametric numerator is the sum of its two directed counts. -/
+theorem JNumCount_def (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r] (s t : Finset (Fin n × Fin n)) :
+    JNumCount r s t = ICount r s t + I t s := by
   simp only [JNumCount]
 
-/-- A two-relation rational pairing is half its numerator. -/
-theorem JCount_def (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
-    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) :
-    JCount r₁ r₂ s t = ((JNumCount r₁ r₂ s t : ℕ) : ℚ) / 2 := by
+/-- A relation-parametric rational pairing is half its numerator. -/
+theorem JCount_def (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r] (s t : Finset (Fin n × Fin n)) :
+    JCount r s t = ((JNumCount r s t : ℕ) : ℚ) / 2 := by
   simp only [JCount]
 
-variable (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
-  [DecidableRel r₁] [DecidableRel r₂]
+variable (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
 
-/-- A two-relation numerator vanishes when the left point set is empty. -/
+/-- A relation-parametric numerator vanishes when the left point set is empty. -/
 @[simp]
-theorem JNumCount_empty_left (t : Finset (Fin n × Fin n)) : JNumCount r₁ r₂ ∅ t = 0 := by
+theorem JNumCount_empty_left (t : Finset (Fin n × Fin n)) : JNumCount r ∅ t = 0 := by
   simp [JNumCount]
 
-/-- A two-relation numerator vanishes when the right point set is empty. -/
+/-- A relation-parametric numerator vanishes when the right point set is empty. -/
 @[simp]
-theorem JNumCount_empty_right (s : Finset (Fin n × Fin n)) : JNumCount r₁ r₂ s ∅ = 0 := by
+theorem JNumCount_empty_right (s : Finset (Fin n × Fin n)) : JNumCount r s ∅ = 0 := by
   simp [JNumCount]
 
-/-- A two-relation numerator is additive in its left point set over disjoint unions. -/
+/-- A relation-parametric numerator is additive in its left point set over disjoint unions. -/
 theorem JNumCount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    JNumCount r₁ r₂ (s₁ ∪ s₂) t =
-      JNumCount r₁ r₂ s₁ t + JNumCount r₁ r₂ s₂ t := by
-  simp only [JNumCount, Icount_union_left r₁ h, Icount_union_right r₂ h]
+    JNumCount r (s₁ ∪ s₂) t = JNumCount r s₁ t + JNumCount r s₂ t := by
+  simp only [JNumCount, ICount_union_left r h, I_union_right h]
   ac_rfl
 
-/-- A two-relation numerator is additive in its right point set over disjoint unions. -/
+/-- A relation-parametric numerator is additive in its right point set over disjoint unions. -/
 theorem JNumCount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    JNumCount r₁ r₂ s (t₁ ∪ t₂) =
-      JNumCount r₁ r₂ s t₁ + JNumCount r₁ r₂ s t₂ := by
-  simp only [JNumCount, Icount_union_right r₁ h, Icount_union_left r₂ h]
+    JNumCount r s (t₁ ∪ t₂) = JNumCount r s t₁ + JNumCount r s t₂ := by
+  simp only [JNumCount, ICount_union_right r h, I_union_left h]
   ac_rfl
 
-/-- A two-relation numerator after inserting a fresh point on the left. -/
+/-- A relation-parametric numerator after inserting a fresh point on the left. -/
 theorem JNumCount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    JNumCount r₁ r₂ (insert p s) t = JNumCount r₁ r₂ {p} t + JNumCount r₁ r₂ s t := by
+    JNumCount r (insert p s) t = JNumCount r {p} t + JNumCount r s t := by
   rw [← Finset.singleton_union, JNumCount_union_left]
   exact Finset.disjoint_singleton_left.mpr h
 
-/-- A two-relation numerator after inserting a fresh point on the right. -/
+/-- A relation-parametric numerator after inserting a fresh point on the right. -/
 theorem JNumCount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    JNumCount r₁ r₂ s (insert p t) = JNumCount r₁ r₂ s {p} + JNumCount r₁ r₂ s t := by
+    JNumCount r s (insert p t) = JNumCount r s {p} + JNumCount r s t := by
   rw [← Finset.singleton_union, JNumCount_union_right]
   exact Finset.disjoint_singleton_left.mpr h
 
-/-- A two-relation rational pairing vanishes when the left point set is empty. -/
+/-- A relation-parametric rational pairing vanishes when the left point set is empty. -/
 @[simp]
-theorem JCount_empty_left (t : Finset (Fin n × Fin n)) : JCount r₁ r₂ ∅ t = 0 := by
+theorem JCount_empty_left (t : Finset (Fin n × Fin n)) : JCount r ∅ t = 0 := by
   simp [JCount]
 
-/-- A two-relation rational pairing vanishes when the right point set is empty. -/
+/-- A relation-parametric rational pairing vanishes when the right point set is empty. -/
 @[simp]
-theorem JCount_empty_right (s : Finset (Fin n × Fin n)) : JCount r₁ r₂ s ∅ = 0 := by
+theorem JCount_empty_right (s : Finset (Fin n × Fin n)) : JCount r s ∅ = 0 := by
   simp [JCount]
 
-/-- A two-relation rational pairing is additive in its left point set over disjoint unions. -/
+/-- A relation-parametric rational pairing is additive in its left point set over disjoint
+unions. -/
 theorem JCount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    JCount r₁ r₂ (s₁ ∪ s₂) t = JCount r₁ r₂ s₁ t + JCount r₁ r₂ s₂ t := by
-  rw [JCount, JCount, JCount, JNumCount_union_left r₁ r₂ h]
+    JCount r (s₁ ∪ s₂) t = JCount r s₁ t + JCount r s₂ t := by
+  rw [JCount, JCount, JCount, JNumCount_union_left r h]
   push_cast
   ring
 
-/-- A two-relation rational pairing is additive in its right point set over disjoint unions. -/
+/-- A relation-parametric rational pairing is additive in its right point set over disjoint
+unions. -/
 theorem JCount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    JCount r₁ r₂ s (t₁ ∪ t₂) = JCount r₁ r₂ s t₁ + JCount r₁ r₂ s t₂ := by
-  rw [JCount, JCount, JCount, JNumCount_union_right r₁ r₂ h]
+    JCount r s (t₁ ∪ t₂) = JCount r s t₁ + JCount r s t₂ := by
+  rw [JCount, JCount, JCount, JNumCount_union_right r h]
   push_cast
   ring
 
-/-- A two-relation rational pairing after inserting a fresh point on the left. -/
+/-- A relation-parametric rational pairing after inserting a fresh point on the left. -/
 theorem JCount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    JCount r₁ r₂ (insert p s) t = JCount r₁ r₂ {p} t + JCount r₁ r₂ s t := by
+    JCount r (insert p s) t = JCount r {p} t + JCount r s t := by
   rw [← Finset.singleton_union, JCount_union_left]
   exact Finset.disjoint_singleton_left.mpr h
 
-/-- A two-relation rational pairing after inserting a fresh point on the right. -/
+/-- Splitting a two-point insertion out of the left argument of a relation-parametric pairing. -/
+theorem JCount_insert_pair_left {S P : Finset (Fin n × Fin n)} {a b : Fin n × Fin n}
+    (hab : a ∉ insert b S) (hb : b ∉ S) :
+    JCount r (insert a (insert b S)) P =
+      JCount r {a} P + JCount r {b} P + JCount r S P := by
+  rw [JCount_insert_left r hab, JCount_insert_left r hb, add_assoc]
+
+/-- A relation-parametric rational pairing after inserting a fresh point on the right. -/
 theorem JCount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    JCount r₁ r₂ s (insert p t) = JCount r₁ r₂ s {p} + JCount r₁ r₂ s t := by
+    JCount r s (insert p t) = JCount r s {p} + JCount r s t := by
   rw [← Finset.singleton_union, JCount_union_right]
   exact Finset.disjoint_singleton_left.mpr h
 
-/-- A two-relation numerator is invariant under diagonal reflection when both relations are. -/
+/-- A relation-parametric numerator is invariant under diagonal reflection when its variable
+relation is. -/
 theorem JNumCount_image_swap
-    (hr₁ : ∀ p q : Fin n × Fin n, r₁ p.swap q.swap ↔ r₁ p q)
-    (hr₂ : ∀ p q : Fin n × Fin n, r₂ p.swap q.swap ↔ r₂ p q)
+    (hr : ∀ p q : Fin n × Fin n, r p.swap q.swap ↔ r p q)
     (s t : Finset (Fin n × Fin n)) :
-    JNumCount r₁ r₂ (s.image Prod.swap) (t.image Prod.swap) = JNumCount r₁ r₂ s t := by
-  rw [JNumCount, JNumCount, Icount_image_swap r₁ hr₁, Icount_image_swap r₂ hr₂]
+    JNumCount r (s.image Prod.swap) (t.image Prod.swap) = JNumCount r s t := by
+  rw [JNumCount, JNumCount, ICount_image_swap r hr, I, I,
+    ICount_image_swap IsSouthWest (fun _ _ => and_comm)]
 
-/-- A two-relation rational pairing is invariant under diagonal reflection when both relations
-are. -/
+/-- A relation-parametric rational pairing is invariant under diagonal reflection when its
+variable relation is. -/
 theorem JCount_image_swap
-    (hr₁ : ∀ p q : Fin n × Fin n, r₁ p.swap q.swap ↔ r₁ p q)
-    (hr₂ : ∀ p q : Fin n × Fin n, r₂ p.swap q.swap ↔ r₂ p q)
+    (hr : ∀ p q : Fin n × Fin n, r p.swap q.swap ↔ r p q)
     (s t : Finset (Fin n × Fin n)) :
-    JCount r₁ r₂ (s.image Prod.swap) (t.image Prod.swap) = JCount r₁ r₂ s t := by
-  rw [JCount, JCount, JNumCount_image_swap r₁ r₂ hr₁ hr₂]
+    JCount r (s.image Prod.swap) (t.image Prod.swap) = JCount r s t := by
+  rw [JCount, JCount, JNumCount_image_swap r hr]
 
 /-- The numerator of the symmetrized `J`-function. Keeping the numerator as a natural number is
 convenient for parity and integrality lemmas before passing to rational values. -/
 @[expose] def JNum (s t : Finset (Fin n × Fin n)) : ℕ :=
-  JNumCount IsSouthWest IsSouthWest s t
+  JNumCount IsSouthWest s t
 
 /-- The numerator of `J` is the sum of the two ordered southwest counts. -/
 theorem JNum_def (s t : Finset (Fin n × Fin n)) : JNum s t = I s t + I t s :=
@@ -403,7 +409,7 @@ theorem JNum_self (s : Finset (Fin n × Fin n)) : JNum s s = 2 * I s s := by
 
 /-- The rational-valued symmetrized grid `J`-function. -/
 @[expose] def J (s t : Finset (Fin n × Fin n)) : ℚ :=
-  JCount IsSouthWest IsSouthWest s t
+  JCount IsSouthWest s t
 
 /-- The rational-valued `J`-function is half of its symmetrized numerator. -/
 theorem J_def (s t : Finset (Fin n × Fin n)) : GridPoint.J s t = ((JNum s t : ℕ) : ℚ) / 2 :=
@@ -420,7 +426,7 @@ theorem J_self (s : Finset (Fin n × Fin n)) : GridPoint.J s s = (I s s : ℚ) :
 
 /-- The numerator of `J` is symmetric. -/
 theorem JNum_comm (s t : Finset (Fin n × Fin n)) : JNum s t = JNum t s := by
-  simp only [JNum, JNumCount, Nat.add_comm]
+  simp only [JNum, JNumCount, I, Nat.add_comm]
 
 /-- The grid `J`-function is symmetric. -/
 theorem J_comm (s t : Finset (Fin n × Fin n)) : GridPoint.J s t = GridPoint.J t s := by
@@ -428,63 +434,63 @@ theorem J_comm (s t : Finset (Fin n × Fin n)) : GridPoint.J s t = GridPoint.J t
 
 /-- The numerator of `J` vanishes when the left point set is empty. -/
 @[simp]
-theorem JNum_empty_left (s : Finset (Fin n × Fin n)) : JNum ∅ s = 0 := by
-  exact JNumCount_empty_left _ _ s
+theorem JNum_empty_left (s : Finset (Fin n × Fin n)) : JNum ∅ s = 0 :=
+  JNumCount_empty_left _ s
 
 /-- The numerator of `J` vanishes when the right point set is empty. -/
 @[simp]
-theorem JNum_empty_right (s : Finset (Fin n × Fin n)) : JNum s ∅ = 0 := by
-  exact JNumCount_empty_right _ _ s
+theorem JNum_empty_right (s : Finset (Fin n × Fin n)) : JNum s ∅ = 0 :=
+  JNumCount_empty_right _ s
 
 /-- The numerator of `J` is additive in the left point set over disjoint unions. -/
 theorem JNum_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
     JNum (s₁ ∪ s₂) t = JNum s₁ t + JNum s₂ t :=
-  JNumCount_union_left _ _ h
+  JNumCount_union_left _ h
 
 /-- The numerator of `J` is additive in the right point set over disjoint unions. -/
 theorem JNum_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
     JNum s (t₁ ∪ t₂) = JNum s t₁ + JNum s t₂ :=
-  JNumCount_union_right _ _ h
+  JNumCount_union_right _ h
 
 /-- The numerator of `J` after inserting a fresh point on the left. -/
 theorem JNum_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
     JNum (insert p s) t = JNum {p} t + JNum s t :=
-  JNumCount_insert_left _ _ h
+  JNumCount_insert_left _ h
 
 /-- The numerator of `J` after inserting a fresh point on the right. -/
 theorem JNum_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
     JNum s (insert p t) = JNum s {p} + JNum s t :=
-  JNumCount_insert_right _ _ h
+  JNumCount_insert_right _ h
 
 /-- `J` vanishes when the left point set is empty. -/
 @[simp]
-theorem J_empty_left (s : Finset (Fin n × Fin n)) : GridPoint.J ∅ s = 0 := by
-  exact JCount_empty_left _ _ s
+theorem J_empty_left (s : Finset (Fin n × Fin n)) : GridPoint.J ∅ s = 0 :=
+  JCount_empty_left _ s
 
 /-- `J` vanishes when the right point set is empty. -/
 @[simp]
-theorem J_empty_right (s : Finset (Fin n × Fin n)) : GridPoint.J s ∅ = 0 := by
-  exact JCount_empty_right _ _ s
+theorem J_empty_right (s : Finset (Fin n × Fin n)) : GridPoint.J s ∅ = 0 :=
+  JCount_empty_right _ s
 
 /-- The grid `J`-function is additive in the left point set over disjoint unions. -/
 theorem J_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
     GridPoint.J (s₁ ∪ s₂) t = GridPoint.J s₁ t + GridPoint.J s₂ t :=
-  JCount_union_left _ _ h
+  JCount_union_left _ h
 
 /-- The grid `J`-function is additive in the right point set over disjoint unions. -/
 theorem J_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
     GridPoint.J s (t₁ ∪ t₂) = GridPoint.J s t₁ + GridPoint.J s t₂ :=
-  JCount_union_right _ _ h
+  JCount_union_right _ h
 
 /-- The grid `J`-function after inserting a fresh point on the left. -/
 theorem J_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
     GridPoint.J (insert p s) t = GridPoint.J {p} t + GridPoint.J s t :=
-  JCount_insert_left _ _ h
+  JCount_insert_left _ h
 
 /-- The grid `J`-function after inserting a fresh point on the right. -/
 theorem J_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
     GridPoint.J s (insert p t) = GridPoint.J s {p} + GridPoint.J s t :=
-  JCount_insert_right _ _ h
+  JCount_insert_right _ h
 
 /-- The numerator of `J` on singleton point sets records whether either point is southwest of
 the other. -/
@@ -533,12 +539,12 @@ theorem J_singleton_self (p : Fin n × Fin n) : GridPoint.J {p} {p} = 0 := by
 /-- The ordered southwest count is monotone in its left point set. -/
 theorem I_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
     I s₁ t ≤ I s₂ t :=
-  Icount_mono_left _ h
+  ICount_mono_left _ h
 
 /-- The ordered southwest count is monotone in its right point set. -/
 theorem I_mono_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : t₁ ⊆ t₂) :
     I s t₁ ≤ I s t₂ :=
-  Icount_mono_right _ h
+  ICount_mono_right _ h
 
 /-- The numerator of `J` is monotone in its left point set. -/
 theorem JNum_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
@@ -564,19 +570,19 @@ theorem isSouthWest_swap (p q : Fin n × Fin n) :
 diagonal. -/
 theorem I_image_swap (s t : Finset (Fin n × Fin n)) :
     I (s.image Prod.swap) (t.image Prod.swap) = I s t :=
-  Icount_image_swap _ isSouthWest_swap s t
+  ICount_image_swap _ isSouthWest_swap s t
 
 /-- The numerator of the `J`-function is invariant under reflecting both point sets across the
 diagonal. -/
 theorem JNum_image_swap (s t : Finset (Fin n × Fin n)) :
     JNum (s.image Prod.swap) (t.image Prod.swap) = JNum s t :=
-  JNumCount_image_swap _ _ isSouthWest_swap isSouthWest_swap s t
+  JNumCount_image_swap _ isSouthWest_swap s t
 
 /-- The symmetrized grid `J`-function is invariant under reflecting both point sets across the
 diagonal. -/
 theorem J_image_swap (s t : Finset (Fin n × Fin n)) :
     GridPoint.J (s.image Prod.swap) (t.image Prod.swap) = GridPoint.J s t :=
-  JCount_image_swap _ _ isSouthWest_swap isSouthWest_swap s t
+  JCount_image_swap _ isSouthWest_swap s t
 
 /-- Reversing both coordinates of both points of a pair exchanges the two endpoints of the strict
 southwest relation: it sends the column and row comparisons to their reverses. -/
@@ -638,9 +644,42 @@ theorem I_graph_eq_card (f g : Fin n → Fin n) :
     GridPoint.I (Finset.univ.image fun c : Fin n => (c, f c))
         (Finset.univ.image fun c : Fin n => (c, g c)) =
       (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < g p.2).card := by
-  rw [I, Icount_graph_eq_card]
+  rw [I, ICount_graph_eq_card]
   exact congrArg Finset.card (Finset.filter_congr fun cd _ => by
     simp only [GridPoint.isSouthWest_iff, Fin.lt_def])
+
+/-- Weakening both comparisons of a column-pair count along an injective row assignment adds
+exactly the `n` diagonal pairs: a pair `c < d` contributes to both counts or to neither, and each
+of the `n` columns contributes its own diagonal pair. -/
+theorem card_filter_le_eq_card_filter_lt_add_card {f : Fin n → Fin n}
+    (hf : Function.Injective f) :
+    (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ f p.2).card =
+      (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2).card + n := by
+  classical
+  have hsplit :
+      (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ f p.2) =
+        (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2) ∪
+          (Finset.univ : Finset (Fin n)).diag := by
+    ext p
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_diag]
+    constructor
+    · rintro ⟨h1, h2⟩
+      rcases eq_or_lt_of_le h1 with h | h
+      · exact Or.inr h
+      · exact Or.inl ⟨h, lt_of_le_of_ne h2 fun heq => (ne_of_lt h) (hf heq)⟩
+    · rintro (⟨h1, h2⟩ | h)
+      · exact ⟨le_of_lt h1, le_of_lt h2⟩
+      · exact ⟨le_of_eq h, le_of_eq (congrArg f h)⟩
+  have hdisj :
+      Disjoint (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2)
+        ((Finset.univ : Finset (Fin n)).diag) := by
+    rw [Finset.disjoint_left]
+    intro p hp hq
+    rw [Finset.mem_filter] at hp
+    rw [Finset.mem_diag] at hq
+    exact (ne_of_lt hp.2.1) hq.2
+  rw [hsplit, Finset.card_union_of_disjoint hdisj, Finset.diag_card, Finset.card_univ,
+    Fintype.card_fin]
 
 end GridPoint
 

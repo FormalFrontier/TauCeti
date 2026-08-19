@@ -128,29 +128,31 @@ theorem maslovXℤ_eq_card (x : GridState n) :
 `O`-marking state against the squares that hold the `O` markings adds the `n` diagonal pairs
 that the strict southwest count misses. -/
 theorem maslovOℤ_O : G.maslovOℤ G.O = 1 - (n : ℤ) := by
-  rw [maslovOℤ_def, OSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq_I_add]
+  rw [maslovOℤ_def, OSet, GridPoint.JNumCenter_def,
+    GridState.ICenter_self_pointSet_eq_I_add_card]
   push_cast
   ring
 
 /-- The integer `X`-Maslov grading of the `X`-marking state is always `1 - n`. -/
 theorem maslovXℤ_X : G.maslovXℤ G.X = 1 - (n : ℤ) := by
-  rw [maslovXℤ_def, XSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq_I_add]
+  rw [maslovXℤ_def, XSet, GridPoint.JNumCenter_def,
+    GridState.ICenter_self_pointSet_eq_I_add_card]
   push_cast
   ring
 
 /-- The rational `O`-Maslov grading equals the cast of its integer counterpart. In particular,
 the doubled asymmetric marking pairing has the integer numerator `JNumCenter(x, 𝕆)`. -/
 theorem maslovO_eq_intCast (x : GridState n) : G.maslovO x = (G.maslovOℤ x : ℚ) := by
-  rw [maslovO_def, maslovOℤ, GridState.J_def, GridState.J_def, GridPoint.J_self, JO_def, OSet,
-    GridPoint.JCenter_def, GridPoint.J_self]
+  rw [maslovO_def, JO_def, maslovOℤ, OSet, GridState.J_def, GridState.J_def,
+    GridPoint.J_sub_two_mul_JCenter_add_J_eq_intCast]
   push_cast
   ring
 
 /-- The rational `X`-Maslov grading equals the cast of its integer counterpart. In particular,
 the doubled asymmetric marking pairing has the integer numerator `JNumCenter(x, 𝕏)`. -/
 theorem maslovX_eq_intCast (x : GridState n) : G.maslovX x = (G.maslovXℤ x : ℚ) := by
-  rw [maslovX_def, maslovXℤ, GridState.J_def, GridState.J_def, GridPoint.J_self, JX_def, XSet,
-    GridPoint.JCenter_def, GridPoint.J_self]
+  rw [maslovX_def, JX_def, maslovXℤ, XSet, GridState.J_def, GridState.J_def,
+    GridPoint.J_sub_two_mul_JCenter_add_J_eq_intCast]
   push_cast
   ring
 

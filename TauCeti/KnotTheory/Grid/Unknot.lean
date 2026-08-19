@@ -194,11 +194,11 @@ private theorem card_filter_split (Q P : Fin (n + 2) × Fin (n + 2) → Prop)
 
 /-- The weakly increasing column pairs are the increasing ones together with the `n + 2` diagonal
 pairs: the case of the identity row assignment of
-`GridState.card_filter_le_eq_card_filter_lt_add_card`. -/
+`GridPoint.card_filter_le_eq_card_filter_lt_add_card`. -/
 private theorem card_filter_le :
     (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + (n + 2) := by
-  simpa using GridState.card_filter_le_eq_card_filter_lt_add_card
+  simpa using GridPoint.card_filter_le_eq_card_filter_lt_add_card
     (f := (id : Fin (n + 2) → Fin (n + 2))) Function.injective_id
 
 /-- A set of column pairs cut out by prescribing the second column as a function of the first,
@@ -210,13 +210,13 @@ private theorem card_filter_graph (a : Fin (n + 2)) (f : Fin (n + 2) → Fin (n 
         p.1 ≠ a ∧ p.2 = f p.1)
       = (Finset.univ.filter fun c : Fin (n + 2) => c ≠ a).image
           fun c => (c, f c) := by
-    ext ⟨a, b⟩
+    ext ⟨c, d⟩
     simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_image, Prod.mk.injEq]
     constructor
-    · rintro ⟨ha, rfl⟩
-      exact ⟨a, ha, rfl, rfl⟩
-    · rintro ⟨c, hc, rfl, rfl⟩
-      exact ⟨hc, rfl⟩
+    · rintro ⟨hc, rfl⟩
+      exact ⟨c, hc, rfl, rfl⟩
+    · rintro ⟨e, he, rfl, rfl⟩
+      exact ⟨he, rfl⟩
   rw [himg, Finset.card_image_of_injective _ fun a b hab => congrArg Prod.fst hab,
     Finset.filter_ne', Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ,
     Fintype.card_fin]

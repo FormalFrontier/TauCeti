@@ -5,15 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.Tactic.Ring
 public import TauCeti.KnotTheory.Grid.JFunction.Count
 
 /-!
-# Pairing grid points against markings at the centres of their squares
+# Pairing grid points against markings at the centers of their squares
 
 The `J`-function of `JFunction/Basic.lean` compares two sets of grid points with the strict
 southwest relation. The Maslov and Alexander gradings, however, pair a *grid state*, which
-occupies grid points, against the `O`- and `X`-*markings*, which sit at the **centres** of
+occupies grid points, against the `O`- and `X`-*markings*, which sit at the **centers** of
 squares. In the planar realization of a grid, the marking of the square named by the grid point
 `q` sits at `q + (1/2, 1/2)`: half a unit northeast of `q`, and never on a grid line. So a grid
 point `p` lies southwest of that marking exactly when `p ≤ q` in both coordinates, whereas the
@@ -31,14 +30,14 @@ using `GridPoint.J`.
 
 This file corrects the grading pairing only. The older `GridRectangle.AvoidsMarkings` predicate
 still interprets marking indices using the open grid-line interior; aligning that Lane G.3
-differential convention with square-centred markings is a separate rectangle correction.
+differential convention with square-centered markings is a separate rectangle correction.
 
 ## Main definitions
 
 * `TauCeti.GridPoint.ICenter`: the ordered count of pairs of a grid point and a marked square with
-  the point southwest of the centre of the square, that is, `GridPoint.Icount` at the weak product
+  the point southwest of the center of the square, that is, `GridPoint.ICount` at the weak product
   order.
-* `TauCeti.GridPoint.JNumCenter`, `TauCeti.GridPoint.JCenter`: the symmetrized numerator and the
+* `TauCeti.GridPoint.JNumCenter`, `TauCeti.GridPoint.JCenter`: the numerator and the
   rational-valued pairing of a set of grid points against a set of marked squares.
 * `TauCeti.GridDiagram.JO`, `TauCeti.GridDiagram.JX`: the pairings of a grid state against the
   `O`- and `X`-markings of a grid diagram.
@@ -48,19 +47,18 @@ differential convention with square-centred markings is a separate rectangle cor
 * `TauCeti.GridPoint.ICenter_graph_eq_card`, `TauCeti.GridState.JNumCenter_pointSet_eq_card`,
   `TauCeti.GridDiagram.JO_eq_card`, `TauCeti.GridDiagram.JX_eq_card`: the pairings as
   column-index counts.
-* `TauCeti.GridState.card_filter_le_eq_card_filter_lt_add_card`,
-  `TauCeti.GridState.ICenter_self_pointSet_eq_I_add`: weakening both comparisons of a
+* `TauCeti.GridPoint.card_filter_le_eq_card_filter_lt_add_card`,
+  `TauCeti.GridState.ICenter_self_pointSet_eq_I_add_card`: weakening both comparisons of a
   column-pair count along an injective row assignment, in particular pairing a grid state against
   the squares it occupies, adds exactly the `n` diagonal pairs to the strict count.
-* `TauCeti.GridPoint.JCenter_insert_left`, `TauCeti.GridPoint.JCenter_union_left`: the pairing is
-  additive in the grid points, which is what localizes a grading change to the corners of a
-  rectangle.
+* `TauCeti.GridPoint.JCenter_insert_pair_left`: the pairing is additive in the grid points, which
+  is what localizes a grading change to the corners of a rectangle.
 
 ## References
 
 This supplies a prerequisite for `CombinatorialHeegaardFloer/README.md` in TauCetiRoadmap,
 Lane G.2, "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`;
-grading-change formulas across a rectangle." The convention that the markings sit at the centres
+grading-change formulas across a rectangle." The convention that the markings sit at the centers
 of their squares while a grid state sits on the grid lines is that of Ozsváth--Stipsicz--Szabó,
 *Grid Homology for Knots and Links*, Chapters 3.1--3.2 and 4.1 for the placement convention, and
 Chapter 4.3 for the grading pairing.
@@ -74,143 +72,46 @@ namespace GridPoint
 
 variable {n : ℕ}
 
-/-- The ordered count of pairs `(p, q) ∈ s ×ˢ t` with `p` southwest of the centre of the square
+/-- The ordered count of pairs `(p, q) ∈ s ×ˢ t` with `p` southwest of the center of the square
 `q`. The left argument holds grid points and the right argument names marked squares; the marking
 of the square named by `q` sits at `q + (1/2, 1/2)`, so a strict comparison against the marking is
 the weak comparison `p ≤ q` of the product order. -/
 def ICenter (s t : Finset (Fin n × Fin n)) : ℕ :=
-  Icount (· ≤ ·) s t
+  ICount (· ≤ ·) s t
 
-/-- The southwest-of-centre count as the cardinality of a filtered product of point sets. -/
-theorem ICenter_def (s t : Finset (Fin n × Fin n)) :
-    ICenter s t =
-      ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => pq.1 ≤ pq.2).card :=
-  by simpa only [ICenter] using Icount_def (· ≤ ·) s t
-
-/-- The southwest-of-centre count is zero when there are no grid points. -/
-@[simp]
-theorem ICenter_empty_left (s : Finset (Fin n × Fin n)) : ICenter ∅ s = 0 :=
-  Icount_empty_left _ s
-
-/-- The southwest-of-centre count is zero when there are no marked squares. -/
-@[simp]
-theorem ICenter_empty_right (s : Finset (Fin n × Fin n)) : ICenter s ∅ = 0 :=
-  Icount_empty_right _ s
-
-/-- The southwest-of-centre count of singletons records the single comparison. -/
-@[simp]
-theorem ICenter_singleton_singleton (p q : Fin n × Fin n) :
-    ICenter {p} {q} = if p ≤ q then 1 else 0 :=
-  Icount_singleton_singleton _ p q
-
-/-- The southwest-of-centre count of one grid point is its weakly northeast fiber. -/
+/-- The southwest-of-center count of one grid point is its weakly northeast fiber. -/
 theorem ICenter_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     ICenter {p} t = (t.filter fun q => p ≤ q).card :=
-  Icount_singleton_left _ p t
+  ICount_singleton_left _ p t
 
-/-- The southwest-of-centre count against one marked square is its weakly southwest fiber. -/
+/-- The southwest-of-center count against one marked square is its weakly southwest fiber. -/
 theorem ICenter_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
     ICenter s {p} = (s.filter fun q => q ≤ p).card :=
-  Icount_singleton_right _ s p
+  ICount_singleton_right _ s p
 
-/-- The southwest-of-centre count is additive in the grid points over disjoint unions. -/
-theorem ICenter_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    ICenter (s₁ ∪ s₂) t = ICenter s₁ t + ICenter s₂ t :=
-  Icount_union_left _ h
-
-/-- The southwest-of-center count is additive in the marked squares over disjoint unions. -/
-theorem ICenter_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    ICenter s (t₁ ∪ t₂) = ICenter s t₁ + ICenter s t₂ :=
-  Icount_union_right _ h
-
-/-- The southwest-of-centre count after inserting a fresh grid point. -/
-theorem ICenter_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    ICenter (insert p s) t = ICenter {p} t + ICenter s t :=
-  Icount_insert_left _ h
-
-/-- The southwest-of-center count after inserting a fresh marked square. -/
-theorem ICenter_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    ICenter s (insert p t) = ICenter s {p} + ICenter s t :=
-  Icount_insert_right _ h
-
-/-- The southwest-of-centre count is invariant under reflecting both point sets across the
-diagonal. -/
-theorem ICenter_image_swap (s t : Finset (Fin n × Fin n)) :
-    ICenter (s.image Prod.swap) (t.image Prod.swap) = ICenter s t :=
-  Icount_image_swap _ (fun _ _ => Prod.swap_le_swap) s t
-
-/-- The southwest-of-centre count of two graph point sets is the number of column pairs `c ≤ d`
+/-- The southwest-of-center count of two graph point sets is the number of column pairs `c ≤ d`
 whose rows compare the same way. This graph-level statement does not require either row
 assignment to be a permutation. -/
 theorem ICenter_graph_eq_card (f g : Fin n → Fin n) :
     ICenter (Finset.univ.image fun c : Fin n => (c, f c))
         (Finset.univ.image fun c : Fin n => (c, g c)) =
       (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ g p.2).card := by
-  rw [ICenter, Icount_graph_eq_card]
+  rw [ICenter, ICount_graph_eq_card]
   exact congrArg Finset.card (Finset.filter_congr fun cd _ => by rw [Prod.mk_le_mk])
 
 end GridPoint
 
-namespace GridState
-
-/-- Weakening both comparisons of a column-pair count along an injective row assignment adds
-exactly the `n` diagonal pairs: a pair `c < d` contributes to both counts or to neither, and each
-of the `n` columns contributes its own diagonal pair. -/
-theorem card_filter_le_eq_card_filter_lt_add_card {f : Fin n → Fin n}
-    (hf : Function.Injective f) :
-    (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ f p.2).card =
-      (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2).card + n := by
-  classical
-  have hsplit :
-      (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ f p.2) =
-        (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2) ∪
-          (Finset.univ : Finset (Fin n)).diag := by
-    ext p
-    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_diag]
-    constructor
-    · rintro ⟨h1, h2⟩
-      rcases eq_or_lt_of_le h1 with h | h
-      · exact Or.inr h
-      · exact Or.inl ⟨h, lt_of_le_of_ne h2 fun heq => (ne_of_lt h) (hf heq)⟩
-    · rintro (⟨h1, h2⟩ | h)
-      · exact ⟨le_of_lt h1, le_of_lt h2⟩
-      · exact ⟨le_of_eq h, le_of_eq (congrArg f h)⟩
-  have hdisj :
-      Disjoint (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2)
-        ((Finset.univ : Finset (Fin n)).diag) := by
-    rw [Finset.disjoint_left]
-    intro p hp hq
-    rw [Finset.mem_filter] at hp
-    rw [Finset.mem_diag] at hq
-    exact (ne_of_lt hp.2.1) hq.2
-  rw [hsplit, Finset.card_union_of_disjoint hdisj, Finset.diag_card, Finset.card_univ,
-    Fintype.card_fin]
-
-end GridState
-
 namespace GridPoint
 
-/-- The symmetrized numerator of the pairing of a set of grid points against a set of marked
-squares: the grid points southwest of a marking, plus the markings southwest of a grid point. -/
+/-- The numerator of the pairing of a set of grid points against a set of marked squares: the
+grid points southwest of a marking, plus the markings southwest of a grid point. -/
 def JNumCenter (s t : Finset (Fin n × Fin n)) : ℕ :=
-  JNumCount (· ≤ ·) IsSouthWest s t
+  JNumCount (· ≤ ·) s t
 
 /-- The numerator of the marking pairing as a sum of its two directed counts. -/
 theorem JNumCenter_def (s t : Finset (Fin n × Fin n)) :
     JNumCenter s t = ICenter s t + I t s :=
-  by
-    rw [JNumCenter, JNumCount_def]
-    rfl
-
-/-- The numerator of the marking pairing vanishes when there are no grid points. -/
-@[simp]
-theorem JNumCenter_empty_left (t : Finset (Fin n × Fin n)) : JNumCenter ∅ t = 0 := by
-  exact JNumCount_empty_left _ _ t
-
-/-- The numerator of the marking pairing vanishes when there are no marked squares. -/
-@[simp]
-theorem JNumCenter_empty_right (s : Finset (Fin n × Fin n)) : JNumCenter s ∅ = 0 := by
-  exact JNumCount_empty_right _ _ s
+  by rw [JNumCenter, JNumCount_def, ICenter]
 
 /-- The numerator of the marking pairing of a single grid point against marked squares is the
 sum of the numbers of markings weakly northeast and strictly southwest of the point. -/
@@ -219,6 +120,23 @@ theorem JNumCenter_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin
       (t.filter fun q => p ≤ q).card + (t.filter fun q => IsSouthWest q p).card := by
   rw [JNumCenter_def, ICenter_singleton_left, I_singleton_right]
 
+/-- The two directed fibers in the numerator of the singleton marking pairing are disjoint. -/
+private theorem disjoint_filter_le_isSouthWest (p : Fin n × Fin n)
+    (t : Finset (Fin n × Fin n)) :
+    Disjoint (t.filter fun q => p ≤ q) (t.filter fun q => IsSouthWest q p) := by
+  rw [Finset.disjoint_left]
+  intro q hq hq'
+  simp only [Finset.mem_filter] at hq hq'
+  exact (not_lt_of_ge (Fin.le_def.mp hq.2.1)) hq'.2.1
+
+/-- The numerator of the singleton marking pairing counts the marked squares weakly northeast or
+strictly southwest of the grid point. -/
+theorem JNumCenter_singleton_left_eq_card (p : Fin n × Fin n)
+    (t : Finset (Fin n × Fin n)) :
+    JNumCenter {p} t = (t.filter fun q => p ≤ q ∨ IsSouthWest q p).card := by
+  rw [JNumCenter_singleton_left,
+    ← Finset.card_union_of_disjoint (disjoint_filter_le_isSouthWest p t), ← Finset.filter_or]
+
 /-- The numerator of the marking pairing against a single marked square is the sum of the
 numbers of grid points weakly southwest and strictly northeast of the marking. -/
 theorem JNumCenter_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
@@ -226,60 +144,48 @@ theorem JNumCenter_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × F
       (s.filter fun q => q ≤ p).card + (s.filter fun q => IsSouthWest p q).card := by
   rw [JNumCenter_def, ICenter_singleton_right, I_singleton_left]
 
-/-- The numerator of the marking pairing is additive in the grid points over disjoint unions. -/
-theorem JNumCenter_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    JNumCenter (s₁ ∪ s₂) t = JNumCenter s₁ t + JNumCenter s₂ t :=
-  JNumCount_union_left _ _ h
-
-/-- The numerator of the marking pairing is additive in the marked squares over disjoint
-unions. -/
-theorem JNumCenter_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    JNumCenter s (t₁ ∪ t₂) = JNumCenter s t₁ + JNumCenter s t₂ :=
-  JNumCount_union_right _ _ h
-
-/-- The numerator of the marking pairing after inserting a fresh grid point. -/
-theorem JNumCenter_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    JNumCenter (insert p s) t = JNumCenter {p} t + JNumCenter s t :=
-  JNumCount_insert_left _ _ h
-
-/-- The numerator of the marking pairing after inserting a fresh marked square. -/
-theorem JNumCenter_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    JNumCenter s (insert p t) = JNumCenter s {p} + JNumCenter s t :=
-  JNumCount_insert_right _ _ h
+/-- The numerator of the marking pairing on singleton sets records its two comparisons. -/
+@[simp]
+theorem JNumCenter_singleton_singleton (p q : Fin n × Fin n) :
+    JNumCenter {p} {q} =
+      (if p ≤ q then 1 else 0) + (if IsSouthWest q p then 1 else 0) := by
+  rw [JNumCenter, JNumCount_def, I, ICount_singleton_singleton,
+    ICount_singleton_singleton]
 
 /-- The numerator of the marking pairing is invariant under reflecting both point sets across
 the diagonal. -/
 theorem JNumCenter_image_swap (s t : Finset (Fin n × Fin n)) :
     JNumCenter (s.image Prod.swap) (t.image Prod.swap) = JNumCenter s t :=
-  JNumCount_image_swap _ _ (fun _ _ => Prod.swap_le_swap) isSouthWest_swap s t
+  JNumCount_image_swap _ (fun _ _ => Prod.swap_le_swap) s t
 
 /-- The rational-valued pairing of a set of grid points against a set of marked squares. This is
 the `J`-function of the grid, corrected for the half-unit offset of the markings. -/
 def JCenter (s t : Finset (Fin n × Fin n)) : ℚ :=
-  JCount (· ≤ ·) IsSouthWest s t
+  JCount (· ≤ ·) s t
 
-/-- The marking pairing is half its symmetrized numerator. -/
+/-- The marking pairing is half its numerator. -/
 theorem JCenter_def (s t : Finset (Fin n × Fin n)) :
     JCenter s t = ((JNumCenter s t : ℕ) : ℚ) / 2 :=
   by rw [JCenter, JCount_def, JNumCenter]
 
-/-- The marking pairing vanishes when there are no grid points. -/
-@[simp]
-theorem JCenter_empty_left (t : Finset (Fin n × Fin n)) : JCenter ∅ t = 0 := by
-  exact JCount_empty_left _ _ t
+/-- Twice the marking pairing is its integer numerator. -/
+theorem two_mul_JCenter (s t : Finset (Fin n × Fin n)) :
+    2 * JCenter s t = ((JNumCenter s t : ℕ) : ℚ) := by
+  rw [JCenter_def, mul_div_cancel₀ _ (by simp)]
 
-/-- The marking pairing vanishes when there are no marked squares. -/
-@[simp]
-theorem JCenter_empty_right (s : Finset (Fin n × Fin n)) : JCenter s ∅ = 0 := by
-  exact JCount_empty_right _ _ s
-
-/-- The marking pairing of a single grid point against marked squares is half the sum of the
-numbers of markings weakly northeast and strictly southwest of the point. -/
+/-- The marking pairing of a single grid point against marked squares is half the number of
+markings weakly northeast or strictly southwest of the point. -/
 theorem JCenter_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     JCenter {p} t =
-      (((t.filter fun q => p ≤ q).card +
-        (t.filter fun q => IsSouthWest q p).card : ℕ) : ℚ) / 2 := by
-  rw [JCenter_def, JNumCenter_singleton_left]
+      (((t.filter fun q => p ≤ q ∨ IsSouthWest q p).card : ℕ) : ℚ) / 2 := by
+  rw [JCenter_def, JNumCenter_singleton_left_eq_card]
+
+/-- Twice the singleton marking pairing is the number of marked squares weakly northeast or
+strictly southwest of the grid point. -/
+theorem two_mul_JCenter_singleton_left (p : Fin n × Fin n)
+    (t : Finset (Fin n × Fin n)) :
+    2 * JCenter {p} t = ((t.filter fun q => p ≤ q ∨ IsSouthWest q p).card : ℚ) := by
+  rw [JCenter_singleton_left, mul_div_cancel₀ _ (by simp)]
 
 /-- The marking pairing against a single marked square is half the sum of the numbers of grid
 points weakly southwest and strictly northeast of the marking. -/
@@ -289,30 +195,32 @@ theorem JCenter_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin 
         (s.filter fun q => IsSouthWest p q).card : ℕ) : ℚ) / 2 := by
   rw [JCenter_def, JNumCenter_singleton_right]
 
-/-- The marking pairing is additive in the grid points over disjoint unions. -/
-theorem JCenter_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    JCenter (s₁ ∪ s₂) t = JCenter s₁ t + JCenter s₂ t :=
-  JCount_union_left _ _ h
+/-- The marking pairing on singleton sets is half its two-comparison numerator. -/
+@[simp]
+theorem JCenter_singleton_singleton (p q : Fin n × Fin n) :
+    JCenter {p} {q} =
+      (((if p ≤ q then 1 else 0) + (if IsSouthWest q p then 1 else 0) : ℕ) : ℚ) / 2 := by
+  rw [JCenter_def, JNumCenter_singleton_singleton]
 
-/-- The marking pairing is additive in the marked squares over disjoint unions. -/
-theorem JCenter_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    JCenter s (t₁ ∪ t₂) = JCenter s t₁ + JCenter s t₂ :=
-  JCount_union_right _ _ h
-
-/-- The marking pairing after inserting a fresh grid point. -/
-theorem JCenter_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    JCenter (insert p s) t = JCenter {p} t + JCenter s t :=
-  JCount_insert_left _ _ h
-
-/-- The marking pairing after inserting a fresh marked square. -/
-theorem JCenter_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    JCenter s (insert p t) = JCenter s {p} + JCenter s t :=
-  JCount_insert_right _ _ h
+/-- Splitting a two-point insertion out of the grid points of the marking pairing. -/
+theorem JCenter_insert_pair_left {S P : Finset (Fin n × Fin n)} {a b : Fin n × Fin n}
+    (hab : a ∉ insert b S) (hb : b ∉ S) :
+    JCenter (insert a (insert b S)) P =
+      JCenter {a} P + JCenter {b} P + JCenter S P := by
+  simpa only [JCenter] using JCount_insert_pair_left (· ≤ ·) hab hb
 
 /-- The marking pairing is invariant under reflecting both point sets across the diagonal. -/
 theorem JCenter_image_swap (s t : Finset (Fin n × Fin n)) :
     JCenter (s.image Prod.swap) (t.image Prod.swap) = JCenter s t :=
-  JCount_image_swap _ _ (fun _ _ => Prod.swap_le_swap) isSouthWest_swap s t
+  JCount_image_swap _ (fun _ _ => Prod.swap_le_swap) s t
+
+/-- The combination of the strict self-pairings and the doubled marking pairing is the cast of an
+integer expression on arbitrary point sets. -/
+theorem J_sub_two_mul_JCenter_add_J_eq_intCast (s t : Finset (Fin n × Fin n)) :
+    GridPoint.J s s - 2 * JCenter s t + GridPoint.J t t =
+      (((I s s : ℤ) - (JNumCenter s t : ℤ) + (I t t : ℤ) : ℤ) : ℚ) := by
+  rw [J_self, two_mul_JCenter, J_self]
+  simp only [Int.cast_add, Int.cast_sub, Int.cast_natCast]
 
 end GridPoint
 
@@ -320,7 +228,7 @@ namespace GridState
 
 variable {n : ℕ}
 
-/-- The southwest-of-centre count of the point sets of two grid states, as a column-pair
+/-- The southwest-of-center count of the point sets of two grid states, as a column-pair
 count. -/
 theorem ICenter_pointSet_eq_card (x y : GridState n) :
     GridPoint.ICenter x.pointSet y.pointSet =
@@ -337,11 +245,11 @@ theorem JNumCenter_pointSet_eq_card (x y : GridState n) :
 
 /-- Pairing a grid state against the squares it occupies adds exactly the `n` diagonal pairs to
 the strict southwest count: the row assignment of a grid state is injective, so this is the
-column-pair count `GridState.card_filter_le_eq_card_filter_lt_add_card`. -/
-theorem ICenter_self_pointSet_eq_I_add (x : GridState n) :
+column-pair count `GridPoint.card_filter_le_eq_card_filter_lt_add_card`. -/
+theorem ICenter_self_pointSet_eq_I_add_card (x : GridState n) :
     GridPoint.ICenter x.pointSet x.pointSet = GridPoint.I x.pointSet x.pointSet + n := by
   rw [ICenter_pointSet_eq_card, I_self_pointSet_eq_card]
-  exact GridState.card_filter_le_eq_card_filter_lt_add_card x.toPerm.injective
+  exact GridPoint.card_filter_le_eq_card_filter_lt_add_card x.toPerm.injective
 
 end GridState
 

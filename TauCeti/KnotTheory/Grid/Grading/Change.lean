@@ -79,15 +79,7 @@ private theorem J_insert_pair_left {S P : Finset (Fin n × Fin n)} {a b : Fin n 
     (hab : a ∉ insert b S) (hb : b ∉ S) :
     GridPoint.J (insert a (insert b S)) P =
       GridPoint.J {a} P + GridPoint.J {b} P + GridPoint.J S P := by
-  rw [GridPoint.J_insert_left hab, GridPoint.J_insert_left hb, add_assoc]
-
-/-- Splitting a two-point insertion out of the grid points of the marking pairing. The two fresh
-grid points contribute their singleton pairings and the rest is untouched. -/
-private theorem JCenter_insert_pair_left {S P : Finset (Fin n × Fin n)} {a b : Fin n × Fin n}
-    (hab : a ∉ insert b S) (hb : b ∉ S) :
-    GridPoint.JCenter (insert a (insert b S)) P =
-      GridPoint.JCenter {a} P + GridPoint.JCenter {b} P + GridPoint.JCenter S P := by
-  rw [GridPoint.JCenter_insert_left hab, GridPoint.JCenter_insert_left hb, add_assoc]
+  simpa only [GridPoint.J] using GridPoint.JCount_insert_pair_left IsSouthWest hab hb
 
 /-- Splitting a two-point insertion out of the right argument of the `J`-function. -/
 private theorem J_insert_pair_right {S P : Finset (Fin n × Fin n)} {a b : Fin n × Fin n}
