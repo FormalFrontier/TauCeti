@@ -1,0 +1,179 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
+public import TauCeti.LinearAlgebra.JordanChevalley.Commuting
+
+/-!
+# Jordan decomposition of commuting algebraic-group points
+
+The Jordan decomposition of algebraic-group points respects commuting products. If two points
+commute, then all of their reconstructed Jordan factors commute across the two decompositions,
+and the semisimple and unipotent parts of their product are the corresponding products.
+
+The proof checks the linear result in every finite-dimensional comodule and then uses Tannakian
+reconstruction to separate points. This compatibility completes a standard structural property
+of the pointwise Jordan decomposition constructed in Layer 4 of the ReductiveGroups roadmap.
+
+## Main declarations
+
+* `TauCeti.HopfAlgebra.Point.commute_semisimplePart_semisimplePart_of_commute`: semisimple parts
+  of commuting points commute.
+* `TauCeti.HopfAlgebra.Point.commute_unipotentPart_unipotentPart_of_commute`: unipotent parts of
+  commuting points commute.
+* `TauCeti.HopfAlgebra.Point.jordanDecomposition_mul_of_commute`: the ordered decomposition of a
+  commuting product is the componentwise product.
+* `TauCeti.HopfAlgebra.Point.semisimplePart_mul_of_commute` and
+  `TauCeti.HopfAlgebra.Point.unipotentPart_mul_of_commute`: the two factor formulas.
+
+## References
+
+* T. A. Springer, *Linear Algebraic Groups*, §2.4.
+* J. S. Milne, *Algebraic Groups* (2017), §9.4.
+-/
+
+public section
+
+open LinearMap WithConv
+open scoped TensorProduct
+
+namespace TauCeti.HopfAlgebra
+namespace Point
+
+universe u
+
+variable (k H K : Type u) [Field k] [CommRing H] [_root_.HopfAlgebra k H]
+  [Field K] [Algebra k K] [PerfectField K]
+
+omit [PerfectField K] in
+private theorem commute_of_pointsAction (g h : WithConv (H →ₐ[k] K))
+    (hc : ∀ M : FGComoduleCat.{u, u, u} k H,
+      Commute
+        (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
+        (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h))) :
+    Commute g h := by
+  rw [commute_iff_eq]
+  apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
+  rw [map_mul, map_mul]
+  apply Tannaka.scalarExtensionComponent_ext
+  intro M
+  rw [Tannaka.scalarExtensionComponent_mul,
+    Tannaka.scalarExtensionComponent_mul]
+  simp only [Tannaka.fgPointTensorIsoEquiv_apply,
+    Tannaka.scalarExtensionComponent_fgPointTensorIso]
+  exact congrArg Units.val (hc M).eq
+
+omit [PerfectField K] in
+private theorem pointsAction_commute {g h : WithConv (H →ₐ[k] K)}
+    (M : FGComoduleCat.{u, u, u} k H) (hgh : Commute g h) :
+    Commute
+      (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
+      (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h)) := by
+  have hc := hgh.map (Comodule.pointsAction M)
+  rw [commute_iff_eq] at hc ⊢
+  rw [← GeneralLinearGroup.ofLinearEquiv_mul,
+    ← GeneralLinearGroup.ofLinearEquiv_mul, hc]
+
+/-- The semisimple parts of two commuting algebraic-group points commute. -/
+theorem commute_semisimplePart_semisimplePart_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    Commute (semisimplePart k H K g) (semisimplePart k H K h) := by
+  apply commute_of_pointsAction k H K
+  intro M
+  rw [ofLinearEquiv_pointsAction_semisimplePart,
+    ofLinearEquiv_pointsAction_semisimplePart]
+  exact GeneralLinearGroup.commute_semisimplePart_semisimplePart_of_commute
+    (pointsAction_commute k H K M hgh)
+
+/-- The semisimple part of the first of two commuting points commutes with the unipotent part of
+the second. -/
+theorem commute_semisimplePart_unipotentPart_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    Commute (semisimplePart k H K g) (unipotentPart k H K h) := by
+  apply commute_of_pointsAction k H K
+  intro M
+  rw [ofLinearEquiv_pointsAction_semisimplePart,
+    ofLinearEquiv_pointsAction_unipotentPart]
+  exact GeneralLinearGroup.commute_semisimplePart_unipotentPart_of_commute
+    (pointsAction_commute k H K M hgh)
+
+/-- The unipotent part of the first of two commuting points commutes with the semisimple part of
+the second. -/
+theorem commute_unipotentPart_semisimplePart_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    Commute (unipotentPart k H K g) (semisimplePart k H K h) :=
+  (commute_semisimplePart_unipotentPart_of_commute k H K hgh.symm).symm
+
+/-- The unipotent parts of two commuting algebraic-group points commute. -/
+theorem commute_unipotentPart_unipotentPart_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    Commute (unipotentPart k H K g) (unipotentPart k H K h) := by
+  apply commute_of_pointsAction k H K
+  intro M
+  rw [ofLinearEquiv_pointsAction_unipotentPart,
+    ofLinearEquiv_pointsAction_unipotentPart]
+  exact GeneralLinearGroup.commute_unipotentPart_unipotentPart_of_commute
+    (pointsAction_commute k H K M hgh)
+
+/-- The Jordan decomposition of a product of commuting algebraic-group points is the
+componentwise product of their Jordan decompositions. -/
+theorem jordanDecomposition_mul_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    jordanDecomposition k H K (g * h) =
+      (semisimplePart k H K g * semisimplePart k H K h,
+        unipotentPart k H K g * unipotentPart k H K h) := by
+  symm
+  apply (eq_jordanDecomposition_iff k H K (g * h) _ _).2
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro M
+    rw [map_mul, GeneralLinearGroup.ofLinearEquiv_mul]
+    exact (isSemisimple_pointsAction_semisimplePart k H K g M).mul_of_commute
+      (isSemisimple_pointsAction_semisimplePart k H K h M)
+      (pointsAction_commute k H K M
+        (commute_semisimplePart_semisimplePart_of_commute k H K hgh))
+  · apply IsUnipotentPoint.mul_of_commute
+    · rw [isUnipotentPoint_def]
+      exact isUnipotent_pointsAction_unipotentPart k H K g
+    · rw [isUnipotentPoint_def]
+      exact isUnipotent_pointsAction_unipotentPart k H K h
+    · exact commute_unipotentPart_unipotentPart_of_commute k H K hgh
+  · exact ((commute_semisimplePart_unipotentPart k H K g).mul_left
+      (commute_unipotentPart_semisimplePart_of_commute k H K hgh).symm).mul_right
+      ((commute_semisimplePart_unipotentPart_of_commute k H K hgh).mul_left
+        (commute_semisimplePart_unipotentPart k H K h))
+  · calc
+      g * h = (semisimplePart k H K g * unipotentPart k H K g) *
+          (semisimplePart k H K h * unipotentPart k H K h) := by
+            rw [semisimplePart_mul_unipotentPart, semisimplePart_mul_unipotentPart]
+      _ = (semisimplePart k H K g * semisimplePart k H K h) *
+          (unipotentPart k H K g * unipotentPart k H K h) := by
+            rw [mul_assoc, ← mul_assoc (unipotentPart k H K g)]
+            rw [(commute_unipotentPart_semisimplePart_of_commute k H K hgh).eq]
+            simp only [mul_assoc]
+
+/-- The semisimple part of a product of commuting algebraic-group points is the product of their
+semisimple parts. -/
+theorem semisimplePart_mul_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    semisimplePart k H K (g * h) =
+      semisimplePart k H K g * semisimplePart k H K h :=
+  by
+    rw [← jordanDecomposition_fst k H K (g * h)]
+    exact congrArg Prod.fst (jordanDecomposition_mul_of_commute k H K hgh)
+
+/-- The unipotent part of a product of commuting algebraic-group points is the product of their
+unipotent parts. -/
+theorem unipotentPart_mul_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    unipotentPart k H K (g * h) =
+      unipotentPart k H K g * unipotentPart k H K h :=
+  by
+    rw [← jordanDecomposition_snd k H K (g * h)]
+    exact congrArg Prod.snd (jordanDecomposition_mul_of_commute k H K hgh)
+
+end Point
+end TauCeti.HopfAlgebra
