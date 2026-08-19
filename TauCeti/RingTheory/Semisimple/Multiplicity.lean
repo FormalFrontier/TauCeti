@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.Matrix.FiniteDimensional
 public import TauCeti.RingTheory.Semisimple.Schur
 
 /-!
@@ -45,6 +46,9 @@ space of intertwiners".
   exactly when `S` occurs among the factors, so the hom space detects the constituents.
 * `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi_const`: the isotypic case, where `M` is
   a power of `S` itself and the multiplicity is the number of copies.
+* `TauCeti.finrank_linearMap_pos_of_ne_bot`: for a finite-dimensional `M`, the hom space out of
+  any nonzero submodule is positive-dimensional.  This asks for neither simplicity nor an
+  algebraically closed field, so it lives apart from the results above.
 
 ## Implementation notes
 
@@ -176,5 +180,27 @@ theorem finrank_linearMap_eq_natCard_of_linearEquiv_pi_const {ι : Type*} [Finit
   exact Nat.card_congr (Equiv.subtypeUnivEquiv fun _ ↦ ⟨LinearEquiv.refl A S⟩)
 
 end Isotypic
+
+/-! ### Positivity for an arbitrary nonzero submodule -/
+
+section Positivity
+
+variable {k A M : Type*} [Field k] [Ring A] [Algebra k A] [AddCommGroup M] [Module k M]
+  [Module A M] [IsScalarTower k A M] [FiniteDimensional k M]
+
+/-- **A nonzero submodule has a positive-dimensional hom space.**  The inclusion of a nonzero
+`A`-submodule `S` of `M` is a nonzero element of `S →ₗ[A] M`, and that hom space is
+finite-dimensional over `k` because `S` and `M` are.  For a simple `S` over a splitting field this
+is the statement that a constituent occurs with positive multiplicity. -/
+theorem finrank_linearMap_pos_of_ne_bot {S : Submodule A M} (hS : S ≠ ⊥) :
+    0 < Module.finrank k (S →ₗ[A] M) := by
+  have : Module.Finite k ↥S :=
+    .of_injective (S.subtype.restrictScalars k) Subtype.val_injective
+  obtain ⟨v, hv, hv0⟩ := S.ne_bot_iff.mp hS
+  have : Nontrivial (S →ₗ[A] M) :=
+    ⟨S.subtype, 0, fun hzero => hv0 (by simpa using DFunLike.congr_fun hzero ⟨v, hv⟩)⟩
+  exact Module.finrank_pos
+
+end Positivity
 
 end TauCeti
