@@ -81,7 +81,7 @@ theorem ext (q r : PrimePower) (hp : q.p = r.p) (he : q.exponent = r.exponent) :
 def card (q : PrimePower) : ℕ := q.p ^ q.exponent
 
 /-- The stored cardinality is the stored base raised to the stored exponent. -/
-@[simp] lemma card_eq_pow (q : PrimePower) : q.card = q.p ^ q.exponent := (rfl)
+@[simp] lemma card_def (q : PrimePower) : q.card = q.p ^ q.exponent := (rfl)
 
 /-- The cardinality stored by a prime-power parameter is a prime power in Mathlib's sense. -/
 lemma isPrimePow_card (q : PrimePower) : IsPrimePow q.card :=
@@ -405,8 +405,9 @@ def fieldOrder : LieTypeIndex → ℕ
 @[simp] theorem fieldOrder_tits : tits.fieldOrder = 2 := by simp only [fieldOrder]
 
 /-- The exponent writing the Frobenius parameter `q` as a power of the characteristic. It is the
-stored exponent of the prime power on the ordinary and graph-twisted branches, and the odd number
-`2 * m + 1` on the Suzuki--Ree branches, whose field order is `p ^ (2 * m + 1)`.
+stored exponent of the prime power on the ordinary and graph-twisted branches, the odd number
+`2 * m + 1` on the Suzuki--Ree branches, whose field order is `p ^ (2 * m + 1)`, and `1` on the
+Tits branch, whose field order is the characteristic `2` itself.
 
 This is not a second numeric parameter: `fieldOrder_eq_characteristic_pow` recovers `fieldOrder`
 from it, and it exists because the `q`-power Frobenius of a field of characteristic `p` is the
@@ -471,7 +472,7 @@ def fieldExponent : LieTypeIndex → ℕ
 theorem fieldOrder_eq_characteristic_pow (d : LieTypeIndex) :
     d.fieldOrder = d.characteristic ^ d.fieldExponent := by
   cases d <;>
-    simp only [fieldOrder, characteristic, fieldExponent, PrimePower.card_eq_pow, pow_one]
+    simp only [fieldOrder, characteristic, fieldExponent, PrimePower.card_def, pow_one]
 
 /-- The exponent writing the Frobenius parameter as a power of the characteristic is positive, so
 the Frobenius parameter is never `1`. -/

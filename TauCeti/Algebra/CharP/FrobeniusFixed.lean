@@ -11,7 +11,7 @@ public import Mathlib.Algebra.Field.Subfield.Basic
 public import Mathlib.Algebra.Ring.Subring.Basic
 
 /-!
-# The subring fixed by an iterated Frobenius
+# The subring and subfield fixed by an iterated Frobenius
 
 Let `A` be a commutative ring of exponential characteristic `p` and let `q = p ^ n`. The elements
 of `A` satisfying `a ^ q = a` are the equalizer of the ring homomorphism `iterateFrobenius A p n`
@@ -23,8 +23,9 @@ For `p` prime, `0 < n` and `A` an algebraic closure of `ZMod p` this subring is 
 elements sitting inside `A`, which is why the construction is the ring-theoretic half of "the fixed
 points of the `q`-power Frobenius are the `𝔽_q`-points"; at `n = 0` it is instead the whole of `A`,
 since `q = 1`. Nothing about finiteness or about the field of `q` elements is proved here: the
-statements below are about an arbitrary commutative ring of exponential characteristic `p`, and
-Mathlib's `iterateFrobenius` supplies every proof.
+subring statements below are about an arbitrary commutative ring of exponential characteristic `p`
+and the subfield ones about an arbitrary field of exponential characteristic `p`, and Mathlib's
+`iterateFrobenius` supplies every proof.
 
 ## Main definitions
 
@@ -34,6 +35,8 @@ Mathlib's `iterateFrobenius` supplies every proof.
 ## Main results
 
 * `TauCeti.mem_frobeniusFixedSubring`: membership is the equation `a ^ p ^ n = a`.
+* `TauCeti.mem_frobeniusFixedSubring_mul_iff_iterate_eq`: at exponent `m * k`, membership is being
+  fixed by the `k`-th iterate of the `p ^ m`-power Frobenius.
 * `TauCeti.frobeniusFixedSubring_zero`: the zeroth iterate fixes everything.
 * `TauCeti.frobeniusFixedSubring_le_of_dvd` and `TauCeti.frobeniusFixedSubfield_le_of_dvd`: the
   fixed subrings and subfields grow along divisibility of the exponent, the inclusion
@@ -80,6 +83,13 @@ variable {A p n}
 theorem mem_frobeniusFixedSubring {a : A} :
     a ∈ frobeniusFixedSubring A p n ↔ a ^ p ^ n = a := Iff.rfl
 
+/-- At an exponent `m * k`, being fixed by the `p ^ (m * k)`-power Frobenius is being fixed by the
+`k`-th iterate of the `p ^ m`-power one, since that iterate *is* the `p ^ (m * k)`-power
+Frobenius. -/
+theorem mem_frobeniusFixedSubring_mul_iff_iterate_eq {m k : ℕ} {a : A} :
+    a ∈ frobeniusFixedSubring A p (m * k) ↔ (iterateFrobenius A p m)^[k] a = a := by
+  rw [mem_frobeniusFixedSubring, ← iterateFrobenius_def, iterateFrobenius_mul_apply]
+
 variable (A p n)
 
 /-- The zeroth Frobenius iterate is the identity, so it fixes every element. -/
@@ -99,9 +109,8 @@ theorem frobeniusFixedSubring_le_of_dvd {m k : ℕ} (h : m ∣ k) :
   intro a ha
   -- membership is `RingHom.eqLocus` membership by definition, so it *is* the equation
   -- `iterateFrobenius A p m a = a`; Mathlib's `RingHom.mem_eqLocus` is the bridge.
-  refine RingHom.mem_eqLocus.mpr ?_
-  rw [iterateFrobenius_mul_apply, Function.iterate_fixed (RingHom.mem_eqLocus.mp ha)]
-  rfl
+  exact mem_frobeniusFixedSubring_mul_iff_iterate_eq.mpr
+    (Function.iterate_fixed (RingHom.mem_eqLocus.mp ha) c)
 
 variable {B : Type*} [CommRing B] [ExpChar B p]
 
@@ -155,10 +164,10 @@ variable {K p n}
 `frobeniusFixedSubring_le_of_dvd`: in the motivating case this is the inclusion
 `𝔽_{p ^ m} ⊆ 𝔽_{p ^ k}` of subfields of an algebraic closure. -/
 theorem frobeniusFixedSubfield_le_of_dvd {m k : ℕ} (h : m ∣ k) :
-    frobeniusFixedSubfield K p m ≤ frobeniusFixedSubfield K p k := fun _ ha =>
-  mem_frobeniusFixedSubfield.mpr (mem_frobeniusFixedSubring.mp
-    (frobeniusFixedSubring_le_of_dvd h (mem_frobeniusFixedSubring.mpr
-      (mem_frobeniusFixedSubfield.mp ha))))
+    frobeniusFixedSubfield K p m ≤ frobeniusFixedSubfield K p k := by
+  rw [← SetLike.coe_subset_coe, ← Subfield.coe_toSubring, ← Subfield.coe_toSubring,
+    toSubring_frobeniusFixedSubfield, toSubring_frobeniusFixedSubfield, SetLike.coe_subset_coe]
+  exact frobeniusFixedSubring_le_of_dvd h
 
 end Field
 

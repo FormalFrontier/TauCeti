@@ -6,20 +6,20 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.Finite.GaloisField
-public import Mathlib.FieldTheory.IsAlgClosed.Basic
+public import Mathlib.FieldTheory.IsSepClosed
 public import TauCeti.Algebra.CharP.FrobeniusFixed
 public import TauCeti.FieldTheory.Finite.FrobeniusFixed
 
 /-!
-# The finite subfields of an algebraically closed field of positive characteristic
+# The finite subfields of a separably closed field of positive characteristic
 
 `TauCeti.frobeniusFixedSubfield K p n` is the subfield of solutions of `a ^ p ^ n = a`, defined for
-an arbitrary field of exponential characteristic `p`. When the field is algebraically closed and
+an arbitrary field of exponential characteristic `p`. When the field is separably closed and
 `n ≠ 0` it is the field of `q = p ^ n` elements sitting inside it.
 
 The counting is the standard one: `a ^ q = a` says exactly that `a` is a root of `X ^ q - X`, a
-polynomial whose derivative is `-1` and which therefore has no repeated roots, so over an
-algebraically closed field it has as many roots as its degree. In any field of characteristic `p` a
+polynomial whose derivative is `-1` and which therefore has no repeated roots, so over a separably
+closed field it splits and has as many roots as its degree. In any field of characteristic `p` a
 subfield with `q` elements is *the* Frobenius-fixed one, since being fixed by the `q`-power map
 characterises the elements of a finite subfield of order `q`. In the other direction every element
 of an algebraic closure of `ZMod p` lies in one of these subfields, since it generates a finite
@@ -27,10 +27,11 @@ extension of the prime field.
 
 ## Main results
 
-* `TauCeti.card_frobeniusFixedSubfield`: over an algebraically closed field and for `n ≠ 0` it has
+* `TauCeti.card_frobeniusFixedSubfield`: over a separably closed field and for `n ≠ 0` it has
   exactly `p ^ n` elements.
 * `TauCeti.eq_frobeniusFixedSubfield_of_natCard`: it is the unique subfield with that many elements.
-* `TauCeti.nonempty_ringEquiv_galoisField`: it is therefore a copy of `GaloisField p n`.
+* `TauCeti.nonempty_frobeniusFixedSubfield_ringEquiv_galoisField`: it is therefore a copy of
+  `GaloisField p n`.
 * `TauCeti.exists_mem_frobeniusFixedSubfield`: an algebraic closure of the prime field is the union
   of these subfields.
 
@@ -59,9 +60,10 @@ section RootSet
 
 variable (K : Type*) [Field K] (p n : ℕ) [Fact p.Prime] [CharP K p]
 
-/-- Over any field of characteristic `p`, being fixed by the `p ^ n`-power Frobenius is being a
-root of `X ^ p ^ n - X`. That polynomial is separable of degree `p ^ n`, which is where the count
-below comes from. -/
+/-- Over any field of characteristic `p` and for `n ≠ 0`, being fixed by the `p ^ n`-power
+Frobenius is being a root of `X ^ p ^ n - X`. That polynomial is then separable of degree `p ^ n`,
+which is where the count below comes from. At `n = 0` the two sides differ: the subfield is the
+whole of `K` while `X ^ 1 - X = 0` has empty root set. -/
 theorem coe_frobeniusFixedSubfield_eq_rootSet (hn : n ≠ 0) :
     (frobeniusFixedSubfield K p n : Set K) = (X ^ p ^ n - X : K[X]).rootSet K := by
   have hne : (X ^ p ^ n - X : K[X]) ≠ 0 :=
@@ -98,17 +100,17 @@ theorem eq_frobeniusFixedSubfield_of_natCard {F : Subfield K} (hF : Nat.card F =
   have hcard : Fintype.card F = p ^ n := by rw [← Nat.card_eq_fintype_card, hF]
   refine SetLike.coe_injective (Set.ext fun a => ?_)
   rw [SetLike.mem_coe, SetLike.mem_coe, mem_frobeniusFixedSubfield, ← hcard,
-    FiniteField.pow_card_eq_self_iff_mem_range_algebraMap]
-  exact ⟨fun ha => ⟨⟨a, ha⟩, rfl⟩, fun ⟨b, hb⟩ => hb ▸ b.2⟩
+    FiniteField.pow_card_eq_self_iff_mem_range_algebraMap, Subfield.algebraMap_ofSubfield,
+    Subfield.coe_subtype, Subtype.range_coe_subtype, Set.mem_ofPred_eq]
 
 end RootSet
 
-section IsAlgClosed
+section IsSepClosed
 
-variable (K : Type*) [Field K] [IsAlgClosed K] (p n : ℕ) [Fact p.Prime] [CharP K p]
+variable (K : Type*) [Field K] [IsSepClosed K] (p n : ℕ) [Fact p.Prime] [CharP K p]
 
-/-- **The field of `q` elements inside an algebraically closed field.** For `q = p ^ n` with
-`n ≠ 0`, the elements of an algebraically closed field of characteristic `p` fixed by the
+/-- **The field of `q` elements inside a separably closed field.** For `q = p ^ n` with
+`n ≠ 0`, the elements of a separably closed field of characteristic `p` fixed by the
 `q`-power Frobenius form a subfield with exactly `q` elements.
 
 The count is the number of roots of the separable polynomial `X ^ q - X`, which is its degree. -/
@@ -117,15 +119,15 @@ theorem card_frobeniusFixedSubfield (hn : n ≠ 0) :
   have hsep : Separable (X ^ p ^ n - X : K[X]) :=
     galois_poly_separable p (p ^ n) (dvd_pow_self p hn)
   have hsplit : ((X ^ p ^ n - X : K[X]).map (algebraMap K K)).Splits :=
-    IsAlgClosed.splits_domain _
+    IsSepClosed.splits_domain _ hsep
   rw [Nat.card_congr (frobeniusFixedSubfieldEquivRootSet K p n hn), Nat.card_eq_fintype_card,
     card_rootSet_eq_natDegree hsep hsplit,
     FiniteField.X_pow_card_pow_sub_X_natDegree_eq K hn (Fact.out (p := p.Prime)).one_lt]
 
-/-- The Frobenius-fixed subfield of an algebraically closed field is a copy of Mathlib's
+/-- The Frobenius-fixed subfield of a separably closed field is a copy of Mathlib's
 `GaloisField p n`, the two being finite fields of the same cardinality. The isomorphism is not
 canonical, which is why only its existence is recorded. -/
-theorem nonempty_ringEquiv_galoisField (hn : n ≠ 0) :
+theorem nonempty_frobeniusFixedSubfield_ringEquiv_galoisField (hn : n ≠ 0) :
     Nonempty (frobeniusFixedSubfield K p n ≃+* GaloisField p n) := by
   have _ : Finite (frobeniusFixedSubfield K p n) := finite_frobeniusFixedSubfield K p n hn
   have _ : Fintype (frobeniusFixedSubfield K p n) := Fintype.ofFinite _
@@ -134,7 +136,7 @@ theorem nonempty_ringEquiv_galoisField (hn : n ≠ 0) :
   rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card,
     card_frobeniusFixedSubfield K p n hn, GaloisField.card p n hn]
 
-end IsAlgClosed
+end IsSepClosed
 
 /-! ## Exhaustion over an algebraic prime field -/
 
@@ -151,15 +153,15 @@ Only algebraicity over the prime field is used, so the statement covers an algeb
 `ZMod p` without assuming algebraic closedness. -/
 theorem exists_mem_frobeniusFixedSubfield (x : K) :
     ∃ n ≠ 0, x ∈ frobeniusFixedSubfield K p n := by
-  classical
-  set E := IntermediateField.adjoin (ZMod p) ({x} : Set K) with hE
+  set E := IntermediateField.adjoin (ZMod p) ({x} : Set K)
   have hx : x ∈ E := IntermediateField.mem_adjoin_simple_self (ZMod p) x
   have _ : FiniteDimensional (ZMod p) E :=
     IntermediateField.adjoin.finiteDimensional (Algebra.IsIntegral.isIntegral x)
   have _ : Finite E := Module.finite_of_finite (ZMod p)
   refine ⟨Module.finrank (ZMod p) E, (Module.finrank_pos (R := ZMod p) (M := E)).ne', ?_⟩
-  have hcard : Nat.card E.toSubfield = p ^ Module.finrank (ZMod p) E :=
-    (FiniteField.pow_finrank_eq_natCard p E).symm
+  have hcard : Nat.card E.toSubfield = p ^ Module.finrank (ZMod p) E := by
+    rw [Nat.card_congr (Equiv.subtypeEquivRight (E.mem_toSubfield ·))]
+    exact (FiniteField.pow_finrank_eq_natCard p E).symm
   rw [← eq_frobeniusFixedSubfield_of_natCard K p _ hcard]
   exact (E.mem_toSubfield x).mpr hx
 

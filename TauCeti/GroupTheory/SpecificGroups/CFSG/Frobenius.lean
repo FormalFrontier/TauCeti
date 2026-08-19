@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.FieldTheory.Finite.AlgClosedSubfield
+public import TauCeti.FieldTheory.Finite.SepClosedSubfield
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
 
 /-!
@@ -44,7 +44,8 @@ branch, which is why it is defined for every valid index and not only for the un
   the corresponding powers of `q`.
 * `TauCeti.ValidLieTypeIndex.card_fixedField`: the fixed field has `q` elements.
 * `TauCeti.ValidLieTypeIndex.eq_fixedField_of_natCard`: it is the only subfield with `q` elements.
-* `TauCeti.ValidLieTypeIndex.nonempty_ringEquiv_galoisField`: it is a copy of `GaloisField p e`.
+* `TauCeti.ValidLieTypeIndex.nonempty_fixedField_ringEquiv_galoisField`: it is a copy of
+  `GaloisField p e`.
 * `TauCeti.ValidLieTypeIndex.mem_frobeniusFixedSubfield_iff_iterate_frobeniusEquiv_eq`: the `k`-th
   iterate fixes the subfield at exponent `e * k`, which for `k ≠ 0` is the field of `q ^ k`
   elements.
@@ -90,12 +91,20 @@ def frobeniusEquiv : d.Closure ≃+* d.Closure :=
 theorem frobeniusEquiv_apply (x : d.Closure) : d.frobeniusEquiv x = x ^ d.fieldOrder := by
   rw [frobeniusEquiv, iterateFrobeniusEquiv_def, ← d.fieldOrder_eq_characteristic_pow]
 
+/-- The Frobenius attached to an index is the `q`-power map. This is the form iteration and
+composition arguments use, `frobeniusEquiv_apply` being the pointwise one.
+
+This is not a `simp` lemma: `simp only [coe_frobeniusEquiv]` already proves
+`frobeniusEquiv_apply`, so annotating it would make that lemma a `simpNF` violation. -/
+theorem coe_frobeniusEquiv : ⇑d.frobeniusEquiv = (· ^ d.fieldOrder) :=
+  funext d.frobeniusEquiv_apply
+
 /-- Iterating the Frobenius attached to an index raises to the corresponding power of `q`. This is
 the form the graph-twisted branches use: their Steinberg map has an `r`-th power equal to the plain
 `Frob_{q ^ r}`, with `r` the order of the diagram automorphism. -/
 theorem iterate_frobeniusEquiv_apply (k : ℕ) (x : d.Closure) :
     (d.frobeniusEquiv : d.Closure → d.Closure)^[k] x = x ^ d.fieldOrder ^ k := by
-  rw [show ⇑d.frobeniusEquiv = (· ^ d.fieldOrder) from funext d.frobeniusEquiv_apply, pow_iterate]
+  rw [coe_frobeniusEquiv, pow_iterate]
 
 /-! ## The field of definition -/
 
@@ -148,9 +157,9 @@ theorem eq_fixedField_of_natCard {F : Subfield d.Closure}
     (by rw [hF, d.fieldOrder_eq_characteristic_pow])
 
 /-- The fixed field is a copy of Mathlib's `GaloisField`, non-canonically. -/
-theorem nonempty_ringEquiv_galoisField :
+theorem nonempty_fixedField_ringEquiv_galoisField :
     Nonempty (d.fixedField ≃+* GaloisField d.characteristic d.fieldExponent) :=
-  _root_.TauCeti.nonempty_ringEquiv_galoisField d.Closure d.characteristic d.fieldExponent
+  nonempty_frobeniusFixedSubfield_ringEquiv_galoisField d.Closure d.characteristic d.fieldExponent
     d.fieldExponent_pos.ne'
 
 variable {d}
@@ -162,8 +171,8 @@ group: the degree `r` extension of `𝔽_q`, with `r` the order of the diagram a
 theorem mem_frobeniusFixedSubfield_iff_iterate_frobeniusEquiv_eq {k : ℕ} {x : d.Closure} :
     x ∈ frobeniusFixedSubfield d.Closure d.characteristic (d.fieldExponent * k) ↔
       (d.frobeniusEquiv : d.Closure → d.Closure)^[k] x = x := by
-  rw [iterate_frobeniusEquiv_apply, mem_frobeniusFixedSubfield, pow_mul,
-    ← d.fieldOrder_eq_characteristic_pow]
+  rw [← Subfield.mem_toSubring, toSubring_frobeniusFixedSubfield,
+    mem_frobeniusFixedSubring_mul_iff_iterate_eq, frobeniusEquiv, coe_iterateFrobeniusEquiv]
 
 /-- **The closure is the union of the finite fields inside it.** Every element of the algebraic
 closure attached to a valid Lie-type index is fixed by some positive iterate of the Frobenius,
