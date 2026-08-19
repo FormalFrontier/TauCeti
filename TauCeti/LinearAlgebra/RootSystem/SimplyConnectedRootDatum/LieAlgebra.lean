@@ -232,7 +232,7 @@ def chevalleyInvolution : t.lieAlgebra ht ≃ₗ⁅ℚ⁆ t.lieAlgebra ht :=
   geckChevalleyInvolution (t.rationalBase ht)
 
 /-- The pinned Chevalley involution is Geck's involution on the pinned rational base. -/
-@[simp] theorem chevalleyInvolution_def :
+theorem chevalleyInvolution_def :
     t.chevalleyInvolution ht = geckChevalleyInvolution (t.rationalBase ht) := (rfl)
 
 -- The generator formulas for `TauCeti.geckChevalleyInvolution` are stated for the bundled
