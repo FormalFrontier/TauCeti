@@ -65,12 +65,10 @@ theorem commute_coe_semisimplePart_left_of_commute
     (hgx : Commute (g : Module.End K V) x) :
     Commute (semisimplePart g : Module.End K V) x := by
   have hcomp : x.comp (g : Module.End K V) = (g : Module.End K V).comp x := by
-    change x * (g : Module.End K V) = (g : Module.End K V) * x
-    exact hgx.symm.eq
+    simpa only [← Module.End.mul_eq_comp] using hgx.symm.eq
   rw [commute_iff_eq]
-  change (semisimplePart g : Module.End K V).comp x =
-    x.comp (semisimplePart g : Module.End K V)
-  exact (comp_semisimplePart_eq_of_comp_eq x g g hcomp).symm
+  simpa only [Module.End.mul_eq_comp] using
+    (comp_semisimplePart_eq_of_comp_eq x g g hcomp).symm
 
 /-- The unipotent factor of an automorphism commutes with every endomorphism that commutes with
 the original automorphism. -/
@@ -79,12 +77,10 @@ theorem commute_coe_unipotentPart_left_of_commute
     (hgx : Commute (g : Module.End K V) x) :
     Commute (unipotentPart g : Module.End K V) x := by
   have hcomp : x.comp (g : Module.End K V) = (g : Module.End K V).comp x := by
-    change x * (g : Module.End K V) = (g : Module.End K V) * x
-    exact hgx.symm.eq
+    simpa only [← Module.End.mul_eq_comp] using hgx.symm.eq
   rw [commute_iff_eq]
-  change (unipotentPart g : Module.End K V).comp x =
-    x.comp (unipotentPart g : Module.End K V)
-  exact (comp_unipotentPart_eq_of_comp_eq x g g hcomp).symm
+  simpa only [Module.End.mul_eq_comp] using
+    (comp_unipotentPart_eq_of_comp_eq x g g hcomp).symm
 
 /-- The semisimple factor of an automorphism commutes with every automorphism that commutes with
 the original automorphism. -/

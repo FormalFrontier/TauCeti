@@ -9,6 +9,7 @@ public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.AlgebraicGroup.Representation.ScalarExtension
 public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Semisimple points of a Hopf algebra

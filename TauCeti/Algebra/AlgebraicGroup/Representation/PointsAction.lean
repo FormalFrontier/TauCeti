@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
-public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
+public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 
 /-!
 # The points action of a comodule, by automorphisms

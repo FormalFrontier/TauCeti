@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.ScalarExtension
 public import TauCeti.Algebra.Coalgebra.Comodule.PointSeparation
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Faithfulness of point automorphisms

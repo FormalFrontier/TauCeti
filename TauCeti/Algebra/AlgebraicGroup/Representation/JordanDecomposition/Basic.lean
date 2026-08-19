@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Equivalence
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.JordanDecomposition
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Jordan decomposition of algebraic-group points

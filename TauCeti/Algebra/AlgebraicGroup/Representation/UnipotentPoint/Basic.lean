@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Unipotent points of an affine group
