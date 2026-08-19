@@ -11,11 +11,11 @@ public import Mathlib.NumberTheory.RamificationInertia.Galois
 /-!
 # A conjugation-stable prime over an unramified rational prime is inert
 
-Let `K` be a number field of degree `2` over `ℚ`. Such a field is Galois: this is
-`NumberField.isGalois_of_finrank_eq_two`, proved from the existence of a single nontrivial
-automorphism, and its Galois group has order `2`. Consequently the two elements of that group act
-on the primes of `𝓞 K` above a rational prime `p` transitively, and a prime `𝔭` above `p` fixed by
-the nontrivial automorphism is the *only* prime above `p`.
+Let `K` be a number field of degree `2` over `ℚ`. Such a field is Galois by Mathlib's
+`Algebra.IsQuadraticExtension.isGalois` instance, and its Galois group has order `2`.
+Consequently the two elements of that group act on the primes of `𝓞 K` above a rational prime `p`
+transitively, and a prime `𝔭` above `p` fixed by the nontrivial automorphism is the *only* prime
+above `p`.
 
 Adding that `p` is unramified turns that into
 
@@ -39,8 +39,6 @@ the classical genus theory in which this dichotomy is used.
 
 ## Main results
 
-* `NumberField.isGalois_of_finrank_eq_two` and `NumberField.natCard_aut_eq_two`: a quadratic number
-  field carrying a nontrivial automorphism is Galois, with Galois group of order `2`.
 * `NumberField.primesOver_eq_singleton_of_map_eq_self`: a prime fixed by the nontrivial
   automorphism is the unique prime above the rational prime it lies over.
 * `NumberField.map_span_eq_of_notMem_ramifiedPrimes`: if that rational prime is moreover
@@ -56,31 +54,6 @@ open scoped NumberField Pointwise
 namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {p : ℕ}
-
-/-- **A quadratic number field is Galois.** A degree-two extension of `ℚ` carrying a nontrivial
-`ℚ`-algebra automorphism is a Galois extension: the fixed field of the whole automorphism group is
-an intermediate field of degree dividing `2`, and it cannot be all of `K`, so it is `ℚ`. -/
-theorem isGalois_of_finrank_eq_two (hK : finrank ℚ K = 2) {f : K ≃ₐ[ℚ] K} (hf : f ≠ 1) :
-    IsGalois ℚ K := by
-  refine IsGalois.of_card_aut_eq_finrank ℚ K ?_
-  set F := IntermediateField.fixedField (⊤ : Subgroup (K ≃ₐ[ℚ] K)) with hF
-  have hcard : Nat.card (K ≃ₐ[ℚ] K) = finrank F K := by
-    rw [hF, IntermediateField.finrank_fixedField_eq_card, Subgroup.card_top]
-  have hmul : finrank ℚ F * finrank F K = 2 := by
-    rw [← hK]; exact Module.finrank_mul_finrank ℚ F K
-  have hne : Nat.card (K ≃ₐ[ℚ] K) ≠ 1 := by
-    intro h
-    obtain ⟨hsub, -⟩ := Nat.card_eq_one_iff_unique.mp h
-    exact hf (Subsingleton.elim f 1)
-  rw [hK, hcard]
-  rw [hcard] at hne
-  exact (Nat.prime_two.eq_one_or_self_of_dvd _ ⟨_, hmul.symm.trans (mul_comm _ _)⟩).resolve_left hne
-
-/-- **The Galois group of a quadratic number field has order two.** -/
-theorem natCard_aut_eq_two (hK : finrank ℚ K = 2) {f : K ≃ₐ[ℚ] K} (hf : f ≠ 1) :
-    Nat.card (K ≃ₐ[ℚ] K) = 2 := by
-  have := isGalois_of_finrank_eq_two hK hf
-  rw [IsGalois.card_aut_eq_finrank, hK]
 
 /-- The pointwise action of a `ℚ`-algebra automorphism of `K` on the ideals of `𝓞 K` is the
 pushforward along any ring automorphism of `𝓞 K` restricting it. -/
@@ -98,7 +71,9 @@ every automorphism: the stabilizer is a nontrivial subgroup of a group of prime 
 private theorem smul_eq_self_of_map_eq_self (hK : finrank ℚ K = 2) {f : K ≃ₐ[ℚ] K} (hf : f ≠ 1)
     {σ : 𝓞 K ≃+* 𝓞 K} (hσ : ∀ x : 𝓞 K, (σ x : K) = f x) {I : Ideal (𝓞 K)}
     (hfix : Ideal.map σ I = I) (τ : K ≃ₐ[ℚ] K) : τ • I = I := by
-  have hcard := natCard_aut_eq_two hK hf
+  let _ : Algebra.IsQuadraticExtension ℚ K := ⟨hK⟩
+  have hcard : Nat.card (K ≃ₐ[ℚ] K) = 2 := by
+    rw [IsGalois.card_aut_eq_finrank, hK]
   have hsq : f ^ 2 = 1 := by rw [← hcard]; exact pow_card_eq_one'
   have hle : Subgroup.zpowers f ≤ MulAction.stabilizer (K ≃ₐ[ℚ] K) I := by
     rw [Subgroup.zpowers_le]
@@ -115,7 +90,7 @@ theorem primesOver_eq_singleton_of_map_eq_self (hK : finrank ℚ K = 2) (hp : p.
     {f : K ≃ₐ[ℚ] K} (hf : f ≠ 1) {σ : 𝓞 K ≃+* 𝓞 K} (hσ : ∀ x : 𝓞 K, (σ x : K) = f x)
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [𝔭.LiesOver (span {(p : ℤ)})] (hfix : Ideal.map σ 𝔭 = 𝔭) :
     (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) = {𝔭} := by
-  have := isGalois_of_finrank_eq_two hK hf
+  let _ : Algebra.IsQuadraticExtension ℚ K := ⟨hK⟩
   have := Fact.mk hp
   refine Set.eq_singleton_iff_unique_mem.mpr ⟨⟨‹_›, ‹_›⟩, ?_⟩
   rintro 𝔮 ⟨h1, h2⟩
