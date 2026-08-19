@@ -116,14 +116,12 @@ variable (bH : Basis ιH K H) (x : Weight K H L → L)
 
 /-- The family of vectors of `L` indexed by `ιH ⊕ H.root` given by a basis of the Cartan
 subalgebra together with a family of root vectors. -/
-@[expose]
 noncomputable def cartanRootFamily : ιH ⊕ H.root → L :=
   Sum.elim (fun i ↦ (bH i : L)) fun α ↦ x α
 
 /-- The family dual to `TauCeti.cartanRootFamily` under the Killing form: the Cartan part is
 `TauCeti.cartanKillingDualBasis`, and the vector dual to the root vector `x α` is the normalised
 opposite root vector `κ(x α, x (-α))⁻¹ • x (-α)`. -/
-@[expose]
 noncomputable def cartanRootDualFamily : ιH ⊕ H.root → L :=
   Sum.elim (fun i ↦ (cartanKillingDualBasis bH i : L))
     fun α ↦ (killingForm K L (x (α : Weight K H L)) (x (-(α : Weight K H L))))⁻¹ •
@@ -132,19 +130,19 @@ noncomputable def cartanRootDualFamily : ιH ⊕ H.root → L :=
 omit [IsKilling K L] [Finite ιH] [DecidableEq ιH] [CharZero K] [IsTriangularizable K H L] in
 /-- On the Cartan block, the adapted family is the chosen basis of `H`. -/
 @[simp]
-theorem cartanRootFamily_inl (i : ιH) : cartanRootFamily bH x (Sum.inl i) = (bH i : L) := rfl
+theorem cartanRootFamily_inl (i : ιH) : cartanRootFamily bH x (Sum.inl i) = (bH i : L) := (rfl)
 
 omit [IsKilling K L] [Finite ιH] [DecidableEq ιH] [CharZero K] [IsTriangularizable K H L] in
 /-- On the root block, the adapted family is the given family of root vectors. -/
 @[simp]
 theorem cartanRootFamily_inr (α : H.root) :
-    cartanRootFamily bH x (Sum.inr α) = x (α : Weight K H L) := rfl
+    cartanRootFamily bH x (Sum.inr α) = x (α : Weight K H L) := (rfl)
 
 omit [CharZero K] in
 /-- On the Cartan block, the dual family is the Killing-dual basis of `H`. -/
 @[simp]
 theorem cartanRootDualFamily_inl (i : ιH) :
-    cartanRootDualFamily bH x (Sum.inl i) = (cartanKillingDualBasis bH i : L) := rfl
+    cartanRootDualFamily bH x (Sum.inl i) = (cartanKillingDualBasis bH i : L) := (rfl)
 
 omit [CharZero K] in
 /-- On the root block, the dual family is the normalised opposite root vector. -/
@@ -152,7 +150,7 @@ omit [CharZero K] in
 theorem cartanRootDualFamily_inr (α : H.root) :
     cartanRootDualFamily bH x (Sum.inr α) =
       (killingForm K L (x (α : Weight K H L)) (x (-(α : Weight K H L))))⁻¹ •
-        x (-(α : Weight K H L)) := rfl
+        x (-(α : Weight K H L)) := (rfl)
 
 namespace IsSl2System
 
