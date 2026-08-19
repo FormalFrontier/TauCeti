@@ -18,7 +18,7 @@ component `piece p`, that scalar is `i^{2p-n}`, and the Hodge decomposition
 `TauCeti.Hodge.HodgeStructureOn.isInternal_piece` extends it to the whole ambient space.
 
 Two identities make `C` the carrier of the Hermitian theory. It squares to the weight sign,
-`C ∘ C = (-1)^n`, so `C` is an automorphism, and is a complex structure exactly in odd weight.
+`C ∘ C = (-1)^n`, so `C` is an automorphism, and is a complex structure in odd weight.
 And it commutes with the conjugation, so it is defined over the real form: this is what allows a
 symmetric bilinear form `Q` to be turned into the Hermitian form `h(u, v) = Q(C u, conj v)` on all
 of the ambient space, rather than only on homogeneous vectors where `i^{p-q}` makes sense.
@@ -67,9 +67,10 @@ private theorem negOne_zpow_two_mul_sub (p k : ℤ) :
   have hkey : ∀ m : ℤ, (-1 : ℂ) ^ (2 * m) = 1 := fun m ↦ by
     rw [zpow_mul]
     norm_num
+  have hp : 2 * p - k + k = 2 * p := by ring
+  have hk : k + k = 2 * k := by ring
   refine mul_right_cancel₀ (b := (-1 : ℂ) ^ k) (zpow_ne_zero _ hne) ?_
-  rw [← zpow_add₀ hne, ← zpow_add₀ hne, show 2 * p - k + k = 2 * p by ring,
-    show k + k = 2 * k by ring, hkey, hkey]
+  rw [← zpow_add₀ hne, ← zpow_add₀ hne, hp, hk, hkey, hkey]
 
 /-- **The Weil operator** of a pure Hodge structure of weight `n`: the complex-linear map acting
 on the Hodge component `H^{p,q}` by `i^{p-q} = i^{2p-n}`. -/
@@ -78,6 +79,7 @@ noncomputable def weilOperator (hs : HodgeStructureOn W ω n) : W →ₗ[ℂ] W 
     hs.decomposition.toLinearMap
 
 /-- The Weil operator acts on the Hodge component `H^{p,n-p}` by the scalar `i^{2p-n}`. -/
+@[simp]
 theorem weilOperator_apply_of_mem (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W}
     (hx : x ∈ hs.piece p) : hs.weilOperator x = Complex.I ^ (2 * p - n) • x := by
   rw [weilOperator, LinearMap.comp_apply, LinearEquiv.coe_coe,
@@ -200,14 +202,15 @@ theorem weilOperator_apply_of_mem_piece_one {hs : HodgeStructureOn W ω 1} {x : 
 /-- In weight one the Weil operator acts on `H^{0,1}` by `-i`. -/
 theorem weilOperator_apply_of_mem_piece_zero {hs : HodgeStructureOn W ω 1} {x : W}
     (hx : x ∈ hs.piece 0) : hs.weilOperator x = -(Complex.I • x) := by
-  rw [hs.weilOperator_apply_of_mem hx, show 2 * (0 : ℤ) - 1 = -1 by ring, zpow_neg,
-    zpow_one, Complex.inv_I, neg_smul]
+  have h_exp : 2 * (0 : ℤ) - 1 = -1 := by ring
+  rw [hs.weilOperator_apply_of_mem hx, h_exp, zpow_neg, zpow_one, Complex.inv_I, neg_smul]
 
 /-- **The Weil operator is real:** it commutes with the conjugation of the Hodge structure. This
 is what lets the Hermitian form `Q(C u, conj v)` be assembled from the scalars `i^{p-q}`. -/
+@[simp]
 theorem conj_weilOperator (hs : HodgeStructureOn W ω n) (x : W) :
     ω.toEquiv (hs.weilOperator x) = hs.weilOperator (ω.toEquiv x) := by
-  refine hs.piece_induction
+  refine hs.piece_induction_on
     (motive := fun w ↦ ω.toEquiv (hs.weilOperator w) = hs.weilOperator (ω.toEquiv w)) x
     (fun p y hy ↦ ?_) (by simp) fun y z hy hz ↦ by simp [map_add, hy, hz]
   have hconj : ω.toEquiv y ∈ hs.piece (n - p) := by
@@ -215,8 +218,8 @@ theorem conj_weilOperator (hs : HodgeStructureOn W ω n) (x : W) :
     exact ⟨y, hy, rfl⟩
   rw [hs.weilOperator_apply_of_mem hy, map_smulₛₗ, hs.weilOperator_apply_of_mem hconj]
   congr 1
-  rw [map_zpow₀, Complex.conj_I, show 2 * (n - p) - n = -(2 * p - n) by ring, zpow_neg,
-    ← inv_zpow, Complex.inv_I]
+  have h_exp : 2 * (n - p) - n = -(2 * p - n) := by ring
+  rw [map_zpow₀, Complex.conj_I, h_exp, zpow_neg, ← inv_zpow, Complex.inv_I]
 
 end HodgeStructureOn
 
@@ -233,9 +236,10 @@ variable {source : HodgeStructure h₁ n} {target : HodgeStructure h₂ n}
 
 /-- A morphism of pure Hodge structures commutes with the Weil operators: it preserves every
 Hodge component, on which both operators are the same scalar. -/
+@[simp]
 theorem commutes_weilOperator (f : Hom source target) (x : W₁) :
     f (source.weilOperator x) = target.weilOperator (f x) := by
-  refine source.piece_induction
+  refine source.piece_induction_on
     (motive := fun w ↦ f (source.weilOperator w) = target.weilOperator (f w)) x
     (fun p y hy ↦ ?_) (by simp) fun y z hy hz ↦ by simp [map_add, hy, hz]
   rw [source.weilOperator_apply_of_mem hy, map_smul,
@@ -251,7 +255,8 @@ theorem tate_weilOperator (m : ℤ) : (tate m).weilOperator = LinearMap.id := by
   have hx : x ∈ (tate m).piece (-m) := by
     rw [tate_piece]
     simp
-  rw [(tate m).weilOperator_apply_of_mem hx, show 2 * -m - -2 * m = (0 : ℤ) by ring]
+  have h_exp : 2 * -m - -2 * m = (0 : ℤ) := by ring
+  rw [(tate m).weilOperator_apply_of_mem hx, h_exp]
   simp
 
 end TauCeti.Hodge
