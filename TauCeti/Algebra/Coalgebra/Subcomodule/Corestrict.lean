@@ -110,6 +110,9 @@ def corestrictSymm (e : C ≃ₗc[R] D)
         (TensorProduct.map W.carrier.subtype (LinearMap.id : C →ₗ[R] C)) := by
       let _ : Comodule R C M := instDouble
       have hmem' := W'.coact_mem hm
+      -- The source of `hmem'` contains `W'.carrier`, while the target contains `W.carrier`.
+      -- These subcomodules have different dependent comodule-instance indices, so expose the
+      -- carrier equality explicitly before rewriting it with the corestriction API.
       rw [show W'.carrier = W.carrier by
         exact corestrict_toSubmodule e.symm.toCoalgHom W] at hmem'
       exact hmem'
@@ -136,6 +139,8 @@ theorem mem_corestrictSymm (e : C ≃ₗc[R] D)
     m ∈ corestrictSymm e W ↔ m ∈ W :=
   by
     let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
+    -- Membership notation hides the underlying submodules behind subcomodules indexed by
+    -- dependent comodule instances; expose those carriers so the preservation lemma can rewrite.
     change m ∈ (corestrictSymm e W).toSubmodule ↔ m ∈ W.toSubmodule
     rw [corestrictSymm_toSubmodule]
 

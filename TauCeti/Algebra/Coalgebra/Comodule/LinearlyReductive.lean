@@ -7,7 +7,6 @@ module
 
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
-public import TauCeti.Algebra.Coalgebra.Comodule.Transport
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Transport
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
