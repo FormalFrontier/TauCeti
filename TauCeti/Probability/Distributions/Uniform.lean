@@ -11,6 +11,7 @@ public import Mathlib.Probability.Distributions.Uniform
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
@@ -53,6 +54,12 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
   endpoints;
 * `mgf_id_uniformMeasure_zero` and `mgf_id_uniformMeasure` — the moment generating function, split
   at the removable singularity `t = 0`;
+* `mgf_id_uniformMeasure_pos` — the mgf is strictly positive, which is what makes the cgf's
+  logarithm meaningful;
+* `cgf_id_uniformMeasure_zero` and `cgf_id_uniformMeasure` — the cumulant generating function, split
+  the same way;
+* `charFun_uniformMeasure_zero` and `charFun_uniformMeasure` — the characteristic function,
+  likewise;
 * `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
 
 ## Implementation
@@ -65,9 +72,8 @@ side condition.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — the cumulant generating function, the characteristic function, and
-  parameter measurability — are not built here.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3 — the uniform family:
+  its measure, density, cdf, moments, and transforms.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -137,14 +143,17 @@ Mathlib's `MeasureTheory.pdf.uniformPDF` is `ℝ≥0∞`-valued; this is the rea
 `uniformPDF_eq_ofReal_uniformPDFReal` relates the two. -/
 def uniformPDFReal (a b x : ℝ) : ℝ := if x ∈ Set.Ioc a b then (b - a)⁻¹ else 0
 
+/-- Inside the interval the real-valued density is the reciprocal of its length. -/
 @[simp]
 theorem uniformPDFReal_of_mem {a b x : ℝ} (hx : x ∈ Set.Ioc a b) :
     uniformPDFReal a b x = (b - a)⁻¹ := by simp [uniformPDFReal, hx]
 
+/-- Outside the interval the real-valued density vanishes. -/
 @[simp]
 theorem uniformPDFReal_of_notMem {a b x : ℝ} (hx : x ∉ Set.Ioc a b) :
     uniformPDFReal a b x = 0 := by simp [uniformPDFReal, hx]
 
+/-- The real-valued uniform density is measurable. -/
 theorem measurable_uniformPDFReal {a b : ℝ} : Measurable (uniformPDFReal a b) := by
   unfold uniformPDFReal
   exact measurable_const.ite measurableSet_Ioc measurable_const
@@ -163,6 +172,7 @@ theorem uniformPDF_eq_ofReal_uniformPDFReal {a b : ℝ} (x : ℝ) :
   · rw [uniformPDFReal_of_notMem hx, ENNReal.ofReal_zero]
     simp [hx]
 
+/-- Mathlib's uniform density on `Set.Ioc a b`, against `volume`, is measurable. -/
 theorem measurable_uniformPDF_Ioc_volume {a b : ℝ} :
     Measurable fun x => pdf.uniformPDF (Set.Ioc a b) x volume := by
   unfold pdf.uniformPDF
@@ -307,6 +317,82 @@ theorem mgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
   rw [mgf, uniformMeasure_eq_smul, integral_smul_measure]
   simp only [id_eq]
   rw [hint, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le, smul_eq_mul]
+  field_simp
+
+/-! ### The cumulant generating function
+
+The cgf is the real logarithm of the mgf, so it is only meaningful once the mgf is known to be
+strictly positive. That positivity is proved here rather than assumed: `mgf_id_uniformMeasure_pos`
+follows from `mgf_pos`, whose integrability hypothesis is exactly what
+`integrableExpSet_id_uniformMeasure` supplies. -/
+
+/-- Every exponential moment of the uniform law is integrable, read off the exponential-moment
+set. -/
+theorem integrable_exp_mul_id_uniformMeasure {a b t : ℝ} :
+    Integrable (fun x => Real.exp (t * x)) (uniformMeasure a b) := by
+  have h : t ∈ integrableExpSet id (uniformMeasure a b) := by
+    rw [integrableExpSet_id_uniformMeasure]
+    exact Set.mem_univ t
+  simpa [integrableExpSet, id_eq] using h
+
+/-- **The moment generating function of the uniform law is strictly positive.**
+
+This is what makes the cgf's logarithm meaningful; it is not a side remark. -/
+theorem mgf_id_uniformMeasure_pos {a b : ℝ} (hab : a < b) (t : ℝ) :
+    0 < mgf id (uniformMeasure a b) t := by
+  have := isProbabilityMeasure_uniformMeasure hab
+  exact mgf_pos integrable_exp_mul_id_uniformMeasure
+
+/-- The cumulant generating function of the uniform law at `0` is `0`. -/
+theorem cgf_id_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
+    cgf id (uniformMeasure a b) 0 = 0 := by
+  rw [cgf, mgf_id_uniformMeasure_zero hab, Real.log_one]
+
+/-- **The cumulant generating function of the uniform law**, away from the removable singularity.
+
+The argument of the logarithm is positive by `mgf_id_uniformMeasure_pos`. -/
+theorem cgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
+    cgf id (uniformMeasure a b) t =
+      Real.log ((Real.exp (t * b) - Real.exp (t * a)) / ((b - a) * t)) := by
+  rw [cgf, mgf_id_uniformMeasure hab ht]
+
+/-! ### The characteristic function
+
+Kept clear of the real mgf development above: this is a complex-valued calculation, and the only
+thing it borrows is `uniformMeasure_eq_smul`. It splits at `t = 0` for the same reason the mgf
+does — the quotient has a removable singularity there. -/
+
+/-- The characteristic function of the uniform law at `0` is `1`. -/
+theorem charFun_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
+    charFun (uniformMeasure a b) 0 = 1 := by
+  have := isProbabilityMeasure_uniformMeasure hab
+  simp [charFun_zero]
+
+/-- **The characteristic function of the uniform law**, away from the removable singularity. -/
+theorem charFun_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
+    charFun (uniformMeasure a b) t
+      = (Complex.exp (Complex.I * b * t) - Complex.exp (Complex.I * a * t))
+          / (Complex.I * ((b - a : ℝ)) * t) := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hc : (Complex.I * t) ≠ 0 := by
+    simp [Complex.I_ne_zero, Complex.ofReal_ne_zero.mpr ht]
+  rw [charFun, uniformMeasure_eq_smul, integral_smul_measure]
+  simp only [Real.inner_apply]
+  rw [← intervalIntegral.integral_of_le hab.le]
+  have hx : ∀ x : ℝ, Complex.exp (↑(x * t) * Complex.I) = Complex.exp (Complex.I * t * x) := by
+    intro x
+    congr 1
+    push_cast
+    ring
+  simp only [hx]
+  rw [integral_exp_mul_complex hc, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le,
+    Complex.real_smul]
+  have he : ∀ y : ℝ, Complex.exp (Complex.I * y * t) = Complex.exp (Complex.I * t * y) := by
+    intro y
+    congr 1
+    ring
+  rw [he b, he a]
+  push_cast
   field_simp
 
 /-! ### Affine transport
