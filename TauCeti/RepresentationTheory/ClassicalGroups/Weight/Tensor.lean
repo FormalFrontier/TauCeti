@@ -147,12 +147,6 @@ theorem iSup_weightSpace_tprod_eq_top (hρ : ⨆ a : Fin n → ℤ, weightSpace 
   top_le_iff.mp <| (iSup_iSup_map₂_weightSpace_eq_top hρ hσ).ge.trans <|
     iSup_mono fun l ↦ iSup_map₂_weightSpace_le_weightSpace_tprod ρ σ l
 
-/-- The weight spaces of the determinant powers span, since the constant weight `m` already
-carries all of `det ^ m`. -/
-theorem iSup_weightSpace_detPowerRep_eq_top (m : ℤ) :
-    ⨆ l : Fin n → ℤ, weightSpace (detPowerRep k n m) l = ⊤ :=
-  top_le_iff.mp <| (weightSpace_detPowerRep (k := k) (n := n) m).ge.trans (le_iSup _ _)
-
 end CommRing
 
 /-! ## Weights add
@@ -205,19 +199,6 @@ theorem isInternal_weightSpace_tprod_stdRep
   isInternal_weightSpace_tprod hchar iSup_weightSpace_stdRep iSup_weightSpace_stdRep
 
 /-! ## The determinant twist -/
-
-/-- **Off the constant weight `m` the representation `det ^ m` has no weight vectors.** Over a
-general commutative ring this fails: over `𝔽₂` the torus is trivial and every weight space of
-`det ^ m` is `⊤`. -/
-theorem weightSpace_detPowerRep_eq_bot (hchar : Function.Injective (weightChar k (κ := Fin n)))
-    {m : ℤ} {l : Fin n → ℤ} (hl : l ≠ fun _ ↦ m) :
-    weightSpace (detPowerRep k n m) l = ⊥ := by
-  refine (Submodule.eq_bot_iff _).mpr fun x hx ↦ ?_
-  by_contra hx0
-  refine hl (hchar (MonoidHom.ext fun t ↦ Units.ext (mul_right_cancel₀ hx0 ?_)))
-  have h := apply_of_mem_weightSpace hx t
-  rw [detPowerRep_apply, smul_eq_mul] at h
-  rw [← h, weightChar_const, det_diagGL]
 
 /-- **Tensoring with `det ^ m` translates weights by the constant sequence `m`.** Under the
 canonical identification `W ⊗[k] k ≃ₗ[k] W` this reads: the weight-`l` space of `ρ ⊗ det ^ m` is
