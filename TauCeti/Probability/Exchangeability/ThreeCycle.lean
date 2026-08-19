@@ -228,6 +228,8 @@ theorem threeCycleInitial_toMeasure :
     (threeCycleInitial : Measure (ZMod 3)) = threeCycleMeasure := by
   simp only [threeCycleInitial, ProbabilityMeasure.coe_mk]
 
+-- Not `@[simp]`: `threeCycleInitial_toMeasure` already simplifies this lemma's left-hand side, so
+-- the `simpNF` linter rejects the tag.
 /-- The bundled initial law gives mass `3⁻¹` to each singleton. -/
 theorem threeCycleInitial_singleton (a : ZMod 3) :
     (threeCycleInitial : Measure (ZMod 3)) {a} = 3⁻¹ := by
@@ -246,6 +248,8 @@ theorem threeCycleStep_toMeasure (a : ZMod 3) :
     (threeCycleStep a : Measure (ZMod 3)) = Measure.dirac (a + 1) := by
   simp only [threeCycleStep, diracProba, ProbabilityMeasure.coe_mk]
 
+-- Not `@[simp]`: `threeCycleStep_toMeasure` already simplifies this lemma's left-hand side, so the
+-- `simpNF` linter rejects the tag.
 /-- The deterministic step gives mass one to the successor state and mass zero to every other
 state. -/
 theorem threeCycleStep_singleton (a b : ZMod 3) :
