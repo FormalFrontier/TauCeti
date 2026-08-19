@@ -80,9 +80,10 @@ theorem heckeSlashSum_slash_invariant (f : ℍ → ℂ) (hf : ∀ δ ∈ Γ₁, 
   have hperm (v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) :
       (f ∣[k] rightCosetRep D v) ∣[k] γ =
         f ∣[k] rightCosetRep D ((⟨γ, hγ⟩ : Γ₂)⁻¹ • v) := by
-    rw [← SlashAction.slash_mul k (rightCosetRep D v) γ f, rightCosetRep_def D v,
-      show (D.out : GL (Fin 2) ℚ) * ((v.out : GL (Fin 2) ℚ))⁻¹ * γ =
-        (D.out : GL (Fin 2) ℚ) * (γ⁻¹ * (v.out : GL (Fin 2) ℚ))⁻¹ from by group,
+    -- `δ τᵥ⁻¹ γ = δ (γ⁻¹ τᵥ)⁻¹`: the right-hand factor is again the inverse of an element of `Γ₂`.
+    have hmul : (D.out : GL (Fin 2) ℚ) * ((v.out : GL (Fin 2) ℚ))⁻¹ * γ =
+        (D.out : GL (Fin 2) ℚ) * (γ⁻¹ * (v.out : GL (Fin 2) ℚ))⁻¹ := by group
+    rw [← SlashAction.slash_mul k (rightCosetRep D v) γ f, rightCosetRep_def D v, hmul,
       slash_rightCosetRep_of_mem_right k D (mul_mem (inv_mem hγ) v.out.2) f hf]
     exact congrArg (f ∣[k] rightCosetRep D ·)
       (MulAction.Quotient.mk_smul_out _ (⟨γ, hγ⟩ : Γ₂)⁻¹ v)

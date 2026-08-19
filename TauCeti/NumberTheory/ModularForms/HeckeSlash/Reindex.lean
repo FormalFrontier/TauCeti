@@ -105,10 +105,10 @@ lemma slash_rightCosetRep_of_mem {h₁ h₂ : GL (Fin 2) ℚ} (hh₁ : h₁ ∈ 
     rw [hu]
     simpa using conj_mem_of_mk_eq ((D.out : GL (Fin 2) ℚ)⁻¹) (Quotient.out_eq _)
   -- Split off that factor on the left; what is left is the chosen representative.
-  rw [show h₁ * (D.out : GL (Fin 2) ℚ) * h₂⁻¹ =
+  have hsplit : h₁ * (D.out : GL (Fin 2) ℚ) * h₂⁻¹ =
       (h₁ * ((D.out : GL (Fin 2) ℚ) * (u⁻¹ * h₂) * (D.out : GL (Fin 2) ℚ)⁻¹)⁻¹) *
-        ((D.out : GL (Fin 2) ℚ) * u⁻¹) from by group,
-    SlashAction.slash_mul, hf _ (mul_mem hh₁ (inv_mem hconj))]
+        ((D.out : GL (Fin 2) ℚ) * u⁻¹) := by group
+  rw [hsplit, SlashAction.slash_mul, hf _ (mul_mem hh₁ (inv_mem hconj))]
 
 /-- The `h₁ = 1` case of `slash_rightCosetRep_of_mem`: slashing by `δ h₂⁻¹` agrees with slashing
 by the chosen representative of `h₂`'s class. This is the form the invariance proof consumes,

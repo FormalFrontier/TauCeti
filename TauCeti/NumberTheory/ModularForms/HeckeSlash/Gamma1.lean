@@ -19,8 +19,8 @@ discharges, once, the two side conditions the general construction carries.
 
 The Hecke triple itself is `HeckeRing/GL2/Gamma1.lean`'s instance, and the finiteness of the
 right-coset index follows from it. What is left is the positivity hypothesis, and that is
-`Δ₀(N) ≤ posDetInt 2` composed with `posDetInt_le_glpos`: every element of `Δ₀(N)` has positive
-determinant by definition, so no double coset of this triple ever fails it.
+`out_mem_glpos_of_delta0` from the same file: every element of `Δ₀(N)` has positive determinant
+by definition, so no double coset of this triple ever fails it.
 
 The operators belong to the double coset itself, not to the representatives `heckeSlashSum` sums
 over: `coe_heckeSlashGamma1ModularFormEnd` below rewrites either of them to `heckeSlashSum`, and
@@ -39,8 +39,6 @@ recurrences — is a separate milestone and is not proved here.
 
 ## Main results
 
-* `HeckeRing.GL2.mem_glpos_out_of_delta0`: a double coset of `Δ₀(N)` has a representative of
-  positive determinant.
 * `HeckeRing.GL2.coe_heckeSlashGamma1ModularFormEnd`,
   `HeckeRing.GL2.coe_heckeSlashGamma1CuspFormEnd`: both operators are `heckeSlashSum` on
   underlying functions.
@@ -61,17 +59,7 @@ open scoped MatrixGroups ModularForm
 
 namespace HeckeRing.GL2
 
-variable {N : ℕ}
-
-/-- The chosen representative of a double coset of `Δ₀(N)` has positive determinant: `Δ₀(N)`
-consists of integral matrices of positive determinant. This is the hypothesis
-`heckeSlashModularFormEnd` carries, discharged once for this triple. -/
-lemma mem_glpos_out_of_delta0 {Γ₁ Γ₂ : Subgroup (GL (Fin 2) ℚ)}
-    (D : HeckeCoset (Delta0 N) Γ₁ Γ₂) :
-    (D.out : GL (Fin 2) ℚ) ∈ Matrix.GLPos (Fin 2) ℚ :=
-  posDetInt_le_glpos 2 (Delta0_le_posDetInt N D.out.2)
-
-variable [NeZero N] (k : ℤ)
+variable {N : ℕ} [NeZero N] (k : ℤ)
   (D : HeckeCoset (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)))
 
 /-- **The Hecke operator of a double coset on `M_k(Γ₁(N))`.** This is the roadmap's Layer 2(b)
@@ -80,23 +68,23 @@ target for `ModularForm`: a `ℂ`-linear endomorphism of the space of modular fo
 condition relating `N` to the determinant of the coset. -/
 noncomputable def heckeSlashGamma1ModularFormEnd :
     Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  heckeSlashModularFormEnd k D (mem_glpos_out_of_delta0 D)
+  heckeSlashModularFormEnd k D (out_mem_glpos_of_delta0 N D)
 
 /-- **The Hecke operator of a double coset on `S_k(Γ₁(N))`** — the statement that the operator
 above preserves cuspidality. -/
 noncomputable def heckeSlashGamma1CuspFormEnd :
     Module.End ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  heckeSlashCuspFormEnd k D (mem_glpos_out_of_delta0 D)
+  heckeSlashCuspFormEnd k D (out_mem_glpos_of_delta0 N D)
 
 /-- The operator is `heckeSlashSum` on underlying functions. -/
 @[simp] lemma coe_heckeSlashGamma1ModularFormEnd (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeSlashGamma1ModularFormEnd k D f) = heckeSlashSum k D f :=
-  coe_heckeSlashModularFormEnd k D (mem_glpos_out_of_delta0 D) f
+  coe_heckeSlashModularFormEnd k D (out_mem_glpos_of_delta0 N D) f
 
 /-- The operator is `heckeSlashSum` on underlying functions. -/
 @[simp] lemma coe_heckeSlashGamma1CuspFormEnd (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeSlashGamma1CuspFormEnd k D f) = heckeSlashSum k D f :=
-  coe_heckeSlashCuspFormEnd k D (mem_glpos_out_of_delta0 D) f
+  coe_heckeSlashCuspFormEnd k D (out_mem_glpos_of_delta0 N D) f
 
 end HeckeRing.GL2
 

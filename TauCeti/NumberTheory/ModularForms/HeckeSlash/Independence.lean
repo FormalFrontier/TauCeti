@@ -145,13 +145,15 @@ theorem heckeSlashSum_eq_sum_of_rightCosets {ι : Type*} [Fintype ι] (a : ι �
       MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)) =
         MulOpposite.op (rightCosetRep D (φ i)) • (Γ₁ : Set (GL (Fin 2) ℚ)) :=
     ⟨fun i ↦ (key i).choose, fun i ↦ (key i).choose_spec⟩
+  -- Indices with the same image under `φ` name the same coset of the family `(aᵢ)`, which `hinj`
+  -- then identifies; stated separately so that `hinj` is applied to this equality itself.
+  have hcoset : ∀ i j, φ i = φ j → MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)) =
+      MulOpposite.op (a j) • (Γ₁ : Set (GL (Fin 2) ℚ)) := fun i j hij ↦ by
+    rw [hφ i, hφ j, hij]
   have hbij : Function.Bijective φ := by
-    refine ⟨fun i j hij ↦ hinj ?_, fun v ↦ ?_⟩
-    · change MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)) =
-        MulOpposite.op (a j) • (Γ₁ : Set (GL (Fin 2) ℚ))
-      rw [hφ i, hφ j, hij]
-    · obtain ⟨i, hi⟩ := key' v
-      exact ⟨i, (hinj' (hi.trans (hφ i))).symm⟩
+    refine ⟨fun i j hij ↦ hinj (hcoset i j hij), fun v ↦ ?_⟩
+    obtain ⟨i, hi⟩ := key' v
+    exact ⟨i, (hinj' (hi.trans (hφ i))).symm⟩
   rw [heckeSlashSum_def]
   exact (Fintype.sum_bijective φ hbij _ _ fun i ↦ slash_eq_of_rightCoset_eq k hf (hφ i)).symm
 
