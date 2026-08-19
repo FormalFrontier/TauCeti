@@ -10,12 +10,6 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Dimension
 public import TauCeti.LinearAlgebra.Matrix.ToLin
 public import TauCeti.RepresentationTheory.Spin.Polarization.Exists
 public import TauCeti.RepresentationTheory.Spin.Representation
--- Private: the field-level central-simple results are descended from an algebraic closure.
-import TauCeti.Algebra.CentralSimple.BaseChange
--- Private: nondegeneracy after base change is used only in the descent argument.
-import TauCeti.LinearAlgebra.QuadraticForm.Radical
-import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
-import Mathlib.LinearAlgebra.CliffordAlgebra.BaseChange
 -- Private: `LinearMap.injective_iff_surjective_of_finrank_eq_finrank` is used only inside a proof.
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 -- Private: `IsSimpleRing.of_ringEquiv` is used only inside a proof.
@@ -44,10 +38,7 @@ or, in a basis of `S`, `TauCeti.SpinPolarizationData.cliffordEquivMatrix`, the m
 `M_{2^l}(K)` for `finrank V = 2 * l`. Since `TauCeti.SpinPolarizationData.ofNondegenerate` builds a
 polarization for every finite-dimensional nondegenerate quadratic space over a separably closed
 field of characteristic different from two, this specializes to the field-level statement
-`CliffordAlgebra.nonempty_algEquiv_matrix_of_finrank_eq_two_mul`. Base change to an algebraic
-closure and descent show more generally that an even-dimensional nondegenerate Clifford algebra
-over any field of characteristic different from two is central simple; over a separably closed
-field it is split by the displayed matrix-algebra equivalence.
+`CliffordAlgebra.nonempty_algEquiv_matrix_of_finrank_eq_two_mul`.
 
 The direction of the argument is worth recording: the spin module is built first and the structure
 theorem is derived *from* it.
@@ -71,11 +62,8 @@ decomposition. Identifying the splitting is separate work.
 
 * `TauCeti.spinAction_bijective`: the Fock action is faithful, hence
   bijective, in even dimension.
-* `CliffordAlgebra.nonempty_algEquiv_matrix_of_finrank_eq_two_mul`,
-  `CliffordAlgebra.isSimpleRing_of_even_finrank` and
-  `CliffordAlgebra.isCentral_of_even_finrank`: the matrix-algebra equivalence over a separably
-  closed field, and simplicity and centrality of the Clifford algebra of a nondegenerate form over
-  any field of characteristic different from two.
+* `CliffordAlgebra.nonempty_algEquiv_matrix_of_finrank_eq_two_mul`: the matrix-algebra equivalence
+  over a separably closed field.
 
 ## References
 
@@ -83,9 +71,6 @@ decomposition. Identifying the splitting is separate work.
   Clifford algebra of an even-dimensional space acts on `⋀·W` through the full endomorphism
   algebra, and the dimension count that makes the action an isomorphism.
 * C. Chevalley, *The Algebraic Theory of Spinors* (1954), Chapter II.
-* P. Gille and T. Szamuely, *Central Simple Algebras and Galois Cohomology*, Section 2.2, and
-  R. S. Pierce, *Associative Algebras*, GTM 88, Chapter 12, for base change and descent of central
-  simple algebras.
 * [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
   Layer 1, "The even-dimensional case".
 -/
@@ -225,14 +210,11 @@ end TauCeti
 
 A finite-dimensional nondegenerate quadratic space over a separably closed field of characteristic
 different from two is polarized by `TauCeti.SpinPolarizationData.ofNondegenerate`, giving the split
-matrix-algebra statement. Over an arbitrary field of characteristic different from two, simplicity
-and centrality follow by applying that statement after base change to an algebraic closure and then
-descending. -/
+matrix-algebra statement. -/
 
 namespace CliffordAlgebra
 
 open TauCeti
-open scoped TensorProduct
 
 universe u v
 
@@ -251,52 +233,5 @@ theorem nonempty_algEquiv_matrix_of_finrank_eq_two_mul [IsSepClosed F] {l : ℕ}
     Nonempty (CliffordAlgebra Q ≃ₐ[F] Matrix (Fin (2 ^ l)) (Fin (2 ^ l)) F) := by
   let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
   exact ⟨(SpinPolarizationData.ofNondegenerate Q hQ).cliffordEquivMatrix hV⟩
-
-private theorem isSimpleRing_and_isCentral_baseChange_algebraicClosure [Invertible (2 : F)]
-    (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
-    IsSimpleRing (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) ∧
-      Algebra.IsCentral (AlgebraicClosure F)
-        (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) := by
-  let _ : NeZero (2 : AlgebraicClosure F) := by
-    refine ⟨?_⟩
-    simpa only [map_ofNat] using
-      (map_ne_zero (algebraMap F (AlgebraicClosure F))).2 (NeZero.ne (2 : F))
-  let _ : Invertible (2 : AlgebraicClosure F) :=
-    invertibleOfNonzero (NeZero.ne (2 : AlgebraicClosure F))
-  let E := AlgebraicClosure F
-  have hQE : (Q.baseChange E).Nondegenerate := hQ.baseChange
-  have hVE : Even (finrank E (E ⊗[F] V)) := by
-    rwa [Module.finrank_baseChange]
-  let P := SpinPolarizationData.ofNondegenerate (Q.baseChange E) hQE
-  exact ⟨SpinPolarizationData.isSimpleRing_cliffordAlgebra P hVE,
-    SpinPolarizationData.isCentral_cliffordAlgebra P hVE⟩
-
-/-- **The Clifford algebra of a nondegenerate quadratic form on an even-dimensional space is a
-simple ring.** After base change to an algebraic closure it is the endomorphism algebra of its
-spinor module, and simplicity descends along the faithfully flat field extension. -/
-theorem isSimpleRing_of_even_finrank (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
-    IsSimpleRing (CliffordAlgebra Q) := by
-  let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  have hC : IsSimpleRing (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) :=
-    (isSimpleRing_and_isCentral_baseChange_algebraicClosure hQ hV).1
-  apply IsSimpleRing.of_baseChange (K := F) (L := AlgebraicClosure F)
-  exact IsSimpleRing.of_ringEquiv
-    (CliffordAlgebra.equivBaseChange (AlgebraicClosure F) Q).toRingEquiv hC
-
-/-- **The Clifford algebra of a nondegenerate quadratic form on an even-dimensional space has center
-the base field.** After base change to an algebraic closure it is the endomorphism algebra of its
-spinor module, whose center is the scalars, and centrality descends along the field extension. With
-`CliffordAlgebra.isSimpleRing_of_even_finrank` this makes it a central simple algebra over `F`. -/
-theorem isCentral_of_even_finrank (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
-    Algebra.IsCentral F (CliffordAlgebra Q) := by
-  let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  let _ : Algebra.IsCentral (AlgebraicClosure F)
-      (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) :=
-    (isSimpleRing_and_isCentral_baseChange_algebraicClosure hQ hV).2
-  let _ : Algebra.IsCentral (AlgebraicClosure F)
-      (AlgebraicClosure F ⊗[F] CliffordAlgebra Q) :=
-    Algebra.IsCentral.of_algEquiv (AlgebraicClosure F) _ _
-      (CliffordAlgebra.equivBaseChange (AlgebraicClosure F) Q)
-  exact TauCeti.Algebra.IsCentral.of_baseChange (K := F) (L := AlgebraicClosure F)
 
 end CliffordAlgebra
