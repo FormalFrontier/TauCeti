@@ -110,44 +110,10 @@ theorem geometricallyConnected_iff_geometricallyConnected_coordinate
       geometricallyConnectedCommHopfAlgProperty k
         ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
           G).unop.obj := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  let eSpec :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat
-          (CommRingCat.of k)).functor.obj H₀ :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H ≪≫
-        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-          (CommRingCat.of k)).app H₀).symm)
-  let eG :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅ G.obj :=
-    (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso (E.counitIso.app G)
-  calc
-    GeometricallyConnected G.obj.obj.X.hom ↔
-        geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k) G.obj :=
-      (geometricallyConnectedAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).symm
-    _ ↔ geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k)
-        ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
-      ((geometricallyConnectedAffineGroupSchemeProperty
-        (CommRingCat.of k)).prop_iff_of_iso eG).symm
-    _ ↔ geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k)
-        ((commHopfAlgCatOpEquivAffineGroupSchemeCat
-          (CommRingCat.of k)).functor.obj H₀) :=
-      (geometricallyConnectedAffineGroupSchemeProperty
-        (CommRingCat.of k)).prop_iff_of_iso eSpec
-    _ ↔ (geometricallyConnectedCommHopfAlgProperty k).op H₀ := by
-      exact Iff.of_eq <| congrArg
-        (fun P : ObjectProperty (CommHopfAlgCat.{u} k)ᵒᵖ ↦ P H₀)
-        (geometricallyConnectedAffineGroupSchemeProperty_inverseImage k)
-    _ ↔ geometricallyConnectedCommHopfAlgProperty k
-        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-          G).unop.obj := by
-      rw [ObjectProperty.op_iff]
-      simp only [H₀, H, E, Functor.op_obj,
-        FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj]
+  exact finiteType_objectProperty_iff_coordinate k
+    (geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k))
+    (geometricallyConnectedCommHopfAlgProperty k)
+    (geometricallyConnectedAffineGroupSchemeProperty_inverseImage k) G
 
 /-- The structural morphism of a Hopf spectrum is geometrically connected exactly when, after
 every extension `K / k` of the base field, every idempotent of `H ⊗[k] K` is zero or one. -/
