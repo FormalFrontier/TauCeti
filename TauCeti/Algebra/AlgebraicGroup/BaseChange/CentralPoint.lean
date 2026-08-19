@@ -57,6 +57,7 @@ variable [Algebra K A] [Algebra k A] [IsScalarTower k K A]
 
 The equivalence is written in the restriction direction, from a point of `K ⊗[k] H` to a
 point of `H`. -/
+@[simp]
 theorem isCentralPoint_baseChangePointsMulEquiv_symm_iff
     (g : WithConv (K ⊗[k] H →ₐ[K] A)) :
     IsCentralPoint
@@ -107,6 +108,7 @@ namespace CommHopfAlgCat
 variable {k : Type u} {K : Type v} [CommRing k] [CommRing K] [Algebra k K]
 
 /-- The bundled base-change equivalence on points preserves and reflects universal centrality. -/
+@[simp]
 theorem isCentralPoint_baseChangePointsMulEquiv_iff
     (H : _root_.CommHopfAlgCat.{v} k) (A : CommAlgCat.{v} K)
     (g : HopfAlgebra.points (R := K) (H := baseChange (K := K) H) A) :
