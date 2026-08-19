@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Ring.Action.ConjAct
+public import TauCeti.Algebra.Lie.Sl2.Basic
 public import TauCeti.Algebra.Lie.Sl2.Weyl.Automorphism
 
 public section
@@ -74,7 +75,7 @@ by factorials.
   centralises every element on which `E` and `F` have opposite eigenvalues.
 * `TauCeti.weylRatio_conj_e` and `TauCeti.weylRatio_conj_f`: it scales the two nilpotent elements
   by `c²` and `c⁻²`.
-* `TauCeti.weylRatio_conj_exp_smul`, `TauCeti.weylRatio_conj_exp_smul_neg` and
+* `TauCeti.weylRatio_conj_exp_smul`, `TauCeti.weylRatio_conj_exp_neg_smul` and
   `TauCeti.weylUnitSMul_conj_exp_smul`: the same relations read on the root subgroup elements.
 * `TauCeti.weylRatio_conj_weylUnitSMul`: conjugation by `h (c)` carries `n (u)` to `n (c² u)`.
 * `TauCeti.lie_weylRatio_conj`: the Weyl ratio preserves the eigenspaces of the Cartan
@@ -136,24 +137,9 @@ private theorem inv_weylUnit_conj_f :
 
 end Conjugation
 
-/-! ## Rescaling an `sl₂` triple -/
-
 section Scaled
 
 variable {R A : Type*} [CommRing R] [Ring A] [Algebra R A] {H E F : A}
-
-/-- **Rescaling an `sl₂` triple by a unit of the base ring.** Scaling the raising element by `c`
-and the lowering element by `c⁻¹` leaves their bracket, hence the Cartan element, unchanged.
-
-For the triple of a root `α` this is the reparametrisation of the pair of root subgroups that the
-scaled Weyl element `TauCeti.weylUnitSMul` is built from. -/
-theorem isSl2Triple_smulUnits (ht : IsSl2Triple H E F) (c : Rˣ) :
-    IsSl2Triple H ((c : R) • E) (((c⁻¹ : Rˣ) : R) • F) where
-  h_ne_zero := ht.h_ne_zero
-  lie_e_f := by
-    rw [smul_lie, lie_smul, ht.lie_e_f, smul_smul, Units.mul_inv, one_smul]
-  lie_h_e_nsmul := by rw [lie_smul, ht.lie_h_e_nsmul, smul_comm]
-  lie_h_f_nsmul := by rw [lie_smul, ht.lie_h_f_nsmul, smul_neg, smul_comm]
 
 variable [Algebra ℚ A]
 
@@ -289,6 +275,7 @@ theorem weylRatio_one : weylRatio (R := R) hE hF 1 = 1 := by
 
 /-- The scaled Weyl element factors as its Weyl ratio times the Weyl element: the normal
 form `n_α(c) = h_α(c) n_α(1)`. -/
+@[simp]
 theorem weylUnitSMul_eq_weylRatio_mul (c : Rˣ) :
     weylUnitSMul (R := R) hE hF c = weylRatio hE hF c * weylUnit hE hF := by
   rw [weylRatio_def, inv_mul_cancel_right]
@@ -359,7 +346,7 @@ theorem weylRatio_conj_exp_smul (c : Rˣ) (u : R) :
     smul_mul_assoc, weylRatio_conj_e hE hF ht c, smul_smul]
 
 /-- Conjugating the opposite root subgroup element by the Weyl ratio. -/
-theorem weylRatio_conj_exp_smul_neg (c : Rˣ) (u : R) :
+theorem weylRatio_conj_exp_neg_smul (c : Rˣ) (u : R) :
     ((weylRatio (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (-(u • F)) *
         (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) =
       IsNilpotent.exp (-((u * ((c⁻¹ : Rˣ) : R) ^ 2) • F)) := by
@@ -390,7 +377,7 @@ theorem weylRatio_conj_weylUnitSMul (c u : Rˣ) :
   rw [coe_weylUnitSMul, coe_weylUnitSMul, hval, hinv, smul_mul', smul_mul']
   simp only [ConjAct.units_smul_def, ConjAct.ofConjAct_toConjAct]
   rw [weylRatio_conj_exp_smul hE hF ht,
-    weylRatio_conj_exp_smul_neg hE hF ht]
+    weylRatio_conj_exp_neg_smul hE hF ht]
 
 /-- **The Weyl ratio preserves the eigenspaces of the Cartan element.** It centralises
 `H`, so conjugation by it commutes with the adjoint action of `H`. -/
