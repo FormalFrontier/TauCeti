@@ -80,17 +80,15 @@ def W1p.ofTestFunctionₗ (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens 
     (hasWeakFDerivOn_testFunctionLp phi)
   map_add' phi psi := by
     apply W1p.ext
-    · rw [W1p.value_mk, testFunctionLp_add, ← W1p.valueL_apply, map_add,
-        W1p.valueL_apply, W1p.value_mk, W1p.valueL_apply, W1p.value_mk]
-    · rw [W1p.gradient_mk, gradientTestFunctionLp_add, ← W1p.gradientL_apply, map_add,
-        W1p.gradientL_apply, W1p.gradient_mk, W1p.gradientL_apply, W1p.gradient_mk]
+    · rw [W1p.value_mk, testFunctionLp_add, ← W1p.valueL_apply, map_add]
+      simp
+    · rw [W1p.gradient_mk, gradientTestFunctionLp_add, ← W1p.gradientL_apply, map_add]
+      simp
   map_smul' c phi := by
     apply W1p.ext
-    · rw [W1p.value_mk, testFunctionLp_smul, ← W1p.valueL_apply, map_smul,
-        W1p.valueL_apply, W1p.value_mk]
+    · rw [W1p.value_mk, testFunctionLp_smul, ← W1p.valueL_apply, map_smul]
       simp
-    · rw [W1p.gradient_mk, gradientTestFunctionLp_smul, ← W1p.gradientL_apply, map_smul,
-        W1p.gradientL_apply, W1p.gradient_mk]
+    · rw [W1p.gradient_mk, gradientTestFunctionLp_smul, ← W1p.gradientL_apply, map_smul]
       simp
 
 @[simp]
@@ -118,12 +116,6 @@ theorem coe_w1p0Submodule :
       closure (Set.range (W1p.ofTestFunctionₗ mu Omega p)) := by
   rw [w1p0Submodule, Submodule.coe_closure, LinearMap.coe_range]
 
-/-- `W^{1,p}_0(Ω)` is the closed-submodule closure of the range of the test-function embedding. -/
-theorem w1p0Submodule_def :
-    w1p0Submodule mu Omega p = (LinearMap.range (W1p.ofTestFunctionₗ mu Omega p)).closure := by
-  apply SetLike.coe_injective
-  rw [coe_w1p0Submodule, Submodule.coe_closure, LinearMap.coe_range]
-
 /-- A test function, viewed in `W^{1,p}(Ω)`, lies in `W^{1,p}_0(Ω)`. -/
 theorem W1p.ofTestFunctionₗ_mem_w1p0Submodule (phi : 𝓓(Omega, ℝ)) :
     W1p.ofTestFunctionₗ mu Omega p phi ∈ w1p0Submodule mu Omega p :=
@@ -133,9 +125,10 @@ theorem W1p.ofTestFunctionₗ_mem_w1p0Submodule (phi : 𝓓(Omega, ℝ)) :
 theorem mem_of_mem_w1p0Submodule {s : Set (W1p mu Omega p)} (hs : IsClosed s)
     (h : ∀ phi, W1p.ofTestFunctionₗ mu Omega p phi ∈ s) {u : W1p mu Omega p}
     (hu : u ∈ w1p0Submodule mu Omega p) : u ∈ s := by
-  change u ∈ (w1p0Submodule mu Omega p : Set (W1p mu Omega p)) at hu
-  rw [coe_w1p0Submodule] at hu
-  exact closure_minimal (by rintro _ ⟨phi, rfl⟩; exact h phi) hs hu
+  have hu' : u ∈ closure (Set.range (W1p.ofTestFunctionₗ mu Omega p)) := by
+    rw [← coe_w1p0Submodule]
+    exact hu
+  exact closure_minimal (by rintro _ ⟨phi, rfl⟩; exact h phi) hs hu'
 
 /-- **The Sobolev space `W^{1,p}_0(Ω)`**, the closure of `C_c^∞(Ω)` in `W^{1,p}(Ω)`. -/
 abbrev W1p0 (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
