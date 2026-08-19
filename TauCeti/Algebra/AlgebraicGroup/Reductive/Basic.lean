@@ -30,6 +30,7 @@ the precise affine-group statement that the geometric fibre is the trivial group
 
 * `TauCeti.reductiveCommHopfAlgProperty`: reductivity for finite-type commutative Hopf algebras
   over a field.
+* `TauCeti.ReductiveCommHopfAlgCat`: the corresponding full subcategory.
 * `TauCeti.reductiveCommHopfAlgProperty.eq_augmentation`: every connected normal smooth
   unipotent closed subgroup of a reductive group's geometric fibre is trivial.
 * `TauCeti.reductiveCommHopfAlgProperty.bot_eq_augmentation`: the zero Hopf ideal of a reductive
@@ -91,11 +92,26 @@ theorem reductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
   geometricNormalSubgroupFreeCommHopfAlgProperty_iff k
     (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) H
 
+/-- Reductivity is the geometric normal-subgroup-freeness property whose candidate subgroups
+are smooth and unipotent. -/
+theorem reductiveCommHopfAlgProperty_eq_geometricNormalSubgroupFree
+    (k : Type u) [Field k] :
+    reductiveCommHopfAlgProperty k =
+      geometricNormalSubgroupFreeCommHopfAlgProperty k
+        (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) := by
+  ext H
+  rw [reductiveCommHopfAlgProperty_iff,
+    geometricNormalSubgroupFreeCommHopfAlgProperty_iff]
+
 /-- Reductivity is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
     (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=
   inferInstanceAs ((geometricNormalSubgroupFreeCommHopfAlgProperty k
     (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))).IsClosedUnderIsomorphisms)
+
+/-- The category of reductive finite-type commutative Hopf algebras over a field. -/
+abbrev ReductiveCommHopfAlgCat (k : Type u) [Field k] :=
+  (reductiveCommHopfAlgProperty k).FullSubcategory
 
 namespace reductiveCommHopfAlgProperty
 

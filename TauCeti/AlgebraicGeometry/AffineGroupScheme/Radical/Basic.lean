@@ -19,6 +19,14 @@ Hopf/group-scheme anti-equivalence. It packages the common scheme-side construct
 reductive and semisimple affine group schemes, including their smoothness, geometric
 connectedness, restricted anti-equivalence, and `hopfSpec` computation interface.
 
+## References
+
+* J. S. Milne, *Algebraic Groups* (2017), §§6.46 and 19.b.
+* T. A. Springer, *Linear Algebraic Groups*, Chapter 8.
+* B. Conrad, *Reductive Group Schemes*, Section 3.
+* The categorical restriction and smoothness transport follow the formal pattern in
+  `TauCeti.AlgebraicGeometry.AffineGroupScheme.Unipotent`.
+
 ## Main declarations
 
 * `TauCeti.geometricNormalSubgroupFreeAffineGroupSchemeProperty`: the transported object
