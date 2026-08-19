@@ -31,6 +31,8 @@ closed subgroup scheme containing the image, constructed in
 ## Main declarations
 
 * `TauCeti.HopfAlgebra.commutatorAlgHom`: the coordinate algebra morphism of the commutator.
+* `TauCeti.HopfAlgebra.map_comp_commutatorAlgHom`: commutators commute with a Hopf-algebra
+  morphism.
 * `TauCeti.HopfAlgebra.productMap_comp_commutatorAlgHom`: evaluation at two algebra-valued points.
 
 ## References
@@ -77,6 +79,45 @@ theorem toConv_commutatorAlgHom :
         (toConv
           (Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H) (H₂ := H)).toAlgHom)⁻¹ := by
   rw [commutatorAlgHom, toConv_ofConv]
+
+variable {K : Type w} [CommSemiring K] [_root_.HopfAlgebra R K]
+
+/-- The coordinate morphism of the commutator is natural under morphisms of commutative Hopf
+algebras. This is the coordinate form of `f([g, h]) = [f(g), f(h)]`. -/
+theorem map_comp_commutatorAlgHom (f : H →ₐc[R] K) :
+    (Bialgebra.TensorProduct.map f f).toAlgHom.comp
+        (commutatorAlgHom (R := R) (H := H)) =
+      (commutatorAlgHom (R := R) (H := K)).comp f.toAlgHom := by
+  apply AlgHom.ext
+  intro x
+  have hleft :
+      AlgHom.mapValue (H := H) (Bialgebra.TensorProduct.map f f).toAlgHom
+          (toConv (commutatorAlgHom (R := R) (H := H))) =
+        AlgHom.mapDomain (A := K ⊗[R] K) f
+          (toConv (commutatorAlgHom (R := R) (H := K))) := by
+    have hinclLeft :
+        (Bialgebra.TensorProduct.map f f).toAlgHom.comp
+            (Bialgebra.TensorProduct.includeLeft
+              (R := R) (H₁ := H) (H₂ := H)).toAlgHom =
+          (Bialgebra.TensorProduct.includeLeft
+            (R := R) (H₁ := K) (H₂ := K)).toAlgHom.comp f.toAlgHom := by
+      simpa only [Bialgebra.TensorProduct.map_toAlgHom,
+        Bialgebra.TensorProduct.includeLeft_toAlgHom] using
+          Algebra.TensorProduct.map_comp_includeLeft f.toAlgHom f.toAlgHom
+    have hinclRight :
+        (Bialgebra.TensorProduct.map f f).toAlgHom.comp
+            (Bialgebra.TensorProduct.includeRight
+              (R := R) (H₁ := H) (H₂ := H)).toAlgHom =
+          (Bialgebra.TensorProduct.includeRight
+            (R := R) (H₁ := K) (H₂ := K)).toAlgHom.comp f.toAlgHom := by
+      simpa only [Bialgebra.TensorProduct.map_toAlgHom,
+        Bialgebra.TensorProduct.includeRight_toAlgHom] using
+          Algebra.TensorProduct.map_comp_includeRight f.toAlgHom f.toAlgHom
+    rw [toConv_commutatorAlgHom, toConv_commutatorAlgHom]
+    apply WithConv.ofConv_injective
+    simp only [map_mul, map_inv, AlgHom.mapValue_apply, AlgHom.mapDomain_apply]
+    rw [hinclLeft, hinclRight]
+  exact congrArg (fun g : WithConv (H →ₐ[R] K ⊗[R] K) ↦ g.ofConv x) hleft
 
 /-- Evaluating the commutator coordinate morphism at two algebra-valued points gives their
 group-theoretic commutator. -/

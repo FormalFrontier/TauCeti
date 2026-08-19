@@ -20,15 +20,13 @@ into the ideal defining the derived subgroup of `Spec K`. It consequently induce
 H / derivedDefiningIdeal H ⟶ K / derivedDefiningIdeal K.
 ```
 
-This file proves the naturality of the commutator coordinate morphism, constructs the induced
-quotient morphism, and packages its identity and composition laws as an endofunctor on
-commutative Hopf algebras. Applying `Spec` reverses this map to the expected restriction between
-derived subgroup schemes.
+Using the naturality of the commutator coordinate morphism, this file constructs the induced
+quotient morphism and packages its identity and composition laws as an endofunctor on commutative
+Hopf algebras. Applying `Spec` reverses this map to the expected restriction between derived
+subgroup schemes.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.map_comp_commutatorAlgHom`: commutators commute with a Hopf-algebra
-  morphism.
 * `TauCeti.CommHopfAlgCat.derivedDefiningIdeal_map_le`: the derived defining ideals are
   functorial.
 * `TauCeti.CommHopfAlgCat.derivedMap`: the induced morphism on derived coordinate algebras.
@@ -53,51 +51,6 @@ open scoped commutatorElement TensorProduct
 namespace TauCeti
 
 universe u v w
-
-namespace HopfAlgebra
-
-variable {R : Type u} [CommSemiring R]
-variable {H : Type v} {K : Type w} [CommSemiring H] [CommSemiring K]
-variable [_root_.HopfAlgebra R H] [_root_.HopfAlgebra R K]
-
-/-- The coordinate morphism of the commutator is natural under morphisms of commutative Hopf
-algebras. This is the coordinate form of `f([g, h]) = [f(g), f(h)]`. -/
-theorem map_comp_commutatorAlgHom (f : H →ₐc[R] K) :
-    (Bialgebra.TensorProduct.map f f).toAlgHom.comp
-        (commutatorAlgHom (R := R) (H := H)) =
-      (commutatorAlgHom (R := R) (H := K)).comp f.toAlgHom := by
-  apply AlgHom.ext
-  intro x
-  have hleft :
-      AlgHom.mapValue (H := H) (Bialgebra.TensorProduct.map f f).toAlgHom
-          (toConv (commutatorAlgHom (R := R) (H := H))) =
-        AlgHom.mapDomain (A := K ⊗[R] K) f
-          (toConv (commutatorAlgHom (R := R) (H := K))) := by
-    have hinclLeft :
-        (Bialgebra.TensorProduct.map f f).toAlgHom.comp
-            (Bialgebra.TensorProduct.includeLeft
-              (R := R) (H₁ := H) (H₂ := H)).toAlgHom =
-          (Bialgebra.TensorProduct.includeLeft
-            (R := R) (H₁ := K) (H₂ := K)).toAlgHom.comp f.toAlgHom := by
-      simpa only [Bialgebra.TensorProduct.map_toAlgHom,
-        Bialgebra.TensorProduct.includeLeft_toAlgHom] using
-          Algebra.TensorProduct.map_comp_includeLeft f.toAlgHom f.toAlgHom
-    have hinclRight :
-        (Bialgebra.TensorProduct.map f f).toAlgHom.comp
-            (Bialgebra.TensorProduct.includeRight
-              (R := R) (H₁ := H) (H₂ := H)).toAlgHom =
-          (Bialgebra.TensorProduct.includeRight
-            (R := R) (H₁ := K) (H₂ := K)).toAlgHom.comp f.toAlgHom := by
-      simpa only [Bialgebra.TensorProduct.map_toAlgHom,
-        Bialgebra.TensorProduct.includeRight_toAlgHom] using
-          Algebra.TensorProduct.map_comp_includeRight f.toAlgHom f.toAlgHom
-    rw [toConv_commutatorAlgHom, toConv_commutatorAlgHom]
-    apply WithConv.ofConv_injective
-    simp only [map_mul, map_inv, AlgHom.mapValue_apply, AlgHom.mapDomain_apply]
-    rw [hinclLeft, hinclRight]
-  exact congrArg (fun g : WithConv (H →ₐ[R] K ⊗[R] K) ↦ g.ofConv x) hleft
-
-end HopfAlgebra
 
 namespace CommHopfAlgCat
 
