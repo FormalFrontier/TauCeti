@@ -34,6 +34,24 @@ namespace TauCeti
 
 universe u v
 
+private theorem isInternal_comp_symm {ι : Type*} {κ : Type*} [DecidableEq ι] [DecidableEq κ]
+    {M : Type*} {σ : Type*} [AddCommMonoid M] [SetLike σ M] [AddSubmonoidClass σ M]
+    {A : ι → σ} (h : DirectSum.IsInternal A) (e : ι ≃ κ) :
+    DirectSum.IsInternal fun k ↦ A (e.symm k) := by
+  have hcomp : (DirectSum.coeAddMonoidHom A).comp
+      (DirectSum.equivCongrLeft (β := fun i ↦ (A i : Type _)) e).symm.toAddMonoidHom =
+      DirectSum.coeAddMonoidHom fun k ↦ A (e.symm k) := by
+    refine DirectSum.addHom_ext' fun k ↦ AddMonoidHom.ext fun y ↦ ?_
+    simp only [AddMonoidHom.coe_comp, Function.comp_apply, AddEquiv.coe_toAddMonoidHom,
+      DirectSum.coeAddMonoidHom_of]
+    rw [← DirectSum.equivCongrLeft_of (β := fun i ↦ (A i : Type _)) e k y,
+      AddEquiv.symm_apply_apply, DirectSum.coeAddMonoidHom_of]
+  have hbij : Function.Bijective (DirectSum.coeAddMonoidHom fun k ↦ A (e.symm k)) := by
+    rw [← hcomp]
+    simpa only [AddMonoidHom.coe_comp, AddEquiv.coe_toAddMonoidHom] using
+      h.comp (AddEquiv.bijective _)
+  exact hbij
+
 namespace InternalGrading
 
 variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
