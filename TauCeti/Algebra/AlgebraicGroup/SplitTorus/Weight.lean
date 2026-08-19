@@ -59,6 +59,12 @@ monomial `∏ j, x_j ^ μ j`. -/
 noncomputable def weightCharacter (μ : σ → ℤ) : Multiplicative (σ →₀ ℤ) :=
   Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm μ)
 
+/-- A split-torus weight character is the multiplicative form of its finitely supported
+exponent vector. -/
+theorem weightCharacter_def (μ : σ → ℤ) :
+    weightCharacter μ = Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm μ) := by
+  rw [weightCharacter]
+
 @[simp]
 theorem toAdd_weightCharacter (μ : σ → ℤ) (j : σ) :
     Multiplicative.toAdd (weightCharacter μ) j = μ j := by
