@@ -61,30 +61,18 @@ def reindex (b : Basis ι H) (σ : ι' ≃ ι) : Basis ι' H where
 
 /-- Reindexing transports the Cartan matrix along the given equivalence. -/
 @[simp] theorem reindex_A (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).A = b.A.submatrix σ σ := by
-  ext i j
-  change b.A (σ i) (σ j) = _
-  rw [Matrix.submatrix_apply]
+    (b.reindex σ).A = b.A.submatrix σ σ := by rfl
 
 /-- Reindexing precomposes the Cartan generators with the given equivalence. -/
 @[simp] theorem reindex_h (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).h = b.h ∘ σ := by
-  funext i
-  change b.h (σ i) = (b.h ∘ σ) i
-  rw [Function.comp_apply]
+    (b.reindex σ).h = b.h ∘ σ := by rfl
 
 /-- Reindexing precomposes the raising generators with the given equivalence. -/
 @[simp] theorem reindex_e (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).e = b.e ∘ σ := by
-  funext i
-  change b.e (σ i) = (b.e ∘ σ) i
-  rw [Function.comp_apply]
+    (b.reindex σ).e = b.e ∘ σ := by rfl
 
 /-- Reindexing precomposes the lowering generators with the given equivalence. -/
 @[simp] theorem reindex_f (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).f = b.f ∘ σ := by
-  funext i
-  change b.f (σ i) = (b.f ∘ σ) i
-  rw [Function.comp_apply]
+    (b.reindex σ).f = b.f ∘ σ := by rfl
 
 end LieAlgebra.Basis

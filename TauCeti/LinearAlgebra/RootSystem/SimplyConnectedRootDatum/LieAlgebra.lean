@@ -35,8 +35,8 @@ Nothing is claimed here about the Lie algebra beyond the relations carried by a
 Geck's construction over an algebraically closed field, and `ℚ` is not one. The Cartan subalgebra
 is a Cartan subalgebra, which is what the basis does give, and the one fact a Chevalley--Demazure
 construction consumes next that the basis does not already carry is recorded: the generators `e`
-and `f` are nilpotent as matrices. That they generate the whole Lie algebra is the `span_ef` field
-of `TauCeti.DynkinType.lieBasis`.
+and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is exposed as
+`TauCeti.DynkinType.lieSpan_lieBasis_e_union_f`.
 
 ## Main definitions
 
@@ -54,6 +54,8 @@ of `TauCeti.DynkinType.lieBasis`.
   the explicit matrix Geck attaches to the corresponding simple root.
 * `TauCeti.DynkinType.lie_lieBasis_h_e` and `TauCeti.DynkinType.lie_lieBasis_h_f`: the two
   relations that mention the Cartan matrix, read against the pinned numbering.
+* `TauCeti.DynkinType.lieSpan_lieBasis_e_union_f`: the raising and lowering generators span the
+  pinned Lie algebra.
 * `TauCeti.DynkinType.isNilpotent_coe_lieBasis_e` and
   `TauCeti.DynkinType.isNilpotent_coe_lieBasis_f`: the raising and lowering generators are
   nilpotent matrices.
@@ -100,10 +102,20 @@ explicit matrices `RootPairing.GeckConstruction.h`, `e` and `f` attached to the 
 def lieAlgebra : LieSubalgebra ℚ (Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) :=
   RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht)
 
+/-- The pinned Lie algebra is Geck's construction on the pinned rational base. -/
+@[simp] theorem lieAlgebra_def :
+    t.lieAlgebra ht = RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht) := (rfl)
+
 /-- The distinguished Cartan subalgebra of `TauCeti.DynkinType.lieAlgebra`, spanned by the
 diagonal matrices attached to the simple coroots. -/
 def cartanSubalgebra : LieSubalgebra ℚ (t.lieAlgebra ht) :=
   RootPairing.GeckConstruction.cartanSubalgebra' (t.rationalBase ht)
+
+/-- The distinguished Cartan subalgebra is the one supplied by Geck's construction. -/
+@[simp] theorem cartanSubalgebra_def :
+    t.cartanSubalgebra ht =
+      (RootPairing.GeckConstruction.cartanSubalgebra (t.rationalBase ht)).comap
+        (t.lieAlgebra ht).incl := (rfl)
 
 /-- **The Chevalley generators of the pinned Lie algebra, numbered by Bourbaki node.** This is
 Geck's basis, whose nodes are the support of the pinned base, renumbered along
@@ -136,6 +148,12 @@ simple root. -/
       RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i) := by
   rw [lieBasis, LieAlgebra.Basis.reindex_f]
   rfl
+
+/-- The Bourbaki-numbered raising and lowering generators span the pinned Lie algebra. -/
+theorem lieSpan_lieBasis_e_union_f :
+    LieSubalgebra.lieSpan ℚ (t.lieAlgebra ht)
+      (Set.range (t.lieBasis ht).e ∪ Set.range (t.lieBasis ht).f) = ⊤ :=
+  (t.lieBasis ht).span_ef
 
 /-! ## The pinned Cartan matrix and the relations -/
 
