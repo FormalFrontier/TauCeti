@@ -5,16 +5,13 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.Probability.Density
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Probability.Distributions.Uniform
-public import Mathlib.Probability.HasLaw
-public import Mathlib.Probability.Density
 public import Mathlib.Probability.CDF
-public import Mathlib.Probability.Moments.Variance
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 /-!
@@ -55,7 +52,12 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
 * `integrableExpSet_id_uniformMeasure` — every exponential moment exists, for every pair of
   endpoints;
 * `mgf_id_uniformMeasure_zero` and `mgf_id_uniformMeasure` — the moment generating function, split
-  at the removable singularity `t = 0`.
+  at the removable singularity `t = 0`;
+* `mgf_id_uniformMeasure_pos` — the mgf is strictly positive, which is what makes the cgf's
+  logarithm meaningful;
+* `cgf_id_uniformMeasure_zero` and `cgf_id_uniformMeasure` — the cumulant generating function, split
+  the same way;
+* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
 
 ## Implementation
 
@@ -68,9 +70,8 @@ side condition.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — the cumulant generating function, the characteristic function, the affine
-  transport `(uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b`, and
-  parameter measurability — are not built here.
+  targets of that item — the characteristic function and parameter measurability — are not built
+  here.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -140,14 +141,17 @@ Mathlib's `MeasureTheory.pdf.uniformPDF` is `ℝ≥0∞`-valued; this is the rea
 `uniformPDF_eq_ofReal_uniformPDFReal` relates the two. -/
 def uniformPDFReal (a b x : ℝ) : ℝ := if x ∈ Set.Ioc a b then (b - a)⁻¹ else 0
 
+/-- Inside the interval the real-valued density is the reciprocal of its length. -/
 @[simp]
 theorem uniformPDFReal_of_mem {a b x : ℝ} (hx : x ∈ Set.Ioc a b) :
     uniformPDFReal a b x = (b - a)⁻¹ := by simp [uniformPDFReal, hx]
 
+/-- Outside the interval the real-valued density vanishes. -/
 @[simp]
 theorem uniformPDFReal_of_notMem {a b x : ℝ} (hx : x ∉ Set.Ioc a b) :
     uniformPDFReal a b x = 0 := by simp [uniformPDFReal, hx]
 
+/-- The real-valued uniform density is measurable. -/
 theorem measurable_uniformPDFReal {a b : ℝ} : Measurable (uniformPDFReal a b) := by
   unfold uniformPDFReal
   exact measurable_const.ite measurableSet_Ioc measurable_const
@@ -166,6 +170,7 @@ theorem uniformPDF_eq_ofReal_uniformPDFReal {a b : ℝ} (x : ℝ) :
   · rw [uniformPDFReal_of_notMem hx, ENNReal.ofReal_zero]
     simp [hx]
 
+/-- Mathlib's uniform density on `Set.Ioc a b`, against `volume`, is measurable. -/
 theorem measurable_uniformPDF_Ioc_volume {a b : ℝ} :
     Measurable fun x => pdf.uniformPDF (Set.Ioc a b) x volume := by
   unfold pdf.uniformPDF
@@ -189,8 +194,8 @@ interval the law is the zero measure, so no probability-measure claim is made he
 theorem hasPDF_of_hasLaw_uniformMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {a b : ℝ} (hX : HasLaw X (uniformMeasure a b) P) :
     HasPDF X P :=
-  hasPDF_of_map_eq_withDensity hX.aemeasurable _ measurable_uniformPDF_Ioc_volume.aemeasurable
-    (by rw [hX.map_eq, uniformMeasure_eq_withDensity])
+  hasPDF_of_hasLaw_withDensity measurable_uniformPDF_Ioc_volume.aemeasurable
+    (by rwa [uniformMeasure_eq_withDensity] at hX)
 
 /-- The Radon-Nikodym derivative of the uniform measure against Lebesgue measure is its density. -/
 theorem rnDeriv_uniformMeasure {a b : ℝ} :
@@ -311,6 +316,90 @@ theorem mgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
   simp only [id_eq]
   rw [hint, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le, smul_eq_mul]
   field_simp
+
+/-! ### The cumulant generating function
+
+The cgf is the real logarithm of the mgf, so it is only meaningful once the mgf is known to be
+strictly positive. That positivity is proved here rather than assumed: `mgf_id_uniformMeasure_pos`
+follows from `mgf_pos`, whose integrability hypothesis is exactly what
+`integrableExpSet_id_uniformMeasure` supplies. -/
+
+/-- Every exponential moment of the uniform law is integrable, read off the exponential-moment
+set. -/
+theorem integrable_exp_mul_id_uniformMeasure {a b t : ℝ} :
+    Integrable (fun x => Real.exp (t * x)) (uniformMeasure a b) := by
+  have h : t ∈ integrableExpSet id (uniformMeasure a b) := by
+    rw [integrableExpSet_id_uniformMeasure]
+    exact Set.mem_univ t
+  simpa [integrableExpSet, id_eq] using h
+
+/-- **The moment generating function of the uniform law is strictly positive.**
+
+This is what makes the cgf's logarithm meaningful; it is not a side remark. -/
+theorem mgf_id_uniformMeasure_pos {a b : ℝ} (hab : a < b) (t : ℝ) :
+    0 < mgf id (uniformMeasure a b) t := by
+  have := isProbabilityMeasure_uniformMeasure hab
+  exact mgf_pos integrable_exp_mul_id_uniformMeasure
+
+/-- The cumulant generating function of the uniform law at `0` is `0`. -/
+theorem cgf_id_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
+    cgf id (uniformMeasure a b) 0 = 0 := by
+  rw [cgf, mgf_id_uniformMeasure_zero hab, Real.log_one]
+
+/-- **The cumulant generating function of the uniform law**, away from the removable singularity.
+
+The argument of the logarithm is positive by `mgf_id_uniformMeasure_pos`. -/
+theorem cgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
+    cgf id (uniformMeasure a b) t =
+      Real.log ((Real.exp (t * b) - Real.exp (t * a)) / ((b - a) * t)) := by
+  rw [cgf, mgf_id_uniformMeasure hab ht]
+
+/-! ### Affine transport
+
+Every uniform law is an affine image of the standard one on `Set.Ioc 0 1`. This is what lets a
+statement proved for `uniformMeasure 0 1` be transported to a general interval instead of reproved,
+and it is the scalar case of the change-of-variables pattern the later families reuse.
+
+The two supporting lemmas are `private`: both are generic facts about Lebesgue measure and affine
+maps with no uniform-distribution content, and exposing them from a distribution-specific module
+would put them in the wrong place. If a later target needs either publicly, relocating it to a
+general measure module is its own focused change. -/
+
+/-- The pushforward of Lebesgue measure under an affine map `x ↦ a + c * x`.
+
+Only `c ≠ 0` is needed; the translation is measure-preserving and the scaling contributes
+`|c|⁻¹`. -/
+private theorem map_volume_affine {a c : ℝ} (hc : c ≠ 0) :
+    Measure.map (fun x => a + c * x) volume = ENNReal.ofReal |c|⁻¹ • volume := by
+  have h : (fun x : ℝ => a + c * x) = (fun y => a + y) ∘ (fun x => c * x) := rfl
+  rw [h, ← Measure.map_map (by fun_prop) (by fun_prop),
+    Real.map_volume_mul_left hc, Measure.map_smul,
+    Measure.IsAddLeftInvariant.map_add_left_eq_self]
+  congr 1
+  rw [abs_inv]
+
+/-- The affine map carries `Set.Ioc 0 1` onto `Set.Ioc a b`, stated as a preimage. -/
+private theorem preimage_affine_Ioc {a b : ℝ} (hab : a < b) :
+    (fun x : ℝ => a + (b - a) * x) ⁻¹' Set.Ioc a b = Set.Ioc 0 1 := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  ext x
+  simp only [Set.mem_preimage, Set.mem_Ioc]
+  constructor
+  · rintro ⟨h1, h2⟩
+    exact ⟨by nlinarith, by nlinarith⟩
+  · rintro ⟨h1, h2⟩
+    exact ⟨by nlinarith, by nlinarith⟩
+
+/-- **Every uniform law is an affine image of the standard one.** -/
+theorem map_uniformMeasure_affine {a b : ℝ} (hab : a < b) :
+    (uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hmeas : Measurable (fun x : ℝ => a + (b - a) * x) := by fun_prop
+  have h01 : uniformMeasure 0 1 = volume.restrict (Set.Ioc (0 : ℝ) 1) := by
+    rw [uniformMeasure_eq_smul]; norm_num
+  rw [h01, ← preimage_affine_Ioc hab, ← Measure.restrict_map hmeas measurableSet_Ioc,
+    map_volume_affine (ne_of_gt hba), abs_of_pos hba, Measure.restrict_smul,
+    uniformMeasure_eq_smul, ENNReal.ofReal_inv_of_pos hba]
 
 end Probability
 

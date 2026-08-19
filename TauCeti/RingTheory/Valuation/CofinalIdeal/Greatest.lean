@@ -48,6 +48,8 @@ the two uses Wedhorn makes of it, and both appear here.
   minimality halves of **Lemma 7.2**, with `Valuation.isLeast_of_idealCofinalFor` the
   least-element form of the last.
 * `Valuation.idealCofinalFor_radical_iff` : cofinality depends only on the radical.
+* `Valuation.exists_mem_max_restrict_ne_zero` : a finite spanning set contains a
+  nonvanishing value-maximising element whenever the ideal does not vanish identically.
 * `Valuation.isGreatestIdealCofinal_closure_singleton_of_span` : **Lemma 7.2's
   greatest-cofinal conclusion** from a generating set, with
   `exists_isGreatestIdealCofinal_of_not_meets` its existence form, which is what Definition 7.3
@@ -385,7 +387,7 @@ radical and `v` does not vanish identically on `I`, then some `t₀ ∈ T` maxim
 Nonvanishing is what needs the radical hypothesis: were every generator in the support, so would
 be everything of `I`, contradicting the witness. Maximality is then `Finset.exists_max_image`, and
 the maximiser inherits nonvanishing because it dominates every generator. -/
-private theorem exists_mem_max_restrict_ne_zero {v : Valuation A Γ₀} {I J : Ideal A} {T : Finset A}
+theorem exists_mem_max_restrict_ne_zero {v : Valuation A Γ₀} {I J : Ideal A} {T : Finset A}
     (hT : Ideal.span (T : Set A) = J) (hrad : I.radical = J.radical) {a₀ : A} (ha₀I : a₀ ∈ I)
     (ha₀0 : (MonoidWithZeroHom.ofClass v) a₀ ≠ 0) :
     ∃ t₀ ∈ T, (MonoidWithZeroHom.ofClass v) t₀ ≠ 0 ∧ ∀ t ∈ T, v.restrict t ≤ v.restrict t₀ := by
