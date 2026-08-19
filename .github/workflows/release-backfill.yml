@@ -1,0 +1,121 @@
+name: Release backfill
+
+# Drive release-tag.yml over a list of releases, one at a time.
+#
+# Twelve releases at roughly an hour each is the campaign this exists for, and it is a
+# campaign rather than a loop: every run creates a permanent tag, so it is dispatched
+# deliberately with a list someone has read, never on a schedule.
+#
+# The list comes from the audit, which is the only thing that knows which commit belongs
+# to which release:
+#
+#   python3 scripts/toolchain_tags.py --audit --json \
+#     | jq -c '[.[] | select(.status == "ready" or .status == "branch-ready")
+#                   | {release, sha: .target_sha, exact}]'
+#
+# Feed that array to the `targets` input. Releases the audit reports as `needs-branch`
+# have no commit yet: construct the branch first, as the audit's own recipe spells out.
+#
+# Why a matrix over `uses:` rather than a matrix inside one job. A matrix job's outputs
+# are last-writer-wins, and one failing shard turns `needs: build` into `failure` for the
+# whole downstream job, so a single unbuildable release would block publishing every other
+# one. Calling the reusable workflow per entry instantiates a complete resolve / build /
+# publish / tag graph for each, which keeps that split, the trust boundary, intact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'JSON array of {"release","sha","exact"} from the audit'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-backfill
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: ${{ github.repository == 'TauCetiProject/TauCeti' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Validate the worklist before anything reaches a matrix
+        id: plan
+        env:
+          # A matrix entry becomes a job name, a concurrency key and a command-line
+          # argument in the called workflow, so nothing unvalidated may reach one.
+          TARGETS: ${{ inputs.targets }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import re
+          import sys
+
+          RELEASE = re.compile(r"\Av\d+\.\d+\.\d+(?:-rc\d+)?\Z")
+          SHA = re.compile(r"\A[0-9a-f]{40}\Z")
+
+          try:
+              targets = json.loads(os.environ["TARGETS"])
+          except ValueError as exc:
+              sys.exit(f"::error::targets is not JSON: {exc}")
+          if not isinstance(targets, list) or not targets:
+              sys.exit("::error::targets must be a non-empty JSON array")
+          # A cap, because the whole point of this workflow is that each entry costs about
+          # an hour of a runner and leaves a permanent tag behind.
+          if len(targets) > 12:
+              sys.exit(f"::error::{len(targets)} targets is more than one campaign; split it")
+
+          clean, seen = [], set()
+          for entry in targets:
+              if not isinstance(entry, dict):
+                  sys.exit(f"::error::{entry!r} is not an object")
+              release, sha = entry.get("release"), entry.get("sha")
+              exact = entry.get("exact", True)
+              if not (isinstance(release, str) and RELEASE.match(release)):
+                  sys.exit(f"::error::{release!r} is not a vX.Y.Z[-rcN] release name")
+              if not (isinstance(sha, str) and SHA.match(sha)):
+                  sys.exit(f"::error::{release}: {sha!r} is not a 40-hex commit id")
+              if not isinstance(exact, bool):
+                  sys.exit(f"::error::{release}: exact must be true or false")
+              if release in seen:
+                  sys.exit(f"::error::{release} appears twice")
+              seen.add(release)
+              clean.append({"release": release, "sha": sha, "exact": exact})
+
+          print(f"::notice::backfilling {len(clean)} release(s): "
+                + ", ".join(e["release"] for e in clean))
+          print("matrix=" + json.dumps(clean))
+          PY
+
+  one:
+    needs: plan
+    strategy:
+      # One failing release must not abandon the rest: each is independent, and a release
+      # that cannot be built is a fact to record rather than a reason to stop.
+      fail-fast: false
+      # Exactly one long build alive at a time. This repository runs hundreds of pr-build
+      # jobs a day and the merge queue is on that path; a backfill is not worth queueing
+      # behind.
+      max-parallel: 1
+      matrix:
+        target: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: ./.github/workflows/release-tag.yml
+    with:
+      release: ${{ matrix.target.release }}
+      sha: ${{ matrix.target.sha }}
+      exact: ${{ matrix.target.exact }}
+    # LAKE_CACHE_KEY is deliberately absent: it is an environment secret resolved inside
+    # the called workflow's publish job, so this driver never names the cache key at all.
+    secrets:
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+      ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+      ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
