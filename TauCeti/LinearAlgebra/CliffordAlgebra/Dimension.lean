@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
-public import Mathlib.LinearAlgebra.CliffordAlgebra.Inversion
 public import TauCeti.LinearAlgebra.ExteriorAlgebra.Dimension
 -- Private: `CliffordAlgebra.nonempty_evenOddEquivAddOne` is used only inside the proof that the
 -- two halves of the `ℤ/2`-grading are equidimensional.
@@ -75,11 +74,16 @@ separate milestone.
   with `CliffordAlgebra.finrank_eq_sum_choose` the same count as a sum of binomial
   coefficients.
 * `CliffordAlgebra.two_mul_finrank_evenOdd`: over a field, each half of the grading of the Clifford
-  algebra of a nonzero space is exactly half of it, for every quadratic form.
+  algebra of a nonzero space is exactly half of it, for every quadratic form, and
+  `CliffordAlgebra.finrank_evenOdd_of_finrank_eq_two_pow` reads that half off any count of the
+  whole algebra by a power of two.
 * `CliffordAlgebra.finrank_evenOdd` and `CliffordAlgebra.finrank_even`: over a
   field in which `2` is invertible, each half of the grading of the Clifford algebra of a nonzero
   finite-dimensional space, and in particular the even subalgebra, has dimension
   `2 ^ (finrank K V - 1)`.
+* `CliffordAlgebra.finrank_evenOdd_zero`: the same count for the zero form — the even and the odd
+  half of an exterior algebra — where the total count is available over every field, so no
+  invertibility of `2` is needed.
 
 ## References
 
@@ -196,13 +200,24 @@ theorem two_mul_finrank_evenOdd [Nontrivial V] [Module.Finite K (CliffordAlgebra
     Submodule.finrank_add_eq_of_isCompl (evenOdd_isCompl Q)
   have hswap : finrank K (evenOdd Q 0) = finrank K (evenOdd Q 1) := by
     obtain ⟨f⟩ := nonempty_evenOddEquivAddOne Q 0
-    have h01 : (0 : ZMod 2) + 1 = 1 := by decide
-    rw [h01] at f
+    rw [show (1 : ZMod 2) = 0 + 1 by decide]
     exact f.finrank_eq
-  have hi : finrank K (evenOdd Q i) = finrank K (evenOdd Q 0) := by
-    fin_cases i
-    · rfl
-    · exact hswap.symm
+  rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl <;> omega
+
+/-- **Half of a power of two is one power of two down.** Whenever the Clifford algebra of a nonzero
+space is counted by a positive power of two, `CliffordAlgebra.two_mul_finrank_evenOdd` splits that
+count and each half of the `ℤ/2`-grading has dimension `2 ^ (n - 1)`.
+
+The count of the whole algebra is left as a hypothesis because there are two sources for it, with
+different requirements: `CliffordAlgebra.finrank_eq_two_pow` for an arbitrary quadratic form, which
+needs `2` to be invertible, and the exterior-algebra count for the zero form, which does not. -/
+theorem finrank_evenOdd_of_finrank_eq_two_pow [Nontrivial V]
+    [Module.Finite K (CliffordAlgebra Q)] {n : ℕ} (hn : 0 < n)
+    (hQ : finrank K (CliffordAlgebra Q) = 2 ^ n) (i : ZMod 2) :
+    finrank K (evenOdd Q i) = 2 ^ (n - 1) := by
+  have hhalf := two_mul_finrank_evenOdd Q i
+  rw [hQ] at hhalf
+  have h2 : 2 * 2 ^ (n - 1) = 2 ^ n := by rw [← pow_succ', Nat.sub_add_cancel hn]
   omega
 
 /-- Over a field in which `2` is invertible, each half of the `ℤ/2`-grading of the Clifford algebra
@@ -211,13 +226,18 @@ of a nonzero finite-dimensional space has half the dimension of the whole: `2 ^ 
 `CliffordAlgebra.finrank_eq_two_pow`, which counts the whole algebra; the halving itself is
 `CliffordAlgebra.two_mul_finrank_evenOdd` and needs no hypothesis on the quadratic form. -/
 theorem finrank_evenOdd [Invertible (2 : K)] [Module.Finite K V] [Nontrivial V] (i : ZMod 2) :
-    finrank K (evenOdd Q i) = 2 ^ (finrank K V - 1) := by
-  have hpos : 0 < finrank K V := Module.finrank_pos
-  have hhalf := two_mul_finrank_evenOdd Q i
-  rw [finrank_eq_two_pow] at hhalf
-  have h2 : 2 * 2 ^ (finrank K V - 1) = 2 ^ finrank K V := by
-    rw [← pow_succ', Nat.sub_add_cancel hpos]
-  omega
+    finrank K (evenOdd Q i) = 2 ^ (finrank K V - 1) :=
+  finrank_evenOdd_of_finrank_eq_two_pow Q Module.finrank_pos (finrank_eq_two_pow Q) i
+
+/-- **Each half of an exterior algebra has dimension `2 ^ (n - 1)`**: the Clifford algebra of the
+*zero* form on a nonzero finite-dimensional space is the exterior algebra, whose total dimension
+`2 ^ n` is `TauCeti.ExteriorAlgebra.finrank_eq_two_pow` — available over every field. So unlike
+`CliffordAlgebra.finrank_evenOdd`, this needs no invertibility of `2`.
+
+This is the count behind the two half-spin summands `⋀ᵉᵛᵉⁿ W` and `⋀ᵒᵈᵈ W` of a spinor module. -/
+theorem finrank_evenOdd_zero [Module.Finite K V] [Nontrivial V] (i : ZMod 2) :
+    finrank K (evenOdd (0 : QuadraticForm K V) i) = 2 ^ (finrank K V - 1) :=
+  finrank_evenOdd_of_finrank_eq_two_pow _ Module.finrank_pos ExteriorAlgebra.finrank_eq_two_pow i
 
 /-- Over a field in which `2` is invertible, the even Clifford algebra of a nonzero
 finite-dimensional space has dimension `2 ^ (n - 1)`, one power of two below the whole algebra.
