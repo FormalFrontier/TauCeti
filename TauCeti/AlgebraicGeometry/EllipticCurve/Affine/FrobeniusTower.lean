@@ -26,11 +26,11 @@ its relative degree. Comparing the two routes gives `2 · [K(W) : K(W)^q] = 2q`.
 
 ## Main results
 
-* `TauCeti.WeierstrassCurve.Affine.finrank_ratFuncPowRange`: for an arbitrary exponent `n`,
+* `WeierstrassCurve.Affine.finrank_ratFuncPowRange`: for an arbitrary exponent `n`,
   `[K(W) : K(x^n)] = 2 * n`.
-* `TauCeti.WeierstrassCurve.Affine.finrank_frobeniusRatFuncRange`: `[K(W) : K(x^q)] = 2 * q`.
-* `TauCeti.WeierstrassCurve.Affine.relfinrank_fieldRange_frobeniusAlgHom`: `[K(W)^q : K(x^q)] = 2`.
-* `TauCeti.WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`: `[K(W) : K(W)^q] = q`.
+* `WeierstrassCurve.Affine.finrank_frobeniusRatFuncRange`: `[K(W) : K(x^q)] = 2 * q`.
+* `WeierstrassCurve.Affine.relfinrank_fieldRange_frobeniusAlgHom`: `[K(W)^q : K(x^q)] = 2`.
+* `WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`: `[K(W) : K(W)^q] = q`.
 
 `K(W)^q` is not given a name of its own: it is the field range of
 `FiniteField.frobeniusAlgHom K W.FunctionField` throughout, which is the expression the seeded
@@ -84,12 +84,10 @@ public section
 open Polynomial WeierstrassCurve IntermediateField
 
 open scoped RatFunc
-
-namespace TauCeti
-
+ 
 namespace WeierstrassCurve.Affine
 
-variable {K : Type*} [Field K] (W : _root_.WeierstrassCurve.Affine K)
+variable {K : Type*} [Field K] (W : WeierstrassCurve.Affine K)
 
 /-! ### The general power tower -/
 
@@ -248,7 +246,5 @@ theorem finrank_fieldRange_frobeniusAlgHom :
   exact Nat.eq_of_mul_eq_mul_left (by norm_num) htower
 
 end WeierstrassCurve.Affine
-
-end TauCeti
 
 end

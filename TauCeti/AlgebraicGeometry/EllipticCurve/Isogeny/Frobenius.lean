@@ -49,7 +49,7 @@ fixes the point at infinity" amounts to here.
 Pure inseparability follows because every function `x` has its `q`-th power in the image of the
 pullback, and `q` is a power of the exponential characteristic of `F`. The degree is the
 field-theoretic
-`TauCeti.WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`, `[K(W) : K(W)^q] = q`,
+`WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`, `[K(W) : K(W)^q] = q`,
 transported along the identification of `fieldPullback` with the `q`-power map on `K(W)`. That
 identification is `Isogeny.fieldPullback_unique`: both maps restrict to `x ↦ x ^ q` on the
 coordinate ring, and only one extension to the fraction field exists.

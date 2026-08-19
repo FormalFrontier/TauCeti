@@ -61,7 +61,7 @@ target.
   `TauCeti.Isogeny.inseparableDegree_relativeFrobeniusIsogeny` splitting that as `1 · p`.
 
 The degree is computed exactly as
-`TauCeti.WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom` computes the finite-field
+`WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom` computes the finite-field
 one, by comparing two towers over the copy of `F(xᵖ)` inside `F(W)`:
 that copy sits below `F(x)` with relative degree `p`, and below the pulled-back `F(W⁽ᵖ⁾)` with
 relative degree `2`, while `[F(W) : F(x)] = 2`.
@@ -89,7 +89,7 @@ AEC II.2.12, and Verschiebung remain.
 Not a port. The pinned sources of this roadmap build only the **absolute** `q`-power Frobenius of
 a curve over a finite field (AINTLIB's `HasseWeil/FrobeniusIsogeny.lean`, already migrated as
 `TauCeti.Isogeny.frobeniusIsogeny` and
-`TauCeti.WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`); the relative Frobenius over
+`WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`); the relative Frobenius over
 an arbitrary base, and the twist it maps to, appear in none of them.
 The degree computation reuses the migrated tower argument of
 `TauCeti/AlgebraicGeometry/EllipticCurve/Affine/FrobeniusTower.lean`, whose general
@@ -285,10 +285,10 @@ theorem fieldPullback_relativeFrobeniusIsogeny_X :
 /-- The copy of `F(xᵖ)` inside `F(W)` is the image of the rational function field of the twist:
 the two descriptions of the field the tower argument below is anchored at. -/
 private theorem relativeFrobenius_ratFuncPowRange_eq_map_ratFuncRange :
-    _root_.TauCeti.WeierstrassCurve.Affine.ratFuncPowRange W p =
+    _root_.WeierstrassCurve.Affine.ratFuncPowRange W p =
       (_root_.WeierstrassCurve.Affine.ratFuncRange (W.map (frobenius F p))).map
         (relativeFrobeniusIsogeny p W).fieldPullback := by
-  rw [_root_.TauCeti.WeierstrassCurve.Affine.ratFuncPowRange_eq_map,
+  rw [_root_.WeierstrassCurve.Affine.ratFuncPowRange_eq_map,
     _root_.WeierstrassCurve.Affine.ratFuncRange_eq_map, IntermediateField.map_map,
     ← _root_.RatFunc.adjoin_X, IntermediateField.adjoin_map, IntermediateField.adjoin_map]
   congr 1
@@ -303,14 +303,14 @@ since `[F(W) : F(x)] = 2` as well, the two towers give `2 · deg = p · 2`. -/
 theorem degree_relativeFrobeniusIsogeny : (relativeFrobeniusIsogeny p W).degree = p := by
   set L := (relativeFrobeniusIsogeny p W).fieldPullback.fieldRange with hL
   have hML : IntermediateField.relfinrank
-      (_root_.TauCeti.WeierstrassCurve.Affine.ratFuncPowRange W p) L = 2 := by
+      (_root_.WeierstrassCurve.Affine.ratFuncPowRange W p) L = 2 := by
     rw [relativeFrobenius_ratFuncPowRange_eq_map_ratFuncRange, hL,
       _root_.WeierstrassCurve.Affine.relfinrank_map_ratFuncRange_fieldRange]
-  have hle : _root_.TauCeti.WeierstrassCurve.Affine.ratFuncPowRange W p ≤ L := by
+  have hle : _root_.WeierstrassCurve.Affine.ratFuncPowRange W p ≤ L := by
     rw [relativeFrobenius_ratFuncPowRange_eq_map_ratFuncRange, hL, AlgHom.fieldRange_eq_map]
     exact IntermediateField.map_mono _ le_top
   have htower := IntermediateField.relfinrank_mul_finrank_top hle
-  rw [hML, _root_.TauCeti.WeierstrassCurve.Affine.finrank_ratFuncPowRange] at htower
+  rw [hML, _root_.WeierstrassCurve.Affine.finrank_ratFuncPowRange] at htower
   rw [Isogeny.degree_def, ← hL]
   omega
 
