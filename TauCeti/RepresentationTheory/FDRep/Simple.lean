@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -87,6 +88,18 @@ noncomputable def homIntertwiningMap {V W : FDRep k G} (f : V ⟶ W) :
     Representation.IntertwiningMap V.ρ W.ρ :=
   (homLinearMap f).intertwiningMap_of_isIntertwiningMap V.ρ W.ρ (homLinearMap_comm f)
 
+/-- The kernel of `homIntertwiningMap f`, as a submodule, is the kernel of the underlying linear
+map.  Stating this once keeps the proofs independent of how the intertwiner wrapper unfolds. -/
+@[simp]
+theorem toSubmodule_ker_homIntertwiningMap {V W : FDRep k G} (f : V ⟶ W) :
+    (homIntertwiningMap f).ker.toSubmodule = LinearMap.ker (homLinearMap f) := rfl
+
+/-- The range of `homIntertwiningMap f`, as a submodule, is the range of the underlying linear
+map.  The companion of `toSubmodule_ker_homIntertwiningMap`. -/
+@[simp]
+theorem toSubmodule_range_homIntertwiningMap {V W : FDRep k G} (f : V ⟶ W) :
+    (homIntertwiningMap f).range.toSubmodule = LinearMap.range (homLinearMap f) := rfl
+
 /-- An intertwiner of the underlying representations, read as a morphism of `FDRep k G`. -/
 @[expose]
 noncomputable def ofIntertwiningMap {V W : FDRep k G}
@@ -147,7 +160,8 @@ theorem mono_iff_injective {V W : FDRep k G} (f : V ⟶ W) :
   · intro hmono
     rw [← LinearMap.ker_eq_bot]
     set K : Subrepresentation V.ρ := (homIntertwiningMap f).ker with hK
-    have hKsub : K.toSubmodule = LinearMap.ker (homLinearMap f) := rfl
+    have hKsub : K.toSubmodule = LinearMap.ker (homLinearMap f) := by
+      rw [hK]; exact toSubmodule_ker_homIntertwiningMap f
     have hcomp : subtypeHom K ≫ f = 0 := by
       refine (eq_zero_iff _).mpr fun u => ?_
       have hu : (u : V) ∈ LinearMap.ker (homLinearMap f) := by rw [← hKsub]; exact u.2
@@ -184,7 +198,7 @@ theorem isIso_iff_bijective {V W : FDRep k G} (f : V ⟶ W) :
       ((e.symm : W →ₗ[k] V).intertwiningMap_of_isIntertwiningMap W.ρ V.ρ (by
         intro g w
         apply hbij.injective
-        change homLinearMap f (e.symm (W.ρ g w)) = homLinearMap f (V.ρ g (e.symm w))
+        simp only [LinearEquiv.coe_coe]
         rw [hinv, homLinearMap_comm, hinv]))
     refine ⟨g, hom_ext fun v => ?_, hom_ext fun w => ?_⟩
     · have hv : homLinearMap f (e.symm (homLinearMap f v)) = homLinearMap f v := hinv _
@@ -246,7 +260,8 @@ theorem simple_iff_isIrreducible (V : FDRep k G) :
       exact absurd hbot bot_ne_top
     · have hinj := (mono_iff_injective f).mp ‹Mono f›
       set R : Subrepresentation V.ρ := (homIntertwiningMap f).range with hR
-      have hRsub : R.toSubmodule = LinearMap.range (homLinearMap f) := rfl
+      have hRsub : R.toSubmodule = LinearMap.range (homLinearMap f) := by
+        rw [hR]; exact toSubmodule_range_homIntertwiningMap f
       have hRne : R ≠ ⊥ := by
         intro hbot
         apply hne
