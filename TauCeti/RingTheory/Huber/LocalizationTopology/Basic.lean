@@ -41,6 +41,9 @@ universal property in `LocalizationTopology.UniversalProperty`, the completion `
 * `hasDenominatorPower_of_idealOfDefinition_le_span`: numerators containing a subset of `A₀`
   whose span contains `I` supply the standing denominator-power hypothesis for every denominator.
 * `isHuberRing_locTopology`: `Aₛ` under `locTopology` is a Huber ring.
+* `awayLift_mem_locSubring` and `awayLift_mem_locIdealImage`: passing to a multiple `w = u * r`
+  of the denominator carries `D` and its neighbourhood filtration forward, the latter at the same
+  index — which is what makes the comparison map of two nested presentations continuous.
 * `isBounded_image_algebraMap_of_isBounded` and `isPowerBounded_algebraMap_of_isPowerBounded`:
   bounded sets have bounded image, so power-orbits transfer and each power-bounded *element*
   stays power-bounded. The `locSubring` route reaches only a ring of definition, whose
@@ -53,10 +56,11 @@ This is a port of AINTLIB's `LocalizationTopology.lean`, at commit `d9f2fbbb`.
 `locIdealImage_mul_algebraMap_subset`, `isBounded_image_algebraMap_of_isBounded` and
 `isPowerBounded_algebraMap_of_isPowerBounded` are later additions, following the skeleton at
 `LocalizationTopology.lean:690-753` of commit `37bbdaeb9`. `awayLift_mem_locSubring`,
-`divBy_mul_mem_locSubring` and `hasDenominatorPower_mul` are **also later additions, and have no
-AINTLIB analogue at all** — commit `37bbdaeb9` carries no transfer of `D`-membership along a
-comparison map and no combination of the denominator hypothesis for a product denominator; they are
-new work for the nested-presentation comparison of Wedhorn §8.2. The main changes
+`awayLift_mem_locIdealImage`, `divBy_mul_mem_locSubring` and `hasDenominatorPower_mul` are **also
+later additions, and have no AINTLIB analogue at all** — commit `37bbdaeb9` carries no transfer of
+`D`-membership or of its neighbourhood filtration along a comparison map, and no combination of the
+denominator hypothesis for a product denominator; they are new work for the nested-presentation
+comparison of Wedhorn §8.2. The main changes
 are: adapted `PairOfDefinition` field names to TauCeti conventions (`A₀`→`ringOfDefinition`,
 `I`→`ideal`, etc.); uses characteristic lemmas instead of destructuring definitions; removed
 unused hypotheses to satisfy `#lint` checks; stated over an arbitrary localisation `S` away from
@@ -499,6 +503,39 @@ theorem locIdealImage_mul_locSubring_subset (P : PairOfDefinition A) (T : Finset
     rw [locIdealImage_zero, Subring.coe_toAddSubgroup]
   rw [h]
   exact locIdealImage_mul_subset_add P T s S n 0
+
+/-- **The neighbourhood filtration transfers to a finer denominator.** With `w = u * r`, the
+comparison map `Aᵤ → A_w` carries `locIdealImage P U u V n` into `locIdealImage P Tw w W n`, at
+the same index `n` — passing to a multiple of the denominator costs no depth.
+
+This is the filtration companion of `awayLift_mem_locSubring`, which carries `D` itself. The two
+together are what a comparison of nested presentations needs. Since both topologies have these
+filtrations as a neighbourhood basis of zero, the same-index inclusion **implies** continuity of
+the comparison map; it is strictly stronger than continuity, which would allow the index to
+grow. -/
+theorem awayLift_mem_locIdealImage (P : PairOfDefinition A) (U : Finset A) (u : A)
+    (V : Type*) [CommRing V] [Algebra A V] [IsLocalization.Away u V]
+    (Tw : Finset A) (w : A) (W : Type*) [CommRing W] [Algebra A W] [IsLocalization.Away w W]
+    (r : A) (hw : w = u * r) (hgen : ∀ t ∈ U, t * r ∈ Tw) (n : ℕ)
+    {x : V} (hx : x ∈ locIdealImage P U u V n) :
+    IsLocalization.Away.lift u (IsLocalization.Away.isUnit_of_dvd w ⟨r, hw⟩) x
+      ∈ locIdealImage P Tw w W n := by
+  obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P U u V n).mp hx
+  clear hx
+  rw [locIdeal_pow_eq_span] at hd
+  induction hd using Submodule.span_induction with
+  | mem z hz =>
+      obtain ⟨b, hb, rfl⟩ := hz
+      rw [toLocSubring_apply, IsLocalization.Away.lift_eq]
+      exact (mem_locIdealImage_iff P Tw w W n).mpr
+        ⟨toLocSubring P Tw w W b, toLocSubring_mem_locIdeal_pow P Tw w W hb,
+          toLocSubring_apply P Tw w W b⟩
+  | zero => simp
+  | add p q _ _ hp hq => simpa [map_add] using (locIdealImage P Tw w W n).add_mem hp hq
+  | smul e p _ hp =>
+      have he := awayLift_mem_locSubring P U u V Tw w W r hw hgen e.2
+      simpa [map_mul, mul_comm] using locIdealImage_mul_locSubring_subset P Tw w W n
+        (Set.mul_mem_mul hp he)
 
 /-- Multiplying `1/s` by an element of `Jᴺ` lands back in `D`, once `N` is large enough that
 `b/s ∈ D` for every `b ∈ Iᴺ`. -/
