@@ -258,8 +258,9 @@ private theorem isSimpleRing_and_isCentral_baseChange_algebraicClosure [Invertib
       Algebra.IsCentral (AlgebraicClosure F)
         (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) := by
   let _ : NeZero (2 : AlgebraicClosure F) := by
-    change NeZero ((algebraMap F (AlgebraicClosure F)) (2 : F))
-    exact NeZero.of_injective (algebraMap F (AlgebraicClosure F)).injective
+    refine ⟨?_⟩
+    simpa only [map_ofNat] using
+      (map_ne_zero (algebraMap F (AlgebraicClosure F))).2 (NeZero.ne (2 : F))
   let _ : Invertible (2 : AlgebraicClosure F) :=
     invertibleOfNonzero (NeZero.ne (2 : AlgebraicClosure F))
   let E := AlgebraicClosure F
