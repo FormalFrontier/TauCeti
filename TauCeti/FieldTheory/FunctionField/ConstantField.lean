@@ -60,11 +60,7 @@ variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F]
 namespace IsFunctionField
 
 /-- An intermediate extension of an algebraic function field `F / k` which is algebraic over `k`
-is a finite extension of `k`.
-
-This is Stichtenoth, Corollary 1.1.16; the proof transports the hypothesis to Mathlib's
-chosen-parameter formulation and reads off `FunctionField.finiteDimensional_of_constantExtension`,
-which compares `k(x)` with `E(x)`. -/
+is a finite extension of `k` (Stichtenoth, Corollary 1.1.16). -/
 theorem finiteDimensional_of_isAlgebraic (hF : IsFunctionField k F) (E : Type*) [Field E]
     [Algebra k E] [Algebra E F] [IsScalarTower k E F] [Algebra.IsAlgebraic k E] :
     FiniteDimensional k E := by
