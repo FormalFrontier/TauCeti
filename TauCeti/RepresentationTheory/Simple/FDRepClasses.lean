@@ -5,108 +5,45 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.AsModule
 public import TauCeti.RepresentationTheory.Simple.Basic
 public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
 
 /-!
-# The isomorphism classes of simple objects of `FDRep k G`
+# Comparing the isomorphism classes of simple objects with the module-level classes
 
-A classification of representations is a bijection onto *isomorphism classes*, so it needs a type
-of them. For abstract simple modules there is none, since they range over every universe, and
-`TauCeti.SimpleSubmoduleClasses` exists to stand in for one: it is the isomorphism classes of
-simple *submodules* of a fixed module, which over a semisimple ring realizes every isomorphism
-class of simple modules. The objects of `FDRep k G` need no such device, because they already form
-a type, and Mathlib already quotients the objects of a category by isomorphism:
-`CategoryTheory.Skeleton`. `TauCeti.SimpleFDRepClasses` is that skeleton, taken of the full
-subcategory of simple objects, and its namespace supplies the constructor, comparison, eliminator,
-and lift that consumers need.
+A classification of representations is a bijection onto isomorphism classes, and the same group can
+be classified in two languages: over the isomorphism classes of simple objects of `FDRep k G`,
+which is `TauCeti.SimpleFDRepClasses` in `TauCeti.RepresentationTheory.Simple.Basic`, and over the
+isomorphism classes of simple `k[G]`-modules, which over a semisimple group algebra is
+`TauCeti.SimpleSubmoduleClasses k[G] k[G]`. Two bijections onto two targets are not yet one
+theorem read twice; what makes them one is a comparison of the targets.
 
-`TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses` compares it with the module-level quotient
-over a semisimple group algebra, sending a simple object to the isomorphism class of the
-`k[G]`-module it carries. It is what makes a categorical classification and a module-level
-classification of the same group two readings of one bijection rather than two unrelated
-bijections; see `TauCeti.coe_simpleFDRepClassesEquivSimpleModuleClasses` for the symmetric group.
+`TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses` is that comparison: it sends a simple object
+to the isomorphism class of the `k[G]`-module it carries. It is well defined because isomorphic
+objects carry isomorphic modules, by `TauCeti.nonempty_fdRepIso_iff` followed by
+`TauCeti.Representation.nonempty_equiv_iff`, and injective because that chain of equivalences runs
+backwards just as well. See `TauCeti.coe_simpleFDRepClassesEquivSimpleModuleClasses` for the
+symmetric group, where the comparison identifies the two classifications by the partitions of `n`.
 
 ## Main results
 
-* `TauCeti.SimpleFDRepClasses`: the isomorphism classes of simple objects of `FDRep k G`.
-* `TauCeti.SimpleFDRepClasses.mk_eq_mk_iff`: two simple objects have the same class exactly when
-  they are isomorphic in `FDRep k G`.
 * `TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses`: over a semisimple group algebra, the
   isomorphism class of the `k[G]`-module a simple object carries.
+* `TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses_injective`: distinct classes of simple
+  objects carry distinct classes of modules, so the comparison identifies the categorical
+  classification with a part of the module-level one.
 -/
 
 public section
 
 open CategoryTheory
 
-attribute [local instance] isIsomorphicSetoid
-
 namespace TauCeti
 
 open scoped MonoidAlgebra
 
-universe u v w
-
-section Ring
-
-variable (k : Type u) (G : Type v) [Ring k] [Monoid G]
-
-/-- **The isomorphism classes of simple objects of `FDRep k G`**: the skeleton of the full
-subcategory they span. -/
-abbrev SimpleFDRepClasses : Type _ :=
-  Skeleton (ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
-
-variable {k G}
-
-namespace SimpleFDRepClasses
-
-/-- The isomorphism class of a simple object of `FDRep k G`. -/
-def mk (X : FDRep k G) [Simple X] : SimpleFDRepClasses k G :=
-  toSkeleton (⟨X, inferInstance⟩ :
-    ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
-
-/-- The underlying skeleton constructor agrees with the simple-object class constructor. -/
-@[simp]
-theorem toSkeleton_eq_mk (X : FDRep k G) [Simple X] :
-    toSkeleton (⟨X, inferInstance⟩ :
-      ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G))) = mk X := (rfl)
-
-/-- Two simple objects have the same class exactly when they are isomorphic. -/
-@[simp]
-theorem mk_eq_mk_iff (X Y : FDRep k G) [Simple X] [Simple Y] :
-    mk X = mk Y ↔ Nonempty (X ≅ Y) :=
-  ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso
-    (Simple : ObjectProperty (FDRep k G)) _ _
-
-/-- To prove a property of every simple-object class, it suffices to prove it on the class of each
-simple object. -/
-@[elab_as_elim]
-theorem ind {motive : SimpleFDRepClasses k G → Prop}
-    (h : ∀ (X : FDRep k G) (hX : Simple X), motive (@mk k G _ _ X hX))
-    (c : SimpleFDRepClasses k G) :
-    motive c :=
-  Quotient.ind (fun X ↦ h X.obj X.property) c
-
-/-- Define a function on simple-object classes from an isomorphism-invariant function on simple
-objects. -/
-noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G) [Simple X], α)
-    (h : ∀ (X Y : FDRep k G) [Simple X] [Simple Y], Nonempty (X ≅ Y) → f X = f Y) :
-    SimpleFDRepClasses k G → α :=
-  Quotient.lift
-    (fun X ↦ @f X.obj X.property)
-    fun X Y e ↦ @h X.obj Y.obj X.property Y.property
-      ⟨(ObjectProperty.ι (Simple : ObjectProperty (FDRep k G))).mapIso e.some⟩
-
-@[simp]
-theorem lift_mk {α : Sort*} {f : ∀ (X : FDRep k G) [Simple X], α} {h}
-    (X : FDRep k G) [Simple X] : lift f h (mk X) = f X := (rfl)
-
-end SimpleFDRepClasses
-
-end Ring
+universe u v
 
 namespace SimpleFDRepClasses
 
@@ -129,6 +66,20 @@ theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Sim
     toSimpleSubmoduleClasses (mk X) =
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
   by rw [toSimpleSubmoduleClasses, lift_mk]
+
+/-- **The comparison is injective**: two simple objects of `FDRep k G` carrying isomorphic
+`k[G]`-modules are isomorphic, so the fibres of the comparison are single classes. This is the
+well-definedness argument run backwards. -/
+theorem toSimpleSubmoduleClasses_injective [IsSemisimpleRing k[G]] :
+    Function.Injective (toSimpleSubmoduleClasses : SimpleFDRepClasses k G → _) := by
+  intro c c'
+  induction c using ind with
+  | h X hX =>
+  induction c' using ind with
+  | h Y hY =>
+  rw [toSimpleSubmoduleClasses_mk, toSimpleSubmoduleClasses_mk, simpleModuleClass_eq_iff,
+    ← Representation.nonempty_equiv_iff, ← nonempty_fdRepIso_iff, mk_eq_mk_iff]
+  exact id
 
 end Field
 

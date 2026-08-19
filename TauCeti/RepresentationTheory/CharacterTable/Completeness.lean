@@ -62,9 +62,12 @@ This implements the completeness and second-orthogonality items of Layer 3 of th
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
 at the `Representation` level. Its `Suggested.lean` pins them as `irreducibleCharacters_span`, over
 the simple objects of `FDRep k G`, and `char_column_orthogonality`, over the `ℂ`-valued character
-table; the statements below are the prerequisites those two are read off from, together with the
-dictionary `FDRep.simple_iff_isIrreducible` between `CategoryTheory.Simple` in `FDRep k G`
-and `Representation.IsIrreducible`, and neither roadmap name is claimed here.
+table; the statements below are the prerequisites those two are read off from, and neither roadmap
+name is claimed here. Reading `irreducibleCharacters_span` off from
+`TauCeti.ClassFunction.le_span_irreducibleCharacters` needs two further steps: the dictionary
+`FDRep.simple_iff_isIrreducible` between `CategoryTheory.Simple` in `FDRep k G` and
+`Representation.IsIrreducible`, which lives in `TauCeti.RepresentationTheory.Simple.Basic` and which
+this file does not import, and a comparison of the two spanning sets, which is not done here.
 See I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.18 and Corollary 2.14, or
 J.-P. Serre, *Linear Representations of Finite Groups*, Sections 2.5 and 6.4.
 -/

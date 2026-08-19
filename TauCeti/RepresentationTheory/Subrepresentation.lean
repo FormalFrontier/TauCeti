@@ -16,8 +16,9 @@ operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubm
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves, nor how it interacts with membership.
 This file adds the five missing counterparts, in the same shape. It also records that the
-representation action on a subrepresentation is the restriction of the original action, the
-inclusion of a subrepresentation as an intertwining map, that the group-algebra action on a
+representation action on a subrepresentation is the restriction of the original action, when an
+intertwining map is zero and when it is surjective in terms of the subrepresentation its range is,
+the inclusion of a subrepresentation as an intertwining map, that the group-algebra action on a
 subrepresentation coerces to the original action, and that a subrepresentation is minimal exactly
 when the `A[G]`-submodule it carries is simple.
 
@@ -28,7 +29,12 @@ lemmas move an order statement between the two lattices, which is what lets a su
 argument — a dimension count, say, or an orthogonal complement — settle a question about
 subrepresentations; and the membership lemma does the same for a single element, so that a
 carrier computed by a `toSubmodule` lemma answers a `SetLike` membership goal without unfolding
-the `SetLike` instance by hand. In the same spirit,
+the `SetLike` instance by hand. `Representation.IntertwiningMap.eq_zero_iff_range_eq_bot` and
+`Representation.IntertwiningMap.surjective_iff_range_eq_top` are the first consumers of the `⊥` and
+`⊤` lemmas, and belong here because `⊥` and `⊤` of `Subrepresentation` have no other API: they are
+`LinearMap.range_eq_bot` and `LinearMap.range_eq_top` moved up to the subrepresentation lattice,
+and `Subrepresentation.subtype_eq_zero_iff` and `Subrepresentation.subtype_surjective_iff` below
+are what they are proved for. In the same spirit,
 `Subrepresentation.isSimpleModule_asSubmodule_iff` moves the notion of an irreducible constituent
 across `Subrepresentation.subrepresentationSubmoduleOrderIso`, so that Mathlib's simple- and
 semisimple-module API applies to minimal subrepresentations; being about `asSubmodule` it asks for

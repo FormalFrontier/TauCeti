@@ -8,10 +8,25 @@ module
 public import Mathlib.CategoryTheory.Skeletal
 
 /-!
-# Comparing objects in a category skeleton
+# Comparing objects in the skeleton of a full subcategory
 
-This file compares classes in the skeleton of a full subcategory through isomorphisms of the
-ambient category.
+Mathlib's `CategoryTheory.toSkeleton_eq_toSkeleton_iff` says that two objects have the same class
+in `CategoryTheory.Skeleton C` exactly when they are isomorphic *in `C`*. When `C` is a full
+subcategory `P.FullSubcategory`, that is an isomorphism of the bundled pairs, whereas a consumer
+starts and ends with objects of the ambient category and wants an isomorphism there. The gap is
+only bookkeeping -- the inclusion `ObjectProperty.ι` is full and faithful, so the two notions of
+isomorphism correspond -- but it has to be crossed every time the skeleton of a full subcategory is
+used as a type of isomorphism classes. This file crosses it once.
+
+Its consumer is `TauCeti.SimpleFDRepClasses.mk_eq_mk_iff`, which says that two simple objects of
+`FDRep k G` have the same isomorphism class exactly when they are isomorphic in `FDRep k G`, and
+through it every classification statement valued in `TauCeti.SimpleFDRepClasses`.
+
+## Main results
+
+* `CategoryTheory.ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso`: two objects of a full
+  subcategory have the same class in its skeleton exactly when they are isomorphic in the ambient
+  category.
 -/
 
 public section

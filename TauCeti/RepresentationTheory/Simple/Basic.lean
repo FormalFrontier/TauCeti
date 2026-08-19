@@ -9,10 +9,11 @@ public import Mathlib.Algebra.Category.ModuleCat.Simple
 public import Mathlib.RepresentationTheory.FDRep
 public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RepresentationTheory.Rep.Iso
+public import TauCeti.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
-# Simple objects of `Rep k G` and `FDRep k G`
+# Simple objects of `Rep k G` and `FDRep k G`, and their isomorphism classes
 
 Two notions of "irreducible representation" coexist. `Representation.IsIrreducible ρ` says that the
 lattice of subrepresentations of `ρ` has exactly two elements, and it is the notion in which the
@@ -39,11 +40,24 @@ isomorphism exactly when the subrepresentation is everything. Simplicity of the 
 says precisely that the lattice of subrepresentations is `{⊥, ⊤}` with `⊥ ≠ ⊤`.
 
 The irreducible-to-simple directions are registered as instances. The converse directions are the
-theorems `Rep.isIrreducible_of_simple` and `FDRep.isIrreducible_of_simple`. The type of isomorphism
-classes of simple objects that a categorical classification statement is valued in is
-`TauCeti.SimpleFDRepClasses`, in
-`TauCeti.RepresentationTheory.Simple.FDRepClasses`; it is Mathlib's `CategoryTheory.Skeleton` of
-the full subcategory of simple objects.
+theorems `Rep.isIrreducible_of_simple` and `FDRep.isIrreducible_of_simple`; they are deliberately
+not instances, since with the forward directions they would close a cycle in the instance graph.
+One consequence of the converse directions not being instances is that inference cannot get from
+`Simple X` to the simplicity of the `k[G]`-module `X.ρ.asModule`, even though Mathlib registers
+that module as simple whenever `X.ρ` is irreducible. The single composite
+`FDRep.isSimpleModule_asModule_of_simple` is therefore registered as an instance as well, so that
+`Simple X` alone suffices for the module-level API; it is the third and last instance the file
+exports.
+
+A classification statement is valued in a type of *isomorphism classes*, and for simple objects of
+`FDRep k G` that type needs no device: unlike abstract simple modules, which range over every
+universe, the objects of `FDRep k G` already form a type, and Mathlib already quotients the objects
+of a category by isomorphism. `TauCeti.SimpleFDRepClasses` is that quotient, namely
+`CategoryTheory.Skeleton` of the full subcategory of simple objects, together with the constructor,
+eliminator and lift a consumer needs. It lives here rather than beside its comparison with the
+module-level quotient (`TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses`, in
+`TauCeti.RepresentationTheory.Simple.FDRepClasses`) so that naming the isomorphism classes does not
+drag in the semisimple isotypic-component theory that only the comparison needs.
 
 ## Main results
 
@@ -54,6 +68,13 @@ the full subcategory of simple objects.
 * `FDRep.simple_iff_isIrreducible`: the same for `FDRep k G`.
 * `FDRep.simple_of_isIrreducible` and `FDRep.isIrreducible_of_simple`: the corresponding instance
   and theorem for `FDRep`.
+* `FDRep.isSimpleModule_asModule_of_simple`: the instance making Mathlib's simple-module API on
+  `X.ρ.asModule` available from `Simple X` alone.
+* `TauCeti.SimpleFDRepClasses`: the isomorphism classes of simple objects of `FDRep k G`.
+* `TauCeti.SimpleFDRepClasses.mk_eq_mk_iff`: two simple objects have the same class exactly when
+  they are isomorphic in `FDRep k G`.
+* `TauCeti.SimpleFDRepClasses.ind` and `TauCeti.SimpleFDRepClasses.lift`: the eliminator and the
+  lift of an isomorphism-invariant function.
 -/
 
 public section
@@ -196,10 +217,77 @@ theorem FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
   (FDRep.simple_iff_isIrreducible X).mp ‹_›
 
 /-- The module carried by a simple object of `FDRep k G` is a simple module over the group
-algebra. -/
+algebra. This is Mathlib's instance for an irreducible representation, composed with
+`FDRep.isIrreducible_of_simple`; it is registered so that inference reaches the module-level API
+from `Simple X`, which the composition cannot do on its own because
+`FDRep.isIrreducible_of_simple` is deliberately not an instance. -/
 instance FDRep.isSimpleModule_asModule_of_simple (X : FDRep k G) [Simple X] :
     IsSimpleModule k[G] (_root_.Representation.asModule X.ρ) :=
-  (Representation.irreducible_iff_isSimpleModule_asModule X.ρ).mp
-    (FDRep.isIrreducible_of_simple X)
+  haveI := FDRep.isIrreducible_of_simple X
+  inferInstance
 
 end FDRep
+
+namespace TauCeti
+
+attribute [local instance] isIsomorphicSetoid
+
+section Classes
+
+variable (k : Type u) (G : Type v) [Ring k] [Monoid G]
+
+/-- **The isomorphism classes of simple objects of `FDRep k G`**: the skeleton of the full
+subcategory they span. -/
+abbrev SimpleFDRepClasses : Type _ :=
+  Skeleton (ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
+
+variable {k G}
+
+namespace SimpleFDRepClasses
+
+/-- The isomorphism class of a simple object of `FDRep k G`. -/
+def mk (X : FDRep k G) [Simple X] : SimpleFDRepClasses k G :=
+  toSkeleton (⟨X, inferInstance⟩ :
+    ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
+
+/-- The underlying skeleton constructor agrees with the simple-object class constructor. -/
+@[simp]
+theorem toSkeleton_eq_mk (X : FDRep k G) [Simple X] :
+    toSkeleton (⟨X, inferInstance⟩ :
+      ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G))) = mk X := (rfl)
+
+/-- Two simple objects have the same class exactly when they are isomorphic. -/
+@[simp]
+theorem mk_eq_mk_iff (X Y : FDRep k G) [Simple X] [Simple Y] :
+    mk X = mk Y ↔ Nonempty (X ≅ Y) :=
+  ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso
+    (Simple : ObjectProperty (FDRep k G)) _ _
+
+/-- To prove a property of every simple-object class, it suffices to prove it on the class of each
+simple object. -/
+@[elab_as_elim]
+theorem ind {motive : SimpleFDRepClasses k G → Prop}
+    (h : ∀ (X : FDRep k G) (hX : Simple X), motive (@mk k G _ _ X hX))
+    (c : SimpleFDRepClasses k G) :
+    motive c :=
+  Quotient.ind (fun X ↦ h X.obj X.property) c
+
+/-- Define a function on simple-object classes from an isomorphism-invariant function on simple
+objects. -/
+noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G) [Simple X], α)
+    (h : ∀ (X Y : FDRep k G) [Simple X] [Simple Y], Nonempty (X ≅ Y) → f X = f Y) :
+    SimpleFDRepClasses k G → α :=
+  Quotient.lift
+    (fun X ↦ @f X.obj X.property)
+    fun X Y e ↦ @h X.obj Y.obj X.property Y.property
+      ⟨(ObjectProperty.ι (Simple : ObjectProperty (FDRep k G))).mapIso e.some⟩
+
+@[simp]
+theorem lift_mk {α : Sort*} {f : ∀ (X : FDRep k G) [Simple X], α} {h}
+    (X : FDRep k G) [Simple X] : lift f h (mk X) = f X := (rfl)
+
+end SimpleFDRepClasses
+
+end Classes
+
+end TauCeti
