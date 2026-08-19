@@ -18,7 +18,7 @@ function has an algebra norm `N : F(W) → F(x)`. Mathlib's `Algebra.norm` suppl
 `RatFunc F` itself once `RatFunc.liftAlgebra` is in scope. This file computes the degree of that
 norm of a function regular away from infinity: it is the degree of the polynomial norm. The
 coordinate values that follow from it — `ord_∞ x = -2`, `ord_∞ y = -3` — are proved where the
-valuation lives, in `FunctionField/InfinityPlace.lean`.
+valuation lives, in `FunctionField/InfinityPlace/Basic.lean`.
 
 ## Main results
 
@@ -51,7 +51,7 @@ The layer asks for the place at infinity, "where `x` and `y` have their poles", 
 `ord_∞ y = -3` and residue field `K`. That place is this norm followed by Mathlib's place at
 infinity of `F(x)`: `ord_∞ f = -deg N(f)`. This file supplies the general degree transport that
 `ord_∞` is computed from; the valuation itself and the two coordinate values are proved in
-`FunctionField/InfinityPlace.lean`. No order at infinity is defined or claimed here. Layer 0
+`FunctionField/InfinityPlace/Basic.lean`. No order at infinity is defined or claimed here. Layer 0
 seeds no declaration this competes with — `Suggested.lean` records that the function-field
 layer's "types are new API and are built there, not pinned here".
 
