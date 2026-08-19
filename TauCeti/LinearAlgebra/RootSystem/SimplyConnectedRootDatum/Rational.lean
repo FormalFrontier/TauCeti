@@ -30,15 +30,10 @@ did over `ℤ`. The pinned base and the Bourbaki-numbered Cartan matrix survive 
 unchanged, so the rational system realizes the same Dynkin type as the datum it comes from.
 
 The rational system is also reduced and irreducible, which are the two remaining hypotheses of
-Geck's construction `RootPairing.GeckConstruction.lieAlgebra`, the construction turning this root
-system into a Lie algebra with the Chevalley basis from which a Chevalley--Demazure group scheme
-is built. The two are established by different routes, because neither is a formal
-consequence of the base change alone. Reducedness holds already over `ℤ`, where it is a property of
-the explicit root tables, and transports because the base change leaves every Cartan integer alone:
-two roots are linearly dependent exactly when their Coxeter weight is four, and that number is an
-integer read off the pinned tables. Irreducibility is *false* over `ℤ` — the roots span only the
-root lattice there — so it cannot be transported at all, and is instead deduced over `ℚ` from
-connectedness of the pinned Dynkin diagram.
+Geck's Chevalley basis `RootPairing.GeckConstruction.basis`. Reducedness holds already over `ℤ`,
+where it is a property of the explicit root tables, and transports by the general theorem
+`TauCeti.isReduced_rootPairingBaseChange`. Irreducibility is not available integrally and is
+instead deduced over `ℚ` from connectedness of the pinned Dynkin diagram.
 
 ## Main definitions
 
@@ -160,31 +155,11 @@ instance instIsRootSystemRationalRootSystem : (t.rationalRootSystem ht).IsRootSy
 
 /-! ## The rational system is reduced and irreducible -/
 
-/-- **The rational system is reduced.** Over both `ℤ` and `ℚ` a pair of roots is linearly dependent
-exactly when its Coxeter weight is `4`, and the base change leaves the Coxeter weight alone, being
-an integer read off the pinned root tables. So dependence over `ℚ` reflects back to dependence over
-`ℤ`, where reducedness of the pinned datum applies. -/
+/-- **The rational system is reduced.** This is reducedness of the pinned integral datum
+transported along the injective base change from `ℤ` to `ℚ`. -/
 instance instIsReducedRationalRootSystem : (t.rationalRootSystem ht).IsReduced := by
-  have hZ : (t.simplyConnectedRootDatum ht).IsReduced := isReduced_simplyConnectedRootDatum t ht
-  refine ⟨fun i j hdep => ?_⟩
-  have hQ : (t.rationalRootSystem ht).coxeterWeight i j = 4 :=
-    (RootPairing.coxeterWeight_eq_four_iff_not_linearIndependent _).2 hdep
-  have hcast : (((t.simplyConnectedRootDatum ht).coxeterWeight i j : ℤ) : ℚ) = ((4 : ℤ) : ℚ) := by
-    simpa [RootPairing.coxeterWeight, pairing_rationalRootSystem] using hQ
-  have hZ4 : (t.simplyConnectedRootDatum ht).coxeterWeight i j = 4 := by exact_mod_cast hcast
-  have hdepZ := (RootPairing.coxeterWeight_eq_four_iff_not_linearIndependent _).1 hZ4
-  rcases RootPairing.IsReduced.eq_or_eq_neg (P := t.simplyConnectedRootDatum ht) i j hdepZ with
-    h | h
-  · refine Or.inl (funext fun k => ?_)
-    have := congrFun h k
-    simp only [root_rationalRootSystem]
-    exact_mod_cast congrArg (fun z : ℤ => (z : ℚ)) this
-  · refine Or.inr (funext fun k => ?_)
-    have hk : (t.simplyConnectedRootDatum ht).root i k =
-        -(t.simplyConnectedRootDatum ht).root j k := congrFun h k
-    simp only [Pi.neg_apply, root_rationalRootSystem, hk]
-    push_cast
-    ring
+  let _ := isReduced_simplyConnectedRootDatum t ht
+  exact isReduced_rootPairingBaseChange ℚ _ _
 
 /-! ## Acceptance: the rational system realizes its own Dynkin type -/
 
@@ -213,15 +188,24 @@ theorem mem_support_rationalBase {k : Fin t.numRoots} :
 the element `t.simpleIndex ht i` of the support of `TauCeti.DynkinType.rationalBase`. Downstream
 constructions index simple roots by `Fin t.rank` and reach the support through this equivalence, so
 that no second numbering of the nodes is introduced. -/
-def simpleSupportEquiv : Fin t.rank ≃ (t.rationalBase ht).support where
-  toFun i := ⟨t.simpleIndex ht i, by simp⟩
-  invFun k := ⟨(k : Fin t.numRoots), (mem_support_rationalBase t ht).mp k.2⟩
-  left_inv i := Fin.ext (by simp [simpleIndex_val])
-  right_inv k := Subtype.ext (Fin.ext (by simp [simpleIndex_val]))
+def simpleSupportEquiv : Fin t.rank ≃ (t.rationalBase ht).support :=
+  (t.simpleSupportEquivSimplyConnectedBase ht).trans
+    (supportEquivRootPairingBaseChangeBase ℚ _ _ _).symm
 
 @[simp] theorem coe_simpleSupportEquiv (i : Fin t.rank) :
     ((t.simpleSupportEquiv ht i : Fin t.numRoots)) = t.simpleIndex ht i := by
-  simp [simpleSupportEquiv]
+  let e := supportEquivRootPairingBaseChangeBase ℚ (t.simplyConnectedRootDatum ht)
+    (toLinearMap_simplyConnectedRootDatum t ht) (t.simplyConnectedBase ht)
+  let x := t.simpleSupportEquivSimplyConnectedBase ht i
+  have hcoe : ((e.symm x : Fin t.numRoots)) = (x : Fin t.numRoots) := by
+    calc
+      (e.symm x : Fin t.numRoots) = (e (e.symm x) : Fin t.numRoots) :=
+        (coe_supportEquivRootPairingBaseChangeBase ℚ _ _ _ (e.symm x)).symm
+      _ = (x : Fin t.numRoots) := congrArg Subtype.val (e.apply_symm_apply x)
+  calc
+    ((t.simpleSupportEquiv ht i : Fin t.numRoots)) = (e.symm x : Fin t.numRoots) := rfl
+    _ = (x : Fin t.numRoots) := hcoe
+    _ = t.simpleIndex ht i := coe_simpleSupportEquivSimplyConnectedBase t ht i
 
 /-- **The Cartan matrix of the pinned base is the standard Cartan matrix of the Dynkin type**, read
 through the Bourbaki numbering. This is what lets a construction stated against

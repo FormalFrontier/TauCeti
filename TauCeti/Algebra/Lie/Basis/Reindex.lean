@@ -12,7 +12,7 @@ public import Mathlib.Algebra.Lie.Basis.Basic
 
 A `LieAlgebra.Basis ι H` is a Chevalley-style presentation of a Lie algebra: a Cartan matrix
 indexed by `ι`, three families `h`, `e`, `f` of elements indexed by `ι`, and the relations between
-them. Nothing in the structure depends on which index type is used, so a bijection `ι' ≃ ι`
+them. Nothing in the structure depends on which index type is used, so a bijection `ι ≃ ι'`
 transports the whole package.
 
 This is what lets a construction whose index set arises from the construction itself — Geck's, for
@@ -25,6 +25,8 @@ original one.
 ## Main definitions
 
 * `LieAlgebra.Basis.reindex`: the basis obtained by renumbering the nodes along a bijection.
+* `LieAlgebra.Basis.cartanBasis`: the Cartan generators as a module basis of the Cartan
+  subalgebra.
 -/
 
 public section
@@ -33,46 +35,70 @@ open Function Set
 
 namespace LieAlgebra.Basis
 
-variable {ι ι' R L : Type*} [Fintype ι] [DecidableEq ι] [Fintype ι'] [DecidableEq ι']
+variable {ι ι' R L : Type*} [Finite ι] [Finite ι']
   [CommRing R] [LieRing L] [LieAlgebra R L] {H : LieSubalgebra R L}
 
 /-- **Renumber the nodes of a Lie algebra basis along a bijection.** The Cartan matrix is
 renumbered by `Matrix.submatrix`, and each of the three families of elements is precomposed with
 the bijection. -/
-def reindex (b : Basis ι H) (σ : ι' ≃ ι) : Basis ι' H where
-  A := b.A.submatrix σ σ
-  h := b.h ∘ σ
-  e := b.e ∘ σ
-  f := b.f ∘ σ
+def reindex (b : Basis ι H) (σ : ι ≃ ι') : Basis ι' H where
+  A := b.A.submatrix σ.symm σ.symm
+  h := b.h ∘ σ.symm
+  e := b.e ∘ σ.symm
+  f := b.f ∘ σ.symm
   cartan_eq_lieSpan := by
-    rw [σ.surjective.range_comp]
+    rw [σ.symm.surjective.range_comp]
     exact b.cartan_eq_lieSpan
-  span_ef := by rw [σ.surjective.range_comp, σ.surjective.range_comp]; exact b.span_ef
-  linInd := b.linInd.comp σ σ.injective
+  span_ef := by
+    rw [σ.symm.surjective.range_comp, σ.symm.surjective.range_comp]
+    exact b.span_ef
+  linInd := b.linInd.comp σ.symm σ.symm.injective
   nondegen := by
+    classical
+    let _ := Fintype.ofFinite ι
+    let _ := Fintype.ofFinite ι'
     rw [Matrix.nondegenerate_iff_det_ne_zero, Matrix.det_submatrix_equiv_self,
       ← Matrix.nondegenerate_iff_det_ne_zero]
     exact b.nondegen
-  sl2 i := b.sl2 (σ i)
-  lie_h_h i j := b.lie_h_h (σ i) (σ j)
-  lie_h_e i j := b.lie_h_e (σ i) (σ j)
-  lie_h_f i j := b.lie_h_f (σ i) (σ j)
-  lie_e_f_ne i j hij := b.lie_e_f_ne (σ i) (σ j) fun h => hij (σ.injective h)
+  sl2 i := b.sl2 (σ.symm i)
+  lie_h_h i j := b.lie_h_h (σ.symm i) (σ.symm j)
+  lie_h_e i j := b.lie_h_e (σ.symm i) (σ.symm j)
+  lie_h_f i j := b.lie_h_f (σ.symm i) (σ.symm j)
+  lie_e_f_ne i j hij :=
+    b.lie_e_f_ne (σ.symm i) (σ.symm j) fun h => hij (σ.symm.injective h)
 
 /-- Reindexing transports the Cartan matrix along the given equivalence. -/
-@[simp] theorem reindex_A (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).A = b.A.submatrix σ σ := by rfl
+@[simp] theorem reindex_A (b : Basis ι H) (σ : ι ≃ ι') :
+    (b.reindex σ).A = b.A.submatrix σ.symm σ.symm := by rfl
 
 /-- Reindexing precomposes the Cartan generators with the given equivalence. -/
-@[simp] theorem reindex_h (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).h = b.h ∘ σ := by rfl
+@[simp] theorem reindex_h (b : Basis ι H) (σ : ι ≃ ι') :
+    (b.reindex σ).h = b.h ∘ σ.symm := by rfl
 
 /-- Reindexing precomposes the raising generators with the given equivalence. -/
-@[simp] theorem reindex_e (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).e = b.e ∘ σ := by rfl
+@[simp] theorem reindex_e (b : Basis ι H) (σ : ι ≃ ι') :
+    (b.reindex σ).e = b.e ∘ σ.symm := by rfl
 
 /-- Reindexing precomposes the lowering generators with the given equivalence. -/
-@[simp] theorem reindex_f (b : Basis ι H) (σ : ι' ≃ ι) :
-    (b.reindex σ).f = b.f ∘ σ := by rfl
+@[simp] theorem reindex_f (b : Basis ι H) (σ : ι ≃ ι') :
+    (b.reindex σ).f = b.f ∘ σ.symm := by rfl
+
+/-! ## The Cartan generators as a module basis -/
+
+/-- The Cartan generators of a Lie algebra basis form a module basis of its Cartan subalgebra. -/
+noncomputable def cartanBasis (b : Basis ι H) : Module.Basis ι R H :=
+  (Module.Basis.span b.linInd).map (LinearEquiv.ofEq _ _ b.coe_cartan_eq_span).symm
+
+/-- The vectors of `LieAlgebra.Basis.cartanBasis` are the Cartan generators. -/
+@[simp] theorem coe_cartanBasis (b : Basis ι H) (i : ι) :
+    (b.cartanBasis i : L) = b.h i := by
+  simp only [cartanBasis, Module.Basis.map_apply, Module.Basis.span_apply,
+    LinearEquiv.ofEq_symm]
+  exact LinearEquiv.coe_ofEq_apply _ _
+
+/-- The Cartan subalgebra has dimension the cardinality of the basis's index type. -/
+theorem finrank_cartan [StrongRankCondition R] (b : Basis ι H) :
+    Module.finrank R H = Nat.card ι :=
+  Module.finrank_eq_nat_card_basis b.cartanBasis
 
 end LieAlgebra.Basis
