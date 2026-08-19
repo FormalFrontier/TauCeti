@@ -185,6 +185,16 @@ theorem line_eq_bot_of_even_finrank (h : Even (finrank K V)) : P.line = ⊥ := b
   have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
   exact Submodule.finrank_eq_zero.1 (by omega)
 
+/-- **A polarization with no remainder has even dimension.** The two isotropic summands are
+equidimensional, so with the remainder gone the dimension is twice that of `W`. This is the
+converse of `SpinPolarizationData.line_eq_bot_of_even_finrank`, and it is what lets the
+even-dimensional theory be stated with the single hypothesis `P.line = ⊥` that the parity
+splitting of the spinor module needs. -/
+theorem even_finrank_of_line_eq_bot (hline : P.line = ⊥) : Even (finrank K V) := by
+  have h := P.finrank_eq_two_mul_finrank_W_add_finrank_line
+  rw [hline, finrank_bot] at h
+  exact ⟨finrank K P.W, by omega⟩
+
 /-- **In even dimension the isotropic summand has half the dimension.** The isotropic summand `W`
 of a polarization of a `2l`-dimensional space has dimension `l`. This is the type `Dₗ` case, where
 the spinor module `⋀·W` has dimension `2ˡ`. -/

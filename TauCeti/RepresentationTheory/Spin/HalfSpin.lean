@@ -69,7 +69,8 @@ their highest weights belong to the complex theory and are not proved here.
   preserves exterior parity.
 * `TauCeti.spinPlus_invariant` and `TauCeti.spinMinus_invariant`: **the half-spin summands are
   invariant** under the spin representation.
-* `TauCeti.isCompl_spinPlus_spinMinus`: the two summands are complementary, so `S = S⁺ ⊕ S⁻`, and
+* `TauCeti.isCompl_spinPlus_spinMinus`: the two summands are complementary, so `S = S⁺ ⊕ S⁻`, with
+  `TauCeti.spinPlus_sup_spinMinus` and `TauCeti.spinPlus_inf_spinMinus` its two halves, and
   `TauCeti.isCompl_spinPlusSubrep_spinMinusSubrep`: the same in the lattice of subrepresentations
   of `spinRep`, so the splitting is one of representations.
 * `TauCeti.map_spinAction_spinPlus_le_spinMinus` and
@@ -140,6 +141,15 @@ exterior parity grading, and it holds for every polarization. Invariance of the 
 theorem isCompl_spinPlus_spinMinus : IsCompl (spinPlus Q P) (spinMinus Q P) := by
   rw [spinPlus_def, spinMinus_def]
   exact evenOdd_isCompl _
+
+/-- **The two half-spin summands span the spinor module**: every spinor is the sum of an even and
+an odd one. -/
+theorem spinPlus_sup_spinMinus : spinPlus Q P ⊔ spinMinus Q P = ⊤ :=
+  codisjoint_iff.1 (isCompl_spinPlus_spinMinus P).codisjoint
+
+/-- **The two half-spin summands meet only in zero**: a spinor of both parities vanishes. -/
+theorem spinPlus_inf_spinMinus : spinPlus Q P ⊓ spinMinus Q P = ⊥ :=
+  disjoint_iff.1 (isCompl_spinPlus_spinMinus P).disjoint
 
 /-! ### The Clifford action is graded
 
