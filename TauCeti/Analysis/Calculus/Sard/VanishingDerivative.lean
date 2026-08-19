@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Calculus.Sard.FlatStratum
 public import TauCeti.Analysis.Calculus.Sard.IntermediateStratum
 import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
+import TauCeti.MeasureTheory.Measure.LocallyNull
 
 /-!
 # Sard's theorem on the locus where the derivative vanishes
@@ -55,7 +56,6 @@ prerequisite for Sard--Smale and hence for every transversality argument downstr
 
 ## Main results
 
-* `TauCeti.measure_image_null_of_locally_null`: an image is null as soon as it is locally null.
 * `TauCeti.addHaar_image_eq_zero_of_fderiv_eq_zero`: the image of a set of points at which the
   derivative vanishes is null, for a map that is `C^k` at those points with `k` large enough.
 * `TauCeti.ContDiff.addHaar_image_setOf_fderiv_eq_zero`: its global form for a smooth map.
@@ -80,25 +80,6 @@ namespace TauCeti
 
 universe u
 
-section Locally
-
-variable {E F : Type*} [TopologicalSpace E] [SecondCountableTopology E] [MeasurableSpace F]
-  {ν : Measure F} {f : E → F} {s : Set E}
-
-/-- If every point of `s` has a neighbourhood within `s` whose image under `f` is null, then the
-image of `s` is null. A countable subcover, available because the source is second countable,
-reduces the global statement to the local ones; this is the image version of
-`MeasureTheory.measure_null_of_locally_null`. -/
-theorem measure_image_null_of_locally_null (h : ∀ x ∈ s, ∃ u ∈ 𝓝[s] x, ν (f '' u) = 0) :
-    ν (f '' s) = 0 := by
-  choose! u hu hu0 using h
-  obtain ⟨t, hts, htc, hst⟩ := TopologicalSpace.countable_cover_nhdsWithin hu
-  refine measure_mono_null (image_mono hst) ?_
-  rw [image_iUnion₂]
-  exact (measure_biUnion_null_iff htc).2 fun x hx ↦ hu0 x (hts hx)
-
-end Locally
-
 section Sard
 
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
@@ -109,14 +90,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 
 /-- A finite smoothness exponent is not `∞`, the side condition of `ContDiffAt.contDiffOn`. -/
 private theorem natCast_ne_infty (m : ℕ) : (m : ℕ∞ω) ≠ ∞ := by simp
-
-omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] [Nontrivial F]
-  [FiniteDimensional ℝ E] in
-/-- A vanishing Fréchet derivative is a vanishing first iterated derivative. -/
-private theorem iteratedFDeriv_one_eq_zero {x : E} (h : fderiv ℝ f x = 0) :
-    iteratedFDeriv ℝ 1 f x = 0 := by
-  ext m
-  simp [iteratedFDeriv_one_apply, h]
 
 /-- The induction behind `TauCeti.addHaar_image_eq_zero_of_fderiv_eq_zero`, on the dimension `n`
 of the source. The source is quantified inside the statement because the induction step replaces
@@ -145,7 +118,9 @@ private theorem addHaar_image_eq_zero_of_fderiv_eq_zero_aux (n : ℕ) :
       refine Or.inr ?_
       push Not at hflat
       obtain ⟨i, hi1, hin, hine⟩ := hflat
-      have h1 : iteratedFDeriv ℝ 1 f x = 0 := iteratedFDeriv_one_eq_zero (hs x hx)
+      have h1 : iteratedFDeriv ℝ 1 f x = 0 := by
+        ext m
+        simp [iteratedFDeriv_one_apply, hs x hx]
       -- Descend from a nonvanishing derivative to the last order at which the derivatives vanish.
       have key : ∀ j : ℕ, j + 1 ≤ n + 1 → iteratedFDeriv ℝ (j + 1) f x ≠ 0 →
           ∃ i ∈ Set.Ico 1 (n + 1), x ∈
@@ -239,11 +214,13 @@ variable (hF : finrank ℝ F = 1)
 
 include hF
 
-omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] [FiniteDimensional ℝ E] in
+omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] [Nontrivial F]
+  [FiniteDimensional ℝ E] in
 /-- A linear map into a one-dimensional space is surjective exactly when it is nonzero, so the
 critical points of a map into such a space are the points where its derivative vanishes. -/
 theorem setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero :
     {x | ¬ Surjective (fderiv ℝ f x)} = {x | fderiv ℝ f x = 0} := by
+  let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
   ext x
   simp only [mem_ofPred_eq, not_iff_comm]
   constructor
@@ -256,18 +233,22 @@ theorem setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero :
     rw [h] at hv
     exact hy (by simpa using hv.symm)
 
+omit [Nontrivial F] in
 /-- **Morse--Sard for a one-dimensional target.** The critical values of a smooth map from a
 finite-dimensional real normed space to a one-dimensional one, that is the values it takes at the
 points where its derivative is not surjective, form a set of additive Haar measure zero. -/
 theorem ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one (hf : ContDiff ℝ ∞ f) :
     ν (f '' {x | ¬ Surjective (fderiv ℝ f x)}) = 0 := by
+  let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
   rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero hF]
   exact ContDiff.addHaar_image_setOf_fderiv_eq_zero ν hf
 
+omit [Nontrivial F] in
 /-- The regular values of a smooth map from a finite-dimensional real normed space to a
 one-dimensional one are dense. -/
 theorem ContDiff.dense_compl_image_criticalPoints_of_finrank_eq_one (hf : ContDiff ℝ ∞ f) :
     Dense (f '' {x | ¬ Surjective (fderiv ℝ f x)})ᶜ := by
+  let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
   rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero hF]
   exact ContDiff.dense_compl_image_setOf_fderiv_eq_zero hf
 
