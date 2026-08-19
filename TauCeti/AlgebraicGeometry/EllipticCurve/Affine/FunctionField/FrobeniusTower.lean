@@ -100,7 +100,10 @@ private theorem frobeniusAlgHom_apply_X :
   rw [_root_.FiniteField.coe_frobeniusAlgHom, Nat.card_eq_fintype_card]
 
 /-- **`[K(W)^q : K(x^q)] = 2`.** Raising `K(x) ⊆ K(W)` to the `q`-th power is an embedding of the
-pair, so the relative degree `2` of `finrank_ratFuncRange` is unchanged. -/
+pair, so the relative degree `2` of `finrank_ratFuncRange` is unchanged.
+
+This is not a simp lemma: `simpNF` first normalizes `Nat.card K` to `Fintype.card K` on the
+left-hand side, so the displayed statement is not in simp-normal form. -/
 theorem relfinrank_fieldRange_frobeniusAlgHom :
     letI := Fintype.ofFinite K
     relfinrank (ratFuncAdjoinXPowRange W (Nat.card K))
