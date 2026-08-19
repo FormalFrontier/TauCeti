@@ -268,7 +268,7 @@ end Slices
 
 section Integral
 
-variable {V : Type*} [NormedAddCommGroup V] [MeasurableSpace V] [BorelSpace V]
+variable {V : Type*} [TopologicalSpace V] [MeasurableSpace V] [BorelSpace V]
 
 /-- Integration against a spatial slice reinstates the Laplace weight. -/
 theorem integral_spatialSlice (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0) {f : V → ℂ}
@@ -324,26 +324,27 @@ theorem RepresentsLaplaceFourier.spatialSlice_eq (h : RepresentsLaplaceFourier �
   eq_bochnerMeasure _ fun a => by
     rw [integral_fourierAtom_spatialSlice, ← h.eq_laplaceFourierTransform (t, a)]
 
-/-- **The converse.** A finite measure whose spatial slices are the Bochner measures of the time
-slices of a continuous positive-definite `F` represents `F`. Positive definiteness and
-continuity enter through Bochner's theorem, which is what makes those Bochner measures
-represent the slices. -/
+/-- **The converse.** A finite measure whose spatial slices are the Bochner measures of the
+continuous positive-definite time slices of `F` represents `F`. Positive definiteness and
+continuity enter through Bochner's theorem, which is what makes those Bochner measures represent
+the slices. -/
 theorem representsLaplaceFourier_of_forall_spatialSlice_eq (hμ : IsFiniteMeasure μ)
-    (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F)
+    (hFpd : ∀ t : ℝ≥0, IsPositiveDefiniteSub fun a => F (t, a))
+    (hFcont : ∀ t : ℝ≥0, Continuous fun a => F (t, a))
     (h : ∀ t : ℝ≥0, spatialSlice μ t = bochnerMeasure fun a => F (t, a)) :
     RepresentsLaplaceFourier μ F := by
   refine representsLaplaceFourier_iff.mpr ⟨hμ, fun x => ?_⟩
-  obtain ⟨hker, hslice⟩ := hFpd.posSemidef_timeSlice_and_continuous hFcont x.1
   rw [← Prod.mk.eta (p := x), ← integral_fourierAtom_spatialSlice, h x.1,
-    integral_fourierAtom_bochnerMeasure hslice (IsPositiveDefiniteSub.of_posSemidef hker) x.2]
+    integral_fourierAtom_bochnerMeasure (hFcont x.1) (hFpd x.1) x.2]
 
 /-- **The slice criterion for the Berg--Christensen--Ressel representation.** A finite measure
-on `ℝ≥0 × V` represents a continuous positive-definite `F` by its Laplace--Fourier transform if
-and only if each of its spatial slices is the Bochner measure of the corresponding time slice
-of `F`. The existence half of the representation theorem is exactly the problem of producing a
+on `ℝ≥0 × V` represents `F` by its Laplace--Fourier transform if and only if each of its spatial
+slices is the Bochner measure of the corresponding continuous positive-definite time slice of
+`F`. The existence half of the representation theorem is exactly the problem of producing a
 finite measure with these prescribed slices. -/
 theorem representsLaplaceFourier_iff_forall_spatialSlice_eq (hμ : IsFiniteMeasure μ)
-    (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F) :
+    (hFpd : ∀ t : ℝ≥0, IsPositiveDefiniteSub fun a => F (t, a))
+    (hFcont : ∀ t : ℝ≥0, Continuous fun a => F (t, a)) :
     RepresentsLaplaceFourier μ F ↔
       ∀ t : ℝ≥0, spatialSlice μ t = bochnerMeasure fun a => F (t, a) :=
   ⟨fun h => h.spatialSlice_eq,
