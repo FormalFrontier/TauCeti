@@ -35,19 +35,20 @@ contributions can cancel.
 * `TauCeti.PlumbingGraph.latticeDifferentialOnGenerator_apply`: the coefficient of the weighted
   face sum of a cube at another cube.
 * `TauCeti.PlumbingGraph.latticeDifferential_ne_zero_of_directions_eq`: the lattice differential
-  does not annihilate a nonzero chain whose cubes share a nonempty direction set.
-* `TauCeti.PlumbingGraph.latticeDifferential_injOn_directions_eq`: the same statement as
-  injectivity on those chains.
+  does not annihilate a nonzero chain whose cubes share a nonempty direction set, so it is
+  injective on those chains.
 * `TauCeti.PlumbingGraph.latticeDifferentialDegree_injective_of_succ_eq_card`: in the top cubical
   degree the graded lattice differential is injective.
 * `TauCeti.PlumbingGraph.exactAt_latticeChainComplex_of_card_le` and
   `TauCeti.PlumbingGraph.isZero_latticeChainHomology_of_card_le`: the complex is exact, and
   lattice homology vanishes, in every cubical degree at least the number of plumbing vertices,
   provided there is one.
-* `TauCeti.PlumbingGraph.not_isZero_latticeChainComplex_X_card`: the top-degree chain group is
-  nonzero, so that vanishing is not vacuous.
-* `TauCeti.PlumbingGraph.isZero_latticeChainHomology_of_card_eq_one`: the lattice homology of a
-  one-vertex plumbing is concentrated in cubical degree zero.
+
+That vanishing is not vacuous, and it is a statement about the differential rather than about the
+chain groups: `isZero_latticeChainComplex_X_iff_card_lt` read at `q = Fintype.card V` says the
+chain group in the top degree is nonzero. Read at `Fintype.card V = 1`,
+`isZero_latticeChainHomology_of_card_le` says the whole lattice homology of a one-vertex plumbing
+sits in cubical degree zero.
 
 ## References
 
@@ -86,14 +87,6 @@ theorem latticeDifferentialOnGenerator_apply [DecidableEq (PlumbingCube V)]
 variable {T : Finset V} {v : V}
 
 omit [Fintype V] in
-/-- Erasing two members of a finite set gives the same set only for the same member. -/
-private theorem eq_of_erase_eq {w : V} (hv : v ∈ T) (h : T.erase w = T.erase v) : w = v := by
-  by_contra hne
-  have hmem : v ∈ T.erase w := Finset.mem_erase.mpr ⟨fun hvw => hne (hvw.symm), hv⟩
-  rw [h] at hmem
-  exact Finset.notMem_erase v T hmem
-
-omit [Fintype V] in
 /-- A lower face never reaches the upper face of a cube whose base point is at least as far
 along the chosen direction: the lower face keeps its own base point, while the upper face has
 moved one step further. -/
@@ -117,7 +110,7 @@ private theorem eq_of_upperFace_eq {C C₀ : PlumbingCube V} {w : V}
   have hdir : T.erase w = T.erase v := by
     have := congrArg PlumbingCube.directions hface
     simpa [hCdir, hC₀dir] using this
-  have hwv : w = v := eq_of_erase_eq hv hdir
+  have hwv : w = v := ((Finset.erase_inj T hv).mp hdir.symm).symm
   subst hwv
   have hbase : C.base + Pi.single w (1 : ℤ) = C₀.base + Pi.single w (1 : ℤ) := by
     simpa using congrArg PlumbingCube.base hface
@@ -170,22 +163,6 @@ theorem latticeDifferential_ne_zero_of_directions_eq
     Finsupp.smul_apply, hself, smul_eq_mul] at hval
   exact Finsupp.mem_support_iff.mp hC₀mem (Polynomial.mul_X_pow_eq_zero hval)
 
-/-- The lattice differential is injective on the chains supported on cubes with one fixed
-nonempty direction set. -/
-theorem latticeDifferential_injOn_directions_eq
-    (P : PlumbingGraph V) (k : P.characteristicVectors) (hv : v ∈ T) :
-    Set.InjOn (P.latticeDifferential k)
-      {c : PlumbingChain V | ∀ C ∈ c.support, C.directions = T} := by
-  classical
-  intro c hc c' hc' hcc'
-  by_contra hne
-  refine P.latticeDifferential_ne_zero_of_directions_eq k hv (c := c - c') (fun C hC => ?_)
-    (sub_ne_zero_of_ne hne) ?_
-  · rcases Finset.mem_union.mp (Finsupp.support_sub hC) with h | h
-    · exact hc C h
-    · exact hc' C h
-  · rw [map_sub, hcc', sub_self]
-
 /-- In the top cubical degree the graded lattice differential is injective: every chain there is
 supported on cubes with the full direction set. -/
 theorem latticeDifferentialDegree_injective_of_succ_eq_card
@@ -209,7 +186,7 @@ theorem latticeDifferentialDegree_injective_of_succ_eq_card
 
 /-- The cubically graded lattice complex is exact in the top cubical degree of a plumbing graph
 with at least one vertex. -/
-theorem exactAt_latticeChainComplex_card [Nonempty V]
+private theorem exactAt_latticeChainComplex_card [Nonempty V]
     (P : PlumbingGraph V) (k : P.characteristicVectors) :
     (P.latticeChainComplex k).ExactAt (Fintype.card V) := by
   obtain ⟨m, hm⟩ : ∃ m, Fintype.card V = m + 1 :=
@@ -224,14 +201,6 @@ theorem exactAt_latticeChainComplex_card [Nonempty V]
   · exact hmono
   · refine IsZero.eq_zero_of_src ?_ _
     exact (P.isZero_latticeChainComplex_X_iff_card_lt k (m + 2)).mpr (by omega)
-
-/-- The top-degree chain group is not zero, so the exactness above is a statement about the
-differential and not about a vanishing chain group. -/
-theorem not_isZero_latticeChainComplex_X_card
-    (P : PlumbingGraph V) (k : P.characteristicVectors) :
-    ¬ IsZero ((P.latticeChainComplex k).X (Fintype.card V)) := by
-  rw [P.isZero_latticeChainComplex_X_iff_card_lt k (Fintype.card V)]
-  exact lt_irrefl _
 
 /-- The cubically graded lattice complex is exact in every cubical degree at least the number of
 vertices of a plumbing graph with at least one vertex. -/
@@ -254,14 +223,6 @@ theorem isZero_latticeChainHomology_of_card_le [Nonempty V]
     IsZero (P.latticeChainHomology k q) := by
   rw [P.latticeChainHomology_def k q]
   exact (P.exactAt_latticeChainComplex_of_card_le k hq).isZero_homology
-
-/-- The lattice homology of a one-vertex plumbing graph is concentrated in cubical degree zero. -/
-theorem isZero_latticeChainHomology_of_card_eq_one
-    (P : PlumbingGraph V) (k : P.characteristicVectors) (hV : Fintype.card V = 1)
-    {q : ℕ} (hq : 0 < q) :
-    IsZero (P.latticeChainHomology k q) := by
-  have : Nonempty V := Fintype.card_pos_iff.mp (by omega)
-  exact P.isZero_latticeChainHomology_of_card_le k (by omega)
 
 end PlumbingGraph
 
