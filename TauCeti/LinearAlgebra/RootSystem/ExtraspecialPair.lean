@@ -98,14 +98,14 @@ structure IsAdditiveRootOrder [l : LinearOrder ι] (b : P.Base) : Prop where
 variable {P}
 
 /-- **Additive root orders exist.** Ordering the indices by the height of their root and breaking
-ties by an arbitrary injection into `ℕ` gives one: heights add, and a positive root has height at
-least one.
+ties by an arbitrary well-order gives one: heights add, and a positive root has height at least one.
 
 The order is passed to `TauCeti.IsAdditiveRootOrder` as an explicit argument here, because it is
 the object asserted to exist rather than an instance available in the context. -/
-theorem exists_isAdditiveRootOrder [Countable ι] (b : P.Base) :
+theorem exists_isAdditiveRootOrder (b : P.Base) :
     ∃ l : LinearOrder ι, @IsAdditiveRootOrder ι R M N _ _ _ _ _ _ P l b := by
-  obtain ⟨f, hf⟩ := Countable.exists_injective_nat ι
+  let f : ι → Ordinal := Ordinal.typein WellOrderingRel
+  have hf : Function.Injective f := Ordinal.typein_injective WellOrderingRel
   have hinj : Function.Injective fun i : ι ↦ toLex (b.height i, f i) := by
     intro i j hij
     exact hf (by simpa using congrArg (fun p ↦ (ofLex p).2) hij)
