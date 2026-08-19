@@ -36,12 +36,17 @@ Consequently the algebra below needs no hypothesis on `μ` at all — in particu
 * `TauCeti.DenseGraphLimits.SymmKernel` — the strict symmetric kernel structure, with a `FunLike`
   coercion, extensionality by the underlying function, and `symm` / `measurable` / `exists_bound`
   accessors.
+* `TauCeti.DenseGraphLimits.SymmKernel.comap` — the pullback of a kernel along a measurable map,
+  acting on both arguments.
 
 ## Main results
 
 * `AddCommGroup` and `Module ℝ` instances, defined pointwise. The `coe_zero`, `coe_add`, `coe_neg`,
   `coe_sub` and `coe_smul` simp lemmas identify every operation with the corresponding operation on
   `Ω → Ω → ℝ`, so the module structure can be computed entirely by `simp`.
+* `comap_apply` evaluates a pullback, and `comap_zero` / `comap_add` / `comap_neg` / `comap_sub` /
+  `comap_smul` say that pulling back is linear, so a pullback of a difference of kernels is the
+  difference of the pullbacks. `comap_id` and `comap_comap` are the functoriality laws.
 
 ## Implementation
 
@@ -180,6 +185,73 @@ instance : Module ℝ (SymmKernel Ω μ) :=
       SymmKernel Ω μ →+ (Ω → Ω → ℝ)) coe_smul
 
 end Algebra
+
+section Comap
+
+variable {Ω' Ω'' : Type*} [MeasurableSpace Ω'] [MeasurableSpace Ω'']
+
+/-- The **pullback of a symmetric kernel along a measurable map** `f : Ω' → Ω`, acting on both
+arguments: `K.comap f hf μ' x y = K (f x) (f y)`.
+
+Symmetry, measurability and boundedness are all inherited from `K`, so no hypothesis beyond
+measurability of `f` is needed — and none on either measure, since `μ` and `μ'` are phantom
+parameters of the two kernel types. The map comes first, as it does for
+`ProbabilityTheory.Kernel.comap`; the target measure `μ'` trails it as an explicit argument,
+because it is not determined by the data.
+
+This is how a kernel on one carrier is read on another. Two uses in the dense graph limit theory:
+the **overlaid difference** on a coupling of two carriers is the difference of the two pullbacks
+along the coordinate projections, and the measure-preserving-map form of the cut distance compares
+pullbacks along maps out of a common carrier. -/
+def comap (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    SymmKernel Ω' μ' where
+  toFun x y := K (f x) (f y)
+  symm' x y := K.symm (f x) (f y)
+  meas' := K.measurable.comp (hf.prodMap hf)
+  bdd' := K.exists_bound.imp fun _ hC x y => hC (f x) (f y)
+
+/-- Pulling back a kernel evaluates it after applying the map to both arguments. -/
+@[simp]
+theorem comap_apply (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
+    (x y : Ω') : K.comap f hf μ' x y = K (f x) (f y) := (rfl)
+
+/-- Pulling back the zero kernel gives the zero kernel. -/
+@[simp]
+theorem comap_zero (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (0 : SymmKernel Ω μ).comap f hf μ' = 0 := by ext; simp
+
+/-- Pullback distributes over addition of kernels. -/
+@[simp]
+theorem comap_add (K L : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (K + L).comap f hf μ' = K.comap f hf μ' + L.comap f hf μ' := by ext; simp
+
+/-- Pullback commutes with negation of kernels. -/
+@[simp]
+theorem comap_neg (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (-K).comap f hf μ' = -K.comap f hf μ' := by ext; simp
+
+/-- Pullback distributes over subtraction of kernels. -/
+@[simp]
+theorem comap_sub (K L : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (K - L).comap f hf μ' = K.comap f hf μ' - L.comap f hf μ' := by ext; simp
+
+/-- Pullback commutes with scalar multiplication of kernels. -/
+@[simp]
+theorem comap_smul (c : ℝ) (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f)
+    (μ' : Measure Ω') : (c • K).comap f hf μ' = c • K.comap f hf μ' := by ext; simp
+
+/-- Pulling back along the identity is the identity. -/
+@[simp]
+theorem comap_id (K : SymmKernel Ω μ) : K.comap id measurable_id μ = K := by
+  ext; simp
+
+/-- Pullbacks compose contravariantly. -/
+@[simp]
+theorem comap_comap (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
+    (g : Ω'' → Ω') (hg : Measurable g) (μ'' : Measure Ω'') :
+    (K.comap f hf μ').comap g hg μ'' = K.comap (f ∘ g) (hf.comp hg) μ'' := by ext; simp
+
+end Comap
 
 end SymmKernel
 
