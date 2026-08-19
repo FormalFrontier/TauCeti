@@ -48,7 +48,7 @@ excludes it. So `{u, v}` is a pair only in the sense of `Set.instInsert`, possib
 the small-arc theorem — which asks `p ≠ q` — still has to rule that out from properties of the
 image domain. Nor is the *piece* of the boundary cut off between the two ends identified: bounding
 `frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ))`, the second geometric input of
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`, is a matter of the image
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`, is a matter of the image
 domain rather than of the crosscut, and is untouched here.
 
 ## Main results

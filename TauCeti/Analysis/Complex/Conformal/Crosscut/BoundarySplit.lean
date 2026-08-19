@@ -47,9 +47,10 @@ the two sides of the crosscut cling to the image boundary only along the crosscu
 planar-separation statement this development does not have, and it is a prerequisite to be proved
 on its own, not something to assume; so no theorem here is stated in a shape that presumes it.
 
-The two pieces are stated with `closure A` rather than `frontier A`, the shape the crosscut
-criterion `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
-`Conformal/CutDiameter.lean` consumes being the latter. A consumer converts between the two with
+The two pieces are stated with `closure A` rather than `frontier A`, while
+`TauCeti.diam_image_inter_ball_le` consumes the latter to produce the image-diameter hypothesis of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. A consumer converts between
+the two with
 `TauCeti.frontier_inter_closure_eq_frontier_inter_frontier` of `TauCeti/Topology/Frontier.lean`,
 applied to `Set.image_mono Set.inter_subset_left` on the near side and to
 `Set.image_mono Set.sdiff_subset` on the far side: on the frontier of a set, adherence to a subset
@@ -185,12 +186,9 @@ theorem frontier_image_subset_union_closure_image (hUo : IsOpen U) (hfc : Contin
     (hρ : ρ ≠ 0) :
     frontier (f '' U) ⊆
       closure (f '' (U ∩ ball ζ ρ)) ∪ closure (f '' (U \ closedBall ζ ρ)) := by
-  have hset : U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ := by
-    rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
   have himg : f '' U =
-      f '' (U ∩ ball ζ ρ) ∪ f '' (U \ closedBall ζ ρ) ∪ f '' (U ∩ sphere ζ ρ) := by
-    conv_lhs => rw [hset]
-    rw [image_union, image_union]
+      f '' (U ∩ ball ζ ρ) ∪ f '' (U \ closedBall ζ ρ) ∪ f '' (U ∩ sphere ζ ρ) :=
+    image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere f
   have hγ : closure (f '' (U ∩ sphere ζ ρ)) ⊆ closure (f '' (U ∩ ball ζ ρ)) :=
     closure_minimal (image_inter_sphere_subset_closure_image_inter_ball hUo hfc hρ) isClosed_closure
   refine frontier_subset_closure.trans ?_

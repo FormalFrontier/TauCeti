@@ -63,8 +63,8 @@ separation, or any other regularity of `K`.
   changes nothing.
 * `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
   filled hull lies in it.
-* `TauCeti.subset_filledHull_of_frontier_subset` — an open bounded set disjoint from `K` whose
-  frontier `K` swallows lies in the filled hull, with no connectivity asked of it.
+* `TauCeti.subset_filledHull_of_frontier_subset` — an open bounded set whose frontier `K` swallows
+  lies in the filled hull, with no connectivity asked of it.
 -/
 
 public section
@@ -118,27 +118,32 @@ theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint
   rw [mem_filledHull_iff, ← connectedComponentIn_eq (hScomp hy)]
   exact mem_filledHull_iff.mp hxH
 
-/-- **An open bounded set whose frontier lies in `K` is cut off from infinity by `K`.** Such a set
-`S`, if disjoint from `K`, is open *and closed* in `Kᶜ`: a point of `Kᶜ` adherent to `S` lies in
-`S ∪ frontier S` and its second alternative is excluded by `frontier S ⊆ K`. So the connected
-component in `Kᶜ` of each of its points stays inside `S`, and is bounded because `S` is.
+/-- **An open bounded set whose frontier lies in `K` is cut off from infinity by `K`.** For a point
+of `S \ K`, the set `S` is open *and closed* in `Kᶜ`: a point of `Kᶜ` adherent to `S` lies in
+`S ∪ frontier S` and its second alternative is excluded by `frontier S ⊆ K`. So its connected
+component in `Kᶜ` stays inside `S`, and is bounded because `S` is. Points of `S ∩ K` lie in the
+filled hull directly.
 
 Unlike `TauCeti.IsPreconnected.subset_filledHull` this asks nothing of the connectivity of `S` and
 nothing about the hull being met, at the price of asking `K` to swallow the whole frontier — the
 same trade as between `TauCeti.diam_le_diam_of_frontier_subset` and
 `TauCeti.IsPreconnected.diam_le_diam_of_disjoint`. -/
 theorem subset_filledHull_of_frontier_subset (hSo : IsOpen S) (hSb : IsBounded S)
-    (hSK : Disjoint S K) (hfr : frontier S ⊆ K) : S ⊆ filledHull K := by
+    (hfr : frontier S ⊆ K) : S ⊆ filledHull K := by
   intro x hx
-  have hxK : x ∈ Kᶜ := Set.disjoint_left.mp hSK hx
+  by_cases hxK : x ∈ K
+  · exact subset_filledHull hxK
+  have hxKc : x ∈ Kᶜ := hxK
   refine mem_filledHull_iff.mpr (hSb.subset ?_)
   refine isPreconnected_connectedComponentIn.subset_left_of_subset_union hSo
     isClosed_closure.isOpen_compl (disjoint_compl_right.mono_left subset_closure) ?_
-    ⟨x, mem_connectedComponentIn hxK, hx⟩
+    ⟨x, mem_connectedComponentIn hxKc, hx⟩
   intro y hy
   by_cases hyc : y ∈ closure S
-  · refine Or.inl ((closure_eq_self_union_frontier S ▸ hyc).resolve_right fun hyf => ?_)
-    exact connectedComponentIn_subset _ _ hy (hfr hyf)
+  · rw [closure_eq_self_union_frontier] at hyc
+    rcases hyc with hyS | hyfr
+    · exact Or.inl hyS
+    · exact (connectedComponentIn_subset _ _ hy (hfr hyfr)).elim
   · exact Or.inr hyc
 
 end TauCeti

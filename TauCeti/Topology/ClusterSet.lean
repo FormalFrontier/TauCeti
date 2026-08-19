@@ -74,6 +74,9 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   compact set, with subsingleton boundary cluster sets, extends continuously to `closure U`;
   `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` is the proper-metric form, where the
   compact set is the closure of the bounded image.
+* `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` and its limit and extension forms —
+  arbitrarily small diameters of image approach regions give a unique boundary value and a
+  continuous extension.
 * `TauCeti.isPreconnected_clusterSetOn` and `TauCeti.isConnected_clusterSetOn` — **the cluster set
   is a continuum** once the approach regions `U ∩ t` are preconnected along a neighbourhood basis
   of `w`; `TauCeti.isCompact_clusterSetOn_of_isBounded` and
@@ -366,6 +369,21 @@ theorem subsingleton_clusterSetOn_of_forall_exists
     _ ≤ ε / 3 + ε / 3 + ε / 3 := add_le_add (add_le_add h₁'.le hxy) hy.le
     _ = ε := by ring
 
+/-- **Arbitrarily small image approach regions make the cluster set a subsingleton.** If for every
+`ε > 0` some ball about `w` has bounded image on `U` of diameter at most `ε`, then the oscillation
+criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exists` applies.
+
+This is the common metric conclusion of geometric boundary estimates: the geometry only has to
+bound `diam (f '' (U ∩ ball w δ))`, with no further structure on either metric space. -/
+theorem subsingleton_clusterSetOn_of_forall_exists_diam_le
+    (h : ∀ ε > 0, ∃ δ > 0, Bornology.IsBounded (f '' (U ∩ ball w δ)) ∧
+      diam (f '' (U ∩ ball w δ)) ≤ ε) :
+    (clusterSetOn f U w).Subsingleton := by
+  refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
+  obtain ⟨δ, hδ, hb, hdiam⟩ := h ε hε
+  exact ⟨δ, hδ, fun _ hx _ hy =>
+    (dist_le_diam_of_mem hb (mem_image_of_mem f hx) (mem_image_of_mem f hy)).trans hdiam⟩
+
 end MetricSpace
 
 /-! ## The extension criterion -/
@@ -424,6 +442,35 @@ theorem exists_continuousOn_closure_eqOn_of_isBounded (hUo : IsOpen U) (hfc : Co
     (fun z hz => subset_closure ⟨z, hz, rfl⟩) hsub
 
 end ProperExtension
+
+section ProperMetricExtension
+
+variable {X Y : Type*} [PseudoMetricSpace X] [MetricSpace Y] [ProperSpace Y] {U : Set X}
+  {f : X → Y} {w : X}
+
+/-- **The diameter criterion for a boundary limit.** A map with bounded image has a limit at an
+adherent point once the images of its approach regions have arbitrarily small diameter. -/
+theorem exists_tendsto_nhdsWithin_of_forall_exists_diam_le
+    (hfb : Bornology.IsBounded (f '' U)) (hw : w ∈ closure U)
+    (h : ∀ ε > 0, ∃ δ > 0, Bornology.IsBounded (f '' (U ∩ ball w δ)) ∧
+      diam (f '' (U ∩ ball w δ)) ≤ ε) :
+    ∃ v, Tendsto f (𝓝[U] w) (𝓝 v) :=
+  exists_tendsto_of_clusterSetOn_subsingleton hfb.isCompact_closure
+    (fun _ hy => subset_closure (mem_image_of_mem f hy)) hw
+    (subsingleton_clusterSetOn_of_forall_exists_diam_le h)
+
+/-- **The diameter criterion for continuous extension.** A continuous map with bounded image
+extends to the closure of an open set if its image approach regions have arbitrarily small
+diameter at every boundary point. -/
+theorem exists_continuousOn_closure_eqOn_of_forall_exists_diam_le (hUo : IsOpen U)
+    (hfc : ContinuousOn f U) (hfb : Bornology.IsBounded (f '' U))
+    (h : ∀ w ∈ frontier U, ∀ ε > 0, ∃ δ > 0,
+      Bornology.IsBounded (f '' (U ∩ ball w δ)) ∧ diam (f '' (U ∩ ball w δ)) ≤ ε) :
+    ∃ F : X → Y, ContinuousOn F (closure U) ∧ EqOn F f U :=
+  exists_continuousOn_closure_eqOn_of_isBounded hUo hfc hfb fun w hw =>
+    subsingleton_clusterSetOn_of_forall_exists_diam_le (h w hw)
+
+end ProperMetricExtension
 
 /-! ## The cluster set as a continuum -/
 

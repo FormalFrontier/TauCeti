@@ -35,7 +35,9 @@ use, and Mathlib has no form of the decomposition.
   `TauCeti.disjoint_inter_ball_inter_sphere`, `TauCeti.disjoint_sdiff_closedBall_inter_sphere` —
   each of them is disjoint from the cut.
 * `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere` — the two sides and the cut
-  cover the whole set.
+  cover the whole set, and
+  `TauCeti.image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere` is its
+  image under an arbitrary map.
 * `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` — a preconnected subset of an open cut set
   missing the sphere lies on one side of it.
 -/
@@ -87,6 +89,14 @@ of `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
 theorem eq_inter_ball_union_sdiff_closedBall_union_inter_sphere {s : Set X} :
     s = s ∩ ball x ρ ∪ s \ closedBall x ρ ∪ s ∩ sphere x ρ := by
   rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
+
+/-- **The image of a circular cut is the union of the images of its two sides and the cut.** This
+is the image form of `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere`; the target
+of `f` carries no structure. -/
+theorem image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere
+    {Y : Type*} (f : X → Y) {s : Set X} :
+    f '' s = f '' (s ∩ ball x ρ) ∪ f '' (s \ closedBall x ρ) ∪ f '' (s ∩ sphere x ρ) := by
+  rw [← image_union, ← image_union, ← eq_inter_ball_union_sdiff_closedBall_union_inter_sphere]
 
 /-- **A connected subset of an open set missing a circular cut lies on one side of it.** This is
 the separation statement the decomposition exists for: the two sides are open and disjoint, so a

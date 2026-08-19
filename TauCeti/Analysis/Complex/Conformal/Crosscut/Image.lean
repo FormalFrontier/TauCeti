@@ -103,7 +103,7 @@ the boundary set, and no part of it is claimed below.
 
 The domain `U` is an arbitrary open set rather than a disc, matching
 `Conformal/CutDiameter.lean`, whose criterion
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` these results feed: a
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` these results feed: a
 disc-shaped input cannot be handed to a criterion stated for a general domain without first
 specialising the criterion, and the Carathéodory correspondence is a statement about a Jordan
 domain and the disc it is mapped from at once, so both directions of it are served only by the
@@ -126,6 +126,9 @@ pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 
 * `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn` — the closure of the image of
   the cut is that image together with the cluster sets of `f` along it.
+* `TauCeti.closure_image_inter_sphere_subset` — an image crosscut is relatively closed in the
+  image domain, and `TauCeti.disjoint_image_of_disjoint_inter_sphere` — so a set disjoint from the
+  crosscut has image disjoint from anything on its closure and the image boundary.
 * `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — at an endpoint of a crosscut of a disc a
   cluster set is a continuum once `f` is continuous along the crosscut with bounded image; its
   nonemptiness for a general domain is the generic `TauCeti.clusterSetOn_nonempty`, applied to the
@@ -164,7 +167,7 @@ namespace TauCeti
 
 open Bornology Complex Filter Metric Set Topology
 
-variable {f : ℂ → ℂ} {U : Set ℂ} {c ζ e : ℂ} {r ρ : ℝ}
+variable {f : ℂ → ℂ} {U K V : Set ℂ} {c ζ e : ℂ} {r ρ : ℝ}
 
 /-! ## Where the cut leaves the domain -/
 
@@ -230,6 +233,42 @@ theorem clusterSetOn_inter_sphere_subset_frontier_inter_closure_image (hUo : IsO
     (fun _ hv => clusterSetOn_subset_frontier_image hUo hd hinj he
       (clusterSetOn_mono inter_subset_left hv))
     fun _ hv => clusterSetOn_subset_closure_image hv
+
+/-- **Taking the closure of an image crosscut adds only boundary points of the image domain.** For
+`f` holomorphic and injective on an open `U`, a point adherent to the image crosscut
+`f '' (U ∩ sphere ζ ρ)` either lies on it or lies on `frontier (f '' U)`: the image crosscut is
+relatively closed in the image domain.
+
+The closure decomposition is
+`TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn`, and
+`TauCeti.clusterSetOn_inter_sphere_subset_frontier_inter_closure_image` puts every added cluster
+value on `frontier (f '' U)`. -/
+theorem closure_image_inter_sphere_subset (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
+    (hinj : InjOn f U) :
+    closure (f '' (U ∩ sphere ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
+  rw [closure_image_inter_sphere_eq_union_biUnion_clusterSetOn
+    (hd.continuousOn.mono inter_subset_left)]
+  exact union_subset_union_right _ (iUnion₂_subset fun _ he =>
+    (clusterSetOn_inter_sphere_subset_frontier_inter_closure_image hUo hd hinj he.1).trans
+      inter_subset_left)
+
+/-- **A set following neither side of a crosscut has image disjoint from its closed image and the
+image boundary.** If `V ⊆ U` is disjoint from `U ∩ sphere ζ ρ`, then `f '' V` avoids every `K`
+contained in the closed image crosscut and `frontier (f '' U)`. Injectivity separates it from the
+crosscut, relative closedness handles the closure, and openness of `f '' U` handles the image
+boundary. -/
+theorem disjoint_image_of_disjoint_inter_sphere (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
+    (hinj : InjOn f U) (hVU : V ⊆ U) (hV : Disjoint V (U ∩ sphere ζ ρ))
+    (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U)) : Disjoint (f '' V) K := by
+  have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
+  have hcross : Disjoint (f '' V) (f '' (U ∩ sphere ζ ρ)) :=
+    hV.image hinj hVU inter_subset_left
+  refine Set.disjoint_left.mpr fun w hw hwK => ?_
+  rcases hK hwK with h | h
+  · exact Set.disjoint_left.mp hcross hw
+      (((closure_image_inter_sphere_subset hUo hd hinj) h).resolve_right fun hfr =>
+        (hΩo.inter_frontier_eq.subset ⟨image_mono hVU hw, hfr⟩).elim)
+  · exact (hΩo.inter_frontier_eq.subset ⟨image_mono hVU hw, h⟩).elim
 
 /-- **Each end of an image crosscut of a disc is a continuum.** For `f` continuous along a genuine
 circular crosscut of a disc and with bounded image *of the crosscut*, the cluster set at either
@@ -326,7 +365,7 @@ which for a circular crosscut of a disc is
 altogether has an empty middle piece and nothing to enclose.
 
 This is where the local connectedness of `∂Ω` that
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` needs enters, the other
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` needs enters, the other
 of its two geometric inputs being the length–area estimate
 `TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself discharge that criterion,
 whose enclosing set has to contain the whole boundary piece
