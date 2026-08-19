@@ -248,6 +248,14 @@ restated here. -/
 /-- The zero vector of `V(n)` has zero coordinates. -/
 @[simp] theorem zero_apply (i : Fin (n + 1)) : (0 : Sl2Std K n) i = 0 := rfl
 
+/-- Finite sums in `V(n)` are coordinatewise. -/
+@[simp] theorem sum_apply {ι : Type*} (s : Finset ι) (f : ι → Sl2Std K n) (i : Fin (n + 1)) :
+    (∑ k ∈ s, f k) i = ∑ k ∈ s, f k i := by
+  classical
+  refine Finset.induction_on s (by simp only [Finset.sum_empty, zero_apply]) ?_
+  intro a t ha ih
+  rw [Finset.sum_insert ha, add_apply, ih, Finset.sum_insert ha]
+
 /-! ### The ladder operators in coordinates -/
 
 /-- The raising operator in coordinates. -/
