@@ -18,8 +18,8 @@ public import TauCeti.Analysis.Normed.Algebra.SquareRoot
 Near a nondegenerate critical point a smooth function is, in suitable coordinates, exactly its
 Hessian quadratic form.  This file proves that, for a real-valued smooth function on a Banach
 space, in the form
-`TauCeti.IsNondegenerateCriticalPoint.exists_openPartialHomeomorph`: there is a chart `ψ` at the
-critical point `x`, carrying `x` to `0` and smooth in both directions, with
+`TauCeti.IsNondegenerateCriticalPoint.exists_morse_chart`: there is a chart `ψ` at the critical
+point `x`, carrying `x` to `0`, with both coordinate maps smooth on their domains, and with
 
 `f y = f x + 2⁻¹ * fderiv ℝ (fderiv ℝ f) x (ψ y) (ψ y)`
 
@@ -67,10 +67,10 @@ is not proved.
 * `TauCeti.exists_congruence_of_symmetric_family`: a smooth family of symmetric continuous
   bilinear forms whose value at `0` is invertible is, near `0`, the congruence of that value by a
   smooth family of operators equal to the identity at `0`.
-* `TauCeti.IsNondegenerateCriticalPoint.exists_normalForm`: **the Morse lemma**, in the form of a
+* `TauCeti.IsNondegenerateCriticalPoint.exists_normal_form`: **the Morse lemma**, in the form of a
   smooth map `φ` fixing `0` with derivative the identity there.
-* `TauCeti.IsNondegenerateCriticalPoint.exists_openPartialHomeomorph`: the Morse lemma as a chart
-  at the critical point.
+* `TauCeti.IsNondegenerateCriticalPoint.exists_morse_chart`: the Morse lemma as a chart at the
+  critical point.
 
 ## References
 
@@ -126,13 +126,11 @@ theorem hessianAverage_eq_integral_Icc (f : E → ℝ) (x : E) :
 @[simp]
 theorem hessianAverage_zero (f : E → ℝ) (x : E) :
     hessianAverage f x 0 = fderiv ℝ (fderiv ℝ f) x := by
-  simp only [hessianAverage, segmentAverage, smul_zero, add_zero]
+  rw [hessianAverage, segmentAverage_zero]
   have hI : (∫ t in (0 : ℝ)..1, 2 * (1 - t)) = 1 := by
     rw [intervalIntegral.integral_const_mul, intervalIntegral.integral_sub
       intervalIntegrable_const intervalIntegral.intervalIntegrable_id]
     norm_num [integral_id]
-  refine (intervalIntegral.integral_smul_const (𝕜 := ℝ) (fun t : ℝ ↦ 2 * (1 - t))
-    (fderiv ℝ (fderiv ℝ f) x)).trans ?_
   rw [hI, one_smul]
 
 /-- The averaged Hessian of a smooth function depends smoothly on the direction. -/
@@ -142,40 +140,50 @@ theorem contDiff_hessianAverage (hf : ContDiff ℝ ∞ f) (x : E) :
     (hf.fderiv_right (m := ∞) (by simp)).fderiv_right (m := ∞) (by simp)
   exact (by fun_prop : ContDiff ℝ ∞ fun t : ℝ ↦ 2 * (1 - t)).contDiff_segmentAverage hd x
 
-private theorem continuous_hessianAverage_integrand (hf : ContDiff ℝ ∞ f) (x v : E) :
+private theorem continuous_hessianAverage_integrand (hf : ContDiff ℝ 2 f) (x v : E) :
     Continuous fun t : ℝ ↦ (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v) := by
   have := isBoundedSMul_clm (E := E)
   have hd : Continuous (fderiv ℝ (fderiv ℝ f)) :=
-    ((hf.fderiv_right (m := ∞) (by simp)).fderiv_right (m := 0) (by simp)).continuous
+    ((hf.fderiv_right (m := 1) (by norm_num)).fderiv_right (m := 0) (by norm_num)).continuous
   exact (by fun_prop : Continuous fun t : ℝ ↦ 2 * (1 - t)).smul (hd.comp (by fun_prop))
 
 /-- Evaluating the averaged Hessian on a pair of vectors commutes with the integral. -/
-theorem hessianAverage_apply (hf : ContDiff ℝ ∞ f) (x v w w' : E) :
+theorem hessianAverage_apply (hf : ContDiff ℝ 2 f) (x v w w' : E) :
     hessianAverage f x v w w'
       = ∫ t in (0 : ℝ)..1, (2 * (1 - t)) * fderiv ℝ (fderiv ℝ f) (x + t • v) w w' := by
   have h1 := continuous_hessianAverage_integrand hf x v
   have h2 : Continuous fun t : ℝ ↦ ((2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v)) w :=
     (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w).continuous.comp h1
-  rw [hessianAverage, segmentAverage,
-    ContinuousLinearMap.intervalIntegral_apply (h1.intervalIntegrable 0 1) w,
-    ContinuousLinearMap.intervalIntegral_apply (h2.intervalIntegrable 0 1) w']
+  have hApply := ContinuousLinearMap.segmentAverage_apply
+    (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w) (fun t ↦ 2 * (1 - t))
+      (fderiv ℝ (fderiv ℝ f)) x v (h1.intervalIntegrable 0 1)
+  have h2' : IntervalIntegrable (fun t : ℝ ↦
+      (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w)
+        ((2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v))) volume 0 1 := by
+    simpa using h2.intervalIntegrable 0 1
+  change (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w)
+      (segmentAverage (fun t ↦ 2 * (1 - t)) (fderiv ℝ (fderiv ℝ f)) x v) w' = _
+  rw [hApply, ContinuousLinearMap.intervalIntegral_apply h2' w']
   simp
 
 /-- The averaged Hessian is a symmetric bilinear form, since each second derivative along the
 segment is. -/
-theorem hessianAverage_symm (hf : ContDiff ℝ ∞ f) (x v w w' : E) :
+theorem hessianAverage_symm (hf : ContDiff ℝ 2 f) (x v w w' : E) :
     hessianAverage f x v w w' = hessianAverage f x v w' w := by
   rw [hessianAverage_apply hf, hessianAverage_apply hf]
   refine intervalIntegral.integral_congr fun t _ ↦ ?_
-  rw [(hf.contDiffAt.isSymmSndFDerivAt (by simp) : IsSymmSndFDerivAt ℝ f (x + t • v)) w w']
+  rw [(hf.contDiffAt.isSymmSndFDerivAt (by norm_num) :
+    IsSymmSndFDerivAt ℝ f (x + t • v)) w w']
 
 /-- **Taylor's formula to second order**, with the remainder written as the averaged Hessian
 evaluated twice on the increment. -/
-theorem map_add_eq_add_hessianAverage (hf : ContDiff ℝ ∞ f) (x v : E) :
+theorem map_add_eq_add_hessianAverage (hf : ContDiff ℝ 2 f) (x v : E) :
     f (x + v) = f x + fderiv ℝ f x v + (2 : ℝ)⁻¹ * hessianAverage f x v v v := by
   have h := map_add_eq_sum_add_integral_iteratedFDeriv (n := 1) (x := x) (y := v)
-    (fun t _ ↦ hf.contDiffAt.of_le (by simp))
+    (fun _ _ ↦ hf.contDiffAt)
   norm_num [Finset.sum_range_succ] at h
+  -- `iteratedFDeriv_two_apply` is stated with the numeral `2`, while Taylor's theorem leaves the
+  -- order as `1 + 1`; expose that definitional equality before rewriting.
   rw [show (1 : ℕ) + 1 = 2 from rfl] at h
   simp only [iteratedFDeriv_two_apply] at h
   rw [h, hessianAverage_apply hf, ← intervalIntegral.integral_const_mul]
@@ -201,8 +209,8 @@ theorem exists_congruence_of_symmetric_family
     {B : E → E →L[ℝ] E →L[ℝ] ℝ} (hB : ContDiff ℝ ∞ B)
     (hsymm : ∀ v w w', B v w w' = B v w' w)
     (B₀ : E ≃L[ℝ] (E →L[ℝ] ℝ)) (hB₀ : (B₀ : E →L[ℝ] E →L[ℝ] ℝ) = B 0) :
-    ∃ R : E → (E →L[ℝ] E), R 0 = 1 ∧ ContDiffAt ℝ ∞ R 0 ∧
-      ∀ᶠ v in 𝓝 (0 : E), ∀ w w', B₀ (R v w) (R v w') = B v w w' := by
+    ∃ (R : E → (E →L[ℝ] E)) (U : Set E), IsOpen U ∧ 0 ∈ U ∧ R 0 = 1 ∧
+      ContDiffOn ℝ ∞ R U ∧ ∀ v ∈ U, ∀ w w', B₀ (R v w) (R v w') = B v w w' := by
   -- the adjoint of an operator for the pairing given by `B₀`
   set adj : (E →L[ℝ] E) →L[ℝ] (E →L[ℝ] E) :=
     (ContinuousLinearMap.compL ℝ E (E →L[ℝ] ℝ) E (B₀.symm : (E →L[ℝ] ℝ) →L[ℝ] E)).comp
@@ -248,20 +256,18 @@ theorem exists_congruence_of_symmetric_family
     intro v
     refine hdet _ _ fun w w' ↦ ?_
     rw [adj_spec, hCapply, hB₀symm, hCapply, hsymm]
-  refine ⟨fun v ↦ sqrtNearOne (E →L[ℝ] E) (C v), ?_, ?_, ?_⟩
-  · have key : sqrtNearOne (E →L[ℝ] E) (C 0) = 1 := by rw [hC0, sqrtNearOne_one]
-    exact key
-  · exact (hC0 ▸ contDiffAt_sqrtNearOne).comp 0 hCsmooth.contDiffAt
-  · have hten : Filter.Tendsto C (𝓝 (0 : E)) (𝓝 1) :=
-      hC0 ▸ hCsmooth.continuous.continuousAt
-    have htenR : Filter.Tendsto (fun v ↦ sqrtNearOne (E →L[ℝ] E) (C v)) (𝓝 (0 : E)) (𝓝 1) := by
-      simpa [Function.comp_def] using
-        (continuousAt_sqrtNearOne (A := E →L[ℝ] E)).tendsto.comp hten
-    have htenA : Filter.Tendsto (fun v ↦ adj (sqrtNearOne (E →L[ℝ] E) (C v)))
-        (𝓝 (0 : E)) (𝓝 1) := by
-      simpa [adj_one, Function.comp_def] using (adj.continuous.tendsto 1).comp htenR
-    have e1 := hten.eventually (eventually_mul_self_sqrtNearOne (A := E →L[ℝ] E))
-    have e2 := htenA.eventually (eventually_sqrtNearOne_mul_self (A := E →L[ℝ] E))
+  let R : E → (E →L[ℝ] E) := fun v ↦ sqrtNearOne (E →L[ℝ] E) (C v)
+  have hR0 : R 0 = 1 := by simp [R, hC0]
+  have hten : Filter.Tendsto C (𝓝 (0 : E)) (𝓝 1) :=
+    hC0 ▸ hCsmooth.continuous.continuousAt
+  have htenR : Filter.Tendsto R (𝓝 (0 : E)) (𝓝 1) := by
+    simpa [R, Function.comp_def] using
+      (continuousAt_sqrtNearOne (A := E →L[ℝ] E)).tendsto.comp hten
+  have htenA : Filter.Tendsto (fun v ↦ adj (R v)) (𝓝 (0 : E)) (𝓝 1) := by
+    simpa [adj_one, Function.comp_def] using (adj.continuous.tendsto 1).comp htenR
+  have e1 := hten.eventually (eventually_mul_self_sqrtNearOne (A := E →L[ℝ] E))
+  have e2 := htenA.eventually (eventually_sqrtNearOne_mul_self (A := E →L[ℝ] E))
+  have hspec : ∀ᶠ v in 𝓝 (0 : E), ∀ w w', B₀ (R v w) (R v w') = B v w w' := by
     filter_upwards [e1, e2] with v h1 h2
     have h3 : adj (sqrtNearOne (E →L[ℝ] E) (C v)) * adj (sqrtNearOne (E →L[ℝ] E) (C v)) = C v := by
       rw [← adj_mul, h1, hCadj]
@@ -283,6 +289,20 @@ theorem exists_congruence_of_symmetric_family
       _ = B v w w' := by
           rw [hB₀symm w (C v w'), hCapply v w' w]
           exact hsymm v w' w
+  obtain ⟨W, hWsub, hWopen, h0W⟩ := mem_nhds_iff.1 hspec
+  let S : Set (E →L[ℝ] E) := {a | AnalyticAt ℝ (sqrtNearOne (E →L[ℝ] E)) a}
+  have hSopen : IsOpen S := isOpen_analyticAt ℝ (sqrtNearOne (E →L[ℝ] E))
+  have h1S : (1 : E →L[ℝ] E) ∈ S := analyticAt_sqrtNearOne
+  let U : Set E := W ∩ C ⁻¹' S
+  have hUopen : IsOpen U := hWopen.inter (hSopen.preimage hCsmooth.continuous)
+  have h0U : (0 : E) ∈ U := ⟨h0W, by simpa [hC0] using h1S⟩
+  refine ⟨R, U, hUopen, h0U, hR0, ?_, ?_⟩
+  · intro v hv
+    have hsqrt : ContDiffAt ℝ ∞ (sqrtNearOne (E →L[ℝ] E)) (C v) := hv.2.contDiffAt
+    change ContDiffWithinAt ℝ ∞ (sqrtNearOne (E →L[ℝ] E) ∘ C) U v
+    exact (hsqrt.comp v hCsmooth.contDiffAt).contDiffWithinAt
+  · intro v hv
+    exact hWsub hv.1
 
 end Congruence
 
@@ -295,22 +315,26 @@ a smooth map `φ`, fixing `0` and with derivative the identity there, in terms o
 exactly its Hessian quadratic form:
 `f (x + v) = f x + 2⁻¹ * fderiv ℝ (fderiv ℝ f) x (φ v) (φ v)` for `v` near `0`.
 
-`TauCeti.IsNondegenerateCriticalPoint.exists_openPartialHomeomorph` repackages this as a chart at
+`TauCeti.IsNondegenerateCriticalPoint.exists_morse_chart` repackages this as a chart at
 `x`. -/
-theorem IsNondegenerateCriticalPoint.exists_normalForm (hf : ContDiff ℝ ∞ f)
+theorem IsNondegenerateCriticalPoint.exists_normal_form (hf : ContDiff ℝ ∞ f)
     (h : IsNondegenerateCriticalPoint f x) :
-    ∃ φ : E → E, φ 0 = 0 ∧ ContDiffAt ℝ ∞ φ 0 ∧
-      HasFDerivAt φ (ContinuousLinearMap.id ℝ E) 0 ∧
-      ∀ᶠ v in 𝓝 (0 : E),
-        f (x + v) = f x + (2 : ℝ)⁻¹ * fderiv ℝ (fderiv ℝ f) x (φ v) (φ v) := by
+    ∃ (φ : E → E) (U : Set E), IsOpen U ∧ 0 ∈ U ∧ φ 0 = 0 ∧ ContDiffOn ℝ ∞ φ U ∧
+      HasFDerivAt φ (ContinuousLinearMap.id ℝ E) 0 ∧ ∀ v ∈ U,
+      f (x + v) = f x + (2 : ℝ)⁻¹ * fderiv ℝ (fderiv ℝ f) x (φ v) (φ v) := by
   obtain ⟨B₀, hB₀⟩ := h.isInvertible
-  obtain ⟨R, hR0, hRsmooth, hRspec⟩ :=
+  obtain ⟨R, U, hUopen, h0U, hR0, hRsmooth, hRspec⟩ :=
     exists_congruence_of_symmetric_family (B := hessianAverage f x) (contDiff_hessianAverage hf x)
-      (fun v w w' ↦ hessianAverage_symm hf x v w w') B₀ (by rw [hB₀, hessianAverage_zero])
-  refine ⟨fun v ↦ R v v, by simp [hR0], hRsmooth.clm_apply contDiffAt_id, ?_, ?_⟩
+      (fun v w w' ↦ hessianAverage_symm (hf.of_le (by norm_num)) x v w w') B₀
+      (by rw [hB₀, hessianAverage_zero])
+  have hRsmoothAt : ContDiffAt ℝ ∞ R 0 :=
+    (hRsmooth 0 h0U).contDiffAt (hUopen.mem_nhds h0U)
+  have hφsmooth : ContDiffOn ℝ ∞ (fun v ↦ R v v) U :=
+    hRsmooth.clm_apply contDiffOn_id
+  refine ⟨fun v ↦ R v v, U, hUopen, h0U, by simp [hR0], hφsmooth, ?_, ?_⟩
   · have hd : HasFDerivAt (fun v ↦ R v v)
         ((R 0).comp (ContinuousLinearMap.id ℝ E) + (fderiv ℝ R 0).flip 0) 0 :=
-      ((hRsmooth.differentiableAt (by simp)).hasFDerivAt).clm_apply
+      ((hRsmoothAt.differentiableAt (by simp)).hasFDerivAt).clm_apply
         (hasFDerivAt_id (𝕜 := ℝ) (0 : E))
     have he : (R 0).comp (ContinuousLinearMap.id ℝ E) + (fderiv ℝ R 0).flip 0
         = ContinuousLinearMap.id ℝ E := by
@@ -319,19 +343,19 @@ theorem IsNondegenerateCriticalPoint.exists_normalForm (hf : ContDiff ℝ ∞ f)
       simp
     rw [← he]
     exact hd
-  · filter_upwards [hRspec] with v hv
-    rw [map_add_eq_add_hessianAverage hf, ← hv v v, ← hB₀]
+  · intro v hv
+    rw [map_add_eq_add_hessianAverage (hf.of_le (by norm_num)), ← hRspec v hv v v, ← hB₀]
     simp [h.fderiv_eq_zero]
 
 /-- **The Morse lemma, as a chart.** At a nondegenerate critical point `x` of a smooth function
 `f` there is a chart `ψ` sending `x` to `0`, smooth in both directions, on whose whole source `f`
 is its Hessian quadratic form read in that chart. -/
-theorem IsNondegenerateCriticalPoint.exists_openPartialHomeomorph (hf : ContDiff ℝ ∞ f)
+theorem IsNondegenerateCriticalPoint.exists_morse_chart (hf : ContDiff ℝ ∞ f)
     (h : IsNondegenerateCriticalPoint f x) :
     ∃ ψ : OpenPartialHomeomorph E E, x ∈ ψ.source ∧ ψ x = 0 ∧
-      ContDiffAt ℝ ∞ ψ x ∧ ContDiffAt ℝ ∞ ψ.symm 0 ∧
+      ContDiffOn ℝ ∞ ψ ψ.source ∧ ContDiffOn ℝ ∞ ψ.symm ψ.target ∧
       ∀ y ∈ ψ.source, f y = f x + (2 : ℝ)⁻¹ * fderiv ℝ (fderiv ℝ f) x (ψ y) (ψ y) := by
-  obtain ⟨φ, hφ0, hφsmooth, hφderiv, hφeq⟩ := h.exists_normalForm hf
+  obtain ⟨φ, U, hUopen, h0U, hφ0, hφsmooth, hφderiv, hφeq⟩ := h.exists_normal_form hf
   have hsub : HasFDerivAt (fun y : E ↦ y - x) (ContinuousLinearMap.id ℝ E) x := by
     simpa using (hasFDerivAt_id (𝕜 := ℝ) x).sub_const x
   have hΨderiv : HasFDerivAt (φ ∘ fun y : E ↦ y - x)
@@ -340,29 +364,65 @@ theorem IsNondegenerateCriticalPoint.exists_openPartialHomeomorph (hf : ContDiff
         ((ContinuousLinearMap.id ℝ E).comp (ContinuousLinearMap.id ℝ E)) x :=
       HasFDerivAt.comp x (by simpa using hφderiv) hsub
     simpa using hc
+  let V : Set E := {y | y - x ∈ U}
+  have hVopen : IsOpen V := hUopen.preimage (by fun_prop)
+  have hxV : x ∈ V := by simp [V, h0U]
+  have hΨsmoothOn : ContDiffOn ℝ ∞ (φ ∘ fun y : E ↦ y - x) V := by
+    intro y hy
+    have hφAt : ContDiffAt ℝ ∞ φ (y - x) :=
+      (hφsmooth (y - x) hy).contDiffAt (hUopen.mem_nhds hy)
+    exact (hφAt.comp y (by fun_prop)).contDiffWithinAt
   have hΨsmooth : ContDiffAt ℝ ∞ (φ ∘ fun y : E ↦ y - x) x :=
-    ContDiffAt.comp x (by simpa using hφsmooth) (by fun_prop)
+    (hΨsmoothOn x hxV).contDiffAt (hVopen.mem_nhds hxV)
   have hΨx : (φ ∘ fun y : E ↦ y - x) x = 0 := by simp [hφ0]
-  have hΨeq : ∀ᶠ y in 𝓝 x, f y = f x + (2 : ℝ)⁻¹ *
-      fderiv ℝ (fderiv ℝ f) x ((φ ∘ fun y : E ↦ y - x) y) ((φ ∘ fun y : E ↦ y - x) y) := by
-    have hten : Filter.Tendsto (fun y : E ↦ y - x) (𝓝 x) (𝓝 0) := by
-      have hc : Continuous (fun y : E ↦ y - x) := by fun_prop
-      simpa using hc.tendsto x
-    filter_upwards [hten.eventually hφeq] with y hy
-    simpa using hy
-  obtain ⟨U, hUsub, hUopen, hxU⟩ := mem_nhds_iff.1 hΨeq
-  refine ⟨(hΨsmooth.toOpenPartialHomeomorph _ hΨderiv (by simp)).restrOpen U hUopen, ?_, ?_,
-    ?_, ?_, ?_⟩
-  · rw [OpenPartialHomeomorph.restrOpen_source]
-    exact ⟨hΨsmooth.mem_toOpenPartialHomeomorph_source hΨderiv (by simp), hxU⟩
-  · simpa using hΨx
-  · simpa using hΨsmooth
-  · have h0 := hΨsmooth.to_localInverse hΨderiv (by simp)
-    rw [hΨx] at h0
-    exact h0
+  have hΨeq : ∀ y ∈ V, f y = f x + (2 : ℝ)⁻¹ *
+      fderiv ℝ (fderiv ℝ f) x ((φ ∘ fun y : E ↦ y - x) y)
+        ((φ ∘ fun y : E ↦ y - x) y) := by
+    intro y hy
+    simpa using hφeq (y - x) hy
+  have hderivInvertible : ∀ᶠ y in 𝓝 x, ∃ e : E ≃L[ℝ] E,
+      (e : E →L[ℝ] E) = fderiv ℝ (φ ∘ fun y : E ↦ y - x) y := by
+    have ht := hΨsmooth.continuousAt_fderiv (by simp)
+    change Filter.Tendsto (fderiv ℝ (φ ∘ fun y : E ↦ y - x)) (𝓝 x)
+      (𝓝 (fderiv ℝ (φ ∘ fun y : E ↦ y - x) x)) at ht
+    rw [hΨderiv.fderiv] at ht
+    exact ht.eventually (ContinuousLinearEquiv.refl ℝ E).nhds
+  have hgood : {y | y ∈ V ∧ ∃ e : E ≃L[ℝ] E,
+      (e : E →L[ℝ] E) = fderiv ℝ (φ ∘ fun y : E ↦ y - x) y} ∈ 𝓝 x :=
+    Filter.inter_mem (hVopen.mem_nhds hxV) hderivInvertible
+  obtain ⟨W, hWsub, hWopen, hxW⟩ := mem_nhds_iff.1 hgood
+  let p := hΨsmooth.toOpenPartialHomeomorph _ hΨderiv (by simp)
+  let ψ := p.restrOpen W hWopen
+  have hxsource : x ∈ ψ.source := by
+    simp only [ψ, OpenPartialHomeomorph.restrOpen_source]
+    exact ⟨hΨsmooth.mem_toOpenPartialHomeomorph_source hΨderiv (by simp), hxW⟩
+  refine ⟨ψ, hxsource, ?_, ?_, ?_, ?_⟩
+  · simpa [ψ, p] using hΨx
   · intro y hy
-    rw [OpenPartialHomeomorph.restrOpen_source] at hy
-    simpa using hUsub hy.2
+    simp only [ψ, OpenPartialHomeomorph.restrOpen_source] at hy
+    have hyV := (hWsub hy.2).1
+    have hsmooth := hΨsmoothOn y hyV
+    apply hsmooth.mono
+    intro z hz
+    simp only [ψ, OpenPartialHomeomorph.restrOpen_source] at hz
+    exact (hWsub hz.2).1
+  · intro z hz
+    have hy : ψ.symm z ∈ ψ.source := ψ.map_target hz
+    have hy' := hy
+    simp only [ψ, OpenPartialHomeomorph.restrOpen_source] at hy'
+    obtain ⟨e, he⟩ := (hWsub hy'.2).2
+    have hyV := (hWsub hy'.2).1
+    have hforwardAt : ContDiffAt ℝ ∞ (φ ∘ fun y : E ↦ y - x) (ψ.symm z) :=
+      (hΨsmoothOn (ψ.symm z) hyV).contDiffAt (hVopen.mem_nhds hyV)
+    have hforwardDeriv : HasFDerivAt ψ (e : E →L[ℝ] E) (ψ.symm z) := by
+      have hd : HasFDerivAt (φ ∘ fun y : E ↦ y - x) (e : E →L[ℝ] E) (ψ.symm z) := by
+        rw [he]
+        exact hforwardAt.differentiableAt (by simp) |>.hasFDerivAt
+      simpa [ψ, p] using hd
+    exact (ψ.contDiffAt_symm hz hforwardDeriv (by simpa [ψ, p] using hforwardAt)).contDiffWithinAt
+  · simp only [ψ, OpenPartialHomeomorph.restrOpen_source]
+    intro y hy
+    simpa [ψ, p] using hΨeq y (hWsub hy.2).1
 
 end MorseLemma
 

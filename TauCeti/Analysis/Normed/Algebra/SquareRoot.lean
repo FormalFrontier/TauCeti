@@ -81,6 +81,25 @@ noncomputable def sqrtNearOne : A → A :=
 
 variable {A}
 
+/-- The square root near the identity is analytic at the identity.  This gives a single
+neighborhood on which it is smooth to every finite order. -/
+theorem analyticAt_sqrtNearOne : AnalyticAt ℝ (sqrtNearOne A) 1 := by
+  let e : OpenPartialHomeomorph A A :=
+    (hasStrictFDerivAt_mul_self_one A).toOpenPartialHomeomorph (fun a : A ↦ a * a)
+  have he : AnalyticAt ℝ e.symm 1 := by
+    have hsource : (1 : A) ∈ e.source :=
+      (hasStrictFDerivAt_mul_self_one A).mem_toOpenPartialHomeomorph_source
+    have hsquare : AnalyticAt ℝ (fun a : A ↦ a * a) 1 := analyticAt_id.mul analyticAt_id
+    have hfderiv : fderiv ℝ (e : A → A) 1 =
+        (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A) := by
+      change fderiv ℝ (fun a : A ↦ a * a) 1 = _
+      rw [(hasStrictFDerivAt_mul_self_one A).hasFDerivAt.fderiv]
+    simpa [e] using e.analyticAt_symm' hsource (by simpa [e] using hsquare) hfderiv
+  have hlocalInverse : sqrtNearOne A = e.symm := by
+    rfl
+  rw [hlocalInverse]
+  simpa [e] using he
+
 /-- The square root near the identity fixes the identity. -/
 @[simp]
 theorem sqrtNearOne_one : sqrtNearOne A 1 = 1 := by
@@ -107,14 +126,8 @@ theorem eventually_sqrtNearOne_mul_self :
       (a := 1)
 
 /-- The square root near the identity is smooth at the identity. -/
-theorem contDiffAt_sqrtNearOne : ContDiffAt ℝ ∞ (sqrtNearOne A) 1 := by
-  have hsquare : ContDiffAt ℝ ∞ (fun a : A ↦ a * a) 1 :=
-    (TauCeti.ContinuousLinearMap.contDiff_apply_self (n := ∞)
-      (ContinuousLinearMap.mul ℝ A)).contDiffAt
-  have h := hsquare.to_localInverse
-    (f' := (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A))
-      (a := 1) (hasStrictFDerivAt_mul_self_one A).hasFDerivAt (by simp)
-  simpa [sqrtNearOne, ContDiffAt.localInverse] using h
+theorem contDiffAt_sqrtNearOne : ContDiffAt ℝ ∞ (sqrtNearOne A) 1 :=
+  analyticAt_sqrtNearOne.contDiffAt
 
 /-- The square root near the identity is continuous at the identity. -/
 theorem continuousAt_sqrtNearOne : ContinuousAt (sqrtNearOne A) 1 :=

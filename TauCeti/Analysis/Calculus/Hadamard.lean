@@ -34,7 +34,6 @@ variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F]
 
 /-- The weighted average of `g` along the segment from `x` to `x + v`. -/
-@[expose]
 noncomputable def segmentAverage (w : ℝ → ℝ) (g : E → F) (x v : E) : F :=
   ∫ t in (0 : ℝ)..1, w t • g (x + t • v)
 
@@ -53,6 +52,23 @@ theorem ContDiff.contDiff_segmentAverage [CompleteSpace F] {n : ℕ∞} {w : ℝ
   rw [segmentAverage_eq_integral_Icc]
   apply contDiff_integral_Icc_of_contDiff n
   exact (hw.comp (by fun_prop)).smul (hg.comp (by fun_prop))
+
+/-- A continuous linear map commutes with a weighted segment average. -/
+theorem ContinuousLinearMap.segmentAverage_apply
+    [CompleteSpace F] {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G] [CompleteSpace G]
+    (L : F →L[ℝ] G) (w : ℝ → ℝ) (g : E → F) (x v : E)
+    (h : IntervalIntegrable (fun t : ℝ ↦ w t • g (x + t • v)) volume 0 1) :
+    L (segmentAverage w g x v) = ∫ t in (0 : ℝ)..1, L (w t • g (x + t • v)) := by
+  rw [segmentAverage]
+  exact (L.intervalIntegral_comp_comm h).symm
+
+/-- At zero displacement, a weighted segment average is the integral of the weight times the
+value of the integrand at the basepoint. -/
+theorem segmentAverage_zero [CompleteSpace F] (w : ℝ → ℝ) (g : E → F) (x : E) :
+    segmentAverage w g x 0 = (∫ t in (0 : ℝ)..1, w t) • g x := by
+  rw [segmentAverage]
+  simp only [smul_zero, add_zero]
+  exact intervalIntegral.integral_smul_const w (g x)
 
 /-- The averaged derivative along the segment from `x` to `y`. -/
 noncomputable def hadamardFactor (f : E → F) (x y : E) : E →L[ℝ] F :=
