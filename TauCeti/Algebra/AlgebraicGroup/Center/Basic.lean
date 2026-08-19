@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.LinearAlgebra.TensorProduct.Basis
+import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 
@@ -222,8 +222,8 @@ private theorem centerCoefficientIdeal_antipode_mem {x : H}
   let q : H →ₐ[k] H ⧸ I := Ideal.Quotient.mkₐ k I
   let g : WithConv (H →ₐ[k] H ⧸ I) := toConv q
   have hgker : I ≤ RingHom.ker g.ofConv.toRingHom := by
-    intro y hy
-    exact RingHom.mem_ker.mpr (Ideal.Quotient.eq_zero_iff_mem.mpr hy)
+    change I ≤ RingHom.ker (q : H →+* H ⧸ I)
+    rw [Ideal.Quotient.mkₐ_ker]
   have hg : HopfAlgebra.IsCentralPoint g :=
     (centerCoefficientIdeal_le_ker_iff_isCentralPoint g).1 hgker
   have hginv : HopfAlgebra.IsCentralPoint g⁻¹ := hg.inv
@@ -249,8 +249,8 @@ private theorem centerCoefficientIdeal_comul_mem {x : H}
   let qr : H →ₐ[k] Q ⊗[k] Q :=
     (Algebra.TensorProduct.includeRight (R := k) (A := Q) (B := Q)).comp q
   have hqker : I ≤ RingHom.ker q.toRingHom := by
-    intro y hy
-    exact RingHom.mem_ker.mpr (Ideal.Quotient.eq_zero_iff_mem.mpr hy)
+    change I ≤ RingHom.ker (q : H →+* Q)
+    rw [Ideal.Quotient.mkₐ_ker]
   have hqlker : I ≤ RingHom.ker ql.toRingHom := by
     intro y hy
     rw [RingHom.mem_ker]
