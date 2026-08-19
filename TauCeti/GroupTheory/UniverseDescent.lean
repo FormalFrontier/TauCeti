@@ -88,10 +88,14 @@ noncomputable def finModelEquiv : FinModel.{u, v} G ≃ G :=
 instance : Finite (FinModel.{u, v} G) :=
   .of_equiv G (finModelEquiv G).symm
 
+/-- A finite enumeration of the small model. -/
+noncomputable instance : Fintype (FinModel.{u, v} G) :=
+  Fintype.ofFinite _
+
 /-- The small model has the same cardinality as the type it models. -/
 @[simp]
-theorem card_finModel : Nat.card (FinModel.{u, v} G) = Nat.card G :=
-  Nat.card_congr (finModelEquiv G)
+theorem card_finModel : Fintype.card (FinModel.{u, v} G) = Nat.card G := by
+  simpa only [Nat.card_eq_fintype_card] using Nat.card_congr (finModelEquiv G)
 
 variable [Group G]
 
