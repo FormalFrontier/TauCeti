@@ -320,15 +320,18 @@ theorem lie_single_eq_zero (hv : IsGlHighestWeightVector mu v) {i j : n} (hij : 
 
 end IsGlHighestWeightVector
 
-/-- **Transport along an equivalence of `gl n R`-modules.** -/
+/-- **Transport along an injective map of `gl n R`-modules.** Injectivity is only used to keep the
+image nonzero; the two weight conditions transport along any map. An equivalence `e` is the case
+`hv.map (e : M →ₗ⁅R,Matrix n n R⁆ M') e.injective`. -/
 theorem IsGlHighestWeightVector.map {M' : Type*} [AddCommGroup M'] [Module R M']
     [LieRingModule (Matrix n n R) M']
-    (e : M ≃ₗ⁅R,Matrix n n R⁆ M') (hv : IsGlHighestWeightVector mu v) :
-    IsGlHighestWeightVector mu (e v) := by
-  have hmap : ∀ (x : Matrix n n R) (m : M), e ⁅x, m⁆ = ⁅x, e m⁆ := fun x m =>
-    LieModuleHom.map_lie (e : M →ₗ⁅R,Matrix n n R⁆ M') x m
+    (f : M →ₗ⁅R,Matrix n n R⁆ M') (hf : Function.Injective f)
+    (hv : IsGlHighestWeightVector mu v) :
+    IsGlHighestWeightVector mu (f v) := by
+  have hmap : ∀ (x : Matrix n n R) (m : M), f ⁅x, m⁆ = ⁅x, f m⁆ := fun x m =>
+    LieModuleHom.map_lie f x m
   refine isGlHighestWeightVector_iff.mpr
-    ⟨fun h => hv.ne_zero (e.injective (by rw [h, map_zero])), fun i => ?_, fun i j hij => ?_⟩
+    ⟨fun h => hv.ne_zero (hf (by rw [h, map_zero])), fun i => ?_, fun i j hij => ?_⟩
   · rw [← hmap, hv.lie_single_self_eq_smul, map_smul]
   · rw [← hmap, hv.lie_single_eq_zero hij, map_zero]
 
