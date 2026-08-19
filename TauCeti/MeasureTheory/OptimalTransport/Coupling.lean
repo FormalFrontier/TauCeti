@@ -33,9 +33,9 @@ measures, and the probability case is packaged separately as a subtype of
 
 * `TauCeti.IsCoupling.measure_prod_univ` and `TauCeti.IsCoupling.measure_univ_prod` — the
   marginal formulas on measurable cylinders, with the converse
-  `TauCeti.isCoupling_of_measure_prod_univ`;
-* `TauCeti.exists_isCoupling_iff` — two finite measures admit a coupling exactly when
-  they have the same total mass, the witness being their normalised product;
+  `TauCeti.isCoupling_of_measure_prod_univ_of_measure_univ_prod`;
+* `TauCeti.exists_isCoupling_iff` — a finite measure and any other measure admit a coupling
+  exactly when they have the same total mass, the witness being their normalised product;
 * `TauCeti.isCoupling_map_swap_iff` and `TauCeti.isCoupling_map_prodMap_iff` —
   invariance of the relation under the coordinate swap and under measurable equivalences of the
   two factors;
@@ -56,7 +56,8 @@ development of the same relation; no code is taken from it. The bundled subtype 
 The declarations sit in the bare `TauCeti` namespace rather than in `TauCeti.Measure`:
 `scripts/lint-dot-notation.py` rejects a new declaration under `TauCeti.<Mathlib type
 namespace>` that takes an explicit argument of that type, because `π.IsCoupling μ ν` would not
-elaborate there anyway. The bare namespace is what makes `hπ.swap` and `hπ.map` work.
+elaborate there anyway. Dot notation on `hπ` works under either namespace; the bare namespace is
+forced by the lint rule and matches `TauCeti.MultiCoupling`.
 
 This is Layer 0, item 1 of the optimal-transport roadmap.
 -/
@@ -117,6 +118,16 @@ theorem isProbabilityMeasure [IsProbabilityMeasure μ] (hπ : IsCoupling π μ �
     IsProbabilityMeasure π :=
   ⟨by rw [← hπ.measure_univ_left, measure_univ]⟩
 
+/-- A coupling with a finite target measure is finite. -/
+theorem isFiniteMeasure_of_right [IsFiniteMeasure ν] (hπ : IsCoupling π μ ν) :
+    IsFiniteMeasure π :=
+  ⟨by rw [← hπ.measure_univ_right]; exact measure_lt_top ν univ⟩
+
+/-- A coupling with a probability target measure is a probability measure. -/
+theorem isProbabilityMeasure_of_right [IsProbabilityMeasure ν] (hπ : IsCoupling π μ ν) :
+    IsProbabilityMeasure π :=
+  ⟨by rw [← hπ.measure_univ_right, measure_univ]⟩
+
 /-- Exchanging the two coordinates of a coupling of `μ` and `ν` gives a coupling of `ν`
 and `μ`. -/
 protected theorem swap (hπ : IsCoupling π μ ν) : IsCoupling (π.map Prod.swap) ν μ where
@@ -151,7 +162,8 @@ end IsCoupling
 /-- The converse of `TauCeti.IsCoupling.measure_prod_univ` and
 `TauCeti.IsCoupling.measure_univ_prod`: the coupling relation can be checked on measurable
 cylinders, one for each factor. -/
-theorem isCoupling_of_measure_prod_univ (hs : ∀ s, MeasurableSet s → π (s ×ˢ univ) = μ s)
+theorem isCoupling_of_measure_prod_univ_of_measure_univ_prod
+    (hs : ∀ s, MeasurableSet s → π (s ×ˢ univ) = μ s)
     (ht : ∀ t, MeasurableSet t → π (univ ×ˢ t) = ν t) : IsCoupling π μ ν where
   fst_eq := Measure.ext fun s hsm ↦ by rw [Measure.fst_apply hsm, ← prod_univ]; exact hs s hsm
   snd_eq := Measure.ext fun t htm ↦ by rw [Measure.snd_apply htm, ← univ_prod]; exact ht t htm
@@ -174,6 +186,7 @@ theorem isCoupling_map_prodMap_iff (e : X ≃ᵐ X') (f : Y ≃ᵐ Y') :
 
 /-- The product measure couples two probability measures, so probability measures always have
 a coupling. -/
+@[simp]
 theorem isCoupling_prod (μ : Measure X) (ν : Measure Y) [IsProbabilityMeasure μ]
     [IsProbabilityMeasure ν] : IsCoupling (μ.prod ν) μ ν :=
   ⟨Measure.fst_prod, Measure.snd_prod⟩
@@ -181,7 +194,7 @@ theorem isCoupling_prod (μ : Measure X) (ν : Measure Y) [IsProbabilityMeasure 
 /-- A finite measure and a measure of equal total mass are coupled by their normalised product.
 The equality makes the second measure finite. The statement includes the zero measures, where
 the normalising factor is `∞` and the plan is `0`. -/
-theorem isCoupling_smul_prod [IsFiniteMeasure μ] (h : μ univ = ν univ) :
+theorem isCoupling_inv_smul_prod [IsFiniteMeasure μ] (h : μ univ = ν univ) :
     IsCoupling ((μ univ)⁻¹ • μ.prod ν) μ ν := by
   let _ : IsFiniteMeasure ν := ⟨by rw [← h]; exact measure_lt_top μ univ⟩
   rcases eq_or_ne (μ univ) 0 with h0 | h0
@@ -200,18 +213,20 @@ theorem isCoupling_smul_prod [IsFiniteMeasure μ] (h : μ univ = ν univ) :
 mass. -/
 theorem exists_isCoupling_iff [IsFiniteMeasure μ] :
     (∃ π : Measure (X × Y), IsCoupling π μ ν) ↔ μ univ = ν univ :=
-  ⟨fun ⟨_, hπ⟩ ↦ hπ.measure_univ_eq, fun h ↦ ⟨_, isCoupling_smul_prod h⟩⟩
+  ⟨fun ⟨_, hπ⟩ ↦ hπ.measure_univ_eq, fun h ↦ ⟨_, isCoupling_inv_smul_prod h⟩⟩
 
 section Dirac
 
 /-- A Dirac measure and a probability measure are coupled by the pushforward of the latter
 along `y ↦ (x, y)`. -/
+@[simp]
 theorem isCoupling_map_prodMk (x : X) (ν : Measure Y) [IsProbabilityMeasure ν] :
     IsCoupling (ν.map (Prod.mk x)) (Measure.dirac x) ν := by
   rw [← Measure.dirac_prod (ν := ν) x]
   exact isCoupling_prod (Measure.dirac x) ν
 
 /-- Two Dirac measures are coupled by the Dirac measure at the pair. -/
+@[simp]
 theorem isCoupling_dirac_dirac (x : X) (y : Y) :
     IsCoupling (Measure.dirac (x, y)) (Measure.dirac x) (Measure.dirac y) := by
   rw [← Measure.dirac_prod_dirac]
@@ -221,31 +236,36 @@ variable {x : X} {y : Y}
 
 /-- A plan whose source marginal is a Dirac measure is the pushforward of its target marginal
 along `y ↦ (x, y)`. Together with `TauCeti.isCoupling_map_prodMk` this says that a Dirac source
-has exactly one coupling with each probability target when `{x}` is measurable. -/
-theorem IsCoupling.eq_map_prodMk (hx : MeasurableSet ({x} : Set X))
-    (hπ : IsCoupling π (Measure.dirac x) ν) : π = ν.map (Prod.mk x) := by
-  have hs : MeasurableSet ({x}ᶜ : Set X) := hx.compl
-  have hx : ∀ᵐ z ∂π, z.1 = x := by
-    rw [ae_iff]
-    have hpre : {z : X × Y | ¬z.1 = x} = Prod.fst ⁻¹' {x}ᶜ := by ext z; simp
-    rw [hpre, ← Measure.fst_apply hs, hπ.fst_eq, Measure.dirac_apply' x hs]
-    simp
-  have hmap : (Prod.mk x ∘ Prod.snd) =ᵐ[π] (id : X × Y → X × Y) := by
-    filter_upwards [hx] with z hz
-    simp [← hz]
-  calc π = Measure.map id π := Measure.map_id.symm
-    _ = Measure.map (Prod.mk x ∘ Prod.snd) π := (Measure.map_congr hmap).symm
-    -- the right-hand side is `Measure.map (Prod.mk x) (Measure.map Prod.snd π)`, which is
-    -- `Measure.snd` by definition
-    _ = Measure.map (Prod.mk x) π.snd :=
-      (Measure.map_map measurable_prodMk_left measurable_snd).symm
-    _ = ν.map (Prod.mk x) := by rw [hπ.snd_eq]
+has exactly one coupling with each probability target. -/
+theorem IsCoupling.eq_map_prodMk (hπ : IsCoupling π (Measure.dirac x) ν) :
+    π = ν.map (Prod.mk x) := by
+  let _ : IsFiniteMeasure π := hπ.isFiniteMeasure
+  apply ext_of_generate_finite _ generateFrom_prod.symm isPiSystem_prod
+  · rintro _ ⟨s, hs, t, ht, rfl⟩
+    rw [Measure.map_apply measurable_prodMk_left (hs.prod ht)]
+    by_cases hxs : x ∈ s
+    · rw [mk_preimage_prod_right hxs]
+      calc
+        π (s ×ˢ t) = π (univ ×ˢ t) := by
+          apply measure_eq_measure_of_null_sdiff
+            (Set.prod_mono (subset_univ s) Subset.rfl)
+          apply measure_mono_null (t := sᶜ ×ˢ (univ : Set Y))
+          · intro z hz
+            exact ⟨fun hzs ↦ hz.2 ⟨hzs, hz.1.2⟩, mem_univ z.2⟩
+          · rw [hπ.measure_prod_univ hs.compl, Measure.dirac_apply' x hs.compl]
+            simp [hxs]
+        _ = ν t := hπ.measure_univ_prod ht
+    · rw [mk_preimage_prod_right_eq_empty hxs, measure_empty]
+      apply measure_mono_null (Set.prod_mono Subset.rfl (subset_univ t))
+      rw [hπ.measure_prod_univ hs, Measure.dirac_apply' x hs]
+      simp [hxs]
+  · rw [Measure.map_apply measurable_prodMk_left MeasurableSet.univ, preimage_univ,
+      ← hπ.measure_univ_right]
 
-/-- Two Dirac measures have exactly one coupling, the Dirac measure at the pair, when the source
-singleton is measurable. -/
-theorem IsCoupling.eq_dirac (hx : MeasurableSet ({x} : Set X))
-    (hπ : IsCoupling π (Measure.dirac x) (Measure.dirac y)) : π = Measure.dirac (x, y) := by
-  rw [hπ.eq_map_prodMk hx, Measure.map_dirac' measurable_prodMk_left]
+/-- Two Dirac measures have exactly one coupling, the Dirac measure at the pair. -/
+theorem IsCoupling.eq_dirac (hπ : IsCoupling π (Measure.dirac x) (Measure.dirac y)) :
+    π = Measure.dirac (x, y) := by
+  rw [hπ.eq_map_prodMk, Measure.map_dirac' measurable_prodMk_left]
 
 end Dirac
 
@@ -288,6 +308,18 @@ def fst (π : Coupling μ ν) : ProbabilityMeasure X :=
 /-- The second marginal of a bundled coupling. -/
 def snd (π : Coupling μ ν) : ProbabilityMeasure Y :=
   π.1.map measurable_snd.aemeasurable
+
+/-- The underlying measure of the first marginal is the pushforward along the first projection.
+This is not a `simp` lemma: `simp` rewrites `π.fst` to `μ` via `fst_eq` instead. -/
+theorem coe_fst (π : Coupling μ ν) :
+    (π.fst).toMeasure = π.1.toMeasure.map Prod.fst :=
+  (rfl)
+
+/-- The underlying measure of the second marginal is the pushforward along the second projection.
+This is not a `simp` lemma: `simp` rewrites `π.snd` to `ν` via `snd_eq` instead. -/
+theorem coe_snd (π : Coupling μ ν) :
+    (π.snd).toMeasure = π.1.toMeasure.map Prod.snd :=
+  (rfl)
 
 /-- The first marginal of a bundled coupling is its prescribed source. -/
 @[simp]
