@@ -94,7 +94,8 @@ Two offsets with the same shift differ by an element killed by the unit `d²`. -
 lemma upperTriShift_bijective [NeZero p] (hpN : p ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
     Function.Bijective (upperTriShift p γ) := by
   refine Finite.injective_iff_bijective.mp fun j j' hjj ↦ ?_
-  have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hpN hγ
+  have hγp : γ ∈ Gamma0 p := Gamma0_le_Gamma0_of_dvd hpN hγ
+  have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hγp
   have h := congrArg (fun m : Fin p ↦ ((m : ℕ) : ZMod p)) hjj
   simp only [upperTriShift_natCast] at h
   push_cast at h
@@ -142,13 +143,14 @@ theorem exists_mem_Gamma0_upperTriRep_mul [NeZero p] (hpN : p ∣ N) {γ : SL(2,
       upperTriRep p j * mapGL ℚ γ = mapGL ℚ γ' * upperTriRep p (upperTriShift p γ j) := by
   have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
   have hcN : ((γ 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hγ
-  have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hpN hγ
+  have hγp : γ ∈ Gamma0 p := Gamma0_le_Gamma0_of_dvd hpN hγ
+  have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hγp
   -- the entry `b'` is an integer: the congruence `a j' ≡ b + j d (mod p)` is exactly `p ∣ …`
   have hdvd : (p : ℤ) ∣ γ 0 1 + (j : ℕ) * γ 1 1
       - (γ 0 0 + (j : ℕ) * γ 1 0) * ((upperTriShift p γ j : ℕ) : ℤ) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
-    rw [upperTriShift_natCast, intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hpN hγ]
+    rw [upperTriShift_natCast, intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hγp]
     push_cast
     linear_combination (-((γ 0 1 : ℤ) : ZMod p)
       - ((j : ℕ) : ZMod p) * ((γ 1 1 : ℤ) : ZMod p)) * had
@@ -209,10 +211,11 @@ theorem heckeSlashUpperTri_slash_mapGL_of_nebentypus (k : ℤ) [NeZero p] (hpN :
     (hf : ∀ δ : ↥(Gamma0 N), f ∣[k] (mapGL ℚ (δ : SL(2, ℤ)) : GL (Fin 2) ℚ)
       = (↑(χ ((Gamma0Map N).toHomUnits δ)) : ℂ) • f) :
     heckeSlashUpperTri k p f ∣[k] (mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ)
-      = (↑(χ ((Gamma0Map N).toHomUnits γ)) : ℂ) • heckeSlashUpperTri k p f :=
-  heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 k hpN γ.2 fun δ hδ hd ↦ by
-    rw [hf ⟨δ, hδ⟩,
-      show ((Gamma0Map N).toHomUnits ⟨δ, hδ⟩) = (Gamma0Map N).toHomUnits γ from Units.ext hd]
+      = (↑(χ ((Gamma0Map N).toHomUnits γ)) : ℂ) • heckeSlashUpperTri k p f := by
+  apply heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 k hpN γ.2
+  intro δ hδ hd
+  have hmap : (Gamma0Map N).toHomUnits ⟨δ, hδ⟩ = (Gamma0Map N).toHomUnits γ := Units.ext hd
+  rw [hf ⟨δ, hδ⟩, hmap]
 
 end HeckeRing.GL2
 

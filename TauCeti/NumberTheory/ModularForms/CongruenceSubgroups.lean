@@ -48,9 +48,8 @@ infrastructure independent of the diamond operators.
 * `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
   unit upper-left entry modulo `N`.
 * `CongruenceSubgroup.intCast_apply_one_zero_eq_zero_of_mem_Gamma0` and
-  `CongruenceSubgroup.intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: modulo any
-  divisor of the level, a `Γ₀(N)` matrix has vanishing lower-left entry and mutually inverse
-  diagonal entries.
+  `CongruenceSubgroup.intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: modulo its
+  level, a `Γ₀(N)` matrix has vanishing lower-left entry and mutually inverse diagonal entries.
 * `CongruenceSubgroup.Gamma0_normalizes_Gamma1` and
   `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
@@ -128,25 +127,21 @@ theorem mem_Gamma1_iff {γ : SL(2, ℤ)} :
   ⟨fun h ↦ ⟨Gamma1_in_Gamma0 N h, (Gamma1_mem N γ).mp h |>.2.1⟩,
     fun ⟨h₀, h₁⟩ ↦ (Gamma1_mem N γ).mpr ((Gamma1_to_Gamma0_mem ⟨γ, h₀⟩).mp h₁)⟩
 
-/-- **The lower-left entry vanishes modulo any divisor of the level**: for `γ ∈ Γ₀(N)` and
-`M ∣ N`, `c ≡ 0 (mod M)`. This is `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd` read on the
-entry rather than on the group. -/
-theorem intCast_apply_one_zero_eq_zero_of_mem_Gamma0 {M N : ℕ} (hMN : M ∣ N) {γ : SL(2, ℤ)}
-    (hγ : γ ∈ Gamma0 N) : ((γ 1 0 : ℤ) : ZMod M) = 0 := by
-  rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-  exact (Int.natCast_dvd_natCast.mpr hMN).trans
-    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hγ))
+/-- **The lower-left entry of a `Γ₀(M)` matrix vanishes modulo `M`**: `c ≡ 0 (mod M)`. -/
+theorem intCast_apply_one_zero_eq_zero_of_mem_Gamma0 {M : ℕ} {γ : SL(2, ℤ)}
+    (hγ : γ ∈ Gamma0 M) : ((γ 1 0 : ℤ) : ZMod M) = 0 :=
+  Gamma0_mem.mp hγ
 
-/-- **The diagonal entries of a `Γ₀(N)` matrix are mutually inverse modulo any divisor of the
-level**: the determinant identity `ad - bc = 1` with the `bc` term killed by `M ∣ c`. It refines
+/-- **The diagonal entries of a `Γ₀(M)` matrix are mutually inverse modulo `M`**: the determinant
+identity `ad - bc = 1` with the `bc` term killed by `M ∣ c`. It refines
 `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0` by naming the inverse. -/
-theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M N : ℕ} (hMN : M ∣ N)
-    {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
+theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M : ℕ}
+    {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 M) :
     ((γ 0 0 : ℤ) : ZMod M) * ((γ 1 1 : ℤ) : ZMod M) = 1 := by
   have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
   have h := congrArg (Int.cast : ℤ → ZMod M) hdet
   push_cast at h
-  rw [intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hMN hγ] at h
+  rw [intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hγ] at h
   linear_combination h
 
 /-- The upper-left entry of a `Γ₀(N)` matrix is a unit modulo `N`: the determinant is one
