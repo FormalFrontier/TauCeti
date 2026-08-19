@@ -18,7 +18,7 @@ powers and factors the absolute Frobenius through Mathlib's base-change map.
 
 ## Main definitions
 
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.relativeFrobeniusCoordinateRingHom`: the
+* `WeierstrassCurve.Affine.CoordinateRing.relativeFrobeniusCoordinateRingHom`: the
   relative Frobenius on coordinate rings.
 
 ## Main results
@@ -42,7 +42,7 @@ public section
 
 open Polynomial
 
-namespace TauCeti.WeierstrassCurve.Affine.CoordinateRing
+namespace WeierstrassCurve.Affine.CoordinateRing
 
 variable {R : Type*} [CommRing R] (p : ℕ) [ExpChar R p]
   (W : _root_.WeierstrassCurve.Affine R)
@@ -59,7 +59,7 @@ private theorem eval₂_relativeFrobenius_eq_zero :
     intro g
     simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, Polynomial.coe_mapRingHom]
     -- Expose the underlying functions of the `toRingHom` and `frobenius` wrappers.
-    change AdjoinRoot.of W.polynomial (expand R p (map (frobenius R p) g)) =
+    change AdjoinRoot.of W.polynomial (expand R p (Polynomial.map (frobenius R p) g)) =
       (AdjoinRoot.of W.polynomial g) ^ p
     rw [← Polynomial.map_expand, Polynomial.map_frobenius_expand, map_pow]
   rw [_root_.WeierstrassCurve.Affine.map_polynomial, Polynomial.eval₂_map, hcomp,
@@ -125,7 +125,7 @@ theorem relativeFrobeniusCoordinateRingHom_comp_coordinateRingMap :
     simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, map_of]
     -- Expose the underlying functions of the `toRingHom` and `frobenius` wrappers.
     change relativeFrobeniusCoordinateRingHom p W
-        (AdjoinRoot.of (W.map (frobenius R p)).polynomial (map (frobenius R p) g)) =
+        (AdjoinRoot.of (W.map (frobenius R p)).polynomial (Polynomial.map (frobenius R p) g)) =
       (AdjoinRoot.of W.polynomial g) ^ p
     rw [relativeFrobeniusCoordinateRingHom_of, ← Polynomial.map_expand,
       Polynomial.map_frobenius_expand, map_pow]
@@ -140,6 +140,6 @@ theorem relativeFrobeniusCoordinateRingHom_coordinateRingMap (z : W.CoordinateRi
     congrArg (fun f : W.CoordinateRing →+* W.CoordinateRing ↦ f z)
       (relativeFrobeniusCoordinateRingHom_comp_coordinateRingMap p W)
 
-end TauCeti.WeierstrassCurve.Affine.CoordinateRing
+end WeierstrassCurve.Affine.CoordinateRing
 
 end

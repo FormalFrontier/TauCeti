@@ -127,7 +127,6 @@ theorem frobeniusRatFuncRange_le_frobeniusFieldRange :
 
 /-- **`[K(W)^q : K(x^q)] = 2`.** Raising `K(x) ⊆ K(W)` to the `q`-th power is an embedding of the
 pair, so the relative degree `2` of `finrank_ratFuncRange` is unchanged. -/
-@[simp]
 theorem relfinrank_fieldRange_frobeniusAlgHom :
     letI := Fintype.ofFinite K
     relfinrank (ratFuncAdjoinXPowRange W (Nat.card K))

@@ -37,7 +37,7 @@ target.
 
 ## Main definitions
 
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.relativeFrobeniusCoordinateRingHom`: the
+* `WeierstrassCurve.Affine.CoordinateRing.relativeFrobeniusCoordinateRingHom`: the
   relative Frobenius as an `R`-algebra map on coordinate rings, over any commutative ring of
   exponential characteristic `p`.
 * `TauCeti.Isogeny.relativeFrobeniusPullback`: the same map read into `W.FunctionField`, a
@@ -102,7 +102,7 @@ open Polynomial WeierstrassCurve
 
 namespace TauCeti
 
-open TauCeti.WeierstrassCurve.Affine.CoordinateRing
+open WeierstrassCurve.Affine.CoordinateRing
 
 namespace Isogeny
 
