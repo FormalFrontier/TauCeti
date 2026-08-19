@@ -81,8 +81,8 @@ theorem representation_apply_eq_smul_of_lieSpan_eq_top
     representation R L M u m = c • m := by
   let F : Module.End R M := representation R L M u - c • LinearMap.id
   have hmemF : ∀ z : M, z ∈ LinearMap.ker F ↔ representation R L M u z = c • z := fun z ↦ by
-    change representation R L M u z - c • z = 0 ↔ representation R L M u z = c • z
-    exact sub_eq_zero
+    simp only [F, LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.smul_apply,
+      LinearMap.id_coe, id_eq, sub_eq_zero]
   have hstab : ∀ (y : L) (z : M), representation R L M u z = c • z →
       representation R L M u ⁅y, z⁆ = c • ⁅y, z⁆ := fun y z hz ↦ by
     rw [representation_lie_of_mem_center hu y z, hz, lie_smul]
