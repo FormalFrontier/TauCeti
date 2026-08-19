@@ -93,7 +93,8 @@ noncomputable abbrev componentGroupFppfSheaf (H : FiniteTypeCommHopfAlgCat.{u, u
     (isNormal_identityComponentHopfIdeal H)
 
 /-- The canonical morphism from the fppf sheaf of points of `H` to its component group sheaf. -/
-noncomputable def componentGroupFppfProjection (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+@[expose] noncomputable def componentGroupFppfProjection
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     CommHopfAlgCat.pointsFppfGroupObject H.obj ⟶ componentGroupFppfSheaf H :=
   CommHopfAlgCat.fppfQuotientProjection H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
