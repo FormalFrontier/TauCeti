@@ -22,6 +22,12 @@ right-coset index follows from it. What is left is the positivity hypothesis, an
 `Δ₀(N) ≤ posDetInt 2` composed with `posDetInt_le_glpos`: every element of `Δ₀(N)` has positive
 determinant by definition, so no double coset of this triple ever fails it.
 
+The operators belong to the double coset itself, not to the representatives `heckeSlashSum` sums
+over: `coe_heckeSlashGamma1ModularFormEnd` below rewrites either of them to `heckeSlashSum`, and
+`heckeSlashSum_coe_eq_sum_of_rightCosets` (`HeckeSlash/Independence.lean`) then evaluates that on
+*any* decomposition of `Γ₁(N) δ Γ₁(N)` into right cosets — any representative `δ` of the coset,
+and any representatives of the cosets `Γ₁(N) aᵢ` — always with the same answer.
+
 ⚠ These are the operators of an *arbitrary* double coset. Identifying particular cosets with the
 classical `Tₙ` — the normalisation lemma for `Γ₁(N) · diag(1, p) · Γ₁(N)`, and the `q`-expansion
 recurrences — is a separate milestone and is not proved here.

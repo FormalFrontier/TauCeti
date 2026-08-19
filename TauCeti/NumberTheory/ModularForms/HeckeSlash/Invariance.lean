@@ -71,8 +71,8 @@ The proof is Shimura's — right multiplication by `γ` permutes the summands �
 is `MulAction.toPerm` applied to `γ⁻¹`, acting on the right-coset index `Γ₂ ⧸ (Γ₂ ∩ δ⁻¹Γ₁δ)`.
 
 ⚠ This proves invariance of the sum formed from the representatives `D.out` and `v.out` that
-`heckeSlashSum` fixes. It does **not** state that sums formed from *different* choices of
-representatives agree; that would be a separate theorem, and none is available yet. -/
+`heckeSlashSum` fixes. That sums formed from *different* choices of representatives agree is a
+separate theorem, `heckeSlashSum_eq_sum_of_rightCosets` in `HeckeSlash/Independence.lean`. -/
 theorem heckeSlashSum_slash_invariant (f : ℍ → ℂ) (hf : ∀ δ ∈ Γ₁, f ∣[k] δ = f)
     {γ : GL (Fin 2) ℚ} (hγ : γ ∈ Γ₂) :
     heckeSlashSum k D f ∣[k] γ = heckeSlashSum k D f := by

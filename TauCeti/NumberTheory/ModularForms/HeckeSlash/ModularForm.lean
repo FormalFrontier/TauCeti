@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Cusps
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Form
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Holomorphic
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Independence
 
 /-!
 # The slash sum descends to modular forms and to cusp forms
@@ -48,6 +49,11 @@ statements and are not proved here.
 
 * `HeckeRing.GL2.coe_heckeSlashModularFormEnd`, `HeckeRing.GL2.coe_heckeSlashCuspFormEnd`: both
   are `heckeSlashSum` on underlying functions.
+* `HeckeRing.GL2.coe_heckeSlashModularFormEnd_eq_sum`,
+  `HeckeRing.GL2.coe_heckeSlashCuspFormEnd_eq_sum`: both are the sum of the slashes over *any*
+  decomposition of the double coset into right cosets, so neither depends on the representatives
+  it is assembled from. This is `heckeSlashSum_coe_eq_sum_of_rightCosets`
+  (`HeckeSlash/Independence.lean`) read off the two endomorphisms.
 
 ## Provenance
 
@@ -69,7 +75,7 @@ public section
 
 open Matrix Matrix.SpecialLinearGroup UpperHalfPlane DoubleCoset HeckeRing.GLn
 
-open scoped MatrixGroups ModularForm
+open scoped MatrixGroups ModularForm Pointwise
 
 namespace HeckeRing.GL2
 
@@ -146,6 +152,33 @@ noncomputable def heckeSlashCuspFormEnd :
 @[simp] lemma coe_heckeSlashCuspFormEnd (f : CuspForm (G.map (mapGL ℝ)) k) :
     ⇑(heckeSlashCuspFormEnd k D hD f) = heckeSlashSum k D f :=
   coe_heckeSlashCuspForm k D hD f
+
+/-- **The operator on modular forms is the sum over any decomposition of the double coset into
+right cosets**: if the right cosets `G aᵢ` are pairwise distinct and cover the double coset, then
+`heckeSlashModularFormEnd k D hD f = ∑ᵢ f ∣[k] aᵢ`. So it is attached to the double coset, not to
+the representatives `heckeSlashSum` is assembled from; the choice-independence itself is
+`heckeSlashSum_coe_eq_sum_of_rightCosets` (`HeckeSlash/Independence.lean`). -/
+lemma coe_heckeSlashModularFormEnd_eq_sum {ι : Type*} [Fintype ι] (a : ι → GL (Fin 2) ℚ)
+    (hcover : doubleCoset (D.out : GL (Fin 2) ℚ) (G.map (mapGL ℚ)) (G.map (mapGL ℚ)) =
+      ⋃ i, MulOpposite.op (a i) • (G.map (mapGL ℚ) : Set (GL (Fin 2) ℚ)))
+    (hinj : Function.Injective fun i ↦
+      MulOpposite.op (a i) • (G.map (mapGL ℚ) : Set (GL (Fin 2) ℚ)))
+    (f : ModularForm (G.map (mapGL ℝ)) k) :
+    ⇑(heckeSlashModularFormEnd k D hD f) = ∑ i, ⇑f ∣[k] a i :=
+  (coe_heckeSlashModularFormEnd k D hD f).trans
+    (heckeSlashSum_coe_eq_sum_of_rightCosets k D a hcover hinj f)
+
+/-- **The operator on cusp forms is the sum over any decomposition of the double coset into right
+cosets**, exactly as for modular forms. -/
+lemma coe_heckeSlashCuspFormEnd_eq_sum {ι : Type*} [Fintype ι] (a : ι → GL (Fin 2) ℚ)
+    (hcover : doubleCoset (D.out : GL (Fin 2) ℚ) (G.map (mapGL ℚ)) (G.map (mapGL ℚ)) =
+      ⋃ i, MulOpposite.op (a i) • (G.map (mapGL ℚ) : Set (GL (Fin 2) ℚ)))
+    (hinj : Function.Injective fun i ↦
+      MulOpposite.op (a i) • (G.map (mapGL ℚ) : Set (GL (Fin 2) ℚ)))
+    (f : CuspForm (G.map (mapGL ℝ)) k) :
+    ⇑(heckeSlashCuspFormEnd k D hD f) = ∑ i, ⇑f ∣[k] a i :=
+  (coe_heckeSlashCuspFormEnd k D hD f).trans
+    (heckeSlashSum_coe_eq_sum_of_rightCosets k D a hcover hinj f)
 
 end HeckeRing.GL2
 

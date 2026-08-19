@@ -76,8 +76,10 @@ variable {G : Subgroup SL(2, ℤ)} (k : ℤ) {Δ : Submonoid (GL (Fin 2) ℚ)}
 `heckeSlashSum`, and its invariance is `heckeSlashSum_slash_invariant` transported across the
 `G.map (mapGL ℚ)` ↔ `G.map (mapGL ℝ)` correspondence.
 
-⚠ As in `Invariance.lean`, this is the sum over the representatives `heckeSlashSum` fixes; no
-claim is made that different choices of representatives give the same form. -/
+⚠ As in `Invariance.lean`, this is the sum over the representatives `heckeSlashSum` fixes. That
+any other decomposition of the double coset into right cosets gives the same form is
+`heckeSlashSum_coe_eq_sum_of_rightCosets` (`HeckeSlash/Independence.lean`), whose hypothesis is
+exactly the slash-invariance carried here. -/
 private noncomputable def heckeSlashInvariant (f : SlashInvariantForm (G.map (mapGL ℝ)) k) :
     SlashInvariantForm (G.map (mapGL ℝ)) k where
   toFun := heckeSlashSum k D f

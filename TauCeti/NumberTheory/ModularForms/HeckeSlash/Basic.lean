@@ -41,7 +41,8 @@ different representative of the same right coset is `γ₁ · (δ τᵥ⁻¹)` f
 `f ∣[k] (γ₁ x) = (f ∣[k] γ₁) ∣[k] x`, so the summand moves unless the slash by `γ₁` is trivial on
 `f`. Even the identity double coset can therefore send a raw `f` to `f ∣[k] γ₁` rather than to `f`.
 What repairs it is slash-invariance of `f` under `Γ₁`, and that is `HeckeSlash/Reindex.lean`;
-`HeckeSlash/Invariance.lean` then turns it into invariance of the sum under `Γ₂`.
+`HeckeSlash/Invariance.lean` then turns it into invariance of the sum under `Γ₂`, and
+`HeckeSlash/Independence.lean` into independence of the sum from every one of those choices.
 
 ⚠ Conventions: `gH` is a left coset and `Hg` a right one, as in Mathlib and in
 `LeftCosetModule/Basic.lean`. AINTLIB's `HeckeAction.lean` uses the opposite labels for the same
@@ -198,11 +199,13 @@ the representatives of the decomposition of `Γ₁ δ Γ₂` into right cosets `
 normalising factor already built into the slash action, this is Shimura's `f ∣[Γ₁ δ Γ₂]ₖ`
 (§3.4, (3.4.1)).
 
-⚠ This depends on the chosen representatives `D.out` and `v.out`, and on a general
+⚠ The *definition* depends on the chosen representatives `D.out` and `v.out`, and on a general
 `f : ℍ → ℂ` the value changes with them — see the module docstring. Invariance of `f` under
-`Γ₁` is *sufficient* to make it independent of those choices (`slash_rightCosetRep_of_mem`,
-`HeckeSlash/Reindex.lean`); whether it is also necessary is not claimed here, since a particular
-`f` and `D` could be independent by cancellation.
+`Γ₁` is *sufficient* to make it independent of those choices: for such an `f` the sum is the
+sum over any decomposition of `Γ₁ δ Γ₂` into right cosets whatsoever
+(`heckeSlashSum_eq_sum_of_rightCosets`, `HeckeSlash/Independence.lean`), which is what makes the
+operators built from it attached to the double coset. Whether invariance is also *necessary* is
+not claimed here, since a particular `f` and `D` could be independent by cancellation.
 
 ⚠ Choice-independence is not the same as being an action, and this docstring does not claim the
 latter. What right multiplication gives is invariance of the *output* under `Γ₂`, which is the
