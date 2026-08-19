@@ -227,11 +227,10 @@ theorem finiteDimensional_residueField (hF : IsFunctionField k F) :
 
 variable (P) in
 /-- **Stichtenoth, Proposition 1.1.15**: the degree of a place is bounded by `[F : k(x)]` for
-every `x` whose order at `P` is nonzero. -/
-theorem degree_le_finrank_over_adjoin (hF : IsFunctionField k F) {x : F} (hx : P.ord x ≠ 0) :
+every `x` whose order at `P` is nonzero, provided `F` is finite over `k(x)`. -/
+theorem degree_le_finrank_over_adjoin {x : F} (hx : P.ord x ≠ 0)
+    [FiniteDimensional k⟮x⟯ F] :
     P.degree ≤ Module.finrank k⟮x⟯ F := by
-  have : FiniteDimensional k⟮x⟯ F :=
-    hF.finiteDimensional_adjoin (P.transcendental_of_ord_ne_zero hx)
   rw [P.degree_eq_finrank]
   exact Module.finrank_le_of_rank_le (rank_residueField_le_finrank_over_adjoin P hx)
 
