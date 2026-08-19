@@ -343,19 +343,16 @@ theorem map_obj_obj (F : Functor C D) [F.PreservesZeroMorphisms]
     (S : E.ConflationCategory) : ((map F hF).obj S).obj = F.mapShortComplex.obj S.obj := by
   exact eq_of_heq HEq.rfl
 
-@[simp]
 theorem map_obj_obj_X₁ (F : Functor C D) [F.PreservesZeroMorphisms]
     (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
     (S : E.ConflationCategory) : ((map F hF).obj S).obj.X₁ = F.obj S.obj.X₁ := by
   exact eq_of_heq HEq.rfl
 
-@[simp]
 theorem map_obj_obj_X₂ (F : Functor C D) [F.PreservesZeroMorphisms]
     (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
     (S : E.ConflationCategory) : ((map F hF).obj S).obj.X₂ = F.obj S.obj.X₂ := by
   exact eq_of_heq HEq.rfl
 
-@[simp]
 theorem map_obj_obj_X₃ (F : Functor C D) [F.PreservesZeroMorphisms]
     (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
     (S : E.ConflationCategory) : ((map F hF).obj S).obj.X₃ = F.obj S.obj.X₃ := by
@@ -603,17 +600,14 @@ theorem map_obj_obj [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : ((map hF).obj S).obj = F.mapShortComplex.obj S.obj := by
   exact eq_of_heq HEq.rfl
 
-@[simp]
 theorem map_obj_obj_X₁ [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : ((map hF).obj S).obj.X₁ = F.obj S.obj.X₁ := by
   exact eq_of_heq HEq.rfl
 
-@[simp]
 theorem map_obj_obj_X₂ [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : ((map hF).obj S).obj.X₂ = F.obj S.obj.X₂ := by
   exact eq_of_heq HEq.rfl
 
-@[simp]
 theorem map_obj_obj_X₃ [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : ((map hF).obj S).obj.X₃ = F.obj S.obj.X₃ := by
   exact eq_of_heq HEq.rfl
