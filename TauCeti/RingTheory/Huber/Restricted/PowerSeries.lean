@@ -36,6 +36,8 @@ where the convergent/restricted power series ring is (5.6.1) in §5.6.
   componentwise.
 * `restrictedMvPowerSeriesSubringLinearEquiv`: at `M = A` the subring and the submodule of
   restricted series are `A`-linearly isomorphic.
+* `coeff_coe_smul_restrictedMvPowerSeriesSubring`: the scalar action on `A⟨T₁, …, Tₖ⟩` is
+  coefficientwise multiplication — the subring's action is `Algebra.smul_def`, not pointwise.
 * `restrictedMvPowerSeriesSubmodulePiEquiv`: that criterion as an `A`-linear equivalence,
   `(∏ i, M i)⟨T₁, …, Tₖ⟩ ≃ₗ[A] ∏ i, M i⟨T₁, …, Tₖ⟩`.
 
@@ -63,7 +65,8 @@ coefficient binders — `[Zero]` and a topology, where the original asked for a 
 **Original here.** `isRestricted_monomial`, `isRestricted_of_hasFiniteSupport`,
 `IsRestricted.smul`, `restrictedMvPowerSeriesSubmodule`, `mem_restrictedMvPowerSeriesSubmodule`,
 `isRestricted_pi_iff`, `restrictedMvPowerSeriesSubmodulePiEquiv` and
-`restrictedMvPowerSeriesSubringLinearEquiv`, each with its computation lemmas.
+`restrictedMvPowerSeriesSubringLinearEquiv`, each with its computation lemmas, together with
+`coeff_coe_smul_restrictedMvPowerSeriesSubring`.
 
 None of the last three has an AINTLIB counterpart, for two different reasons. The two product
 statements have none because the source states restrictedness only for a single coefficient
@@ -497,6 +500,21 @@ theorem coe_restrictedMvPowerSeriesSubringLinearEquiv {k : ℕ} {A : Type*} [Com
     [TopologicalSpace A] [NonarchimedeanRing A] (f : restrictedMvPowerSeriesSubring k A) :
     ((restrictedMvPowerSeriesSubringLinearEquiv k A f : restrictedMvPowerSeriesSubmodule k A A) :
       MvPowerSeries (Fin k) A) = (f : MvPowerSeries (Fin k) A) := (rfl)
+
+/-- The scalar action on `A⟨T₁, …, Tₖ⟩` is coefficientwise multiplication.
+
+The subring carries an `Algebra A` instance, so `a • f` is `algebraMap a * f` rather than a
+pointwise action; this is the lemma that gets a consumer from one to the other. -/
+@[simp]
+theorem coeff_coe_smul_restrictedMvPowerSeriesSubring {k : ℕ} {A : Type*} [CommRing A]
+    [TopologicalSpace A] [NonarchimedeanRing A] (a : A)
+    (f : restrictedMvPowerSeriesSubring k A) (s : Fin k →₀ ℕ) :
+    (((a • f : restrictedMvPowerSeriesSubring k A) : MvPowerSeries (Fin k) A) :
+        (Fin k →₀ ℕ) → A) s =
+      a * (((f : MvPowerSeries (Fin k) A) : (Fin k →₀ ℕ) → A) s) := by
+  simp only [Algebra.smul_def, Subring.coe_mul, coe_algebraMap_restrictedMvPowerSeriesSubring,
+    ← MvPowerSeries.coeff_apply]
+  rw [← Algebra.smul_def, MvPowerSeries.coeff_smul]
 
 /-- Its inverse is likewise the identity on the underlying series. -/
 @[simp]
