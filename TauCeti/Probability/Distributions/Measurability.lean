@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.Analysis.SpecialFunctions.Gamma
+public import TauCeti.MeasureTheory.Measure.Measurability
 public import Mathlib.Probability.Distributions.Bernoulli
 public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Distributions.Binomial
@@ -35,9 +36,9 @@ the per-parameter measurability Mathlib already provides -- `Real.Gamma` and
 `ProbabilityTheory.beta` now vary too, which is why `Real.measurable_Gamma` is needed.
 
 The discrete families are weighted sums of Dirac measures, and are handled by the shared
-`measurable_sum_smul_dirac`, which evaluates such a measure on a set as a `tsum` of the weights.
-The binomial law is the finite such sum `ProbabilityTheory.binomial_eq_sum_dirac`, and is evaluated
-directly.
+`TauCeti.MeasureTheory.measurable_sum_smul_dirac`, which evaluates such a measure on a set as a
+`tsum` of the weights. The binomial law is the finite such sum
+`ProbabilityTheory.binomial_eq_sum_dirac`, and is evaluated directly.
 
 Three families are defined by a case split at a degenerate parameter — `gaussianReal μ 0` and
 `cauchyMeasure x₀ 0` are Dirac measures, `geometricMeasure 0` is `Measure.dirac 0` — and their
@@ -53,8 +54,6 @@ itself measurable.
   `measurable_binomial` — the discrete families;
 * `measurable_beta` — the Beta normalizing constant `ProbabilityTheory.beta`, needed on the way and
   of independent interest;
-* `measurable_sum_smul_dirac` — the shared bridge for weighted sums of Dirac measures.
-
 The parameter measurability of `uniformMeasure` is `TauCeti.Probability.measurable_uniformMeasure`,
 in `TauCeti/Probability/Distributions/Uniform.lean`, next to that family's other results.
 
@@ -189,27 +188,13 @@ theorem measurable_cauchyMeasure : Measurable fun p : ℝ × ℝ≥0 => cauchyMe
 
 /-! ### The discrete families -/
 
-/-- A countable mixture of Dirac measures at fixed atoms `g i` is measurable in the weights.
-
-This is the discrete counterpart of `MeasureTheory.measurable_withDensity`: evaluating on a
-measurable set turns the measure into the sum `∑' i, f b i * 1_{g i ∈ s}`, and a `tsum` of
-measurable functions is measurable. The atoms are indexed by a countable type of their own, so the
-ambient space `α` may be uncountable. -/
-theorem measurable_sum_smul_dirac {β ι α : Type*} [MeasurableSpace β] [MeasurableSpace α]
-    [Countable ι] {f : β → ι → ℝ≥0∞} {g : ι → α}
-    (hf : ∀ i, Measurable fun b => f b i) :
-    Measurable fun b => Measure.sum fun i => f b i • Measure.dirac (g i) := by
-  refine Measure.measurable_measure.2 fun s hs => ?_
-  simp only [Measure.sum_apply _ hs, Measure.smul_apply, smul_eq_mul, Measure.dirac_apply' _ hs]
-  exact Measurable.tsum fun i => (hf i).mul_const _
-
 /-- **The Poisson family is measurable in its rate.**
 
 The roadmap's Layer 4 composes this with `Real.toNNReal` to build the Gamma-mixed Poisson kernel. -/
 @[fun_prop]
 theorem measurable_poissonMeasure : Measurable fun r : ℝ≥0 => poissonMeasure r := by
   simp only [poissonMeasure]
-  exact measurable_sum_smul_dirac fun n => by fun_prop
+  exact TauCeti.MeasureTheory.measurable_sum_smul_dirac fun n => by fun_prop
 
 /-- **The geometric family is measurable in its success probability.**
 
@@ -218,7 +203,8 @@ measurable set `{p | p ≠ 0}` of the unit interval. -/
 @[fun_prop]
 theorem measurable_geometricMeasure : Measurable fun p : unitInterval => geometricMeasure p := by
   simp only [geometricMeasure]
-  refine Measurable.ite ?_ (measurable_sum_smul_dirac fun n => by fun_prop) measurable_const
+  refine Measurable.ite ?_ (TauCeti.MeasureTheory.measurable_sum_smul_dirac fun n => by fun_prop)
+    measurable_const
   exact (measurableSet_singleton (0 : unitInterval)).compl
 
 /-- **The Bernoulli family is measurable in its success probability.** -/
