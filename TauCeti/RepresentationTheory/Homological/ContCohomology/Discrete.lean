@@ -92,56 +92,52 @@ section Kernel
 
 variable (G : Type u) [Group G] (M : Type v) [MulAction G M]
 
-/-- The kernel of a group action, regarded as a subgroup of the acting group. -/
-abbrev actionKernel : Subgroup G := (MulAction.toPermHom G M).ker
-
-/-- Membership in the action kernel means fixing every element. -/
-theorem mem_actionKernel_iff {g : G} :
-    g ∈ actionKernel G M ↔ ∀ m : M, g • m = m := by
-  simp only [actionKernel, MonoidHom.mem_ker, Equiv.ext_iff, MulAction.toPermHom_apply,
-    MulAction.toPerm_apply, Equiv.Perm.one_apply]
-
 /-- The action kernel is the intersection of all point stabilizers. -/
-theorem actionKernel_eq_iInf_stabilizer :
-    actionKernel G M = ⨅ m : M, MulAction.stabilizer G m := by
+theorem toPermHom_ker_eq_iInf_stabilizer :
+    (MulAction.toPermHom G M).ker = ⨅ m : M, MulAction.stabilizer G m := by
   ext g
-  simp only [mem_actionKernel_iff, Subgroup.mem_iInf, MulAction.mem_stabilizer_iff]
+  simp only [MonoidHom.mem_ker, Equiv.ext_iff, MulAction.toPermHom_apply,
+    MulAction.toPerm_apply, Equiv.Perm.one_apply, Subgroup.mem_iInf,
+    MulAction.mem_stabilizer_iff]
 
 /-- The action kernel is the whole group exactly when the action is trivial. -/
-theorem actionKernel_eq_top_iff :
-    actionKernel G M = ⊤ ↔ ∀ (g : G) (m : M), g • m = m := by
+@[simp]
+theorem toPermHom_ker_eq_top_iff :
+    (MulAction.toPermHom G M).ker = ⊤ ↔ ∀ (g : G) (m : M), g • m = m := by
   constructor
   · intro h g m
-    apply (mem_actionKernel_iff G M).mp
-    rw [h]
-    exact Subgroup.mem_top g
+    have hg : g ∈ (MulAction.toPermHom G M).ker := by rw [h]; exact Subgroup.mem_top g
+    exact Equiv.congr_fun (MonoidHom.mem_ker.mp hg) m
   · intro h
     rw [eq_top_iff]
     intro g _
-    exact (mem_actionKernel_iff G M).mpr (h g)
+    rw [MonoidHom.mem_ker, Equiv.ext_iff]
+    exact h g
 
 /-- An action on a finite space factors through a finite quotient. -/
-theorem finite_quotient_actionKernel [Finite M] : Finite (G ⧸ actionKernel G M) := by
+theorem finite_quotient_toPermHom_ker [Finite M] :
+    Finite (G ⧸ (MulAction.toPermHom G M).ker) := by
   exact Finite.of_equiv (MulAction.toPermHom G M).range
     (QuotientGroup.quotientKerEquivRange (MulAction.toPermHom G M)).symm.toEquiv
 
 variable [TopologicalSpace G] [TopologicalSpace M] [DiscreteTopology M] [ContinuousSMul G M]
 
 /-- The kernel of a continuous action on a finite discrete space is open. -/
-theorem actionKernel_isOpen [Finite M] : IsOpen (actionKernel G M : Set G) := by
-  rw [actionKernel_eq_iInf_stabilizer, Subgroup.coe_iInf]
+theorem isOpen_toPermHom_ker [Finite M] :
+    IsOpen ((MulAction.toPermHom G M).ker : Set G) := by
+  rw [toPermHom_ker_eq_iInf_stabilizer, Subgroup.coe_iInf]
   exact isOpen_iInter_of_finite fun m ↦ stabilizer_isOpen G m
 
 /-- The open normal subgroup given by the kernel of a finite discrete action. -/
 def openActionKernel [Finite M] : OpenNormalSubgroup G where
   toOpenSubgroup :=
-    { toSubgroup := actionKernel G M
-      isOpen' := actionKernel_isOpen G M }
+    { toSubgroup := (MulAction.toPermHom G M).ker
+      isOpen' := isOpen_toPermHom_ker G M }
   isNormal' := (MulAction.toPermHom G M).normal_ker
 
 @[simp]
 theorem openActionKernel_toSubgroup [Finite M] :
-    (openActionKernel G M).toSubgroup = actionKernel G M := by
+    (openActionKernel G M).toSubgroup = (MulAction.toPermHom G M).ker := by
   ext
   simp only [openActionKernel]
 
@@ -149,8 +145,9 @@ theorem openActionKernel_toSubgroup [Finite M] :
 taken to be the kernel of the action. -/
 @[simp]
 theorem openActionKernel_smul_eq_self [Finite M] (g : openActionKernel G M) (m : M) :
-    (g : G) • m = m :=
-  (mem_actionKernel_iff G M).mp g.2 m
+    (g : G) • m = m := by
+  have hg := MonoidHom.mem_ker.mp g.2
+  exact Equiv.congr_fun hg m
 
 end Kernel
 
@@ -162,6 +159,7 @@ variable (G : Type u) [Group G] [TopologicalSpace G]
 
 /-- The fixed points of the action kernel on a finite discrete module are the whole module. This
 is the levelwise stabilization of the invariant coefficient system. -/
+@[simp]
 theorem fixedPoints_openActionKernel_eq_top :
     FixedPoints.addSubgroup (openActionKernel G M).toSubgroup M = ⊤ := by
   rw [eq_top_iff]
