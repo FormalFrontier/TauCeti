@@ -11,7 +11,6 @@ public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Distributions.Pareto
 public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.Probability.Distributions.Cauchy
-public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 
 /-!
 # `HasPDF` instances for Mathlib's continuous families
@@ -44,7 +43,8 @@ continuity is all these bridges need.
 ## Main results
 
 * `hasPDF_of_hasLaw_gammaMeasure` and its five siblings, each paired with a `pdf_..._eq`
-  a.e.-identification and an `rnDeriv_...` identification. The two shared bridges they are built
+  a.e.-identification. Five of the six also get an `rnDeriv_...` identification here; the Gaussian
+  one is Mathlib's `ProbabilityTheory.rnDeriv_gaussianReal`. The two shared bridges they are built
   from are in `TauCeti.Probability.Density`.
 
 Three `ℝ≥0∞`-valued measurability lemmas (`measurable_gammaPDF`, `measurable_betaPDF`,
@@ -195,20 +195,21 @@ measurable above.
 states exactly this, for both positive and zero variance, so callers should use it directly; adding
 a Tau Ceti name for it would be a wrapper around an existing theorem rather than a contribution.
 
-The Cauchy law needs both branches stated separately, because at zero scale it is a Dirac measure —
-**singular** with respect to `volume`, so its derivative vanishes almost everywhere rather than
-being a density. That is a different statement, not a degenerate case of the same one. -/
+The Cauchy law needs no nondegeneracy hypothesis. At zero scale it is a Dirac measure, singular with
+respect to `volume`, so the derivative vanishes almost everywhere — and `cauchyPDF x₀ 0` vanishes
+too, so a single statement covers every scale. `rnDeriv_cauchyMeasure_zero` records the boundary as
+a specialization of it. -/
 
 /-- The Radon–Nikodym derivative of a Gamma law is `gammaPDF`. -/
 theorem rnDeriv_gammaMeasure (a r : ℝ) :
     (gammaMeasure a r).rnDeriv volume =ᵐ[volume] gammaPDF a r := by
-  rw [show gammaMeasure a r = volume.withDensity (gammaPDF a r) from rfl]
+  unfold gammaMeasure
   exact Measure.rnDeriv_withDensity volume (measurable_gammaPDF a r)
 
 /-- The Radon–Nikodym derivative of a Beta law is `betaPDF`. -/
 theorem rnDeriv_betaMeasure (α β : ℝ) :
     (betaMeasure α β).rnDeriv volume =ᵐ[volume] betaPDF α β := by
-  rw [show betaMeasure α β = volume.withDensity (betaPDF α β) from rfl]
+  unfold betaMeasure
   exact Measure.rnDeriv_withDensity volume (measurable_betaPDF α β)
 
 /-- The Radon–Nikodym derivative of an exponential law is `exponentialPDF`, which is `gammaPDF 1`
@@ -216,7 +217,7 @@ by definition. -/
 theorem rnDeriv_expMeasure (r : ℝ) :
     (expMeasure r).rnDeriv volume =ᵐ[volume] exponentialPDF r := by
   have h : (expMeasure r).rnDeriv volume =ᵐ[volume] gammaPDF 1 r := by
-    rw [show expMeasure r = volume.withDensity (gammaPDF 1 r) from rfl]
+    unfold expMeasure gammaMeasure
     exact Measure.rnDeriv_withDensity volume (measurable_gammaPDF 1 r)
   unfold exponentialPDF exponentialPDFReal
   exact h
@@ -224,22 +225,34 @@ theorem rnDeriv_expMeasure (r : ℝ) :
 /-- The Radon–Nikodym derivative of a Pareto law is `paretoPDF`. -/
 theorem rnDeriv_paretoMeasure (t r : ℝ) :
     (paretoMeasure t r).rnDeriv volume =ᵐ[volume] paretoPDF t r := by
-  rw [show paretoMeasure t r = volume.withDensity (paretoPDF t r) from rfl]
+  unfold paretoMeasure
   exact Measure.rnDeriv_withDensity volume (measurable_paretoPDF t r)
 
-/-- The Radon–Nikodym derivative of a nondegenerate Cauchy law is `cauchyPDF`. -/
-theorem rnDeriv_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0) :
-    (cauchyMeasure x₀ γ).rnDeriv volume =ᵐ[volume] cauchyPDF x₀ γ := by
-  rw [cauchyMeasure_of_scale_ne_zero _ hγ]
-  exact Measure.rnDeriv_withDensity volume (measurable_cauchyPDF x₀ γ)
+/-- At zero scale the Cauchy density vanishes identically. -/
+theorem cauchyPDF_zero_scale (x₀ : ℝ) : cauchyPDF x₀ 0 = 0 := by
+  funext x
+  simp [cauchyPDF, cauchyPDFReal]
 
-/-- **The singular boundary.** At zero scale the Cauchy law is `Measure.dirac x₀`, which is singular
-with respect to `volume`, so its Radon–Nikodym derivative vanishes almost everywhere. -/
+/-- The Radon–Nikodym derivative of a Cauchy law is `cauchyPDF`, at **every** scale.
+
+No nondegeneracy hypothesis is needed. At zero scale the law is `Measure.dirac x₀`, singular with
+respect to `volume`, so the derivative vanishes almost everywhere — and `cauchyPDF x₀ 0` vanishes
+too, so the same equation holds. -/
+theorem rnDeriv_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) :
+    (cauchyMeasure x₀ γ).rnDeriv volume =ᵐ[volume] cauchyPDF x₀ γ := by
+  by_cases hγ : γ = 0
+  · subst hγ
+    rw [show cauchyMeasure x₀ 0 = Measure.dirac x₀ from by simp [cauchyMeasure],
+      cauchyPDF_zero_scale]
+    exact Measure.rnDeriv_eq_zero_of_mutuallySingular (mutuallySingular_dirac x₀ volume)
+      Measure.AbsolutelyContinuous.rfl
+  · rw [cauchyMeasure_of_scale_ne_zero _ hγ]
+    exact Measure.rnDeriv_withDensity volume (measurable_cauchyPDF x₀ γ)
+
+/-- **The singular boundary**, as a specialization: at zero scale the derivative vanishes a.e. -/
 theorem rnDeriv_cauchyMeasure_zero (x₀ : ℝ) :
     (cauchyMeasure x₀ 0).rnDeriv volume =ᵐ[volume] 0 := by
-  rw [show cauchyMeasure x₀ 0 = Measure.dirac x₀ from by simp [cauchyMeasure]]
-  exact Measure.rnDeriv_eq_zero_of_mutuallySingular (mutuallySingular_dirac x₀ volume)
-    Measure.AbsolutelyContinuous.rfl
+  simpa [cauchyPDF_zero_scale] using rnDeriv_cauchyMeasure x₀ 0
 
 end Probability
 
