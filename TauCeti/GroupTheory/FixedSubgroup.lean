@@ -27,6 +27,8 @@ endomorphism of it, so it is available before any ambient group has been constru
 * `TauCeti.fixedSubgroup_eq_top_iff`: only the identity fixes every point.
 * `TauCeti.fixedSubgroup_le_fixedSubgroup_pow`: a point fixed by an endomorphism is fixed by each of
   its powers.
+* `TauCeti.map_fixedSubgroup_le`: a homomorphism intertwining two endomorphisms carries the points
+  fixed by the one to the points fixed by the other.
 
 ## References
 
@@ -74,5 +76,15 @@ Frobenius. -/
 theorem fixedSubgroup_le_fixedSubgroup_pow (F : Monoid.End G) (n : ℕ) :
     fixedSubgroup (F : G →* G) ≤ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) :=
   mem_fixedSubgroup_pow_of_mem F n
+
+variable {G' : Type*} [Group G']
+
+/-- A homomorphism intertwining two endomorphisms carries the points fixed by the one to the points
+fixed by the other. -/
+theorem map_fixedSubgroup_le {F : G →* G} {F' : G' →* G'} (ψ : G →* G')
+    (hψ : ψ.comp F = F'.comp ψ) : (fixedSubgroup F).map ψ ≤ fixedSubgroup F' := by
+  rintro _ ⟨x, hx, rfl⟩
+  rw [mem_fixedSubgroup, ← MonoidHom.comp_apply, ← hψ, MonoidHom.comp_apply,
+    mem_fixedSubgroup.mp hx]
 
 end TauCeti

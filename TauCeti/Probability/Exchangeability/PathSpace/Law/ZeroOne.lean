@@ -8,7 +8,7 @@ module
 public import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
 public import TauCeti.Probability.DeFinetti.BlockFactorization
 public import TauCeti.Probability.Exchangeability.MixedIID.Mixture
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
 
 /-!

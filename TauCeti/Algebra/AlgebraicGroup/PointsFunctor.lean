@@ -115,6 +115,14 @@ lemma pointsFunctor_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     (pointsFunctor (H := H)).map φ = mapPoints (H := H) φ :=
   rfl
 
+/-- The map of `pointsFunctor`, transported along its concrete object presentations, is the
+corresponding map on points. -/
+lemma pointsFunctor_map_eqToHom {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    eqToHom (pointsFunctor_obj (H := H) A).symm ≫
+        (pointsFunctor (H := H)).map φ =
+      mapPoints (H := H) φ ≫ eqToHom (pointsFunctor_obj (H := H) B).symm :=
+  rfl
+
 /-- The pointwise value of the image of an `A`-point under `pointsFunctor.map φ`. -/
 @[simp]
 lemma pointsFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (φ : A ⟶ B)

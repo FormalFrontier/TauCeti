@@ -23,6 +23,7 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 
 * `NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
 * `NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
+* `NumberField.gen_sq`: the integral generator squares to the radicand in `𝓞 K`.
 * `NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
 * `NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
 * `NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
@@ -62,16 +63,20 @@ theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
     minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
 
 omit [NumberField K] in
+/-- The integral generator squares to the radicand: `θ² = d` in `𝓞 K`. -/
+@[simp] theorem gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
+  have hae := minpoly.aeval ℤ θ
+  rw [hmin] at hae
+  have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
+    simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
+  linear_combination h2
+
+omit [NumberField K] in
 /-- The generator squares to the radicand in `K`: `θ² = d`. -/
 @[simp] theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℤ K d := by
-  have h : θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
-    have hae := minpoly.aeval ℤ θ
-    rw [hmin] at hae
-    have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
-      simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
-    linear_combination h2
-  have := congrArg (algebraMap (𝓞 K) K) h
+  have := congrArg (algebraMap (𝓞 K) K) (gen_sq hmin)
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
 omit [NumberField K] in
