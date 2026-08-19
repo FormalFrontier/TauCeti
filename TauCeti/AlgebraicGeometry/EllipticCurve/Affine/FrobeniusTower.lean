@@ -84,7 +84,7 @@ public section
 open Polynomial WeierstrassCurve IntermediateField
 
 open scoped RatFunc
- 
+
 namespace WeierstrassCurve.Affine
 
 variable {K : Type*} [Field K] (W : WeierstrassCurve.Affine K)
