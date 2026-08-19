@@ -61,6 +61,8 @@ jobs:
           python3 scripts/test_elan_pin.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
+          python3 scripts/test_release_commit.py
+          python3 scripts/test_cache_publish_block.py
 
       # The two-library split is build convenience, not a trust boundary.
       # This guard is what actually stops the AI-owned library from inheriting

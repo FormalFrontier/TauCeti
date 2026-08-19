@@ -1,0 +1,725 @@
+name: Release tag
+
+# Build one commit from source, publish its oleans, and tag it as Tau Ceti at a Lean
+# release. Dispatched per release; `scripts/toolchain_tags.py --audit` is what says
+# which commit belongs to which release, and this workflow is what makes it true.
+#
+# Why this is not part of ci.yml. That workflow triggers only on a push to main, so a
+# pull request editing it is never exercised by its own CI: the first execution of any
+# change to it is in production, as the sole cache publisher holding the write key. It
+# also carries `concurrency: main-ci-cache-publisher` at workflow level, so a release
+# run placed in it would stall the post-merge publisher for the length of a release
+# build. The staging and staged-tree blocks below are copied from it verbatim instead,
+# the way pr-build.yml copies the pinned installers, with scripts/test_cache_publish_block.py
+# preventing drift.
+#
+# The job split IS the trust boundary, exactly as in ci.yml:
+#
+#   resolve   Runs no repository Lean code. Establishes that the target is a main
+#             commit, or one pin-only commit off a main ancestor, and that it names the
+#             release it claims to. Runs main's copy of the checker, never the target's.
+#   build     Elaborates every module unsandboxed, so everything it reports is
+#             attacker-chosen. Holds no secret and no token.
+#   publish   The only holder of LAKE_CACHE_KEY. No workspace, no dependencies, and it
+#             takes the revision from `resolve`, never from `build`: otherwise code in
+#             the target could publish its artifacts under main's revision key and every
+#             pr-build consumer would restore them.
+#   tag       The only holder of the App key. No checkout. Never moves a tag.
+#
+# The `github.ref` conditions below are usability guards, not enforcement: a branch's
+# own copy of this file could delete them. Enforcement is the `lake-cache-publish` and
+# `release-tags` environments, whose deployment branch policy GitHub applies to
+# `github.ref` before either job can read a secret.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Lean release to tag, e.g. v4.33.0 (must match mathlib's tag name)"
+        required: true
+        type: string
+      sha:
+        description: "40-hex commit to build, publish and tag"
+        required: true
+        type: string
+      exact:
+        description: "The commit pins mathlib's release tag exactly (leave on unless the audit says otherwise)"
+        required: false
+        default: true
+        type: boolean
+      allow_mathlib_rebuild:
+        description: "Proceed even when mathlib published no cache for this release (adds hours)"
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      release: { required: true, type: string }
+      sha: { required: true, type: string }
+      exact: { required: false, type: boolean, default: true }
+      allow_mathlib_rebuild: { required: false, type: boolean, default: false }
+    secrets:
+      APP_ID: { required: false }
+      APP_PRIVATE_KEY: { required: false }
+      ZULIP_API_KEY: { required: false }
+      ZULIP_EMAIL: { required: false }
+
+permissions:
+  contents: read
+
+# Deduplicates a double dispatch of the same target, and nothing else. Deliberately NOT
+# `main-ci-cache-publisher`: that group keeps one running and one pending run and cancels
+# the rest, which would silently drop most of a backfill, and joining it would block main's
+# post-merge publisher for the length of a release build.
+concurrency:
+  group: release-tag-${{ inputs.release }}-${{ inputs.sha }}
+  cancel-in-progress: false
+
+jobs:
+  # Trusted: runs main's copy of the checker and no code from the target. This is what
+  # licenses the unsandboxed build below.
+  resolve:
+    if: ${{ github.repository == 'TauCetiProject/TauCeti' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      sha: ${{ steps.check.outputs.sha }}
+      release: ${{ steps.check.outputs.release }}
+      toolchain: ${{ steps.check.outputs.toolchain }}
+      mathlib-rev: ${{ steps.check.outputs.mathlib-rev }}
+      kind: ${{ steps.check.outputs.kind }}
+      exact: ${{ steps.check.outputs.exact }}
+    steps:
+      # main's copy, sparse to scripts/, and never the target's tree: the target must not
+      # be placed on disk in a job whose output the publisher trusts.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: scripts
+          persist-credentials: false
+
+      - name: Validate the target and its release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          # Through the environment, never interpolated into the script body: both are
+          # dispatcher-chosen strings that become an API path and a command-line argument.
+          RELEASE: ${{ inputs.release }}
+          SHA: ${{ inputs.sha }}
+          EXACT: ${{ inputs.exact && 'true' || 'false' }}
+        run: bash scripts/check-release-commit.sh "$RELEASE" "$SHA" "$EXACT"
+
+  # Untrusted by construction: elaborates every module, and Lean runs code at elaboration
+  # time. No secret, no token, and nothing it reports is believed downstream.
+  build:
+    needs: resolve
+    if: ${{ github.repository == 'TauCetiProject/TauCeti' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    # The from-source build of main took about 49 minutes as ci.yml's Build step before
+    # the cache landed. Generous headroom for an older, smaller tree, still bounded.
+    timeout-minutes: 300
+    outputs:
+      staged: ${{ steps.stage.outputs.staged }}
+      reported-toolchain: ${{ steps.stage.outputs.toolchain }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          # This job elaborates every module and Lean runs code at elaboration time; an
+          # http.extraheader carrying GITHUB_TOKEN would be within its reach.
+          persist-credentials: false
+          fetch-depth: 1
+
+      # No `restore-mathlib-ltars` here, deliberately. `uses: ./...` resolves the action
+      # from the checked-out tree, and that composite action landed on 2026-08-14, so it is
+      # absent from every commit older than that: a release build of v4.31.0 would fail
+      # before it started. It would also miss on any older pin, being keyed by the toolchain
+      # and manifest hashes, and writing its snapshot back would put an old pin into main's
+      # shared namespace. `lake exe cache get` below is the authoritative fetch regardless.
+
+      - name: Install elan (pinned + checksum) and the toolchain
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
+        run: |
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.elan/bin:$PATH"
+          elan toolchain install "$(cat lean-toolchain)"
+          lean --version
+          lake --version
+
+      - name: Fetch Mathlib oleans, retrying with a forced full refetch
+        run: |
+          set -o pipefail
+          if ! lake exe cache get 2>&1 | tee "$RUNNER_TEMP/cache-get.log"; then
+            echo "::warning::lake exe cache get failed; forcing a full refetch"
+            lake exe cache get! 2>&1 | tee "$RUNNER_TEMP/cache-get.log"
+          fi
+
+      # Mathlib publishes its cache only from a push to master, and a toolchain bump
+      # invalidates every module hash, so a tag mathlib cut on its `stable` branch has no
+      # cache at all and this build would compile mathlib from scratch. Detect that in about
+      # ninety seconds rather than after hours, and fail closed if the log is unreadable.
+      - name: Require a complete Mathlib cache before starting a long build
+        env:
+          ALLOW_REBUILD: ${{ inputs.allow_mathlib_rebuild && 'true' || 'false' }}
+          M: ${{ needs.resolve.outputs.mathlib-rev }}
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/cache-get.log"
+          if [ ! -r "$log" ]; then
+            echo "::error::$log is missing, so cache completeness cannot be established"
+            exit 1
+          fi
+          if grep -qF 'some files were not found in the cache' "$log"; then
+            if [ "$ALLOW_REBUILD" = "true" ]; then
+              echo "::warning::mathlib's cache is incomplete at $M; compiling it from source"
+            else
+              echo "::error::mathlib published no complete olean cache at $M, so this build would compile mathlib from scratch. Note that publishing Tau Ceti's own oleans does NOT fix this for consumers of the tag: they fetch mathlib's from mathlib. Re-dispatch with allow_mathlib_rebuild if a tag is wanted anyway."
+              exit 1
+            fi
+          fi
+
+      # nightly-verify.yml's recipe. LAKE_RESTORE_ARTIFACTS=false plus a workspace-local
+      # LAKE_CACHE_DIR that is never fetched into are what make this from scratch;
+      # LAKE_ARTIFACT_CACHE stays true only so the build packs its own outputs locally,
+      # which is exactly what leaves $LAKE_CACHE_DIR populated for `lake cache stage`.
+      # Tau Ceti's own oleans are never restored here, by design: the point of a release
+      # build is that nothing is taken on faith from the cache it is about to fill.
+      - name: Build the release commit from source, with no cached artifacts
+        env:
+          LAKE_ARTIFACT_CACHE: "true"
+          LAKE_RESTORE_ARTIFACTS: "false"
+          LAKE_NO_CACHE: "true"
+          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
+        run: lake build
+
+      # The audits and lints THIS commit defines, discovered rather than hardcoded. A
+      # release is judged by its own contemporaneous checks, and it has to be: the module
+      # system audit arrived in June, lint-style.sh in August, so a fixed list taken from
+      # today's main would fail on every older release for want of a file. Each is announced
+      # so the log says plainly what ran and what the commit simply did not have, and the
+      # step fails on the first real failure.
+      - name: Run the audits and lints this commit defines
+        env:
+          LAKE_ARTIFACT_CACHE: "true"
+          LAKE_RESTORE_ARTIFACTS: "false"
+          LAKE_NO_CACHE: "true"
+          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
+        run: |
+          set -euo pipefail
+          ran=0
+          for exe in axioms module-system; do
+            if grep -Eq "^[[:space:]]*name[[:space:]]*=[[:space:]]*\"$exe\"" lakefile.toml; then
+              echo "::group::lake exe $exe"
+              lake exe "$exe"
+              echo "::endgroup::"
+              ran=$((ran + 1))
+            else
+              echo "::notice::this commit declares no '$exe' executable; skipping that audit"
+            fi
+          done
+          for script in scripts/lint-env.sh scripts/lint-style.sh; do
+            if [ -f "$script" ]; then
+              echo "::group::$script"
+              bash "$script"
+              echo "::endgroup::"
+              ran=$((ran + 1))
+            else
+              echo "::notice::this commit has no $script; skipping that lint"
+            fi
+          done
+          # A commit with no checks at all would make this job assert nothing beyond "it
+          # compiles", which is not what a release tag should mean.
+          [ "$ran" -gt 0 ] || { echo "::error::this commit defines no audits or lints at all"; exit 1; }
+          echo "ran $ran audit(s) and lint(s)"
+
+      - name: Configure the Lake cache staging (no-op unless the S3 endpoints are set)
+        id: cachecfg
+        env:
+          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
+          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+        run: |
+          if [ -n "$S3_ARTIFACT_ENDPOINT" ] && [ -n "$S3_REVISION_ENDPOINT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lake cache upload configured; staging the release's oleans"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lake cache upload not configured, skipping"
+          fi
+
+      - name: Stage TauCeti's oleans for the publish job
+        id: stage
+        if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
+        env:
+          # Restated at step level, and the same values the restore step sets job-wide when the
+          # public endpoints are configured, so staging works either way: with the restore on,
+          # the health-check build already packed these artifacts; with it off, the pack below
+          # is what puts them in the cache directory for `lake cache stage` to find.
+          LAKE_ARTIFACT_CACHE: "true"
+          LAKE_RESTORE_ARTIFACTS: "true"
+          # Don't download during the packing build — we only want to PUT, not GET. (The
+          # S3 host needs SigV4 even for reads, so an anonymous GET here would 403 anyway.)
+          LAKE_NO_CACHE: "true"
+          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
+        run: |
+          # Pack the already-built oleans into the local Lake cache (no recompile, since the
+          # health-check build above left matching traces), emit the root-package
+          # input->output mappings, then copy exactly the artifacts those mappings name into
+          # a staging directory, alongside a copy of the mappings themselves. `lake cache
+          # stage` reads no credential and contacts no network.
+          lake build >/dev/null
+          lake build --no-build -o .lake/outputs.jsonl
+          echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
+          lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
+          # `lake cache put-staged` does not configure the workspace, which is precisely what
+          # keeps project code out of the publish job, so it cannot derive the toolchain and
+          # platform halves of the upload scope. The publish job supplies them from the pin
+          # instead, which is right only while the package config keeps the two assumptions
+          # below. Check them here, where the workspace does exist: `platformIndependent` is
+          # what makes Lake leave the platform out of the scope (put-staged's default), while
+          # `fixedToolchain` or `bootstrap` would make Lake leave the toolchain out of it (which
+          # put-staged is told to include). Either silent mismatch would publish under a scope
+          # pr-build's `lake cache get --service ... --repo` never reads, i.e. a cache never hit.
+          if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+            echo "::error::lakefile.toml no longer sets platformIndependent = true; publish-lake-cache must now pass --platform to lake cache put-staged"
+            exit 1
+          fi
+          if grep -Eq '^[[:space:]]*(fixedToolchain|bootstrap)[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+            echo "::error::lakefile.toml now sets fixedToolchain or bootstrap; Lake drops the toolchain from the scope for such a package, so publish-lake-cache must stop passing --toolchain"
+            exit 1
+          fi
+          # `lake env` reports the workspace's own view of the toolchain, which is exactly the
+          # `Env.toolchain` Lake scopes an upload by. The publish job does not take this on
+          # faith: it reads lean-toolchain itself and fails if the two disagree. Reporting it
+          # anyway turns a disagreement into a loud failure instead of a silent wrong scope.
+          TOOLCHAIN="$(lake env printenv ELAN_TOOLCHAIN || true)"
+          if [ -z "$TOOLCHAIN" ]; then
+            echo "::error::could not determine the Lean toolchain that scopes the cache upload"
+            exit 1
+          fi
+          printf 'toolchain=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+          echo "staged=true" >> "$GITHUB_OUTPUT"
+
+      # The artifact name carries the target, because a reusable workflow called from a
+      # matrix shares the CALLER's run and `upload-artifact@v4` names are immutable within
+      # one: a fixed name would 409 on the second release of a backfill, however sequential.
+      - name: Hand the staged oleans to the publish job
+        if: ${{ steps.stage.outputs.staged == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lake-cache-staging-${{ needs.resolve.outputs.release }}-${{ needs.resolve.outputs.sha }}
+          path: ${{ runner.temp }}/lake-cache-staging
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  # The only job that ever holds LAKE_CACHE_KEY. One file checked out, no workspace, no
+  # dependencies, no token scopes: `lake cache put-staged` is documented as not configuring
+  # the workspace and so not executing user code.
+  publish-lake-cache:
+    needs: [resolve, build]
+    if: ${{ github.repository == 'TauCetiProject/TauCeti' && github.ref == 'refs/heads/main'
+            && needs.build.outputs.staged == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: {}
+    # The deployment branch policy on this environment is the ENFORCEMENT that a run whose
+    # ref is a release branch cannot read the key, whatever that branch's copy of this file
+    # says. Required reviewers, if configured, sit on top of it.
+    environment: lake-cache-publish
+    env:
+      # The Lake that performs the UPLOAD, which is not the target's own. `lake cache
+      # put-staged` only grew `--rev` and `--service` in v4.34.0-rc1, so an older release's
+      # Lake cannot be told which revision to publish under or which endpoint to use. The
+      # target's toolchain is passed as data through `--toolchain` instead. Bumping this is
+      # safe while put-staged keeps those three options.
+      UPLOADER_TOOLCHAIN: leanprover/lean4:v4.34.0-rc1
+    steps:
+      # At the RESOLVED sha, not main's tip and not the build job's report: the pin that
+      # scopes the upload must be the one the release actually carries, and it must come
+      # from a job that ran no code.
+      - name: Check out the target's toolchain pin, and nothing else
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          sparse-checkout: lean-toolchain
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Download the staged oleans
+        uses: actions/download-artifact@v4
+        with:
+          name: lake-cache-staging-${{ needs.resolve.outputs.release }}-${{ needs.resolve.outputs.sha }}
+          path: ${{ runner.temp }}/lake-cache-staging
+
+      - name: Check the staged tree before pointing Lake at it
+        env:
+          STAGING: ${{ runner.temp }}/lake-cache-staging
+        run: |
+          # `lake cache put-staged` uploads `<staging dir>/<name>` for every artifact the
+          # mappings file names, and it parses a name as "<hash>.<everything after the first
+          # dot>" without checking that the join stays inside the staging directory. The job
+          # that produced this tree ran code that landed on main, so both the names and the
+          # tree are attacker-chosen: a name such as `0.art/../../../proc/self/environ` would
+          # otherwise have Lake read this job's environment, the key included, and PUT it
+          # into a publicly readable bucket. Artifact names are flat `<hash>.<ext>` files, so
+          # require exactly that, and require the tree to be a flat directory of regular files
+          # so no name can resolve through a symlink either.
+          if find "$STAGING" -mindepth 2 -print -quit | grep -q .; then
+            echo "::error::the staged tree is nested; expected a flat directory of artifacts"
+            exit 1
+          fi
+          if find "$STAGING" -mindepth 1 ! -type f -print -quit | grep -q .; then
+            echo "::error::the staged tree holds an entry that is not a regular file"
+            exit 1
+          fi
+          python3 - "$STAGING/outputs.jsonl" <<'PY'
+          import json, re, sys
+
+          # A Lake artifact name: a content hash, then dot-separated extension components.
+          NAME = re.compile(r"\A[0-9A-Za-z]+(\.[0-9A-Za-z]+)*\Z")
+
+          def check(value, lineno):
+              """Reject any string that is not a plain artifact name.
+
+              Lake reads artifact descriptors out of arbitrarily nested JSON, so recurse
+              over everything and hold every string to the same shape rather than trying
+              to predict which positions become file names.
+              """
+              if isinstance(value, str):
+                  if not NAME.match(value):
+                      sys.exit(f"::error::{path} line {lineno}: {value!r} is not a plain artifact name")
+              elif isinstance(value, list):
+                  for item in value:
+                      check(item, lineno)
+              elif isinstance(value, dict):
+                  for key, item in value.items():
+                      check(key, lineno)
+                      check(item, lineno)
+
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as handle:
+              for lineno, line in enumerate(handle, start=1):
+                  # The first line carries the map's schema version, not an artifact name.
+                  if lineno > 1:
+                      check(json.loads(line), lineno)
+          PY
+
+      - name: Install elan (pinned + checksum) and the uploading toolchain
+        id: toolchain
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
+          REPORTED: ${{ needs.build.outputs.reported-toolchain }}
+          EXPECTED: ${{ needs.resolve.outputs.toolchain }}
+          RELEASE: ${{ needs.resolve.outputs.release }}
+        run: |
+          set -euo pipefail
+          TOOLCHAIN="$(cat lean-toolchain)"
+          case "$TOOLCHAIN" in
+            leanprover/lean4:[A-Za-z0-9]*) ;;
+            *) echo "::error::lean-toolchain names '$TOOLCHAIN', which is not a leanprover/lean4 release"; exit 1 ;;
+          esac
+          # Three independent readings must agree: what resolve verified through the API,
+          # what this job's own checkout says, and what the build job reports. Only the
+          # first two are trusted; the third is checked so a disagreement is loud rather
+          # than a silent wrong scope.
+          if [ "$TOOLCHAIN" != "$EXPECTED" ]; then
+            echo "::error::resolve verified '$EXPECTED' but the checkout reads '$TOOLCHAIN'"; exit 1
+          fi
+          if [ "$TOOLCHAIN" != "leanprover/lean4:$RELEASE" ]; then
+            echo "::error::'$TOOLCHAIN' is not the toolchain for $RELEASE"; exit 1
+          fi
+          if [ "$TOOLCHAIN" != "$REPORTED" ]; then
+            echo "::error::the build job built with '$REPORTED' but the pin is '$TOOLCHAIN'"; exit 1
+          fi
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          # TWO toolchains, and conflating them is the trap. `lake cache put-staged` only
+          # grew --rev and --service in v4.34.0-rc1, so an older release's own Lake cannot
+          # be the uploader. The UPLOADER is a modern Lake, invoked explicitly; the TARGET's
+          # toolchain is data, passed only through --toolchain to scope the upload.
+          "$HOME/.elan/bin/elan" toolchain install "$UPLOADER_TOOLCHAIN"
+          printf 'target=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the staged oleans to the Lake cache
+        env:
+          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
+          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+          LAKE_CACHE_KEY_RAW: ${{ secrets.LAKE_CACHE_KEY }}
+          TARGET_TOOLCHAIN: ${{ steps.toolchain.outputs.target }}
+          STAGING: ${{ runner.temp }}/lake-cache-staging
+          # From `resolve`, never from `build`: code in the target must not be able to
+          # choose the revision key its artifacts are published under.
+          REV: ${{ needs.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # Unlike ci.yml, a missing key FAILS here. That workflow stays green in an
+          # unconfigured repository because a post-merge health check should; here it would
+          # let the tag job publish a tag with nothing behind it.
+          if [ -z "$LAKE_CACHE_KEY_RAW" ]; then
+            echo "::error::the LAKE_CACHE_KEY secret is not set; a release cannot be tagged without a published cache"
+            exit 1
+          fi
+          case "$REV" in
+            [0-9a-f]*) ;;
+            *) echo "::error::the revision '$REV' is not a commit id"; exit 1 ;;
+          esac
+          KEY="$LAKE_CACHE_KEY_RAW"
+          KEY="${KEY%"${KEY##*[![:space:]]}"}"
+          echo "::add-mask::$KEY"; export LAKE_CACHE_KEY="$KEY"
+          CFG="$RUNNER_TEMP/lake-cache.toml"
+          cat > "$CFG" <<TOML
+          cache.defaultUploadService = "tauceti-r2"
+          [[cache.service]]
+          name = "tauceti-r2"
+          kind = "s3"
+          artifactEndpoint = "$S3_ARTIFACT_ENDPOINT"
+          revisionEndpoint = "$S3_REVISION_ENDPOINT"
+          TOML
+          export LAKE_CONFIG="$CFG"
+          elan run "$UPLOADER_TOOLCHAIN" lake cache put-staged "$STAGING" --service tauceti-r2 \
+            --repo TauCetiProject/TauCeti --rev "$REV" --toolchain "$TARGET_TOOLCHAIN"
+
+      # A published tag claims a complete cache, so read it back before anything claims it.
+      # This also catches a partial upload, which `put-staged` alone would not report.
+      # A published tag claims a complete cache, so read it back before anything claims it.
+      # This also catches a partial upload, which `put-staged` alone does not report.
+      #
+      # The two object layouts are not the same shape and neither is guessed here: the
+      # revision mapping is `revisions/<repo>/tc/<toolchain>/<rev>.jsonl`, its first line is a
+      # schema stamp and every later line is `["<input hash>", "<hash>.<kind>"]`, while the
+      # artifact itself is `artifacts/<repo>/<hash>.art`. So the name in the mapping is not a
+      # URL: the hash is what it shares with the object.
+      - name: Read the published cache back before anything is tagged
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+          TARGET_TOOLCHAIN: ${{ steps.toolchain.outputs.target }}
+          REV: ${{ needs.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PUBLIC_ARTIFACT_ENDPOINT" ] || [ -z "$PUBLIC_REVISION_ENDPOINT" ]; then
+            echo "::error::the public read endpoints are not configured, so the publish cannot be verified"
+            exit 1
+          fi
+          # The scope segment Lake writes: `/` becomes `--` and `:` becomes `---`.
+          scope="${TARGET_TOOLCHAIN//\//--}"
+          scope="${scope//:/---}"
+          url="$PUBLIC_REVISION_ENDPOINT/TauCetiProject/TauCeti/tc/$scope/$REV.jsonl"
+          echo "reading back $url"
+          curl -fsS "$url" -o "$RUNNER_TEMP/revision.jsonl" \
+            || { echo "::error::no revision mapping was published at $url"; exit 1; }
+          entries="$(wc -l < "$RUNNER_TEMP/revision.jsonl")"
+          echo "revision mapping entries: $entries"
+          [ "$entries" -gt 1 ] || { echo "::error::the published mapping is empty"; exit 1; }
+          python3 - "$RUNNER_TEMP/revision.jsonl" > "$RUNNER_TEMP/hashes" <<'PY'
+          import json, re, sys
+
+          # Line 1 is the schema stamp. On every later line the entry carrying a dot is the
+          # artifact name; the other is the input hash, which addresses nothing.
+          hashes = []
+          for lineno, line in enumerate(open(sys.argv[1]), 1):
+              if lineno == 1 or not line.strip():
+                  continue
+              entry = json.loads(line)
+              values = entry.values() if isinstance(entry, dict) else entry
+              for value in values:
+                  if isinstance(value, str) and "." in value:
+                      head = value.split(".", 1)[0]
+                      if re.fullmatch(r"[0-9A-Za-z]+", head):
+                          hashes.append(head)
+          print("\n".join(dict.fromkeys(hashes)))
+          PY
+          found="$(wc -l < "$RUNNER_TEMP/hashes")"
+          [ "$found" -gt 0 ] || { echo "::error::the mapping names no artifacts"; exit 1; }
+          echo "distinct artifacts named: $found"
+          # Spot-check rather than fetch every one: a wholesale failure shows up in the first
+          # few, the objects are immutable once written, and this job is on the path to a tag.
+          checked=0
+          while read -r h; do
+            [ -n "$h" ] || continue
+            curl -fsS -o /dev/null "$PUBLIC_ARTIFACT_ENDPOINT/TauCetiProject/TauCeti/$h.art" \
+              || { echo "::error::the mapping names $h but $h.art is not served"; exit 1; }
+            checked=$((checked + 1))
+            [ "$checked" -ge 10 ] && break
+          done < "$RUNNER_TEMP/hashes"
+          echo "verified $checked of $found published artifacts"
+
+  # The only holder of the App key: its own job, no checkout, and the tag created through
+  # the API rather than `git push`, so the credential never shares a machine with a tree.
+  tag:
+    # `resolve` is listed even though publish-lake-cache already depends on it: the `needs`
+    # context contains DIRECT dependencies only, so `needs.resolve.outputs` would be empty.
+    needs: [resolve, build, publish-lake-cache]
+    if: ${{ github.repository == 'TauCetiProject/TauCeti' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    environment: release-tags
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-contents: write
+
+      - name: Create the annotated tag, and never move an existing one
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          RELEASE: ${{ needs.resolve.outputs.release }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+          M: ${{ needs.resolve.outputs.mathlib-rev }}
+          TOOLCHAIN: ${{ needs.resolve.outputs.toolchain }}
+          KIND: ${{ needs.resolve.outputs.kind }}
+          EXACT: ${{ needs.resolve.outputs.exact }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # Idempotent by refusal. Re-dispatching a release is the normal recovery path, so
+          # an existing tag on the same commit is a notice; a tag pointing elsewhere is an
+          # error, because a published tag that changes meaning is worse than a missing one.
+          # `PATCH git/refs` with force appears nowhere in this job.
+          if existing="$(gh api "repos/$REPO/git/ref/tags/$RELEASE" \
+                          --jq '[.object.sha, .object.type] | @tsv' 2>/dev/null)"; then
+            obj="$(printf '%s' "$existing" | cut -f1)"
+            kind="$(printf '%s' "$existing" | cut -f2)"
+            if [ "$kind" = "tag" ]; then
+              obj="$(gh api "repos/$REPO/git/tags/$obj" --jq '.object.sha')"
+            fi
+            if [ "$obj" = "$SHA" ]; then
+              echo "::notice::$RELEASE already tags $SHA; nothing to do"
+              exit 0
+            fi
+            echo "::error::$RELEASE already points at $obj, not $SHA; a published tag is never moved"
+            exit 1
+          fi
+          if [ "$EXACT" = "true" ]; then
+            pin="yes"
+          else
+            pin="no, the pin is later than the release tag (see the audit)"
+          fi
+          MSG="$(printf '%s\n' \
+            "TauCeti $RELEASE" \
+            "" \
+            "Lean toolchain: $TOOLCHAIN" \
+            "Mathlib:        $M (leanprover-community/mathlib4 $RELEASE)" \
+            "Commit:         $SHA ($KIND)" \
+            "Exact pin:      $pin" \
+            "" \
+            "Built from source with the Lake artifact cache disabled, checked with the" \
+            "audits and lints that commit defines, and published to the Lake cache by" \
+            "$RUN_URL")"
+          tag_sha="$(gh api -X POST "repos/$REPO/git/tags" \
+            -f tag="$RELEASE" -f message="$MSG" -f object="$SHA" -f type=commit \
+            -f 'tagger[name]=tauceti-review-bot[bot]' \
+            -f 'tagger[email]=290224625+tauceti-review-bot[bot]@users.noreply.github.com' \
+            -f "tagger[date]=$(date -u +%Y-%m-%dT%H:%M:%SZ)" --jq '.sha')"
+          gh api -X POST "repos/$REPO/git/refs" \
+            -f ref="refs/tags/$RELEASE" -f sha="$tag_sha" > /dev/null
+          echo "::notice::created annotated tag $RELEASE at $SHA"
+
+  # Failure only: the tag is the success signal. A fresh runner with no checkout, holding
+  # only the Zulip credentials, exactly as nightly-verify.yml reports.
+  report:
+    needs: [resolve, build, publish-lake-cache, tag]
+    if: ${{ always() && github.repository == 'TauCetiProject/TauCeti'
+            && (needs.resolve.result != 'success' || needs.build.result != 'success'
+                || needs.publish-lake-cache.result != 'success' || needs.tag.result != 'success') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Post the failure to Zulip
+        env:
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          ZULIP_CHANNEL: Tau Ceti
+          # Its own topic: stuck_alerts.py reconciles "Stuck PRs" by marker and edits the
+          # messages it recognises, so an unrelated post would sit inside its bookkeeping.
+          ZULIP_TOPIC: Releases
+          RELEASE: ${{ inputs.release }}
+          SHA: ${{ inputs.sha }}
+          RESOLVE: ${{ needs.resolve.result }}
+          BUILD: ${{ needs.build.result }}
+          PUBLISH: ${{ needs.publish-lake-cache.result }}
+          TAG: ${{ needs.tag.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import os
+          import sys
+          import urllib.parse
+          import urllib.request
+
+          # Fixed classifications only. Nothing here interpolates build output, which the
+          # build job's own code could have chosen.
+          release = os.environ.get("RELEASE") or "an unnamed release"
+          sha = (os.environ.get("SHA") or "")[:8] or "an unresolved commit"
+          stages = [("validation", os.environ.get("RESOLVE")),
+                    ("the from-source build", os.environ.get("BUILD")),
+                    ("the cache publish", os.environ.get("PUBLISH")),
+                    ("tagging", os.environ.get("TAG"))]
+          first = next((name for name, result in stages
+                        if result not in ("success", "skipped", "", None)), None)
+          lines = [f"**The release run for `{release}` did not finish** at `{sha}`."]
+          if first == "validation":
+              lines.append("Validation refused the commit, so nothing was built. Either it is "
+                           "not a valid release commit for that release, or the release is "
+                           "already tagged elsewhere.")
+          elif first == "the from-source build":
+              lines.append("The from-source build, an audit or a lint failed. If it stopped at "
+                           "the mathlib cache check, mathlib published no cache for this "
+                           "release and a tag would need `allow_mathlib_rebuild`; that is a "
+                           "different problem from the source not compiling.")
+          elif first == "the cache publish":
+              lines.append("The build passed but the cache was not published or did not read "
+                           "back. No tag was created, which is the intended outcome: a tag "
+                           "claims a complete cache.")
+          elif first == "tagging":
+              lines.append("Everything built and published, but the tag was not created. The "
+                           "usual cause is a tag that already exists on a different commit, "
+                           "which is never moved automatically.")
+          else:
+              lines.append("A job did not complete. See the run log.")
+          lines.append(f"[Run log]({os.environ['RUN_URL']})")
+          content = "\n\n".join(lines)
+
+          email = (os.environ.get("ZULIP_EMAIL") or "").strip()
+          key = (os.environ.get("ZULIP_API_KEY") or "").strip()
+          site = (os.environ.get("ZULIP_SITE") or "").strip().rstrip("/")
+          if not (email and key and site):
+              print("::error::ZULIP_EMAIL / ZULIP_API_KEY not set; cannot report the failure")
+              sys.exit(1)
+          data = urllib.parse.urlencode({
+              "type": "stream",
+              "to": os.environ["ZULIP_CHANNEL"],
+              "topic": os.environ["ZULIP_TOPIC"],
+              "content": content,
+          }).encode()
+          req = urllib.request.Request(site + "/api/v1/messages", data=data, method="POST")
+          req.add_header("Authorization",
+                         "Basic " + base64.b64encode(f"{email}:{key}".encode()).decode())
+          req.add_header("Content-Type", "application/x-www-form-urlencoded")
+          with urllib.request.urlopen(req, timeout=30) as response:
+              print(f"zulip: HTTP {response.status}")
+          PY
