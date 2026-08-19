@@ -52,7 +52,7 @@ the classical ambiguous class number formula.
   quadratic conjugation, in the integral form `x ε = y σε`.
 * `NumberField.exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one`: a `2`-torsion ideal
   class of an imaginary quadratic field is the class of an ambiguous ideal.
-* `NumberField.sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self`: conversely, the
+* `NumberField.classGroupMk0_sq_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self`: conversely, the
   class of an ambiguous ideal is `2`-torsion.
 * `NumberField.sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`: the ambiguous classes
   are exactly the classes of ambiguous ideals.
@@ -217,7 +217,7 @@ a class fixed by the induced action on `Cl(𝓞 K)`, which is `2`-torsion becaus
 inversion (`mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`). This is the easy direction of
 `sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`, and needs no hypothesis on the
 signature of `K`. -/
-theorem sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self
+theorem classGroupMk0_sq_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {I : (Ideal (𝓞 K))⁰}
     (hI : Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K)) =
@@ -243,6 +243,6 @@ theorem sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self [IsTotallyC
         ClassGroup.mk0 I = C :=
   ⟨exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one hmin hgen, by
     rintro ⟨I, hI, rfl⟩
-    exact sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self hmin hgen hI⟩
+    exact classGroupMk0_sq_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self hmin hgen hI⟩
 
 end NumberField
