@@ -20,7 +20,7 @@ map on cohomology induced by a morphism of coefficient sheaves is linear.
 
 public section
 
-open CategoryTheory Limits TopologicalSpace AlgebraicGeometry Opposite
+open CategoryTheory Limits TopologicalSpace AlgebraicGeometry Scheme.Modules Opposite
 
 namespace TauCeti
 
@@ -40,7 +40,8 @@ private def restrictGlobal (U : X.Opens) (r : Γ(X, ⊤)) :
   X.presheaf.map (homOfLE le_top).op r
 
 /-- Multiplication by a global function, as a morphism of sheaves of modules. -/
-def globalSectionsSmul (M : X.Modules) (r : Γ(X, ⊤)) : M ⟶ M where
+def _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul
+    (M : X.Modules) (r : Γ(X, ⊤)) : M ⟶ M where
   val.app U := by
     letI : CommRing (X.ringCatSheaf.obj.obj U) :=
       inferInstanceAs (CommRing (X.presheaf.obj U))
@@ -64,18 +65,21 @@ def globalSectionsSmul (M : X.Modules) (r : Γ(X, ⊤)) : M ⟶ M where
     congr
 
 @[simp]
-lemma globalSectionsSmul_app (M : X.Modules) (r : Γ(X, ⊤)) (U : X.Opens) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_app
+    (M : X.Modules) (r : Γ(X, ⊤)) (U : X.Opens) :
     (globalSectionsSmul M r).app U = M.smul (X.presheaf.map U.leTop.op r) := by
   rfl
 
 @[simp]
-lemma globalSectionsSmul_zero (M : X.Modules) : globalSectionsSmul M 0 = 0 := by
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_zero
+    (M : X.Modules) : globalSectionsSmul M 0 = 0 := by
   ext U x
   change X.presheaf.map U.leTop.op 0 • x = 0
   simp
 
 @[simp]
-lemma globalSectionsSmul_add (M : X.Modules) (r s : Γ(X, ⊤)) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_add
+    (M : X.Modules) (r s : Γ(X, ⊤)) :
     globalSectionsSmul M (r + s) = globalSectionsSmul M r + globalSectionsSmul M s := by
   ext U x
   change X.presheaf.map U.leTop.op (r + s) • x =
@@ -84,13 +88,15 @@ lemma globalSectionsSmul_add (M : X.Modules) (r s : Γ(X, ⊤)) :
   simp [add_smul]
 
 @[simp]
-lemma globalSectionsSmul_one (M : X.Modules) : globalSectionsSmul M 1 = 𝟙 M := by
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_one
+    (M : X.Modules) : globalSectionsSmul M 1 = 𝟙 M := by
   ext U x
   change X.presheaf.map U.leTop.op 1 • x = x
   simp
 
 @[simp]
-lemma globalSectionsSmul_mul (M : X.Modules) (r s : Γ(X, ⊤)) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_mul
+    (M : X.Modules) (r s : Γ(X, ⊤)) :
     globalSectionsSmul M (r * s) = globalSectionsSmul M s ≫ globalSectionsSmul M r := by
   ext U x
   change X.presheaf.map U.leTop.op (r * s) • x =
@@ -100,7 +106,8 @@ lemma globalSectionsSmul_mul (M : X.Modules) (r s : Γ(X, ⊤)) :
 
 /-- The action of global functions on a sheaf of modules, bundled as a ring homomorphism into
 the endomorphism ring of the sheaf. -/
-def globalSectionsAction (M : X.Modules) : Γ(X, ⊤) →+* End M where
+def _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsAction
+    (M : X.Modules) : Γ(X, ⊤) →+* End M where
   toFun := globalSectionsSmul M
   map_one' := globalSectionsSmul_one M
   map_mul' := fun r s ↦ by
@@ -110,12 +117,14 @@ def globalSectionsAction (M : X.Modules) : Γ(X, ⊤) →+* End M where
   map_add' := globalSectionsSmul_add M
 
 @[simp]
-lemma globalSectionsAction_apply (M : X.Modules) (r : Γ(X, ⊤)) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsAction_apply
+    (M : X.Modules) (r : Γ(X, ⊤)) :
     globalSectionsAction M r = globalSectionsSmul M r :=
   by rfl
 
 @[reassoc]
-lemma globalSectionsSmul_naturality (f : M ⟶ N) (r : Γ(X, ⊤)) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_naturality
+    (f : M ⟶ N) (r : Γ(X, ⊤)) :
     globalSectionsSmul M r ≫ f = f ≫ globalSectionsSmul N r := by
   ext U x
   change f.app U (X.presheaf.map U.leTop.op r • x) =
@@ -124,7 +133,8 @@ lemma globalSectionsSmul_naturality (f : M ⟶ N) (r : Γ(X, ⊤)) :
 
 /-- The action of global functions on cohomology, bundled as a ring homomorphism into additive
 endomorphisms. -/
-def cohomologyAction (M : X.Modules) (i : ℕ) :
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyAction
+    (M : X.Modules) (i : ℕ) :
     Γ(X, ⊤) →+* AddMonoid.End (Cohomology M i) where
   toFun r := ((cohomologyFunctor X i).map (globalSectionsSmul M r)).hom
   map_one' := by
@@ -145,11 +155,13 @@ def cohomologyAction (M : X.Modules) (i : ℕ) :
     rfl
 
 /-- Cohomology is canonically a module over the ring of global functions. -/
-instance cohomologyModule (M : X.Modules) (i : ℕ) : Module Γ(X, ⊤) (Cohomology M i) :=
+instance _root_.AlgebraicGeometry.Scheme.Modules.cohomologyModule
+    (M : X.Modules) (i : ℕ) : Module Γ(X, ⊤) (Cohomology M i) :=
   Module.compHom (Cohomology M i) (cohomologyAction M i)
 
 @[simp]
-lemma cohomology_smul (M : X.Modules) (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomology_smul
+    (M : X.Modules) (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
     r • x = (cohomologyFunctor X i).map (globalSectionsSmul M r) x :=
   by
     change cohomologyAction M i r x = _
@@ -157,7 +169,8 @@ lemma cohomology_smul (M : X.Modules) (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology
 
 /-- The map on cohomology induced by a morphism of coefficient sheaves is linear over global
 functions. -/
-def cohomologyMapLinear (f : M ⟶ N) (i : ℕ) :
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear
+    (f : M ⟶ N) (i : ℕ) :
     Cohomology M i →ₗ[Γ(X, ⊤)] Cohomology N i where
   toFun := (cohomologyFunctor X i).map f
   map_add' := map_add _
@@ -179,7 +192,8 @@ def cohomologyMapLinear (f : M ⟶ N) (i : ℕ) :
       (globalSectionsSmul_naturality f r)
 
 @[simp]
-lemma cohomologyMapLinear_apply (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_apply
+    (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
     cohomologyMapLinear f i x = (cohomologyFunctor X i).map f x :=
   by
     change (cohomologyFunctor X i).map f x = _
@@ -187,7 +201,8 @@ lemma cohomologyMapLinear_apply (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
 
 /-- The canonical identification of zeroth cohomology with global sections is linear over global
 functions. -/
-def cohomologyZeroLinearEquiv (M : X.Modules) :
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv
+    (M : X.Modules) :
     Cohomology M 0 ≃ₗ[Γ(X, ⊤)] Γ(M, ⊤) where
   __ := cohomologyZeroEquiv M
   map_smul' r x := by
@@ -205,7 +220,8 @@ def cohomologyZeroLinearEquiv (M : X.Modules) :
     exact M.smul_apply r (cohomologyZeroEquiv M x)
 
 @[simp]
-lemma cohomologyZeroLinearEquiv_apply (M : X.Modules) (x : Cohomology M 0) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv_apply
+    (M : X.Modules) (x : Cohomology M 0) :
     cohomologyZeroLinearEquiv M x = cohomologyZeroEquiv M x :=
   by
     change cohomologyZeroEquiv M x = _
@@ -216,38 +232,44 @@ section Base
 variable (R : Type u) [CommRing R] (X : Scheme.{u}) [X.Over (Spec (.of R))]
 
 /-- The homomorphism from the base ring to global functions on a scheme over that ring. -/
-def baseRingToGlobalSections : R →+* Γ(X, ⊤) :=
+def _root_.AlgebraicGeometry.Scheme.Modules.baseRingToGlobalSections : R →+* Γ(X, ⊤) :=
   ((Scheme.ΓSpecIso (.of R)).inv ≫ (X ↘ Spec (.of R)).appTop).hom
 
 /-- Cohomology of a scheme over a commutative ring is a module over the base ring. -/
-instance cohomologyBaseModule (M : X.Modules) (i : ℕ) : Module R (Cohomology M i) :=
+instance _root_.AlgebraicGeometry.Scheme.Modules.cohomologyBaseModule
+    (M : X.Modules) (i : ℕ) : Module R (Cohomology M i) :=
   Module.compHom (Cohomology M i) (baseRingToGlobalSections R X)
 
 /-- Global sections of a sheaf of modules on a scheme over a commutative ring form a module over
 the base ring. -/
-instance globalSectionsBaseModule (M : X.Modules) : Module R Γ(M, ⊤) :=
+instance _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsBaseModule
+    (M : X.Modules) : Module R Γ(M, ⊤) :=
   Module.compHom Γ(M, ⊤) (baseRingToGlobalSections R X)
 
 @[simp]
-lemma base_smul_cohomology (M : X.Modules) (i : ℕ) (r : R) (x : Cohomology M i) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.base_smul_cohomology
+    (M : X.Modules) (i : ℕ) (r : R) (x : Cohomology M i) :
     r • x = (baseRingToGlobalSections R X r) • x :=
   rfl
 
 @[simp]
-lemma base_smul_globalSections (M : X.Modules) (r : R) (x : Γ(M, ⊤)) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.base_smul_globalSections
+    (M : X.Modules) (r : R) (x : Γ(M, ⊤)) :
     r • x = baseRingToGlobalSections R X r • x :=
   rfl
 
 /-- For a scheme over a commutative ring, the canonical identification of zeroth cohomology with
 global sections is linear over the base ring. -/
-def cohomologyZeroBaseLinearEquiv (M : X.Modules) :
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroBaseLinearEquiv
+    (M : X.Modules) :
     Cohomology M 0 ≃ₗ[R] Γ(M, ⊤) where
   __ := cohomologyZeroEquiv M
   map_smul' r x := (cohomologyZeroLinearEquiv M).map_smul
     (baseRingToGlobalSections R X r) x
 
 @[simp]
-lemma cohomologyZeroBaseLinearEquiv_apply (M : X.Modules) (x : Cohomology M 0) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroBaseLinearEquiv_apply
+    (M : X.Modules) (x : Cohomology M 0) :
     cohomologyZeroBaseLinearEquiv R X M x = cohomologyZeroEquiv M x := by
   change cohomologyZeroEquiv M x = _
   rfl
