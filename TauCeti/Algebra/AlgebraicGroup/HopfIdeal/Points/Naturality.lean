@@ -56,7 +56,9 @@ lemma mapValue_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
     AlgHom.mapValue χ g ∈ quotientPointsSubgroup H I (CommAlgCat.of R B) := by
   rw [mem_quotientPointsSubgroup_iff] at hg ⊢
   intro h hh
-  rw [AlgHom.mapValue_apply_apply, hg h hh, map_zero]
+  rw [AlgHom.mapValue_apply]
+  change χ (g.ofConv h) = 0
+  rw [hg h hh, map_zero]
 
 /-- Post-composition preserves the ambient-point subgroup cut out by a Hopf ideal. -/
 lemma mapPoints_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)

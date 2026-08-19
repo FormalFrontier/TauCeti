@@ -137,6 +137,10 @@ theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite Îº] (wt : Fin N â†
     CategoryTheory.NatTrans.comp_app]
   -- `rw` cannot see `GrpCat.comp_apply` through the bundled group-hom coercion here.
   erw [GrpCat.comp_apply]
+  change (CommHopfAlgCat.mapPointsFunctor diagonalTorusCoordinateMap).app A
+      ((CommHopfAlgCat.mapPointsFunctor
+        (CommHopfAlgCat.ofHom (MonoidAlgebra.mapDomainBialgHom R
+          (FGCommGrpCat.toMonoidHom (FGCommGrpCat.ofHom (weightCharacterMap wt)))))).app A p) = _
   rw [DiagonalizableGroup.mapPointsFunctor_coordinateMap_app,
     mapPointsFunctor_diagonalTorusCoordinateMap_app, FGCommGrpCat.toMonoidHom_ofHom]
 

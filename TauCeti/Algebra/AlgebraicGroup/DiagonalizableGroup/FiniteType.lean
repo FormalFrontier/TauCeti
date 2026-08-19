@@ -99,7 +99,9 @@ the contravariant point map given by precomposition of characters. -/
 theorem mapPointsFunctor_coordinateMap_app {G H : FGCommGrpCat.{v}} (φ : G ⟶ H)
     (A : CommAlgCat.{w} R)
     (p : HopfAlgebra.points (R := R) (H := MonoidAlgebra R H) A) :
-    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R φ).hom).app A p =
+    (CommHopfAlgCat.mapPointsFunctor
+      (CommHopfAlgCat.ofHom
+        (MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ)))).app A p =
       pointsMap (FGCommGrpCat.toMonoidHom φ) p := by
   rfl
 
