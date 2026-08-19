@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.Contractability
+public import TauCeti.Probability.Exchangeability.MarkovExchangeable
 public import TauCeti.Probability.Exchangeability.PathSpace.Shift
 public import Mathlib.MeasureTheory.Group.Measure
 public import Mathlib.Probability.UniformOn
@@ -28,6 +29,10 @@ ProbabilityTheory.uniformOn Set.univ`, and the deterministic rotation process `t
 its path law is invariant under the one-sided shift
 (`threeCycle_measurePreserving_shift`), because shifting the sample path of `ω` gives the sample
 path of `ω + 1`, and the uniform law is translation invariant.
+
+It is a deterministic Markov chain, hence Markov exchangeable
+(`threeCycle_markovExchangeable`); since it is not exchangeable, this is also the example showing
+that `Exchangeable` is strictly stronger than `MarkovExchangeable`.
 
 It is, however, neither exchangeable (`threeCycle_not_exchangeable`) nor contractable
 (`threeCycle_not_contractable`): the pair `(X₀, X₁) = (ω, ω + 1)` lands in
@@ -157,6 +162,59 @@ exchangeability symmetry: the pair `(X₀, X₁) = (ω, ω + 1)` ranges over
 theorem threeCycle_not_exchangeable : ¬ Exchangeable threeCycleMeasure threeCycle := by
   intro hE
   exact threeCycle_not_contractable (hE.contractable (fun _ => Measurable.of_discrete.aemeasurable))
+
+/-- **The 3-cycle has the finite-dimensional laws of a Markov chain.** A path of length `n + 1` is
+possible only if every step advances the state by one, in which case it is determined by its
+starting state and carries the uniform mass `3⁻¹`. -/
+theorem threeCycle_prefixLaw_singleton (n : ℕ) (w : Fin (n + 1) → ZMod 3) :
+    prefixLaw threeCycleMeasure threeCycle (n + 1) {w} =
+      3⁻¹ * ∏ i : Fin n, (if w i.succ = w i.castSucc + 1 then 1 else 0 : ℝ≥0∞) := by
+  classical
+  have hmap : prefixLaw threeCycleMeasure threeCycle (n + 1) {w} =
+      threeCycleMeasure ((fun (ω : ZMod 3) (i : Fin (n + 1)) => threeCycle i.val ω) ⁻¹' {w}) := by
+    rw [prefixLaw_def, blockLaw_def,
+      Measure.map_apply Measurable.of_discrete MeasurableSet.of_discrete]
+  by_cases hstep : ∀ i : Fin n, w i.succ = w i.castSucc + 1
+  · have hprod : (∏ i : Fin n, (if w i.succ = w i.castSucc + 1 then 1 else 0 : ℝ≥0∞)) = 1 :=
+      Finset.prod_eq_one fun i _ => by simp [hstep i]
+    have hw : ∀ i : Fin (n + 1), w i = w 0 + (i.val : ZMod 3) := by
+      intro i
+      induction i using Fin.induction with
+      | zero => simp
+      | succ j ih =>
+        rw [hstep j, ih]
+        simp only [Fin.val_succ, Fin.val_castSucc]
+        push_cast
+        ring
+    have hset : (fun (ω : ZMod 3) (i : Fin (n + 1)) => threeCycle i.val ω) ⁻¹' {w} = {w 0} := by
+      ext ω
+      simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, threeCycle_apply]
+      refine ⟨fun h => by simpa using h 0, ?_⟩
+      rintro rfl i
+      exact (hw i).symm
+    rw [hmap, hset, threeCycleMeasure_singleton, hprod, mul_one]
+  · obtain ⟨i, hi⟩ := not_forall.mp hstep
+    have hprod : (∏ i : Fin n, (if w i.succ = w i.castSucc + 1 then 1 else 0 : ℝ≥0∞)) = 0 :=
+      Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi])
+    have hset : (fun (ω : ZMod 3) (i : Fin (n + 1)) => threeCycle i.val ω) ⁻¹' {w} = ∅ := by
+      ext ω
+      simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, threeCycle_apply,
+        Set.mem_empty_iff_false, iff_false]
+      intro h
+      refine hi ?_
+      rw [← h i.succ, ← h i.castSucc]
+      simp only [Fin.val_succ, Fin.val_castSucc]
+      push_cast
+      ring
+    rw [hmap, hset, measure_empty, hprod, mul_zero]
+
+/-- **The 3-cycle is Markov exchangeable.** It is a deterministic Markov chain, so its finite path
+probabilities factor through the transition counts. With `threeCycle_not_exchangeable`, this
+separates `MarkovExchangeable` from `Exchangeable`. -/
+theorem threeCycle_markovExchangeable : MarkovExchangeable threeCycleMeasure threeCycle :=
+  markovExchangeable_of_prefixLaw_singleton_eq (fun _ => Measurable.of_discrete.aemeasurable)
+    (fun _ => 3⁻¹)
+    (fun a b => if b = a + 1 then 1 else 0) threeCycle_prefixLaw_singleton
 
 end Probability
 
