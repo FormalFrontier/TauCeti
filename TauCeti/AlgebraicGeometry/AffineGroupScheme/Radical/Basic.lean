@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.Radical.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
@@ -108,9 +109,8 @@ theorem geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       Q.op := by
   subst Q
-  exact ObjectProperty.inverseImage_inverse_inverseImage_functor
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
-    (geometricNormalSubgroupFreeCommHopfAlgProperty k P).op
+  unfold geometricNormalSubgroupFreeAffineGroupSchemeProperty
+  exact ObjectProperty.inverseImage_functor_inverseImage_inverse _ _
 
 /-- `Spec` restricts to an anti-equivalence for a geometric normal-subgroup-freeness property. -/
 noncomputable def geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCat
@@ -121,10 +121,31 @@ noncomputable def geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSch
     (hQ : Q = geometricNormalSubgroupFreeCommHopfAlgProperty k P) :
     Q.FullSubcategoryᵒᵖ ≌
       (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).FullSubcategory :=
-  (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategoryOp
-    Q
-    (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P)
-    (geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage k P Q hQ)
+  (ObjectProperty.opEquivalence Q).symm.trans <|
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategory
+      (geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage k P Q hQ)
+
+/-- The generic restricted anti-equivalence followed by the property inclusion is the
+finite-type anti-equivalence after forgetting the property proof. -/
+private noncomputable def
+    geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCatFunctorCompιIso
+    (k : Type u) [Field k]
+    (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
+    (Q : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k))
+    [P.IsClosedUnderIsomorphisms] [Q.IsClosedUnderIsomorphisms]
+    (hQ : Q = geometricNormalSubgroupFreeCommHopfAlgProperty k P) :
+    (geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCat k P Q hQ).functor ⋙
+        (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).ι ≅
+      Q.ι.op ⋙ (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
+  Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft (ObjectProperty.opEquivalence Q).symm.functor
+      ((geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).liftCompιIso
+        (Q.op.ι ⋙
+          (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor) _) ≪≫
+    (Functor.associator _ _ _).symm ≪≫
+    Functor.isoWhiskerRight
+      (Q.op.liftCompιIso Q.ι.op (fun X => X.unop.property))
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor
 
 /-- The restricted anti-equivalence followed by the inclusions into affine group schemes is
 Mathlib's `hopfSpec` after forgetting the property and finite-type proofs. -/
@@ -142,9 +163,13 @@ noncomputable def
       Q.ι.op ⋙
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
-  congrFullSubcategoryFunctorCompHopfSpecIso k
-    Q
-    (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P)
-    (geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage k P Q hQ)
+  Functor.isoWhiskerRight
+      (geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCatFunctorCompιIso
+        k P Q hQ)
+      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
+        (affineGroupSchemeProperty (CommRingCat.of k)).ι) ≪≫
+    Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft Q.ι.op
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k)
 
 end TauCeti

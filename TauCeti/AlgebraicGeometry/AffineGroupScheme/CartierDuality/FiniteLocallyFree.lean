@@ -8,7 +8,6 @@ module
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.CartierDuality.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
-public import TauCeti.CategoryTheory.ObjectProperty.Equivalence
 public import TauCeti.CategoryTheory.Monoidal.Mon
 
 /-!
@@ -37,7 +36,7 @@ inverse of the double-dual isomorphism `cartierDualDualIso`.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat`: the category selected by that property.
 * `finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat`:
   the restricted anti-equivalence over a commutative ring.
-  Its `congrFullSubcategoryFunctorCompιIso`, `functorCompιIso`, `inverseCompιIso`, and
+  Its `functorCompFullSubcategoryιIso`, `functorCompιIso`, `inverseCompιIso`, and
   `rightOpInverseCompιIso` describe the two functors after forgetting the property proofs.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDuality`: Cartier duality over an
   arbitrary affine base, with `cartierDuality_functor` and `cartierDuality_inverse` computing
@@ -149,29 +148,27 @@ noncomputable def
     (R : Type u) [CommRing R] :
     (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R)ᵒᵖ ≌
       FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R) :=
-  (commHopfAlgCatOpEquivAffineGroupSchemeCat
-    (CommRingCat.of R)).congrFullSubcategoryOp
-      (finiteLocallyFreeBicommutativeHopfAlgProperty R)
-      (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R))
-      (finiteLocallyFreeCommAffineGroupSchemeProperty_inverseImage R)
+  (ObjectProperty.opEquivalence
+    (finiteLocallyFreeBicommutativeHopfAlgProperty R)).symm.trans <|
+    (commHopfAlgCatOpEquivAffineGroupSchemeCat
+      (CommRingCat.of R)).congrFullSubcategory
+        (finiteLocallyFreeCommAffineGroupSchemeProperty_inverseImage R)
 
 namespace
   finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
 
 /-- The restricted equivalence followed by the finite-locally-free inclusion is the unrestricted
-equivalence applied after forgetting the property proofs. -/
-noncomputable def congrFullSubcategoryFunctorCompιIso (R : Type u) [CommRing R] :
+equivalence applied after forgetting the property proofs. This isomorphism isolates the
+implementation of the object-property restrictions, so that downstream files never have to unfold
+them. -/
+noncomputable def functorCompFullSubcategoryιIso (R : Type u) [CommRing R] :
     (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
           R).functor ⋙
         (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R)).ι ≅
       (forget₂ (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R)
           (CommHopfAlgCat.{u} R)).op ⋙
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor :=
-  Equivalence.congrFullSubcategoryFunctorCompιIso
-    (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R))
-    (finiteLocallyFreeBicommutativeHopfAlgProperty R)
-    (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R))
-    (finiteLocallyFreeCommAffineGroupSchemeProperty_inverseImage R)
+  Iso.refl _
 
 /-- The restricted anti-equivalence followed by the inclusions into affine group schemes and all
 group schemes is Mathlib's `hopfSpec` after forgetting the finiteness, projectivity, and
@@ -184,7 +181,7 @@ noncomputable def functorCompιIso (R : Type u) [CommRing R] :
       (forget₂ (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R)
           (CommHopfAlgCat.{u} R)).op ⋙ hopfSpec (CommRingCat.of R) :=
   Functor.isoWhiskerRight
-      (congrFullSubcategoryFunctorCompιIso R)
+      (functorCompFullSubcategoryιIso R)
       (affineGroupSchemeProperty (CommRingCat.of R)).ι ≪≫
     Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft
@@ -201,14 +198,7 @@ noncomputable def inverseCompιIso (R : Type u) [CommRing R] :
           (CommHopfAlgCat.{u} R)).op ≅
       (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R)).ι ⋙
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).inverse :=
-  Iso.isoCompInverse <|
-    Functor.associator _ _ _ ≪≫
-      Iso.inverseCompIso
-        (Equivalence.congrFullSubcategoryFunctorCompιIso
-          (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R))
-          (finiteLocallyFreeBicommutativeHopfAlgProperty R)
-          (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R))
-          (finiteLocallyFreeCommAffineGroupSchemeProperty_inverseImage R)).symm
+  Iso.refl _
 
 /-- The `rightOp` inverse used in scheme-level Cartier duality computes, after forgetting
 module-finiteness and cocommutativity, as the opposite of the unrestricted coordinate Hopf-algebra
@@ -222,13 +212,7 @@ noncomputable def rightOpInverseCompιIso (R : Type u) [CommRing R] :
   let e := inverseCompιIso R
   exact
     { hom := e.inv.leftOp
-      inv := e.hom.leftOp
-      hom_inv_id := by
-        change (e.hom ≫ e.inv).leftOp = 𝟙 _
-        rw [e.hom_inv_id, NatTrans.leftOp_id]
-      inv_hom_id := by
-        change (e.inv ≫ e.hom).leftOp = 𝟙 _
-        rw [e.inv_hom_id, NatTrans.leftOp_id] }
+      inv := e.hom.leftOp }
 
 end
   finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
