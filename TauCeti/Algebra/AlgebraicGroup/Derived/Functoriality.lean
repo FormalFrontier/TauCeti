@@ -52,12 +52,12 @@ open scoped commutatorElement TensorProduct
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 namespace HopfAlgebra
 
 variable {R : Type u} [CommSemiring R]
-variable {H K : Type v} [CommSemiring H] [CommSemiring K]
+variable {H : Type v} {K : Type w} [CommSemiring H] [CommSemiring K]
 variable [_root_.HopfAlgebra R H] [_root_.HopfAlgebra R K]
 
 /-- The coordinate morphism of the commutator is natural under morphisms of commutative Hopf
@@ -104,7 +104,7 @@ namespace CommHopfAlgCat
 section Semiring
 
 variable {R : Type u} [CommSemiring R]
-variable {H K : Type v} [CommSemiring H] [CommSemiring K]
+variable {H : Type v} {K : Type w} [CommSemiring H] [CommSemiring K]
 variable [_root_.HopfAlgebra R H] [_root_.HopfAlgebra R K]
 
 /-- A morphism of commutative Hopf algebras sends the derived defining ideal into the derived
@@ -181,7 +181,7 @@ theorem derivedMap_comp (f : H ⟶ K) (g : K ⟶ L) :
 /-- Taking the coordinate algebra of the derived subgroup is an endofunctor on commutative Hopf
 algebras. On affine group schemes, composition with the contravariant spectrum functor gives the
 covariant derived-subgroup construction. -/
-@[expose] noncomputable def derivedFunctor :
+noncomputable def derivedFunctor :
     _root_.CommHopfAlgCat.{v} R ⥤ _root_.CommHopfAlgCat.{v} R where
   obj H := quotient H (derivedDefiningIdeal (R := R) H)
   map := derivedMap
@@ -197,7 +197,9 @@ theorem derivedFunctor_obj (H : _root_.CommHopfAlgCat.{v} R) :
 /-- The derived-coordinate functor acts on morphisms by the induced quotient morphism. -/
 @[simp]
 theorem derivedFunctor_map (f : H ⟶ K) :
-    (derivedFunctor (R := R)).map f = derivedMap f :=
+    (derivedFunctor (R := R)).map f =
+      eqToHom (derivedFunctor_obj H) ≫ derivedMap f ≫
+        eqToHom (derivedFunctor_obj K).symm :=
   (rfl)
 
 /-- The quotient morphisms from an ambient coordinate Hopf algebra to its derived-subgroup
@@ -205,8 +207,10 @@ coordinate algebra form a natural transformation. After applying the contravaria
 functor, this is the natural closed immersion of the derived subgroup into the ambient group. -/
 noncomputable def derivedQuotientNatTrans :
     𝟭 (_root_.CommHopfAlgCat.{v} R) ⟶ derivedFunctor (R := R) where
-  app H := mkQuotient H (derivedDefiningIdeal (R := R) H)
+  app H := mkQuotient H (derivedDefiningIdeal (R := R) H) ≫
+    eqToHom (derivedFunctor_obj H).symm
   naturality {H K} f := by
+    rw [derivedFunctor_map]
     -- The naturality field retains the identity- and derived-functor object wrappers; expose
     -- their quotient-coordinate shape so the established commuting square applies.
     change f ≫ mkQuotient K (derivedDefiningIdeal (R := R) K) =
@@ -218,7 +222,8 @@ morphism defining the derived closed subgroup. -/
 @[simp]
 theorem derivedQuotientNatTrans_app (H : _root_.CommHopfAlgCat.{v} R) :
     (derivedQuotientNatTrans (R := R)).app H =
-      mkQuotient H (derivedDefiningIdeal (R := R) H) :=
+      mkQuotient H (derivedDefiningIdeal (R := R) H) ≫
+        eqToHom (derivedFunctor_obj H).symm :=
   (rfl)
 
 end CommHopfAlgCat
