@@ -32,8 +32,8 @@ from the diamond operator and is not part of the diagonal slash.
   scaling matrix used by `V_d`.
 * `TauCeti.slash_natDiagGL_d_one_eq_smul_levelRaise`: the rational diagonal slash is
   `d ^ (k - 1)` times the degeneracy map.
-* `TauCeti.ModularForm.qExpansion_slash_natDiagGL_d_one` and
-  `TauCeti.CuspForm.qExpansion_slash_natDiagGL_d_one`: the resulting power-series identities.
+* `ModularForm.qExpansion_slash_natDiagGL_d_one` and
+  `CuspForm.qExpansion_slash_natDiagGL_d_one`: the resulting power-series identities.
 * The corresponding `_coeff` lemmas give the divisibility-conditional coefficient formula.
 
 ## Provenance
@@ -92,54 +92,49 @@ lemma slash_natDiagGL_d_one_eq_smul_levelRaise {𝒢 𝒢' : Subgroup (GL (Fin 2
   ext τ
   rw [slash_natDiagGL_d_one_apply, Pi.smul_apply, smul_eq_mul, ModularForm.levelRaise_apply]
 
-namespace ModularForm
-
 /-- **The `q`-expansion of the rational diagonal slash.** Slashing by `diag(d, 1)` multiplies
 the level-raised expansion by `d ^ (k - 1)`, so the result is
 `d ^ (k - 1) • (qExpansion f).expand d`. -/
-theorem qExpansion_slash_natDiagGL_d_one {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)}
-    [𝒢'.HasDetOne] [NeZero d]
+theorem _root_.ModularForm.qExpansion_slash_natDiagGL_d_one
+    {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)} [𝒢'.HasDetOne] [NeZero d]
     (h𝒢 : (1 : ℝ) ∈ 𝒢.strictPeriods) (h𝒢' : (1 : ℝ) ∈ 𝒢'.strictPeriods)
     (hle : 𝒢' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢) (f : ModularForm 𝒢 k) :
     qExpansion 1 (⇑f ∣[k] (natDiagGL 2 ![d, 1] : GL (Fin 2) ℚ)) =
       (d : ℂ) ^ (k - 1) • (qExpansion 1 f).expand d (NeZero.ne d) := by
   rw [slash_natDiagGL_d_one_eq_smul_levelRaise hle f,
     UpperHalfPlane.qExpansion_smul
-      (ModularFormClass.analyticAt_cuspFunction_zero (levelRaise d hle f) one_pos h𝒢'),
-    qExpansion_levelRaise h𝒢 h𝒢' hle]
+      (ModularFormClass.analyticAt_cuspFunction_zero (ModularForm.levelRaise d hle f) one_pos h𝒢'),
+    ModularForm.qExpansion_levelRaise h𝒢 h𝒢' hle]
 
 /-- The coefficient form of `qExpansion_slash_natDiagGL_d_one`: the diagonal term contributes
 `d ^ (k - 1) a_(n / d)` on indices divisible by `d`, and zero elsewhere. -/
-theorem qExpansion_slash_natDiagGL_d_one_coeff {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)}
-    [𝒢'.HasDetOne] [NeZero d]
+theorem _root_.ModularForm.qExpansion_slash_natDiagGL_d_one_coeff
+    {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)} [𝒢'.HasDetOne] [NeZero d]
     (h𝒢 : (1 : ℝ) ∈ 𝒢.strictPeriods) (h𝒢' : (1 : ℝ) ∈ 𝒢'.strictPeriods)
     (hle : 𝒢' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢) (f : ModularForm 𝒢 k) (n : ℕ) :
     (qExpansion 1 (⇑f ∣[k] (natDiagGL 2 ![d, 1] : GL (Fin 2) ℚ))).coeff n =
       if d ∣ n then (d : ℂ) ^ (k - 1) * (qExpansion 1 f).coeff (n / d) else 0 := by
-  rw [qExpansion_slash_natDiagGL_d_one h𝒢 h𝒢' hle f, PowerSeries.coeff_smul,
+  rw [ModularForm.qExpansion_slash_natDiagGL_d_one h𝒢 h𝒢' hle f, PowerSeries.coeff_smul,
     PowerSeries.coeff_expand]
   split_ifs <;> simp
 
 /-- **The diagonal-slash coefficient formula at `Γ₁`.** The source form has level `M`, while
 `Gamma1_map_le_conjAct_scaleGL` packages its scaled translate at level `dM`; this specialization
 is the form needed by the coprime Hecke recurrence. -/
-theorem qExpansion_slash_natDiagGL_d_one_coeff_Gamma1 (M d : ℕ) [NeZero M] [NeZero d]
+theorem _root_.ModularForm.qExpansion_slash_natDiagGL_d_one_coeff_Gamma1
+    (M d : ℕ) [NeZero M] [NeZero d]
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (n : ℕ) :
     (qExpansion 1 (⇑f ∣[k] (natDiagGL 2 ![d, 1] : GL (Fin 2) ℚ))).coeff n =
       if d ∣ n then (d : ℂ) ^ (k - 1) * (qExpansion 1 f).coeff (n / d) else 0 := by
   let _ : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  refine qExpansion_slash_natDiagGL_d_one_coeff ?_ ?_
+  refine ModularForm.qExpansion_slash_natDiagGL_d_one_coeff ?_ ?_
     (Gamma1_map_le_conjAct_scaleGL M d) f n <;>
     simp [CongruenceSubgroup.strictPeriods_Gamma1]
 
-end ModularForm
-
-namespace CuspForm
-
 /-- The rational diagonal-slash `q`-expansion for a cusp form. This is the modular-form theorem
 applied to the canonical coercion, whose underlying function and `q`-expansion are unchanged. -/
-theorem qExpansion_slash_natDiagGL_d_one {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)}
-    [𝒢'.HasDetOne] [NeZero d]
+theorem _root_.CuspForm.qExpansion_slash_natDiagGL_d_one
+    {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)} [𝒢'.HasDetOne] [NeZero d]
     (h𝒢 : (1 : ℝ) ∈ 𝒢.strictPeriods) (h𝒢' : (1 : ℝ) ∈ 𝒢'.strictPeriods)
     (hle : 𝒢' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢) (f : CuspForm 𝒢 k) :
     qExpansion 1 (⇑f ∣[k] (natDiagGL 2 ![d, 1] : GL (Fin 2) ℚ)) =
@@ -147,8 +142,8 @@ theorem qExpansion_slash_natDiagGL_d_one {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)
   ModularForm.qExpansion_slash_natDiagGL_d_one h𝒢 h𝒢' hle (f : ModularForm 𝒢 k)
 
 /-- The coefficient form of `CuspForm.qExpansion_slash_natDiagGL_d_one`. -/
-theorem qExpansion_slash_natDiagGL_d_one_coeff {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)}
-    [𝒢'.HasDetOne] [NeZero d]
+theorem _root_.CuspForm.qExpansion_slash_natDiagGL_d_one_coeff
+    {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)} [𝒢'.HasDetOne] [NeZero d]
     (h𝒢 : (1 : ℝ) ∈ 𝒢.strictPeriods) (h𝒢' : (1 : ℝ) ∈ 𝒢'.strictPeriods)
     (hle : 𝒢' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢) (f : CuspForm 𝒢 k) (n : ℕ) :
     (qExpansion 1 (⇑f ∣[k] (natDiagGL 2 ![d, 1] : GL (Fin 2) ℚ))).coeff n =
@@ -158,16 +153,15 @@ theorem qExpansion_slash_natDiagGL_d_one_coeff {𝒢 𝒢' : Subgroup (GL (Fin 2
 
 /-- The diagonal-slash coefficient formula for a cusp form at `Γ₁`, obtained from the general
 cusp-form identity using the standard level transport `Γ₁(dM) ≤ diag(d,1)⁻¹ Γ₁(M) diag(d,1)`. -/
-theorem qExpansion_slash_natDiagGL_d_one_coeff_Gamma1 (M d : ℕ) [NeZero M] [NeZero d]
+theorem _root_.CuspForm.qExpansion_slash_natDiagGL_d_one_coeff_Gamma1
+    (M d : ℕ) [NeZero M] [NeZero d]
     (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (n : ℕ) :
     (qExpansion 1 (⇑f ∣[k] (natDiagGL 2 ![d, 1] : GL (Fin 2) ℚ))).coeff n =
       if d ∣ n then (d : ℂ) ^ (k - 1) * (qExpansion 1 f).coeff (n / d) else 0 := by
   let _ : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  refine qExpansion_slash_natDiagGL_d_one_coeff ?_ ?_
+  refine CuspForm.qExpansion_slash_natDiagGL_d_one_coeff ?_ ?_
     (Gamma1_map_le_conjAct_scaleGL M d) f n <;>
     simp [CongruenceSubgroup.strictPeriods_Gamma1]
-
-end CuspForm
 
 end TauCeti
 
