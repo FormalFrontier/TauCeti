@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Sobolev.Poincare.Slab
 public import TauCeti.Analysis.Sobolev.W1p.Zero
-public import Mathlib.MeasureTheory.Constructions.Pi
 
 /-!
 # The Poincaré inequality on `W^{1,p}_0(Ω)`
