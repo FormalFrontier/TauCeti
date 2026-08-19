@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.CommonKernel
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 

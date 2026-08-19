@@ -23,7 +23,8 @@ This file constructs the morphism by factoring it through the diagonal torus of 
 character lattices, the factorization is the homomorphism sending the `i`-th coordinate character
 to `wt i`; contravariance of diagonalizable groups gives the required map of split tori. The
 scheme-valued point formula then follows from the existing point comparisons for diagonalizable
-groups and the diagonal torus.
+groups and the diagonal torus. The file also computes the algebra-valued point map induced by the
+weight-torus coordinate morphism.
 
 The construction is the scheme-level realization of `TauCeti.basisWeightTorus`. In particular,
 when `wt` is the weight function of a finite free admissible lattice, it supplies the split-torus
@@ -38,6 +39,10 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
 * `TauCeti.GeneralLinear.weightTorus`: the represented morphism `𝔾ₘ^κ → GL_N`.
 * `TauCeti.GeneralLinear.schemePointsMulEquiv_weightTorus`: its diagonal matrix on
   scheme-valued points.
+* `TauCeti.GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app`: the induced map on
+  algebra-valued points.
+* `TauCeti.GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap`: the diagonal
+  coordinates of that point map are the prescribed characters.
 
 ## References
 
@@ -114,13 +119,6 @@ theorem weightTorus_def (wt : Fin N → κ → ℤ) :
     rw [← (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map_comp]
   rfl
 
-private theorem weightTorus_hom (wt : Fin N → κ → ℤ) :
-    (weightTorus (R := R) wt).hom.hom =
-      (DiagonalizableGroup.groupSchemeMap R
-          (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom ≫
-        diagonalTorus.hom.hom :=
-  rfl
-
 end Construction
 
 section PointsFunctor
@@ -137,6 +135,7 @@ theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite κ] (wt : Fin N �
         (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
   rw [weightTorusCoordinateMap, CommHopfAlgCat.mapPointsFunctor_comp,
     CategoryTheory.NatTrans.comp_app]
+  -- `rw` cannot see `GrpCat.comp_apply` through the bundled group-hom coercion here.
   erw [GrpCat.comp_apply]
   rw [DiagonalizableGroup.mapPointsFunctor_coordinateMap_app,
     mapPointsFunctor_diagonalTorusCoordinateMap_app, FGCommGrpCat.toMonoidHom_ofHom]
@@ -170,34 +169,6 @@ end PointsFunctor
 
 variable {A : Type u} [CommRing A] [Algebra R A]
 
-private theorem groupSchemePointMulEquiv_comp_weightTorus [Finite κ]
-    (wt : Fin N → κ → ℤ)
-    (q : HopfAlgebra.points
-      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) (CommAlgCat.of R A)) :
-    CommHopfAlgCat.mapMulEquivOfPresentation
-          (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
-          (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ)) q ≫
-        (weightTorus (R := R) wt).hom.hom =
-      groupSchemePointMulEquiv N A
-        ((CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap wt)).app
-          (CommAlgCat.of R A) q) := by
-  rw [weightTorus_def]
-  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
-    (R := R) A (groupScheme_def R N)
-      (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
-      (groupSchemePointMulEquiv N A)
-      (CommHopfAlgCat.mapMulEquivOfPresentation
-        (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
-        (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ)))
-      (groupSchemePointMulEquiv_apply_left N A)
-      (CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
-        (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
-        (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
-        (congrArg
-          (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left)
-          (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))))
-      (weightTorusCoordinateMap wt) q
-
 variable [Fintype κ]
 
 /-- On scheme-valued points, the weight torus is the diagonal matrix whose `i`-th diagonal entry
@@ -209,36 +180,49 @@ theorem schemePointsMulEquiv_weightTorus (wt : Fin N → κ → ℤ)
     schemePointsMulEquiv N A (p ≫ (weightTorus (R := R) wt).hom.hom) =
       diagGL (fun i => torusCharacter
         (SplitTorus.schemePointsMulEquiv (R := R) (A := A) p) (wt i)) := by
-  let e := CommHopfAlgCat.mapMulEquivOfPresentation
-    (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
-    (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
-  obtain ⟨q, rfl⟩ := e.surjective p
-  have hq : DiagonalizableGroup.groupSchemePointsMulEquiv
-      (R := R) (A := A) (SplitTorus.characterGroup κ) (e q) = q := by
-    apply AlgebraicGeometry.Spec.mapMulEquiv.injective
-    apply Over.OverMorphism.ext
-    rw [← DiagonalizableGroup.groupSchemePointsMulEquiv_apply_left_comp]
-    rw [CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
-      (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
-      (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
-      (DiagonalizableGroup.groupScheme_X_left R (SplitTorus.characterGroup κ))]
-    erw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
-    rfl
-  have hpoints : SplitTorus.schemePointsMulEquiv (R := R) (A := A) (e q) =
-      SplitTorus.pointsMulEquiv q := by
-    ext i
-    rw [SplitTorus.schemePointsMulEquiv_apply_coe, SplitTorus.pointsMulEquiv_apply_coe]
-    rw [hq]
-    rfl
-  rw [groupSchemePointMulEquiv_comp_weightTorus]
-  erw [schemePointsMulEquiv_groupSchemePointMulEquiv]
-  rw [mapPointsFunctor_weightTorusCoordinateMap_app,
-    pointsMulEquiv_diagonalTorusPoints]
+  rw [weightTorus]
+  -- Reassociate the two scheme morphisms so the named diagonal-torus point formula applies.
+  change schemePointsMulEquiv N A
+      ((p ≫ (DiagonalizableGroup.groupSchemeMap R
+        (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom) ≫
+        diagonalTorus.hom.hom) = _
+  rw [schemePointsMulEquiv_diagonalTorus]
   congr 1
   funext i
-  calc
-    _ = torusCharacter (SplitTorus.pointsMulEquiv q) (wt i) :=
-      diagonalTorusCoordinates_pointsMap_weightCharacterMap wt (CommAlgCat.of R A) q i
-    _ = _ := by rw [← hpoints]
+  let χ : Multiplicative (κ →₀ ℤ) →* Aˣ := DiagonalizableGroup.schemePointsMulEquiv
+    (R := R) (A := A) (SplitTorus.characterGroup κ) p
+  have hsource : SplitTorus.schemePointsMulEquiv (R := R) (A := A) p =
+      freeAbelianCharEquiv χ := by
+    funext j
+    apply Units.ext
+    rw [SplitTorus.schemePointsMulEquiv_apply_coe, freeAbelianCharEquiv_apply,
+      DiagonalizableGroup.schemePointsMulEquiv_apply_coe]
+    rfl
+  have htarget : SplitTorus.schemePointsMulEquiv (R := R) (A := A)
+      (p ≫ (DiagonalizableGroup.groupSchemeMap R
+        (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom) =
+      freeAbelianCharEquiv (χ.comp (weightCharacterMap wt)) := by
+    have hmap : DiagonalizableGroup.schemePointsMulEquiv
+        (R := R) (A := A) (SplitTorus.characterGroup (ULift.{u} (Fin N)))
+        (p ≫ (DiagonalizableGroup.groupSchemeMap R
+          (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom) =
+        χ.comp (weightCharacterMap wt) := by
+      exact DiagonalizableGroup.schemePointsMulEquiv_groupSchemeMap
+        (R := R) (A := A) (FGCommGrpCat.ofHom (weightCharacterMap wt)) p
+    rw [← hmap]
+    funext j
+    apply Units.ext
+    rw [SplitTorus.schemePointsMulEquiv_apply_coe, freeAbelianCharEquiv_apply,
+      DiagonalizableGroup.schemePointsMulEquiv_apply_coe]
+    rfl
+  rw [diagonalTorusCoordinates_apply, htarget, hsource,
+    freeAbelianCharEquiv_apply, MonoidHom.comp_apply, weightCharacterMap_ofAdd_single]
+  change χ (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i))) =
+    torusCharacter (freeAbelianCharEquiv χ) (wt i)
+  conv_lhs =>
+    rw [← freeAbelianCharEquiv.symm_apply_apply χ,
+      freeAbelianCharEquiv_symm_apply_ofAdd]
+  rw [torusCharacter_def, Finsupp.prod_fintype _ _ fun _ => zpow_zero _]
+  exact Finset.prod_congr rfl fun j _ => by simp
 
 end TauCeti.GeneralLinear
