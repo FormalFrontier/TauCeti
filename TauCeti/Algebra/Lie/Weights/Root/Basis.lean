@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.Killing.CartanDualBasis
 public import TauCeti.Algebra.Lie.Killing.DualBasis
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 
@@ -32,7 +33,6 @@ for each root, which is what computes the Casimir scalar of a highest weight vec
 
 ## Main definitions
 
-* `TauCeti.cartanKillingDualBasis`: the basis of `H` dual to `bH` under the Killing form of `L`.
 * `TauCeti.cartanRootFamily`: a basis of `H` followed by the root vectors `x α`.
 * `TauCeti.cartanRootDualFamily`: the family dual to it, whose value at the root `α` is
   `κ(x α, x (-α))⁻¹ • x (-α)`.
@@ -44,7 +44,7 @@ for each root, which is what computes the Casimir scalar of a highest weight vec
   `TauCeti.IsSl2System.killingForm_cartanRootFamily_cartanRootDualFamily_of_ne`: the two families
   are biorthogonal for the Killing form.
 * `TauCeti.IsSl2System.coe_cartanRootBasis` and
-  `TauCeti.IsSl2System.killingDualBasis_cartanRootBasis`: the basis is the first family and its
+  `TauCeti.IsSl2System.coe_killingDualBasis_cartanRootBasis`: the basis is the first family and its
   Killing-dual basis is the second.
 
 ## References
@@ -75,38 +75,11 @@ private theorem eq_zero_of_forall_mem_killingForm_eq_zero [IsKilling K L] {S : S
   have hker : killingForm K L z = 0 := by
     ext w
     simpa [LieModule.traceForm_comm K L L z w] using LinearMap.congr_fun hle w
-  have hmem : z ∈ LinearMap.ker (killingForm K L) := hker
+  have hmem : z ∈ LinearMap.ker (killingForm K L) := LinearMap.mem_ker.mpr hker
   rwa [ker_killingForm_eq_bot, Submodule.mem_bot] at hmem
-
-/-! ### The Cartan part -/
 
 variable [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
   {ιH : Type w} [Finite ιH] [DecidableEq ιH]
-
-/-- The basis of the Cartan subalgebra **dual to `bH` under the Killing form** of `L`: the Killing
-form stays non-degenerate on `H`, so the dual basis exists there. -/
-noncomputable def cartanKillingDualBasis (bH : Basis ιH K H) : Basis ιH K H :=
-  (LieModule.traceForm K H L).dualBasis (traceForm_cartan_nondegenerate K L H) bH
-
-/-- The defining biorthogonality of `TauCeti.cartanKillingDualBasis`. -/
-theorem killingForm_cartanKillingDualBasis (bH : Basis ιH K H) (i j : ιH) :
-    killingForm K L (bH i : L) (cartanKillingDualBasis bH j : L) = if i = j then 1 else 0 :=
-  (DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i))
-      (cartanKillingDualBasis bH j)).trans
-    (LinearMap.BilinForm.apply_dualBasis_right _
-      (LinearMap.BilinForm.isSymm_def.mpr fun u v ↦ LieModule.traceForm_comm K H L u v) bH i j)
-
-/-- **Expansion of an element of `H` in the Killing-dual basis**: the coefficients are the Killing
-pairings against `bH`. -/
-theorem sum_killingForm_smul_cartanKillingDualBasis [Fintype ιH] (bH : Basis ιH K H) (u : H) :
-    ∑ i, killingForm K L (bH i : L) (u : L) • cartanKillingDualBasis bH i = u := by
-  conv_rhs => rw [← (cartanKillingDualBasis bH).sum_repr u]
-  refine Finset.sum_congr rfl fun i _ ↦ ?_
-  have hrestrict : killingForm K L (bH i : L) (u : L) =
-      LieModule.traceForm K H L (bH i) u :=
-    DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i)) u
-  rw [cartanKillingDualBasis, LinearMap.BilinForm.dualBasis_repr_apply, hrestrict,
-    LieModule.traceForm_comm K H L]
 
 /-! ### The adapted families -/
 
@@ -158,13 +131,6 @@ variable {x} (hx : IsSl2System x)
 
 include hx
 
-/-- **Opposite root vectors of a normalised family pair non-trivially** under the Killing form.
-This is what makes the dual family well defined. -/
-theorem killingForm_root_neg_ne_zero {α : Weight K H L} (hα : α.IsNonZero) :
-    killingForm K L (x α) (x (-α)) ≠ 0 := by
-  rw [hx.killingForm_root_neg_eq α hα]
-  exact mul_ne_zero two_ne_zero (inv_ne_zero (root_apply_cartanEquivDual_symm_ne_zero hα))
-
 /-- The Killing form pairs each member of the adapted family with its own dual to `1`. -/
 theorem killingForm_cartanRootFamily_cartanRootDualFamily_self (i : ιH ⊕ H.root) :
     killingForm K L (cartanRootFamily bH x i) (cartanRootDualFamily bH x i) = 1 := by
@@ -172,7 +138,9 @@ theorem killingForm_cartanRootFamily_cartanRootDualFamily_self (i : ιH ⊕ H.ro
   · rw [cartanRootFamily_inl, cartanRootDualFamily_inl, killingForm_cartanKillingDualBasis]
     simp
   · rw [cartanRootFamily_inr, cartanRootDualFamily_inr, map_smul, smul_eq_mul,
-      inv_mul_cancel₀ (hx.killingForm_root_neg_ne_zero (LieSubalgebra.isNonZero_coe_root α))]
+      inv_mul_cancel₀
+        (hx.killingForm_root_neg_ne_zero (α : Weight K H L)
+          (LieSubalgebra.isNonZero_coe_root α))]
 
 omit [CharZero K] in
 /-- **The two adapted families are biorthogonal for the Killing form.** The mixed Cartan-root
@@ -226,24 +194,22 @@ theorem span_range_cartanRootDualFamily_eq_top :
     rw [hspan, Submodule.span_le]
     rintro _ ⟨i, rfl⟩
     exact Submodule.subset_span ⟨Sum.inl i, rfl⟩
-  have htop : (⨆ χ : Weight K H L, (rootSpace H χ).toSubmodule) = ⊤ :=
-    LieSubmodule.iSup_toSubmodule_eq_top.mpr (iSup_genWeightSpace_eq_top' K H L)
-  refine top_le_iff.mp (htop ▸ iSup_le fun χ ↦ ?_)
+  rw [← top_le_iff, ← hx.span_range_sup_toSubmodule_eq_top]
+  refine sup_le (Submodule.span_le.mpr ?_) hcartan
+  rintro _ ⟨χ, rfl⟩
   by_cases hχ : χ.IsNonZero
   · have hmem : (-χ) ∈ H.root := by simpa [LieSubalgebra.root] using hχ.neg
     have hmemS : cartanRootDualFamily bH x (Sum.inr ⟨-χ, hmem⟩) ∈ S :=
       Submodule.subset_span ⟨_, rfl⟩
     rw [cartanRootDualFamily_inr] at hmemS
     simp only [neg_neg] at hmemS
-    have hne := hx.killingForm_root_neg_ne_zero hχ.neg
+    have hne := hx.killingForm_root_neg_ne_zero (-χ) hχ.neg
     have hx0 : x χ ∈ S := by
       have hmul := S.smul_mem (killingForm K L (x (-χ)) (x χ)) hmemS
       rwa [smul_smul, mul_inv_cancel₀ (by simpa using hne), one_smul] at hmul
-    rw [hx.toSubmodule_rootSpace_eq_span χ hχ, Submodule.span_le, Set.singleton_subset_iff]
     exact hx0
-  · have h0 : (χ : H → K) = 0 := not_not.mp hχ
-    rw [h0, rootSpace_zero_eq K L H]
-    simpa using hcartan
+  · rw [hx.eq_zero_of_isZero χ (not_not.mp hχ)]
+    exact S.zero_mem
 
 /-- The two adapted families are a pair of dual bases for the Killing form. -/
 theorem dualBases_cartanRootFamily :
@@ -278,7 +244,7 @@ theorem coe_cartanRootBasis : ⇑(hx.cartanRootBasis bH) = cartanRootFamily bH x
 /-- **The Killing-dual basis of the adapted basis is the dual family.** Both are characterised by
 biorthogonality against the adapted basis, and the Killing form is non-degenerate. -/
 @[simp]
-theorem killingDualBasis_cartanRootBasis [DecidableEq (Weight K H L)] [Fintype ιH] :
+theorem coe_killingDualBasis_cartanRootBasis [DecidableEq (Weight K H L)] [Fintype ιH] :
     ⇑(killingDualBasis (hx.cartanRootBasis bH)) = cartanRootDualFamily bH x := by
   funext j
   rw [← sub_eq_zero]

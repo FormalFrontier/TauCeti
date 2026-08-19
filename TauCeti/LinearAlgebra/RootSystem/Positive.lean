@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Group.Submonoid.Support
+public import Mathlib.Data.Finset.Lattice.Basic
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
@@ -80,7 +81,7 @@ the step that Mathlib currently performs only inside the proof of
 
 namespace TauCeti
 
-open Set
+open Set Finset
 
 universe u v w x
 
@@ -162,6 +163,21 @@ lemma mem_posRootsFinset [Finite ι] (i : ι) : i ∈ posRootsFinset P b ↔ i �
 @[simp]
 lemma mem_negRootsFinset [Finite ι] (i : ι) : i ∈ negRootsFinset P b ↔ i ∈ negRoots P b :=
   (negRoots_finite P b).mem_toFinset
+
+/-- The finsets of positive and negative roots are disjoint. -/
+lemma disjoint_posRootsFinset_negRootsFinset [Finite ι] :
+    Disjoint (posRootsFinset P b) (negRootsFinset P b) := by
+  rw [Finset.disjoint_left]
+  intro i hi hi'
+  exact Set.disjoint_left.mp (disjoint_posRoots_negRoots P b)
+    ((mem_posRootsFinset P b i).mp hi) ((mem_negRootsFinset P b i).mp hi')
+
+/-- The positive and negative root finsets partition the root index type. -/
+lemma posRootsFinset_union_negRootsFinset [Fintype ι] [DecidableEq ι] :
+    posRootsFinset P b ∪ negRootsFinset P b = Finset.univ := by
+  ext i
+  simpa only [Finset.mem_union, Finset.mem_univ, iff_true, mem_posRootsFinset,
+    mem_negRootsFinset] using mem_posRoots_or_mem_negRoots P b i
 
 /-- Every simple root is positive. -/
 lemma support_subset_posRoots : ↑b.support ⊆ posRoots P b := by

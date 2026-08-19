@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Weights.RootSystem
+public import TauCeti.Algebra.Lie.Weights.Killing
 
 /-!
 # Root vectors normalised against the coroots
@@ -138,6 +139,12 @@ theorem killingForm_root_neg_eq (hα : α.IsNonZero) :
     (hx.mem_rootSpace α) (hx.mem_rootSpace (-α)), hx.lie_neg α hα, coroot]
   rw [← Nat.cast_smul_eq_nsmul K, smul_smul, Submodule.coe_smul_of_tower]
   norm_num
+
+/-- Opposite root vectors of a normalised family pair non-trivially under the Killing form. -/
+theorem killingForm_root_neg_ne_zero (hα : α.IsNonZero) :
+    killingForm K L (x α) (x (-α)) ≠ 0 :=
+  killingForm_ne_zero_of_mem_rootSpace hα (hx.mem_rootSpace α) (hx.ne_zero α hα)
+    (hx.mem_rootSpace (-α)) (hx.ne_zero (-α) hα.neg)
 
 /-- A root vector of a normalised family spans its root space. -/
 theorem toSubmodule_rootSpace_eq_span (hα : α.IsNonZero) :

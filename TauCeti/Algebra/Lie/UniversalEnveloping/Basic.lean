@@ -17,7 +17,6 @@ additional structures such as filtrations, bialgebras, or antipodes.
 
 * `TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι`: a universal enveloping algebra is
   generated, as an algebra, by its canonical Lie generators.
-* `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation`: the adjoint action of `U(L)` on `L`.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι`: an algebra representation maps the bracket of
   canonical Lie generators to the bracket of their images.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι_eq_smul`: a Lie-bracket eigenvector remains one
@@ -60,25 +59,6 @@ theorem adjoin_range_ι :
     _root_.Algebra.map_top]
   -- `mkAlgHom R L` is by definition the quotient map `RingCon.mkₐ R (ringCon R L)`.
   exact (AlgHom.range_eq_top _).2 (RingCon.mkₐ_surjective _)
-
-/-- The adjoint representation of a universal enveloping algebra: the algebra map extending the
-adjoint action `ad` of the Lie algebra on itself. -/
-noncomputable def adjointRepresentation : U →ₐ[R] Module.End R L :=
-  _root_.UniversalEnvelopingAlgebra.lift R (LieAlgebra.ad R L)
-
--- Neither this lemma nor its pointwise form below is a `simp` lemma: `simp` unfolds `ι` through
--- Mathlib's `UniversalEnvelopingAlgebra.ι_apply`, so a left-hand side mentioning `ι` is not in
--- simp-normal form. This is why Mathlib's own `lift_ι_apply` is not a `simp` lemma either.
-/-- The adjoint representation acts on a Lie generator by the adjoint action. -/
-theorem adjointRepresentation_ι (y : L) :
-    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) = LieAlgebra.ad R L y :=
-  _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ y
-
-/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation_ι`: a Lie
-generator acts by the Lie bracket. -/
-theorem adjointRepresentation_ι_apply (y z : L) :
-    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) z = ⁅y, z⁆ := by
-  rw [adjointRepresentation_ι, LieAlgebra.ad_apply]
 
 variable {R L}
 variable {B : Type w} [Ring B] [Algebra R B]

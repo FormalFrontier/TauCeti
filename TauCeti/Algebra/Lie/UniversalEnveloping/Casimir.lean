@@ -58,9 +58,9 @@ canonical choice this development needs and the one the roadmap pins.
 * `TauCeti.representation_casimirElement_apply`: the Casimir element acts on a Lie module by the
   double bracket along any basis of `L` and its Killing-dual basis.
 
-The remaining statement about `casimirElement`, that it acts on a highest weight module of weight
-`λ` by the scalar `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`, is not proved here: it is phrased in terms of the
-highest weight modules `L(λ)` and of the invariant form on weights, neither of which exists yet.
+That scalar is computed in `TauCeti/Algebra/Lie/HighestWeight/Casimir.lean`, in
+`TauCeti.IsHighestWeightVector.representation_casimirElement_apply_eq_smul_weylVector` and
+`TauCeti.IsHighestWeightVector.representation_casimirElement_apply_eq_smul_of_lieSpan_eq_top`.
 
 ## References
 

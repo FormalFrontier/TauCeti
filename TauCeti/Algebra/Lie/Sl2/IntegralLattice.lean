@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Module.Lattice
 public import TauCeti.Algebra.Lie.Sl2.Standard
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Representation
 public import TauCeti.RingTheory.Binomial
 import Mathlib.Tactic.FinCases
 
@@ -32,11 +33,6 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 
 ## Main declarations
 
-* `TauCeti.Sl2Std.repEnveloping`: the enveloping-algebra representation on the standard
-  module `V(n)`.
-* `TauCeti.Sl2Std.repEnveloping_ι`, `TauCeti.Sl2Std.repEnveloping_ι'`, and
-  `TauCeti.Sl2Std.repEnveloping_ι_slFinTwoBasis`: evaluation on
-  Lie algebra generators.
 * `TauCeti.Sl2Std.integralLattice`: the coordinate `ℤ`-lattice in `V(n)`.
 * `TauCeti.Sl2Std.mem_integralLattice_iff`: integrality of coordinates.
 * `TauCeti.Sl2Std.integerCoordinatesLinearEquiv`: its identification with `Fin (n + 1) → ℤ`.
@@ -173,33 +169,6 @@ theorem ringChoose_diag_apply [Algebra ℚ K]
   have : IsAddTorsionFree K := .of_module_rat K
   exact (nsmul_right_inj (Nat.factorial_ne_zero k)).mp heq
 
-/-- The enveloping-algebra representation on the standard module `V(n)`. -/
-noncomputable def repEnveloping (K : Type*) [CommRing K] (n : ℕ) :
-    _root_.UniversalEnvelopingAlgebra K (LieAlgebra.SpecialLinear.sl (Fin 2) K) →ₐ[K]
-      Module.End K (Sl2Std K n) :=
-  _root_.UniversalEnvelopingAlgebra.lift K (rep K n)
-
-/-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
-theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
-    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
-  _root_.UniversalEnvelopingAlgebra.lift_ι_apply K (rep K n) x
-
-/-- The `simp`-normal form of `repEnveloping_ι`, stated for the canonical generators as `simp`
-writes them: `ι K x` unfolds to `mkAlgHom K _ (TensorAlgebra.ι K x)`. -/
-@[simp]
-theorem repEnveloping_ι' (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
-    repEnveloping K n
-      (_root_.UniversalEnvelopingAlgebra.mkAlgHom K
-        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (TensorAlgebra.ι K x)) = rep K n x := by
-  simpa using repEnveloping_ι (K := K) (n := n) x
-
-/-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
-raising, lowering, and Cartan operators. -/
-theorem repEnveloping_ι_slFinTwoBasis (i : Fin 3) :
-    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
-      ![raise K n, lower K n, diag K n] i := by
-  rw [repEnveloping_ι, rep_apply_basis]
-
 end GeneralCoefficients
 
 variable (n : ℕ)
@@ -331,26 +300,35 @@ noncomputable def kostantFormRep :
       Module.End ℤ (integralLattice n) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantFormRep
     ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2]
-    (repEnveloping ℚ n) (integralLattice n)
+    (TauCeti.UniversalEnvelopingAlgebra.representation ℚ 𝔰𝔩₂ (Sl2Std ℚ n)) (integralLattice n)
     (by
       intro i k v hv
-      have hrep : repEnveloping ℚ n
+      have hrep : TauCeti.UniversalEnvelopingAlgebra.representation ℚ 𝔰𝔩₂ (Sl2Std ℚ n)
           (_root_.UniversalEnvelopingAlgebra.ι ℚ
             (![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] i)) =
           ![raise ℚ n, lower ℚ n] i := by
         fin_cases i
-        · exact repEnveloping_ι_slFinTwoBasis 0
-        · exact repEnveloping_ι_slFinTwoBasis 1
+        · rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
+          ext v
+          rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
+          simpa using LinearMap.congr_fun (rep_apply_basis (K := ℚ) (n := n) 0) v
+        · rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
+          ext v
+          rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
+          simpa using LinearMap.congr_fun (rep_apply_basis (K := ℚ) (n := n) 1) v
       rw [TauCeti.Associative.map_dividedPower, hrep]
       fin_cases i
       · exact dividedPower_raise_mem_integralLattice n k hv
       · exact dividedPower_lower_mem_integralLattice n k hv)
     (by
       intro i k v hv
-      have hrep : repEnveloping ℚ n
+      have hrep : TauCeti.UniversalEnvelopingAlgebra.representation ℚ 𝔰𝔩₂ (Sl2Std ℚ n)
           (_root_.UniversalEnvelopingAlgebra.ι ℚ (![slFinTwoBasis ℚ 2] i)) = diag ℚ n := by
         fin_cases i
-        exact repEnveloping_ι_slFinTwoBasis 2
+        rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
+        ext v
+        rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
+        simpa using LinearMap.congr_fun (rep_apply_basis (K := ℚ) (n := n) 2) v
       rw [Ring.map_choose, hrep]
       exact ringChoose_diag_mem_integralLattice n k hv)
 
@@ -362,7 +340,8 @@ theorem coe_kostantFormRep_apply
       ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2])
     (v : integralLattice n) :
     ((kostantFormRep n u v : integralLattice n) : Sl2Std ℚ n) =
-      repEnveloping ℚ n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n) :=
+      TauCeti.UniversalEnvelopingAlgebra.representation ℚ 𝔰𝔩₂ (Sl2Std ℚ n)
+        (u : U𝔰𝔩₂) (v : Sl2Std ℚ n) :=
   TauCeti.UniversalEnvelopingAlgebra.coe_kostantFormRep_apply _ _ _ _ _ _ u v
 
 /-- The rank-one Kostant integral form acts on the standard integral lattice.
@@ -374,7 +353,8 @@ theorem kostantForm_apply_mem_integralLattice
     (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm
       ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2])
     {v : Sl2Std ℚ n} (hv : v ∈ integralLattice n) :
-    repEnveloping ℚ n u v ∈ integralLattice n := by
+    TauCeti.UniversalEnvelopingAlgebra.representation ℚ 𝔰𝔩₂ (Sl2Std ℚ n) u v ∈
+      integralLattice n := by
   rw [← coe_kostantFormRep_apply n ⟨u, hu⟩ ⟨v, hv⟩]
   exact (((kostantFormRep n) ⟨u, hu⟩) ⟨v, hv⟩).2
 
