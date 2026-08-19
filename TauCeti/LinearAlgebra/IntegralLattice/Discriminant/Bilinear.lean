@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Quotient.Bilinear
+public import TauCeti.Algebra.AddCircle
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Basic
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Group
 
@@ -69,16 +70,6 @@ private theorem dualCarrierFormModOne_apply (L : IntegralLattice V) (x y : L.dua
     L.dualCarrierFormModOne x y = (L.form x y : AddCircle (1 : ℚ)) :=
   (rfl)
 
-private theorem coe_eq_zero_iff_mem_one (q : ℚ) :
-    (q : AddCircle (1 : ℚ)) = 0 ↔ q ∈ (1 : Submodule ℤ ℚ) := by
-  constructor
-  · intro h
-    obtain ⟨n, hn⟩ := (AddCircle.coe_eq_zero_iff (1 : ℚ)).mp h
-    exact Submodule.mem_one.mpr ⟨n, by simpa using hn⟩
-  · intro h
-    obtain ⟨n, hn⟩ := Submodule.mem_one.mp h
-    exact (AddCircle.coe_eq_zero_iff (1 : ℚ)).mpr ⟨n, by simpa using hn⟩
-
 /-- The pairing modulo `ℤ` is symmetric, hence reflexive in the sense needed to descend a
 bilinear map through the same quotient in both variables. -/
 private theorem dualCarrierFormModOne_isRefl (L : IntegralLattice V) :
@@ -95,7 +86,7 @@ private theorem carrierInDual_le_ker_dualCarrierFormModOne (L : IntegralLattice 
   rw [LinearMap.mem_ker]
   ext y
   rw [LinearMap.zero_apply, dualCarrierFormModOne_apply]
-  apply (coe_eq_zero_iff_mem_one _).mpr
+  apply (AddCircle.coe_eq_zero_iff_mem_one _).mpr
   have hyx : L.form y x ∈ (1 : Submodule ℤ ℚ) :=
     y.2 x ((L.mem_carrierInDual_iff x).mp hx)
   rw [L.isSymm.eq]
@@ -113,6 +104,14 @@ theorem discriminantPairing_mk (L : IntegralLattice V) (x y : L.dualCarrier) :
     L.discriminantPairing (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) =
       (L.form x y : AddCircle (1 : ℚ)) :=
   (rfl)
+
+/-- The discriminant pairing of two representatives vanishes exactly when the ambient form
+pairs them integrally. -/
+theorem discriminantPairing_mk_eq_zero_iff (L : IntegralLattice V) (x y : L.dualCarrier) :
+    L.discriminantPairing (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) = 0 ↔
+      L.form x y ∈ (1 : Submodule ℤ ℚ) := by
+  rw [discriminantPairing_mk]
+  exact AddCircle.coe_eq_zero_iff_mem_one _
 
 /-- The discriminant pairing is symmetric. -/
 theorem discriminantPairing_comm (L : IntegralLattice V) (x y : L.DiscriminantGroup) :
@@ -155,7 +154,7 @@ private theorem injective_discriminantPairing (L : IntegralLattice V) [L.IsNonde
       have hzero : (L.form ((x - y : L.dualCarrier) : V) z : AddCircle (1 : ℚ)) = 0 := by
         rw [Submodule.coe_sub, map_sub, LinearMap.sub_apply, AddCircle.coe_sub, sub_eq_zero]
         exact hpair
-      exact (coe_eq_zero_iff_mem_one _).mp hzero
+      exact (AddCircle.coe_eq_zero_iff_mem_one _).mp hzero
 
 /-- The discriminant bilinear module of a nondegenerate integral lattice is nondegenerate. -/
 theorem isNondegenerate_discriminantBilinearModule (L : IntegralLattice V)
