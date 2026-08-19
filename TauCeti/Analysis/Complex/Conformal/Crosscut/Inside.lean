@@ -198,13 +198,12 @@ Thus the frontier route supplies the same filled-hull inclusion as the enclosure
 same `E`; either inclusion gives a diameter bound for the generic criterion
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. -/
 theorem image_inter_ball_subset_filledHull_of_frontier_subset (hUo : IsOpen U)
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hb : IsBounded (f '' U)) {E : Set ℂ}
+    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
+    (hb : IsBounded (f '' (U ∩ ball ζ ρ))) {E : Set ℂ}
     (hE : frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ⊆ E) :
     f '' (U ∩ ball ζ ρ) ⊆ filledHull (f '' (U ∩ sphere ζ ρ) ∪ E) :=
   subset_filledHull_of_frontier_subset
-    (isOpen_image_of_differentiableOn_of_injOn (hUo.inter isOpen_ball)
-      (hd.mono inter_subset_left) (hinj.mono inter_subset_left))
-    (hb.subset (image_mono inter_subset_left))
+    hb
     fun _ hw => (frontier_image_inter_ball_subset hUo hd hinj hw).imp id fun h => hE ⟨h, hw⟩
 
 end TauCeti

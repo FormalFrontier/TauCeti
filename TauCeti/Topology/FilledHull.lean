@@ -63,7 +63,7 @@ separation, or any other regularity of `K`.
   changes nothing.
 * `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
   filled hull lies in it.
-* `TauCeti.subset_filledHull_of_frontier_subset` — an open bounded set whose frontier `K` swallows
+* `TauCeti.subset_filledHull_of_frontier_subset` — a bounded set whose frontier `K` swallows
   lies in the filled hull, with no connectivity asked of it.
 -/
 
@@ -118,32 +118,34 @@ theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint
   rw [mem_filledHull_iff, ← connectedComponentIn_eq (hScomp hy)]
   exact mem_filledHull_iff.mp hxH
 
-/-- **An open bounded set whose frontier lies in `K` is cut off from infinity by `K`.** For a point
-of `S \ K`, the set `S` is open *and closed* in `Kᶜ`: a point of `Kᶜ` adherent to `S` lies in
-`S ∪ frontier S` and its second alternative is excluded by `frontier S ⊆ K`. So its connected
-component in `Kᶜ` stays inside `S`, and is bounded because `S` is. Points of `S ∩ K` lie in the
-filled hull directly.
+/-- **A bounded set whose frontier lies in `K` is cut off from infinity by `K`.** A point of
+`S \ K` lies in `interior S`, since every non-interior point of `S` lies on `frontier S ⊆ K`.
+The interior is open, and its frontier still lies in `K`, so its connected component in `Kᶜ`
+stays inside `interior S` and is bounded because `S` is. Points of `S ∩ K` lie in the filled hull
+directly.
 
 Unlike `TauCeti.IsPreconnected.subset_filledHull` this asks nothing of the connectivity of `S` and
 nothing about the hull being met, at the price of asking `K` to swallow the whole frontier — the
 same trade as between `TauCeti.diam_le_diam_of_frontier_subset` and
 `TauCeti.IsPreconnected.diam_le_diam_of_disjoint`. -/
-theorem subset_filledHull_of_frontier_subset (hSo : IsOpen S) (hSb : IsBounded S)
-    (hfr : frontier S ⊆ K) : S ⊆ filledHull K := by
+theorem subset_filledHull_of_frontier_subset (hSb : IsBounded S) (hfr : frontier S ⊆ K) :
+    S ⊆ filledHull K := by
   intro x hx
   by_cases hxK : x ∈ K
   · exact subset_filledHull hxK
   have hxKc : x ∈ Kᶜ := hxK
-  refine mem_filledHull_iff.mpr (hSb.subset ?_)
-  refine isPreconnected_connectedComponentIn.subset_left_of_subset_union hSo
-    isClosed_closure.isOpen_compl (disjoint_compl_right.mono_left subset_closure) ?_
-    ⟨x, mem_connectedComponentIn hxKc, hx⟩
-  intro y hy
-  by_cases hyc : y ∈ closure S
-  · rw [closure_eq_self_union_frontier] at hyc
-    rcases hyc with hyS | hyfr
-    · exact Or.inl hyS
-    · exact (connectedComponentIn_subset _ _ hy (hfr hyfr)).elim
-  · exact Or.inr hyc
+  have hxi : x ∈ interior S := (mem_interior_iff_notMem_frontier hx).2 fun h => hxK (hfr h)
+  have hcomp : connectedComponentIn Kᶜ x ⊆ interior S := by
+    refine isPreconnected_connectedComponentIn.subset_left_of_subset_union isOpen_interior
+      isClosed_closure.isOpen_compl (disjoint_compl_right.mono_left subset_closure) ?_
+      ⟨x, mem_connectedComponentIn hxKc, hxi⟩
+    intro y hy
+    by_cases hyc : y ∈ closure (interior S)
+    · rw [closure_eq_self_union_frontier] at hyc
+      rcases hyc with hyS | hyfr
+      · exact Or.inl hyS
+      · exact (connectedComponentIn_subset _ _ hy (hfr (frontier_interior_subset hyfr))).elim
+    · exact Or.inr hyc
+  exact mem_filledHull_iff.mpr (hSb.subset (hcomp.trans interior_subset))
 
 end TauCeti
