@@ -156,11 +156,15 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-! ### Derivatives of test functions -/
 
+/-- A test function is differentiable. -/
+@[fun_prop]
+theorem differentiable_testFunction (φ : 𝓓(Ω, ℝ)) : Differentiable ℝ (φ : E → ℝ) :=
+  φ.contDiff.differentiable (by simp)
+
 /-- Outside its support, the directional derivative of a test function vanishes. -/
 theorem lineDeriv_eq_zero_of_notMem_tsupport (φ : 𝓓(Ω, ℝ)) {x : E}
     (hx : x ∉ tsupport (φ : E → ℝ)) (v : E) : lineDeriv ℝ (φ : E → ℝ) x v = 0 := by
-  have hd : DifferentiableAt ℝ (φ : E → ℝ) x :=
-    (φ.contDiff.differentiable (by simp)).differentiableAt
+  have hd : DifferentiableAt ℝ (φ : E → ℝ) x := differentiable_testFunction φ x
   rw [hd.lineDeriv_eq_fderiv, fderiv_of_notMem_tsupport ℝ hx]
   simp
 
@@ -515,7 +519,7 @@ theorem hasWeakLineDerivOn_of_hasLineDerivAt (hu : LocallyIntegrableOn u Ω μ)
     (hu' : LocallyIntegrableOn u' Ω μ) (h : ∀ x ∈ (Ω : Set E), HasLineDerivAt ℝ u (u' x) x v) :
     HasWeakLineDerivOn μ Ω u u' v := by
   refine ⟨‹CompleteSpace F›, hu, hu', fun φ => ?_⟩
-  have hφd : Differentiable ℝ (φ : E → ℝ) := φ.contDiff.differentiable (by simp)
+  have hφd := differentiable_testFunction φ
   have key := integral_bilinear_hasLineDerivAt_right_eq_neg_left_of_integrable
     (μ := μ) (f := u) (f' := u') (g := (φ : E → ℝ))
     (g' := fun x => lineDeriv ℝ (φ : E → ℝ) x v) (v := v)

@@ -47,8 +47,8 @@ boundary regularity of `Ω` is used.
 * `TauCeti.W1p`: the corresponding complete normed space.
 * `TauCeti.mem_w1pSubmodule_iff_hasWeakFDerivOn`: membership is exactly weak
   differentiability of the value component with the recorded gradient.
-* `TauCeti.W1p.continuous_value` and `TauCeti.W1p.continuous_gradient`: the two components depend
-  continuously, and linearly, on the Sobolev function.
+* `TauCeti.W1p.valueL` and `TauCeti.W1p.gradientL`: the two components as continuous linear
+  projections from the Sobolev space.
 
 ## References
 
@@ -369,45 +369,6 @@ def W1p.gradient (u : W1p mu Omega p) : Lp E p (mu.restrict Omega) :=
 omit [FiniteDimensional ℝ E] in
 @[simp]
 theorem W1p.gradientL_apply (u : W1p mu Omega p) : W1p.gradientL u = W1p.gradient u := (rfl)
-
-omit [FiniteDimensional ℝ E] in
-/-- The value component of a Sobolev function depends continuously on it: it is the underlying
-map of the continuous linear projection `TauCeti.W1p.valueL`. -/
-theorem W1p.continuous_value :
-    Continuous (W1p.value (mu := mu) (Omega := Omega) (p := p)) :=
-  (W1p.valueL (mu := mu) (Omega := Omega) (p := p)).continuous.congr fun u => W1p.valueL_apply u
-
-omit [FiniteDimensional ℝ E] in
-/-- The weak gradient of a Sobolev function depends continuously on it: it is the underlying map
-of the continuous linear projection `TauCeti.W1p.gradientL`. -/
-theorem W1p.continuous_gradient :
-    Continuous (W1p.gradient (mu := mu) (Omega := Omega) (p := p)) :=
-  (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)).continuous.congr fun u =>
-    W1p.gradientL_apply u
-
-omit [FiniteDimensional ℝ E] in
-@[simp]
-theorem W1p.value_add (u v : W1p mu Omega p) :
-    W1p.value (u + v) = W1p.value u + W1p.value v := by
-  simp only [← W1p.valueL_apply, map_add]
-
-omit [FiniteDimensional ℝ E] in
-@[simp]
-theorem W1p.value_smul (c : ℝ) (u : W1p mu Omega p) :
-    W1p.value (c • u) = c • W1p.value u := by
-  simp only [← W1p.valueL_apply, map_smul]
-
-omit [FiniteDimensional ℝ E] in
-@[simp]
-theorem W1p.gradient_add (u v : W1p mu Omega p) :
-    W1p.gradient (u + v) = W1p.gradient u + W1p.gradient v := by
-  simp only [← W1p.gradientL_apply, map_add]
-
-omit [FiniteDimensional ℝ E] in
-@[simp]
-theorem W1p.gradient_smul (c : ℝ) (u : W1p mu Omega p) :
-    W1p.gradient (c • u) = c • W1p.gradient u := by
-  simp only [← W1p.gradientL_apply, map_smul]
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
     [Fact (1 <= p)] in
