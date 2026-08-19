@@ -19,7 +19,8 @@ Foundational results about the pair `Γ₁(N) ≤ Γ₀(N)` beyond Mathlib's
 after mapping to `GL₂(ℝ)`), the ratio of two `Γ₀(N)`-elements with equal lower-right entry
 lies in `Γ₁(N)`, the lower-right-entry map `Γ₀(N) →* (ZMod N)ˣ` is surjective, and the
 location of `-I`: it always lies in `Γ₀(N)`, with lower-right entry the unit `-1`, and it
-lies in `Γ₁(N)` exactly when `N ∣ 2`.  The file then computes the index of `Γ₀` at
+lies in `Γ₁(N)` exactly when `N ∣ 2`; and every power of the translation matrix `T` lies in
+`Γ₁(N)`, at every level.  The file then computes the index of `Γ₀` at
 prime-power levels — the degree count of Shimura, Theorem 3.24 — which lives here because it
 is congruence-subgroup arithmetic consumed by, but independent of, the Hecke-ring layer.
 
@@ -254,6 +255,18 @@ theorem neg_one_mem_Gamma1_iff : (-1 : SL(2, ℤ)) ∈ Gamma1 N ↔ N ∣ 2 := b
     rw [neg_eq_iff_add_eq_zero, ← ZMod.natCast_eq_zero_iff 2 N]
     norm_num
   simp [Gamma1_mem, h]
+
+/-- The entries of a power of the translation matrix `T = !![1, 1; 0, 1]`, as an identity of
+matrix entries rather than of matrices — the form `Gamma1_mem` consumes. -/
+private lemma coe_T_zpow_apply (n : ℤ) (i j : Fin 2) :
+    (ModularGroup.T ^ n : SL(2, ℤ)) i j = (!![1, n; 0, 1] : Matrix (Fin 2) (Fin 2) ℤ) i j :=
+  congrFun (congrFun (ModularGroup.coe_T_zpow n) i) j
+
+/-- **Every power of the translation matrix lies in `Γ₁(N)`, at every level.** `Tⁿ` has diagonal
+`(1, 1)` and vanishing lower-left entry, so the three congruences of `Gamma1_mem` hold with no
+condition on `n` or `N`. (In particular the width of the cusp `∞` for `Γ₁(N)` is `1`.) -/
+theorem T_zpow_mem_Gamma1 (N : ℕ) (n : ℤ) : ModularGroup.T ^ n ∈ Gamma1 N := by
+  simp [Gamma1_mem, coe_T_zpow_apply]
 
 /-! ## The index of `Γ₀(pᵏ)`
 
