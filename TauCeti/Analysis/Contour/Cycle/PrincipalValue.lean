@@ -41,6 +41,7 @@ integrand *is* interval-integrable along each generator, the two agree
 ## Main results
 
 * `TauCeti.Contour.Cycle.cauchyPV_eq_sum_support` — the value as a coefficient-weighted sum.
+* `TauCeti.Contour.Cycle.cauchyPVExists_iff` — existence along the canonical support.
 * `TauCeti.Contour.Cycle.hasCauchyPV_iff` — the predicate as its two clauses.
 * `TauCeti.Contour.Cycle.HasCauchyPV.of_generators` — a per-generator family of principal values
   assembles into the cycle's.
@@ -101,6 +102,14 @@ theorem cauchyPV_eq_sum_support (f : ℂ → ℂ) (C : Cycle) :
 of the canonical support. Curves that cancel out of the cycle impose no condition. -/
 def CauchyPVExists (C : Cycle) (f : ℂ → ℂ) : Prop :=
   ∀ γ ∈ FreeAbelianGroup.support C, TauCeti.Contour.CauchyPVExists γ γ.a γ.b f
+
+/-- Characterization of `Cycle.CauchyPVExists` as existence along every curve of the canonical
+support — the eliminator/constructor interface, so downstream users need not unfold the
+definition. -/
+theorem cauchyPVExists_iff :
+    CauchyPVExists C f ↔
+      ∀ γ ∈ FreeAbelianGroup.support C, TauCeti.Contour.CauchyPVExists γ γ.a γ.b f :=
+  Iff.rfl
 
 /-- The Cauchy principal value of `f` along the cycle `C` exists and equals `v`. -/
 def HasCauchyPV (C : Cycle) (f : ℂ → ℂ) (v : ℂ) : Prop :=
