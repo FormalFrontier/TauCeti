@@ -21,9 +21,10 @@ connectedness and geometric reducedness descend from the source `Spec K` to the 
 
 The image is also finite type whenever the ambient affine group `Spec H` is finite type, since
 its coordinate algebra is a quotient of `H`. Together these facts provide the image-property
-part of the subgroup-generation argument used for the unipotent radical: the image of the
-multiplication map from two connected geometrically reduced subgroups is again connected and
-geometrically reduced.
+part of the subgroup-generation argument used for the unipotent radical. For normal subgroups
+`U` and `V`, this applies after equipping the product scheme `U × V` with the appropriate
+semidirect-product group structure, so that multiplication into the ambient group is a group
+homomorphism.
 
 ## Main declarations
 
@@ -40,8 +41,9 @@ geometrically reduced.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, §§15--16.
 
 This is image infrastructure for Layer 5, "The unipotent radical", of the ReductiveGroups
-roadmap. The maximality construction takes scheme-theoretic images of multiplication maps and
-needs connectedness and reducedness to survive that operation.
+roadmap. The maximality construction needs the scheme-theoretic image of the multiplication
+homomorphism from an appropriate semidirect product of normal subgroups; the results here supply
+the connectedness and reducedness descent step once that semidirect product is constructed.
 -/
 
 public section
