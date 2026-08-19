@@ -1,10 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430"
-     font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"
      role="img" aria-labelledby="participation-title participation-description">
   <title id="participation-title">Tau Ceti — human participation: 38 people across 4 repositories as of 2026-08-05</title>
   <desc id="participation-description">TauCeti: 25, TauCetiRoadmap: 22, TauCetiWorker: 4, TauCetiReview: 3. People active in several repositories are counted in each bar.</desc>
   <style>
-    text{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;fill:#eef2fb}.title{font-size:19.0px;font-weight:600}.subtitle{font-size:13.0px;fill:#9aa6c9}.tick{font-size:12.0px;fill:#9aa6c9}.grid{stroke:rgba(255,255,255,0.08);stroke-width:1.0}.axis{stroke:rgba(255,255,255,0.18);stroke-width:1.0}
+    text{font-family:'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif;fill:#eef2fb}.title{font-size:19.0px;font-weight:600}.subtitle{font-size:13.0px;fill:#9aa6c9}.tick{font-size:12.0px;fill:#9aa6c9}.grid{stroke:rgba(255,255,255,0.08);stroke-width:1.0}.axis{stroke:rgba(255,255,255,0.18);stroke-width:1.0}
     .total{fill:#eef2fb;font-size:42.0px;font-weight:700}
     .label{fill:#eef2fb;font-size:15.0px;text-anchor:end}
     .count{fill:#eef2fb;font-size:16.0px;font-weight:650}

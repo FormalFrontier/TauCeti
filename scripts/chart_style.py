@@ -7,7 +7,16 @@ GRID = "rgba(255,255,255,0.08)"
 AXIS = "rgba(255,255,255,0.18)"
 TEXT = "#eef2fb"
 MUTED = "#9aa6c9"
-FONT_FAMILY = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"
+# Deliberately concrete, and deliberately not `system-ui`/`ui-sans-serif`. These
+# charts are served as `<img src="...svg">`, so each SVG is an isolated document
+# with no page CSS and no webfont, and the stack is resolved by the host OS. On
+# macOS that means San Francisco, which is split into SF Text and SF Display with
+# a switch near 20px and glyph IDs that are out of sync between the two; at least
+# one Mac renders the chart titles, the text that crosses that boundary, as
+# overlapping nonsense while the smaller subtitles and ticks beside them are fine.
+# Named faces sidestep the question and narrow how much the cards vary between
+# platforms, which the hand-tuned label spacing in these scripts likes.
+FONT_FAMILY = "'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif"
 
 # The participation card established the site's chart typography at this native width.
 # Scale design-space font sizes with each SVG's viewBox so all cards have the same
