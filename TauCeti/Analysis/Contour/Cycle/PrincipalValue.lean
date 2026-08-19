@@ -108,6 +108,7 @@ def HasCauchyPV (C : Cycle) (f : ℂ → ℂ) (v : ℂ) : Prop :=
 
 /-- `Cycle.HasCauchyPV` unfolded into its two clauses — existence along every curve of the
 canonical support, and the value — so consumers need not unfold the definition. -/
+@[simp]
 theorem hasCauchyPV_iff {v : ℂ} :
     HasCauchyPV C f v ↔ CauchyPVExists C f ∧ cauchyPV f C = v := Iff.rfl
 
