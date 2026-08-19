@@ -57,9 +57,18 @@ namespace PiTensorProduct
 
 universe u v w
 
+section Semiring
+
 variable {R : Type u} {M : Type v} {ι : Type w}
-variable [CommRing R] [AddCommGroup M] [Module R M] [Finite ι]
-  [Module.Free R M] [Module.Finite R M]
+variable [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- Permuting the factors is invertible: the operators of the permutation representation compose to
+the identity along inverse permutations. -/
+private theorem reindexRepresentation_mul_inv (σ : Equiv.Perm ι) :
+    reindexRepresentation R M ι σ * reindexRepresentation R M ι σ⁻¹ = 1 := by
+  rw [← map_mul, mul_inv_cancel, map_one]
+
+variable [Finite ι] [Module.Free R M] [Module.Finite R M]
 
 /-- **The comparison isomorphism carries a permuted pure tensor to the conjugated map.** This is
 the pure-tensor case of `PiTensorProduct.piTensorHomEquiv_reindexRepresentation_mul`, and is
@@ -93,14 +102,13 @@ theorem piTensorHomEquiv_reindexRepresentation_mul (σ : Equiv.Perm ι)
   | add x y hx hy =>
     rw [map_add, LinearEquiv.map_add, LinearEquiv.map_add, add_mul, mul_add, hx, hy]
 
-omit [Finite ι] [Module.Free R M] [Module.Finite R M] in
-/-- Permuting the factors is invertible: the operators of the permutation representation compose to
-the identity along inverse permutations. -/
-private theorem reindexRepresentation_mul_inv (σ : Equiv.Perm ι) :
-    reindexRepresentation R M ι σ * reindexRepresentation R M ι σ⁻¹ = 1 := by
-  rw [← map_mul, mul_inv_cancel, map_one]
+end Semiring
 
-variable [Fintype ι]
+section Ring
+
+variable {R : Type u} {M : Type v} {ι : Type w}
+variable [CommRing R] [AddCommGroup M] [Module R M] [Fintype ι]
+  [Module.Free R M] [Module.Finite R M]
 
 /-- **The commutant of the permutation action on a tensor power is the span of the diagonal
 operators.** For a finite free module `M` and `(#ι)!` invertible in `R`, an endomorphism of
@@ -137,6 +145,8 @@ theorem mem_span_range_map_const_iff_forall_commute (h : IsUnit ((Fintype.card �
     have hcancel := congrArg (· * reindexRepresentation R M ι σ⁻¹) (hkey.trans hcomm.symm)
     simp only [mul_assoc, reindexRepresentation_mul_inv, mul_one] at hcancel
     exact hcancel
+
+end Ring
 
 end PiTensorProduct
 

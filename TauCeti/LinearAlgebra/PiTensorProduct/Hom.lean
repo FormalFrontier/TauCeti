@@ -144,7 +144,11 @@ noncomputable def piTensorHomEquiv :
     (⨂[R] i, M i →ₗ[R] N i) ≃ₗ[R] ((⨂[R] i, M i) →ₗ[R] ⨂[R] i, N i) :=
   LinearEquiv.ofBijective piTensorHomMap piTensorHomMap_bijective
 
-/-- The equivalence acts as the comparison map it is built from. -/
+/-- The equivalence acts as the comparison map it is built from. The priority is low so that the
+more specific `PiTensorProduct.piTensorHomEquiv_tprod` still reaches its own normal form
+`PiTensorProduct.map` on a pure tensor, which this rule would otherwise strand at
+`PiTensorProduct.piTensorHomMap`. -/
+@[simp low]
 theorem piTensorHomEquiv_apply (x : ⨂[R] i, M i →ₗ[R] N i) :
     piTensorHomEquiv R M N x = piTensorHomMap x :=
   (rfl)
