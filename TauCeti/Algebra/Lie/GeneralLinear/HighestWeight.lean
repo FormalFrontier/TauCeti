@@ -221,7 +221,7 @@ theorem isGlDominantIntegral_of_le_one (hn : n ≤ 1) (mu : Fin n → R) : IsGlD
 dominance for `gl n` does not force the entries to be integers: it is dominant
 (`TauCeti.isGlDominantIntegral_glStaircase`) and none of its entries is an integer
 (`TauCeti.glStaircase_ne_intCast`). Its consecutive differences are all `1`, so it is the half-shift
-of the integral weight `(N - 1, N - 2, …, 0)` by the central direction `-1/2 · (1, …, 1)`. -/
+of the integral weight `(N - 1, N - 2, …, 0)` by the central direction `1/2 · (1, …, 1)`. -/
 def glStaircase (N : ℕ) : Fin N → ℚ := fun i => (N : ℚ) - 1 / 2 - (i : ℕ)
 
 @[simp]
@@ -333,9 +333,9 @@ the weight off the vector, so two weights of the same nonzero vector agree entry
 theorem IsGlHighestWeightVector.weight_eq [IsCancelMulZero R] [Module.IsTorsionFree R M]
     (hv : IsGlHighestWeightVector mu v) (hv' : IsGlHighestWeightVector nu v) : mu = nu := by
   funext i
-  refine smul_left_injective R hv.ne_zero ?_
-  change mu i • v = nu i • v
-  rw [← hv.lie_single_self_eq_smul i, hv'.lie_single_self_eq_smul i]
+  have hsmul : mu i • v = nu i • v := by
+    rw [← hv.lie_single_self_eq_smul i, hv'.lie_single_self_eq_smul i]
+  exact smul_left_injective R hv.ne_zero hsmul
 
 variable [LieModule R (Matrix n n R) M]
 
@@ -387,8 +387,9 @@ theorem isGlHighestWeightVector_iff_forall_mem :
     hv.lie_eq_zero_of_mem_strictUpperTriangular hA⟩, fun ⟨hne, hcartan, hnil⟩ => ?_⟩
   refine ⟨hne, fun i => ?_, fun i j hij => hnil _ (single_mem_strictUpperTriangular hij 1)⟩
   have h := hcartan ⟨single i i 1, single_self_mem_diagonalCartan i 1⟩
-  rwa [glWeightEquiv_apply, show ∑ j : n, mu j * (single i i (1 : R)) j j = mu i by
-    simp [single_apply, Finset.sum_ite_eq]] at h
+  have hsum : ∑ j : n, mu j * (single i i (1 : R)) j j = mu i := by
+    simp [single_apply, Finset.sum_ite_eq]
+  rwa [glWeightEquiv_apply, hsum] at h
 
 section TorsionFree
 
