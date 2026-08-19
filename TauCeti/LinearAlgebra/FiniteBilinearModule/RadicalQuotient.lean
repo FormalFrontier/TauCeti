@@ -19,21 +19,24 @@ b (x + K) (y + K) = b x y.
 ```
 
 The resulting module is nondegenerate exactly when `K` is the whole radical, since the radical of
-the quotient is `rad(A) / K`. Taking `K = rad(A)` therefore gives the canonical nondegenerate
-quotient, and other choices of `K` arise when a specific subgroup is being divided out, as for
-the orthogonal quotients in
+the quotient is the image of `rad(A)`. Taking `K = rad(A)` therefore gives the canonical
+nondegenerate quotient, and other choices of `K` arise when a specific subgroup is being divided
+out, as for the orthogonal quotients in
 `TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Quotient`.
 
-The carrier is a `Submodule` quotient and the packaged module is exposed, so a map out of it can
-be built with `Submodule.liftQ` or `QuadraticMap.lift`; `quotientOfLeRadicalLift` packages the
-additive case.
+Both `quotientOfLeRadical` and `radicalQuotient` are exposed, so their carriers reduce to the
+`Submodule` quotient and a map out of either can be built directly with `Submodule.liftQ` or
+`QuadraticMap.lift`.
 
 ## Main declarations
 
 * `TauCeti.FiniteBilinearModule.quotientOfLeRadical`: the quotient by a subgroup of the radical.
-* `TauCeti.FiniteBilinearModule.quotientOfLeRadicalLift`: the elimination principle.
+* `TauCeti.FiniteBilinearModule.radical_quotientOfLeRadical`: the radical of the quotient is the
+  image of the radical.
 * `TauCeti.FiniteBilinearModule.isNondegenerate_quotientOfLeRadical_iff`: nondegeneracy holds
   exactly when the subgroup exhausts the radical.
+* `TauCeti.FiniteBilinearModule.card_quotientOfLeRadical`: the order of the quotient is the index
+  of the subgroup.
 * `TauCeti.FiniteBilinearModule.radicalQuotient`: the nondegenerate quotient by the radical.
 
 ## References
@@ -46,16 +49,17 @@ public section
 
 namespace TauCeti.FiniteBilinearModule
 
-universe u v
+universe u
 
 variable (A : FiniteBilinearModule.{u})
 
 /-! ## Quotient by a subgroup of the radical -/
 
-/-- The underlying additive quotient of a finite bilinear module by a subgroup of its radical.
+/-- The underlying additive quotient of a finite bilinear module by a subgroup.
 
-This is a `Submodule` quotient, so `Submodule.liftQ` and `QuadraticMap.lift` apply to it. -/
-abbrev QuotientOfLeRadical (K : AddSubgroup A) := A.carrier ⧸ K.toIntSubmodule
+This is a `Submodule` quotient, so `Submodule.liftQ` and `QuadraticMap.lift` apply to it. It is
+the carrier of `quotientOfLeRadical` when the subgroup lies in the radical. -/
+abbrev QuotientByAddSubgroup (K : AddSubgroup A) := A.carrier ⧸ K.toIntSubmodule
 
 /-- A subgroup of the radical, read as a `ℤ`-submodule, lies in the kernel of the pairing. -/
 theorem toIntSubmodule_le_ker_toBilin {K : AddSubgroup A} (hK : K ≤ A.radical) :
@@ -69,18 +73,25 @@ theorem toIntSubmodule_le_ker_toBilin {K : AddSubgroup A} (hK : K ≤ A.radical)
 /-- The pairing of a finite bilinear module, descended through a subgroup of its radical.
 
 This is the underlying `ℤ`-bilinear map of `quotientOfLeRadical`. -/
-@[expose] noncomputable def quotientOfLeRadicalBilin (K : AddSubgroup A) (hK : K ≤ A.radical) :
-    A.QuotientOfLeRadical K →ₗ[ℤ] A.QuotientOfLeRadical K →ₗ[ℤ] AddCircle (1 : ℚ) :=
+noncomputable def quotientOfLeRadicalBilin (K : AddSubgroup A) (hK : K ≤ A.radical) :
+    A.QuotientByAddSubgroup K →ₗ[ℤ] A.QuotientByAddSubgroup K →ₗ[ℤ] AddCircle (1 : ℚ) :=
   LinearMap.IsRefl.liftQ₂ A.toBilin K.toIntSubmodule A.isRefl_toBilin
     (A.toIntSubmodule_le_ker_toBilin hK)
+
+/-- The descended pairing is computed by the original pairing on representatives. -/
+@[simp]
+theorem quotientOfLeRadicalBilin_mk (K : AddSubgroup A) (hK : K ≤ A.radical) (x y : A) :
+    A.quotientOfLeRadicalBilin K hK (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) =
+      A.pairing x y := by
+  rw [quotientOfLeRadicalBilin, LinearMap.liftQ₂_mk, A.toBilin_apply]
 
 /-- The finite bilinear module obtained by quotienting by a subgroup of the radical.
 
 The package is exposed so that its carrier projection reduces to the `Submodule` quotient
-`QuotientOfLeRadical`, which is what an elimination principle out of the quotient needs. -/
+`QuotientByAddSubgroup`, which is what a map out of the quotient needs. -/
 @[expose] noncomputable def quotientOfLeRadical (K : AddSubgroup A) (hK : K ≤ A.radical) :
     FiniteBilinearModule where
-  carrier := A.QuotientOfLeRadical K
+  carrier := A.QuotientByAddSubgroup K
   finite := Finite.of_surjective K.toIntSubmodule.mkQ K.toIntSubmodule.mkQ_surjective
   pairing :=
     { toFun := fun x ↦ (A.quotientOfLeRadicalBilin K hK x).toAddMonoidHom
@@ -98,8 +109,7 @@ The package is exposed so that its carrier projection reduces to the `Submodule`
     change A.quotientOfLeRadicalBilin K hK (Submodule.Quotient.mk x)
       (Submodule.Quotient.mk y) = A.quotientOfLeRadicalBilin K hK (Submodule.Quotient.mk y)
         (Submodule.Quotient.mk x)
-    rw [quotientOfLeRadicalBilin, LinearMap.liftQ₂_mk, LinearMap.liftQ₂_mk,
-      A.toBilin_apply, A.toBilin_apply]
+    rw [A.quotientOfLeRadicalBilin_mk K hK, A.quotientOfLeRadicalBilin_mk K hK]
     exact A.pairing_comm x y
 
 /-- The quotient map onto the quotient by a subgroup of the radical. -/
@@ -115,7 +125,7 @@ theorem quotientOfLeRadical_pairing_mk (K : AddSubgroup A) (hK : K ≤ A.radical
   -- Unfold the opaque `CharacterModule` alias to expose evaluation of the quotient lift.
   change A.quotientOfLeRadicalBilin K hK (Submodule.Quotient.mk x)
     (Submodule.Quotient.mk y) = A.pairing x y
-  rw [quotientOfLeRadicalBilin, LinearMap.liftQ₂_mk, A.toBilin_apply]
+  exact A.quotientOfLeRadicalBilin_mk K hK x y
 
 /-- The quotient map by a subgroup of the radical is surjective. -/
 theorem quotientOfLeRadicalMk_surjective (K : AddSubgroup A) (hK : K ≤ A.radical) :
@@ -135,53 +145,51 @@ theorem quotientOfLeRadicalMk_eq_zero_iff (K : AddSubgroup A) (hK : K ≤ A.radi
     A.quotientOfLeRadicalMk K hK x = 0 ↔ x ∈ K := by
   rw [← AddMonoidHom.mem_ker, A.quotientOfLeRadicalMk_ker K hK]
 
-/-- Two classes in the quotient agree exactly when their representatives differ by the
-subgroup. -/
-theorem quotientOfLeRadicalMk_eq_iff (K : AddSubgroup A) (hK : K ≤ A.radical) (x y : A) :
-    A.quotientOfLeRadicalMk K hK x = A.quotientOfLeRadicalMk K hK y ↔ x - y ∈ K := by
-  rw [← A.quotientOfLeRadicalMk_eq_zero_iff K hK, map_sub, sub_eq_zero]
-
-/-- Descend an additive homomorphism that vanishes on the subgroup through the quotient. -/
-noncomputable def quotientOfLeRadicalLift {B : Type v} [AddCommGroup B] (K : AddSubgroup A)
-    (hK : K ≤ A.radical) (f : A →+ B) (hf : ∀ x ∈ K, f x = 0) :
-    A.quotientOfLeRadical K hK →+ B :=
-  (K.toIntSubmodule.liftQ f.toIntLinearMap fun x hx ↦ hf x hx).toAddMonoidHom
-
-/-- The descended homomorphism agrees with the original on representatives. -/
-@[simp]
-theorem quotientOfLeRadicalLift_mk {B : Type v} [AddCommGroup B] (K : AddSubgroup A)
-    (hK : K ≤ A.radical) (f : A →+ B) (hf : ∀ x ∈ K, f x = 0) (x : A) :
-    A.quotientOfLeRadicalLift K hK f hf (A.quotientOfLeRadicalMk K hK x) = f x :=
-  (rfl)
-
-/-- **Nondegeneracy of the quotient.** Quotienting by a subgroup of the radical leaves a
-nondegenerate module exactly when that subgroup exhausts the radical: the radical of the quotient
-is `rad(A) / K`. -/
-theorem isNondegenerate_quotientOfLeRadical_iff (K : AddSubgroup A) (hK : K ≤ A.radical) :
-    (A.quotientOfLeRadical K hK).IsNondegenerate ↔ A.radical ≤ K := by
-  rw [isNondegenerate_iff_radical_eq_bot, eq_bot_iff]
+/-- **The radical of the quotient** is the image of the radical: quotienting by a subgroup of the
+radical does not create new degeneracy. -/
+theorem radical_quotientOfLeRadical (K : AddSubgroup A) (hK : K ≤ A.radical) :
+    (A.quotientOfLeRadical K hK).radical = A.radical.map (A.quotientOfLeRadicalMk K hK) := by
+  ext q
+  obtain ⟨x, rfl⟩ := A.quotientOfLeRadicalMk_surjective K hK q
   constructor
-  · intro h x hx
-    have hmem : A.quotientOfLeRadicalMk K hK x ∈ (A.quotientOfLeRadical K hK).radical := by
-      rw [mem_radical_iff]
-      intro q
-      obtain ⟨y, rfl⟩ := A.quotientOfLeRadicalMk_surjective K hK q
-      rw [A.quotientOfLeRadical_pairing_mk K hK]
-      exact (A.mem_radical_iff x).mp hx y
-    exact (A.quotientOfLeRadicalMk_eq_zero_iff K hK x).mp (h hmem)
-  · intro h q hq
-    obtain ⟨x, rfl⟩ := A.quotientOfLeRadicalMk_surjective K hK q
-    rw [AddSubgroup.mem_bot, A.quotientOfLeRadicalMk_eq_zero_iff K hK]
-    refine h ?_
-    rw [mem_radical_iff]
-    intro y
+  · intro hq
+    refine ⟨x, (A.mem_radical_iff x).mpr fun y ↦ ?_, rfl⟩
     rw [← A.quotientOfLeRadical_pairing_mk K hK x y]
     exact (mem_radical_iff _ _).mp hq _
+  · rintro ⟨z, hz, hzx⟩
+    rw [mem_radical_iff]
+    intro q'
+    obtain ⟨y, rfl⟩ := A.quotientOfLeRadicalMk_surjective K hK q'
+    rw [← hzx, A.quotientOfLeRadical_pairing_mk K hK]
+    exact (A.mem_radical_iff z).mp hz y
+
+/-- **Nondegeneracy of the quotient.** Quotienting by a subgroup of the radical leaves a
+nondegenerate module exactly when that subgroup exhausts the radical. -/
+theorem isNondegenerate_quotientOfLeRadical_iff (K : AddSubgroup A) (hK : K ≤ A.radical) :
+    (A.quotientOfLeRadical K hK).IsNondegenerate ↔ A.radical ≤ K := by
+  rw [isNondegenerate_iff_radical_eq_bot, A.radical_quotientOfLeRadical K hK, eq_bot_iff]
+  constructor
+  · intro h x hx
+    exact (A.quotientOfLeRadicalMk_eq_zero_iff K hK x).mp (h ⟨x, hx, rfl⟩)
+  · rintro h q ⟨x, hx, rfl⟩
+    rw [AddSubgroup.mem_bot, A.quotientOfLeRadicalMk_eq_zero_iff K hK]
+    exact h hx
+
+/-- The order of the quotient by a subgroup of the radical is the index of that subgroup. -/
+theorem card_quotientOfLeRadical (K : AddSubgroup A) (hK : K ≤ A.radical) :
+    Nat.card (A.quotientOfLeRadical K hK) = K.index := by
+  conv_rhs => rw [← A.quotientOfLeRadicalMk_ker K hK]
+  rw [AddSubgroup.index_ker,
+    AddMonoidHom.range_eq_top.mpr (A.quotientOfLeRadicalMk_surjective K hK),
+    AddSubgroup.card_top]
 
 /-! ## Quotient by the radical -/
 
-/-- The finite bilinear module obtained by quotienting by the radical. -/
-noncomputable def radicalQuotient : FiniteBilinearModule :=
+/-- The finite bilinear module obtained by quotienting by the radical.
+
+Exposed for the same reason as `quotientOfLeRadical`: so that its carrier reduces to the
+`Submodule` quotient and maps out of it are definable. -/
+@[expose] noncomputable def radicalQuotient : FiniteBilinearModule :=
   A.quotientOfLeRadical A.radical le_rfl
 
 /-- The quotient map from a finite bilinear module to its radical quotient. -/
@@ -203,13 +211,6 @@ theorem radicalQuotientMk_surjective : Function.Surjective (radicalQuotientMk A)
 @[simp]
 theorem radicalQuotientMk_ker : (radicalQuotientMk A).ker = A.radical :=
   A.quotientOfLeRadicalMk_ker A.radical le_rfl
-
-/-- A class in the radical quotient vanishes exactly when its representative is in the
-radical. -/
-@[simp]
-theorem radicalQuotientMk_eq_zero_iff (x : A) :
-    radicalQuotientMk A x = 0 ↔ x ∈ A.radical :=
-  A.quotientOfLeRadicalMk_eq_zero_iff A.radical le_rfl x
 
 /-- Quotienting a finite bilinear module by its radical produces a nondegenerate module. -/
 theorem isNondegenerate_radicalQuotient : (radicalQuotient A).IsNondegenerate :=
