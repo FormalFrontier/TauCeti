@@ -38,9 +38,9 @@ computed bigradings are exactly the two extreme bigradings of that tensor power.
 Nothing about the homology is proved here, and the gradings of the remaining grid states are
 not compared with these two: only the two marking states are graded.
 
-The Maslov computation reduces to counts of pairs of columns: strict comparisons where a state or
-a marking set is paired with one of its own kind, and weak ones where a state is paired against
-the markings, which sit at the centres of their squares. Each of the three strict crossed counts
+The Maslov computation reduces to counts of pairs of columns. Only the state-to-marking direction
+uses weak comparisons against the centers of the marked squares; the marking-to-state direction
+and both self-pairings remain strict. Each of the three strict crossed counts
 differs from the plain count `#{(c, c') | c < c'}` by exactly `N - 1` — the missing pairs are the
 ones ending in the last column, respectively the ones with consecutive columns — and each of the
 two weak crossed counts exceeds it by exactly `1`. The five count comparisons are the private
@@ -194,11 +194,11 @@ private theorem card_filter_split (Q P : Fin (n + 2) × Fin (n + 2) → Prop)
 
 /-- The weakly increasing column pairs are the increasing ones together with the `n + 2` diagonal
 pairs: the case of the identity row assignment of
-`GridPoint.card_filter_le_eq_card_filter_lt_add_card`. -/
+`TauCeti.card_filter_le_eq_card_filter_lt_add_card_of_injective`. -/
 private theorem card_filter_le :
     (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + (n + 2) := by
-  simpa using GridPoint.card_filter_le_eq_card_filter_lt_add_card
+  simpa using card_filter_le_eq_card_filter_lt_add_card_of_injective
     (f := (id : Fin (n + 2) → Fin (n + 2))) Function.injective_id
 
 /-- A set of column pairs cut out by prescribing the second column as a function of the first,
@@ -331,7 +331,7 @@ private theorem card_filter_le_O_le_X :
     rw [unknot_O_apply, unknot_X_apply]
     constructor
     · rintro ⟨h1, h2⟩
-      have h1' : (p.1 : ℕ) ≤ (p.2 : ℕ) := h1
+      have h1' : (p.1 : ℕ) ≤ (p.2 : ℕ) := Fin.le_def.mp h1
       have h2' : (finRotate (n + 2) p.2 : ℕ) < (p.1 : ℕ) := Fin.not_le.mp h2
       have hlast : p.2 = Fin.last (n + 1) := by
         by_contra hne
@@ -366,7 +366,7 @@ private theorem card_filter_le_X_le_O :
     rw [unknot_O_apply, unknot_X_apply]
     constructor
     · rintro ⟨h1, h2⟩
-      have h1' : (p.1 : ℕ) ≤ (p.2 : ℕ) := h1
+      have h1' : (p.1 : ℕ) ≤ (p.2 : ℕ) := Fin.le_def.mp h1
       have h2' : (p.2 : ℕ) < (finRotate (n + 2) p.1 : ℕ) := Fin.not_le.mp h2
       have hne : p.1 ≠ Fin.last (n + 1) := by
         intro hlast

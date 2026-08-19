@@ -25,6 +25,8 @@ reversal is in `TauCeti.KnotTheory.Grid.JFunction.Basic` (`GridState.J_rotate`).
 themselves are *not* rotation invariant: they pair a grid state against the markings, which sit at
 the centres of their squares, so the half-turn about a grid point that rotates a state and the
 half-turn about a square centre that rotates the markings are different maps of the torus.
+This distinction and its grading consequence follow the analysis in
+[TauCeti pull request #3135](https://github.com/TauCetiProject/TauCeti/pull/3135).
 
 ## Main definitions
 
