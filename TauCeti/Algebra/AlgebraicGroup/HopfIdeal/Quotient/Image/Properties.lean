@@ -65,11 +65,12 @@ private theorem image_baseChange_injective (f : H ⟶ K)
     (L : Type u) [Field L] [Algebra k L] :
     Function.Injective
       (Algebra.TensorProduct.map (imageι f).hom.toAlgHom (AlgHom.id k L)) := by
-  change Function.Injective
-    (TensorProduct.map (imageι f).hom.toLinearMap (LinearMap.id : L →ₗ[k] L))
-  exact TensorProduct.map_injective_of_flat_flat
-    (imageι f).hom.toLinearMap (LinearMap.id : L →ₗ[k] L)
+  have h := TensorProduct.map_injective_of_flat_flat
+    (imageι f).hom.toAlgHom.toLinearMap (AlgHom.id k L).toLinearMap
       (imageι_injective f) Function.injective_id
+  rw [← TensorProduct.AlgebraTensorModule.map_eq,
+    ← Algebra.TensorProduct.toLinearMap_map] at h
+  exact h
 
 end CommHopfAlgCat
 
