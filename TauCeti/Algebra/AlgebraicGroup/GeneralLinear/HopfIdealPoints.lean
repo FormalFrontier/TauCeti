@@ -19,6 +19,10 @@ vanishing on the Hopf ideal and is functorial in the value algebra.
 
 * `TauCeti.GeneralLinear.hopfIdealPointsSubgroup`: the matrix subgroup cut out by a Hopf ideal
   in the general-linear coordinate ring.
+* `TauCeti.GeneralLinear.mem_hopfIdealPointsSubgroup_iff`: membership is characterized by
+  vanishing on the Hopf ideal.
+* `TauCeti.GeneralLinear.hopfIdealPointsSubgroup_le_of_le`: larger Hopf ideals cut out smaller
+  point subgroups.
 * `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup`: functoriality of that subgroup in the
   value algebra.
 -/
@@ -68,6 +72,31 @@ theorem pointsMulEquiv_mem_hopfIdealPointsSubgroup
       (coordinateHopfAlgebra R n) I (CommAlgCat.of R A)) :
     pointsMulEquiv n q ∈ hopfIdealPointsSubgroup n I A := by
   exact ⟨q, hq, rfl⟩
+
+/-- A point pulled back along a coordinate morphism that kills a Hopf ideal lies in the
+general-linear subgroup cut out by that ideal. -/
+theorem pointsMulEquiv_mapPointsFunctor_mem_hopfIdealPointsSubgroup
+    {H : CommHopfAlgCat.{u} R}
+    (I : HopfIdeal R (coordinateHopfAlgebra R n))
+    (φ : coordinateHopfAlgebra R n ⟶ H)
+    (hφ : I.toIdeal ≤ RingHom.ker φ.hom.toAlgHom.toRingHom)
+    (A : Type w) [CommRing A] [Algebra R A]
+    (p : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R A)) :
+    pointsMulEquiv n ((CommHopfAlgCat.mapPointsFunctor φ).app (CommAlgCat.of R A) p) ∈
+      hopfIdealPointsSubgroup n I A := by
+  let q : HopfAlgebra.points
+      (R := R) (H := coordinateHopfAlgebra R n) (CommAlgCat.of R A) :=
+    (CommHopfAlgCat.mapPointsFunctor φ).app (CommAlgCat.of R A) p
+  apply pointsMulEquiv_mem_hopfIdealPointsSubgroup n I A q
+  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+  intro x hx
+  dsimp only [q]
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply]
+  have hx' := hφ hx
+  rw [RingHom.mem_ker] at hx'
+  have hxmap : φ.hom x = 0 := by
+    simpa only [BialgHom.coe_toAlgHom, AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using hx'
+  rw [hxmap, map_zero]
 
 /-- Applying a value-algebra homomorphism entrywise preserves the general-linear point subgroup
 cut out by a Hopf ideal. -/

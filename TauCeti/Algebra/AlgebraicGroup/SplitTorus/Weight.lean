@@ -32,6 +32,8 @@ faithful, so it is what turns a spanning set of weights into a closed immersion 
 
 ## Main results
 
+* `TauCeti.SplitTorus.apply_weightCharacter`: evaluation of a weight character under an
+  arbitrary multiplicative character.
 * `TauCeti.SplitTorus.charOfPoint_weightCharacter`: the value of a weight character at a point.
 * `TauCeti.SplitTorus.closure_range_weightCharacter_eq_top_iff`: weights generate the character
   group exactly when they span the lattice of exponent vectors.
@@ -70,6 +72,18 @@ theorem toAdd_weightCharacter (μ : σ → ℤ) (j : σ) :
     Multiplicative.toAdd (weightCharacter μ) j = μ j := by
   simp [weightCharacter]
 
+/-- Evaluating a split-torus weight under a multiplicative character gives the corresponding
+monomial in the free-abelian coordinates of that character. -/
+theorem apply_weightCharacter
+    (χ : Multiplicative (σ →₀ ℤ) →* Aˣ) (μ : σ → ℤ) :
+    χ (weightCharacter μ) = torusCharacter (freeAbelianCharEquiv χ) μ := by
+  rw [weightCharacter]
+  conv_lhs =>
+    rw [← freeAbelianCharEquiv.symm_apply_apply χ,
+      freeAbelianCharEquiv_symm_apply_ofAdd]
+  rw [torusCharacter_def, Finsupp.prod_fintype _ _ fun _ => zpow_zero _]
+  exact Finset.prod_congr rfl fun j _ => by simp
+
 /-- **The value of a weight character at a point of the split torus** is the corresponding
 monomial in the coordinates of the point. -/
 @[simp]
@@ -83,12 +97,7 @@ theorem charOfPoint_weightCharacter
     refine Units.ext ?_
     rw [pointsMulEquiv_apply_coe, freeAbelianCharEquiv_apply,
       DiagonalizableGroup.charOfPoint_apply_coe]
-  have hchar : DiagonalizableGroup.charOfPoint q.ofConv =
-      (freeAbelianCharEquiv (M := Aˣ)).symm (pointsMulEquiv (R := R) (A := A) q) := by
-    rw [hcoord, MulEquiv.symm_apply_apply]
-  rw [hchar, weightCharacter, freeAbelianCharEquiv_symm_apply_ofAdd, torusCharacter_def,
-    Finsupp.prod_fintype _ _ fun _ => zpow_zero _]
-  exact Finset.prod_congr rfl fun j _ => by simp
+  rw [apply_weightCharacter, ← hcoord]
 
 /-- **A family of weights generates the character group of the split torus exactly when it spans
 the lattice of exponent vectors.** -/

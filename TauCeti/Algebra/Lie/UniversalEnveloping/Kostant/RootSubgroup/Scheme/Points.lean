@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.CommonKernel
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
@@ -96,22 +95,19 @@ theorem kostantRootSubgroupMatrix_mem_generatedPoints
       (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) (CommAlgCat.of ℤ A)) :
     kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b q ∈
       kostantGeneratedPointsSubgroup e h ρ M hM hnil b A := by
-  let p : HopfAlgebra.points
-      (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ n) (CommAlgCat.of ℤ A) :=
-    toConv (q.ofConv.comp
-      (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom.toAlgHom)
-  have hp : p ∈ CommHopfAlgCat.quotientPointsSubgroup
-      (GeneralLinear.coordinateHopfAlgebra ℤ n)
-      (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) (CommAlgCat.of ℤ A) := by
-    rw [kostantGeneratedDefiningIdeal_def]
-    exact CommHopfAlgCat.mapPoints_commonKernel_mem_quotientPointsSubgroup
-      (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) i
-        (CommAlgCat.of ℤ A) q
-  rw [kostantGeneratedPointsSubgroup_def,
-    ← pointsMulEquiv_kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b A q]
-  simpa only [p, GeneralLinear.pointsMulEquiv_apply] using
-    GeneralLinear.pointsMulEquiv_mem_hopfIdealPointsSubgroup n
-      (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) A p hp
+  have hmatrix : GeneralLinear.pointsMulEquiv n
+      ((CommHopfAlgCat.mapPointsFunctor
+        (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).app
+          (CommAlgCat.of ℤ A) q) =
+      kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b q := by
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply, GeneralLinear.pointsMulEquiv_apply]
+    exact pointsMulEquiv_kostantRootSubgroupCoordinateMap
+      e h ρ M hM i (hnil i) b A q
+  rw [kostantGeneratedPointsSubgroup_def, ← hmatrix]
+  exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_mem_hopfIdealPointsSubgroup n
+    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
+    (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
+    (kostantGeneratedDefiningIdeal_toIdeal_le_ker e h ρ M hM hnil b i) A q
 
 /-- In basis coordinates, a parametrized Kostant root-subgroup element is its represented
 root-subgroup matrix. -/

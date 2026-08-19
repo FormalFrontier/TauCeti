@@ -36,11 +36,15 @@ using ordinary integers.
 
 * `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv`: the typed comparison between
   scheme-valued points of `D(G)` and algebra points of `R[G]`.
+* `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv_symm_apply_left`: the underlying
+  spectrum map of the inverse comparison.
 * `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue` and
   `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv_groupSchemeMap`: its naturality in
   the value algebra and the character group.
 * `TauCeti.DiagonalizableGroup.schemePointsMulEquiv`: scheme-valued points of `D(G)` are
   characters `G →* Aˣ`.
+* `TauCeti.DiagonalizableGroup.schemePointsMulEquiv_eq_pointsMulEquiv_groupSchemePointsMulEquiv`:
+  this character comparison factors through the convolution-point comparison.
 * `TauCeti.DiagonalizableGroup.schemePointsMulEquiv_mapValue`: this identification is natural
   in the value algebra.
 * `TauCeti.DiagonalizableGroup.schemePointsMulEquiv_groupSchemeMap`: a diagonalizable
@@ -80,12 +84,14 @@ open AlgebraicGeometry
 variable {R A B : Type u} [CommRing R] [CommRing A] [CommRing B]
 variable [Algebra R A] [Algebra R B]
 
+/-- The underlying-object isomorphism induced by the named Hopf-spectrum presentation. -/
 private noncomputable def groupSchemeIsoHopfSpec (G : FGCommGrpCat.{u}) :
     (groupScheme R G).X ≅
       ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateRing R G).obj)).X :=
   (Grp.forget _).mapIso (eqToIso (groupScheme_def R G))
 
+/-- The underlying Hopf spectrum identified with the relative spectrum of its group algebra. -/
 private noncomputable def hopfSpecIsoSpec (G : FGCommGrpCat.{u}) :
     ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
       (Opposite.op (coordinateRing R G).obj)).X ≅
@@ -93,6 +99,7 @@ private noncomputable def hopfSpecIsoSpec (G : FGCommGrpCat.{u}) :
   (Grp.forget _).mapIso
     (eqToIso (hopfSpec_obj_eq_asOver R (coordinateRing R G).obj))
 
+/-- The composite identification of the named diagonalizable group with its relative spectrum. -/
 private noncomputable def groupSchemeIsoSpec (G : FGCommGrpCat.{u}) :
     (groupScheme R G).X ≅
       (Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R)) :=
@@ -166,6 +173,21 @@ lemma groupSchemePointsMulEquiv_apply_left_comp (G : FGCommGrpCat.{u})
   rw [Over.comp_left, groupSchemeIsoSpec_hom_left] at hleft
   exact hleft
 
+/-- The inverse typed point comparison is the spectrum morphism induced by the algebra point,
+transported to the named diagonalizable group scheme. -/
+lemma groupSchemePointsMulEquiv_symm_apply_left (G : FGCommGrpCat.{u})
+    (f : WithConv (MonoidAlgebra R G →ₐ[R] A)) :
+    ((groupSchemePointsMulEquiv (R := R) (A := A) G).symm f).left =
+      Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
+        eqToHom (groupScheme_X_left R G).symm := by
+  apply (cancel_mono (eqToHom (groupScheme_X_left R G))).1
+  rw [groupSchemePointsMulEquiv_apply_left_comp, MulEquiv.apply_symm_apply]
+  -- `Spec.mapMulEquiv` has no rewrite lemma exposing the underlying scheme morphism.
+  change Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) =
+    (Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
+      eqToHom (groupScheme_X_left R G).symm) ≫ eqToHom (groupScheme_X_left R G)
+  simp
+
 /-- The typed scheme-point comparison is natural in the value algebra. -/
 theorem groupSchemePointsMulEquiv_mapValue (G : FGCommGrpCat.{u}) (phi : A →ₐ[R] B)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -200,6 +222,7 @@ theorem groupSchemePointsMulEquiv_mapValue (G : FGCommGrpCat.{u}) (phi : A →�
       (p ≫ (groupSchemeIsoSpec (R := R) G).hom))).symm
   exact hcomp.trans (hpcomp.trans hnat)
 
+/-- The relative spectrum map induced contravariantly by a character-group homomorphism. -/
 private noncomputable def hopfSpecMapAsOver {G H : FGCommGrpCat.{u}} (f : G ⟶ H) :
     (Spec (CommRingCat.of (MonoidAlgebra R H))).asOver (Spec (CommRingCat.of R)) ⟶
       (Spec (CommRingCat.of (MonoidAlgebra R G))).asOver (Spec (CommRingCat.of R)) :=
@@ -273,6 +296,17 @@ noncomputable def schemePointsMulEquiv (G : FGCommGrpCat.{u}) :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (groupScheme R G).X) ≃* (G →* Aˣ) :=
   (groupSchemePointsMulEquiv (R := R) (A := A) G).trans pointsMulEquiv
+
+/-- The diagonalizable-group scheme-points character is obtained by first passing to its
+convolution point and then applying the algebra-valued points equivalence. -/
+theorem schemePointsMulEquiv_eq_pointsMulEquiv_groupSchemePointsMulEquiv
+    (G : FGCommGrpCat.{u})
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R G).X) :
+    schemePointsMulEquiv (R := R) (A := A) G p =
+      pointsMulEquiv
+        (groupSchemePointsMulEquiv (R := R) (A := A) G p) := by
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply]
 
 /-- A scheme-valued point, viewed as a character, evaluates a group element on the
 corresponding group-algebra basis monomial. -/

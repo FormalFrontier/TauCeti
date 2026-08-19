@@ -95,13 +95,11 @@ noncomputable abbrev coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
 
 /-- The map on algebra-valued points induced by a diagonalizable-group coordinate morphism is
 the contravariant point map given by precomposition of characters. -/
-@[simp]
+-- Not `@[simp]`: simplification unfolds `coordinateMap` on the left before this lemma can apply.
 theorem mapPointsFunctor_coordinateMap_app {G H : FGCommGrpCat.{v}} (φ : G ⟶ H)
     (A : CommAlgCat.{w} R)
     (p : HopfAlgebra.points (R := R) (H := MonoidAlgebra R H) A) :
-    (CommHopfAlgCat.mapPointsFunctor
-      (CommHopfAlgCat.ofHom
-        (MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ)))).app A p =
+    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R φ).hom).app A p =
       pointsMap (FGCommGrpCat.toMonoidHom φ) p := by
   rfl
 
