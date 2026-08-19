@@ -103,7 +103,7 @@ least one.
 
 The order is passed to `TauCeti.IsAdditiveRootOrder` as an explicit argument here, because it is
 the object asserted to exist rather than an instance available in the context. -/
-theorem exists_isAdditiveRootOrder [Finite ι] (b : P.Base) :
+theorem exists_isAdditiveRootOrder [Countable ι] (b : P.Base) :
     ∃ l : LinearOrder ι, @IsAdditiveRootOrder ι R M N _ _ _ _ _ _ P l b := by
   obtain ⟨f, hf⟩ := Countable.exists_injective_nat ι
   have hinj : Function.Injective fun i : ι ↦ toLex (b.height i, f i) := by
