@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,6 +25,8 @@ subcomodules to be usable as comodules in their own right.
 * `TauCeti.Subcomodule.inducedCoact`: the coaction on the subtype of a subcomodule.
 * `TauCeti.Subcomodule.instComodule`: the induced right-comodule structure.
 * `TauCeti.Subcomodule.subtype`: the inclusion as a comodule morphism.
+* `TauCeti.Comodule.Hom.codRestrict`: a comodule morphism corestricted to a
+  subcomodule containing its image.
 
 ## References
 
@@ -231,5 +234,71 @@ theorem subtype_apply (n : N) : Subcomodule.subtype N n = n :=
   (rfl)
 
 end Subcomodule
+
+namespace Comodule.Hom
+
+variable {N : Type*}
+variable [AddCommMonoid N] [Module R N] [Comodule R C N]
+
+/-- Corestrict a comodule morphism to a subcomodule containing its image. -/
+noncomputable def codRestrict (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) : Hom R C M P :=
+  let g : M →ₗ[R] P :=
+    { toFun := fun m ↦ ⟨f m, h m⟩
+      map_add' := fun x y ↦ Subtype.ext (map_add f.toLinearMap x y)
+      map_smul' := fun r x ↦ Subtype.ext (map_smul f.toLinearMap r x) }
+  { toLinearMap := g
+    map_coact := by
+      ext m
+      apply Module.Flat.rTensor_preserves_injective_linearMap
+        (SMulMemClass.subtype P) Subtype.val_injective
+      simp only [LinearMap.comp_apply]
+      calc
+        (SMulMemClass.subtype P).rTensor C
+            (TensorProduct.map g LinearMap.id
+              (Comodule.coact (R := R) (C := C) (M := M) m)) =
+          TensorProduct.map f.toLinearMap LinearMap.id
+            (Comodule.coact (R := R) (C := C) (M := M) m) := by
+              rw [LinearMap.rTensor_def, TensorProduct.map_map]
+              rfl
+        _ = Comodule.coact (R := R) (C := C) (M := N) (f m) :=
+          f.map_coact_apply m
+        _ = (SMulMemClass.subtype P).rTensor C
+            (Comodule.coact (R := R) (C := C) (M := P) ⟨f m, h m⟩) :=
+          (Subcomodule.subtype_rTensor_coact P ⟨f m, h m⟩).symm }
+
+private theorem codRestrict_toLinearMap_def (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) :
+    (f.codRestrict P h).toLinearMap = f.toLinearMap.codRestrict P.toSubmodule h :=
+  LinearMap.ext fun _ ↦ rfl
+
+private theorem codRestrict_apply_def (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) (m : M) : (f.codRestrict P h m : N) = f m :=
+  rfl
+
+/-- The underlying linear map of a corestricted comodule morphism is the ordinary linear
+corestriction. -/
+@[simp]
+theorem codRestrict_toLinearMap (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) :
+    (f.codRestrict P h).toLinearMap = f.toLinearMap.codRestrict P.toSubmodule h :=
+  by exact codRestrict_toLinearMap_def f P h
+
+/-- Corestricting a comodule morphism changes only its codomain. -/
+@[simp]
+theorem codRestrict_apply (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) (m : M) : (f.codRestrict P h m : N) = f m :=
+  by exact codRestrict_apply_def f P h m
+
+/-- Composing a corestricted comodule morphism with the subcomodule inclusion recovers the
+original morphism. -/
+@[simp]
+theorem subtype_comp_codRestrict (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) :
+    Comodule.Hom.comp (Subcomodule.subtype P) (f.codRestrict P h) = f := by
+  ext m
+  simp
+
+end Comodule.Hom
 
 end TauCeti

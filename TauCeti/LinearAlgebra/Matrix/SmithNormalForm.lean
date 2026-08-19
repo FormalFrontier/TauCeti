@@ -456,7 +456,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
   refine ⟨⟨L_big, hL_det_big⟩, ⟨R_big, hR_det_big⟩, d', hd'_pos,
     by simp [d'], ?_, ?_, ?_, ?_⟩
   · intro i hi1 hi2
-    simp only [d']; rw [if_neg (show i ≠ (0 : Fin (k + 2)) from hi1), if_neg hi2]
+    simp only [d']; rw [ite_eq_right (show i ≠ (0 : Fin (k + 2)) from hi1), ite_eq_right hi2]
   · exact gcd_natAbs_le_left a b ha
   · exact gcd_natAbs_lt_left_of_not_dvd a b ha
   -- definitional: the values of the constructed `SL` elements are `L_big` and `R_big`
@@ -468,8 +468,8 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
       (fun i ↦ by simp only [e]; exact genEquiv_symm_inr_ne_j k j hj i)
     -- definitional: unfold the local abbreviation `d'` at the pivot index
     · change (if j = (0 : Fin (k + 2)) then g else if j = j then p * q * g else d j) = _
-      rw [if_neg (fun h ↦ hj (by rw [h]; rfl)), if_pos rfl]
-    · intro i hi0 hij; simp only [d', if_neg hi0, if_neg hij]
+      rw [ite_eq_right (fun h ↦ hj (by rw [h]; rfl)), ite_eq_left rfl]
+    · intro i hi0 hij; simp only [d', ite_eq_right hi0, ite_eq_right hij]
 
 private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
     (L R : Matrix (Fin m) (Fin m) ℤ) (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
@@ -608,14 +608,14 @@ private lemma divChain_prepend (k : ℕ) (c : ℤ) (d_tail' : Fin (k + 1) → �
   cases i with
   | zero =>
     -- definitional: the constructor `⟨0, _⟩` is the literal `0` in `Fin (k + 2)`
-    rw [if_pos (show (⟨0, by omega⟩ : Fin (k + 2)) = 0 from rfl),
-      if_neg (show (⟨1, hi⟩ : Fin (k + 2)) ≠ 0 from
+    rw [ite_eq_left (show (⟨0, by omega⟩ : Fin (k + 2)) = 0 from rfl),
+      ite_eq_right (show (⟨1, hi⟩ : Fin (k + 2)) ≠ 0 from
         fun h ↦ absurd (Fin.ext_iff.mp h) (by simp))]
     exact hc ⟨0, by omega⟩
   | succ i =>
-    rw [if_neg (show (⟨i + 1, by omega⟩ : Fin (k + 2)) ≠ 0 from
+    rw [ite_eq_right (show (⟨i + 1, by omega⟩ : Fin (k + 2)) ≠ 0 from
         fun h ↦ absurd (Fin.ext_iff.mp h) (by simp)),
-      if_neg (show (⟨i + 2, hi⟩ : Fin (k + 2)) ≠ 0 from
+      ite_eq_right (show (⟨i + 2, hi⟩ : Fin (k + 2)) ≠ 0 from
         fun h ↦ absurd (Fin.ext_iff.mp h) (by simp))]
     -- definitional: `i + 1 - 1` reduces to `i`
     change d_tail' ⟨i, by omega⟩ ∣ d_tail' ⟨i + 1, by omega⟩
@@ -783,17 +783,8 @@ theorem smith_normal_form_unique {c d : Fin n → ℤ} (hc_pos : ∀ i, 0 ≤ c 
       (R : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal d) : c = d := by
   have h' : (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
       (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal c := by
-    calc (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
-        (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ)
-        = (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) *
-            ((L : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal c *
-              (R : Matrix (Fin n) (Fin n) ℤ)) *
-            (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) := by rw [h]
-      _ = ((↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * ↑L) * Matrix.diagonal c *
-            (↑R * (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ)) := by
-          simp only [Matrix.mul_assoc]
-      _ = Matrix.diagonal c := by
-          rw [Units.inv_mul, Units.mul_inv, Matrix.one_mul, Matrix.mul_one]
+    rw [← h]
+    simp [Matrix.mul_assoc]
   have key : ∀ k (hk : k ≤ n),
       ∏ j : Fin k, c ⟨j.val, by omega⟩ = ∏ j : Fin k, d ⟨j.val, by omega⟩ := fun k hk ↦
     Int.dvd_antisymm

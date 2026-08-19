@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,6 +25,11 @@ of an arbitrary morphism of schemes `f : X ⟶ S`, the hypothesis being `s ≫ f
   residue field of the base, `κ(y) ≅ κ(s y)`, with inverse the residue-field map of `s`.
 * `residueDegree_comp_of_section`: residue degrees over a further base are computed on the base,
   `[κ(s y) : κ(g y)] = [κ(y) : κ(g y)]` for `g : S ⟶ Z`.
+* `residueFieldRingEquivOfSection`: over a base `Spec K` with `K` a field, the residue field at a
+  `K`-rational point *is* `K`, through the evaluation map that Mathlib attaches to any `K`-point,
+  `X.descResidueField (Scheme.stalkClosedPointTo s)`. The section hypothesis makes that map
+  bijective (`descResidueField_bijective_of_section`), which is what lets a `K`-rational point
+  transport `K`-structures to the fibre data at the point.
 
 The divisor-level consequences live in `TauCeti.AlgebraicGeometry.RationalPoint.Degree`, which
 keeps the results here independent of Weil divisor theory. They are the geometric source of the
@@ -39,8 +45,9 @@ is a statement about pullbacks in an arbitrary category rather than about scheme
 
 No external mathematics is vendored; the proofs reuse Mathlib's `Scheme.Hom.residueFieldMap`,
 `Scheme.residueFieldCongr` and `Scheme.Hom.residueDegree` API, `CategoryTheory.asIso` and
-`CategoryTheory.Iso.inv_ext` for the isomorphism, and Tau Ceti's `residueDegree_comp` and
-`residueDegree_eq_one_iff`.
+`CategoryTheory.Iso.inv_ext` for the isomorphism, Mathlib's `Scheme.descResidueField`,
+`Scheme.stalkClosedPointTo` and `Scheme.residue_descResidueField` for the rational-point
+evaluation map, and Tau Ceti's `residueDegree_comp` and `residueDegree_eq_one_iff`.
 -/
 
 public section
@@ -162,6 +169,68 @@ lemma residueFieldIsoOfSection_inv (hs : s ≫ f = 𝟙 S) (y : S) :
   Iso.inv_ext <| by
     rw [residueFieldIsoOfSection_hom, Category.assoc,
       residueFieldMap_comp_residueFieldMap_of_section hs y]
+
+/-! ### The residue field at a rational point
+
+Over a base `Spec K` with `K` a field, the residue field at a rational point is not merely
+isomorphic to the residue field of the base: it *is* the ground field `K`, through the canonical
+evaluation map that Mathlib attaches to any `K`-point of `X`, namely
+`X.descResidueField (Scheme.stalkClosedPointTo s)`. -/
+
+section OverField
+
+variable {K : Type u} [Field K] {X : Scheme.{u}} {f : X ⟶ Spec (.of K)} {s : Spec (.of K) ⟶ X}
+
+/-- A section of `f : X ⟶ Spec K` maps the stalk at its image point onto `K`: the induced map
+`𝒪_{X, s 0} ⟶ K` of Mathlib's `Scheme.stalkClosedPointTo` is surjective, because composing it
+with the stalk map of `f` gives the corresponding map for the identity of `Spec K`, which is an
+isomorphism. -/
+lemma stalkClosedPointTo_surjective_of_section (hs : s ≫ f = 𝟙 (Spec (.of K))) :
+    Function.Surjective (Scheme.stalkClosedPointTo s) := by
+  -- The hypothesis is used through a universally quantified morphism, since the *type* of
+  -- `Scheme.stalkClosedPointTo t` depends on `t`; substituting `t := 𝟙 _` avoids a transport.
+  have key : ∀ t : Spec (.of K) ⟶ Spec (.of K), t = 𝟙 (Spec (.of K)) →
+      Function.Surjective (Scheme.stalkClosedPointTo t) := by
+    rintro t rfl
+    have H : ∀ x : (Spec (.of K) : Scheme.{u}),
+        IsIso (Scheme.Hom.stalkMap (𝟙 (Spec (.of K))) x) := fun _ ↦ inferInstance
+    have : IsIso (Scheme.stalkClosedPointTo (𝟙 (Spec (.of K)))) := by
+      rw [Scheme.stalkClosedPointTo]
+      have := H (IsLocalRing.closedPoint K)
+      infer_instance
+    exact (ConcreteCategory.bijective_of_isIso _).2
+  intro a
+  obtain ⟨b, hb⟩ := key _ hs a
+  -- The last step is `ConcreteCategory.comp_apply`, which is definitional; it cannot be applied
+  -- as a rewrite here, because the point `s (closedPoint K)` inhabits `↥(Spec (.of K))` only up
+  -- to unfolding `Spec`, so the rewritten term is not type-correct at reducible transparency.
+  exact ⟨Scheme.Hom.stalkMap f _ b, by rw [← hb, Scheme.stalkClosedPointTo_comp]; rfl⟩
+
+/-- The canonical evaluation map `κ(s 0) ⟶ K` at a `K`-rational point is bijective: it is
+injective as a map of fields, and surjective because the stalk already surjects onto `K`. -/
+lemma descResidueField_bijective_of_section (hs : s ≫ f = 𝟙 (Spec (.of K))) :
+    Function.Bijective (X.descResidueField (Scheme.stalkClosedPointTo s)) := by
+  refine ⟨(X.descResidueField (Scheme.stalkClosedPointTo s)).hom.injective, fun k ↦ ?_⟩
+  obtain ⟨a, ha⟩ := stalkClosedPointTo_surjective_of_section hs k
+  refine ⟨X.residue _ a, ?_⟩
+  rw [← ha, ← ConcreteCategory.comp_apply, Scheme.residue_descResidueField]
+
+/-- The residue field of `X` at a `K`-rational point is canonically the ground field `K`, through
+the evaluation map of the point. -/
+noncomputable def residueFieldRingEquivOfSection (hs : s ≫ f = 𝟙 (Spec (.of K))) :
+    IsLocalRing.ResidueField (X.presheaf.stalk (s (IsLocalRing.closedPoint K))) ≃+* K :=
+  RingEquiv.ofBijective (X.descResidueField (Scheme.stalkClosedPointTo s)).hom
+    (descResidueField_bijective_of_section hs)
+
+/-- `residueFieldRingEquivOfSection` is the evaluation map of the rational point. -/
+@[simp]
+lemma residueFieldRingEquivOfSection_apply (hs : s ≫ f = 𝟙 (Spec (.of K)))
+    (z : IsLocalRing.ResidueField (X.presheaf.stalk (s (IsLocalRing.closedPoint K)))) :
+    residueFieldRingEquivOfSection hs z =
+      X.descResidueField (Scheme.stalkClosedPointTo s) z :=
+  (rfl)
+
+end OverField
 
 end AlgebraicGeometry
 

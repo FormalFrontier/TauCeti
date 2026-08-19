@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,17 +21,19 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 
 ## Main results
 
-* `TauCeti.NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
-* `TauCeti.NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
-* `TauCeti.NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
-* `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
-* `TauCeti.NumberField.not_isSquare_radicand`: the radicand is not a rational square.
-* `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
-* `TauCeti.NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
-* `TauCeti.NumberField.discr_one_halfGen`: the discriminant of `{1, (1+θ)/2}` over `ℚ` is `d`.
+* `NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
+* `NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
+* `NumberField.gen_sq`: the integral generator squares to the radicand in `𝓞 K`.
+* `NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
+* `NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
+* `NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `NumberField.not_isSquare_radicand`: the radicand is not a rational square.
+* `NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
+* `NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
+* `NumberField.discr_one_halfGen`: the discriminant of `{1, (1+θ)/2}` over `ℚ` is `d`.
 
 The trace and discriminant computations reuse the generic quadratic-extension API
-`TauCeti.NumberField.trace_eq_zero_of_sq_ratCast` and
+`NumberField.trace_eq_zero_of_sq_ratCast` and
 `TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap` from `TauCeti.FieldTheory.Trace`.
 -/
 
@@ -39,7 +42,7 @@ public section
 open Polynomial NumberField Module
 open scoped Matrix
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
@@ -60,17 +63,28 @@ theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
     minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
 
 omit [NumberField K] in
+/-- The integral generator squares to the radicand: `θ² = d` in `𝓞 K`. -/
+@[simp] theorem gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
+  have hae := minpoly.aeval ℤ θ
+  rw [hmin] at hae
+  have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
+    simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
+  linear_combination h2
+
+omit [NumberField K] in
 /-- The generator squares to the radicand in `K`: `θ² = d`. -/
 @[simp] theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℤ K d := by
-  have h : θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
-    have hae := minpoly.aeval ℤ θ
-    rw [hmin] at hae
-    have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
-      simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
-    linear_combination h2
-  have := congrArg (algebraMap (𝓞 K) K) h
+  have := congrArg (algebraMap (𝓞 K) K) (gen_sq hmin)
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
+
+omit [NumberField K] in
+/-- The generator squares to the radicand viewed over `ℚ`: `θ² = (d : ℚ)` in `K`. This is
+`coe_gen_sq` transported along `ℤ → ℚ → K`, the form fed to the generic square-root-basis API. -/
+theorem coe_gen_sq_ratCast [CharZero K] (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
+  rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
 
 /-- The generator is irrational: `θ ∉ ℚ`. -/
 theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
@@ -89,8 +103,7 @@ factorization `(θ - q)(θ + q) = θ² - d = 0` would force `θ = ±q ∈ ℚ`. 
 theorem not_isSquare_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     ¬ IsSquare (((d : ℤ) : ℚ)) := by
   rintro ⟨q, hq⟩
-  have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
   have hq' : algebraMap ℚ K ((d : ℤ) : ℚ) = algebraMap ℚ K q * algebraMap ℚ K q := by
     rw [← map_mul, ← hq]
   have hfac : ((θ : K) - algebraMap ℚ K q) * ((θ : K) + algebraMap ℚ K q) = 0 := by
@@ -103,8 +116,7 @@ theorem not_isSquare_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d) :
 theorem trace_gen_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     Algebra.trace ℚ K (θ : K) = 0 := by
   -- Specialise the generic `trace_eq_zero_of_sq_ratCast` to `θ² = d` and the irrationality of `θ`.
-  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
   exact trace_eq_zero_of_sq_ratCast hd' (gen_notMem_range hmin)
 
 /-- The discriminant of the `ℚ`-family `{1, θ}` is `4d`. -/
@@ -112,8 +124,7 @@ theorem discr_one_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.discr ℚ ![(1 : K), (θ : K)] = ((4 * d : ℤ) : ℚ) := by
   -- Specialise the generic square-root-basis discriminant `discr_one_elem_eq_of_sq_algebraMap`.
-  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
   rw [TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap (finrank_rat_eq_two hmin hgen) hd'
     (gen_notMem_range hmin)]
   push_cast; ring
@@ -133,4 +144,4 @@ theorem discr_one_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d)
   rw [hP, Algebra.discr_of_matrix_mulVec, discr_one_gen hmin hgen, Matrix.det_fin_two_of]
   push_cast; ring
 
-end TauCeti.NumberField
+end NumberField

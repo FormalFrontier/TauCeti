@@ -1,10 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.JordanChevalley
+public import TauCeti.RingTheory.Adjoin.Unit
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # Multiplicative Jordan–Chevalley decomposition
@@ -24,13 +27,15 @@ through faithful representations of affine algebraic groups.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsSemisimple`: a linear automorphism is semisimple when its
+* `LinearMap.GeneralLinearGroup.IsSemisimple`: a linear automorphism is semisimple when its
   underlying endomorphism is semisimple.
-* `TauCeti.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
-  difference from the identity is nilpotent.
-* `TauCeti.GeneralLinearGroup.jordanDecomposition`: the canonical commuting semisimple and
+* `LinearMap.GeneralLinearGroup.IsSemisimple.inv` and `.zpow`: semisimple automorphisms are closed
+  under inverses and integer powers.
+* `LinearMap.GeneralLinearGroup.IsSemisimple.mul_of_commute`: commuting semisimple automorphisms
+  have semisimple product.
+* `LinearMap.GeneralLinearGroup.jordanDecomposition`: the canonical commuting semisimple and
   unipotent factors.
-* `TauCeti.GeneralLinearGroup.eq_jordanDecomposition_iff`: the existence and uniqueness
+* `LinearMap.GeneralLinearGroup.eq_jordanDecomposition_iff`: the existence and uniqueness
   characterization of those factors.
 
 ## References
@@ -42,15 +47,11 @@ through faithful representations of affine algebraic groups.
 
 public section
 
-namespace TauCeti
-
-open LinearMap
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open Module
 
-universe u v
+universe u v w x
 
 section Definitions
 
@@ -60,9 +61,11 @@ variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 def IsSemisimple (g : GeneralLinearGroup K V) : Prop :=
   Module.End.IsSemisimple (g : End K V)
 
-/-- A linear automorphism is unipotent if its difference from the identity is nilpotent. -/
-def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=
-  _root_.IsNilpotent ((g : End K V) - 1)
+/-- Semisimplicity of a linear automorphism means semisimplicity of its underlying
+endomorphism. -/
+theorem isSemisimple_def (g : GeneralLinearGroup K V) :
+    IsSemisimple g ↔ Module.End.IsSemisimple (g : End K V) :=
+  Iff.rfl
 
 /-- The identity automorphism is semisimple. -/
 @[simp]
@@ -71,13 +74,58 @@ theorem isSemisimple_one [IsSemisimpleModule K V] :
   unfold IsSemisimple
   exact Module.End.isSemisimple_id
 
-/-- The identity automorphism is unipotent. -/
-@[simp]
-theorem isUnipotent_one : IsUnipotent (1 : GeneralLinearGroup K V) := by
-  unfold IsUnipotent
-  simp
-
 end Definitions
+
+section Field
+
+variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+  [FiniteDimensional K V]
+
+/-- The inverse of a semisimple linear automorphism is semisimple. -/
+theorem IsSemisimple.inv {g : GeneralLinearGroup K V} (hg : IsSemisimple g) :
+    IsSemisimple g⁻¹ := by
+  rw [isSemisimple_def] at hg ⊢
+  exact hg.of_mem_adjoin_singleton
+    (TauCeti.Units.coe_inv_mem_adjoin g (IsIntegral.of_finite K (g : End K V)))
+
+/-- A linear automorphism is semisimple if and only if its inverse is semisimple. -/
+@[simp]
+theorem isSemisimple_inv_iff (g : GeneralLinearGroup K V) :
+    IsSemisimple g⁻¹ ↔ IsSemisimple g := by
+  constructor
+  · intro hg
+    have := hg.inv
+    rwa [inv_inv] at this
+  · exact IsSemisimple.inv
+
+/-- Every natural power of a semisimple linear automorphism is semisimple. -/
+theorem IsSemisimple.pow {g : GeneralLinearGroup K V} (hg : IsSemisimple g) (n : ℕ) :
+    IsSemisimple (g ^ n) := by
+  rw [isSemisimple_def] at hg ⊢
+  simpa only [Units.val_pow_eq_pow_val] using hg.pow n
+
+/-- Every integer power of a semisimple linear automorphism is semisimple. -/
+theorem IsSemisimple.zpow {g : GeneralLinearGroup K V} (hg : IsSemisimple g) (n : ℤ) :
+    IsSemisimple (g ^ n) := by
+  cases n with
+  | ofNat n => simpa only [Int.ofNat_eq_natCast, zpow_natCast] using hg.pow n
+  | negSucc n => simpa only [zpow_negSucc] using (hg.pow n.succ).inv
+
+section PerfectField
+
+variable [PerfectField K]
+
+/-- The product of two commuting semisimple linear automorphisms is semisimple. -/
+theorem IsSemisimple.mul_of_commute {g h : GeneralLinearGroup K V}
+    (hg : IsSemisimple g) (hh : IsSemisimple h) (hcomm : Commute g h) :
+    IsSemisimple (g * h) := by
+  rw [isSemisimple_def] at hg hh ⊢
+  rw [Units.val_mul]
+  exact hg.mul_of_commute hcomm.units_val hh
+
+end PerfectField
+
+end Field
 
 section PerfectField
 
@@ -118,13 +166,14 @@ private theorem exists_jordanDecomposition (g : GeneralLinearGroup K V) :
   · unfold IsSemisimple
     rw [hs'_val]
     exact hs
-  · unfold IsUnipotent
+  · rw [isUnipotent_def]
     rw [hu'_sub]
     exact hs'n.isNilpotent_mul_left hn
   · exact (Commute.refl s').inv_right.mul_right hs'g
   · dsimp only [u']
     simp
 
+/-- The nilpotent additive part associated to a semisimple--unipotent factorization. -/
 private def additiveNilpotentPart
     (s u : GeneralLinearGroup K V) : End K V :=
   (s : End K V) * ((u : End K V) - 1)
@@ -133,7 +182,7 @@ omit [PerfectField K] [FiniteDimensional K V] in
 private theorem additiveNilpotentPart_isNilpotent
     {s u : GeneralLinearGroup K V} (hu : IsUnipotent u) (hsu : Commute s u) :
     _root_.IsNilpotent (additiveNilpotentPart s u) := by
-  unfold IsUnipotent at hu
+  rw [isUnipotent_def] at hu
   apply (hsu.units_val.sub_right (Commute.one_right _)).isNilpotent_mul_left
   exact hu
 
@@ -211,9 +260,19 @@ theorem eq_jordanDecomposition_iff (g s u : GeneralLinearGroup K V) :
 noncomputable def semisimplePart (g : GeneralLinearGroup K V) : GeneralLinearGroup K V :=
   (jordanDecomposition g).1
 
+/-- The semisimple part is the first factor of the canonical Jordan decomposition. -/
+theorem semisimplePart_def (g : GeneralLinearGroup K V) :
+    semisimplePart g = (jordanDecomposition g).1 :=
+  (rfl)
+
 /-- The unipotent factor of the multiplicative Jordan–Chevalley decomposition. -/
 noncomputable def unipotentPart (g : GeneralLinearGroup K V) : GeneralLinearGroup K V :=
   (jordanDecomposition g).2
+
+/-- The unipotent part is the second factor of the canonical Jordan decomposition. -/
+theorem unipotentPart_def (g : GeneralLinearGroup K V) :
+    unipotentPart g = (jordanDecomposition g).2 :=
+  (rfl)
 
 /-- The semisimple factor is semisimple. -/
 theorem isSemisimple_semisimplePart (g : GeneralLinearGroup K V) :
@@ -235,6 +294,62 @@ theorem commute_semisimplePart_unipotentPart (g : GeneralLinearGroup K V) :
 theorem semisimplePart_mul_unipotentPart (g : GeneralLinearGroup K V) :
     semisimplePart g * unipotentPart g = g :=
   (jordanDecomposition_spec g).2.2.2.symm
+
+/-- A binary operation preserving multiplication, semisimplicity, and unipotence preserves the
+multiplicative Jordan decomposition. -/
+theorem jordanDecomposition_map₂
+    {W : Type w} {U : Type x}
+    [AddCommGroup W] [Module K W] [FiniteDimensional K W]
+    [AddCommGroup U] [Module K U] [FiniteDimensional K U]
+    (F : GeneralLinearGroup K V → GeneralLinearGroup K W → GeneralLinearGroup K U)
+    (map_mul : ∀ a c b d, F (a * c) (b * d) = F a b * F c d)
+    (map_isSemisimple : ∀ {a b}, IsSemisimple a → IsSemisimple b → IsSemisimple (F a b))
+    (map_isUnipotent : ∀ {a b}, IsUnipotent a → IsUnipotent b → IsUnipotent (F a b))
+    (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
+    jordanDecomposition (F g h) =
+      (F (semisimplePart g) (semisimplePart h),
+        F (unipotentPart g) (unipotentPart h)) := by
+  symm
+  apply (eq_jordanDecomposition_iff (F g h) _ _).2
+  refine ⟨map_isSemisimple (isSemisimple_semisimplePart g)
+      (isSemisimple_semisimplePart h),
+    map_isUnipotent (isUnipotent_unipotentPart g) (isUnipotent_unipotentPart h), ?_, ?_⟩
+  · rw [commute_iff_eq, ← map_mul, ← map_mul]
+    exact congrArg₂ F (commute_semisimplePart_unipotentPart g).eq
+      (commute_semisimplePart_unipotentPart h).eq
+  · rw [← map_mul, semisimplePart_mul_unipotentPart,
+      semisimplePart_mul_unipotentPart]
+
+/-- The semisimple factor of an automorphism is a polynomial in that automorphism. -/
+theorem coe_semisimplePart_mem_adjoin (g : GeneralLinearGroup K V) :
+    (semisimplePart g : Module.End K V) ∈
+      Algebra.adjoin K {(g : Module.End K V)} := by
+  obtain ⟨n, hn_mem, s, hs_mem, hn, hs, hsum⟩ :=
+    Module.End.exists_isNilpotent_isSemisimple (f := (g : Module.End K V))
+  let s₀ : Module.End K V := semisimplePart g
+  let u₀ : Module.End K V := unipotentPart g
+  let n₀ : Module.End K V := s₀ * (u₀ - 1)
+  have hsu : Commute s₀ (u₀ - 1) :=
+    (commute_semisimplePart_unipotentPart g).units_val.sub_right (Commute.one_right _)
+  have hn₀ : IsNilpotent n₀ :=
+    hsu.isNilpotent_mul_left ((isUnipotent_def _).mp (isUnipotent_unipotentPart g))
+  have hs₀ : Module.End.IsSemisimple s₀ :=
+    (isSemisimple_def _).mp (isSemisimple_semisimplePart g)
+  have hcomm₀ : Commute n₀ s₀ := (Commute.refl s₀).mul_left hsu.symm
+  have hsum₀ : n₀ + s₀ = (g : Module.End K V) := by
+    dsimp only [n₀]
+    rw [mul_sub, mul_one, sub_add_cancel]
+    exact congrArg ((↑·) : GeneralLinearGroup K V → Module.End K V)
+      (semisimplePart_mul_unipotentPart g)
+  have hcomm : Commute n s :=
+    Algebra.commute_of_mem_adjoin_singleton_of_commute hs_mem
+      (Algebra.commute_of_mem_adjoin_self hn_mem).symm
+  have heq := Module.End.isNilpotent_isSemisimple_unique hn₀ hs₀ hn hs hcomm₀ hcomm
+    (hsum₀.trans hsum)
+  -- Restate the opaque factor through the local name used by the uniqueness calculation.
+  change s₀ ∈ Algebra.adjoin K {(g : Module.End K V)}
+  rw [heq.2]
+  exact hs_mem
 
 /-- A semisimple automorphism is its own semisimple part. -/
 @[simp]
@@ -276,6 +391,4 @@ theorem unipotentPart_eq_self {g : GeneralLinearGroup K V} (hg : IsUnipotent g) 
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

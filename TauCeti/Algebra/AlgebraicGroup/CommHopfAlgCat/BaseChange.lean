@@ -1,8 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
+
+import Mathlib.LinearAlgebra.TensorProduct.RightExactness
 
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
@@ -24,6 +27,7 @@ the original points evaluated on `K`-algebras.
 
 * `CommHopfAlgCat.baseChange`: the bundled Hopf `K`-algebra `K ⊗[k] H`.
 * `CommHopfAlgCat.baseChangeMap`: scalar extension of a coordinate morphism.
+* `CommHopfAlgCat.baseChangeMap_surjective`: base change preserves surjectivity.
 * `CommHopfAlgCat.baseChangeFunctor`: functorial base change on commutative Hopf algebras.
 * `CommHopfAlgCat.baseChangePointsMulEquiv`: the inherited point equivalence
   `(K ⊗[k] H →ₐ[K] A) ≃* (H →ₐ[k] A)`.
@@ -76,6 +80,15 @@ lemma baseChangeMap_apply_tmul {H L : _root_.CommHopfAlgCat.{v} k}
     (baseChangeMap (K := K) φ).hom (s ⊗ₜ[k] h) = s ⊗ₜ[k] φ.hom h := by
   rw [hom_baseChangeMap, _root_.Bialgebra.TensorProduct.map_tmul,
     _root_.BialgHom.id_apply]
+
+/-- Base change along `k → K` preserves surjectivity of a morphism of commutative Hopf
+algebras. -/
+theorem baseChangeMap_surjective {H L : _root_.CommHopfAlgCat.{v} k}
+    (φ : H ⟶ L) (hφ : Function.Surjective φ.hom) :
+    Function.Surjective (baseChangeMap (K := K) φ).hom := by
+  rw [hom_baseChangeMap]
+  exact Algebra.TensorProduct.map_surjective (AlgHom.id k K) φ.hom.toAlgHom
+    Function.surjective_id hφ
 
 /-- Base change is functorial on commutative Hopf algebras. -/
 noncomputable abbrev baseChangeFunctor :

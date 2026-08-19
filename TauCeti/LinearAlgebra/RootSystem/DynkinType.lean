@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -318,8 +319,8 @@ entry `-2`. -/
 private lemma cartanMatrix_B_apply_eq_neg_two {n : ℕ} (hn : 2 ≤ n) (i j : Fin n)
     (hi : (i : ℕ) = n - 2) (hj : (j : ℕ) = n - 1) : CartanMatrix.B n i j = -2 := by
   have hij : i ≠ j := by rintro rfl; omega
-  simp only [CartanMatrix.B, Matrix.of_apply, if_neg hij]
-  rw [if_pos (by omega : (i : ℕ) + 1 = (j : ℕ)), if_pos (by omega : (j : ℕ) = n - 1)]
+  simp only [CartanMatrix.B, Matrix.of_apply, ite_eq_right hij]
+  rw [ite_eq_left (by omega : (i : ℕ) + 1 = (j : ℕ)), ite_eq_left (by omega : (j : ℕ) = n - 1)]
 
 private lemma not_isSimplyLaced_cartanMatrix_B {n : ℕ} (hn : 2 ≤ n) :
     ¬ (CartanMatrix.B n).IsSimplyLaced := by

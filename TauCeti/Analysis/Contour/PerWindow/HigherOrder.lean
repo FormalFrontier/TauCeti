@@ -112,10 +112,10 @@ theorem intervalIntegrable_pow_inv_mul_deriv_truncated {γ : ℝ → ℂ} {s : �
     by_cases h_far : ‖γ t - s‖ > ε
     · have h_mem : t ∈ {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε}ᶜ :=
         fun hK => absurd hK.2 (not_le.mpr h_far)
-      rw [Set.indicator_of_mem h_mem, if_pos h_far]
+      rw [Set.indicator_of_mem h_mem, ite_eq_left h_far]
     · have h_notMem : t ∉ {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε}ᶜ := fun hKc =>
         hKc ⟨Set.uIoc_subset_uIcc ht, not_lt.mp h_far⟩
-      rw [Set.indicator_of_notMem h_notMem, if_neg h_far]
+      rw [Set.indicator_of_notMem h_notMem, ite_eq_right h_far]
   refine intervalIntegrable_truncated_mul_deriv (f := fun z => c / (z - s) ^ k)
     (M := ‖c‖ / ε ^ k) hderiv_int h_aesm fun t h_far => ?_
   rw [norm_div, norm_pow]

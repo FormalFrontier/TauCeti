@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -156,9 +157,9 @@ is bijective there (`IsMDissipative.mem_resolventSet` and
 `LinearPMap.smul_sub_bijective`), with inverse bounded by `1 / lambda` through
 `IsDissipative.norm_le_of_smul_sub_eq`. Asking for a single `lambda` is the form the
 hypothesis takes in the Lumer--Phillips generation theorem — that a densely defined
-m-dissipative operator *is* the generator of a contraction semigroup — which is not yet
-available in this library; its converse half is `ContractionSemigroup.isMDissipative_generator`
-below. -/
+m-dissipative operator *is* the generator of a contraction semigroup — proved as
+`IsMDissipative.exists_contractionSemigroup_generator_eq`; its converse half is
+`ContractionSemigroup.isMDissipative_generator` below. -/
 @[expose] def IsMDissipative (A : X →ₗ.[ℝ] X) : Prop :=
   IsDissipative A ∧
     ∃ lambda : ℝ, 0 < lambda ∧ Function.Surjective fun x : A.domain => lambda • (x : X) - A x

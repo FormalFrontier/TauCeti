@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -109,20 +110,6 @@ private theorem transportedColumnAntisymmetrizer_single_eq_zero
     exact add_neg_cancel _
   exact (smul_eq_zero.mp htwo).resolve_left two_ne_zero
 
-private theorem coe_asAlgebraHom_toRepresentation {G V : Type*} [Group G]
-    [AddCommGroup V] [Module ℚ V] {ρ : Representation ℚ G V}
-    (S : Subrepresentation ρ) (a : MonoidAlgebra ℚ G) (x : S.toSubmodule) :
-    ((S.toRepresentation.asAlgebraHom a x : S.toSubmodule) : V) =
-      ρ.asAlgebraHom a (x : V) := by
-  induction a using MonoidAlgebra.induction_linear with
-  | zero => simp
-  | add a b ha hb =>
-      simpa only [map_add, LinearMap.add_apply, Submodule.coe_add] using
-        congrArg₂ (fun u v => u + v) ha hb
-  | single g r =>
-      simp only [Representation.asAlgebraHom_single]
-      congr 1
-
 private theorem coe_toRepresentation_apply {G V : Type*} [Group G]
     [AddCommGroup V] [Module ℚ V] {ρ : Representation ℚ G V}
     (S : Subrepresentation ρ) (g : G) (x : S.toSubmodule) :
@@ -197,7 +184,7 @@ private theorem sum_take_rowLens_le_of_intertwiningMap_ne_zero
     apply YoungTableau.polytabloid_ne_zero t
     rw [← hbv]
     have haw' := congrArg Subtype.val haw
-    rw [coe_asAlgebraHom_toRepresentation] at haw'
+    rw [Subrepresentation.coe_toRepresentation_asAlgebraHom_apply] at haw'
     exact haw'
   exact hawne (hinj (h.trans (map_zero f).symm))
 

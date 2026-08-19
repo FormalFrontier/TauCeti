@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,6 +32,8 @@ for every finite acyclic quiver.
   forwards, whose entries carry no loop and emit no arrow off the list, is sink-admissible, with
   `TauCeti.Quiver.isSinkAdmissible_of_pairwise_of_forall_mem` the case of a list of all the
   vertices, where the last hypothesis — that no arrow leaves the list — is automatic.
+* `TauCeti.Quiver.IsSinkAdmissible.isEmpty_hom_self`: no vertex of a repetition-free
+  sink-admissible list carries a loop.
 
 ## References
 
@@ -171,6 +174,21 @@ theorem isSinkAdmissible_of_pairwise_of_forall_mem (q : _root_.Quiver.{v} V) {l 
     (hp : l.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V q x y)) :
     IsSinkAdmissible q l :=
   isSinkAdmissible_of_pairwise q hnd (fun x _ ↦ hloop x) hp fun _ _ b hb ↦ absurd (hall b) hb
+
+/-! ### Loops along a sink-admissible ordering -/
+
+/-- **No vertex of a repetition-free sink-admissible list carries a loop.** At its own stage the
+vertex is a sink of the reflected quiver, so it carries no loop there; and reflecting along a
+repetition-free prefix leaves the loops at any vertex alone
+(`TauCeti.Quiver.hom_reflectList`), because both ends of a loop lie on the same side of the
+prefix. This is the looplessness hypothesis under which the composite of the simple reflections
+along the list preserves the Tits form. -/
+theorem IsSinkAdmissible.isEmpty_hom_self {q : _root_.Quiver.{v} V} {l : List V} (hnd : l.Nodup)
+    (hl : IsSinkAdmissible q l) {i : V} (hi : i ∈ l) :
+    IsEmpty (@_root_.Quiver.Hom V q i i) := by
+  obtain ⟨t, u, rfl⟩ := List.append_of_mem hi
+  rw [← hom_reflectList q (List.Nodup.of_append_left hnd) (a := i) (b := i) Iff.rfl]
+  exact @IsSink.isEmpty_hom_self V (reflectList q t) i (hl t u i rfl)
 
 /-! ### Existence for a finite acyclic quiver -/
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -68,14 +69,14 @@ private noncomputable def eqAtEquiv (i j : ι) (hij : i ≠ j) :
         by_cases ha : a = j
         · subst a
           dsimp only
-          rw [dif_pos rfl]
+          rw [dite_eq_left rfl]
           exact x.2
         · dsimp only
-          rw [dif_neg ha]
+          rw [dite_eq_right ha]
       right_inv := fun x => by
         funext a
         dsimp only
-        rw [dif_neg a.2] }
+        rw [dite_eq_right a.2] }
 
 private theorem card_eqAt (i j : ι) (hij : i ≠ j) :
     Set.ncard {x : ι → κ | x i = x j} =

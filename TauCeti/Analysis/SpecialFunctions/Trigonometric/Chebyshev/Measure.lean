@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -293,10 +294,10 @@ lemma integral_normalizedChebyshevT_mul_normalizedChebyshevT_measureT_eq_ite (m 
           rw [integral_eval_T_real_mul_eval_T_real_measureT_eq_ite]
           by_cases hmn : m = n
           · subst hmn
-            rw [if_pos rfl, if_pos rfl]
+            rw [ite_eq_left rfl, ite_eq_left rfl]
             field_simp [Real.sqrt_ne_zero'.mpr hnpos]
             rw [Real.sq_sqrt hnpos.le]
-          · rw [if_neg hmn, if_neg hmn, mul_zero]
+          · rw [ite_eq_right hmn, ite_eq_right hmn, mul_zero]
 
 /-- The normalized Chebyshev `T` modes have Kronecker-delta inner products in `L²(measureT)`. -/
 @[simp]

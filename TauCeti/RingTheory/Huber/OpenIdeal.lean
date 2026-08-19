@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -25,6 +26,8 @@ work is that an *ideal* of `A` containing the image of `Iⁿ` automatically cont
   it contains a power of `I · A`.
 * `TauCeti.Huber.PairOfDefinition.isOpen_iff_le_radical`: an ideal of `A` is open exactly when its
   radical contains `I · A`.
+* `TauCeti.Huber.IsTateRing.isOpen_iff_eq_top`: an ideal of a Tate ring is open exactly when it is
+  the whole ring.
 
 ## Provenance
 
@@ -84,5 +87,24 @@ theorem isOpen_iff_le_radical (P : PairOfDefinition A) (a : Ideal A) :
     fun h ↦ Ideal.exists_pow_le_of_le_radical_of_fg h P.fg_extendedIdealOfDefinition⟩
 
 end PairOfDefinition
+
+section Tate
+
+variable {A : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
+
+/-- An open ideal in a Tate ring is the whole ring `⊤`. -/
+theorem IsTateRing.eq_top_of_isOpen [IsTateRing A] {J : Ideal A}
+    (hJ : IsOpen (J : Set A)) : J = ⊤ := by
+  obtain ⟨ϖ, hϖ⟩ := IsTateRing.exists_isPseudoUniformizer (A := A)
+  obtain ⟨n, hn⟩ := hϖ.isTopologicallyNilpotent.exists_pow_mem_of_mem_nhds (hJ.mem_nhds J.zero_mem)
+  exact Ideal.eq_top_of_isUnit_mem J hn (hϖ.isUnit.pow n)
+
+/-- In a Tate ring, an ideal is open if and only if it is the whole ring `⊤`. -/
+@[simp]
+theorem IsTateRing.isOpen_iff_eq_top [IsTateRing A] (J : Ideal A) :
+    IsOpen (J : Set A) ↔ J = ⊤ :=
+  ⟨IsTateRing.eq_top_of_isOpen, fun h ↦ h.symm ▸ isOpen_univ⟩
+
+end Tate
 
 end TauCeti.Huber

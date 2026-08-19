@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RingTheory.Finiteness.Ideal
 public import Mathlib.Topology.Algebra.Nonarchimedean.AdicTopology
+public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.RingTheory.Huber.PowerBounded
 
 /-!
@@ -33,12 +35,15 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
 
 * `TauCeti.Huber.PairOfDefinition.mem_idealImage` and
   `TauCeti.Huber.PairOfDefinition.coe_idealImage`: membership in the image of `Iⁿ`.
+* `TauCeti.Huber.PairOfDefinition.span_image_eq_extendedIdealOfDefinition`: generators of `I`
+  continue to generate its extension to `A`.
 * `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`: the images of `Iⁿ` are a neighbourhood
   basis of zero.
 * `TauCeti.Huber.IsAdic.comap`: an adic topology transports along a ring equivalence that is an
   inducing map. This is what lets a ring of definition carry an ideal of definition that natively
   lives in a merely equivalent ring, which is what `TauCeti.Huber.PairOfDefinition` needs.
 * `TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`: a Huber ring is nonarchimedean.
+* `TauCeti.Huber.IsHuberRing.quotient`: a quotient of a Huber ring is a Huber ring.
 * `TauCeti.Huber.PairOfDefinition.isBounded_ringOfDefinition`: a ring of definition is bounded,
   hence `A₀ ≤ A°` (`TauCeti.Huber.PairOfDefinition.le_powerBoundedSubring`). This is the
   boundedness half of Wedhorn Corollary 6.4.
@@ -48,6 +53,9 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   Tate-ring form is `TauCeti.Huber.IsTateRing.exists_hasBasis_nhds_zero`.
 * `TauCeti.Huber.IsHuberRing.of_discreteTopology`: a discrete ring is Huber, the first of the
   roadmap's Layer-0 examples.
+* `TauCeti.Huber.exists_sum_eq_of_mem_span_mul`: pure algebra, stated here because it is what
+  finite generation of an ideal of definition is used through — an element of `(G) * K`, for a
+  finite family `G`, is a `K`-linear combination of `G` itself.
 
 ## Provenance
 
@@ -76,6 +84,37 @@ public section
 open Filter Pointwise Topology
 
 namespace TauCeti.Huber
+
+section SpanMul
+
+variable {R : Type*} [CommSemiring R]
+
+/-- An element of `(G) * K` is a `K`-linear combination of the finite family `G`.
+
+This is Mathlib's `Submodule.mem_ideal_smul_span_iff_exists_sum'` in the form the Huber theory
+uses it: a `Finset.sum` over `G` itself, with cofactors given by a function on all of `R`, rather
+than a `Finsupp` on the subtype `↥G`. It is what bounds, uniformly in `k`, the number of terms
+needed to write an element of `Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`, both in Wedhorn Remark 6.8
+(`TauCeti.RingTheory.Huber.Completion`) and in the identification of the neighbourhood subgroups
+of `A⟨X⟩_T` with the powers of one finitely generated ideal
+(`TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition`). -/
+theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
+    (hb : b ∈ Ideal.span (G : Set R) * K) :
+    ∃ c : R → R, (∀ z, c z ∈ K) ∧ ∑ z ∈ G, z * c z = b := by
+  classical
+  -- Present `(G) * K` as `K • span (id '' G)`, so that the coefficients are handed to us.
+  rw [mul_comm, ← Ideal.smul_eq_mul, ← Set.image_id (G : Set R)] at hb
+  obtain ⟨a, ha, rfl⟩ := (Submodule.mem_ideal_smul_span_iff_exists_sum' _ _ _ _).mp hb
+  -- Extend the coefficients from `G` to all of `R` by zero.
+  refine ⟨fun z ↦ if h : z ∈ G then a ⟨z, h⟩ else 0, fun z ↦ ?_, ?_⟩
+  · dsimp only
+    split_ifs
+    exacts [ha _, K.zero_mem]
+  · rw [Finsupp.sum_fintype _ _ (by simp),
+      ← Finset.sum_finset_coe (fun z ↦ z * if h : z ∈ G then a ⟨z, h⟩ else 0) G]
+    exact Finset.sum_congr rfl fun i _ ↦ by simp [Finset.mem_coe.mp i.2, mul_comm]
+
+end SpanMul
 
 /-- A *pair of definition* `(A₀, I)` for a topological ring `A`: an open subring `A₀` together
 with a finitely generated ideal `I` of `A₀` whose adic topology is the subspace topology.
@@ -189,6 +228,52 @@ theorem mem_idealImage (P : PairOfDefinition A) (n : ℕ) {x : A} :
       ∃ y ∈ (P.idealOfDefinition ^ n : Ideal P.ringOfDefinition), (y : A) = x := by
   simp [idealImage]
 
+/-- The images of the powers of the ideal of definition are nested. -/
+theorem idealImage_anti (P : PairOfDefinition A) {m n : ℕ} (h : m ≤ n) :
+    P.idealImage n ≤ P.idealImage m := by
+  intro x hx
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
+  exact (P.mem_idealImage m).mpr ⟨y, Ideal.pow_le_pow_right h hy, rfl⟩
+
+/-- `Iⁿ ⊆ A` lies in the ring of definition. -/
+theorem idealImage_le_ringOfDefinition (P : PairOfDefinition A) (n : ℕ) :
+    P.idealImage n ≤ P.ringOfDefinition.toAddSubgroup := by
+  intro x hx
+  obtain ⟨y, -, rfl⟩ := (P.mem_idealImage n).mp hx
+  exact y.2
+
+/-- `Iⁿ ⊆ A` absorbs multiplication by an element of the ring of definition. -/
+theorem mul_mem_idealImage (P : PairOfDefinition A) {n : ℕ} {a x : A}
+    (ha : a ∈ P.ringOfDefinition) (hx : x ∈ P.idealImage n) : a * x ∈ P.idealImage n := by
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
+  exact (P.mem_idealImage n).mpr ⟨⟨a, ha⟩ * y, Ideal.mul_mem_left _ _ hy, by push_cast; ring⟩
+
+/-- The images of the powers of the ideal of definition multiply: `Iᵃ · Iᵇ ⊆ Iᵃ⁺ᵇ`. -/
+theorem mul_mem_idealImage_add (P : PairOfDefinition A) {a b : ℕ} {x y : A}
+    (hx : x ∈ P.idealImage a) (hy : y ∈ P.idealImage b) : x * y ∈ P.idealImage (a + b) := by
+  obtain ⟨u, hu, rfl⟩ := (P.mem_idealImage a).mp hx
+  obtain ⟨v, hv, rfl⟩ := (P.mem_idealImage b).mp hy
+  exact (P.mem_idealImage (a + b)).mpr
+    ⟨u * v, (pow_add P.idealOfDefinition a b).symm ▸ Ideal.mul_mem_mul hu hv, by push_cast; ring⟩
+
+/-- **One coefficient, decomposed.** An element of `Iⁿ⁺¹ ⊆ A` is a combination of a finite
+generating set `G` of `I` with cofactors in `Iⁿ`. -/
+theorem exists_sum_eq_of_mem_idealImage_succ (P : PairOfDefinition A)
+    {G : Finset P.ringOfDefinition}
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) (n : ℕ) {x : A}
+    (hx : x ∈ P.idealImage (n + 1)) :
+    ∃ c : P.ringOfDefinition → A,
+      (∀ z, c z ∈ P.idealImage n) ∧ ∑ z ∈ G, (z : A) * c z = x := by
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage (n + 1)).mp hx
+  have hy' : y ∈ Ideal.span (G : Set P.ringOfDefinition) * P.idealOfDefinition ^ n := by
+    rw [hG, ← pow_succ']
+    exact hy
+  obtain ⟨c, hc, hsum⟩ := exists_sum_eq_of_mem_span_mul G (P.idealOfDefinition ^ n) hy'
+  refine ⟨fun z ↦ (c z : A), fun z ↦ (P.mem_idealImage n).mpr ⟨c z, hc z, rfl⟩, ?_⟩
+  rw [← hsum]
+  push_cast
+  rfl
+
 /-- The ideal `I · A` of `A` generated by the ideal of definition `I ⊆ A₀`. This is core data of
 a pair of definition; `TauCeti/RingTheory/Huber/OpenIdeal.lean` characterises the open ideals of
 `A` in terms of its powers. -/
@@ -217,6 +302,19 @@ theorem fg_extendedIdealOfDefinition (P : PairOfDefinition A) :
     P.extendedIdealOfDefinition.FG :=
   P.fg_idealOfDefinition.map _
 
+open scoped Classical in
+/-- A finite generating set of the ideal of definition, mapped into `A`, generates the extended
+ideal of definition. -/
+theorem span_image_eq_extendedIdealOfDefinition (P : PairOfDefinition A)
+    (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) :
+    Ideal.span ((G.image ((↑) : P.ringOfDefinition → A) : Finset A) : Set A) =
+      P.extendedIdealOfDefinition := by
+  rw [P.extendedIdealOfDefinition_def, ← hG, Ideal.map_span]
+  congr 1
+  ext a
+  simp
+
 /-- Each `Iⁿ` is open in `A`. -/
 theorem isOpen_idealImage [IsTopologicalRing A] (P : PairOfDefinition A) (n : ℕ) :
     IsOpen (P.idealImage n : Set A) :=
@@ -238,6 +336,21 @@ theorem hasBasis_nhds_zero (P : PairOfDefinition A) :
   rw [← hmap]
   exact P.isAdic_idealOfDefinition.hasBasis_nhds_zero.map _
 
+/-- **An element of the ideal of definition is topologically nilpotent.** Its powers lie in the
+successive `Iⁿ`, whose images are a neighbourhood basis of zero
+(`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`), so they converge to `0` in `A`.
+
+This is the property Wedhorn uses throughout §7.2: it is what forces a continuous valuation to
+have cofinal values on `I`, and hence `v a < 1` there (Theorem 7.10). -/
+theorem isTopologicallyNilpotent_of_mem_idealOfDefinition (P : PairOfDefinition A)
+    {a : P.ringOfDefinition} (ha : a ∈ P.idealOfDefinition) :
+    IsTopologicallyNilpotent (a : A) := by
+  rw [IsTopologicallyNilpotent, P.hasBasis_nhds_zero.tendsto_right_iff]
+  intro n _
+  filter_upwards [Filter.eventually_ge_atTop n] with m hm
+  refine (P.mem_idealImage n).mpr ⟨a ^ m, ?_, by push_cast; ring⟩
+  exact Ideal.pow_le_pow_right hm (Ideal.pow_mem_pow ha m)
+
 /-- A ring admitting a pair of definition is nonarchimedean. -/
 theorem toNonarchimedeanRing [IsTopologicalRing A] (P : PairOfDefinition A) :
     NonarchimedeanRing A where
@@ -258,14 +371,62 @@ theorem isBounded_ringOfDefinition [IsTopologicalRing A] (P : PairOfDefinition A
 /-- A ring of definition consists of power-bounded elements: `A₀ ≤ A°`. The nonarchimedean
 hypothesis is only needed to state it, since `P` itself supplies one. -/
 theorem le_powerBoundedSubring [NonarchimedeanRing A] (P : PairOfDefinition A) :
-    P.ringOfDefinition ≤ powerBoundedSubring A := by
-  intro a ha
-  rw [mem_powerBoundedSubring, isPowerBounded_iff]
-  exact P.isBounded_ringOfDefinition.subset (by
-    rintro _ ⟨n, rfl⟩
-    exact P.ringOfDefinition.pow_mem ha n)
+    P.ringOfDefinition ≤ powerBoundedSubring A := fun _ ha ↦
+  mem_powerBoundedSubring.mpr (P.isBounded_ringOfDefinition.isPowerBounded_of_mem ha)
+
+/-- The image of a pair of definition in a quotient ring, used to furnish the quotient Huber
+ring structure. -/
+private def quotient [IsTopologicalRing A] (P : PairOfDefinition A) (J : Ideal A) :
+    PairOfDefinition (A ⧸ J) := by
+  let q : A →+* A ⧸ J := Ideal.Quotient.mk J
+  let A₀ : Subring (A ⧸ J) := P.ringOfDefinition.map q
+  let q₀ : P.ringOfDefinition →+* A₀ :=
+    (q.comp P.ringOfDefinition.subtype).codRestrict A₀ fun a ↦
+      Subring.mem_map.mpr ⟨a, a.2, rfl⟩
+  have hq₀_cont : Continuous q₀ := by
+    dsimp [q₀]
+    exact (continuous_quotient_mk'.comp continuous_subtype_val).subtype_mk _
+  have hq₀_open : IsOpenMap q₀ := by
+    dsimp [q₀]
+    exact
+      (QuotientRing.isOpenMap_coe J).subtype_map P.isOpen_ringOfDefinition
+        (fun a ha ↦ Subring.mem_map.mpr ⟨a, ha, rfl⟩)
+  have hq₀_surj : Function.Surjective q₀ := by
+    rintro ⟨x, hx⟩
+    obtain ⟨a, ha, rfl⟩ := Subring.mem_map.mp hx
+    exact ⟨⟨a, ha⟩, rfl⟩
+  refine
+    { ringOfDefinition := A₀
+      isOpen_ringOfDefinition := by
+        rw [Subring.coe_map]
+        exact QuotientRing.isOpenMap_coe J _ P.isOpen_ringOfDefinition
+      idealOfDefinition := P.idealOfDefinition.map q₀
+      fg_idealOfDefinition := P.fg_idealOfDefinition.map q₀
+      isAdic_idealOfDefinition := isAdic_iff.mpr ⟨?_, ?_⟩ }
+  · intro n
+    rw [← Ideal.map_pow]
+    have hset : ((P.idealOfDefinition ^ n).map q₀ : Set A₀) =
+        q₀ '' ((P.idealOfDefinition ^ n : Ideal P.ringOfDefinition) :
+          Set P.ringOfDefinition) := by
+      ext y
+      exact Ideal.mem_map_iff_of_surjective q₀ hq₀_surj
+    rw [hset]
+    exact hq₀_open _ ((isAdic_iff.mp P.isAdic_idealOfDefinition).1 n)
+  · intro s hs
+    obtain ⟨n, hn⟩ := (isAdic_iff.mp P.isAdic_idealOfDefinition).2
+      (q₀ ⁻¹' s) (hq₀_cont.continuousAt.preimage_mem_nhds (by simpa using hs))
+    refine ⟨n, ?_⟩
+    rw [← Ideal.map_pow]
+    rintro y hy
+    obtain ⟨x, hx, rfl⟩ := Ideal.mem_map_iff_of_surjective q₀ hq₀_surj |>.mp hy
+    exact hn hx
 
 end PairOfDefinition
+
+/-- Quotients of Huber rings, with the quotient topology, are Huber rings. -/
+instance IsHuberRing.quotient {A : Type*} [CommRing A] [TopologicalSpace A]
+    [IsTopologicalRing A] [IsHuberRing A] (J : Ideal A) : IsHuberRing (A ⧸ J) :=
+  ⟨IsHuberRing.nonempty_pairOfDefinition.elim fun P ↦ ⟨P.quotient J⟩⟩
 
 section Discrete
 

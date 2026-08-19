@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -320,7 +321,7 @@ theorem characterPairing_eq_intCast_sum {f₁ f₂ : ClassFunction k G}
   rw [eq_sum_smul_ofCharacter h₁, eq_sum_smul_ofCharacter h₂]
   simp only [map_sum, LinearMap.sum_apply, map_smul, LinearMap.smul_apply, smul_eq_mul,
     characterPairing_ofCharacter_irreducibleRepresentation_orthonormal, mul_ite, mul_one, mul_zero,
-    Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   push_cast
   exact Finset.sum_congr rfl fun i _ => mul_comm _ _
 

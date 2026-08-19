@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -105,7 +106,7 @@ theorem finrank_mul_sum_centralCharacter_eq_card [Invertible (Nat.card G : k)] :
   have hself : Nonempty (_root_.Representation.Equiv ρ ρ) := ⟨.refl ρ⟩
   have horth : ∑ g : G, ρ.character g * ρ.character g⁻¹ = Nat.card G := by
     have h := _root_.Representation.char_orthonormal ρ ρ
-    rw [if_pos hself,
+    rw [ite_eq_left hself,
       inv_mul_eq_iff_eq_mul₀ (Invertible.ne_zero (a := (Nat.card G : k)))] at h
     simpa using h
   rw [Finset.mul_sum, ← horth,

@@ -133,13 +133,8 @@ theorem multiplicity_mul_left {γ : G} (hγ : γ ∈ Γ₁) (g h d : G)
   have h1 : QuotientGroup.mk (γ'⁻¹ * i.out) = γ'⁻¹ • i := by
     rw [← smul_eq_mul]
     exact MulAction.Quotient.mk_smul_out _ γ'⁻¹ i
-  have hk : (γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out ∈
-      (ConjAct.toConjAct g • Γ₂).subgroupOf Γ₁ :=
-    QuotientGroup.eq.mp (h1.trans (QuotientGroup.out_eq' _).symm)
-  have hβ : g⁻¹ * ((((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G)) * g ∈ Γ₂ := by
-    have hmem := Subgroup.mem_subgroupOf.mp hk
-    rwa [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← ConjAct.toConjAct_inv,
-      ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv] at hmem
+  have hβ : g⁻¹ * ((((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G)) * g ∈ Γ₂ :=
+    conj_mem_of_mk_eq g (h1.trans (QuotientGroup.out_eq' _).symm)
   have hy : ((γ'⁻¹ • i).out : G) =
       γ⁻¹ * (i.out : G) * (((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G) := by
     -- `γ' = ⟨γ, hγ⟩` by the `set` above, so the two sides of the `show` are definitionally
@@ -189,14 +184,14 @@ private lemma sum_ite_mem_multiplicity [IsHeckeTriple Δ H₂ H₃] [IsHeckeTrip
   by_cases hx : ∃ F₀ ∈ Finset.univ.image (mulMap H₂ H₃ H₄ g₂ g₃),
       x ∈ doubleCoset (F₀.rep : G) H₂ H₄
   · obtain ⟨F₀, hF₀, hxF₀⟩ := hx
-    rw [Finset.sum_eq_single_of_mem F₀ hF₀ fun F hF hne ↦ if_neg fun hxF ↦
+    rw [Finset.sum_eq_single_of_mem F₀ hF₀ fun F hF hne ↦ ite_eq_right fun hxF ↦
       hne (HeckeCoset.toSet_injective (by
         rw [HeckeCoset.toSet_eq_doubleCoset_rep, HeckeCoset.toSet_eq_doubleCoset_rep,
           ← doubleCoset_eq_of_mem hxF, ← doubleCoset_eq_of_mem hxF₀])),
-      if_pos hxF₀]
+      ite_eq_left hxF₀]
     exact (multiplicity_doubleCoset_congr _ _ hxF₀).symm
   · simp only [not_exists, not_and] at hx
-    rw [Finset.sum_eq_zero fun F hF ↦ if_neg (hx F hF)]
+    rw [Finset.sum_eq_zero fun F hF ↦ ite_eq_right (hx F hF)]
     by_contra h0
     have hne : multiplicity H₂ H₃ H₄ (g₂ : G) (g₃ : G) x ≠ 0 := fun hh ↦ h0 hh.symm
     obtain ⟨w, hw, y, hy, rfl⟩ := mem_doubleCoset.mp (multiplicity_ne_zero_iff.mp hne)
@@ -296,9 +291,9 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
       refine Finset.sum_congr rfl fun p _ ↦ ?_
       by_cases hm : ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂) : G ⧸ H₃) =
           (((l.out : G) * E.rep : G) : G ⧸ H₃)
-      · rw [if_pos hm, if_pos ⟨hcond, hm⟩]
-      · rw [if_neg hm, if_neg fun hh ↦ hm hh.2]
-    · exact (Finset.sum_eq_zero fun p _ ↦ if_neg fun hh ↦ hcond hh.1).symm
+      · rw [ite_eq_left hm, ite_eq_left ⟨hcond, hm⟩]
+      · rw [ite_eq_right hm, ite_eq_right fun hh ↦ hm hh.2]
+    · exact (Finset.sum_eq_zero fun p _ ↦ ite_eq_right fun hh ↦ hcond hh.1).symm
   rw [Finset.sum_congr rfl hA,
     Finset.sum_congr rfl fun (E : HeckeCoset Δ H₁ H₃) _ ↦ Finset.sum_comm, Finset.sum_comm,
     nat_card_setOf_eq_sum]
@@ -326,7 +321,7 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
   rw [Finset.sum_eq_single_of_mem E₀ hE₀mem ?hEne]
   case hEne =>
     intro E hE hne
-    refine Finset.sum_eq_zero fun l _ ↦ if_neg ?_
+    refine Finset.sum_eq_zero fun l _ ↦ ite_eq_right ?_
     rintro ⟨-, hmatch⟩
     have hwE : wG ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ := by
       have h2 := QuotientGroup.eq.mp hmatch
@@ -338,7 +333,7 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
   rw [Finset.sum_eq_single_of_mem l₀ (Finset.mem_univ _) ?hlne]
   case hlne =>
     intro l _ hlne
-    refine if_neg ?_
+    refine ite_eq_right ?_
     rintro ⟨-, hmatch⟩
     exact hlne (mk_out_mul_injective H₁ H₃ ((E₀.rep : Δ) : G) (hmatch.symm.trans hmk))
   have hiff : ((((l₀.out : G) * (E₀.rep : G))⁻¹ * d ∈ doubleCoset (g₃ : G) H₃ H₄) ∧
@@ -357,8 +352,8 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
       rw [hw2, mul_mem_doubleCoset_iff (H₃.inv_mem hl₀)] at hh
       exact hh
   by_cases hd4 : wG⁻¹ * (d : G) ∈ doubleCoset (g₃ : G) H₃ H₄
-  · rw [if_pos (hiff.mpr hd4), if_pos hd4]
-  · rw [if_neg fun hh ↦ hd4 (hiff.mp hh), if_neg hd4]
+  · rw [ite_eq_left (hiff.mpr hd4), ite_eq_left hd4]
+  · rw [ite_eq_right fun hh ↦ hd4 (hiff.mp hh), ite_eq_right hd4]
 
 open Classical in
 /-- Associativity of the structure constants of the Hecke product (Proposition 3.2 of

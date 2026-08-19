@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -41,7 +42,7 @@ open WeierstrassCurve.Affine
 variable {F : Type*} [Field F]
 
 /-- A contravariant pullback from the target coordinate ring to the source function field. -/
-abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) :=
+abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) : Type _ :=
   W₂.CoordinateRing →ₐ[F] W₁.FunctionField
 
 namespace CoordinatePullback

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -45,9 +46,9 @@ theorem legendreSym_oddPrimeDiscriminant (p q : ℕ) [Fact q.Prime] :
       if p % 4 = 1 then legendreSym q (p : ℤ)
       else legendreSym q (-1) * legendreSym q (p : ℤ) := by
   by_cases hp : p % 4 = 1
-  · rw [oddPrimeDiscriminant_of_mod_four_eq_one hp, if_pos hp]
+  · rw [oddPrimeDiscriminant_of_mod_four_eq_one hp, ite_eq_left hp]
   · rw [oddPrimeDiscriminant_of_mod_four_ne_one hp]
-    rw [if_neg hp, neg_eq_neg_one_mul, legendreSym.mul]
+    rw [ite_eq_right hp, neg_eq_neg_one_mul, legendreSym.mul]
 
 /-- Expanding the Legendre symbol of `p*` at an odd prime `q`, using the supplementary law
 `legendreSym q (-1) = χ₄ q`. -/

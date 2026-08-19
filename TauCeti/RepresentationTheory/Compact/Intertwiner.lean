@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -22,6 +23,13 @@ which *is* an intertwiner: `averageOperator … ∘ π g = ρ g ∘ averageOpera
 Schur orthogonality relations run on, and it is the exact analogue for compact groups of the finite
 average `|G|⁻¹ ∑ g, ρ g⁻¹ ∘ T ∘ π g` behind Mathlib's Maschke theorem
 (`LinearMap.sumOfConjugates`), with the Haar integral in place of the finite sum.
+
+The target `W` is not assumed complete. `averageOperator` is `TauCeti.haarAverage` of a continuous
+family valued in the operator space `V →L[𝕜] W`, so it inherits that average's convention: it is the
+displayed Haar integral when that space is complete, and the Bochner integral's junk value `0`
+otherwise. `[CompleteSpace W]` is what supplies completeness of `V →L[𝕜] W`, so the statements that
+read the average's actual value, from `TauCeti.ContRepresentation.averageOperator_apply` onwards,
+carry it.
 
 The construction is a projection onto the intertwiners: it is linear in `T`, it fixes every
 intertwiner, and — when `V = W` and `π = ρ` and `V` is finite-dimensional — it preserves the trace.
@@ -86,6 +94,7 @@ private theorem comp_inv_self (g : G) : (ρ g).comp (ρ g⁻¹) = ContinuousLine
 
 include hπ hρ
 
+omit [CompleteSpace W] in
 /-- The integrand `g ↦ ρ g⁻¹ ∘ T ∘ π g` of the averaging construction, as a continuous map on the
 group. Continuity is where the two continuity hypotheses on the representations are used. -/
 private noncomputable def conjFamily (T : V →L[𝕜] W) : C(G, V →L[𝕜] W) where
@@ -103,12 +112,16 @@ private theorem conjFamily_apply_apply (T : V →L[𝕜] W) (g : G) (v : V) :
     conjFamily π hπ ρ hρ T g v = ρ g⁻¹ (T (π g v)) :=
   rfl
 
+omit [CompleteSpace W] in
 /-- The **Haar average of an operator over a pair of representations**,
 `∫ g, ρ g⁻¹ ∘ T ∘ π g ∂(haarProb G)`.
 
-For a compact group this is always defined — the integrand is continuous and Haar measure is
+On a complete `W` this is always defined — the integrand is continuous and Haar measure is
 finite — and it always intertwines `π` with `ρ`
-(`TauCeti.ContRepresentation.averageOperator_comp`). -/
+(`TauCeti.ContRepresentation.averageOperator_comp`). `W` is not assumed complete. The average is
+taken in the operator space `V →L[𝕜] W`, so it is `TauCeti.haarAverage`'s junk value `0` unless that
+space is complete, which `[CompleteSpace W]` supplies; that is why the results below that read the
+average's actual value carry it. -/
 noncomputable def averageOperator (T : V →L[𝕜] W) : V →L[𝕜] W :=
   haarAverage G (𝕜 := 𝕜) (conjFamily π hπ ρ hρ T)
 
@@ -123,6 +136,7 @@ theorem averageOperator_apply (T : V →L[𝕜] W) (v : V) :
 
 /-! ### Linearity in the averaged operator -/
 
+omit [CompleteSpace W] in
 @[simp]
 theorem averageOperator_zero : averageOperator π hπ ρ hρ 0 = 0 := by
   have hzero : conjFamily π hπ ρ hρ 0 = 0 := by
@@ -130,6 +144,7 @@ theorem averageOperator_zero : averageOperator π hπ ρ hρ 0 = 0 := by
     simp
   rw [averageOperator, hzero, map_zero]
 
+omit [CompleteSpace W] in
 @[simp]
 theorem averageOperator_add (T₁ T₂ : V →L[𝕜] W) :
     averageOperator π hπ ρ hρ (T₁ + T₂)
@@ -140,6 +155,7 @@ theorem averageOperator_add (T₁ T₂ : V →L[𝕜] W) :
     simp
   rw [averageOperator, averageOperator, averageOperator, hadd, map_add]
 
+omit [CompleteSpace W] in
 @[simp]
 theorem averageOperator_smul (c : 𝕜) (T : V →L[𝕜] W) :
     averageOperator π hπ ρ hρ (c • T) = c • averageOperator π hπ ρ hρ T := by
@@ -148,6 +164,7 @@ theorem averageOperator_smul (c : 𝕜) (T : V →L[𝕜] W) :
     simp
   rw [averageOperator, averageOperator, hsmul, map_smul]
 
+omit [CompleteSpace W] in
 /-- Haar averaging over a pair of representations, bundled as a linear map in the averaged
 operator. Bundling supplies the remaining additive identities (`map_neg`, `map_sub`, `map_sum`)
 through the `LinearMap` API. -/
@@ -156,6 +173,7 @@ noncomputable def averageOperatorₗ : (V →L[𝕜] W) →ₗ[𝕜] V →L[𝕜
   map_add' := averageOperator_add π hπ ρ hρ
   map_smul' := averageOperator_smul π hπ ρ hρ
 
+omit [CompleteSpace W] in
 @[simp]
 theorem averageOperatorₗ_apply (T : V →L[𝕜] W) :
     averageOperatorₗ π hπ ρ hρ T = averageOperator π hπ ρ hρ T :=

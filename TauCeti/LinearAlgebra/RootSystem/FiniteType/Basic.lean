@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,12 +52,19 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
 * `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`: the rank-two bound. For `i ≠ j` the Cartan
   product `A i j * A j i` lies in `{0, 1, 2, 3}`, so every edge of the diagram is single, double or
   triple.
+* `TauCeti.IsFiniteType.isSimplyLaced_iff`: **a finite-type matrix is simply laced exactly when
+  none of its edges is multiple**, that is, when no Cartan product of two distinct indices exceeds
+  `1`. Together with the rank-two bound this is how the classification enters its simply-laced
+  branch, having excluded the Cartan products `2` and `3`.
+* `TauCeti.IsFiniteType.exists_apply_succ_eq_zero`: **a finite-type diagram carries no cycle**. A
+  cyclic list of at least three distinct indices has a missing edge. This is the second estimate:
+  the test vector is supported on the indices of the putative cycle, its coordinate at each of them
+  being the reciprocal of the symmetrizer, and each edge of the cycle then cancels the diagonal
+  contribution of one of its ends.
 * `TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero`: **a finite-type diagram carries no
-  triangle**. Two distinct neighbours of an index are never adjacent to one another. This is the
-  second estimate: the test vector is supported on the three indices of the putative triangle, its
-  coordinate at each of them being the weight of the opposite edge, and the rank-two bound then
-  makes the symmetrized form nonpositive there. `TauCeti.IsFiniteType.pairwise_apply_eq_zero` is the
-  same statement for a whole neighbourhood, in the shape the star bound consumes.
+  triangle**, the three-index case of the previous item: two distinct neighbours of an index are
+  never adjacent to one another. `TauCeti.IsFiniteType.pairwise_apply_eq_zero` is the same statement
+  for a whole neighbourhood, in the shape the star bound consumes.
 
 The star bound selects its neighbours through a pairwise non-adjacency hypothesis; with the triangle
 excluded that hypothesis comes for free, and the consequences below are the unconditional graph
@@ -75,6 +83,11 @@ statements the classification runs on.
   type `Ã₂` is ruled out in `TauCeti.not_isFiniteType_affineA₂`. It does not subsume the
   no-triangle theorem: `TauCeti.not_isFiniteType_doubleEdgeTriangle` exhibits a nonsingular
   triangle.
+* `TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`: **a finite-type matrix has no
+  nonzero subdominant vector**, one with `xᵢ · (A x)ᵢ ≤ 0` at every index. This is the fourth
+  elimination tool, and unlike `TauCeti.IsFiniteType.det_ne_zero` it does not ask the certificate to
+  be a null vector, only to point away from the positive cone coordinatewise, so a single vector can
+  rule out a whole family of diagrams.
 * `TauCeti.isFiniteType_cartanMatrix`: **the Cartan matrix of a base of a finite crystallographic
   root system is of finite type**, and `TauCeti.HasCartanType.isFiniteType`: so is the standard
   Cartan matrix of any Dynkin type realized by such a base.
@@ -187,16 +200,6 @@ private theorem symmetrization_apply_comm {d : B → ℚ}
     (hpd : (Matrix.of fun i j ↦ d i * (A i j : ℚ)).PosDef) (p q : B) :
     d q * (A q p : ℚ) = d p * (A p q : ℚ) := by
   simpa using hpd.isHermitian.apply p q
-
-omit [Fintype B] in
-/-- **The square of an edge weight of the symmetrization is a scaled Cartan product.** The weight
-`dₚAₚq` squares to `dₚdq · AₚqAqₚ`, the two symmetrizer values times the Cartan product of the
-edge. This is what lets the triangle estimate be run over `ℚ`: the square roots of the geometric
-argument never appear. -/
-private theorem sq_symmetrization_apply {d : B → ℚ} {p q : B}
-    (hsymm : d q * (A q p : ℚ) = d p * (A p q : ℚ)) :
-    (d p * (A p q : ℚ)) ^ 2 = d p * d q * ((A p q : ℚ) * (A q p : ℚ)) := by
-  linear_combination (-(d p * (A p q : ℚ))) * hsymm
 
 /-- **A principal submatrix of a finite-type matrix is of finite type.** This is the form in which
 a forbidden subdiagram excludes every diagram containing it. -/
@@ -355,122 +358,194 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
 
-/-- **Three Cartan products in the rank-two range satisfy `(α + β + γ) ^ 2 ≤ 9αβγ`.** This is the
-arithmetic behind the exclusion of triangles. The three edges of a triangle carry Cartan products
-between `1` and `3`, and the inequality then says that the test vector built from those three
-products does not see a positive value of the symmetrized form. Equality holds exactly at
-`α = β = γ = 1`, the simply laced triangle, which is the affine diagram `Ã₂`. -/
-private theorem add_sq_le_nine_mul {α β γ : ℤ} (hα : 1 ≤ α) (hα' : α ≤ 3) (hβ : 1 ≤ β)
-    (hβ' : β ≤ 3) (hγ : 1 ≤ γ) (hγ' : γ ≤ 3) :
-    (α + β + γ) ^ 2 ≤ 9 * (α * β * γ) := by
-  interval_cases α <;> interval_cases β <;> interval_cases γ <;> norm_num
+/-- **A finite-type matrix is simply laced exactly when none of its edges is multiple.** The Cartan
+product `A i j * A j i` is the multiplicity of the edge joining `i` and `j`, so the condition on the
+right says that every edge is single: no double edge, and no triple edge.
 
-/-- **The endgame of the triangle exclusion.** If `m` is positive with `m² = P²αβγ` and the three
-Cartan products satisfy the bound of `TauCeti.IsFiniteType.add_sq_le_nine_mul`, then `3m` is not
-below `P(α + β + γ)`: squaring the strict inequality would make `9P²αβγ` smaller than itself.
+Only the off-diagonal entries are constrained, one entry of a transposed pair at a time, and that
+is enough because the entries of such a pair vanish together and a product of two nonpositive
+integers is `1` only when both are `-1`. -/
+theorem isSimplyLaced_iff (h : IsFiniteType A) :
+    A.IsSimplyLaced ↔ ∀ i j, i ≠ j → A i j * A j i ≤ 1 := by
+  constructor
+  · intro hsl i j hij
+    rcases hsl hij with hij' | hij' <;> rcases hsl hij.symm with hji | hji <;> simp [hij', hji]
+  · intro hle i j hij
+    have hbound := hle i j hij
+    have hnonneg : 0 ≤ A i j * A j i :=
+      mul_nonneg_of_nonpos_of_nonpos (h.apply_le_zero_of_ne hij) (h.apply_le_zero_of_ne hij.symm)
+    rcases (by omega : A i j * A j i = 0 ∨ A i j * A j i = 1) with hzero | hone
+    · rcases mul_eq_zero.mp hzero with hij' | hji
+      · exact Or.inl hij'
+      · exact Or.inl (h.apply_eq_zero_symm hji)
+    · rcases Int.eq_one_or_neg_one_of_mul_eq_one' hone with ⟨hij', -⟩ | ⟨hij', -⟩
+      · have := h.apply_le_zero_of_ne hij
+        omega
+      · exact Or.inr hij'
 
-At the call site `P` is the product of the three symmetrizer values, `α`, `β`, `γ` are the Cartan
-products along the three edges of the triangle, and `m` is the product of the three edge weights of
-the symmetrization, up to sign; the value of the symmetrized form at the test vector is
-`2P(α + β + γ) - 6m`, so positive definiteness is exactly the inequality refuted here. -/
-private theorem not_three_mul_lt {P m α β γ : ℚ} (hP : 0 < P) (hm : 0 < m)
-    (hm2 : m ^ 2 = P ^ 2 * (α * β * γ)) (hb : (α + β + γ) ^ 2 ≤ 9 * (α * β * γ)) :
-    ¬ 3 * m < P * (α + β + γ) := fun hlt ↦ by
-  nlinarith [mul_le_mul_of_nonneg_left hb (mul_pos hP hP).le, sq_nonneg (P * (α + β + γ) - 3 * m)]
+/-- **On a cycle of length at least three an index and its two cyclic neighbours are pairwise
+distinct.** Successor and predecessor are the cyclic ones, taken in the additive group `Fin m`.
+Three is the exact threshold: on `Fin 2` an index has a single neighbour, `i + 1 = i - 1`. -/
+private theorem cyclic_neighbors_pairwise_ne {m : ℕ} [NeZero m] (hm : 3 ≤ m) (i : Fin m) :
+    i + 1 ≠ i ∧ i - 1 ≠ i ∧ i + 1 ≠ i - 1 := by
+  have hval1 : ((1 : Fin m) : ℕ) = 1 := by
+    rw [Fin.val_one', Nat.mod_eq_of_lt (by omega)]
+  have hone : (1 : Fin m) ≠ 0 := fun hc ↦ by
+    have hval := congrArg Fin.val hc
+    rw [hval1, Fin.val_zero] at hval
+    omega
+  have htwo : (1 : Fin m) + 1 ≠ 0 := fun hc ↦ by
+    have hval2 : (((1 : Fin m) + 1 : Fin m) : ℕ) = 2 := by
+      rw [Fin.val_add, hval1, Nat.mod_eq_of_lt (by omega)]
+    have hval := congrArg Fin.val hc
+    rw [hval2, Fin.val_zero] at hval
+    omega
+  have hsucc : i + 1 ≠ i := fun hc ↦ hone (add_left_cancel (hc.trans (add_zero i).symm))
+  refine ⟨hsucc, fun hc ↦ ?_, fun hc ↦ ?_⟩
+  · have h1 : i - 1 + 1 = i + 1 := by rw [hc]
+    rw [sub_add_cancel] at h1
+    exact hsucc h1.symm
+  · refine htwo (add_left_cancel (a := i) ?_)
+    rw [← add_assoc, hc, sub_add_cancel, add_zero]
 
-/-- **The three-index core of the no-triangle theorem.** A finite-type matrix on three indices has
-a missing edge: if the first index is joined to the other two, those two are not joined to each
-other.
+/-- **A symmetric cycle form with the given diagonal and edge bounds has rows summing to a
+difference of reciprocals.** For `f` symmetric with `f i i = 2 / dᵢ`, nonpositive off the diagonal
+and at most `-1/dᵢ` along each cycle edge, the `i`th row sums to at most `1/dᵢ - 1/dᵢ₋₁`. Summing
+this over the cycle makes the right-hand side telescope to zero. -/
+private theorem sum_le_inv_sub_inv {m : ℕ} [NeZero m] (hm : 3 ≤ m)
+    {d : Fin m → ℚ} {f : Fin m → Fin m → ℚ} (hfsymm : ∀ i j, f i j = f j i)
+    (hdiag : ∀ i, f i i = 2 / d i) (hnonpos : ∀ i j : Fin m, j ≠ i → f i j ≤ 0)
+    (hedge : ∀ i : Fin m, f i (i + 1) ≤ -(d i)⁻¹) (i : Fin m) :
+    ∑ j, f i j ≤ (d i)⁻¹ - (d (i - 1))⁻¹ := by
+  obtain ⟨hsucc, hpred, hsp⟩ := cyclic_neighbors_pairwise_ne hm i
+  rw [← Finset.sum_sdiff (Finset.subset_univ ({i, i + 1, i - 1} : Finset (Fin m)))]
+  have hrest : ∑ j ∈ Finset.univ \ ({i, i + 1, i - 1} : Finset (Fin m)), f i j ≤ 0 := by
+    refine Finset.sum_nonpos fun j hj ↦ hnonpos i j ?_
+    simp only [Finset.mem_sdiff, Finset.mem_insert, Finset.mem_singleton, not_or] at hj
+    tauto
+  have hthree : ∑ j ∈ ({i, i + 1, i - 1} : Finset (Fin m)), f i j
+      = f i i + f i (i + 1) + f i (i - 1) := by
+    rw [Finset.sum_insert (by
+        simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
+        exact ⟨hsucc.symm, hpred.symm⟩),
+      Finset.sum_insert (by simpa using hsp), Finset.sum_singleton, add_assoc]
+  have hlast : f i (i - 1) ≤ -(d (i - 1))⁻¹ := by
+    have hshift := hedge (i - 1)
+    rwa [sub_add_cancel, hfsymm] at hshift
+  have hhalf : (2 : ℚ) / d i = (d i)⁻¹ + (d i)⁻¹ := by
+    rw [div_eq_mul_inv]; ring
+  have hii := hdiag i
+  have hnext := hedge i
+  rw [hthree]
+  linarith
 
-The proof is the second, and last, positive-definiteness estimate of this file, and it is a
-different one from the star bound: the test vector is supported on *all three* indices, and at each
-of them its coordinate is the weight, in the symmetrization, of the *opposite* edge. Writing
-`a`, `b`, `c` for the three edge weights - each negative, since the off-diagonal entries are - the
-symmetrized form evaluates at that vector to `2(d₀c² + d₁b² + d₂a²) + 6abc`, and the identity
-`a² = d₀d₁·(A₀₁A₁₀)` turns this into `2P(α + β + γ) - 6m` in the notation of
-`TauCeti.IsFiniteType.not_three_mul_lt`. -/
-private theorem apply_eq_zero_fin_three {T : Matrix (Fin 3) (Fin 3) ℤ} (h : IsFiniteType T)
-    (h01 : T 0 1 ≠ 0) (h02 : T 0 2 ≠ 0) :
-    T 1 2 = 0 := by
-  by_contra h12
+/-- **A cyclic diagram is not of finite type.** On an index type of size at least three, no
+finite-type matrix joins every index to its cyclic successor: some `Tₖ,ₖ₊₁` vanishes.
+
+This is the positive-definiteness estimate behind the acyclicity of a finite-type diagram, and the
+test vector is the reciprocal `xᵢ = 1/dᵢ` of the symmetrizer. At it the symmetrized form
+`∑ᵢⱼ xᵢ dᵢTᵢⱼ xⱼ` collects `2/dᵢ` from each diagonal entry and `Tᵢⱼ/dⱼ` from each off-diagonal one,
+and the latter is nonpositive throughout. The two entries of the pair `{k, k+1}` contribute equally,
+each `Tₖ₊₁,ₖ/dₖ ≤ -1/dₖ`, since the symmetrization identity `dₖTₖ,ₖ₊₁ = dₖ₊₁Tₖ₊₁,ₖ` is exactly what
+makes `Tᵢⱼ/dⱼ` symmetric in `i` and `j`. So the value is at most `∑ₖ 2/dₖ - 2∑ₖ 1/dₖ = 0`, which
+positive definiteness forbids. Edges off the cycle only lower the value further, so the cycle need
+not be chordless, and the scaling by the symmetrizer is what keeps the test vector rational: the
+geometric argument takes unit vectors along the coroots and needs their square roots.
+
+The affine diagrams `Ãₙ` for `n ≥ 2`, the ones whose diagrams are cycles, are what this excludes,
+and at three indices every triangle: `TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero` is the
+case `m = 3`. The remaining affine diagram `Ã₁` is a double edge on two indices rather than a cycle,
+and is excluded instead by the rank-two bound `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`. -/
+private theorem exists_apply_succ_eq_zero_fin {m : ℕ} [NeZero m] (hm : 3 ≤ m)
+    {T : Matrix (Fin m) (Fin m) ℤ} (h : IsFiniteType T) :
+    ∃ k, T k (k + 1) = 0 := by
+  by_contra hcon
+  push Not at hcon
   obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
   have hsymm := symmetrization_apply_comm hpd
-  -- Each of the three edges is present, so each edge weight of the symmetrization is negative.
-  have hT01 : T 0 1 < 0 := lt_of_le_of_ne (h.apply_le_zero_of_ne (by decide)) h01
-  have hT02 : T 0 2 < 0 := lt_of_le_of_ne (h.apply_le_zero_of_ne (by decide)) h02
-  have hT12 : T 1 2 < 0 := lt_of_le_of_ne (h.apply_le_zero_of_ne (by decide)) h12
-  have ha : d 0 * ((T 0 1 : ℤ) : ℚ) < 0 := mul_neg_of_pos_of_neg (hd 0) (by exact_mod_cast hT01)
-  have hb : d 0 * ((T 0 2 : ℤ) : ℚ) < 0 := mul_neg_of_pos_of_neg (hd 0) (by exact_mod_cast hT02)
-  have hc : d 1 * ((T 1 2 : ℤ) : ℚ) < 0 := mul_neg_of_pos_of_neg (hd 1) (by exact_mod_cast hT12)
-  -- The test vector: at each index, the weight of the opposite edge.
-  have hq := hpd.dotProduct_mulVec_pos
-    (x := ![-(d 1 * ((T 1 2 : ℤ) : ℚ)), -(d 0 * ((T 0 2 : ℤ) : ℚ)), -(d 0 * ((T 0 1 : ℤ) : ℚ))])
-    (fun hcon ↦ by
-      have h0 := congrFun hcon 0
-      simp only [Matrix.cons_val_zero, Pi.zero_apply, neg_eq_zero] at h0
-      linarith)
+  -- `f i j` is the contribution of the pair `(i, j)` to the form at the test vector; it is
+  -- symmetric, and nonpositive off the diagonal.
+  obtain ⟨f, hf⟩ : ∃ f : Fin m → Fin m → ℚ, ∀ i j, f i j = (T i j : ℚ) / d j := ⟨_, fun _ _ ↦ rfl⟩
+  have hfsymm : ∀ i j, f i j = f j i := by
+    intro i j
+    rw [hf, hf, div_eq_div_iff (hd j).ne' (hd i).ne']
+    linear_combination -hsymm i j
+  have hdiag : ∀ i, f i i = 2 / d i := by
+    intro i
+    rw [hf, h.apply_self]
+    norm_num
+  have hnonpos : ∀ i j : Fin m, j ≠ i → f i j ≤ 0 := by
+    intro i j hji
+    have h1 : ((T i j : ℤ) : ℚ) ≤ 0 := by exact_mod_cast h.apply_le_zero_of_ne (Ne.symm hji)
+    rw [hf, div_eq_mul_inv]
+    simpa using mul_le_mul_of_nonneg_right h1 (inv_nonneg.mpr (hd j).le)
+  -- Along an edge of the cycle the contribution is at most `-1/dᵢ`, at either of its two entries.
+  have hedge : ∀ i : Fin m, f i (i + 1) ≤ -(d i)⁻¹ := by
+    intro i
+    have h0 : T (i + 1) i ≠ 0 := fun hc ↦ hcon i (h.apply_eq_zero_symm hc)
+    have hle : T (i + 1) i ≤ -1 := by
+      have := h.apply_le_zero_of_ne (cyclic_neighbors_pairwise_ne hm i).1
+      omega
+    have hcast : ((T (i + 1) i : ℤ) : ℚ) ≤ -1 := by exact_mod_cast hle
+    calc f i (i + 1) = (T (i + 1) i : ℚ) * (d i)⁻¹ := by rw [hfsymm, hf, div_eq_mul_inv]
+      _ ≤ (-1 : ℚ) * (d i)⁻¹ := mul_le_mul_of_nonneg_right hcast (inv_nonneg.mpr (hd i).le)
+      _ = -(d i)⁻¹ := by ring
+  -- Positive definiteness at the test vector.
+  have hx : (fun k : Fin m ↦ (d k)⁻¹) ≠ 0 := fun hc ↦ by
+    simpa [(hd (0 : Fin m)).ne'] using congrFun hc 0
+  have hq := hpd.dotProduct_mulVec_pos hx
   rw [star_trivial, Matrix.dot_mulVec_eq_sum_sum] at hq
-  simp only [Fin.sum_univ_three, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.head_cons, Matrix.cons_val_two, Matrix.tail_cons] at hq
-  rw [h.apply_self 0, h.apply_self 1, h.apply_self 2, hsymm 0 1, hsymm 0 2, hsymm 1 2] at hq
-  push_cast at hq
-  -- The square of an edge weight is the Cartan product of that edge, scaled by two symmetrizers.
-  have ea := sq_symmetrization_apply (hsymm 0 1)
-  have eb := sq_symmetrization_apply (hsymm 0 2)
-  have ec := sq_symmetrization_apply (hsymm 1 2)
-  -- Package the three edges as the data the arithmetic endgame consumes.
-  refine not_three_mul_lt (P := d 0 * d 1 * d 2)
-    (m := -(d 0 * ((T 0 1 : ℤ) : ℚ) * (d 0 * ((T 0 2 : ℤ) : ℚ)) * (d 1 * ((T 1 2 : ℤ) : ℚ))))
-    (α := ((T 0 1 : ℤ) : ℚ) * ((T 1 0 : ℤ) : ℚ)) (β := ((T 0 2 : ℤ) : ℚ) * ((T 2 0 : ℤ) : ℚ))
-    (γ := ((T 1 2 : ℤ) : ℚ) * ((T 2 1 : ℤ) : ℚ))
-    (mul_pos (mul_pos (hd 0) (hd 1)) (hd 2))
-    (neg_pos.mpr (mul_neg_of_pos_of_neg (mul_pos_of_neg_of_neg ha hb) hc)) ?_ ?_ ?_
-  · -- `m² = P²αβγ`, by multiplying the three edge identities.
-    have : (-(d 0 * ((T 0 1 : ℤ) : ℚ) * (d 0 * ((T 0 2 : ℤ) : ℚ)) * (d 1 * ((T 1 2 : ℤ) : ℚ)))) ^ 2
-        = (d 0 * ((T 0 1 : ℤ) : ℚ)) ^ 2 * (d 0 * ((T 0 2 : ℤ) : ℚ)) ^ 2 *
-          (d 1 * ((T 1 2 : ℤ) : ℚ)) ^ 2 := by ring
-    rw [this, ea, eb, ec]
-    ring
-  · -- The rank-two bound on each of the three edges feeds the arithmetic inequality.
-    have hα := h.one_le_apply_mul_apply h01
-    have hβ := h.one_le_apply_mul_apply h02
-    have hγ := h.one_le_apply_mul_apply h12
-    have hα' := h.apply_mul_apply_mem_of_ne (i := 0) (j := 1) (by decide)
-    have hβ' := h.apply_mul_apply_mem_of_ne (i := 0) (j := 2) (by decide)
-    have hγ' := h.apply_mul_apply_mem_of_ne (i := 1) (j := 2) (by decide)
-    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hα' hβ' hγ'
-    have := add_sq_le_nine_mul hα (by omega) hβ (by omega) hγ (by omega)
-    exact_mod_cast this
-  · -- Positive definiteness at the test vector, rewritten through the three edge identities: each
-    -- diagonal contribution is twice `P` times the Cartan product of the opposite edge.
-    have ea' : 2 * d 2 * (d 0 * ((T 0 1 : ℤ) : ℚ)) ^ 2
-        = 2 * (d 0 * d 1 * d 2) * (((T 0 1 : ℤ) : ℚ) * ((T 1 0 : ℤ) : ℚ)) := by rw [ea]; ring
-    have eb' : 2 * d 1 * (d 0 * ((T 0 2 : ℤ) : ℚ)) ^ 2
-        = 2 * (d 0 * d 1 * d 2) * (((T 0 2 : ℤ) : ℚ) * ((T 2 0 : ℤ) : ℚ)) := by rw [eb]; ring
-    have ec' : 2 * d 0 * (d 1 * ((T 1 2 : ℤ) : ℚ)) ^ 2
-        = 2 * (d 0 * d 1 * d 2) * (((T 1 2 : ℤ) : ℚ) * ((T 2 1 : ℤ) : ℚ)) := by rw [ec]; ring
-    linarith [hq, ea', eb', ec']
+  simp only [Matrix.of_apply] at hq
+  have hq' : (0 : ℚ) < ∑ i, ∑ j, f i j := by
+    rw [Finset.sum_comm]
+    refine lt_of_lt_of_le hq (le_of_eq (Finset.sum_congr rfl fun j _ ↦
+      Finset.sum_congr rfl fun i _ ↦ ?_))
+    rw [hf, inv_mul_cancel_left₀ (hd i).ne', div_eq_mul_inv]
+  -- Each index contributes at most `1/dᵢ - 1/dᵢ₋₁`, and those differences telescope around the
+  -- cycle to `0`.
+  have hbound : ∀ i : Fin m, ∑ j, f i j ≤ (d i)⁻¹ - (d (i - 1))⁻¹ :=
+    sum_le_inv_sub_inv hm hfsymm hdiag hnonpos hedge
+  have hshift : ∑ i : Fin m, (d (i - 1))⁻¹ = ∑ i : Fin m, (d i)⁻¹ :=
+    Fintype.sum_equiv (Equiv.subRight (1 : Fin m)) _ _ fun _ ↦ rfl
+  have hle := Finset.sum_le_sum fun i (_ : i ∈ (Finset.univ : Finset (Fin m))) ↦ hbound i
+  rw [Finset.sum_sub_distrib, hshift, sub_self] at hle
+  linarith
+
+/-- **A finite-type diagram carries no cycle.** A cyclic list of at least three distinct indices
+has a missing edge: some index of the cycle is not joined to its successor. The cycle is not
+required to be chordless, and no edge of it is required to be simple.
+
+Only the principal submatrix on the indices of the cycle is involved, so this is
+`TauCeti.IsFiniteType.exists_apply_succ_eq_zero_fin` transported along the injection.
+`TauCeti.IsFiniteType.isAcyclic_diagramGraph` is the same statement in the language of graphs. -/
+theorem exists_apply_succ_eq_zero (h : IsFiniteType A) {m : ℕ} [NeZero m] (hm : 3 ≤ m)
+    {v : Fin m → B} (hv : Function.Injective v) :
+    ∃ k, A (v k) (v (k + 1)) = 0 := by
+  obtain ⟨k, hk⟩ := exists_apply_succ_eq_zero_fin hm (h.submatrix hv)
+  exact ⟨k, hk⟩
 
 /-- **A finite-type diagram carries no triangle.** Two distinct neighbours of an index are never
 adjacent to one another, so the neighbourhood of an index is pairwise non-adjacent and the star
 bound applies to it with no side condition.
 
-This is what turns the conditional consequences of the star bound into graph statements: the degree
-bound `TauCeti.IsFiniteType.card_le_three_of_forall_apply_ne_zero`, the fact that at most one edge
-at an index is multiple, and the isolation of a triple edge. -/
+This is the three-index case of `TauCeti.IsFiniteType.exists_apply_succ_eq_zero`, and it is what
+turns the conditional consequences of the star bound into graph statements: the degree bound
+`TauCeti.IsFiniteType.card_le_three_of_forall_apply_ne_zero`, the fact that at most one edge at an
+index is multiple, and the isolation of a triple edge. -/
 theorem apply_eq_zero_of_apply_ne_zero (h : IsFiniteType A) {i j k : B} (hij : i ≠ j) (hik : i ≠ k)
     (hjk : j ≠ k) (hj : A i j ≠ 0) (hk : A i k ≠ 0) :
     A j k = 0 := by
-  -- Restrict to the principal submatrix on the three indices and apply the three-index core.
-  have he : Function.Injective ![i, j, k] := by
+  by_contra hjk0
+  -- Were the three indices pairwise joined they would close up into a cycle of length three.
+  have hki : A k i ≠ 0 := fun hc ↦ hk (h.apply_eq_zero_symm hc)
+  have hv : Function.Injective ![i, j, k] := by
     intro p q hpq
     fin_cases p <;> fin_cases q <;> simp_all
-  have h' := h.submatrix he
-  have e01 : (A.submatrix ![i, j, k] ![i, j, k]) 0 1 = A i j := by simp
-  have e02 : (A.submatrix ![i, j, k] ![i, j, k]) 0 2 = A i k := by simp
-  have e12 : (A.submatrix ![i, j, k] ![i, j, k]) 1 2 = A j k := by simp
-  have := apply_eq_zero_fin_three h' (e01 ▸ hj) (e02 ▸ hk)
-  rwa [e12] at this
+  obtain ⟨t, ht⟩ := h.exists_apply_succ_eq_zero (m := 3) (by norm_num) hv
+  fin_cases t
+  · exact hj (by simpa using ht)
+  · exact hjk0 (by simpa using ht)
+  · exact hki (by simpa using ht)
 
 /-- **The neighbourhood of an index is pairwise non-adjacent.** This is the no-triangle theorem in
 the form the star bound consumes: a set of neighbours of `i`, none of them `i` itself, satisfies the
@@ -589,6 +664,32 @@ theorem det_ne_zero [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
   intro hdet
   rw [hdet] at hu
   simp at hu
+
+/-- **A finite-type matrix admits no nonzero subdominant vector.** Call a rational vector `x`
+*subdominant* for `A` when `xᵢ · (A x)ᵢ ≤ 0` at every index `i`; then `x = 0`.
+
+The symmetrized quadratic form of `A` at `x` is `∑ᵢ dᵢ · xᵢ · (A x)ᵢ`, because scaling the `i`-th
+row by `dᵢ` scales the `i`-th summand by `dᵢ`, and the symmetrizer is positive. So a subdominant
+vector makes the form nonpositive, which positive definiteness allows only at `0`.
+
+This is the elimination tool for a diagram carrying an explicit certificate. It is weaker than
+asking for a null vector, as `TauCeti.IsFiniteType.det_ne_zero` does: the certificate is allowed to
+be strictly subdominant at some indices, which is what lets a single vector rule out a whole family
+of diagrams rather than only the critical ones. -/
+theorem eq_zero_of_forall_mul_sum_apply_mul_nonpos (h : IsFiniteType A) {x : B → ℚ}
+    (hx : ∀ i, x i * ∑ j, (A i j : ℚ) * x j ≤ 0) : x = 0 := by
+  by_contra hne
+  obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
+  have hpos := hpd.dotProduct_mulVec_pos hne
+  rw [star_trivial, Matrix.dot_mulVec_eq_sum_sum] at hpos
+  simp only [Matrix.of_apply] at hpos
+  rw [Finset.sum_comm] at hpos
+  refine absurd hpos (not_lt.2 (Finset.sum_nonpos fun i _ ↦ ?_))
+  have hrow : ∑ j, x i * (d i * (A i j : ℚ)) * x j = d i * (x i * ∑ j, (A i j : ℚ) * x j) := by
+    rw [Finset.mul_sum, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun j _ ↦ by ring
+  rw [hrow]
+  simpa using mul_le_mul_of_nonneg_left (hx i) (hd i).le
 
 end IsFiniteType
 

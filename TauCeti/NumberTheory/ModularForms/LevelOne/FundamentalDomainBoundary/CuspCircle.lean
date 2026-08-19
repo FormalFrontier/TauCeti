@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -10,6 +11,8 @@ public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
 public import TauCeti.NumberTheory.ModularForms.Order.AtCusp
 
+import Mathlib.NumberTheory.ModularForms.LevelOne.Basic
+import TauCeti.NumberTheory.ModularForms.Basic
 import TauCeti.Analysis.Complex.IsolatedZero
 import TauCeti.Analysis.Contour.Argument.Principle
 
@@ -27,7 +30,7 @@ value is `2πi` times the order at the cusp.
 
 * `TauCeti.ModularForm.fdBoundaryQRadius`: the radius `e^{-2πH}` of the ceiling's
   `q`-circle, with `fdBoundaryQRadius_def`, `_pos`, and `_lt_one`.
-* `TauCeti.ModularForm.qParam_fdBoundary_segment5`: the ceiling parametrizes the
+* `TauCeti.ModularForm.qParam_fdBoundarySegment5`: the ceiling parametrizes the
   `q`-circle.
 * `TauCeti.ModularForm.circleIntegral_logDeriv_cuspFunction`: the `q`-circle integral of
   the cusp function's logarithmic derivative is `2πi` times the cusp order.
@@ -41,9 +44,9 @@ value is `2πi` times the order at the cusp.
 
 public section
 
-open Complex Function
+open Complex Filter Function MeasureTheory Set Topology UpperHalfPlane
 
-open scoped Real
+open scoped ModularForm MatrixGroups Modular Real UpperHalfPlane
 
 namespace TauCeti
 
@@ -74,11 +77,11 @@ lemma fdBoundaryQRadius_lt_one {H : ℝ} (hH : 0 < H) : fdBoundaryQRadius H < 1 
 /-- Under the level-one `q`-parameter, the ceiling of the boundary contour traces the
 `q`-circle of radius `e^{-2πH}`: the segment parameter `t ∈ [4, 5]` becomes the angle
 `2π(t - 9/2)`, sweeping `[-π, π]` once counterclockwise. -/
-theorem qParam_fdBoundary_segment5 (H t : ℝ) :
-    Periodic.qParam (1 : ℝ) (fdBoundary_segment5 H t) =
+theorem qParam_fdBoundarySegment5 (H t : ℝ) :
+    Periodic.qParam (1 : ℝ) (fdBoundarySegment5 H t) =
       circleMap 0 (fdBoundaryQRadius H) (2 * Real.pi * (t - 9 / 2)) := by
-  have hz : fdBoundary_segment5 H t = ((t - 9 / 2 : ℝ) : ℂ) + H * Complex.I := by
-    rw [fdBoundary_segment5_apply, AffineMap.lineMap_apply, vsub_eq_sub, vadd_eq_add,
+  have hz : fdBoundarySegment5 H t = ((t - 9 / 2 : ℝ) : ℂ) + H * Complex.I := by
+    rw [fdBoundarySegment5_apply, AffineMap.lineMap_apply, vsub_eq_sub, vadd_eq_add,
       Complex.real_smul]
     push_cast
     ring
@@ -127,6 +130,46 @@ theorem circleIntegral_logDeriv_cuspFunction {g : UpperHalfPlane → ℂ} {H : �
     simp
   have key := Contour.argumentPrinciple_local hR hmer honly hn
   rw [key]
+
+/-- Above a threshold height, the cusp function is nonvanishing on the punctured contour
+`q`-disk: `cuspFunction_eventually_ne_zero` gives non-vanishing on *some* punctured
+neighbourhood of `0`, while the contour needs it on the disc of radius
+`fdBoundaryQRadius H = exp (-2πH)` — that radius shrinks as `H` grows, so the disc sits
+inside the neighbourhood exactly above a threshold. The threshold device follows
+`valence_formula_general_S_FM` in `ForMathlib/ValenceFormula.lean` of AINTLIB. -/
+theorem exists_threshold_cuspFunction_ne_zero {F : Type*} [FunLike F ℍ ℂ] {k : ℤ}
+    [ModularFormClass F 𝒮ℒ k] {f : F}
+    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+    ∃ H₀ : ℝ, ∀ H : ℝ, H₀ ≤ H →
+      ∀ q ∈ Metric.closedBall (0 : ℂ) (fdBoundaryQRadius H), q ≠ 0 →
+        cuspFunction 1 ⇑f q ≠ 0 := by
+  obtain ⟨ε, hε, hne⟩ := Metric.eventually_nhds_iff.mp
+    (eventually_nhdsWithin_iff.mp
+      (cuspFunction_eventually_ne_zero (f := f) one_pos one_mem_strictPeriods_SL hf))
+  refine ⟨(Real.log ε⁻¹ + 1) / (2 * Real.pi), fun H hH q hq hq0 ↦ hne ?_ hq0⟩
+  have hlog : 1 - Real.log ε ≤ 2 * Real.pi * H := by
+    linarith [Real.log_inv ε, (div_le_iff₀ (by positivity)).mp hH]
+  have hlt : fdBoundaryQRadius H < ε := by
+    rw [fdBoundaryQRadius_def, ← Real.exp_log hε, Real.exp_lt_exp]
+    linarith
+  simpa using (mem_closedBall_zero_iff.mp hq).trans_lt hlt
+
+/-- The cusp function of a level-one modular form is analytic on the closed `q`-disk of the
+contour: it is differentiable on the unit ball, and the disk's radius `exp (-2πH)` stays
+below `1`. -/
+theorem analyticAt_cuspFunction_of_mem_closedBall {F : Type*} [FunLike F ℍ ℂ] {k : ℤ}
+    [ModularFormClass F 𝒮ℒ k] (f : F)
+    {H : ℝ} (hH : 0 < H) :
+    ∀ q ∈ Metric.closedBall (0 : ℂ) (fdBoundaryQRadius H),
+      AnalyticAt ℂ (cuspFunction 1 ⇑f) q := by
+  have hper : Periodic (⇑f ∘ ofComplex) 1 :=
+    SlashInvariantFormClass.periodic_comp_ofComplex f one_mem_strictPeriods_SL
+  have : Fact (IsCusp OnePoint.infty 𝒮ℒ) :=
+    ⟨Subgroup.isCusp_of_mem_strictPeriods one_pos one_mem_strictPeriods_SL⟩
+  exact fun q hq => (differentiableOn_cuspFunction_ball one_pos hper (ModularFormClass.holo f)
+    (ModularFormClass.bdd_at_infty f)).analyticAt <|
+      Metric.isOpen_ball.mem_nhds <| mem_ball_zero_iff.mpr <|
+        (mem_closedBall_zero_iff.mp hq).trans_lt (fdBoundaryQRadius_lt_one hH)
 
 end ModularForm
 

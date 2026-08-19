@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -38,11 +39,11 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u
+universe u v
 
 namespace Rep
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
 
 private abbrev RightCosets (S : Subgroup G) := Quotient (QuotientGroup.rightRel S)
 
@@ -114,7 +115,7 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
         simpa [mul_assoc] using
           (QuotientGroup.rightRel_apply.mp (Quotient.exact' hq'))
       simpa [mul_assoc] using S.inv_mem hinv
-    rw [if_pos hq, indTerm_apply, dif_pos (by simpa [mul_assoc] using hmem)]
+    rw [ite_eq_left hq, indTerm_apply, dite_eq_left (by simpa [mul_assoc] using hmem)]
     have hfactor :
         rightCosetFactor (S := S) (q.out * g) =
           ⟨q.out * g * q.out⁻¹, hmem⟩ := by
@@ -137,18 +138,13 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
       refine (Quotient.sound' ?_).trans (Quotient.out_eq' q)
       rw [QuotientGroup.rightRel_apply]
       simpa [mul_assoc] using S.inv_mem h
-    rw [if_neg hq, indTerm_apply, dif_neg (by simpa [mul_assoc] using hmem)]
+    rw [ite_eq_right hq, indTerm_apply, dite_eq_right (by simpa [mul_assoc] using hmem)]
 
 end Rep
 
 section Forget
 
-variable {k G : Type u} [Field k] [Group G] (A : FDRep k G)
-
-/-- Forgetting finite-dimensionality keeps the same underlying module, so it keeps the
-`FiniteDimensional` instance. -/
-private instance : FiniteDimensional k ((forget₂ (FDRep k G) (Rep k G)).obj A) :=
-  inferInstanceAs (FiniteDimensional k A)
+variable {k : Type u} {G : Type v} [Field k] [Group G] (A : FDRep k G)
 
 /-- The forgetful functor `FDRep k G ⥤ Rep k G` preserves characters. -/
 private theorem character_forget₂ (g : G) :
@@ -164,7 +160,7 @@ end Forget
 open scoped Classical in
 /-- The induced character at `g` is the sum of the original character over those left coset
 representatives `t` for which `t⁻¹ g t` belongs to the subgroup. -/
-theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
+theorem character_indFDRep_sum_quotient {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) (g : G) :
     (indFDRep (k := k) (G := G) A).character g =
       letI := Fintype.ofFinite (G ⧸ S)
@@ -173,10 +169,10 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
           A.character ⟨(Quotient.out t)⁻¹ * g * Quotient.out t, h⟩
         else 0 := by
   have hindCharacter :
-      (indFDRep (k := k) (G := G) A).character g =
+    (indFDRep (k := k) (G := G) A).character g =
         (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g :=
     (character_forget₂ (indFDRep (k := k) (G := G) A) g).symm.trans (congrFun
-      (Representation.char_iso (Representation.equivOfIso (indFDRepForgetIso A))) g)
+      (Representation.char_iso (indFDRepForgetEquiv A)) g)
   let := Fintype.ofFinite (G ⧸ S)
   let A' : Rep.{u} k S := (forget₂ (FDRep k S) (Rep k S)).obj A
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
@@ -206,12 +202,12 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
       intro t _
       rw [indTerm_apply]
       by_cases hmem : t.out⁻¹ * g * t.out ∈ S
-      · rw [dif_pos hmem, dif_pos hmem, hforgetCharacter]
-      · rw [dif_neg hmem, dif_neg hmem]
+      · rw [dite_eq_left hmem, dite_eq_left hmem, hforgetCharacter]
+      · rw [dite_eq_right hmem, dite_eq_right hmem]
 
 section ClassFun
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
 
 /-- The character of an induced representation is the induced class function of its character. -/
 @[simp]

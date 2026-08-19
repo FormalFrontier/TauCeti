@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,8 +22,8 @@ active segment. These are the `γ'` factors of the valence-formula contour integ
 
 ## Main declarations
 
-* `TauCeti.ModularForm.hasDerivAt_fdBoundary_segment1` … `_segment5`: the closed-form
-  segment derivatives.
+* `TauCeti.ModularForm.hasDerivAt_fdBoundarySegment1` through
+  `TauCeti.ModularForm.hasDerivAt_fdBoundarySegment5`: the closed-form segment derivatives.
 * `TauCeti.ModularForm.hasDerivAt_fdBoundary_of_lt_one` … `_of_gt_four`: the contour
   differentiates like its active segment between the breakpoints, with the two arcs
   unified across their smooth junction (`hasDerivAt_fdBoundary_of_mem_Ioo_one_three`).
@@ -49,14 +50,14 @@ namespace ModularForm
 section Segments
 
 /-- Segment 1 differentiates to its constant chord. -/
-lemma hasDerivAt_fdBoundary_segment1 (H t : ℝ) :
-    HasDerivAt (fdBoundary_segment1 H) ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)) t :=
+lemma hasDerivAt_fdBoundarySegment1 (H t : ℝ) :
+    HasDerivAt (fdBoundarySegment1 H) ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)) t :=
   (AffineMap.hasDerivAt_lineMap).congr_of_eventuallyEq <|
-    Filter.Eventually.of_forall fun s ↦ by rw [fdBoundary_segment1_apply]
+    Filter.Eventually.of_forall fun s ↦ by rw [fdBoundarySegment1_apply]
 
 /-- Segment 2 differentiates to the arc speed times the rotated tangent. -/
-lemma hasDerivAt_fdBoundary_segment2 (t : ℝ) :
-    HasDerivAt fdBoundary_segment2
+lemma hasDerivAt_fdBoundarySegment2 (t : ℝ) :
+    HasDerivAt fdBoundarySegment2
       ((Real.pi / 2 - Real.pi / 3) •
         (circleMap 0 1 (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * Complex.I))
       t := by
@@ -68,11 +69,11 @@ lemma hasDerivAt_fdBoundary_segment2 (t : ℝ) :
   exact (HasDerivAt.scomp_of_eq (x := t)
     (hg := hasDerivAt_circleMap 0 1 (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)))
     (hh := hθ) (hy := rfl)).congr_of_eventuallyEq <|
-    Filter.Eventually.of_forall fun s ↦ by rw [fdBoundary_segment2_apply]; rfl
+    Filter.Eventually.of_forall fun s ↦ by rw [fdBoundarySegment2_apply]; rfl
 
 /-- Segment 3 differentiates to the arc speed times the rotated tangent. -/
-lemma hasDerivAt_fdBoundary_segment3 (t : ℝ) :
-    HasDerivAt fdBoundary_segment3
+lemma hasDerivAt_fdBoundarySegment3 (t : ℝ) :
+    HasDerivAt fdBoundarySegment3
       ((2 * Real.pi / 3 - Real.pi / 2) •
         (circleMap 0 1 (Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) *
           Complex.I)) t := by
@@ -84,22 +85,22 @@ lemma hasDerivAt_fdBoundary_segment3 (t : ℝ) :
   exact (HasDerivAt.scomp_of_eq (x := t)
     (hg := hasDerivAt_circleMap 0 1 (Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)))
     (hh := hθ) (hy := rfl)).congr_of_eventuallyEq <|
-    Filter.Eventually.of_forall fun s ↦ by rw [fdBoundary_segment3_apply]; rfl
+    Filter.Eventually.of_forall fun s ↦ by rw [fdBoundarySegment3_apply]; rfl
 
 /-- Segment 4 differentiates to its constant chord. -/
-lemma hasDerivAt_fdBoundary_segment4 (H t : ℝ) :
-    HasDerivAt (fdBoundary_segment4 H) (-1 / 2 + H * Complex.I - (ρ : ℂ)) t := by
+lemma hasDerivAt_fdBoundarySegment4 (H t : ℝ) :
+    HasDerivAt (fdBoundarySegment4 H) (-1 / 2 + H * Complex.I - (ρ : ℂ)) t := by
   have h := HasDerivAt.scomp_of_eq (x := t)
     (hg := AffineMap.hasDerivAt_lineMap (a := (ρ : ℂ)) (b := -1 / 2 + H * Complex.I))
     (hh := (hasDerivAt_id t).sub_const 3) (hy := rfl)
   simp only [one_smul] at h
   exact h.congr_of_eventuallyEq <| Filter.Eventually.of_forall fun s ↦ by
-    rw [fdBoundary_segment4_apply]
+    rw [fdBoundarySegment4_apply]
     rfl
 
 /-- Segment 5 differentiates to its constant chord, the unit horizontal. -/
-lemma hasDerivAt_fdBoundary_segment5 (H t : ℝ) :
-    HasDerivAt (fdBoundary_segment5 H) (1 : ℂ) t := by
+lemma hasDerivAt_fdBoundarySegment5 (H t : ℝ) :
+    HasDerivAt (fdBoundarySegment5 H) (1 : ℂ) t := by
   have h := HasDerivAt.scomp_of_eq (x := t)
     (hg := AffineMap.hasDerivAt_lineMap (a := (-1 / 2 + H * Complex.I : ℂ))
       (b := 1 / 2 + H * Complex.I))
@@ -108,7 +109,7 @@ lemma hasDerivAt_fdBoundary_segment5 (H t : ℝ) :
   have hchord : (1 / 2 + H * Complex.I : ℂ) - (-1 / 2 + H * Complex.I) = 1 := by ring
   rw [hchord] at h
   exact h.congr_of_eventuallyEq <| Filter.Eventually.of_forall fun s ↦ by
-    rw [fdBoundary_segment5_apply]
+    rw [fdBoundarySegment5_apply]
     rfl
 
 end Segments
@@ -117,37 +118,37 @@ section SegmentDerivRewrites
 
 /-- Segment 1's derivative, in rewrite form. -/
 @[simp]
-lemma deriv_fdBoundary_segment1 (H t : ℝ) :
-    deriv (fdBoundary_segment1 H) t = (ρ : ℂ) + 1 - (1 / 2 + H * Complex.I) :=
-  (hasDerivAt_fdBoundary_segment1 H t).deriv
+lemma deriv_fdBoundarySegment1 (H t : ℝ) :
+    deriv (fdBoundarySegment1 H) t = (ρ : ℂ) + 1 - (1 / 2 + H * Complex.I) :=
+  (hasDerivAt_fdBoundarySegment1 H t).deriv
 
 /-- Segment 2's derivative, in rewrite form. -/
 @[simp]
-lemma deriv_fdBoundary_segment2 (t : ℝ) :
-    deriv fdBoundary_segment2 t =
+lemma deriv_fdBoundarySegment2 (t : ℝ) :
+    deriv fdBoundarySegment2 t =
       (Real.pi / 2 - Real.pi / 3) •
         (circleMap 0 1 (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * Complex.I) :=
-  (hasDerivAt_fdBoundary_segment2 t).deriv
+  (hasDerivAt_fdBoundarySegment2 t).deriv
 
 /-- Segment 3's derivative, in rewrite form. -/
 @[simp]
-lemma deriv_fdBoundary_segment3 (t : ℝ) :
-    deriv fdBoundary_segment3 t =
+lemma deriv_fdBoundarySegment3 (t : ℝ) :
+    deriv fdBoundarySegment3 t =
       (2 * Real.pi / 3 - Real.pi / 2) •
         (circleMap 0 1 (Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) *
           Complex.I) :=
-  (hasDerivAt_fdBoundary_segment3 t).deriv
+  (hasDerivAt_fdBoundarySegment3 t).deriv
 
 /-- Segment 4's derivative, in rewrite form. -/
 @[simp]
-lemma deriv_fdBoundary_segment4 (H t : ℝ) :
-    deriv (fdBoundary_segment4 H) t = -1 / 2 + H * Complex.I - (ρ : ℂ) :=
-  (hasDerivAt_fdBoundary_segment4 H t).deriv
+lemma deriv_fdBoundarySegment4 (H t : ℝ) :
+    deriv (fdBoundarySegment4 H) t = -1 / 2 + H * Complex.I - (ρ : ℂ) :=
+  (hasDerivAt_fdBoundarySegment4 H t).deriv
 
 /-- Segment 5's derivative, in rewrite form. -/
 @[simp]
-lemma deriv_fdBoundary_segment5 (H t : ℝ) : deriv (fdBoundary_segment5 H) t = 1 :=
-  (hasDerivAt_fdBoundary_segment5 H t).deriv
+lemma deriv_fdBoundarySegment5 (H t : ℝ) : deriv (fdBoundarySegment5 H) t = 1 :=
+  (hasDerivAt_fdBoundarySegment5 H t).deriv
 
 end SegmentDerivRewrites
 
@@ -158,7 +159,7 @@ variable {H t : ℝ}
 /-- Below the first breakpoint the contour differentiates like segment 1. -/
 lemma hasDerivAt_fdBoundary_of_lt_one (ht : t < 1) :
     HasDerivAt (fdBoundary H) ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)) t :=
-  (hasDerivAt_fdBoundary_segment1 H t).congr_of_eventuallyEq <| by
+  (hasDerivAt_fdBoundarySegment1 H t).congr_of_eventuallyEq <| by
     filter_upwards [Iio_mem_nhds ht] with s hs
     exact fdBoundary_of_le_one hs.le
 
@@ -197,14 +198,14 @@ lemma hasDerivAt_fdBoundary_of_mem_Ioo_one_three (ht : t ∈ Set.Ioo (1 : ℝ) 3
 segment 4. -/
 lemma hasDerivAt_fdBoundary_of_mem_Ioo_three_four (ht : t ∈ Set.Ioo (3 : ℝ) 4) :
     HasDerivAt (fdBoundary H) (-1 / 2 + H * Complex.I - (ρ : ℂ)) t :=
-  (hasDerivAt_fdBoundary_segment4 H t).congr_of_eventuallyEq <| by
+  (hasDerivAt_fdBoundarySegment4 H t).congr_of_eventuallyEq <| by
     filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
     exact fdBoundary_of_le_four hs.1 hs.2.le
 
 /-- Above the fourth breakpoint the contour differentiates like segment 5. -/
 lemma hasDerivAt_fdBoundary_of_gt_four (ht : 4 < t) :
     HasDerivAt (fdBoundary H) (1 : ℂ) t :=
-  (hasDerivAt_fdBoundary_segment5 H t).congr_of_eventuallyEq <| by
+  (hasDerivAt_fdBoundarySegment5 H t).congr_of_eventuallyEq <| by
     filter_upwards [Ioi_mem_nhds ht] with s hs
     exact fdBoundary_of_gt_four hs
 

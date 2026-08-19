@@ -1,12 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.MeasureTheory.Measure.Map
 public import Mathlib.MeasureTheory.Measure.AEMeasurable
 public import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+public import Mathlib.MeasureTheory.MeasurableSpace.Embedding
+public import Mathlib.Logic.Equiv.Fin.Basic
 public import Mathlib.Tactic.Measurability
 
 /-!
@@ -21,7 +24,13 @@ hypotheses enter only in lemmas that compose `Measure.map`s.
 definitions here are about the order structure of `ℕ` (prefixes, shifts, strictly increasing
 selections) and stay sequence-level.
 
-These declarations follow the roadmap signatures in
+The prefix/tail measurable equivalence `prefixSplitEquiv` is an exception on both counts: it is
+neither a roadmap signature nor adapted from the pinned sources, but general infrastructure that
+several exchangeability arguments need in order to reindex a sequence as a length-`r` prefix paired
+with the tail from index `r`. It lives here because it is stated purely in terms of the order
+structure of `ℕ`, with no measure and no process.
+
+The remaining declarations follow the roadmap signatures in
 `TauCetiRoadmap/Exchangeability/README.md` and
 `TauCetiRoadmap/Exchangeability/Suggested.lean`, Layer 0. They are adapted from the
 `cameronfreer/exchangeability` Layer 0 sources pinned at
@@ -170,6 +179,38 @@ theorem measurable_shift : Measurable (shift α) := by
   unfold shift
   measurability
 
+/-- Split a sequence into its length-`r` prefix `Fin r → α` and the tail `ℕ → α` from index `r`, as
+a measurable equivalence.  The forward map sends `f` to `(fun i => f i.val, fun j => f (r + j))`;
+its inverse glues a prefix/tail pair back into a sequence, taking coordinates below `r` from the
+prefix and the rest (reindexed by `· - r`) from the tail. -/
+def prefixSplitEquiv (r : ℕ) : (ℕ → α) ≃ᵐ (Fin r → α) × (ℕ → α) :=
+  (MeasurableEquiv.arrowCongr' (finSumNatEquiv r).symm (.refl α)).trans
+    (MeasurableEquiv.sumPiEquivProdPi fun _ => α)
+
+/-- **Applying `prefixSplitEquiv`**: it reads off the length-`r` prefix and the tail from index `r`.
+
+This is the one place that depends on the definitional form of `MeasurableEquiv.arrowCongr'` and
+`sumPiEquivProdPi`, neither of which exposes an apply lemma. Everything else about the equivalence
+is derived from here, so the fragile step is isolated rather than repeated. -/
+@[simp]
+theorem prefixSplitEquiv_apply (r : ℕ) (f : ℕ → α) :
+    prefixSplitEquiv r f = (fun i : Fin r => f (i : ℕ), fun j : ℕ => f (r + j)) := (rfl)
+
+/-- The inverse of `prefixSplitEquiv` glues a prefix/tail pair into a sequence: coordinates below
+`r` come from the prefix `p.1`, the rest (reindexed by `· - r`) from the tail `p.2`. -/
+@[simp]
+theorem prefixSplitEquiv_symm_apply (r : ℕ) (p : (Fin r → α) × (ℕ → α)) (n : ℕ) :
+    (prefixSplitEquiv r).symm p n = if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
+  have key : (prefixSplitEquiv r).symm p
+      = fun n => if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
+    apply (prefixSplitEquiv r).injective
+    rw [MeasurableEquiv.apply_symm_apply, prefixSplitEquiv_apply]
+    refine Prod.ext (funext fun i => ?_) (funext fun j => ?_)
+    · simp only [dite_eq_left i.isLt, Fin.eta]
+    · have h : ¬ (r + j < r) := Nat.not_lt.mpr (Nat.le_add_right r j)
+      simp only [dite_eq_right h, Nat.add_sub_cancel_left]
+  rw [key]
+
 /-- The prefix law is the pushforward of the path law by `prefixProj`. -/
 theorem map_prefixProj_pathLaw (μ : Measure Ω) {X : ℕ → Ω → α}
     (hX : AEMeasurable (fun ω => fun i => X i ω) μ) (n : ℕ) :
@@ -177,6 +218,13 @@ theorem map_prefixProj_pathLaw (μ : Measure Ω) {X : ℕ → Ω → α}
   rw [pathLaw_def, prefixLaw_def, blockLaw_def]
   rw [AEMeasurable.map_map_of_aemeasurable (measurable_prefixProj n).aemeasurable hX,
     Function.comp_def]
+  rfl
+
+/-- The prefix laws of a path law are the prefix laws of the process. -/
+theorem prefixLaw_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α} (hX : ∀ i, AEMeasurable (X i) μ)
+    (n : ℕ) : prefixLaw (pathLaw μ X) (fun n (x : ℕ → α) => x n) n = prefixLaw μ X n := by
+  rw [prefixLaw_def, blockLaw_def,
+    ← map_prefixProj_pathLaw μ (aemeasurable_pi_lambda (fun ω => fun i => X i ω) hX) n]
   rfl
 
 /-- A coordinatewise measurable map sends block laws to block laws. -/
@@ -270,6 +318,28 @@ theorem ExchangeableAt.permute {μ : Measure Ω} {X : ℕ → Ω → α} {n : �
     (h : ExchangeableAt μ X n) (σ : Equiv.Perm (Fin n)) :
     blockLaw μ X (fun i : Fin n => (σ i).val) = prefixLaw μ X n :=
   h σ
+
+/-- Under finite exchangeability at `n`, rearranging a path leaves its probability unchanged. -/
+theorem ExchangeableAt.prefixLaw_singleton_comp [MeasurableSingletonClass α]
+    {μ : Measure Ω} {X : ℕ → Ω → α} {n : ℕ} (h : ExchangeableAt μ X n)
+    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) (w : Fin n → α)
+    (σ : Equiv.Perm (Fin n)) :
+    prefixLaw μ X n {w ∘ σ} = prefixLaw μ X n {w} := by
+  have hmeas : Measurable fun x : Fin n → α => fun i => x (σ⁻¹ i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply (σ⁻¹ i)
+  have hmap : (prefixLaw μ X n).map (fun x : Fin n → α => fun i => x (σ⁻¹ i)) =
+      prefixLaw μ X n := by
+    conv_lhs => rw [prefixLaw_def]
+    rw [map_blockLaw_reindex μ (fun i : Fin n => i.val) (fun i => σ⁻¹ i) hX]
+    exact h σ⁻¹
+  conv_rhs => rw [← hmap]
+  rw [Measure.map_apply hmeas (measurableSet_singleton w)]
+  congr 1
+  ext x
+  simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, Function.comp_apply]
+  refine ⟨fun hx j => ?_, fun hx i => ?_⟩
+  · simpa using hx (σ⁻¹ j)
+  · simpa using hx (σ i)
 
 theorem FullyExchangeable.permute {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : FullyExchangeable μ X) (π : Equiv.Perm ℕ) :

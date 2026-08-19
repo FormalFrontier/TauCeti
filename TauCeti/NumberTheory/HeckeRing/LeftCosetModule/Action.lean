@@ -198,8 +198,8 @@ open Classical in
 private lemma sum_ite_orbit_eq (t : 𝕋 Δ H R) (β : Δ) (c : R) {x : HeckeCoset Δ ⊥ H}
     {D₀ : HeckeCoset Δ H H} (hx : x ∈ smulOrbit H D₀.rep β) :
     (t.sum fun D mD ↦ if x ∈ smulOrbit H D.rep β then c * mD else 0) = c * t D₀ := by
-  refine (Finsupp.sum_eq_single D₀ (fun D _ hne ↦ ?_) (fun _ ↦ by simp)).trans (if_pos hx)
-  rw [if_neg]
+  refine (Finsupp.sum_eq_single D₀ (fun D _ hne ↦ ?_) (fun _ ↦ by simp)).trans (ite_eq_left hx)
+  rw [ite_eq_right]
   intro hmem
   exact hne (by
     have h := eq_of_mem_smulOrbit hmem hx
@@ -318,7 +318,7 @@ private lemma single_mul_smul_single (D₁ D₂ : HeckeCoset Δ H H) (q : HeckeC
     exact (Nat.cast_commute _ (c * (a * b))).symm.eq
   · have hzero : (HeckeCosetModule.structureConstants R H H H D₁.rep D₂.rep).sum
         (fun D mD ↦ if x ∈ smulOrbit H D.rep q.rep then c * (a * b) * mD else 0) = 0 :=
-      (Finsupp.sum_congr fun D _ ↦ if_neg fun hmem ↦ h ⟨D, hmem⟩).trans
+      (Finsupp.sum_congr fun D _ ↦ ite_eq_right fun hmem ↦ h ⟨D, hmem⟩).trans
         (Finsupp.sum_fun_zero _)
     have hempty : (smulOrbit H D₁.rep q.rep).filter
         (fun i ↦ x ∈ smulOrbit H D₂.rep i.rep) = ∅ :=

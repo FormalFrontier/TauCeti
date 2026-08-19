@@ -10,13 +10,20 @@ public import TauCeti.Topology.MetricSpace.Cut
 import Mathlib.Analysis.Normed.Module.Ball.Pointwise
 
 /-!
-# The near side of a ball cut by a sphere
+# A set cut by a sphere, in a normed space
 
 `TauCeti/Topology/MetricSpace/Cut.lean` cuts an arbitrary set `s` by a sphere `sphere y ρ` into a
-*near side* `s ∩ ball y ρ` and a *far side* `s \ closedBall y ρ`. This file specialises the cut set
-to a ball, `s = ball x r`, and records what the near side then is: a convex set, hence connected as
-soon as it is nonempty, hence a connected component of the cut ball. Its frontier is covered by the
-two spheres involved.
+*near side* `s ∩ ball y ρ` and a *far side* `s \ closedBall y ρ`. This file adds what the linear
+structure of a normed space contributes to that cut.
+
+Two things, of which the first keeps the cut set arbitrary: for an *open* `s`, the part of the
+cutting sphere inside `s` is adherent to **both** sides, because in a normed space a sphere is
+adherent both to the open ball it bounds and to the exterior of the closed one. So neither side can
+be separated from the cut itself.
+
+The second specialises the cut set to a ball, `s = ball x r`, and records what the near side then
+is: a convex set, hence connected as soon as it is nonempty, hence a connected component of the cut
+ball. Its frontier is covered by the two spheres involved.
 
 Only *a* component, and not one of exactly two: at this generality the far side can itself be
 disconnected — in `ℝ`, cutting `ball 0 1` by `sphere 0 (1 / 2)` leaves three components — so how
@@ -64,6 +71,9 @@ the maximum modulus principle is applied against. None of that is used here.
 
 ## Main results
 
+* `TauCeti.inter_sphere_subset_closure_inter_ball` and
+  `TauCeti.inter_sphere_subset_closure_sdiff_closedBall` — the part of the cutting sphere inside an
+  open set is adherent to both sides of the cut.
 * `TauCeti.frontier_ball_inter_ball_subset` — the frontier of the near side lies on the two spheres.
 * `TauCeti.nonempty_ball_inter_ball` — two balls that overlap meet.
 * `TauCeti.isConnected_ball_inter_ball` — the near side is connected.
@@ -102,7 +112,39 @@ end PseudoMetric
 
 section Normed
 
-variable {E : Type*} [SeminormedAddCommGroup E] [NormedSpace ℝ E] {c ζ z : E} {r ρ : ℝ}
+variable {E : Type*} [SeminormedAddCommGroup E] [NormedSpace ℝ E] {s : Set E} {c ζ z : E} {r ρ : ℝ}
+
+/-! ## Both sides of the cut cling to the cutting sphere -/
+
+/-- **The cut of an open set clings to the near side.** The part `s ∩ sphere x r` of the cutting
+sphere lying in an open `s` is adherent to the near side `s ∩ ball x r`.
+
+The linear structure enters through `closure_ball`, which identifies the closure of a ball of
+nonzero radius with the closed ball and so puts the sphere inside it; the openness of `s` is what
+lets the closure be taken inside the intersection, by `IsOpen.inter_closure`. Both hypotheses are
+needed: in a general metric space a sphere can be disjoint from the closure of its ball, and for a
+non-open `s` the point of `s ∩ sphere x r` may be isolated in `s`. -/
+theorem inter_sphere_subset_closure_inter_ball (hs : IsOpen s) (x : E) (hr : r ≠ 0) :
+    s ∩ sphere x r ⊆ closure (s ∩ ball x r) := by
+  have hsph : sphere x r ⊆ closure (ball x r) := by
+    rw [closure_ball x hr]; exact sphere_subset_closedBall
+  exact (inter_subset_inter_right s hsph).trans hs.inter_closure
+
+/-- **The cut of an open set clings to the far side.** The mirror of
+`TauCeti.inter_sphere_subset_closure_inter_ball`: the part `s ∩ sphere x r` of the cutting sphere
+lying in an open `s` is adherent to the far side `s \ closedBall x r` as well.
+
+Here the sphere is put inside the closure of the *exterior* of the closed ball: it is the frontier
+of that closed ball by `frontier_closedBall`, hence the frontier of its complement, hence adherent
+to it. -/
+theorem inter_sphere_subset_closure_sdiff_closedBall (hs : IsOpen s) (x : E) (hr : r ≠ 0) :
+    s ∩ sphere x r ⊆ closure (s \ closedBall x r) := by
+  have hsph : sphere x r ⊆ closure (closedBall x r)ᶜ := by
+    rw [← frontier_closedBall x hr, ← frontier_compl]
+    exact frontier_subset_closure
+  simpa only [sdiff_eq] using (inter_subset_inter_right s hsph).trans hs.inter_closure
+
+/-! ## The near side of a ball -/
 
 /-- **Two balls whose radii together exceed the distance between their centres meet.** This is the
 converse of Mathlib's `Metric.dist_lt_add_of_nonempty_ball_inter_ball`, and it is where the linear

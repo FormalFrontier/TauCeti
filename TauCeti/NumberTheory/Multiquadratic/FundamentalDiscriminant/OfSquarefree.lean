@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -49,16 +50,16 @@ field `ℚ(√d)` for squarefree `d`, namely `d` when `d ≡ 1 (mod 4)` and `4 *
 def fundamentalDiscriminant (d : ℤ) : ℤ := if d % 4 = 1 then d else 4 * d
 
 @[simp] theorem fundamentalDiscriminant_of_mod_four_eq_one {d : ℤ} (hd : d % 4 = 1) :
-    fundamentalDiscriminant d = d := if_pos hd
+    fundamentalDiscriminant d = d := ite_eq_left hd
 
 @[simp] theorem fundamentalDiscriminant_of_mod_four_ne_one {d : ℤ} (hd : d % 4 ≠ 1) :
-    fundamentalDiscriminant d = 4 * d := if_neg hd
+    fundamentalDiscriminant d = 4 * d := ite_eq_right hd
 
 theorem fundamentalDiscriminant_def (d : ℤ) :
     fundamentalDiscriminant d = if d % 4 = 1 then d else 4 * d := by
   by_cases h : d % 4 = 1
-  · rw [if_pos h]; exact fundamentalDiscriminant_of_mod_four_eq_one h
-  · rw [if_neg h]; exact fundamentalDiscriminant_of_mod_four_ne_one h
+  · rw [ite_eq_left h]; exact fundamentalDiscriminant_of_mod_four_eq_one h
+  · rw [ite_eq_right h]; exact fundamentalDiscriminant_of_mod_four_ne_one h
 
 /-- `fundamentalDiscriminant d` is `d` or `4 * d`. Implementation helper for
 `exists_sq_mul_eq_fundamentalDiscriminant`. -/

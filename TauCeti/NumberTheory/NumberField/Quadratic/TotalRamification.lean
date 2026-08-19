@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RingTheory.RamificationInertia.Basic
 public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
+public import Mathlib.Algebra.Algebra.Equiv
 
 /-!
 # A ramified prime of a quadratic field is totally ramified
@@ -33,13 +35,14 @@ ramification in the genus field, and `e(𝔭 ∣ p) = 2` is what makes the genus
 
 ## Main results
 
-In the namespace `TauCeti.NumberField`, all for `Module.finrank ℚ K = 2`:
+In the namespace `NumberField`, all for `Module.finrank ℚ K = 2`:
 
 * `primesOver_eq_singleton_of_mem_ramifiedPrimes` and
   `ncard_primesOver_eq_one_of_mem_ramifiedPrimes`: a ramified prime has a unique prime above it.
 * `ramificationIdx_eq_two_of_mem_ramifiedPrimes` and `inertiaDeg_eq_one_of_mem_ramifiedPrimes`:
   that prime has `e = 2` and `f = 1`.
 * `map_span_eq_sq_of_mem_ramifiedPrimes`: `p 𝓞 K = 𝔭 ^ 2`.
+* `map_eq_self_of_mem_ramifiedPrimes`: any ring automorphism of `𝓞 K` fixes `𝔭`.
 * `mem_ramifiedPrimes_iff_ramificationIdx_eq_two`: conversely, `e = 2` characterises the ramified
   primes among the rational primes.
 -/
@@ -49,7 +52,7 @@ public section
 open Ideal Module
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {p : ℕ}
 
@@ -166,6 +169,17 @@ theorem map_span_eq_sq_of_mem_ramifiedPrimes :
     Set.toFinset_congr (primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭)]
   simp [ramificationIdx_eq_two_of_mem_ramifiedPrimes hK hmem 𝔭]
 
+/-- **A ring automorphism fixes a ramified prime.** In a degree-two number field, any ring
+automorphism `σ` of `𝓞 K` fixes the unique prime `𝔭` above a ramified rational prime `p`: `σ 𝔭` is
+again a prime of `𝓞 K` lying over `p`, and a ramified prime has only one prime above it. -/
+theorem map_eq_self_of_mem_ramifiedPrimes (σ : 𝓞 K ≃+* 𝓞 K) :
+    Ideal.map σ 𝔭 = 𝔭 := by
+  have hlo : (Ideal.map σ 𝔭).LiesOver (span {(p : ℤ)}) :=
+    Ideal.LiesOver.of_eq_map_equiv (span {(p : ℤ)}) σ.toIntAlgEquiv rfl
+  have hmemset : Ideal.map σ 𝔭 ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) :=
+    ⟨inferInstance, hlo⟩
+  rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
+
 omit hmem
 include hp
 
@@ -179,4 +193,4 @@ theorem mem_ramifiedPrimes_iff_ramificationIdx_eq_two :
   have := Algebra.IsUnramifiedIn.ramificationIdx_eq_one (R := ℤ) hunr (𝔓 := 𝔭) ‹_›
   omega
 
-end TauCeti.NumberField
+end NumberField

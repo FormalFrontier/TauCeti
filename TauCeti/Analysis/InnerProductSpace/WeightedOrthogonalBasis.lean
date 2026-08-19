@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -120,8 +120,9 @@ private theorem integral_bareNormalized_real {μ : Measure α}
           rw [horth]
           by_cases hmn : m = n
           · subst hmn
-            rw [if_pos rfl, if_pos rfl, Real.mul_self_sqrt hcn.le, inv_mul_cancel₀ hcn.ne']
-          · rw [if_neg hmn, if_neg hmn, mul_zero]
+            rw [ite_eq_left rfl, ite_eq_left rfl, Real.mul_self_sqrt hcn.le,
+              inv_mul_cancel₀ hcn.ne']
+          · rw [ite_eq_right hmn, ite_eq_right hmn, mul_zero]
 
 /-- The normalized bare functions have Kronecker-delta inner products in `L²(w·μ)`. -/
 theorem inner_bareNormalizedLp {μ : Measure α}

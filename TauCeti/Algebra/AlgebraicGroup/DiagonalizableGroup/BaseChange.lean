@@ -1,20 +1,24 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Basic
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
+public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.BaseChange
 
 /-!
 # Base change of diagonalizable-group points
 
 For a commutative group `G`, the diagonalizable group `D(G)` over `k` is represented by the
-Hopf algebra `k[G]`. This file records the corresponding base-change calculation on functors
-of points: if `K` is a `k`-algebra and `A` is a commutative `K`-algebra, then the
-`A`-valued points of the base-changed Hopf algebra `K ⊗[k] k[G]` are still the character group
-`G →* Aˣ`.
+Hopf algebra `k[G]`. The imported `TauCeti.MonoidAlgebra.scalarTensorBialgEquiv` identifies its
+base change `K ⊗[k] k[G]` with `K[G]` as a bialgebra. This file records the corresponding
+calculation on functors of points: if `A` is a commutative `K`-algebra, then the `A`-valued
+points of the base-changed Hopf algebra are still the character group `G →* Aˣ`.
 
 The construction is the composition of two existing Tau Ceti equivalences:
 `AlgHom.baseChangePointsMulEquiv`, which identifies points of `K ⊗[k] k[G]` with
@@ -31,8 +35,13 @@ algebra over `K`") and Layer 4 ("Diagonalizable groups and groups of multiplicat
 
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv`: the multiplicative equivalence
   from base-changed points of `D(G)` to the character group `G →* Aˣ`.
+* `TauCeti.DiagonalizableGroup.baseChangeCoordinateRingIso`: base change of the finite-type
+  coordinate Hopf algebra of `D(G)` is the corresponding coordinate Hopf algebra over the new
+  base.
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_apply_coe`: the equivalence reads a
   point by evaluating it on `1 ⊗ single g 1`.
+* `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_mapDomain_scalarTensorBialgEquiv`:
+  the coordinate-ring and points-level base-change equivalences agree.
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_mapDomain`: under a homomorphism
   `G →* G'`, the base-changed points map is precomposition of characters.
 
@@ -48,7 +57,7 @@ diagonalizable-group points calculation are Tau Ceti's
 
 public section
 
-open WithConv
+open CategoryTheory WithConv
 open scoped TensorProduct
 
 namespace TauCeti
@@ -61,6 +70,26 @@ variable {k : Type u} {K : Type v} {A : Type w} {G : Type w'}
 variable [CommSemiring k] [CommSemiring K] [CommSemiring A]
 variable [Algebra k K] [Algebra K A] [Algebra k A] [IsScalarTower k K A]
 variable [CommGroup G]
+
+/-- **The coordinate Hopf algebra of a finite-type diagonalizable group commutes with base
+change.** This is the bundled form of `MonoidAlgebra.scalarTensorBialgEquiv` for a finitely
+generated commutative group `G`:
+
+```text
+K ⊗[k] k[G] ≅ K[G].
+```
+
+It is an abbreviation so that `MonoidAlgebra.scalarTensorBialgEquiv_tmul` and
+`MonoidAlgebra.scalarTensorBialgEquiv_symm_single` apply directly to its forward and inverse maps,
+without duplicating their statements at this bundling layer.
+-/
+noncomputable abbrev baseChangeCoordinateRingIso
+    (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
+    (G : FGCommGrpCat.{u}) :
+    FiniteTypeCommHopfAlgCat.baseChange (K := K) (coordinateRing k G) ≅
+      coordinateRing K G :=
+  ObjectProperty.isoMk _ <|
+    _root_.CommHopfAlgCat.isoMk (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G))
 
 /-- The `A`-points of the base change `K ⊗[k] k[G]` of the diagonalizable group `D(G)` are
 the character group `G →* Aˣ`.
@@ -112,6 +141,19 @@ theorem baseChangePointsMulEquiv_symm_apply_single_one (χ : G →* Aˣ) (g : G)
         (1 ⊗ₜ[k] MonoidAlgebra.single g (1 : k)) =
       (χ g : A) := by
   rw [baseChangePointsMulEquiv_symm_apply_tmul_single]
+  simp
+
+/-- The coordinate-ring and functor-of-points base-change identifications agree. A point of
+`K[G]`, restricted along `K ⊗[k] k[G] ≃ₐc[K] K[G]`, gives the same character under
+`baseChangePointsMulEquiv` as it does under the ordinary `pointsMulEquiv` over `K`. -/
+theorem baseChangePointsMulEquiv_mapDomain_scalarTensorBialgEquiv
+    (f : WithConv (MonoidAlgebra K G →ₐ[K] A)) :
+    baseChangePointsMulEquiv (k := k) (K := K) (A := A) (G := G)
+        (AlgHom.mapDomain (A := A)
+          (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G) :
+            K ⊗[k] MonoidAlgebra k G →ₐc[K] MonoidAlgebra K G) f) =
+      pointsMulEquiv (R := K) (A := A) (G := G) f := by
+  ext g
   simp
 
 section MapDomain

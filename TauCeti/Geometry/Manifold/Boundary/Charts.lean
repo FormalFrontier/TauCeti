@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -135,14 +136,14 @@ private noncomputable def boundaryChart (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)
     exact e.map_source hq
   map_target' z hz := by
     simp only [mem_preimage] at hz ⊢
-    rw [dif_pos hz]
+    rw [dite_eq_left hz]
     exact e.map_target hz
   left_inv' q hq := by
     have hq' := boundaryParam_boundaryProj_chart_apply hk he hq
     have hq'' : EuclideanHalfSpace.boundaryParam n
         (EuclideanHalfSpace.boundaryProj n (e q.1)) ∈ e.target := by
       rw [hq']; exact e.map_source hq
-    rw [dif_pos hq'']
+    rw [dite_eq_left hq'']
     refine Subtype.ext ?_
     -- Reduce equality in the boundary subtype to equality of its ambient points, and unfold the
     -- selected `invFun` branch. Both are definitional reductions internal to this constructor.
@@ -151,7 +152,7 @@ private noncomputable def boundaryChart (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)
     rw [hq', e.left_inv hq]
   right_inv' z hz := by
     simp only [mem_preimage] at hz
-    rw [dif_pos hz]
+    rw [dite_eq_left hz]
     simp [e.right_inv hz]
   open_source := e.open_source.preimage continuous_subtype_val
   open_target := e.open_target.preimage EuclideanHalfSpace.continuous_boundaryParam
@@ -163,7 +164,7 @@ private noncomputable def boundaryChart (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)
     refine ContinuousOn.congr (e.symm.continuousOn.comp
       EuclideanHalfSpace.continuous_boundaryParam.continuousOn (mapsTo_preimage _ _)) fun z hz ↦ ?_
     simp only [mem_preimage] at hz
-    simp [Function.comp_apply, dif_pos hz]
+    simp [Function.comp_apply, dite_eq_left hz]
 
 variable {hk : k ≠ 0} {p : ↥((𝓡∂ (n + 1)).boundary M)}
   {he : e ∈ atlas (EuclideanHalfSpace (n + 1)) M}
@@ -248,7 +249,6 @@ theorem boundaryChartedSpace_atlas :
 variable (M) in
 /-- The source of the preferred boundary chart at `p` is the part of the boundary the ambient
 preferred chart at `p` sees. -/
-@[simp]
 theorem boundaryChartedSpace_chartAt_source (p : ↥((𝓡∂ (n + 1)).boundary M)) :
     (chartAt (EuclideanSpace ℝ (Fin n)) p).source =
       Subtype.val ⁻¹' (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).source :=
@@ -259,7 +259,6 @@ theorem boundaryChartedSpace_chartAt_source (p : ↥((𝓡∂ (n + 1)).boundary 
 variable (M) in
 /-- The target of the preferred boundary chart at `p` is the ambient target, pulled back to the
 coordinate hyperplane. -/
-@[simp]
 theorem boundaryChartedSpace_chartAt_target (p : ↥((𝓡∂ (n + 1)).boundary M)) :
     (chartAt (EuclideanSpace ℝ (Fin n)) p).target =
       EuclideanHalfSpace.boundaryParam n ⁻¹'
@@ -271,7 +270,6 @@ theorem boundaryChartedSpace_chartAt_target (p : ↥((𝓡∂ (n + 1)).boundary 
 variable (M) in
 /-- The preferred boundary chart at `p` reads a point through the ambient preferred chart at `p`
 and deletes the zeroth coordinate. -/
-@[simp]
 theorem boundaryChartedSpace_chartAt_apply (p q : ↥((𝓡∂ (n + 1)).boundary M)) :
     chartAt (EuclideanSpace ℝ (Fin n)) p q =
       EuclideanHalfSpace.boundaryProj n
@@ -283,7 +281,6 @@ theorem boundaryChartedSpace_chartAt_apply (p q : ↥((𝓡∂ (n + 1)).boundary
 variable (M) in
 /-- On its target, the inverse of the preferred boundary chart at `p` is the inverse of the ambient
 preferred chart at `p`, applied to the parametrized point. -/
-@[simp]
 theorem boundaryChartedSpace_chartAt_symm_apply (p : ↥((𝓡∂ (n + 1)).boundary M))
     {z : EuclideanSpace ℝ (Fin n)}
     (hz : EuclideanHalfSpace.boundaryParam n z ∈
@@ -356,26 +353,6 @@ theorem isManifold_boundary (hk : k ≠ 0) :
     contDiffOn_boundaryChart_symm_trans p q (chart_mem_atlas _ p.1)
       (chart_mem_atlas _ q.1)
 
-/-- Identify `EuclideanSpace ℝ (Fin n) × ℝ` with `EuclideanSpace ℝ (Fin (n + 1))` by placing the
-`ℝ` factor in the zeroth coordinate. This is the complement used by
-`isImmersion_subtypeVal_boundary`. -/
-private noncomputable def boundaryValComplementEquiv (n : ℕ) :
-    (EuclideanSpace ℝ (Fin n) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 1)) :=
-  (ContinuousLinearEquiv.prodComm ℝ (EuclideanSpace ℝ (Fin n)) ℝ).trans <|
-    ((ContinuousLinearEquiv.refl ℝ ℝ).prodCongr (EuclideanSpace.equiv (Fin n) ℝ)).trans <|
-      (Fin.consEquivL ℝ (fun _ : Fin (n + 1) ↦ ℝ)).trans
-        (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm
-
-@[simp]
-private theorem boundaryValComplementEquiv_apply_zero (x : EuclideanSpace ℝ (Fin n)) (r : ℝ) :
-    boundaryValComplementEquiv n (x, r) 0 = r := by
-  simp [boundaryValComplementEquiv]
-
-@[simp]
-private theorem boundaryValComplementEquiv_apply_succ (x : EuclideanSpace ℝ (Fin n)) (r : ℝ)
-    (i : Fin n) : boundaryValComplementEquiv n (x, r) i.succ = x i := by
-  simp [boundaryValComplementEquiv]
-
 variable (M) in
 /-- The inclusion of the boundary into the manifold is a `C^k` immersion. In the preferred
 boundary and ambient charts it is the coordinate inclusion with one-dimensional complement. -/
@@ -390,7 +367,7 @@ theorem isImmersion_subtypeVal_boundary (hk : k ≠ 0) :
   apply Manifold.IsImmersionOfComplement.isImmersion (F := ℝ)
   intro p
   apply Manifold.IsImmersionAtOfComplement.mk_of_continuousAt
-    continuous_subtype_val.continuousAt (boundaryValComplementEquiv n)
+    continuous_subtype_val.continuousAt (euclideanHalfSpaceBoundaryNormalEquiv n)
     (chartAt (EuclideanSpace ℝ (Fin n)) p)
     (chartAt (EuclideanHalfSpace (n + 1)) (p : M))
     (mem_chart_source _ p) (mem_chart_source _ (p : M))

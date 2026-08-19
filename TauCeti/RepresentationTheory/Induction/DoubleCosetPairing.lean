@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -69,7 +69,7 @@ universe u v w z
 variable (k : Type u) {G : Type v} [Field k] [Group G]
 
 /-- The character of an induced trivial representation is the coset permutation character. -/
-private theorem ofCharacter_ind_trivial (H : Subgroup G) [Finite (G ⧸ H)] :
+private theorem ofCharacter_ind_trivial (H : Subgroup G) :
     ofCharacter ((Representation.trivial k H k).ind H.subtype) =
       ofCharacter (Representation.ofMulAction k G (G ⧸ H)) :=
   Subtype.ext (funext fun g => by

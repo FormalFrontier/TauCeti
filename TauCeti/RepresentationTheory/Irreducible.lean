@@ -1,12 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.Subrepresentation
 public import Mathlib.RingTheory.SimpleModule.Rank
+import TauCeti.RingTheory.Semisimple.DoubleCentralizer
+import TauCeti.RingTheory.Semisimple.Schur
 
 /-!
 # Criteria for irreducibility
@@ -38,13 +41,21 @@ irreducible by.
 
 ## Main results
 
+* `TauCeti.Representation.IsIrreducible.nontrivial`: an irreducible representation has a nonzero
+  carrier.
 * `TauCeti.Representation.isIrreducible_of_finrank_eq_one`: a line is irreducible.
+* `TauCeti.Representation.isIrreducible_of_linearEquiv`: irreducibility transports along an
+  equivariant linear equivalence.
 * `TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom`: an atom of the lattice of
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
   algebra map exhausts the endomorphisms is irreducible.
+* `Representation.asAlgebraHom_surjective_of_isIrreducible`: over an algebraically closed
+  field, every finite-dimensional irreducible representation exhausts the endomorphisms.
 * `TauCeti.Representation.exists_isAtom_le`: every nonzero finite-dimensional subrepresentation
   contains an atom, so the atom criterion always has something to apply to.
+* `TauCeti.Representation.exists_isAtom`: in particular a nonzero finite-dimensional
+  representation has an atom.
 * `TauCeti.Representation.exists_isIrreducible_subrepresentation`: consequently every nonzero
   finite-dimensional representation contains an irreducible subrepresentation.
 
@@ -62,6 +73,16 @@ namespace Representation
 
 variable {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
 
+open scoped MonoidAlgebra in
+/-- **An irreducible representation has a nonzero carrier.** This is `IsSimpleModule.nontrivial`
+for `ρ.asModule`, read back on `V` along `ρ.asModuleEquiv`; the Mathlib statement is not an
+instance, so nothing supplies `Nontrivial V` without naming it. -/
+theorem IsIrreducible.nontrivial {ρ : Representation k G V} (h : ρ.IsIrreducible) :
+    Nontrivial V :=
+  have _ : ρ.IsIrreducible := h
+  have _ := IsSimpleModule.nontrivial k[G] ρ.asModule
+  ρ.asModuleEquiv.symm.toEquiv.nontrivial
+
 /-- A representation on a one-dimensional vector space is irreducible. -/
 theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
     (h : Module.finrank k V = 1) : ρ.IsIrreducible := by
@@ -78,6 +99,40 @@ theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
 /-- The trivial representation of a monoid on the base field is irreducible, being a line. -/
 instance isIrreducible_trivial_self : (_root_.Representation.trivial k G k).IsIrreducible :=
   isIrreducible_of_finrank_eq_one _ (Module.finrank_self k)
+
+/-- **Irreducibility transports along an equivariant linear equivalence.** A linear equivalence
+intertwining two representations matches their lattices of subrepresentations, by taking preimages
+of invariant subspaces, so one is irreducible exactly when the other is.
+
+Only one direction is stated; the reverse is this one applied to `e.symm`. -/
+theorem isIrreducible_of_linearEquiv {W : Type*} [AddCommGroup W] [Module k W]
+    {ρ : Representation k G V} {σ : Representation k G W} (e : V ≃ₗ[k] W)
+    (he : ∀ g v, e (ρ g v) = σ g (e v)) (h : ρ.IsIrreducible) : σ.IsIrreducible := by
+  have _ : ρ.IsIrreducible := h
+  have hV : Nontrivial V := IsIrreducible.nontrivial h
+  have : Nontrivial W := e.symm.toEquiv.nontrivial
+  have hne : (⊥ : Subrepresentation σ) ≠ ⊤ := fun hc =>
+    bot_ne_top (α := Submodule k W) (by
+      rw [← Subrepresentation.toSubmodule_bot (ρ := σ), ← Subrepresentation.toSubmodule_top
+        (ρ := σ), hc])
+  have : Nontrivial (Subrepresentation σ) := ⟨⊥, ⊤, hne⟩
+  refine ⟨fun τ => ?_⟩
+  -- pull `τ` back along `e` to a subrepresentation of `ρ`
+  let τ' : Subrepresentation ρ :=
+    { toSubmodule := τ.toSubmodule.comap (e : V →ₗ[k] W)
+      apply_mem_toSubmodule g v hv := by
+        simp only [Submodule.mem_comap, LinearEquiv.coe_coe] at hv ⊢
+        rw [he]
+        exact τ.apply_mem_toSubmodule g hv }
+  have hmap : (τ'.toSubmodule).map (e : V →ₗ[k] W) = τ.toSubmodule :=
+    Submodule.map_comap_eq_of_surjective e.surjective _
+  refine (eq_bot_or_eq_top τ').imp (fun hτ => ?_) fun hτ => ?_
+  · refine Subrepresentation.toSubmodule_injective ?_
+    rw [← hmap, hτ, Subrepresentation.toSubmodule_bot, Submodule.map_bot,
+      Subrepresentation.toSubmodule_bot]
+  · refine Subrepresentation.toSubmodule_injective ?_
+    rw [← hmap, hτ, Subrepresentation.toSubmodule_top, Submodule.map_top, LinearEquiv.range,
+      Subrepresentation.toSubmodule_top]
 
 /-- A subrepresentation that is an **atom** of the lattice of subrepresentations -- nonzero, with
 no subrepresentation strictly between it and zero -- carries an irreducible representation.  The
@@ -135,6 +190,47 @@ theorem isIrreducible_of_asAlgebraHom_surjective [Nontrivial V] (ρ : Representa
   refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
   rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
 
+open scoped MonoidAlgebra in
+/-- **Burnside density theorem.** The monoid algebra of a finite-dimensional irreducible
+representation over an algebraically closed field exhausts the full endomorphism algebra.
+
+Jacobson density gives all endomorphisms linear over the representation's commuting endomorphism
+ring. Schur's lemma identifies that ring with the base field, so these are exactly the
+`k`-linear endomorphisms. -/
+theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
+    [IsAlgClosed k] [FiniteDimensional k V]
+    (ρ : Representation k G V) (hρ : ρ.IsIrreducible) :
+    Function.Surjective ρ.asAlgebraHom := by
+  have : ρ.IsIrreducible := hρ
+  have : IsSimpleModule k[G] ρ.asModule := inferInstance
+  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] ρ.asModule
+  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Module.Finite (Module.End k[G] ρ.asModule) ρ.asModule :=
+    finite_end_of_smulCommClass (R := k[G]) (M := ρ.asModule) k
+  intro T
+  let T' : Module.End (Module.End k[G] ρ.asModule) ρ.asModule :=
+    { toFun := T
+      map_add' := T.map_add
+      map_smul' := fun f x ↦ by
+        -- `T` acts on `V`, while `f` acts on the definitionally equal type synonym
+        -- `ρ.asModule`; exposing function application is required before Schur's scalar
+        -- description is type-correct.
+        change T (f x) = f (T x)
+        rw [← endAlgEquivSelfOfIsSimpleModule_smul (k := k) (A := k[G]) f x,
+          ← endAlgEquivSelfOfIsSimpleModule_smul (k := k) (A := k[G]) f (T x)]
+        exact T.map_smul _ _ }
+  obtain ⟨a, ha⟩ :=
+    Module.Finite.toModuleEnd_moduleEnd_surjective (R := k[G]) (M := ρ.asModule) T'
+  refine ⟨a, LinearMap.ext fun x ↦ ?_⟩
+  have hT' (y : ρ.asModule) : T' y = T y := rfl
+  have hx := LinearMap.congr_fun ha (ρ.asModuleEquiv.symm x)
+  rw [hT'] at hx
+  have hx' := congrArg ρ.asModuleEquiv hx
+  have hT_equiv : ρ.asModuleEquiv (T (ρ.asModuleEquiv.symm x)) = T x := rfl
+  rw [hT_equiv] at hx'
+  simpa only [Module.toModuleEnd_apply, DistribSMul.toLinearMap_apply,
+    _root_.Representation.asModuleEquiv_map_smul, LinearEquiv.apply_symm_apply] using hx'
+
 /-! ### Atoms exist in finite dimensions -/
 
 /-- **Atoms exist.** Every nonzero finite-dimensional subrepresentation contains an atom of the
@@ -164,6 +260,18 @@ theorem exists_isAtom_le {ρ : Representation k G V} {σ : Subrepresentation ρ}
     (Submodule.finrank_lt_finrank_of_lt (Subrepresentation.toSubmodule_lt_toSubmodule.mpr hυ))
     ⟨hυ0, hυ.le.trans hτσ⟩
 
+/-- **A nonzero finite-dimensional representation has a minimal nonzero subrepresentation.**  This
+is `TauCeti.Representation.exists_isAtom_le` applied to the whole space, which is nonzero exactly
+because `V` is; the acting monoid stays arbitrary. -/
+theorem exists_isAtom [FiniteDimensional k V] [Nontrivial V] (ρ : Representation k G V) :
+    ∃ σ : Subrepresentation ρ, IsAtom σ := by
+  have htop : (⊤ : Subrepresentation ρ) ≠ ⊥ := fun hc =>
+    top_ne_bot (α := Submodule k V) (by
+      rw [← Subrepresentation.toSubmodule_top (ρ := ρ), ← Subrepresentation.toSubmodule_bot
+        (ρ := ρ), hc])
+  obtain ⟨σ, -, hσ⟩ := exists_isAtom_le htop
+  exact ⟨σ, hσ⟩
+
 /-- **Every nonzero finite-dimensional representation contains an irreducible subrepresentation.**
 Finite-dimensionality alone suffices; no semisimplicity is assumed.  This produces a single
 irreducible subrepresentation, not a decomposition: a representation that is not semisimple need
@@ -171,11 +279,7 @@ not be the sum of its irreducible subrepresentations. -/
 theorem exists_isIrreducible_subrepresentation [FiniteDimensional k V] [Nontrivial V]
     (ρ : Representation k G V) :
     ∃ σ : Subrepresentation ρ, σ ≠ ⊥ ∧ σ.toRepresentation.IsIrreducible := by
-  have htop : (⊤ : Subrepresentation ρ) ≠ ⊥ := fun hc =>
-    top_ne_bot (α := Submodule k V) (by
-      rw [← Subrepresentation.toSubmodule_top (ρ := ρ), ← Subrepresentation.toSubmodule_bot
-        (ρ := ρ), hc])
-  obtain ⟨σ, -, hσ⟩ := exists_isAtom_le htop
+  obtain ⟨σ, hσ⟩ := exists_isAtom ρ
   exact ⟨σ, hσ.1, isIrreducible_toRepresentation_of_isAtom hσ⟩
 
 end Representation

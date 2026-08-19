@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -241,11 +242,11 @@ def slopeValue (v : ℤ × ℤ) : OnePoint ℚ :=
   if v.2 = 0 then ∞ else ((v.1 : ℚ) / (v.2 : ℚ) : ℚ)
 
 @[simp]
-theorem slopeValue_of_snd_eq_zero {v : ℤ × ℤ} (hq : v.2 = 0) : slopeValue v = ∞ := if_pos hq
+theorem slopeValue_of_snd_eq_zero {v : ℤ × ℤ} (hq : v.2 = 0) : slopeValue v = ∞ := ite_eq_left hq
 
 @[simp]
 theorem slopeValue_of_snd_ne_zero {v : ℤ × ℤ} (hq : v.2 ≠ 0) :
-    slopeValue v = ((v.1 : ℚ) / (v.2 : ℚ) : ℚ) := if_neg hq
+    slopeValue v = ((v.1 : ℚ) / (v.2 : ℚ) : ℚ) := ite_eq_right hq
 
 /-- The value of a class is unchanged by the sign action `v ↦ -v`. -/
 theorem slopeValue_neg (v : ℤ × ℤ) : slopeValue (-v) = slopeValue v := by

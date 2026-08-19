@@ -1,10 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 
 /-!
@@ -13,7 +16,8 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 This file packages the regular right comodule of a coalgebra as a bundled object of
 `ComoduleCat`, and, when the coalgebra is finitely generated as a module, as an object of
 `FGComoduleCat`. It also records the canonical morphism from the group-like comodule on
-the rank-one free module `R` into the regular comodule.
+the rank-one free module `R` into the regular comodule, and multiplication of a bialgebra
+as a morphism from the tensor square of its regular comodule.
 
 This is Layer 1 infrastructure for the Tau Ceti reductive-groups roadmap target
 "Comodules over a coalgebra/Hopf algebra", specifically the regular-representation part of
@@ -25,14 +29,16 @@ the finitely generated comodule category.
 * `TauCeti.Comodule.Hom.groupLikeToRegular`: the map `r ↦ r • g` from the group-like
   comodule on `R` into the regular comodule.
 * `TauCeti.Comodule.Hom.trivialToRegular`: the bialgebraic special case `g = 1`.
+* `TauCeti.Comodule.Hom.regularMul`: bialgebra multiplication as a morphism from the
+  tensor square of the regular comodule.
 * `TauCeti.FGComoduleCat.regular`: the regular comodule as a finitely generated comodule,
   when the underlying coalgebra is finitely generated as an `R`-module.
 
 ## References
 
 This is the standard regular right comodule of a coalgebra; see Sweedler, *Hopf Algebras*,
-Chapter 2. It reuses Mathlib's `GroupLike` API from
-`Mathlib.RingTheory.Bialgebra.GroupLike`.
+Chapter 2. The group-like morphisms reuse Mathlib's `GroupLike` API, and the multiplication
+morphism reuses `Bialgebra.mulCoalgHom`.
 -/
 
 public section
@@ -116,6 +122,62 @@ theorem trivialToRegular_apply (r : R) :
     exact LinearMap.congr_fun (trivialToRegular_toLinearMap (R := R) (C := C)) r
 
 end Bialgebra
+
+section Multiplication
+
+variable {R : Type u} {H : Type v} [CommSemiring R] [Semiring H] [Bialgebra R H]
+
+attribute [local instance] Comodule.tensor
+
+/-- Multiplication of a bialgebra, regarded as a morphism from the tensor square of its
+regular right comodule to the regular right comodule. -/
+noncomputable def regularMul : Hom R H (H ⊗[R] H) H where
+  toLinearMap := LinearMap.mul' R H
+  map_coact := by
+    apply TensorProduct.ext'
+    intro x y
+    simp only [LinearMap.comp_apply, LinearMap.mul'_apply, Comodule.tensor_coact,
+      Comodule.tensorCoact_tmul, Comodule.instSelf_coact]
+    have combine_mul (a b : H ⊗[R] H) :
+        TensorProduct.map (LinearMap.mul' R H) LinearMap.id
+            (Comodule.tensorCombine (R := R) (C := H) (M := H) (N := H) (a ⊗ₜ[R] b)) =
+          TensorProduct.map (LinearMap.mul' R H) (LinearMap.mul' R H)
+            (TensorProduct.tensorTensorTensorComm R H H H H (a ⊗ₜ[R] b)) := by
+      induction a using TensorProduct.induction_on with
+      | zero => simp
+      | add a₁ a₂ ha₁ ha₂ =>
+        simp only [TensorProduct.add_tmul, map_add, ha₁, ha₂]
+      | tmul a₁ a₂ =>
+        induction b using TensorProduct.induction_on with
+        | zero => simp
+        | add b₁ b₂ hb₁ hb₂ =>
+          simp only [TensorProduct.tmul_add, map_add, hb₁, hb₂]
+        | tmul b₁ b₂ => simp
+    rw [combine_mul]
+    convert CoalgHomClass.map_comp_comul_apply (Bialgebra.mulCoalgHom R H) (x ⊗ₜ[R] y)
+      using 1 <;> rfl
+
+private theorem regularMul_toLinearMap_def :
+    (regularMul (R := R) (H := H)).toLinearMap = LinearMap.mul' R H :=
+  rfl
+
+/-- The underlying linear map of regular-comodule multiplication is bialgebra
+multiplication. -/
+@[simp]
+theorem regularMul_toLinearMap :
+    (regularMul (R := R) (H := H)).toLinearMap = LinearMap.mul' R H :=
+  by exact regularMul_toLinearMap_def
+
+private theorem regularMul_tmul_def (x y : H) :
+    regularMul (R := R) (H := H) (x ⊗ₜ[R] y) = x * y :=
+  rfl
+
+/-- Regular-comodule multiplication sends a pure tensor to the product of its factors. -/
+@[simp]
+theorem regularMul_tmul (x y : H) : regularMul (R := R) (H := H) (x ⊗ₜ[R] y) = x * y :=
+  by exact regularMul_tmul_def x y
+
+end Multiplication
 
 end Hom
 

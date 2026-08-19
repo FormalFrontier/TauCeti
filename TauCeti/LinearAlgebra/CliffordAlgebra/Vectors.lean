@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
@@ -28,7 +30,7 @@ transports the exterior-algebra statements along it, so all of them hold for an 
 quadratic form over a commutative ring in which `2` is invertible; no hypothesis on `Q` — no
 nondegeneracy, no finiteness, no freeness — is needed.
 
-The payoff is `TauCeti.CliffordAlgebra.ιRangeEquiv`, the linear equivalence `M ≃ₗ[R] range (ι Q)`.
+The payoff is `CliffordAlgebra.ιRangeEquiv`, the linear equivalence `M ≃ₗ[R] range (ι Q)`.
 It is what turns a statement about elements of `CliffordAlgebra Q` that happen to lie in
 `range (ι Q)` into a statement about vectors of `M`: Mathlib's twisted conjugation lemmas
 (`lipschitzGroup.conjAct_smul_range_ι`, `spinGroup.involute_act_ι_mem_range_ι`) say only that the
@@ -37,31 +39,28 @@ action to an honest linear automorphism of `M`. Landing in the orthogonal group 
 further step: a linear automorphism is not orthogonal for free, and that the transported action
 preserves `Q` has to be proved separately.
 
-Against the degree filtration `TauCeti.CliffordAlgebra.filtration`, whose first step is spanned by
+Against the degree filtration `CliffordAlgebra.filtration`, whose first step is spanned by
 the scalars and the vectors, the disjointness of the two pins that step down to `R ⊕ M`:
-`TauCeti.CliffordAlgebra.filtrationOneEquiv`.
+`CliffordAlgebra.filtrationOneEquiv`.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.ιInv`: the linear left inverse of `ι Q`, the *vector part* of an
+* `CliffordAlgebra.ιInv`: the linear left inverse of `ι Q`, the *vector part* of an
   element of the Clifford algebra.
-* `TauCeti.CliffordAlgebra.ιRangeEquiv`: the vector equivalence `M ≃ₗ[R] range (ι Q)`.
-* `TauCeti.CliffordAlgebra.scalarAddVector` and
-  `TauCeti.CliffordAlgebra.filtrationOneEquiv`: the map `(r, m) ↦ r + ι Q m` out of `R × M`, and
+* `CliffordAlgebra.ιRangeEquiv`: the vector equivalence `M ≃ₗ[R] range (ι Q)`.
+* `CliffordAlgebra.scalarAddVector` and
+  `CliffordAlgebra.filtrationOneEquiv`: the map `(r, m) ↦ r + ι Q m` out of `R × M`, and
   the equivalence with the first step of the degree filtration that it induces.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.ι_injective`, `TauCeti.CliffordAlgebra.ι_inj` and
-  `TauCeti.CliffordAlgebra.ι_eq_zero_iff`: the generators are a faithful copy of `M`.
-* `TauCeti.CliffordAlgebra.algebraMap_injective` and the instance
-  `TauCeti.CliffordAlgebra.faithfulSMul` it provides: the scalars are a faithful copy of `R`, so
-  Mathlib's `FaithfulSMul` simp lemmas apply.
-* `TauCeti.CliffordAlgebra.ι_eq_algebraMap_iff`, `TauCeti.CliffordAlgebra.ι_ne_one` and
-  `TauCeti.CliffordAlgebra.ι_range_disjoint_one`: a vector is a scalar only when both vanish.
-* `TauCeti.CliffordAlgebra.mem_range_ι_iff`: membership of `range (ι Q)` is detected by the vector
+* `CliffordAlgebra.ι_injective`, `CliffordAlgebra.ι_inj` and
+  `CliffordAlgebra.ι_eq_zero_iff`: the generators are a faithful copy of `M`.
+* `CliffordAlgebra.ι_eq_algebraMap_iff`, `CliffordAlgebra.ι_ne_one` and
+  `CliffordAlgebra.ι_range_disjoint_one`: a vector is a scalar only when both vanish.
+* `CliffordAlgebra.mem_range_ι_iff`: membership of `range (ι Q)` is detected by the vector
   part.
-* `TauCeti.CliffordAlgebra.finrank_filtration_one`: the first step of the degree filtration has one
+* `CliffordAlgebra.finrank_filtration_one`: the first step of the degree filtration has one
   more dimension than `M`.
 
 ## References
@@ -74,11 +73,8 @@ the scalars and the vectors, the disjointness of the two pins that step down to 
 
 public section
 
-open CliffordAlgebra
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -89,20 +85,14 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
 /-! ### The comparison with the exterior algebra
 
-Mathlib's `CliffordAlgebra.equivExterior` is only a linear equivalence, but the two facts that make
-it useful here — that it fixes generators and fixes scalars — are immediate from its definition as
-a `changeForm`, and are recorded once. -/
+Mathlib's `CliffordAlgebra.equivExterior` is only a linear equivalence. Its scalar equation is
+recorded in the general Clifford-algebra API; here we record the generator equation needed for
+the vector API. Both are immediate from its definition as a `changeForm`. -/
 
 /-- `CliffordAlgebra.equivExterior` sends a generator to the corresponding generator of the
 exterior algebra. -/
 theorem equivExterior_ι (m : M) : equivExterior Q (ι Q m) = ExteriorAlgebra.ι R m :=
   changeForm_ι changeForm.associated_neg_proof m
-
-/-- `CliffordAlgebra.equivExterior` sends a scalar to the corresponding scalar of the exterior
-algebra. -/
-theorem equivExterior_algebraMap (r : R) :
-    equivExterior Q (algebraMap R (CliffordAlgebra Q) r) = algebraMap R (ExteriorAlgebra R M) r :=
-  changeForm_algebraMap changeForm.associated_neg_proof r
 
 /-! ### The vector part -/
 
@@ -147,21 +137,6 @@ theorem ι_inj (m n : M) : ι Q m = ι Q n ↔ m = n := (ι_injective Q).eq_iff
 theorem ι_eq_zero_iff (m : M) : ι Q m = 0 ↔ m = 0 := by
   rw [← ι_inj Q m 0, map_zero]
 
-/-! ### `algebraMap` is injective -/
-
-/-- **The scalars of a Clifford algebra are a faithful copy of `R`.** -/
-theorem algebraMap_injective : Function.Injective (algebraMap R (CliffordAlgebra Q)) := by
-  intro r s hrs
-  have h := congrArg (equivExterior Q) hrs
-  rwa [equivExterior_algebraMap, equivExterior_algebraMap,
-    ExteriorAlgebra.algebraMap_inj M] at h
-
-/-- With this instance the `iff` forms come from Mathlib: `algebraMap.coe_inj`,
-`FaithfulSMul.algebraMap_eq_zero_iff` and `FaithfulSMul.algebraMap_eq_one_iff` are all `simp`
-lemmas already. -/
-instance faithfulSMul : FaithfulSMul R (CliffordAlgebra Q) :=
-  (faithfulSMul_iff_algebraMap_injective R (CliffordAlgebra Q)).2 (algebraMap_injective Q)
-
 /-! ### Vectors are not scalars -/
 
 /-- A generator is a scalar only in the trivial way: both the vector and the scalar vanish. -/
@@ -178,9 +153,9 @@ theorem ι_ne_one [Nontrivial R] (m : M) : ι Q m ≠ 1 := by
   exact one_ne_zero ∘ And.right
 
 /-- **The vectors of a Clifford algebra are disjoint from its scalars.** Together with
-`TauCeti.CliffordAlgebra.filtration_one`, which writes the first step of the degree filtration as
+`TauCeti.Algebra.wordFiltration_one`, which writes the first step of the degree filtration as
 `1 ⊔ LinearMap.range (ι Q)`, this is what makes that step a direct sum of `R` and `M`; see
-`TauCeti.CliffordAlgebra.filtrationOneEquiv`. -/
+`CliffordAlgebra.filtrationOneEquiv`. -/
 theorem ι_range_disjoint_one :
     Disjoint (LinearMap.range (ι Q)) (1 : Submodule R (CliffordAlgebra Q)) := by
   rw [Submodule.disjoint_def]
@@ -229,7 +204,7 @@ theorem ιRangeEquiv_symm_apply (x : LinearMap.range (ι Q)) :
 /-! ### The first step of the degree filtration -/
 
 /-- The elements of degree at most one, as a map out of `R × M`: `(r, m) ↦ r + ι Q m`. It is
-injective with image `TauCeti.CliffordAlgebra.filtration Q 1`. -/
+injective with image `CliffordAlgebra.filtration Q 1`. -/
 def scalarAddVector : R × M →ₗ[R] CliffordAlgebra Q :=
   LinearMap.coprod (Algebra.linearMap R (CliffordAlgebra Q)) (ι Q)
 
@@ -242,10 +217,12 @@ theorem scalarAddVector_apply (x : R × M) :
 omit [Invertible (2 : R)] in
 /-- The scalars and the vectors span exactly the first step of the degree filtration. -/
 theorem range_scalarAddVector : LinearMap.range (scalarAddVector Q) = filtration Q 1 := by
-  rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range, ← filtration_one]
+  rw [scalarAddVector, LinearMap.range_coprod, ← Submodule.one_eq_range]
+  -- The Clifford filtration is the reducible alias of the generic word filtration.
+  exact (TauCeti.Algebra.wordFiltration_one (ι Q)).symm
 
 /-- A scalar and a vector summing to zero both vanish, the scalars and the vectors being disjoint
-(`TauCeti.CliffordAlgebra.ι_range_disjoint_one`). -/
+(`CliffordAlgebra.ι_range_disjoint_one`). -/
 theorem scalarAddVector_injective : Function.Injective (scalarAddVector Q) := by
   have hd : Disjoint (LinearMap.range (Algebra.linearMap R (CliffordAlgebra Q)))
       (LinearMap.range (ι Q)) := by
@@ -256,8 +233,8 @@ theorem scalarAddVector_injective : Function.Injective (scalarAddVector Q) := by
     Submodule.prod_bot]
 
 /-- **The first step of the degree filtration is `R ⊕ M`.** The scalars and the vectors span it
-(`TauCeti.CliffordAlgebra.filtration_one`) and meet only in `0`
-(`TauCeti.CliffordAlgebra.ι_range_disjoint_one`), so together they parametrize it faithfully. -/
+(`TauCeti.Algebra.wordFiltration_one`) and meet only in `0`
+(`CliffordAlgebra.ι_range_disjoint_one`), so together they parametrize it faithfully. -/
 noncomputable def filtrationOneEquiv : (R × M) ≃ₗ[R] filtration Q 1 :=
   (LinearEquiv.ofInjective _ (scalarAddVector_injective Q)).trans
     (LinearEquiv.ofEq _ _ (range_scalarAddVector Q))
@@ -276,7 +253,7 @@ section Field
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
   (Q : QuadraticForm K V) [Invertible (2 : K)]
 
-/-- Counting dimensions in `TauCeti.CliffordAlgebra.filtrationOneEquiv`: the first step of the
+/-- Counting dimensions in `CliffordAlgebra.filtrationOneEquiv`: the first step of the
 degree filtration is one dimension bigger than the space of vectors. -/
 theorem finrank_filtration_one [FiniteDimensional K V] :
     Module.finrank K (filtration Q 1) = Module.finrank K V + 1 := by
@@ -286,5 +263,3 @@ theorem finrank_filtration_one [FiniteDimensional K V] :
 end Field
 
 end CliffordAlgebra
-
-end TauCeti

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -90,14 +91,14 @@ private theorem headD_cyclotomicCoeffsAux_ne_zero (fuel n : ℕ)
   | succ fuel =>
     rw [cyclotomicCoeffsAux] at h ⊢
     by_cases hn0 : n = 0
-    · rw [if_pos hn0]; simp
+    · rw [ite_eq_left hn0]; simp
     · -- what is left after dropping the leading zeros does not start with a zero
       have hdrop : ∀ l : List ℤ, l.dropWhile (· == 0) ≠ [] →
           (l.dropWhile (· == 0)).headD 0 ≠ 0 := fun l hl => by
         have hpos : 0 < (l.dropWhile (· == 0)).length := List.length_pos_iff.2 hl
         simpa [List.head?_eq_getElem?, List.getElem?_eq_getElem hpos] using
           List.dropWhile_get_zero_not (· == 0) l hpos
-      rw [if_neg hn0] at h ⊢
+      rw [ite_eq_right hn0] at h ⊢
       exact hdrop _ h
 
 /-- **Dividing out a known family of monic factors.**  If the polynomial of `l` is `A` times the
@@ -134,9 +135,9 @@ private theorem ofCoeffList_cyclotomicCoeffsAux (fuel : ℕ) :
     intro n hn
     rw [cyclotomicCoeffsAux]
     by_cases hn0 : n = 0
-    · rw [if_pos hn0, hn0]
+    · rw [ite_eq_left hn0, hn0]
       simp [ofCoeffList_cons]
-    rw [if_neg hn0, ofCoeffList_dropWhile_beq_zero]
+    rw [ite_eq_right hn0, ofCoeffList_dropWhile_beq_zero]
     have hnodup : ((List.range n).filter (fun d => n % d == 0)).Nodup :=
       (List.nodup_range).filter _
     have htoFinset : ((List.range n).filter (fun d => n % d == 0)).toFinset = n.properDivisors := by

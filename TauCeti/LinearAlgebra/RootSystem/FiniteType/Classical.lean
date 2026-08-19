@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -178,7 +179,7 @@ private lemma simpleCorootsA_vecMul_injective (n : ℕ) :
   refine vecMul_injective_of_submatrix_isUpperTriangular Fin.castSucc (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
     simp only [simpleCorootsA, twoTermRows_apply, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ]
-    rw [if_neg (by omega), if_neg (by omega), add_zero]
+    rw [ite_eq_right (by omega), ite_eq_right (by omega), add_zero]
   · simp [simpleCorootsA, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ]
 
 /-- **The Cartan matrix of type `Aₙ` is of finite type**, at every rank. -/
@@ -226,7 +227,7 @@ private lemma simpleCorootsB_vecMul_injective (n : ℕ) :
   · have hji' : j.val < i.val := hji
     have hle := Order.le_succ i
     simp only [simpleCorootsB, twoTermRows_apply, id_eq, Fin.ext_iff]
-    rw [if_neg (by omega), if_neg (by omega), add_zero]
+    rw [ite_eq_right (by omega), ite_eq_right (by omega), add_zero]
   · simp only [simpleCorootsB, twoTermRows_apply, id_eq, Fin.ext_iff, orderSucc_val]
     split_ifs <;> first | (exfalso; omega) | norm_num
 
@@ -272,12 +273,12 @@ private lemma simpleCorootsD_mul_conjTranspose (k : ℕ) :
   rcases Nat.eq_zero_or_pos k with rfl | hk
   · have hk2 : 0 + 2 ≤ 2 := by omega
     simp only [Matrix.of_apply, CartanMatrix.D, Fin.ext_iff, forkIndex_val, orderSucc_val,
-      if_pos hk2]
+      ite_eq_left hk2]
     split_ifs <;> first | (exfalso; omega) | norm_num
   · have hk2 : ¬(k + 2 ≤ 2) := by omega
     by_cases hin : i.val + 1 < k + 2 <;> by_cases hjn : j.val + 1 < k + 2 <;>
-        simp only [Matrix.of_apply, CartanMatrix.D, hin, hjn, if_true, if_false, Fin.ext_iff,
-          forkIndex_val, orderSucc_val, if_neg hk2] <;>
+        simp only [Matrix.of_apply, CartanMatrix.D, hin, hjn, ite_true, ite_false, Fin.ext_iff,
+          forkIndex_val, orderSucc_val, ite_eq_right hk2] <;>
         split_ifs <;> first | (exfalso; omega) | norm_num
 
 /-- **The simple coroots of type `Dₙ` are independent.** No coordinate makes the matrix
@@ -308,10 +309,10 @@ private lemma simpleCorootsD_vecMul_injective (k : ℕ) :
       intro i
       have hi : (i.castSucc : Fin (k + 2)).val + 1 < k + 2 := by
         have := i.isLt; simp only [Fin.val_castSucc]; omega
-      rw [hrow, if_pos hi, mul_zero]
+      rw [hrow, ite_eq_left hi, mul_zero]
     rw [Finset.sum_congr rfl fun i _ ↦ hchain i] at h0
     simp only [Finset.sum_const_zero, zero_add] at h0
-    rw [hrow, if_neg (by simp only [Fin.val_last]; omega)] at h0
+    rw [hrow, ite_eq_right (by simp only [Fin.val_last]; omega)] at h0
     linarith
   -- The chain rows are triangular on the first `k + 1` coordinates.
   have hblock : Function.Injective (M.submatrix Fin.castSucc Fin.castSucc).vecMul := by

@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
+public import Mathlib.LinearAlgebra.Matrix.Charpoly.Coeff
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Determinant
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
 
 /-!
@@ -23,6 +25,7 @@ and surjectivity without choosing a presentation of derivations on the determina
 ## Main declarations
 
 * `TauCeti.GeneralLinear.tangentMatrix`: evaluate a tangent derivation on the generic entries.
+* `TauCeti.GeneralLinear.trace_tangentMatrix`: the derivative of the determinant is matrix trace.
 * `TauCeti.GeneralLinear.tangentLinearEquivMatrix`: the tangent space of `GLₙ` is linearly
   equivalent to `n × n` matrices.
 * `TauCeti.GeneralLinear.tangentLieEquivMatrix`: the same equivalence as an equivalence of Lie
@@ -30,7 +33,8 @@ and surjectivity without choosing a presentation of derivations on the determina
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), §14.
+* J. S. Milne, *Algebraic Groups* (2017), §§10, 14.
+* The first-order determinant computation uses Mathlib's `Matrix.det_one_add_smul`.
 -/
 
 public section
@@ -164,6 +168,76 @@ private theorem tangentPoint_matrix_fst (d : Derivation R (H (R := R) n)
     (1 : Matrix.GeneralLinearGroup (Fin n)
       (Bialgebra.CounitAlgebra R (H (R := R) n) B)) i j
   exact hij
+
+/-- A dual-number matrix whose classical part is the identity has determinant with first-order
+part equal to the trace of its infinitesimal part. -/
+private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ}
+    (M : Matrix (Fin n) (Fin n) (DualNumber C))
+    (hM : M.map fst = 1) :
+    snd (Matrix.det M) = Matrix.trace (M.map snd) := by
+  classical
+  let X : Matrix (Fin n) (Fin n) C := M.map snd
+  let X' : Matrix (Fin n) (Fin n) (DualNumber C) := X.map inl
+  have hmatrix : M = 1 + (inr (1 : C) : DualNumber C) • X' := by
+    apply Matrix.ext
+    intro i j
+    rw [← TrivSqZeroExt.inl_fst_add_inr_snd_eq (M i j)]
+    have hMij := congr_fun (congr_fun hM i) j
+    rw [Matrix.map_apply] at hMij
+    rw [hMij]
+    simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply, smul_eq_mul, X', X,
+      Matrix.one_apply, apply_ite, inl_one, inl_zero, inr_mul_inl, op_smul_eq_smul, mul_one]
+  calc
+    snd (Matrix.det M) =
+        snd (Matrix.det (1 + (inr (1 : C) : DualNumber C) • X')) := by rw [hmatrix]
+    _ = Matrix.trace X := by
+      rw [Matrix.det_one_add_smul]
+      simp only [DualNumber.inr_eq_smul_eps, one_smul, DualNumber.eps_pow_two, mul_zero,
+        add_zero, snd_add, snd_one, snd_mul, DualNumber.snd_eps, smul_eq_mul, mul_one,
+        DualNumber.fst_eps, MulOpposite.op_zero, zero_smul, zero_add]
+      simp only [Matrix.trace, Matrix.diag_apply]
+      rw [fst_sum]
+      apply Finset.sum_congr rfl
+      intro i _
+      simp only [X', Matrix.map_apply, fst_inl]
+    _ = Matrix.trace (M.map snd) := by simp only [X]
+
+/-- **The differential of the determinant on `GLₙ` is matrix trace.** Evaluating a tangent
+derivation on the generic determinant, then identifying its counit-valued coefficient with `B`,
+equals the trace of its tangent matrix. -/
+@[simp]
+theorem trace_tangentMatrix (d : Derivation R (H (R := R) n)
+    (Bialgebra.CounitAlgebra R (H (R := R) n) B)) :
+    Matrix.trace (tangentMatrix n d) =
+      d (determinantGroupLike R n : H (R := R) n) := by
+  let q := derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d)
+  let M : Matrix (Fin n) (Fin n) (DualNumber (Bialgebra.CounitAlgebra R
+      (H (R := R) n) B)) := (pointsMulEquiv (R := R) n q.val).val
+  -- Compute the determinant of the dual-number point in the tangent kernel.
+  have hdet : d (determinantGroupLike R n : H (R := R) n) =
+      Matrix.trace (M.map snd) := by
+    calc
+      d (determinantGroupLike R n : H (R := R) n) =
+          snd (q.val.ofConv (determinantGroupLike R n : H (R := R) n)) := by
+        -- Unfold the local tangent point `q` before applying its public second-component rule.
+        rw [show q = derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d) from rfl]
+        exact (derivationMulEquivTangentKer_apply_snd (.ofAdd d) _).symm
+      _ = snd (Matrix.det M) := by
+        rw [point_apply_determinantGroupLike, ← pointsMulEquiv_apply]
+      _ = Matrix.trace (M.map snd) :=
+        snd_det_eq_trace_of_fst_eq_one M (by
+          apply Matrix.ext
+          intro i j
+          simp only [Matrix.map_apply, Matrix.one_apply, M, q]
+          exact tangentPoint_matrix_fst n d i j)
+  -- Transport the entrywise identity through the coefficient equivalence.
+  rw [hdet]
+  simp only [Matrix.trace, Matrix.diag_apply]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [tangentMatrix_apply]
+  simp only [Matrix.map_apply, M, q, tangentPoint_matrix_snd]
+  exact Bialgebra.CounitAlgebra.algEquivSelf_apply R (H (R := R) n) B _
 
 private theorem tangentMatrix_injective :
     Function.Injective (tangentMatrix (R := R) (B := B) n) := by

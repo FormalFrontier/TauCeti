@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -400,7 +401,7 @@ private lemma evalE₄E₆_component_eq (p : MvPolynomial (Fin 2) ℂ) (n : ℕ)
   refine Finset.sum_eq_zero fun d hd ↦
     evalE₄E₆_monomial_apply_eq_zero_of_ne _ _ _ fun heq ↦ MvPolynomial.mem_support_iff.mp hd ?_
   rw [hq_def, MvPolynomial.coeff_sub, MvPolynomial.coeff_weightedHomogeneousComponent,
-    if_pos ?_, sub_self]
+    ite_eq_left ?_, sub_self]
   rw [weight_eq_4a_6b]
   lia
 
@@ -430,7 +431,7 @@ private lemma evalE₄E₆_discriminantPoly_mul_apply {n : ℕ}
       hcast ▸ GradedMonoid.GMul.mul (CuspForm.discriminant : ModularForm 𝒮ℒ 12)
         ((evalE₄E₆ s) ↑(n - 12)) := by
   conv_lhs => rw [map_mul, evalE₄E₆_discriminantPoly, evalE₄E₆_eq_of_apply (n - 12) s hs,
-    DirectSum.of_mul_of, DirectSum.of_apply, dif_pos hcast]
+    DirectSum.of_mul_of, DirectSum.of_apply, dite_eq_left hcast]
 
 private lemma evalE₄E₆_discriminantPoly_mul_coeff_zero {n : ℕ} (hn12 : 12 ≤ n)
     (s : MvPolynomial (Fin 2) ℂ)
@@ -617,7 +618,7 @@ private lemma reduced_isWeightedHomogeneous_eq_monomial {n : ℕ}
   rw [MvPolynomial.coeff_monomial]
   by_cases hd : d = d₀
   · simp [hd]
-  rw [if_neg (Ne.symm hd)]
+  rw [ite_eq_right (Ne.symm hd)]
   by_cases hd_supp : d ∈ r.support
   · obtain ⟨ha, hb⟩ := unique_small_weight_solution (hr_red d hd_supp) (hr_red d₀ hd₀)
       (by rw [← weight_eq_4a_6b, ← weight_eq_4a_6b,

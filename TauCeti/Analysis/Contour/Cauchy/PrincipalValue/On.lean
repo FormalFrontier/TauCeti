@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
+import TauCeti.Analysis.Contour.Curve.ExcisionMeasure
 import TauCeti.Analysis.Contour.Curve.Distance
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Analysis.Calculus.Deriv.Inverse
@@ -195,8 +196,8 @@ theorem HasCauchyPVAt.hasCauchyPV {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → �
     intro ε t
     simp only [Finset.mem_singleton, exists_eq_left]
     by_cases h' : ‖γ t - z₀‖ ≤ ε
-    · rw [if_pos h', if_neg (not_lt.mpr h')]
-    · rw [if_neg h', if_pos (not_le.mp h')]
+    · rw [ite_eq_left h', ite_eq_right (not_lt.mpr h')]
+    · rw [ite_eq_right h', ite_eq_left (not_le.mp h')]
   refine ⟨{z₀}, ?_, ?_⟩
   · filter_upwards [h.eventually_intervalIntegrable] with ε hε
     exact (intervalIntegrable_congr fun t _ => hbody ε t).mpr hε
@@ -254,10 +255,7 @@ theorem HasCauchyPVWith.of_integrable_of_crossings_measure_zero {γ : ℝ → �
   classical
   set g : ℝ → ℂ := fun t => f (γ t) * deriv γ t with hg
   have hmeas : ∀ ε : ℝ, MeasureTheory.NullMeasurableSet {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε}
-      (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε => by
-    have hset : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} = ⋃ s ∈ S, {t | ‖γ t - s‖ ≤ ε} := by ext t; simp
-    refine hset ▸ MeasureTheory.NullMeasurableSet.biUnion S.countable_toSet fun s _ => ?_
-    exact nullMeasurableSet_le ((hγ.sub_const s).norm) aemeasurable_const
+      (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε => nullMeasurableSet_excision hγ S ε
   have hsm : ∀ ε : ℝ, MeasureTheory.AEStronglyMeasurable
       (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g t)
       (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε =>
@@ -265,8 +263,8 @@ theorem HasCauchyPVWith.of_integrable_of_crossings_measure_zero {γ : ℝ → �
       (Filter.Eventually.of_forall fun t => by
         dsimp only
         by_cases h : ∃ s ∈ S, ‖γ t - s‖ ≤ ε
-        · rw [Set.indicator_of_notMem (by simpa using h), if_pos h]
-        · rw [Set.indicator_of_mem (by simpa using h), if_neg h])
+        · rw [Set.indicator_of_notMem (by simpa using h), ite_eq_left h]
+        · rw [Set.indicator_of_mem (by simpa using h), ite_eq_right h])
   have hle : ∀ ε : ℝ, ∀ t : ℝ,
       ‖(if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g t)‖ ≤ ‖g t‖ := fun ε t => by
     by_cases h : ∃ s ∈ S, ‖γ t - s‖ ≤ ε <;> simp [h]
@@ -278,7 +276,7 @@ theorem HasCauchyPVWith.of_integrable_of_crossings_measure_zero {γ : ℝ → �
       ht (Set.mem_biUnion hs ⟨htI, hst⟩)
     refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
     filter_upwards [eventually_not_exists_mem_le (γ t) S hne] with ε hε
-    exact (if_neg hε).symm
+    exact (ite_eq_right hε).symm
   refine ⟨Filter.Eventually.of_forall fun ε =>
       h_int.mono_fun (hsm ε) (Filter.Eventually.of_forall (hle ε)), ?_⟩
   exact intervalIntegral.tendsto_integral_filter_of_dominated_convergence (fun t => ‖g t‖)
@@ -471,7 +469,7 @@ private theorem norm_truncatedIntegrand_sub_le {γ : ℝ → ℂ} {f : ℂ → �
   classical
   simp only [truncatedIntegrand]
   by_cases h1 : ∃ s ∈ S₁, ‖γ t - s‖ ≤ ε <;> by_cases h2 : ∃ s ∈ S₂, ‖γ t - s‖ ≤ ε
-  · simp only [if_pos h1, if_pos h2, sub_self, norm_zero]
+  · simp only [ite_eq_left h1, ite_eq_left h2, sub_self, norm_zero]
     positivity
   · have hfar2 : ¬ ∃ s ∈ S₂, ‖γ t - s‖ ≤ ε₀ := by
       rintro ⟨s₂, hs₂, hle₂⟩
@@ -482,7 +480,7 @@ private theorem norm_truncatedIntegrand_sub_le {γ : ℝ → ℂ} {f : ℂ → �
         rw [he]; exact norm_sub_le _ _
       have := hP1 s₁ hs₁ s₂ hs₂ hs12
       linarith
-    rw [if_pos h1, if_neg h2, if_neg hfar2, zero_sub, norm_neg]
+    rw [ite_eq_left h1, ite_eq_right h2, ite_eq_right hfar2, zero_sub, norm_neg]
     exact le_add_of_nonneg_left (norm_nonneg _)
   · have hfar1 : ¬ ∃ s ∈ S₁, ‖γ t - s‖ ≤ ε₀ := by
       rintro ⟨s₁, hs₁, hle₁⟩
@@ -493,9 +491,9 @@ private theorem norm_truncatedIntegrand_sub_le {γ : ℝ → ℂ} {f : ℂ → �
         rw [he]; exact norm_sub_le _ _
       have := hP1 s₁ hs₁ s₂ hs₂ hs12
       linarith
-    rw [if_neg h1, if_pos h2, if_neg hfar1, sub_zero]
+    rw [ite_eq_right h1, ite_eq_left h2, ite_eq_right hfar1, sub_zero]
     exact le_add_of_nonneg_right (norm_nonneg _)
-  · rw [if_neg h1, if_neg h2, sub_self, norm_zero]
+  · rw [ite_eq_right h1, ite_eq_right h2, sub_self, norm_zero]
     positivity
 
 /-- **Pointwise a.e. vanishing of the truncated difference.** For almost every `t`, the
@@ -538,7 +536,7 @@ private theorem tendsto_truncatedIntegrand_sub_ae {γ : ℝ → ℂ} {a b : ℝ}
     refine Tendsto.congr' ?_ tendsto_const_nhds
     filter_upwards [eventually_not_exists_mem_le (γ t) S₁ hne1,
       eventually_not_exists_mem_le (γ t) S₂ hne2] with ε h1 h2
-    simp only [truncatedIntegrand, if_neg h1, if_neg h2, sub_self]
+    simp only [truncatedIntegrand, ite_eq_right h1, ite_eq_right h2, sub_self]
 
 /-- **Enlargement inertness of the excision set (difference form).** For finite excision sets `S₁`
 and `S₂` whose truncated integrands are eventually integrable, the difference of the two truncated
@@ -626,7 +624,7 @@ principal value whenever it exists, by uniqueness. -/
 theorem HasCauchyPV.cauchyPV_eq {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {v : ℂ}
     (h : HasCauchyPV γ a b f v) : cauchyPV γ a b f = v := by
   have hex : ∃ v, HasCauchyPV γ a b f v := ⟨v, h⟩
-  rw [cauchyPV, dif_pos hex]
+  rw [cauchyPV, dite_eq_left hex]
   exact hex.choose_spec.unique h
 
 /-- Value form of `HasCauchyPV.congr_curve`: curves agreeing on the open parameter interval have
@@ -638,7 +636,7 @@ theorem cauchyPV_congr_curve {γ₁ γ₂ : ℝ → ℂ} {a b : ℝ} {f : ℂ �
     rw [hv.cauchyPV_eq, (hv.congr_curve h_eq).cauchyPV_eq]
   · have h2 : ¬ ∃ v, HasCauchyPV γ₂ a b f v := fun ⟨v, hv⟩ =>
       h ⟨v, hv.congr_curve h_eq.symm⟩
-    rw [cauchyPV, dif_neg h, cauchyPV, dif_neg h2]
+    rw [cauchyPV, dite_eq_right h, cauchyPV, dite_eq_right h2]
 
 /-- The value form of `HasCauchyPV.zero`: the principal value of the zero integrand is `0`. -/
 @[simp]
@@ -839,10 +837,10 @@ theorem HasCauchyPV.congr_along_curve_off {γ : ℝ → ℂ} {a b : ℝ} {f g : 
       truncatedIntegrand γ f (T ∪ P) ε t = truncatedIntegrand γ g (T ∪ P) ε t := by
     intro ε hε t ht
     by_cases hex : ∃ s ∈ T ∪ P, ‖γ t - s‖ ≤ ε
-    · simp only [truncatedIntegrand, if_pos hex]
+    · simp only [truncatedIntegrand, ite_eq_left hex]
     · have h_off : γ t ∉ (P : Set ℂ) := fun hp =>
         hex ⟨γ t, Finset.mem_union_right _ (Finset.mem_coe.mp hp), by simp [hε.le]⟩
-      simp only [truncatedIntegrand, if_neg hex, h_eq t ht h_off]
+      simp only [truncatedIntegrand, ite_eq_right hex, h_eq t ht h_off]
   refine ⟨T ∪ P, ?_, ?_⟩
   · filter_upwards [hI, self_mem_nhdsWithin] with ε hε hε_pos
     exact (intervalIntegrable_congr_uIoo fun t ht => h_body ε hε_pos t ht).mp hε

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -58,40 +59,6 @@ variable {R : Type u} [CommRing R]
 variable {H K : _root_.CommHopfAlgCat.{v} R}
 variable {B : Type w} [CommRing B] [Algebra R B]
 
-/-- The ideal on which both the counit and a counit-valued derivation vanish.
-
-The counit condition is what makes the vanishing of the derivation stable under multiplication:
-if `ε(x) = 0` and `d(x) = 0`, then the Leibniz rule gives `d(a * x) = 0` for every `a`. This
-auxiliary ideal packages the generated-ideal argument in
-`derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal`. -/
-private def derivationVanishingIdeal
-    (d : Derivation R K (Bialgebra.CounitAlgebra R K B)) : Ideal K where
-  carrier := {x | Coalgebra.counit (R := R) x = 0 ∧ d x = 0}
-  zero_mem' := by simp
-  add_mem' := by
-    rintro a b ⟨haε, had⟩ ⟨hbε, hbd⟩
-    simp [map_add, haε, hbε, had, hbd]
-  smul_mem' := by
-    rintro a b ⟨hbε, hbd⟩
-    constructor
-    · -- An ideal's scalar action is multiplication; no rewrite lemma exposes that notation here.
-      change Coalgebra.counit (R := R) (a * b) = 0
-      simp [hbε]
-    · -- Restate the same scalar action so that the derivation's Leibniz lemma applies.
-      change d (a * b) = 0
-      rw [d.leibniz]
-      have hb_smul : b • d a = 0 := by
-        rw [Algebra.smul_def, Bialgebra.CounitAlgebra.algebraMap_apply, hbε,
-          ← Bialgebra.CounitAlgebra.algebraMap_base R K B 0, map_zero, zero_mul]
-      rw [hbd, smul_zero, hb_smul, add_zero]
-
-/-- Membership in the auxiliary vanishing ideal is simultaneous vanishing of the counit and the
-derivation. -/
-private theorem mem_derivationVanishingIdeal_iff
-    (d : Derivation R K (Bialgebra.CounitAlgebra R K B)) (x : K) :
-    x ∈ derivationVanishingIdeal d ↔ Coalgebra.counit (R := R) x = 0 ∧ d x = 0 :=
-  Iff.rfl
-
 /-- The canonical linear identification of the copies of `B` indexed by `K` and `H`. -/
 private noncomputable def counitCoefficientEquiv :
     Bialgebra.CounitAlgebra R K B ≃ₗ[R] Bialgebra.CounitAlgebra R H B :=
@@ -126,8 +93,8 @@ private theorem derivationComp_apply_eq_counitCoefficientEquiv (f : H ⟶ K)
 the kernel Hopf ideal.
 
 The forward implication is the nontrivial one: zero precomposition says that the derivation
-vanishes on the image of the augmentation ideal. Those images lie in `derivationVanishingIdeal`,
-so the ideal they generate lies there as well. The reverse implication tests on
+vanishes on the image of the augmentation ideal, hence on the ideal it generates by
+`Derivation.apply_eq_zero_of_mem_span`. The reverse implication tests on
 `x - ε(x)`, whose image belongs to the kernel Hopf ideal and differs from the image of `x` by a
 scalar, on which every derivation vanishes. -/
 theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
@@ -135,20 +102,18 @@ theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
     derivationComp (B := B) f.hom d = 0 ↔
       ∀ x ∈ (kernelHopfIdeal f).toIdeal, d x = 0 := by
   constructor
-  · intro hcomp
-    have hle : (kernelHopfIdeal f).toIdeal ≤ derivationVanishingIdeal d := by
-      rw [kernelHopfIdeal_toIdeal, Ideal.map_le_iff_le_comap]
-      intro x hx
-      rw [Ideal.mem_comap, mem_derivationVanishingIdeal_iff]
-      have hxε : Coalgebra.counit (R := R) x = 0 :=
-        (HopfIdeal.mem_augmentation R H).mp (HopfIdeal.mem_toIdeal.mp hx)
-      constructor
-      · simpa using (CoalgHomClass.counit_comp_apply f.hom x).trans hxε
-      · have hvalue := DFunLike.congr_fun hcomp x
-        rw [derivationComp_apply_eq_counitCoefficientEquiv] at hvalue
-        exact counitCoefficientEquiv.map_eq_zero_iff.mp hvalue
-    intro x hx
-    exact (mem_derivationVanishingIdeal_iff d x).mp (hle hx) |>.2
+  · intro hcomp x hx
+    rw [kernelHopfIdeal_toIdeal, Ideal.map] at hx
+    apply Derivation.apply_eq_zero_of_mem_span d (x := x) (S := f.hom ''
+      ((HopfIdeal.augmentation R H).toIdeal : Set H)) _ _ hx
+    · rintro _ ⟨y, hy, rfl⟩
+      have hyε : Coalgebra.counit (R := R) y = 0 :=
+        (HopfIdeal.mem_augmentation R H).mp (HopfIdeal.mem_toIdeal.mp hy)
+      simpa using (CoalgHomClass.counit_comp_apply f.hom y).trans hyε
+    · rintro _ ⟨y, _, rfl⟩
+      have hvalue := DFunLike.congr_fun hcomp y
+      rw [derivationComp_apply_eq_counitCoefficientEquiv] at hvalue
+      exact counitCoefficientEquiv.map_eq_zero_iff.mp hvalue
   · intro hvanish
     apply Derivation.ext
     intro x
@@ -166,7 +131,7 @@ theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
 the differential `Lie(Spec K) → Lie(Spec H)`. -/
 theorem lieSubalgebra_kernelHopfIdeal (f : H ⟶ K) :
     HopfIdeal.lieSubalgebra (B := B) (kernelHopfIdeal f) =
-      LieIdeal.toLieSubalgebra R
+      LieIdeal.toLieSubalgebra B
         (Derivation R K (Bialgebra.CounitAlgebra R K B))
         (LieHom.ker (derivationCompLieHom (B := B) f.hom)) := by
   apply LieSubalgebra.ext _ _
@@ -178,8 +143,8 @@ theorem lieSubalgebra_kernelHopfIdeal (f : H ⟶ K) :
 /-- The subtype of a Lie ideal and the subtype of its underlying Lie subalgebra are canonically
 Lie-equivalent. -/
 private def lieIdealSubtypeEquiv
-    {L : Type x} [LieRing L] [LieAlgebra R L] (I : LieIdeal R L) :
-    LieIdeal.toLieSubalgebra R L I ≃ₗ⁅R⁆ I where
+    {L : Type x} [LieRing L] [LieAlgebra B L] (I : LieIdeal B L) :
+    LieIdeal.toLieSubalgebra B L I ≃ₗ⁅B⁆ I where
   toFun x := ⟨x, x.property⟩
   invFun x := ⟨x, x.property⟩
   left_inv _ := rfl
@@ -194,8 +159,8 @@ private def lieIdealSubtypeEquiv
 /-- The subtype equivalence is the identity on ambient values. -/
 @[simp]
 private theorem lieIdealSubtypeEquiv_apply_coe
-    {L : Type x} [LieRing L] [LieAlgebra R L] (I : LieIdeal R L)
-    (z : LieIdeal.toLieSubalgebra R L I) :
+    {L : Type x} [LieRing L] [LieAlgebra B L] (I : LieIdeal B L)
+    (z : LieIdeal.toLieSubalgebra B L I) :
     ((lieIdealSubtypeEquiv I z : I) : L) = z :=
   by
     unfold lieIdealSubtypeEquiv
@@ -209,7 +174,7 @@ The source is the derivation presentation of the Lie algebra of
 range is identified with the differential kernel by `lieSubalgebra_kernelHopfIdeal`. -/
 noncomputable def kernelLieEquiv (f : H ⟶ K) :
     Derivation R (K ⧸ (kernelHopfIdeal f).toIdeal)
-        (Bialgebra.CounitAlgebra R (K ⧸ (kernelHopfIdeal f).toIdeal) B) ≃ₗ⁅R⁆
+        (Bialgebra.CounitAlgebra R (K ⧸ (kernelHopfIdeal f).toIdeal) B) ≃ₗ⁅B⁆
       LieHom.ker (derivationCompLieHom (B := B) f.hom) :=
   (HopfIdeal.quotientLieEquiv (B := B) (kernelHopfIdeal f)).trans
     ((LieEquiv.ofEq _ _

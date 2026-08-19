@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,14 +12,16 @@ import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 # Regularity of tangent-bundle-valued maps and directional derivatives
 
 This file records reusable regularity facts for maps into a tangent bundle and for applying the
-manifold differential of a function to a smooth section.
+manifold differential of a function to tangent vectors whose base point varies.
 
 ## Main results
 
 * `contMDiff_tangentBundle_mk_zero`: smoothness of the zero tangent vector over a varying point.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
-* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
-  tangent-bundle section is `C^m` when `m + 1 ≤ n`.
+* `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
+  normed vector space.
+* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
+  tangent bundle is `C^m` when `m + 1 ≤ n`.
 
 ## References
 
@@ -73,22 +76,34 @@ theorem contMDiff_tangentBundle_mk_constBase {v : N → E}
 
 end TangentBundleInputs
 
-/-- Applying the differential of a `C^n` function to a `C^m` tangent-bundle section is `C^m`
-when `m + 1 ≤ n`. -/
+omit [IsManifold I 1 M] in
+/-- For a normed vector-space target, the tangent-space identification in `mvfderiv` is the
+canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
+@[simp] theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
+    mvfderiv I f x v = mfderiv I 𝓘(𝕜, F) f x v := by
+  rw [mvfderiv, ContinuousLinearMap.comp_apply]
+  -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
+  rfl
+
+/-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
+tangent bundle when `m + 1 ≤ n`. -/
 theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
-    {V : ∀ x : M, TangentSpace I x}
     (hf : ContMDiff I 𝓘(𝕜, F) n f)
-    (hV : ContMDiff I I.tangent m (fun x => (V x : TangentBundle I M)))
     (hmn : m + 1 ≤ n) :
-    ContMDiff I 𝓘(𝕜, F) m (fun x => mvfderiv I f x (V x)) := by
+    ContMDiff I.tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle I M => mvfderiv I f p.1 p.2) := by
   let df : TangentBundle I M → TangentBundle 𝓘(𝕜, F) F := tangentMap% f
   have hdf : ContMDiff I.tangent 𝓘(𝕜, F).tangent m df :=
     hf.contMDiff_tangentMap hmn
   have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
       (fun p : TangentBundle 𝓘(𝕜, F) F => p.2) :=
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
-  -- `TangentSpace 𝓘(𝕜, F) (f x)` is definitionally `F`; there is no lemma-based rewrite.
-  change ContMDiff I 𝓘(𝕜, F) m
-    (fun x => mfderiv I 𝓘(𝕜, F) f x (V x))
-  have h := hsnd.comp (hdf.comp hV)
-  exact h.congr fun x => rfl
+  have h := hsnd.comp hdf
+  have htangent (p : TangentBundle I M) :
+      NormedSpace.fromTangentSpace (f p.1) ((tangentMap% f p).2) =
+        mvfderiv I f p.1 p.2 := by
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
+    rfl
+  -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
+  -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
+  exact h.congr fun p => (htangent p).symm

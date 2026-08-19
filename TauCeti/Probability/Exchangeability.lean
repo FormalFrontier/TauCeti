@@ -1,15 +1,18 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.Map
+public import TauCeti.Probability.Exchangeability.MarkovExchangeable
 public import TauCeti.Probability.Exchangeability.Family
 public import TauCeti.Probability.Exchangeability.MixedIID.Map
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Const
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.Congr
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 
 /-!
@@ -24,12 +27,14 @@ This module declares nothing of its own; it is a curated re-export.
 
 * the finite-dimensional laws `blockLaw`, `prefixLaw`, `pathLaw`, and finite-marginal uniqueness;
 * the symmetry predicates `ExchangeableAt`, `Exchangeable`, `FullyExchangeable`, `Contractable`,
-  and the index-generic `ExchangeableFamily`;
+  `MarkovExchangeable`, and the index-generic `ExchangeableFamily`;
 * the representation predicates `MixedIIDWith`, `MixedIID`, `ConditionallyIIDWith`,
   `ConditionallyIID`, with their constructors, accessors, and simp-normal forms;
 * the implications between them, including the symmetry consequences of each and the projection
   from the conditional predicate to the mixture one;
 * reindexing along injections, and closure under measurable coordinate maps;
+* the congruences under a coordinatewise a.e. change of process, and — for the representation
+  predicates — under an a.e. change of witness;
 * the constant-witness (i.i.d.) degenerate case.
 
 ## What is deliberately not here
@@ -48,6 +53,7 @@ worked example ("an i.i.d. sequence is mixed i.i.d., exchangeable, and contracta
 exported here because it doubles as constructor API — the results that build the representation
 predicates from independence together with a common law — not because examples are curated in
 general.
+
 ## References
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API), which specifies

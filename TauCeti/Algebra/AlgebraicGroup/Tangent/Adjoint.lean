@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,14 +30,14 @@ computation appears; inverses come from the group of points.
 
 ## Main declarations
 
-* `TauCeti.Derivation.adDerivation`: the conjugate of a tangent vector by a point.
-* `TauCeti.Derivation.toConv_coe_adDerivation`: that conjugate as the convolution product
+* `Derivation.adDerivation`: the conjugate of a tangent vector by a point.
+* `Derivation.toConv_coe_adDerivation`: that conjugate as the convolution product
   `g ⋆ d ⋆ g⁻¹`, the form the algebraic manipulations use.
-* `TauCeti.Derivation.adRepresentation`: the adjoint action, as a representation of
+* `Derivation.adRepresentation`: the adjoint action, as a representation of
   the convolution group of points on the tangent space.
 
 Compatibility of the action with the Lie bracket needs the Lie structure and so lives in
-`Tangent.Lie.Adjoint`, keeping this module free of it.
+`Tangent.Lie.Adjoint.Basic`, keeping this module free of it.
 
 The action stays on the Lie functor `B ↦ Derivation R A (CounitAlgebra R A B)`; at
 each `B` it is a genuine representation. Identifying the functor's value at `B` with
@@ -51,11 +52,9 @@ finite-projectivity hypothesis on the conormal module and is not attempted here.
 
 public section
 
-namespace TauCeti
-
 namespace Derivation
 
-open _root_.Coalgebra WithConv TensorProduct
+open TauCeti _root_.Coalgebra WithConv TensorProduct
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
   [CommSemiring B] [Algebra R B]
@@ -157,7 +156,7 @@ theorem adDerivation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R 
 /-- **The conjugate of a tangent vector, in convolution form**: `Ad g d` is the product
 `g ⋆ d ⋆ g⁻¹` in the convolution algebra of linear maps.  This is the form in which the
 adjoint action is manipulated algebraically, and the bracket compatibility in
-`Tangent.Lie.Adjoint` is proved from it. -/
+`Tangent.Lie.Adjoint.Basic` is proved from it. -/
 lemma toConv_coe_adDerivation
     (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
@@ -210,5 +209,3 @@ lemma adRepresentation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra 
   rfl
 
 end Derivation
-
-end TauCeti

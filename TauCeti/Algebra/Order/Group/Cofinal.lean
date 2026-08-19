@@ -71,8 +71,11 @@ a property of sets with respect to `≤`. -/
 def IsCofinalElement (H : Subgroup Γ) (γ : Γ) : Prop :=
   ∀ h ∈ H, ∃ n : ℕ, γ ^ n < h
 
-/-- The defining property of a cofinal element. -/
-@[simp]
+/-- The defining property of a cofinal element.
+
+Deliberately not `@[simp]`: the right-hand side is the unfolded bounded quantifier, so tagging
+it rewrites uses of the named predicate into raw `∀ … ∃ …` form. This mirrors
+`Valuation.cofinalValueFor_def`, which is not `@[simp]` for the same reason. -/
 theorem isCofinalElement_def {H : Subgroup Γ} {γ : Γ} :
     IsCofinalElement H γ ↔ ∀ h ∈ H, ∃ n : ℕ, γ ^ n < h :=
   Iff.rfl

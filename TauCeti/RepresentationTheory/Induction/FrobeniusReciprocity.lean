@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -259,11 +259,11 @@ private theorem sum_indTerm_mul_eq_sum_subtype [Fintype G] (f : S → k) {h : G 
           (if hy : y ∈ S then f ⟨y, hy⟩ else 0) * h y⁻¹ := by
         refine (Finset.sum_subset (Finset.filter_subset _ _) fun y _ hy => ?_).symm
         rw [Finset.mem_filter] at hy
-        rw [dif_neg fun hy' => hy ⟨Finset.mem_univ y, hy'⟩, zero_mul]
+        rw [dite_eq_right fun hy' => hy ⟨Finset.mem_univ y, hy'⟩, zero_mul]
     _ = ∑ s : S, (if hy : (s : G) ∈ S then f ⟨(s : G), hy⟩ else 0) * h (s : G)⁻¹ :=
         Finset.sum_subtype (p := fun y : G => y ∈ S) _ (by simp) _
     _ = ∑ s : S, f s * h ((s : G)⁻¹) :=
-        Finset.sum_congr rfl fun s _ => by rw [dif_pos s.2]
+        Finset.sum_congr rfl fun s _ => by rw [dite_eq_left s.2]
 
 open scoped Classical in
 /-- **The double count, in cleared-denominator form.** Summing the induced class function against a

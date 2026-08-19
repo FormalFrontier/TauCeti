@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -32,9 +33,9 @@ directions are explicit: a tableau is sent to the set `TauCeti.BoundedSSYT.colFi
 entries of its column, and a set is sent back to the tableau `TauCeti.BoundedSSYT.ofColFinset`
 that lists it in increasing order, which is `Finset.orderEmbOfFin`.
 
-Symmetry is a corollary rather than an input: `TauCeti.schurPoly_ones_isSymmetric` records the
-one-column case of the symmetry of the Schur polynomials, which is proved here without the
-Bender--Knuth involution that the general case needs.
+Symmetry is a corollary rather than an input: the one-column case falls out of
+`TauCeti.schurPoly_ones` and the symmetry of the elementary symmetric polynomials, without the
+Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs in general.
 
 ## Main definitions
 
@@ -54,8 +55,6 @@ Bender--Knuth involution that the general case needs.
 * `TauCeti.diagramSchurPoly_eq_esymm_of_rowLen_le_one`: the Schur polynomial of a one-column
   shape is an elementary symmetric polynomial.
 * `TauCeti.schurPoly_ones`: `s_{(1ⁿ)} = e_n`.
-* `TauCeti.schurPoly_ones_isSymmetric`: the Schur polynomial of a one-column partition is
-  symmetric.
 
 ## References
 
@@ -175,11 +174,11 @@ private def colTableau (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card
   col_strict' := by
     intro i1 i2 j hi hcell
     obtain ⟨hi2, rfl⟩ := (YoungDiagram.mem_iff_of_rowLen_le_one h).mp hcell
-    rw [dif_pos ⟨hi.trans hi2, rfl⟩, dif_pos ⟨hi2, rfl⟩]
+    rw [dite_eq_left ⟨hi.trans hi2, rfl⟩, dite_eq_left ⟨hi2, rfl⟩]
     exact (s.orderEmbOfFin hs).strictMono hi
   zeros' := by
     intro i j hcell
-    exact dif_neg fun hij => hcell ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hij)
+    exact dite_eq_right fun hij => hcell ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hij)
 
 private theorem colTableau_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
     (hs : s.card = μ.colLen 0) (i j : ℕ) :
@@ -194,7 +193,7 @@ def ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.c
   ⟨colTableau h s hs, by
     intro i c hic
     obtain ⟨hi, rfl⟩ := (YoungDiagram.mem_iff_of_rowLen_le_one h).mp hic
-    rw [colTableau_apply, dif_pos ⟨hi, rfl⟩]
+    rw [colTableau_apply, dite_eq_left ⟨hi, rfl⟩]
     exact (s.orderEmbOfFin hs ⟨i, hi⟩).isLt⟩
 
 theorem ofColFinset_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0)
@@ -206,7 +205,7 @@ theorem ofColFinset_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.c
 @[simp]
 theorem colEntry_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0)
     (i : Fin (μ.colLen 0)) : colEntry (ofColFinset h s hs) i = s.orderEmbOfFin hs i :=
-  Fin.ext <| by rw [colEntry_val, ofColFinset_apply, dif_pos ⟨i.isLt, rfl⟩]
+  Fin.ext <| by rw [colEntry_val, ofColFinset_apply, dite_eq_left ⟨i.isLt, rfl⟩]
 
 @[simp]
 theorem colFinset_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
@@ -221,8 +220,8 @@ theorem ofColFinset_colFinset (h : μ.rowLen 0 ≤ 1) (T : BoundedSSYT N μ) :
   rw [ofColFinset_apply]
   by_cases hij : (i, j) ∈ μ
   · obtain ⟨hi, rfl⟩ := (YoungDiagram.mem_iff_of_rowLen_le_one h).mp hij
-    rw [dif_pos ⟨hi, rfl⟩, orderEmbOfFin_colFinset T, colEntry_val]
-  · rw [dif_neg fun hc => hij ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hc),
+    rw [dite_eq_left ⟨hi, rfl⟩, orderEmbOfFin_colFinset T, colEntry_val]
+  · rw [dite_eq_right fun hc => hij ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hc),
       T.1.zeros hij]
 
 /-- **The bounded tableaux of a one-column shape are the sets of letters of the right size**: a
@@ -274,14 +273,6 @@ theorem schurPoly_ones (n : ℕ) : schurPoly σ R (Nat.Partition.ones n) = esymm
   rw [schurPoly_eq_rename,
     diagramSchurPoly_eq_esymm_of_rowLen_le_one (rowLen_diagramOf_ones_le_one n 0),
     card_diagramOf, rename_esymm]
-
-/-- **The Schur polynomial of a one-column partition is symmetric.**  This is the one-column case
-of the symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution and
-is not proved here; for `(1ⁿ)` it is the symmetry of the elementary symmetric polynomials. -/
-theorem schurPoly_ones_isSymmetric (n : ℕ) :
-    (schurPoly σ R (Nat.Partition.ones n)).IsSymmetric := by
-  rw [schurPoly_ones]
-  exact esymm_isSymmetric σ R n
 
 end Partition
 

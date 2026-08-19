@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -54,6 +55,18 @@ variable [CommSemiring R]
 section Coalgebra
 
 variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
+
+/-- Pairing a vector in a regular subcomodule with the restricted counit recovers its
+underlying element of the coalgebra. -/
+@[simp]
+theorem matrixCoefficient_counit_comp_subtype [Module.Flat R C]
+    (N : Subcomodule R C C) (n : N) :
+    matrixCoefficient (R := R) (C := C)
+      ((Coalgebra.counit (R := R) (A := C)).comp (SMulMemClass.subtype N)) n = n := by
+  rw [← Subcomodule.subtype_toLinearMap]
+  rw [← matrixCoefficient_map (Subcomodule.subtype N)
+    (Coalgebra.counit (R := R) (A := C)) n]
+  simp
 
 /-- Every element of a coalgebra is a matrix coefficient of the regular comodule.
 
@@ -162,11 +175,9 @@ theorem le_matrixCoefficientSubalgebra_toRegularSubcomodule (D : Subcoalgebra R 
     (Coalgebra.counit (R := R) (A := C)).comp
       (Subcomodule.subtype D.toRegularSubcomodule).toLinearMap
   have hcoeff : Comodule.matrixCoefficient (R := R) (C := C) phi d = c := by
-    rw [← Comodule.matrixCoefficient_map
-      (Subcomodule.subtype D.toRegularSubcomodule)
-      (Coalgebra.counit (R := R) (A := C)) d]
-    simpa only [Subcomodule.subtype_apply, d] using
-      Comodule.matrixCoefficient_counit_self (R := R) c
+    simpa only [phi, Subcomodule.subtype_toLinearMap, d] using
+      Comodule.matrixCoefficient_counit_comp_subtype
+        (R := R) (C := C) D.toRegularSubcomodule d
   rw [← hcoeff]
   exact Comodule.matrixCoefficient_mem_subalgebra (R := R) (C := C) phi d
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -10,6 +11,7 @@ public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Subcoalgebra
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.Lattice
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Finite
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
+import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Regular
 
 /-!
 # Finite subcoalgebras and directed unions
@@ -187,9 +189,8 @@ theorem exists_finite_subcoalgebra_mem [CommRing R] [IsDomain R] [IsPrincipalIde
       Comodule.matrixCoefficient (R := R) (C := C)
           ((Coalgebra.counit (R := R) (A := C)).comp
             (Subcomodule.subtype N).toLinearMap) n = c := by
-    rw [← Comodule.matrixCoefficient_map (R := R) (C := C)
-      (Subcomodule.subtype N) (Coalgebra.counit (R := R) (A := C)) n]
-    simp [n]
+    simpa only [Subcomodule.subtype_toLinearMap, n] using
+      Comodule.matrixCoefficient_counit_comp_subtype (R := R) (C := C) N n
   rw [hcoeff] at hn
   exact hn
 

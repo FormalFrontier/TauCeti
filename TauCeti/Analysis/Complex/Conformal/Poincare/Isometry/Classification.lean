@@ -309,6 +309,36 @@ theorem bijOn_ball_of_hyperbolicDist_map_eq
 
 namespace PoincareDisc
 
+/-- **The scalar representative of an isometry of the Poincaré disc.** Every isometry `f` of
+`PoincareDisc` is carried by a self-map `F` of the open unit ball that preserves the hyperbolic
+distance on the ball and represents `f` in the coordinate `toUnitDisc`. -/
+private lemma exists_mapsTo_ball_and_hyperbolicDist_map_eq_of_isometry
+    {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
+    ∃ F : ℂ → ℂ, MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) ∧
+      (∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
+        hyperbolicDist (F z) (F w) = hyperbolicDist z w) ∧
+      ∀ z : PoincareDisc, F (toUnitDisc z : ℂ) = (toUnitDisc (f z) : ℂ) := by
+  classical
+  -- the representative is `0` off the ball; the first two conclusions restrict to the ball and
+  -- the third is only ever applied at `toUnitDisc z`, which is a disc point
+  refine ⟨fun z => if h : ‖z‖ < 1 then
+    ((toUnitDisc (f (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z h)))) : ℂ) else 0, ?_, ?_,
+    ?_⟩
+  · refine mapsTo_ball_of_forall_unitDisc_coe_eq
+      (e := fun z => toUnitDisc (f (Complex.UnitDisc.toPoincare z))) fun z => ?_
+    rw [dite_eq_left z.norm_lt_one, Complex.UnitDisc.mk_coe]
+  · intro z hz w hw
+    have hz' := mem_ball_zero_iff.mp hz
+    have hw' := mem_ball_zero_iff.mp hw
+    have hdist := hf.dist_eq (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z hz'))
+      (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk w hw'))
+    dsimp only
+    rw [dite_eq_left hz', dite_eq_left hw']
+    simpa only [dist_eq, toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] using hdist
+  · intro z
+    dsimp only
+    rw [dite_eq_left (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
+
 /-- **The isometries of the Poincaré disc, bundled form.** Every isometry of the metric space
 `PoincareDisc` is a standard disc automorphism `unitDiscStandardAutomorphismIsometryEquiv u a`,
 or that automorphism precomposed with the conjugation `starIsometryEquiv`: the isometry group of
@@ -319,32 +349,8 @@ theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star
     ∃ (u : Circle) (a : Complex.UnitDisc),
       (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a z) ∨
         (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a (starIsometryEquiv z)) := by
-  classical
-  set F : ℂ → ℂ := fun z =>
-    if h : ‖z‖ < 1 then
-      ((toUnitDisc (f (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z h)))) : ℂ)
-    else 0 with hF_def
-  have hFval : ∀ (z : ℂ) (h : ‖z‖ < 1),
-      F z = ((toUnitDisc (f (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z h)))) : ℂ) := by
-    intro z h
-    rw [hF_def]
-    simp only [dif_pos h]
-  have hFmaps : MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-    intro z hz
-    rw [hFval z (mem_ball_zero_iff.mp hz), mem_ball_zero_iff]
-    exact Complex.UnitDisc.norm_lt_one _
-  have hFiso : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
-      hyperbolicDist (F z) (F w) = hyperbolicDist z w := by
-    intro z hz w hw
-    have hz' := mem_ball_zero_iff.mp hz
-    have hw' := mem_ball_zero_iff.mp hw
-    have hdist := hf.dist_eq (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z hz'))
-      (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk w hw'))
-    rw [hFval z hz', hFval w hw']
-    simpa only [dist_eq, toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] using hdist
-  -- `F` is the scalar representative of `f`, so the scalar classification applies to it.
-  have hFz : ∀ z : PoincareDisc, F (toUnitDisc z : ℂ) = (toUnitDisc (f z) : ℂ) := fun z => by
-    rw [hFval _ (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
+  -- the scalar representative of `f`, to which the scalar classification applies
+  obtain ⟨F, hFmaps, hFiso, hFz⟩ := exists_mapsTo_ball_and_hyperbolicDist_map_eq_of_isometry hf
   obtain ⟨u, b, hu, hb, hcase⟩ :=
     exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_hyperbolicDist_map_eq
       hFmaps hFiso

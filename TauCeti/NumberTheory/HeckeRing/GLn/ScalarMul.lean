@@ -29,6 +29,8 @@ Chris Birkbeck), scalar row.
 
 * `HeckeRing.GLn.diagElem_const_mul` and `diagElem_mul_const`: `T(c, …, c) · T(b) = T(c·b)`
   and its mirror.
+* `HeckeRing.GLn.diagElem_const_pow`: `T(c, …, c)^k = T(c^k, …, c^k)`, the iterate of the
+  left-hand case.
 
 ## References
 
@@ -121,6 +123,20 @@ theorem diagElem_mul_const (b : Fin n → ℕ) (hb : ∀ i, 0 < b i) (c : ℕ) (
   rw [HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution n)
       (transposeAntiInvolution_onHeckeCoset_eq_self n),
     diagElem_const_mul n c hc b hb, mul_comm (fun _ : Fin n ↦ c) b]
+
+/-- `T(c, …, c)^k = T(c^k, …, c^k)`: the scalar double cosets are closed under powers, the
+iterate of `diagElem_const_mul`. -/
+@[simp]
+theorem diagElem_const_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
+    diagElem (fun _ : Fin n ↦ c) ^ k = diagElem (fun _ : Fin n ↦ c ^ k) := by
+  induction k with
+  | zero =>
+    simp only [pow_zero]
+    symm
+    exact (congrArg diagElem (funext fun _ ↦ by simp)).trans diagElem_one
+  | succ k ih =>
+    rw [pow_succ', ih, diagElem_const_mul n c hc (fun _ ↦ c ^ k) (fun _ ↦ pow_pos hc k)]
+    exact congrArg diagElem (funext fun _ ↦ by simp only [Pi.mul_apply]; ring)
 
 end Scalar
 

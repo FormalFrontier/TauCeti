@@ -12,7 +12,7 @@ public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 import Mathlib.Algebra.Field.ZMod
 
 /-!
-# Congruence subgroup infrastructure: the pair `Γ₁(N) ⊴ Γ₀(N)` and the index of `Γ₀(pᵏ)`
+# Congruence subgroups: the pair `Γ₁(N) ⊴ Γ₀(N)`, the index of `Γ₀(pᵏ)`, and the level
 
 Foundational results about the pair `Γ₁(N) ≤ Γ₀(N)` beyond Mathlib's
 `Mathlib.NumberTheory.ModularForms.CongruenceSubgroups`: `Γ₀(N)` normalizes `Γ₁(N)` (also
@@ -23,21 +23,34 @@ lies in `Γ₁(N)` exactly when `N ∣ 2`.  The file then computes the index of 
 prime-power levels — the degree count of Shimura, Theorem 3.24 — which lives here because it
 is congruence-subgroup arithmetic consumed by, but independent of, the Hecke-ring layer.
 
+A final section records how the *principal* congruence subgroups compose with the arithmetic
+of the level: `Γ` is antitone in the level like the other two families, and the join of two
+of them is the principal congruence subgroup of the gcd, `Γ(gcd a b) = Γ(a) ⊔ Γ(b)`. That
+identity is Shimura's Lemma 3.28; it is the Chinese remainder theorem for `SL₂`, and it is
+what lets a Hecke operator at level `ab` be analysed one prime at a time.
+
 Ported from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/HeckeRIngs/GL2/Gamma1Pair.lean`, for the index section
-`LeanModularForms/HeckeRIngs/GL2/CongruenceIndex.lean`, and for the level-antitonicity
-lemmas `LeanModularForms/HeckeRIngs/GL2/LevelEmbed.lean`, all Chris Birkbeck,
+`LeanModularForms/HeckeRIngs/GL2/CongruenceIndex.lean`, for the level-antitonicity
+lemmas `LeanModularForms/HeckeRIngs/GL2/LevelEmbed.lean`, and for the gcd decomposition
+`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/Foundation.lean`, all Chris Birkbeck,
 <https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>), extracted from
 `TauCeti/NumberTheory/ModularForms/DiamondOperators.lean` as congruence-subgroup
 infrastructure independent of the diamond operators.
 
 ## Main results
 
-* `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`:
-  both families are antitone in the level, `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
+* `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`,
+  `CongruenceSubgroup.Gamma_le_Gamma_of_dvd`: all three families are antitone in the level,
+  `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
+* `CongruenceSubgroup.mem_Gamma1_iff`: `Γ₁(N)` is cut out inside `Γ₀(N)` by the
+  single congruence `d ≡ 1`.
 * `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
   unit upper-left entry modulo `N`.
-* `CongruenceSubgroup.Gamma0_normalizes_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
+* `CongruenceSubgroup.intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: modulo its
+  level, a `Γ₀(N)` matrix has mutually inverse diagonal entries.
+* `CongruenceSubgroup.Gamma0_normalizes_Gamma1` and
+  `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
   `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL ℝ)` is invariant
@@ -52,6 +65,13 @@ infrastructure independent of the diamond operators.
   and `0 < k`.
 * `CongruenceSubgroup.Gamma0_prime_power_index`: `[SL₂(ℤ) : Γ₀(pᵏ)] = p^(k-1) * (p + 1)` for
   prime `p` and `k ≥ 1`.
+* `CongruenceSubgroup.Gamma_gcd_eq_sup`: `Γ(gcd a b) = Γ(a) ⊔ Γ(b)` — Shimura's Lemma 3.28,
+  the Chinese remainder theorem for `SL₂`.
+
+## References
+
+* [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
+  Lemma 3.28 and Theorem 3.24.
 -/
 
 public section
@@ -73,11 +93,50 @@ theorem Gamma1_le_Gamma1_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma1 N ≤ Gamma1 
     by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.2.1,
     by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.2.2⟩
 
+/-- `Γ` is antitone in the level: if `M ∣ N` then `Γ(N) ≤ Γ(M)`, by reducing the four
+congruences along `ZMod N → ZMod M`. The `Γ₀`/`Γ₁` cases are below and above. -/
+theorem Gamma_le_Gamma_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma N ≤ Gamma M := by
+  intro A hA
+  rw [Gamma_mem] at hA ⊢
+  exact ⟨by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.1,
+    by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.2.1,
+    by simpa [map_intCast, map_one, map_zero] using
+      congr_arg (ZMod.castHom h (ZMod M)) hA.2.2.1,
+    by simpa [map_intCast, map_one, map_zero] using
+      congr_arg (ZMod.castHom h (ZMod M)) hA.2.2.2⟩
+
+/-- `Γ(N) ≤ Γ₀(N)`: the principal congruence subgroup sits inside `Γ₀(N)`, since `c ≡ 0` is
+one of the four congruences it imposes. -/
+theorem Gamma_le_Gamma0 (N : ℕ) : Gamma N ≤ Gamma0 N := fun _ hA ↦
+  Gamma0_mem.mpr (Gamma_mem.mp hA).2.2.1
+
 /-- `Γ₀` is antitone in the level: if `M ∣ N` then `Γ₀(N) ≤ Γ₀(M)`. -/
 theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 M := by
   intro A hA
   rw [Gamma0_mem] at hA ⊢
   simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA
+
+/-- **`Γ₁(N)` is the fibre of `Gamma0Map` over `1`.** A matrix lies in `Γ₁(N)` exactly when it
+lies in `Γ₀(N)` and its lower-right entry is `1` modulo `N`; the congruence `a ≡ 1` that
+`CongruenceSubgroup.Gamma1_mem` also asks for is then forced by the determinant. This is the
+form in which membership is checked whenever a construction produces a `Γ₀(N)` matrix and
+controls only its lower-right entry. -/
+theorem mem_Gamma1_iff {γ : SL(2, ℤ)} :
+    γ ∈ Gamma1 N ↔ γ ∈ Gamma0 N ∧ ((γ 1 1 : ℤ) : ZMod N) = 1 :=
+  ⟨fun h ↦ ⟨Gamma1_in_Gamma0 N h, (Gamma1_mem N γ).mp h |>.2.1⟩,
+    fun ⟨h₀, h₁⟩ ↦ (Gamma1_mem N γ).mpr ((Gamma1_to_Gamma0_mem ⟨γ, h₀⟩).mp h₁)⟩
+
+/-- **The diagonal entries of a `Γ₀(M)` matrix are mutually inverse modulo `M`**: the determinant
+identity `ad - bc = 1` with the `bc` term killed by `M ∣ c`. It refines
+`CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0` by naming the inverse. -/
+theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M : ℕ}
+    {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 M) :
+    ((γ 0 0 : ℤ) : ZMod M) * ((γ 1 1 : ℤ) : ZMod M) = 1 := by
+  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
+  have h := congrArg (Int.cast : ℤ → ZMod M) hdet
+  push_cast at h
+  rw [Gamma0_mem.mp hγ] at h
+  linear_combination h
 
 /-- The upper-left entry of a `Γ₀(N)` matrix is a unit modulo `N`: the determinant is one
 and the lower-left entry vanishes modulo `N`, so `ad ≡ 1`. -/
@@ -98,6 +157,15 @@ theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N)) (h : SL(2, ℤ)) (hh : h �
   (Gamma1_mem _ _).mpr <| (Gamma1_to_Gamma0_mem _).mp <|
     (Gamma0Map N).normal_ker.conj_mem ⟨h, Gamma1_in_Gamma0 N hh⟩
       ((Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp hh)) g
+
+/-- `Γ₀(N)` lies in the normaliser of `Γ₁(N)`: the statement of `Gamma0_normalizes_Gamma1` in
+the form the coset combinatorics of the Petersson product consumes. -/
+theorem Gamma0_le_normalizer_Gamma1 (N : ℕ) :
+    Gamma0 N ≤ Subgroup.normalizer (Gamma1 N : Set SL(2, ℤ)) := fun g hg ↦
+  Subgroup.mem_normalizer_iff.mpr fun h ↦
+    ⟨Gamma0_normalizes_Gamma1 ⟨g, hg⟩ h, fun hh ↦ by
+      simpa [mul_assoc] using
+        Gamma0_normalizes_Gamma1 ⟨g⁻¹, (Gamma0 N).inv_mem hg⟩ _ hh⟩
 
 /-- The inclusion `Γ₁(N) ≤ Γ₀(N)`, transported to `GL₂(ℝ)`. -/
 theorem Gamma1_map_le_Gamma0_map (N : ℕ) :
@@ -143,7 +211,7 @@ private lemma coe_diagUnit (u : (ZMod N)ˣ) :
 
 /-- `(Gamma0Map N).toHomUnits` is surjective: every unit `u ∈ (ZMod N)ˣ` is realized as the
 lower-right entry of some `g ∈ Gamma0 N`, by strong approximation for `SL₂`. -/
-theorem Gamma0Map_toHomUnits_surjective [NeZero N] :
+theorem Gamma0Map_toHomUnits_surjective :
     Function.Surjective ((Gamma0Map N).toHomUnits) := fun u ↦ by
   obtain ⟨g, hg⟩ := map_intCast_zmod_surjective (diagUnit u)
   have hentry : ∀ i j, ((g i j : ℤ) : ZMod N) =
@@ -373,5 +441,160 @@ theorem Gamma0_prime_power_index (p : ℕ) (hp : Nat.Prime p) (k : ℕ) (hk : 0 
       ← Subgroup.relIndex_mul_index (Gamma0_le_Gamma0_of_dvd (pow_dvd_pow p m.le_succ)),
       Gamma0_relIndex_pow_succ p hp.pos m hm, ih, ← mul_assoc, ← pow_succ',
       Nat.sub_add_cancel hm]
+
+/-! ### The Chinese-remainder decomposition `Γ(gcd a b) = Γ(a) ⊔ Γ(b)` -/
+
+/-- Two integers agreeing modulo `gcd m n` are simultaneously congruent to a single lift,
+modulo `m` and modulo `n`: the Bézout coefficients give the lift explicitly. -/
+private lemma exists_int_modEq_of_modEq_gcd {m n x y : ℤ} (h : x ≡ y [ZMOD ↑(Int.gcd m n)]) :
+    ∃ z : ℤ, z ≡ x [ZMOD m] ∧ z ≡ y [ZMOD n] := by
+  rw [Int.modEq_iff_dvd] at h
+  obtain ⟨k, hk⟩ := h
+  have hbez := Int.gcd_eq_gcd_ab m n
+  refine ⟨x + m * (Int.gcdA m n * k), ?_, ?_⟩
+  · exact Int.modEq_iff_dvd.mpr ⟨-(Int.gcdA m n * k), by ring⟩
+  · refine Int.modEq_iff_dvd.mpr ⟨Int.gcdB m n * k, ?_⟩
+    -- `hk : y - x = gcd m n * k` is the divisibility witness; solved for `y` it is the shape
+    -- `hbez` can be substituted into.
+    have hy : y = x + (↑(Int.gcd m n) : ℤ) * k := by linarith
+    rw [hy, hbez]
+    ring
+
+/-- Entries of a `Γ(N)` matrix agree with the identity's modulo `N`. -/
+private lemma intCast_apply_modEq_one_of_mem_Gamma (N : ℕ) (γ : SL(2, ℤ))
+    (hγ : γ ∈ Gamma N) (i j : Fin 2) :
+    ((1 : SL(2, ℤ)) i j : ℤ) ≡ (γ i j : ℤ) [ZMOD (N : ℤ)] := by
+  rw [Gamma_mem'] at hγ
+  have h := congr_fun₂ (congr_arg Subtype.val hγ) i j
+  simp only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply,
+    Matrix.SpecialLinearGroup.coe_one, Int.coe_castRingHom] at h
+  rw [← ZMod.intCast_eq_intCast_iff]
+  simpa [Matrix.one_apply] using h.symm
+
+/-- A lift chosen modulo `lcm a b` reduces correctly modulo any divisor of it. -/
+private lemma map_apply_of_dvd_lcm {a b : ℕ}
+    (M : Matrix (Fin 2) (Fin 2) ℤ) (β : SL(2, ℤ))
+    (hβ : (↑(Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod (Nat.lcm a b))) β) :
+        Matrix (Fin 2) (Fin 2) (ZMod (Nat.lcm a b))) =
+      M.map (Int.castRingHom (ZMod (Nat.lcm a b))))
+    {m : ℕ} (hm : m ∣ Nat.lcm a b) (i j : Fin 2) :
+    (↑(Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod m)) β) :
+        Matrix (Fin 2) (Fin 2) (ZMod m)) i j = ((M i j : ℤ) : ZMod m) := by
+  have hentry : (((β : Matrix (Fin 2) (Fin 2) ℤ) i j : ℤ) : ZMod (Nat.lcm a b)) =
+      ((M i j : ℤ) : ZMod (Nat.lcm a b)) := by
+    have := congr_fun₂ hβ i j
+    simpa only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+      Matrix.map_apply, Int.coe_castRingHom] using this
+  have := congr_arg (ZMod.castHom hm (ZMod m)) hentry
+  simpa only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply,
+    Int.coe_castRingHom, map_intCast] using this
+
+/-- **A `2 × 2` integer matrix congruent to the identity modulo `a` and to a matrix of
+`SL(2, ℤ)` modulo `b` has determinant congruent to `1` modulo `lcm a b`.** -/
+private lemma det_fin_two_modEq_one_lcm {a b : ℕ} {M : Matrix (Fin 2) (Fin 2) ℤ} {γ : SL(2, ℤ)}
+    (hMa : ∀ i j, M i j ≡ ((1 : SL(2, ℤ)) i j : ℤ) [ZMOD (a : ℤ)])
+    (hMb : ∀ i j, M i j ≡ (γ i j : ℤ) [ZMOD (b : ℤ)]) :
+    M 0 0 * M 1 1 - M 0 1 * M 1 0 ≡ 1 [ZMOD ↑(Nat.lcm a b)] := by
+  -- reduction is a ring map, so it carries determinants to determinants (`RingHom.map_det`),
+  -- and every matrix of `SL(2, ℤ)` has determinant `1`; the two moduli then differ only in
+  -- which matrix `M` is compared against
+  have key : ∀ (n : ℕ) (g : SL(2, ℤ)), (∀ i j, M i j ≡ (g i j : ℤ) [ZMOD (n : ℤ)]) →
+      M 0 0 * M 1 1 - M 0 1 * M 1 0 ≡ 1 [ZMOD (n : ℤ)] := by
+    intro n g hM
+    have hmap : (Int.castRingHom (ZMod n)).mapMatrix M =
+        (Int.castRingHom (ZMod n)).mapMatrix (g : Matrix (Fin 2) (Fin 2) ℤ) := by
+      ext i j
+      exact (ZMod.intCast_eq_intCast_iff _ _ _).mpr (hM i j)
+    have hdet := congr_arg Matrix.det hmap
+    rw [← RingHom.map_det, ← RingHom.map_det, g.prop] at hdet
+    rw [← ZMod.intCast_eq_intCast_iff, ← Matrix.det_fin_two]
+    simpa using hdet
+  -- `Int.modEq_and_modEq_iff_modEq_lcm` is stated for `Int.lcm`, so the `Nat.lcm` modulus
+  -- has to be renamed before it applies.
+  have hlcm : (↑(Nat.lcm a b) : ℤ) = ↑(Int.lcm (a : ℤ) (b : ℤ)) := by simp [Int.lcm, Nat.lcm]
+  rw [hlcm, ← Int.modEq_and_modEq_iff_modEq_lcm]
+  exact ⟨key a 1 hMa, key b γ hMb⟩
+
+/-- **A lift realising `M` modulo `lcm a b` splits `γ` across the two levels.** If `β` reduces
+to `M` modulo `lcm a b`, and `M` is congruent to the identity modulo `a` and to `γ` modulo `b`,
+then `β ∈ Γ(a)` and `β⁻¹γ ∈ Γ(b)`. -/
+private lemma mem_Gamma_and_inv_mul_mem_Gamma_of_map_eq {a b : ℕ}
+    {M : Matrix (Fin 2) (Fin 2) ℤ} {β γ : SL(2, ℤ)}
+    (hβ : (↑(Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod (Nat.lcm a b))) β) :
+        Matrix (Fin 2) (Fin 2) (ZMod (Nat.lcm a b))) =
+      M.map (Int.castRingHom (ZMod (Nat.lcm a b))))
+    (hMa : ∀ i j, M i j ≡ ((1 : SL(2, ℤ)) i j : ℤ) [ZMOD (a : ℤ)])
+    (hMb : ∀ i j, M i j ≡ (γ i j : ℤ) [ZMOD (b : ℤ)]) :
+    β ∈ Gamma a ∧ β⁻¹ * γ ∈ Gamma b := by
+  have hzM : ∀ i j : Fin 2,
+      (M i j : ZMod a) = ((1 : SL(2, ℤ)) i j : ZMod a) ∧
+      (M i j : ZMod b) = (γ i j : ZMod b) := fun i j =>
+    ⟨(ZMod.intCast_eq_intCast_iff _ _ _).mpr (hMa i j),
+      (ZMod.intCast_eq_intCast_iff _ _ _).mpr (hMb i j)⟩
+  refine ⟨?_, ?_⟩
+  · rw [Gamma_mem']
+    ext i j
+    rw [map_apply_of_dvd_lcm M β hβ (Nat.dvd_lcm_left a b) i j, (hzM i j).1]
+    simp [Matrix.one_apply]
+  · rw [Gamma_mem', map_mul, map_inv]
+    have hβ_b : Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod b)) β =
+        Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod b)) γ := by
+      ext i j
+      rw [map_apply_of_dvd_lcm M β hβ (Nat.dvd_lcm_right a b) i j, (hzM i j).2]
+      simp
+    rw [hβ_b]
+    exact inv_mul_cancel _
+
+/-- **The Chinese remainder theorem lifts a matrix of `Γ(gcd a b)` simultaneously.** For
+`γ ∈ Γ(gcd a b)` there is an integer matrix congruent to the identity modulo `a` and to `γ`
+modulo `b`. -/
+private lemma exists_matrix_modEq_one_modEq_of_mem_Gamma_gcd {a b : ℕ} {γ : SL(2, ℤ)}
+    (hγ : γ ∈ Gamma (Nat.gcd a b)) :
+    ∃ M : Matrix (Fin 2) (Fin 2) ℤ,
+      (∀ i j, M i j ≡ ((1 : SL(2, ℤ)) i j : ℤ) [ZMOD (a : ℤ)]) ∧
+        ∀ i j, M i j ≡ (γ i j : ℤ) [ZMOD (b : ℤ)] := by
+  have hcompat : ∀ i j : Fin 2,
+      ((1 : SL(2, ℤ)) i j : ℤ) ≡ (γ i j : ℤ) [ZMOD ↑(Int.gcd (a : ℤ) (b : ℤ))] := by
+    -- `Int.gcd` of two casts is the `Nat.gcd` of the naturals; the two spellings of the
+    -- modulus are equal but not syntactically interchangeable.
+    have hgcd : (↑(Int.gcd (a : ℤ) (b : ℤ)) : ℤ) = ↑(Nat.gcd a b) := by simp [Int.gcd]
+    rw [hgcd]
+    exact intCast_apply_modEq_one_of_mem_Gamma _ γ hγ
+  choose z hza hzb using fun i j => exists_int_modEq_of_modEq_gcd (hcompat i j)
+  exact ⟨Matrix.of z, hza, hzb⟩
+
+/-- **Shimura, Lemma 3.28.** `Γ(gcd a b) = Γ(a) ⊔ Γ(b)`: the join of two principal congruence
+subgroups is the principal congruence subgroup of the gcd.
+
+The inclusion `⊇` is antitonicity. For `⊆`, lift `γ ∈ Γ(gcd a b)` entrywise: its entries agree
+with the identity's modulo `gcd a b`, so the Chinese remainder theorem supplies a matrix `M`
+congruent to `1` modulo `a` and to `γ` modulo `b`. Strong approximation
+(`map_intCast_zmod_surjective`) realises `M mod lcm a b` by an actual `β ∈ SL₂(ℤ)`, and then
+`β ∈ Γ(a)` while `β⁻¹γ ∈ Γ(b)`, so `γ = β · (β⁻¹γ)`. -/
+theorem Gamma_gcd_eq_sup (a b : ℕ) : Gamma (Nat.gcd a b) = Gamma a ⊔ Gamma b := by
+  -- a zero level contributes `Γ(0) = ⊥` and drops out of both sides
+  rcases Nat.eq_zero_or_pos a with rfl | ha
+  · simp [Gamma_zero_bot]
+  rcases Nat.eq_zero_or_pos b with rfl | hb
+  · simp [Gamma_zero_bot]
+  have : NeZero a := ⟨ha.ne'⟩
+  have : NeZero b := ⟨hb.ne'⟩
+  have : NeZero (Nat.lcm a b) := ⟨Nat.lcm_ne_zero (NeZero.ne a) (NeZero.ne b)⟩
+  refine le_antisymm ?_ (sup_le (Gamma_le_Gamma_of_dvd (Nat.gcd_dvd_left a b))
+    (Gamma_le_Gamma_of_dvd (Nat.gcd_dvd_right a b)))
+  have : (Gamma a).Normal := Gamma_normal a
+  intro γ hγ
+  rw [Subgroup.mem_sup_of_normal_left]
+  obtain ⟨M, hMa, hMb⟩ := exists_matrix_modEq_one_modEq_of_mem_Gamma_gcd hγ
+  have hM_det : (M.map (Int.castRingHom (ZMod (Nat.lcm a b)))).det = 1 := by
+    simp only [Matrix.det_fin_two, Matrix.map_apply, Int.coe_castRingHom]
+    have h := (ZMod.intCast_eq_intCast_iff _ _ _).mpr (det_fin_two_modEq_one_lcm hMa hMb)
+    push_cast at h ⊢
+    exact_mod_cast h
+  obtain ⟨β, hβ⟩ := Matrix.SpecialLinearGroup.map_intCast_zmod_surjective
+    ⟨M.map (Int.castRingHom (ZMod (Nat.lcm a b))), hM_det⟩
+  obtain ⟨hβ_a, hβ_b⟩ :=
+    mem_Gamma_and_inv_mul_mem_Gamma_of_map_eq (congr_arg Subtype.val hβ) hMa hMb
+  exact ⟨β, hβ_a, β⁻¹ * γ, hβ_b, by group⟩
 
 end CongruenceSubgroup

@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
 
 public section
@@ -37,7 +38,7 @@ records. The `b` of the `a`-th simple root is the Bourbaki successor `min (a + 1
 moves that successor to the first slot of the enumeration.
 
 Only the coroots are asked to span their lattice, and only that half is recorded, in
-`typeCSimplyConnectedRootDatum_corootSpan_eq_top`. The roots span the root lattice, which sits
+`corootSpan_typeCSimplyConnectedRootDatum_eq_top`. The roots span the root lattice, which sits
 inside the weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both
 lattices are trivial and the index is `1`), so the datum is a `RootDatum` carrying no
 `RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected" means here.
@@ -62,7 +63,7 @@ lattices are trivial and the index is `1`), so the datum is a `RootDatum` carryi
   set of the first `n` root indices.
 * `TauCeti.DynkinType.hasCartanType_typeCSimplyConnectedRootDatum`: the pinned base has Cartan type
   `C n`.
-* `TauCeti.DynkinType.typeCSimplyConnectedRootDatum_corootSpan_eq_top`: the coroots span the
+* `TauCeti.DynkinType.corootSpan_typeCSimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
 
 ## References
@@ -126,15 +127,15 @@ private lemma typeCPair_swap_eq {i j : TypeCIndex n} (h1 : typeCFst i = typeCSnd
   subst ha
   subst hb
   rcases lt_trichotomy a b with hab | hab | hab
-  · rw [if_pos hab] at hs'
-    rw [if_neg (not_lt.mpr hab.le)] at hs
+  · rw [ite_eq_left hab] at hs'
+    rw [ite_eq_right (not_lt.mpr hab.le)] at hs
     subst hs
     exact absurd hs' (by simp)
   · subst hab
-    rw [if_neg (lt_irrefl a)] at hs hs'
+    rw [ite_eq_right (lt_irrefl a)] at hs hs'
     rw [hs]
-  · rw [if_neg (not_lt.mpr hab.le)] at hs'
-    rw [if_pos hab] at hs
+  · rw [ite_eq_right (not_lt.mpr hab.le)] at hs'
+    rw [ite_eq_left hab] at hs
     subst hs'
     exact absurd hs (by simp)
 
@@ -200,26 +201,26 @@ private lemma typeCMk_pair {x y : Signed n} (h : y ≠ signedNeg x) :
   · subst hst
     rcases le_or_gt a b with hab | hab
     · have hmk : typeCMk (a, s) (b, s) = (b, a, s) := by
-        rw [typeCMk, if_pos rfl, max_eq_right hab, min_eq_left hab]
+        rw [typeCMk, ite_eq_left rfl, max_eq_right hab, min_eq_left hab]
       refine Or.inr ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_neg (not_lt.mpr hab)]
+      rw [hmk, typeCSnd, ite_eq_right (not_lt.mpr hab)]
     · have hmk : typeCMk (a, s) (b, s) = (a, b, s) := by
-        rw [typeCMk, if_pos rfl, max_eq_left hab.le, min_eq_right hab.le]
+        rw [typeCMk, ite_eq_left rfl, max_eq_left hab.le, min_eq_right hab.le]
       refine Or.inl ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_neg (not_lt.mpr hab.le)]
+      rw [hmk, typeCSnd, ite_eq_right (not_lt.mpr hab.le)]
   · have ht : t = !s := by cases s <;> cases t <;> simp_all
     subst ht
     rcases lt_trichotomy a b with hab | hab | hab
     · have hmk : typeCMk (a, s) (b, !s) = (a, b, s) := by
-        rw [typeCMk, if_neg hst, if_pos hab]
+        rw [typeCMk, ite_eq_right hst, ite_eq_left hab]
       refine Or.inl ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_pos hab]
+      rw [hmk, typeCSnd, ite_eq_left hab]
     · refine absurd ?_ h
       simp [hab]
     · have hmk : typeCMk (a, s) (b, !s) = (b, a, !s) := by
-        rw [typeCMk, if_neg hst, if_neg (not_lt.mpr hab.le)]
+        rw [typeCMk, ite_eq_right hst, ite_eq_right (not_lt.mpr hab.le)]
       refine Or.inr ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_pos hab, Bool.not_not]
+      rw [hmk, typeCSnd, ite_eq_left hab, Bool.not_not]
 
 private lemma typeCRoot_typeCMk {x y : Signed n} (h : y ≠ signedNeg x) :
     typeCRoot (typeCMk x y) = pairRoot x y := by
@@ -356,6 +357,10 @@ def typeCSimplyConnectedRootDatum (n : ℕ) :
     simpa using
       typeCCoroot_typeCReflectionIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
 
+/-- The pinned pairing of type `Cₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeCSimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeCSimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 private lemma root_typeCSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).root k = typeCRoot ((typeCIndexEquiv n).symm k) :=
   rfl
@@ -368,6 +373,14 @@ private lemma pairing_typeCSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).pairing k l =
       (typeCSimplyConnectedRootDatum n).root k ⬝ᵥ (typeCSimplyConnectedRootDatum n).coroot l :=
   rfl
+
+/-- Every Cartan integer between roots of the pinned type `C` datum has absolute value at most
+two. -/
+theorem abs_pairing_typeCSimplyConnectedRootDatum_le_two (k l : Fin (2 * n ^ 2)) :
+    |(typeCSimplyConnectedRootDatum n).pairing k l| ≤ 2 := by
+  rw [pairing_typeCSimplyConnectedRootDatum, root_typeCSimplyConnectedRootDatum,
+    coroot_typeCSimplyConnectedRootDatum]
+  exact abs_pairRoot_dotProduct_pairCoroot_le_two (typeCSnd_ne_signedNeg_typeCFst _)
 
 /-! ## The root and the coroot at an arbitrary index
 
@@ -522,20 +535,10 @@ coroot lattice, so that the datum is the simply connected one. -/
 
 /-! ## The pinned base -/
 
-/-- The telescoping identity behind `root_mem_or_neg_mem`: a difference `f a - f b` with `a ≤ b` is
-the sum of the consecutive differences between them. -/
-private lemma sub_mem_of_forall {M : Type*} [AddCommGroup M] (S : AddSubmonoid M) (f : ℕ → M)
-    {a b : ℕ} (hab : a ≤ b) (h : ∀ k, a ≤ k → k < b → f k - f (k + 1) ∈ S) : f a - f b ∈ S := by
-  -- `Finset.sum_Ico_sub` at `-f` is the telescoping identity in the direction needed here.
-  have key := Finset.sum_Ico_sub (fun k => -f k) hab
-  simp only [neg_sub_neg] at key
-  rw [← key]
-  exact sum_mem fun k hk => h k (Finset.mem_Ico.mp hk).1 (Finset.mem_Ico.mp hk).2
-
 private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
     weight n a - weight n b ∈
       AddSubmonoid.closure (range (typeCSimpleRoot (n := n))) := by
-  refine sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   have hk' : k + 1 < n := by omega
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleRoot_of_lt (i := ⟨k, by omega⟩) (by simpa using hk')]
@@ -543,7 +546,7 @@ private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
 private lemma coweight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b ≤ n) :
     coweight n a - coweight n b ∈
       AddSubmonoid.closure (range (typeCSimpleCoroot (n := n))) := by
-  refine sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleCoroot_eq (i := ⟨k, by omega⟩)]
 
@@ -651,7 +654,7 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
       rw [Finset.sum_eq_single c]
       · simp
       · intro d _ hd
-        exact if_neg fun hb => hd (Fin.ext hb)
+        exact ite_eq_right fun hb => hd (Fin.ext hb)
       · simp
     rw [hfirst] at h0
     linarith [h0]
@@ -663,11 +666,11 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
       intro hm
       have h := hrel ⟨0, hm⟩
       have hsum : ∑ i : Fin n, (if (0 : ℕ) = (i : ℕ) + 1 then g i else 0) = 0 :=
-        Finset.sum_eq_zero fun i _ => if_neg (by omega)
+        Finset.sum_eq_zero fun i _ => ite_eq_right (by omega)
       rw [hsum] at h
       by_cases hn : (0 : ℕ) + 1 = n
-      · rw [if_pos hn] at h; linarith
-      · rw [if_neg hn] at h; linarith
+      · rw [ite_eq_left hn] at h; linarith
+      · rw [ite_eq_right hn] at h; linarith
     | succ m ih =>
       intro hm
       have h := hrel ⟨m + 1, hm⟩
@@ -676,12 +679,12 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
         rw [Finset.sum_eq_single (⟨m, by omega⟩ : Fin n)]
         · simp
         · intro d _ hd
-          exact if_neg fun hb => hd (Fin.ext (by simpa using by omega))
+          exact ite_eq_right fun hb => hd (Fin.ext (by simpa using by omega))
         · simp
       rw [hsum, ih (by omega)] at h
       by_cases hn : (m + 1 : ℕ) + 1 = n
-      · rw [if_pos hn] at h; simpa using by linarith
-      · rw [if_neg hn] at h; simpa using by linarith
+      · rw [ite_eq_left hn] at h; simpa using by linarith
+      · rw [ite_eq_right hn] at h; simpa using by linarith
   intro i
   simpa using hzero (i : ℕ) i.isLt
 
@@ -696,11 +699,11 @@ private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
 
 /-- The support of the pinned base of type `Cₙ`: the first `n` root indices. -/
 private def typeCSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
-  Finset.univ.map ⟨typeCSimpleIndex n, typeCSimpleIndex_injective⟩
+  simpleSupport (typeCSimpleIndex_injective (n := n))
 
 private lemma coe_typeCSimpleSupport :
-    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) := by
-  simp [typeCSimpleSupport]
+    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) :=
+  coe_simpleSupport _
 
 private lemma image_root_typeCSimpleSupport :
     (typeCSimplyConnectedRootDatum n).root '' (typeCSimpleSupport n : Set (Fin (2 * n ^ 2)))
@@ -754,16 +757,8 @@ def typeCSimplyConnectedBase (n : ℕ) : (typeCSimplyConnectedRootDatum n).Base 
 /-- **The support of the pinned base of type `Cₙ` is the set of the first `n` root indices**, which
 by `TauCeti.DynkinType.root_typeCSimpleIndex` carry the simple roots in Bourbaki order. -/
 @[simp] theorem mem_support_typeCSimplyConnectedBase {k : Fin (2 * n ^ 2)} :
-    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n := by
-  -- The support of the base is `typeCSimpleSupport n` by definition.
-  change k ∈ typeCSimpleSupport n ↔ (k : ℕ) < n
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simp only [Function.Embedding.coeFn_mk, typeCSimpleIndex_val]
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeCSimpleIndex_injective (n := n)) (fun _ ↦ typeCSimpleIndex_val _)
 
 /-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
 private def typeCBaseEquiv (n : ℕ) : (typeCSimplyConnectedBase n).support ≃ Fin n where
@@ -803,7 +798,7 @@ connected lattice condition required by the pinned Chevalley--Demazure construct
 counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
 weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both lattices are
 trivial). -/
-theorem typeCSimplyConnectedRootDatum_corootSpan_eq_top (n : ℕ) :
+theorem corootSpan_typeCSimplyConnectedRootDatum_eq_top (n : ℕ) :
     (typeCSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
   refine top_unique ?_
   rw [← (Pi.basisFun ℤ (Fin n)).span_eq]

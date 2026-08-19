@@ -1,16 +1,22 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Exponential
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Analysis.Calculus.Deriv.Mul
 
 /-!
 # Exponentials in normed algebras
 
 This file records basic facts about the exponential in normed algebras, including the
-specialization to continuous linear endomorphisms of a real normed space.
+specialization to continuous linear endomorphisms of a real normed space: the norm bound
+`‖exp x‖ ≤ Real.exp ‖x‖`, exponential bounds for power-bounded operators, the exponential of a
+scalar multiple of the identity, and the Duhamel identity
+`exp (t • B) x - x = ∫₀ᵗ exp (u • B) (B x) du` for the orbits of a bounded operator.
 -/
 
 public section
@@ -41,6 +47,33 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
 namespace ContinuousLinearMap
 
+/-- If every power of a bounded operator `B` has norm at most `M`, then
+`‖exp (s B)‖ ≤ M exp s` for every `s ≥ 0`. -/
+theorem norm_exp_smul_le_mul_exp_of_norm_pow_le [CompleteSpace X] {B : X →L[ℝ] X} {M s : ℝ}
+    (hs : 0 ≤ s) (hpow : ∀ n : ℕ, ‖B ^ n‖ ≤ M) :
+    ‖exp (s • B)‖ ≤ M * Real.exp s := by
+  have hseries : HasSum
+      (fun n : ℕ => ((n.factorial : ℝ)⁻¹) • (s • B) ^ n) (exp (s • B)) :=
+    NormedSpace.exp_series_hasSum_exp' (s • B)
+  have hscalar : HasSum (fun n : ℕ => M * (s ^ n / n.factorial))
+      (M * Real.exp s) := by
+    rw [Real.exp_eq_exp_ℝ]
+    simpa [div_eq_mul_inv, mul_comm] using
+      (NormedSpace.exp_series_hasSum_exp' (𝕂 := ℝ) (𝔸 := ℝ) s).mul_left M
+  have hterm (n : ℕ) :
+      ‖((n.factorial : ℝ)⁻¹) • (s • B) ^ n‖ ≤ M * (s ^ n / n.factorial) := by
+    rw [smul_pow, norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
+      abs_of_nonneg (inv_nonneg.mpr (Nat.cast_nonneg _)), abs_pow, abs_of_nonneg hs]
+    calc
+      (n.factorial : ℝ)⁻¹ * (s ^ n * ‖B ^ n‖)
+          ≤ (n.factorial : ℝ)⁻¹ * (s ^ n * M) := by
+            gcongr
+            exact hpow n
+      _ = M * (s ^ n / n.factorial) := by
+        rw [div_eq_mul_inv]
+        ring
+  exact hseries.norm_le_of_bounded hscalar hterm
+
 /-- The exponential of a real scalar multiple of the identity operator is the corresponding
 scalar exponential times the identity. -/
 @[simp]
@@ -60,6 +93,23 @@ theorem norm_exp_smul_one_le (c : ℝ) :
   rw [exp_smul_one, norm_smul, Real.norm_eq_abs, abs_of_nonneg (Real.exp_nonneg _)]
   simpa only [ContinuousLinearMap.one_def, mul_one] using
     mul_le_mul_of_nonneg_left ContinuousLinearMap.norm_id_le (Real.exp_nonneg c)
+
+/-- **The Duhamel identity for the exponential of a bounded operator.** For `B : X →L[ℝ] X`,
+`exp (t B) x - x = ∫₀ᵗ exp (u B) (B x) du`.
+
+This is the fundamental theorem of calculus applied to the differentiable orbit
+`u ↦ exp (u B) x`, whose derivative is the continuous function `u ↦ exp (u B) (B x)`. -/
+theorem exp_smul_apply_sub_eq_intervalIntegral [CompleteSpace X] (B : X →L[ℝ] X) (t : ℝ) (x : X) :
+    exp (t • B) x - x = ∫ u in (0 : ℝ)..t, exp (u • B) (B x) := by
+  have hderiv : ∀ u : ℝ, HasDerivAt (fun v : ℝ => exp (v • B) x) (exp (u • B) (B x)) u := by
+    intro u
+    simpa [mul_apply_eq_comp] using
+      (hasDerivAt_exp_smul_const B u).clm_apply (hasDerivAt_const u x)
+  have hcont : Continuous fun u : ℝ => exp (u • B) (B x) :=
+    (differentiable_exp_smul_const ℝ B).continuous.clm_apply continuous_const
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt (fun u _ => hderiv u)
+    (hcont.intervalIntegrable 0 t)]
+  simp
 
 end ContinuousLinearMap
 

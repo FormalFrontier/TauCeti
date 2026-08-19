@@ -9,7 +9,7 @@ public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
 public import TauCeti.NumberTheory.HeckeRing.One
 
 import TauCeti.LinearAlgebra.Matrix.SmithNormalForm
-import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 
 /-!
 # Diagonal coset representatives for the `GL_n` Hecke ring
@@ -74,7 +74,7 @@ noncomputable def natDiagGL (a : Fin n → ℕ) : GL (Fin n) ℚ :=
 @[simp] lemma natDiagGL_coe (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(natDiagGL n a) : Matrix (Fin n) (Fin n) ℚ) =
     Matrix.diagonal (fun i ↦ (a i : ℚ)) := by
-  rw [natDiagGL, dif_pos ha, TauCeti.diagGL_coe]
+  rw [natDiagGL, dite_eq_left ha, TauCeti.diagGL_coe]
   simp
 
 lemma hasIntEntries_natDiagGL (a : Fin n → ℕ) : HasIntEntries n (natDiagGL n a) := by
@@ -109,7 +109,7 @@ lemma natDiagGL_mem_posDetInt (a : Fin n → ℕ) : natDiagGL n a ∈ posDetInt 
   refine (mem_posDetInt_iff n).mpr ⟨hasIntEntries_natDiagGL n a, ?_⟩
   by_cases ha : ∀ i, 0 < a i
   · exact natDiagGL_det_pos n a ha
-  · rw [natDiagGL, dif_neg ha]
+  · rw [natDiagGL, dite_eq_right ha]
     simp
 
 lemma natDiagGL_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
@@ -119,7 +119,7 @@ lemma natDiagGL_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
 /-- The junk branch of `natDiagGL`: without positivity the value is the identity. -/
 @[simp] lemma natDiagGL_of_not_pos {a : Fin n → ℕ} (ha : ¬ ∀ i, 0 < a i) :
     natDiagGL n a = 1 :=
-  dif_neg ha
+  dite_eq_right ha
 
 private lemma natDiagGL_const_eq_scalar {c : ℕ} (hc : 0 < c) :
     natDiagGL n (fun _ ↦ c) =
@@ -162,6 +162,13 @@ lemma isDvdChain_iff {n : ℕ} {a : Fin n → ℕ} :
 
 lemma isDvdChain_const (c : ℕ) : IsDvdChain (fun _ : Fin n ↦ c) :=
   fun _ _ _ ↦ dvd_refl _
+
+/-- The pointwise product of two divisibility chains is a divisibility chain. Scaling by a
+constant `c` is the case where `b` is the constant function, with `hb := isDvdChain_const n c`. -/
+lemma isDvdChain_mul {a b : Fin n → ℕ} (ha : IsDvdChain a) (hb : IsDvdChain b) :
+    IsDvdChain (a * b) :=
+  isDvdChain_iff.mpr fun _ _ hij ↦
+    mul_dvd_mul (isDvdChain_iff.mp ha hij) (isDvdChain_iff.mp hb hij)
 
 /-- The positive divisibility chains of length `n`: the parameter space of the diagonal
 double cosets. -/

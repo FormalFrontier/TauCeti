@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,7 +30,7 @@ later tubular-neighbourhood and surgery interfaces.
 * `TauCeti.SmoothEmbedding.ofIsSmoothEmbedding`: bundle a map satisfying Mathlib's
   `Manifold.IsSmoothEmbedding` predicate.
 * `TauCeti.SmoothEmbedding.id`: the identity smooth embedding.
-* `TauCeti.SmoothEmbedding.of_opens`: the inclusion of an open subset as a smooth embedding.
+* `TauCeti.SmoothEmbedding.ofOpens`: the inclusion of an open subset as a smooth embedding.
 * `TauCeti.SmoothEmbedding.prodMap`: the product of two bundled smooth embeddings.
 * `TauCeti.SmoothEmbedding.sumInl` / `sumInr`: the coproduct inclusions as smooth embeddings.
 
@@ -172,22 +173,22 @@ theorem id_coe [IsManifold I n M] :
   exact id_apply (I := I) (n := n) x
 
 /-- The inclusion of an open subset of a manifold as a bundled smooth embedding. -/
-def of_opens [IsManifold I n M] (s : TopologicalSpace.Opens M) :
+def ofOpens [IsManifold I n M] (s : TopologicalSpace.Opens M) :
     SmoothEmbedding I I n s M where
   toContMDiffMap :=
     ⟨Subtype.val, (Manifold.IsSmoothEmbedding.of_opens (I := I) (n := n) s).contMDiff⟩
   isSmoothEmbedding_toFun := Manifold.IsSmoothEmbedding.of_opens (I := I) (n := n) s
 
 @[simp]
-theorem of_opens_apply [IsManifold I n M] (s : TopologicalSpace.Opens M) (x : s) :
-    of_opens (I := I) (n := n) s x = x := by
+theorem ofOpens_apply [IsManifold I n M] (s : TopologicalSpace.Opens M) (x : s) :
+    ofOpens (I := I) (n := n) s x = x := by
   rfl
 
 @[simp]
-theorem of_opens_coe [IsManifold I n M] (s : TopologicalSpace.Opens M) :
-    ⇑(of_opens (I := I) (n := n) s) = Subtype.val := by
+theorem ofOpens_coe [IsManifold I n M] (s : TopologicalSpace.Opens M) :
+    ⇑(ofOpens (I := I) (n := n) s) = Subtype.val := by
   funext x
-  exact of_opens_apply (I := I) (n := n) s x
+  exact ofOpens_apply (I := I) (n := n) s x
 
 /-- The product of two bundled smooth embeddings. -/
 def prodMap [IsManifold I n M] [IsManifold J n N] [IsManifold I' n M'] [IsManifold J' n N']

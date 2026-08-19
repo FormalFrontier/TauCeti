@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,7 +9,6 @@ public import Mathlib.FieldTheory.Galois.Abelian
 public import Mathlib.FieldTheory.Normal.Basic
 public import Mathlib.FieldTheory.SeparableClosure
 public import Mathlib.GroupTheory.Exponent
-import Mathlib.Algebra.CharP.Basic
 
 /-!
 # A multiquadratic field is Galois
@@ -119,7 +119,7 @@ theorem aut_gen_eq_self_or_eq_neg (hroot : ∀ i, root i ^ 2 = algebraMap K L (d
 
 omit [Finite ι] in
 /-- A generator is not equal to its own negation when the radicand is nonzero, since `2 ≠ 0` in
-`L` (via `Ring.eq_self_iff_eq_zero_of_char_ne_two`). -/
+`L`. -/
 theorem gen_ne_neg [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (i : ι) (hd : d i ≠ 0) :
     gen (K := K) root i ≠ -gen root i := by
@@ -131,9 +131,9 @@ theorem gen_ne_neg [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L 
   have hr0 : root i ≠ 0 := fun hx0 =>
     hd ((map_eq_zero_iff _ (FaithfulSMul.algebraMap_injective K L)).mp
       (by rw [← hroot i, hx0]; ring))
-  have hchar : ringChar L ≠ 2 := fun hc =>
-    h2L (by exact_mod_cast (ringChar.spec L 2).2 (by simp [hc]))
-  exact hr0 ((Ring.eq_self_iff_eq_zero_of_char_ne_two hchar).mp hcoe.symm)
+  -- `root i = -root i` gives `2 · root i = 0`, so `root i = 0` since `2 ≠ 0`, contradicting `hr0`.
+  have h2r : (2 : L) * root i = 0 := by linear_combination hcoe
+  exact hr0 ((mul_eq_zero.mp h2r).resolve_left h2L)
 
 /-- `∏ᵢ (X² - dᵢ)` is nonzero. -/
 private theorem definingPolynomial_ne_zero : definingPolynomial d ≠ 0 := by

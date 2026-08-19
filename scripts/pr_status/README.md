@@ -21,7 +21,7 @@ reactions can never disagree:
 | lifecycle `merged` / `closed` | *(no label)* | `:merge:` / `:closed-pr:` |
 | ci `running` | `awaiting-CI` | 🟡 `yellow` |
 | ci not reported | `awaiting-CI` | 🟡 `yellow` |
-| ci `failure` | `awaiting-author` | 🔴 `red_circle` |
+| ci `failure` | `ci-failed` | 🔴 `red_circle` |
 | ci `success`, review `changes` | `awaiting-author` | 🟢 + ✍️ `writing` |
 | ci `success`, review `approved` | `ready-to-merge` | 🟢 + ✔️ `check` |
 | ci `success`, review pending, live marker | `review-in-progress` | 🟢 + 👀 |
@@ -37,14 +37,14 @@ and an authenticated `gh` CLI, nothing from PyPI.
 
 ## Labels
 
-The five labels are mutually exclusive; [`labels.py`](labels.py) sets one and
+The six labels are mutually exclusive; [`labels.py`](labels.py) sets one and
 removes any other, so exactly one is present on an open PR (none on a terminal
-PR). All five are provisioned on first use, and **`labels.py` is the sole writer
+PR). All six are provisioned on first use, and **`labels.py` is the sole writer
 of them**: the "exactly one" invariant is CI's alone to keep, and it assumes
 nothing about any worker or review harness. That is deliberate: anyone can point
 their own review harness at TauCeti, and CI must not depend on a particular one.
 
-`review-in-progress` is derived, like the other four, from a signal CI reads
+`review-in-progress` is derived, like the other five, from a signal CI reads
 rather than from anyone writing the label. The signal is the review engine's
 in-flight marker (`<!--tauceti-review-in-progress-->`, carrying a `head` and an
 `expires_at`), treated as an **optional, documented** contract that any review
@@ -167,7 +167,7 @@ a persistent Zulip config break, exactly like the healthcheck.
 
 The labels need no secret: `pr-labels.yml` uses the same GitHub App
 (`APP_ID` / `APP_PRIVATE_KEY`) already configured for the roadmap and merge
-workflows, scoped to this repo, and provisions the five labels on first use.
+workflows, scoped to this repo, and provisions the six labels on first use.
 
 ## Failure modes (Zulip)
 

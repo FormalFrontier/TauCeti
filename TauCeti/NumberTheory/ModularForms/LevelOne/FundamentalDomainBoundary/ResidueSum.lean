@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -48,8 +49,8 @@ namespace ModularForm
 variable {H : ℝ}
 
 /-- The truncation height dominates the corner row. -/
-private lemma sqrt_three_div_two_lt_of_one_lt (hH : 1 < H) : Real.sqrt 3 / 2 < H := by
-  nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
+private lemma sqrt_three_div_two_lt_of_one_lt (hH : 1 < H) : Real.sqrt 3 / 2 < H :=
+  sqrt_three_div_two_lt_one.trans hH
 
 /-- **The residue sum along the boundary contour.** For a function with a polar-part
 decomposition on an open set containing the closed truncated fundamental domain, all of

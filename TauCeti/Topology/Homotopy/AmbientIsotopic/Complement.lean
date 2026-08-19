@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -113,7 +114,8 @@ variable {f g : C(X, Y)}
 their ranges (the embedded images, for embeddings) are homeomorphic. -/
 theorem nonempty_rangeHomeomorph (hfg : AmbientIsotopic f g) :
     Nonempty (Set.range f ≃ₜ Set.range g) := by
-  obtain ⟨Φ, rfl⟩ := hfg
+  obtain ⟨Φ, hΦ⟩ := ambientIsotopic_def.mp hfg
+  subst g
   exact ⟨Φ.rangeHomeomorph f⟩
 
 /-- **Ambient isotopy preserves complements up to homeomorphism.** If `f` and `g` are ambient
@@ -122,7 +124,8 @@ isotopic, the complements `(range f)ᶜ` and `(range g)ᶜ` are homeomorphic. Fo
 ambient isotopy rather than on the naive isotopy relation. -/
 theorem nonempty_complementHomeomorph (hfg : AmbientIsotopic f g) :
     Nonempty (↥(Set.range f)ᶜ ≃ₜ ↥(Set.range g)ᶜ) := by
-  obtain ⟨Φ, rfl⟩ := hfg
+  obtain ⟨Φ, hΦ⟩ := ambientIsotopic_def.mp hfg
+  subst g
   exact ⟨Φ.complementHomeomorph f⟩
 
 end AmbientIsotopic

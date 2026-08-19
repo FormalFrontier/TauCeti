@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -125,8 +126,8 @@ theorem rowSymmetrizer_relabel :
   ext τ
   rw [coeff_conj, rowSymmetrizer_coeff, rowSymmetrizer_coeff]
   by_cases h : σ⁻¹ * τ * σ ∈ rowSubgroup t
-  · rw [if_pos h, if_pos ((mem_rowSubgroup_relabel σ t).mpr h)]
-  · rw [if_neg h, if_neg fun hτ => h ((mem_rowSubgroup_relabel σ t).mp hτ)]
+  · rw [ite_eq_left h, ite_eq_left ((mem_rowSubgroup_relabel σ t).mpr h)]
+  · rw [ite_eq_right h, ite_eq_right fun hτ => h ((mem_rowSubgroup_relabel σ t).mp hτ)]
 
 /-- Relabeling by `σ` conjugates the column antisymmetrizer by `σ`; the signs are unchanged,
 conjugate permutations having equal signs. -/
@@ -139,8 +140,8 @@ theorem columnAntisymmetrizer_relabel :
   have hsign : Equiv.Perm.sign (σ⁻¹ * τ * σ) = Equiv.Perm.sign τ := by
     rw [map_mul, map_mul, Equiv.Perm.sign_inv, mul_right_comm, Int.units_mul_self, one_mul]
   by_cases h : σ⁻¹ * τ * σ ∈ colSubgroup t
-  · rw [if_pos h, if_pos ((mem_colSubgroup_relabel σ t).mpr h), hsign]
-  · rw [if_neg h, if_neg fun hτ => h ((mem_colSubgroup_relabel σ t).mp hτ)]
+  · rw [ite_eq_left h, ite_eq_left ((mem_colSubgroup_relabel σ t).mpr h), hsign]
+  · rw [ite_eq_right h, ite_eq_right fun hτ => h ((mem_colSubgroup_relabel σ t).mp hτ)]
 
 /-- Relabeling by `σ` conjugates the Young symmetrizer by `σ`: `c_{σt} = σ c_t σ⁻¹`. -/
 @[simp]

@@ -129,13 +129,13 @@ noncomputable def transFamily (F G : I → Y) (u : I) : Y :=
 @[simp]
 theorem transFamily_of_le_half (F G : I → Y) {u : I} (hu : (u : ℝ) ≤ 2⁻¹) :
     transFamily F G u = F (projIcc 0 1 zero_le_one (2 * u)) :=
-  if_pos hu
+  ite_eq_left hu
 
 /-- Strictly past the junction the concatenated family is the second family. -/
 @[simp]
 theorem transFamily_of_half_lt (F G : I → Y) {u : I} (hu : 2⁻¹ < (u : ℝ)) :
     transFamily F G u = G (projIcc 0 1 zero_le_one (2 * u - 1)) :=
-  if_neg (not_le.mpr hu)
+  ite_eq_right (not_le.mpr hu)
 
 /-- At parameter time `0` the concatenated family is the initial value of the first family:
 a concatenation starts where its first factor starts.

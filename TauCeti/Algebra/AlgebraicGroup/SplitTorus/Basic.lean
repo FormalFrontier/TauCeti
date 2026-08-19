@@ -1,11 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Basic
+public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
 public import TauCeti.Algebra.Group.FreeAbelianCharacter
+public import Mathlib.RingTheory.Finiteness.Finsupp
 
 /-!
 # The split torus and its functor of points
@@ -35,6 +38,8 @@ as the existing multiplicative group `𝔾ₘ`, roots of unity `μ_n`, and diago
 
 ## Main definitions
 
+* `TauCeti.SplitTorus.characterGroup`: the finitely generated character group of a finite-rank
+  split torus.
 * `TauCeti.SplitTorus.pointsMulEquiv`: the multiplicative equivalence from the convolution
   group of `A`-points of the rank-`σ` split torus to `σ → Aˣ`.
 * `TauCeti.SplitTorus.pointsMulEquiv_apply_coe`: a point is sent to its values on the standard
@@ -61,6 +66,17 @@ universe u v w
 
 variable {R : Type u} {A : Type v} {σ : Type w}
 variable [CommSemiring R] [CommSemiring A] [Algebra R A]
+
+/-- A finite-rank free character lattice, written multiplicatively, is finitely generated. -/
+instance instFGMultiplicativeFinsuppInt {sigma : Type u} [Finite sigma] :
+    Group.FG (Multiplicative (sigma →₀ ℤ)) := by
+  exact AddGroup.fg_iff_mul_fg.mp
+    (Module.Finite.iff_addGroup_fg.mp
+      (inferInstance : Module.Finite ℤ (sigma →₀ ℤ)))
+
+/-- The finitely generated character group of the split torus indexed by `sigma`. -/
+noncomputable abbrev characterGroup (sigma : Type u) [Finite sigma] : FGCommGrpCat.{u} :=
+  FGCommGrpCat.of (Multiplicative (sigma →₀ ℤ))
 
 /-- The functor of points of the rank-`σ` split torus `D(Multiplicative (σ →₀ ℤ))`: for every
 commutative `R`-algebra `A`, the convolution group of `R`-algebra maps out of

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -352,9 +353,9 @@ theorem characterPairing_ofCharacter_irreducibleRepresentation_orthonormal
       if i = j then 1 else 0 := by
   by_cases hij : i = j
   · subst hij
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact ClassFunction.characterPairing_ofCharacter_self _
-  · rw [if_neg hij]
+  · rw [ite_eq_right hij]
     exact ClassFunction.characterPairing_ofCharacter_eq_zero _ _
       (pairwise_isEmpty_equiv_irreducibleRepresentation k (Ne.symm hij))
 

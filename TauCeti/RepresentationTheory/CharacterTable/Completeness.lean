@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -198,15 +199,15 @@ theorem sum_char_mul_char_inv (g h : G) :
     ∑ i, (ρ i).character g * (ρ i).character h⁻¹ =
       if IsConj g h then (Nat.card G : k) / Nat.card (ConjClasses.mk g).carrier else 0 := by
   have hgg := card_conjClass_mul_sum_char_mul_char_inv ρ hind hcard g g
-  rw [if_pos (IsConj.refl g)] at hgg
+  rw [ite_eq_left (IsConj.refl g)] at hgg
   have hc : (Nat.card (ConjClasses.mk g).carrier : k) ≠ 0 := fun h0 =>
     Invertible.ne_zero (Nat.card G : k) (by rw [← hgg, h0, zero_mul])
   have hgh := card_conjClass_mul_sum_char_mul_char_inv ρ hind hcard g h
   by_cases hconj : IsConj g h
-  · rw [if_pos hconj] at hgh ⊢
+  · rw [ite_eq_left hconj] at hgh ⊢
     rw [eq_div_iff hc, mul_comm]
     exact hgh
-  · rw [if_neg hconj] at hgh ⊢
+  · rw [ite_eq_right hconj] at hgh ⊢
     exact (mul_eq_zero.mp hgh).resolve_left hc
 
 end Orthogonality

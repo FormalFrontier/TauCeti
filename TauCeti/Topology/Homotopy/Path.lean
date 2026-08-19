@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Topology.Subpath
 public import Mathlib.Topology.Homotopy.Contractible
+public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
 -- Private: `Path.Homotopic.map_trans_evalAt` is used only in the proof of
 -- `map_nullhomotopic_of_nullhomotopic` below, so this import is not re-exported.
 import Mathlib.AlgebraicTopology.FundamentalGroupoid.InducedMaps
@@ -14,11 +15,16 @@ import Mathlib.AlgebraicTopology.FundamentalGroupoid.InducedMaps
 /-!
 # Path homotopy helpers
 
-Small path and path-homotopy quotient lemmas used by the universal-cover construction. The
+Small path and path-homotopy lemmas, mostly for the universal-cover construction. The
 quotient subpath identities are adapted from Kim Morrison's Mathlib universal-cover drafts,
 especially [#31576](https://github.com/leanprover-community/mathlib4/pull/31576) and
 [#38292](https://github.com/leanprover-community/mathlib4/pull/38292), following the earlier
 Tau Ceti work in [#42](https://github.com/TauCetiProject/TauCeti/pull/42).
+
+`Path.exists_homotopy_forall_mem_of_isSimplyConnected` is not from that source: it records that
+`SimplyConnectedSpace.paths_homotopic`, applied in a subspace `↥V`, yields a homotopy in the
+ambient space whose intermediate paths all stay in `V`. Analytic continuation consumes it in
+`Analysis/Complex/Conformal/GlobalBranch.lean`.
 -/
 
 public section
@@ -96,6 +102,28 @@ theorem continuous_initialSegmentFamily_uncurry {a b : X} (γ : Path a b) :
     initialSegmentFamily γ 1 = γ.cast rfl (by simp) := by
   ext s
   simp [initialSegmentFamily_apply, min_eq_left s.2.2, γ.extend_apply s.2]
+
+/-- **Two paths with the same endpoints in a simply connected set are homotopic inside it.** For
+`p` and `q` running in `V` between the same two points of `V`, there is a homotopy from `p` to `q`
+every intermediate path of which again lies in `V`.
+
+The homotopy is stated in the ambient space rather than in `↥V`, with membership in `V` as a
+separate conclusion: that is the form consumers want, and it spares them transporting along the
+subtype. -/
+theorem exists_homotopy_forall_mem_of_isSimplyConnected {V : Set X} (hV : IsSimplyConnected V)
+    {a b : X} {p q : Path a b} (hp : ∀ t, p t ∈ V) (hq : ∀ t, q t ∈ V) :
+    ∃ K : p.Homotopy q, ∀ t x, K (t, x) ∈ V := by
+  have := hV.simplyConnectedSpace
+  have haV : a ∈ V := p.source ▸ hp 0
+  have hbV : b ∈ V := p.target ▸ hp 1
+  obtain ⟨h⟩ := SimplyConnectedSpace.paths_homotopic
+    (Path.codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) p hp)
+    (Path.codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) q hq)
+  -- map the subspace homotopy back down, and read its endpoints through `map_codRestrict`
+  refine ⟨(h.map (⟨Subtype.val, continuous_subtype_val⟩ : C(V, X))).cast
+    (Path.map_codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) p hp)
+    (Path.map_codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) q hq), fun t x => ?_⟩
+  simp
 
 end Path
 

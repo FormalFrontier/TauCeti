@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,9 +35,12 @@ ambient σ-algebra — which is exactly `tailProcess X ≤ ‹MeasurableSpace Ω
 rather than the stronger pointwise measurability of the coordinates. The specialization derives that
 bound from measurable coordinates via `tailProcess_le_ambient`.
 
-No theorem here assumes `[StandardBorelSpace Ω]`. That hypothesis is what *supplying* the canonical
-witness costs — `mixedIIDWith_of_contractable` carries it — so the specialization below takes the
-witness as an explicit hypothesis instead of deriving it.
+No theorem here assumes `[StandardBorelSpace Ω]`, and the specialization below takes the witness as
+an explicit hypothesis rather than deriving it. That is an import boundary, not a mathematical
+cost: `Contractable.conditionallyIIDWith_directingProbabilityMeasure` supplies the witness with no
+hypothesis on `Ω` at all, but it belongs to the `L²` route, which this file does not import.
+`TauCeti.Probability.DeFinetti.CanonicalMixture` does import it, and states the resulting
+witness-free representation theorems for contractable and exchangeable processes.
 
 ## Final representation
 
@@ -45,7 +49,9 @@ the **unique** law of `ν`. That uniqueness is `mixedIID_mixingLaw_unique`, prov
 generic representation in `Exchangeability/MixedIID/Mixture.lean`; it is stated for `MixedIIDWith`
 witnesses and so does not mention `deFinettiMeasure`. The theorem `deFinetti_mixture` in
 `TauCeti.Probability.DeFinetti.Representation` derives the unique mixing-law representation from
-exchangeability without assuming a witness.
+exchangeability without assuming a witness, and
+`eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi` in
+`TauCeti.Probability.DeFinetti.CanonicalMixture` identifies its witness with `deFinettiMeasure`.
 -/
 
 public section
@@ -99,9 +105,9 @@ theorem deFinettiMeasure_toMeasure {μ : Measure Ω} [IsProbabilityMeasure μ] {
 measure is a mixing representative for `X`, the path law of `X` is the `deFinettiMeasure`-mixture of
 the infinite product measures.
 
-The witness hypothesis is taken rather than derived: `mixedIIDWith_of_contractable` supplies it, but
-only under `[StandardBorelSpace Ω]`, and taking it here keeps that assumption out of this
-statement. -/
+The witness hypothesis is taken rather than derived, to keep this file free of any de Finetti proof
+route. `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_contractable`, in
+`TauCeti.Probability.DeFinetti.CanonicalMixture`, discharges it from contractability alone. -/
 theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith {μ : Measure Ω}
     [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX : ∀ n, Measurable (X n))
     (h : MixedIIDWith μ X (directingProbabilityMeasure μ X)) :

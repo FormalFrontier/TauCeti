@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,8 +32,8 @@ hypothesis, since a finite set closed under `s ↦ s + 1` is empty.
 
 ## Main declarations
 
-* `TauCeti.ModularForm.intervalIntegral_fdBoundary_segment4_eq_neg_segment1`.
-* `TauCeti.ModularForm.intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1`: the
+* `TauCeti.ModularForm.intervalIntegral_fdBoundarySegment4_eq_neg_segment1`.
+* `TauCeti.ModularForm.intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1`: the
   same cancellation for a reflection-invariantly excised integrand.
 
 ## References
@@ -54,7 +55,7 @@ namespace ModularForm
 the negative of the right vertical integral: the reflection `t ↦ 4 - t` carries the
 right vertical onto the left through the translation `z ↦ z - 1`, which the periodicity
 absorbs, and reverses the orientation. -/
-theorem intervalIntegral_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
+theorem intervalIntegral_fdBoundarySegment4_eq_neg_segment1 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] (H : ℝ) {φ : ℂ → E}
     (hφ : Function.Periodic φ 1) :
     ∫ t in (3 : ℝ)..4, deriv (fdBoundary H) t • φ (fdBoundary H t) =
@@ -73,7 +74,7 @@ theorem intervalIntegral_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
 /-- The right-vertical integrability of a period-`1` integrand reflects to the left
 vertical: the reflection carries the integrand to its negation through the translation
 and the periodicity. -/
-theorem intervalIntegrable_deriv_smul_fdBoundary_segment4 {E : Type*}
+theorem intervalIntegrable_deriv_smul_fdBoundarySegment4 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] {H : ℝ} {φ : ℂ → E}
     (hφ : Function.Periodic φ 1)
     (hint : IntervalIntegrable (fun t ↦ deriv (fdBoundary H) t • φ (fdBoundary H t))
@@ -131,7 +132,7 @@ theorem exists_norm_fdBoundary_four_sub_le_iff {H : ℝ} {S : Finset ℂ} {ε : 
 right vertical onto the left, and it carries the excised integrand to itself: the excision
 test transports by `exists_norm_fdBoundary_four_sub_le_iff`, and the integrand's value by the
 periodicity already used without the excision. -/
-theorem intervalIntegrable_excised_deriv_smul_fdBoundary_segment4 {E : Type*}
+theorem intervalIntegrable_excised_deriv_smul_fdBoundarySegment4 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] {H : ℝ} {φ : ℂ → E}
     (hφ : Function.Periodic φ 1) {S : Finset ℂ} {ε : ℝ}
     (hrefl : ∀ s ∈ S, -(starRingEnd ℂ) s ∈ S)
@@ -151,17 +152,17 @@ theorem intervalIntegrable_excised_deriv_smul_fdBoundary_segment4 {E : Type*}
   have hder := deriv_fdBoundary_four_sub_vertical H hu
   rw [sub_sub_self] at hval hder hiff
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H (4 - x) - s‖ ≤ ε
-  · simp only [if_pos hc, if_pos (hiff.mpr hc), smul_zero, neg_zero]
+  · simp only [ite_eq_left hc, ite_eq_left (hiff.mpr hc), smul_zero, neg_zero]
   · -- Discharge both `if`s first: rewriting values inside a live condition would stop
-    -- `if_neg` from matching it.
-    simp only [if_neg hc, if_neg fun h => hc (hiff.mp h)]
+    -- `ite_eq_right` from matching it.
+    simp only [ite_eq_right hc, ite_eq_right fun h => hc (hiff.mp h)]
     simp only [hval, hφ.sub_eq, hder, neg_smul]
 
 /-- **The vertical cancellation survives excision.** The reflection `t ↦ 4 - t` carries the right
 vertical onto the left by `z ↦ -conj z`, an isometry of `ℂ`, so an integrand excised within `ε`
 of a set invariant under that reflection is excised at matching parameters on the two verticals,
 and the cancellation of the untruncated integrals
-(`TauCeti.ModularForm.intervalIntegral_fdBoundary_segment4_eq_neg_segment1`) persists.
+(`TauCeti.ModularForm.intervalIntegral_fdBoundarySegment4_eq_neg_segment1`) persists.
 
 Reflection invariance, not translation closure, is the right hypothesis: the two verticals are
 exchanged by `z ↦ -conj z`, and being an isometry it moves an `ε`-ball to an `ε`-ball. (A set
@@ -169,7 +170,7 @@ closed under the bare translation `s ↦ s + 1` would have to be empty, since a 
 element of largest real part.) For `TauCeti.ModularForm.verticalSingularSet` the invariance is the
 composite of `re_eq_of_mem_verticalSingularSet` with `sub_one_mem_verticalSingularSet` or
 `add_one_mem_verticalSingularSet`, whose translations are conditional on the real part. -/
-theorem intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
+theorem intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] (H : ℝ) {φ : ℂ → E}
     (hφ : Function.Periodic φ 1) {S : Finset ℂ} {ε : ℝ}
     (hrefl : ∀ s ∈ S, -(starRingEnd ℂ) s ∈ S) :
@@ -191,8 +192,8 @@ theorem intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
   have hval : fdBoundary H (4 - u) = fdBoundary H u - 1 :=
     fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε
-  · rw [if_pos (hiff.mpr hc), if_pos hc, smul_zero, smul_zero, neg_zero]
-  · rw [if_neg fun h => hc (hiff.mp h), if_neg hc, hval,
+  · rw [ite_eq_left (hiff.mpr hc), ite_eq_left hc, smul_zero, smul_zero, neg_zero]
+  · rw [ite_eq_right fun h => hc (hiff.mp h), ite_eq_right hc, hval,
       deriv_fdBoundary_four_sub_vertical H hu, hφ.sub_eq, neg_smul]
 
 end ModularForm

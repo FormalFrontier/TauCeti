@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -48,7 +48,8 @@ supplies a concrete prime, as the dihedral instances in
 * `TauCeti.IsGoodDixonPrime.card_nthRootsFinset`: that splitting has `e` distinct roots.
 * `TauCeti.IsGoodDixonPrime.isSemisimple_apply`: every group element acts semisimply in a
   representation over `ZMod p`.
-* `TauCeti.IsGoodDixonPrime.valMinAbs_intCast_of_natAbs_le_sqrt` and
+* `TauCeti.IsGoodDixonPrime.two_mul_natAbs_lt_of_natAbs_le_sqrt`,
+  `TauCeti.IsGoodDixonPrime.valMinAbs_intCast_of_natAbs_le_sqrt` and
   `TauCeti.IsGoodDixonPrime.eq_of_intCast_eq_of_natAbs_le_sqrt`: an integer bounded by `√|G|` is
   recovered from, and so determined by, its residue modulo `p`. This is what the size bound is
   for.
@@ -166,13 +167,20 @@ theorem card_nthRootsFinset [Fact p.Prime] (hp : IsGoodDixonPrime G p) :
 
 theorem neZero (hp : IsGoodDixonPrime G p) : NeZero p := ⟨hp.prime.ne_zero⟩
 
+/-- **Dixon's size bound in the shape the residue window asks for.** An integer of absolute value
+at most `⌊√|G|⌋` lies strictly inside the window of half-width `p / 2`, since `2⌊√|G|⌋ < p`. -/
+theorem two_mul_natAbs_lt_of_natAbs_le_sqrt (hp : IsGoodDixonPrime G p) {z : ℤ}
+    (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) : 2 * z.natAbs < p := by
+  have := hp.two_mul_sqrt_lt
+  omega
+
 /-- **The certified rational-integer lift at a good Dixon prime.** Dixon's size bound opens a
 residue window wide enough that an integer of absolute value at most `⌊√|G|⌋` is returned by
 `ZMod.valMinAbs` from its residue. This is the first stage of the cyclotomic lift: a rational
 character value, reduced modulo `p`, is recovered exactly. -/
 theorem valMinAbs_intCast_of_natAbs_le_sqrt (hp : IsGoodDixonPrime G p) {z : ℤ}
     (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) : ((z : ZMod p)).valMinAbs = z :=
-  ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt (by have := hp.two_mul_sqrt_lt; omega)
+  ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt (hp.two_mul_natAbs_lt_of_natAbs_le_sqrt hz)
 
 /-- **Dixon's size bound opens a wide enough residue window.** Two integers of absolute value at
 most `⌊√|G|⌋` that agree modulo `p` are equal, so an integer of that size is determined by its
@@ -180,8 +188,8 @@ residue. This is why the lift is unambiguous. -/
 theorem eq_of_intCast_eq_of_natAbs_le_sqrt (hp : IsGoodDixonPrime G p) {z w : ℤ}
     (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) (hw : w.natAbs ≤ Nat.sqrt (Nat.card G))
     (h : (z : ZMod p) = w) : z = w :=
-  ZMod.eq_of_intCast_eq_of_two_mul_natAbs_lt (by have := hp.two_mul_sqrt_lt; omega)
-    (by have := hp.two_mul_sqrt_lt; omega) h
+  ZMod.eq_of_intCast_eq_of_two_mul_natAbs_lt (hp.two_mul_natAbs_lt_of_natAbs_le_sqrt hz)
+    (hp.two_mul_natAbs_lt_of_natAbs_le_sqrt hw) h
 
 /-! #### Representations over `ZMod p` -/
 

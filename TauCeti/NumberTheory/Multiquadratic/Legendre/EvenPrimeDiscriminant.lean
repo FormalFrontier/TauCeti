@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -68,11 +69,11 @@ theorem legendreSym_evenPrimeDiscriminantRadicand {D : ℤ} (hD : IsEvenPrimeDis
     legendreSym q (evenPrimeDiscriminantRadicand D) =
       if D = -4 then χ₄ q else if D = 8 then χ₈ q else χ₈' q := by
   rcases hD with rfl | rfl | rfl
-  · rw [evenPrimeDiscriminantRadicand_neg_four, if_pos rfl, legendreSym.at_neg_one hq]
-  · rw [evenPrimeDiscriminantRadicand_eight, if_neg (by norm_num), if_pos rfl,
+  · rw [evenPrimeDiscriminantRadicand_neg_four, ite_eq_left rfl, legendreSym.at_neg_one hq]
+  · rw [evenPrimeDiscriminantRadicand_eight, ite_eq_right (by norm_num), ite_eq_left rfl,
       legendreSym.at_two hq]
-  · rw [evenPrimeDiscriminantRadicand_neg_eight, if_neg (by norm_num), if_neg (by norm_num),
-      legendreSym.at_neg_two hq]
+  · rw [evenPrimeDiscriminantRadicand_neg_eight, ite_eq_right (by norm_num),
+      ite_eq_right (by norm_num), legendreSym.at_neg_two hq]
 
 /-- An even prime discriminant `D` and its radicand `D / 4` have the same Legendre symbol at
 every odd prime `q`: they differ by the square factor `4`, which contributes a trivial
@@ -136,10 +137,10 @@ theorem legendreSym_evenPrimeDiscriminantRadicand_eq_one_iff {D : ℤ}
       else if D = 8 then q % 8 = 1 ∨ q % 8 = 7
       else q % 8 = 1 ∨ q % 8 = 3 := by
   rcases hD with rfl | rfl | rfl
-  · rw [if_pos rfl, legendreSym_evenPrimeDiscriminantRadicand_neg_four_eq_one_iff hq]
-  · rw [if_neg (by norm_num), if_pos rfl,
+  · rw [ite_eq_left rfl, legendreSym_evenPrimeDiscriminantRadicand_neg_four_eq_one_iff hq]
+  · rw [ite_eq_right (by norm_num), ite_eq_left rfl,
       legendreSym_evenPrimeDiscriminantRadicand_eight_eq_one_iff hq]
-  · rw [if_neg (by norm_num), if_neg (by norm_num),
+  · rw [ite_eq_right (by norm_num), ite_eq_right (by norm_num),
       legendreSym_evenPrimeDiscriminantRadicand_neg_eight_eq_one_iff hq]
 
 /-- A variable even prime discriminant is a quadratic residue modulo an odd prime `q`

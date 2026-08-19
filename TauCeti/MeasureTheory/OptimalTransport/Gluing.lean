@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -98,9 +99,6 @@ theorem lintegral_glue [SFinite π] [IsSFiniteKernel κ] {f : X × Y × Z → �
     ∫⁻ p, f p ∂(glue π κ) = ∫⁻ w, ∫⁻ z, f (w.1, w.2, z) ∂(κ w.2) ∂π := by
   rw [glue, lintegral_map hf MeasurableEquiv.prodAssoc.measurable]
   exact MeasureTheory.Measure.lintegral_compProd (hf.comp MeasurableEquiv.prodAssoc.measurable)
-
-instance instSFiniteGlue [SFinite π] [IsSFiniteKernel κ] : SFinite (glue π κ) := by
-  rw [glue]; infer_instance
 
 instance instIsFiniteMeasureGlue [IsFiniteMeasure π] [IsFiniteKernel κ] :
     IsFiniteMeasure (glue π κ) := by

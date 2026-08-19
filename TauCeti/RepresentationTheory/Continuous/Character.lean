@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -57,9 +58,9 @@ scalars than that functional does: `𝕜` is a complete nontrivially normed fiel
 This is the character definition of Layer 6 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md);
 the `L²` theory and the orthogonality relations are in
-`TauCeti/RepresentationTheory/Compact/Character.lean`. Nothing here needs a group, a measure, or
-compactness, so it is stated over a topological monoid. The mathematical development follows Daniel
-Bump, *Lie Groups*, second edition, Chapter 2.
+`TauCeti/RepresentationTheory/Compact/Character/Basic.lean`. Nothing here needs a group, a measure,
+or compactness, so it is stated over a topological monoid. The mathematical development follows
+Daniel Bump, *Lie Groups*, second edition, Chapter 2.
 -/
 
 public section

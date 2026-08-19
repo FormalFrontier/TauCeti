@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.RootLength
+public import Mathlib.GroupTheory.OrderOfElement
 
 /-!
 # Numbered diagram permutations for the finite groups of Lie type
@@ -29,6 +31,15 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 * `TauCeti.trialityPermD4`: the order-three triality symmetry of `D₄`.
 * `TauCeti.lengthPermRankTwo`: the length-exchanging permutation for `B₂` and `G₂`.
 * `TauCeti.lengthPermF4`: the length-exchanging permutation for `F₄`.
+
+## Main results
+
+* `TauCeti.orderOf_graphPermA`, `TauCeti.orderOf_graphPermD`, `TauCeti.orderOf_graphPermE6` and
+  `TauCeti.orderOf_trialityPermD4`: the graph permutations have order exactly two (for
+  `graphPermA`, on at least two nodes), except for triality, which has order three.
+* `TauCeti.cartanMatrix_A_graphPermA`, `TauCeti.cartanMatrix_D_graphPermD`,
+  `TauCeti.cartanMatrix_E6_graphPermE6` and `TauCeti.cartanMatrix_D4_trialityPermD4`: each graph
+  permutation is an automorphism of the corresponding Cartan matrix.
 -/
 
 public section
@@ -60,10 +71,24 @@ def lengthPermRankTwo : Equiv.Perm (Fin 2) :=
 def lengthPermF4 : Equiv.Perm (Fin 4) :=
   graphPermA 4
 
+/-- Reversal of a chain of at least two nodes moves the first node, so it is not the identity.
+The bound is necessary: `graphPermA 0` and `graphPermA 1` are the identity. -/
+theorem graphPermA_ne_one {n : ℕ} (hn : 2 ≤ n) : graphPermA n ≠ 1 := by
+  intro h
+  have h0 : n - (0 + 1) = 0 := by
+    have h1 : graphPermA n ⟨0, by omega⟩ = ⟨0, by omega⟩ := by rw [h]; rfl
+    rw [graphPermA, Fin.revPerm_apply] at h1
+    exact congrArg Fin.val h1
+  omega
+
 /-- Reversing the `Aₙ` chain twice is the identity. -/
 @[simp] theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
   ext i
   simp [graphPermA, pow_two, Equiv.Perm.mul_apply]
+
+/-- Reversal of a chain of at least two nodes has order exactly two. -/
+@[simp] theorem orderOf_graphPermA {n : ℕ} (hn : 2 ≤ n) : orderOf (graphPermA n) = 2 :=
+  orderOf_eq_prime (graphPermA_sq n) (graphPermA_ne_one hn)
 
 /-- The final-index swap sends index `n - 2` to index `n - 1`; for `4 ≤ n`, these are the two
 `Dₙ` fork nodes. -/
@@ -92,6 +117,17 @@ two `Dₙ` fork nodes. -/
 @[simp] theorem graphPermD_sq (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ^ 2 = 1 := by
   simp [graphPermD, pow_two]
 
+/-- The two swapped indices are distinct, so the swap is not the identity. -/
+theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
+  rw [graphPermD, ne_eq, Equiv.swap_eq_one_iff]
+  intro h
+  have : n - 2 = n - 1 := congrArg Fin.val h
+  omega
+
+/-- Exchanging the final two indices has order exactly two. -/
+@[simp] theorem orderOf_graphPermD (n : ℕ) (hn : 2 ≤ n) : orderOf (graphPermD n hn) = 2 :=
+  orderOf_eq_prime (graphPermD_sq n hn) (graphPermD_ne_one n hn)
+
 /-- The `E₆` graph permutation sends node `0` to node `5`. -/
 @[simp] lemma graphPermE6_apply_zero : graphPermE6 0 = 5 := by decide
 /-- The `E₆` graph permutation fixes node `1`. -/
@@ -108,6 +144,10 @@ two `Dₙ` fork nodes. -/
 /-- Applying the `E₆` graph permutation twice is the identity. -/
 @[simp] theorem graphPermE6_sq : graphPermE6 ^ 2 = 1 := by decide
 
+/-- The `E₆` graph permutation has order exactly two. -/
+@[simp] theorem orderOf_graphPermE6 : orderOf graphPermE6 = 2 :=
+  orderOf_eq_prime graphPermE6_sq (by decide)
+
 /-- Triality sends outer node `0` to outer node `2`. -/
 @[simp] lemma trialityPermD4_apply_zero : trialityPermD4 0 = 2 := by decide
 /-- Triality fixes the central node `1`. -/
@@ -119,6 +159,10 @@ two `Dₙ` fork nodes. -/
 
 /-- Applying triality three times is the identity. -/
 @[simp] theorem trialityPermD4_pow_three : trialityPermD4 ^ 3 = 1 := by decide
+
+/-- Triality has order exactly three. -/
+@[simp] theorem orderOf_trialityPermD4 : orderOf trialityPermD4 = 3 :=
+  orderOf_eq_prime trialityPermD4_pow_three (by decide)
 
 /-- The rank-two length permutation sends node `0` to node `1`. -/
 @[simp] lemma lengthPermRankTwo_apply_zero : lengthPermRankTwo 0 = 1 := by decide

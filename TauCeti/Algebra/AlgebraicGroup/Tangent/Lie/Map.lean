@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -118,12 +119,34 @@ section LieHom
 variable {R A A' B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
   [CommRing A'] [Bialgebra R A'] [CommRing B] [Algebra R B]
 
-/-- The differential on derivations, as a morphism of Lie algebras. -/
+/-- The differential on derivations, as a morphism of Lie algebras over the coefficient ring. -/
 noncomputable def derivationCompLieHom (φ : A' →ₐc[R] A) :
-    Derivation R A (Bialgebra.CounitAlgebra R A B) →ₗ⁅R⁆
-      Derivation R A' (Bialgebra.CounitAlgebra R A' B) :=
-  { derivationComp (B := B) φ with
-    map_lie' := derivationComp_bracket φ _ _ }
+    Derivation R A (Bialgebra.CounitAlgebra R A B) →ₗ⁅B⁆
+      Derivation R A' (Bialgebra.CounitAlgebra R A' B) where
+  toFun := derivationComp (B := B) φ
+  map_add' := map_add (derivationComp (B := B) φ)
+  map_smul' b d := by
+    ext a
+    apply (Bialgebra.CounitAlgebra.algEquivSelf R A' B).injective
+    calc
+      _ = Bialgebra.CounitAlgebra.algEquivSelf R A B
+          ((b • d) ((φ : A' →ₐ[R] A) a)) := by
+        rw [derivationComp_apply]
+        exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).trans
+          (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).symm
+      _ = b * Bialgebra.CounitAlgebra.algEquivSelf R A B (d ((φ : A' →ₐ[R] A) a)) :=
+        algEquivSelf_derivation_smul_apply (R := R) (A := A) b d _
+      _ = b * Bialgebra.CounitAlgebra.algEquivSelf R A' B
+          (derivationComp (B := B) φ d a) := by
+        congr 1
+        rw [derivationComp_apply]
+        exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).trans
+          (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).symm
+      _ = _ := by
+        simpa only [RingHom.id_apply] using
+          (algEquivSelf_derivation_smul_apply (R := R) (A := A') b
+            (derivationComp (B := B) φ d) a).symm
+  map_lie' := derivationComp_bracket φ _ _
 
 @[simp]
 lemma derivationCompLieHom_apply (φ : A' →ₐc[R] A)
@@ -138,7 +161,7 @@ lemma derivationCompLieHom_apply (φ : A' →ₐc[R] A)
 @[simp]
 theorem derivationCompLieHom_id :
     derivationCompLieHom (B := B) (BialgHom.id R A) =
-      LieHom.id (R := R) (L₁ := Derivation R A (Bialgebra.CounitAlgebra R A B)) := by
+      LieHom.id (R := B) (L₁ := Derivation R A (Bialgebra.CounitAlgebra R A B)) := by
   ext d
   simp [derivationCompLieHom_apply]
 

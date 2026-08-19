@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Analysis.Contour.Dixon.Def
-import TauCeti.Analysis.Calculus.DSlopeIntegral
+import TauCeti.Analysis.Calculus.DSlope.Integral
 import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 import Mathlib.Analysis.Calculus.FDeriv.Measurable
 

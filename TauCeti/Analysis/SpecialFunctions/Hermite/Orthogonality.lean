@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -143,18 +143,18 @@ theorem integral_hermite_mul_hermite_mul_gaussian (m n : ℕ) :
     (∫ x : ℝ, aeval x (hermite m) * aeval x (hermite n) * Real.exp (-(x ^ 2 / 2)))
       = if m = n then (n.factorial : ℝ) * Real.sqrt (2 * π) else 0 := by
   rcases lt_trichotomy m n with h | rfl | h
-  · rw [if_neg h.ne, integral_aeval_mul_hermite, iterate_derivative_hermite,
+  · rw [ite_eq_right h.ne, integral_aeval_mul_hermite, iterate_derivative_hermite,
       Nat.descFactorial_eq_zero_iff_lt.mpr h]
     simp
-  · rw [if_pos rfl, integral_aeval_mul_hermite]
+  · rw [ite_eq_left rfl, integral_aeval_mul_hermite]
     have hconst : (fun x : ℝ => aeval x (derivative^[m] (hermite m)) * Real.exp (-(x ^ 2 / 2)))
         = fun x : ℝ => (m.factorial : ℝ) * Real.exp (-(x ^ 2 / 2)) := by
       ext x
       rw [iterate_derivative_hermite, Nat.sub_self, Nat.descFactorial_self, hermite_zero]
       simp [nsmul_eq_mul]
     rw [hconst, integral_const_mul, integral_gaussian_half]
-  · rw [if_neg h.ne', integral_hermite_swap, integral_aeval_mul_hermite, iterate_derivative_hermite,
-      Nat.descFactorial_eq_zero_iff_lt.mpr h]
+  · rw [ite_eq_right h.ne', integral_hermite_swap, integral_aeval_mul_hermite,
+      iterate_derivative_hermite, Nat.descFactorial_eq_zero_iff_lt.mpr h]
     simp
 
 /-- **The Hermite orthogonality relation, Gaussian-measure form** (milestone A1):

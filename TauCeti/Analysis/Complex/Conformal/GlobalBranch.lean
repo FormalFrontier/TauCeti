@@ -1,12 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Monodromy
-public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
+public import TauCeti.Topology.Homotopy.Path
 import Mathlib.Topology.MetricSpace.Thickening
 
 /-!
@@ -41,12 +41,11 @@ The branch produced is unique as soon as `U` is preconnected, by the identity pr
 ## The construction
 
 Path independence is monodromy plus simple connectivity: two paths in `U` with the same endpoints
-lift to paths in the subspace `↥U`, where `SimplyConnectedSpace.paths_homotopic` produces a
-homotopy rel endpoints; pushing that homotopy back down to `ℂ` keeps every intermediate path
-inside `U`, so the hypothesis supplies a continuation along each of them and
-`TauCeti.monodromy_theorem` applies. Uniqueness of continuation along a *fixed* path
-(`TauCeti.IsAnalyticContinuationAlong.eventuallyEq`, over the preconnected parameter interval)
-then matches the two given continuations with the two extreme members of that family.
+are joined by a homotopy whose every intermediate path is again inside `U`
+(`Path.exists_homotopy_forall_mem_of_isSimplyConnected`), so the hypothesis supplies a continuation
+along each of them and `TauCeti.monodromy_theorem` applies. Uniqueness of continuation along a
+*fixed* path (`TauCeti.IsAnalyticContinuationAlong.eventuallyEq`, over the preconnected parameter
+interval) then matches the two given continuations with the two extreme members of that family.
 
 The global branch is `F w = (value at w of the terminal germ of a continuation to w)`, chosen once
 per point of `U` by path connectedness; path independence says the choice does not matter. The
@@ -83,10 +82,11 @@ Mathlib has the abstract monodromy statement `IsLocalHomeomorph.monodromy_theore
 criterion `IsCoveringMap.existsUnique_continuousMap_lifts` for a simply connected base
 (`Mathlib/Topology/Homotopy/Lifting.lean`), but consuming them for germs of holomorphic functions
 would first require the étale space of those germs as a topological space, which Mathlib does not
-have; see the discussion in `Conformal/Monodromy.lean`. Mathlib's simple-connectivity API
-(`SimplyConnectedSpace.paths_homotopic`, `IsSimplyConnected.isPathConnected`), its path homotopy
-API (`Path.Homotopy.map`), and its metric thickening of a compact set are consumed rather than
-restated.
+have; see the discussion in `Conformal/Monodromy.lean`. Mathlib's simple-connectivity and path
+homotopy APIs are consumed rather than restated: `IsSimplyConnected.isPathConnected` here, and
+`SimplyConnectedSpace.paths_homotopic` with `Path.Homotopy.map` through
+`Path.exists_homotopy_forall_mem_of_isSimplyConnected`. So is its metric thickening of a compact
+set.
 
 ## References
 
@@ -117,31 +117,17 @@ theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f�
     (hf : IsAnalyticContinuationAlong f γ univ) (hf0 : f 0 =ᶠ[𝓝 z₀] f₀)
     (hg : IsAnalyticContinuationAlong g δ univ) (hg0 : g 0 =ᶠ[𝓝 z₀] f₀) :
     f 1 =ᶠ[𝓝 (γ 1)] g 1 := by
-  -- Lift the two paths to the subspace `↥U`, where simple connectivity makes them homotopic rel
-  -- endpoints; push the homotopy back to `ℂ` — every intermediate path still lies in `U`, so the
-  -- hypothesis continues the germ along it — and apply `TauCeti.monodromy_theorem` to the
-  -- resulting family. The two given continuations are then matched with the extreme members of
-  -- that family by uniqueness along a fixed path.
-  have := hUc.simplyConnectedSpace
-  have hz₀U : z₀ ∈ U := hγ0 ▸ hγU 0
-  -- The two paths, read in the subspace `↥U`, where simple connectivity lives.
-  let p : Path (⟨z₀, hz₀U⟩ : U) (⟨γ 1, hγU 1⟩ : U) :=
-    { toFun := fun x => ⟨γ x, hγU x⟩
-      continuous_toFun := hγ.subtype_mk _
-      source' := Subtype.ext hγ0
-      target' := rfl }
-  let q : Path (⟨z₀, hz₀U⟩ : U) (⟨γ 1, hγU 1⟩ : U) :=
-    { toFun := fun x => ⟨δ x, hδU x⟩
-      continuous_toFun := hδ.subtype_mk _
-      source' := Subtype.ext hδ0
-      target' := Subtype.ext hend }
-  obtain ⟨h⟩ := SimplyConnectedSpace.paths_homotopic p q
-  -- The same homotopy, read back in `ℂ`; it never leaves `U`.
-  set K := h.map (⟨Subtype.val, continuous_subtype_val⟩ : C(U, ℂ)) with hK
-  have hKmem : ∀ t x : I, K (t, x) ∈ U := fun t x => (h (t, x)).2
-  have hKzero : ∀ t : I, K (t, 0) = z₀ := fun t => by simp [hK]
-  have hKp : (fun x => K (0, x)) = γ := funext fun x => by simp [hK, p]
-  have hKq : (fun x => K (1, x)) = δ := funext fun x => by simp [hK, q]
+  -- Simple connectivity joins the two paths by a homotopy that stays in `U`, so the hypothesis
+  -- continues the germ along every intermediate path and `TauCeti.monodromy_theorem` applies to
+  -- the resulting family. The two given continuations are then matched with the extreme members
+  -- of that family by uniqueness along a fixed path.
+  let P : Path z₀ (γ 1) := { toFun := γ, continuous_toFun := hγ, source' := hγ0, target' := rfl }
+  let Q : Path z₀ (γ 1) := { toFun := δ, continuous_toFun := hδ, source' := hδ0, target' := hend }
+  obtain ⟨K, hKmem⟩ :=
+    Path.exists_homotopy_forall_mem_of_isSimplyConnected hUc (p := P) (q := Q) hγU hδU
+  have hKzero : ∀ t : I, K (t, 0) = z₀ := fun t => by simp
+  have hKp : (fun x => K (0, x)) = γ := funext fun x => by simp [P]
+  have hKq : (fun x => K (1, x)) = δ := funext fun x => by simp [Q]
   -- A continuation along every intermediate path, all starting from the germ of `f₀`.
   have hcont : ∀ t : I, ContinuesAlong f₀ fun x => K (t, x) := fun t =>
     H.continuesAlong (by fun_prop) (hKmem t) (hKzero t)

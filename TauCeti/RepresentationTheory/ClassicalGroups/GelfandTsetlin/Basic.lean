@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -303,13 +304,13 @@ def truncate (P : GTPattern (n + 1)) : GTPattern n where
   zeros' := by
     intro i j h
     by_cases hj : j ≤ n
-    · rw [if_pos hj]; exact P.entry_eq_zero (by omega)
-    · rw [if_neg hj]
+    · rw [ite_eq_left hj]; exact P.entry_eq_zero (by omega)
+    · rw [ite_eq_right hj]
   interlacing' := by
     intro i j hij hj
     have h1 : j ≤ n := by omega
     have h2 : j + 1 ≤ n := by omega
-    simp only [h1, h2, if_true]
+    simp only [h1, h2, ite_true]
     exact P.interlacing' hij (by omega)
 
 @[simp]
@@ -336,8 +337,8 @@ def extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRo
     intro i j hz
     by_cases hj : j = n + 1
     · have hi : ¬ i < n + 1 := by omega
-      rw [if_pos hj, dif_neg hi]
-    · rw [if_neg hj]
+      rw [ite_eq_left hj, dite_eq_right hi]
+    · rw [ite_eq_right hj]
       exact Q.entry_eq_zero (by omega)
   interlacing' := by
     intro i j hij hj
@@ -347,11 +348,11 @@ def extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRo
       have hi' : i < n + 1 := by omega
       have hi'' : i + 1 < n + 1 := by omega
       rw [hjn]
-      exact ⟨by simp only [if_neg hne, dif_pos hi']; exact h.le_castSucc ⟨i, hi⟩,
-        by simp only [if_neg hne, dif_pos hi'']; exact h.succ_le ⟨i, hi⟩⟩
+      exact ⟨by simp only [ite_eq_right hne, dite_eq_left hi']; exact h.le_castSucc ⟨i, hi⟩,
+        by simp only [ite_eq_right hne, dite_eq_left hi'']; exact h.succ_le ⟨i, hi⟩⟩
     · have hne : ¬ (j = n + 1) := by omega
       have hne' : ¬ (j + 1 = n + 1) := by omega
-      simp only [if_neg hne, if_neg hne']
+      simp only [ite_eq_right hne, ite_eq_right hne']
       exact Q.interlacing' hij (by omega)
 
 theorem extend_apply (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
@@ -362,18 +363,18 @@ theorem extend_apply (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces
 @[simp]
 theorem extend_apply_of_ne (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i j : ℕ} (hj : j ≠ n + 1) : extend Q l h i j = Q i j := by
-  rw [extend_apply, if_neg hj]
+  rw [extend_apply, ite_eq_right hj]
 
 @[simp]
 theorem extend_apply_top (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i : ℕ} (hi : i < n + 1) : extend Q l h i (n + 1) = l ⟨i, hi⟩ := by
-  rw [extend_apply, if_pos rfl, dif_pos hi]
+  rw [extend_apply, ite_eq_left rfl, dite_eq_left hi]
 
 /-- Prepending a row leaves the cells past the end of the new row empty.  This is not `@[simp]`:
 `entry_eq_zero_of_le` already rewrites it, being the general normal form for an out-of-row cell. -/
 theorem extend_apply_top_of_le (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow)
     {i : ℕ} (hi : n + 1 ≤ i) : extend Q l h i (n + 1) = 0 := by
-  rw [extend_apply, if_pos rfl, dif_neg (by omega)]
+  rw [extend_apply, ite_eq_left rfl, dite_eq_right (by omega)]
 
 @[simp]
 theorem topRow_extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow) :
@@ -388,8 +389,8 @@ theorem truncate_extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interla
   rw [truncate_apply]
   by_cases hj : j ≤ n
   · have hj' : j ≠ n + 1 := by omega
-    rw [if_pos hj, extend_apply_of_ne Q l h hj']
-  · rw [if_neg hj]
+    rw [ite_eq_left hj, extend_apply_of_ne Q l h hj']
+  · rw [ite_eq_right hj]
     exact (Q.entry_eq_zero_of_lt (by omega)).symm
 
 @[simp]
@@ -404,8 +405,8 @@ theorem extend_truncate (P : GTPattern (n + 1)) :
       exact (P.entry_eq_zero_of_le (by omega)).symm
   · rw [extend_apply_of_ne _ _ _ hj, truncate_apply]
     by_cases hjn : j ≤ n
-    · rw [if_pos hjn]
-    · rw [if_neg hjn]
+    · rw [ite_eq_left hjn]
+    · rw [ite_eq_right hjn]
       exact (P.entry_eq_zero_of_lt (by omega)).symm
 
 /-- **Deleting the top row is a bijection.**  The Gelfand-Tsetlin patterns with `n + 1` rows and

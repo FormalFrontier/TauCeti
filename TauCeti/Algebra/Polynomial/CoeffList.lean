@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -99,14 +100,14 @@ theorem ofCoeffList_cons (a : R) (l : List R) :
   rw [coeff_add, coeff_ofCoeffList, coeff_ofCoeffList, coeff_C_mul, coeff_X_pow,
     List.reverse_cons]
   rcases lt_or_ge i l.length with h | h
-  · rw [List.getD_append _ _ _ _ (by simpa using h), if_neg h.ne, mul_zero, zero_add]
+  · rw [List.getD_append _ _ _ _ (by simpa using h), ite_eq_right h.ne, mul_zero, zero_add]
   · rw [List.getD_eq_getElem?_getD (l := l.reverse),
       List.getElem?_eq_none (by simpa using h), Option.getD_none,
       List.getD_append_right _ _ _ _ (by simpa using h)]
     rcases eq_or_lt_of_le h with h' | h'
-    · rw [← h', if_pos rfl, mul_one, add_zero]
+    · rw [← h', ite_eq_left rfl, mul_one, add_zero]
       simp
-    · rw [if_neg (by omega), mul_zero, zero_add, List.getD_eq_getElem?_getD,
+    · rw [ite_eq_right (by omega), mul_zero, zero_add, List.getD_eq_getElem?_getD,
         List.getElem?_eq_none (by simp; omega), Option.getD_none]
 
 /-- A leading zero coefficient may be dropped.  This is not a `simp` lemma: `simp` already gets
@@ -185,7 +186,7 @@ theorem coeffList_ofCoeffList {l : List R} (h : l = [] ∨ l.headD 0 ≠ 0) :
     intro h0
     exact h (by rw [← coeff_ofCoeffList_length_sub_one, h0, coeff_zero])
   have hlen : (ofCoeffList l).coeffList.length = l.length := by
-    rw [Polynomial.length_coeffList_eq_ite, if_neg hne, natDegree_ofCoeffList (Or.inr h)]
+    rw [Polynomial.length_coeffList_eq_ite, ite_eq_right hne, natDegree_ofCoeffList (Or.inr h)]
     omega
   have hdeg : (ofCoeffList l).degree.succ = l.length := by
     rw [← Polynomial.length_coeffList_eq_withBotSucc_degree]; exact hlen

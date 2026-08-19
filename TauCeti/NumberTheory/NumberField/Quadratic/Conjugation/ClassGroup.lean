@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,7 +12,7 @@ public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Norm
 /-!
 # Quadratic conjugation acts on the class group by inversion
 
-For a quadratic number field `K = ℚ(√d)`, `TauCeti.NumberField.ringOfIntegersQuadraticConj` is the
+For a quadratic number field `K = ℚ(√d)`, `NumberField.ringOfIntegersQuadraticConj` is the
 ring automorphism `σ : 𝓞 K ≃+* 𝓞 K` restricting field conjugation. This file records that its
 induced action on the class group `Cl(𝓞 K)` is an involution, sharpens that to **inversion** (the
 genus-theoretic mechanism `I · σI` principal), and concludes that `σ` therefore acts trivially on
@@ -34,19 +35,21 @@ classical genus theory behind the inversion action of conjugation on the class g
 
 ## Main results
 
-* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_involutive`: the induced action on
+* `NumberField.mulEquiv_ringOfIntegersQuadraticConj_involutive`: the induced action on
   `Cl(𝓞 K)` is an involution.
-* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`: quadratic conjugation
+* `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`: quadratic conjugation
   acts on `Cl(𝓞 K)` by inversion.
-* `TauCeti.NumberField.elementaryTwoQuotientCongr_ringOfIntegersQuadraticConj_apply_eq_self`: hence
+* `NumberField.elementaryTwoQuotientCongr_ringOfIntegersQuadraticConj_apply_eq_self`: hence
   quadratic conjugation is the identity on the maximal elementary-2 quotient `Cl(𝓞 K)/Cl(𝓞 K)²`.
+* `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`: a class is fixed by
+  quadratic conjugation iff it is 2-torsion.
 -/
 
 public section
 
 open NumberField Polynomial
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
@@ -81,4 +84,13 @@ quotient is the identity. This is the capstone reduction feeding the genus-field
     (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen))
     (mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen) x
 
-end TauCeti.NumberField
+/-- **A class is fixed by quadratic conjugation iff it is 2-torsion.** Because quadratic conjugation
+acts on `Cl(𝓞 K)` by inversion, the classes it fixes are exactly those equal to their own inverse,
+i.e. the 2-torsion — the *ambiguous* classes of genus theory. -/
+theorem mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (C : ClassGroup (𝓞 K)) :
+    ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen) C = C ↔ C ^ 2 = 1 := by
+  rw [mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen, inv_eq_iff_mul_eq_one, ← pow_two]
+
+end NumberField

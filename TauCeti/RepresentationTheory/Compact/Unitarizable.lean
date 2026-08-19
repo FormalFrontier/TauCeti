@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.RepresentationTheory.Compact.Averaging
-public import TauCeti.RepresentationTheory.Continuous.Unitary
+public import TauCeti.RepresentationTheory.Continuous.Unitary.Basic
 public import Mathlib.Analysis.InnerProductSpace.Positive
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
@@ -50,7 +51,9 @@ It is the compact-group replacement for the invertibility of `|G|` in Maschke's 
 invariant-complement and complete-reducibility results of
 `TauCeti.RepresentationTheory.Continuous.InvariantComplement` take `IsUnitary` as a hypothesis; this
 file does not discharge that hypothesis, but the invariant form built here is the input a
-unitarization construction needs.
+unitarization construction needs. `TauCeti.RepresentationTheory.Compact.UnitaryModel` carries that
+construction out in finite dimensions, conjugating `π` into a representation that is unitary for
+the inner product `V` was given.
 
 The mathematical development follows Daniel Bump, *Lie Groups*, second edition, Chapter 2.
 -/
@@ -263,7 +266,8 @@ self-adjoint operator `S` with `(π g)† ∘ S ∘ (π g) = S`.
 
 This operator is the input to unitarization: retopologizing `V` by `⟪S ·, ·⟫`, or conjugating `π`
 by `S ^ (1 / 2)`, makes every `π g` unitary. Neither construction is carried out here, so this file
-does not itself produce an `IsUnitary` representation. -/
+does not itself produce an `IsUnitary` representation;
+`TauCeti.ContRepresentation.exists_isUnitary_congr` does, for a finite-dimensional carrier. -/
 theorem isUnitarizable :
     ∃ S : V →L[𝕜] V, IsSelfAdjoint S ∧ (∀ v : V, v ≠ 0 → 0 < re ⟪S v, v⟫_𝕜) ∧
       ∀ g : G, (ContinuousLinearMap.adjoint (π g)).comp (S.comp (π g)) = S :=

@@ -24,7 +24,10 @@ find "$prep/src" -name '*.lean' -print0 \
   | xargs -0 -P "$jobs" -I{} bash -c '
       f="$1"
       out="${f%.lean}.hb"
-      lake env lean -Dlinter.countHeartbeats=true "$f" > "$out" 2>&1 || true
+      # This advisory re-elaboration still executes untrusted Lean code, so it
+      # gets the same per-process wall-time limit as the required build.
+      lake env "$WATCHDOG_TOOLCHAIN/bin/lean" \
+        -Dlinter.countHeartbeats=true "$f" > "$out" 2>&1 || true
     ' _ {}
 
 echo "Measured $(find "$prep/src" -name '*.hb' | wc -l) file(s)."

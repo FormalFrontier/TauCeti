@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -170,9 +170,9 @@ theorem integral_twoPiHermiteDilated_mul_twoPiHermiteDilated_mul_gaussianWeight 
   rw [integral_const_mul, integral_twoPiHermiteFunction_mul_twoPiHermiteFunction]
   by_cases hmn : m = n
   · subst hmn
-    rw [if_pos rfl, if_pos rfl, mul_one,
+    rw [ite_eq_left rfl, ite_eq_left rfl, mul_one,
       Real.mul_self_sqrt (twoPiHermiteNormalization_pos m).le]
-  · rw [if_neg hmn, if_neg hmn, mul_zero]
+  · rw [ite_eq_right hmn, ite_eq_right hmn, mul_zero]
 
 /-- The exponential-moment hypothesis of the completeness theorem, at the Gaussian weight
 `e^{-2πx²}` of the Fourier-adapted system. -/

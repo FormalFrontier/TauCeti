@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -23,7 +24,7 @@ iterated coning/gluing.  This file supplies the combinatorial operation and its 
 entirely on the join construction already available in Tau Ceti.
 
 The file also records that the construction satisfies the internal cone condition
-`TauCeti.PreAbstractSimplicialComplex.IsCone` at its apex (`isCone_cone`), which is what
+`PreAbstractSimplicialComplex.IsCone` at its apex (`isCone_cone`), which is what
 identifies the two accounts of a cone.
 
 The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter
@@ -32,8 +33,8 @@ point.
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.cone`: the cone on a pre-abstract simplicial complex.
-* `TauCeti.AbstractSimplicialComplex.cone`: the cone on an abstract simplicial complex.
+* `PreAbstractSimplicialComplex.cone`: the cone on a pre-abstract simplicial complex.
+* `AbstractSimplicialComplex.cone`: the cone on an abstract simplicial complex.
 
 ## Main results
 
@@ -48,8 +49,6 @@ point.
 -/
 
 public section
-
-namespace TauCeti
 
 open Finset Function Sum
 
@@ -214,4 +213,3 @@ theorem cone_mono (h : K ≤ L) : cone K ≤ cone L :=
 
 end AbstractSimplicialComplex
 
-end TauCeti

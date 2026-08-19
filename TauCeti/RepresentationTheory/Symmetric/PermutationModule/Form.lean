@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -73,7 +74,7 @@ theorem tabloidForm_single_coe_single_coe_of_mem {g h : Equiv.Perm (Fin n)}
     tabloidForm μ (MonoidAlgebra.single (g : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) 1)
         (MonoidAlgebra.single (h : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) 1) = 1 := by
   classical
-  rw [permutationForm_single_single, if_pos (QuotientGroup.eq.mpr hgh), mul_one]
+  rw [permutationForm_single_single, ite_eq_left (QuotientGroup.eq.mpr hgh), mul_one]
 
 /-- Permutations lying in different cosets of the Young subgroup describe distinct `μ`-tabloids, so
 the corresponding basis vectors pair to `0`. -/
@@ -82,7 +83,7 @@ theorem tabloidForm_single_coe_single_coe_of_notMem {g h : Equiv.Perm (Fin n)}
     tabloidForm μ (MonoidAlgebra.single (g : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) 1)
         (MonoidAlgebra.single (h : Equiv.Perm (Fin n) ⧸ youngSubgroup μ) 1) = 0 := by
   classical
-  rw [permutationForm_single_single, if_neg fun hq => hgh (QuotientGroup.eq.mp hq)]
+  rw [permutationForm_single_single, ite_eq_right fun hq => hgh (QuotientGroup.eq.mp hq)]
 
 /-- The symmetric group acts on `M^μ` by isometries of the tabloid form: it permutes the tabloid
 basis. -/

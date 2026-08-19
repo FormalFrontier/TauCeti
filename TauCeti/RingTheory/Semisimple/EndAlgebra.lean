@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -13,12 +14,12 @@ public import Mathlib.RingTheory.Artinian.Defs
 public import Mathlib.RingTheory.SimpleModule.Basic
 public import Mathlib.RingTheory.SimpleRing.Defs
 -- Non-public: used only inside proofs. The matrix presentation of the endomorphism algebra of a
--- power, the dimension of a matrix algebra, simplicity of a matrix ring over a simple ring, and the
--- isotypic decomposition over a simple Artinian algebra are all internal to the arguments below,
--- and no exported statement mentions a matrix algebra.
+-- power, the dimension of a matrix algebra, the simplicity of the endomorphism ring of an isotypic
+-- module, and the isotypic decomposition over a simple Artinian algebra are all internal to the
+-- arguments below, and no exported statement mentions a matrix algebra.
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.Matrix.ToLin
-import Mathlib.RingTheory.SimpleRing.Matrix
+import TauCeti.RingTheory.Semisimple.IsotypicEnd
 import TauCeti.RingTheory.Semisimple.SimpleArtinian
 
 /-!
@@ -95,20 +96,11 @@ is the matrix ring `Mat_k(End_R S)` over the division ring of Schur's lemma, wit
 `M ≠ 0`.
 
 No base field is involved: `M` is a power `Sᵏ` of a minimal left ideal `S` of `R` because `R` is
-simple Artinian and `M` is finite over `R`. -/
-theorem moduleEnd [Nontrivial M] : IsSimpleRing (Module.End R M) := by
-  classical
-  obtain ⟨S, hS⟩ := IsAtomic.exists_atom (Submodule R R)
-  rw [← isSimpleModule_iff_isAtom] at hS
-  obtain ⟨k, ⟨e⟩⟩ := (IsIsotypicOfType.of_isSimpleRing R (↥S) M).linearEquiv_fun
-  have hk : k ≠ 0 := by
-    rintro rfl
-    exact not_subsingleton M e.subsingleton
-  have : Nonempty (Fin k) := ⟨⟨0, Nat.pos_of_ne_zero hk⟩⟩
-  -- Schur's lemma makes `End_R S` a division ring, hence a simple ring, hence so is `Mat_k` of it.
-  have : IsSimpleRing (Matrix (Fin k) (Fin k) (Module.End R ↥S)) := inferInstance
-  exact _root_.IsSimpleRing.of_ringEquiv
-    (e.conjRingEquiv.trans (endVecRingEquivMatrixEnd (Fin k) R ↥S)).symm this
+simple Artinian and `M` is finite over `R`.  That is the only use made of simplicity of `R`, so
+this is the specialization of `TauCeti.isSimpleRing_moduleEnd_of_isIsotypic` along
+`IsSimpleRing.isIsotypic`. -/
+theorem moduleEnd [Nontrivial M] : IsSimpleRing (Module.End R M) :=
+  isSimpleRing_moduleEnd_of_isIsotypic (_root_.IsSimpleRing.isIsotypic R M)
 
 end Simplicity
 

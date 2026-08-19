@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -128,12 +129,25 @@ theorem mem_eigenvalueSearch_iff_hasEigenvalue :
   rw [mem_eigenvalueSearch_iff_mem_spectrum, ← Matrix.spectrum_toLin',
     Module.End.hasEigenvalue_iff_mem_spectrum]
 
+/-- The scalar-minus-matrix system is the corresponding eigenvector equation. -/
+theorem scalar_sub_mulVec_eq_zero_iff {R : Type*} [NonUnitalNonAssocRing R]
+    (A : Matrix n n R) (a : R) (v : n → R) :
+    (Matrix.diagonal (fun _ => a) - A) *ᵥ v = 0 ↔ A *ᵥ v = a • v := by
+  rw [Matrix.sub_mulVec, sub_eq_zero, eq_comm]
+  -- Mathlib's `Matrix.diagonal_const_mulVec` requires `NonAssocSemiring`, whereas this result does
+  -- not need a multiplicative identity.
+  have hdiag : (Matrix.diagonal (fun _ => a)) *ᵥ v = a • v := by
+    funext i
+    rw [Matrix.mulVec_diagonal]
+    rfl
+  rw [hdiag]
+
 /-- A scalar is found by the search exactly when it has a nonzero eigenvector. -/
 theorem mem_eigenvalueSearch_iff_exists_mulVec :
     a ∈ eigenvalueSearch A ↔ ∃ v ≠ 0, A *ᵥ v = a • v := by
   rw [mem_eigenvalueSearch, ← Matrix.exists_mulVec_eq_zero_iff]
   refine exists_congr fun v => and_congr_right fun _ => ?_
-  rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec, eq_comm]
+  exact scalar_sub_mulVec_eq_zero_iff A a v
 
 /-- A matrix and its transpose have the same eigenvalues. -/
 @[simp] theorem eigenvalueSearch_transpose (A : Matrix n n F) :

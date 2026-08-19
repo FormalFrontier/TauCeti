@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -72,7 +73,7 @@ theorem aut_gen_eq_signPattern (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)
 /-- **Read the sign pattern off a generator-wise sign.** If `σ (gen root i) = ε • gen root i`
 with `ε = ±1` (in `ℤ`) and `d i ≠ 0`, then `signPattern root σ i` is `0` when `ε = 1` and `1`
 when `ε = -1`. This bridges a generator-wise sign — for instance a Frobenius acting on `√dᵢ` by
-a Legendre symbol (`TauCeti.NumberField.isArithFrobAt_apply_sqrt`) — to the `(ℤ/2)ⁿ`
+a Legendre symbol (`NumberField.isArithFrobAt_apply_sqrt`) — to the `(ℤ/2)ⁿ`
 identification, so it composes with `TauCeti.Multiquadratic.galoisGroupEquiv_apply`. -/
 theorem signPattern_eq_ite_of_zsmul_gen [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
@@ -81,10 +82,10 @@ theorem signPattern_eq_ite_of_zsmul_gen [NeZero (2 : K)]
     signPattern root σ i = if ε = 1 then 0 else 1 := by
   rw [signPattern]
   rcases hε with rfl | rfl
-  · rw [one_smul] at hσ; rw [if_pos hσ, if_pos rfl]
+  · rw [one_smul] at hσ; rw [ite_eq_left hσ, ite_eq_left rfl]
   · rw [neg_one_zsmul] at hσ
-    rw [if_neg (fun h => gen_ne_neg hroot i hd (h.symm.trans hσ)),
-      if_neg (by norm_num : (-1 : ℤ) ≠ 1)]
+    rw [ite_eq_right (fun h => gen_ne_neg hroot i hd (h.symm.trans hσ)),
+      ite_eq_right (by norm_num : (-1 : ℤ) ≠ 1)]
 
 /-- Two automorphisms with the same sign pattern are equal. -/
 theorem signPattern_injective (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :

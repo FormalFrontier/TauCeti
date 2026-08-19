@@ -1,14 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Analysis.Complex.Schwarz
-public import Mathlib.Analysis.Calculus.DSlope
 public import Mathlib.Data.Set.Function
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Isometry
 import Mathlib.Analysis.Calculus.Deriv.Mul
+import TauCeti.Analysis.Calculus.DSlope.Basic
 
 /-!
 # A holomorphic automorphism of the unit disc fixing the origin is a rotation
@@ -84,12 +85,11 @@ theorem exists_eqOn_const_mul_of_leftInvOn_ball_of_map_zero
     norm_num
   have hz₀_ne : z₀ ≠ 0 := by
     rw [hz₀_def]; norm_num
-  -- The slope `dslope f 0 z₀ = f z₀ / z₀` has modulus one because `f` preserves the modulus.
-  have hslope : dslope f 0 z₀ = f z₀ / z₀ := by
-    rw [dslope_of_ne _ hz₀_ne, slope_def_field, hf0, sub_zero, sub_zero]
+  -- The slope has modulus one because `f` fixes the origin and preserves the modulus.
   have hkey : ‖dslope f 0 z₀‖ = 1 := by
-    rw [hslope, norm_div, hnorm z₀ hz₀_mem]
-    exact div_self (norm_ne_zero_iff.mpr hz₀_ne)
+    refine norm_dslope_eq_one_of_norm_sub_map_eq hz₀_ne ?_
+    rw [hf0, sub_zero, sub_zero]
+    exact hnorm z₀ hz₀_mem
   -- The equality case of the Schwarz lemma makes `f` affine with this slope.
   set c : ℂ := dslope f 0 z₀ with hc_def
   have hmaps_closed : MapsTo f (ball (0 : ℂ) 1) (closedBall (f 0) 1) := by

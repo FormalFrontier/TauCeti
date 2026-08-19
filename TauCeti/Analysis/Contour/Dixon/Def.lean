@@ -111,12 +111,12 @@ theorem dixonH1_eq_dixonH2_sub_windingNumber_mul_f {f : ℂ → ℂ} {γ : ℝ �
 @[simp]
 theorem dixonFunction_eq_dixonH1 {f : ℂ → ℂ} {U : Set ℂ} {γ : ℝ → ℂ} {a b : ℝ} {w : ℂ}
     (hw : w ∈ U) : dixonFunction f U γ a b w = dixonH1 f γ a b w := by
-  rw [dixonFunction_def, if_pos hw]
+  rw [dixonFunction_def, ite_eq_left hw]
 
 /-- Off `U`, the glued Dixon function is `dixonH2`. -/
 @[simp]
 theorem dixonFunction_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ} {γ : ℝ → ℂ} {a b : ℝ} {w : ℂ}
     (hw : w ∉ U) : dixonFunction f U γ a b w = dixonH2 f γ a b w := by
-  rw [dixonFunction_def, if_neg hw]
+  rw [dixonFunction_def, ite_eq_right hw]
 
 end TauCeti.Contour

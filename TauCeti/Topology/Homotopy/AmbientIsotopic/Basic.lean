@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -23,10 +24,9 @@ operations on ambient isotopies themselves, which live beside the `AmbientIsotop
 `TauCeti.Topology.Homotopy.Isotopy.Basic`: the constant ambient isotopy `AmbientIsotopy.refl`, the
 pointwise composition `AmbientIsotopy.trans`, and the pointwise inverse `AmbientIsotopy.symm`.
 Because each of their total maps is a composition or inverse of homeomorphisms, none of the
-closure operations needs the closed-cover gluing that `Isotopy.trans` requires. This is a
-continuous topological generalization of the point-set ambient-isotopy condition in
-Burde--Zieschang, *Knots*, Chapter 1, intended for later specialization to embeddings such as
-knots.
+closure operations needs a separate gluing argument. This is a continuous topological
+generalization of the point-set ambient-isotopy condition in Burde--Zieschang, *Knots*, Chapter 1,
+Definition 1.2, intended for later specialization to embeddings such as knots.
 
 ## Main definitions
 
@@ -55,7 +55,7 @@ carries `f` to `g`, that is, its final homeomorphism postcomposes `f` to `g`. Th
 continuous topological ambient-isotopy relation intended to underlie later knot-equivalence
 specialisations (ambient isotopy of smooth embeddings `S¹ ↪ M`); it does not itself encode the
 smooth or PL structure those specialisations add. -/
-@[expose] def AmbientIsotopic (f g : C(X, Y)) : Prop :=
+def AmbientIsotopic (f g : C(X, Y)) : Prop :=
   ∃ Φ : AmbientIsotopy Y, Φ.final.comp f = g
 
 /-- `f` and `g` are ambient isotopic exactly when some ambient isotopy's final homeomorphism

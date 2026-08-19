@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -80,12 +81,12 @@ def halfDiscBoundary (R : ℝ) : ℝ → ℂ := fun t =>
 
 @[simp]
 theorem halfDiscBoundary_of_le {t : ℝ} (h : t ≤ R) : halfDiscBoundary R t = (t : ℂ) :=
-  if_pos h
+  ite_eq_left h
 
 @[simp]
 theorem halfDiscBoundary_of_lt {t : ℝ} (h : R < t) :
     halfDiscBoundary R t = circleMap 0 R (t - R) :=
-  if_neg (not_le.mpr h)
+  ite_eq_right (not_le.mpr h)
 
 /-- The contour starts at `-R`. -/
 -- Not `@[simp]`: with `halfDiscBoundary_of_le` in the simp set, `simp` already proves this

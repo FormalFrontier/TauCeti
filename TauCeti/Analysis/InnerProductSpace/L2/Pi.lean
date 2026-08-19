@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -44,6 +44,7 @@ orthonormality half is short. The completeness half runs in three moves:
 ## Main statements
 
 * `TauCeti.memLp_pi_prod` — the pointwise product of `L²` functions is `L²` for the product measure.
+* `TauCeti.integrable_L2piMul_mul` — a product of `L²` factors times an `L²` function is integrable.
 * `TauCeti.inner_L2piMul` — the inner product of two tensors factors coordinatewise.
 * `TauCeti.orthonormal_L2piMul` — coordinatewise orthonormal families multiply to an orthonormal
   family.
@@ -102,6 +103,12 @@ theorem coeFn_L2piMul (F : ∀ i, Lp 𝕜 2 (μ i)) :
     ⇑(L2piMul F) =ᵐ[Measure.pi μ] fun x : ∀ i, α i => ∏ i, F i (x i) :=
   MemLp.coeFn_toLp _
 
+/-- A pointwise product of coordinatewise `L²` functions times an `L²` function on the product
+space is integrable. -/
+theorem integrable_L2piMul_mul (F : ∀ i, Lp 𝕜 2 (μ i)) (f : Lp 𝕜 2 (Measure.pi μ)) :
+    Integrable (fun x : ∀ i, α i => (∏ i, F i (x i)) * f x) (Measure.pi μ) :=
+  (memLp_pi_prod fun i => Lp.memLp (F i)).integrable_mul (Lp.memLp f)
+
 end NormedCommRing
 
 variable [RCLike 𝕜]
@@ -138,7 +145,7 @@ theorem orthonormal_L2piMul {κ : ι → Type*} {b : ∀ i, κ i → Lp 𝕜 2 (
   · subst hkl
     simp
   · obtain ⟨i, hi⟩ := Function.ne_iff.1 hkl
-    rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi]), if_neg hkl]
+    rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi]), ite_eq_right hkl]
 
 /-- The tensor construction is norm-multiplicative. -/
 @[simp]
@@ -367,6 +374,16 @@ theorem piHilbertBasis_apply {κ : ι → Type*}
     (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) (k : ∀ i, κ i) :
     piHilbertBasis b k = L2piMul fun i => b i (k i) := by
   rw [piHilbertBasis, HilbertBasis.coe_mkOfOrthogonalEqBot]
+
+/-- The coordinate of a tensor in a product Hilbert basis is the product of its coordinatewise
+coordinates. -/
+@[simp]
+theorem piHilbertBasis_repr_L2piMul {κ : ι → Type*}
+    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) (F : ∀ i, Lp 𝕜 2 (μ i))
+    (k : ∀ i, κ i) :
+    (piHilbertBasis b).repr (L2piMul F) k = ∏ i, (b i).repr (F i) (k i) := by
+  rw [HilbertBasis.repr_apply_apply, piHilbertBasis_apply, inner_L2piMul]
+  exact Finset.prod_congr rfl fun i _ => (HilbertBasis.repr_apply_apply (b i) (F i) (k i)).symm
 
 /-- The `k`-th vector of `piHilbertBasis` is a.e. the pointwise product `∏ i, b i (k i)`. -/
 theorem coeFn_piHilbertBasis {κ : ι → Type*}

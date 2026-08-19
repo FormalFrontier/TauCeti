@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -291,7 +292,7 @@ theorem IsDominantIntegral.exists_nat_apply_coroot {lam : Dual K H}
   obtain ⟨g, hg⟩ : ∃ g : H.root → ℕ, ∀ j ∈ b.support,
       lam ((IsKilling.rootSystem H).coroot j) = (g j : K) :=
     ⟨fun j => if hj : j ∈ b.support then (hlam j hj).choose else 0,
-      fun j hj => by simpa only [dif_pos hj] using (hlam j hj).choose_spec⟩
+      fun j hj => by simpa only [dite_eq_left hj] using (hlam j hj).choose_spec⟩
   refine ⟨∑ j ∈ b.support, f j * g j, ?_⟩
   rw [hsum, map_sum, Nat.cast_sum]
   refine Finset.sum_congr rfl fun j hj => ?_

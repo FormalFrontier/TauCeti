@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,7 +22,8 @@ where it is the condition cutting out the rings of definition of a Huber ring.
 `isBounded_singleton` and `isBounded_finite` — are stated exactly as in William Coram's
 mathlib4#40013 (several proofs follow it too), so that the two can be identified once that pull
 request lands. Everything else here is new: `isBounded_iUnion`, the nonarchimedean
-`IsBounded.addSubgroupClosure` and `IsBounded.add`, and the image and transport lemmas. The
+`IsBounded.addSubgroupClosure`, `IsBounded.add` and `isBounded_sup`, and the image and transport
+lemmas. The
 selection and ordering of results follows AINTLIB's `Bounded.lean`, the roadmap's designated
 prior formalisation of this layer; its proofs were not used.
 
@@ -32,12 +34,15 @@ prior formalisation of this layer; its proofs were not used.
 ## Main results
 
 * `TauCeti.Huber.isBounded_iff`: unfolding lemma for `IsBounded`.
+* `TauCeti.Huber.isBounded_finsetProd`: a finite pointwise product of bounded sets is bounded.
 * `TauCeti.Huber.isBounded_finite`: finite sets are bounded.
 * `TauCeti.Huber.IsBounded.union`, `TauCeti.Huber.IsBounded.mul`: unions and pointwise products
   of bounded sets are bounded.
 * `TauCeti.Huber.IsBounded.add`, `TauCeti.Huber.IsBounded.addSubgroupClosure`: over a ring with a
   nonarchimedean additive group, sums and the generated additive subgroup of bounded sets stay
   bounded.
+* `TauCeti.Huber.isBounded_sup`: the join of two bounded subrings of a commutative ring is
+  bounded — the boundedness input for joins of rings of definition.
 * `TauCeti.Huber.IsBounded.image`: a morphism continuous at zero which is open at zero preserves
   boundedness, and `TauCeti.Huber.isBounded_image_ringEquiv_iff` transports boundedness along a
   topological ring isomorphism.
@@ -171,6 +176,21 @@ end ContinuousMul
 
 end MonoidWithZero
 
+section CommMonoidWithZero
+
+variable {M : Type*} [CommMonoidWithZero M] [TopologicalSpace M]
+
+/-- **A finite pointwise product of bounded sets is bounded.** Commutativity is
+what makes the `Finset` product of sets available in the first place, and no continuity is
+required. -/
+theorem isBounded_finsetProd {ι : Type*} (s : Finset ι) {S : ι → Set M}
+    (hS : ∀ i ∈ s, IsBounded (S i)) : IsBounded (∏ i ∈ s, S i) :=
+  s.prod_induction S IsBounded (fun _ _ ↦ IsBounded.mul)
+    (isBounded_pair_zero_one.subset
+      (Set.singleton_subset_iff.mpr (Set.mem_insert_iff.mpr (Or.inr rfl)))) hS
+
+end CommMonoidWithZero
+
 section Nonarchimedean
 
 variable {A : Type*} [Ring A] [TopologicalSpace A] [NonarchimedeanAddGroup A]
@@ -200,6 +220,18 @@ theorem IsBounded.add {S T : Set A} (hS : IsBounded S) (hT : IsBounded T) : IsBo
   rintro _ ⟨s, hs, t, ht, rfl⟩
   exact AddSubgroup.add_mem _ (AddSubgroup.subset_closure (.inl hs))
     (AddSubgroup.subset_closure (.inr ht))
+
+/-- The join of two bounded subrings of a commutative ring is bounded. -/
+theorem isBounded_sup {A : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanAddGroup A]
+    (B₀ B₁ : Subring A) (hB₀ : IsBounded (B₀ : Set A)) (hB₁ : IsBounded (B₁ : Set A)) :
+    IsBounded ((B₀ ⊔ B₁ : Subring A) : Set A) := by
+  refine (hB₀.mul hB₁).addSubgroupClosure.subset fun x hx ↦ ?_
+  have hmem : x ∈ Subring.closure ((B₀ : Set A) ∪ (B₁ : Set A)) := by
+    simpa [Subring.closure_union] using hx
+  have hcl : ∀ B : Subring A, Submonoid.closure (B : Set A) = B.toSubmonoid := fun B ↦ by
+    rw [← Subring.coe_toSubmonoid]; exact Submonoid.closure_eq _
+  rw [Subring.mem_closure_iff, Submonoid.closure_union, hcl, hcl] at hmem
+  simpa [Submonoid.coe_sup] using hmem
 
 end Nonarchimedean
 

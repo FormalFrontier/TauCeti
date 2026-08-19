@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -91,13 +92,10 @@ setting the roadmap works in.
   Of that bullet, the `GLₙ`-subrepresentation, the fixed choice of tableau, the canonical
   isomorphism between the images for different tableaux, and the vanishing criterion are built
   here.  The bullet's two remaining deliverables, the extreme cases `S^{(d)} V ≅ Symᵈ V` and
-  `S^{(1ᵈ)} V ≅ ⋀ᵈ V`, are deliberately left to a follow-up, because each first needs
-  infrastructure that exists neither in Mathlib nor here: a linear map `Sym[k]^d M →ₗ[k] ⨂[k]^d M`
-  descending the symmetrizer through `SymmetricPower.mk`, injectivity and naturality for
-  `exteriorPower.toTensorPower`, and the value of `c_t` at a one-row and at a one-column shape.
-  The follow-up can state and prove both against `TauCeti.weylModuleOfShape`,
-  `TauCeti.weylModuleOfShape_toSubmodule` and `TauCeti.weylRepOfShape` without unfolding anything
-  built here.
+  `S^{(1ᵈ)} V ≅ ⋀ᵈ V`, are proved in
+  `TauCeti/RepresentationTheory/ClassicalGroups/ExtremeShape.lean`, against
+  `TauCeti.YoungTableau.weylModule_toSubmodule` and `TauCeti.weylRepOfShape` and without
+  unfolding anything built here.
 -/
 
 public section
@@ -418,13 +416,13 @@ identification is `TauCeti.YoungTableau.weylRepEquivOfShape`.
 This is the object the classical-groups roadmap pins as `schurFunctor n μ`. -/
 noncomputable def weylModuleOfShape (μ : YoungDiagram) :
     Subrepresentation (tensorPowerRep k n μ.card) :=
-  YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toEquiv
+  YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toTableau
 
 /-- The Weyl module of a shape is the Weyl module of its row-superstandard tableau, so the
 tableau-indexed lemmas apply to it. -/
 theorem weylModuleOfShape_def (μ : YoungDiagram) :
     weylModuleOfShape k n μ =
-      YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toEquiv :=
+      YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toTableau :=
   (rfl)
 
 /-- The action of `GL n k` on the Weyl module of a shape. -/
@@ -439,7 +437,7 @@ theorem weylModuleOfShape_toSubmodule (μ : YoungDiagram) :
     (weylModuleOfShape k n μ).toSubmodule =
       LinearMap.range (permTensorActionAlgHom k n μ.card
         (YoungTableau.youngSymmetrizerOver k
-          (StandardYoungTableau.rowSuperstandard μ).toEquiv)) :=
+          (StandardYoungTableau.rowSuperstandard μ).toTableau)) :=
   YoungTableau.weylModule_toSubmodule k n _
 
 /-- The action on the Weyl module of a shape is the restriction of the action on the tensor

@@ -95,7 +95,7 @@ private lemma circleIntegral_const_mul_zpow_sub {c s₀ : ℂ} {R : ℝ} {n : �
     norm_num
     ring
   · rw [circleIntegral.integral_const_mul, circleIntegral.integral_sub_zpow_of_ne hn1,
-      if_neg (by omega)]
+      ite_eq_right (by omega)]
     ring
 
 /-- The peeled leading term `a·(· − s₀) ^ n` (`n < 0`, pole at `s₀ ∈ S ⊆ ball c R`) has its

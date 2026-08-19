@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 Tau Ceti. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Determinant
+public import Mathlib.LinearAlgebra.BilinearForm.Properties
+import TauCeti.LinearAlgebra.BilinearForm.Multilinear
 
 public section
 
@@ -53,11 +54,8 @@ The recovery statements need a cancellation hypothesis, not just `ω ≠ 0`: ove
 None of the transformation laws is a `simp` lemma: the basis is a hypothesis and does not occur in
 the conclusion, so `simp` could not infer it.
 
-The bilinear statements go through a private reading of an alternating bilinear form as an
-`AlternatingMap` on `Fin 2`. That conversion is deliberately not exported. The converse direction
-already exists, as `TauCeti.MultilinearMap.toBilinForm`, and an exported version of this one
-should be the matching half of that correspondence — over a `CommSemiring`, with the round trips —
-rather than the one-way, proof-indexed constructor needed here.
+The bilinear statements use `LinearMap.IsAlt.toAlternatingMap` to read an alternating bilinear form
+as an `AlternatingMap` on `Fin 2`.
 
 ## Provenance
 
@@ -134,24 +132,11 @@ section RankTwo
 
 variable {R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
 
-/-- An alternating bilinear form read as an alternating map in two arguments. -/
-private def IsAlt.toAlternatingMap {ω : M →ₗ[R] M →ₗ[R] N} (halt : ω.IsAlt) :
-    M [⋀^Fin 2]→ₗ[R] N where
-  toFun v := ω (v 0) (v 1)
-  map_update_add' v i x y := by fin_cases i <;> simp
-  map_update_smul' v i c x := by fin_cases i <;> simp
-  map_eq_zero_of_eq' v i j hv hij := by
-    fin_cases i <;> fin_cases j <;> simp_all [LinearMap.IsAlt.self_eq_zero halt]
-
-@[simp]
-private theorem IsAlt.toAlternatingMap_apply {ω : M →ₗ[R] M →ₗ[R] N} (halt : ω.IsAlt)
-    (v : Fin 2 → M) : halt.toAlternatingMap v = ω (v 0) (v 1) := rfl
-
 private theorem IsAlt.toAlternatingMap_ne_zero {ω : M →ₗ[R] M →ₗ[R] N} (halt : ω.IsAlt)
     (hω : ω ≠ 0) : halt.toAlternatingMap ≠ 0 := by
   contrapose! hω
   ext x y
-  exact congrArg (fun f : M [⋀^Fin 2]→ₗ[R] N => f ![x, y]) hω
+  simpa using congrArg (fun f : M [⋀^Fin 2]→ₗ[R] N => f ![x, y]) hω
 
 /-- **An endomorphism of a rank-two module scales an alternating bilinear form by its
 determinant.** The basis is a hypothesis witnessing that the rank is two; it does not occur in the
@@ -159,9 +144,10 @@ conclusion, which is an equality of bilinear maps. -/
 theorem IsAlt.compl₁₂_self_eq_det_smul (b : Basis (Fin 2) R M) {ω : M →ₗ[R] M →ₗ[R] N}
     (halt : ω.IsAlt) (φ : M →ₗ[R] M) : ω.compl₁₂ φ φ = LinearMap.det φ • ω := by
   ext x y
-  have h := AlternatingMap.compLinearMap_eq_det_smul b halt.toAlternatingMap φ
+  have h := AlternatingMap.compLinearMap_eq_det_smul b
+    halt.toAlternatingMap φ
   simpa only [compl₁₂_apply, smul_apply, AlternatingMap.compLinearMap_apply,
-    IsAlt.toAlternatingMap_apply, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one,
+    LinearMap.IsAlt.toAlternatingMap_apply, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one,
     Matrix.cons_val_fin_one, AlternatingMap.smul_apply] using
     congrArg (fun f : M [⋀^Fin 2]→ₗ[R] N => f ![x, y]) h
 
@@ -177,9 +163,10 @@ theorem det_eq_of_compl₁₂_self_eq_smul [NoZeroSMulDivisors R N] (b : Basis (
   ext v
   have hv : v = ![v 0, v 1] := by ext i; fin_cases i <;> rfl
   rw [hv]
-  simpa only [Fin.isValue, AlternatingMap.compLinearMap_apply, IsAlt.toAlternatingMap_apply,
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_fin_one, AlternatingMap.smul_apply,
-    compl₁₂_apply, smul_apply] using DFunLike.congr_fun (DFunLike.congr_fun h (v 0)) (v 1)
+  simpa only [Fin.isValue, AlternatingMap.compLinearMap_apply,
+    LinearMap.IsAlt.toAlternatingMap_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.cons_val_fin_one, AlternatingMap.smul_apply, compl₁₂_apply, smul_apply] using
+    DFunLike.congr_fun (DFunLike.congr_fun h (v 0)) (v 1)
 
 end RankTwo
 

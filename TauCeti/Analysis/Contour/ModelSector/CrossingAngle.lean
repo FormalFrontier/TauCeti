@@ -83,11 +83,12 @@ theorem crossingAngle_modelSector (hr : 0 < r) (φ : ℝ) (α : ℝ) :
   have h_R : Tendsto (deriv (modelSector z₀ r φ α)) (𝓝[>] 0) (𝓝 v) := by
     refine Tendsto.congr' ?_ tendsto_const_nhds
     filter_upwards [Ioo_mem_nhdsGT hr] with s hs
-    rw [hderiv (ne_of_gt hs.1) (by rw [abs_of_pos hs.1]; exact hs.2), if_neg (not_lt.mpr hs.1.le)]
+    rw [hderiv (ne_of_gt hs.1) (by rw [abs_of_pos hs.1]; exact hs.2),
+      ite_eq_right (not_lt.mpr hs.1.le)]
   have h_L : Tendsto (deriv (modelSector z₀ r φ α)) (𝓝[<] 0) (𝓝 (-u)) := by
     refine Tendsto.congr' ?_ tendsto_const_nhds
     filter_upwards [Ioo_mem_nhdsLT (neg_lt_zero.mpr hr)] with s hs
-    rw [hderiv (ne_of_lt hs.2) (by rw [abs_of_neg hs.2]; linarith [hs.1]), if_pos hs.2]
+    rw [hderiv (ne_of_lt hs.2) (by rw [abs_of_neg hs.2]; linarith [hs.1]), ite_eq_left hs.2]
   rw [crossingAngle_eq_of_tendsto h_R h_L, neg_neg]
   -- `arg u - arg v` is `α` in `Real.Angle`; the shared transport reads that back.
   refine Real.Angle.toIcoMod_eq_toIcoMod_iff_coe_eq.mpr ?_

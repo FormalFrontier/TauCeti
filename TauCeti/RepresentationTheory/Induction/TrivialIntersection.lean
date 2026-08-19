@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -85,13 +85,13 @@ theorem indClassFun_apply_coe [Finite G] (hH : IsTISubgroup H) (hk : IsUnit (Nat
     intro y hy
     rw [indTerm_apply]
     by_cases h : y⁻¹ * (x : G) * y ∈ H
-    · rw [dif_pos h]
+    · rw [dite_eq_left h]
       have hx1 : (x : G) = 1 := hH.eq_one (g := y⁻¹) (by simpa using hy) x.2 (by simpa using h)
       have hone : (⟨y⁻¹ * (x : G) * y, h⟩ : H) = 1 := by
         ext
         simp [hx1]
       rw [hone, hf1]
-    · rw [dif_neg h]
+    · rw [dite_eq_right h]
   -- A representative inside `H` contributes `f x`, since `f` is a class function.
   have hin : ∀ y : H, indTerm f (x : G) (y : G) = f x := by
     intro y
@@ -100,7 +100,7 @@ theorem indClassFun_apply_coe [Finite G] (hH : IsTISubgroup H) (hk : IsUnit (Nat
     have hcoe : (⟨(y : G)⁻¹ * (x : G) * (y : G), hmem⟩ : H) = y⁻¹ * x * y⁻¹⁻¹ := by
       ext
       simp
-    rw [indTerm_apply, dif_pos hmem, hcoe]
+    rw [indTerm_apply, dite_eq_left hmem, hcoe]
     exact ClassFunction.mem_iff.mp hf x y⁻¹
   refine mul_left_cancel₀ hk.ne_zero ?_
   rw [natCard_mul_indClassFun hf]

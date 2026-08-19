@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -13,9 +14,9 @@ import TauCeti.RingTheory.Norm.Quadratic
 # Norm-principality for quadratic conjugation
 
 For a quadratic number field `K = ℚ(√d)` with quadratic conjugation
-`σ = TauCeti.NumberField.ringOfIntegersQuadraticConj`, this file proves the genus-theoretic
+`σ = NumberField.ringOfIntegersQuadraticConj`, this file proves the genus-theoretic
 key fact that `I · σI` is principal for every ideal `I` of `𝓞 K`.  This is the hypothesis
-consumed by `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
+consumed by `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
 The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
 `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
@@ -29,19 +30,14 @@ public section
 
 open Polynomial NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The generator `θ` of the quadratic field is nonzero (its minimal polynomial has degree `2`,
-not `1`). -/
-private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := by
-  intro h0
-  have hh : minpoly ℚ (θ : K) = X ^ 2 - C ((d : ℤ) : ℚ) := minpoly_rat_quadratic hmin
-  rw [h0, minpoly.zero] at hh
-  have := congrArg natDegree hh
-  rw [natDegree_X, natDegree_X_pow_sub_C] at this
-  exact absurd this (by norm_num)
+/-- The generator `θ` of the quadratic field is nonzero: it is irrational (`gen_notMem_range`),
+whereas `0` is rational. -/
+private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := fun h0 =>
+  gen_notMem_range hmin ⟨0, by rw [map_zero, h0]⟩
 
 /-- Quadratic conjugation is a nontrivial automorphism: it does not equal the identity, since it
 sends the nonzero generator `θ` to its negative `-θ`. -/
@@ -113,30 +109,35 @@ private theorem map_relNorm_le_mul_map_ringOfIntegersQuadraticConj
   rw [Function.comp_apply, algebraMap_intNorm_eq hmin hgen]
   exact Ideal.mul_mem_mul hx (Ideal.mem_map_of_mem _ hx)
 
+/-- **The norm-ideal identity.** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`, the
+product `I · σI` is the extension to `𝓞 K` of the relative norm ideal `relNorm ℤ I`. -/
+@[simp] theorem mul_map_ringOfIntegersQuadraticConj_eq_map_relNorm
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (I : Ideal (𝓞 K)) :
+    I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I
+      = Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ I) := by
+  -- Conjugation preserves the relative norm, so `σI` and `I` have equal relative norm.
+  have hreln : Ideal.relNorm ℤ (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I) =
+      Ideal.relNorm ℤ I := by
+    rw [← map_ringOfIntegersQuadraticConjₐ hmin hgen I,
+      Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) I]
+  -- Hence both `(relNorm I) 𝓞 K` and `I · σI` have relative norm `(relNorm I)²`.
+  have hnorm : Ideal.relNorm ℤ (Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ I)) =
+      Ideal.relNorm ℤ (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I) := by
+    rw [Ideal.relNorm_algebraMap, finrank_int_eq_two hmin hgen,
+      map_mul (Ideal.relNorm ℤ), hreln, ← sq]
+  -- With the containment `(relNorm I) 𝓞 K ≤ I · σI`, equal relative norms force equality.
+  exact (Ideal.eq_of_le_of_relNorm_eq
+    (map_relNorm_le_mul_map_ringOfIntegersQuadraticConj hmin hgen I) hnorm).symm
+
 /-- **Norm-principality (Lemma A).** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`,
 the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
 genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`. -/
 theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (I : Ideal (𝓞 K)) :
     (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I).IsPrincipal := by
-  -- `I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, the extension of a principal
-  -- `ℤ`-ideal; the equality is obtained by matching relative norms and divisibility.
-  -- Conjugation preserves the relative norm: rewrite to the `ℤ`-algebra form, which is what
-  -- Mathlib's lemma takes.
-  have hreln : Ideal.relNorm ℤ (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I) =
-      Ideal.relNorm ℤ I := by
-    rw [← map_ringOfIntegersQuadraticConjₐ hmin hgen I,
-      Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) I]
-  -- So both ideals have relative norm `(relNorm I)²`.
-  have hnorm : Ideal.relNorm ℤ (Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ I)) =
-      Ideal.relNorm ℤ (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I) := by
-    rw [Ideal.relNorm_algebraMap, finrank_int_eq_two hmin hgen,
-      map_mul (Ideal.relNorm ℤ), hreln, ← sq]
-  -- So the containment is an equality, and the left side is principal, being the extension of the
-  -- principal `ℤ`-ideal `relNorm I`.
-  rw [← Ideal.eq_of_le_of_relNorm_eq
-    (map_relNorm_le_mul_map_ringOfIntegersQuadraticConj hmin hgen I) hnorm]
+  -- `I · σI` is the extension of the principal `ℤ`-ideal `relNorm ℤ I`, hence principal.
+  rw [mul_map_ringOfIntegersQuadraticConj_eq_map_relNorm hmin hgen I]
   have : (Ideal.relNorm ℤ I).IsPrincipal := IsPrincipalIdealRing.principal _
   infer_instance
 
-end TauCeti.NumberField
+end NumberField

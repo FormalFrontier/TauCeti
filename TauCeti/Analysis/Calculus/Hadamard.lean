@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,11 +34,11 @@ variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F]
 
 /-- The averaged derivative along the segment from `x` to `y`. -/
-noncomputable def hadamardFactor [CompleteSpace F] (f : E → F) (x y : E) : E →L[ℝ] F :=
+noncomputable def hadamardFactor (f : E → F) (x y : E) : E →L[ℝ] F :=
   ∫ t in (0 : ℝ)..1, fderiv ℝ f (x + t • (y - x))
 
 /-- The averaged derivative written as an integral over the compact unit interval. -/
-theorem hadamardFactor_eq_integral_Icc [CompleteSpace F] (f : E → F) (x : E) :
+theorem hadamardFactor_eq_integral_Icc (f : E → F) (x : E) :
     hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
       fderiv ℝ f (x + t • (y - x)) := by
   funext y

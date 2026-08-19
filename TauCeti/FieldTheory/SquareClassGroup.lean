@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -23,8 +24,9 @@ square. So linear independence of the classes is the **Finset form** of square-c
 ## Main definitions and results
 
 * `TauCeti.SquareClassGroup`: the square-class group `Kˣ ⧸ (Kˣ)²`, an `𝔽₂`-vector space.
-* `TauCeti.squareClass`: the class of a unit, with `squareClass_eq_zero_iff` characterising the
-  trivial class as the squares.
+* `TauCeti.squareClass`, `TauCeti.squareClassHom`: the class of a unit, as a function and a
+  multiplicative homomorphism, with `squareClass_eq_zero_iff` characterising the trivial class as
+  the squares.
 * `TauCeti.linearIndependent_squareClass_iff`: the classes of `d : ι → Kˣ` are `ZMod 2`-linearly
   independent iff no nonempty subset product is a square.
 -/
@@ -50,6 +52,17 @@ instance : Module (ZMod 2) (SquareClassGroup K) :=
 def squareClass (u : Kˣ) : SquareClassGroup K :=
   QuotientAddGroup.mk (Additive.ofMul u)
 
+/-- The square-class quotient map, written multiplicatively between the unit group and the
+multiplicative form of the additive square-class group. -/
+def squareClassHom : Kˣ →* Multiplicative (SquareClassGroup K) :=
+  (QuotientAddGroup.mk' (Subgroup.square Kˣ).toAddSubgroup).toMultiplicativeRight
+
+@[simp]
+theorem squareClassHom_apply (u : Kˣ) :
+    squareClassHom u = Multiplicative.ofAdd (squareClass u) := by
+  rw [squareClassHom, squareClass]
+  rfl
+
 /-- A unit has trivial square class iff it is a square. -/
 @[simp] theorem squareClass_eq_zero_iff (u : Kˣ) : squareClass u = 0 ↔ IsSquare u := by
   rw [squareClass, QuotientAddGroup.eq_zero_iff, Additive.mem_toAddSubgroup,
@@ -73,8 +86,8 @@ private theorem sum_smul_squareClass {ι : Type*} [Fintype ι] (d : ι → Kˣ) 
   rw [squareClass_prod, Finset.sum_filter]
   refine Finset.sum_congr rfl fun i _ => ?_
   rcases zmod_two_eq_zero_or_one (g i) with h | h
-  · rw [h, zero_smul]; exact (if_neg (by decide)).symm
-  · rw [h, one_smul]; exact (if_pos rfl).symm
+  · rw [h, zero_smul]; exact (ite_eq_right (by decide)).symm
+  · rw [h, one_smul]; exact (ite_eq_left rfl).symm
 
 /-- **Square-class independence is `ZMod 2`-linear independence.** For a finite family of units
 `d : ι → Kˣ`, the square classes `squareClass (d i)` are `ZMod 2`-linearly independent in the
@@ -97,7 +110,7 @@ theorem linearIndependent_squareClass_iff {ι : Type*} [Finite ι] (d : ι → K
       · rintro ⟨-, hi⟩
         by_contra hiS
         rw [hg] at hi
-        simp only [hiS, if_false] at hi
+        simp only [hiS, ite_false] at hi
         exact absurd hi (by decide)
       · intro hiS
         exact ⟨Finset.mem_univ i, by rw [hg]; simp [hiS]⟩
@@ -107,7 +120,7 @@ theorem linearIndependent_squareClass_iff {ι : Type*} [Finite ι] (d : ι → K
     obtain ⟨i, hiS⟩ := hS
     have hi0 := H g hsum i
     rw [hg] at hi0
-    simp only [hiS, if_true] at hi0
+    simp only [hiS, ite_true] at hi0
     exact absurd hi0 (by decide)
   · -- A linear dependence singles out a nonempty square subset product.
     intro H g hsum i

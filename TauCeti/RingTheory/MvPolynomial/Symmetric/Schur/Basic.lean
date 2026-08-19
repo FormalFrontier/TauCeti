@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -23,7 +24,7 @@ definition alone gives, and transports it to the partition-indexed Schur polynom
 The tableaux summed over are the bounded ones, `TauCeti.BoundedSSYT`: Mathlib's
 `SemistandardYoungTableau μ` fills cells with arbitrary natural numbers, and it is the bound that
 makes the sum finite. The alphabet is `0, 1, …, N - 1` rather than the classical `1, …, N`,
-matching `TauCeti.SemistandardYoungTableau.content`.
+matching `SemistandardYoungTableau.content`.
 
 The load-bearing statement is `TauCeti.coeff_diagramSchurPoly`: the coefficient of a monomial
 `x^d` in `s_μ` is the image in the coefficient semiring of the Kostka number `K_{μ d}`, the number
@@ -44,7 +45,8 @@ together with the Kostka theory of `TauCeti.Combinatorics.Young.Kostka`:
 An arbitrary finite alphabet `σ` is ordered by `Fintype.equivFin σ`, and `TauCeti.schurPoly σ R μ`
 is `TauCeti.diagramSchurPoly` renamed along that ordering. The result does not depend on the
 ordering, but that is the symmetry of `s_μ`, which is *not* proved here: it is the Bender-Knuth
-involution, a separate target of the Schur-Weyl roadmap, and none of the results below need it.
+involution, and it lives downstream in
+`TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Symmetric`.  None of the results below need it.
 
 ## Main definitions
 
@@ -348,7 +350,7 @@ variable {σ : Type*} [Fintype σ] {n : ℕ}
 /-- **The Schur polynomial** `s_μ` of a partition `μ` in the finite alphabet `σ`: the Schur
 polynomial `TauCeti.diagramSchurPoly` of the Young diagram of `μ` in the alphabet
 `Fin (Fintype.card σ)`, renamed along the ordering `Fintype.equivFin σ` of `σ`. The ordering does
-not matter, `s_μ` being symmetric, but symmetry is not proved here. -/
+not matter, `s_μ` being symmetric (`TauCeti.schurPoly_isSymmetric`, proved downstream). -/
 noncomputable def schurPoly (σ : Type*) [Fintype σ] (R : Type*) [CommSemiring R] {n : ℕ}
     (μ : n.Partition) : MvPolynomial σ R :=
   rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ))

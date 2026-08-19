@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -44,9 +45,11 @@ quietly assume the theorem it serves.
 * `TauCeti.continuous_convolutionEigenspaceRepresentation`: at a nonzero eigenvalue the eigenspace
   representation is continuous, so it is a genuine finite-dimensional continuous representation
   of `G`.
-* `TauCeti.isRepresentative_smul_convolutionCLM_of_mem_eigenspace`: the continuous representative
-  of an eigenvector at a nonzero eigenvalue is the conjugate of a matrix coefficient of that
-  representation, hence a representative function.
+* `TauCeti.exists_smul_convolutionCLM_eq_star_matrixCoeff`: the continuous representative of an
+  eigenvector at a nonzero eigenvalue is the conjugate of a matrix coefficient of that
+  representation, at a vector independent of the eigenvector.
+* `TauCeti.isRepresentative_smul_convolutionCLM_of_mem_eigenspace`: consequently it is a
+  representative function.
 * `TauCeti.convolutionCLM_mem_representativeSubmodule_of_mem_iSup_eigenspace`: convolving a finite
   sum of eigenvectors gives an element of the representative ring `𝓡(G)`.
 * `TauCeti.convolutionCLM_mem_closure_representativeSubmodule`: for a symmetric kernel, `k * f`
@@ -156,23 +159,22 @@ theorem continuous_convolutionEigenspaceRepresentation (k : C(G, 𝕜)) {μ : �
 
 /-! ### The eigenvectors are representative functions -/
 
-/-- **The continuous representative of an eigenvector is a representative function.** For a nonzero
-eigenvalue `μ`, the continuous function `μ⁻¹ • (k * f)` representing an eigenvector `f` is the
-conjugate of a matrix coefficient of `TauCeti.convolutionEigenspaceRepresentation`, at the Riesz
-vector of the functional "evaluate the continuous representative at the identity". At `μ = 0` the
-function is `0`, which is representative for trivial reasons.
+/-- **The continuous representative of an eigenvector is a matrix coefficient of the eigenspace
+representation.** For a nonzero eigenvalue `μ`, one vector `y` of the eigenspace serves for every
+eigenvector at once: it is the Riesz vector of the functional "evaluate the continuous
+representative at the identity", and `μ⁻¹ • (k * f)` is the conjugate of the matrix coefficient at
+`(f, y)`.
 
-This is the point of the whole construction: at a nonzero eigenvalue the continuous representative
-of an eigenvector is not merely continuous, it is a matrix coefficient of a finite-dimensional
-continuous representation. At `μ = 0` the statement carries no information about `f` beyond
-`TauCeti.convolutionCLM_eq_zero_of_mem_eigenspace_zero`, which is what makes it `0`. -/
-theorem isRepresentative_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
-    {f : Lp 𝕜 2 (haarProb G)}
-    (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ) :
-    IsRepresentative (μ⁻¹ • convolutionCLM k f) := by
-  rcases eq_or_ne μ 0 with rfl | hμ
-  · rw [inv_zero, zero_smul]
-    exact isRepresentative_zero 𝕜 G
+Naming the representation, rather than only the conclusion that the function is representative,
+is what records that the finite-dimensional representations produced by the density argument are
+*unitary* (`TauCeti.isUnitary_convolutionEigenspaceRepresentation`), so that a statement proved
+for unitary representations can be fed back into it. -/
+theorem exists_smul_convolutionCLM_eq_star_matrixCoeff (k : C(G, 𝕜)) {μ : 𝕜} (hμ : μ ≠ 0) :
+    ∃ y : Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ,
+      ∀ f (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ),
+        μ⁻¹ • convolutionCLM k f
+          = star (ContRepresentation.matrixCoeff (convolutionEigenspaceRepresentation k μ)
+              (continuous_convolutionEigenspaceRepresentation k hμ) ⟨f, hf⟩ y) := by
   have := finiteDimensional_eigenspace_convolutionOperator k hμ
   have hπ := continuous_convolutionEigenspaceRepresentation k hμ
   obtain ⟨y, hy⟩ :
@@ -187,18 +189,35 @@ theorem isRepresentative_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) 
     rw [InnerProductSpace.toDual_symm_apply]
     simp only [smul_apply, ContinuousLinearMap.comp_apply,
       Submodule.coe_subtypeL, Submodule.subtype_apply, ContinuousMap.evalCLM_apply, smul_eq_mul]
-  have key : μ⁻¹ • convolutionCLM k f
-      = star (ContRepresentation.matrixCoeff (convolutionEigenspaceRepresentation k μ) hπ
-          ⟨f, hf⟩ y) := by
-    ext g
-    have hg : ⟪y, convolutionEigenspaceRepresentation k μ g ⟨f, hf⟩⟫_𝕜
-        = μ⁻¹ * convolutionCLM k f g := by
-      rw [hy, coe_convolutionEigenspaceRepresentation_apply, convolutionCLM_rightRegularLp]
-      simp only [ContinuousMap.comp_apply, ContinuousMap.coe_mulRight, one_mul]
-    rw [ContinuousMap.star_apply, ContinuousMap.smul_apply, smul_eq_mul,
-      ContRepresentation.matrixCoeff_apply, RCLike.star_def, inner_conj_symm, hg]
-  rw [key]
-  exact (isRepresentative_matrixCoeff _ hπ _ _).star
+  refine ⟨y, fun f hf => ?_⟩
+  ext g
+  have hg : ⟪y, convolutionEigenspaceRepresentation k μ g ⟨f, hf⟩⟫_𝕜
+      = μ⁻¹ * convolutionCLM k f g := by
+    rw [hy, coe_convolutionEigenspaceRepresentation_apply, convolutionCLM_rightRegularLp]
+    simp only [ContinuousMap.comp_apply, ContinuousMap.coe_mulRight, one_mul]
+  rw [ContinuousMap.star_apply, ContinuousMap.smul_apply, smul_eq_mul,
+    ContRepresentation.matrixCoeff_apply, RCLike.star_def, inner_conj_symm, hg]
+
+/-- **The continuous representative of an eigenvector is a representative function.** For a nonzero
+eigenvalue `μ`, the continuous function `μ⁻¹ • (k * f)` representing an eigenvector `f` is the
+conjugate of a matrix coefficient of `TauCeti.convolutionEigenspaceRepresentation`. At `μ = 0` the
+function is `0`, which is representative for trivial reasons.
+
+This is the point of the whole construction: at a nonzero eigenvalue the continuous representative
+of an eigenvector is not merely continuous, it is a matrix coefficient of a finite-dimensional
+continuous representation. At `μ = 0` the statement carries no information about `f` beyond
+`TauCeti.convolutionCLM_eq_zero_of_mem_eigenspace_zero`, which is what makes it `0`. -/
+theorem isRepresentative_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
+    {f : Lp 𝕜 2 (haarProb G)}
+    (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ) :
+    IsRepresentative (μ⁻¹ • convolutionCLM k f) := by
+  rcases eq_or_ne μ 0 with rfl | hμ
+  · rw [inv_zero, zero_smul]
+    exact isRepresentative_zero 𝕜 G
+  have := finiteDimensional_eigenspace_convolutionOperator k hμ
+  obtain ⟨y, hy⟩ := exists_smul_convolutionCLM_eq_star_matrixCoeff k hμ
+  rw [hy f hf]
+  exact (isRepresentative_matrixCoeff _ _ _ _).star
 
 /-- **Convolving a finite sum of eigenvectors lies in the representative ring `𝓡(G)`.** Each
 nonzero eigenvalue contributes a matrix coefficient, and the zero eigenspace contributes

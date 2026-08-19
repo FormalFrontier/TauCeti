@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -42,6 +43,10 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 ## Main results
 
 * `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure` — the prefix block factorization
+  (the `L²` route proves a stronger, arbitrary-selection form independently, as
+  `condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure` in
+  `DeFinetti/ViaL2/BlockFactorization.lean`; the overlap is the intended two-route structure and
+  neither file imports the other)
   at the directing measure, the base case rectangle identities over a contractable process reduce
   to.
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
@@ -97,7 +102,8 @@ theorem condExp_blockIndicatorProd_ae_eq_prod_of_iCondIndepFun_tailProcess
     (fun i => hX_meas (k i))).1 hCI Finset.univ (sets := C) (fun i _ => hC i)
   -- The intersection over the selection is the block cylinder.
   have hcyl : ⋂ i ∈ (Finset.univ : Finset (Fin m)), X (k i) ⁻¹' C i = blockCylinder X k C := by
-    ext ω; simp [mem_blockCylinder, Set.mem_iInter, Set.mem_preimage]
+    rw [blockCylinder_eq_iInter]
+    simp
   rw [hcyl] at hfac
   -- Goal LHS = `μ⟦blockCylinder X k C | tail⟧`, the block-indicator conditional expectation.
   rw [blockIndicatorProd_eq_indicator]
@@ -122,7 +128,7 @@ of the block-indicator product is a.e. the directing-measure product
 `∏ i, (directingMeasure μ X ω).real (C i)`, then the block law of the rectangle `∏ᵢ C i` is the
 `μ`-average `∫⁻ ∏ᵢ (directingMeasure μ X ω) (C i)` of that product. -/
 private theorem blockLaw_eq_lintegral_prod_directingMeasure_of_condExp_ae_eq
-    [StandardBorelSpace Ω] [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
+     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
     {m : ℕ} {k : Fin m → ℕ} {C : Fin m → Set α} (hC : ∀ i, MeasurableSet (C i))
     (hfac : μ[blockIndicatorProd X k C | tailProcess X]

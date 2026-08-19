@@ -219,6 +219,32 @@ jobs:
           # mapping yet. Harmless (just a slightly deeper fetch) when the cache is off.
           fetch-depth: 100
 
+      # Pin the new build/watchdog scripts to the commit that supplied this
+      # workflow. This matters during first rollout and historical manual
+      # dispatches, where the PR's base predates those scripts. For normal
+      # pull_request_target and merge_group events github.workflow_sha is the
+      # trusted base-defined workflow commit, never the candidate checkout.
+      - name: Checkout workflow-pinned trusted build tooling
+        if: ${{ env.INFRA != '1' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: gate
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Stage workflow-pinned build tooling into the trusted base
+        if: ${{ env.INFRA != '1' }}
+        run: |
+          set -euo pipefail
+          rm -rf base/scripts/perf
+          cp -a gate/scripts/perf base/scripts/perf
+          cp gate/scripts/sandbox-build.sh base/scripts/sandbox-build.sh
+          cp gate/scripts/lint-env.sh base/scripts/lint-env.sh
+          cp gate/scripts/lint-style.sh base/scripts/lint-style.sh
+          cp gate/scripts/source-modules.sh base/scripts/source-modules.sh
+          cp gate/scripts/HeaderStyle.lean base/scripts/HeaderStyle.lean
+
       - name: Checkout merge-base config (trusted ancestor — only to scope the PR's pin delta)
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
         uses: actions/checkout@v4
@@ -304,11 +330,23 @@ jobs:
             echo "::error::TauCeti/ may not use set_option (it can weaken maxHeartbeats, linters, maxRecDepth, ...); remove it"; exit 1
           fi
 
-      - name: Install elan (trusted)
+      # Take elan from a pinned leanprover/elan release verified by SHA-256, not from whatever
+      # the installer URL serves at the moment of the request. This elan chooses the `lake` the
+      # sandboxed build runs, and it is installed here, in the trusted phase, before landrun
+      # confines anything, so a substituted one would sit outside the sandbox by construction.
+      # Same idiom as the landrun pin below; scripts/test_elan_pin.py keeps the copies honest.
+      - name: Install elan (trusted, pinned + checksum)
         if: ${{ env.INFRA != '1' }}
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
         run: |
-          curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
-          chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Install landrun (pinned + checksum) and self-test (fail closed)
@@ -334,6 +372,24 @@ jobs:
             echo "::error::landrun not enforcing (run=$ok write=$wr shm=$shm net=$net); refusing to run PR code"; exit 1
           fi
 
+      # Restore only Mathlib's compressed, content-addressed `.ltar` download store from a
+      # trusted main publisher. This workflow is restore-only: neither fork PRs nor merge-group
+      # candidates can publish cache contents. For a validated pin bump the expressions hash the
+      # already-overlaid files under base/, so an exact new-pin snapshot is preferred. A
+      # Mathlib-only bump can fall back to the newest same-toolchain main snapshot; a toolchain
+      # bump misses both keys and refetches from Mathlib's server. `lake exe cache get` below
+      # remains authoritative and downloads every applicable hash that is still absent. The
+      # workflow-pinned local action credits the corresponding Mathlib design and owns the key
+      # namespace shared with ci.yml. This is separate from the much larger `./.lake` cache.
+      - name: Restore Mathlib's compressed download cache from main
+        if: ${{ env.INFRA != '1' }}
+        uses: ./gate/.github/actions/restore-mathlib-ltars
+        with:
+          # The action's default cache directory is outside base/, which is later mounted into
+          # landrun. Although MATHLIB_CACHE_DIR is job-wide, landrun's explicit `--env` allowlist
+          # excludes it and the cache directory is not mounted, so the sandbox never receives it.
+          project-dir: base
+
       # `lake exe cache get` runs the `cache` exe built from the pinned Mathlib, unsandboxed,
       # with network (to download oleans) but deliberately NO token in env. For a normal PR that
       # is the trusted base Mathlib. For a validated bump it is the PR's Mathlib pin — which
@@ -350,7 +406,10 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ( cd base && lake exe cache get ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"
+          if ! ( cd base && lake exe cache get ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"; then
+            echo "::warning::lake exe cache get failed; forcing a full refetch"
+            ( cd base && lake exe cache get! ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"
+          fi
           mkdir -p base/.lake/tmp
 
       # Backstop to bump-guard's step 2b, measuring the thing itself rather than a proxy.
@@ -381,6 +440,12 @@ jobs:
           fi
           echo "Mathlib cache is complete at the bump target."
 
+      # Text-only trusted lint: inspect the overlaid PR sources after Mathlib's source tree is
+      # available. It does not elaborate or execute the untrusted TauCeti code.
+      - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
+        if: ${{ env.INFRA != '1' }}
+        run: (cd base && python3 scripts/lint-dot-notation.py)
+
       # Enable Lake's built-in artifact cache for the build below ONLY when the public read
       # endpoints are configured (repo variables). Until then this is a no-op: LAKE_*
       # stay empty and the landrun build recompiles TauCeti/ from scratch exactly as before.
@@ -406,141 +471,28 @@ jobs:
             echo "::notice::Lake artifact cache not configured — building TauCeti/ from scratch (set the LAKE_CACHE_*_PUBLIC repo variables to enable)"
           fi
 
-      # Anonymous GETs from the PUBLIC read host (a different host than the S3 API endpoint
-      # the trusted main upload uses). Looks up TauCeti's OWN root-package oleans for the
-      # base-branch revision — backtracking up to --max-revs ancestors — and unpacks them
-      # into the local Lake cache ($LAKE_CACHE_DIR). This is trusted, main-built data: no
-      # token is in reach and no PR code runs (lakefile.toml is declarative + base-trusted).
-      # Mathlib's oleans are NOT here; they come from `lake exe cache get` above.
-      #
-      # A TOTAL miss is non-fatal: the landrun build just recompiles from scratch, as when the
-      # cache is off. A PARTIAL fetch is a different matter. `lake cache get` continues past a
-      # failed download and exits nonzero (see `lake cache help get`), leaving input-to-output
-      # mappings whose artifacts never arrived. The landrun build below is offline and has no
-      # cache service configured, so it cannot fetch them: Lake logs a warning per affected
-      # module and correctly rebuilds it from source, but `lake build --iofail` is
-      # `--fail-level=info`, so those warnings fail a build in which every module compiled.
-      # Partial fetches are routine: they cost about a third of merge-group builds their cache.
-      # Fixed by https://github.com/leanprover/lean4/pull/14651, landing in v4.34.0-rc1;
-      # see https://github.com/TauCetiProject/TauCeti/issues/2062.
-      #
-      # Hence: retry from an EMPTY cache each time, then fall back to no cache at all. Retrying
-      # over the dirty cache a failed attempt left behind does not work: Lake skips any artifact
-      # already on disk, so the retry re-fetches only what is still MISSING and never revisits
-      # what the failed attempt got wrong. It then reports clean and the corruption survives
-      # into the build. Discarding between attempts is what makes a clean verdict mean the
-      # cache is whole; it is affordable because a failing attempt aborts in seconds and a full
-      # refetch is ~30s.
+      # Restore TauCeti's own root-package oleans from the public Lake cache. The fetch logic
+      # (retry-from-empty, then fall back to no cache at all) lives in the workflow-pinned
+      # trusted script so ci.yml's post-merge build can restore the very same way; see its
+      # header for why a partial fetch must be discarded rather than kept.
       - name: Fetch TauCeti's own oleans from the Lake cache (network, no token; no PR code)
         if: ${{ env.INFRA != '1' && env.TAUCETI_CACHE_ENABLED == '1' }}
         env:
           # Passed under non-LAKE_ names so Lake never sees the deprecated endpoint
-          # environment variables; we hand it the endpoints through a `--service` config.
+          # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: bash gate/scripts/lake-cache-get.sh base
+
+      - name: Prepare trusted read-only Lean watchdog toolchain
+        if: ${{ env.INFRA != '1' }}
         run: |
-          # Define the public read service in a Lake system config and select it with
-          # `--service` (the env-var form of endpoint config is deprecated). Anonymous
-          # GETs, so no key here.
-          CFG="$RUNNER_TEMP/lake-cache.toml"
-          cat > "$CFG" <<TOML
-          cache.defaultService = "tauceti-public"
-          [[cache.service]]
-          name = "tauceti-public"
-          kind = "s3"
-          artifactEndpoint = "$PUBLIC_ARTIFACT_ENDPOINT"
-          revisionEndpoint = "$PUBLIC_REVISION_ENDPOINT"
-          TOML
-          # `lake cache get` cannot be judged by exit status alone. Lake accumulates transfer
-          # failures into a local `didError` but then tests the stale `s.didError`
-          # (Lake/Config/Cache.lean, `if s.didError then failure`), so it can log
-          # "failed to download some artifacts" and still exit 0. An attempt therefore counts
-          # as clean only if it exits 0 AND logs no failure diagnostic.
-          # SIMPLIFY ON THE BUMP TO v4.34.0: that stale read is fixed by
-          # https://github.com/leanprover/lean4/pull/14651 ("fix: lake: gracefully handle curl
-          # and IO errors during transfer"), which missed v4.33.0-rc2 by hours and was not
-          # backported. From v4.34.0-rc1 on, drop FAIL_RE and trust `rc` alone.
-          # The purge below outlives that bump: it is for
-          # https://github.com/leanprover/lean4/issues/14670, still open.
-          # Discarding the cache must never fail the step. A plain `rm -rf` on a directory that
-          # Lake's stragglers are still writing into exits 1 with "Directory not empty", and under
-          # `set -e` that killed the whole build — worse than the partial cache it was clearing.
-          # Rename first (atomic, and unaffected by concurrent writes under the old path), then
-          # delete the renamed copy best-effort. What matters for correctness is only that the
-          # cache PATH is empty for the next attempt, not that the bytes are reclaimed promptly.
-          discard_cache() {
-            local d=base/.lake/cache
-            [ -e "$d" ] || return 0
-            if mv "$d" "$d.discard.$$" 2>/dev/null; then
-              rm -rf "$d.discard.$$" 2>/dev/null || true
-            else
-              rm -rf "$d" 2>/dev/null || true
-            fi
-            return 0
-          }
-          # `downloaded artifact hash mismatch` must be here. Lake handles a mismatch by deleting
-          # the artifact and setting `didError`, but the stale `didError` read below means the
-          # process can still exit 0, and the deletion leaves an input-to-output mapping whose
-          # artifact is gone. The offline build cannot refetch it, so that entry becomes a build
-          # failure rather than a rebuild. Treat it as unclean so the cache is refetched or dropped.
-          FAIL_RE='failed to download|output lookup failed|curl exited with code|downloaded artifact hash mismatch'
-          # A revision with no cached build at all is deterministic: retrying cannot change it,
-          # and there is nothing partial to discard.
-          MISS_RE='no outputs found'
-          # Six attempts, not three. Losing every attempt discards the whole cache and forces a
-          # ~22 minute full rebuild, which was happening on 4 of 18 sampled builds (the other 14
-          # took 2-3 minutes). The cause is lean4#14698: one unreadable artifact throws out of
-          # `computeFileHash`, which has no try/catch, so a single ENOENT aborts the entire fetch
-          # and discards every artifact already downloaded. Which artifact trips it varies between
-          # attempts, so re-fetching genuinely tends to succeed; at the observed per-attempt
-          # failure rate six attempts take whole-cache loss from roughly 22% to roughly 5%.
-          # Reduce this again once the fix (lean4#14651) reaches a released toolchain: it is on
-          # master only, and v4.33.0-rc2 was branched before it landed.
-          ATTEMPTS=6
-          clean=0
-          for attempt in $(seq 1 $ATTEMPTS); do
-            LOG="$RUNNER_TEMP/cache-get-$attempt.log"
-            rc=0
-            ( cd base && LAKE_CONFIG="$CFG" lake cache get --service tauceti-public \
-                --repo TauCetiProject/TauCeti ) > "$LOG" 2>&1 || rc=$?
-            cat "$LOG"
-            if [ "$rc" = 0 ] && ! grep -qE "$FAIL_RE" "$LOG"; then clean=1; break; fi
-            if grep -qE "$MISS_RE" "$LOG"; then break; fi
-            # `[ ... ] && sleep` would abort the step under `bash -e` on the last attempt,
-            # when the test is false and the whole list returns nonzero. Use a plain `if`.
-            if [ "$attempt" != "$ATTEMPTS" ]; then
-              echo "::notice::lake cache get attempt $attempt of $ATTEMPTS did not complete cleanly; discarding the partial cache and retrying"
-              # Sleep BEFORE discarding. A failed `lake cache get` returns as soon as one transfer
-              # errors, while its sibling curl/leantar processes are still writing into the cache
-              # dir; discarding at that instant races them. This is no longer a throttling backoff:
-              # the read endpoint serves these artifacts byte-identically under 48-way concurrency,
-              # so the failures are the Lake bug above rather than rate limiting, and a short fixed
-              # pause is enough to let the stragglers finish.
-              sleep 10
-              # Must precede the retry: see the step comment above. Without this, attempt N+1
-              # skips every artifact this attempt already wrote, including the broken ones, and
-              # a clean exit from it says nothing about the entries that made this attempt fail.
-              discard_cache
-            fi
-          done
-          if [ "$clean" != 1 ]; then
-            # Purge on ANY unclean outcome, not just a recognised download failure: an earlier
-            # attempt may have written mappings whose artifacts never arrived, and the last
-            # attempt's log alone does not witness that. A cache the offline build cannot fully
-            # resolve is worse than none, because each unresolvable entry becomes a build
-            # failure rather than a rebuild. Discarding it restores the no-cache path exactly.
-            echo "::warning::lake cache get did not complete cleanly; discarding the cache and building TauCeti/ from scratch"
-            discard_cache
-            # Empty is NOT off: Lake parses an empty LAKE_ARTIFACT_CACHE as "unspecified" and
-            # then defaults artifact-cache reads to true, and an empty LAKE_CACHE_DIR falls back
-            # to the workspace's own .lake/cache. Say false explicitly rather than relying on
-            # the directory above having just been deleted.
-            {
-              echo "LAKE_ARTIFACT_CACHE=false"
-              echo "LAKE_RESTORE_ARTIFACTS=false"
-              echo "LAKE_CACHE_DIR="
-            } >> "$GITHUB_ENV"
-          fi
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          real_lean=$(cd base && elan which lean)
+          watchdog="$RUNNER_TEMP/lean-watchdog-toolchain"
+          bash base/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
+          echo "WATCHDOG_TOOLCHAIN=$watchdog" >> "$GITHUB_ENV"
 
       - name: Build (trusted config + overlaid TauCeti/) under landrun, offline
         id: build
@@ -560,9 +512,11 @@ jobs:
           # early and reddened every PR build (#694). All prose now lives in the script.
           landrun --rox /usr --rox /etc \
             --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
-            --rox "$HOME/.elan" --rox "$PWD/base" --rw "$PWD/base/.lake" \
+            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
+            --rox "$PWD/base" --rw "$PWD/base/.lake" \
             --env PATH --env HOME --env CI \
             --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
+            --env WATCHDOG_TOOLCHAIN \
             -- bash -euxo pipefail -c 'cd base && exec bash scripts/sandbox-build.sh'
 
       - name: Report build and bump-guard statuses to the PR head commit
@@ -574,7 +528,7 @@ jobs:
           # abort the step and leave the commit with a partial set. A MISSING required status is
           # worse than a red one. `build` never appears, so GitHub holds the PR at BLOCKED
           # forever; core.derive reads no `build` status, so labels.py pins the PR at
-          # `awaiting-CI` (its ci=None branch) rather than `awaiting-author`; and nothing re-runs
+          # `awaiting-CI` (its ci=None branch) rather than `ci-failed`; and nothing re-runs
           # pr-build without a push, so no event ever corrects it. That wedged PR #1358 for seven
           # days, invisible to both the author path and the review path.
           #

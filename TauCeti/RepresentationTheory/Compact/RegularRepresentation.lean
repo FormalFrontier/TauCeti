@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.RepresentationTheory.Compact.Haar
-public import TauCeti.RepresentationTheory.Continuous.Unitary
+public import TauCeti.RepresentationTheory.Continuous.Unitary.Basic
+public import TauCeti.MeasureTheory.Function.Lp.CompMeasurePreservingEquiv
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Continuous
 
@@ -90,11 +92,9 @@ representatives. -/
 theorem rightRegularLp_toLp (F : C(G, 𝕜)) (g : G) :
     rightRegularLp 𝕜 G g (ContinuousMap.toLp 2 (haarProb G) 𝕜 F)
       = ContinuousMap.toLp 2 (haarProb G) 𝕜 (F.comp (.mulRight g)) := by
-  rw [rightRegularLp_apply, Lp.ext_iff]
-  refine (Lp.coeFn_compMeasurePreserving _ _).trans (Filter.EventuallyEq.trans ?_
-    (ContinuousMap.coeFn_toLp (E := 𝕜) (p := 2) (haarProb G) (𝕜 := 𝕜) _).symm)
-  exact (measurePreserving_mul_right (haarProb G) g).quasiMeasurePreserving.ae_eq_comp
-    (ContinuousMap.coeFn_toLp (E := 𝕜) (p := 2) (haarProb G) (𝕜 := 𝕜) F)
+  rw [rightRegularLp_apply]
+  exact Lp.compMeasurePreserving_toLp 𝕜 F (.mulRight g)
+    (measurePreserving_mul_right (haarProb G) g)
 
 variable (𝕜 G) in
 /-- **The right regular representation is unitary**, because right translation preserves

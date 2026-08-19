@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -86,8 +87,8 @@ private theorem repr_permTensorActionAlgHom_apply_tensorPowerBasis
     exact if_congr ⟨fun hc => comp_perm_symm_injective hf hc, fun hc => by rw [hc]⟩ rfl rfl
   rw [Finset.sum_congr rfl hterm, Finset.sum_ite_eq' a.coeff.support ρ]
   by_cases hρ : ρ ∈ a.coeff.support
-  · rw [if_pos hρ]
-  · rw [if_neg hρ, Finsupp.notMem_support_iff.mp hρ]
+  · rw [ite_eq_left hρ]
+  · rw [ite_eq_right hρ, Finsupp.notMem_support_iff.mp hρ]
 
 /-- **Faithfulness of the symmetric-group image.**  If the tensor degree does not exceed the
 dimension, the algebra map `R[S_d] → End((Rⁿ)^{⊗d})` is injective. -/
@@ -202,9 +203,9 @@ theorem permTensorAction_injective_of_two_le [Nontrivial R] (h : 2 ≤ n) :
       rw [hστ]
     rw [permTensorAction_tensorPowerBasis, permTensorAction_tensorPowerBasis] at himg
     have hfun := congrFun ((tensorPowerBasis R n d).injective himg) x
-    rw [if_pos rfl] at hfun
+    rw [ite_eq_left rfl] at hfun
     by_contra hne
-    rw [if_neg fun hc => hne hc.symm] at hfun
+    rw [ite_eq_right fun hc => hne hc.symm] at hfun
     exact hab hfun
   simpa using congrArg Equiv.symm hsymm
 

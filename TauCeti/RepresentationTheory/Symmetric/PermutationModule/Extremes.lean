@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -159,10 +160,10 @@ theorem char_permutationModule_ones (n : ℕ) (σ : Equiv.Perm (Fin n)) :
             (1 : Equiv.Perm (Fin n)) • q = q} = n.factorial := by
       rw [Nat.card_congr (Equiv.subtypeUnivEquiv fun q => one_smul _ q),
         ← Subgroup.index_eq_card, Subgroup.index_bot, Nat.card_perm, Nat.card_fin]
-    rw [hcard, if_pos rfl]
+    rw [hcard, ite_eq_left rfl]
   · have : IsEmpty {q : Equiv.Perm (Fin n) ⧸ (⊥ : Subgroup (Equiv.Perm (Fin n))) //
         σ • q = q} :=
       ⟨fun q => hσ ((quotientBot_smul_eq_self_iff σ q.1).mp q.2)⟩
-    rw [Nat.card_of_isEmpty, if_neg hσ, Nat.cast_zero]
+    rw [Nat.card_of_isEmpty, ite_eq_right hσ, Nat.cast_zero]
 
 end TauCeti

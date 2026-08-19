@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -173,13 +174,13 @@ lemma posPart_pointDifference {x y : X} (h : x ≠ y) : (pointDifference x y)⁺
   ext z
   rw [coeff_posPart, coeff_pointDifference]
   rcases eq_or_ne z x with rfl | hzx
-  · rw [if_pos rfl, if_neg h, coeff_ofPoint_self, sub_zero]
+  · rw [ite_eq_left rfl, ite_eq_right h, coeff_ofPoint_self, sub_zero]
     exact sup_eq_left.mpr zero_le_one
-  · rw [if_neg hzx, coeff_ofPoint_of_ne hzx]
+  · rw [ite_eq_right hzx, coeff_ofPoint_of_ne hzx]
     rcases eq_or_ne z y with rfl | hzy
-    · rw [if_pos rfl, zero_sub]
+    · rw [ite_eq_left rfl, zero_sub]
       exact sup_eq_right.mpr (neg_nonpos.mpr zero_le_one)
-    · rw [if_neg hzy, sub_zero]
+    · rw [ite_eq_right hzy, sub_zero]
       exact sup_idem 0
 
 /-- For distinct points the negative part of `[x] - [y]` is the point divisor `[y]`. -/

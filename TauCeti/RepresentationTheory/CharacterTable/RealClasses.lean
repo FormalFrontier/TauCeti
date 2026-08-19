@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -125,9 +126,10 @@ theorem card_inv_mul_sum_irreducibleCharacter_sq [CharZero k]
     rw [Subtype.ext_iff, funext_iff]
     simp
   by_cases hfix : ∀ g : G, irreducibleCharacter k i g⁻¹ = irreducibleCharacter k i g
-  · rw [if_pos hfix, ← hval, characterPairing_ofCharacter_invMap_self, if_pos (hiff.mpr hfix)]
-  · rw [if_neg hfix, ← hval, characterPairing_ofCharacter_invMap_self,
-      if_neg fun h => hfix (hiff.mp h)]
+  · rw [ite_eq_left hfix, ← hval, characterPairing_ofCharacter_invMap_self,
+      ite_eq_left (hiff.mpr hfix)]
+  · rw [ite_eq_right hfix, ← hval, characterPairing_ofCharacter_invMap_self,
+      ite_eq_right fun h => hfix (hiff.mp h)]
 
 end Rows
 
@@ -206,9 +208,9 @@ private theorem card_inv_mul_card_carrier_mul_sum_characterTable_sq (C : ConjCla
   have hG : (Nat.card G : k) ≠ 0 := Invertible.ne_zero _
   have hC : (Nat.card C.carrier : k) ≠ 0 := ConjClasses.card_carrier_cast_ne_zero C hG
   by_cases hR : IsRealClass C
-  · rw [if_pos hR, if_pos hR]
+  · rw [ite_eq_left hR, ite_eq_left hR]
     field_simp
-  · rw [if_neg hR, if_neg hR, mul_zero, mul_zero]
+  · rw [ite_eq_right hR, ite_eq_right hR, mul_zero, mul_zero]
 
 open scoped Classical in
 /-- **The double count.** Counting inversion-invariant rows and real classes both come out of the

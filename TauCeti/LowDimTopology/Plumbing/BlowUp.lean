@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Data.Fintype.BigOperators
+public import TauCeti.LowDimTopology.Plumbing.Characteristic
 public import TauCeti.LowDimTopology.Plumbing.NegativeDefinite
 
 /-!
@@ -41,6 +43,17 @@ what makes the blow-up usable in Lane L: negative-definiteness is the standing h
 lattice homology, so a move that leaves it in place is a move along which the invariant can be
 compared.
 
+The covector side of the same splitting is `blowUpCovectorEquiv`, the identification dual to
+`blowUpVertexEquiv`: a covector `k` of `P` together with a value `ε` on the exceptional class
+becomes the covector of the blow-up whose pairing against a total transform is
+
+`⟨k', φ(x, s)⟩ = ⟨k, x⟩ + ε * s`.
+
+It is characteristic for the blow-up exactly when `k` is characteristic for `P` and `ε` is odd,
+and every characteristic covector of the blow-up arises this way, so `blowUpCharacteristic`
+parametrizes them completely; the canonical characteristic covector of the blow-up is the
+canonical one of `P` carrying `-1`, the adjunction value of the exceptional class.
+
 Nothing about lattice homology itself is proved here; the invariance of lattice homology under the
 Neumann moves is a separate (later) target, and this file supplies the move together with the fact
 that it preserves the hypothesis under which the invariant is defined.
@@ -50,6 +63,10 @@ that it preserves the hypothesis under which the invariant is defined.
 * `TauCeti.PlumbingGraph.blowUpVertex`: the blow-up of a plumbing graph at a vertex.
 * `TauCeti.PlumbingGraph.blowUpVertexEquiv`: the total-transform identification of the blown-up
   lattice with `(V → ℤ) × ℤ`.
+* `TauCeti.PlumbingGraph.blowUpCovectorEquiv`: the total-transform identification of the covectors
+  of the blow-up with pairs `(k, ε)`, dual to `blowUpVertexEquiv`.
+* `TauCeti.PlumbingGraph.blowUpCharacteristic`: the characteristic covector of the blow-up
+  determined by a characteristic covector of `P` and an odd value on the exceptional class.
 
 ## Main results
 
@@ -57,6 +74,13 @@ that it preserves the hypothesis under which the invariant is defined.
   with its framing `-1` it is a blow-down candidate in Neumann's calculus.
 * `TauCeti.PlumbingGraph.intersectionForm_blowUpVertexEquiv`: the blown-up intersection form is
   the orthogonal direct sum of the original one with `⟨-1⟩`.
+* `TauCeti.PlumbingGraph.sum_blowUpCovectorEquiv_mul_blowUpVertexEquiv`: the two total-transform
+  identifications are dual to one another.
+* `TauCeti.PlumbingGraph.isCharacteristicVector_blowUpCovectorEquiv_iff` and
+  `TauCeti.PlumbingGraph.exists_blowUpCovectorEquiv_eq`: the characteristic covectors of the
+  blow-up are exactly the pairs of a characteristic covector of `P` with an odd exceptional value.
+* `TauCeti.PlumbingGraph.blowUpCovectorEquiv_canonicalCharacteristic`: the canonical characteristic
+  covector of the blow-up is the canonical one of `P` with exceptional value `-1`.
 * `TauCeti.PlumbingGraph.intersectionForm_single_none_self` and
   `TauCeti.PlumbingGraph.intersectionForm_blowUpVertexEquiv_single_none`: the exceptional class has
   square `-1` and is orthogonal to the image of the original lattice.
@@ -314,6 +338,180 @@ theorem blowUpVertex_intersectionMatrix_some_some (w w' : V) :
       P.intersectionMatrix_apply_of_ne hne, hzero, sub_zero]
     simp only [blowUpVertex_adj_some_some]
 
+/-! ### The covectors of a blow-up
+
+The lattice of the blow-up is identified with `(V → ℤ) × ℤ` by the total transform
+`blowUpVertexEquiv`. This section records the dual identification of its covectors, and the
+resulting parametrization of the characteristic covectors of a blow-up.
+-/
+
+/-- The total-transform identification of the covectors of the blow-up.
+
+A pair `(k, ε)` consisting of a covector `k` of the original plumbing lattice and the value `ε`
+on the exceptional class is sent to the covector of the blow-up taking the value `ε` at the new
+vertex `none` and `k w - [w = v] ε` at an old vertex `some w`. This is the identification dual to
+`blowUpVertexEquiv`: `sum_blowUpCovectorEquiv_mul_blowUpVertexEquiv` says the pairing of
+`blowUpCovectorEquiv v (k, ε)` against the total transform of `(x, s)` is `⟨k, x⟩ + ε * s`, so
+`k` is the restriction of the covector to the image of the old lattice and `ε` is its value on
+the exceptional class.
+
+Beware that the old coordinates are *not* simply retained: the value at `some v` is corrected by
+`ε`, because the basis vector `Pi.single (some v) 1` of the blow-up is the proper transform of the
+sphere `v`, not its total transform. -/
+def blowUpCovectorEquiv (v : V) : ((V → ℤ) × ℤ) ≃ₗ[ℤ] (Option V → ℤ) where
+  toFun p a := a.elim p.2 fun w => p.1 w - if w = v then p.2 else 0
+  map_add' p q := by
+    funext a
+    cases a with
+    | none => rfl
+    | some w =>
+        simp only [Option.elim_some, Prod.fst_add, Prod.snd_add, Pi.add_apply]
+        split_ifs <;> ring
+  map_smul' c p := by
+    funext a
+    cases a with
+    | none => rfl
+    | some w =>
+        simp only [Option.elim_some, Prod.smul_fst, Prod.smul_snd, Pi.smul_apply, smul_eq_mul,
+          RingHom.id_apply]
+        split_ifs <;> ring
+  invFun k := (fun w => k (some w) + (if w = v then k none else 0), k none)
+  left_inv p := by
+    rw [Prod.ext_iff]
+    refine ⟨funext fun w => ?_, rfl⟩
+    simp only [Option.elim_some, Option.elim_none]
+    split_ifs <;> ring
+  right_inv k := by
+    funext a
+    cases a with
+    | none => rfl
+    | some w =>
+        simp only [Option.elim_some]
+        split_ifs <;> ring
+
+/-- The value of a lifted covector on the exceptional class. -/
+@[simp]
+theorem blowUpCovectorEquiv_apply_none (k : V → ℤ) (ε : ℤ) :
+    blowUpCovectorEquiv v (k, ε) none = ε :=
+  (rfl)
+
+/-- The value of a lifted covector at an old vertex, corrected at the blown-up vertex. -/
+@[simp]
+theorem blowUpCovectorEquiv_apply_some (k : V → ℤ) (ε : ℤ) (w : V) :
+    blowUpCovectorEquiv v (k, ε) (some w) = k w - if w = v then ε else 0 :=
+  (rfl)
+
+/-- At the blown-up vertex the lifted covector is corrected by the exceptional value. -/
+theorem blowUpCovectorEquiv_apply_some_self (k : V → ℤ) (ε : ℤ) :
+    blowUpCovectorEquiv v (k, ε) (some v) = k v - ε := by
+  simp
+
+/-- Away from the blown-up vertex the lifted covector keeps its old values. -/
+theorem blowUpCovectorEquiv_apply_some_of_ne (k : V → ℤ) (ε : ℤ) {w : V} (h : w ≠ v) :
+    blowUpCovectorEquiv v (k, ε) (some w) = k w := by
+  simp [h]
+
+/-- The inverse identification reads off the value on the exceptional class and undoes the
+correction at the blown-up vertex. -/
+@[simp]
+theorem blowUpCovectorEquiv_symm_apply (k : Option V → ℤ) :
+    (blowUpCovectorEquiv v).symm k =
+      (fun w => k (some w) + (if w = v then k none else 0), k none) :=
+  (rfl)
+
+/-- The canonical characteristic covector of the blow-up is the canonical characteristic covector
+of `P` carrying the value `-1` on the exceptional class.
+
+This is the adjunction formula for a blow-up: the exceptional sphere has square `-1`, so
+`K(E) + E · E = -2` forces `K(E) = -1`. -/
+theorem blowUpCovectorEquiv_canonicalCharacteristic :
+    blowUpCovectorEquiv v (P.canonicalCharacteristic, -1) =
+      (P.blowUpVertex v).canonicalCharacteristic := by
+  funext a
+  cases a with
+  | none => simp
+  | some w =>
+      simp only [blowUpCovectorEquiv_apply_some, canonicalCharacteristic_apply,
+        blowUpVertex_weight_some]
+      split_ifs <;> ring
+
+/-- A lifted covector is characteristic for the blow-up exactly when the covector it lifts is
+characteristic for `P` and its value on the exceptional class is odd.
+
+Oddness is the parity condition at the new `-1`-framed vertex; at an old vertex the correction
+`[w = v] ε` and the framing drop `[w = v]` cancel modulo two precisely because `ε` is odd. -/
+@[simp]
+theorem isCharacteristicVector_blowUpCovectorEquiv_iff (k : V → ℤ) (ε : ℤ) :
+    (P.blowUpVertex v).IsCharacteristicVector (blowUpCovectorEquiv v (k, ε)) ↔
+      P.IsCharacteristicVector k ∧ Odd ε := by
+  simp only [isCharacteristicVector_iff, Int.ModEq, Int.odd_iff]
+  constructor
+  · intro h
+    have hnone := h none
+    rw [blowUpCovectorEquiv_apply_none, blowUpVertex_weight_none] at hnone
+    refine ⟨fun w => ?_, by omega⟩
+    have hw := h (some w)
+    rcases eq_or_ne w v with rfl | hwv
+    · rw [blowUpCovectorEquiv_apply_some_self, blowUpVertex_weight_some_self] at hw
+      omega
+    · rw [blowUpCovectorEquiv_apply_some_of_ne (h := hwv),
+        blowUpVertex_weight_some_of_ne (h := hwv)] at hw
+      omega
+  · rintro ⟨hk, hε⟩ a
+    cases a with
+    | none => rw [blowUpCovectorEquiv_apply_none, blowUpVertex_weight_none]; omega
+    | some w =>
+        have hw := hk w
+        rcases eq_or_ne w v with rfl | hwv
+        · rw [blowUpCovectorEquiv_apply_some_self, blowUpVertex_weight_some_self]
+          omega
+        · rw [blowUpCovectorEquiv_apply_some_of_ne (h := hwv),
+            blowUpVertex_weight_some_of_ne (h := hwv)]
+          omega
+
+/-- Every characteristic covector of a blow-up is the lift of a characteristic covector of `P`
+carrying an odd value on the exceptional class. Together with
+`isCharacteristicVector_blowUpCovectorEquiv_iff` this parametrizes the characteristic covectors of
+a blow-up completely. -/
+theorem exists_blowUpCovectorEquiv_eq (k : (P.blowUpVertex v).characteristicVectors) :
+    ∃ (l : P.characteristicVectors) (ε : ℤ), Odd ε ∧
+      blowUpCovectorEquiv v (l.val, ε) = k.val := by
+  obtain ⟨p, hp⟩ := (blowUpCovectorEquiv v).surjective k.val
+  obtain ⟨hl, hε⟩ :=
+    (P.isCharacteristicVector_blowUpCovectorEquiv_iff v p.1 p.2).mp (hp ▸ k.property)
+  exact ⟨⟨p.1, hl⟩, p.2, hε, hp⟩
+
+/-- The characteristic covector of the blow-up of `P` at `v` determined by a characteristic
+covector `k` of `P` and an odd value `ε` on the exceptional class.
+
+Every odd exceptional value gives a characteristic covector; the canonical characteristic covector
+of a blow-up is the case `ε = -1` of `k` canonical, by
+`blowUpCharacteristic_canonicalCharacteristic`. Only the unit values `ε = ±1` make the extra term
+by which the blow-up changes the weight function nonnegative at every exceptional multiplicity;
+see `characteristicWeight_le_blowUpCharacteristic` in `Weight/BlowUp.lean`. -/
+def blowUpCharacteristic (k : P.characteristicVectors) (ε : ℤ) (hε : Odd ε) :
+    (P.blowUpVertex v).characteristicVectors :=
+  ⟨blowUpCovectorEquiv v (k.val, ε),
+    (P.isCharacteristicVector_blowUpCovectorEquiv_iff v k.val ε).mpr ⟨k.property, hε⟩⟩
+
+/-- The underlying covector of `blowUpCharacteristic` is the lift of the underlying covector. -/
+@[simp]
+theorem blowUpCharacteristic_val (k : P.characteristicVectors) (ε : ℤ) (hε : Odd ε) :
+    (P.blowUpCharacteristic v k ε hε).val = blowUpCovectorEquiv v (k.val, ε) :=
+  (rfl)
+
+/-- The canonical characteristic covector of a blow-up is the canonical characteristic covector of
+`P` with the unit `-1` on the exceptional class. -/
+theorem blowUpCharacteristic_canonicalCharacteristic :
+    P.blowUpCharacteristic v
+        ⟨P.canonicalCharacteristic, P.isCharacteristicVector_canonicalCharacteristic⟩ (-1)
+          (by norm_num) =
+      ⟨(P.blowUpVertex v).canonicalCharacteristic,
+        (P.blowUpVertex v).isCharacteristicVector_canonicalCharacteristic⟩ := by
+  refine Subtype.ext ?_
+  rw [blowUpCharacteristic_val]
+  simpa using P.blowUpCovectorEquiv_canonicalCharacteristic v
+
 section Lattice
 
 variable [Fintype V]
@@ -326,7 +524,7 @@ private theorem blowUpVertex_mulVec_apply_none (y : V → ℤ) (t : ℤ) :
   rw [Matrix.mulVec_apply_eq_sum, Fintype.sum_option]
   simp only [blowUpVertex_intersectionMatrix_none_none, blowUpVertex_intersectionMatrix_none_some,
     blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, ite_mul, one_mul, zero_mul,
-    Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   ring
 
 /-- The `some`-coordinates of the image of a lifted lattice point under the blown-up intersection
@@ -345,7 +543,7 @@ private theorem blowUpVertex_mulVec_apply_some (y : V → ℤ) (t : ℤ) (w : V)
   simp only [blowUpVertex_intersectionMatrix_some_none, blowUpVertex_intersectionMatrix_some_some,
     blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, hsplit]
   rw [Finset.sum_sub_distrib, ← Finset.mul_sum, Matrix.mulVec_apply_eq_sum]
-  simp only [ite_mul, one_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+  simp only [ite_mul, one_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   split_ifs <;> ring
 
 /-- **The blow-up splits the intersection form.** Under the total-transform identification
@@ -369,7 +567,19 @@ theorem intersectionForm_blowUpVertexEquiv (x y : V → ℤ) (s t : ℤ) :
   simp only [blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some,
     P.blowUpVertex_mulVec_apply_none v y t, P.blowUpVertex_mulVec_apply_some v y t, hterm]
   rw [Finset.sum_add_distrib, Finset.sum_ite_eq' Finset.univ v fun w => x w * t]
-  simp only [Finset.mem_univ, if_true]
+  simp only [Finset.mem_univ, ite_true]
+  ring
+
+/-- The two total-transform identifications are dual to one another: the pairing of the lifted
+covector `(k, ε)` against the lifted lattice point `(x, s)` is `⟨k, x⟩ + ε * s`. -/
+theorem sum_blowUpCovectorEquiv_mul_blowUpVertexEquiv (k x : V → ℤ) (ε s : ℤ) :
+    ∑ a, blowUpCovectorEquiv v (k, ε) a * blowUpVertexEquiv v (x, s) a =
+      (∑ w, k w * x w) + ε * s := by
+  rw [Fintype.sum_option]
+  simp only [blowUpCovectorEquiv_apply_none, blowUpCovectorEquiv_apply_some,
+    blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, sub_mul, ite_mul, zero_mul]
+  rw [Finset.sum_sub_distrib, Finset.sum_ite_eq' Finset.univ v fun w => ε * x w]
+  simp only [Finset.mem_univ, ite_true]
   ring
 
 /-- The exceptional class has self-intersection `-1`. -/

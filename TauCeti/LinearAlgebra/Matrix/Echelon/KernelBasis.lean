@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -131,7 +132,7 @@ theorem rowReduceMatrix_pivotColumn (i i' : Fin (rowReduce L).length) :
   rw [rowReduceMatrix_apply, pivotColumn_apply]
   rcases eq_or_ne i' i with rfl | hne
   · simpa using rowReduce_self L (List.get_mem _ _)
-  · rw [if_neg hne]
+  · rw [ite_eq_right hne]
     exact rowReduce_eq_zero_of_ne L (List.get_mem _ _) (List.get_mem _ _)
       (by simpa only [← pivotColumn_apply] using (pivotColumn_injective L).ne hne)
 
@@ -160,7 +161,7 @@ variable {L}
 theorem kernelVector_apply_of_isFreeColumn {c : Fin n} (hc : IsFreeColumn L c) (j : Fin n) :
     kernelVector L j c = if c = j then 1 else 0 := by
   rw [kernelVector_apply, sub_eq_self]
-  refine Finset.sum_eq_zero fun i _ => if_neg fun h => ?_
+  refine Finset.sum_eq_zero fun i _ => ite_eq_right fun h => ?_
   exact not_isFreeColumn_pivotColumn L i (h ▸ hc)
 
 /-- In a pivot column a kernel vector of a free column is the negated entry of the corresponding
@@ -170,9 +171,9 @@ theorem kernelVector_pivotColumn {j : Fin n} (hj : IsFreeColumn L j)
     (i : Fin (rowReduce L).length) :
     kernelVector L j (pivotColumn L i) = -rowReduceMatrix L i j := by
   have hne : pivotColumn L i ≠ j := fun h => not_isFreeColumn_pivotColumn L i (h ▸ hj)
-  rw [kernelVector_apply, if_neg hne, zero_sub, Finset.sum_eq_single i
-    (fun i' _ hne' => if_neg ((pivotColumn_injective L).ne hne'))
-    (fun h => absurd (Finset.mem_univ i) h), if_pos rfl]
+  rw [kernelVector_apply, ite_eq_right hne, zero_sub, Finset.sum_eq_single i
+    (fun i' _ hne' => ite_eq_right ((pivotColumn_injective L).ne hne'))
+    (fun h => absurd (Finset.mem_univ i) h), ite_eq_left rfl]
 
 /-- **Each reduced row annihilates each kernel vector.** -/
 theorem dotProduct_rowReduceMatrix_kernelVector (i : Fin (rowReduce L).length) (j : Fin n) :
@@ -185,7 +186,7 @@ theorem dotProduct_rowReduceMatrix_kernelVector (i : Fin (rowReduce L).length) (
       rowReduceMatrix L i j := by
     simp only [Finset.mul_sum, mul_ite, mul_zero]
     rw [Finset.sum_comm]
-    simp only [Finset.sum_ite_eq, Finset.mem_univ, if_true, rowReduceMatrix_pivotColumn]
+    simp only [Finset.sum_ite_eq, Finset.mem_univ, ite_true, rowReduceMatrix_pivotColumn]
     simp
   simp only [dotProduct, kernelVector_apply, mul_sub, Finset.sum_sub_distrib, h₁, h₂, sub_self]
 
@@ -260,7 +261,7 @@ theorem linearIndependent_kernelVector :
   rw [hcomp]
   refine linearIndependent_iff'.mpr fun s g hg j hj => ?_
   simpa only [Finset.sum_apply, Pi.smul_apply, Pi.single_apply, smul_eq_mul, mul_ite, mul_one,
-    mul_zero, Finset.sum_ite_eq, if_pos hj, Pi.zero_apply] using congrFun hg j
+    mul_zero, Finset.sum_ite_eq, ite_eq_left hj, Pi.zero_apply] using congrFun hg j
 
 /-- **Every vector in the kernel is the sum of the kernel vectors of the free columns**, with its
 own values in the free columns as coefficients. -/
@@ -275,9 +276,9 @@ theorem eq_sum_smul_kernelVector_of_mulVec_eq_zero {v : Fin n → F} (hv : A *�
   · rw [Finset.sum_eq_single (⟨c, hc⟩ : {j : Fin n // IsFreeColumn L j})
       (fun j _ hne => by
         rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc,
-          if_neg fun h => hne (Subtype.ext h.symm), smul_zero])
+          ite_eq_right fun h => hne (Subtype.ext h.symm), smul_zero])
       (fun h => absurd (Finset.mem_univ _) h)]
-    rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc, if_pos rfl, smul_eq_mul, mul_one]
+    rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc, ite_eq_left rfl, smul_eq_mul, mul_one]
   obtain ⟨i, rfl⟩ := (not_isFreeColumn_iff L).mp hc
   have hfree : ∑ c ∈ Finset.univ.filter (IsFreeColumn L), rowReduceMatrix L i c * v c =
       ∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 :=
@@ -403,8 +404,8 @@ theorem nodup_kernelBasis : (kernelBasis A).Nodup := by
   have hjfree : IsFreeColumn (List.ofFn A) j := by simpa using (List.mem_filter.mp hj).2
   by_contra hne
   have := congrFun h j
-  rw [kernelVector_apply_of_isFreeColumn hjfree, if_pos rfl,
-    kernelVector_apply_of_isFreeColumn hjfree, if_neg hne] at this
+  rw [kernelVector_apply_of_isFreeColumn hjfree, ite_eq_left rfl,
+    kernelVector_apply_of_isFreeColumn hjfree, ite_eq_right hne] at this
   exact one_ne_zero this
 
 /-- **The algorithm returns `n - rank` vectors**: the rank-nullity theorem, counted off the

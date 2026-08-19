@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -95,10 +96,10 @@ theorem left_notMem_cIoo (a b : Fin n) : a ∉ cIoo a b := by
   rw [mem_cIoo] at ha
   by_cases hab : a.val < b.val
   · have hinside : a.val < a.val ∧ a.val < b.val := by
-      simpa only [hab, if_true] using ha.2
+      simpa only [hab, ite_true] using ha.2
     exact Nat.lt_irrefl a.val hinside.1
   · have hinside : a.val < a.val ∨ a.val < b.val := by
-      simpa only [hab, if_false] using ha.2
+      simpa only [hab, ite_false] using ha.2
     cases hinside with
     | inl hlt => exact Nat.lt_irrefl a.val hlt
     | inr hlt => exact hab hlt
@@ -109,10 +110,10 @@ theorem right_notMem_cIoo (a b : Fin n) : b ∉ cIoo a b := by
   rw [mem_cIoo] at hb
   by_cases hab : a.val < b.val
   · have hinside : a.val < b.val ∧ b.val < b.val := by
-      simpa only [hab, if_true] using hb.2
+      simpa only [hab, ite_true] using hb.2
     exact Nat.lt_irrefl b.val hinside.2
   · have hinside : a.val < b.val ∨ b.val < b.val := by
-      simpa only [hab, if_false] using hb.2
+      simpa only [hab, ite_false] using hb.2
     cases hinside with
     | inl hlt => exact hab hlt
     | inr hlt => exact Nat.lt_irrefl b.val hlt

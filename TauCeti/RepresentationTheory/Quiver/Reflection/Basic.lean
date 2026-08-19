@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -37,6 +38,8 @@ and sources in finite acyclic quivers are proved in
 ## Main results
 
 * `TauCeti.Quiver.IsSink.isSource_reflect`: reflecting at a sink turns it into a source.
+* `TauCeti.Quiver.IsSink.path_self_eq_nil`: a closed path at a sink is the trivial one, with
+  `TauCeti.Quiver.IsSource.path_self_eq_nil` its dual.
 * `TauCeti.Quiver.hom_reflect_reflect`: reflecting twice at the same vertex restores the original
   arrows, so reflection at a vertex is an involution.
 
@@ -107,6 +110,22 @@ theorem IsSink.eq_of_path {i b : V} (h : IsSink i) (p : Path i b) : i = b := by
 
 /-- A path into a source is trivial, so it starts where it ends. -/
 theorem IsSource.eq_of_path {i a : V} (h : IsSource i) (p : Path a i) : a = i := by
+  cases p with
+  | nil => rfl
+  | cons _ e => exact (h.isEmpty_hom _).elim e
+
+/-- A closed path at a sink is the trivial one: its last arrow would have to be a loop at the
+sink. This is the form `TauCeti.Quiver.IsSink.eq_of_path` takes once its conclusion has been
+substituted, and it is what says that a sink acts on a representation only through the identity. -/
+theorem IsSink.path_self_eq_nil {i : V} (h : IsSink i) (p : Path i i) : p = Path.nil := by
+  cases p with
+  | nil => rfl
+  | cons q e =>
+    obtain rfl := h.eq_of_path q
+    exact h.isEmpty_hom_self.elim e
+
+/-- A closed path at a source is the trivial one. -/
+theorem IsSource.path_self_eq_nil {i : V} (h : IsSource i) (p : Path i i) : p = Path.nil := by
   cases p with
   | nil => rfl
   | cons _ e => exact (h.isEmpty_hom _).elim e

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -55,7 +56,11 @@ the irreducibility it yields.
 
 * `TauCeti.YoungTableau.smul_tabloid_eq_self_iff`: the stabilizer of the tabloid of `t` is the row
   group of `t`.
+* `TauCeti.YoungTableau.tabloid_eq_iff_rowIndex_eq`: two tableaux have the same tabloid exactly when
+  they put every label in the same row.
 * `TauCeti.YoungTableau.polytabloid_relabel`: relabeling translates the polytabloid.
+* `TauCeti.YoungTableau.polytabloid_coeff_eq_zero_of_forall_ne`: only the tabloids reachable from
+  `{t}` by a column permutation occur in `e_t`.
 * `TauCeti.YoungTableau.polytabloid_ne_zero` and
   `TauCeti.YoungTableau.tabloidForm_polytabloid_self`: polytabloids are nonzero, and the tabloid
   form pairs one with itself to the order of the column group.
@@ -123,6 +128,21 @@ element of the row group of `t`. -/
 theorem smul_tabloid_eq_iff {t : YoungTableau μ} {σ τ : Equiv.Perm (Fin μ.card)} :
     σ • tabloid t = τ • tabloid t ↔ σ⁻¹ * τ ∈ rowSubgroup t := by
   rw [← smul_tabloid_eq_self_iff, mul_smul, inv_smul_eq_iff, eq_comm]
+
+/-- **Two tableaux have the same tabloid exactly when they put every label in the same row.** -/
+@[simp]
+theorem tabloid_eq_iff_rowIndex_eq {t u : YoungTableau μ} :
+    tabloid t = tabloid u ↔ rowIndex t = rowIndex u := by
+  obtain ⟨σ, rfl⟩ := exists_relabel_eq t u
+  rw [tabloid_relabel, eq_comm, smul_tabloid_eq_self_iff, mem_rowSubgroup]
+  constructor
+  · intro hσ
+    funext k
+    simpa using hσ (σ⁻¹ k)
+  · intro hσ k
+    have hk := congrFun hσ (σ k)
+    rw [rowIndex_relabel] at hk
+    simpa using hk
 
 /-- Distinct elements of the column group of `t` move the tabloid of `t` to distinct tabloids: the
 column group meets the row group, which is the stabilizer, only in the identity. -/
@@ -203,6 +223,17 @@ theorem polytabloid_coeff_tabloid (t : YoungTableau μ) :
     (polytabloid t).coeff (tabloid t) = 1 := by
   have h := polytabloid_coeff_smul_tabloid t 1
   simpa using h
+
+/-- Only the tabloids reachable from `{t}` by a column permutation occur in the polytabloid
+`e_t`. -/
+theorem polytabloid_coeff_eq_zero_of_forall_ne (t : YoungTableau μ)
+    {X : Equiv.Perm (Fin μ.card) ⧸ youngSubgroup (shapePartition μ)}
+    (h : ∀ q ∈ colSubgroup t, q • tabloid t ≠ X) : (polytabloid t).coeff X = 0 := by
+  classical
+  rw [polytabloid_eq_sum, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
+  refine Finset.sum_eq_zero fun q _ => ?_
+  have hne := h (q : Equiv.Perm (Fin μ.card)) q.2
+  simp [MonoidAlgebra.coeff_single, hne]
 
 /-- Polytabloids are nonzero. -/
 @[simp]

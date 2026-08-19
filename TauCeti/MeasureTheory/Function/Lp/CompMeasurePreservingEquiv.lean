@@ -1,11 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Cadence
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.MeasureTheory.Function.LpSpace.Basic
+public import Mathlib.MeasureTheory.Function.LpSpace.ContinuousFunctions
 
 /-!
 # `L^p` isometric equivalences from an almost-everywhere inverse pair
@@ -34,6 +34,8 @@ inverse has that inverse on both sides.
 * `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv` and
   `MeasureTheory.Lp.coeFn_compMeasurePreservingₗᵢEquiv_symm` identify the equivalence and its
   inverse with precomposition by `f` and by `g` respectively.
+* `MeasureTheory.Lp.compMeasurePreserving_toLp` identifies precomposition on the `Lp` class of a
+  continuous function with ordinary composition of continuous maps.
 
 This construction generalizes the by-hand equivalence
 `TauCeti.chebyshevCosineL2Equiv`
@@ -74,6 +76,22 @@ theorem compMeasurePreserving_comp_apply_of_ae_id {α β E : Type*} [MeasurableS
   rw [compMeasurePreserving_val,
     AEEqFun.compMeasurePreserving_congr _ _ measurable_id hfg,
     AEEqFun.compMeasurePreserving_id]
+
+/-- Precomposition of the `Lp` class of a continuous function by a measure-preserving continuous
+map is the `Lp` class of the composite continuous function. -/
+@[simp]
+theorem compMeasurePreserving_toLp {α β E : Type*} [TopologicalSpace α] [CompactSpace α]
+    [MeasurableSpace α] [BorelSpace α] [TopologicalSpace β] [CompactSpace β] [MeasurableSpace β]
+    [BorelSpace β] [NormedAddCommGroup E] [SecondCountableTopologyEither α E]
+    [SecondCountableTopologyEither β E] {μ : Measure α} {μb : Measure β} [IsFiniteMeasure μ]
+    [IsFiniteMeasure μb] {p : ℝ≥0∞} [Fact (1 ≤ p)] (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E]
+    [IsBoundedSMul 𝕜 E] (F : C(β, E)) (φ : C(α, β)) (hφ : MeasurePreserving φ μ μb) :
+    compMeasurePreserving φ hφ (ContinuousMap.toLp p μb 𝕜 F) =
+      ContinuousMap.toLp p μ 𝕜 (F.comp φ) := by
+  refine Lp.ext ((coeFn_compMeasurePreserving _ hφ).trans ?_)
+  exact (hφ.quasiMeasurePreserving.ae_eq_comp
+    (ContinuousMap.coeFn_toLp (𝕜 := 𝕜) (p := p) μb F)).trans
+      (ContinuousMap.coeFn_toLp (𝕜 := 𝕜) (p := p) μ (F.comp φ)).symm
 
 /-- **The `L^p` isometric equivalence induced by an almost-everywhere inverse pair of
 measure-preserving maps.**

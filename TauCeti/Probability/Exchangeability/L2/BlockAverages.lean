@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -97,14 +98,14 @@ private theorem sum_sum_cov_eq (hX : Contractable μ X)
     intro i j
     by_cases hij : i = j
     · subst hij
-      rw [if_pos rfl, covariance_self (hmeas _), hX.variance_coord_eq (hmeas _) (hmeas 0)]
+      rw [ite_eq_left rfl, covariance_self (hmeas _), hX.variance_coord_eq (hmeas _) (hmeas 0)]
       ring
-    · rw [if_neg hij, hX.covariance_eq_of_ne (hmeas _) (hmeas _) (hmeas 0) (hmeas 1)
+    · rw [ite_eq_right hij, hX.covariance_eq_of_ne (hmeas _) (hmeas _) (hmeas 0) (hmeas 1)
         (fun h => hij (hk h)) (by norm_num)]
       ring
   simp_rw [hcov]
   simp only [Finset.sum_add_distrib, Finset.sum_const, Finset.sum_ite_eq, Finset.mem_univ,
-    if_true, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    ite_true, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
   ring
 
 /-- **The variance of a block average of a contractable L² sequence.** For a contractable

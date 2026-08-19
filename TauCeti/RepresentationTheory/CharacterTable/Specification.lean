@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -267,9 +268,9 @@ theorem exists_eq_characterTable : ∃ j, ∀ C, M i C = characterTable ℂ G j 
   -- Both rows have self-pairing `1`, so the two constants of proportionality have equal squares.
   have hsum := sq_mul_sum_mul_conj_eq_of_mul_eq_mul (G := G) key
   have hMii := hM.row_orthonormal i i
-  rw [if_pos rfl] at hMii
+  rw [ite_eq_left rfl] at hMii
   have hTjj := card_inv_mul_sum_card_conjClass_mul_characterTable_mul_conj j j
-  rw [if_pos rfl] at hTjj
+  rw [ite_eq_left rfl] at hTjj
   rw [((inv_mul_eq_one₀ hG).mp hMii).symm, ((inv_mul_eq_one₀ hG).mp hTjj).symm] at hsum
   have hsq : characterDegree ℂ j ^ 2 = d ^ 2 := by
     have := mul_right_cancel₀ hG hsum
@@ -311,9 +312,9 @@ theorem characterTable_unique_rows (hM : IsCharacterTableSpec G M) :
     by_contra hne
     have hrow : M j = M i := funext fun C => by rw [hτ j C, hτ i C, hij]
     have h₀ := hM.row_orthonormal i j
-    rw [if_neg hne, hrow] at h₀
+    rw [ite_eq_right hne, hrow] at h₀
     have h₁ := hM.row_orthonormal i i
-    rw [if_pos rfl] at h₁
+    rw [ite_eq_left rfl] at h₁
     exact one_ne_zero (h₁.symm.trans h₀)
   exact ⟨Equiv.ofBijective τ (Finite.injective_iff_bijective.mp hinj),
     Matrix.ext fun i C => hτ i C⟩

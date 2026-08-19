@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix
+public import TauCeti.LinearAlgebra.RootSystem.Coxeter.Matrix
 
 public section
 
@@ -30,7 +31,7 @@ which express `(r₁r₂)ⁿ` over an arbitrary commutative ring through the Che
 two reflections of a root pairing, read as elements of the Weyl group. Substituting `c = 1, 2, 3`,
 that is `t = -1, 0, 1`, makes the two Chebyshev coefficients of the general formula vanish at the
 exponents `3`, `4`, `6`, which gives `g³ = 1`, `g⁴ = 1`, `g⁶ = 1`; the remaining value `c = 0` is
-the orthogonal case, already settled in `TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix`, where the
+the orthogonal case, already settled in `TauCeti.LinearAlgebra.RootSystem.Coxeter.Matrix`, where the
 two reflections commute, and where the order is pinned to `2` only for two distinct simple roots of
 a base.
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -12,11 +13,11 @@ public import Mathlib.Dynamics.Ergodic.Extreme
 -- Non-public: the zero-one input for the i.i.d. direction and the comparison between invariant
 -- and exchangeable events.
 import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
-import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
+import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 -- Non-public: exchangeable path laws are shift-preserving.
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
 -- Non-public: a zero-one law on `ProbabilityMeasure α` is Dirac.
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 -- Non-public: mixture injectivity identifies the conditioned mixing law with `π`.
 import TauCeti.MeasureTheory.Measure.MixtureInjective
 

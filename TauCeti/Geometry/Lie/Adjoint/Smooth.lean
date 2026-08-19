@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -22,7 +23,9 @@ This advances Deliverable A, Layer 1 of
 
 * `TauCeti.Lie.contMDiff_adjointContinuousLinearMap`: the adjoint operator depends smoothly on the
   group element.
-* `TauCeti.Lie.contMDiff_tangentAd_apply`: the joint action `(g, X) ↦ tangentAd g X` is smooth.
+* `TauCeti.Lie.contMDiff_tangentAd_apply`: the bundled tangent adjoint action is jointly smooth.
+* `TauCeti.Lie.contMDiff_tangentAd_apply_const`: the bundled tangent adjoint action on a fixed model
+  vector is smooth in the group element.
 
 ## References
 
@@ -83,16 +86,10 @@ theorem contMDiff_adjointContinuousLinearMap :
   let f : G → G → G := fun g ↦ conjDiffeomorph (I := I) (n := 1) g
   let c : G → G := fun _ ↦ 1
   have hf : CMDiffAt ∞ (Function.uncurry f) (g, c g) := by
-    have h := contMDiff_smul (I := I) (I' := I) (n := ∞)
-      (G := ConjAct G) (M := G) (ConjAct.toConjAct g, c g)
-    -- `ConjAct G` is a type synonym carrying definitionally the topology and charts of `G`, and
-    -- its scalar action is definitionally conjugation. Since `contMDiff_smul` exposes the domain
-    -- as `ConjAct G × G`, crossing that wrapper requires this definitional reduction.
-    change CMDiffAt ∞ (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹) (g, c g) at h
     rw [show Function.uncurry f = fun p : G × G ↦ p.1 * p.2 * p.1⁻¹ by
       funext p
       exact conjDiffeomorph_apply p.1 p.2]
-    exact h
+    exact contMDiff_conj_prod (I := I) (n := ∞) _
   have h := hf.mfderiv (m := ∞) f c contMDiffAt_const (by simp)
   have hfc : (fun x ↦ f x (c x)) = c := by
     funext x
@@ -122,19 +119,28 @@ theorem contMDiff_adjointContinuousLinearMap :
   exact cancel_inCoordinates_at (I := I) (M := G) (x := 1)
     (ϕ := mfderiv I I (f x) 1)
 
-/-- The tangent adjoint action is jointly smooth in the group element and tangent vector. -/
+/-- The bundled tangent adjoint action is jointly smooth in the group element and model vector. -/
 theorem contMDiff_tangentAd_apply :
     ContMDiff (I.prod 𝓘(ℝ, E)) 𝓘(ℝ, E) ∞
       (fun p : G × E ↦
         show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) := by
-  -- `GroupLieAlgebra I G` is definitionally the model `E`; these ascriptions expose the model on
-  -- both sides so the continuous-linear-map application theorem can be used.
+  -- `GroupLieAlgebra I G` definitionally reduces to the model space `E`; expose that model-space
+  -- presentation so the continuous-linear-map smoothness API applies.
   rw [show (fun p : G × E ↦
       show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) =
-      fun p ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2 by
+    fun p ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2 by
     funext p
     exact tangentAd_apply (I := I) p.1 p.2]
   exact ((contMDiff_adjointContinuousLinearMap (I := I) (G := G)).comp contMDiff_fst).clm_apply
     contMDiff_snd
+
+/-- The bundled tangent adjoint action on a fixed model vector is smooth in the group element. -/
+theorem contMDiff_tangentAd_apply_const (Y : E) :
+    ContMDiff I 𝓘(ℝ, E) ∞
+      (fun g : G ↦ show E from tangentAd (I := I) g (Y : GroupLieAlgebra I G)) := by
+  -- `GroupLieAlgebra I G` definitionally reduces to the model space `E`; expose that model-space
+  -- presentation when specializing the jointly smooth action to `Y`.
+  exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp
+    (contMDiff_id.prodMk contMDiff_const)
 
 end TauCeti.Lie

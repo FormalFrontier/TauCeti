@@ -70,12 +70,12 @@ noncomputable def resToImagAxis (F : ℍ → ℂ) : ℝ → ℂ :=
 /-- The characteristic equation of `resToImagAxis` on its domain of interest. -/
 @[simp]
 theorem resToImagAxis_of_pos (F : ℍ → ℂ) {t : ℝ} (ht : 0 < t) :
-    resToImagAxis F t = F ⟨Complex.I * t, by simpa using ht⟩ := dif_pos ht
+    resToImagAxis F t = F ⟨Complex.I * t, by simpa using ht⟩ := dite_eq_left ht
 
 /-- Off the positive axis the restriction is `0` by convention. -/
 @[simp]
 theorem resToImagAxis_of_nonpos (F : ℍ → ℂ) {t : ℝ} (ht : t ≤ 0) :
-    resToImagAxis F t = 0 := dif_neg (not_lt.mpr ht)
+    resToImagAxis F t = 0 := dite_eq_right (not_lt.mpr ht)
 
 /-! ### The restriction commutes with the pointwise operations
 

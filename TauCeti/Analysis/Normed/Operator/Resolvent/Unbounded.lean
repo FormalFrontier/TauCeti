@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -60,6 +61,8 @@ Two bridges keep this from being a parallel universe.
 * `TauCeti.LinearPMap.mem_resolventSet_of_norm_mul_lt_one` and
   `TauCeti.LinearPMap.isOpen_resolventSet`: the Neumann-series perturbation of a
   resolvent point, and the openness of the resolvent set it gives.
+* `TauCeti.LinearPMap.eq_of_le_of_mem_resolventSet`: an operator has no proper extension
+  sharing a resolvent point.
 * `TauCeti.LinearPMap.mem_resolventSet_toPMap_top_iff` and
   `TauCeti.LinearPMap.resolvent_toPMap_top`: the bounded bridge.
 
@@ -203,6 +206,27 @@ theorem apply_resolvent (h : lambda ∈ resolventSet A) (y : X) :
 theorem smul_sub_bijective (h : lambda ∈ resolventSet A) :
     Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
   (isResolventAt_resolvent h).smul_sub_bijective
+
+/-- **An operator has no proper extension sharing a resolvent point.** If `A ≤ B` and some
+`lambda` lies in the resolvent set of both, then `A = B`.
+
+A vector `y ∈ D(B)` has `lambda • y - B y = lambda • x - A x` for a unique `x ∈ D(A)`, by
+surjectivity for `A`; injectivity for `B` then forces `y = x`, so `D(B) ⊆ D(A)`.
+
+This is the step that upgrades "`A` is a restriction of the generator" to "`A` *is* the
+generator" in the generation theorems. -/
+theorem eq_of_le_of_mem_resolventSet {A B : X →ₗ.[ℝ] X} (hAB : A ≤ B)
+    (hA : lambda ∈ resolventSet A) (hB : lambda ∈ resolventSet B) : A = B := by
+  refine LinearPMap.eq_of_le_of_domain_eq hAB (le_antisymm hAB.1 fun y hy => ?_)
+  obtain ⟨x, hx⟩ := (smul_sub_bijective hA).surjective (lambda • y - B ⟨y, hy⟩)
+  obtain ⟨x', hx'coe, hx'val⟩ := LinearPMap.exists_of_le hAB x
+  have hxy : x' = (⟨y, hy⟩ : B.domain) := by
+    refine (smul_sub_bijective hB).injective ?_
+    simp only [← hx'coe, ← hx'val]
+    exact hx
+  have hcoe : (x : X) = y := by rw [hx'coe, hxy]
+  rw [← hcoe]
+  exact x.property
 
 /-- The resolvent commutes with `A` on `D(A)`: `R(lambda) (A x) = A (R(lambda) x)`. -/
 theorem resolvent_apply_comm (h : lambda ∈ resolventSet A) (x : A.domain) :

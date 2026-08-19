@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -22,7 +23,7 @@ labels as the column is long.  Summing over the columns of `t`, the cells of `ν
 rows -- of which there are exactly `min k (colLen j)` in column `j` -- already accommodate `X`,
 so `μ₁ + ⋯ + μ_k ≤ ν₁ + ⋯ + ν_k`.
 
-The counting core `TauCeti.YoungDiagram.card_filter_le_sum_take_rowLens` is stated for an
+The counting core `YoungDiagram.card_filter_le_sum_take_rowLens` is stated for an
 arbitrary finite index type carrying a row function and an injection into the cells: this is what
 the tableau statement, where the index type is the set of labels, unfolds to, and it keeps the
 counting free of any tableau bookkeeping.  The lemma is the combinatorial engine behind the
@@ -33,7 +34,7 @@ below holds.
 
 ## Main results
 
-* `TauCeti.YoungDiagram.card_filter_le_sum_take_rowLens`: the counting core.
+* `YoungDiagram.card_filter_le_sum_take_rowLens`: the counting core.
 * `TauCeti.YoungTableau.sum_take_rowLens_le_of_injective`: the dominance lemma for two tableaux.
 * `TauCeti.dominates_of_rowIndex_colIndex_injective`: the dominance lemma for partitions.
 * `TauCeti.exists_ne_rowIndex_eq_colIndex_eq_of_not_dominates`: its contrapositive, producing two
@@ -48,8 +49,6 @@ below holds.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace YoungDiagram
 
@@ -95,6 +94,8 @@ theorem card_filter_le_sum_take_rowLens {α : Type*} [Fintype α] (lam : YoungDi
       ⟨(_root_.YoungDiagram.mem_cells _).mp (hmem a), (hfib a ha).2⟩
 
 end YoungDiagram
+
+namespace TauCeti
 
 namespace YoungTableau
 

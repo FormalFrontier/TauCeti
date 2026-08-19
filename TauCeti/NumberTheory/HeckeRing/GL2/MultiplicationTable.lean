@@ -67,10 +67,10 @@ lemma heckeTScalar_mul_heckeTDiag (c a d : ℕ) :
   · simp [heckeTScalar_def, heckeTDiag_def]
   by_cases hcond : 0 < a ∧ 0 < d ∧ a ∣ d
   · exact heckeTScalar_mul_heckeTDiag_of_pos hc hcond.1 hcond.2.1 hcond.2.2
-  · have hzero : heckeTDiag a d = 0 := by rw [heckeTDiag_def]; exact if_neg hcond
+  · have hzero : heckeTDiag a d = 0 := by rw [heckeTDiag_def]; exact ite_eq_right hcond
     have hzero' : heckeTDiag (c * a) (c * d) = 0 := by
       rw [heckeTDiag_def]
-      refine if_neg fun h ↦ hcond ⟨?_, ?_, ?_⟩
+      refine ite_eq_right fun h ↦ hcond ⟨?_, ?_, ?_⟩
       · rcases Nat.eq_zero_or_pos a with rfl | ha
         · simp at h
         · exact ha
@@ -149,12 +149,7 @@ private lemma first_invariant_dvd_p_of_product (p : ℕ) (S : SpecialLinearGroup
   have hRadj : R_ℤ * R_ℤ.adjugate = 1 := by rw [Matrix.mul_adjugate, R.prop, one_smul]
   have hM_eq : M = L_ℤ.adjugate * Matrix.diagonal (fun i ↦ (a i : ℤ)) * R_ℤ.adjugate :=
     matrix_isolate_middle L_ℤ M R_ℤ _ hLadj hRadj (by
-      have hre : L_ℤ * M * R_ℤ = L_ℤ * dp * S_ℤ * dpk * R_ℤ := by
-        ext i j
-        simp only [M, S_ℤ, Matrix.mul_apply, Fin.sum_univ_two]
-        ring
-      rw [hre]
-      exact heq)
+      simpa only [M, mul_assoc] using heq)
   have h_dvd_entry : ∀ i j : Fin 2, (a 0 : ℤ) ∣ M i j := by
     intro i j
     rw [hM_eq]
@@ -174,13 +169,7 @@ private lemma first_invariant_dvd_p_of_product (p : ℕ) (S : SpecialLinearGroup
   have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) := S.isCoprime_col 0
   have h1 : (a 0 : ℤ) ∣ S_ℤ 0 0 := h_M00 ▸ h_dvd_entry 0 0
   have h2 : (a 0 : ℤ) ∣ (p : ℤ) * S_ℤ 1 0 := h_M10 ▸ h_dvd_entry 1 0
-  have h_cop_a : IsCoprime ((a 0 : ℤ)) (S_ℤ 1 0) := by
-    obtain ⟨u, v, huv⟩ := h_cop
-    obtain ⟨t, ht⟩ := h1
-    refine ⟨u * t, v, ?_⟩
-    have hshuffle : u * t * (a 0 : ℤ) = u * ((a 0 : ℤ) * t) := by ring
-    rw [hshuffle, ← ht]
-    exact huv
+  have h_cop_a : IsCoprime (a 0 : ℤ) (S_ℤ 1 0) := h_cop.of_isCoprime_of_dvd_left h1
   exact_mod_cast h_cop_a.dvd_of_dvd_mul_right h2
 
 /-- Determinant balance: if a `T(1,p) · T(1,pᵏ)`-shaped product lies in the double coset
@@ -302,11 +291,11 @@ private lemma multiplicity_degree_sum_eq (D₁ D₂ Dout₁ Dout₂ : HeckeCoset
     rw [HeckeCosetModule.structureConstants_apply, HeckeCosetModule.add_apply,
       HeckeCosetModule.single_apply, HeckeCosetModule.single_apply]
     by_cases h1 : Dout₁ = A
-    · rw [if_pos h1, if_neg (h1 ▸ fun h ↦ hne h.symm), add_zero, ← h1]
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1, ite_eq_right (h1 ▸ fun h ↦ hne h.symm), add_zero, ← h1]
+    · rw [ite_eq_right h1]
       by_cases h2 : Dout₂ = A
-      · rw [if_pos h2, zero_add, ← h2]
-      · rw [if_neg h2, add_zero,
+      · rw [ite_eq_left h2, zero_add, ← h2]
+      · rw [ite_eq_right h2, add_zero,
           hzero A (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm), Nat.cast_zero]
   have h1 : LeftCosetModule.deg Δ H ℤ
       (HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1) =
@@ -341,12 +330,9 @@ private lemma mulSupport_pp_subset (k : ℕ)
       (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
     A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
   classical
-  -- Mathlib's `det_mapGL` is about the *unit* determinant `(mapGL ℚ S).det : ℚˣ`, while every
-  -- goal below is about the matrix determinant `(↑(mapGL ℚ S)).det : ℚ`. This is the bridge
-  -- between the two, used four times in the determinant bookkeeping of stage 4.
-  have hdet : ∀ S : SpecialLinearGroup (Fin 2) ℤ, (mapGL ℚ S).val.det = 1 := fun S ↦ by
-    simpa only [Matrix.GeneralLinearGroup.val_det_apply, Units.val_one] using
-      congrArg Units.val (Matrix.SpecialLinearGroup.det_mapGL (S := ℚ) S)
+  -- the matrix determinant of an `SL₂(ℤ)` element, used four times in stage 4's bookkeeping
+  have hdet : ∀ S : SpecialLinearGroup (Fin 2) ℤ, (mapGL ℚ S).val.det = 1 := fun S ↦
+    det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).2 ⟨S, rfl⟩)
   -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
   have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
     fin_cases i <;> simp [hp.pos]
@@ -625,12 +611,12 @@ theorem heckeT_prime_mul_heckeTDiag_one_prime_pow (k : ℕ) :
   rw [hsmul, HeckeCosetModule.single_apply, HeckeCosetModule.single_apply]
   by_cases h1 : diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ) = A
   · have h12 : diagCoset (![p, p ^ k] : Fin 2 → ℕ) ≠ A := fun h ↦ hne (h1.trans h.symm)
-    rw [if_pos h1, if_neg h12, mul_zero, add_zero, ← h1, hm1, Nat.cast_one]
-  · rw [if_neg h1]
+    rw [ite_eq_left h1, ite_eq_right h12, mul_zero, add_zero, ← h1, hm1, Nat.cast_one]
+  · rw [ite_eq_right h1]
     by_cases h2 : diagCoset (![p, p ^ k] : Fin 2 → ℕ) = A
-    · rw [if_pos h2, mul_one, zero_add, ← h2, hm2]
+    · rw [ite_eq_left h2, mul_one, zero_add, ← h2, hm2]
       split_ifs <;> push_cast <;> ring
-    · rw [if_neg h2, mul_zero, add_zero,
+    · rw [ite_eq_right h2, mul_zero, add_zero,
         hzero A (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm), Nat.cast_zero]
 
 end SupportSubset

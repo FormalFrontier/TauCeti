@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -128,7 +128,7 @@ theorem zPart_partition (σ : Equiv.Perm α) :
   have hcount : ∀ i ∈ m.toFinset, σ.partition.parts.count i = m.count i := by
     intro i hi
     have hne : (1 : ℕ) ≠ i := fun h => h1 (h ▸ Multiset.mem_toFinset.mp hi)
-    rw [hparts, Multiset.count_add, Multiset.count_replicate, if_neg hne, add_zero]
+    rw [hparts, Multiset.count_add, Multiset.count_replicate, ite_eq_right hne, add_zero]
   have hcount_one : σ.partition.parts.count 1 = k := by
     rw [hparts, Multiset.count_add, Multiset.count_eq_zero_of_notMem h1,
       Multiset.count_replicate_self, zero_add]

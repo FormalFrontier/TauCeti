@@ -5,9 +5,11 @@ Pure logic only: the GitHub-reading helpers in core and the label writes in labe
 these run with no network and no `gh`. Run with:  python3 -m unittest test_pr_labels
 """
 
+import json
 import os
 import sys
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -162,11 +164,18 @@ class DerivedLabel(unittest.TestCase):
         self.assertEqual(self.label(ci=None), "awaiting-CI")
         self.assertEqual(self.label(ci="running"), "awaiting-CI")
 
-    def test_ci_failure_is_awaiting_author(self):
-        self.assertEqual(self.label(ci="failure"), "awaiting-author")
+    def test_ci_failure_is_ci_failed(self):
+        self.assertEqual(self.label(ci="failure"), "ci-failed")
 
     def test_green_changes_is_awaiting_author(self):
         self.assertEqual(self.label(ci="success", review="changes"), "awaiting-author")
+
+    def test_a_red_build_outranks_the_review_verdict(self):
+        # Both states want the author, but they are told apart on purpose: a red build is read in the
+        # build log and a changes request in the review threads. A PR that is red AND has a changes
+        # request shows ci-failed, because nothing about the review can be trusted until it builds.
+        self.assertEqual(self.label(ci="failure", review="changes"), "ci-failed")
+        self.assertEqual(self.label(ci="failure", review="approved"), "ci-failed")
 
     def test_green_approved_is_ready(self):
         self.assertEqual(self.label(ci="success", review="approved"), "ready-to-merge")
@@ -182,7 +191,7 @@ class DerivedLabel(unittest.TestCase):
     def test_marker_only_overlays_the_awaiting_review_slot(self):
         # A live marker never overrides a more important state.
         self.assertEqual(self.label(ci="running", inprogress=True), "awaiting-CI")
-        self.assertEqual(self.label(ci="failure", inprogress=True), "awaiting-author")
+        self.assertEqual(self.label(ci="failure", inprogress=True), "ci-failed")
         self.assertEqual(self.label(ci="success", review="changes", inprogress=True), "awaiting-author")
         self.assertEqual(self.label(ci="success", review="approved", inprogress=True), "ready-to-merge")
 
@@ -284,6 +293,55 @@ class Reconcile(unittest.TestCase):
         labels.reconcile("1")
         self.assertEqual(self.added, [])
         self.assertEqual(sorted(self.removed), ["ready-to-merge", "review-in-progress"])
+
+
+class EnsureLabel(unittest.TestCase):
+    """A label is created once and then lives forever, so ensure_label has to keep an EXISTING
+    label's colour and description in step with LABELS -- otherwise editing a description here
+    would never reach GitHub and the live label would go on describing behaviour we changed."""
+
+    def setUp(self):
+        self._run = labels._run
+        self.calls = []
+        self.probe = None
+        labels._run = self.fake_run
+
+    def tearDown(self):
+        labels._run = self._run
+
+    def fake_run(self, args):
+        self.calls.append(args)
+        if args[0].startswith("/repos/") and len(args) == 1:      # the GET probe
+            if self.probe is None:
+                return SimpleNamespace(returncode=1, stdout="", stderr="gh: Not Found (HTTP 404)")
+            return SimpleNamespace(returncode=0, stdout=json.dumps(self.probe), stderr="")
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    def methods(self):
+        return [args[1] for args in self.calls if args[0] == "--method"]
+
+    def test_absent_label_is_created(self):
+        labels.ensure_label("ci-failed")
+        self.assertEqual(self.methods(), ["POST"])
+
+    def test_matching_label_is_left_alone(self):
+        color, description = labels.LABELS["ci-failed"]
+        self.probe = {"color": color, "description": description}
+        labels.ensure_label("ci-failed")
+        self.assertEqual(self.methods(), [])
+
+    def test_drifted_description_is_patched(self):
+        color, _ = labels.LABELS["awaiting-author"]
+        self.probe = {"color": color, "description": "The build failed or a review requested changes"}
+        labels.ensure_label("awaiting-author")
+        self.assertEqual(self.methods(), ["PATCH"])
+
+    def test_an_unreadable_probe_body_never_breaks_the_add(self):
+        labels._run = lambda args: (
+            self.calls.append(args)
+            or SimpleNamespace(returncode=0, stdout="not json", stderr="")
+        )
+        labels.ensure_label("ci-failed")   # must not raise; presentation is cosmetic
 
 
 if __name__ == "__main__":

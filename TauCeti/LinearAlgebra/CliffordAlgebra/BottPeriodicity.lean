@@ -1,24 +1,36 @@
 /-
 Copyright (c) 2026 Tau Ceti Project. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Tau Ceti Project
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.RealForm
+public import TauCeti.LinearAlgebra.CliffordAlgebra.SignSwitch
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
+
+import Mathlib.LinearAlgebra.Matrix.Unique
 
 /-!
 # Hyperbolic Bott periodicity for real Clifford algebras
 
-This file proves the `(1, 1)` periodicity step for Clifford algebras. Adding one positive and one
-negative generator is equivalent to tensoring with two-by-two real matrices.
+This file proves the `(1, 1)` periodicity step for Clifford algebras: adding one positive and one
+negative generator is equivalent to tensoring with two-by-two real matrices. It also derives the
+signature-switch recurrence `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)` from
+`CliffordAlgebra.signSwitchEquiv`.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
-  real quadratic module tensors its Clifford algebra with `M₂(ℝ)`.
+* `CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
+  real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
+* `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms;
+* `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
+  size `2 ^ n` after adjoining `n` hyperbolic planes;
+* `TauCeti.realCliffordSignatureReductionEquiv`: the reduction of a standard signature by its
+  common positive and negative part;
+* `TauCeti.realCliffordSignatureSwitchRecurrenceEquiv`: the recurrence which switches a real
+  signature while adding two positive generators.
 
 ## References
 
@@ -32,7 +44,7 @@ public section
 open Module QuadraticMap
 open scoped Matrix TensorProduct
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {M : Type*} [AddCommGroup M] [Module ℝ M]
 variable (Q : QuadraticForm ℝ M)
@@ -410,4 +422,193 @@ theorem hyperbolicEquivTensor_symm_apply_ι_hyperbolic
   rw [AlgEquiv.apply_symm_apply, hyperbolicEquivTensor_ι]
   simp
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra
+
+namespace TauCeti
+
+/-- The hyperbolic Bott step for the standard real signature forms:
+`Cliff(p + 1, q + 1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
+noncomputable def realCliffordBottEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + 1) (q + 1)) ≃ₐ[ℝ]
+      (_root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ) :=
+  (_root_.CliffordAlgebra.equivOfIsometry (realBottSplitIsometry p q)).trans
+    (CliffordAlgebra.hyperbolicEquivTensor (realCliffordForm p q))
+
+/-- `realCliffordBottEquiv` first separates the last positive and negative coordinates, then
+applies the hyperbolic-plane equivalence. -/
+@[simp]
+theorem realCliffordBottEquiv_ι (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    realCliffordBottEquiv p q (_root_.CliffordAlgebra.ι _ v) =
+      _root_.CliffordAlgebra.ι (realCliffordForm p q)
+          (realBottSplitIsometry p q v).1 ⊗ₜ[ℝ] !![0, 1; 1, 0] +
+        1 ⊗ₜ[ℝ]
+          !![(realBottSplitIsometry p q v).2 0, (realBottSplitIsometry p q v).2 1;
+             -(realBottSplitIsometry p q v).2 1, -(realBottSplitIsometry p q v).2 0] := by
+  rw [realCliffordBottEquiv, AlgEquiv.trans_apply,
+    _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι,
+    CliffordAlgebra.hyperbolicEquivTensor_ι]
+  rfl
+
+/-! ### Iterated hyperbolic reduction -/
+
+private def tensorMatrixMulEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
+    (m n : ℕ) :
+    (A ⊗[R] Matrix (Fin m) (Fin m) R) ⊗[R] Matrix (Fin n) (Fin n) R ≃ₐ[R]
+      A ⊗[R] Matrix (Fin (m * n)) (Fin (m * n)) R :=
+  (Algebra.TensorProduct.assoc R R R A
+      (Matrix (Fin m) (Fin m) R) (Matrix (Fin n) (Fin n) R)).trans
+    (Algebra.TensorProduct.congr (AlgEquiv.refl : A ≃ₐ[R] A)
+      ((Matrix.kroneckerAlgEquiv (Fin m) (Fin n) R).trans
+        (Matrix.reindexAlgEquiv R R finProdFinEquiv)))
+
+private def tensorMatrixOneEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A] :
+    A ≃ₐ[R] A ⊗[R] Matrix (Fin 1) (Fin 1) R :=
+  ((Matrix.uniqueAlgEquiv (R := R) (A := A) (m := Unit)).symm.trans
+      (Matrix.reindexAlgEquiv R A (Equiv.ofUnique Unit (Fin 1)))).trans
+    (matrixEquivTensor (Fin 1) R A)
+
+private noncomputable def realCliffordBottIterEquivImpl (p q : ℕ) : (n : ℕ) →
+    _root_.CliffordAlgebra (realCliffordForm (p + n) (q + n)) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+        Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ
+  | 0 => by
+      simpa using tensorMatrixOneEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q))
+  | n + 1 =>
+      (realCliffordBottEquiv (p + n) (q + n)).trans
+        ((Algebra.TensorProduct.congr (realCliffordBottIterEquivImpl p q n)
+          (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans
+            (tensorMatrixMulEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q)) (2 ^ n) 2))
+
+/-- Iterating the hyperbolic Bott step `n` times identifies
+`Cliff(p + n, q + n)` with `Cliff(p, q) ⊗ M_(2 ^ n)(ℝ)`. -/
+@[irreducible]
+noncomputable def realCliffordBottIterEquiv (p q n : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + n) (q + n)) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+        Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ :=
+  realCliffordBottIterEquivImpl p q n
+
+private noncomputable def castRealCliffordMatrixEquiv
+    {p q p' q' r s r' s' n n' : ℕ}
+    (hp : p = p') (hq : q = q') (hr : r = r') (hs : s = s') (hn : n = n')
+    (e : _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm r s) ⊗[ℝ]
+        Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ) :
+    _root_.CliffordAlgebra (realCliffordForm p' q') ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm r' s') ⊗[ℝ]
+        Matrix (Fin (2 ^ n')) (Fin (2 ^ n')) ℝ :=
+  hp ▸ hq ▸ hr ▸ hs ▸ hn ▸ e
+
+/-- Removing the common positive and negative part of a real Clifford signature leaves a
+one-sided signature and a matrix factor of size `2 ^ min p q`. -/
+noncomputable def realCliffordSignatureReductionEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm (p - min p q) (q - min p q)) ⊗[ℝ]
+        Matrix (Fin (2 ^ min p q)) (Fin (2 ^ min p q)) ℝ :=
+  castRealCliffordMatrixEquiv
+    (Nat.sub_add_cancel (Nat.min_le_left p q))
+    (Nat.sub_add_cancel (Nat.min_le_right p q)) rfl rfl rfl
+    (realCliffordBottIterEquiv (p - min p q) (q - min p q) (min p q))
+
+/-- If `p ≤ q`, reducing the common part of a real Clifford signature leaves only negative
+generators. -/
+noncomputable def realCliffordNegativeAxisReductionEquiv (p q : ℕ) (h : p ≤ q) :
+    _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm 0 (q - p)) ⊗[ℝ]
+        Matrix (Fin (2 ^ p)) (Fin (2 ^ p)) ℝ :=
+  castRealCliffordMatrixEquiv rfl rfl (by simp [Nat.min_eq_left h])
+    (by simp [Nat.min_eq_left h]) (Nat.min_eq_left h)
+    (realCliffordSignatureReductionEquiv p q)
+
+/-- If `q ≤ p`, reducing the common part of a real Clifford signature leaves only positive
+generators. -/
+noncomputable def realCliffordPositiveAxisReductionEquiv (p q : ℕ) (h : q ≤ p) :
+    _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm (p - q) 0) ⊗[ℝ]
+        Matrix (Fin (2 ^ q)) (Fin (2 ^ q)) ℝ :=
+  castRealCliffordMatrixEquiv rfl rfl (by simp [Nat.min_eq_right h])
+    (by simp [Nat.min_eq_right h]) (Nat.min_eq_right h)
+    (realCliffordSignatureReductionEquiv p q)
+
+/-- At zero iterations, `realCliffordBottIterEquiv` is the canonical identification with a
+one-by-one matrix tensor factor. -/
+@[simp]
+theorem realCliffordBottIterEquiv_zero_apply (p q : ℕ)
+    (x : _root_.CliffordAlgebra (realCliffordForm p q)) :
+    let e : _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+        _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+          Matrix (Fin 1) (Fin 1) ℝ := realCliffordBottIterEquiv p q 0
+    e x = x ⊗ₜ[ℝ] (1 : Matrix (Fin 1) (Fin 1) ℝ) := by
+  unfold realCliffordBottIterEquiv
+  -- Expose the zero branch of the private recursive implementation.
+  change tensorMatrixOneEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q)) x = _
+  rw [tensorMatrixOneEquiv, AlgEquiv.trans_apply, matrixEquivTensor_apply,
+    Fintype.sum_prod_type, Fin.sum_univ_one, Fin.sum_univ_one]
+  -- The unfolded tensor equivalence leaves the unique matrix unit to identify with `1`.
+  change x ⊗ₜ[ℝ] Matrix.single 0 0 1 = x ⊗ₜ[ℝ] 1
+  congr 1
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp
+
+/-- The successor iteration first applies one hyperbolic Bott step, transports the previous
+iteration through the left tensor factor, and absorbs the two matrix factors by the Kronecker
+equivalence. -/
+@[simp]
+theorem realCliffordBottIterEquiv_succ (p q n : ℕ) :
+    realCliffordBottIterEquiv p q (n + 1) =
+      (realCliffordBottEquiv (p + n) (q + n)).trans
+        ((Algebra.TensorProduct.congr (realCliffordBottIterEquiv p q n)
+          (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans
+          ((Algebra.TensorProduct.assoc ℝ ℝ ℝ
+              (_root_.CliffordAlgebra (realCliffordForm p q))
+              (Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ)
+              (Matrix (Fin 2) (Fin 2) ℝ)).trans
+            (Algebra.TensorProduct.congr
+              (AlgEquiv.refl : _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ] _)
+              ((Matrix.kroneckerAlgEquiv (Fin (2 ^ n)) (Fin 2) ℝ).trans
+                (Matrix.reindexAlgEquiv ℝ ℝ finProdFinEquiv))))) := by
+  unfold realCliffordBottIterEquiv
+  rw [realCliffordBottIterEquivImpl]
+  rfl
+
+/-! ### Signature-switch recurrence -/
+
+/-- One sign switch followed by the hyperbolic Bott step gives the signature-switch recurrence
+`Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)`. -/
+noncomputable def realCliffordSignatureSwitchRecurrenceEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + 1 + 1) q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm q p) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ :=
+  (_root_.CliffordAlgebra.equivOfIsometry
+    (realCliffordPositiveSplitIsometry (p + 1) q)).trans
+    ((CliffordAlgebra.signSwitchEquiv (realCliffordForm (p + 1) q)).trans
+      ((_root_.CliffordAlgebra.equivOfIsometry
+        (realCliffordSignSwitchStandardIsometry (p + 1) q)).trans
+          (realCliffordBottEquiv q p)))
+
+/-- The signature-switch recurrence sends a Clifford generator through its two coordinate
+isometries and the sign-switch generator formula, then transports the result through
+`realCliffordBottEquiv q p`. -/
+@[simp]
+theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
+    (v : Fin ((p + 1 + 1) + q) → ℝ) :
+    realCliffordSignatureSwitchRecurrenceEquiv p q (_root_.CliffordAlgebra.ι _ v) =
+      realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+        (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) *
+        realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+          (realCliffordSignSwitchStandardIsometry (p + 1) q
+            ((realCliffordPositiveSplitIsometry (p + 1) q v).1, 0))) +
+          (realCliffordPositiveSplitIsometry (p + 1) q v).2 •
+            realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+              (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) := by
+  simp only [realCliffordSignatureSwitchRecurrenceEquiv, AlgEquiv.trans_apply,
+    _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι, AlgEquiv.trans_apply,
+    CliffordAlgebra.signSwitchEquiv_ι, map_add, map_mul, map_smul,
+    AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry_apply]
+
+end TauCeti

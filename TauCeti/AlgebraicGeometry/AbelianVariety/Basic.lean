@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -10,6 +11,7 @@ public import Mathlib.AlgebraicGeometry.Group.Abelian
 public import Mathlib.AlgebraicGeometry.Group.Smooth
 public import Mathlib.AlgebraicGeometry.Geometrically.Connected
 public import Mathlib.Topology.KrullDimension
+public import TauCeti.AlgebraicGeometry.RationalPoint.Basic
 
 /-!
 # Abelian varieties
@@ -32,12 +34,23 @@ hypotheses we derive:
 * `AbelianVariety.isIntegral`: the underlying scheme is integral;
 * `AbelianVariety.smooth` and `AbelianVariety.geometricallyConnected`: the roadmap's geometric
   hypotheses derived from geometric integrality;
+* `AbelianVariety.isLocallyNoetherian`: the underlying scheme is locally Noetherian, since the
+  structure morphism is locally of finite type; this is what makes the tangent space at the
+  identity finite-dimensional downstream;
 * `AbelianVariety.dim`: the topological Krull dimension of the underlying scheme;
 * `AbelianVariety.ofGeometricallyIntegral`: a constructor from the geometrically integral package
   used by Mathlib's rigidity theorem;
 * `AbelianVariety.baseChange`: the base change of an abelian variety along a field extension
   `K → L` is again an abelian variety, since properness and geometric integrality are stable under
   base change and the monoidal pullback functor carries the group-object structure.
+
+The unit of the group law is a `K`-rational point, so the file also records the identity-point
+interface used by every later construction at the identity — the zero section
+`AbelianVariety.zeroSection`, the identity point `AbelianVariety.zeroPoint`, and the resulting
+identification `AbelianVariety.zeroResidueFieldRingEquiv : κ(0) ≃+* K` of the residue field there
+with the ground field, with its `K`-algebra instance. These specialize the rational-point API of
+`TauCeti.AlgebraicGeometry.RationalPoint.Basic` at the unit section; the tangent space built on
+them lives in `TauCeti.AlgebraicGeometry.AbelianVariety.TangentSpace`.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, "Abelian variety = smooth,
 proper, geometrically connected group scheme over `k`; basic API ... Commutativity is automatic
@@ -114,6 +127,10 @@ instance smooth (A : AbelianVariety K) : Smooth A.toOver.hom := by
   have : GrpObj (Over.mk A.toOver.hom) := inferInstanceAs (GrpObj A.toOver)
   exact smooth_of_grpObj A.toOver.hom
 
+/-- The underlying scheme of an abelian variety is locally Noetherian. -/
+instance isLocallyNoetherian (A : AbelianVariety K) : IsLocallyNoetherian A.toScheme :=
+  LocallyOfFiniteType.isLocallyNoetherian A.toOver.hom
+
 /-- An abelian variety is geometrically connected over the base field. -/
 instance geometricallyConnected (A : AbelianVariety K) :
     GeometricallyConnected A.toOver.hom :=
@@ -131,6 +148,71 @@ one-point base `Spec K` descends to absolute integrality. In particular the unde
 nonempty, irreducible, and reduced. -/
 instance isIntegral (A : AbelianVariety K) : IsIntegral A.toScheme :=
   GeometricallyIntegral.isIntegral_of_subsingleton A.toOver.hom
+
+/-! ### The identity point
+
+The unit of the group law is a section `Spec K ⟶ A` of the structure morphism, so it is a
+`K`-rational point of `A` and the residue field there is canonically the ground field. Following
+the additive convention for abelian varieties, these carry the `zero` stem. -/
+
+/-- The zero section `Spec K ⟶ A` of an abelian variety, that is, the unit of its group law. -/
+noncomputable abbrev zeroSection (A : AbelianVariety K) : Spec (.of K) ⟶ A.toScheme :=
+  η[A.toOver].left
+
+/-- The zero section is a section of the structure morphism of `A`. -/
+lemma zeroSection_comp_toOver_hom (A : AbelianVariety K) :
+    A.zeroSection ≫ A.toOver.hom = 𝟙 (Spec (.of K)) := by
+  simpa only [Over.tensorUnit_hom] using η[A.toOver].w
+
+/-- The identity point `0` of an abelian variety, obtained by evaluating the zero section at the
+unique point of `Spec K`. Its implementation is kept opaque; use `zeroPoint_def` to rewrite it
+explicitly. -/
+noncomputable def zeroPoint (A : AbelianVariety K) : A.toScheme :=
+  A.zeroSection (IsLocalRing.closedPoint K)
+
+/-- The identity point is the value of the zero section. Not a simp lemma: the simp normal form
+of the structure morphism at the identity point is `toOver_hom_zeroPoint`, whose left-hand side
+this equation would rewrite. -/
+lemma zeroPoint_def (A : AbelianVariety K) :
+    A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) :=
+  (rfl)
+
+/-- The structure morphism sends the identity point to the unique point of `Spec K`. -/
+@[simp]
+lemma toOver_hom_zeroPoint (A : AbelianVariety K) :
+    A.toOver.hom A.zeroPoint = IsLocalRing.closedPoint K := by
+  rw [zeroPoint_def]
+  exact section_apply (zeroSection_comp_toOver_hom A) (IsLocalRing.closedPoint K)
+
+/-- The residue field of an abelian variety at its identity is canonically the ground field `K`,
+through the evaluation map of the zero section. -/
+noncomputable def zeroResidueFieldRingEquiv (A : AbelianVariety K) :
+    IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint) ≃+* K :=
+  residueFieldRingEquivOfSection (zeroSection_comp_toOver_hom A)
+
+/-- `zeroResidueFieldRingEquiv` is the evaluation map of the identity point. The argument is
+transported explicitly from `zeroPoint` to the value of the zero section. -/
+@[simp]
+lemma zeroResidueFieldRingEquiv_apply (A : AbelianVariety K)
+    (z : IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :
+    A.zeroResidueFieldRingEquiv z =
+      A.toScheme.descResidueField (Scheme.stalkClosedPointTo A.zeroSection)
+        (A.zeroPoint_def ▸ z) := by
+  exact residueFieldRingEquivOfSection_apply (zeroSection_comp_toOver_hom A)
+    (A.zeroPoint_def ▸ z)
+
+/-- The residue field at the identity is a `K`-algebra through `zeroResidueFieldRingEquiv`. -/
+noncomputable instance algebraZeroResidueField (A : AbelianVariety K) :
+    Algebra K (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :=
+  A.zeroResidueFieldRingEquiv.symm.toRingHom.toAlgebra
+
+/-- The structure map of the `K`-algebra `κ(0)` is the inverse of
+`zeroResidueFieldRingEquiv`. -/
+@[simp]
+lemma algebraMap_zeroResidueField (A : AbelianVariety K) (k : K) :
+    algebraMap K (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) k =
+      A.zeroResidueFieldRingEquiv.symm k := by
+  rw [RingHom.algebraMap_toAlgebra, RingEquiv.toRingHom_eq_coe, RingEquiv.coe_toRingHom]
 
 /-- A constructor for abelian varieties from Mathlib's geometrically integral package. -/
 noncomputable def ofGeometricallyIntegral (G : Over (Spec (.of K))) [GrpObj G]

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -49,8 +50,13 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [NormedSpace ℝ V] [Norm
   [SMulCommClass ℝ 𝕜 V]
 
 /-- Averaging a continuous vector-valued function against normalized Haar measure, as a
-continuous linear map. -/
-noncomputable def haarAverage [CompleteSpace V] : C(G, V) →L[𝕜] V :=
+continuous linear map.
+
+`V` is not assumed complete, so this is the Bochner integral's junk value `0` unless it is: the
+definition and its linear structure need no completeness, and the lemmas below that talk about the
+average's actual value (`haarAverage_const`, `norm_haarAverage_eq_one`, and everything reached
+through `haarAverage_comp_comm`) ask for `[CompleteSpace V]` precisely because they do. -/
+noncomputable def haarAverage : C(G, V) →L[𝕜] V :=
   LinearMap.mkContinuous
     { toFun := fun f ↦ ∫ g, f g ∂haarProb G
       map_add' := fun f h ↦ integral_add
@@ -66,17 +72,17 @@ noncomputable def haarAverage [CompleteSpace V] : C(G, V) →L[𝕜] V :=
 Not a `simp` lemma: `haarAverage` is the normal form here, so that the constant, translation
 and inversion lemmas below can be `simp` lemmas. Unfold explicitly with `rw`/`simp` when the
 underlying integral is wanted. -/
-theorem haarAverage_apply [CompleteSpace V] (f : C(G, V)) :
+theorem haarAverage_apply (f : C(G, V)) :
     haarAverage G (𝕜 := 𝕜) f = ∫ g, f g ∂haarProb G :=
   (rfl)
 
 /-- The operator norm of Haar averaging is at most one. -/
-theorem norm_haarAverage_le_one [CompleteSpace V] :
+theorem norm_haarAverage_le_one :
     ‖haarAverage G (𝕜 := 𝕜) (V := V)‖ ≤ 1 :=
   LinearMap.mkContinuous_norm_le _ zero_le_one _
 
 /-- Haar averaging is norm-nonincreasing for the uniform norm on continuous maps. -/
-theorem norm_haarAverage_apply_le [CompleteSpace V] (f : C(G, V)) :
+theorem norm_haarAverage_apply_le (f : C(G, V)) :
     ‖haarAverage G (𝕜 := 𝕜) f‖ ≤ ‖f‖ := by
   simpa using (haarAverage G (𝕜 := 𝕜) (V := V)).le_of_opNorm_le (norm_haarAverage_le_one G) f
 
@@ -100,7 +106,7 @@ theorem norm_haarAverage_eq_one [Nontrivial V] [CompleteSpace V] :
 
 /-- Haar averaging is unchanged by left translation of the argument. -/
 @[simp]
-theorem haarAverage_comp_mulLeft [CompleteSpace V] (f : C(G, V)) (g : G) :
+theorem haarAverage_comp_mulLeft (f : C(G, V)) (g : G) :
     haarAverage G (𝕜 := 𝕜) (f.comp (ContinuousMap.mulLeft g)) =
       haarAverage G (𝕜 := 𝕜) f := by
   simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
@@ -109,7 +115,7 @@ theorem haarAverage_comp_mulLeft [CompleteSpace V] (f : C(G, V)) (g : G) :
 
 /-- Haar averaging is unchanged by right translation of the argument. -/
 @[simp]
-theorem haarAverage_comp_mulRight [CompleteSpace V] (f : C(G, V)) (g : G) :
+theorem haarAverage_comp_mulRight (f : C(G, V)) (g : G) :
     haarAverage G (𝕜 := 𝕜) (f.comp (ContinuousMap.mulRight g)) =
       haarAverage G (𝕜 := 𝕜) f := by
   simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,
@@ -118,7 +124,7 @@ theorem haarAverage_comp_mulRight [CompleteSpace V] (f : C(G, V)) (g : G) :
 
 /-- Haar averaging is unchanged by inversion of the argument. -/
 @[simp]
-theorem haarAverage_comp_inv [CompleteSpace V] (f : C(G, V)) :
+theorem haarAverage_comp_inv (f : C(G, V)) :
     haarAverage G (𝕜 := 𝕜) (f.comp (Homeomorph.inv G : C(G, G))) =
       haarAverage G (𝕜 := 𝕜) f := by
   simp only [haarAverage_apply, ContinuousMap.coe_comp, Function.comp_apply,

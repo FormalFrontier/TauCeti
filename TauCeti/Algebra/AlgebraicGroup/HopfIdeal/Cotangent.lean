@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -104,7 +105,10 @@ noncomputable def quotientCotangentMap (I : HopfIdeal k H) :
       (Bialgebra.AugmentationIdeal k H)
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
       (Algebra.ofId H (H ⧸ I.toIdeal))
-      (augmentationIdeal_le_comap_quotient I)).restrictScalars k
+      (by
+        intro x hx
+        rw [Ideal.mem_comap, Algebra.ofId_apply]
+        exact augmentationIdeal_le_comap_quotient I hx)).restrictScalars k
 
 /-- The quotient cotangent map sends the class of an augmentation-ideal element to the class of
 its image in the quotient. -/
@@ -115,13 +119,16 @@ theorem quotientCotangentMap_toCotangent (I : HopfIdeal k H)
         ((Bialgebra.AugmentationIdeal k H).toCotangent x) =
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).toCotangent
         ⟨algebraMap H (H ⧸ I.toIdeal) x, by
-          simpa [Bialgebra.AugmentationIdeal, RingHom.mem_ker] using x.property⟩ := by
-  rw [quotientCotangentMap]
-  exact Ideal.mapCotangent_toCotangent
-    (Bialgebra.AugmentationIdeal k H)
-    (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
-    (Algebra.ofId H (H ⧸ I.toIdeal))
-    (augmentationIdeal_le_comap_quotient I) x
+          have hx : Coalgebra.counit (R := k) (x : H) = 0 := x.property
+          rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
+          simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+            Ideal.Quotient.algebraMap_eq, Bialgebra.counitAlgHom_apply,
+            Bialgebra.Quotient.counit_mk] using hx⟩ := by
+  rw [quotientCotangentMap, LinearMap.restrictScalars_apply,
+    Ideal.mapCotangent_toCotangent]
+  apply (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).toCotangent.congr_arg
+  ext
+  exact Algebra.ofId_apply (H ⧸ I.toIdeal) (x : H)
 
 /-- The quotient cotangent map sends the first-order displacement of `x` to the first-order
 displacement of its quotient class. -/
@@ -236,8 +243,20 @@ theorem finrank_quotientLie_add_finrank_conormal (I : HopfIdeal k H)
         Module.finrank k (conormalSubspace I) =
       Module.finrank k
         (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
-  simpa only [Derivation.finrank_eq_finrank_cotangentSpace] using
-    finrank_quotientCotangent_add_finrank_conormal I
+  have hquotient :
+      Module.finrank k
+          (Derivation k (H ⧸ I.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) =
+        Module.finrank k (Bialgebra.CotangentSpace k (H ⧸ I.toIdeal)) :=
+    Derivation.finrank_eq_finrank_cotangentSpace
+      (k := k) (H := H ⧸ I.toIdeal)
+  have hambient :
+      Module.finrank k
+          (Derivation k H (Bialgebra.CounitAlgebra k H k)) =
+        Module.finrank k (Bialgebra.CotangentSpace k H) :=
+    Derivation.finrank_eq_finrank_cotangentSpace (k := k) (H := H)
+  rw [hquotient, hambient]
+  exact finrank_quotientCotangent_add_finrank_conormal I
 
 end Field
 

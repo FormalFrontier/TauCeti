@@ -130,7 +130,7 @@ theorem coeff_eq_meromorphicPolarCoeffAt (decomp : PolarPartDecomposition f S U)
     rw [h_f, decomp.polarPart_eq s z, hg_def]
     ring
   have h_wit := laurent_coeff_eq_meromorphicPolarCoeffAt hMero h_g_cont h_exp k.val
-  rwa [dif_pos k.isLt, dif_pos (h_ord ▸ k.isLt)] at h_wit
+  rwa [dite_eq_left k.isLt, dite_eq_left (h_ord ▸ k.isLt)] at h_wit
 
 end PolarPartDecomposition
 
@@ -183,15 +183,15 @@ theorem ConditionB.pow_unit_tangent_eq_of_coeff_ne_zero {γ : ℝ → ℂ} {a b 
   rw [h_eq] at h_sec
   obtain ⟨N', a', g', hg', h_exp, h_reso⟩ := h_sec.laurent_compatible
   have h_wit := laurent_coeff_eq_meromorphicPolarCoeffAt hMero hg'.continuousAt h_exp k.val
-  rw [dif_pos (show k.val < meromorphicPolarOrderAt f ↑s from h_ord ▸ k.isLt)] at h_wit
+  rw [dite_eq_left (show k.val < meromorphicPolarOrderAt f ↑s from h_ord ▸ k.isLt)] at h_wit
   have h_ne : meromorphicPolarCoeffAt hMero ⟨k.val, h_ord ▸ k.isLt⟩ ≠ 0 := h_can ▸ hc
   by_cases hkN : k.val < N'
-  · rw [dif_pos hkN] at h_wit
+  · rw [dite_eq_left hkN] at h_wit
     obtain ⟨m, hm⟩ := h_reso ⟨k.val, hkN⟩ (fun h0 => h_ne (h_wit ▸ h0)) hk1
     exact pow_unit_tangent_eq_of_resonance
       (tendsto_deriv_ne_zero_right h_imm ht_Ioo hR)
       (tendsto_deriv_ne_zero_left h_imm ht_Ioo hL) hR hL ⟨m, hm⟩
-  · rw [dif_neg hkN] at h_wit
+  · rw [dite_eq_right hkN] at h_wit
     exact absurd h_wit.symm h_ne
 
 end TauCeti.Contour

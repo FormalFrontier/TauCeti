@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,6 +11,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 -- the path-law transfer, and the machinery the symmetry transport runs on.
 -- Public: `directingProbabilityMeasure` names the witness in the exported statement.
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
+import TauCeti.Probability.DeFinetti.DirectingMeasure.BlockCylinder
 import TauCeti.Probability.DeFinetti.BlockFactorization
 import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
 import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
@@ -98,38 +99,9 @@ private theorem measure_inter_blockCylinder_eq_setLIntegral
     μ ((directingProbabilityMeasure μ X ⁻¹' S)
         ∩ blockCylinder X (fun i : Fin r => (i : ℕ)) B)
       = ∫⁻ ω in directingProbabilityMeasure μ X ⁻¹' S,
-          ∏ i, directingMeasure μ X ω (B i) ∂μ := by
-  classical
-  have hTail : tailProcess X ≤ ‹MeasurableSpace Ω› :=
-    tailProcess_le_ambient 0 fun j _ => hX_meas j
-  have : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
-  set A : Set Ω := directingProbabilityMeasure μ X ⁻¹' S with hA_def
-  have hA_tail : MeasurableSet[tailProcess X] A :=
-    measurable_tailProcess_directingProbabilityMeasure hS
-  have hA : MeasurableSet A := hTail _ hA_tail
-  have hg_int : Integrable (fun ω => ∏ i, (directingMeasure μ X ω).real (B i)) μ :=
-    integrable_prod_directingMeasure_real hTail hB
-  have hind_int : Integrable (blockIndicatorProd X (fun i : Fin r => (i : ℕ)) B) μ :=
-    integrable_blockIndicatorProd (fun i => (hX_meas _).aemeasurable) hB
-  -- the conditional factorization, tested against the tail event `A`
-  have hchain : ∫ ω in A, blockIndicatorProd X (fun i : Fin r => (i : ℕ)) B ω ∂μ
-      = ∫ ω in A, ∏ i, (directingMeasure μ X ω).real (B i) ∂μ := by
-    rw [← setIntegral_condExp hTail hind_int hA_tail]
-    refine setIntegral_congr_ae hA ?_
-    filter_upwards
-      [condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure hX hX_meas hB] with ω hω _
-    exact hω
-  -- The left side is the real mass of the intersection, via the public block-indicator integral
-  -- read against the restricted measure.
-  have hleft : ∫ ω in A, blockIndicatorProd X (fun i : Fin r => (i : ℕ)) B ω ∂μ
-      = μ.real (A ∩ blockCylinder X (fun i : Fin r => (i : ℕ)) B) := by
-    rw [integral_blockIndicatorProd (μ := μ.restrict A) (fun i => (hX_meas _).aemeasurable) hB,
-      blockLaw_blockCylinder X (fun i => (hX_meas _).aemeasurable) hB,
-      Measure.restrict_apply (measurableSet_blockCylinder (fun i => hX_meas _) hB),
-      Set.inter_comm, measureReal_def]
-  have hne : μ (A ∩ blockCylinder X (fun i : Fin r => (i : ℕ)) B) ≠ ⊤ := measure_ne_top μ _
-  rw [← ENNReal.ofReal_toReal hne, ← measureReal_def, ← hleft, hchain,
-    ofReal_integral_eq_lintegral_prod_directingMeasure hg_int.restrict]
+          ∏ i, directingMeasure μ X ω (B i) ∂μ :=
+  measure_inter_blockCylinder_eq_setLIntegral_of_condExp hX_meas hB
+    (condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure hX hX_meas hB) hS
 
 -- A finitely supported reindexing pulls the prefix cylinder back to the `k`-cylinder, once the
 -- permutation realises `k` on the initial segment. This is a set identity: no measure, no
@@ -173,7 +145,6 @@ private theorem measure_inter_blockCylinder_eq_setLIntegral_of_injective
         ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
       = ∫⁻ ω in directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S,
           ∏ i, directingMeasure μ (fun j (x : ℕ → α) => x j) ω (B i) ∂μ := by
-  classical
   have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
   obtain ⟨π, hπfin, hπval⟩ := Equiv.Perm.exists_finite_compl_fixedBy_apply_eq
     (⟨Fin.val, Fin.val_injective⟩ : Fin m ↪ ℕ) ⟨k, hk⟩

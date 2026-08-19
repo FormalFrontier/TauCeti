@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
 public import TauCeti.Geometry.Manifold.DerivationBundle
-public import TauCeti.Geometry.Lie.InvariantVectorField
+public import TauCeti.Geometry.Lie.InvariantVectorField.Basic
 
 /-!
 # Evaluation of left-invariant derivations
@@ -94,8 +95,8 @@ theorem contMDiff_mvfderiv_mulInvariantVectorField
     (f : C^∞⟮I, G; 𝕜⟯) :
     ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
       (fun g ↦ mvfderiv I f g (mulInvariantVectorField v g)) :=
-  f.contMDiff.contMDiff_mvfderiv_apply
-    (contMDiff_mulInvariantVectorField_infty v) (by simp)
+  (f.contMDiff.contMDiff_mvfderiv_apply (by simp)).comp
+    (contMDiff_mulInvariantVectorField_infty v)
 
 /-- The derivation of smooth functions that differentiates along the left-invariant vector
 field of a tangent vector `v` at the identity. -/
@@ -186,7 +187,7 @@ noncomputable def tangentToLeftInvariantDerivation
     change mvfderiv I f 1 (mulInvariantVectorField (v + w) 1) =
       mvfderiv I f 1 (mulInvariantVectorField v 1) +
         mvfderiv I f 1 (mulInvariantVectorField w 1)
-    simp
+    simp only [mulInvariantVectorField_add, Pi.add_apply, map_add]
   map_smul' c v := by
     apply LeftInvariantDerivation.evalAt_one_injective
     ext f

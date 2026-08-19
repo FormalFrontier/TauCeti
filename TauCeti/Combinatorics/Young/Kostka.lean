@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.Combinatorics.Young.SemistandardTableau
 public import Mathlib.Data.Finsupp.Multiset
 public import Mathlib.SetTheory.Cardinal.Finite
 public import TauCeti.Combinatorics.Enumerative.Partition.Conjugate
+public import TauCeti.Combinatorics.Young.SemistandardTableau
 
 /-!
 # Kostka numbers
@@ -21,7 +23,7 @@ the tableau of shape `μ` whose `i`-th row consists of `i`s is the only one of c
 `∑_{i < k} w i` to be at most the corresponding partial sum of the row lengths of `μ` (so, for
 partitions, `K_{μ ν} = 0` unless `μ` dominates `ν`).
 
-The mechanism behind both is a single observation, `TauCeti.SemistandardYoungTableau.le_entry`: the
+The mechanism behind both is a single observation, `SemistandardYoungTableau.le_entry`: the
 entries of a semistandard tableau strictly increase down each column, so the entry in row `i` is at
 least `i`, and therefore the cells carrying an entry smaller than `k` all lie in the first `k`
 rows.
@@ -32,7 +34,7 @@ highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen
 
 ## Main definitions
 
-* `TauCeti.SemistandardYoungTableau.content`: the content (or weight) of a semistandard Young
+* `SemistandardYoungTableau.content`: the content (or weight) of a semistandard Young
   tableau, `content T i` being the number of cells filled with `i`.
 * `TauCeti.BoundedSSYT`: the semistandard Young tableaux of a given shape whose entries lie below
   a given bound, that is, those written in a finite alphabet.
@@ -43,11 +45,11 @@ highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen
 
 ## Main results
 
-* `TauCeti.SemistandardYoungTableau.sum_content_le_sum_take_rowLens`: the partial sums of the
+* `SemistandardYoungTableau.sum_content_le_sum_take_rowLens`: the partial sums of the
   content of a tableau of shape `μ` are bounded by those of the row lengths of `μ`.
-* `TauCeti.SemistandardYoungTableau.eq_highestWeight_of_content_eq_rowLen`: a tableau of shape `μ`
+* `SemistandardYoungTableau.eq_highestWeight_of_content_eq_rowLen`: a tableau of shape `μ`
   and content `μ.rowLen` is the highest-weight tableau.
-* `TauCeti.SemistandardYoungTableau.finite_content_eq`: the tableaux of a fixed shape and content
+* `SemistandardYoungTableau.finite_content_eq`: the tableaux of a fixed shape and content
   are finite, so the Kostka number counts them faithfully.
 * `TauCeti.finite_boundedSSYT`: likewise the tableaux of a fixed shape written in a finite alphabet,
   `TauCeti.BoundedSSYT`, are finite.
@@ -63,8 +65,6 @@ highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen
 -/
 
 public section
-
-namespace TauCeti
 
 namespace SemistandardYoungTableau
 
@@ -170,8 +170,8 @@ theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTable
     exact le_antisymm (Nat.lt_succ_iff.mp (Finset.mem_filter.mp hmem).2) (le_entry T hij)
   ext i j
   by_cases hij : (i, j) ∈ μ
-  · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_pos hij]
-  · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_neg hij]
+  · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, ite_eq_left hij]
+  · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, ite_eq_right hij]
 
 /-- The semistandard tableaux of a fixed shape and content are finite. -/
 instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
@@ -196,6 +196,8 @@ instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
   · rw [T.1.zeros hij, T'.1.zeros hij]
 
 end SemistandardYoungTableau
+
+namespace TauCeti
 
 /-- The semistandard Young tableaux of shape `μ` written in the alphabet `{0, …, n - 1}`, that
 is, those all of whose entries are smaller than `n`.  Mathlib's `SemistandardYoungTableau μ`
@@ -223,7 +225,8 @@ theorem isEmpty_of_lt_colLen (h : n < μ.colLen 0) : IsEmpty (BoundedSSYT n μ) 
 instance (n : ℕ) : Unique (BoundedSSYT n (⊥ : YoungDiagram)) where
   default := ⟨_root_.SemistandardYoungTableau.highestWeight ⊥, fun _ _ hic => absurd hic (by simp)⟩
   uniq T := Subtype.ext <| _root_.SemistandardYoungTableau.ext fun _ _ => by
-    rw [T.1.zeros (by simp), _root_.SemistandardYoungTableau.highestWeight_apply, if_neg (by simp)]
+    rw [T.1.zeros (by simp), _root_.SemistandardYoungTableau.highestWeight_apply,
+      ite_eq_right (by simp)]
 
 end BoundedSSYT
 

@@ -1,18 +1,21 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Analysis.Calculus.LogDeriv
 public import Mathlib.Analysis.Complex.Periodic
+public import Mathlib.RingTheory.RootsOfUnity.Complex
 
 /-!
 # The local parameter under translation, period rescaling, and differentiation
 
 Identities for the local parameter `𝕢 h z = exp (2 π I z / h)` at a cusp: translating
 the argument multiplies by an exponential, the `m`-th power of the local parameter at
-period `m * h` is the local parameter at period `h`, the parameter differentiates to
+period `m * h` is the local parameter at period `h`, the values at the integer offsets
+`b < p` satisfy the roots-of-unity orthogonality relation, the parameter differentiates to
 itself times `2πi/h`, and the logarithmic derivative of any periodic function of
 nonzero width `h` factors through its cusp function along the parameter.
 
@@ -20,6 +23,8 @@ nonzero width `h` factors through its cusp function along the parameter.
 
 * `TauCeti.Periodic.qParam_sub`: `𝕢 h (z - j) = 𝕢 h z * exp (-2 π I j / h)`.
 * `TauCeti.Periodic.qParam_nat_mul_pow`: `𝕢 (m * h) z ^ m = 𝕢 h z` for `m ≠ 0`.
+* `TauCeti.Periodic.sum_qParam_natCast_pow`: the roots-of-unity orthogonality relation
+  `∑_{b < p} 𝕢 p b ^ m = if p ∣ m then p else 0`.
 * `TauCeti.Periodic.hasDerivAt_qParam` (with `deriv_qParam`): the `q`-parameter
   differentiates to itself times `2πi/h`.
 * `TauCeti.Periodic.logDeriv_eq_logDeriv_cuspFunction_mul_deriv_qParam`: the chain rule
@@ -57,6 +62,33 @@ theorem qParam_nat_mul_pow {m : ℕ} (hm : m ≠ 0) (z : ℂ) : 𝕢 (m * h) z ^
   simp only [qParam, ← Complex.exp_nat_mul, ofReal_mul, ofReal_natCast]
   rw [mul_div_assoc', mul_div_mul_left _ _ (Nat.cast_ne_zero.mpr hm)]
 
+/-- **Orthogonality of the `p`-th roots of unity**, in the local-parameter spelling: the
+values `𝕢 p b = exp (2 π I b / p)` at the integer offsets `b < p` are the `p`-th roots of
+unity, so summing their `m`-th powers gives `p` when `p ∣ m` and `0` otherwise.
+
+This is the identity that makes a sum over the offsets `b < p` of a translated
+`q`-expansion pick out the coefficients in the arithmetic progression `p ℕ`. -/
+theorem sum_qParam_natCast_pow {p : ℕ} (m : ℕ) :
+    ∑ b ∈ Finset.range p, 𝕢 (p : ℝ) (b : ℂ) ^ m = if p ∣ m then (p : ℂ) else 0 := by
+  rcases eq_or_ne p 0 with rfl | hp
+  · simp
+  -- Every value `𝕢 p b` is a power of the primitive root `ζ = 𝕢 p 1`, so the sum is geometric
+  -- in `ζ ^ m`.
+  have hζ : IsPrimitiveRoot (𝕢 (p : ℝ) 1) p := by
+    have hqe : 𝕢 (p : ℝ) 1 = Complex.exp (2 * π * I / p) := by
+      rw [qParam, mul_one, Complex.ofReal_natCast]
+    rw [hqe]
+    exact Complex.isPrimitiveRoot_exp p hp
+  have hterm : ∀ b ∈ Finset.range p, 𝕢 (p : ℝ) (b : ℂ) ^ m = (𝕢 (p : ℝ) 1 ^ m) ^ b := by
+    intro b _
+    simp only [qParam, ← Complex.exp_nat_mul]
+    ring_nf
+  rw [Finset.sum_congr rfl hterm]
+  split_ifs with hd
+  · rw [(hζ.pow_eq_one_iff_dvd m).mpr hd]
+    simp
+  · rw [geom_sum_eq (fun hone ↦ hd ((hζ.pow_eq_one_iff_dvd m).mp hone)),
+      ← pow_mul, mul_comm m p, pow_mul, hζ.pow_eq_one, one_pow, sub_self, zero_div]
 
 /-- The `q`-parameter differentiates to itself times `2πi/h`. For `h = 0` the parameter
 is the constant `1`, whose derivative is genuinely `0` — the value the division junk

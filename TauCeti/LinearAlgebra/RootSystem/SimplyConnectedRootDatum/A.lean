@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import Mathlib.LinearAlgebra.RootSystem.Base
+public import TauCeti.Data.Fin.Basic
+public import TauCeti.LinearAlgebra.RootSystem.Positive
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
 public section
 
@@ -66,13 +67,17 @@ here.
   `A n`.
 * `TauCeti.DynkinType.corootSpan_typeASimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
+* `TauCeti.DynkinType.ncard_posRoots_typeASimplyConnectedRootDatum`: the number of positive roots
+  is `(n + 1).choose 2`, for any base.
 
 ## References
 
 The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters
 4--6*, Plate I, and Humphreys, *Introduction to Lie Algebras and Representation Theory*, section
 12.1. This is the `Aₙ` branch of the target "a named datum per valid type" in Layer 6 of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The positive-root count is the
+corresponding clause of the `Aₙ` worked example in the "Worked examples (acceptance criteria)"
+section of that README; it agrees with the count in Bourbaki, Plate I.
 -/
 
 namespace TauCeti
@@ -103,42 +108,17 @@ private lemma typeAWeight_dotProduct_typeACoweight {a c : ℕ} (ha : a ≤ n) (h
     typeAWeight n a ⬝ᵥ typeACoweight n c
       = (if a = c then 1 else 0) - (if a = n then 1 else 0) := by
   have key : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) then (1 : ℤ) else 0) *
-      (if c ≤ (k : ℕ) then 1 else 0) = if h : b < n then (if c ≤ b then (1 : ℤ) else 0) else 0 := by
-    intro b
-    simp only [ite_mul, one_mul, zero_mul]
-    by_cases h : b < n
-    · rw [dif_pos h]
-      convert Fintype.sum_ite_eq (⟨b, h⟩ : Fin n)
-        (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) using 1 with k
-      simp [Fin.ext_iff]
-    · rw [dif_neg h]
-      exact Finset.sum_eq_zero fun k _ => if_neg (by omega)
+      (if c ≤ (k : ℕ) then 1 else 0) = if h : b < n then (if c ≤ b then (1 : ℤ) else 0) else 0 :=
+    fun b => by
+      simp only [ite_mul, one_mul, zero_mul]
+      simpa only [Nat.add_zero, Nat.sub_zero, Nat.zero_le, and_true] using
+        sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 0
   have key' : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) + 1 then (1 : ℤ) else 0) *
       (if c ≤ (k : ℕ) then 1 else 0)
-        = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 := by
-    intro b
-    simp only [ite_mul, one_mul, zero_mul]
-    by_cases h : b - 1 < n ∧ 1 ≤ b
-    · rw [dif_pos h]
-      calc
-        _ = ∑ k : Fin n, if (⟨b - 1, h.1⟩ : Fin n) = k then
-            (if c ≤ (k : ℕ) then (1 : ℤ) else 0) else 0 := by
-          apply Finset.sum_congr rfl
-          intro k _
-          congr 1
-          apply propext
-          constructor
-          · intro hb
-            apply Fin.ext
-            simp only
-            omega
-          · intro hk
-            have hkval := congrArg Fin.val hk
-            simp only at hkval
-            omega
-        _ = _ := Fintype.sum_ite_eq _ _
-    · rw [dif_neg h]
-      exact Finset.sum_eq_zero fun k _ => if_neg (by omega)
+        = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 :=
+    fun b => by
+      simp only [ite_mul, one_mul, zero_mul]
+      exact sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 1
   simp only [dotProduct, typeAWeight, typeACoweight, sub_mul, Finset.sum_sub_distrib,
     key a, key' a]
   split_ifs <;> omega
@@ -245,12 +225,6 @@ private lemma typeAPairReflection_coroot (p q : TypeAIndex n) :
   simp only [typeAPairCoroot]
   module
 
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- `dotProductEquiv` has `dotProductBilin` as its underlying linear map by definition.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
-
 /-! ## The Bourbaki enumeration of the roots -/
 
 private lemma one_le_val_sub (p : TypeAIndex n) : 1 ≤ ((p.val.2 - p.val.1 : Fin (n + 1)) : ℕ) := by
@@ -312,6 +286,7 @@ private def typeAPairEquiv (n : ℕ) : TypeAIndex n ≃ Fin n × Fin (n + 1) whe
 private def typeAIndexEquiv (n : ℕ) : TypeAIndex n ≃ Fin (n * (n + 1)) :=
   (typeAPairEquiv n).trans finProdFinEquiv
 
+/-- Reflection in the root indexed by `k`, transported to the pinned enumeration. -/
 private def typeAReflectionPerm (n : ℕ) (k : Fin (n * (n + 1))) :
     Fin (n * (n + 1)) ≃ Fin (n * (n + 1)) :=
   ((typeAIndexEquiv n).symm.trans
@@ -358,6 +333,10 @@ def typeASimplyConnectedRootDatum (n : ℕ) :
   reflectionPerm_root := typeAReflectionPerm_root
   reflectionPerm_coroot := typeAReflectionPerm_coroot
 
+/-- The pinned pairing of type `Aₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeASimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeASimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 private lemma root_typeASimplyConnectedRootDatum (k : Fin (n * (n + 1))) :
     (typeASimplyConnectedRootDatum n).root k = typeAPairRoot ((typeAIndexEquiv n).symm k) :=
   rfl
@@ -370,6 +349,20 @@ private lemma pairing_typeASimplyConnectedRootDatum (k l : Fin (n * (n + 1))) :
     (typeASimplyConnectedRootDatum n).pairing k l =
       (typeASimplyConnectedRootDatum n).root k ⬝ᵥ (typeASimplyConnectedRootDatum n).coroot l :=
   rfl
+
+/-- The root--coroot pairing of the pinned type `A` datum is symmetric. -/
+theorem pairing_typeASimplyConnectedRootDatum_comm (k l : Fin (n * (n + 1))) :
+    (typeASimplyConnectedRootDatum n).pairing k l =
+      (typeASimplyConnectedRootDatum n).pairing l k := by
+  rw [pairing_typeASimplyConnectedRootDatum, pairing_typeASimplyConnectedRootDatum,
+    root_typeASimplyConnectedRootDatum, root_typeASimplyConnectedRootDatum,
+    coroot_typeASimplyConnectedRootDatum, coroot_typeASimplyConnectedRootDatum,
+    typeAPairing, typeAPairing]
+  rw [ite_eq_comm ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.1,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.2,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.1,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.2]
+  ring
 
 /-- The `i`-th simple root of type `Aₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeASimpleIndex (n : ℕ) (i : Fin n) : Fin (n * (n + 1)) :=
@@ -431,20 +424,6 @@ coroot lattice, so that the datum is the simply connected one. -/
 
 /-! ## The pinned base -/
 
-private lemma sub_mem_closure_of_le {M : Type*} [AddCommGroup M] (f : ℕ → M) {a b : ℕ}
-    (hb : b ≤ n) (hab : a ≤ b) :
-    f a - f b ∈ AddSubmonoid.closure (range fun i : Fin n => f (i : ℕ) - f ((i : ℕ) + 1)) := by
-  have hshift := Finset.sum_Ico_add' (fun i => f i - f (i + 1)) 0 (b - a) a
-  simp only [zero_add] at hshift
-  have htel : f a - f b = ∑ i ∈ Finset.Ico a b, (f i - f (i + 1)) := by
-    rw [← Nat.sub_add_cancel hab, ← hshift]
-    simpa [Nat.Ico_zero_eq_range, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
-      (Finset.sum_range_sub' (fun i => f (i + a)) (b - a)).symm
-  rw [htel]
-  refine AddSubmonoid.sum_mem _ fun i hi => AddSubmonoid.subset_closure ?_
-  have : i < n := lt_of_lt_of_le (Finset.mem_Ico.mp hi).2 hb
-  exact ⟨⟨i, this⟩, rfl⟩
-
 /-- **A sequence with vanishing second difference is linear.** In an additive cancellative
 commutative monoid, if `S 0 = 0` and `S (k + 1) + S (k + 1) = S k + S (k + 2)` for every `k < n`,
 then `S j = j • S 1` for every `j ≤ n + 1`. -/
@@ -483,10 +462,10 @@ private lemma linearIndependent_typeASimpleRoot (n : ℕ) :
     simpa only [S, Nat.add_right_cancel_iff, Fin.val_inj] using Fintype.sum_ite_eq' j g
   have hSzero : ∀ c : ℕ, n < c → S c = 0 := by
     intro c hc
-    refine Finset.sum_eq_zero fun j _ => if_neg ?_
+    refine Finset.sum_eq_zero fun j _ => ite_eq_right ?_
     have := j.isLt
     omega
-  have hS0 : S 0 = 0 := Finset.sum_eq_zero fun j _ => if_neg (by omega)
+  have hS0 : S 0 = 0 := Finset.sum_eq_zero fun j _ => ite_eq_right (by omega)
   have hshift : ∀ c : ℕ, ∑ j : Fin n, (if (j : ℕ) = c then g j else 0) = S (c + 1) :=
     fun c => Finset.sum_congr rfl fun j _ => by by_cases h : (j : ℕ) = c <;> simp [h]
   have hrec : ∀ k : Fin n, S ((k : ℕ) + 1) + S ((k : ℕ) + 1) = S (k : ℕ) + S ((k : ℕ) + 2) := by
@@ -516,68 +495,46 @@ private lemma linearIndependent_typeASimpleRoot (n : ℕ) :
 private lemma linearIndependent_typeASimpleCoroot (n : ℕ) :
     LinearIndependent ℤ fun i : Fin n => typeACoweight n (i : ℕ) -
       typeACoweight n ((i : ℕ) + 1) := by
-  have h : (fun i : Fin n => typeACoweight n (i : ℕ) - typeACoweight n ((i : ℕ) + 1)) =
-      fun i : Fin n => (Pi.basisFun ℤ (Fin n)) i := by
-    funext i
-    rw [typeACoweight_sub_succ]
-    simp
-  rw [h]
-  exact (Pi.basisFun ℤ (Fin n)).linearIndependent
+  simpa only [typeACoweight_sub_succ] using Pi.linearIndependent_single_one (Fin n) ℤ
 
 /-- The support of the pinned base of type `Aₙ`: the first `n` root indices. -/
-private def typeASimpleSupport (n : ℕ) : Finset (Fin (n * (n + 1))) :=
-  Finset.univ.map ⟨typeASimpleIndex n, typeASimpleIndex_injective⟩
+private abbrev typeASimpleSupport (n : ℕ) : Finset (Fin (n * (n + 1))) :=
+  simpleSupport (typeASimpleIndex_injective (n := n))
 
 private lemma mem_typeASimpleSupport {k : Fin (n * (n + 1))} :
-    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n := by
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simp only [Function.Embedding.coeFn_mk, typeASimpleIndex_val]
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
-
-private lemma coe_typeASimpleSupport :
-    (typeASimpleSupport n : Set (Fin (n * (n + 1)))) = range (typeASimpleIndex n) := by
-  simp [typeASimpleSupport]
+    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeASimpleIndex_injective (n := n)) (fun _ ↦ typeASimpleIndex_val _)
 
 private lemma image_root_typeASimpleSupport :
     (typeASimplyConnectedRootDatum n).root '' (typeASimpleSupport n : Set (Fin (n * (n + 1)))) =
       range fun i : Fin n => typeAWeight n (i : ℕ) - typeAWeight n ((i : ℕ) + 1) := by
-  rw [coe_typeASimpleSupport, ← range_comp]
+  rw [typeASimpleSupport, image_simpleSupport]
   exact congrArg range (funext fun i => root_typeASimpleIndex_eq i)
 
 private lemma image_coroot_typeASimpleSupport :
     (typeASimplyConnectedRootDatum n).coroot '' (typeASimpleSupport n : Set (Fin (n * (n + 1)))) =
       range fun i : Fin n => typeACoweight n (i : ℕ) - typeACoweight n ((i : ℕ) + 1) := by
-  rw [coe_typeASimpleSupport, ← range_comp]
+  rw [typeASimpleSupport, image_simpleSupport]
   exact congrArg range (funext fun i => coroot_typeASimpleIndex_eq i)
 
 /-- The Bourbaki-numbered base of the pinned simply connected root datum of type `Aₙ`. Its support
 is the set of the first `n` root indices, carrying the simple roots in Bourbaki order. -/
 def typeASimplyConnectedBase (n : ℕ) : (typeASimplyConnectedRootDatum n).Base where
   support := typeASimpleSupport n
-  linearIndepOn_root := by
-    have h : LinearIndepOn ℤ (typeASimplyConnectedRootDatum n).root
-        (range (typeASimpleIndex n)) := by
-      rw [linearIndepOn_range_iff typeASimpleIndex_injective]
+  linearIndepOn_root :=
+    linearIndepOn_simpleSupport _ _ <| by
       have hcomp : (typeASimplyConnectedRootDatum n).root ∘ typeASimpleIndex n =
           fun i : Fin n => typeAWeight n (i : ℕ) - typeAWeight n ((i : ℕ) + 1) :=
         funext fun i => root_typeASimpleIndex_eq i
       rw [hcomp]
       exact linearIndependent_typeASimpleRoot n
-    rwa [← coe_typeASimpleSupport] at h
-  linearIndepOn_coroot := by
-    have h : LinearIndepOn ℤ (typeASimplyConnectedRootDatum n).coroot
-        (range (typeASimpleIndex n)) := by
-      rw [linearIndepOn_range_iff typeASimpleIndex_injective]
+  linearIndepOn_coroot :=
+    linearIndepOn_simpleSupport _ _ <| by
       have hcomp : (typeASimplyConnectedRootDatum n).coroot ∘ typeASimpleIndex n =
           fun i : Fin n => typeACoweight n (i : ℕ) - typeACoweight n ((i : ℕ) + 1) :=
         funext fun i => coroot_typeASimpleIndex_eq i
       rw [hcomp]
       exact linearIndependent_typeASimpleCoroot n
-    rwa [← coe_typeASimpleSupport] at h
   root_mem_or_neg_mem k := by
     have hroot : (typeASimplyConnectedRootDatum n).root k =
         typeAWeight n (((typeAIndexEquiv n).symm k).val.1 : ℕ) -
@@ -610,18 +567,6 @@ def typeASimplyConnectedBase (n : ℕ) : (typeASimplyConnectedRootDatum n).Base 
     k ∈ (typeASimplyConnectedBase n).support ↔ (k : ℕ) < n :=
   mem_typeASimpleSupport
 
-/-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
-private def typeABaseEquiv (n : ℕ) : (typeASimplyConnectedBase n).support ≃ Fin n where
-  toFun x := ⟨(x : Fin (n * (n + 1))), mem_typeASimpleSupport.mp x.2⟩
-  invFun i := ⟨typeASimpleIndex n i, mem_typeASimpleSupport.mpr (by simp)⟩
-  left_inv x := by
-    apply Subtype.ext
-    apply Fin.ext
-    simp
-  right_inv i := by
-    apply Fin.ext
-    simp
-
 private lemma pairing_typeASimpleIndex (i j : Fin n) :
     (typeASimplyConnectedRootDatum n).pairing (typeASimpleIndex n i) (typeASimpleIndex n j) =
       CartanMatrix.A n i j := by
@@ -631,29 +576,26 @@ private lemma pairing_typeASimpleIndex (i j : Fin n) :
 /-- **The pinned datum of type `Aₙ` has Cartan type `A n`.** Its Bourbaki-numbered base realizes the
 standard Cartan matrix `CartanMatrix.A n`, with the node numbering of `TauCeti.DynkinType`. -/
 theorem hasCartanType_typeASimplyConnectedRootDatum (n : ℕ) :
-    HasCartanType (typeASimplyConnectedRootDatum n) (typeASimplyConnectedBase n) (.A n) := by
-  rw [hasCartanType_iff]
-  refine ⟨typeABaseEquiv n, fun i j => ?_⟩
-  have hi : (i : Fin (n * (n + 1))) = typeASimpleIndex n (typeABaseEquiv n i) :=
-    Fin.ext (by simp [typeABaseEquiv])
-  have hj : (j : Fin (n * (n + 1))) = typeASimpleIndex n (typeABaseEquiv n j) :=
-    Fin.ext (by simp [typeABaseEquiv])
-  rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff,
-    RootPairing.Base.algebraMap_cartanMatrixIn_apply, hi, hj, pairing_typeASimpleIndex,
-    cartanMatrix_A]
-  rfl
+    HasCartanType (typeASimplyConnectedRootDatum n) (typeASimplyConnectedBase n) (.A n) :=
+  hasCartanType_of_pairing_eq (typeASimpleIndex_injective (n := n)) rfl fun i j =>
+    (pairing_typeASimpleIndex i j).trans (by simp)
 
 /-- **The coroots of the pinned type `Aₙ` datum span the cocharacter lattice.** This is the simply
 connected lattice condition required by the pinned Chevalley--Demazure construction. Its
 counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
 weight lattice with index `n + 1` (Bourbaki, Plate I). -/
 theorem corootSpan_typeASimplyConnectedRootDatum_eq_top (n : ℕ) :
-    (typeASimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
-  refine top_unique ?_
-  rw [← (Pi.basisFun ℤ (Fin n)).span_eq]
-  refine Submodule.span_mono ?_
-  rintro _ ⟨i, rfl⟩
-  exact ⟨typeASimpleIndex n i, by rw [coroot_typeASimpleIndex]; simp⟩
+    (typeASimplyConnectedRootDatum n).corootSpan ℤ = ⊤ :=
+  corootSpan_eq_top_of_coroot_eq_single (coroot_typeASimpleIndex (n := n))
+
+/-- **The pinned root datum of type `Aₙ` has `(n + 1).choose 2` positive roots.** Exactly half of
+its `n * (n + 1)` roots are positive, for any base. -/
+@[simp]
+theorem ncard_posRoots_typeASimplyConnectedRootDatum (n : ℕ)
+    (b : (typeASimplyConnectedRootDatum n).Base) :
+    (posRoots (typeASimplyConnectedRootDatum n) b).ncard = (n + 1).choose 2 := by
+  rw [ncard_posRoots_eq_natCard_div_two]
+  simp [Nat.choose_two_right, Nat.mul_comm]
 
 end DynkinType
 

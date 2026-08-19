@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,6 +31,8 @@ along its action on weights, matching the coroot functional of a root with that 
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
+* `TauCeti.RootPairing.weylGroup.ofIdx_ne_one` says a simple reflection is not the identity over a
+  ring of characteristic zero.
 * `TauCeti.RootPairing.weylGroup.eq_one_of_smul_eq_self` says a Weyl-group element acting trivially
   on the weight space is the identity.
 * `TauCeti.RootPairing.weylGroup.ext` says two Weyl-group elements agreeing on the weight space are
@@ -191,6 +193,15 @@ lemma ofIdx_inv_eq (i : ι) :
 lemma ofIdx_mul_self (i : ι) :
     _root_.RootPairing.weylGroup.ofIdx P i * _root_.RootPairing.weylGroup.ofIdx P i = 1 := by
   rw [mul_eq_one_iff_eq_inv, ofIdx_inv_eq]
+
+/-- **A simple reflection is not the identity** over a ring of characteristic zero. -/
+theorem ofIdx_ne_one [CharZero R] (i : ι) :
+    _root_.RootPairing.weylGroup.ofIdx P i ≠ 1 := by
+  intro h
+  have hi := congrArg (fun w : P.weylGroup => P.coroot' i (w • P.root i)) h
+  simp only [one_smul, _root_.RootPairing.root_coroot'_eq_pairing,
+    _root_.RootPairing.pairing_same] at hi
+  norm_num at hi
 
 variable {P} in
 /-- A Weyl-group element acting trivially on the weight space is the identity: the weight-space

@@ -108,6 +108,35 @@ lemma mk_eq_mk_of_mem {g₁ g₂ : Δ} (h : (g₁ : G) ∈ doubleCoset (g₂ : G
     mk H₁ H₂ g₁ = mk H₁ H₂ g₂ :=
   eq_iff.mpr (doubleCoset_eq_of_mem h)
 
+section Map
+
+variable {Δ' : Submonoid G} {H₁' H₂' : Subgroup G}
+
+/-- **Functoriality of `HeckeCoset` in its triple.** Inclusions `Δ ≤ Δ'`, `H₁ ≤ H₁'` and
+`H₂ ≤ H₂'` send `H₁ g H₂` to `H₁' g H₂'`: widening the coefficient subgroups can only merge
+double cosets, never split them. -/
+noncomputable def map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') :
+    HeckeCoset Δ H₁ H₂ → HeckeCoset Δ' H₁' H₂' :=
+  Quotient.map (Submonoid.inclusion hΔ) fun a b hab ↦ by
+    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hb⟩ := DoubleCoset.rel_iff.mp hab
+    exact DoubleCoset.rel_iff.mpr ⟨γ₁, h₁ hγ₁, γ₂, h₂ hγ₂, hb⟩
+
+@[simp] lemma map_mk (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (g : Δ) :
+    map hΔ h₁ h₂ (mk H₁ H₂ g) = mk H₁' H₂' (Submonoid.inclusion hΔ g) := (rfl)
+
+@[simp] lemma map_id (D : HeckeCoset Δ H₁ H₂) :
+    map (le_refl Δ) (le_refl H₁) (le_refl H₂) D = D :=
+  Quotient.inductionOn D fun _ ↦ rfl
+
+variable {Δ'' : Submonoid G} {H₁'' H₂'' : Subgroup G}
+
+@[simp] lemma map_map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (hΔ' : Δ' ≤ Δ'')
+    (h₁' : H₁' ≤ H₁'') (h₂' : H₂' ≤ H₂'') (D : HeckeCoset Δ H₁ H₂) :
+    map hΔ' h₁' h₂' (map hΔ h₁ h₂ D) = map (hΔ.trans hΔ') (h₁.trans h₁') (h₂.trans h₂') D :=
+  Quotient.inductionOn D fun _ ↦ rfl
+
+end Map
+
 /-- Induction: to prove something for all double cosets, prove it for `mk H₁ H₂ g`. -/
 protected lemma induction {motive : HeckeCoset Δ H₁ H₂ → Prop}
     (h : ∀ g : Δ, motive (mk H₁ H₂ g)) :
@@ -154,14 +183,29 @@ lemma mk_out_mul_injective (Γ₁ Γ₂ : Subgroup G) (g : G) :
   simpa [mul_assoc] using hij
 
 open scoped Pointwise in
-/-- The conjugation criterion for the stabilizer subgroup indexing `DecompQuotient`: an
-element of the stabilizer conjugates into `H` under `g`. -/
-lemma conj_mem_of_stabilizer {H : Subgroup G} (g : G)
-    (n : (ConjAct.toConjAct g • H).subgroupOf H) : g⁻¹ * (n : G) * g ∈ H := by
+/-- The conjugation criterion for the stabilizer subgroup indexing `DecompQuotient`: an element
+of `(ConjAct.toConjAct g • H₂).subgroupOf H₁` conjugates by `g` into `H₂`. -/
+lemma conj_mem_of_stabilizer {H₁ H₂ : Subgroup G} (g : G)
+    (n : (ConjAct.toConjAct g • H₂).subgroupOf H₁) : g⁻¹ * (n : G) * g ∈ H₂ := by
   have hn := n.2
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def] at hn
   simpa [ConjAct.ofConjAct_toConjAct] using hn
+
+/-- Equality of classes in `DecompQuotient H₁ H₂ g` gives the conjugation relation between their
+representatives: `u₁⁻¹ u₂` lies in the stabilizer indexing the decomposition, so conjugating it
+by `g` lands in `H₂`.
+
+Note the two subgroups play different roles: the representatives live in `H₁`, which indexes the
+quotient, while the conclusion lands in `H₂`, which is the one being conjugated. They coincide in
+the common case `DecompQuotient H H g`. -/
+-- Reach for this whenever a class equality `⟦u₁⟧ = ⟦u₂⟧` has to become a membership:
+-- `QuotientGroup.eq` supplies the stabilizer membership and `conj_mem_of_stabilizer` does the
+-- conjugation, so unfolding `QuotientGroup.leftRel` by hand duplicates both.
+lemma conj_mem_of_mk_eq {H₁ H₂ : Subgroup G} (g : G) {u₁ u₂ : H₁}
+    (h : (QuotientGroup.mk u₁ : DecompQuotient H₁ H₂ g) = QuotientGroup.mk u₂) :
+    g⁻¹ * ((u₁ : G)⁻¹ * u₂) * g ∈ H₂ :=
+  conj_mem_of_stabilizer g ⟨_, QuotientGroup.eq.mp h⟩
 
 end DoubleCoset
 
