@@ -269,15 +269,6 @@ private theorem dimVector_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h :
   subst h
   rfl
 
-omit fV in
-private theorem intCast_dimVector_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h : r = q)
-    (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r)
-    (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
-    (fun j : V ↦ (@dimVector k V fld q ((transportCodomain h F).obj M) j : ℤ))
-      = fun j : V ↦ (@dimVector k V fld r (F.obj M) j : ℤ) :=
-  congrArg (fun c : V → ℕ ↦ fun j : V ↦ (c j : ℤ))
-    (dimVector_transportCodomain_obj h F M)
-
 /-- **The Coxeter functor** `C⁺`: the composite of the Bernstein-Gelfand-Ponomarev reflection
 functors at the successive vertices of a sink-admissible *ordering* of the vertices -- a
 sink-admissible list that repeats no vertex and contains every one of them. Reflecting once at
@@ -309,6 +300,17 @@ theorem coxeterFunctor_def (q : _root_.Quiver.{w} V)
     (reflectionFunctorList k l q hq hl)
 
 /-- Transporting the reflection-functor composite back to the original quiver does not change its
+dimension vector. -/
+theorem dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
+    (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    @dimVector k V fld q ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M) =
+      @dimVector k V fld (Quiver.reflectList q l)
+        ((reflectionFunctorList k l q hq hl).obj M) :=
+  dimVector_transportCodomain_obj _ _ M
+
+/-- Transporting the reflection-functor composite back to the original quiver does not change its
 dimension vector after coercion to integers. -/
 theorem intCast_dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
@@ -318,7 +320,8 @@ theorem intCast_dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
         (@dimVector k V fld q ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M) j : ℤ))
       = fun j : V ↦ (@dimVector k V fld (Quiver.reflectList q l)
           ((reflectionFunctorList k l q hq hl).obj M) j : ℤ) :=
-  intCast_dimVector_transportCodomain_obj _ _ M
+  congrArg (fun c : V → ℕ ↦ fun j : V ↦ (c j : ℤ))
+    (dimVector_coxeterFunctor_obj q hq hnd hall hl M)
 
 /-- **The Coxeter functor annihilates the zero representation.** -/
 theorem isZero_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
@@ -356,7 +359,8 @@ unchanged by a simple reflection at a loopless vertex, hence by the whole Coxete
 (`TauCeti.titsForm_vertexPreReflectionList`), and no vertex of a repetition-free sink-admissible
 list carries a loop (`TauCeti.Quiver.IsSinkAdmissible.isEmpty_hom_self`). So on an indecomposable
 representation the Coxeter functor either annihilates it or leaves the Tits form of its dimension
-vector alone: the invariant along which the Layer 5 reflection induction descends. -/
+vector alone. This preserved invariant is used by the Layer 5 reflection induction, whose descent
+measure is root height. -/
 theorem titsForm_dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
     (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
