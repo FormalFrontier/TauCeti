@@ -10,7 +10,6 @@ public import Mathlib.MeasureTheory.Measure.Prod
 public import TauCeti.Analysis.Bochner.BochnerTheorem
 public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Transform
-public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice
 -- Non-public: the Fourier-convention bridge between the atom integral and `charFun`, the bound
 -- on the Laplace kernel, Laplace determinacy on `ℝ≥0` and the product-`σ`-algebra plumbing are
 -- all consumed inside proofs only.
@@ -57,7 +56,7 @@ the criterion above is what it discharges last.
 * `TauCeti.integral_fourierAtom_spatialSlice`, `TauCeti.charFun_spatialSlice`: the
   Fourier-convention transform, and the characteristic function, of a spatial slice are the
   Laplace--Fourier transform at that time.
-* `TauCeti.antitone_spatialSlice`: spatial slices decrease in time.
+* `TauCeti.spatialSlice_antitone`: spatial slices decrease in time.
 * `TauCeti.timeMarginal`: the time marginal of the slab `ℝ≥0 × B`.
 * `TauCeti.RepresentsLaplaceFourier.spatialSlice_eq` and
   `TauCeti.representsLaplaceFourier_iff_forall_spatialSlice_eq`: the spatial slices of a
@@ -179,7 +178,7 @@ theorem spatialSlice_zero_measure (t : ℝ≥0) :
 
 /-- **The spatial slices decrease in time**: the Laplace weight `exp (-t p)` is nonincreasing
 in `t` at every frequency `p ≥ 0`. -/
-theorem antitone_spatialSlice (μ : Measure (ℝ≥0 × V)) : Antitone (spatialSlice μ) := by
+theorem spatialSlice_antitone (μ : Measure (ℝ≥0 × V)) : Antitone (spatialSlice μ) := by
   refine fun t u htu => Measure.le_iff.mpr fun B hB => ?_
   rw [spatialSlice_apply μ t hB, spatialSlice_apply μ u hB]
   refine lintegral_mono fun y => ?_
@@ -189,7 +188,7 @@ theorem antitone_spatialSlice (μ : Measure (ℝ≥0 × V)) : Antitone (spatialS
 
 /-- Every spatial slice is dominated by the spatial marginal. -/
 theorem spatialSlice_le_snd (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0) : spatialSlice μ t ≤ μ.snd :=
-  spatialSlice_zero μ ▸ antitone_spatialSlice μ t.coe_nonneg
+  spatialSlice_zero μ ▸ spatialSlice_antitone μ t.coe_nonneg
 
 /-- The **time marginal** of the slab `ℝ≥0 × B`, as a measure on `ℝ≥0`. It is the measure whose
 Laplace transform records the masses `t ↦ (spatialSlice μ t).real B`
