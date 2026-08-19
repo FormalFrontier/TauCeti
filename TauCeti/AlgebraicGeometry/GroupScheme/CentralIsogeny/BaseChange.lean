@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Basic
-public import TauCeti.CategoryTheory.Monoidal.Mon
 
 /-!
 # Base change of group-scheme isogenies
