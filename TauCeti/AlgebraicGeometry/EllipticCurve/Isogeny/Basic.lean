@@ -81,7 +81,7 @@ theorem mapsInfinity_of_pow {W₁ W₂ : WeierstrassCurve.Affine F}
   obtain ⟨w, hw⟩ := h z
   refine IsIntegral.of_pow hn ?_
   rw [← hw]
-  change IsIntegral W₂.CoordinateRing (algebraMap W₂.CoordinateRing W₁.FunctionField w)
+  rw [← AlgHom.coe_toRingHom, ← RingHom.algebraMap_toAlgebra pullback.toRingHom]
   exact isIntegral_algebraMap
 
 /-- The identity coordinate pullback, embedding a coordinate ring into its fraction field. -/
