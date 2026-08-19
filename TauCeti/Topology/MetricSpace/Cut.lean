@@ -31,7 +31,11 @@ use, and Mathlib has no form of the decomposition.
 ## Main results
 
 * `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` — the two sides cover the cut set.
-* `TauCeti.disjoint_inter_ball_sdiff_closedBall` — the two sides are disjoint.
+* `TauCeti.disjoint_inter_ball_sdiff_closedBall` — the two sides are disjoint, and
+  `TauCeti.disjoint_inter_ball_inter_sphere`, `TauCeti.disjoint_sdiff_closedBall_inter_sphere` —
+  each of them is disjoint from the cut.
+* `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere` — the two sides and the cut
+  cover the whole set.
 * `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` — a preconnected subset of an open cut set
   missing the sphere lies on one side of it.
 -/
@@ -65,6 +69,24 @@ the far side outside it. -/
 theorem disjoint_inter_ball_sdiff_closedBall {s : Set X} :
     Disjoint (s ∩ ball x ρ) (s \ closedBall x ρ) :=
   Set.disjoint_sdiff_right.mono_left (inter_subset_right.trans ball_subset_closedBall)
+
+/-- The near side of a circular cut misses the cut itself, the ball and the sphere being
+disjoint. -/
+theorem disjoint_inter_ball_inter_sphere {s : Set X} :
+    Disjoint (s ∩ ball x ρ) (s ∩ sphere x ρ) :=
+  Set.disjoint_of_subset inter_subset_right inter_subset_right sphere_disjoint_ball.symm
+
+/-- The far side of a circular cut misses the cut itself, the sphere lying in the closed ball. -/
+theorem disjoint_sdiff_closedBall_inter_sphere {s : Set X} :
+    Disjoint (s \ closedBall x ρ) (s ∩ sphere x ρ) :=
+  Set.disjoint_of_subset le_rfl (inter_subset_right.trans sphere_subset_closedBall)
+    disjoint_sdiff_left
+
+/-- **A circular cut splits a set into a near side, a far side and the cut.** The three-piece form
+of `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
+theorem eq_inter_ball_union_sdiff_closedBall_union_inter_sphere {s : Set X} :
+    s = s ∩ ball x ρ ∪ s \ closedBall x ρ ∪ s ∩ sphere x ρ := by
+  rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
 
 /-- **A connected subset of an open set missing a circular cut lies on one side of it.** This is
 the separation statement the decomposition exists for: the two sides are open and disjoint, so a
