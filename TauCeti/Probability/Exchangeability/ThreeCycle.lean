@@ -35,8 +35,8 @@ path of `ω + 1`, and the uniform law is translation invariant.
 It is a deterministic Markov chain, hence a mixture of Markov chains
 (`threeCycle_mixedMarkovChain`) and so Markov exchangeable (`threeCycle_markovExchangeable`); since
 it is not exchangeable, this is also the example showing that `Exchangeable` is strictly stronger
-than `MarkovExchangeable`, and — through `threeCycle_not_mixedIID` — that `MixedIID` is strictly
-stronger than `MixedMarkovChain`.
+than `MarkovExchangeable`, and — through `threeCycle_not_mixedIID` — that, among coordinatewise
+a.e.-measurable processes, `MixedIID` is strictly stronger than `MixedMarkovChain`.
 
 It is, however, neither exchangeable (`threeCycle_not_exchangeable`) nor contractable
 (`threeCycle_not_contractable`): the pair `(X₀, X₁) = (ω, ω + 1)` lands in
@@ -258,9 +258,9 @@ theorem threeCycle_mixedMarkovChainWith :
       exact congrArg _ (Finset.prod_congr rfl fun i _ =>
         (threeCycleStep_singleton (w i.castSucc) (w i.succ)).symm)
 
-/-- **The 3-cycle is a mixture of Markov chains.** With `threeCycle_not_mixedIID`, this separates
-`MixedMarkovChain` from `MixedIID`: mixing over Markov chains is strictly more general than mixing
-over i.i.d. laws. -/
+/-- **The 3-cycle is a mixture of Markov chains.** With `threeCycle_not_mixedIID`, this shows that,
+among coordinatewise a.e.-measurable processes, mixing over Markov chains is strictly more general
+than mixing over i.i.d. laws. -/
 theorem threeCycle_mixedMarkovChain : MixedMarkovChain threeCycleMeasure threeCycle :=
   MixedMarkovChain.of_witnesses threeCycle_mixedMarkovChainWith
 

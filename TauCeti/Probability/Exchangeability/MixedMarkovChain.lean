@@ -22,9 +22,9 @@ prefixLaw μ X (n + 1) {w} = ∫⁻ ω, ν ω {w 0} * ∏ i, κ ω (w i.castSucc
 
 for every finite path `w`. `MixedMarkovChainWith μ X ν κ` names the pair of witnesses, and
 `MixedMarkovChain μ X` is the existential wrapper. The naming and the witness/existential split
-follow `MixedIIDWith` / `MixedIID`, which this notion contains: an i.i.d. mixture is the mixture of
-Markov chains whose rows do not depend on the current state
-(`MixedIIDWith.mixedMarkovChainWith`).
+follow `MixedIIDWith` / `MixedIID`. Among coordinatewise a.e.-measurable processes, this notion
+contains mixed i.i.d. processes: an i.i.d. mixture is the mixture of Markov chains whose rows do not
+depend on the current state (`MixedIIDWith.mixedMarkovChainWith`).
 
 ⚠ Like `MixedIIDWith`, this is a property of the **unconditional** finite path laws only. It says
 nothing about the joint law of `(ν, κ, X)`, so it is not a conditional-independence statement, and
@@ -35,15 +35,16 @@ analogue of `ConditionallyIIDWith` and is deliberately not what is defined here.
 This is the class in the conclusion of the Diaconis–Freedman representation theorem: a recurrent
 Markov exchangeable process is a mixture of Markov chains. This file supplies the class together
 with the **easy direction** of that theorem, `MixedMarkovChainWith.markovExchangeable`: every
-mixture of Markov chains is Markov exchangeable. The mechanism is the one that makes transition
-counts the sufficient statistic of a Markov chain — a product of transition weights along a path
-depends on the path only through its transition counts
+mixture of Markov chains is Markov exchangeable. The mechanism is the one that makes the initial
+state together with the transition counts sufficient for a Markov-chain path probability — the
+transition-product factor depends on the path only through its transition counts
 (`TauCeti.prod_transitionCount_congr`) — applied inside the mixing integral, where it holds
 pointwise in the mixing variable.
 
-The class is strictly larger than the mixed i.i.d. one: the deterministic 3-cycle of
-`TauCeti/Probability/Exchangeability/ThreeCycle.lean` is a Markov chain, hence a mixture of Markov
-chains (`threeCycle_mixedMarkovChain`), but is not exchangeable and so not mixed i.i.d.
+Among coordinatewise a.e.-measurable processes, the class is strictly larger than the mixed i.i.d.
+one: the deterministic 3-cycle of `TauCeti/Probability/Exchangeability/ThreeCycle.lean` is a
+Markov chain, hence a mixture of Markov chains (`threeCycle_mixedMarkovChain`), but is not
+exchangeable and so not mixed i.i.d.
 
 ## Main definitions
 
@@ -53,13 +54,13 @@ chains (`threeCycle_mixedMarkovChain`), but is not exchangeable and so not mixed
 ## Main results
 
 * `TauCeti.Probability.MixedMarkovChainWith.prefixLaw_singleton_eq_lintegral_prod_pow`: the
-  transition counts of a path are a sufficient statistic for its probability.
+  initial state and transition counts of a path are sufficient for its probability.
 * `TauCeti.Probability.MixedMarkovChainWith.markovExchangeable`: a mixture of Markov chains is
   Markov exchangeable — the easy direction of Diaconis–Freedman.
 * `TauCeti.Probability.mixedMarkovChainWith_const`: a single Markov chain is the degenerate
   mixture.
-* `TauCeti.Probability.MixedIIDWith.mixedMarkovChainWith`: a mixed i.i.d. process is a mixture of
-  Markov chains with state-independent rows.
+* `TauCeti.Probability.MixedIIDWith.mixedMarkovChainWith`: a coordinatewise a.e.-measurable mixed
+  i.i.d. process is a mixture of Markov chains with state-independent rows.
 
 ## References
 
@@ -213,10 +214,10 @@ theorem MixedMarkovChain.aemeasurable {μ : Measure Ω} {X : ℕ → Ω → α}
   obtain ⟨_, _, h⟩ := h
   exact h.aemeasurable i
 
-/-- **The transition counts of a path are a sufficient statistic for its probability.** Rewriting
-the mixture identity through `TauCeti.prod_transitionCount` replaces the product along the path by
-a product of powers indexed by the transition counts; the index set `S` only has to contain the
-letters of the path. -/
+/-- **The initial state together with the transition counts of a path is sufficient for its
+probability.** Rewriting the mixture identity through `TauCeti.prod_transitionCount` replaces the
+transition-product factor by a product of powers indexed by the transition counts; the index set
+`S` only has to contain the letters of the path. -/
 theorem MixedMarkovChainWith.prefixLaw_singleton_eq_lintegral_prod_pow {μ : Measure Ω}
     {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} {κ : Ω → α → ProbabilityMeasure α}
     (h : MixedMarkovChainWith μ X ν κ) {n : ℕ} (w : Fin (n + 1) → α) {S : Finset α}
@@ -264,11 +265,12 @@ theorem mixedMarkovChainWith_const [Countable α] [MeasurableSingletonClass α]
   MixedMarkovChainWith.intro hX measurable_const (fun _ => measurable_const) fun n w => by
     rw [h n w, lintegral_const, measure_univ, mul_one]
 
-/-- **A mixed i.i.d. process is a mixture of Markov chains** whose rows do not depend on the
-current state: drawing the next coordinate from the mixing representative, whatever the present
-one, reproduces the mixed i.i.d. finite-dimensional laws. This places `MixedIID` below
-`MixedMarkovChain` in the symmetry lattice, refining `Exchangeable.markovExchangeable` at the level
-of the representations. -/
+/-- **A coordinatewise a.e.-measurable mixed i.i.d. process is a mixture of Markov chains** whose
+rows do not depend on the current state: drawing the next coordinate from the mixing
+representative, whatever the present one, reproduces the mixed i.i.d. finite-dimensional laws.
+Thus, among coordinatewise a.e.-measurable processes, this places `MixedIID` below
+`MixedMarkovChain` in the symmetry lattice, refining `Exchangeable.markovExchangeable` at the
+level of the representations. -/
 theorem MixedIIDWith.mixedMarkovChainWith [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
     (h : MixedIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) :
@@ -280,7 +282,8 @@ theorem MixedIIDWith.mixedMarkovChainWith [Countable α] [MeasurableSingletonCla
     h.blockLaw_univ_pi _ hk (fun i => {w i}) fun i => measurableSet_singleton (w i)]
   exact lintegral_congr fun ω => Fin.prod_univ_succ fun i => (ν ω : Measure α) {w i}
 
-/-- **A mixed i.i.d. process is a mixture of Markov chains**, existential form. -/
+/-- **A coordinatewise a.e.-measurable mixed i.i.d. process is a mixture of Markov chains**,
+existential form. -/
 theorem MixedIID.mixedMarkovChain [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} (h : MixedIID μ X) (hX : ∀ i, AEMeasurable (X i) μ) :
     MixedMarkovChain μ X := by
