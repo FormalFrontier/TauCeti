@@ -126,8 +126,8 @@ theorem gradientTestFunctionLp_add (q : ENNReal) (phi psi : 𝓓(Omega, ℝ)) :
   rw [gradientTestFunctionLp, gradientTestFunctionLp, gradientTestFunctionLp,
     ← MemLp.toLp_add]
   apply MemLp.toLp_congr
-  exact ae_of_all _ fun x => gradient_add (differentiable_testFunction phi x)
-    (differentiable_testFunction psi x)
+  exact ae_of_all _ fun x => gradient_add ((phi.contDiff.differentiable (by simp)) x)
+    ((psi.contDiff.differentiable (by simp)) x)
 
 @[simp]
 theorem gradientTestFunctionLp_smul (q : ENNReal) (c : ℝ) (phi : 𝓓(Omega, ℝ)) :

@@ -81,17 +81,11 @@ def W1p.ofTestFunctionₗ (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens 
   toFun phi := W1p.mk (testFunctionLp p phi) (gradientTestFunctionLp p phi)
     (hasWeakFDerivOn_testFunctionLp phi)
   map_add' phi psi := by
-    apply W1p.ext
-    · rw [W1p.value_mk, testFunctionLp_add, ← W1p.valueL_apply, map_add]
-      simp
-    · rw [W1p.gradient_mk, gradientTestFunctionLp_add, ← W1p.gradientL_apply, map_add]
-      simp
+    apply W1p.ext <;>
+      simp only [← W1p.valueL_apply, ← W1p.gradientL_apply, map_add] <;> simp
   map_smul' c phi := by
-    apply W1p.ext
-    · rw [W1p.value_mk, testFunctionLp_smul, ← W1p.valueL_apply, map_smul]
-      simp
-    · rw [W1p.gradient_mk, gradientTestFunctionLp_smul, ← W1p.gradientL_apply, map_smul]
-      simp
+    apply W1p.ext <;>
+      simp only [← W1p.valueL_apply, ← W1p.gradientL_apply, map_smul] <;> simp
 
 @[simp]
 theorem W1p.value_ofTestFunctionₗ (phi : 𝓓(Omega, ℝ)) :
