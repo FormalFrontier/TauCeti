@@ -35,5 +35,6 @@ class WorkflowPins(unittest.TestCase):
                     f"{workflow.name} runs one TauCetiReview SHA but checks out another",
                 )
 
+
 if __name__ == "__main__":
     unittest.main()
