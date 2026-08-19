@@ -223,6 +223,26 @@ noncomputable def cutNormSet [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :
 absolute integral over `S × T`. -/
 noncomputable def cutNorm [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
 
+/-- The **signed cut norm**: the supremum, over measurable `[-1,1]`-valued test functions `u` and
+`v`, of `|∫∫ u(x) v(y) K(x,y)|`.
+
+Relaxing the indicators of `cutNorm` to `[-1,1]`-valued functions can only increase the supremum
+(`cutNorm_le_cutNormSigned`), and increases it by at most a factor of `4`.  That upper side of the
+sandwich, `cutNormSigned_le_four_mul_cutNorm`, is a separate roadmap target and is not proved
+here.
+
+`[IsFiniteMeasure μ]` is required, as for `cutNorm`, and is not decoration: on an infinite measure
+the test integrals are unbounded — take `μ` Lebesgue, `K` the constant kernel `1`, and `u = v` the
+indicator of `[0, n]`, giving `n²` — so the conditionally complete supremum on `ℝ` would collapse to
+its junk value `0` for a kernel that is nowhere near zero.  Finiteness is what makes
+`abs_testIntegral_le_integral_abs` bound the range, and hence what makes this a faithful
+supremum. -/
+noncomputable def cutNormSigned [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :=
+  let ν : FiniteMeasure Ω := ⟨μ, inferInstance⟩
+  ⨆ (u : Ω → ℝ) (_ : Measurable u) (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1)
+    (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+    |K.testIntegral (ν : Measure Ω) u v|
+
 variable [IsFiniteMeasure μ]
 
 /-- The cut norm is definitionally its separately roadmap-pinned measurable-set form.  This is not
@@ -358,24 +378,6 @@ theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
   simp only [SymmKernel.rectIntegral_smul, abs_mul,
     Real.mul_iSup_of_nonneg (abs_nonneg c)]
 
-/-- The **signed cut norm**: the supremum, over measurable `[-1,1]`-valued test functions `u` and
-`v`, of `|∫∫ u(x) v(y) K(x,y)|`.
-
-Relaxing the indicators of `cutNorm` to `[-1,1]`-valued functions can only increase the supremum
-(`cutNorm_le_cutNormSigned`), and increases it by at most a factor of `4`.  That upper side of the
-sandwich, `cutNormSigned_le_four_mul_cutNorm`, is a separate roadmap target and is not proved
-here.
-
-Unlike `cutNorm`, this definition needs no finiteness hypothesis on `μ` — the supremum is taken in
-`ℝ` either way.  Finiteness enters exactly on the results that need the `L¹` bound to know the
-supremum is over a bounded set, which is every result below except the two purely order-theoretic
-ones. -/
-noncomputable def cutNormSigned (K : SymmKernel Ω μ) : ℝ :=
-  ⨆ (u : Ω → ℝ) (_ : Measurable u) (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1)
-    (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
-    |K.testIntegral μ u v|
-
-omit [IsFiniteMeasure μ] in
 /-- The signed cut norm is the iterated supremum over measurable `[-1,1]`-valued test functions. -/
 theorem cutNormSigned_def (K : SymmKernel Ω μ) :
     cutNormSigned μ K =
@@ -441,7 +443,6 @@ theorem abs_testIntegral_le_cutNormSigned (K : SymmKernel Ω μ) {u v : Ω → �
   exact le_ciSup (bddAbove_range_of_forall_le fun _ =>
     K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1) hv1
 
-omit [IsFiniteMeasure μ] in
 /-- To prove an upper bound on the signed cut norm, it suffices to prove it for every pair of
 measurable `[-1,1]`-valued test functions.  Nonnegativity of the bound is not a hypothesis: it
 follows by testing against the zero function. -/
@@ -458,7 +459,6 @@ theorem cutNormSigned_le {K : SymmKernel Ω μ} {C : ℝ}
     Real.iSup_le (fun v => Real.iSup_le (fun hv => Real.iSup_le (fun hv1 =>
       h u v hu hv hu1 hv1) hC) hC) hC) hC) hC) hC
 
-omit [IsFiniteMeasure μ] in
 /-- The signed cut norm is nonnegative. -/
 theorem cutNormSigned_nonneg (K : SymmKernel Ω μ) : 0 ≤ cutNormSigned μ K := by
   rw [cutNormSigned_def]
