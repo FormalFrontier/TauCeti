@@ -79,13 +79,6 @@ def IsCentral (I : HopfIdeal R H) : Prop :=
   ∀ x : H, HopfAlgebra.conjugationAlgHom (R := R) (H := H) x -
       Algebra.TensorProduct.includeRight x ∈ leftTensorIdeal (R := R) (H := H) I.toIdeal
 
-/-- Centrality, restated as the defining ideal-membership condition. -/
-theorem isCentral_def (I : HopfIdeal R H) :
-    I.IsCentral ↔
-      ∀ x : H, HopfAlgebra.conjugationAlgHom (R := R) (H := H) x -
-        Algebra.TensorProduct.includeRight x ∈ leftTensorIdeal (R := R) (H := H) I.toIdeal :=
-  Iff.rfl
-
 /-- Centrality passes to larger Hopf ideals, which cut out smaller closed subgroups. -/
 theorem IsCentral.mono {I J : HopfIdeal R H} (hI : I.IsCentral) (hIJ : I ≤ J) : J.IsCentral :=
   fun x ↦ leftTensorIdeal_mono R H (toIdeal_le_toIdeal.mpr hIJ) (hI x)
@@ -101,7 +94,7 @@ The zero Hopf ideal cuts out all of `Spec H`, so its centrality says that conjug
 which for the convolution group of points is commutativity. -/
 theorem isCentral_bot_iff_isCocomm :
     (⊥ : HopfIdeal R H).IsCentral ↔ _root_.Coalgebra.IsCocomm R H := by
-  rw [isCentral_def, ← HopfAlgebra.commute_includeLeft_includeRight_iff_isCocomm R H,
+  rw [IsCentral, ← HopfAlgebra.commute_includeLeft_includeRight_iff_isCocomm R H,
     commute_iff_eq]
   have hzero : leftTensorIdeal (R := R) (H := H) (⊥ : HopfIdeal R H).toIdeal = ⊥ := by
     rw [bot_toIdeal, leftTensorIdeal_def, Ideal.map_bot]
