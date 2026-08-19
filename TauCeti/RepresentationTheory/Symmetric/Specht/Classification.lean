@@ -6,10 +6,9 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
 public import TauCeti.RepresentationTheory.FDRep.Simple
-public import TauCeti.RepresentationTheory.Induction.Restriction
 public import TauCeti.RepresentationTheory.Symmetric.Partitions
+public import TauCeti.RepresentationTheory.Symmetric.Specht.AbsoluteIrreducibility
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Distinctness
-public import TauCeti.RepresentationTheory.Symmetric.Specht.Endomorphism
 
 /-!
 # The classification of the rational representations of the symmetric group
@@ -20,13 +19,13 @@ separately elsewhere in the library.
 
 *Irreducibility* is James's submodule theorem
 (`TauCeti.isIrreducible_spechtModule`), transported into the categorical language by
-`TauCeti.FDRep.simple_iff_isIrreducible`.
+`FDRep.simple_iff_isIrreducible`.
 
-*Absolute irreducibility* is the statement that the endomorphism ring of `S^μ` is `ℚ` and not some
-larger division ring; it is `TauCeti.finrank_intertwiningMap_spechtSubrepresentation`, transported
-along the relabelling of `Fin n` used to package `S^μ` as an object of `FDRep ℚ Sₙ`.  Over a field
-that is not algebraically closed this does not follow from irreducibility, and it is what makes the
-character of `S^μ` have self-pairing exactly `1`.
+*Absolute irreducibility* is `TauCeti.spechtModuleIntertwiningEndAlgEquiv`, the statement that the
+endomorphism algebra of `S^μ` is `ℚ` and not some larger division ring; the dimension form used here
+reads it off through `FDRep.finrank_hom_eq_finrank_intertwiningMap`.  Over a field that is not
+algebraically closed this does not follow from irreducibility, and it is what makes the character of
+`S^μ` have self-pairing exactly `1`.
 
 *Distinctness* is `TauCeti.spechtModule_iso_iff`, proved by the dominance-order comparison.
 
@@ -81,16 +80,8 @@ Irreducibility over a field that is not algebraically closed leaves room for a l
 of endomorphisms; here there is none, which is exactly what keeps `ℂ ⊗_ℚ S^μ` irreducible. -/
 theorem spechtModule_absolutelyIrreducible (μ : n.Partition) :
     Module.finrank ℚ (spechtModule μ ⟶ spechtModule μ) = 1 := by
-  have hres := finrank_hom_res_mulEquiv (k := ℚ)
-    (finCongr (card_diagramOf μ).symm).permCongrHom
-    (FDRep.of (spechtSubrepresentation (diagramOf μ)).toRepresentation)
-    (FDRep.of (spechtSubrepresentation (diagramOf μ)).toRepresentation)
-  have hone : Module.finrank ℚ
-      (FDRep.of (spechtSubrepresentation (diagramOf μ)).toRepresentation ⟶
-        FDRep.of (spechtSubrepresentation (diagramOf μ)).toRepresentation) = 1 := by
-    rw [FDRep.finrank_hom_eq_finrank_intertwiningMap]
-    exact finrank_intertwiningMap_spechtSubrepresentation (diagramOf μ)
-  exact hres.trans hone
+  rw [FDRep.finrank_hom_eq_finrank_intertwiningMap]
+  simpa using (spechtModuleIntertwiningEndAlgEquiv μ).toLinearEquiv.finrank_eq
 
 /-- The character of the Specht module `S^μ`, as a class function on `Sₙ`. -/
 noncomputable def spechtCharacter (μ : n.Partition) : ClassFunction ℚ (Equiv.Perm (Fin n)) :=
@@ -101,9 +92,9 @@ values are `1` by absolute irreducibility, and the off-diagonal ones vanish by d
 theorem characterPairing_spechtCharacter (μ ν : n.Partition) :
     characterPairing (spechtCharacter μ) (spechtCharacter ν) = if μ = ν then 1 else 0 := by
   rcases eq_or_ne μ ν with rfl | hne
-  · rw [if_pos rfl, spechtCharacter, characterPairing_ofFDRep_eq_finrank,
+  · rw [ite_eq_left rfl, spechtCharacter, characterPairing_ofFDRep_eq_finrank,
       spechtModule_absolutelyIrreducible, Nat.cast_one]
-  · rw [if_neg hne]
+  · rw [ite_eq_right hne]
     refine characterPairing_ofFDRep_eq_zero _ _ (not_nonempty_iff.mp ?_)
     rw [spechtModule_iso_iff]
     exact hne

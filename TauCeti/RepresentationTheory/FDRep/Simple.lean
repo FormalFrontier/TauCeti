@@ -17,24 +17,23 @@ the same thing, and this file proves it.
 
 The translation is carried by the space of intertwiners: a morphism of `FDRep k G` is exactly a
 linear map between the underlying spaces commuting with the two actions, so
-`TauCeti.FDRep.homLinearEquivIntertwiningMap` identifies a morphism space of `FDRep k G` with a
-space of intertwiners.  Through that identification a monomorphism is an injective map and an
-isomorphism a bijective one, while the subobjects of an object are its subrepresentations; the
-dictionary between the two notions of irreducibility follows.
+`FDRep.homLinearEquivIntertwiningMap` identifies a morphism space of `FDRep k G` with a space of
+intertwiners.  Through that identification a monomorphism is an injective map and an isomorphism a
+bijective one, while the subobjects of an object are its subrepresentations; the dictionary between
+the two notions of irreducibility follows.
 
 ## Main definitions
 
-* `TauCeti.FDRep.homLinearEquivIntertwiningMap`: the morphism space `V ⟶ W` of `FDRep k G` is the
-  space of intertwiners from `V.ρ` to `W.ρ`.
+* `FDRep.homLinearEquivIntertwiningMap`: the morphism space `V ⟶ W` of `FDRep k G` is the space of
+  intertwiners from `V.ρ` to `W.ρ`.
 
 ## Main results
 
-* `TauCeti.FDRep.mono_iff_injective` and `TauCeti.FDRep.isIso_iff_bijective`: monomorphisms and
-  isomorphisms of `FDRep k G` are the injective and the bijective intertwiners.
-* `TauCeti.FDRep.simple_iff_isIrreducible`: **an object of `FDRep k G` is simple exactly when its
+* `FDRep.mono_iff_injective` and `FDRep.isIso_iff_bijective`: monomorphisms and isomorphisms of
+  `FDRep k G` are the injective and the bijective intertwiners.
+* `FDRep.simple_iff_isIrreducible`: **an object of `FDRep k G` is simple exactly when its
   representation is irreducible**.
-* `TauCeti.FDRep.finrank_hom_eq_finrank_intertwiningMap`: the two morphism spaces have the same
-  dimension.
+* `FDRep.finrank_hom_eq_finrank_intertwiningMap`: the two morphism spaces have the same dimension.
 
 ## References
 
@@ -46,8 +45,6 @@ dictionary between the two notions of irreducibility follows.
 public section
 
 open CategoryTheory Representation
-
-namespace TauCeti
 
 namespace FDRep
 
@@ -135,8 +132,8 @@ theorem finrank_hom_eq_finrank_intertwiningMap (V W : FDRep k G) :
 /-- The inclusion of a subrepresentation, as a morphism of `FDRep k G`. -/
 @[expose]
 noncomputable def subtypeHom {V : FDRep k G} (U : Subrepresentation V.ρ) :
-    _root_.FDRep.of U.toRepresentation ⟶ V :=
-  ofIntertwiningMap (V := _root_.FDRep.of U.toRepresentation)
+    FDRep.of U.toRepresentation ⟶ V :=
+  ofIntertwiningMap (V := FDRep.of U.toRepresentation)
     (U.toSubmodule.subtype.intertwiningMap_of_isIntertwiningMap
       U.toRepresentation V.ρ fun _ _ => rfl)
 
@@ -268,5 +265,3 @@ theorem simple_iff_isIrreducible (V : FDRep k G) :
       exact (isIso_iff_bijective f).mpr ⟨hinj, hsurj⟩
 
 end FDRep
-
-end TauCeti
