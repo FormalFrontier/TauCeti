@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Representation
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Casimir
 public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Root.Basis
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Vector
@@ -42,8 +42,6 @@ same scalar everywhere
 
 ## Main results
 
-* `TauCeti.representation_casimirElement_apply`: the Casimir element acts by the double bracket
-  along any basis of `L` and its Killing-dual basis.
 * `TauCeti.IsHighestWeightVector.representation_casimirElement`: the Casimir element sends a
   highest weight vector `v` of weight `λ` to `(⟨λ, λ⟩ + ⟨λ, 2ρ⟩) • v`.
 * `TauCeti.IsHighestWeightVector.representation_casimirElement_weylVector`: the same scalar,
@@ -67,7 +65,7 @@ namespace TauCeti
 
 open Finset LieAlgebra LieAlgebra.IsKilling LieModule Module
 open _root_.TauCeti.UniversalEnvelopingAlgebra
-  (representation representation_ι_apply commute_representation_of_mem_center)
+  (representation commute_representation_of_mem_center)
 
 universe u v w
 
@@ -75,18 +73,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   [IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-
-/-! ### The Casimir element as a double bracket -/
-
-omit [CharZero K] [H.IsCartanSubalgebra] [IsTriangularizable K H L] in
-/-- **The Casimir element acts by the double bracket along any basis** of `L` and its Killing-dual
-basis: the two canonical generators of each summand act one after the other. -/
-theorem representation_casimirElement_apply {ι : Type*} [DecidableEq ι] [Fintype ι]
-    (bs : Basis ι K L) (m : M) :
-    representation K L M (casimirElement K L) m = ∑ i, ⁅bs i, ⁅killingDualBasis bs i, m⁆⁆ := by
-  rw [casimirElement_eq_sum bs, map_sum, LinearMap.sum_apply]
-  exact Finset.sum_congr rfl fun i _ ↦ by
-    rw [map_mul, Module.End.mul_apply, representation_ι_apply, representation_ι_apply]
 
 /-! ### The two blocks of the sum -/
 
@@ -176,11 +162,22 @@ private theorem sum_lie_lie_cartanRootDualFamily {x : Weight K H L → L} (hx : 
       rw [leibniz_lie, hx.lie_neg _ hnz, hzero, lie_zero, add_zero, hv.lie_eq_smul]
     have hcoeff : (killingForm K L (x (α : Weight K H L)) (x (-(α : Weight K H L))))⁻¹ *
         lam (coroot (α : Weight K H L)) =
-        invForm lam ((IsKilling.rootSystem H).root α) := by
-      rw [rootSystem_root_apply, killingForm_root_neg_eq_invForm hx hnz, mul_inv, inv_inv,
-        mul_assoc, mul_comm (invForm ((α : Weight K H L) : Dual K H) _)
-          (lam (coroot (α : Weight K H L))), invForm_coroot_weight, ← mul_assoc,
-        inv_mul_cancel₀ (two_ne_zero : (2 : K) ≠ 0), one_mul]
+        invForm lam ((IsKilling.rootSystem H).root α) :=
+      calc (killingForm K L (x (α : Weight K H L)) (x (-(α : Weight K H L))))⁻¹ *
+            lam (coroot (α : Weight K H L))
+          -- the Killing pairing of opposite root vectors, in terms of the invariant form
+          = (2 * (invForm ((α : Weight K H L) : Dual K H) (α : Weight K H L))⁻¹)⁻¹ *
+              lam (coroot (α : Weight K H L)) := by
+            rw [killingForm_root_neg_eq_invForm hx hnz]
+        _ = 2⁻¹ * (lam (coroot (α : Weight K H L)) *
+              invForm ((α : Weight K H L) : Dual K H) (α : Weight K H L)) := by
+            rw [mul_inv, inv_inv]; ring
+          -- the normalisation `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩` of the invariant form
+        _ = 2⁻¹ * (2 * invForm lam ((α : Weight K H L) : Dual K H)) := by
+            rw [invForm_coroot_weight]
+        _ = invForm lam ((IsKilling.rootSystem H).root α) := by
+            rw [rootSystem_root_apply, ← mul_assoc, inv_mul_cancel₀ (two_ne_zero : (2 : K) ≠ 0),
+              one_mul]
     rw [smul_lie, lie_smul, hleib, smul_smul, hcoeff]
   rw [Finset.sum_congr rfl hposterm, hneg, add_zero, ← Finset.sum_smul, ← map_sum,
     twoWeylVector_def]

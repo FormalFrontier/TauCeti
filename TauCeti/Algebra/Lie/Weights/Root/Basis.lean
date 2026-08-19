@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Casimir
+public import TauCeti.Algebra.Lie.Killing.DualBasis
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 
 /-!
@@ -80,11 +80,6 @@ private theorem eq_zero_of_forall_mem_killingForm_eq_zero [IsKilling K L] {S : S
 
 /-! ### The Cartan part -/
 
-/-- The trace form of `H` acting on `L` is symmetric, in the bundled form the dual-basis API asks
-for. -/
-private theorem traceForm_cartan_isSymm : (LieModule.traceForm K H L).IsSymm :=
-  LinearMap.BilinForm.isSymm_def.mpr fun u v ↦ LieModule.traceForm_comm K H L u v
-
 variable [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
   {ιH : Type w} [Finite ιH] [DecidableEq ιH]
 
@@ -98,7 +93,8 @@ theorem killingForm_cartanKillingDualBasis (bH : Basis ιH K H) (i j : ιH) :
     killingForm K L (bH i : L) (cartanKillingDualBasis bH j : L) = if i = j then 1 else 0 :=
   (DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i))
       (cartanKillingDualBasis bH j)).trans
-    (LinearMap.BilinForm.apply_dualBasis_right _ traceForm_cartan_isSymm bH i j)
+    (LinearMap.BilinForm.apply_dualBasis_right _
+      (LinearMap.BilinForm.isSymm_def.mpr fun u v ↦ LieModule.traceForm_comm K H L u v) bH i j)
 
 /-- **Expansion of an element of `H` in the Killing-dual basis**: the coefficients are the Killing
 pairings against `bH`. -/
@@ -274,12 +270,16 @@ followed by the root vectors of a normalised family. -/
 noncomputable def cartanRootBasis : Basis (ιH ⊕ H.root) K L :=
   (hx.dualBases_cartanRootFamily bH).basis
 
+/-- **The adapted basis is the adapted family**: coercing
+`TauCeti.IsSl2System.cartanRootBasis` back to a family of vectors of `L` returns
+`TauCeti.cartanRootFamily`, the basis of `H` followed by the root vectors. -/
 @[simp]
 theorem coe_cartanRootBasis : ⇑(hx.cartanRootBasis bH) = cartanRootFamily bH x :=
   (hx.dualBases_cartanRootFamily bH).coe_basis
 
 /-- **The Killing-dual basis of the adapted basis is the dual family.** Both are characterised by
 biorthogonality against the adapted basis, and the Killing form is non-degenerate. -/
+@[simp]
 theorem killingDualBasis_cartanRootBasis [DecidableEq (Weight K H L)] [Fintype ιH] :
     ⇑(killingDualBasis (hx.cartanRootBasis bH)) = cartanRootDualFamily bH x := by
   funext j
