@@ -47,7 +47,7 @@ alone is *not* invariant.
 
 ## Main definitions
 
-* `HeckeRing.GL2.upperTriShift`: the offset permutation `j ↦ d b + j d² mod p`.
+* `HeckeRing.GL2.upperTriShift`: the offset map `j ↦ d b + j d² mod p`.
 
 ## Main results
 
@@ -88,13 +88,12 @@ def upperTriShift (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) : Fin p :=
       = ((γ 1 1 * γ 0 1 + (j : ℕ) * (γ 1 1 * γ 1 1) : ℤ) : ZMod p) :=
   ZMod.natCast_rightInverse _
 
-/-- **The offset map is a bijection.** Under the stated hypotheses, `d` is the inverse of `a`
-modulo `p`, so the map gives the unique solution in `[0, p)` of `a j' ≡ b + j d (mod p)`.
+/-- **The offset map is a bijection.** For `γ ∈ Γ₀(p)`, `d` is the inverse of `a` modulo `p`,
+so the map gives the unique solution in `[0, p)` of `a j' ≡ b + j d (mod p)`.
 Two offsets with the same shift differ by an element killed by the unit `d²`. -/
-lemma upperTriShift_bijective [NeZero p] (hpN : p ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
+lemma upperTriShift_bijective [NeZero p] {γ : SL(2, ℤ)} (hγp : γ ∈ Gamma0 p) :
     Function.Bijective (upperTriShift p γ) := by
   refine Finite.injective_iff_bijective.mp fun j j' hjj ↦ ?_
-  have hγp : γ ∈ Gamma0 p := Gamma0_le_Gamma0_of_dvd hpN hγ
   have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hγp
   have h := congrArg (fun m : Fin p ↦ ((m : ℕ) : ZMod p)) hjj
   simp only [upperTriShift_natCast] at h
@@ -187,7 +186,8 @@ theorem heckeSlashUpperTri_slash_mapGL_of_mem_Gamma0 (k : ℤ) [NeZero p] (hpN :
     rw [← SlashAction.slash_mul, hmul, SlashAction.slash_mul, hf γ' hγ' hdd,
       ModularForm.rat_smul_slash_of_det_pos k (det_upperTriRep_pos p _) f u]
   rw [Finset.sum_congr rfl fun j _ ↦ key j]
-  exact Fintype.sum_bijective (upperTriShift p γ) (upperTriShift_bijective hpN hγ)
+  exact Fintype.sum_bijective (upperTriShift p γ)
+    (upperTriShift_bijective (Gamma0_le_Gamma0_of_dvd hpN hγ))
     (fun j ↦ u • (f ∣[k] (upperTriRep p (upperTriShift p γ j) : GL (Fin 2) ℚ)))
     (fun j ↦ u • (f ∣[k] (upperTriRep p j : GL (Fin 2) ℚ))) fun _ ↦ rfl
 
