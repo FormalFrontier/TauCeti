@@ -87,14 +87,11 @@ private theorem finrank_toSubmodule (N : LieSubmodule K H L) :
     finrank K N.toSubmodule = finrank K N :=
   rfl
 
-/-- Membership in the `Finset` of roots of a Cartan subalgebra is nonvanishing of the weight. -/
-theorem mem_root_iff {α : Weight K H L} : α ∈ H.root ↔ α.IsNonZero := by
-  simp [LieSubalgebra.root]
-
 open scoped Classical in
 /-- **The root-space decomposition.** A finite-dimensional Lie algebra that is triangularizable
-over a Cartan subalgebra `H` is the internal direct sum of the root spaces of `H`, indexed by the
-weights of `H` on `L`: the roots, together with the zero weight whose root space is `H` itself. -/
+over a Cartan subalgebra `H` is the internal direct sum of the root spaces of `H`, indexed by all
+the weights of `H` on `L`. The nonzero weights are the roots; the zero weight, when it is a weight
+at all, contributes `H` itself. -/
 theorem isInternal_rootSpace [LieModule.IsTriangularizable K H L] :
     DirectSum.IsInternal fun α : Weight K H L ↦ (rootSpace H (α : H → K)).toSubmodule := by
   refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top ?_ ?_
@@ -105,6 +102,7 @@ theorem isInternal_rootSpace [LieModule.IsTriangularizable K H L] :
 
 /-- **The zero root space is the Cartan subalgebra**, at the level of dimensions. When the zero
 functional is not a weight of `H` on `L` both sides vanish, since then `H` itself is trivial. -/
+@[simp]
 theorem finrank_rootSpace_zero : finrank K (rootSpace H (0 : H → K)) = finrank K H := by
   have h : (rootSpace H (0 : H → K)).toSubmodule = H.toSubmodule := by
     rw [← LieAlgebra.coe_zeroRootSubalgebra K L H, zeroRootSubalgebra_eq_of_is_cartan K L H]
@@ -123,8 +121,8 @@ total. -/
 private theorem sum_finrank_rootSpace_root :
     ∑ α ∈ H.root, finrank K (rootSpace H (α : H → K)) = H.root.card := by
   rw [Finset.sum_congr rfl fun α hα ↦
-    IsKilling.finrank_rootSpace_eq_one α ((mem_root_iff H).mp hα), Finset.sum_const, smul_eq_mul,
-    mul_one]
+    IsKilling.finrank_rootSpace_eq_one α (H.isNonZero_coe_root ⟨α, hα⟩), Finset.sum_const,
+    smul_eq_mul, mul_one]
 
 omit [CharZero K] [LieAlgebra.IsKilling K L] [LieModule.IsTriangularizable K H L] in
 open scoped Classical in
@@ -132,21 +130,21 @@ open scoped Classical in
 is at most one such weight, the zero one, and its root space is `H`. -/
 private theorem sum_finrank_rootSpace_compl_root :
     ∑ α ∈ H.rootᶜ, finrank K (rootSpace H (α : H → K)) = finrank K H := by
+  have hmem : ∀ α : Weight K H L, α ∈ H.rootᶜ ↔ (α : H → K) = 0 := fun α ↦ by simp
   by_cases h0 : rootSpace H (0 : H → K) = ⊥
   · have hH : finrank K H = 0 := by
       rw [← finrank_rootSpace_zero H, ← finrank_toSubmodule, h0, LieSubmodule.bot_toSubmodule]
       simp
     have hempty : (H.rootᶜ : Finset (Weight K H L)) = ∅ := by
       refine Finset.eq_empty_of_forall_notMem fun α hα ↦ Weight.genWeightSpace_ne_bot L α ?_
-      rw [Finset.mem_compl, mem_root_iff, not_not] at hα
-      rw [show (α : H → K) = 0 from hα]
+      rw [(hmem α).mp hα]
       exact h0
     rw [hempty, Finset.sum_empty, hH]
   · have hsingle : (H.rootᶜ : Finset (Weight K H L)) = {⟨0, h0⟩} := by
       ext α
-      rw [Finset.mem_compl, mem_root_iff, not_not, Finset.mem_singleton]
+      rw [hmem α, Finset.mem_singleton]
       refine ⟨fun hα ↦ Weight.ext fun x ↦ ?_, ?_⟩
-      · rw [congr_fun (show (α : H → K) = 0 from hα) x]
+      · rw [congr_fun hα x]
         rfl
       · rintro rfl
         rfl
@@ -190,11 +188,10 @@ theorem finrank_eq_finrank_cartan_add_two_mul_card_isPos
     (b : (IsKilling.rootSystem H).Base) :
     finrank K L
       = finrank K H + 2 * (Finset.univ.filter fun i : H.root ↦ b.IsPos i).card := by
-  rw [finrank_eq_finrank_cartan_add_two_mul_ncard_posRoots H b,
-    show posRoots (IsKilling.rootSystem H) b
-      = ↑(Finset.univ.filter fun i : H.root ↦ b.IsPos i) from Set.ext fun i ↦ by
-        simp [mem_posRoots],
-    Set.ncard_coe_finset]
+  have hpos : posRoots (IsKilling.rootSystem H) b
+      = ↑(Finset.univ.filter fun i : H.root ↦ b.IsPos i) :=
+    Set.ext fun i ↦ by simp [mem_posRoots]
+  rw [finrank_eq_finrank_cartan_add_two_mul_ncard_posRoots H b, hpos, Set.ncard_coe_finset]
 
 /-- The number of roots is even: root negation pairs them up. No base has to be supplied, since
 one always exists (`RootPairing.nonempty_base`). -/
@@ -209,8 +206,8 @@ theorem finrank_sub_finrank_cartan (b : (IsKilling.rootSystem H).Base) :
   have h := finrank_eq_finrank_cartan_add_two_mul_ncard_posRoots H b
   omega
 
-/-- **`dim L + dim H` is twice `dim H` plus the number of positive roots**, so halving it is
-exact. -/
+/-- **`dim L + dim H` is twice the sum of `dim H` and the number of positive roots**, so halving
+it is exact. -/
 theorem finrank_add_finrank_cartan (b : (IsKilling.rootSystem H).Base) :
     finrank K L + finrank K H
       = 2 * (finrank K H + (posRoots (IsKilling.rootSystem H) b).ncard) := by
