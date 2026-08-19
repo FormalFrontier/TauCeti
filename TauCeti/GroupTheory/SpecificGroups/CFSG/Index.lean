@@ -80,11 +80,8 @@ theorem ext (q r : PrimePower) (hp : q.p = r.p) (he : q.exponent = r.exponent) :
 /-- The cardinality represented by a prime-power parameter. -/
 def card (q : PrimePower) : ℕ := q.p ^ q.exponent
 
-@[simp] lemma card_mk (p exponent : ℕ) (hp : p.Prime) (he : 0 < exponent) :
-    card ⟨p, exponent, hp, he⟩ = p ^ exponent := (rfl)
-
 /-- The stored cardinality is the stored base raised to the stored exponent. -/
-lemma card_eq_pow (q : PrimePower) : q.card = q.p ^ q.exponent := by cases q; simp
+@[simp] lemma card_eq_pow (q : PrimePower) : q.card = q.p ^ q.exponent := (rfl)
 
 /-- The cardinality stored by a prime-power parameter is a prime power in Mathlib's sense. -/
 lemma isPrimePow_card (q : PrimePower) : IsPrimePow q.card :=

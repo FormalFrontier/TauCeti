@@ -11,41 +11,45 @@ public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
 /-!
 # The field Frobenius of a Lie-type index
 
-Every Steinberg endomorphism in the CFSG list starts from the map `x ↦ x ^ q` on the algebraic
-closure of the prime field, where `q` is the Frobenius parameter recorded by the index. This file
-constructs that map, `TauCeti.ValidLieTypeIndex.frobenius`, and identifies the field it fixes.
+On the ordinary and graph-twisted branches of the CFSG list the Steinberg endomorphism starts from
+the map `x ↦ x ^ q` on the algebraic closure of the prime field, where `q` is the Frobenius
+parameter recorded by the index; on the Suzuki--Ree and Tits branches the Steinberg map is instead
+an odd power of a half-Frobenius, whose square is that same `x ↦ x ^ q`. Either way `𝔽_q` is the
+field of definition, so the map is worth having for every valid index. This file constructs it,
+`TauCeti.ValidLieTypeIndex.frobeniusEquiv`, and identifies the field it fixes.
 
 The construction is Mathlib's iterated Frobenius. Writing `q = p ^ e` with
 `TauCeti.LieTypeIndex.fieldExponent`, the map is the `e`-fold iterate of the `p`-power Frobenius of
 `TauCeti.ValidLieTypeIndex.Closure`, which is a ring *automorphism* because an algebraically closed
 field is perfect. Its fixed field is the copy of `𝔽_q` inside the closure: it has exactly `q`
-elements, it is the unique subfield with that many, and every element of the closure lies in the
-fixed field of some such map. So the ambient field of a group of Lie type is the union of the
-finite fields that its Frobenius powers cut out, and the field of definition attached to the index
-is the one cut out by `frobenius` itself.
+elements, it is the unique subfield with that many, and every element of the closure is fixed by
+some positive iterate. So the ambient field of a group of Lie type is the union of the finite
+fields that its Frobenius powers cut out, and the field of definition attached to the index is the
+one cut out by `frobeniusEquiv` itself.
 
-Nothing here concerns a group. The graph-twisted and Suzuki--Ree branches compose this map with a
-diagram automorphism or replace it by an odd power of a half-Frobenius, and both of those act on a
-group and not on the field; the field-level map is the same `x ↦ x ^ q` on every branch, which is
-why it is defined for every valid index and not only for the untwisted ones.
+Nothing here concerns a group. The graph-twisted branches compose this map with a diagram
+automorphism and the Suzuki--Ree branches replace it by an odd power of a half-Frobenius, and both
+of those act on a group and not on the field; the field-level map is the same `x ↦ x ^ q` on every
+branch, which is why it is defined for every valid index and not only for the untwisted ones.
 
 ## Main definitions
 
-* `TauCeti.ValidLieTypeIndex.frobenius`: the `q`-power Frobenius automorphism of the closure.
+* `TauCeti.ValidLieTypeIndex.frobeniusEquiv`: the `q`-power Frobenius automorphism of the closure.
 * `TauCeti.ValidLieTypeIndex.fixedField`: the subfield it fixes.
 
 ## Main results
 
-* `TauCeti.ValidLieTypeIndex.frobenius_apply` and
-  `TauCeti.ValidLieTypeIndex.iterate_frobenius_apply`: the Frobenius and its iterates raise to the
-  corresponding powers of `q`.
+* `TauCeti.ValidLieTypeIndex.frobeniusEquiv_apply` and
+  `TauCeti.ValidLieTypeIndex.iterate_frobeniusEquiv_apply`: the Frobenius and its iterates raise to
+  the corresponding powers of `q`.
 * `TauCeti.ValidLieTypeIndex.card_fixedField`: the fixed field has `q` elements.
 * `TauCeti.ValidLieTypeIndex.eq_fixedField_of_natCard`: it is the only subfield with `q` elements.
 * `TauCeti.ValidLieTypeIndex.nonempty_ringEquiv_galoisField`: it is a copy of `GaloisField p e`.
-* `TauCeti.ValidLieTypeIndex.mem_frobeniusFixedSubfield_iff_iterate_frobenius_eq`: the `k`-th
-  iterate fixes the field of `q ^ k` elements.
-* `TauCeti.ValidLieTypeIndex.exists_mem_frobeniusFixedSubfield`: the closure is the union of the
-  fixed fields of the iterated Frobenius maps.
+* `TauCeti.ValidLieTypeIndex.mem_frobeniusFixedSubfield_iff_iterate_frobeniusEquiv_eq`: the `k`-th
+  iterate fixes the subfield at exponent `e * k`, which for `k ≠ 0` is the field of `q ^ k`
+  elements.
+* `TauCeti.ValidLieTypeIndex.exists_iterate_frobeniusEquiv_eq`: every element of the closure is
+  fixed by some positive iterate.
 
 ## Roadmap
 
@@ -78,22 +82,20 @@ variable (d : ValidLieTypeIndex)
 
 It is the `fieldExponent`-fold iterate of the `p`-power Frobenius, and is an automorphism rather
 than merely an endomorphism because an algebraically closed field is perfect. -/
-def frobenius : d.Closure ≃+* d.Closure :=
+def frobeniusEquiv : d.Closure ≃+* d.Closure :=
   iterateFrobeniusEquiv d.Closure d.characteristic d.fieldExponent
 
 /-- The Frobenius attached to an index raises to the power recorded by the index. -/
 @[simp]
-theorem frobenius_apply (x : d.Closure) : d.frobenius x = x ^ d.fieldOrder := by
-  rw [frobenius, iterateFrobeniusEquiv_def, ← d.fieldOrder_eq_characteristic_pow]
+theorem frobeniusEquiv_apply (x : d.Closure) : d.frobeniusEquiv x = x ^ d.fieldOrder := by
+  rw [frobeniusEquiv, iterateFrobeniusEquiv_def, ← d.fieldOrder_eq_characteristic_pow]
 
 /-- Iterating the Frobenius attached to an index raises to the corresponding power of `q`. This is
-the form the graph-twisted branches use: their Steinberg map has a `d`-th power equal to the plain
-`Frob_{q ^ d}`, with `d` the order of the diagram automorphism. -/
-theorem iterate_frobenius_apply (k : ℕ) (x : d.Closure) :
-    (d.frobenius : d.Closure → d.Closure)^[k] x = x ^ d.fieldOrder ^ k := by
-  induction k with
-  | zero => simp
-  | succ k ih => rw [Function.iterate_succ_apply', ih, frobenius_apply, ← pow_mul, ← pow_succ]
+the form the graph-twisted branches use: their Steinberg map has an `r`-th power equal to the plain
+`Frob_{q ^ r}`, with `r` the order of the diagram automorphism. -/
+theorem iterate_frobeniusEquiv_apply (k : ℕ) (x : d.Closure) :
+    (d.frobeniusEquiv : d.Closure → d.Closure)^[k] x = x ^ d.fieldOrder ^ k := by
+  rw [show ⇑d.frobeniusEquiv = (· ^ d.fieldOrder) from funext d.frobeniusEquiv_apply, pow_iterate]
 
 /-! ## The field of definition -/
 
@@ -101,6 +103,10 @@ theorem iterate_frobenius_apply (k : ℕ) (x : d.Closure) :
 index: the copy of `𝔽_q` inside the closure, with `q = d.fieldOrder`. -/
 def fixedField : Subfield d.Closure :=
   frobeniusFixedSubfield d.Closure d.characteristic d.fieldExponent
+
+/-- The fixed field is the Frobenius-fixed subfield at the exponent recorded by the index. -/
+theorem fixedField_def :
+    d.fixedField = frobeniusFixedSubfield d.Closure d.characteristic d.fieldExponent := (rfl)
 
 variable {d}
 
@@ -111,9 +117,9 @@ theorem mem_fixedField {x : d.Closure} : x ∈ d.fixedField ↔ x ^ d.fieldOrder
 
 /-- The fixed field is the fixed-point set of the Frobenius, which is what makes it the field of
 definition of the group cut out by that Frobenius. -/
-theorem mem_fixedField_iff_frobenius_eq {x : d.Closure} :
-    x ∈ d.fixedField ↔ d.frobenius x = x := by
-  rw [mem_fixedField, frobenius_apply]
+theorem mem_fixedField_iff_frobeniusEquiv_eq {x : d.Closure} :
+    x ∈ d.fixedField ↔ d.frobeniusEquiv x = x := by
+  rw [mem_fixedField, frobeniusEquiv_apply]
 
 variable (d)
 
@@ -124,7 +130,10 @@ instance : Finite d.fixedField :=
     d.fieldExponent_pos.ne'
 
 /-- **The field of definition has `q` elements.** The subfield of the algebraic closure fixed by
-the Frobenius attached to a valid Lie-type index has exactly `d.fieldOrder` elements. -/
+the Frobenius attached to a valid Lie-type index has exactly `d.fieldOrder` elements.
+
+This is not a `simp` lemma: `mem_fixedField` already rewrites the membership under the coercion,
+so the left-hand side is not in `simp`-normal form. -/
 theorem card_fixedField : Nat.card d.fixedField = d.fieldOrder := by
   rw [fixedField,
     card_frobeniusFixedSubfield d.Closure d.characteristic d.fieldExponent
@@ -133,10 +142,10 @@ theorem card_fixedField : Nat.card d.fixedField = d.fieldOrder := by
 
 /-- The fixed field is the unique subfield of the closure with `d.fieldOrder` elements, so the
 index determines it without reference to the Frobenius that cut it out. -/
-theorem eq_fixedField_of_natCard {F : Subfield d.Closure} [Finite F]
+theorem eq_fixedField_of_natCard {F : Subfield d.Closure}
     (hF : Nat.card F = d.fieldOrder) : F = d.fixedField :=
   eq_frobeniusFixedSubfield_of_natCard d.Closure d.characteristic d.fieldExponent
-    d.fieldExponent_pos.ne' (by rw [hF, d.fieldOrder_eq_characteristic_pow])
+    (by rw [hF, d.fieldOrder_eq_characteristic_pow])
 
 /-- The fixed field is a copy of Mathlib's `GaloisField`, non-canonically. -/
 theorem nonempty_ringEquiv_galoisField :
@@ -144,28 +153,30 @@ theorem nonempty_ringEquiv_galoisField :
   _root_.TauCeti.nonempty_ringEquiv_galoisField d.Closure d.characteristic d.fieldExponent
     d.fieldExponent_pos.ne'
 
+variable {d}
+
+/-- The elements fixed by the `k`-th iterate of the Frobenius are the fixed subfield at exponent
+`fieldExponent * k`, which for `k ≠ 0` is by `card_frobeniusFixedSubfield` the field of `q ^ k`
+elements. This identifies the field of definition of a graph-twisted family's ambient untwisted
+group: the degree `r` extension of `𝔽_q`, with `r` the order of the diagram automorphism. -/
+theorem mem_frobeniusFixedSubfield_iff_iterate_frobeniusEquiv_eq {k : ℕ} {x : d.Closure} :
+    x ∈ frobeniusFixedSubfield d.Closure d.characteristic (d.fieldExponent * k) ↔
+      (d.frobeniusEquiv : d.Closure → d.Closure)^[k] x = x := by
+  rw [iterate_frobeniusEquiv_apply, mem_frobeniusFixedSubfield, pow_mul,
+    ← d.fieldOrder_eq_characteristic_pow]
+
 /-- **The closure is the union of the finite fields inside it.** Every element of the algebraic
-closure attached to a valid Lie-type index is fixed by some positive iterate of the `p`-power
-Frobenius, hence lies in a finite subfield.
+closure attached to a valid Lie-type index is fixed by some positive iterate of the Frobenius,
+hence lies in a finite subfield of the closure.
 
 Together with `card_fixedField` this places the field of definition of the index inside an
 exhaustive tower of finite subfields, and it is why the closure, though itself infinite, carries no
 element that is not algebraic over a field of definition. -/
-theorem exists_mem_frobeniusFixedSubfield (x : d.Closure) :
-    ∃ n ≠ 0, x ∈ frobeniusFixedSubfield d.Closure d.characteristic n :=
-  _root_.TauCeti.exists_mem_frobeniusFixedSubfield d.Closure d.characteristic x
-
-variable {d}
-
-/-- The elements fixed by the `k`-th iterate of the Frobenius are the fixed subfield at exponent
-`fieldExponent * k`, which by `card_frobeniusFixedSubfield` is the field of `q ^ k` elements. This
-identifies the field of definition of a graph-twisted family's ambient untwisted group: the degree
-`d` extension of `𝔽_q`, with `d` the order of the diagram automorphism. -/
-theorem mem_frobeniusFixedSubfield_iff_iterate_frobenius_eq {k : ℕ} {x : d.Closure} :
-    x ∈ frobeniusFixedSubfield d.Closure d.characteristic (d.fieldExponent * k) ↔
-      (d.frobenius : d.Closure → d.Closure)^[k] x = x := by
-  rw [iterate_frobenius_apply, mem_frobeniusFixedSubfield, pow_mul,
-    ← d.fieldOrder_eq_characteristic_pow]
+theorem exists_iterate_frobeniusEquiv_eq (x : d.Closure) :
+    ∃ k ≠ 0, (d.frobeniusEquiv : d.Closure → d.Closure)^[k] x = x := by
+  obtain ⟨n, hn, hx⟩ := exists_mem_frobeniusFixedSubfield d.Closure d.characteristic x
+  exact ⟨n, hn, mem_frobeniusFixedSubfield_iff_iterate_frobeniusEquiv_eq.mp
+    (frobeniusFixedSubfield_le_of_dvd (dvd_mul_left n d.fieldExponent) hx)⟩
 
 end
 

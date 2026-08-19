@@ -8,27 +8,22 @@ module
 public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import TauCeti.Algebra.CharP.FrobeniusFixed
+public import TauCeti.FieldTheory.Finite.FrobeniusFixed
 
 /-!
 # The finite subfields of an algebraically closed field of positive characteristic
 
-`TauCeti.frobeniusFixedSubring A p n` is the subring of solutions of `a ^ p ^ n = a`, defined for an
-arbitrary commutative ring of exponential characteristic `p`. Over a field it is closed under
-inverses, so it is a subfield, `TauCeti.frobeniusFixedSubfield`; and when the field is
-algebraically closed and `n ≠ 0` it is the field of `q = p ^ n` elements sitting inside it.
+`TauCeti.frobeniusFixedSubfield K p n` is the subfield of solutions of `a ^ p ^ n = a`, defined for
+an arbitrary field of exponential characteristic `p`. When the field is algebraically closed and
+`n ≠ 0` it is the field of `q = p ^ n` elements sitting inside it.
 
 The counting is the standard one: `a ^ q = a` says exactly that `a` is a root of `X ^ q - X`, a
 polynomial whose derivative is `-1` and which therefore has no repeated roots, so over an
-algebraically closed field it has as many roots as its degree. Being closed under inverses is what
-turns the resulting `q`-element subring into a copy of `𝔽_q`, and a counting argument then shows it
-is the *only* subfield with `q` elements. In the other direction every element of an algebraic
-closure of `ZMod p` lies in one of these subfields, since it generates a finite extension of the
-prime field.
-
-## Main definitions
-
-* `TauCeti.frobeniusFixedSubfield`: the subfield of a field of exponential characteristic `p` fixed
-  by the `p ^ n`-power Frobenius.
+algebraically closed field it has as many roots as its degree. In any field of characteristic `p` a
+subfield with `q` elements is *the* Frobenius-fixed one, since being fixed by the `q`-power map
+characterises the elements of a finite subfield of order `q`. In the other direction every element
+of an algebraic closure of `ZMod p` lies in one of these subfields, since it generates a finite
+extension of the prime field.
 
 ## Main results
 
@@ -45,11 +40,11 @@ This is the field-theoretic half of "the fixed points of the `q`-power Frobenius
 `𝔽_q`-points", the ring-theoretic half being `TauCeti.frobeniusFixedSubring` itself. It is a
 prerequisite of the "points over an algebraically closed field, functorially in the field" target
 of Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, and of milestone L1 of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose Steinberg maps start from the `q`-power Frobenius
-of an algebraic closure of `ZMod p`.
+`TauCetiRoadmap/CFSGStatement/README.md`, whose ordinary and graph-twisted Steinberg maps start
+from the `q`-power Frobenius of an algebraic closure of `ZMod p`.
 
-* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §26.
 * S. Lang, *Algebra*, 3rd ed., V.5.
+* R. Lidl and H. Niederreiter, *Finite Fields*, §2.1.
 -/
 
 public section
@@ -58,42 +53,7 @@ open Polynomial
 
 namespace TauCeti
 
-/-! ## The fixed subfield -/
-
-section Field
-
-variable (K : Type*) [Field K] (p n : ℕ) [ExpChar K p]
-
-/-- The subfield of elements of a field `K` fixed by the `p ^ n`-power Frobenius, that is, the
-solutions of `a ^ p ^ n = a`.
-
-This is `TauCeti.frobeniusFixedSubring` together with closure under inverses, which holds because
-`(a⁻¹) ^ p ^ n = (a ^ p ^ n)⁻¹`. As with the subring, nothing about finiteness is asserted at this
-level of generality: at `n = 0`, or in characteristic zero, it is the whole of `K`. -/
-@[expose]
-def frobeniusFixedSubfield : Subfield K where
-  __ := frobeniusFixedSubring K p n
-  inv_mem' a ha := by
-    simp only [Subring.mem_carrier, mem_frobeniusFixedSubring] at ha ⊢
-    rw [inv_pow, ha]
-
-variable {K p n}
-
-/-- Membership in the Frobenius-fixed subfield is the equation `a ^ p ^ n = a`. -/
-@[simp]
-theorem mem_frobeniusFixedSubfield {a : K} :
-    a ∈ frobeniusFixedSubfield K p n ↔ a ^ p ^ n = a := mem_frobeniusFixedSubring
-
-variable (K p n)
-
-/-- The Frobenius-fixed subfield has the Frobenius-fixed subring as its underlying subring. -/
-@[simp]
-theorem toSubring_frobeniusFixedSubfield :
-    (frobeniusFixedSubfield K p n).toSubring = frobeniusFixedSubring K p n := rfl
-
-end Field
-
-/-! ## Counting over an algebraically closed field -/
+/-! ## The root set of `X ^ q - X` -/
 
 section RootSet
 
@@ -110,8 +70,9 @@ theorem coe_frobeniusFixedSubfield_eq_rootSet (hn : n ≠ 0) :
   simp [Polynomial.mem_rootSet, hne, sub_eq_zero]
 
 /-- The equivalence used to count the Frobenius-fixed subfield: its elements are exactly the roots
-of `X ^ p ^ n - X`, a separable polynomial of degree `p ^ n`. -/
-def frobeniusFixedSubfieldEquivRootSet (hn : n ≠ 0) :
+of `X ^ p ^ n - X`, a separable polynomial of degree `p ^ n`. The public form of this is
+`coe_frobeniusFixedSubfield_eq_rootSet`. -/
+private def frobeniusFixedSubfieldEquivRootSet (hn : n ≠ 0) :
     frobeniusFixedSubfield K p n ≃ (X ^ p ^ n - X : K[X]).rootSet K :=
   Equiv.setCongr (coe_frobeniusFixedSubfield_eq_rootSet K p n hn)
 
@@ -120,6 +81,25 @@ set of roots of a nonzero polynomial. This is not an instance: at `n = 0` the su
 of `K`, which need not be finite. -/
 theorem finite_frobeniusFixedSubfield (hn : n ≠ 0) : Finite (frobeniusFixedSubfield K p n) :=
   .of_equiv _ (frobeniusFixedSubfieldEquivRootSet K p n hn).symm
+
+/-- **Uniqueness of the subfield of `q` elements.** A subfield with `p ^ n` elements of a field of
+characteristic `p` is the subfield fixed by the `p ^ n`-power Frobenius.
+
+An element of the ambient field satisfies `a ^ q = a` exactly when it lies in a subfield with `q`
+elements, by `TauCeti.FiniteField.pow_card_eq_self_iff_mem_range_algebraMap`; no counting, and no
+algebraic closedness, is involved. -/
+theorem eq_frobeniusFixedSubfield_of_natCard {F : Subfield K} (hF : Nat.card F = p ^ n) :
+    F = frobeniusFixedSubfield K p n := by
+  have hne : Nat.card F ≠ 0 := by
+    rw [hF]
+    exact pow_ne_zero n (Fact.out (p := p.Prime)).ne_zero
+  have _ : Finite F := Nat.finite_of_card_ne_zero hne
+  have _ : Fintype F := Fintype.ofFinite F
+  have hcard : Fintype.card F = p ^ n := by rw [← Nat.card_eq_fintype_card, hF]
+  refine SetLike.coe_injective (Set.ext fun a => ?_)
+  rw [SetLike.mem_coe, SetLike.mem_coe, mem_frobeniusFixedSubfield, ← hcard,
+    FiniteField.pow_card_eq_self_iff_mem_range_algebraMap]
+  exact ⟨fun ha => ⟨⟨a, ha⟩, rfl⟩, fun ⟨b, hb⟩ => hb ▸ b.2⟩
 
 end RootSet
 
@@ -141,33 +121,6 @@ theorem card_frobeniusFixedSubfield (hn : n ≠ 0) :
   rw [Nat.card_congr (frobeniusFixedSubfieldEquivRootSet K p n hn), Nat.card_eq_fintype_card,
     card_rootSet_eq_natDegree hsep hsplit,
     FiniteField.X_pow_card_pow_sub_X_natDegree_eq K hn (Fact.out (p := p.Prime)).one_lt]
-
-/-- **Uniqueness of the subfield of `q` elements.** A finite subfield of an algebraically closed
-field of characteristic `p` with `p ^ n` elements is the subfield fixed by the `p ^ n`-power
-Frobenius.
-
-Every element of a finite field of cardinality `q` satisfies `a ^ q = a`, so such a subfield is
-contained in the fixed one; the two then agree because they have the same finite cardinality. -/
-theorem eq_frobeniusFixedSubfield_of_natCard {F : Subfield K} [Finite F]
-    (hn : n ≠ 0) (hF : Nat.card F = p ^ n) : F = frobeniusFixedSubfield K p n := by
-  have _ : Fintype F := Fintype.ofFinite F
-  have _ : Finite (frobeniusFixedSubfield K p n) := finite_frobeniusFixedSubfield K p n hn
-  rw [Nat.card_eq_fintype_card] at hF
-  have hsub : (F : Set K) ⊆ (frobeniusFixedSubfield K p n : Set K) := by
-    intro a ha
-    have hpow := FiniteField.pow_card (⟨a, ha⟩ : F)
-    rw [hF] at hpow
-    exact mem_frobeniusFixedSubfield.mpr (congrArg (Subtype.val : F → K) hpow)
-  have hcard : (frobeniusFixedSubfield K p n : Set K).ncard ≤ (F : Set K).ncard := by
-    have h₁ : (frobeniusFixedSubfield K p n : Set K).ncard = p ^ n := by
-      simp only [← Nat.card_coe_set_eq, SetLike.coe_sort_coe]
-      exact card_frobeniusFixedSubfield K p n hn
-    have h₂ : (F : Set K).ncard = p ^ n := by
-      simp only [← Nat.card_coe_set_eq, SetLike.coe_sort_coe]
-      rw [Nat.card_eq_fintype_card, hF]
-    rw [h₁, h₂]
-  exact SetLike.coe_injective
-    (Set.eq_of_subset_of_ncard_le hsub hcard (Set.toFinite _))
 
 /-- The Frobenius-fixed subfield of an algebraically closed field is a copy of Mathlib's
 `GaloisField p n`, the two being finite fields of the same cardinality. The isomorphism is not
@@ -204,14 +157,11 @@ theorem exists_mem_frobeniusFixedSubfield (x : K) :
   have _ : FiniteDimensional (ZMod p) E :=
     IntermediateField.adjoin.finiteDimensional (Algebra.IsIntegral.isIntegral x)
   have _ : Finite E := Module.finite_of_finite (ZMod p)
-  have _ : Fintype E := Fintype.ofFinite E
-  refine ⟨Module.finrank (ZMod p) E, ?_, ?_⟩
-  · exact (Module.finrank_pos (R := ZMod p) (M := E)).ne'
-  · have hcard : p ^ Module.finrank (ZMod p) E = Nat.card E :=
-      FiniteField.pow_finrank_eq_natCard p E
-    have hpow := FiniteField.pow_card (⟨x, hx⟩ : E)
-    rw [← Nat.card_eq_fintype_card, ← hcard] at hpow
-    exact mem_frobeniusFixedSubfield.mpr (congrArg (Subtype.val : E → K) hpow)
+  refine ⟨Module.finrank (ZMod p) E, (Module.finrank_pos (R := ZMod p) (M := E)).ne', ?_⟩
+  have hcard : Nat.card E.toSubfield = p ^ Module.finrank (ZMod p) E :=
+    (FiniteField.pow_finrank_eq_natCard p E).symm
+  rw [← eq_frobeniusFixedSubfield_of_natCard K p _ hcard]
+  exact (E.mem_toSubfield x).mpr hx
 
 end Algebraic
 
