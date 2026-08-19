@@ -27,6 +27,8 @@ endomorphism of it, so it is available before any ambient group has been constru
 * `TauCeti.fixedSubgroup_eq_top_iff`: only the identity fixes every point.
 * `TauCeti.fixedSubgroup_le_fixedSubgroup_pow`: a point fixed by an endomorphism is fixed by each of
   its powers.
+* `TauCeti.fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp`: a point fixed by each of two
+  endomorphisms is fixed by their composite.
 * `TauCeti.map_fixedSubgroup_le`: a homomorphism intertwining two endomorphisms carries the points
   fixed by the one to the points fixed by the other.
 
@@ -76,6 +78,17 @@ Frobenius. -/
 theorem fixedSubgroup_le_fixedSubgroup_pow (F : Monoid.End G) (n : ℕ) :
     fixedSubgroup (F : G →* G) ≤ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) :=
   mem_fixedSubgroup_pow_of_mem F n
+
+/-- A point fixed by each of two endomorphisms is fixed by their composite.
+
+The converse fails in general: a Steinberg endomorphism is a composite of a Frobenius with a
+diagram automorphism, and its fixed points are not in general fixed by either factor. -/
+theorem fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp (F F' : G →* G) :
+    fixedSubgroup F ⊓ fixedSubgroup F' ≤ fixedSubgroup (F'.comp F) := by
+  intro x hx
+  obtain ⟨hF, hF'⟩ := Subgroup.mem_inf.mp hx
+  rw [mem_fixedSubgroup] at hF hF' ⊢
+  rw [MonoidHom.comp_apply, hF, hF']
 
 variable {G' : Type*} [Group G']
 

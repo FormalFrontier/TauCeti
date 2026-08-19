@@ -33,8 +33,8 @@ steinberg (xᵢ(t)) = x_{σ i}(t ^ q).
 ```
 
 The two factors commute, so iterating the composite separates them: the `k`-th iterate is
-`γ ^ k ∘ Frob_{q ^ k}`. When the symmetry has order `d`, in the sense that `θ ^ d` is the identity
-of the representation, the `d`-th iterate is therefore the plain Frobenius `Frob_{q ^ d}`, and a
+`γ ^ k ∘ Frob_{q ^ k}`. When the symmetry has order `d`, in the sense that `γ ^ d = 1`, the `d`-th
+iterate is therefore the plain Frobenius `Frob_{q ^ d}`, and a
 `steinberg`-fixed point is fixed by it. Once the data is pinned and the fixed subgroups are
 identified, that containment becomes the standard statement that a graph-twisted group of Lie type
 sits inside the untwisted group over the degree-`d` extension of the field of definition, with
@@ -42,8 +42,8 @@ sits inside the untwisted group over the degree-`d` extension of the field of de
 abstract fixed subgroups it specializes to. Conversely a point fixed by both `Frob_q` and `γ` is
 fixed by the composite, though in general not every fixed point of the composite arises this way.
 
-Taking the untwisted symmetry, `θ` the identity, collapses `steinberg` to `Frob_q` itself, so the
-nine untwisted families are the same construction rather than a separate one.
+A trivial symmetry automorphism, `γ = 1`, collapses `steinberg` to `Frob_q` itself, so the nine
+untwisted families are the same construction rather than a separate one.
 
 Nothing here asserts that `steinberg` is the unique endomorphism with the displayed action on the
 root subgroups, that its fixed subgroup is finite, or that the derived central quotient of that
@@ -60,16 +60,16 @@ is made that `σ` comes from a symmetry of a Dynkin diagram.
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_kostantRootSubgroupParam`: the
   defining equation `steinberg (xᵢ(t)) = x_{σ i}(t ^ q)`.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_eq_kostantElementaryFrobenius`:
-  an untwisted symmetry gives back the Frobenius endomorphism.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_iterate`: the iterates separate as
   `γ ^ k ∘ Frob_{q ^ k}`, and `kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius`
   is the case of a symmetry of order `k`.
-* `TauCeti.UniversalEnvelopingAlgebra.fixedSubgroup_kostantElementarySteinberg_le`: the fixed
+* `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_eq_kostantElementaryFrobenius`:
+  a trivial symmetry automorphism gives back the Frobenius endomorphism.
+* `fixedSubgroup_kostantElementarySteinberg_le_fixedSubgroup_kostantElementaryFrobenius`: the fixed
   subgroup of a Steinberg endomorphism whose symmetry has order `d` lies in the fixed subgroup of
-  `Frob_{q ^ d}`, and
-  `TauCeti.UniversalEnvelopingAlgebra.le_fixedSubgroup_kostantElementarySteinberg` is the
-  containment in the other direction available before any surjectivity theorem.
+  `Frob_{q ^ d}`.
+* `fixedSubgroup_kostantElementaryFrobenius_inf_le_fixedSubgroup_kostantElementarySteinberg`: a
+  point fixed by both `Frob_q` and `γ` is fixed by the composite.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_injective`: injectivity over a
   reduced value ring.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryMap_kostantElementarySteinberg`:
@@ -158,17 +158,6 @@ theorem kostantElementarySteinberg_apply (g : kostantElementarySubgroup e h ρ M
         (kostantElementaryFrobenius e h ρ M hM hnil p n A g) := by
   rw [kostantElementarySteinberg, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom]
 
-/-- Inside the ambient automorphism group, the Steinberg endomorphism conjugates the Frobenius
-image by the scalar extension of `θ`. -/
-theorem val_kostantElementarySteinberg (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A g :
-        LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
-      baseChangeInvariantRestrictUnit (R := A) θ.toAddEquiv M hθM *
-          (kostantElementaryFrobenius e h ρ M hM hnil p n A g :
-            LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
-        (baseChangeInvariantRestrictUnit (R := A) θ.toAddEquiv M hθM)⁻¹ := by
-  rw [kostantElementarySteinberg_apply, val_kostantElementaryNumberedSymmetryAut]
-
 /-- The defining equation of the Steinberg endomorphism on the root subgroups: it moves the root
 subgroup at `i` to the one at `σ i` and raises the parameter to the `p ^ n`-th power. -/
 @[simp]
@@ -180,23 +169,16 @@ theorem kostantElementarySteinberg_kostantRootSubgroupParam (i : I) (t : Multipl
           (Multiplicative.ofAdd (Multiplicative.toAdd t ^ p ^ n)),
         kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A (σ i)
           (Multiplicative.ofAdd (Multiplicative.toAdd t ^ p ^ n))⟩ := by
-  refine Subtype.ext ?_
-  rw [val_kostantElementarySteinberg, kostantElementaryFrobenius_kostantRootSubgroupParam,
-    baseChangeInvariantRestrictUnit_conj_kostantRootSubgroupParam e h ρ M hM hnil σ θ hθM hθe]
-
-/-- An untwisted symmetry produces the plain Frobenius endomorphism.
-
-The nine untwisted families of the classification are therefore the case `θ = 1` of the same
-construction, and not a second one. -/
-theorem kostantElementarySteinberg_eq_kostantElementaryFrobenius (hθ : ∀ v, θ v = v) :
-    kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A =
-      kostantElementaryFrobenius e h ρ M hM hnil p n A := by
-  have hone : kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A = 1 := by
-    have := kostantElementaryNumberedSymmetryAut_pow_eq_one e h ρ M hM hnil σ θ hθM hθe hσ A
-      (n := 1) (by simpa using hθ)
-    simpa using this
-  refine MonoidHom.ext fun g => ?_
-  rw [kostantElementarySteinberg_apply, hone, MulAut.one_apply]
+  have hF : kostantElementaryFrobenius e h ρ M hM hnil p n A
+        ⟨kostantRootSubgroupParam e h ρ M hM i (hnil i) A t,
+          kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A i t⟩ =
+      ⟨kostantRootSubgroupParam e h ρ M hM i (hnil i) A
+          (Multiplicative.ofAdd (Multiplicative.toAdd t ^ p ^ n)),
+        kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A i
+          (Multiplicative.ofAdd (Multiplicative.toAdd t ^ p ^ n))⟩ :=
+    Subtype.ext (kostantElementaryFrobenius_kostantRootSubgroupParam e h ρ M hM hnil p n A i t)
+  rw [kostantElementarySteinberg_apply, hF,
+    kostantElementaryNumberedSymmetryAut_kostantRootSubgroupParam]
 
 /-- The Steinberg endomorphism is injective over a reduced value ring.
 
@@ -233,23 +215,36 @@ theorem kostantElementarySteinberg_iterate (k : ℕ)
       have hadd : kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A
           (kostantElementaryFrobenius e h ρ M hM hnil p n A g) =
             kostantElementaryFrobenius e h ρ M hM hnil p (n * (k + 1)) A g := by
-        rw [Nat.mul_succ, kostantElementaryFrobenius_add]
-        rfl
+        rw [Nat.mul_succ, kostantElementaryFrobenius_add, MonoidHom.comp_apply]
       rw [Function.iterate_succ_apply, ih, kostantElementarySteinberg_apply,
         kostantElementaryFrobenius_kostantElementaryNumberedSymmetryAut, hadd, pow_succ,
         MulAut.mul_apply]
 
-/-- A symmetry of order `k` makes the `k`-th iterate of its Steinberg endomorphism the plain
-Frobenius `Frob_{q ^ k}`.
+/-- A symmetry automorphism of order `k` makes the `k`-th iterate of its Steinberg endomorphism the
+plain Frobenius `Frob_{q ^ k}`.
 
-For the graph-twisted families this is `k = 2` on `²A`, `²D` and `²E₆` and `k = 3` on `³D₄`. -/
+For the graph-twisted families this is `k = 2` on `²A`, `²D` and `²E₆` and `k = 3` on `³D₄`. The
+order relation is taken on `γ` rather than on `θ`, since that is all the proof uses; a caller
+holding `θ ^ k = 1` on the nose gets it from
+`kostantElementaryNumberedSymmetryAut_pow_eq_one`. -/
 theorem kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius {k : ℕ}
-    (hk : ∀ v, (θ ^ k) v = v) (g : kostantElementarySubgroup e h ρ M hM hnil A) :
+    (hk : kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A ^ k = 1)
+    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
     (⇑(kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A))^[k] g =
       kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A g := by
-  rw [kostantElementarySteinberg_iterate,
-    kostantElementaryNumberedSymmetryAut_pow_eq_one e h ρ M hM hnil σ θ hθM hθe hσ A hk,
-    MulAut.one_apply]
+  rw [kostantElementarySteinberg_iterate, hk, MulAut.one_apply]
+
+/-- A trivial symmetry automorphism produces the plain Frobenius endomorphism.
+
+The nine untwisted families of the classification are therefore the case `γ = 1` of the same
+construction, and not a second one; it is the first iterate of the previous theorem. -/
+theorem kostantElementarySteinberg_eq_kostantElementaryFrobenius
+    (hγ : kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A = 1) :
+    kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A =
+      kostantElementaryFrobenius e h ρ M hM hnil p n A :=
+  MonoidHom.ext fun g => by
+    simpa using kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius
+      e h ρ M hM hnil σ θ hθM hθe hσ p n A (k := 1) (by simpa using hγ) g
 
 end Iterate
 
@@ -265,7 +260,8 @@ of a graph-twisted group of Lie type in the untwisted group over the degree-`d` 
 field of definition; here it is a containment of abstract fixed subgroups. The reverse containment
 is not claimed and fails in general, the twisted group being a proper subgroup once the symmetry is
 nontrivial. -/
-theorem fixedSubgroup_kostantElementarySteinberg_le {d : ℕ} (hd : ∀ v, (θ ^ d) v = v) :
+theorem fixedSubgroup_kostantElementarySteinberg_le_fixedSubgroup_kostantElementaryFrobenius
+    {d : ℕ} (hd : kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A ^ d = 1) :
     fixedSubgroup (kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A) ≤
       fixedSubgroup (kostantElementaryFrobenius e h ρ M hM hnil p (n * d) A) := by
   intro g hg
@@ -276,18 +272,16 @@ theorem fixedSubgroup_kostantElementarySteinberg_le {d : ℕ} (hd : ∀ v, (θ ^
 
 /-- A point fixed by both the Frobenius and the numbered symmetry is fixed by their composite.
 
-The converse fails in general: a Steinberg-fixed point need not be fixed by either factor, which is
-why a graph-twisted group is not the fixed points of a Frobenius. -/
-theorem le_fixedSubgroup_kostantElementarySteinberg :
+This is `fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp` at the two factors. The converse
+fails in general: a Steinberg-fixed point need not be fixed by either factor, which is why a
+graph-twisted group is not the fixed points of a Frobenius. -/
+theorem fixedSubgroup_kostantElementaryFrobenius_inf_le_fixedSubgroup_kostantElementarySteinberg :
     fixedSubgroup (kostantElementaryFrobenius e h ρ M hM hnil p n A) ⊓
         fixedSubgroup
           (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A).toMonoidHom ≤
       fixedSubgroup (kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A) := by
-  intro g hg
-  obtain ⟨hF, hγ⟩ := Subgroup.mem_inf.mp hg
-  rw [mem_fixedSubgroup] at hF hγ ⊢
-  rw [kostantElementarySteinberg_apply, hF]
-  exact hγ
+  rw [kostantElementarySteinberg]
+  exact fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp _ _
 
 end FixedPoints
 
