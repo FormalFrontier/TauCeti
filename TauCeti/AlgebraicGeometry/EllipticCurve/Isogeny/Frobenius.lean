@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FrobeniusTower
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.FrobeniusTower
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Separability
 public import TauCeti.FieldTheory.Finite.Frobenius
 
@@ -19,9 +19,9 @@ that pullback maps infinity to infinity, so it is an isogeny of `W` with itself.
 inseparable of degree `q`.
 
 The declarations take `[Finite F]` rather than `[Fintype F]`, matching
-`Affine/FrobeniusTower.lean`, and state the exponent as `Nat.card F`: a `Fintype` instance is
-chosen enumeration data, and neither the definitions nor the statements should depend on it. The
-instance Mathlib's map needs is installed locally where it is required.
+`Affine/FunctionField/FrobeniusTower.lean`, and state the exponent as `Nat.card F`: a `Fintype`
+instance is chosen enumeration data, and neither the definitions nor the statements should depend
+on it. The instance Mathlib's map needs is installed locally where it is required.
 
 ## Main definitions
 

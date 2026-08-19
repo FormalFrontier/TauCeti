@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.CoordinateRingMap
+public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
 public import Mathlib.LinearAlgebra.Dimension.Localization
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 public import Mathlib.FieldTheory.RatFunc.AsPolynomial
@@ -94,6 +94,11 @@ instance in `Affine/Point.lean`, and Mathlib has `FaithfulSMul.algebraMap_inject
 `isBaseChange_coordToFunc`, with the two private localization instances beneath it, is not needed
 at all — Mathlib's `IsFractionRing.finrank_eq` states the degree equality outright, and Mathlib has
 deprecated its own base-change-flavoured version in favour of it.
+
+`toAlgHom_ratFuncX` and `relfinrank_map_ratFuncRange_fieldRange` are **not** ported: the first
+names the affine coordinate inside the copy of the rational function field, and the second is the
+`IntermediateField.relfinrank_map_map` transport of `finrank_ratFuncRange`, which the source has
+only in the specialised form `finrank_over_frobenius_image`.
 -/
 
 public section
@@ -201,8 +206,8 @@ theorem finrank_ratFuncRange : Module.finrank (ratFuncRange W) W.FunctionField =
     fun z ↦ (IsScalarTower.toAlgHom_apply F (RatFunc F) W.FunctionField z).symm).trans
       (finrank_functionField W (RatFunc F))
 
-/-- **The image of `F(W')` has degree two over the image of `F(x)`.** Mapping the pair
-`F(x) ⊆ F(W')` along a function-field embedding preserves its relative degree. -/
+/-- **The image of `F(W)` has degree two over the image of `F(x)`.** Mapping the pair
+`F(x) ⊆ F(W)` along a function-field embedding preserves its relative degree. -/
 @[simp]
 theorem relfinrank_map_ratFuncRange_fieldRange {M : Type*} [Field M] [Algebra F M]
     (f : W.FunctionField →ₐ[F] M) :

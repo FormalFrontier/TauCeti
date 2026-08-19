@@ -35,23 +35,21 @@ Over a finite field the `q`-power map is already an `F`-algebra map, and
 one that survives over an arbitrary — in particular imperfect — base, at the cost of a moving
 target.
 
+That coordinate-ring map is an input from `Affine/RelativeFrobenius.lean`, which declares it as
+`CoordinateRing.relativeFrobenius` together with its factorisation `relativeFrobenius_comp_map` of
+the `p`-power map of `W.CoordinateRing` into Mathlib's semilinear base-change map followed by an
+`F`-linear one; the pointedness of the isogeny below and its pure inseparability are both read off
+that factorisation.
+
 ## Main definitions
 
-* `WeierstrassCurve.Affine.CoordinateRing.relativeFrobeniusCoordinateRingHom`: the
-  relative Frobenius as an `R`-algebra map on coordinate rings, over any commutative ring of
-  exponential characteristic `p`.
-* `TauCeti.Isogeny.relativeFrobeniusPullback`: the same map read into `W.FunctionField`, a
-  `TauCeti.CoordinatePullback`.
+* `TauCeti.Isogeny.relativeFrobeniusPullback`: the coordinate-ring map read into
+  `W.FunctionField`, a `TauCeti.CoordinatePullback`.
 * `TauCeti.Isogeny.relativeFrobeniusIsogeny`: the relative Frobenius isogeny
   `W → W.map (frobenius F p)`.
 
 ## Main results
 
-* `relativeFrobeniusCoordinateRingHom_comp_coordinateRingMap`: composing the relative Frobenius
-  with Mathlib's base-change map `W.CoordinateRing →+* (W.map (frobenius R p)).CoordinateRing`
-  gives the absolute Frobenius of `W.CoordinateRing`. This is the factorisation of the `p`-power
-  map into a semilinear map followed by an `R`-linear one, and both the pointedness of the
-  isogeny and its pure inseparability are read off it.
 * `TauCeti.Isogeny.isPurelyInseparable_relativeFrobeniusIsogeny`: the relative Frobenius is
   purely inseparable (Silverman II.2.11(b)); every element of `F(W)` has its `p`-th power in the
   pulled-back copy of `F(W⁽ᵖ⁾)`.
@@ -59,11 +57,12 @@ target.
   with `TauCeti.Isogeny.separableDegree_relativeFrobeniusIsogeny` and
   `TauCeti.Isogeny.inseparableDegree_relativeFrobeniusIsogeny` splitting that as `1 · p`.
 
-The degree is computed exactly as
-`WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom` computes the finite-field
-one, by comparing two towers over the copy of `F(xᵖ)` inside `F(W)`:
-that copy sits below `F(x)` with relative degree `p`, and below the pulled-back `F(W⁽ᵖ⁾)` with
-relative degree `2`, while `[F(W) : F(x)] = 2`.
+The degree is the shared tower comparison
+`WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow`, applied to the pullback: over the
+copy of `F(xᵖ)` inside `F(W)`, that copy sits below `F(x)` with relative degree `p` and below the
+pulled-back `F(W⁽ᵖ⁾)` with relative degree `2`, while `[F(W) : F(x)] = 2`. The finite-field
+`WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom` is the same lemma applied to the
+`q`-power map.
 
 No result here needs `W` to be elliptic, matching the isogeny API it extends; Mathlib's
 `WeierstrassCurve.instIsEllipticMap` supplies `(W.map (frobenius F p)).IsElliptic` for a consumer
@@ -91,9 +90,9 @@ a curve over a finite field (AINTLIB's `HasseWeil/FrobeniusIsogeny.lean`, alread
 `WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`); the relative Frobenius over
 an arbitrary base, and the twist it maps to, appear in none of them.
 The degree computation reuses the migrated tower argument of
-`TauCeti/AlgebraicGeometry/EllipticCurve/Affine/FunctionField/PowerTower.lean`, whose
-`ratFuncAdjoinXPowRange` API rests on `TauCeti.RatFunc.finrank_adjoin_X_pow` from
-`TauCeti/FieldTheory/RatFunc/PowerTower.lean`.
+`TauCeti/AlgebraicGeometry/EllipticCurve/Affine/FunctionField/PowerTower.lean`, which carries the
+AINTLIB credit for it, and whose `ratFuncAdjoinXPowRange` API rests on
+`TauCeti.RatFunc.finrank_adjoin_X_pow` from `TauCeti/FieldTheory/RatFunc/PowerTower.lean`.
 -/
 
 public section
@@ -102,7 +101,7 @@ open Polynomial WeierstrassCurve
 
 namespace TauCeti
 
-open WeierstrassCurve.Affine.CoordinateRing
+open WeierstrassCurve.Affine
 
 namespace Isogeny
 
@@ -110,12 +109,12 @@ namespace Isogeny
 
 variable {F : Type*} [Field F] (p : ℕ) [ExpChar F p] (W : WeierstrassCurve.Affine F)
 
-/-- **The relative Frobenius pullback**: `relativeFrobeniusCoordinateRingHom` read into the
+/-- **The relative Frobenius pullback**: `CoordinateRing.relativeFrobenius` read into the
 function field of `W`. -/
 noncomputable def relativeFrobeniusPullback :
     CoordinatePullback W (W.map (frobenius F p)) :=
   (IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField).comp
-    (relativeFrobeniusCoordinateRingHom p W)
+    (CoordinateRing.relativeFrobenius p W)
 
 /-- The relative Frobenius pullback is the coordinate-ring map followed by the embedding of
 `W.CoordinateRing` in its fraction field. -/
@@ -123,7 +122,7 @@ noncomputable def relativeFrobeniusPullback :
 theorem relativeFrobeniusPullback_apply (z : (W.map (frobenius F p)).CoordinateRing) :
     relativeFrobeniusPullback p W z =
       algebraMap W.CoordinateRing W.FunctionField
-        (relativeFrobeniusCoordinateRingHom p W z) := by
+        (CoordinateRing.relativeFrobenius p W z) := by
   rw [relativeFrobeniusPullback, AlgHom.comp_apply, IsScalarTower.toAlgHom_apply]
 
 /-- **The relative Frobenius maps the point at infinity to the point at infinity.** Every element
@@ -135,7 +134,7 @@ theorem mapsInfinity_relativeFrobeniusPullback :
     (expChar_pos F p) fun z ↦ ?_
   exact ⟨_root_.WeierstrassCurve.Affine.CoordinateRing.map W (frobenius F p) z, by
     rw [relativeFrobeniusPullback_apply,
-      relativeFrobeniusCoordinateRingHom_coordinateRingMap, map_pow]⟩
+      CoordinateRing.relativeFrobenius_map, map_pow]⟩
 
 /-- **The relative Frobenius isogeny** `F_{W/F} : W → W⁽ᵖ⁾`. -/
 noncomputable def relativeFrobeniusIsogeny : Isogeny W (W.map (frobenius F p)) where
@@ -151,10 +150,9 @@ theorem relativeFrobeniusIsogeny_pullback :
 
 **Deliberately not `@[simp]`.** Its left-hand side is already dismantled by the `@[simp]` chain
 `Isogeny.fieldPullback_algebraMap`, `relativeFrobeniusIsogeny_pullback`,
-`relativeFrobeniusPullback_apply` and `relativeFrobeniusCoordinateRingHom_coordinateRingMap`, so
-tagging it fails
-`simpNF`; it is stated because it is the field-level form the pure-inseparability argument
-below quotes. -/
+`relativeFrobeniusPullback_apply` and `CoordinateRing.relativeFrobenius_map`, so tagging it fails
+`simpNF`; it is stated because it is the field-level form the pure-inseparability argument below
+quotes. -/
 theorem fieldPullback_relativeFrobeniusIsogeny_coordinateRingMap (z : W.CoordinateRing) :
     (relativeFrobeniusIsogeny p W).fieldPullback
         (algebraMap (W.map (frobenius F p)).CoordinateRing
@@ -162,7 +160,7 @@ theorem fieldPullback_relativeFrobeniusIsogeny_coordinateRingMap (z : W.Coordina
           (_root_.WeierstrassCurve.Affine.CoordinateRing.map W (frobenius F p) z)) =
       algebraMap W.CoordinateRing W.FunctionField z ^ p := by
   rw [Isogeny.fieldPullback_algebraMap, relativeFrobeniusIsogeny_pullback,
-    relativeFrobeniusPullback_apply, relativeFrobeniusCoordinateRingHom_coordinateRingMap,
+    relativeFrobeniusPullback_apply, CoordinateRing.relativeFrobenius_map,
     map_pow]
 
 /-- **`F(W)ᵖ` lies in the pulled-back copy of `F(W⁽ᵖ⁾)`.** A quotient of two coordinate functions
@@ -185,8 +183,6 @@ instance isPurelyInseparable_relativeFrobeniusIsogeny :
 
 section Degree
 
-open scoped _root_.RatFunc
-
 /-- **The relative Frobenius pullback sends the affine coordinate of the twist to `xᵖ`.** -/
 @[simp]
 theorem fieldPullback_relativeFrobeniusIsogeny_X :
@@ -198,36 +194,16 @@ theorem fieldPullback_relativeFrobeniusIsogeny_X :
     Isogeny.fieldPullback_algebraMap]
   simp [IsScalarTower.algebraMap_apply F[X] W.CoordinateRing]
 
-/-- The copy of `F(xᵖ)` inside `F(W)` is the image of the rational function field of the twist:
-the two descriptions of the field the tower argument below is anchored at. -/
-private theorem relativeFrobenius_ratFuncAdjoinXPowRange_eq_map_ratFuncRange :
-    _root_.WeierstrassCurve.Affine.ratFuncAdjoinXPowRange W p =
-      (_root_.WeierstrassCurve.Affine.ratFuncRange (W.map (frobenius F p))).map
-        (relativeFrobeniusIsogeny p W).fieldPullback := by
-  rw [_root_.WeierstrassCurve.Affine.ratFuncAdjoinXPowRange_eq_map,
-    _root_.WeierstrassCurve.Affine.ratFuncRange_eq_map, IntermediateField.map_map,
-    ← _root_.RatFunc.adjoin_X, IntermediateField.adjoin_map, IntermediateField.adjoin_map]
-  congr 1
-  simp only [Set.image_singleton, AlgHom.coe_comp, Function.comp_apply, map_pow,
-    _root_.WeierstrassCurve.Affine.toAlgHom_ratFuncX,
-    fieldPullback_relativeFrobeniusIsogeny_X]
-
-/-- **The relative Frobenius isogeny has degree `p`** (Silverman II.2.11(c)). Both `F(x)` and the
-pulled-back `F(W⁽ᵖ⁾)` sit between `F(xᵖ)` and `F(W)`, of relative degrees `p` and `2` over it;
-since `[F(W) : F(x)] = 2` as well, the two towers give `2 · deg = p · 2`. -/
+/-- **The relative Frobenius isogeny has degree `p`** (Silverman II.2.11(c)). This is the tower
+comparison `WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow`, whose only input is the
+value of the pullback at the affine coordinate: both `F(x)` and the pulled-back `F(W⁽ᵖ⁾)` sit
+between `F(xᵖ)` and `F(W)`, of relative degrees `p` and `2` over it, and `[F(W) : F(x)] = 2` as
+well, so the two towers give `2 · deg = p · 2`. -/
 @[simp]
 theorem degree_relativeFrobeniusIsogeny : (relativeFrobeniusIsogeny p W).degree = p := by
-  set L := (relativeFrobeniusIsogeny p W).fieldPullback.fieldRange with hL
-  have hML : IntermediateField.relfinrank
-      (_root_.WeierstrassCurve.Affine.ratFuncAdjoinXPowRange W p) L = 2 := by
-    rw [relativeFrobenius_ratFuncAdjoinXPowRange_eq_map_ratFuncRange, hL,
-      _root_.WeierstrassCurve.Affine.relfinrank_map_ratFuncRange_fieldRange]
-  have hle : _root_.WeierstrassCurve.Affine.ratFuncAdjoinXPowRange W p ≤ L := by
-    rw [relativeFrobenius_ratFuncAdjoinXPowRange_eq_map_ratFuncRange, hL,
-      AlgHom.fieldRange_eq_map]
-    exact IntermediateField.map_mono _ le_top
-  rw [Isogeny.degree_def, ← hL]
-  exact _root_.WeierstrassCurve.Affine.finrank_of_relfinrank_ratFuncAdjoinXPowRange W hle hML
+  rw [Isogeny.degree_def]
+  exact _root_.WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow W _
+    (fieldPullback_relativeFrobeniusIsogeny_X p W)
 
 end Degree
 

@@ -20,10 +20,16 @@ infinite-dimensional extension: `K(x^0) = K`, so both sides of each formula read
 
 ## Main results
 
-* `WeierstrassCurve.Affine.ratFuncAdjoinXPowRange`: the copy of `K(x^n)` inside `K(W)`.
+* `WeierstrassCurve.Affine.ratFuncAdjoinXPowRange`: the copy of `K(x^n)` inside `K(W)`, with
+  `ratFuncAdjoinXPowRange_eq_map` and `mem_ratFuncAdjoinXPowRange` as its interface and
+  `algebraMap_X_pow_mem_ratFuncAdjoinXPowRange` for its generator.
 * `WeierstrassCurve.Affine.finrank_ratFuncAdjoinXPowRange`: `[K(W) : K(x^n)] = 2 * n`.
-* `WeierstrassCurve.Affine.finrank_of_relfinrank_ratFuncAdjoinXPowRange`: a reusable final
-  tower step for an intermediate field of relative degree two over `K(x^n)`.
+* `WeierstrassCurve.Affine.ratFuncAdjoinXPowRange_eq_map_ratFuncRange` and
+  `WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow`: for any embedding
+  `f : K(W') → K(W)` of function fields sending the affine coordinate of `W'` to `x ^ n`, the copy
+  of `K(x^n)` is the image of `K(x')`, and `[K(W) : f(K(W'))] = n`. This is the whole tower
+  comparison behind a degree of an inseparable isogeny; the absolute and the relative Frobenius
+  each supply their own `hf` and read off their degree.
 
 No result needs `W` to be elliptic: the Weierstrass equation alone gives the power basis.
 
@@ -34,10 +40,17 @@ Frobenius degree computations both use this tower.
 
 ## Provenance
 
-Not a port. This exponent-generic API factors out the common tower argument used by the absolute
-and relative Frobenius constructions. Its rational-function input is
+The tower argument is the one ported from the AINTLIB `HasseWeil` project
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, pinned by that roadmap at
+`dev/hasse-weil @ 513e83879e2f`), `HasseWeil/FrobeniusIsogeny.lean`, whose `private`
+declarations `frobFracRange`, `frobFracRange_le_frobRange`, `finrank_frobFracRange_functionField`
+and `finrank_over_frobenius_image` are its finite-field model: there the exponent is the
+cardinality of a finite field and the embedding is the `q`-power map. The arbitrary-exponent,
+arbitrary-embedding statements here are new, as
+`TauCeti/FieldTheory/RatFunc/PowerTower.lean` records for their rational-function input
 `TauCeti.RatFunc.finrank_adjoin_X_pow`; the outer degree two is
-`WeierstrassCurve.Affine.finrank_ratFuncRange`.
+`WeierstrassCurve.Affine.finrank_ratFuncRange`. The finite-field specialisation stays in
+`Affine/FunctionField/FrobeniusTower.lean`.
 -/
 
 public section
@@ -63,6 +76,23 @@ theorem ratFuncAdjoinXPowRange_eq_map (n : ℕ) :
         (IsScalarTower.toAlgHom K (RatFunc K) W.FunctionField) := by
   rw [ratFuncAdjoinXPowRange]
 
+/-- An element of `K(W)` lies in the copy of `K(x^n)` exactly when it is the image there of an
+element of `K(X^n)`. -/
+@[simp]
+theorem mem_ratFuncAdjoinXPowRange {n : ℕ} {z : W.FunctionField} :
+    z ∈ ratFuncAdjoinXPowRange W n ↔
+      ∃ r ∈ IntermediateField.adjoin K {(RatFunc.X : RatFunc K) ^ n},
+        IsScalarTower.toAlgHom K (RatFunc K) W.FunctionField r = z := by
+  rw [ratFuncAdjoinXPowRange_eq_map]
+  exact IntermediateField.mem_map _
+
+/-- The generator: `x ^ n` lies in the copy of `K(x^n)`. -/
+theorem algebraMap_X_pow_mem_ratFuncAdjoinXPowRange (n : ℕ) :
+    algebraMap K[X] W.FunctionField X ^ n ∈ ratFuncAdjoinXPowRange W n :=
+  (mem_ratFuncAdjoinXPowRange W).mpr
+    ⟨(RatFunc.X : RatFunc K) ^ n, IntermediateField.mem_adjoin_simple_self _ _,
+      by rw [map_pow, toAlgHom_ratFuncX]⟩
+
 /-- `K(x^n)` sits inside `K(x)`, both read inside `K(W)`. -/
 theorem ratFuncAdjoinXPowRange_le_ratFuncRange (n : ℕ) :
     ratFuncAdjoinXPowRange W n ≤ ratFuncRange W := by
@@ -87,15 +117,41 @@ theorem finrank_ratFuncAdjoinXPowRange (n : ℕ) :
   rw [← htower, Nat.mul_comm]
 
 /-- If an intermediate field has relative degree two over `K(x^n)`, the degree of `K(W)` over it
-is `n`. This is the common final tower step in the absolute and relative Frobenius degree
-computations. -/
-theorem finrank_of_relfinrank_ratFuncAdjoinXPowRange {n : ℕ}
+is `n`. This is the final tower step of `finrank_fieldRange_of_apply_X_eq_pow`. -/
+private theorem finrank_of_relfinrank_ratFuncAdjoinXPowRange {n : ℕ}
     {L : IntermediateField K W.FunctionField} (hle : ratFuncAdjoinXPowRange W n ≤ L)
     (h : relfinrank (ratFuncAdjoinXPowRange W n) L = 2) :
     Module.finrank L W.FunctionField = n := by
   have htower := relfinrank_mul_finrank_top hle
   rw [h, finrank_ratFuncAdjoinXPowRange] at htower
   omega
+
+/-- **The copy of `K(x^n)` inside `K(W)` is the image of the rational function field of `W'`**,
+for any embedding `f : K(W') → K(W)` of function fields carrying the affine coordinate of `W'` to
+`x ^ n`. This is the field the degree tower below is anchored at, in its two descriptions. -/
+theorem ratFuncAdjoinXPowRange_eq_map_ratFuncRange {W' : WeierstrassCurve.Affine K} {n : ℕ}
+    (f : W'.FunctionField →ₐ[K] W.FunctionField)
+    (hf : f (algebraMap K[X] W'.FunctionField X) = algebraMap K[X] W.FunctionField X ^ n) :
+    ratFuncAdjoinXPowRange W n = (ratFuncRange W').map f := by
+  rw [ratFuncAdjoinXPowRange_eq_map, ratFuncRange_eq_map, IntermediateField.map_map,
+    ← RatFunc.adjoin_X, IntermediateField.adjoin_map, IntermediateField.adjoin_map]
+  congr 1
+  simp only [Set.image_singleton, AlgHom.coe_comp, Function.comp_apply, map_pow,
+    toAlgHom_ratFuncX, hf]
+
+/-- **`[K(W) : f(K(W'))] = n`** for an embedding `f : K(W') → K(W)` of function fields carrying the
+affine coordinate of `W'` to `x ^ n`. Both `K(x)` and the image of `K(W')` lie between `K(x^n)` and
+`K(W)`, of relative degrees `n` and `2` over it; since `[K(W) : K(x)] = 2` as well, the two towers
+give `2 · [K(W) : f(K(W'))] = 2n`. -/
+theorem finrank_fieldRange_of_apply_X_eq_pow {W' : WeierstrassCurve.Affine K} {n : ℕ}
+    (f : W'.FunctionField →ₐ[K] W.FunctionField)
+    (hf : f (algebraMap K[X] W'.FunctionField X) = algebraMap K[X] W.FunctionField X ^ n) :
+    Module.finrank f.fieldRange W.FunctionField = n := by
+  have h := ratFuncAdjoinXPowRange_eq_map_ratFuncRange W f hf
+  refine finrank_of_relfinrank_ratFuncAdjoinXPowRange W ?_ ?_
+  · rw [h, AlgHom.fieldRange_eq_map]
+    exact IntermediateField.map_mono _ le_top
+  · rw [h, relfinrank_map_ratFuncRange_fieldRange]
 
 end WeierstrassCurve.Affine
 

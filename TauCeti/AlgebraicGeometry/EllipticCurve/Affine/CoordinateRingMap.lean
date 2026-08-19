@@ -6,11 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-public import Mathlib.Algebra.CharP.Algebra
 public import TauCeti.RingTheory.AdjoinRoot
 
 /-!
-# The coordinate-ring map
+# Surjectivity of the coordinate-ring map
 
 Mathlib's `WeierstrassCurve.Affine.CoordinateRing.map` sends a ring homomorphism `f : R →+* S` to
 `R[W] →+* S[W.map f]`, and proves it injective when `f` is (`CoordinateRing.map_injective`). It
@@ -20,8 +19,6 @@ in a line each.
 
 ## Main results
 
-* `WeierstrassCurve.Affine.expChar_coordinateRing`: a coordinate ring has the same exponential
-  characteristic as its base ring.
 * `WeierstrassCurve.Affine.CoordinateRing.map_surjective` and
   `WeierstrassCurve.Affine.CoordinateRing.map_bijective`: the coordinate-ring specialisations,
   stated like Mathlib's `CoordinateRing.map_injective` for an arbitrary `f : R →+* S`.
@@ -52,9 +49,6 @@ the statement is for an arbitrary surjective `f : R →+* S`, matching the gener
 `CoordinateRing.map_injective`, and preimages come from `Polynomial.map_surjective`. The argument
 itself lives one level down, in `TauCeti/RingTheory/AdjoinRoot.lean`; the equivalence the source
 bundled it for is left to the use site.
-
-The exponential-characteristic instance is not ported. It is the direct transport along
-Mathlib's injective coordinate-ring algebra map.
 -/
 
 public section
@@ -62,17 +56,6 @@ public section
 open Polynomial
 
 open scoped Polynomial.Bivariate
-
-namespace WeierstrassCurve.Affine
-
-variable {R : Type*} [CommRing R] (W : WeierstrassCurve.Affine R)
-
-/-- The coordinate ring of a Weierstrass curve has the same exponential characteristic as its
-base ring. -/
-instance expChar_coordinateRing (p : ℕ) [ExpChar R p] : ExpChar W.CoordinateRing p :=
-  ExpChar.of_injective_algebraMap' R p
-
-end WeierstrassCurve.Affine
 
 namespace WeierstrassCurve.Affine.CoordinateRing
 
