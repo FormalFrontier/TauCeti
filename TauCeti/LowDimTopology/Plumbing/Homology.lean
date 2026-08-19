@@ -38,6 +38,8 @@ canonically isomorphic to its whole chain module.
 * `TauCeti.PlumbingGraph.latticeShortComplex_exact_iff_range_eq_ker`: that short complex is exact
   exactly when the boundaries of the lattice differential are all of its cycles.
 * `TauCeti.PlumbingGraph.latticeHomology`: its canonical `𝔽₂[U]`-module homology.
+* `TauCeti.PlumbingGraph.latticeHomologyCycleMap`: the map taking a coefficient to the homology
+  class of its multiple of a fixed cycle.
 * `TauCeti.PlumbingGraph.latticeHomologyIsoChainOfIsEmpty`: the homology of a zero-vertex
   plumbing is its full chain module.
 * `TauCeti.PlumbingGraph.latticeHomologyIsoCoefficientOfIsEmpty`: that chain module has one
@@ -131,6 +133,55 @@ theorem latticeHomology_def (P : PlumbingGraph V) (k : P.characteristicVectors) 
     P.latticeHomology k = (P.latticeShortComplex k).homology := by
   unfold latticeHomology
   rfl
+
+/-- The linear map sending `a : 𝔽₂[U]` to the homology class of `a • c`, for a lattice
+cycle `c`. -/
+noncomputable def latticeHomologyCycleMap (P : PlumbingGraph V) (k : P.characteristicVectors)
+    (c : PlumbingChain V) (hc : P.latticeDifferential k c = 0) :
+    PlumbingCoefficient →ₗ[PlumbingCoefficient] P.latticeHomology k :=
+  let S := P.latticeShortComplex k
+  let z : LinearMap.ker S.g.hom := ⟨c, by
+    change P.latticeDifferential k c = 0
+    exact hc⟩
+  let q : S.moduleCatLeftHomologyData.H :=
+    (LinearMap.range S.moduleCatToCycles).mkQ z
+  S.moduleCatHomologyIso.inv.hom.comp
+    (LinearMap.toSpanSingleton PlumbingCoefficient S.moduleCatLeftHomologyData.H q)
+
+/-- A coefficient maps to zero under `latticeHomologyCycleMap` exactly when its multiple of the
+cycle is a boundary. -/
+theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (c : PlumbingChain V)
+    (hc : P.latticeDifferential k c = 0) (a : PlumbingCoefficient) :
+    P.latticeHomologyCycleMap k c hc a = 0 ↔
+      a • c ∈ LinearMap.range (P.latticeDifferential k) := by
+  let S := P.latticeShortComplex k
+  let z : LinearMap.ker S.g.hom := ⟨c, by
+    change P.latticeDifferential k c = 0
+    exact hc⟩
+  let q : S.moduleCatLeftHomologyData.H :=
+    (LinearMap.range S.moduleCatToCycles).mkQ z
+  change S.moduleCatHomologyIso.inv (a • q) = 0 ↔ _
+  constructor
+  · intro ha
+    have hq : a • q = 0 := by
+      have hz := S.moduleCatHomologyIso.inv_hom_id_apply (a • q)
+      rw [ha, map_zero] at hz
+      exact hz.symm
+    change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0 at hq
+    rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero] at hq
+    obtain ⟨b, hb⟩ := hq
+    exact ⟨b, congrArg Subtype.val hb⟩
+  · rintro ⟨b, hb⟩
+    have hz : a • z ∈ LinearMap.range S.moduleCatToCycles := by
+      refine ⟨b, ?_⟩
+      apply Subtype.ext
+      exact hb
+    have hq : a • q = 0 := by
+      change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0
+      rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
+      exact hz
+    exact (congrArg (fun x => S.moduleCatHomologyIso.inv x) hq).trans (map_zero _)
 
 /-- The characteristic-two lattice homology of a zero-vertex plumbing is canonically isomorphic
 to its whole plumbing-chain module. -/

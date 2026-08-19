@@ -44,7 +44,9 @@ future work.
 * `TauCeti.PlumbingGraph.exists_cycle_latticeAugmentation_eq_one`: a lattice point of minimal
   characteristic weight is a cycle with augmentation `1`.
 * `TauCeti.PlumbingGraph.exists_cycle_eq_zero_of_smul_mem_range_latticeDifferential`: that cycle
-  spans a free `𝔽₂[U]`-submodule of the cycles modulo boundaries: the `U`-tower.
+  satisfies the chain-level nonboundary criterion for the `U`-tower.
+* `TauCeti.PlumbingGraph.exists_injective_latticeHomologyCycleMap`: the resulting map from
+  `𝔽₂[U]` into lattice homology is injective.
 * `TauCeti.PlumbingGraph.not_isZero_latticeHomology`: the lattice homology of a negative-definite
   plumbing is nonzero.
 
@@ -253,6 +255,28 @@ theorem exists_cycle_eq_zero_of_smul_mem_range_latticeDifferential (P : Plumbing
   refine ⟨c, hcycle, fun a ha => ?_⟩
   have := P.latticeAugmentation_eq_zero_of_mem_range h k ha
   rwa [map_smul, hone, smul_eq_mul, mul_one] at this
+
+/-- A cycle with augmentation `1` generates a free copy of `𝔽₂[U]` in lattice homology. -/
+theorem latticeHomologyCycleMap_injective (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
+    (k : P.characteristicVectors) (c : PlumbingChain V)
+    (hc : P.latticeDifferential k c = 0) (hone : P.latticeAugmentation k c = 1) :
+    Function.Injective (P.latticeHomologyCycleMap k c hc) := by
+  apply (injective_iff_map_eq_zero _).2
+  intro a ha
+  have hrange : a • c ∈ LinearMap.range (P.latticeDifferential k) :=
+    (P.latticeHomologyCycleMap_apply_eq_zero_iff k c hc a).mp ha
+  have hzero := P.latticeAugmentation_eq_zero_of_mem_range h k hrange
+  rwa [map_smul, hone, smul_eq_mul, mul_one] at hzero
+
+/-- The class of a minimal-weight lattice point embeds a free `𝔽₂[U]`-submodule into the
+lattice homology of a negative-definite plumbing. -/
+theorem exists_injective_latticeHomologyCycleMap (P : PlumbingGraph V)
+    (h : P.IsNegativeDefinite) (k : P.characteristicVectors) :
+    ∃ (c : PlumbingChain V) (hc : P.latticeDifferential k c = 0),
+      P.latticeAugmentation k c = 1 ∧
+        Function.Injective (P.latticeHomologyCycleMap k c hc) := by
+  obtain ⟨c, hc, hone⟩ := P.exists_cycle_latticeAugmentation_eq_one h k
+  exact ⟨c, hc, hone, P.latticeHomologyCycleMap_injective h k c hc hone⟩
 
 /-! ### Nonvanishing of lattice homology -/
 
