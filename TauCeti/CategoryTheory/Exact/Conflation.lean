@@ -228,6 +228,22 @@ theorem opEquivalence_inverse_obj_unop_obj (E : ConflationClass C)
     (S : E.op.ConflationCategory) :
     ((opEquivalence E).inverse.obj S).unop.obj = S.obj.unop := (rfl)
 
+/-- On morphisms, taking a conflation to the opposite conflation applies the termwise opposite
+map to its underlying short-complex morphism. -/
+@[simp]
+theorem opEquivalence_functor_map_hom (E : ConflationClass C)
+    {S T : E.ConflationCategoryᵒᵖ} (a : S ⟶ T) :
+    HEq ((opEquivalence E).functor.map a).hom (ShortComplex.opMap a.unop.hom) := by
+  exact heq_of_eq rfl
+
+/-- On morphisms, unopposing a conflation applies the termwise unopposite map to its underlying
+short-complex morphism. -/
+@[simp]
+theorem opEquivalence_inverse_map_unop_hom (E : ConflationClass C)
+    {S T : E.op.ConflationCategory} (a : S ⟶ T) :
+    HEq ((opEquivalence E).inverse.map a).unop.hom (ShortComplex.unopMap a.hom) := by
+  exact heq_of_eq rfl
+
 end Opposite
 
 end ConflationCategory
@@ -322,6 +338,12 @@ theorem mapCompιIso_inv_app [F.Additive] (hF : E.IsConflationExact E' F)
     (S : E.ConflationCategory) : HEq ((mapCompιIso hF).inv.app S)
       (𝟙 (F.mapShortComplex.obj S.obj)) := by
   exact heq_of_eq rfl
+
+/- The component equations for `map` above are necessarily heterogeneous: opacity hides the
+identification between a lifted object's terms and their componentwise images. Consequently the
+naturality equations below, which are homogeneous equalities of dependent morphisms, must expose
+the wrappers locally to identify their endpoints; rewriting by the `HEq` component equations would
+instead leave casts involving the opaque lifted objects. -/
 
 /-- The functor on conflations induced by the identity functor is naturally isomorphic to the
 identity functor. -/
