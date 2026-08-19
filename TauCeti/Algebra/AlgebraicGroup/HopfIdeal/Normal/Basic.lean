@@ -24,13 +24,15 @@ with the first tensor factor carrying the conjugating variable. Thus `I` is norm
 commutative value algebra, the subgroup cut out by a normal Hopf ideal is a normal subgroup of
 the ambient group of points.
 
-Normal Hopf ideals are closed under arbitrary suprema.
+Normal Hopf ideals are closed under arbitrary suprema. Every Hopf ideal has a normal core: the
+largest normal Hopf ideal below it.
 
 ## Main declarations
 
 * `TauCeti.HopfIdeal.IsNormal`: stability under the coordinate conjugation action.
 * `TauCeti.HopfIdeal.isNormal_bot`: the zero Hopf ideal is normal.
 * `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
+* `TauCeti.HopfIdeal.normalCore`: the largest normal Hopf ideal below a given Hopf ideal.
 * `TauCeti.HopfIdeal.IsNormal.comap_of_bijective`: normality is preserved by pullback along a
   bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
@@ -96,6 +98,42 @@ theorem isNormal_iSup {i : Sort*} {I : i → HopfIdeal R H} (hI : ∀ j, (I j).I
     (⨆ j, I j).IsNormal := by
   rw [isNormal_def, iSup_toIdeal, Ideal.map_iSup, rightTensorIdeal_iSup]
   exact iSup_le fun j ↦ le_iSup_of_le j (hI j)
+
+/-- The supremum of a set of normal Hopf ideals is normal. -/
+theorem isNormal_sSup {s : Set (HopfIdeal R H)} (hs : ∀ I ∈ s, I.IsNormal) :
+    (sSup s).IsNormal := by
+  rw [sSup_eq_iSup']
+  exact isNormal_iSup fun I ↦ hs I I.property
+
+/-- The largest normal Hopf ideal contained in `J`. -/
+noncomputable def normalCore (J : HopfIdeal R H) : HopfIdeal R H :=
+  sSup {I | I.IsNormal ∧ I ≤ J}
+
+/-- The normal core is normal. -/
+@[simp]
+theorem isNormal_normalCore (J : HopfIdeal R H) : J.normalCore.IsNormal :=
+  isNormal_sSup fun _ hI ↦ hI.1
+
+/-- The normal core of a Hopf ideal is contained in that ideal. -/
+theorem normalCore_le (J : HopfIdeal R H) : J.normalCore ≤ J := by
+  rw [normalCore]
+  exact sSup_le fun I hI ↦ hI.2
+
+/-- Every normal Hopf ideal below `J` lies below the normal core of `J`. -/
+theorem le_normalCore (I J : HopfIdeal R H) (hI : I.IsNormal) (hIJ : I ≤ J) :
+    I ≤ J.normalCore := by
+  rw [normalCore]
+  exact le_sSup ⟨hI, hIJ⟩
+
+/-- A normal Hopf ideal lies below the normal core of `J` exactly when it lies below `J`. -/
+theorem le_normalCore_iff_of_isNormal (I J : HopfIdeal R H) (hI : I.IsNormal) :
+    I ≤ J.normalCore ↔ I ≤ J :=
+  ⟨fun h ↦ h.trans J.normalCore_le, le_normalCore I J hI⟩
+
+/-- A normal Hopf ideal equals its normal core. -/
+theorem normalCore_eq_self_of_isNormal (J : HopfIdeal R H) (hJ : J.IsNormal) :
+    J.normalCore = J :=
+  le_antisymm J.normalCore_le (le_normalCore J J hJ le_rfl)
 
 end HopfIdeal
 
