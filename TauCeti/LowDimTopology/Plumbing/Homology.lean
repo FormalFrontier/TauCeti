@@ -35,6 +35,8 @@ canonically isomorphic to its whole chain module.
 
 * `TauCeti.PlumbingGraph.latticeShortComplex`: the short complex with the lattice differential
   in both positions.
+* `TauCeti.PlumbingGraph.latticeShortComplex_exact_iff`: that short complex is exact exactly when
+  every cycle of the lattice differential is a boundary.
 * `TauCeti.PlumbingGraph.latticeHomology`: its canonical `𝔽₂[U]`-module homology.
 * `TauCeti.PlumbingGraph.latticeHomologyIsoChainOfIsEmpty`: the homology of a zero-vertex
   plumbing is its full chain module.
@@ -100,6 +102,22 @@ theorem latticeShortComplex_f (P : PlumbingGraph V) (k : P.characteristicVectors
 theorem latticeShortComplex_g (P : PlumbingGraph V) (k : P.characteristicVectors) :
     HEq (P.latticeShortComplex k).g
       (ModuleCat.ofHom (P.latticeDifferential k)) := (HEq.rfl)
+
+/-- Exactness of the lattice short complex says exactly that every cycle of the lattice
+differential is a boundary. This is the concrete, chain-level reading of the vanishing of lattice
+homology. -/
+theorem latticeShortComplex_exact_iff (P : PlumbingGraph V) (k : P.characteristicVectors) :
+    (P.latticeShortComplex k).Exact ↔
+      ∀ c : PlumbingChain V, P.latticeDifferential k c = 0 →
+        c ∈ LinearMap.range (P.latticeDifferential k) := by
+  rw [ShortComplex.moduleCat_exact_iff]
+  constructor
+  · intro hexact c hc
+    obtain ⟨b, hb⟩ := hexact c hc
+    exact ⟨b, hb⟩
+  · intro hcycle c hc
+    obtain ⟨b, hb⟩ := hcycle c hc
+    exact ⟨b, hb⟩
 
 /-- The characteristic-two lattice homology module: the homology of the weighted
 plumbing-lattice short complex.

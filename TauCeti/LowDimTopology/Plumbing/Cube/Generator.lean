@@ -245,6 +245,13 @@ theorem characteristicWeight_mk [Fintype V] (P : PlumbingGraph V)
       P.characteristicCubeWeight k x S :=
   by simp [characteristicWeight_def]
 
+/-- The characteristic weight of a zero-dimensional cube is the point weight of its base
+point. -/
+theorem characteristicWeight_of_directions_eq_empty [Fintype V] (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions = ∅) :
+    characteristicWeight P k C = P.characteristicWeight k C.base := by
+  rw [characteristicWeight_def, hC, PlumbingGraph.characteristicCubeWeight_empty]
+
 /-- The nonnegative `U`-exponent contributed by the raw lower cube obtained by erasing a direction.
 When the direction is present, this is the exponent of the lower face. -/
 noncomputable irreducible_def characteristicLowerFaceExponent [Fintype V] (P : PlumbingGraph V)
