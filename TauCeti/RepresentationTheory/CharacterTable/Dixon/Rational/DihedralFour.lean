@@ -152,20 +152,15 @@ theorem dihedralGroupFour_centralCharacterSearch :
       numClasses_dihedralClassData_four]
 
 /-- **Signed least representatives modulo `5` recover every entry of the integral
-central-character table.** This is the rational lifting step of the Dixon computation. -/
-@[simp]
+central-character table.** This is the rational lifting step of the Dixon computation.
+
+This is not a `simp` lemma: `dihedralGroupFourCentralCharacterTable_apply` already rewrites both
+sides to matrix literals, so the simplifier reaches the same conclusion on its own. -/
 theorem dihedralGroupFour_valMinAbs_centralCharacterTable
     (i j : DihedralGroupFourClassIndex) :
-    (((!![1,  1,  2,  2,  2;
-          1,  1,  2, -2, -2;
-          1,  1, -2,  2, -2;
-          1,  1, -2, -2,  2;
-          1, -1,  0,  0,  0] i j : ℤ) : ZMod 5)).valMinAbs =
-      !![1,  1,  2,  2,  2;
-         1,  1,  2, -2, -2;
-         1,  1, -2,  2, -2;
-         1,  1, -2, -2,  2;
-         1, -1,  0,  0,  0] i j := by
+    ((dihedralGroupFourCentralCharacterTable i j : ZMod 5)).valMinAbs =
+      dihedralGroupFourCentralCharacterTable i j := by
+  rw [dihedralGroupFourCentralCharacterTable_apply]
   apply ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt
   fin_cases i <;> fin_cases j <;> decide
 
