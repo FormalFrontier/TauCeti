@@ -125,9 +125,10 @@ theorem geometricallyConnected_iff_geometricallyConnected_coordinate
   let eG :
       (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅ G.obj :=
     (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso (E.counitIso.app G)
-  change geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k) G.obj ↔
-    (geometricallyConnectedCommHopfAlgProperty k).op H₀
   calc
+    GeometricallyConnected G.obj.obj.X.hom ↔
+        geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k) G.obj :=
+      (geometricallyConnectedAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).symm
     _ ↔ geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k)
         ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
       ((geometricallyConnectedAffineGroupSchemeProperty
@@ -138,10 +139,15 @@ theorem geometricallyConnected_iff_geometricallyConnected_coordinate
       (geometricallyConnectedAffineGroupSchemeProperty
         (CommRingCat.of k)).prop_iff_of_iso eSpec
     _ ↔ (geometricallyConnectedCommHopfAlgProperty k).op H₀ := by
-      change ((geometricallyConnectedAffineGroupSchemeProperty
-        (CommRingCat.of k)).inverseImage
-          (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor) H₀ ↔ _
-      rw [geometricallyConnectedAffineGroupSchemeProperty_inverseImage]
+      exact Iff.of_eq <| congrArg
+        (fun P : ObjectProperty (CommHopfAlgCat.{u} k)ᵒᵖ ↦ P H₀)
+        (geometricallyConnectedAffineGroupSchemeProperty_inverseImage k)
+    _ ↔ geometricallyConnectedCommHopfAlgProperty k
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
+          G).unop.obj := by
+      rw [ObjectProperty.op_iff]
+      simp only [H₀, H, E, Functor.op_obj,
+        FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj]
 
 /-- The structural morphism of a Hopf spectrum is geometrically connected exactly when, after
 every extension `K / k` of the base field, every idempotent of `H ⊗[k] K` is zero or one. -/

@@ -141,7 +141,10 @@ noncomputable def semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat
       (semisimpleAffineGroupSchemeProperty_inverseImage k)
 
 /-- The forward semisimple anti-equivalence followed by the inclusions into finite-type affine
-group schemes is the finite-type anti-equivalence after forgetting semisimplicity. -/
+group schemes is definitionally the finite-type anti-equivalence after forgetting semisimplicity.
+
+This private isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and
+`congrFullSubcategory` from the public `Spec` compatibility isomorphism below. -/
 private noncomputable def
     semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCatFunctorCompιIso
     (k : Type u) [Field k] :

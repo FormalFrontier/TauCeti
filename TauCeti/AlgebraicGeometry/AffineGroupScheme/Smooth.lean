@@ -152,7 +152,7 @@ theorem smooth_iff_algebraSmooth_coordinate
     (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso (E.counitIso.app G)
   calc
     Smooth G.obj.obj.X.hom ↔ smoothAffineGroupSchemeProperty (CommRingCat.of k) G.obj :=
-      Iff.rfl
+      (smoothAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).symm
     _ ↔ smoothAffineGroupSchemeProperty (CommRingCat.of k)
         ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
       ((smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_iff_of_iso eG).symm
@@ -161,13 +161,13 @@ theorem smooth_iff_algebraSmooth_coordinate
           (CommRingCat.of k)).functor.obj H₀) :=
       (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_iff_of_iso eSpec
     _ ↔ (smoothCommHopfAlgProperty k).op H₀ := by
-      change ((smoothAffineGroupSchemeProperty (CommRingCat.of k)).inverseImage
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor) H₀ ↔ _
-      rw [smoothAffineGroupSchemeProperty_inverseImage]
+      exact Iff.of_eq <| congrArg
+        (fun P : ObjectProperty (CommHopfAlgCat.{u} k)ᵒᵖ ↦ P H₀)
+        (smoothAffineGroupSchemeProperty_inverseImage k)
     _ ↔ Algebra.Smooth k
         ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop := by
       rw [ObjectProperty.op_iff, smoothCommHopfAlgProperty_iff]
-      change Algebra.Smooth k H.unop.obj ↔ Algebra.Smooth k H.unop.obj
-      rfl
+      simp only [H₀, H, E, Functor.op_obj,
+        FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj]
 
 end TauCeti
