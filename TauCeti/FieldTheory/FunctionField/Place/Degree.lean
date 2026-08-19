@@ -37,14 +37,13 @@ a genuine positive natural number.
   field is a finite extension of the constants.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
   `ord_P x ≠ 0`.
-  The lower bound `1 ≤ deg P` is then `TauCeti.Place.one_le_degree`, whose finiteness
-  hypothesis `TauCeti.Place.finite_residueField` supplies.
+  The lower bound `1 ≤ deg P` is `TauCeti.Place.one_le_degree_of_isFunctionField`.
 * `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
   `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
   those whose residue field is exhausted by the constants, equivalently those at which every
   integral function agrees with a constant to first order.
-* `TauCeti.Place.degree_eq_one_of_isAlgClosed`: a place with algebraic residue field over an
-  algebraically closed field of constants is rational (Stichtenoth, Remark 1.1.17).
+* `TauCeti.Place.degree_eq_one_of_isAlgClosed_of_isIntegral`: a place with algebraic residue
+  field over an algebraically closed field of constants is rational (Stichtenoth, Remark 1.1.17).
 
 ## Implementation notes
 
@@ -131,8 +130,9 @@ theorem linearIndependent_adjoin_of_linearIndependent_residue {x : F} (hx : 0 < 
   classical
   have hx0 : x ≠ 0 := fun h ↦ by simp [h] at hx
   have hxmem : x ∈ P.integers := P.mem_integers_iff_ord_nonneg.mpr hx.le
-  have ht : IsLocalRing.residue P.integers ⟨x, hxmem⟩ = 0 :=
-    (P.residue_eq_zero_iff_ord_pos (f := ⟨x, hxmem⟩) hx0).mpr hx
+  have ht : IsLocalRing.residue P.integers ⟨x, hxmem⟩ = 0 := by
+    rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_ord_pos hx0]
+    exact hx
   have hxtr : Transcendental k x := P.transcendental_of_ord_ne_zero hx.ne'
   have hinj : Function.Injective (aeval x : k[X] →ₐ[k] F) := transcendental_iff_injective.mp hxtr
   -- The coercion `𝒪_P → F` as a `k`-algebra map, used to move relations between `F` and `𝒪_P`.
@@ -235,6 +235,13 @@ theorem degree_le_finrank_over_adjoin (hF : IsFunctionField k F) {x : F} (hx : P
   rw [P.degree_eq_finrank]
   exact Module.finrank_le_of_rank_le (rank_residueField_le_finrank_over_adjoin P hx)
 
+variable (P) in
+/-- **Stichtenoth, Proposition 1.1.15**: the degree of a place of an algebraic function field
+is positive. -/
+theorem one_le_degree_of_isFunctionField (hF : IsFunctionField k F) : 1 ≤ P.degree := by
+  let _ := P.finite_residueField hF
+  exact P.one_le_degree
+
 /-! ### Rational places -/
 
 variable (P) in
@@ -281,8 +288,8 @@ theorem degree_eq_one_iff_forall_exists_valuation_sub_lt_one :
 variable (P) in
 /-- If the residue field of a place is algebraic over an algebraically closed field of constants,
 then the place is rational (Stichtenoth, Remark 1.1.17). -/
-theorem degree_eq_one_of_isAlgClosed [IsAlgClosed k] [Algebra.IsIntegral k P.ResidueField] :
-    P.degree = 1 := by
+theorem degree_eq_one_of_isAlgClosed_of_isIntegral [IsAlgClosed k]
+    [Algebra.IsIntegral k P.ResidueField] : P.degree = 1 := by
   exact (degree_eq_one_iff_algebraMap_surjective P).mpr
     (IsAlgClosed.algebraMap_bijective_of_isIntegral (k := k)).2
 
