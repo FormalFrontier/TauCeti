@@ -11,8 +11,10 @@ module
 public import TauCeti.RepresentationTheory.ClassicalGroups.Torus
 -- The determinant powers, the worked one-dimensional example at the end of the file.
 public import TauCeti.RepresentationTheory.ClassicalGroups.Determinant
--- The simultaneous eigenspaces of a commuting family of endomorphisms and their independence.
-public import Mathlib.LinearAlgebra.Eigenspace.Pi
+-- The characters `TauCeti.torusCharacter` of a split torus, which the weight characters package.
+public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+-- The independence of the joint eigenspaces of a representation, indexed by characters.
+public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 
 /-!
 # Weights of the diagonal torus of the general linear group
@@ -25,8 +27,8 @@ decomposition rather than a labelling: the weight spaces are independent, and th
 representation is the internal direct sum of its weight spaces, which are its coordinate lines.
 
 The weight space is an intersection of eigenspaces, one for each point of the torus, so
-independence is the independence of the simultaneous eigenspaces of a commuting family of
-endomorphisms — Mathlib's `Module.End.independent_iInf_maxGenEigenspace_of_forall_mapsTo` —
+independence is the independence of the joint eigenspaces of a representation indexed by
+characters — `TauCeti.iSupIndep_iInf_eigenspace_unitHom` —
 transported along the injection `l ↦ TauCeti.weightChar k l`. That injection is where the
 coefficients enter: over `𝔽₂` the torus is trivial (`TauCeti.diagonalTorus_eq_bot`), every `l`
 gives the same character, and the whole module is a weight space for every weight at once, so
@@ -64,15 +66,19 @@ The weight space is indexed by `l : Fin n → ℤ`, not by a character of the to
 the index the highest-weight theory of the roadmap runs on; `TauCeti.weightChar` is the translation
 between the two, and `TauCeti.weightChar_injective` says the translation is faithful.
 
+`TauCeti.weightChar` only repackages the split-torus character `TauCeti.torusCharacter`, which is
+the same product `∏ i, tᵢ ^ lᵢ` read as a function of the weight; the point of the repackaging is
+that a *fixed* weight gives a homomorphism in the torus point, which is the form the joint
+eigenspaces are indexed by. All arithmetic of the characters comes from the `torusCharacter`
+lemmas.
+
 The intersection defining `TauCeti.weightSpace` runs over `t : Fin n → kˣ` rather than over
 `TauCeti.diagonalTorus k n` itself: `TauCeti.diagGL` is onto the torus
 (`TauCeti.mem_diagonalTorus_iff_exists_diagGL`), so the two conditions agree, and the
 coordinatewise form is the one every computation below uses.
 
-Weight spaces are intersections of honest eigenspaces, not of generalised ones. Independence is
-inherited from the generalised statement, which is the form Mathlib proves; nothing below needs
-the generalised spaces themselves, since a torus element acts on a weight vector by an honest
-scalar.
+Weight spaces are intersections of honest eigenspaces, not of generalised ones: a torus element
+acts on a weight vector by an honest scalar, and independence is available in that form already.
 
 ## References
 
@@ -96,27 +102,28 @@ variable (k : Type u) [CommRing k] {n : ℕ}
 /-! ## The characters of the diagonal torus -/
 
 /-- The character `t ↦ ∏ i, tᵢ ^ lᵢ` of the diagonal torus of `GL n k` attached to an integer
-sequence `l`. The weight space of `l` is cut out by it. -/
+sequence `l`: the split-torus character `TauCeti.torusCharacter` of `l`, read as a homomorphism in
+the torus point. The weight space of `l` is cut out by it. -/
 def weightChar (l : Fin n → ℤ) : (Fin n → kˣ) →* kˣ where
-  toFun t := ∏ i, t i ^ l i
-  map_one' := by simp
-  map_mul' s t := by simp [mul_zpow, Finset.prod_mul_distrib]
+  toFun t := torusCharacter t l
+  map_one' := torusCharacter_one l
+  map_mul' s t := torusCharacter_mul s t l
 
-/-- The value of a weight character, unfolding the definition. -/
+/-- A weight character is the split-torus character of its weight, with the arguments in the order
+the weight-space API uses. Every arithmetic property of `TauCeti.weightChar` reduces through this
+to the `TauCeti.torusCharacter` lemmas. -/
 theorem weightChar_apply (l : Fin n → ℤ) (t : Fin n → kˣ) :
-    weightChar k l t = ∏ i, t i ^ l i :=
+    weightChar k l t = torusCharacter t l :=
   (rfl)
 
 @[simp]
 theorem weightChar_zero : weightChar k (0 : Fin n → ℤ) = 1 :=
-  MonoidHom.ext fun t ↦ by simp [weightChar_apply]
+  MonoidHom.ext fun t ↦ torusCharacter_zero t
 
 /-- Weights add as characters multiply. -/
 theorem weightChar_add (l m : Fin n → ℤ) :
     weightChar k (l + m) = weightChar k l * weightChar k m :=
-  MonoidHom.ext fun t ↦ by
-    simp only [weightChar_apply, MonoidHom.mul_apply, Pi.add_apply, zpow_add]
-    rw [Finset.prod_mul_distrib]
+  MonoidHom.ext fun t ↦ torusCharacter_add t l m
 
 /-- The character of `Pi.single i 1` is the `i`-th coordinate: this is the weight carried by the
 `i`-th standard basis vector. -/
@@ -124,7 +131,7 @@ theorem weightChar_add (l m : Fin n → ℤ) :
 theorem weightChar_single (i : Fin n) (t : Fin n → kˣ) :
     weightChar k (Pi.single i 1) t = t i := by
   classical
-  rw [weightChar_apply,
+  rw [weightChar_apply, torusCharacter_def,
     Finset.prod_eq_single i (fun j _ hj ↦ by simp [Pi.single_eq_of_ne hj])
       (fun h ↦ absurd (Finset.mem_univ i) h),
     Pi.single_eq_same, zpow_one]
@@ -132,17 +139,7 @@ theorem weightChar_single (i : Fin n) (t : Fin n → kˣ) :
 /-- The character of a constant sequence is a power of the determinant of the torus element. -/
 theorem weightChar_const (m : ℤ) (t : Fin n → kˣ) :
     weightChar k (fun _ ↦ m) t = (∏ i, t i) ^ m := by
-  rw [weightChar_apply, Finset.prod_zpow]
-
-/-- Evaluating a weight character at a torus element supported in one coordinate reads off the
-corresponding entry of the weight. This is how a weight is recovered from its character. -/
-theorem weightChar_update_one (l : Fin n → ℤ) (i : Fin n) (u : kˣ) :
-    weightChar k l (Function.update 1 i u) = u ^ l i := by
-  classical
-  rw [weightChar_apply,
-    Finset.prod_eq_single i (fun j _ hj ↦ by simp [Function.update_of_ne hj])
-      (fun h ↦ absurd (Finset.mem_univ i) h),
-    Function.update_self]
+  rw [weightChar_apply, torusCharacter_def, Finset.prod_zpow]
 
 /-! ## The weight spaces of a representation -/
 
@@ -171,12 +168,6 @@ theorem apply_of_mem_weightSpace {ρ : Representation k (GL (Fin n) k) W} {l : F
     (hw : w ∈ weightSpace ρ l) (t : Fin n → kˣ) :
     ρ (diagGL t) w = ((weightChar k l t : kˣ) : k) • w :=
   (mem_weightSpace_iff ρ l w).mp hw t
-
-/-- The torus points act on a representation by commuting endomorphisms, the diagonal matrices
-forming a commutative subgroup. -/
-theorem commute_apply_diagGL (ρ : Representation k (GL (Fin n) k) W) (s t : Fin n → kˣ) :
-    Commute (ρ (diagGL s)) (ρ (diagGL t)) :=
-  ((Commute.all s t).map diagGL).map ρ
 
 /-! ## The standard representation and the determinant powers -/
 
@@ -241,28 +232,19 @@ theorem weightChar_injective : Function.Injective (weightChar k (n := n)) := by
   refine eq_of_two_zpow_eq k ?_
   have hval := congrArg
     (fun χ : (Fin n → kˣ) →* kˣ ↦
-      ((χ (Function.update 1 i (Units.mk0 (2 : k) two_ne_zero)) : kˣ) : k)) h
-  simpa [weightChar_update_one] using hval
+      ((χ (Pi.mulSingle i (Units.mk0 (2 : k) two_ne_zero)) : kˣ) : k)) h
+  simpa [weightChar_apply] using hval
 
 variable {W : Type v} [AddCommGroup W] [Module k W]
 
-/-- **The weight spaces of a representation of `GL n k` are independent.** Over a field of
-characteristic zero the weight is recoverable from its character, so the weight spaces are a
-subfamily of the simultaneous eigenspaces of the commuting family `t ↦ ρ (diagGL t)`, and those are
-independent. -/
+/-- **The weight spaces of a representation of `GL n k` are independent.** The weight spaces are
+the joint eigenspaces of the representation `t ↦ ρ (diagGL t)` of the torus indexed by the
+characters `weightChar k l`, and those are independent; over a field of characteristic zero the
+weight is recoverable from its character, so indexing by weights keeps them distinct. -/
 theorem iSupIndep_weightSpace (ρ : Representation k (GL (Fin n) k) W) :
-    iSupIndep fun l : Fin n → ℤ ↦ weightSpace ρ l := by
-  classical
-  have hgen := Module.End.independent_iInf_maxGenEigenspace_of_forall_mapsTo
-    (fun t : Fin n → kˣ ↦ ρ (diagGL t))
-    (fun s t φ ↦ Module.End.mapsTo_maxGenEigenspace_of_comm (commute_apply_diagGL ρ t s) φ)
-  have hinj : Function.Injective
-      (fun (l : Fin n → ℤ) (t : Fin n → kˣ) ↦ ((weightChar k l t : kˣ) : k)) := by
-    intro l l' h
-    refine weightChar_injective (k := k) (MonoidHom.ext fun t ↦ ?_)
-    exact Units.ext (congrFun h t)
-  refine (hgen.comp hinj).mono fun l ↦ le_iInf fun t ↦ ?_
-  exact (weightSpace_le_eigenspace ρ l t).trans Module.End.eigenspace_le_maxGenEigenspace
+    iSupIndep fun l : Fin n → ℤ ↦ weightSpace ρ l :=
+  (iSupIndep_iInf_eigenspace_unitHom
+      (ρ := (ρ : GL (Fin n) k →* Module.End k W).comp diagGL)).comp weightChar_injective
 
 /-! ## The weight-space decomposition of the standard representation -/
 
