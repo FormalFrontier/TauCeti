@@ -457,5 +457,55 @@ class DivergedHeadTest(unittest.TestCase):
         _install(self, self._routes(""))
         self.assertEqual(sa.detect_diverged_head(), [])
 
+class SteppingStoneTest(unittest.TestCase):
+    """A stepping stone suppresses every mathlib bump, so it must never go unreported.
+
+    `stranded-pr` cannot cover this: it skips any PR carrying a hold label and wants a
+    green build plus a review verdict, which is exactly the shape a parked stone has."""
+
+    def _routes(self, created_at, state="failure", labels=()):
+        import json
+        pr = {"number": 77, "head": "stonehead", "created_at": created_at,
+              "labels": list(labels)}
+        status = json.dumps({"state": state, "updated_at": created_at})
+        return [("head=TauCetiProject:hopscotch/tag-bump", json.dumps(pr) + "\n"),
+                ("/statuses", status)]
+
+    def test_a_red_stone_past_the_window_alerts(self):
+        _install(self, self._routes(_ago(20)))
+        alerts = sa.detect_stuck_stone()
+        self.assertEqual([a["key"] for a in alerts], ["stuck-stone/77"])
+        self.assertIn("red", alerts[0]["body"])
+
+    def test_a_fresh_stone_is_not_an_alert(self):
+        _install(self, self._routes(_ago(2)))
+        self.assertEqual(sa.detect_stuck_stone(), [])
+
+    def test_a_green_but_unmerged_stone_still_alerts(self):
+        # The difference from stuck-bump. A green stone that nothing merges holds back
+        # every dependency update just as effectively as a red one.
+        _install(self, self._routes(_ago(20), state="success"))
+        alerts = sa.detect_stuck_stone()
+        self.assertEqual(len(alerts), 1)
+        self.assertIn("green", alerts[0]["body"])
+
+    def test_a_held_stone_alerts_and_says_the_hold_is_bounded(self):
+        _install(self, self._routes(_ago(20), labels=["hold"]))
+        alerts = sa.detect_stuck_stone()
+        self.assertEqual(len(alerts), 1)
+        self.assertIn("one further daily tick", alerts[0]["body"])
+
+    def test_it_fires_before_the_closer_demotes(self):
+        # The alert is only useful while the PR is still open: landing a fix then keeps the
+        # exact release commit on main.
+        self.assertLess(sa.STONE_STUCK_HOURS, 20)
+
+    def test_the_branch_matches_the_workflow(self):
+        import pathlib
+        workflow = (pathlib.Path(__file__).resolve().parents[2]
+                    / ".github/workflows/update.yml").read_text()
+        self.assertIn(f"STONE_BRANCH: {sa.STONE_BRANCH}", workflow)
+
+
 if __name__ == "__main__":
     unittest.main()

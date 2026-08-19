@@ -9,6 +9,20 @@ name: Update Dependencies
 # PRs and pushes use the tauceti-review-bot App token so pr-build/review trigger
 # normally. Both update paths preserve Mathlib's `master` nomination and change only the
 # manifest/toolchain pins, so bump-guard can validate and auto-merge them once green.
+#
+# Stepping stones. Mathlib's `vX` tag sits on the commit that bumps its own lean-toolchain
+# to X, so the window in which main could pin a release is one Mathlib toolchain era, and
+# for a stable release that has been as little as fifteen hours. Taking the last-known-good
+# commit every day steps clean over such a window, and did over v4.33.0. So when the LKG
+# target lies past a release tag main has not reached, this job pins THAT tag first, on its
+# own branch, and holds the ordinary bump back until it merges. The exact release commit
+# then exists on main and `release-tag.yml` can build, publish and tag it, instead of
+# someone having to construct it afterwards.
+#
+# A stepping stone must never be able to freeze dependency updates, so it has a hard
+# lifetime rather than a CI-colour test: at the next daily tick it has either merged or it
+# is demoted, whatever its colour, and demotion parks its head on `releases/<tag>` where
+# release-tag.yml can still use it. A first-known-bad regression outranks it entirely.
 
 on:
   schedule:
@@ -17,6 +31,18 @@ on:
 
 env:
   LKG_BRANCH: hopscotch/lkg-bump
+  # Upstream's own suggested name for this case; bump-to-latest's step 1.5 probe watches
+  # whichever branch it is given, so this must match the one open-bump-pr writes.
+  STONE_BRANCH: hopscotch/tag-bump
+  # How long a stepping stone may stay open before it is demoted. Twenty hours, not
+  # twenty-four: this job runs at 17:00, so a stone opened at 17:01 is 23.98 hours old at
+  # the next tick and a 24 hour threshold would silently become 48. The upper bound is
+  # stuck_alerts' PIN_STALE_DAYS = 4, which would otherwise fire an emergency alert caused
+  # by a policy we chose.
+  STONE_LIFETIME_HOURS: "20"
+  # A hold label buys one further tick and no more. Parking a stone parks every dependency
+  # update behind it, so it is bounded and it is alerted, never a quiet freeze.
+  STONE_HOLD_HOURS: "44"
 
 jobs:
   bump:
@@ -24,6 +50,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      stone-demoted: ${{ steps.stone_close.outputs.demoted }}
+      stone-release: ${{ steps.stone_close.outputs.release }}
+      stone-branch: ${{ steps.stone_close.outputs.branch }}
+      stone-head: ${{ steps.stone_close.outputs.head }}
+      stone-reason: ${{ steps.stone_close.outputs.reason }}
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -44,15 +76,219 @@ jobs:
         with:
           query-type: first-known-bad
 
+      # Is a stepping stone in flight, and for how long? The clock is the PR's own
+      # created_at, which is stable precisely because the stone step below is skipped
+      # while one is open: unlike the LKG branch, this one is never force-pushed
+      # underneath itself, so its age means what it says.
+      - name: Look for an open stepping stone
+        id: stone_state
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh pr list --repo "$REPO" --state open --head "$STONE_BRANCH" \
+            --json number,createdAt,headRefOid,body,labels --jq '.[0] // empty' \
+            > "$RUNNER_TEMP/stone.json"
+          if [ ! -s "$RUNNER_TEMP/stone.json" ]; then
+            echo "open=" >> "$GITHUB_OUTPUT"
+            echo "no stepping stone in flight"
+            exit 0
+          fi
+          # Through a file, never a shell interpolation: the body is whatever the branch's
+          # last pusher wrote.
+          python3 - "$RUNNER_TEMP/stone.json" <<'PY' >> "$GITHUB_OUTPUT"
+          import datetime
+          import json
+          import re
+          import sys
+
+          pr = json.load(open(sys.argv[1]))
+          created = datetime.datetime.fromisoformat(pr["createdAt"].replace("Z", "+00:00"))
+          age = (datetime.datetime.now(datetime.timezone.utc) - created).total_seconds() / 3600
+          held = bool({n["name"].lower() for n in pr.get("labels", [])}
+                      & {"keep", "hold", "wip", "human", "do-not-close", "blocked"})
+          marker = re.search(r"<!--tauceti-stepping-stone:v1 (v[0-9][0-9A-Za-z.\-]*)-->",
+                             pr.get("body") or "")
+          if marker is None:
+              # Without the marker there is no way to know which release the stone is for,
+              # and demotion has to name a branch. Say so rather than guess.
+              print("::warning::the open stepping stone carries no release marker")
+          print(f"open={pr['number']}")
+          print(f"head={pr['headRefOid']}")
+          print(f"age={age:.2f}")
+          print(f"held={'true' if held else 'false'}")
+          print(f"release={marker.group(1) if marker else ''}")
+          PY
+
+      - name: Report the open stepping stone
+        if: steps.stone_state.outputs.open != ''
+        env:
+          PR: ${{ steps.stone_state.outputs.open }}
+          RELEASE: ${{ steps.stone_state.outputs.release }}
+          AGE: ${{ steps.stone_state.outputs.age }}
+          HELD: ${{ steps.stone_state.outputs.held }}
+        run: |
+          echo "stepping stone: PR $PR for ${RELEASE:-an unmarked release}, ${AGE}h old, held=$HELD"
+
+      # Close and demote BEFORE the bump decision below, so ordinary bumps resume in this
+      # same run rather than a day later. Demotion is what makes closing safe: the head is
+      # a pin-only commit off main, exactly the shape release-tag.yml accepts, so parking
+      # it on `releases/<tag>` keeps the release reachable and stops the next run
+      # re-opening the same PR.
+      - name: Demote a stepping stone that has run out of time
+        id: stone_close
+        if: steps.stone_state.outputs.open != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          FKB: ${{ steps.fkb.outputs.commit }}
+          PR: ${{ steps.stone_state.outputs.open }}
+          HEAD_SHA: ${{ steps.stone_state.outputs.head }}
+          AGE: ${{ steps.stone_state.outputs.age }}
+          HELD: ${{ steps.stone_state.outputs.held }}
+          RELEASE: ${{ steps.stone_state.outputs.release }}
+        run: |
+          set -euo pipefail
+          reason=""
+          if [ -n "$FKB" ]; then
+            # A first-known-bad regression outranks a stepping stone: the fix PR owns the
+            # pin, and update.yml already closes the LKG PR for the same reason.
+            reason="an incompatibility is active, so the first-known-bad fix owns the pin"
+          elif [ "$HELD" = "true" ]; then
+            if awk -v a="$AGE" -v b="$STONE_HOLD_HOURS" 'BEGIN{exit !(a >= b)}'; then
+              reason="it is labelled to be held but has now blocked dependency updates for ${AGE}h"
+            fi
+          elif awk -v a="$AGE" -v b="$STONE_LIFETIME_HOURS" 'BEGIN{exit !(a >= b)}'; then
+            reason="it did not merge within its ${STONE_LIFETIME_HOURS}h lifetime"
+          fi
+          if [ -z "$reason" ]; then
+            echo "demoted=false" >> "$GITHUB_OUTPUT"
+            echo "the stepping stone is still within its lifetime; leaving it alone"
+            exit 0
+          fi
+          echo "demoting: $reason"
+          branch=""
+          if [ -n "$RELEASE" ]; then
+            branch="releases/$RELEASE"
+            # 422 means the ref already exists, which is success for our purposes.
+            gh api -X POST "repos/$REPO/git/refs" \
+              -f ref="refs/heads/$branch" -f sha="$HEAD_SHA" >/dev/null 2>&1 \
+              || echo "::notice::$branch already exists or could not be created; not overwriting it"
+          else
+            echo "::warning::no release marker on the stone, so its head is not parked on a branch"
+          fi
+          gh pr close "$PR" --repo "$REPO" --comment "Closing this stepping stone: $reason.
+
+          Its head is parked on \`$branch\`, which is still the commit that pins mathlib at
+          \`$RELEASE\` exactly, so \`release-tag.yml\` can build, publish and tag it from there.
+          If Tau Ceti genuinely does not compile at that mathlib commit, the fix belongs on
+          \`main\` as an ordinary PR, after which re-cut the branch; \`releases/*\` is a pin-only
+          namespace and never a place code lands.
+
+          Ordinary dependency bumps resume from this run."
+          {
+            echo "demoted=true"
+            echo "release=$RELEASE"
+            echo "branch=$branch"
+            echo "head=$HEAD_SHA"
+            echo "reason=$reason"
+          } >> "$GITHUB_OUTPUT"
+
+      # Only when nothing else owns the pin: no active regression, and no stone still open.
+      - name: Look up the latest mathlib release reachable from the last-known-good commit
+        id: rel
+        if: >-
+          steps.fkb.outputs.commit == ''
+          && (steps.stone_state.outputs.open == '' || steps.stone_close.outputs.demoted == 'true')
+        uses: leanprover-community/downstream-reports/.github/actions/query-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
+        with:
+          query-type: last-good-release
+
+      # Already handled means: the release is tagged, or its commit is parked on a release
+      # branch for release-tag.yml. Both are durable records held by GitHub, so the state
+      # machine needs no store of its own, exactly as stuck_alerts.py needs none.
+      - name: Has this release already been handled?
+        id: stone_handled
+        if: steps.rel.outputs.rev != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.rel.outputs.rev }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
+            echo "::error::the snapshot returned '$TAG', which is not a release tag name"
+            exit 1
+          fi
+          if gh api "repos/$REPO/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            echo "handled=true" >> "$GITHUB_OUTPUT"; echo "$TAG is already tagged"; exit 0
+          fi
+          if gh api "repos/$REPO/git/ref/heads/releases/$TAG" >/dev/null 2>&1; then
+            echo "handled=true" >> "$GITHUB_OUTPUT"
+            echo "$TAG already has a release branch"; exit 0
+          fi
+          echo "handled=false" >> "$GITHUB_OUTPUT"
+
+      # `preserve-lakefile` is mandatory, not stylistic: without it hopscotch writes the tag
+      # name into the manifest's inputRev, and check-bump.sh rejects a changed nomination
+      # outright, so the PR could never auto-merge. `skip-build` is what makes the lifetime
+      # policy coherent: with a build, hopscotch reports updated=false on failure, the PR is
+      # never opened at all, and the LKG bump sails straight over the release in exactly the
+      # case this exists for. pr-build is the judge instead. `apply-fixes` stays at its
+      # default false because applied fixes are changes to TauCeti/, which would both break
+      # auto-merge and destroy the two-pin-files-only property release-tag.yml relies on.
+      - name: Pin mathlib at the release tag (stepping stone)
+        id: stone
+        if: >-
+          steps.fkb.outputs.commit == ''
+          && steps.stone_state.outputs.open == ''
+          && steps.stone_handled.outputs.handled == 'false'
+        uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
+        with:
+          query-type: last-good-release
+          branch: ${{ env.STONE_BRANCH }}
+          preserve-lakefile: true
+          skip-build: true
+
+      - name: Open or update the stepping-stone PR
+        if: steps.stone.outputs.updated == 'true'
+        uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
+        with:
+          branch: ${{ env.STONE_BRANCH }}
+          title: "chore: pin mathlib at ${{ steps.rel.outputs.rev }} (release stepping stone)"
+          commit-message: "chore: pin mathlib at ${{ steps.rel.outputs.rev }}"
+          message: |
+            The last-known-good bump is about to step over mathlib's `${{ steps.rel.outputs.rev }}`
+            tag, which main's pin has not reached. This PR pins mathlib at that tag exactly
+            (`${{ steps.rel.outputs.commit }}`), so the release can be built, cached and tagged from
+            a real main commit rather than from one constructed afterwards.
+
+            Ordinary dependency bumps are held back until this merges. If it has not merged by
+            the next daily run it is closed automatically and its head is parked on
+            `releases/${{ steps.rel.outputs.rev }}`, so nothing here can freeze the bump.
+
+            <!--tauceti-stepping-stone:v1 ${{ steps.rel.outputs.rev }}-->
+          token: ${{ steps.app-token.outputs.token }}
+          git-user-name: tauceti-review-bot[bot]
+          git-user-email: 290224625+tauceti-review-bot[bot]@users.noreply.github.com
+
       - name: Bump to latest mathlib
         id: bump
-        if: steps.fkb.outputs.commit == ''
+        if: >-
+          steps.fkb.outputs.commit == ''
+          && steps.stone_state.outputs.open == ''
+          && steps.stone.outputs.updated != 'true'
         uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           preserve-lakefile: true
 
       - name: Open or update PR
-        if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
+        if: >-
+          steps.fkb.outputs.commit == ''
+          && steps.stone_state.outputs.open == ''
+          && steps.stone.outputs.updated != 'true'
+          && steps.bump.outputs.updated == 'true'
         uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           branch: ${{ env.LKG_BRANCH }}
@@ -62,6 +298,83 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           git-user-name: tauceti-review-bot[bot]
           git-user-email: 290224625+tauceti-review-bot[bot]@users.noreply.github.com
+
+  # A demoted stepping stone is worth a person's attention: dependency bumps have resumed,
+  # but a release now has no commit on main and needs the release-branch path instead. Its
+  # own job on a fresh runner, because the bump job runs a downloaded hopscotch binary and
+  # a `lake update` that evaluates mathlib's lakefile, so it must not hold Zulip
+  # credentials. Same shape as nightly-verify.yml's reporter.
+  report-demotion:
+    runs-on: ubuntu-latest
+    needs: bump
+    if: ${{ always() && github.repository == 'TauCetiProject/TauCeti'
+            && needs.bump.outputs.stone-demoted == 'true' }}
+    timeout-minutes: 10
+    steps:
+      - name: Post the demotion to Zulip
+        env:
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          ZULIP_CHANNEL: Tau Ceti
+          # The same topic release-tag.yml and the toolchain-tag audit report to, and not
+          # "Stuck PRs", which stuck_alerts.py reconciles by marker.
+          ZULIP_TOPIC: Releases
+          RELEASE: ${{ needs.bump.outputs.stone-release }}
+          BRANCH: ${{ needs.bump.outputs.stone-branch }}
+          HEAD_SHA: ${{ needs.bump.outputs.stone-head }}
+          REASON: ${{ needs.bump.outputs.stone-reason }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import os
+          import sys
+          import urllib.parse
+          import urllib.request
+
+          release = os.environ.get("RELEASE") or "an unmarked release"
+          branch = os.environ.get("BRANCH") or ""
+          head = (os.environ.get("HEAD_SHA") or "")[:8]
+          reason = os.environ.get("REASON") or "it ran out of time"
+          lines = [
+              f"**The stepping stone for `{release}` was demoted**, because {reason}.",
+              "Ordinary mathlib bumps have resumed.",
+          ]
+          if branch:
+              lines.append(
+                  f"Its head `{head}` is parked on `{branch}`, which still pins mathlib at "
+                  f"`{release}` exactly, so `release-tag.yml` can build, publish and tag it "
+                  f"from there. If Tau Ceti does not compile at that mathlib commit, the fix "
+                  f"belongs on `main` as an ordinary PR and the branch is then re-cut; "
+                  f"`releases/*` is a pin-only namespace and never a place code lands.")
+          else:
+              lines.append(
+                  "It carried no release marker, so its head was NOT parked on a branch. "
+                  "Find the commit on the closed PR before it is garbage collected.")
+          lines.append(f"[Run log]({os.environ['RUN_URL']})")
+          content = "\n\n".join(lines)
+
+          email = (os.environ.get("ZULIP_EMAIL") or "").strip()
+          key = (os.environ.get("ZULIP_API_KEY") or "").strip()
+          site = (os.environ.get("ZULIP_SITE") or "").strip().rstrip("/")
+          if not (email and key and site):
+              print("::error::ZULIP_EMAIL / ZULIP_API_KEY not set; cannot report the demotion")
+              sys.exit(1)
+          data = urllib.parse.urlencode({
+              "type": "stream",
+              "to": os.environ["ZULIP_CHANNEL"],
+              "topic": os.environ["ZULIP_TOPIC"],
+              "content": content,
+          }).encode()
+          req = urllib.request.Request(site + "/api/v1/messages", data=data, method="POST")
+          req.add_header("Authorization",
+                         "Basic " + base64.b64encode(f"{email}:{key}".encode()).decode())
+          req.add_header("Content-Type", "application/x-www-form-urlencoded")
+          with urllib.request.urlopen(req, timeout=30) as response:
+              print(f"zulip: HTTP {response.status}")
+          PY
 
   open-issue:
     runs-on: ubuntu-latest

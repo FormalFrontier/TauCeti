@@ -116,6 +116,14 @@ import zulip as zp  # noqa: E402
 
 REPO = core.REPO
 LKG_BRANCH = "hopscotch/lkg-bump"  # keep in sync with update.yml's LKG_BRANCH
+# The stepping-stone branch update.yml opens when the daily bump would step over a mathlib
+# release tag. Keep in sync with update.yml's STONE_BRANCH.
+STONE_BRANCH = "hopscotch/tag-bump"
+# update.yml demotes a stone at its next daily tick (STONE_LIFETIME_HOURS = 20). Alert
+# before that, so a human gets the chance to land a fix and keep the exact release commit
+# on main rather than having it parked on a release branch.
+STONE_STUCK_HOURS = 12
+
 
 # Keys we generate use only this alphabet; the marker is anchored to the final
 # line and its key validated against this grammar, so untrusted text that happens
@@ -242,6 +250,52 @@ def detect_stuck_bump():
                     f"together with the pin move in one human-owned PR, so the bump "
                     f"can resume."),
             })
+    return out
+
+
+def detect_stuck_stone():
+    """A stepping-stone PR that is not going to merge on its own.
+
+    update.yml closes such a stone at its next daily tick and parks its head on
+    `releases/<tag>`, so this is never an emergency in the sense the other detectors mean.
+    It fires EARLIER than that closer on purpose: while the PR is still open, landing a
+    fix keeps the exact release commit on main, which is the whole point of the stone. Once
+    it is demoted the release can still be tagged, just from a constructed branch.
+
+    Deliberately not left to `stranded-pr`: that detector skips any PR carrying a hold
+    label and requires a green build plus a review verdict, so a stone that is green but
+    unreviewed, or simply labelled `hold`, would never be reported by it at all while it
+    holds every dependency bump back."""
+    prs = gh_stream(
+        f"/repos/{REPO}/pulls?state=open&head=TauCetiProject:{STONE_BRANCH}&per_page=5",
+        jq='.[] | {number, head: .head.sha, created_at, '
+           'labels: [.labels[].name]}', paginate=False)
+    out = []
+    for pr in prs:
+        age = hours_since(pr["created_at"])
+        if age < STONE_STUCK_HOURS:
+            continue
+        state, _ = newest_status(pr["head"], "build")
+        # Unlike stuck-bump, a green-but-unmerged stone still counts: it blocks every
+        # ordinary bump behind it just as effectively as a red one, and the merge
+        # machinery, not the bump, is then the thing to look at.
+        colour = "red" if state in RED_CONCLUSIONS or state == "error" else (
+            "green" if state == "success" else f"`{state or 'missing'}`")
+        held = sorted(HOLD_LABELS.intersection(n.lower() for n in pr.get("labels", [])))
+        parked = (f" It carries {held}, which buys it one further daily tick and no more."
+                  if held else "")
+        out.append({
+            "key": f"stuck-stone/{pr['number']}",
+            "title": "Release stepping stone is holding back every mathlib bump",
+            "body": (
+                f"The stepping-stone PR https://github.com/{REPO}/pull/{pr['number']} has "
+                f"been open over {STONE_STUCK_HOURS}h with a {colour} `build`, and ordinary "
+                f"mathlib bumps are suppressed while it is open.{parked}\n\n"
+                f"**Fix:** land whatever it needs so it merges, and the exact release commit "
+                f"lands on main. Otherwise the daily bump will close it, park its head on a "
+                f"`releases/` branch and resume; the release can still be tagged from there, "
+                f"just not from main."),
+        })
     return out
 
 
@@ -677,6 +731,7 @@ def detect_stale_fkb():
 # so a detector that raises marks exactly its own alerts "unknown" for the run.
 DETECTORS = [
     ("stuck-bump", detect_stuck_bump),
+    ("stuck-stone", detect_stuck_stone),
     ("stale-pin", detect_stale_pin),
     ("stranded-pr", detect_stranded_prs),
     ("eviction-loop", detect_eviction_loops),
