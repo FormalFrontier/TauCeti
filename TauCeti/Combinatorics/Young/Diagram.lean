@@ -21,7 +21,9 @@ lengths are summed as `∑ i ∈ Finset.range k, μ.rowLen i` or as `(μ.rowLens
 the rows exhaust the cells, the row lengths also determine the diagram
 (`YoungDiagram.rowLen_injective`).  Cutting the same count column by column,
 `YoungDiagram.card_filter_fst_lt_filter_snd_eq` counts the cells of the first `k` rows
-lying in a fixed column.
+lying in a fixed column.  The same row-by-row reading applies to any property of the cells, not
+only to counting them all: `YoungDiagram.card_filter_cells` counts the cells satisfying a
+predicate one row at a time.
 
 The partial sums are the shape of every dominance statement about partitions, since dominance
 compares partial sums of decreasingly sorted parts, and the sorted parts of a partition are the
@@ -130,6 +132,36 @@ theorem card_eq_sum_range_rowLen (μ : _root_.YoungDiagram) {N : ℕ} (hN : μ.c
   refine (congrArg Finset.card (Finset.filter_true_of_mem fun c hc => ?_)).symm
   exact lt_of_lt_of_le ((_root_.YoungDiagram.mem_iff_lt_colLen.mp hc).trans_le
     (μ.colLen_anti 0 c.snd c.snd.zero_le)) hN
+
+/-- **The cells of a Young diagram carrying a given property, counted row by row.**  The range of
+summation is any range of rows containing all of them, as in
+`YoungDiagram.card_eq_sum_range_rowLen`; a row past the last one contributes nothing, being
+empty. -/
+theorem card_filter_cells (μ : _root_.YoungDiagram) (p : ℕ × ℕ → Prop) [DecidablePred p] {N : ℕ}
+    (hN : μ.colLen 0 ≤ N) :
+    (μ.cells.filter p).card
+      = ∑ i ∈ Finset.range N, ((Finset.range (μ.rowLen i)).filter fun j => p (i, j)).card := by
+  have hcells : μ.cells.filter p
+      = (Finset.range N).biUnion fun i =>
+          ((Finset.range (μ.rowLen i)).filter fun j => p (i, j)).image fun j => (i, j) := by
+    ext c
+    obtain ⟨i, j⟩ := c
+    simp only [Finset.mem_filter, Finset.mem_biUnion, Finset.mem_range, Finset.mem_image,
+      _root_.YoungDiagram.mem_cells, Prod.mk.injEq]
+    constructor
+    · rintro ⟨hij, hp⟩
+      refine ⟨i, lt_of_lt_of_le (lt_of_lt_of_le (_root_.YoungDiagram.mem_iff_lt_colLen.mp hij)
+        (μ.colLen_anti 0 j j.zero_le)) hN, j, ⟨?_, hp⟩, rfl, rfl⟩
+      exact _root_.YoungDiagram.mem_iff_lt_rowLen.mp hij
+    · rintro ⟨i', -, j', ⟨hj', hp⟩, rfl, rfl⟩
+      exact ⟨_root_.YoungDiagram.mem_iff_lt_rowLen.mpr hj', hp⟩
+  rw [hcells, Finset.card_biUnion]
+  · exact Finset.sum_congr rfl fun i _ =>
+      Finset.card_image_of_injective _ fun _ _ h => congrArg Prod.snd h
+  · intro y _ z _ hyz
+    simp only [Finset.disjoint_left, Finset.mem_image, Finset.mem_filter, Finset.mem_range]
+    rintro c ⟨j, -, rfl⟩ ⟨j', -, hj'⟩
+    exact hyz (congrArg Prod.fst hj').symm
 
 /-- The first `k` entries of `YoungDiagram.rowLens` count the cells in the first `k` rows.  This
 is `YoungDiagram.sum_range_rowLen_eq_card_filter_fst` with the truncation taken on the

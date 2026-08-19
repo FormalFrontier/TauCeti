@@ -33,6 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # This job elaborates every TauCeti module, and Lean runs code at elaboration time.
+          # Without this, checkout leaves an http.extraheader carrying GITHUB_TOKEN in the
+          # workspace .git/config for the whole job, within reach of that code. Nothing here
+          # needs it: no step calls the GitHub API or pushes, `lake exe cache get` talks to
+          # Mathlib's own server, scripts/lake-cache-get.sh does anonymous GETs, and
+          # `lake cache get` reads the local revision from .git without authenticating.
+          persist-credentials: false
           # Enough history for `lake cache get` to backtrack to a recently-published
           # ancestor commit (its `--max-revs`) when the tip itself has no mapping yet.
           # Harmless (just a slightly deeper fetch) when the cache is off.
@@ -51,6 +58,7 @@ jobs:
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
           python3 scripts/test_landrun_pin.py
+          python3 scripts/test_elan_pin.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
 
@@ -76,7 +84,7 @@ jobs:
           fi
 
       # Restore only Mathlib's compressed, content-addressed `.ltar` download store. This is
-      # deliberately separate from lean-action's multi-gigabyte `./.lake` cache below: `lake exe
+      # deliberately narrower than a cache of the whole multi-gigabyte `./.lake` tree: `lake exe
       # cache get` remains authoritative, locally selects and unpacks the linked hashes, and
       # downloads anything this best-effort snapshot does not contain. The exact key makes a
       # repeated pin cheap; the same-toolchain prefix lets a new Mathlib pin reuse unchanged
@@ -89,20 +97,29 @@ jobs:
         with:
           project-dir: .
 
-      # Use lean-action for toolchain setup, but keep the fetch as an explicit step so a failed
-      # normal fetch can be retried with `get!`, which force-downloads and unpacks every linked
-      # file instead of trusting a possibly malformed restored `.ltar`.
-      - name: Set up Lean
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          build: false
-          test: false
-          lint: false
-          use-mathlib-cache: false
-          # Keep lean-action's broad GitHub cache off. It archives the whole `./.lake` tree;
-          # the narrow restore/save steps here cache only Mathlib's compressed `.ltar` files.
-          use-github-cache: false
+      # Install elan from a pinned leanprover/elan release, verified by SHA-256, then install the
+      # toolchain `lean-toolchain` names. This replaces leanprover/lean-action, which resolved
+      # from a floating major tag and installed elan by piping an unpinned installer to `sh`; with
+      # its build, test, lint and cache inputs all off, toolchain setup was all it did here. The
+      # Mathlib fetch stays an explicit step below so a failed normal fetch can be retried with
+      # `get!`, which force-downloads and unpacks every linked file instead of trusting a possibly
+      # malformed restored `.ltar`. scripts/test_elan_pin.py keeps the copies of the pin honest.
+      - name: Install elan (pinned + checksum) and the toolchain
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
+        run: |
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.elan/bin:$PATH"
+          elan toolchain install "$(cat lean-toolchain)"
+          lean --version
+          lake --version
 
       - name: Fetch Mathlib oleans, retrying with a forced full refetch
         run: |
@@ -425,9 +442,11 @@ jobs:
                       check(json.loads(line), lineno)
           PY
 
-      - name: Install elan and the pinned toolchain
+      - name: Install elan (pinned + checksum) and the pinned toolchain
         id: toolchain
         env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
           REPORTED: ${{ needs.build.outputs.reported-toolchain }}
         run: |
           TOOLCHAIN="$(cat lean-toolchain)"
@@ -446,13 +465,25 @@ jobs:
             echo "::error::the build job built with '$REPORTED' but lean-toolchain pins '$TOOLCHAIN'"
             exit 1
           fi
-          # elan's installer is fetched unpinned, exactly as pr-build.yml and lean-action fetch
-          # it, so elan's distribution and the named Lean release are in this job's trust base
-          # the same way they are in every other job here. That is a project-wide assumption
-          # about leanprover's release channel, not one this split introduces: the build job
-          # installs elan the same way and runs the same toolchain over the whole library.
-          curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
-          chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
+          # elan comes from a pinned leanprover/elan release verified by SHA-256, not from
+          # whatever the installer URL serves at the moment of the request. The next step hands
+          # LAKE_CACHE_KEY to a `lake` this elan selected, so an installer nothing here fixes
+          # would have moved the toolchain check above rather than closed it: constrain the
+          # toolchain NAME but not the elan that resolves it, and the choice just relocates.
+          # What this does not do is fix the bytes of the Lean release elan then downloads.
+          # `lean-toolchain` pins that release's name, not its contents, and elan offers no hook
+          # to verify the archive, so leanprover's release channel stays in this job's trust
+          # base exactly as it is in every other job here. Closing that would mean fetching and
+          # unpacking the release ourselves, or a verification hook from upstream; see
+          # https://github.com/TauCetiProject/TauCeti/issues/3725 for why the latter is the
+          # better bargain.
+          # scripts/test_elan_pin.py keeps the copies of the pin honest.
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
           "$HOME/.elan/bin/elan" toolchain install "$TOOLCHAIN"
           printf 'name=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
