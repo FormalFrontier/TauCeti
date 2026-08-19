@@ -89,8 +89,9 @@ private theorem toMatrixUnit_mul_toMatrixUnit_of_not_composable
   rw [toMatrixUnit, toMatrixUnit, Matrix.single_mul_single_of_ne (h := hne)]
 
 /-- The two trivial paths go to the two diagonal matrix units, which sum to the identity matrix.
-The enumeration is left arbitrary, as `TauCeti.PathAlgebra.liftAlgHom` asks for this over any one:
-`TauCeti.Quiver.Kronecker.vertexEquiv` transports the sum to the one over `Fin 2`. -/
+The enumeration is left an argument, so that the sum can be taken over the one
+`TauCeti.PathAlgebra.liftAlgHom` asks for it over: `TauCeti.Quiver.Kronecker.vertexEquiv` transports
+the sum to the one over `Fin 2` whichever it is. -/
 private theorem sum_toMatrixUnit_nil (fq : Fintype (Kronecker A)) :
     ∑ v ∈ @Finset.univ (Kronecker A) fq,
         toMatrixUnit k (⟨v, v, Path.nil⟩ : Quiver.TotalPath (Kronecker A)) = 1 :=
@@ -104,7 +105,7 @@ private noncomputable def toMatrixAlgHom :
     pathAlgebra k (Kronecker A) →ₐ[k] Matrix (Fin 2) (Fin 2) k :=
   PathAlgebra.liftAlgHom k (toMatrixUnit k) (toMatrixUnit_mul_toMatrixUnit_of_comp k)
     (toMatrixUnit_mul_toMatrixUnit_of_not_composable k)
-    (by intro fq; exact sum_toMatrixUnit_nil k fq)
+    (sum_toMatrixUnit_nil k (Fintype.ofFinite _))
 
 private theorem toMatrixAlgHom_single (x : Quiver.TotalPath (Kronecker A)) (c : k) :
     toMatrixAlgHom k (PathAlgebra.single x c)

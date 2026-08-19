@@ -211,7 +211,8 @@ variable (M : QuiverRep.{u, v, w, t} k Q)
 the two composition laws and the completeness of the summand projections proved above. -/
 noncomputable def toEnd : pathAlgebra k Q →ₐ[k] Module.End k (DirectSum Q (vertexSpace k Q M)) :=
   PathAlgebra.liftAlgHom k (pathEnd k Q M) (pathEnd_mul_pathEnd_of_comp k Q M)
-    (pathEnd_mul_pathEnd_of_not_composable k Q M) (by intro _; exact sum_pathEnd_nil k Q M)
+    (pathEnd_mul_pathEnd_of_not_composable k Q M)
+    (letI := Fintype.ofFinite Q; sum_pathEnd_nil k Q M)
 
 /-- The action of a basis path is the endomorphism it was assigned. -/
 @[simp]

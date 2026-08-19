@@ -736,8 +736,10 @@ private theorem liftLinear_mul (f g : pathAlgebra k Q) :
       · rw [single_mul_single_of_not_composable hy, map_zero, liftLinear_single, liftLinear_single,
           smul_mul_smul_comm, hzero hy, smul_zero]
 
+-- The enumeration is the one the unit is built from, `Fintype.ofFinite Q`; a caller holding the
+-- sum over some other `Fintype Q` transports it along `Subsingleton.elim`, as `one_def` does.
 variable [Finite Q]
-  (hone : ∀ [Fintype Q], ∑ v : Q, F ⟨v, v, _root_.Quiver.Path.nil⟩ = 1)
+  (hone : letI := Fintype.ofFinite Q; ∑ v : Q, F ⟨v, v, _root_.Quiver.Path.nil⟩ = 1)
 
 include hone in
 private theorem liftLinear_one : liftLinear k F (1 : pathAlgebra k Q) = 1 := by
