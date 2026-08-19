@@ -8,13 +8,13 @@ module
 public import Mathlib.Probability.Kernel.IonescuTulcea.Traj
 
 /-!
-# Projective limits on countable products
+# Projective limits on sequences
 
-This file proves a countable version of Kolmogorov's extension theorem when every positive-indexed
-coordinate is standard Borel. Mathlib defines projective measure families and proves uniqueness of
-their projective limits, while its Ionescu--Tulcea construction produces a path law from a sequence
-of transition kernels. Here a coherent family of finite-prefix laws is disintegrated to obtain
-those kernels.
+This file proves a sequence-indexed version of Kolmogorov's extension theorem when every
+positive-indexed coordinate is standard Borel. Mathlib defines projective measure families and
+proves uniqueness of their projective limits, while its Ionescu--Tulcea construction produces a
+path law from a sequence of transition kernels. Here a coherent family of finite-prefix laws is
+disintegrated to obtain those kernels.
 
 ## Main result
 
