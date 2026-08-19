@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Relations.Basic
-public import TauCeti.CategoryTheory.Monoidal.Mon
 
 /-!
 # Chevalley relations in the generated Kostant group scheme
@@ -70,6 +69,15 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable (A : Type) [CommRing A]
 
+private theorem kostantGeneratedGroupSchemeι_monoidHom_injective :
+    Function.Injective (IsMonHom.monoidHom
+      (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom
+      ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)))) := by
+  let _ : Mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom :=
+    Over.mono_of_mono_left _
+  intro p q hpq
+  exact (cancel_mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom).1 hpq
+
 /-- Represented Kostant root subgroups attached to commuting root vectors commute as points of
 the generated group scheme over every commutative value ring. -/
 theorem commute_kostantRootSubgroupToGenerated {i j : I} (hij : ⁅e i, e j⁆ = 0)
@@ -78,13 +86,10 @@ theorem commute_kostantRootSubgroupToGenerated {i j : I} (hij : ⁅e i, e j⁆ =
     Commute
       (p ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b i).hom.hom)
       (q ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b j).hom.hom) := by
-  have : Mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom :=
-    Over.mono_of_mono_left _
   apply Commute.of_map
     (f := IsMonHom.monoidHom
       (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom _)
-    (fun _ _ hpq =>
-      (cancel_mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom).1 hpq)
+    (kostantGeneratedGroupSchemeι_monoidHom_injective e h ρ M hM b hnil A)
   simp only [IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
     kostantRootSubgroupToGenerated_comp_ι]
   exact Commute.of_map (GeneralLinear.schemePointsMulEquiv n A).injective
@@ -106,13 +111,7 @@ theorem commutatorElement_kostantRootSubgroupToGenerated_of_lie_eq
     ⁅p ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b i).hom.hom,
       q ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b j).hom.hom⁆ =
       r ≫ (kostantRootSubgroupToGenerated e h ρ M hM hnil b k).hom.hom := by
-  have : Mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom :=
-    Over.mono_of_mono_left _
-  apply (show Function.Injective (IsMonHom.monoidHom
-    (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom
-      ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)))) from
-    fun _ _ hpq =>
-      (cancel_mono (kostantGeneratedGroupSchemeι e h ρ M hM hnil b).hom.hom).1 hpq)
+  apply kostantGeneratedGroupSchemeι_monoidHom_injective e h ρ M hM b hnil A
   rw [map_commutatorElement]
   simp only [IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
     kostantRootSubgroupToGenerated_comp_ι]
