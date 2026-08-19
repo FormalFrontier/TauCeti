@@ -47,8 +47,8 @@ transition counts of a path are the sufficient statistic: see
   other.
 * `TauCeti.prod_transitionCount`: a product of transition weights along a word depends on the word
   only through its transition counts.
-* `TauCeti.prod_transitionCount_congr`: the resulting comparison of two words with equal transition
-  counts.
+* `TauCeti.prod_eq_of_transitionCount_eq`: the resulting comparison of two words with equal
+  transition counts.
 
 ## References
 
@@ -130,14 +130,23 @@ theorem sum_transitionCount_left {n : ℕ} (w : Fin (n + 1) → α) {S : Finset 
   rw [transitionCount_eq_card_filter, filter_filter]
   exact congrArg _ (filter_congr fun i _ => by simp [and_comm])
 
+/-- Implementation helper: two words over a common alphabet take all their values in one common
+`Finset`, namely the union of their images. This supplies the index set that
+`sum_transitionCount_left`, `sum_transitionCount_right`, and `prod_transitionCount` ask for when
+two words are compared. -/
+private theorem exists_finset_forall_mem {N : ℕ} (u v : Fin N → α) :
+    ∃ S : Finset α, (∀ i, u i ∈ S) ∧ ∀ i, v i ∈ S := by
+  classical
+  exact ⟨image u univ ∪ image v univ,
+    fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i)),
+    fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))⟩
+
 /-- **The transition counts and the first letter determine the occurrence counts.** -/
 theorem occCount_eq_of_transitionCount_eq {n : ℕ} {u v : Fin (n + 1) → α} (h0 : u 0 = v 0)
     (h : ∀ a b, transitionCount u a b = transitionCount v a b) (a : α) :
     occCount u a = occCount v a := by
   classical
-  set S : Finset α := image u univ ∪ image v univ
-  have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
-  have hSv : ∀ i, v i ∈ S := fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))
+  obtain ⟨S, hSu, hSv⟩ := exists_finset_forall_mem u v
   have hout : occCount (u ∘ Fin.castSucc) a = occCount (v ∘ Fin.castSucc) a := by
     rw [← sum_transitionCount_right u (fun i => hSu i.succ) a,
       ← sum_transitionCount_right v (fun i => hSv i.succ) a]
@@ -197,13 +206,10 @@ theorem prod_transitionCount {M : Type*} [CommMonoid M] {n : ℕ} (w : Fin (n + 
 /-- **Words with the same transition counts have the same product of transition weights.** This is
 `prod_transitionCount` with the index set eliminated: the two words are compared through the common
 `Finset` of letters they use. -/
-theorem prod_transitionCount_congr {M : Type*} [CommMonoid M] {n : ℕ} {u v : Fin (n + 1) → α}
+theorem prod_eq_of_transitionCount_eq {M : Type*} [CommMonoid M] {n : ℕ} {u v : Fin (n + 1) → α}
     (h : ∀ a b, transitionCount u a b = transitionCount v a b) (p : α → α → M) :
     ∏ i : Fin n, p (u i.castSucc) (u i.succ) = ∏ i : Fin n, p (v i.castSucc) (v i.succ) := by
-  classical
-  set S : Finset α := image u univ ∪ image v univ
-  have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
-  have hSv : ∀ i, v i ∈ S := fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))
+  obtain ⟨S, hSu, hSv⟩ := exists_finset_forall_mem u v
   rw [prod_transitionCount u (fun i : Fin n => ⟨hSu i.castSucc, hSu i.succ⟩) p,
     prod_transitionCount v (fun i : Fin n => ⟨hSv i.castSucc, hSv i.succ⟩) p]
   exact prod_congr rfl fun ab _ => by rw [h ab.1 ab.2]

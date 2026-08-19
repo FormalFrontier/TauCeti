@@ -158,7 +158,7 @@ theorem markovExchangeable_of_prefixLaw_singleton_eq [Countable α] [MeasurableS
     MarkovExchangeable μ X := by
   refine MarkovExchangeable.intro hX ?_
   intro n u v h0 hcount
-  rw [h n u, h n v, h0, prod_transitionCount_congr hcount p]
+  rw [h n u, h n v, h0, prod_eq_of_transitionCount_eq hcount p]
 
 /-- **The process-level and path-law formulations of Markov exchangeability agree.** -/
 theorem markovExchangeable_pathLaw_iff [Countable α] [MeasurableSingletonClass α]
