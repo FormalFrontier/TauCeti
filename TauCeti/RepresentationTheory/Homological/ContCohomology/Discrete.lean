@@ -54,7 +54,7 @@ theorem exists_openNormalSubgroup_smul_eq_self (m : M) :
 
 /-- A finite set in a discrete continuous module over a profinite group is fixed pointwise by a
 single open normal subgroup. -/
-theorem Set.Finite.exists_openNormalSubgroup_smul_eq_self {s : Set M} (hs : s.Finite) :
+theorem _root_.Set.Finite.exists_openNormalSubgroup_smul_eq_self {s : Set M} (hs : s.Finite) :
     ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, ∀ m ∈ s, u • m = m := by
   let V : Set G := ⋂ m ∈ s, (MulAction.stabilizer G m : Set G)
   have hOpen : IsOpen V :=
