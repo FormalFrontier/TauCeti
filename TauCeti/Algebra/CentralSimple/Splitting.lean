@@ -20,6 +20,7 @@ public import TauCeti.Algebra.Matrix.BaseChange
 -- the fundamental theorem of algebra (`Complex.isAlgClosed`, the one heavy import here) of the
 -- worked examples are all used only inside proofs, so downstream importers do not pay for them.
 import Mathlib.Analysis.Complex.Polynomial.Basic
+import Mathlib.Data.Matrix.Composition
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import TauCeti.Algebra.CentralSimple.Wedderburn
 import TauCeti.Algebra.Central.Quaternion
@@ -56,6 +57,8 @@ an arbitrary `K`-algebra, where the degree is not yet meaningful.
   observation `TauCeti.Algebra.isSplittingField_matrix` that a full matrix algebra over `K` is
   split by every extension (by the base change `TauCeti.Algebra.matrixBaseChangeAlgEquiv` of
   `TauCeti/Algebra/Matrix/BaseChange.lean`).
+* `TauCeti.Algebra.IsSplittingField.matrix`: a splitting field for `A` also splits every full
+  matrix algebra over `A`.
 * `TauCeti.Algebra.isSplittingField_self_iff`: `A` is split by its own base field exactly when it
   *is* a matrix algebra over it. This is the statement that "split" means what it should.
 * `TauCeti.Algebra.finrank_eq_sq_of_algEquiv_matrix` and
@@ -143,6 +146,19 @@ theorem isSplittingField_congr {B : Type*} [Ring B] [Algebra K B] (e : A ≃ₐ[
 `TauCeti.Algebra.matrixBaseChangeAlgEquiv`. In particular it is split by `K` itself. -/
 theorem isSplittingField_matrix (n : ℕ) : IsSplittingField K (Matrix (Fin n) (Fin n) K) L :=
   (isSplittingField_iff K _ L).2 ⟨n, ⟨matrixBaseChangeAlgEquiv K L (Fin n)⟩⟩
+
+/-- If `L` splits a `K`-algebra `A`, then it also splits every full matrix algebra over `A`.
+
+After base change, the given splitting identifies each matrix entry with an `m × m` matrix over
+`L`; composing the two matrix indices gives an `(n * m) × (n * m)` matrix over `L`. -/
+theorem IsSplittingField.matrix (h : IsSplittingField K A L) (n : ℕ) :
+    IsSplittingField K (Matrix (Fin n) (Fin n) A) L := by
+  obtain ⟨m, ⟨e⟩⟩ := h
+  refine (isSplittingField_iff K _ L).2 ⟨n * m, ⟨?_⟩⟩
+  exact (matrixCoeffBaseChangeAlgEquiv K L (Fin n) A).trans <|
+    (e.mapMatrix (m := Fin n)).trans <|
+      (Matrix.compAlgEquiv (Fin n) (Fin m) L L).trans <|
+        Matrix.reindexAlgEquiv L L finProdFinEquiv
 
 /-- **`A` is split by its own base field exactly when it is a matrix algebra over it.** This is the
 sanity check on the definition: over `L = K` the scalar extension does nothing, so "split" is
