@@ -30,8 +30,8 @@ scalar laws, which is exactly what a consumer needs in order to package them as
 The absolutely continuous families are all `volume.withDensity` of their density, so they are
 handled once and for all by Mathlib's `MeasureTheory.measurable_withDensity`: it is enough
 to know that the density is measurable **jointly** in the parameters and the point. That is the
-content of the `..._uncurry` lemmas below, and it is a genuinely stronger statement than the
-per-parameter measurability Mathlib already provides -- `Real.Gamma` and
+content of the `measurable_uncurry_...` lemmas below, and it is a genuinely stronger statement than
+the per-parameter measurability Mathlib already provides -- `Real.Gamma` and
 `ProbabilityTheory.beta` now vary too, which is why `Real.measurable_Gamma` is needed.
 
 The discrete families are weighted sums of Dirac measures, and are handled by the shared
@@ -98,7 +98,7 @@ and its analogues fix the parameters and are therefore too weak. -/
 
 /-- The Gamma density is measurable jointly in its shape, its rate and the point. -/
 @[fun_prop]
-theorem measurable_gammaPDF_uncurry :
+theorem measurable_uncurry_gammaPDF :
     Measurable fun q : (ℝ × ℝ) × ℝ => gammaPDF q.1.1 q.1.2 q.2 := by
   simp only [gammaPDF, gammaPDFReal]
   exact (Measurable.ite (measurableSet_le measurable_const measurable_snd)
@@ -106,7 +106,7 @@ theorem measurable_gammaPDF_uncurry :
 
 /-- The Beta density is measurable jointly in its two shapes and the point. -/
 @[fun_prop]
-theorem measurable_betaPDF_uncurry :
+theorem measurable_uncurry_betaPDF :
     Measurable fun q : (ℝ × ℝ) × ℝ => betaPDF q.1.1 q.1.2 q.2 := by
   simp only [betaPDF, betaPDFReal]
   refine (Measurable.ite ?_ (by fun_prop) measurable_const).ennreal_ofReal
@@ -115,7 +115,7 @@ theorem measurable_betaPDF_uncurry :
 
 /-- The Pareto density is measurable jointly in its threshold, its shape and the point. -/
 @[fun_prop]
-theorem measurable_paretoPDF_uncurry :
+theorem measurable_uncurry_paretoPDF :
     Measurable fun q : (ℝ × ℝ) × ℝ => paretoPDF q.1.1 q.1.2 q.2 := by
   simp only [paretoPDF, paretoPDFReal]
   exact (Measurable.ite (measurableSet_le measurable_fst.fst measurable_snd)
@@ -126,14 +126,14 @@ theorem measurable_paretoPDF_uncurry :
 At `v = 0` the formula returns `0`, which is the junk value of `gaussianPDF`; the measure
 `gaussianReal μ 0` is a Dirac measure and is handled separately in `measurable_gaussianReal`. -/
 @[fun_prop]
-theorem measurable_gaussianPDF_uncurry :
+theorem measurable_uncurry_gaussianPDF :
     Measurable fun q : (ℝ × ℝ≥0) × ℝ => gaussianPDF q.1.1 q.1.2 q.2 := by
   simp only [gaussianPDF, gaussianPDFReal]
   fun_prop
 
 /-- The Cauchy density is measurable jointly in its location, its scale and the point. -/
 @[fun_prop]
-theorem measurable_cauchyPDF_uncurry :
+theorem measurable_uncurry_cauchyPDF :
     Measurable fun q : (ℝ × ℝ≥0) × ℝ => cauchyPDF q.1.1 q.1.2 q.2 := by
   simp only [cauchyPDF, cauchyPDFReal]
   fun_prop
@@ -143,7 +143,7 @@ theorem measurable_cauchyPDF_uncurry :
 /-- **The Gamma family is measurable in its parameters.** -/
 @[fun_prop]
 theorem measurable_gammaMeasure : Measurable fun p : ℝ × ℝ => gammaMeasure p.1 p.2 :=
-  measurable_withDensity (μ := volume) measurable_gammaPDF_uncurry
+  measurable_withDensity (μ := volume) measurable_uncurry_gammaPDF
 
 /-- **The exponential family is measurable in its rate.**
 
@@ -159,12 +159,12 @@ theorem measurable_expMeasure : Measurable fun r : ℝ => expMeasure r := by
 /-- **The Beta family is measurable in its parameters.** -/
 @[fun_prop]
 theorem measurable_betaMeasure : Measurable fun p : ℝ × ℝ => betaMeasure p.1 p.2 :=
-  measurable_withDensity (μ := volume) measurable_betaPDF_uncurry
+  measurable_withDensity (μ := volume) measurable_uncurry_betaPDF
 
 /-- **The Pareto family is measurable in its parameters.** -/
 @[fun_prop]
 theorem measurable_paretoMeasure : Measurable fun p : ℝ × ℝ => paretoMeasure p.1 p.2 :=
-  measurable_withDensity (μ := volume) measurable_paretoPDF_uncurry
+  measurable_withDensity (μ := volume) measurable_uncurry_paretoPDF
 
 /-- **The real Gaussian family is measurable in its mean and variance.**
 
@@ -174,7 +174,7 @@ along the measurable set `{p | p.2 = 0}` and uses `MeasureTheory.Measure.measura
 theorem measurable_gaussianReal : Measurable fun p : ℝ × ℝ≥0 => gaussianReal p.1 p.2 := by
   simp only [gaussianReal]
   refine Measurable.ite ?_ (Measure.measurable_dirac.comp measurable_fst)
-    (measurable_withDensity (μ := volume) measurable_gaussianPDF_uncurry)
+    (measurable_withDensity (μ := volume) measurable_uncurry_gaussianPDF)
   exact measurable_snd (measurableSet_singleton 0)
 
 /-- **The Cauchy family is measurable in its location and scale.**
@@ -184,7 +184,7 @@ As for the Gaussian, the zero-scale fibre is a Dirac measure and is split off. -
 theorem measurable_cauchyMeasure : Measurable fun p : ℝ × ℝ≥0 => cauchyMeasure p.1 p.2 := by
   simp only [cauchyMeasure]
   refine Measurable.ite ?_ (Measure.measurable_dirac.comp measurable_fst)
-    (measurable_withDensity (μ := volume) measurable_cauchyPDF_uncurry)
+    (measurable_withDensity (μ := volume) measurable_uncurry_cauchyPDF)
   exact measurable_snd (measurableSet_singleton 0)
 
 /-! ### The discrete families -/
