@@ -10,7 +10,7 @@ public import TauCeti.Algebra.Lie.Sl2.WeylAutomorphism
 public section
 
 /-!
-# The scaled Weyl elements and the coroot torus of an `sl₂` triple
+# The scaled Weyl elements and their Weyl ratios
 
 Let `t : IsSl2Triple H E F` be an `sl₂` triple in an associative algebra `A`, with `E` and `F`
 nilpotent, and let `A` also be an algebra over a commutative ring `R`. For a unit `c` of `R` the
@@ -28,22 +28,23 @@ Chevalley's `n_α(c) = x_α(c) x_{-α}(-c⁻¹) x_α(c)`. Their ratios
 h (c) = n (c) · n (1)⁻¹
 ```
 
-are Chevalley's `h_α(c) = n_α(c) n_α(1)⁻¹`, the value at `c` of the coroot cocharacter
-`α^∨ : 𝔾ₘ → G`. This file constructs both families and proves the relations that pin them against
-the triple.
+are the elements denoted `h_α(c) = n_α(c) n_α(1)⁻¹` in Chevalley's construction. This file
+constructs both parameterized families and proves their conjugation relations against the triple.
+It does not prove that `c ↦ h_α(c)` is multiplicative, so it does not package this family as a
+cocharacter.
 
 The scaled Weyl element inverts the Cartan element and interchanges the two nilpotent elements with
 a scale, `n (c) E n (c)⁻¹ = -(c⁻²) • F` and `n (c) F n (c)⁻¹ = -(c²) • E`, while its effect on an
 element on which `E` and `F` have opposite eigenvalues — a Cartan element, in the intended
 application — is the coreflection `y ↦ y - q • H`, *independently of* `c`. That independence is what
-makes `h (c)` centralise the whole Cartan subalgebra while acting on the two root vectors by the
-value of the root on the coroot,
+makes `h (c)` centralise the whole Cartan subalgebra while acting on the two root vectors with the
+expected exponents,
 
 ```text
 h (c) E h (c)⁻¹ = c² • E,     h (c) F h (c)⁻¹ = c⁻² • F,
 ```
 
-which is `α(α^∨(c)) = c^⟨α, α^∨⟩ = c²`. On the root subgroups themselves the same relations read
+On the root subgroups themselves the same relations read
 `h (c) x_α(u) h (c)⁻¹ = x_α(c² u)` and `n (c) x_α(u) n (c)⁻¹ = x_{-α}(-c⁻² u)`, and conjugation
 carries one scaled Weyl element to another, `h (c) n (u) h (c)⁻¹ = n (c² u)`.
 
@@ -55,7 +56,7 @@ by factorials.
 ## Main definitions
 
 * `TauCeti.weylUnitSMul`: the scaled Weyl element `n (c)`.
-* `TauCeti.corootUnit`: the coroot torus element `h (c) = n (c) n (1)⁻¹`.
+* `TauCeti.corootUnit`: the family of Weyl ratios `h (c) = n (c) n (1)⁻¹`.
 
 ## Main results
 
@@ -63,20 +64,20 @@ by factorials.
   conjugate.
 * `TauCeti.isSl2Triple_smulUnits`: rescaling an `sl₂` triple by a unit of the base ring.
 * `TauCeti.weylUnitSMul_one` and `TauCeti.corootUnit_one`: at scale one the scaled Weyl element is
-  the Weyl element and the coroot torus element is trivial.
+  the Weyl element and its ratio is trivial.
 * `TauCeti.weylUnitSMul_eq_corootUnit_mul`: the normal form `n_α(c) = h_α(c) n_α(1)`.
 * `TauCeti.weylUnitSMul_conj_h`, `TauCeti.weylUnitSMul_conj_e`, `TauCeti.weylUnitSMul_conj_f`:
   the scaled Weyl element negates the Cartan element and interchanges the two nilpotent elements
   with the scales `c⁻²` and `c²`.
 * `TauCeti.weylUnitSMul_conj_of_lie_eq_smul`: the coreflection formula, independent of the scale.
-* `TauCeti.corootUnit_conj_of_lie_eq_smul` and `TauCeti.corootUnit_conj_h`: the coroot torus
-  element centralises every element on which `E` and `F` have opposite eigenvalues.
+* `TauCeti.corootUnit_conj_of_lie_eq_smul` and `TauCeti.corootUnit_conj_h`: the Weyl ratio
+  centralises every element on which `E` and `F` have opposite eigenvalues.
 * `TauCeti.corootUnit_conj_e` and `TauCeti.corootUnit_conj_f`: it scales the two nilpotent elements
   by `c²` and `c⁻²`.
 * `TauCeti.corootUnit_conj_exp_smul`, `TauCeti.corootUnit_conj_exp_smul_neg` and
   `TauCeti.weylUnitSMul_conj_exp_smul`: the same relations read on the root subgroup elements.
 * `TauCeti.corootUnit_conj_weylUnitSMul`: conjugation by `h (c)` carries `n (u)` to `n (c² u)`.
-* `TauCeti.lie_corootUnit_conj`: the coroot torus element preserves the eigenspaces of the Cartan
+* `TauCeti.lie_corootUnit_conj`: the Weyl ratio preserves the eigenspaces of the Cartan
   element.
 
 ## References
@@ -85,9 +86,10 @@ by factorials.
 * R. Steinberg, *Lectures on Chevalley Groups*, §3.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §26.
 
-The coroot cocharacter and its relations against the root subgroups are part of the pinning data
-asked for by Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of the
-`CFSGStatement` roadmap.
+These Weyl-ratio relations are prerequisites for the coroot cocharacter and its relations against
+the root subgroups, which are part of the pinning data asked for by Layer 9 of
+`TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of the `CFSGStatement`
+roadmap.
 -/
 
 namespace TauCeti
@@ -270,28 +272,29 @@ theorem weylUnitSMul_conj_exp_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u : R) :
   rw [exp_units_conj _ (hE.smul u), mul_smul_comm, smul_mul_assoc,
     weylUnitSMul_conj_e hE hF ht c, smul_neg, smul_smul]
 
-/-! ## The coroot torus -/
+/-! ## Weyl ratios -/
 
-/-- **The coroot torus element at `c`**, the ratio `n (c) · n (1)⁻¹` of the scaled Weyl element by
-the Weyl element.
+/-- **The Weyl ratio at `c`**, the element `n (c) · n (1)⁻¹` obtained from the scaled Weyl element
+and the Weyl element.
 
 For the images of a Chevalley root pair in a representation this is Chevalley's
-`h_α(c) = n_α(c) n_α(1)⁻¹`, the value at `c` of the coroot cocharacter `α^∨ : 𝔾ₘ → G`. -/
+`h_α(c) = n_α(c) n_α(1)⁻¹`. No multiplicativity statement about this parameterized family is made
+here. -/
 noncomputable def corootUnit (hE : IsNilpotent E) (hF : IsNilpotent F) (c : Rˣ) : Aˣ :=
   weylUnitSMul hE hF c * (weylUnit hE hF)⁻¹
 
-/-- The coroot cocharacter is trivial at `1`. -/
+/-- The Weyl ratio at `1` is trivial. -/
 @[simp]
 theorem corootUnit_one : corootUnit (R := R) hE hF 1 = 1 := by
   rw [corootUnit, weylUnitSMul_one, mul_inv_cancel]
 
-/-- The scaled Weyl element factors as the coroot torus element times the Weyl element: the normal
+/-- The scaled Weyl element factors as its Weyl ratio times the Weyl element: the normal
 form `n_α(c) = h_α(c) n_α(1)`. -/
 theorem weylUnitSMul_eq_corootUnit_mul (c : Rˣ) :
     weylUnitSMul (R := R) hE hF c = corootUnit hE hF c * weylUnit hE hF := by
   rw [corootUnit, inv_mul_cancel_right]
 
-/-- Conjugation by the coroot torus element is conjugation by the Weyl element followed by
+/-- Conjugation by the Weyl ratio is conjugation by the Weyl element followed by
 conjugation by the scaled Weyl element. -/
 private theorem corootUnit_conj_eq (c : Rˣ) (x : A) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * x *
@@ -306,32 +309,29 @@ variable (ht : IsSl2Triple H E F)
 
 include ht
 
-/-- **The coroot torus element scales the raising element by `c²`**: the value at `α^∨(c)` of the
-root `α`, since `⟨α, α^∨⟩ = 2`. -/
+/-- **The Weyl ratio scales the raising element by `c²`.** -/
 theorem corootUnit_conj_e (c : Rˣ) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * E *
         (((corootUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) = (((c : Rˣ) : R) ^ 2) • E := by
   rw [corootUnit_conj_eq, inv_weylUnit_conj_e hE hF ht, mul_neg, neg_mul,
     weylUnitSMul_conj_f hE hF ht c, neg_neg]
 
-/-- **The coroot torus element scales the lowering element by `c⁻²`**: the value at `α^∨(c)` of the
-root `-α`. -/
+/-- **The Weyl ratio scales the lowering element by `c⁻²`.** -/
 theorem corootUnit_conj_f (c : Rˣ) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * F *
         (((corootUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) = (((c⁻¹ : Rˣ) : R) ^ 2) • F := by
   rw [corootUnit_conj_eq, inv_weylUnit_conj_f hE hF ht, mul_neg, neg_mul,
     weylUnitSMul_conj_e hE hF ht c, neg_neg]
 
-/-- **The coroot torus element centralises the Cartan element of the triple.** -/
+/-- **The Weyl ratio centralises the Cartan element of the triple.** -/
 theorem corootUnit_conj_h (c : Rˣ) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * H *
         (((corootUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) = H := by
   rw [corootUnit_conj_eq, inv_weylUnit_conj_h hE hF ht, mul_neg, neg_mul,
     weylUnitSMul_conj_h hE hF ht c, neg_neg]
 
-/-- **Conjugating a root subgroup element by the coroot torus element.** For a Chevalley root pair
-this is the pinning equation `h_α(c) x_α(u) h_α(c)⁻¹ = x_α(c² u)`: the torus acts on the parameter
-of the root subgroup through the root. -/
+/-- **Conjugating a root subgroup element by the Weyl ratio.** For a Chevalley root pair this is
+the relation `h_α(c) x_α(u) h_α(c)⁻¹ = x_α(c² u)`. -/
 theorem corootUnit_conj_exp_smul (c : Rˣ) (u : R) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (u • E) *
         (((corootUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -339,7 +339,7 @@ theorem corootUnit_conj_exp_smul (c : Rˣ) (u : R) :
   rw [exp_units_conj _ (hE.smul u), mul_smul_comm, smul_mul_assoc,
     corootUnit_conj_e hE hF ht c, smul_smul]
 
-/-- Conjugating the opposite root subgroup element by the coroot torus element. -/
+/-- Conjugating the opposite root subgroup element by the Weyl ratio. -/
 theorem corootUnit_conj_exp_smul_neg (c : Rˣ) (u : R) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (-(u • F)) *
         (((corootUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -347,7 +347,7 @@ theorem corootUnit_conj_exp_smul_neg (c : Rˣ) (u : R) :
   rw [exp_units_conj _ (hF.smul u).neg, mul_neg, neg_mul, mul_smul_comm, smul_mul_assoc,
     corootUnit_conj_f hE hF ht c, smul_smul]
 
-/-- **The coroot torus element rescales the scaled Weyl elements**: conjugation by `h_α(c)` carries
+/-- **The Weyl ratio rescales the scaled Weyl elements**: conjugation by `h_α(c)` carries
 `n_α(u)` to `n_α(c² u)`. -/
 theorem corootUnit_conj_weylUnitSMul (c u : Rˣ) :
     corootUnit (R := R) hE hF c * weylUnitSMul hE hF u * (corootUnit (R := R) hE hF c)⁻¹ =
@@ -365,9 +365,9 @@ theorem corootUnit_conj_weylUnitSMul (c u : Rˣ) :
     units_conj_mul, units_conj_mul, corootUnit_conj_exp_smul hE hF ht,
     corootUnit_conj_exp_smul_neg hE hF ht]
 
-/-- **The coroot torus element preserves the eigenspaces of the Cartan element.** It centralises
-`H`, so conjugation by it commutes with the adjoint action of `H`. For the triple of a root `α`
-this says that `α^∨(c)` normalises every root space. -/
+/-- **The Weyl ratio preserves the eigenspaces of the Cartan element.** It centralises
+`H`, so conjugation by it commutes with the adjoint action of `H`; for a root triple, this says
+that the ratio normalises every root space. -/
 theorem lie_corootUnit_conj {z : A} {m : ℚ} (hhz : ⁅H, z⁆ = m • z) (c : Rˣ) :
     ⁅H, ((corootUnit (R := R) hE hF c : Aˣ) : A) * z *
         (((corootUnit (R := R) hE hF c)⁻¹ : Aˣ) : A)⁆ =
@@ -397,8 +397,8 @@ the opposite eigenvalues `q` and `-q` is carried by conjugation with the scaled 
 `y - q • H`, whatever the scale `c`.
 
 For a Cartan element `y` of the triple of a root `α` this is the coreflection
-`y ↦ y - α(y) • α^∨`, and its independence of `c` is what makes `TauCeti.corootUnit` centralise
-the Cartan subalgebra. -/
+`y ↦ y - α(y) • α^∨`, and its independence of `c` is what makes the Weyl ratio
+`TauCeti.corootUnit` centralise the Cartan subalgebra. -/
 theorem weylUnitSMul_conj_of_lie_eq_smul {y : A} {q : ℚ}
     (hye : ⁅y, E⁆ = q • E) (hyf : ⁅y, F⁆ = -(q • F)) (c : Rˣ) :
     ((weylUnitSMul (R := R) hE hF c : Aˣ) : A) * y *
@@ -410,9 +410,8 @@ theorem weylUnitSMul_conj_of_lie_eq_smul {y : A} {q : ℚ}
   exact weylUnit_conj_of_lie_eq_smul (isSl2Triple_smulUnits ht c) (hE.smul (c : R))
     (hF.smul ((c⁻¹ : Rˣ) : R)) hye' hyf'
 
-/-- **The coroot torus element centralises every element on which `E` and `F` have opposite
-eigenvalues.** In the intended application these are the elements of the Cartan subalgebra, so the
-coroot cocharacter lands in the centraliser of the maximal torus. -/
+/-- **The Weyl ratio centralises every element on which `E` and `F` have opposite eigenvalues.**
+In the intended application these are the elements of the Cartan subalgebra. -/
 theorem corootUnit_conj_of_lie_eq_smul {y : A} {q : ℚ}
     (hye : ⁅y, E⁆ = q • E) (hyf : ⁅y, F⁆ = -(q • F)) (c : Rˣ) :
     ((corootUnit (R := R) hE hF c : Aˣ) : A) * y *
