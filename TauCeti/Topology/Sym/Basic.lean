@@ -124,8 +124,7 @@ theorem continuous_map {f : α → β} (hf : Continuous f) :
   rw [continuous_iff_comp_ofFn, map_comp_ofFn]
   exact continuous_ofFn.comp (Continuous.piMap fun _ => hf)
 
-/-- The symmetric power of an open map is open: the quotient map onto the symmetric power is open,
-and postcomposition by an open map is open on ordered tuples. -/
+/-- The symmetric power of an open map is open. -/
 theorem isOpenMap_map {f : α → β} (hf : IsOpenMap f) :
     IsOpenMap (Sym.map f : Sym α n → Sym β n) := by
   rw [isOpenQuotientMap_ofFn.isOpenMap_iff, map_comp_ofFn]

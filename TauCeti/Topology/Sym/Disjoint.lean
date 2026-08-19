@@ -65,9 +65,7 @@ theorem continuous_appendSubtype : Continuous (appendSubtype U V n m) := by
   exact continuous_append.comp
     ((continuous_map continuous_subtype_val).prodMap (continuous_map continuous_subtype_val))
 
-/-- Concatenating an unordered tuple of points of an open set `U` and one of points of an open set
-`V` is an open map: `Fin.append` is a homeomorphism on ordered tuples, and the quotient map onto a
-symmetric power is open. -/
+/-- For open sets `U` and `V`, concatenating their symmetric-power points is an open map. -/
 theorem isOpenMap_appendSubtype (hU : IsOpen U) (hV : IsOpen V) :
     IsOpenMap (appendSubtype U V n m) := by
   rw [appendSubtype_eq_append_map]
