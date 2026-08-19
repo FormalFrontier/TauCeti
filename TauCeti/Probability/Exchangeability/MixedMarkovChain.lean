@@ -12,8 +12,8 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 # Mixtures of Markov chains
 
 A process `X : ℕ → Ω → α` on a countable state space is a **mixture of Markov chains** when its
-finite-path `μ`-masses are averages of Markov-chain path masses: there is a random
-initial law `ν : Ω → ProbabilityMeasure α` and a random transition matrix
+finite-path `μ`-masses are integrals of Markov-chain path masses against `μ`: there is a measurable
+initial-law witness `ν : Ω → ProbabilityMeasure α` and a measurable transition-matrix witness
 `κ : Ω → α → ProbabilityMeasure α` with
 
 ```text
@@ -84,13 +84,13 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **A mixture of Markov chains** with a specified random initial law `ν` and random transition
-matrix `κ`: the `μ`-mass of a finite path is the `μ`-average of its Markov-chain path mass
-built from `ν ω` and `κ ω`. The countability and measurable-singleton conjuncts restrict this
-singleton-mass formulation to discrete state spaces, matching `MarkovExchangeable`, where it is
-non-vacuous and determines the finite path laws. Bundled alongside, as in `MarkovExchangeable`, are
-the regularity conjuncts the mixture identity is stated against: the process is coordinatewise a.e.
-measurable, and both witnesses are measurable (`ν`, and each row `ω ↦ κ ω a`). -/
+/-- **A mixture of Markov chains** with specified mixing witnesses `ν` and `κ`: the `μ`-mass of a
+finite path is the integral against `μ` of its Markov-chain path mass built from `ν ω` and `κ ω`.
+The countability and measurable-singleton conjuncts restrict this singleton-mass formulation to
+discrete state spaces, matching `MarkovExchangeable`, where it is non-vacuous and determines the
+finite path laws. Bundled alongside, as in `MarkovExchangeable`, are the regularity conjuncts the
+mixture identity is stated against: the process is coordinatewise a.e. measurable, and both
+witnesses are measurable (`ν`, and each row `ω ↦ κ ω a`). -/
 def MixedMarkovChainWith (μ : Measure Ω) (X : ℕ → Ω → α)
     (ν : Ω → ProbabilityMeasure α) (κ : Ω → α → ProbabilityMeasure α) : Prop :=
   Countable α ∧ MeasurableSingletonClass α ∧ (∀ i, AEMeasurable (X i) μ) ∧
@@ -131,21 +131,21 @@ theorem MixedMarkovChainWith.aemeasurable {μ : Measure Ω} {X : ℕ → Ω → 
     (h : MixedMarkovChainWith μ X ν κ) (i : ℕ) : AEMeasurable (X i) μ :=
   h.2.2.1 i
 
-/-- The random initial law of a mixture of Markov chains is measurable. -/
+/-- The initial-law witness of a mixture of Markov chains is measurable. -/
 @[grind →]
 theorem MixedMarkovChainWith.measurable_initialLaw {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} {κ : Ω → α → ProbabilityMeasure α}
     (h : MixedMarkovChainWith μ X ν κ) : Measurable ν :=
   h.2.2.2.1
 
-/-- Each row of the random transition matrix of a mixture of Markov chains is measurable. -/
+/-- Each row of the transition-matrix witness of a mixture of Markov chains is measurable. -/
 theorem MixedMarkovChainWith.measurable_transitionMatrix {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} {κ : Ω → α → ProbabilityMeasure α}
     (h : MixedMarkovChainWith μ X ν κ) (a : α) : Measurable fun ω => κ ω a :=
   h.2.2.2.2.1 a
 
-/-- The defining mixture identity: the `μ`-mass of a finite path is the `μ`-average of its
-Markov-chain path masses. -/
+/-- The defining mixture identity: the `μ`-mass of a finite path is the integral of its
+Markov-chain path masses against `μ`. -/
 @[grind =>]
 theorem MixedMarkovChainWith.prefixLaw_singleton_eq_lintegral {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} {κ : Ω → α → ProbabilityMeasure α}
@@ -170,8 +170,8 @@ theorem mixedMarkovChainWith_iff [Countable α] [MeasurableSingletonClass α]
       h.prefixLaw_singleton_eq_lintegral⟩,
     fun h => MixedMarkovChainWith.intro h.1 h.2.1 h.2.2.1 h.2.2.2⟩
 
-/-- **A mixture of Markov chains**: existence of a random initial law and a random transition
-matrix representing the finite path laws. -/
+/-- **A mixture of Markov chains**: existence of initial-law and transition-matrix witnesses
+representing the finite path laws by integration against `μ`. -/
 def MixedMarkovChain (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
   ∃ (ν : Ω → ProbabilityMeasure α) (κ : Ω → α → ProbabilityMeasure α),
     MixedMarkovChainWith μ X ν κ
@@ -182,7 +182,7 @@ theorem MixedMarkovChain.of_witnesses {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : MixedMarkovChainWith μ X ν κ) : MixedMarkovChain μ X :=
   ⟨ν, κ, h⟩
 
-/-- A mixture of Markov chains has a random initial law and a random transition matrix. -/
+/-- A mixture of Markov chains has initial-law and transition-matrix witnesses. -/
 theorem MixedMarkovChain.exists_witnesses {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : MixedMarkovChain μ X) :
     ∃ (ν : Ω → ProbabilityMeasure α) (κ : Ω → α → ProbabilityMeasure α),
@@ -234,8 +234,8 @@ theorem MixedMarkovChainWith.prefixLaw_singleton_eq_lintegral_prod_pow {μ : Mea
 /-- **A mixture of Markov chains is Markov exchangeable.** This is the easy direction of the
 Diaconis–Freedman representation theorem. Two paths with a common start and common transition
 counts have equal Markov-chain probabilities for *every* value of the mixing variable, because a
-product of transition weights depends on the path only through its transition counts; averaging
-preserves the equality. -/
+product of transition weights depends on the path only through its transition counts; integration
+against `μ` preserves the equality. -/
 theorem MixedMarkovChainWith.markovExchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
     {ν : Ω → ProbabilityMeasure α} {κ : Ω → α → ProbabilityMeasure α}
     (h : MixedMarkovChainWith μ X ν κ) : MarkovExchangeable μ X := by
@@ -255,7 +255,7 @@ theorem MixedMarkovChain.markovExchangeable {μ : Measure Ω} {X : ℕ → Ω �
 
 /-- **A Markov chain is the degenerate mixture of Markov chains.** The hypothesis is the defining
 product form of the finite-dimensional laws of a Markov chain with initial law `p₀` and transition
-matrix `p`; the witnesses are the constant random objects. -/
+matrix `p`; the mixing witnesses are constant. -/
 theorem mixedMarkovChainWith_const_of_prefixLaw_singleton_eq
     [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
