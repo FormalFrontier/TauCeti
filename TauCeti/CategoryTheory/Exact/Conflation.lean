@@ -323,30 +323,60 @@ theorem mapCompιIso_inv_app [F.Additive] (hF : E.IsConflationExact E' F)
       (𝟙 (F.mapShortComplex.obj S.obj)) := by
   exact heq_of_eq rfl
 
-/-- Mapping conflations by the identity functor gives the identity functor. -/
-theorem map_id : map (ExactStructure.IsConflationExact.id (E := E)) =
-    Functor.id E.ConflationCategory :=
-  CategoryTheory.Functor.hext (fun _ ↦ rfl) (fun _ _ _ ↦ by rfl)
-
 /-- The functor on conflations induced by the identity functor is naturally isomorphic to the
 identity functor. -/
 def mapIdIso : map (ExactStructure.IsConflationExact.id (E := E)) ≅
     Functor.id E.ConflationCategory :=
-  eqToIso map_id
+  NatIso.ofComponents (fun S ↦ ObjectProperty.isoMk _ (Iso.refl S.obj)) (by
+      intro S T a
+      apply ObjectProperty.hom_ext
+      apply ShortComplex.hom_ext <;>
+        simp [map, ObjectProperty.lift, ObjectProperty.isoMk, ObjectProperty.homMk,
+          Functor.mapShortComplex])
 
-/-- Mapping conflations by a composite is the same functor as mapping successively. -/
-theorem map_comp {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
-    [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
-    (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H) :
-    map (hF.comp hH) = map hF ⋙ map hH :=
-  CategoryTheory.Functor.hext (fun _ ↦ rfl) (fun _ _ _ ↦ by rfl)
+/-- The forward component of `mapIdIso` is the identity on the underlying short complex. -/
+@[simp]
+theorem mapIdIso_hom_app_hom (S : E.ConflationCategory) :
+    HEq ((mapIdIso (E := E)).hom.app S).hom (𝟙 S.obj) := by
+  exact heq_of_eq rfl
+
+/-- The inverse component of `mapIdIso` is the identity on the underlying short complex. -/
+@[simp]
+theorem mapIdIso_inv_app_hom (S : E.ConflationCategory) :
+    HEq ((mapIdIso (E := E)).inv.app S).hom (𝟙 S.obj) := by
+  exact heq_of_eq rfl
 
 /-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
 def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
     : map (hF.comp hH) ≅ map hF ⋙ map hH :=
-  eqToIso (map_comp hF hH)
+  NatIso.ofComponents (fun S ↦ ObjectProperty.isoMk _ (Iso.refl ((S.obj.map F).map H))) (by
+      intro S T a
+      apply ObjectProperty.hom_ext
+      apply ShortComplex.hom_ext <;>
+        simp [map, ObjectProperty.lift, ObjectProperty.isoMk, ObjectProperty.homMk,
+          Functor.mapShortComplex] <;> rfl)
+
+/-- The forward component of `mapCompIso` is the identity on the successively mapped underlying
+short complex. -/
+@[simp]
+theorem mapCompIso_hom_app_hom {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
+    [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
+    (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
+    (S : E.ConflationCategory) : HEq ((mapCompIso hF hH).hom.app S).hom
+      (𝟙 ((S.obj.map F).map H)) := by
+  exact heq_of_eq rfl
+
+/-- The inverse component of `mapCompIso` is the identity on the successively mapped underlying
+short complex. -/
+@[simp]
+theorem mapCompIso_inv_app_hom {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
+    [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
+    (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
+    (S : E.ConflationCategory) : HEq ((mapCompIso hF hH).inv.app S).hom
+      (𝟙 ((S.obj.map F).map H)) := by
+  exact heq_of_eq rfl
 
 /-- A natural isomorphism between conflation-exact functors induces a natural isomorphism between
 their functors on conflations. -/
