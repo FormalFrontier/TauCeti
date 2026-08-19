@@ -53,9 +53,9 @@ families; the Gaussian and Cauchy `ℝ≥0∞` versions already exist and are re
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 1 — connecting Mathlib's
-  continuous families to `HasPDF`, identifying `pdf X P`, and identifying the Radon–Nikodym
-  derivatives. Item 4 (parameter measurability) is
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, items 1 and 2 — item 1
+  connects Mathlib's continuous families to `HasPDF` and identifies `pdf X P`; item 2 identifies
+  the Radon–Nikodym derivatives. Item 4 (parameter measurability) is
   `TauCeti/Probability/Distributions/Measurability.lean`.
 -/
 
@@ -217,8 +217,8 @@ by definition. -/
 theorem rnDeriv_expMeasure (r : ℝ) :
     (expMeasure r).rnDeriv volume =ᵐ[volume] exponentialPDF r := by
   have h : (expMeasure r).rnDeriv volume =ᵐ[volume] gammaPDF 1 r := by
-    unfold expMeasure gammaMeasure
-    exact Measure.rnDeriv_withDensity volume (measurable_gammaPDF 1 r)
+    unfold expMeasure
+    exact rnDeriv_gammaMeasure 1 r
   unfold exponentialPDF exponentialPDFReal
   exact h
 
@@ -227,11 +227,6 @@ theorem rnDeriv_paretoMeasure (t r : ℝ) :
     (paretoMeasure t r).rnDeriv volume =ᵐ[volume] paretoPDF t r := by
   unfold paretoMeasure
   exact Measure.rnDeriv_withDensity volume (measurable_paretoPDF t r)
-
-/-- At zero scale the Cauchy density vanishes identically. -/
-theorem cauchyPDF_zero_scale (x₀ : ℝ) : cauchyPDF x₀ 0 = 0 := by
-  funext x
-  simp [cauchyPDF, cauchyPDFReal]
 
 /-- The Radon–Nikodym derivative of a Cauchy law is `cauchyPDF`, at **every** scale.
 
@@ -242,8 +237,7 @@ theorem rnDeriv_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) :
     (cauchyMeasure x₀ γ).rnDeriv volume =ᵐ[volume] cauchyPDF x₀ γ := by
   by_cases hγ : γ = 0
   · subst hγ
-    rw [show cauchyMeasure x₀ 0 = Measure.dirac x₀ from by simp [cauchyMeasure],
-      cauchyPDF_zero_scale]
+    rw [cauchyMeasure_zero_scale, cauchyPDF_scale_zero]
     exact Measure.rnDeriv_eq_zero_of_mutuallySingular (mutuallySingular_dirac x₀ volume)
       Measure.AbsolutelyContinuous.rfl
   · rw [cauchyMeasure_of_scale_ne_zero _ hγ]
@@ -252,7 +246,7 @@ theorem rnDeriv_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) :
 /-- **The singular boundary**, as a specialization: at zero scale the derivative vanishes a.e. -/
 theorem rnDeriv_cauchyMeasure_zero (x₀ : ℝ) :
     (cauchyMeasure x₀ 0).rnDeriv volume =ᵐ[volume] 0 := by
-  simpa [cauchyPDF_zero_scale] using rnDeriv_cauchyMeasure x₀ 0
+  simpa using rnDeriv_cauchyMeasure x₀ 0
 
 end Probability
 
