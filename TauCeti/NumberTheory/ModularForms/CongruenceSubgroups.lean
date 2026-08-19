@@ -256,17 +256,11 @@ theorem neg_one_mem_Gamma1_iff : (-1 : SL(2, ℤ)) ∈ Gamma1 N ↔ N ∣ 2 := b
     norm_num
   simp [Gamma1_mem, h]
 
-/-- The entries of a power of the translation matrix `T = !![1, 1; 0, 1]`, as an identity of
-matrix entries rather than of matrices — the form `Gamma1_mem` consumes. -/
-private lemma coe_T_zpow_apply (n : ℤ) (i j : Fin 2) :
-    (ModularGroup.T ^ n : SL(2, ℤ)) i j = (!![1, n; 0, 1] : Matrix (Fin 2) (Fin 2) ℤ) i j :=
-  congrFun (congrFun (ModularGroup.coe_T_zpow n) i) j
-
 /-- **Every power of the translation matrix lies in `Γ₁(N)`, at every level.** `Tⁿ` has diagonal
 `(1, 1)` and vanishing lower-left entry, so the three congruences of `Gamma1_mem` hold with no
 condition on `n` or `N`. (In particular the width of the cusp `∞` for `Γ₁(N)` is `1`.) -/
 theorem T_zpow_mem_Gamma1 (N : ℕ) (n : ℤ) : ModularGroup.T ^ n ∈ Gamma1 N := by
-  simp [Gamma1_mem, coe_T_zpow_apply]
+  simp [Gamma1_mem, ModularGroup.coe_T_zpow]
 
 /-! ## The index of `Γ₀(pᵏ)`
 

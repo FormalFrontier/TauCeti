@@ -106,6 +106,7 @@ theorem heckeSlashSum_diagCosetGamma1 (hpN : p ∣ N) {F : Type*} [FunLike F ℍ
 /-- **The normalisation lemma on `M_k(Γ₁(N))`.** For `p ∣ N` the Hecke operator of the double
 coset `Γ₁(N) · diag(1, p) · Γ₁(N)` is the classical operator of `UpperTri/ModularForm.lean` —
 the operator modern papers write `Uₚ`. -/
+@[simp]
 theorem heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
     heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) =
       heckeSlashUpperTriModularFormEnd k hpN :=
@@ -114,6 +115,7 @@ theorem heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
       heckeSlashSum_diagCosetGamma1 k hpN f]
 
 /-- **The normalisation lemma on `S_k(Γ₁(N))`.** -/
+@[simp]
 theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
     heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) = heckeSlashUpperTriCuspFormEnd k hpN :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
@@ -122,6 +124,7 @@ theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
 
 /-- **The `q`-expansion recurrence for the double-coset operator**: at `p ∣ N` its coefficient at
 `m` is the coefficient of the original form at `p m`. -/
+@[simp]
 theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
     (qExpansion 1 (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f)).coeff m
@@ -130,6 +133,7 @@ theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p
     qExpansion_coeff_heckeSlashUpperTriModularFormEnd]
 
 /-- **The `q`-expansion recurrence for the double-coset operator on cusp forms.** -/
+@[simp]
 theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
     (qExpansion 1 (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f)).coeff m
