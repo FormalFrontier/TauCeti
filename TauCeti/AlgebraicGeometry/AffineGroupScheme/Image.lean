@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
+public import TauCeti.AlgebraicGeometry.SchemeTheoreticImage
 
 /-!
 # Scheme-theoretic images of affine group morphisms
@@ -56,33 +57,6 @@ namespace TauCeti
 open AlgebraicGeometry
 
 universe u
-
-variable {R S : CommRingCat.{u}}
-
-/-- The ideal defining the scheme-theoretic image of a spectrum map is the kernel of the
-corresponding ring homomorphism. -/
-@[simp]
-theorem specTargetImageIdeal_specMap (f : R ⟶ S) :
-    specTargetImageIdeal (Spec.map f) = RingHom.ker f.hom := by
-  rw [specTargetImageIdeal]
-  rw [Adjunction.homEquiv_symm_apply]
-  -- The image ideal is phrased through the `Γ ⊣ Spec` adjunction. Normalize its recovered
-  -- coordinate map to the explicit global-sections map before using naturality of `ΓSpecIso`.
-  change RingHom.ker (((Scheme.ΓSpecIso R).inv ≫ (Spec.map f).appTop).hom) = _
-  rw [← Scheme.ΓSpecIso_inv_naturality]
-  ext x
-  rw [RingHom.mem_ker, RingHom.mem_ker]
-  change (Scheme.ΓSpecIso S).inv.hom (f.hom x) = 0 ↔ f.hom x = 0
-  constructor
-  · intro hx
-    calc
-      f.hom x = (Scheme.ΓSpecIso S).hom.hom
-          ((Scheme.ΓSpecIso S).inv.hom (f.hom x)) :=
-        (Iso.inv_hom_id_apply (Scheme.ΓSpecIso S) (f.hom x)).symm
-      _ = (Scheme.ΓSpecIso S).hom.hom 0 := congrArg _ hx
-      _ = 0 := map_zero _
-  · intro hx
-    rw [hx, map_zero]
 
 namespace CommHopfAlgCat
 
