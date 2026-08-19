@@ -153,17 +153,8 @@ noncomputable def
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
-  Functor.isoWhiskerRight
-      (Equivalence.congrFullSubcategoryFunctorCompιIso
-        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
-        (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
-        (reductiveAffineGroupSchemeProperty_inverseImage k))
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
-        (affineGroupSchemeProperty (CommRingCat.of k)).ι) ≪≫
-    Functor.associator _ _ _ ≪≫
-    Functor.isoWhiskerLeft
-      (forget₂ (ReductiveCommHopfAlgCat.{u} k)
-        (FiniteTypeCommHopfAlgCat.{u, u} k)).op
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k)
+  congrFullSubcategoryFunctorCompHopfSpecIso k
+    (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
+    (reductiveAffineGroupSchemeProperty_inverseImage k)
 
 end TauCeti

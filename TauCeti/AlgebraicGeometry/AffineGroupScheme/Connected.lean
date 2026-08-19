@@ -32,8 +32,8 @@ predicate across the finite-type Hopf-algebra/affine-group-scheme anti-equivalen
 * J. S. Milne, *Algebraic Groups* (2017), §2.a.
 
 This is the geometric-connectedness prerequisite for Layer 3, "Identity component and component
-group", and its transport supports the reductive and unipotent scheme predicates in Layer 6 of
-the ReductiveGroups roadmap.
+group", and its transport supports the reductive scheme predicate in Layer 6 of the
+ReductiveGroups roadmap.
 -/
 
 public section

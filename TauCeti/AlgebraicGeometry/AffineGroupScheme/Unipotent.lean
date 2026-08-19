@@ -124,24 +124,6 @@ noncomputable def
     (smoothUnipotentCommHopfAlgProperty k) (smoothUnipotentAffineGroupSchemeProperty k)
     (smoothUnipotentAffineGroupSchemeProperty_inverseImage k)
 
-/-- The forward smooth-unipotent anti-equivalence followed by the inclusions into finite-type
-affine group schemes is the finite-type anti-equivalence after forgetting smooth unipotence.
-
-This private isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and
-`congrFullSubcategory` from the public `Spec` compatibility isomorphism below. -/
-private noncomputable def
-    smoothUnipotentCommHopfAlgCatOpEquivSmoothUnipotentAffineGroupSchemeCatFunctorCompιIso
-    (k : Type u) [Field k] :
-    (smoothUnipotentCommHopfAlgCatOpEquivSmoothUnipotentAffineGroupSchemeCat k).functor ⋙
-        (smoothUnipotentAffineGroupSchemeProperty k).ι ≅
-      (forget₂ (SmoothUnipotentCommHopfAlgCat.{u, u} k)
-          (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
-        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  Equivalence.congrFullSubcategoryFunctorCompιIso
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
-    (smoothUnipotentCommHopfAlgProperty k) (smoothUnipotentAffineGroupSchemeProperty k)
-    (smoothUnipotentAffineGroupSchemeProperty_inverseImage k)
-
 /-- The forward smooth-unipotent anti-equivalence, followed by the inclusions into finite-type
 affine group schemes and affine group schemes, is Mathlib's `hopfSpec` after forgetting the
 smooth-unipotent and finite-type proofs. This is the computation interface for the restricted
@@ -157,14 +139,8 @@ noncomputable def
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
-  Functor.isoWhiskerRight
-      (smoothUnipotentCommHopfAlgCatOpEquivSmoothUnipotentAffineGroupSchemeCatFunctorCompιIso k)
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
-        (affineGroupSchemeProperty (CommRingCat.of k)).ι) ≪≫
-    Functor.associator _ _ _ ≪≫
-    Functor.isoWhiskerLeft
-      (forget₂ (SmoothUnipotentCommHopfAlgCat.{u, u} k)
-        (FiniteTypeCommHopfAlgCat.{u, u} k)).op
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k)
+  congrFullSubcategoryFunctorCompHopfSpecIso k
+    (smoothUnipotentCommHopfAlgProperty k) (smoothUnipotentAffineGroupSchemeProperty k)
+    (smoothUnipotentAffineGroupSchemeProperty_inverseImage k)
 
 end TauCeti
