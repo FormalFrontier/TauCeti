@@ -21,13 +21,14 @@ The consequence this file is written for concerns statements of the shape
 ∀ (G : Type u) [Group G] [Finite G] [IsSimpleGroup G], ∃ i, Nonempty (G ≃* F i)
 ```
 
-for a family `F : ι → Type v` of groups: a list of groups that catches every finite simple group
-in one universe catches every finite simple group in every universe, so the proposition does not
-depend on the universe it quantifies over. The universe of the family plays no part in this and is
-left unrelated to both.
+for a family `F : ι → Type v` carrying multiplications: a family that catches every finite simple
+group in one universe catches every finite simple group in every universe, so the proposition does
+not depend on the universe it quantifies over. The universe of the family plays no part in this and
+is left unrelated to both.
 
 Nothing here is specific to any particular family, and no finiteness or simplicity is asserted of
-the members of `F`; the family is arbitrary data.
+the members of `F`, which carry only the multiplication that `≃*` needs; the family is arbitrary
+data.
 
 ## Main results
 
@@ -42,8 +43,8 @@ Milestone A0 of `TauCetiRoadmap/CFSGStatement/README.md` asks for `classificatio
 that `ClassificationStatement.{0}` implies `ClassificationStatement.{u}`, and prescribes the proof
 used here: "A finite `G : Type u` is equivalent to `Fin (Nat.card G)`, and its group and simplicity
 structure transport along that equivalence." The index family `CFSGIndex.Group` is not yet
-available, since it waits on milestone L3, so the transport is proved here for an arbitrary family
-of groups, which is all the argument uses; A0 obtains its named target by taking the family to be
+available, since it waits on milestone L3, so the transport is proved here for an arbitrary family,
+which is all the argument uses; A0 obtains its named target by taking the family to be
 `CFSGIndex.Group`.
 -/
 
@@ -55,9 +56,9 @@ universe u u₂ v w
 
 section Descent
 
-variable {ι : Sort w} {F : ι → Type v} [∀ i, Group (F i)]
+variable {ι : Sort w} {F : ι → Type v} [∀ i, Mul (F i)]
 
-/-- **Universe descent.** A family of groups that catches every finite group in `Type u₂`, up to
+/-- **Universe descent.** A family that catches every finite group in `Type u₂`, up to
 isomorphism, catches every finite group in `Type u`.
 
 The given group is replaced by a small model of it in `Type u₂`, to which the hypothesis applies. -/
@@ -70,8 +71,8 @@ theorem exists_mulEquiv_of_forall_finite
   obtain ⟨i, ⟨f⟩⟩ := h H
   exact ⟨i, ⟨e.trans f⟩⟩
 
-/-- **Universe descent for a classification statement.** A family of groups that catches every
-finite simple group in `Type u₂`, up to isomorphism, catches every finite simple group in `Type u`.
+/-- **Universe descent for a classification statement.** A family that catches every finite simple
+group in `Type u₂`, up to isomorphism, catches every finite simple group in `Type u`.
 
 This is not a consequence of `TauCeti.exists_mulEquiv_of_forall_finite`, whose hypothesis is about
 all finite groups and is therefore strictly stronger: simplicity has to be carried across the
@@ -86,7 +87,7 @@ theorem exists_mulEquiv_of_forall_finite_isSimpleGroup
   obtain ⟨i, ⟨f⟩⟩ := h H
   exact ⟨i, ⟨e.trans f⟩⟩
 
-/-- **Universe independence.** Whether a family of groups catches every finite simple group up to
+/-- **Universe independence.** Whether a family catches every finite simple group up to
 isomorphism does not depend on the universe the statement quantifies over.
 
 Both directions are `TauCeti.exists_mulEquiv_of_forall_finite_isSimpleGroup`, which relates two
