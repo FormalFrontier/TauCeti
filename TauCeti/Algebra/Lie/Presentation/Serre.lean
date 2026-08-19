@@ -439,6 +439,16 @@ theorem eq_serreLift {h : IsSerreSystem R CM H E F} {g : Matrix.ToLieAlgebra R C
   serre_hom_ext (fun i => by rw [hH, serreLift_serreH]) (fun i => by rw [hE, serreLift_serreE])
     fun i => by rw [hF, serreLift_serreF]
 
+/-- A Serre system whose raising and lowering families generate the ambient Lie algebra presents
+it: the homomorphism it determines is surjective. -/
+theorem serreLift_surjective (h : IsSerreSystem R CM H E F)
+    (hspan : LieSubalgebra.lieSpan R L (Set.range E ∪ Set.range F) = ⊤) :
+    Function.Surjective (serreLift h) := by
+  rw [← LieHom.range_eq_top, eq_top_iff, ← hspan, LieSubalgebra.lieSpan_le]
+  rintro _ (⟨i, rfl⟩ | ⟨i, rfl⟩)
+  · exact ⟨serreE R CM i, serreLift_serreE h i⟩
+  · exact ⟨serreF R CM i, serreLift_serreF h i⟩
+
 variable (R CM)
 
 /-- Lifting the generators of `Matrix.ToLieAlgebra R CM` along their own Serre system returns the

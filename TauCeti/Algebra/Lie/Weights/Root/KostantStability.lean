@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Weights.Root.IntegralLattice
-public import TauCeti.Algebra.Lie.Weights.ChevalleySystem
+public import TauCeti.Algebra.Lie.Weights.Chevalley.System
 
 /-!
 # The Chevalley lattice is stable under divided powers of the adjoint action
