@@ -123,14 +123,14 @@ theorem overlayDiff_swap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π
 /-- On a common carrier, the overlaid difference of `U` and `W` along the diagonal coupling pulls
 back along the diagonal `x ↦ (x, x)` to their plain difference as kernels.
 
-`diagonalCoupling μ` is the pushforward of `μ` along that same diagonal, and by
-`isCoupling_diagonalCoupling` it is one of the couplings the cross-carrier cut distance takes an
-infimum over. This identity computes the kernel it contributes; recognizing the resulting value as
-the same-carrier cut norm `‖U - W‖□` additionally needs the cut norm's change of variables along a
-pushforward, which is not part of this file. -/
+`TauCeti.Measure.diagonalCoupling μ` is the pushforward of `μ` along that same diagonal, and by
+`TauCeti.Measure.isCoupling_diagonalCoupling` it is one of the couplings the cross-carrier cut
+distance takes an infimum over. This identity computes the kernel it contributes; recognizing the
+resulting value as the same-carrier cut norm `‖U - W‖□` additionally needs the cut norm's change of
+variables along a pushforward, which is not part of this file. -/
 theorem comap_overlayDiff_diagonalCoupling {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] (U W : Graphon Ω μ) :
-    (overlayDiff U W (diagonalCoupling μ)).comap (fun x => (x, x))
+    (overlayDiff U W (TauCeti.Measure.diagonalCoupling μ)).comap (fun x => (x, x))
         (measurable_id'.prodMk measurable_id') μ = U.toSymmKernel - W.toSymmKernel := by
   ext x y
   simp
