@@ -107,22 +107,11 @@ theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLa
   ext p
   rfl
 
-/-- The carrier of an orthogonal sum is canonically the product of the carrier types.
-
-This is written directly so its computation rules are definitional for the `ℤ`-module instances
-inferred on integral-lattice carrier types. Reusing `Submodule.prodEquiv` introduces different
-instance terms and breaks, for example, the `rfl` proofs of `orthogonalSumCarrierEquiv_inl` and
-`orthogonalSumCarrierEquiv_inr` below. -/
+/-- The carrier of an orthogonal sum is canonically the product of the carrier types. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
-    L.orthogonalSum M ≃ₗ[ℤ] L × M where
-  toFun p :=
-    (⟨p.1.1, (Submodule.mem_prod.mp p.2).1⟩,
-      ⟨p.1.2, (Submodule.mem_prod.mp p.2).2⟩)
-  invFun p := ⟨(p.1, p.2), Submodule.mem_prod.mpr ⟨p.1.2, p.2.2⟩⟩
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
+    L.orthogonalSum M ≃ₗ[ℤ] L × M :=
+  (LinearEquiv.ofEq _ _ (L.orthogonalSum_carrier M)).trans
+    (Submodule.prodEquiv L.carrier M.carrier)
 
 /-- The canonical inclusion of the first carrier into an orthogonal sum. -/
 def orthogonalSumInl (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -167,42 +156,42 @@ def orthogonalSumSnd (L : IntegralLattice V) (M : IntegralLattice W) :
 @[simp]
 theorem orthogonalSumCarrierEquiv_inl (L : IntegralLattice V) (M : IntegralLattice W) (a : L) :
     orthogonalSumCarrierEquiv L M (orthogonalSumInl L M a) = (a, 0) := by
-  rfl
+  apply Prod.ext <;> apply Subtype.ext <;> simp [orthogonalSumCarrierEquiv]
 
 @[simp]
 theorem orthogonalSumCarrierEquiv_inr (L : IntegralLattice V) (M : IntegralLattice W) (b : M) :
     orthogonalSumCarrierEquiv L M (orthogonalSumInr L M b) = (0, b) := by
-  rfl
+  apply Prod.ext <;> apply Subtype.ext <;> simp [orthogonalSumCarrierEquiv]
 
 /-- The first projection of the first inclusion is the identity. -/
 theorem orthogonalSumFst_inl (L : IntegralLattice V) (M : IntegralLattice W) (a : L) :
     orthogonalSumFst L M (orthogonalSumInl L M a) = a := by
-  rfl
+  simp
 
 /-- The first projection of the second inclusion is zero. -/
 theorem orthogonalSumFst_inr (L : IntegralLattice V) (M : IntegralLattice W) (b : M) :
     orthogonalSumFst L M (orthogonalSumInr L M b) = 0 := by
-  rfl
+  simp
 
 /-- The second projection of the first inclusion is zero. -/
 theorem orthogonalSumSnd_inl (L : IntegralLattice V) (M : IntegralLattice W) (a : L) :
     orthogonalSumSnd L M (orthogonalSumInl L M a) = 0 := by
-  rfl
+  simp
 
 /-- The second projection of the second inclusion is the identity. -/
 theorem orthogonalSumSnd_inr (L : IntegralLattice V) (M : IntegralLattice W) (b : M) :
     orthogonalSumSnd L M (orthogonalSumInr L M b) = b := by
-  rfl
+  simp
 
 @[simp]
 theorem coe_orthogonalSumCarrierEquiv_fst (L : IntegralLattice V) (M : IntegralLattice W)
     (p : L.orthogonalSum M) : ((orthogonalSumCarrierEquiv L M p).1 : V) = p.1.1 := by
-  rfl
+  simp [orthogonalSumCarrierEquiv]
 
 @[simp]
 theorem coe_orthogonalSumCarrierEquiv_snd (L : IntegralLattice V) (M : IntegralLattice W)
     (p : L.orthogonalSum M) : ((orthogonalSumCarrierEquiv L M p).2 : W) = p.1.2 := by
-  rfl
+  simp [orthogonalSumCarrierEquiv]
 
 /-- A vector in an orthogonal sum is the sum of the inclusions of its two projections. -/
 theorem orthogonalSumInl_fst_add_inr_snd_eq (L : IntegralLattice V) (M : IntegralLattice W)

@@ -27,13 +27,10 @@ variable [Module R M] [Module R N]
 /-- A product submodule, as a module, is the product of the two submodules.
 
 This is the linear refinement of `AddSubmonoid.prodEquiv`. -/
-def prodEquiv (p : Submodule R M) (q : Submodule R N) : ↥(p.prod q) ≃ₗ[R] p × q where
-  toFun x := (⟨x.1.1, x.2.1⟩, ⟨x.1.2, x.2.2⟩)
-  invFun x := ⟨(x.1.1, x.2.1), x.1.2, x.2.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
+def prodEquiv (p : Submodule R M) (q : Submodule R N) : ↥(p.prod q) ≃ₗ[R] p × q :=
+  { Equiv.Set.prod (p : Set M) (q : Set N) with
+    map_add' _ _ := rfl
+    map_smul' _ _ := rfl }
 
 @[simp]
 theorem prodEquiv_apply (p : Submodule R M) (q : Submodule R N) (x : ↥(p.prod q)) :

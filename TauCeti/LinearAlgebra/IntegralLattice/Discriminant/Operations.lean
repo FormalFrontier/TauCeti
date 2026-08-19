@@ -149,8 +149,7 @@ theorem discriminantGroupOrthogonalSumEquiv_mk (L : IntegralLattice V) (M : Inte
         Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).2) := by
   rw [discriminantGroupOrthogonalSumEquiv, LinearEquiv.trans_apply]
   rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply,
-    Submodule.quotientProdEquiv_apply_mk]
-  congr 1
+    Submodule.quotientProdEquiv_apply_mk, LinearEquiv.coe_coe]
 
 /-- The product equivalence of discriminant groups is an isometry from the discriminant pairing
 of an orthogonal sum to the orthogonal product of the two discriminant pairings. -/

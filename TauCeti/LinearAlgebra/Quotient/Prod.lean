@@ -19,19 +19,15 @@ Mathlib has the additive-group form of this statement,
 `QuotientAddGroup.prodAddEquiv`; `quotientProdEquiv` below records the analogous scalar-compatible
 equivalence, which is the form module-theoretic consumers need. There is no submodule form upstream.
 
-The additive equivalence cannot simply be transported. It is stated for
-`p.toAddSubgroup.prod q.toAddSubgroup`, whose quotient carries `QuotientAddGroup.Quotient.addGroup`,
-whereas `(M × N) ⧸ p.prod q` carries `Submodule.Quotient.addCommMonoid`. Feeding it to
-`AddEquiv.toLinearEquiv` elaborates, but the resulting term is not type-correct at instance
-transparency: neither `AddEquiv.coe_toLinearEquiv` nor `QuotientAddGroup.prodAddEquiv_apply`
-rewrites in the characteristic lemmas, which are then provable only by bare `rfl` through the
-wrappers. `quotientProdEquiv` is therefore assembled from `Submodule.liftQ` and `LinearMap.coprod`,
-which keeps its computation rules inside the `Submodule` API.
-
 ## Main declarations
 
 * `Submodule.quotientProdEquiv`: `(M × N) ⧸ p.prod q ≃ₗ (M ⧸ p) × (N ⧸ q)`.
 * `Submodule.finrank_quotient_prod`: the ranks of the quotients add.
+
+## Implementation notes
+
+`quotientProdEquiv` is assembled from `Submodule.liftQ` and `LinearMap.coprod`, so its computation
+rules are stated in the `Submodule.Quotient.mk` API rather than through `AddEquiv` wrappers.
 -/
 
 public section
