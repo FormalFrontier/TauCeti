@@ -203,6 +203,7 @@ theorem abs_testIntegral_le_integral_abs [IsFiniteMeasure μ] (K : SymmKernel Ω
 
 /-- Testing against two indicator functions recovers the rectangle integral.  This is what makes
 the set form of the cut norm a special case of the signed form. -/
+@[simp]
 theorem testIntegral_indicator_one (K : SymmKernel Ω μ) {S T : Set Ω}
     (hS : MeasurableSet S) (hT : MeasurableSet T) :
     K.testIntegral μ (S.indicator 1) (T.indicator 1) = K.rectIntegral μ S T := by
