@@ -60,7 +60,6 @@ variable [HasZeroObject C]
 open ZeroObject
 
 /-- The right unitor of the binary biproduct: a zero second summand may be deleted. -/
-@[expose, simps]
 noncomputable def biprodRightUnitor (X : C) [HasBinaryBiproduct X (0 : C)] : X ⊞ (0 : C) ≅ X where
   hom := biprod.fst
   inv := biprod.inl
@@ -69,8 +68,22 @@ noncomputable def biprodRightUnitor (X : C) [HasBinaryBiproduct X (0 : C)] : X �
     simpa using ((isZero_zero C).eq_of_tgt 0 biprod.snd)
   inv_hom_id := by simp
 
+-- These projection lemmas deliberately have non-`rfl` proofs so the unitor bodies remain hidden.
+/-- The forward map of the right biproduct unitor is the first projection. -/
+@[simp]
+lemma biprodRightUnitor_hom (X : C) [HasBinaryBiproduct X (0 : C)] :
+    (biprodRightUnitor X).hom = biprod.fst := by
+  change (biprod.fst : X ⊞ (0 : C) ⟶ X) = biprod.fst
+  exact (Category.comp_id _).symm.trans (Category.comp_id _)
+
+/-- The inverse map of the right biproduct unitor is the first inclusion. -/
+@[simp]
+lemma biprodRightUnitor_inv (X : C) [HasBinaryBiproduct X (0 : C)] :
+    (biprodRightUnitor X).inv = biprod.inl := by
+  change (biprod.inl : X ⟶ X ⊞ (0 : C)) = biprod.inl
+  exact (Category.comp_id _).symm.trans (Category.comp_id _)
+
 /-- The left unitor of the binary biproduct: a zero first summand may be deleted. -/
-@[expose, simps]
 noncomputable def biprodLeftUnitor (X : C) [HasBinaryBiproduct (0 : C) X] : (0 : C) ⊞ X ≅ X where
   hom := biprod.snd
   inv := biprod.inr
@@ -78,6 +91,20 @@ noncomputable def biprodLeftUnitor (X : C) [HasBinaryBiproduct (0 : C) X] : (0 :
     refine biprod.hom_ext _ _ ?_ (by simp)
     simpa using ((isZero_zero C).eq_of_tgt 0 biprod.fst)
   inv_hom_id := by simp
+
+/-- The forward map of the left biproduct unitor is the second projection. -/
+@[simp]
+lemma biprodLeftUnitor_hom (X : C) [HasBinaryBiproduct (0 : C) X] :
+    (biprodLeftUnitor X).hom = biprod.snd := by
+  change (biprod.snd : (0 : C) ⊞ X ⟶ X) = biprod.snd
+  exact (Category.comp_id _).symm.trans (Category.comp_id _)
+
+/-- The inverse map of the left biproduct unitor is the second inclusion. -/
+@[simp]
+lemma biprodLeftUnitor_inv (X : C) [HasBinaryBiproduct (0 : C) X] :
+    (biprodLeftUnitor X).inv = biprod.inr := by
+  change (biprod.inr : X ⟶ (0 : C) ⊞ X) = biprod.inr
+  exact (Category.comp_id _).symm.trans (Category.comp_id _)
 
 end Unitors
 

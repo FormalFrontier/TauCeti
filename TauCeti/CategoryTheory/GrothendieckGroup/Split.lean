@@ -215,7 +215,7 @@ lemma freeMap_splitRelation (F : C ⥤ D) [F.Additive] (X Y : C) :
 
 /-- An additive functor carries the biproduct relations into the subgroup they generate in the
 target, which is what functoriality of the presentation asks for. -/
-lemma freeMap_mem_splitRelations (F : C ⥤ D) [F.Additive] :
+lemma freeMap_splitRelations_mem_closure (F : C ⥤ D) [F.Additive] :
     ∀ r ∈ splitRelations C, freeMap F r ∈ AddSubgroup.closure (splitRelations D) := by
   rintro _ ⟨X, Y, rfl⟩
   rw [freeMap_splitRelation]
@@ -225,16 +225,18 @@ namespace SplitK0
 
 /-- The homomorphism of split Grothendieck groups induced by an additive functor. -/
 noncomputable def map (F : C ⥤ D) [F.Additive] : SplitK0 C →+ SplitK0 D :=
-  PresentedK0.map F (freeMap_mem_splitRelations F)
+  PresentedK0.map F (freeMap_splitRelations_mem_closure F)
 
 @[simp]
 lemma map_of (F : C ⥤ D) [F.Additive] (X : C) : map F (of X) = of (F.obj X) :=
   PresentedK0.map_of F _ X
 
+/-- `SplitK0.map` sends the identity functor to the identity homomorphism. -/
 @[simp]
 lemma map_id : map (𝟭 C) = AddMonoidHom.id (SplitK0 C) :=
   hom_ext fun X => by rw [map_of, AddMonoidHom.id_apply]; rfl
 
+/-- `SplitK0.map` sends a composite of additive functors to the composite homomorphism. -/
 lemma map_comp {E : Type u''} [Category.{v''} E] [Preadditive E] [HasBinaryBiproducts E]
     [EssentiallySmall.{w''} E] (F : C ⥤ D) (G : D ⥤ E) [F.Additive] [G.Additive] :
     map (F ⋙ G) = (map G).comp (map F) :=
@@ -249,8 +251,8 @@ lemma map_congr {F G : C ⥤ D} [F.Additive] [G.Additive]
 /-- Invariance under additive equivalences. -/
 noncomputable def mapEquiv (e : C ≌ D) [e.functor.Additive] [e.inverse.Additive] :
     SplitK0 C ≃+ SplitK0 D :=
-  PresentedK0.mapEquiv e (freeMap_mem_splitRelations e.functor)
-    (freeMap_mem_splitRelations e.inverse)
+  PresentedK0.mapEquiv e (freeMap_splitRelations_mem_closure e.functor)
+    (freeMap_splitRelations_mem_closure e.inverse)
 
 @[simp]
 lemma mapEquiv_of (e : C ≌ D) [e.functor.Additive] [e.inverse.Additive] (X : C) :
@@ -287,6 +289,7 @@ noncomputable instance : Add (ObjectCode C) :=
 noncomputable instance : Zero (ObjectCode C) := ⟨objectCode (0 : C)⟩
 
 omit [HasZeroObject C] in
+/-- The code of a binary biproduct is the sum of the object codes. -/
 @[simp]
 lemma objectCode_biprod (X Y : C) : objectCode (X ⊞ Y) = objectCode X + objectCode Y :=
   (objectCode_congr (biprod.mapIso (objectCodeOutIso X) (objectCodeOutIso Y))).symm

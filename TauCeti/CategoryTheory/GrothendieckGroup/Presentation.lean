@@ -122,13 +122,9 @@ lemma objectCode_eq_objectCode_iff {X Y : C} :
 lemma objectCode_congr {X Y : C} (e : X ≅ Y) : objectCode X = objectCode Y :=
   objectCode_eq_objectCode_iff.2 ⟨e⟩
 
-/-- A chosen isomorphism between two objects with the same code. -/
-noncomputable def isoOfObjectCodeEq {X Y : C} (h : objectCode X = objectCode Y) : X ≅ Y :=
-  (objectCode_eq_objectCode_iff.1 h).some
-
 /-- A chosen object with the code of `X` is isomorphic to `X`. -/
 noncomputable def objectCodeOutIso (X : C) : objectCodeOut (objectCode X) ≅ X :=
-  isoOfObjectCodeEq (objectCode_objectCodeOut _)
+  (objectCode_eq_objectCode_iff.1 (objectCode_objectCodeOut _)).some
 
 lemma objectCode_surjective : Function.Surjective (objectCode : C → ObjectCode C) :=
   fun c => ⟨objectCodeOut c, objectCode_objectCodeOut c⟩
