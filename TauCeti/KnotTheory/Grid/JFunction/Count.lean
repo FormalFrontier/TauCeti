@@ -23,7 +23,7 @@ comparable points of the other set.
 
 These lemmas concern the state-against-state pairing `GridPoint.J` only. The corner terms of the
 rectangle grading-change localizations (`Grading/Change.lean`) pair a corner against the `O`- and
-`X`-marking sets, so they are terms of `GridPoint.JCentre` instead, the markings sitting at the
+`X`-marking sets, so they are terms of `GridPoint.JCenter` instead, the markings sitting at the
 centres of their squares; a counting form for those is not recorded here.
 
 ## Main results

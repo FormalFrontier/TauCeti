@@ -21,7 +21,7 @@ homology. For finite sets of grid points, `GridPoint.Icount r s t` counts the or
 `(p, q) ∈ s × t` with `r p q`; `GridPoint.I s t` is its value at the strict southwest relation,
 and `GridPoint.J s t` is the symmetrized half-count. Keeping the count parametric in the
 relation lets the pairing against markings at the centres of their squares
-(`JFunction/Centre.lean`), which weakens the comparison, share this API.
+(`JFunction/Center.lean`), which weakens the comparison, share this API.
 
 The API is deliberately point-set level: later grading definitions apply it to grid-state and
 marking point sets, which the Maslov and Alexander gradings are then assembled from.
@@ -103,7 +103,7 @@ theorem not_isSouthWest_swap {p q : Fin n × Fin n} (h : IsSouthWest p q) :
 are the strict southwest relation `GridPoint.IsSouthWest`, giving the `J`-function of this file,
 and the weak product order, giving the pairing of grid points against markings sitting at the
 centres of their squares. -/
-@[expose] def Icount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+def Icount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
     (s t : Finset (Fin n × Fin n)) : ℕ :=
   ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => r pq.1 pq.2).card
 
@@ -113,7 +113,7 @@ variable (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
 theorem Icount_def (s t : Finset (Fin n × Fin n)) :
     Icount r s t =
       ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => r pq.1 pq.2).card :=
-  rfl
+  by simp only [Icount]
 
 /-- The ordered relation count is zero when the left point set is empty. -/
 @[simp]
@@ -219,7 +219,7 @@ theorem I_def (s t : Finset (Fin n × Fin n)) :
     I s t =
       ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) =>
         IsSouthWest pq.1 pq.2).card :=
-  rfl
+  Icount_def IsSouthWest s t
 
 /-- Membership in the finite set counted by `GridPoint.I`. -/
 theorem mem_filter_product_isSouthWest (s t : Finset (Fin n × Fin n))

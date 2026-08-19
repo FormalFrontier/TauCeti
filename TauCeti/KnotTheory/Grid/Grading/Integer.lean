@@ -21,7 +21,7 @@ half-integer: its double is an integer.
 The key elementary fact is that the `J`-function on a point set with *itself* is already an
 integer, `J(s, s) = I(s, s)`, because the symmetrized numerator `JNum(s, s) = 2 · I(s, s)` is
 even. Feeding this into the formula `M_O(x) = J(x, x) - 2 · J_O(x) + J(O, O) + 1` cancels every
-remaining half: `2 · J_O(x) = JNumCentre(x, O)` is an integer, and the two self-pairings are
+remaining half: `2 · J_O(x) = JNumCenter(x, O)` is an integer, and the two self-pairings are
 integers, so `M_O(x)` is an integer. The same computation handles `M_X`.
 
 ## Main definitions
@@ -69,30 +69,30 @@ variable {n : ℕ} (G : GridDiagram n)
 
 /-- The integer-valued `O`-Maslov grading of a grid state.
 
-This is the integer formula `M_O(x) = I(x, x) - JNumCentre(x, O) + I(O, O) + 1` obtained from
+This is the integer formula `M_O(x) = I(x, x) - JNumCenter(x, O) + I(O, O) + 1` obtained from
 the rational definition once the two halves coming from the `J`-function cancel. -/
 def maslovOℤ (x : GridState n) : ℤ :=
-  (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCentre x.pointSet G.OSet
+  (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCenter x.pointSet G.OSet
     + GridPoint.I G.OSet G.OSet + 1
 
 /-- The integer `O`-Maslov grading restated as its defining formula. -/
 @[simp]
 theorem maslovOℤ_def (x : GridState n) :
     G.maslovOℤ x =
-      (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCentre x.pointSet G.OSet
+      (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCenter x.pointSet G.OSet
         + GridPoint.I G.OSet G.OSet + 1 :=
   rfl
 
 /-- The integer-valued `X`-Maslov grading of a grid state. -/
 def maslovXℤ (x : GridState n) : ℤ :=
-  (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCentre x.pointSet G.XSet
+  (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCenter x.pointSet G.XSet
     + GridPoint.I G.XSet G.XSet + 1
 
 /-- The integer `X`-Maslov grading restated as its defining formula. -/
 @[simp]
 theorem maslovXℤ_def (x : GridState n) :
     G.maslovXℤ x =
-      (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCentre x.pointSet G.XSet
+      (GridPoint.I x.pointSet x.pointSet : ℤ) - GridPoint.JNumCenter x.pointSet G.XSet
         + GridPoint.I G.XSet G.XSet + 1 :=
   rfl
 
@@ -106,7 +106,7 @@ theorem maslovOℤ_eq_card (x : GridState n) :
           + (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ G.O p.1 < x p.2).card)
         + (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ G.O p.1 < G.O p.2).card + 1 := by
   rw [maslovOℤ_def, OSet, GridState.I_self_pointSet_eq_card x,
-    GridState.JNumCentre_pointSet_eq_card x G.O, GridState.I_self_pointSet_eq_card G.O]
+    GridState.JNumCenter_pointSet_eq_card x G.O, GridState.I_self_pointSet_eq_card G.O]
   push_cast
   ring
 
@@ -119,7 +119,7 @@ theorem maslovXℤ_eq_card (x : GridState n) :
           + (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ G.X p.1 < x p.2).card)
         + (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ G.X p.1 < G.X p.2).card + 1 := by
   rw [maslovXℤ_def, XSet, GridState.I_self_pointSet_eq_card x,
-    GridState.JNumCentre_pointSet_eq_card x G.X, GridState.I_self_pointSet_eq_card G.X]
+    GridState.JNumCenter_pointSet_eq_card x G.X, GridState.I_self_pointSet_eq_card G.X]
   push_cast
   ring
 
@@ -127,31 +127,29 @@ theorem maslovXℤ_eq_card (x : GridState n) :
 `O`-marking state against the squares that hold the `O` markings adds the `n` diagonal pairs
 that the strict southwest count misses. -/
 theorem maslovOℤ_O : G.maslovOℤ G.O = 1 - (n : ℤ) := by
-  rw [maslovOℤ_def, OSet, GridPoint.JNumCentre_def, GridState.ICentre_self_pointSet_eq]
+  rw [maslovOℤ_def, OSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq]
   push_cast
   ring
 
 /-- The integer `X`-Maslov grading of the `X`-marking state is always `1 - n`. -/
 theorem maslovXℤ_X : G.maslovXℤ G.X = 1 - (n : ℤ) := by
-  rw [maslovXℤ_def, XSet, GridPoint.JNumCentre_def, GridState.ICentre_self_pointSet_eq]
+  rw [maslovXℤ_def, XSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq]
   push_cast
   ring
 
-/-- The rational `O`-Maslov grading is the cast of its integer counterpart: `M_O` is an
-integer. Both self-pairings are integers by `GridPoint.J_self`, and the mixed term is one because
-`2 * J_O(x) = JNumCentre(x, 𝕆)`. -/
+/-- The rational `O`-Maslov grading equals the cast of its integer counterpart. In particular,
+the doubled asymmetric marking pairing has the integer numerator `JNumCenter(x, 𝕆)`. -/
 theorem maslovO_eq_intCast (x : GridState n) : G.maslovO x = (G.maslovOℤ x : ℚ) := by
   rw [maslovO_def, maslovOℤ, GridState.J_def, GridState.J_def, GridPoint.J_self, JO_def, OSet,
-    GridPoint.JCentre_def, GridPoint.J_self]
+    GridPoint.JCenter_def, GridPoint.J_self]
   push_cast
   ring
 
-/-- The rational `X`-Maslov grading is the cast of its integer counterpart: `M_X` is an
-integer. Both self-pairings are integers by `GridPoint.J_self`, and the mixed term is one because
-`2 * J_X(x) = JNumCentre(x, 𝕏)`. -/
+/-- The rational `X`-Maslov grading equals the cast of its integer counterpart. In particular,
+the doubled asymmetric marking pairing has the integer numerator `JNumCenter(x, 𝕏)`. -/
 theorem maslovX_eq_intCast (x : GridState n) : G.maslovX x = (G.maslovXℤ x : ℚ) := by
   rw [maslovX_def, maslovXℤ, GridState.J_def, GridState.J_def, GridPoint.J_self, JX_def, XSet,
-    GridPoint.JCentre_def, GridPoint.J_self]
+    GridPoint.JCenter_def, GridPoint.J_self]
   push_cast
   ring
 
@@ -193,13 +191,13 @@ theorem two_mul_alexander_exists_int (x : GridState n) :
 theorem maslovOℤ_transpose (x : GridState n) :
     G.transpose.maslovOℤ x.transpose = G.maslovOℤ x := by
   rw [maslovOℤ_def, maslovOℤ_def, GridState.transpose_pointSet, transpose_OSet,
-    GridPoint.I_image_swap, GridPoint.JNumCentre_image_swap, GridPoint.I_image_swap]
+    GridPoint.I_image_swap, GridPoint.JNumCenter_image_swap, GridPoint.I_image_swap]
 
 /-- The integer-valued `X`-Maslov grading is invariant under the diagonal reflection. -/
 theorem maslovXℤ_transpose (x : GridState n) :
     G.transpose.maslovXℤ x.transpose = G.maslovXℤ x := by
   rw [maslovXℤ_def, maslovXℤ_def, GridState.transpose_pointSet, transpose_XSet,
-    GridPoint.I_image_swap, GridPoint.JNumCentre_image_swap, GridPoint.I_image_swap]
+    GridPoint.I_image_swap, GridPoint.JNumCenter_image_swap, GridPoint.I_image_swap]
 
 /-- The integer numerator of twice the Alexander grading is invariant under the diagonal
 reflection. -/

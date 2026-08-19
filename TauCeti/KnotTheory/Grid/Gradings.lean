@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.Tactic.Ring
-public import TauCeti.KnotTheory.Grid.JFunction.Centre
+public import TauCeti.KnotTheory.Grid.JFunction.Center
 
 /-!
 # Maslov and Alexander gradings for grid states
@@ -16,11 +16,12 @@ Heegaard Floer roadmap. The point-set `J`-function of a pair of grid states and 
 grid state against a set of marked squares were developed separately; here we use them to define
 the `O`- and `X`-Maslov gradings and the Alexander grading of a grid state.
 
-Each Maslov grading is the self-pairing of the formal difference `x - 𝕆`, expanded as
-`M_O(x) = J(x, x) - 2 J_O(x) + J(𝕆, 𝕆) + 1`. Only the middle, mixed term compares grid points
-against markings, and it is therefore the marking pairing `GridDiagram.JO` of
-`JFunction/Centre.lean`, which accounts for the markings sitting at the centres of their
-squares; the two outer terms compare like with like and are ordinary `J`-pairings.
+The `O`-Maslov grading is
+`M_O(x) = J(x, x) - 2 J_O(x) + J(𝕆, 𝕆) + 1`, and the `X`-Maslov grading is defined analogously.
+The middle term compares grid points against markings, so it uses the asymmetric marking pairing
+`GridDiagram.JO` or `GridDiagram.JX` from `JFunction/Center.lean`, which accounts for the markings
+sitting at the centres of their squares. The two outer terms compare like with like and use the
+ordinary `J`-pairing.
 
 The definitions are intentionally formula-level. The later integer-valuedness and
 rectangle-change theorems can refer to these names without unfolding the point-pair count.
@@ -46,9 +47,9 @@ rectangle-change theorems can refer to these names without unfolding the point-p
 This supplies the grading-definition part of
 `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`,
 Lane G.2, "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`;
-grading-change formulas across a rectangle." The formulas follow
-Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.2:
-`M_O(x) = J(x - O, x - O) + 1`, `M_X(x) = J(x - X, x - X) + 1`, and
+grading-change formulas across a rectangle." The grading conventions follow
+Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.2, with markings realized
+at the centres of their squares. In particular,
 `A(x) = (M_O(x) - M_X(x)) / 2 - (n - 1) / 2`.
 -/
 
@@ -60,28 +61,23 @@ namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
 
-/-- The `O`-Maslov grading of a grid state.
-
-This is the self-pairing formula `M_O(x) = J(x - 𝕆, x - 𝕆) + 1`, expanded so that the mixed term
-is the marking pairing `GridDiagram.JO`, which places each `O` marking at the centre of its
-square. -/
+/-- The `O`-Maslov grading of a grid state: the state and marking self-pairings, minus twice the
+asymmetric pairing of the state against the `O`-markings, plus the normalization constant. -/
 @[expose] def maslovO (x : GridState n) : ℚ :=
   GridState.J x x - 2 * G.JO x + GridState.J G.O G.O + 1
 
-/-- The `O`-Maslov grading as its expanded self-pairing formula. -/
+/-- The `O`-Maslov grading as its defining formula. -/
 @[simp]
 theorem maslovO_def (x : GridState n) :
     G.maslovO x = GridState.J x x - 2 * G.JO x + GridState.J G.O G.O + 1 :=
   rfl
 
-/-- The `X`-Maslov grading of a grid state.
-
-This is the self-pairing formula `M_X(x) = J(x - 𝕏, x - 𝕏) + 1`, expanded so that the mixed term
-is the marking pairing `GridDiagram.JX`. -/
+/-- The `X`-Maslov grading of a grid state: the state and marking self-pairings, minus twice the
+asymmetric pairing of the state against the `X`-markings, plus the normalization constant. -/
 @[expose] def maslovX (x : GridState n) : ℚ :=
   GridState.J x x - 2 * G.JX x + GridState.J G.X G.X + 1
 
-/-- The `X`-Maslov grading as its expanded self-pairing formula. -/
+/-- The `X`-Maslov grading as its defining formula. -/
 @[simp]
 theorem maslovX_def (x : GridState n) :
     G.maslovX x = GridState.J x x - 2 * G.JX x + GridState.J G.X G.X + 1 :=
