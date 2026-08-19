@@ -92,6 +92,7 @@ def splitRelations : Set (FreeAbelianGroup (ObjectCode C)) :=
   {r | ∃ X Y : C, r = splitRelation X Y}
 
 /-- Membership in the family of biproduct relations. -/
+@[simp]
 lemma mem_splitRelations_iff {r : FreeAbelianGroup (ObjectCode C)} :
     r ∈ splitRelations C ↔ ∃ X Y : C, r = splitRelation X Y := (Iff.rfl)
 
