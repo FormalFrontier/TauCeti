@@ -8,7 +8,6 @@ module
 public import TauCeti.CategoryTheory.Exact.Functor
 public import TauCeti.CategoryTheory.Exact.Opposite
 public import Mathlib.CategoryTheory.ObjectProperty.Equivalence
-public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 
 /-!
 # The category of conflations
@@ -36,12 +35,15 @@ conflation class gives the expected equivalence on conflations.
   isomorphisms of conflations from their three components.
 * `TauCeti.ConflationClass.ConflationCategory.isIso_iff`: a map of conflations is an isomorphism
   exactly when all three components are isomorphisms.
-* `TauCeti.ExactStructure.ConflationCategory.map`: the functor induced by a conflation-exact
-  functor.
-* `TauCeti.ExactStructure.ConflationCategory.mapNatIso`: natural-isomorphism invariance of the
+* `TauCeti.ConflationClass.ConflationCategory.map`: the functor induced by a functor preserving
+  conflations, with `TauCeti.ExactStructure.ConflationCategory.map` as its exact-structure
+  specialization.
+* `TauCeti.ConflationClass.ConflationCategory.mapIdIso` and `.mapCompIso`: identity and composition
+  coherence for the induced functor.
+* `TauCeti.ConflationClass.ConflationCategory.mapNatIso`: natural-isomorphism invariance of the
   induced functor.
-* `TauCeti.ConflationClass.ConflationCategory.opEquivalence`: the equivalence supplied by the
-  opposite conflation class.
+* `TauCeti.ConflationClass.ConflationCategory.opEquivalence`: the equivalence
+  `E.ConflationCategoryᵒᵖ ≃ E.op.ConflationCategory`.
 
 ## References
 
@@ -191,7 +193,6 @@ theorem isoMk_inv_hom_τ₃ {S T : E.ConflationCategory} (e₁ : S.obj.X₁ ≅ 
 
 /-- A morphism of conflations is an isomorphism exactly when its three components are
 isomorphisms. -/
-@[simp]
 theorem isIso_iff {S T : E.ConflationCategory} (a : S ⟶ T) :
     IsIso a ↔ IsIso a.hom.τ₁ ∧ IsIso a.hom.τ₂ ∧ IsIso a.hom.τ₃ := by
   rw [← ObjectProperty.isIso_hom_iff]
@@ -199,52 +200,365 @@ theorem isIso_iff {S T : E.ConflationCategory} (a : S ⟶ T) :
 
 section Opposite
 
-/-- The inverse image of opposite conflations under the short-complex opposite equivalence is
-the opposite of the original conflation property. -/
-theorem op_conflation_inverseImage (E : ConflationClass C) :
-    E.op.Conflation.inverseImage (ShortComplex.opEquiv C).functor = E.Conflation.op :=
-  by
-    ext S
-    rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.op_iff]
-    dsimp only [ShortComplex.opEquiv, ShortComplex.opFunctor]
-    exact E.op_conflation_op_iff S.unop
-
 /-- Taking opposites gives an equivalence from the opposite of the category of conflations to the
 category of conflations of the opposite conflation class. -/
 noncomputable def opEquivalence (E : ConflationClass C) :
     E.ConflationCategoryᵒᵖ ≌ E.op.ConflationCategory :=
   (ObjectProperty.opEquivalence E.Conflation).symm.trans
-    ((ShortComplex.opEquiv C).congrFullSubcategory (op_conflation_inverseImage E))
+    ((ShortComplex.opEquiv C).congrFullSubcategory E.op_conflation_inverseImage)
 
-/-- The underlying short complex of the opposite of a conflation is its termwise opposite. -/
+/-- The underlying short complex of the opposite of a conflation is `S.unop.obj.op`: its arrows
+are `S.unop.obj.g.op` and `S.unop.obj.f.op`, so its outer terms are exchanged. -/
 @[simp]
 theorem opEquivalence_functor_obj_obj (E : ConflationClass C)
     (S : E.ConflationCategoryᵒᵖ) :
     ((opEquivalence E).functor.obj S).obj = S.unop.obj.op := (rfl)
 
-/-- The underlying short complex obtained by unopposing a conflation is its termwise unopposite. -/
+/-- The underlying short complex obtained by unopposing a conflation reverses the opposite short
+complex again, exchanging its outer terms. -/
 @[simp]
 theorem opEquivalence_inverse_obj_unop_obj (E : ConflationClass C)
     (S : E.op.ConflationCategory) :
     ((opEquivalence E).inverse.obj S).unop.obj = S.obj.unop := (rfl)
 
-/-- On morphisms, taking a conflation to the opposite conflation applies the termwise opposite
-map to its underlying short-complex morphism. -/
-@[simp]
-theorem opEquivalence_functor_map_hom (E : ConflationClass C)
-    {S T : E.ConflationCategoryᵒᵖ} (a : S ⟶ T) :
-    HEq ((opEquivalence E).functor.map a).hom (ShortComplex.opMap a.unop.hom) := by
-  exact heq_of_eq rfl
+omit [Preadditive C] in
+private theorem op_hom_eq_of_heq {A : Type u₁} [Category.{v₁} A]
+    {X X' Y Y' : A} (hX : X = X') (hY : Y = Y')
+    {f : X ⟶ Y} {g : X' ⟶ Y'} (h : HEq f g) :
+    f = eqToHom hX ≫ g ≫ eqToHom hY.symm := by
+  subst X'
+  subst Y'
+  simpa using eq_of_heq h
 
-/-- On morphisms, unopposing a conflation applies the termwise unopposite map to its underlying
-short-complex morphism. -/
+/-- On morphisms, taking opposites applies `ShortComplex.opMap`, which reverses direction and sends
+`τ₁` to `τ₃.op`. -/
+theorem opEquivalence_functor_map_hom_heq (E : ConflationClass C)
+    {S T : E.ConflationCategoryᵒᵖ} (a : S ⟶ T) :
+    HEq ((opEquivalence E).functor.map a).hom (ShortComplex.opMap a.unop.hom) := HEq.rfl
+
+/-- On the first component, taking opposites reverses direction and sends `τ₁` to `τ₃.op`. -/
 @[simp]
-theorem opEquivalence_inverse_map_unop_hom (E : ConflationClass C)
+theorem opEquivalence_functor_map_hom_τ₁ (E : ConflationClass C)
+    {S T : E.ConflationCategoryᵒᵖ} (a : S ⟶ T) :
+    ((opEquivalence E).functor.map a).hom.τ₁ =
+      eqToHom (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₁) (opEquivalence_functor_obj_obj E S)) ≫
+        a.unop.hom.τ₃.op ≫ eqToHom (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₁)
+          (opEquivalence_functor_obj_obj E T)).symm :=
+  op_hom_eq_of_heq
+    (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₁) (opEquivalence_functor_obj_obj E S))
+    (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₁) (opEquivalence_functor_obj_obj E T)) HEq.rfl
+
+/-- On the middle component, taking opposites sends `τ₂` to `τ₂.op`. -/
+@[simp]
+theorem opEquivalence_functor_map_hom_τ₂ (E : ConflationClass C)
+    {S T : E.ConflationCategoryᵒᵖ} (a : S ⟶ T) :
+    ((opEquivalence E).functor.map a).hom.τ₂ =
+      eqToHom (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₂) (opEquivalence_functor_obj_obj E S)) ≫
+        a.unop.hom.τ₂.op ≫ eqToHom (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₂)
+          (opEquivalence_functor_obj_obj E T)).symm :=
+  op_hom_eq_of_heq
+    (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₂) (opEquivalence_functor_obj_obj E S))
+    (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₂) (opEquivalence_functor_obj_obj E T)) HEq.rfl
+
+/-- On the third component, taking opposites reverses direction and sends `τ₃` to `τ₁.op`. -/
+@[simp]
+theorem opEquivalence_functor_map_hom_τ₃ (E : ConflationClass C)
+    {S T : E.ConflationCategoryᵒᵖ} (a : S ⟶ T) :
+    ((opEquivalence E).functor.map a).hom.τ₃ =
+      eqToHom (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₃) (opEquivalence_functor_obj_obj E S)) ≫
+        a.unop.hom.τ₁.op ≫ eqToHom (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₃)
+          (opEquivalence_functor_obj_obj E T)).symm :=
+  op_hom_eq_of_heq
+    (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₃) (opEquivalence_functor_obj_obj E S))
+    (congrArg (fun X : ShortComplex Cᵒᵖ ↦ X.X₃) (opEquivalence_functor_obj_obj E T)) HEq.rfl
+
+/-- On morphisms, unopposing applies `ShortComplex.unopMap`, which reverses direction and sends
+`τ₁` to `τ₃.unop`. -/
+theorem opEquivalence_inverse_map_unop_hom_heq (E : ConflationClass C)
     {S T : E.op.ConflationCategory} (a : S ⟶ T) :
-    HEq ((opEquivalence E).inverse.map a).unop.hom (ShortComplex.unopMap a.hom) := by
-  exact heq_of_eq rfl
+    HEq ((opEquivalence E).inverse.map a).unop.hom (ShortComplex.unopMap a.hom) := HEq.rfl
+
+/-- On the first component, unopposing reverses direction and sends `τ₁` to `τ₃.unop`. -/
+@[simp]
+theorem opEquivalence_inverse_map_unop_hom_τ₁ (E : ConflationClass C)
+    {S T : E.op.ConflationCategory} (a : S ⟶ T) :
+    ((opEquivalence E).inverse.map a).unop.hom.τ₁ =
+      eqToHom (congrArg (fun X : ShortComplex C ↦ X.X₁) (opEquivalence_inverse_obj_unop_obj E T)) ≫
+        a.hom.τ₃.unop ≫ eqToHom (congrArg (fun X : ShortComplex C ↦ X.X₁)
+          (opEquivalence_inverse_obj_unop_obj E S)).symm :=
+  op_hom_eq_of_heq
+    (congrArg (fun X : ShortComplex C ↦ X.X₁) (opEquivalence_inverse_obj_unop_obj E T))
+    (congrArg (fun X : ShortComplex C ↦ X.X₁) (opEquivalence_inverse_obj_unop_obj E S)) HEq.rfl
+
+/-- On the middle component, unopposing sends `τ₂` to `τ₂.unop`. -/
+@[simp]
+theorem opEquivalence_inverse_map_unop_hom_τ₂ (E : ConflationClass C)
+    {S T : E.op.ConflationCategory} (a : S ⟶ T) :
+    ((opEquivalence E).inverse.map a).unop.hom.τ₂ =
+      eqToHom (congrArg (fun X : ShortComplex C ↦ X.X₂) (opEquivalence_inverse_obj_unop_obj E T)) ≫
+        a.hom.τ₂.unop ≫ eqToHom (congrArg (fun X : ShortComplex C ↦ X.X₂)
+          (opEquivalence_inverse_obj_unop_obj E S)).symm :=
+  op_hom_eq_of_heq
+    (congrArg (fun X : ShortComplex C ↦ X.X₂) (opEquivalence_inverse_obj_unop_obj E T))
+    (congrArg (fun X : ShortComplex C ↦ X.X₂) (opEquivalence_inverse_obj_unop_obj E S)) HEq.rfl
+
+/-- On the third component, unopposing reverses direction and sends `τ₃` to `τ₁.unop`. -/
+@[simp]
+theorem opEquivalence_inverse_map_unop_hom_τ₃ (E : ConflationClass C)
+    {S T : E.op.ConflationCategory} (a : S ⟶ T) :
+    ((opEquivalence E).inverse.map a).unop.hom.τ₃ =
+      eqToHom (congrArg (fun X : ShortComplex C ↦ X.X₃) (opEquivalence_inverse_obj_unop_obj E T)) ≫
+        a.hom.τ₁.unop ≫ eqToHom (congrArg (fun X : ShortComplex C ↦ X.X₃)
+          (opEquivalence_inverse_obj_unop_obj E S)).symm :=
+  op_hom_eq_of_heq
+    (congrArg (fun X : ShortComplex C ↦ X.X₃) (opEquivalence_inverse_obj_unop_obj E T))
+    (congrArg (fun X : ShortComplex C ↦ X.X₃) (opEquivalence_inverse_obj_unop_obj E S)) HEq.rfl
 
 end Opposite
+
+section Functor
+
+variable {D : Type u₂} [Category.{v₂} D] [Preadditive D]
+variable {E' : ConflationClass D} {F G : Functor C D}
+
+omit [Preadditive D] in
+private theorem hom_eq_of_heq {X X' Y Y' : D} (hX : X = X') (hY : Y = Y')
+    {f : X ⟶ Y} {g : X' ⟶ Y'} (h : HEq f g) :
+    f = eqToHom hX ≫ g ≫ eqToHom hY.symm := by
+  subst X'
+  subst Y'
+  simpa using eq_of_heq h
+
+/-- A functor preserving zero morphisms and conflations induces a functor between the corresponding
+categories of conflations. -/
+def map (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F)) :
+    Functor E.ConflationCategory E'.ConflationCategory :=
+  ObjectProperty.lift _ (ConflationCategory.ι E ⋙ F.mapShortComplex) fun S ↦ hF S.property
+
+/-- The underlying short complex of a mapped conflation is its componentwise image. -/
+@[simp]
+theorem map_obj_obj (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : ((map F hF).obj S).obj = F.mapShortComplex.obj S.obj := by
+  exact eq_of_heq HEq.rfl
+
+@[simp]
+theorem map_obj_obj_X₁ (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : ((map F hF).obj S).obj.X₁ = F.obj S.obj.X₁ := by
+  exact eq_of_heq HEq.rfl
+
+@[simp]
+theorem map_obj_obj_X₂ (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : ((map F hF).obj S).obj.X₂ = F.obj S.obj.X₂ := by
+  exact eq_of_heq HEq.rfl
+
+@[simp]
+theorem map_obj_obj_X₃ (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : ((map F hF).obj S).obj.X₃ = F.obj S.obj.X₃ := by
+  exact eq_of_heq HEq.rfl
+
+@[simp]
+theorem map_obj_obj_f (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : ((map F hF).obj S).obj.f =
+      eqToHom (map_obj_obj_X₁ F hF S) ≫ F.map S.obj.f ≫
+        eqToHom (map_obj_obj_X₂ F hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ F hF S) (map_obj_obj_X₂ F hF S) HEq.rfl
+
+@[simp]
+theorem map_obj_obj_g (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : ((map F hF).obj S).obj.g =
+      eqToHom (map_obj_obj_X₂ F hF S) ≫ F.map S.obj.g ≫
+        eqToHom (map_obj_obj_X₃ F hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ F hF S) (map_obj_obj_X₃ F hF S) HEq.rfl
+
+@[simp]
+theorem map_map_hom_τ₁ (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    {S T : E.ConflationCategory} (a : S ⟶ T) :
+    ((map F hF).map a).hom.τ₁ = eqToHom (map_obj_obj_X₁ F hF S) ≫
+      F.map a.hom.τ₁ ≫ eqToHom (map_obj_obj_X₁ F hF T).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ F hF S) (map_obj_obj_X₁ F hF T) HEq.rfl
+
+@[simp]
+theorem map_map_hom_τ₂ (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    {S T : E.ConflationCategory} (a : S ⟶ T) :
+    ((map F hF).map a).hom.τ₂ = eqToHom (map_obj_obj_X₂ F hF S) ≫
+      F.map a.hom.τ₂ ≫ eqToHom (map_obj_obj_X₂ F hF T).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ F hF S) (map_obj_obj_X₂ F hF T) HEq.rfl
+
+@[simp]
+theorem map_map_hom_τ₃ (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    {S T : E.ConflationCategory} (a : S ⟶ T) :
+    ((map F hF).map a).hom.τ₃ = eqToHom (map_obj_obj_X₃ F hF S) ≫
+      F.map a.hom.τ₃ ≫ eqToHom (map_obj_obj_X₃ F hF T).symm :=
+  hom_eq_of_heq (map_obj_obj_X₃ F hF S) (map_obj_obj_X₃ F hF T) HEq.rfl
+
+/-- After forgetting that its objects are conflations, the induced functor is the ordinary
+componentwise map on short complexes. -/
+def mapCompιIso (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F)) :
+    map F hF ⋙ ι E' ≅ ι E ⋙ F.mapShortComplex :=
+  ObjectProperty.liftCompιIso _ _ _
+
+/-- The forward component of `mapCompιIso` is the equality transport from the lifted object to
+its componentwise image. -/
+@[simp]
+theorem mapCompιIso_hom_app (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : (mapCompιIso F hF).hom.app S =
+      eqToHom (map_obj_obj F hF S) := by
+  exact eq_of_heq HEq.rfl
+
+/-- The inverse component of `mapCompιIso` is the reverse equality transport. -/
+@[simp]
+theorem mapCompιIso_inv_app (F : Functor C D) [F.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (S : E.ConflationCategory) : (mapCompιIso F hF).inv.app S =
+      eqToHom (map_obj_obj F hF S).symm := by
+  exact eq_of_heq HEq.rfl
+
+/-- The functor on conflations induced by the identity functor is naturally isomorphic to the
+identity functor. -/
+def mapIdIso : map (E := E) (E' := E) (Functor.id C) (fun hS ↦ hS) ≅
+    Functor.id E.ConflationCategory := Iso.refl _
+
+/-- The forward component of `mapIdIso` is the equality transport to the original short complex. -/
+@[simp]
+theorem mapIdIso_hom_app_hom (S : E.ConflationCategory) :
+    ((mapIdIso (E := E)).hom.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl : ((map (E := E) (E' := E) (Functor.id C)
+        (fun hS ↦ hS)).obj S).obj = S.obj) := by
+  exact eq_of_heq HEq.rfl
+
+/-- The inverse component of `mapIdIso` is the reverse equality transport. -/
+@[simp]
+theorem mapIdIso_inv_app_hom (S : E.ConflationCategory) :
+    ((mapIdIso (E := E)).inv.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl : S.obj = ((map (E := E) (E' := E)
+        (Functor.id C) (fun hS ↦ hS)).obj S).obj) := by
+  exact eq_of_heq HEq.rfl
+
+/-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
+def mapCompIso {K : Type*} [Category* K] [Preadditive K]
+    {E'' : ConflationClass K} (F : Functor C D) (H : Functor D K)
+    [F.PreservesZeroMorphisms] [H.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hH : ∀ {S : ShortComplex D}, E'.Conflation S → E''.Conflation (S.map H)) :
+    map (F ⋙ H) (fun hS ↦ hH (hF hS)) ≅ map F hF ⋙ map H hH := Iso.refl _
+
+/-- The forward component of `mapCompIso` is the equality transport between the two mapped
+short complexes. -/
+@[simp]
+theorem mapCompIso_hom_app_hom {K : Type*} [Category* K] [Preadditive K]
+    {E'' : ConflationClass K} (F : Functor C D) (H : Functor D K)
+    [F.PreservesZeroMorphisms] [H.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hH : ∀ {S : ShortComplex D}, E'.Conflation S → E''.Conflation (S.map H))
+    (S : E.ConflationCategory) : ((mapCompIso F H hF hH).hom.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl :
+        ((map (F ⋙ H) (fun hS ↦ hH (hF hS))).obj S).obj =
+          ((map F hF ⋙ map H hH).obj S).obj) := by
+  exact eq_of_heq HEq.rfl
+
+/-- The inverse component of `mapCompIso` is the reverse equality transport. -/
+@[simp]
+theorem mapCompIso_inv_app_hom {K : Type*} [Category* K] [Preadditive K]
+    {E'' : ConflationClass K} (F : Functor C D) (H : Functor D K)
+    [F.PreservesZeroMorphisms] [H.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hH : ∀ {S : ShortComplex D}, E'.Conflation S → E''.Conflation (S.map H))
+    (S : E.ConflationCategory) : ((mapCompIso F H hF hH).inv.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl : ((map F hF ⋙ map H hH).obj S).obj =
+        ((map (F ⋙ H) (fun hS ↦ hH (hF hS))).obj S).obj) := by
+  exact eq_of_heq HEq.rfl
+
+/-- A natural isomorphism between functors preserving conflations induces a natural isomorphism
+between their functors on conflations. -/
+def mapNatIso (F G : Functor C D) [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) : map F hF ≅ map G hG :=
+  NatIso.ofComponents (fun S ↦ ObjectProperty.isoMk _ (S.obj.mapNatIso e)) (by
+    intro S T a
+    apply ObjectProperty.hom_ext
+    apply ShortComplex.hom_ext
+    all_goals exact e.hom.naturality _)
+
+@[simp]
+theorem mapNatIso_hom_app_hom_τ₁ (F G : Functor C D)
+    [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) (S : E.ConflationCategory) :
+    ((mapNatIso F G hF hG e).hom.app S).hom.τ₁ =
+      eqToHom (map_obj_obj_X₁ F hF S) ≫ e.hom.app S.obj.X₁ ≫
+        eqToHom (map_obj_obj_X₁ G hG S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ F hF S) (map_obj_obj_X₁ G hG S) HEq.rfl
+
+@[simp]
+theorem mapNatIso_hom_app_hom_τ₂ (F G : Functor C D)
+    [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) (S : E.ConflationCategory) :
+    ((mapNatIso F G hF hG e).hom.app S).hom.τ₂ =
+      eqToHom (map_obj_obj_X₂ F hF S) ≫ e.hom.app S.obj.X₂ ≫
+        eqToHom (map_obj_obj_X₂ G hG S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ F hF S) (map_obj_obj_X₂ G hG S) HEq.rfl
+
+@[simp]
+theorem mapNatIso_hom_app_hom_τ₃ (F G : Functor C D)
+    [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) (S : E.ConflationCategory) :
+    ((mapNatIso F G hF hG e).hom.app S).hom.τ₃ =
+      eqToHom (map_obj_obj_X₃ F hF S) ≫ e.hom.app S.obj.X₃ ≫
+        eqToHom (map_obj_obj_X₃ G hG S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₃ F hF S) (map_obj_obj_X₃ G hG S) HEq.rfl
+
+@[simp]
+theorem mapNatIso_inv_app_hom_τ₁ (F G : Functor C D)
+    [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) (S : E.ConflationCategory) :
+    ((mapNatIso F G hF hG e).inv.app S).hom.τ₁ =
+      eqToHom (map_obj_obj_X₁ G hG S) ≫ e.inv.app S.obj.X₁ ≫
+        eqToHom (map_obj_obj_X₁ F hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ G hG S) (map_obj_obj_X₁ F hF S) HEq.rfl
+
+@[simp]
+theorem mapNatIso_inv_app_hom_τ₂ (F G : Functor C D)
+    [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) (S : E.ConflationCategory) :
+    ((mapNatIso F G hF hG e).inv.app S).hom.τ₂ =
+      eqToHom (map_obj_obj_X₂ G hG S) ≫ e.inv.app S.obj.X₂ ≫
+        eqToHom (map_obj_obj_X₂ F hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ G hG S) (map_obj_obj_X₂ F hF S) HEq.rfl
+
+@[simp]
+theorem mapNatIso_inv_app_hom_τ₃ (F G : Functor C D)
+    [F.PreservesZeroMorphisms] [G.PreservesZeroMorphisms]
+    (hF : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map F))
+    (hG : ∀ {S : ShortComplex C}, E.Conflation S → E'.Conflation (S.map G))
+    (e : F ≅ G) (S : E.ConflationCategory) :
+    ((mapNatIso F G hF hG e).inv.app S).hom.τ₃ =
+      eqToHom (map_obj_obj_X₃ G hG S) ≫ e.inv.app S.obj.X₃ ≫
+        eqToHom (map_obj_obj_X₃ F hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₃ G hG S) (map_obj_obj_X₃ F hF S) HEq.rfl
+
+end Functor
 
 end ConflationCategory
 
@@ -267,118 +581,126 @@ section Functor
 
 variable {D : Type u₂} [Category.{v₂} D] [Preadditive D] [HasZeroObject D]
   [HasBinaryBiproducts D]
-variable {E' : ExactStructure D} {F G : C ⥤ D}
+variable {E' : ExactStructure D} {F G : Functor C D}
+
+omit [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
+private theorem hom_eq_of_heq {X X' Y Y' : D} (hX : X = X') (hY : Y = Y')
+    {f : X ⟶ Y} {g : X' ⟶ Y'} (h : HEq f g) :
+    f = eqToHom hX ≫ g ≫ eqToHom hY.symm := by
+  subst X'
+  subst Y'
+  simpa using eq_of_heq h
 
 /-- A conflation-exact functor induces a functor between the corresponding categories of
 conflations. -/
 def map [F.Additive] (hF : E.IsConflationExact E' F) :
-    E.ConflationCategory ⥤ E'.ConflationCategory :=
-  ObjectProperty.lift _ (ConflationClass.ConflationCategory.ι E.toConflationClass ⋙
-    F.mapShortComplex) fun S ↦ hF.map_conflation S.property
+    Functor E.ConflationCategory E'.ConflationCategory :=
+  ConflationClass.ConflationCategory.map F hF.map_conflation
+
+/-- The underlying short complex of a mapped conflation is its componentwise image. -/
+@[simp]
+theorem map_obj_obj [F.Additive] (hF : E.IsConflationExact E' F)
+    (S : E.ConflationCategory) : ((map hF).obj S).obj = F.mapShortComplex.obj S.obj := by
+  exact eq_of_heq HEq.rfl
 
 @[simp]
 theorem map_obj_obj_X₁ [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : ((map hF).obj S).obj.X₁ = F.obj S.obj.X₁ := (rfl)
+    (S : E.ConflationCategory) : ((map hF).obj S).obj.X₁ = F.obj S.obj.X₁ := by
+  exact eq_of_heq HEq.rfl
 
 @[simp]
 theorem map_obj_obj_X₂ [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : ((map hF).obj S).obj.X₂ = F.obj S.obj.X₂ := (rfl)
+    (S : E.ConflationCategory) : ((map hF).obj S).obj.X₂ = F.obj S.obj.X₂ := by
+  exact eq_of_heq HEq.rfl
 
 @[simp]
 theorem map_obj_obj_X₃ [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : ((map hF).obj S).obj.X₃ = F.obj S.obj.X₃ := (rfl)
+    (S : E.ConflationCategory) : ((map hF).obj S).obj.X₃ = F.obj S.obj.X₃ := by
+  exact eq_of_heq HEq.rfl
 
 @[simp]
 theorem map_obj_obj_f [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : HEq ((map hF).obj S).obj.f (F.map S.obj.f) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((map hF).obj S).obj.f =
+      eqToHom (map_obj_obj_X₁ hF S) ≫ F.map S.obj.f ≫
+        eqToHom (map_obj_obj_X₂ hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ hF S) (map_obj_obj_X₂ hF S) HEq.rfl
 
 @[simp]
 theorem map_obj_obj_g [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : HEq ((map hF).obj S).obj.g (F.map S.obj.g) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((map hF).obj S).obj.g =
+      eqToHom (map_obj_obj_X₂ hF S) ≫ F.map S.obj.g ≫
+        eqToHom (map_obj_obj_X₃ hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ hF S) (map_obj_obj_X₃ hF S) HEq.rfl
 
 @[simp]
 theorem map_map_hom_τ₁ [F.Additive] (hF : E.IsConflationExact E' F)
     {S T : E.ConflationCategory} (a : S ⟶ T) :
-    HEq ((map hF).map a).hom.τ₁ (F.map a.hom.τ₁) := by
-  exact heq_of_eq rfl
+    ((map hF).map a).hom.τ₁ = eqToHom (map_obj_obj_X₁ hF S) ≫
+      F.map a.hom.τ₁ ≫ eqToHom (map_obj_obj_X₁ hF T).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ hF S) (map_obj_obj_X₁ hF T) HEq.rfl
 
 @[simp]
 theorem map_map_hom_τ₂ [F.Additive] (hF : E.IsConflationExact E' F)
     {S T : E.ConflationCategory} (a : S ⟶ T) :
-    HEq ((map hF).map a).hom.τ₂ (F.map a.hom.τ₂) := by
-  exact heq_of_eq rfl
+    ((map hF).map a).hom.τ₂ = eqToHom (map_obj_obj_X₂ hF S) ≫
+      F.map a.hom.τ₂ ≫ eqToHom (map_obj_obj_X₂ hF T).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ hF S) (map_obj_obj_X₂ hF T) HEq.rfl
 
 @[simp]
 theorem map_map_hom_τ₃ [F.Additive] (hF : E.IsConflationExact E' F)
     {S T : E.ConflationCategory} (a : S ⟶ T) :
-    HEq ((map hF).map a).hom.τ₃ (F.map a.hom.τ₃) := by
-  exact heq_of_eq rfl
+    ((map hF).map a).hom.τ₃ = eqToHom (map_obj_obj_X₃ hF S) ≫
+      F.map a.hom.τ₃ ≫ eqToHom (map_obj_obj_X₃ hF T).symm :=
+  hom_eq_of_heq (map_obj_obj_X₃ hF S) (map_obj_obj_X₃ hF T) HEq.rfl
 
 /-- After forgetting that its objects are conflations, the induced functor is the ordinary
 componentwise map on short complexes. -/
 def mapCompιIso [F.Additive] (hF : E.IsConflationExact E' F) :
     map hF ⋙ ConflationClass.ConflationCategory.ι E'.toConflationClass ≅
       ConflationClass.ConflationCategory.ι E.toConflationClass ⋙ F.mapShortComplex :=
-  ObjectProperty.liftCompιIso _ _ _
+  ConflationClass.ConflationCategory.mapCompιIso F hF.map_conflation
 
-/-- The forward component of `mapCompιIso` is heterogeneously equal to the identity of the
-ordinary componentwise image. -/
+/-- The forward component of `mapCompιIso` is the equality transport to the componentwise image. -/
 @[simp]
 theorem mapCompιIso_hom_app [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : HEq ((mapCompιIso hF).hom.app S)
-      (𝟙 (F.mapShortComplex.obj S.obj)) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : (mapCompιIso hF).hom.app S =
+      eqToHom (map_obj_obj hF S) := by
+  exact eq_of_heq HEq.rfl
 
-/-- The inverse component of `mapCompιIso` is heterogeneously equal to the identity of the
-ordinary componentwise image. -/
+/-- The inverse component of `mapCompιIso` is the reverse equality transport. -/
 @[simp]
 theorem mapCompιIso_inv_app [F.Additive] (hF : E.IsConflationExact E' F)
-    (S : E.ConflationCategory) : HEq ((mapCompιIso hF).inv.app S)
-      (𝟙 (F.mapShortComplex.obj S.obj)) := by
-  exact heq_of_eq rfl
-
-/- The component equations for `map` above are necessarily heterogeneous: opacity hides the
-identification between a lifted object's terms and their componentwise images. Consequently the
-naturality equations below, which are homogeneous equalities of dependent morphisms, must expose
-the wrappers locally to identify their endpoints; rewriting by the `HEq` component equations would
-instead leave casts involving the opaque lifted objects. -/
+    (S : E.ConflationCategory) : (mapCompιIso hF).inv.app S =
+      eqToHom (map_obj_obj hF S).symm := by
+  exact eq_of_heq HEq.rfl
 
 /-- The functor on conflations induced by the identity functor is naturally isomorphic to the
 identity functor. -/
 def mapIdIso : map (ExactStructure.IsConflationExact.id (E := E)) ≅
     Functor.id E.ConflationCategory :=
-  NatIso.ofComponents (fun S ↦ ObjectProperty.isoMk _ (Iso.refl S.obj)) (by
-      intro S T a
-      apply ObjectProperty.hom_ext
-      apply ShortComplex.hom_ext <;>
-        simp [map, ObjectProperty.lift, ObjectProperty.isoMk, ObjectProperty.homMk,
-          Functor.mapShortComplex])
+  Iso.refl _
 
 /-- The forward component of `mapIdIso` is the identity on the underlying short complex. -/
 @[simp]
 theorem mapIdIso_hom_app_hom (S : E.ConflationCategory) :
-    HEq ((mapIdIso (E := E)).hom.app S).hom (𝟙 S.obj) := by
-  exact heq_of_eq rfl
+    ((mapIdIso (E := E)).hom.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl :
+        ((map (ExactStructure.IsConflationExact.id (E := E))).obj S).obj = S.obj) := by
+  exact eq_of_heq HEq.rfl
 
 /-- The inverse component of `mapIdIso` is the identity on the underlying short complex. -/
 @[simp]
 theorem mapIdIso_inv_app_hom (S : E.ConflationCategory) :
-    HEq ((mapIdIso (E := E)).inv.app S).hom (𝟙 S.obj) := by
-  exact heq_of_eq rfl
+    ((mapIdIso (E := E)).inv.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl :
+        S.obj = ((map (ExactStructure.IsConflationExact.id (E := E))).obj S).obj) := by
+  exact eq_of_heq HEq.rfl
 
 /-- Mapping conflations by a composite is naturally isomorphic to mapping successively. -/
 def mapCompIso {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
-    : map (hF.comp hH) ≅ map hF ⋙ map hH :=
-  NatIso.ofComponents (fun S ↦ ObjectProperty.isoMk _ (Iso.refl ((S.obj.map F).map H))) (by
-      intro S T a
-      apply ObjectProperty.hom_ext
-      apply ShortComplex.hom_ext <;>
-        simp [map, ObjectProperty.lift, ObjectProperty.isoMk, ObjectProperty.homMk,
-          Functor.mapShortComplex] <;> rfl)
+    : map (hF.comp hH) ≅ map hF ⋙ map hH := Iso.refl _
 
 /-- The forward component of `mapCompIso` is the identity on the successively mapped underlying
 short complex. -/
@@ -386,9 +708,10 @@ short complex. -/
 theorem mapCompIso_hom_app_hom {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
-    (S : E.ConflationCategory) : HEq ((mapCompIso hF hH).hom.app S).hom
-      (𝟙 ((S.obj.map F).map H)) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapCompIso hF hH).hom.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl : ((map (hF.comp hH)).obj S).obj =
+        ((map hF ⋙ map hH).obj S).obj) := by
+  exact eq_of_heq HEq.rfl
 
 /-- The inverse component of `mapCompIso` is the identity on the successively mapped underlying
 short complex. -/
@@ -396,63 +719,64 @@ short complex. -/
 theorem mapCompIso_inv_app_hom {K : Type*} [Category* K] [Preadditive K] [HasZeroObject K]
     [HasBinaryBiproducts K] {E'' : ExactStructure K} {H : D ⥤ K} [F.Additive] [H.Additive]
     (hF : E.IsConflationExact E' F) (hH : E'.IsConflationExact E'' H)
-    (S : E.ConflationCategory) : HEq ((mapCompIso hF hH).inv.app S).hom
-      (𝟙 ((S.obj.map F).map H)) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapCompIso hF hH).inv.app S).hom =
+      eqToHom (by exact eq_of_heq HEq.rfl : ((map hF ⋙ map hH).obj S).obj =
+        ((map (hF.comp hH)).obj S).obj) := by
+  exact eq_of_heq HEq.rfl
 
 /-- A natural isomorphism between conflation-exact functors induces a natural isomorphism between
 their functors on conflations. -/
 def mapNatIso [F.Additive] [G.Additive] (hF : E.IsConflationExact E' F)
     (hG : E.IsConflationExact E' G) (e : F ≅ G) : map hF ≅ map hG :=
-  NatIso.ofComponents (fun S ↦
-    ObjectProperty.isoMk (fun T : ShortComplex D ↦ E'.Conflation T) (S.obj.mapNatIso e))
-    (by
-      intro S T a
-      apply ObjectProperty.hom_ext
-      apply ShortComplex.hom_ext
-      all_goals exact e.hom.naturality _)
+  ConflationClass.ConflationCategory.mapNatIso F G hF.map_conflation hG.map_conflation e
 
 @[simp]
 theorem mapNatIso_hom_app_hom_τ₁ [F.Additive] [G.Additive]
     (hF : E.IsConflationExact E' F) (hG : E.IsConflationExact E' G) (e : F ≅ G)
-    (S : E.ConflationCategory) : HEq ((mapNatIso hF hG e).hom.app S).hom.τ₁
-      (e.hom.app S.obj.X₁) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapNatIso hF hG e).hom.app S).hom.τ₁ =
+      eqToHom (map_obj_obj_X₁ hF S) ≫ e.hom.app S.obj.X₁ ≫
+        eqToHom (map_obj_obj_X₁ hG S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ hF S) (map_obj_obj_X₁ hG S) HEq.rfl
 
 @[simp]
 theorem mapNatIso_hom_app_hom_τ₂ [F.Additive] [G.Additive]
     (hF : E.IsConflationExact E' F) (hG : E.IsConflationExact E' G) (e : F ≅ G)
-    (S : E.ConflationCategory) : HEq ((mapNatIso hF hG e).hom.app S).hom.τ₂
-      (e.hom.app S.obj.X₂) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapNatIso hF hG e).hom.app S).hom.τ₂ =
+      eqToHom (map_obj_obj_X₂ hF S) ≫ e.hom.app S.obj.X₂ ≫
+        eqToHom (map_obj_obj_X₂ hG S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ hF S) (map_obj_obj_X₂ hG S) HEq.rfl
 
 @[simp]
 theorem mapNatIso_hom_app_hom_τ₃ [F.Additive] [G.Additive]
     (hF : E.IsConflationExact E' F) (hG : E.IsConflationExact E' G) (e : F ≅ G)
-    (S : E.ConflationCategory) : HEq ((mapNatIso hF hG e).hom.app S).hom.τ₃
-      (e.hom.app S.obj.X₃) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapNatIso hF hG e).hom.app S).hom.τ₃ =
+      eqToHom (map_obj_obj_X₃ hF S) ≫ e.hom.app S.obj.X₃ ≫
+        eqToHom (map_obj_obj_X₃ hG S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₃ hF S) (map_obj_obj_X₃ hG S) HEq.rfl
 
 @[simp]
 theorem mapNatIso_inv_app_hom_τ₁ [F.Additive] [G.Additive]
     (hF : E.IsConflationExact E' F) (hG : E.IsConflationExact E' G) (e : F ≅ G)
-    (S : E.ConflationCategory) : HEq ((mapNatIso hF hG e).inv.app S).hom.τ₁
-      (e.inv.app S.obj.X₁) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapNatIso hF hG e).inv.app S).hom.τ₁ =
+      eqToHom (map_obj_obj_X₁ hG S) ≫ e.inv.app S.obj.X₁ ≫
+        eqToHom (map_obj_obj_X₁ hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₁ hG S) (map_obj_obj_X₁ hF S) HEq.rfl
 
 @[simp]
 theorem mapNatIso_inv_app_hom_τ₂ [F.Additive] [G.Additive]
     (hF : E.IsConflationExact E' F) (hG : E.IsConflationExact E' G) (e : F ≅ G)
-    (S : E.ConflationCategory) : HEq ((mapNatIso hF hG e).inv.app S).hom.τ₂
-      (e.inv.app S.obj.X₂) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapNatIso hF hG e).inv.app S).hom.τ₂ =
+      eqToHom (map_obj_obj_X₂ hG S) ≫ e.inv.app S.obj.X₂ ≫
+        eqToHom (map_obj_obj_X₂ hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₂ hG S) (map_obj_obj_X₂ hF S) HEq.rfl
 
 @[simp]
 theorem mapNatIso_inv_app_hom_τ₃ [F.Additive] [G.Additive]
     (hF : E.IsConflationExact E' F) (hG : E.IsConflationExact E' G) (e : F ≅ G)
-    (S : E.ConflationCategory) : HEq ((mapNatIso hF hG e).inv.app S).hom.τ₃
-      (e.inv.app S.obj.X₃) := by
-  exact heq_of_eq rfl
+    (S : E.ConflationCategory) : ((mapNatIso hF hG e).inv.app S).hom.τ₃ =
+      eqToHom (map_obj_obj_X₃ hG S) ≫ e.inv.app S.obj.X₃ ≫
+        eqToHom (map_obj_obj_X₃ hF S).symm :=
+  hom_eq_of_heq (map_obj_obj_X₃ hG S) (map_obj_obj_X₃ hF S) HEq.rfl
 
 end Functor
 
