@@ -29,10 +29,10 @@ root, that string has no lower part, so `⟨αⱼ, αᵢ∨⟩` is minus the len
 step past the top of the string the root space vanishes.
 
 Together with `TauCeti.serreLift` this presents `L` as a quotient of the Serre algebra of its own
-Cartan matrix, `TauCeti.exists_surjective_serreLift_of_base`. Everything is proved a second time
-for Mathlib's bundled `LieAlgebra.Basis`, whose four elementary relations are already among its
-fields, so that the Lie algebra `RootPairing.GeckConstruction.lieAlgebra` builds from a root system
-is covered without first extracting a base from it.
+Cartan matrix, `TauCeti.exists_surjective_serreLift_of_base`. The corresponding statement for
+Mathlib's bundled `LieAlgebra.Basis` needs none of the hypotheses above and is proved by
+`sl₂`-strings instead, in `TauCeti/Algebra/Lie/Presentation/Serre/Basis.lean`; what this file adds
+about a basis is only that its generators are root vectors.
 
 Note that the Cartan matrix is transposed on the way: `TauCeti.IsSerreSystem` follows Serre's
 convention `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`, whereas `RootPairing.Base.cartanMatrix i j` is `⟨αᵢ, αⱼ∨⟩`.
@@ -53,9 +53,6 @@ convention `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`, whereas `RootPairing.Base.cartanM
   Cartan matrix, by a homomorphism sending `Hᵢ` to the simple coroot `αᵢ∨`.
 * `TauCeti.lieBasis_e_mem_rootSpace` and `TauCeti.lieBasis_f_mem_rootSpace`: the generators of a
   `LieAlgebra.Basis` are root vectors for its simple roots.
-* `TauCeti.isSerreSystem_lieBasis` and `TauCeti.exists_surjective_serreLift_of_lieBasis`: the same
-  two conclusions for Mathlib's bundled `LieAlgebra.Basis`, which is what
-  `RootPairing.GeckConstruction.basis` produces from a root system with a base.
 
 ## References
 
@@ -215,18 +212,11 @@ theorem exists_isSerreSystem_of_base (b : (rootSystem H).Base) :
   · simpa using he i
   · simpa using hf i
 
-/-! ## Serre systems from a Lie algebra basis -/
+/-! ## Root vectors of a Lie algebra basis -/
 
 section LieBasis
 
-section Fintype
-
 variable {ι : Type*} [Fintype ι] (b : LieAlgebra.Basis ι H)
-
-omit [H.IsCartanSubalgebra] in
-/-- The `i`-th simple root of a Lie algebra basis, read as a weight. -/
-private theorem coe_lieBasisRoot (i : ι) :
-    ⇑(((b.baseSupportEquiv i : H.root) : Weight K H L)) = ⇑(b.baseSupp i) := rfl
 
 omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
 /-- The raising generator `eᵢ` of a Lie algebra basis is a root vector for its simple root. -/
@@ -238,74 +228,6 @@ omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K 
 root. -/
 theorem lieBasis_f_mem_rootSpace (i : ι) : b.f i ∈ rootSpace H (-⇑(b.baseSupp i)) :=
   (mem_genWeightSpace _ _ _).mpr fun x ↦ ⟨1, by simp [← eq_neg_iff_add_eq_zero]⟩
-
-/-- The pairing of two simple roots of a Lie algebra basis is the corresponding entry of its
-matrix. -/
-private theorem lieBasis_apply_coroot (i j : ι) :
-    ((b.A j i : ℤ) : K) = ((b.baseSupportEquiv j : H.root) : Weight K H L)
-      (coroot (((b.baseSupportEquiv i : H.root) : Weight K H L))) := by
-  rw [LieAlgebra.Basis.coroot_eq_h', ← b.baseSupp_apply_h' j i]
-  simp [coe_lieBasisRoot]
-
-/-- The difference of two distinct simple roots of a Lie algebra basis is not a root. -/
-private theorem lieBasis_rootSpace_sub_eq_bot {i j : ι} (hij : i ≠ j) :
-    rootSpace H (⇑(((b.baseSupportEquiv j : H.root) : Weight K H L)) -
-      ⇑(((b.baseSupportEquiv i : H.root) : Weight K H L))) = ⊥ :=
-  rootSpace_sub_eq_bot_of_base b.base (by simpa using hij.symm)
-
-end Fintype
-
-variable {ι : Type*} [Finite ι] (b : LieAlgebra.Basis ι H)
-
-/-- **The generators of a Lie algebra basis form a Serre system.** The relevant Cartan matrix is
-the transpose of `LieAlgebra.Basis.A`, because `TauCeti.IsSerreSystem` follows Serre's convention
-`⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ` while `LieAlgebra.Basis.lie_h_e` reads `⁅hⱼ, eᵢ⁆ = Aᵢⱼ eᵢ`. -/
-theorem isSerreSystem_lieBasis : IsSerreSystem K b.Aᵀ b.h b.e b.f := by
-  have _i : Fintype ι := Fintype.ofFinite ι
-  have hE : ∀ i j : ι, i ≠ j → ((ad K L (b.e i)) ^ (-b.Aᵀ i j).toNat) ⁅b.e i, b.e j⁆ = 0 := by
-    intro i j hij
-    refine ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot
-      (H.isNonZero_coe_root (b.baseSupportEquiv i : H.root))
-      (lieBasis_rootSpace_sub_eq_bot b hij) ?_ ?_ ?_
-    · rw [Matrix.transpose_apply, coe_lieBasisRoot]
-      exact lieBasis_apply_coroot b i j
-    · rw [coe_lieBasisRoot]; exact lieBasis_e_mem_rootSpace b i
-    · rw [coe_lieBasisRoot]; exact lieBasis_e_mem_rootSpace b j
-  have hF : ∀ i j : ι, i ≠ j → ((ad K L (b.f i)) ^ (-b.Aᵀ i j).toNat) ⁅b.f i, b.f j⁆ = 0 := by
-    intro i j hij
-    refine ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot
-      (α := -((b.baseSupportEquiv i : H.root) : Weight K H L))
-      (β := -((b.baseSupportEquiv j : H.root) : Weight K H L))
-      (Weight.isNonZero_neg.2 (H.isNonZero_coe_root (b.baseSupportEquiv i : H.root))) ?_ ?_ ?_ ?_
-    · rw [Weight.coe_neg, Weight.coe_neg, neg_sub_neg]
-      exact lieBasis_rootSpace_sub_eq_bot b hij.symm
-    · rw [Weight.coe_neg, coroot_neg, Pi.neg_apply, map_neg, neg_neg, Matrix.transpose_apply]
-      exact lieBasis_apply_coroot b i j
-    · rw [Weight.coe_neg, coe_lieBasisRoot]; exact lieBasis_f_mem_rootSpace b i
-    · rw [Weight.coe_neg, coe_lieBasisRoot]; exact lieBasis_f_mem_rootSpace b j
-  exact
-    { lie_H_H := b.lie_h_h
-      lie_E_F_self := fun i ↦ (b.sl2 i).lie_e_f
-      lie_E_F_of_ne := fun _ _ hij ↦ b.lie_e_f_ne _ _ hij
-      lie_H_E := fun i j ↦ by rw [Matrix.transpose_apply]; exact b.lie_h_e j i
-      lie_H_F := fun i j ↦ by rw [Matrix.transpose_apply, ← neg_smul]; exact b.lie_h_f j i
-      ad_pow_lie_E_E := fun i j ↦ by
-        rcases eq_or_ne i j with rfl | hij
-        · simp
-        · exact hE i j hij
-      ad_pow_lie_F_F := fun i j ↦ by
-        rcases eq_or_ne i j with rfl | hij
-        · simp
-        · exact hF i j hij }
-
-open scoped Classical in
-/-- **A Lie algebra with a basis is a quotient of the Serre algebra of the transposed matrix of
-that basis**, by a homomorphism sending the generator `Hᵢ` to `hᵢ`. -/
-theorem exists_surjective_serreLift_of_lieBasis :
-    ∃ φ : Matrix.ToLieAlgebra K b.Aᵀ →ₗ⁅K⁆ L, Function.Surjective φ ∧
-      ∀ i, φ (serreH K b.Aᵀ i) = b.h i :=
-  ⟨serreLift (isSerreSystem_lieBasis b), serreLift_surjective _ b.span_ef,
-    fun i ↦ serreLift_serreH _ i⟩
 
 end LieBasis
 
