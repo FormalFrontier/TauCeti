@@ -22,10 +22,7 @@ isomorphism classes and additive on binary biproducts.
 A short complex with a splitting is a conflation of *every* exact structure on `C`
 (`TauCeti.ExactStructure.conflation_of_splitting`), so the biproduct relations are imposed by
 every exact structure. Once exact `K₀` is available, the comparison homomorphism out of split
-`K₀` will therefore be an instance of `TauCeti.PresentedK0.ofLE`; no such comparison is stated
-here. The defining equation of `TauCeti.SplitK0` is exposed so that `TauCeti.PresentedK0.ofLE`
-does apply at this type from another module; `TauCeti.PresentedK0` itself stays opaque, so
-nothing further leaks.
+`K₀` will therefore be an instance of `TauCeti.SplitK0.ofLE`; no such comparison is stated here.
 
 The construction is the presentation engine of
 `TauCeti/CategoryTheory/GrothendieckGroup/Presentation.lean` applied to the biproduct relations,
@@ -43,6 +40,7 @@ the same small universe.
 * `TauCeti.splitRelation X Y`: the relation `[X ⊞ Y] - [X] - [Y]`, and `TauCeti.splitRelations C`
   the family of all of them.
 * `TauCeti.SplitK0 C`: split `K₀`, with class map `TauCeti.SplitK0.of`.
+* `TauCeti.SplitK0.ofLE`: the comparison to a presentation imposing more relations.
 * `TauCeti.SplitK0.AdditiveInvariant C G`: an isomorphism-invariant, biproduct-additive function
   on objects, and `TauCeti.SplitK0.lift` the homomorphism it induces.
 * `TauCeti.SplitK0.map` and `TauCeti.SplitK0.mapEquiv`: functoriality for additive functors and
@@ -108,7 +106,6 @@ variable (C : Type u) [Category.{v} C] [HasZeroMorphisms C] [HasBinaryBiproducts
 /-- The split Grothendieck group of an essentially small category with zero morphisms and binary
 biproducts: the free abelian group on the isomorphism classes of objects, modulo
 `[X ⊞ Y] = [X] + [Y]`. -/
-@[expose]
 def SplitK0 : Type w := PresentedK0 (splitRelations C)
 
 noncomputable instance : AddCommGroup (SplitK0 C) :=
@@ -123,6 +120,17 @@ noncomputable def of (X : C) : SplitK0 C := PresentedK0.of X
 
 lemma of_congr {X Y : C} (e : X ≅ Y) : (of X : SplitK0 C) = of Y :=
   PresentedK0.of_congr e
+
+/-- The comparison from split `K₀` to a presentation imposing every split relation. -/
+noncomputable def ofLE {rels : Set (FreeAbelianGroup (ObjectCode C))}
+    (h : splitRelations C ⊆ AddSubgroup.closure rels) : SplitK0 C →+ PresentedK0 rels :=
+  PresentedK0.ofLE h
+
+@[simp]
+lemma ofLE_of {rels : Set (FreeAbelianGroup (ObjectCode C))}
+    (h : splitRelations C ⊆ AddSubgroup.closure rels) (X : C) :
+    ofLE h (of X) = (PresentedK0.of X : PresentedK0 rels) :=
+  PresentedK0.ofLE_of h X
 
 /-- The defining relation of split `K₀`: the class of a biproduct is the sum of the classes. -/
 @[simp]
@@ -175,8 +183,7 @@ structure AdditiveInvariant (G : Type*) [AddCommGroup G] where
   /-- The value on a biproduct is the sum of the values. -/
   map_biprod : ∀ X Y : C, obj (X ⊞ Y) = obj X + obj Y
 
-/-- A biproduct-additive invariant is an additive invariant for the biproduct relations. -/
-noncomputable def AdditiveInvariant.toPresented (a : AdditiveInvariant C G) :
+private noncomputable def AdditiveInvariant.toPresented (a : AdditiveInvariant C G) :
     PresentedK0.AdditiveInvariant (splitRelations C) G where
   obj := a.obj
   map_iso := a.map_iso
@@ -186,8 +193,8 @@ noncomputable def AdditiveInvariant.toPresented (a : AdditiveInvariant C G) :
       freeLift_freeOf a.map_iso, freeLift_freeOf a.map_iso, a.map_biprod]
     abel
 
-@[simp]
-lemma AdditiveInvariant.toPresented_obj (a : AdditiveInvariant C G) : a.toPresented.obj = a.obj :=
+@[simp] private lemma AdditiveInvariant.toPresented_obj (a : AdditiveInvariant C G) :
+    a.toPresented.obj = a.obj :=
   (rfl)
 
 /-- The homomorphism out of split `K₀` induced by a biproduct-additive invariant. -/
@@ -302,21 +309,26 @@ variable {C : Type u} [Category.{v} C] [HasZeroMorphisms C] [HasZeroObject C]
 
 namespace SplitK0
 
+omit [HasZeroMorphisms C] [HasZeroObject C] [HasBinaryBiproducts C] in
+private noncomputable def objectCodeChosenIso (X : C) :
+    (objectCode_surjective (objectCode X)).choose ≅ X :=
+  (objectCode_eq_objectCode_iff.1 (objectCode_surjective (objectCode X)).choose_spec).some
+
 /-- The class map of split `K₀`, as a homomorphism from the additive monoid of isomorphism
 classes of objects. -/
 noncomputable def ofCode : ObjectCode C →+ SplitK0 C where
-  toFun c := of (objectCodeOut c)
+  toFun c := of (objectCode_surjective c).choose
   map_zero' := by
-    rw [← objectCode_zero, of_congr (objectCodeOutIso (0 : C)), of_zero]
+    rw [← objectCode_zero, of_congr (objectCodeChosenIso (0 : C)), of_zero]
   map_add' a b := by
     obtain ⟨A, rfl⟩ := objectCode_surjective a
     obtain ⟨B, rfl⟩ := objectCode_surjective b
-    rw [← objectCode_biprod, of_congr (objectCodeOutIso (A ⊞ B)),
-      of_congr (objectCodeOutIso A), of_congr (objectCodeOutIso B), of_biprod]
+    rw [← objectCode_biprod, of_congr (objectCodeChosenIso (A ⊞ B)),
+      of_congr (objectCodeChosenIso A), of_congr (objectCodeChosenIso B), of_biprod]
 
 @[simp]
 lemma ofCode_objectCode (X : C) : ofCode (objectCode X) = (of X : SplitK0 C) :=
-  of_congr (objectCodeOutIso X)
+  of_congr (objectCodeChosenIso X)
 
 variable (C) in
 /-- The invariant sending an object to its isomorphism class, viewed in the group completion of

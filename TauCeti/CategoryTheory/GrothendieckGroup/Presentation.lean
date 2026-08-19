@@ -22,16 +22,12 @@ classes of objects: it is `Shrink (Skeleton C)`. The smallness hypotheses are `P
 `ObjectCode C` takes no data argument and depends only on `C` and the target universe. Its
 underlying small model and representatives are nevertheless arbitrary choices. Consequently, the
 object-facing API -- `of`, `induction_on`, `hom_ext`, `AdditiveInvariant`, `liftEquiv`, and `map` --
-is stated purely in terms of objects of `C`, so callers need not manipulate representatives. A
-representative is nevertheless available as `TauCeti.objectCodeOut`, for constructions such as an
-algebraic structure on `ObjectCode C` itself, which cannot be phrased without one.
+is stated purely in terms of objects of `C`, so callers need not manipulate representatives.
 
 ## Main definitions
 
 * `TauCeti.ObjectCode C`: a small type of codes for the isomorphism classes of objects of an
-  essentially small category `C`, with `TauCeti.objectCode` the code of an object,
-  `TauCeti.objectCodeOut` a chosen object with a given code, and `TauCeti.objectCodeOutIso` a
-  chosen (non-canonical) isomorphism `objectCodeOut (objectCode X) ≅ X`.
+  essentially small category `C`, with `TauCeti.objectCode` the code of an object.
 * `TauCeti.freeOf X`: the generator of `FreeAbelianGroup (ObjectCode C)` attached to `X`, and
   `TauCeti.freeLift f`: the additive homomorphism out of that free abelian group determined by a
   function `f` on objects.
@@ -105,13 +101,10 @@ isomorphic; see `TauCeti.objectCode_eq_objectCode_iff`. -/
 noncomputable def objectCode (X : C) : ObjectCode C :=
   equivShrink _ (toSkeleton X)
 
-/-- A chosen object of `C` with a given code. It is an arbitrary representative of its
-isomorphism class; the object-facing API below never exposes the choice, but a construction
-transporting a structure from `C` to `ObjectCode C` needs one. -/
-noncomputable def objectCodeOut (c : ObjectCode C) : C :=
+private noncomputable def objectCodeOut (c : ObjectCode C) : C :=
   (fromSkeleton C).obj ((equivShrink _).symm c)
 
-@[simp] lemma objectCode_objectCodeOut (c : ObjectCode C) :
+@[simp] private lemma objectCode_objectCodeOut (c : ObjectCode C) :
     objectCode (objectCodeOut c) = c := by
   rw [objectCode, objectCodeOut, toSkeleton_fromSkeleton_obj, Equiv.apply_symm_apply]
 
@@ -122,12 +115,11 @@ lemma objectCode_eq_objectCode_iff {X Y : C} :
 lemma objectCode_congr {X Y : C} (e : X ≅ Y) : objectCode X = objectCode Y :=
   objectCode_eq_objectCode_iff.2 ⟨e⟩
 
-/-- A chosen isomorphism between the representative of the code of `X` and `X` itself. It is an
-arbitrary choice extracted from the `Nonempty` witness of
-`TauCeti.objectCode_eq_objectCode_iff`, so it is not natural in `X` and no coherence between its
-instances at different objects should be assumed. -/
-noncomputable def objectCodeOutIso (X : C) : objectCodeOut (objectCode X) ≅ X :=
-  (objectCode_eq_objectCode_iff.1 (objectCode_objectCodeOut _)).some
+private noncomputable def isoOfObjectCodeEq {X Y : C} (h : objectCode X = objectCode Y) : X ≅ Y :=
+  (objectCode_eq_objectCode_iff.1 h).some
+
+private noncomputable def objectCodeOutIso (X : C) : objectCodeOut (objectCode X) ≅ X :=
+  isoOfObjectCodeEq (objectCode_objectCodeOut _)
 
 lemma objectCode_surjective : Function.Surjective (objectCode : C → ObjectCode C) :=
   fun c => ⟨objectCodeOut c, objectCode_objectCodeOut c⟩
