@@ -18,8 +18,8 @@ smooth unipotent closed subgroup.
 
 The resulting full subcategory is anti-equivalent to reductive finite-type commutative Hopf
 algebras (`ReductiveCommHopfAlgCat`). This synchronizes the coordinate-ring and scheme models of
-reductive groups, while leaving smoothness and finite type as explicit parts of the predicate
-rather than baking them into a monolithic notion of algebraic group.
+reductive groups. Smoothness is part of the transported predicate, while finite type is enforced
+by the ambient category rather than baked into a monolithic notion of algebraic group.
 
 ## Main declarations
 

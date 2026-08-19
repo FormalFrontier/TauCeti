@@ -125,11 +125,14 @@ noncomputable def geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSch
     (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
     (Q : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k))
-    [P.IsClosedUnderIsomorphisms] [Q.IsClosedUnderIsomorphisms]
+    [P.IsClosedUnderIsomorphisms]
     (hQ : Q = geometricNormalSubgroupFreeCommHopfAlgProperty k P) :
     Q.FullSubcategoryᵒᵖ ≌
-      (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).FullSubcategory :=
-  (ObjectProperty.opEquivalence Q).symm.trans <|
+      (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).FullSubcategory := by
+  letI : Q.IsClosedUnderIsomorphisms := by
+    rw [hQ]
+    infer_instance
+  exact (ObjectProperty.opEquivalence Q).symm.trans <|
     (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategory
       (geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage k P Q hQ)
 
@@ -140,12 +143,15 @@ private noncomputable def
     (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
     (Q : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k))
-    [P.IsClosedUnderIsomorphisms] [Q.IsClosedUnderIsomorphisms]
+    [P.IsClosedUnderIsomorphisms]
     (hQ : Q = geometricNormalSubgroupFreeCommHopfAlgProperty k P) :
     (geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCat k P Q hQ).functor ⋙
         (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).ι ≅
-      Q.ι.op ⋙ (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  Functor.associator _ _ _ ≪≫
+      Q.ι.op ⋙ (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor := by
+  letI : Q.IsClosedUnderIsomorphisms := by
+    rw [hQ]
+    infer_instance
+  exact Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft (ObjectProperty.opEquivalence Q).symm.functor
       ((geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).liftCompιIso
         (Q.op.ι ⋙
@@ -162,7 +168,7 @@ noncomputable def
     (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
     (Q : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k))
-    [P.IsClosedUnderIsomorphisms] [Q.IsClosedUnderIsomorphisms]
+    [P.IsClosedUnderIsomorphisms]
     (hQ : Q = geometricNormalSubgroupFreeCommHopfAlgProperty k P) :
     (geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCat k P Q hQ).functor ⋙
           (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).ι ⋙
@@ -170,8 +176,11 @@ noncomputable def
         (affineGroupSchemeProperty (CommRingCat.of k)).ι ≅
       Q.ι.op ⋙
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-          (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
-  Functor.isoWhiskerRight
+          (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) := by
+  letI : Q.IsClosedUnderIsomorphisms := by
+    rw [hQ]
+    infer_instance
+  exact Functor.isoWhiskerRight
       (geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCatFunctorCompιIso
         k P Q hQ)
       ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
