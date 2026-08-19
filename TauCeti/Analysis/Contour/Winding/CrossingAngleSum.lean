@@ -19,21 +19,22 @@ import TauCeti.Analysis.Contour.Winding.EndpointRatio
 # The crossing angles of a closed immersion, modulo an integer
 
 Hungerbühler–Wasem Proposition 2.2 decomposes a closed piecewise-`C¹` immersion `Λ` meeting a
-point `s` at the finitely many parameters `t₁, …, tₙ` as `Λ = Λ̃ + Γ₁ + ⋯ + Γₙ`, with `Λ̃`
-avoiding `s` and each `Γ_ℓ` a model sector of opening angle `α_ℓ`, and concludes
+point `s` at the finitely many parameters `t₁, …, tₙ` as
+`Λ = \tilde{\Lambda} + Γ₁ + ⋯ + Γₙ`, with `\tilde{\Lambda}` avoiding `s` and each `Γ_ℓ`
+a model sector of opening angle `α_ℓ`, and concludes
 
-`n_s(Λ) = n_s(Λ̃) + ∑_ℓ α_ℓ / 2π`.
+`n_s(Λ) = n_s(\tilde{\Lambda}) + ∑_ℓ α_ℓ / 2π`.
 
-Since `Λ̃` avoids `s`, its winding number is an integer
+Since `\tilde{\Lambda}` avoids `s`, its winding number is an integer
 (`TauCeti.Contour.IsPiecewiseC1On.exists_int_windingNumber`). This file proves the identity in
 the form that does not name the surgered curve:
 
 `n_s(Λ) - ∑_ℓ α_ℓ / 2π ∈ ℤ`,
 
-where `α_ℓ = crossingAngle Λ t_ℓ` is read off the one-sided tangents at the crossing. Nothing
-here builds `Λ̃`, so the integer is produced abstractly rather than identified with `n_s(Λ̃)`;
-that identification, which needs the excise-and-cap construction, is what remains of HW
-Proposition 2.2.
+where `α_ℓ = crossingAngle Λ t_ℓ` is read off the one-sided tangents at the crossing.
+Nothing here builds `\tilde{\Lambda}`, so the integer is produced abstractly rather than
+identified with `n_s(\tilde{\Lambda})`; that identification, which needs the excise-and-cap
+construction, is what remains of HW Proposition 2.2.
 
 The proof does not decompose the curve either. It exponentiates. The principal value
 `2πi · n_s(Λ)` is aggregated out of plain pieces and crossing windows exactly as the existence
@@ -299,10 +300,10 @@ angles over `2π`:
 
 `n_s(γ) = k + (∑_{t ∈ T} crossingAngle γ t) / 2π`.
 
-In HW's decomposition `Λ = Λ̃ + Γ₁ + ⋯ + Γₙ` the integer is `n_s(Λ̃)`, the winding number of the
-curve obtained by excising the crossings and capping them off; that surgery is not performed
-here, so `k` is produced abstractly. Everything else is: the crossings' contribution is exactly
-their model-sector value `α_ℓ / 2π`.
+In HW's decomposition `Λ = \tilde{\Lambda} + Γ₁ + ⋯ + Γₙ` the integer is
+`n_s(\tilde{\Lambda})`, the winding number of the curve obtained by excising the crossings and
+capping them off; that surgery is not performed here, so `k` is produced abstractly.
+Everything else is: the crossings' contribution is exactly their model-sector value `α_ℓ / 2π`.
 
 With no crossings this is `TauCeti.Contour.IsPiecewiseC1On.exists_int_windingNumber`, and with a
 single smooth crossing it gives the half-integral winding number of the half-residue regime
