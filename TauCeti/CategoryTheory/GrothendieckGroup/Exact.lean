@@ -90,8 +90,17 @@ noncomputable def conflationRelation (S : ShortComplex C) : FreeAbelianGroup (Ob
   freeOf S.X₂ - freeOf S.X₁ - freeOf S.X₃
 
 /-- The defining equation of `TauCeti.conflationRelation`. -/
+@[simp]
 lemma conflationRelation_def (S : ShortComplex C) :
     conflationRelation S = freeOf S.X₂ - freeOf S.X₁ - freeOf S.X₃ := (rfl)
+
+/-- An additive homomorphism annihilates the relation of a short complex exactly when it is
+additive on that complex. This evaluates a conflation relation once and for all, for both the
+quotient map presenting exact `K₀` and the free extension of an invariant. -/
+lemma map_conflationRelation_eq_zero_iff {G : Type*} [AddCommGroup G]
+    (f : FreeAbelianGroup (ObjectCode C) →+ G) (S : ShortComplex C) :
+    f (conflationRelation S) = 0 ↔ f (freeOf S.X₂) = f (freeOf S.X₁) + f (freeOf S.X₃) := by
+  rw [conflationRelation_def, map_sub, map_sub, sub_sub, sub_eq_zero]
 
 /-- The free map of a functor carries the relation of a short complex to the relation of its
 image. -/
@@ -115,6 +124,7 @@ def exactRelations (E : ExactStructure C) : Set (FreeAbelianGroup (ObjectCode C)
 variable {E E' : ExactStructure C}
 
 /-- Membership in the family of conflation relations. -/
+@[simp]
 lemma mem_exactRelations_iff {r : FreeAbelianGroup (ObjectCode C)} :
     r ∈ exactRelations E ↔ ∃ S : ShortComplex C, E.Conflation S ∧ r = conflationRelation S :=
   (Iff.rfl)
@@ -158,11 +168,9 @@ lemma of_congr {X Y : C} (e : X ≅ Y) : (of X : ExactK0 E) = of Y :=
 sum of the classes of its outer terms. -/
 theorem of_conflation {S : ShortComplex C} (hS : E.Conflation S) :
     (of S.X₂ : ExactK0 E) = of S.X₁ + of S.X₃ := by
-  have h : (PresentedK0.mk (conflationRelation S) : PresentedK0 (exactRelations E)) = 0 :=
-    PresentedK0.mk_eq_zero_of_mem (conflationRelation_mem_exactRelations hS)
-  rw [conflationRelation_def, map_sub, map_sub, PresentedK0.mk_freeOf, PresentedK0.mk_freeOf,
-    PresentedK0.mk_freeOf, sub_sub, sub_eq_zero] at h
-  exact h
+  have h := (map_conflationRelation_eq_zero_iff (PresentedK0.mk (rels := exactRelations E)) S).1
+    (PresentedK0.mk_eq_zero_of_mem (conflationRelation_mem_exactRelations hS))
+  rwa [PresentedK0.mk_freeOf, PresentedK0.mk_freeOf, PresentedK0.mk_freeOf] at h
 
 /-- The defining relation of exact `K₀`, stated for a conflation presented by its two maps. -/
 theorem of_eq_add_of_conflation {X Y Z : C} {i : X ⟶ Y} {p : Y ⟶ Z} (zero : i ≫ p = 0)
@@ -170,7 +178,7 @@ theorem of_eq_add_of_conflation {X Y Z : C} {i : X ⟶ Y} {p : Y ⟶ Z} (zero : 
   of_conflation hS
 
 /-- The class of the subobject of a conflation is the difference of the other two classes. -/
-theorem of_sub_of_conflation {S : ShortComplex C} (hS : E.Conflation S) :
+theorem of_eq_sub_of_conflation {S : ShortComplex C} (hS : E.Conflation S) :
     (of S.X₁ : ExactK0 E) = of S.X₂ - of S.X₃ := by
   rw [of_conflation hS]
   abel
@@ -182,6 +190,7 @@ theorem of_biprod (X Z : C) : (of (X ⊞ Z) : ExactK0 E) = of X + of Z :=
   of_conflation (E.conflation_biprodShortComplex X Z)
 
 /-- The class of an object which is zero vanishes. -/
+@[simp]
 theorem of_eq_zero_of_isZero {X : C} (hX : IsZero X) : (of X : ExactK0 E) = 0 := by
   have h := of_biprod (E := E) X X
   rw [of_congr (isoBiprodZero hX).symm] at h
@@ -229,9 +238,9 @@ private noncomputable def AdditiveInvariant.toPresented (a : AdditiveInvariant E
   map_iso := a.map_iso
   map_rel := by
     rintro _ ⟨S, hS, rfl⟩
-    rw [conflationRelation_def, map_sub, map_sub, freeLift_freeOf a.map_iso,
-      freeLift_freeOf a.map_iso, freeLift_freeOf a.map_iso, a.map_conflation hS]
-    abel
+    rw [map_conflationRelation_eq_zero_iff, freeLift_freeOf a.map_iso,
+      freeLift_freeOf a.map_iso, freeLift_freeOf a.map_iso]
+    exact a.map_conflation hS
 
 @[simp] private lemma AdditiveInvariant.toPresented_obj (a : AdditiveInvariant E G) :
     a.toPresented.obj = a.obj :=
@@ -447,6 +456,8 @@ theorem fromSplit_unique (f : ExactK0 (ExactStructure.split C) →+ ExactK0 E)
     (hf : ∀ X : C, f (of X) = (of X : ExactK0 E)) : f = fromSplit E :=
   ofLE_unique _ f hf
 
+/-- The canonical comparison out of split `K₀` is surjective: the classes of objects generate
+exact `K₀`, so the exact `K₀` of any exact structure is a quotient of split `K₀`. -/
 theorem fromSplit_surjective : Function.Surjective (fromSplit E) :=
   ofLE_surjective _
 
