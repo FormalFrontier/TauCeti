@@ -269,6 +269,8 @@ private theorem isSimpleRing_of_baseChange
   apply IsSimpleRing.of_eq_bot_or_eq_top
   intro I
   let p : Submodule K A := I.asIdeal.restrictScalars K
+  have mem_p (x : A) : x ∈ p ↔ x ∈ I := by
+    simp only [p, Submodule.restrictScalars_mem, TwoSidedIdeal.mem_asIdeal]
   let J : TwoSidedIdeal (L ⊗[K] A) := TwoSidedIdeal.mk' (p.baseChange L)
     (p.baseChange L).zero_mem
     (fun hx hy => (p.baseChange L).add_mem hx hy)
@@ -284,8 +286,7 @@ private theorem isSimpleRing_of_baseChange
           | add x y hx hy => simpa [mul_add] using (p.baseChange L).add_mem hx hy
           | tmul m i =>
               refine ⟨(l * m) ⊗ₜ[K] ⟨a * i.1, ?_⟩, ?_⟩
-              · change a * i.1 ∈ I
-                exact I.mul_mem_left a i.1 i.2
+              · exact (mem_p _).2 (I.mul_mem_left a i.1 ((mem_p _).1 i.2))
               · simp [Algebra.TensorProduct.tmul_mul_tmul])
     (fun {x y} hx => by
       obtain ⟨z, rfl⟩ := hx
@@ -298,8 +299,7 @@ private theorem isSimpleRing_of_baseChange
           | add x y hx hy => simpa [add_mul] using (p.baseChange L).add_mem hx hy
           | tmul m i =>
               refine ⟨(m * l) ⊗ₜ[K] ⟨i.1 * a, ?_⟩, ?_⟩
-              · change i.1 * a ∈ I
-                exact I.mul_mem_right i.1 a i.2
+              · exact (mem_p _).2 (I.mul_mem_right i.1 a ((mem_p _).1 i.2))
               · simp [Algebra.TensorProduct.tmul_mul_tmul])
   have hcarrier (x : L ⊗[K] A) : x ∈ J ↔ x ∈ p.baseChange L := by simp [J]
   rcases IsSimpleOrder.eq_bot_or_eq_top J with hJ | hJ
@@ -311,8 +311,8 @@ private theorem isSimpleRing_of_baseChange
     have hp : p = ⊥ := (Submodule.baseChange_inj (A := L)).mp (by simpa using hpbc)
     apply TwoSidedIdeal.ext
     intro x
-    change x ∈ p ↔ x ∈ (⊥ : Submodule K A)
-    rw [hp]
+    rw [← mem_p, hp]
+    simp
   · right
     have hpbc : p.baseChange L = ⊤ := by
       ext x
@@ -321,8 +321,8 @@ private theorem isSimpleRing_of_baseChange
     have hp : p = ⊤ := (Submodule.baseChange_inj (A := L)).mp (by simpa using hpbc)
     apply TwoSidedIdeal.ext
     intro x
-    change x ∈ p ↔ x ∈ (⊤ : Submodule K A)
-    rw [hp]
+    rw [← mem_p, hp]
+    simp
 
 private theorem neZero_two_algebraicClosure {F : Type*} [Field F] [NeZero (2 : F)] :
     NeZero (2 : AlgebraicClosure F) := ⟨by
