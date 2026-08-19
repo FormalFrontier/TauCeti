@@ -92,11 +92,11 @@ theorem analyticAt_sqrtNearOne : AnalyticAt ℝ (sqrtNearOne A) 1 := by
     have hsquare : AnalyticAt ℝ (fun a : A ↦ a * a) 1 := analyticAt_id.mul analyticAt_id
     have hfderiv : fderiv ℝ (e : A → A) 1 =
         (ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ) two_ne_zero) : A ≃L[ℝ] A) := by
-      change fderiv ℝ (fun a : A ↦ a * a) 1 = _
+      simp only [e, HasStrictFDerivAt.toOpenPartialHomeomorph_coe]
       rw [(hasStrictFDerivAt_mul_self_one A).hasFDerivAt.fderiv]
     simpa [e] using e.analyticAt_symm' hsource (by simpa [e] using hsquare) hfderiv
-  have hlocalInverse : sqrtNearOne A = e.symm := by
-    rfl
+  have hlocalInverse : sqrtNearOne A = e.symm :=
+    (hasStrictFDerivAt_mul_self_one A).localInverse_def
   rw [hlocalInverse]
   simpa [e] using he
 

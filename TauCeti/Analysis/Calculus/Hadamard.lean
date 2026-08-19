@@ -64,6 +64,7 @@ theorem ContinuousLinearMap.segmentAverage_apply
 
 /-- At zero displacement, a weighted segment average is the integral of the weight times the
 value of the integrand at the basepoint. -/
+@[simp]
 theorem segmentAverage_zero [CompleteSpace F] (w : ℝ → ℝ) (g : E → F) (x : E) :
     segmentAverage w g x 0 = (∫ t in (0 : ℝ)..1, w t) • g x := by
   rw [segmentAverage]

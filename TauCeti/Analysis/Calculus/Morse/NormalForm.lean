@@ -43,7 +43,9 @@ The weight `2 * (1 - t)` is what makes `B 0` the Hessian on the nose.  Iterating
 Hadamard factorisation of `TauCeti.Analysis.Calculus.Hadamard` twice would also produce a smooth
 family with `f (x + v) - f x = B v v v` at a critical point, but its value at `0` is then the
 derivative of a parametrised integral rather than the Hessian, and it is not symmetric; both are
-needed here.
+needed here.  The averaged Hessian and its Taylor formula are stated for a map into an arbitrary
+Banach space, nothing in them being special to real-valued functions; only the congruence and the
+Morse lemma itself need `f` real-valued.
 
 The family `R` is manufactured from a square root: the operator `C v = (B 0)⁻¹ ∘ B v` is close to
 the identity for `v` close to `0`, so it has a unique square root there
@@ -93,30 +95,34 @@ open scoped ContDiff
 
 namespace TauCeti
 
-universe u
+universe u v
 
-variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → ℝ} {x : E}
+variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F] {x : E}
 
 -- `NormedSpace.toIsBoundedSMul` does not fire on an iterated space of continuous linear maps,
 -- because the `SMul` instance found there is `ContinuousLinearMap.instSMul` rather than the one
 -- coming from the module structure; the two are definitionally equal, and this restatement makes
 -- the instance available to `ContDiff.smul` and `Continuous.smul` below.
-private theorem isBoundedSMul_clm : IsBoundedSMul ℝ (E →L[ℝ] E →L[ℝ] ℝ) :=
-  @NormedSpace.toIsBoundedSMul ℝ (E →L[ℝ] E →L[ℝ] ℝ) _ _ _
+private theorem isBoundedSMul_clm : IsBoundedSMul ℝ (E →L[ℝ] E →L[ℝ] F) :=
+  @NormedSpace.toIsBoundedSMul ℝ (E →L[ℝ] E →L[ℝ] F) _ _ _
 
 section HessianAverage
+
+variable [CompleteSpace F] {f : E → F}
 
 /-- The **averaged Hessian** of `f` at `x` in the direction `v`: the average of the second
 derivative of `f` along the segment from `x` to `x + v`, against the weight `2 * (1 - t)`.  The
 weight is normalised so that the value at `v = 0` is the Hessian at `x` itself
 (`TauCeti.hessianAverage_zero`), while `TauCeti.map_add_eq_add_hessianAverage` says that
-`f (x + v)` differs from its first-order Taylor polynomial by `2⁻¹ * hessianAverage f x v v v`. -/
-def hessianAverage (f : E → ℝ) (x v : E) : E →L[ℝ] E →L[ℝ] ℝ :=
+`f (x + v)` differs from its first-order Taylor polynomial by `2⁻¹ • hessianAverage f x v v v`. -/
+def hessianAverage (f : E → F) (x v : E) : E →L[ℝ] E →L[ℝ] F :=
   segmentAverage (fun t ↦ 2 * (1 - t)) (fderiv ℝ (fderiv ℝ f)) x v
 
+omit [CompleteSpace F] in
 /-- The averaged Hessian as an integral over the compact unit interval, the shape in which the
 regularity theorem for parametrised integrals applies to it. -/
-theorem hessianAverage_eq_integral_Icc (f : E → ℝ) (x : E) :
+theorem hessianAverage_eq_integral_Icc (f : E → F) (x : E) :
     hessianAverage f x = fun v ↦ ∫ t in Set.Icc (0 : ℝ) 1,
       (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v) := by
   exact segmentAverage_eq_integral_Icc _ _ _
@@ -124,7 +130,7 @@ theorem hessianAverage_eq_integral_Icc (f : E → ℝ) (x : E) :
 /-- At the basepoint the averaged Hessian is the Hessian: the weight `2 * (1 - t)` has integral
 `1` over the unit interval. -/
 @[simp]
-theorem hessianAverage_zero (f : E → ℝ) (x : E) :
+theorem hessianAverage_zero (f : E → F) (x : E) :
     hessianAverage f x 0 = fderiv ℝ (fderiv ℝ f) x := by
   rw [hessianAverage, segmentAverage_zero]
   have hI : (∫ t in (0 : ℝ)..1, 2 * (1 - t)) = 1 := by
@@ -140,9 +146,10 @@ theorem contDiff_hessianAverage (hf : ContDiff ℝ ∞ f) (x : E) :
     (hf.fderiv_right (m := ∞) (by simp)).fderiv_right (m := ∞) (by simp)
   exact (by fun_prop : ContDiff ℝ ∞ fun t : ℝ ↦ 2 * (1 - t)).contDiff_segmentAverage hd x
 
+omit [CompleteSpace F] in
 private theorem continuous_hessianAverage_integrand (hf : ContDiff ℝ 2 f) (x v : E) :
     Continuous fun t : ℝ ↦ (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v) := by
-  have := isBoundedSMul_clm (E := E)
+  have := isBoundedSMul_clm (E := E) (F := F)
   have hd : Continuous (fderiv ℝ (fderiv ℝ f)) :=
     ((hf.fderiv_right (m := 1) (by norm_num)).fderiv_right (m := 0) (by norm_num)).continuous
   exact (by fun_prop : Continuous fun t : ℝ ↦ 2 * (1 - t)).smul (hd.comp (by fun_prop))
@@ -150,20 +157,16 @@ private theorem continuous_hessianAverage_integrand (hf : ContDiff ℝ 2 f) (x v
 /-- Evaluating the averaged Hessian on a pair of vectors commutes with the integral. -/
 theorem hessianAverage_apply (hf : ContDiff ℝ 2 f) (x v w w' : E) :
     hessianAverage f x v w w'
-      = ∫ t in (0 : ℝ)..1, (2 * (1 - t)) * fderiv ℝ (fderiv ℝ f) (x + t • v) w w' := by
+      = ∫ t in (0 : ℝ)..1, (2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v) w w' := by
   have h1 := continuous_hessianAverage_integrand hf x v
   have h2 : Continuous fun t : ℝ ↦ ((2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v)) w :=
-    (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w).continuous.comp h1
+    (ContinuousLinearMap.apply ℝ (E →L[ℝ] F) w).continuous.comp h1
   have hApply := ContinuousLinearMap.segmentAverage_apply
-    (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w) (fun t ↦ 2 * (1 - t))
+    (ContinuousLinearMap.apply ℝ (E →L[ℝ] F) w) (fun t ↦ 2 * (1 - t))
       (fderiv ℝ (fderiv ℝ f)) x v (h1.intervalIntegrable 0 1)
-  have h2' : IntervalIntegrable (fun t : ℝ ↦
-      (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w)
-        ((2 * (1 - t)) • fderiv ℝ (fderiv ℝ f) (x + t • v))) volume 0 1 := by
-    simpa using h2.intervalIntegrable 0 1
-  change (ContinuousLinearMap.apply ℝ (E →L[ℝ] ℝ) w)
-      (segmentAverage (fun t ↦ 2 * (1 - t)) (fderiv ℝ (fderiv ℝ f)) x v) w' = _
-  rw [hApply, ContinuousLinearMap.intervalIntegral_apply h2' w']
+  simp only [ContinuousLinearMap.apply_apply] at hApply
+  rw [hessianAverage, hApply,
+    ContinuousLinearMap.intervalIntegral_apply (h2.intervalIntegrable 0 1) w']
   simp
 
 /-- The averaged Hessian is a symmetric bilinear form, since each second derivative along the
@@ -178,7 +181,7 @@ theorem hessianAverage_symm (hf : ContDiff ℝ 2 f) (x v w w' : E) :
 /-- **Taylor's formula to second order**, with the remainder written as the averaged Hessian
 evaluated twice on the increment. -/
 theorem map_add_eq_add_hessianAverage (hf : ContDiff ℝ 2 f) (x v : E) :
-    f (x + v) = f x + fderiv ℝ f x v + (2 : ℝ)⁻¹ * hessianAverage f x v v v := by
+    f (x + v) = f x + fderiv ℝ f x v + (2 : ℝ)⁻¹ • hessianAverage f x v v v := by
   have h := map_add_eq_sum_add_integral_iteratedFDeriv (n := 1) (x := x) (y := v)
     (fun _ _ ↦ hf.contDiffAt)
   norm_num [Finset.sum_range_succ] at h
@@ -186,9 +189,12 @@ theorem map_add_eq_add_hessianAverage (hf : ContDiff ℝ 2 f) (x v : E) :
   -- order as `1 + 1`; expose that definitional equality before rewriting.
   rw [show (1 : ℕ) + 1 = 2 from rfl] at h
   simp only [iteratedFDeriv_two_apply] at h
-  rw [h, hessianAverage_apply hf, ← intervalIntegral.integral_const_mul]
+  rw [h, hessianAverage_apply hf, ← intervalIntegral.integral_smul]
   refine congrArg (fun z ↦ f x + fderiv ℝ f x v + z) ?_
-  exact intervalIntegral.integral_congr fun t _ ↦ by ring
+  refine intervalIntegral.integral_congr fun t _ ↦ ?_
+  rw [smul_smul]
+  congr 1
+  ring
 
 end HessianAverage
 
@@ -299,8 +305,8 @@ theorem exists_congruence_of_symmetric_family
   refine ⟨R, U, hUopen, h0U, hR0, ?_, ?_⟩
   · intro v hv
     have hsqrt : ContDiffAt ℝ ∞ (sqrtNearOne (E →L[ℝ] E)) (C v) := hv.2.contDiffAt
-    change ContDiffWithinAt ℝ ∞ (sqrtNearOne (E →L[ℝ] E) ∘ C) U v
-    exact (hsqrt.comp v hCsmooth.contDiffAt).contDiffWithinAt
+    have hcomp := (hsqrt.comp v hCsmooth.contDiffAt).contDiffWithinAt (s := U)
+    rwa [Function.comp_def] at hcomp
   · intro v hv
     exact hWsub hv.1
 
@@ -308,7 +314,7 @@ end Congruence
 
 section MorseLemma
 
-variable [CompleteSpace E]
+variable [CompleteSpace E] {f : E → ℝ}
 
 /-- **The Morse lemma.** Near a nondegenerate critical point `x` of a smooth function `f` there is
 a smooth map `φ`, fixing `0` and with derivative the identity there, in terms of which `f` is
@@ -382,9 +388,7 @@ theorem IsNondegenerateCriticalPoint.exists_morse_chart (hf : ContDiff ℝ ∞ f
     simpa using hφeq (y - x) hy
   have hderivInvertible : ∀ᶠ y in 𝓝 x, ∃ e : E ≃L[ℝ] E,
       (e : E →L[ℝ] E) = fderiv ℝ (φ ∘ fun y : E ↦ y - x) y := by
-    have ht := hΨsmooth.continuousAt_fderiv (by simp)
-    change Filter.Tendsto (fderiv ℝ (φ ∘ fun y : E ↦ y - x)) (𝓝 x)
-      (𝓝 (fderiv ℝ (φ ∘ fun y : E ↦ y - x) x)) at ht
+    have ht := (hΨsmooth.continuousAt_fderiv (by simp)).tendsto
     rw [hΨderiv.fderiv] at ht
     exact ht.eventually (ContinuousLinearEquiv.refl ℝ E).nhds
   have hgood : {y | y ∈ V ∧ ∃ e : E ≃L[ℝ] E,
