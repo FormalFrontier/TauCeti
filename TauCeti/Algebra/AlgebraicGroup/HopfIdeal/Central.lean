@@ -41,6 +41,10 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 * `TauCeti.CommHopfAlgCat.isCentral_iff_forall_isCentralPoint`: **a Hopf ideal is central exactly
   when the points it cuts out are central points over every value algebra.**
 * `TauCeti.HopfIdeal.IsCentral.isNormal`: a central Hopf ideal is normal.
+* `TauCeti.HopfIdeal.IsCentral.isMulCommutative_quotientPointsSubgroup`: the points of a central
+  closed subgroup form a commutative group.
+* `TauCeti.HopfIdeal.IsCentral.isCocomm_quotient`: the coordinate Hopf algebra of a central
+  closed subgroup is cocommutative.
 * `TauCeti.HopfIdeal.isCentral_bot_iff_isCocomm`: the whole group is central exactly when the
   coordinate Hopf algebra is cocommutative.
 * `TauCeti.CommHopfAlgCat.isCentral_augmentation`: the trivial subgroup is central.
@@ -271,6 +275,38 @@ theorem IsCentral.isNormal {H : _root_.CommHopfAlgCat.{v} R} {I : HopfIdeal R H}
   have : g * n * g⁻¹ = n := by
     rw [← hcom.eq, mul_assoc, mul_inv_cancel, mul_one]
   rwa [this]
+
+/-- The algebra-valued points of a central closed subgroup form a commutative group. -/
+theorem IsCentral.isMulCommutative_quotientPointsSubgroup
+    {H : _root_.CommHopfAlgCat.{v} R} {I : HopfIdeal R H} (hI : I.IsCentral)
+    (A : CommAlgCat.{v} R) : IsMulCommutative (CommHopfAlgCat.quotientPointsSubgroup H I A) := by
+  rw [isMulCommutative_iff]
+  rintro ⟨g, hg⟩ ⟨h, _⟩
+  apply Subtype.ext
+  exact
+    ((CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg).commute h).eq
+
+/-- The coordinate Hopf algebra of a central closed subgroup is cocommutative. Equivalently,
+every central closed subgroup scheme is a commutative group scheme. -/
+theorem IsCentral.isCocomm_quotient {H : _root_.CommHopfAlgCat.{v} R}
+    {I : HopfIdeal R H} (hI : I.IsCentral) :
+    _root_.Coalgebra.IsCocomm R (CommHopfAlgCat.quotient H I) := by
+  rw [← isCentral_bot_iff_isCocomm]
+  rw [CommHopfAlgCat.isCentral_iff_forall_isCentralPoint]
+  intro A g _
+  rw [HopfAlgebra.isCentralPoint_def]
+  intro B _ _ φ h
+  rw [commute_iff_eq]
+  let B' : CommAlgCat.{v} R := CommAlgCat.of R B
+  let g' := AlgHom.mapValue φ g
+  have hg' : CommHopfAlgCat.quotientPointsHom H I B' g' ∈
+      CommHopfAlgCat.quotientPointsSubgroup H I B' :=
+    CommHopfAlgCat.quotientPointsHom_mem_quotientPointsSubgroup H I B' g'
+  have hcentral :=
+    CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup H I hI B' hg'
+  apply CommHopfAlgCat.quotientPointsHom_injective H I B'
+  simpa only [map_mul] using
+    (hcentral.commute (CommHopfAlgCat.quotientPointsHom H I B' h)).eq
 
 end HopfIdeal
 
