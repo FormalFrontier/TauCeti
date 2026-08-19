@@ -99,7 +99,7 @@ attribute [local instance] TauCeti.moduleNNRat
 -- Match tensor products to the `ℤ`-algebra instance the Kostant torus is stated against.
 attribute [local instance high] Algebra.toModule
 
-universe v
+universe v w
 
 variable {L : Type v} [LieRing L] [LieAlgebra ℚ L] [LieAlgebra.IsKilling ℚ L]
   [FiniteDimensional ℚ L] {H : LieSubalgebra ℚ L} [H.IsCartanSubalgebra]
@@ -290,9 +290,9 @@ theorem rootCorootWeightBasisCard_eq_finrank :
 
 section Torus
 
-/-- **The torus of coroot cocharacters of the adjoint Chevalley group.** Over any commutative ring
-`A` it acts diagonally on `A ⊗[ℤ] L_ℤ`, scaling the base-changed weight-basis vector `b i` by the
-value at `s` of its character `chevalleyWeightFin i`.
+/-- **The diagonal coroot-parameter torus action on the Chevalley lattice.** Over any commutative
+ring `A` it acts on `A ⊗[ℤ] L_ℤ`, scaling the base-changed weight-basis vector `b i` by the value at
+`s` of its character `chevalleyWeightFin i`.
 
 The parameter is indexed by all weights of `L` rather than by the roots alone; at the zero weight
 the coroot vanishes, and with it both the cocharacter
@@ -306,13 +306,14 @@ noncomputable def chevalleyTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] 
   UniversalEnvelopingAlgebra.kostantTorusPoints (rootCorootSpan x).toAddSubgroup
     hx.chevalleyWeightBasisFin hx.chevalleyWeightFin A
 
-/-- The defining equation of `TauCeti.IsChevalleySystem.chevalleyTorusPoints`, through which the
-`kostantTorusPoints` API — naturality in the value ring, scalar extension, the matrix form and the
-torus subgroup — applies to it. -/
-theorem chevalleyTorusPoints_def (A : Type*) [CommRing A] [Algebra ℤ A] :
-    hx.chevalleyTorusPoints A =
-      UniversalEnvelopingAlgebra.kostantTorusPoints (rootCorootSpan x).toAddSubgroup
-        hx.chevalleyWeightBasisFin hx.chevalleyWeightFin A :=
+/-- The image of the diagonal coroot-parameter action in the general linear group. -/
+noncomputable def chevalleyTorusSubgroup (A : Type*) [CommRing A] [Algebra ℤ A] :
+    Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (rootCorootSpan x).toAddSubgroup)) :=
+  (hx.chevalleyTorusPoints A).range
+
+/-- The Chevalley torus subgroup is the range of the torus-points homomorphism. -/
+theorem chevalleyTorusSubgroup_eq_range (A : Type*) [CommRing A] [Algebra ℤ A] :
+    hx.chevalleyTorusSubgroup A = (hx.chevalleyTorusPoints A).range :=
   (rfl)
 
 /-- **A torus point acts on a weight vector of the Chevalley lattice by the value of its
@@ -330,6 +331,54 @@ theorem chevalleyTorusPoints_tmul_of_isCartanWeightVector {A : Type*} [CommRing 
     hx.kostantForm_apply_mem_rootCorootSpan
     hx.chevalleyWeightBasisFin hx.chevalleyWeightFin
     hx.isCartanWeightVector_chevalleyWeightBasisFin hm s a
+
+/-- A Chevalley torus point scales a base-changed weight-basis vector by its recorded character. -/
+@[simp] theorem chevalleyTorusPoints_tmul_basis {A : Type*} [CommRing A] [Algebra ℤ A]
+    (s : Weight ℚ H L → Aˣ) (a : A) (i : Fin (rootCorootWeightBasisCard x)) :
+    (hx.chevalleyTorusPoints A s).val (a ⊗ₜ[ℤ] hx.chevalleyWeightBasisFin i) =
+      ((torusCharacter s (hx.chevalleyWeightFin i) : A) * a) ⊗ₜ[ℤ]
+        hx.chevalleyWeightBasisFin i := by
+  exact UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_basis _ _ _ s a i
+
+/-- A Chevalley torus point scales a base-changed root-vector generator by its Cartan character. -/
+theorem chevalleyTorusPoints_tmul_rootVector {A : Type*} [CommRing A] [Algebra ℤ A]
+    (β : Weight ℚ H L) (s : Weight ℚ H L → Aˣ) (a : A) :
+    (hx.chevalleyTorusPoints A s).val
+        (a ⊗ₜ[ℤ] (⟨x β, rootVector_mem_rootCorootSpan x β⟩ : (rootCorootSpan x).toAddSubgroup)) =
+      ((torusCharacter s (rootCartanWeight β) : A) * a) ⊗ₜ[ℤ]
+        (⟨x β, rootVector_mem_rootCorootSpan x β⟩ : (rootCorootSpan x).toAddSubgroup) :=
+  hx.chevalleyTorusPoints_tmul_of_isCartanWeightVector
+    (hx.toIsSl2System.isCartanWeightVector_rootVector β) s a
+
+/-- Naturality of the Chevalley torus action in the value ring. -/
+theorem map_chevalleyTorusPoints {A B : Type*} [CommRing A] [CommRing B]
+    (φ : A →+* B) (s : Weight ℚ H L → Aˣ) (z : A ⊗[ℤ] (rootCorootSpan x).toAddSubgroup) :
+    TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id
+        ((hx.chevalleyTorusPoints A s).val z) =
+      (hx.chevalleyTorusPoints B fun α => Units.map (φ : A →* B) (s α)).val
+        (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
+  exact UniversalEnvelopingAlgebra.map_kostantTorusPoints _ _ _ φ s z
+
+/-- Scalar extension carries a Chevalley torus point to the point with mapped parameters. -/
+theorem mapScalarExtensionAutomorphisms_chevalleyTorusPoints {A B : CommAlgCat.{w} ℤ}
+    (φ : A ⟶ B) (s : Weight ℚ H L → Aˣ) :
+    GeneralLinear.mapScalarExtensionAutomorphisms (V := (rootCorootSpan x).toAddSubgroup) φ
+        (hx.chevalleyTorusPoints A s) =
+      hx.chevalleyTorusPoints B fun α => Units.map φ.hom.toRingHom.toMonoidHom (s α) := by
+  exact UniversalEnvelopingAlgebra.mapScalarExtensionAutomorphisms_kostantTorusPoints _ _ _ φ s
+
+/-- The Chevalley torus action in the coordinates of its numbered weight basis. -/
+noncomputable def chevalleyTorusMatrix {A : Type*} [CommRing A] [Algebra ℤ A] :
+    (Weight ℚ H L → Aˣ) →* Matrix.GeneralLinearGroup
+      (Fin (rootCorootWeightBasisCard x)) A :=
+  UniversalEnvelopingAlgebra.kostantTorusMatrix (rootCorootSpan x).toAddSubgroup
+    hx.chevalleyWeightBasisFin hx.chevalleyWeightFin
+
+/-- In the Chevalley weight basis, a torus point is diagonal with its weight characters. -/
+@[simp] theorem chevalleyTorusMatrix_apply {A : Type*} [CommRing A] [Algebra ℤ A]
+    (s : Weight ℚ H L → Aˣ) :
+    hx.chevalleyTorusMatrix s = diagGL fun i => torusCharacter s (hx.chevalleyWeightFin i) := by
+  exact UniversalEnvelopingAlgebra.kostantTorusMatrix_apply _ _ _ s
 
 end Torus
 

@@ -139,7 +139,7 @@ noncomputable def rootCartanWeight (β : Weight K H L) : Weight K H L → ℤ :=
 `K`. Since `K` has characteristic zero this determines `TauCeti.rootCartanWeight` uniquely; it is
 deliberately not a `simp` lemma, as rewriting with it discards the integrality the definition
 exists to record. -/
-theorem intCast_rootCartanWeight (α β : Weight K H L) :
+theorem intCast_rootCartanWeight_apply (α β : Weight K H L) :
     ((rootCartanWeight β α : ℤ) : K) = β (coroot α) := by
   rw [rootCartanWeight, apply_coroot_eq_cast α β]
 
@@ -153,7 +153,7 @@ theorem corootFamily_eq_zero_of_isZero {α : Weight K H L} (hα : α.IsZero) :
 @[simp] theorem rootCartanWeight_eq_zero_of_isZero (β : Weight K H L) {α : Weight K H L}
     (hα : α.IsZero) : rootCartanWeight β α = 0 := by
   have : ((rootCartanWeight β α : ℤ) : K) = ((0 : ℤ) : K) := by
-    rw [intCast_rootCartanWeight, coroot_eq_zero_iff.2 hα]
+    rw [intCast_rootCartanWeight_apply, coroot_eq_zero_iff.2 hα]
     simp
   exact_mod_cast this
 
@@ -208,7 +208,7 @@ theorem lie_rootVector_rootVector_mem_rootCorootSpan
 `TauCeti.rootCartanWeight`. -/
 theorem lie_coroot_rootVector (α β : Weight K H L) :
     ⁅(coroot α : L), x β⁆ = ((rootCartanWeight β α : ℤ) : K) • x β := by
-  rw [hx.lie_coroot β α, intCast_rootCartanWeight]
+  rw [hx.lie_coroot β α, intCast_rootCartanWeight_apply]
 
 /-- The bracket of a coroot with a root vector belongs to the integral root--coroot span. Its
 coefficient is the corresponding integral Cartan number. -/
