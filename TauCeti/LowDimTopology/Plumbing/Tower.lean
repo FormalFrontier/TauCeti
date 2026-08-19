@@ -26,9 +26,11 @@ weight is a cycle sent to `1`.
 
 Two consequences follow. First, lattice homology is not zero: the short complex of the lattice
 differential is not exact. Second, and more precisely, the class of a minimal-weight lattice point
-generates a *free* `𝔽₂[U]`-submodule: no nonzero multiple `U ^ j` of it is a boundary. That
-infinite `U`-tower is the structural feature that makes `m` the numerical `d`-invariant of the
-plumbed three-manifold, rather than one value among many.
+generates a *free* `𝔽₂[U]`-submodule: no nonzero multiple `U ^ j` of it is a boundary, an infinite
+`U`-tower. Nothing here locates that tower in a homological grading, so no `d`-invariant is
+identified; in Némethi's theory it is the graded bottom of such a tower that gives the
+`d`-invariant of the plumbed three-manifold, and a graded statement to that effect is left to
+future work.
 
 ## Main definitions
 
@@ -256,57 +258,10 @@ minimal-weight lattice point is a cycle that is not a boundary. -/
 theorem not_exact_latticeShortComplex (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) : ¬ (P.latticeShortComplex k).Exact := by
   obtain ⟨c, hcycle, hone⟩ := P.exists_cycle_latticeAugmentation_eq_one h k
-  rw [ShortComplex.moduleCat_exact_iff]
+  rw [P.latticeShortComplex_exact_iff_range_eq_ker k]
   intro hexact
-  have hf : (P.latticeShortComplex k).f =
-      eqToHom (P.latticeShortComplex_X₁ k) ≫
-        ModuleCat.ofHom (P.latticeDifferential k) ≫
-          eqToHom (P.latticeShortComplex_X₂ k).symm :=
-    (conj_eqToHom_iff_heq _ _ (P.latticeShortComplex_X₁ k)
-      (P.latticeShortComplex_X₂ k)).mpr (P.latticeShortComplex_f k)
-  have hg : (P.latticeShortComplex k).g =
-      eqToHom (P.latticeShortComplex_X₂ k) ≫
-        ModuleCat.ofHom (P.latticeDifferential k) ≫
-          eqToHom (P.latticeShortComplex_X₃ k).symm :=
-    (conj_eqToHom_iff_heq _ _ (P.latticeShortComplex_X₂ k)
-      (P.latticeShortComplex_X₃ k)).mpr (P.latticeShortComplex_g k)
-  have hf_comp : (P.latticeShortComplex k).f ≫
-      (eqToIso (P.latticeShortComplex_X₂ k)).hom =
-        (eqToIso (P.latticeShortComplex_X₁ k)).hom ≫
-          ModuleCat.ofHom (P.latticeDifferential k) := by
-    rw [hf]
-    simp
-  have hg_comp : (eqToIso (P.latticeShortComplex_X₂ k)).inv ≫
-      (P.latticeShortComplex k).g =
-        ModuleCat.ofHom (P.latticeDifferential k) ≫
-          (eqToIso (P.latticeShortComplex_X₃ k)).inv := by
-    rw [hg]
-    simp
-  let c' : (P.latticeShortComplex k).X₂ :=
-    (eqToIso (P.latticeShortComplex_X₂ k)).inv c
-  have hcycle' : (P.latticeShortComplex k).g c' = 0 := by
-    change (((eqToIso (P.latticeShortComplex_X₂ k)).inv ≫
-      (P.latticeShortComplex k).g) c) = 0
-    rw [hg_comp, ConcreteCategory.comp_apply]
-    change (eqToIso (P.latticeShortComplex_X₃ k)).inv
-      (P.latticeDifferential k c) = 0
-    rw [hcycle, map_zero]
-  obtain ⟨b, hb⟩ := hexact c' hcycle'
-  let b' : PlumbingChain V := (eqToIso (P.latticeShortComplex_X₁ k)).hom b
-  have hb' : P.latticeDifferential k b' = c := by
-    have hb'' := congrArg (fun x => (eqToIso (P.latticeShortComplex_X₂ k)).hom x) hb
-    change (((P.latticeShortComplex k).f ≫
-      (eqToIso (P.latticeShortComplex_X₂ k)).hom) b) =
-        (eqToIso (P.latticeShortComplex_X₂ k)).hom c' at hb''
-    rw [hf_comp, ConcreteCategory.comp_apply] at hb''
-    change P.latticeDifferential k b' =
-      (eqToIso (P.latticeShortComplex_X₂ k)).hom c' at hb''
-    have hc' : (eqToIso (P.latticeShortComplex_X₂ k)).hom c' = c := by
-      change (((eqToIso (P.latticeShortComplex_X₂ k)).inv ≫
-        (eqToIso (P.latticeShortComplex_X₂ k)).hom) c) = c
-      simp
-    rwa [hc'] at hb''
-  have hzero := P.latticeAugmentation_eq_zero_of_mem_range h k ⟨b', hb'⟩
+  have hzero := P.latticeAugmentation_eq_zero_of_mem_range h k
+    (hexact ▸ LinearMap.mem_ker.mpr hcycle)
   rw [hone] at hzero
   exact one_ne_zero hzero
 
