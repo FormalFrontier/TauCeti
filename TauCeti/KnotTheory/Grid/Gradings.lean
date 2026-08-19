@@ -141,13 +141,11 @@ theorem alexander_transpose (x : GridState n) :
   rw [alexander_def, alexander_def, maslovO_transpose, maslovX_transpose]
 
 /-- The marking swap exchanges the two Maslov gradings: `M_O` of the swap is `M_X`. -/
-@[simp]
 theorem maslovO_swapMarkings (x : GridState n) :
     G.swapMarkings.maslovO x = G.maslovX x := by
   rw [maslovO_def, maslovX_def, JO_swapMarkings, swapMarkings_O]
 
 /-- The marking swap exchanges the two Maslov gradings: `M_X` of the swap is `M_O`. -/
-@[simp]
 theorem maslovX_swapMarkings (x : GridState n) :
     G.swapMarkings.maslovX x = G.maslovO x := by
   rw [maslovX_def, maslovO_def, JX_swapMarkings, swapMarkings_X]
