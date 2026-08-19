@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 
@@ -34,6 +36,8 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
 * `TauCeti.GeneralLinear.weightCharacterMap`: the homomorphism on character lattices.
 * `TauCeti.GeneralLinear.weightTorusCoordinateMap`: the coordinate Hopf-algebra morphism of the
   represented weight torus.
+* `TauCeti.GeneralLinear.weightTorusBaseChangeCoordinateMap`: that morphism base changed along
+  `R → K` and transported into the coordinate Hopf algebras built directly over `K`.
 * `TauCeti.GeneralLinear.weightTorus`: the represented morphism `𝔾ₘ^κ → GL_N`.
 * `TauCeti.GeneralLinear.schemePointsMulEquiv_weightTorus`: its diagonal matrix on
   scheme-valued points.
@@ -121,6 +125,44 @@ private theorem weightTorus_hom (wt : Fin N → κ → ℤ) :
   rfl
 
 end Construction
+
+section BaseChange
+
+universe v
+
+variable [Finite κ]
+
+/-- The base change along `R → K` of the weight-torus coordinate map, transported into the
+coordinate Hopf algebras built directly over `K` by `coordinateHopfAlgebraBaseChangeIso` and
+`DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso`.
+
+This is a transport of the map over `R`, not a fresh construction over `K`: it is not proved
+here to agree with `weightTorusCoordinateMap (R := K) wt`, which would need base-change
+compatibility of `diagonalTorusCoordinateMap`. -/
+noncomputable def weightTorusBaseChangeCoordinateMap
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
+    (wt : Fin N → κ → ℤ) :
+    coordinateHopfAlgebra K N ⟶
+      (DiagonalizableGroup.coordinateRing K (SplitTorus.characterGroup κ)).obj :=
+  (coordinateHopfAlgebraBaseChangeIso R K N).inv ≫
+    CommHopfAlgCat.baseChangeMap (weightTorusCoordinateMap (R := R) wt) ≫
+    (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
+      (SplitTorus.characterGroup κ)).hom
+
+/-- The base-changed weight-torus coordinate map is the stated composite of the two coordinate
+base-change isomorphisms with the scalar extension of the map over `R`. -/
+theorem weightTorusBaseChangeCoordinateMap_def
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
+    (wt : Fin N → κ → ℤ) :
+    weightTorusBaseChangeCoordinateMap R K wt =
+      (coordinateHopfAlgebraBaseChangeIso R K N).inv ≫
+        CommHopfAlgCat.baseChangeMap (weightTorusCoordinateMap (R := R) wt) ≫
+        (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
+          (SplitTorus.characterGroup κ)).hom := by
+  unfold weightTorusBaseChangeCoordinateMap
+  rfl
+
+end BaseChange
 
 variable [Fintype κ]
 variable {A : Type u} [CommRing A] [Algebra R A]
