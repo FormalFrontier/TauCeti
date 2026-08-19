@@ -67,9 +67,9 @@ private theorem extensionBasis_castAdd {m n : ℕ} (p : Submodule K V)
 @[simp]
 private theorem extensionBasis_natAdd_mkQ {m n : ℕ} (p : Submodule K V)
     (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) (j : Fin n) :
-    p.mkQ (extensionBasis p bp bq (Fin.natAdd m j)) = bq j := by
+    Submodule.Quotient.mk (extensionBasis p bp bq (Fin.natAdd m j)) = bq j := by
   rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Submodule.mkQ_apply, Basis.sumQuot_inr]
+    Basis.sumQuot_inr]
 
 @[simp]
 private theorem extensionBasis_repr_castAdd {m n : ℕ} (p : Submodule K V)
@@ -158,7 +158,7 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
                     LinearMap.toMatrixAlgEquiv_apply,
                     extensionBasis_repr_natAdd]
                   rw [← q_apply]
-                  rw [extensionBasis_natAdd_mkQ]
+                  rw [Submodule.mkQ_apply, extensionBasis_natAdd_mkQ]
                   simpa only [LinearMap.toMatrixAlgEquiv_apply] using
                     (hbq g |>.isUpperTriangular
                       ((Fin.strictMono_natAdd 1).lt_iff_lt.mp hji))
@@ -175,7 +175,7 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
               rw [finSumFinEquiv_apply_right, LinearMap.toMatrixAlgEquiv_apply,
                 extensionBasis_repr_natAdd]
               rw [← q_apply]
-              rw [extensionBasis_natAdd_mkQ]
+              rw [Submodule.mkQ_apply, extensionBasis_natAdd_mkQ]
               simpa only [LinearMap.toMatrixAlgEquiv_apply] using hbq g |>.apply_diag i
       · let _ : Subsingleton V := not_nontrivial_iff_subsingleton.mp hV
         have hzero : finrank K V = 0 := Module.finrank_zero_of_subsingleton
