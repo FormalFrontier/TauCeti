@@ -43,6 +43,8 @@ namespace TauCeti.RatFunc
 theorem finrank_adjoin_X_pow (K : Type*) [Field K] (n : ℕ) :
     Module.finrank (IntermediateField.adjoin K {(_root_.RatFunc.X : _root_.RatFunc K) ^ n})
       (_root_.RatFunc K) = n := by
+  -- `X ^ n` as the image of a polynomial, so that `finrank_eq_max_natDegree` reads its
+  -- numerator and denominator off `X ^ n` and `1`
   rw [← _root_.RatFunc.algebraMap_X, ← map_pow, _root_.RatFunc.finrank_eq_max_natDegree,
     _root_.RatFunc.num_algebraMap, _root_.RatFunc.denom_algebraMap, natDegree_X_pow,
     natDegree_one, Nat.max_zero]

@@ -22,15 +22,14 @@ below `K(W)^q` as well. Along `K(x^q) ⊆ K(x) ⊆ K(W)` the degrees are `q` and
 raising to the `q`-th power embeds the pair `K(x) ⊆ K(W)` as `K(x^q) ⊆ K(W)^q` and so preserves
 its relative degree. Comparing the two routes gives `2 · [K(W) : K(W)^q] = 2q`.
 
-## Main results
+## Main result
 
-* `WeierstrassCurve.Affine.relfinrank_fieldRange_frobeniusAlgHom`: `[K(W)^q : K(x^q)] = 2`.
 * `WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`: `[K(W) : K(W)^q] = q`.
 
 `K(W)^q` is not given a name of its own: it is the field range of
-`FiniteField.frobeniusAlgHom K W.FunctionField` throughout, which is the expression the seeded
-`Isogeny.degree` — a `finrank` over a `fieldPullback.fieldRange` — is taken over, so a consumer
-needs no rewriting to reach it.
+`FiniteField.frobeniusAlgHom K W.FunctionField` throughout, which is the expression
+`TauCeti.Isogeny.degree` — a `finrank` over a `fieldPullback.fieldRange` — is taken over, so a
+consumer needs no rewriting to reach it.
 
 No degree here needs `W` to be elliptic: these are degrees of `K(W)` over embedded subfields, and
 the Weierstrass equation alone gives the power basis.
@@ -38,24 +37,25 @@ the Weierstrass equation alone gives the power basis.
 ## Roadmap
 
 `TauCetiRoadmap/EllipticCurves/README.md`, **Layer 1**, the Frobenius isogeny — "the key input to
-Layer 3", seeded as `frobeniusIsogeny` with `degree_frobeniusIsogeny : … = Nat.card F`, where
+Layer 3". That isogeny and its degree already exist, as `TauCeti.Isogeny.frobeniusIsogeny` and
+`TauCeti.Isogeny.degree_frobeniusIsogeny : (frobeniusIsogeny W).degree = Nat.card F`, where
 `Isogeny.degree φ := Module.finrank φ.fieldPullback.fieldRange W₁.FunctionField`. The subfield
-`K(W)^q` here is the field range that seeded degree is taken over, so
-`finrank_fieldRange_frobeniusAlgHom` is that theorem's field-theoretic content, available before
-any isogeny exists and stated in the same `Nat.card K`.
+`K(W)^q` here is the field range that degree is taken over, so
+`finrank_fieldRange_frobeniusAlgHom` is the field-theoretic input
+`degree_frobeniusIsogeny` is transported from, stated in the same `Nat.card K`.
 
-Nothing here defines an isogeny, a `fieldPullback` or a `degree`; the seeded declarations stay
-untouched for whoever builds Layer 1's isogeny API.
+Nothing here defines an isogeny, a `fieldPullback` or a `degree`: this file is purely the
+field theory that `Isogeny/Frobenius.lean` consumes.
 
 ## Provenance
 
 Ported from the AINTLIB `HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, pinned by
 that roadmap at `dev/hasse-weil @ 513e83879e2f`), `HasseWeil/FrobeniusIsogeny.lean`, the `private`
-declarations `frobeniusAlgHom_comp_comm`, `finrank_over_frobenius_image` and
-`frobenius_finrank_functionField`. The source's `frobFracRange`, `frobFracRange_le_frobRange` and
-`finrank_frobFracRange_functionField` are the finite-field model of the exponent-generic tower,
-which lives in `Affine/FunctionField/PowerTower.lean` and carries their credit; what remains here
-is the specialisation of that tower to the `q`-power map.
+declarations `finrank_over_frobenius_image` and `frobenius_finrank_functionField`. The source's
+`frobFracRange`, `frobFracRange_le_frobRange` and `finrank_frobFracRange_functionField` are the
+finite-field model of the exponent-generic tower, which lives in
+`Affine/FunctionField/PowerTower.lean` and carries their credit; what remains here is the
+specialisation of that tower to the `q`-power map.
 
 Changes from the source. They are `private` there, inside the file that builds the Frobenius
 isogeny, and work over `FractionRing K[X]`; a large part of their length is spent transporting the
@@ -99,23 +99,10 @@ private theorem frobeniusAlgHom_apply_X :
   let _ := Fintype.ofFinite K
   rw [_root_.FiniteField.coe_frobeniusAlgHom, Nat.card_eq_fintype_card]
 
-/-- **`[K(W)^q : K(x^q)] = 2`.** Raising `K(x) ⊆ K(W)` to the `q`-th power is an embedding of the
-pair, so the relative degree `2` of `finrank_ratFuncRange` is unchanged.
-
-This is not a simp lemma: `simpNF` first normalizes `Nat.card K` to `Fintype.card K` on the
-left-hand side, so the displayed statement is not in simp-normal form. -/
-theorem relfinrank_fieldRange_frobeniusAlgHom :
-    letI := Fintype.ofFinite K
-    relfinrank (ratFuncAdjoinXPowRange W (Nat.card K))
-      (_root_.FiniteField.frobeniusAlgHom K W.FunctionField).fieldRange = 2 := by
-  let _ := Fintype.ofFinite K
-  rw [ratFuncAdjoinXPowRange_eq_map_ratFuncRange W _ (frobeniusAlgHom_apply_X W),
-    _root_.WeierstrassCurve.Affine.relfinrank_map_ratFuncRange_fieldRange]
-
 /-- **`[K(W) : K(W)^q] = q`.** The tower `K(x^q) ⊆ K(W)^q ⊆ K(W)` has degrees `2` and
 `[K(W) : K(W)^q]`, with product `2q`. Stated over the field range of the `q`-power map itself,
-which is the form the seeded `Isogeny.degree` — a `finrank` over a `fieldPullback.fieldRange` —
-is taken over. -/
+which is the form `TauCeti.Isogeny.degree` — a `finrank` over a `fieldPullback.fieldRange` — is
+taken over. -/
 @[simp]
 theorem finrank_fieldRange_frobeniusAlgHom :
     letI := Fintype.ofFinite K
