@@ -23,11 +23,8 @@ components cannot both be outside `TauCeti.filledHull K`.
   real normed space of dimension at least two.
 * `TauCeti.connectedComponentIn_compl_eq_of_not_isBounded` — the unbounded connected component of
   the complement of a bounded set is unique.
-* `TauCeti.isClosed_filledHull` — the filled hull of a closed set is closed.
-* `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn` — of two points of the
-  complement of a bounded set in different components, at least one lies in the filled hull.
-
-This is a prerequisite of the planar-separation step of the `ConformalMapping` roadmap (L5).
+* `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn` — of two points in
+  different components, at least one lies in the filled hull.
 
 ## References
 
@@ -106,31 +103,18 @@ theorem connectedComponentIn_compl_eq_of_not_isBounded (h : 1 < Module.rank ℝ 
     (isPreconnected_compl_closedBall h 0 R).subset_connectedComponentIn hx'R hext hy'R
   rw [connectedComponentIn_eq hx'c, connectedComponentIn_eq h1, ← connectedComponentIn_eq hy'c]
 
-omit [NormedSpace ℝ E] in
-/-- **The filled hull of a closed set is closed.** Its complement is the union of the unbounded
-connected components of `Kᶜ`, each of which is open. -/
-theorem isClosed_filledHull [LocallyConnectedSpace E] (hK : IsClosed K) :
-    IsClosed (filledHull K) := by
-  rw [← isOpen_compl_iff, isOpen_iff_forall_mem_open]
-  intro x hx
-  rw [mem_compl_iff, mem_filledHull_iff] at hx
-  refine ⟨connectedComponentIn Kᶜ x, fun y hy => ?_, hK.isOpen_compl.connectedComponentIn, ?_⟩
-  · rw [mem_compl_iff, mem_filledHull_iff, ← connectedComponentIn_eq hy]
-    exact hx
-  · refine mem_connectedComponentIn fun hxK => hx ?_
-    rw [connectedComponentIn_eq_empty (notMem_compl_iff.mpr hxK)]
-    exact isBounded_empty
-
-/-- **Two points of the complement of a bounded set in different components are not both outside
+/-- **Two points in different components of the complement of a bounded set cannot both lie outside
 the filled hull.** -/
 theorem mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn (h : 1 < Module.rank ℝ E)
-    (hK : IsBounded K) (hy : y ∉ K) (hxy : y ∉ connectedComponentIn Kᶜ x) :
+    (hK : IsBounded K) (hxy : y ∉ connectedComponentIn Kᶜ x) :
     x ∈ filledHull K ∨ y ∈ filledHull K := by
-  by_contra hcon
-  push Not at hcon
-  rw [mem_filledHull_iff] at hcon
-  rw [mem_filledHull_iff] at hcon
-  exact hxy ((connectedComponentIn_compl_eq_of_not_isBounded h hK hcon.1 hcon.2).symm ▸
-    mem_connectedComponentIn (mem_compl hy))
+  by_cases hy : y ∈ K
+  · exact Or.inr (subset_filledHull hy)
+  · by_contra hcon
+    push Not at hcon
+    rw [mem_filledHull_iff] at hcon
+    rw [mem_filledHull_iff] at hcon
+    exact hxy ((connectedComponentIn_compl_eq_of_not_isBounded h hK hcon.1 hcon.2).symm ▸
+      mem_connectedComponentIn (mem_compl hy))
 
 end TauCeti

@@ -8,6 +8,7 @@ module
 public import Mathlib.Topology.Bornology.Basic
 public import Mathlib.Topology.Connected.Basic
 import TauCeti.Topology.Frontier
+public import Mathlib.Topology.Connected.LocallyConnected
 
 /-!
 # Filling in the bounded complementary components of a set
@@ -38,8 +39,9 @@ The negation of membership — that the component of a point in the complement o
 off the filled hull of the trace. Those statements are left as they stand: they are about the
 unbounded side, which needs no name, whereas everything here is about the filled side.
 
-The hull is deliberately *not* claimed to be closed, connected, or idempotent — none of which is
-needed downstream, and the first two of which fail without hypotheses on `K`.
+The hull is *not* claimed to be connected or idempotent, neither of which holds without hypotheses
+on `K`. Closedness does hold when `K` is closed and the space is locally connected
+(`isClosed_filledHull`).
 
 ## Roadmap role
 
@@ -66,6 +68,7 @@ separation, or any other regularity of `K`.
   filled hull lies in it.
 * `TauCeti.subset_filledHull_of_frontier_subset` — a bounded set whose frontier `K` swallows
   lies in the filled hull, with no connectivity asked of it.
+* `TauCeti.isClosed_filledHull` — the filled hull of a closed set is closed.
 -/
 
 public section
@@ -144,5 +147,19 @@ theorem subset_filledHull_of_frontier_subset (hSb : IsBounded S) (hfr : frontier
       isPreconnected_connectedComponentIn ⟨x, mem_connectedComponentIn hxKc, hxi⟩ ⟨y, hy, hyi⟩
     exact connectedComponentIn_subset _ _ hz (hfr (frontier_interior_subset hzf))
   exact mem_filledHull_iff.mpr (hSb.subset (hcomp.trans interior_subset))
+
+/-- **The filled hull of a closed set is closed.** Its complement is the union of the unbounded
+connected components of `Kᶜ`, each of which is open. -/
+theorem isClosed_filledHull [LocallyConnectedSpace E] (hK : IsClosed K) :
+    IsClosed (filledHull K) := by
+  rw [← isOpen_compl_iff, isOpen_iff_forall_mem_open]
+  intro x hx
+  rw [mem_compl_iff, mem_filledHull_iff] at hx
+  refine ⟨connectedComponentIn Kᶜ x, fun y hy => ?_, hK.isOpen_compl.connectedComponentIn, ?_⟩
+  · rw [mem_compl_iff, mem_filledHull_iff, ← connectedComponentIn_eq hy]
+    exact hx
+  · refine mem_connectedComponentIn fun hxK => hx ?_
+    rw [connectedComponentIn_eq_empty (notMem_compl_iff.mpr hxK)]
+    exact isBounded_empty
 
 end TauCeti
