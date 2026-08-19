@@ -34,10 +34,11 @@ counting theorem
 
 `dim V^G = ∫ g, χ_π g ∂(haarProb G)`,
 
-the compact form of the finite-group identity `dim V^G = |G|⁻¹ ∑ χ_π g`. It is the multiplicity tool
-that turns character integrals into dimensions: applied to the symmetric and exterior squares it
-computes the Frobenius-Schur indicator, and applied to `Hom(V, W)` it computes the multiplicity of
-one irreducible in another representation.
+the compact form of the finite-group identity `dim V^G = |G|⁻¹ ∑ χ_π g`. It is the tool that turns
+character integrals into dimensions: applied to the symmetric and exterior squares it computes the
+Frobenius-Schur indicator, and applied to `Hom(V, W)` it computes the dimension of the space of
+intertwiners `V → W` (which for complex scalars and irreducible `V` is the multiplicity of `V` in
+`W`, but over `ℝ` counts each copy with the dimension of its endomorphism division algebra).
 
 ## Main definitions
 
@@ -134,6 +135,7 @@ Left invariance of Haar measure makes the average absorb the action on the left,
 
 /-- **The Haar average absorbs the action on the left**: `π h ∘ P = P`. This is left invariance of
 normalized Haar measure. -/
+@[simp]
 theorem comp_haarAverageMap (h : G) :
     (π h).comp (haarAverageMap π hπ) = haarAverageMap π hπ := by
   ext v
@@ -147,6 +149,7 @@ theorem comp_haarAverageMap (h : G) :
 
 /-- **The Haar average absorbs the action on the right**: `P ∘ π h = P`. This is right invariance of
 normalized Haar measure, which holds because a compact group is unimodular. -/
+@[simp]
 theorem haarAverageMap_comp (h : G) :
     (haarAverageMap π hπ).comp (π h) = haarAverageMap π hπ := by
   ext v
@@ -165,6 +168,7 @@ theorem haarAverageMap_mem_invariants (v : V) : haarAverageMap π hπ v ∈ π.i
 
 /-- The Haar average is the identity on the invariant subspace: the integrand is then constant, and
 normalized Haar measure has total mass one. -/
+@[simp]
 theorem haarAverageMap_apply_of_mem_invariants {v : V} (hv : v ∈ π.invariants) :
     haarAverageMap π hπ v = v := by
   have hconst : ∀ g : G, π g v = v := hv
@@ -178,11 +182,13 @@ theorem isProj_haarAverageMap :
   map_id _ hv := haarAverageMap_apply_of_mem_invariants π hπ hv
 
 /-- The Haar average is idempotent. -/
+@[simp]
 theorem haarAverageMap_comp_self :
     (haarAverageMap π hπ).comp (haarAverageMap π hπ) = haarAverageMap π hπ :=
   ContinuousLinearMap.coe_injective (isProj_haarAverageMap π hπ).isIdempotentElem
 
 /-- The range of the Haar average is exactly the invariant subspace. -/
+@[simp]
 theorem range_haarAverageMap :
     LinearMap.range (haarAverageMap π hπ : V →ₗ[𝕜] V) = π.invariants :=
   (isProj_haarAverageMap π hπ).range
