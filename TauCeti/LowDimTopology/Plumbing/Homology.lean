@@ -150,6 +150,7 @@ noncomputable def latticeHomologyCycleMap (P : PlumbingGraph V) (k : P.character
 
 /-- A coefficient maps to zero under `latticeHomologyCycleMap` exactly when its multiple of the
 cycle is a boundary. -/
+@[simp]
 theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
     (k : P.characteristicVectors) (c : PlumbingChain V)
     (hc : P.latticeDifferential k c = 0) (a : PlumbingCoefficient) :
