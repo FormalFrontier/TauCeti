@@ -167,25 +167,26 @@ theorem isMulCommutative_pointQuotient_of_le_derivedDefiningIdeal
   exact mem_quotientPointsSubgroup_of_le H hID A
     (commutator_mem_derivedPointsSubgroup H A g h)
 
-/-- A normal closed subgroup contains the derived subgroup exactly when all of the corresponding
-point-group quotients are commutative. The converse needs no point-separation or rational-point
-hypothesis. -/
+/-- A closed subgroup contains the derived subgroup exactly when it is normal and all of the
+corresponding point-group quotients are commutative. The converse needs no point-separation or
+rational-point hypothesis. -/
 theorem le_derivedDefiningIdeal_iff_isMulCommutative_pointQuotient
-    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
     I ≤ derivedDefiningIdeal (R := R) H ↔
-      ∀ A : CommAlgCat.{v} R,
-        let _ : (quotientPointsSubgroup H I A).Normal :=
-          quotientPointsSubgroup_normal H I hI A
-        IsMulCommutative
-          (HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A) := by
+      ∃ hI : I.IsNormal,
+        ∀ A : CommAlgCat.{v} R,
+          let _ : (quotientPointsSubgroup H I A).Normal :=
+            quotientPointsSubgroup_normal H I hI A
+          IsMulCommutative
+            (HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A) := by
   constructor
-  · intro hID A
+  · intro hID
+    refine ⟨isNormal_of_le_derivedDefiningIdeal H I hID, fun A ↦ ?_⟩
     exact isMulCommutative_pointQuotient_of_le_derivedDefiningIdeal H I hID A
-  · intro hquot
+  · rintro ⟨hI, hquot⟩
     rw [le_derivedDefiningIdeal_iff]
     intro x hx
-    rw [RingHom.mem_ker]
-    change HopfAlgebra.commutatorAlgHom (R := R) (H := H) x = 0
+    simp only [RingHom.mem_ker, AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom]
     let A : CommAlgCat.{v} R := CommAlgCat.of R (H ⊗[R] H)
     let g : HopfAlgebra.points (R := R) (H := H) A :=
       toConv (Bialgebra.TensorProduct.includeLeft

@@ -79,6 +79,7 @@ theorem augmentation_toIdeal :
   exact Iff.rfl
 
 /-- Every Hopf ideal is contained in the augmentation ideal. -/
+@[simp]
 theorem le_augmentation (I : HopfIdeal R H) : I ≤ augmentation R H :=
   fun _ hx ↦ (mem_augmentation R H).mpr (I.counit_eq_zero hx)
 
