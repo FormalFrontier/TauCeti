@@ -148,12 +148,11 @@ This is where the inside assumption is introduced, at one point as a hypothesis;
 criterion below passes it on unchanged. For a Jordan curve `K` the hypothesis is the
 plane-separation statement `J ⊆ closure (filledHull J \ J)` recorded in the roadmap section of
 `TauCeti/Topology/FilledHull.lean`, read at `p`. -/
-theorem nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall (hUo : IsOpen U)
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hγ : f '' (U ∩ sphere ζ ρ) ⊆ K)
+theorem nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall
+    (hΩo : IsOpen (f '' U)) (hγ : f '' (U ∩ sphere ζ ρ) ⊆ K)
     (hp : p ∈ f '' (U ∩ sphere ζ ρ)) (hin : p ∈ closure (filledHull K \ K)) :
     (f '' (U ∩ ball ζ ρ) ∩ filledHull K).Nonempty ∨
       (f '' (U \ closedBall ζ ρ) ∩ filledHull K).Nonempty := by
-  have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
   obtain ⟨q, hqΩ, hqH, hqK⟩ :=
     mem_closure_iff.mp hin _ hΩo (image_mono inter_subset_left hp)
   rw [image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere] at hqΩ
@@ -179,7 +178,7 @@ theorem image_inter_ball_subset_filledHull_of_diam_lt (hUo : IsOpen U)
     (hp : p ∈ f '' (U ∩ sphere ζ ρ)) (hin : p ∈ closure (filledHull K \ K)) :
     f '' (U ∩ ball ζ ρ) ⊆ filledHull K := by
   rcases nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall
-    hUo hd hinj hγ hp hin with h | h
+    (isOpen_image_of_differentiableOn_of_injOn hUo hd hinj) hγ hp hin with h | h
   · exact image_subset_filledHull_of_disjoint_inter_sphere hUo hd hinj inter_subset_left
       disjoint_inter_ball_inter_sphere hAc hK h
   · exact absurd (diam_le_diam_of_subset_filledHull hKb
