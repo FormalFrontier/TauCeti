@@ -29,8 +29,9 @@ long node and `q i = p` on a short one, and which therefore satisfies `τ ^ 2 = 
 predicate defined here, `TauCeti.DynkinType.IsSpecialNodePerm`, is the root-level datum such an
 isogeny carries.
 
-The point of the file is that this datum is completely rigid, and the theorems saying so are what
-make "the" special isogeny of a type well-defined data rather than a choice:
+The point of the file is that this datum is completely rigid, and the theorems saying so make the
+node permutation, and hence the root-subgroup indexing datum for a future special isogeny,
+canonical:
 
 * it exists exactly for `B₂`, `F₄` and `G₂` among the valid types
   (`TauCeti.DynkinType.exists_isSpecialNodePerm_iff`);
@@ -61,7 +62,7 @@ that construction, stated against the pinned Bourbaki numbering of
 
 ## Main results
 
-* `TauCeti.DynkinType.isSpecialNodePerm_B_two`, `TauCeti.DynkinType.isSpecialNodePerm_F4` and
+* `TauCeti.DynkinType.isSpecialNodePerm_B2`, `TauCeti.DynkinType.isSpecialNodePerm_F4` and
   `TauCeti.DynkinType.isSpecialNodePerm_G2`: the three special node permutations, taken from the
   pinned length permutations of `TauCeti/LinearAlgebra/RootSystem/DiagramPermutations.lean`.
 * `TauCeti.DynkinType.exists_isSpecialNodePerm_iff`: **a valid Dynkin type admits a special node
@@ -103,6 +104,8 @@ structure IsSpecialNodePerm (t : DynkinType) (σ : Equiv.Perm (Fin t.rank)) : Pr
   /-- The permutation carries the standard Cartan matrix to the transposed matrix. -/
   cartanMatrix_apply (i j : Fin t.rank) : t.cartanMatrix (σ i) (σ j) = t.cartanMatrix j i
 
+attribute [simp] IsSpecialNodePerm.isLongSimpleRoot_apply IsSpecialNodePerm.cartanMatrix_apply
+
 namespace IsSpecialNodePerm
 
 variable {t : DynkinType} {σ τ : Equiv.Perm (Fin t.rank)}
@@ -142,7 +145,7 @@ end IsSpecialNodePerm
 
 /-- Exchanging the two nodes of `B₂` is a special node permutation: the first node is long and the
 second short, and the swap transposes the `B₂` Cartan matrix. -/
-theorem isSpecialNodePerm_B_two : (B 2).IsSpecialNodePerm lengthPermRankTwo where
+theorem isSpecialNodePerm_B2 : (B 2).IsSpecialNodePerm lengthPermRankTwo where
   isLongSimpleRoot_apply := isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2
   cartanMatrix_apply := cartanMatrix_B2_lengthPermRankTwo
 
@@ -229,7 +232,7 @@ theorem exists_isSpecialNodePerm_iff {t : DynkinType} (ht : t.Valid) :
         · exact absurd h (not_isSpecialNodePerm_B hn σ)
     | C n => exact absurd h (not_isSpecialNodePerm_C (valid_C.mp ht) σ)
   · rintro (rfl | rfl | rfl)
-    · exact ⟨_, isSpecialNodePerm_B_two⟩
+    · exact ⟨_, isSpecialNodePerm_B2⟩
     · exact ⟨_, isSpecialNodePerm_F4⟩
     · exact ⟨_, isSpecialNodePerm_G2⟩
 
@@ -242,7 +245,7 @@ uniqueness follows. -/
 
 /-- The identity is the only permutation of the two `B₂` nodes preserving its Cartan matrix, the
 `B₂` matrix being asymmetric. -/
-theorem eq_one_of_cartanMatrix_B_two {ρ : Equiv.Perm (Fin 2)}
+theorem eq_one_of_cartanMatrix_B2 {ρ : Equiv.Perm (Fin 2)}
     (h : ∀ i j : Fin 2, (B 2).cartanMatrix (ρ i) (ρ j) = (B 2).cartanMatrix i j) : ρ = 1 := by
   have key : ∀ f : Fin 2 → Fin 2,
       (∀ p : Fin 2 × Fin 2, CartanMatrix.B 2 (f p.1) (f p.2) = CartanMatrix.B 2 p.1 p.2) →
@@ -293,14 +296,14 @@ theorem eq_one_of_cartanMatrix_F4 {ρ : Equiv.Perm (Fin 4)}
   fin_cases i
   exacts [hρ₀, hρ₁, hρ₂, hρ₃]
 
-/-- **A valid Dynkin type has at most one special node permutation.** This is what lets a
-downstream construction speak of *the* special isogeny of a type rather than of a chosen one. -/
+/-- **A valid Dynkin type has at most one special node permutation.** Thus its numbered-node
+permutation, and hence its root-subgroup indexing datum, is canonical whenever it exists. -/
 theorem IsSpecialNodePerm.unique {t : DynkinType} (ht : t.Valid)
     {σ τ : Equiv.Perm (Fin t.rank)} (hσ : t.IsSpecialNodePerm σ) (hτ : t.IsSpecialNodePerm τ) :
     σ = τ := by
   have hmul : τ⁻¹ * σ = 1 := by
     rcases (exists_isSpecialNodePerm_iff ht).mp ⟨σ, hσ⟩ with rfl | rfl | rfl
-    · exact eq_one_of_cartanMatrix_B_two (hσ.cartanMatrix_apply_inv_mul hτ)
+    · exact eq_one_of_cartanMatrix_B2 (hσ.cartanMatrix_apply_inv_mul hτ)
     · exact eq_one_of_cartanMatrix_F4 (hσ.cartanMatrix_apply_inv_mul hτ)
     · exact eq_one_of_cartanMatrix_G2 (hσ.cartanMatrix_apply_inv_mul hτ)
   rw [← one_mul σ, ← mul_inv_cancel τ, mul_assoc, hmul, mul_one]
@@ -322,7 +325,7 @@ theorem IsSpecialNodePerm.submatrix_cartanMatrix_ne {t : DynkinType} (ht : t.Val
     {σ : Equiv.Perm (Fin t.rank)} (h : t.IsSpecialNodePerm σ) :
     t.cartanMatrix.submatrix σ σ ≠ t.cartanMatrix := by
   rcases (exists_isSpecialNodePerm_iff ht).mp ⟨σ, h⟩ with rfl | rfl | rfl
-  · rw [IsSpecialNodePerm.unique ht h isSpecialNodePerm_B_two]
+  · rw [IsSpecialNodePerm.unique ht h isSpecialNodePerm_B2]
     exact cartanMatrix_B2_submatrix_lengthPermRankTwo_ne
   · rw [IsSpecialNodePerm.unique ht h isSpecialNodePerm_F4]
     exact cartanMatrix_F4_submatrix_lengthPermF4_ne
