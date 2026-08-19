@@ -376,9 +376,11 @@ theorem mapHopfIdealPointsSubgroup_id
   apply MonoidHom.ext
   intro g
   apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  rfl
+  rw [coe_mapHopfIdealPointsSubgroup, MonoidHom.id_apply]
+  change Matrix.GeneralLinearGroup.map (RingHom.id A)
+      (g : Matrix.GeneralLinearGroup (Fin n) A) = g
+  exact DFunLike.congr_fun (Matrix.GeneralLinearGroup.map_id (n := Fin n))
+    (g : Matrix.GeneralLinearGroup (Fin n) A)
 
 /-- Maps between general-linear Hopf-ideal point subgroups preserve composition of value-algebra
 homomorphisms. -/
@@ -393,9 +395,16 @@ theorem mapHopfIdealPointsSubgroup_comp
   apply MonoidHom.ext
   intro g
   apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  rfl
+  rw [coe_mapHopfIdealPointsSubgroup, MonoidHom.comp_apply,
+    coe_mapHopfIdealPointsSubgroup, coe_mapHopfIdealPointsSubgroup]
+  change Matrix.GeneralLinearGroup.map (ψ.toRingHom.comp φ.toRingHom)
+      (g : Matrix.GeneralLinearGroup (Fin n) A) =
+    Matrix.GeneralLinearGroup.map ψ.toRingHom
+      (Matrix.GeneralLinearGroup.map φ.toRingHom
+        (g : Matrix.GeneralLinearGroup (Fin n) A))
+  exact DFunLike.congr_fun
+    (Matrix.GeneralLinearGroup.map_comp (n := Fin n) φ.toRingHom ψ.toRingHom)
+      (g : Matrix.GeneralLinearGroup (Fin n) A)
 
 /-- Larger Hopf ideals cut out smaller general-linear point subgroups. -/
 theorem hopfIdealPointsSubgroup_le_of_le

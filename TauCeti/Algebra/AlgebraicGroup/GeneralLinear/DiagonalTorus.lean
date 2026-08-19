@@ -242,6 +242,7 @@ theorem mapPointsFunctor_diagonalTorusCoordinateMap_app
     (CommHopfAlgCat.mapPointsFunctor
       (diagonalTorusCoordinateMap (R := R) (N := N))).app A f =
       diagonalTorusPoints f := by
+  -- Transport the same-universe computation at the generic point `id_K` to `f` by naturality.
   let K := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))
   let p : WithConv (K →ₐ[R] K) := toConv (AlgHom.id R K)
   have hp :
@@ -249,7 +250,7 @@ theorem mapPointsFunctor_diagonalTorusCoordinateMap_app
         (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R K) p =
         diagonalTorusPoints p := by
     rw [mapPointsFunctor_diagonalTorusCoordinateMap, diagonalTorusPointsMap_app]
-    rfl
+    exact GrpCat.ofHom_apply diagonalTorusPoints p
   have hfp : AlgHom.mapValue (H := K) f.ofConv p = f := by
     simp only [AlgHom.mapValue_apply, p, AlgHom.comp_id, WithConv.toConv_ofConv]
   have hnat :

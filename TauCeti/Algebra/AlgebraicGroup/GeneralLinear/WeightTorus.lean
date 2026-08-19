@@ -137,12 +137,7 @@ theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite κ] (wt : Fin N �
         (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
   rw [weightTorusCoordinateMap, CommHopfAlgCat.mapPointsFunctor_comp,
     CategoryTheory.NatTrans.comp_app]
-  -- Expose application of the composite natural transformation; the named lemmas below handle
-  -- both point-map wrapper boundaries.
-  change (CommHopfAlgCat.mapPointsFunctor diagonalTorusCoordinateMap).app A
-      ((CommHopfAlgCat.mapPointsFunctor
-        (DiagonalizableGroup.coordinateMap R
-          (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom).app A p) = _
+  erw [GrpCat.comp_apply]
   rw [DiagonalizableGroup.mapPointsFunctor_coordinateMap_app,
     mapPointsFunctor_diagonalTorusCoordinateMap_app, FGCommGrpCat.toMonoidHom_ofHom]
 
@@ -175,6 +170,34 @@ end PointsFunctor
 
 variable {A : Type u} [CommRing A] [Algebra R A]
 
+private theorem groupSchemePointMulEquiv_comp_weightTorus [Finite κ]
+    (wt : Fin N → κ → ℤ)
+    (q : HopfAlgebra.points
+      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) (CommAlgCat.of R A)) :
+    CommHopfAlgCat.mapMulEquivOfPresentation
+          (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
+          (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ)) q ≫
+        (weightTorus (R := R) wt).hom.hom =
+      groupSchemePointMulEquiv N A
+        ((CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap wt)).app
+          (CommAlgCat.of R A) q) := by
+  rw [weightTorus_def]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
+    (R := R) A (groupScheme_def R N)
+      (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
+      (groupSchemePointMulEquiv N A)
+      (CommHopfAlgCat.mapMulEquivOfPresentation
+        (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
+        (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ)))
+      (groupSchemePointMulEquiv_apply_left N A)
+      (CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
+        (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
+        (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
+        (congrArg
+          (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left)
+          (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))))
+      (weightTorusCoordinateMap wt) q
+
 variable [Fintype κ]
 
 /-- On scheme-valued points, the weight torus is the diagonal matrix whose `i`-th diagonal entry
@@ -186,52 +209,36 @@ theorem schemePointsMulEquiv_weightTorus (wt : Fin N → κ → ℤ)
     schemePointsMulEquiv N A (p ≫ (weightTorus (R := R) wt).hom.hom) =
       diagGL (fun i => torusCharacter
         (SplitTorus.schemePointsMulEquiv (R := R) (A := A) p) (wt i)) := by
-  rw [weightTorus_hom, ← Category.assoc]
-  rw [schemePointsMulEquiv_diagonalTorus]
+  let e := CommHopfAlgCat.mapMulEquivOfPresentation
+    (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
+    (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
+  obtain ⟨q, rfl⟩ := e.surjective p
+  have hq : DiagonalizableGroup.groupSchemePointsMulEquiv
+      (R := R) (A := A) (SplitTorus.characterGroup κ) (e q) = q := by
+    apply AlgebraicGeometry.Spec.mapMulEquiv.injective
+    apply Over.OverMorphism.ext
+    rw [← DiagonalizableGroup.groupSchemePointsMulEquiv_apply_left_comp]
+    rw [CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
+      (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj A
+      (DiagonalizableGroup.groupScheme_def R (SplitTorus.characterGroup κ))
+      (DiagonalizableGroup.groupScheme_X_left R (SplitTorus.characterGroup κ))]
+    erw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
+    rfl
+  have hpoints : SplitTorus.schemePointsMulEquiv (R := R) (A := A) (e q) =
+      SplitTorus.pointsMulEquiv q := by
+    ext i
+    rw [SplitTorus.schemePointsMulEquiv_apply_coe, SplitTorus.pointsMulEquiv_apply_coe]
+    rw [hq]
+    rfl
+  rw [groupSchemePointMulEquiv_comp_weightTorus]
+  erw [schemePointsMulEquiv_groupSchemePointMulEquiv]
+  rw [mapPointsFunctor_weightTorusCoordinateMap_app,
+    pointsMulEquiv_diagonalTorusPoints]
   congr 1
   funext i
-  rw [diagonalTorusCoordinates_apply]
-  let chi := DiagonalizableGroup.schemePointsMulEquiv
-    (R := R) (A := A) (SplitTorus.characterGroup κ) p
-  have hcoordinate :
-      SplitTorus.schemePointsMulEquiv (R := R) (A := A)
-          (p ≫ (DiagonalizableGroup.groupSchemeMap R
-            (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom) (ULift.up i) =
-        chi (weightCharacterMap wt
-          (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1))) := by
-    calc
-      _ = DiagonalizableGroup.schemePointsMulEquiv
-          (R := R) (A := A) (SplitTorus.characterGroup (ULift.{u} (Fin N)))
-            (p ≫ (DiagonalizableGroup.groupSchemeMap R
-              (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom)
-              (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1) :
-                SplitTorus.characterGroup (ULift.{u} (Fin N))) := by
-        apply Units.ext
-        rw [SplitTorus.schemePointsMulEquiv_apply_coe]
-        exact (DiagonalizableGroup.schemePointsMulEquiv_apply_coe
-          (R := R) (A := A) (SplitTorus.characterGroup (ULift.{u} (Fin N))) _ _).symm
-      _ = _ := by
-        rw [DiagonalizableGroup.schemePointsMulEquiv_groupSchemeMap]
-        rfl
-  rw [hcoordinate, weightCharacterMap_ofAdd_single]
-  let m := Finsupp.equivFunOnFinite.symm (wt i)
   calc
-    chi (Multiplicative.ofAdd m) =
-        DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv
-          (R := R) (A := A)
-            (p ≫ (SplitTorus.characterGroupSchemeMap (R := R) m).hom.hom) := by
-      rw [SplitTorus.characterGroupSchemeMap_def]
-      exact (DiagonalizableGroup.multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap
-          (R := R) (A := A) (SplitTorus.characterGroup κ)
-            (Multiplicative.ofAdd m) p).symm
-    _ = m.prod fun j n =>
-        SplitTorus.schemePointsMulEquiv (R := R) (A := A) p j ^ n :=
-      SplitTorus.multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap m p
-    _ = ∏ j, SplitTorus.schemePointsMulEquiv (R := R) (A := A) p j ^ wt i j := by
-      rw [Finsupp.prod_fintype _ _ (fun _ => zpow_zero _)]
-      simp only [m, Finsupp.equivFunOnFinite_symm_apply_apply]
-    _ = torusCharacter
-        (SplitTorus.schemePointsMulEquiv (R := R) (A := A) p) (wt i) := by
-      rw [torusCharacter_def]
+    _ = torusCharacter (SplitTorus.pointsMulEquiv q) (wt i) :=
+      diagonalTorusCoordinates_pointsMap_weightCharacterMap wt (CommAlgCat.of R A) q i
+    _ = _ := by rw [← hpoints]
 
 end TauCeti.GeneralLinear
