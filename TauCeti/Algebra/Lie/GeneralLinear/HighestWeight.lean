@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Borel
+public import Mathlib.Algebra.Ring.CharZero
 public import Mathlib.Data.Rat.Cast.Defs
 
 /-!
@@ -17,8 +18,10 @@ Weights of `gl n R` for the diagonal Cartan subalgebra are tuples `μ : n → R`
 `TauCeti/Algebra/Lie/GeneralLinear/Borel.lean`.
 
 The first is **dominance**. For `gl n` it is a condition on *differences*, not on the entries
-themselves: a tuple `μ : Fin n → R` is dominant integral when each consecutive difference
-`μ i - μ (i+1)` is a natural number. The entries are unconstrained, and that slack is exactly the
+themselves: a tuple `μ : Fin n → R` over a ring of characteristic zero is dominant integral when
+each consecutive difference `μ i - μ (i+1)` is a natural number — characteristic zero is what makes
+"is a natural number" a real condition, since over `ZMod p` every element is a natural number cast
+and every tuple would qualify. The entries are unconstrained, and that slack is exactly the
 central direction: adding a constant tuple `c · (1, …, 1)` — the weight of the centre of `gl n` —
 preserves dominance for every `c : R`. The staircase `(N - 1/2, N - 3/2, …, 1/2)` over `ℚ` is
 dominant with no integer entry at all, which is what makes the slack visible, and the weakly
@@ -35,7 +38,7 @@ whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_forall_mem`
 ## Main definitions
 
 * `TauCeti.IsGlDominantIntegral μ`: the consecutive differences of `μ : Fin n → R` are natural
-  numbers.
+  numbers, for `R` of characteristic zero.
 * `TauCeti.glStaircase N`: the staircase tuple `(N - 1/2, N - 3/2, …, 1/2) : Fin N → ℚ`.
 * `TauCeti.IsGlHighestWeightVector μ v`: `v` is nonzero, the diagonal matrix unit `Eᵢᵢ` acts on it
   by `μ i`, and every raising matrix unit `Eᵢⱼ` with `i < j` annihilates it.
@@ -72,12 +75,18 @@ that they are definitionally the classical conditions; because the bodies are no
 
 Dominance is stated for `Fin n`, since "consecutive" refers to the successor on the indices, while
 the highest weight condition needs only a linearly ordered index type and is stated for one, as
-`TauCeti.strictUpperTriangular` is. Both are over an arbitrary commutative ring: no field,
-characteristic or algebraic closure hypothesis is used, and the roadmap's field case is the
-instance `R = K`. The two statements that read a scalar back off a vector — uniqueness of the
-weight, and that rescaling preserves the predicate — are the ones needing more, namely the
-hypotheses `IsCancelMulZero R` and `Module.IsTorsionFree R M` of Mathlib's `smul_left_injective`,
-without which a torsion vector could carry several weights at once.
+`TauCeti.strictUpperTriangular` is. Neither needs a field or an algebraically closed field, so both
+are over a commutative ring and the roadmap's field case is the instance `R = K`; dominance
+additionally asks for `CharZero R`, because "the difference is a natural number" is a condition on
+`R` only when the cast `ℕ → R` is injective — in characteristic `p` every element of `ZMod p` is
+such a cast and the predicate would be satisfied by every tuple. That hypothesis is used in the
+definition itself, through the injective `Nat.castEmbedding` rather than the bare `Nat.cast`, so
+that no shape of the predicate can drift away from it; `TauCeti.isGlDominantIntegral_iff` puts the
+condition back in the plain form `∃ k : ℕ, μ i - μ j = k`. The two statements that read a scalar
+back off a vector — uniqueness of the weight, and that rescaling preserves the predicate — are the
+ones needing more, namely the hypotheses `IsCancelMulZero R` and `Module.IsTorsionFree R M` of
+Mathlib's `smul_left_injective`, without which a torsion vector could carry several weights at
+once.
 
 As in `TauCeti/Algebra/Lie/GeneralLinear/Basic.lean`, `LieRing.ofAssociativeRing` is a local
 instance, Mathlib not registering it globally; the Lie module hypotheses on `M` are stated against
@@ -108,17 +117,25 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 section Dominant
 
-variable {R : Type*} [CommRing R] {n : ℕ}
+variable {R : Type*} [CommRing R] [CharZero R] {n : ℕ}
 
 /-- A tuple `μ : Fin n → R` is **dominant integral** for `gl n` when each consecutive difference
 `μ i - μ j`, `j` the successor of `i`, is a natural number.
+
+The scalars are required to have characteristic zero: that is what makes the condition say what it
+reads as. In characteristic `p` the cast `ℕ → R` is not injective — over `ZMod p` every element is
+the cast of a natural number — so every tuple would be dominant and the notion would be vacuous.
+Accordingly the cast is spelled through `Nat.castEmbedding`, which is `Nat.cast` bundled with its
+injectivity, so that the hypothesis is used by the statement itself;
+`TauCeti.isGlDominantIntegral_iff` restates the condition with the plain cast and is how the
+predicate is introduced and eliminated.
 
 The entries themselves are unconstrained: dominance is a condition on differences only, so it is
 invariant under the central direction `μ ↦ μ + c · (1, …, 1)`
 (`TauCeti.IsGlDominantIntegral.add_const`) and does not force integrality
 (`TauCeti.glStaircase_ne_intCast`). -/
 def IsGlDominantIntegral (mu : Fin n → R) : Prop :=
-  ∀ i j : Fin n, (i : ℕ) + 1 = (j : ℕ) → ∃ k : ℕ, mu i - mu j = (k : R)
+  ∀ i j : Fin n, (i : ℕ) + 1 = (j : ℕ) → ∃ k : ℕ, mu i - mu j = Nat.castEmbedding k
 
 /-- `TauCeti.IsGlDominantIntegral` unfolded. The predicate is not exposed, so this is how it is
 introduced and eliminated outside this file. -/
@@ -133,6 +150,7 @@ variable {mu nu : Fin n → R}
 `μ i - μ j` is a natural number, by adding up the `d` consecutive differences. -/
 theorem IsGlDominantIntegral.exists_natCast_sub_of_add_eq (h : IsGlDominantIntegral mu) :
     ∀ (d : ℕ) (i j : Fin n), (i : ℕ) + d = (j : ℕ) → ∃ k : ℕ, mu i - mu j = (k : R) := by
+  rw [isGlDominantIntegral_iff] at h
   intro d
   induction d with
   | zero =>
@@ -167,6 +185,7 @@ theorem isGlDominantIntegral_const (c : R) : IsGlDominantIntegral (fun _ : Fin n
 /-- Dominance is closed under addition. -/
 theorem IsGlDominantIntegral.add (h : IsGlDominantIntegral mu) (h' : IsGlDominantIntegral nu) :
     IsGlDominantIntegral (mu + nu) := by
+  rw [isGlDominantIntegral_iff] at h h' ⊢
   intro i j hij
   obtain ⟨k₁, hk₁⟩ := h i j hij
   obtain ⟨k₂, hk₂⟩ := h' i j hij
@@ -184,6 +203,7 @@ integer tuples that index the rational representations of the group `GL n` sit i
 weights of `gl n`, the extra directions being the non-integral ones. -/
 theorem isGlDominantIntegral_intCast {a : Fin n → ℤ} (ha : Antitone a) :
     IsGlDominantIntegral (fun i => (a i : R)) := by
+  rw [isGlDominantIntegral_iff]
   intro i j hij
   have hle : i ≤ j := Fin.le_def.mpr (by omega)
   have h0 : (0 : ℤ) ≤ a i - a j := sub_nonneg.mpr (ha hle)
@@ -210,6 +230,7 @@ theorem glStaircase_apply (N : ℕ) (i : Fin N) :
 
 /-- The staircase weight is dominant: its consecutive differences are all `1`. -/
 theorem isGlDominantIntegral_glStaircase (N : ℕ) : IsGlDominantIntegral (glStaircase N) := by
+  rw [isGlDominantIntegral_iff]
   intro i j hij
   have hji : ((j : ℕ) : ℚ) = ((i : ℕ) : ℚ) + 1 := by exact_mod_cast hij.symm
   exact ⟨1, by rw [glStaircase_apply, glStaircase_apply, hji]; push_cast; ring⟩
