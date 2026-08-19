@@ -40,6 +40,8 @@ cut out by `J`, namely its normal closure.
   bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
   subgroup on points over every commutative value algebra.
+* `TauCeti.CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff`: transport of
+  quotient-subgroup membership along a bialgebra equivalence.
 
 ## References
 
@@ -174,6 +176,24 @@ theorem quotientPointsSubgroup_normal (H : _root_.CommHopfAlgCat.{v} R)
     simpa using hn y ((HopfIdeal.mem_toIdeal (I := I)).mp hy)
   exact RingHom.mem_ker.mp (hker (hI.conjugation_mem hx))
 
+/-- Precomposition by a bijective bialgebra morphism identifies the points cut out by a Hopf
+ideal with the points cut out by its pullback. -/
+theorem mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+    {H K : Type v} [CommRing H] [CommRing K] [HopfAlgebra R H] [HopfAlgebra R K]
+    (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f)
+    (I : HopfIdeal R K) (A : CommAlgCat.{w} R)
+    (g : HopfAlgebra.points (R := R) (H := K) A) :
+    AlgHom.mapDomainMulEquiv (A := A) (BialgEquiv.ofBijective f ⟨hinj, hsurj⟩) g ∈
+        quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
+      g ∈ quotientPointsSubgroup (_root_.CommHopfAlgCat.of R K) I A := by
+  rw [mem_quotientPointsSubgroup_iff, mem_quotientPointsSubgroup_iff]
+  constructor
+  · intro hg y hy
+    obtain ⟨x, rfl⟩ := hsurj y
+    exact hg x (HopfIdeal.mem_comap.mpr hy)
+  · intro hg x hx
+    exact hg (f x) (HopfIdeal.mem_comap.mp hx)
+
 /-- If a Hopf ideal cuts out a normal subgroup over the value algebra `H ⊗ (H ⧸ I)`, then it is
 normal. That single test algebra suffices: it carries the two points whose conjugate detects
 membership in the ideal. -/
@@ -245,29 +265,23 @@ theorem IsNormal.comap_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal) (f : H
   intro A
   let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
   let E := AlgHom.mapDomainMulEquiv (A := A) e
-  have hmem (g : HopfAlgebra.points (R := R) (H := K) A) :
-      E g ∈ CommHopfAlgCat.quotientPointsSubgroup
-          (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
-        g ∈ CommHopfAlgCat.quotientPointsSubgroup
-          (_root_.CommHopfAlgCat.of R K) I A := by
-    rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
-      CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
-    constructor
-    · intro hg y hy
-      obtain ⟨x, rfl⟩ := hsurj y
-      exact hg x (mem_comap.mpr hy)
-    · intro hg x hx
-      exact hg (f x) (mem_comap.mp hx)
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+    f hinj hsurj I A
   constructor
   intro n hn g
   have hn' : E.symm n ∈ CommHopfAlgCat.quotientPointsSubgroup
       (_root_.CommHopfAlgCat.of R K) I A := by
-    rw [← hmem]
+    apply (hmem (E.symm n)).mp
+    change E (E.symm n) ∈ CommHopfAlgCat.quotientPointsSubgroup
+      (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A
     simpa using hn
   have hconj := (CommHopfAlgCat.quotientPointsSubgroup_normal
     (_root_.CommHopfAlgCat.of R K) I hI A).conj_mem (E.symm n) hn' (E.symm g)
-  rw [← hmem] at hconj
-  simpa using hconj
+  have hconj' := (hmem _).mpr hconj
+  change E (E.symm g * E.symm n * (E.symm g)⁻¹) ∈
+    CommHopfAlgCat.quotientPointsSubgroup
+      (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A at hconj'
+  simpa using hconj'
 
 end HopfIdeal
 

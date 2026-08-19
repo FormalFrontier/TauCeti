@@ -16,8 +16,8 @@ an isomorphism of their centers.
 
 The proof uses the universal property of `centerDefiningIdeal`: the pullback of a central Hopf
 ideal along a bialgebra equivalence is central, so minimality gives both inclusions. The resulting
-coordinate isomorphism is constructed with the general quotient-by-pullback isomorphism and is
-then transported through `hopfSpec`.
+coordinate isomorphism transports the general quotient-by-pullback isomorphism along this ideal
+equality and is then carried through `hopfSpec`.
 
 ## Main declarations
 
@@ -45,10 +45,13 @@ open CategoryTheory
 
 namespace TauCeti.CommHopfAlgCat
 
-universe u
+universe u v
 
 variable {k : Type u} [Field k]
-variable {H K : _root_.CommHopfAlgCat.{u} k}
+
+section Coordinate
+
+variable {H K : _root_.CommHopfAlgCat.{v} k}
 
 /-- **An isomorphism of commutative Hopf algebras preserves the ideal defining the center.** -/
 @[simp]
@@ -73,16 +76,31 @@ theorem comap_centerDefiningIdeal (e : H ≅ K) :
     simpa using hxH
   · exact hforward
 
+/-- The isomorphism on coordinate Hopf algebras obtained by restricting an ambient isomorphism
+to the centers. -/
+@[expose] noncomputable def centerCoordinateIso (e : H ≅ K) :
+    quotient H (centerDefiningIdeal H) ≅ quotient K (centerDefiningIdeal K) :=
+  eqToIso (congrArg (quotient H) (comap_centerDefiningIdeal e).symm) ≪≫
+    quotientIsoOfIso e (centerDefiningIdeal K)
+
 /-- The coordinate morphism obtained by restricting an ambient isomorphism to the centers. -/
-noncomputable def centerCoordinateMap (e : H ≅ K) :
+@[expose] noncomputable def centerCoordinateMap (e : H ≅ K) :
     quotient H (centerDefiningIdeal H) ⟶ quotient K (centerDefiningIdeal K) :=
-  liftQuotient (centerDefiningIdeal H)
-    (e.hom ≫ mkQuotient K (centerDefiningIdeal K)) <| by
-      intro x hx
-      change (mkQuotient K (centerDefiningIdeal K)).hom (e.hom.hom x) = 0
-      rw [mkQuotient_eq_zero_iff]
-      apply HopfIdeal.mem_comap.mp
-      rwa [comap_centerDefiningIdeal e]
+  (centerCoordinateIso e).hom
+
+/-- The forward morphism of the coordinate isomorphism is the restricted coordinate map. -/
+@[simp]
+theorem centerCoordinateIso_hom (e : H ≅ K) :
+    (centerCoordinateIso e).hom = centerCoordinateMap e :=
+  rfl
+
+/-- Restriction to centers commutes with the two ambient quotient morphisms. -/
+@[simp]
+theorem mkQuotient_comp_centerCoordinateMap (e : H ≅ K) :
+    mkQuotient H (centerDefiningIdeal H) ≫ centerCoordinateMap e =
+      e.hom ≫ mkQuotient K (centerDefiningIdeal K) := by
+  rw [centerCoordinateMap, centerCoordinateIso]
+  simp
 
 /-- On quotient classes, restriction to the center applies the ambient isomorphism before taking
 the target quotient class. -/
@@ -91,77 +109,127 @@ theorem centerCoordinateMap_mk (e : H ≅ K) (x : H) :
     (centerCoordinateMap e).hom
         (Ideal.Quotient.mk (centerDefiningIdeal H).toIdeal x) =
       Ideal.Quotient.mkₐ k (centerDefiningIdeal K).toIdeal (e.hom.hom x) := by
-  rw [← Ideal.Quotient.mkₐ_eq_mk (R₁ := k)]
-  rw [centerCoordinateMap, liftQuotient_mk, _root_.CommHopfAlgCat.comp_apply,
-    mkQuotient_apply]
-
-/-- Restriction to centers commutes with the two ambient quotient morphisms. -/
-@[simp]
-theorem mkQuotient_comp_centerCoordinateMap (e : H ≅ K) :
-    mkQuotient H (centerDefiningIdeal H) ≫ centerCoordinateMap e =
-      e.hom ≫ mkQuotient K (centerDefiningIdeal K) :=
-  mkQuotient_comp_liftQuotient _ _ _
+  calc
+    (centerCoordinateMap e).hom
+        (Ideal.Quotient.mk (centerDefiningIdeal H).toIdeal x) =
+        (mkQuotient H (centerDefiningIdeal H) ≫ centerCoordinateMap e).hom x := by
+      rw [_root_.CommHopfAlgCat.comp_apply, mkQuotient_apply,
+        Ideal.Quotient.mkₐ_eq_mk]
+    _ = (e.hom ≫ mkQuotient K (centerDefiningIdeal K)).hom x :=
+      BialgHom.congr_fun
+        (congrArg _root_.CommHopfAlgCat.Hom.hom
+          (mkQuotient_comp_centerCoordinateMap e)) x
+    _ = Ideal.Quotient.mkₐ k (centerDefiningIdeal K).toIdeal (e.hom.hom x) := by
+      rw [_root_.CommHopfAlgCat.comp_apply, mkQuotient_apply]
 
 /-- The map on center coordinates induced by an identity is the identity. -/
 @[simp]
-theorem centerCoordinateMap_id (H : _root_.CommHopfAlgCat.{u} k) :
+theorem centerCoordinateMap_refl (H : _root_.CommHopfAlgCat.{v} k) :
     centerCoordinateMap (Iso.refl H) = 𝟙 (quotient H (centerDefiningIdeal H)) := by
-  ext q
-  obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (centerDefiningIdeal H).toIdeal q
-  simp only [Ideal.Quotient.mkₐ_eq_mk]
-  rw [centerCoordinateMap_mk]
-  rfl
+  let _ : Epi (mkQuotient H (centerDefiningIdeal H)) :=
+    ConcreteCategory.epi_of_surjective _
+      (Ideal.Quotient.mkₐ_surjective k (centerDefiningIdeal H).toIdeal)
+  rw [← cancel_epi (mkQuotient H (centerDefiningIdeal H))]
+  simp
 
 /-- Restriction to center coordinates is compatible with composition of isomorphisms. -/
 @[simp]
-theorem centerCoordinateMap_trans {L : _root_.CommHopfAlgCat.{u} k}
+theorem centerCoordinateMap_trans {L : _root_.CommHopfAlgCat.{v} k}
     (e : H ≅ K) (f : K ≅ L) :
     centerCoordinateMap (e ≪≫ f) = centerCoordinateMap e ≫ centerCoordinateMap f := by
-  ext q
-  obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (centerDefiningIdeal H).toIdeal q
-  simp only [Ideal.Quotient.mkₐ_eq_mk]
-  rw [centerCoordinateMap_mk, _root_.CommHopfAlgCat.comp_apply,
-    centerCoordinateMap_mk]
-  simp only [Ideal.Quotient.mkₐ_eq_mk]
-  rw [centerCoordinateMap_mk]
-  rfl
+  let _ : Epi (mkQuotient H (centerDefiningIdeal H)) :=
+    ConcreteCategory.epi_of_surjective _
+      (Ideal.Quotient.mkₐ_surjective k (centerDefiningIdeal H).toIdeal)
+  rw [← cancel_epi (mkQuotient H (centerDefiningIdeal H))]
+  calc
+    mkQuotient H (centerDefiningIdeal H) ≫ centerCoordinateMap (e ≪≫ f) =
+        (e ≪≫ f).hom ≫ mkQuotient L (centerDefiningIdeal L) :=
+      mkQuotient_comp_centerCoordinateMap (e ≪≫ f)
+    _ = e.hom ≫ (f.hom ≫ mkQuotient L (centerDefiningIdeal L)) := by
+      rw [Iso.trans_hom, Category.assoc]
+    _ = e.hom ≫ (mkQuotient K (centerDefiningIdeal K) ≫ centerCoordinateMap f) := by
+      rw [mkQuotient_comp_centerCoordinateMap]
+    _ = (e.hom ≫ mkQuotient K (centerDefiningIdeal K)) ≫ centerCoordinateMap f :=
+      (Category.assoc _ _ _).symm
+    _ = (mkQuotient H (centerDefiningIdeal H) ≫ centerCoordinateMap e) ≫
+        centerCoordinateMap f := by
+      rw [mkQuotient_comp_centerCoordinateMap]
+    _ = mkQuotient H (centerDefiningIdeal H) ≫
+        (centerCoordinateMap e ≫ centerCoordinateMap f) :=
+      Category.assoc _ _ _
 
-/-- The isomorphism on coordinate Hopf algebras obtained by restricting an ambient isomorphism
-to the centers. -/
-noncomputable def centerCoordinateIso (e : H ≅ K) :
-    quotient H (centerDefiningIdeal H) ≅ quotient K (centerDefiningIdeal K) where
-  hom := centerCoordinateMap e
-  inv := centerCoordinateMap e.symm
-  hom_inv_id := by
-    ext q
-    obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (centerDefiningIdeal H).toIdeal q
-    simp only [Ideal.Quotient.mkₐ_eq_mk]
-    rw [_root_.CommHopfAlgCat.comp_apply, centerCoordinateMap_mk]
-    simp only [Ideal.Quotient.mkₐ_eq_mk]
-    rw [centerCoordinateMap_mk]
-    simp
-  inv_hom_id := by
-    ext q
-    obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (centerDefiningIdeal K).toIdeal q
-    simp only [Ideal.Quotient.mkₐ_eq_mk]
-    rw [_root_.CommHopfAlgCat.comp_apply, centerCoordinateMap_mk]
-    simp only [Ideal.Quotient.mkₐ_eq_mk]
-    rw [centerCoordinateMap_mk]
-    simp
-
-/-- The coordinate isomorphism of centers sends the class of `x` to the class of its image under
-the ambient isomorphism. -/
+/-- The inverse morphism of the coordinate isomorphism is restriction along the inverse ambient
+isomorphism. -/
 @[simp]
-theorem centerCoordinateIso_hom_mk (e : H ≅ K) (x : H) :
-    (centerCoordinateIso e).hom.hom
-        (Ideal.Quotient.mk (centerDefiningIdeal H).toIdeal x) =
-      Ideal.Quotient.mkₐ k (centerDefiningIdeal K).toIdeal (e.hom.hom x) := by
-  exact centerCoordinateMap_mk e x
+theorem centerCoordinateIso_inv (e : H ≅ K) :
+    (centerCoordinateIso e).inv = centerCoordinateMap e.symm := by
+  rw [← cancel_mono (centerCoordinateIso e).hom]
+  rw [Iso.inv_hom_id, centerCoordinateIso_hom, ← centerCoordinateMap_trans,
+    Iso.symm_self_id, centerCoordinateMap_refl]
+
+end Coordinate
+
+section Scheme
+
+variable {H K : _root_.CommHopfAlgCat.{u} k}
 
 /-- An isomorphism of affine group schemes represented by commutative Hopf algebras restricts to
 an isomorphism of their center group schemes. -/
-noncomputable def centerGroupSchemeIso (e : H ≅ K) :
+@[expose] noncomputable def centerGroupSchemeIso (e : H ≅ K) :
     centerGroupScheme H ≅ centerGroupScheme K :=
   ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).mapIso (centerCoordinateIso e).op).symm
+
+/-- The forward center-scheme isomorphism is induced contravariantly by restriction along the
+inverse ambient isomorphism. -/
+@[simp]
+theorem centerGroupSchemeIso_hom (e : H ≅ K) :
+    (centerGroupSchemeIso e).hom =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map
+        (centerCoordinateMap e.symm).op := by
+  rw [centerGroupSchemeIso]
+  simp
+
+/-- The inverse center-scheme isomorphism is induced contravariantly by restriction along the
+forward ambient isomorphism. -/
+@[simp]
+theorem centerGroupSchemeIso_inv (e : H ≅ K) :
+    (centerGroupSchemeIso e).inv =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map
+        (centerCoordinateMap e).op := by
+  rw [centerGroupSchemeIso]
+  simp
+
+/-- The isomorphism of centers commutes with their inclusions into the ambient affine group
+schemes. -/
+theorem centerGroupSchemeIso_hom_comp_centerGroupSchemeι (e : H ≅ K) :
+    (centerGroupSchemeIso e).hom ≫ centerGroupSchemeι K =
+      centerGroupSchemeι H ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map e.inv.op := by
+  rw [centerGroupSchemeIso_hom]
+  change (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map
+      (centerCoordinateMap e.symm).op ≫ quotientSpecι K (centerDefiningIdeal K) =
+    quotientSpecι H (centerDefiningIdeal H) ≫
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map e.inv.op
+  rw [quotientSpecι_def, quotientSpecι_def,
+    ← (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map_comp,
+    ← (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map_comp,
+    ← op_comp, ← op_comp, mkQuotient_comp_centerCoordinateMap, Iso.symm_hom]
+
+/-- The center-scheme isomorphism induced by the identity is the identity. -/
+@[simp]
+theorem centerGroupSchemeIso_refl (H : _root_.CommHopfAlgCat.{u} k) :
+    centerGroupSchemeIso (Iso.refl H) = Iso.refl (centerGroupScheme H) := by
+  apply Iso.ext
+  simp
+
+/-- Center-scheme isomorphisms induced by ambient isomorphisms respect composition. -/
+@[simp]
+theorem centerGroupSchemeIso_trans {L : _root_.CommHopfAlgCat.{u} k}
+    (e : H ≅ K) (f : K ≅ L) :
+    centerGroupSchemeIso (e ≪≫ f) = centerGroupSchemeIso e ≪≫ centerGroupSchemeIso f := by
+  apply Iso.ext
+  simp
+
+end Scheme
 
 end TauCeti.CommHopfAlgCat

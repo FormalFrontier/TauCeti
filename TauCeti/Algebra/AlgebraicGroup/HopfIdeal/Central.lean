@@ -22,10 +22,11 @@ point of `G` in the sense of `TauCeti.HopfAlgebra.IsCentralPoint`. As for normal
 algebra suffices to detect it, namely `(H ⧸ I) ⊗[R] H`, which carries the tautological point of
 the subgroup together with the tautological point of the ambient group.
 
-The main consequences record that the notion behaves as expected. A central Hopf ideal is normal,
-its closed subgroup has commutative point groups and cocommutative coordinate quotient, and the
-zero Hopf ideal — the one cutting out the whole group — is central exactly when `H` is
-cocommutative, that is, exactly when `G` is commutative.
+The main consequences record that the notion behaves as expected. Centrality is preserved by
+pullback along a bijective bialgebra morphism, a central Hopf ideal is normal, its closed subgroup
+has commutative point groups and cocommutative coordinate quotient, and the zero Hopf ideal — the
+one cutting out the whole group — is central exactly when `H` is cocommutative, that is, exactly
+when `G` is commutative.
 
 Centrality is *upward* closed in the lattice of Hopf ideals, since a larger Hopf ideal cuts out a
 smaller closed subgroup. It is not closed downwards, so this file does not construct a smallest
@@ -41,6 +42,8 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 
 * `TauCeti.CommHopfAlgCat.isCentral_iff_forall_isCentralPoint`: **a Hopf ideal is central exactly
   when the points it cuts out are central points over every value algebra.**
+* `TauCeti.HopfIdeal.IsCentral.comap_of_bijective`: centrality is preserved by pullback along a
+  bijective bialgebra morphism.
 * `TauCeti.HopfIdeal.IsCentral.isNormal`: a central Hopf ideal is normal.
 * `TauCeti.HopfIdeal.IsCentral.isCocomm_quotient`: the coordinate Hopf algebra of a central
   closed subgroup is cocommutative.
@@ -274,30 +277,19 @@ theorem IsCentral.comap_of_bijective {H K : Type v} [CommRing H] [CommRing K]
   intro A g hg
   let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
   let E := AlgHom.mapDomainMulEquiv (A := A) e
-  have hmem (q : HopfAlgebra.points (R := R) (H := K) A) :
-      E q ∈ CommHopfAlgCat.quotientPointsSubgroup
-          (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
-        q ∈ CommHopfAlgCat.quotientPointsSubgroup
-          (_root_.CommHopfAlgCat.of R K) I A := by
-    rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
-      CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
-    constructor
-    · intro hq y hy
-      obtain ⟨x, rfl⟩ := hsurj y
-      exact hq x (mem_comap.mpr hy)
-    · intro hq x hx
-      exact hq (f x) (mem_comap.mp hx)
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+    f hinj hsurj I A
   have hg' : E.symm g ∈ CommHopfAlgCat.quotientPointsSubgroup
       (_root_.CommHopfAlgCat.of R K) I A := by
-    rw [← hmem]
+    apply (hmem (E.symm g)).mp
+    change E (E.symm g) ∈ CommHopfAlgCat.quotientPointsSubgroup
+      (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A
     simpa using hg
   have hcentral := CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup
     (_root_.CommHopfAlgCat.of R K) I hI A hg'
-  have htransport :=
-    (HopfAlgebra.isCentralPoint_mapDomain_bialgEquiv_iff e (E.symm g)).mpr hcentral
-  have heq : AlgHom.mapDomain (A := A) e.toBialgHom (E.symm g) = g := by
-    exact E.apply_symm_apply g
-  rw [heq] at htransport
+  have htransport := hcentral.mapDomain_bialgEquiv e
+  change HopfAlgebra.IsCentralPoint (E (E.symm g)) at htransport
+  rw [E.apply_symm_apply] at htransport
   exact htransport
 
 /-- **A central Hopf ideal is normal.** Its points commute with every point of the ambient group
