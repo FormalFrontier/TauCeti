@@ -103,7 +103,7 @@ the boundary set, and no part of it is claimed below.
 
 The domain `U` is an arbitrary open set rather than a disc, matching
 `Conformal/CutDiameter.lean`, whose criterion
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` these results feed: a
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` these results feed: a
 disc-shaped input cannot be handed to a criterion stated for a general domain without first
 specialising the criterion, and the Carathéodory correspondence is a statement about a Jordan
 domain and the disc it is mapped from at once, so both directions of it are served only by the
@@ -369,12 +369,11 @@ which for a circular crosscut of a disc is
 `TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere`; a cut missing `frontier U`
 altogether has an empty middle piece and nothing to enclose.
 
-Local connectedness and the length–area estimate
-`TauCeti.exists_diam_image_ball_inter_sphere_le` are the two geometric inputs to
-`TauCeti.diam_image_inter_ball_le`; its conclusion establishes the approach-region diameter
-hypothesis of `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. The result here
-does not by itself discharge `TauCeti.diam_image_inter_ball_le`, whose enclosing set has to contain
-the whole boundary piece
+This is where the local connectedness of `∂Ω` that
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` needs enters, the other
+of its two geometric inputs being the length–area estimate
+`TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself discharge that criterion,
+whose enclosing set has to contain the whole boundary piece
 `frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ))` and not only the middle piece.
 
 Everything topological is in `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset`, the

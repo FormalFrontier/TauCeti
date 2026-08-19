@@ -47,10 +47,9 @@ the two sides of the crosscut cling to the image boundary only along the crosscu
 planar-separation statement this development does not have, and it is a prerequisite to be proved
 on its own, not something to assume; so no theorem here is stated in a shape that presumes it.
 
-The two pieces are stated with `closure A` rather than `frontier A`, while
-`TauCeti.diam_image_inter_ball_le` consumes the latter to produce the image-diameter hypothesis of
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. A consumer converts between
-the two with
+The two pieces are stated with `closure A` rather than `frontier A`, the shape the crosscut
+criterion `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
+`Conformal/CutDiameter.lean` consumes being the latter. A consumer converts between the two with
 `TauCeti.frontier_inter_closure_eq_frontier_inter_frontier` of `TauCeti/Topology/Frontier.lean`,
 applied to `Set.image_mono Set.inter_subset_left` on the near side and to
 `Set.image_mono Set.sdiff_subset` on the far side: on the frontier of a set, adherence to a subset

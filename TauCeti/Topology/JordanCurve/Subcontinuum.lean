@@ -68,7 +68,8 @@ condition on the subcontinuum — that it be nowhere dense in the curve — and 
 L5 argument this file exists for: fed to
 `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` — the criterion that turns singleton
 boundary cluster sets into a continuous extension on the closure of the domain, and the companion of
-the diameter form `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` — it gives
+the diameter form `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` that
+`ConformalMapping/STATUS.md` names as proved — it gives
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`, a conformal map of
 a convex domain onto a bounded Jordan-bounded region none of whose boundary cluster sets has
 interior in the boundary curve extends continuously to `closure U`. That conclusion is the L5

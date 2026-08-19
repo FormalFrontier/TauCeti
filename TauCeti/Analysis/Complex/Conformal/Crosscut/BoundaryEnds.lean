@@ -46,12 +46,10 @@ boundary points into a small boundary arc; the pair `{u, v}` produced here is th
 The two ends may coincide: an image crosscut is free to close up, and no hypothesis available here
 excludes it. So `{u, v}` is a pair only in the sense of `Set.instInsert`, possibly a singleton, and
 the small-arc theorem — which asks `p ≠ q` — still has to rule that out from properties of the
-image domain. Nor is the *piece* of the boundary cut off between the two ends identified: enclosing
-`frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ))` in a small bounded set is a
-geometric input to `TauCeti.diam_image_inter_ball_le`, whose conclusion supplies the
-approach-region diameter hypothesis of
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. That enclosure is a matter of
-the image domain rather than of the crosscut, and is untouched here.
+image domain. Nor is the *piece* of the boundary cut off between the two ends identified: bounding
+`frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ))`, the second geometric input of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`, is a matter of the image
+domain rather than of the crosscut, and is untouched here.
 
 ## Main results
 

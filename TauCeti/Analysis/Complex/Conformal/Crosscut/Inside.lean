@@ -50,9 +50,10 @@ side, and a diameter comparison selects the near one.
 * **An enclosed side is trapped**: each side is preconnected and disjoint from `K`, so if it meets
   `filledHull K` it lies inside (`TauCeti.image_subset_filledHull_of_disjoint_inter_sphere`) and is
   therefore no wider than `K`.
-* **At least one side**, as soon as some point of the image crosscut is a limit of points inside
-  `K` (`TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall`): a point of
-  the inside close enough to it lies in the image domain and off `K`, hence on one of the two sides.
+* **At least one side meets the inside**, as soon as some point of the image crosscut is a limit of
+  points inside `K`
+  (`TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall`): a point of the
+  inside close enough to it lies in the image domain and off `K`, hence on one of the two sides.
 
 If `K` is narrower than the far side, at most the near side can be enclosed: trapping the far side
 would give `diam B ≤ diam K`. Combining this exclusion with the two facts above,
@@ -76,16 +77,18 @@ isolates those inputs; it does not discharge them.
 That the enclosure route asks for no more than the frontier route does is
 `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset`: a boundary piece `E` enclosing
 `frontier Ω ∩ frontier A` puts the near side inside `f '' (U ∩ sphere ζ ρ) ∪ E`, so the hypothesis
-produced by the frontier route gives the same inclusion with the same `E`. Either route then uses
-`TauCeti.diam_le_diam_of_subset_filledHull` to feed the common metric criterion
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`.
+produced by the frontier route gives the same inclusion with the same `E`. Either route then reads
+the inclusion as a width bound on the near side through
+`TauCeti.diam_le_diam_of_subset_filledHull`, which is what the Cauchy criterion
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists` of `TauCeti/Topology/ClusterSet.lean` consumes,
+through `Metric.dist_le_diam_of_mem`.
 
 ## Main results
 
 * `TauCeti.image_subset_filledHull_of_disjoint_inter_sphere` — an image side meeting the inside of
   such a curve lies inside it.
-* `TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall` — a curve with
-  inside points next to the image crosscut encloses one of the two sides.
+* `TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall` — one of the two
+  image sides meets the inside of a curve with inside points next to the image crosscut.
 * `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` — such a curve, if narrower than the far
   side, encloses the *near* side.
 * `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset` — the enclosure hypothesis is
@@ -137,10 +140,11 @@ theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
     (disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
       hUo hd hinj hVU hV hK) hne
 
-/-! ## At least one side is enclosed -/
+/-! ## At least one side meets the inside -/
 
-/-- **A curve with a point of its inside next to the image crosscut encloses one of the two sides.**
-If a point `p` of the image crosscut is a limit of points of `filledHull K \ K`, then such a point
+/-- **One of the two image sides meets the inside of a curve with a point of its inside next to the
+image crosscut.** If a point `p` of the image crosscut is a limit of points of `filledHull K \ K`,
+then such a point
 `q` close enough to `p` lies in the open image domain; being off `K` it is off the image crosscut,
 so it lies on one of the two image sides, and it lies in `filledHull K`.
 
@@ -194,8 +198,8 @@ frontier of that side lies in `f '' (U ∩ sphere ζ ρ) ∪ E` by
 encloses the side.
 
 Thus the frontier route supplies the same filled-hull inclusion as the enclosure route, with the
-same `E`; either inclusion gives a diameter bound for the generic criterion
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. -/
+same `E`; either inclusion becomes a width bound on the near side by
+`TauCeti.diam_le_diam_of_subset_filledHull`. -/
 theorem image_inter_ball_subset_filledHull_of_frontier_subset (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
     (hb : IsBounded (f '' (U ∩ ball ζ ρ))) {E : Set ℂ}

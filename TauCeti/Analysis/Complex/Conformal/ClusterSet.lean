@@ -67,13 +67,14 @@ then propagates to `closure U` for `TauCeti.closureHomeomorph`. Boundary injecti
 here, and neither is the singleton property — but the last section reduces it.
 
 The relative form is what connects that vocabulary to the *geometric* criterion of
-`Conformal/CutDiameter.lean`. There, `TauCeti.diam_image_inter_ball_le` turns a bound on the image
-of `sphere w ρ` together with a bounded set enclosing
-`frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ))` into the image-diameter hypothesis of
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. The first datum comes from the
-length–area method of `Conformal/LengthArea.lean`; the second is the input still missing at layer
-L5. The relative form here names it as a union of cluster sets over boundary points of `U` inside
-the closed disc. No estimate on them is claimed here.
+`Conformal/CutDiameter.lean`. There,
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` produces the continuous
+extension from a bound on the diameter of `f '' (U ∩ sphere w ρ)` together with a bounded set
+enclosing `frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ))`. The first of those two data is what
+the length–area method of `Conformal/LengthArea.lean` supplies; the second is the input still
+missing at layer L5, and what the relative form does is *name* it — as a union of cluster sets over
+the boundary points of `U` inside the closed disc — and show that these sets are precisely what the
+cluster set at `w` is the limit of. No estimate on them is claimed here.
 
 ## The singleton property on a Jordan image boundary
 
@@ -346,13 +347,15 @@ is compact because it lies in `closedBall w ρ`:
 > `frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ))`
 > `= ⋃ e ∈ frontier U ∩ closure (U ∩ ball w ρ), clusterSetOn f (U ∩ ball w ρ) e`.
 
-The left-hand side is exactly the set that `TauCeti.diam_image_inter_ball_le` asks to be enclosed
-in a small bounded set before its image-diameter conclusion is fed to
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. This identifies the second
-geometric input — the first is the length–area estimate making the circle image short — as a union
-of cluster sets *along the ball neighbourhood*, indexed by the boundary points of `U` that the
-neighbourhood reaches. Nothing here asks `U ∩ sphere w ρ` to be a crosscut; when it is one,
-`U ∩ ball w ρ` is the side towards `w` and the set below is the boundary piece it cuts off.
+The left-hand side is exactly the set that
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
+`Conformal/CutDiameter.lean` asks to be enclosed in a small bounded set: what that criterion
+needs made small at each boundary point of `U`, alongside the image of the circle `sphere w ρ`. So
+this identifies its second geometric input — the first being the length–area estimate, which makes
+the image of that circle short — as a union of cluster sets *along the ball neighbourhood*, indexed
+by the boundary points of `U` that the neighbourhood reaches. Nothing here asks `U ∩ sphere w ρ` to
+be a crosscut; when it is one, `U ∩ ball w ρ` is the side of that crosscut towards `w` and the set
+below is the boundary piece it cuts off.
 
 It is not the middle piece `frontier (f '' U) ∩ closure (f '' (U ∩ sphere w ρ))` of
 `Conformal/Crosscut/Image.lean`, which is indexed by the boundary points *on the circle* and is

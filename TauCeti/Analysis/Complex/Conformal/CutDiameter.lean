@@ -58,10 +58,12 @@ bound: for any `E` containing the boundary points of `Ω` that lie on `frontier 
 
 (`TauCeti.diam_image_inter_ball_le`), and likewise for the far side
 (`TauCeti.diam_image_sdiff_closedBall_le`). Feeding those bounds, one for each tolerance, to the
-metric criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` of
-`Topology/ClusterSet.lean` gives the boundary limit and, when the bounds are available at every
-point of `frontier U`, the continuous extension
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`.
+Cauchy criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exists` of
+`Topology/ClusterSet.lean` — a diameter bound on the image of an approach region bounding the
+distance between two of its values by `Metric.dist_le_diam_of_mem` — gives the boundary limit
+`TauCeti.exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le` and, if the bounds are available
+at every point of `frontier U`, the continuous extension to `closure U`,
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`.
 
 This is the **geometric** counterpart of the analytic criterion
 `TauCeti.exists_continuousOn_closedBall_eqOn` of `Conformal/Crosscut/Basic.lean`. That one asks for
@@ -75,8 +77,8 @@ joining its two ends. Neither is proved here; what is proved here is that those 
 with no maximum principle and no estimate on `f` inside the domain.
 
 Nothing below assumes that `ζ` lies on `frontier U`, or that `Ω` is anything but bounded, so the
-hypotheses stay checkable; adherence enters only when the generic boundary-limit criterion is
-applied.
+hypotheses stay checkable; only the final two theorems, which produce a limit, ask `ζ` to be
+adherent to `U`.
 
 ## Generality
 
@@ -93,7 +95,7 @@ that never mention a holomorphic map are stated at their own generality elsewher
 here: `TauCeti.frontier_image_subset_image_union_frontier_image` for maps between arbitrary
 topological spaces, `TauCeti.diam_le_diam_of_frontier_subset` — through `TauCeti.diam_frontier`
 and `TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
-`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` for a map between metric spaces. What
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists` for a map between metric spaces. What
 remains here is exactly the conformal content: the open mapping theorem, and the reading of a
 circular cut as a crosscut.
 
@@ -104,6 +106,11 @@ circular cut as a crosscut.
   boundary of the image domain.
 * `TauCeti.diam_image_inter_ball_le` and `TauCeti.diam_image_sdiff_closedBall_le` — either side of a
   crosscut has image no wider than the image crosscut together with the boundary piece it cuts off.
+* `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_union_le` — small cut-off pieces make
+  the boundary cluster set a subsingleton.
+* `TauCeti.exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le` and
+  `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` — the resulting
+  boundary limit and continuous extension to the closure.
 
 ## Coordination with upstream Mathlib
 
@@ -209,5 +216,66 @@ theorem diam_image_sdiff_closedBall_le (hUo : IsOpen U) (hd : DifferentiableOn �
     ((hb.subset (image_mono inter_subset_left)).union hE)
     fun _ hp =>
       (frontier_image_sdiff_closedBall_subset hUo hd hinj hp).imp id fun h => hEsub ⟨h, hp⟩
+
+/-! ## The boundary limit -/
+
+/-- **The crosscut criterion in geometric form, cluster-set version.** If for every `ε > 0` there
+is a crosscut radius `ρ > 0` and a bounded set `E` enclosing the boundary points of the image domain
+that cling to the cut-off piece, such that the image crosscut together with `E` has diameter at most
+`ε`, then `f` has at most one cluster value at `ζ` along `U`.
+
+This is `TauCeti.diam_image_inter_ball_le` fed to the Cauchy criterion
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists`: the crosscut neighbourhood is an approach
+region, and `Metric.dist_le_diam_of_mem` reads the diameter bound on its image as a bound on the
+distance between two values of `f` there, the image being bounded because `f '' U` is. -/
+theorem subsingleton_clusterSetOn_of_forall_exists_diam_union_le (hUo : IsOpen U)
+    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hb : IsBounded (f '' U))
+    (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
+      frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ⊆ E ∧
+      diam (f '' (U ∩ sphere ζ ρ) ∪ E) ≤ ε) :
+    (clusterSetOn f U ζ).Subsingleton := by
+  refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
+  obtain ⟨ρ, hρ, E, hEb, hEsub, hEdiam⟩ := h ε hε
+  exact ⟨ρ, hρ, fun _ hx _ hy => (dist_le_diam_of_mem (hb.subset (image_mono inter_subset_left))
+    (mem_image_of_mem f hx) (mem_image_of_mem f hy)).trans
+    ((diam_image_inter_ball_le hUo hd hinj hb hEb hEsub).trans hEdiam)⟩
+
+/-- **The crosscut criterion in geometric form, boundary-limit version.** A conformal map of a
+domain with bounded image has a limit at a point `ζ` of its closure, along the domain, as soon as
+the pieces it cuts off at `ζ` can be made small in the sense of
+`TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_union_le`.
+
+The cluster set is a subsingleton by that theorem, and it is nonempty because `f` maps the domain
+into the compact closure of its bounded image, which is what
+`TauCeti.exists_tendsto_of_clusterSetOn_subsingleton` needs. -/
+theorem exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le (hUo : IsOpen U)
+    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hb : IsBounded (f '' U))
+    (hζ : ζ ∈ closure U)
+    (h : ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
+      frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ⊆ E ∧
+      diam (f '' (U ∩ sphere ζ ρ) ∪ E) ≤ ε) :
+    ∃ v, Tendsto f (𝓝[U] ζ) (𝓝 v) :=
+  exists_tendsto_of_clusterSetOn_subsingleton hb.isCompact_closure
+    (fun w hw => subset_closure ⟨w, hw, rfl⟩) hζ
+    (subsingleton_clusterSetOn_of_forall_exists_diam_union_le hUo hd hinj hb h)
+
+/-- **The crosscut criterion in geometric form, continuous-extension version.** If the hypothesis of
+`TauCeti.exists_tendsto_nhdsWithin_of_forall_exists_diam_union_le` holds at *every* boundary point
+of the domain, the conformal map `f` extends continuously to `closure U`.
+
+This is the shape the Carathéodory boundary correspondence is proved in once the two geometric
+inputs are available: the length–area method makes the image crosscut short at some radius, and
+local connectedness of the image boundary supplies the small set `E` joining its ends. Nothing here
+asserts that the extension is injective, which is an independent matter. For a disc,
+`Metric.frontier_ball` and `Metric.closure_ball` turn the hypothesis and the conclusion into
+statements about `sphere c r` and `closedBall c r`. -/
+theorem exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le (hUo : IsOpen U)
+    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hb : IsBounded (f '' U))
+    (h : ∀ w ∈ frontier U, ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, IsBounded E ∧
+      frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ)) ⊆ E ∧
+      diam (f '' (U ∩ sphere w ρ) ∪ E) ≤ ε) :
+    ∃ F : ℂ → ℂ, ContinuousOn F (closure U) ∧ EqOn F f U :=
+  exists_continuousOn_closure_eqOn_of_isBounded hUo hd.continuousOn hb fun w hw =>
+    subsingleton_clusterSetOn_of_forall_exists_diam_union_le hUo hd hinj hb (h w hw)
 
 end TauCeti
