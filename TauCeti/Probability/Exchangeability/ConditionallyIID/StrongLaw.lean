@@ -73,10 +73,11 @@ against *every* probability measure at once, and it is all the empirical-measure
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 6's empirical form of the
   directing-measure theorem. This module supplies the topology-free fixed-set core; weak
-  empirical-measure convergence is a separate downstream theorem requiring a chosen compatible
-  Polish topology, which `[StandardBorelSpace α]` does not select. Such a theorem tests against a
-  countable determining class, and `tendsto_empiricalMeasure_apply_ae_forall` is the "one null set
-  for a countable determining class" step it consumes.
+  empirical-measure convergence is the separate downstream theorem
+  `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` in `ConditionallyIID/WeakConvergence.lean`,
+  which needs only a second-countable topology on `α` whose open sets are measurable. It tests
+  against a countable determining class, and `tendsto_empiricalMeasure_apply_ae_forall` is the
+  "one null set for a countable determining class" step it consumes.
 * O. Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), §1.1.
 
 No material is adapted from `cameronfreer/exchangeability`, which does not treat empirical
