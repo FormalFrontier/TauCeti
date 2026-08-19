@@ -54,7 +54,9 @@ theorem algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj (hmin : minpoly ℤ �
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
     algebraMap ℚ K (Algebra.norm ℚ (algebraMap (𝓞 K) K x))
       = algebraMap (𝓞 K) K (x * ringOfIntegersQuadraticConj hmin hgen x) := by
-  rw [map_mul, algebraMap_ringOfIntegersQuadraticConj, algebraMap_norm_eq_mul_quadraticConj]
+  rw [map_mul]
+  simpa only [RingOfIntegers.coe_eq_algebraMap, coe_ringOfIntegersQuadraticConj] using
+    algebraMap_norm_eq_mul_quadraticConj hmin hgen (algebraMap (𝓞 K) K x)
 
 /-- **Key norm identity.** For `x : 𝓞 K`, the extension of its integral norm equals `x · σx`, the
 product of `x` with its quadratic conjugate. -/
@@ -63,8 +65,11 @@ private theorem algebraMap_intNorm_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
     algebraMap ℤ (𝓞 K) (Algebra.intNorm ℤ (𝓞 K) x)
       = x * ringOfIntegersQuadraticConj hmin hgen x := by
   apply RingOfIntegers.coe_injective
-  rw [map_mul, algebraMap_ringOfIntegersQuadraticConj,
-    ← algebraMap_norm_eq_mul_quadraticConj hmin hgen,
+  rw [map_mul, show algebraMap (𝓞 K) K (ringOfIntegersQuadraticConj hmin hgen x) =
+      quadraticConj hmin hgen (algebraMap (𝓞 K) K x) by
+    simpa only [RingOfIntegers.coe_eq_algebraMap] using
+      coe_ringOfIntegersQuadraticConj hmin hgen x]
+  rw [← algebraMap_norm_eq_mul_quadraticConj hmin hgen,
     ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K, IsScalarTower.algebraMap_apply ℤ ℚ K]
   congr 1
   rw [Algebra.intNorm_eq_norm, algebraMap_int_eq, eq_intCast]
