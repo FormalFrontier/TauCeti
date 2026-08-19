@@ -40,7 +40,8 @@ parity-preservingly and parity-reversingly, hence acts as zero, hence vanishes. 
 `TauCeti.mem_even_of_map_spinPlus_le_of_map_spinMinus_le`, and everything else follows from it: the
 two half-spin summands are simple over the even subalgebra
 (`TauCeti.eq_bot_or_eq_top_of_map_spinPlusAction_le`) because each factor is a full endomorphism
-algebra, and they are **inequivalent** (`TauCeti.not_exists_equiv_spinPlus_spinMinus`) because the
+algebra, and they are **inequivalent**
+(`TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`) because the
 element of `even Q` acting as the identity on `S⁺` and as zero on `S⁻` kills any map that
 intertwines them.
 
@@ -78,7 +79,8 @@ results here are the even-dimensional half.
 * `TauCeti.eq_bot_or_eq_top_of_map_spinPlusAction_le` and
   `TauCeti.eq_bot_or_eq_top_of_map_spinMinusAction_le`: **the half-spin summands are simple** over
   the even Clifford subalgebra.
-* `TauCeti.not_exists_equiv_spinPlus_spinMinus`: **the half-spin summands are inequivalent.**
+* `TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`: **the half-spin summands
+  are inequivalent.**
 
 ## References
 
@@ -230,9 +232,10 @@ theorem mem_even_of_map_spinPlus_le_of_map_spinMinus_le (hline : P.line = ⊥)
     (hplus : (spinPlus Q P).map (spinAction Q P x) ≤ spinPlus Q P)
     (hminus : (spinMinus Q P).map (spinAction Q P x) ≤ spinMinus Q P) :
     x ∈ CliffordAlgebra.even Q := by
-  obtain ⟨x₀, hx₀, x₁, hx₁, rfl⟩ := Submodule.mem_sup.1
-    (show x ∈ evenOdd Q 0 ⊔ evenOdd Q 1 by
-      rw [codisjoint_iff.1 (CliffordAlgebra.evenOdd_isCompl (Q := Q)).codisjoint]; trivial)
+  have hxsplit : x ∈ evenOdd Q 0 ⊔ evenOdd Q 1 := by
+    rw [codisjoint_iff.1 (CliffordAlgebra.evenOdd_isCompl (Q := Q)).codisjoint]
+    trivial
+  obtain ⟨x₀, hx₀, x₁, hx₁, rfl⟩ := Submodule.mem_sup.1 hxsplit
   have hx₀even : x₀ ∈ CliffordAlgebra.even Q := by
     rw [← Subalgebra.mem_toSubmodule, CliffordAlgebra.even_toSubmodule]
     exact hx₀
@@ -268,8 +271,8 @@ theorem mem_even_of_map_spinPlus_le_of_map_spinMinus_le (hline : P.line = ⊥)
     simpa using this
   have hzero : spinAction Q P x₁ = 0 := by
     refine LinearMap.ext fun s => ?_
-    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1
-      (show s ∈ spinPlus Q P ⊔ spinMinus Q P by rw [spinPlus_sup_spinMinus P]; trivial)
+    have hssplit : s ∈ spinPlus Q P ⊔ spinMinus Q P := by simp
+    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hssplit
     rw [map_add, hzeroplus a ha, hzerominus b hb, add_zero, LinearMap.zero_apply]
   have hx₁zero : x₁ = 0 :=
     spinAction_injective P (P.even_finrank_of_line_eq_bot hline) (by rw [hzero, map_zero])
@@ -295,8 +298,8 @@ theorem evenSpinAction_injective (hline : P.line = ⊥) :
   rw [evenSpinAction_apply, Prod.mk_eq_zero] at hx
   have hzero : spinAction Q P x = 0 := by
     refine LinearMap.ext fun s => ?_
-    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1
-      (show s ∈ spinPlus Q P ⊔ spinMinus Q P by rw [spinPlus_sup_spinMinus P]; trivial)
+    have hssplit : s ∈ spinPlus Q P ⊔ spinMinus Q P := by simp
+    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hssplit
     have h₁ : spinAction Q P x a = 0 := by
       have := congrArg (fun g : Module.End K (spinPlus Q P) => (g ⟨a, ha⟩ : ExteriorAlgebra K P.W))
         hx.1
@@ -399,15 +402,15 @@ theorem eq_bot_or_eq_top_of_map_spinPlusAction_le (hline : P.line = ⊥)
   exact hg ▸ hx.1 ▸ hN x ⟨s, hs, rfl⟩
 
 /-- **The odd half-spin summand is a simple module over the even Clifford subalgebra.** -/
-theorem eq_bot_or_eq_top_of_map_spinMinusAction_le (hline : P.line = ⊥) (hW : P.W ≠ ⊥)
+theorem eq_bot_or_eq_top_of_map_spinMinusAction_le (hline : P.line = ⊥)
     (N : Submodule K (spinMinus Q P))
     (hN : ∀ x : CliffordAlgebra.even Q, N.map (spinMinusAction Q P hline x) ≤ N) :
     N = ⊥ ∨ N = ⊤ := by
-  have := nontrivial_spinMinus P hW
   rcases eq_or_ne N ⊥ with hbot | hbot
   · exact Or.inl hbot
   refine Or.inr (eq_top_iff.2 fun t _ => ?_)
   obtain ⟨s, hs, hs0⟩ := N.exists_mem_ne_zero_of_ne_bot hbot
+  let _ : Nontrivial (spinMinus Q P) := ⟨s, 0, hs0⟩
   obtain ⟨g, hg⟩ := IsSimpleModule.toSpanSingleton_surjective
     (Module.End K (spinMinus Q P)) hs0 t
   rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hg
@@ -430,10 +433,9 @@ theorem eq_zero_of_intertwines_spinPlusAction (hline : P.line = ⊥)
   rw [hx.1, hx.2] at h
   simpa using h
 
-/-- **The two half-spin summands are inequivalent.** There is no isomorphism of modules over the
-even Clifford subalgebra between `S⁺` and `S⁻`, even though in even dimension the two have the same
-dimension `2 ^ (dim W - 1)`. -/
-theorem not_exists_equiv_spinPlus_spinMinus (hline : P.line = ⊥) :
+/-- **The two half-spin summands are inequivalent.** There is no linear equivalence intertwining
+the two actions of the even Clifford subalgebra. -/
+theorem not_exists_equiv_intertwines_spinPlusAction_spinMinusAction (hline : P.line = ⊥) :
     ¬ ∃ e : spinPlus Q P ≃ₗ[K] spinMinus Q P,
       ∀ (x : CliffordAlgebra.even Q) (s : spinPlus Q P),
         e (spinPlusAction Q P hline x s) = spinMinusAction Q P hline x (e s) := by
@@ -442,8 +444,8 @@ theorem not_exists_equiv_spinPlus_spinMinus (hline : P.line = ⊥) :
     eq_zero_of_intertwines_spinPlusAction P hline _ he
   have := nontrivial_spinPlus P
   obtain ⟨s, hs⟩ := exists_ne (0 : spinPlus Q P)
-  exact hs (e.injective (by rw [show e s = (e : spinPlus Q P →ₗ[K] spinMinus Q P) s from rfl,
-    hzero, LinearMap.zero_apply, map_zero]))
+  have hes : e s = 0 := by simpa using LinearMap.congr_fun hzero s
+  exact hs (e.injective (hes.trans (map_zero e).symm))
 
 end Even
 

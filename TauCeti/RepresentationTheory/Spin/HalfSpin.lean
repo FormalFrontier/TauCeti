@@ -144,10 +144,12 @@ theorem isCompl_spinPlus_spinMinus : IsCompl (spinPlus Q P) (spinMinus Q P) := b
 
 /-- **The two half-spin summands span the spinor module**: every spinor is the sum of an even and
 an odd one. -/
+@[simp]
 theorem spinPlus_sup_spinMinus : spinPlus Q P ⊔ spinMinus Q P = ⊤ :=
   codisjoint_iff.1 (isCompl_spinPlus_spinMinus P).codisjoint
 
 /-- **The two half-spin summands meet only in zero**: a spinor of both parities vanishes. -/
+@[simp]
 theorem spinPlus_inf_spinMinus : spinPlus Q P ⊓ spinMinus Q P = ⊥ :=
   disjoint_iff.1 (isCompl_spinPlus_spinMinus P).disjoint
 
@@ -271,11 +273,10 @@ theorem mem_spinMinusSubrep (hline : P.line = ⊥) {s : ExteriorAlgebra K P.W} :
 it says that the parity splitting of `S` is a splitting of the spin representation itself. -/
 theorem isCompl_spinPlusSubrep_spinMinusSubrep (hline : P.line = ⊥) :
     IsCompl (spinPlusSubrep P hline) (spinMinusSubrep P hline) := by
-  have h := isCompl_spinPlus_spinMinus P
-  rw [isCompl_iff, disjoint_iff, codisjoint_iff] at h ⊢
+  rw [isCompl_iff, disjoint_iff, codisjoint_iff]
   refine ⟨Subrepresentation.toSubmodule_injective ?_, Subrepresentation.toSubmodule_injective ?_⟩
-  · simpa using h.1
-  · simpa using h.2
+  · simp
+  · simp
 
 /-! ### Odd elements carry each summand into the other
 
