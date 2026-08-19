@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.Map
+public import TauCeti.Probability.Exchangeability.MarkovExchangeable
 public import TauCeti.Probability.Exchangeability.Family
 public import TauCeti.Probability.Exchangeability.MixedIID.Map
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
@@ -26,7 +27,7 @@ This module declares nothing of its own; it is a curated re-export.
 
 * the finite-dimensional laws `blockLaw`, `prefixLaw`, `pathLaw`, and finite-marginal uniqueness;
 * the symmetry predicates `ExchangeableAt`, `Exchangeable`, `FullyExchangeable`, `Contractable`,
-  and the index-generic `ExchangeableFamily`;
+  `MarkovExchangeable`, and the index-generic `ExchangeableFamily`;
 * the representation predicates `MixedIIDWith`, `MixedIID`, `ConditionallyIIDWith`,
   `ConditionallyIID`, with their constructors, accessors, and simp-normal forms;
 * the implications between them, including the symmetry consequences of each and the projection
