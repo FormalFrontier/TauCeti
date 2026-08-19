@@ -21,11 +21,10 @@ northeast of them, and dually over the right points. Specializing the left (or r
 a singleton turns each `J`-pairing against a single grid square into a plain count of the strictly
 comparable points of the other set.
 
-The singleton pairings are exactly the corner terms `GridPoint.J {corner} P` produced by the
-rectangle grading-change localizations (`GradingChange.lean`), where the four corners of a
-rectangle move are paired against the `O`- and `X`-marking sets. Reading each such term as the
-number of markings strictly northeast or southwest of the corner is the counting form those
-localizations feed into.
+These lemmas concern the state-against-state pairing `GridPoint.J` only. The corner terms of the
+rectangle grading-change localizations (`Grading/Change.lean`) pair a corner against the `O`- and
+`X`-marking sets, so they are terms of `GridPoint.JCentre` instead, the markings sitting at the
+centres of their squares; a counting form for those is not recorded here.
 
 ## Main results
 

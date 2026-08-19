@@ -17,9 +17,11 @@ public import TauCeti.KnotTheory.Grid.Rotation
 # The grid `J`-function
 
 This file adds the finite point-pair count used in the Maslov and Alexander gradings of grid
-homology. For finite sets of grid points, `GridPoint.I s t` counts ordered pairs
-`(p, q) ∈ s × t` with `p` strictly southwest of `q`, and `GridPoint.J s t` is the symmetrized
-half-count.
+homology. For finite sets of grid points, `GridPoint.Icount r s t` counts the ordered pairs
+`(p, q) ∈ s × t` with `r p q`; `GridPoint.I s t` is its value at the strict southwest relation,
+and `GridPoint.J s t` is the symmetrized half-count. Keeping the count parametric in the
+relation lets the pairing against markings at the centres of their squares
+(`JFunction/Centre.lean`), which weakens the comparison, share this API.
 
 The API is deliberately point-set level: later grading definitions apply it to grid-state and
 marking point sets, which the Maslov and Alexander gradings are then assembled from.
@@ -27,7 +29,10 @@ marking point sets, which the Maslov and Alexander gradings are then assembled f
 ## Main definitions
 
 * `TauCeti.GridPoint.IsSouthWest`: the strict southwest relation on grid squares.
-* `TauCeti.GridPoint.I`: the ordered southwest pair count.
+* `TauCeti.GridPoint.Icount`: the ordered count of pairs of grid points related by a given
+  decidable relation.
+* `TauCeti.GridPoint.I`: the ordered southwest pair count, `Icount` at the strict southwest
+  relation.
 * `TauCeti.GridPoint.JNum`: the numerator of the symmetrized `J`-function.
 * `TauCeti.GridPoint.J`: the rational-valued symmetrized `J`-function.
 * `TauCeti.GridState.J`: the specialized form for a pair of grid states.
@@ -94,10 +99,120 @@ theorem not_isSouthWest_swap {p q : Fin n × Fin n} (h : IsSouthWest p q) :
   intro hqp
   exact (not_lt_of_gt h.1) hqp.1
 
+/-- The ordered count of pairs `(p, q) ∈ s × t` related by `r`. The two relations used on grids
+are the strict southwest relation `GridPoint.IsSouthWest`, giving the `J`-function of this file,
+and the weak product order, giving the pairing of grid points against markings sitting at the
+centres of their squares. -/
+@[expose] def Icount (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (s t : Finset (Fin n × Fin n)) : ℕ :=
+  ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => r pq.1 pq.2).card
+
+variable (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+
+/-- The ordered relation count as the cardinality of the filtered product of point sets. -/
+theorem Icount_def (s t : Finset (Fin n × Fin n)) :
+    Icount r s t =
+      ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => r pq.1 pq.2).card :=
+  rfl
+
+/-- The ordered relation count is zero when the left point set is empty. -/
+@[simp]
+theorem Icount_empty_left (s : Finset (Fin n × Fin n)) : Icount r ∅ s = 0 := by
+  simp [Icount]
+
+/-- The ordered relation count is zero when the right point set is empty. -/
+@[simp]
+theorem Icount_empty_right (s : Finset (Fin n × Fin n)) : Icount r s ∅ = 0 := by
+  simp [Icount]
+
+/-- The ordered relation count of singleton point sets records the single comparison. -/
+@[simp]
+theorem Icount_singleton_singleton (p q : Fin n × Fin n) :
+    Icount r {p} {q} = if r p q then 1 else 0 := by
+  simp only [Icount, Finset.singleton_product_singleton, Finset.filter_singleton]
+  by_cases h : r p q
+  · simp only [h, ite_true, Finset.card_singleton]
+  · simp only [h, ite_false, Finset.card_empty]
+
+/-- The ordered relation count is additive in the left point set over disjoint unions. -/
+theorem Icount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
+    Icount r (s₁ ∪ s₂) t = Icount r s₁ t + Icount r s₂ t := by
+  dsimp [Icount]
+  rw [Finset.union_product, Finset.filter_union, Finset.card_union_of_disjoint]
+  exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inl h))
+
+/-- The ordered relation count is additive in the right point set over disjoint unions. -/
+theorem Icount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
+    Icount r s (t₁ ∪ t₂) = Icount r s t₁ + Icount r s t₂ := by
+  dsimp [Icount]
+  rw [Finset.product_union, Finset.filter_union, Finset.card_union_of_disjoint]
+  exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inr h))
+
+/-- The ordered relation count after inserting a fresh point on the left. -/
+theorem Icount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
+    Icount r (insert p s) t = Icount r {p} t + Icount r s t := by
+  rw [← Finset.singleton_union, Icount_union_left]
+  exact Finset.disjoint_singleton_left.mpr h
+
+/-- The ordered relation count after inserting a fresh point on the right. -/
+theorem Icount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
+    Icount r s (insert p t) = Icount r s {p} + Icount r s t := by
+  rw [← Finset.singleton_union, Icount_union_right]
+  exact Finset.disjoint_singleton_left.mpr h
+
+/-- The ordered relation count is monotone in its left point set. -/
+theorem Icount_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
+    Icount r s₁ t ≤ Icount r s₂ t := by
+  dsimp [Icount]
+  exact Finset.card_le_card fun pq hpq => by
+    simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
+    exact ⟨⟨h hpq.1.1, hpq.1.2⟩, hpq.2⟩
+
+/-- The ordered relation count is monotone in its right point set. -/
+theorem Icount_mono_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : t₁ ⊆ t₂) :
+    Icount r s t₁ ≤ Icount r s t₂ := by
+  dsimp [Icount]
+  exact Finset.card_le_card fun pq hpq => by
+    simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
+    exact ⟨⟨hpq.1.1, h hpq.1.2⟩, hpq.2⟩
+
+/-- The reflection map on pairs of grid squares is injective. -/
+theorem prodMap_swap_injective :
+    Function.Injective
+      (Prod.map (Prod.swap (α := Fin n) (β := Fin n)) (Prod.swap (α := Fin n) (β := Fin n))) :=
+  Prod.swap_injective.prodMap Prod.swap_injective
+
+/-- The ordered relation count of a relation invariant under the diagonal reflection is invariant
+under reflecting both point sets across the diagonal. -/
+theorem Icount_image_swap (hr : ∀ p q : Fin n × Fin n, r p.swap q.swap ↔ r p q)
+    (s t : Finset (Fin n × Fin n)) :
+    Icount r (s.image Prod.swap) (t.image Prod.swap) = Icount r s t := by
+  rw [Icount_def, Icount_def, ← Finset.prodMap_image_product Prod.swap Prod.swap s t,
+    Finset.filter_image, Finset.card_image_of_injective _ prodMap_swap_injective]
+  congr 1
+  exact Finset.filter_congr fun pq _ => hr pq.1 pq.2
+
+/-- The ordered relation count of two graph point sets counts the column pairs whose two
+prescribed grid points are related. This graph-level statement does not require either row
+assignment to be a permutation. -/
+theorem Icount_graph_eq_card (f g : Fin n → Fin n) :
+    Icount r (Finset.univ.image fun c : Fin n => (c, f c))
+        (Finset.univ.image fun c : Fin n => (c, g c)) =
+      (Finset.univ.filter fun p : Fin n × Fin n => r (p.1, f p.1) (p.2, g p.2)).card := by
+  classical
+  have hff : Function.Injective (fun c : Fin n => (c, f c)) :=
+    fun _ _ h => congrArg Prod.fst h
+  have hfg : Function.Injective (fun c : Fin n => (c, g c)) :=
+    fun _ _ h => congrArg Prod.fst h
+  rw [Icount_def,
+    ← Finset.prodMap_image_product (fun c : Fin n => (c, f c)) (fun c : Fin n => (c, g c)),
+    Finset.filter_image, Finset.card_image_of_injective _ (hff.prodMap hfg),
+    Finset.univ_product_univ]
+  exact congrArg Finset.card (Finset.filter_congr fun _ _ => Iff.rfl)
+
 /-- The ordered count of pairs `(p, q) ∈ s × t` with `p` strictly southwest of `q`. -/
 @[expose] def I (s t : Finset (Fin n × Fin n)) : ℕ :=
-  ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) =>
-    IsSouthWest pq.1 pq.2).card
+  Icount IsSouthWest s t
 
 /-- The ordered southwest count as the cardinality of the filtered product of point sets. -/
 theorem I_def (s t : Finset (Fin n × Fin n)) :
@@ -116,22 +231,19 @@ theorem mem_filter_product_isSouthWest (s t : Finset (Fin n × Fin n))
 
 /-- The ordered southwest count is zero when the left point set is empty. -/
 @[simp]
-theorem I_empty_left (s : Finset (Fin n × Fin n)) : I ∅ s = 0 := by
-  simp [I]
+theorem I_empty_left (s : Finset (Fin n × Fin n)) : I ∅ s = 0 :=
+  Icount_empty_left _ s
 
 /-- The ordered southwest count is zero when the right point set is empty. -/
 @[simp]
-theorem I_empty_right (s : Finset (Fin n × Fin n)) : I s ∅ = 0 := by
-  simp [I]
+theorem I_empty_right (s : Finset (Fin n × Fin n)) : I s ∅ = 0 :=
+  Icount_empty_right _ s
 
 /-- The ordered southwest count of singleton point sets is one exactly for a southwest pair. -/
 @[simp]
 theorem I_singleton_singleton (p q : Fin n × Fin n) :
-    I {p} {q} = if IsSouthWest p q then 1 else 0 := by
-  simp only [I, Finset.singleton_product_singleton, Finset.filter_singleton]
-  by_cases h : IsSouthWest p q
-  · simp only [h, ite_true, Finset.card_singleton]
-  · simp only [h, ite_false, Finset.card_empty]
+    I {p} {q} = if IsSouthWest p q then 1 else 0 :=
+  Icount_singleton_singleton _ p q
 
 /-- No point contributes a southwest pair with itself. -/
 theorem I_singleton_self (p : Fin n × Fin n) : I {p} {p} = 0 := by
@@ -139,29 +251,23 @@ theorem I_singleton_self (p : Fin n × Fin n) : I {p} {p} = 0 := by
 
 /-- The ordered southwest count is additive in the left point set over disjoint unions. -/
 theorem I_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    I (s₁ ∪ s₂) t = I s₁ t + I s₂ t := by
-  dsimp [I]
-  rw [Finset.union_product, Finset.filter_union, Finset.card_union_of_disjoint]
-  exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inl h))
+    I (s₁ ∪ s₂) t = I s₁ t + I s₂ t :=
+  Icount_union_left _ h
 
 /-- The ordered southwest count is additive in the right point set over disjoint unions. -/
 theorem I_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    I s (t₁ ∪ t₂) = I s t₁ + I s t₂ := by
-  dsimp [I]
-  rw [Finset.product_union, Finset.filter_union, Finset.card_union_of_disjoint]
-  exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inr h))
+    I s (t₁ ∪ t₂) = I s t₁ + I s t₂ :=
+  Icount_union_right _ h
 
 /-- The ordered southwest count after inserting a fresh point on the left. -/
 theorem I_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    I (insert p s) t = I {p} t + I s t := by
-  rw [← Finset.singleton_union, I_union_left]
-  exact Finset.disjoint_singleton_left.mpr h
+    I (insert p s) t = I {p} t + I s t :=
+  Icount_insert_left _ h
 
 /-- The ordered southwest count after inserting a fresh point on the right. -/
 theorem I_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    I s (insert p t) = I s {p} + I s t := by
-  rw [← Finset.singleton_union, I_union_right]
-  exact Finset.disjoint_singleton_left.mpr h
+    I s (insert p t) = I s {p} + I s t :=
+  Icount_insert_right _ h
 
 /-- The numerator of the symmetrized `J`-function. Keeping the numerator as a natural number is
 convenient for parity and integrality lemmas before passing to rational values. -/
@@ -314,19 +420,13 @@ theorem J_singleton_self (p : Fin n × Fin n) : GridPoint.J {p} {p} = 0 := by
 
 /-- The ordered southwest count is monotone in its left point set. -/
 theorem I_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
-    I s₁ t ≤ I s₂ t := by
-  dsimp [I]
-  exact Finset.card_le_card fun pq hpq => by
-    simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
-    exact ⟨⟨h hpq.1.1, hpq.1.2⟩, hpq.2⟩
+    I s₁ t ≤ I s₂ t :=
+  Icount_mono_left _ h
 
 /-- The ordered southwest count is monotone in its right point set. -/
 theorem I_mono_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : t₁ ⊆ t₂) :
-    I s t₁ ≤ I s t₂ := by
-  dsimp [I]
-  exact Finset.card_le_card fun pq hpq => by
-    simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
-    exact ⟨⟨hpq.1.1, h hpq.1.2⟩, hpq.2⟩
+    I s t₁ ≤ I s t₂ :=
+  Icount_mono_right _ h
 
 /-- The numerator of `J` is monotone in its left point set. -/
 theorem JNum_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
@@ -348,20 +448,11 @@ theorem isSouthWest_swap (p q : Fin n × Fin n) :
   unfold IsSouthWest
   exact and_comm
 
-/-- The reflection map on pairs of grid squares is injective. -/
-private theorem prodMap_swap_injective :
-    Function.Injective
-      (Prod.map (Prod.swap (α := Fin n) (β := Fin n)) (Prod.swap (α := Fin n) (β := Fin n))) :=
-  Prod.swap_injective.prodMap Prod.swap_injective
-
 /-- The ordered southwest count is invariant under reflecting both point sets across the
 diagonal. -/
 theorem I_image_swap (s t : Finset (Fin n × Fin n)) :
-    I (s.image Prod.swap) (t.image Prod.swap) = I s t := by
-  rw [I_def, I_def, ← Finset.prodMap_image_product Prod.swap Prod.swap s t,
-    Finset.filter_image, Finset.card_image_of_injective _ prodMap_swap_injective]
-  congr 1
-  exact Finset.filter_congr fun pq _ => isSouthWest_swap pq.1 pq.2
+    I (s.image Prod.swap) (t.image Prod.swap) = I s t :=
+  Icount_image_swap _ isSouthWest_swap s t
 
 /-- The numerator of the `J`-function is invariant under reflecting both point sets across the
 diagonal. -/
@@ -435,17 +526,9 @@ theorem I_graph_eq_card (f g : Fin n → Fin n) :
     GridPoint.I (Finset.univ.image fun c : Fin n => (c, f c))
         (Finset.univ.image fun c : Fin n => (c, g c)) =
       (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < g p.2).card := by
-  classical
-  have hff : Function.Injective (fun c : Fin n => (c, f c)) :=
-    fun _ _ h => congrArg Prod.fst h
-  have hfg : Function.Injective (fun c : Fin n => (c, g c)) :=
-    fun _ _ h => congrArg Prod.fst h
-  rw [GridPoint.I_def,
-    ← Finset.prodMap_image_product (fun c : Fin n => (c, f c)) (fun c : Fin n => (c, g c)),
-    Finset.filter_image, Finset.card_image_of_injective _ (hff.prodMap hfg),
-    Finset.univ_product_univ]
-  refine congrArg Finset.card (Finset.filter_congr fun cd _ => ?_)
-  simp only [Prod.map_fst, Prod.map_snd, GridPoint.isSouthWest_iff, Fin.lt_def]
+  rw [I, Icount_graph_eq_card]
+  exact congrArg Finset.card (Finset.filter_congr fun cd _ => by
+    simp only [GridPoint.isSouthWest_iff, Fin.lt_def])
 
 end GridPoint
 

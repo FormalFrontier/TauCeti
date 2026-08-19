@@ -201,7 +201,7 @@ related: this is the algebraic shape of the grading formula. -/
 theorem maslovO_sub_maslovO_eq (x y : GridState n) :
     G.maslovO x - G.maslovO y =
       (GridState.J x x - GridState.J y y) - 2 * (G.JO x - G.JO y) := by
-  rw [maslovO_eq, maslovO_eq]
+  rw [maslovO_def, maslovO_def]
   ring
 
 /-- The difference of the `X`-Maslov grading at two grid states splits into the change in the
@@ -209,7 +209,7 @@ state self-pairing and twice the change in the `X`-marking pairing. -/
 theorem maslovX_sub_maslovX_eq (x y : GridState n) :
     G.maslovX x - G.maslovX y =
       (GridState.J x x - GridState.J y y) - 2 * (G.JX x - G.JX y) := by
-  rw [maslovX_eq, maslovX_eq]
+  rw [maslovX_def, maslovX_def]
   ring
 
 /-- The Alexander grading change at two grid states is the difference of the two marking pairing

@@ -26,22 +26,25 @@ Two things are proved about the family. First it really is a knot diagram: its c
 permutation is `(finRotate (n + 2))⁻¹`, a single `(n + 2)`-cycle, so all `n + 2` markings lie on
 one component. Second, the bigradings of its two marking states are computed. Writing
 `N = n + 2` for the grid number, the general lemmas `maslovOℤ_O` and `maslovXℤ_X` give
-`M_O(O) = 1` and `M_X(X) = 1`, while the two crossed Maslov gradings are computed here to be
-`M_X(O) = M_O(X) = N`. Hence
+`M_O(O) = M_X(X) = 1 - N`, while the two crossed Maslov gradings are computed here to be
+`M_X(O) = M_O(X) = 0`. Hence
 
-`(M_O, A)` is `(1, -(N - 1))` at the `O`-state and `(N, 0)` at the `X`-state.
+`(M_O, A)` is `(1 - N, -(N - 1))` at the `O`-state and `(0, 0)` at the `X`-state.
 
 Both gradings therefore differ by `N - 1` between the two marking states, which is the spread
 expected of the fully blocked grid homology `GH̃` of an `N`-grid unknot: that homology is
-predicted to be `W^{⊗(N-1)}` with `W = 𝔽 ⊕ 𝔽` in bigradings `(0, 0)` and `(-1, -1)`.
+predicted to be `W^{⊗(N-1)}` with `W = 𝔽 ⊕ 𝔽` in bigradings `(0, 0)` and `(-1, -1)`, and the two
+computed bigradings are exactly the two extreme bigradings of that tensor power.
 Nothing about the homology is proved here, and the gradings of the remaining grid states are
 not compared with these two: only the two marking states are graded.
 
-The Maslov computation reduces to four counts of pairs of columns, and each of the three crossed
-counts differs from the plain count `#{(c, c') | c < c'}` by exactly `N - 1`; the missing pairs
-are the ones ending in the last column, respectively the ones with consecutive columns. The three
-count comparisons are the private lemmas below, and the plain count itself never has to be
-evaluated.
+The Maslov computation reduces to counts of pairs of columns: strict comparisons where a state or
+a marking set is paired with one of its own kind, and weak ones where a state is paired against
+the markings, which sit at the centres of their squares. Each of the three strict crossed counts
+differs from the plain count `#{(c, c') | c < c'}` by exactly `N - 1` — the missing pairs are the
+ones ending in the last column, respectively the ones with consecutive columns — and each of the
+two weak crossed counts exceeds it by exactly `1`. The five count comparisons are the private
+lemmas below, and the plain count itself never has to be evaluated.
 
 ## Main definitions
 
@@ -58,7 +61,7 @@ evaluated.
 * `TauCeti.GridDiagram.relabelRows_relabelColumns_unknot`: the diagram is invariant under
   simultaneously shifting all rows and all columns by one.
 * `TauCeti.GridDiagram.maslovXℤ_unknot_O` and `TauCeti.GridDiagram.maslovOℤ_unknot_X`: the two
-  crossed Maslov gradings of the marking states are both the grid number.
+  crossed Maslov gradings of the marking states both vanish.
 * `TauCeti.GridDiagram.alexander_unknot_O` and `TauCeti.GridDiagram.alexander_unknot_X`: the
   Alexander gradings of the marking states are `-(n + 1)` and `0`.
 
@@ -180,45 +183,23 @@ theorem relabelRows_relabelColumns_unknot :
 
 /-! ### Column-pair counts for the Maslov gradings -/
 
-/-- Splitting the pairs of columns in increasing order according to an auxiliary predicate. -/
-private theorem card_filter_lt_split (P : Fin (n + 2) × Fin (n + 2) → Prop) [DecidablePred P] :
-    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2 ∧ P p).card
-        + (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2 ∧ ¬ P p).card
-      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card := by
+/-- Splitting a set of pairs of columns according to an auxiliary predicate. -/
+private theorem card_filter_split (Q P : Fin (n + 2) × Fin (n + 2) → Prop)
+    [DecidablePred Q] [DecidablePred P] :
+    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => Q p ∧ P p).card
+        + (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => Q p ∧ ¬ P p).card
+      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => Q p).card := by
   rw [← Finset.filter_filter, ← Finset.filter_filter]
   exact Finset.card_filter_add_card_filter_not _
 
-/-- Splitting the pairs of columns in weakly increasing order according to an auxiliary
-predicate. -/
-private theorem card_filter_le_split (P : Fin (n + 2) × Fin (n + 2) → Prop) [DecidablePred P] :
-    (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2 ∧ P p).card
-        + (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2 ∧ ¬ P p).card
-      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card := by
-  rw [← Finset.filter_filter, ← Finset.filter_filter]
-  exact Finset.card_filter_add_card_filter_not _
-
-/-- The weakly increasing column pairs are the increasing ones together with the `n + 2`
-diagonal pairs. -/
+/-- The weakly increasing column pairs are the increasing ones together with the `n + 2` diagonal
+pairs: the case of the identity row assignment of
+`GridPoint.card_filter_le_eq_card_filter_lt_add`. -/
 private theorem card_filter_le :
     (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + (n + 2) := by
-  classical
-  have hsplit : (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2)
-      = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2) ∪
-        (Finset.univ : Finset (Fin (n + 2))).diag := by
-    ext p
-    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_diag,
-      le_iff_lt_or_eq]
-  have hdisj : Disjoint
-      (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2)
-      (Finset.univ : Finset (Fin (n + 2))).diag := by
-    rw [Finset.disjoint_left]
-    intro p hp hq
-    rw [Finset.mem_filter] at hp
-    rw [Finset.mem_diag] at hq
-    exact (ne_of_lt hp.2) hq.2
-  rw [hsplit, Finset.card_union_of_disjoint hdisj, Finset.diag_card, Finset.card_univ,
-    Fintype.card_fin]
+  simpa using GridPoint.card_filter_le_eq_card_filter_lt_add
+    (f := (id : Fin (n + 2) → Fin (n + 2))) Function.injective_id
 
 /-- A set of column pairs cut out by prescribing the second column as a function of the first,
 which is required to avoid one prescribed column, has `n + 1` elements. -/
@@ -271,7 +252,8 @@ private theorem card_filter_lt_O_lt_X : (Finset.univ.filter fun p : Fin (n + 2) 
       exact Fin.not_lt_zero p.1
   have hcard := card_filter_graph n (Fin.last (n + 1)) fun _ => Fin.last (n + 1)
   rw [← hset] at hcard
-  have hsplit := card_filter_lt_split n fun p => (unknot n).O p.1 < (unknot n).X p.2
+  have hsplit :=
+    card_filter_split n (fun p => p.1 < p.2) fun p => (unknot n).O p.1 < (unknot n).X p.2
   omega
 
 /-- Among the increasing column pairs, exactly the `n + 1` pairs of consecutive columns fail to
@@ -300,7 +282,8 @@ private theorem card_filter_lt_X_lt_O : (Finset.univ.filter fun p : Fin (n + 2) 
       exact ⟨(lt_finRotate_iff_ne_last p.1).mpr h1, lt_irrefl _⟩
   have hcard := card_filter_graph n (Fin.last (n + 1)) (finRotate (n + 2))
   rw [← hset] at hcard
-  have hsplit := card_filter_lt_split n fun p => (unknot n).X p.1 < (unknot n).O p.2
+  have hsplit :=
+    card_filter_split n (fun p => p.1 < p.2) fun p => (unknot n).X p.1 < (unknot n).O p.2
   omega
 
 /-- Among the increasing column pairs, exactly the `n + 1` pairs ending in the last column fail to
@@ -329,7 +312,8 @@ private theorem card_filter_lt_X_lt_X : (Finset.univ.filter fun p : Fin (n + 2) 
       exact Fin.not_lt_zero _
   have hcard := card_filter_graph n (Fin.last (n + 1)) fun _ => Fin.last (n + 1)
   rw [← hset] at hcard
-  have hsplit := card_filter_lt_split n fun p => (unknot n).X p.1 < (unknot n).X p.2
+  have hsplit :=
+    card_filter_split n (fun p => p.1 < p.2) fun p => (unknot n).X p.1 < (unknot n).X p.2
   omega
 
 /-- Among the weakly increasing column pairs, exactly the `n + 1` pairs whose second column is
@@ -362,7 +346,8 @@ private theorem card_filter_le_O_le_X :
       simpa using Nat.pos_of_ne_zero h1'
   have hcard := card_filter_graph n 0 fun _ => Fin.last (n + 1)
   rw [← hset] at hcard
-  have hsplit := card_filter_le_split n fun p => (unknot n).O p.1 ≤ (unknot n).X p.2
+  have hsplit :=
+    card_filter_split n (fun p => p.1 ≤ p.2) fun p => (unknot n).O p.1 ≤ (unknot n).X p.2
   have hle := card_filter_le n
   omega
 
@@ -396,7 +381,8 @@ private theorem card_filter_le_X_le_O :
       exact (lt_finRotate_iff_ne_last p.1).mpr h1
   have hcard := card_filter_graph n (Fin.last (n + 1)) fun c => c
   rw [← hset] at hcard
-  have hsplit := card_filter_le_split n fun p => (unknot n).X p.1 ≤ (unknot n).O p.2
+  have hsplit :=
+    card_filter_split n (fun p => p.1 ≤ p.2) fun p => (unknot n).X p.1 ≤ (unknot n).O p.2
   have hle := card_filter_le n
   omega
 

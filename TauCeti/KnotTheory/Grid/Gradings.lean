@@ -74,11 +74,6 @@ theorem maslovO_def (x : GridState n) :
     G.maslovO x = GridState.J x x - 2 * G.JO x + GridState.J G.O G.O + 1 :=
   rfl
 
-/-- The expanded `O`-Maslov grading formula. -/
-theorem maslovO_eq (x : GridState n) :
-    G.maslovO x = GridState.J x x - 2 * G.JO x + GridState.J G.O G.O + 1 :=
-  rfl
-
 /-- The `X`-Maslov grading of a grid state.
 
 This is the self-pairing formula `M_X(x) = J(x - 𝕏, x - 𝕏) + 1`, expanded so that the mixed term
@@ -89,11 +84,6 @@ is the marking pairing `GridDiagram.JX`. -/
 /-- The `X`-Maslov grading as its expanded self-pairing formula. -/
 @[simp]
 theorem maslovX_def (x : GridState n) :
-    G.maslovX x = GridState.J x x - 2 * G.JX x + GridState.J G.X G.X + 1 :=
-  rfl
-
-/-- The expanded `X`-Maslov grading formula. -/
-theorem maslovX_eq (x : GridState n) :
     G.maslovX x = GridState.J x x - 2 * G.JX x + GridState.J G.X G.X + 1 :=
   rfl
 
@@ -118,7 +108,7 @@ theorem alexander_eq (x : GridState n) :
     G.alexander x =
       (2 * (G.JX x - G.JO x) + (GridState.J G.O G.O - GridState.J G.X G.X) -
         (((n : ℤ) - 1 : ℤ) : ℚ)) / 2 := by
-  rw [alexander, maslovO_eq, maslovX_eq]
+  rw [alexander, maslovO_def, maslovX_def]
   ring
 
 /-- The difference of the two Maslov gradings is twice the Alexander grading plus the

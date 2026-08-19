@@ -138,8 +138,8 @@ theorem maslovXℤ_X : G.maslovXℤ G.X = 1 - (n : ℤ) := by
   ring
 
 /-- The rational `O`-Maslov grading is the cast of its integer counterpart: `M_O` is an
-integer. This specializes the general self-pairing integrality `GridPoint.JDiff_self_eq_intCast`
-to the `O`-markings. -/
+integer. Both self-pairings are integers by `GridPoint.J_self`, and the mixed term is one because
+`2 * J_O(x) = JNumCentre(x, 𝕆)`. -/
 theorem maslovO_eq_intCast (x : GridState n) : G.maslovO x = (G.maslovOℤ x : ℚ) := by
   rw [maslovO_def, maslovOℤ, GridState.J_def, GridState.J_def, GridPoint.J_self, JO_def, OSet,
     GridPoint.JCentre_def, GridPoint.J_self]
@@ -147,8 +147,8 @@ theorem maslovO_eq_intCast (x : GridState n) : G.maslovO x = (G.maslovOℤ x : �
   ring
 
 /-- The rational `X`-Maslov grading is the cast of its integer counterpart: `M_X` is an
-integer. This specializes the general self-pairing integrality `GridPoint.JDiff_self_eq_intCast`
-to the `X`-markings. -/
+integer. Both self-pairings are integers by `GridPoint.J_self`, and the mixed term is one because
+`2 * J_X(x) = JNumCentre(x, 𝕏)`. -/
 theorem maslovX_eq_intCast (x : GridState n) : G.maslovX x = (G.maslovXℤ x : ℚ) := by
   rw [maslovX_def, maslovXℤ, GridState.J_def, GridState.J_def, GridPoint.J_self, JX_def, XSet,
     GridPoint.JCentre_def, GridPoint.J_self]

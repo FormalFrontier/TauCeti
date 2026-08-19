@@ -32,9 +32,9 @@ using `GridPoint.J`.
 
 ## Main definitions
 
-* `TauCeti.GridPoint.IsSouthWestOfCentre`: a grid point lies southwest of the centre of a given
-  square.
-* `TauCeti.GridPoint.ICentre`: the ordered count of such pairs.
+* `TauCeti.GridPoint.ICentre`: the ordered count of pairs of a grid point and a marked square with
+  the point southwest of the centre of the square, that is, `GridPoint.Icount` at the weak product
+  order.
 * `TauCeti.GridPoint.JNumCentre`, `TauCeti.GridPoint.JCentre`: the symmetrized numerator and the
   rational-valued pairing of a set of grid points against a set of marked squares.
 * `TauCeti.GridDiagram.JO`, `TauCeti.GridDiagram.JX`: the pairings of a grid state against the
@@ -45,8 +45,10 @@ using `GridPoint.J`.
 * `TauCeti.GridPoint.ICentre_graph_eq_card`, `TauCeti.GridState.JNumCentre_pointSet_eq_card`,
   `TauCeti.GridDiagram.JO_eq_card`, `TauCeti.GridDiagram.JX_eq_card`: the pairings as
   column-index counts.
-* `TauCeti.GridState.ICentre_self_pointSet_eq`: pairing a grid state against the squares it
-  occupies adds exactly the `n` diagonal pairs to the strict count.
+* `TauCeti.GridPoint.card_filter_le_eq_card_filter_lt_add`,
+  `TauCeti.GridState.ICentre_self_pointSet_eq`: weakening both comparisons of a column-pair count
+  along an injective row assignment, in particular pairing a grid state against the squares it
+  occupies, adds exactly the `n` diagonal pairs to the strict count.
 * `TauCeti.GridPoint.JCentre_insert_left`, `TauCeti.GridPoint.JCentre_union_left`: the pairing is
   additive in the grid points, which is what localizes a grading change to the corners of a
   rectangle.
@@ -68,98 +70,50 @@ namespace GridPoint
 
 variable {n : ℕ}
 
-/-- A grid point lies southwest of the centre of the square named by `q` exactly when it is
-weakly southwest of `q` itself: the marking of that square sits at `q + (1/2, 1/2)`, so a strict
-comparison against the marking is a weak comparison against the naming grid point. -/
-@[expose] def IsSouthWestOfCentre (p q : Fin n × Fin n) : Prop :=
-  p.1 ≤ q.1 ∧ p.2 ≤ q.2
-
-/-- Lying southwest of the centre of a square is decidable. -/
-instance decidableIsSouthWestOfCentre (p q : Fin n × Fin n) :
-    Decidable (IsSouthWestOfCentre p q) :=
-  inferInstanceAs (Decidable (p.1 ≤ q.1 ∧ p.2 ≤ q.2))
-
-/-- Lying southwest of the centre of a square, in coordinate form. -/
-@[simp, grind =]
-theorem isSouthWestOfCentre_iff (p q : Fin n × Fin n) :
-    IsSouthWestOfCentre p q ↔ p.1 ≤ q.1 ∧ p.2 ≤ q.2 :=
-  Iff.rfl
-
-/-- A grid point lies southwest of the centre of its own square. -/
-theorem isSouthWestOfCentre_self (p : Fin n × Fin n) : IsSouthWestOfCentre p p :=
-  ⟨le_rfl, le_rfl⟩
-
-/-- Lying strictly southwest of a grid point implies lying southwest of the centre of its
-square. -/
-theorem isSouthWestOfCentre_of_isSouthWest {p q : Fin n × Fin n} (h : IsSouthWest p q) :
-    IsSouthWestOfCentre p q :=
-  ⟨le_of_lt h.1, le_of_lt h.2⟩
-
 /-- The ordered count of pairs `(p, q) ∈ s ×ˢ t` with `p` southwest of the centre of the square
-`q`. The left argument holds grid points and the right argument names marked squares. -/
+`q`. The left argument holds grid points and the right argument names marked squares; the marking
+of the square named by `q` sits at `q + (1/2, 1/2)`, so a strict comparison against the marking is
+the weak comparison `p ≤ q` of the product order. -/
 @[expose] def ICentre (s t : Finset (Fin n × Fin n)) : ℕ :=
-  ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) =>
-    IsSouthWestOfCentre pq.1 pq.2).card
+  Icount (· ≤ ·) s t
 
 /-- The southwest-of-centre count as the cardinality of a filtered product of point sets. -/
 theorem ICentre_def (s t : Finset (Fin n × Fin n)) :
     ICentre s t =
-      ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) =>
-        IsSouthWestOfCentre pq.1 pq.2).card :=
+      ((s ×ˢ t).filter fun pq : (Fin n × Fin n) × (Fin n × Fin n) => pq.1 ≤ pq.2).card :=
   rfl
 
 /-- The southwest-of-centre count is zero when there are no grid points. -/
 @[simp]
-theorem ICentre_empty_left (s : Finset (Fin n × Fin n)) : ICentre ∅ s = 0 := by
-  simp [ICentre]
+theorem ICentre_empty_left (s : Finset (Fin n × Fin n)) : ICentre ∅ s = 0 :=
+  Icount_empty_left _ s
 
 /-- The southwest-of-centre count is zero when there are no marked squares. -/
 @[simp]
-theorem ICentre_empty_right (s : Finset (Fin n × Fin n)) : ICentre s ∅ = 0 := by
-  simp [ICentre]
+theorem ICentre_empty_right (s : Finset (Fin n × Fin n)) : ICentre s ∅ = 0 :=
+  Icount_empty_right _ s
 
 /-- The southwest-of-centre count of singletons records the single comparison. -/
 @[simp]
 theorem ICentre_singleton_singleton (p q : Fin n × Fin n) :
-    ICentre {p} {q} = if IsSouthWestOfCentre p q then 1 else 0 := by
-  simp only [ICentre, Finset.singleton_product_singleton, Finset.filter_singleton]
-  by_cases h : IsSouthWestOfCentre p q
-  · simp only [h, ite_true, Finset.card_singleton]
-  · simp only [h, ite_false, Finset.card_empty]
+    ICentre {p} {q} = if p ≤ q then 1 else 0 :=
+  Icount_singleton_singleton _ p q
 
 /-- The southwest-of-centre count is additive in the grid points over disjoint unions. -/
 theorem ICentre_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    ICentre (s₁ ∪ s₂) t = ICentre s₁ t + ICentre s₂ t := by
-  dsimp [ICentre]
-  rw [Finset.union_product, Finset.filter_union, Finset.card_union_of_disjoint]
-  exact Finset.disjoint_filter_filter (Finset.disjoint_product.mpr (Or.inl h))
+    ICentre (s₁ ∪ s₂) t = ICentre s₁ t + ICentre s₂ t :=
+  Icount_union_left _ h
 
 /-- The southwest-of-centre count after inserting a fresh grid point. -/
 theorem ICentre_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    ICentre (insert p s) t = ICentre {p} t + ICentre s t := by
-  rw [← Finset.singleton_union, ICentre_union_left]
-  exact Finset.disjoint_singleton_left.mpr h
-
-/-- Lying southwest of the centre of a square is preserved by the diagonal reflection. -/
-theorem isSouthWestOfCentre_swap (p q : Fin n × Fin n) :
-    IsSouthWestOfCentre (Prod.swap p) (Prod.swap q) ↔ IsSouthWestOfCentre p q := by
-  unfold IsSouthWestOfCentre
-  exact and_comm
-
-/-- The reflection map on pairs of grid squares is injective. -/
-private theorem prodMap_swap_injective' :
-    Function.Injective
-      (Prod.map (Prod.swap (α := Fin n) (β := Fin n)) (Prod.swap (α := Fin n) (β := Fin n))) :=
-  Prod.swap_injective.prodMap Prod.swap_injective
+    ICentre (insert p s) t = ICentre {p} t + ICentre s t :=
+  Icount_insert_left _ h
 
 /-- The southwest-of-centre count is invariant under reflecting both point sets across the
 diagonal. -/
 theorem ICentre_image_swap (s t : Finset (Fin n × Fin n)) :
-    ICentre (s.image Prod.swap) (t.image Prod.swap) = ICentre s t := by
-  rw [ICentre_def, ICentre_def, ← Finset.prodMap_image_product Prod.swap Prod.swap s t,
-    Finset.filter_image, Finset.card_image_of_injective _ prodMap_swap_injective']
-  congr 1
-  exact Finset.filter_congr fun pq _ => isSouthWestOfCentre_swap pq.1 pq.2
+    ICentre (s.image Prod.swap) (t.image Prod.swap) = ICentre s t :=
+  Icount_image_swap _ (fun _ _ => Prod.swap_le_swap) s t
 
 /-- The southwest-of-centre count of two graph point sets is the number of column pairs `c ≤ d`
 whose rows compare the same way. This graph-level statement does not require either row
@@ -168,17 +122,40 @@ theorem ICentre_graph_eq_card (f g : Fin n → Fin n) :
     ICentre (Finset.univ.image fun c : Fin n => (c, f c))
         (Finset.univ.image fun c : Fin n => (c, g c)) =
       (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ g p.2).card := by
+  rw [ICentre, Icount_graph_eq_card]
+  exact congrArg Finset.card (Finset.filter_congr fun cd _ => by rw [Prod.mk_le_mk])
+
+/-- Weakening both comparisons of a column-pair count along an injective row assignment adds
+exactly the `n` diagonal pairs: a pair `c < d` contributes to both counts or to neither, and each
+of the `n` columns contributes its own diagonal pair. -/
+theorem card_filter_le_eq_card_filter_lt_add {f : Fin n → Fin n} (hf : Function.Injective f) :
+    (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ f p.2).card =
+      (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2).card + n := by
   classical
-  have hff : Function.Injective (fun c : Fin n => (c, f c)) :=
-    fun _ _ h => congrArg Prod.fst h
-  have hfg : Function.Injective (fun c : Fin n => (c, g c)) :=
-    fun _ _ h => congrArg Prod.fst h
-  rw [ICentre_def,
-    ← Finset.prodMap_image_product (fun c : Fin n => (c, f c)) (fun c : Fin n => (c, g c)),
-    Finset.filter_image, Finset.card_image_of_injective _ (hff.prodMap hfg),
-    Finset.univ_product_univ]
-  refine congrArg Finset.card (Finset.filter_congr fun cd _ => ?_)
-  simp only [Prod.map_fst, Prod.map_snd, isSouthWestOfCentre_iff, Fin.le_def]
+  have hsplit :
+      (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ f p.1 ≤ f p.2) =
+        (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2) ∪
+          (Finset.univ : Finset (Fin n)).diag := by
+    ext p
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_diag]
+    constructor
+    · rintro ⟨h1, h2⟩
+      rcases eq_or_lt_of_le h1 with h | h
+      · exact Or.inr h
+      · exact Or.inl ⟨h, lt_of_le_of_ne h2 fun heq => (ne_of_lt h) (hf heq)⟩
+    · rintro (⟨h1, h2⟩ | h)
+      · exact ⟨le_of_lt h1, le_of_lt h2⟩
+      · exact ⟨le_of_eq h, le_of_eq (congrArg f h)⟩
+  have hdisj :
+      Disjoint (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ f p.1 < f p.2)
+        ((Finset.univ : Finset (Fin n)).diag) := by
+    rw [Finset.disjoint_left]
+    intro p hp hq
+    rw [Finset.mem_filter] at hp
+    rw [Finset.mem_diag] at hq
+    exact (ne_of_lt hp.2.1) hq.2
+  rw [hsplit, Finset.card_union_of_disjoint hdisj, Finset.diag_card, Finset.card_univ,
+    Fintype.card_fin]
 
 /-- The symmetrized numerator of the pairing of a set of grid points against a set of marked
 squares: the grid points southwest of a marking, plus the markings southwest of a grid point. -/
@@ -268,40 +245,12 @@ theorem JNumCentre_pointSet_eq_card (x y : GridState n) :
   rw [GridPoint.JNumCentre_def, ICentre_pointSet_eq_card, I_pointSet_eq_card]
 
 /-- Pairing a grid state against the squares it occupies adds exactly the `n` diagonal pairs to
-the strict southwest count: a column pair `c < d` contributes to both counts or to neither, and
-each of the `n` columns contributes its own square. -/
+the strict southwest count: the row assignment of a grid state is injective, so this is the
+column-pair count `GridPoint.card_filter_le_eq_card_filter_lt_add`. -/
 theorem ICentre_self_pointSet_eq (x : GridState n) :
     GridPoint.ICentre x.pointSet x.pointSet = GridPoint.I x.pointSet x.pointSet + n := by
-  classical
   rw [ICentre_pointSet_eq_card, I_self_pointSet_eq_card]
-  have hsplit :
-      (Finset.univ.filter fun p : Fin n × Fin n => p.1 ≤ p.2 ∧ x p.1 ≤ x p.2) =
-        (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ x p.1 < x p.2) ∪
-          (Finset.univ.filter fun p : Fin n × Fin n => p.1 = p.2) := by
-    ext p
-    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_univ, true_and]
-    constructor
-    · rintro ⟨h1, h2⟩
-      rcases eq_or_lt_of_le h1 with h | h
-      · exact Or.inr h
-      · exact Or.inl ⟨h, lt_of_le_of_ne h2 fun heq => (ne_of_lt h) (x.toPerm.injective heq)⟩
-    · rintro (⟨h1, h2⟩ | h)
-      · exact ⟨le_of_lt h1, le_of_lt h2⟩
-      · exact ⟨le_of_eq h, le_of_eq (congrArg x h)⟩
-  have hdisj :
-      Disjoint (Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ x p.1 < x p.2)
-        (Finset.univ.filter fun p : Fin n × Fin n => p.1 = p.2) := by
-    rw [Finset.disjoint_left]
-    intro p hp hq
-    rw [Finset.mem_filter] at hp hq
-    exact (ne_of_lt hp.2.1) hq.2
-  have hdiag : (Finset.univ.filter fun p : Fin n × Fin n => p.1 = p.2).card = n := by
-    have hset : (Finset.univ.filter fun p : Fin n × Fin n => p.1 = p.2) =
-        (Finset.univ : Finset (Fin n)).diag := by
-      ext p
-      simp [Finset.mem_diag]
-    rw [hset, Finset.diag_card, Finset.card_univ, Fintype.card_fin]
-  rw [hsplit, Finset.card_union_of_disjoint hdisj, hdiag]
+  exact GridPoint.card_filter_le_eq_card_filter_lt_add x.toPerm.injective
 
 end GridState
 
