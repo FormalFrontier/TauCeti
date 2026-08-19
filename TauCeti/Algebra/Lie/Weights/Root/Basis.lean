@@ -40,8 +40,6 @@ for each root, which is what computes the Casimir scalar of a highest weight vec
 
 ## Main results
 
-* `TauCeti.traceForm_eq_killingForm`: the Killing form of `L` restricted to `H` is the trace form
-  of `H` acting on `L`, pointwise.
 * `TauCeti.IsSl2System.killingForm_cartanRootFamily_cartanRootDualFamily_self` and
   `TauCeti.IsSl2System.killingForm_cartanRootFamily_cartanRootDualFamily_of_ne`: the two families
   are biorthogonal for the Killing form.
@@ -82,12 +80,6 @@ private theorem eq_zero_of_forall_mem_killingForm_eq_zero [IsKilling K L] {S : S
 
 /-! ### The Cartan part -/
 
-/-- **The Killing form of `L` restricted to `H` is the trace form of `H` acting on `L`**, in the
-pointwise form; the unapplied identity is Mathlib's `LieAlgebra.restrict_killingForm`. -/
-theorem traceForm_eq_killingForm (u v : H) :
-    LieModule.traceForm K H L u v = killingForm K L (u : L) (v : L) :=
-  rfl
-
 /-- The trace form of `H` acting on `L` is symmetric, in the bundled form the dual-basis API asks
 for. -/
 private theorem traceForm_cartan_isSymm : (LieModule.traceForm K H L).IsSymm :=
@@ -104,7 +96,8 @@ noncomputable def cartanKillingDualBasis (bH : Basis ιH K H) : Basis ιH K H :=
 /-- The defining biorthogonality of `TauCeti.cartanKillingDualBasis`. -/
 theorem killingForm_cartanKillingDualBasis (bH : Basis ιH K H) (i j : ιH) :
     killingForm K L (bH i : L) (cartanKillingDualBasis bH j : L) = if i = j then 1 else 0 :=
-  (traceForm_eq_killingForm _ _).symm.trans
+  (DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i))
+      (cartanKillingDualBasis bH j)).trans
     (LinearMap.BilinForm.apply_dualBasis_right _ traceForm_cartan_isSymm bH i j)
 
 /-- **Expansion of an element of `H` in the Killing-dual basis**: the coefficients are the Killing
@@ -113,8 +106,11 @@ theorem sum_killingForm_smul_cartanKillingDualBasis [Fintype ιH] (bH : Basis ι
     ∑ i, killingForm K L (bH i : L) (u : L) • cartanKillingDualBasis bH i = u := by
   conv_rhs => rw [← (cartanKillingDualBasis bH).sum_repr u]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
-  rw [cartanKillingDualBasis, LinearMap.BilinForm.dualBasis_repr_apply,
-    ← traceForm_eq_killingForm, LieModule.traceForm_comm K H L]
+  have hrestrict : killingForm K L (bH i : L) (u : L) =
+      LieModule.traceForm K H L (bH i) u :=
+    DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i)) u
+  rw [cartanKillingDualBasis, LinearMap.BilinForm.dualBasis_repr_apply, hrestrict,
+    LieModule.traceForm_comm K H L]
 
 /-! ### The adapted families -/
 

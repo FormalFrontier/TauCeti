@@ -99,7 +99,11 @@ private theorem sum_lie_lie_cartanKillingDualBasis {ιH : Type*} [Fintype ιH] [
     ∑ i, ⁅(bH i : L), ⁅(cartanKillingDualBasis bH i : L), v⁆⁆ = invForm lam lam • v := by
   have hpair : ∀ u : H, killingForm K L (u : L) (((cartanEquivDual H).symm lam : H) : L)
       = lam u := fun u ↦ by
-    rw [← traceForm_eq_killingForm, LieModule.traceForm_comm K H L]
+    have hrestrict : killingForm K L (u : L) (((cartanEquivDual H).symm lam : H) : L) =
+        LieModule.traceForm K H L u ((cartanEquivDual H).symm lam) :=
+      DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) u)
+        ((cartanEquivDual H).symm lam)
+    rw [hrestrict, LieModule.traceForm_comm K H L]
     exact LinearMap.BilinForm.apply_toDual_symm_apply
       (hB := traceForm_cartan_nondegenerate K L H) lam u
   have hexp := congrArg (⇑lam) (sum_killingForm_smul_cartanKillingDualBasis bH
