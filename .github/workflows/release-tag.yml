@@ -341,9 +341,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions: {}
-    # The deployment branch policy on this environment is the ENFORCEMENT that a run whose
-    # ref is a release branch cannot read the key, whatever that branch's copy of this file
-    # says. Required reviewers, if configured, sit on top of it.
+    # The environment gates this job; it does not supply its key. LAKE_CACHE_KEY stays a
+    # repository secret, which a job declaring an `environment:` still sees, so there is no
+    # second copy to rotate. What the environment adds is the deployment branch policy,
+    # which GitHub applies to `github.ref` before the job may run at all and which a
+    # release branch's own copy of this file therefore cannot delete, plus the required
+    # reviewer sitting on top of it.
     environment: lake-cache-publish
     env:
       # The Lake that performs the UPLOAD, which is not the target's own. `lake cache

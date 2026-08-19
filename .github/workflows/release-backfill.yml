@@ -112,8 +112,10 @@ jobs:
       release: ${{ matrix.target.release }}
       sha: ${{ matrix.target.sha }}
       exact: ${{ matrix.target.exact }}
-    # LAKE_CACHE_KEY is deliberately absent: it is an environment secret resolved inside
-    # the called workflow's publish job, so this driver never names the cache key at all.
+    # LAKE_CACHE_KEY is deliberately absent. A job that declares an `environment:` still
+    # sees the repository secrets, so the publish job resolves it for itself and this
+    # driver never names the cache key at all. The environment is what gates that job, not
+    # what supplies its key.
     secrets:
       APP_ID: ${{ secrets.APP_ID }}
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
