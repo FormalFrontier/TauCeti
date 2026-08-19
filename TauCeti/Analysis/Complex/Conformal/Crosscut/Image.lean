@@ -126,9 +126,11 @@ pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 
 * `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn` — the closure of the image of
   the cut is that image together with the cluster sets of `f` along it.
-* `TauCeti.closure_image_inter_sphere_subset` — an image crosscut is relatively closed in the
-  image domain, and `TauCeti.disjoint_image_of_disjoint_inter_sphere` — so a set disjoint from the
-  crosscut has image disjoint from anything on its closure and the image boundary.
+* `TauCeti.closure_image_inter_sphere_subset_union_frontier_image` — an image crosscut is
+  relatively closed in the image domain, and
+  `TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`
+  — so a set disjoint from the crosscut has image disjoint from anything on its closure and the
+  image boundary.
 * `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — at an endpoint of a crosscut of a disc a
   cluster set is a continuum once `f` is continuous along the crosscut with bounded image; its
   nonemptiness for a general domain is the generic `TauCeti.clusterSetOn_nonempty`, applied to the
@@ -243,7 +245,8 @@ The closure decomposition is
 `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn`, and
 `TauCeti.clusterSetOn_inter_sphere_subset_frontier_inter_closure_image` puts every added cluster
 value on `frontier (f '' U)`. -/
-theorem closure_image_inter_sphere_subset (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
+theorem closure_image_inter_sphere_subset_union_frontier_image (hUo : IsOpen U)
+    (hd : DifferentiableOn ℂ f U)
     (hinj : InjOn f U) :
     closure (f '' (U ∩ sphere ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
   rw [closure_image_inter_sphere_eq_union_biUnion_clusterSetOn
@@ -257,8 +260,9 @@ image boundary.** If `V ⊆ U` is disjoint from `U ∩ sphere ζ ρ`, then `f ''
 contained in the closed image crosscut and `frontier (f '' U)`. Injectivity separates it from the
 crosscut, relative closedness handles the closure, and openness of `f '' U` handles the image
 boundary. -/
-theorem disjoint_image_of_disjoint_inter_sphere (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
-    (hinj : InjOn f U) (hVU : V ⊆ U) (hV : Disjoint V (U ∩ sphere ζ ρ))
+theorem disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
+    (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
+    (hV : Disjoint V (U ∩ sphere ζ ρ))
     (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U)) : Disjoint (f '' V) K := by
   have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
   have hcross : Disjoint (f '' V) (f '' (U ∩ sphere ζ ρ)) :=
@@ -266,7 +270,8 @@ theorem disjoint_image_of_disjoint_inter_sphere (hUo : IsOpen U) (hd : Different
   refine Set.disjoint_left.mpr fun w hw hwK => ?_
   rcases hK hwK with h | h
   · exact Set.disjoint_left.mp hcross hw
-      (((closure_image_inter_sphere_subset hUo hd hinj) h).resolve_right fun hfr =>
+      (((closure_image_inter_sphere_subset_union_frontier_image hUo hd hinj) h).resolve_right
+        fun hfr =>
         (hΩo.inter_frontier_eq.subset ⟨image_mono hVU hw, hfr⟩).elim)
   · exact (hΩo.inter_frontier_eq.subset ⟨image_mono hVU hw, h⟩).elim
 
@@ -364,11 +369,12 @@ which for a circular crosscut of a disc is
 `TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere`; a cut missing `frontier U`
 altogether has an empty middle piece and nothing to enclose.
 
-This is where the local connectedness of `∂Ω` that
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` needs enters, the other
-of its two geometric inputs being the length–area estimate
-`TauCeti.exists_diam_image_ball_inter_sphere_le`. It does not by itself discharge that criterion,
-whose enclosing set has to contain the whole boundary piece
+Local connectedness and the length–area estimate
+`TauCeti.exists_diam_image_ball_inter_sphere_le` are the two geometric inputs to
+`TauCeti.diam_image_inter_ball_le`; its conclusion establishes the approach-region diameter
+hypothesis of `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`. The result here
+does not by itself discharge `TauCeti.diam_image_inter_ball_le`, whose enclosing set has to contain
+the whole boundary piece
 `frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ))` and not only the middle piece.
 
 Everything topological is in `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset`, the

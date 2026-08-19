@@ -33,15 +33,19 @@ up into an arbitrarily small Jordan curve
 
 ## The two sides against one curve
 
-Everything below runs on a bounded `K` lying on the closed image crosscut and the image boundary,
+The diameter-selection theorem below runs on a bounded `K` lying on the closed image crosscut and
+the image boundary,
 
 > `f '' (U ∩ sphere ζ ρ) ⊆ K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier Ω`,
 
 the shape in which a curve joining the two ends of the image crosscut along `frontier Ω` arrives.
-The first inclusion is what makes `K` cut `Ω`; the second is what keeps `K` off the two sides, by
-`TauCeti.closure_image_inter_sphere_subset`: the image crosscut is *relatively closed* in the image
-domain, being its complement in the two open image sides, so its closure adds only boundary points.
-Two facts locate the enclosed side, and a diameter comparison selects the near one.
+Its ingredients use only the assumptions they need: trapping a side uses the upper inclusion but
+not boundedness, while existence of an enclosed side uses the lower inclusion but neither
+boundedness nor the upper inclusion. The comparison with the frontier route uses instead the
+filled hull of `f '' (U ∩ sphere ζ ρ) ∪ E`. The upper inclusion keeps `K` off the two sides by
+`TauCeti.closure_image_inter_sphere_subset_union_frontier_image`: the image crosscut is relatively
+closed in the image domain, so its closure adds only boundary points. Two facts locate the enclosed
+side, and a diameter comparison selects the near one.
 
 * **An enclosed side is trapped**: each side is preconnected and disjoint from `K`, so if it meets
   `filledHull K` it lies inside (`TauCeti.image_subset_filledHull_of_disjoint_inter_sphere`) and is
@@ -120,7 +124,8 @@ variable {f : ℂ → ℂ} {U K V : Set ℂ} {ζ p : ℂ} {ρ : ℝ}
 
 /-- **An image side that meets the inside of such a curve lies inside it.** The side is
 preconnected as a continuous image of a preconnected set and disjoint from `K` by
-`TauCeti.disjoint_image_of_disjoint_inter_sphere`, so `TauCeti.IsPreconnected.subset_filledHull`
+`TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`,
+so `TauCeti.IsPreconnected.subset_filledHull`
 traps it in the bounded component of `Kᶜ` it meets. Instantiate `V` at `U ∩ ball ζ ρ` for the near
 side and at `U \ closedBall ζ ρ` for the far side. -/
 theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
@@ -129,7 +134,8 @@ theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
     (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
     (hne : (f '' V ∩ filledHull K).Nonempty) : f '' V ⊆ filledHull K :=
   IsPreconnected.subset_filledHull (hVc.image f (hd.continuousOn.mono hVU))
-    (disjoint_image_of_disjoint_inter_sphere hUo hd hinj hVU hV hK) hne
+    (disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
+      hUo hd hinj hVU hV hK) hne
 
 /-! ## At least one side is enclosed -/
 

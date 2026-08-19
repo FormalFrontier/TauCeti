@@ -452,12 +452,13 @@ variable {X Y : Type*} [PseudoMetricSpace X] [MetricSpace Y] [ProperSpace Y] {U 
 adherent point once the images of its approach regions have arbitrarily small diameter. -/
 theorem exists_tendsto_nhdsWithin_of_forall_exists_diam_le
     (hfb : Bornology.IsBounded (f '' U)) (hw : w ∈ closure U)
-    (h : ∀ ε > 0, ∃ δ > 0, Bornology.IsBounded (f '' (U ∩ ball w δ)) ∧
-      diam (f '' (U ∩ ball w δ)) ≤ ε) :
+    (h : ∀ ε > 0, ∃ δ > 0, diam (f '' (U ∩ ball w δ)) ≤ ε) :
     ∃ v, Tendsto f (𝓝[U] w) (𝓝 v) :=
   exists_tendsto_of_clusterSetOn_subsingleton hfb.isCompact_closure
     (fun _ hy => subset_closure (mem_image_of_mem f hy)) hw
-    (subsingleton_clusterSetOn_of_forall_exists_diam_le h)
+    (subsingleton_clusterSetOn_of_forall_exists_diam_le fun ε hε => by
+      obtain ⟨δ, hδ, hdiam⟩ := h ε hε
+      exact ⟨δ, hδ, hfb.subset (image_mono inter_subset_left), hdiam⟩)
 
 /-- **The diameter criterion for continuous extension.** A continuous map with bounded image
 extends to the closure of an open set if its image approach regions have arbitrarily small
@@ -465,10 +466,12 @@ diameter at every boundary point. -/
 theorem exists_continuousOn_closure_eqOn_of_forall_exists_diam_le (hUo : IsOpen U)
     (hfc : ContinuousOn f U) (hfb : Bornology.IsBounded (f '' U))
     (h : ∀ w ∈ frontier U, ∀ ε > 0, ∃ δ > 0,
-      Bornology.IsBounded (f '' (U ∩ ball w δ)) ∧ diam (f '' (U ∩ ball w δ)) ≤ ε) :
+      diam (f '' (U ∩ ball w δ)) ≤ ε) :
     ∃ F : X → Y, ContinuousOn F (closure U) ∧ EqOn F f U :=
   exists_continuousOn_closure_eqOn_of_isBounded hUo hfc hfb fun w hw =>
-    subsingleton_clusterSetOn_of_forall_exists_diam_le (h w hw)
+    subsingleton_clusterSetOn_of_forall_exists_diam_le fun ε hε => by
+      obtain ⟨δ, hδ, hdiam⟩ := h w hw ε hε
+      exact ⟨δ, hδ, hfb.subset (image_mono inter_subset_left), hdiam⟩
 
 end ProperMetricExtension
 

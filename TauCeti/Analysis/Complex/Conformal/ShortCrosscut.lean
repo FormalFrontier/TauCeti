@@ -22,11 +22,12 @@ point, `dist ζ c = r`, the **circular crosscut** of `Conformal/Crosscut/Basic.l
 `ρ < 2 * r`, and empty otherwise — as an arc of angles, and concludes that its image under a
 conformal map has small diameter at suitable radii `ρ`.
 
-That is the first of the two geometric inputs
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` of
-`Topology/ClusterSet.lean` runs on, and hence of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's boundary correspondence. The second —
-a small set `E` enclosing the boundary points of the image domain that cling to the piece the
+That is the first of the two geometric inputs to `TauCeti.diam_image_inter_ball_le`, whose
+conclusion supplies the approach-region diameter hypothesis of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le` in
+`Topology/ClusterSet.lean`, and hence of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's boundary correspondence. The second — a
+small set `E` enclosing the boundary points of the image domain that cling to the piece the
 crosscut cuts off — is a matter of local connectedness of that boundary and is not treated here.
 
 ## The intersection is an arc
@@ -228,10 +229,11 @@ with `R ≤ 2 * r`. Neither restriction is imposed here, and away from the bound
 holds: a cutting circle centred at `c` itself meets the disc in the whole of `sphere c ρ` for
 `ρ < r`, and one centred far outside meets it at radii `ρ` far above `2 * r`.
 
-This is the first of the two geometric inputs of
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`; nothing here bounds
-the boundary piece the crosscut cuts off, which is a matter of the image domain rather than of the
-map. -/
+This is the first of the two geometric inputs to `TauCeti.diam_image_inter_ball_le`, whose
+conclusion supplies the approach-region diameter hypothesis of
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_le`; nothing here bounds the
+boundary piece the crosscut cuts off, which is a matter of the image domain rather than of the map.
+-/
 theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top
     (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
