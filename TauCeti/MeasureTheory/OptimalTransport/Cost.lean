@@ -71,7 +71,9 @@ integral along a pushforward (`TauCeti.transportCost_comp_swap`,
 `TauCeti.transportCost_comp_prodMap`, the Dirac formulas and
 `TauCeti.transportCost_map_le_lintegral`). The order-theoretic API needs none.
 
-This is Layer 1, item 1 of the optimal-transport roadmap.
+This supplies the nonnegative-cost interface from Layer 1, item 1 of the optimal-transport
+roadmap. The parallel signed `EReal` interface for costs bounded below by an integrable split
+function is a separate definition family and is not part of this module.
 -/
 
 public section
