@@ -150,7 +150,7 @@ theorem exists_mem_Gamma0_upperTriRep_mul [NeZero p] (hpN : p ∣ N) {γ : SL(2,
       - (γ 0 0 + (j : ℕ) * γ 1 0) * ((upperTriShift p γ j : ℕ) : ℤ) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
-    rw [upperTriShift_natCast, intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hγp]
+    rw [upperTriShift_natCast, Gamma0_mem.mp hγp]
     push_cast
     linear_combination (-((γ 0 1 : ℤ) : ZMod p)
       - ((j : ℕ) : ZMod p) * ((γ 1 1 : ℤ) : ZMod p)) * had
