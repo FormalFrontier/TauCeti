@@ -59,7 +59,7 @@ namespace TauCeti
 
 open Module
 
-universe u
+universe u v
 
 namespace Algebra
 
@@ -123,6 +123,8 @@ theorem index_eq_deg_of_algEquiv_matrix {n : ℕ} [NeZero n] {D : Type*} [Divisi
   have hW := deg_eq_mul_deg_of_algEquiv_matrix W.equiv
   have hD := deg_eq_mul_deg_of_algEquiv_matrix e
   rw [hsize] at hW
+  -- Unfold `index` here to expose the chosen Wedderburn division algebra.  The public
+  -- presentation-independent rewrite proved by this theorem is not yet available.
   change deg K W.divisionAlgebra = deg K D
   exact Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero (NeZero.ne n)) (hW.symm.trans hD)
 
@@ -134,7 +136,7 @@ theorem deg_eq_mul_index_of_algEquiv_matrix {n : ℕ} [NeZero n] {D : Type*} [Di
   rw [deg_eq_mul_deg_of_algEquiv_matrix e, index_eq_deg_of_algEquiv_matrix e]
 
 /-- The index is invariant under isomorphism of central simple `K`-algebras. -/
-theorem index_eq_of_algEquiv {B : Type u} [Ring B] [Algebra K B] [Algebra.IsCentral K B]
+theorem index_eq_of_algEquiv {B : Type v} [Ring B] [Algebra K B] [Algebra.IsCentral K B]
     [IsSimpleRing B] [FiniteDimensional K B] (e : A ≃ₐ[K] B) : index K A = index K B := by
   let W := wedderburnData K A
   let _ := W.divisionRing
