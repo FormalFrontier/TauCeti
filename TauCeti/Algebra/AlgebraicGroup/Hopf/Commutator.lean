@@ -26,7 +26,7 @@ convolution point `i₁ * i₂ * i₁⁻¹ * i₂⁻¹`.
 The commutator is not generally a group homomorphism from the product, so this construction is an
 algebra morphism rather than a bialgebra morphism. Its kernel nevertheless determines the smallest
 closed subgroup scheme containing the image, constructed in
-`TauCeti.Algebra.AlgebraicGroup.Derived`.
+`TauCeti.Algebra.AlgebraicGroup.Derived.Basic`.
 
 ## Main declarations
 
