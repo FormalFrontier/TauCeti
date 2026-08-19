@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LowDimTopology.Plumbing.E8
 public import TauCeti.LowDimTopology.Plumbing.Grading
 public import TauCeti.LowDimTopology.Plumbing.Homology
 public import TauCeti.LowDimTopology.Plumbing.Weight.Sublevel
@@ -42,12 +41,10 @@ plumbed three-manifold, rather than one value among many.
   boundaries.
 * `TauCeti.PlumbingGraph.exists_cycle_latticeAugmentation_eq_one`: a lattice point of minimal
   characteristic weight is a cycle with augmentation `1`.
-* `TauCeti.PlumbingGraph.exists_cycle_forall_smul_notMem_range_latticeDifferential`: that cycle
+* `TauCeti.PlumbingGraph.exists_cycle_eq_zero_of_smul_mem_range_latticeDifferential`: that cycle
   spans a free `𝔽₂[U]`-submodule of the cycles modulo boundaries: the `U`-tower.
 * `TauCeti.PlumbingGraph.not_isZero_latticeHomology`: the lattice homology of a negative-definite
   plumbing is nonzero.
-* `TauCeti.e8Plumbing_not_isZero_latticeHomology`: in particular the lattice homology of the `E₈`
-  plumbing is nonzero in every spin^c structure.
 
 ## References
 
@@ -153,12 +150,14 @@ theorem latticeAugmentation_latticeDifferentialOnGenerator (P : PlumbingGraph V)
       ← pow_add, ← pow_add]
     have hlowerbase :
         P.characteristicWeight k (C.lowerFace v.val v.property).base =
-          PlumbingCube.characteristicWeight P k (C.lowerFace v.val v.property) :=
-      (PlumbingCube.characteristicWeight_of_directions_eq_empty P k hlower).symm
+          PlumbingCube.characteristicWeight P k (C.lowerFace v.val v.property) := by
+      rw [PlumbingCube.characteristicWeight_def, hlower,
+        PlumbingGraph.characteristicCubeWeight_empty]
     have hupperbase :
         P.characteristicWeight k (C.upperFace v.val v.property).base =
-          PlumbingCube.characteristicWeight P k (C.upperFace v.val v.property) :=
-      (PlumbingCube.characteristicWeight_of_directions_eq_empty P k hupper).symm
+          PlumbingCube.characteristicWeight P k (C.upperFace v.val v.property) := by
+      rw [PlumbingCube.characteristicWeight_def, hupper,
+        PlumbingGraph.characteristicCubeWeight_empty]
     have hlowerexp :
         (PlumbingCube.characteristicLowerFaceExponent P k C v.val : ℤ) =
           PlumbingCube.characteristicWeight P k C -
@@ -240,7 +239,7 @@ theorem exists_cycle_latticeAugmentation_eq_one (P : PlumbingGraph V)
 
 /-- The `U`-tower: the class of a minimal-weight lattice point spans a free `𝔽₂[U]`-submodule of
 lattice homology, since no nonzero multiple of that cycle is a boundary. -/
-theorem exists_cycle_forall_smul_notMem_range_latticeDifferential (P : PlumbingGraph V)
+theorem exists_cycle_eq_zero_of_smul_mem_range_latticeDifferential (P : PlumbingGraph V)
     (h : P.IsNegativeDefinite) (k : P.characteristicVectors) :
     ∃ c : PlumbingChain V, P.latticeDifferential k c = 0 ∧
       ∀ a : PlumbingCoefficient,
@@ -257,9 +256,57 @@ minimal-weight lattice point is a cycle that is not a boundary. -/
 theorem not_exact_latticeShortComplex (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) : ¬ (P.latticeShortComplex k).Exact := by
   obtain ⟨c, hcycle, hone⟩ := P.exists_cycle_latticeAugmentation_eq_one h k
-  rw [latticeShortComplex_exact_iff]
+  rw [ShortComplex.moduleCat_exact_iff]
   intro hexact
-  have hzero := P.latticeAugmentation_eq_zero_of_mem_range h k (hexact c hcycle)
+  have hf : (P.latticeShortComplex k).f =
+      eqToHom (P.latticeShortComplex_X₁ k) ≫
+        ModuleCat.ofHom (P.latticeDifferential k) ≫
+          eqToHom (P.latticeShortComplex_X₂ k).symm :=
+    (conj_eqToHom_iff_heq _ _ (P.latticeShortComplex_X₁ k)
+      (P.latticeShortComplex_X₂ k)).mpr (P.latticeShortComplex_f k)
+  have hg : (P.latticeShortComplex k).g =
+      eqToHom (P.latticeShortComplex_X₂ k) ≫
+        ModuleCat.ofHom (P.latticeDifferential k) ≫
+          eqToHom (P.latticeShortComplex_X₃ k).symm :=
+    (conj_eqToHom_iff_heq _ _ (P.latticeShortComplex_X₂ k)
+      (P.latticeShortComplex_X₃ k)).mpr (P.latticeShortComplex_g k)
+  have hf_comp : (P.latticeShortComplex k).f ≫
+      (eqToIso (P.latticeShortComplex_X₂ k)).hom =
+        (eqToIso (P.latticeShortComplex_X₁ k)).hom ≫
+          ModuleCat.ofHom (P.latticeDifferential k) := by
+    rw [hf]
+    simp
+  have hg_comp : (eqToIso (P.latticeShortComplex_X₂ k)).inv ≫
+      (P.latticeShortComplex k).g =
+        ModuleCat.ofHom (P.latticeDifferential k) ≫
+          (eqToIso (P.latticeShortComplex_X₃ k)).inv := by
+    rw [hg]
+    simp
+  let c' : (P.latticeShortComplex k).X₂ :=
+    (eqToIso (P.latticeShortComplex_X₂ k)).inv c
+  have hcycle' : (P.latticeShortComplex k).g c' = 0 := by
+    change (((eqToIso (P.latticeShortComplex_X₂ k)).inv ≫
+      (P.latticeShortComplex k).g) c) = 0
+    rw [hg_comp, ConcreteCategory.comp_apply]
+    change (eqToIso (P.latticeShortComplex_X₃ k)).inv
+      (P.latticeDifferential k c) = 0
+    rw [hcycle, map_zero]
+  obtain ⟨b, hb⟩ := hexact c' hcycle'
+  let b' : PlumbingChain V := (eqToIso (P.latticeShortComplex_X₁ k)).hom b
+  have hb' : P.latticeDifferential k b' = c := by
+    have hb'' := congrArg (fun x => (eqToIso (P.latticeShortComplex_X₂ k)).hom x) hb
+    change (((P.latticeShortComplex k).f ≫
+      (eqToIso (P.latticeShortComplex_X₂ k)).hom) b) =
+        (eqToIso (P.latticeShortComplex_X₂ k)).hom c' at hb''
+    rw [hf_comp, ConcreteCategory.comp_apply] at hb''
+    change P.latticeDifferential k b' =
+      (eqToIso (P.latticeShortComplex_X₂ k)).hom c' at hb''
+    have hc' : (eqToIso (P.latticeShortComplex_X₂ k)).hom c' = c := by
+      change (((eqToIso (P.latticeShortComplex_X₂ k)).inv ≫
+        (eqToIso (P.latticeShortComplex_X₂ k)).hom) c) = c
+      simp
+    rwa [hc'] at hb''
+  have hzero := P.latticeAugmentation_eq_zero_of_mem_range h k ⟨b', hb'⟩
   rw [hone] at hzero
   exact one_ne_zero hzero
 
@@ -273,12 +320,5 @@ theorem not_isZero_latticeHomology (P : PlumbingGraph V) (h : P.IsNegativeDefini
   exact P.not_exact_latticeShortComplex h k
 
 end PlumbingGraph
-
-/-- The characteristic-two lattice homology of the `E₈` plumbing is nonzero in every spin^c
-structure. This is the roadmap's concrete negative-definite plumbing, the one whose lattice
-homology computes the Heegaard Floer homology of the Poincaré homology sphere. -/
-theorem e8Plumbing_not_isZero_latticeHomology (k : e8Plumbing.characteristicVectors) :
-    ¬ CategoryTheory.Limits.IsZero (e8Plumbing.latticeHomology k) :=
-  e8Plumbing.not_isZero_latticeHomology e8Plumbing_isNegativeDefinite k
 
 end TauCeti
