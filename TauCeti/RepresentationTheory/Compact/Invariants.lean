@@ -42,8 +42,6 @@ one irreducible in another representation.
 ## Main definitions
 
 * `ContRepresentation.haarAverageMap`: the Haar average `∫ g, π g` of the action operators.
-* `ContRepresentation.haarAverageIntertwiner`: that average as a continuous
-  self-intertwiner.
 
 ## Main results
 
@@ -159,17 +157,6 @@ theorem haarAverageMap_comp (h : G) :
     _ = ∫ g, π g v ∂haarProb G := integral_mul_right_eq_self (fun g : G ↦ π g v) h
     _ = haarAverageMap π hπ v := (haarAverageMap_apply π hπ v).symm
 
-/-- The Haar average of the action operators, as a continuous self-intertwiner. -/
-noncomputable def haarAverageIntertwiner : ContIntertwiningMap π π where
-  __ := haarAverageMap π hπ
-  isIntertwining' h := by
-    rw [haarAverageMap_comp π hπ h, comp_haarAverageMap π hπ h]
-
-@[simp]
-theorem toContinuousLinearMap_haarAverageIntertwiner :
-    (haarAverageIntertwiner π hπ).toContinuousLinearMap = haarAverageMap π hπ :=
-  (rfl)
-
 /-! ### The projection onto the invariants -/
 
 /-- The Haar average lands in the invariant subspace. -/
@@ -192,16 +179,13 @@ theorem isProj_haarAverageMap :
 
 /-- The Haar average is idempotent. -/
 theorem haarAverageMap_comp_self :
-    (haarAverageMap π hπ).comp (haarAverageMap π hπ) = haarAverageMap π hπ := by
-  ext v
-  exact haarAverageMap_apply_of_mem_invariants π hπ (haarAverageMap_mem_invariants π hπ v)
+    (haarAverageMap π hπ).comp (haarAverageMap π hπ) = haarAverageMap π hπ :=
+  ContinuousLinearMap.coe_injective (isProj_haarAverageMap π hπ).isIdempotentElem
 
 /-- The range of the Haar average is exactly the invariant subspace. -/
 theorem range_haarAverageMap :
-    LinearMap.range (haarAverageMap π hπ : V →ₗ[𝕜] V) = π.invariants := by
-  refine le_antisymm (LinearMap.range_le_iff_comap.2 (Submodule.eq_top_iff'.2 fun v ↦ ?_)) ?_
-  · exact haarAverageMap_mem_invariants π hπ v
-  · exact fun v hv ↦ ⟨v, haarAverageMap_apply_of_mem_invariants π hπ hv⟩
+    LinearMap.range (haarAverageMap π hπ : V →ₗ[𝕜] V) = π.invariants :=
+  (isProj_haarAverageMap π hπ).range
 
 end Projection
 
