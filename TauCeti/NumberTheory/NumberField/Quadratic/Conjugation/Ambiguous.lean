@@ -96,11 +96,6 @@ private theorem map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
     rw [Ideal.map_map, hcomp, Ideal.map_id]
   h
 
-/-- An involutive ring automorphism preserves nonvanishing of ideals. -/
-private theorem map_ne_zero_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
-    (hf : Function.Involutive f) {I : Ideal R} (hI : I ≠ 0) : Ideal.map f I ≠ 0 := fun h0 =>
-  hI <| by simpa [map_map_of_involutive hf] using congrArg (Ideal.map f) h0
-
 /-- **Two elements of an imaginary quadratic field with associated norms have equal norms.** If
 `x σx` and `y σy` are associates in `𝓞 K` then they are equal: their ratio is a unit whose norm is
 the square of a positive rational, hence `1`. This is the step where total complexity of `K` enters;
@@ -174,11 +169,13 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one [IsTotallyCo
   obtain ⟨x, y, hx, hy, hxy⟩ := ClassGroup.mk0_eq_mk0_iff.mp hfix
   set σ := ringOfIntegersQuadraticConj hmin hgen
   have hinv : Function.Involutive σ := ringOfIntegersQuadraticConj_involutive hmin hgen
-  -- `Ideal.map` along the ring equivalence and along its underlying ring hom agree definitionally.
-  replace hxy : Ideal.span {x} * Ideal.map σ (J : Ideal (𝓞 K)) =
-    Ideal.span {y} * (J : Ideal (𝓞 K)) := hxy
+  -- Restate the pushforward in `hxy` along the equivalence rather than its underlying hom.
+  simp only [Ideal.map_coe] at hxy
   have hJ0 : (J : Ideal (𝓞 K)) ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp J.2
-  have hJm0 : Ideal.map σ (J : Ideal (𝓞 K)) ≠ 0 := map_ne_zero_of_involutive hinv hJ0
+  have hJm0 : Ideal.map σ (J : Ideal (𝓞 K)) ≠ 0 := by
+    rw [ne_eq, Ideal.zero_eq_bot, Ideal.map_eq_bot_iff_of_injective σ.injective,
+      ← Ideal.zero_eq_bot]
+    exact hJ0
   have hspanx : Ideal.span ({x} : Set (𝓞 K)) ≠ 0 := by
     rw [ne_eq, Ideal.zero_eq_bot, Ideal.span_singleton_eq_bot]; exact hx
   -- Conjugating that identity gives the companion identity.
@@ -239,7 +236,9 @@ theorem sq_classGroupMk0_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self
 ideals.** For a totally complex quadratic number field, an ideal class is `2`-torsion — equivalently
 fixed by quadratic conjugation — precisely when it is represented by an ideal that conjugation
 fixes. This is the descent step of the ambiguous class number formula: it turns the count of
-`2`-torsion classes into a count of ambiguous ideals, which are the products of ramified primes. -/
+`2`-torsion classes into a count of ambiguous ideals. Classifying those ideals — modulo the
+extended rational ideals they are products of the ramified primes — is a further step, not proved
+here. -/
 theorem sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self [IsTotallyComplex K]
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (C : ClassGroup (𝓞 K)) :

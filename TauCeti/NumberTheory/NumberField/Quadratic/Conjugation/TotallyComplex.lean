@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.TotallyRealComplex
-public import Mathlib.NumberTheory.NumberField.Norm
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Norm
 
 /-!
@@ -78,7 +77,7 @@ theorem comp_quadraticConj_eq_conjugate [IsTotallyComplex K] (hmin : minpoly ℤ
 
 /-- **Quadratic conjugation is complex conjugation**, elementwise: for a totally complex quadratic
 field, every complex embedding `φ` satisfies `φ (σ x) = conj (φ x)`. -/
-theorem apply_quadraticConj_eq_conj [IsTotallyComplex K] (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem apply_quadraticConj_eq_conj [IsTotallyComplex K] (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (φ : K →+* ℂ) (x : K) :
     φ (quadraticConj hmin hgen x) = (starRingEnd ℂ) (φ x) :=
   RingHom.congr_fun (comp_quadraticConj_eq_conjugate hmin hgen φ) x
