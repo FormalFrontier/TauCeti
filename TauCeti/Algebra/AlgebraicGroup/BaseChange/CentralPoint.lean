@@ -11,8 +11,8 @@ public import TauCeti.Algebra.AlgebraicGroup.Hopf.CentralPoint
 /-!
 # Central points under base change
 
-Let `H` be a commutative Hopf algebra over `k`, let `K` be a commutative `k`-algebra, and let
-`A` be a commutative `K`-algebra. The standard equivalence
+Let `H` be a bialgebra over `k`, let `K` be a commutative `k`-algebra, and let `A` be a
+commutative `K`-algebra. The standard equivalence
 
 ```text
   (K ⊗[k] H →ₐ[K] A) ≃ (H →ₐ[k] A)
@@ -32,8 +32,8 @@ change.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), §1.k and §2.
-* W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
+* J. S. Milne, *Algebraic Groups* (2017), §§1.d, 1.k, and 2.a.
+* W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapters 2 and 16.
 
 This is the pointwise base-change input for the center `Z(G)` in Layer 6 of the
 ReductiveGroups roadmap.
@@ -45,12 +45,12 @@ open TensorProduct WithConv
 
 namespace TauCeti
 
-universe u
+universe u v
 
 namespace HopfAlgebra
 
-variable {k K H A : Type u} [CommRing k] [CommRing K] [CommRing H] [CommRing A]
-variable [Algebra k K] [_root_.HopfAlgebra k H]
+variable {k : Type u} {K H A : Type v} [CommRing k] [CommRing K] [Ring H] [CommRing A]
+variable [Algebra k K] [_root_.Bialgebra k H]
 variable [Algebra K A] [Algebra k A] [IsScalarTower k K A]
 
 /-- Universal centrality is preserved and reflected by the base-change equivalence on points.
@@ -96,7 +96,7 @@ theorem isCentralPoint_baseChangePointsMulEquiv_symm_iff
     simp only [map_mul]
     have hφ : φK.restrictScalars k = φ := AlgHom.ext fun _ ↦ rfl
     rw [← hφ, ← AlgHom.mapValue_baseChangePointsMulEquiv φK]
-    simpa using (hg φK
+    simpa only [MulEquiv.apply_symm_apply] using (hg φK
       (AlgHom.baseChangePointsMulEquiv
         (k := k) (K := K) (A := H) (R := B) h)).eq
 
@@ -104,11 +104,11 @@ end HopfAlgebra
 
 namespace CommHopfAlgCat
 
-variable {k K : Type u} [CommRing k] [CommRing K] [Algebra k K]
+variable {k : Type u} {K : Type v} [CommRing k] [CommRing K] [Algebra k K]
 
 /-- The bundled base-change equivalence on points preserves and reflects universal centrality. -/
 theorem isCentralPoint_baseChangePointsMulEquiv_iff
-    (H : _root_.CommHopfAlgCat.{u} k) (A : CommAlgCat.{u} K)
+    (H : _root_.CommHopfAlgCat.{v} k) (A : CommAlgCat.{v} K)
     (g : HopfAlgebra.points (R := K) (H := baseChange (K := K) H) A) :
     HopfAlgebra.IsCentralPoint (baseChangePointsMulEquiv (K := K) A H g) ↔
       HopfAlgebra.IsCentralPoint g := by
