@@ -5,6 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+-- The finiteness of the roots of `X ^ n - 1`, used only in the proof of `weightChar_injective`.
+import Mathlib.Algebra.Polynomial.Roots
+-- `CharZero.infinite`, which specialises `weightChar_injective` to characteristic zero.
+public import Mathlib.Algebra.CharZero.Infinite
 public import Mathlib.Algebra.Module.Equiv.Basic
 public import Mathlib.LinearAlgebra.Basis.SMul
 public import Mathlib.LinearAlgebra.Matrix.Basis
@@ -25,9 +29,17 @@ in a weight basis of an admissible lattice, and `TauCeti.basisDiagonal_apply_of_
 the statement that it acts on a weight vector by the corresponding character — which is what makes
 the conjugation formula against a root subgroup come out.
 
+Fixing the weight instead of the point turns a character into a homomorphism
+`TauCeti.weightChar` on the points of the torus, which is the form in which a weight indexes a
+joint eigenspace. Whether that indexing is faithful depends on the coefficients: over `𝔽₂` the
+torus has a single point, so every weight gives the trivial character, while over an infinite
+field distinct weights stay distinct (`TauCeti.weightChar_injective`).
+
 ## Main definitions
 
 * `TauCeti.torusCharacter`: the value at `s : κ → Rˣ` of the character `μ : κ → ℤ` of `𝔾ₘ^κ`.
+* `TauCeti.weightChar`: that character with the weight fixed, as a homomorphism on the points of
+  the torus.
 * `TauCeti.weylReflectTorusPoint`: the multiplicative reflection of split-torus points dual to a
   reflection of their character lattice.
 * `TauCeti.basisDiagonal`: the automorphism scaling each basis vector by a prescribed unit.
@@ -41,6 +53,8 @@ the conjugation formula against a root subgroup come out.
 * `TauCeti.basisWeightTorus_apply_of_repr_eq_zero`: the special case for a weight vector.
 * `TauCeti.torusCharacter_weylReflectTorusPoint`: evaluation at a reflected point agrees with
   evaluation of the reflected character.
+* `TauCeti.weightChar_injective`: over an infinite field, distinct weights give distinct
+  characters of the torus.
 
 ## References
 
@@ -202,6 +216,91 @@ theorem map_torusCharacter {S : Type*} [CommRing S] (φ : R →+* S) (s : κ →
     Units.map (φ : R →* S) (torusCharacter s μ) =
       torusCharacter (fun j => Units.map (φ : R →* S) (s j)) μ := by
   simp [torusCharacter, map_prod, map_zpow]
+
+/-! ## A character as a homomorphism of torus points -/
+
+section WeightChar
+
+variable (R)
+
+/-- The character `μ` of the split torus `𝔾ₘ^κ` read as a homomorphism `(κ → Rˣ) →* Rˣ`: the
+value `TauCeti.torusCharacter s μ` with the weight `μ` fixed and the point `s` varying. This is the
+form in which a weight indexes a joint eigenspace of the torus. -/
+def weightChar (μ : κ → ℤ) : (κ → Rˣ) →* Rˣ where
+  toFun s := torusCharacter s μ
+  map_one' := torusCharacter_one μ
+  map_mul' s t := torusCharacter_mul s t μ
+
+/-- A weight character evaluates as the split-torus character of its weight, with the arguments in
+the order the weight-space API uses. Every arithmetic property of `TauCeti.weightChar` reduces
+through this to the `TauCeti.torusCharacter` lemmas. -/
+theorem weightChar_apply (μ : κ → ℤ) (s : κ → Rˣ) : weightChar R μ s = torusCharacter s μ :=
+  (rfl)
+
+/-- The trivial weight gives the trivial character. -/
+@[simp]
+theorem weightChar_zero : weightChar R (0 : κ → ℤ) = 1 :=
+  MonoidHom.ext fun s ↦ torusCharacter_zero s
+
+/-- Weights add as characters multiply. -/
+theorem weightChar_add (μ ν : κ → ℤ) :
+    weightChar R (μ + ν) = weightChar R μ * weightChar R ν :=
+  MonoidHom.ext fun s ↦ torusCharacter_add s μ ν
+
+/-- The character of `Pi.single c 1` is the `c`-th coordinate: this is the weight carried by the
+`c`-th basis vector of a weight basis. -/
+@[simp]
+theorem weightChar_single [DecidableEq κ] (c : κ) (s : κ → Rˣ) :
+    weightChar R (Pi.single c 1) s = s c := by
+  rw [weightChar_apply, torusCharacter_def,
+    prod_eq_single c (fun j _ hj ↦ by simp [Pi.single_eq_of_ne hj])
+      (fun h ↦ absurd (mem_univ c) h),
+    Pi.single_eq_same, zpow_one]
+
+/-- The character of a constant weight is a power of the product of the coordinates. -/
+theorem weightChar_const (z : ℤ) (s : κ → Rˣ) :
+    weightChar R (fun _ ↦ z) s = (∏ j, s j) ^ z := by
+  rw [weightChar_apply, torusCharacter_def, prod_zpow]
+
+end WeightChar
+
+/-! ## Separating weights -/
+
+/-- In an infinite field no nonzero exponent kills every unit: the units killed by `d` are roots
+of `X ^ |d| - 1`, hence finitely many, while the nonzero elements are infinite in number. This is
+the one arithmetic input to `TauCeti.weightChar_injective`. No single unit need have infinite
+order — over the algebraic closure of `𝔽ₚ` none does — so the exponent has to be beaten by a unit
+depending on it. -/
+private theorem exists_zpow_ne_one (K : Type*) [Field K] [Infinite K] {d : ℤ} (hd : d ≠ 0) :
+    ∃ u : Kˣ, u ^ d ≠ 1 := by
+  by_contra hcon
+  push Not at hcon
+  have hpos : 0 < d.natAbs := Int.natAbs_pos.mpr hd
+  have hsub : (Set.univ : Set K) ⊆ insert 0 ↑(Polynomial.nthRootsFinset d.natAbs (1 : K)) := by
+    intro x _
+    rcases eq_or_ne x 0 with rfl | hx
+    · exact Set.mem_insert _ _
+    · have hu : Units.mk0 x hx ^ d.natAbs = 1 := pow_natAbs_eq_one.mpr (hcon _)
+      exact Set.mem_insert_of_mem _ (by
+        simpa [Polynomial.mem_nthRootsFinset hpos] using congrArg Units.val hu)
+  exact Set.infinite_univ
+    (((Polynomial.nthRootsFinset d.natAbs (1 : K)).finite_toSet.insert 0).subset hsub)
+
+/-- **Distinct weights give distinct characters of the split torus**, over an infinite field. Some
+hypothesis on the coefficients is needed: over `𝔽₂` the torus `𝔾ₘ^κ` has a single point and every
+weight gives the trivial character. A field of characteristic zero is infinite
+(`CharZero.infinite`), so that case is a specialisation. -/
+theorem weightChar_injective {K : Type*} [Field K] [Infinite K] :
+    Function.Injective (weightChar K (κ := κ)) := by
+  classical
+  intro μ ν h
+  funext c
+  by_contra hne
+  obtain ⟨u, hu⟩ := exists_zpow_ne_one K (sub_ne_zero.mpr hne)
+  refine hu ?_
+  have hval := congrArg (fun χ : (κ → Kˣ) →* Kˣ ↦ χ (Pi.mulSingle c u)) h
+  simp only [weightChar_apply, torusCharacter_mulSingle] at hval
+  rw [zpow_sub, hval, mul_inv_cancel]
 
 end TorusCharacter
 

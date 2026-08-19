@@ -9,6 +9,7 @@ import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Ring
 public import TauCeti.LowDimTopology.Plumbing.NegativeDefinite
+public import TauCeti.LowDimTopology.Plumbing.Tower
 
 /-!
 # The negative-definite E₈ plumbing
@@ -32,6 +33,8 @@ for checking later computations on this example.
 * `TauCeti.e8Plumbing_neg_intersectionForm`: the completed-square identity for the negative
   intersection form.
 * `TauCeti.e8Plumbing_isNegativeDefinite`: the `E₈` plumbing is negative definite.
+* `TauCeti.e8Plumbing_not_isZero_latticeHomology`: its characteristic-two lattice homology is
+  nonzero in every spin^c structure.
 
 ## References
 
@@ -204,5 +207,12 @@ theorem e8Plumbing_isNegativeDefinite : e8Plumbing.IsNegativeDefinite := by
       Finset.sum_nonneg fun i _ => e8SquareTerm_nonneg x i
     nlinarith
   exact hx (eq_zero_of_e8SquareTerm_sum_eq_zero x hR)
+
+/-- The characteristic-two lattice homology of the `E₈` plumbing is nonzero in every spin^c
+structure. This is the roadmap's concrete negative-definite plumbing, the one whose lattice
+homology computes the Heegaard Floer homology of the Poincaré homology sphere. -/
+theorem e8Plumbing_not_isZero_latticeHomology (k : e8Plumbing.characteristicVectors) :
+    ¬ CategoryTheory.Limits.IsZero (e8Plumbing.latticeHomology k) :=
+  e8Plumbing.not_isZero_latticeHomology e8Plumbing_isNegativeDefinite k
 
 end TauCeti

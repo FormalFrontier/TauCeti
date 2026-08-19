@@ -103,7 +103,9 @@ This is the fully faithful half of `quiverRepEquivalence`, Layer 1 of
 equivalence "sending a module `M` to the representation `v ↦ eᵥ M`, with an arrow acting by left
 multiplication, and inverting through the idempotent decomposition `M = ⨁ᵥ eᵥ M`". Full
 faithfulness is proved here; the essential surjectivity that completes the equivalence — a
-`kQ`-module structure on `⨁ᵥ Mᵥ` for a given representation — is not, and is the remaining half.
+`kQ`-module structure on `⨁ᵥ Mᵥ` for a given representation — is
+`TauCeti.RepresentationTheory.Quiver.Representation.AsModule`, where the two halves are assembled
+into `TauCeti.quiverRepEquivalence`.
 
 The equivalence itself is classical; see Assem--Simson--Skowroński, *Elements of the Representation
 Theory of Associative Algebras I*, Ch. III, or Schiffler, *Quiver Representations*, Ch. 5.
@@ -449,7 +451,8 @@ theorem quiverRepFunctor_map {M N : ModuleCat.{t} (pathAlgebra k Q)} (f : M ⟶ 
 /-- **The functor from `kQ`-modules to representations of `Q` is fully faithful**: this is
 `TauCeti.quiverRepHomOfModule_bijective`, with `TauCeti.moduleHomOfQuiverRepHom` as the explicit
 preimage. It is one half of the roadmap's `quiverRepEquivalence`; the other half is essential
-surjectivity. -/
+surjectivity, proved in
+`TauCeti.RepresentationTheory.Quiver.Representation.AsModule`. -/
 noncomputable def quiverRepFunctorFullyFaithful :
     (quiverRepFunctor.{u, v, w, t} k Q).FullyFaithful where
   preimage {_ _} φ := ModuleCat.ofHom (moduleHomOfQuiverRepHom k Q φ)

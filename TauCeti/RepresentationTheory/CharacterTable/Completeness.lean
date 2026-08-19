@@ -52,10 +52,9 @@ conjugate or not.
 
 The irreducibles are produced on the coordinate spaces `Fin n → k` rather than as simple objects of
 `FDRep k G`, because a Wedderburn block is a matrix algebra acting on its column space, and because
-`FDRep k G` carries only representations on types in the universe of `k`. Neither Mathlib nor this
-repository relates `CategoryTheory.Simple` in `FDRep k G` to `Representation.IsIrreducible`, so the
-`FDRep` mirrors of the statements below are not available; the `Representation`-level statements are
-the ones the rest of the theory uses.
+`FDRep k G` carries only representations on types in the universe of `k`. The
+`Representation`-level statements are the ones the rest of the theory uses; a consumer holding a
+simple object of `FDRep k G` reaches them through `FDRep.simple_iff_isIrreducible`.
 
 ## References
 
@@ -63,9 +62,12 @@ This implements the completeness and second-orthogonality items of Layer 3 of th
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
 at the `Representation` level. Its `Suggested.lean` pins them as `irreducibleCharacters_span`, over
 the simple objects of `FDRep k G`, and `char_column_orthogonality`, over the `ℂ`-valued character
-table; the statements below are the prerequisites those two are read off from once Layer 2.5
-supplies the dictionary between `CategoryTheory.Simple` in `FDRep k G` and
-`Representation.IsIrreducible`, and neither roadmap name is claimed here.
+table; the statements below are the prerequisites those two are read off from, and neither roadmap
+name is claimed here. Reading `irreducibleCharacters_span` off from
+`TauCeti.ClassFunction.le_span_irreducibleCharacters` needs two further steps: the dictionary
+`FDRep.simple_iff_isIrreducible` between `CategoryTheory.Simple` in `FDRep k G` and
+`Representation.IsIrreducible`, which lives in `TauCeti.RepresentationTheory.Simple.Basic` and which
+this file does not import, and a comparison of the two spanning sets, which is not done here.
 See I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.18 and Corollary 2.14, or
 J.-P. Serre, *Linear Representations of Finite Groups*, Sections 2.5 and 6.4.
 -/
@@ -273,9 +275,9 @@ unless `G` is abelian.
 This is the `Representation`-level form, spanning by the characters of the irreducible
 representations on the coordinate spaces `Fin n → k` that the Wedderburn blocks produce. It is a
 prerequisite for, and not the same statement as, the roadmap's `irreducibleCharacters_span`, which
-spans by the characters of the simple objects of `FDRep k G`: passing between the two needs the
-dictionary between `CategoryTheory.Simple` in `FDRep k G` and `Representation.IsIrreducible`, which
-is Layer 2.5 work and exists neither in Mathlib nor here. -/
+spans by the characters of the simple objects of `FDRep k G`: passing between the two needs
+`FDRep.simple_iff_isIrreducible` and a comparison of the two spanning sets, which is not
+done here. -/
 theorem le_span_irreducibleCharacters :
     ClassFunction k G ≤ Submodule.span k
       {f : G → k | ∃ (n : ℕ) (ρ : Representation k G (Fin n → k)), ρ.IsIrreducible ∧

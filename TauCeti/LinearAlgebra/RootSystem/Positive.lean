@@ -37,7 +37,9 @@ positive root is a nonnegative integer combination of the simple coroots.
 
 * `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
 * `TauCeti.ncard_posRoots_eq_natCard_div_two` says that, for a finite root index type, exactly
-  half of the roots are positive.
+  half of the roots are positive, and `TauCeti.posRootsFinset_eq_filter`,
+  `TauCeti.card_posRootsFinset` read `TauCeti.posRootsFinset` as the filter of the positivity
+  predicate and its cardinality as the cardinality of `TauCeti.posRoots`.
 * `TauCeti.add_mem_posRoots` and `TauCeti.add_mem_negRoots` say each of the two sets is closed
   under those sums of its members that are again roots, and
   `TauCeti.reflectionPerm_self_notMem_posRoots`, `TauCeti.reflectionPerm_self_notMem_negRoots` say
@@ -178,6 +180,17 @@ lemma posRootsFinset_union_negRootsFinset [Fintype ι] [DecidableEq ι] :
   ext i
   simpa only [Finset.mem_union, Finset.mem_univ, iff_true, mem_posRootsFinset,
     mem_negRootsFinset] using mem_posRoots_or_mem_negRoots P b i
+
+/-- The finset of positive roots is the filter of the positivity predicate, which is the shape a
+consumer that counts positive roots by `Finset.filter` meets them in. -/
+lemma posRootsFinset_eq_filter [Fintype ι] [DecidablePred b.IsPos] :
+    posRootsFinset P b = Finset.univ.filter fun i ↦ b.IsPos i := by
+  ext i
+  simp
+
+/-- Counting the positive roots as a finset agrees with counting them as a set. -/
+lemma card_posRootsFinset [Finite ι] : (posRootsFinset P b).card = (posRoots P b).ncard :=
+  (Set.ncard_eq_toFinset_card _ (posRoots_finite P b)).symm
 
 /-- Every simple root is positive. -/
 lemma support_subset_posRoots : ↑b.support ⊆ posRoots P b := by
