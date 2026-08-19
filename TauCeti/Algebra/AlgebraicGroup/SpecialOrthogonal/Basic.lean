@@ -5,11 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.UnitaryGroup
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Order
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Orthogonal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
 
