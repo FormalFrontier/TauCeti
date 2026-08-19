@@ -238,7 +238,7 @@ variable (k : Type u) (G : Type v) [Ring k] [Monoid G]
 
 /-- **The isomorphism classes of simple objects of `FDRep k G`**: the skeleton of the full
 subcategory they span. -/
-abbrev SimpleFDRepClasses : Type _ :=
+def SimpleFDRepClasses : Type _ :=
   Skeleton (ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
 
 variable {k G}
@@ -249,12 +249,6 @@ namespace SimpleFDRepClasses
 def mk (X : FDRep k G) [Simple X] : SimpleFDRepClasses k G :=
   toSkeleton (⟨X, inferInstance⟩ :
     ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
-
-/-- The underlying skeleton constructor agrees with the simple-object class constructor. -/
-@[simp]
-theorem toSkeleton_eq_mk (X : FDRep k G) [Simple X] :
-    toSkeleton (⟨X, inferInstance⟩ :
-      ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G))) = mk X := (rfl)
 
 /-- Two simple objects have the same class exactly when they are isomorphic. -/
 @[simp]
