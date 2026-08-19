@@ -19,17 +19,15 @@ Hopf algebra `CommHopfAlgCat.image f = H / ker f`. The canonical map from this i
 `K` is injective. Tensoring it with any field extension remains injective, so geometric
 connectedness and geometric reducedness descend from the source `Spec K` to the image.
 
-The image is also finite type whenever the ambient affine group `Spec H` is finite type, since
-its coordinate algebra is a quotient of `H`. Together these facts provide the image-property
-part of the subgroup-generation argument used for the unipotent radical. For normal subgroups
-`U` and `V`, this applies after equipping the product scheme `U × V` with the appropriate
-semidirect-product group structure, so that multiplication into the ambient group is a group
-homomorphism.
+Finite type of the image whenever the ambient affine group `Spec H` is finite type follows
+directly from Mathlib's finite-type instance for quotient algebras. Together these facts provide
+the image-property part of the subgroup-generation argument used for the unipotent radical. For
+normal subgroups `U` and `V`, this applies after equipping the product scheme `U × V` with the
+appropriate semidirect-product group structure, so that multiplication into the ambient group is
+a group homomorphism.
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.image_finiteType`: a closed image in a finite-type affine group is
-  finite type.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty.image`: the image of a geometrically
   connected affine group is geometrically connected.
 * `TauCeti.geometricallyReducedCommHopfAlgProperty.image`: the image of a geometrically reduced
@@ -60,23 +58,6 @@ noncomputable section
 namespace CommHopfAlgCat
 
 variable {k : Type u} [Field k] {H K : _root_.CommHopfAlgCat.{u} k}
-
-/-- The coordinate algebra of the scheme-theoretic image is finite type when the ambient
-coordinate algebra is finite type.
-
-The assumption is on `H`, the coordinate algebra of the target affine group, because
-`image f = H / ker f`. No finiteness assumption on the source coordinate algebra `K` is needed.
--/
-theorem image_finiteType (f : H ⟶ K) [Algebra.FiniteType k H] :
-    Algebra.FiniteType k (image f) :=
-  Algebra.FiniteType.of_surjective (mkImage f).hom.toAlgHom (mkImage_surjective f)
-
-/-- The image coordinate algebra is reduced whenever the source coordinate algebra is reduced.
-
-Contravariantly, the scheme-theoretic image of a morphism from a reduced affine group is
-reduced. This is the ground-field form of the geometric result below. -/
-theorem image_isReduced (f : H ⟶ K) [IsReduced K] : IsReduced (image f) :=
-  isReduced_of_injective (imageι f).hom.toAlgHom.toRingHom (imageι_injective f)
 
 /-- After any extension of the ground field, the canonical inclusion of the image coordinate
 algebra into the source coordinate algebra remains injective. -/
