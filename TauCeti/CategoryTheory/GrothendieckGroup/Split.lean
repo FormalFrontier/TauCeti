@@ -175,6 +175,7 @@ noncomputable def lift (a : AdditiveInvariant C G) : SplitK0 C →+ G :=
 lemma lift_of (a : AdditiveInvariant C G) (X : C) : lift a (of X) = a.obj X :=
   PresentedK0.lift_of a.toPresented X
 
+/-- Any homomorphism agreeing with an additive invariant on object classes is its induced lift. -/
 theorem lift_unique (a : AdditiveInvariant C G) (f : SplitK0 C →+ G)
     (hf : ∀ X : C, f (of X) = a.obj X) : f = lift a :=
   hom_ext fun X => by rw [hf, lift_of]
@@ -206,17 +207,13 @@ variable {C : Type u} [Category.{v} C] [Preadditive C] [HasBinaryBiproducts C]
   {D : Type u'} [Category.{v'} D] [Preadditive D] [HasBinaryBiproducts D]
   [EssentiallySmall.{w'} D]
 
-/-- An additive functor carries the biproduct relation of `X` and `Y` to the biproduct relation of
-their images. -/
-lemma freeMap_splitRelation (F : C ⥤ D) [F.Additive] (X Y : C) :
+private lemma freeMap_splitRelation (F : C ⥤ D) [F.Additive] (X Y : C) :
     freeMap F (splitRelation X Y) = splitRelation (F.obj X) (F.obj Y) := by
   have : PreservesBinaryBiproducts F := preservesBinaryBiproducts_of_preservesBiproducts F
   rw [splitRelation, map_sub, map_sub, freeMap_freeOf, freeMap_freeOf, freeMap_freeOf,
     freeOf_congr (F.mapBiprod X Y), splitRelation]
 
-/-- An additive functor carries the biproduct relations into the subgroup they generate in the
-target, which is what functoriality of the presentation asks for. -/
-lemma freeMap_splitRelations_mem_closure (F : C ⥤ D) [F.Additive] :
+private lemma freeMap_splitRelations_mem_closure (F : C ⥤ D) [F.Additive] :
     ∀ r ∈ splitRelations C, freeMap F r ∈ AddSubgroup.closure (splitRelations D) := by
   rintro _ ⟨X, Y, rfl⟩
   rw [freeMap_splitRelation]
@@ -238,6 +235,7 @@ lemma map_id : map (𝟭 C) = AddMonoidHom.id (SplitK0 C) :=
   PresentedK0.map_id _
 
 /-- `SplitK0.map` sends a composite of additive functors to the composite homomorphism. -/
+@[simp]
 lemma map_comp {E : Type u''} [Category.{v''} E] [Preadditive E] [HasBinaryBiproducts E]
     [EssentiallySmall.{w''} E] (F : C ⥤ D) (G : D ⥤ E) [F.Additive] [G.Additive] :
     map (F ⋙ G) = (map G).comp (map F) :=
