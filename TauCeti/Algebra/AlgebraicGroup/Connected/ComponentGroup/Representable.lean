@@ -600,14 +600,7 @@ private theorem pointwiseQuotientPresheafGrpProjection_comp_componentIso_hom
         (Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
           (CommHopfAlgCat.mapPointsFunctor (componentCoordinateHom H)))
         GrpCat.uliftFunctor.{u + 1, u}) := by
-    rw [show (CommHopfAlgCat.groupFunctorGrpIso (Functor.isoWhiskerRight
-      (Functor.isoWhiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
-        (componentPointwiseQuotientNatIso H))
-      GrpCat.uliftFunctor.{u + 1, u})).hom =
-        CommHopfAlgCat.groupFunctorGrpMap (Functor.whiskerRight
-          (Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
-            (componentPointwiseQuotientNatIso H).hom)
-          GrpCat.uliftFunctor.{u + 1, u}) from rfl,
+    rw [CommHopfAlgCat.groupFunctorGrpIso_hom,
       groupFunctorGrpMap_comp]
     congr 1
     simpa only [Functor.whiskerLeft_comp, Functor.whiskerRight_comp,
@@ -638,6 +631,28 @@ noncomputable def componentCoordinateFppfGroupObjectHom
         (CommHopfAlgCat.of k (ConstantGroup.coordinateRing k
           (ConnectedComponents (PrimeSpectrum H))))).symm
 
+private theorem componentGroupFppfProjection_comp_iso_hom_def
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    componentGroupFppfProjection H ≫ (componentGroupFppfGroupObjectIso H).hom =
+      let F := presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))
+      let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts F
+      eqToHom (CommHopfAlgCat.pointsFppfGroupObject.eq_1 H.obj) ≫
+        (F.mapGrp.map
+          (CommHopfAlgCat.pointwiseQuotientPresheafGrpProjection H.obj
+            (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+            (isNormal_identityComponentHopfIdeal H)) ≫
+          (F.mapGrp.mapIso (componentPointwiseQuotientPresheafGrpIso H)).hom) ≫
+        eqToHom (CommHopfAlgCat.pointsFppfGroupObject.eq_1
+          (CommHopfAlgCat.of k (ConstantGroup.coordinateRing k
+            (ConnectedComponents (PrimeSpectrum H))))).symm := by
+  let F := presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))
+  let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts F
+  unfold componentGroupFppfProjection
+  rw [fppfQuotientProjection_eq]
+  unfold componentGroupFppfGroupObjectIso
+  dsimp
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+
 /-- The representability isomorphism carries the component-group quotient projection to the
 sheafification of the component-coordinate morphism on points. -/
 @[simp]
@@ -647,20 +662,22 @@ theorem componentGroupFppfProjection_comp_componentGroupFppfGroupObjectIso_hom
       componentCoordinateFppfGroupObjectHom H := by
   let F := presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))
   let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts F
-  unfold componentGroupFppfProjection
-  rw [fppfQuotientProjection_eq]
-  unfold componentGroupFppfGroupObjectIso componentCoordinateFppfGroupObjectHom
+  rw [componentGroupFppfProjection_comp_iso_hom_def]
+  unfold componentCoordinateFppfGroupObjectHom
   dsimp
-  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl,
-    Category.id_comp]
-  change F.mapGrp.map
+  have hcore : F.mapGrp.map
         (CommHopfAlgCat.pointwiseQuotientPresheafGrpProjection H.obj
           (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
           (isNormal_identityComponentHopfIdeal H)) ≫
-      (F.mapGrp.mapIso (componentPointwiseQuotientPresheafGrpIso H)).hom =
-    F.mapGrp.map (componentCoordinatePresheafGrpHom H)
-  rw [Functor.mapIso_hom, ← F.mapGrp.map_comp,
-    pointwiseQuotientPresheafGrpProjection_comp_componentIso_hom]
+      F.mapGrp.map (componentPointwiseQuotientPresheafGrpIso H).hom =
+      F.mapGrp.map (componentCoordinatePresheafGrpHom H) := by
+    rw [← F.mapGrp.map_comp,
+      pointwiseQuotientPresheafGrpProjection_comp_componentIso_hom]
+  simpa only [Category.assoc] using congrArg (fun f ↦
+    eqToHom (CommHopfAlgCat.pointsFppfGroupObject.eq_1 H.obj) ≫ f ≫
+      eqToHom (CommHopfAlgCat.pointsFppfGroupObject.eq_1
+        (CommHopfAlgCat.of k (ConstantGroup.coordinateRing k
+          (ConnectedComponents (PrimeSpectrum H))))).symm) hcore
 
 /-- The underlying fppf sheaf of the component-group quotient is represented by the finite
 constant group scheme on the connected components of the prime spectrum. -/

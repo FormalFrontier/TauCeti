@@ -107,6 +107,14 @@ noncomputable def groupFunctorGrpIso {C : Type u} [Category.{v} C]
     ext X x
     exact congrArg (fun f ↦ f x) (e.inv_hom_id_app X)
 
+/-- The forward map of the group-object isomorphism induced by a natural isomorphism is the
+group-object map induced by its forward natural transformation. -/
+@[simp]
+theorem groupFunctorGrpIso_hom {C : Type u} [Category.{v} C]
+    {F G : C ⥤ GrpCat.{u}} (e : F ≅ G) :
+    (groupFunctorGrpIso e).hom = groupFunctorGrpMap e.hom := by
+  rw [groupFunctorGrpIso.eq_1]
+
 /-- The convolution-points presheaf as a group object in type-valued presheaves, with values
 lifted to the universe in which the affine-site sheafification lives. -/
 noncomputable def pointsPresheafGrp (H : _root_.CommHopfAlgCat.{u} R) :
