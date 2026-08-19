@@ -310,9 +310,15 @@ theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
     IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by
   rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_valuation_lt_one]
 
+/-- Evaluation at a place vanishes exactly on elements of positive order. The hypothesis
+`f ≠ 0` guards the junk value `ord_P 0 = 0`. -/
+theorem residue_eq_zero_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
+    IsLocalRing.residue P.integers f = 0 ↔ 0 < P.ord (f : F) := by
+  rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_ord_pos hf]
+
 /-- The **degree** `deg P = [F_P : k]` of a place (Stichtenoth, Definition 1.1.14). Its
 finiteness, which guards the junk value of `Module.finrank`, holds whenever `F/k` is a function
-field (Stichtenoth, Proposition 1.1.15). -/
+field: see `TauCeti.Place.finite_residueField` (Stichtenoth, Proposition 1.1.15). -/
 noncomputable def degree : ℕ := Module.finrank k P.ResidueField
 
 theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := (rfl)
