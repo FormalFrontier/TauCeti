@@ -11,6 +11,7 @@ public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Distributions.Pareto
 public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.Probability.Distributions.Cauchy
+public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 
 /-!
 # `HasPDF` instances for Mathlib's continuous families
@@ -43,8 +44,8 @@ continuity is all these bridges need.
 ## Main results
 
 * `hasPDF_of_hasLaw_gammaMeasure` and its five siblings, each paired with a `pdf_..._eq`
-  a.e.-identification. The two shared bridges they are built from are in
-  `TauCeti.Probability.Density`.
+  a.e.-identification and an `rnDeriv_...` identification. The two shared bridges they are built
+  from are in `TauCeti.Probability.Density`.
 
 Three `ℝ≥0∞`-valued measurability lemmas (`measurable_gammaPDF`, `measurable_betaPDF`,
 `measurable_paretoPDF`) are supplied because Mathlib exposes only the real-valued forms for those
@@ -53,8 +54,8 @@ families; the Gaussian and Cauchy `ℝ≥0∞` versions already exist and are re
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 1 — connecting Mathlib's
-  continuous families to `HasPDF` and identifying `pdf X P`. Item 2 (the Radon–Nikodym derivatives)
-  is a separate target and is not built here; item 4 (parameter measurability) is
+  continuous families to `HasPDF`, identifying `pdf X P`, and identifying the Radon–Nikodym
+  derivatives. Item 4 (parameter measurability) is
   `TauCeti/Probability/Distributions/Measurability.lean`.
 -/
 
@@ -183,6 +184,67 @@ theorem pdf_eq_cauchyPDF_of_hasLaw_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (h�
     (hX : HasLaw X (cauchyMeasure x₀ γ) P) : pdf X P =ᵐ[volume] cauchyPDF x₀ γ :=
   pdf_eq_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ).aemeasurable
     (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)
+
+/-! ### Radon–Nikodym derivatives
+
+The same six families, now identified as Radon–Nikodym derivatives against Lebesgue measure. For the
+`withDensity` families this is `Measure.rnDeriv_withDensity` applied to the density already shown
+measurable above; for the Gaussian it is Mathlib's `rnDeriv_gaussianReal`, reused rather than
+reproved, which covers the zero-variance case as well.
+
+The Cauchy law needs both branches stated separately, because at zero scale it is a Dirac measure —
+**singular** with respect to `volume`, so its derivative vanishes almost everywhere rather than
+being a density. That is a different statement, not a degenerate case of the same one. -/
+
+/-- The Radon–Nikodym derivative of a Gamma law is `gammaPDF`. -/
+theorem rnDeriv_gammaMeasure (a r : ℝ) :
+    (gammaMeasure a r).rnDeriv volume =ᵐ[volume] gammaPDF a r := by
+  rw [show gammaMeasure a r = volume.withDensity (gammaPDF a r) from rfl]
+  exact Measure.rnDeriv_withDensity volume (measurable_gammaPDF a r)
+
+/-- The Radon–Nikodym derivative of a Beta law is `betaPDF`. -/
+theorem rnDeriv_betaMeasure (α β : ℝ) :
+    (betaMeasure α β).rnDeriv volume =ᵐ[volume] betaPDF α β := by
+  rw [show betaMeasure α β = volume.withDensity (betaPDF α β) from rfl]
+  exact Measure.rnDeriv_withDensity volume (measurable_betaPDF α β)
+
+/-- The Radon–Nikodym derivative of an exponential law is `exponentialPDF`, which is `gammaPDF 1`
+by definition. -/
+theorem rnDeriv_expMeasure (r : ℝ) :
+    (expMeasure r).rnDeriv volume =ᵐ[volume] exponentialPDF r := by
+  have h : (expMeasure r).rnDeriv volume =ᵐ[volume] gammaPDF 1 r := by
+    rw [show expMeasure r = volume.withDensity (gammaPDF 1 r) from rfl]
+    exact Measure.rnDeriv_withDensity volume (measurable_gammaPDF 1 r)
+  unfold exponentialPDF exponentialPDFReal
+  exact h
+
+/-- The Radon–Nikodym derivative of a Pareto law is `paretoPDF`. -/
+theorem rnDeriv_paretoMeasure (t r : ℝ) :
+    (paretoMeasure t r).rnDeriv volume =ᵐ[volume] paretoPDF t r := by
+  rw [show paretoMeasure t r = volume.withDensity (paretoPDF t r) from rfl]
+  exact Measure.rnDeriv_withDensity volume (measurable_paretoPDF t r)
+
+/-- The Radon–Nikodym derivative of a Gaussian law is `gaussianPDF`.
+
+This is Mathlib's `rnDeriv_gaussianReal`, which already handles both positive and zero variance;
+nothing is reproved here. -/
+theorem rnDeriv_gaussianReal' (m : ℝ) (v : ℝ≥0) :
+    (gaussianReal m v).rnDeriv volume =ᵐ[volume] gaussianPDF m v :=
+  rnDeriv_gaussianReal m v
+
+/-- The Radon–Nikodym derivative of a nondegenerate Cauchy law is `cauchyPDF`. -/
+theorem rnDeriv_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0) :
+    (cauchyMeasure x₀ γ).rnDeriv volume =ᵐ[volume] cauchyPDF x₀ γ := by
+  rw [cauchyMeasure_of_scale_ne_zero _ hγ]
+  exact Measure.rnDeriv_withDensity volume (measurable_cauchyPDF x₀ γ)
+
+/-- **The singular boundary.** At zero scale the Cauchy law is `Measure.dirac x₀`, which is singular
+with respect to `volume`, so its Radon–Nikodym derivative vanishes almost everywhere. -/
+theorem rnDeriv_cauchyMeasure_zero (x₀ : ℝ) :
+    (cauchyMeasure x₀ 0).rnDeriv volume =ᵐ[volume] 0 := by
+  rw [show cauchyMeasure x₀ 0 = Measure.dirac x₀ from by simp [cauchyMeasure]]
+  exact Measure.rnDeriv_eq_zero_of_mutuallySingular (mutuallySingular_dirac x₀ volume)
+    Measure.AbsolutelyContinuous.rfl
 
 end Probability
 
