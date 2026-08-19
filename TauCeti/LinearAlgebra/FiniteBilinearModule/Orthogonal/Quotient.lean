@@ -38,6 +38,7 @@ overlattice with this quotient is the lattice-side statement and is not yet form
   restricted pairing.
 * `TauCeti.FiniteBilinearModule.isNondegenerate_orthogonalQuotient_iff`: the orthogonal quotient
   is nondegenerate exactly when `H` contains the radical.
+* `TauCeti.FiniteBilinearModule.card_orthogonalQuotient`: the order of the quotient as an index.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq`: the order
   computation `|H^⊥/H| · |H|² = |A|` for isotropic `H`.
 * `TauCeti.FiniteBilinearModule.card_orthogonalQuotient_eq_one_iff`: triviality of the quotient,
@@ -151,11 +152,8 @@ theorem radical_restrict_orthogonalComplement (H : AddSubgroup A) :
 no nondegeneracy of `A` is needed for the statement. -/
 theorem isNondegenerate_orthogonalQuotient_iff (H : AddSubgroup A) :
     (A.orthogonalQuotient H).IsNondegenerate ↔ A.radical ≤ H := by
-  have hrad : A.radical ≤ A.orthogonalComplement H := by
-    intro z hz
-    rw [A.mem_orthogonalComplement_iff]
-    intro y _
-    exact (A.mem_radical_iff z).mp hz y
+  have hrad : A.radical ≤ A.orthogonalComplement H :=
+    A.orthogonalComplement_top ▸ A.orthogonalComplement_anti le_top
   rw [orthogonalQuotient, isNondegenerate_quotientOfLeRadical_iff,
     A.radical_restrict_orthogonalComplement H]
   constructor
@@ -171,8 +169,14 @@ theorem isNondegenerate_orthogonalQuotient_iff (H : AddSubgroup A) :
 /-- In a nondegenerate module the orthogonal quotient is nondegenerate. -/
 theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenerate)
     (H : AddSubgroup A) : (A.orthogonalQuotient H).IsNondegenerate :=
-  (A.isNondegenerate_orthogonalQuotient_iff H).mpr
-    (le_of_eq (A.isNondegenerate_iff_radical_eq_bot.mp hA) |>.trans bot_le)
+  (A.isNondegenerate_orthogonalQuotient_iff H).mpr (hA.radical_eq_bot ▸ bot_le)
+
+/-- The order of the orthogonal quotient is the index of the part of `H` lying in `H^⊥`. -/
+theorem card_orthogonalQuotient (H : AddSubgroup A) :
+    Nat.card (A.orthogonalQuotient H) = (H.addSubgroupOf (A.orthogonalComplement H)).index :=
+  (A.restrict (A.orthogonalComplement H)).card_quotientOfLeRadical
+    (H.addSubgroupOf (A.orthogonalComplement H))
+    (A.addSubgroupOf_orthogonalComplement_le_radical_restrict H)
 
 /-- For an isotropic subgroup of a nondegenerate module, the order of the orthogonal quotient
 satisfies `|H^⊥/H| · |H|² = |A|`. -/
@@ -184,10 +188,7 @@ theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegener
   have hKcard : Nat.card (H.addSubgroupOf (A.orthogonalComplement H)) = Nat.card H :=
     Nat.card_congr (AddSubgroup.addSubgroupOfEquivOfLe hle).toEquiv
   have hindex : (H.addSubgroupOf (A.orthogonalComplement H)).index =
-      Nat.card (A.orthogonalQuotient H) :=
-    ((A.restrict (A.orthogonalComplement H)).card_quotientOfLeRadical
-      (H.addSubgroupOf (A.orthogonalComplement H))
-      (A.addSubgroupOf_orthogonalComplement_le_radical_restrict H)).symm
+      Nat.card (A.orthogonalQuotient H) := (A.card_orthogonalQuotient H).symm
   have hlag := AddSubgroup.card_mul_index (H.addSubgroupOf (A.orthogonalComplement H))
   rw [hKcard, hindex] at hlag
   have hAcard := IsNondegenerate.card_mul_card_orthogonalComplement A hA H
@@ -199,18 +200,7 @@ theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegener
 already contained in `H`. No hypothesis on `H` or on `A` is needed. -/
 theorem card_orthogonalQuotient_eq_one_iff (H : AddSubgroup A) :
     Nat.card (A.orthogonalQuotient H) = 1 ↔ A.orthogonalComplement H ≤ H := by
-  constructor
-  · intro hcard x hx
-    have hsub : Subsingleton (A.orthogonalQuotient H).carrier :=
-      (Nat.card_eq_one_iff_unique.mp hcard).1
-    exact (A.orthogonalQuotientMk_eq_zero_iff H ⟨x, hx⟩).mp (hsub.elim _ _)
-  · intro hle
-    have hzero : ∀ q : A.orthogonalQuotient H, q = 0 := by
-      intro q
-      obtain ⟨x, rfl⟩ := A.orthogonalQuotientMk_surjective H q
-      exact (A.orthogonalQuotientMk_eq_zero_iff H x).mpr (hle x.2)
-    rw [Nat.card_eq_one_iff_unique]
-    exact ⟨⟨fun q r ↦ (hzero q).trans (hzero r).symm⟩, ⟨0⟩⟩
+  rw [A.card_orthogonalQuotient H, AddSubgroup.index_eq_one, AddSubgroup.addSubgroupOf_eq_top]
 
 /-- **Triviality of the orthogonal quotient characterizes Lagrangians.** For an isotropic
 subgroup the quotient collapses exactly when `H = H^⊥`. -/
