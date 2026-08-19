@@ -209,11 +209,13 @@ end Degree
 
 /-- **The relative Frobenius isogeny has separable degree one**, as pure inseparability
 requires. -/
+@[simp]
 theorem separableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).separableDegree = 1 :=
   separableDegree_eq_one_of_isPurelyInseparable (relativeFrobeniusIsogeny p W)
 
 /-- **The relative Frobenius isogeny carries its whole degree `p` in the inseparable part.** -/
+@[simp]
 theorem inseparableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).inseparableDegree = p := by
   rw [inseparableDegree_eq_degree_of_isPurelyInseparable, degree_relativeFrobeniusIsogeny]

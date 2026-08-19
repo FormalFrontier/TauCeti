@@ -7,7 +7,6 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 public import TauCeti.FieldTheory.RatFunc.PowerTower
-public import Mathlib.FieldTheory.Relrank
 
 /-!
 # Power subfields of the function field of a Weierstrass curve
