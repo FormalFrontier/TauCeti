@@ -35,6 +35,8 @@ consumed by milestone L0 of the `CFSGStatement` roadmap.
 ## Main declarations
 
 * `TauCeti.finite_rootCorootGenerators`: the root--coroot generating set is finite.
+* `TauCeti.instModuleFiniteRootCorootSpanToAddSubgroup`: the span is finitely generated over `ℤ`
+  in its additive presentation too.
 * `TauCeti.IsSl2System.span_rootCorootSpan_eq_top`: the integral span is full over the ground
   field.
 * `TauCeti.IsChevalleySystem.chevalleyLieLattice`: the canonical integral Lie lattice attached to
@@ -94,6 +96,15 @@ noncomputable instance instModuleFiniteRootCorootSpan (x : Weight K H L → L) :
     Module.Finite ℤ (rootCorootSpan x) := by
   rw [rootCorootSpan_eq_span_generators]
   exact Module.Finite.span_of_finite ℤ (finite_rootCorootGenerators x)
+
+/-- The integral root--coroot span presented as an additive subgroup — the shape in which the
+Kostant lattice API reads an admissible lattice — is finitely generated as a `ℤ`-module. -/
+noncomputable instance instModuleFiniteRootCorootSpanToAddSubgroup (x : Weight K H L → L) :
+    Module.Finite ℤ (rootCorootSpan x).toAddSubgroup :=
+  -- `Submodule.toAddSubgroup` keeps the carrier set, so the two subtypes are the same type by
+  -- reducibility and the identity is a `ℤ`-linear equivalence between them.
+  Module.Finite.equiv (AddEquiv.toIntLinearEquiv
+    (AddEquiv.refl (rootCorootSpan x) : (rootCorootSpan x) ≃+ (rootCorootSpan x).toAddSubgroup))
 
 namespace IsSl2System
 
