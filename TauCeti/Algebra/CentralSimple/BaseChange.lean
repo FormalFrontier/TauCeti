@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
--- All three are imported publicly, because this module is where the scalar extension of a central
+-- The first three imports are public because this module is where the scalar extension of a central
 -- simple algebra is assembled and it re-exports the pieces. `TauCeti.Algebra.deg` occurs in the
 -- statement of `TauCeti.Algebra.deg_baseChange` and `TauCeti.Algebra.CentralSimple.Degree`
 -- re-exports the simplicity of a tensor product; `TauCeti.Algebra.Central.BaseChange` supplies the
@@ -15,6 +15,8 @@ module
 public import TauCeti.Algebra.Central.BaseChange
 public import TauCeti.Algebra.CentralSimple.Degree
 public import TauCeti.Algebra.TensorProduct.BaseChange
+-- Public: the two-sided-ideal operations occur in the base-change API below.
+public import Mathlib.RingTheory.TwoSidedIdeal.Operations
 -- Non-public: none of these appears in the type of an exported declaration.
 -- `Module.finrank_baseChange` is used only inside the proof of `TauCeti.Algebra.deg_baseChange`,
 -- and the complex numbers and the real quaternions only by the worked examples at the end of the
@@ -22,6 +24,7 @@ public import TauCeti.Algebra.TensorProduct.BaseChange
 -- `ℍ[·]` notation there).
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.LinearAlgebra.Dimension.Constructions
+import Mathlib.RingTheory.Flat.FaithfullyFlat.Basic
 import TauCeti.Algebra.Central.Quaternion
 
 /-!
@@ -39,6 +42,8 @@ a central simple `L`-algebra with no glue at all.
 
 ## Main results
 
+* `TauCeti.TwoSidedIdeal.baseChange`: scalar extension of a two-sided ideal.
+* `TauCeti.IsSimpleRing.of_baseChange`: simplicity descends along a field extension.
 * `TauCeti.Algebra.deg_baseChange`: base change **preserves the degree**,
   `deg L (L ⊗[K] A) = deg K A`.
 
@@ -76,6 +81,87 @@ public section
 namespace TauCeti
 
 open scoped TensorProduct
+
+namespace TwoSidedIdeal
+
+variable {K A : Type*} [Field K] [Ring A] [Algebra K A]
+
+/-- The scalar extension of a two-sided ideal. Its underlying subspace is the usual scalar
+extension of the ideal regarded as a `K`-submodule. -/
+noncomputable def baseChange (L : Type*) [Field L] [Algebra K L] (I : TwoSidedIdeal A) :
+    TwoSidedIdeal (L ⊗[K] A) :=
+  let p : Submodule K A := I.asIdeal.restrictScalars K
+  TwoSidedIdeal.mk' (p.baseChange L)
+    (p.baseChange L).zero_mem
+    (fun hx hy => (p.baseChange L).add_mem hx hy)
+    (fun hx => (p.baseChange L).neg_mem hx)
+    (fun {x y} hy => by
+      obtain ⟨z, rfl⟩ := hy
+      induction x using TensorProduct.induction_on with
+      | zero => simp
+      | add x y hx hy => simpa [add_mul] using (p.baseChange L).add_mem hx hy
+      | tmul l a =>
+          induction z using TensorProduct.induction_on with
+          | zero => simp
+          | add x y hx hy => simpa [mul_add] using (p.baseChange L).add_mem hx hy
+          | tmul m i =>
+              refine ⟨(l * m) ⊗ₜ[K] ⟨a * i.1, ?_⟩, ?_⟩
+              · exact I.mul_mem_left a i.1 i.2
+              · simp [Algebra.TensorProduct.tmul_mul_tmul])
+    (fun {x y} hx => by
+      obtain ⟨z, rfl⟩ := hx
+      induction y using TensorProduct.induction_on with
+      | zero => simp
+      | add x y hx hy => simpa [mul_add] using (p.baseChange L).add_mem hx hy
+      | tmul l a =>
+          induction z using TensorProduct.induction_on with
+          | zero => simp
+          | add x y hx hy => simpa [add_mul] using (p.baseChange L).add_mem hx hy
+          | tmul m i =>
+              refine ⟨(m * l) ⊗ₜ[K] ⟨i.1 * a, ?_⟩, ?_⟩
+              · exact I.mul_mem_right i.1 a i.2
+              · simp [Algebra.TensorProduct.tmul_mul_tmul])
+
+/-- Membership in a base-changed two-sided ideal is membership in the base-changed underlying
+subspace. -/
+@[simp]
+theorem mem_baseChange (L : Type*) [Field L] [Algebra K L] (I : TwoSidedIdeal A)
+    (x : L ⊗[K] A) :
+    x ∈ baseChange L I ↔ x ∈ (I.asIdeal.restrictScalars K).baseChange L := by
+  simp [baseChange]
+
+private theorem baseChange_injective (L : Type*) [Field L] [Algebra K L] :
+    Function.Injective (baseChange L : TwoSidedIdeal A → TwoSidedIdeal (L ⊗[K] A)) := by
+  intro I J h
+  have hsub : (I.asIdeal.restrictScalars K).baseChange L =
+      (J.asIdeal.restrictScalars K).baseChange L := by
+    ext x
+    rw [← mem_baseChange L I, ← mem_baseChange L J, h]
+  have hrestrict := (Submodule.baseChange_inj (A := L)).mp hsub
+  ext x
+  exact SetLike.ext_iff.mp hrestrict x
+
+end TwoSidedIdeal
+
+namespace IsSimpleRing
+
+variable {K L A : Type*} [Field K] [Field L] [Algebra K L]
+  [Ring A] [Algebra K A] [Nontrivial A]
+
+/-- Simplicity descends along a field extension: if the scalar extension of a nontrivial algebra
+is a simple ring, then the original algebra is a simple ring. -/
+theorem of_baseChange (h : IsSimpleRing (L ⊗[K] A)) : IsSimpleRing A := by
+  let _ := h
+  apply IsSimpleRing.of_eq_bot_or_eq_top
+  intro I
+  rcases IsSimpleOrder.eq_bot_or_eq_top
+      (TauCeti.TwoSidedIdeal.baseChange (K := K) L I) with hI | hI
+  · left
+    exact TwoSidedIdeal.baseChange_injective (K := K) L (by ext x; rw [hI]; simp)
+  · right
+    exact TwoSidedIdeal.baseChange_injective (K := K) L (by ext x; rw [hI]; simp)
+
+end IsSimpleRing
 
 namespace Algebra
 

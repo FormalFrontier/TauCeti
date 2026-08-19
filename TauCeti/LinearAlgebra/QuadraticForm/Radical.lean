@@ -9,6 +9,11 @@ public import Mathlib.Algebra.CharP.Invertible
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.QuadraticForm.Prod
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+public import Mathlib.LinearAlgebra.QuadraticForm.TensorProduct
+-- Private: the determinant criterion and base-changed basis are used only to prove that
+-- nondegeneracy is preserved by base change.
+import Mathlib.LinearAlgebra.Matrix.BilinearForm
+import Mathlib.LinearAlgebra.TensorProduct.Basis
 
 /-!
 # Radical API for quadratic forms
@@ -25,6 +30,8 @@ its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as 
 * `QuadraticMap.radical_prod`: the radical of an orthogonal product is the product of the radicals.
 * `QuadraticMap.Nondegenerate.ne_zero`: a nondegenerate quadratic form on a nontrivial module is
   nonzero.
+* `QuadraticMap.Nondegenerate.baseChange`: a finite-dimensional nondegenerate quadratic form over a
+  field remains nondegenerate after extending scalars.
 * `LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip`: the polar form of the quadratic form of a
   symmetric bilinear form `B` is `2 • B`.
 * `LinearMap.BilinForm.radical_toQuadraticMap`: the radical of the quadratic form of a symmetric
@@ -78,6 +85,28 @@ theorem ne_zero [Nontrivial M] {Q : QuadraticForm R M} (hQ : Q.Nondegenerate) : 
     rw [hzero, QuadraticMap.mem_radical_iff']
     simp
   rwa [hQ.radical_eq_bot, Submodule.mem_bot] at hm
+
+/-- A finite-dimensional nondegenerate quadratic form over a field remains nondegenerate after
+extending scalars to another field, provided two is invertible in both fields. -/
+theorem baseChange {K L V : Type*} [Field K] [Field L] [Algebra K L]
+    [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    [Invertible (2 : K)] [Invertible (2 : L)] {Q : QuadraticForm K V}
+    (hQ : Q.Nondegenerate) : (Q.baseChange L).Nondegenerate := by
+  let b := Module.Free.chooseBasis K V
+  let _ := Fintype.ofFinite (Module.Free.ChooseBasisIndex K V)
+  let _ := Classical.decEq (Module.Free.ChooseBasisIndex K V)
+  rw [← QuadraticMap.nondegenerate_polar_iff] at hQ ⊢
+  rw [QuadraticForm.polarBilin_baseChange]
+  have hdet := (LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b).mp hQ
+  refine (LinearMap.BilinForm.nondegenerate_iff_det_ne_zero (b.baseChange L)).mpr ?_
+  have hmatrix :
+      LinearMap.BilinForm.toMatrix (b.baseChange L)
+          (LinearMap.BilinForm.baseChange L Q.polarBilin) =
+        (LinearMap.BilinForm.toMatrix b Q.polarBilin).map (algebraMap K L) := by
+    ext i j
+    simp [LinearMap.BilinForm.toMatrix_apply, Algebra.smul_def]
+  rw [hmatrix, ← (algebraMap K L).mapMatrix_apply, ← (algebraMap K L).map_det]
+  exact (map_ne_zero (algebraMap K L)).2 hdet
 
 end QuadraticMap.Nondegenerate
 
