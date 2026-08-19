@@ -182,15 +182,16 @@ theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
     have hx'' : (GeneralLinear.weightTorusCoordinateMap wt).hom x = 0 := hx'
     rw [hx'', map_zero]
   refine ⟨q, hq, ?_⟩
-  dsimp only [q]
-  rw [GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app]
-  change GeneralLinear.pointsMulEquiv n _ = _
-  rw [
-    GeneralLinear.pointsMulEquiv_diagonalTorusPoints, kostantTorusMatrix_apply]
-  congr 1
-  funext i
-  rw [GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap]
-  simp only [p, MulEquiv.apply_symm_apply]
+  have hq_matrix :
+      GeneralLinear.pointsMulEquiv n q = kostantTorusMatrix M b wt s := by
+    dsimp only [q]
+    rw [GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app,
+      GeneralLinear.pointsMulEquiv_diagonalTorusPoints, kostantTorusMatrix_apply]
+    congr 1
+    funext i
+    rw [GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap]
+    simp only [p, MulEquiv.apply_symm_apply]
+  simpa only [MulEquiv.coe_toMonoidHom] using hq_matrix
 
 /-- In basis coordinates, the pointwise elementary subgroup lies in the toral closure's
 algebra-valued points. -/
