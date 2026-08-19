@@ -21,9 +21,9 @@ solvable.
 
 ## Main declarations
 
-* `TauCeti.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent`: simultaneous
+* `Representation.exists_basis_isUpperUnitriangular_of_isUnipotent`: simultaneous
   upper-unitriangularization of a unipotent monoid representation.
-* `TauCeti.Representation.isSolvable_of_injective_of_isUnipotent`: a group with a faithful
+* `Representation.isSolvable_of_injective_of_isUnipotent`: a group with a faithful
   finite-dimensional unipotent representation is solvable.
 
 ## References
@@ -51,6 +51,7 @@ section Monoid
 
 variable [Monoid G]
 
+/-- Extend bases of a submodule and its quotient to a basis of the ambient module. -/
 private def extensionBasis {m n : ℕ} (p : Submodule K V)
     (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) :
     Basis (Fin (m + n)) K V :=
@@ -86,7 +87,8 @@ private theorem extensionBasis_repr_natAdd {m n : ℕ} (p : Submodule K V)
 
 /-- A finite-dimensional monoid representation by unipotent operators has a basis in which all
 representing matrices are upper unitriangular. -/
-theorem exists_basis_isUpperUnitriangular_of_isUnipotent [FiniteDimensional K V]
+theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
+    [FiniteDimensional K V]
     (rho : Representation K G V) (hunipotent : ∀ g, IsNilpotent (rho g - 1)) :
     ∃ (n : ℕ) (b : Basis (Fin n) K V),
       ∀ g, (LinearMap.toMatrixAlgEquiv b (rho g)).IsUpperUnitriangular := by
@@ -186,7 +188,10 @@ end Monoid
 
 variable [Group G]
 
-private def toUpperUnitriangularGroup {n : ℕ} (rho : Representation K G V)
+/-- Embed a representation into an upper-unitriangular group using a basis in which all of its
+operators are upper unitriangular. -/
+private def _root_.Representation.toUpperUnitriangularGroup {n : ℕ}
+    (rho : Representation K G V)
     (b : Basis (Fin n) K V)
     (h : ∀ g, (LinearMap.toMatrixAlgEquiv b (rho g)).IsUpperUnitriangular) :
     G →* TauCeti.upperUnitriangularGroup (Fin n) K := by
@@ -208,12 +213,14 @@ private def toUpperUnitriangularGroup {n : ℕ} (rho : Representation K G V)
 
 /-- A group admitting a faithful finite-dimensional representation by unipotent operators is
 solvable. -/
-theorem isSolvable_of_injective_of_isUnipotent [FiniteDimensional K V]
+theorem _root_.Representation.isSolvable_of_injective_of_isUnipotent
+    [FiniteDimensional K V]
     (rho : Representation K G V) (hinjective : Function.Injective rho.asGroupHom)
     (hunipotent : ∀ g, IsNilpotent (rho g - 1)) : Group.IsSolvable G := by
-  obtain ⟨n, b, hb⟩ := exists_basis_isUpperUnitriangular_of_isUnipotent rho hunipotent
+  obtain ⟨n, b, hb⟩ :=
+    _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent rho hunipotent
   apply Group.isSolvable_of_isSolvable_injective
-    (f := toUpperUnitriangularGroup rho b hb)
+    (f := _root_.Representation.toUpperUnitriangularGroup rho b hb)
   intro g h hgh
   apply hinjective
   apply Units.ext
