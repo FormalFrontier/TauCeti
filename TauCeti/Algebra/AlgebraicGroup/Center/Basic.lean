@@ -222,8 +222,7 @@ private theorem centerCoefficientIdeal_antipode_mem {x : H}
   let q : H →ₐ[k] H ⧸ I := Ideal.Quotient.mkₐ k I
   let g : WithConv (H →ₐ[k] H ⧸ I) := toConv q
   have hgker : I ≤ RingHom.ker g.ofConv.toRingHom := by
-    change I ≤ RingHom.ker (q : H →+* H ⧸ I)
-    rw [Ideal.Quotient.mkₐ_ker]
+    simp [g, q, Ideal.Quotient.mkₐ_ker]
   have hg : HopfAlgebra.IsCentralPoint g :=
     (centerCoefficientIdeal_le_ker_iff_isCentralPoint g).1 hgker
   have hginv : HopfAlgebra.IsCentralPoint g⁻¹ := hg.inv
@@ -248,35 +247,16 @@ private theorem centerCoefficientIdeal_comul_mem {x : H}
     (Algebra.TensorProduct.includeLeft (R := k) (S := k) (A := Q) (B := Q)).comp q
   let qr : H →ₐ[k] Q ⊗[k] Q :=
     (Algebra.TensorProduct.includeRight (R := k) (A := Q) (B := Q)).comp q
-  have hqker : I ≤ RingHom.ker q.toRingHom := by
-    change I ≤ RingHom.ker (q : H →+* Q)
-    rw [Ideal.Quotient.mkₐ_ker]
-  have hqlker : I ≤ RingHom.ker ql.toRingHom := by
+  have hcompker (f : Q →ₐ[k] Q ⊗[k] Q) :
+      I ≤ RingHom.ker (f.comp q).toRingHom := by
     intro y hy
     rw [RingHom.mem_ker]
-    -- The kernel is stated through `toRingHom`; expose the bundled algebra-map evaluation.
-    change ql y = 0
-    have hqy : q y = 0 := RingHom.mem_ker.mp (hqker hy)
-    -- Expose the local composite so the quotient-map vanishing can rewrite its argument.
-    change Algebra.TensorProduct.includeLeft
-      (R := k) (S := k) (A := Q) (B := Q) (q y) = 0
-    calc
-      Algebra.TensorProduct.includeLeft (q y) =
-          Algebra.TensorProduct.includeLeft (0 : Q) := congrArg _ hqy
-      _ = 0 := map_zero _
-  have hqrker : I ≤ RingHom.ker qr.toRingHom := by
-    intro y hy
-    rw [RingHom.mem_ker]
-    -- The kernel is stated through `toRingHom`; expose the bundled algebra-map evaluation.
-    change qr y = 0
-    have hqy : q y = 0 := RingHom.mem_ker.mp (hqker hy)
-    -- Expose the local composite so the quotient-map vanishing can rewrite its argument.
-    change Algebra.TensorProduct.includeRight
-      (R := k) (A := Q) (B := Q) (q y) = 0
-    calc
-      Algebra.TensorProduct.includeRight (q y) =
-          Algebra.TensorProduct.includeRight (0 : Q) := congrArg _ hqy
-      _ = 0 := map_zero _
+    have hqy : q y = 0 := Ideal.Quotient.eq_zero_iff_mem.mpr hy
+    simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, AlgHom.comp_apply, hqy, map_zero]
+  have hqlker : I ≤ RingHom.ker ql.toRingHom :=
+    hcompker (Algebra.TensorProduct.includeLeft (R := k) (S := k) (A := Q) (B := Q))
+  have hqrker : I ≤ RingHom.ker qr.toRingHom :=
+    hcompker (Algebra.TensorProduct.includeRight (R := k) (A := Q) (B := Q))
   have hql : HopfAlgebra.IsCentralPoint (toConv ql) :=
     (centerCoefficientIdeal_le_ker_iff_isCentralPoint (toConv ql)).1 hqlker
   have hqr : HopfAlgebra.IsCentralPoint (toConv qr) :=
