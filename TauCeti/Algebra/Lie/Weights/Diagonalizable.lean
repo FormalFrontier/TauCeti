@@ -90,12 +90,13 @@ theorem nonempty_weight [IsTriangularizable K L M] [Nontrivial M] : Nonempty (We
   by_contra! contra
   simpa only [iSup_of_empty, bot_ne_top] using iSup_genWeightSpace_eq_top' K L M
 
-open scoped Classical in
+/-! ### The generalized weight-space decomposition -/
+
 /-- **The generalized weight-space decomposition.** A finite-dimensional triangularizable module is
 the internal direct sum of its generalized weight spaces, indexed by all of its weights. This is
 Mathlib's `LieModule.iSupIndep_genWeightSpace'` and `LieModule.iSup_genWeightSpace_eq_top'`
 packaged as a `DirectSum.IsInternal`, which is the form the dimension counts consume. -/
-theorem isInternal_genWeightSpace [IsTriangularizable K L M] :
+theorem isInternal_genWeightSpace [IsTriangularizable K L M] [DecidableEq (Weight K L M)] :
     DirectSum.IsInternal fun χ : Weight K L M ↦ (genWeightSpace M (χ : L → K)).toSubmodule := by
   refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top ?_ ?_
   · rw [LieSubmodule.iSupIndep_toSubmodule]
