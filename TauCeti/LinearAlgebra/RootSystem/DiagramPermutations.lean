@@ -46,7 +46,8 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
   two counterparts record that this is a different matrix, so a length permutation is not a
   diagram symmetry.
 * `TauCeti.lengthPermRankTwo_lengthPermRankTwo` and `TauCeti.lengthPermF4_lengthPermF4`: the length
-  permutations are involutions.
+  permutations are involutions, and `TauCeti.lengthPermRankTwo_apply`,
+  `TauCeti.graphPermA_apply` and `TauCeti.lengthPermF4_apply` evaluate them as reversals.
 -/
 
 public section
@@ -187,13 +188,25 @@ theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
 /-- The two rank-two nodes are distinct, so exchanging them is not the identity. -/
 theorem lengthPermRankTwo_ne_one : lengthPermRankTwo ≠ 1 := by decide
 
+/-- On two nodes, exchanging them is reversal. -/
+@[simp] theorem lengthPermRankTwo_apply (i : Fin 2) : lengthPermRankTwo i = i.rev := by
+  fin_cases i <;> decide
+
 /-- Exchanging the two rank-two nodes has order exactly two. -/
 @[simp] theorem orderOf_lengthPermRankTwo : orderOf lengthPermRankTwo = 2 :=
   orderOf_eq_prime lengthPermRankTwo_sq lengthPermRankTwo_ne_one
 
+/-- Reversal of a chain sends a node to its reverse. -/
+@[simp] theorem graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
+  simp only [graphPermA, Fin.revPerm_apply]
+
 /-- Reversal of a chain is an involution. -/
 @[simp] theorem graphPermA_graphPermA (n : ℕ) (i : Fin n) : graphPermA n (graphPermA n i) = i := by
   simp only [graphPermA, Fin.revPerm_apply, Fin.rev_rev]
+
+/-- Reversing the `F₄` diagram sends a node to its reverse. -/
+@[simp] theorem lengthPermF4_apply (i : Fin 4) : lengthPermF4 i = i.rev :=
+  graphPermA_apply 4 i
 
 /-- Reversing the `F₄` diagram is an involution. -/
 @[simp] theorem lengthPermF4_lengthPermF4 (i : Fin 4) : lengthPermF4 (lengthPermF4 i) = i :=
