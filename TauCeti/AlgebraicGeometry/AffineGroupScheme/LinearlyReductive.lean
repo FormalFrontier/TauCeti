@@ -129,8 +129,9 @@ noncomputable def
         (linearlyReductiveAffineGroupSchemeProperty_inverseImage k)
 
 /-- The restricted anti-equivalence followed by the inclusion is the unrestricted
-anti-equivalence after forgetting linear reductivity. This private isomorphism isolates the
-definitional boundary of `opEquivalence` and `congrFullSubcategory`. -/
+anti-equivalence after forgetting linear reductivity. This private isomorphism composes the
+canonical comparison isomorphisms for the lifts used by `opEquivalence` and
+`congrFullSubcategory`. -/
 private noncomputable def
     linearlyReductiveCommHopfAlgCatOpEquivLinearlyReductiveAffineGroupSchemeCatFunctorCompιIso
     (k : Type u) [Field k] :
@@ -140,7 +141,16 @@ private noncomputable def
           (CommHopfAlgCat.{u} k)).op ⋙
         (commHopfAlgCatOpEquivAffineGroupSchemeCat
           (CommRingCat.of k)).functor :=
-  Iso.refl _
+  Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft
+      (ObjectProperty.opEquivalence
+        (linearlyReductiveCommHopfAlgProperty.{u, u} k)).inverse
+      ((linearlyReductiveAffineGroupSchemeProperty k).liftCompιIso _ _) ≪≫
+    (Functor.associator _ _ _).symm ≪≫
+    Functor.isoWhiskerRight
+      ((linearlyReductiveCommHopfAlgProperty.{u, u} k).op.liftCompιIso _ _)
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat
+        (CommRingCat.of k)).functor
 
 /-- The restricted anti-equivalence followed by the inclusions into affine group schemes is
 `hopfSpec` after forgetting the proof of linear reductivity. -/
