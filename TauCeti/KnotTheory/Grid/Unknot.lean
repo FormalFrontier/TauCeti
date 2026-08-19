@@ -194,11 +194,11 @@ private theorem card_filter_split (Q P : Fin (n + 2) × Fin (n + 2) → Prop)
 
 /-- The weakly increasing column pairs are the increasing ones together with the `n + 2` diagonal
 pairs: the case of the identity row assignment of
-`GridPoint.card_filter_le_eq_card_filter_lt_add`. -/
+`GridState.card_filter_le_eq_card_filter_lt_add_card`. -/
 private theorem card_filter_le :
     (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 ≤ p.2).card
       = (Finset.univ.filter fun p : Fin (n + 2) × Fin (n + 2) => p.1 < p.2).card + (n + 2) := by
-  simpa using GridPoint.card_filter_le_eq_card_filter_lt_add
+  simpa using GridState.card_filter_le_eq_card_filter_lt_add_card
     (f := (id : Fin (n + 2) → Fin (n + 2))) Function.injective_id
 
 /-- A set of column pairs cut out by prescribing the second column as a function of the first,

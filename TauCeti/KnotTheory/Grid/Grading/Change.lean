@@ -26,8 +26,9 @@ relationship between `x` and `y`.
 
 When `y` is obtained from `x` by a rectangle move `R : GridRectangleBetween x y`, the two states
 share all but two of their occupied squares (`RectangleSwap.lean`), so each marking pairing
-`J_O(x) - J_O(y)` collapses to a difference of four corner `J`-singletons: the source corners
-`(left, bottom)`, `(right, top)` against the target corners `(left, top)`, `(right, bottom)`.
+`J_O(x) - J_O(y)` collapses to a difference of four corner `JCenter`-singletons: the source
+corners `(left, bottom)`, `(right, top)` against the target corners `(left, top)`,
+`(right, bottom)`.
 For Maslov gradings the state self-pairing does not cancel, so this file also localizes its
 change to the moving corners and their pairings with the shared part of the two states. Feeding
 these localized formulas back into the grading reductions removes the opaque whole-state
@@ -41,12 +42,12 @@ marking-local because the state self-pairing cancels there.
   twice the marking pairing change.
 * `TauCeti.GridDiagram.alexander_sub_alexander_eq`: the Alexander grading change is the difference
   of the two marking pairing changes; the state self-pairing cancels.
-* `TauCeti.GridRectangleBetween.JCenter_pointSet_sub_eq`,
-  `TauCeti.GridRectangleBetween.J_pointSet_sub_eq`: across a rectangle move, the change in the
-  pairing of a state's points against an arbitrary fixed point set collapses to the four moving
-  corners, for the marking pairing and for the plain `J`-pairing alike.
+* `TauCeti.GridRectangleBetween.JCenter_pointSet_sub_eq`: across a rectangle move, the change in
+  the marking pairing of a state's points against an arbitrary fixed point set collapses to the
+  four moving corners.
 * `TauCeti.GridDiagram.JO_sub_JO_eq`, `TauCeti.GridDiagram.JX_sub_JX_eq`: across a
-  rectangle move the marking pairing change is a difference of four corner `J`-singletons.
+  rectangle move the marking pairing change is a difference of four corner
+  `JCenter`-singletons.
 * `TauCeti.GridRectangleBetween.J_self_sub_J_self_eq`: across a rectangle move, the state
   self-pairing change is localized to the moving corners and the shared state points.
 * `TauCeti.GridDiagram.alexander_change_rectangle`,
@@ -169,21 +170,6 @@ theorem JCenter_pointSet_sub_eq (P : Finset (Fin n × Fin n)) :
   have key₂ :=
     GridPoint.JCenter_insert_pair_left (P := P) R.left_top_notMem_insert_inter
       R.right_bottom_notMem_inter
-  rw [← R.source_pointSet_eq] at key₁
-  rw [← R.target_pointSet_eq] at key₂
-  rw [key₁, key₂]
-  ring
-
-/-- Across a rectangle move, the change in the `J`-pairing of a state's points against an
-arbitrary fixed point set `P` collapses to the four moving corners. -/
-theorem J_pointSet_sub_eq (P : Finset (Fin n × Fin n)) :
-    GridPoint.J x.pointSet P - GridPoint.J y.pointSet P =
-      (GridPoint.J {(R.left, R.bottom)} P + GridPoint.J {(R.right, R.top)} P) -
-        (GridPoint.J {(R.left, R.top)} P + GridPoint.J {(R.right, R.bottom)} P) := by
-  have key₁ :=
-    GridPoint.J_insert_pair_left (P := P) R.left_bottom_notMem_insert_inter R.right_top_notMem_inter
-  have key₂ :=
-    GridPoint.J_insert_pair_left (P := P) R.left_top_notMem_insert_inter R.right_bottom_notMem_inter
   rw [← R.source_pointSet_eq] at key₁
   rw [← R.target_pointSet_eq] at key₂
   rw [key₁, key₂]

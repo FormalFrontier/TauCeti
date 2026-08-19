@@ -33,6 +33,8 @@ marking point sets, which the Maslov and Alexander gradings are then assembled f
   decidable relation.
 * `TauCeti.GridPoint.I`: the ordered southwest pair count, `Icount` at the strict southwest
   relation.
+* `TauCeti.GridPoint.JNumCount`, `TauCeti.GridPoint.JCount`: the two-relation numerator and its
+  rational half, shared by the strict and marking pairings.
 * `TauCeti.GridPoint.JNum`: the numerator of the symmetrized `J`-function.
 * `TauCeti.GridPoint.J`: the rational-valued symmetrized `J`-function.
 * `TauCeti.GridState.J`: the specialized form for a pair of grid states.
@@ -54,7 +56,7 @@ marking point sets, which the Maslov and Alexander gradings are then assembled f
 This supplies a prerequisite for `CombinatorialHeegaardFloer/README.md` in TauCetiRoadmap, Lane G.2,
 "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`; grading-change
 formulas across a rectangle." The definition follows Ozsváth--Stipsicz--Szabó, *Grid Homology
-for Knots and Links*, Chapter 3.2, where `J` is the symmetrization of the northeast/southwest
+for Knots and Links*, Chapter 4.3, where `J` is the symmetrization of the northeast/southwest
 point-pair count.
 -/
 
@@ -269,14 +271,129 @@ theorem I_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h :
     I s (insert p t) = I s {p} + I s t :=
   Icount_insert_right _ h
 
+/-- The numerator formed from two directed relation counts. The first relation compares the left
+point set to the right one, while the second compares the right point set to the left one. -/
+def JNumCount (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) : ℕ :=
+  Icount r₁ s t + Icount r₂ t s
+
+/-- The rational pairing obtained by halving a two-relation numerator. -/
+def JCount (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) : ℚ :=
+  ((JNumCount r₁ r₂ s t : ℕ) : ℚ) / 2
+
+/-- A two-relation numerator is the sum of its two directed counts. -/
+theorem JNumCount_def (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) :
+    JNumCount r₁ r₂ s t = Icount r₁ s t + Icount r₂ t s := by
+  simp only [JNumCount]
+
+/-- A two-relation rational pairing is half its numerator. -/
+theorem JCount_def (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+    [DecidableRel r₁] [DecidableRel r₂] (s t : Finset (Fin n × Fin n)) :
+    JCount r₁ r₂ s t = ((JNumCount r₁ r₂ s t : ℕ) : ℚ) / 2 := by
+  simp only [JCount]
+
+variable (r₁ r₂ : (Fin n × Fin n) → (Fin n × Fin n) → Prop)
+  [DecidableRel r₁] [DecidableRel r₂]
+
+/-- A two-relation numerator vanishes when the left point set is empty. -/
+@[simp]
+theorem JNumCount_empty_left (t : Finset (Fin n × Fin n)) : JNumCount r₁ r₂ ∅ t = 0 := by
+  simp [JNumCount]
+
+/-- A two-relation numerator vanishes when the right point set is empty. -/
+@[simp]
+theorem JNumCount_empty_right (s : Finset (Fin n × Fin n)) : JNumCount r₁ r₂ s ∅ = 0 := by
+  simp [JNumCount]
+
+/-- A two-relation numerator is additive in its left point set over disjoint unions. -/
+theorem JNumCount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
+    JNumCount r₁ r₂ (s₁ ∪ s₂) t =
+      JNumCount r₁ r₂ s₁ t + JNumCount r₁ r₂ s₂ t := by
+  simp only [JNumCount, Icount_union_left r₁ h, Icount_union_right r₂ h]
+  ac_rfl
+
+/-- A two-relation numerator is additive in its right point set over disjoint unions. -/
+theorem JNumCount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
+    JNumCount r₁ r₂ s (t₁ ∪ t₂) =
+      JNumCount r₁ r₂ s t₁ + JNumCount r₁ r₂ s t₂ := by
+  simp only [JNumCount, Icount_union_right r₁ h, Icount_union_left r₂ h]
+  ac_rfl
+
+/-- A two-relation numerator after inserting a fresh point on the left. -/
+theorem JNumCount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
+    JNumCount r₁ r₂ (insert p s) t = JNumCount r₁ r₂ {p} t + JNumCount r₁ r₂ s t := by
+  rw [← Finset.singleton_union, JNumCount_union_left]
+  exact Finset.disjoint_singleton_left.mpr h
+
+/-- A two-relation numerator after inserting a fresh point on the right. -/
+theorem JNumCount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
+    JNumCount r₁ r₂ s (insert p t) = JNumCount r₁ r₂ s {p} + JNumCount r₁ r₂ s t := by
+  rw [← Finset.singleton_union, JNumCount_union_right]
+  exact Finset.disjoint_singleton_left.mpr h
+
+/-- A two-relation rational pairing vanishes when the left point set is empty. -/
+@[simp]
+theorem JCount_empty_left (t : Finset (Fin n × Fin n)) : JCount r₁ r₂ ∅ t = 0 := by
+  simp [JCount]
+
+/-- A two-relation rational pairing vanishes when the right point set is empty. -/
+@[simp]
+theorem JCount_empty_right (s : Finset (Fin n × Fin n)) : JCount r₁ r₂ s ∅ = 0 := by
+  simp [JCount]
+
+/-- A two-relation rational pairing is additive in its left point set over disjoint unions. -/
+theorem JCount_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
+    JCount r₁ r₂ (s₁ ∪ s₂) t = JCount r₁ r₂ s₁ t + JCount r₁ r₂ s₂ t := by
+  rw [JCount, JCount, JCount, JNumCount_union_left r₁ r₂ h]
+  push_cast
+  ring
+
+/-- A two-relation rational pairing is additive in its right point set over disjoint unions. -/
+theorem JCount_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
+    JCount r₁ r₂ s (t₁ ∪ t₂) = JCount r₁ r₂ s t₁ + JCount r₁ r₂ s t₂ := by
+  rw [JCount, JCount, JCount, JNumCount_union_right r₁ r₂ h]
+  push_cast
+  ring
+
+/-- A two-relation rational pairing after inserting a fresh point on the left. -/
+theorem JCount_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
+    JCount r₁ r₂ (insert p s) t = JCount r₁ r₂ {p} t + JCount r₁ r₂ s t := by
+  rw [← Finset.singleton_union, JCount_union_left]
+  exact Finset.disjoint_singleton_left.mpr h
+
+/-- A two-relation rational pairing after inserting a fresh point on the right. -/
+theorem JCount_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
+    JCount r₁ r₂ s (insert p t) = JCount r₁ r₂ s {p} + JCount r₁ r₂ s t := by
+  rw [← Finset.singleton_union, JCount_union_right]
+  exact Finset.disjoint_singleton_left.mpr h
+
+/-- A two-relation numerator is invariant under diagonal reflection when both relations are. -/
+theorem JNumCount_image_swap
+    (hr₁ : ∀ p q : Fin n × Fin n, r₁ p.swap q.swap ↔ r₁ p q)
+    (hr₂ : ∀ p q : Fin n × Fin n, r₂ p.swap q.swap ↔ r₂ p q)
+    (s t : Finset (Fin n × Fin n)) :
+    JNumCount r₁ r₂ (s.image Prod.swap) (t.image Prod.swap) = JNumCount r₁ r₂ s t := by
+  rw [JNumCount, JNumCount, Icount_image_swap r₁ hr₁, Icount_image_swap r₂ hr₂]
+
+/-- A two-relation rational pairing is invariant under diagonal reflection when both relations
+are. -/
+theorem JCount_image_swap
+    (hr₁ : ∀ p q : Fin n × Fin n, r₁ p.swap q.swap ↔ r₁ p q)
+    (hr₂ : ∀ p q : Fin n × Fin n, r₂ p.swap q.swap ↔ r₂ p q)
+    (s t : Finset (Fin n × Fin n)) :
+    JCount r₁ r₂ (s.image Prod.swap) (t.image Prod.swap) = JCount r₁ r₂ s t := by
+  rw [JCount, JCount, JNumCount_image_swap r₁ r₂ hr₁ hr₂]
+
 /-- The numerator of the symmetrized `J`-function. Keeping the numerator as a natural number is
 convenient for parity and integrality lemmas before passing to rational values. -/
 @[expose] def JNum (s t : Finset (Fin n × Fin n)) : ℕ :=
-  I s t + I t s
+  JNumCount IsSouthWest IsSouthWest s t
 
 /-- The numerator of `J` is the sum of the two ordered southwest counts. -/
 theorem JNum_def (s t : Finset (Fin n × Fin n)) : JNum s t = I s t + I t s :=
-  rfl
+  by simp only [JNum, JNumCount, I]
 
 /-- The symmetrized numerator of the `J`-function on a point set with itself is even: it is twice
 the ordered southwest count. -/
@@ -286,11 +403,11 @@ theorem JNum_self (s : Finset (Fin n × Fin n)) : JNum s s = 2 * I s s := by
 
 /-- The rational-valued symmetrized grid `J`-function. -/
 @[expose] def J (s t : Finset (Fin n × Fin n)) : ℚ :=
-  ((JNum s t : ℕ) : ℚ) / 2
+  JCount IsSouthWest IsSouthWest s t
 
 /-- The rational-valued `J`-function is half of its symmetrized numerator. -/
 theorem J_def (s t : Finset (Fin n × Fin n)) : GridPoint.J s t = ((JNum s t : ℕ) : ℚ) / 2 :=
-  rfl
+  by simp only [GridPoint.J, JCount, JNum]
 
 /-- The `J`-function on a point set with itself is an integer, namely the ordered southwest
 count. The two southwest comparisons of a pair contribute symmetrically, so the division by two
@@ -303,77 +420,71 @@ theorem J_self (s : Finset (Fin n × Fin n)) : GridPoint.J s s = (I s s : ℚ) :
 
 /-- The numerator of `J` is symmetric. -/
 theorem JNum_comm (s t : Finset (Fin n × Fin n)) : JNum s t = JNum t s := by
-  rw [JNum, JNum, Nat.add_comm]
+  simp only [JNum, JNumCount, Nat.add_comm]
 
 /-- The grid `J`-function is symmetric. -/
 theorem J_comm (s t : Finset (Fin n × Fin n)) : GridPoint.J s t = GridPoint.J t s := by
-  simp [GridPoint.J, JNum_comm s t]
+  rw [J_def, J_def, JNum_comm]
 
 /-- The numerator of `J` vanishes when the left point set is empty. -/
 @[simp]
 theorem JNum_empty_left (s : Finset (Fin n × Fin n)) : JNum ∅ s = 0 := by
-  simp [JNum]
+  exact JNumCount_empty_left _ _ s
 
 /-- The numerator of `J` vanishes when the right point set is empty. -/
 @[simp]
 theorem JNum_empty_right (s : Finset (Fin n × Fin n)) : JNum s ∅ = 0 := by
-  simp [JNum]
+  exact JNumCount_empty_right _ _ s
 
 /-- The numerator of `J` is additive in the left point set over disjoint unions. -/
 theorem JNum_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    JNum (s₁ ∪ s₂) t = JNum s₁ t + JNum s₂ t := by
-  simp only [JNum, I_union_left h, I_union_right h]
-  ac_rfl
+    JNum (s₁ ∪ s₂) t = JNum s₁ t + JNum s₂ t :=
+  JNumCount_union_left _ _ h
 
 /-- The numerator of `J` is additive in the right point set over disjoint unions. -/
 theorem JNum_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    JNum s (t₁ ∪ t₂) = JNum s t₁ + JNum s t₂ := by
-  rw [JNum_comm s (t₁ ∪ t₂), JNum_union_left h, JNum_comm t₁ s, JNum_comm t₂ s]
+    JNum s (t₁ ∪ t₂) = JNum s t₁ + JNum s t₂ :=
+  JNumCount_union_right _ _ h
 
 /-- The numerator of `J` after inserting a fresh point on the left. -/
 theorem JNum_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    JNum (insert p s) t = JNum {p} t + JNum s t := by
-  rw [← Finset.singleton_union, JNum_union_left]
-  exact Finset.disjoint_singleton_left.mpr h
+    JNum (insert p s) t = JNum {p} t + JNum s t :=
+  JNumCount_insert_left _ _ h
 
 /-- The numerator of `J` after inserting a fresh point on the right. -/
 theorem JNum_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    JNum s (insert p t) = JNum s {p} + JNum s t := by
-  rw [← Finset.singleton_union, JNum_union_right]
-  exact Finset.disjoint_singleton_left.mpr h
+    JNum s (insert p t) = JNum s {p} + JNum s t :=
+  JNumCount_insert_right _ _ h
 
 /-- `J` vanishes when the left point set is empty. -/
 @[simp]
 theorem J_empty_left (s : Finset (Fin n × Fin n)) : GridPoint.J ∅ s = 0 := by
-  simp [GridPoint.J]
+  exact JCount_empty_left _ _ s
 
 /-- `J` vanishes when the right point set is empty. -/
 @[simp]
 theorem J_empty_right (s : Finset (Fin n × Fin n)) : GridPoint.J s ∅ = 0 := by
-  simp [GridPoint.J]
+  exact JCount_empty_right _ _ s
 
 /-- The grid `J`-function is additive in the left point set over disjoint unions. -/
 theorem J_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
-    GridPoint.J (s₁ ∪ s₂) t = GridPoint.J s₁ t + GridPoint.J s₂ t := by
-  simp only [GridPoint.J, JNum_union_left h, Nat.cast_add]
-  exact add_div ((JNum s₁ t : ℕ) : ℚ) ((JNum s₂ t : ℕ) : ℚ) (2 : ℚ)
+    GridPoint.J (s₁ ∪ s₂) t = GridPoint.J s₁ t + GridPoint.J s₂ t :=
+  JCount_union_left _ _ h
 
 /-- The grid `J`-function is additive in the right point set over disjoint unions. -/
 theorem J_union_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : Disjoint t₁ t₂) :
-    GridPoint.J s (t₁ ∪ t₂) = GridPoint.J s t₁ + GridPoint.J s t₂ := by
-  rw [J_comm s (t₁ ∪ t₂), J_union_left h, J_comm t₁ s, J_comm t₂ s]
+    GridPoint.J s (t₁ ∪ t₂) = GridPoint.J s t₁ + GridPoint.J s t₂ :=
+  JCount_union_right _ _ h
 
 /-- The grid `J`-function after inserting a fresh point on the left. -/
 theorem J_insert_left {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ s) :
-    GridPoint.J (insert p s) t = GridPoint.J {p} t + GridPoint.J s t := by
-  rw [← Finset.singleton_union, J_union_left]
-  exact Finset.disjoint_singleton_left.mpr h
+    GridPoint.J (insert p s) t = GridPoint.J {p} t + GridPoint.J s t :=
+  JCount_insert_left _ _ h
 
 /-- The grid `J`-function after inserting a fresh point on the right. -/
 theorem J_insert_right {p : Fin n × Fin n} {s t : Finset (Fin n × Fin n)} (h : p ∉ t) :
-    GridPoint.J s (insert p t) = GridPoint.J s {p} + GridPoint.J s t := by
-  rw [← Finset.singleton_union, J_union_right]
-  exact Finset.disjoint_singleton_left.mpr h
+    GridPoint.J s (insert p t) = GridPoint.J s {p} + GridPoint.J s t :=
+  JCount_insert_right _ _ h
 
 /-- The numerator of `J` on singleton point sets records whether either point is southwest of
 the other. -/
@@ -381,7 +492,7 @@ the other. -/
 theorem JNum_singleton_singleton (p q : Fin n × Fin n) :
     JNum {p} {q} =
       (if IsSouthWest p q then 1 else 0) + (if IsSouthWest q p then 1 else 0) := by
-  simp [JNum]
+  simp [JNum, JNumCount]
 
 /-- The `J`-function on singleton point sets is half the number of southwest comparisons
 between the two points. -/
@@ -390,7 +501,7 @@ theorem J_singleton_singleton (p q : Fin n × Fin n) :
     GridPoint.J {p} {q} =
       (((if IsSouthWest p q then 1 else 0) +
         (if IsSouthWest q p then 1 else 0) : ℕ) : ℚ) / 2 := by
-  simp [GridPoint.J]
+  simp [GridPoint.J, JCount, JNumCount]
 
 /-- The `J`-function of two comparable singleton point sets is `1 / 2`. -/
 theorem J_singleton_singleton_of_isSouthWest_or_isSouthWest {p q : Fin n × Fin n}
@@ -416,7 +527,8 @@ theorem J_singleton_singleton_of_isSouthWest_or_isSouthWest {p q : Fin n × Fin 
 
 /-- The `J`-function of a singleton with itself is zero. -/
 theorem J_singleton_self (p : Fin n × Fin n) : GridPoint.J {p} {p} = 0 := by
-  simp [GridPoint.J]
+  rw [J_self, I_singleton_self]
+  norm_num
 
 /-- The ordered southwest count is monotone in its left point set. -/
 theorem I_mono_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : s₁ ⊆ s₂) :
@@ -457,14 +569,14 @@ theorem I_image_swap (s t : Finset (Fin n × Fin n)) :
 /-- The numerator of the `J`-function is invariant under reflecting both point sets across the
 diagonal. -/
 theorem JNum_image_swap (s t : Finset (Fin n × Fin n)) :
-    JNum (s.image Prod.swap) (t.image Prod.swap) = JNum s t := by
-  rw [JNum_def, JNum_def, I_image_swap, I_image_swap]
+    JNum (s.image Prod.swap) (t.image Prod.swap) = JNum s t :=
+  JNumCount_image_swap _ _ isSouthWest_swap isSouthWest_swap s t
 
 /-- The symmetrized grid `J`-function is invariant under reflecting both point sets across the
 diagonal. -/
 theorem J_image_swap (s t : Finset (Fin n × Fin n)) :
-    GridPoint.J (s.image Prod.swap) (t.image Prod.swap) = GridPoint.J s t := by
-  rw [J_def, J_def, JNum_image_swap]
+    GridPoint.J (s.image Prod.swap) (t.image Prod.swap) = GridPoint.J s t :=
+  JCount_image_swap _ _ isSouthWest_swap isSouthWest_swap s t
 
 /-- Reversing both coordinates of both points of a pair exchanges the two endpoints of the strict
 southwest relation: it sends the column and row comparisons to their reverses. -/

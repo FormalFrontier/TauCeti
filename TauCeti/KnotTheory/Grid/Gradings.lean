@@ -48,8 +48,8 @@ This supplies the grading-definition part of
 `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`,
 Lane G.2, "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`;
 grading-change formulas across a rectangle." The grading conventions follow
-Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.2, with markings realized
-at the centres of their squares. In particular,
+Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapters 3.1--3.2 and 4.1 for the
+placement convention, and Chapter 4.3 for the bigrading. In particular,
 `A(x) = (M_O(x) - M_X(x)) / 2 - (n - 1) / 2`.
 -/
 
@@ -63,25 +63,25 @@ variable {n : ℕ} (G : GridDiagram n)
 
 /-- The `O`-Maslov grading of a grid state: the state and marking self-pairings, minus twice the
 asymmetric pairing of the state against the `O`-markings, plus the normalization constant. -/
-@[expose] def maslovO (x : GridState n) : ℚ :=
+def maslovO (x : GridState n) : ℚ :=
   GridState.J x x - 2 * G.JO x + GridState.J G.O G.O + 1
 
 /-- The `O`-Maslov grading as its defining formula. -/
 @[simp]
 theorem maslovO_def (x : GridState n) :
     G.maslovO x = GridState.J x x - 2 * G.JO x + GridState.J G.O G.O + 1 :=
-  rfl
+  by simp only [maslovO]
 
 /-- The `X`-Maslov grading of a grid state: the state and marking self-pairings, minus twice the
 asymmetric pairing of the state against the `X`-markings, plus the normalization constant. -/
-@[expose] def maslovX (x : GridState n) : ℚ :=
+def maslovX (x : GridState n) : ℚ :=
   GridState.J x x - 2 * G.JX x + GridState.J G.X G.X + 1
 
 /-- The `X`-Maslov grading as its defining formula. -/
 @[simp]
 theorem maslovX_def (x : GridState n) :
     G.maslovX x = GridState.J x x - 2 * G.JX x + GridState.J G.X G.X + 1 :=
-  rfl
+  by simp only [maslovX]
 
 /-- The Alexander grading of a grid state.
 
@@ -141,11 +141,13 @@ theorem alexander_transpose (x : GridState n) :
   rw [alexander_def, alexander_def, maslovO_transpose, maslovX_transpose]
 
 /-- The marking swap exchanges the two Maslov gradings: `M_O` of the swap is `M_X`. -/
+@[simp]
 theorem maslovO_swapMarkings (x : GridState n) :
     G.swapMarkings.maslovO x = G.maslovX x := by
   rw [maslovO_def, maslovX_def, JO_swapMarkings, swapMarkings_O]
 
 /-- The marking swap exchanges the two Maslov gradings: `M_X` of the swap is `M_O`. -/
+@[simp]
 theorem maslovX_swapMarkings (x : GridState n) :
     G.swapMarkings.maslovX x = G.maslovO x := by
   rw [maslovX_def, maslovO_def, JX_swapMarkings, swapMarkings_X]

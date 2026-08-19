@@ -97,8 +97,9 @@ theorem maslovXℤ_def (x : GridState n) :
   rfl
 
 /-- The integer `O`-Maslov grading of a grid state written entirely as counts over column
-indices. Every southwest count in `maslovOℤ` is a state or marking point-set count, so it collapses
-to a column-pair count and the grading evaluates without unfolding any point-pair product. -/
+indices. The state and marking self-counts are strict southwest counts, while the first directed
+state-to-marking count is the weak southwest-of-centre comparison. All collapse to column-pair
+counts, so the grading evaluates without unfolding any point-pair product. -/
 theorem maslovOℤ_eq_card (x : GridState n) :
     G.maslovOℤ x =
       ((Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ x p.1 < x p.2).card : ℤ)
@@ -111,7 +112,7 @@ theorem maslovOℤ_eq_card (x : GridState n) :
   ring
 
 /-- The integer `X`-Maslov grading of a grid state written entirely as counts over column
-indices. -/
+indices, with the state-to-marking term using the weak southwest-of-centre comparison. -/
 theorem maslovXℤ_eq_card (x : GridState n) :
     G.maslovXℤ x =
       ((Finset.univ.filter fun p : Fin n × Fin n => p.1 < p.2 ∧ x p.1 < x p.2).card : ℤ)
@@ -127,13 +128,13 @@ theorem maslovXℤ_eq_card (x : GridState n) :
 `O`-marking state against the squares that hold the `O` markings adds the `n` diagonal pairs
 that the strict southwest count misses. -/
 theorem maslovOℤ_O : G.maslovOℤ G.O = 1 - (n : ℤ) := by
-  rw [maslovOℤ_def, OSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq]
+  rw [maslovOℤ_def, OSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq_I_add]
   push_cast
   ring
 
 /-- The integer `X`-Maslov grading of the `X`-marking state is always `1 - n`. -/
 theorem maslovXℤ_X : G.maslovXℤ G.X = 1 - (n : ℤ) := by
-  rw [maslovXℤ_def, XSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq]
+  rw [maslovXℤ_def, XSet, GridPoint.JNumCenter_def, GridState.ICenter_self_pointSet_eq_I_add]
   push_cast
   ring
 
