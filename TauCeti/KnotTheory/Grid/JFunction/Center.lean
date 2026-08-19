@@ -79,6 +79,12 @@ the weak comparison `p ≤ q` of the product order. -/
 def ICenter (s t : Finset (Fin n × Fin n)) : ℕ :=
   ICount (· ≤ ·) s t
 
+/-- The southwest-of-center count is the relation-parametric ordered count at the weak product
+order. -/
+theorem ICenter_eq_ICount (s t : Finset (Fin n × Fin n)) :
+    ICenter s t = ICount (· ≤ ·) s t :=
+  by simp only [ICenter]
+
 /-- The southwest-of-center count of one grid point is its weakly northeast fiber. -/
 theorem ICenter_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     ICenter {p} t = (t.filter fun q => p ≤ q).card :=
@@ -107,6 +113,12 @@ namespace GridPoint
 grid points southwest of a marking, plus the markings southwest of a grid point. -/
 def JNumCenter (s t : Finset (Fin n × Fin n)) : ℕ :=
   JNumCount (· ≤ ·) s t
+
+/-- The numerator of the marking pairing is the relation-parametric numerator at the weak product
+order. -/
+theorem JNumCenter_eq_JNumCount (s t : Finset (Fin n × Fin n)) :
+    JNumCenter s t = JNumCount (· ≤ ·) s t :=
+  by simp only [JNumCenter]
 
 /-- The numerator of the marking pairing as a sum of its two directed counts. -/
 theorem JNumCenter_def (s t : Finset (Fin n × Fin n)) :
@@ -162,6 +174,11 @@ theorem JNumCenter_image_swap (s t : Finset (Fin n × Fin n)) :
 the `J`-function of the grid, corrected for the half-unit offset of the markings. -/
 def JCenter (s t : Finset (Fin n × Fin n)) : ℚ :=
   JCount (· ≤ ·) s t
+
+/-- The marking pairing is the relation-parametric rational pairing at the weak product order. -/
+theorem JCenter_eq_JCount (s t : Finset (Fin n × Fin n)) :
+    JCenter s t = JCount (· ≤ ·) s t :=
+  by simp only [JCenter]
 
 /-- The marking pairing is half its numerator. -/
 theorem JCenter_def (s t : Finset (Fin n × Fin n)) :
