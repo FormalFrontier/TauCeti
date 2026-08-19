@@ -62,39 +62,6 @@ variable
   [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
   {γ : ℝ → M} {a b : ℝ}
 
-/-- A `C¹` path on a compact interval admits a globally `C¹` path on `[0, 1]` with the same
-endpoints and the same length. This is the single-piece case of corner smoothing; the
-reparametrization is affine, so it changes neither the endpoints nor the length. -/
-theorem exists_contMDiff_pathELength_eq_of_le (hab : a ≤ b)
-    (hγ : ContMDiffOn 𝓘(ℝ, ℝ) I 1 γ (Icc a b)) :
-    ∃ η : ℝ → M, ContMDiff 𝓘(ℝ, ℝ) I 1 η ∧ η 0 = γ a ∧ η 1 = γ b ∧
-      Manifold.pathELength I η 0 1 = Manifold.pathELength I γ a b := by
-  set f := ContinuousAffineMap.lineMap (R := ℝ) a b with hf
-  have hmaps : f '' Icc 0 1 ⊆ Icc a b := by
-    rw [hf, ContinuousAffineMap.coe_lineMap_eq, ← segment_eq_image_lineMap]
-    simp [hab, segment_eq_Icc]
-  have hcomp : ContMDiffOn 𝓘(ℝ, ℝ) I 1 (γ ∘ f) (Icc 0 1) := by
-    apply hγ.comp
-    · rw [contMDiffOn_iff_contDiffOn]
-      exact f.contDiff.contDiffOn
-    · rw [← image_subset_iff]
-      exact hmaps
-  obtain ⟨η, hη, hη₀, hη₁, hlen, -, -⟩ := TauCeti.exists_contMDiff_pathELength_eq hcomp
-  refine ⟨η, hη, ?_, ?_, ?_⟩
-  · simpa [hf, ContinuousAffineMap.coe_lineMap_eq] using hη₀
-  · simpa [hf, ContinuousAffineMap.coe_lineMap_eq] using hη₁
-  · rw [hlen, hf]
-    have key := Manifold.pathELength_comp_of_monotoneOn (I := I) (γ := γ)
-      (f := ContinuousAffineMap.lineMap (R := ℝ) a b) (a := 0) (b := 1) zero_le_one
-      (by
-        rw [ContinuousAffineMap.coe_lineMap_eq]
-        exact (AffineMap.lineMap_mono hab).monotoneOn _)
-      (ContinuousAffineMap.lineMap (R := ℝ) a b).differentiableOn
-      (by
-        simpa [ContinuousAffineMap.coe_lineMap_eq] using
-          hγ.mdifferentiableOn one_ne_zero)
-    simpa [ContinuousAffineMap.coe_lineMap_eq] using key
-
 /-- **Corner smoothing along an explicit partition.** A path which is `C¹` on every piece of a
 finite ordered partition is replaced by a globally `C¹` path on `[0, 1]` with the same endpoints
 whose length is the sum of the lengths of the pieces.
