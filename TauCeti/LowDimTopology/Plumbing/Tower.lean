@@ -79,6 +79,7 @@ noncomputable def latticeAugmentationCoefficient (P : PlumbingGraph V)
 
 /-- On a zero-dimensional cube the augmentation coefficient is the `U`-power measuring how far the
 base point sits above the minimal characteristic weight. -/
+@[simp]
 theorem latticeAugmentationCoefficient_of_directions_eq_empty (P : PlumbingGraph V)
     (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions = ∅) :
     P.latticeAugmentationCoefficient k C =
@@ -86,6 +87,7 @@ theorem latticeAugmentationCoefficient_of_directions_eq_empty (P : PlumbingGraph
   simp [latticeAugmentationCoefficient, hC]
 
 /-- On a cube of positive dimension the augmentation coefficient vanishes. -/
+@[simp]
 theorem latticeAugmentationCoefficient_of_directions_ne_empty (P : PlumbingGraph V)
     (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions ≠ ∅) :
     P.latticeAugmentationCoefficient k C = 0 := by
@@ -119,6 +121,7 @@ theorem latticeAugmentation_eq_zero_of_mem_degreePart (P : PlumbingGraph V)
   simp [P.latticeAugmentationCoefficient_of_directions_ne_empty k hne]
 
 /-- A zero-dimensional cube has no directions to differentiate along, so it is a cycle. -/
+@[simp]
 theorem latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty (P : PlumbingGraph V)
     (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions = ∅) :
     P.latticeDifferentialOnGenerator k C = 0 := by
