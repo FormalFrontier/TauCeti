@@ -56,8 +56,8 @@ the integral root--coroot span.
 * `TauCeti.IsChevalleySystem.exists_int_lie_eq_smul`: every root-sum bracket has an integral
   coefficient.
 * `TauCeti.IsChevalleySystem.intStructureConstant`: that coefficient, named as an integer, with
-  `lie_eq_intStructureConstant_zsmul` its defining equation and `intStructureConstant_eq_or`
-  identifying it as `±(p + 1)`.
+  `lie_eq_intStructureConstant_zsmul` its defining equation and
+  `intStructureConstant_eq_natCast_or_eq_neg_natCast` identifying it as `±(p + 1)`.
 
 ## References
 
@@ -268,7 +268,7 @@ theorem eq_intStructureConstant_iff
 
 /-- The integer structure constant of a genuine root-sum bracket is `±(p + 1)`, for `p` the
 root-string coefficient `chainBotCoeff α β`. -/
-theorem intStructureConstant_eq_or
+theorem intStructureConstant_eq_natCast_or_eq_neg_natCast
     (α β γ : Weight K H L) (hα : α.IsNonZero) (hβ : β.IsNonZero) (hγ : γ.IsNonZero)
     (hαβ : (γ : H → K) = (α : H → K) + β) :
     hx.intStructureConstant α β γ hγ hαβ = (chainBotCoeff α β + 1 : ℕ) ∨
