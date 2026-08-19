@@ -32,9 +32,10 @@ The determinant powers are the worked case. All of `det ^ m` sits in the single 
 (`TauCeti.weightSpace_detPowerRep`), and once weights are separated every other weight space of
 `det ^ m` vanishes (`TauCeti.weightSpace_detPowerRep_eq_bot`), so the sum over pairs collapses to
 one term: tensoring with `det ^ m` **translates** the weights of a representation by the constant
-sequence `m` (`TauCeti.weightSpace_tprod_detPowerRep`). That is the weight-space shadow of the
-statement that the rational representations of `GL n` are the determinant twists of the polynomial
-ones.
+sequence `m` (`TauCeti.weightSpace_tprod_detPowerRep`). What is proved here is exactly that
+translation of weight spaces; it is the step that the classification of the irreducible rational
+representations of `GL n` as `det`-twists of the polynomial ones runs on, but that classification
+needs the highest-weight theory and is not proved here.
 
 ## Main results
 
@@ -122,8 +123,10 @@ theorem iSup_map₂_weightSpace_le_weightSpace_tprod (ρ : Representation k (GL 
 /-! ## Spanning -/
 
 /-- The products of weight spaces of the two factors already exhaust the tensor product, once the
-weight spaces of each factor span it. -/
-theorem iSup_iSup_map₂_weightSpace_eq_top (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤)
+weight spaces of each factor span it. This is the shared engine of
+`TauCeti.iSup_weightSpace_tprod_eq_top` and `TauCeti.weightSpace_tprod`, and is not part of the
+API. -/
+private theorem iSup_iSup_map₂_weightSpace_eq_top (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤)
     (hσ : ⨆ b : Fin n → ℤ, weightSpace σ b = ⊤) :
     ⨆ l : Fin n → ℤ, ⨆ a : Fin n → ℤ,
         Submodule.map₂ (TensorProduct.mk k W W') (weightSpace ρ a) (weightSpace σ (l - a)) = ⊤ := by
@@ -182,16 +185,15 @@ theorem weightSpace_tprod (hchar : Function.Injective (weightChar k (κ := Fin n
         (iSup_iSup_map₂_weightSpace_eq_top hρ hσ)).mp
       (iSup_map₂_weightSpace_le_weightSpace_tprod ρ σ)) l).symm
 
-/-- **A tensor product of weight-decomposed representations is weight-decomposed.** -/
+/-- **A tensor product of weight-decomposed representations is weight-decomposed.** Only the
+spanning half of the hypothesis on each factor is needed: once weights are separated, the
+independence of the weight spaces of the tensor product is automatic
+(`TauCeti.iSupIndep_weightSpace`). -/
 theorem isInternal_weightSpace_tprod (hchar : Function.Injective (weightChar k (κ := Fin n)))
-    (hρ : DirectSum.IsInternal fun a : Fin n → ℤ ↦ weightSpace ρ a)
-    (hσ : DirectSum.IsInternal fun b : Fin n → ℤ ↦ weightSpace σ b) :
+    (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤) (hσ : ⨆ b : Fin n → ℤ, weightSpace σ b = ⊤) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (ρ.tprod σ) l :=
   (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-    ⟨iSupIndep_weightSpace hchar _,
-      iSup_weightSpace_tprod_eq_top
-        ((DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mp hρ).2
-        ((DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mp hσ).2⟩
+    ⟨iSupIndep_weightSpace hchar _, iSup_weightSpace_tprod_eq_top hρ hσ⟩
 
 /-- **The tensor square of the standard representation is the internal direct sum of its weight
 spaces**, the first case of the weight-space decomposition beyond the standard representation
@@ -200,8 +202,7 @@ theorem isInternal_weightSpace_tprod_stdRep
     (hchar : Function.Injective (weightChar k (κ := Fin n))) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦
       weightSpace ((stdRep k n).tprod (stdRep k n)) l :=
-  isInternal_weightSpace_tprod hchar (isInternal_weightSpace_stdRep hchar)
-    (isInternal_weightSpace_stdRep hchar)
+  isInternal_weightSpace_tprod hchar iSup_weightSpace_stdRep iSup_weightSpace_stdRep
 
 /-! ## The determinant twist -/
 
@@ -220,8 +221,9 @@ theorem weightSpace_detPowerRep_eq_bot (hchar : Function.Injective (weightChar k
 
 /-- **Tensoring with `det ^ m` translates weights by the constant sequence `m`.** Under the
 canonical identification `W ⊗[k] k ≃ₗ[k] W` this reads: the weight-`l` space of `ρ ⊗ det ^ m` is
-the weight-`(l - m)` space of `ρ`. It is the weight-space form of the statement that the rational
-representations of `GL n` are the determinant twists of the polynomial ones. -/
+the weight-`(l - m)` space of `ρ`. Nothing beyond this translation of weight spaces is claimed: it
+is the computation underlying the classification of the irreducible rational representations of
+`GL n` as `det`-twists of the polynomial ones, which is not proved here. -/
 theorem weightSpace_tprod_detPowerRep (hchar : Function.Injective (weightChar k (κ := Fin n)))
     (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤) (m : ℤ) (l : Fin n → ℤ) :
     weightSpace (ρ.tprod (detPowerRep k n m)) l
