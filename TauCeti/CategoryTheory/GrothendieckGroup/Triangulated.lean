@@ -339,26 +339,26 @@ section Equivalence
 /-- **Equivalence invariance of triangulated `K₀`**: a triangulated equivalence induces an
 isomorphism of triangulated Grothendieck groups. -/
 noncomputable def mapEquiv (e : C ≌ D) [e.functor.CommShift ℤ] [e.inverse.CommShift ℤ]
-    [e.CommShift ℤ] [e.IsTriangulated] : TriangulatedK0 C ≃+ TriangulatedK0 D :=
+    [e.IsTriangulated] : TriangulatedK0 C ≃+ TriangulatedK0 D :=
   PresentedK0.mapEquiv e (mapsTo_triangulatedRelations e.functor)
     (mapsTo_triangulatedRelations e.inverse)
 
 @[simp]
-lemma mapEquiv_of (e : C ≌ D) [e.functor.CommShift ℤ] [e.inverse.CommShift ℤ] [e.CommShift ℤ]
+lemma mapEquiv_of (e : C ≌ D) [e.functor.CommShift ℤ] [e.inverse.CommShift ℤ]
     [e.IsTriangulated] (X : C) :
     mapEquiv e (of X) = (of (e.functor.obj X) : TriangulatedK0 D) :=
   PresentedK0.mapEquiv_of e _ _ X
 
 @[simp]
 lemma mapEquiv_symm_of (e : C ≌ D) [e.functor.CommShift ℤ] [e.inverse.CommShift ℤ]
-    [e.CommShift ℤ] [e.IsTriangulated] (Y : D) :
+    [e.IsTriangulated] (Y : D) :
     (mapEquiv e).symm (of Y) = (of (e.inverse.obj Y) : TriangulatedK0 C) :=
   PresentedK0.mapEquiv_symm_of e _ _ Y
 
 /-- The homomorphism underlying equivalence invariance is the map induced by the functor. -/
 @[simp]
 lemma mapEquiv_toAddMonoidHom (e : C ≌ D) [e.functor.CommShift ℤ] [e.inverse.CommShift ℤ]
-    [e.CommShift ℤ] [e.IsTriangulated] :
+    [e.IsTriangulated] :
     ((mapEquiv e : TriangulatedK0 C ≃+ TriangulatedK0 D) : TriangulatedK0 C →+ TriangulatedK0 D) =
       map e.functor :=
   hom_ext fun X => by simp
