@@ -102,7 +102,7 @@ theorem geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage
     (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
     (Q : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k))
-    [P.IsClosedUnderIsomorphisms] [Q.IsClosedUnderIsomorphisms]
+    [Q.IsClosedUnderIsomorphisms]
     (hQ : Q = geometricNormalSubgroupFreeCommHopfAlgProperty k P) :
     (geometricNormalSubgroupFreeAffineGroupSchemeProperty k P).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
