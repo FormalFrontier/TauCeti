@@ -39,7 +39,7 @@ is the congruence condition `p ∣ N` that makes the upper-triangular representa
 The cusp conditions ask for `Subgroup.IsArithmetic` on the level, which `(Gamma1 N).map (mapGL ℝ)`
 carries through `CongruenceSubgroup.instFiniteIndexGamma1` once `N ≠ 0`. Invariance is carried
 rationally throughout `UpperTri/Invariance.lean`, so the one place the `ℚ`/`ℝ` bridge is needed
-is `rat_slash_mapGL` below.
+is `ModularForm.rat_slash_mapGL`, from `ModularForms/SlashActionRat.lean`.
 
 ## Main definitions
 
@@ -77,19 +77,12 @@ namespace HeckeRing.GL2
 
 variable {N p : ℕ} (k : ℤ)
 
-/-- The `ℚ`/`ℝ` bridge for the slash by an integral matrix: the rational action in which
-`UpperTri/Invariance.lean` is stated agrees with the real action in which `SlashInvariantForm`
-is indexed. -/
-private lemma rat_slash_mapGL (F : ℍ → ℂ) (δ : SL(2, ℤ)) :
-    F ∣[k] (mapGL ℚ δ : GL (Fin 2) ℚ) = F ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) := by
-  rw [ModularForm.rat_slash, map_mapGL]
-
 /-- Slash-invariance of a form at level `Γ₁(N)`, transported to the rational action — the
 hypothesis `UpperTri/Invariance.lean` asks for. -/
 private lemma rat_slash_eq_of_mem_Gamma1 {F : Type*} [FunLike F ℍ ℂ]
     [SlashInvariantFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) {δ : SL(2, ℤ)}
     (hδ : δ ∈ Gamma1 N) : (⇑f) ∣[k] (mapGL ℚ δ : GL (Fin 2) ℚ) = ⇑f := by
-  rw [rat_slash_mapGL]
+  rw [ModularForm.rat_slash_mapGL]
   exact SlashInvariantFormClass.slash_action_eq f _ (Subgroup.mem_map_of_mem _ hδ)
 
 /-- The width of `∞` for `Γ₁(N)` is `1`, so all `q`-expansions below are taken at width `1`. -/
@@ -112,7 +105,7 @@ private noncomputable def heckeSlashUpperTriModularForm (hpN : p ∣ N)
   slash_action_eq' γ hγ := by
     obtain ⟨δ, hδ, rfl⟩ := Subgroup.mem_map.mp hγ
     let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
-    rw [← rat_slash_mapGL]
+    rw [← ModularForm.rat_slash_mapGL]
     exact heckeSlashUpperTri_slash_mapGL_of_mem_Gamma1 k hpN hδ
       fun _ hε ↦ rat_slash_eq_of_mem_Gamma1 k f hε
   holo' := mdifferentiable_heckeSlashUpperTri k p (ModularFormClass.holo f)
@@ -179,9 +172,9 @@ theorem heckeSlashUpperTriModularFormEnd_mem_modFormCharSpace (hpN : p ∣ N)
   let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   rw [mem_modFormCharSpace_iff_nebentypus] at hf ⊢
   intro g
-  rw [coe_heckeSlashUpperTriModularFormEnd, ← rat_slash_mapGL]
+  rw [coe_heckeSlashUpperTriModularFormEnd, ← ModularForm.rat_slash_mapGL]
   exact heckeSlashUpperTri_slash_mapGL_of_nebentypus k hpN χ g
-    fun δ ↦ by rw [rat_slash_mapGL]; exact hf δ
+    fun δ ↦ by rw [ModularForm.rat_slash_mapGL]; exact hf δ
 
 /-- **The operator preserves the nebentypus on cusp forms**: it maps `S_k(N, χ)` into itself. -/
 theorem heckeSlashUpperTriCuspFormEnd_mem_cuspFormCharSpace (hpN : p ∣ N)
@@ -191,9 +184,9 @@ theorem heckeSlashUpperTriCuspFormEnd_mem_cuspFormCharSpace (hpN : p ∣ N)
   let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   rw [mem_cuspFormCharSpace_iff_nebentypus] at hf ⊢
   intro g
-  rw [coe_heckeSlashUpperTriCuspFormEnd, ← rat_slash_mapGL]
+  rw [coe_heckeSlashUpperTriCuspFormEnd, ← ModularForm.rat_slash_mapGL]
   exact heckeSlashUpperTri_slash_mapGL_of_nebentypus k hpN χ g
-    fun δ ↦ by rw [rat_slash_mapGL]; exact hf δ
+    fun δ ↦ by rw [ModularForm.rat_slash_mapGL]; exact hf δ
 
 /-- **The `q`-expansion recurrence**: the coefficient at `m` is `a_{p m}(f)` for `p ∣ N`.
 When `p` is prime, this is the Diamond–Shurman recurrence

@@ -44,7 +44,8 @@ Chris Birkbeck).
 * `HeckeRing.GL2.Gamma1Image_le_Delta0`: `Γ₁(N) ≤ Δ₀(N)`, the special case of the Γ₀ result.
 * `HeckeRing.GL2.Delta0_le_commensurator_Gamma1Image`: `Δ₀(N)` lies in the commensurator
   of `Γ₁(N)`.
-* the `IsHeckeTriple (Delta0 N) (Gamma1Image N) (Gamma1Image N)` instance.
+* the `IsHeckeTriple (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))`
+  instance.
 
 ## References
 
@@ -97,8 +98,13 @@ lemma Delta0_le_commensurator_Gamma1Image :
   exact (Delta0_le_posDetInt N).trans (posDetInt_le_commensurator 2)
 
 /-- **The Hecke triple of `Γ₁(N)`**: `Γ₁(N) ≤ Δ₀(N) ≤ commensurator(Γ₁(N))` inside
-`GL₂(ℚ)` — the setting of the Hecke operators on modular forms of level `N`. -/
-instance : IsHeckeTriple (Delta0 N) (Gamma1Image N) (Gamma1Image N) :=
+`GL₂(ℚ)` — the setting of the Hecke operators on modular forms of level `N`.
+
+Stated at the unfolded `(Gamma1 N).map (mapGL ℚ)` rather than at `Gamma1Image N`: instance search
+unfolds neither, and the unfolded spelling is the one consumers meet, since the level of a
+modular form of level `N` is written `(Gamma1 N).map (mapGL ℝ)` and its rational companion
+arrives in the same shape. -/
+instance : IsHeckeTriple (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) :=
   IsHeckeTriple.of_diagonal (Gamma1Image_le_Delta0 N) (Delta0_le_commensurator_Gamma1Image N)
 
 end HeckeRing.GL2
