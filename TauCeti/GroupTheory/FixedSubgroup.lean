@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Group.Subgroup.Map
 public import Mathlib.Algebra.Group.Equiv.Basic
 public import Mathlib.Algebra.Group.Subgroup.Ker
 
@@ -39,6 +40,9 @@ endomorphism of it, so it is available before any ambient group has been constru
   fixed by the one to the points fixed by the other.
 * `TauCeti.map_fixedSubgroup_eq`: an isomorphism intertwining them carries the one *onto* the other.
 * `TauCeti.fixedSubgroupCongr`: the resulting isomorphism of fixed subgroups.
+* `TauCeti.symm_comp_eq_comp_symm_of_comp_eq_comp` and
+  `TauCeti.trans_comp_eq_comp_trans_of_comp_eq_comp`: intertwining relations invert and compose,
+  which is what makes that isomorphism symmetric and transitive.
 
 ## References
 
@@ -51,7 +55,7 @@ public section
 
 namespace TauCeti
 
-open Subgroup
+open _root_.Subgroup
 
 variable {G : Type*} [Group G]
 
@@ -105,25 +109,22 @@ variable {F : G →* G} {F' : G' →* G'}
 
 The equation is not symmetric in `ψ` and `ψ.symm`, so this is what makes the transport of the fixed
 subgroup two-sided. -/
-theorem _root_.MulEquiv.symm_comp_eq_comp_symm (ψ : G ≃* G')
+theorem symm_comp_eq_comp_symm_of_comp_eq_comp (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
-    (ψ.symm : G' →* G).comp F' = F.comp (ψ.symm : G' →* G) := by
-  ext y
-  apply ψ.injective
-  simpa using (DFunLike.congr_fun hψ (ψ.symm y)).symm
+    (ψ.symm : G' →* G).comp F' = F.comp (ψ.symm : G' →* G) :=
+  have h : Function.Semiconj ψ F F' := fun x => DFunLike.congr_fun hψ x
+  MonoidHom.ext (h.inverse_left ψ.symm_apply_apply ψ.apply_symm_apply)
 
 variable {G'' : Type*} [Group G''] {F'' : G'' →* G''}
 
 /-- Intertwining relations compose. -/
-theorem _root_.MulEquiv.trans_comp_eq_comp_trans {ψ : G ≃* G'} {χ : G' ≃* G''}
+theorem trans_comp_eq_comp_trans_of_comp_eq_comp {ψ : G ≃* G'} {χ : G' ≃* G''}
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G'))
     (hχ : (χ : G' →* G'').comp F' = F''.comp (χ : G' →* G'')) :
-    ((ψ.trans χ : G ≃* G'') : G →* G'').comp F = F''.comp ((ψ.trans χ : G ≃* G'') : G →* G'') := by
-  ext x
-  have h₁ : ψ (F x) = F' (ψ x) := DFunLike.congr_fun hψ x
-  have h₂ : χ (F' (ψ x)) = F'' (χ (ψ x)) := DFunLike.congr_fun hχ (ψ x)
-  change χ (ψ (F x)) = F'' (χ (ψ x))
-  rw [h₁, h₂]
+    ((ψ.trans χ : G ≃* G'') : G →* G'').comp F = F''.comp ((ψ.trans χ : G ≃* G'') : G →* G'') :=
+  have h₁ : Function.Semiconj ψ F F' := fun x => DFunLike.congr_fun hψ x
+  have h₂ : Function.Semiconj χ F' F'' := fun x => DFunLike.congr_fun hχ x
+  MonoidHom.ext (h₁.trans h₂)
 
 /-- An isomorphism intertwining two endomorphisms carries the points fixed by the one *onto* the
 points fixed by the other. -/
@@ -132,7 +133,8 @@ theorem map_fixedSubgroup_eq (ψ : G ≃* G')
     (fixedSubgroup F).map (ψ : G →* G') = fixedSubgroup F' :=
   le_antisymm (map_fixedSubgroup_le _ hψ) fun y hy =>
     ⟨ψ.symm y,
-      map_fixedSubgroup_le (ψ.symm : G' →* G) (MulEquiv.symm_comp_eq_comp_symm ψ hψ) ⟨y, hy, rfl⟩,
+      map_fixedSubgroup_le (ψ.symm : G' →* G) (symm_comp_eq_comp_symm_of_comp_eq_comp ψ hψ)
+        ⟨y, hy, rfl⟩,
       ψ.apply_symm_apply y⟩
 
 /-- The isomorphism of fixed subgroups induced by an isomorphism intertwining the two
@@ -140,80 +142,39 @@ endomorphisms. -/
 def fixedSubgroupCongr (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
     ↥(fixedSubgroup F) ≃* ↥(fixedSubgroup F') :=
-  (ψ.subgroupMap (fixedSubgroup F)).trans (MulEquiv.subgroupCongr (map_fixedSubgroup_eq ψ hψ))
+  Subgroup.congrOfMapEq ψ (map_fixedSubgroup_eq ψ hψ)
 
 @[simp]
 theorem coe_fixedSubgroupCongr_apply (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) (x : ↥(fixedSubgroup F)) :
-    (fixedSubgroupCongr ψ hψ x : G') = ψ (x : G) := by
-  simp only [fixedSubgroupCongr, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
-    MulEquiv.coe_subgroupMap_apply]
+    (fixedSubgroupCongr ψ hψ x : G') = ψ (x : G) :=
+  Subgroup.coe_congrOfMapEq_apply ψ _ x
 
 @[simp]
 theorem coe_fixedSubgroupCongr_symm_apply (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) (y : ↥(fixedSubgroup F')) :
-    ((fixedSubgroupCongr ψ hψ).symm y : G) = ψ.symm (y : G') := by
-  simp only [fixedSubgroupCongr, MulEquiv.symm_trans_apply, MulEquiv.subgroupCongr_symm_apply,
-    MulEquiv.subgroupMap_symm_apply]
+    ((fixedSubgroupCongr ψ hψ).symm y : G) = ψ.symm (y : G') :=
+  Subgroup.coe_congrOfMapEq_symm_apply ψ _ y
 
 @[simp]
 theorem fixedSubgroupCongr_refl
     (hψ : (MulEquiv.refl G : G →* G).comp F = F.comp (MulEquiv.refl G : G →* G)) :
     fixedSubgroupCongr (MulEquiv.refl G) hψ = MulEquiv.refl ↥(fixedSubgroup F) :=
-  MulEquiv.ext fun _ => Subtype.ext (by simp)
+  Subgroup.congrOfMapEq_refl _
 
+@[simp]
 theorem fixedSubgroupCongr_trans (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) (χ : G' ≃* G'')
     (hχ : (χ : G' →* G'').comp F' = F''.comp (χ : G' →* G'')) :
     (fixedSubgroupCongr ψ hψ).trans (fixedSubgroupCongr χ hχ) =
-      fixedSubgroupCongr (ψ.trans χ) (MulEquiv.trans_comp_eq_comp_trans hψ hχ) :=
-  MulEquiv.ext fun _ => Subtype.ext (by simp)
+      fixedSubgroupCongr (ψ.trans χ) (trans_comp_eq_comp_trans_of_comp_eq_comp hψ hχ) :=
+  Subgroup.congrOfMapEq_trans _ _ _ _
 
+-- Not `@[simp]`, for the reason given at `TauCeti.Subgroup.congrOfMapEq_symm`.
 theorem fixedSubgroupCongr_symm (ψ : G ≃* G')
     (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
     (fixedSubgroupCongr ψ hψ).symm =
-      fixedSubgroupCongr ψ.symm (MulEquiv.symm_comp_eq_comp_symm ψ hψ) :=
-  MulEquiv.ext fun _ => Subtype.ext (by simp)
-
-/-! ### Transporting the endomorphism as well
-
-A consumer usually has an isomorphism `ψ : G ≃* G'` and an endomorphism of `G`, and no candidate
-`F'` in hand. Conjugating `F` by `ψ` supplies one, and it is the only choice: `ψ` intertwines `F`
-with `F'` exactly when `F'` is that conjugate. -/
-
-/-- The endomorphism of `G'` obtained by conjugating an endomorphism of `G` by an isomorphism. -/
-def _root_.MulEquiv.endCongr (ψ : G ≃* G') : (G →* G) ≃ (G' →* G') :=
-  (MulEquiv.monoidHomCongrLeftEquiv (N := G) ψ).trans (MulEquiv.monoidHomCongrRightEquiv ψ)
-
-@[simp]
-theorem _root_.MulEquiv.endCongr_apply (ψ : G ≃* G') (F : G →* G) (y : G') :
-    MulEquiv.endCongr ψ F y = ψ (F (ψ.symm y)) := by
-  simp only [MulEquiv.endCongr, Equiv.trans_apply, MulEquiv.monoidHomCongrLeftEquiv_apply,
-    MulEquiv.monoidHomCongrRightEquiv_apply, MonoidHom.coe_comp, Function.comp_apply,
-    MulEquiv.coe_toMonoidHom]
-
-/-- An isomorphism intertwines an endomorphism with its own conjugate. -/
-theorem _root_.MulEquiv.comp_eq_endCongr_comp (ψ : G ≃* G') (F : G →* G) :
-    (ψ : G →* G').comp F = (MulEquiv.endCongr ψ F).comp (ψ : G →* G') := by
-  ext x
-  simp
-
-/-- An isomorphism intertwines `F` with `F'` exactly when `F'` is the conjugate of `F`, so no
-generality is lost by conjugating. -/
-theorem _root_.MulEquiv.comp_eq_comp_iff_eq_endCongr (ψ : G ≃* G') :
-    (ψ : G →* G').comp F = F'.comp (ψ : G →* G') ↔ MulEquiv.endCongr ψ F = F' := by
-  refine ⟨fun h => MonoidHom.ext fun y => ?_, fun h => h ▸ MulEquiv.comp_eq_endCongr_comp ψ F⟩
-  simpa using DFunLike.congr_fun h (ψ.symm y)
-
-/-- The isomorphism of fixed subgroups induced by an isomorphism of the ambient group, with the
-endomorphism carried along by conjugation. -/
-def fixedSubgroupCongrEnd (ψ : G ≃* G') (F : G →* G) :
-    ↥(fixedSubgroup F) ≃* ↥(fixedSubgroup (MulEquiv.endCongr ψ F)) :=
-  fixedSubgroupCongr ψ (MulEquiv.comp_eq_endCongr_comp ψ F)
-
-@[simp]
-theorem coe_fixedSubgroupCongrEnd_apply (ψ : G ≃* G') (F : G →* G) (x : ↥(fixedSubgroup F)) :
-    (fixedSubgroupCongrEnd ψ F x : G') = ψ (x : G) :=
-  coe_fixedSubgroupCongr_apply _ _ x
+      fixedSubgroupCongr ψ.symm (symm_comp_eq_comp_symm_of_comp_eq_comp ψ hψ) :=
+  Subgroup.congrOfMapEq_symm _ _
 
 end TauCeti

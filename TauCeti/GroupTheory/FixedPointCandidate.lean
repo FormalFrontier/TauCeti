@@ -34,13 +34,6 @@ depends only on the isomorphism class of the *pair* `(G, F)`, which is what lets
 * `TauCeti.FixedPointCandidate`: the derived central quotient of a fixed subgroup.
 * `TauCeti.FixedPointCandidate.congr`: its transport along an isomorphism intertwining the two
   endomorphisms.
-* `TauCeti.FixedPointCandidate.congrEnd`: the same, with the endomorphism carried along by
-  conjugation rather than supplied.
-
-## Main results
-
-* `TauCeti.FixedPointCandidate.mulEquivId`: at the identity endomorphism the recipe returns the
-  derived central quotient of the whole group.
 
 ## References
 
@@ -94,38 +87,20 @@ theorem congr_refl (hψ : (MulEquiv.refl G : G →* G).comp F = F.comp (MulEquiv
     FixedPointCandidate.congr (MulEquiv.refl G) hψ = MulEquiv.refl (FixedPointCandidate F) := by
   rw [FixedPointCandidate.congr, fixedSubgroupCongr_refl, DerivedCentralQuotient.congr_refl]
 
+@[simp]
 theorem congr_trans (ψ : G ≃* G') (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G'))
     (χ : G' ≃* G'') (hχ : (χ : G' →* G'').comp F' = F''.comp (χ : G' →* G'')) :
     (FixedPointCandidate.congr ψ hψ).trans (FixedPointCandidate.congr χ hχ) =
-      FixedPointCandidate.congr (ψ.trans χ) (MulEquiv.trans_comp_eq_comp_trans hψ hχ) := by
+      FixedPointCandidate.congr (ψ.trans χ) (trans_comp_eq_comp_trans_of_comp_eq_comp hψ hχ) := by
   rw [FixedPointCandidate.congr, FixedPointCandidate.congr, FixedPointCandidate.congr,
     DerivedCentralQuotient.congr_trans, fixedSubgroupCongr_trans]
 
+@[simp]
 theorem congr_symm (ψ : G ≃* G') (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
     (FixedPointCandidate.congr ψ hψ).symm =
-      FixedPointCandidate.congr ψ.symm (MulEquiv.symm_comp_eq_comp_symm ψ hψ) := by
+      FixedPointCandidate.congr ψ.symm (symm_comp_eq_comp_symm_of_comp_eq_comp ψ hψ) := by
   rw [FixedPointCandidate.congr, FixedPointCandidate.congr, DerivedCentralQuotient.congr_symm,
     fixedSubgroupCongr_symm]
-
-/-- The candidate simple group transported along an isomorphism of the ambient group, with the
-endomorphism carried along by conjugation.
-
-This is the form a consumer replacing one realization of a pinned group by another uses: only the
-isomorphism of ambient groups has to be produced, and the Steinberg map on the other side is then
-determined. -/
-def congrEnd (ψ : G ≃* G') (F : G →* G) :
-    FixedPointCandidate F ≃* FixedPointCandidate (MulEquiv.endCongr ψ F) :=
-  FixedPointCandidate.congr ψ (MulEquiv.comp_eq_endCongr_comp ψ F)
-
-/-- At the identity endomorphism the recipe returns the derived central quotient of the whole
-group, since the identity fixes every point.
-
-This is the degenerate end of the construction, and the reason the two steps are composed in the
-stated order: no Steinberg endomorphism is involved, and what is left is exactly the
-derived-subgroup-modulo-its-centre step. -/
-def mulEquivId : FixedPointCandidate (MonoidHom.id G) ≃* DerivedCentralQuotient G :=
-  DerivedCentralQuotient.congr
-    ((MulEquiv.subgroupCongr (fixedSubgroup_eq_top_iff.mpr rfl)).trans Subgroup.topEquiv)
 
 end FixedPointCandidate
 

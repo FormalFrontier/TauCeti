@@ -41,8 +41,8 @@ depends only on the isomorphism class of `G`.
 
 * `TauCeti.DerivedCentralQuotient`: the group `[G, G] / Z([G, G])`.
 * `TauCeti.DerivedCentralQuotient.lift`: the factorisation of a surjection onto a centreless group.
-* `TauCeti.commutatorCongr` and `TauCeti.DerivedCentralQuotient.congr`: transport of the derived
-  subgroup and of the derived central quotient along an isomorphism of groups.
+* `TauCeti.DerivedCentralQuotient.congr`: transport of the derived central quotient along an
+  isomorphism of groups, built from the transport `TauCeti.commutatorCongr` of the derived subgroup.
 
 ## Main results
 
@@ -87,46 +87,6 @@ theorem isPerfect_of_not_isMulCommutative [IsSimpleGroup G] (h : ¬ IsMulCommuta
   exact h (center_eq_top_iff.mp hb)
 
 end IsSimpleGroup
-
-/-! ## Transporting the derived subgroup -/
-
-variable {G' G'' : Type*} [Group G'] [Group G'']
-
-/-- An isomorphism of groups carries the derived subgroup onto the derived subgroup. -/
-theorem Subgroup.map_commutator_eq_commutator (ψ : G ≃* G') :
-    (commutator G).map (ψ : G →* G') = commutator G' := by
-  rw [map_commutator_eq, MonoidHom.range_eq_top_of_surjective _ ψ.surjective]
-  rfl
-
-/-- The isomorphism of derived subgroups induced by an isomorphism of groups. -/
-def commutatorCongr (ψ : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') :=
-  (ψ.subgroupMap (commutator G)).trans
-    (MulEquiv.subgroupCongr (Subgroup.map_commutator_eq_commutator ψ))
-
-@[simp]
-theorem coe_commutatorCongr_apply (ψ : G ≃* G') (x : ↥(commutator G)) :
-    (commutatorCongr ψ x : G') = ψ (x : G) := by
-  simp only [commutatorCongr, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
-    MulEquiv.coe_subgroupMap_apply]
-
-@[simp]
-theorem coe_commutatorCongr_symm_apply (ψ : G ≃* G') (y : ↥(commutator G')) :
-    ((commutatorCongr ψ).symm y : G) = ψ.symm (y : G') := by
-  simp only [commutatorCongr, MulEquiv.symm_trans_apply, MulEquiv.subgroupCongr_symm_apply,
-    MulEquiv.subgroupMap_symm_apply]
-
-@[simp]
-theorem commutatorCongr_refl :
-    commutatorCongr (MulEquiv.refl G) = MulEquiv.refl ↥(commutator G) :=
-  MulEquiv.ext fun _ => Subtype.ext (by simp)
-
-theorem commutatorCongr_trans (ψ : G ≃* G') (χ : G' ≃* G'') :
-    (commutatorCongr ψ).trans (commutatorCongr χ) = commutatorCongr (ψ.trans χ) :=
-  MulEquiv.ext fun _ => Subtype.ext (by simp)
-
-theorem commutatorCongr_symm (ψ : G ≃* G') :
-    (commutatorCongr ψ).symm = commutatorCongr ψ.symm :=
-  MulEquiv.ext fun _ => Subtype.ext (by simp)
 
 /-! ## The derived subgroup modulo its centre -/
 
@@ -244,6 +204,8 @@ theorem mulEquivSelf_mk [Group.IsPerfect ↥(commutator G)]
 
 /-! ### Transport along an isomorphism -/
 
+variable {G' G'' : Type*} [Group G'] [Group G'']
+
 /-- The derived central quotient transported along an isomorphism of groups.
 
 Both steps of the recipe are transported: the isomorphism restricts to the derived subgroups, and
@@ -264,17 +226,20 @@ theorem congr_refl :
     DerivedCentralQuotient.congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuotient G) :=
   MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by simp
 
+@[simp]
 theorem congr_trans (ψ : G ≃* G') (χ : G' ≃* G'') :
     (DerivedCentralQuotient.congr ψ).trans (DerivedCentralQuotient.congr χ) =
       DerivedCentralQuotient.congr (ψ.trans χ) :=
   MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by
-    simp [← commutatorCongr_trans]
+    simp only [MulEquiv.trans_apply, congr_mk]
+    exact congrArg _ (Subtype.ext (by simp))
 
+@[simp]
 theorem congr_symm (ψ : G ≃* G') :
     (DerivedCentralQuotient.congr ψ).symm = DerivedCentralQuotient.congr ψ.symm :=
   MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by
-    apply (DerivedCentralQuotient.congr ψ).injective
-    simp [← commutatorCongr_symm]
+    simp only [DerivedCentralQuotient.congr, QuotientGroup.congr_symm, QuotientGroup.congr_mk,
+      commutatorCongr_symm]
 
 end DerivedCentralQuotient
 
