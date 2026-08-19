@@ -93,6 +93,15 @@ private noncomputable def gradedObjectPiecesEquiv :
     (⨁ p : ℤ, X p) ≃ₗ[R] (⨁ p : ℤ, gradedObjectPiece R X p) :=
   DirectSum.congrLinearEquiv fun p ↦ gradedObjectPieceEquiv R X p
 
+private theorem gradedObjectPiecesEquiv_lof (p : ℤ) (x : X p) :
+    gradedObjectPiecesEquiv R X (DirectSum.lof R ℤ (fun q ↦ X q) p x) =
+      DirectSum.lof R ℤ (fun q ↦ gradedObjectPiece R X q) p
+        ((gradedObjectPieceEquiv R X p).toLinearMap x) := by
+  -- Expose the bundled linear map so Mathlib's direct-sum application lemmas can rewrite it.
+  change (gradedObjectPiecesEquiv R X).toLinearMap
+    (DirectSum.lof R ℤ (fun q ↦ X q) p x) = _
+  rw [gradedObjectPiecesEquiv, DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
+
 private theorem gradedObjectPiecesEquiv_symm_eq_coeLinearMap :
     (gradedObjectPiecesEquiv R X).symm.toLinearMap =
       DirectSum.coeLinearMap (gradedObjectPiece R X) := by
@@ -108,10 +117,7 @@ private theorem gradedObjectPiecesEquiv_symm_eq_coeLinearMap :
     rw [gradedObjectPieceEquiv_apply]
     exact hy.symm
   rw [← hy, hx]
-  change _ = (DirectSum.congrLinearEquiv fun p ↦ gradedObjectPieceEquiv R X p).toLinearMap
-    (DirectSum.lof R ℤ (fun q ↦ X q) p y)
-  rw [DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
-  rfl
+  exact (gradedObjectPiecesEquiv_lof R X p y).symm
 
 /-- The external direct sum of a graded object carries the internal grading by its canonical
 component copies. -/
@@ -136,29 +142,35 @@ noncomputable def ofGradedObjectToGradedObjectIso :
   intro p
   exact (gradedObjectPieceEquiv R X p).symm.toModuleIso
 
-/-- The forward component of the comparison is the inverse of the canonical equivalence onto the
-corresponding copy in the external direct sum. -/
+/-- The underlying element of the inverse comparison is the canonical direct-sum inclusion. -/
 @[simp]
-theorem ofGradedObjectToGradedObjectIso_hom_app (p : ℤ) :
-    (ofGradedObjectToGradedObjectIso R X).hom p =
-      eqToHom (show (ofGradedObject R X).toGradedObject p =
-        ModuleCat.of R (gradedObjectPiece R X p) from
-          congrArg (fun N : Submodule R (⨁ q : ℤ, X q) ↦ ModuleCat.of R N)
-            (ofGradedObject_piece R X p)) ≫
-        (gradedObjectPieceEquiv R X p).symm.toModuleIso.hom := by
-  rfl
+theorem ofGradedObjectToGradedObjectIso_inv_apply (p : ℤ) (x : X p) :
+    ((ofGradedObjectToGradedObjectIso R X).inv p x : ⨁ q : ℤ, X q) =
+      DirectSum.lof R ℤ (fun q ↦ X q) p x := by
+  rw [ofGradedObjectToGradedObjectIso]
+  exact gradedObjectPieceEquiv_apply R X p x
 
-/-- The inverse component of the comparison is the canonical equivalence onto the corresponding
-copy in the external direct sum. -/
+/-- Applying the forward comparison and then including its component recovers the original
+element of the external direct sum. -/
 @[simp]
-theorem ofGradedObjectToGradedObjectIso_inv_app (p : ℤ) :
-    (ofGradedObjectToGradedObjectIso R X).inv p =
-      (gradedObjectPieceEquiv R X p).symm.toModuleIso.inv ≫
-        eqToHom (show ModuleCat.of R (gradedObjectPiece R X p) =
-          (ofGradedObject R X).toGradedObject p from
-            (congrArg (fun N : Submodule R (⨁ q : ℤ, X q) ↦ ModuleCat.of R N)
-              (ofGradedObject_piece R X p)).symm) := by
-  rfl
+theorem ofGradedObjectToGradedObjectIso_hom_apply (p : ℤ)
+    (x : (ofGradedObject R X).toGradedObject p) :
+    DirectSum.lof R ℤ (fun q ↦ X q) p
+        ((ofGradedObjectToGradedObjectIso R X).hom p x) = x := by
+  have hx : (ofGradedObjectToGradedObjectIso R X).inv p
+      ((ofGradedObjectToGradedObjectIso R X).hom p x) = x := by
+    have hp : (ofGradedObjectToGradedObjectIso R X).hom p ≫
+        (ofGradedObjectToGradedObjectIso R X).inv p = 𝟙 _ :=
+      congrFun (ofGradedObjectToGradedObjectIso R X).hom_inv_id p
+    change ((ofGradedObjectToGradedObjectIso R X).hom p ≫
+      (ofGradedObjectToGradedObjectIso R X).inv p) x = x
+    rw [hp]
+    rfl
+  calc
+    _ = ((ofGradedObjectToGradedObjectIso R X).inv p
+        ((ofGradedObjectToGradedObjectIso R X).hom p x) : ⨁ q : ℤ, X q) :=
+      (ofGradedObjectToGradedObjectIso_inv_apply R X p _).symm
+    _ = x := congrArg Subtype.val hx
 
 end OfGradedObject
 
