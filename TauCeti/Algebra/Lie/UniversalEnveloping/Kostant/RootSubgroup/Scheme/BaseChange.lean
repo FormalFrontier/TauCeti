@@ -45,10 +45,10 @@ extension of the general linear group over `ℤ`.
   the defining Hopf ideal.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedBaseChangeIso`: the base change of the
   carrier is the quotient by `J_A`.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupBaseChangeCoordinateMap`: the
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupBaseChangeGeneratedCoordinateMap`: the
   base-changed root subgroup, factored through the base-changed carrier.
-* `TauCeti.UniversalEnvelopingAlgebra.mkQuotient_comp_kostantRootSubgroupBaseChangeCoordinateMap`:
-  the factorization recovers the base change of the root-subgroup coordinate map.
+* `mkQuotient_comp_kostantRootSubgroupBaseChangeGeneratedCoordinateMap`: the factorization
+  recovers the base change of the root-subgroup coordinate map.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedBaseChangeIdeal_le_commonKernelHopfIdeal`:
   the carrier generated over `A` lies inside the base-changed carrier.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedGeneralLinearBaseChangeIdeal`: the Hopf ideal
@@ -139,7 +139,7 @@ theorem mkQuotient_comp_kostantGeneratedBaseChangeIso_hom :
 /-- The `i`th base-changed root-subgroup coordinate map, factored through the base change of the
 Chevalley carrier: the base change of the factorization over `ℤ`, read through the presentation of
 the base change. -/
-noncomputable def kostantRootSubgroupBaseChangeCoordinateMap (i : I) :
+noncomputable def kostantRootSubgroupBaseChangeGeneratedCoordinateMap (i : I) :
     CommHopfAlgCat.quotient
         (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
         (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A) ⟶
@@ -152,14 +152,14 @@ noncomputable def kostantRootSubgroupBaseChangeCoordinateMap (i : I) :
 root subgroup recovers the base change of the `i`th root-subgroup coordinate map. This is the
 compatibility of the root-subgroup data with base change. -/
 @[simp]
-theorem mkQuotient_comp_kostantRootSubgroupBaseChangeCoordinateMap (i : I) :
+theorem mkQuotient_comp_kostantRootSubgroupBaseChangeGeneratedCoordinateMap (i : I) :
     CommHopfAlgCat.mkQuotient
           (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
           (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A) ≫
-        kostantRootSubgroupBaseChangeCoordinateMap e h ρ M hM hnil b A i =
+        kostantRootSubgroupBaseChangeGeneratedCoordinateMap e h ρ M hM hnil b A i =
       CommHopfAlgCat.baseChangeMap
         (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
-  rw [kostantRootSubgroupBaseChangeCoordinateMap, ← Category.assoc,
+  rw [kostantRootSubgroupBaseChangeGeneratedCoordinateMap, ← Category.assoc,
     mkQuotient_comp_kostantGeneratedBaseChangeIso_hom,
     ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
     mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap]
@@ -212,10 +212,11 @@ noncomputable def kostantGeneratedGeneralLinearBaseChangeIdeal :
 
 /-- Membership in the general-linear defining ideal over `A` is membership of the transported
 element in the base-changed defining ideal. -/
+@[simp]
 theorem mem_kostantGeneratedGeneralLinearBaseChangeIdeal_iff
     {x : GeneralLinear.coordinateHopfAlgebra A n} :
     x ∈ kostantGeneratedGeneralLinearBaseChangeIdeal e h ρ M hM hnil b A ↔
-      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).symm.hom.hom x ∈
+      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).inv.hom x ∈
         kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A :=
   HopfIdeal.mem_comap
 
@@ -227,12 +228,7 @@ theorem map_tmul_mem_kostantGeneratedGeneralLinearBaseChangeIdeal_of_mem (s : A)
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).hom.hom (s ⊗ₜ[ℤ] y) ∈
       kostantGeneratedGeneralLinearBaseChangeIdeal e h ρ M hM hnil b A := by
   rw [mem_kostantGeneratedGeneralLinearBaseChangeIdeal_iff,
-    show (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).symm.hom.hom
-        ((GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).hom.hom (s ⊗ₜ[ℤ] y)) =
-          s ⊗ₜ[ℤ] y from
-      CommHopfAlgCat.inv_hom_apply
-        (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n) (s ⊗ₜ[ℤ] y),
-    kostantGeneratedBaseChangeIdeal_def]
+    CommHopfAlgCat.inv_hom_apply, kostantGeneratedBaseChangeIdeal_def]
   exact CommHopfAlgCat.tmul_mem_baseChangeHopfIdeal s hy
 
 /-- The Chevalley carrier cut out inside `GLₙ` over `A` is the same closed subgroup scheme as the
@@ -327,7 +323,7 @@ noncomputable def kostantRootSubgroupGeneralLinearBaseChangeGeneratedCoordinateM
         (kostantGeneratedGeneralLinearBaseChangeIdeal e h ρ M hM hnil b A) ⟶
       AdditiveGroup.coordinateHopfAlgebra A :=
   (kostantGeneratedGeneralLinearBaseChangePresentationIso e h ρ M hM hnil b A).hom ≫
-    kostantRootSubgroupBaseChangeCoordinateMap e h ρ M hM hnil b A i ≫
+    kostantRootSubgroupBaseChangeGeneratedCoordinateMap e h ρ M hM hnil b A i ≫
     (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom
 
 /-- Quotienting by the general-linear defining ideal over `A` and then applying the factored root
@@ -343,8 +339,8 @@ theorem mkQuotient_comp_kostantRootSubgroupGeneralLinearBaseChangeGeneratedCoord
   rw [kostantRootSubgroupGeneralLinearBaseChangeGeneratedCoordinateMap, ← Category.assoc,
     mkQuotient_comp_kostantGeneratedGeneralLinearBaseChangePresentationIso_hom, Category.assoc,
     ← Category.assoc (CommHopfAlgCat.mkQuotient _ _),
-    mkQuotient_comp_kostantRootSubgroupBaseChangeCoordinateMap,
-    kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap]
+    mkQuotient_comp_kostantRootSubgroupBaseChangeGeneratedCoordinateMap,
+    kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap_def]
 
 /-- Every root subgroup over `A` kills the general-linear defining ideal over `A`, so all of them
 land in the Chevalley carrier presented there. -/
@@ -358,9 +354,8 @@ theorem kostantGeneratedGeneralLinearBaseChangeIdeal_toIdeal_le_ker (i : I) :
     (HopfIdeal.mem_toIdeal.mpr
       ((mem_kostantGeneratedGeneralLinearBaseChangeIdeal_iff
         e h ρ M hM hnil b A).mp hx))
-  rw [Iso.symm_hom] at hbase
   rw [RingHom.mem_ker] at hbase ⊢
-  rw [kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap]
+  rw [kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap_def]
   have hbase' :
       (CommHopfAlgCat.baseChangeMap
           (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).hom
