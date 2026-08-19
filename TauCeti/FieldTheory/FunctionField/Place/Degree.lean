@@ -9,7 +9,7 @@ public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import Mathlib.RingTheory.Localization.Module
 public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
-public import TauCeti.FieldTheory.IntermediateField.AdjoinInv
+public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
 
 /-!
 # The degree of a place of an algebraic function field is finite
@@ -30,20 +30,19 @@ a genuine positive natural number.
 
 ## Main results
 
-* `TauCeti.Place.linearIndependent_adjoin_of_linearIndependent_residue`: the heart of the
-  matter. If `x` has positive order at `P`, then elements of `𝒪_P` whose residues are linearly
+* `TauCeti.Place.linearIndependent_over_adjoin_of_linearIndependent_residue`: the heart of the
+  matter. If `x` has nonzero order at `P`, then elements of `𝒪_P` whose residues are linearly
   independent over `k` are themselves linearly independent over `k(x)`.
-* `TauCeti.Place.finite_residueField`: the residue field of a place of an algebraic function
-  field is a finite extension of the constants.
+* `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
+  function field is a finite extension of the constants.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
   `ord_P x ≠ 0`.
   The lower bound `1 ≤ deg P` is `TauCeti.Place.one_le_degree_of_isFunctionField`.
-* `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
-  `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
-  those whose residue field is exhausted by the constants, equivalently those at which every
-  integral function agrees with a constant to first order.
-* `TauCeti.Place.degree_eq_one_of_isAlgClosed_of_isIntegral`: a place with algebraic residue
-  field over an algebraically closed field of constants is rational (Stichtenoth, Remark 1.1.17).
+* `TauCeti.Place.degree_eq_one_of_isAlgClosed`: over an algebraically closed field of constants
+  every place of an algebraic function field is rational (Stichtenoth, Remark 1.1.17).
+
+The rational places themselves are characterised in
+`TauCeti.FieldTheory.FunctionField.Place.Basic`, where no function-field hypothesis is needed.
 
 ## Implementation notes
 
@@ -90,6 +89,9 @@ private theorem residue_aeval_of_residue_eq_zero {t : P.integers}
   rw [RingHom.comp_apply, IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
     IsLocalRing.ResidueField.algebraMap_eq]
 
+/-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
+divides every member leaves at least one quotient with nonzero constant term. The exponent is
+the least `Polynomial.rootMultiplicity 0` over the nonzero members. -/
 private theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X])
     (hne : ∃ i ∈ s, p i ≠ 0) :
     ∃ m, ∃ q : ι → k[X], (∀ i ∈ s, p i = X ^ m * q i) ∧
@@ -119,20 +121,15 @@ private theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι 
 
 /-! ### Linear independence over `k(x)` of a lift of a `k`-independent family of residues -/
 
-/-- **The key step of Stichtenoth, Proposition 1.1.15.** Let `x` be an element of positive order
-at a place `P`, so that `x` reduces to `0` in the residue field. If elements `z i` of the
-valuation ring `𝒪_P` have residues that are linearly independent over the constants `k`, then
-the `z i` are themselves linearly independent over `k(x)`. -/
-theorem linearIndependent_adjoin_of_linearIndependent_residue {x : F} (hx : 0 < P.ord x)
-    {ι : Type*} {z : ι → P.integers}
+private theorem linearIndependent_over_adjoin_of_linearIndependent_residue_of_ord_pos
+    {x : F} (hx : 0 < P.ord x) {ι : Type*} {z : ι → P.integers}
     (hz : LinearIndependent k fun i ↦ IsLocalRing.residue P.integers (z i)) :
     LinearIndependent k⟮x⟯ fun i ↦ (z i : F) := by
   classical
   have hx0 : x ≠ 0 := fun h ↦ by simp [h] at hx
   have hxmem : x ∈ P.integers := P.mem_integers_iff_ord_nonneg.mpr hx.le
-  have ht : IsLocalRing.residue P.integers ⟨x, hxmem⟩ = 0 := by
-    rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_ord_pos hx0]
-    exact hx
+  have ht : IsLocalRing.residue P.integers ⟨x, hxmem⟩ = 0 :=
+    (P.residue_eq_zero_iff_ord_pos hx0).mpr hx
   have hxtr : Transcendental k x := P.transcendental_of_ord_ne_zero hx.ne'
   have hinj : Function.Injective (aeval x : k[X] →ₐ[k] F) := transcendental_iff_injective.mp hxtr
   -- The coercion `𝒪_P → F` as a `k`-algebra map, used to move relations between `F` and `𝒪_P`.
@@ -150,10 +147,13 @@ theorem linearIndependent_adjoin_of_linearIndependent_residue {x : F} (hx : 0 < 
     intro y hy
     rwa [Algebra.adjoin_singleton_eq_range_aeval, AlgHom.mem_range] at hy
   choose p hp using fun i ↦ hrange (g i : F) (g i).2
+  -- The same identity read through the structure map of the subalgebra, which is how the
+  -- coefficients appear in the relation `hsum`.
+  have hpa : ∀ i, algebraMap (Algebra.adjoin k ({x} : Set F)) F (g i) = aeval x (p i) :=
+    fun i ↦ by rw [Subalgebra.algebraMap_apply]; exact (hp i).symm
   have hpzero : ∀ i, p i = 0 ↔ g i = 0 := by
     intro i
-    rw [← hinj.eq_iff, map_zero, hp i]
-    exact ⟨fun h ↦ Subtype.ext h, fun h ↦ congrArg _ h⟩
+    rw [← hinj.eq_iff, map_zero, hp i, ZeroMemClass.coe_eq_zero]
   obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := exists_common_X_pow_factor s p
     ⟨i₀, hi₀, fun h ↦ hg0 ((hpzero i₀).mp h)⟩
   -- The relation, with the common factor `x ^ m` removed, lives in `𝒪_P`.
@@ -163,9 +163,7 @@ theorem linearIndependent_adjoin_of_linearIndependent_residue {x : F} (hx : 0 < 
     rw [Finset.mul_sum, mul_zero]
     rw [← hsum]
     refine Finset.sum_congr rfl fun i hi ↦ ?_
-    rw [Algebra.smul_def]
-    have : (algebraMap (Algebra.adjoin k ({x} : Set F)) F) (g i) = aeval x (p i) := (hp i).symm
-    rw [this, hfactor i hi]
+    rw [Algebra.smul_def, hpa i, hfactor i hi]
     simp [mul_assoc]
   have hsumO : ∑ i ∈ s, aeval (⟨x, hxmem⟩ : P.integers) (q i) * z i = 0 := by
     apply Subtype.ext
@@ -181,19 +179,22 @@ theorem linearIndependent_adjoin_of_linearIndependent_residue {x : F} (hx : 0 < 
   have := linearIndependent_iff'.mp hz s (fun i ↦ (q i).coeff 0) hres j hjs
   exact hqj this
 
-/-! ### Finiteness and the bound on the degree -/
+/-- **The key step of Stichtenoth, Proposition 1.1.15.** Let `x` be an element of nonzero order
+at a place `P`. If elements `z i` of the valuation ring `𝒪_P` have residues that are linearly
+independent over the constants `k`, then the `z i` are themselves linearly independent
+over `k(x)`. -/
+theorem linearIndependent_over_adjoin_of_linearIndependent_residue {x : F} (hx : P.ord x ≠ 0)
+    {ι : Type*} {z : ι → P.integers}
+    (hz : LinearIndependent k fun i ↦ IsLocalRing.residue P.integers (z i)) :
+    LinearIndependent k⟮x⟯ fun i ↦ (z i : F) := by
+  rcases lt_or_gt_of_ne hx with hneg | hpos
+  · -- A pole of `x` at `P` is a zero of `x⁻¹`, and `k⟮x⁻¹⟯ = k⟮x⟯`.
+    have hinv : 0 < P.ord x⁻¹ := by rw [P.ord_inv]; omega
+    rw [← IntermediateField.adjoin_simple_inv (K := k) x]
+    exact linearIndependent_over_adjoin_of_linearIndependent_residue_of_ord_pos hinv hz
+  · exact linearIndependent_over_adjoin_of_linearIndependent_residue_of_ord_pos hpos hz
 
-private theorem rank_residueField_le_finrank_over_adjoin_of_ord_pos (P : Place k F) {x : F}
-    (hx : 0 < P.ord x)
-    [FiniteDimensional k⟮x⟯ F] :
-    Module.rank k P.ResidueField ≤ (Module.finrank k⟮x⟯ F : Cardinal) := by
-  refine rank_le fun s hs ↦ ?_
-  choose z hz using fun i : s ↦ IsLocalRing.residue_surjective (i : P.ResidueField)
-  have hz' : LinearIndependent k fun i : s ↦ IsLocalRing.residue P.integers (z i) := by
-    simpa only [hz] using hs
-  have := (linearIndependent_adjoin_of_linearIndependent_residue hx
-    hz').fintype_card_le_finrank
-  simpa using this
+/-! ### Finiteness and the bound on the degree -/
 
 variable (P) in
 /-- The rank of the residue field over the constants is bounded by `[F : k(x)]` for every `x`
@@ -202,20 +203,19 @@ whose order at `P` is nonzero, provided `F` is finite over `k(x)` (Stichtenoth, 
 theorem rank_residueField_le_finrank_over_adjoin {x : F} (hx : P.ord x ≠ 0)
     [FiniteDimensional k⟮x⟯ F] :
     Module.rank k P.ResidueField ≤ (Module.finrank k⟮x⟯ F : Cardinal) := by
-  rcases lt_or_gt_of_ne hx with hneg | hpos
-  · have hinv : 0 < P.ord x⁻¹ := by rw [P.ord_inv]; omega
-    have : FiniteDimensional k⟮x⁻¹⟯ F := by
-      rw [IntermediateField.adjoin_simple_inv (K := k) x]
-      infer_instance
-    rw [← IntermediateField.adjoin_simple_inv (K := k) x]
-    exact rank_residueField_le_finrank_over_adjoin_of_ord_pos P hinv
-  · exact rank_residueField_le_finrank_over_adjoin_of_ord_pos P hpos
+  refine rank_le fun s hs ↦ ?_
+  choose z hz using fun i : s ↦ IsLocalRing.residue_surjective (i : P.ResidueField)
+  have hz' : LinearIndependent k fun i : s ↦ IsLocalRing.residue P.integers (z i) := by
+    simpa only [hz] using hs
+  simpa using
+    (linearIndependent_over_adjoin_of_linearIndependent_residue hx hz').fintype_card_le_finrank
 
 variable (P) in
 /-- The residue field of a place of an algebraic function field is a finite extension of the
 constants (Stichtenoth, Proposition 1.1.15). This is what makes `TauCeti.Place.degree` a
 genuine invariant rather than a junk value. -/
-theorem finite_residueField (hF : IsFunctionField k F) : Module.Finite k P.ResidueField := by
+theorem finiteDimensional_residueField (hF : IsFunctionField k F) :
+    FiniteDimensional k P.ResidueField := by
   obtain ⟨t, ht⟩ := P.exists_isUniformizer
   rw [P.isUniformizer_iff_ord_eq_one] at ht
   have hpos : 0 < P.ord t := by omega
@@ -239,59 +239,16 @@ variable (P) in
 /-- **Stichtenoth, Proposition 1.1.15**: the degree of a place of an algebraic function field
 is positive. -/
 theorem one_le_degree_of_isFunctionField (hF : IsFunctionField k F) : 1 ≤ P.degree := by
-  let _ := P.finite_residueField hF
+  let _ := P.finiteDimensional_residueField hF
   exact P.one_le_degree
 
-/-! ### Rational places -/
-
 variable (P) in
-/-- A place has degree one exactly when every residue is the residue of a constant: the
-**rational** places (Stichtenoth, Definition 1.1.14). -/
-theorem degree_eq_one_iff_algebraMap_surjective :
-    P.degree = 1 ↔ Function.Surjective (algebraMap k P.ResidueField) := by
-  rw [degree_eq_finrank, Algebra.finrank_eq_one_iff_bijective_algebraMap]
-  exact ⟨And.right, fun h ↦ ⟨FaithfulSMul.algebraMap_injective k _, h⟩⟩
-
-variable (P) in
-/-- A place is rational exactly when every function integral at `P` agrees with a constant to
-first order: this is the sense in which the value `f(P)` of a function at a rational place is
-an element of `k`. The multiplicative form avoids the junk value `ord_P 0 = 0`, which occurs
-here whenever `f` is itself a constant. -/
-theorem degree_eq_one_iff_forall_exists_valuation_sub_lt_one :
-    P.degree = 1 ↔
-      ∀ f ∈ P.integers, ∃ c : k, P.valuation (f - algebraMap k F c) < 1 := by
-  have hsub : ∀ (a : P.integers) (c : k),
-      ((a - algebraMap k P.integers c : P.integers) : F) = (a : F) - algebraMap k F c :=
-    fun a c ↦ by
-      change (algebraMap P.integers F) (a - algebraMap k P.integers c) = _
-      rw [map_sub, IsScalarTower.algebraMap_apply k P.integers F]
-      -- The structure map from the valuation subring to `F` is its subtype coercion.
-      rfl
-  have key : ∀ (a : P.integers) (c : k),
-      P.valuation ((a : F) - algebraMap k F c) < 1 ↔
-        IsLocalRing.residue P.integers a = algebraMap k P.ResidueField c := by
-    intro a c
-    rw [← hsub a c, ← P.mem_maximalIdeal_iff_valuation_lt_one, ← IsLocalRing.residue_eq_zero_iff,
-      map_sub, sub_eq_zero]
-    rw [IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
-      IsLocalRing.ResidueField.algebraMap_eq]
-  rw [degree_eq_one_iff_algebraMap_surjective]
-  constructor
-  · intro h f hf
-    obtain ⟨c, hc⟩ := h (IsLocalRing.residue P.integers ⟨f, hf⟩)
-    exact ⟨c, (key ⟨f, hf⟩ c).mpr hc.symm⟩
-  · intro h y
-    obtain ⟨a, rfl⟩ := IsLocalRing.residue_surjective y
-    obtain ⟨c, hc⟩ := h (a : F) a.2
-    exact ⟨c, ((key a c).mp hc).symm⟩
-
-variable (P) in
-/-- If the residue field of a place is algebraic over an algebraically closed field of constants,
-then the place is rational (Stichtenoth, Remark 1.1.17). -/
-theorem degree_eq_one_of_isAlgClosed_of_isIntegral [IsAlgClosed k]
-    [Algebra.IsIntegral k P.ResidueField] : P.degree = 1 := by
-  exact (degree_eq_one_iff_algebraMap_surjective P).mpr
-    (IsAlgClosed.algebraMap_bijective_of_isIntegral (k := k)).2
+/-- **Stichtenoth, Remark 1.1.17**: over an algebraically closed field of constants every place
+of an algebraic function field is rational. -/
+theorem degree_eq_one_of_isAlgClosed [IsAlgClosed k] (hF : IsFunctionField k F) :
+    P.degree = 1 := by
+  let _ := P.finiteDimensional_residueField hF
+  exact P.degree_eq_one_of_isAlgClosed_of_isIntegral
 
 end Place
 

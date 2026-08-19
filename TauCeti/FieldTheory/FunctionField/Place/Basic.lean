@@ -45,6 +45,10 @@ equivalence is needed and equality of places *is* equality of valuations
   (`TauCeti.Place.mem_integers_of_mem_algebraicClosure`).
 * `TauCeti.Place.integers_injective`: a place is determined by its valuation ring
   (Stichtenoth, Theorem 1.1.13).
+* `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
+  `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
+  those whose residue field is exhausted by the constants, equivalently those at which every
+  integral function agrees with a constant to first order.
 
 ## Implementation notes
 
@@ -310,9 +314,16 @@ theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
     IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by
   rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_valuation_lt_one]
 
+/-- Evaluation at a place vanishes on a nonzero function exactly when that function has
+positive order: the additive form of `TauCeti.Place.residue_eq_zero_iff_valuation_lt_one`. -/
+theorem residue_eq_zero_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
+    IsLocalRing.residue P.integers f = 0 ↔ 0 < P.ord (f : F) := by
+  rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_ord_pos hf]
+
 /-- The **degree** `deg P = [F_P : k]` of a place (Stichtenoth, Definition 1.1.14). Its
 finiteness, which guards the junk value of `Module.finrank`, holds whenever `F/k` is a function
-field: see `TauCeti.Place.finite_residueField` (Stichtenoth, Proposition 1.1.15). -/
+field: see `TauCeti.Place.finiteDimensional_residueField` (Stichtenoth,
+Proposition 1.1.15). -/
 noncomputable def degree : ℕ := Module.finrank k P.ResidueField
 
 theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := (rfl)
@@ -320,6 +331,50 @@ theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := (rfl)
 theorem one_le_degree [Module.Finite k P.ResidueField] : 1 ≤ P.degree := by
   rw [degree_eq_finrank]
   exact Module.finrank_pos
+
+/-- A place has degree one exactly when every residue is the residue of a constant: the
+**rational** places (Stichtenoth, Definition 1.1.14). -/
+theorem degree_eq_one_iff_algebraMap_surjective :
+    P.degree = 1 ↔ Function.Surjective (algebraMap k P.ResidueField) := by
+  rw [degree_eq_finrank, Algebra.finrank_eq_one_iff_bijective_algebraMap]
+  exact ⟨And.right, fun h ↦ ⟨FaithfulSMul.algebraMap_injective k _, h⟩⟩
+
+/-- A place is rational exactly when every function integral at `P` agrees with a constant to
+first order: this is the sense in which the value `f(P)` of a function at a rational place is
+an element of `k`. The multiplicative form avoids the junk value `ord_P 0 = 0`, which occurs
+here whenever `f` is itself a constant. -/
+theorem degree_eq_one_iff_forall_exists_valuation_sub_lt_one :
+    P.degree = 1 ↔
+      ∀ f ∈ P.integers, ∃ c : k, P.valuation (f - algebraMap k F c) < 1 := by
+  have hsub : ∀ (a : P.integers) (c : k),
+      ((a - algebraMap k P.integers c : P.integers) : F) = (a : F) - algebraMap k F c :=
+    fun a c ↦ by
+      rw [← ValuationSubring.algebraMap_apply P.integers (a - algebraMap k P.integers c),
+        _root_.map_sub, ← IsScalarTower.algebraMap_apply k P.integers F,
+        ValuationSubring.algebraMap_apply]
+  have key : ∀ (a : P.integers) (c : k),
+      P.valuation ((a : F) - algebraMap k F c) < 1 ↔
+        IsLocalRing.residue P.integers a = algebraMap k P.ResidueField c := by
+    intro a c
+    rw [← hsub a c, ← P.residue_eq_zero_iff_valuation_lt_one, _root_.map_sub, sub_eq_zero]
+    rw [IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
+      IsLocalRing.ResidueField.algebraMap_eq]
+  rw [degree_eq_one_iff_algebraMap_surjective]
+  constructor
+  · intro h f hf
+    obtain ⟨c, hc⟩ := h (IsLocalRing.residue P.integers ⟨f, hf⟩)
+    exact ⟨c, (key ⟨f, hf⟩ c).mpr hc.symm⟩
+  · intro h y
+    obtain ⟨a, rfl⟩ := IsLocalRing.residue_surjective y
+    obtain ⟨c, hc⟩ := h (a : F) a.2
+    exact ⟨c, ((key a c).mp hc).symm⟩
+
+/-- If the residue field of a place is algebraic over an algebraically closed field of constants,
+then the place is rational (Stichtenoth, Remark 1.1.17). -/
+theorem degree_eq_one_of_isAlgClosed_of_isIntegral [IsAlgClosed k]
+    [Algebra.IsIntegral k P.ResidueField] : P.degree = 1 :=
+  (degree_eq_one_iff_algebraMap_surjective P).mpr
+    (IsAlgClosed.algebraMap_bijective_of_isIntegral (k := k)).2
 
 end ResidueField
 
