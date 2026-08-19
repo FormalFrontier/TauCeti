@@ -43,6 +43,9 @@ to honest.
 ## Main results
 
 * `TauCeti.nonempty_weight`: a nonzero finite-dimensional triangularizable module has a weight.
+* `TauCeti.isInternal_genWeightSpace`: a finite-dimensional triangularizable module is the internal
+  direct sum of its *generalized* weight spaces. This needs no diagonalizability and is the form
+  the dimension counts consume; the honest-weight-space refinement is below.
 * `TauCeti.isSemisimple_toEnd_coroot`: a coroot acts semisimply on a finite-dimensional module.
 * `TauCeti.isSemisimple_toEnd_cartan`: **every element of the Cartan subalgebra acts semisimply.**
 * `TauCeti.genWeightSpace_eq_weightSpace`: **the generalized weight spaces are honest weight
@@ -86,6 +89,19 @@ Mathlib performs this step inside the proof of
 theorem nonempty_weight [IsTriangularizable K L M] [Nontrivial M] : Nonempty (Weight K L M) := by
   by_contra! contra
   simpa only [iSup_of_empty, bot_ne_top] using iSup_genWeightSpace_eq_top' K L M
+
+open scoped Classical in
+/-- **The generalized weight-space decomposition.** A finite-dimensional triangularizable module is
+the internal direct sum of its generalized weight spaces, indexed by all of its weights. This is
+Mathlib's `LieModule.iSupIndep_genWeightSpace'` and `LieModule.iSup_genWeightSpace_eq_top'`
+packaged as a `DirectSum.IsInternal`, which is the form the dimension counts consume. -/
+theorem isInternal_genWeightSpace [IsTriangularizable K L M] :
+    DirectSum.IsInternal fun χ : Weight K L M ↦ (genWeightSpace M (χ : L → K)).toSubmodule := by
+  refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top ?_ ?_
+  · rw [LieSubmodule.iSupIndep_toSubmodule]
+    exact iSupIndep_genWeightSpace' K L M
+  · rw [← LieSubmodule.iSup_toSubmodule, iSup_genWeightSpace_eq_top' K L M]
+    simp
 
 end Triangularizable
 
@@ -188,10 +204,6 @@ Killing-semisimple Lie algebra is the internal direct sum of the simultaneous ei
 Cartan subalgebra, so `χ ↦ finrank (weightSpace M χ)` counts honest multiplicities. -/
 theorem isInternal_weightSpace :
     DirectSum.IsInternal fun χ : Weight K H M ↦ (weightSpace M (χ : H → K)).toSubmodule := by
-  refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top ?_ ?_
-  · rw [LieSubmodule.iSupIndep_toSubmodule]
-    simpa only [genWeightSpace_eq_weightSpace] using iSupIndep_genWeightSpace' K H M
-  · rw [← LieSubmodule.iSup_toSubmodule, iSup_weightSpace_eq_top K H M]
-    simp
+  simpa only [genWeightSpace_eq_weightSpace] using isInternal_genWeightSpace K H M
 
 end TauCeti

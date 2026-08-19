@@ -7,6 +7,8 @@ module
 
 public import Mathlib.Algebra.Lie.Weights.RootSystem
 public import Mathlib.LinearAlgebra.RootSystem.BaseExists
+public import TauCeti.Algebra.Lie.Submodule.Finrank
+public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
@@ -34,7 +36,7 @@ subtraction; the subtracted and added forms `dim L - dim H = 2 · #Δ⁺` and
 exponents `(dim L ± dim H) / 2` is dividing exactly.
 
 The `dim H` summand comes from the zero root space, which for a Cartan subalgebra is `H` itself
-(`LieAlgebra.zeroRootSubalgebra_eq_of_is_cartan`). `TauCeti.finrank_rootSpace_zero` records this at
+(`LieAlgebra.rootSpace_zero_eq`). `TauCeti.finrank_rootSpace_zero` records this at
 the level of dimensions, covering also the degenerate case `H = ⊥`, where the zero functional is
 not a weight at all and both sides vanish; that is why the sum below is split over `H.root` and its
 complement rather than by removing a named zero weight, which need not exist.
@@ -44,8 +46,7 @@ complement rather than by removing a named zero weight, which need not exist.
 * `TauCeti.isInternal_rootSpace`: `L` is the internal direct sum of the root spaces of `H`, indexed
   by the weights of `H` on `L`.
 * `TauCeti.finrank_rootSpace_zero`: the zero root space has the dimension of `H`.
-* `TauCeti.finrank_eq_finrank_cartan_add_card_root`: **`dim L = dim H + #Δ`**, whence
-  `TauCeti.finrank_cartan_le`.
+* `TauCeti.finrank_eq_finrank_cartan_add_card_root`: **`dim L = dim H + #Δ`**.
 * `TauCeti.card_root_eq_two_mul_ncard_posRoots`: `#Δ = 2 · #Δ⁺`, and `TauCeti.even_card_root` the
   parity of `#Δ` it gives.
 * `TauCeti.finrank_eq_finrank_cartan_add_two_mul_ncard_posRoots` and
@@ -58,13 +59,15 @@ complement rather than by removing a named zero weight, which need not exist.
 
 This is the numerical shadow of the root-space decomposition of Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, *"`L = H ⊕ ⨁_{α ∈ roots} Lα` with
-`finrank_rootSpace_eq_one` making each `Lα` a line"*. It is also the parity half of the bookkeeping
-pin `finrank_eq_rank_add_two_mul_card_isPos` of Layer 9 of
-`TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`, *"the parity identity
-`d = l + 2 · #Δ⁺`, stated additively so the exponents `(d ± l)/2` below are exact divisions"*. That
-pin states the identity with `LieAlgebra.rank ℂ L` in place of `dim H`; comparing Mathlib's
-`LieAlgebra.rank`, defined through the nilpotency degree of a generic element, with the dimension of
-a Cartan subalgebra is a separate statement and is not proved here.
+`finrank_rootSpace_eq_one` making each `Lα` a line"*.
+
+It is a prerequisite for, and **not** an instance of, the bookkeeping pin
+`finrank_eq_rank_add_two_mul_card_isPos` of Layer 9 of
+`TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`: that pin states the parity
+identity with `LieAlgebra.rank ℂ L` where the count below gives `dim H`. Bridging the two is the
+separate Layer 9 target `rank_eq_finrank_cartan`, which compares Mathlib's `LieAlgebra.rank`,
+defined through the nilpotency degree of a generic element, with the dimension of a Cartan
+subalgebra; it is not proved here, and no declaration below claims that pin.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Springer GTM 9 (1972),
   §8.1 (the root-space decomposition) and §10.1 (the pairing of positive and negative roots).
@@ -79,33 +82,25 @@ section RootSpaceDecomposition
 variable {K L : Type*} [Field K] [LieRing L] [LieAlgebra K L] [FiniteDimensional K L]
   (H : LieSubalgebra K L) [H.IsCartanSubalgebra]
 
-omit [FiniteDimensional K L] [H.IsCartanSubalgebra] in
-/-- Reading the dimension of a Lie submodule through its underlying submodule changes nothing.
-This is the bridge between `TauCeti.finrank_eq_sum_finrank_of_isInternal`, which sums over
-submodules, and Mathlib's root-space dimension lemmas, which are stated for the Lie submodule. -/
-private theorem finrank_toSubmodule (N : LieSubmodule K H L) :
-    finrank K N.toSubmodule = finrank K N :=
-  rfl
-
 open scoped Classical in
 /-- **The root-space decomposition.** A finite-dimensional Lie algebra that is triangularizable
 over a Cartan subalgebra `H` is the internal direct sum of the root spaces of `H`, indexed by all
 the weights of `H` on `L`. The nonzero weights are the roots; the zero weight, when it is a weight
-at all, contributes `H` itself. -/
+at all, contributes `H` itself.
+
+This is `TauCeti.isInternal_genWeightSpace` for the adjoint action of `H` on `L`, a root space
+being by definition the generalized weight space of that action. -/
 theorem isInternal_rootSpace [LieModule.IsTriangularizable K H L] :
-    DirectSum.IsInternal fun α : Weight K H L ↦ (rootSpace H (α : H → K)).toSubmodule := by
-  refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top ?_ ?_
-  · rw [LieSubmodule.iSupIndep_toSubmodule]
-    exact iSupIndep_genWeightSpace' K H L
-  · rw [← LieSubmodule.iSup_toSubmodule, iSup_genWeightSpace_eq_top' K H L]
-    simp
+    DirectSum.IsInternal fun α : Weight K H L ↦ (rootSpace H (α : H → K)).toSubmodule :=
+  isInternal_genWeightSpace K H L
 
 /-- **The zero root space is the Cartan subalgebra**, at the level of dimensions. When the zero
 functional is not a weight of `H` on `L` both sides vanish, since then `H` itself is trivial. -/
 @[simp]
 theorem finrank_rootSpace_zero : finrank K (rootSpace H (0 : H → K)) = finrank K H := by
-  have h : (rootSpace H (0 : H → K)).toSubmodule = H.toSubmodule := by
-    rw [← LieAlgebra.coe_zeroRootSubalgebra K L H, zeroRootSubalgebra_eq_of_is_cartan K L H]
+  have h : (rootSpace H (0 : H → K)).toSubmodule = H.toSubmodule :=
+    (congrArg LieSubmodule.toSubmodule (LieAlgebra.rootSpace_zero_eq K L H)).trans
+      H.coe_toLieSubmodule
   exact congrArg (fun N : Submodule K L ↦ finrank K N) h
 
 end RootSpaceDecomposition
@@ -162,10 +157,6 @@ theorem finrank_eq_finrank_cartan_add_card_root :
       finrank K (rootSpace H (α : H → K)),
     sum_finrank_rootSpace_compl_root H, sum_finrank_rootSpace_root H]
 
-/-- The dimension of a Cartan subalgebra is at most the dimension of the whole Lie algebra. -/
-theorem finrank_cartan_le : finrank K H ≤ finrank K L :=
-  finrank_eq_finrank_cartan_add_card_root H ▸ Nat.le_add_right _ _
-
 /-- **The number of roots is twice the number of positive roots** for any base, since root
 negation exchanges the positive and the negative roots. -/
 theorem card_root_eq_two_mul_ncard_posRoots (b : (IsKilling.rootSystem H).Base) :
@@ -188,10 +179,9 @@ theorem finrank_eq_finrank_cartan_add_two_mul_card_isPos
     (b : (IsKilling.rootSystem H).Base) :
     finrank K L
       = finrank K H + 2 * (Finset.univ.filter fun i : H.root ↦ b.IsPos i).card := by
-  have hpos : posRoots (IsKilling.rootSystem H) b
-      = ↑(Finset.univ.filter fun i : H.root ↦ b.IsPos i) :=
-    Set.ext fun i ↦ by simp [mem_posRoots]
-  rw [finrank_eq_finrank_cartan_add_two_mul_ncard_posRoots H b, hpos, Set.ncard_coe_finset]
+  rw [finrank_eq_finrank_cartan_add_two_mul_ncard_posRoots H b,
+    ← card_posRootsFinset (IsKilling.rootSystem H) b,
+    posRootsFinset_eq_filter (IsKilling.rootSystem H) b]
 
 /-- The number of roots is even: root negation pairs them up. No base has to be supplied, since
 one always exists (`RootPairing.nonempty_base`). -/
