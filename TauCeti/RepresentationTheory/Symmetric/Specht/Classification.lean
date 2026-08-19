@@ -75,8 +75,15 @@ instance spechtModule_simple (μ : n.Partition) : Simple (spechtModule μ) :=
   (FDRep.simple_iff_isIrreducible _).mpr (isIrreducible_spechtModule μ)
 
 /-- The character of the Specht module `S^μ`, as a class function on `Sₙ`. -/
+@[expose]
 noncomputable def spechtCharacter (μ : n.Partition) : ClassFunction ℚ (Equiv.Perm (Fin n)) :=
   ofFDRep (spechtModule μ)
+
+/-- The defining equation of `TauCeti.spechtCharacter`, so that consumers can rewrite with it
+instead of unfolding the definition. -/
+@[simp]
+theorem spechtCharacter_def (μ : n.Partition) :
+    spechtCharacter μ = ofFDRep (spechtModule μ) := rfl
 
 /-- **The Specht characters are orthonormal** for the pairing of class functions: the diagonal
 values are `1` by absolute irreducibility, and the off-diagonal ones vanish by distinctness. -/
@@ -86,7 +93,7 @@ theorem characterPairing_spechtCharacter (μ ν : n.Partition) :
   · have hone : Module.finrank ℚ (spechtModule μ ⟶ spechtModule μ) = 1 := by
       rw [FDRep.finrank_hom_eq_finrank_intertwiningMap]
       simpa using (spechtModuleIntertwiningEndAlgEquiv μ).toLinearEquiv.finrank_eq
-    rw [ite_eq_left rfl, spechtCharacter, characterPairing_ofFDRep_eq_finrank, hone,
+    rw [ite_eq_left rfl, spechtCharacter_def, characterPairing_ofFDRep_eq_finrank, hone,
       Nat.cast_one]
   · rw [ite_eq_right hne]
     refine characterPairing_ofFDRep_eq_zero _ _ (not_nonempty_iff.mp ?_)

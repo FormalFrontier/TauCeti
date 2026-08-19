@@ -49,9 +49,9 @@ open CategoryTheory Representation
 
 namespace FDRep
 
-universe u
+universe u v
 
-variable {k G : Type u} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 
 /-- The linear map underlying a morphism of `FDRep k G`. -/
 @[expose]
@@ -154,6 +154,8 @@ noncomputable def subtypeHom {V : FDRep k G} (U : Subrepresentation V.ρ) :
 theorem homLinearMap_subtypeHom {V : FDRep k G} (U : Subrepresentation V.ρ)
     (u : U.toSubmodule) : homLinearMap (subtypeHom U) u = (u : V) := rfl
 
+/-- **A morphism of `FDRep k G` is a monomorphism exactly when it is injective**: monicity in the
+category is detected on the underlying linear map. -/
 theorem mono_iff_injective {V W : FDRep k G} (f : V ⟶ W) :
     Mono f ↔ Function.Injective (homLinearMap f) := by
   constructor
@@ -180,6 +182,9 @@ theorem mono_iff_injective {V W : FDRep k G} (f : V ⟶ W) :
     have := congrArg (fun φ : Z ⟶ W => homLinearMap φ z) hab
     simpa using this
 
+/-- **A morphism of `FDRep k G` is an isomorphism exactly when it is bijective**: an intertwiner
+with a set-theoretic inverse has an inverse in the category, the inverse being automatically
+equivariant. -/
 theorem isIso_iff_bijective {V W : FDRep k G} (f : V ⟶ W) :
     IsIso f ↔ Function.Bijective (homLinearMap f) := by
   constructor
