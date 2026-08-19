@@ -9,7 +9,6 @@ public import TauCeti.RepresentationTheory.Quiver.Reflection.Admissible
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Coxeter
 public import TauCeti.RepresentationTheory.Quiver.Reflection.EulerForm
 public import TauCeti.RepresentationTheory.Quiver.Reflection.FullyFaithful
-public import TauCeti.RepresentationTheory.Quiver.Reflection.Iterate
 
 /-!
 # The Coxeter functor
@@ -160,15 +159,18 @@ theorem isZero_reflectionFunctorList_obj :
 
 /-! ### The action on an indecomposable representation -/
 
-/-- **A composite of reflection functors on an indecomposable representation.** Either no stage
-meets the vertex simple at its own sink -- and then the composite is again indecomposable, its
-dimension vector the corresponding product of simple reflections applied to the dimension vector
-of `M` -- or some stage does, and the composite is the zero representation.
+/-- **A composite of reflection functors on an indecomposable representation.** Either the
+composite is again indecomposable, and then its dimension vector is the corresponding product of
+simple reflections applied to the dimension vector of `M`, or the composite is the zero
+representation.
 
-Both cases occur: for example, the vertex simple `Sᵢ` at the first entry is annihilated by
-`TauCeti.isZero_reflectRep`. The simple reflections on the right are those of the *original*
-quiver, by `TauCeti.vertexPreReflectionList_reflectAt`, even though the successive stages act on
-successively reflected quivers. -/
+The proof runs the dichotomy `TauCeti.incomingSum_surjective_or_forall_subsingleton` at each
+stage: a stage meeting the vertex simple at its own sink annihilates the representation
+(`TauCeti.isZero_reflectRep`), which is what lands in the second branch, while every other stage
+preserves indecomposability and reflects the dimension vector. Both branches occur -- the vertex
+simple at the first entry falls into the second. The simple reflections on the right are those of
+the *original* quiver, by `TauCeti.vertexPreReflectionList_reflectAt`, even though the successive
+stages act on successively reflected quivers. -/
 theorem indecomposable_and_dimVector_reflectionFunctorList_or_isZero [DecidableEq V] :
     ∀ (l : List V) (q : _root_.Quiver.{w} V)
       (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b))
@@ -293,17 +295,6 @@ noncomputable def coxeterFunctor (k : Type u) {V : Type v} [fld : Field k] [fV :
     @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld q :=
   transportCodomain (Quiver.reflectList_eq_self q hnd hall) (reflectionFunctorList k l q hq hl)
 
-private theorem coxeterFunctor_def_aux (q : _root_.Quiver.{w} V)
-    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
-    (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l) :
-    coxeterFunctor.{u, v, w, x} k q hq hnd hall hl =
-      Eq.mp (congrArg (fun r : _root_.Quiver.{w} V ↦
-        @QuiverRep.{u, v, w, max v w x} k V fld q ⥤
-          @QuiverRep.{u, v, w, max v w x} k V fld r)
-        (Quiver.reflectList_eq_self q hnd hall)) (reflectionFunctorList k l q hq hl) := by
-  change transportCodomain _ _ = _
-  exact transportCodomain_eq_eqMp _ _
-
 /-- The Coxeter functor is the reflection-functor composite transported along the equality between
 the iteratively reflected quiver and the original quiver. -/
 theorem coxeterFunctor_def (q : _root_.Quiver.{w} V)
@@ -314,7 +305,8 @@ theorem coxeterFunctor_def (q : _root_.Quiver.{w} V)
         @QuiverRep.{u, v, w, max v w x} k V fld q ⥤
           @QuiverRep.{u, v, w, max v w x} k V fld r)
         (Quiver.reflectList_eq_self q hnd hall)) (reflectionFunctorList k l q hq hl) :=
-  coxeterFunctor_def_aux q hq hnd hall hl
+  transportCodomain_eq_eqMp (Quiver.reflectList_eq_self q hnd hall)
+    (reflectionFunctorList k l q hq hl)
 
 /-- Transporting the reflection-functor composite back to the original quiver does not change its
 dimension vector after coercion to integers. -/
