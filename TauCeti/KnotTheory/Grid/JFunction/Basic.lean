@@ -177,7 +177,7 @@ theorem Icount_mono_right {s t₁ t₂ : Finset (Fin n × Fin n)} (h : t₁ ⊆ 
     exact ⟨⟨hpq.1.1, h hpq.1.2⟩, hpq.2⟩
 
 /-- The reflection map on pairs of grid squares is injective. -/
-theorem prodMap_swap_injective :
+private theorem prodMap_swap_injective :
     Function.Injective
       (Prod.map (Prod.swap (α := Fin n) (β := Fin n)) (Prod.swap (α := Fin n) (β := Fin n))) :=
   Prod.swap_injective.prodMap Prod.swap_injective

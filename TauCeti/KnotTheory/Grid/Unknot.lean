@@ -373,7 +373,8 @@ private theorem card_filter_le_X_le_O :
         rw [hlast, finRotate_last, Fin.val_zero] at h2'
         omega
       rw [coe_finRotate_of_ne_last hne] at h2'
-      exact ⟨hne, Fin.ext (show (p.2 : ℕ) = (p.1 : ℕ) by omega)⟩
+      have hpval : (p.2 : ℕ) = (p.1 : ℕ) := by omega
+      exact ⟨hne, Fin.ext hpval⟩
     · rintro ⟨h1, h2⟩
       have hp : p.2 = p.1 := h2
       refine ⟨le_of_eq hp.symm, ?_⟩

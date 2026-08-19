@@ -186,6 +186,26 @@ theorem JNumCenter_empty_left (t : Finset (Fin n × Fin n)) : JNumCenter ∅ t =
 theorem JNumCenter_empty_right (s : Finset (Fin n × Fin n)) : JNumCenter s ∅ = 0 := by
   simp [JNumCenter_def]
 
+/-- The numerator of the marking pairing of a single grid point against marked squares is the
+sum of the numbers of markings weakly northeast and strictly southwest of the point. -/
+theorem JNumCenter_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
+    JNumCenter {p} t =
+      (t.filter fun q => p ≤ q).card + (t.filter fun q => IsSouthWest q p).card := by
+  rw [JNumCenter_def, ICenter_def, I_def, Finset.singleton_product,
+    Finset.product_singleton, Finset.filter_map, Finset.filter_map, Finset.card_map,
+    Finset.card_map]
+  rfl
+
+/-- The numerator of the marking pairing against a single marked square is the sum of the
+numbers of grid points weakly southwest and strictly northeast of the marking. -/
+theorem JNumCenter_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
+    JNumCenter s {p} =
+      (s.filter fun q => q ≤ p).card + (s.filter fun q => IsSouthWest p q).card := by
+  rw [JNumCenter_def, ICenter_def, I_def, Finset.product_singleton,
+    Finset.singleton_product, Finset.filter_map, Finset.filter_map, Finset.card_map,
+    Finset.card_map]
+  rfl
+
 /-- The numerator of the marking pairing is additive in the grid points over disjoint unions. -/
 theorem JNumCenter_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
     JNumCenter (s₁ ∪ s₂) t = JNumCenter s₁ t + JNumCenter s₂ t := by
@@ -236,6 +256,22 @@ theorem JCenter_empty_left (t : Finset (Fin n × Fin n)) : JCenter ∅ t = 0 := 
 @[simp]
 theorem JCenter_empty_right (s : Finset (Fin n × Fin n)) : JCenter s ∅ = 0 := by
   simp [JCenter_def]
+
+/-- The marking pairing of a single grid point against marked squares is half the sum of the
+numbers of markings weakly northeast and strictly southwest of the point. -/
+theorem JCenter_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
+    JCenter {p} t =
+      (((t.filter fun q => p ≤ q).card +
+        (t.filter fun q => IsSouthWest q p).card : ℕ) : ℚ) / 2 := by
+  rw [JCenter_def, JNumCenter_singleton_left]
+
+/-- The marking pairing against a single marked square is half the sum of the numbers of grid
+points weakly southwest and strictly northeast of the marking. -/
+theorem JCenter_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
+    JCenter s {p} =
+      (((s.filter fun q => q ≤ p).card +
+        (s.filter fun q => IsSouthWest p q).card : ℕ) : ℚ) / 2 := by
+  rw [JCenter_def, JNumCenter_singleton_right]
 
 /-- The marking pairing is additive in the grid points over disjoint unions. -/
 theorem JCenter_union_left {s₁ s₂ t : Finset (Fin n × Fin n)} (h : Disjoint s₁ s₂) :
