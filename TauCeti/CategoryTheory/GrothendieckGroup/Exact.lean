@@ -279,7 +279,7 @@ variable (F : C ⥤ D) [F.Additive]
 
 /-- A conflation-exact functor carries every chosen relation of the source into the relations of
 the target. -/
-theorem mapsTo_exactRelations (hF : E.IsConflationExact E' F) :
+private theorem mapsTo_exactRelations (hF : E.IsConflationExact E' F) :
     ∀ r ∈ exactRelations E, freeMap F r ∈ AddSubgroup.closure (exactRelations E') := by
   rintro _ ⟨S, hS, rfl⟩
   rw [freeMap_conflationRelation]
