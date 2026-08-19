@@ -44,8 +44,9 @@ is built from; it is injective as soon as the value ring is reduced.
   morphism of value rings.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFunctor`: the resulting group-valued functor.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius`: the `p ^ n`-power Frobenius
-  endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring and
-  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change.
+  endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring,
+  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change, and
+  `kostantElementaryMap_kostantElementaryFrobenius` its naturality in the value ring.
 
 ## References
 
@@ -391,6 +392,19 @@ theorem kostantElementaryFrobenius_add (m : ℕ) :
         Nat.add_comm n m]
   rw [kostantElementaryFrobenius, kostantElementaryFrobenius, kostantElementaryFrobenius, hadd,
     kostantElementaryMap_comp]
+
+/-- The Frobenius endomorphism of the elementary group commutes with base change of the value ring,
+because a ring homomorphism preserves `p ^ n`-th powers. -/
+theorem kostantElementaryMap_kostantElementaryFrobenius {B : CommAlgCat.{w} ℤ} [ExpChar B p]
+    (φ : A ⟶ B) (g : kostantElementarySubgroup e h ρ M hM hnil A) :
+    kostantElementaryMap e h ρ M hM hnil φ
+        (kostantElementaryFrobenius e h ρ M hM hnil p n A g) =
+      kostantElementaryFrobenius e h ρ M hM hnil p n B
+        (kostantElementaryMap e h ρ M hM hnil φ g) := by
+  have hcomm : iterateFrobeniusValueHom p n A ≫ φ = φ ≫ iterateFrobeniusValueHom p n B :=
+    CommAlgCat.hom_ext <| AlgHom.ext fun x => by simp
+  simp only [kostantElementaryFrobenius_eq_kostantElementaryMap, ← MonoidHom.comp_apply,
+    ← kostantElementaryMap_comp, hcomm]
 
 /-- The Frobenius endomorphism of the elementary group is injective over a reduced value ring.
 

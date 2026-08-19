@@ -22,8 +22,11 @@ This file forms their composite
 steinberg = γ ∘ Frob_q,
 ```
 
-the shape of the Steinberg endomorphism whose fixed points are the finite groups of Lie type
-outside the Suzuki--Ree families. Its defining equation on the root subgroups is
+the abstract shape of a Steinberg endomorphism outside the Suzuki--Ree families. The Kostant data
+`(e, h, ρ, M)` and the value ring `A` stay arbitrary here, so the fixed points of the composite are
+only an abstract subgroup: identifying them with a finite group of Lie type needs the pinned
+ambient data of the later milestone `L0` together with an identification theorem, neither of which
+is available yet, and no finiteness is proved below. Its defining equation on the root subgroups is
 
 ```text
 steinberg (xᵢ(t)) = x_{σ i}(t ^ q).
@@ -32,11 +35,12 @@ steinberg (xᵢ(t)) = x_{σ i}(t ^ q).
 The two factors commute, so iterating the composite separates them: the `k`-th iterate is
 `γ ^ k ∘ Frob_{q ^ k}`. When the symmetry has order `d`, in the sense that `θ ^ d` is the identity
 of the representation, the `d`-th iterate is therefore the plain Frobenius `Frob_{q ^ d}`, and a
-`steinberg`-fixed point is fixed by it. That containment is the standard statement that a
-graph-twisted group of Lie type sits inside the untwisted group over the degree-`d` extension of
-the field of definition: `²A`, `²D` and `²E₆` take `d = 2` and `³D₄` takes `d = 3`. Conversely a
-point fixed by both `Frob_q` and `γ` is fixed by the composite, though in general not every fixed
-point of the composite arises this way.
+`steinberg`-fixed point is fixed by it. Once the data is pinned and the fixed subgroups are
+identified, that containment becomes the standard statement that a graph-twisted group of Lie type
+sits inside the untwisted group over the degree-`d` extension of the field of definition, with
+`d = 2` for `²A`, `²D` and `²E₆` and `d = 3` for `³D₄`; what is proved below is the containment of
+abstract fixed subgroups it specializes to. Conversely a point fixed by both `Frob_q` and `γ` is
+fixed by the composite, though in general not every fixed point of the composite arises this way.
 
 Taking the untwisted symmetry, `θ` the identity, collapses `steinberg` to `Frob_q` itself, so the
 nine untwisted families are the same construction rather than a separate one.
@@ -80,10 +84,17 @@ maps", at the level of generality the elementary group is built at: that milesto
 the simple-root-subgroup equations and the order relations. Its three inputs (the pinning equation,
 the order relation `γ ^ d = 1`, and the commutation of `γ` with `Frob_q`) are the results of
 `NumberedSymmetry.lean`, and the composite formed here is what milestone `L3` feeds to
-`TauCeti.FixedPointCandidate`. What remains for `L1` after this is the ambient group of `L0`, which
-supplies the pinned Chevalley--Demazure data that instantiates `(e, h, ρ, M)` for a given valid
-Lie-type index; the Suzuki--Ree branches of `L2` are a separate construction, an odd power of an
-exceptional isogeny rather than a composite with a graph automorphism.
+`TauCeti.FixedPointCandidate`.
+
+Nothing here consumes `L0`. The Kostant datum `(e, h, ρ, M)` and the value ring are parameters, so
+this file uses none of the four carriers `L0` owns (`ValidLieTypeIndex.AmbientGroup`, its `Group`
+instance, `ValidLieTypeIndex.Closure`, and `ValidLieTypeIndex.simpleRootSubgroup`), exactly as its
+two factors, already on `main`, use none of them. What remains for `L1` after this is the ambient
+group of `L0`, which supplies the pinned Chevalley--Demazure data that instantiates `(e, h, ρ, M)`
+for a given valid Lie-type index; `ValidLieTypeIndex.steinberg` on the `GraphTwistedIndex` branches
+is then this construction applied to that data. The Suzuki--Ree branches of `L2` are a separate
+construction, an odd power of an exceptional isogeny rather than a composite with a graph
+automorphism.
 
 ## References
 
@@ -127,9 +138,12 @@ variable (p n : ℕ) (A : CommAlgCat.{w} ℤ) [ExpChar A p]
 /-- The **Steinberg endomorphism** attached to a symmetry `(σ, θ)` of the numbered Kostant data and
 to the `p ^ n`-power Frobenius of the value ring: the composite `γ ∘ Frob_q`, where `q = p ^ n`.
 
-Over an algebraic closure of `𝔽_p` and with `θ` realising a symmetry of the Dynkin diagram, this is
-the endomorphism whose fixed points are the untwisted or graph-twisted finite group of Lie type.
-The Suzuki--Ree families are *not* of this form: their Steinberg maps are odd powers of an
+For general Kostant data and a general value ring this is just that composite, and its fixed
+subgroup is an abstract subgroup of the elementary group. Over an algebraic closure of `𝔽_p`, with
+the pinned ambient data of the later milestone `L0` and with `θ` realising a symmetry of the Dynkin
+diagram, it is intended to be the endomorphism whose fixed points are the untwisted or
+graph-twisted finite group of Lie type; that identification is a separate theorem and is not proved
+here. The Suzuki--Ree families are *not* of this form: their Steinberg maps are odd powers of an
 exceptional isogeny and use no diagram permutation. -/
 noncomputable def kostantElementarySteinberg :
     kostantElementarySubgroup e h ρ M hM hnil A →*
@@ -246,9 +260,11 @@ variable (p n : ℕ) (A : CommAlgCat.{w} ℤ) [ExpChar A p]
 /-- A point fixed by a Steinberg endomorphism whose symmetry has order `d` is fixed by the
 Frobenius `Frob_{q ^ d}`.
 
-This is the containment of a graph-twisted group of Lie type in the untwisted group over the
-degree-`d` extension of its field of definition. The reverse containment is not claimed and fails
-in general, the twisted group being a proper subgroup once the symmetry is nontrivial. -/
+Once the data is pinned and the fixed subgroups are identified, this specializes to the containment
+of a graph-twisted group of Lie type in the untwisted group over the degree-`d` extension of its
+field of definition; here it is a containment of abstract fixed subgroups. The reverse containment
+is not claimed and fails in general, the twisted group being a proper subgroup once the symmetry is
+nontrivial. -/
 theorem fixedSubgroup_kostantElementarySteinberg_le {d : ℕ} (hd : ∀ v, (θ ^ d) v = v) :
     fixedSubgroup (kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A) ≤
       fixedSubgroup (kostantElementaryFrobenius e h ρ M hM hnil p (n * d) A) := by
@@ -279,22 +295,6 @@ section BaseChange
 
 variable (p n : ℕ) {A B : CommAlgCat.{w} ℤ} [ExpChar A p] [ExpChar B p]
 
-/-- The Frobenius endomorphism of the elementary group commutes with base change of the value ring,
-because a ring homomorphism preserves `p ^ n`-th powers. -/
-theorem kostantElementaryMap_kostantElementaryFrobenius (φ : A ⟶ B)
-    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    kostantElementaryMap e h ρ M hM hnil φ
-        (kostantElementaryFrobenius e h ρ M hM hnil p n A g) =
-      kostantElementaryFrobenius e h ρ M hM hnil p n B
-        (kostantElementaryMap e h ρ M hM hnil φ g) := by
-  have hcomm : iterateFrobeniusValueHom p n A ≫ φ = φ ≫ iterateFrobeniusValueHom p n B :=
-    CommAlgCat.hom_ext <| AlgHom.ext fun x => by
-      rw [CommAlgCat.hom_comp, AlgHom.comp_apply, CommAlgCat.hom_comp, AlgHom.comp_apply,
-        iterateFrobeniusValueHom_apply, iterateFrobeniusValueHom_apply, map_pow]
-  rw [kostantElementaryFrobenius_eq_kostantElementaryMap,
-    kostantElementaryFrobenius_eq_kostantElementaryMap, ← MonoidHom.comp_apply,
-    ← MonoidHom.comp_apply, ← kostantElementaryMap_comp, ← kostantElementaryMap_comp, hcomm]
-
 /-- The Steinberg endomorphism commutes with base change of the value ring.
 
 Both of its factors do, so the elementary groups over the value rings of a fixed exponential
@@ -311,9 +311,9 @@ theorem kostantElementaryMap_kostantElementarySteinberg (φ : A ⟶ B)
 
 /-- Base change of the value ring carries Steinberg-fixed points to Steinberg-fixed points.
 
-For a field extension this is the inclusion of a finite group of Lie type into the group of the
-same type over the larger field; nothing here asserts that the inclusion is proper, or that either
-side is finite. -/
+Both sides are abstract fixed subgroups of the elementary groups; nothing here identifies either
+one with a finite group of Lie type, asserts that either is finite, or asserts that the map between
+them is injective. -/
 theorem map_fixedSubgroup_kostantElementarySteinberg_le (φ : A ⟶ B) :
     (fixedSubgroup (kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A)).map
         (kostantElementaryMap e h ρ M hM hnil φ) ≤
