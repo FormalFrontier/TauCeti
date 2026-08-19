@@ -25,8 +25,9 @@ algebra automorphism of `k[N]`.  This file packages that automorphism as a monoi
 
 * `MonoidAlgebra.conjNormalAlgAut_single`: conjugation acts on the group-algebra basis by
   conjugating the group element.
-* `MonoidAlgebra.conjNormalAlgAut_inv_self_apply`: conjugating by `g` and then by `g⁻¹` is the
-  identity.
+
+Conjugating by `g` and then by `g⁻¹` is the identity; that cancellation is left to `simp`, which
+proves it from `map_inv` and `AlgEquiv.symm_apply_apply`.
 -/
 
 public section
@@ -50,11 +51,5 @@ variable {k N}
 theorem conjNormalAlgAut_single (g : G) (n : N) (a : k) :
     conjNormalAlgAut k N g (single n a) = single (MulAut.conjNormal g n) a :=
   domCongr_single _ _ _
-
-/-- Conjugating by `g` and then by `g⁻¹` is the identity.  Not a `simp` lemma: `simp` already
-proves it from `map_inv` and `AlgEquiv.symm_apply_apply`, and tagging it fails `simpNF`. -/
-theorem conjNormalAlgAut_inv_self_apply (g : G) (a : k[N]) :
-    conjNormalAlgAut k N g⁻¹ (conjNormalAlgAut k N g a) = a := by
-  simp
 
 end MonoidAlgebra

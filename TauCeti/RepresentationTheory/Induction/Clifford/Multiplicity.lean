@@ -114,7 +114,7 @@ open TauCeti
 namespace Representation
 
 open TauCeti.Representation
-open MonoidAlgebra (conjNormalAlgAut conjNormalAlgAut_single conjNormalAlgAut_inv_self_apply)
+open MonoidAlgebra (conjNormalAlgAut conjNormalAlgAut_single)
 
 section Translate
 

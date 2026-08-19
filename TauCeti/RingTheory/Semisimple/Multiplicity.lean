@@ -191,7 +191,11 @@ variable {k A M : Type*} [Field k] [Ring A] [Algebra k A] [AddCommGroup M] [Modu
 /-- **A nonzero submodule has a positive-dimensional hom space.**  The inclusion of a nonzero
 `A`-submodule `S` of `M` is a nonzero element of `S →ₗ[A] M`, and that hom space is
 finite-dimensional over `k` because `S` and `M` are.  For a simple `S` over a splitting field this
-is the statement that a constituent occurs with positive multiplicity. -/
+is the statement that a constituent occurs with positive multiplicity.
+
+`A` is a ring rather than a semiring because the finite-dimensionality of the hom space is
+`LinearMap.finiteDimensional'`, which needs one; over a semiring `↥S` carries no `AddCommGroup`
+instance and `Module.Finite.linearMap` does not apply. -/
 theorem finrank_linearMap_pos_of_ne_bot {S : Submodule A M} (hS : S ≠ ⊥) :
     0 < Module.finrank k (S →ₗ[A] M) := by
   have : Module.Finite k ↥S :=
@@ -204,3 +208,4 @@ theorem finrank_linearMap_pos_of_ne_bot {S : Submodule A M} (hS : S ≠ ⊥) :
 end Positivity
 
 end TauCeti
+
