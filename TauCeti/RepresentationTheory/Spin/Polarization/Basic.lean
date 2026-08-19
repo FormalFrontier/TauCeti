@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+
 -- Private: `Subspace.dual_finrank_eq`, `Module.finrank_prod` and
 -- `LinearMap.finrank_le_finrank_of_injective` occur only inside the proofs of the dimension
 -- count; none is named by an exported statement.
@@ -30,15 +30,16 @@ giving `dim W = l` both in dimension `2l` (type `Dₗ`) and in dimension `2l + 1
 
 ## Main results
 
-* `TauCeti.SpinPolarizationData.finrank_eq`: `dim V = 2 · dim W + dim line`, with
-  `TauCeti.SpinPolarizationData.finrank_W'` and
-  `TauCeti.SpinPolarizationData.finrank_line_le_one` supplying its two ingredients.
-* `TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul` and
-  `TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul_add_one`: `dim W = l` in dimension
-  `2l` and in dimension `2l + 1`.
-* `TauCeti.SpinPolarizationData.line_eq_bot_of_finrank_eq_two_mul` and
-  `TauCeti.SpinPolarizationData.finrank_line_eq_one_of_finrank_eq_two_mul_add_one`: what the
-  remainder is in each case — nothing, respectively a line.
+* `TauCeti.SpinPolarizationData.finrank_eq_two_mul_finrank_W_add_finrank_line` and
+  `TauCeti.SpinPolarizationData.finrank_line_le_one` give the dimension bookkeeping of a
+  finite-dimensional polarization.
+* `TauCeti.SpinPolarizationData.line_eq_bot_of_even_finrank` and
+  `TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul` are its even-dimensional
+  consequences.
+* `TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul_add_one` and
+  `TauCeti.SpinPolarizationData.finrank_line_eq_one_of_finrank_eq_two_mul_add_one` are its
+  odd-dimensional consequences: the isotropic summand again has dimension `l`, and the remainder
+  is exactly a line.
 
 ## References
 
@@ -144,63 +145,74 @@ open Module
 variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
   {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
 
-/-- **The two isotropic summands of a polarization are equidimensional**, because the polar form
-identifies the second with the dual of the first. -/
-theorem finrank_W' : finrank K P.W' = finrank K P.W :=
-  P.pairingEquiv.finrank_eq.trans Subspace.dual_finrank_eq
+/-! ### The dimensions of the three summands
 
-/-- **The remainder of a polarization is at most a line**: it embeds into the ground field through
-its coordinate. -/
+A polarization is a decomposition `V = W ⊕ W' ⊕ L` in which the polar form pairs `W` with `W'`
+perfectly and `L` sits inside the scalar line. The first fact makes the two isotropic summands
+equidimensional and the second bounds the remainder by one dimension, so the dimension of `V`
+determines the dimension of `W` up to the parity of `finrank V`. -/
+
+/-- **The two isotropic summands of a polarization have the same dimension.** The polar form
+identifies the second with the dual of the first, and a space and its dual have the same
+dimension. -/
+theorem finrank_W'_eq_finrank_W : finrank K P.W' = finrank K P.W := by
+  rw [P.pairingEquiv.finrank_eq, Subspace.dual_finrank_eq]
+
+/-- **The orthogonal remainder of a polarization is at most a line.** Its scalar coordinate
+`SpinPolarizationData.lineCoordinate` is injective into `K`, which is one-dimensional. -/
 theorem finrank_line_le_one : finrank K P.line ≤ 1 := by
-  simpa using P.lineCoordinate.finrank_le_finrank_of_injective P.lineCoordinate_injective
+  have h := LinearMap.finrank_le_finrank_of_injective (f := P.lineCoordinate)
+    P.lineCoordinate_injective
+  simpa using h
 
 variable [FiniteDimensional K V]
 
-/-- **The dimension of a polarized quadratic space**: twice the dimension of the isotropic summand,
-plus the dimension of the remainder — which is `0` or `1` by
-`TauCeti.SpinPolarizationData.finrank_line_le_one`, so the parity of `finrank K V` decides which. -/
-theorem finrank_eq : finrank K V = 2 * finrank K P.W + finrank K P.line := by
-  have h := P.decompositionEquiv.finrank_eq
-  rw [finrank_prod, finrank_prod, P.finrank_W'] at h
-  omega
+/-- **The dimension of a polarized quadratic space**: twice the dimension of the isotropic summand
+`W`, plus the dimension of the remainder. Together with `finrank_line_le_one` this pins
+`finrank W` to `finrank V / 2`. -/
+theorem finrank_eq_two_mul_finrank_W_add_finrank_line :
+    finrank K V = 2 * finrank K P.W + finrank K P.line := by
+  rw [← P.decompositionEquiv.finrank_eq, finrank_prod, finrank_prod, P.finrank_W'_eq_finrank_W]
+  ring
 
-/-- In **even** dimension `2l` the isotropic summand of a polarization has dimension `l`. This is
-the type `Dₗ` case, where the spinor module `⋀·W` has dimension `2ˡ`. -/
+/-- **In even dimension a polarization has no remainder.** The remainder is at most a line and
+carries the parity of `finrank V`, so an even-dimensional space forces it to vanish. This is the
+hypothesis under which the exterior parity of `⋀·W` splits the spin representation, in
+`TauCeti/RepresentationTheory/Spin/HalfSpin.lean`. -/
+theorem line_eq_bot_of_even_finrank (h : Even (finrank K V)) : P.line = ⊥ := by
+  obtain ⟨m, hm⟩ := h
+  have h₁ := P.finrank_line_le_one
+  have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
+  exact Submodule.finrank_eq_zero.1 (by omega)
+
+/-- **In even dimension the isotropic summand has half the dimension.** The isotropic summand `W`
+of a polarization of a `2l`-dimensional space has dimension `l`. This is the type `Dₗ` case, where
+the spinor module `⋀·W` has dimension `2ˡ`. -/
 theorem finrank_W_of_finrank_eq_two_mul {l : ℕ} (hV : finrank K V = 2 * l) :
     finrank K P.W = l := by
-  have h := P.finrank_eq
-  have := P.finrank_line_le_one
+  have h₁ := P.finrank_line_le_one
+  have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
   omega
 
-/-- **In even dimension the remainder of a polarization is trivial**: the two isotropic summands,
-of equal dimension, already exhaust an even-dimensional space, so the remainder — at most a line by
-`TauCeti.SpinPolarizationData.finrank_line_le_one` — has nowhere to sit. This is the hypothesis
-`P.line = ⊥` under which the two parity halves of the spinor module are subrepresentations, in
-`TauCeti/RepresentationTheory/Spin/HalfSpin.lean`. -/
-theorem line_eq_bot_of_finrank_eq_two_mul {l : ℕ} (hV : finrank K V = 2 * l) : P.line = ⊥ := by
-  refine Submodule.finrank_eq_zero.1 ?_
-  have h := P.finrank_eq
-  have := P.finrank_line_le_one
-  omega
-
-/-- In **odd** dimension `2l + 1` the isotropic summand of a polarization again has dimension `l`.
-This is the type `Bₗ` case, where the spinor module `⋀·W` has dimension `2ˡ` and the parity
-splitting is not one of representations. -/
+/-- **In odd dimension the isotropic summand again has half the dimension, rounded down.** The
+isotropic summand `W` of a polarization of a `2l + 1`-dimensional space has dimension `l`, the odd
+dimension being taken up by the remainder. This is the type `Bₗ` case, where the spinor module
+`⋀·W` again has dimension `2ˡ` but the parity splitting is not one of representations. -/
 theorem finrank_W_of_finrank_eq_two_mul_add_one {l : ℕ} (hV : finrank K V = 2 * l + 1) :
     finrank K P.W = l := by
-  have h := P.finrank_eq
-  have := P.finrank_line_le_one
+  have h₁ := P.finrank_line_le_one
+  have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
   omega
 
-/-- **In odd dimension the remainder of a polarization is exactly a line**: it is at most a line by
-`TauCeti.SpinPolarizationData.finrank_line_le_one`, and an odd-dimensional space leaves it no
-alternative, the two isotropic summands being equidimensional. It is the line spanned by an
-anisotropic vector, whose action mixes the two parities of the spinor module — which is why they
-are not subrepresentations in the type `Bₗ` case. -/
+/-- **In odd dimension the remainder is exactly a line.** It is at most a line by
+`SpinPolarizationData.finrank_line_le_one`, and the two isotropic summands, being equidimensional,
+take up an even dimension, so an odd-dimensional space leaves the remainder no alternative. It is
+the line spanned by an anisotropic vector, whose action mixes the two exterior parities of the
+spinor module — which is why they are not subrepresentations in the type `Bₗ` case. -/
 theorem finrank_line_eq_one_of_finrank_eq_two_mul_add_one {l : ℕ} (hV : finrank K V = 2 * l + 1) :
     finrank K P.line = 1 := by
-  have h := P.finrank_eq
-  have := P.finrank_line_le_one
+  have h₁ := P.finrank_line_le_one
+  have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
   omega
 
 end Dimension

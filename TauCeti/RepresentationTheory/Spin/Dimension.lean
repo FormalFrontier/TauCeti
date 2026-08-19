@@ -34,7 +34,7 @@ in the even half, and there is no half-spin splitting to speak of.
 A polarization also fixes `dim W` in terms of `dim V`, by the dimension count that comes with the
 polarization data itself (`TauCeti/RepresentationTheory/Spin/Polarization/Basic.lean`): `dim W = l`
 both in even dimension `2l`, the type `Dₗ` case, where the remainder of the polarization vanishes
-(`TauCeti.SpinPolarizationData.line_eq_bot_of_finrank_eq_two_mul`) so that the two halves are
+(`TauCeti.SpinPolarizationData.line_eq_bot_of_even_finrank`) so that the two halves are
 subrepresentations of dimension `2 ^ (l - 1)`, and in odd dimension `2l + 1`, the type `Bₗ` case,
 where the remainder is a line, the splitting is not one of representations (see
 `TauCeti/RepresentationTheory/Spin/HalfSpin.lean`) and the spin module of dimension `2 ^ l` is the
