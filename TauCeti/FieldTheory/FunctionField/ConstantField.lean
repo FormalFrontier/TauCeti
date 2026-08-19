@@ -90,12 +90,6 @@ theorem finiteDimensional_algebraicClosure (hF : IsFunctionField k F) :
     FiniteDimensional k (_root_.algebraicClosure k F) :=
   hF.finiteDimensional_of_isAlgebraic _
 
-/-- Every element of an algebraic function field outside its field of constants is a rational
-parameter (Stichtenoth, Remark 1.1.2 read through the field of constants). -/
-theorem finiteDimensional_adjoin_of_notMem_algebraicClosure (hF : IsFunctionField k F) {y : F}
-    (hy : y ∉ _root_.algebraicClosure k F) : FiniteDimensional k⟮y⟯ F :=
-  hF.finiteDimensional_adjoin fun h ↦ hy (mem_algebraicClosure_iff.2 h)
-
 end IsFunctionField
 
 /-! ### Exactness of the field of constants -/
@@ -120,15 +114,6 @@ theorem isIntegrallyClosedIn_iff_forall_isAlgebraic :
 theorem isIntegrallyClosedIn_iff_finrank_algebraicClosure_eq_one :
     IsIntegrallyClosedIn k F ↔ Module.finrank k (algebraicClosure k F) = 1 := by
   rw [IntermediateField.finrank_eq_one_iff, algebraicClosure_eq_bot_iff_isIntegrallyClosedIn]
-
-/-- Exactness of the constant field passes to intermediate extensions: if no element of `F`
-outside `k` is algebraic over `k`, the same holds inside any field between `k` and `F`. This
-specializes Mathlib's `AlgHom.isIntegrallyClosedIn` to a tower of fields, where the required
-injectivity is automatic. -/
-theorem isIntegrallyClosedIn_of_tower (E : Type*) [Field E] [Algebra k E] [Algebra E F]
-    [IsScalarTower k E F] [IsIntegrallyClosedIn k F] : IsIntegrallyClosedIn k E :=
-  AlgHom.isIntegrallyClosedIn (IsScalarTower.toAlgHom k E F)
-    (FaithfulSMul.algebraMap_injective E F) inferInstance
 
 /-- The field of constants is exact in itself: nothing in `F` outside `algebraicClosure k F` is
 algebraic over `algebraicClosure k F`. -/
@@ -170,16 +155,9 @@ theorem IsFunctionField.exists_intermediateField_isIntegrallyClosedIn (hF : IsFu
 theorem algebraicClosure_ratFunc (K : Type*) [Field K] :
     algebraicClosure K (RatFunc K) = ⊥ := by
   refine eq_bot_iff.2 fun f hf ↦ ?_
-  rw [mem_algebraicClosure_iff] at hf
-  obtain ⟨p, rfl⟩ := IsIntegrallyClosed.isIntegral_iff.1
-    (hf.isIntegral.tower_top (A := K[X]))
-  have hp : IsAlgebraic K p :=
-    (isAlgebraic_algebraMap_iff (FaithfulSMul.algebraMap_injective K[X] (RatFunc K))).1 hf
-  have hdeg : p.natDegree = 0 := by
-    by_contra hne
-    exact p.transcendental hne
-      (mem_nonZeroDivisors_of_ne_zero (leadingCoeff_ne_zero.2 fun h ↦ hne (by simp [h]))) hp
-  rw [Polynomial.eq_C_of_natDegree_eq_zero hdeg, RatFunc.algebraMap_C]
+  obtain ⟨c, rfl⟩ := not_not.1 fun h ↦
+    RatFunc.transcendental_of_ne_C f h (mem_algebraicClosure_iff.1 hf)
+  rw [← RatFunc.algebraMap_eq_C]
   exact IntermediateField.algebraMap_mem _ _
 
 /-- `k` is integrally closed in the rational function field `k(x)`. -/
