@@ -12,7 +12,7 @@ public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Basic
 # Binary biproduct squares
 
 This file records generic categorical properties of binary biproducts. A biproduct map factors
-through the maps obtained by changing one summand at a time, the squares obtained by adjoining
+through the maps obtained by changing one summand at a time, and the squares obtained by adjoining
 an identity summand are pushouts or pullbacks.
 -/
 

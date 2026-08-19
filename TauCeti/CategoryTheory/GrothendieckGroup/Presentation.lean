@@ -30,8 +30,8 @@ algebraic structure on `ObjectCode C` itself, which cannot be phrased without on
 
 * `TauCeti.ObjectCode C`: a small type of codes for the isomorphism classes of objects of an
   essentially small category `C`, with `TauCeti.objectCode` the code of an object,
-  `TauCeti.objectCodeOut` a chosen object with a given code, and `TauCeti.objectCodeOutIso` the
-  isomorphism identifying it with any other object of the same code.
+  `TauCeti.objectCodeOut` a chosen object with a given code, and `TauCeti.objectCodeOutIso` a
+  chosen (non-canonical) isomorphism `objectCodeOut (objectCode X) ≅ X`.
 * `TauCeti.freeOf X`: the generator of `FreeAbelianGroup (ObjectCode C)` attached to `X`, and
   `TauCeti.freeLift f`: the additive homomorphism out of that free abelian group determined by a
   function `f` on objects.
@@ -122,7 +122,10 @@ lemma objectCode_eq_objectCode_iff {X Y : C} :
 lemma objectCode_congr {X Y : C} (e : X ≅ Y) : objectCode X = objectCode Y :=
   objectCode_eq_objectCode_iff.2 ⟨e⟩
 
-/-- A chosen object with the code of `X` is isomorphic to `X`. -/
+/-- A chosen isomorphism between the representative of the code of `X` and `X` itself. It is an
+arbitrary choice extracted from the `Nonempty` witness of
+`TauCeti.objectCode_eq_objectCode_iff`, so it is not natural in `X` and no coherence between its
+instances at different objects should be assumed. -/
 noncomputable def objectCodeOutIso (X : C) : objectCodeOut (objectCode X) ≅ X :=
   (objectCode_eq_objectCode_iff.1 (objectCode_objectCodeOut _)).some
 
