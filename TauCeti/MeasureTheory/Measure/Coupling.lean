@@ -20,12 +20,13 @@ generally not canonical, and consumers such as the cut distance minimize over al
 product and diagonal measures provide two standard constructions on a common probability carrier;
 depending on the measure, they may or may not differ.
 
-The declarations live in `TauCeti.Measure` because none depends on graphons or cut metrics.
+Although these declarations retain the roadmap-pinned `TauCeti.DenseGraphLimits` namespace, they
+live in measure theory because none depends on graphons or cut metrics.
 
 ## Main definitions
 
-* `TauCeti.Measure.IsCoupling` — the predicate that a measure has prescribed marginals;
-* `TauCeti.Measure.diagonalCoupling` — the pushforward of a measure along the diagonal.
+* `TauCeti.DenseGraphLimits.IsCoupling` — the predicate that a measure has prescribed marginals;
+* `TauCeti.DenseGraphLimits.diagonalCoupling` — the pushforward of a measure along the diagonal.
 
 ## Main results
 
@@ -40,8 +41,6 @@ The declarations live in `TauCeti.Measure` because none depends on graphons or c
 
 * Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 1 — the coupling-primary,
   cross-carrier cut distance and its `IsCoupling` input.
-* `TauCeti/MeasureTheory/OptimalTransport/Gluing.lean` — the existing gluing API whose formulation
-  of marginal conditions via `Measure.fst` and `Measure.snd` is followed here.
 -/
 
 public section
@@ -52,7 +51,7 @@ open MeasureTheory
 
 namespace TauCeti
 
-namespace Measure
+namespace DenseGraphLimits
 
 variable {Ω₁ Ω₂ : Type*} [MeasurableSpace Ω₁] [MeasurableSpace Ω₂]
 
@@ -150,6 +149,6 @@ instance instIsProbabilityMeasureDiagonalCoupling (μ : Measure Ω) [IsProbabili
 
 end Diagonal
 
-end Measure
+end DenseGraphLimits
 
 end TauCeti
