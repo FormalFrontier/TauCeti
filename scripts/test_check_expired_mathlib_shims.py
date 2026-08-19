@@ -228,7 +228,12 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         )
         available = check.available_replacements((group,), {"Future.name"}, pathlib.Path("."))
         summary = check.markdown_summary((group,), available)
+        warning = check.warning_message(available[0])
         self.assertIn("Speculative target name", summary)
+        self.assertIn("no deterministic migration", summary)
+        self.assertIn("no deterministic migration", warning)
+        self.assertNotIn("migrate to the canonical target", summary.lower() + warning.lower())
+        self.assertFalse(check.blocks_bump(available[0]))
 
     def test_landing_sentinel_requires_audit_not_source_deletion(self):
         group = check.ShimGroup(

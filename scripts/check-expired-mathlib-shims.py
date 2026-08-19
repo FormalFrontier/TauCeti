@@ -404,7 +404,9 @@ def markdown_summary(
         note = replacement.note.replace("|", "\\|").replace("\n", " ")
         if replacement.speculative:
             note = f"Speculative target name; {note}"
-        if replacement.landing_sentinel:
+            guidance = ("Audit whether this guessed target is the real counterpart; it identifies "
+                        "no deterministic migration on its own.")
+        elif replacement.landing_sentinel:
             guidance = ("Audit against the landed stack; migrate only declarations with canonical "
                         "counterparts and preserve or re-home source-only API.")
         else:
@@ -418,7 +420,10 @@ def warning_message(replacement: AvailableReplacement) -> str:
 
     targets = ", ".join(replacement.targets)
     speculative = " [speculative target name]" if replacement.speculative else ""
-    if replacement.landing_sentinel:
+    if replacement.speculative:
+        advice = ("audit whether this guessed target is the real counterpart; it identifies no "
+                  "deterministic migration on its own")
+    elif replacement.landing_sentinel:
         advice = ("audit this source against the landed stack; migrate only declarations with "
                   "canonical counterparts and preserve or re-home source-only API")
     else:
