@@ -6,11 +6,13 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.Contractability
-public import TauCeti.Probability.Exchangeability.MarkovExchangeable
+public import TauCeti.Probability.Exchangeability.MixedMarkovChain
 public import TauCeti.Probability.Exchangeability.PathSpace.Shift
 public import Mathlib.MeasureTheory.Group.Measure
 public import Mathlib.Probability.UniformOn
 public import Mathlib.Data.ZMod.Basic
+-- Non-public: used only inside proofs — a mixed i.i.d. process is exchangeable.
+import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
 # A stationary process that is not exchangeable: the deterministic 3-cycle
@@ -30,9 +32,11 @@ its path law is invariant under the one-sided shift
 (`threeCycle_measurePreserving_shift`), because shifting the sample path of `ω` gives the sample
 path of `ω + 1`, and the uniform law is translation invariant.
 
-It is a deterministic Markov chain, hence Markov exchangeable
-(`threeCycle_markovExchangeable`); since it is not exchangeable, this is also the example showing
-that `Exchangeable` is strictly stronger than `MarkovExchangeable`.
+It is a deterministic Markov chain, hence a mixture of Markov chains
+(`threeCycle_mixedMarkovChain`) and so Markov exchangeable (`threeCycle_markovExchangeable`); since
+it is not exchangeable, this is also the example showing that `Exchangeable` is strictly stronger
+than `MarkovExchangeable`, and — through `threeCycle_not_mixedIID` — that `MixedIID` is strictly
+stronger than `MixedMarkovChain`.
 
 It is, however, neither exchangeable (`threeCycle_not_exchangeable`) nor contractable
 (`threeCycle_not_contractable`): the pair `(X₀, X₁) = (ω, ω + 1)` lands in
@@ -75,6 +79,10 @@ and stays scoped to this example, rather than leaking to the general `uniformOn 
 @[simp]
 theorem threeCycleMeasure_def : threeCycleMeasure = uniformOn Set.univ :=
   rfl
+
+/-- The stationary law of the 3-cycle is a probability measure. -/
+instance : IsProbabilityMeasure threeCycleMeasure :=
+  isProbabilityMeasure_uniformOn Set.finite_univ Set.univ_nonempty
 
 /-- The uniform law on `ZMod 3` is invariant under right addition, supplying the translation
 invariance used in the shift-stationarity proof. -/
@@ -215,6 +223,51 @@ theorem threeCycle_markovExchangeable : MarkovExchangeable threeCycleMeasure thr
   markovExchangeable_of_prefixLaw_singleton_eq (fun _ => Measurable.of_discrete.aemeasurable)
     (fun _ => 3⁻¹)
     (fun a b => if b = a + 1 then 1 else 0) threeCycle_prefixLaw_singleton
+
+/-- The uniform initial law of the 3-cycle, bundled as a probability measure. -/
+def threeCycleInitial : ProbabilityMeasure (ZMod 3) :=
+  ⟨threeCycleMeasure, inferInstance⟩
+
+/-- The bundled initial law gives mass `3⁻¹` to each singleton. -/
+theorem threeCycleInitial_singleton (a : ZMod 3) :
+    (threeCycleInitial : Measure (ZMod 3)) {a} = 3⁻¹ :=
+  threeCycleMeasure_singleton a
+
+/-- The deterministic transition matrix of the 3-cycle, sending the state `a` to the point mass at
+its successor `a + 1`. -/
+def threeCycleStep (a : ZMod 3) : ProbabilityMeasure (ZMod 3) :=
+  ⟨Measure.dirac (a + 1), inferInstance⟩
+
+/-- The deterministic step gives mass one to the successor state and mass zero to every other
+state. -/
+theorem threeCycleStep_singleton (a b : ZMod 3) :
+    (threeCycleStep a : Measure (ZMod 3)) {b} = if b = a + 1 then 1 else 0 := by
+  have h : (threeCycleStep a : Measure (ZMod 3)) = Measure.dirac (a + 1) := rfl
+  rw [h, Measure.dirac_apply]
+  simp [Set.indicator_apply, eq_comm]
+
+/-- **The 3-cycle is a mixture of Markov chains, with named witnesses** — degenerately, being a
+single Markov chain: the uniform initial law and the deterministic successor step reproduce its
+finite path laws. -/
+theorem threeCycle_mixedMarkovChainWith :
+    MixedMarkovChainWith threeCycleMeasure threeCycle (fun _ => threeCycleInitial)
+      fun _ => threeCycleStep :=
+  mixedMarkovChainWith_const
+    (fun _ => Measurable.of_discrete.aemeasurable) threeCycleInitial threeCycleStep fun n w => by
+      rw [threeCycle_prefixLaw_singleton n w, threeCycleInitial_singleton]
+      exact congrArg _ (Finset.prod_congr rfl fun i _ =>
+        (threeCycleStep_singleton (w i.castSucc) (w i.succ)).symm)
+
+/-- **The 3-cycle is a mixture of Markov chains.** With `threeCycle_not_mixedIID`, this separates
+`MixedMarkovChain` from `MixedIID`: mixing over Markov chains is strictly more general than mixing
+over i.i.d. laws. -/
+theorem threeCycle_mixedMarkovChain : MixedMarkovChain threeCycleMeasure threeCycle :=
+  MixedMarkovChain.of_witnesses threeCycle_mixedMarkovChainWith
+
+/-- **The 3-cycle is not mixed i.i.d.**, since a mixed i.i.d. process is exchangeable and the
+3-cycle is not. -/
+theorem threeCycle_not_mixedIID : ¬ MixedIID threeCycleMeasure threeCycle :=
+  fun h => threeCycle_not_exchangeable h.exchangeable
 
 end Probability
 

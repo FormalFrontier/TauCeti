@@ -63,7 +63,7 @@ public section
 
 noncomputable section
 
-open Finset MeasureTheory
+open MeasureTheory
 open scoped ENNReal
 
 namespace TauCeti
@@ -156,16 +156,9 @@ theorem markovExchangeable_of_prefixLaw_singleton_eq [Countable α] [MeasurableS
     (h : ∀ (n : ℕ) (w : Fin (n + 1) → α),
       prefixLaw μ X (n + 1) {w} = p₀ (w 0) * ∏ i : Fin n, p (w i.castSucc) (w i.succ)) :
     MarkovExchangeable μ X := by
-  classical
   refine MarkovExchangeable.intro hX ?_
   intro n u v h0 hcount
-  set S : Finset α := image u univ ∪ image v univ
-  have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
-  have hSv : ∀ i, v i ∈ S := fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))
-  rw [h n u, h n v, h0,
-    prod_transitionCount u (fun i : Fin n => ⟨hSu i.castSucc, hSu i.succ⟩) p,
-    prod_transitionCount v (fun i : Fin n => ⟨hSv i.castSucc, hSv i.succ⟩) p]
-  exact congrArg _ (prod_congr rfl fun ab _ => by rw [hcount ab.1 ab.2])
+  rw [h n u, h n v, h0, prod_transitionCount_congr hcount p]
 
 /-- **The process-level and path-law formulations of Markov exchangeability agree.** -/
 theorem markovExchangeable_pathLaw_iff [Countable α] [MeasurableSingletonClass α]

@@ -47,6 +47,8 @@ transition counts of a path are the sufficient statistic: see
   other.
 * `TauCeti.prod_transitionCount`: a product of transition weights along a word depends on the word
   only through its transition counts.
+* `TauCeti.prod_transitionCount_congr`: the resulting comparison of two words with equal transition
+  counts.
 
 ## References
 
@@ -191,6 +193,20 @@ theorem prod_transitionCount {M : Type*} [CommMonoid M] {n : ℕ} (w : Fin (n + 
       filter (fun i : Fin n => w i.castSucc = ab.1 ∧ w i.succ = ab.2) univ :=
     filter_congr fun i _ => by simp [Prod.ext_iff]
   rw [prod_congr rfl hval, prod_const, transitionCount_eq_card_filter, hset]
+
+/-- **Words with the same transition counts have the same product of transition weights.** This is
+`prod_transitionCount` with the index set eliminated: the two words are compared through the common
+`Finset` of letters they use. -/
+theorem prod_transitionCount_congr {M : Type*} [CommMonoid M] {n : ℕ} {u v : Fin (n + 1) → α}
+    (h : ∀ a b, transitionCount u a b = transitionCount v a b) (p : α → α → M) :
+    ∏ i : Fin n, p (u i.castSucc) (u i.succ) = ∏ i : Fin n, p (v i.castSucc) (v i.succ) := by
+  classical
+  set S : Finset α := image u univ ∪ image v univ
+  have hSu : ∀ i, u i ∈ S := fun i => mem_union_left _ (mem_image_of_mem u (mem_univ i))
+  have hSv : ∀ i, v i ∈ S := fun i => mem_union_right _ (mem_image_of_mem v (mem_univ i))
+  rw [prod_transitionCount u (fun i : Fin n => ⟨hSu i.castSucc, hSu i.succ⟩) p,
+    prod_transitionCount v (fun i : Fin n => ⟨hSv i.castSucc, hSv i.succ⟩) p]
+  exact prod_congr rfl fun ab _ => by rw [h ab.1 ab.2]
 
 end TauCeti
 
