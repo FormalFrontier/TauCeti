@@ -134,15 +134,17 @@ theorem latticeHomology_def (P : PlumbingGraph V) (k : P.characteristicVectors) 
   unfold latticeHomology
   rfl
 
+private theorem latticeShortComplex_g_hom_apply (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (c : PlumbingChain V) :
+    (P.latticeShortComplex k).g.hom c = P.latticeDifferential k c := rfl
+
 /-- The linear map sending `a : 𝔽₂[U]` to the homology class of `a • c`, for a lattice
 cycle `c`. -/
 noncomputable def latticeHomologyCycleMap (P : PlumbingGraph V) (k : P.characteristicVectors)
     (c : PlumbingChain V) (hc : P.latticeDifferential k c = 0) :
     PlumbingCoefficient →ₗ[PlumbingCoefficient] P.latticeHomology k :=
   let S := P.latticeShortComplex k
-  let z : LinearMap.ker S.g.hom := ⟨c, by
-    change P.latticeDifferential k c = 0
-    exact hc⟩
+  let z : LinearMap.ker S.g.hom := ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩
   let q : S.moduleCatLeftHomologyData.H :=
     (LinearMap.range S.moduleCatToCycles).mkQ z
   S.moduleCatHomologyIso.inv.hom.comp
@@ -157,11 +159,12 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
     P.latticeHomologyCycleMap k c hc a = 0 ↔
       a • c ∈ LinearMap.range (P.latticeDifferential k) := by
   let S := P.latticeShortComplex k
-  let z : LinearMap.ker S.g.hom := ⟨c, by
-    change P.latticeDifferential k c = 0
-    exact hc⟩
+  let z : LinearMap.ker S.g.hom := ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩
   let q : S.moduleCatLeftHomologyData.H :=
     (LinearMap.range S.moduleCatToCycles).mkQ z
+  -- `moduleCatHomologyIso` is Mathlib's interface from abstract homology to the explicit
+  -- kernel/range quotient. Unfolding the local cycle map here is necessary to use that interface;
+  -- rewriting across it instead fails because `latticeHomology` remains opaque to the rewriter.
   change S.moduleCatHomologyIso.inv (a • q) = 0 ↔ _
   constructor
   · intro ha
@@ -169,6 +172,8 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
       have hz := S.moduleCatHomologyIso.inv_hom_id_apply (a • q)
       rw [ha, map_zero] at hz
       exact hz.symm
+    -- The local `q` is definitionally the quotient projection of `z`; expose that single
+    -- application so `Submodule.Quotient.mk_eq_zero` can characterize its kernel.
     change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0 at hq
     rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero] at hq
     obtain ⟨b, hb⟩ := hq
@@ -179,6 +184,7 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
       apply Subtype.ext
       exact hb
     have hq : a • q = 0 := by
+      -- As above, this is the concrete application rule for the quotient projection defining `q`.
       change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0
       rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
       exact hz
