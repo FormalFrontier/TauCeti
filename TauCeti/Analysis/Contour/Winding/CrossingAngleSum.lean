@@ -93,9 +93,10 @@ private theorem exp_mul_I_congr_angle {x y : ℝ} (h : (x : Real.Angle) = (y : R
     rw [hxy]
     push_cast
     ring
-  rw [hx, add_mul, Complex.exp_add,
-    show ((k : ℂ) * (2 * (Real.pi : ℂ))) * Complex.I
-      = (k : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) from by ring,
+  have hk_exp : ((k : ℂ) * (2 * (Real.pi : ℂ))) * Complex.I
+      = (k : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) := by
+    ring
+  rw [hx, add_mul, Complex.exp_add, hk_exp,
     Complex.exp_int_mul_two_pi_mul_I, mul_one]
 
 /-- **The per-window principal value exponentiates to the chord ratio times the crossing angle.**
