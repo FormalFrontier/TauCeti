@@ -174,7 +174,7 @@ theorem le_derivedDefiningIdeal_iff_isMulCommutative_pointQuotient
     (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
     I ≤ derivedDefiningIdeal (R := R) H ↔
       ∃ hI : I.IsNormal,
-        ∀ A : CommAlgCat.{v} R,
+        ∀ A : CommAlgCat.{max v w} R,
           let _ : (quotientPointsSubgroup H I A).Normal :=
             quotientPointsSubgroup_normal H I hI A
           IsMulCommutative
@@ -187,13 +187,15 @@ theorem le_derivedDefiningIdeal_iff_isMulCommutative_pointQuotient
     rw [le_derivedDefiningIdeal_iff]
     intro x hx
     simp only [RingHom.mem_ker, AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom]
-    let A : CommAlgCat.{v} R := CommAlgCat.of R (H ⊗[R] H)
+    let A : CommAlgCat.{max v w} R :=
+      CommAlgCat.of R (ULift.{max v w} (H ⊗[R] H))
+    let up : (H ⊗[R] H) →ₐ[R] A := ULift.algEquiv.symm.toAlgHom
     let g : HopfAlgebra.points (R := R) (H := H) A :=
-      toConv (Bialgebra.TensorProduct.includeLeft
-        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+      toConv (up.comp (Bialgebra.TensorProduct.includeLeft
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom)
     let h : HopfAlgebra.points (R := R) (H := H) A :=
-      toConv (Bialgebra.TensorProduct.includeRight
-        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+      toConv (up.comp (Bialgebra.TensorProduct.includeRight
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom)
     let _ : (quotientPointsSubgroup H I A).Normal :=
       quotientPointsSubgroup_normal H I hI A
     have hcomm : _root_.commutator (HopfAlgebra.points (R := R) (H := H) A) ≤
@@ -204,13 +206,14 @@ theorem le_derivedDefiningIdeal_iff_isMulCommutative_pointQuotient
     rw [mem_quotientPointsSubgroup_iff] at hmem
     have hzero := hmem x hx
     have hproduct : Algebra.TensorProduct.productMap g.ofConv h.ofConv =
-        AlgHom.id R (H ⊗[R] H) := by
-      simpa [g, h] using
-        (AffineGroup.Product.productMap_restrict (AlgHom.id R (H ⊗[R] H)))
+        up := by
+      simp [g, h, AffineGroup.Product.productMap_restrict]
     have heval := DFunLike.congr_fun
       (HopfAlgebra.productMap_comp_commutatorAlgHom g h) x
     rw [hproduct] at heval
-    simpa only [A, AlgHom.comp_apply, AlgHom.id_apply] using heval.trans hzero
+    apply (ULift.algEquiv (R := R)).symm.injective
+    simpa only [A, up, AlgHom.comp_apply, AlgEquiv.toAlgHom_apply, map_zero] using
+      heval.trans hzero
 
 section Commutative
 

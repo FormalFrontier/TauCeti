@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
+import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # The conormal sequence of a closed affine subgroup
@@ -58,13 +59,6 @@ variable {k : Type u} {H : Type v}
 section Ring
 
 variable [CommRing k] [CommRing H] [HopfAlgebra k H]
-
-/-- A Hopf ideal is contained in the augmentation ideal. -/
-private theorem toIdeal_le_augmentationIdeal (I : HopfIdeal k H) :
-    I.toIdeal ≤ Bialgebra.AugmentationIdeal k H := by
-  intro x hx
-  rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
-  exact I.counit_eq_zero (mem_toIdeal.mp hx)
 
 /-- The image of a closed subgroup's defining Hopf ideal in the ambient augmentation cotangent
 space. This is the conormal space at the identity, equivalently
@@ -181,22 +175,30 @@ private theorem comap_augmentationIdeal_quotient (I : HopfIdeal k H) :
 surjective. -/
 theorem quotientCotangentMap_surjective (I : HopfIdeal k H) :
     Function.Surjective (quotientCotangentMap I) := by
+  have hI : I.toIdeal ≤ Bialgebra.AugmentationIdeal k H := by
+    have hI' := toIdeal_le_toIdeal.mpr I.le_augmentation
+    rw [augmentation_toIdeal] at hI'
+    exact hI'
   exact Ideal.mapCotangent_surjective_of_comap_eq
     (Ideal.Quotient.mkₐ_surjective H I.toIdeal)
     (by
       rw [comap_augmentationIdeal_quotient, Ideal.Quotient.algebraMap_eq, Ideal.mk_ker]
-      exact (sup_eq_right.mpr (toIdeal_le_augmentationIdeal I)).symm)
+      exact (sup_eq_right.mpr hI).symm)
 
 /-- The kernel of the quotient cotangent map is exactly the conormal subspace, giving the
 exact conormal sequence of a closed affine subgroup at the identity. -/
 theorem ker_quotientCotangentMap (I : HopfIdeal k H) :
     LinearMap.ker (quotientCotangentMap I) = conormalSubspace I := by
+  have hI : I.toIdeal ≤ Bialgebra.AugmentationIdeal k H := by
+    have hI' := toIdeal_le_toIdeal.mpr I.le_augmentation
+    rw [augmentation_toIdeal] at hI'
+    exact hI'
   rw [quotientCotangentMap, LinearMap.ker_restrictScalars]
   rw [Ideal.mapCotangent_ker_of_surjective
     (Ideal.Quotient.mkₐ_surjective H I.toIdeal)
     (by
       rw [comap_augmentationIdeal_quotient, Ideal.Quotient.algebraMap_eq, Ideal.mk_ker]
-      exact (sup_eq_right.mpr (toIdeal_le_augmentationIdeal I)).symm)]
+      exact (sup_eq_right.mpr hI).symm)]
   apply le_antisymm
   · rintro _ ⟨x, hx, rfl⟩
     rw [conormalSubspace]
@@ -208,12 +210,12 @@ theorem ker_quotientCotangentMap (I : HopfIdeal k H) :
   · rintro _ ⟨x, hx, rfl⟩
     have hx' : x ∈ I.toIdeal :=
       (Submodule.restrictScalars_mem k I.toIdeal x).mp hx
-    refine ⟨⟨x, toIdeal_le_augmentationIdeal I hx'⟩, ?_, ?_⟩
+    refine ⟨⟨x, hI hx'⟩, ?_, ?_⟩
     · exact Submodule.mem_comap.mpr
         (Ideal.mem_inf.mpr ⟨by simpa only [Ideal.Quotient.algebraMap_eq, Ideal.mk_ker],
-          toIdeal_le_augmentationIdeal I hx'⟩)
+          hI hx'⟩)
     · exact (Bialgebra.cotangentMap_augmentation
-        (R := k) (A := H) ⟨x, toIdeal_le_augmentationIdeal I hx'⟩).symm
+        (R := k) (A := H) ⟨x, hI hx'⟩).symm
 
 end Ring
 
