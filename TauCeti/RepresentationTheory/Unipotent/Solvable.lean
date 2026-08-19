@@ -101,6 +101,7 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
           rho.exists_fixed_submodule_finrank_eq_one_of_isUnipotent hunipotent
         have hp (g : G) : p ≤ p.comap (rho g) := by
           intro x hx
+          -- Membership in the comap unfolds to membership of the image in `p`.
           change rho g x ∈ p
           rw [hfixed g x hx]
           exact hx
@@ -110,6 +111,7 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
         have hq (g : G) : IsNilpotent (q g - 1) := by
           have hsub : p ≤ p.comap (rho g - 1) := by
             intro x hx
+            -- After unfolding the comap and subtraction of endomorphisms, this is invariance.
             change rho g x - x ∈ p
             exact p.sub_mem (hp g hx) hx
           have hnil := Module.End.IsNilpotent.mapQ hsub (hunipotent g)
@@ -128,6 +130,10 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
         refine ⟨1 + n, b, fun g ↦ ?_⟩
         rw [Matrix.isUpperUnitriangular_def]
         constructor
+        -- The extension basis lists the fixed line `p` before a lift of the quotient basis.
+        -- We check the four resulting matrix blocks: the first two index configurations are
+        -- impossible below the diagonal, the lower-left block vanishes by invariance of `p`,
+        -- and the lower-right block is upper triangular by the induction hypothesis on `V ⧸ p`.
         · intro i j hji
           obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
           obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
@@ -135,16 +141,20 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
           | inl i =>
               cases j with
               | inl j =>
+                  -- The fixed-line block is `1 × 1`, so it has no entry below the diagonal.
                   simp only [finSumFinEquiv_apply_left] at hji
                   have := (Fin.strictMono_castAdd n).lt_iff_lt.mp hji
                   omega
               | inr j =>
+                  -- A quotient column follows every fixed-line row in the extension basis.
                   rw [finSumFinEquiv_apply_left, finSumFinEquiv_apply_right] at hji
+                  -- The order on `Fin (1 + n)` unfolds to the displayed inequality of values.
                   change 1 + j.val < i.val at hji
                   omega
           | inr i =>
               cases j with
               | inl j =>
+                  -- The lower-left block is zero because every operator preserves `p`.
                   rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left,
                     LinearMap.toMatrixAlgEquiv_apply]
                   have hmem : rho g (bp j : V) ∈ p := hp g (bp j).2
@@ -154,6 +164,7 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
                     (Submodule.Quotient.mk_eq_zero p).mpr hmem, map_zero,
                     Finsupp.zero_apply]
               | inr j =>
+                  -- The lower-right block represents the induced action on `V ⧸ p`.
                   rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_right,
                     LinearMap.toMatrixAlgEquiv_apply,
                     extensionBasis_repr_natAdd]
@@ -162,6 +173,8 @@ theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_isUnipotent
                   simpa only [LinearMap.toMatrixAlgEquiv_apply] using
                     (hbq g |>.isUpperTriangular
                       ((Fin.strictMono_natAdd 1).lt_iff_lt.mp hji))
+        -- On the diagonal, the fixed-line block is the identity by construction and the
+        -- quotient block has diagonal entries one by the induction hypothesis.
         · intro i
           obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
           cases i with
@@ -206,6 +219,7 @@ private def _root_.Representation.toUpperUnitriangularGroup {n : ℕ}
         refine ⟨?_, h g |>.apply_diag⟩
         intro i j hji
         apply (h g).isUpperTriangular
+        -- The inherited order on `Fin n` is definitionally the order on its values.
         change j.val < i.val at hji ⊢
         exact hji⟩
       map_one' := Subtype.ext (map_one f)
