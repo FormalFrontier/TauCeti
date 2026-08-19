@@ -68,26 +68,29 @@ variable (σ : L ≃ₗ⁅R⁆ L) (hσ : H.map (σ : L →ₗ⁅R⁆ L) = H)
 
 include hσ
 
+namespace LieSubalgebra
+
 /-- An automorphism normalising `H` maps `H` into itself. -/
-theorem apply_mem_of_mem {y : L} (hy : y ∈ H) : σ y ∈ H := by
+theorem apply_mem_of_map_eq_self {y : L} (hy : y ∈ H) : σ y ∈ H := by
   rw [← hσ, LieSubalgebra.mem_map]
   exact ⟨y, hy, rfl⟩
 
 /-- If a normalising automorphism moves `y` into `H`, then `y` was already in `H`. -/
-theorem mem_of_apply_mem {y : L} (hy : σ y ∈ H) : y ∈ H := by
+theorem mem_of_apply_mem_of_map_eq_self {y : L} (hy : σ y ∈ H) : y ∈ H := by
   rw [← hσ, LieSubalgebra.mem_map] at hy
   obtain ⟨z, hz, hzy⟩ := hy
   exact σ.injective hzy ▸ hz
 
 /-- The inverse of a normalising automorphism maps `H` into itself. -/
-theorem symm_apply_mem_of_mem {y : L} (hy : y ∈ H) : σ.symm y ∈ H :=
-  mem_of_apply_mem σ hσ (by simpa using hy)
+theorem symm_apply_mem_of_map_eq_self {y : L} (hy : y ∈ H) : σ.symm y ∈ H :=
+  mem_of_apply_mem_of_map_eq_self σ hσ (by simpa using hy)
+
+end LieSubalgebra
 
 /-- The restriction to `H` of an automorphism of `L` normalising `H`. -/
-@[expose]
 def restrictAut : H ≃ₗ⁅R⁆ H where
-  toFun y := ⟨σ y, apply_mem_of_mem σ hσ y.2⟩
-  invFun y := ⟨σ.symm y, symm_apply_mem_of_mem σ hσ y.2⟩
+  toFun y := ⟨σ y, LieSubalgebra.apply_mem_of_map_eq_self σ hσ y.2⟩
+  invFun y := ⟨σ.symm y, LieSubalgebra.symm_apply_mem_of_map_eq_self σ hσ y.2⟩
   map_add' _ _ := by ext; simp
   map_smul' _ _ := by ext; simp
   map_lie' := by intro x y; ext; exact σ.map_lie x y
@@ -95,22 +98,28 @@ def restrictAut : H ≃ₗ⁅R⁆ H where
   right_inv _ := by ext; simp
 
 @[simp]
-theorem coe_restrictAut_apply (y : H) : (restrictAut σ hσ y : L) = σ y := rfl
+theorem coe_restrictAut_apply (y : H) : (restrictAut σ hσ y : L) = σ y := (rfl)
 
 @[simp]
-theorem coe_restrictAut_symm_apply (y : H) : ((restrictAut σ hσ).symm y : L) = σ.symm y := rfl
+theorem coe_restrictAut_symm_apply (y : H) :
+    ((restrictAut σ hσ).symm y : L) = σ.symm y := (rfl)
+
+namespace LieSubalgebra
 
 /-- The inverse of a normalising automorphism normalises `H` as well. -/
-theorem map_symm_eq : H.map (σ.symm : L →ₗ⁅R⁆ L) = H := by
+theorem map_symm_eq_self_of_map_eq_self : H.map (σ.symm : L →ₗ⁅R⁆ L) = H := by
   ext y
   rw [LieSubalgebra.mem_map]
-  refine ⟨?_, fun hy => ⟨σ y, apply_mem_of_mem σ hσ hy, by simp⟩⟩
+  refine ⟨?_, fun hy => ⟨σ y, apply_mem_of_map_eq_self σ hσ hy, by simp⟩⟩
   rintro ⟨z, hz, rfl⟩
-  exact symm_apply_mem_of_mem σ hσ hz
+  exact symm_apply_mem_of_map_eq_self σ hσ hz
+
+end LieSubalgebra
 
 /-- The restriction of the inverse automorphism is the inverse of the restriction. -/
-theorem restrictAut_symm_symm (y : H) :
-    (restrictAut σ.symm (map_symm_eq σ hσ)).symm y = restrictAut σ hσ y := by
+theorem restrictAut_symm_symm_apply (y : H) :
+    (restrictAut σ.symm (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ)).symm y =
+      restrictAut σ hσ y := by
   ext
   simp
 
@@ -171,14 +180,15 @@ theorem map_rootSpace_eq (χ : H → R) :
   · rintro ⟨z, hz, rfl⟩
     exact map_mem_rootSpace σ hσ hz
   · have hcomp : (χ ∘ (restrictAut σ hσ).symm) ∘
-        (restrictAut σ.symm (map_symm_eq σ hσ)).symm = χ := by
+        (restrictAut σ.symm (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ)).symm = χ := by
       funext y
-      simp [restrictAut_symm_symm σ hσ y]
-    have h := map_mem_rootSpace σ.symm (map_symm_eq σ hσ) hw
+      simp [restrictAut_symm_symm_apply σ hσ y]
+    have h := map_mem_rootSpace σ.symm
+      (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ) hw
     rwa [hcomp] at h
 
 /-- The root space of `χ ∘ (σ|H)⁻¹` is nonzero whenever the root space of `χ` is. -/
-theorem genWeightSpace_comp_restrictAut_symm_ne_bot (χ : Weight R H L) :
+private theorem genWeightSpace_comp_restrictAut_symm_ne_bot (χ : Weight R H L) :
     genWeightSpace L ((χ : H → R) ∘ (restrictAut σ hσ).symm) ≠ ⊥ := by
   obtain ⟨z, hz, hz₀⟩ := χ.exists_ne_zero
   intro hbot
@@ -189,12 +199,11 @@ theorem genWeightSpace_comp_restrictAut_symm_ne_bot (χ : Weight R H L) :
 
 /-- The weight of `H` acting on `L` obtained from `χ` by precomposing with the inverse of the
 restriction of a normalising automorphism. -/
-@[expose]
-def weightMap (χ : Weight R H L) : Weight R H L :=
+private def weightMap (χ : Weight R H L) : Weight R H L :=
   ⟨(χ : H → R) ∘ (restrictAut σ hσ).symm, genWeightSpace_comp_restrictAut_symm_ne_bot σ hσ χ⟩
 
 @[simp]
-theorem coe_weightMap (χ : Weight R H L) :
+private theorem coe_weightMap (χ : Weight R H L) :
     (weightMap σ hσ χ : H → R) = (χ : H → R) ∘ (restrictAut σ hσ).symm := rfl
 
 end RootSpace
@@ -210,24 +219,23 @@ include hσ
 
 /-- The permutation of the weights of `H` acting on `L` induced by an automorphism of `L`
 normalising `H`. -/
-@[expose]
 def weightPerm : Equiv.Perm (Weight R H L) where
   toFun := weightMap σ hσ
-  invFun := weightMap σ.symm (map_symm_eq σ hσ)
+  invFun := weightMap σ.symm (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ)
   left_inv χ := by
     ext y
-    simp [weightMap, restrictAut_symm_symm σ hσ y]
+    simp [weightMap, restrictAut_symm_symm_apply σ hσ y]
   right_inv χ := by
     ext y
-    simp [weightMap, restrictAut_symm_symm σ hσ]
+    simp [weightMap, restrictAut_symm_symm_apply σ hσ]
 
 @[simp]
 theorem coe_weightPerm (χ : Weight R H L) :
-    (weightPerm σ hσ χ : H → R) = (χ : H → R) ∘ (restrictAut σ hσ).symm := rfl
+    (weightPerm σ hσ χ : H → R) = (χ : H → R) ∘ (restrictAut σ hσ).symm := (rfl)
 
 @[simp]
 theorem weightPerm_apply_apply (χ : Weight R H L) (y : H) :
-    weightPerm σ hσ χ y = χ ((restrictAut σ hσ).symm y) := rfl
+    weightPerm σ hσ χ y = χ ((restrictAut σ hσ).symm y) := (rfl)
 
 /-- A normalising automorphism carries the root space of a weight into the root space of its
 image under the induced permutation. -/
@@ -254,20 +262,25 @@ theorem weightPerm_isNonZero {χ : Weight R H L} (hχ : χ.IsNonZero) :
 
 end WeightPerm
 
-section Killing
+section Sl2Triple
 
-variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
-  [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
-  {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
+variable {R : Type u} {L : Type v} [CommRing R] [LieRing L] [LieAlgebra R L]
 
-omit [CharZero K] [LieAlgebra.IsKilling K L] [FiniteDimensional K L] in
 /-- An `sl₂` triple is carried to an `sl₂` triple by an automorphism. -/
-theorem isSl2Triple_map {h e f : L} (σ : L ≃ₗ⁅K⁆ L) (t : IsSl2Triple h e f) :
+theorem isSl2Triple_map {h e f : L} (σ : L ≃ₗ⁅R⁆ L) (t : IsSl2Triple h e f) :
     IsSl2Triple (σ h) (σ e) (σ f) where
   h_ne_zero := by simpa using t.h_ne_zero
   lie_e_f := by rw [← LieEquiv.map_lie, t.lie_e_f]
   lie_h_e_nsmul := by rw [← LieEquiv.map_lie, t.lie_h_e_nsmul, map_nsmul]
   lie_h_f_nsmul := by rw [← LieEquiv.map_lie, t.lie_h_f_nsmul, map_neg, map_nsmul]
+
+end Sl2Triple
+
+section Killing
+
+variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
+  [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
+  {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
 
 variable (σ : L ≃ₗ⁅K⁆ L) (hσ : H.map (σ : L →ₗ⁅K⁆ L) = H)
 

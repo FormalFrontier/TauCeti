@@ -27,7 +27,7 @@ gives `ε α = ε (-α)`. Together `ε α ^ 2 = 1`, so **every scalar is `1` or 
 That conclusion is the general-root form of a diagram automorphism of a split semisimple Lie
 algebra. A graph symmetry of the Dynkin diagram is pinned by its action on the simple root vectors,
 where the parameter is unchanged; on a general root vector a sign appears, and the signs cannot all
-be normalised away. The type-`A` graph automorphism `X ↦ -Jᵀ X J` of `sl n` already exhibits them.
+be normalised away. The type-`A` graph automorphism `X ↦ -J Xᵀ J⁻¹` of `sl n` already exhibits them.
 What is proved here is that a sign is all that appears.
 
 The hypothesis that `σ` commutes with `ω` is not automatic and is not a weakening: the Chevalley
@@ -122,9 +122,7 @@ theorem mul_eq_one_of_map_eq_smul {α : Weight K H L} (hα : α.IsNonZero) {c d 
   refine hx.mul_eq_one_of_eq_smul (weightPerm σ hσ α) (hx.map σ hσ)
     (weightPerm_isNonZero σ hσ hα) ?_ ?_
   · rwa [Equiv.symm_apply_apply]
-  · rw [show ((weightPerm σ hσ).symm (-weightPerm σ hσ α)) = -α by
-      rw [weightPerm_symm_neg, Equiv.symm_apply_apply]]
-    exact hd
+  · simpa only [weightPerm_symm_neg, Equiv.symm_apply_apply] using hd
 
 end IsSl2System
 
