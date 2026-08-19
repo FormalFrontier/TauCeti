@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Basis
+public import TauCeti.Algebra.Lie.Basis.Cartan
 public import TauCeti.Algebra.Lie.Basis.Reindex
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Rational
 
@@ -171,12 +172,12 @@ type**, in the Bourbaki numbering. -/
     basis_A_eq, cartanMatrix_rationalBase]
 
 /-- The action of a Cartan generator on a raising generator, against the pinned Cartan matrix. -/
-theorem lie_lieBasis_h_e (i j : Fin t.rank) :
+@[simp] theorem lie_lieBasis_h_e (i j : Fin t.rank) :
     ⁅(t.lieBasis ht).h j, (t.lieBasis ht).e i⁆ = t.cartanMatrix i j • (t.lieBasis ht).e i := by
   rw [(t.lieBasis ht).lie_h_e, lieBasis_A_eq]
 
 /-- The action of a Cartan generator on a lowering generator, against the pinned Cartan matrix. -/
-theorem lie_lieBasis_h_f (i j : Fin t.rank) :
+@[simp] theorem lie_lieBasis_h_f (i j : Fin t.rank) :
     ⁅(t.lieBasis ht).h j, (t.lieBasis ht).f i⁆ = -t.cartanMatrix i j • (t.lieBasis ht).f i := by
   rw [(t.lieBasis ht).lie_h_f, lieBasis_A_eq]
 

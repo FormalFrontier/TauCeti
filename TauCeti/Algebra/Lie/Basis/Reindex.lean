@@ -25,8 +25,6 @@ original one.
 ## Main definitions
 
 * `LieAlgebra.Basis.reindex`: the basis obtained by renumbering the nodes along a bijection.
-* `LieAlgebra.Basis.cartanBasis`: the Cartan generators as a module basis of the Cartan
-  subalgebra.
 -/
 
 public section
@@ -82,23 +80,5 @@ def reindex (b : Basis ι H) (σ : ι ≃ ι') : Basis ι' H where
 /-- Reindexing precomposes the lowering generators with the given equivalence. -/
 @[simp] theorem reindex_f (b : Basis ι H) (σ : ι ≃ ι') :
     (b.reindex σ).f = b.f ∘ σ.symm := by rfl
-
-/-! ## The Cartan generators as a module basis -/
-
-/-- The Cartan generators of a Lie algebra basis form a module basis of its Cartan subalgebra. -/
-noncomputable def cartanBasis (b : Basis ι H) : Module.Basis ι R H :=
-  (Module.Basis.span b.linInd).map (LinearEquiv.ofEq _ _ b.coe_cartan_eq_span).symm
-
-/-- The vectors of `LieAlgebra.Basis.cartanBasis` are the Cartan generators. -/
-@[simp] theorem coe_cartanBasis (b : Basis ι H) (i : ι) :
-    (b.cartanBasis i : L) = b.h i := by
-  simp only [cartanBasis, Module.Basis.map_apply, Module.Basis.span_apply,
-    LinearEquiv.ofEq_symm]
-  exact LinearEquiv.coe_ofEq_apply _ _
-
-/-- The Cartan subalgebra has dimension the cardinality of the basis's index type. -/
-theorem finrank_cartan [StrongRankCondition R] (b : Basis ι H) :
-    Module.finrank R H = Nat.card ι :=
-  Module.finrank_eq_nat_card_basis b.cartanBasis
 
 end LieAlgebra.Basis
