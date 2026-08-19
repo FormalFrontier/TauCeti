@@ -250,16 +250,19 @@ theorem mapPointsFunctor_diagonalTorusCoordinateMap_app
         diagonalTorusPoints p := by
     rw [mapPointsFunctor_diagonalTorusCoordinateMap, diagonalTorusPointsMap_app]
     rfl
-  have hmap := congrArg (AlgHom.mapValue (H := coordinateHopfAlgebra R N) f.ofConv) hp
-  rw [mapValue_diagonalTorusPoints] at hmap
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
-  have hp_id : p.ofConv = AlgHom.id R K := rfl
-  rw [AlgHom.mapValue_apply] at hmap
-  rw [WithConv.ofConv_toConv, hp_id, AlgHom.id_comp] at hmap
-  change _ = diagonalTorusPoints (toConv (f.ofConv.comp p.ofConv)) at hmap
-  rw [hp_id, AlgHom.comp_id, WithConv.toConv_ofConv] at hmap
-  exact hmap
+  have hfp : AlgHom.mapValue (H := K) f.ofConv p = f := by
+    simp only [AlgHom.mapValue_apply, p, AlgHom.comp_id, WithConv.toConv_ofConv]
+  have hnat :
+      AlgHom.mapValue (H := coordinateHopfAlgebra R N) f.ofConv
+          ((CommHopfAlgCat.mapPointsFunctor
+            (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R K) p) =
+        (CommHopfAlgCat.mapPointsFunctor
+          (diagonalTorusCoordinateMap (R := R) (N := N))).app A
+            (AlgHom.mapValue (H := K) f.ofConv p) := by
+    exact DFunLike.congr_fun
+      (AlgHom.mapValue_mapDomain
+        (diagonalTorusCoordinateMap (R := R) (N := N)).hom f.ofConv) p
+  rw [← hfp, ← hnat, hp, mapValue_diagonalTorusPoints]
 
 /-- The diagonal torus of `GLₙ`, as a morphism from the rank-`N` split torus group scheme. -/
 noncomputable def diagonalTorus :

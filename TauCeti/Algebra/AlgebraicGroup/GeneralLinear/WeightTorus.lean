@@ -136,25 +136,15 @@ theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite κ] (wt : Fin N �
     (CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap wt)).app (CommAlgCat.of R A) p =
       diagonalTorusPoints
         (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
-  rw [weightTorusCoordinateMap, CommHopfAlgCat.mapPointsFunctor_comp]
-  change (CommHopfAlgCat.mapPointsFunctor diagonalTorusCoordinateMap).app
-      (CommAlgCat.of R A)
-        ((CommHopfAlgCat.mapPointsFunctor
-          (DiagonalizableGroup.coordinateMap R
-            (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom).app (CommAlgCat.of R A) p) = _
-  calc
-    _ = diagonalTorusPoints
-        ((CommHopfAlgCat.mapPointsFunctor
-          (DiagonalizableGroup.coordinateMap R
-            (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom).app
-              (CommAlgCat.of R A) p) :=
-      mapPointsFunctor_diagonalTorusCoordinateMap_app _ _
-    _ = diagonalTorusPoints
-        (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
-      congr 1
+  rw [weightTorusCoordinateMap, CommHopfAlgCat.mapPointsFunctor_comp,
+    CategoryTheory.NatTrans.comp_app]
+  erw [CategoryTheory.ConcreteCategory.comp_apply]
+  erw [mapPointsFunctor_diagonalTorusCoordinateMap_app]
+  congr 1
 
 /-- The diagonal coordinates obtained by restricting a split-torus point along a weight family
 are the corresponding torus characters. -/
+@[simp]
 theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
     (wt : Fin N → κ → ℤ)
     (p : HopfAlgebra.points
@@ -167,17 +157,12 @@ theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
   rw [diagonalTorusCoordinates_apply]
   apply Units.ext
   rw [SplitTorus.pointsMulEquiv_apply_coe, DiagonalizableGroup.pointsMap_apply,
-    AlgHom.comp_apply, MonoidAlgebra.mapDomainBialgHom]
-  change p.ofConv ((MonoidAlgebra.mapDomainAlgHom R R
-    (weightCharacterMap wt))
-      (MonoidAlgebra.single (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1)) 1)) = _
-  rw [MonoidAlgebra.mapDomainAlgHom_apply, MonoidAlgebra.mapDomain_single,
-    weightCharacterMap_ofAdd_single, ← DiagonalizableGroup.charOfPoint_apply_coe]
-  rw [show Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)) =
-    SplitTorus.weightCharacter (wt i) by
-      rw [Multiplicative.ext_iff]
-      ext j
-      simp]
+    AlgHom.comp_apply]
+  erw [MonoidAlgebra.mapDomainBialgHom_single]
+  rw [weightCharacterMap_ofAdd_single, ← DiagonalizableGroup.charOfPoint_apply_coe]
+  have hweight : Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)) =
+      SplitTorus.weightCharacter (wt i) := rfl
+  rw [hweight]
   rw [SplitTorus.charOfPoint_weightCharacter]
 
 end PointsFunctor

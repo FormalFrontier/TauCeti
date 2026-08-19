@@ -103,9 +103,8 @@ theorem map_mem_kostantToralPointsSubgroup {A : Type v} {B : Type v'}
   rw [mem_kostantToralPointsSubgroup_iff] at hg ⊢
   intro x hx
   have hφ : φ.toIntAlgHom.toRingHom = φ := by ext; rfl
-  rw [← hφ, ← GeneralLinear.mapValue_pointsMulEquiv_symm_apply]
-  change φ.toIntAlgHom (((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g).ofConv x) = 0
-  rw [hg x hx, map_zero]
+  rw [← hφ, ← GeneralLinear.mapValue_pointsMulEquiv_symm_apply,
+    AlgHom.mapValue_apply_apply, hg x hx, map_zero]
 
 /-- The map on toral-closure points induced by a ring homomorphism of value rings. -/
 noncomputable def mapKostantToralPointsSubgroup {A : Type v} {B : Type v'}
@@ -167,8 +166,8 @@ theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
     kostantTorusMatrix M b wt s ∈
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
   let p := (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).symm s
-  let q : WithConv (GeneralLinear.coordinateHopfAlgebra ℤ n →ₐ[ℤ] A) :=
-    toConv (p.ofConv.comp (GeneralLinear.weightTorusCoordinateMap wt).hom.toAlgHom)
+  let q := (CommHopfAlgCat.mapPointsFunctor
+    (GeneralLinear.weightTorusCoordinateMap wt)).app (CommAlgCat.of ℤ A) p
   have hq : q ∈ CommHopfAlgCat.quotientPointsSubgroup
       (GeneralLinear.coordinateHopfAlgebra ℤ n)
       (kostantToralDefiningIdeal e h ρ M hM hnil b wt) (CommAlgCat.of ℤ A) := by
@@ -176,19 +175,11 @@ theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
     intro x hx
     have hx' := kostantToralDefiningIdeal_toIdeal_le_torus_ker
       e h ρ M hM hnil b wt hx
-    change p.ofConv ((GeneralLinear.weightTorusCoordinateMap wt).hom x) = 0
-    rw [show (GeneralLinear.weightTorusCoordinateMap wt).hom x = 0 from hx', map_zero]
-  have hq_eq : q =
-      (CommHopfAlgCat.mapPointsFunctor
-        (GeneralLinear.weightTorusCoordinateMap wt)).app (CommAlgCat.of ℤ A) p := by
-    dsimp only [q]
-    rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+    rw [q, CommHopfAlgCat.mapPointsFunctor_app_apply_apply]
+    rw [hx', map_zero]
   refine ⟨q, hq, ?_⟩
-  rw [hq_eq, GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app]
-  change GeneralLinear.pointsMulEquiv n
-      (GeneralLinear.diagonalTorusPoints
-        (DiagonalizableGroup.pointsMap (GeneralLinear.weightCharacterMap wt) p)) = _
-  rw [GeneralLinear.pointsMulEquiv_diagonalTorusPoints, kostantTorusMatrix_apply]
+  rw [q, GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app,
+    GeneralLinear.pointsMulEquiv_diagonalTorusPoints, kostantTorusMatrix_apply]
   congr 1
   funext i
   rw [GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap]

@@ -152,6 +152,11 @@ groups is automatically a group homomorphism, so no separate construction is nee
 lemma mapValue_apply (φ : A →ₐ[R] B) (f : WithConv (H →ₐ[R] A)) :
     mapValue φ f = toConv (φ.comp f.ofConv) := rfl
 
+/-- Evaluating a point after mapping its value algebra applies the value-algebra map to the
+original evaluation. -/
+lemma mapValue_apply_apply (φ : A →ₐ[R] B) (f : WithConv (H →ₐ[R] A)) (h : H) :
+    mapValue φ f h = φ (f.ofConv h) := rfl
+
 /-- `mapValue` preserves the identity: `mapValue (𝟙 A)` is the identity monoid homomorphism. -/
 @[simp]
 lemma mapValue_id :

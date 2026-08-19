@@ -94,9 +94,8 @@ theorem map_mem_kostantGeneratedPointsSubgroup {A : Type v} {B : Type v'}
   rw [mem_kostantGeneratedPointsSubgroup_iff] at hg ⊢
   intro x hx
   have hφ : φ.toIntAlgHom.toRingHom = φ := by ext; rfl
-  rw [← hφ, ← GeneralLinear.mapValue_pointsMulEquiv_symm_apply]
-  change φ.toIntAlgHom (((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g).ofConv x) = 0
-  rw [hg x hx, map_zero]
+  rw [← hφ, ← GeneralLinear.mapValue_pointsMulEquiv_symm_apply,
+    AlgHom.mapValue_apply_apply, hg x hx, map_zero]
 
 /-- The homomorphism on generated-scheme points induced by a ring homomorphism of value rings. -/
 noncomputable def mapKostantGeneratedPointsSubgroup {A : Type v} {B : Type v'}
