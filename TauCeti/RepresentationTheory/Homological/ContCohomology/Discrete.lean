@@ -42,16 +42,6 @@ variable {G : Type u} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [TotallyDisconnectedSpace G]
   {M : Type v} [TopologicalSpace M] [DiscreteTopology M] [MulAction G M] [ContinuousSMul G M]
 
-/-- Every element of a discrete continuous module over a profinite group is fixed by an open
-normal subgroup. -/
-theorem exists_openNormalSubgroup_smul_eq_self (m : M) :
-    ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, u • m = m := by
-  have hOpen : IsOpen (MulAction.stabilizer G m : Set G) := stabilizer_isOpen G m
-  obtain ⟨U, hU⟩ :=
-    ProfiniteGrp.exist_openNormalSubgroup_sub_open_nhds_of_one hOpen
-      (by simp)
-  exact ⟨U, fun u hu ↦ MulAction.mem_stabilizer_iff.mp (hU hu)⟩
-
 /-- A finite set in a discrete continuous module over a profinite group is fixed pointwise by a
 single open normal subgroup. -/
 theorem _root_.Set.Finite.exists_openNormalSubgroup_smul_eq_self {s : Set M} (hs : s.Finite) :
@@ -66,6 +56,14 @@ theorem _root_.Set.Finite.exists_openNormalSubgroup_smul_eq_self {s : Set M} (hs
     ProfiniteGrp.exist_openNormalSubgroup_sub_open_nhds_of_one hOpen hOne
   refine ⟨U, fun u hu m hm ↦ ?_⟩
   exact MulAction.mem_stabilizer_iff.mp (Set.mem_iInter₂.mp (hU hu) m hm)
+
+/-- Every element of a discrete continuous module over a profinite group is fixed by an open
+normal subgroup. -/
+theorem exists_openNormalSubgroup_smul_eq_self (m : M) :
+    ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, u • m = m := by
+  obtain ⟨U, hU⟩ :=
+    (Set.finite_singleton m).exists_openNormalSubgroup_smul_eq_self (G := G)
+  exact ⟨U, fun u hu ↦ hU u hu m (Set.mem_singleton m)⟩
 
 /-- A finite family in a discrete continuous module over a profinite group has a common open
 normal stabilizer. This is the form used for the finite image of a locally constant cochain. -/
