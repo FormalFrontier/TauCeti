@@ -62,6 +62,8 @@ defined once the root vectors are.
 * `TauCeti.IsSl2System.killingForm_root_neg_eq`: the Killing pairing of opposite normalized root
   vectors is `2 / α((cartanEquivDual H)⁻¹ α)`.
 * `TauCeti.IsSl2System.lie_coroot`: the Cartan relation.
+* `TauCeti.IsSl2System.isNilpotent_ad_rootVector`: every member of the family acts nilpotently in
+  the adjoint representation.
 * `TauCeti.IsSl2System.lie_mem_rootSpace_add` and
   `TauCeti.IsSl2System.lie_eq_zero_of_rootSpace_add_eq_bot`: the root grading of the bracket.
 * `TauCeti.IsSl2System.exists_lie_eq_smul_of_coe_eq_add`: the structure constants exist.
@@ -124,6 +126,16 @@ theorem isSl2Triple (hα : α.IsNonZero) : IsSl2Triple (coroot α : L) (x α) (x
 
 /-- A root vector of a normalised family is nonzero, being the `e` of an `sl₂` triple. -/
 theorem ne_zero (hα : α.IsNonZero) : x α ≠ 0 := (hx.isSl2Triple α hα).e_ne_zero
+
+/-- **Every member of a normalised root-vector system acts nilpotently in the adjoint
+representation.** At a root this is the nilpotency of `ad` on a root space; at a zero weight the
+member is `0`. Divided-power exponentials of the family are therefore available over every value
+ring. -/
+theorem isNilpotent_ad_rootVector : _root_.IsNilpotent (LieAlgebra.ad K L (x α)) := by
+  rcases eq_or_ne (α : H → K) 0 with h0 | h0
+  · rw [hx.eq_zero_of_isZero α h0, map_zero]
+    exact IsNilpotent.zero
+  · exact LieAlgebra.isNilpotent_ad_of_mem_rootSpace H h0 (hx.mem_rootSpace α)
 
 /-- The Killing pairing of opposite vectors in a normalised root-vector system is
 `2 / α((cartanEquivDual H)⁻¹ α)`. -/

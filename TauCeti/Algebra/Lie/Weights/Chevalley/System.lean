@@ -55,6 +55,9 @@ the integral root--coroot span.
   root-sum structure constant is `p + 1` or its negative.
 * `TauCeti.IsChevalleySystem.exists_int_lie_eq_smul`: every root-sum bracket has an integral
   coefficient.
+* `TauCeti.IsChevalleySystem.intStructureConstant`: that coefficient, named as an integer, with
+  `lie_eq_intStructureConstant_zsmul` its defining equation and `intStructureConstant_eq_or`
+  identifying it as `±(p + 1)`.
 
 ## References
 
@@ -218,6 +221,72 @@ theorem exists_int_lie_eq_smul
   obtain ⟨z, hz⟩ := hx.exists_int_structureConstant α β γ hγ hαβ
   refine ⟨z, ?_⟩
   rw [hx.toIsSl2System.lie_eq_structureConstant_smul α β γ hγ hαβ, hz]
+
+/-- **The integer structure constant of a Chevalley system**: the unique integer `N` with
+`⁅x α, x β⁆ = N • x γ` when the root `γ` is the sum of `α` and `β`.
+
+The rational structure constant of a merely normalised system is a scalar of the base field. The
+Chevalley normalization pins it to the image of an integer, and it is the integer, not its cast,
+that a construction in characteristic `p` needs. The public interface is
+`TauCeti.IsChevalleySystem.intStructureConstant_cast` and its uniqueness restatement
+`TauCeti.IsChevalleySystem.eq_intStructureConstant_iff`; consumers need not unfold this choice. -/
+noncomputable def intStructureConstant
+    (α β γ : Weight K H L) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) : ℤ :=
+  Classical.choose (hx.exists_int_structureConstant α β γ hγ hαβ)
+
+/-- The cast of the integer structure constant is the structure constant. -/
+@[simp]
+theorem intStructureConstant_cast
+    (α β γ : Weight K H L) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) :
+    ((hx.intStructureConstant α β γ hγ hαβ : ℤ) : K) =
+      hx.toIsSl2System.structureConstant α β γ hγ hαβ :=
+  (Classical.choose_spec (hx.exists_int_structureConstant α β γ hγ hαβ)).symm
+
+/-- **The defining equation of the integer structure constant.** The coefficient is an integer
+acting by `ℤ`-scalar multiplication, which is what survives reduction to a base of arbitrary
+characteristic. -/
+theorem lie_eq_intStructureConstant_zsmul
+    (α β γ : Weight K H L) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) :
+    ⁅x α, x β⁆ = hx.intStructureConstant α β γ hγ hαβ • x γ := by
+  rw [hx.toIsSl2System.lie_eq_structureConstant_smul α β γ hγ hαβ,
+    ← hx.intStructureConstant_cast α β γ hγ hαβ, Int.cast_smul_eq_zsmul]
+
+/-- An integer is the integer structure constant exactly when it gives the bracket of the
+corresponding root vectors. -/
+theorem eq_intStructureConstant_iff
+    (α β γ : Weight K H L) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) (z : ℤ) :
+    z = hx.intStructureConstant α β γ hγ hαβ ↔ ⁅x α, x β⁆ = z • x γ := by
+  refine ⟨fun hz => hz ▸ hx.lie_eq_intStructureConstant_zsmul α β γ hγ hαβ, fun hz => ?_⟩
+  refine Int.cast_injective (α := K) ?_
+  rw [hx.intStructureConstant_cast α β γ hγ hαβ]
+  exact (hx.toIsSl2System.eq_structureConstant_iff α β γ hγ hαβ (z : K)).2
+    (by rw [Int.cast_smul_eq_zsmul]; exact hz)
+
+/-- The integer structure constant of a genuine root-sum bracket is `±(p + 1)`, for `p` the
+root-string coefficient `chainBotCoeff α β`. -/
+theorem intStructureConstant_eq_or
+    (α β γ : Weight K H L) (hα : α.IsNonZero) (hβ : β.IsNonZero) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) :
+    hx.intStructureConstant α β γ hγ hαβ = (chainBotCoeff α β + 1 : ℕ) ∨
+      hx.intStructureConstant α β γ hγ hαβ = -((chainBotCoeff α β + 1 : ℕ) : ℤ) := by
+  rcases hx.structureConstant_eq_natCast_or_eq_neg_natCast α β γ hα hβ hγ hαβ with hN | hN
+  · exact Or.inl (Int.cast_injective (α := K)
+      (by rw [hx.intStructureConstant_cast α β γ hγ hαβ, hN]; push_cast; ring))
+  · exact Or.inr (Int.cast_injective (α := K)
+      (by rw [hx.intStructureConstant_cast α β γ hγ hαβ, hN]; push_cast; ring))
+
+/-- The integer structure constant of a genuine root-sum bracket is nonzero. -/
+theorem intStructureConstant_ne_zero
+    (α β γ : Weight K H L) (hα : α.IsNonZero) (hβ : β.IsNonZero) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) :
+    hx.intStructureConstant α β γ hγ hαβ ≠ 0 := by
+  intro hzero
+  refine hx.toIsSl2System.structureConstant_ne_zero α β γ hγ hαβ hα hβ ?_
+  rw [← hx.intStructureConstant_cast α β γ hγ hαβ, hzero, Int.cast_zero]
 
 end IsChevalleySystem
 

@@ -49,7 +49,7 @@ by the second bracket to zero.
 Together with the binomial coefficients of the Cartan generators, which act diagonally on root
 vectors, this is exactly the invariance needed to make `L` a module over the Kostant `ℤ`-form of
 `U(L)` preserving a finite free lattice; that consequence is drawn in
-`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint`. This advances Layer 9 of
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint.Basic`. This advances Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of `CFSGStatement`.
 
 ## Main results
