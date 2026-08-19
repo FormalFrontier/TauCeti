@@ -8,7 +8,7 @@ module
 import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 public import Mathlib.LinearAlgebra.FreeModule.PID
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.WeightDecomposition
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Weight.Decomposition
 
 /-!
 # Every admissible lattice has a weight basis
