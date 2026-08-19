@@ -6,7 +6,6 @@ Authors: Claude
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Basic
-public import TauCeti.MeasureTheory.OptimalTransport.Gluing
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 /-!
@@ -21,16 +20,18 @@ symmetric kernel on the coupled space `(Ω₁ × Ω₂, π)`.
 These two objects are what makes the cut distance of the dense graph limit theory cross-carrier.
 `cutDist U W` is the infimum, over all couplings `π`, of the cut norm of `overlayDiff U W π`; the
 cut norm acts on kernels, and `overlayDiff U W π` is exactly the kernel it is applied to. Neither
-object needs a standard Borel or atomless hypothesis, which is why the resulting distance is defined
-— and satisfies the triangle inequality — on arbitrary probability carriers.
+object needs a standard Borel or atomless hypothesis, which is why the resulting distance is
+*defined* on arbitrary probability carriers. That its triangle inequality also holds there is a
+separate result, proved by step-graphon approximation (Janson, Lemma 6.5) rather than by gluing
+couplings, and is not built here.
 
 **`IsCoupling` is a `Prop`, not a structure or a class.** A coupling of two given marginals is not
 canonical: the independent coupling `μ₁ ⊗ μ₂` and, on a common carrier, the diagonal coupling are
 both couplings of the same pair, and the cut distance minimizes over all of them. A typeclass would
 have instance resolution silently pick one. The predicate is stated with Mathlib's marginals
-`MeasureTheory.Measure.fst` and `MeasureTheory.Measure.snd`, matching
-`TauCeti.Measure.exists_comp_of_standardBorel_right` and the rest of the gluing API, which are
-deliberately phrased the same way.
+`MeasureTheory.Measure.fst` and `MeasureTheory.Measure.snd`, matching the optimal transport
+gluing API of `TauCeti/MeasureTheory/OptimalTransport/Gluing.lean`, whose hypotheses and conclusions
+are phrased the same way, so a plan composed there is recognized as a coupling here by `rw`.
 
 **`overlayDiff` does not need the coupling hypothesis.** The measure argument of `SymmKernel` is a
 phantom parameter, so the kernel `fun p q => U p.1 q.1 - W p.2 q.2` is well-formed over *any*
@@ -54,17 +55,14 @@ hypotheses at all.
   couplings of a given pair of marginals are not unique, which is why `IsCoupling` is a `Prop`;
 * `IsCoupling.isProbabilityMeasure` — a coupling of probability measures is one;
 * `IsCoupling.measurePreserving_fst` / `_snd` and `IsCoupling.integral_comp_fst` / `_snd` — the
-  marginal conditions as measure-preserving projections and as an identity between integrals, the
-  form in which the counting lemma transports a density computed on the coupled space back to a
-  single carrier;
+  marginal conditions as measure-preserving projections, and as the identity that an integrand
+  depending on one coordinate only integrates against `π` exactly as against that marginal;
 * `IsCoupling.swap` — a coupling of `μ₁, μ₂` swaps to one of `μ₂, μ₁`;
-* `IsCoupling.exists_comp` — two couplings sharing a middle marginal compose, over a standard Borel
-  final carrier;
 * `overlayDiff_apply`, `abs_overlayDiff_apply_le_one` — the eliminator and the `[-1, 1]` bound;
-* `overlayDiff_swap` — swapping the coupling negates the overlaid difference, up to the pullback
-  along `Prod.swap`;
-* `overlayDiff_diag_apply` — on the diagonal of a common carrier the overlaid difference is the
-  plain difference `U - W`.
+* `overlayDiff_swap` — swapping the two graphons negates the overlaid difference, up to the pullback
+  along `Prod.swap`, for *any* two measures on the two products;
+* `comap_overlayDiff_diagonalCoupling` — on a common carrier the overlaid difference along the
+  diagonal coupling pulls back along the diagonal to the plain difference `U - W`.
 
 ## References
 
@@ -74,8 +72,6 @@ hypotheses at all.
   quotient are separate targets and are not built here. The signatures follow
   `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, which pins `IsCoupling` as a `Prop` (not a
   structure or class) for the reason recorded above.
-* The composition of couplings reuses the gluing lemma of
-  `TauCeti/MeasureTheory/OptimalTransport/Gluing.lean`, built for the optimal transport roadmap.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
   (2013), §6 — cut distance via couplings.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), §8.2.
@@ -91,7 +87,7 @@ namespace TauCeti
 
 namespace DenseGraphLimits
 
-variable {Ω₁ Ω₂ Ω₃ : Type*} [MeasurableSpace Ω₁] [MeasurableSpace Ω₂] [MeasurableSpace Ω₃]
+variable {Ω₁ Ω₂ : Type*} [MeasurableSpace Ω₁] [MeasurableSpace Ω₂]
 
 /-- A **coupling** of `μ₁` and `μ₂`: a measure on the product whose marginals are `μ₁` and `μ₂`.
 
@@ -100,7 +96,7 @@ canonical, and the cut distance minimizes over all of them. Use `isCoupling_iff`
 def IsCoupling (μ₁ : Measure Ω₁) (μ₂ : Measure Ω₂) (π : Measure (Ω₁ × Ω₂)) : Prop :=
   π.fst = μ₁ ∧ π.snd = μ₂
 
-variable {μ₁ : Measure Ω₁} {μ₂ : Measure Ω₂} {μ₃ : Measure Ω₃} {π : Measure (Ω₁ × Ω₂)}
+variable {μ₁ : Measure Ω₁} {μ₂ : Measure Ω₂} {π : Measure (Ω₁ × Ω₂)}
 
 /-- The defining conditions of `IsCoupling`. The definition's body is not exposed, so this is the
 lemma downstream modules should rewrite with. -/
@@ -152,10 +148,9 @@ section Integral
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- A function of the first coordinate integrates against a coupling as it does against the first
-marginal.
-
-This is the step by which a homomorphism density computed on the coupled space is recognized as the
-density on `(Ω₁, μ₁)`. -/
+marginal: an integrand that reads only one coordinate is blind to which coupling it is integrated
+against. (A homomorphism density is an integral over `Ω ^ V(F)` of a product of kernel values, so
+transporting one needs the iterated form of `measurePreserving_fst`, not this lemma.) -/
 theorem IsCoupling.integral_comp_fst (hπ : IsCoupling μ₁ μ₂ π) {f : Ω₁ → E}
     (hf : AEStronglyMeasurable f μ₁) : ∫ p, f p.1 ∂π = ∫ x, f x ∂μ₁ := by
   rw [← hπ.measurePreserving_fst.map_eq] at hf ⊢
@@ -170,32 +165,16 @@ theorem IsCoupling.integral_comp_snd (hπ : IsCoupling μ₁ μ₂ π) {f : Ω�
 
 end Integral
 
-/-- Two couplings sharing a middle marginal compose to a coupling of the outer two, provided the
-final carrier is standard Borel.
-
-The witness is produced by the gluing lemma of `TauCeti/MeasureTheory/OptimalTransport/Gluing.lean`,
-whose hypotheses are already phrased through `MeasureTheory.Measure.fst` and
-`MeasureTheory.Measure.snd`. The standard Borel hypothesis is the one the disintegration there
-needs; the roadmap's hypothesis-free triangle inequality for `cutDist` takes a different route,
-approximating by step graphons rather than gluing directly. -/
-theorem IsCoupling.exists_comp [StandardBorelSpace Ω₃] [IsProbabilityMeasure μ₂]
-    {σ : Measure (Ω₂ × Ω₃)} (hπ : IsCoupling μ₁ μ₂ π) (hσ : IsCoupling μ₂ μ₃ σ) :
-    ∃ ζ : Measure (Ω₁ × Ω₃), IsCoupling μ₁ μ₃ ζ := by
-  have : IsProbabilityMeasure σ := hσ.isProbabilityMeasure
-  obtain ⟨ζ, hζ₁, hζ₂⟩ :=
-    TauCeti.Measure.exists_comp_of_standardBorel_right (π := π) (σ := σ)
-      (by rw [hπ.snd_eq, hσ.fst_eq])
-  exact ⟨ζ, isCoupling_iff.2 ⟨by rw [hζ₁, hπ.fst_eq], by rw [hζ₂, hσ.snd_eq]⟩⟩
-
 section Diagonal
 
 variable {Ω : Type*} [MeasurableSpace Ω]
 
 /-- The **diagonal coupling** of a measure with itself: the pushforward of `μ` along `x ↦ (x, x)`.
 
-It is the coupling that reads two graphons on a common carrier at the *same* point, so
-`overlayDiff U W (diagonalCoupling μ)` restricts along the diagonal to the plain difference `U - W`
-(`overlayDiff_diag_apply`). Use `diagonalCoupling_apply` to compute it. -/
+It is the coupling that reads two graphons on a common carrier at the *same* point: it couples `μ`
+with itself (`isCoupling_diagonalCoupling`), and the overlaid difference taken along it pulls back
+along the diagonal to the plain difference `U - W` (`comap_overlayDiff_diagonalCoupling`). Use
+`diagonalCoupling_apply` to compute it. -/
 def diagonalCoupling (μ : Measure Ω) : Measure (Ω × Ω) := μ.map fun x => (x, x)
 
 /-- The diagonal coupling of a measurable set is the measure of its diagonal slice. -/
@@ -232,14 +211,15 @@ The measure `π` is unconstrained here: `SymmKernel` carries its measure as a ph
 the marginal conditions are only needed once the cut norm integrates against `π`. -/
 def overlayDiff (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π : Measure (Ω₁ × Ω₂)) :
     SymmKernel (Ω₁ × Ω₂) π :=
-  U.toSymmKernel.comap π measurable_fst - W.toSymmKernel.comap π measurable_snd
+  U.toSymmKernel.comap Prod.fst measurable_fst π - W.toSymmKernel.comap Prod.snd measurable_snd π
 
 /-- The overlaid difference is the difference of the two coordinate pullbacks. Outside this module,
 use this to unfold `overlayDiff`. -/
 theorem overlayDiff_eq_comap_sub_comap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
     (π : Measure (Ω₁ × Ω₂)) :
     overlayDiff U W π =
-      U.toSymmKernel.comap π measurable_fst - W.toSymmKernel.comap π measurable_snd := (rfl)
+      U.toSymmKernel.comap Prod.fst measurable_fst π -
+        W.toSymmKernel.comap Prod.snd measurable_snd π := (rfl)
 
 /-- The overlaid difference evaluates as the difference of the two graphons read through the two
 coordinates. -/
@@ -264,21 +244,29 @@ theorem abs_overlayDiff_apply_le_one (U : Graphon Ω₁ μ₁) (W : Graphon Ω�
 coupling — negates the overlaid difference.
 
 This is the identity behind the symmetry of the cut distance: the cut norm is even and invariant
-under the pullback along the measure-preserving `Prod.swap`, so the two infima agree. -/
-theorem overlayDiff_swap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π : Measure (Ω₁ × Ω₂)) :
-    overlayDiff W U (π.map Prod.swap) =
-      -(overlayDiff U W π).comap (π.map Prod.swap) measurable_swap := by
+under the pullback along the measure-preserving `Prod.swap`, so the two infima agree. Both measures
+are unconstrained — they are phantom parameters of the two kernel types — so a caller holding a
+coupling `ρ` of `μ₂, μ₁` may use it directly, without rewriting `ρ` into the form `π.map Prod.swap`
+inside its type. -/
+theorem overlayDiff_swap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π : Measure (Ω₁ × Ω₂))
+    (ρ : Measure (Ω₂ × Ω₁)) :
+    overlayDiff W U ρ = -(overlayDiff U W π).comap Prod.swap measurable_swap ρ := by
   ext p q
   simp
 
-/-- Read at two diagonal points of a common carrier, the overlaid difference of `U` and `W` is their
-plain difference as kernels — whatever the coupling.
+/-- On a common carrier, the overlaid difference of `U` and `W` along the diagonal coupling pulls
+back along the diagonal `x ↦ (x, x)` to their plain difference as kernels.
 
-With `isCoupling_diagonalCoupling`, this is what exhibits the same-carrier cut norm `‖U - W‖□` as
-one of the values the cross-carrier cut distance takes an infimum over. -/
-theorem overlayDiff_diag_apply {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    [IsProbabilityMeasure μ] (U W : Graphon Ω μ) (π : Measure (Ω × Ω)) (x y : Ω) :
-    overlayDiff U W π (x, x) (y, y) = (U.toSymmKernel - W.toSymmKernel) x y := by
+`diagonalCoupling μ` is the pushforward of `μ` along that same diagonal, and by
+`isCoupling_diagonalCoupling` it is one of the couplings the cross-carrier cut distance takes an
+infimum over. This identity computes the kernel it contributes; recognizing the resulting value as
+the same-carrier cut norm `‖U - W‖□` additionally needs the cut norm's change of variables along a
+pushforward, which is not part of this file. -/
+theorem comap_overlayDiff_diagonalCoupling {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    [IsProbabilityMeasure μ] (U W : Graphon Ω μ) :
+    (overlayDiff U W (diagonalCoupling μ)).comap (fun x => (x, x))
+        (measurable_id'.prodMk measurable_id') μ = U.toSymmKernel - W.toSymmKernel := by
+  ext x y
   simp
 
 end OverlayDiff

@@ -191,18 +191,19 @@ section Comap
 variable {Ω' Ω'' : Type*} [MeasurableSpace Ω'] [MeasurableSpace Ω'']
 
 /-- The **pullback of a symmetric kernel along a measurable map** `f : Ω' → Ω`, acting on both
-arguments: `K.comap μ' hf x y = K (f x) (f y)`.
+arguments: `K.comap f hf μ' x y = K (f x) (f y)`.
 
 Symmetry, measurability and boundedness are all inherited from `K`, so no hypothesis beyond
 measurability of `f` is needed — and none on either measure, since `μ` and `μ'` are phantom
-parameters of the two kernel types. The target measure `μ'` is therefore an explicit argument: it is
-not determined by the data.
+parameters of the two kernel types. The map comes first, as it does for
+`ProbabilityTheory.Kernel.comap`; the target measure `μ'` trails it as an explicit argument,
+because it is not determined by the data.
 
 This is how a kernel on one carrier is read on another. Two uses in the dense graph limit theory:
 the **overlaid difference** on a coupling of two carriers is the difference of the two pullbacks
 along the coordinate projections, and the measure-preserving-map form of the cut distance compares
 pullbacks along maps out of a common carrier. -/
-def comap (K : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω} (hf : Measurable f) :
+def comap (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
     SymmKernel Ω' μ' where
   toFun x y := K (f x) (f y)
   symm' x y := K.symm (f x) (f y)
@@ -210,38 +211,38 @@ def comap (K : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω} (hf : Meas
   bdd' := K.exists_bound.imp fun _ hC x y => hC (f x) (f y)
 
 @[simp]
-theorem comap_apply (K : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω} (hf : Measurable f)
-    (x y : Ω') : K.comap μ' hf x y = K (f x) (f y) := (rfl)
+theorem comap_apply (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
+    (x y : Ω') : K.comap f hf μ' x y = K (f x) (f y) := (rfl)
 
 @[simp]
-theorem comap_zero (μ' : Measure Ω') {f : Ω' → Ω} (hf : Measurable f) :
-    (0 : SymmKernel Ω μ).comap μ' hf = 0 := by ext; simp
+theorem comap_zero (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (0 : SymmKernel Ω μ).comap f hf μ' = 0 := by ext; simp
 
 @[simp]
-theorem comap_add (K L : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω} (hf : Measurable f) :
-    (K + L).comap μ' hf = K.comap μ' hf + L.comap μ' hf := by ext; simp
+theorem comap_add (K L : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (K + L).comap f hf μ' = K.comap f hf μ' + L.comap f hf μ' := by ext; simp
 
 @[simp]
-theorem comap_neg (K : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω} (hf : Measurable f) :
-    (-K).comap μ' hf = -K.comap μ' hf := by ext; simp
+theorem comap_neg (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (-K).comap f hf μ' = -K.comap f hf μ' := by ext; simp
 
 @[simp]
-theorem comap_sub (K L : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω} (hf : Measurable f) :
-    (K - L).comap μ' hf = K.comap μ' hf - L.comap μ' hf := by ext; simp
+theorem comap_sub (K L : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω') :
+    (K - L).comap f hf μ' = K.comap f hf μ' - L.comap f hf μ' := by ext; simp
 
 @[simp]
-theorem comap_smul (c : ℝ) (K : SymmKernel Ω μ) (μ' : Measure Ω') {f : Ω' → Ω}
-    (hf : Measurable f) : (c • K).comap μ' hf = c • K.comap μ' hf := by ext; simp
+theorem comap_smul (c : ℝ) (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f)
+    (μ' : Measure Ω') : (c • K).comap f hf μ' = c • K.comap f hf μ' := by ext; simp
 
 /-- Pulling back along the identity is the identity. -/
 @[simp]
-theorem comap_id (K : SymmKernel Ω μ) : K.comap μ measurable_id = K := by
+theorem comap_id (K : SymmKernel Ω μ) : K.comap id measurable_id μ = K := by
   ext; simp
 
 /-- Pullbacks compose contravariantly. -/
-theorem comap_comap (K : SymmKernel Ω μ) (μ' : Measure Ω') (μ'' : Measure Ω'') {f : Ω' → Ω}
-    (hf : Measurable f) {g : Ω'' → Ω'} (hg : Measurable g) :
-    (K.comap μ' hf).comap μ'' hg = K.comap μ'' (hf.comp hg) := by ext; simp
+theorem comap_comap (K : SymmKernel Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
+    (g : Ω'' → Ω') (hg : Measurable g) (μ'' : Measure Ω'') :
+    (K.comap f hf μ').comap g hg μ'' = K.comap (f ∘ g) (hf.comp hg) μ'' := by ext; simp
 
 end Comap
 
