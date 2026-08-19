@@ -85,7 +85,7 @@ private lemma logDeriv_zpow_sub_mul {g : ℂ → ℂ} {c z : ℂ} {n : ℤ} (hz 
   have hld_sub : logDeriv (fun w => w - c) z = (z - c)⁻¹ := by
     have hderiv : deriv (fun w => w - c) z = 1 := by simp
     rw [logDeriv_apply, hderiv, one_div]
-  rw [logDeriv_mul z hzpow hg_ne hdz hg_diff,
+  rw [logDeriv_fun_mul z hzpow hg_ne hdz hg_diff,
     logDeriv_fun_zpow (f := fun w => w - c) (differentiableAt_id.sub_const c) n, hld_sub]
 
 /-- **Simple-pole splitting of the logarithmic derivative.** Near a point `s` where `F` is
