@@ -26,6 +26,7 @@ empty. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.Or
 
 * `TauCeti.ModularForm.orderOfVanishingOnOrbit`: the order descended to
   `MulAction.orbitRel.Quotient SL(2, ℤ) ℍ`.
+* `TauCeti.ModularForm.orderOfVanishingOnOrbit_nonneg`: the order on an orbit is nonnegative.
 * `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnOrbit`: finite support on orbits, the
   zero form having empty support.
 * `TauCeti.ModularForm.sum_orderOfVanishingAt_eq_finsum_orbit`: a divisor sum over an arbitrary
@@ -77,6 +78,13 @@ lemma orderOfVanishingOnOrbit_mk [SlashInvariantFormClass F 𝒮ℒ k] (p : ℍ)
     orderOfVanishingOnOrbit f (Quotient.mk'' p) = orderOfVanishingAt f p := by
   unfold orderOfVanishingOnOrbit
   rfl
+
+/-- The vanishing order on an orbit is nonnegative: a modular form is holomorphic, so it has no
+poles. -/
+lemma orderOfVanishingOnOrbit_nonneg [ModularFormClass F 𝒮ℒ k] (f : F)
+    (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : 0 ≤ orderOfVanishingOnOrbit f q := by
+  induction q using Quotient.inductionOn' with
+  | _ p => simpa using orderOfVanishingAt_nonneg (ModularFormClass.holo f) p
 
 /-- Only finitely many orbits of a level-one form carry nonzero order. -/
 lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] (f : F) :

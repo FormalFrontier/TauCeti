@@ -51,6 +51,12 @@ literally the `q` with `q ≠ ⟦i⟧` and `q ≠ ⟦ρ⟧`.
 * `TauCeti.ModularGroup.card_stabilizer_psl_I`, `TauCeti.ModularGroup.card_stabilizer_psl_ρ` and
   `TauCeti.ModularGroup.card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ`: the resulting
   elliptic orders `e_i = 2`, `e_ρ = 3` and `e_P = 1`.
+* `TauCeti.ModularGroup.ellipticOrder`: those orders assembled into a single function `e_P` on
+  the orbit space, with `TauCeti.ModularGroup.ellipticOrder_I`,
+  `TauCeti.ModularGroup.ellipticOrder_ρ`, `TauCeti.ModularGroup.ellipticOrder_eq_one_iff`,
+  `TauCeti.ModularGroup.ellipticOrder_pos` and
+  `TauCeti.ModularGroup.cardStabilizerOnOrbit_eq_two_mul_ellipticOrder`.
+* `TauCeti.ModularGroup.orbit_mk_I_ne_orbit_mk_ρ`: the two elliptic orbits are distinct.
 
 ## References
 
@@ -226,6 +232,87 @@ theorem card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ (z : ℍ)
   have h := card_stabilizer_eq_two_mul_card_stabilizer_psl z
   rw [card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ z hI hρ] at h
   omega
+
+/-! ### The elliptic order of an orbit -/
+
+/-- **The elliptic order `e_P` of an `SL(2, ℤ)`-orbit of `ℍ`**: the order of the stabiliser, in
+`PSL(2, ℤ)`, of any point of the orbit. It is `2` on the orbit of `i`, `3` on the orbit of `ρ`
+and `1` everywhere else, and the valence formula weights an orbit by its reciprocal `1 / e_P`.
+
+The index type is the `SL(2, ℤ)`-orbit space, because that is the one the order divisor
+`TauCeti.ModularForm.orderOfVanishingOnOrbit` is defined on, while the count is taken in
+`PSL(2, ℤ)`, which is the group acting effectively. So this is not an instance of the generic
+`TauCeti.cardStabilizerOnOrbit`, whose quotient and whose group are the same; the two are
+related by `cardStabilizerOnOrbit_eq_two_mul_ellipticOrder`. -/
+noncomputable def ellipticOrder (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : ℕ :=
+  Quotient.liftOn' q (fun z ↦ Nat.card (stabilizer PSL(2, ℤ) z)) fun a b h ↦ by
+    -- the `SL(2, ℤ)`-orders agree along the orbit, and each is twice the `PSL(2, ℤ)` one
+    have ha := card_stabilizer_eq_two_mul_card_stabilizer_psl a
+    have hb := card_stabilizer_eq_two_mul_card_stabilizer_psl b
+    have hab := TauCeti.card_stabilizer_of_orbitRel h
+    omega
+
+/-- Evaluating `ellipticOrder` on the orbit of `z` recovers the `PSL(2, ℤ)`-stabiliser order
+at `z`. -/
+@[simp]
+theorem ellipticOrder_mk (z : ℍ) :
+    ellipticOrder (Quotient.mk'' z : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) =
+      Nat.card (stabilizer PSL(2, ℤ) z) := by
+  unfold ellipticOrder
+  rfl
+
+/-- **The matrix stabiliser order is twice the elliptic order**, orbitwise: the centre `±1` acts
+trivially. This is `card_stabilizer_eq_two_mul_card_stabilizer_psl` read on the orbit space, and
+it is what relates `ellipticOrder` to the generic `TauCeti.cardStabilizerOnOrbit`. -/
+theorem cardStabilizerOnOrbit_eq_two_mul_ellipticOrder
+    (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
+    TauCeti.cardStabilizerOnOrbit q = 2 * ellipticOrder q := by
+  induction q using Quotient.inductionOn' with
+  | _ z => simpa using card_stabilizer_eq_two_mul_card_stabilizer_psl z
+
+-- Neither of the two elliptic values below is `@[simp]`, for the reason recorded above for the
+-- stabiliser counts: `ellipticOrder_mk` together with `MulAction.mem_stabilizer_iff` rewrites the
+-- left-hand side into a `Nat.card` of a subtype, so it is not in simp-normal form.
+
+/-- **`e_i = 2`.** -/
+theorem ellipticOrder_I :
+    ellipticOrder (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = 2 := by
+  rw [ellipticOrder_mk, card_stabilizer_psl_I]
+
+/-- **`e_ρ = 3`.** -/
+theorem ellipticOrder_ρ :
+    ellipticOrder (Quotient.mk'' ρ : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = 3 := by
+  rw [ellipticOrder_mk, card_stabilizer_psl_ρ]
+
+/-- **`e_P = 1` off the two elliptic orbits**: away from them `PSL(2, ℤ)` acts freely. -/
+theorem ellipticOrder_eq_one {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ}
+    (hI : q ≠ Quotient.mk'' I) (hρ : q ≠ Quotient.mk'' ρ) : ellipticOrder q = 1 := by
+  induction q using Quotient.inductionOn' with
+  | _ z => exact card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ z hI hρ
+
+/-- **The two elliptic orbits are distinct**: their elliptic orders `2` and `3` differ. -/
+theorem orbit_mk_I_ne_orbit_mk_ρ :
+    (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' ρ := by
+  intro h
+  have h2 : ellipticOrder (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = 2 :=
+    ellipticOrder_I
+  rw [h, ellipticOrder_ρ] at h2
+  omega
+
+/-- **The elliptic order is positive**, so the weight `1 / e_P` is defined and nonzero. -/
+theorem ellipticOrder_pos (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : 0 < ellipticOrder q := by
+  by_cases hI : q = Quotient.mk'' I
+  · rw [hI, ellipticOrder_I]; omega
+  by_cases hρ : q = Quotient.mk'' ρ
+  · rw [hρ, ellipticOrder_ρ]; omega
+  · rw [ellipticOrder_eq_one hI hρ]; omega
+
+/-- **Exactly two orbits are elliptic**: `e_P = 1` characterises the non-elliptic orbits. -/
+theorem ellipticOrder_eq_one_iff {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ} :
+    ellipticOrder q = 1 ↔ q ≠ Quotient.mk'' I ∧ q ≠ Quotient.mk'' ρ := by
+  refine ⟨fun h ↦ ⟨fun hI ↦ ?_, fun hρ ↦ ?_⟩, fun h ↦ ellipticOrder_eq_one h.1 h.2⟩
+  · rw [hI, ellipticOrder_I] at h; omega
+  · rw [hρ, ellipticOrder_ρ] at h; omega
 
 end ModularGroup
 
