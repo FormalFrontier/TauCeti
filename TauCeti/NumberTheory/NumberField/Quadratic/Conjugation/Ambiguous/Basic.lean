@@ -23,10 +23,12 @@ the two notions of "ambiguous" match up:
 
 This is the descent step of the classical *ambiguous class number formula*, which counts the
 `2`-torsion of `Cl(𝓞 K)`: it replaces a count of ambiguous **classes** by a count of ambiguous
-**ideals**. The remaining step of that count — that an ambiguous ideal is, up to an extended
-rational ideal, a product of the ramified primes, which already satisfy the relation `∏ 𝔭 = (θ)` of
-`TauCeti.Multiquadratic.span_singleton_eq_prod_primeFactors` — is not proved here; with it the
-genus-theoretic bound `2-rank ≤ t - 1` of the Multiquadratic roadmap follows.
+**ideals**. The remaining step of that count — that the class of an ambiguous ideal is a product of
+classes of ramified primes, which in turn satisfy the relation `∏ 𝔭 = (θ)` of
+`TauCeti.Multiquadratic.span_singleton_eq_prod_primeFactors` — is
+`NumberField.classGroupMk0_mem_closure_of_map_eq_self` in
+`Quadratic/Conjugation/Ambiguous/Ideal.lean`; the two together give the genus-theoretic bound
+`2-rank ≤ t - 1` of the Multiquadratic roadmap.
 
 The proof is Hilbert's Theorem 90 for the quadratic extension `K/ℚ`, in the elementary form
 available for a degree-two extension. If `[σJ] = [J]` then `(x) σJ = (y) J` for nonzero
@@ -52,6 +54,8 @@ the classical ambiguous class number formula.
   class of an ambiguous ideal is `2`-torsion.
 * `NumberField.sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`: the ambiguous classes
   are exactly the classes of ambiguous ideals.
+* `Ideal.map_map_of_involutive`: pushing an ideal forward twice along an involutive ring
+  automorphism returns it.
 -/
 
 public section
@@ -64,7 +68,7 @@ namespace NumberField
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
 /-- Pushing an ideal forward twice along an involutive ring automorphism returns it. -/
-private theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
+theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
     (hf : Function.Involutive f) (I : Ideal R) : Ideal.map f (Ideal.map f I) = I := by
   have hcomp : (f : R →+* R).comp (f : R →+* R) = RingHom.id R := RingHom.ext hf
   rw [← Ideal.map_coe (f := f) I, ← Ideal.map_coe (f := f) (Ideal.map (f : R →+* R) I),
@@ -206,8 +210,8 @@ theorem classGroupMk0_sq_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self
 ideals.** For a totally complex quadratic number field, an ideal class is `2`-torsion — equivalently
 fixed by quadratic conjugation — precisely when it is represented by an ideal that conjugation
 fixes. This is the descent step of the ambiguous class number formula: it turns the count of
-`2`-torsion classes into a count of ambiguous ideals. Classifying those ideals — modulo extended
-rational ideals, they are products of the ramified primes — is a further step, not proved here. -/
+`2`-torsion classes into a count of ambiguous ideals. Classifying those ideals — their classes are
+products of classes of ramified primes — is `classGroupMk0_mem_closure_of_map_eq_self`. -/
 theorem sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self [IsTotallyComplex K]
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (C : ClassGroup (𝓞 K)) :
