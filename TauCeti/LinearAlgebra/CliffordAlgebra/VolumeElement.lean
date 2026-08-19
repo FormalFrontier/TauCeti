@@ -40,11 +40,13 @@ This is the even/odd dichotomy of the Clifford algebra as seen from the volume e
 factors span `M` and there are **oddly** many of them, the volume element commutes with every
 generator, hence is **central** (`CliffordAlgebra.prod_map_ι_mem_center_of_odd_length`); if there
 are evenly many, it **anticommutes** with every generator
-(`CliffordAlgebra.prod_map_ι_mul_ι_of_even_length`). It is the odd case that puts a further element
-in the centre of the Clifford algebra of an odd-dimensional quadratic space. That the centre is
-then exactly a rank-two algebra rather than the scalars is *not* proved here and needs hypotheses
-this file does not make — for `Q = 0` on `R ^ 3` the Clifford algebra is the exterior algebra and
-its centre is much larger. `TauCeti/RepresentationTheory/Spin/Structure.lean` proves the
+(`CliffordAlgebra.prod_map_ι_mul_ι_of_even_length`). Centrality is all the odd case claims: under
+these hypotheses the volume element may well be a scalar already, and is `0` as soon as one of its
+factors is. That it is a *further* central element, and that the centre is then exactly a rank-two
+algebra rather than the scalars, is *not* proved here and needs hypotheses this file does not make
+— a nondegenerate form over a field away from characteristic two, with the list an orthogonal
+basis. For `Q = 0` on `R ^ 3` the Clifford algebra is the exterior algebra and its centre is much
+larger instead. `TauCeti/RepresentationTheory/Spin/Structure.lean` proves the
 even-dimensional structure theorem only and records the odd-dimensional splitting as separate,
 unproved work; the volume element is the element that splitting is expected to run on.
 
@@ -127,8 +129,9 @@ theorem prod_map_ι_mul_ι_of_forall_isOrtho {l : List M} {m : M}
           rw [smul_neg, List.length_cons, pow_succ, mul_neg_one, neg_smul]
 
 /-- The mirror image of `prod_map_ι_mul_ι_of_forall_isOrtho`: the same sign moves the vector
-back, the sign being its own inverse. -/
-theorem ι_mul_prod_map_ι_of_forall_isOrtho {l : List M} {m : M}
+back, the sign being its own inverse. Kept private, as it says nothing the public form does not:
+its only use is to read the crossing right-to-left inside `prod_map_ι_append_cons_mul_ι`. -/
+private theorem ι_mul_prod_map_ι_of_forall_isOrtho {l : List M} {m : M}
     (h : ∀ x ∈ l, Q.IsOrtho x m) :
     ι Q m * (l.map (ι Q)).prod = ((-1 : R) ^ l.length) • ((l.map (ι Q)).prod * ι Q m) := by
   have hsign : ((-1 : R) ^ l.length) * (-1) ^ l.length = 1 := by
@@ -200,9 +203,12 @@ theorem prod_map_ι_mul_ι_of_mem_span {l : List M} (hl : l.Pairwise Q.IsOrtho) 
 /-- **The volume element of an odd number of pairwise orthogonal vectors spanning `M` is central.**
 
 Crossing a generator costs `(-1) ^ (n - 1)`, and `n - 1` is even, so the volume element commutes
-with every generator; the generators generate the algebra, so it commutes with everything. This is
-the extra central element that makes the centre of an odd-dimensional Clifford algebra bigger than
-the scalars — how much bigger is not decided here. -/
+with every generator; the generators generate the algebra, so it commutes with everything.
+
+Centrality is all that is claimed. Under these hypotheses the volume element may already be a
+scalar, and is `0` as soon as one of its factors is; it is the element *expected* to generate the
+centre beyond the scalars in the odd-dimensional case, but that expectation rests on nondegeneracy
+hypotheses made nowhere in this file. -/
 theorem prod_map_ι_mem_center_of_odd_length {l : List M} (hl : l.Pairwise Q.IsOrtho)
     (hlen : Odd l.length) (hspan : Submodule.span R {x : M | x ∈ l} = ⊤) :
     (l.map (ι Q)).prod ∈ Subalgebra.center R (CliffordAlgebra Q) := by
@@ -242,6 +248,7 @@ theorem prod_map_ι_mul_ι_of_even_length {l : List M} (hl : l.Pairwise Q.IsOrth
 /-- **The square of the volume element of a pairwise orthogonal list is a scalar**,
 `(-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ`: interleaving the two copies of the product takes
 `n.choose 2` transpositions, and each pair of equal adjacent factors collapses to `Q vᵢ`. -/
+@[simp]
 theorem prod_map_ι_mul_self {l : List M} (hl : l.Pairwise Q.IsOrtho) :
     (l.map (ι Q)).prod * (l.map (ι Q)).prod
       = algebraMap R (CliffordAlgebra Q) (((-1 : R) ^ l.length.choose 2) * (l.map Q).prod) := by
