@@ -16,10 +16,11 @@ the small type `TauCeti.ObjectCode C` of codes for the isomorphism classes of ob
 additive commutative monoid structure: the sum of two classes is the class of the biproduct of
 representatives, and the neutral element is the class of the zero object.
 
-Representatives are chosen internally to define addition, but they never escape:
+Representatives are chosen internally to define addition, through
+`Function.surjInv TauCeti.objectCode_surjective`, but they never escape:
 `TauCeti.objectCode_biprod` computes the sum on the codes of actual objects, and the monoid laws
-are transported from `biprod.associator`,
-`biprod.braiding` and the two zero-summand isomorphisms of Mathlib.
+are transported from `biprod.associator`, `biprod.braiding` and the two zero-summand isomorphisms
+of Mathlib.
 
 ## Main definitions
 
@@ -48,37 +49,32 @@ universe w v u
 variable {C : Type u} [Category.{v} C] [HasZeroMorphisms C] [HasZeroObject C]
   [HasBinaryBiproducts C] [EssentiallySmall.{w} C]
 
-omit [HasZeroMorphisms C] [HasZeroObject C] [HasBinaryBiproducts C] in
-private noncomputable def objectCodeRep (c : ObjectCode C) : C :=
-  (objectCode_surjective c).choose
-
-omit [HasZeroMorphisms C] [HasZeroObject C] [HasBinaryBiproducts C] in
-@[simp] private lemma objectCode_objectCodeRep (c : ObjectCode C) :
-    objectCode (objectCodeRep c) = c :=
-  (objectCode_surjective c).choose_spec
-
-omit [HasZeroMorphisms C] [HasZeroObject C] [HasBinaryBiproducts C] in
-private noncomputable def objectCodeRepIso (X : C) : objectCodeRep (objectCode X) ≅ X :=
-  (objectCode_eq_objectCode_iff.1 (objectCode_objectCodeRep _)).some
-
-/-- Isomorphism classes of objects are added by taking the binary biproduct. -/
+/-- Isomorphism classes of objects are added by taking the binary biproduct of representatives. -/
 noncomputable instance : Add (ObjectCode C) :=
-  ⟨fun c d => objectCode ((objectCode_surjective c).choose ⊞
-    (objectCode_surjective d).choose)⟩
+  ⟨fun c d => objectCode (Function.surjInv objectCode_surjective c ⊞
+    Function.surjInv objectCode_surjective d)⟩
 
 /-- The class of the zero object is the neutral isomorphism class. -/
 noncomputable instance : Zero (ObjectCode C) := ⟨objectCode (0 : C)⟩
 
 omit [HasZeroObject C] in
 private lemma ObjectCode.add_def (c d : ObjectCode C) :
-    c + d = objectCode (objectCodeRep c ⊞ objectCodeRep d) := (rfl)
+    c + d = objectCode (Function.surjInv objectCode_surjective c ⊞
+      Function.surjInv objectCode_surjective d) := (rfl)
+
+omit [HasZeroObject C] in
+private lemma objectCode_biprod_congr {X Y X' Y' : C} (hX : objectCode X = objectCode X')
+    (hY : objectCode Y = objectCode Y') : objectCode (X ⊞ Y) = objectCode (X' ⊞ Y') :=
+  objectCode_congr (biprod.mapIso (objectCode_eq_objectCode_iff.1 hX).some
+    (objectCode_eq_objectCode_iff.1 hY).some)
 
 omit [HasZeroObject C] in
 /-- The code of a binary biproduct is the sum of the object codes. -/
 @[simp]
-lemma objectCode_biprod (X Y : C) : objectCode (X ⊞ Y) = objectCode X + objectCode Y := by
-  rw [ObjectCode.add_def]
-  exact (objectCode_congr (biprod.mapIso (objectCodeRepIso X) (objectCodeRepIso Y))).symm
+lemma objectCode_biprod (X Y : C) : objectCode (X ⊞ Y) = objectCode X + objectCode Y :=
+  (objectCode_biprod_congr (Function.surjInv_eq objectCode_surjective (objectCode X)).symm
+    (Function.surjInv_eq objectCode_surjective (objectCode Y)).symm).trans
+      (ObjectCode.add_def _ _).symm
 
 omit [HasZeroMorphisms C] [HasBinaryBiproducts C] in
 /-- The code of the zero object is the neutral isomorphism class. -/

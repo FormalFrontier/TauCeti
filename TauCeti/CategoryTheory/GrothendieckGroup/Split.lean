@@ -309,26 +309,29 @@ variable {C : Type u} [Category.{v} C] [HasZeroMorphisms C] [HasZeroObject C]
 
 namespace SplitK0
 
-omit [HasZeroMorphisms C] [HasZeroObject C] [HasBinaryBiproducts C] in
-private noncomputable def objectCodeChosenIso (X : C) :
-    (objectCode_surjective (objectCode X)).choose ≅ X :=
-  (objectCode_eq_objectCode_iff.1 (objectCode_surjective (objectCode X)).choose_spec).some
+omit [HasZeroObject C] in
+private lemma of_eq_of_objectCode_eq {X Y : C} (h : objectCode X = objectCode Y) :
+    (of X : SplitK0 C) = of Y :=
+  of_congr (objectCode_eq_objectCode_iff.1 h).some
 
 /-- The class map of split `K₀`, as a homomorphism from the additive monoid of isomorphism
 classes of objects. -/
 noncomputable def ofCode : ObjectCode C →+ SplitK0 C where
-  toFun c := of (objectCode_surjective c).choose
+  toFun c := of (Function.surjInv objectCode_surjective c)
   map_zero' := by
-    rw [← objectCode_zero, of_congr (objectCodeChosenIso (0 : C)), of_zero]
+    refine (of_eq_of_objectCode_eq (Y := (0 : C)) ?_).trans of_zero
+    rw [Function.surjInv_eq objectCode_surjective, objectCode_zero]
   map_add' a b := by
-    obtain ⟨A, rfl⟩ := objectCode_surjective a
-    obtain ⟨B, rfl⟩ := objectCode_surjective b
-    rw [← objectCode_biprod, of_congr (objectCodeChosenIso (A ⊞ B)),
-      of_congr (objectCodeChosenIso A), of_congr (objectCodeChosenIso B), of_biprod]
+    have h : objectCode (Function.surjInv objectCode_surjective (a + b)) =
+        objectCode (Function.surjInv objectCode_surjective a ⊞
+          Function.surjInv objectCode_surjective b) := by
+      rw [Function.surjInv_eq objectCode_surjective, objectCode_biprod,
+        Function.surjInv_eq objectCode_surjective, Function.surjInv_eq objectCode_surjective]
+    exact (of_eq_of_objectCode_eq h).trans (of_biprod _ _)
 
 @[simp]
 lemma ofCode_objectCode (X : C) : ofCode (objectCode X) = (of X : SplitK0 C) :=
-  of_congr (objectCodeChosenIso X)
+  of_eq_of_objectCode_eq (Function.surjInv_eq objectCode_surjective (objectCode X))
 
 variable (C) in
 /-- The invariant sending an object to its isomorphism class, viewed in the group completion of
