@@ -69,11 +69,9 @@ lemma downstream modules should rewrite with. -/
 theorem isCoupling_iff : IsCoupling μ₁ μ₂ π ↔ π.fst = μ₁ ∧ π.snd = μ₂ := (Iff.rfl)
 
 /-- The first marginal of a coupling. -/
-@[simp]
 theorem IsCoupling.fst_eq (hπ : IsCoupling μ₁ μ₂ π) : π.fst = μ₁ := isCoupling_iff.1 hπ |>.1
 
 /-- The second marginal of a coupling. -/
-@[simp]
 theorem IsCoupling.snd_eq (hπ : IsCoupling μ₁ μ₂ π) : π.snd = μ₂ := isCoupling_iff.1 hπ |>.2
 
 /-- The first projection out of a coupling is measure preserving. This is the marginal condition in
