@@ -136,9 +136,10 @@ theorem isCentralPoint_mapDomain_bialgEquiv_iff (e : H ≃ₐc[R] K)
   constructor
   · intro hg
     have htransport := hg.mapDomain_bialgEquiv e.symm
-    change IsCentralPoint ((AlgHom.mapDomainMulEquiv (A := A) e).symm
-      (AlgHom.mapDomainMulEquiv (A := A) e g)) at htransport
-    rw [(AlgHom.mapDomainMulEquiv (A := A) e).symm_apply_apply] at htransport
+    simp only [BialgEquiv.toBialgHom_eq_coe] at htransport
+    rw [← AlgHom.mapDomainMulEquiv_apply (A := A) e,
+      ← AlgHom.mapDomainMulEquiv_symm_apply (A := A) e,
+      (AlgHom.mapDomainMulEquiv (A := A) e).symm_apply_apply] at htransport
     exact htransport
   · exact fun hg ↦ hg.mapDomain_bialgEquiv e
 

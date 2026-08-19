@@ -282,14 +282,13 @@ theorem IsCentral.comap_of_bijective {H K : Type v} [CommRing H] [CommRing K]
   have hg' : E.symm g ∈ CommHopfAlgCat.quotientPointsSubgroup
       (_root_.CommHopfAlgCat.of R K) I A := by
     apply (hmem (E.symm g)).mp
-    change E (E.symm g) ∈ CommHopfAlgCat.quotientPointsSubgroup
-      (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A
-    simpa using hg
+    rw [E.apply_symm_apply]
+    exact hg
   have hcentral := CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup
     (_root_.CommHopfAlgCat.of R K) I hI A hg'
   have htransport := hcentral.mapDomain_bialgEquiv e
-  change HopfAlgebra.IsCentralPoint (E (E.symm g)) at htransport
-  rw [E.apply_symm_apply] at htransport
+  simp only [BialgEquiv.toBialgHom_eq_coe] at htransport
+  rw [← AlgHom.mapDomainMulEquiv_apply e, E.apply_symm_apply] at htransport
   exact htransport
 
 /-- **A central Hopf ideal is normal.** Its points commute with every point of the ambient group

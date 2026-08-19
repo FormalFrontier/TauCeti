@@ -206,10 +206,7 @@ theorem centerGroupSchemeIso_hom_comp_centerGroupSchemeι (e : H ≅ K) :
       centerGroupSchemeι H ≫
         (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map e.inv.op := by
   rw [centerGroupSchemeIso_hom]
-  change (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map
-      (centerCoordinateMap e.symm).op ≫ quotientSpecι K (centerDefiningIdeal K) =
-    quotientSpecι H (centerDefiningIdeal H) ≫
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map e.inv.op
+  simp only [centerGroupSchemeι]
   rw [quotientSpecι_def, quotientSpecι_def,
     ← (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map_comp,
     ← (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map_comp,
