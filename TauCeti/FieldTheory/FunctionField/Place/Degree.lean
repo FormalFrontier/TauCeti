@@ -37,8 +37,9 @@ a genuine positive natural number.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
   `ord_P x ≠ 0`.
   The lower bound `1 ≤ deg P` is `TauCeti.Place.one_le_degree_of_isFunctionField`.
-* `TauCeti.Place.degree_eq_one_of_isAlgClosed`: over an algebraically closed field of constants
-  every place of an algebraic function field is rational (Stichtenoth, Remark 1.1.17).
+* `TauCeti.Place.degree_eq_one_of_isAlgClosed_of_isFunctionField`: over an algebraically closed
+  field of constants every place of an algebraic function field is rational (Stichtenoth,
+  Remark 1.1.17).
 
 The rational places themselves are characterised in
 `TauCeti.FieldTheory.FunctionField.Place.Basic`, where no function-field hypothesis is needed.
@@ -244,8 +245,8 @@ theorem one_le_degree_of_isFunctionField (hF : IsFunctionField k F) : 1 ≤ P.de
 variable (P) in
 /-- **Stichtenoth, Remark 1.1.17**: over an algebraically closed field of constants every place
 of an algebraic function field is rational. -/
-theorem degree_eq_one_of_isAlgClosed [IsAlgClosed k] (hF : IsFunctionField k F) :
-    P.degree = 1 := by
+theorem degree_eq_one_of_isAlgClosed_of_isFunctionField [IsAlgClosed k]
+    (hF : IsFunctionField k F) : P.degree = 1 := by
   let _ := P.finiteDimensional_residueField hF
   exact P.degree_eq_one_of_isAlgClosed_of_isIntegral
 
