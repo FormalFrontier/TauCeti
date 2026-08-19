@@ -45,6 +45,8 @@ make this explicit data available without requiring downstream users to unfold t
   lattice.
 * `TauCeti.DynkinType.root_simpleIndex`, `coroot_simpleIndex`, and
   `mem_support_simplyConnectedBase`: the entrywise pinning of the simple roots and base.
+* `TauCeti.DynkinType.pairing_simpleIndex` and `TauCeti.DynkinType.pairingIn_simpleIndex`: the
+  Cartan integers at the simple indices are the entries of the Bourbaki-numbered Cartan matrix.
 * `TauCeti.DynkinType.card_support_simplyConnectedBase`: the pinned base has `t.rank` elements.
 * `TauCeti.DynkinType.toLinearMap_simplyConnectedRootDatum`: the pinned pairing is the dot
   product, uniformly in the type.
@@ -438,6 +440,22 @@ theorem toLinearMap_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid)
   | G2 =>
     rw [simplyConnectedRootDatum_G2]
     exact g2SimplyConnectedRootDatum_toLinearMap x y
+
+/-- **The Cartan integers of the pinned datum at the simple indices are the entries of its
+Bourbaki-numbered Cartan matrix.** The simple root is a row of the Cartan matrix and the simple
+coroot is a standard basis vector, so the dot product picks out one entry. -/
+theorem pairing_simpleIndex (t : DynkinType) (ht : t.Valid) (i j : Fin t.rank) :
+    (t.simplyConnectedRootDatum ht).pairing (t.simpleIndex ht i) (t.simpleIndex ht j) =
+      t.cartanMatrix i j := by
+  rw [← RootPairing.root_coroot_eq_pairing, toLinearMap_simplyConnectedRootDatum,
+    root_simpleIndex, coroot_simpleIndex, dotProduct_single, mul_one]
+
+/-- The integral form of `TauCeti.DynkinType.pairing_simpleIndex`. -/
+theorem pairingIn_simpleIndex (t : DynkinType) (ht : t.Valid) (i j : Fin t.rank) :
+    (t.simplyConnectedRootDatum ht).pairingIn ℤ (t.simpleIndex ht i) (t.simpleIndex ht j) =
+      t.cartanMatrix i j := by
+  simpa using (t.simplyConnectedRootDatum ht).algebraMap_pairingIn ℤ (t.simpleIndex ht i)
+    (t.simpleIndex ht j) |>.trans (pairing_simpleIndex t ht i j)
 
 /-! ## Uniform acceptance theorems -/
 

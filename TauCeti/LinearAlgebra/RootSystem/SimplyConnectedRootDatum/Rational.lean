@@ -6,7 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.BaseChange
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.NonSimplyLaced
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Reduced
 
 public section
 
@@ -27,18 +30,23 @@ linearly independent in a space of dimension `t.rank`, and the coroots span, bec
 did over `ℤ`. The pinned base and the Bourbaki-numbered Cartan matrix survive the base change
 unchanged, so the rational system realizes the same Dynkin type as the datum it comes from.
 
-What is *not* proved here is that the rational system is reduced and irreducible. Both are
-properties of the explicit root tables rather than of the base change: irreducibility is false over
-`ℤ`, so it cannot be transported at all, and reducedness has not been established for the pinned
-tables. They are the two remaining hypotheses of Geck's construction
-`RootPairing.GeckConstruction.lieAlgebra`, which is what turns this root system into the split
-semisimple Lie algebra whose Chevalley basis a Chevalley--Demazure group scheme is built from.
+The rational system is also reduced and irreducible, which are the two remaining hypotheses of
+Geck's construction `RootPairing.GeckConstruction.lieAlgebra`, the construction turning this root
+system into the split semisimple Lie algebra whose Chevalley basis a Chevalley--Demazure group
+scheme is built from. The two are established by different routes, because neither is a formal
+consequence of the base change alone. Reducedness holds already over `ℤ`, where it is a property of
+the explicit root tables, and transports because the base change leaves every Cartan integer alone:
+two roots are linearly dependent exactly when their Coxeter weight is four, and that number is an
+integer read off the pinned tables. Irreducibility is *false* over `ℤ` — the roots span only the
+root lattice there — so it cannot be transported at all, and is instead deduced over `ℚ` from
+connectedness of the pinned Dynkin diagram.
 
 ## Main definitions
 
 * `TauCeti.DynkinType.rationalRootSystem`: the pinned datum of a valid Dynkin type, base-changed
   to `ℚ`.
 * `TauCeti.DynkinType.rationalBase`: its Bourbaki-numbered base.
+* `TauCeti.DynkinType.simpleSupportEquiv`: the Bourbaki numbering of the support of that base.
 
 ## Main results
 
@@ -46,6 +54,13 @@ semisimple Lie algebra whose Chevalley basis a Chevalley--Demazure group scheme 
 * `TauCeti.DynkinType.hasCartanType_rationalRootSystem`: the rational system realizes its own
   Dynkin type against the pinned numbering.
 * `TauCeti.DynkinType.pairingIn_rationalRootSystem`: its Cartan integers are those of the datum.
+* `TauCeti.DynkinType.isReduced_simplyConnectedRootDatum`: the pinned integral datum is reduced,
+  uniformly in the type.
+* `TauCeti.DynkinType.instIsReducedRationalRootSystem` and
+  `TauCeti.DynkinType.instIsIrreducibleRationalRootSystem`: the rational system is reduced and
+  irreducible.
+* `TauCeti.DynkinType.cartanMatrix_rationalBase`: read through the Bourbaki numbering, the Cartan
+  matrix of the pinned base is the standard Cartan matrix of the Dynkin type.
 
 ## References
 
@@ -146,6 +161,41 @@ instance instIsRootSystemRationalRootSystem : (t.rationalRootSystem ht).IsRootSy
   span_root_eq_top := span_range_root_rationalRootSystem_eq_top t ht
   span_coroot_eq_top := span_range_coroot_rationalRootSystem_eq_top t ht
 
+/-! ## The rational system is reduced and irreducible -/
+
+/-- **The pinned integral datum is reduced**, uniformly in the valid Dynkin type. The simply-laced
+and non-simply-laced halves are proved by different criteria, so this only joins them. -/
+theorem isReduced_simplyConnectedRootDatum : (t.simplyConnectedRootDatum ht).IsReduced := by
+  by_cases hs : t.IsSimplyLaced
+  · exact isReduced_simplyConnectedRootDatum_of_isSimplyLaced t ht hs
+  · exact isReduced_simplyConnectedRootDatum_of_not_isSimplyLaced t ht hs
+
+/-- **The rational system is reduced.** Over both `ℤ` and `ℚ` a pair of roots is linearly dependent
+exactly when its Coxeter weight is `4`, and the base change leaves the Coxeter weight alone, being
+an integer read off the pinned root tables. So dependence over `ℚ` reflects back to dependence over
+`ℤ`, where reducedness of the pinned datum applies. -/
+instance instIsReducedRationalRootSystem : (t.rationalRootSystem ht).IsReduced := by
+  have hZ : (t.simplyConnectedRootDatum ht).IsReduced := isReduced_simplyConnectedRootDatum t ht
+  refine ⟨fun i j hdep => ?_⟩
+  have hQ : (t.rationalRootSystem ht).coxeterWeight i j = 4 :=
+    (RootPairing.coxeterWeight_eq_four_iff_not_linearIndependent _).2 hdep
+  have hcast : (((t.simplyConnectedRootDatum ht).coxeterWeight i j : ℤ) : ℚ) = ((4 : ℤ) : ℚ) := by
+    simpa [RootPairing.coxeterWeight, pairing_rationalRootSystem] using hQ
+  have hZ4 : (t.simplyConnectedRootDatum ht).coxeterWeight i j = 4 := by exact_mod_cast hcast
+  have hdepZ := (RootPairing.coxeterWeight_eq_four_iff_not_linearIndependent _).1 hZ4
+  rcases RootPairing.IsReduced.eq_or_eq_neg (P := t.simplyConnectedRootDatum ht) i j hdepZ with
+    h | h
+  · refine Or.inl (funext fun k => ?_)
+    have := congrFun h k
+    simp only [root_rationalRootSystem]
+    exact_mod_cast congrArg (fun z : ℤ => (z : ℚ)) this
+  · refine Or.inr (funext fun k => ?_)
+    have hk : (t.simplyConnectedRootDatum ht).root i k =
+        -(t.simplyConnectedRootDatum ht).root j k := congrFun h k
+    simp only [Pi.neg_apply, root_rationalRootSystem, hk]
+    push_cast
+    ring
+
 /-! ## Acceptance: the rational system realizes its own Dynkin type -/
 
 /-- **The rational system has Cartan type `t`.** The base change leaves both the support of the
@@ -157,6 +207,41 @@ theorem hasCartanType_rationalRootSystem :
   refine (hasCartanType_iff _ _).2 ⟨(supportEquivRootPairingBaseChangeBase ℚ _ _ _).trans e,
     fun i j => ?_⟩
   exact (cartanMatrix_rootPairingBaseChangeBase ℚ _ _ _ i j).trans (he _ _)
+
+/-- **The rational system is irreducible.** The pinned Dynkin diagram of a valid type is connected,
+which over a field of characteristic zero forces irreducibility. -/
+instance instIsIrreducibleRationalRootSystem : (t.rationalRootSystem ht).IsIrreducible :=
+  (hasCartanType_rationalRootSystem t ht).isIrreducible ht
+
+/-! ## The Bourbaki numbering of the base support -/
+
+theorem mem_support_rationalBase {k : Fin t.numRoots} :
+    k ∈ (t.rationalBase ht).support ↔ (k : ℕ) < t.rank := by
+  rw [support_rationalBase, mem_support_simplyConnectedBase]
+
+/-- **The Bourbaki numbering of the pinned base.** Bourbaki node `i`, at `Fin` index `i - 1`, is
+the element `t.simpleIndex ht i` of the support of `TauCeti.DynkinType.rationalBase`. Downstream
+constructions index simple roots by `Fin t.rank` and reach the support through this equivalence, so
+that no second numbering of the nodes is introduced. -/
+def simpleSupportEquiv : Fin t.rank ≃ (t.rationalBase ht).support where
+  toFun i := ⟨t.simpleIndex ht i, by simp⟩
+  invFun k := ⟨(k : Fin t.numRoots), (mem_support_rationalBase t ht).mp k.2⟩
+  left_inv i := Fin.ext (by simp [simpleIndex_val])
+  right_inv k := Subtype.ext (Fin.ext (by simp [simpleIndex_val]))
+
+@[simp] theorem coe_simpleSupportEquiv (i : Fin t.rank) :
+    ((t.simpleSupportEquiv ht i : Fin t.numRoots)) = t.simpleIndex ht i := by
+  simp [simpleSupportEquiv]
+
+/-- **The Cartan matrix of the pinned base is the standard Cartan matrix of the Dynkin type**, read
+through the Bourbaki numbering. This is what lets a construction stated against
+`RootPairing.Base.cartanMatrix` be read off `TauCeti.DynkinType.cartanMatrix`. -/
+@[simp] theorem cartanMatrix_rationalBase (i j : Fin t.rank) :
+    (t.rationalBase ht).cartanMatrix (t.simpleSupportEquiv ht i) (t.simpleSupportEquiv ht j) =
+      t.cartanMatrix i j := by
+  change (t.rationalBase ht).cartanMatrixIn ℤ _ _ = _
+  rw [RootPairing.Base.cartanMatrixIn_def, coe_simpleSupportEquiv, coe_simpleSupportEquiv,
+    pairingIn_rationalRootSystem, pairingIn_simpleIndex]
 
 end
 
