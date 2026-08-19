@@ -43,8 +43,12 @@ infrastructure independent of the diamond operators.
 * `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`,
   `CongruenceSubgroup.Gamma_le_Gamma_of_dvd`: all three families are antitone in the level,
   `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
+* `CongruenceSubgroup.mem_Gamma1_iff`: `Γ₁(N)` is cut out inside `Γ₀(N)` by the
+  single congruence `d ≡ 1`.
 * `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
   unit upper-left entry modulo `N`.
+* `CongruenceSubgroup.intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: modulo its
+  level, a `Γ₀(N)` matrix has mutually inverse diagonal entries.
 * `CongruenceSubgroup.Gamma0_normalizes_Gamma1` and
   `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
@@ -111,6 +115,28 @@ theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 
   intro A hA
   rw [Gamma0_mem] at hA ⊢
   simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA
+
+/-- **`Γ₁(N)` is the fibre of `Gamma0Map` over `1`.** A matrix lies in `Γ₁(N)` exactly when it
+lies in `Γ₀(N)` and its lower-right entry is `1` modulo `N`; the congruence `a ≡ 1` that
+`CongruenceSubgroup.Gamma1_mem` also asks for is then forced by the determinant. This is the
+form in which membership is checked whenever a construction produces a `Γ₀(N)` matrix and
+controls only its lower-right entry. -/
+theorem mem_Gamma1_iff {γ : SL(2, ℤ)} :
+    γ ∈ Gamma1 N ↔ γ ∈ Gamma0 N ∧ ((γ 1 1 : ℤ) : ZMod N) = 1 :=
+  ⟨fun h ↦ ⟨Gamma1_in_Gamma0 N h, (Gamma1_mem N γ).mp h |>.2.1⟩,
+    fun ⟨h₀, h₁⟩ ↦ (Gamma1_mem N γ).mpr ((Gamma1_to_Gamma0_mem ⟨γ, h₀⟩).mp h₁)⟩
+
+/-- **The diagonal entries of a `Γ₀(M)` matrix are mutually inverse modulo `M`**: the determinant
+identity `ad - bc = 1` with the `bc` term killed by `M ∣ c`. It refines
+`CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0` by naming the inverse. -/
+theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M : ℕ}
+    {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 M) :
+    ((γ 0 0 : ℤ) : ZMod M) * ((γ 1 1 : ℤ) : ZMod M) = 1 := by
+  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
+  have h := congrArg (Int.cast : ℤ → ZMod M) hdet
+  push_cast at h
+  rw [Gamma0_mem.mp hγ] at h
+  linear_combination h
 
 /-- The upper-left entry of a `Γ₀(N)` matrix is a unit modulo `N`: the determinant is one
 and the lower-left entry vanishes modulo `N`, so `ad ≡ 1`. -/

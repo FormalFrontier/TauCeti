@@ -16,6 +16,9 @@ paths with a common endpoint, there likewise exists a globally `C¹` path betwee
 endpoints whose length is the sum of their lengths. These are the basic existential properties
 needed to compare piecewise-`C¹` and `C¹` definitions of Riemannian distance.
 
+A path on an arbitrary compact interval can first be reparametrized affinely onto `[0, 1]`
+without changing its endpoints or length.
+
 The construction uses Mathlib's `Real.smoothTransition` and
 `Manifold.pathELength_comp_of_monotoneOn`. No new notion of path length is introduced.
 
@@ -23,6 +26,8 @@ The construction uses Mathlib's `Real.smoothTransition` and
 
 * `TauCeti.exists_contMDiff_pathELength_eq`: obtain a globally `C¹` path, constant near its
   endpoints, with the same endpoints and length as a given `C¹` path.
+* `TauCeti.Manifold.exists_contMDiff_pathELength_eq_of_le`: reparametrize a `C¹` path from an
+  arbitrary compact interval onto `[0, 1]`, preserving its endpoints and length.
 * `TauCeti.exists_contMDiff_pathELength_eq_add`: obtain a globally `C¹` path between the outer
   endpoints of two compatible `C¹` paths, with length equal to the sum of their lengths.
 
@@ -95,6 +100,43 @@ theorem exists_contMDiff_pathELength_eq {γ : ℝ → M} (hγ : ContMDiffOn 𝓘
       apply Real.smoothTransition.one_of_one_le
       norm_num at ht ⊢
       linarith]
+
+namespace Manifold
+
+/-- A `C¹` path on a compact interval admits a globally `C¹` path on `[0, 1]` with the same
+endpoints and the same length. This is the single-piece case of corner smoothing; the
+reparametrization is affine, so it changes neither the endpoints nor the length. -/
+theorem exists_contMDiff_pathELength_eq_of_le {γ : ℝ → M} {a b : ℝ} (hab : a ≤ b)
+    (hγ : ContMDiffOn 𝓘(ℝ, ℝ) I 1 γ (Icc a b)) :
+    ∃ η : ℝ → M, ContMDiff 𝓘(ℝ, ℝ) I 1 η ∧ η 0 = γ a ∧ η 1 = γ b ∧
+      Manifold.pathELength I η 0 1 = Manifold.pathELength I γ a b := by
+  set f := ContinuousAffineMap.lineMap (R := ℝ) a b with hf
+  have hmaps : f '' Icc 0 1 ⊆ Icc a b := by
+    rw [hf, ContinuousAffineMap.coe_lineMap_eq, ← segment_eq_image_lineMap]
+    simp [hab, segment_eq_Icc]
+  have hcomp : ContMDiffOn 𝓘(ℝ, ℝ) I 1 (γ ∘ f) (Icc 0 1) := by
+    apply hγ.comp
+    · rw [contMDiffOn_iff_contDiffOn]
+      exact f.contDiff.contDiffOn
+    · rw [← image_subset_iff]
+      exact hmaps
+  obtain ⟨η, hη, hη₀, hη₁, hlen, -, -⟩ := TauCeti.exists_contMDiff_pathELength_eq hcomp
+  refine ⟨η, hη, ?_, ?_, ?_⟩
+  · simpa [hf, ContinuousAffineMap.coe_lineMap_eq] using hη₀
+  · simpa [hf, ContinuousAffineMap.coe_lineMap_eq] using hη₁
+  · rw [hlen, hf]
+    have key := Manifold.pathELength_comp_of_monotoneOn (I := I) (γ := γ)
+      (f := ContinuousAffineMap.lineMap (R := ℝ) a b) (a := 0) (b := 1) zero_le_one
+      (by
+        rw [ContinuousAffineMap.coe_lineMap_eq]
+        exact (AffineMap.lineMap_mono hab).monotoneOn _)
+      (ContinuousAffineMap.lineMap (R := ℝ) a b).differentiableOn
+      (by
+        simpa [ContinuousAffineMap.coe_lineMap_eq] using
+          hγ.mdifferentiableOn one_ne_zero)
+    simpa [ContinuousAffineMap.coe_lineMap_eq] using key
+
+end Manifold
 
 /-- Given two `C¹` paths on `[0, 1]` whose endpoints match, there is a globally `C¹` path with
 their outer endpoints which is constant near those endpoints and whose length is the sum of the

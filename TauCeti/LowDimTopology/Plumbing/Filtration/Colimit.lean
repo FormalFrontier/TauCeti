@@ -23,7 +23,9 @@ Mathlib's pointwise criterion for colimits of homological complexes. Thus the fu
 complex is canonically the filtered colimit of its weight truncations.
 
 This is the chain-level direct-limit presentation used to pass finite sublevel computations to
-the full lattice complex. Passing this colimit through homology is a subsequent step.
+the full lattice complex. The colimit is passed through homology in
+`TauCeti.LowDimTopology.Plumbing.Filtration.Homology`; identifying the result with `ℍ⁻` remains
+a subsequent step.
 
 ## Main definitions
 
