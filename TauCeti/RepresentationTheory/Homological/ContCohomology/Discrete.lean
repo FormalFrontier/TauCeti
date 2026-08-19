@@ -120,18 +120,8 @@ theorem actionKernel_eq_top_iff :
     intro g _
     exact (mem_actionKernel_iff G M).mpr (h g)
 
-/-- The permutation representation factors faithfully through the quotient by its kernel. -/
-theorem action_factors_through_quotient :
-    ∃ ρ : G ⧸ actionKernel G M →* Equiv.Perm M,
-      Function.Injective ρ ∧
-        ∀ (g : G) (m : M), ρ (QuotientGroup.mk g) m = g • m := by
-  refine ⟨QuotientGroup.kerLift (MulAction.toPermHom G M),
-    QuotientGroup.kerLift_injective (MulAction.toPermHom G M), fun g m ↦ ?_⟩
-  rw [QuotientGroup.kerLift_mk]
-  rfl
-
 /-- An action on a finite space factors through a finite quotient. -/
-theorem actionQuotient_finite [Finite M] : Finite (G ⧸ actionKernel G M) := by
+theorem finite_quotient_actionKernel [Finite M] : Finite (G ⧸ actionKernel G M) := by
   exact Finite.of_equiv (MulAction.toPermHom G M).range
     (QuotientGroup.quotientKerEquivRange (MulAction.toPermHom G M)).symm.toEquiv
 
@@ -139,11 +129,7 @@ variable [TopologicalSpace G] [TopologicalSpace M] [DiscreteTopology M] [Continu
 
 /-- The kernel of a continuous action on a finite discrete space is open. -/
 theorem actionKernel_isOpen [Finite M] : IsOpen (actionKernel G M : Set G) := by
-  rw [show (actionKernel G M : Set G) =
-    ⋂ m : M, (MulAction.stabilizer G m : Set G) by
-      ext g
-      simp only [Set.mem_iInter, SetLike.mem_coe, mem_actionKernel_iff,
-        MulAction.mem_stabilizer_iff]]
+  rw [actionKernel_eq_iInf_stabilizer, Subgroup.coe_iInf]
   exact isOpen_iInter_of_finite fun m ↦ stabilizer_isOpen G m
 
 /-- The open normal subgroup given by the kernel of a finite discrete action. -/
@@ -161,6 +147,7 @@ theorem openActionKernel_toSubgroup [Finite M] :
 
 /-- A finite discrete module is fixed pointwise by an open normal subgroup. The subgroup can be
 taken to be the kernel of the action. -/
+@[simp]
 theorem openActionKernel_smul_eq_self [Finite M] (g : openActionKernel G M) (m : M) :
     (g : G) • m = m :=
   (mem_actionKernel_iff G M).mp g.2 m
