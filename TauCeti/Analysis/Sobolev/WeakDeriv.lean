@@ -13,6 +13,9 @@ public import Mathlib.Analysis.Distribution.TestFunction
 -- uniqueness, so downstream importers pay for neither.
 import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
+-- This import is public: `Gradient` supplies the `∇` of the weak derivative of a test function
+-- below, together with the Riesz correspondence `innerSL` in which that statement is phrased.
+public import Mathlib.Analysis.Calculus.Gradient.Basic
 
 /-!
 # Weak derivatives on an open set
@@ -137,6 +140,8 @@ weaken them for no gain.
   `TauCeti.hasWeakFDerivOn_of_differentiableOn`: classical derivatives that are locally integrable
   on `Ω` are weak derivatives.
 * `TauCeti.hasWeakLineDerivOn_const`: against a Haar measure, a constant has weak derivative `0`.
+* `TauCeti.hasWeakFDerivOn_testFunction`: a test function has weak derivative the linear
+  functional represented by its gradient.
 * `TauCeti.HasWeakLineDerivOn.ae_eq` and `TauCeti.HasWeakFDerivOn.ae_eq`: uniqueness almost
   everywhere on `Ω`.
 * `TauCeti.HasWeakLineDerivOn.ae_eq_lineDeriv` and `TauCeti.HasWeakFDerivOn.ae_eq_fderiv`: where
@@ -554,6 +559,34 @@ theorem hasWeakFDerivOn_of_differentiableOn (hu : LocallyIntegrableOn u Ω μ)
     fun x hx => (h x hx).hasFDerivAt.hasLineDerivAt v
 
 end Classical
+
+/-! ### Test functions are weakly differentiable
+
+A test function is the basic example: it is smooth, so its classical derivative is also a weak
+one. On an inner product space the derivative is recorded through its Riesz representative, the
+gradient, which is the form in which the Sobolev spaces consume it. -/
+
+section TestFunction
+
+variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+  [FiniteDimensional ℝ E] [BorelSpace E] {μ : Measure E} [μ.IsAddHaarMeasure] {Ω : Opens E}
+
+open scoped Gradient InnerProductSpace
+
+/-- **A test function is weakly differentiable**, with weak derivative the continuous linear
+functional represented by its gradient. -/
+theorem hasWeakFDerivOn_testFunction (φ : 𝓓(Ω, ℝ)) :
+    HasWeakFDerivOn μ Ω (φ : E → ℝ) fun x => innerSL ℝ (∇ (φ : E → ℝ) x) := by
+  have hcoe : (fun x => innerSL ℝ (∇ (φ : E → ℝ) x)) = fderiv ℝ (φ : E → ℝ) := by
+    funext x
+    ext y
+    simp [inner_gradient_left (𝕜 := ℝ) (f := (φ : E → ℝ)) (x := x) (y := y)]
+  rw [hcoe]
+  refine hasWeakFDerivOn_of_differentiableOn ?_ ?_ fun x _ => differentiable_testFunction φ x
+  · exact φ.continuous.locallyIntegrable.locallyIntegrableOn _
+  · exact (φ.contDiff.continuous_fderiv (by simp)).locallyIntegrable.locallyIntegrableOn _
+
+end TestFunction
 
 /-! ### Uniqueness -/
 

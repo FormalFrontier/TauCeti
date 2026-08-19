@@ -35,11 +35,13 @@ subspace under a suitable geometric hypothesis but not on all of `W^{1,p}(Ω)`.
 
 ## Main declarations
 
-* `TauCeti.W1p.ofTestFunctionₗ`: the linear embedding `C_c^∞(Ω) → W^{1,p}(Ω)`.
+* `TauCeti.W1p.ofTestFunctionₗ` and `TauCeti.W1p.ofTestFunctionₗ_injective`: the linear embedding
+  `C_c^∞(Ω) → W^{1,p}(Ω)`, and its injectivity.
 * `TauCeti.w1p0Submodule` and `TauCeti.W1p0`: the space `W^{1,p}_0(Ω)`, complete for the graph
   norm.
-* `TauCeti.mem_of_mem_w1p0Submodule`: extend a closed property from test-function jets to
-  `W^{1,p}_0(Ω)`.
+* `TauCeti.w1p0Submodule_subset_of_isClosed`: a closed set containing every test-function jet
+  contains `W^{1,p}_0(Ω)`, which is how a property is extended from test functions to the whole
+  space.
 
 ## References
 
@@ -66,7 +68,7 @@ omit [Fact (1 ≤ p)] in
 private theorem hasWeakFDerivOn_testFunctionLp (phi : 𝓓(Omega, ℝ)) :
     HasWeakFDerivOn mu Omega (testFunctionLp (mu := mu) p phi)
       fun x => innerSL ℝ (gradientTestFunctionLp (mu := mu) p phi x) := by
-  refine ((hasWeakFDerivOn_testFunction (mu := mu) phi).congr_ae ?_).congr_ae_deriv ?_
+  refine ((hasWeakFDerivOn_testFunction (μ := mu) phi).congr_ae ?_).congr_ae_deriv ?_
   · filter_upwards [testFunctionLp_apply_ae (mu := mu) p phi] with x hx using hx.symm
   · filter_upwards [gradientTestFunctionLp_apply_ae (mu := mu) p phi] with x hx
     rw [hx]
@@ -101,6 +103,31 @@ theorem W1p.gradient_ofTestFunctionₗ (phi : 𝓓(Omega, ℝ)) :
     W1p.gradient (W1p.ofTestFunctionₗ mu Omega p phi) = gradientTestFunctionLp p phi :=
   W1p.gradient_mk _ _ _
 
+/-- The embedding of the test functions is **injective**: two test functions with the same jet
+agree almost everywhere on `Ω`, hence everywhere, being continuous, supported in `Ω`, and measured
+by a Haar measure, which is positive on nonempty open sets. So `W^{1,p}(Ω)` really does contain a
+copy of `C_c^∞(Ω)`, not just a quotient of it. -/
+theorem W1p.ofTestFunctionₗ_injective :
+    Function.Injective (W1p.ofTestFunctionₗ mu Omega p) := by
+  intro phi psi h
+  have hLp : testFunctionLp (mu := mu) p phi = testFunctionLp (mu := mu) p psi := by
+    simpa using congrArg W1p.value h
+  have hae : (phi : E → ℝ) =ᵐ[mu.restrict Omega] (psi : E → ℝ) := by
+    filter_upwards [testFunctionLp_apply_ae (mu := mu) p phi,
+      testFunctionLp_apply_ae (mu := mu) p psi] with x hx hy
+    rw [← hx, ← hy, hLp]
+  have hsubset : {x | (phi : E → ℝ) x ≠ psi x} ⊆ (Omega : Set E) := by
+    intro x hx
+    by_contra hxO
+    exact hx (by rw [image_eq_zero_of_notMem_tsupport fun hc => hxO (phi.tsupport_subset hc),
+      image_eq_zero_of_notMem_tsupport fun hc => hxO (psi.tsupport_subset hc)])
+  have hzero : mu {x | (phi : E → ℝ) x ≠ psi x} = 0 := by
+    have := ae_iff.1 hae
+    rwa [Measure.restrict_apply' Omega.isOpen.measurableSet,
+      Set.inter_eq_self_of_subset_left hsubset] at this
+  have hempty := (isOpen_ne_fun phi.continuous psi.continuous).measure_eq_zero_iff mu |>.1 hzero
+  exact TestFunction.ext fun x => not_not.1 fun hx => Set.eq_empty_iff_forall_notMem.1 hempty x hx
+
 /-! ### The space `W^{1,p}_0(Ω)` -/
 
 /-- **The closed subspace `W^{1,p}_0(Ω)` of `W^{1,p}(Ω)`**: the closure of the test functions
@@ -121,14 +148,13 @@ theorem W1p.ofTestFunctionₗ_mem_w1p0Submodule (phi : 𝓓(Omega, ℝ)) :
     W1p.ofTestFunctionₗ mu Omega p phi ∈ w1p0Submodule mu Omega p :=
   Submodule.mem_closure_iff.2 (Submodule.le_topologicalClosure _ ⟨phi, rfl⟩)
 
-/-- A closed property that holds for every test-function jet holds throughout `W^{1,p}_0(Ω)`. -/
-theorem mem_of_mem_w1p0Submodule {s : Set (W1p mu Omega p)} (hs : IsClosed s)
-    (h : ∀ phi, W1p.ofTestFunctionₗ mu Omega p phi ∈ s) {u : W1p mu Omega p}
-    (hu : u ∈ w1p0Submodule mu Omega p) : u ∈ s := by
-  have hu' : u ∈ closure (Set.range (W1p.ofTestFunctionₗ mu Omega p)) := by
-    rw [← coe_w1p0Submodule]
-    exact hu
-  exact closure_minimal (by rintro _ ⟨phi, rfl⟩; exact h phi) hs hu'
+/-- **Minimality of the closure**: a closed set containing every test-function jet contains all
+of `W^{1,p}_0(Ω)`. -/
+theorem w1p0Submodule_subset_of_isClosed {s : Set (W1p mu Omega p)} (hs : IsClosed s)
+    (h : ∀ phi, W1p.ofTestFunctionₗ mu Omega p phi ∈ s) :
+    (w1p0Submodule mu Omega p : Set (W1p mu Omega p)) ⊆ s := by
+  rw [coe_w1p0Submodule]
+  exact closure_minimal (by rintro _ ⟨phi, rfl⟩; exact h phi) hs
 
 /-- **The Sobolev space `W^{1,p}_0(Ω)`**, the closure of `C_c^∞(Ω)` in `W^{1,p}(Ω)`. -/
 abbrev W1p0 (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)

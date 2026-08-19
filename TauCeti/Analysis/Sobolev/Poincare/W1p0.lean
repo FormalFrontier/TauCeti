@@ -23,7 +23,7 @@ Poincaré--Wirtinger is not proved here.
 The estimate for a single test function is
 `TauCeti.eLpNorm_le_eLpNorm_fderiv_of_support_subset_slab`. The set
 `{u | ‖u‖_p ≤ C ‖∇u‖_p}` is closed and contains every test-function jet, so
-`TauCeti.mem_of_mem_w1p0Submodule` passes the estimate to their closure.
+`TauCeti.w1p0Submodule_subset_of_isClosed` passes the estimate to their closure.
 
 The slab hypothesis is load-bearing: no such inequality holds on the whole space, by
 `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`. So is the boundary condition: the
@@ -106,17 +106,8 @@ theorem W1p.norm_value_le_mul_norm_gradient_of_subset_slab (hp : p ≠ ∞) {i :
   have hclosed : IsClosed {v : W1p volume Omega p |
       ‖W1p.value v‖ ≤ (b - a) * ‖W1p.gradient v‖} := by
     simpa only [W1p.valueL_apply, W1p.gradientL_apply] using hclosedL
-  apply mem_of_mem_w1p0Submodule hclosed _ hu
-  intro phi
+  refine w1p0Submodule_subset_of_isClosed hclosed (fun phi => ?_) hu
   simpa using norm_testFunctionLp_le_of_subset_slab hp hab hOmega phi
-
-omit [Fact (1 ≤ p)] in
-private theorem eLpNorm_restrict_eq_zero_of_coe_eq_empty
-    {F : Type*} [NormedAddCommGroup F]
-    (hempty : (Omega : Set (EuclideanSpace ℝ (Fin (n + 1)))) = ∅)
-    (f : EuclideanSpace ℝ (Fin (n + 1)) → F) :
-    eLpNorm f p (volume.restrict (Omega : Set (EuclideanSpace ℝ (Fin (n + 1))))) = 0 := by
-  rw [hempty, Measure.restrict_empty, eLpNorm_measure_zero]
 
 /-- **The Poincaré inequality on `W^{1,p}_0(Ω)` for a bounded domain.** If `1 ≤ p < ∞` and
 `Ω ⊆ ℝ^{n+1}` is contained in a ball of radius `R`, then
@@ -132,9 +123,13 @@ theorem W1p.norm_value_le_mul_norm_gradient_of_subset_ball
   · have hball : Metric.ball c R = ∅ := Metric.ball_eq_empty.2 hR
     have hempty : (Omega : Set (EuclideanSpace ℝ (Fin (n + 1)))) = ∅ :=
       subset_empty_iff.1 (hball ▸ hOmega)
-    rw [Lp.norm_def, Lp.norm_def,
-      eLpNorm_restrict_eq_zero_of_coe_eq_empty hempty,
-      eLpNorm_restrict_eq_zero_of_coe_eq_empty hempty]
+    -- `Ω` is empty, so the measure is zero, its almost-everywhere filter is `⊥`, and every
+    -- `Lᵖ` class over it is `0`; both sides of the inequality vanish.
+    have hbot : ae (volume.restrict (Omega : Set (EuclideanSpace ℝ (Fin (n + 1))))) = ⊥ :=
+      ae_eq_bot.2 (by rw [hempty, Measure.restrict_empty])
+    have hvalue : W1p.value u = 0 := Lp.ext (by rw [hbot]; exact Filter.eventually_bot)
+    have hgradient : W1p.gradient u = 0 := Lp.ext (by rw [hbot]; exact Filter.eventually_bot)
+    rw [hvalue, hgradient]
     simp
   have hslab : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ (Fin (n + 1)))),
       x (0 : Fin (n + 1)) ∈ Icc (c 0 - R) (c 0 + R) :=

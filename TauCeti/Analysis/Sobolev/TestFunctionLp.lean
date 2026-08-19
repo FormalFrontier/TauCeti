@@ -139,25 +139,4 @@ theorem gradientTestFunctionLp_smul (q : ENNReal) (c : ℝ) (phi : 𝓓(Omega, �
 
 end Gradient
 
-section WeakGradient
-
-variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-  [FiniteDimensional ℝ E] [BorelSpace E] {mu : Measure E} [mu.IsAddHaarMeasure]
-  {Omega : Opens E}
-
-/-- **A test function is weakly differentiable**, with weak derivative the continuous linear
-functional represented by its gradient. -/
-theorem hasWeakFDerivOn_testFunction (phi : 𝓓(Omega, ℝ)) :
-    HasWeakFDerivOn mu Omega (phi : E → ℝ) fun x => innerSL ℝ (∇ (phi : E → ℝ) x) := by
-  have hcoe : (fun x => innerSL ℝ (∇ (phi : E → ℝ) x)) = fderiv ℝ (phi : E → ℝ) := by
-    funext x
-    ext y
-    simp [inner_gradient_left (𝕜 := ℝ) (f := (phi : E → ℝ)) (x := x) (y := y)]
-  rw [hcoe]
-  refine hasWeakFDerivOn_of_differentiableOn ?_ ?_ fun x _ => differentiable_testFunction phi x
-  · exact phi.continuous.locallyIntegrable.locallyIntegrableOn _
-  · exact (phi.contDiff.continuous_fderiv (by simp)).locallyIntegrable.locallyIntegrableOn _
-
-end WeakGradient
-
 end TauCeti
