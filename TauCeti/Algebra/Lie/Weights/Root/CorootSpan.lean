@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Weights.Integrality
+public import TauCeti.Algebra.Lie.Weights.Killing
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 
 /-!
@@ -37,6 +38,8 @@ ReductiveGroups roadmap, which is in turn consumed by CFSGStatement milestone L0
 * `TauCeti.rootCorootSpan`: their span over `ℤ`.
 * `TauCeti.corootFamily`: the coroots as a family indexed by the weights of `L`.
 * `TauCeti.rootCartanWeight`: the Cartan integers `β α∨` as a `ℤ`-valued weight of `β`.
+* `TauCeti.corootFamily_eq_zero_of_isZero` and `TauCeti.rootCartanWeight_eq_zero_of_isZero`: both
+  vanish at the zero weight, the one index that indexing by all weights adds to the roots.
 * `TauCeti.lie_coroot_coroot_eq_zero` and `TauCeti.IsSl2System.lie_coroot_rootVector`: the two
   bracket computations against a coroot, in their integral form.
 * `TauCeti.IsSl2System.lie_mem_rootCorootSpan`: closure under the bracket when the root-vector
@@ -111,8 +114,9 @@ theorem rootCorootSpan_le_iff {x : Weight K H L → L} {P : Submodule ℤ L} :
 
 variable (H) in
 /-- The coroots of `L`, as a family indexed by the **weights** of `L`. The index runs over all
-weights and not only the roots: the zero weight has `coroot 0 = 0` and so contributes nothing to
-any span or product taken over this family.
+weights and not only the roots: at the zero weight the value is `0` by
+`TauCeti.corootFamily_eq_zero_of_isZero`, so that index contributes nothing to any span or product
+taken over this family.
 
 This is the family of distinguished Cartan vectors of `TauCeti.chevalleyKostantForm`. -/
 noncomputable def corootFamily : Weight K H L → L := fun α => (coroot α : L)
@@ -127,23 +131,37 @@ of all coroots, written through the root-chain coefficients that
 `LieAlgebra.IsKilling.apply_coroot_eq_cast` uses to exhibit that pairing as an integer.
 
 Like `TauCeti.corootFamily`, this is indexed by all weights: at the zero weight the coroot is zero
-and the value is `0`. -/
+and so is the value, by `TauCeti.rootCartanWeight_eq_zero_of_isZero`. -/
 noncomputable def rootCartanWeight (β : Weight K H L) : Weight K H L → ℤ :=
   fun α => (chainBotCoeff (α : H → K) β : ℤ) - (chainTopCoeff (α : H → K) β : ℤ)
 
 /-- The defining property of `TauCeti.rootCartanWeight`: it is the Cartan integer `β α∨`, read in
-`K`. -/
-@[simp] theorem intCast_rootCartanWeight (α β : Weight K H L) :
+`K`. Since `K` has characteristic zero this determines `TauCeti.rootCartanWeight` uniquely; it is
+deliberately not a `simp` lemma, as rewriting with it discards the integrality the definition
+exists to record. -/
+theorem intCast_rootCartanWeight (α β : Weight K H L) :
     ((rootCartanWeight β α : ℤ) : K) = β (coroot α) := by
   rw [rootCartanWeight, apply_coroot_eq_cast α β]
 
+/-- The coroot family vanishes at the zero weight, which is why indexing it by all weights rather
+than by the roots costs nothing. -/
+theorem corootFamily_eq_zero_of_isZero {α : Weight K H L} (hα : α.IsZero) :
+    corootFamily H α = 0 := by
+  rw [corootFamily_apply, coroot_eq_zero_iff.2 hα, ZeroMemClass.coe_zero]
+
+/-- Every root has Cartan integer zero at the zero weight, the coroot there being zero. -/
+@[simp] theorem rootCartanWeight_eq_zero_of_isZero (β : Weight K H L) {α : Weight K H L}
+    (hα : α.IsZero) : rootCartanWeight β α = 0 := by
+  have : ((rootCartanWeight β α : ℤ) : K) = ((0 : ℤ) : K) := by
+    rw [intCast_rootCartanWeight, coroot_eq_zero_iff.2 hα]
+    simp
+  exact_mod_cast this
+
 omit [CharZero K] [LieModule.IsTriangularizable K H L] in
-/-- **Two coroots commute**: a splitting Cartan subalgebra of a Killing-semisimple Lie algebra is
-abelian. -/
+/-- **Two coroots commute**, being elements of the abelian Cartan subalgebra. -/
 theorem lie_coroot_coroot_eq_zero (α β : Weight K H L) :
-    ⁅(coroot α : L), (coroot β : L)⁆ = 0 := by
-  have h := trivial_lie_zero H H (coroot α) (coroot β)
-  simpa only [LieSubalgebra.coe_bracket, ZeroMemClass.coe_zero] using congrArg Subtype.val h
+    ⁅(coroot α : L), (coroot β : L)⁆ = 0 :=
+  lie_cartan_cartan_eq_zero (coroot α) (coroot β)
 
 namespace IsSl2System
 

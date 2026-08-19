@@ -159,14 +159,14 @@ theorem dividedPower_adjointRepresentation_mem (α : Weight ℚ H L) (n : ℕ) {
     Associative.dividedPower_def, LinearMap.smul_apply]
   exact hx.inv_factorial_smul_ad_pow_mem_chevalleyLieLattice α n hy
 
-/-- Every binomial coefficient of a distinguished Cartan vector acts on the Chevalley lattice
-through the adjoint representation. -/
+/-- Every binomial coefficient of a coroot acts on the Chevalley lattice through the adjoint
+representation. -/
 theorem ringChoose_adjointRepresentation_mem (α : Weight ℚ H L) (n : ℕ) {y : L}
     (hy : y ∈ hx.chevalleyLieLattice) :
     UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
-        (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (corootFamily H α)) n) y ∈
+        (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (coroot α : L)) n) y ∈
       hx.chevalleyLieLattice := by
-  rw [corootFamily_apply, Ring.map_choose (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+  rw [Ring.map_choose (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
     (_root_.UniversalEnvelopingAlgebra.ι ℚ (coroot α : L)) n,
     UniversalEnvelopingAlgebra.adjointRepresentation_ι]
   exact hx.ringChoose_ad_coroot_mem_chevalleyLieLattice α n hy
@@ -180,7 +180,9 @@ theorem chevalleyKostantForm_le_stabilizer :
         hx.chevalleyLieLattice.toSubmodule :=
   TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_stabilizer _ _ _ _
     (fun α n _ hy => hx.dividedPower_adjointRepresentation_mem α n hy)
-    (fun α n _ hy => hx.ringChoose_adjointRepresentation_mem α n hy)
+    (fun α n _ hy => by
+      rw [corootFamily_apply]
+      exact hx.ringChoose_adjointRepresentation_mem α n hy)
 
 /-- The adjoint action of an element of the Kostant form of a Chevalley system preserves the
 Chevalley lattice. -/
@@ -197,7 +199,9 @@ noncomputable def chevalleyLatticeRep :
   TauCeti.UniversalEnvelopingAlgebra.kostantFormRep _ _
     (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) _
     (fun α n _ hy => hx.dividedPower_adjointRepresentation_mem α n hy)
-    (fun α n _ hy => hx.ringChoose_adjointRepresentation_mem α n hy)
+    (fun α n _ hy => by
+      rw [corootFamily_apply]
+      exact hx.ringChoose_adjointRepresentation_mem α n hy)
 
 @[simp]
 theorem coe_chevalleyLatticeRep_apply (u : chevalleyKostantForm x)

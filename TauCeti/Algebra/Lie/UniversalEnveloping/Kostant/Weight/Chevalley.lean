@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Weight.Basis
+public import TauCeti.Algebra.Module.Submodule.Finite
 
 /-!
 # The weight basis of a Chevalley lattice
@@ -21,13 +22,14 @@ the root subgroups — therefore still carried those three as hypotheses.
 This file discharges them for the Chevalley lattice `L_ℤ = (rootCorootSpan x).toAddSubgroup` of a
 Chevalley system `x`, whose admissibility for the adjoint representation is
 `TauCeti.IsChevalleySystem.chevalleyKostantForm_apply_mem` and whose finite generation is
-`TauCeti.instModuleFiniteRootCorootSpanToAddSubgroup`. The distinguished Cartan vectors are
-`TauCeti.corootFamily`, and the missing input is the weight datum: `L_ℤ` is spanned by the root
-vectors and the coroots, and each of those is a joint eigenvector of the operators `ad α∨`. A root
-vector `x β` has the integer weight `TauCeti.rootCartanWeight β`, while a coroot is annihilated by
-every `ad α∨` and so has weight zero. That is exactly the span condition, so the Chevalley lattice
-acquires a weight basis with nothing left to assume. Only the stability input needs the Chevalley
-system; the weight datum holds for any normalized system of root vectors.
+`TauCeti.instModuleFiniteRootCorootSpan` read through `TauCeti.instModuleFiniteToAddSubgroup`. The
+distinguished Cartan vectors are `TauCeti.corootFamily`, and the missing input is the weight datum:
+`L_ℤ` is spanned by the root vectors and the coroots, and each of those is a joint eigenvector of
+the operators `ad α∨`. A root vector `x β` has the integer weight `TauCeti.rootCartanWeight β`,
+while a coroot is annihilated by every `ad α∨` and so has weight zero. That is exactly the span
+condition, so the Chevalley lattice acquires a weight basis with nothing left to assume. Only the
+stability input needs the Chevalley system; the weight datum holds for any normalized system of
+root vectors.
 
 That the resulting basis is a basis of a full `ℤ`-form, rather than of a proper subspace, is
 `TauCeti.IsSl2System.span_rootCorootSpan_eq_top` read through `Submodule.coe_toAddSubgroup`.
@@ -48,8 +50,8 @@ this construction returns.
 
 ## Main definitions
 
-* `TauCeti.rootCorootWeightBasisCard`: the number of vectors of a weight basis of the integral
-  root--coroot span.
+* `TauCeti.rootCorootWeightBasisCard`: the number of index values of the weight basis of the
+  integral root--coroot span.
 * `TauCeti.IsChevalleySystem.chevalleyWeightBasis` and
   `TauCeti.IsChevalleySystem.chevalleyWeightBasisFin`: the weight basis of the Chevalley lattice,
   the latter numbered by `Fin`, paired with `TauCeti.IsChevalleySystem.chevalleyWeightFin`.
@@ -59,6 +61,7 @@ this construction returns.
 ## Main results
 
 * `TauCeti.IsSl2System.isCartanWeightVector_rootVector` and
+  `TauCeti.isCartanWeightVector_cartan`, specialized to a coroot in
   `TauCeti.isCartanWeightVector_coroot`: the generators of the Chevalley lattice are joint
   eigenvectors of the coroot operators, of the stated integral weights.
 * `TauCeti.IsSl2System.mem_iSup_jointWeightSpace`: the Chevalley lattice lies in the span of the
@@ -105,15 +108,23 @@ variable {L : Type v} [LieRing L] [LieAlgebra ℚ L] [LieAlgebra.IsKilling ℚ L
 /-! ## The generators of the Chevalley lattice are weight vectors -/
 
 omit [LieModule.IsTriangularizable ℚ H L] in
-/-- **A coroot is a joint eigenvector of the coroot operators of weight zero**: the Cartan
-subalgebra is abelian, so every `ad α∨` annihilates it. -/
+/-- **An element of the Cartan subalgebra is a joint eigenvector of the coroot operators of weight
+zero**: the Cartan subalgebra is abelian, so every `ad α∨` annihilates it. -/
+theorem isCartanWeightVector_cartan (y : H) :
+    UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
+      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) 0 (y : L) :=
+  (UniversalEnvelopingAlgebra.isCartanWeightVector_iff _ _).2 fun α => by
+    rw [corootFamily_apply, UniversalEnvelopingAlgebra.adjointRepresentation_ι,
+      LieAlgebra.ad_apply, lie_cartan_cartan_eq_zero]
+    simp
+
+omit [LieModule.IsTriangularizable ℚ H L] in
+/-- **A coroot is a joint eigenvector of the coroot operators of weight zero**, being an element of
+the Cartan subalgebra. -/
 theorem isCartanWeightVector_coroot (β : Weight ℚ H L) :
     UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
       (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) 0 ((coroot β : H) : L) :=
-  (UniversalEnvelopingAlgebra.isCartanWeightVector_iff _ _).2 fun α => by
-    rw [corootFamily_apply, UniversalEnvelopingAlgebra.adjointRepresentation_ι,
-      LieAlgebra.ad_apply, lie_coroot_coroot_eq_zero]
-    simp
+  isCartanWeightVector_cartan (coroot β)
 
 namespace IsSl2System
 
@@ -155,7 +166,10 @@ end IsSl2System
 
 /-! ## The weight basis of the Chevalley lattice -/
 
-/-- The number of vectors of a weight basis of the integral root--coroot span, which is its rank. -/
+/-- The number of index values of `TauCeti.UniversalEnvelopingAlgebra.kostantWeightBasis` for the
+integral root--coroot span of `x` against the coroot family. For a Chevalley system this is the
+rank of that lattice, by `TauCeti.IsChevalleySystem.rootCorootWeightBasisCard_eq_finrank`; for an
+arbitrary family `x` no such claim is made. -/
 noncomputable abbrev rootCorootWeightBasisCard (x : Weight ℚ H L → L) : ℕ :=
   Nat.card (Σ μ : Weight ℚ H L → ℤ, Module.Free.ChooseBasisIndex ℤ
     (UniversalEnvelopingAlgebra.weightSublattice (corootFamily H)
@@ -280,11 +294,12 @@ section Torus
 `A` it acts diagonally on `A ⊗[ℤ] L_ℤ`, scaling the base-changed weight-basis vector `b i` by the
 value at `s` of its character `chevalleyWeightFin i`.
 
-The parameter is indexed by all weights of `L` rather than by the roots alone; the zero weight has
-`coroot 0 = 0`, so every weight of the lattice vanishes on it and that coordinate of `s` acts
-trivially. This is not yet the maximal torus of the Layer 9 pinning: exhibiting that needs a
-rank-`ℓ` cocharacter datum, equivalently the simply connected lattice, which the adjoint lattice
-does not supply. -/
+The parameter is indexed by all weights of `L` rather than by the roots alone; at the zero weight
+the coroot vanishes, and with it both the cocharacter
+(`TauCeti.corootFamily_eq_zero_of_isZero`) and the weights of the generators
+(`TauCeti.rootCartanWeight_eq_zero_of_isZero`). This is not yet the maximal torus of the Layer 9
+pinning: exhibiting that needs a rank-`ℓ` cocharacter datum, equivalently the simply connected
+lattice, which the adjoint lattice does not supply. -/
 noncomputable def chevalleyTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     (Weight ℚ H L → Aˣ) →*
       LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (rootCorootSpan x).toAddSubgroup) :=
