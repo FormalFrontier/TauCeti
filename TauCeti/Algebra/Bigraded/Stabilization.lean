@@ -132,15 +132,6 @@ theorem mul_W_right_injective : Function.Injective fun P : Series => P * W :=
 theorem mul_W_pow_right_injective (k : ℕ) : Function.Injective fun P : Series => P * W ^ k :=
   fun _ _ h => mul_right_cancel₀ (pow_ne_zero k W_ne_zero) h
 
-/-- A stabilization vanishes only if the original series does. This is not a `simp` lemma: `simp`
-already reduces the left-hand side through `mul_eq_zero` and `pow_eq_zero_iff'`. -/
-theorem mul_W_pow_eq_zero_iff (P : Series) (k : ℕ) : P * W ^ k = 0 ↔ P = 0 := by
-  constructor
-  · intro h
-    exact mul_W_pow_right_injective k (by simpa using h)
-  · rintro rfl
-    simp
-
 /-- The bigraded dimensions of a `k`-fold stabilization. The summand of `P ⊗ W^{⊗k}` in bidegree
 `(m, a)` collects the summands of `P` in the bidegrees `(m + i, a + i)` on the diagonal above it,
 each with the binomial multiplicity `k.choose i`. -/
@@ -258,10 +249,6 @@ theorem stableMk_eq_stableMk_iff {P Q : Series} :
 @[simp]
 theorem stableMk_mul_W_pow (P : Series) (k : ℕ) : stableMk (P * W ^ k) = stableMk P :=
   stableMk_eq_stableMk_iff.mpr (isStablyEquiv_mul_W_pow P k)
-
-/-- Every stable class is the class of a series. -/
-theorem stableMk_surjective : Function.Surjective stableMk :=
-  Quotient.mk_surjective
 
 end StablyEquiv
 
