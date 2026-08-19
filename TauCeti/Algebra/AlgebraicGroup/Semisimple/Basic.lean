@@ -111,6 +111,31 @@ theorem semisimpleCommHopfAlgProperty_iff (k : Type u) [Field k]
       intro I hnormal hsubConnected hsub
       exact htrivial I hnormal hsubConnected hsub.1 hsub.2
 
+/-- Semisimplicity is the geometric normal-subgroup-freeness property whose candidate subgroups
+are smooth and have geometrically solvable points. -/
+theorem semisimpleCommHopfAlgProperty_eq_geometricNormalSubgroupFree
+    (k : Type u) [Field k] :
+    semisimpleCommHopfAlgProperty k =
+      geometricNormalSubgroupFreeCommHopfAlgProperty k
+        (((smoothCommHopfAlgProperty (AlgebraicClosure k)) ⊓
+          geometricallySolvablePointsCommHopfAlgProperty (AlgebraicClosure k)).inverseImage
+            (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+              (CommHopfAlgCat.{u} (AlgebraicClosure k)))) := by
+  ext H
+  rw [semisimpleCommHopfAlgProperty_iff,
+    geometricNormalSubgroupFreeCommHopfAlgProperty_iff]
+  simp only [ObjectProperty.prop_inverseImage_iff, ObjectProperty.prop_inf_iff,
+    FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj, smoothCommHopfAlgProperty_iff]
+  constructor
+  · rintro ⟨hsmooth, hconnected, htrivial⟩
+    refine ⟨hsmooth, hconnected, ?_⟩
+    intro I hnormal hsubConnected hsub
+    exact htrivial I hnormal hsubConnected hsub.1 hsub.2
+  · rintro ⟨hsmooth, hconnected, htrivial⟩
+    refine ⟨hsmooth, hconnected, ?_⟩
+    intro I hnormal hsubConnected hsubSmooth hsubSolvable
+    exact htrivial I hnormal hsubConnected ⟨hsubSmooth, hsubSolvable⟩
+
 /-- Semisimplicity is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
     (semisimpleCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=

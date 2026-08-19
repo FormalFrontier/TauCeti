@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Radical.Basic
 
 /-!
 # Reductive affine group schemes
@@ -64,8 +63,8 @@ Thus it presents the coordinate-ring definition on the scheme side without choos
 unipotent radical over the ground field. -/
 def reductiveAffineGroupSchemeProperty (k : Type u) [Field k] :
     ObjectProperty (FiniteTypeAffineGroupSchemeCat (CommRingCat.of k)) :=
-  (reductiveCommHopfAlgProperty k).op.inverseImage
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse
+  geometricNormalSubgroupFreeAffineGroupSchemeProperty k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))
 
 /-- A finite-type affine group scheme is reductive exactly when its coordinate Hopf algebra,
 supplied by the affine anti-equivalence, is reductive. -/
@@ -76,7 +75,9 @@ theorem reductiveAffineGroupSchemeProperty_iff
     reductiveAffineGroupSchemeProperty k G ↔
       reductiveCommHopfAlgProperty k
         ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop :=
-  Iff.rfl
+  (geometricNormalSubgroupFreeAffineGroupSchemeProperty_iff k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) G).trans <| by
+      rw [← reductiveCommHopfAlgProperty_eq_geometricNormalSubgroupFree]
 
 /-- Reductivity of finite-type affine group schemes is invariant under isomorphism. -/
 instance (k : Type u) [Field k] :
@@ -95,8 +96,8 @@ theorem smooth_of_reductiveAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : reductiveAffineGroupSchemeProperty k G) :
     Smooth G.obj.obj.X.hom := by
-  exact (smooth_iff_algebraSmooth_coordinate k G).mpr
-    ((reductiveAffineGroupSchemeProperty_iff k G).mp hG).smooth
+  exact smooth_of_geometricNormalSubgroupFreeAffineGroupSchemeProperty k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) G hG
 
 /-- Objects of `ReductiveAffineGroupSchemeCat k` have smooth structural morphism. -/
 instance (k : Type u) [Field k] (G : ReductiveAffineGroupSchemeCat k) :
@@ -110,8 +111,8 @@ theorem geometricallyConnected_of_reductiveAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : reductiveAffineGroupSchemeProperty k G) :
     GeometricallyConnected G.obj.obj.X.hom := by
-  exact (geometricallyConnected_iff_geometricallyConnected_coordinate k G).mpr
-    ((reductiveAffineGroupSchemeProperty_iff k G).mp hG).geometricallyConnected
+  exact geometricallyConnected_of_geometricNormalSubgroupFreeAffineGroupSchemeProperty k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) G hG
 
 /-- Objects of `ReductiveAffineGroupSchemeCat k` have geometrically connected structural
 morphism. -/
@@ -126,18 +127,20 @@ theorem reductiveAffineGroupSchemeProperty_inverseImage
     (reductiveAffineGroupSchemeProperty k).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       (reductiveCommHopfAlgProperty k).op :=
-  ObjectProperty.inverseImage_inverse_inverseImage_functor
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
-    (reductiveCommHopfAlgProperty k).op
+  geometricNormalSubgroupFreeAffineGroupSchemeProperty_inverseImage k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))
+    (reductiveCommHopfAlgProperty k)
+    (reductiveCommHopfAlgProperty_eq_geometricNormalSubgroupFree k)
 
 /-- `Spec` restricts to an anti-equivalence from reductive finite-type commutative Hopf algebras
 to reductive affine group schemes. -/
 noncomputable def reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCat
     (k : Type u) [Field k] :
     (ReductiveCommHopfAlgCat.{u} k)ᵒᵖ ≌ ReductiveAffineGroupSchemeCat k :=
-  (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategoryOp
-    (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
-    (reductiveAffineGroupSchemeProperty_inverseImage k)
+  geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCat k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))
+    (reductiveCommHopfAlgProperty k)
+    (reductiveCommHopfAlgProperty_eq_geometricNormalSubgroupFree k)
 
 /-- The forward reductive anti-equivalence, followed by the inclusions into finite-type affine
 group schemes and affine group schemes, is Mathlib's `hopfSpec` after forgetting the reductivity
@@ -153,8 +156,9 @@ noncomputable def
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
-  congrFullSubcategoryFunctorCompHopfSpecIso k
-    (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
-    (reductiveAffineGroupSchemeProperty_inverseImage k)
+  geometricNormalSubgroupFreeCommHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))
+    (reductiveCommHopfAlgProperty k)
+    (reductiveCommHopfAlgProperty_eq_geometricNormalSubgroupFree k)
 
 end TauCeti
