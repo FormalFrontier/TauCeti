@@ -13,7 +13,8 @@ public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 # Geometric connectedness of affine group schemes
 
 This file compares geometric connectedness of a commutative Hopf algebra with Mathlib's
-scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum.
+scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum, and transports the
+predicate across the finite-type Hopf-algebra/affine-group-scheme anti-equivalence.
 
 ## Main declarations
 
@@ -25,15 +26,14 @@ scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum.
   connectedness of a finite-type affine group scheme in terms of its coordinate algebra.
 * `TauCeti.geometricallyConnected_hopfSpec_iff_idempotent_eq_zero_or_one`: the idempotent
   characterization of geometric connectedness for a Hopf spectrum.
-* `TauCeti.geometricallyConnected_of_geometricallyConnectedCommHopfAlgProperty_inverse`:
-  geometric connectedness transport through the inverse finite-type anti-equivalence.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §2.a.
 
 This is the geometric-connectedness prerequisite for Layer 3, "Identity component and component
-group", of the ReductiveGroups roadmap.
+group", and its transport supports the reductive and unipotent scheme predicates in Layer 6 of
+the ReductiveGroups roadmap.
 -/
 
 public section
@@ -127,29 +127,5 @@ theorem geometricallyConnected_hopfSpec_iff_idempotent_eq_zero_or_one
         IsIdempotentElem e → e = 0 ∨ e = 1 := by
   rw [← geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec,
     geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one]
-
-/-- A finite-type affine group scheme is geometrically connected when the coordinate Hopf algebra
-supplied by the inverse finite-type anti-equivalence is geometrically connected. -/
-theorem geometricallyConnected_of_geometricallyConnectedCommHopfAlgProperty_inverse
-    (k : Type u) [Field k]
-    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
-    (hG : geometricallyConnectedCommHopfAlgProperty k
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop.obj) :
-    GeometricallyConnected G.obj.obj.X.hom := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  let e : G.obj.obj ≅ (hopfSpec (CommRingCat.of k)).obj H₀ :=
-    ((affineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-        (E.counitIso.app G))).symm ≪≫
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H
-  let : MorphismProperty.RespectsIso
-      (@GeometricallyConnected : MorphismProperty Scheme.{u}) :=
-    MorphismProperty.IsStableUnderBaseChange.respectsIso
-  apply (MorphismProperty.over_iso_iff
-    (@GeometricallyConnected : MorphismProperty Scheme.{u}) ((Grp.forget _).mapIso e)).mpr
-  exact (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec k H₀.unop).mp hG
 
 end TauCeti

@@ -17,10 +17,10 @@ schemes of finite type over a field. The coordinate-ring predicate says that the
 and geometrically connected and that its geometric fibre has no nontrivial connected normal
 smooth unipotent closed subgroup.
 
-The resulting full subcategory is anti-equivalent to reductive commutative Hopf algebras. This
-synchronizes the coordinate-ring and scheme models of reductive groups, while leaving smoothness
-and finite type as explicit parts of the predicate rather than baking them into a monolithic
-notion of algebraic group.
+The resulting full subcategory is anti-equivalent to reductive finite-type commutative Hopf
+algebras (`ReductiveCommHopfAlgCat`). This synchronizes the coordinate-ring and scheme models of
+reductive groups, while leaving smoothness and finite type as explicit parts of the predicate
+rather than baking them into a monolithic notion of algebraic group.
 
 ## Main declarations
 
@@ -28,8 +28,13 @@ notion of algebraic group.
   over a field.
 * `TauCeti.reductiveAffineGroupSchemeProperty_iff`: its coordinate-ring characterization.
 * `TauCeti.ReductiveAffineGroupSchemeCat`: the corresponding full subcategory.
+* `TauCeti.smooth_of_reductiveAffineGroupSchemeProperty` and
+  `TauCeti.geometricallyConnected_of_reductiveAffineGroupSchemeProperty`: structural properties
+  of reductive affine group schemes, with corresponding instances on the bundled category.
 * `TauCeti.reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCat`: the restricted affine
   Hopf/group-scheme anti-equivalence.
+* `TauCeti.reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCat.functorCompιIso`: its
+  `hopfSpec` computation interface.
 
 ## References
 
@@ -105,9 +110,8 @@ theorem geometricallyConnected_of_reductiveAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : reductiveAffineGroupSchemeProperty k G) :
     GeometricallyConnected G.obj.obj.X.hom := by
-  apply geometricallyConnected_of_geometricallyConnectedCommHopfAlgProperty_inverse k G
-  exact
-    ((reductiveAffineGroupSchemeProperty_iff k G).mp hG |>.geometricallyConnected)
+  exact (geometricallyConnected_iff_geometricallyConnected_coordinate k G).mpr
+    ((reductiveAffineGroupSchemeProperty_iff k G).mp hG).geometricallyConnected
 
 /-- Objects of `ReductiveAffineGroupSchemeCat k` have geometrically connected structural
 morphism. -/
@@ -121,32 +125,18 @@ theorem reductiveAffineGroupSchemeProperty_inverseImage
     (k : Type u) [Field k] :
     (reductiveAffineGroupSchemeProperty k).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
-      (reductiveCommHopfAlgProperty k).op := by
-  ext H
-  exact ((reductiveCommHopfAlgProperty k).op.prop_iff_of_iso
-    ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).unitIso.app H)).symm
+      (reductiveCommHopfAlgProperty k).op :=
+  ObjectProperty.inverseImage_inverse_inverseImage_functor
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
+    (reductiveCommHopfAlgProperty k).op
 
 /-- `Spec` restricts to an anti-equivalence from reductive finite-type commutative Hopf algebras
 to reductive affine group schemes. -/
 noncomputable def reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCat
     (k : Type u) [Field k] :
     (ReductiveCommHopfAlgCat.{u} k)ᵒᵖ ≌ ReductiveAffineGroupSchemeCat k :=
-  (ObjectProperty.opEquivalence (reductiveCommHopfAlgProperty k)).symm.trans <|
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategory
-      (reductiveAffineGroupSchemeProperty_inverseImage k)
-
-/-- The forward reductive anti-equivalence followed by the inclusions into finite-type affine
-group schemes is the finite-type anti-equivalence after forgetting reductivity. -/
-private noncomputable def
-    reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCatFunctorCompιIso
-    (k : Type u) [Field k] :
-    (reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCat k).functor ⋙
-        (reductiveAffineGroupSchemeProperty k).ι ≅
-      (forget₂ (ReductiveCommHopfAlgCat.{u} k)
-          (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
-        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.congrFullSubcategoryFunctorCompιIso
-    k (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
+  (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategoryOp
+    (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
     (reductiveAffineGroupSchemeProperty_inverseImage k)
 
 /-- The forward reductive anti-equivalence, followed by the inclusions into finite-type affine
@@ -164,7 +154,10 @@ noncomputable def
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
   Functor.isoWhiskerRight
-      (reductiveCommHopfAlgCatOpEquivReductiveAffineGroupSchemeCatFunctorCompιIso k)
+      (Equivalence.congrFullSubcategoryFunctorCompιIso
+        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
+        (reductiveCommHopfAlgProperty k) (reductiveAffineGroupSchemeProperty k)
+        (reductiveAffineGroupSchemeProperty_inverseImage k))
       ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
         (affineGroupSchemeProperty (CommRingCat.of k)).ι) ≪≫
     Functor.associator _ _ _ ≪≫

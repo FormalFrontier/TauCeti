@@ -120,9 +120,9 @@ noncomputable def
     (k : Type u) [Field k] :
     (SmoothUnipotentCommHopfAlgCat.{u, u} k)ᵒᵖ ≌
       SmoothUnipotentAffineGroupSchemeCat k :=
-  (ObjectProperty.opEquivalence (smoothUnipotentCommHopfAlgProperty k)).symm.trans <|
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategory
-      (smoothUnipotentAffineGroupSchemeProperty_inverseImage k)
+  (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).congrFullSubcategoryOp
+    (smoothUnipotentCommHopfAlgProperty k) (smoothUnipotentAffineGroupSchemeProperty k)
+    (smoothUnipotentAffineGroupSchemeProperty_inverseImage k)
 
 /-- The forward smooth-unipotent anti-equivalence followed by the inclusions into finite-type
 affine group schemes is the finite-type anti-equivalence after forgetting smooth unipotence.
@@ -137,7 +137,10 @@ private noncomputable def
       (forget₂ (SmoothUnipotentCommHopfAlgCat.{u, u} k)
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  Iso.refl _
+  Equivalence.congrFullSubcategoryFunctorCompιIso
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
+    (smoothUnipotentCommHopfAlgProperty k) (smoothUnipotentAffineGroupSchemeProperty k)
+    (smoothUnipotentAffineGroupSchemeProperty_inverseImage k)
 
 /-- The forward smooth-unipotent anti-equivalence, followed by the inclusions into finite-type
 affine group schemes and affine group schemes, is Mathlib's `hopfSpec` after forgetting the

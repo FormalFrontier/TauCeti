@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
+public import TauCeti.CategoryTheory.ObjectProperty.Equivalence
 
 /-!
 # Affine group schemes of finite type
@@ -42,6 +42,10 @@ reductive-groups roadmap, while the dictionary records that the two predicates c
   after both inclusions, the forward functor is Mathlib's `AlgebraicGeometry.hopfSpec`.
 * `TauCeti.finiteType_objectProperty_iff_coordinate`: transport of an isomorphism-invariant
   object property through the finite-type anti-equivalence.
+* `TauCeti.finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.inverseObjIsoHopfSpec`:
+  comparison of a finite-type affine group scheme with the Hopf spectrum of its coordinates.
+* `morphismProperty_iff_hopfSpec_inverse`:
+  transport of an isomorphism-invariant morphism property across this comparison.
 
 ## References
 
@@ -161,36 +165,6 @@ noncomputable def finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
       (CommRingCat.of R)).congrFullSubcategory
         (finiteTypeAffineGroupSchemeProperty_inverseImage R)
 
-namespace finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
-
-/-- Restricting the finite-type anti-equivalence to full subcategories and then including the
-target is naturally isomorphic to first including the source and then applying the finite-type
-anti-equivalence. This records the underlying-functor interface of `opEquivalence`, `trans`, and
-`congrFullSubcategory` for further restrictions. -/
-noncomputable def congrFullSubcategoryFunctorCompιIso
-    (R : Type u) [CommRing R]
-    (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} R))
-    (Q : ObjectProperty (FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)))
-    [Q.IsClosedUnderIsomorphisms]
-    (h : Q.inverseImage
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor = P.op) :
-    ((ObjectProperty.opEquivalence P).symm.trans
-        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).congrFullSubcategory
-          h)).functor ⋙ Q.ι ≅
-      P.ι.op ⋙
-        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor :=
-  Functor.associator _ _ _ ≪≫
-    Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
-      (Q.liftCompιIso
-        (P.op.ι ⋙ (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor)
-        _) ≪≫
-    (Functor.associator _ _ _).symm ≪≫
-    Functor.isoWhiskerRight
-      (P.op.liftCompιIso P.ι.op (fun X => X.unop.property))
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor
-
-end finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
-
 /-- The forward restricted equivalence followed by the finite-type inclusion is definitionally
 the unrestricted equivalence applied after forgetting the finite-type proof. This private
 isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and
@@ -272,5 +246,41 @@ theorem finiteType_objectProperty_iff_coordinate
       rw [ObjectProperty.op_iff]
       simp only [H₀, H, E, Functor.op_obj,
         FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj]
+
+namespace finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
+
+/-- A finite-type affine group scheme is isomorphic to the Hopf spectrum of the coordinate Hopf
+algebra supplied by the inverse finite-type anti-equivalence. -/
+noncomputable def inverseObjIsoHopfSpec
+    (R : Type u) [CommRing R]
+    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)) :
+    G.obj.obj ≅
+      (hopfSpec (CommRingCat.of R)).obj
+        ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+          (CommHopfAlgCat.{u} R)).op.obj
+            ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).inverse.obj G)) :=
+  ((affineGroupSchemeProperty (CommRingCat.of R)).ι.mapIso
+      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι.mapIso
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).counitIso.app G))).symm
+    ≪≫
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso R).app
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).inverse.obj G)
+
+/-- An isomorphism-invariant morphism property holds for a finite-type affine group scheme if and
+only if it holds for the Hopf spectrum of the coordinate algebra supplied by the inverse
+anti-equivalence. -/
+theorem morphismProperty_iff_hopfSpec_inverse
+    (R : Type u) [CommRing R]
+    (P : MorphismProperty Scheme.{u}) [P.RespectsIso]
+    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)) :
+    P G.obj.obj.X.hom ↔
+      P (((hopfSpec (CommRingCat.of R)).obj
+        ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+          (CommHopfAlgCat.{u} R)).op.obj
+            ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
+              R).inverse.obj G))).X.hom) :=
+  MorphismProperty.over_iso_iff P ((Grp.forget _).mapIso (inverseObjIsoHopfSpec R G))
+
+end finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
 
 end TauCeti
