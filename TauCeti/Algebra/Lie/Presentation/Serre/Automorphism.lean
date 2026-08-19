@@ -58,6 +58,8 @@ Nothing here assumes that `CM` is a Cartan matrix, matching
   `TauCeti.serreDiagramAut_symm`: the diagram automorphisms follow the group law of the
   permutations, which for the hypothesis itself is `TauCeti.submatrix_perm_refl`,
   `TauCeti.submatrix_perm_trans` and `TauCeti.submatrix_perm_symm`.
+* `TauCeti.serreDiagramAut_iterate_eq_id`: a power relation on the indexing permutation induces
+  the same iterate relation on its diagram automorphism.
 * `TauCeti.serreChevalleyInvolution_involutive`: the Chevalley involution squares to the identity.
 * `TauCeti.serreChevalleyInvolution_comm_serreDiagramAut`: it commutes with every diagram
   automorphism.
@@ -211,6 +213,58 @@ theorem serreDiagramAut_symm (hσ : CM.submatrix σ σ = CM) :
   serre_equiv_ext (fun i => (LieEquiv.symm_apply_eq _).2 (by simp))
     (fun i => (LieEquiv.symm_apply_eq _).2 (by simp))
     fun i => (LieEquiv.symm_apply_eq _).2 (by simp)
+
+-- Unlike `Equiv.Perm`, endomorphism `LieEquiv`s do not carry a group instance. This private
+-- iterate keeps every intermediate map bundled, so the Serre-generator extensionality theorem can
+-- be used below. Its value is the ordinary function iterate by `lieEquivIterate_apply`.
+private noncomputable def lieEquivIterate
+    {L : Type*} [LieRing L] [LieAlgebra R L] (e : L ≃ₗ⁅R⁆ L) : ℕ → L ≃ₗ⁅R⁆ L
+  | 0 => LieEquiv.refl
+  | n + 1 => e.trans (lieEquivIterate e n)
+
+private theorem lieEquivIterate_apply
+    {L : Type*} [LieRing L] [LieAlgebra R L] (e : L ≃ₗ⁅R⁆ L) (n : ℕ) (x : L) :
+    lieEquivIterate R e n x = e^[n] x := by
+  induction n generalizing x with
+  | zero => rfl
+  | succ n ih =>
+      rw [Function.iterate_succ_apply]
+      exact ih (e x)
+
+private theorem lieEquivIterate_apply_of_apply
+    {I L : Type*} [LieRing L] [LieAlgebra R L] (e : L ≃ₗ⁅R⁆ L) (τ : Equiv.Perm I)
+    (g : I → L) (h : ∀ i, e (g i) = g (τ i)) (n : ℕ) (i : I) :
+    lieEquivIterate R e n (g i) = g ((τ ^ n) i) := by
+  induction n generalizing i with
+  | zero => simp [lieEquivIterate]
+  | succ n ih =>
+      rw [lieEquivIterate, LieEquiv.trans_apply, h, ih, pow_succ,
+        Equiv.Perm.mul_apply]
+
+/-- A diagram automorphism has order dividing the order of its indexing permutation. If
+`σ ^ n = 1`, then applying the corresponding Serre automorphism `n` times is the identity.
+
+This is stated using `Function.iterate` because endomorphism `LieEquiv`s do not carry a group
+instance. -/
+theorem serreDiagramAut_iterate_eq_id (hσ : CM.submatrix σ σ = CM) {n : ℕ}
+    (hn : σ ^ n = 1) : (serreDiagramAut R CM hσ : _ → _)^[n] = id := by
+  have hiter : lieEquivIterate R (serreDiagramAut R CM hσ) n = LieEquiv.refl :=
+    serre_equiv_ext
+      (fun i => calc
+        _ = serreH R CM ((σ ^ n) i) := lieEquivIterate_apply_of_apply R _ σ
+          (serreH R CM) (serreDiagramAut_serreH R CM hσ) n i
+        _ = _ := by rw [hn, Equiv.Perm.one_apply]; rfl)
+      (fun i => calc
+        _ = serreE R CM ((σ ^ n) i) := lieEquivIterate_apply_of_apply R _ σ
+          (serreE R CM) (serreDiagramAut_serreE R CM hσ) n i
+        _ = _ := by rw [hn, Equiv.Perm.one_apply]; rfl)
+      fun i => calc
+        _ = serreF R CM ((σ ^ n) i) := lieEquivIterate_apply_of_apply R _ σ
+          (serreF R CM) (serreDiagramAut_serreF R CM hσ) n i
+        _ = _ := by rw [hn, Equiv.Perm.one_apply]; rfl
+  funext x
+  rw [← lieEquivIterate_apply, hiter]
+  rfl
 
 /-- Naturality: any Serre system realising the presentation transports the diagram automorphism to
 the reindexed system. -/
