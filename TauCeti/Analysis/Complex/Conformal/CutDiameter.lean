@@ -147,8 +147,8 @@ the image `f '' (U ∩ ball ζ ρ)` of the crosscut neighbourhood is covered by 
 
 This is `TauCeti.frontier_image_subset_image_union_frontier_image` for the near side of the
 crosscut, the two sides of which are disjoint and open and cover the domain apart from the crosscut
-arc by `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. That lemma asks nothing of `f`
-beyond openness and disjointness of the images of the two sides, so
+arc by `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere`. That lemma asks nothing of
+`f` beyond openness and disjointness of the images of the two sides, so
 `TauCeti.isOpen_image_of_differentiableOn_of_injOn` is the only place the analytic hypotheses enter,
 and `Disjoint.image` reads the disjointness off injectivity alone. -/
 theorem frontier_image_inter_ball_subset (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)

@@ -177,9 +177,9 @@ theorem frontier_inter_closure_image_inter_sphere_subset_inter (hUo : IsOpen U)
 third set is needed: the image of the cut is adherent to both sides, so its closure adds nothing.
 
 The decomposition `U = (U ∩ ball ζ ρ) ∪ (U \ closedBall ζ ρ) ∪ (U ∩ sphere ζ ρ)` is
-`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` together with `Set.sdiff_union_inter`;
-taking images and closures, `frontier (f '' U) ⊆ closure (f '' U)` splits into the three closures,
-and the third is absorbed by
+`TauCeti.image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere`;
+taking closures, `frontier (f '' U) ⊆ closure (f '' U)` splits into the three closures, and the
+third is absorbed by
 `TauCeti.image_inter_sphere_subset_closure_image_inter_ball`. -/
 theorem frontier_image_subset_union_closure_image (hUo : IsOpen U) (hfc : ContinuousOn f U)
     (hρ : ρ ≠ 0) :

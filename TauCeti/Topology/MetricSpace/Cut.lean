@@ -14,8 +14,9 @@ public import Mathlib.Topology.MetricSpace.Pseudo.Lemmas
 Removing the sphere `sphere x ρ` from a set `s` leaves two pieces: the *near side*
 `s ∩ ball x ρ`, of the points of `s` closer to `x` than `ρ`, and the *far side*
 `s \ closedBall x ρ`, of those further away. This file records that they cover `s \ sphere x ρ`,
-that they are disjoint, and — when `s` is open, so that both sides are open — that a preconnected
-subset of `s` missing the sphere lies entirely in one of them.
+that they are disjoint, that the two sides together with the cut cover all of `s` (also after
+applying an arbitrary map), and — when `s` is open, so that both sides are open — that a
+preconnected subset of `s` missing the sphere lies entirely in one of them.
 
 Nothing beyond the containments `ball x ρ ⊆ closedBall x ρ` and `sphere x ρ ⊆ closedBall x ρ`, and
 the openness of a ball against the closedness of a closed ball, is used, so `s` is an arbitrary set

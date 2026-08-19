@@ -53,7 +53,9 @@ in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected s
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
 containing its frontier: there the enclosing set must be known to contain the whole frontier, here
-only that the set is cut off from infinity. Neither implies the other.
+only that the set is cut off from infinity. The frontier route is the special case of the enclosure
+route obtained from `TauCeti.subset_filledHull_of_frontier_subset`; the enclosure route does not
+require the whole frontier to be caught.
 
 ## Generality
 

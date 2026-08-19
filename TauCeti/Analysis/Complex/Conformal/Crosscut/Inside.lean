@@ -50,10 +50,11 @@ side, and a diameter comparison selects the near one.
 * **An enclosed side is trapped**: each side is preconnected and disjoint from `K`, so if it meets
   `filledHull K` it lies inside (`TauCeti.image_subset_filledHull_of_disjoint_inter_sphere`) and is
   therefore no wider than `K`.
-* **At least one side meets the inside**, as soon as some point of the image crosscut is a limit of
+* **At least one side meets the inside**, as soon as some point of the image domain is a limit of
   points inside `K`
-  (`TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall`): a point of the
-  inside close enough to it lies in the image domain and off `K`, hence on one of the two sides.
+  (`TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull`):
+  a point of the inside close enough to it lies in the image domain and off `K`, hence on one of
+  the two sides.
 
 If `K` is narrower than the far side, at most the near side can be enclosed: trapping the far side
 would give `diam B ≤ diam K`. Combining this exclusion with the two facts above,
@@ -62,10 +63,10 @@ would give `diam B ≤ diam K`. Combining this exclusion with the two facts abov
 ## What is assumed, and what remains
 
 No theorem here assumes plane separation. The second fact above takes as a hypothesis that one
-*given* point `p` of the image crosscut satisfies `p ∈ closure (filledHull K \ K)`, a property of
-the set `K` at the point `p`; it is not an unproved theorem in disguise. This is the only place the
-inside assumption is introduced; `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` passes it
-on unchanged.
+*given* point `p` of the image domain satisfies `p ∈ closure (filledHull K \ K)`, a property of the
+set `K` at the point `p`; it is not an unproved theorem in disguise. In the intended application
+`p` is chosen on the image crosscut. This is the only place the inside assumption is introduced;
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` passes it on unchanged.
 
 What that hypothesis costs, when `K` is a Jordan curve, is exactly the open frontier item recorded
 in the roadmap section of `TauCeti/Topology/FilledHull.lean`: that every point of a Jordan curve is
@@ -87,8 +88,9 @@ through `Metric.dist_le_diam_of_mem`.
 
 * `TauCeti.image_subset_filledHull_of_disjoint_inter_sphere` — an image side meeting the inside of
   such a curve lies inside it.
-* `TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall` — one of the two
-  image sides meets the inside of a curve with inside points next to the image crosscut.
+* `TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull` —
+  one of the two image sides meets the inside of a curve with inside points next to the image
+  domain.
 * `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` — such a curve, if narrower than the far
   side, encloses the *near* side.
 * `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset` — the enclosure hypothesis is
@@ -142,8 +144,8 @@ theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
 
 /-! ## At least one side meets the inside -/
 
-/-- **One of the two image sides meets the inside of a curve with a point of its inside next to the
-image crosscut.** If a point `p` of the image crosscut is a limit of points of `filledHull K \ K`,
+/-- **One of the two image sides meets the inside of a curve with a point of its inside in the image
+domain.** If a point `p` of the image domain is a limit of points of `filledHull K \ K`,
 then such a point
 `q` close enough to `p` lies in the open image domain; being off `K` it is off the image crosscut,
 so it lies on one of the two image sides, and it lies in `filledHull K`.
@@ -152,13 +154,13 @@ This is where the inside assumption is introduced, at one point as a hypothesis;
 criterion below passes it on unchanged. For a Jordan curve `K` the hypothesis is the
 plane-separation statement `J ⊆ closure (filledHull J \ J)` recorded in the roadmap section of
 `TauCeti/Topology/FilledHull.lean`, read at `p`. -/
-theorem nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall
+theorem nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull
     (hΩo : IsOpen (f '' U)) (hγ : f '' (U ∩ sphere ζ ρ) ⊆ K)
-    (hp : p ∈ f '' (U ∩ sphere ζ ρ)) (hin : p ∈ closure (filledHull K \ K)) :
+    (hp : p ∈ f '' U) (hin : p ∈ closure (filledHull K \ K)) :
     (f '' (U ∩ ball ζ ρ) ∩ filledHull K).Nonempty ∨
       (f '' (U \ closedBall ζ ρ) ∩ filledHull K).Nonempty := by
   obtain ⟨q, hqΩ, hqH, hqK⟩ :=
-    mem_closure_iff.mp hin _ hΩo (image_mono inter_subset_left hp)
+    mem_closure_iff.mp hin _ hΩo hp
   rw [image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere] at hqΩ
   exact (hqΩ.resolve_right fun h => hqK (hγ h)).imp (fun h => ⟨q, h, hqH⟩) fun h => ⟨q, h, hqH⟩
 
@@ -169,9 +171,10 @@ radius, where the far side is nearly the whole image domain — then it is the *
 encloses, and by `TauCeti.diam_le_diam_of_subset_filledHull` that side is no wider than `K`.
 
 Of the two alternatives
-`TauCeti.nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall` offers, the far one
+`TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull`
+offers, the far one
 is excluded: it would trap the far side inside `K` and so make it no wider than `K`. The theorem
-still requires both cut sides to be preconnected, a point on the image crosscut, and the strict
+still requires both cut sides to be preconnected, a point in the image domain, and the strict
 far-side diameter bound; those inputs are not produced here. -/
 theorem image_inter_ball_subset_filledHull_of_diam_lt (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
@@ -179,9 +182,9 @@ theorem image_inter_ball_subset_filledHull_of_diam_lt (hUo : IsOpen U)
     (hKb : IsBounded K) (hγ : f '' (U ∩ sphere ζ ρ) ⊆ K)
     (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
     (hlt : diam K < diam (f '' (U \ closedBall ζ ρ)))
-    (hp : p ∈ f '' (U ∩ sphere ζ ρ)) (hin : p ∈ closure (filledHull K \ K)) :
+    (hp : p ∈ f '' U) (hin : p ∈ closure (filledHull K \ K)) :
     f '' (U ∩ ball ζ ρ) ⊆ filledHull K := by
-  rcases nonempty_inter_filledHull_image_inter_ball_or_image_sdiff_closedBall
+  rcases nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull
     (isOpen_image_of_differentiableOn_of_injOn hUo hd hinj) hγ hp hin with h | h
   · exact image_subset_filledHull_of_disjoint_inter_sphere hUo hd hinj inter_subset_left
       disjoint_inter_ball_inter_sphere hAc hK h

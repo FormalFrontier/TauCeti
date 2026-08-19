@@ -255,7 +255,7 @@ theorem closure_image_inter_sphere_subset_union_frontier_image (hUo : IsOpen U)
     (clusterSetOn_inter_sphere_subset_frontier_inter_closure_image hUo hd hinj he.1).trans
       inter_subset_left)
 
-/-- **A set following neither side of a crosscut has image disjoint from its closed image and the
+/-- **A subset of the domain missing the crosscut has image off the closed image crosscut and the
 image boundary.** If `V ⊆ U` is disjoint from `U ∩ sphere ζ ρ`, then `f '' V` avoids every `K`
 contained in the closed image crosscut and `frontier (f '' U)`. Injectivity separates it from the
 crosscut, relative closedness handles the closure, and openness of `f '' U` handles the image
@@ -265,15 +265,12 @@ theorem disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
     (hV : Disjoint V (U ∩ sphere ζ ρ))
     (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U)) : Disjoint (f '' V) K := by
   have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
-  have hcross : Disjoint (f '' V) (f '' (U ∩ sphere ζ ρ)) :=
-    hV.image hinj hVU inter_subset_left
-  refine Set.disjoint_left.mpr fun w hw hwK => ?_
-  rcases hK hwK with h | h
-  · exact Set.disjoint_left.mp hcross hw
-      (((closure_image_inter_sphere_subset_union_frontier_image hUo hd hinj) h).resolve_right
-        fun hfr =>
-        (hΩo.inter_frontier_eq.subset ⟨image_mono hVU hw, hfr⟩).elim)
-  · exact (hΩo.inter_frontier_eq.subset ⟨image_mono hVU hw, h⟩).elim
+  have hfr : Disjoint (f '' V) (frontier (f '' U)) :=
+    (disjoint_frontier_iff_isOpen.mpr hΩo).symm.mono_left (image_mono hVU)
+  have hKsub : K ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) :=
+    hK.trans (union_subset
+      (closure_image_inter_sphere_subset_union_frontier_image hUo hd hinj) subset_union_right)
+  exact ((hV.image hinj hVU inter_subset_left).union_right hfr).mono_right hKsub
 
 /-- **Each end of an image crosscut of a disc is a continuum.** For `f` continuous along a genuine
 circular crosscut of a disc and with bounded image *of the crosscut*, the cluster set at either
