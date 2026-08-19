@@ -239,16 +239,6 @@ universe u v
 variable {F : Type u} [Field F] [NeZero (2 : F)]
   {V : Type v} [AddCommGroup V] [Module F V] [FiniteDimensional F V] {Q : QuadraticForm F V}
 
-noncomputable local instance : Invertible (2 : F) :=
-  invertibleOfNonzero (NeZero.ne (2 : F))
-
-local instance : NeZero (2 : AlgebraicClosure F) := by
-  change NeZero ((algebraMap F (AlgebraicClosure F)) (2 : F))
-  exact NeZero.of_injective (algebraMap F (AlgebraicClosure F)).injective
-
-noncomputable local instance : Invertible (2 : AlgebraicClosure F) :=
-  invertibleOfNonzero (NeZero.ne (2 : AlgebraicClosure F))
-
 /-- **The structure theorem over a separably closed field**: the Clifford algebra of a
 nondegenerate quadratic form on a `2l`-dimensional space is the matrix algebra `M_{2^l}(F)`.
 
@@ -258,14 +248,20 @@ polarization-dependent isomorphism itself is
 `TauCeti.SpinPolarizationData.cliffordEquivMatrix`. -/
 theorem nonempty_algEquiv_matrix_of_finrank_eq_two_mul [IsSepClosed F] {l : ℕ}
     (hQ : Q.Nondegenerate) (hV : finrank F V = 2 * l) :
-    Nonempty (CliffordAlgebra Q ≃ₐ[F] Matrix (Fin (2 ^ l)) (Fin (2 ^ l)) F) :=
-  ⟨(SpinPolarizationData.ofNondegenerate Q hQ).cliffordEquivMatrix hV⟩
+    Nonempty (CliffordAlgebra Q ≃ₐ[F] Matrix (Fin (2 ^ l)) (Fin (2 ^ l)) F) := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
+  exact ⟨(SpinPolarizationData.ofNondegenerate Q hQ).cliffordEquivMatrix hV⟩
 
-private theorem isSimpleRing_and_isCentral_baseChange_algebraicClosure
+private theorem isSimpleRing_and_isCentral_baseChange_algebraicClosure [Invertible (2 : F)]
     (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
     IsSimpleRing (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) ∧
       Algebra.IsCentral (AlgebraicClosure F)
         (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) := by
+  let _ : NeZero (2 : AlgebraicClosure F) := by
+    change NeZero ((algebraMap F (AlgebraicClosure F)) (2 : F))
+    exact NeZero.of_injective (algebraMap F (AlgebraicClosure F)).injective
+  let _ : Invertible (2 : AlgebraicClosure F) :=
+    invertibleOfNonzero (NeZero.ne (2 : AlgebraicClosure F))
   let E := AlgebraicClosure F
   have hQE : (Q.baseChange E).Nondegenerate := hQ.baseChange
   have hVE : Even (finrank E (E ⊗[F] V)) := by
@@ -279,9 +275,10 @@ simple ring.** After base change to an algebraic closure it is the endomorphism 
 spinor module, and simplicity descends along the faithfully flat field extension. -/
 theorem isSimpleRing_of_even_finrank (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
     IsSimpleRing (CliffordAlgebra Q) := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
   have hC : IsSimpleRing (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) :=
     (isSimpleRing_and_isCentral_baseChange_algebraicClosure hQ hV).1
-  apply TauCeti.IsSimpleRing.of_baseChange (K := F) (L := AlgebraicClosure F)
+  apply IsSimpleRing.of_baseChange (K := F) (L := AlgebraicClosure F)
   exact IsSimpleRing.of_ringEquiv
     (CliffordAlgebra.equivBaseChange (AlgebraicClosure F) Q).toRingEquiv hC
 
@@ -291,6 +288,7 @@ spinor module, whose center is the scalars, and centrality descends along the fi
 `CliffordAlgebra.isSimpleRing_of_even_finrank` this makes it a central simple algebra over `F`. -/
 theorem isCentral_of_even_finrank (hQ : Q.Nondegenerate) (hV : Even (finrank F V)) :
     Algebra.IsCentral F (CliffordAlgebra Q) := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
   let _ : Algebra.IsCentral (AlgebraicClosure F)
       (CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) :=
     (isSimpleRing_and_isCentral_baseChange_algebraicClosure hQ hV).2

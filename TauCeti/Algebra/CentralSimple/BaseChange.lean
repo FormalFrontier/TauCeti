@@ -42,8 +42,8 @@ a central simple `L`-algebra with no glue at all.
 
 ## Main results
 
-* `TauCeti.TwoSidedIdeal.baseChange`: scalar extension of a two-sided ideal.
-* `TauCeti.IsSimpleRing.of_baseChange`: simplicity descends along a field extension.
+* `TwoSidedIdeal.baseChange`: scalar extension of a two-sided ideal.
+* `IsSimpleRing.of_baseChange`: simplicity descends along a field extension.
 * `TauCeti.Algebra.deg_baseChange`: base change **preserves the degree**,
   `deg L (L ⊗[K] A) = deg K A`.
 
@@ -77,8 +77,6 @@ Cohomology*, Section 2.2, and R. S. Pierce, *Associative Algebras*, GTM 88, Chap
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped TensorProduct
 
@@ -155,13 +153,15 @@ theorem of_baseChange (h : IsSimpleRing (L ⊗[K] A)) : IsSimpleRing A := by
   apply IsSimpleRing.of_eq_bot_or_eq_top
   intro I
   rcases IsSimpleOrder.eq_bot_or_eq_top
-      (TauCeti.TwoSidedIdeal.baseChange (K := K) L I) with hI | hI
+      (TwoSidedIdeal.baseChange (K := K) L I) with hI | hI
   · left
     exact TwoSidedIdeal.baseChange_injective (K := K) L (by ext x; rw [hI]; simp)
   · right
     exact TwoSidedIdeal.baseChange_injective (K := K) L (by ext x; rw [hI]; simp)
 
 end IsSimpleRing
+
+namespace TauCeti
 
 namespace Algebra
 
