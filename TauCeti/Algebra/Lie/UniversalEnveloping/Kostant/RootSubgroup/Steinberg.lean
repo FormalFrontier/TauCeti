@@ -68,7 +68,7 @@ is made that `σ` comes from a symmetry of a Dynkin diagram.
 * `fixedSubgroup_kostantElementarySteinberg_le_fixedSubgroup_kostantElementaryFrobenius`: the fixed
   subgroup of a Steinberg endomorphism whose symmetry has order `d` lies in the fixed subgroup of
   `Frob_{q ^ d}`.
-* `kostantElementaryFrobenius_kostantElementaryNumberedSymmetryAut_le_kostantElementarySteinberg`:
+* `fixedSubgroup_frobenius_inf_fixedSubgroup_numberedSymmetry_le_fixedSubgroup_steinberg`:
   a point fixed by both `Frob_q` and `γ` is fixed by the composite.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_injective`: injectivity over a
   reduced value ring.
@@ -276,7 +276,7 @@ This is `fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp` at the two facto
 fails in general: a Steinberg-fixed point need not be fixed by either factor, which is why a
 graph-twisted group is not the fixed points of a Frobenius. -/
 theorem
-    kostantElementaryFrobenius_kostantElementaryNumberedSymmetryAut_le_kostantElementarySteinberg :
+    fixedSubgroup_frobenius_inf_fixedSubgroup_numberedSymmetry_le_fixedSubgroup_steinberg :
     fixedSubgroup (kostantElementaryFrobenius e h ρ M hM hnil p n A) ⊓
         fixedSubgroup
           (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A).toMonoidHom ≤
