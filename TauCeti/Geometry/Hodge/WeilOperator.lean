@@ -79,7 +79,6 @@ noncomputable def weilOperator (hs : HodgeStructureOn W ω n) : W →ₗ[ℂ] W 
     hs.decomposition.toLinearMap
 
 /-- The Weil operator acts on the Hodge component `H^{p,n-p}` by the scalar `i^{2p-n}`. -/
-@[simp]
 theorem weilOperator_apply_of_mem (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W}
     (hx : x ∈ hs.piece p) : hs.weilOperator x = Complex.I ^ (2 * p - n) • x := by
   rw [weilOperator, LinearMap.comp_apply, LinearEquiv.coe_coe,
