@@ -450,6 +450,15 @@ noncomputable def kostantTorusMatrix :
     (kostantTorusPoints M b wt A)
 
 omit [Module ℚ V] in
+/-- The public unfolding equation for the matrix-valued Kostant torus: take the diagonal action
+on the base-changed lattice and write it in the coordinates of `b.baseChange A`. -/
+theorem kostantTorusMatrix_def :
+    kostantTorusMatrix M b wt =
+      (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
+        (kostantTorusPoints M b wt A) := by
+  rw [kostantTorusMatrix]
+
+omit [Module ℚ V] in
 private theorem kostantTorusMatrix_coe (s : κ → Aˣ) :
     (kostantTorusMatrix M b wt s : Matrix (Fin n) (Fin n) A) =
       LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
