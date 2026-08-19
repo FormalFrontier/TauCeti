@@ -187,19 +187,26 @@ theorem riemannianEDist_eq_iInf_pathELength_piecewise (x y : M) :
 variable (I) in
 /-- The Riemannian extended distance is the infimum of the lengths of the piecewise `C¹` paths
 joining the two points on the fixed parameter interval `[0, 1]`. Restricting to `[0, 1]` loses
-nothing, because corner smoothing already delivers its `C¹` competitor there. -/
+nothing, because corner smoothing sends a competitor on an arbitrary interval to one on `[0, 1]`
+with the same endpoints and the same length.
+
+This is `TauCeti.Manifold.riemannianEDist_eq_iInf_pathELength_piecewise` specialized to the
+parameter interval `[0, 1]`: the two infima are compared directly, the `[0, 1]` competitors
+being a subfamily of the arbitrary-interval ones. -/
 theorem riemannianEDist_eq_iInf_pathELength_piecewise_zero_one (x y : M) :
     Manifold.riemannianEDist I x y =
       ⨅ (γ : ℝ → M) (_ : IsPiecewiseContMDiffOn I 1 γ 0 1)
         (_ : γ 0 = x) (_ : γ 1 = y), Manifold.pathELength I γ 0 1 := by
-  refine le_antisymm ?_ (le_of_forall_gt fun r hr ↦ ?_)
+  rw [riemannianEDist_eq_iInf_pathELength_piecewise I x y]
+  refine le_antisymm ?_ ?_
   · refine le_iInf fun γ ↦ le_iInf fun h ↦ le_iInf fun hx ↦ le_iInf fun hy ↦ ?_
-    subst hx
-    subst hy
-    exact h.riemannianEDist_le_pathELength
-  · obtain ⟨γ, hγ₀, hγ₁, hγ, hlt⟩ := Manifold.exists_lt_of_riemannianEDist_lt hr
-    refine lt_of_le_of_lt ?_ hlt
-    exact iInf_le_of_le γ (iInf_le_of_le (IsPiecewiseContMDiffOn.of_contMDiffOn zero_lt_one hγ)
-      (iInf_le_of_le hγ₀ (iInf_le_of_le hγ₁ le_rfl)))
+    exact iInf_le_of_le γ (iInf_le_of_le 0 (iInf_le_of_le 1
+      (iInf_le_of_le h (iInf_le_of_le hx (iInf_le_of_le hy le_rfl)))))
+  · refine le_iInf fun γ ↦ le_iInf fun a ↦ le_iInf fun b ↦ le_iInf fun h ↦
+      le_iInf fun hx ↦ le_iInf fun hy ↦ ?_
+    obtain ⟨η, hη, hη₀, hη₁, hlen⟩ := h.exists_contMDiff_pathELength_eq
+    refine le_trans (iInf_le_of_le η (iInf_le_of_le
+      (IsPiecewiseContMDiffOn.of_contMDiffOn zero_lt_one hη.contMDiffOn)
+      (iInf_le_of_le (hη₀.trans hx) (iInf_le_of_le (hη₁.trans hy) le_rfl)))) hlen.le
 
 end TauCeti.Manifold
