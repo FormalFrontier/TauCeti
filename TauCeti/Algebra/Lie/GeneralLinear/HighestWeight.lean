@@ -31,9 +31,10 @@ representations of the group.
 The second is being a **highest weight vector** of weight `μ`: a nonzero vector which the diagonal
 matrix units `Eᵢᵢ` scale by `μ i` and which the raising matrix units `Eᵢⱼ`, `i < j`, annihilate.
 Those two families are coordinates for the diagonal Cartan subalgebra and generators of the
-positive nilpotent ideal `𝔫⁺`, so the elementwise conditions are equivalent to the two
-coordinate-free ones: the whole Cartan acts by the weight `TauCeti.glWeightEquiv R n μ`, and the
-whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_forall_mem`).
+positive nilpotent subalgebra `𝔫⁺` of strictly upper triangular matrices — which is a Lie ideal of
+the standard Borel subalgebra, not of `gl n` itself — so the elementwise conditions are equivalent
+to the two coordinate-free ones: the whole Cartan acts by the weight `TauCeti.glWeightEquiv R n μ`,
+and the whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_forall_mem`).
 
 ## Main definitions
 
@@ -55,7 +56,8 @@ whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_forall_mem`
   dominant and no entry of it is an integer, so dominance genuinely does not force integrality.
 * `TauCeti.IsGlHighestWeightVector.lie_eq_glWeightEquiv_smul` and
   `TauCeti.IsGlHighestWeightVector.lie_eq_zero_of_mem_strictUpperTriangular`: the whole diagonal
-  Cartan subalgebra acts by the weight, and the whole positive nilpotent ideal annihilates.
+  Cartan subalgebra acts by the weight, and the whole positive nilpotent subalgebra `𝔫⁺`
+  annihilates.
 * `TauCeti.isGlHighestWeightVector_iff_forall_mem`: those two conditions characterise a highest
   weight vector, so the elementwise definition loses nothing.
 * `TauCeti.IsGlHighestWeightVector.weight_eq`: a vector is a highest weight vector for at most one
@@ -285,7 +287,9 @@ unit positive system when it is nonzero, the diagonal matrix unit `Eᵢᵢ` acts
 `μ i`, and every raising matrix unit `Eᵢⱼ` with `i < j` annihilates it.
 
 The two elementwise families are coordinates for the diagonal Cartan subalgebra and generators of
-the positive nilpotent ideal `𝔫⁺`, so this says exactly that `v` is a `𝔫⁺`-annihilated weight
+the positive nilpotent subalgebra `𝔫⁺` — the nilpotent ideal of the standard Borel subalgebra
+`TauCeti.upperTriangular R n`, not an ideal of `gl n R` — so this says exactly that `v` is a
+`𝔫⁺`-annihilated weight
 vector of weight `TauCeti.glWeightEquiv R n μ`; see
 `TauCeti.isGlHighestWeightVector_iff_forall_mem`. -/
 def IsGlHighestWeightVector (mu : n → R) (v : M) : Prop :=
@@ -358,8 +362,8 @@ theorem lie_eq_glWeightEquiv_smul (hv : IsGlHighestWeightVector mu v) (A : diago
   rw [glWeightEquiv_apply]
   exact hv.lie_eq_smul_of_mem_diagonalCartan A.2
 
-/-- **The whole positive nilpotent ideal `𝔫⁺` annihilates a highest weight vector**, not just the
-raising matrix units that span it. -/
+/-- **The whole positive nilpotent subalgebra `𝔫⁺` annihilates a highest weight vector**, not just
+the raising matrix units that span it. -/
 theorem lie_eq_zero_of_mem_strictUpperTriangular (hv : IsGlHighestWeightVector mu v)
     {A : Matrix n n R} (hA : A ∈ strictUpperTriangular R n) : ⁅A, v⁆ = 0 := by
   conv_lhs => rw [Matrix.matrix_eq_sum_single A]
@@ -377,7 +381,7 @@ end IsGlHighestWeightVector
 
 /-- **The subalgebra form of the definition**: a highest weight vector is exactly a nonzero vector
 on which the diagonal Cartan subalgebra acts by the weight `TauCeti.glWeightEquiv R n μ` and which
-the positive nilpotent ideal `𝔫⁺` annihilates. The elementwise definition therefore loses
+the positive nilpotent subalgebra `𝔫⁺` annihilates. The elementwise definition therefore loses
 nothing. -/
 theorem isGlHighestWeightVector_iff_forall_mem :
     IsGlHighestWeightVector mu v ↔ v ≠ 0 ∧
