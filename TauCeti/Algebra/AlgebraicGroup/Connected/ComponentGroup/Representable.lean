@@ -647,7 +647,7 @@ private theorem componentGroupFppfProjection_comp_iso_hom_def
             (ConnectedComponents (PrimeSpectrum H))))).symm := by
   let F := presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))
   let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts F
-  unfold componentGroupFppfProjection
+  rw [componentGroupFppfProjection_def]
   rw [fppfQuotientProjection_eq]
   unfold componentGroupFppfGroupObjectIso
   dsimp
