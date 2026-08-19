@@ -11,7 +11,7 @@ module
 public import TauCeti.RepresentationTheory.ClassicalGroups.Torus
 -- The determinant powers, the worked one-dimensional example at the end of the file.
 public import TauCeti.RepresentationTheory.ClassicalGroups.Determinant
--- The characters `TauCeti.torusCharacter` of a split torus, which the weight characters package.
+-- The characters `TauCeti.weightChar` of a split torus, and their injectivity in weight.
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 -- The independence of the joint eigenspaces of a representation, indexed by characters.
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
@@ -21,36 +21,33 @@ public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 
 A vector `w` of a representation `ρ` of `GL n k` has **weight** `l : Fin n → ℤ` when every
 invertible diagonal matrix `diagGL t` scales it by `∏ i, tᵢ ^ lᵢ`. The vectors of weight `l` form
-the **weight space** `TauCeti.weightSpace ρ l`, and this file builds that space, the characters
-`TauCeti.weightChar` of the diagonal torus cutting it out, and the two facts that make weights a
-decomposition rather than a labelling: the weight spaces are independent, and the standard
-representation is the internal direct sum of its weight spaces, which are its coordinate lines.
+the **weight space** `TauCeti.weightSpace ρ l`, and this file builds that space and the two facts
+that make weights a decomposition rather than a labelling: the weight spaces are independent, and
+the standard representation is the internal direct sum of its weight spaces, which are its
+coordinate lines.
 
-The weight space is an intersection of eigenspaces, one for each point of the torus, so
-independence is the independence of the joint eigenspaces of a representation indexed by
-characters — `TauCeti.iSupIndep_iInf_eigenspace_unitHom` —
-transported along the injection `l ↦ TauCeti.weightChar k l`. That injection is where the
-coefficients enter: over `𝔽₂` the torus is trivial (`TauCeti.diagonalTorus_eq_bot`), every `l`
-gives the same character, and the whole module is a weight space for every weight at once, so
-nothing is independent. What rules this out is a unit of infinite order, and in a field of
-characteristic zero `2` is one; that is the standing hypothesis of every statement below that
-separates weights.
+The scalar `∏ i, tᵢ ^ lᵢ` is the split-torus character `TauCeti.weightChar k l`, built in
+`TauCeti.LinearAlgebra.Basis.DiagonalTorus`. The weight space is an intersection of eigenspaces,
+one for each point of the torus, so independence is the independence of the joint eigenspaces of a
+representation indexed by characters — `TauCeti.iSupIndep_iInf_eigenspace_unitHom` — transported
+along `l ↦ TauCeti.weightChar k l`. That transport needs the map to be injective, and that is
+where the coefficients enter: over `𝔽₂` the torus is trivial
+(`TauCeti.diagonalTorus_eq_bot`), every `l` gives the same character, and the whole module is a
+weight space for every weight at once, so nothing is independent. Rather than fix the coefficients,
+every statement below that separates weights takes `Function.Injective (weightChar k)` as a
+hypothesis, and `TauCeti.weightChar_injective` discharges it over a field of characteristic zero.
 
 The definitions themselves need only a commutative ring, and are stated there.
 
 ## Main definitions
 
-* `TauCeti.weightChar`: the character `t ↦ ∏ i, tᵢ ^ lᵢ` of the diagonal torus attached to
-  `l : Fin n → ℤ`, as a homomorphism of the coordinatewise units.
 * `TauCeti.weightSpace`: the space of vectors on which the diagonal torus acts through
   `TauCeti.weightChar`.
 
 ## Main results
 
-* `TauCeti.weightChar_injective`: over a field of characteristic zero, distinct weights give
-  distinct characters of the torus.
 * `TauCeti.iSupIndep_weightSpace`: **the weight spaces of a representation of `GL n k` are
-  independent**, over a field of characteristic zero.
+  independent**, as soon as distinct weights give distinct characters.
 * `TauCeti.weightSpace_stdRep_single` and `TauCeti.weightSpace_stdRep_eq_bot`: the weight spaces of
   the standard representation are exactly its coordinate lines, the line `k ∙ eᵢ` carrying the
   weight `Pi.single i 1` and every other weight space vanishing.
@@ -64,13 +61,7 @@ The definitions themselves need only a commutative ring, and are stated there.
 
 The weight space is indexed by `l : Fin n → ℤ`, not by a character of the torus, because that is
 the index the highest-weight theory of the roadmap runs on; `TauCeti.weightChar` is the translation
-between the two, and `TauCeti.weightChar_injective` says the translation is faithful.
-
-`TauCeti.weightChar` only repackages the split-torus character `TauCeti.torusCharacter`, which is
-the same product `∏ i, tᵢ ^ lᵢ` read as a function of the weight; the point of the repackaging is
-that a *fixed* weight gives a homomorphism in the torus point, which is the form the joint
-eigenspaces are indexed by. All arithmetic of the characters comes from the `torusCharacter`
-lemmas.
+between the two, and the separation hypothesis says the translation is faithful.
 
 The intersection defining `TauCeti.weightSpace` runs over `t : Fin n → kˣ` rather than over
 `TauCeti.diagonalTorus k n` itself: `TauCeti.diagGL` is onto the torus
@@ -97,54 +88,10 @@ namespace TauCeti
 
 section CommRing
 
-variable (k : Type u) [CommRing k] {n : ℕ}
-
-/-! ## The characters of the diagonal torus -/
-
-/-- The character `t ↦ ∏ i, tᵢ ^ lᵢ` of the diagonal torus of `GL n k` attached to an integer
-sequence `l`: the split-torus character `TauCeti.torusCharacter` of `l`, read as a homomorphism in
-the torus point. The weight space of `l` is cut out by it. -/
-def weightChar (l : Fin n → ℤ) : (Fin n → kˣ) →* kˣ where
-  toFun t := torusCharacter t l
-  map_one' := torusCharacter_one l
-  map_mul' s t := torusCharacter_mul s t l
-
-/-- A weight character is the split-torus character of its weight, with the arguments in the order
-the weight-space API uses. Every arithmetic property of `TauCeti.weightChar` reduces through this
-to the `TauCeti.torusCharacter` lemmas. -/
-theorem weightChar_apply (l : Fin n → ℤ) (t : Fin n → kˣ) :
-    weightChar k l t = torusCharacter t l :=
-  (rfl)
-
-@[simp]
-theorem weightChar_zero : weightChar k (0 : Fin n → ℤ) = 1 :=
-  MonoidHom.ext fun t ↦ torusCharacter_zero t
-
-/-- Weights add as characters multiply. -/
-theorem weightChar_add (l m : Fin n → ℤ) :
-    weightChar k (l + m) = weightChar k l * weightChar k m :=
-  MonoidHom.ext fun t ↦ torusCharacter_add t l m
-
-/-- The character of `Pi.single i 1` is the `i`-th coordinate: this is the weight carried by the
-`i`-th standard basis vector. -/
-@[simp]
-theorem weightChar_single (i : Fin n) (t : Fin n → kˣ) :
-    weightChar k (Pi.single i 1) t = t i := by
-  classical
-  rw [weightChar_apply, torusCharacter_def,
-    Finset.prod_eq_single i (fun j _ hj ↦ by simp [Pi.single_eq_of_ne hj])
-      (fun h ↦ absurd (Finset.mem_univ i) h),
-    Pi.single_eq_same, zpow_one]
-
-/-- The character of a constant sequence is a power of the determinant of the torus element. -/
-theorem weightChar_const (m : ℤ) (t : Fin n → kˣ) :
-    weightChar k (fun _ ↦ m) t = (∏ i, t i) ^ m := by
-  rw [weightChar_apply, torusCharacter_def, Finset.prod_zpow]
+variable {k : Type u} [CommRing k] {n : ℕ}
+variable {W : Type v} [AddCommGroup W] [Module k W]
 
 /-! ## The weight spaces of a representation -/
-
-variable {k}
-variable {W : Type v} [AddCommGroup W] [Module k W]
 
 /-- The **weight space** of weight `l : Fin n → ℤ`: the vectors that every invertible diagonal
 matrix `diagGL t` scales by `∏ i, tᵢ ^ lᵢ`. -/
@@ -152,6 +99,7 @@ def weightSpace (ρ : Representation k (GL (Fin n) k) W) (l : Fin n → ℤ) : S
   ⨅ t : Fin n → kˣ, Module.End.eigenspace (ρ (diagGL t)) ((weightChar k l t : kˣ) : k)
 
 /-- Membership in a weight space is the eigen-relation at every point of the torus. -/
+@[simp]
 theorem mem_weightSpace_iff (ρ : Representation k (GL (Fin n) k) W) (l : Fin n → ℤ) (w : W) :
     w ∈ weightSpace ρ l ↔
       ∀ t : Fin n → kˣ, ρ (diagGL t) w = ((weightChar k l t : kˣ) : k) • w := by
@@ -198,6 +146,7 @@ theorem iSup_weightSpace_stdRep :
 `m`-th power of the product of its entries. Over a commutative ring this leaves the other weight
 spaces of `det ^ m` unconstrained — over `𝔽₂` the torus is trivial, so every one of them is `⊤`
 too. -/
+@[simp]
 theorem weightSpace_detPowerRep (m : ℤ) :
     weightSpace (detPowerRep k n m) (fun _ ↦ m) = ⊤ := by
   refine top_le_iff.mp fun x _ ↦ ?_
@@ -207,67 +156,38 @@ theorem weightSpace_detPowerRep (m : ℤ) :
 
 end CommRing
 
-/-- In a field of characteristic zero the integer powers of `2` are pairwise distinct, so `2` is a
-unit of infinite order. This is the one arithmetic input to `TauCeti.weightChar_injective`. -/
-private theorem eq_of_two_zpow_eq (k : Type u) [Field k] [CharZero k] {a b : ℤ}
-    (hab : (2 : k) ^ a = (2 : k) ^ b) : a = b := by
-  have hcast : ∀ m : ℤ, (2 : k) ^ m = (((2 : ℚ) ^ m : ℚ) : k) := by
-    intro m
-    rw [Rat.cast_zpow]
-    norm_num
-  rw [hcast a, hcast b] at hab
-  exact (zpow_right_inj₀ (by norm_num) (by norm_num)).mp (Rat.cast_injective hab)
+/-! ## The weight spaces of the standard representation
 
-section Field
+Here the coefficients must separate weights, in the sense that `l ↦ weightChar k l` is injective;
+`TauCeti.weightChar_injective` supplies that over a field of characteristic zero. -/
 
-variable {k : Type u} [Field k] [CharZero k] {n : ℕ}
+section Domain
 
-/-! ## Separating weights over a field of characteristic zero -/
-
-/-- **Distinct weights give distinct characters of the torus.** Characteristic zero is what makes
-this true: over `𝔽₂` the torus is trivial and every weight gives the trivial character. -/
-theorem weightChar_injective : Function.Injective (weightChar k (n := n)) := by
-  intro l l' h
-  funext i
-  refine eq_of_two_zpow_eq k ?_
-  have hval := congrArg
-    (fun χ : (Fin n → kˣ) →* kˣ ↦
-      ((χ (Pi.mulSingle i (Units.mk0 (2 : k) two_ne_zero)) : kˣ) : k)) h
-  simpa [weightChar_apply] using hval
-
-variable {W : Type v} [AddCommGroup W] [Module k W]
-
-/-- **The weight spaces of a representation of `GL n k` are independent.** The weight spaces are
-the joint eigenspaces of the representation `t ↦ ρ (diagGL t)` of the torus indexed by the
-characters `weightChar k l`, and those are independent; over a field of characteristic zero the
-weight is recoverable from its character, so indexing by weights keeps them distinct. -/
-theorem iSupIndep_weightSpace (ρ : Representation k (GL (Fin n) k) W) :
-    iSupIndep fun l : Fin n → ℤ ↦ weightSpace ρ l :=
-  (iSupIndep_iInf_eigenspace_unitHom
-      (ρ := (ρ : GL (Fin n) k →* Module.End k W).comp diagGL)).comp weightChar_injective
-
-/-! ## The weight-space decomposition of the standard representation -/
+variable {k : Type u} [CommRing k] [IsDomain k] {n : ℕ}
 
 /-- **A nonzero coordinate pins the weight.** If a vector of weight `l` in the standard
 representation has a nonzero `j`-th coordinate then `l = Pi.single j 1`. -/
-theorem eq_single_of_mem_weightSpace_stdRep {l : Fin n → ℤ} {w : Fin n → k}
+theorem eq_single_of_mem_weightSpace_stdRep
+    (hchar : Function.Injective (weightChar k (κ := Fin n))) {l : Fin n → ℤ} {w : Fin n → k}
     (hw : w ∈ weightSpace (stdRep k n) l) {j : Fin n} (hj : w j ≠ 0) :
     l = Pi.single j 1 := by
-  refine weightChar_injective (k := k) (MonoidHom.ext fun t ↦ ?_)
+  refine hchar (MonoidHom.ext fun t ↦ ?_)
   have h := congrFun (apply_of_mem_weightSpace hw t) j
   rw [stdRep_diagGL_apply, Pi.smul_apply, smul_eq_mul] at h
   rw [weightChar_single]
   exact Units.ext (mul_right_cancel₀ hj h).symm
 
 /-- Off the weights `Pi.single i 1` the standard representation has no weight vectors. -/
-theorem weightSpace_stdRep_eq_bot {l : Fin n → ℤ} (hl : ∀ i : Fin n, l ≠ Pi.single i 1) :
+theorem weightSpace_stdRep_eq_bot (hchar : Function.Injective (weightChar k (κ := Fin n)))
+    {l : Fin n → ℤ} (hl : ∀ i : Fin n, l ≠ Pi.single i 1) :
     weightSpace (stdRep k n) l = ⊥ := by
   refine (Submodule.eq_bot_iff _).mpr fun w hw ↦ funext fun j ↦ ?_
   by_contra hj
-  exact hl j (eq_single_of_mem_weightSpace_stdRep hw hj)
+  exact hl j (eq_single_of_mem_weightSpace_stdRep hchar hw hj)
 
 /-- **The weight spaces of the standard representation are its coordinate lines.** -/
-theorem weightSpace_stdRep_single (i : Fin n) :
+theorem weightSpace_stdRep_single (hchar : Function.Injective (weightChar k (κ := Fin n)))
+    (i : Fin n) :
     weightSpace (stdRep k n) (Pi.single i 1) = Submodule.span k {Pi.basisFun k (Fin n) i} := by
   refine le_antisymm (fun w hw ↦ ?_) (span_basisFun_le_weightSpace_stdRep i)
   rw [Submodule.mem_span_singleton]
@@ -277,18 +197,36 @@ theorem weightSpace_stdRep_single (i : Fin n) :
     simp
   · have hzero : w j = 0 := by
       by_contra hj
-      have hsingle := eq_single_of_mem_weightSpace_stdRep hw hj
+      have hsingle := eq_single_of_mem_weightSpace_stdRep hchar hw hj
       have hone : (Pi.single i 1 : Fin n → ℤ) j = 1 := by rw [hsingle, Pi.single_eq_same]
       rw [Pi.single_eq_of_ne hji] at hone
       exact one_ne_zero hone.symm
     simp [hzero, Pi.basisFun_apply, hji]
 
+end Domain
+
+section Field
+
+variable {k : Type u} [Field k] {n : ℕ}
+variable {W : Type v} [AddCommGroup W] [Module k W]
+
+/-- **The weight spaces of a representation of `GL n k` are independent**, as soon as distinct
+weights give distinct characters of the torus. The weight spaces are the joint eigenspaces of the
+representation `t ↦ ρ (diagGL t)` of the torus indexed by the characters `weightChar k l`, and
+those are independent; the hypothesis makes the weight recoverable from its character, so indexing
+by weights keeps them distinct. -/
+theorem iSupIndep_weightSpace (hchar : Function.Injective (weightChar k (κ := Fin n)))
+    (ρ : Representation k (GL (Fin n) k) W) :
+    iSupIndep fun l : Fin n → ℤ ↦ weightSpace ρ l :=
+  (iSupIndep_iInf_eigenspace_unitHom
+      (ρ := (ρ : GL (Fin n) k →* Module.End k W).comp diagGL)).comp hchar
+
 /-- **The standard representation is the internal direct sum of its weight spaces**: the
 weight-space decomposition in its smallest instance. -/
-theorem isInternal_weightSpace_stdRep :
+theorem isInternal_weightSpace_stdRep (hchar : Function.Injective (weightChar k (κ := Fin n))) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (stdRep k n) l :=
   (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-    ⟨iSupIndep_weightSpace _, iSup_weightSpace_stdRep⟩
+    ⟨iSupIndep_weightSpace hchar _, iSup_weightSpace_stdRep⟩
 
 end Field
 

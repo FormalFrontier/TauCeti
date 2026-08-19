@@ -25,9 +25,17 @@ in a weight basis of an admissible lattice, and `TauCeti.basisDiagonal_apply_of_
 the statement that it acts on a weight vector by the corresponding character — which is what makes
 the conjugation formula against a root subgroup come out.
 
+Fixing the weight instead of the point turns a character into a homomorphism
+`TauCeti.weightChar` on the points of the torus, which is the form in which a weight indexes a
+joint eigenspace. Whether that indexing is faithful depends on the coefficients: over `𝔽₂` the
+torus has a single point, so every weight gives the trivial character, while over a field of
+characteristic zero distinct weights stay distinct (`TauCeti.weightChar_injective`).
+
 ## Main definitions
 
 * `TauCeti.torusCharacter`: the value at `s : κ → Rˣ` of the character `μ : κ → ℤ` of `𝔾ₘ^κ`.
+* `TauCeti.weightChar`: that character with the weight fixed, as a homomorphism on the points of
+  the torus.
 * `TauCeti.weylReflectTorusPoint`: the multiplicative reflection of split-torus points dual to a
   reflection of their character lattice.
 * `TauCeti.basisDiagonal`: the automorphism scaling each basis vector by a prescribed unit.
@@ -41,6 +49,8 @@ the conjugation formula against a root subgroup come out.
 * `TauCeti.basisWeightTorus_apply_of_repr_eq_zero`: the special case for a weight vector.
 * `TauCeti.torusCharacter_weylReflectTorusPoint`: evaluation at a reflected point agrees with
   evaluation of the reflected character.
+* `TauCeti.weightChar_injective`: over a field of characteristic zero, distinct weights give
+  distinct characters of the torus.
 
 ## References
 
@@ -202,6 +212,79 @@ theorem map_torusCharacter {S : Type*} [CommRing S] (φ : R →+* S) (s : κ →
     Units.map (φ : R →* S) (torusCharacter s μ) =
       torusCharacter (fun j => Units.map (φ : R →* S) (s j)) μ := by
   simp [torusCharacter, map_prod, map_zpow]
+
+/-! ## A character as a homomorphism of torus points -/
+
+section WeightChar
+
+variable (R)
+
+/-- The character `μ` of the split torus `𝔾ₘ^κ` read as a homomorphism `(κ → Rˣ) →* Rˣ`: the
+value `TauCeti.torusCharacter s μ` with the weight `μ` fixed and the point `s` varying. This is the
+form in which a weight indexes a joint eigenspace of the torus. -/
+def weightChar (μ : κ → ℤ) : (κ → Rˣ) →* Rˣ where
+  toFun s := torusCharacter s μ
+  map_one' := torusCharacter_one μ
+  map_mul' s t := torusCharacter_mul s t μ
+
+/-- A weight character evaluates as the split-torus character of its weight, with the arguments in
+the order the weight-space API uses. Every arithmetic property of `TauCeti.weightChar` reduces
+through this to the `TauCeti.torusCharacter` lemmas. -/
+theorem weightChar_apply (μ : κ → ℤ) (s : κ → Rˣ) : weightChar R μ s = torusCharacter s μ :=
+  (rfl)
+
+/-- The trivial weight gives the trivial character. -/
+@[simp]
+theorem weightChar_zero : weightChar R (0 : κ → ℤ) = 1 :=
+  MonoidHom.ext fun s ↦ torusCharacter_zero s
+
+/-- Weights add as characters multiply. -/
+theorem weightChar_add (μ ν : κ → ℤ) :
+    weightChar R (μ + ν) = weightChar R μ * weightChar R ν :=
+  MonoidHom.ext fun s ↦ torusCharacter_add s μ ν
+
+/-- The character of `Pi.single c 1` is the `c`-th coordinate: this is the weight carried by the
+`c`-th basis vector of a weight basis. -/
+@[simp]
+theorem weightChar_single [DecidableEq κ] (c : κ) (s : κ → Rˣ) :
+    weightChar R (Pi.single c 1) s = s c := by
+  rw [weightChar_apply, torusCharacter_def,
+    prod_eq_single c (fun j _ hj ↦ by simp [Pi.single_eq_of_ne hj])
+      (fun h ↦ absurd (mem_univ c) h),
+    Pi.single_eq_same, zpow_one]
+
+/-- The character of a constant weight is a power of the product of the coordinates. -/
+theorem weightChar_const (z : ℤ) (s : κ → Rˣ) :
+    weightChar R (fun _ ↦ z) s = (∏ j, s j) ^ z := by
+  rw [weightChar_apply, torusCharacter_def, prod_zpow]
+
+end WeightChar
+
+/-! ## Separating weights -/
+
+/-- In a field of characteristic zero the integer powers of `2` are pairwise distinct, so `2` is a
+unit of infinite order. This is the one arithmetic input to `TauCeti.weightChar_injective`. -/
+private theorem eq_of_two_zpow_eq (K : Type*) [Field K] [CharZero K] {a b : ℤ}
+    (hab : (2 : K) ^ a = (2 : K) ^ b) : a = b := by
+  have hcast : ∀ m : ℤ, (2 : K) ^ m = (((2 : ℚ) ^ m : ℚ) : K) := by
+    intro m
+    rw [Rat.cast_zpow]
+    norm_num
+  rw [hcast a, hcast b] at hab
+  exact (zpow_right_inj₀ (by norm_num) (by norm_num)).mp (Rat.cast_injective hab)
+
+/-- **Distinct weights give distinct characters of the split torus**, over a field of
+characteristic zero. Some hypothesis on the coefficients is needed: over `𝔽₂` the torus `𝔾ₘ^κ` has
+a single point and every weight gives the trivial character. -/
+theorem weightChar_injective {K : Type*} [Field K] [CharZero K] :
+    Function.Injective (weightChar K (κ := κ)) := by
+  classical
+  intro μ ν h
+  funext c
+  refine eq_of_two_zpow_eq K ?_
+  have hval := congrArg
+    (fun χ : (κ → Kˣ) →* Kˣ ↦ ((χ (Pi.mulSingle c (Units.mk0 (2 : K) two_ne_zero)) : Kˣ) : K)) h
+  simpa [weightChar_apply] using hval
 
 end TorusCharacter
 
