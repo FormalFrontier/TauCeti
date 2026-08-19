@@ -33,11 +33,15 @@ Hodge II*, §1.2.1, and Voisin, *Hodge Theory and Complex Algebraic Geometry I*,
 * `TauCeti.Hodge.HodgeStructureOn.piece_iSupIndep`: the Hodge components are independent.
 * `TauCeti.Hodge.HodgeStructureOn.isInternal_piece`: the Hodge components form an internal direct
   sum of the ambient complex vector space.
+* `TauCeti.Hodge.HodgeStructureOn.decomposition`: that direct sum as a linear equivalence.
+* `TauCeti.Hodge.HodgeStructureOn.piece_induction`: induction along the Hodge decomposition.
 -/
 
 public section
 
 namespace TauCeti.Hodge
+
+open scoped DirectSum
 
 universe u
 
@@ -141,6 +145,44 @@ theorem isInternal_piece (hs : HodgeStructureOn W ω n) : DirectSum.IsInternal h
   classical
   exact DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
     hs.piece_iSupIndep hs.iSup_piece_eq_top
+
+/-- The Hodge decomposition as a linear equivalence: the ambient complex vector space is the
+direct sum of its Hodge components. -/
+noncomputable def decomposition (hs : HodgeStructureOn W ω n) :
+    W ≃ₗ[ℂ] ⨁ p, hs.piece p :=
+  (LinearEquiv.ofBijective (DirectSum.coeLinearMap hs.piece) hs.isInternal_piece).symm
+
+/-- The inverse of the Hodge decomposition sums up the Hodge components. -/
+@[simp]
+theorem decomposition_symm_apply (hs : HodgeStructureOn W ω n) (x : ⨁ p, hs.piece p) :
+    hs.decomposition.symm x = DirectSum.coeLinearMap hs.piece x := by
+  rw [decomposition, LinearEquiv.symm_symm]
+  rfl
+
+/-- A vector lying in a single Hodge component decomposes as that one component. -/
+theorem decomposition_apply_of_mem (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W}
+    (hx : x ∈ hs.piece p) :
+    hs.decomposition x = DirectSum.lof ℂ ℤ (fun q ↦ hs.piece q) p ⟨x, hx⟩ :=
+  hs.decomposition.symm.injective (by simp)
+
+/-- Induction along the Hodge decomposition: a property that holds at zero, is stable under
+addition, and holds on every Hodge component holds everywhere. -/
+theorem piece_induction (hs : HodgeStructureOn W ω n) {motive : W → Prop} (x : W)
+    (mem : ∀ p, ∀ y ∈ hs.piece p, motive y) (zero : motive 0)
+    (add : ∀ y z, motive y → motive z → motive (y + z)) : motive x := by
+  have hx : x ∈ ⨆ p, hs.piece p := by
+    rw [hs.iSup_piece_eq_top]
+    exact Submodule.mem_top
+  exact Submodule.iSup_induction (motive := motive) hs.piece hx mem zero add
+
+/-- Two complex-linear maps out of the ambient space that agree on every Hodge component are
+equal. -/
+theorem linearMap_ext_of_piece {N : Type*} [AddCommGroup N] [Module ℂ N]
+    (hs : HodgeStructureOn W ω n) {f g : W →ₗ[ℂ] N}
+    (h : ∀ p, ∀ x ∈ hs.piece p, f x = g x) : f = g := by
+  ext x
+  refine hs.piece_induction x h (by simp) fun y z hy hz ↦ ?_
+  rw [map_add, map_add, hy, hz]
 
 end HodgeStructureOn
 
