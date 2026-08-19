@@ -137,12 +137,17 @@ instance instModuleVertexSpace (v : Q) : Module k (vertexSpace k Q M v) :=
 noncomputable def mapₗ {a b : Q} (p : _root_.Quiver.Path a b) :
     vertexSpace k Q M a →ₗ[k] vertexSpace k Q M b := (M.map p).hom
 
+-- Not `@[simp]`: `TauCeti.QuiverRep.mapₗ` is the simp-normal form of a structure map here, since
+-- it is the retyping that lets the direct sum see the vertex spaces; rewriting with this would
+-- undo that everywhere and take `TauCeti.QuiverRep.smul_ofVertex` and
+-- `TauCeti.QuiverRep.pathMap_vertexComponentEquiv` out of simp normal form.
 /-- The retyped structure map is the structure map. -/
 theorem mapₗ_apply {a b : Q} (p : _root_.Quiver.Path a b) (z : vertexSpace k Q M a) :
     mapₗ k Q M p z = (M.map p) z := (rfl)
 
 /-- **The trivial path acts as the identity**, the element-level
 `TauCeti.QuiverRep.map_nil_apply` read as an equation of linear maps. -/
+@[simp]
 theorem mapₗ_nil (a : Q) : mapₗ k Q M (_root_.Quiver.Path.nil : _root_.Quiver.Path a a)
     = LinearMap.id := by
   refine LinearMap.ext fun z => ?_
@@ -193,12 +198,6 @@ theorem pathEnd_mul {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.
     mapₗ_comp k Q M q p]
   exact congrArg _ (congrArg _ (DirectSum.component.lof_self k a _))
 
-/-- The projection onto a summand kills every other summand. -/
-theorem component_lof_of_ne {i j : Q} (hij : j ≠ i) (b : vertexSpace k Q M j) :
-    DirectSum.component k Q (vertexSpace k Q M) i
-      (DirectSum.lof k Q (vertexSpace k Q M) j b) = 0 :=
-  (DirectSum.component.of k i j b).trans (dite_eq_right hij)
-
 /-- **Paths that do not meet annihilate one another**, because the second lands in a summand the
 first reads as zero. This is the other half of the multiplicativity of
 `TauCeti.QuiverRep.toEnd`. -/
@@ -207,7 +206,8 @@ theorem pathEnd_mul_eq_zero {x y : Quiver.TotalPath Q} (h : y.2.1 ≠ x.1) :
   refine LinearMap.ext fun z => ?_
   have key : DirectSum.component k Q (vertexSpace k Q M) x.1 (pathEnd k Q M y z) = 0 := by
     rw [pathEnd_apply]
-    exact component_lof_of_ne k Q M h _
+    -- the projection onto a summand kills every other summand
+    exact (DirectSum.component.of k x.1 y.2.1 _).trans (dite_eq_right h)
   rw [Module.End.mul_apply, pathEnd_apply, key, map_zero, map_zero, LinearMap.zero_apply]
 
 /-- **The trivial paths give the summand projections**, and those sum to the identity: this is what
@@ -227,6 +227,7 @@ noncomputable def toEndₗ :
   (pathAlgebraBasis k Q).constr k (pathEnd k Q M)
 
 /-- The action of a basis path is the endomorphism it was assigned. -/
+@[simp]
 theorem toEndₗ_ofPath (x : Quiver.TotalPath Q) :
     toEndₗ k Q M (ofPath x) = pathEnd k Q M x := by
   have h := (pathAlgebraBasis k Q).constr_basis k (pathEnd k Q M) x
@@ -235,8 +236,9 @@ theorem toEndₗ_ofPath (x : Quiver.TotalPath Q) :
 /-- The action of a scaled basis path scales its endomorphism. -/
 theorem toEndₗ_single (x : Quiver.TotalPath Q) (c : k) :
     toEndₗ k Q M (single x c) = c • pathEnd k Q M x := by
-  rw [show (single x c : pathAlgebra k Q) = c • ofPath x by
-    rw [ofPath_eq_single, smul_single, mul_one], map_smul, toEndₗ_ofPath]
+  have hx : (single x c : pathAlgebra k Q) = c • ofPath x := by
+    rw [ofPath_eq_single, smul_single, mul_one]
+  rw [hx, map_smul, toEndₗ_ofPath]
 
 /-- The action of a vertex idempotent is the endomorphism of the trivial path there, which by
 `TauCeti.QuiverRep.mapₗ_nil` is the projection onto that summand. -/
@@ -291,6 +293,7 @@ noncomputable def toEnd : pathAlgebra k Q →ₐ[k] Module.End k (DirectSum Q (v
     fun c x => (toEndₗ k Q M).map_smul c x
 
 /-- The algebra map acts by the linear map it was built from. -/
+@[simp]
 theorem toEnd_apply (f : pathAlgebra k Q) : toEnd k Q M f = toEndₗ k Q M f := (rfl)
 
 /-- The module over the path algebra carried by a representation of `Q`. -/
@@ -300,9 +303,14 @@ def asModule : Type max v t := DirectSum Q (vertexSpace k Q M)
 instance : AddCommGroup (asModule k Q M) :=
   inferInstanceAs (AddCommGroup (DirectSum Q (vertexSpace k Q M)))
 
+/-- **The defining `kQ`-action**: the path algebra acts on `⨁ᵥ Mᵥ` through the algebra map
+`TauCeti.QuiverRep.toEnd` into its `k`-linear endomorphisms. -/
 noncomputable instance : Module (pathAlgebra k Q) (asModule k Q M) :=
   Module.compHom (DirectSum Q (vertexSpace k Q M)) (toEnd k Q M).toRingHom
 
+/-- The `k`-action, by restriction of scalars along `algebraMap k (kQ)` — deliberately *not* the
+direct sum's own `k`-action, though `TauCeti.QuiverRep.smul_asModule_k` says the two agree; see the
+implementation notes. -/
 noncomputable instance : Module k (asModule k Q M) :=
   Module.restrictScalars k (pathAlgebra k Q) (asModule k Q M)
 
@@ -311,7 +319,8 @@ two are compatible by construction. -/
 instance : IsScalarTower k (pathAlgebra k Q) (asModule k Q M) :=
   IsScalarTower.restrictScalars k (pathAlgebra k Q) (asModule k Q M)
 
-/-- The underlying direct sum of an element. -/
+/-- The additive equivalence identifying `TauCeti.QuiverRep.asModule` with the direct sum `⨁ᵥ Mᵥ`
+underlying it. -/
 @[expose]
 def asModuleEquiv : asModule k Q M ≃+ DirectSum Q (vertexSpace k Q M) := AddEquiv.refl _
 
@@ -336,6 +345,7 @@ noncomputable def asModuleLinearEquiv :
   { asModuleEquiv k Q M with map_smul' := smul_asModule_k k Q M }
 
 /-- The `k`-linear identification with the underlying direct sum is the additive one. -/
+@[simp]
 theorem asModuleLinearEquiv_apply (x : asModule k Q M) :
     asModuleLinearEquiv k Q M x = asModuleEquiv k Q M x := (rfl)
 
@@ -349,10 +359,12 @@ noncomputable def toVertex (v : Q) : asModule k Q M →ₗ[k] vertexSpace k Q M 
     (asModuleLinearEquiv k Q M).toLinearMap
 
 /-- The inclusion of a vertex space is the inclusion of the corresponding summand. -/
+@[simp]
 theorem asModuleEquiv_ofVertex (v : Q) (z : vertexSpace k Q M v) :
     asModuleEquiv k Q M (ofVertex k Q M v z) = DirectSum.lof k Q (vertexSpace k Q M) v z := (rfl)
 
 /-- The projection onto a vertex space undoes its inclusion. -/
+@[simp]
 theorem toVertex_ofVertex (v : Q) (z : vertexSpace k Q M v) :
     toVertex k Q M v (ofVertex k Q M v z) = z :=
   DirectSum.component.lof_self k v z
@@ -374,6 +386,7 @@ theorem smul_ofVertex {a b : Q} (p : _root_.Quiver.Path a b) (z : vertexSpace k 
 
 /-- **The vertex idempotent acts as the projection onto its summand**, the fact from which the
 vertex component of `TauCeti.QuiverRep.asModule` is read off. -/
+@[simp]
 theorem vertexIdempotent_smul (v : Q) (x : asModule k Q M) :
     (vertexIdempotent k v : pathAlgebra k Q) • x = ofVertex k Q M v (toVertex k Q M v x) := by
   apply (asModuleEquiv k Q M).injective
@@ -400,11 +413,13 @@ noncomputable def vertexComponentEquiv (v : Q) :
 
 /-- The identification of a vertex space with a vertex component is the inclusion of the
 summand. -/
+@[simp]
 theorem coe_vertexComponentEquiv (v : Q) (z : vertexSpace k Q M v) :
     (vertexComponentEquiv k Q M v z : asModule k Q M) = ofVertex k Q M v z := (rfl)
 
 /-- **The identification is natural in the path**: the action of a path on the vertex components of
 `TauCeti.QuiverRep.asModule` is the structure map of the representation. -/
+@[simp]
 theorem pathMap_vertexComponentEquiv {a b : Q} (p : _root_.Quiver.Path a b)
     (z : vertexSpace k Q M a) :
     pathMap k (asModule k Q M) p (vertexComponentEquiv k Q M a z)
@@ -427,6 +442,11 @@ noncomputable def asModuleIso : quiverRepOfModule k Q (asModule k Q M) ≅ M :=
       change Q at a
       change Q at b
       refine ModuleCat.hom_ext (LinearMap.ext fun x => ?_)
+      -- both sides of the naturality square are `ModuleCat.ofHom` of a composite of a structure
+      -- map with a `LinearEquiv.toModuleIso`, and the bundling is definitional: no rewrite lemma
+      -- states the elementwise form, because `ModuleCat.hom_comp` and
+      -- `LinearEquiv.toModuleIso_symm_hom` fire only on the unapplied morphisms, leaving the
+      -- coercions to unfold anyway. `change` names the elementwise goal in one step.
       change (vertexComponentEquiv k Q M b).symm (pathMap k (asModule k Q M) p x)
         = mapₗ k Q M p ((vertexComponentEquiv k Q M a).symm x)
       rw [LinearEquiv.symm_apply_eq, ← pathMap_vertexComponentEquiv]
