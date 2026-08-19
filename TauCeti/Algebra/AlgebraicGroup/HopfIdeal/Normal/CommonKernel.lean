@@ -25,6 +25,11 @@ normal and ordinary generated subgroups agree.
 
 * `TauCeti.CommHopfAlgCat.normalCommonKernelHopfIdeal`: the largest normal Hopf ideal killed by a
   family of morphisms.
+* `TauCeti.CommHopfAlgCat.isNormal_normalCommonKernelHopfIdeal`: the ideal is normal.
+* `TauCeti.CommHopfAlgCat.normalCommonKernelHopfIdeal_le_commonKernelHopfIdeal`: comparison with
+  the ordinary common-kernel ideal.
+* `TauCeti.CommHopfAlgCat.normalCommonKernelHopfIdeal_eq_commonKernelHopfIdeal_of_isNormal`:
+  agreement when the ordinary common-kernel ideal is normal.
 * `TauCeti.CommHopfAlgCat.le_normalCommonKernelHopfIdeal_iff_of_isNormal`: its universal property.
 * `TauCeti.CommHopfAlgCat.normalCommonKernelLift`: the induced factorization through the normal
   generated subgroup.
@@ -56,8 +61,29 @@ variable {ι : Type w} {K : ι → _root_.CommHopfAlgCat.{v} R}
 
 Contravariantly, quotienting by this ideal gives the smallest normal closed subgroup scheme of
 `Spec H` through which all the morphisms `Spec (K i) ⟶ Spec H` factor. -/
-@[expose] noncomputable def normalCommonKernelHopfIdeal (f : ∀ i, H ⟶ K i) : HopfIdeal R H :=
+noncomputable def normalCommonKernelHopfIdeal (f : ∀ i, H ⟶ K i) : HopfIdeal R H :=
   (commonKernelHopfIdeal f).normalCore
+
+/-- The normal common-kernel ideal is normal. -/
+@[simp]
+theorem isNormal_normalCommonKernelHopfIdeal (f : ∀ i, H ⟶ K i) :
+    (normalCommonKernelHopfIdeal f).IsNormal := by
+  rw [normalCommonKernelHopfIdeal]
+  exact HopfIdeal.isNormal_normalCore _
+
+/-- The normal common-kernel ideal lies below the ordinary common-kernel ideal. -/
+theorem normalCommonKernelHopfIdeal_le_commonKernelHopfIdeal (f : ∀ i, H ⟶ K i) :
+    normalCommonKernelHopfIdeal f ≤ commonKernelHopfIdeal f := by
+  rw [normalCommonKernelHopfIdeal]
+  exact HopfIdeal.normalCore_le _
+
+/-- If the ordinary common-kernel ideal is normal, it agrees with the normal common-kernel
+ideal. -/
+theorem normalCommonKernelHopfIdeal_eq_commonKernelHopfIdeal_of_isNormal
+    (f : ∀ i, H ⟶ K i) (h : (commonKernelHopfIdeal f).IsNormal) :
+    normalCommonKernelHopfIdeal f = commonKernelHopfIdeal f := by
+  rw [normalCommonKernelHopfIdeal]
+  exact HopfIdeal.normalCore_eq_self_of_isNormal _ h
 
 /-- Every member of the defining family kills the normal common-kernel ideal. -/
 theorem normalCommonKernelHopfIdeal_toIdeal_le_ker (f : ∀ i, H ⟶ K i) (i : ι) :
