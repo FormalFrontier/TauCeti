@@ -44,6 +44,28 @@ theorem mem_toPreAbstractSimplicialComplex {ι : Type*} {K : AbstractSimplicialC
 
 end AbstractSimplicialComplex
 
+namespace PreAbstractSimplicialComplex
+
+variable {ι : Type*} {K L : PreAbstractSimplicialComplex ι} {σ : Finset ι} {v : ι}
+
+/-- A finite set is a face of an intersection of two precomplexes exactly when it is a face of
+both. -/
+@[simp]
+theorem mem_inf {ρ : Finset ι} : ρ ∈ K ⊓ L ↔ ρ ∈ K ∧ ρ ∈ L :=
+  Iff.rfl
+
+/-- Every vertex of a face spans a singleton face. -/
+theorem singleton_mem_of_mem (hσ : σ ∈ K) (hv : v ∈ σ) : ({v} : Finset ι) ∈ K :=
+  (K.isRelLowerSet_faces hσ).2 (Finset.singleton_subset_iff.mpr hv) (Finset.singleton_nonempty v)
+
+/-- A vertex whose singleton is not a face occurs in no face at all.  This is the convenient way
+to say that a vertex is *unused* by a complex, as needed when a construction adjoins a fresh
+vertex. -/
+theorem notMem_of_singleton_notMem (hv : ({v} : Finset ι) ∉ K) (hσ : σ ∈ K) : v ∉ σ :=
+  fun h => hv (singleton_mem_of_mem hσ h)
+
+end PreAbstractSimplicialComplex
+
 namespace TauCeti.AbstractSimplicialComplex
 
 /-- A finite set belongs to the full abstract simplicial complex exactly when it is nonempty. -/

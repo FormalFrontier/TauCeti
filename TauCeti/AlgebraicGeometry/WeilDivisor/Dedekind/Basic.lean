@@ -49,9 +49,9 @@ only for proper curves over a field (and number fields with the archimedean plac
 and is later geometric input.
 
 This reuses Mathlib's `IsDedekindDomain.HeightOneSpectrum.valuationOfNeZero` (the multiplicative
-`v`-adic valuation `Kˣ →* Multiplicative ℤ`, whose multiplicativity `adicOrd` inherits), the
-`WithZero.log` logarithm on `ℤᵐ⁰`, and `IsDedekindDomain.HeightOneSpectrum.Support.finite`
-(finiteness of the support of a rational function); no external mathematics is vendored.
+`v`-adic valuation `Kˣ →* Multiplicative ℤ`, whose multiplicativity `adicOrd` inherits), and
+`IsDedekindDomain.HeightOneSpectrum.Support.finite` (finiteness of the support of a rational
+function); no external mathematics is vendored.
 -/
 
 public section
