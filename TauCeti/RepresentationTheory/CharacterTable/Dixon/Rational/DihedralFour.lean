@@ -152,8 +152,16 @@ central-character table.** This is the rational lifting step of the Dixon comput
 @[simp]
 theorem dihedralGroupFour_valMinAbs_centralCharacterTable
     (i j : DihedralGroupFourClassIndex) :
-    ((dihedralGroupFourCentralCharacterTable i j : ZMod 5)).valMinAbs =
-      dihedralGroupFourCentralCharacterTable i j := by
+    (((!![1,  1,  2,  2,  2;
+          1,  1,  2, -2, -2;
+          1,  1, -2,  2, -2;
+          1,  1, -2, -2,  2;
+          1, -1,  0,  0,  0] i j : ℤ) : ZMod 5)).valMinAbs =
+      !![1,  1,  2,  2,  2;
+         1,  1,  2, -2, -2;
+         1,  1, -2,  2, -2;
+         1,  1, -2, -2,  2;
+         1, -1,  0,  0,  0] i j := by
   apply ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt
   fin_cases i <;> fin_cases j <;> decide
 
