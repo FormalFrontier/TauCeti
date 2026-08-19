@@ -6,9 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.MonoidAlgebra.NoZeroDivisors
-public import Mathlib.Algebra.MonoidAlgebra.Lift
-public import Mathlib.Algebra.Polynomial.Laurent
-public import Mathlib.Algebra.Ring.NegOnePow
+public import TauCeti.Algebra.Bigraded.Basic
 
 /-!
 # Bigraded vector spaces up to `⊗ W`-stabilization
@@ -30,7 +28,7 @@ multiplication by `TauCeti.Bigraded.W`, and unwinding the convolution gives the 
 `(P * W)(m, a) = P(m, a) + P(m + 1, a + 1)`.
 
 The quotient is not vacuous, and that is the substance here. Multiplication by `W` is injective
-(`TauCeti.Bigraded.mul_W_right_injective`), so no information beyond the number of stabilizations
+(`TauCeti.Bigraded.mul_W_left_injective`), so no information beyond the number of stabilizations
 is lost; note this genuinely uses finite support, since on unbounded bigraded vector spaces
 tensoring with `W` is *not* injective. Consequently each stable class contains exactly one
 `W`-indivisible series (`TauCeti.Bigraded.exists_isReduced`,
@@ -61,7 +59,7 @@ only after that factor is divided out.
 
 * `TauCeti.Bigraded.coeff_mul_W` and `TauCeti.Bigraded.coeff_mul_W_pow`: tensoring with `W`
   adds the diagonal shift by `(1, 1)`, and iterating it adds binomial multiples of the shifts.
-* `TauCeti.Bigraded.mul_W_right_injective`: tensoring with `W` is injective.
+* `TauCeti.Bigraded.mul_W_left_injective`: tensoring with `W` is injective.
 * `TauCeti.Bigraded.exists_isReduced` and `TauCeti.Bigraded.IsReduced.eq_of_mul_W_pow_eq`: every
   series is a stabilization of a unique reduced one.
 * `TauCeti.Bigraded.isStablyEquiv_iff_reducedRep_eq`: the reduced representative is a complete
@@ -89,17 +87,15 @@ namespace Bigraded
 
 open AddMonoidAlgebra
 
-/-- The Poincaré series of a finite-dimensional bigraded vector space: the dimension of the
-summand in each bidegree `(Maslov, Alexander)`, all but finitely many of them zero.
-
-Over a field, a bigraded vector space with finite-dimensional summands is determined up to
-bigraded isomorphism by this function, and the product is the Poincaré series of the tensor
-product. -/
-abbrev Series : Type := AddMonoidAlgebra ℕ (ℤ × ℤ)
+/-
+The implementation definitions below are deliberately sealed. Their characteristic lemmas are
+the public interface; the parenthesized `(rfl)` proofs keep those lemmas propositional without
+exposing the quotient and choice implementations downstream.
+-/
 
 /-- The Poincaré series of the stabilization factor `W`: one generator in bidegree `(0, 0)` and
 one in bidegree `(-1, -1)`. -/
-@[expose] noncomputable def W : Series := 1 + single (-1, -1) 1
+noncomputable def W : Series := 1 + single (-1, -1) 1
 
 /-- The coefficient of `W` in bidegree `(0, 0)`. -/
 @[simp]
@@ -125,11 +121,11 @@ theorem coeff_mul_W (P : Series) (g : ℤ × ℤ) :
 vector spaces with unbounded support the same operation is not injective, since for instance a
 one-dimensional summand in every bidegree `(m, m)` and a two-dimensional summand in every second
 such bidegree have the same stabilization. -/
-theorem mul_W_right_injective : Function.Injective fun P : Series => P * W :=
+theorem mul_W_left_injective : Function.Injective fun P : Series => P * W :=
   fun _ _ h => mul_right_cancel₀ W_ne_zero h
 
 /-- Tensoring with `W` repeatedly is injective. -/
-theorem mul_W_pow_right_injective (k : ℕ) : Function.Injective fun P : Series => P * W ^ k :=
+theorem mul_W_pow_left_injective (k : ℕ) : Function.Injective fun P : Series => P * W ^ k :=
   fun _ _ h => mul_right_cancel₀ (pow_ne_zero k W_ne_zero) h
 
 /-- The bigraded dimensions of a `k`-fold stabilization. The summand of `P ⊗ W^{⊗k}` in bidegree
@@ -139,7 +135,9 @@ theorem coeff_mul_W_pow (P : Series) (k : ℕ) (g : ℤ × ℤ) :
     (P * W ^ k).coeff g =
       ∑ i ∈ Finset.range (k + 1), k.choose i * P.coeff (g + ((i : ℤ), (i : ℤ))) := by
   induction k generalizing g with
-  | zero => simp [show ((0 : ℤ), (0 : ℤ)) = 0 from rfl]
+  | zero =>
+    have hzero : ((0 : ℤ), (0 : ℤ)) = 0 := Prod.ext (by simp) (by simp)
+    simp [hzero]
   | succ k ih =>
     have hshift : ∀ i : ℕ,
         g + (1, 1) + ((i : ℤ), (i : ℤ)) = g + (((i + 1 : ℕ) : ℤ), ((i + 1 : ℕ) : ℤ)) := by
@@ -156,39 +154,10 @@ theorem coeff_mul_W_pow (P : Series) (k : ℕ) (g : ℤ × ℤ) :
     push_cast
     ring
 
-section TotalDim
-
-/-- The total dimension of a finite-dimensional bigraded vector space, as a ring homomorphism:
-the tensor product multiplies total dimensions. -/
-noncomputable def totalDim : Series →+* ℕ :=
-  liftNCRingHom (RingHom.id ℕ) (1 : Multiplicative (ℤ × ℤ) →* ℕ) fun _ _ => Commute.all _ _
-
-/-- The total dimension is the sum of the dimensions of all the bigraded summands. -/
-theorem totalDim_apply (P : Series) : totalDim P = P.coeff.sum fun _ c => c := by
-  simp [totalDim, liftNCRingHom, AddMonoidAlgebra.liftNC]
-
-/-- The total dimension of a series concentrated in one bidegree. -/
-@[simp]
-theorem totalDim_single (g : ℤ × ℤ) (r : ℕ) : totalDim (single g r) = r := by
-  simp [totalDim]
-
 /-- The stabilization factor `W` is two-dimensional. -/
 @[simp]
 theorem totalDim_W : totalDim W = 2 := by
-  simp [W, totalDim]
-
-/-- Only the zero series has total dimension zero. -/
-@[simp]
-theorem totalDim_eq_zero_iff (P : Series) : totalDim P = 0 ↔ P = 0 := by
-  rw [totalDim_apply, Finsupp.sum, Finset.sum_eq_zero_iff]
-  constructor
-  · intro h
-    ext g
-    by_cases hg : g ∈ P.coeff.support
-    · simpa using h g hg
-    · simpa using Finsupp.notMem_support_iff.mp hg
-  · rintro rfl
-    simp
+  rw [W, map_add, map_one, totalDim_single]
 
 /-- Stabilizing `k` times multiplies the total dimension by `2 ^ k`: this is the grid-size
 dependence of the blocked grid homologies, and it is why the unstabilized theories are not link
@@ -196,13 +165,16 @@ invariants. -/
 theorem totalDim_mul_W_pow (P : Series) (k : ℕ) : totalDim (P * W ^ k) = 2 ^ k * totalDim P := by
   rw [map_mul, map_pow, totalDim_W, mul_comm]
 
-end TotalDim
-
 section StablyEquiv
 
 /-- Two bigraded vector spaces are stably equivalent when they become isomorphic after tensoring
 each with some number of copies of `W`. -/
-@[expose] def IsStablyEquiv (P Q : Series) : Prop := ∃ i j : ℕ, P * W ^ i = Q * W ^ j
+def IsStablyEquiv (P Q : Series) : Prop := ∃ i j : ℕ, P * W ^ i = Q * W ^ j
+
+/-- Stable equivalence is witnessed by stabilizing each series some number of times. -/
+theorem isStablyEquiv_iff {P Q : Series} :
+    IsStablyEquiv P Q ↔ ∃ i j : ℕ, P * W ^ i = Q * W ^ j := by
+  rfl
 
 /-- Stable equivalence is reflexive. -/
 @[refl]
@@ -228,17 +200,34 @@ theorem isStablyEquiv_mul_W_pow (P : Series) (k : ℕ) : IsStablyEquiv (P * W ^ 
   ⟨0, k, by rw [pow_zero, mul_one]⟩
 
 /-- Stable equivalence as a setoid, so that the stable classes form a quotient type. -/
-@[expose] def stableSetoid : Setoid Series where
+def stableSetoid : Setoid Series where
   r := IsStablyEquiv
   iseqv := ⟨isStablyEquiv_refl, IsStablyEquiv.symm, IsStablyEquiv.trans⟩
 
 /-- A bigraded vector space up to `⊗ W`-stabilization. This is the shape of the invariant
 attached to a link by a blocked grid homology: the grid size is visible in a representative but
 not in the class. -/
-@[expose] def StableSeries : Type := Quotient stableSetoid
+def StableSeries : Type := Quotient stableSetoid
 
 /-- The stable class of a bigraded vector space. -/
-@[expose] def stableMk (P : Series) : StableSeries := Quotient.mk stableSetoid P
+def stableMk (P : Series) : StableSeries := Quotient.mk stableSetoid P
+
+/-- Prove a property of a stable series by proving it on every representative. -/
+protected theorem StableSeries.inductionOn {motive : StableSeries → Prop} (S : StableSeries)
+    (mk : ∀ P, motive (stableMk P)) : motive S :=
+  Quotient.inductionOn S mk
+
+/-- Define a function on stable series from a function on representatives that respects stable
+equivalence. -/
+protected def StableSeries.lift {X : Sort*} (f : Series → X)
+    (h : ∀ {P Q}, IsStablyEquiv P Q → f P = f Q) : StableSeries → X :=
+  Quotient.lift f fun _ _ hPQ => h hPQ
+
+/-- Lifting a function to the stable class of a representative returns its value there. -/
+@[simp]
+theorem StableSeries.lift_stableMk {X : Sort*} (f : Series → X)
+    (h : ∀ {P Q}, IsStablyEquiv P Q → f P = f Q) (P : Series) :
+    StableSeries.lift f h (stableMk P) = f P := (rfl)
 
 /-- Two series have the same stable class exactly when they are stably equivalent. -/
 theorem stableMk_eq_stableMk_iff {P Q : Series} :
@@ -256,7 +245,12 @@ section Reduced
 
 /-- A bigraded vector space is reduced when it is not a nontrivial stabilization: the only way to
 write it as `Q ⊗ W` is with `Q = 0`. The zero series is reduced. -/
-@[expose] def IsReduced (P : Series) : Prop := ∀ Q : Series, P = Q * W → Q = 0
+def IsReduced (P : Series) : Prop := ∀ Q : Series, P = Q * W → Q = 0
+
+/-- A series is reduced exactly when every expression of it as a stabilization has zero
+unstabilized factor. -/
+theorem isReduced_iff {P : Series} : IsReduced P ↔ ∀ Q : Series, P = Q * W → Q = 0 := by
+  rfl
 
 /-- The zero series is reduced. -/
 theorem isReduced_zero : IsReduced (0 : Series) :=
@@ -311,7 +305,7 @@ theorem IsReduced.eq_of_mul_W_pow_eq {P Q : Series} (hP : IsReduced P) (hQ : IsR
   · exact (this hQ hP h.symm (Nat.le_of_not_le hij)).symm
   obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hij
   have hcancel : P = Q * W ^ d := by
-    refine mul_W_pow_right_injective i ?_
+    refine mul_W_pow_left_injective i ?_
     simpa [pow_add, mul_assoc, mul_comm, mul_left_comm] using h
   rcases Nat.eq_zero_or_pos d with rfl | hd
   · simpa using hcancel
@@ -362,17 +356,17 @@ theorem isStablyEquiv_iff_reducedRep_eq {P Q : Series} :
     exact (isStablyEquiv_reducedRep P).trans (h ▸ (isStablyEquiv_reducedRep Q).symm)
 
 /-- Reduction descends to the quotient: the canonical representative of a stable class. -/
-@[expose] noncomputable def reduce : StableSeries → Series :=
-  Quotient.lift reducedRep fun _ _ h => isStablyEquiv_iff_reducedRep_eq.mp h
+noncomputable def reduce : StableSeries → Series :=
+  StableSeries.lift reducedRep fun h => isStablyEquiv_iff_reducedRep_eq.mp h
 
 /-- The canonical representative of the class of `P` is the reduced representative of `P`. -/
 @[simp]
-theorem reduce_stableMk (P : Series) : reduce (stableMk P) = reducedRep P := rfl
+theorem reduce_stableMk (P : Series) : reduce (stableMk P) = reducedRep P := (rfl)
 
 /-- The canonical representative of a stable class lies in that class. -/
 @[simp]
 theorem stableMk_reduce (S : StableSeries) : stableMk (reduce S) = S := by
-  induction S using Quotient.inductionOn with
+  induction S using StableSeries.inductionOn with
   | _ P => exact (stableMk_eq_stableMk_iff.mpr (isStablyEquiv_reducedRep P)).symm
 
 /-- A stable class is determined by its canonical representative. -/
@@ -404,7 +398,7 @@ theorem reducedRep_W_pow (k : ℕ) : reducedRep (W ^ k) = 1 := by
 `W`-indivisible ones: reduction and inclusion are mutually inverse. -/
 noncomputable def stableEquivReduced : StableSeries ≃ {P : Series // IsReduced P} where
   toFun S := ⟨reduce S, by
-    induction S using Quotient.inductionOn with
+    induction S using StableSeries.inductionOn with
     | _ P => exact isReduced_reducedRep P⟩
   invFun P := stableMk P.1
   left_inv S := by simp
@@ -412,33 +406,7 @@ noncomputable def stableEquivReduced : StableSeries ≃ {P : Series // IsReduced
 
 end Reduced
 
-section Euler
-
 open LaurentPolynomial
-
-/-- The Alexander-graded Euler characteristic of a bigraded vector space, as a monoid
-homomorphism on bidegrees: bidegree `(m, a)` contributes `(-1)^m T^a`. -/
-noncomputable def eulerMonoidHom : Multiplicative (ℤ × ℤ) →* ℤ[T;T⁻¹] where
-  toFun g := single g.toAdd.2 (g.toAdd.1.negOnePow : ℤ)
-  map_one' := rfl
-  map_mul' g h := by
-    simp only [toAdd_mul, Prod.fst_add, Prod.snd_add, Int.negOnePow_add, Units.val_mul,
-      single_mul_single]
-
-/-- The Alexander-graded Euler characteristic of a finite-dimensional bigraded vector space: the
-Laurent polynomial whose `T^a` coefficient is the alternating sum, over the Maslov grading, of
-the dimensions in Alexander grading `a`.
-
-This is a ring homomorphism, so it turns the tensor product into a product of Laurent
-polynomials. -/
-noncomputable def euler : Series →+* ℤ[T;T⁻¹] :=
-  liftNCRingHom (Nat.castRingHom _) eulerMonoidHom fun _ _ => Commute.all _ _
-
-/-- The Euler characteristic of a series concentrated in one bidegree. -/
-@[simp]
-theorem euler_single (m a : ℤ) (r : ℕ) :
-    euler (single (m, a) r) = (r : ℤ[T;T⁻¹]) * single a (m.negOnePow : ℤ) :=
-  liftNCRingHom_single _ _ _ _ _
 
 /-- The Euler characteristic of the stabilization factor is `1 - T⁻¹`. -/
 @[simp]
@@ -456,8 +424,6 @@ Alexander polynomial. -/
 theorem euler_mul_W_pow (P : Series) (k : ℕ) :
     euler (P * W ^ k) = euler P * (1 - T (-1)) ^ k := by
   rw [map_mul, map_pow, euler_W]
-
-end Euler
 
 end Bigraded
 
