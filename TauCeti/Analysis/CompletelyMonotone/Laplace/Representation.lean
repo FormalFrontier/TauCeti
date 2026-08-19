@@ -547,12 +547,34 @@ protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplaceOnIoi μ f) (h : 
     RepresentsLaplaceOnIoi μ g :=
   ⟨hf.1, fun _ ht => (h (mem_Ioi.mpr ht)).trans (hf.eq_laplaceTransform ht)⟩
 
+/-- The sum of two representing measures represents the sum of the functions on the positive
+half-line. -/
+protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}
+    (hf : RepresentsLaplaceOnIoi μ f) (hg : RepresentsLaplaceOnIoi ν g) :
+    RepresentsLaplaceOnIoi (μ + ν) (f + g) := by
+  refine ⟨fun t ht => (hf.integrable ht).add_measure (hg.integrable ht), fun t ht => ?_⟩
+  rw [Pi.add_apply, hf.eq_laplaceTransform ht, hg.eq_laplaceTransform ht,
+    laplaceTransform_add_measure μ ν (hf.integrable ht) (hg.integrable ht)]
+
+/-- Scaling a representing measure by `c : ℝ≥0` represents the scaled function on the
+positive half-line. -/
+protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
+    (hf : RepresentsLaplaceOnIoi μ f) :
+    RepresentsLaplaceOnIoi ((c : ℝ≥0∞) • μ) (fun t => (c : ℝ) * f t) := by
+  refine ⟨fun _ ht => (hf.integrable ht).smul_measure (by simp), fun t ht => ?_⟩
+  rw [laplaceTransform_smul_measure, ENNReal.coe_toReal, ← hf.eq_laplaceTransform ht]
+
 /-- **Easy direction**: a represented function is completely monotone on `(0, ∞)`. -/
 lemma isCompletelyMonotoneOnIoi (h : RepresentsLaplaceOnIoi μ f) :
     IsCompletelyMonotoneOnIoi f :=
   (isCompletelyMonotoneOnIoi_laplaceTransform μ h.1).congr fun _ ht => h.eq_laplaceTransform ht
 
 end RepresentsLaplaceOnIoi
+
+/-- The zero measure represents the zero function on the positive half-line. -/
+lemma representsLaplaceOnIoi_zero :
+    RepresentsLaplaceOnIoi (0 : Measure ℝ≥0) 0 :=
+  ⟨fun _ _ => by simp, fun _ _ => by simp⟩
 
 /-- A finite representing measure represents on the open half-line as well: the finiteness
 clause supplies the integrability clause, and `(0, ∞) ⊆ [0, ∞)`. -/
