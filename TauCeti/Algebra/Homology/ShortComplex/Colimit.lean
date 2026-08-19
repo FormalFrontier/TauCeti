@@ -16,28 +16,33 @@ public import Mathlib.CategoryTheory.Abelian.GrothendieckAxioms.Basic
 /-!
 # Homology and exact colimits
 
-This file proves that homology of short complexes of modules, and hence homology of homological
-complexes of modules, commutes with exact colimits. It also supplies the small-universe AB5
-instance needed when the ring and its modules live in unrelated universes.
+This file proves that homology of short complexes in an abelian category, and hence homology of
+homological complexes, commutes with colimits of every shape whose colimits are exact. It also
+supplies the small-universe AB5 instance for module categories in which the ring and its modules
+live in unrelated universes.
 
 ## Main results
 
 * `TauCeti.moduleCat_ab5OfSize`: small filtered colimits of modules are exact.
-* `TauCeti.shortComplexHomologyFunctor_preservesColimitsOfShape`: homology of short complexes of
-  modules preserves colimits of any exact shape.
+* `TauCeti.shortComplexHomologyFunctor_preservesColimitsOfShape`: homology of short complexes
+  preserves colimits of any exact shape.
 * `TauCeti.homologicalComplexShortComplexFunctor_preservesColimitsOfShape`: the short complex
   associated to a homological complex preserves all existing colimits.
 * `TauCeti.homologicalComplexHomologyFunctor_preservesColimitsOfShape`: homology of homological
-  complexes of modules preserves colimits of any exact shape.
+  complexes preserves colimits of any exact shape.
 
 ## Implementation notes
 
-Mathlib defines both `ShortComplex.colimitCocone F` and the image under `colim` of the short
-complex corresponding to `F` componentwise, using the same three chosen colimits and `colimMap`s.
-The object comparison below records this intentional definitional identification. Mathlib exposes
-no natural isomorphism comparing these two presentations, and replacing the equality by a
-reflexive `ShortComplex.isoMk` loses the definitional identification of the chosen cocone legs and
-of the associated `HasHomology` instances.
+A diagram `F : J ⥤ ShortComplex C` corresponds under `ShortComplex.functorEquivalence` to a short
+complex `S` of diagrams, and the colimit cocone used here is the image of `S` under
+`colim : (J ⥤ C) ⥤ C`, with legs assembled from the counit of that equivalence. Working with the
+counit rather than with the definitional identification of the two presentations keeps every
+intermediate statement well typed for `rw` and `simp`: in a general category, unlike in a concrete
+one, neither the unit laws nor associativity hold definitionally, so the composites appearing here
+cannot be manipulated by `rfl` alone.
+
+Exactness of `J`-shaped colimits makes `colim` preserve homology, which turns the homology of that
+cocone into the chosen colimit of the pointwise homology diagram.
 
 Mathlib's AB5 instance for `ModuleCat.{u} R` asks for `R : Type u`. The instance here removes the
 corresponding restriction on the module universe for small filtered shapes by transporting
@@ -50,7 +55,7 @@ namespace TauCeti
 
 open CategoryTheory CategoryTheory.Limits
 
-universe u v w
+universe u v w u' v'
 
 variable {R : Type u} [Ring R]
 
@@ -63,148 +68,157 @@ instance moduleCat_ab5OfSize : AB5OfSize.{0, 0} (ModuleCat.{v} R) where
     exact HasExactColimitsOfShape.domain_of_functor J
       (forget₂ (ModuleCat.{v} R) AddCommGrpCat.{v})
 
-variable {J : Type w} [Category.{w} J] [HasColimitsOfShape J (ModuleCat.{v} R)]
-  [HasExactColimitsOfShape J (ModuleCat.{v} R)]
+variable {C : Type u'} [Category.{v'} C] [Abelian C]
+variable {J : Type w} [Category.{w} J] [HasColimitsOfShape J C]
+  [HasExactColimitsOfShape J C]
 
 private noncomputable abbrev shortComplexDiagram
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) : ShortComplex (J ⥤ ModuleCat.{v} R) :=
-  (ShortComplex.functorEquivalence J (ModuleCat.{v} R)).inverse.obj F
+    (F : J ⥤ ShortComplex C) : ShortComplex (J ⥤ C) :=
+  (ShortComplex.functorEquivalence J C).inverse.obj F
 
-omit [HasExactColimitsOfShape J (ModuleCat.{v} R)] in
-private theorem shortComplexColimitCocone_pt_eq (F : J ⥤ ShortComplex (ModuleCat.{v} R)) :
-    (ShortComplex.colimitCocone F).pt = (shortComplexDiagram F).map colim :=
-  rfl
+omit [HasColimitsOfShape J C] [HasExactColimitsOfShape J C] in
+/-- Evaluating the short complex of diagrams attached to `F` at `j` gives back `F.obj j`. This is
+the corresponding component of the counit of `ShortComplex.functorEquivalence`, stated with the
+evaluated short complex as its source so that later composites are well typed. -/
+private noncomputable def shortComplexDiagramEvaluationIso
+    (F : J ⥤ ShortComplex C) (j : J) :
+    (shortComplexDiagram F).map ((evaluation J C).obj j) ≅ F.obj j :=
+  ((ShortComplex.functorEquivalence J C).counitIso.app F).app j
 
-omit [HasExactColimitsOfShape J (ModuleCat.{v} R)] in
-private theorem shortComplexColimitCocone_ι_app_eq
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    (shortComplexDiagram F).mapNatTrans (colim.ι j) ≫
-        eqToHom (shortComplexColimitCocone_pt_eq F).symm =
-      (ShortComplex.colimitCocone F).ι.app j := by
-  ext <;> rfl
+omit [HasColimitsOfShape J C] [HasExactColimitsOfShape J C] in
+private theorem shortComplexDiagramEvaluationIso_hom_naturality
+    (F : J ⥤ ShortComplex C) {X Y : J} (f : X ⟶ Y) :
+    (shortComplexDiagram F).mapNatTrans ((evaluation J C).map f) ≫
+        (shortComplexDiagramEvaluationIso F Y).hom =
+      (shortComplexDiagramEvaluationIso F X).hom ≫ F.map f :=
+  ((ShortComplex.functorEquivalence J C).counitIso.app F).hom.naturality f
 
-private theorem shortComplex_mapHomologyIso_colimit
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    ((shortComplexDiagram F).mapHomologyIso ((evaluation J (ModuleCat.{v} R)).obj j)).hom ≫
+omit [HasColimitsOfShape J C] [HasExactColimitsOfShape J C] in
+private theorem shortComplexDiagramEvaluationIso_inv_naturality
+    (F : J ⥤ ShortComplex C) {X Y : J} (f : X ⟶ Y) :
+    F.map f ≫ (shortComplexDiagramEvaluationIso F Y).inv =
+      (shortComplexDiagramEvaluationIso F X).inv ≫
+        (shortComplexDiagram F).mapNatTrans ((evaluation J C).map f) := by
+  rw [Iso.comp_inv_eq, Category.assoc, shortComplexDiagramEvaluationIso_hom_naturality,
+    Iso.inv_hom_id_assoc]
+
+omit [HasExactColimitsOfShape J C] in
+private theorem mapNatTrans_evaluation_comp_colim
+    (F : J ⥤ ShortComplex C) {X Y : J} (f : X ⟶ Y) :
+    (shortComplexDiagram F).mapNatTrans ((evaluation J C).map f) ≫
+        (shortComplexDiagram F).mapNatTrans (colim.ι Y) =
+      (shortComplexDiagram F).mapNatTrans (colim.ι X) := by
+  ext <;>
+    simp only [ShortComplex.comp_τ₁, ShortComplex.comp_τ₂, ShortComplex.comp_τ₃,
+      ShortComplex.mapNatTrans_τ₁, ShortComplex.mapNatTrans_τ₂, ShortComplex.mapNatTrans_τ₃,
+      evaluation_map_app, colim.ι_app] <;>
+    exact colimit.w _ f
+
+/-- The cocone on `F : J ⥤ ShortComplex C` obtained by applying `colim` to the associated short
+complex of diagrams. -/
+private noncomputable def shortComplexColimCocone (F : J ⥤ ShortComplex C) : Cocone F where
+  pt := (shortComplexDiagram F).map colim
+  ι :=
+    { app := fun j ↦ (shortComplexDiagramEvaluationIso F j).inv ≫
+        (shortComplexDiagram F).mapNatTrans (colim.ι j)
+      naturality := fun _ _ f ↦ by
+        dsimp
+        rw [Category.comp_id, ← Category.assoc,
+          shortComplexDiagramEvaluationIso_inv_naturality, Category.assoc,
+          mapNatTrans_evaluation_comp_colim] }
+
+/-- The cocone `shortComplexColimCocone F` is colimiting: each of its three components is the
+chosen colimit cocone of the corresponding diagram in `C`, up to the identities contributed by the
+counit of `ShortComplex.functorEquivalence`. -/
+private noncomputable def isColimitShortComplexColimCocone (F : J ⥤ ShortComplex C) :
+    IsColimit (shortComplexColimCocone F) :=
+  ShortComplex.isColimitOfIsColimitπ _
+    (IsColimit.ofIsoColimit (colimit.isColimit (F ⋙ ShortComplex.π₁))
+      (Cocone.ext (Iso.refl _) fun _ ↦ (Category.comp_id _).trans (Category.id_comp _).symm))
+    (IsColimit.ofIsoColimit (colimit.isColimit (F ⋙ ShortComplex.π₂))
+      (Cocone.ext (Iso.refl _) fun _ ↦ (Category.comp_id _).trans (Category.id_comp _).symm))
+    (IsColimit.ofIsoColimit (colimit.isColimit (F ⋙ ShortComplex.π₃))
+      (Cocone.ext (Iso.refl _) fun _ ↦ (Category.comp_id _).trans (Category.id_comp _).symm))
+
+omit [HasColimitsOfShape J C] [HasExactColimitsOfShape J C] in
+private theorem mapHomologyIso_evaluation_naturality
+    (F : J ⥤ ShortComplex C) {X Y : J} (f : X ⟶ Y) :
+    ShortComplex.homologyMap
+          ((shortComplexDiagram F).mapNatTrans ((evaluation J C).map f)) ≫
+        ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj Y)).hom =
+      ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj X)).hom ≫
+        (shortComplexDiagram F).homology.map f := by
+  -- The transition map of the homology diagram is the component of `(evaluation J C).map f`.
+  have h : ShortComplex.homologyMap
+        ((shortComplexDiagram F).mapNatTrans ((evaluation J C).map f)) ≫
+      ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj Y)).hom =
+      ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj X)).hom ≫
+        ((evaluation J C).map f).app (shortComplexDiagram F).homology := by
+    rw [NatTrans.app_homology ((evaluation J C).map f) (shortComplexDiagram F)]
+    simp
+  exact h
+
+/-- The pointwise homology diagram of `F` is the homology of the associated short complex of
+diagrams, because evaluation preserves homology. -/
+private noncomputable def shortComplexHomologyDiagramIso (F : J ⥤ ShortComplex C) :
+    F ⋙ ShortComplex.homologyFunctor C ≅ (shortComplexDiagram F).homology :=
+  NatIso.ofComponents
+    (fun j ↦ ShortComplex.homologyMapIso (shortComplexDiagramEvaluationIso F j).symm ≪≫
+      (shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj j))
+    (fun {X Y} f ↦ by
+      have h : ShortComplex.homologyMap (F.map f) ≫
+            (ShortComplex.homologyMap (shortComplexDiagramEvaluationIso F Y).inv ≫
+              ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj Y)).hom) =
+          (ShortComplex.homologyMap (shortComplexDiagramEvaluationIso F X).inv ≫
+              ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj X)).hom) ≫
+            (shortComplexDiagram F).homology.map f := by
+        rw [Category.assoc, ← mapHomologyIso_evaluation_naturality, ← Category.assoc,
+          ← Category.assoc, ← ShortComplex.homologyMap_comp, ← ShortComplex.homologyMap_comp,
+          shortComplexDiagramEvaluationIso_inv_naturality]
+      exact h)
+
+private theorem shortComplex_mapHomologyIso_colimit (F : J ⥤ ShortComplex C) (j : J) :
+    ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj j)).hom ≫
         colimit.ι (shortComplexDiagram F).homology j ≫
-          ((shortComplexDiagram F).mapHomologyIso colim).symm.hom =
+          ((shortComplexDiagram F).mapHomologyIso colim).inv =
       ShortComplex.homologyMap ((shortComplexDiagram F).mapNatTrans (colim.ι j)) := by
+  -- The middle map is the component at `(shortComplexDiagram F).homology` of the natural
+  -- transformation `colim.ι j`, so `NatTrans.app_homology` applies.
   change _ ≫ (colim.ι j).app (shortComplexDiagram F).homology ≫ _ = _
   rw [NatTrans.app_homology (colim.ι j) (shortComplexDiagram F)]
   simp
 
-omit [HasColimitsOfShape J (ModuleCat.{v} R)]
-  [HasExactColimitsOfShape J (ModuleCat.{v} R)] in
-private theorem shortComplexHomologyDiagram_obj_eq
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    (F ⋙ ShortComplex.homologyFunctor (ModuleCat.{v} R)).obj j =
-      ((shortComplexDiagram F).map ((evaluation J (ModuleCat.{v} R)).obj j)).homology :=
-  rfl
-
-private noncomputable def shortComplexHomologyDiagramIso
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) :
-    F ⋙ ShortComplex.homologyFunctor (ModuleCat.{v} R) ≅ (shortComplexDiagram F).homology :=
-  NatIso.ofComponents
-    (fun j ↦ eqToIso (shortComplexHomologyDiagram_obj_eq F j) ≪≫
-      (shortComplexDiagram F).mapHomologyIso ((evaluation J (ModuleCat.{v} R)).obj j))
-    (fun {X Y} f ↦ by
-      let τ := (evaluation J (ModuleCat.{v} R)).map f
-      have h : ShortComplex.homologyMap ((shortComplexDiagram F).mapNatTrans τ) ≫
-          ((shortComplexDiagram F).mapHomologyIso ((evaluation J (ModuleCat.{v} R)).obj Y)).hom =
-          ((shortComplexDiagram F).mapHomologyIso ((evaluation J (ModuleCat.{v} R)).obj X)).hom ≫
-            τ.app (shortComplexDiagram F).homology := by
-        rw [NatTrans.app_homology τ (shortComplexDiagram F)]
-        simp
-      exact h)
-
-omit [HasColimitsOfShape J (ModuleCat.{v} R)]
-  [HasExactColimitsOfShape J (ModuleCat.{v} R)] in
-private theorem shortComplexHomologyDiagramIso_hom_app
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    (shortComplexHomologyDiagramIso F).hom.app j =
-      eqToHom (shortComplexHomologyDiagram_obj_eq F j) ≫
-        ((shortComplexDiagram F).mapHomologyIso ((evaluation J (ModuleCat.{v} R)).obj j)).hom :=
-  rfl
-
-private theorem shortComplexHomologyDiagramIso_colimit
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    (shortComplexHomologyDiagramIso F).hom.app j ≫
-        colimit.ι (shortComplexDiagram F).homology j ≫
-          ((shortComplexDiagram F).mapHomologyIso colim).symm.hom =
-      eqToHom (shortComplexHomologyDiagram_obj_eq F j) ≫
-        ShortComplex.homologyMap ((shortComplexDiagram F).mapNatTrans (colim.ι j)) := by
-  rw [shortComplexHomologyDiagramIso_hom_app]
-  simp only [Category.assoc]
-  rw [shortComplex_mapHomologyIso_colimit F j]
-
-omit [HasExactColimitsOfShape J (ModuleCat.{v} R)] in
-private theorem shortComplexHomologyMapCocone_pt_eq
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) :
-    (ShortComplex.colimitCocone F).pt.homology =
-      ((ShortComplex.homologyFunctor (ModuleCat.{v} R)).mapCocone
-        (ShortComplex.colimitCocone F)).pt :=
-  rfl
-
-omit [HasExactColimitsOfShape J (ModuleCat.{v} R)] in
-private theorem shortComplexHomologyFunctor_map_eq
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    eqToHom (shortComplexHomologyDiagram_obj_eq F j) ≫
-        ShortComplex.homologyMap ((ShortComplex.colimitCocone F).ι.app j) ≫
-          eqToHom (shortComplexHomologyMapCocone_pt_eq F) =
-      (ShortComplex.homologyFunctor (ModuleCat.{v} R)).map
-        ((ShortComplex.colimitCocone F).ι.app j) :=
-  rfl
-
-private noncomputable def shortComplexHomologyColimitPointIso
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) :
-    colimit (shortComplexDiagram F).homology ≅
-      ((ShortComplex.homologyFunctor (ModuleCat.{v} R)).mapCocone
-        (ShortComplex.colimitCocone F)).pt :=
-  ((shortComplexDiagram F).mapHomologyIso colim).symm ≪≫
-    ShortComplex.homologyMapIso (eqToIso (shortComplexColimitCocone_pt_eq F)).symm ≪≫
-      eqToIso (shortComplexHomologyMapCocone_pt_eq F)
-
 private theorem shortComplexHomologyColimit_compatibility
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) (j : J) :
-    (shortComplexHomologyDiagramIso F).hom.app j ≫
-        colimit.ι (shortComplexDiagram F).homology j ≫
-          (shortComplexHomologyColimitPointIso F).hom =
-      (ShortComplex.homologyFunctor (ModuleCat.{v} R)).map
-        ((ShortComplex.colimitCocone F).ι.app j) := by
-  dsimp only [shortComplexHomologyColimitPointIso, Iso.trans_hom,
-    ShortComplex.homologyMapIso_hom, eqToIso.hom]
-  slice_lhs 1 3 => rw [shortComplexHomologyDiagramIso_colimit F j]
-  rw [ShortComplex.homologyMapIso_hom]
-  slice_lhs 2 3 => rw [← ShortComplex.homologyMap_comp]
-  have hEq : (eqToIso (shortComplexColimitCocone_pt_eq F)).symm.hom =
-      eqToHom (shortComplexColimitCocone_pt_eq F).symm := by
-    cases shortComplexColimitCocone_pt_eq F
-    rfl
-  rw [hEq, shortComplexColimitCocone_ι_app_eq]
-  exact shortComplexHomologyFunctor_map_eq F j
+    (F : J ⥤ ShortComplex C) (j : J) :
+    ((ShortComplex.homologyMap (shortComplexDiagramEvaluationIso F j).inv ≫
+            ((shortComplexDiagram F).mapHomologyIso ((evaluation J C).obj j)).hom) ≫
+          colimit.ι (shortComplexDiagram F).homology j) ≫
+        ((shortComplexDiagram F).mapHomologyIso colim).inv =
+      ShortComplex.homologyMap ((shortComplexDiagramEvaluationIso F j).inv ≫
+        (shortComplexDiagram F).mapNatTrans (colim.ι j)) := by
+  rw [Category.assoc, Category.assoc, shortComplex_mapHomologyIso_colimit,
+    ShortComplex.homologyMap_comp]
 
-private noncomputable def shortComplexHomologyColimitCoconeIso
-    (F : J ⥤ ShortComplex (ModuleCat.{v} R)) :
+/-- Homology of the colimit cocone `shortComplexColimCocone F` is the chosen colimit of the
+pointwise homology diagram of `F`. -/
+private noncomputable def shortComplexHomologyColimitCoconeIso (F : J ⥤ ShortComplex C) :
     (Cocone.precompose (shortComplexHomologyDiagramIso F).hom).obj
         (colimit.cocone (shortComplexDiagram F).homology) ≅
-      (ShortComplex.homologyFunctor (ModuleCat.{v} R)).mapCocone
-        (ShortComplex.colimitCocone F) := by
-  refine Cocone.ext (shortComplexHomologyColimitPointIso F) ?_
-  intro j
-  exact shortComplexHomologyColimit_compatibility F j
+      (ShortComplex.homologyFunctor C).mapCocone (shortComplexColimCocone F) :=
+  Cocone.ext ((shortComplexDiagram F).mapHomologyIso colim).symm
+    (fun j ↦ shortComplexHomologyColimit_compatibility F j)
 
-/-- Homology of short complexes of modules preserves colimits of any exact shape. -/
+/-- Homology of short complexes preserves colimits of any exact shape. -/
 instance shortComplexHomologyFunctor_preservesColimitsOfShape :
-    PreservesColimitsOfShape J (ShortComplex.homologyFunctor (ModuleCat.{v} R)) where
+    PreservesColimitsOfShape J (ShortComplex.homologyFunctor C) where
   preservesColimit {F} :=
     preservesColimit_of_preserves_colimit_cocone
-      (ShortComplex.isColimitColimitCocone F)
+      (isColimitShortComplexColimCocone F)
       ((IsColimit.equivOfNatIsoOfIso
         (shortComplexHomologyDiagramIso F).symm
         (colimit.cocone (shortComplexDiagram F).homology)
-        ((ShortComplex.homologyFunctor (ModuleCat.{v} R)).mapCocone
-          (ShortComplex.colimitCocone F))
-        (shortComplexHomologyColimitCoconeIso (R := R) F)) (colimit.isColimit _))
+        ((ShortComplex.homologyFunctor C).mapCocone (shortComplexColimCocone F))
+        (shortComplexHomologyColimitCoconeIso F)) (colimit.isColimit _))
 
 variable {I D : Type*} [Category D] [HasZeroMorphisms D] [HasColimitsOfShape J D]
   (c : ComplexShape I) (q : I)
@@ -224,12 +238,11 @@ instance homologicalComplexShortComplexFunctor_preservesColimitsOfShape :
     · exact isColimitOfPreserves (HomologicalComplex.eval D c (c.next q))
         (colimit.isColimit F)
 
-/-- Homology in any degree of a homological complex of modules preserves colimits of any exact
-shape. -/
+/-- Homology in any degree of a homological complex preserves colimits of any exact shape. -/
 instance homologicalComplexHomologyFunctor_preservesColimitsOfShape :
     PreservesColimitsOfShape J
-      (HomologicalComplex.homologyFunctor (ModuleCat.{v} R) c q) := by
+      (HomologicalComplex.homologyFunctor C c q) := by
   exact preservesColimitsOfShape_of_natIso
-    (HomologicalComplex.homologyFunctorIso (ModuleCat.{v} R) c q).symm
+    (HomologicalComplex.homologyFunctorIso C c q).symm
 
 end TauCeti
