@@ -144,7 +144,8 @@ theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite κ] (wt : Fin N �
 
 /-- The diagonal coordinates obtained by restricting a split-torus point along a weight family
 are the corresponding torus characters. -/
-@[simp]
+-- Not `@[simp]`: the left-hand side first normalizes through `pointsMap_apply` and
+-- `diagonalTorusCoordinates_apply`, so `simpNF` rejects this higher-level equation.
 theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
     (wt : Fin N → κ → ℤ)
     (p : HopfAlgebra.points
@@ -161,7 +162,10 @@ theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
   erw [MonoidAlgebra.mapDomainBialgHom_single]
   rw [weightCharacterMap_ofAdd_single, ← DiagonalizableGroup.charOfPoint_apply_coe]
   have hweight : Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)) =
-      SplitTorus.weightCharacter (wt i) := rfl
+      SplitTorus.weightCharacter (wt i) := by
+    apply Multiplicative.toAdd.injective
+    ext j
+    simp
   rw [hweight]
   rw [SplitTorus.charOfPoint_weightCharacter]
 

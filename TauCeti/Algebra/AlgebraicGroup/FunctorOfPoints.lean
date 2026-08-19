@@ -154,7 +154,8 @@ lemma mapValue_apply (φ : A →ₐ[R] B) (f : WithConv (H →ₐ[R] A)) :
 
 /-- Evaluating a point after mapping its value algebra applies the value-algebra map to the
 original evaluation. -/
-lemma mapValue_apply_apply (φ : A →ₐ[R] B) (f : WithConv (H →ₐ[R] A)) (h : H) :
+lemma _root_.AlgHom.mapValue_apply_apply
+    (φ : A →ₐ[R] B) (f : WithConv (H →ₐ[R] A)) (h : H) :
     mapValue φ f h = φ (f.ofConv h) := rfl
 
 /-- `mapValue` preserves the identity: `mapValue (𝟙 A)` is the identity monoid homomorphism. -/

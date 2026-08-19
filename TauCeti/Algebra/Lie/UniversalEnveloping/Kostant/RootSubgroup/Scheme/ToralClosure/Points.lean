@@ -166,8 +166,10 @@ theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
     kostantTorusMatrix M b wt s ∈
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
   let p := (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).symm s
-  let q := (CommHopfAlgCat.mapPointsFunctor
-    (GeneralLinear.weightTorusCoordinateMap wt)).app (CommAlgCat.of ℤ A) p
+  let q : HopfAlgebra.points
+      (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ n) (CommAlgCat.of ℤ A) :=
+    (CommHopfAlgCat.mapPointsFunctor
+      (GeneralLinear.weightTorusCoordinateMap wt)).app (CommAlgCat.of ℤ A) p
   have hq : q ∈ CommHopfAlgCat.quotientPointsSubgroup
       (GeneralLinear.coordinateHopfAlgebra ℤ n)
       (kostantToralDefiningIdeal e h ρ M hM hnil b wt) (CommAlgCat.of ℤ A) := by
@@ -175,10 +177,15 @@ theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
     intro x hx
     have hx' := kostantToralDefiningIdeal_toIdeal_le_torus_ker
       e h ρ M hM hnil b wt hx
-    rw [q, CommHopfAlgCat.mapPointsFunctor_app_apply_apply]
-    rw [hx', map_zero]
+    dsimp only [q]
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply]
+    have hx'' : (GeneralLinear.weightTorusCoordinateMap wt).hom x = 0 := hx'
+    rw [hx'', map_zero]
   refine ⟨q, hq, ?_⟩
-  rw [q, GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app,
+  dsimp only [q]
+  rw [GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app]
+  change GeneralLinear.pointsMulEquiv n _ = _
+  rw [
     GeneralLinear.pointsMulEquiv_diagonalTorusPoints, kostantTorusMatrix_apply]
   congr 1
   funext i
