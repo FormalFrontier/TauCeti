@@ -217,8 +217,8 @@ theorem IsSemisimplePoint.mul_of_commute {g h : WithConv (H →ₐ[k] K)}
   intro M
   rw [map_mul, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul]
   apply (hg M).mul_of_commute (hh M)
-  exact (hcomm.map (Comodule.pointsAction M)).map
-    (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.toMonoidHom
+  exact (LinearMap.GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+    (hcomm.map (Comodule.pointsAction M))
 
 end PerfectField
 

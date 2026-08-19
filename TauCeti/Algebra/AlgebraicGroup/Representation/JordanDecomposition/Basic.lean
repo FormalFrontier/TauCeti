@@ -241,11 +241,12 @@ theorem isSemisimple_isUnipotent_unique (g s u : WithConv (H →ₐ[k] K))
     apply GeneralLinearGroup.isSemisimple_isUnipotent_unique
     · exact hs M
     · exact (isUnipotentPoint_def u).mp hu M
-    · exact Comodule.commute_ofLinearEquiv_pointsAction s u hc
+    · exact (GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+        (hc.map (Comodule.pointsAction M))
     · exact isSemisimple_pointsAction_semisimplePart k H K g M
     · exact isUnipotent_pointsAction_unipotentPart k H K g M
-    · exact Comodule.commute_ofLinearEquiv_pointsAction _ _
-        (commute_semisimplePart_unipotentPart k H K g)
+    · exact (GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+        ((commute_semisimplePart_unipotentPart k H K g).map (Comodule.pointsAction M))
     · rw [← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
         ← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul, ← map_mul, ← map_mul, hmul,
         semisimplePart_mul_unipotentPart]

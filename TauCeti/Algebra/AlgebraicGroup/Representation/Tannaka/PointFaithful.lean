@@ -27,10 +27,12 @@ schemes.
   point.
 * `TauCeti.Tannaka.fgPointNatIsoHom_injective`: point automorphisms on finitely generated
   comodules determine the point over a principal ideal domain.
-* `TauCeti.Tannaka.fgPoint_ext_of_forall_ofLinearEquiv_pointsAction`: points are equal when
-  their general-linear actions agree on every finitely generated comodule.
-* `TauCeti.Tannaka.commute_iff_forall_ofLinearEquiv_pointsAction`: points commute exactly when
-  their general-linear actions commute on every finitely generated comodule.
+* `TauCeti.Tannaka.fgPoint_ext_of_forall_ofLinearEquiv_pointsAction`: over a principal ideal
+  domain, points are equal when their general-linear actions agree on every finitely generated
+  comodule.
+* `TauCeti.Tannaka.commute_iff_forall_ofLinearEquiv_pointsAction`: over a principal ideal domain,
+  points commute exactly when their general-linear actions commute on every finitely generated
+  comodule.
 
 ## References
 
@@ -110,8 +112,9 @@ theorem fgPointNatIsoHom_injective :
   simpa only [M, LinearEquiv.toModuleIsoₛ_hom, SemimoduleCat.hom_ofHom,
     Comodule.pointsAction_toLinearMap] using congrArg SemimoduleCat.Hom.hom happ
 
-/-- Algebra-valued points are equal when their actions, viewed in the general linear group,
-agree on every finitely generated comodule. -/
+/-- Over a principal ideal domain, when `H` is free as a module, algebra-valued points are equal
+when their actions, viewed in the general linear group, agree on every finitely generated
+comodule. In particular, this applies over a field. -/
 theorem fgPoint_ext_of_forall_ofLinearEquiv_pointsAction
     {g h : WithConv (H →ₐ[R] A)}
     (heq : ∀ M : FGComoduleCat.{u, v, v} R H,
@@ -127,8 +130,9 @@ theorem fgPoint_ext_of_forall_ofLinearEquiv_pointsAction
     (LinearMap.GeneralLinearGroup.generalLinearEquiv A _).symm.injective (heq M)
   simp only [haction]
 
-/-- Two algebra-valued points commute if and only if their actions, viewed in the general linear
-group, commute on every finitely generated comodule. -/
+/-- Over a principal ideal domain, when `H` is free as a module, two algebra-valued points commute
+if and only if their actions, viewed in the general linear group, commute on every finitely
+generated comodule. In particular, this applies over a field. -/
 theorem commute_iff_forall_ofLinearEquiv_pointsAction
     {g h : WithConv (H →ₐ[R] A)} :
     Commute g h ↔
@@ -138,7 +142,8 @@ theorem commute_iff_forall_ofLinearEquiv_pointsAction
           (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h)) := by
   constructor
   · intro hgh M
-    exact Comodule.commute_ofLinearEquiv_pointsAction g h hgh
+    exact (LinearMap.GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+      (hgh.map (Comodule.pointsAction M))
   · intro hactions
     rw [commute_iff_eq]
     apply fgPoint_ext_of_forall_ofLinearEquiv_pointsAction R H A
