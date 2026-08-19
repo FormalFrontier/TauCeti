@@ -35,7 +35,7 @@ where the coefficients enter: over `𝔽₂` the torus is trivial
 (`TauCeti.diagonalTorus_eq_bot`), every `l` gives the same character, and the whole module is a
 weight space for every weight at once, so nothing is independent. Rather than fix the coefficients,
 every statement below that separates weights takes `Function.Injective (weightChar k)` as a
-hypothesis, and `TauCeti.weightChar_injective` discharges it over a field of characteristic zero.
+hypothesis, and `TauCeti.weightChar_injective` discharges it over an infinite field.
 
 The definitions themselves need only a commutative ring, and are stated there.
 
@@ -159,7 +159,7 @@ end CommRing
 /-! ## The weight spaces of the standard representation
 
 Here the coefficients must separate weights, in the sense that `l ↦ weightChar k l` is injective;
-`TauCeti.weightChar_injective` supplies that over a field of characteristic zero. -/
+`TauCeti.weightChar_injective` supplies that over an infinite field. -/
 
 section Domain
 
