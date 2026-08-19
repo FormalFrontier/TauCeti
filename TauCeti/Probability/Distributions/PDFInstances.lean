@@ -16,23 +16,32 @@ public import Mathlib.Probability.Distributions.Cauchy
 # `HasPDF` instances for Mathlib's continuous families
 
 Several of Mathlib's continuous scalar laws can be presented as `withDensity` measures, but none is
-connected to `MeasureTheory.HasPDF`. This file supplies that bridge for the six such families, and
-identifies the resulting density. How each is presented differs: `gammaMeasure`, `betaMeasure` and
+connected to `MeasureTheory.HasPDF`. This file supplies that bridge for the six such families,
+identifies the resulting density, and identifies each as a Radon–Nikodym derivative against
+Lebesgue measure. How each is presented differs: `gammaMeasure`, `betaMeasure` and
 `paretoMeasure` are `withDensity` by definition, `expMeasure` through `gammaMeasure`, and
 `gaussianReal` and `cauchyMeasure` only away from zero spread.
 
-**One helper, six families, two conclusions each.** The bridges themselves live in
+**One helper, six families, three conclusions each.** The bridges themselves live in
 `TauCeti/Probability/Density.lean`, which mentions no particular distribution:
 `hasPDF_of_hasLaw_withDensity` gives `HasPDF` and `pdf_eq_of_hasLaw_withDensity` identifies the
-density. Keeping them there lets `Distributions/Uniform.lean` reuse the same bridges without
-importing Gamma, Beta, Pareto, Gaussian and Cauchy along with them. Nothing here recomputes a
+density. The third conclusion, the Radon–Nikodym derivative, needs no Tau Ceti bridge: it is
+Mathlib's `Measure.rnDeriv_withDensity` for the five `withDensity` families, and Mathlib's
+`rnDeriv_gaussianReal` for the sixth. Keeping the two bridges there lets
+`Distributions/Uniform.lean` reuse them without importing Gamma, Beta, Pareto, Gaussian and Cauchy
+along with them. Nothing here recomputes a
 density — Mathlib already proved each defining `withDensity` equality, and this file packages those
 facts.
 
 **Where the spread may vanish.** `gaussianReal m v` and `cauchyMeasure x₀ γ` are defined by a case
-split: at `v = 0` and `γ = 0` they are Dirac measures, which are singular with respect to `volume`
-and have no density at all. Those two bridges therefore carry `v ≠ 0` and `γ ≠ 0` — not as
-convenience hypotheses but because the statement is false without them.
+split: at `v = 0` and `γ = 0` they are Dirac measures, singular with respect to `volume`. The two
+**`HasPDF`** bridges therefore carry `v ≠ 0` and `γ ≠ 0` — not as convenience hypotheses but because
+`HasPDF` genuinely fails without them.
+
+The *identifications* need no such hypothesis, and do not carry one. Mathlib defines `pdf X P` as
+`(map X P).rnDeriv volume` outright, and at zero spread that derivative and the density both vanish
+almost everywhere, so `rnDeriv_cauchyMeasure` and the two `pdf_eq_*` corollaries derived from it
+hold at every parameter.
 
 `gammaMeasure`, `betaMeasure`, `expMeasure` and `paretoMeasure` need no such hypothesis: each is
 `volume.withDensity` of its density **for every parameter**, so each is absolutely continuous
@@ -131,16 +140,20 @@ theorem hasPDF_of_hasLaw_expMeasure {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
   hasPDF_of_hasLaw_withDensity (measurable_gammaPDF 1 r).aemeasurable
     (by simpa only [expMeasure, gammaMeasure] using hX)
 
+/-- `exponentialPDF` is `gammaPDF 1` by definition.  Stated once so the two proofs that need it
+rewrite with a named equality rather than relying on a silent delta-reduction. -/
+theorem exponentialPDF_eq_gammaPDF (r : ℝ) : exponentialPDF r = gammaPDF 1 r := (rfl)
+
 /-- The density of an exponential law is `exponentialPDF`.
 
-`exponentialPDFReal` is *defined* as `gammaPDFReal 1`, so the two densities agree definitionally;
-the `unfold` names that rather than leaving it to elaboration. -/
+`exponentialPDF` is *defined* as `gammaPDF 1`, so the two densities agree definitionally;
+`exponentialPDF_eq_gammaPDF` names that equality rather than leaving it to elaboration. -/
 theorem pdf_eq_exponentialPDF_of_hasLaw_expMeasure {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
     pdf X P =ᵐ[volume] exponentialPDF r := by
   have h : pdf X P =ᵐ[volume] gammaPDF 1 r :=
     pdf_eq_of_hasLaw_withDensity (measurable_gammaPDF 1 r).aemeasurable
       (by simpa only [expMeasure, gammaMeasure] using hX)
-  unfold exponentialPDF exponentialPDFReal
+  rw [exponentialPDF_eq_gammaPDF]
   exact h
 
 /-- A variable with a Pareto law has a density. -/
@@ -164,12 +177,6 @@ theorem hasPDF_of_hasLaw_gaussianReal {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
   hasPDF_of_hasLaw_withDensity (measurable_gaussianPDF m v).aemeasurable
     (by rwa [gaussianReal_of_var_ne_zero _ hv] at hX)
 
-/-- The density of a nondegenerate Gaussian law is `gaussianPDF`. -/
-theorem pdf_eq_gaussianPDF_of_hasLaw_gaussianReal {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
-    (hX : HasLaw X (gaussianReal m v) P) : pdf X P =ᵐ[volume] gaussianPDF m v :=
-  pdf_eq_of_hasLaw_withDensity (measurable_gaussianPDF m v).aemeasurable
-    (by rwa [gaussianReal_of_var_ne_zero _ hv] at hX)
-
 /-- A variable with a nondegenerate Cauchy law has a density.
 
 `γ ≠ 0` is required, not merely convenient: `cauchyMeasure x₀ 0` is `Measure.dirac x₀`, which is
@@ -177,12 +184,6 @@ singular with respect to `volume`. -/
 theorem hasPDF_of_hasLaw_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0)
     (hX : HasLaw X (cauchyMeasure x₀ γ) P) : HasPDF X P :=
   hasPDF_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ).aemeasurable
-    (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)
-
-/-- The density of a nondegenerate Cauchy law is `cauchyPDF`. -/
-theorem pdf_eq_cauchyPDF_of_hasLaw_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0)
-    (hX : HasLaw X (cauchyMeasure x₀ γ) P) : pdf X P =ᵐ[volume] cauchyPDF x₀ γ :=
-  pdf_eq_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ).aemeasurable
     (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)
 
 /-! ### Radon–Nikodym derivatives
@@ -197,8 +198,7 @@ a Tau Ceti name for it would be a wrapper around an existing theorem rather than
 
 The Cauchy law needs no nondegeneracy hypothesis. At zero scale it is a Dirac measure, singular with
 respect to `volume`, so the derivative vanishes almost everywhere — and `cauchyPDF x₀ 0` vanishes
-too, so a single statement covers every scale. `rnDeriv_cauchyMeasure_zero` records the boundary as
-a specialization of it. -/
+too, so a single statement covers every scale. -/
 
 /-- The Radon–Nikodym derivative of a Gamma law is `gammaPDF`. -/
 theorem rnDeriv_gammaMeasure (a r : ℝ) :
@@ -216,11 +216,9 @@ theorem rnDeriv_betaMeasure (α β : ℝ) :
 by definition. -/
 theorem rnDeriv_expMeasure (r : ℝ) :
     (expMeasure r).rnDeriv volume =ᵐ[volume] exponentialPDF r := by
-  have h : (expMeasure r).rnDeriv volume =ᵐ[volume] gammaPDF 1 r := by
-    unfold expMeasure
-    exact rnDeriv_gammaMeasure 1 r
-  unfold exponentialPDF exponentialPDFReal
-  exact h
+  rw [exponentialPDF_eq_gammaPDF]
+  unfold expMeasure
+  exact rnDeriv_gammaMeasure 1 r
 
 /-- The Radon–Nikodym derivative of a Pareto law is `paretoPDF`. -/
 theorem rnDeriv_paretoMeasure (t r : ℝ) :
@@ -243,10 +241,24 @@ theorem rnDeriv_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) :
   · rw [cauchyMeasure_of_scale_ne_zero _ hγ]
     exact Measure.rnDeriv_withDensity volume (measurable_cauchyPDF x₀ γ)
 
-/-- **The singular boundary**, as a specialization: at zero scale the derivative vanishes a.e. -/
-theorem rnDeriv_cauchyMeasure_zero (x₀ : ℝ) :
-    (cauchyMeasure x₀ 0).rnDeriv volume =ᵐ[volume] 0 := by
-  simpa using rnDeriv_cauchyMeasure x₀ 0
+/-! ### The two densities at a possibly-vanishing spread
+
+The Gaussian and Cauchy density identifications are corollaries of the derivative identifications
+above, so unlike their `HasPDF` counterparts they need no nondegeneracy hypothesis: `pdf X P` *is*
+`(map X P).rnDeriv volume`, and at zero spread both sides vanish almost everywhere.
+-/
+
+/-- The density of a Gaussian law is `gaussianPDF`, at **every** variance. -/
+theorem pdf_eq_gaussianPDF_of_hasLaw_gaussianReal {m : ℝ} {v : ℝ≥0}
+    (hX : HasLaw X (gaussianReal m v) P) : pdf X P =ᵐ[volume] gaussianPDF m v := by
+  rw [pdf_def, hX.map_eq]
+  exact rnDeriv_gaussianReal m v
+
+/-- The density of a Cauchy law is `cauchyPDF`, at **every** scale. -/
+theorem pdf_eq_cauchyPDF_of_hasLaw_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0}
+    (hX : HasLaw X (cauchyMeasure x₀ γ) P) : pdf X P =ᵐ[volume] cauchyPDF x₀ γ := by
+  rw [pdf_def, hX.map_eq]
+  exact rnDeriv_cauchyMeasure x₀ γ
 
 end Probability
 
