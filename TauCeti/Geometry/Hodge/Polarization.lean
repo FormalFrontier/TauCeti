@@ -37,8 +37,8 @@ realized that way must insert to match this convention.
 * `TauCeti.Hodge.IsPolarization`: the Hodge–Riemann relations for a fixed integral form.
 * `TauCeti.Hodge.IsPolarization.orthogonal_piece`: distinct Hodge components pair to zero unless
   their degrees add up to the weight.
-* `TauCeti.Hodge.IsPolarization.complex_nondegenerate`: the complexified form of a polarization of
-  a finite free lattice is nondegenerate.
+* `TauCeti.Hodge.IsPolarization.complex_nondegenerate`: the complexified form of a polarization is
+  nondegenerate.
 * `TauCeti.Hodge.IsPolarization.exists_pairing_ne_zero`: conjugate Hodge components pair
   nondegenerately.
 * `TauCeti.Hodge.Polarization`: a polarized Hodge structure's form, bundled with its relations.
@@ -107,9 +107,8 @@ theorem complex_symm_weight (h : IsPolarization hℂ hs Q) (x y : Vℂ) :
   have hxy := DFunLike.congr_fun (DFunLike.congr_fun hforms x) y
   simpa only [LinearMap.BilinForm.flip_apply, LinearMap.smul_apply, zsmul_eq_mul] using hxy
 
-/-- The complexification of a polarizing form on a finite free lattice is nondegenerate. -/
-theorem complex_nondegenerate [Module.Free ℤ V] [Module.Finite ℤ V]
-    (h : IsPolarization hℂ hs Q) :
+/-- The complexification of a polarizing form is nondegenerate. -/
+theorem complex_nondegenerate (h : IsPolarization hℂ hs Q) :
     LinearMap.BilinForm.Nondegenerate (integralFormToComplex hℂ Q) :=
   integralFormToComplex_nondegenerate hℂ h.nondegenerate
 
@@ -178,8 +177,8 @@ theorem Q_symm_weight (P : Polarization hℂ hs) (x y : Vℂ) :
     P.Q y x = (n.negOnePow : ℤ) * P.Q x y :=
   P.isPolarization.complex_symm_weight x y
 
-/-- The complex form of a polarization on a finite free lattice is nondegenerate. -/
-theorem Q_nondegenerate [Module.Free ℤ V] [Module.Finite ℤ V] (P : Polarization hℂ hs) :
+/-- The complex form of a polarization is nondegenerate. -/
+theorem Q_nondegenerate (P : Polarization hℂ hs) :
     LinearMap.BilinForm.Nondegenerate P.Q :=
   P.isPolarization.complex_nondegenerate
 

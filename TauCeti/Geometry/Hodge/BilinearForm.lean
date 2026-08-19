@@ -8,6 +8,8 @@ module
 public import Mathlib.LinearAlgebra.BilinearForm.TensorProduct
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import Mathlib.RingTheory.TensorProduct.Free
+import Mathlib.Algebra.Algebra.Rat
+import Mathlib.RingTheory.Localization.BaseChange
 public import TauCeti.Geometry.Hodge.Conjugation
 
 /-!
@@ -20,9 +22,8 @@ canonical tensor model, and characterizes it by its values on integral vectors.
 
 Two properties make the extension usable in Hodge theory. It is *real*: conjugating both arguments
 conjugates the value, because lattice-induced conjugation fixes the integral vectors. And it is
-nondegenerate as soon as the integral form is, provided the lattice is finite free, since
-nondegeneracy of a form on a finite free module over a domain is the nonvanishing of the
-determinant of its Gram matrix.
+nondegenerate as soon as the integral form is: nondegeneracy is preserved first by localization from
+`ℤ` to `ℚ` and then by scalar extension from `ℚ` to `ℂ`.
 
 ## Main declarations
 
@@ -30,8 +31,8 @@ determinant of its Gram matrix.
 * `TauCeti.Hodge.integralFormToComplex_ι`: its values on integral vectors.
 * `TauCeti.Hodge.integralFormToComplex_unique`: it is the only such extension.
 * `TauCeti.Hodge.integralFormToComplex_conj`: it commutes with lattice-induced conjugation.
-* `TauCeti.Hodge.integralFormToComplex_nondegenerate`: it inherits nondegeneracy from a finite
-  free lattice.
+* `TauCeti.Hodge.integralFormToComplex_nondegenerate`: it inherits nondegeneracy from the integral
+  form.
 -/
 
 public section
@@ -103,27 +104,112 @@ theorem integralFormToComplex_conj (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMa
   | smul z x hx => simp [hx]
   | add x₁ x₂ hx₁ hx₂ => simp [hx₁, hx₂]
 
-/-- The complexification of a nondegenerate integral form on a finite free lattice is
-nondegenerate.
+private theorem integralFormToRat_nondegenerate {Q : LinearMap.BilinForm ℤ V}
+    (hQ : Q.Nondegenerate) : (Q.baseChange ℚ).Nondegenerate := by
+  let f : V →ₗ[ℤ] ℚ ⊗[ℤ] V := TensorProduct.mk ℤ ℚ V 1
+  have hf : IsLocalizedModule (nonZeroDivisors ℤ) f := by
+    rw [isLocalizedModule_iff_isBaseChange (nonZeroDivisors ℤ) ℚ]
+    exact TensorProduct.isBaseChange ℤ V ℚ
+  constructor
+  · intro x hx
+    obtain ⟨⟨v, s⟩, hs⟩ := hf.surj x
+    have hv : v = 0 := hQ.1 v fun w ↦ by
+      have h : Q.baseChange ℚ (s • x) (1 ⊗ₜ[ℤ] w) = 0 := by simp [hx]
+      rw [hs] at h
+      change Q.baseChange ℚ (1 ⊗ₜ[ℤ] v) (1 ⊗ₜ[ℤ] w) = 0 at h
+      have hc : (Q v w : ℚ) = 0 := by simpa using h
+      exact_mod_cast hc
+    rw [hv, map_zero] at hs
+    exact (IsLocalizedModule.smul_injective f s) (by simpa using hs)
+  · intro y hy
+    obtain ⟨⟨v, s⟩, hs⟩ := hf.surj y
+    have hv : v = 0 := hQ.2 v fun w ↦ by
+      have h : Q.baseChange ℚ (1 ⊗ₜ[ℤ] w) (s • y) = 0 := by simp [hy]
+      rw [hs] at h
+      change Q.baseChange ℚ (1 ⊗ₜ[ℤ] w) (1 ⊗ₜ[ℤ] v) = 0 at h
+      have hc : (Q w v : ℚ) = 0 := by simpa using h
+      exact_mod_cast hc
+    rw [hv, map_zero] at hs
+    exact (IsLocalizedModule.smul_injective f s) (by simpa using hs)
 
-Over a domain, nondegeneracy of a form on a finite free module is the nonvanishing of the
-determinant of its Gram matrix, and the Gram matrix of the complexified form in the complexified
-basis is the entrywise image of the integral Gram matrix. -/
-theorem integralFormToComplex_nondegenerate [Module.Free ℤ V] [Module.Finite ℤ V]
-    (hℂ : IsBaseChange ℂ ιℂ) {Q : LinearMap.BilinForm ℤ V}
-    (hQ : LinearMap.BilinForm.Nondegenerate Q) :
-    LinearMap.BilinForm.Nondegenerate (integralFormToComplex hℂ Q) := by
+private theorem rationalFormToComplex_nondegenerate {W : Type*} [AddCommGroup W] [Module ℚ W]
+    {B : LinearMap.BilinForm ℚ W} (hB : B.Nondegenerate) :
+    (B.baseChange ℂ).Nondegenerate := by
   classical
-  set b := Module.Free.chooseBasis ℤ V
-  set bℂ := (Algebra.TensorProduct.basis ℂ b).map hℂ.equiv with hbℂ
-  have hbℂ_apply : ∀ i, bℂ i = ιℂ (b i) := by
-    intro i
-    simp [hbℂ, hℂ.equiv_tmul]
-  have hmat : LinearMap.BilinForm.toMatrix bℂ (integralFormToComplex hℂ Q) =
-      (LinearMap.BilinForm.toMatrix b Q).map (fun z : ℤ ↦ (z : ℂ)) := by
-    ext i j
-    simp [LinearMap.BilinForm.toMatrix_apply, hbℂ_apply]
-  rw [LinearMap.BilinForm.nondegenerate_iff_det_ne_zero bℂ, hmat, ← Int.cast_det]
-  simpa using (LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b).mp hQ
+  let b := Module.Free.chooseBasis ℚ ℂ
+  let e := TensorProduct.equivFinsuppOfBasisLeft (N := W) b
+  constructor
+  · intro x hx
+    let c := e x
+    have hc : c = 0 := by
+      ext i
+      apply hB.1 (c i)
+      intro w
+      have h := hx (1 ⊗ₜ[ℚ] w)
+      have hrepr : c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = x := by
+        calc
+          c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = e.symm c :=
+            (TensorProduct.equivFinsuppOfBasisLeft_symm_apply b c).symm
+          _ = x := by simp [c]
+      rw [← hrepr] at h
+      have hi := congrArg (fun z : ℂ ↦ b.repr z i) h
+      have hi' : (∑ j ∈ c.support, Finsupp.single j (B (c j) w)) i = 0 := by
+        simpa [Finsupp.sum] using hi
+      by_cases hic : i ∈ c.support
+      · have heval : (∑ j ∈ c.support, Finsupp.single j (B (c j) w)) i =
+            B (c i) w := by
+          simp [Finsupp.single_apply, hic]
+        exact heval ▸ hi'
+      · have hci : c i = 0 := Finsupp.notMem_support_iff.mp hic
+        simp [hci]
+    exact e.injective (by simpa [c] using hc)
+  · intro y hy
+    let c := e y
+    have hc : c = 0 := by
+      ext i
+      apply hB.2 (c i)
+      intro w
+      have h := hy (1 ⊗ₜ[ℚ] w)
+      have hrepr : c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = y := by
+        calc
+          c.sum (fun i v ↦ b i ⊗ₜ[ℚ] v) = e.symm c :=
+            (TensorProduct.equivFinsuppOfBasisLeft_symm_apply b c).symm
+          _ = y := by simp [c]
+      rw [← hrepr] at h
+      have hi := congrArg (fun z : ℂ ↦ b.repr z i) h
+      have hi' : (∑ j ∈ c.support, Finsupp.single j (B w (c j))) i = 0 := by
+        simpa [Finsupp.sum] using hi
+      by_cases hic : i ∈ c.support
+      · have heval : (∑ j ∈ c.support, Finsupp.single j (B w (c j))) i =
+            B w (c i) := by
+          simp [Finsupp.single_apply, hic]
+        exact heval ▸ hi'
+      · have hci : c i = 0 := Finsupp.notMem_support_iff.mp hic
+        simp [hci]
+    exact e.injective (by simpa [c] using hc)
+
+private theorem integralFormToCanonicalComplex_nondegenerate {Q : LinearMap.BilinForm ℤ V}
+    (hQ : Q.Nondegenerate) : (Q.baseChange ℂ).Nondegenerate := by
+  let e := TensorProduct.AlgebraTensorModule.cancelBaseChange ℤ ℚ ℂ ℂ V
+  have hn : ((Q.baseChange ℚ).baseChange ℂ).Nondegenerate :=
+    rationalFormToComplex_nondegenerate (integralFormToRat_nondegenerate hQ)
+  have heq : Q.baseChange ℂ =
+      LinearMap.BilinForm.congr e ((Q.baseChange ℚ).baseChange ℂ) := by
+    ext z v
+    simp [e]
+  rw [heq]
+  exact LinearMap.BilinForm.Nondegenerate.congr e hn
+
+/-- Complexification preserves nondegeneracy of an integral bilinear form. -/
+theorem integralFormToComplex_nondegenerate (hℂ : IsBaseChange ℂ ιℂ)
+    {Q : LinearMap.BilinForm ℤ V} (hQ : Q.Nondegenerate) :
+    (integralFormToComplex hℂ Q).Nondegenerate := by
+  have hform : integralFormToComplex hℂ Q =
+      LinearMap.BilinForm.congr hℂ.equiv (Q.baseChange ℂ) := by
+    ext x y
+    rfl
+  rw [hform]
+  exact LinearMap.BilinForm.Nondegenerate.congr hℂ.equiv
+    (integralFormToCanonicalComplex_nondegenerate hQ)
 
 end TauCeti.Hodge

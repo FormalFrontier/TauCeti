@@ -181,11 +181,6 @@ def tatePolarization (m : ℤ) : Polarization isBaseChange_tateLatticeMap (tate 
   Qint := LinearMap.mul ℤ ℤ
   isPolarization := isPolarization_tate m
 
-/-- The polarizing form of `ℤ(m)` is multiplication of integers. -/
-@[simp]
-theorem tatePolarization_Qint (m : ℤ) : (tatePolarization m).Qint = LinearMap.mul ℤ ℤ :=
-  (rfl)
-
 /-- The Tate Hodge structure is polarizable. -/
 theorem isPolarizable_tate (m : ℤ) : IsPolarizable isBaseChange_tateLatticeMap (tate m) :=
   (tatePolarization m).isPolarizable
