@@ -34,19 +34,13 @@ does nothing once it has succeeded: on a perfect group with trivial centre — i
 nonabelian simple group — it returns the group itself, and by Grün's lemma its output is centreless
 as soon as `[G, G]` is perfect, so a second application changes nothing.
 
-Two ways of comparing the output with another group are supplied, because the recipe names a group
-without describing it. Transport says that isomorphic groups have isomorphic derived central
-quotients, so the output depends only on the isomorphism class of `G`. Recognition says that a
-surjection from `[G, G]` onto a centreless group with central kernel *is* the derived central
-quotient; that is the shape in which the output is identified with a group given by some other
-construction, and it needs no description of `Z([G, G])`.
+Transport says that isomorphic groups have isomorphic derived central quotients, so the output
+depends only on the isomorphism class of `G`.
 
 ## Main definitions
 
 * `TauCeti.DerivedCentralQuotient`: the group `[G, G] / Z([G, G])`.
 * `TauCeti.DerivedCentralQuotient.lift`: the factorisation of a surjection onto a centreless group.
-* `TauCeti.DerivedCentralQuotient.mulEquivOfKerLeCenter`: the recognition isomorphism attached to a
-  surjection with central kernel onto a centreless group.
 * `TauCeti.commutatorCongr` and `TauCeti.DerivedCentralQuotient.congr`: transport of the derived
   subgroup and of the derived central quotient along an isomorphism of groups.
 
@@ -188,42 +182,6 @@ theorem lift_surjective {K : Type*} [Group K] (f : ↥(commutator G) →* K)
     (hf : Function.Surjective f) (hK : center K = ⊥) : Function.Surjective (lift f hf hK) :=
   QuotientGroup.lift_surjective_of_surjective _ f hf
     (TauCeti.MonoidHom.center_le_ker f hf hK)
-
-/-- The kernel of a surjection from `[G, G]` onto a centreless group is exactly the centre as soon
-as it is central at all: the centre always lies in it, so the two hypotheses meet. -/
-theorem ker_eq_center {K : Type*} [Group K] (f : ↥(commutator G) →* K)
-    (hf : Function.Surjective f) (hK : center K = ⊥)
-    (hker : f.ker ≤ center ↥(commutator G)) : f.ker = center ↥(commutator G) :=
-  le_antisymm hker (TauCeti.MonoidHom.center_le_ker f hf hK)
-
-/-- **Recognition of the derived central quotient.** A surjection from `[G, G]` onto a centreless
-group with central kernel *is* the derived central quotient.
-
-This is the shape in which the output of the recipe is identified with a group produced by some
-other construction: exhibiting a surjection from `[H, H]` onto that group whose kernel is central
-suffices, and no description of `Z([H, H])` itself is needed. The centreless hypothesis on the
-target cannot be dropped, since the identity of `[G, G]` has trivial, hence central, kernel. -/
-noncomputable def mulEquivOfKerLeCenter {K : Type*} [Group K] (f : ↥(commutator G) →* K)
-    (hf : Function.Surjective f) (hK : center K = ⊥)
-    (hker : f.ker ≤ center ↥(commutator G)) : DerivedCentralQuotient G ≃* K :=
-  (QuotientGroup.quotientMulEquivOfEq (ker_eq_center f hf hK hker).symm).trans
-    (QuotientGroup.quotientKerEquivOfSurjective f hf)
-
-@[simp]
-theorem mulEquivOfKerLeCenter_mk {K : Type*} [Group K] (f : ↥(commutator G) →* K)
-    (hf : Function.Surjective f) (hK : center K = ⊥)
-    (hker : f.ker ≤ center ↥(commutator G)) (x : ↥(commutator G)) :
-    mulEquivOfKerLeCenter f hf hK hker (x : DerivedCentralQuotient G) = f x := by
-  simp only [mulEquivOfKerLeCenter, MulEquiv.trans_apply, QuotientGroup.quotientMulEquivOfEq_mk]
-  exact QuotientGroup.kerLift_mk ..
-
-/-- The recognition isomorphism is the factorisation of `f` through the quotient, so it is the
-unique homomorphism compatible with the quotient map. -/
-theorem toMonoidHom_mulEquivOfKerLeCenter {K : Type*} [Group K] (f : ↥(commutator G) →* K)
-    (hf : Function.Surjective f) (hK : center K = ⊥)
-    (hker : f.ker ≤ center ↥(commutator G)) :
-    (mulEquivOfKerLeCenter f hf hK hker : DerivedCentralQuotient G →* K) = lift f hf hK :=
-  lift_unique f hf hK _ fun x => mulEquivOfKerLeCenter_mk f hf hK hker x
 
 /-! ### The recipe on groups it has already succeeded on -/
 

@@ -27,10 +27,7 @@ Both steps of the recipe transport along an isomorphism, so the composite does t
 `TauCeti.FixedPointCandidate.congr` turns an isomorphism `ψ : G ≃* G'` intertwining `F` with an
 endomorphism `F'` of `G'` into an isomorphism of the two candidates. The candidate therefore
 depends only on the isomorphism class of the *pair* `(G, F)`, which is what lets a construction of
-`(G, F)` be replaced by another realization of it without changing the group named. Comparison with
-a group produced by an unrelated construction is instead
-`TauCeti.DerivedCentralQuotient.mulEquivOfKerLeCenter`, which applies to the candidate verbatim
-because `FixedPointCandidate` is a derived central quotient.
+`(G, F)` be replaced by another realization of it without changing the group named.
 
 ## Main definitions
 
