@@ -25,7 +25,8 @@ commutative value algebra, the subgroup cut out by a normal Hopf ideal is a norm
 the ambient group of points.
 
 Normal Hopf ideals are closed under arbitrary suprema. Every Hopf ideal has a normal core: the
-largest normal Hopf ideal below it.
+largest normal Hopf ideal below it. This normal-core API is the Hopf-ideal analogue of Mathlib's
+`Subgroup.normalCore`.
 
 ## Main declarations
 
