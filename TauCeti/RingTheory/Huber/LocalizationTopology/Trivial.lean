@@ -54,7 +54,7 @@ to be power-bounded and therefore does not change `P`.
   `A⟨T/1⟩` is the Hausdorff completion of `A`.
 * `TauCeti.Huber.PairOfDefinition.locTopology_denom_one_adjoin`: the same topology computation for
   an arbitrary finite family of power-bounded numerators, after enlarging the pair of definition.
-* `TauCeti.Huber.PairOfDefinition.bijective_toCompletionLoc_denom_one` and
+* `TauCeti.Huber.PairOfDefinition.toCompletionLoc_denom_one_bijective` and
   `TauCeti.Huber.PairOfDefinition.toCompletionLocEquivDenomOne`: **`𝒪_X(X) ≅ A`.** For `A`
   complete and Hausdorff the structure map `A → A⟨T/1⟩` is a ring isomorphism, and
   `TauCeti.Huber.PairOfDefinition.toCompletionLocHomeomorphDenomOne` upgrades it to a
@@ -88,7 +88,8 @@ and every localisation away from `1`. -/
 theorem hasDenominatorPower_denom_one (S : Type*) [CommRing S] [Algebra A S]
     [IsLocalization.Away (1 : A) S] : HasDenominatorPower P T 1 S := by
   refine (hasDenominatorPower_iff P T 1 S).mpr ⟨1, fun b _ ↦ ?_⟩
-  rw [divBy_one_right]
+  rw [show (divBy (b : A) 1 : S) = algebraMap A S b by
+    simpa using divBy_mul_cancel_left (A := A) (S := S) (b : A) 1]
   exact algebraMap_mem_locSubring P T 1 S b.2
 
 variable (hT : ∀ t ∈ T, t ∈ P.ringOfDefinition)
@@ -97,14 +98,18 @@ include hT
 
 /-- **The candidate ring of definition of the trivial presentation is `A₀`.** The adjoined
 fractions `t/1` are the numerators themselves, and those were assumed to lie in `A₀`. -/
+@[simp]
 theorem locSubring_denom_one : locSubring P T 1 A = P.ringOfDefinition := by
   refine le_antisymm ((locSubring_le_iff P T 1 A).mpr ⟨fun a ha ↦ ?_, fun t ht ↦ ?_⟩) fun a ha ↦ ?_
   · simpa using ha
-  · simpa using hT t ht
+  · rw [show (divBy t 1 : A) = t by
+      simpa using divBy_mul_cancel_left (A := A) (S := A) t 1]
+    exact hT t ht
   · simpa using algebraMap_mem_locSubring P T 1 A ha
 
 /-- **The basic neighbourhoods of the trivial presentation are those of `A`.** With `D = A₀` the
 ideal `J = I · D` is `I` itself, so the `n`-th neighbourhood of zero is the image of `Iⁿ`. -/
+@[simp]
 theorem locIdealImage_denom_one (n : ℕ) : locIdealImage P T 1 A n = P.idealImage n := by
   have hle : locSubring P T 1 A ≤ P.ringOfDefinition := (locSubring_denom_one P T hT).le
   refine le_antisymm (fun x hx ↦ ?_) fun x hx ↦ ?_
@@ -129,6 +134,7 @@ Both are ring topologies on `A` with the images of the powers of `I` as a neighb
 zero — for the left-hand side by `hasBasis_nhds_zero_locTopology` together with
 `locIdealImage_denom_one`, for the right-hand side by
 `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero` — so they are equal. -/
+@[simp]
 theorem locTopology_denom_one [IsTopologicalRing A] :
     locTopology P T 1 A (hasDenominatorPower_denom_one P T A) = ‹TopologicalSpace A› := by
   have hbasis : (@nhds A (locTopology P T 1 A (hasDenominatorPower_denom_one P T A)) 0).HasBasis
@@ -146,6 +152,7 @@ omit hT in
 power-bounded elements need not lie in `A₀`, but it lies in the ring of definition of the enlarged
 pair `P.adjoin T hT`, so `locTopology_denom_one` applies there. The conclusion does not mention the
 pair, so this is the statement in full generality. -/
+@[simp]
 theorem locTopology_denom_one_adjoin [IsTopologicalRing A] (hTpb : ∀ t ∈ T, IsPowerBounded t) :
     locTopology (P.adjoin T hTpb) T 1 A (hasDenominatorPower_denom_one (P.adjoin T hTpb) T A) =
       ‹TopologicalSpace A› :=
@@ -166,6 +173,7 @@ uniformity of one and the same topological group topology, by `locTopology_denom
 
 This is what makes `A⟨T/1⟩` *equal to*, and not merely isomorphic to, the Hausdorff completion
 `Â` of `A`: the completion is formed from the uniformity, and the two uniformities agree. -/
+@[simp]
 theorem locUniformSpace_denom_one :
     locUniformSpace P T 1 A (hasDenominatorPower_denom_one P T A) = ‹UniformSpace A› := by
   have hloc := @IsUniformAddGroup.rightUniformSpace_eq A
@@ -237,7 +245,7 @@ private theorem toCompletionLoc_retraction_denom_one
   exact congrArg (fun k ↦ k x) hid
 
 /-- **The structure map of the trivial presentation is bijective.** -/
-theorem bijective_toCompletionLoc_denom_one :
+theorem toCompletionLoc_denom_one_bijective :
     Function.Bijective (toCompletionLoc P T 1 A (hasDenominatorPower_denom_one P T A)) :=
   ⟨Function.LeftInverse.injective (retraction_toCompletionLoc_denom_one P T hTpb),
     fun x ↦ ⟨_, toCompletionLoc_retraction_denom_one P T hTpb x⟩⟩
