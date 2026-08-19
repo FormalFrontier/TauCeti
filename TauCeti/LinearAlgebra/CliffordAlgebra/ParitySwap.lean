@@ -141,6 +141,7 @@ theorem paritySwapEquiv_symm_apply (h : IsUnit (Q e - B e e)) (x : CliffordAlgeb
 /-- **The parity-swapping automorphism exchanges the two halves of the grading.** The inclusion
 `≤` is oddness; the reverse holds because the preimage of `y` is a scalar multiple of
 `changeFormAux Q B e y`, which lies in `evenOdd Q (i + 1 + 1) = evenOdd Q i`. -/
+@[simp]
 theorem map_evenOdd_paritySwapEquiv (h : IsUnit (Q e - B e e)) (i : ZMod 2) :
     (evenOdd Q i).map (paritySwapEquiv h).toLinearMap = evenOdd Q (i + 1) := by
   have hi : i + 1 + 1 = i := by revert i; decide
