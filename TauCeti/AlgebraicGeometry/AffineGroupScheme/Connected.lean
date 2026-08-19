@@ -13,8 +13,7 @@ public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 # Geometric connectedness of affine group schemes
 
 This file compares geometric connectedness of a commutative Hopf algebra with Mathlib's
-scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum, and transports the
-predicate across the finite-type Hopf-algebra/affine-group-scheme anti-equivalence.
+scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum.
 
 ## Main declarations
 
@@ -32,8 +31,7 @@ predicate across the finite-type Hopf-algebra/affine-group-scheme anti-equivalen
 * J. S. Milne, *Algebraic Groups* (2017), §2.a.
 
 This is the geometric-connectedness prerequisite for Layer 3, "Identity component and component
-group", and its transport supports the reductive scheme predicate in Layer 6 of the
-ReductiveGroups roadmap.
+group", of the ReductiveGroups roadmap.
 -/
 
 public section
