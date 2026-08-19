@@ -29,7 +29,9 @@ intermediate carrier is also proved to be a full `ℤ`-lattice in the common rat
 when `L` is nondegenerate. The correspondence and its membership, inverse, and order lemmas do not
 require nondegeneracy; only this fullness result does.
 
-Integrality and evenness of an intermediate carrier are deliberately not assumed here.
+Integrality and evenness of an intermediate carrier are deliberately not assumed here; the
+restrictions of the correspondence they cut out live in
+`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic`.
 
 ## Main declarations
 
@@ -40,12 +42,6 @@ Integrality and evenness of an intermediate carrier are deliberately not assumed
   intermediate carrier in `A_L`.
 * `TauCeti.IntegralLattice.intermediateCarrierOfDiscriminantSubgroup`: the inverse-image carrier
   `L_H` attached to a subgroup `H` of `A_L`.
-
-## TODO
-
-Restrict this correspondence to the bilinear-isotropic subgroups of `A_L`, which cut out the
-integral intermediate carriers, and to the quadratic-isotropic subgroups, which cut out the even
-ones. Neither refinement is formalized yet.
 
 ## References
 

@@ -69,7 +69,8 @@ private theorem dualCarrierFormModOne_apply (L : IntegralLattice V) (x y : L.dua
     L.dualCarrierFormModOne x y = (L.form x y : AddCircle (1 : ℚ)) :=
   (rfl)
 
-private theorem coe_eq_zero_iff_mem_one (q : ℚ) :
+/-- A rational number reduces to zero in `ℚ/ℤ` exactly when it is an integer. -/
+theorem coe_eq_zero_iff_mem_one (q : ℚ) :
     (q : AddCircle (1 : ℚ)) = 0 ↔ q ∈ (1 : Submodule ℤ ℚ) := by
   constructor
   · intro h
