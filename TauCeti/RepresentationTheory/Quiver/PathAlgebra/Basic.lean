@@ -39,7 +39,7 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 * `TauCeti.pathAlgebraBasis`: the paths of `Q` as a `k`-basis of `kQ`.
 * `TauCeti.PathAlgebra.liftAlgHom`: **the universal property of the path algebra**, extending an
   assignment of elements of a `k`-algebra to the basis paths to an algebra homomorphism out of
-  `kQ`.
+  `kQ`, the only one doing so by `TauCeti.PathAlgebra.liftAlgHom_unique`.
 
 ## Main results
 
@@ -763,9 +763,17 @@ theorem liftAlgHom_ofPath (x : Quiver.TotalPath Q) :
   liftLinear_ofPath k F x
 
 /-- The lift is `k`-linear, so a scaled basis path scales the element it was assigned. -/
+@[simp]
 theorem liftAlgHom_single (x : Quiver.TotalPath Q) (c : k) :
     liftAlgHom k F hcomp hzero hone (single x c) = c • F x :=
   liftLinear_single k F x c
+
+/-- **The lift is the only one**: an algebra homomorphism out of `kQ` taking the value `F x` on
+each basis path is `TauCeti.PathAlgebra.liftAlgHom`, since the basis paths span. -/
+theorem liftAlgHom_unique (G : pathAlgebra k Q →ₐ[k] B) (hG : ∀ x, G (ofPath x) = F x) :
+    G = liftAlgHom k F hcomp hzero hone :=
+  AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
+    simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, hG, liftAlgHom_ofPath]
 
 end Lift
 
