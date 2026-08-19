@@ -160,10 +160,7 @@ theorem IsUnipotentPoint.mul_of_commute {g h : WithConv (H →ₐ[k] K)}
   intro M
   rw [map_mul, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul]
   apply (hg M).mul_of_commute (hh M)
-  have hactionComm := hcomm.map (Comodule.pointsAction M)
-  rw [commute_iff_eq] at hactionComm ⊢
-  rw [← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
-    ← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul, hactionComm]
+  exact Comodule.commute_ofLinearEquiv_pointsAction g h hcomm
 
 /-- Every natural power of a unipotent point is unipotent. -/
 theorem IsUnipotentPoint.pow {g : WithConv (H →ₐ[k] K)}

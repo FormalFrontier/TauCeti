@@ -21,8 +21,14 @@ of the pointwise Jordan decomposition constructed in Layer 4 of the ReductiveGro
 
 ## Main declarations
 
+* `TauCeti.HopfAlgebra.Point.commute_semisimplePart_right_of_commute` and
+  `TauCeti.HopfAlgebra.Point.commute_unipotentPart_right_of_commute`: each Jordan factor commutes
+  with every point commuting with the original point.
 * `TauCeti.HopfAlgebra.Point.commute_semisimplePart_semisimplePart_of_commute`: semisimple parts
   of commuting points commute.
+* `TauCeti.HopfAlgebra.Point.commute_semisimplePart_unipotentPart_of_commute` and
+  `TauCeti.HopfAlgebra.Point.commute_unipotentPart_semisimplePart_of_commute`: the two
+  cross-commutation statements.
 * `TauCeti.HopfAlgebra.Point.commute_unipotentPart_unipotentPart_of_commute`: unipotent parts of
   commuting points commute.
 * `TauCeti.HopfAlgebra.Point.jordanDecomposition_mul_of_commute`: the ordered decomposition of a
@@ -49,75 +55,57 @@ universe u
 variable (k H K : Type u) [Field k] [CommRing H] [_root_.HopfAlgebra k H]
   [Field K] [Algebra k K] [PerfectField K]
 
-omit [PerfectField K] in
-private theorem commute_of_pointsAction (g h : WithConv (H →ₐ[k] K))
-    (hc : ∀ M : FGComoduleCat.{u, u, u} k H,
-      Commute
-        (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
-        (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h))) :
-    Commute g h := by
-  rw [commute_iff_eq]
-  apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-  rw [map_mul, map_mul]
-  apply Tannaka.scalarExtensionComponent_ext
+/-- The semisimple factor of a point commutes with every point that commutes with the original
+point. -/
+theorem commute_semisimplePart_right_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    Commute (semisimplePart k H K g) h := by
+  apply (Tannaka.commute_iff_forall_ofLinearEquiv_pointsAction k H K).2
   intro M
-  rw [Tannaka.scalarExtensionComponent_mul,
-    Tannaka.scalarExtensionComponent_mul]
-  simp only [Tannaka.fgPointTensorIsoEquiv_apply,
-    Tannaka.scalarExtensionComponent_fgPointTensorIso]
-  exact congrArg Units.val (hc M).eq
+  rw [ofLinearEquiv_pointsAction_semisimplePart]
+  exact GeneralLinearGroup.commute_semisimplePart_right_of_commute
+    (Comodule.commute_ofLinearEquiv_pointsAction g h hgh)
 
-omit [PerfectField K] in
-private theorem pointsAction_commute {g h : WithConv (H →ₐ[k] K)}
-    (M : FGComoduleCat.{u, u, u} k H) (hgh : Commute g h) :
-    Commute
-      (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
-      (GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h)) := by
-  have hc := hgh.map (Comodule.pointsAction M)
-  rw [commute_iff_eq] at hc ⊢
-  rw [← GeneralLinearGroup.ofLinearEquiv_mul,
-    ← GeneralLinearGroup.ofLinearEquiv_mul, hc]
+/-- The unipotent factor of a point commutes with every point that commutes with the original
+point. -/
+theorem commute_unipotentPart_right_of_commute
+    {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
+    Commute (unipotentPart k H K g) h := by
+  apply (Tannaka.commute_iff_forall_ofLinearEquiv_pointsAction k H K).2
+  intro M
+  rw [ofLinearEquiv_pointsAction_unipotentPart]
+  exact GeneralLinearGroup.commute_unipotentPart_right_of_commute
+    (Comodule.commute_ofLinearEquiv_pointsAction g h hgh)
 
 /-- The semisimple parts of two commuting algebraic-group points commute. -/
 theorem commute_semisimplePart_semisimplePart_of_commute
     {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
-    Commute (semisimplePart k H K g) (semisimplePart k H K h) := by
-  apply commute_of_pointsAction k H K
-  intro M
-  rw [ofLinearEquiv_pointsAction_semisimplePart,
-    ofLinearEquiv_pointsAction_semisimplePart]
-  exact GeneralLinearGroup.commute_semisimplePart_semisimplePart_of_commute
-    (pointsAction_commute k H K M hgh)
+    Commute (semisimplePart k H K g) (semisimplePart k H K h) :=
+  commute_semisimplePart_right_of_commute k H K
+    (commute_semisimplePart_right_of_commute k H K hgh.symm).symm
 
 /-- The semisimple part of the first of two commuting points commutes with the unipotent part of
 the second. -/
 theorem commute_semisimplePart_unipotentPart_of_commute
     {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
-    Commute (semisimplePart k H K g) (unipotentPart k H K h) := by
-  apply commute_of_pointsAction k H K
-  intro M
-  rw [ofLinearEquiv_pointsAction_semisimplePart,
-    ofLinearEquiv_pointsAction_unipotentPart]
-  exact GeneralLinearGroup.commute_semisimplePart_unipotentPart_of_commute
-    (pointsAction_commute k H K M hgh)
+    Commute (semisimplePart k H K g) (unipotentPart k H K h) :=
+  commute_semisimplePart_right_of_commute k H K
+    (commute_unipotentPart_right_of_commute k H K hgh.symm).symm
 
 /-- The unipotent part of the first of two commuting points commutes with the semisimple part of
 the second. -/
 theorem commute_unipotentPart_semisimplePart_of_commute
     {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
     Commute (unipotentPart k H K g) (semisimplePart k H K h) :=
-  (commute_semisimplePart_unipotentPart_of_commute k H K hgh.symm).symm
+  commute_unipotentPart_right_of_commute k H K
+    (commute_semisimplePart_right_of_commute k H K hgh.symm).symm
 
 /-- The unipotent parts of two commuting algebraic-group points commute. -/
 theorem commute_unipotentPart_unipotentPart_of_commute
     {g h : WithConv (H →ₐ[k] K)} (hgh : Commute g h) :
-    Commute (unipotentPart k H K g) (unipotentPart k H K h) := by
-  apply commute_of_pointsAction k H K
-  intro M
-  rw [ofLinearEquiv_pointsAction_unipotentPart,
-    ofLinearEquiv_pointsAction_unipotentPart]
-  exact GeneralLinearGroup.commute_unipotentPart_unipotentPart_of_commute
-    (pointsAction_commute k H K M hgh)
+    Commute (unipotentPart k H K g) (unipotentPart k H K h) :=
+  commute_unipotentPart_right_of_commute k H K
+    (commute_unipotentPart_right_of_commute k H K hgh.symm).symm
 
 /-- The Jordan decomposition of a product of commuting algebraic-group points is the
 componentwise product of their Jordan decompositions. -/
@@ -133,7 +121,7 @@ theorem jordanDecomposition_mul_of_commute
     rw [map_mul, GeneralLinearGroup.ofLinearEquiv_mul]
     exact (isSemisimple_pointsAction_semisimplePart k H K g M).mul_of_commute
       (isSemisimple_pointsAction_semisimplePart k H K h M)
-      (pointsAction_commute k H K M
+      (Comodule.commute_ofLinearEquiv_pointsAction _ _
         (commute_semisimplePart_semisimplePart_of_commute k H K hgh))
   · apply IsUnipotentPoint.mul_of_commute
     · rw [isUnipotentPoint_def]
@@ -141,19 +129,18 @@ theorem jordanDecomposition_mul_of_commute
     · rw [isUnipotentPoint_def]
       exact isUnipotent_pointsAction_unipotentPart k H K h
     · exact commute_unipotentPart_unipotentPart_of_commute k H K hgh
-  · exact ((commute_semisimplePart_unipotentPart k H K g).mul_left
-      (commute_unipotentPart_semisimplePart_of_commute k H K hgh).symm).mul_right
-      ((commute_semisimplePart_unipotentPart_of_commute k H K hgh).mul_left
-        (commute_semisimplePart_unipotentPart k H K h))
+  · exact TauCeti.commute_mul_mul_of_cross_commute
+      (commute_semisimplePart_unipotentPart k H K g)
+      (commute_semisimplePart_unipotentPart_of_commute k H K hgh)
+      (commute_unipotentPart_semisimplePart_of_commute k H K hgh).symm
+      (commute_semisimplePart_unipotentPart k H K h)
   · calc
       g * h = (semisimplePart k H K g * unipotentPart k H K g) *
           (semisimplePart k H K h * unipotentPart k H K h) := by
             rw [semisimplePart_mul_unipotentPart, semisimplePart_mul_unipotentPart]
       _ = (semisimplePart k H K g * semisimplePart k H K h) *
-          (unipotentPart k H K g * unipotentPart k H K h) := by
-            rw [mul_assoc, ← mul_assoc (unipotentPart k H K g)]
-            rw [(commute_unipotentPart_semisimplePart_of_commute k H K hgh).eq]
-            simp only [mul_assoc]
+          (unipotentPart k H K g * unipotentPart k H K h) :=
+        (commute_unipotentPart_semisimplePart_of_commute k H K hgh).mul_mul_mul_comm _ _
 
 /-- The semisimple part of a product of commuting algebraic-group points is the product of their
 semisimple parts. -/

@@ -238,37 +238,24 @@ theorem isSemisimple_isUnipotent_unique (g s u : WithConv (H →ₐ[k] K))
         LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M u) =
           LinearMap.GeneralLinearGroup.ofLinearEquiv
             (Comodule.pointsAction M (unipotentPart k H K g)) := by
-    let rho : WithConv (H →ₐ[k] K) →*
-        LinearMap.GeneralLinearGroup K (K ⊗[k] M) :=
-      (LinearMap.GeneralLinearGroup.generalLinearEquiv K (K ⊗[k] M)).symm.toMonoidHom.comp
-        (Comodule.pointsAction M)
     apply GeneralLinearGroup.isSemisimple_isUnipotent_unique
     · exact hs M
     · exact (isUnipotentPoint_def u).mp hu M
-    · exact hc.map rho
+    · exact Comodule.commute_ofLinearEquiv_pointsAction s u hc
     · exact isSemisimple_pointsAction_semisimplePart k H K g M
     · exact isUnipotent_pointsAction_unipotentPart k H K g M
-    · exact (commute_semisimplePart_unipotentPart k H K g).map rho
+    · exact Comodule.commute_ofLinearEquiv_pointsAction _ _
+        (commute_semisimplePart_unipotentPart k H K g)
     · rw [← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
         ← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul, ← map_mul, ← map_mul, hmul,
         semisimplePart_mul_unipotentPart]
   constructor
-  · apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-    apply Tannaka.scalarExtensionComponent_ext
+  · apply Tannaka.fgPoint_ext_of_forall_ofLinearEquiv_pointsAction k H K
     intro M
-    simp only [Tannaka.fgPointTensorIsoEquiv_apply,
-      Tannaka.scalarExtensionComponent_fgPointTensorIso]
-    apply LinearMap.ext
-    intro x
-    exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).1
-  · apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-    apply Tannaka.scalarExtensionComponent_ext
+    exact (h_unique M).1
+  · apply Tannaka.fgPoint_ext_of_forall_ofLinearEquiv_pointsAction k H K
     intro M
-    simp only [Tannaka.fgPointTensorIsoEquiv_apply,
-      Tannaka.scalarExtensionComponent_fgPointTensorIso]
-    apply LinearMap.ext
-    intro x
-    exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).2
+    exact (h_unique M).2
 
 /-- The canonical point-level Jordan decomposition has the defining semisimple, unipotent,
 commutation, and product properties. -/

@@ -24,8 +24,17 @@ ReductiveGroups roadmap.
 
 ## Main declarations
 
+* `LinearMap.GeneralLinearGroup.commute_coe_semisimplePart_right_of_commute` and
+  `LinearMap.GeneralLinearGroup.commute_coe_unipotentPart_right_of_commute`: each Jordan factor
+  commutes with every endomorphism commuting with the original automorphism.
+* `LinearMap.GeneralLinearGroup.commute_semisimplePart_right_of_commute` and
+  `LinearMap.GeneralLinearGroup.commute_unipotentPart_right_of_commute`: the automorphism-level
+  centralizer statements.
 * `LinearMap.GeneralLinearGroup.commute_semisimplePart_semisimplePart_of_commute`: semisimple
   parts of commuting automorphisms commute.
+* `LinearMap.GeneralLinearGroup.commute_semisimplePart_unipotentPart_of_commute` and
+  `LinearMap.GeneralLinearGroup.commute_unipotentPart_semisimplePart_of_commute`: the two
+  cross-commutation statements.
 * `LinearMap.GeneralLinearGroup.commute_unipotentPart_unipotentPart_of_commute`: unipotent parts
   of commuting automorphisms commute.
 * `LinearMap.GeneralLinearGroup.jordanDecomposition_mul_of_commute`: the ordered decomposition
@@ -40,6 +49,17 @@ ReductiveGroups roadmap.
 
 public section
 
+namespace TauCeti
+
+/-- Products commute when every factor of the first product commutes with every factor of the
+second product. -/
+theorem commute_mul_mul_of_cross_commute {M : Type*} [Semigroup M] {a b c d : M}
+    (hac : Commute a c) (had : Commute a d) (hbc : Commute b c) (hbd : Commute b d) :
+    Commute (a * b) (c * d) :=
+  (hac.mul_left hbc).mul_right (had.mul_left hbd)
+
+end TauCeti
+
 namespace LinearMap.GeneralLinearGroup
 
 open Module
@@ -49,53 +69,67 @@ universe u v
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
   [PerfectField K] [FiniteDimensional K V]
 
-private theorem commute_semisimplePart_right_of_commute
+/-- The semisimple factor of an automorphism commutes with every endomorphism that commutes with
+the original automorphism. -/
+theorem commute_coe_semisimplePart_right_of_commute
+    {g : GeneralLinearGroup K V} {x : Module.End K V}
+    (hgx : Commute (g : Module.End K V) x) :
+    Commute (semisimplePart g : Module.End K V) x :=
+  (Algebra.commute_of_mem_adjoin_singleton_of_commute
+    (coe_semisimplePart_mem_adjoin g) hgx.symm).symm
+
+/-- The unipotent factor of an automorphism commutes with every endomorphism that commutes with
+the original automorphism. -/
+theorem commute_coe_unipotentPart_right_of_commute
+    {g : GeneralLinearGroup K V} {x : Module.End K V}
+    (hgx : Commute (g : Module.End K V) x) :
+    Commute (unipotentPart g : Module.End K V) x :=
+  (Algebra.commute_of_mem_adjoin_singleton_of_commute
+    (coe_unipotentPart_mem_adjoin g) hgx.symm).symm
+
+/-- The semisimple factor of an automorphism commutes with every automorphism that commutes with
+the original automorphism. -/
+theorem commute_semisimplePart_right_of_commute
     {g h : GeneralLinearGroup K V} (hgh : Commute g h) :
-    Commute (semisimplePart g) h := by
-  apply Commute.units_of_val
-  exact (Algebra.commute_of_mem_adjoin_singleton_of_commute
-    (coe_semisimplePart_mem_adjoin g) hgh.units_val.symm).symm
+    Commute (semisimplePart g) h :=
+  Commute.units_of_val (commute_coe_semisimplePart_right_of_commute hgh.units_val)
+
+/-- The unipotent factor of an automorphism commutes with every automorphism that commutes with
+the original automorphism. -/
+theorem commute_unipotentPart_right_of_commute
+    {g h : GeneralLinearGroup K V} (hgh : Commute g h) :
+    Commute (unipotentPart g) h :=
+  Commute.units_of_val (commute_coe_unipotentPart_right_of_commute hgh.units_val)
 
 /-- The semisimple parts of two commuting linear automorphisms commute. -/
 theorem commute_semisimplePart_semisimplePart_of_commute
     {g h : GeneralLinearGroup K V} (hgh : Commute g h) :
-    Commute (semisimplePart g) (semisimplePart h) := by
-  apply Commute.units_of_val
-  exact Algebra.commute_of_mem_adjoin_singleton_of_commute
-    (coe_semisimplePart_mem_adjoin h)
-    ((Algebra.commute_of_mem_adjoin_singleton_of_commute
-      (coe_semisimplePart_mem_adjoin g) hgh.units_val.symm).symm)
-
-private theorem unipotentPart_eq_inv_mul (g : GeneralLinearGroup K V) :
-    unipotentPart g = (semisimplePart g)⁻¹ * g := by
-  apply mul_left_cancel (a := semisimplePart g)
-  rw [semisimplePart_mul_unipotentPart]
-  simp
+    Commute (semisimplePart g) (semisimplePart h) :=
+  commute_semisimplePart_right_of_commute
+    (commute_semisimplePart_right_of_commute hgh.symm).symm
 
 /-- The semisimple part of the first of two commuting automorphisms commutes with the unipotent
 part of the second. -/
 theorem commute_semisimplePart_unipotentPart_of_commute
     {g h : GeneralLinearGroup K V} (hgh : Commute g h) :
-    Commute (semisimplePart g) (unipotentPart h) := by
-  rw [unipotentPart_eq_inv_mul]
-  exact (commute_semisimplePart_semisimplePart_of_commute hgh).inv_right.mul_right
-    (commute_semisimplePart_right_of_commute hgh)
+    Commute (semisimplePart g) (unipotentPart h) :=
+  commute_semisimplePart_right_of_commute
+    (commute_unipotentPart_right_of_commute hgh.symm).symm
 
 /-- The unipotent part of the first of two commuting automorphisms commutes with the semisimple
 part of the second. -/
 theorem commute_unipotentPart_semisimplePart_of_commute
     {g h : GeneralLinearGroup K V} (hgh : Commute g h) :
     Commute (unipotentPart g) (semisimplePart h) :=
-  (commute_semisimplePart_unipotentPart_of_commute hgh.symm).symm
+  commute_unipotentPart_right_of_commute
+    (commute_semisimplePart_right_of_commute hgh.symm).symm
 
 /-- The unipotent parts of two commuting linear automorphisms commute. -/
 theorem commute_unipotentPart_unipotentPart_of_commute
     {g h : GeneralLinearGroup K V} (hgh : Commute g h) :
-    Commute (unipotentPart g) (unipotentPart h) := by
-  rw [unipotentPart_eq_inv_mul, unipotentPart_eq_inv_mul]
-  exact ((commute_semisimplePart_semisimplePart_of_commute hgh).inv_left.inv_right.mul_left
-      ((commute_semisimplePart_right_of_commute hgh.symm).symm.inv_right)).mul_right
-    ((commute_semisimplePart_right_of_commute hgh).inv_left.mul_left hgh)
+    Commute (unipotentPart g) (unipotentPart h) :=
+  commute_unipotentPart_right_of_commute
+    (commute_unipotentPart_right_of_commute hgh.symm).symm
 
 /-- The Jordan decomposition of a product of commuting linear automorphisms is the
 componentwise product of their Jordan decompositions. -/
@@ -112,19 +146,18 @@ theorem jordanDecomposition_mul_of_commute
     (isUnipotent_unipotentPart g).mul_of_commute
       (isUnipotent_unipotentPart h)
       (commute_unipotentPart_unipotentPart_of_commute hgh), ?_, ?_⟩
-  · exact ((commute_semisimplePart_unipotentPart g).mul_left
-      (commute_unipotentPart_semisimplePart_of_commute hgh).symm).mul_right
-      ((commute_semisimplePart_unipotentPart_of_commute hgh).mul_left
-        (commute_semisimplePart_unipotentPart h))
+  · exact TauCeti.commute_mul_mul_of_cross_commute
+      (commute_semisimplePart_unipotentPart g)
+      (commute_semisimplePart_unipotentPart_of_commute hgh)
+      (commute_unipotentPart_semisimplePart_of_commute hgh).symm
+      (commute_semisimplePart_unipotentPart h)
   · calc
       g * h = (semisimplePart g * unipotentPart g) *
           (semisimplePart h * unipotentPart h) := by
             rw [semisimplePart_mul_unipotentPart, semisimplePart_mul_unipotentPart]
       _ = (semisimplePart g * semisimplePart h) *
-          (unipotentPart g * unipotentPart h) := by
-            rw [mul_assoc, ← mul_assoc (unipotentPart g)]
-            rw [(commute_unipotentPart_semisimplePart_of_commute hgh).eq]
-            simp only [mul_assoc]
+          (unipotentPart g * unipotentPart h) :=
+        (commute_unipotentPart_semisimplePart_of_commute hgh).mul_mul_mul_comm _ _
 
 /-- The semisimple part of a product of commuting automorphisms is the product of their
 semisimple parts. -/

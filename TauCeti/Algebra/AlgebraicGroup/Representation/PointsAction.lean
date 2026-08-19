@@ -26,6 +26,8 @@ than by an antipode computation.
 
 * `TauCeti.Comodule.pointsAction`: the action of the group of points by linear
   automorphisms of `A ⊗[R] V`.
+* `TauCeti.Comodule.commute_ofLinearEquiv_pointsAction`: commuting points act by commuting
+  elements of the general linear group.
 * `TauCeti.Comodule.pointsAction_corestrict`: compatibility of point actions with
   corestriction and precomposition, also provided for bundled finite comodules by
   `TauCeti.Comodule.pointsAction_corestrict_obj`.
@@ -62,6 +64,18 @@ lemma pointsAction_toLinearMap (g : WithConv (H →ₐ[R] A)) :
     ((pointsRepresentation V).asGroupHom g) : A ⊗[R] V →ₗ[A] A ⊗[R] V) = _
   rw [LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap,
     Representation.asGroupHom_apply, pointsRepresentation_apply]
+
+/-- Commuting points act by commuting elements of the general linear group on every
+comodule. -/
+theorem commute_ofLinearEquiv_pointsAction
+    (g h : WithConv (H →ₐ[R] A)) (hgh : Commute g h) :
+    Commute
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv (pointsAction V g))
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv (pointsAction V h)) := by
+  have hc := hgh.map (pointsAction V)
+  rw [commute_iff_eq] at hc ⊢
+  rw [← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    ← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul, hc]
 
 universe u v w x y
 
