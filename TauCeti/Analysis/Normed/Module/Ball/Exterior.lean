@@ -14,10 +14,8 @@ public import TauCeti.Topology.FilledHull
 In a real normed space of dimension at least two the complement of a closed ball is preconnected:
 it is the union, over the radii `M` exceeding the ball's, of the spheres of radius `M`, strung
 together along a single ray from the centre. Consequently the complement of a *bounded* set has at
-most one unbounded connected component — any two unbounded components reach the exterior of a ball
-containing the set, and that exterior lies in a single component — so two points of the complement
-that lie in different components cannot both be outside the filled hull
-`TauCeti.filledHull K` (`TauCeti/Topology/FilledHull.lean`).
+most one unbounded connected component, and two points of the complement that lie in different
+components cannot both be outside `TauCeti.filledHull K`.
 
 ## Main results
 
@@ -25,15 +23,15 @@ that lie in different components cannot both be outside the filled hull
   real normed space of dimension at least two.
 * `TauCeti.connectedComponentIn_compl_eq_of_not_isBounded` — the unbounded connected component of
   the complement of a bounded set is unique.
+* `TauCeti.isClosed_filledHull` — the filled hull of a closed set is closed.
 * `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn` — of two points of the
   complement of a bounded set in different components, at least one lies in the filled hull.
 
-## Roadmap role
+This is a prerequisite of the planar-separation step of the `ConformalMapping` roadmap (L5).
 
-This is a prerequisite of the planar-separation step of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`: once the two sides of an image crosscut are known to
-lie in different components of the complement of the small Jordan curve through the crosscut, this
-file says one of them is inside that curve, in the vocabulary of `TauCeti.filledHull`.
+## References
+
+* Ch. Pommerenke, *Boundary Behaviour of Conformal Maps*, Springer, 1992.
 -/
 
 public section
@@ -45,9 +43,7 @@ open Bornology Metric Set
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {K : Set E} {x y : E}
 
 /-- **The exterior of a closed ball is preconnected** in a real normed space of dimension at least
-two. The exterior is the union of the spheres of larger radius, each of which meets the ray
-`t ↦ x + t • u` (`‖u‖ = 1`) issuing from the centre, so all of them are strung together along that
-ray. -/
+two. -/
 theorem isPreconnected_compl_closedBall (h : 1 < Module.rank ℝ E) (x : E) (r : ℝ) :
     IsPreconnected (closedBall x r)ᶜ := by
   rcases lt_or_ge r 0 with hr | hr
@@ -89,9 +85,7 @@ theorem isPreconnected_compl_closedBall (h : 1 < Module.rank ℝ E) (x : E) (r :
   · refine IsPreconnected.union (x + M • u) ?_ (hLmem M hM) (isPreconnected_sphere h x M) hLc
     rw [mem_sphere, dist_eq_norm, hnorm M (hr.trans hM.le)]
 
-/-- **The unbounded component of the complement of a bounded set is unique.** Two unbounded
-components both reach outside a closed ball containing the set, and the exterior of that ball is
-preconnected and disjoint from the set, so it lies in a single component. -/
+/-- **The unbounded component of the complement of a bounded set is unique.** -/
 theorem connectedComponentIn_compl_eq_of_not_isBounded (h : 1 < Module.rank ℝ E)
     (hK : IsBounded K) (hx : ¬ IsBounded (connectedComponentIn Kᶜ x))
     (hy : ¬ IsBounded (connectedComponentIn Kᶜ y)) :
@@ -112,9 +106,23 @@ theorem connectedComponentIn_compl_eq_of_not_isBounded (h : 1 < Module.rank ℝ 
     (isPreconnected_compl_closedBall h 0 R).subset_connectedComponentIn hx'R hext hy'R
   rw [connectedComponentIn_eq hx'c, connectedComponentIn_eq h1, ← connectedComponentIn_eq hy'c]
 
+omit [NormedSpace ℝ E] in
+/-- **The filled hull of a closed set is closed.** Its complement is the union of the unbounded
+connected components of `Kᶜ`, each of which is open. -/
+theorem isClosed_filledHull [LocallyConnectedSpace E] (hK : IsClosed K) :
+    IsClosed (filledHull K) := by
+  rw [← isOpen_compl_iff, isOpen_iff_forall_mem_open]
+  intro x hx
+  rw [mem_compl_iff, mem_filledHull_iff] at hx
+  refine ⟨connectedComponentIn Kᶜ x, fun y hy => ?_, hK.isOpen_compl.connectedComponentIn, ?_⟩
+  · rw [mem_compl_iff, mem_filledHull_iff, ← connectedComponentIn_eq hy]
+    exact hx
+  · refine mem_connectedComponentIn fun hxK => hx ?_
+    rw [connectedComponentIn_eq_empty (notMem_compl_iff.mpr hxK)]
+    exact isBounded_empty
+
 /-- **Two points of the complement of a bounded set in different components are not both outside
-the filled hull.** If neither lay in `TauCeti.filledHull K`, both components would be unbounded,
-hence equal by `TauCeti.connectedComponentIn_compl_eq_of_not_isBounded`. -/
+the filled hull.** -/
 theorem mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn (h : 1 < Module.rank ℝ E)
     (hK : IsBounded K) (hy : y ∉ K) (hxy : y ∉ connectedComponentIn Kᶜ x) :
     x ∈ filledHull K ∨ y ∈ filledHull K := by
