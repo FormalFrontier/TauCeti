@@ -130,15 +130,15 @@ theorem smoothAffineGroupSchemeProperty_inverseImage
 /-- A finite-type affine group scheme has smooth structural morphism exactly when its coordinate
 algebra supplied by the affine anti-equivalence is smooth. -/
 theorem smooth_iff_algebraSmooth_coordinate
-    (k : Type u) [Field k]
-    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k)) :
+    (R : Type u) [CommRing R]
+    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)) :
     Smooth G.obj.obj.X.hom ↔
-      Algebra.Smooth k
-        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop := by
+      Algebra.Smooth R
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).inverse.obj G).unop := by
   rw [← smoothCommHopfAlgProperty_iff]
-  exact finiteType_objectProperty_iff_coordinate k
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k))
-    (smoothCommHopfAlgProperty k)
-    (smoothAffineGroupSchemeProperty_inverseImage k) G
+  exact finiteType_objectProperty_iff_coordinate R
+    (smoothAffineGroupSchemeProperty (CommRingCat.of R))
+    (smoothCommHopfAlgProperty R)
+    (smoothAffineGroupSchemeProperty_inverseImage R) G
 
 end TauCeti
