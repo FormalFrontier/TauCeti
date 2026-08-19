@@ -76,6 +76,8 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
+/-- `2` is invertible in a field of characteristic zero: the Casimir computation halves the
+coefficient of the Cartan generator coming from each `sl₂`-triple. -/
 local instance invertibleTwo : Invertible (2 : K) := invertibleOfNonzero two_ne_zero
 
 /-! ### The two blocks of the sum -/
