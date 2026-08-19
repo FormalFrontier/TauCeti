@@ -22,11 +22,12 @@ separately elsewhere in the library.
 (`TauCeti.isIrreducible_spechtModule`), transported into the categorical language by
 `FDRep.simple_iff_isIrreducible`.
 
-*Absolute irreducibility* is `TauCeti.spechtModuleIntertwiningEndAlgEquiv`, the statement that the
-endomorphism algebra of `S^μ` is `ℚ` and not some larger division ring; the dimension form used here
-reads it off through `FDRep.finrank_hom_eq_finrank_intertwiningMap`.  Over a field that is not
-algebraically closed this does not follow from irreducibility, and it is what makes the character of
-`S^μ` have self-pairing exactly `1`.
+*Absolute irreducibility* is `TauCeti.spechtModuleIntertwiningEndAlgEquiv`, proved in
+`TauCeti/RepresentationTheory/Symmetric/Specht/AbsoluteIrreducibility.lean`: the endomorphism
+algebra of `S^μ` is `ℚ` and not some larger division ring.  It is used below through
+`FDRep.finrank_hom_eq_finrank_intertwiningMap`, which reads it off as a dimension.  Over a field
+that is not algebraically closed this does not follow from irreducibility, and it is what makes
+the character of `S^μ` have self-pairing exactly `1`.
 
 *Distinctness* is `TauCeti.spechtModule_iso_iff`, proved by the dominance-order comparison.
 
@@ -41,8 +42,6 @@ hypothesis is replaced by the absolute irreducibility of the Specht modules.
 ## Main results
 
 * `TauCeti.spechtModule_simple`: **irreducibility**, `S^μ` is a simple object of `FDRep ℚ Sₙ`.
-* `TauCeti.spechtModule_absolutelyIrreducible`: **absolute irreducibility**, the endomorphism space
-  of `S^μ` is one-dimensional over `ℚ`.
 * `TauCeti.spechtModule_iso_iff`: **distinctness** (proved in
   `TauCeti/RepresentationTheory/Symmetric/Specht/Distinctness.lean`).
 * `TauCeti.exists_spechtModule_iso`: **completeness**, every simple object of `FDRep ℚ Sₙ` is
@@ -75,15 +74,6 @@ submodule theorem. -/
 instance spechtModule_simple (μ : n.Partition) : Simple (spechtModule μ) :=
   (FDRep.simple_iff_isIrreducible _).mpr (isIrreducible_spechtModule μ)
 
-/-- **The Specht modules are absolutely irreducible over `ℚ`**: the endomorphism space of `S^μ` in
-`FDRep ℚ Sₙ` is one-dimensional, i.e. every endomorphism is a scalar and the Schur index is `1`.
-Irreducibility over a field that is not algebraically closed leaves room for a larger division ring
-of endomorphisms; here there is none, which is exactly what keeps `ℂ ⊗_ℚ S^μ` irreducible. -/
-theorem spechtModule_absolutelyIrreducible (μ : n.Partition) :
-    Module.finrank ℚ (spechtModule μ ⟶ spechtModule μ) = 1 := by
-  rw [FDRep.finrank_hom_eq_finrank_intertwiningMap]
-  simpa using (spechtModuleIntertwiningEndAlgEquiv μ).toLinearEquiv.finrank_eq
-
 /-- The character of the Specht module `S^μ`, as a class function on `Sₙ`. -/
 noncomputable def spechtCharacter (μ : n.Partition) : ClassFunction ℚ (Equiv.Perm (Fin n)) :=
   ofFDRep (spechtModule μ)
@@ -93,8 +83,11 @@ values are `1` by absolute irreducibility, and the off-diagonal ones vanish by d
 theorem characterPairing_spechtCharacter (μ ν : n.Partition) :
     characterPairing (spechtCharacter μ) (spechtCharacter ν) = if μ = ν then 1 else 0 := by
   rcases eq_or_ne μ ν with rfl | hne
-  · rw [ite_eq_left rfl, spechtCharacter, characterPairing_ofFDRep_eq_finrank,
-      spechtModule_absolutelyIrreducible, Nat.cast_one]
+  · have hone : Module.finrank ℚ (spechtModule μ ⟶ spechtModule μ) = 1 := by
+      rw [FDRep.finrank_hom_eq_finrank_intertwiningMap]
+      simpa using (spechtModuleIntertwiningEndAlgEquiv μ).toLinearEquiv.finrank_eq
+    rw [ite_eq_left rfl, spechtCharacter, characterPairing_ofFDRep_eq_finrank, hone,
+      Nat.cast_one]
   · rw [ite_eq_right hne]
     refine characterPairing_ofFDRep_eq_zero _ _ (not_nonempty_iff.mp ?_)
     rw [spechtModule_iso_iff]
