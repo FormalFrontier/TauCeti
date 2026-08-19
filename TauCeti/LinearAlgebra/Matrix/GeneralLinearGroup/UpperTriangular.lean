@@ -24,9 +24,15 @@ B_m(R) → (m → Rˣ).
 ```
 
 Its kernel is exactly the upper-unitriangular group `U_m(R)`. Since `U_m(R)` is nilpotent and the
-diagonal group is abelian, this proves that `B_m(R)` is solvable. This is the group-theoretic
-solvability input for recognizing the positive-root subgroup in a pinning as a Borel subgroup in
-Layer 9, "Pinnings", of the ReductiveGroups roadmap.
+diagonal group is abelian, this proves that `B_m(R)` is solvable.
+
+This continues the "Lie--Kolchin; solvable groups" milestone in Layer 5 of the ReductiveGroups
+roadmap. That milestone's scheme-level property,
+`TauCeti.geometricallySolvablePointsCommHopfAlgProperty`, asks for a solvable abstract group of
+geometric points, and its one worked Borel example, for `GL₂`, is proved by transporting the
+abstract-group solvability `TauCeti.GL2Borel.instIsSolvable` along the points equivalence
+`TauCeti.GeneralLinear.Borel.pointsMulEquiv`. The theorem below is that same input for every `m`,
+so the argument carries over to the upper-triangular Borel of `GLₘ`.
 
 ## Main declarations
 
