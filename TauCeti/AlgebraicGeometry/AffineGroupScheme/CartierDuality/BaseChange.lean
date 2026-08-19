@@ -82,7 +82,8 @@ theorem finiteLocallyFreeCommAffineGroupSchemeProperty_baseChange
       ((finiteLocallyFreeBicommutativeHopfAlgProperty R).ι.obj (coordinateHopfAlgebra R G))).symm ≪≫
     (AffineGroupSchemeCat.baseChangeFunctor
       (CommRingCat.ofHom (algebraMap R S))).mapIso ?_
-  exact ((functorCompFullSubcategoryιIso R).app (op (coordinateHopfAlgebra R G))).symm ≪≫
+  exact ((congrFullSubcategoryFunctorCompιIso R).app
+      (op (coordinateHopfAlgebra R G))).symm ≪≫
     (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R)).ι.mapIso
       ((finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
         R).counitIso.app G)
@@ -120,7 +121,7 @@ noncomputable def hopfSpecBaseChangeNatIso :
     Functor.isoWhiskerLeft
         (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
           R).functor (baseChangeFunctorCompιIso R S) ≪≫
-      Functor.isoWhiskerRight (functorCompFullSubcategoryιIso R)
+      Functor.isoWhiskerRight (congrFullSubcategoryFunctorCompιIso R)
         (AffineGroupSchemeCat.baseChangeFunctor (CommRingCat.ofHom (algebraMap R S))) ≪≫
       Functor.isoWhiskerLeft
         (forget₂ (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) (CommHopfAlgCat.{u} R)).op
@@ -130,7 +131,7 @@ noncomputable def hopfSpecBaseChangeNatIso :
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of S)).functor ≪≫
       (Functor.isoWhiskerLeft
         (FiniteLocallyFreeBicommutativeHopfAlgCat.baseChangeFunctor R S).op
-        (functorCompFullSubcategoryιIso S)).symm
+        (congrFullSubcategoryFunctorCompιIso S)).symm
 
 /-- The `rightOp` form of `hopfSpecBaseChangeNatIso`, comparing the two ways of passing from a
 coordinate Hopf algebra over `R` to a group scheme over `S`. It exists only to transport
