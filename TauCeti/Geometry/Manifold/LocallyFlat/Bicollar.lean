@@ -41,11 +41,11 @@ figure-eight immersion of a line into the plane is locally bicollared and is not
 since bicollars only see the domain locally.
 
 This is the codimension-one collaring bullet of layer 2 of the geometric-topology roadmap
-(`TauCetiRoadmap/GeometricTopology/README.md`). What remains of that bullet is Brown's global
-theorem, that a locally bicollared *closed* subset is bicollared, and its consequence that a
-locally flat `(n-1)`-sphere in `Sⁿ` is bicollared; those are genuinely global and are not proved
-here. Positive-codimension normal bundles, the companion notion, are flagged by the roadmap as a
-dependency to be taken from elsewhere rather than built in this layer.
+(`TauCetiRoadmap/GeometricTopology/README.md`). What remains of that bullet is its global sphere
+conclusion: a locally flat `(n-1)`-sphere in `Sⁿ` is bicollared. That conclusion needs a genuinely
+global collaring argument and is not proved here. Positive-codimension normal bundles, the
+companion notion, are flagged by the roadmap as a dependency to be taken from elsewhere rather
+than built in this layer.
 
 ## Main definitions
 
