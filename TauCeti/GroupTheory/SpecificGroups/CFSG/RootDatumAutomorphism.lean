@@ -29,8 +29,6 @@ automorphism.
 
 ## Main declarations
 
-* `TauCeti.GraphTwistedIndex.diagramPerm_mem_diagramSymmetry`: the pinned diagram permutation is a
-  symmetry of the Cartan matrix.
 * `TauCeti.GraphTwistedIndex.datumGraphAut`: the resulting automorphism of the pinned simply
   connected root datum.
 * `TauCeti.GraphTwistedIndex.datumGraphAut_pow_twistOrder`: its order relation.
@@ -51,13 +49,6 @@ namespace TauCeti.GraphTwistedIndex
 
 variable (d : GraphTwistedIndex)
 
-/-- The pinned diagram permutation of a graph-twisted index is a symmetry of the Bourbaki-numbered
-Cartan matrix of its underlying untwisted Dynkin diagram. This is the membership consumed by
-`TauCeti.DynkinType.diagramAut`. -/
-theorem diagramPerm_mem_diagramSymmetry :
-    d.diagramPerm ∈ d.1.dynkinType.diagramSymmetry :=
-  DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm
-
 noncomputable section
 
 /-- **The graph automorphism of the pinned simply connected root datum** attached to a graph-twisted
@@ -65,7 +56,8 @@ index: the automorphism realizing its pinned diagram permutation. It is the iden
 family, where that permutation is the identity. -/
 def datumGraphAut :
     (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).Aut :=
-  DynkinType.diagramAut d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry
+  DynkinType.diagramAut d.1.dynkinType_valid
+    (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm)
 
 /-- The weight map of the root-datum graph automorphism permutes the fundamental-weight
 coordinates by the diagram permutation of the index. -/
@@ -90,30 +82,32 @@ permutation of the index. -/
 
 /-- Every root of the pinned datum has its fundamental-weight coordinates permuted by the diagram
 permutation of the index. -/
-theorem root_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
+@[simp] theorem root_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
     (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root
         (d.datumGraphAut.indexEquiv k) =
       fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root k
         (d.diagramPerm.symm j) := by
   rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
-  exact DynkinType.root_diagramRootPerm d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry k
+  exact DynkinType.root_diagramRootPerm d.1.dynkinType_valid
+    (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
 
 /-- Every coroot of the pinned datum has its simple-coroot coordinates permuted by the diagram
 permutation of the index. -/
-theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
+@[simp] theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
     (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
         (d.datumGraphAut.indexEquiv k) =
       fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot k
         (d.diagramPerm.symm j) := by
   rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
   exact DynkinType.coroot_diagramRootPerm d.1.dynkinType_valid
-    d.diagramPerm_mem_diagramSymmetry k
+    (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
 
 /-- **The order relation of the root-datum graph automorphism.** This is `γ ^ 2 = 1` for `²Aₙ`,
 `²Dₙ` and `²E₆`, `γ ^ 3 = 1` for `³D₄`, and the trivial relation on an untwisted family, all read
 off the twist order recorded by the index. -/
 @[simp] theorem datumGraphAut_pow_twistOrder : d.datumGraphAut ^ d.twistOrder = 1 :=
-  DynkinType.diagramAut_pow_eq_one d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry
+  DynkinType.diagramAut_pow_eq_one d.1.dynkinType_valid
+    (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm)
     d.diagramPerm_pow_twistOrder
 
 end

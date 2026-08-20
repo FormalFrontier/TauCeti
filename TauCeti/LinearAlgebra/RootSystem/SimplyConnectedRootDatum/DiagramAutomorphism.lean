@@ -153,7 +153,7 @@ numbering of the simple roots. -/
 
 /-- The weight map of the rational automorphism is the permutation of the fundamental-weight
 coordinates. -/
-@[simp] theorem weightMap_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
+@[simp] theorem rationalDiagramAut_weightMap (hσ : σ ∈ t.diagramSymmetry) :
     (rationalDiagramAut ht hσ).toHom.weightMap =
       (LinearEquiv.funCongrLeft ℚ ℚ σ.symm).toLinearMap := by
   apply (t.rationalBase ht).toWeightBasis.ext
@@ -168,12 +168,12 @@ coordinates. -/
 
 /-- **Every root of the pinned datum has its fundamental-weight coordinates permuted** by a symmetry
 of the Cartan matrix. -/
-theorem root_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoots) :
+@[simp] theorem root_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoots) :
     (t.simplyConnectedRootDatum ht).root (diagramRootPerm ht hσ k) =
       fun j => (t.simplyConnectedRootDatum ht).root k (σ.symm j) := by
   have h := RootPairing.Hom.root_weightMap_apply (t.rationalRootSystem ht)
     (t.rationalRootSystem ht) k (rationalDiagramAut ht hσ).toHom
-  rw [weightMap_rationalDiagramAut] at h
+  rw [rationalDiagramAut_weightMap] at h
   ext j
   have := congrFun h j
   simp only [LinearEquiv.coe_coe, LinearEquiv.funCongrLeft_apply, LinearMap.funLeft_apply,
@@ -182,7 +182,7 @@ theorem root_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoot
 
 /-- The inverse coweight map of the rational automorphism is the permutation of the simple-coroot
 coordinates. -/
-@[simp] theorem coweightEquiv_symm_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
+@[simp] theorem rationalDiagramAut_coweightEquiv_symm (hσ : σ ∈ t.diagramSymmetry) :
     ((RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht) (t.rationalRootSystem ht)
         (rationalDiagramAut ht hσ)).symm : _ →ₗ[ℚ] _) =
       (LinearEquiv.funCongrLeft ℚ ℚ σ.symm).toLinearMap := by
@@ -213,7 +213,7 @@ coordinates. -/
 
 /-- **Every coroot of the pinned datum has its simple-coroot coordinates permuted** by a symmetry of
 the Cartan matrix. -/
-theorem coroot_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoots) :
+@[simp] theorem coroot_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoots) :
     (t.simplyConnectedRootDatum ht).coroot (diagramRootPerm ht hσ k) =
       fun j => (t.simplyConnectedRootDatum ht).coroot k (σ.symm j) := by
   have h1 : (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht) (t.rationalRootSystem ht)
@@ -224,7 +224,7 @@ theorem coroot_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRo
   have h2 := congrArg (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
     (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm h1
   rw [LinearEquiv.symm_apply_apply] at h2
-  have h3 := LinearMap.congr_fun (coweightEquiv_symm_rationalDiagramAut ht hσ)
+  have h3 := LinearMap.congr_fun (rationalDiagramAut_coweightEquiv_symm ht hσ)
     ((t.rationalRootSystem ht).coroot k)
   ext j
   have h4 : (t.rationalRootSystem ht).coroot (diagramRootPerm ht hσ k) j =
