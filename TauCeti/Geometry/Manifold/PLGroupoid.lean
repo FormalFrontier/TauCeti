@@ -37,8 +37,11 @@ structure is introduced for it, matching Mathlib's treatment of `IsManifold`.
 * `TauCeti.plGroupoid_le_contDiffGroupoid_zero`: the forgetful inclusion "PL implies Top". Its
   mathematical content is that a PL map is continuous (`TauCeti.IsPLOn.continuousOn`).
 * `TauCeti.ofSet_mem_plGroupoid` and the `ClosedUnderRestriction (plGroupoid I)` instance: the
-  identity of an open set is PL, so the groupoid is closed under restriction, as every structure
-  groupoid used to define manifolds must be.
+  identity of an open set is PL, so the groupoid is closed under restriction. `HasGroupoid` does
+  not itself ask for this, but the standard constructions downstream of it do — restricting a
+  chart to an open subset (`StructureGroupoid.restr_mem_maximalAtlas`) and the charted-space
+  structure an open subset inherits (`TopologicalSpace.Opens.instHasGroupoid`) both take
+  `ClosedUnderRestriction` as an instance argument.
 
 There is deliberately no inclusion in the other direction against `contDiffGroupoid`: a smooth
 transition map is not literally piecewise affine, and the comparison between the smooth and the PL
@@ -128,7 +131,8 @@ theorem ofSet_mem_plGroupoid {s : Set H} (hs : IsOpen s) :
     simp [h, plPregroupoid]
   exact isPLOn_comp_symm I s
 
-/-- The PL groupoid is closed under restriction, so it can be used to define manifolds. -/
+/-- The PL groupoid is closed under restriction: the restriction of a PL chart to an open subset
+is again PL. This is what the constructions on open subsets of a PL manifold ask for. -/
 instance : ClosedUnderRestriction (plGroupoid I) :=
   (closedUnderRestriction_iff_id_le _).mpr
     (by
@@ -144,7 +148,7 @@ the definition above is not a roundabout way of asking for affineness. -/
 
 /-- The piecewise-linear homeomorphism of `ℝ` that is the identity on the non-positive half-line
 and multiplication by `2` on the non-negative one. -/
-@[expose] noncomputable def doubleRight : ℝ ≃ₜ ℝ where
+noncomputable def doubleRight : ℝ ≃ₜ ℝ where
   toFun x := if x ≤ 0 then x else 2 * x
   invFun y := if y ≤ 0 then y else y / 2
   left_inv x := by
@@ -164,11 +168,11 @@ and multiplication by `2` on the non-negative one. -/
     continuous_id continuous_const fun x hx => by simp [hx]
 
 @[simp]
-theorem doubleRight_apply (x : ℝ) : doubleRight x = if x ≤ 0 then x else 2 * x := rfl
+theorem doubleRight_apply (x : ℝ) : doubleRight x = if x ≤ 0 then x else 2 * x := (rfl)
 
 @[simp]
 theorem doubleRight_symm_apply (y : ℝ) :
-    doubleRight.symm y = if y ≤ 0 then y else y / 2 := rfl
+    doubleRight.symm y = if y ≤ 0 then y else y / 2 := (rfl)
 
 /-- `TauCeti.doubleRight` is an element of the PL groupoid of the trivial model on `ℝ`. -/
 theorem doubleRight_mem_plGroupoid :

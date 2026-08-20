@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Topology.Algebra.Ring.Real
 public import Mathlib.Topology.ContinuousOn
-public import Mathlib.Topology.LocallyFinite
 public import TauCeti.Analysis.Convex.Polyhedron
 
 /-!
@@ -40,10 +39,11 @@ groupoid quantifies over, and the covering form restricts to subsets for free
 Finiteness is asked for only near each point. A piecewise-linear map may genuinely have infinitely
 many pieces — a breakpoint at every integer, say — so a globally finite decomposition is not a
 local condition, and `Pregroupoid.locality` demands one. Local finiteness is the textbook remedy,
-and it implies the present predicate: a locally finite family is, by definition, finite on a small
-enough neighbourhood of each point. `TauCeti.isPLOn_of_locallyFinite` records that implication, and
-it is the bridge from a triangulation, which supplies exactly a locally finite family of affine
-pieces.
+and it implies the present predicate: a family that is locally finite along the set is, by
+definition, finite on a small enough neighbourhood of each of the set's points.
+`TauCeti.isPLOn_of_locallyFinite` records that implication, in this direction only — no converse
+is proved, and none is claimed — and it is the bridge from a triangulation, which supplies exactly
+such a family of affine pieces.
 
 ## Main definitions
 
@@ -54,7 +54,8 @@ pieces.
 ## Main results
 
 * `TauCeti.isPiecewiseAffineOn_of_finite` and `TauCeti.isPLOn_of_locallyFinite`: the two
-  constructors, from a cover indexed by an arbitrary finite type and from a locally finite one.
+  constructors, from a cover indexed by an arbitrary finite type and from one that is locally
+  finite along the set.
 * `TauCeti.IsPLOn.continuousOn`: a piecewise-linear map is continuous. This is the "PL implies
   Top" content; the cells are closed and locally finite in number, so continuity is a pasting
   argument.
@@ -225,13 +226,15 @@ theorem IsPLOn.comp {t : Set F} (hg : IsPLOn g t) (hf : IsPLOn f s) (hst : s ⊆
   exact ⟨V ∩ (s ∩ f ⁻¹' W), inter_mem hV (inter_mem self_mem_nhdsWithin hpre),
     hPAg.comp (hPAf.mono inter_subset_left) fun _ hy => hy.2.2⟩
 
-/-- A *locally finite* polyhedral cover of `s` on whose cells `f` is affine makes `f` piecewise
-linear on `s`. This is the bridge from a triangulation, which supplies exactly such a cover, and
-it is why the local finite formulation of `TauCeti.IsPLOn` loses nothing. -/
+/-- A polyhedral cover of `s` on whose cells `f` is affine and which is *locally finite along `s`*
+— every point of `s` has a neighbourhood meeting only finitely many cells — makes `f` piecewise
+linear on `s`. This is the bridge from a triangulation, which supplies exactly such a cover; the
+implication runs in this direction only, and no converse is proved here. -/
 theorem isPLOn_of_locallyFinite {ι : Type*} {C : ι → Set E} {A : ι → (E →ᴬ[ℝ] F)}
-    (hlf : LocallyFinite C) (hC : ∀ i, IsConvexPolyhedron (C i)) (hcov : s ⊆ ⋃ i, C i)
-    (heq : ∀ i, EqOn f (A i) (s ∩ C i)) : IsPLOn f s := fun x _ => by
-  obtain ⟨U, hU, hfin⟩ := hlf x
+    (hlf : ∀ x ∈ s, ∃ U ∈ 𝓝 x, {i | (C i ∩ U).Nonempty}.Finite)
+    (hC : ∀ i, IsConvexPolyhedron (C i)) (hcov : s ⊆ ⋃ i, C i)
+    (heq : ∀ i, EqOn f (A i) (s ∩ C i)) : IsPLOn f s := fun x hx => by
+  obtain ⟨U, hU, hfin⟩ := hlf x hx
   have : Finite {i // (C i ∩ U).Nonempty} := hfin.to_subtype
   refine ⟨s ∩ U, inter_mem self_mem_nhdsWithin (nhdsWithin_le_nhds hU),
     isPiecewiseAffineOn_of_finite (ι := {i // (C i ∩ U).Nonempty}) (C := fun i => C i.1)
