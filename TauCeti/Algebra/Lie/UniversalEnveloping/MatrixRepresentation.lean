@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
-public import Mathlib.LinearAlgebra.Matrix.ToLin
+public import Mathlib.Algebra.Lie.Matrix
+public import Mathlib.Algebra.Lie.UniversalEnveloping
 
 /-!
 # The defining representation of a matrix Lie subalgebra
@@ -17,15 +17,15 @@ transports nilpotency of an underlying matrix to nilpotency of the resulting end
 
 ## Main definitions and results
 
-* `TauCeti.MatrixLieSubalgebra.matrixRepresentation`: the defining representation extended to the
+* `LieSubalgebra.matrixRepresentation`: the defining representation extended to the
   universal enveloping algebra.
-* `TauCeti.MatrixLieSubalgebra.matrixRepresentation_ι_injective`: faithfulness on the Lie algebra.
-* `TauCeti.MatrixLieSubalgebra.isNilpotent_matrixRepresentation_ι`: nilpotency transport.
+* `LieSubalgebra.matrixRepresentation_ι_injective`: faithfulness on the Lie algebra.
+* `LieSubalgebra.isNilpotent_matrixRepresentation_ι`: nilpotency transport.
 -/
 
 public section
 
-namespace TauCeti.MatrixLieSubalgebra
+namespace LieSubalgebra
 
 open scoped _root_.Matrix
 
@@ -38,16 +38,23 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 /-- The defining action of a matrix Lie subalgebra, extended to its universal enveloping algebra. -/
 def matrixRepresentation (K : _root_.LieSubalgebra R (Matrix n n R)) :
     _root_.UniversalEnvelopingAlgebra R K →ₐ[R] Module.End R (n → R) :=
-  _root_.UniversalEnvelopingAlgebra.lift R
-    (_root_.LieHom.comp
-      (_root_.AlgHom.toLieHom (Matrix.toLinAlgEquiv' (n := n) (R := R)).toAlgHom)
-      K.incl)
+  _root_.UniversalEnvelopingAlgebra.lift R (LieModule.toEnd R K (n → R))
+
+/-- The defining representation is the universal-enveloping extension of the matrix Lie-module
+action. -/
+theorem matrixRepresentation_def (K : _root_.LieSubalgebra R (Matrix n n R)) :
+    matrixRepresentation K =
+      _root_.UniversalEnvelopingAlgebra.lift R (LieModule.toEnd R K (n → R)) := (rfl)
 
 /-- A Lie generator acts through its underlying matrix. -/
 theorem matrixRepresentation_ι (K : _root_.LieSubalgebra R (Matrix n n R)) (x : K) :
     matrixRepresentation K (_root_.UniversalEnvelopingAlgebra.ι R x) =
-      Matrix.toLinAlgEquiv' (x : Matrix n n R) :=
-  _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
+      Matrix.toLinAlgEquiv' (x : Matrix n n R) := by
+  rw [matrixRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply]
+  apply LinearMap.ext
+  intro v
+  rw [LieModule.toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module, Matrix.lie_apply,
+    Matrix.toLinAlgEquiv'_apply]
 
 /-- Pointwise, a Lie generator acts by matrix-vector multiplication. -/
 theorem matrixRepresentation_ι_apply (K : _root_.LieSubalgebra R (Matrix n n R))
@@ -61,17 +68,17 @@ theorem matrixRepresentation_ι_injective (K : _root_.LieSubalgebra R (Matrix n 
     Function.Injective fun x : K =>
       matrixRepresentation K (_root_.UniversalEnvelopingAlgebra.ι R x) := by
   intro x y hxy
-  simp only [matrixRepresentation_ι] at hxy
-  exact Subtype.ext (Matrix.toLinAlgEquiv'.injective hxy)
+  apply LieModule.IsFaithful.injective_toEnd (R := R) (L := K) (M := n → R)
+  simpa only [matrixRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply] using hxy
 
 /-- A nilpotent matrix acts nilpotently in the defining representation. -/
 theorem isNilpotent_matrixRepresentation_ι (K : _root_.LieSubalgebra R (Matrix n n R))
     (x : K) (hx : IsNilpotent (x : Matrix n n R)) :
     IsNilpotent (matrixRepresentation K (_root_.UniversalEnvelopingAlgebra.ι R x)) := by
   rw [matrixRepresentation_ι]
-  exact IsNilpotent.map hx (Matrix.toLinAlgEquiv' (n := n) (R := R)).toRingHom
+  exact IsNilpotent.map hx (Matrix.toLinAlgEquiv' (n := n) (R := R))
 
 end
 
 
-end TauCeti.MatrixLieSubalgebra
+end LieSubalgebra

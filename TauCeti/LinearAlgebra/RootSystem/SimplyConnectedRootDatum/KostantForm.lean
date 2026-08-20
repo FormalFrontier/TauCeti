@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Basis.KostantForm
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Basis
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Orbit
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
@@ -28,7 +28,7 @@ Four things are needed before the divided powers of the Kostant form can be expo
 root subgroups, and all four are supplied here.
 
 *The form itself.* `TauCeti.DynkinType.kostantForm` is
-`TauCeti.LieBasis.kostantForm` applied to the pinned Lie algebra basis. Because the raising
+`LieAlgebra.Basis.kostantForm` applied to the pinned Lie algebra basis. Because the raising
 and lowering generators already generate the whole Lie algebra,
 `TauCeti.DynkinType.span_kostantForm_eq_top` says the form spans `U(L)` over `ℚ` without further
 hypotheses.
@@ -124,25 +124,25 @@ coefficients of the numbered Cartan generators.
 Identification with the canonical all-root Kostant `ℤ`-form is not asserted. -/
 def kostantForm :
     Subring (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)) :=
-  LieBasis.kostantForm (t.lieBasis ht)
+  (t.lieBasis ht).kostantForm
 
 /-- The pinned form is the basis Kostant form for the pinned Lie algebra basis. -/
-theorem kostantForm_def : t.kostantForm ht = LieBasis.kostantForm (t.lieBasis ht) := (rfl)
+theorem kostantForm_def : t.kostantForm ht = (t.lieBasis ht).kostantForm := (rfl)
 
 /-- Every divided power of a numbered raising or lowering generator lies in the Kostant form. -/
 theorem dividedPower_mem_kostantForm (i : Fin t.rank ⊕ Fin t.rank) (n : ℕ) :
     Associative.dividedPower n
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ (LieBasis.rootGenerator (t.lieBasis ht) i)) ∈
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i)) ∈
       t.kostantForm ht := by
   rw [kostantForm_def]
-  exact LieBasis.dividedPower_mem_kostantForm (t.lieBasis ht) i n
+  exact (t.lieBasis ht).dividedPower_mem_kostantForm i n
 
 /-- Every binomial coefficient of a numbered Cartan generator lies in the Kostant form. -/
 theorem ringChoose_mem_kostantForm (i : Fin t.rank) (n : ℕ) :
     Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) n ∈
       t.kostantForm ht := by
   rw [kostantForm_def]
-  exact LieBasis.ringChoose_mem_kostantForm (t.lieBasis ht) i n
+  exact (t.lieBasis ht).ringChoose_mem_kostantForm i n
 
 /-- The universal property of the pinned simple-generator Kostant form. -/
 @[simp]
@@ -150,9 +150,9 @@ theorem kostantForm_le_iff
     (T : Subring (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht))) :
     t.kostantForm ht ≤ T ↔
       (∀ i n, Associative.dividedPower n
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ (LieBasis.rootGenerator (t.lieBasis ht) i)) ∈ T) ∧
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i)) ∈ T) ∧
       ∀ i n, Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) n ∈ T := by
-  rw [kostantForm_def, LieBasis.kostantForm_le_iff]
+  rw [kostantForm_def, LieAlgebra.Basis.kostantForm_le_iff]
 
 /-- **The Kostant form spans the enveloping algebra.** Its `ℚ`-span is the whole universal
 enveloping algebra of the pinned split Lie algebra.
@@ -162,7 +162,7 @@ comparison with the classical all-root form require additional results. -/
 theorem span_kostantForm_eq_top :
     Submodule.span ℚ (t.kostantForm ht :
         Set (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht))) = ⊤ :=
-  LieBasis.span_kostantForm_eq_top (t.lieBasis ht)
+  (t.lieBasis ht).span_kostantForm_eq_top
 
 /-! ## The defining representation -/
 
@@ -173,7 +173,11 @@ invoked. -/
 def geckRepresentation :
     _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht) →ₐ[ℚ]
       Module.End ℚ (t.GeckIndex ht → ℚ) :=
-  MatrixLieSubalgebra.matrixRepresentation (t.lieAlgebra ht)
+  (t.lieAlgebra ht).matrixRepresentation
+
+/-- The Geck representation is the defining representation of its matrix Lie subalgebra. -/
+theorem geckRepresentation_def :
+    t.geckRepresentation ht = (t.lieAlgebra ht).matrixRepresentation := (rfl)
 
 -- Neither this lemma nor its pointwise form below is a `simp` lemma: `simp` unfolds `ι` through
 -- Mathlib's `UniversalEnvelopingAlgebra.ι_apply`, so a left-hand side mentioning `ι` is not in
@@ -182,24 +186,25 @@ def geckRepresentation :
 theorem geckRepresentation_ι (x : t.lieAlgebra ht) :
     t.geckRepresentation ht (_root_.UniversalEnvelopingAlgebra.ι ℚ x) =
       Matrix.toLinAlgEquiv' (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) := by
-  rw [geckRepresentation]
-  exact MatrixLieSubalgebra.matrixRepresentation_ι (t.lieAlgebra ht) x
+  rw [geckRepresentation_def]
+  exact LieSubalgebra.matrixRepresentation_ι (t.lieAlgebra ht) x
 
 /-- The pointwise form of `TauCeti.DynkinType.geckRepresentation_ι`: a Lie generator acts by
 multiplying a coordinate vector by its underlying matrix. -/
 theorem geckRepresentation_ι_apply (x : t.lieAlgebra ht) (v : t.GeckIndex ht → ℚ) :
     t.geckRepresentation ht (_root_.UniversalEnvelopingAlgebra.ι ℚ x) v =
       (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) *ᵥ v := by
-  rw [geckRepresentation]
-  exact MatrixLieSubalgebra.matrixRepresentation_ι_apply (t.lieAlgebra ht) x v
+  rw [geckRepresentation_def]
+  exact LieSubalgebra.matrixRepresentation_ι_apply (t.lieAlgebra ht) x v
 
-/-- **The defining representation is faithful.** Distinct elements of the pinned Lie algebra act
+/-- **The defining representation is faithful on the Lie algebra.** Distinct elements of the
+pinned Lie algebra act
 differently, so the Lie algebra embeds in the endomorphisms of the Geck module. -/
 theorem geckRepresentation_ι_injective :
     Function.Injective fun x : t.lieAlgebra ht =>
       t.geckRepresentation ht (_root_.UniversalEnvelopingAlgebra.ι ℚ x) := by
-  rw [geckRepresentation]
-  exact MatrixLieSubalgebra.matrixRepresentation_ι_injective (t.lieAlgebra ht)
+  rw [geckRepresentation_def]
+  exact LieSubalgebra.matrixRepresentation_ι_injective (t.lieAlgebra ht)
 
 /-! ## Nilpotency of the numbered generators -/
 
@@ -208,12 +213,14 @@ exponential of a root vector a finite sum, hence an automorphism of any stable l
 value ring. -/
 theorem isNilpotent_geckRepresentation_rootGenerator (i : Fin t.rank ⊕ Fin t.rank) :
     IsNilpotent (t.geckRepresentation ht
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ (LieBasis.rootGenerator (t.lieBasis ht) i))) := by
-  rw [geckRepresentation]
-  apply MatrixLieSubalgebra.isNilpotent_matrixRepresentation_ι (t.lieAlgebra ht)
+      (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i))) := by
+  rw [geckRepresentation_def]
+  apply LieSubalgebra.isNilpotent_matrixRepresentation_ι (t.lieAlgebra ht)
   cases i with
-  | inl i => simpa only [LieBasis.rootGenerator_inl] using t.isNilpotent_coe_lieBasis_e ht i
-  | inr i => simpa only [LieBasis.rootGenerator_inr] using t.isNilpotent_coe_lieBasis_f ht i
+  | inl i => simpa only [LieAlgebra.Basis.rootGenerator_inl] using
+      t.isNilpotent_coe_lieBasis_e ht i
+  | inr i => simpa only [LieAlgebra.Basis.rootGenerator_inr] using
+      t.isNilpotent_coe_lieBasis_f ht i
 
 /-! ## The weights of the Geck module -/
 
@@ -259,15 +266,14 @@ integral form as a hypothesis. This one is preserved by construction, by
 `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit`, and it is full by
 `TauCeti.DynkinType.span_geckOrbit_eq_top`. No finite-generation or lattice property is asserted. -/
 def geckOrbit : Submodule ℤ (t.GeckIndex ht → ℚ) :=
-  UniversalEnvelopingAlgebra.kostantOrbitSpan (LieBasis.rootGenerator (t.lieBasis ht))
-    (t.lieBasis ht).h (t.geckRepresentation ht) (range fun x => Pi.single x 1)
+  UniversalEnvelopingAlgebra.orbitOfRep (t.kostantForm ht) (t.geckRepresentation ht)
+    (range fun x => Pi.single x 1)
 
-/-- The pinned integral orbit is the generic represented orbit span of the standard coordinate
+/-- The pinned integral orbit is the generic represented orbit of the standard coordinate
 vectors. -/
 theorem geckOrbit_def :
-    t.geckOrbit ht = UniversalEnvelopingAlgebra.kostantOrbitSpan
-      (LieBasis.rootGenerator (t.lieBasis ht)) (t.lieBasis ht).h (t.geckRepresentation ht)
-        (range fun x => Pi.single x 1) := (rfl)
+    t.geckOrbit ht = UniversalEnvelopingAlgebra.orbitOfRep (t.kostantForm ht)
+      (t.geckRepresentation ht) (range fun x => Pi.single x 1) := (rfl)
 
 /-- A Kostant-form translate of a standard coordinate vector lies in the integral orbit. -/
 theorem geckRepresentation_single_mem_geckOrbit
@@ -275,34 +281,31 @@ theorem geckRepresentation_single_mem_geckOrbit
     (x : t.GeckIndex ht) :
     t.geckRepresentation ht u (Pi.single x 1) ∈ t.geckOrbit ht := by
   rw [geckOrbit_def]
-  rw [kostantForm_def, LieBasis.kostantForm_def] at hu
-  exact UniversalEnvelopingAlgebra.apply_mem_kostantOrbitSpan _ _ _ _ hu (mem_range_self x)
+  exact UniversalEnvelopingAlgebra.apply_mem_orbitOfRep _ _ _ hu (mem_range_self x)
 
 /-- Every standard coordinate vector lies in the integral orbit, the identity of the enveloping
 algebra being one of the elements the orbit is taken over. -/
 theorem single_mem_geckOrbit (x : t.GeckIndex ht) :
     Pi.single x (1 : ℚ) ∈ t.geckOrbit ht := by
   rw [geckOrbit_def]
-  exact UniversalEnvelopingAlgebra.subset_kostantOrbitSpan _ _ _ _ (mem_range_self x)
+  exact UniversalEnvelopingAlgebra.subset_orbitOfRep _ _ _ (mem_range_self x)
 
 /-- **The integral orbit is stable under the Kostant form.** This is the hypothesis a Kostant root
-subgroup needs of the lattice it acts on, and it holds here because the orbit is taken over a
-subring: acting again multiplies inside the form. -/
+subgroup needs of the stable `ℤ`-submodule it acts on, and it holds here because the orbit is taken
+over a subring: acting again multiplies inside the form. -/
 theorem geckRepresentation_mem_geckOrbit
     {u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)} (hu : u ∈ t.kostantForm ht)
     {v : t.GeckIndex ht → ℚ} (hv : v ∈ t.geckOrbit ht) :
     t.geckRepresentation ht u v ∈ t.geckOrbit ht := by
   rw [geckOrbit_def] at hv ⊢
-  rw [kostantForm_def, LieBasis.kostantForm_def] at hu
-  exact UniversalEnvelopingAlgebra.apply_mem_kostantOrbitSpan_of_mem _ _ _ _ hu hv
+  exact UniversalEnvelopingAlgebra.apply_mem_orbitOfRep_of_mem _ _ _ hu hv
 
 /-- The elimination principle for the pinned integral orbit. -/
 theorem geckOrbit_le_iff (N : Submodule ℤ (t.GeckIndex ht → ℚ)) :
     t.geckOrbit ht ≤ N ↔
       ∀ u ∈ t.kostantForm ht, ∀ x,
         t.geckRepresentation ht u (Pi.single x 1) ∈ N := by
-  rw [geckOrbit_def, kostantForm_def, LieBasis.kostantForm_def,
-    UniversalEnvelopingAlgebra.kostantOrbitSpan_le_iff]
+  rw [geckOrbit_def, UniversalEnvelopingAlgebra.orbitOfRep_le_iff]
   constructor
   · intro h u hu x
     exact h u hu (Pi.single x 1) (mem_range_self x)
@@ -315,13 +318,11 @@ theorem span_geckOrbit_eq_top :
     Submodule.span ℚ (t.geckOrbit ht : Set (t.GeckIndex ht → ℚ)) = ⊤ := by
   classical
   rw [geckOrbit_def]
-  apply UniversalEnvelopingAlgebra.span_kostantOrbitSpan_eq_top
+  apply UniversalEnvelopingAlgebra.span_orbitOfRep_eq_top
   have hrange : range (fun x : t.GeckIndex ht => Pi.single x (1 : ℚ)) =
-      range (Pi.basisFun ℚ (t.GeckIndex ht)) := by
-    ext v
-    constructor <;> rintro ⟨x, rfl⟩
-    · exact ⟨x, Pi.basisFun_apply ℚ (t.GeckIndex ht) x⟩
-    · exact ⟨x, (Pi.basisFun_apply ℚ (t.GeckIndex ht) x).symm⟩
+      range (Pi.basisFun ℚ (t.GeckIndex ht)) :=
+    congrArg Set.range
+      (funext fun x => (Pi.basisFun_apply ℚ (t.GeckIndex ht) x).symm)
   rw [hrange, (Pi.basisFun ℚ (t.GeckIndex ht)).span_eq]
 
 end

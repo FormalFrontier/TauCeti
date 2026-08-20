@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Basis.Cartan
+public import Mathlib.Algebra.Lie.Basis.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
 
 /-!
@@ -21,15 +21,15 @@ identification with the classical all-root Kostant form requires a separate comp
 
 ## Main definitions and results
 
-* `TauCeti.LieBasis.rootGenerator`: the combined raising and lowering generators.
-* `TauCeti.LieBasis.kostantForm`: the associated simple-generator Kostant form.
-* `TauCeti.LieBasis.kostantForm_le_iff`: its universal property.
-* `TauCeti.LieBasis.span_kostantForm_eq_top`: the form spans the enveloping algebra.
+* `LieAlgebra.Basis.rootGenerator`: the combined raising and lowering generators.
+* `LieAlgebra.Basis.kostantForm`: the associated simple-generator Kostant form.
+* `LieAlgebra.Basis.kostantForm_le_iff`: its universal property.
+* `LieAlgebra.Basis.span_kostantForm_eq_top`: the form spans the enveloping algebra.
 -/
 
 public section
 
-namespace TauCeti.LieBasis
+namespace LieAlgebra.Basis
 
 open Set
 
@@ -69,42 +69,43 @@ theorem lieSpan_range_rootGenerator_union_range_h_eq_top :
 
 /-- The simple-generator Kostant form attached to a Lie algebra basis. -/
 def kostantForm : Subring U :=
-  UniversalEnvelopingAlgebra.kostantForm (rootGenerator b) b.h
+  TauCeti.UniversalEnvelopingAlgebra.kostantForm (rootGenerator b) b.h
 
 /-- The basis Kostant form is the generic form for the combined root generators and Cartan
 generators. -/
 theorem kostantForm_def :
-    kostantForm b = UniversalEnvelopingAlgebra.kostantForm (rootGenerator b) b.h := (rfl)
+    kostantForm b = TauCeti.UniversalEnvelopingAlgebra.kostantForm (rootGenerator b) b.h := (rfl)
 
 /-- Every divided power of a raising or lowering generator lies in the basis Kostant form. -/
 theorem dividedPower_mem_kostantForm (i : ι ⊕ ι) (n : ℕ) :
-    Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator b i)) ∈
+    TauCeti.Associative.dividedPower n
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator b i)) ∈
       kostantForm b := by
   rw [kostantForm_def b]
-  exact UniversalEnvelopingAlgebra.dividedPower_mem_kostantForm _ _ i n
+  exact TauCeti.UniversalEnvelopingAlgebra.dividedPower_mem_kostantForm _ _ i n
 
 /-- Every binomial coefficient of a Cartan generator lies in the basis Kostant form. -/
 theorem ringChoose_mem_kostantForm (i : ι) (n : ℕ) :
     Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (b.h i)) n ∈ kostantForm b := by
   rw [kostantForm_def b]
-  exact UniversalEnvelopingAlgebra.ringChoose_mem_kostantForm _ _ i n
+  exact TauCeti.UniversalEnvelopingAlgebra.ringChoose_mem_kostantForm _ _ i n
 
 /-- The universal property of the basis Kostant form, split into its root and Cartan families. -/
 @[simp]
 theorem kostantForm_le_iff (T : Subring U) :
     kostantForm b ≤ T ↔
-      (∀ i n, Associative.dividedPower n
+      (∀ i n, TauCeti.Associative.dividedPower n
         (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator b i)) ∈ T) ∧
       ∀ i n, Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (b.h i)) n ∈ T := by
-  rw [kostantForm_def b, UniversalEnvelopingAlgebra.kostantForm_le_iff]
+  rw [kostantForm_def b, TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_iff]
 
 /-- The basis Kostant form spans the rational universal enveloping algebra. -/
 theorem span_kostantForm_eq_top :
     Submodule.span ℚ (kostantForm b : Set U) = ⊤ := by
   rw [kostantForm_def b]
-  exact UniversalEnvelopingAlgebra.span_kostantForm_eq_top _ _
+  exact TauCeti.UniversalEnvelopingAlgebra.span_kostantForm_eq_top _ _
     (lieSpan_range_rootGenerator_union_range_h_eq_top b)
 
 end
 
-end TauCeti.LieBasis
+end LieAlgebra.Basis
