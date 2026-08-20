@@ -158,7 +158,7 @@ theorem diagramSchurPoly_eq_sum_interlacingShapes (n : ℕ) (μ : _root_.YoungDi
           + Finsupp.mapDomain Fin.castSucc
               (BoundedSSYT.weight (BoundedSSYT.restrict T _ rfl)) :=
       (BoundedSSYT.weight_eq_mapDomain_add_single T rfl).trans (add_comm _ _)
-    rw [rename_monomial, X_pow_eq_monomial, monomial_mul, one_mul, hexp]
+    rw [rename_monomial, X_pow_eq_monomial, monomial_mul_monomial, one_mul, hexp]
     exact congrArg (monomial · (1 : R)) hw
   rw [diagramSchurPoly_eq_sum, Finset.sum_congr rfl fun T _ => key T,
     BoundedSSYT.sum_eq_sum_interlacingShapes n μ fun ν S =>
