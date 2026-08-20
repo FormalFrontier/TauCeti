@@ -116,7 +116,6 @@ private noncomputable def generalLinearPointsNumberedSymmetryMulEquiv (A : CommA
     (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A))).trans
       (GeneralLinear.pointsMulEquiv (R := ℤ) (A := A) n).symm
 
-@[simp]
 private theorem pointsMulEquiv_generalLinearPointsNumberedSymmetryMulEquiv
     (A : CommAlgCat ℤ)
     (f : HopfAlgebra.points
