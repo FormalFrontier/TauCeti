@@ -27,6 +27,10 @@ components cannot both be outside `TauCeti.filledHull K`.
   different components, at least one lies in the filled hull (dimension at least two).
 
 This is a prerequisite of the planar-separation step of the `ConformalMapping` roadmap (L5).
+
+## References
+
+* Ch. Pommerenke, *Boundary Behaviour of Conformal Maps*, Ch. 2.
 -/
 
 public section
