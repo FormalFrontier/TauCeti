@@ -188,6 +188,18 @@ noncomputable def kostantRootSubgroupBaseChangePresentationCoordinateMap (i : I)
       (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) ≫
     (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom
 
+omit [Finite κ] in
+/-- The transported base-changed root-subgroup map is the stated composite of the two coordinate
+base-change isomorphisms with the scalar extension of the map over `ℤ`. -/
+theorem kostantRootSubgroupBaseChangePresentationCoordinateMap_def (i : I) :
+    kostantRootSubgroupBaseChangePresentationCoordinateMap e h ρ M hM hnil b A i =
+      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).inv ≫
+        CommHopfAlgCat.baseChangeMap
+          (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) ≫
+        (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom := by
+  unfold kostantRootSubgroupBaseChangePresentationCoordinateMap
+  rfl
+
 /-- The transported base change of the `i`th root-subgroup coordinate map, factored through the
 transported toral carrier. -/
 noncomputable def kostantRootSubgroupToralBaseChangePresentationCoordinateMap (i : I) :
