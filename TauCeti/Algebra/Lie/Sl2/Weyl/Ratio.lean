@@ -39,12 +39,17 @@ The scaled Weyl element inverts the Cartan element and interchanges the two nilp
 a scale, `n (c) E n (c)⁻¹ = -(c⁻²) • F` and `n (c) F n (c)⁻¹ = -(c²) • E`, while its effect on an
 element on which `E` and `F` have opposite eigenvalues — a Cartan element, in the intended
 application — is the coreflection `y ↦ y - q • H`, *independently of* `c`. That independence is what
-makes `h (c)` centralise the whole Cartan subalgebra while acting on the two root vectors with the
-expected exponents,
+makes `h (c)` centralise every element with those opposite eigenvalues, while acting on the two root
+vectors with the expected exponents,
 
 ```text
 h (c) E h (c)⁻¹ = c² • E,     h (c) F h (c)⁻¹ = c⁻² • F,
 ```
+
+Centralisation of a whole Cartan subalgebra is not proved here — this file has no Cartan
+subalgebra and no root space decomposition. It is the consequence of the displayed hypotheses in a
+setting supplying them, where every Cartan element `y` has `⁅y, E⁆ = α(y) • E` and
+`⁅y, F⁆ = -(α(y) • F)` for the root `α` of the triple.
 
 On the root subgroups themselves the same relations read
 `h (c) x_α(u) h (c)⁻¹ = x_α(c² u)` and `n (c) x_α(u) n (c)⁻¹ = x_{-α}(-c⁻² u)`, and conjugation
@@ -186,7 +191,8 @@ the opposite eigenvalues `q` and `-q` is carried by conjugation with the scaled 
 
 For a Cartan element `y` of the triple of a root `α` this is the coreflection
 `y ↦ y - α(y) • α^∨`, and its independence of `c` is what makes the Weyl ratio
-`TauCeti.weylRatio` centralise the Cartan subalgebra. -/
+`TauCeti.weylRatio` centralise `y` (`TauCeti.weylRatio_conj_of_lie_eq_smul`), hence, in a setting
+where every Cartan element satisfies these hypotheses, the whole Cartan subalgebra. -/
 theorem weylUnitSMul_conj_of_lie_eq_smul (ht : IsSl2Triple H E F) {y : A} {q : ℚ}
     (hye : ⁅y, E⁆ = q • E) (hyf : ⁅y, F⁆ = -(q • F)) (c : Rˣ) :
     ((weylUnitSMul (R := R) hE hF c : Aˣ) : A) * y *
