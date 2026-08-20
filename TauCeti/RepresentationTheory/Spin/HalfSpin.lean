@@ -76,6 +76,11 @@ belong to the complex theory and are not proved here.
   `TauCeti.spinPlus_sup_spinMinus` and `TauCeti.spinPlus_inf_spinMinus` its two halves, and
   `TauCeti.isCompl_spinPlusSubrep_spinMinusSubrep`: the same in the lattice of subrepresentations
   of `spinRep`, so the splitting is one of representations.
+* `TauCeti.nontrivial_spinPlus` and `TauCeti.nontrivial_spinMinus`: neither summand is zero, the
+  odd one as soon as `W` is nonzero.
+* `TauCeti.spinPlusAction_spinGroup` and `TauCeti.spinMinusAction_spinGroup`: the two bundlings
+  agree, in that the even-subalgebra actions restrict along the spin group to the
+  subrepresentations of `spinRep`.
 * `TauCeti.map_spinAction_spinPlus_le_spinMinus` and
   `TauCeti.map_spinAction_spinMinus_le_spinPlus`: an odd Clifford element carries each of the two
   summands into the other, so the invariance argument does not extend from the spin group — which

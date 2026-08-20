@@ -48,6 +48,12 @@ The invariant-subspace conclusions are stated in lattice form, as "an invariant 
 or everything", rather than as `IsSimpleModule`: `S⁺` and `S⁻` carry no `Module (even Q)` instance,
 and manufacturing one would mean a type synonym for a statement that reads no better through it.
 
+The actions themselves — `TauCeti.spinPlusAction`, `TauCeti.spinMinusAction` and their pair
+`TauCeti.evenSpinActionProd` — are defined in
+`TauCeti/RepresentationTheory/Spin/HalfSpin.lean`, beside the bundling of the same two summands as
+subrepresentations of `spinRep` that the same invariance gives; this file only proves theorems
+about them.
+
 The hypothesis `P.line = ⊥` is the even-dimensional case, and it is exactly what makes the parity
 splitting a splitting of modules at all;
 `TauCeti.SpinPolarizationData.even_finrank_of_line_eq_bot` turns it into the evenness the structure
@@ -64,9 +70,6 @@ results here are the even-dimensional half.
 
 ## Main definitions
 
-* `TauCeti.spinPlusAction` and `TauCeti.spinMinusAction`: the actions of the even Clifford
-  subalgebra on the two half-spin summands, as algebra homomorphisms.
-* `TauCeti.evenSpinActionProd`: the two of them together.
 * `TauCeti.SpinPolarizationData.evenCliffordEquivProdEnd`: **the even structure theorem**, that
   `even Q` is the product of the endomorphism algebras of the two half-spin summands.
 * `TauCeti.SpinPolarizationData.evenCliffordEquivProdMatrix`: its matrix-algebra form.
@@ -81,7 +84,10 @@ results here are the even-dimensional half.
   `TauCeti.eq_bot_or_eq_top_of_map_spinMinusAction_le`: the two half-spin summands have no proper
   nonzero invariant subspace. Together with `TauCeti.nontrivial_spinPlus` and
   `TauCeti.nontrivial_spinMinus`, respectively, these say that the summands are simple.
-* `TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`: **the half-spin summands
+* `TauCeti.eq_zero_of_intertwines_spinPlusAction_spinMinusAction` and
+  `TauCeti.eq_zero_of_intertwines_spinMinusAction_spinPlusAction`: there is no nonzero map either
+  way intertwining the two actions, and hence
+  `TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`: **the half-spin summands
   are inequivalent.**
 
 ## References
