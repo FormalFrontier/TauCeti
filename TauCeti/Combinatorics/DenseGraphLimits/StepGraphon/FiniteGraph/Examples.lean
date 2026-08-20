@@ -48,7 +48,7 @@ theorem homDensity_top_two_finiteGraphGraphon_top_four :
     homDensity (⊤ : SimpleGraph (Fin 2)) (finiteGraphGraphon (⊤ : SimpleGraph (Fin 4)))
       = 3 / 4 := by
   have hcount : Nat.card ((⊤ : SimpleGraph (Fin 2)) →g (⊤ : SimpleGraph (Fin 4))) = 12 := by
-    rw [card_hom_eq_card_adj_preserving_maps, Nat.card_eq_fintype_card]
+    rw [card_hom_eq_card_adjPreservingMaps, Nat.card_eq_fintype_card]
     decide
   rw [homDensity_finiteGraphGraphon _ (by norm_num), homDensityFin_def, hcount]
   norm_num
@@ -58,7 +58,7 @@ a triangle to edges of the five-cycle, so the density vanishes exactly rather th
 theorem homDensity_top_three_finiteGraphGraphon_cycleGraph_five :
     homDensity (⊤ : SimpleGraph (Fin 3)) (finiteGraphGraphon (SimpleGraph.cycleGraph 5)) = 0 := by
   have hcount : Nat.card ((⊤ : SimpleGraph (Fin 3)) →g SimpleGraph.cycleGraph 5) = 0 := by
-    rw [card_hom_eq_card_adj_preserving_maps, Nat.card_eq_fintype_card]
+    rw [card_hom_eq_card_adjPreservingMaps, Nat.card_eq_fintype_card]
     decide
   rw [homDensity_finiteGraphGraphon _ (by norm_num), homDensityFin_def, hcount]
   norm_num

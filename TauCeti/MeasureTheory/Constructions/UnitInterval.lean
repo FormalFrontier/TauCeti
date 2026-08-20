@@ -47,8 +47,9 @@ top cell `[(m-1)/m, 1] = Set.Ici ((m-1)/m)`.
 * `TauCeti.unitInterval.measurable_cellIdx` — the index depends measurably on the point;
 * `TauCeti.unitInterval.measurableSet_preimage_cellIdx` — every cell is measurable;
 * `TauCeti.unitInterval.volume_preimage_cellIdx` — every cell has volume `1/m`;
-* `TauCeti.unitInterval.integral_pi_comp_cellIdx` — a function of the cell indices of finitely many
-  independent uniform points integrates to the average of its values over `V → Fin m`.
+* `TauCeti.unitInterval.integral_pi_comp_cellIdx_eq_inv_smul_sum` — a function of the cell indices
+  of finitely many independent uniform points integrates to the average of its values over
+  `V → Fin m`.
 
 ## References
 
@@ -161,7 +162,7 @@ theorem volume_preimage_cellIdx (hi : i < m) :
       linarith
   rw [hgoal, one_div, ENNReal.ofReal_inv_of_pos hmR, ENNReal.ofReal_natCast]
 
-variable {V : Type*} [Fintype V]
+variable {V E : Type*} [Fintype V] [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
 
 open scoped Classical in
 /-- **Independent uniform points, read through their cells.** The integral of a function of the
@@ -172,9 +173,9 @@ This is the transfer that turns an integral over the continuous carrier `(I, vol
 sum, and it is where the equal volume of the cells is consumed. The integrand's argument is
 `ℕ`-valued, so no `0 < m` hypothesis is hidden in a `Fin m`-valued cell map; the sum on the right
 ranges over `V → Fin m`, which is where the finiteness lives. -/
-theorem integral_pi_comp_cellIdx (hm : 0 < m) (f : (V → ℕ) → ℝ) :
+theorem integral_pi_comp_cellIdx_eq_inv_smul_sum (hm : 0 < m) (f : (V → ℕ) → E) :
     ∫ x : V → I, f (fun v => cellIdx m (x v)) ∂(Measure.pi fun _ : V => (volume : Measure I))
-      = (∑ ψ : V → Fin m, f fun v => (ψ v : ℕ)) / (m : ℝ) ^ Fintype.card V := by
+      = ((m : ℝ) ^ Fintype.card V)⁻¹ • ∑ ψ : V → Fin m, f fun v => (ψ v : ℕ) := by
   classical
   set box : (V → Fin m) → Set (V → I) :=
     fun ψ => univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))} with hbox
@@ -191,13 +192,21 @@ theorem integral_pi_comp_cellIdx (hm : 0 < m) (f : (V → ℕ) → ℝ) :
     intro x
     set ψ₀ : V → Fin m := fun v => ⟨cellIdx m (x v), cellIdx_lt hm (x v)⟩ with hψ₀
     rw [Finset.sum_eq_single ψ₀]
-    · rw [indicator_of_mem]
-      intro v _
-      exact rfl
+    · have hx : x ∈ box ψ₀ := by
+        rw [hbox]
+        intro v _
+        rw [Set.mem_preimage, Set.mem_singleton_iff, hψ₀]
+      calc
+        f (fun v => cellIdx m (x v)) = f (fun v => (ψ₀ v : ℕ)) := by
+          simp only [hψ₀, Fin.val_mk]
+        _ = (box ψ₀).indicator (fun _ => f fun v => (ψ₀ v : ℕ)) x :=
+          (indicator_of_mem hx (fun _ => f fun v => (ψ₀ v : ℕ))).symm
     · intro ψ _ hne
       refine indicator_of_notMem (fun hmem => hne ?_) _
       funext v
-      exact Fin.val_injective (hmem v (mem_univ v)).symm
+      apply Fin.val_injective
+      rw [hψ₀]
+      exact (Set.mem_singleton_iff.mp (Set.mem_preimage.1 (hmem v (mem_univ v)))).symm
     · intro h
       exact absurd (Finset.mem_univ ψ₀) h
   calc ∫ x : V → I, f (fun v => cellIdx m (x v)) ∂(Measure.pi fun _ : V => (volume : Measure I))
@@ -206,12 +215,12 @@ theorem integral_pi_comp_cellIdx (hm : 0 < m) (f : (V → ℕ) → ℝ) :
             ∂(Measure.pi fun _ : V => (volume : Measure I)) := by
         rw [← integral_finsetSum _ fun ψ _ => (integrable_const _).indicator (hboxMeas ψ)]
         exact integral_congr_ae (Filter.Eventually.of_forall key)
-    _ = ∑ ψ : V → Fin m, ((m : ℝ)⁻¹) ^ Fintype.card V * f fun v => (ψ v : ℕ) := by
+    _ = ∑ ψ : V → Fin m, ((m : ℝ)⁻¹) ^ Fintype.card V • f fun v => (ψ v : ℕ) := by
         refine Finset.sum_congr rfl fun ψ _ => ?_
         rw [integral_indicator_const _ (hboxMeas ψ), measureReal_def, hboxVol ψ]
-        simp [ENNReal.toReal_pow, smul_eq_mul]
-    _ = (∑ ψ : V → Fin m, f fun v => (ψ v : ℕ)) / (m : ℝ) ^ Fintype.card V := by
-        rw [← Finset.mul_sum, inv_pow, div_eq_inv_mul]
+        simp [ENNReal.toReal_pow]
+    _ = ((m : ℝ) ^ Fintype.card V)⁻¹ • ∑ ψ : V → Fin m, f fun v => (ψ v : ℕ) := by
+        rw [← Finset.smul_sum, inv_pow]
 
 end unitInterval
 
