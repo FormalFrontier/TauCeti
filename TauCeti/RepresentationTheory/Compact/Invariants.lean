@@ -147,6 +147,12 @@ theorem comp_haarAverageMap (h : G) :
     _ = ∫ g, π g v ∂haarProb G := integral_mul_left_eq_self (fun g : G ↦ π g v) h
     _ = haarAverageMap π hπ v := (haarAverageMap_apply π hπ v).symm
 
+/-- The Haar average absorbs the action on the left, applied to a vector: `π h (P v) = P v`. -/
+@[simp]
+theorem comp_haarAverageMap_apply (h : G) (v : V) :
+    π h (haarAverageMap π hπ v) = haarAverageMap π hπ v :=
+  DFunLike.congr_fun (comp_haarAverageMap π hπ h) v
+
 /-- **The Haar average absorbs the action on the right**: `P ∘ π h = P`. This is right invariance of
 normalized Haar measure, which holds because a compact group is unimodular. -/
 @[simp]
@@ -162,9 +168,11 @@ theorem haarAverageMap_comp (h : G) :
 
 /-! ### The projection onto the invariants -/
 
-/-- The Haar average lands in the invariant subspace. -/
+/-- The Haar average lands in the invariant subspace. This is not itself a `simp` lemma — its
+statement is not in simp normal form, since `ContRepresentation.mem_invariants` unfolds the
+membership — but `simp` proves it from `ContRepresentation.comp_haarAverageMap_apply`. -/
 theorem haarAverageMap_mem_invariants (v : V) : haarAverageMap π hπ v ∈ π.invariants :=
-  fun h ↦ DFunLike.congr_fun (comp_haarAverageMap π hπ h) v
+  fun h ↦ comp_haarAverageMap_apply π hπ h v
 
 /-- The Haar average is the identity on the invariant subspace: the integrand is then constant, and
 normalized Haar measure has total mass one. -/
