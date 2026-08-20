@@ -88,7 +88,6 @@ theorem intCast_geckWeight_inr (k : Fin t.numRoots) :
 
 /-- The degree of a root coordinate in Geck's defining representation is the height of that root
 relative to the pinned base. -/
-@[simp]
 theorem weightDegree_geckWeight_inr (k : Fin t.numRoots) :
     t.weightDegree ht (t.geckWeight ht (Sum.inr k)) =
       ((t.rationalBase ht).height k : ℚ) := by
@@ -104,7 +103,6 @@ theorem weightDegree_geckWeight_inr_pos {k : Fin t.numRoots}
 
 /-- A Cartan-support coordinate in Geck's defining representation has weight zero, hence degree
 zero. -/
-@[simp]
 theorem weightDegree_geckWeight_inl (x : (t.rationalBase ht).support) :
     t.weightDegree ht (t.geckWeight ht (Sum.inl x)) = 0 := by
   have hzero : t.geckWeight ht (Sum.inl x) = 0 := by
@@ -114,7 +112,6 @@ theorem weightDegree_geckWeight_inl (x : (t.rationalBase ht).support) :
 
 /-- **Every simple-root Cartan row has degree one.** This is the positive-degree input for each
 numbered raising generator of the pinned Lie algebra. -/
-@[simp]
 theorem weightDegree_cartanMatrix_row (i : Fin t.rank) :
     t.weightDegree ht (fun j ↦ t.cartanMatrix i j) = 1 := by
   have hweight : (fun j ↦ t.cartanMatrix i j) =
@@ -129,7 +126,6 @@ theorem weightDegree_cartanMatrix_row (i : Fin t.rank) :
   simp
 
 /-- Every negative simple-root Cartan row has degree minus one. -/
-@[simp]
 theorem weightDegree_neg_cartanMatrix_row (i : Fin t.rank) :
     t.weightDegree ht (fun j ↦ -t.cartanMatrix i j) = -1 := by
   rw [← Pi.neg_def, map_neg, weightDegree_cartanMatrix_row]
