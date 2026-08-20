@@ -45,14 +45,15 @@ large on every plan; the two are separated by
 * `TauCeti.transportCost_comp_swap`, `TauCeti.transportCost_comm` and
   `TauCeti.transportCost_comp_prodMap` — functoriality: exchanging the two factors, symmetry for
   a symmetric cost, and invariance under measurable equivalences of the two factors;
-* `TauCeti.transportCost_dirac_left` and `TauCeti.transportCost_dirac_dirac` — the exact value
-  when the source is a Dirac measure, where the plan is unique;
+* `TauCeti.transportCost_dirac_left`, `TauCeti.transportCost_dirac_right` and
+  `TauCeti.transportCost_dirac_dirac` — the exact value when either marginal is a Dirac
+  measure, where the plan is unique;
 * `TauCeti.transportCost_map_le_lintegral` — the Monge-to-Kantorovich inequality: the transport
   cost of `μ` and a pushforward `μ.map T` is at most the cost `∫⁻ x, c (x, T x) ∂μ` of the map
   `T` itself;
 * `TauCeti.isOptimalCoupling_iff` — optimality is minimality among feasible plans, so it does
-  not depend on the value `transportCost c μ ν` being finite, with
-  `TauCeti.IsCoupling.isOptimalCoupling_dirac_left` the first family of optimal plans.
+  not depend on the value `transportCost c μ ν` being finite, with the left and right Dirac
+  lemmas giving the first families of optimal plans.
 
 ## Implementation notes
 
@@ -95,14 +96,6 @@ variable {X : Type u} {Y : Type v} {X' : Type w} {Y' : Type*}
 over the couplings `π` of `μ` and `ν`. It is `∞` when `μ` and `ν` have no coupling at all. -/
 def transportCost (c : X × Y → ℝ≥0∞) (μ : Measure X) (ν : Measure Y) : ℝ≥0∞ :=
   ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν), ∫⁻ z, c z ∂π
-
-/-- The transport cost unfolded: the iterated infimum over plans and over proofs that they
-couple the two measures. The order-theoretic interface below — `TauCeti.le_transportCost` and
-`TauCeti.transportCost_le_lintegral` — already determines the value, so this restatement is
-needed only to manipulate the infimum itself. -/
-theorem transportCost_eq_iInf (c : X × Y → ℝ≥0∞) (μ : Measure X) (ν : Measure Y) :
-    transportCost c μ ν = ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν), ∫⁻ z, c z ∂π :=
-  (rfl)
 
 /-- Every coupling bounds the transport cost from above. -/
 theorem transportCost_le_lintegral (hπ : IsCoupling π μ ν) (c : X × Y → ℝ≥0∞) :
@@ -240,10 +233,8 @@ theorem transportCost_comp_prodMap (e : X ≃ᵐ X') (f : Y ≃ᵐ Y') {c : X' �
       ∫⁻ w, c w ∂π.map (Prod.map e f) = ∫⁻ z, c (e z.1, f z.2) ∂π :=
     lintegral_map hc (e.measurable.prodMap f.measurable)
   refine le_antisymm (le_transportCost fun σ hσ ↦ ?_) (le_transportCost fun π hπ ↦ ?_)
-  · have hmap : (σ.map (Prod.map e.symm f.symm)).map (Prod.map e f) = σ := by
-      rw [Measure.map_map (e.measurable.prodMap f.measurable)
-          (e.symm.measurable.prodMap f.symm.measurable), Prod.map_comp_map, e.self_comp_symm,
-        f.self_comp_symm, Prod.map_id, Measure.map_id]
+  · have hmap : (σ.map (Prod.map e.symm f.symm)).map (Prod.map e f) = σ :=
+      MeasurableEquiv.map_map_symm (ν := σ) (e.prodCongr f)
     have hπ : IsCoupling (σ.map (Prod.map e.symm f.symm)) μ ν :=
       (isCoupling_map_prodMap_iff e f).1 (by rw [hmap]; exact hσ)
     calc transportCost (fun z ↦ c (e z.1, f z.2)) μ ν
@@ -267,6 +258,13 @@ theorem transportCost_dirac_left [IsProbabilityMeasure ν] (hc : Measurable c) (
         transportCost_le_lintegral (isCoupling_map_prodMk x ν) _
       _ = ∫⁻ y, c (x, y) ∂ν := lintegral_map hc measurable_prodMk_left
   · rw [hπ.eq_map_prodMk, lintegral_map hc measurable_prodMk_left]
+
+/-- A Dirac target has exactly one coupling with each probability source, so its transport cost
+is an integral against the source. -/
+theorem transportCost_dirac_right [IsProbabilityMeasure μ] (hc : Measurable c) (y : Y) :
+    transportCost c μ (Measure.dirac y) = ∫⁻ x, c (x, y) ∂μ := by
+  rw [← transportCost_comp_swap hc μ (Measure.dirac y)]
+  exact transportCost_dirac_left (hc.comp measurable_swap) y
 
 /-- Two Dirac measures have exactly one coupling, so their transport cost is the value of the
 cost at the pair. -/
@@ -330,5 +328,18 @@ theorem IsCoupling.isOptimalCoupling_dirac_left [IsProbabilityMeasure ν] (hc : 
   toIsCoupling := hπ
   lintegral_eq := by
     rw [hπ.eq_map_prodMk, lintegral_map hc measurable_prodMk_left, transportCost_dirac_left hc]
+
+/-- Every coupling into a Dirac measure is optimal, because there is only one. -/
+theorem IsCoupling.isOptimalCoupling_dirac_right [IsProbabilityMeasure μ] (hc : Measurable c)
+    {y : Y} (hπ : IsCoupling π μ (Measure.dirac y)) :
+    IsOptimalCoupling c π μ (Measure.dirac y) := by
+  have hπ' : IsOptimalCoupling (fun z : Y × X ↦ c z.swap) (π.map Prod.swap)
+      (Measure.dirac y) μ :=
+    hπ.swap.isOptimalCoupling_dirac_left (hc.comp measurable_swap)
+  have hπ'' := hπ'.swap (hc.comp measurable_swap)
+  have hmap : (π.map Prod.swap).map Prod.swap = π :=
+    MeasurableEquiv.map_map_symm (ν := π) MeasurableEquiv.prodComm
+  rw [hmap] at hπ''
+  simpa [Function.comp_def] using hπ''
 
 end TauCeti
