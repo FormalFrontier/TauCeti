@@ -31,9 +31,12 @@ of the two formulations is not needed.
 
 ## Main declarations
 
+* `TauCeti.Groupoid.natTrans_ext`: a natural transformation is determined by its component at the
+  weakly initial object.
 * `TauCeti.Groupoid.natIsoOfEnd`: an equivariant isomorphism of the values at a weakly initial
   object of a groupoid extends to a natural isomorphism.
 * `TauCeti.Groupoid.natIsoOfEnd_app_self`: the extension restricts to the given isomorphism.
+* `TauCeti.Groupoid.eq_natIsoOfEnd`: the extension is the only natural isomorphism doing so.
 -/
 
 public section
@@ -47,6 +50,20 @@ namespace TauCeti.Groupoid
 
 variable {C : Type u} [CategoryTheory.Groupoid.{v} C] {D : Type w} [Category.{t} D]
   {F G : C ⥤ D} {x₀ : C} (hconn : ∀ x : C, Nonempty (x₀ ⟶ x))
+
+include hconn in
+/-- A natural transformation between functors out of a groupoid is determined by its component at
+a weakly initial object. -/
+theorem natTrans_ext {α β : F ⟶ G} (h : α.app x₀ = β.app x₀) : α = β := by
+  ext x
+  obtain ⟨f⟩ := hconn x
+  rw [← cancel_epi (F.map f), α.naturality f, β.naturality f, h]
+
+include hconn in
+/-- A natural isomorphism between functors out of a groupoid is determined by its component at
+a weakly initial object. -/
+theorem natIso_ext {α β : F ≅ G} (h : α.app x₀ = β.app x₀) : α = β :=
+  Iso.ext (natTrans_ext hconn (by simpa using congrArg Iso.hom h))
 
 /-- A chosen isomorphism from the weakly initial object `x₀` to an arbitrary object. -/
 private def chosenIso (x : C) : x₀ ≅ x :=
@@ -88,8 +105,14 @@ theorem natIsoOfEnd_app_self (e : F.obj x₀ ≅ G.obj x₀)
     (natIsoOfEnd hconn e he).app x₀ = e := by
   apply Iso.ext
   -- Compare the hom components using the chosen transport formula.
-  change (natIsoOfEnd hconn e he).hom.app x₀ = e.hom
-  rw [natIsoOfEnd_hom_app, ← he (chosenIso hconn x₀).hom, ← Category.assoc, ← F.map_comp,
-    Iso.inv_hom_id, F.map_id, Category.id_comp]
+  rw [Iso.app_hom, natIsoOfEnd_hom_app, ← he (chosenIso hconn x₀).hom, ← Category.assoc,
+    ← F.map_comp, Iso.inv_hom_id, F.map_id, Category.id_comp]
+
+/-- The extension is the only natural isomorphism restricting to the given one at the weakly
+initial object. -/
+theorem eq_natIsoOfEnd (e : F.obj x₀ ≅ G.obj x₀)
+    (he : ∀ g : x₀ ⟶ x₀, F.map g ≫ e.hom = e.hom ≫ G.map g) (α : F ≅ G) (hα : α.app x₀ = e) :
+    α = natIsoOfEnd hconn e he :=
+  natIso_ext hconn (by rw [hα, natIsoOfEnd_app_self])
 
 end TauCeti.Groupoid
