@@ -13,6 +13,9 @@ public import Mathlib.Analysis.Distribution.TestFunction
 -- uniqueness, so downstream importers pay for neither.
 import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
+-- This import is public: `Gradient` supplies the `∇` of the weak derivative of a test function
+-- below, together with the Riesz correspondence `innerSL` in which that statement is phrased.
+public import Mathlib.Analysis.Calculus.Gradient.Basic
 
 /-!
 # Weak derivatives on an open set
@@ -137,6 +140,8 @@ weaken them for no gain.
   `TauCeti.hasWeakFDerivOn_of_differentiableOn`: classical derivatives that are locally integrable
   on `Ω` are weak derivatives.
 * `TauCeti.hasWeakLineDerivOn_const`: against a Haar measure, a constant has weak derivative `0`.
+* `TauCeti.hasWeakFDerivOn_testFunction`: a test function has weak derivative the linear
+  functional represented by its gradient.
 * `TauCeti.HasWeakLineDerivOn.ae_eq` and `TauCeti.HasWeakFDerivOn.ae_eq`: uniqueness almost
   everywhere on `Ω`.
 * `TauCeti.HasWeakLineDerivOn.ae_eq_lineDeriv` and `TauCeti.HasWeakFDerivOn.ae_eq_fderiv`: where
@@ -160,7 +165,7 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 theorem lineDeriv_eq_zero_of_notMem_tsupport (φ : 𝓓(Ω, ℝ)) {x : E}
     (hx : x ∉ tsupport (φ : E → ℝ)) (v : E) : lineDeriv ℝ (φ : E → ℝ) x v = 0 := by
   have hd : DifferentiableAt ℝ (φ : E → ℝ) x :=
-    (φ.contDiff.differentiable (by simp)).differentiableAt
+    (φ.contDiff.differentiable (by simp)) x
   rw [hd.lineDeriv_eq_fderiv, fderiv_of_notMem_tsupport ℝ hx]
   simp
 
@@ -515,7 +520,7 @@ theorem hasWeakLineDerivOn_of_hasLineDerivAt (hu : LocallyIntegrableOn u Ω μ)
     (hu' : LocallyIntegrableOn u' Ω μ) (h : ∀ x ∈ (Ω : Set E), HasLineDerivAt ℝ u (u' x) x v) :
     HasWeakLineDerivOn μ Ω u u' v := by
   refine ⟨‹CompleteSpace F›, hu, hu', fun φ => ?_⟩
-  have hφd : Differentiable ℝ (φ : E → ℝ) := φ.contDiff.differentiable (by simp)
+  have hφd := φ.contDiff.differentiable (by simp)
   have key := integral_bilinear_hasLineDerivAt_right_eq_neg_left_of_integrable
     (μ := μ) (f := u) (f' := u') (g := (φ : E → ℝ))
     (g' := fun x => lineDeriv ℝ (φ : E → ℝ) x v) (v := v)
@@ -550,6 +555,35 @@ theorem hasWeakFDerivOn_of_differentiableOn (hu : LocallyIntegrableOn u Ω μ)
     fun x hx => (h x hx).hasFDerivAt.hasLineDerivAt v
 
 end Classical
+
+/-! ### Test functions are weakly differentiable
+
+A test function is the basic example: it is smooth, so its classical derivative is also a weak
+one. On an inner product space the derivative is recorded through its Riesz representative, the
+gradient, which is the form in which the Sobolev spaces consume it. -/
+
+section TestFunction
+
+variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+  [FiniteDimensional ℝ E] [BorelSpace E] {μ : Measure E} [μ.IsAddHaarMeasure] {Ω : Opens E}
+
+open scoped Gradient InnerProductSpace
+
+/-- **A test function is weakly differentiable**, with weak derivative the continuous linear
+functional represented by its gradient. -/
+theorem hasWeakFDerivOn_testFunction (φ : 𝓓(Ω, ℝ)) :
+    HasWeakFDerivOn μ Ω (φ : E → ℝ) fun x => innerSL ℝ (∇ (φ : E → ℝ) x) := by
+  have hcoe : (fun x => innerSL ℝ (∇ (φ : E → ℝ) x)) = fderiv ℝ (φ : E → ℝ) := by
+    funext x
+    ext y
+    simp [inner_gradient_left (𝕜 := ℝ) (f := (φ : E → ℝ)) (x := x) (y := y)]
+  rw [hcoe]
+  refine hasWeakFDerivOn_of_differentiableOn ?_ ?_ fun x _ =>
+    (φ.contDiff.differentiable (by simp)) x
+  · exact φ.continuous.locallyIntegrable.locallyIntegrableOn _
+  · exact (φ.contDiff.continuous_fderiv (by simp)).locallyIntegrable.locallyIntegrableOn _
+
+end TestFunction
 
 /-! ### Uniqueness -/
 

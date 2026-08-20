@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.Finite.Basic
-public import Mathlib.FieldTheory.RatFunc.IntermediateField
+public import TauCeti.FieldTheory.RatFunc.PowerTower
 
 /-!
 # The `q`-th powers in a rational function field
@@ -17,13 +17,12 @@ subfield `K(X^q)`, and `K(X)` has degree exactly `q` over it.
 
 ## Main results
 
-* `TauCeti.RatFunc.finrank_adjoin_X_pow`: `[K(X) : K(X^n)] = n`, over any field and for any `n`.
 * `TauCeti.FiniteField.fieldRange_frobeniusAlgHom_ratFunc`: the image of the `q`-power map on
   `K(X)` is `K⟮X ^ q⟯`.
-* `TauCeti.FiniteField.finrank_fieldRange_frobeniusAlgHom_ratFunc`: `[K(X) : K(X^q)] = q`, the two
-  above combined.
+* `TauCeti.FiniteField.finrank_fieldRange_frobeniusAlgHom_ratFunc`: `[K(X) : K(X^q)] = q`, by
+  combining that description with the general power-tower degree.
 
-All three are `@[simp]`.
+Both are `@[simp]`.
 
 ## Roadmap
 
@@ -53,7 +52,8 @@ Changes from the source. Both are `private` there, inside the file that builds t
 isogeny, and are stated with an elliptic curve and a `DecidableEq K` in scope; neither is used by
 either proof, and neither statement mentions a curve. The degree is separated out here as
 `RatFunc.finrank_adjoin_X_pow`, over an arbitrary field and exponent, since nothing in it is about
-the Frobenius.
+the Frobenius. That general result now lives in `TauCeti.FieldTheory.RatFunc.PowerTower`, so
+importers needing no finite-field theory do not acquire that dependency.
 
 Neither proof is ported. The source computes the field range by hand, passing an element of `K(X)`
 to its numerator and denominator and applying `FiniteField.expand_card` to each; Mathlib's
@@ -68,22 +68,6 @@ public section
 open Polynomial
 
 namespace TauCeti
-
-namespace RatFunc
-
-/-- **`[K(X) : K(X ^ n)] = n`** for any field `K` and any `n`. At `n = 0` both sides read `0`:
-`K⟮1⟯` is `K`, over which `K(X)` is infinite-dimensional, and `Module.finrank` reports `0`. -/
-@[simp]
-theorem finrank_adjoin_X_pow (K : Type*) [Field K] (n : ℕ) :
-    Module.finrank (IntermediateField.adjoin K {(_root_.RatFunc.X : _root_.RatFunc K) ^ n})
-      (_root_.RatFunc K) = n := by
-  -- `X ^ n` as the image of a polynomial, so that `finrank_eq_max_natDegree` reads its
-  -- numerator and denominator off `X ^ n` and `1`
-  rw [← _root_.RatFunc.algebraMap_X, ← map_pow, _root_.RatFunc.finrank_eq_max_natDegree,
-    _root_.RatFunc.num_algebraMap, _root_.RatFunc.denom_algebraMap, natDegree_X_pow,
-    natDegree_one, Nat.max_zero]
-
-end RatFunc
 
 namespace FiniteField
 

@@ -47,6 +47,8 @@ boundary regularity of `Ω` is used.
 * `TauCeti.W1p`: the corresponding complete normed space.
 * `TauCeti.mem_w1pSubmodule_iff_hasWeakFDerivOn`: membership is exactly weak
   differentiability of the value component with the recorded gradient.
+* `TauCeti.W1p.valueL` and `TauCeti.W1p.gradientL`: the two components as continuous linear
+  projections from the Sobolev space.
 
 ## References
 
