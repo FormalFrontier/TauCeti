@@ -26,10 +26,10 @@ identification.
 
 ## Main declarations
 
-* `TauCeti.GaloisDescent.groupAlgebraInvariants_isIntegral`: the split group algebra is integral
-  over its invariant algebra.
-* `TauCeti.GaloisDescent.groupAlgebraInvariants_moduleFinite`: for a finitely generated exponent
-  group, the split group algebra is module-finite over its invariant algebra.
+* `TauCeti.GaloisDescent.isIntegral_groupAlgebra_over_groupAlgebraInvariants`: the split group
+  algebra is integral over its invariant algebra.
+* `TauCeti.GaloisDescent.moduleFinite_groupAlgebra_over_groupAlgebraInvariants`: for a finitely
+  generated exponent group, the split group algebra is module-finite over its invariant algebra.
 * `TauCeti.GaloisDescent.instFiniteTypeGroupAlgebraInvariants`: the invariant algebra is finite
   type over the ground field.
 
@@ -56,7 +56,7 @@ variable [Field k] [Field L] [Algebra k L] [AddCommGroup M]
 
 /-- The split group algebra is integral over the invariant algebra when its automorphism group
 is finite. -/
-theorem groupAlgebraInvariants_isIntegral
+theorem isIntegral_groupAlgebra_over_groupAlgebraInvariants
     [Finite (L ≃ₐ[k] L)] (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     Algebra.IsIntegral (groupAlgebraInvariants rho)
       (MonoidAlgebra L (Multiplicative M)) := by
@@ -84,7 +84,7 @@ theorem groupAlgebraInvariants_isIntegral
 
 /-- If `L/k` is finite and the exponent group is finitely generated, the split group
 algebra is finite as a module over its invariant algebra. -/
-theorem groupAlgebraInvariants_moduleFinite
+theorem moduleFinite_groupAlgebra_over_groupAlgebraInvariants
     [FiniteDimensional k L] [Module.Finite ℤ M]
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     Module.Finite (groupAlgebraInvariants rho)
@@ -100,7 +100,7 @@ theorem groupAlgebraInvariants_moduleFinite
       (groupAlgebraInvariants rho) (MonoidAlgebra L (Multiplicative M))
   let _ : Algebra.IsIntegral (groupAlgebraInvariants rho)
       (MonoidAlgebra L (Multiplicative M)) :=
-    groupAlgebraInvariants_isIntegral rho
+    isIntegral_groupAlgebra_over_groupAlgebraInvariants rho
   exact Algebra.IsIntegral.finite
 
 /-- The invariant algebra of the automorphism action on the group algebra of a finitely generated
@@ -116,7 +116,7 @@ noncomputable instance instFiniteTypeGroupAlgebraInvariants
       (Module.Finite.finiteType L) inferInstance
   let _ : Module.Finite (groupAlgebraInvariants rho)
       (MonoidAlgebra L (Multiplicative M)) :=
-    groupAlgebraInvariants_moduleFinite rho
+    moduleFinite_groupAlgebra_over_groupAlgebraInvariants rho
   exact ⟨fg_of_fg_of_fg (A := k) (B := groupAlgebraInvariants rho)
     (C := MonoidAlgebra L (Multiplicative M))
       Algebra.FiniteType.out Module.Finite.fg_top (fun _ _ h ↦ Subtype.ext h)⟩
