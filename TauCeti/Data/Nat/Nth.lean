@@ -16,7 +16,7 @@ times. Mathlib's `Nat.nth_count` identifies it whenever a witness is available: 
 bookkeeping — the *only if* half, including the degenerate branch — which is what a case analysis
 on the value of `nth p k` needs.
 
-`TauCeti.nth_eq_iff` supplies it: `nth p k = m` exactly when `m` is a counting witness, or else
+`TauCeti.Nat.nth_eq_iff` supplies it: `nth p k = m` exactly when `m` is a counting witness, or else
 `m = 0` and no counting witness exists at all. The two branches are mutually exclusive, and a
 counting witness is unique when it exists, because `Nat.count p` strictly increases across a point
 where `p` holds.
@@ -29,25 +29,24 @@ finitely many of the values of `x`.
 
 ## Main results
 
-* `TauCeti.nth_eq_zero_of_forall_count_ne`: with no counting witness, `Nat.nth` takes its junk
+* `TauCeti.Nat.nth_eq_zero_of_forall_count_ne`: with no counting witness, `Nat.nth` takes its junk
   value.
-* `TauCeti.nth_eq_iff`: the fibres of `Nat.nth p`.
+* `TauCeti.Nat.nth_eq_iff`: the fibres of `Nat.nth p`.
 -/
 
 public section
 
 namespace TauCeti
 
+namespace Nat
+
 /-- **Without a counting witness `Nat.nth` is junk.** If no `n` satisfying `p` has exactly `k`
 predecessors satisfying `p`, then `p` holds at most `k` times, so `Nat.nth p k` is `0`. -/
 theorem nth_eq_zero_of_forall_count_ne {p : ℕ → Prop} [DecidablePred p] {k : ℕ}
     (h : ∀ n, p n → Nat.count p n ≠ k) : Nat.nth p k = 0 := by
-  by_cases hf : (Set.ofPred p).Finite
-  · by_cases hlt : k < hf.toFinset.card
-    · exact absurd (Nat.count_nth_of_lt_card_finite hf hlt)
-        (h _ (Nat.nth_mem_of_lt_card hf hlt))
-    · exact Nat.nth_of_card_le hf (not_lt.1 hlt)
-  · exact absurd (Nat.count_nth_of_infinite hf k) (h _ (Nat.nth_mem_of_infinite hf k))
+  by_contra h'
+  exact h _ (Nat.nth_mem_of_ne_zero h')
+    (Nat.count_nth fun hf => Nat.lt_card_toFinset_of_nth_ne_zero h' hf)
 
 /-- **The fibres of `Nat.nth p`.** The value `Nat.nth p k` is `m` exactly when either `m` is the
 counting witness for `k` — it satisfies `p` and has exactly `k` predecessors satisfying `p` — or
@@ -67,5 +66,7 @@ theorem nth_eq_iff {p : ℕ → Prop} [DecidablePred p] {k m : ℕ} :
   · rintro (⟨hm, hcm⟩ | ⟨rfl, h⟩)
     · rw [← hcm, Nat.nth_count hm]
     · exact nth_eq_zero_of_forall_count_ne fun n hn hcn => h n ⟨hn, hcn⟩
+
+end Nat
 
 end TauCeti
