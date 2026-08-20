@@ -10,8 +10,8 @@ module
 public import TauCeti.RepresentationTheory.ClassicalGroups.Weight.Basic
 -- `TauCeti.IsRationalRep` and its basis-free coordinate-entry form.
 public import TauCeti.RepresentationTheory.ClassicalGroups.Rational
--- `TauCeti.laurentFunctions`, `TauCeti.linearIndependent_weightCharHom` and the restriction of a
--- rational function to the diagonal torus.
+-- The restriction of a rational function to the diagonal torus; this module also re-exports
+-- `TauCeti.laurentFunctions` and `TauCeti.linearIndependent_weightCharHom`.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.LaurentFunctions
 
 /-!
@@ -40,6 +40,11 @@ of distinct characters
 acts on the image of `A l` by the character of `l`, so that image lies in the weight space of `l`
 (`TauCeti.apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul`). Evaluating the expansion at `t = 1`
 writes the identity as `∑_l A l`, so every vector is a sum of weight vectors.
+
+The tensor, symmetric and exterior powers of the standard representation are polynomial
+(`TauCeti.isPolynomialRep_tensorPowerRep` and its companions), hence rational
+(`TauCeti.IsPolynomialRep.isRationalRep`), so their decompositions are instances of the theorem
+below and are not restated as separate declarations.
 
 The pinned roadmap signature carries `[FiniteDimensional ℂ W]` as well. It is dropped here: it is
 implied by `TauCeti.IsRationalRep.finite`, and an unused hypothesis on the statement would be both
@@ -109,9 +114,10 @@ theorem IsRationalRep.exists_forall_diagGL_eq_sum_smul (h : IsRationalRep ρ) :
   rw [map_smul, LinearEquiv.apply_symm_apply]
   rw [Matrix.smul_apply, Matrix.of_apply, smul_eq_mul, mul_comm]
 
-/-- **The coefficients of a Laurent expansion are weight projections.** If the torus acts through
-a finite sum `∑ l ∈ S, (∏ i, tᵢ ^ lᵢ) • A l`, then every value of `A l` is a weight vector of
-weight `l`.
+/-- **The coefficients of a Laurent expansion take their values in the weight spaces.** If the
+torus acts through a finite sum `∑ l ∈ S, (∏ i, tᵢ ^ lᵢ) • A l`, then every value of `A l` is a
+weight vector of weight `l`. Nothing is claimed here about `A l` being idempotent, or acting as
+the identity on the weight space of `l`; only its image is located.
 
 The proof compares the expansion of `ρ (diagGL (s * t))` with the composite
 `ρ (diagGL s) ∘ ρ (diagGL t)`: both are combinations of the characters with `End`-valued
@@ -191,20 +197,5 @@ theorem IsRationalRep.isInternal_weightSpace (h : IsRationalRep ρ) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace ρ l :=
   (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
     ⟨iSupIndep_weightSpace weightChar_injective ρ, h.iSup_weightSpace_eq_top⟩
-
-/-- The tensor powers of the standard representation decompose into weight spaces. -/
-theorem isInternal_weightSpace_tensorPowerRep (n d : ℕ) :
-    DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (tensorPowerRep ℂ n d) l :=
-  (isPolynomialRep_tensorPowerRep n d).isRationalRep.isInternal_weightSpace
-
-/-- The symmetric powers of the standard representation decompose into weight spaces. -/
-theorem isInternal_weightSpace_symPowerRep (n d : ℕ) :
-    DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (symPowerRep ℂ n d) l :=
-  (isPolynomialRep_symPowerRep n d).isRationalRep.isInternal_weightSpace
-
-/-- The exterior powers of the standard representation decompose into weight spaces. -/
-theorem isInternal_weightSpace_extPowerRep (n d : ℕ) :
-    DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (extPowerRep ℂ n d) l :=
-  (isPolynomialRep_extPowerRep n d).isRationalRep.isInternal_weightSpace
 
 end TauCeti
