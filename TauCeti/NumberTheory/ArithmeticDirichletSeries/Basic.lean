@@ -88,6 +88,7 @@ theorem zeroExtend_bot (f : IdealArithmeticFunction K) : f.zeroExtend ⊥ = 0 :=
   simp [zeroExtend]
 
 /-- Away from `⊥`, the zero extension is the original ideal arithmetic function. -/
+@[simp]
 theorem zeroExtend_of_ne (f : IdealArithmeticFunction K) {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
     f.zeroExtend I = f ⟨I, by simpa using hI⟩ := by
   rw [zeroExtend]
@@ -106,12 +107,13 @@ theorem restrict_zeroExtend (f : IdealArithmeticFunction K) : restrict f.zeroExt
   simp
 
 /-- Extending a restriction recovers a function on all ideals exactly when it vanishes at `⊥`. -/
+@[simp]
 theorem zeroExtend_restrict {g : Ideal (𝓞 K) → ℂ} (hg : g ⊥ = 0) :
     (restrict g).zeroExtend = g := by
   funext I
   by_cases hI : I = ⊥
   · simpa [hI] using hg.symm
-  · simp [zeroExtend_of_ne, hI]
+  · simp [hI]
 
 /-- A function on all ideals is a zero extension if and only if it vanishes at `⊥`. -/
 theorem exists_zeroExtend_eq_iff {g : Ideal (𝓞 K) → ℂ} :
@@ -164,41 +166,41 @@ theorem zeroExtend_ne_zero (f : IdealArithmeticFunction K) (hf : ∀ I, f I ≠ 
 @[simp]
 theorem zeroExtend_zero : zeroExtend (0 : IdealArithmeticFunction K) = 0 := by
   funext I
-  by_cases hI : I = ⊥ <;> simp [hI, zeroExtend_of_ne]
+  by_cases hI : I = ⊥ <;> simp [hI]
 
 /-- Zero extension preserves pointwise addition. -/
 @[simp]
 theorem zeroExtend_add (f g : IdealArithmeticFunction K) :
     zeroExtend (f + g) = f.zeroExtend + g.zeroExtend := by
   funext I
-  by_cases hI : I = ⊥ <;> simp [hI, zeroExtend_of_ne]
+  by_cases hI : I = ⊥ <;> simp [hI]
 
 /-- Zero extension preserves pointwise negation. -/
 @[simp]
 theorem zeroExtend_neg (f : IdealArithmeticFunction K) : zeroExtend (-f) = -f.zeroExtend := by
   funext I
-  by_cases hI : I = ⊥ <;> simp [hI, zeroExtend_of_ne]
+  by_cases hI : I = ⊥ <;> simp [hI]
 
 /-- Zero extension preserves pointwise subtraction. -/
 @[simp]
 theorem zeroExtend_sub (f g : IdealArithmeticFunction K) :
     zeroExtend (f - g) = f.zeroExtend - g.zeroExtend := by
   funext I
-  by_cases hI : I = ⊥ <;> simp [hI, zeroExtend_of_ne]
+  by_cases hI : I = ⊥ <;> simp [hI]
 
 /-- Zero extension preserves pointwise complex scalar multiplication. -/
 @[simp]
 theorem zeroExtend_smul (c : ℂ) (f : IdealArithmeticFunction K) :
     zeroExtend (c • f) = c • f.zeroExtend := by
   funext I
-  by_cases hI : I = ⊥ <;> simp [hI, zeroExtend_of_ne]
+  by_cases hI : I = ⊥ <;> simp [hI]
 
 /-- Zero extension preserves pointwise multiplication. -/
 @[simp]
 theorem zeroExtend_mul (f g : IdealArithmeticFunction K) :
     zeroExtend (f * g) = f.zeroExtend * g.zeroExtend := by
   funext I
-  by_cases hI : I = ⊥ <;> simp [hI, zeroExtend_of_ne]
+  by_cases hI : I = ⊥ <;> simp [hI]
 
 /-- The everywhere-one function on all ideals is not the zero extension of an ideal arithmetic
 function, since its value at `⊥` is one rather than zero. This is the roadmap's zero-ideal
