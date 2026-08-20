@@ -200,21 +200,43 @@ theorem natCard_mul_relIndex {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ 
     ← index_intermediateCarrierOfDiscriminantSubgroup K]
   exact index_mul_relIndex ((L.intermediateCarrierOfDiscriminantSubgroup_le_iff H K).mpr h)
 
+/-- The carrier glued along `H`, pulled back to the dual carrier, is the inverse image of `H`
+under the quotient map. -/
+private theorem comap_subtype_intermediateCarrierOfDiscriminantSubgroup
+    (H : AddSubgroup L.DiscriminantGroup) :
+    (L.intermediateCarrierOfDiscriminantSubgroup H).1.toAddSubgroup.comap
+        L.dualCarrier.subtype.toAddMonoidHom = H.comap L.carrierInDual.mkQ.toAddMonoidHom := by
+  ext x
+  simp [L.coe_mem_intermediateCarrierOfDiscriminantSubgroup_iff H x]
+
+/-- The dual carrier is the range of its own inclusion, read as a subgroup of the ambient
+space. -/
+private theorem range_dualCarrier_subtype :
+    L.dualCarrier.subtype.toAddMonoidHom.range = L.dualCarrier.toAddSubgroup := by
+  ext x
+  simp
+
+/-- **The relative index of two glued intermediate carriers is the relative index of the two
+subgroups of the discriminant group.** Both sides are read off the same quotient of the dual
+carrier, so no finiteness and no containment of `H` in `K` is needed. -/
+theorem relIndex_intermediateCarrierOfDiscriminantSubgroup
+    (H K : AddSubgroup L.DiscriminantGroup) :
+    relIndex (L.intermediateCarrierOfDiscriminantSubgroup H)
+      (L.intermediateCarrierOfDiscriminantSubgroup K) = H.relIndex K := by
+  have hmap : ((L.intermediateCarrierOfDiscriminantSubgroup K).1.toAddSubgroup.comap
+      L.dualCarrier.subtype.toAddMonoidHom).map L.dualCarrier.subtype.toAddMonoidHom =
+      (L.intermediateCarrierOfDiscriminantSubgroup K).1.toAddSubgroup :=
+    AddSubgroup.map_comap_eq_self (by
+      rw [range_dualCarrier_subtype]
+      exact fun x hx ↦ (L.intermediateCarrierOfDiscriminantSubgroup K).2.2 hx)
+  rw [relIndex, ← hmap, ← AddSubgroup.relIndex_comap,
+    comap_subtype_intermediateCarrierOfDiscriminantSubgroup,
+    comap_subtype_intermediateCarrierOfDiscriminantSubgroup, AddSubgroup.relIndex_comap,
+    AddSubgroup.map_comap_eq_self_of_surjective L.carrierInDual.mkQ_surjective]
+
 section IsNondegenerate
 
 variable [L.IsNondegenerate]
-
-/-- **The relative index of two glued intermediate carriers is the relative index of the two
-subgroups of the discriminant group.** Nondegeneracy enters only through the finiteness of the
-discriminant group, which is what lets the order of `H` be cancelled. -/
-theorem relIndex_intermediateCarrierOfDiscriminantSubgroup
-    {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ K) :
-    relIndex (L.intermediateCarrierOfDiscriminantSubgroup H)
-      (L.intermediateCarrierOfDiscriminantSubgroup K) = H.relIndex K := by
-  refine Nat.eq_of_mul_eq_mul_left (n := Nat.card H) Nat.card_pos ?_
-  rw [natCard_mul_relIndex h, AddSubgroup.relIndex,
-    ← Nat.card_congr (AddSubgroup.addSubgroupOfEquivOfLe h).toEquiv]
-  exact (AddSubgroup.card_mul_index _).symm
 
 /-- The index of the dual carrier is the discriminant of the lattice. -/
 @[simp]
