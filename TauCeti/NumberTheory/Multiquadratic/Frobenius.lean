@@ -7,7 +7,7 @@ module
 
 public import TauCeti.NumberTheory.NumberField.Frobenius
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Group
-import TauCeti.FieldTheory.IntermediateField.AdjoinEqTop
+import TauCeti.FieldTheory.IntermediateField.Adjoin.EqTop
 
 /-!
 # The Frobenius acts on multiquadratic generators by Legendre symbols

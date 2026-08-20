@@ -33,24 +33,27 @@ four branch equations are simp lemmas rather than the selector body being expose
 
 * `TauCeti.SuzukiReeIndex.lengthPerm` selects the length-exchanging permutation used by the
   exceptional isogeny.
+* `TauCeti.SuzukiReeIndex.exponent` is `1` on long simple roots and the characteristic on short
+  simple roots.
 * `TauCeti.SuzukiReeIndex.lengthPerm_suzuki`, `TauCeti.SuzukiReeIndex.lengthPerm_reeG2`,
   `TauCeti.SuzukiReeIndex.lengthPerm_reeF4`, and `TauCeti.SuzukiReeIndex.lengthPerm_tits` are the
   branch equations naming the selected permutation on each half-Frobenius family.
 * `TauCeti.SuzukiReeIndex.isLongSimpleRoot_lengthPerm` proves that this permutation exchanges long
-  and short simple roots.
-* `TauCeti.SuzukiReeIndex.exponent` is `1` on long simple roots and the characteristic on short
-  simple roots.
-* `TauCeti.SuzukiReeIndex.exponent_of_isLongSimpleRoot` and
-  `TauCeti.SuzukiReeIndex.exponent_of_not_isLongSimpleRoot` are the two computation rules used by
-  the exceptional-isogeny equations.
-* `TauCeti.SuzukiReeIndex.exponent_eq_one_iff` and
-  `TauCeti.SuzukiReeIndex.exponent_eq_characteristic_iff` characterize the two values without
-  unfolding the definition.
-
-This is the Suzuki--Ree numbered-data part of milestone I0 in
-`TauCetiRoadmap/CFSGStatement/README.md`. The exponent convention follows Carter, *Simple Groups of
-Lie Type*. The permutations and numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters
-4--6*, plates II, VIII, and IX, as fixed by the CFSG and root-systems roadmaps.
+  and short simple roots, and `TauCeti.SuzukiReeIndex.lengthPerm_lengthPerm` that it is an
+  involution.
+* `TauCeti.SuzukiReeIndex.cartanMatrix_lengthPerm`: it carries the Cartan matrix of the underlying
+  diagram to the transposed matrix, so, unlike the graph automorphisms of
+  `TauCeti.GraphTwistedIndex.diagramPerm`, it is not a diagram symmetry.
+* `TauCeti.SuzukiReeIndex.exponent_of_isLongSimpleRoot`,
+  `TauCeti.SuzukiReeIndex.exponent_of_not_isLongSimpleRoot`,
+  `TauCeti.SuzukiReeIndex.exponent_eq_one_iff` and
+  `TauCeti.SuzukiReeIndex.exponent_eq_characteristic_iff` compute and characterize the two
+  exponents, and `TauCeti.SuzukiReeIndex.exponent_mul_exponent_lengthPerm` multiplies the two
+  exponents of a length-exchanged pair to the characteristic.
+The permutation, the exponents, and their branch equations are the Suzuki--Ree numbered-data part
+of milestone I0 in `TauCetiRoadmap/CFSGStatement/README.md`. The exponent convention follows Carter,
+*Simple Groups of Lie Type*. The permutations and numbering follow Bourbaki, *Lie Groups and Lie
+Algebras, Chapters 4--6*, plates II, VIII, and IX, as fixed by the CFSG and root-systems roadmaps.
 -/
 
 public section
@@ -228,6 +231,98 @@ theorem exponent_eq_one_or_eq_characteristic (e : SuzukiReeIndex) (i : Fin e.1.r
   by_cases hi : e.1.dynkinType.IsLongSimpleRoot i
   · exact Or.inl (exponent_of_isLongSimpleRoot e i hi)
   · exact Or.inr (exponent_of_not_isLongSimpleRoot e i hi)
+
+/-! ### The length permutation is an involution transposing the Cartan matrix -/
+
+-- As for `isLongSimpleRoot_reindexPerm`, transporting a property of a pinned permutation together
+-- with its index type avoids dependent rewriting through `DynkinType.rank`.
+private theorem involutive_reindexPerm {t u : DynkinType} (h : t = u) (p : Equiv.Perm (Fin u.rank))
+    (hp : ∀ j, p (p j) = j) (i : Fin t.rank) :
+    ((finCongr (congrArg DynkinType.rank h)).symm.permCongr p)
+        (((finCongr (congrArg DynkinType.rank h)).symm.permCongr p) i) = i := by
+  subst u
+  simpa [finCongr_refl, Equiv.permCongr_def] using hp i
+
+private theorem cartanMatrix_reindexPerm {t u : DynkinType} (h : t = u)
+    (p : Equiv.Perm (Fin u.rank))
+    (hp : ∀ j k, u.cartanMatrix (p j) (p k) = u.cartanMatrix k j) (i j : Fin t.rank) :
+    t.cartanMatrix (((finCongr (congrArg DynkinType.rank h)).symm.permCongr p) i)
+        (((finCongr (congrArg DynkinType.rank h)).symm.permCongr p) j) =
+      t.cartanMatrix j i := by
+  subst u
+  simpa [finCongr_refl, Equiv.permCongr_def] using hp i j
+
+/-- The length permutation selected by a Suzuki--Ree index is an involution: the exceptional
+isogeny exchanges the long and short simple roots, so applying it twice returns each node. -/
+@[simp]
+theorem lengthPerm_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
+    e.lengthPerm (e.lengthPerm i) = i := by
+  simp only [ValidLieTypeIndex.rank] at i ⊢
+  obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
+  cases d <;> try simp at hhalf
+  case suzuki =>
+    rw [lengthPerm_suzuki]
+    exact involutive_reindexPerm (LieTypeIndex.dynkinType_suzuki _) lengthPermRankTwo
+      lengthPermRankTwo_lengthPermRankTwo i
+  case reeG2 =>
+    rw [lengthPerm_reeG2]
+    exact involutive_reindexPerm (LieTypeIndex.dynkinType_reeG2 _) lengthPermRankTwo
+      lengthPermRankTwo_lengthPermRankTwo i
+  case reeF4 =>
+    rw [lengthPerm_reeF4]
+    exact involutive_reindexPerm (LieTypeIndex.dynkinType_reeF4 _) lengthPermF4
+      lengthPermF4_lengthPermF4 i
+  case tits =>
+    rw [lengthPerm_tits]
+    exact involutive_reindexPerm LieTypeIndex.dynkinType_tits lengthPermF4
+      lengthPermF4_lengthPermF4 i
+
+/-- The length permutation selected by a Suzuki--Ree index carries the Cartan matrix of its
+underlying untwisted diagram to the transposed matrix.
+
+This is what distinguishes it from the graph automorphisms of
+`TauCeti.GraphTwistedIndex.diagramPerm`, which preserve their Cartan matrix
+(`TauCeti.GraphTwistedIndex.cartanMatrix_diagramPerm`). A permutation transposing the Cartan matrix
+is a symmetry of the *dual* diagram, so it is not realized by an automorphism of the pinned group;
+it is realized by a special isogeny, which is why these four families need a half-Frobenius. -/
+@[simp]
+theorem cartanMatrix_lengthPerm (e : SuzukiReeIndex) (i j : Fin e.1.rank) :
+    e.1.dynkinType.cartanMatrix (e.lengthPerm i) (e.lengthPerm j) =
+      e.1.dynkinType.cartanMatrix j i := by
+  simp only [ValidLieTypeIndex.dynkinType, ValidLieTypeIndex.rank] at i j ⊢
+  obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
+  cases d <;> try simp at hhalf
+  case suzuki =>
+    rw [lengthPerm_suzuki]
+    exact cartanMatrix_reindexPerm (LieTypeIndex.dynkinType_suzuki _) lengthPermRankTwo
+      cartanMatrix_B2_lengthPermRankTwo i j
+  case reeG2 =>
+    rw [lengthPerm_reeG2]
+    exact cartanMatrix_reindexPerm (LieTypeIndex.dynkinType_reeG2 _) lengthPermRankTwo
+      cartanMatrix_G2_lengthPermRankTwo i j
+  case reeF4 =>
+    rw [lengthPerm_reeF4]
+    exact cartanMatrix_reindexPerm (LieTypeIndex.dynkinType_reeF4 _) lengthPermF4
+      cartanMatrix_F4_lengthPermF4 i j
+  case tits =>
+    rw [lengthPerm_tits]
+    exact cartanMatrix_reindexPerm LieTypeIndex.dynkinType_tits lengthPermF4
+      cartanMatrix_F4_lengthPermF4 i j
+
+/-- The exponents attached to a simple root and to its partner under the length permutation
+multiply to the defining characteristic.
+
+This is the relation that makes the square of the exceptional isogeny the prime-field Frobenius:
+one factor is `1` and the other is the characteristic, in one order or the other. -/
+@[simp]
+theorem exponent_mul_exponent_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
+    e.exponent i * e.exponent (e.lengthPerm i) = e.1.characteristic := by
+  by_cases hi : e.1.dynkinType.IsLongSimpleRoot i
+  · rw [exponent_of_isLongSimpleRoot e i hi,
+      exponent_of_not_isLongSimpleRoot e _ fun h => (isLongSimpleRoot_lengthPerm e i).mp h hi,
+      one_mul]
+  · rw [exponent_of_not_isLongSimpleRoot e i hi,
+      exponent_of_isLongSimpleRoot e _ ((isLongSimpleRoot_lengthPerm e i).mpr hi), mul_one]
 
 end SuzukiReeIndex
 
