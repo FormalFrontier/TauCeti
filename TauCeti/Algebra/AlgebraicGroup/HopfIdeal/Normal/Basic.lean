@@ -131,10 +131,24 @@ theorem le_normalCore_iff_of_isNormal (I J : HopfIdeal R H) (hI : I.IsNormal) :
     I ≤ J.normalCore ↔ I ≤ J :=
   ⟨fun h ↦ h.trans J.normalCore_le, le_normalCore I J hI⟩
 
+/-- The normal-core operator is monotone. -/
+theorem normalCore_mono {I J : HopfIdeal R H} (hIJ : I ≤ J) :
+    I.normalCore ≤ J.normalCore :=
+  le_normalCore I.normalCore J (isNormal_normalCore I) (I.normalCore_le.trans hIJ)
+
 /-- A normal Hopf ideal equals its normal core. -/
 theorem normalCore_eq_self_of_isNormal (J : HopfIdeal R H) (hJ : J.IsNormal) :
     J.normalCore = J :=
   le_antisymm J.normalCore_le (le_normalCore J J hJ le_rfl)
+
+/-- Taking the normal core twice has the same effect as taking it once. -/
+@[simp]
+theorem normalCore_idempotent (J : HopfIdeal R H) : J.normalCore.normalCore = J.normalCore :=
+  normalCore_eq_self_of_isNormal J.normalCore (isNormal_normalCore J)
+
+/-- A Hopf ideal equals its normal core exactly when it is normal. -/
+theorem normalCore_eq_self_iff (J : HopfIdeal R H) : J.normalCore = J ↔ J.IsNormal :=
+  ⟨fun h ↦ h ▸ isNormal_normalCore J, normalCore_eq_self_of_isNormal J⟩
 
 end HopfIdeal
 
