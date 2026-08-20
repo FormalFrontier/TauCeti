@@ -20,9 +20,13 @@ relabeling API rather than introducing a new primitive. It carries a grid state 
 and a grid diagram to a grid diagram.
 
 Only the basic state/diagram operation and its point-set lemmas live here, parallel to where
-`transpose` is developed; the invariance of the `J`-function under coordinate reversal is in
-`TauCeti.KnotTheory.Grid.JFunction.Basic`, and the resulting grading invariance is in
-`TauCeti.KnotTheory.Grid.Gradings` and `TauCeti.KnotTheory.Grid.Grading.Integer`.
+`transpose` is developed; the invariance of the `J`-pairing of two grid states under coordinate
+reversal is in `TauCeti.KnotTheory.Grid.JFunction.Basic` (`GridState.J_rotate`). The gradings
+themselves are *not* rotation invariant: they pair a grid state against the markings, which sit at
+the centres of their squares, so the half-turn about a grid point that rotates a state and the
+half-turn about a square centre that rotates the markings are different maps of the torus.
+This distinction and its grading consequence follow the analysis in
+[TauCeti pull request #3135](https://github.com/TauCetiProject/TauCeti/pull/3135).
 
 ## Main definitions
 

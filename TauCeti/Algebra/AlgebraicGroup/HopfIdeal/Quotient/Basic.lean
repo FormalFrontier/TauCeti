@@ -155,6 +155,15 @@ lemma liftQuotient_unique (I : HopfIdeal R H) (f : H ⟶ K)
     _ = (liftQuotient I f hf).hom (Ideal.Quotient.mkₐ R I.toIdeal h) :=
       (liftQuotient_mk I f hf h).symm
 
+/-- A surjective morphism remains surjective after factoring through a Hopf-ideal quotient. -/
+theorem liftQuotient_surjective_of_surjective (I : HopfIdeal R H) (f : H ⟶ K)
+    (hf : I.toIdeal ≤ RingHom.ker f.hom.toAlgHom.toRingHom)
+    (hsurj : Function.Surjective f.hom) :
+    Function.Surjective (liftQuotient I f hf).hom := by
+  intro y
+  obtain ⟨x, rfl⟩ := hsurj y
+  exact ⟨Ideal.Quotient.mkₐ R I.toIdeal x, liftQuotient_mk I f hf x⟩
+
 /-- Auxiliary quotient isomorphism when the source ideal is the kernel of the composite
 with the target quotient morphism. -/
 private noncomputable def quotientIsoOfSurjectiveAux (f : H ⟶ K)
