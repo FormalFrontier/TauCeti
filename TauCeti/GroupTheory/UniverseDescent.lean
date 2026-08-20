@@ -35,7 +35,8 @@ data.
 * `TauCeti.exists_mulEquiv_of_forall_finite` and
   `TauCeti.exists_mulEquiv_of_forall_finite_isSimpleGroup`: a family that catches every finite
   group, respectively every finite simple group, in one universe catches those in every universe.
-* `TauCeti.forall_finite_isSimpleGroup_exists_mulEquiv_iff`: the resulting universe independence.
+* `TauCeti.forall_finite_exists_mulEquiv_iff` and
+  `TauCeti.forall_finite_isSimpleGroup_exists_mulEquiv_iff`: the resulting universe independence.
 
 ## References
 
@@ -70,6 +71,17 @@ theorem exists_mulEquiv_of_forall_finite
   have : Finite H := .of_equiv G e.toEquiv
   obtain ⟨i, ⟨f⟩⟩ := h H
   exact ⟨i, ⟨e.trans f⟩⟩
+
+/-- **Universe independence.** Whether a family catches every finite group up to isomorphism does
+not depend on the universe the statement quantifies over.
+
+Both directions are `TauCeti.exists_mulEquiv_of_forall_finite`, which relates two unrelated
+universes rather than descending along an inclusion. -/
+theorem forall_finite_exists_mulEquiv_iff :
+    (∀ (G : Type u) [Group G] [Finite G], ∃ i, Nonempty (G ≃* F i)) ↔
+      ∀ (G : Type u₂) [Group G] [Finite G], ∃ i, Nonempty (G ≃* F i) :=
+  ⟨fun h _ _ _ => exists_mulEquiv_of_forall_finite h _,
+    fun h _ _ _ => exists_mulEquiv_of_forall_finite h _⟩
 
 /-- **Universe descent for a classification statement.** A family that catches every finite simple
 group in `Type u₂`, up to isomorphism, catches every finite simple group in `Type u`.
