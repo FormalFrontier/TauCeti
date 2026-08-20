@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Geometry.Manifold.Riemannian.Basic
+public import TauCeti.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
 # Riemannian metrics on open submanifolds
@@ -34,31 +35,6 @@ open scoped Bundle ContDiff Manifold Topology
 
 noncomputable section
 
-namespace TauCeti.Manifold
-
-variable
-  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
-
-/-- The canonical identification between the tangent space of an open submanifold and the ambient
-tangent space. Both are Mathlib's type synonym for the common model vector space. -/
-noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
-    TangentSpace I x ≃L[ℝ] TangentSpace I (x : M) where
-  toFun v := v
-  invFun v := v
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  continuous_toFun := continuous_id
-  continuous_invFun := continuous_id
-
-@[simp]
-theorem tangentSpaceOpenEquiv_apply {U : Opens M} (x : U) (v : TangentSpace I x) :
-    tangentSpaceOpenEquiv (I := I) x v = v := by
-  rfl
-
-end TauCeti.Manifold
-
 namespace Bundle.RiemannianMetric
 
 variable
@@ -82,6 +58,17 @@ noncomputable def restrictOpen
     filter_upwards with v
     rfl
   isVonNBounded x := g.isVonNBounded x.1
+
+/-- Restricting a Riemannian metric evaluates the ambient metric through the canonical tangent-space
+identification. -/
+@[simp]
+theorem restrictOpen_inner
+    (g : RiemannianMetric (fun x : M ↦ TangentSpace I x)) (U : Opens M)
+    (x : U) (v w : TangentSpace I x) :
+    (g.restrictOpen U).inner x v w =
+      g.inner (x : M) (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x v)
+        (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x w) := by
+  rfl
 
 end Bundle.RiemannianMetric
 
@@ -109,13 +96,6 @@ noncomputable def restrictOpen
     have h := g.contMDiff.contMDiffAt.comp x
       (contMDiff_subtype_val (I := I) (U := U)).contMDiffAt
     rw [contMDiffAt_totalSpace] at h
-    rcases mem_nhds_iff.mp
-      (TopologicalSpace.Opens.chartAt_subtype_val_symm_eventuallyEq (H := H) U (x := x)) with
-      ⟨V, hV, hVopen, hxV⟩
-    have hxV' : chartAt H x x ∈ V := by
-      simpa [TopologicalSpace.Opens.chartAt_eq] using hxV
-    have hVevent : ∀ᶠ y in nhds x, chartAt H x y ∈ V :=
-      ((chartAt H x).continuousAt (by simp)).eventually (hVopen.mem_nhds hxV')
     apply h.2.congr_of_eventuallyEq
     filter_upwards [
       (trivializationAt E (TangentSpace I : U → Type _) x).open_baseSet.mem_nhds
@@ -123,7 +103,8 @@ noncomputable def restrictOpen
       continuousAt_subtype_val.eventually
         ((trivializationAt E (TangentSpace I : M → Type _) x.1).open_baseSet.mem_nhds
           (mem_baseSet_trivializationAt E (TangentSpace I : M → Type _) x.1)),
-      hVevent] with y hyU hyM hyV
+      TauCeti.Manifold.tangentSpaceOpenEquiv_trivializationAt_symmL_eventuallyEq
+        (I := I) x] with y hyU hyM hsymm
     have hyU' : y ∈ (chartAt H x).source := by simpa using hyU
     have hyM' : (y : M) ∈ (chartAt H (x : M)).source := by exact hyM
     have hyUhom : y ∈ (trivializationAt (E →L[ℝ] ℝ)
@@ -140,39 +121,6 @@ noncomputable def restrictOpen
       ContinuousLinearEquiv.arrowCongr_apply,
       ite_true]
     simp [TauCeti.Manifold.tangentSpaceOpenEquiv]
-    have hinv : (chartAt H (x : M)).symm =ᶠ[nhds (chartAt H (x : M) (y : M))]
-        Subtype.val ∘ (chartAt H x).symm :=
-      Filter.eventuallyEq_of_mem (hVopen.mem_nhds hyV) hV
-    have hIsymm : Tendsto I.symm
-        (nhds (I (chartAt H (x : M) (y : M))))
-        (nhds (chartAt H (x : M) (y : M))) := by
-      have hc : Tendsto I.symm
-          (nhds (I (chartAt H (x : M) (y : M))))
-          (nhds (I.symm (I (chartAt H (x : M) (y : M))))) :=
-        I.continuous_symm.continuousAt
-      simpa only [I.left_inv] using hc
-    have htrans := Filter.EventuallyEq.comp_tendsto
-      (hinv.fun_comp (↑I ∘ chartAt H (y : M))) hIsymm
-    have hd : fderivWithin ℝ
-        (((↑I ∘ chartAt H (y : M)) ∘ (chartAt H (x : M)).symm) ∘ I.symm)
-          (Set.range I) (I (chartAt H (x : M) (y : M))) =
-        fderivWithin ℝ
-          (((↑I ∘ chartAt H (y : M)) ∘ Subtype.val ∘ (chartAt H x).symm) ∘ I.symm)
-            (Set.range I) (I (chartAt H (x : M) (y : M))) :=
-      htrans.fderivWithin_eq_of_nhds
-    have hsymm (z : E) :
-        TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
-            ((trivializationAt E (TangentSpace I : U → Type _) x).symmL ℝ y z) =
-          (trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) z := by
-      rw [TangentBundle.symmL_trivializationAt_eq_core hyU',
-        TangentBundle.symmL_trivializationAt_eq_core hyM']
-      -- `TangentSpace` is an irreducible synonym, so expose the common model-space equality that
-      -- the two coordinate changes denote before applying the derivative congruence.
-      change (tangentBundleCore I U).coordChange (achart H x) (achart H y) y z =
-        (tangentBundleCore I M).coordChange (achart H (x : M)) (achart H (y : M)) (y : M) z
-      simpa [tangentBundleCore_coordChange_achart,
-        Function.comp_def, TopologicalSpace.Opens.chartAt_eq,
-        TauCeti.Manifold.tangentSpaceOpenEquiv] using DFunLike.congr_fun hd.symm z
     have hsymm' (z : E) :
         TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
             ((trivializationAt E (TangentSpace I : U → Type _) x).symm y z) =
@@ -189,6 +137,18 @@ noncomputable def restrictOpen
     simpa [TauCeti.Manifold.tangentSpaceOpenEquiv] using
       congrArg (fun p : TangentSpace I (y : M) × TangentSpace I (y : M) ↦
         g.inner (y : M) p.1 p.2) hp
+
+omit [IsManifold I n M] in
+/-- Restricting a smooth Riemannian metric evaluates the ambient metric through the canonical
+tangent-space identification. -/
+@[simp]
+theorem restrictOpen_inner
+    (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M)
+    (x : U) (v w : TangentSpace I x) :
+    (g.restrictOpen U).inner x v w =
+      g.inner (x : M) (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x v)
+        (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x w) := by
+  rfl
 
 end Bundle.ContMDiffRiemannianMetric
 
@@ -253,6 +213,7 @@ theorem riemannianMetricOpen_inner
       RiemannianBundle.g.inner (x : M)
         (Manifold.tangentSpaceOpenEquiv (I := I) x v)
         (Manifold.tangentSpaceOpenEquiv (I := I) x w) := by
-  rfl
+  exact Bundle.ContMDiffRiemannianMetric.restrictOpen_inner
+    (ambientContMDiffRiemannianMetric (I := I) (n := n)) U x v w
 
 end TauCeti
