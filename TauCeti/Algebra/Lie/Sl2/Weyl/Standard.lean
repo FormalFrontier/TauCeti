@@ -58,7 +58,7 @@ form as the rank-one straightening formula and the rank-one admissible lattice.
 ## Main definitions
 
 * `TauCeti.Sl2Std.weylUnit`: the Weyl element of `V(n)`, a unit of `Module.End ℚ (Sl2Std ℚ n)`.
-* `TauCeti.Sl2Std.weylLattice` and `TauCeti.Sl2Std.weylLatticeEquiv`: its restriction to the
+* `TauCeti.Sl2Std.weylLatticeEnd` and `TauCeti.Sl2Std.weylLatticeEquiv`: its restriction to the
   coordinate lattice, as a `ℤ`-linear endomorphism and as the automorphism that endomorphism is.
 
 ## Main results
@@ -66,9 +66,9 @@ form as the rank-one straightening formula and the rank-one admissible lattice.
 * `TauCeti.Sl2Std.weylUnit_apply_basis`: `n · vᵢ = (-1) ^ (n - i) · v_{n - i}`, with the matrix
   form `TauCeti.Sl2Std.weylUnit_apply_apply` in coordinates.
 * `TauCeti.Sl2Std.coe_weylUnit_sq` and `TauCeti.Sl2Std.weylUnit_weylUnit_apply`: `n ^ 2 = (-1) ^ n`.
-* `TauCeti.Sl2Std.weylLattice_comp_weylLattice` and
-  `TauCeti.Sl2Std.baseChange_weylLattice_comp`: the same relation on the coordinate lattice and on
-  its points over an arbitrary commutative ring.
+* `TauCeti.Sl2Std.weylLatticeEnd_comp_weylLatticeEnd` and
+  `TauCeti.Sl2Std.baseChange_weylLatticeEnd_comp`: the same relation on the coordinate lattice and
+  on its points over an arbitrary commutative ring.
 
 ## References
 
@@ -88,19 +88,12 @@ variable (n : ℕ)
 
 /-! ## The Weyl element -/
 
-/-- The raising operator of `V(n)` is nilpotent. -/
-theorem isNilpotent_raise (K : Type*) [CommRing K] : IsNilpotent (raise K n) :=
-  ⟨n + 1, raise_pow_eq_zero⟩
-
-/-- The lowering operator of `V(n)` is nilpotent. -/
-theorem isNilpotent_lower (K : Type*) [CommRing K] : IsNilpotent (lower K n) :=
-  ⟨n + 1, lower_pow_eq_zero⟩
-
 /-- **The Weyl element of `V(n)`**, the unit `exp e · exp (-f) · exp e` of
 `Module.End ℚ (Sl2Std ℚ n)`. It is Chevalley's `n_α = x_α(1) x_{-α}(-1) x_α(1)` in the rank-one
 representation of highest weight `n`. -/
 noncomputable def weylUnit : (Module.End ℚ (Sl2Std ℚ n))ˣ :=
-  _root_.TauCeti.weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ)
+  _root_.TauCeti.weylUnit (isNilpotent_raise (K := ℚ) (n := n))
+    (isNilpotent_lower (K := ℚ) (n := n))
 
 /-- The Weyl element of `V(n)` is the threefold product of exponentials. -/
 theorem coe_weylUnit :
@@ -142,10 +135,12 @@ theorem weylUnit_mul_raise :
       -(lower ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
-  have h := _root_.TauCeti.weylUnit_conj_e (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
-    (isNilpotent_lower n ℚ)
-  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
-    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ)] at h
+  have h := _root_.TauCeti.weylUnit_conj_e (isSl2Triple_ladder n hn)
+    (isNilpotent_raise (K := ℚ) (n := n)) (isNilpotent_lower (K := ℚ) (n := n))
+  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise (K := ℚ) (n := n))
+      (isNilpotent_lower (K := ℚ) (n := n)),
+    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise (K := ℚ) (n := n))
+      (isNilpotent_lower (K := ℚ) (n := n))] at h
   rw [← neg_mul]
   exact (Units.mul_inv_eq_iff_eq_mul _).mp h
 
@@ -156,10 +151,12 @@ theorem weylUnit_mul_lower :
       -(raise ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
-  have h := _root_.TauCeti.weylUnit_conj_f (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
-    (isNilpotent_lower n ℚ)
-  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
-    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ)] at h
+  have h := _root_.TauCeti.weylUnit_conj_f (isSl2Triple_ladder n hn)
+    (isNilpotent_raise (K := ℚ) (n := n)) (isNilpotent_lower (K := ℚ) (n := n))
+  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise (K := ℚ) (n := n))
+      (isNilpotent_lower (K := ℚ) (n := n)),
+    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise (K := ℚ) (n := n))
+      (isNilpotent_lower (K := ℚ) (n := n))] at h
   rw [← neg_mul]
   exact (Units.mul_inv_eq_iff_eq_mul _).mp h
 
@@ -421,52 +418,53 @@ theorem weylUnit_mem_integralLattice {v : Sl2Std ℚ n} (hv : v ∈ integralLatt
   ring
 
 /-- **The Weyl element as an endomorphism of the coordinate lattice.** -/
-@[expose] noncomputable def weylLattice : integralLattice n →ₗ[ℤ] integralLattice n :=
+@[expose] noncomputable def weylLatticeEnd : integralLattice n →ₗ[ℤ] integralLattice n :=
   ((weylUnit n : Module.End ℚ (Sl2Std ℚ n)).restrictScalars ℤ).restrict
     fun _ hv => weylUnit_mem_integralLattice n hv
 
 @[simp]
-theorem coe_weylLattice_apply (v : integralLattice n) :
-    (weylLattice n v : Sl2Std ℚ n) = (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (v : Sl2Std ℚ n) :=
+theorem coe_weylLatticeEnd_apply (v : integralLattice n) :
+    (weylLatticeEnd n v : Sl2Std ℚ n) =
+      (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (v : Sl2Std ℚ n) :=
   rfl
 
-attribute [irreducible] weylLattice
+attribute [irreducible] weylLatticeEnd
 
 /-- **The integral form of the relation `n ^ 2 = (-1) ^ n`.** The Weyl element squares to the
 integer scalar `(-1) ^ n` already on the coordinate lattice, before any denominator is
 available. -/
-theorem weylLattice_comp_weylLattice :
-    (weylLattice n) ∘ₗ (weylLattice n) = ((-1 : ℤ) ^ n) • LinearMap.id := by
+theorem weylLatticeEnd_comp_weylLatticeEnd :
+    (weylLatticeEnd n) ∘ₗ (weylLatticeEnd n) = ((-1 : ℤ) ^ n) • LinearMap.id := by
   have hcast : ((-1 : ℚ) ^ n) = ((((-1 : ℤ) ^ n : ℤ) : ℚ)) := by
     push_cast
     ring
   refine LinearMap.ext fun v => ?_
   refine Subtype.ext ?_
-  rw [LinearMap.comp_apply, coe_weylLattice_apply, coe_weylLattice_apply,
+  rw [LinearMap.comp_apply, coe_weylLatticeEnd_apply, coe_weylLatticeEnd_apply,
     weylUnit_weylUnit_apply, LinearMap.smul_apply, LinearMap.id_coe, id_eq, SetLike.val_smul,
     hcast, Int.cast_smul_eq_zsmul]
 
 /-- **The Weyl element is an automorphism of the coordinate lattice**, its own inverse up to the
 sign `(-1) ^ n`. -/
 @[expose] noncomputable def weylLatticeEquiv : integralLattice n ≃ₗ[ℤ] integralLattice n :=
-  LinearEquiv.ofLinearMap (weylLattice n) (((-1 : ℤ) ^ n) • weylLattice n)
+  LinearEquiv.ofLinearMap (weylLatticeEnd n) (((-1 : ℤ) ^ n) • weylLatticeEnd n)
     (by
-      rw [LinearMap.comp_smul, weylLattice_comp_weylLattice, smul_smul, ← pow_add, ← two_mul,
+      rw [LinearMap.comp_smul, weylLatticeEnd_comp_weylLatticeEnd, smul_smul, ← pow_add, ← two_mul,
         pow_mul, neg_one_sq, one_pow, one_smul])
     (by
-      rw [LinearMap.smul_comp, weylLattice_comp_weylLattice, smul_smul, ← pow_add, ← two_mul,
+      rw [LinearMap.smul_comp, weylLatticeEnd_comp_weylLatticeEnd, smul_smul, ← pow_add, ← two_mul,
         pow_mul, neg_one_sq, one_pow, one_smul])
 
 /-- The linear map underlying the lattice automorphism is the restricted Weyl element. -/
 @[simp]
-theorem weylLatticeEquiv_toLinearMap : (weylLatticeEquiv n).toLinearMap = weylLattice n := by
+theorem weylLatticeEquiv_toLinearMap : (weylLatticeEquiv n).toLinearMap = weylLatticeEnd n := by
   apply LinearEquiv.toLinearMap_ofLinearMap
 
 @[simp]
 theorem coe_weylLatticeEquiv_apply (v : integralLattice n) :
     (weylLatticeEquiv n v : Sl2Std ℚ n) = (weylUnit n : Module.End ℚ (Sl2Std ℚ n))
       (v : Sl2Std ℚ n) := by
-  rw [← coe_weylLattice_apply n v]
+  rw [← coe_weylLatticeEnd_apply n v]
   exact congrArg Subtype.val (LinearMap.congr_fun (weylLatticeEquiv_toLinearMap n) v)
 
 attribute [irreducible] weylLatticeEquiv
@@ -475,16 +473,17 @@ attribute [irreducible] weylLatticeEquiv
 along `ℤ → A` keeps the relation `n ^ 2 = (-1) ^ n`, so it holds on the `A`-points of the lattice
 for every commutative ring `A` — in particular in characteristics two and three, where the
 exponential series defining the Weyl element does not exist. -/
-theorem baseChange_weylLattice_comp (A : Type*) [CommRing A] [Algebra ℤ A] :
-    (LinearMap.baseChange A (weylLattice n)) ∘ₗ (LinearMap.baseChange A (weylLattice n)) =
+theorem baseChange_weylLatticeEnd_comp (A : Type*) [CommRing A] [Algebra ℤ A] :
+    (LinearMap.baseChange A (weylLatticeEnd n)) ∘ₗ
+      (LinearMap.baseChange A (weylLatticeEnd n)) =
       ((-1 : A) ^ n) • LinearMap.id := by
   rw [← LinearMap.baseChange_comp]
   rcases Nat.even_or_odd n with he | ho
-  · have hid : (weylLattice n) ∘ₗ (weylLattice n) = LinearMap.id := by
-      rw [weylLattice_comp_weylLattice, he.neg_one_pow, one_smul]
+  · have hid : (weylLatticeEnd n) ∘ₗ (weylLatticeEnd n) = LinearMap.id := by
+      rw [weylLatticeEnd_comp_weylLatticeEnd, he.neg_one_pow, one_smul]
     rw [hid, LinearMap.baseChange_id, he.neg_one_pow, one_smul]
-  · have hid : (weylLattice n) ∘ₗ (weylLattice n) = -LinearMap.id := by
-      rw [weylLattice_comp_weylLattice, ho.neg_one_pow, neg_smul, one_smul]
+  · have hid : (weylLatticeEnd n) ∘ₗ (weylLatticeEnd n) = -LinearMap.id := by
+      rw [weylLatticeEnd_comp_weylLatticeEnd, ho.neg_one_pow, neg_smul, one_smul]
     rw [hid, LinearMap.baseChange_neg, LinearMap.baseChange_id, ho.neg_one_pow]
     refine LinearMap.ext fun x => ?_
     rw [LinearMap.neg_apply, LinearMap.id_coe, id_eq, LinearMap.smul_apply, LinearMap.id_coe,
