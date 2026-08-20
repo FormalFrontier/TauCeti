@@ -83,10 +83,11 @@ permutation of the index. -/
 /-- Every root of the pinned datum has its fundamental-weight coordinates permuted by the diagram
 permutation of the index. -/
 @[simp] theorem root_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
-    (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root
-        (d.datumGraphAut.indexEquiv k) =
+    d.datumGraphAut •
+        (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root k =
       fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root k
         (d.diagramPerm.symm j) := by
+  rw [← RootPairing.Equiv.root_indexEquiv_eq_smul]
   rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
   exact DynkinType.root_diagramRootPerm d.1.dynkinType_valid
     (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
