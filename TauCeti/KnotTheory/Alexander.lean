@@ -419,6 +419,7 @@ theorem det_alexanderMatrix_enlargeRow (V : Matrix ι ι R) (η : ι → R) :
 
 /-- **The Alexander polynomial is unchanged by a column enlargement of the Seifert matrix.** The
 extra factor of `T` in the determinant is exactly cancelled by the genus going up by one. -/
+@[simp]
 theorem alexander_enlargeColumn (V : Matrix ι ι R) (ξ : ι → R) :
     alexander (enlargeColumn V ξ) = alexander V := by
   have hcard : Fintype.card (ι ⊕ Fin 2) / 2 = Fintype.card ι / 2 + 1 := by
@@ -428,6 +429,7 @@ theorem alexander_enlargeColumn (V : Matrix ι ι R) (ξ : ι → R) :
   rw [alexander, alexander, det_alexanderMatrix_enlargeColumn, hcard, ← mul_assoc, ← T_add, hexp]
 
 /-- **The Alexander polynomial is unchanged by a row enlargement of the Seifert matrix.** -/
+@[simp]
 theorem alexander_enlargeRow (V : Matrix ι ι R) (η : ι → R) :
     alexander (enlargeRow V η) = alexander V := by
   rw [enlargeRow, alexander_transpose, alexander_enlargeColumn, alexander_transpose]
