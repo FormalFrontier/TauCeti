@@ -99,7 +99,7 @@ theorem MarkovExchangeable.prefixLaw_singleton_eq_of_perm_excursions (h : Markov
   exact h.prefixLaw_loopPathAt_eq_of_perm a₀ hperm hn
 
 /-- The mass of a finite path, as the measure of the event that the process spells it out. -/
-private theorem prefixLaw_singleton_eq_measure [Countable α] [MeasurableSingletonClass α]
+private theorem prefixLaw_singleton_eq_measure [MeasurableSingletonClass α]
     (hX : ∀ i, AEMeasurable (X i) μ) {n : ℕ} (w : Fin n → α) :
     prefixLaw μ X n {w} = μ {ω | ∀ i : Fin n, X i.val ω = w i} := by
   have hmap : AEMeasurable (fun ω (i : Fin n) => X i.val ω) μ :=
