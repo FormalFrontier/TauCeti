@@ -51,16 +51,15 @@ namespace TauCeti
 
 open NumberField nonZeroDivisors
 
-variable {K : Type*} [Field K] [NumberField K]
+variable {K : Type*} [Field K]
 
 /-- An **ideal arithmetic function** on a number field `K`: a complex-valued function on the
 nonzero integral ideals of `𝓞 K`. The index type is the submonoid `(Ideal (𝓞 K))⁰` of
 non-zero-divisors of the ideal monoid, which for a Dedekind domain is exactly the set of
 ideals different from `⊥` (`TauCeti.Ideal.mem_nonZeroDivisors_iff_ne_bot`). -/
-abbrev IdealArithmeticFunction (K : Type*) [Field K] [NumberField K] : Type _ :=
+abbrev IdealArithmeticFunction (K : Type*) [Field K] : Type _ :=
   (Ideal (𝓞 K))⁰ → ℂ
 
-omit [NumberField K] in
 /-- An ideal of the ring of integers of a number field is a non-zero-divisor of the ideal
 monoid exactly when it is nonzero. -/
 theorem Ideal.mem_nonZeroDivisors_iff_ne_bot {I : Ideal (𝓞 K)} :
