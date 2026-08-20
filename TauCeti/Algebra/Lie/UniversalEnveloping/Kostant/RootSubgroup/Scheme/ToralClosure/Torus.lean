@@ -86,8 +86,8 @@ private theorem weightTorusCoordinateMap_eq_diagonalCoordinateMap [Fintype κ] :
         (DiagonalizableGroup.charOfPoint p.ofConv
           (SplitTorus.weightCharacter (wt y)) : H) =
           MonoidAlgebra.single (SplitTorus.weightCharacter (wt y)) 1 := by
-      rw [DiagonalizableGroup.charOfPoint_apply_coe]
-      rfl
+      have hp : p.ofConv = AlgHom.id ℤ H := WithConv.ofConv_toConv _
+      rw [DiagonalizableGroup.charOfPoint_apply_coe, hp, AlgHom.id_apply]
     have hleft := congrArg (fun q =>
         ((GeneralLinear.pointsMulEquiv n q : Matrix.GeneralLinearGroup (Fin n) H) :
           Matrix (Fin n) (Fin n) H) i j) hmap
