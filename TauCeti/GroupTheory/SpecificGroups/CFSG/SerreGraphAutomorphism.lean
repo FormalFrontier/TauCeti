@@ -22,6 +22,11 @@ the CFSG index, and `TauCeti.serreDiagramAut` turns any Cartan-matrix symmetry i
 of the corresponding Serre Lie algebra. The matrix invariance proof here is the audit boundary
 between them. No root datum, Lie algebra, or automorphism is selected by choice.
 
+The presentation uses the transposed Cartan matrix because `TauCeti.IsSerreSystem` states
+`⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`. This is the same carrier as
+`TauCeti.DynkinType.SerreLieAlgebra`; for the graph-twisted diagrams the permutation preserves both
+the Cartan matrix and its transpose.
+
 The resulting automorphism sends each of the three generator families without signs,
 
 ```text
@@ -65,7 +70,7 @@ variable (d : GraphTwistedIndex)
 variable (R : Type u) [CommRing R]
 
 /-- The diagram permutation selected by a graph-twisted index preserves the Cartan matrix of its
-underlying untwisted Dynkin diagram. This is the matrix form consumed by `serreDiagramAut`. -/
+underlying untwisted Dynkin diagram. Its transposed form below is consumed by `serreDiagramAut`. -/
 @[simp]
 theorem cartanMatrix_submatrix_diagramPerm :
     d.1.dynkinType.cartanMatrix.submatrix d.diagramPerm d.diagramPerm =
@@ -78,9 +83,8 @@ presentation of the pinned Lie algebra. -/
 @[simp]
 theorem cartanMatrix_transpose_submatrix_diagramPerm :
     (Matrix.transpose d.1.dynkinType.cartanMatrix).submatrix d.diagramPerm d.diagramPerm =
-      Matrix.transpose d.1.dynkinType.cartanMatrix := by
-  ext i j
-  exact d.cartanMatrix_diagramPerm j i
+      Matrix.transpose d.1.dynkinType.cartanMatrix :=
+  submatrix_perm_transpose d.cartanMatrix_submatrix_diagramPerm
 
 /-- The graph automorphism of the Serre Lie algebra attached to a graph-twisted index.
 

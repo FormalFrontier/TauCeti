@@ -81,10 +81,10 @@ carrier `TauCeti.DynkinType.lieAlgebra`. Milestone L0 of
 through `TauCeti.ValidLieTypeIndex.dynkinType` and `TauCeti.ValidLieTypeIndex.dynkinType_valid`.
 
 The higher Serre relations come from `TauCeti/Algebra/Lie/Presentation/Serre/Basis.lean`, which
-proves them for any `LieAlgebra.Basis` on a Noetherian Lie algebra. The root-string form in
-`TauCeti/Algebra/Lie/Presentation/Serre/Killing.lean` does not apply here: the pinned algebra is
-built over `ℚ`, and Mathlib establishes a trivial radical for Geck's construction only over an
-algebraically closed field.
+proves them for any `LieAlgebra.Basis` on a Noetherian Lie algebra. The Killing-form corollary in
+`TauCeti/Algebra/Lie/Presentation/Serre/Killing.lean` obtains such a basis from a root-system base;
+that route does not apply directly here because Mathlib establishes a trivial radical for Geck's
+construction only over an algebraically closed field, while the pinned algebra is built over `ℚ`.
 -/
 
 public section
@@ -193,26 +193,13 @@ Serre generators is carried to the signed exchange of the pinned Chevalley gener
 theorem serreLift_serreChevalleyInvolution (x : t.SerreLieAlgebra) :
     t.serreLift ht (serreChevalleyInvolution ℚ t.cartanMatrixᵀ x) =
       t.chevalleyInvolution ht (t.serreLift ht x) := by
-  have hcomp :
-      (t.serreLift ht).comp
-          (serreChevalleyInvolution ℚ t.cartanMatrixᵀ :
-            t.SerreLieAlgebra →ₗ⁅ℚ⁆ t.SerreLieAlgebra) =
-        (t.chevalleyInvolution ht : t.lieAlgebra ht →ₗ⁅ℚ⁆ t.lieAlgebra ht).comp
-          (t.serreLift ht) :=
-    serre_hom_ext
-      (fun i => by
-        simp only [LieHom.comp_apply, LieEquiv.coe_coe, serreChevalleyInvolution_serreH, map_neg,
-          t.serreLift_serreH ht]
-        exact (t.chevalleyInvolution_lieBasis_h ht i).symm)
-      (fun i => by
-        simp only [LieHom.comp_apply, LieEquiv.coe_coe, serreChevalleyInvolution_serreE, map_neg,
-          t.serreLift_serreE ht, t.serreLift_serreF ht]
-        exact (t.chevalleyInvolution_lieBasis_e ht i).symm)
-      fun i => by
-        simp only [LieHom.comp_apply, LieEquiv.coe_coe, serreChevalleyInvolution_serreF, map_neg,
-          t.serreLift_serreE ht, t.serreLift_serreF ht]
-        exact (t.chevalleyInvolution_lieBasis_f ht i).symm
-  exact DFunLike.congr_fun hcomp x
+  have hcomp :=
+    _root_.TauCeti.comp_serreLift_eq_serreLift_comp_serreChevalleyInvolution
+      ℚ t.cartanMatrixᵀ (t.isSerreSystem_lieBasis ht)
+      (t.chevalleyInvolution ht : t.lieAlgebra ht →ₗ⁅ℚ⁆ t.lieAlgebra ht)
+      (t.chevalleyInvolution_lieBasis_h ht) (t.chevalleyInvolution_lieBasis_e ht)
+      (t.chevalleyInvolution_lieBasis_f ht)
+  exact DFunLike.congr_fun hcomp.symm x
 
 end
 

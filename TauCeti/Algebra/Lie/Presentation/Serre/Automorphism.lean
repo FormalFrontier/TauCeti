@@ -65,6 +65,8 @@ Nothing here assumes that `CM` is a Cartan matrix, matching
   automorphism.
 * `TauCeti.serreLift_comp_serreDiagramAut` and
   `TauCeti.serreLift_comp_serreChevalleyInvolution`: naturality against an arbitrary Serre system.
+* `TauCeti.comp_serreLift_eq_serreLift_comp_serreChevalleyInvolution`: a concrete signed
+  involution intertwines the universal lift with the Serre Chevalley involution.
 
 ## Implementation notes
 
@@ -376,6 +378,19 @@ theorem serreLift_comp_serreChevalleyInvolution {H E F : B → L} (h : IsSerreSy
           Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM) =
       serreLift h.neg_swap :=
   serre_hom_ext (fun i => by simp) (fun i => by simp) fun i => by simp
+
+/-- A homomorphism acting by signed exchange on a Serre system intertwines its universal lift with
+the Chevalley involution of the presentation. -/
+theorem comp_serreLift_eq_serreLift_comp_serreChevalleyInvolution {H E F : B → L}
+    (h : IsSerreSystem R CM H E F) (θ : L →ₗ⁅R⁆ L)
+    (hH : ∀ i, θ (H i) = -H i) (hE : ∀ i, θ (E i) = -F i)
+    (hF : ∀ i, θ (F i) = -E i) :
+    θ.comp (serreLift h) =
+      (serreLift h).comp
+        (serreChevalleyInvolution R CM :
+          Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM) := by
+  rw [serreLift_comp_serreChevalleyInvolution]
+  exact eq_serreLift (fun i => by simp [hH]) (fun i => by simp [hE]) fun i => by simp [hF]
 
 end Chevalley
 

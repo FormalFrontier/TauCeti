@@ -33,13 +33,11 @@ Bourbaki numbering. `TauCeti.DynkinType.lieBasis` is therefore Geck's basis renu
 `TauCeti.DynkinType.cartanMatrix`, not a reindexed copy of it that would have to be compared with
 the pinned one.
 
-Nothing is claimed here about the Lie algebra beyond the relations carried by a
-`LieAlgebra.Basis`. In particular it is not asserted to be semisimple: Mathlib derives that from
-Geck's construction over an algebraically closed field, and `ℚ` is not one. The Cartan subalgebra
-is a Cartan subalgebra, which is what the basis does give, and the one fact a Chevalley--Demazure
-construction consumes next that the basis does not already carry is recorded: the generators `e`
-and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is exposed as
-`TauCeti.DynkinType.lieSpan_lieBasis_e_union_f_eq_top`.
+The file does not assert that the Lie algebra is semisimple: Mathlib derives that from Geck's
+construction over an algebraically closed field, and `ℚ` is not one. It records the Cartan
+subalgebra supplied by the basis, the nilpotency of the generators `e` and `f` as matrices, and the
+Chevalley involution obtained from Geck's explicit involution. Generation of the whole Lie algebra
+is exposed as `TauCeti.DynkinType.lieSpan_lieBasis_e_union_f_eq_top`.
 
 ## Main definitions
 
@@ -68,9 +66,13 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
 * `TauCeti.DynkinType.finrank_cartanSubalgebra`: the Cartan subalgebra has dimension `t.rank`.
 * `TauCeti.DynkinType.geckLieEquiv_chevalleyInvolution`: the involution is Geck's, read through
   that identification.
+* `TauCeti.DynkinType.coe_geckLieEquiv` and the three `geckLieEquiv_lieBasis_*` lemmas: the
+  identification's computation rules on matrices and numbered generators.
 * `TauCeti.DynkinType.chevalleyInvolution_lieBasis_h`,
   `TauCeti.DynkinType.chevalleyInvolution_lieBasis_e` and
   `TauCeti.DynkinType.chevalleyInvolution_lieBasis_f`: the involution on the numbered generators.
+* `TauCeti.DynkinType.chevalleyInvolution_chevalleyInvolution` and
+  `TauCeti.DynkinType.involutive_chevalleyInvolution`: the involution squares to the identity.
 
 ## References
 
@@ -234,6 +236,13 @@ def geckLieEquiv :
     t.lieAlgebra ht ≃ₗ⁅ℚ⁆ RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht) :=
   LieEquiv.ofEq _ _ (by rw [lieAlgebra_def])
 
+/-- The identification with Geck's construction does not change the underlying matrix. -/
+@[simp] theorem coe_geckLieEquiv (x : t.lieAlgebra ht) :
+    ((t.geckLieEquiv ht x :
+        RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht)) :
+      Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) = x :=
+  LieEquiv.ofEq_apply _ _ _ x
+
 /-- **The Chevalley involution of the pinned split Lie algebra**: the automorphism
 `hᵢ ↦ -hᵢ`, `eᵢ ↦ -fᵢ`, `fᵢ ↦ -eᵢ` of `TauCeti.DynkinType.lieAlgebra`. It is
 `TauCeti.geckChevalleyInvolution` of the pinned rational base, read against the Bourbaki
@@ -250,19 +259,23 @@ theorem geckLieEquiv_chevalleyInvolution (x : t.lieAlgebra ht) :
       geckChevalleyInvolution (t.rationalBase ht) (t.geckLieEquiv ht x) :=
   (t.geckLieEquiv ht).apply_symm_apply _
 
--- The generator formulas for `TauCeti.geckChevalleyInvolution` are stated for the bundled
--- subtype elements, so each Bourbaki-numbered generator is first written in that shape.
-private theorem geckLieEquiv_lieBasis_h (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).h i) =
+/-- The identification with Geck's construction sends a numbered Cartan generator to Geck's
+corresponding bundled matrix. -/
+theorem geckLieEquiv_lieBasis_h (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).h i) =
     ⟨RootPairing.GeckConstruction.h (t.simpleSupportEquiv ht i), h_mem_lieAlgebra _⟩ :=
-  Subtype.ext (t.coe_lieBasis_h ht i)
+  Subtype.ext (by rw [coe_geckLieEquiv]; exact t.coe_lieBasis_h ht i)
 
-private theorem geckLieEquiv_lieBasis_e (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).e i) =
+/-- The identification with Geck's construction sends a numbered raising generator to Geck's
+corresponding bundled matrix. -/
+theorem geckLieEquiv_lieBasis_e (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).e i) =
     ⟨RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i), e_mem_lieAlgebra _⟩ :=
-  Subtype.ext (t.coe_lieBasis_e ht i)
+  Subtype.ext (by rw [coe_geckLieEquiv]; exact t.coe_lieBasis_e ht i)
 
-private theorem geckLieEquiv_lieBasis_f (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).f i) =
+/-- The identification with Geck's construction sends a numbered lowering generator to Geck's
+corresponding bundled matrix. -/
+theorem geckLieEquiv_lieBasis_f (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).f i) =
     ⟨RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i), f_mem_lieAlgebra _⟩ :=
-  Subtype.ext (t.coe_lieBasis_f ht i)
+  Subtype.ext (by rw [coe_geckLieEquiv]; exact t.coe_lieBasis_f ht i)
 
 /-- **The Chevalley involution negates each Cartan generator**, `hᵢ ↦ -hᵢ`. -/
 @[simp] theorem chevalleyInvolution_lieBasis_h (i : Fin t.rank) :
@@ -286,6 +299,17 @@ the same Bourbaki number**, `fᵢ ↦ -eᵢ`. -/
   rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
     map_neg, geckLieEquiv_lieBasis_e, geckLieEquiv_lieBasis_f]
   exact geckChevalleyInvolution_f (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- Applying the pinned Chevalley involution twice returns the original element. -/
+@[simp] theorem chevalleyInvolution_chevalleyInvolution (x : t.lieAlgebra ht) :
+    t.chevalleyInvolution ht (t.chevalleyInvolution ht x) = x := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht),
+    geckLieEquiv_chevalleyInvolution, geckLieEquiv_chevalleyInvolution]
+  exact geckChevalleyInvolution_geckChevalleyInvolution (t.rationalBase ht) _
+
+/-- The pinned Chevalley involution is involutive. -/
+theorem involutive_chevalleyInvolution : Function.Involutive (t.chevalleyInvolution ht) :=
+  t.chevalleyInvolution_chevalleyInvolution ht
 
 /-- The Chevalley involution of the pinned split Lie algebra is its own inverse. -/
 @[simp] theorem chevalleyInvolution_symm :

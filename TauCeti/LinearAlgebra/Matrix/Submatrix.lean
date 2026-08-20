@@ -13,8 +13,9 @@ public import Mathlib.LinearAlgebra.Matrix.Defs
 
 A permutation `σ` of the index set of a square matrix `M` *preserves* `M` when
 `M.submatrix σ σ = M`. Such permutations form a subgroup of `Equiv.Perm`, and this file records the
-three closure properties: `TauCeti.submatrix_perm_refl`, `TauCeti.submatrix_perm_trans` and
-`TauCeti.submatrix_perm_symm`.
+closure properties under identity, composition, inverse, and transpose:
+`TauCeti.submatrix_perm_refl`, `TauCeti.submatrix_perm_trans`,
+`TauCeti.submatrix_perm_symm`, and `TauCeti.submatrix_perm_transpose`.
 
 For the Cartan matrix of a Dynkin diagram these permutations are the diagram symmetries.
 -/
@@ -22,6 +23,8 @@ For the Cartan matrix of a Dynkin diagram these permutations are the diagram sym
 public section
 
 namespace TauCeti
+
+open scoped Matrix
 
 variable {B α : Type*} {M : Matrix B B α} {σ τ : Equiv.Perm B}
 
@@ -46,5 +49,10 @@ theorem submatrix_perm_symm (hσ : M.submatrix σ σ = M) : M.submatrix σ.symm 
   calc M.submatrix ⇑σ.symm ⇑σ.symm
       = (M.submatrix ⇑σ ⇑σ).submatrix ⇑σ.symm ⇑σ.symm := by rw [hσ]
     _ = M := by rw [Matrix.submatrix_submatrix, Equiv.self_comp_symm, Matrix.submatrix_id_id]
+
+/-- If `σ` preserves a square matrix then it also preserves its transpose. -/
+theorem submatrix_perm_transpose (hσ : M.submatrix σ σ = M) :
+    Mᵀ.submatrix σ σ = Mᵀ := by
+  rw [← Matrix.transpose_submatrix, hσ]
 
 end TauCeti

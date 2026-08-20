@@ -49,6 +49,8 @@ verifies for the standard triple of `sl (Fin 2) K`.
 
 * `TauCeti.pow_toEnd_f_eq_zero_of_lt`: the string of a primitive vector of weight `n : ℕ` stops
   after `n` steps, not merely at step `n + 1`.
+* `TauCeti.pow_toEnd_f_succ_toNat_eq_zero`: the corresponding endpoint when the primitive
+  vector's weight is presented as an integer.
 * `TauCeti.linearIndependent_pow_toEnd_f`: the `n + 1` vectors of the string are linearly
   independent, being eigenvectors of `h` for the distinct eigenvalues `n, n - 2, …, -n`.
 * `TauCeti.weightStringSubmodule_eq_top`: a primitive vector of an irreducible module generates it.
@@ -147,7 +149,7 @@ variable {K : Type*} [CommRing K] [IsDomain K] [CharZero K]
 variable {L : Type*} [LieRing L] [LieAlgebra K L]
 variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 variable [IsTorsionFree K M]
-variable {h e f : L} {t : IsSl2Triple h e f} {m : M} {n : ℕ}
+variable {h e f : L} {t : IsSl2Triple h e f} {m : M} {n : ℕ} {z : ℤ}
 
 /-! ### The end of the string -/
 
@@ -157,6 +159,18 @@ step `n` gives zero. Mathlib's
 theorem pow_toEnd_f_eq_zero_of_lt [IsNoetherian K M] (P : t.HasPrimitiveVectorWith m (n : K))
     {i : ℕ} (hi : n < i) : (toEnd K L M f ^ i) m = 0 :=
   Module.End.pow_map_zero_of_le hi (P.pow_toEnd_f_eq_zero_of_eq_nat rfl)
+
+/-- The string below a primitive vector whose eigenvalue is presented as an integer `z` stops
+after `z.toNat` steps. The existence theorem for primitive-vector weights shows that `z` is a
+natural number before the endpoint theorem is applied. -/
+theorem pow_toEnd_f_succ_toNat_eq_zero [IsNoetherian K M]
+    (P : t.HasPrimitiveVectorWith m ((z : ℤ) : K)) :
+    (toEnd K L M f ^ (z.toNat + 1)) m = 0 := by
+  obtain ⟨k, hk⟩ := P.exists_nat
+  have hzk : z = (k : ℤ) := by exact_mod_cast hk
+  have htoNat : z.toNat = k := by omega
+  rw [htoNat]
+  exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
 
 /-! ### Linear independence of the string -/
 
