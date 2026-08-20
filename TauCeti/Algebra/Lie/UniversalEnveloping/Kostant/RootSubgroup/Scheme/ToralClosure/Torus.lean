@@ -86,7 +86,6 @@ private theorem weightTorusCoordinateMap_eq_diagonalCoordinateMap [Fintype κ] :
         (DiagonalizableGroup.charOfPoint p.ofConv
           (SplitTorus.weightCharacter (wt y)) : H) =
           MonoidAlgebra.single (SplitTorus.weightCharacter (wt y)) 1 := by
-      change (AlgHom.id ℤ H) _ = _
       rfl
     have hleft := congrArg (fun q =>
         ((GeneralLinear.pointsMulEquiv n q : Matrix.GeneralLinearGroup (Fin n) H) :
@@ -95,9 +94,13 @@ private theorem weightTorusCoordinateMap_eq_diagonalCoordinateMap [Fintype κ] :
       GeneralLinear.pointsMulEquiv_diagonalTorusPoints] at hleft
     rw [GeneralLinear.pointsMulEquiv_apply,
       GeneralLinear.pointToGeneralLinear_apply] at hleft
+    -- The point-evaluation lemmas leave `hleft` behind the `pointsMulEquiv` wrapper;
+    -- expose the underlying coordinate-algebra application used by `hAlg`.
     change (GeneralLinear.weightTorusCoordinateMap wt).hom.toAlgHom
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
           (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (i, j)))) = _ at hleft
+    -- `BialgHom.ext` presents the right side through `CommHopfAlgCat.ofHom`; expose its
+    -- underlying algebra homomorphism so `diagonalCoordinateMap_X` can rewrite it.
     change _ = DiagonalizableGroup.diagonalCoordinateMap b
       (fun y => SplitTorus.weightCharacter (wt y))
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
