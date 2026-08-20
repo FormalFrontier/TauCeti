@@ -256,6 +256,7 @@ theorem lie_eq_intStructureConstant_zsmul
 
 /-- An integer is the integer structure constant exactly when it gives the bracket of the
 corresponding root vectors. -/
+@[simp]
 theorem eq_intStructureConstant_iff
     (α β γ : Weight K H L) (hγ : γ.IsNonZero)
     (hαβ : (γ : H → K) = (α : H → K) + β) (z : ℤ) :

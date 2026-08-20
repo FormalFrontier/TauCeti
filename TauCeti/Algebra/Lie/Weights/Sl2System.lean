@@ -129,8 +129,8 @@ theorem ne_zero (hα : α.IsNonZero) : x α ≠ 0 := (hx.isSl2Triple α hα).e_n
 
 /-- **Every member of a normalised root-vector system acts nilpotently in the adjoint
 representation.** At a root this is the nilpotency of `ad` on a root space; at a zero weight the
-member is `0`. Divided-power exponentials of the family are therefore available over every value
-ring. -/
+member is `0`. This is the nilpotency hypothesis for divided-power exponentials; lattice stability
+supplies their integrality separately. -/
 theorem isNilpotent_ad_rootVector : _root_.IsNilpotent (LieAlgebra.ad K L (x α)) := by
   rcases eq_or_ne (α : H → K) 0 with h0 | h0
   · rw [hx.eq_zero_of_isZero α h0, map_zero]

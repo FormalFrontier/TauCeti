@@ -104,7 +104,8 @@ variable {x : Weight ℚ H L → L} (hx : IsSl2System x)
 include hx
 
 /-- Every root vector of a normalised system acts nilpotently in the adjoint representation of the
-enveloping algebra, so its divided-power exponential is available over every value ring. -/
+enveloping algebra. This is the nilpotency hypothesis for the divided-power exponential; lattice
+stability supplies its integrality separately. -/
 theorem isNilpotent_representation_rootVector (α : Weight ℚ H L) :
     IsNilpotent (UniversalEnvelopingAlgebra.representation ℚ L L
       (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α))) := by
@@ -124,21 +125,6 @@ the Kostant root-subgroup machinery takes its admissible lattice. It is an abbre
 finite and free module instances on `rootCorootSpan x` remain available to consumers. -/
 abbrev chevalleyLatticeAddSubgroup (x : Weight ℚ H L → L) : AddSubgroup L :=
   (rootCorootSpan x).toAddSubgroup
-
--- Transport the existing module instances through the definitionally identical carrier types.
-private noncomputable def rootCorootSpanEquivChevalleyLatticeAddSubgroup :
-    rootCorootSpan x ≃ₗ[ℤ] chevalleyLatticeAddSubgroup x :=
-  LinearEquiv.refl ℤ (rootCorootSpan x)
-
-/-- The additive-subgroup presentation of a Chevalley lattice is finite over `ℤ`. -/
-noncomputable instance instModuleFiniteChevalleyLatticeAddSubgroup :
-    Module.Finite ℤ (chevalleyLatticeAddSubgroup x) :=
-  Module.Finite.equiv rootCorootSpanEquivChevalleyLatticeAddSubgroup
-
-/-- The additive-subgroup presentation of a Chevalley lattice is free over `ℤ`. -/
-noncomputable instance instModuleFreeChevalleyLatticeAddSubgroup :
-    Module.Free ℤ (chevalleyLatticeAddSubgroup x) :=
-  Module.Free.of_equiv rootCorootSpanEquivChevalleyLatticeAddSubgroup
 
 /-- The additive-subgroup form of the Chevalley lattice agrees with the underlying additive
 subgroup of `chevalleyLieLattice`. -/
