@@ -50,8 +50,8 @@ intertwiners `V → W` (which for complex scalars and irreducible `V` is the mul
   invariant subspace, with `ContRepresentation.range_haarAverageMap` identifying its range
   and `ContRepresentation.haarAverageMap_comp_self` its idempotence.
 * `ContRepresentation.trace_haarAverageMap`: its trace is `∫ g, χ_π g`.
-* `ContRepresentation.finrank_invariants`: **the dimension of the invariants is the Haar
-  integral of the character.**
+* `ContRepresentation.integral_character_eq_finrank_invariants`: **the Haar integral of the
+  character is the dimension of the invariants.**
 * `ContRepresentation.integral_character_eq_zero_iff`: that integral vanishes exactly when
   there is no nonzero invariant vector.
 
@@ -60,10 +60,11 @@ intertwiners `V → W` (which for complex scalars and irreducible `V` is the mul
 `haarAverageMap` is defined as `integratedOperator π hπ 1` rather than as a fresh Haar average, so
 that the trace computation is the one already proved for the integrated operator and no second
 Bochner-integral bookkeeping is needed. Its two invariance lemmas are proved vectorwise from
-`MeasureTheory.integral_mul_left_eq_self` and `MeasureTheory.integral_mul_right_eq_self`, not from
-the class-function machinery of `TauCeti/RepresentationTheory/Compact/Integrated.lean`: the constant
-function `1` is a class function, but that route yields only conjugation invariance, which is
-strictly weaker than the one-sided invariance used here.
+`TauCeti.haarAverage_comp_mulLeft` and `TauCeti.haarAverage_comp_mulRight`, applied to the orbit
+map `g ↦ π g v`, and not from the class-function machinery of
+`TauCeti/RepresentationTheory/Compact/Integrated.lean`: the constant function `1` is a class
+function, but that route yields only conjugation invariance, which is strictly weaker than the
+one-sided invariance used here.
 
 The invariant subspace is Mathlib's `ContRepresentation.invariants`, not a new definition, and the
 projection is packaged through Mathlib's `LinearMap.IsProj` so that `LinearMap.IsProj.trace`
@@ -104,14 +105,17 @@ variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 include hπ
 
 /-- The orbit map `g ↦ π g v` of a vector, as a continuous map on the group. It is the integrand of
-the Haar average below, and the only thing the proofs need from it is its integrability. -/
+the Haar average below, in the bundled form that `TauCeti.haarAverage` and its translation
+invariance lemmas take. -/
 private noncomputable def orbitMap (v : V) : C(G, V) :=
   ⟨fun g ↦ π g v, (ContinuousLinearMap.apply 𝕜 V v).continuous.comp hπ⟩
 
-omit [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] [CompleteSpace V] in
-private theorem integrable_orbitMap (v : V) :
-    Integrable (fun g : G ↦ π g v) (haarProb G) :=
-  integrable_continuousMap G (orbitMap π hπ v)
+omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+  [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] [CompleteSpace V] in
+/-- The orbit map, unfolded. -/
+@[simp]
+private theorem orbitMap_apply (v : V) (g : G) : orbitMap π hπ v g = π g v :=
+  (rfl)
 
 /-- **The Haar average of the action operators** `∫ g, π g ∂(haarProb G)`, the integrated operator
 of the constant function `1`.
@@ -128,10 +132,38 @@ theorem haarAverageMap_apply (v : V) :
   rw [haarAverageMap, integratedOperator_apply]
   simp
 
+/-- The Haar average, evaluated at a vector, is `TauCeti.haarAverage` of that vector's orbit map.
+This is the form in which the translation invariance of Haar averaging applies below. -/
+private theorem haarAverageMap_apply_eq_haarAverage (v : V) :
+    haarAverageMap π hπ v = haarAverage G (𝕜 := 𝕜) (orbitMap π hπ v) := by
+  rw [haarAverageMap_apply, haarAverage_apply]
+  simp
+
 /-! ### The two invariances
 
 Left invariance of Haar measure makes the average absorb the action on the left, right invariance
-— unimodularity, which a compact group has — makes it absorb the action on the right. -/
+— unimodularity, which a compact group has — makes it absorb the action on the right. Both are read
+off `TauCeti.haarAverage_comp_mulLeft` and `TauCeti.haarAverage_comp_mulRight`, once the two
+translates of the orbit map are identified. -/
+
+omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V]
+  [SMulCommClass ℝ 𝕜 V] [CompleteSpace V] in
+/-- Precomposing the orbit map with left translation is postcomposing it with the action:
+`g ↦ π (h * g) v` is `g ↦ π h (π g v)`. -/
+private theorem orbitMap_comp_mulLeft (h : G) (v : V) :
+    (orbitMap π hπ v).comp (ContinuousMap.mulLeft h)
+      = (π h : C(V, V)).comp (orbitMap π hπ v) := by
+  ext g
+  simp [map_mul, mul_apply_eq_comp]
+
+omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V]
+  [SMulCommClass ℝ 𝕜 V] [CompleteSpace V] in
+/-- Precomposing the orbit map with right translation is the orbit map of the translated vector:
+`g ↦ π (g * h) v` is `g ↦ π g (π h v)`. -/
+private theorem orbitMap_comp_mulRight (h : G) (v : V) :
+    (orbitMap π hπ v).comp (ContinuousMap.mulRight h) = orbitMap π hπ (π h v) := by
+  ext g
+  simp [map_mul, mul_apply_eq_comp]
 
 /-- **The Haar average absorbs the action on the left**: `π h ∘ P = P`. This is left invariance of
 normalized Haar measure. -/
@@ -140,12 +172,11 @@ theorem comp_haarAverageMap (h : G) :
     (π h).comp (haarAverageMap π hπ) = haarAverageMap π hπ := by
   ext v
   calc π h (haarAverageMap π hπ v)
-      = ∫ g, π h (π g v) ∂haarProb G := by
-        rw [haarAverageMap_apply, ← (π h).integral_comp_comm (integrable_orbitMap π hπ v)]
-    _ = ∫ g, π (h * g) v ∂haarProb G := by
-        simp only [map_mul, mul_apply_eq_comp]
-    _ = ∫ g, π g v ∂haarProb G := integral_mul_left_eq_self (fun g : G ↦ π g v) h
-    _ = haarAverageMap π hπ v := (haarAverageMap_apply π hπ v).symm
+      = haarAverage G (𝕜 := 𝕜) ((π h : C(V, V)).comp (orbitMap π hπ v)) := by
+        rw [haarAverageMap_apply_eq_haarAverage, ContinuousLinearMap.haarAverage_comp_comm]
+    _ = haarAverage G (𝕜 := 𝕜) (orbitMap π hπ v) := by
+        rw [← orbitMap_comp_mulLeft, haarAverage_comp_mulLeft]
+    _ = haarAverageMap π hπ v := (haarAverageMap_apply_eq_haarAverage π hπ v).symm
 
 /-- The Haar average absorbs the action on the left, applied to a vector: `π h (P v) = P v`. -/
 @[simp]
@@ -160,24 +191,29 @@ theorem haarAverageMap_comp (h : G) :
     (haarAverageMap π hπ).comp (π h) = haarAverageMap π hπ := by
   ext v
   calc haarAverageMap π hπ (π h v)
-      = ∫ g, π (g * h) v ∂haarProb G := by
-        rw [haarAverageMap_apply]
-        simp only [map_mul, mul_apply_eq_comp]
-    _ = ∫ g, π g v ∂haarProb G := integral_mul_right_eq_self (fun g : G ↦ π g v) h
-    _ = haarAverageMap π hπ v := (haarAverageMap_apply π hπ v).symm
+      = haarAverage G (𝕜 := 𝕜) ((orbitMap π hπ v).comp (ContinuousMap.mulRight h)) := by
+        rw [orbitMap_comp_mulRight, haarAverageMap_apply_eq_haarAverage]
+    _ = haarAverage G (𝕜 := 𝕜) (orbitMap π hπ v) := haarAverage_comp_mulRight G _ _
+    _ = haarAverageMap π hπ v := (haarAverageMap_apply_eq_haarAverage π hπ v).symm
+
+/-- The Haar average absorbs the action on the right, applied to a vector: `P (π h v) = P v`. -/
+@[simp]
+theorem haarAverageMap_comp_apply (h : G) (v : V) :
+    haarAverageMap π hπ (π h v) = haarAverageMap π hπ v :=
+  DFunLike.congr_fun (haarAverageMap_comp π hπ h) v
 
 /-! ### The projection onto the invariants -/
 
 /-- The Haar average lands in the invariant subspace. This is not itself a `simp` lemma — its
 statement is not in simp normal form, since `ContRepresentation.mem_invariants` unfolds the
 membership — but `simp` proves it from `ContRepresentation.comp_haarAverageMap_apply`. -/
-theorem haarAverageMap_mem_invariants (v : V) : haarAverageMap π hπ v ∈ π.invariants :=
+theorem haarAverageMap_invariant (v : V) : haarAverageMap π hπ v ∈ π.invariants :=
   fun h ↦ comp_haarAverageMap_apply π hπ h v
 
 /-- The Haar average is the identity on the invariant subspace: the integrand is then constant, and
 normalized Haar measure has total mass one. -/
 @[simp]
-theorem haarAverageMap_apply_of_mem_invariants {v : V} (hv : v ∈ π.invariants) :
+theorem haarAverageMap_id {v : V} (hv : v ∈ π.invariants) :
     haarAverageMap π hπ v = v := by
   have hconst : ∀ g : G, π g v = v := hv
   rw [haarAverageMap_apply]
@@ -186,8 +222,8 @@ theorem haarAverageMap_apply_of_mem_invariants {v : V} (hv : v ∈ π.invariants
 /-- **Haar averaging is a projection onto the invariants.** -/
 theorem isProj_haarAverageMap :
     LinearMap.IsProj π.invariants (haarAverageMap π hπ : V →ₗ[𝕜] V) where
-  map_mem := haarAverageMap_mem_invariants π hπ
-  map_id _ hv := haarAverageMap_apply_of_mem_invariants π hπ hv
+  map_mem := haarAverageMap_invariant π hπ
+  map_id _ hv := haarAverageMap_id π hπ hv
 
 /-- The Haar average is idempotent. -/
 @[simp]
@@ -228,21 +264,22 @@ theorem trace_haarAverageMap :
   rw [haarAverageMap, trace_integratedOperator]
   simp
 
-/-- **The dimension of the invariants is the Haar integral of the character**,
-`dim V^G = ∫ g, χ_π g ∂(haarProb G)`.
+/-- **The Haar integral of the character is the dimension of the invariants**,
+`∫ g, χ_π g ∂(haarProb G) = dim V^G`.
 
-Both sides are the trace of the Haar average `∫ g, π g`: on the left because that average is a
-projection onto the invariants, on the right because the trace of an integrated operator is the
-integral of the traces. This is the compact-group form of the finite-group count
+Both sides are the trace of the Haar average `∫ g, π g`: on the left because the trace of an
+integrated operator is the integral of the traces, on the right because that average is a
+projection onto the invariants. This is the compact-group form of the finite-group count
 `dim V^G = |G|⁻¹ ∑ g, χ_π g`, and the tool that turns character integrals into dimensions. -/
-theorem finrank_invariants :
-    (Module.finrank 𝕜 π.invariants : 𝕜) = ∫ g, character π hπ g ∂haarProb G := by
+theorem integral_character_eq_finrank_invariants :
+    ∫ g, character π hπ g ∂haarProb G = (Module.finrank 𝕜 π.invariants : 𝕜) := by
   rw [← trace_haarAverageMap π hπ, (isProj_haarAverageMap π hπ).trace]
 
 /-- **The character integral vanishes exactly when there is no nonzero invariant vector.** -/
 theorem integral_character_eq_zero_iff :
     ∫ g, character π hπ g ∂haarProb G = 0 ↔ π.invariants = ⊥ := by
-  rw [← finrank_invariants π hπ, Nat.cast_eq_zero, Submodule.finrank_eq_zero]
+  rw [integral_character_eq_finrank_invariants π hπ, Nat.cast_eq_zero,
+    Submodule.finrank_eq_zero]
 
 end Trace
 
