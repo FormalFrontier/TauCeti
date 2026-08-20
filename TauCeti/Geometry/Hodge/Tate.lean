@@ -176,12 +176,17 @@ theorem isPolarization_tate (m : ℤ) :
       rw [hbot, Submodule.mem_bot] at hx
       exact absurd hx hx0
 
-/-- The Tate Hodge structure `ℤ(m)`, polarized by multiplication of integers. The body is exposed
-so that its polarizing form can be evaluated outside this module. -/
-@[expose] def tatePolarization (m : ℤ) :
+/-- The Tate Hodge structure `ℤ(m)`, polarized by multiplication of integers. -/
+def tatePolarization (m : ℤ) :
     Polarization isBaseChange_tateLatticeMap (tate m) where
   Qint := LinearMap.mul ℤ ℤ
   isPolarization := isPolarization_tate m
+
+/-- The complex form of the Tate polarization is multiplication on the complex line. -/
+@[simp]
+theorem tatePolarization_Q (m : ℤ) :
+    (tatePolarization m).Q = LinearMap.mul ℂ ℂ := by
+  rw [Polarization.Q_def, tatePolarization, integralFormToComplex_tateLatticeMap_mul]
 
 /-- The Tate Hodge structure is polarizable. -/
 theorem isPolarizable_tate (m : ℤ) : IsPolarizable isBaseChange_tateLatticeMap (tate m) :=
