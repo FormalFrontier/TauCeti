@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.CentralPoint
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
@@ -51,7 +51,8 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
 
 The coordinate condition is the conjugation-triviality criterion for a central closed subgroup,
-and mirrors the normality criterion of `TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal`. This is
+and mirrors the normality criterion of
+`TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic`. This is
 a prerequisite for the center `Z(G)` in Layer 6, "Reductive and semisimple groups", of
 `TauCetiRoadmap/ReductiveGroups/README.md`.
 -/

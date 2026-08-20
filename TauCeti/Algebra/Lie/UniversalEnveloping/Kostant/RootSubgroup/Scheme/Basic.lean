@@ -121,7 +121,7 @@ theorem kostantRootSubgroup_def :
 
 section Points
 
-variable (A : Type) [CommRing A]
+variable (A : Type*) [CommRing A]
 
 /-- On algebra-valued points, precomposition with the Kostant coordinate morphism gives the
 original divided-power exponential matrix. -/
@@ -192,6 +192,12 @@ theorem pointsMulEquiv_kostantRootSubgroupCoordinateMap
     pointsMulEquiv_kostantRootSubgroupCoordinateMap_apply
       e h ρ M hM i hnil b A q r s
 
+end Points
+
+section SchemePoints
+
+variable (A : Type) [CommRing A]
+
 private theorem groupSchemePointMulEquiv_comp_kostantRootSubgroup
     (q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
     AdditiveGroup.groupSchemePointMulEquiv A q ≫
@@ -246,6 +252,6 @@ theorem schemePointsMulEquiv_kostantRootSubgroup
     pointsMulEquiv_kostantRootSubgroupCoordinateMap,
     MulEquiv.symm_apply_apply]
 
-end Points
+end SchemePoints
 
 end TauCeti.UniversalEnvelopingAlgebra
