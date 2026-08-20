@@ -12,12 +12,10 @@ module
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.FinTwo
 -- `Subgroup.index` occurs in the statements below.
 public import Mathlib.GroupTheory.Index
--- `Group.IsSolvable` occurs in the statement of `TauCeti.GL2Borel.instIsSolvable`.
-public import Mathlib.GroupTheory.Solvable
 -- `Matrix.BlockTriangular` occurs in the statement of `TauCeti.blockTriangular_id_iff`.
 public import Mathlib.LinearAlgebra.Matrix.Block
--- `TauCeti.diagGL` is the body of `TauCeti.GL2Borel.torusHom`, so it must be imported publicly.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+-- The general upper-triangular group specializes to `TauCeti.GL2Borel` below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel.Basic
 -- Non-public: the order of `GL₂` over a finite field, and the number of units of a finite field,
 -- are used only inside the counting proofs, so downstream importers do not pay for them.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
@@ -26,8 +24,9 @@ import Mathlib.Algebra.GroupWithZero.Units.Fintype
 /-!
 # The Borel subgroup of `GL₂`
 
-The **Borel subgroup** `B` of `GL₂` is the subgroup of invertible upper-triangular matrices. It is
-the standard minimal parabolic: over a finite field it is the subgroup from which the principal
+The **Borel subgroup** `B` of `GL₂` is the `Fin 2` specialization of
+`TauCeti.upperTriangularGroup`, the subgroup of invertible upper-triangular matrices. It is the
+standard minimal parabolic: over a finite field it is the subgroup from which the principal
 series `Ind_B^{GL₂}(α ⊗ β)` is induced, and its index `q + 1` is the dimension of that induced
 representation.
 
@@ -70,7 +69,6 @@ q + 1`, the number of points of the projective line.
 * `TauCeti.GL2Borel.mem_ker_diag_iff`: the kernel of `TauCeti.GL2Borel.diag` is the unipotent
   radical, the image of `TauCeti.GL2Borel.unipotentHom`.
 * `TauCeti.GL2Borel.eq_torusHom_mul_unipotentHom`: the decomposition `B = T U`.
-* `TauCeti.GL2Borel.instIsSolvable`: the Borel subgroup is solvable over every commutative ring.
 * `TauCeti.GL2Borel.det_diag`: the determinant of an element of `B` is the product of its two
   diagonal entries.
 * `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`: a matrix with an upper-triangular conjugate
@@ -86,11 +84,10 @@ The name follows the `GL2` prefix that
 the `Matrix.GeneralLinearGroup` namespace; the statements are the roadmap's, with `[Field F]
 [Fintype F]` weakened to `[CommRing R]` wherever the result does not count.
 
-Membership is spelled by the single vanishing condition `g 1 0 = 0` rather than through
-`Matrix.BlockTriangular`, because the explicit form is what every proof below uses; in size `2` the
-two are the same condition (`TauCeti.blockTriangular_id_iff`), which is how the subgroup axioms are
-discharged from Mathlib's `Matrix.BlockTriangular.mul` and
-`Matrix.blockTriangular_inv_of_blockTriangular`.
+The subgroup is the `Fin 2` specialization of `TauCeti.upperTriangularGroup`. Its public membership
+lemma is nevertheless stated as the concrete condition `g 1 0 = 0`, because that is what the
+coordinate proofs below use; `TauCeti.blockTriangular_id_iff` identifies this condition with the
+general upper-triangular predicate.
 
 ## References
 
@@ -149,25 +146,9 @@ section CommRing
 
 variable (R : Type u) [CommRing R]
 
-/-- The **Borel subgroup** of `GL₂`: the invertible upper-triangular `2 × 2` matrices, that is,
-those `g` with `g 1 0 = 0`. -/
-def GL2Borel : Subgroup (GL (Fin 2) R) where
-  -- Both closure axioms come from Mathlib's block-triangular API, through
-  -- `TauCeti.blockTriangular_id_iff`: `Matrix.BlockTriangular.mul` for products, and
-  -- `Matrix.blockTriangular_inv_of_blockTriangular` for inverses.
-  carrier := {g | (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0}
-  mul_mem' := by
-    intro g h hg hh
-    simp only [Set.mem_ofPred_eq, ← blockTriangular_id_iff] at hg hh ⊢
-    rw [Units.val_mul]
-    exact hg.mul hh
-  one_mem' := by
-    simp [Matrix.one_apply_ne]
-  inv_mem' := by
-    intro g hg
-    simp only [Set.mem_ofPred_eq, ← blockTriangular_id_iff] at hg ⊢
-    rw [Matrix.coe_units_inv]
-    exact Matrix.blockTriangular_inv_of_blockTriangular hg
+/-- The **Borel subgroup** of `GL₂`, obtained by specializing the general upper-triangular
+subgroup to `Fin 2`. -/
+abbrev GL2Borel : Subgroup (GL (Fin 2) R) := upperTriangularGroup (Fin 2) R
 
 namespace GL2Borel
 
@@ -176,13 +157,13 @@ variable {R}
 @[simp]
 theorem mem_iff {g : GL (Fin 2) R} :
     g ∈ GL2Borel R ↔ (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 :=
-  Iff.rfl
+  UpperTriangularGroup.mem_iff.trans blockTriangular_id_iff
 
 /-- The lower-left entry of an element of the Borel subgroup vanishes. -/
 @[simp]
 theorem apply_one_zero (g : GL2Borel R) :
     ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 :=
-  g.2
+  mem_iff.mp g.2
 
 /-- The `(0, 0)` entry is multiplicative on the Borel subgroup: only the lower-left entry of the
 *right* factor is needed. -/
@@ -208,62 +189,35 @@ variable (R)
 sends `b` to `!![1, b; 0, 1]`. -/
 theorem upperRightHom_mem (b : R) :
     Matrix.GeneralLinearGroup.upperRightHom b ∈ GL2Borel R := by
-  simp [mem_iff, Matrix.GeneralLinearGroup.upperRightHom]
+  apply mem_iff.mpr
+  simp [Matrix.GeneralLinearGroup.upperRightHom]
 
 /-- The scalar matrices sit inside the Borel subgroup. -/
 theorem scalar_mem (u : Rˣ) : Matrix.GeneralLinearGroup.scalar (Fin 2) u ∈ GL2Borel R := by
-  simp [mem_iff, Matrix.scalar_apply, Matrix.diagonal_apply_ne]
+  apply mem_iff.mpr
+  simp [Matrix.scalar_apply]
 
 variable {R}
 
 theorem mk_mem (a d : Rˣ) (b : R) : mk a d b ∈ GL2Borel R := by
-  simp [mem_iff]
+  apply mem_iff.mpr
+  simp
 
-/-- The **diagonal projection**: the two diagonal entries of an element of the Borel subgroup, as
-units of `R`. It is the retraction onto the split torus `TauCeti.GL2Borel.torusHom`. -/
-def diag : GL2Borel R →* Rˣ × Rˣ where
-  -- The entries are units because the inverse of `g` is again upper triangular, so the diagonal
-  -- entries of `g` and of `g⁻¹` multiply to the diagonal entries of `1`; the map is multiplicative
-  -- because the diagonal of a product of upper-triangular matrices is the product of the diagonals.
-  toFun g :=
-    (⟨((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0,
-        (((g : GL (Fin 2) R)⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0,
-        by
-          have := mul_apply_zero_zero (g := (g : GL (Fin 2) R))
-            ((GL2Borel R).inv_mem g.2)
-          rw [mul_inv_cancel] at this
-          simpa using this.symm,
-        by
-          have := mul_apply_zero_zero (g := ((g : GL (Fin 2) R)⁻¹ : GL (Fin 2) R)) g.2
-          rw [inv_mul_cancel] at this
-          simpa using this.symm⟩,
-      ⟨((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 1,
-        (((g : GL (Fin 2) R)⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 1,
-        by
-          have := mul_apply_one_one (h := ((g : GL (Fin 2) R)⁻¹ : GL (Fin 2) R)) g.2
-          rw [mul_inv_cancel] at this
-          simpa using this.symm,
-        by
-          have := mul_apply_one_one (h := (g : GL (Fin 2) R))
-            ((GL2Borel R).inv_mem g.2)
-          rw [inv_mul_cancel] at this
-          simpa using this.symm⟩)
-  map_one' := by
-    ext <;> simp
-  map_mul' g h := by
-    ext
-    · exact mul_apply_zero_zero h.2
-    · exact mul_apply_one_one g.2
+/-- The **diagonal projection**: the general diagonal projection specialized to `Fin 2`, with its
+two coordinates packaged as a pair of units. -/
+def diag : GL2Borel R →* Rˣ × Rˣ :=
+  (MonoidHom.mk' (fun t : Fin 2 → Rˣ ↦ (t 0, t 1)) fun _ _ ↦ rfl).comp
+    (UpperTriangularGroup.diag (m := Fin 2) (R := R))
 
 @[simp]
 theorem diag_fst_val (g : GL2Borel R) :
     (((diag g).1 : Rˣ) : R) = ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0 :=
-  (rfl)
+  UpperTriangularGroup.diag_apply_val g 0
 
 @[simp]
 theorem diag_snd_val (g : GL2Borel R) :
     (((diag g).2 : Rˣ) : R) = ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 1 :=
-  (rfl)
+  UpperTriangularGroup.diag_apply_val g 1
 
 @[simp]
 theorem diag_mk (a d : Rˣ) (b : R) : diag ⟨mk a d b, mk_mem a d b⟩ = (a, d) := by
@@ -283,24 +237,22 @@ theorem det_diag (g : GL2Borel R) :
 matrix `!![a, 0; 0, d]`. Its existence is what upgrades the bijection
 `TauCeti.GL2Borel.equivProd` to a genuine splitting `B = T U`. -/
 def torusHom : Rˣ × Rˣ →* GL2Borel R :=
-  (diagGL.comp <| MonoidHom.mk' (fun p : Rˣ × Rˣ => ![p.1, p.2]) fun p q => by
-      funext i; fin_cases i <;> rfl).codRestrict (GL2Borel R) fun p => by
-    simp [mem_iff]
+  (UpperTriangularGroup.diagonalHom (m := Fin 2) (R := R)).comp <|
+    MonoidHom.mk' (fun p : Rˣ × Rˣ ↦ ![p.1, p.2]) fun _ _ ↦ by
+      funext i
+      fin_cases i <;> rfl
 
 @[simp]
 theorem coe_torusHom (p : Rˣ × Rˣ) :
     ((torusHom p : GL2Borel R) : GL (Fin 2) R) = mk p.1 p.2 0 := by
   refine Matrix.GeneralLinearGroup.ext fun i j => ?_
-  fin_cases i <;> fin_cases j <;> simp [torusHom, diagGL_apply]
+  simp only [torusHom, MonoidHom.comp_apply]
+  rw [UpperTriangularGroup.coe_diagonalHom, coe_mk]
+  fin_cases i <;> fin_cases j <;> simp
 
 @[simp]
 theorem diag_torusHom (p : Rˣ × Rˣ) : diag (torusHom p) = p := by
   ext <;> simp
-
-/-- The diagonal projection is surjective: the diagonal matrix `!![a, 0; 0, d]` realizes
-`(a, d)`. -/
-theorem diag_surjective : Function.Surjective (diag (R := R)) := fun p =>
-  ⟨torusHom p, diag_torusHom p⟩
 
 /-- The **unipotent radical** `U`, as an additive character valued in the Borel subgroup: `b` is
 sent to `!![1, b; 0, 1]`. It is `Matrix.GeneralLinearGroup.upperRightHom` with its codomain
@@ -341,16 +293,6 @@ theorem mem_ker_diag_iff (g : GL2Borel R) :
       simp [Matrix.GeneralLinearGroup.upperRightHom, h₀, h₁, apply_one_zero g]
   · rintro ⟨b, rfl⟩
     exact MonoidHom.mem_ker.mpr (diag_unipotentHom b)
-
-/-- The upper-triangular Borel subgroup of `GL₂` is solvable over every commutative ring.
-
-Its diagonal quotient is abelian, and the kernel of the diagonal projection is the image of the
-abelian additive group of the ring under `unipotentHom`. -/
-instance instIsSolvable : Group.IsSolvable (GL2Borel R) := by
-  apply Group.isSolvable_of_ker_le_range (unipotentHom (R := R)).toMonoidHom (diag (R := R))
-  intro g hg
-  obtain ⟨b, rfl⟩ := (mem_ker_diag_iff g).mp hg
-  exact ⟨Multiplicative.ofAdd b, rfl⟩
 
 /-- **The Borel subgroup is `T U`**: every element of `B` is the diagonal matrix carrying its two
 torus coordinates times the unipotent matrix carrying the remaining upper-right coordinate. -/

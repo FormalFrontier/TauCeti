@@ -5,13 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
--- `Group.IsSolvable` occurs in the statement of
--- `TauCeti.UpperTriangularGroup.instIsSolvable`.
-public import Mathlib.GroupTheory.Solvable
--- `MulEquiv.piUnits` packages a family of units as a unit in the product ring.
-public import Mathlib.Algebra.Group.Pi.Units
--- The nilpotence of the upper-unitriangular subgroup supplies the solvable kernel below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
+-- `TauCeti.diagGL` supplies the diagonal section below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+-- The upper-unitriangular subgroup is the kernel of the diagonal projection.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Basic
 
 /-!
 # Upper-triangular general linear groups
@@ -23,26 +20,16 @@ upper-triangular matrices over `R`. Reading off the diagonal defines a group hom
 B_m(R) → (m → Rˣ).
 ```
 
-Its kernel is exactly the upper-unitriangular group `U_m(R)`. Since `U_m(R)` is nilpotent and the
-diagonal group is abelian, this proves that `B_m(R)` is solvable.
-
-This continues the "Lie--Kolchin; solvable groups" milestone in Layer 5 of the ReductiveGroups
-roadmap. That milestone's scheme-level property,
-`TauCeti.geometricallySolvablePointsCommHopfAlgProperty`, asks for a solvable abstract group of
-geometric points, and its one worked Borel example, for `GL₂`, is proved by transporting the
-abstract-group solvability `TauCeti.GL2Borel.instIsSolvable` along the points equivalence
-`TauCeti.GeneralLinear.Borel.pointsMulEquiv`. The theorem below is that same input for every `m`,
-so the argument carries over to the upper-triangular Borel of `GLₘ`.
+Its kernel is exactly the upper-unitriangular subgroup. The specialization to `m = Fin 2` is
+`TauCeti.GL2Borel`; its pair-valued diagonal coordinates and its representation-theoretic API are
+defined in `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel`.
 
 ## Main declarations
 
 * `TauCeti.upperTriangularGroup`: the subgroup of upper-triangular elements of `GL m R`.
 * `TauCeti.UpperTriangularGroup.diag`: the diagonal homomorphism to `m → Rˣ`.
 * `TauCeti.UpperTriangularGroup.diagonalHom`: its section by diagonal matrices.
-* `TauCeti.UpperTriangularGroup.upperUnitriangularHom`: the inclusion `U_m(R) → B_m(R)`.
-* `TauCeti.UpperTriangularGroup.range_upperUnitriangularHom_eq_ker_diag`: exactness at `B_m(R)`.
-* `TauCeti.UpperTriangularGroup.instIsSolvable`: upper-triangular general linear groups are
-  solvable.
+* `TauCeti.UpperTriangularGroup.ker_diag`: identification of the diagonal kernel.
 
 ## References
 
@@ -110,17 +97,25 @@ theorem diag_apply_val (g : upperTriangularGroup m R) (i : m) :
 
 /-- The diagonal matrices give a homomorphic section of the diagonal projection. -/
 def diagonalHom : (m → Rˣ) →* upperTriangularGroup m R :=
-  ((Units.map (Matrix.diagonalRingHom m R).toMonoidHom).comp
-    (MulEquiv.piUnits).symm.toMonoidHom).codRestrict (upperTriangularGroup m R) fun t ↦ by
-      intro i j hji
+  (diagGL (k := R) (ι := m)).codRestrict (upperTriangularGroup m R) fun t ↦
+    mem_iff.mpr fun i j hji ↦ by
+      rw [diagGL_coe]
       exact Matrix.diagonal_apply_ne _ (ne_of_gt hji)
 
-/-- The matrix underlying `diagonalHom t` has `t` on the diagonal and zero elsewhere. -/
+/-- The matrix underlying `diagonalHom t` is the corresponding diagonal matrix. -/
+@[simp]
+theorem coe_diagonalHom (t : m → Rˣ) :
+    (((diagonalHom t : upperTriangularGroup m R) : GL m R) : Matrix m m R) =
+      Matrix.diagonal fun i ↦ (t i : R) := by
+  exact diagGL_coe t
+
+/-- The entries of `diagonalHom t` vanish off the diagonal and equal `t i` on it. -/
 @[simp]
 theorem diagonalHom_apply (t : m → Rˣ) (i j : m) :
     (((diagonalHom t : upperTriangularGroup m R) : GL m R) : Matrix m m R) i j =
       if i = j then (t i : R) else 0 := by
-  simp [diagonalHom, Matrix.diagonal_apply]
+  rw [coe_diagonalHom]
+  exact Matrix.diagonal_apply ..
 
 /-- Diagonal matrices form a section of the diagonal projection. -/
 @[simp]
@@ -136,51 +131,34 @@ theorem diag_surjective : Function.Surjective (diag (m := m) (R := R)) :=
 /-- The upper-unitriangular group is a subgroup of the upper-triangular group. -/
 theorem upperUnitriangularGroup_le_upperTriangularGroup :
     upperUnitriangularGroup m R ≤ upperTriangularGroup m R :=
-  fun _ hg ↦ (UpperUnitriangularGroup.mem_iff.mp hg).isUpperTriangular
+  fun _ hg ↦ mem_iff.mpr (UpperUnitriangularGroup.mem_iff.mp hg).isUpperTriangular
 
-/-- The inclusion of the upper-unitriangular group in the upper-triangular group. -/
-def upperUnitriangularHom :
-    upperUnitriangularGroup m R →* upperTriangularGroup m R :=
-  Subgroup.inclusion upperUnitriangularGroup_le_upperTriangularGroup
-
-/-- The inclusion into the upper-triangular group does not change the underlying `GL_m`
-element. -/
+/-- Membership in the kernel of the diagonal projection is upper-unitriangularity of the
+underlying matrix. -/
 @[simp]
-theorem coe_upperUnitriangularHom (g : upperUnitriangularGroup m R) :
-    ((upperUnitriangularHom g : upperTriangularGroup m R) : GL m R) = g :=
-  by simp [upperUnitriangularHom]
-
-/-- The kernel of the diagonal homomorphism is exactly the image of the upper-unitriangular
-subgroup. -/
-theorem range_upperUnitriangularHom_eq_ker_diag :
-    (upperUnitriangularHom (m := m) (R := R)).range = (diag (m := m) (R := R)).ker := by
-  ext g
+theorem mem_ker_diag_iff {g : upperTriangularGroup m R} :
+    g ∈ (diag (m := m) (R := R)).ker ↔ (g : GL m R) ∈ upperUnitriangularGroup m R := by
+  rw [MonoidHom.mem_ker]
   constructor
-  · rintro ⟨u, rfl⟩
-    rw [MonoidHom.mem_ker]
+  · intro hg
+    apply UpperUnitriangularGroup.mem_iff.mpr
+    rw [Matrix.isUpperUnitriangular_def]
+    refine ⟨isUpperTriangular g, fun i ↦ ?_⟩
+    have hi := congrFun hg i
+    simpa only [diag_apply_val, Pi.one_apply, Units.val_one] using congrArg Units.val hi
+  · intro hg
     funext i
     apply Units.ext
-    exact UpperUnitriangularGroup.apply_diag u i
-  · intro hg
-    have hdiag : ∀ i,
-        ((g : GL m R) : Matrix m m R) i i = 1 := by
-      intro i
-      have hi := congrFun (MonoidHom.mem_ker.mp hg) i
-      exact congrArg Units.val hi
-    let u : upperUnitriangularGroup m R :=
-      ⟨g.1, UpperUnitriangularGroup.mem_iff.mpr (by
-        rw [Matrix.isUpperUnitriangular_def]
-        exact ⟨isUpperTriangular g, hdiag⟩)⟩
-    exact ⟨u, rfl⟩
+    simpa only [diag_apply_val, Pi.one_apply, Units.val_one] using
+      UpperUnitriangularGroup.apply_diag ⟨(g : GL m R), hg⟩ i
 
-/-- The upper-triangular subgroup of `GL_m(R)` is solvable over every commutative ring.
-
-The diagonal quotient is abelian, while the kernel of the diagonal projection is the nilpotent
-upper-unitriangular group. -/
-instance instIsSolvable : Group.IsSolvable (upperTriangularGroup m R) := by
-  apply Group.isSolvable_of_ker_le_range
-    (upperUnitriangularHom (m := m) (R := R)) (diag (m := m) (R := R))
-  rw [range_upperUnitriangularHom_eq_ker_diag]
+/-- The kernel of the diagonal projection is the upper-unitriangular subgroup, viewed inside the
+upper-triangular group. -/
+theorem ker_diag :
+    (diag (m := m) (R := R)).ker =
+      (upperUnitriangularGroup m R).subgroupOf (upperTriangularGroup m R) := by
+  ext g
+  rw [Subgroup.mem_subgroupOf, mem_ker_diag_iff]
 
 end UpperTriangularGroup
 

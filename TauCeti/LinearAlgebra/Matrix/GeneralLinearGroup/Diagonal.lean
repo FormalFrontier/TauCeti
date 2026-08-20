@@ -23,8 +23,8 @@ import Mathlib.Algebra.GroupWithZero.Units.Fintype
 /-!
 # Diagonal elements of the general linear group, and the diagonal torus
 
-A family of units `t : Fin n → kˣ` is the diagonal of an invertible diagonal matrix, and this
-assignment is a group homomorphism `TauCeti.diagGL : (Fin n → kˣ) →* GL (Fin n) k`. Its entries,
+A family of units indexed by a finite type `ι` is the diagonal of an invertible diagonal matrix,
+and this assignment is a group homomorphism `TauCeti.diagGL : (ι → kˣ) →* GL ι k`. Its entries,
 its determinant and its injectivity are recorded here, together with two facts about diagonal
 matrices proper: invertibility of a diagonal matrix upgrades its diagonal entries to units, and a
 matrix commuting with a diagonal matrix has no entries away from the diagonal wherever that
@@ -122,30 +122,32 @@ section Semiring
 
 variable [Semiring k]
 
-/-- Coordinatewise units embed in `GL n k` as diagonal matrices. -/
-def diagGL : (Fin n → kˣ) →* GL (Fin n) k :=
-  (Units.map (Matrix.diagonalRingHom (Fin n) k).toMonoidHom).comp
+/-- Coordinatewise units embed in a general linear group as diagonal matrices. -/
+def diagGL {ι : Type*} [Fintype ι] [DecidableEq ι] : (ι → kˣ) →* GL ι k :=
+  (Units.map (Matrix.diagonalRingHom ι k).toMonoidHom).comp
     (MulEquiv.piUnits).symm.toMonoidHom
 
 /-- The matrix underlying `diagGL t` is the diagonal matrix with entries `t i`. -/
 @[simp]
-theorem diagGL_coe (t : Fin n → kˣ) : (diagGL t : Matrix (Fin n) (Fin n) k) =
+theorem diagGL_coe {ι : Type*} [Fintype ι] [DecidableEq ι] (t : ι → kˣ) :
+    (diagGL t : Matrix ι ι k) =
       Matrix.diagonal fun i => (t i : k) := by
   rfl
 
 /-- The entries of `diagGL t` vanish off the diagonal and equal `t i` on it. -/
 @[simp]
-theorem diagGL_apply (t : Fin n → kˣ) (i j : Fin n) :
+theorem diagGL_apply {ι : Type*} [Fintype ι] [DecidableEq ι] (t : ι → kˣ) (i j : ι) :
     diagGL t i j = if i = j then (t i : k) else 0 := by
   rw [diagGL_coe]
   exact Matrix.diagonal_apply ..
 
 /-- The diagonal embedding is injective. -/
-theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
+theorem diagGL_injective {ι : Type*} [Fintype ι] [DecidableEq ι] :
+    Function.Injective (diagGL (k := k) (ι := ι)) := by
   intro t s h
   funext i
   apply Units.ext
-  have := congrArg (fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k) i i) h
+  have := congrArg (fun g : GL ι k ↦ (g : Matrix ι ι k) i i) h
   simpa using this
 
 /-- The diagonal entries of an invertible diagonal matrix are units: the inverse matrix supplies
@@ -169,7 +171,7 @@ theorem isUnit_apply_of_isDiag {ι : Type*} [Fintype ι] [DecidableEq ι] {g : G
 
 /-- The **diagonal torus** of `GL n k`: the image of the coordinatewise units under `diagGL`. -/
 def diagonalTorus (k : Type u) [Semiring k] (n : ℕ) : Subgroup (GL (Fin n) k) :=
-  MonoidHom.range (diagGL (k := k) (n := n))
+  MonoidHom.range (diagGL (k := k) (ι := Fin n))
 
 /-- Membership in the diagonal torus, read off its definition as a range: an element lies in it
 exactly when it is `diagGL t` for a family of units `t`. -/
