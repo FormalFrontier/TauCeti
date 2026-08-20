@@ -170,7 +170,7 @@ theorem nontrivial_spinPlus [Nontrivial K] : Nontrivial (spinPlus Q P) :=
 
 /-- **The odd half-spin summand is nonzero** as soon as the isotropic summand is. For `W = ⊥`
 the spinor module is the ground ring, entirely even, and this fails. -/
-theorem nontrivial_spinMinus [Nontrivial K] (hW : P.W ≠ ⊥) : Nontrivial (spinMinus Q P) := by
+theorem nontrivial_spinMinus (hW : P.W ≠ ⊥) : Nontrivial (spinMinus Q P) := by
   let _ : Nontrivial P.W := Submodule.nontrivial_iff_ne_bot.2 hW
   obtain ⟨w, hw⟩ := exists_ne (0 : P.W)
   refine ⟨⟨ExteriorAlgebra.ι K w, ?_⟩, 0, ?_⟩
