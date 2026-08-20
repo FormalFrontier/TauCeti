@@ -22,8 +22,6 @@ pointwise kernel.
 
 ## Main declarations
 
-* `TauCeti.GroupScheme.pointMap_injective_of_mono`: a morphism monic in `Over X` induces an
-  injective map on points over every test scheme.
 * `TauCeti.GroupScheme.HasCentralKernel.precomp_of_mono`: central kernels are preserved by
   precomposition with a morphism monic in `Over X`.
 * `TauCeti.GroupScheme.HasCentralKernel.postcomp_of_mono`: central kernels are preserved by
@@ -55,14 +53,6 @@ open AlgebraicGeometry
 universe u
 
 variable {X : Scheme.{u}} {F G H K : Grp (Over X)}
-
-/-- A group-scheme morphism monic in `Over X` induces an injective map on points over every test
-scheme. -/
-theorem pointMap_injective_of_mono (e : G ⟶ H) [Mono e.hom.hom] (T : Over X) :
-    Function.Injective (pointMap e T) := by
-  intro g h hgh
-  apply (cancel_mono e.hom.hom).1
-  simpa only [pointMap_apply] using hgh
 
 /-- Precomposing with a morphism monic in `Over X` preserves the central-kernel condition. -/
 theorem HasCentralKernel.precomp_of_mono (e : F ⟶ G) [Mono e.hom.hom] (f : G ⟶ H)
@@ -119,13 +109,13 @@ variable {k : Type u} [Field k]
 instance centralIsogenies_respectsIso : (centralIsogenies k).RespectsIso := by
   apply MorphismProperty.RespectsIso.mk
   · intro _ _ _ e f hf
-    have hf' := (isCentralIsogeny_iff_isIsogeny_and f).mp hf
-    exact (isCentralIsogeny_iff_isIsogeny_and (e.hom ≫ f)).mpr
+    have hf' := (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mp hf
+    exact (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel (e.hom ≫ f)).mpr
       ⟨MorphismProperty.RespectsIso.precomp (isogenies k) e.hom f hf'.1,
         hf'.2.precomp_of_mono e.hom f⟩
   · intro _ _ _ e f hf
-    have hf' := (isCentralIsogeny_iff_isIsogeny_and f).mp hf
-    exact (isCentralIsogeny_iff_isIsogeny_and (f ≫ e.hom)).mpr
+    have hf' := (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mp hf
+    exact (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel (f ≫ e.hom)).mpr
       ⟨MorphismProperty.RespectsIso.postcomp (isogenies k) e.hom f hf'.1,
         hf'.2.postcomp_of_mono f e.hom⟩
 
