@@ -140,8 +140,9 @@ private theorem pow_toEnd_sub_smul_apply {x : H} {mu nu : K} {v : M}
 
 variable (b : (IsKilling.rootSystem H).Base) {lam : Dual K H} {v : M}
 
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [IsTriangularizable K H L] in
-variable (H M) in
+omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
+  [IsTriangularizable K H L] in
+variable (H M) [LieRing.IsNilpotent H] in
 /-- **The top weight space is disjoint from the span of the other weight spaces**, the weight
 spaces of a module being independent. -/
 theorem disjoint_genWeightSpace_genWeightSpaceSpan_ne (lam : Dual K H) :
