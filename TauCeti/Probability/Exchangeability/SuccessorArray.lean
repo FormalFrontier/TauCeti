@@ -120,43 +120,45 @@ end TransitionCounts
 
 section Measurability
 
-variable {α : Type*} [MeasurableSpace α] [MeasurableSingletonClass α] {a : α} {k n : ℕ}
+variable {α : Type*} [MeasurableSpace α] {a : α} {k n : ℕ}
 
 /-- The event that a path has a specified value at a specified index. -/
-private theorem measurableSet_apply_eq (a : α) (n : ℕ) :
+private theorem measurableSet_apply_eq (a : α) (n : ℕ) (ha : MeasurableSet ({a} : Set α)) :
     MeasurableSet {x : ℕ → α | x n = a} := by
   -- Writing the set-builder as a preimage lets `measurable_pi_apply` infer its target set.
   change MeasurableSet ((fun x : ℕ → α => x n) ⁻¹' {a})
-  exact measurable_pi_apply n (measurableSet_singleton a)
+  exact measurable_pi_apply n ha
 
 /-- Visit counts of a measurably varying sequence are measurable when the relevant coordinates
 are measurable. -/
 theorem measurable_visitCount_comp {β : Type*} [MeasurableSpace β] {P : β → ℕ → α}
-    (a : α) (n : ℕ) (hP : ∀ i < n, Measurable fun b => P b i) :
+    (a : α) (n : ℕ) (ha : MeasurableSet ({a} : Set α))
+    (hP : ∀ i < n, Measurable fun b => P b i) :
     Measurable fun b => visitCount (P b) a n := by
   classical
   induction n with
   | zero => simp only [visitCount_zero]; exact measurable_const
   | succ n ih =>
     simp only [visitCount_succ]
-    exact Measurable.ite (hP n (Nat.lt_succ_self n) (measurableSet_singleton a))
+    exact Measurable.ite (hP n (Nat.lt_succ_self n) ha)
       (Measurable.of_discrete.comp (ih fun i hi => hP i (hi.trans_le (Nat.le_succ n))))
       (ih fun i hi => hP i (hi.trans_le (Nat.le_succ n)))
 
 /-- Visit counts are measurable functions of a path. -/
-theorem measurable_visitCount (a : α) (n : ℕ) :
+theorem measurable_visitCount (a : α) (n : ℕ) (ha : MeasurableSet ({a} : Set α)) :
     Measurable fun x : ℕ → α => visitCount x a n :=
-  measurable_visitCount_comp a n fun i _ => measurable_pi_apply i
+  measurable_visitCount_comp a n ha fun i _ => measurable_pi_apply i
 
 /-- The event witnessing that index `n` is the `k`-th visit to `a` is measurable. -/
-private theorem measurableSet_isVisitWitness (a : α) (k n : ℕ) :
+private theorem measurableSet_isVisitWitness (a : α) (k n : ℕ)
+    (ha : MeasurableSet ({a} : Set α)) :
     MeasurableSet {x : ℕ → α | x n = a ∧ visitCount x a n = k} :=
-  (measurableSet_apply_eq a n).inter
-    (measurable_visitCount a n (measurableSet_singleton k))
+  (measurableSet_apply_eq a n ha).inter
+    (measurable_visitCount a n ha (measurableSet_singleton k))
 
 /-- Visit times are measurable functions of the path. Each fibre is described by
 `visitTime_eq_iff` as a countable Boolean combination of coordinate events. -/
-theorem measurable_visitTime (a : α) (k : ℕ) :
+theorem measurable_visitTime (a : α) (k : ℕ) (ha : MeasurableSet ({a} : Set α)) :
     Measurable fun x : ℕ → α => visitTime x a k := by
   refine measurable_to_countable' fun m => ?_
   have hrw : (fun x : ℕ → α => visitTime x a k) ⁻¹' {m} =
@@ -167,7 +169,7 @@ theorem measurable_visitTime (a : α) (k : ℕ) :
       Set.mem_ofPred_eq] using visitTime_eq_iff (x := x) (a := a)
   rw [hrw]
   refine MeasurableSet.union
-    (measurableSet_isVisitWitness a k m)
+    (measurableSet_isVisitWitness a k m ha)
     ?_
   by_cases hm : m = 0
   · have hiInter : {x : ℕ → α | m = 0 ∧ ∀ n, ¬(x n = a ∧ visitCount x a n = k)} =
@@ -176,7 +178,7 @@ theorem measurable_visitTime (a : α) (k : ℕ) :
       simp only [Set.mem_ofPred_eq, hm, true_and, Set.mem_iInter, Set.mem_compl_iff,
         Set.mem_inter_iff]
     rw [hiInter]
-    exact MeasurableSet.iInter fun n => (measurableSet_isVisitWitness a k n).compl
+    exact MeasurableSet.iInter fun n => (measurableSet_isVisitWitness a k n ha).compl
   · have hempty : {x : ℕ → α | m = 0 ∧ ∀ n, ¬(x n = a ∧ visitCount x a n = k)} = ∅ := by
       ext x
       simp only [Set.mem_ofPred_eq, hm, false_and, Set.mem_empty_iff_false]
@@ -184,18 +186,21 @@ theorem measurable_visitTime (a : α) (k : ℕ) :
     exact MeasurableSet.empty
 
 /-- Each entry of the successor array is a measurable function of the path. -/
-theorem measurable_successorArray_apply (a : α) (k : ℕ) :
+theorem measurable_successorArray_apply (a : α) (k : ℕ)
+    (ha : MeasurableSet ({a} : Set α)) :
     Measurable fun x : ℕ → α => successorArray x a k := by
   simp only [successorArray_def]
   exact measurable_eval_index (g := fun x : ℕ → α => x)
     (f := fun x : ℕ → α => visitTime x a k + 1)
-    measurable_id (Measurable.of_discrete.comp (measurable_visitTime a k))
+    measurable_id (Measurable.of_discrete.comp (measurable_visitTime a k ha))
+
+variable [MeasurableSingletonClass α]
 
 /-- **The successor array of a path is a measurable function of the path.** -/
 theorem measurable_successorArray :
     Measurable fun x : ℕ → α => successorArray x :=
   measurable_pi_lambda _ fun a =>
-    measurable_pi_lambda _ fun k => measurable_successorArray_apply a k
+    measurable_pi_lambda _ fun k => measurable_successorArray_apply a k (measurableSet_singleton a)
 
 /-- The map pairing a path's initial state with its successor array is measurable. -/
 theorem measurable_apply_zero_prodMk_successorArray :
@@ -217,8 +222,9 @@ private theorem measurable_pathOfSuccessors_apply (n : ℕ) :
           pathOfSuccessors q.1 q.2 n := ih n (Nat.lt_succ_self n)
       have hcounts : Measurable fun q : α × (α → ℕ → α) =>
           fun a => visitCount (pathOfSuccessors q.1 q.2) a n :=
-        measurable_pi_lambda _ fun a => measurable_visitCount_comp a n fun i hi =>
-          ih i (hi.trans (Nat.lt_succ_self n))
+        measurable_pi_lambda _ fun a =>
+          measurable_visitCount_comp a n (measurableSet_singleton a) fun i hi =>
+            ih i (hi.trans (Nat.lt_succ_self n))
       have hstate : Measurable fun q : α × (α → ℕ → α) =>
           q.2 (pathOfSuccessors q.1 q.2 n) :=
         measurable_eval_index (g := fun q : α × (α → ℕ → α) => q.2)

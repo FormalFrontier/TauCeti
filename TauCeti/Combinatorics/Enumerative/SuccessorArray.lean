@@ -123,8 +123,10 @@ theorem visitCount_zero (x : ℕ → α) (a : α) : visitCount x a 0 = 0 := by
 
 /-- Visit counts before `n` depend only on sequence values before `n`. -/
 theorem visitCount_congr (h : ∀ i < n, x i = y i) : visitCount x a n = visitCount y a n := by
-  rw [visitCount, visitCount, show (fun i : Fin n => x i.val) = (fun i => y i.val) from
-    funext fun i => h i.val i.isLt]
+  unfold visitCount
+  apply congrArg (fun z => occCount z a)
+  funext i
+  exact h i.val i.isLt
 
 /-- Splitting a visit count at the final index. -/
 @[grind =]
