@@ -28,9 +28,9 @@ theorem therefore hands the columns a directing measure `λ : Ω → Probability
 The theorem of this file is that the extra, off-diagonal part of the symmetry makes that directing
 measure **factor over the rows**: almost surely, its mass on a finite box
 `{x | ∀ a ∈ F, x a ∈ B a}` is the product over `a ∈ F` of its one-row masses. So conditionally on
-the directing measure the rows are not merely identically distributed but independent, which is the
-mixture-of-independent-i.i.d.-rows form that the Diaconis–Freedman representation of Markov
-exchangeable processes consumes.
+the directing measure distinct rows are independent, while the entries are identically distributed
+within each row. This is the mixture-of-independent-i.i.d.-rows form that the Diaconis–Freedman
+representation of Markov exchangeable processes consumes.
 
 ## Main definitions
 
@@ -126,7 +126,7 @@ variable {μ : Measure Ω} {Y : ι × ℕ → Ω → α}
 omit [Countable ι] in
 /-- Characterization of row exchangeability by invariance under every family of row-wise time
 permutations. -/
-theorem RowExchangeable_def :
+theorem rowExchangeable_def :
     RowExchangeable μ Y ↔ ∀ π : ι → Equiv.Perm ℕ,
       (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
         μ.map fun ω (p : ι × ℕ) => Y p ω :=
@@ -147,7 +147,7 @@ theorem RowExchangeable.fullyExchangeable_row (h : RowExchangeable μ Y)
   have hrow : Measurable fun y : ι × ℕ → α => fun k => y (a, k) :=
     measurable_pi_lambda _ fun k => measurable_pi_apply (a, k)
   have hmap := congrArg (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun k => y (a, k))
-    (RowExchangeable_def.mp h π)
+    (rowExchangeable_def.mp h π)
   rw [AEMeasurable.map_map_of_aemeasurable hrow.aemeasurable
       (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)),
     AEMeasurable.map_map_of_aemeasurable hrow.aemeasurable
@@ -166,7 +166,7 @@ theorem RowExchangeable.fullyExchangeable_arrayColumn (h : RowExchangeable μ Y)
   have hmap := congrArg
     (fun ρ : Measure (ι × ℕ → α) =>
       ρ.map fun y => fun (k : ℕ) (a : ι) => y (a, k))
-    (RowExchangeable_def.mp h fun _ => σ)
+    (rowExchangeable_def.mp h fun _ => σ)
   rw [AEMeasurable.map_map_of_aemeasurable hcol.aemeasurable
       (aemeasurable_pi_lambda _ fun p => hY (p.1, σ p.2)),
     AEMeasurable.map_map_of_aemeasurable hcol.aemeasurable
@@ -182,17 +182,17 @@ theorem RowExchangeable.fullyExchangeable_arrayColumn (h : RowExchangeable μ Y)
   rw [pathLaw, hleft, hright]
   simpa [Function.comp_def] using hmap
 
-/-- **Row exchangeability is closed under coordinatewise pushforward.** Applying one measurable map
-to every entry of a row exchangeable array leaves it row exchangeable. -/
+/-- **Row exchangeability is closed under row-wise coordinatewise pushforward.** Applying a
+measurable map, allowed to depend on the row, to every entry leaves the array row exchangeable. -/
 theorem RowExchangeable.map_values {β : Type*} [MeasurableSpace β] (h : RowExchangeable μ Y)
-    (hY : ∀ p, AEMeasurable (Y p) μ) {f : α → β} (hf : Measurable f) :
-    RowExchangeable μ fun p ω => f (Y p ω) := by
-  rw [RowExchangeable_def] at h ⊢
+    (hY : ∀ p, AEMeasurable (Y p) μ) {f : ι → α → β} (hf : ∀ a, Measurable (f a)) :
+    RowExchangeable μ fun p ω => f p.1 (Y p ω) := by
+  rw [rowExchangeable_def] at h ⊢
   intro π
-  have hpush : Measurable fun y : ι × ℕ → α => fun p : ι × ℕ => f (y p) :=
-    measurable_pi_lambda _ fun p => hf.comp (measurable_pi_apply p)
+  have hpush : Measurable fun y : ι × ℕ → α => fun p : ι × ℕ => f p.1 (y p) :=
+    measurable_pi_lambda _ fun p => (hf p.1).comp (measurable_pi_apply p)
   have hmap := congrArg
-    (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun p : ι × ℕ => f (y p)) (h π)
+    (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun p : ι × ℕ => f p.1 (y p)) (h π)
   rw [AEMeasurable.map_map_of_aemeasurable hpush.aemeasurable
       (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)),
     AEMeasurable.map_map_of_aemeasurable hpush.aemeasurable
@@ -209,29 +209,31 @@ theorem RowExchangeable.exchangeable_arrayColumn (h : RowExchangeable μ Y)
 section TwoTimes
 
 omit [Countable ι] in
-private theorem measurableSet_pairEventPath (F : Finset ι) {B : ι → Set α}
-    (hB : ∀ a ∈ F, MeasurableSet (B a)) (c d : ι → ℕ) :
-    MeasurableSet {y : ι × ℕ → α | ∀ a ∈ F, y (a, c a) ∈ B a ∧ y (a, d a) ∈ B a} := by
-  have : {y : ι × ℕ → α | ∀ a ∈ F, y (a, c a) ∈ B a ∧ y (a, d a) ∈ B a} =
-      ⋂ a ∈ F, ((fun y : ι × ℕ → α => y (a, c a)) ⁻¹' B a ∩
-        (fun y : ι × ℕ → α => y (a, d a)) ⁻¹' B a) := by
+private theorem measurableSet_pairEventPath (F : Finset ι) {B₀ B₁ : ι → Set α}
+    (hB₀ : ∀ a ∈ F, MeasurableSet (B₀ a)) (hB₁ : ∀ a ∈ F, MeasurableSet (B₁ a))
+    (c d : ι → ℕ) :
+    MeasurableSet {y : ι × ℕ → α | ∀ a ∈ F, y (a, c a) ∈ B₀ a ∧ y (a, d a) ∈ B₁ a} := by
+  have : {y : ι × ℕ → α | ∀ a ∈ F, y (a, c a) ∈ B₀ a ∧ y (a, d a) ∈ B₁ a} =
+      ⋂ a ∈ F, ((fun y : ι × ℕ → α => y (a, c a)) ⁻¹' B₀ a ∩
+        (fun y : ι × ℕ → α => y (a, d a)) ⁻¹' B₁ a) := by
     ext y; simp [Set.mem_iInter]
   rw [this]
   exact MeasurableSet.biInter F.countable_toSet fun a _ =>
-    ((measurable_pi_apply _) (hB a ‹a ∈ F›)).inter
-      ((measurable_pi_apply _) (hB a ‹a ∈ F›))
+    ((measurable_pi_apply _) (hB₀ a ‹a ∈ F›)).inter
+      ((measurable_pi_apply _) (hB₁ a ‹a ∈ F›))
 
 /-- **The two-time pattern lemma.** Under row exchangeability the probability that every row of a
-finite set lands in its own target set at two prescribed times is the same for all choices of the
-two times, so long as the two times chosen in each row of that set are distinct.
+finite set lands in two specified target sets at two prescribed times is the same for all choices
+of the two times, so long as the two times chosen in each row of that set are distinct.
 
 This is the whole combinatorial input to the factorization theorem: each moment of the directing
 measure computes such a probability, with a different time pattern. -/
 theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
-    (hY : ∀ p, AEMeasurable (Y p) μ) (F : Finset ι) {B : ι → Set α}
-    (hB : ∀ a ∈ F, MeasurableSet (B a)) {c d : ι → ℕ} (hcd : ∀ a ∈ F, c a ≠ d a) :
-    μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a} =
-      μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B a ∧ Y (a, 1) ω ∈ B a} := by
+    (hY : ∀ p, AEMeasurable (Y p) μ) (F : Finset ι) {B₀ B₁ : ι → Set α}
+    (hB₀ : ∀ a ∈ F, MeasurableSet (B₀ a)) (hB₁ : ∀ a ∈ F, MeasurableSet (B₁ a))
+    {c d : ι → ℕ} (hcd : ∀ a ∈ F, c a ≠ d a) :
+    μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B₀ a ∧ Y (a, d a) ω ∈ B₁ a} =
+      μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B₀ a ∧ Y (a, 1) ω ∈ B₁ a} := by
   classical
   -- A permutation of time in row `a` carrying `0` to `c a` and `1` to `d a`. Only the rows of `F`
   -- are constrained, so rows outside `F` — where `c` and `d` may agree — take the identity.
@@ -246,10 +248,11 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
       exact ⟨σ, fun _ => ⟨by simpa using hσ 0, by simpa using hσ 1⟩⟩
     · exact ⟨1, fun ha' => absurd ha' ha⟩
   choose π hπ using hexists
-  set A : Set (ι × ℕ → α) := {y : ι × ℕ → α | ∀ a ∈ F, y (a, 0) ∈ B a ∧ y (a, 1) ∈ B a} with hA
-  have hAmeas : MeasurableSet A := measurableSet_pairEventPath F hB _ _
+  set A : Set (ι × ℕ → α) :=
+    {y : ι × ℕ → α | ∀ a ∈ F, y (a, 0) ∈ B₀ a ∧ y (a, 1) ∈ B₁ a} with hA
+  have hAmeas : MeasurableSet A := measurableSet_pairEventPath F hB₀ hB₁ _ _
   have hLHS : (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) A =
-      μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a} := by
+      μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B₀ a ∧ Y (a, d a) ω ∈ B₁ a} := by
     rw [Measure.map_apply_of_aemeasurable
       (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)) hAmeas]
     congr 1
@@ -258,10 +261,10 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
     refine forall_congr' fun a => forall_congr' fun ha => ?_
     rw [(hπ a ha).1, (hπ a ha).2]
   have hRHS : (μ.map fun ω (p : ι × ℕ) => Y p ω) A =
-      μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B a ∧ Y (a, 1) ω ∈ B a} := by
+      μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B₀ a ∧ Y (a, 1) ω ∈ B₁ a} := by
     rw [Measure.map_apply_of_aemeasurable (aemeasurable_pi_lambda _ fun p => hY p) hAmeas]
     rfl
-  rw [← hLHS, ← hRHS, RowExchangeable_def.mp h π]
+  rw [← hLHS, ← hRHS, rowExchangeable_def.mp h π]
 
 end TwoTimes
 
@@ -310,8 +313,9 @@ private theorem RowExchangeable.measure_setOf_two_blocks_eq (h : RowExchangeable
       · rw [(hFval a ha).1, (hFval a ha).2]; exact h1 a ha
       · rw [(hGval a ha).1, (hGval a ha).2]; exact h2 a ha
   rw [← hglue, ← hsplit c d, ← hsplit (fun _ => 0) (fun _ => 1),
-    h.measure_setOf_forall_pair_eq hY (F ∪ G) (fun a ha => hB a (Finset.mem_union.mp ha))
-      fun a _ => hcd a]
+    h.measure_setOf_forall_pair_eq hY (F ∪ G)
+      (fun a ha => hB a (Finset.mem_union.mp ha))
+      (fun a ha => hB a (Finset.mem_union.mp ha)) fun a _ => hcd a]
 
 section Factorization
 
@@ -446,8 +450,6 @@ theorem RowExchangeable.ae_apply_pi_union [IsFiniteMeasure μ] (h : RowExchangea
   have hlam_meas := hlam.measurable_mixingRepresentative
   have hprob : ∀ (ω : Ω) (S : Set (ι → α)), (lam ω : Measure (ι → α)) S ≤ 1 := fun _ _ =>
     prob_le_one
-  have hne : ∀ (ω : Ω) (S : Set (ι → α)), (lam ω : Measure (ι → α)) S ≠ ⊤ := fun ω S =>
-    ((hprob ω S).trans_lt ENNReal.one_lt_top).ne
   have hle1 : ∀ (ω : Ω) (S : Set (ι → α)), ((lam ω : Measure (ι → α)) S).toReal ≤ 1 := by
     intro ω S
     simpa using ENNReal.toReal_mono ENNReal.one_ne_top (hprob ω S)
@@ -473,28 +475,29 @@ theorem RowExchangeable.ae_apply_pi_union [IsFiniteMeasure μ] (h : RowExchangea
     rw [hg]
     exact hmul1 _ _ (by rw [abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _)
       (by rw [abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _)
-  have hbdd : ∀ (c : ℝ) (φ : Ω → ℝ), Measurable φ → (∀ ω, |φ ω| ≤ c) → Integrable φ μ := by
-    intro c φ hφ hb
-    exact (integrable_const c).mono' hφ.aestronglyMeasurable
-      (.of_forall fun ω => by simpa [Real.norm_eq_abs] using hb ω)
-  have htoReal : ∀ u : Ω → ℝ≥0∞, Measurable u → (∀ ω, u ω ≠ ⊤) →
-      ∫ ω, (u ω).toReal ∂μ = (∫⁻ ω, u ω ∂μ).toReal := fun u hu hu' =>
-    integral_toReal hu.aemeasurable (.of_forall fun ω => (hu' ω).lt_top)
   have hI1 : ∫ ω, f ω * f ω ∂μ = T.toReal := by
     have hrw : (fun ω => f ω * f ω) = fun ω =>
         ((lam ω : Measure (ι → α)) (C ∩ D) * (lam ω : Measure (ι → α)) (C ∩ D)).toReal := by
       funext ω; rw [ENNReal.toReal_mul]
-    rw [hrw, htoReal (fun ω => (lam ω : Measure (ι → α)) (C ∩ D) *
-      (lam ω : Measure (ι → α)) (C ∩ D)) (hmCD.mul hmCD)
-      (fun ω => ENNReal.mul_ne_top (hne ω _) (hne ω _)), hT1]
+    rw [hrw, integral_toReal
+      (f := fun ω => (lam ω : Measure (ι → α)) (C ∩ D) *
+        (lam ω : Measure (ι → α)) (C ∩ D)) (hmCD.mul hmCD).aemeasurable
+      (.of_forall fun ω => (ENNReal.mul_ne_top
+        (measure_ne_top (lam ω : Measure (ι → α)) _)
+        (measure_ne_top (lam ω : Measure (ι → α)) _)).lt_top), hT1]
   have hI2 : ∫ ω, f ω * g ω ∂μ = T.toReal := by
     have hrw : (fun ω => f ω * g ω) = fun ω =>
         ((lam ω : Measure (ι → α)) (C ∩ D) * (lam ω : Measure (ι → α)) C *
           (lam ω : Measure (ι → α)) D).toReal := by
       funext ω; rw [ENNReal.toReal_mul, ENNReal.toReal_mul, hf, hg, mul_assoc]
-    rw [hrw, htoReal (fun ω => (lam ω : Measure (ι → α)) (C ∩ D) * (lam ω : Measure (ι → α)) C *
-      (lam ω : Measure (ι → α)) D) ((hmCD.mul hmC).mul hmD)
-      (fun ω => ENNReal.mul_ne_top (ENNReal.mul_ne_top (hne ω _) (hne ω _)) (hne ω _)), hT2]
+    rw [hrw, integral_toReal
+      (f := fun ω => (lam ω : Measure (ι → α)) (C ∩ D) *
+        (lam ω : Measure (ι → α)) C * (lam ω : Measure (ι → α)) D)
+      ((hmCD.mul hmC).mul hmD).aemeasurable
+      (.of_forall fun ω => (ENNReal.mul_ne_top (ENNReal.mul_ne_top
+        (measure_ne_top (lam ω : Measure (ι → α)) _)
+        (measure_ne_top (lam ω : Measure (ι → α)) _))
+        (measure_ne_top (lam ω : Measure (ι → α)) _)).lt_top), hT2]
   have hI3 : ∫ ω, g ω * g ω ∂μ = T.toReal := by
     have hrw : (fun ω => g ω * g ω) = fun ω =>
         ((lam ω : Measure (ι → α)) C * (lam ω : Measure (ι → α)) C *
@@ -502,17 +505,27 @@ theorem RowExchangeable.ae_apply_pi_union [IsFiniteMeasure μ] (h : RowExchangea
       funext ω
       rw [ENNReal.toReal_mul, ENNReal.toReal_mul, ENNReal.toReal_mul, hg]
       ring
-    rw [hrw, htoReal (fun ω => (lam ω : Measure (ι → α)) C * (lam ω : Measure (ι → α)) C *
-      (lam ω : Measure (ι → α)) D * (lam ω : Measure (ι → α)) D)
-      (((hmC.mul hmC).mul hmD).mul hmD)
-      (fun ω => ENNReal.mul_ne_top (ENNReal.mul_ne_top
-        (ENNReal.mul_ne_top (hne ω _) (hne ω _)) (hne ω _)) (hne ω _)), hT3]
+    rw [hrw, integral_toReal
+      (f := fun ω => (lam ω : Measure (ι → α)) C * (lam ω : Measure (ι → α)) C *
+        (lam ω : Measure (ι → α)) D * (lam ω : Measure (ι → α)) D)
+      (((hmC.mul hmC).mul hmD).mul hmD).aemeasurable
+      (.of_forall fun ω => (ENNReal.mul_ne_top (ENNReal.mul_ne_top
+        (ENNReal.mul_ne_top (measure_ne_top (lam ω : Measure (ι → α)) _)
+          (measure_ne_top (lam ω : Measure (ι → α)) _))
+        (measure_ne_top (lam ω : Measure (ι → α)) _))
+        (measure_ne_top (lam ω : Measure (ι → α)) _)).lt_top), hT3]
   have e1 : Integrable (fun ω => f ω * f ω) μ :=
-    hbdd 1 _ (hfm.mul hfm) fun ω => hmul1 _ _ (hf1 ω) (hf1 ω)
+    Integrable.of_bound (hfm.mul hfm).aestronglyMeasurable 1
+      (.of_forall fun ω => by
+        simpa [Real.norm_eq_abs] using hmul1 _ _ (hf1 ω) (hf1 ω))
   have e2 : Integrable (fun ω => f ω * g ω) μ :=
-    hbdd 1 _ (hfm.mul hgm) fun ω => hmul1 _ _ (hf1 ω) (hg1 ω)
+    Integrable.of_bound (hfm.mul hgm).aestronglyMeasurable 1
+      (.of_forall fun ω => by
+        simpa [Real.norm_eq_abs] using hmul1 _ _ (hf1 ω) (hg1 ω))
   have e3 : Integrable (fun ω => g ω * g ω) μ :=
-    hbdd 1 _ (hgm.mul hgm) fun ω => hmul1 _ _ (hg1 ω) (hg1 ω)
+    Integrable.of_bound (hgm.mul hgm).aestronglyMeasurable 1
+      (.of_forall fun ω => by
+        simpa [Real.norm_eq_abs] using hmul1 _ _ (hg1 ω) (hg1 ω))
   have hexp : (fun ω => (f ω - g ω) ^ 2)
       = fun ω => f ω * f ω - 2 * (f ω * g ω) + g ω * g ω := by funext ω; ring
   have e2' : Integrable (fun ω => 2 * (f ω * g ω)) μ := e2.const_mul 2
@@ -530,7 +543,9 @@ theorem RowExchangeable.ae_apply_pi_union [IsFiniteMeasure μ] (h : RowExchangea
       have : (f ω - g ω) ^ 2 = 0 := hω
       exact pow_eq_zero_iff two_ne_zero |>.mp this
     linarith
-  rw [← ENNReal.toReal_eq_toReal_iff' (hne ω _) (ENNReal.mul_ne_top (hne ω _) (hne ω _)),
+  rw [← ENNReal.toReal_eq_toReal_iff' (measure_ne_top (lam ω : Measure (ι → α)) _)
+      (ENNReal.mul_ne_top (measure_ne_top (lam ω : Measure (ι → α)) _)
+        (measure_ne_top (lam ω : Measure (ι → α)) _)),
     ENNReal.toReal_mul]
   simpa [hf, hg] using hfg
 
