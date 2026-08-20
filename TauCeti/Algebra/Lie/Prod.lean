@@ -10,7 +10,7 @@ public import Mathlib.Algebra.Lie.Submodule
 public section
 
 /-!
-# The product of two Lie modules
+# General infrastructure for Lie modules
 
 Mathlib gives the product of two Lie *algebras* its Lie ring structure
 (`Mathlib/Algebra/Lie/Prod.lean`) and the product of a *family* of Lie modules its Lie module
@@ -18,6 +18,9 @@ structure (`Mathlib/Algebra/Lie/DirectSum.lean`), but not the binary product of 
 a fixed Lie algebra. This file supplies it: for `L`-modules `M` and `N`, the componentwise bracket
 makes `M × N` an `L`-module, and the four maps `fst`, `snd`, `inl`, `inr` are morphisms of
 `L`-modules.
+
+It also supplies `LieModuleEquiv.ofBijective`, the Lie-module analogue of
+`LieEquiv.ofBijective`.
 
 The binary product is what an argument comparing two Lie modules of *different* types needs: the
 direct sum `⨁ i, M i` of a family forces all the summands into one universe, whereas `M × N` does
@@ -27,6 +30,7 @@ product.
 
 ## Main definitions
 
+* `TauCeti.LieModuleEquiv.ofBijective`: a bijective morphism of Lie modules is an equivalence.
 * `TauCeti.LieModuleHom.fst` and `TauCeti.LieModuleHom.snd`: the two projections.
 * `TauCeti.LieModuleHom.inl` and `TauCeti.LieModuleHom.inr`: the two inclusions.
 -/
@@ -38,6 +42,22 @@ universe u v w w₁
 variable {R : Type u} {L : Type v} {M : Type w} {N : Type w₁}
 variable [CommRing R] [LieRing L] [AddCommGroup M] [Module R M] [LieRingModule L M]
   [AddCommGroup N] [Module R N] [LieRingModule L N]
+
+namespace LieModuleEquiv
+
+/-- A bijective morphism of Lie modules is an equivalence of Lie modules. This is the Lie module
+analogue of `LieEquiv.ofBijective`. -/
+noncomputable def ofBijective (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) : M ≃ₗ⁅R,L⁆ N :=
+  { LinearEquiv.ofBijective (f : M →ₗ[R] N) hf with
+    toFun := f
+    map_lie' := f.map_lie _ _ }
+
+@[simp]
+theorem ofBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) (m : M) :
+    ofBijective f hf m = f m :=
+  (rfl)
+
+end LieModuleEquiv
 
 /-- The componentwise bracket makes the product of two `L`-modules an `L`-module. -/
 instance instLieRingModuleProd : LieRingModule L (M × N) where
@@ -52,6 +72,7 @@ theorem lie_prod_fst (x : L) (p : M × N) : (⁅x, p⁆ : M × N).1 = ⁅x, p.1�
 @[simp]
 theorem lie_prod_snd (x : L) (p : M × N) : (⁅x, p⁆ : M × N).2 = ⁅x, p.2⁆ := rfl
 
+@[simp]
 theorem lie_prod_mk (x : L) (m : M) (n : N) : ⁅x, (m, n)⁆ = (⁅x, m⁆, ⁅x, n⁆) := rfl
 
 instance instLieModuleProd [LieAlgebra R L] [LieModule R L M] [LieModule R L N] :
@@ -64,30 +85,30 @@ namespace LieModuleHom
 variable (R L M N)
 
 /-- The projection of a product of Lie modules onto its first factor. -/
-@[expose] def fst : M × N →ₗ⁅R,L⁆ M :=
+def fst : M × N →ₗ⁅R,L⁆ M :=
   { LinearMap.fst R M N with map_lie' := rfl }
 
 /-- The projection of a product of Lie modules onto its second factor. -/
-@[expose] def snd : M × N →ₗ⁅R,L⁆ N :=
+def snd : M × N →ₗ⁅R,L⁆ N :=
   { LinearMap.snd R M N with map_lie' := rfl }
 
 /-- The inclusion of the first factor into a product of Lie modules. -/
-@[expose] def inl : M →ₗ⁅R,L⁆ M × N :=
+def inl : M →ₗ⁅R,L⁆ M × N :=
   { LinearMap.inl R M N with map_lie' := by simp [lie_prod_mk] }
 
 /-- The inclusion of the second factor into a product of Lie modules. -/
-@[expose] def inr : N →ₗ⁅R,L⁆ M × N :=
+def inr : N →ₗ⁅R,L⁆ M × N :=
   { LinearMap.inr R M N with map_lie' := by simp [lie_prod_mk] }
 
 variable {R L M N}
 
-@[simp] theorem fst_apply (p : M × N) : fst R L M N p = p.1 := rfl
+@[simp] theorem fst_apply (p : M × N) : fst R L M N p = p.1 := (rfl)
 
-@[simp] theorem snd_apply (p : M × N) : snd R L M N p = p.2 := rfl
+@[simp] theorem snd_apply (p : M × N) : snd R L M N p = p.2 := (rfl)
 
-@[simp] theorem inl_apply (m : M) : inl R L M N m = (m, 0) := rfl
+@[simp] theorem inl_apply (m : M) : inl R L M N m = (m, 0) := (rfl)
 
-@[simp] theorem inr_apply (n : N) : inr R L M N n = (0, n) := rfl
+@[simp] theorem inr_apply (n : N) : inr R L M N n = (0, n) := (rfl)
 
 end LieModuleHom
 

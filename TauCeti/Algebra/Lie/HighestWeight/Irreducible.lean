@@ -81,33 +81,6 @@ open LieAlgebra LieModule Module
 
 universe u v w w₁
 
-/-! ### Bijective morphisms of Lie modules
-
-Mathlib turns a bijective morphism of Lie *algebras* into an equivalence (`LieEquiv.ofBijective`)
-but has no such constructor for Lie modules; this is it. -/
-
-section General
-
-variable {R : Type u} {L : Type v} {M : Type w} {N : Type w₁}
-variable [CommRing R] [LieRing L] [AddCommGroup M] [Module R M] [LieRingModule L M]
-  [AddCommGroup N] [Module R N] [LieRingModule L N]
-
-/-- A bijective morphism of Lie modules is an equivalence of Lie modules. This is the Lie module
-analogue of `LieEquiv.ofBijective`. -/
-@[expose] noncomputable def lieModuleEquivOfBijective (f : M →ₗ⁅R,L⁆ N)
-    (hf : Function.Bijective f) :
-    M ≃ₗ⁅R,L⁆ N :=
-  { LinearEquiv.ofBijective (f : M →ₗ[R] N) hf with
-    toFun := f
-    map_lie' := f.map_lie _ _ }
-
-@[simp]
-theorem lieModuleEquivOfBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) (m : M) :
-    lieModuleEquivOfBijective f hf m = f m :=
-  rfl
-
-end General
-
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
@@ -197,13 +170,13 @@ omit [CharZero K] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L] [LieM
   [LieModule K L N] in
 private theorem mem_diagonalComapInr {n : N} :
     n ∈ diagonalComapInr K L v w ↔ ((0, n) : M × N) ∈ LieSubmodule.lieSpan K L {((v, w) : M × N)} :=
-  Iff.rfl
+  by simp only [diagonalComapInr, LieSubmodule.mem_comap, LieModuleHom.inr_apply]
 
 omit [CharZero K] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L] [LieModule K L M]
   [LieModule K L N] in
 private theorem mem_diagonalComapInl {m : M} :
     m ∈ diagonalComapInl K L v w ↔ ((m, 0) : M × N) ∈ LieSubmodule.lieSpan K L {((v, w) : M × N)} :=
-  Iff.rfl
+  by simp only [diagonalComapInl, LieSubmodule.mem_comap, LieModuleHom.inl_apply]
 
 omit [CharZero K] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L] [LieModule K L M]
   [LieModule K L N] in
@@ -293,7 +266,8 @@ private theorem bijective_diagonalFst [LieModule.IsIrreducible K L M]
     (hw : IsHighestWeightVector b lam w) : Function.Bijective (diagonalFst K L v w) := by
   constructor
   · intro p q hpq
-    have hfst : (p : M × N).1 = (q : M × N).1 := hpq
+    have hfst : (p : M × N).1 = (q : M × N).1 := by
+      simpa [diagonalFst] using hpq
     have hd : ((p : M × N) - q) ∈ LieSubmodule.lieSpan K L {((v, w) : M × N)} := sub_mem p.2 q.2
     have h1 : ((p : M × N) - q).1 = 0 := sub_eq_zero.mpr hfst
     have hmem : ((p : M × N) - q).2 ∈ diagonalComapInr K L v w := by
@@ -307,7 +281,7 @@ private theorem bijective_diagonalFst [LieModule.IsIrreducible K L M]
   · refine (LieModuleHom.range_eq_top _).mp ?_
     refine (IsSimpleOrder.eq_bot_or_eq_top _).resolve_left fun hbot => hv.ne_zero ?_
     have hmem : v ∈ LieModuleHom.range (diagonalFst K L v w) :=
-      ⟨⟨(v, w), LieSubmodule.subset_lieSpan rfl⟩, rfl⟩
+      ⟨⟨(v, w), LieSubmodule.subset_lieSpan rfl⟩, by simp [diagonalFst]⟩
     rw [hbot] at hmem
     simpa using hmem
 
@@ -316,7 +290,8 @@ private theorem bijective_diagonalSnd [LieModule.IsIrreducible K L M]
     (hw : IsHighestWeightVector b lam w) : Function.Bijective (diagonalSnd K L v w) := by
   constructor
   · intro p q hpq
-    have hsnd : (p : M × N).2 = (q : M × N).2 := hpq
+    have hsnd : (p : M × N).2 = (q : M × N).2 := by
+      simpa [diagonalSnd] using hpq
     have hd : ((p : M × N) - q) ∈ LieSubmodule.lieSpan K L {((v, w) : M × N)} := sub_mem p.2 q.2
     have h2 : ((p : M × N) - q).2 = 0 := sub_eq_zero.mpr hsnd
     have hmem : ((p : M × N) - q).1 ∈ diagonalComapInl K L v w := by
@@ -330,7 +305,7 @@ private theorem bijective_diagonalSnd [LieModule.IsIrreducible K L M]
   · refine (LieModuleHom.range_eq_top _).mp ?_
     refine (IsSimpleOrder.eq_bot_or_eq_top _).resolve_left fun hbot => hw.ne_zero ?_
     have hmem : w ∈ LieModuleHom.range (diagonalSnd K L v w) :=
-      ⟨⟨(v, w), LieSubmodule.subset_lieSpan rfl⟩, rfl⟩
+      ⟨⟨(v, w), LieSubmodule.subset_lieSpan rfl⟩, by simp [diagonalSnd]⟩
     rw [hbot] at hmem
     simpa using hmem
 
@@ -342,8 +317,8 @@ vector, which is the graph of the isomorphism between them. -/
 theorem nonempty_lieModuleEquiv_of_isHighestWeightVector [LieModule.IsIrreducible K L M]
     [LieModule.IsIrreducible K L N] (hv : IsHighestWeightVector b lam v)
     (hw : IsHighestWeightVector b lam w) : Nonempty (M ≃ₗ⁅K,L⁆ N) :=
-  ⟨(lieModuleEquivOfBijective _ (bijective_diagonalFst hv hw)).symm.trans
-    (lieModuleEquivOfBijective _ (bijective_diagonalSnd hv hw))⟩
+  ⟨(LieModuleEquiv.ofBijective _ (bijective_diagonalFst hv hw)).symm.trans
+    (LieModuleEquiv.ofBijective _ (bijective_diagonalSnd hv hw))⟩
 
 /-- **The classification of the irreducible highest weight modules.** Two irreducible modules
 carrying highest weight vectors of weights `lam` and `mu` are isomorphic exactly when
