@@ -175,6 +175,7 @@ def adicResidueHom : R →+* (adic k F p).ResidueField :=
 
 variable {k F p}
 
+@[simp]
 theorem adicResidueHom_eq_zero_iff {r : R} :
     adicResidueHom k F p r = 0 ↔ r ∈ p.asIdeal := by
   rw [adicResidueHom, RingHom.comp_apply, residue_eq_zero_iff_valuation_lt_one, valuation_adic,
