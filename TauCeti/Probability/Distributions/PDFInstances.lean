@@ -199,7 +199,8 @@ a Tau Ceti name for it would be a wrapper around an existing theorem rather than
 
 The Cauchy law needs no nondegeneracy hypothesis. At zero scale it is a Dirac measure, singular with
 respect to `volume`, so the derivative vanishes almost everywhere — and `cauchyPDF x₀ 0` vanishes
-too, so a single statement covers every scale. -/
+too, so a single statement covers every scale.  `rnDeriv_cauchyMeasure_zero_scale` states the
+boundary itself, with `0` on the right. -/
 
 /-- The Radon–Nikodym derivative of a Gamma law is `gammaPDF`. -/
 theorem rnDeriv_gammaMeasure (a r : ℝ) :
@@ -241,6 +242,18 @@ theorem rnDeriv_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) :
       Measure.AbsolutelyContinuous.rfl
   · rw [cauchyMeasure_of_scale_ne_zero _ hγ]
     exact Measure.rnDeriv_withDensity volume (measurable_cauchyPDF x₀ γ)
+
+/-- **The singular boundary.**  At zero scale the Cauchy law is `Measure.dirac x₀`, singular with
+respect to `volume`, so its Radon–Nikodym derivative vanishes almost everywhere.
+
+Stated separately from `rnDeriv_cauchyMeasure` even though it follows in one line, because its
+right-hand side is `0` rather than a density: the two agree only through `cauchyPDF_scale_zero`.
+The roadmap names this as its own deliverable — "at the boundary `cauchyMeasure x₀ 0 =
+Measure.dirac x₀`, prove that the derivative is zero almost everywhere" — so it is discoverable by
+name here rather than left to be re-derived. -/
+theorem rnDeriv_cauchyMeasure_zero_scale (x₀ : ℝ) :
+    (cauchyMeasure x₀ 0).rnDeriv volume =ᵐ[volume] 0 := by
+  simpa using rnDeriv_cauchyMeasure x₀ 0
 
 /-! ### The two densities at a possibly-vanishing spread
 
