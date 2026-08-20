@@ -151,6 +151,11 @@ def kostantForm :
     Subring (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)) :=
   UniversalEnvelopingAlgebra.kostantForm (t.chevalleyGenerator ht) (t.lieBasis ht).h
 
+-- The next two lemmas are the membership API of `TauCeti.DynkinType.kostantForm`, whose body is
+-- not exposed: outside this module the generic `TauCeti.UniversalEnvelopingAlgebra` membership
+-- lemmas do not apply to it, because nothing there unfolds `t.kostantForm ht` to
+-- `TauCeti.UniversalEnvelopingAlgebra.kostantForm (t.chevalleyGenerator ht) (t.lieBasis ht).h`.
+
 /-- Every divided power of a numbered raising or lowering generator lies in the Kostant form. -/
 theorem dividedPower_mem_kostantForm (i : Fin t.rank ⊕ Fin t.rank) (n : ℕ) :
     Associative.dividedPower n
