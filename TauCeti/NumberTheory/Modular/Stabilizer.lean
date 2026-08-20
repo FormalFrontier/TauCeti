@@ -56,7 +56,6 @@ literally the `q` with `q ≠ ⟦i⟧` and `q ≠ ⟦ρ⟧`.
   `TauCeti.ModularGroup.ellipticOrder_ρ`, `TauCeti.ModularGroup.ellipticOrder_eq_one_iff`,
   `TauCeti.ModularGroup.ellipticOrder_pos` and
   `TauCeti.ModularGroup.cardStabilizerOnOrbit_eq_two_mul_ellipticOrder`.
-* `TauCeti.ModularGroup.orbit_mk_I_ne_orbit_mk_ρ`: the two elliptic orbits are distinct.
 
 ## References
 
@@ -254,7 +253,6 @@ noncomputable def ellipticOrder (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ)
 
 /-- Evaluating `ellipticOrder` on the orbit of `z` recovers the `PSL(2, ℤ)`-stabiliser order
 at `z`. -/
-@[simp]
 theorem ellipticOrder_mk (z : ℍ) :
     ellipticOrder (Quotient.mk'' z : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) =
       Nat.card (stabilizer PSL(2, ℤ) z) := by
@@ -268,36 +266,29 @@ theorem cardStabilizerOnOrbit_eq_two_mul_ellipticOrder
     (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
     TauCeti.cardStabilizerOnOrbit q = 2 * ellipticOrder q := by
   induction q using Quotient.inductionOn' with
-  | _ z => simpa using card_stabilizer_eq_two_mul_card_stabilizer_psl z
-
--- Neither of the two elliptic values below is `@[simp]`, for the reason recorded above for the
--- stabiliser counts: `ellipticOrder_mk` together with `MulAction.mem_stabilizer_iff` rewrites the
--- left-hand side into a `Nat.card` of a subtype, so it is not in simp-normal form.
+  | _ z => simpa only [TauCeti.cardStabilizerOnOrbit_mk, ellipticOrder_mk] using
+      card_stabilizer_eq_two_mul_card_stabilizer_psl z
 
 /-- **`e_i = 2`.** -/
+@[simp]
 theorem ellipticOrder_I :
     ellipticOrder (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = 2 := by
   rw [ellipticOrder_mk, card_stabilizer_psl_I]
 
 /-- **`e_ρ = 3`.** -/
+@[simp]
 theorem ellipticOrder_ρ :
     ellipticOrder (Quotient.mk'' ρ : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = 3 := by
   rw [ellipticOrder_mk, card_stabilizer_psl_ρ]
 
 /-- **`e_P = 1` off the two elliptic orbits**: away from them `PSL(2, ℤ)` acts freely. -/
-theorem ellipticOrder_eq_one {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ}
+theorem ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ
+    {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ}
     (hI : q ≠ Quotient.mk'' I) (hρ : q ≠ Quotient.mk'' ρ) : ellipticOrder q = 1 := by
   induction q using Quotient.inductionOn' with
-  | _ z => exact card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ z hI hρ
-
-/-- **The two elliptic orbits are distinct**: their elliptic orders `2` and `3` differ. -/
-theorem orbit_mk_I_ne_orbit_mk_ρ :
-    (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' ρ := by
-  intro h
-  have h2 : ellipticOrder (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = 2 :=
-    ellipticOrder_I
-  rw [h, ellipticOrder_ρ] at h2
-  omega
+  | _ z =>
+    rw [ellipticOrder_mk]
+    exact card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ z hI hρ
 
 /-- **The elliptic order is positive**, so the weight `1 / e_P` is defined and nonzero. -/
 theorem ellipticOrder_pos (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : 0 < ellipticOrder q := by
@@ -305,12 +296,13 @@ theorem ellipticOrder_pos (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : 0 <
   · rw [hI, ellipticOrder_I]; omega
   by_cases hρ : q = Quotient.mk'' ρ
   · rw [hρ, ellipticOrder_ρ]; omega
-  · rw [ellipticOrder_eq_one hI hρ]; omega
+  · rw [ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ hI hρ]; omega
 
-/-- **Exactly two orbits are elliptic**: `e_P = 1` characterises the non-elliptic orbits. -/
+/-- **`e_P = 1` characterises the non-elliptic orbits.** -/
 theorem ellipticOrder_eq_one_iff {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ} :
     ellipticOrder q = 1 ↔ q ≠ Quotient.mk'' I ∧ q ≠ Quotient.mk'' ρ := by
-  refine ⟨fun h ↦ ⟨fun hI ↦ ?_, fun hρ ↦ ?_⟩, fun h ↦ ellipticOrder_eq_one h.1 h.2⟩
+  refine ⟨fun h ↦ ⟨fun hI ↦ ?_, fun hρ ↦ ?_⟩,
+    fun h ↦ ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ h.1 h.2⟩
   · rw [hI, ellipticOrder_I] at h; omega
   · rw [hρ, ellipticOrder_ρ] at h; omega
 
