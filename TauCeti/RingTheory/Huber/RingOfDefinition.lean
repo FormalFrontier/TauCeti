@@ -559,6 +559,8 @@ theorem exists_pairOfDefinition_ringOfDefinition_eq (B : Subring A)
   have hspan : Ideal.span ((G ^ (k₀ + 1) : Finset P.ringOfDefinition) :
       Set P.ringOfDefinition) = P.idealOfDefinition ^ (k₀ + 1) := by
     rw [Finset.coe_pow]
+    -- `Ideal.span` is definitionally `Submodule.span`; expose that representation to apply
+    -- Mathlib's `Submodule.span_pow` directly.
     change Submodule.span P.ringOfDefinition ((G : Set P.ringOfDefinition) ^ (k₀ + 1)) = _
     rw [← Submodule.span_pow]
     exact congrArg (· ^ (k₀ + 1)) hG
