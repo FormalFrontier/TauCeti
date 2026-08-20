@@ -30,6 +30,7 @@ central kernel and that every isogeny out of a commutative group scheme is centr
 ## Main declarations
 
 * `TauCeti.GroupScheme.HasCentralKernel`: every functor-of-points kernel is central.
+* `TauCeti.GroupScheme.centralKernels`: the corresponding morphism property.
 * `TauCeti.GroupScheme.isogenies`: the finite, flat, surjective morphism property on group schemes.
 * `TauCeti.GroupScheme.IsIsogeny`: the corresponding predicate on a group-scheme morphism.
 * `TauCeti.GroupScheme.IsCentralIsogeny`: an isogeny with central kernel.
@@ -90,6 +91,10 @@ This all-test-schemes condition is the functor-of-points formulation of the sche
 kernel being contained in the centre. -/
 def HasCentralKernel (f : G ⟶ H) : Prop :=
   ∀ (T : Over X) (g : T ⟶ G.X), g ≫ f.hom.hom = 1 → ∀ h : T ⟶ G.X, Commute g h
+
+/-- The morphism property of having central kernel. -/
+@[expose] def centralKernels (X : Scheme) : MorphismProperty (Grp (Over X)) :=
+  fun _ _ f ↦ HasCentralKernel f
 
 /-- A group-scheme morphism has central kernel exactly when the kernel of its map on points over
 every test scheme is contained in the ordinary group centre. -/
@@ -205,15 +210,15 @@ theorem comp {f : G ⟶ H} {g : H ⟶ K} (hf : IsIsogeny f) (hg : IsIsogeny g) :
 
 end IsIsogeny
 
+/-- The morphism property of being a central isogeny of group schemes over a field. -/
+@[expose] def centralIsogenies (k : Type u) [Field k] :
+    MorphismProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
+  isogenies k ⊓ centralKernels (Spec (CommRingCat.of k))
+
 /-- A central isogeny is an isogeny whose scheme-theoretic kernel is central, expressed on the
 functor of points over every test scheme. -/
-def IsCentralIsogeny (f : G ⟶ H) : Prop :=
-  IsIsogeny f ∧ HasCentralKernel f
-
-/-- The morphism property of being a central isogeny of group schemes over a field. -/
-abbrev centralIsogenies (k : Type u) [Field k] :
-    MorphismProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
-  fun _ _ f ↦ IsCentralIsogeny f
+abbrev IsCentralIsogeny (f : G ⟶ H) : Prop :=
+  centralIsogenies k f
 
 /-- A morphism is a central isogeny exactly when its underlying scheme morphism is finite, flat,
 and surjective and its kernel is central on all scheme-valued points. -/
@@ -221,7 +226,8 @@ theorem isCentralIsogeny_iff (f : G ⟶ H) :
     IsCentralIsogeny f ↔
       IsFinite f.hom.hom.left ∧ Flat f.hom.hom.left ∧ Surjective f.hom.hom.left ∧
         HasCentralKernel f := by
-  rw [IsCentralIsogeny, isIsogeny_iff]
+  change (IsIsogeny f ∧ HasCentralKernel f) ↔ _
+  rw [isIsogeny_iff]
   simp only [and_assoc]
 
 /-- A group-scheme morphism is a central isogeny exactly when it is finite, flat, and surjective
