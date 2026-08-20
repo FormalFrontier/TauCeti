@@ -41,6 +41,11 @@ Mathlib's `IsDedekindDomain.HeightOneSpectrum.exists_primeCompl_mul_eq_or_mul_eq
 arbitrary element of `K` as a fraction with denominator outside `𝔭`, in one of the two possible
 directions.
 
+Bundling the centre as a height one prime needs `w` to be nontrivial, and nothing more; the
+normalization theorems need the stronger `Function.Surjective w`, from which the nontriviality
+instance is installed on the spot through `Valuation.isNontrivial_of_surjective`, so that
+surjectivity is their only valuation hypothesis.
+
 `Valuation.centerIdeal` and `Valuation.heightOneSpectrum` keep their bodies unexposed; the
 characterization lemmas `Valuation.mem_centerIdeal` and `Valuation.asIdeal_heightOneSpectrum` are
 the interface. The latter's definitional proof is parenthesized (`(rfl)`) so that it is not inferred
@@ -57,6 +62,14 @@ namespace Valuation
 
 variable {R : Type*} [CommRing R] {K : Type*} [Field K] [Algebra R K]
   {w : _root_.Valuation K ℤᵐ⁰}
+
+/-- A valuation onto `ℤᵐ⁰` that is surjective is nontrivial: some element has value
+`exp (-1) ≠ 1`. -/
+theorem isNontrivial_of_surjective (hw : Function.Surjective w) : w.IsNontrivial := by
+  obtain ⟨x, hx⟩ := hw (WithZero.exp (-1))
+  refine (isNontrivial_iff_exists_lt_one w).mpr ⟨x, ?_, ?_⟩
+  · exact w.ne_zero_iff.mp (by simp [hx])
+  · simpa [hx] using WithZero.exp_lt_exp.mpr (by norm_num : (-1 : ℤ) < 0)
 
 section CenterIdeal
 
@@ -175,25 +188,30 @@ theorem asIdeal_heightOneSpectrum [w.IsNontrivial]
 /-- **The adic valuation of the centre of `w` on `R` is `w` itself**: a normalized valuation of the
 fraction field of a Dedekind domain whose valuation ring contains that domain is adic. -/
 @[simp]
-theorem valuation_heightOneSpectrum [w.IsNontrivial] (hw : Function.Surjective w)
+theorem valuation_heightOneSpectrum (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
+    haveI := isNontrivial_of_surjective hw
     (heightOneSpectrum R w hR).valuation K = w :=
+  haveI := isNontrivial_of_surjective hw
   eq_valuation_of_forall_mem_asIdeal_iff hw hR fun _ ↦ by
     rw [asIdeal_heightOneSpectrum, mem_centerIdeal]
 
 /-- A height one prime whose adic valuation is `w` is the centre of `w`. -/
-theorem eq_heightOneSpectrum {𝔮 : HeightOneSpectrum R} [w.IsNontrivial]
+theorem eq_heightOneSpectrum {𝔮 : HeightOneSpectrum R}
     (hw : Function.Surjective w) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1)
-    (h : 𝔮.valuation K = w) : 𝔮 = heightOneSpectrum R w hR :=
+    (h : 𝔮.valuation K = w) :
+    haveI := isNontrivial_of_surjective hw
+    𝔮 = heightOneSpectrum R w hR :=
   HeightOneSpectrum.eq_of_valuation_isEquiv_valuation (K := K)
     (by rw [h, valuation_heightOneSpectrum hw hR])
 
 variable (R) in
 /-- **A normalized valuation of the fraction field of a Dedekind domain `R` whose valuation ring
 contains `R` is the adic valuation of a unique height one prime of `R`.** -/
-theorem existsUnique_heightOneSpectrum_valuation_eq [w.IsNontrivial]
+theorem existsUnique_heightOneSpectrum_valuation_eq
     (hw : Function.Surjective w) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     ∃! 𝔭 : HeightOneSpectrum R, 𝔭.valuation K = w :=
+  haveI := isNontrivial_of_surjective hw
   ⟨heightOneSpectrum R w hR, valuation_heightOneSpectrum hw hR,
     fun _ h ↦ eq_heightOneSpectrum hw hR h⟩
 
