@@ -28,7 +28,8 @@ on the unit interval.
 `cellIdx m x = min ⌊m * x⌋₊ (m - 1)`. The `min` is what closes the top cell: without it `x = 1`
 would be a fibre of its own and the fibres would no longer be `m` sets of equal measure. Clipping,
 rather than special-casing `x = 1`, also keeps the definition total in `m`: at `m = 0` it returns
-`0`, a value no statement below uses, since each carries `i < m`.
+`0`, but that value has no cell-index meaning; results that interpret it as a valid cell index or
+compute a cell volume carry positivity or range hypotheses.
 
 The top fibre is genuinely `Set.Ici ((m-1)/m)`, and `volume_preimage_cellIdx` computes it as such;
 the argument does not quietly replace it by `Set.Ico ((m-1)/m) 1` and appeal to `{1}` being null.
@@ -40,6 +41,8 @@ the argument does not quietly replace it by `Set.Ico ((m-1)/m) 1` and appeal to 
 ## Main results
 
 * `TauCeti.unitInterval.cellIdx_lt` — the index is a valid one: `cellIdx m x < m` when `0 < m`;
+* `TauCeti.unitInterval.cellIdx_eq_iff_of_succ_lt` and
+  `TauCeti.unitInterval.cellIdx_eq_top_iff` — the non-top and top fibres;
 * `TauCeti.unitInterval.measurable_cellIdx` — the index depends measurably on the point;
 * `TauCeti.unitInterval.measurableSet_preimage_cellIdx` — every cell is measurable;
 * `TauCeti.unitInterval.volume_preimage_cellIdx` — every cell has volume `1/m`;
@@ -79,6 +82,37 @@ def cellIdx (m : ℕ) (x : I) : ℕ := min ⌊(m : ℝ) * (x : ℝ)⌋₊ (m - 1
 theorem cellIdx_lt (hm : 0 < m) (x : I) : cellIdx m x < m :=
   lt_of_le_of_lt (min_le_right _ _) (Nat.sub_lt hm Nat.one_pos)
 
+/-- A non-top cell has the expected half-open fibre: `cellIdx m x = i` exactly when
+`i / m ≤ x < (i + 1) / m`. -/
+@[simp]
+theorem cellIdx_eq_iff_of_succ_lt (hi : i + 1 < m) (x : I) :
+    cellIdx m x = i ↔ (i : ℝ) / m ≤ (x : ℝ) ∧ (x : ℝ) < ((i : ℝ) + 1) / m := by
+  have hm0 : 0 < m := by omega
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm0
+  have h0 : (0 : ℝ) ≤ (m : ℝ) * (x : ℝ) := mul_nonneg hmR.le x.2.1
+  have hmin : cellIdx m x = i ↔ ⌊(m : ℝ) * (x : ℝ)⌋₊ = i := by
+    simp only [cellIdx]
+    omega
+  rw [hmin, Nat.floor_eq_iff h0, div_le_iff₀ hmR, lt_div_iff₀ hmR]
+  constructor
+  · rintro ⟨h1, h2⟩
+    exact ⟨by linarith, by linarith⟩
+  · rintro ⟨h1, h2⟩
+    exact ⟨by linarith, by linarith⟩
+
+/-- The top cell is closed at `1`: `cellIdx m x = m - 1` exactly when
+`(m - 1) / m ≤ x`. -/
+@[simp]
+theorem cellIdx_eq_top_iff (hm : 0 < m) (x : I) :
+    cellIdx m x = m - 1 ↔ ((m - 1 : ℕ) : ℝ) / m ≤ (x : ℝ) := by
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  have h0 : (0 : ℝ) ≤ (m : ℝ) * (x : ℝ) := mul_nonneg hmR.le x.2.1
+  have hmin : cellIdx m x = m - 1 ↔ m - 1 ≤ ⌊(m : ℝ) * (x : ℝ)⌋₊ := by
+    simp only [cellIdx]
+    omega
+  rw [hmin, Nat.le_floor_iff h0, div_le_iff₀ hmR]
+  simp only [mul_comm]
+
 /-- The cell index depends measurably on the point: a floor of a continuous function, followed by
 a map out of the countable discrete space `ℕ`. -/
 @[fun_prop]
@@ -109,16 +143,9 @@ theorem volume_preimage_cellIdx (hi : i < m) :
         ⟨by positivity, (div_le_one hmR).2 (by exact_mod_cast hlt.le)⟩
       have hset : cellIdx m ⁻¹' {i} = Ico (⟨(i : ℝ) / m, hα⟩ : I) ⟨((i : ℝ) + 1) / m, hβ⟩ := by
         ext x
-        have h0 : (0 : ℝ) ≤ (m : ℝ) * (x : ℝ) := mul_nonneg hmR.le x.2.1
-        have hcomm : (m : ℝ) * (x : ℝ) = (x : ℝ) * m := mul_comm _ _
-        have hmin : cellIdx m x = i ↔ ⌊(m : ℝ) * (x : ℝ)⌋₊ = i := by
-          simp only [cellIdx]; omega
         simp only [mem_preimage, mem_singleton_iff, mem_Ico, ← Subtype.coe_le_coe,
-          ← Subtype.coe_lt_coe, hmin, Nat.floor_eq_iff h0]
-        rw [div_le_iff₀ hmR, lt_div_iff₀ hmR]
-        constructor
-        · rintro ⟨h1, h2⟩; exact ⟨by linarith, by linarith⟩
-        · rintro ⟨h1, h2⟩; exact ⟨by linarith, by linarith⟩
+          ← Subtype.coe_lt_coe]
+        exact cellIdx_eq_iff_of_succ_lt hlt x
       rw [hset, _root_.unitInterval.volume_Ico]
       congr 1
       field_simp
@@ -126,16 +153,9 @@ theorem volume_preimage_cellIdx (hi : i < m) :
     · -- the top cell: the fibre is `[(m-1)/m, 1]`
       have hset : cellIdx m ⁻¹' {i} = Ici (⟨(i : ℝ) / m, hα⟩ : I) := by
         ext x
-        have h0 : (0 : ℝ) ≤ (m : ℝ) * (x : ℝ) := mul_nonneg hmR.le x.2.1
-        have hcomm : (m : ℝ) * (x : ℝ) = (x : ℝ) * m := mul_comm _ _
-        have hmin : cellIdx m x = i ↔ i ≤ ⌊(m : ℝ) * (x : ℝ)⌋₊ := by
-          simp only [cellIdx]; omega
-        simp only [mem_preimage, mem_singleton_iff, mem_Ici, ← Subtype.coe_le_coe, hmin,
-          Nat.le_floor_iff h0]
-        rw [div_le_iff₀ hmR]
-        constructor
-        · intro h; linarith
-        · intro h; linarith
+        simp only [mem_preimage, mem_singleton_iff, mem_Ici, ← Subtype.coe_le_coe]
+        have hi_top : i = m - 1 := by omega
+        simpa [hi_top] using cellIdx_eq_top_iff hm0 x
       rw [hset, _root_.unitInterval.volume_Ici]
       congr 1
       have : (i : ℝ) + 1 = m := by exact_mod_cast heq

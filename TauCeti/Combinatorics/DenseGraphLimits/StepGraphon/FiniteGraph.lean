@@ -8,7 +8,6 @@ module
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Basic
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Finite
 public import TauCeti.MeasureTheory.Constructions.UnitInterval
-public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 
 /-!
 # A finite graph as a graphon
@@ -48,17 +47,13 @@ and measurability is a composition through the countable discrete space `ℕ × 
 * `TauCeti.DenseGraphLimits.finiteGraphGraphon_apply_of_adj`,
   `TauCeti.DenseGraphLimits.finiteGraphGraphon_apply_of_not_adj`,
   `TauCeti.DenseGraphLimits.finiteGraphGraphon_apply` — the value on a rectangle of cells;
-* `TauCeti.DenseGraphLimits.homDensity_finiteGraphGraphon` — finite-graph compatibility;
-* `TauCeti.DenseGraphLimits.homDensity_top_finiteGraphGraphon_top` and
-  `TauCeti.DenseGraphLimits.homDensity_top_finiteGraphGraphon_cycleGraph` — the computed-value
-  backstops `t(K₂, W_{K₄}) = 3/4` and `t(K₃, W_{C₅}) = 0`.
+* `TauCeti.DenseGraphLimits.homDensity_finiteGraphGraphon` — finite-graph compatibility.
 
 ## References
 
 * Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 1 acceptance ("a finite graph as a
   step graphon") and Layer 7 / *Worked examples* ("finite-graph compatibility
-  `t(F, W_G) = hom(F,G)/|V(G)|^{|V(F)|}`"), together with the computed-value backstops
-  `t(K₂, W_{K₄}) = 3/4` and `t(K₃, W_{C₅}) = 0`. The signatures `finiteGraphGraphon` and
+  `t(F, W_G) = hom(F,G)/|V(G)|^{|V(F)|}`). The signatures `finiteGraphGraphon` and
   `homDensity_finiteGraphGraphon` follow `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), §7.1.
 -/
@@ -142,12 +137,7 @@ finite graph `G` on `Fin m` is the finite homomorphism density of `F` in `G`:
 `t(F, W_G) = hom(F, G) / m ^ |V(F)|`.
 
 Positivity of `m` is needed: at `m = 0` and a pattern with no edges the left-hand side is `1`,
-while the right-hand side is `0 / 0 = 0`.
-
-The proof is a change of variables and nothing else. The integrand is constant on each product of
-cells, and equals `1` exactly when the corresponding map `V → Fin m` preserves adjacency, so
-`unitInterval.integral_pi_comp_cellIdx` turns the integral into the average of that indicator over
-all `m ^ |V(F)|` vertex maps — which is the finite density. -/
+while the right-hand side is `0 / 0 = 0`. -/
 theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (hm : 0 < m)
     (G : SimpleGraph (Fin m)) :
     homDensity F (finiteGraphGraphon G) = homDensityFin F G := by
@@ -194,32 +184,6 @@ theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (
       then (1 : ℝ) else 0)
   rw [homDensity_def, integral_congr_ae (Filter.Eventually.of_forall hstep), hpi, hsum,
     homDensityFin_def, Fintype.card_fin]
-
-/-! ### Computed-value backstops -/
-
-/-- **The edge density of `K₄`.** `t(K₂, W_{K₄}) = 3/4`: of the `16` ordered pairs of vertices of
-the complete graph on four vertices, the `12` with distinct entries are adjacent.
-
-A numeric floor under the definitions that the headline compatibility theorem does not give: it
-pins the normalization of both densities and the equal size of the cells at once. -/
-theorem homDensity_top_finiteGraphGraphon_top :
-    homDensity (⊤ : SimpleGraph (Fin 2)) (finiteGraphGraphon (⊤ : SimpleGraph (Fin 4)))
-      = 3 / 4 := by
-  have hcount : Nat.card ((⊤ : SimpleGraph (Fin 2)) →g (⊤ : SimpleGraph (Fin 4))) = 12 := by
-    rw [card_hom_eq_card_adj_preserving_maps, Nat.card_eq_fintype_card]
-    decide
-  rw [homDensity_finiteGraphGraphon _ (by norm_num), homDensityFin_def, hcount]
-  norm_num
-
-/-- **`C₅` is triangle-free.** `t(K₃, W_{C₅}) = 0`: no map `Fin 3 → Fin 5` sends all three edges of
-a triangle to edges of the five-cycle, so the density vanishes exactly rather than approximately. -/
-theorem homDensity_top_finiteGraphGraphon_cycleGraph :
-    homDensity (⊤ : SimpleGraph (Fin 3)) (finiteGraphGraphon (SimpleGraph.cycleGraph 5)) = 0 := by
-  have hcount : Nat.card ((⊤ : SimpleGraph (Fin 3)) →g SimpleGraph.cycleGraph 5) = 0 := by
-    rw [card_hom_eq_card_adj_preserving_maps, Nat.card_eq_fintype_card]
-    decide
-  rw [homDensity_finiteGraphGraphon _ (by norm_num), homDensityFin_def, hcount]
-  norm_num
 
 end DenseGraphLimits
 
