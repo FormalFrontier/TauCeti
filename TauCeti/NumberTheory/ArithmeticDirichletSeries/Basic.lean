@@ -544,16 +544,6 @@ theorem toMultiplicativeIdealWeight_pointwiseMul (ψ : UnitaryIdealWeight K) :
     (χ.pointwiseMul ψ).toMultiplicativeIdealWeight =
       χ.toMultiplicativeIdealWeight.pointwiseMul ψ.toMultiplicativeIdealWeight := (rfl)
 
-omit [NumberField K] in
-@[simp]
-theorem pointwiseMul_apply (ψ : UnitaryIdealWeight K) (I : Ideal (𝓞 K)) :
-    χ.pointwiseMul ψ I = χ I * ψ I := (rfl)
-
-omit [NumberField K] in
-@[simp]
-theorem bad_pointwiseMul (ψ : UnitaryIdealWeight K) :
-    (χ.pointwiseMul ψ).bad = χ.bad ∪ ψ.bad := (rfl)
-
 /-- The **restriction** of a unitary ideal weight away from a finite set `S` of height-one primes,
 which is again unitary: a height-one prime outside `χ.bad ∪ S` is prime to `S`, because a
 height-one prime dividing another is equal to it. -/
