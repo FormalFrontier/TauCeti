@@ -77,7 +77,8 @@ discs (topological sliceness) and for stating the annulus conjecture.
 * `TauCeti.isLocallyFlat_iff_isOpenEmbedding`: in codimension zero, locally flat means open.
 * `TauCeti.IsLocallyFlat.isLocallyClosed_range`: a locally flat image is locally closed, as soon as
   the origin of the complementary model is closed.
-* `TauCeti.isLocallyFlat_prodMkLeft`: the standard model `x ↦ (x, 0)` is locally flat.
+* `TauCeti.isLocallyFlat_prodMkLeft`: over a domain charted on `F`, the standard model
+  `x ↦ (x, 0)` is locally flat.
 
 ## Implementation notes
 
@@ -634,16 +635,15 @@ theorem isLocallyFlat_iff_isOpenEmbedding [Subsingleton F'] [ChartedSpace (F × 
   rw [IsLocallyFlat, h0]
   exact isSliceEmbedding_univ_iff
 
-/-- The standard local model: the inclusion of `F` as the slice `F × {0}` of `F × F'` is locally
-flat. With `F = ℝⁿ` and `F' = ℝᵏ` this is the coordinate slice `ℝⁿ × {0} ⊆ ℝⁿ⁺ᵏ` that local
+/-- The standard local model: over a space `N` charted on `F`, the inclusion of `N` as the slice
+`N × {0}` of `N × F'` is locally flat, its flattening charts being the charts of `N` times the
+identity. With `N = F = ℝⁿ` and `F' = ℝᵏ` this is the coordinate slice `ℝⁿ × {0} ⊆ ℝⁿ⁺ᵏ` that local
 flatness is modelled on. -/
-theorem isLocallyFlat_prodMkLeft : IsLocallyFlat F F' (fun x : F => (x, (0 : F'))) := by
-  have hrange : (range fun x : F => (x, (0 : F'))) = (univ : Set F) ×ˢ ({0} : Set F') := by
-    ext p
-    simp [Prod.ext_iff, eq_comm]
-  refine ⟨isEmbedding_prodMkLeft 0, fun x => ⟨OpenPartialHomeomorph.refl (F × F'), mem_univ _, ?_⟩⟩
-  rw [hrange]
-  exact isSliceChart_iff.2 fun y _ => Iff.rfl
+theorem isLocallyFlat_prodMkLeft [ChartedSpace F N] :
+    IsLocallyFlat F F' (fun x : N => (x, (0 : F'))) := by
+  refine ⟨isEmbedding_prodMkLeft 0, fun x => ⟨(chartAt F x).prod (OpenPartialHomeomorph.refl F'),
+    ⟨mem_chart_source F x, mem_univ _⟩, isSliceChart_iff.2 fun p _ => ?_⟩⟩
+  simp [Prod.ext_iff, eq_comm]
 
 end StandardSlice
 
