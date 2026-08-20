@@ -335,33 +335,38 @@ theorem map_one_snd_of_mem_Z2 {f : G × G → M} (hf : f ∈ Z2 G M) (g : G) :
 variable (G M)
 
 /-- The first continuous cohomology group `H¹(G, M) = Z¹/B¹`. -/
-abbrev H1 := (Z1 G M) ⧸ ((B1 G M).addSubgroupOf (Z1 G M))
+abbrev H1 [ContinuousSMul G M] := (Z1 G M) ⧸ ((B1 G M).addSubgroupOf (Z1 G M))
 
 /-- The second continuous cohomology group `H²(G, M) = Z²/B²`. -/
-abbrev H2 := (Z2 G M) ⧸ ((B2 G M).addSubgroupOf (Z2 G M))
+abbrev H2 [ContinuousMul G] [ContinuousSMul G M] :=
+  (Z2 G M) ⧸ ((B2 G M).addSubgroupOf (Z2 G M))
 
 /-- The class map in degree `1`. -/
-abbrev H1pi : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
+abbrev H1pi [ContinuousSMul G M] : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
 
 /-- The class map in degree `2`. -/
-abbrev H2pi : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
+abbrev H2pi [ContinuousMul G] [ContinuousSMul G M] : (Z2 G M) →+ H2 G M :=
+  QuotientAddGroup.mk' _
 
 /-- Every class in `H¹` is represented by a continuous `1`-cocycle. -/
-theorem H1pi_surjective : Function.Surjective (H1pi G M) :=
+theorem H1pi_surjective [ContinuousSMul G M] : Function.Surjective (H1pi G M) :=
   QuotientAddGroup.mk'_surjective _
 
 /-- Every class in `H²` is represented by a continuous `2`-cocycle. -/
-theorem H2pi_surjective : Function.Surjective (H2pi G M) :=
+theorem H2pi_surjective [ContinuousMul G] [ContinuousSMul G M] :
+    Function.Surjective (H2pi G M) :=
   QuotientAddGroup.mk'_surjective _
 
 variable {G M}
 
 /-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H1pi_eq_zero_iff {f : Z1 G M} : H1pi G M f = 0 ↔ (f : G → M) ∈ B1 G M := by
+theorem H1pi_eq_zero_iff [ContinuousSMul G M] {f : Z1 G M} :
+    H1pi G M f = 0 ↔ (f : G → M) ∈ B1 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
 /-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H2pi_eq_zero_iff {f : Z2 G M} : H2pi G M f = 0 ↔ (f : G × G → M) ∈ B2 G M := by
+theorem H2pi_eq_zero_iff [ContinuousMul G] [ContinuousSMul G M] {f : Z2 G M} :
+    H2pi G M f = 0 ↔ (f : G × G → M) ∈ B2 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
 end Cocycles
@@ -465,7 +470,7 @@ theorem trivialZ1Equiv_symm_apply
 
 Continuity is what makes this useful rather than decorative: without it the right-hand side is the
 group of abstract homomorphisms, which for a profinite group is enormous. -/
-noncomputable def trivialH1Equiv :
+noncomputable def trivialH1Equiv [ContinuousSMul G M] :
     H1 G M ≃+ Additive (ContinuousMonoidHom G (Multiplicative M)) :=
   (QuotientAddGroup.quotientAddEquivOfEq
       (M := (B1 G M).addSubgroupOf (Z1 G M)) (N := ⊥) (by
@@ -475,7 +480,7 @@ noncomputable def trivialH1Equiv :
 
 /-- `trivialH1Equiv` sends the class of a continuous `1`-cocycle to the homomorphism it is. -/
 @[simp]
-theorem trivialH1Equiv_apply (f : Z1 G M) :
+theorem trivialH1Equiv_apply [ContinuousSMul G M] (f : Z1 G M) :
     trivialH1Equiv htriv (f : H1 G M) = trivialZ1Equiv htriv f := (rfl)
 
 end TrivialAction
