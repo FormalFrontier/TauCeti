@@ -43,8 +43,8 @@ directions.
 
 `Valuation.centerIdeal` and `Valuation.heightOneSpectrum` keep their bodies unexposed; the
 characterization lemmas `Valuation.mem_centerIdeal` and `Valuation.asIdeal_heightOneSpectrum` are
-the interface, and their proofs are parenthesized (`(rfl)`, `(Iff.rfl)`) so that they are not
-inferred to be `@[defeq]`, which would require the bodies to be exposed.
+the interface. The latter's definitional proof is parenthesized (`(rfl)`) so that it is not inferred
+to be `@[defeq]`, which would require the body to be exposed.
 -/
 
 public section
@@ -66,56 +66,34 @@ of elements of `R` of positive valuation. It is prime (`Valuation.isPrime_center
 nonzero as soon as `w` is nontrivial and `K` is the fraction field of `R`
 (`Valuation.centerIdeal_ne_bot`). -/
 def centerIdeal (w : _root_.Valuation K ℤᵐ⁰) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
-    Ideal R where
-  carrier := {r : R | w (algebraMap R K r) < 1}
-  zero_mem' := by simp
-  add_mem' {a b} ha hb := by
-    have h : w (algebraMap R K (a + b)) ≤ max (w (algebraMap R K a)) (w (algebraMap R K b)) := by
-      rw [map_add]
-      exact w.map_add _ _
-    exact lt_of_le_of_lt h (max_lt ha hb)
-  smul_mem' c x hx := by
-    have h : w (algebraMap R K (c • x)) = w (algebraMap R K c) * w (algebraMap R K x) := by
-      rw [smul_eq_mul, map_mul, w.map_mul]
-    calc w (algebraMap R K (c • x)) ≤ 1 * w (algebraMap R K x) := h ▸ mul_le_mul_left (hR c) _
-      _ < 1 := by simpa using hx
+    Ideal R :=
+  (IsLocalRing.maximalIdeal w.valuationSubring).comap
+    ((algebraMap R K).codRestrict w.valuationSubring fun r ↦
+      (w.mem_valuationSubring_iff _).mpr (hR r))
 
+/-- An element belongs to the centre ideal exactly when its valuation is strictly below `1`. -/
 @[simp]
 theorem mem_centerIdeal {r : R} {hR : ∀ r : R, w (algebraMap R K r) ≤ 1} :
-    r ∈ centerIdeal R w hR ↔ w (algebraMap R K r) < 1 := (Iff.rfl)
+    r ∈ centerIdeal R w hR ↔ w (algebraMap R K r) < 1 := by
+  rw [centerIdeal, Ideal.mem_comap, w.mem_maximalIdeal_iff]
+  rfl
 
 /-- Off its centre, a valuation bounded by `1` on `R` takes the value `1`. -/
 theorem eq_one_of_notMem_centerIdeal {r : R} (hR : ∀ r : R, w (algebraMap R K r) ≤ 1)
     (hr : r ∉ centerIdeal R w hR) : w (algebraMap R K r) = 1 :=
   le_antisymm (hR r) (not_lt.mp (mt mem_centerIdeal.mpr hr))
 
-/-- The centre of a valuation bounded by `1` on `R` is a prime ideal of `R`: off the centre the
-valuation takes the value `1`, so a product of two elements off the centre again has value `1`. -/
+/-- The centre of a valuation bounded by `1` on `R` is a prime ideal of `R`. -/
 theorem isPrime_centerIdeal (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
-    (centerIdeal R w hR).IsPrime := by
-  refine Ideal.isPrime_iff.mpr ⟨fun h ↦ ?_, fun {a b} hab ↦ ?_⟩
-  · have h1 : w (algebraMap R K (1 : R)) < 1 := mem_centerIdeal.mp (h ▸ Submodule.mem_top)
-    simp at h1
-  · by_contra hc
-    rw [not_or] at hc
-    have h : w (algebraMap R K (a * b)) = 1 := by
-      rw [map_mul, w.map_mul, eq_one_of_notMem_centerIdeal hR hc.1,
-        eq_one_of_notMem_centerIdeal hR hc.2, one_mul]
-    exact absurd (h ▸ mem_centerIdeal.mp hab) (lt_irrefl 1)
+    (centerIdeal R w hR).IsPrime :=
+  (IsLocalRing.maximalIdeal w.valuationSubring).comap_isPrime _
 
-/-- The centre of a surjective valuation of the fraction field `K` of `R` is a nonzero ideal of
-`R`: an element of `K` of value `exp (-1)` is a fraction `a / b` whose numerator `a` is a nonzero
+/-- The centre of a nontrivial valuation of the fraction field `K` of `R` is a nonzero ideal of
+`R`: an element of `K` of value below `1` is a fraction `a / b` whose numerator `a` is a nonzero
 element of the centre. -/
-theorem centerIdeal_ne_bot [IsDomain R] [IsFractionRing R K] (hw : Function.Surjective w)
+theorem centerIdeal_ne_bot [IsDomain R] [IsFractionRing R K] [w.IsNontrivial]
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : centerIdeal R w hR ≠ ⊥ := by
-  obtain ⟨y, hy⟩ := hw (WithZero.exp (-1 : ℤ))
-  have hy0 : y ≠ 0 := by
-    rintro rfl
-    rw [map_zero] at hy
-    exact WithZero.exp_ne_zero hy.symm
-  have hy1 : w y < 1 := by
-    rw [hy, ← WithZero.exp_zero (M := ℤ), WithZero.exp_lt_exp]
-    omega
+  obtain ⟨y, hy0, hy1⟩ := Valuation.IsNontrivial.exists_lt_one (v := w)
   obtain ⟨ab, hab⟩ := IsLocalization.surj (nonZeroDivisors R) y
   have hb : algebraMap R K (ab.2 : R) ≠ 0 :=
     IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors ab.2.2
@@ -182,11 +160,21 @@ variable (R) in
 centred. Its adic valuation is `w` itself (`Valuation.valuation_heightOneSpectrum`), and it is the
 only height one prime with that property (`Valuation.eq_heightOneSpectrum`). -/
 def heightOneSpectrum (w : _root_.Valuation K ℤᵐ⁰) (hw : Function.Surjective w)
-    (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : HeightOneSpectrum R where
-  asIdeal := centerIdeal R w hR
-  isPrime := isPrime_centerIdeal hR
-  ne_bot := centerIdeal_ne_bot hw hR
+    (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : HeightOneSpectrum R := by
+  letI : w.IsNontrivial := Valuation.isNontrivial_iff_exists_lt_one w |>.mpr <| by
+    obtain ⟨y, hy⟩ := hw (WithZero.exp (-1 : ℤ))
+    refine ⟨y, ?_, ?_⟩
+    · rintro rfl
+      rw [map_zero] at hy
+      exact WithZero.exp_ne_zero hy.symm
+    · rw [hy, ← WithZero.exp_zero (M := ℤ), WithZero.exp_lt_exp]
+      omega
+  exact
+    { asIdeal := centerIdeal R w hR
+      isPrime := isPrime_centerIdeal hR
+      ne_bot := centerIdeal_ne_bot hR }
 
+/-- The underlying ideal of `heightOneSpectrum` is the centre ideal. -/
 @[simp]
 theorem asIdeal_heightOneSpectrum (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :

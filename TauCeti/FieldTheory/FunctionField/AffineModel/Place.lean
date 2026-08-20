@@ -73,27 +73,23 @@ theorem mem_integers_of_isIntegral {R : Type w} [CommRing R] [Algebra R F]
   exact P.mem_integers_iff.mpr
     ((Valuation.valuationSubring.integers P.valuation).isIntegral_iff_v_le_one.mp hy.tower_top)
 
-/-- The polynomial ring `k[x]` lies in the valuation ring of `P` as soon as `x` does: the
-valuation ring is a `k`-subalgebra of `F`. -/
-theorem mem_integers_of_mem_adjoin {x : F} (hx : x ∈ P.integers) {y : F}
-    (hy : y ∈ Algebra.adjoin k ({x} : Set F)) : y ∈ P.integers :=
-  Algebra.adjoin_le (S := Subalgebra.mk P.integers.toSubring.toSubsemiring
-    P.algebraMap_mem_integers) (by simpa using hx) hy
-
 /-- **`k[x]` lies in the valuation ring of `P` exactly when `x` has no pole at `P`**: the
 criterion selecting the places on the finite chart of `x`. Its additive form is obtained from
 `TauCeti.Place.mem_integers_iff_ord_nonneg`. -/
+@[simp]
 theorem adjoin_le_integers_iff {x : F} :
     (∀ y ∈ Algebra.adjoin k ({x} : Set F), y ∈ P.integers) ↔ x ∈ P.integers :=
-  ⟨fun h ↦ h x (Algebra.self_mem_adjoin_singleton k x),
-    fun hx _ hy ↦ P.mem_integers_of_mem_adjoin hx hy⟩
+  ⟨fun h ↦ h x (Algebra.self_mem_adjoin_singleton k x), fun hx _ hy ↦
+    Algebra.adjoin_le (S := Subalgebra.mk P.integers.toSubring.toSubsemiring
+      P.algebraMap_mem_integers) (Set.singleton_subset_iff.mpr (by simpa using hx)) hy⟩
 
 /-- Every element of `F` integral over `k[x]` lies in the valuation ring of `P`, as soon as `x`
 has no pole at `P`. This is what makes the integral closure of `k[x]` in `F` — the affine model
 attached to `x` — an object of the finite chart of `P`. -/
 theorem mem_integers_of_isIntegral_adjoin {x : F} (hx : x ∈ P.integers) {y : F}
     (hy : IsIntegral (Algebra.adjoin k ({x} : Set F)) y) : y ∈ P.integers :=
-  P.mem_integers_of_isIntegral (fun r ↦ P.mem_integers_of_mem_adjoin hx r.2) hy
+  P.mem_integers_of_isIntegral
+    (fun r ↦ P.adjoin_le_integers_iff.mpr hx r.1 r.2) hy
 
 end Integers
 
