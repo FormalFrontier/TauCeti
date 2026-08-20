@@ -156,15 +156,14 @@ def g2SpecialIsogeny :
   rw [g2SpecialIsogeny]
   simp
 
-lemma g2SpecialIsogeny_indexEquiv_apply (i : Fin 12) :
+@[simp] lemma g2SpecialIsogeny_indexEquiv_apply (i : Fin 12) :
     g2SpecialIsogeny.indexEquiv i = g2SpecialIsogenyIndex i := by
   rw [g2SpecialIsogeny]
   simp
 
-lemma g2SpecialIsogeny_exponent :
-    g2SpecialIsogeny.exponent = g2SpecialIsogenyExponent := by
+@[simp] lemma g2SpecialIsogeny_exponent (i : Fin 12) :
+    g2SpecialIsogeny.exponent i = g2SpecialIsogenyExponent i := by
   rw [g2SpecialIsogeny]
-  funext i
   simp
 
 /-- On the two simple roots, the index bijection of the special isogeny of `G₂` is the pinned
@@ -208,8 +207,10 @@ theorem g2SpecialIsogeny_comp_self :
       Equiv.trans_apply, Equiv.refl_apply, g2SpecialIsogeny_indexEquiv_apply] using
       congrArg Fin.val (g2SpecialIsogenyIndex_involutive i)
   · funext i
-    rw [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
-    norm_num
+    simp only [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
+    have hthree : ((3 : ℕ+) : ℤ) = 3 := by norm_num
+    rw [hthree]
+    exact g2SpecialIsogeny_exponent_mul_exponent i
 
 /-- **The defining relation of the special isogeny of `G₂` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
@@ -303,15 +304,14 @@ noncomputable def f4SpecialIsogeny :
   rw [f4SpecialIsogeny]
   simp
 
-lemma f4SpecialIsogeny_indexEquiv_apply (i : Fin 48) :
+@[simp] lemma f4SpecialIsogeny_indexEquiv_apply (i : Fin 48) :
     f4SpecialIsogeny.indexEquiv i = f4SpecialIsogenyIndex i := by
   rw [f4SpecialIsogeny]
   simp
 
-lemma f4SpecialIsogeny_exponent :
-    f4SpecialIsogeny.exponent = f4SpecialIsogenyExponent := by
+@[simp] lemma f4SpecialIsogeny_exponent (i : Fin 48) :
+    f4SpecialIsogeny.exponent i = f4SpecialIsogenyExponent i := by
   rw [f4SpecialIsogeny]
-  funext i
   simp
 
 /-- On the four simple roots, the index bijection of the special isogeny of `F₄` is the pinned
@@ -355,8 +355,10 @@ theorem f4SpecialIsogeny_comp_self :
       Equiv.trans_apply, Equiv.refl_apply, f4SpecialIsogeny_indexEquiv_apply] using
       congrArg Fin.val (f4SpecialIsogenyIndex_involutive i)
   · funext i
-    rw [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
-    norm_num
+    simp only [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
+    have htwo : ((2 : ℕ+) : ℤ) = 2 := by norm_num
+    rw [htwo]
+    exact f4SpecialIsogeny_exponent_mul_exponent i
 
 /-- **The defining relation of the special isogeny of `F₄` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by

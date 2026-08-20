@@ -123,6 +123,8 @@ structure RootPairingIsogeny (P : RootPairing ι R M N) (Q : RootPairing ι₂ R
   coroot_coweightMap : ∀ i,
     coweightMap (Q.coroot (indexEquiv i)) = (exponent i : R) • P.coroot i
 
+attribute [simp] RootPairingIsogeny.root_weightMap RootPairingIsogeny.coroot_coweightMap
+
 namespace RootPairingIsogeny
 
 variable {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} {S : RootPairing ι₃ R M₃ N₃}
@@ -283,6 +285,8 @@ private lemma matrix_mulVecLin_finiteIndex_of_det_ne_zero
     rw [Matrix.mulVecLin_apply, Matrix.mulVec_cramer]
     exact congrArg (· • x) (Int.natAbs_of_nonneg hdet).symm
   · refine ⟨-Matrix.cramer A x, ?_⟩
+    -- The range goal unfolds scalar multiplication by `d : ℕ` to `d`-fold addition, whereas
+    -- Cramer's rule is stated using the corresponding integer scalar action.
     change A.mulVecLin (-Matrix.cramer A x) = d • x
     rw [map_neg, Matrix.mulVecLin_apply, Matrix.mulVec_cramer, ← neg_smul]
     exact congrArg (· • x) (Int.ofNat_natAbs_of_nonpos hdet).symm
