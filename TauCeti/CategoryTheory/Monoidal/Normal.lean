@@ -67,7 +67,7 @@ noncomputable def normalConjugation (φ : H ⟶ G) [IsMonHom.Normal φ] : G ⊗ 
 
 /-- Including the conjugate of a normal-subgroup element gives its ambient conjugate. This is the
 defining equation of `normalConjugation`. -/
-@[reassoc]
+@[simp, reassoc]
 theorem normalConjugation_comp (φ : H ⟶ G) [IsMonHom.Normal φ] :
     normalConjugation φ ≫ φ = G ◁ φ ≫ GrpObj.conj G :=
   Classical.choose_spec (IsMonHom.Normal.exists_comp_eq_conj φ)
@@ -93,14 +93,14 @@ theorem lift_normalConjugation_comp (φ : H ⟶ G) [IsMonHom.Normal φ]
 theorem normalConjugation_one_left (φ : H ⟶ G) [IsMonHom.Normal φ] (h : X ⟶ H) :
     lift 1 h ≫ normalConjugation φ = h := by
   apply (cancel_mono φ).1
-  simp [lift_normalConjugation_comp]
+  simp
 
 /-- Conjugation fixes the identity generalized point of a normal subgroup object. -/
 @[simp]
 theorem normalConjugation_one_right (φ : H ⟶ G) [IsMonHom.Normal φ] (g : X ⟶ G) :
     lift g 1 ≫ normalConjugation φ = 1 := by
   apply (cancel_mono φ).1
-  simp [lift_normalConjugation_comp]
+  simp
 
 /-- Conjugation by a product is successive conjugation, with the right factor acting first. -/
 @[simp]
@@ -109,7 +109,7 @@ theorem normalConjugation_mul_left (φ : H ⟶ G) [IsMonHom.Normal φ]
     lift (g₁ * g₂) h ≫ normalConjugation φ =
       lift g₁ (lift g₂ h ≫ normalConjugation φ) ≫ normalConjugation φ := by
   apply (cancel_mono φ).1
-  simp [lift_normalConjugation_comp]
+  simp
   group
 
 /-- Conjugation preserves multiplication in a normal subgroup object. -/
