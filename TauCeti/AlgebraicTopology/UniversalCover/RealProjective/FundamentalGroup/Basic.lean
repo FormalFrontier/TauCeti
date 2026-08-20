@@ -18,7 +18,7 @@ For `2 ≤ n`, real projective `n`-space `RPⁿ` has fundamental group isomorphi
 two-sheeted antipodal quotient `mk n`.
 
 The antipodal cover is a regular covering map with deck group `ℤˣ`, and the covering sphere `Sⁿ`
-is simply connected for `2 ≤ n` by `TauCeti.simplyConnectedSpace_euclideanSphere`. The
+is simply connected for `2 ≤ n` by `TauCeti.simplyConnectedSpace_sphere_euclideanSpace`. The
 regular-cover comparison `TauCeti.Deck.IsRegular.fundamentalGroupEquiv` therefore identifies the
 fundamental group of `RPⁿ` at any basepoint with the opposite of the deck group. Since `ℤˣ` is
 commutative, the opposite drops out, yielding
@@ -78,7 +78,7 @@ for any basepoint `x` with a chosen lift `e` in the sphere:
 def fundamentalGroupMulEquiv (hn : 2 ≤ n)
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) :
     FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ :=
-  haveI := simplyConnectedSpace_euclideanSphere hn
+  haveI := simplyConnectedSpace_sphere_euclideanSpace hn
   (Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e).trans
     ((MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
       (MulOpposite.opMulEquiv (M := ℤˣ)).symm)
@@ -93,7 +93,7 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
     fundamentalGroupMulEquiv n hn e γ = u ↔
       ((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
         u • (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
-  have := simplyConnectedSpace_euclideanSphere hn
+  have := simplyConnectedSpace_sphere_euclideanSpace hn
   let F := Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e
   let T := (MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
     (MulOpposite.opMulEquiv (M := ℤˣ)).symm

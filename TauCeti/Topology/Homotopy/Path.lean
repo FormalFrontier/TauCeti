@@ -27,9 +27,11 @@ ambient space whose intermediate paths all stay in `V`. Analytic continuation co
 `Analysis/Complex/Conformal/GlobalBranch.lean`.
 
 `Path.homotopic_of_continuous_square` is likewise adapted from Kim Morrison's
-[#38292](https://github.com/leanprover-community/mathlib4/pull/38292). It moved here from
-`AlgebraicTopology/UniversalCover/BasedPath.lean` and is used by
-`AlgebraicTopology/Sphere/SimplyConnected.lean`.
+[#38292](https://github.com/leanprover-community/mathlib4/pull/38292). It is used by
+`AlgebraicTopology/UniversalCover/BasedPath.lean`, where it previously lived privately, and by
+`AlgebraicTopology/Sphere/Puncture.lean`. The lemma
+`Path.Homotopic.refl_of_forall_mem_of_nullhomotopic` is not from #38292; it was factored out of
+`AlgebraicTopology/SemilocallySimplyConnected/Basic.lean`.
 -/
 
 public section

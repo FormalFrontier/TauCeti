@@ -5,9 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Normed.Module.Normalize
 public import Mathlib.Topology.Homotopy.Contractible
+public import TauCeti.Analysis.Normed.Module.Normalize
 public import TauCeti.Topology.Homotopy.Path
+-- Private: these supply the affine homotopy and the antipode inequality used in proofs below.
+import Mathlib.Analysis.Normed.Module.Ball.Action
+import Mathlib.Topology.Homotopy.Affine
 
 /-!
 # The punctured unit sphere
@@ -24,14 +27,12 @@ arbitrary loop off a point, which is done in
 
 ## Main declarations
 
-* `TauCeti.normalizeToSphere`: radial projection of a continuous nowhere-zero map to the unit
-  sphere.
-* `Path.homotopic_of_normalize_segment_ne_zero`: radial projection of a straight-line
-  homotopy between sphere loops.
+* `TauCeti.homotopic_of_normalize_segment_ne_zero`: radial projection of a straight-line
+  homotopy between sphere paths.
 * `TauCeti.contractibleSpace_sphere_compl_singleton`: the sphere minus one point is contractible.
 * `TauCeti.nullhomotopic_inclusion_sphere_compl_singleton`: the inclusion of the sphere minus a
   point into the sphere is null-homotopic.
-* `TauCeti.homotopic_refl_of_notMem_range_sphere`: a loop on the unit sphere omitting a point of
+* `TauCeti.homotopic_refl_of_notMem_range`: a loop on the unit sphere omitting a point of
   the sphere is null-homotopic.
 
 ## References
@@ -53,33 +54,12 @@ namespace TauCeti
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- Radial projection sends a continuous nowhere-zero map into a real normed space continuously
-to its unit sphere. -/
-@[expose] noncomputable def normalizeToSphere {Y : Type*} [TopologicalSpace Y] (f : Y → E)
-    (hf : Continuous f) (h0 : ∀ y, f y ≠ 0) : C(Y, sphere (0 : E) 1) where
-  toFun y := ⟨normalize (f y), mem_sphere_zero_iff_norm.mpr (norm_normalize (h0 y))⟩
-  continuous_toFun := by
-    refine Continuous.subtype_mk ?_ _
-    -- `normalize` is definitionally inverse-norm scalar multiplication; exposing that formula
-    -- lets the standard continuity combinators apply.
-    change Continuous fun y => ‖f y‖⁻¹ • f y
-    exact ((continuous_norm.comp hf).inv₀
-      (fun y => norm_ne_zero_iff.mpr (h0 y))).smul hf
-
-/-- The underlying vector of `normalizeToSphere f hf h0 y` is the normalization of `f y`. -/
-@[simp]
-theorem normalizeToSphere_apply {Y : Type*} [TopologicalSpace Y] (f : Y → E)
-    (hf : Continuous f) (h0 : ∀ y, f y ≠ 0) (y : Y) :
-    ((normalizeToSphere f hf h0 y : sphere (0 : E) 1) : E) = normalize (f y) := rfl
-
 private theorem smul_sub_smul_ne_zero_of_ne {x p : E} (hx : ‖x‖ = 1) (hp : ‖p‖ = 1)
     (hxp : x ≠ p) (u : ℝ) : (1 - u) • x - u • p ≠ 0 := by
   intro h
   have h' : (1 - u) • x = u • p := by rwa [sub_eq_zero] at h
   have habs : |1 - u| = |u| := by
-    have hnorm := congrArg norm h'
-    rw [norm_smul, norm_smul, hx, hp, mul_one, mul_one, Real.norm_eq_abs, Real.norm_eq_abs] at hnorm
-    exact hnorm
+    simpa [norm_smul, hx, hp, Real.norm_eq_abs] using congrArg norm h'
   have hu : u = 1 / 2 := by
     have hsquare := congrArg (fun r : ℝ => r ^ 2) habs
     simp only [sq_abs] at hsquare
@@ -96,11 +76,18 @@ private noncomputable def normalizeSegmentToSphere {Y : Type*} [TopologicalSpace
     (f g : Y → E) (hf : Continuous f) (hg : Continuous g)
     (h0 : ∀ z : I × Y, (1 - (z.1 : ℝ)) • f z.2 + (z.1 : ℝ) • g z.2 ≠ 0) :
     C(I × Y, sphere (0 : E) 1) :=
-  normalizeToSphere
-    (fun z => (1 - (z.1 : ℝ)) • f z.2 + (z.1 : ℝ) • g z.2)
-    (((continuous_const.sub (continuous_subtype_val.comp continuous_fst)).smul
-        (hf.comp continuous_snd)).add
-      ((continuous_subtype_val.comp continuous_fst).smul (hg.comp continuous_snd))) h0
+  let F : C(Y, E) := ⟨f, hf⟩
+  let G : C(Y, E) := ⟨g, hg⟩
+  normalizeToSphere (ContinuousMap.Homotopy.affine F G)
+    (ContinuousMap.Homotopy.affine F G).continuous fun z => by
+      have hline : (ContinuousMap.Homotopy.affine F G) z =
+          (1 - (z.1 : ℝ)) • f z.2 + (z.1 : ℝ) • g z.2 := by
+        rw [ContinuousMap.Homotopy.affine_apply, AffineMap.lineMap_apply]
+        change (z.1 : ℝ) • (g z.2 - f z.2) + f z.2 = _
+        rw [smul_sub, sub_smul, one_smul]
+        abel
+      rw [hline]
+      exact h0 z
 
 section Segment
 
@@ -109,59 +96,66 @@ variable {Y : Type*} [TopologicalSpace Y] {f g : Y → E} {hf : Continuous f} {h
 
 /-- The underlying vector of the segment homotopy at `(u, y)` is the normalization of the point
 of the segment from `f y` to `g y` at time `u`. -/
-private theorem normalizeSegmentToSphere_apply (u : I) (y : Y) :
+private theorem coe_normalizeSegmentToSphere_apply (u : I) (y : Y) :
     ((normalizeSegmentToSphere f g hf hg h0 (u, y) : sphere (0 : E) 1) : E) =
-      normalize ((1 - (u : ℝ)) • f y + (u : ℝ) • g y) :=
-  normalizeToSphere_apply _ _ _ (u, y)
+      normalize ((1 - (u : ℝ)) • f y + (u : ℝ) • g y) := by
+  rw [normalizeSegmentToSphere, coe_normalizeToSphere_apply,
+    ContinuousMap.Homotopy.affine_apply, AffineMap.lineMap_apply]
+  congr 1
+  change (u : ℝ) • (g y - f y) + f y = _
+  rw [smul_sub, sub_smul, one_smul]
+  abel
 
 /-- The segment homotopy starts at the radial projection of `f`. -/
-private theorem normalizeSegmentToSphere_zero_left (y : Y) :
+private theorem coe_normalizeSegmentToSphere_zero_left (y : Y) :
     ((normalizeSegmentToSphere f g hf hg h0 (0, y) : sphere (0 : E) 1) : E) = normalize (f y) := by
-  rw [normalizeSegmentToSphere_apply]
+  rw [coe_normalizeSegmentToSphere_apply]
   simp
 
 /-- The segment homotopy ends at the radial projection of `g`. -/
-private theorem normalizeSegmentToSphere_one_left (y : Y) :
+private theorem coe_normalizeSegmentToSphere_one_left (y : Y) :
     ((normalizeSegmentToSphere f g hf hg h0 (1, y) : sphere (0 : E) 1) : E) = normalize (g y) := by
-  rw [normalizeSegmentToSphere_apply]
+  rw [coe_normalizeSegmentToSphere_apply]
   simp
 
 /-- Where `f` and `g` agree at a unit vector the segment homotopy stays at that vector. -/
-private theorem normalizeSegmentToSphere_apply_of_eq {y : Y} {v : E} (hfy : f y = v)
+private theorem coe_normalizeSegmentToSphere_apply_of_eq {y : Y} {v : E} (hfy : f y = v)
     (hgy : g y = v) (hv : ‖v‖ = 1) (u : I) :
     ((normalizeSegmentToSphere f g hf hg h0 (u, y) : sphere (0 : E) 1) : E) = v := by
-  rw [normalizeSegmentToSphere_apply, hfy, hgy, ← add_smul]
+  rw [coe_normalizeSegmentToSphere_apply, hfy, hgy, ← add_smul]
   simpa using normalize_eq_self_of_norm_eq_one hv
 
 end Segment
 
-/-- A loop in the unit sphere is homotopic to the radial projection of a continuous comparison
-loop when every point of their pointwise straight-line homotopy avoids the origin. -/
-theorem _root_.Path.homotopic_of_normalize_segment_ne_zero {x : sphere (0 : E) 1} (γ γ' : Path x x)
+/-- A path in the unit sphere is homotopic to the radial projection of a continuous comparison
+map when every point of their pointwise straight-line homotopy avoids the origin and the comparison
+map itself takes the source and target values at the two endpoints. -/
+theorem homotopic_of_normalize_segment_ne_zero {a b : sphere (0 : E) 1} (γ γ' : Path a b)
     (f : I → E) (hf : Continuous f)
     (hγ' : ∀ t, ((γ' t : sphere (0 : E) 1) : E) = normalize (f t))
-    (hf_zero : f 0 = (x : E)) (hf_one : f 1 = (x : E))
+    (hf_zero : f 0 = (a : E)) (hf_one : f 1 = (b : E))
     (h : ∀ z : I × I,
       (1 - (z.1 : ℝ)) • ((γ z.2 : sphere (0 : E) 1) : E) +
         (z.1 : ℝ) • f z.2 ≠ 0) : γ.Homotopic γ' := by
-  have hxnorm : ‖((x : sphere (0 : E) 1) : E)‖ = 1 := mem_sphere_zero_iff_norm.mp x.2
+  have hanorm : ‖((a : sphere (0 : E) 1) : E)‖ = 1 := mem_sphere_zero_iff_norm.mp a.2
+  have hbnorm : ‖((b : sphere (0 : E) 1) : E)‖ = 1 := mem_sphere_zero_iff_norm.mp b.2
   refine Path.homotopic_of_continuous_square
     (normalizeSegmentToSphere (fun t => ((γ t : sphere (0 : E) 1) : E)) f
       (continuous_subtype_val.comp γ.continuous) hf h)
     (ContinuousMap.continuous _) ?_ ?_ ?_ ?_
   · intro s
     refine Subtype.ext ?_
-    rw [normalizeSegmentToSphere_zero_left]
+    rw [coe_normalizeSegmentToSphere_zero_left]
     exact normalize_eq_self_of_norm_eq_one (mem_sphere_zero_iff_norm.mp (γ s).2)
   · intro s
     refine Subtype.ext ?_
-    rw [normalizeSegmentToSphere_one_left]
+    rw [coe_normalizeSegmentToSphere_one_left]
     exact (hγ' s).symm
   · intro u
-    refine Subtype.ext (normalizeSegmentToSphere_apply_of_eq (y := (0 : I)) ?_ hf_zero hxnorm u)
+    refine Subtype.ext (coe_normalizeSegmentToSphere_apply_of_eq (y := (0 : I)) ?_ hf_zero hanorm u)
     exact congrArg Subtype.val γ.source
   · intro u
-    refine Subtype.ext (normalizeSegmentToSphere_apply_of_eq (y := (1 : I)) ?_ hf_one hxnorm u)
+    refine Subtype.ext (coe_normalizeSegmentToSphere_apply_of_eq (y := (1 : I)) ?_ hf_one hbnorm u)
     exact congrArg Subtype.val γ.target
 
 private theorem normalize_smul_sub_smul_ne_of_ne {x p : E} (hx : ‖x‖ = 1) (hp : ‖p‖ = 1)
@@ -179,9 +173,9 @@ private theorem normalize_smul_sub_smul_ne_of_ne {x p : E} (hx : ‖x‖ = 1) (h
     abel
   have hleft : 0 < ‖v‖ + (u : ℝ) := add_pos_of_pos_of_nonneg hvnorm u.2.1
   have hright : 0 ≤ 1 - (u : ℝ) := sub_nonneg.mpr u.2.2
-  have hcoeff := congrArg norm heq
-  rw [norm_smul, norm_smul, hp, hx, mul_one, mul_one, Real.norm_eq_abs, Real.norm_eq_abs,
-    abs_of_pos hleft, abs_of_nonneg hright] at hcoeff
+  have hcoeff : ‖v‖ + (u : ℝ) = 1 - (u : ℝ) := by
+    simpa [norm_smul, hp, hx, Real.norm_eq_abs, abs_of_pos hleft, abs_of_nonneg hright] using
+      congrArg norm heq
   have hright' : 0 < 1 - (u : ℝ) := hcoeff ▸ hleft
   rw [hcoeff] at heq
   have hinv := congrArg (fun y : E => (1 - (u : ℝ))⁻¹ • y) heq
@@ -212,27 +206,15 @@ theorem contractibleSpace_sphere_compl_singleton (p : sphere (0 : E) 1) :
             normalize ((1 - (u : ℝ)) • ((q : sphere (0 : E) 1) : E) - (u : ℝ) • (p : E)) :=
     ⟨normalizeSegmentToSphere inclusion (fun _ => -(p : E)) hinclusion continuous_const hsegment,
       ContinuousMap.continuous _,
-      fun u q => by rw [normalizeSegmentToSphere_apply, smul_neg, ← sub_eq_add_neg]⟩
+      fun u q => by rw [coe_normalizeSegmentToSphere_apply, smul_neg, ← sub_eq_add_neg]⟩
   have hGne : ∀ z, G z ≠ p := by
     rintro ⟨u, q⟩ hG
     refine normalize_smul_sub_smul_ne_of_ne
       (mem_sphere_zero_iff_norm.mp (q : sphere (0 : E) 1).2) hp
       (fun hq => q.2 (Set.mem_singleton_iff.mpr (Subtype.ext hq))) u ?_
     rw [← hGval u q, hG]
-  let antipode : sphere (0 : E) 1 := ⟨-(p : E), by simp⟩
-  have hneg : antipode ≠ p := by
-    intro h
-    have hval : -(p : E) = (p : E) := by
-      simpa only [antipode] using congrArg Subtype.val h
-    have htwo : (2 : ℝ) • (p : E) = 0 := by
-      calc
-        (2 : ℝ) • (p : E) = (p : E) + (p : E) := two_smul ℝ (p : E)
-        _ = -(p : E) + (p : E) := congrArg (fun y : E => y + (p : E)) hval.symm
-        _ = 0 := neg_add_cancel (p : E)
-    have hpzero : (p : E) = 0 := (smul_eq_zero.mp htwo).resolve_left (by norm_num)
-    rw [hpzero, norm_zero] at hp
-    norm_num at hp
-  refine ⟨⟨antipode, by simpa only [Set.mem_compl_iff, Set.mem_singleton_iff]⟩, ⟨?_⟩⟩
+  have hneg : -p ≠ p := (ne_neg_of_mem_unit_sphere ℝ p).symm
+  refine ⟨⟨-p, by simpa only [Set.mem_compl_iff, Set.mem_singleton_iff]⟩, ⟨?_⟩⟩
   exact
     { toFun := fun z => ⟨G z,
         by simpa only [Set.mem_compl_iff, Set.mem_singleton_iff] using hGne z⟩
@@ -249,7 +231,7 @@ theorem contractibleSpace_sphere_compl_singleton (p : sphere (0 : E) 1) :
         have hraw : ((G (1, q) : sphere (0 : E) 1) : E) = -(p : E) := by
           rw [hGval]
           simpa [normalize_neg] using congrArg Neg.neg (normalize_eq_self_of_norm_eq_one hp)
-        exact Subtype.ext (Subtype.ext hraw) }
+        exact Subtype.ext (Subtype.ext (hraw.trans (coe_neg_sphere p).symm)) }
 
 /-- **The inclusion of the unit sphere minus one point into the sphere is null-homotopic.** -/
 theorem nullhomotopic_inclusion_sphere_compl_singleton (p : sphere (0 : E) 1) :
@@ -263,7 +245,7 @@ theorem nullhomotopic_inclusion_sphere_compl_singleton (p : sphere (0 : E) 1) :
 
 /-- **A loop on the unit sphere that omits a point of the sphere is null-homotopic.** The loop
 runs in the punctured sphere, whose inclusion into the sphere is null-homotopic. -/
-theorem homotopic_refl_of_notMem_range_sphere {x : sphere (0 : E) 1} (γ : Path x x)
+theorem homotopic_refl_of_notMem_range {x : sphere (0 : E) 1} (γ : Path x x)
     {p : sphere (0 : E) 1} (hp : p ∉ Set.range γ) : γ.Homotopic (Path.refl x) := by
   have hmem : ∀ t, γ t ∈ ({p}ᶜ : Set (sphere (0 : E) 1)) := fun t hmem =>
     hp ⟨t, (Set.mem_singleton_iff.mp hmem).symm ▸ rfl⟩
