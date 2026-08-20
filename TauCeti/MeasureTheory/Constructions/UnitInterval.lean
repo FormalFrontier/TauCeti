@@ -142,8 +142,9 @@ theorem volume_preimage_cellIdx (hi : i < m) :
       linarith
   rw [hgoal, one_div, ENNReal.ofReal_inv_of_pos hmR, ENNReal.ofReal_natCast]
 
-variable {V : Type*} [Fintype V] [DecidableEq V]
+variable {V : Type*} [Fintype V]
 
+open scoped Classical in
 /-- **Independent uniform points, read through their cells.** The integral of a function of the
 cell indices of `#V` independent uniform points on `[0, 1]` is the average of that function over
 all `#V`-tuples of cells.

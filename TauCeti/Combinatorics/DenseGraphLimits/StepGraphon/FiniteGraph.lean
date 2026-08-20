@@ -91,6 +91,7 @@ def finiteGraphGraphon (G : SimpleGraph (Fin m)) : Graphon I (volume : Measure I
     · rw [ite_eq_left h, ite_eq_left h.symm]
     · rw [ite_eq_right h, ite_eq_right fun h' => h h'.symm]
   meas' := by
+    -- Unfold the structure projection and the uncurrying in `Graphon.meas'`.
     change Measurable fun p : I × I =>
       if (G.map Fin.valEmbedding).Adj (cellIdx m p.1) (cellIdx m p.2) then (1 : ℝ) else 0
     exact (measurable_of_countable fun q : ℕ × ℕ =>
@@ -106,6 +107,7 @@ open scoped Classical in
 
 This is the honest unfolding, transport to `ℕ` included; the rectangle lemmas below are the form
 callers should use. -/
+@[simp]
 theorem finiteGraphGraphon_apply_cellIdx (G : SimpleGraph (Fin m)) (x y : I) :
     finiteGraphGraphon G x y =
       if (G.map Fin.valEmbedding).Adj (cellIdx m x) (cellIdx m y) then 1 else 0 := (rfl)
