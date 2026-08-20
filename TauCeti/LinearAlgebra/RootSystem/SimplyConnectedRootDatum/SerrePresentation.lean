@@ -189,6 +189,7 @@ theorem nontrivial_serreLieAlgebra : Nontrivial t.SerreLieAlgebra :=
 
 /-- **The comparison map intertwines the two Chevalley involutions**: the signed exchange of the
 Serre generators is carried to the signed exchange of the pinned Chevalley generators. -/
+@[simp]
 theorem serreLift_serreChevalleyInvolution (x : t.SerreLieAlgebra) :
     t.serreLift ht (serreChevalleyInvolution ℚ t.cartanMatrixᵀ x) =
       t.chevalleyInvolution ht (t.serreLift ht x) := by

@@ -244,6 +244,7 @@ def chevalleyInvolution : t.lieAlgebra ht ≃ₗ⁅ℚ⁆ t.lieAlgebra ht :=
 
 /-- The pinned Chevalley involution is Geck's involution, read through the identification of the
 two carriers. -/
+@[simp]
 theorem geckLieEquiv_chevalleyInvolution (x : t.lieAlgebra ht) :
     t.geckLieEquiv ht (t.chevalleyInvolution ht x) =
       geckChevalleyInvolution (t.rationalBase ht) (t.geckLieEquiv ht x) :=
