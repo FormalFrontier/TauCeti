@@ -42,6 +42,8 @@ as the existing multiplicative group `𝔾ₘ`, roots of unity `μ_n`, and diago
   split torus.
 * `TauCeti.SplitTorus.pointsMulEquiv`: the multiplicative equivalence from the convolution
   group of `A`-points of the rank-`σ` split torus to `σ → Aˣ`.
+* `TauCeti.SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv`: this equivalence factors through
+  the free-abelian character equivalence.
 * `TauCeti.SplitTorus.pointsMulEquiv_apply_coe`: a point is sent to its values on the standard
   generators `single (ofAdd (single i 1)) 1`.
 * `TauCeti.SplitTorus.pointsMulEquiv_mapValue`: the points equivalence is natural in the value
@@ -84,6 +86,14 @@ commutative `R`-algebra `A`, the convolution group of `R`-algebra maps out of
 noncomputable def pointsMulEquiv :
     WithConv (MonoidAlgebra R (Multiplicative (σ →₀ ℤ)) →ₐ[R] A) ≃* (σ → Aˣ) :=
   DiagonalizableGroup.pointsMulEquiv.trans freeAbelianCharEquiv
+
+/-- The split-torus points equivalence is the free-abelian character equivalence applied to the
+underlying diagonalizable-group character. -/
+theorem pointsMulEquiv_eq_freeAbelianCharEquiv
+    (f : WithConv (MonoidAlgebra R (Multiplicative (σ →₀ ℤ)) →ₐ[R] A)) :
+    pointsMulEquiv f =
+      freeAbelianCharEquiv (DiagonalizableGroup.pointsMulEquiv f) := by
+  rw [pointsMulEquiv, MulEquiv.trans_apply]
 
 /-- The points equivalence reads off the value of a point on the `i`-th standard generator
 `single (ofAdd (single i 1)) 1` of `R[Multiplicative (σ →₀ ℤ)]`. -/
