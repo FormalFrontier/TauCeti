@@ -215,6 +215,24 @@ coordinates. -/
   · have h' : ¬ (σ.symm k = i) := fun hc => h (by rw [← hc, Equiv.apply_symm_apply])
     simp [h, h']
 
+/-- The coweight map of the rational automorphism is the permutation of the simple-coroot
+coordinates. -/
+@[simp] theorem rationalDiagramAut_coweightMap (hσ : σ ∈ t.diagramSymmetry) :
+    (rationalDiagramAut ht hσ).toHom.coweightMap =
+      (LinearEquiv.funCongrLeft ℚ ℚ σ).toLinearMap := by
+  apply LinearMap.ext
+  intro x
+  rw [← RootPairing.Equiv.coweightEquiv_apply]
+  apply (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
+    (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm.injective
+  rw [LinearEquiv.symm_apply_apply]
+  change x = ((RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
+    (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm : _ →ₗ[ℚ] _)
+      ((LinearEquiv.funCongrLeft ℚ ℚ σ).toLinearMap x)
+  rw [rationalDiagramAut_coweightEquiv_symm]
+  ext j
+  simp
+
 /-- **Every coroot of the pinned datum has its simple-coroot coordinates permuted** by a symmetry of
 the Cartan matrix. -/
 @[simp] theorem coroot_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoots) :
@@ -242,7 +260,7 @@ the Cartan matrix. -/
 
 /-- The two coordinate permutations are transpose to one another against the dot-product pairing of
 the pinned datum. -/
-theorem funCongrLeft_dualMap_comp_toPerfPair :
+private theorem funCongrLeft_dualMap_comp_toPerfPair :
     (LinearEquiv.funCongrLeft ℤ ℤ σ.symm).toLinearMap.dualMap ∘ₗ
         (t.simplyConnectedRootDatum ht).flip.toPerfPair =
       (t.simplyConnectedRootDatum ht).flip.toPerfPair ∘ₗ
@@ -257,7 +275,7 @@ theorem funCongrLeft_dualMap_comp_toPerfPair :
 
 /-- The permutation of the fundamental-weight coordinates carries the root enumeration along
 `TauCeti.DynkinType.diagramRootPerm`. -/
-theorem funCongrLeft_comp_root (hσ : σ ∈ t.diagramSymmetry) :
+private theorem funCongrLeft_comp_root (hσ : σ ∈ t.diagramSymmetry) :
     ⇑(LinearEquiv.funCongrLeft ℤ ℤ σ.symm).toLinearMap ∘ (t.simplyConnectedRootDatum ht).root =
       (t.simplyConnectedRootDatum ht).root ∘ diagramRootPerm ht hσ := by
   ext k j
@@ -266,7 +284,7 @@ theorem funCongrLeft_comp_root (hσ : σ ∈ t.diagramSymmetry) :
 
 /-- The permutation of the simple-coroot coordinates carries the coroot enumeration along the
 inverse of `TauCeti.DynkinType.diagramRootPerm`. -/
-theorem funCongrLeft_comp_coroot (hσ : σ ∈ t.diagramSymmetry) :
+private theorem funCongrLeft_comp_coroot (hσ : σ ∈ t.diagramSymmetry) :
     ⇑(LinearEquiv.funCongrLeft ℤ ℤ σ).toLinearMap ∘ (t.simplyConnectedRootDatum ht).coroot =
       (t.simplyConnectedRootDatum ht).coroot ∘ (diagramRootPerm ht hσ).symm := by
   ext k j
