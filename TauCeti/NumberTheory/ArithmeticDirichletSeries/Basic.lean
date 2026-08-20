@@ -42,10 +42,11 @@ function and is not an ideal weight, because `map_zero` forces the value `0` at 
 ideal Möbius function is not an ideal weight, because complete multiplicativity forces `χ 𝔭 = 0`
 as soon as `χ (𝔭 ^ 2) = 0`
 (`MultiplicativeIdealWeight.not_exists_apply_eq_neg_one_and_apply_sq_eq_zero`); and the twist
-`χ · N⁻ᶻ` is unitary only for purely imaginary `z`, because on a good ideal of norm greater than
-one its modulus is `N(I) ^ (-Re z)` (`UnitaryIdealWeight.norm_apply_normTwist_ne_one`).
-Accordingly the arbitrary norm twist lands in `MultiplicativeIdealWeight` and only
-`imaginaryNormTwist` stays inside `UnitaryIdealWeight`.
+when `z.re ≠ 0`, the twist `χ · N⁻ᶻ` has non-unit modulus at every good ideal of norm greater
+than one, since its modulus there is `N(I) ^ (-Re z)`
+(`UnitaryIdealWeight.norm_apply_normTwist_ne_one`). Accordingly the arbitrary norm-twist
+construction lands in `MultiplicativeIdealWeight`, while `imaginaryNormTwist` stays inside
+`UnitaryIdealWeight`.
 
 The carriers are stated for the ring of integers of a number field rather than for a general
 Dedekind domain, because the absolute norm that the twists and all of Layer 1 use is Mathlib's
@@ -62,7 +63,7 @@ Dedekind domain, because the absolute norm that the twists and all of Layer 1 us
 * `TauCeti.MultiplicativeIdealWeight.IsGood`: an ideal is *good* when it is nonzero and divisible
   by no bad prime.
 * `TauCeti.UnitaryIdealWeight`: the ideal weights of modulus one away from the bad primes,
-  together with `one`, `conj`, `restrict` and `imaginaryNormTwist`.
+  together with `one`, `conj`, `pointwiseMul`, `restrict` and `imaginaryNormTwist`.
 
 ## Main results
 
@@ -82,6 +83,12 @@ export contract names `IdealArithmeticFunction`, `zeroExtend`, `MultiplicativeId
 `UnitaryIdealWeight`. Layer 1 sums an `IdealArithmeticFunction` over the ideals of a fixed
 absolute norm to reach Mathlib's `LSeries`, and Layer 2 defines the convolution whose divisor sums
 are the reason the carrier omits `⊥`.
+
+The carrier signatures follow
+[`ArithmeticDirichletSeries/Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/ArithmeticDirichletSeries/Suggested.lean).
+This implementation retains its nonzero-ideal carrier and general-versus-unitary norm-twist
+split, but treats the bad set as data rather than the exact zero locus and defines `IsGood` only
+for `MultiplicativeIdealWeight`, reached from a unitary weight through its underlying weight.
 -/
 
 public section
@@ -121,7 +128,7 @@ namespace IdealArithmeticFunction
 open Classical in
 /-- The canonical extension of an arithmetic function on the nonzero ideals to all ideals,
 by the value `0` at the excluded zero ideal `⊥`. -/
-@[expose] noncomputable def zeroExtend (f : IdealArithmeticFunction K) (I : Ideal (𝓞 K)) : ℂ :=
+noncomputable def zeroExtend (f : IdealArithmeticFunction K) (I : Ideal (𝓞 K)) : ℂ :=
   if h : I = ⊥ then 0 else f ⟨I, mem_nonzeroIdeal_iff.2 h⟩
 
 variable (f : IdealArithmeticFunction K)
@@ -225,6 +232,10 @@ def IsGood (I : Ideal (𝓞 K)) : Prop :=
   I ≠ ⊥ ∧ ∀ 𝔭 ∈ χ.bad, ¬ 𝔭.asIdeal ∣ I
 
 variable {χ}
+
+@[simp]
+theorem isGood_iff {I : Ideal (𝓞 K)} : χ.IsGood I ↔ I ≠ ⊥ ∧ ∀ 𝔭 ∈ χ.bad, ¬ 𝔭.asIdeal ∣ I :=
+  Iff.rfl
 
 theorem IsGood.ne_bot {I : Ideal (𝓞 K)} (hI : χ.IsGood I) : I ≠ ⊥ := hI.1
 
@@ -409,9 +420,9 @@ theorem restrict_apply_of_isGood {S : Set (HeightOneSpectrum (𝓞 K))} (hS : S.
 /-! #### The norm twist -/
 
 /-- The **norm twist** `I ↦ χ I * N(I) ^ (-z)` of a multiplicative ideal weight by an arbitrary
-complex number, with the same bad set. Its codomain is the general multiplicative carrier: for
-`Re z ≠ 0` the twist is not unitary, by
-`TauCeti.UnitaryIdealWeight.norm_apply_normTwist_ne_one`. -/
+complex number, with the same bad set. Its codomain is the general multiplicative carrier. When
+`Re z ≠ 0`, `TauCeti.UnitaryIdealWeight.norm_apply_normTwist_ne_one` shows that a twist of a
+unitary weight has non-unit modulus at every good ideal of norm greater than one. -/
 noncomputable def normTwist (z : ℂ) : MultiplicativeIdealWeight K where
   toFun I := χ I * (Ideal.absNorm I : ℂ) ^ (-z)
   map_zero' := by simp
@@ -442,7 +453,7 @@ variable (K : Type*) [Field K] [NumberField K]
 
 /-- A **unitary ideal weight**: a multiplicative ideal weight whose values at the height-one primes
 outside the bad set have modulus one. A finite-order Hecke character, viewed as a weight on ideals,
-lands here; an arbitrary norm twist does not. -/
+lands here; purely imaginary norm twists preserve this carrier. -/
 structure UnitaryIdealWeight extends MultiplicativeIdealWeight K where
   /-- Away from the bad primes the weight has modulus one. -/
   norm_apply_eq_one : ∀ 𝔭 ∉ bad, ‖toMonoidWithZeroHom 𝔭.asIdeal‖ = 1
@@ -518,6 +529,31 @@ omit [NumberField K] in
 theorem toMultiplicativeIdealWeight_conj :
     χ.conj.toMultiplicativeIdealWeight = χ.toMultiplicativeIdealWeight.conj := (rfl)
 
+/-- The **pointwise product** of two unitary ideal weights, with the union of their bad sets. -/
+noncomputable def pointwiseMul (ψ : UnitaryIdealWeight K) : UnitaryIdealWeight K where
+  toMultiplicativeIdealWeight :=
+    χ.toMultiplicativeIdealWeight.pointwiseMul ψ.toMultiplicativeIdealWeight
+  norm_apply_eq_one 𝔭 h𝔭 := by
+    rw [MultiplicativeIdealWeight.pointwiseMul_apply, norm_mul,
+      χ.norm_apply_eq_one 𝔭 (fun h ↦ h𝔭 (Or.inl h)),
+      ψ.norm_apply_eq_one 𝔭 (fun h ↦ h𝔭 (Or.inr h)), one_mul]
+
+omit [NumberField K] in
+@[simp]
+theorem toMultiplicativeIdealWeight_pointwiseMul (ψ : UnitaryIdealWeight K) :
+    (χ.pointwiseMul ψ).toMultiplicativeIdealWeight =
+      χ.toMultiplicativeIdealWeight.pointwiseMul ψ.toMultiplicativeIdealWeight := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem pointwiseMul_apply (ψ : UnitaryIdealWeight K) (I : Ideal (𝓞 K)) :
+    χ.pointwiseMul ψ I = χ I * ψ I := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem bad_pointwiseMul (ψ : UnitaryIdealWeight K) :
+    (χ.pointwiseMul ψ).bad = χ.bad ∪ ψ.bad := (rfl)
+
 /-- The **restriction** of a unitary ideal weight away from a finite set `S` of height-one primes,
 which is again unitary: a height-one prime outside `χ.bad ∪ S` is prime to `S`, because a
 height-one prime dividing another is equal to it. -/
@@ -548,9 +584,8 @@ theorem norm_apply_normTwist_of_isGood (z : ℂ) {I : Ideal (𝓞 K)}
   rw [MultiplicativeIdealWeight.normTwist_apply, norm_mul, χ.norm_apply_eq_one_of_isGood hI,
     one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re]
 
-/-- **Unitarity rejection test.** A norm twist by a `z` that is not purely imaginary is not
-unitary: at every good ideal of absolute norm greater than one its modulus differs from `1`. So
-`TauCeti.MultiplicativeIdealWeight.normTwist` genuinely lands in the general carrier. -/
+/-- **Norm-twist rejection test.** If `z.re ≠ 0`, then at every good ideal of absolute norm
+greater than one, the norm twist has modulus different from `1`. -/
 theorem norm_apply_normTwist_ne_one {z : ℂ} (hz : z.re ≠ 0) {I : Ideal (𝓞 K)}
     (hI : χ.toMultiplicativeIdealWeight.IsGood I) (hnorm : 1 < Ideal.absNorm I) :
     ‖χ.toMultiplicativeIdealWeight.normTwist z I‖ ≠ 1 := by
