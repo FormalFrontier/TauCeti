@@ -322,6 +322,7 @@ theorem map_id : map (𝟭 C) = AddMonoidHom.id (TriangulatedK0 C) :=
   hom_ext fun X => by rw [map_of, AddMonoidHom.id_apply, Functor.id_obj]
 
 /-- The induced maps of a composite of triangulated functors compose. -/
+@[simp]
 theorem map_comp {K : Type u''} [Category.{v''} K] [Preadditive K] [HasZeroObject K]
     [HasShift K ℤ] [∀ n : ℤ, (shiftFunctor K n).Additive] [Pretriangulated K]
     [EssentiallySmall.{w''} K] (H : D ⥤ K) [H.CommShift ℤ] [H.IsTriangulated] :
