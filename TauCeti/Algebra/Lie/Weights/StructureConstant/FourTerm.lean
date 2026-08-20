@@ -65,8 +65,6 @@ it is an input to.
   when one of the three pairs does not sum to a root.
 * `TauCeti.IsSl2System.rootSpace_add_eq_bot_of_rootSpace_add_eq_bot`: two absent summands force
   the third pair not to sum to a root either.
-* `TauCeti.IsSl2System.killingForm_root_neg_eq_invForm`: the Killing pairing of opposite root
-  vectors is `2 / ⟨α, α⟩`.
 * `TauCeti.IsSl2System.structureConstant_four_term_invForm`: Carter's displayed form of the
   relation, with the root lengths of the invariant form as denominators.
 
@@ -233,13 +231,6 @@ theorem rootSpace_add_eq_bot_of_rootSpace_add_eq_bot (hα : α.IsNonZero) (hβ :
 
 /-! ## Carter's form, with the root lengths of the invariant form -/
 
-/-- The Killing pairing of opposite normalised root vectors is `2 / ⟨α, α⟩` for the invariant form
-on weights. This is `TauCeti.IsSl2System.killingForm_root_neg_eq` read through
-`TauCeti.invForm`. -/
-theorem killingForm_root_neg_eq_invForm (hα : α.IsNonZero) :
-    killingForm K L (x α) (x (-α)) = 2 * (invForm (α : Dual K H) α)⁻¹ := by
-  rw [hx.killingForm_root_neg_eq α hα, invForm_apply_apply, Weight.toLinear_apply]
-
 /-- **Carter's form of the four-term relation.** The three products of structure constants,
 divided by the lengths of the roots their pairs sum to, add to zero.
 
@@ -263,8 +254,9 @@ theorem structureConstant_four_term_invForm (μ ν ρ : Weight K H L)
         hx.structureConstant γ α ρ hρ hργα * hx.structureConstant β δ (-ρ) hρ.neg hρβδ *
           (invForm (ρ : Dual K H) ρ)⁻¹ = 0 := by
   have hrel := hx.structureConstant_four_term α β γ δ μ ν ρ hμ hν hρ hμαβ hμγδ hνβγ hναδ hργα hρβδ
-  rw [hx.killingForm_root_neg_eq_invForm μ hμ, hx.killingForm_root_neg_eq_invForm ν hν,
-    hx.killingForm_root_neg_eq_invForm ρ hρ] at hrel
+  rw [hx.killingForm_root_neg_eq μ hμ, hx.killingForm_root_neg_eq ν hν,
+    hx.killingForm_root_neg_eq ρ hρ] at hrel
+  simp only [invForm_apply_apply, Weight.toLinear_apply]
   have htwo : (2 : K) ≠ 0 := two_ne_zero
   apply mul_left_cancel₀ htwo
   rw [mul_zero]
