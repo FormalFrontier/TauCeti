@@ -77,7 +77,7 @@ variable (𝕂 A : Type*) [NontriviallyNormedField 𝕂]
 variable [NormedRing A] [NormedAlgebra 𝕂 A]
 variable [CharZero 𝕂] [ContinuousSMul ℚ≥0 𝕂]
 
-/-- The power series for `log (1 + u)` converges throughout the open unit ball. -/
+/-- The radius of `logOneAddSeries` is at least one. -/
 theorem one_le_logOneAddSeries_radius : 1 ≤ (logOneAddSeries 𝕂 A).radius := by
   let c : ℕ → 𝕂 := fun n ↦ (-1 : 𝕂) ^ (n + 1) / n
   have hratio : (fun n ↦ ‖c n.succ‖ / ‖c n‖) =
