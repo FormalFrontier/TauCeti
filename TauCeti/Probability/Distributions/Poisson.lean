@@ -83,9 +83,8 @@ theorem integral_id_map_cast_poissonMeasure (r : ℝ≥0) :
 theorem integral_sq_map_cast_poissonMeasure (r : ℝ≥0) :
     ∫ x, x ^ 2 ∂Po(ℝ, r) = (r : ℝ) ^ 2 + r := by
   calc
-    ∫ x, x ^ 2 ∂Po(ℝ, r) = ∫ x, ((fun y : ℝ ↦ y) ^ 2) x ∂Po(ℝ, r) := rfl
-    _ = iteratedDeriv 2 (mgf (fun x : ℝ ↦ x) Po(ℝ, r)) 0 :=
-      (iteratedDeriv_mgf_zero (by simp) 2).symm
+    ∫ x, x ^ 2 ∂Po(ℝ, r) = iteratedDeriv 2 (mgf (fun x : ℝ ↦ x) Po(ℝ, r)) 0 := by
+      simpa only [Pi.pow_apply] using (iteratedDeriv_mgf_zero (by simp) 2).symm
     _ = (r : ℝ) ^ 2 + r := by
       rw [mgf_id_map_cast_poissonMeasure, iteratedDeriv_succ, iteratedDeriv_one]
       have hderiv : deriv (fun t : ℝ ↦ exp ((r : ℝ) * (exp t - 1))) =
