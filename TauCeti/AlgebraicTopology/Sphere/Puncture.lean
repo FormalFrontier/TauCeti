@@ -26,7 +26,7 @@ arbitrary loop off a point, which is done in
 
 * `TauCeti.normalizeToSphere`: radial projection of a continuous nowhere-zero map to the unit
   sphere.
-* `TauCeti.Path.homotopic_of_normalize_segment_ne_zero`: radial projection of a straight-line
+* `Path.homotopic_of_normalize_segment_ne_zero`: radial projection of a straight-line
   homotopy between sphere loops.
 * `TauCeti.contractibleSpace_sphere_compl_singleton`: the sphere minus one point is contractible.
 * `TauCeti.nullhomotopic_inclusion_sphere_compl_singleton`: the inclusion of the sphere minus a
@@ -103,7 +103,7 @@ private noncomputable def normalizeSegmentToSphere {Y : Type*} [TopologicalSpace
 
 /-- A loop in the unit sphere is homotopic to the radial projection of a continuous comparison
 loop when every point of their pointwise straight-line homotopy avoids the origin. -/
-theorem Path.homotopic_of_normalize_segment_ne_zero {x : sphere (0 : E) 1} (γ γ' : Path x x)
+theorem _root_.Path.homotopic_of_normalize_segment_ne_zero {x : sphere (0 : E) 1} (γ γ' : Path x x)
     (f : I → E) (hf : Continuous f)
     (hγ' : ∀ t, ((γ' t : sphere (0 : E) 1) : E) = normalize (f t))
     (hf_zero : f 0 = (x : E)) (hf_one : f 1 = (x : E))
