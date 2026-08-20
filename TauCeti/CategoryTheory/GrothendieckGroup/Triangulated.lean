@@ -193,6 +193,7 @@ theorem of_shift_one (X : C) : (of (X⟦(1 : ℤ)⟧) : TriangulatedK0 C) = -of 
 
 /-- **The class of an iterated shift**: `[X⟦n⟧] = (-1)ⁿ[X]` for every integer `n`, the sign being
 `Int.negOnePow n`. -/
+@[simp]
 theorem of_shift (n : ℤ) (X : C) :
     (of (X⟦n⟧) : TriangulatedK0 C) = (n.negOnePow : ℤ) • of X := by
   have hpred : ∀ m : ℤ, (m - 1).negOnePow = -m.negOnePow := fun m => by
