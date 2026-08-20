@@ -36,11 +36,14 @@ topological monoid; the consumer is
 `TauCeti/RepresentationTheory/Compact/FrobeniusSchur.lean`, where continuity supplies the
 integrability of the two square characters against Haar measure.
 
-The scalars are `ℂ`: the symmetric- and exterior-power representations of
-`TauCeti/RepresentationTheory/SymmetricPower.lean` and
+The scalars are a complete nontrivially normed field `𝕜` with `2 ≠ 0` — exactly what the trace
+functional behind `TauCeti.ContRepresentation.character` and the closed formulas ask for; the
+consumer instantiates them at `ℂ`. `𝕜` is in `Type` rather than `Type*` because the symmetric- and
+exterior-power representations of `TauCeti/RepresentationTheory/SymmetricPower.lean` and
 `TauCeti/RepresentationTheory/ExteriorPower.lean`, whose characters are spoken of here, are built
-over a base ring in `Type`, so a general field in an arbitrary universe would not even let the
-statements be formed.
+over a base ring in `Type`, so a field in an arbitrary universe would not even let the statements
+be formed. The hypothesis `2 ≠ 0` is explicit rather than a `CharZero`-style instance because that
+is the shape `Representation.char_symmetricSquare` and `Representation.char_exteriorSquare` carry.
 
 Both declarations sit in the **root** `ContRepresentation` namespace, so that
 `π.continuous_character_symmetricPower_two hπ` elaborates: `ContRepresentation` is Mathlib's type,
@@ -55,33 +58,34 @@ open TauCeti.ContRepresentation
 
 namespace ContRepresentation
 
-variable {G V : Type*} [Monoid G] [TopologicalSpace G] [ContinuousMul G]
-  [NormedAddCommGroup V] [NormedSpace ℂ V] [FiniteDimensional ℂ V]
+variable {𝕜 : Type} {G V : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+  [Monoid G] [TopologicalSpace G] [ContinuousMul G]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
 
-variable (π : ContRepresentation ℂ G V) (hπ : Continuous π)
+variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 include hπ in
 /-- The symmetric-square character is continuous, being `½(χ(g)² + χ(g²))`. -/
-theorem continuous_character_symmetricPower_two :
+theorem continuous_character_symmetricPower_two (h2 : (2 : 𝕜) ≠ 0) :
     Continuous fun g : G ↦ (π.toRepresentation.symmetricPower 2).character g := by
   have h : (fun g : G ↦ (π.toRepresentation.symmetricPower 2).character g)
       = fun g : G ↦ (character π hπ g ^ 2 + character π hπ (g * g)) / 2 := by
     funext g
     simpa only [coe_character] using
-      Representation.char_symmetricSquare π.toRepresentation g two_ne_zero
+      Representation.char_symmetricSquare π.toRepresentation g h2
   rw [h]
   exact (((character π hπ).continuous.pow 2).add
     (continuous_character_mul_self π hπ)).div_const 2
 
 include hπ in
 /-- The exterior-square character is continuous, being `½(χ(g)² - χ(g²))`. -/
-theorem continuous_character_exteriorPower_two :
+theorem continuous_character_exteriorPower_two (h2 : (2 : 𝕜) ≠ 0) :
     Continuous fun g : G ↦ (π.toRepresentation.exteriorPower 2).character g := by
   have h : (fun g : G ↦ (π.toRepresentation.exteriorPower 2).character g)
       = fun g : G ↦ (character π hπ g ^ 2 - character π hπ (g * g)) / 2 := by
     funext g
     simpa only [coe_character] using
-      Representation.char_exteriorSquare π.toRepresentation g two_ne_zero
+      Representation.char_exteriorSquare π.toRepresentation g h2
   rw [h]
   exact (((character π hπ).continuous.pow 2).sub
     (continuous_character_mul_self π hπ)).div_const 2

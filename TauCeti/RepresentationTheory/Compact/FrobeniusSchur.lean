@@ -160,13 +160,13 @@ include hπ in
 /-- The symmetric-square character is integrable against normalized Haar measure. -/
 theorem integrable_character_symmetricPower_two :
     Integrable (fun g : G ↦ (π.toRepresentation.symmetricPower 2).character g) (haarProb G) :=
-  integrable_of_continuous (continuous_character_symmetricPower_two π hπ)
+  integrable_of_continuous (continuous_character_symmetricPower_two π hπ two_ne_zero)
 
 include hπ in
 /-- The exterior-square character is integrable against normalized Haar measure. -/
 theorem integrable_character_exteriorPower_two :
     Integrable (fun g : G ↦ (π.toRepresentation.exteriorPower 2).character g) (haarProb G) :=
-  integrable_of_continuous (continuous_character_exteriorPower_two π hπ)
+  integrable_of_continuous (continuous_character_exteriorPower_two π hπ two_ne_zero)
 
 /-- **The Frobenius-Schur indicator is the signed difference of the two square-character
 integrals**, `ν₂(π) = ∫ χ_{Sym²π} - ∫ χ_{Λ²π}`.
