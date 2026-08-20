@@ -7,7 +7,7 @@ module
 
 public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop
+public import TauCeti.RepresentationTheory.Quiver.OneLoop.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 public import Mathlib.RingTheory.AdjoinRoot
@@ -66,9 +66,8 @@ multiplication by every power of it, and those powers are a basis.
 
 The quiver `•↺` itself -- `TauCeti.Quiver.OneLoop`, with its `Quiver` instance and its loop
 `TauCeti.Quiver.OneLoop.loop` -- is defined in
-`TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop`, the file that first needed it. That is
-what this file imports that module for: every declaration below mentions the quiver, and the
-path-algebra results cited under "References" are not what the import is for.
+`TauCeti.RepresentationTheory.Quiver.OneLoop.Basic`, which carries the vertex and arrow data alone;
+the path-algebra results cited under "References" are not imported here.
 
 `TauCeti.oneLoopRep` and `TauCeti.oneLoopNilpotentRep` carry `@[expose]` because the vertex space of
 the representation has to reduce to `k`, resp. to `k[X]/(Xⁿ⁺¹)`, for the statements below to

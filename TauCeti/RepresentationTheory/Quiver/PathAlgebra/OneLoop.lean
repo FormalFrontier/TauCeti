@@ -8,18 +8,18 @@ module
 public import Mathlib.Algebra.MonoidAlgebra.Basic
 public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
+public import TauCeti.RepresentationTheory.Quiver.OneLoop.Basic
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
 /-!
 # The path algebra of the one-loop quiver
 
-This file defines the quiver with one vertex and one loop and identifies its path algebra with the
-additive monoid algebra on `ℕ`, equivalently the polynomial algebra in one variable. It also shows
-that this path algebra is infinite-dimensional over a division ring.
+This file identifies the path algebra of the quiver `TauCeti.Quiver.OneLoop` with one vertex and
+one loop with the additive monoid algebra on `ℕ`, equivalently the polynomial algebra in one
+variable. It also shows that this path algebra is infinite-dimensional over a division ring.
 
 ## Main declarations
 
-* `TauCeti.Quiver.OneLoop`: the quiver with one vertex and one loop.
 * `TauCeti.PathAlgebra.oneLoopAlgEquiv`: its path algebra is `AddMonoidAlgebra k ℕ`.
 * `TauCeti.not_finiteDimensional_pathAlgebra_oneLoop`: the one-loop path algebra is
   infinite-dimensional.
@@ -35,29 +35,7 @@ universe v w
 
 namespace Quiver
 
-/-- The quiver with one vertex and one loop. -/
-inductive OneLoop : Type
-  | vertex
-  deriving DecidableEq
-
 namespace OneLoop
-
-instance : Fintype OneLoop where
-  elems := {vertex}
-  complete x := by cases x; simp
-
-instance : Unique OneLoop where
-  default := vertex
-  uniq x := by cases x; rfl
-
-instance : _root_.Quiver OneLoop where
-  Hom _ _ := PUnit
-
-instance (a b : OneLoop) : Subsingleton (a ⟶ b) :=
-  inferInstanceAs (Subsingleton PUnit)
-
-/-- The unique loop in the one-loop quiver. -/
-def loop : (vertex : OneLoop) ⟶ vertex := PUnit.unit
 
 private def pathOfLength : ℕ → _root_.Quiver.Path (vertex : OneLoop) vertex
   | 0 => .nil
