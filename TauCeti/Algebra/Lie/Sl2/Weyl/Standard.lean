@@ -13,8 +13,8 @@ public section
 /-!
 # The Weyl element of a standard `sl₂`-module
 
-The three ladder operators of `TauCeti.Sl2Std ℚ n` are nilpotent, so the raising and lowering
-operators carry a Weyl element
+The two ladder operators of `TauCeti.Sl2Std ℚ n`, raising and lowering, are nilpotent, so they
+carry a Weyl element
 
 ```text
 n = exp e · exp (-f) · exp e
