@@ -11,12 +11,15 @@ public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Basic
 # Base change of group-scheme isogenies
 
 This file proves that isogenies of group schemes over a field remain isogenies after base change
-along a morphism between spectra of fields. The group-scheme base change is the pullback functor
-on the over category, lifted to group objects.
+along a morphism between spectra of fields. For a commutative source, the base-changed isogeny is
+central. The group-scheme base change is the pullback functor on the over category, lifted to group
+objects.
 
 ## Main declarations
 
 * `TauCeti.GroupScheme.IsIsogeny.baseChange`: isogenies remain isogenies after base change.
+* `TauCeti.GroupScheme.IsIsogeny.baseChange_isCentral_of_isCommMonObj`: the base change of an
+  isogeny from a commutative source is a central isogeny.
 
 ## References
 
@@ -51,6 +54,15 @@ theorem IsIsogeny.baseChange
   exact ⟨MorphismProperty.overPullbackMap _ _ hf.isFinite,
     MorphismProperty.overPullbackMap _ _ hf.flat,
     MorphismProperty.overPullbackMap _ _ hf.surjective⟩
+
+/-- The base change of an isogeny from a commutative group scheme is a central isogeny. -/
+theorem IsIsogeny.baseChange_isCentral_of_isCommMonObj
+    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k)) {f : G ⟶ H}
+    (hf : IsIsogeny f) [IsCommMonObj G.X] :
+    IsCentralIsogeny ((Over.pullback s).mapGrp.map f) := by
+  let _ : IsCommMonObj ((Over.pullback s).mapGrp.obj G).X := by
+    exact ((Over.pullback s).mapCommMon.obj (.mk G.X)).comm
+  exact (hf.baseChange s).isCentral_of_isCommMonObj
 
 end Field
 
