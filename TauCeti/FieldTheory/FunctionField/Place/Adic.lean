@@ -137,8 +137,11 @@ theorem ord_algebraMap_adic {r : R} (hr : r ≠ 0) :
 
 /-- A generator of `p` is a prime element for the place `adic k F p`, i.e. a uniformizer for its
 normalized valuation. -/
-theorem isUniformizer_algebraMap_adic {π : R} (hπ : π ≠ 0) (h : p.asIdeal = Ideal.span {π}) :
+theorem isUniformizer_algebraMap_adic {π : R} (h : p.asIdeal = Ideal.span {π}) :
     (adic k F p).valuation.IsUniformizer (algebraMap R F π) := by
+  have hπ : π ≠ 0 := by
+    rintro rfl
+    exact p.ne_bot (by simp [h])
   have hπ' : algebraMap R F π ≠ 0 := IsFractionRing.to_map_eq_zero_iff.ne.mpr hπ
   rw [isUniformizer_iff_ord_eq_one, (adic k F p).ord_eq_iff_valuation_eq_exp_neg hπ',
     valuation_adic, HeightOneSpectrum.valuation_of_algebraMap,
