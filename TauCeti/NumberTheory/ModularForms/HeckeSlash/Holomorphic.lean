@@ -37,10 +37,11 @@ open scoped MatrixGroups ModularForm Manifold
 
 namespace HeckeRing.GL2
 
-variable (k : ℤ) (D : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+variable (k : ℤ) {Δ : Submonoid (GL (Fin 2) ℚ)} {Γ₁ Γ₂ : Subgroup (GL (Fin 2) ℚ)}
+  (D : HeckeCoset Δ Γ₁ Γ₂) [Finite (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹)]
 
 /-- **The slash sum of a holomorphic function is holomorphic.** Together with slash-invariance
-(`heckeSlashSum_slash_invariant_of_mem_SLnZ`) this supplies one of the two extra conditions a
+(`heckeSlashSum_slash_invariant`) this supplies one of the two extra conditions a
 `ModularForm` carries over a `SlashInvariantForm`; boundedness at the cusps is separate and is
 not proved here. -/
 lemma mdifferentiable_heckeSlashSum {f : ℍ → ℂ} (hf : MDiff f) : MDiff (heckeSlashSum k D f) := by

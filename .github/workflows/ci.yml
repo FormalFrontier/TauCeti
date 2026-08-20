@@ -62,6 +62,7 @@ jobs:
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
           python3 scripts/test_check_expired_mathlib_shims.py
+          python3 scripts/test_toolchain_tags.py
 
       # The two-library split is build convenience, not a trust boundary.
       # This guard is what actually stops the AI-owned library from inheriting

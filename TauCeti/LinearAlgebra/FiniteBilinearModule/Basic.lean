@@ -588,6 +588,11 @@ theorem isIsotropicElem_prod (B : FiniteBilinearModule) (x : A) (y : B) :
 /-- A subgroup is bilinearly isotropic when the pairing vanishes on the subgroup square. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, ∀ y ∈ H, A.pairing x y = 0
 
+/-- Bilinear isotropy of a subgroup, unfolded to its defining property. -/
+theorem isIsotropic_def {H : AddSubgroup A} :
+    A.IsIsotropic H ↔ ∀ x ∈ H, ∀ y ∈ H, A.pairing x y = 0 :=
+  Iff.rfl
+
 /-- An element belonging to an isotropic subgroup is isotropic. -/
 theorem isIsotropicElem_of_mem_isIsotropic {H : AddSubgroup A} (hH : A.IsIsotropic H) {x : A}
     (hx : x ∈ H) : A.IsIsotropicElem x :=

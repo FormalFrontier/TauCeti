@@ -30,6 +30,8 @@ algebraic closure of the ground field via the counit.
 
 * `TauCeti.semisimpleCommHopfAlgProperty`: semisimplicity for finite-type commutative Hopf
   algebras over a field.
+* `TauCeti.SemisimpleCommHopfAlgCat`: the full subcategory of semisimple coordinate Hopf
+  algebras.
 * `TauCeti.semisimpleCommHopfAlgProperty.eq_augmentation`: every connected normal smooth
   solvable closed subgroup of a semisimple group's geometric fibre is trivial.
 * `TauCeti.semisimpleCommHopfAlgProperty.geometricFiberCounitBialgEquiv`: a semisimple group
@@ -117,6 +119,10 @@ instance (k : Type u) [Field k] :
       geometricallySolvablePointsCommHopfAlgProperty (AlgebraicClosure k)).inverseImage
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
           (CommHopfAlgCat.{u} (AlgebraicClosure k))))).IsClosedUnderIsomorphisms)
+
+/-- The category of semisimple finite-type commutative Hopf algebras over a field. -/
+abbrev SemisimpleCommHopfAlgCat (k : Type u) [Field k] :=
+  (semisimpleCommHopfAlgProperty k).FullSubcategory
 
 namespace semisimpleCommHopfAlgProperty
 
