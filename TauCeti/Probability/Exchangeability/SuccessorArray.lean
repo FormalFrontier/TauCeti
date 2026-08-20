@@ -191,7 +191,6 @@ variable {α : Type*} {x : ℕ → α} {a a₀ : α} {s : α → ℕ → α} {i 
 
 /-- **The step relation of the successor array**, at a time known to sit at the state `a`: the
 sequence moves to the successor of `a` indexed by the number of earlier visits to `a`. -/
-@[simp]
 theorem successorArray_visitCount_of_eq (h : x n = a) :
     successorArray x a (visitCount x a n) = x (n + 1) := by
   rw [successorArray, visitTime_visitCount h]
