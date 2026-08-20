@@ -38,6 +38,7 @@ zero case is discharged from the probability-measure instance instead.
 
 ## Main results
 
+* `integrable_pow_id_expMeasure` — every moment is integrable;
 * `integral_pow_id_expMeasure` — the `n`-th moment, `n ! / r ^ n`;
 * `integral_id_expMeasure`, `integral_sq_id_expMeasure` — the mean and the second moment;
 * `variance_id_expMeasure` — the variance.
@@ -70,6 +71,15 @@ private theorem exponentialPDFReal_apply (x : ℝ) :
     ring
   · rfl
 
+/-- `expMeasure` is a `withDensity` measure by definition.  Named so the proofs below rewrite with
+it rather than repeating a bare definitional conversion. -/
+private theorem expMeasure_eq_withDensity (r : ℝ) :
+    expMeasure r = volume.withDensity (exponentialPDF r) := (rfl)
+
+/-- The `ℝ≥0∞`-valued density is `ENNReal.ofReal` of the real one, by definition. -/
+private theorem exponentialPDF_apply (r x : ℝ) :
+    exponentialPDF r x = ENNReal.ofReal (exponentialPDFReal r x) := (rfl)
+
 /-- Integrability of the Gamma integrand at a general rate.  Mathlib proves this at `r = 1`
 (`GammaIntegral_convergent`); the general case follows by scaling. -/
 private theorem integrableOn_gammaIntegrand (ha : 0 < a) (hr : 0 < r) :
@@ -88,9 +98,9 @@ private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
   have hmeas : Measurable (exponentialPDF r) := measurable_gammaPDF 1 r
   have key : ∀ x : ℝ, (exponentialPDF r x).toReal • g x = exponentialPDFReal r x * g x := by
     intro x
-    rw [smul_eq_mul, show exponentialPDF r x = ENNReal.ofReal (exponentialPDFReal r x) from rfl,
+    rw [smul_eq_mul, exponentialPDF_apply,
       ENNReal.toReal_ofReal (exponentialPDFReal_nonneg hr x)]
-  rw [show expMeasure r = volume.withDensity (exponentialPDF r) from rfl,
+  rw [expMeasure_eq_withDensity,
     integral_withDensity_eq_integral_toReal_smul hmeas
       (ae_of_all _ fun x => ENNReal.ofReal_lt_top)]
   exact integral_congr_ae (ae_of_all _ fun x => key x)
@@ -114,17 +124,21 @@ private theorem integrand_eq_indicator (hn : n ≠ 0) :
       rw [hx0, zero_pow hn, mul_zero]
     · ring
 
-/-- Every moment of the exponential law is integrable. -/
-private theorem integrable_pow_id_expMeasure (hr : 0 < r) (hn : n ≠ 0) :
+/-- **Every moment of the exponential law is integrable.**  This is not implied by the moment
+formula below: Lean's integral is defined for non-integrable functions too, so an integral equality
+alone says nothing about finiteness. -/
+theorem integrable_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
     Integrable (fun x => x ^ n) (expMeasure r) := by
+  have hprob : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+  rcases eq_or_ne n 0 with rfl | hn
+  · simp
   have hmeas : Measurable (exponentialPDF r) := measurable_gammaPDF 1 r
   have htoReal : ∀ x : ℝ,
       x ^ n * (exponentialPDF r x).toReal = exponentialPDFReal r x * x ^ n := by
     intro x
-    rw [show exponentialPDF r x = ENNReal.ofReal (exponentialPDFReal r x) from rfl,
-      ENNReal.toReal_ofReal (exponentialPDFReal_nonneg hr x)]
+    rw [exponentialPDF_apply, ENNReal.toReal_ofReal (exponentialPDFReal_nonneg hr x)]
     ring
-  rw [show expMeasure r = volume.withDensity (exponentialPDF r) from rfl,
+  rw [expMeasure_eq_withDensity,
     integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
     funext htoReal, integrand_eq_indicator hn, integrable_indicator_iff measurableSet_Ioi]
   exact (integrableOn_gammaIntegrand (by positivity) hr).const_mul r
@@ -144,7 +158,7 @@ theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
   rw [integral_expMeasure hr, integrand_eq_indicator hn,
     integral_indicator measurableSet_Ioi, integral_const_mul,
     integral_rpow_mul_exp_neg_mul_Ioi (by positivity) hr, Real.Gamma_nat_eq_factorial,
-    show ((n : ℝ) + 1) = ((n + 1 : ℕ) : ℝ) by push_cast; ring, Real.rpow_natCast]
+    ← Nat.cast_succ, Real.rpow_natCast]
   field_simp
   rw [one_div, inv_pow, pow_succ]
   field_simp
@@ -161,7 +175,7 @@ theorem integral_sq_id_expMeasure (hr : 0 < r) : ∫ x, x ^ 2 ∂(expMeasure r) 
 theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = (r ^ 2)⁻¹ := by
   have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   have h₂ : Integrable (fun x => id x ^ 2) (expMeasure r) :=
-    integrable_pow_id_expMeasure hr two_ne_zero
+    integrable_pow_id_expMeasure hr 2
   have hLp : MemLp id 2 (expMeasure r) :=
     (memLp_two_iff_integrable_sq measurable_id.aestronglyMeasurable).2 h₂
   rw [variance_eq_sub hLp]
