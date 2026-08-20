@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Complex.TaylorSeries
-public import Mathlib.Analysis.SpecialFunctions.Exponential
-public import Mathlib.NumberTheory.LSeries.Dirichlet
-public import Mathlib.NumberTheory.LSeries.Positivity
+import Mathlib.Analysis.Complex.TaylorSeries
+import Mathlib.Analysis.SpecialFunctions.Exponential
+import Mathlib.NumberTheory.LSeries.Positivity
+public import Mathlib.NumberTheory.LSeries.Deriv
 public import TauCeti.NumberTheory.LSeries.EntireExtension
 
 /-!
@@ -36,8 +36,6 @@ its own analytic continuation.
   nonvanishing argument applies once a positive combination of L-series has been shown entire.
 * `TauCeti.LSeries.abscissaOfAbsConv_eq_bot_of_hasEntireExtension`: the same conclusion phrased
   through the repository's `LSeries.HasEntireExtension` predicate.
-* `TauCeti.LSeries.not_hasAnalyticExtensionAt_one`: the coefficient sequence of the Riemann zeta
-  function is singular at `s = 1`.
 
 ## Implementation notes
 
@@ -87,18 +85,17 @@ lemma term_logMul_iterate (f : ℕ → ℂ) (s : ℂ) (k n : ℕ) :
 
 /-- The `k`-th iterated derivative of an L-series, with its alternating sign removed, is the
 L-series of `log ^ k * a`. -/
-lemma LSeries_logMul_iterate_eq {x : ℝ} (hx : LSeries.abscissaOfAbsConv a < x) (k : ℕ) :
-    LSeries (LSeries.logMul^[k] a) (x : ℂ)
-      = (-1 : ℂ) ^ k * iteratedDeriv k (LSeries a) (x : ℂ) := by
-  rw [LSeries_iteratedDeriv k (by simpa using hx), ← mul_assoc, ← pow_add,
-    Even.neg_one_pow ⟨k, rfl⟩, one_mul]
+lemma LSeries_logMul_iterate_eq {s : ℂ} (hs : LSeries.abscissaOfAbsConv a < s.re) (k : ℕ) :
+    LSeries (LSeries.logMul^[k] a) s = (-1 : ℂ) ^ k * iteratedDeriv k (LSeries a) s := by
+  rw [LSeries_iteratedDeriv k hs, ← mul_assoc, ← pow_add, Even.neg_one_pow ⟨k, rfl⟩, one_mul]
 
 /-- For nonnegative coefficients the L-series of `log ^ k * a` is a nonnegative real number
 throughout the half-plane of absolute convergence. -/
 lemma LSeries_logMul_iterate_nonneg (ha : 0 ≤ a) {x : ℝ}
     (hx : LSeries.abscissaOfAbsConv a < x) (k : ℕ) :
     0 ≤ LSeries (LSeries.logMul^[k] a) (x : ℂ) :=
-  (LSeries_logMul_iterate_eq hx k).symm ▸ LSeries.iteratedDeriv_alternating ha hx k
+  (LSeries_logMul_iterate_eq (s := (x : ℂ)) (by simpa using hx) k).symm ▸
+    LSeries.iteratedDeriv_alternating ha hx k
 
 /-- The real part of a Dirichlet term of a nonnegative coefficient sequence at a real point. -/
 lemma re_term_of_ne_zero (ha : 0 ≤ a) (x : ℝ) {n : ℕ} (hn : n ≠ 0) :
@@ -109,10 +106,6 @@ lemma re_term_of_ne_zero (ha : 0 ≤ a) (x : ℝ) {n : ℕ} (hn : n ≠ 0) :
     rw [← Complex.ofReal_natCast, ← Complex.ofReal_cpow (Nat.cast_nonneg n)]
   rw [LSeries.term_of_ne_zero hn, hA, hcast, ← Complex.ofReal_div, Complex.ofReal_re,
     Complex.ofReal_re]
-
-/-- The real part of a Dirichlet term of a nonnegative coefficient sequence is nonnegative. -/
-lemma re_term_nonneg (ha : 0 ≤ a) (x : ℝ) (n : ℕ) : 0 ≤ (LSeries.term a (x : ℂ) n).re := by
-  simpa using (Complex.le_def.mp (LSeries.term_nonneg (ha n) x)).1
 
 /-- For nonnegative coefficients and `x` in the half-plane of absolute convergence, the real
 series `∑ (log n) ^ k * a n / n ^ x` converges to the real part of the L-series of
@@ -214,9 +207,11 @@ theorem landau (ha : 0 ≤ a) {σ : ℝ} (habs : LSeries.abscissaOfAbsConv a = (
   have habsc : LSeries.abscissaOfAbsConv a < c := by
     rw [habs]
     exact_mod_cast (by rw [hcdef]; linarith : σ < c)
+  have hxc : x - c = -y := by rw [hxdef]; ring
+  have habsc' : LSeries.abscissaOfAbsConv a < (((c : ℝ) : ℂ)).re := by simpa using habsc
   have hxball : ((x : ℝ) : ℂ) ∈ ball ((c : ℝ) : ℂ) (1 + δ) := by
-    rw [mem_ball, Complex.isometry_ofReal.dist_eq, Real.dist_eq, hxdef,
-      show c - y - c = -y by ring, abs_neg, abs_of_pos hy0, hydef]
+    rw [mem_ball, Complex.isometry_ofReal.dist_eq, Real.dist_eq, hxc, abs_neg,
+      abs_of_pos hy0, hydef]
     linarith
   have hGdiffOn : DifferentiableOn ℂ G (ball ((c : ℝ) : ℂ) (1 + δ)) :=
     fun s hs ↦ (hGdiff s hs).differentiableWithinAt
@@ -240,7 +235,7 @@ theorem landau (ha : 0 ≤ a) {σ : ℝ} (habs : LSeries.abscissaOfAbsConv a = (
     have e1 : (-((y : ℝ) : ℂ)) ^ k * iteratedDeriv k (LSeries a) ((c : ℝ) : ℂ)
         = ((y : ℝ) : ℂ) ^ k * ((-1 : ℂ) ^ k * iteratedDeriv k (LSeries a) ((c : ℝ) : ℂ)) := by
       rw [neg_pow]; ring
-    rw [hd, hzc, smul_eq_mul, smul_eq_mul, e1, ← LSeries_logMul_iterate_eq habsc k]
+    rw [hd, hzc, smul_eq_mul, smul_eq_mul, e1, ← LSeries_logMul_iterate_eq habsc' k]
     nth_rewrite 1 [hTk]
     push_cast
     ring
@@ -278,13 +273,14 @@ theorem landau (ha : 0 ≤ a) {σ : ℝ} (habs : LSeries.abscissaOfAbsConv a = (
   have hsum_x : Summable (fun n : ℕ ↦ (LSeries.term a ((x : ℝ) : ℂ) n).re) := by
     refine summable_of_sum_le (c := ∑' k : ℕ, y ^ k / Nat.factorial k *
       (LSeries (LSeries.logMul^[k] a) ((c : ℝ) : ℂ)).re)
-      (fun n ↦ re_term_nonneg ha x n) fun s ↦ ?_
+      (fun n ↦ by simpa using (Complex.le_def.mp (LSeries.term_nonneg (ha n) x)).1) fun s ↦ ?_
     refine hasSum_le (fun k ↦ ?_) (hasSum_sum fun n _ ↦ hexp n) hsummable_k.hasSum
     rw [← Finset.mul_sum]
     refine mul_le_mul_of_nonneg_left ?_
       (div_nonneg (pow_nonneg hy0.le k) (Nat.cast_nonneg _))
     exact sum_le_hasSum s
-      (fun n _ ↦ mul_nonneg (pow_nonneg (Real.log_natCast_nonneg n) k) (re_term_nonneg ha c n))
+      (fun n _ ↦ mul_nonneg (pow_nonneg (Real.log_natCast_nonneg n) k)
+        (by simpa using (Complex.le_def.mp (LSeries.term_nonneg (ha n) c)).1))
       (hasSum_logPow_mul_re_term ha habsc k)
   have hLS : LSeriesSummable a ((x : ℝ) : ℂ) :=
     (Complex.summable_ofReal.mpr hsum_x).congr fun n ↦
@@ -292,7 +288,8 @@ theorem landau (ha : 0 ≤ a) {σ : ℝ} (habs : LSeries.abscissaOfAbsConv a = (
         rw [Complex.ofReal_zero]; exact LSeries.term_nonneg (ha n) x)).symm
   have hle := hLS.abscissaOfAbsConv_le
   rw [habs, Complex.ofReal_re] at hle
-  exact absurd (show σ ≤ x from mod_cast hle) (by linarith)
+  have hσx : σ ≤ x := mod_cast hle
+  linarith
 
 /-- **Landau's theorem, half-plane form.** A Dirichlet series with nonnegative coefficients and
 finite abscissa of absolute convergence converges as far to the left as it continues
@@ -348,14 +345,5 @@ theorem abscissaOfAbsConv_eq_bot_of_hasEntireExtension (ha : 0 ≤ a)
     (h : LSeries.HasEntireExtension a) : LSeries.abscissaOfAbsConv a = ⊥ := by
   obtain ⟨F, hF, hFa⟩ := h.exists_extension
   exact abscissaOfAbsConv_eq_bot_of_differentiable ha h.abscissa_lt_top.ne hF fun _ hs ↦ hFa hs
-
-/-- **The Dirichlet series of the Riemann zeta function is singular at `s = 1`.** The constant
-sequence `1` has nonnegative values and abscissa of absolute convergence `1`, so Landau's theorem
-applies: no function differentiable on a disc around `1` agrees with `LSeries 1` to the right
-of `1`. -/
-theorem not_hasAnalyticExtensionAt_one : ¬ HasAnalyticExtensionAt (1 : ℕ → ℂ) 1 :=
-  landau (fun _ ↦ zero_le_one) (by
-    rw [EReal.coe_one]
-    exact LSeries.abscissaOfAbsConv_one)
 
 end TauCeti.LSeries
