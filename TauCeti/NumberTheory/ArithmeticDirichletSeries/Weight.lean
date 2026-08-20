@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Defs
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Basic
 public import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!
