@@ -236,6 +236,7 @@ theorem prod_map_ι_mul_ι_of_even_length {l : List M} (hl : l.Pairwise Q.IsOrth
 /-- **The square of the volume element of a pairwise orthogonal list is a scalar**,
 `(-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ`: interleaving the two copies of the product takes
 `n.choose 2` transpositions, and each pair of equal adjacent factors collapses to `Q vᵢ`. -/
+@[simp]
 theorem prod_map_ι_sq_scalar {l : List M} (hl : l.Pairwise Q.IsOrtho) :
     (l.map (ι Q)).prod * (l.map (ι Q)).prod
       = algebraMap R (CliffordAlgebra Q) (((-1 : R) ^ l.length.choose 2) * (l.map Q).prod) := by
