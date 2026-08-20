@@ -74,6 +74,8 @@ theorem twoRank_le_ncard_ramifiedPrimes_sub_one [IsTotallyComplex K]
   obtain ⟨Q, hprime, hover⟩ :=
     NumberField.exists_primeIdealFamily (K := K) s fun p hp =>
       prime_of_mem_ramifiedPrimes (hram p hp)
+  have hsram : ∀ p ∈ ramifiedPrimes K, p ∈ s := fun p hp =>
+    Finset.mem_coe.mp (hscoe.symm ▸ hp)
   have hsub : d.natAbs.primeFactors ⊆ s := by
     intro p hp
     have hpp := Nat.prime_of_mem_primeFactors hp
@@ -86,7 +88,8 @@ theorem twoRank_le_ncard_ramifiedPrimes_sub_one [IsTotallyComplex K]
   have hinj : Nat.card {Cl : ClassGroup (𝓞 K) // Cl ^ 2 = 1} ≤
       Nat.card (Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (s : Set ℕ))) := by
     refine Nat.card_le_card_of_injective
-      (fun Cl => ⟨Cl.1, NumberField.mem_closure_of_sq_eq_one hmin hgen hscoe.ge hprime hover Cl.2⟩)
+      (fun Cl => ⟨Cl.1, NumberField.mem_closure_of_sq_eq_one hmin hgen hscoe.ge
+        (fun p hp => hprime p (hsram p hp)) (fun p hp => hover p (hsram p hp)) Cl.2⟩)
       ?_
     intro a b h
     exact Subtype.ext (Subtype.mk_eq_mk.mp h)

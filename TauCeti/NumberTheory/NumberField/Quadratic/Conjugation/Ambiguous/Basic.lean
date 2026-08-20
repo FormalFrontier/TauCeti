@@ -54,8 +54,6 @@ the classical ambiguous class number formula.
   class of an ambiguous ideal is `2`-torsion.
 * `NumberField.sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`: the ambiguous classes
   are exactly the classes of ambiguous ideals.
-* `Ideal.map_map_of_involutive`: pushing an ideal forward twice along an involutive ring
-  automorphism returns it.
 -/
 
 public section
@@ -66,13 +64,6 @@ open scoped NumberField nonZeroDivisors
 namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
-
-/-- Pushing an ideal forward twice along an involutive ring automorphism returns it. -/
-theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
-    (hf : Function.Involutive f) (I : Ideal R) : Ideal.map f (Ideal.map f I) = I := by
-  have hcomp : (f : R →+* R).comp (f : R →+* R) = RingHom.id R := RingHom.ext hf
-  rw [← Ideal.map_coe (f := f) I, ← Ideal.map_coe (f := f) (Ideal.map (f : R →+* R) I),
-    Ideal.map_map, hcomp, Ideal.map_id]
 
 /-- **Two elements of an imaginary quadratic field with associated norms have equal norms.** If
 `x σx` and `y σy` are associates in `𝓞 K` then they are equal: their ratio is a unit whose norm is
@@ -155,8 +146,11 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one [IsTotallyCo
   have hxy2 : Ideal.span {σ x} * (J : Ideal (𝓞 K)) =
       Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K)) := by
     have h := congrArg (Ideal.map σ) hxy
+    have hcomp : (σ : 𝓞 K →+* 𝓞 K).comp (σ : 𝓞 K →+* 𝓞 K) = RingHom.id (𝓞 K) :=
+      RingHom.ext hinv
     rwa [Ideal.map_mul, Ideal.map_mul, Ideal.map_span, Ideal.map_span, Set.image_singleton,
-      Set.image_singleton, Ideal.map_map_of_involutive hinv] at h
+      Set.image_singleton, ← Ideal.map_coe (f := σ), ← Ideal.map_coe (f := σ), Ideal.map_map,
+      hcomp, Ideal.map_id] at h
   -- Multiplying the two identities and cancelling `σJ` leaves `(x σx) = (y σy)`.
   have hspan : Ideal.span {x * σ x} = Ideal.span ({y * σ y} : Set (𝓞 K)) := by
     refine mul_right_cancel₀ hJm0 ?_
