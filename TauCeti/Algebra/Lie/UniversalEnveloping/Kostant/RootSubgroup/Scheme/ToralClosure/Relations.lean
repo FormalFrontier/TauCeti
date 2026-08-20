@@ -169,7 +169,9 @@ theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
           (Multiplicative.ofAdd
             ((torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) * u)) ≫
         (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom := by
-  simpa using kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
+  rw [← AdditiveGroup.schemePointsMulEquiv_symm_apply]
+  simpa only [MulEquiv.apply_symm_apply, toAdd_ofAdd] using
+    kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
     e h ρ M hM b wt hwt hnil A hα s
       ((AdditiveGroup.schemePointsMulEquiv A).symm (Multiplicative.ofAdd u))
 
