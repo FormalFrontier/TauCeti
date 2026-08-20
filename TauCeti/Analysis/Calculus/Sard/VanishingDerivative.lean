@@ -218,7 +218,7 @@ omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] [Nontrivial F]
   [FiniteDimensional ℝ E] in
 /-- A linear map into a one-dimensional space is surjective exactly when it is nonzero, so the
 critical points of a map into such a space are the points where its derivative vanishes. -/
-theorem setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero :
+@[simp] theorem setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero :
     {x | ¬ Surjective (fderiv ℝ f x)} = {x | fderiv ℝ f x = 0} := by
   let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
   ext x
