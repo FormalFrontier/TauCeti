@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Killing.DualBasis
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Representation
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 
 /-!

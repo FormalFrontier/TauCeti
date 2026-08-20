@@ -19,6 +19,7 @@ of the Cartan subalgebra and its coordinate expansion.
 
 * `TauCeti.cartanKillingDualBasis`: the basis dual under the restricted Killing form.
 * `TauCeti.killingForm_cartanKillingDualBasis`: its defining biorthogonality.
+* `TauCeti.cartanKillingDualBasis_repr_apply`: its coordinate accessor.
 * `TauCeti.sum_killingForm_smul_cartanKillingDualBasis`: expansion in the dual basis.
 -/
 
@@ -48,16 +49,20 @@ theorem killingForm_cartanKillingDualBasis (bH : Basis ι K H) (i j : ι) :
     (LinearMap.BilinForm.apply_dualBasis_right _
       (LinearMap.BilinForm.isSymm_def.mpr fun u v ↦ LieModule.traceForm_comm K H L u v) bH i j)
 
+/-- Coordinates in the Cartan Killing-dual basis are Killing pairings against `bH`. -/
+@[simp]
+theorem cartanKillingDualBasis_repr_apply (bH : Basis ι K H) (u : H) (i : ι) :
+    (cartanKillingDualBasis bH).repr u i = killingForm K L (bH i : L) (u : L) := by
+  rw [cartanKillingDualBasis, LinearMap.BilinForm.dualBasis_repr_apply,
+    LieModule.traceForm_comm K H L]
+  exact (DFunLike.congr_fun
+    (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i)) u).symm
+
 /-- Expansion of an element of `H` in the Killing-dual basis: the coefficients are its Killing
 pairings against `bH`. -/
 theorem sum_killingForm_smul_cartanKillingDualBasis [Fintype ι] (bH : Basis ι K H) (u : H) :
     ∑ i, killingForm K L (bH i : L) (u : L) • cartanKillingDualBasis bH i = u := by
   conv_rhs => rw [← (cartanKillingDualBasis bH).sum_repr u]
-  refine Finset.sum_congr rfl fun i _ ↦ ?_
-  have hrestrict : killingForm K L (bH i : L) (u : L) =
-      LieModule.traceForm K H L (bH i) u :=
-    DFunLike.congr_fun (LinearMap.congr_fun (LieAlgebra.restrict_killingForm K L H) (bH i)) u
-  rw [cartanKillingDualBasis, LinearMap.BilinForm.dualBasis_repr_apply, hrestrict,
-    LieModule.traceForm_comm K H L]
+  exact Finset.sum_congr rfl fun i _ ↦ by rw [cartanKillingDualBasis_repr_apply]
 
 end TauCeti

@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Casimir
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Representation
 public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Root.Basis
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Vector

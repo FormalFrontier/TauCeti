@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Representation
 public import TauCeti.Algebra.Lie.Weights.Root.KostantStability
 public import TauCeti.LinearAlgebra.Eigenspace.Binomial
 

@@ -44,7 +44,7 @@ universe u v
 variable {K : Type u} {L : Type v} [Field K] [LieRing L] [LieAlgebra K L]
   [LieAlgebra.IsKilling K L]
 
-variable {ι : Type*} [DecidableEq ι] [Fintype ι]
+variable {ι : Type*} [DecidableEq ι] [Finite ι]
 
 omit [LieAlgebra.IsKilling K L] in
 /-- The Killing form is symmetric, in the bundled `LinearMap.BilinForm.IsSymm` form that the
@@ -54,7 +54,7 @@ private theorem killingForm_isSymm : (killingForm K L).IsSymm :=
 
 /-- The basis of `L` **dual to `b` under the Killing form**: `κ (b i) (killingDualBasis b j)` is
 `1` when `i = j` and `0` otherwise (`TauCeti.killingForm_killingDualBasis`). -/
-noncomputable def killingDualBasis (b : Module.Basis ι K L) : Module.Basis ι K L :=
+noncomputable abbrev killingDualBasis (b : Module.Basis ι K L) : Module.Basis ι K L :=
   (killingForm K L).dualBasis (LieAlgebra.IsKilling.killingForm_nondegenerate K L) b
 
 /-- The defining biorthogonality of the Killing-dual basis. -/
@@ -84,13 +84,14 @@ theorem repr_apply_eq_killingForm (b : Module.Basis ι K L) (v : L) (i : ι) :
   rw [killingDualBasis_repr_apply, LieModule.traceForm_comm]
 
 /-- **Expansion in `b`**, with the coefficients read off by the Killing-dual basis. -/
-theorem sum_killingForm_smul_basis (b : Module.Basis ι K L) (v : L) :
+theorem sum_killingForm_smul_basis [Fintype ι] (b : Module.Basis ι K L) (v : L) :
     ∑ i, killingForm K L v (killingDualBasis b i) • b i = v := by
   conv_rhs => rw [← b.sum_repr v]
   exact sum_congr rfl fun i _ ↦ by rw [repr_apply_eq_killingForm]
 
 /-- **Expansion in the Killing-dual basis**, with the coefficients read off by `b`. -/
-theorem sum_killingForm_smul_killingDualBasis (b : Module.Basis ι K L) (v : L) :
+theorem sum_killingForm_smul_killingDualBasis [Fintype ι]
+    (b : Module.Basis ι K L) (v : L) :
     ∑ i, killingForm K L (b i) v • killingDualBasis b i = v := by
   conv_rhs => rw [← (killingDualBasis b).sum_repr v]
   exact sum_congr rfl fun i _ ↦ by rw [killingDualBasis_repr_apply]
