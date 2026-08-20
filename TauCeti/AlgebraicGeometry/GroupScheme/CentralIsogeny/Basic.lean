@@ -210,6 +210,11 @@ functor of points over every test scheme. -/
 def IsCentralIsogeny (f : G ⟶ H) : Prop :=
   IsIsogeny f ∧ HasCentralKernel f
 
+/-- The morphism property of being a central isogeny of group schemes over a field. -/
+abbrev centralIsogenies (k : Type u) [Field k] :
+    MorphismProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
+  fun _ _ f ↦ IsCentralIsogeny f
+
 /-- A morphism is a central isogeny exactly when its underlying scheme morphism is finite, flat,
 and surjective and its kernel is central on all scheme-valued points. -/
 theorem isCentralIsogeny_iff (f : G ⟶ H) :
