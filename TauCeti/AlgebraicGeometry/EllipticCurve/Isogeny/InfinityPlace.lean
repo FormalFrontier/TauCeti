@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.InfinityPlace.Unique
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Relations
 import TauCeti.RingTheory.Valuation.Polynomial
 import Mathlib.RingTheory.Valuation.Integral
 

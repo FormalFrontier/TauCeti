@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.InfinityPlace.Basic
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Relations
 -- Proof-only: Mathlib's evaluation of a valuation of `F(x)` with `v X > 1` is used inside
 -- `val_algebraMap_eq_zpow_intDegree`; no statement here mentions Ostrowski's theorem.
 import Mathlib.NumberTheory.RatFunc.Ostrowski
@@ -54,9 +55,6 @@ The route has three steps, and none of them needs a Riemann–Roch theorem or a 
   `(v y) ^ 2 = (v x) ^ 3` — the pole orders `2` and `3`, for any such `v`.
 * `WeierstrassCurve.Affine.val_add_mul_mk_Y_le_one_iff`: the criterion the theorem is proved by,
   worth stating because it computes the valuation ring of every such `v` in closed form.
-* `WeierstrassCurve.Affine.exists_ratFunc_add_mul_mk_Y`: every function is `A + B y` with `A` and
-  `B` rational — the spanning half of the quadratic extension, in the form these arguments use.
-* `WeierstrassCurve.Affine.mk_Y_mul_add_eq`: the Weierstrass equation, read in the function field.
 * `WeierstrassCurve.Affine.one_lt_infinityPlace_X`: `1 < v_∞ x`, the instance of the hypothesis
   that `W.infinityPlace` itself satisfies.
 
@@ -163,71 +161,6 @@ theorem val_algebraMap_le_pow {p : F[X]} {n : ℕ} (hp : p.natDegree ≤ n) :
     exact pow_le_pow_right₀ hx.le hp
 
 end Trivial
-
-section Relation
-
-variable (W)
-
-/-- `AdjoinRoot.mk_C` in the `algebraMap` spelling the rewrite below wants. (`CoordinateRing.lean`
-carries a private lemma of the same shape; neither file exports one, and importing that file here
-for a one-line wrapper around a Mathlib lemma would pull in the Dedekind development.) -/
-private theorem coordinateRing_mk_C (p : F[X]) :
-    CoordinateRing.mk W (Polynomial.C p) = algebraMap F[X] W.CoordinateRing p :=
-  AdjoinRoot.mk_C p
-
-/-- **The Weierstrass equation, in the function field**:
-`y * (y + (a₁X + a₃)) = X³ + a₂X² + a₄X + a₆`. Grouping the two left-hand terms as a product is
-what makes the valuation of the left-hand side a product of two values, which is how the pole
-orders of `x` and `y` are compared below. -/
-theorem mk_Y_mul_add_eq :
-    algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.mk W Y) *
-        (algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.mk W Y)
-          + algebraMap F[X] W.FunctionField (Polynomial.C W.a₁ * Polynomial.X + Polynomial.C W.a₃))
-      = algebraMap F[X] W.FunctionField
-          (Polynomial.X ^ 3 + Polynomial.C W.a₂ * Polynomial.X ^ 2
-            + Polynomial.C W.a₄ * Polynomial.X + Polynomial.C W.a₆) := by
-  have hY : CoordinateRing.mk W Y * (CoordinateRing.mk W Y
-      + algebraMap F[X] W.CoordinateRing (Polynomial.C W.a₁ * Polynomial.X + Polynomial.C W.a₃))
-      = algebraMap F[X] W.CoordinateRing (Polynomial.X ^ 3 + Polynomial.C W.a₂ * Polynomial.X ^ 2
-          + Polynomial.C W.a₄ * Polynomial.X + Polynomial.C W.a₆) := by
-    rw [← coordinateRing_mk_C, ← coordinateRing_mk_C, ← map_add, ← map_mul]
-    exact AdjoinRoot.mk_eq_mk.mpr ⟨1, by rw [polynomial]; ring1⟩
-  rw [IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField,
-    IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, ← map_add, ← map_mul, hY]
-
-end Relation
-
-section Decompose
-
-variable (W)
-
-/-- **Every function is `A + B y` with `A` and `B` rational functions of `x`.** Clearing a
-polynomial denominator reduces to the coordinate ring, where Mathlib's basis `{1, Y}` supplies the
-decomposition. -/
-theorem exists_ratFunc_add_mul_mk_Y (z : W.FunctionField) :
-    ∃ A B : RatFunc F, algebraMap (RatFunc F) W.FunctionField A
-      + algebraMap (RatFunc F) W.FunctionField B *
-        algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.mk W Y) = z := by
-  -- Write `z` over a polynomial denominator, and decompose its numerator on the basis `{1, Y}`.
-  obtain ⟨⟨u, ⟨-, p, hp, rfl⟩⟩, h⟩ := IsLocalization.surj
-    (Algebra.algebraMapSubmonoid W.CoordinateRing (nonZeroDivisors F[X])) z
-  obtain ⟨a, b, rfl⟩ := CoordinateRing.exists_smul_basis_eq u
-  have hp0 : algebraMap F[X] W.FunctionField p ≠ 0 :=
-    (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective F[X] W.FunctionField)).2
-      (nonZeroDivisors.ne_zero hp)
-  rw [← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, Algebra.smul_def,
-    Algebra.smul_def, map_add, map_mul, map_mul, map_one, mul_one,
-    ← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField,
-    ← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField] at h
-  refine ⟨algebraMap F[X] (RatFunc F) a / algebraMap F[X] (RatFunc F) p,
-    algebraMap F[X] (RatFunc F) b / algebraMap F[X] (RatFunc F) p, ?_⟩
-  rw [map_div₀, map_div₀, ← IsScalarTower.algebraMap_apply F[X] (RatFunc F) W.FunctionField,
-    ← IsScalarTower.algebraMap_apply F[X] (RatFunc F) W.FunctionField,
-    ← IsScalarTower.algebraMap_apply F[X] (RatFunc F) W.FunctionField]
-  field_simp
-  linear_combination -h
-
-end Decompose
 
 section PoleOrders
 
