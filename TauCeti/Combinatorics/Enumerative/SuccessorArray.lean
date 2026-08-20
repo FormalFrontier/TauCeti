@@ -176,7 +176,6 @@ section Reconstruction
 variable {α : Type*} {x y : ℕ → α} {a a₀ : α} {s : α → ℕ → α} {i n : ℕ}
 
 /-- At a visit to `a`, the sequence moves to the corresponding entry of its successor array. -/
-@[simp]
 theorem successorArray_visitCount_of_eq (h : x n = a) :
     successorArray x a (visitCount x a n) = x (n + 1) := by
   rw [successorArray, visitTime_visitCount h]
