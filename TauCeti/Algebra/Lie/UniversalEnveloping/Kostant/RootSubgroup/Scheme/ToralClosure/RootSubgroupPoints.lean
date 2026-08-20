@@ -86,14 +86,6 @@ noncomputable def kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat.{v} ℤ
   ((CommHopfAlgCat.mapPointsFunctor
     (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).app A).hom
 
-private theorem kostantRootSubgroupToralPoints_apply_def (i : I) (A : CommAlgCat.{v} ℤ)
-    (q : HopfAlgebra.points
-      (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) A) :
-    kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A q =
-      (CommHopfAlgCat.mapPointsFunctor
-        (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).app A q :=
-  rfl
-
 /-- The intrinsic root-subgroup point map is precomposition by its factored coordinate map. -/
 @[simp]
 theorem kostantRootSubgroupToralPoints_apply (i : I) (A : CommAlgCat.{v} ℤ)
@@ -102,7 +94,7 @@ theorem kostantRootSubgroupToralPoints_apply (i : I) (A : CommAlgCat.{v} ℤ)
     kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A q =
       (CommHopfAlgCat.mapPointsFunctor
         (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).app A q :=
-  kostantRootSubgroupToralPoints_apply_def e h ρ M hM hnil b wt i A q
+  (rfl)
 
 /-- Including an intrinsic toral-closure root point into the ambient general linear group recovers
 the original represented root-subgroup point. -/
@@ -162,13 +154,6 @@ noncomputable def kostantRootSubgroupToralParam (i : I) (A : CommAlgCat.{v} ℤ)
   (kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A).comp
     (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom
 
-private theorem kostantRootSubgroupToralParam_apply_def (i : I) (A : CommAlgCat.{v} ℤ)
-    (t : Multiplicative A) :
-    kostantRootSubgroupToralParam e h ρ M hM hnil b wt i A t =
-      kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A
-        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t) :=
-  rfl
-
 /-- The parametrized intrinsic root subgroup is the point map evaluated on the corresponding
 point of `𝔾ₐ`. -/
 @[simp]
@@ -177,7 +162,7 @@ theorem kostantRootSubgroupToralParam_apply (i : I) (A : CommAlgCat.{v} ℤ)
     kostantRootSubgroupToralParam e h ρ M hM hnil b wt i A t =
       kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t) :=
-  kostantRootSubgroupToralParam_apply_def e h ρ M hM hnil b wt i A t
+  (rfl)
 
 /-- The intrinsic root-subgroup point map is natural in the value algebra. -/
 @[simp]
