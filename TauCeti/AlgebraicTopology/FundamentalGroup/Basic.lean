@@ -24,7 +24,7 @@ Stage 0.1 of the `TauCetiRoadmap/UniversalCovers` roadmap.
 
 ## Main declarations
 
-* `TauCeti.FundamentalGroupoid.nonempty_hom`: the fundamental groupoid of a path-connected
+* `FundamentalGroupoid.nonempty_hom`: the fundamental groupoid of a path-connected
   space is connected.
 * `TauCeti.FundamentalGroup.map_range_eq_bot_iff`: the induced map has trivial range exactly
   when every loop at the basepoint becomes nullhomotopic in the target.
@@ -42,16 +42,20 @@ public section
 
 open CategoryTheory
 
+namespace FundamentalGroupoid
+
+/-- In the fundamental groupoid of a path-connected space every object receives a morphism from
+every other one, so the groupoid is connected. -/
+theorem nonempty_hom {Y : Type*} [TopologicalSpace Y]
+    [PathConnectedSpace Y] (x y : FundamentalGroupoid Y) : Nonempty (x ⟶ y) :=
+  ⟨Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath x.as y.as)⟩
+
+end FundamentalGroupoid
+
 namespace TauCeti
 
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X]
 variable {A : Type*} [TopologicalSpace A]
-
-/-- In the fundamental groupoid of a path-connected space every object receives a morphism from
-every other one, so the groupoid is connected. -/
-theorem FundamentalGroupoid.nonempty_hom {Y : Type*} [TopologicalSpace Y]
-    [PathConnectedSpace Y] (x y : _root_.FundamentalGroupoid Y) : Nonempty (x ⟶ y) :=
-  ⟨Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath x.as y.as)⟩
 
 /-- Mapping a loop class represented by a path is represented by mapping that path. -/
 theorem FundamentalGroup.map_fromPath {Y : Type*} [TopologicalSpace Y] (f : C(X, Y)) (base : X)

@@ -40,8 +40,6 @@ what produces the universal cover the reconstruction quotients.
 
 ## Main declarations
 
-* `TauCeti.FundamentalGroupoid.nonempty_hom`: the fundamental groupoid of a path-connected
-  space is connected.
 * `TauCeti.FundamentalGroupoidAction.basepointMulAction`: the action of `π₁(X, x₀)` on the value
   of a fundamental-groupoid action at `x₀`.
 * `TauCeti.ConnectedCoveringSpace.exists_monodromyFunctor_iso`: every fibrewise transitive action
@@ -118,7 +116,7 @@ theorem exists_monodromyFunctor_iso (F : FundamentalGroupoid X ⥤ Type u)
   refine ⟨UniversalCover.stabilizerCover x₀ a, ⟨?_⟩⟩
   refine eqToIso (CoveringSpace.monodromyFunctor_obj _) ≪≫
     TauCeti.Groupoid.natIsoOfEnd
-      (TauCeti.FundamentalGroupoid.nonempty_hom (FundamentalGroupoid.mk x₀))
+      (FundamentalGroupoid.nonempty_hom (FundamentalGroupoid.mk x₀))
       (UniversalCover.transitiveActionFiberEquiv x₀ a).toIso (fun g => ?_)
   refine ConcreteCategory.hom_ext _ _ fun z => ?_
   simp only [types_comp_apply]
