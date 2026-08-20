@@ -6,10 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Basic
-public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
-public import Mathlib.RingTheory.Ideal.Basic
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
@@ -319,12 +316,18 @@ theorem restrict_apply (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite) (I
 theorem bad_restrict (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite) :
     (χ.restrict S hS).bad = χ.bad ∪ S := (rfl)
 
+/-- The restriction away from `S` agrees with the original weight at every ideal divisible by no
+prime in `S`. -/
+theorem restrict_apply_of_not_dvd {S : Set (HeightOneSpectrum (𝓞 K))} (hS : S.Finite)
+    {I : Ideal (𝓞 K)} (hI : ∀ 𝔭 ∈ S, ¬ 𝔭.asIdeal ∣ I) : χ.restrict S hS I = χ I := by
+  rw [restrict_apply]
+  exact ite_eq_left hI
+
 /-- The restriction away from `S` agrees with the original weight at the ideals that are good for
 it, since those are prime to `S`. -/
 theorem restrict_apply_of_isGood {S : Set (HeightOneSpectrum (𝓞 K))} (hS : S.Finite)
-    {I : Ideal (𝓞 K)} (hI : (χ.restrict S hS).IsGood I) : χ.restrict S hS I = χ I := by
-  rw [restrict_apply]
-  exact ite_eq_left fun 𝔭 h𝔭 ↦ hI.not_dvd (Or.inr h𝔭)
+    {I : Ideal (𝓞 K)} (hI : (χ.restrict S hS).IsGood I) : χ.restrict S hS I = χ I :=
+  χ.restrict_apply_of_not_dvd hS fun _ h𝔭 ↦ hI.not_dvd (Or.inr h𝔭)
 
 /-! #### The norm twist -/
 
@@ -375,6 +378,16 @@ instance : CoeFun (UnitaryIdealWeight K) fun _ ↦ Ideal (𝓞 K) → ℂ :=
   ⟨fun χ ↦ χ.toMultiplicativeIdealWeight⟩
 
 variable {K} (χ : UnitaryIdealWeight K)
+
+omit [NumberField K] in
+/-- The arithmetic function on the nonzero ideals underlying a unitary ideal weight. -/
+def toIdealArithmeticFunction : IdealArithmeticFunction K :=
+  χ.toMultiplicativeIdealWeight.toIdealArithmeticFunction
+
+omit [NumberField K] in
+@[simp]
+theorem toIdealArithmeticFunction_apply (I : (Ideal (𝓞 K))⁰) :
+    χ.toIdealArithmeticFunction I = χ (I : Ideal (𝓞 K)) := (rfl)
 
 omit [NumberField K] in
 /-- Two unitary ideal weights with the same underlying multiplicative ideal weight are equal. -/
