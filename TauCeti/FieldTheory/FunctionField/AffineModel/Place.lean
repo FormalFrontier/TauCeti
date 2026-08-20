@@ -76,7 +76,6 @@ theorem mem_integers_of_isIntegral {R : Type w} [CommRing R] [Algebra R F]
 /-- **`k[x]` lies in the valuation ring of `P` exactly when `x` has no pole at `P`**: the
 criterion selecting the places on the finite chart of `x`. Its additive form is obtained from
 `TauCeti.Place.mem_integers_iff_ord_nonneg`. -/
-@[simp]
 theorem adjoin_le_integers_iff {x : F} :
     (∀ y ∈ Algebra.adjoin k ({x} : Set F), y ∈ P.integers) ↔ x ∈ P.integers :=
   ⟨fun h ↦ h x (Algebra.self_mem_adjoin_singleton k x), fun hx _ hy ↦
