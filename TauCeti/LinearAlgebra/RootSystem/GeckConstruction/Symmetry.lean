@@ -188,7 +188,7 @@ theorem submatrix_geckIndexEquiv_e (i : b.support) :
   rcases x with x | x <;> rcases y with y | y <;>
     simp only [submatrix_apply, geckIndexEquiv_inl, geckIndexEquiv_inr, GeckConstruction.e,
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
-      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g, Equiv.apply_eq_iff_eq,
+      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g, indexNeg_neg, Equiv.apply_eq_iff_eq,
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_add_iff,
       chainBotCoeff_indexEquiv]
 
@@ -204,7 +204,7 @@ theorem submatrix_geckIndexEquiv_f (i : b.support) :
   rcases x with x | x <;> rcases y with y | y <;>
     simp only [submatrix_apply, geckIndexEquiv_inl, geckIndexEquiv_inr, GeckConstruction.f,
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
-      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g, Equiv.apply_eq_iff_eq,
+      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g, indexNeg_neg, Equiv.apply_eq_iff_eq,
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_sub_iff,
       chainTopCoeff_indexEquiv]
 

@@ -81,9 +81,9 @@ because its weight map is linear. -/
 theorem indexEquiv_neg (i : ι) :
     letI := P.indexNeg
     letI := P₂.indexNeg
-    g.indexEquiv (-i) = -g.indexEquiv i := by
+    g.indexEquiv ((P.reflectionPerm i) i) = -g.indexEquiv i := by
   refine P₂.root.injective ?_
-  rw [indexNeg_neg, indexNeg_neg, ← Hom.root_weightMap_apply P P₂ _ g.toHom,
+  rw [indexNeg_neg, ← Hom.root_weightMap_apply P P₂ _ g.toHom,
     root_reflectionPerm, root_reflectionPerm, reflection_apply_self, reflection_apply_self,
     map_neg, Hom.root_weightMap_apply]
 
