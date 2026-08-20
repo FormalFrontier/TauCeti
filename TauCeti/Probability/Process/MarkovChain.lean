@@ -71,7 +71,7 @@ variable {α : Type*} [MeasurableSpace α]
 
 This is the change of index that connects Mathlib's Ionescu–Tulcea API, which restricts a path to
 `Finset.Iic n`, with the `Fin`-indexed prefix laws used downstream. -/
-def iicEquivFin (α : Type*) [MeasurableSpace α] (n : ℕ) :
+private def iicEquivFin (α : Type*) [MeasurableSpace α] (n : ℕ) :
     ((_ : ↥(Iic n)) → α) ≃ᵐ (Fin (n + 1) → α) :=
   (MeasurableEquiv.piCongrLeft (fun _ : ↥(Iic n) => α)
     ((Iic n).orderIsoOfFin (k := n + 1) (by simp))).symm
@@ -84,16 +84,17 @@ private theorem coe_orderIsoIic_apply (n : ℕ) (i : Fin (n + 1)) :
     (fun j => mem_Iic.2 (Nat.le_of_lt_succ j.2)) Fin.val_strictMono) i
 
 @[simp]
-theorem iicEquivFin_apply (n : ℕ) (u : (_ : ↥(Iic n)) → α) (i : Fin (n + 1)) :
+private theorem iicEquivFin_apply (n : ℕ) (u : (_ : ↥(Iic n)) → α) (i : Fin (n + 1)) :
     iicEquivFin α n u i = u ⟨i.1, mem_Iic.2 (Nat.lt_succ_iff.1 i.2)⟩ :=
   by
+    -- `piCongrLeft` acts by precomposition, so its coercion reduces definitionally to this value.
     change u ((Iic n).orderIsoOfFin (k := n + 1) (by simp) i) = _
     congr 1
     ext
     exact coe_orderIsoIic_apply n i
 
 @[simp]
-theorem iicEquivFin_symm_apply (n : ℕ) (w : Fin (n + 1) → α) (j : ↥(Iic n)) :
+private theorem iicEquivFin_symm_apply (n : ℕ) (w : Fin (n + 1) → α) (j : ↥(Iic n)) :
     (iicEquivFin α n).symm w j = w ⟨j.1, Nat.lt_succ_iff.2 (mem_Iic.1 j.2)⟩ :=
   by
     simp only [iicEquivFin, MeasurableEquiv.symm_symm]
@@ -101,6 +102,7 @@ theorem iicEquivFin_symm_apply (n : ℕ) (w : Fin (n + 1) → α) (j : ↥(Iic n
     simp only [eq_rec_constant]
     congr 1
     ext
+    -- The subtype coercion exposes the value component of the inverse order isomorphism.
     change (((Iic n).orderIsoOfFin (k := n + 1) (by simp)).symm j : Fin (n + 1)).1 = j.1
     have h := coe_orderIsoIic_apply n
       (((Iic n).orderIsoOfFin (k := n + 1) (by simp)).symm j)
@@ -126,7 +128,7 @@ instance [IsProbabilityMeasure ν] : IsProbabilityMeasure (markovChainLaw ν κ)
 
 /-- The trajectory of the chain restricted to time `0` is the initial law, transported along the
 canonical identification of `(_ : ↥(Iic 0)) → α` with `α`. -/
-theorem markovChainLaw_map_frestrictLe_zero :
+private theorem markovChainLaw_map_frestrictLe_zero :
     (markovChainLaw ν κ).map (frestrictLe 0) =
       ν.map (MeasurableEquiv.piUnique fun _ : ↥(Iic (0 : ℕ)) => α).symm := by
   rw [markovChainLaw, Kernel.trajMeasure,

@@ -345,8 +345,7 @@ theorem markovChainLaw_markovExchangeable [Countable α] [MeasurableSingletonCla
 
 /-- **A homogeneous Markov chain is the degenerate mixture of Markov chains** at its own initial
 law and transition kernel: the two witnesses are the constant ones. This is the source of genuine
-`MixedMarkovChain` processes at an arbitrary transition kernel, and hence of genuine instances of
-the hypothesis of the Diaconis–Freedman representation theorem. -/
+`MixedMarkovChain` processes at an arbitrary transition kernel. -/
 theorem markovChainLaw_mixedMarkovChainWith [Countable α] [MeasurableSingletonClass α] :
     MixedMarkovChainWith (markovChainLaw ν κ) (fun i x => x i)
       (fun _ => (⟨ν, inferInstance⟩ : ProbabilityMeasure α))
