@@ -7,8 +7,10 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
-public import Mathlib.LinearAlgebra.CliffordAlgebra.Inversion
 public import TauCeti.LinearAlgebra.ExteriorAlgebra.Dimension
+-- Private: `CliffordAlgebra.nonempty_evenOddEquivAddOne` is used only inside the proof that the
+-- two halves of the `ℤ/2`-grading are equidimensional.
+import TauCeti.LinearAlgebra.CliffordAlgebra.ParitySwap
 
 /-!
 # Freeness and dimension of a Clifford algebra
@@ -30,14 +32,12 @@ degree-graded argument would produce one exterior power at a time; here it is th
 of a basis index set instead, because the basis is transported from Mathlib's basis
 `Module.Basis.ExteriorAlgebra` of the exterior algebra, indexed by finite subsets.
 
-A second section splits that count in half along Mathlib's `ℤ/2`-grading `evenOdd Q`. Over any
-commutative ring, as soon as some vector `v` has `Q v` a unit, right multiplication by `ι Q v` is a
-linear automorphism of the Clifford algebra carrying `evenOdd Q i` onto `evenOdd Q (i + 1)`, because
-a vector is odd and because `ι Q v * ι Q v = Q v` makes `ι Q v` a unit
-(`CliffordAlgebra.isUnit_ι_of_isUnit`). Over a field the two halves therefore have the same
-dimension, and over a field in which `2` is invertible, where the count `2 ^ n` above is available,
-that dimension is `2 ^ (n - 1)` each, as is the dimension of the even subalgebra
-`CliffordAlgebra.even Q`.
+A second section splits that count in half along Mathlib's `ℤ/2`-grading `evenOdd Q`. Over a field
+the two halves of the grading of the Clifford algebra of a nonzero space are isomorphic for *every*
+quadratic form, by the odd linear automorphism of
+`TauCeti/LinearAlgebra/CliffordAlgebra/ParitySwap.lean`, so over a field in which `2` is
+invertible, where the count `2 ^ n` above is available, each has dimension `2 ^ (n - 1)`, as does
+the even subalgebra `CliffordAlgebra.even Q`.
 
 These counts are what make the structure theory of Clifford algebras run: over an algebraically
 closed field a nondegenerate `Q` on a `2l`-dimensional space has
@@ -61,10 +61,6 @@ separate milestone.
 
 * `CliffordAlgebra.basis`: the basis of `CliffordAlgebra Q` indexed by the finite subsets of
   the index set of a basis of `M`, over a ring in which `2` is invertible.
-* `CliffordAlgebra.mulRightιEquiv`: right multiplication by a vector whose norm is a unit,
-  as a linear automorphism of the Clifford algebra, and
-  `CliffordAlgebra.evenOddEquivAddOne`, the isomorphism between consecutive halves of the
-  `ℤ/2`-grading that it restricts to.
 
 ## Main results
 
@@ -77,11 +73,17 @@ separate milestone.
 * `CliffordAlgebra.finrank_eq_two_pow`: `finrank R (CliffordAlgebra Q) = 2 ^ finrank R M`,
   with `CliffordAlgebra.finrank_eq_sum_choose` the same count as a sum of binomial
   coefficients.
-* `CliffordAlgebra.map_evenOdd_mulRightιEquiv`: multiplying by a vector whose norm is a
-  unit exchanges the two halves of the `ℤ/2`-grading.
+* `CliffordAlgebra.two_mul_finrank_evenOdd`: over a field, each half of the grading of the Clifford
+  algebra of a nonzero space is exactly half of it, for every quadratic form, and
+  `CliffordAlgebra.finrank_evenOdd_of_finrank_eq_two_pow` reads that half off any count of the
+  whole algebra by a power of two.
 * `CliffordAlgebra.finrank_evenOdd` and `CliffordAlgebra.finrank_even`: over a
-  field in which `2` is invertible, each half of the grading, and in particular the even
-  subalgebra, has dimension `2 ^ (finrank K V - 1)`.
+  field in which `2` is invertible, each half of the grading of the Clifford algebra of a nonzero
+  finite-dimensional space, and in particular the even subalgebra, has dimension
+  `2 ^ (finrank K V - 1)`.
+* `CliffordAlgebra.finrank_evenOdd_zero`: the same count for the zero form — the even and the odd
+  half of an exterior algebra — where the total count is available over every field, so no
+  invertibility of `2` is needed.
 
 ## References
 
@@ -176,112 +178,79 @@ theorem finrank_pos [Nontrivial R] [Module.Free R M] [Module.Finite R M] :
 
 end CommRing
 
-section EvenOdd
-
-variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
-  (Q : QuadraticForm R M) {v : M}
-
-/-- Right multiplication by a vector whose norm is a unit, as a linear automorphism of the Clifford
-algebra. The Clifford relation `ι Q v * ι Q v = Q v` makes `ι Q v` itself a unit
-(`CliffordAlgebra.isUnit_ι_of_isUnit`), and right multiplication by a unit is
-`Units.mulRightLinearEquiv`. -/
-noncomputable def mulRightιEquiv (hv : IsUnit (Q v)) :
-    CliffordAlgebra Q ≃ₗ[R] CliffordAlgebra Q :=
-  (isUnit_ι_of_isUnit Q hv).unit.mulRightLinearEquiv R
-
-@[simp]
-theorem mulRightιEquiv_apply (hv : IsUnit (Q v)) (x : CliffordAlgebra Q) :
-    mulRightιEquiv Q hv x = x * ι Q v := by
-  rw [mulRightιEquiv, Units.mulRightLinearEquiv_apply, IsUnit.unit_spec]
-
-@[simp]
-theorem mulRightιEquiv_symm_apply (hv : IsUnit (Q v)) (x : CliffordAlgebra Q) :
-    (mulRightιEquiv Q hv).symm x = x * ι Q (Ring.inverse (Q v) • v) := by
-  refine (LinearEquiv.symm_apply_eq _).2 ?_
-  rw [mulRightιEquiv_apply, map_smul, mul_smul_comm, smul_mul_assoc, mul_assoc, ι_sq_scalar,
-    ← Algebra.commutes, ← Algebra.smul_def, smul_smul, Ring.inverse_mul_cancel _ hv, one_smul]
-
-/-- Multiplying by a vector whose norm is a unit exchanges the two halves of the `ℤ/2`-grading,
-since a vector is odd. This is what makes the even and the odd part of a Clifford algebra
-equidimensional as soon as some vector has a unit norm; over a field that is exactly the
-condition that the form is not identically zero. -/
-theorem map_evenOdd_mulRightιEquiv (hv : IsUnit (Q v)) (i : ZMod 2) :
-    (evenOdd Q i).map (mulRightιEquiv Q hv).toLinearMap = evenOdd Q (i + 1) := by
-  have h2 : (1 : ZMod 2) + 1 = 0 := by decide
-  refine le_antisymm (Submodule.map_le_iff_le_comap.2 fun x hx => ?_) fun y hy => ?_
-  · rw [Submodule.mem_comap, LinearEquiv.coe_coe, mulRightιEquiv_apply]
-    exact evenOdd_mul_le Q i 1 (Submodule.mul_mem_mul hx (ι_mem_evenOdd_one Q v))
-  · refine Submodule.mem_map.2 ⟨(mulRightιEquiv Q hv).symm y, ?_, ?_⟩
-    · have hmem : (mulRightιEquiv Q hv).symm y ∈ evenOdd Q (i + 1 + 1) := by
-        rw [mulRightιEquiv_symm_apply]
-        exact evenOdd_mul_le Q (i + 1) 1
-          (Submodule.mul_mem_mul hy (ι_mem_evenOdd_one Q _))
-      rwa [add_assoc, h2, add_zero] at hmem
-    · rw [LinearEquiv.coe_coe, LinearEquiv.apply_symm_apply]
-
-/-- The two halves of the `ℤ/2`-grading of a Clifford algebra are isomorphic as modules, provided
-some vector has a unit norm: multiplication by that vector carries one onto the other. -/
-noncomputable def evenOddEquivAddOne (hv : IsUnit (Q v)) (i : ZMod 2) :
-    evenOdd Q i ≃ₗ[R] evenOdd Q (i + 1) :=
-  (Submodule.equivMapOfInjective _ (mulRightιEquiv Q hv).injective _).trans
-    (LinearEquiv.ofEq _ _ (map_evenOdd_mulRightιEquiv Q hv i))
-
-@[simp]
-theorem coe_evenOddEquivAddOne_apply (hv : IsUnit (Q v)) (i : ZMod 2) (x : evenOdd Q i) :
-    (evenOddEquivAddOne Q hv i x : CliffordAlgebra Q) = x * ι Q v := by
-  rw [evenOddEquivAddOne, LinearEquiv.trans_apply, LinearEquiv.coe_ofEq_apply,
-    Submodule.coe_equivMapOfInjective_apply, LinearEquiv.coe_coe, mulRightιEquiv_apply]
-
-@[simp]
-theorem coe_evenOddEquivAddOne_symm_apply (hv : IsUnit (Q v)) (i : ZMod 2)
-    (y : evenOdd Q (i + 1)) :
-    ((evenOddEquivAddOne Q hv i).symm y : CliffordAlgebra Q) =
-      y * ι Q (Ring.inverse (Q v) • v) := by
-  have h := coe_evenOddEquivAddOne_apply Q hv i ((evenOddEquivAddOne Q hv i).symm y)
-  rw [LinearEquiv.apply_symm_apply] at h
-  rw [h, ← mulRightιEquiv_apply Q hv, ← mulRightιEquiv_symm_apply Q hv,
-    LinearEquiv.symm_apply_apply]
-
-end EvenOdd
-
 section Field
 
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
-  (Q : QuadraticForm K V) {v : V}
+  (Q : QuadraticForm K V)
 
-/-- Over a field in which `2` is invertible, each half of the `ℤ/2`-grading of a Clifford algebra on
-a finite-dimensional space carrying a vector of nonzero norm has half the dimension of the whole:
-`2 ^ (n - 1)` for `n = finrank K V`. The invertibility of `2` is inherited from
-`finrank_eq_two_pow`, which counts the whole algebra.
+/-- **Each half of the `ℤ/2`-grading is exactly half of the Clifford algebra**, over a field and
+for a nonzero space, whatever the quadratic form.
 
-The vector of nonzero norm is what the proof multiplies by; it is not the sharpest hypothesis,
-since for the zero form the two halves of the exterior algebra are equidimensional as well
-whenever `V ≠ 0`. What it does rule out is `V = 0`, where the Clifford algebra is `K` and entirely
-even, so no such statement can hold. -/
-theorem finrank_evenOdd [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0) (i : ZMod 2) :
-    finrank K (evenOdd Q i) = 2 ^ (finrank K V - 1) := by
-  have hV : Nontrivial V := ⟨v, 0, fun h => hv (h ▸ (QuadraticMap.map_zero Q))⟩
-  have hpos : 0 < finrank K V := Module.finrank_pos
-  have hsum : finrank K (evenOdd Q 0) + finrank K (evenOdd Q 1) = 2 ^ finrank K V := by
-    rw [Submodule.finrank_add_eq_of_isCompl (evenOdd_isCompl Q), finrank_eq_two_pow]
-  have hswap : finrank K (evenOdd Q 0) = finrank K (evenOdd Q 1) :=
-    (evenOddEquivAddOne Q (isUnit_iff_ne_zero.2 hv) 0).finrank_eq
-  have hi : finrank K (evenOdd Q i) = finrank K (evenOdd Q 0) := by
-    fin_cases i
-    · rfl
-    · exact hswap.symm
-  have h2 : 2 * 2 ^ (finrank K V - 1) = 2 ^ finrank K V := by
-    rw [← pow_succ', Nat.sub_add_cancel hpos]
+The two halves are complementary (`CliffordAlgebra.evenOdd_isCompl`), so their dimensions add up to
+the whole; and they are equidimensional by `CliffordAlgebra.nonempty_evenOddEquivAddOne`, which
+produces an odd linear automorphism out of a vector and a linear functional rather than out of an
+anisotropic vector, so it covers the zero form — the exterior algebra — as well. The hypothesis
+`V ≠ 0` cannot be dropped: for `V = 0` the Clifford algebra is `K` and entirely even.
+
+Nothing here needs `2` to be invertible; that hypothesis enters only with
+`CliffordAlgebra.finrank_eq_two_pow`, which evaluates the right-hand side. -/
+theorem two_mul_finrank_evenOdd [Nontrivial V] [Module.Finite K (CliffordAlgebra Q)] (i : ZMod 2) :
+    2 * finrank K (evenOdd Q i) = finrank K (CliffordAlgebra Q) := by
+  have hsum : finrank K (evenOdd Q 0) + finrank K (evenOdd Q 1) = finrank K (CliffordAlgebra Q) :=
+    Submodule.finrank_add_eq_of_isCompl (evenOdd_isCompl Q)
+  have hswap : finrank K (evenOdd Q 0) = finrank K (evenOdd Q 1) := by
+    obtain ⟨f⟩ := nonempty_evenOddEquivAddOne Q 0
+    -- `f` relates `evenOdd Q 0` to `evenOdd Q (0 + 1)`. Simplification does not close the gap to
+    -- `evenOdd Q 1`: the numerals of `ZMod 2` elaborate through `OfNat`, not `Zero.zero`/`One.one`,
+    -- so `zero_add` never matches the index. Name the index equation and rewrite the goal by it.
+    have hone : (1 : ZMod 2) = 0 + 1 := by decide
+    rw [hone]
+    exact f.finrank_eq
+  rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl <;> omega
+
+/-- **Half of a power of two is one power of two down.** Whenever the Clifford algebra of a nonzero
+space is counted by a positive power of two, `CliffordAlgebra.two_mul_finrank_evenOdd` splits that
+count and each half of the `ℤ/2`-grading has dimension `2 ^ (n - 1)`.
+
+The count of the whole algebra is left as a hypothesis because there are two sources for it, with
+different requirements: `CliffordAlgebra.finrank_eq_two_pow` for an arbitrary quadratic form, which
+needs `2` to be invertible, and the exterior-algebra count for the zero form, which does not. -/
+theorem finrank_evenOdd_of_finrank_eq_two_pow [Nontrivial V]
+    [Module.Finite K (CliffordAlgebra Q)] {n : ℕ} (hn : 0 < n)
+    (hQ : finrank K (CliffordAlgebra Q) = 2 ^ n) (i : ZMod 2) :
+    finrank K (evenOdd Q i) = 2 ^ (n - 1) := by
+  have hhalf := two_mul_finrank_evenOdd Q i
+  rw [hQ] at hhalf
+  have h2 : 2 * 2 ^ (n - 1) = 2 ^ n := by rw [← pow_succ', Nat.sub_add_cancel hn]
   omega
 
-/-- Over a field in which `2` is invertible, the even Clifford algebra of a finite-dimensional space
-carrying a vector of nonzero norm has dimension `2 ^ (n - 1)`, one power of two below the whole
-algebra. This is the dimension count behind the identification of the even subalgebra with a
-product of two matrix algebras one size down. -/
-theorem finrank_even [Invertible (2 : K)] [Module.Finite K V] (hv : Q v ≠ 0) :
+/-- Over a field in which `2` is invertible, each half of the `ℤ/2`-grading of the Clifford algebra
+of a nonzero finite-dimensional space has half the dimension of the whole: `2 ^ (n - 1)` for
+`n = finrank K V`. The invertibility of `2` is inherited from
+`CliffordAlgebra.finrank_eq_two_pow`, which counts the whole algebra; the halving itself is
+`CliffordAlgebra.two_mul_finrank_evenOdd` and needs no hypothesis on the quadratic form. -/
+theorem finrank_evenOdd [Invertible (2 : K)] [Module.Finite K V] [Nontrivial V] (i : ZMod 2) :
+    finrank K (evenOdd Q i) = 2 ^ (finrank K V - 1) :=
+  finrank_evenOdd_of_finrank_eq_two_pow Q Module.finrank_pos (finrank_eq_two_pow Q) i
+
+/-- **Each half of an exterior algebra has dimension `2 ^ (n - 1)`**: the Clifford algebra of the
+*zero* form on a nonzero finite-dimensional space is the exterior algebra, whose total dimension
+`2 ^ n` is `TauCeti.ExteriorAlgebra.finrank_eq_two_pow` — available over every field. So unlike
+`CliffordAlgebra.finrank_evenOdd`, this needs no invertibility of `2`.
+
+This is the count behind the two half-spin summands `⋀ᵉᵛᵉⁿ W` and `⋀ᵒᵈᵈ W` of a spinor module. -/
+theorem finrank_evenOdd_zero [Module.Finite K V] [Nontrivial V] (i : ZMod 2) :
+    finrank K (evenOdd (0 : QuadraticForm K V) i) = 2 ^ (finrank K V - 1) :=
+  finrank_evenOdd_of_finrank_eq_two_pow _ Module.finrank_pos ExteriorAlgebra.finrank_eq_two_pow i
+
+/-- Over a field in which `2` is invertible, the even Clifford algebra of a nonzero
+finite-dimensional space has dimension `2 ^ (n - 1)`, one power of two below the whole algebra.
+This is the dimension count behind the identification of the even subalgebra with a product of two
+matrix algebras one size down. -/
+theorem finrank_even [Invertible (2 : K)] [Module.Finite K V] [Nontrivial V] :
     finrank K (_root_.CliffordAlgebra.even Q) = 2 ^ (finrank K V - 1) :=
   (LinearEquiv.ofEq _ _ (_root_.CliffordAlgebra.even_toSubmodule Q)).finrank_eq.trans
-    (finrank_evenOdd Q hv 0)
+    (finrank_evenOdd Q 0)
 
 end Field
 

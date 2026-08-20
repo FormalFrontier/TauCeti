@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Projection
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
+public import TauCeti.LinearAlgebra.Submodule.Prod
 
 /-!
 # Definiteness and the signature of a quadratic form
@@ -181,17 +182,6 @@ section Prod
 
 variable {M' : Type*} [AddCommGroup M'] [Module K M'] [FiniteDimensional K M']
 
-/-- The product of two subspaces, as a subspace of the product ambient space, is linearly
-equivalent to the product of their underlying types. -/
-private def subspaceProdEquiv (U : Subspace K M) (W : Subspace K M') :
-    (U × W) ≃ₗ[K] U.prod W where
-  toFun p := ⟨(p.1, p.2), p.1.2, p.2.2⟩
-  invFun p := (⟨p.1.1, p.2.1⟩, ⟨p.1.2, p.2.2⟩)
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
-
 /-- The sum of the positive indices of two quadratic forms is a lower bound for the positive
 index of their orthogonal product. -/
 private theorem add_sigPos_le_sigPos_prod (Q : _root_.QuadraticForm K M)
@@ -220,7 +210,7 @@ private theorem add_sigPos_le_sigPos_prod (Q : _root_.QuadraticForm K M)
     sigPos Q + sigPos Q' = Module.finrank K U + Module.finrank K W := by
       rw [hUrank, hWrank]
     _ = Module.finrank K (U × W) := Module.finrank_prod.symm
-    _ = Module.finrank K (U.prod W) := LinearEquiv.finrank_eq (subspaceProdEquiv U W)
+    _ = Module.finrank K (U.prod W) := LinearEquiv.finrank_eq (Submodule.prodEquiv U W).symm
     _ ≤ sigPos (Q.prod Q') := le_sigPos_of_posDef (Q := Q.prod Q') hprod
 
 /-- The sum of the negative indices of two quadratic forms is a lower bound for the negative
@@ -246,7 +236,7 @@ theorem sigPos_prod (Q : _root_.QuadraticForm K M) (Q' : _root_.QuadraticForm K 
       Module.finrank K Q.radical + Module.finrank K Q'.radical := by
     let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
     rw [QuadraticMap.radical_prod, ← LinearEquiv.finrank_eq
-      (subspaceProdEquiv Q.radical Q'.radical),
+      (Submodule.prodEquiv Q.radical Q'.radical).symm,
       Module.finrank_prod]
   rw [hrad, Module.finrank_prod] at hsum
   omega

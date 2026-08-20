@@ -8,8 +8,7 @@ module
 public import Mathlib.AlgebraicGeometry.Morphisms.Smooth
 public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 
 /-!
 # Smooth affine group schemes
@@ -31,6 +30,8 @@ base, such as `μₚ` and `αₚ`, remain in the ambient category.
   group schemes.
 * `TauCeti.algebraSmooth_iff_smooth_hopfSpec`: compatibility of the algebraic and
   scheme-theoretic smoothness conditions.
+* `TauCeti.smooth_iff_algebraSmooth_coordinate`: smoothness of a finite-type affine group
+  scheme in terms of the coordinate algebra supplied by the anti-equivalence.
 
 ## References
 
@@ -125,5 +126,19 @@ theorem smoothAffineGroupSchemeProperty_inverseImage
     apply (smoothAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e.symm
     exact (algebraSmooth_iff_smooth_hopfSpec R H.unop).mp
       ((smoothCommHopfAlgProperty_iff H.unop).mpr h)
+
+/-- A finite-type affine group scheme has smooth structural morphism exactly when its coordinate
+algebra supplied by the affine anti-equivalence is smooth. -/
+theorem smooth_iff_algebraSmooth_coordinate
+    (R : Type u) [CommRing R]
+    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)) :
+    Smooth G.obj.obj.X.hom ↔
+      Algebra.Smooth R
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).inverse.obj G).unop := by
+  rw [← smoothCommHopfAlgProperty_iff]
+  exact finiteType_objectProperty_iff_coordinate R
+    (smoothAffineGroupSchemeProperty (CommRingCat.of R))
+    (smoothCommHopfAlgProperty R)
+    (smoothAffineGroupSchemeProperty_inverseImage R) G
 
 end TauCeti
