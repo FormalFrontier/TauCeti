@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.End
 public import Mathlib.Algebra.Group.Subgroup.Ker
 
 /-!
@@ -29,6 +30,9 @@ endomorphism of it, so it is available before any ambient group has been constru
   its powers.
 * `TauCeti.fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp`: a point fixed by each of two
   endomorphisms is fixed by their composite.
+* `TauCeti.fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one`: fixed points of a
+  composite of commuting endomorphisms lie in the fixed points of a power of one factor when the
+  other factor has finite order.
 * `TauCeti.map_fixedSubgroup_le`: a homomorphism intertwining two endomorphisms carries the points
   fixed by the one to the points fixed by the other.
 
@@ -89,6 +93,26 @@ theorem fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp (F F' : G →* G) 
   obtain ⟨hF, hF'⟩ := Subgroup.mem_inf.mp hx
   rw [mem_fixedSubgroup] at hF hF' ⊢
   rw [MonoidHom.comp_apply, hF, hF']
+
+/-- Suppose that two endomorphisms commute and that `F' ^ d = 1`. Every point fixed by
+`F'.comp F` is then fixed by `F ^ d`.
+
+This is the fixed-subgroup consequence of `Function.Commute.comp_iterate`. -/
+theorem fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one
+    (F : Monoid.End G) (F' : MulAut G) (hcomm : Function.Commute F' F)
+    {d : ℕ} (hpow : F' ^ d = 1) :
+    fixedSubgroup (F'.toMonoidHom.comp F : G →* G) ≤
+      fixedSubgroup ((F ^ d : Monoid.End G) : G →* G) := by
+  intro x hx
+  rw [mem_fixedSubgroup] at hx
+  rw [mem_fixedSubgroup_end_pow_iff]
+  have hfixed := Function.iterate_fixed hx d
+  have hcomp : (⇑(F'.toMonoidHom.comp F : Monoid.End G)) = (⇑F') ∘ (⇑F) := rfl
+  rw [hcomp, hcomm.comp_iterate] at hfixed
+  have hpow' (y : G) : F'^[d] y = y := by
+    rw [← congrFun (hom_coe_pow (fun f : MulAut G => (f : G → G))
+      (MulAut.coe_one _) (MulAut.coe_mul _) F' d) y, hpow, MulAut.one_apply]
+  simpa only [hpow', Function.comp_apply] using hfixed
 
 variable {G' : Type*} [Group G']
 

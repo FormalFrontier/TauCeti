@@ -393,6 +393,17 @@ theorem kostantElementaryFrobenius_add (m : ℕ) :
   rw [kostantElementaryFrobenius, kostantElementaryFrobenius, kostantElementaryFrobenius, hadd,
     kostantElementaryMap_comp]
 
+/-- Iterating the `p ^ n`-power Frobenius `k` times gives the `p ^ (n * k)`-power Frobenius. -/
+theorem kostantElementaryFrobenius_mul (k : ℕ)
+    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
+    (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A))^[k] g =
+      kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A g := by
+  induction k generalizing g with
+  | zero => simp
+  | succ k ih =>
+      rw [Function.iterate_succ_apply, ih, Nat.mul_succ, kostantElementaryFrobenius_add,
+        MonoidHom.comp_apply]
+
 /-- The Frobenius endomorphism of the elementary group commutes with base change of the value ring,
 because a ring homomorphism preserves `p ^ n`-th powers. -/
 theorem kostantElementaryMap_kostantElementaryFrobenius {B : CommAlgCat.{w} ℤ} [ExpChar B p]
