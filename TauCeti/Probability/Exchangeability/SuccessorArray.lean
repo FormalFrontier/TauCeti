@@ -90,9 +90,9 @@ namespace Probability
 
 section TransitionCounts
 
-variable {α : Type*} {x : ℕ → α} {a b : α} {n : ℕ}
+attribute [local instance] Classical.decEq
 
-local instance : DecidableEq α := Classical.decEq α
+variable {α : Type*} {x : ℕ → α} {a b : α} {n : ℕ}
 
 /-- Splitting off the last transition of a prefix. -/
 private theorem transitionCount_prefixProj_succ_add_ite (x : ℕ → α) (n : ℕ) (a b : α) :

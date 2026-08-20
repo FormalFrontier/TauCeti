@@ -87,7 +87,6 @@ private theorem visitTime_def_private (x : ℕ → α) (a : α) (k : ℕ) :
   rfl
 
 /-- The defining equation for visit times. -/
-@[simp]
 theorem visitTime_def (x : ℕ → α) (a : α) (k : ℕ) :
     visitTime x a k = Nat.nth (fun i => x i = a) k :=
   visitTime_def_private x a k
@@ -97,7 +96,6 @@ private theorem successorArray_def_private (x : ℕ → α) (a : α) (k : ℕ) :
   rfl
 
 /-- The defining equation for an entry of the successor array. -/
-@[simp]
 theorem successorArray_def (x : ℕ → α) (a : α) (k : ℕ) :
     successorArray x a k = x (visitTime x a k + 1) :=
   successorArray_def_private x a k
@@ -105,6 +103,8 @@ theorem successorArray_def (x : ℕ → α) (a : α) (k : ℕ) :
 end Defs
 
 section Counting
+
+attribute [local instance] Classical.decEq
 
 variable {α : Type*} {x y : ℕ → α} {a : α} {k m n : ℕ}
 
@@ -125,12 +125,9 @@ theorem visitCount_congr (h : ∀ i < n, x i = y i) : visitCount x a n = visitCo
     funext fun i => h i.val i.isLt]
 
 /-- Splitting a visit count at the final index. -/
-local instance : DecidableEq α := Classical.decEq α
-
 theorem visitCount_succ (x : ℕ → α) (a : α) (n : ℕ) :
     visitCount x a (n + 1) =
       if x n = a then visitCount x a n + 1 else visitCount x a n := by
-  classical
   rw [visitCount_eq_count, visitCount_eq_count, Nat.count_succ]
   split_ifs <;> simp
 
