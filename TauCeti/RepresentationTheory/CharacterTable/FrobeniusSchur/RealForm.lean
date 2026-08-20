@@ -29,7 +29,13 @@ tensors `1 ⊗ₜ w` are asked for, which is enough because those generate `ℂ 
 it admits a real form.  `Representation.IsRealForm` allows any carrier for the real form,
 while `Representation.IsRealizableOverReal` pins it to `Fin (finrank ℂ V) → ℝ`, so that the
 predicate needs no type existential; transporting a real form on an arbitrary carrier to the pinned
-one along a basis is not built here.
+one along a basis is not built here.  Pinning the carrier by the dimension is only faithful in
+finite dimension -- `finrank ℂ V = 0` for an infinite-dimensional `V`, which would make the pinned
+carrier the zero space -- so `Representation.IsRealizableOverReal` carries
+`FiniteDimensional ℂ V` as a conjunct of its statement, and
+`Representation.isRealizableOverReal_iff` drops it again once it is available as an instance.  The
+infinite-dimensional case is outside the scope of the pinned predicate; `Representation.IsRealForm`
+is the notion to use there.
 
 This file builds those two notions and proves the direction of the Frobenius-Schur criterion that
 goes from a real form to the indicator: **an irreducible representation with a real form is
@@ -59,7 +65,8 @@ from the two of them, whose fixed points are the real form.  That construction i
 
 * `Representation.averageForm`: the average of a bilinear form over a finite group.
 * `Representation.IsRealForm`: `σ` is a real form of `ρ`.
-* `Representation.IsRealizableOverReal`: `ρ` admits a real form.
+* `Representation.IsRealizableOverReal`: `ρ` admits a real form on a carrier pinned by the
+  dimension of `V`.
 
 ## Main results
 
@@ -329,15 +336,21 @@ variable (ρ) in
 /-- **Realizability over `ℝ`**: `ρ` admits a real form on the carrier `Fin (finrank ℂ V) → ℝ`.
 Pinning the carrier avoids a type existential; a real form on an arbitrary carrier is
 `Representation.IsRealForm`, and every result below about the indicator is proved from that
-more general notion. -/
-def IsRealizableOverReal : Prop :=
-  ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ
+more general notion.
 
-/-- `Representation.IsRealizableOverReal` unfolded. -/
-theorem isRealizableOverReal_iff :
+Finite-dimensionality of `V` is part of the statement, not an ambient hypothesis: `finrank ℂ V`
+is `0` for an infinite-dimensional `V`, so without it the pinned carrier would degenerate to the
+zero space and the predicate would say nothing about real forms.  The infinite-dimensional case is
+outside the scope of this notion; use `Representation.IsRealForm` there. -/
+def IsRealizableOverReal : Prop :=
+  FiniteDimensional ℂ V ∧ ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ
+
+/-- `Representation.IsRealizableOverReal` unfolded, with the finite-dimensionality it carries
+already available as an instance. -/
+theorem isRealizableOverReal_iff [FiniteDimensional ℂ V] :
     IsRealizableOverReal ρ ↔
       ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ :=
-  (Iff.rfl)
+  and_iff_right ‹FiniteDimensional ℂ V›
 
 end RealForm
 
@@ -364,7 +377,7 @@ is the "realizable" half of the orthogonality criterion; the converse, that indi
 a real form, is not proved here. -/
 theorem frobeniusSchurIndicator_eq_one_of_isRealizableOverReal [ρ.IsIrreducible]
     (h : IsRealizableOverReal ρ) : frobeniusSchurIndicator ρ = 1 := by
-  obtain ⟨σ, hσ⟩ := h
+  obtain ⟨σ, hσ⟩ := isRealizableOverReal_iff.mp h
   have : Nontrivial V :=
     TauCeti.Representation.IsIrreducible.nontrivial (inferInstance : ρ.IsIrreducible)
   have hpos : 0 < finrank ℂ V := Module.finrank_pos
