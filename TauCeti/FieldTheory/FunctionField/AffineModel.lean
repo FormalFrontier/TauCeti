@@ -41,12 +41,6 @@ integrally closed, then swallows everything integral over `k[x]`.
   `TauCeti.Place.valuationSubringAtPrime_eq_integers`: the valuation ring of the place is the
   localization of the model at the centre.
 
-## Implementation notes
-
-`TauCeti.Place.center` is `@[expose]`d, and it is the only definition here that is: its
-characterization lemma `TauCeti.Place.mem_center_asIdeal` holds by `rfl`, and the proof term of an
-exported theorem may unfold only exposed definitions.
-
 ## References
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
@@ -112,13 +106,22 @@ include hR
 
 /-- The **centre** on an affine model `R` of a place `P` finite on `R`: the height one prime of
 `R` consisting of the elements with a zero at `P`. -/
-@[expose]
 def center : HeightOneSpectrum R :=
   P.valuation.heightOneSpectrum R P.valuation_surjective fun r ↦ P.mem_integers_iff.mp (hR r)
 
+/-- **The valuation of a place finite on an affine model is the adic valuation of its centre.**
+This is the exact, not merely up-to-equivalence, form of the correspondence between places and
+height one primes. -/
+@[simp]
+theorem valuation_center : (P.center hR).valuation F = P.valuation :=
+  Valuation.valuation_heightOneSpectrum _ _
+
+/-- The centre of `P` on `R` consists of the elements of `R` at which the valuation of `P` is
+`< 1`. -/
 @[simp]
 theorem mem_center_asIdeal {r : R} :
-    r ∈ (P.center hR).asIdeal ↔ P.valuation (algebraMap R F r) < 1 := Iff.rfl
+    r ∈ (P.center hR).asIdeal ↔ P.valuation (algebraMap R F r) < 1 := by
+  rw [← HeightOneSpectrum.valuation_lt_one_iff_mem (K := F), P.valuation_center hR]
 
 /-- The additive form of `TauCeti.Place.mem_center_asIdeal`: the centre of `P` on `R` consists of
 the elements of `R` with a zero at `P`. The hypothesis `r ≠ 0` guards the junk value
@@ -129,13 +132,6 @@ theorem mem_center_asIdeal_iff_ord_pos {r : R} (hr : r ≠ 0) :
   rw [mem_center_asIdeal, P.valuation_eq_exp_neg_ord hr', ← WithZero.exp_zero (M := ℤ),
     WithZero.exp_lt_exp]
   omega
-
-/-- **The valuation of a place finite on an affine model is the adic valuation of its centre.**
-This is the exact, not merely up-to-equivalence, form of the correspondence between places and
-height one primes. -/
-@[simp]
-theorem valuation_center : (P.center hR).valuation F = P.valuation :=
-  Valuation.valuation_heightOneSpectrum _ _
 
 /-- A height one prime whose adic valuation is that of `P` is the centre of `P`. -/
 theorem eq_center {𝔭 : HeightOneSpectrum R} (h : 𝔭.valuation F = P.valuation) :

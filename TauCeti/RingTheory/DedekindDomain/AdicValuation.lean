@@ -41,10 +41,10 @@ Mathlib's `IsDedekindDomain.HeightOneSpectrum.exists_primeCompl_mul_eq_or_mul_eq
 arbitrary element of `K` as a fraction with denominator outside `𝔭`, in one of the two possible
 directions.
 
-`Valuation.centerIdeal` and `Valuation.heightOneSpectrum` are `@[expose]`d, and only they are:
-their characterization lemmas `Valuation.mem_centerIdeal` and
-`Valuation.asIdeal_heightOneSpectrum` hold by `rfl`, and the proof term of an exported theorem may
-unfold only exposed definitions.
+`Valuation.centerIdeal` and `Valuation.heightOneSpectrum` keep their bodies unexposed; the
+characterization lemmas `Valuation.mem_centerIdeal` and `Valuation.asIdeal_heightOneSpectrum` are
+the interface, and their proofs are parenthesized (`(rfl)`, `(Iff.rfl)`) so that they are not
+inferred to be `@[defeq]`, which would require the bodies to be exposed.
 -/
 
 public section
@@ -62,10 +62,9 @@ section CenterIdeal
 
 variable (R) in
 /-- The **centre** on `R` of a valuation `w` of `K` whose valuation ring contains `R`: the ideal
-of elements of `R` of positive valuation. It is prime (`Valuation.centerIdeal_isPrime`), and it is
+of elements of `R` of positive valuation. It is prime (`Valuation.isPrime_centerIdeal`), and it is
 nonzero as soon as `w` is nontrivial and `K` is the fraction field of `R`
 (`Valuation.centerIdeal_ne_bot`). -/
-@[expose]
 def centerIdeal (w : _root_.Valuation K ℤᵐ⁰) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     Ideal R where
   carrier := {r : R | w (algebraMap R K r) < 1}
@@ -83,7 +82,7 @@ def centerIdeal (w : _root_.Valuation K ℤᵐ⁰) (hR : ∀ r : R, w (algebraMa
 
 @[simp]
 theorem mem_centerIdeal {r : R} {hR : ∀ r : R, w (algebraMap R K r) ≤ 1} :
-    r ∈ centerIdeal R w hR ↔ w (algebraMap R K r) < 1 := Iff.rfl
+    r ∈ centerIdeal R w hR ↔ w (algebraMap R K r) < 1 := (Iff.rfl)
 
 /-- Off its centre, a valuation bounded by `1` on `R` takes the value `1`. -/
 theorem eq_one_of_notMem_centerIdeal {r : R} (hR : ∀ r : R, w (algebraMap R K r) ≤ 1)
@@ -92,7 +91,7 @@ theorem eq_one_of_notMem_centerIdeal {r : R} (hR : ∀ r : R, w (algebraMap R K 
 
 /-- The centre of a valuation bounded by `1` on `R` is a prime ideal of `R`: off the centre the
 valuation takes the value `1`, so a product of two elements off the centre again has value `1`. -/
-theorem centerIdeal_isPrime (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
+theorem isPrime_centerIdeal (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     (centerIdeal R w hR).IsPrime := by
   refine Ideal.isPrime_iff.mpr ⟨fun h ↦ ?_, fun {a b} hab ↦ ?_⟩
   · have h1 : w (algebraMap R K (1 : R)) < 1 := mem_centerIdeal.mp (h ▸ Submodule.mem_top)
@@ -182,17 +181,16 @@ variable (R) in
 /-- The height one prime of `R` at which a normalized valuation of `K` bounded by `1` on `R` is
 centred. Its adic valuation is `w` itself (`Valuation.valuation_heightOneSpectrum`), and it is the
 only height one prime with that property (`Valuation.eq_heightOneSpectrum`). -/
-@[expose]
 def heightOneSpectrum (w : _root_.Valuation K ℤᵐ⁰) (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : HeightOneSpectrum R where
   asIdeal := centerIdeal R w hR
-  isPrime := centerIdeal_isPrime hR
+  isPrime := isPrime_centerIdeal hR
   ne_bot := centerIdeal_ne_bot hw hR
 
 @[simp]
 theorem asIdeal_heightOneSpectrum (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
-    (heightOneSpectrum R w hw hR).asIdeal = centerIdeal R w hR := rfl
+    (heightOneSpectrum R w hw hR).asIdeal = centerIdeal R w hR := (rfl)
 
 /-- **The adic valuation of the centre of `w` on `R` is `w` itself**: a normalized valuation of the
 fraction field of a Dedekind domain whose valuation ring contains that domain is adic. -/
@@ -200,7 +198,8 @@ fraction field of a Dedekind domain whose valuation ring contains that domain is
 theorem valuation_heightOneSpectrum (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     (heightOneSpectrum R w hw hR).valuation K = w :=
-  eq_valuation_of_forall_mem_asIdeal_iff hw hR fun _ ↦ Iff.rfl
+  eq_valuation_of_forall_mem_asIdeal_iff hw hR fun _ ↦ by
+    rw [asIdeal_heightOneSpectrum, mem_centerIdeal]
 
 /-- A height one prime whose adic valuation is `w` is the centre of `w`. -/
 theorem eq_heightOneSpectrum {𝔮 : HeightOneSpectrum R} (hw : Function.Surjective w)
