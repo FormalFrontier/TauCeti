@@ -265,6 +265,17 @@ theorem ratFuncEquiv_none : ratFuncEquiv k none = infty k := (rfl)
 theorem ratFuncEquiv_some (p : HeightOneSpectrum (k[X])) :
     ratFuncEquiv k (some p) = adic k (RatFunc k) p := (rfl)
 
+@[simp]
+theorem ratFuncEquiv_symm_infty : (ratFuncEquiv k).symm (infty k) = none := by
+  apply (ratFuncEquiv k).injective
+  simp
+
+@[simp]
+theorem ratFuncEquiv_symm_adic (p : HeightOneSpectrum (k[X])) :
+    (ratFuncEquiv k).symm (adic k (RatFunc k) p) = some p := by
+  apply (ratFuncEquiv k).injective
+  simp
+
 end Place
 
 end TauCeti
