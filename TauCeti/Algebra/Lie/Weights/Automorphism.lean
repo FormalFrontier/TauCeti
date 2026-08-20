@@ -13,8 +13,8 @@ public import TauCeti.Algebra.Lie.Weights.Sl2System
 # Automorphisms normalising a Cartan subalgebra
 
 Let `σ` be an automorphism of a Lie algebra `L` which normalises a nilpotent subalgebra `H`, in
-the sense that `H.map σ = H`. Then `σ` restricts to an automorphism `σ|H` of `H`
-(`TauCeti.restrictAut`), and it carries the root space of `χ : H → R` onto the root space of
+the sense that `H.map σ = H`. Then Mathlib's `LieEquiv.ofSubalgebras` restricts `σ` to an
+automorphism `σ|H` of `H`, and it carries the root space of `χ : H → R` onto the root space of
 `χ ∘ (σ|H)⁻¹`: root-space membership is the condition `∀ y, ∃ k, ((ad y - χ y) ^ k) z = 0`, and it
 is transported by rewriting `y` as `σ (σ⁻¹ y)`. So `σ` permutes the weights, and in the Killing
 setting it also transports the `sl₂` data attached to a root, sending the coroot of `α` to the
@@ -77,24 +77,24 @@ omit [LieRing.IsNilpotent H] in
 /-- A normalising automorphism intertwines the two `H`-endomorphisms cutting out the root spaces of
 `χ` and of `χ ∘ (σ|H)⁻¹`. -/
 private theorem comp_sub_smul_one (χ : H → R) (y : H) :
-    (toEnd R H L y - (χ ∘ (restrictAut σ hσ).symm) y • (1 : Module.End R L)) ∘ₗ
+    (toEnd R H L y - (χ ∘ (σ.ofSubalgebras H H hσ).symm) y • (1 : Module.End R L)) ∘ₗ
         (σ.toLinearEquiv : L →ₗ[R] L) =
       (σ.toLinearEquiv : L →ₗ[R] L) ∘ₗ
-        (toEnd R H L ((restrictAut σ hσ).symm y) -
-          χ ((restrictAut σ hσ).symm y) • (1 : Module.End R L)) := by
+        (toEnd R H L ((σ.ofSubalgebras H H hσ).symm y) -
+          χ ((σ.ofSubalgebras H H hσ).symm y) • (1 : Module.End R L)) := by
   ext z
-  have hy : ⁅y, σ z⁆ = σ ⁅(restrictAut σ hσ).symm y, z⁆ := by
+  have hy : ⁅y, σ z⁆ = σ ⁅(σ.ofSubalgebras H H hσ).symm y, z⁆ := by
     rw [LieSubalgebra.coe_bracket_of_module, LieSubalgebra.coe_bracket_of_module, σ.map_lie,
-      coe_restrictAut_symm_apply, LieEquiv.apply_symm_apply]
+      LieEquiv.ofSubalgebras_symm_apply, LieEquiv.apply_symm_apply]
   simp [hy]
 
 /-- A normalising automorphism carries the root space of `χ` into the root space of the weight
 `χ ∘ (σ|H)⁻¹` obtained by precomposing with the inverse of its restriction. -/
 theorem map_mem_rootSpace {χ : H → R} {z : L} (hz : z ∈ rootSpace H χ) :
-    σ z ∈ rootSpace H (χ ∘ (restrictAut σ hσ).symm) := by
+    σ z ∈ rootSpace H (χ ∘ (σ.ofSubalgebras H H hσ).symm) := by
   rw [rootSpace, mem_genWeightSpace] at hz ⊢
   intro y
-  obtain ⟨k, hk⟩ := hz ((restrictAut σ hσ).symm y)
+  obtain ⟨k, hk⟩ := hz ((σ.ofSubalgebras H H hσ).symm y)
   refine ⟨k, ?_⟩
   simpa [hk] using LinearMap.congr_fun
     (Module.End.commute_pow_left_of_commute (comp_sub_smul_one σ hσ χ y) k) z
@@ -104,25 +104,26 @@ theorem map_mem_rootSpace {χ : H → R} {z : L} (hz : z ∈ rootSpace H χ) :
 back into the first. -/
 theorem map_rootSpace_eq (χ : H → R) :
     (rootSpace H χ).toSubmodule.map (σ.toLinearEquiv : L →ₗ[R] L) =
-      (rootSpace H (χ ∘ (restrictAut σ hσ).symm)).toSubmodule := by
+      (rootSpace H (χ ∘ (σ.ofSubalgebras H H hσ).symm)).toSubmodule := by
   ext w
   simp only [Submodule.mem_map, LieSubmodule.mem_toSubmodule]
   refine ⟨?_, fun hw => ⟨σ.symm w, ?_, by simp⟩⟩
   · rintro ⟨z, hz, rfl⟩
     exact map_mem_rootSpace σ hσ hz
-  · have hcomp : (χ ∘ (restrictAut σ hσ).symm) ∘
-        (restrictAut σ.symm (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ)).symm = χ :=
+  · have hcomp : (χ ∘ (σ.ofSubalgebras H H hσ).symm) ∘
+        (σ.symm.ofSubalgebras H H
+          (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ)).symm = χ :=
       funext fun y => congrArg χ (Subtype.ext (by simp))
     have h := map_mem_rootSpace σ.symm
       (LieSubalgebra.map_symm_eq_self_of_map_eq_self σ hσ) hw
     rwa [hcomp] at h
 
 /-- The root space of `χ ∘ (σ|H)⁻¹` is nonzero whenever the root space of `χ` is. -/
-private theorem genWeightSpace_comp_restrictAut_symm_ne_bot (χ : Weight R H L) :
-    genWeightSpace L ((χ : H → R) ∘ (restrictAut σ hσ).symm) ≠ ⊥ := by
+private theorem genWeightSpace_comp_ofSubalgebras_symm_ne_bot (χ : Weight R H L) :
+    genWeightSpace L ((χ : H → R) ∘ (σ.ofSubalgebras H H hσ).symm) ≠ ⊥ := by
   obtain ⟨z, hz, hz₀⟩ := χ.exists_ne_zero
   intro hbot
-  have hmem : σ z ∈ genWeightSpace L ((χ : H → R) ∘ (restrictAut σ hσ).symm) :=
+  have hmem : σ z ∈ genWeightSpace L ((χ : H → R) ∘ (σ.ofSubalgebras H H hσ).symm) :=
     map_mem_rootSpace σ hσ hz
   rw [hbot, LieSubmodule.mem_bot] at hmem
   exact hz₀ (by simpa using congrArg σ.symm hmem)
@@ -130,11 +131,8 @@ private theorem genWeightSpace_comp_restrictAut_symm_ne_bot (χ : Weight R H L) 
 /-- The weight of `H` acting on `L` obtained from `χ` by precomposing with the inverse of the
 restriction of a normalising automorphism. -/
 private def weightMap (χ : Weight R H L) : Weight R H L :=
-  ⟨(χ : H → R) ∘ (restrictAut σ hσ).symm, genWeightSpace_comp_restrictAut_symm_ne_bot σ hσ χ⟩
-
-@[simp]
-private theorem coe_weightMap (χ : Weight R H L) :
-    (weightMap σ hσ χ : H → R) = (χ : H → R) ∘ (restrictAut σ hσ).symm := rfl
+  ⟨(χ : H → R) ∘ (σ.ofSubalgebras H H hσ).symm,
+    genWeightSpace_comp_ofSubalgebras_symm_ne_bot σ hσ χ⟩
 
 end RootSpace
 
@@ -161,11 +159,12 @@ def weightPerm : Equiv.Perm (Weight R H L) where
 
 @[simp]
 theorem coe_weightPerm (χ : Weight R H L) :
-    (weightPerm σ hσ χ : H → R) = (χ : H → R) ∘ (restrictAut σ hσ).symm := (rfl)
+    (weightPerm σ hσ χ : H → R) =
+      (χ : H → R) ∘ (σ.ofSubalgebras H H hσ).symm := (rfl)
 
 @[simp]
 theorem weightPerm_apply_apply (χ : Weight R H L) (y : H) :
-    weightPerm σ hσ χ y = χ ((restrictAut σ hσ).symm y) := (rfl)
+    weightPerm σ hσ χ y = χ ((σ.ofSubalgebras H H hσ).symm y) := (rfl)
 
 /-- The inverse of the induced permutation is the permutation induced by the inverse
 automorphism. -/
@@ -178,12 +177,13 @@ theorem weightPerm_symm :
 itself. -/
 @[simp]
 theorem coe_weightPerm_symm (χ : Weight R H L) :
-    ((weightPerm σ hσ).symm χ : H → R) = (χ : H → R) ∘ restrictAut σ hσ :=
+    ((weightPerm σ hσ).symm χ : H → R) =
+      (χ : H → R) ∘ σ.ofSubalgebras H H hσ :=
   funext fun y => congrArg (χ : H → R) (Subtype.ext (by simp))
 
 @[simp]
 theorem weightPerm_symm_apply_apply (χ : Weight R H L) (y : H) :
-    (weightPerm σ hσ).symm χ y = χ (restrictAut σ hσ y) :=
+    (weightPerm σ hσ).symm χ y = χ (σ.ofSubalgebras H H hσ y) :=
   congrArg (χ : H → R) (Subtype.ext (by simp))
 
 /-- A normalising automorphism carries the root space of a weight into the root space of its
@@ -209,10 +209,10 @@ theorem weightPerm_isZero_iff {χ : Weight R H L} :
   constructor
   · intro h
     funext y
-    simpa using congrFun h (restrictAut σ hσ y)
+    simpa using congrFun h (σ.ofSubalgebras H H hσ y)
   · intro h
     funext y
-    simpa using congrFun h ((restrictAut σ hσ).symm y)
+    simpa using congrFun h ((σ.ofSubalgebras H H hσ).symm y)
 
 /-- A weight is zero exactly when its preimage under the induced permutation is. -/
 @[simp]
