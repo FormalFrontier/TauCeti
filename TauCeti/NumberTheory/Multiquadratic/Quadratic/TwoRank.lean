@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrimeProduct
+public import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Independence
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Ambiguous.Ideal
 import Mathlib.NumberTheory.NumberField.ClassNumber
 

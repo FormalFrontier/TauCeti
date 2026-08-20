@@ -51,6 +51,8 @@ x² + ny²*, Chapter 3, and F. Lemmermeyer, *Reciprocity Laws*, Chapter 6.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.mem_ramifiedPrimes_of_mem_primeFactors`: a prime factor of the radicand
+  ramifies.
 * `TauCeti.Multiquadratic.span_singleton_eq_prod_primeFactors`: `(θ) = ∏_{p ∣ d} 𝔭_p`.
 * `TauCeti.Multiquadratic.exists_span_singleton_eq_prod_primeFactors`: a family of primes above
   the prime factors of `d` exists and satisfies this identity.
@@ -82,7 +84,7 @@ private theorem dvd_fundamentalDiscriminant_of_mem_primeFactors {p : ℕ}
     (Int.natAbs_dvd.mpr dvd_rfl)
 
 /-- A prime factor of the radicand is a ramified prime of `ℚ(√d)`. -/
-private theorem mem_ramifiedPrimes_of_mem_primeFactors (hmin : minpoly ℤ θ = X ^ 2 - C d)
+theorem mem_ramifiedPrimes_of_mem_primeFactors (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) {p : ℕ}
     (hp : p ∈ d.natAbs.primeFactors) : p ∈ ramifiedPrimes K :=
   (mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf
