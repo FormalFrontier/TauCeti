@@ -93,6 +93,14 @@ noncomputable abbrev coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
   FiniteTypeCommHopfAlgCat.ofHom
     (MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ))
 
+/-- The bialgebra morphism underlying `coordinateMap φ` is the group-algebra map induced
+by the underlying group homomorphism. -/
+@[simp]
+theorem toBialgHom_coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
+    FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ) =
+      MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ) :=
+  rfl
+
 /-- The map on algebra-valued points induced by a diagonalizable-group coordinate morphism is
 the contravariant point map given by precomposition of characters. -/
 -- Not `@[simp]`: simplification unfolds `coordinateMap` on the left before this lemma can apply.
@@ -101,15 +109,9 @@ theorem mapPointsFunctor_coordinateMap_app {G H : FGCommGrpCat.{v}} (φ : G ⟶ 
     (p : HopfAlgebra.points (R := R) (H := MonoidAlgebra R H) A) :
     (CommHopfAlgCat.mapPointsFunctor (coordinateMap R φ).hom).app A p =
       pointsMap (FGCommGrpCat.toMonoidHom φ) p := by
-  rfl
-
-/-- The bialgebra morphism underlying `coordinateMap φ` is the group-algebra map induced
-by the underlying group homomorphism. -/
-@[simp]
-theorem toBialgHom_coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
-    FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ) =
-      MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ) :=
-  rfl
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply, pointsMap_apply]
+  exact congrArg (fun f => WithConv.toConv (p.ofConv.comp f))
+    (congrArg BialgHom.toAlgHom (toBialgHom_coordinateMap R φ))
 
 /-- The coordinate map sends a group-algebra basis element to the basis element indexed
 by its image under the underlying group homomorphism.

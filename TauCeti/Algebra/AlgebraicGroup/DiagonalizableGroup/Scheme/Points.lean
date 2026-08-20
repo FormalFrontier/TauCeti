@@ -181,8 +181,9 @@ lemma groupSchemePointsMulEquiv_symm_apply_left (G : FGCommGrpCat.{u})
       Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
         eqToHom (groupScheme_X_left R G).symm := by
   apply (cancel_mono (eqToHom (groupScheme_X_left R G))).1
-  rw [groupSchemePointsMulEquiv_apply_left_comp, MulEquiv.apply_symm_apply]
-  -- `Spec.mapMulEquiv` has no rewrite lemma exposing the underlying scheme morphism.
+  rw [groupSchemePointsMulEquiv_apply_left_comp, MulEquiv.apply_symm_apply,
+    CommHopfAlgCat.mapMulEquiv_left]
+  -- Normalize the `Over.left` source and the proof-irrelevant equality witnesses.
   change Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) =
     (Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
       eqToHom (groupScheme_X_left R G).symm) ≫ eqToHom (groupScheme_X_left R G)

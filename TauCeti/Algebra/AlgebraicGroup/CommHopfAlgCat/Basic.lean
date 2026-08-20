@@ -133,7 +133,7 @@ lemma mapPointsFunctor_comp_app_apply {H K L : CommHopfAlgCat.{v} R}
     (mapPointsFunctor (φ ≫ ψ)).app A f =
       (mapPointsFunctor φ).app A ((mapPointsFunctor ψ).app A f) := by
   rw [mapPointsFunctor_comp, NatTrans.comp_app]
-  rfl
+  exact GrpCat.comp_apply ((mapPointsFunctor ψ).app A) ((mapPointsFunctor φ).app A) f
 
 /-- The contravariant functor assigning to a commutative Hopf algebra its group-valued
 functor of points.

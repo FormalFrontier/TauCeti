@@ -151,20 +151,23 @@ theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
         (SplitTorus.pointsMulEquiv
           (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p)) i =
       torusCharacter (SplitTorus.pointsMulEquiv p) (wt i) := by
-  rw [diagonalTorusCoordinates_apply]
-  apply Units.ext
-  rw [SplitTorus.pointsMulEquiv_apply_coe]
-  simp only [DiagonalizableGroup.pointsMap_apply, AlgHom.coe_comp, BialgHom.coe_toAlgHom,
-    Function.comp_apply, MonoidAlgebra.mapDomainBialgHom_single]
-  rw [weightCharacterMap_ofAdd_single, ← DiagonalizableGroup.charOfPoint_apply_coe]
+  rw [diagonalTorusCoordinates_apply,
+    SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv,
+    DiagonalizableGroup.pointsMulEquiv_pointsMap, freeAbelianCharEquiv_apply,
+    MonoidHom.comp_apply, weightCharacterMap_ofAdd_single]
   have hweight : Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)) =
-      SplitTorus.weightCharacter (wt i) := (SplitTorus.weightCharacter_def (wt i)).symm
-  rw [hweight]
-  rw [SplitTorus.charOfPoint_weightCharacter]
+      SplitTorus.weightCharacter (wt i) := by
+    apply Multiplicative.toAdd.injective
+    ext j
+    simp
+  rw [hweight, SplitTorus.apply_weightCharacter,
+    ← SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv]
 
 end PointsFunctor
 
 variable {A : Type u} [CommRing A] [Algebra R A]
+
+section Finite
 
 variable [Finite κ]
 
@@ -192,6 +195,8 @@ private lemma groupSchemePointMulEquiv_comp_weightTorus (wt : Fin N → κ → �
         (R := R) (A := A) (SplitTorus.characterGroup κ)
     _ = _ := congrArg (groupSchemePointMulEquiv N A)
       (mapPointsFunctor_weightTorusCoordinateMap_app wt (CommAlgCat.of R A) q)
+
+end Finite
 
 variable [Fintype κ]
 
