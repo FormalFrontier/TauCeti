@@ -111,7 +111,7 @@ variable {I : ModelWithCorners 𝕂 E H} {J : ModelWithCorners 𝕂 F G}
   {n : WithTop ℕ∞}
 
 /-- The source of a composition of partial diffeomorphisms. -/
-theorem PartialDiffeomorph.trans_source (Φ : PartialDiffeomorph I J M N n)
+theorem _root_.PartialDiffeomorph.trans_source (Φ : PartialDiffeomorph I J M N n)
     (Ψ : PartialDiffeomorph J K N P n) :
     (Φ.trans Ψ).source = Φ.source ∩ Φ ⁻¹' Ψ.source := by
   rw [PartialDiffeomorph.trans_toPartialEquiv]
