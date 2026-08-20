@@ -46,7 +46,8 @@ coordinate matching in the proofs is an explicit rewrite rather than a silent un
   triangle density;
 * `integrable_prod_edgeFactor_fin_two`, `integrable_prod_edgeFactor_fin_three` — integrability of
   the transported integrand, again for an arbitrary graph;
-* `integrable_triangle_integrand` — the same for the expanded triangle integrand.
+* `integrable_edge_integrand`, `integrable_triangle_integrand` — the same for the two expanded
+  integrands, so a consumer of either iterated form has the hypothesis `integral_prod` needs.
 
 ## References
 
@@ -166,6 +167,12 @@ private theorem prod_edgeFactor_top_fin_three (W : Graphon Ω μ) (p : Ω × Ω 
     Matrix.cons_val_two, Matrix.tail_cons]
   ring
 
+/-- The edge integrand is integrable, by transport from `integrable_prod_edgeFactor_fin_two`. -/
+theorem integrable_edge_integrand (W : Graphon Ω μ) :
+    Integrable (fun p : Ω × Ω => W p.1 p.2) (μ.prod μ) :=
+  (integrable_prod_edgeFactor_fin_two ⊤ W).congr
+    (ae_of_all _ fun p => prod_edgeFactor_top_fin_two W p)
+
 /-- The triangle integrand is integrable, by transport from
 `integrable_prod_edgeFactor_fin_three`. -/
 theorem integrable_triangle_integrand (W : Graphon Ω μ) :
@@ -184,10 +191,7 @@ theorem homDensity_top_fin_two (W : Graphon Ω μ) :
 /-- The edge density as an iterated integral. -/
 theorem homDensity_top_fin_two_eq_integral_integral (W : Graphon Ω μ) :
     homDensity (⊤ : SimpleGraph (Fin 2)) W = ∫ x, ∫ y, W x y ∂μ ∂μ := by
-  have hint : Integrable (fun p : Ω × Ω => W p.1 p.2) (μ.prod μ) :=
-    (integrable_prod_edgeFactor_fin_two ⊤ W).congr
-      (ae_of_all _ fun p => prod_edgeFactor_top_fin_two W p)
-  rw [homDensity_top_fin_two, integral_prod _ hint]
+  rw [homDensity_top_fin_two, integral_prod _ (integrable_edge_integrand W)]
 
 /-- **The triangle density.**  The homomorphism density of `K₃` is the integral of the product of
 the graphon over the three edges of a triple of points. -/
