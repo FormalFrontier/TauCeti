@@ -12,9 +12,8 @@ public import TauCeti.Algebra.Lie.Weights.Root.IntegralLattice
 
 The Chevalley--Demazure construction starts from the integral lattice spanned by a normalized
 family of root vectors and by the coroots. A symmetry of the pinned Lie algebra does not usually
-fix those generators pointwise: it permutes the roots, carries each coroot to the corresponding
-coroot, and can change a root vector by a sign. This file proves that these equations preserve the
-integral root--coroot span exactly.
+fix those generators pointwise: it permutes the roots and can change both root vectors and coroots
+by signs. This file proves that these equations preserve the integral root--coroot span exactly.
 
 The result is first stated at the natural module-theoretic level for an arbitrary family of root
 vectors. It is then specialized to the Lie lattice of a Chevalley system, where the restriction is
@@ -30,7 +29,7 @@ lattice.
 ## Main declarations
 
 * `TauCeti.map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg`: a signed permutation of the root
-  vectors, compatible with the coroots, preserves the integral root--coroot span.
+  vectors and coroots preserves the integral root--coroot span.
 * `TauCeti.rootCorootSpanEquiv`: the resulting integral linear automorphism.
 * `TauCeti.IsChevalleySystem.chevalleyLieLatticeEquiv`: its restriction to the Chevalley Lie
   lattice as an integral Lie algebra automorphism.
@@ -62,12 +61,13 @@ section RootCorootSpan
 
 variable {x : Weight K H L → L} (g : L ≃ₗ[K] L) (σ : Equiv.Perm (Weight K H L))
 variable (hroot : ∀ α, g (x α) = x (σ α) ∨ g (x α) = -x (σ α))
-variable (hcoroot : ∀ α, g (coroot α : L) = (coroot (σ α) : L))
+variable (hcoroot : ∀ α, g (coroot α : L) = (coroot (σ α) : L) ∨
+  g (coroot α : L) = -(coroot (σ α) : L))
 
 include σ hroot hcoroot
 
-/-- **A signed permutation of the root vectors which carries coroots along the same root
-permutation preserves the integral root--coroot span.**
+/-- **A signed permutation of the root vectors and coroots along the same root permutation
+preserves the integral root--coroot span.**
 
 Both inclusions are recorded: the forward one uses closure under negation, while the reverse one
 uses preimages under `σ` and changes the sign of the source vector when necessary. Thus this is an
@@ -86,9 +86,12 @@ theorem map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg :
       · rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, h]
         exact (rootCorootSpan x).neg_mem (rootVector_mem_rootCorootSpan x (σ α))
     · intro α
-      rw [Submodule.mem_comap, LinearEquiv.coe_toLinearMap,
-        LinearEquiv.restrictScalars_apply, hcoroot α]
-      exact coroot_mem_rootCorootSpan x (σ α)
+      rw [Submodule.mem_comap]
+      rcases hcoroot α with h | h
+      · rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, h]
+        exact coroot_mem_rootCorootSpan x (σ α)
+      · rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, h]
+        exact (rootCorootSpan x).neg_mem (coroot_mem_rootCorootSpan x (σ α))
   · rw [rootCorootSpan_le_iff]
     constructor
     · intro β
@@ -101,9 +104,14 @@ theorem map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg :
         rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, map_neg, h,
           σ.apply_symm_apply, neg_neg]
     · intro β
-      refine ⟨(coroot (σ.symm β) : L), coroot_mem_rootCorootSpan x _, ?_⟩
-      rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, hcoroot,
-        σ.apply_symm_apply]
+      rcases hcoroot (σ.symm β) with h | h
+      · refine ⟨(coroot (σ.symm β) : L), coroot_mem_rootCorootSpan x _, ?_⟩
+        rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, h,
+          σ.apply_symm_apply]
+      · refine ⟨-(coroot (σ.symm β) : L), (rootCorootSpan x).neg_mem
+          (coroot_mem_rootCorootSpan x _), ?_⟩
+        rw [LinearEquiv.coe_toLinearMap, LinearEquiv.restrictScalars_apply, map_neg, h,
+          σ.apply_symm_apply, neg_neg]
 
 /-- Membership in the root--coroot span is invariant under a compatible signed root
 permutation. This is the form used when an ambient automorphism must be shown to preserve an
@@ -162,7 +170,8 @@ variable [CharZero K] [LieModule.IsTriangularizable K H L]
 variable {ω : L ≃ₗ⁅K⁆ L} {x : Weight K H L → L} (hx : IsChevalleySystem ω x)
 variable (g : L ≃ₗ⁅K⁆ L) (σ : Equiv.Perm (Weight K H L))
 variable (hroot : ∀ α, g (x α) = x (σ α) ∨ g (x α) = -x (σ α))
-variable (hcoroot : ∀ α, g (coroot α : L) = (coroot (σ α) : L))
+variable (hcoroot : ∀ α, g (coroot α : L) = (coroot (σ α) : L) ∨
+  g (coroot α : L) = -(coroot (σ α) : L))
 
 include hx σ hroot hcoroot
 
@@ -211,7 +220,10 @@ automorphism on underlying vectors. -/
 @[simp]
 theorem coe_chevalleyLieLatticeEquiv_symm_apply (z : hx.chevalleyLieLattice) :
     ((hx.chevalleyLieLatticeEquiv g σ hroot hcoroot).symm z : L) = g.symm z := by
-  rfl
+  apply g.injective
+  simp only [LieEquiv.coe_toLieHom]
+  rw [g.apply_symm_apply, ← hx.coe_chevalleyLieLatticeEquiv_apply g σ hroot hcoroot,
+    LieEquiv.apply_symm_apply]
 
 end IsChevalleySystem
 
