@@ -8,7 +8,6 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Points
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
 
 /-!
 # Points of the toral Kostant closure
