@@ -161,7 +161,8 @@ theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
       (SplitTorus.groupScheme ℤ κ).X)
     (u : A) :
     (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom) *
-        ((AdditiveGroup.schemePointsMulEquiv A).symm (Multiplicative.ofAdd u) ≫
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm (Multiplicative.ofAdd u)) ≫
           (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) *
         (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom)⁻¹ =
       (AdditiveGroup.schemePointsMulEquiv A).symm
