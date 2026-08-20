@@ -70,8 +70,8 @@ that composes to zero is already zero.
   so an action of it that composes to zero is zero.
 * `IsSl2Triple.eq_two_of_lie_h_e_eq_smul`: the raising eigenvalue of an `sl₂` triple is
   forced to be two in a torsion-free module.
-* `TauCeti.isSl2Triple_smulUnits`: rescaling the raising element by a unit and the lowering
-  element by its inverse preserves an `sl₂` triple.
+* `IsSl2Triple.rescale`: rescaling the raising element by a unit and the lowering element by its
+  inverse preserves an `sl₂` triple.
 
 ## Implementation notes
 
@@ -118,8 +118,8 @@ theorem _root_.IsSl2Triple.eq_two_of_lie_h_e_eq_smul {S H : Type*} [CommRing S] 
 
 /-- **Rescaling an `sl₂` triple by a unit of the base ring.** Scaling the raising element by `c`
 and the lowering element by `c⁻¹` leaves their bracket, hence the Cartan element, unchanged. -/
-theorem isSl2Triple_smulUnits {S A : Type*} [CommRing S] [Ring A] [Algebra S A]
-    {h e f : A} (t : IsSl2Triple h e f) (c : Sˣ) :
+theorem _root_.IsSl2Triple.rescale {S L : Type*} [CommRing S] [LieRing L] [LieAlgebra S L]
+    {h e f : L} (t : IsSl2Triple h e f) (c : Sˣ) :
     IsSl2Triple h ((c : S) • e) (((c⁻¹ : Sˣ) : S) • f) where
   h_ne_zero := t.h_ne_zero
   lie_e_f := by
