@@ -128,6 +128,8 @@ theorem zeroExtend_ne_const_one (f : IdealArithmeticFunction K) :
   intro h
   simpa using congrFun h ⊥
 
+/-- The constant-one function on nonzero ideals extends to the indicator of ideals unequal to
+`⊥`. -/
 theorem zeroExtend_one_apply (I : Ideal (𝓞 K)) :
     (1 : IdealArithmeticFunction K).zeroExtend I = if I = ⊥ then 0 else 1 := by
   rcases eq_or_ne I ⊥ with rfl | hI

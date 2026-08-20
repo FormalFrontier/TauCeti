@@ -374,6 +374,7 @@ theorem normTwist_zero (χ : MultiplicativeIdealWeight K) : normTwist 0 χ = χ 
   ext I
   simp
 
+/-- Successive norm twists combine by adding their parameters. -/
 theorem normTwist_normTwist (z w : ℂ) (χ : MultiplicativeIdealWeight K) :
     normTwist z (normTwist w χ) = normTwist (z + w) χ := by
   ext I

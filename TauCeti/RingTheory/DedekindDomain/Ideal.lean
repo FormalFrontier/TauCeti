@@ -95,6 +95,7 @@ theorem isPrimeTo_mul_iff : IsPrimeTo (I * J) S ↔ IsPrimeTo I S ∧ IsPrimeTo 
   · exact hI.2 𝔭 h𝔭 h
   · exact hJ.2 𝔭 h𝔭 h
 
+/-- A height-one prime ideal is prime to `S` exactly when its spectrum point is not in `S`. -/
 @[simp]
 theorem isPrimeTo_asIdeal_iff {𝔭 : HeightOneSpectrum R} :
     IsPrimeTo 𝔭.asIdeal S ↔ 𝔭 ∉ S := by
