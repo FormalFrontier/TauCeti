@@ -145,7 +145,7 @@ theorem intCast_rootCartanWeight_apply (α β : Weight K H L) :
 
 /-- The coroot family vanishes at the zero weight, which is why indexing it by all weights rather
 than by the roots costs nothing. -/
-theorem corootFamily_eq_zero_of_isZero {α : Weight K H L} (hα : α.IsZero) :
+@[simp] theorem corootFamily_eq_zero_of_isZero {α : Weight K H L} (hα : α.IsZero) :
     corootFamily H α = 0 := by
   rw [corootFamily_apply, coroot_eq_zero_iff.2 hα, ZeroMemClass.coe_zero]
 
