@@ -509,6 +509,35 @@ class Upstream:
         self.calls += 1
         return _gh(f"repos/{REPO}/git/tags/{sha}", jq=".object.sha").strip()
 
+    def release_branch_shape(self, head):
+        """(ok, why-not) for the structural half of a release commit.
+
+        Matching pins is not the whole shape: a commit that also carries source changes
+        would otherwise be nominated as a permanent tag target. This is the same property
+        `scripts/check-release-commit.sh` establishes before anything is built, checked here
+        too so the audit does not name a commit the release workflow will refuse. Kept to
+        one request: the compare endpoint answers both questions."""
+        self.calls += 1
+        try:
+            raw = _gh(f"repos/{REPO}/compare/main...{head}",
+                      jq='[(.status), (.ahead_by|tostring), '
+                         '([.files[]? | .filename + ":" + .status] | join(","))] | @tsv')
+        except RuntimeError as exc:
+            return None, f"could not compare it with main ({exc})"
+        status, ahead, files = (raw.strip().split("\t") + ["", "", ""])[:3]
+        if status not in ("ahead", "diverged"):
+            return False, f"compares {status!r} with main, so it is not one commit off it"
+        if ahead != "1":
+            return False, f"is {ahead} commits ahead of main; a release commit is exactly one"
+        changed = [f for f in files.split(",") if f]
+        if not changed or len(changed) > len(PIN_FILES):
+            return False, f"changes {len(changed)} files; a release commit changes only the pins"
+        for entry in changed:
+            name, _, state = entry.rpartition(":")
+            if name not in PIN_FILES or state != "modified":
+                return False, f"changes {name or entry!r}, which is outside the two Lake pins"
+        return True, None
+
     def repo_pin_at(self, sha):
         """(toolchain, mathlib rev) at a commit of THIS repository, read through the
         API rather than git: a tag's target may be a release-branch commit that a
@@ -792,11 +821,18 @@ def _target_of(segments, release, mathlib_rev, up):
         # ancestor, only the pin files changed) before anything is built from it.
         try:
             toolchain, pin = up.repo_pin_at(head)
-        except RuntimeError:
-            toolchain, pin = None, None
-        if toolchain == toolchain_for(release) and pin == mathlib_rev:
-            return head, "release-branch", True, None, "release-branch"
-        return None, "release-branch", True, None, "release-branch-invalid"
+        except RuntimeError as exc:
+            # Unreadable is not wrong. Telling someone to re-cut a branch because the API
+            # blinked is worse advice than saying the state could not be read.
+            return None, "release-branch", True, None, f"release-branch-unreadable:{exc}"
+        if toolchain != toolchain_for(release) or pin != mathlib_rev:
+            return None, "release-branch", True, None, "release-branch-invalid"
+        shaped, why = up.release_branch_shape(head)
+        if shaped is None:
+            return None, "release-branch", True, None, f"release-branch-unreadable:{why}"
+        if not shaped:
+            return None, "release-branch", True, None, f"release-branch-misshapen:{why}"
+        return head, "release-branch", True, None, "release-branch"
 
     base, rule = resolve_base(segments, release, mathlib_rev, up)
     if base is not None:
@@ -813,7 +849,8 @@ def _target_of(segments, release, mathlib_rev, up):
     return None, None, True, None, rule
 
 
-def _tag_is_valid(tag_sha, release, mathlib_rev, up, target=None, target_exact=True):
+def _tag_is_valid(tag_sha, release, mathlib_rev, up, target=None, target_exact=True,
+                  target_kind=None):
     """(ok, why-not, exact) for a tag that already exists.
 
     Rung-aware, and it checks WHICH commit, not merely a plausible one. An earlier version
@@ -826,7 +863,10 @@ def _tag_is_valid(tag_sha, release, mathlib_rev, up, target=None, target_exact=T
     want = toolchain_for(release)
     if toolchain != want:
         return False, f"is on {toolchain or 'no toolchain'}, not {want}", True
-    if target and tag_sha != target:
+    if target and target_kind == "main-commit" and tag_sha != target:
+        # Only for a main commit, whose identity policy fixes and nothing can move. A
+        # release branch is mutable: if it is later re-cut onto another exact-pin commit, a
+        # correctly placed permanent tag would otherwise start reading as a mismatch.
         return False, (f"is on {tag_sha[:8]}, but policy names {target[:8]}"), target_exact
     if target_exact and pin != mathlib_rev:
         return False, (f"pins mathlib {(pin or 'nothing')[:8]}, but an exact tag for "
@@ -871,7 +911,8 @@ def classify(release, mathlib_rev, segments, up):
         # what policy would name today. Otherwise deleting a `releases/vX` branch
         # after tagging, which is harmless, would read as a tag mismatch.
         ok, why, exact = _tag_is_valid(tag_sha, release, mathlib_rev, up,
-                                       target=target, target_exact=row["exact"])
+                                       target=target, target_exact=row["exact"],
+                                       target_kind=row["target_kind"])
         row["exact"] = exact
         if ok:
             row["status"] = "tagged"
@@ -883,6 +924,18 @@ def classify(release, mathlib_rev, segments, up):
         return row
 
     if target is None:
+        if rule.startswith("release-branch-unreadable"):
+            row["status"] = "blocked"
+            row["reason"] = (
+                f"{row['branch']} exists but its state could not be read "
+                f"({rule.split(':', 1)[-1]}); this is not a verdict on the branch")
+            return row
+        if rule.startswith("release-branch-misshapen"):
+            row["status"] = "blocked"
+            row["reason"] = (
+                f"{row['branch']} pins the right mathlib but {rule.split(':', 1)[-1]}; "
+                "re-cut it from the base rather than tagging what is there")
+            return row
         if rule == "release-branch-invalid":
             row["status"] = "blocked"
             row["reason"] = (

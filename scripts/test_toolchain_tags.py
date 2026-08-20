@@ -222,13 +222,14 @@ class FakeUpstream:
     exactly as the real ones do."""
 
     def __init__(self, tags=None, repo_tags=None, branches=None, verify=None,
-                 bump_commits=None, pins=None):
+                 bump_commits=None, pins=None, shapes=None):
         self.tags = dict(tags or REAL_TAGS)
         self.by_sha = {sha: name for name, sha in self.tags.items()}
         self.repo_tags = dict(repo_tags or {})
         self.branches = dict(branches or {})
         self.verify = dict(verify or {})
         self.pins = dict(pins or {})
+        self.shapes = dict(shapes or {})
         self.bump_commits = (set(self.tags) if bump_commits is None else set(bump_commits))
         self.calls = 0
         self._toolchain_of = {}
@@ -298,6 +299,10 @@ class FakeUpstream:
     def verify_conclusion(self, sha):
         self.calls += 1
         return self.verify.get(sha)
+
+    def release_branch_shape(self, head):
+        self.calls += 1
+        return self.shapes.get(head, (True, None))
 
     def repo_pin_at(self, sha):
         self.calls += 1
@@ -605,6 +610,39 @@ class Classification(unittest.TestCase):
         self.assertEqual(row["status"], "branch-ready")
         self.assertEqual(row["target_sha"], head)
         self.assertEqual(row["target_kind"], "release-branch")
+
+    def test_a_release_branch_carrying_more_than_the_pins_is_not_a_target(self):
+        # Right pins, wrong shape. A commit that also changes source would otherwise be
+        # nominated as a permanent tag target; the release workflow would refuse it later,
+        # but the audit should not be pointing at it in the meantime.
+        head = "a" * 40
+        up = FakeUpstream(branches={"v4.33.0": head},
+                          pins={head: ("leanprover/lean4:v4.33.0", REAL_TAGS["v4.33.0"])},
+                          shapes={head: (False, "changes TauCeti/Foo.lean, which is outside "
+                                                "the two Lake pins")})
+        row = self.row("v4.33.0", up)
+        self.assertEqual(row["status"], "blocked")
+        self.assertIn("outside the two Lake pins", row["reason"])
+
+    def test_an_unreadable_release_branch_is_not_called_wrong(self):
+        # A blinking API is not a verdict, and must not produce advice to re-cut a branch
+        # that may be perfectly correct.
+        head = "a" * 40
+        up = FakeUpstream(branches={"v4.33.0": head})   # no pins recorded: repo_pin_at raises
+        row = self.row("v4.33.0", up)
+        self.assertEqual(row["status"], "blocked")
+        self.assertIn("could not be read", row["reason"])
+        self.assertNotIn("re-cut", row["reason"])
+
+    def test_a_tag_is_not_judged_against_a_branch_that_has_since_moved(self):
+        # A permanent tag compared with a mutable branch head would start reading as a
+        # mismatch the moment someone re-cut the branch onto another exact-pin commit.
+        tagged, moved = "b" * 40, "c" * 40
+        pins = {sha: ("leanprover/lean4:v4.33.0", REAL_TAGS["v4.33.0"])
+                for sha in (tagged, moved)}
+        up = FakeUpstream(branches={"v4.33.0": moved}, pins=pins,
+                          repo_tags={"v4.33.0": tagged})
+        self.assertEqual(self.row("v4.33.0", up)["status"], "tagged")
 
     def test_a_release_branch_pointing_anywhere_is_not_a_target(self):
         # Creating `releases/vX` at an arbitrary commit must not make that commit the
