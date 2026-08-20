@@ -14,8 +14,9 @@ public import Mathlib.Topology.MetricSpace.Pseudo.Lemmas
 Removing the sphere `sphere x ρ` from a set `s` leaves two pieces: the *near side*
 `s ∩ ball x ρ`, of the points of `s` closer to `x` than `ρ`, and the *far side*
 `s \ closedBall x ρ`, of those further away. This file records that they cover `s \ sphere x ρ`,
-that they are disjoint, and — when `s` is open, so that both sides are open — that a preconnected
-subset of `s` missing the sphere lies entirely in one of them.
+that they are disjoint, that the two sides together with the cut cover all of `s` (also after
+applying an arbitrary map), and — when `s` is open, so that both sides are open — that a
+preconnected subset of `s` missing the sphere lies entirely in one of them.
 
 Nothing beyond the containments `ball x ρ ⊆ closedBall x ρ` and `sphere x ρ ⊆ closedBall x ρ`, and
 the openness of a ball against the closedness of a closed ball, is used, so `s` is an arbitrary set
@@ -31,7 +32,13 @@ use, and Mathlib has no form of the decomposition.
 ## Main results
 
 * `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` — the two sides cover the cut set.
-* `TauCeti.disjoint_inter_ball_sdiff_closedBall` — the two sides are disjoint.
+* `TauCeti.disjoint_inter_ball_sdiff_closedBall` — the two sides are disjoint, and
+  `TauCeti.disjoint_inter_ball_inter_sphere`, `TauCeti.disjoint_sdiff_closedBall_inter_sphere` —
+  each of them is disjoint from the cut.
+* `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere` — the two sides and the cut
+  cover the whole set, and
+  `TauCeti.image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere` is its
+  image under an arbitrary map.
 * `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` — a preconnected subset of an open cut set
   missing the sphere lies on one side of it.
 -/
@@ -65,6 +72,32 @@ the far side outside it. -/
 theorem disjoint_inter_ball_sdiff_closedBall {s : Set X} :
     Disjoint (s ∩ ball x ρ) (s \ closedBall x ρ) :=
   Set.disjoint_sdiff_right.mono_left (inter_subset_right.trans ball_subset_closedBall)
+
+/-- The near side of a circular cut misses the cut itself, the ball and the sphere being
+disjoint. -/
+theorem disjoint_inter_ball_inter_sphere {s : Set X} :
+    Disjoint (s ∩ ball x ρ) (s ∩ sphere x ρ) :=
+  Set.disjoint_of_subset inter_subset_right inter_subset_right sphere_disjoint_ball.symm
+
+/-- The far side of a circular cut misses the cut itself, the sphere lying in the closed ball. -/
+theorem disjoint_sdiff_closedBall_inter_sphere {s : Set X} :
+    Disjoint (s \ closedBall x ρ) (s ∩ sphere x ρ) :=
+  Set.disjoint_of_subset le_rfl (inter_subset_right.trans sphere_subset_closedBall)
+    disjoint_sdiff_left
+
+/-- **A circular cut splits a set into a near side, a far side and the cut.** The three-piece form
+of `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
+theorem eq_inter_ball_union_sdiff_closedBall_union_inter_sphere {s : Set X} :
+    s = s ∩ ball x ρ ∪ s \ closedBall x ρ ∪ s ∩ sphere x ρ := by
+  rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
+
+/-- **The image of a circular cut is the union of the images of its two sides and the cut.** This
+is the image form of `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere`; the target
+of `f` carries no structure. -/
+theorem image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere
+    {Y : Type*} (f : X → Y) {s : Set X} :
+    f '' s = f '' (s ∩ ball x ρ) ∪ f '' (s \ closedBall x ρ) ∪ f '' (s ∩ sphere x ρ) := by
+  rw [← image_union, ← image_union, ← eq_inter_ball_union_sdiff_closedBall_union_inter_sphere]
 
 /-- **A connected subset of an open set missing a circular cut lies on one side of it.** This is
 the separation statement the decomposition exists for: the two sides are open and disjoint, so a
