@@ -33,6 +33,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 * `LinearMap.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
   difference from the identity is nilpotent.
 * `LinearMap.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
+* `LinearMap.GeneralLinearGroup.isUnipotent_of_charpoly_eq`: the characteristic-polynomial
+  sufficient condition over a commutative ring.
 * `LinearMap.GeneralLinearGroup.isUnipotent_iff_charpoly`: the characteristic-polynomial
   criterion over an integral domain.
 * `LinearMap.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
@@ -78,6 +80,23 @@ theorem isUnipotent_def (g : GeneralLinearGroup K V) :
     IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
   Iff.rfl
 
+/-- An automorphism of a finite free module over a commutative ring is unipotent if its
+characteristic polynomial is a power of `X - 1`. -/
+theorem isUnipotent_of_charpoly_eq
+    {F : Type u} {W : Type v} [CommRing F] [AddCommGroup W] [Module F W]
+    [Module.Free F W] [Module.Finite F W] (g : GeneralLinearGroup F W) {n : ℕ}
+    (h : (g : End F W).charpoly = (Polynomial.X - 1) ^ n) :
+    IsUnipotent g := by
+  rw [isUnipotent_def]
+  have hchar := LinearMap.charpoly_sub_smul (g : End F W) (1 : F)
+  rw [h] at hchar
+  have hnilCharpoly :
+      ((g : End F W) - 1).charpoly = Polynomial.X ^ n := by
+    simpa using hchar
+  refine ⟨n, ?_⟩
+  rw [← @Polynomial.aeval_X_pow F, ← hnilCharpoly,
+    LinearMap.aeval_self_charpoly]
+
 /-- Over an integral domain, an automorphism of a finite free module is unipotent exactly when its
 characteristic polynomial is a power of `X - 1`. -/
 theorem isUnipotent_iff_charpoly
@@ -85,17 +104,14 @@ theorem isUnipotent_iff_charpoly
     [Module.Free F W] [Module.Finite F W] (g : GeneralLinearGroup F W) :
     IsUnipotent g ↔
       (g : End F W).charpoly = (Polynomial.X - 1) ^ Module.finrank F W := by
-  rw [isUnipotent_def, LinearMap.isNilpotent_iff_charpoly]
   constructor
   · intro h
+    rw [isUnipotent_def, LinearMap.isNilpotent_iff_charpoly] at h
     have hchar := LinearMap.charpoly_sub_smul
       ((g : End F W) - 1) (-1 : F)
     rw [h] at hchar
     simpa [sub_eq_add_neg] using hchar
-  · intro h
-    have hchar := LinearMap.charpoly_sub_smul (g : End F W) (1 : F)
-    rw [h] at hchar
-    simpa using hchar
+  · exact isUnipotent_of_charpoly_eq g
 
 /-- The identity automorphism is unipotent. -/
 @[simp]

@@ -159,21 +159,18 @@ theorem isUnipotentPoint_of_mem_unipotent
           LinearMap.GeneralLinearGroup A (A ⊗[R] M)) : Module.End A (A ⊗[R] M)) =
         Comodule.endOfPoint M g.ofConv := by
     exact Comodule.pointsAction_toLinearMap M g
-  rw [LinearMap.GeneralLinearGroup.isUnipotent_def, hcoe]
   have hEndCharpoly :
       (Comodule.endOfPoint M g.ofConv).charpoly =
         (Polynomial.X - 1) ^ Fintype.card (Module.Free.ChooseBasisIndex R M) := by
     rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange A),
       Comodule.toMatrix_endOfPoint, hGCharpoly, Matrix.charpoly_one]
-  have hnilCharpoly :
-      (Comodule.endOfPoint M g.ofConv - 1).charpoly =
-        Polynomial.X ^ Fintype.card (Module.Free.ChooseBasisIndex R M) := by
-    have hchar := LinearMap.charpoly_sub_smul (Comodule.endOfPoint M g.ofConv) (1 : A)
-    rw [hEndCharpoly] at hchar
-    simpa using hchar
-  refine ⟨Fintype.card (Module.Free.ChooseBasisIndex R M), ?_⟩
-  rw [← @Polynomial.aeval_X_pow A, ← hnilCharpoly,
-    LinearMap.aeval_self_charpoly]
+  have hActionCharpoly :
+      ((LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g) :
+          LinearMap.GeneralLinearGroup A (A ⊗[R] M)) : Module.End A (A ⊗[R] M)).charpoly =
+        (Polynomial.X - 1) ^ Fintype.card (Module.Free.ChooseBasisIndex R M) := by
+    rw [hcoe]
+    exact hEndCharpoly
+  exact LinearMap.GeneralLinearGroup.isUnipotent_of_charpoly_eq _ hActionCharpoly
 
 end
 
