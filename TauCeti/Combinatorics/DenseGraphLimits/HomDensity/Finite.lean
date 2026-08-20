@@ -56,16 +56,18 @@ carrying decidability hypotheses that the analytic statements downstream would t
 
 * `TauCeti.DenseGraphLimits.homDensityFin` — the homomorphism density `t(F, G)`.
 * `TauCeti.DenseGraphLimits.injHomDensity` — the injective homomorphism density `t₀(F, G)`.
+* `TauCeti.DenseGraphLimits.homEquivAdjPreservingMaps` — a homomorphism is exactly an
+  adjacency-preserving vertex map.
 
-Both bodies stay unexposed; `homDensityFin_def` and `injHomDensity_def` are the unfolding lemmas
-downstream modules should use.
+Both density bodies stay unexposed; `homDensityFin_def` and `injHomDensity_def` are the unfolding
+lemmas downstream modules should use.
 
 ## Main results
 
 * `card_injective_hom_eq_labelledCopyCount`, `injHomDensity_eq_labelledCopyCount_div` — the bridge
   to Mathlib's counting primitive, at the level of the count and of the density;
-* `card_hom_eq_card_adj_preserving_maps` — homomorphisms are counted by the
-  adjacency-preserving vertex maps;
+* `card_hom_eq_card_adj_preserving_maps` — the cardinality form of
+  `homEquivAdjPreservingMaps`: homomorphisms are counted by the adjacency-preserving vertex maps;
 * `homDensityFin_nonneg`, `homDensityFin_le_one`, `injHomDensity_nonneg`, `injHomDensity_le_one` —
   both densities lie in `[0, 1]`, unconditionally. The degenerate cases are included: when the host
   is empty and the pattern is not, numerator and denominator both vanish and `x / 0 = 0` gives `0`.
@@ -159,18 +161,25 @@ theorem injHomDensity_eq_labelledCopyCount_div :
 /-! ### Homomorphisms as adjacency-preserving vertex maps -/
 
 omit [Fintype V] [Fintype W] in
-/-- A homomorphism is exactly a vertex map preserving adjacency, so the two are counted alike.
+/-- A homomorphism `F →g G` is exactly a vertex map preserving adjacency: forgetting the bundling
+is a bijection onto the adjacency-preserving maps.
 
-The right-hand side is a subtype of a plain function type, which is where the counting arguments
-work: it is what a change of variables over the vertex assignments produces, and for concrete
-finite graphs it is decidable. -/
+The codomain is a subtype of a plain function type, which is where the counting arguments work: it
+is what a change of variables over the vertex assignments produces, and for concrete finite graphs
+it is decidable. -/
+def homEquivAdjPreservingMaps :
+    (F →g G) ≃ {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} where
+  toFun φ := ⟨⇑φ, fun _ _ h => φ.map_adj h⟩
+  invFun ψ := ⟨ψ.1, fun {_ _} h => ψ.2 _ _ h⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+omit [Fintype V] [Fintype W] in
+/-- Homomorphisms and adjacency-preserving vertex maps are counted alike, the cardinality form of
+`homEquivAdjPreservingMaps`. -/
 theorem card_hom_eq_card_adj_preserving_maps :
     Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
-  Nat.card_congr
-    { toFun := fun φ => ⟨⇑φ, fun _ _ h => φ.map_adj h⟩
-      invFun := fun ψ => ⟨ψ.1, fun {_ _} h => ψ.2 _ _ h⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
+  Nat.card_congr (homEquivAdjPreservingMaps F G)
 
 /-! ### Both densities lie in `[0, 1]` -/
 

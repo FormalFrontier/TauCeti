@@ -31,8 +31,8 @@ rather than special-casing `x = 1`, also keeps the definition total in `m`: at `
 `0`, but that value has no cell-index meaning; results that interpret it as a valid cell index or
 compute a cell volume carry positivity or range hypotheses.
 
-The top fibre is genuinely `Set.Ici ((m-1)/m)`, and `volume_preimage_cellIdx` computes it as such;
-the argument does not quietly replace it by `Set.Ico ((m-1)/m) 1` and appeal to `{1}` being null.
+So the fibres are the half-open cells `[i/m, (i+1)/m)` for `i + 1 < m`, together with the closed
+top cell `[(m-1)/m, 1] = Set.Ici ((m-1)/m)`.
 
 ## Main definitions
 
@@ -42,7 +42,8 @@ the argument does not quietly replace it by `Set.Ico ((m-1)/m) 1` and appeal to 
 
 * `TauCeti.unitInterval.cellIdx_lt` — the index is a valid one: `cellIdx m x < m` when `0 < m`;
 * `TauCeti.unitInterval.cellIdx_eq_iff_of_succ_lt` and
-  `TauCeti.unitInterval.cellIdx_eq_top_iff` — the non-top and top fibres;
+  `TauCeti.unitInterval.cellIdx_eq_sub_one_iff` — the fibres below the top cell, and the top
+  fibre;
 * `TauCeti.unitInterval.measurable_cellIdx` — the index depends measurably on the point;
 * `TauCeti.unitInterval.measurableSet_preimage_cellIdx` — every cell is measurable;
 * `TauCeti.unitInterval.volume_preimage_cellIdx` — every cell has volume `1/m`;
@@ -82,7 +83,7 @@ def cellIdx (m : ℕ) (x : I) : ℕ := min ⌊(m : ℝ) * (x : ℝ)⌋₊ (m - 1
 theorem cellIdx_lt (hm : 0 < m) (x : I) : cellIdx m x < m :=
   lt_of_le_of_lt (min_le_right _ _) (Nat.sub_lt hm Nat.one_pos)
 
-/-- A non-top cell has the expected half-open fibre: `cellIdx m x = i` exactly when
+/-- A cell below the top one has the half-open fibre: `cellIdx m x = i` exactly when
 `i / m ≤ x < (i + 1) / m`. -/
 @[simp]
 theorem cellIdx_eq_iff_of_succ_lt (hi : i + 1 < m) (x : I) :
@@ -103,7 +104,7 @@ theorem cellIdx_eq_iff_of_succ_lt (hi : i + 1 < m) (x : I) :
 /-- The top cell is closed at `1`: `cellIdx m x = m - 1` exactly when
 `(m - 1) / m ≤ x`. -/
 @[simp]
-theorem cellIdx_eq_top_iff (hm : 0 < m) (x : I) :
+theorem cellIdx_eq_sub_one_iff (hm : 0 < m) (x : I) :
     cellIdx m x = m - 1 ↔ ((m - 1 : ℕ) : ℝ) / m ≤ (x : ℝ) := by
   have hmR : (0 : ℝ) < m := by exact_mod_cast hm
   have h0 : (0 : ℝ) ≤ (m : ℝ) * (x : ℝ) := mul_nonneg hmR.le x.2.1
@@ -113,8 +114,7 @@ theorem cellIdx_eq_top_iff (hm : 0 < m) (x : I) :
   rw [hmin, Nat.le_floor_iff h0, div_le_iff₀ hmR]
   simp only [mul_comm]
 
-/-- The cell index depends measurably on the point: a floor of a continuous function, followed by
-a map out of the countable discrete space `ℕ`. -/
+/-- The cell index depends measurably on the point. -/
 @[fun_prop]
 theorem measurable_cellIdx : Measurable (cellIdx m) :=
   (measurable_of_countable fun k => min k (m - 1)).comp
@@ -125,10 +125,8 @@ theorem measurable_cellIdx : Measurable (cellIdx m) :=
 theorem measurableSet_preimage_cellIdx (m i : ℕ) : MeasurableSet (cellIdx m ⁻¹' {i}) :=
   measurable_cellIdx (measurableSet_singleton i)
 
-/-- Every cell of the `m`-fold equipartition has volume `1/m`.
-
-Two cases, and they are genuinely different sets: below the top the fibre is the half-open interval
-`[i/m, (i+1)/m)`, while the top fibre is the closed `[(m-1)/m, 1]`. -/
+/-- Every cell of the `m`-fold equipartition has volume `1/m`: the half-open `[i/m, (i+1)/m)` below
+the top cell, and the closed `[(m-1)/m, 1]` at the top. -/
 theorem volume_preimage_cellIdx (hi : i < m) :
     volume (cellIdx m ⁻¹' {i}) = (m : ℝ≥0∞)⁻¹ := by
   have hm0 : 0 < m := lt_of_le_of_lt (Nat.zero_le i) hi
@@ -155,7 +153,7 @@ theorem volume_preimage_cellIdx (hi : i < m) :
         ext x
         simp only [mem_preimage, mem_singleton_iff, mem_Ici, ← Subtype.coe_le_coe]
         have hi_top : i = m - 1 := by omega
-        simpa [hi_top] using cellIdx_eq_top_iff hm0 x
+        simpa [hi_top] using cellIdx_eq_sub_one_iff hm0 x
       rw [hset, _root_.unitInterval.volume_Ici]
       congr 1
       have : (i : ℝ) + 1 = m := by exact_mod_cast heq
@@ -210,7 +208,7 @@ theorem integral_pi_comp_cellIdx (hm : 0 < m) (f : (V → ℕ) → ℝ) :
         exact integral_congr_ae (Filter.Eventually.of_forall key)
     _ = ∑ ψ : V → Fin m, ((m : ℝ)⁻¹) ^ Fintype.card V * f fun v => (ψ v : ℕ) := by
         refine Finset.sum_congr rfl fun ψ _ => ?_
-        rw [integral_indicator_const _ (hboxMeas ψ), Measure.real, hboxVol ψ]
+        rw [integral_indicator_const _ (hboxMeas ψ), measureReal_def, hboxVol ψ]
         simp [ENNReal.toReal_pow, smul_eq_mul]
     _ = (∑ ψ : V → Fin m, f fun v => (ψ v : ℕ)) / (m : ℝ) ^ Fintype.card V := by
         rw [← Finset.mul_sum, inv_pow, div_eq_inv_mul]
