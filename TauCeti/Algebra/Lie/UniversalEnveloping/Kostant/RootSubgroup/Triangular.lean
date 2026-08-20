@@ -101,23 +101,6 @@ theorem isUpperTriangular_toMatrix_integralDividedPower
   exact repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
     (not_lt_of_ge hsr.le) hn
 
-include e hM in
-/-- Every positive divided power of a positive root operator has zero diagonal in an ordered
-weight basis. -/
-theorem toMatrix_integralDividedPower_apply_self
-    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
-    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
-    (horder : ∀ {r s : η} {n : ℕ}, 0 < n → wt r = wt s + n • α → r < s)
-    {n : ℕ} (hn : 0 < n) (r : η) :
-    LinearMap.toMatrix b b
-        (integralDividedPower
-          (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M n
-          (fun _ hv ↦ dividedPower_apply_mem_of_kostantForm_apply_mem
-            e h ρ hM i n hv)) r r = 0 := by
-  rw [LinearMap.toMatrix_apply]
-  exact repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
-    (lt_irrefl r) hn
-
 /-! ## Positive root-subgroup matrices -/
 
 variable (i : ι)
@@ -137,17 +120,17 @@ theorem isUpperUnitriangular_kostantRootSubgroupMatrix {A : Type*} [CommRing A]
   rw [Matrix.isUpperUnitriangular_def]
   constructor
   · intro r s hsr
-    change s < r at hsr
     rw [kostantRootSubgroupMatrix_apply, Module.Basis.baseChange_apply,
       kostantRootSubgroupPoints_tmul, map_sum, Finsupp.finsetSum_apply]
     apply Finset.sum_eq_zero
     intro n _
     by_cases hn : n = 0
     · subst n
-      simp [integralDividedPower_zero, ne_of_lt hsr]
+      have hrs : s ≠ r := ne_of_lt hsr
+      simp [integralDividedPower_zero, hrs]
     · rw [Module.Basis.baseChange_repr_tmul,
         repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
-          (not_lt_of_ge hsr.le) (Nat.pos_of_ne_zero hn)]
+          (r := r) (s := s) (not_lt_of_ge hsr.le) (Nat.pos_of_ne_zero hn)]
       simp
   · intro r
     have hclass :
@@ -196,9 +179,8 @@ noncomputable def kostantRootSubgroupUpperUnitriangular {A : Type*} [CommRing A]
       upperUnitriangularGroup η A :=
   (kostantRootSubgroupMatrix e h ρ M hM i hnil b).codRestrict
     (upperUnitriangularGroup η A) fun f ↦
-      UpperUnitriangularGroup.mem_iff.mpr <|
-        isUpperUnitriangular_kostantRootSubgroupMatrix
-          e h ρ M hM b wt i hnil hwt hα horder f
+      range_kostantRootSubgroupMatrix_le_upperUnitriangular
+        e h ρ M hM b wt i hnil hwt hα horder ⟨f, rfl⟩
 
 /-- Forgetting the upper-unitriangular codomain recovers the original root-subgroup matrix. -/
 @[simp]
@@ -214,6 +196,7 @@ theorem coe_kostantRootSubgroupUpperUnitriangular {A : Type*} [CommRing A]
 
 /-- The upper-unitriangular realization of a positive Kostant root subgroup is natural in the
 commutative base ring. -/
+@[simp]
 theorem map_kostantRootSubgroupUpperUnitriangular {A B : Type*} [CommRing A] [CommRing B]
     (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
     (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
