@@ -277,12 +277,35 @@ def maximalSubmodule (lam : Dual K H) : LieSubmodule K L M :=
 
 omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
   [IsTriangularizable K H L] in
+/-- The supremum description underlying `maximalSubmodule`. -/
+theorem maximalSubmodule_eq_sSup [LieRing.IsNilpotent H] :
+    maximalSubmodule H M lam =
+      sSup {N : LieSubmodule K L M |
+        Disjoint (N : Submodule K M)
+          (genWeightSpace M ((lam : Dual K H) : H → K) : Submodule K M)} := by
+  rw [maximalSubmodule]
+
+omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
+  [IsTriangularizable K H L] in
 /-- A Lie submodule meeting the `lam`-weight space trivially lies in the maximal submodule. -/
 theorem le_maximalSubmodule [LieRing.IsNilpotent H] {N : LieSubmodule K L M}
     (h : Disjoint (N : Submodule K M)
       (genWeightSpace M ((lam : Dual K H) : H → K) : Submodule K M)) :
     N ≤ maximalSubmodule H M lam :=
   le_sSup h
+
+omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
+  [IsTriangularizable K H L] in
+/-- The maximal submodule lies in `P` exactly when every submodule meeting the `lam`-weight space
+trivially lies in `P`. -/
+@[simp]
+theorem maximalSubmodule_le_iff [LieRing.IsNilpotent H] {P : LieSubmodule K L M} :
+    maximalSubmodule H M lam ≤ P ↔
+      ∀ N : LieSubmodule K L M,
+        Disjoint (N : Submodule K M)
+          (genWeightSpace M ((lam : Dual K H) : H → K) : Submodule K M) → N ≤ P := by
+  rw [maximalSubmodule_eq_sSup, sSup_le_iff]
+  rfl
 
 /-- In a highest weight module, meeting the top weight space trivially is missing the generator,
 the top weight space being the line the generator spans. -/
@@ -498,6 +521,9 @@ noncomputable def quotientMaximalSubmoduleEquivOfSurjectiveOfIsIrreducible
     map_lie' := by
       intro y q
       obtain ⟨m, rfl⟩ := LieSubmodule.Quotient.surjective_mk' (maximalSubmodule H M lam) q
+      -- A quotient by a Lie submodule is defined as the quotient by its underlying submodule, and
+      -- `LieSubmodule.Quotient.mk` abbreviates `Submodule.Quotient.mk`; expose exactly those two
+      -- wrappers so the linear quotient equivalence lemmas below apply.
       change e (Submodule.Quotient.mk (⁅y, m⁆)) = ⁅y, e (Submodule.Quotient.mk m)⁆
       dsimp only [e]
       rw [LinearEquiv.trans_apply, Submodule.quotEquivOfEq_mk,
