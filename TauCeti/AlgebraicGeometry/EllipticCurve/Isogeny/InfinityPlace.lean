@@ -55,6 +55,8 @@ the place at infinity forward to the place at infinity. It is also the Layer-0 `
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2, III.4.
+* The final integrality step uses Mathlib's `Valuation.Integers.isIntegral_iff_v_le_one`, by
+  Kenny Lau and Yakov Pechersky.
 -/
 
 public section
