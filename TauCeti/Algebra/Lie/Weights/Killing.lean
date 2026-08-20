@@ -10,8 +10,8 @@ public import Mathlib.Algebra.Lie.Weights.RootSystem
 /-!
 # Killing pairings of root spaces
 
-This file records consequences of the non-degeneracy of the Killing form for root spaces of a
-splitting Cartan subalgebra.
+This file records consequences of the non-degeneracy of the Killing form for the root spaces of a
+splitting Cartan subalgebra, and the vanishing of brackets inside the Cartan subalgebra itself.
 
 ## Main results
 
@@ -19,6 +19,8 @@ splitting Cartan subalgebra.
   nonzero Killing pairing.
 * `TauCeti.rootSpace_neg_eq_bot_iff`: the roots are closed under negation, so a functional on the
   Cartan subalgebra is a root exactly when its negative is.
+* `TauCeti.lie_cartan_cartan_eq_zero`: the Cartan subalgebra is abelian, so two of its elements
+  have zero bracket in the ambient Lie algebra.
 -/
 
 public section
@@ -61,5 +63,12 @@ theorem rootSpace_neg_eq_bot_iff (χ : H → K) :
     exact key χ hne h
   · by_contra hne
     exact key (-χ) hne (by rwa [neg_neg])
+
+omit [CharZero K] [LieModule.IsTriangularizable K H L] in
+/-- **A splitting Cartan subalgebra is abelian**, so any two of its elements have zero bracket in
+the ambient Lie algebra. -/
+theorem lie_cartan_cartan_eq_zero (y z : H) : ⁅(y : L), (z : L)⁆ = 0 := by
+  have h := trivial_lie_zero H H y z
+  simpa only [LieSubalgebra.coe_bracket, ZeroMemClass.coe_zero] using congrArg Subtype.val h
 
 end TauCeti

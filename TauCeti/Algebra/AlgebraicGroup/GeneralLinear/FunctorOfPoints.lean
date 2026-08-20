@@ -54,7 +54,7 @@ namespace TauCeti
 
 namespace GeneralLinear
 
-universe u w
+universe u w w'
 
 variable {R : Type u} [CommRing R] (n : ℕ)
 
@@ -100,6 +100,7 @@ theorem pointToGeneralLinear_apply
         (coordinateRingMap R n (MvPolynomial.X (i, j)))) := by
   exact matrixOfPoint_apply n f i j
 
+/-- Evaluate the polynomial coordinate ring at the entries of an invertible matrix. -/
 private noncomputable def evaluationOfGeneralLinear
     (g : Matrix.GeneralLinearGroup (Fin n) A) :
     MatrixMonoid.CoordinateRing R n →ₐ[R] A :=
@@ -114,6 +115,7 @@ private theorem evaluationOfGeneralLinear_determinant_isUnit
     Matrix.mvPolynomialX_mapMatrix_aeval]
   exact Matrix.isUnits_det_units g
 
+/-- Extend matrix evaluation to the localization in which the determinant is inverted. -/
 private noncomputable def localizedEvaluationOfGeneralLinear
     (g : Matrix.GeneralLinearGroup (Fin n) A) : CoordinateRing R n →ₐ[R] A :=
   IsLocalization.Away.liftAlgHom
@@ -241,7 +243,7 @@ end Pointwise
 
 section Naturality
 
-variable {A B : Type w} [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
+variable {A : Type w} {B : Type w'} [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
 
 /-- Reading a point as an invertible matrix commutes with maps of value algebras. -/
 theorem pointToGeneralLinear_mapValue (phi : A →ₐ[R] B)

@@ -43,15 +43,24 @@ closure, in `A_U`, of the image of `A⁺[T/s]`.
   `TauCeti.Huber.PairOfDefinition.divBy_mem_completedPlusSubring`: the image of `A⁺` and each
   fraction `t/s` lie in `A_U⁺`, which is what the roadmap's description of its generators asks.
 * `TauCeti.Huber.PairOfDefinition.completedPlusSubring_le_powerBoundedSubring`: `A_U⁺ ⊆ (A_U)°`.
+* `TauCeti.Huber.PairOfDefinition.locSubring_mul_idealOfDefinition_mem_adjoin_plus`: the
+  absorption itself — inside `Aₛ`, an element of `D = A₀[T/s]` times an element of the ideal
+  of definition `I` lies in `A⁺[T/s]`.
+* `TauCeti.Huber.PairOfDefinition.locIdealImage_one_le_adjoin_plus`: inside `Aₛ`, and before any
+  completion, `A⁺[T/s]` absorbs the first basic neighbourhood of zero — the first step toward the
+  openness of `A_U⁺` discussed below.
 
 Of the three conditions making `(A_U, A_U⁺)` a Huber pair, two are here: integral closedness by
 construction (`isIntegrallyClosedIn_completedPlusSubring`) and power-boundedness
-(`completedPlusSubring_le_powerBoundedSubring`). **Openness is not proved here.** It reduces, by
-`Subgroup.isOpen_of_openSubgroup` and the `isOpen_ringOfDefinition` field of the completed pair,
-to containing that pair's ring of definition — and since that ring is a *closure* of an image
-while `A_U⁺` carries no topological closure, the only route available here — `closure_le` — asks
-for `A_U⁺` to be closed. That is sufficient rather than necessary: a direct argument for the
-containment would do as well, and none is on hand.
+(`completedPlusSubring_le_powerBoundedSubring`). **Openness is still not proved here**, but its
+pre-completion half is: `locIdealImage_one_le_adjoin_plus` shows that `A⁺[T/s]` absorbs the first
+basic neighbourhood of zero in `Aₛ`, so `A_U⁺` contains the image of that neighbourhood.
+
+What remains is a statement about the completion rather than about `Aₛ`. The neighbourhoods of
+zero in `A⟨T/s⟩` are the *closures* of the images of the `locIdealImage`, so absorbing an image
+does not by itself make `A_U⁺` a neighbourhood of zero; that step needs `A_U⁺` to be closed. As
+`A_U⁺` is an integral closure taken in the completion, its closedness is exactly the
+identification recorded below as Huber's Lemma 2.4.3, which is not available here.
 
 ## Provenance
 
@@ -68,12 +77,18 @@ describes a single integral closure of that image, and each additional layer enl
 generating subring, so the objects agree only after an identification theorem that is not
 available here. Their shape buys closedness of `A_U⁺`, which their power-boundedness argument then
 uses; that cost is deferred rather than avoided, and is what the openness note above
-records. No proof was copied and
-nothing here is ported.
+records.
+
+The absorption results are adapted from the same AINTLIB file:
+`locSubring_mul_idealOfDefinition_mem_adjoin_plus` and `locIdealImage_one_le_adjoin_plus` follow
+`RationalLocData.locNhd_one_subset_locPlusSubring` and the neighbourhood step of
+`RationalLocData.completedPlusSubringBase_isOpen`. Their openness
+proof itself is **not** adapted: it closes by `Subring.isClosed_topologicalClosure`, which their
+extra closure layer supplies and this file's definition does not. No proof text was copied.
 
 ## References
 
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], §8.2, 8.16 and 7.47(4).
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], §8.2, 8.16, 7.19, 7.20 and 7.47(4).
 -/
 
 public section
@@ -291,6 +306,121 @@ theorem completedPlusSubring_le_powerBoundedSubring (P : PairOfDefinition A) (Ap
       · exact mem_powerBoundedSubring.mpr (isPowerBounded_divBy_locUniformSpace P T s S hden ht)
     exact mem_powerBoundedSubring.mp (hle hy)
   exact mem_powerBoundedSubring.mpr (isPowerBounded_completion_coe_of_isPowerBounded hyS)
+
+omit [IsTopologicalRing A] in
+/-- **`A⁺[T/s]` absorbs the ideal of definition**, inside `Aₛ` and before any completion: for `c`
+in the ring of definition `D = A₀[T/s]` of the localised topology and `i` in the ideal of
+definition `I`, the product `c · i` already lies in the subring `A⁺[T/s]` whose image
+`completedPlusSubringBase` is. This is the absorption itself; `locIdealImage_one_le_adjoin_plus`
+packages it as a statement about the first basic neighbourhood of zero. The strategy is
+Wedhorn's, in the proofs of Proposition 7.19 and Lemma 7.20.
+
+Two facts carry it. The image of `I` lies in `Aplus`, which is the hypothesis `hIplus`; and `I`
+is an ideal *of `A₀`*, so a coefficient contributed by `A₀` can be pushed onto the numerator
+instead. Only the containment is needed, not power-boundedness or a nonarchimedean topology: for a
+ring of integral elements `A⁺` it is discharged by
+`TauCeti.Huber.IsRingOfIntegralElements.mem_of_isTopologicallyNilpotent` applied to
+`TauCeti.Huber.PairOfDefinition.isTopologicallyNilpotent_of_mem_idealOfDefinition`. -/
+theorem locSubring_mul_idealOfDefinition_mem_adjoin_plus
+    (P : PairOfDefinition A) (Aplus : Subring A)
+    (hIplus : ∀ j : P.ringOfDefinition, j ∈ P.idealOfDefinition → (j : A) ∈ Aplus)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    {c : S} (hc : c ∈ locSubring P T s S) {i : P.ringOfDefinition}
+    (hi : i ∈ P.idealOfDefinition) :
+    c * algebraMap A S (i : A) ∈
+      Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)) := by
+  -- Running over `D` with the predicate `c · I ⊆ A⁺[T/s]` breaks at the multiplicative step:
+  -- `A₀ ⊄ A⁺` leaves `c` itself outside `A⁺[T/s]`. So run instead over the transporter of
+  -- `W = {z | z · I ⊆ A⁺[T/s]}` into itself — unlike `W`, that is a subring, so `locSubring_le_iff`
+  -- decides it on the generators of `D`. Multiplying by `1` recovers `W`.
+  have hdiv : ∀ t ∈ T,
+      (divBy t s : S) ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)) :=
+    fun t ht ↦ Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩
+  have hplus : ∀ a ∈ Aplus,
+      algebraMap A S a ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)) :=
+    fun a ha ↦ Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus)
+  set E := Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))
+  -- The ideal of definition lands in `A⁺` by hypothesis, hence in `A⁺[T/s]`.
+  have hI : ∀ j ∈ P.idealOfDefinition, algebraMap A S (j : A) ∈ E := fun j hj ↦
+    hplus _ (hIplus j hj)
+  -- `W`: the elements of `Aₛ` carrying the image of `I` into `A⁺[T/s]`. It is an additive
+  -- subgroup, but not a subring.
+  let W : AddSubgroup S :=
+    { carrier := {z | ∀ j ∈ P.idealOfDefinition, z * algebraMap A S (j : A) ∈ E}
+      add_mem' := fun hx hy j hj ↦ by rw [add_mul]; exact add_mem (hx j hj) (hy j hj)
+      zero_mem' := fun j _ ↦ by rw [zero_mul]; exact zero_mem E
+      neg_mem' := fun hx j hj ↦ by rw [neg_mul]; exact neg_mem (hx j hj) }
+  -- `R`: the transporter of `W` into itself, which is a subring, so `D ≤ R` is decided by the
+  -- generators of `D`.
+  let R : Subring S :=
+    { carrier := {x | ∀ z ∈ W, x * z ∈ W}
+      one_mem' := fun z hz ↦ by rwa [one_mul]
+      mul_mem' := fun hx hy z hz ↦ by rw [mul_assoc]; exact hx _ (hy z hz)
+      zero_mem' := fun z _ ↦ by rw [zero_mul]; exact zero_mem W
+      add_mem' := fun hx hy z hz ↦ by rw [add_mul]; exact add_mem (hx z hz) (hy z hz)
+      neg_mem' := fun hx z hz ↦ by rw [neg_mul]; exact neg_mem (hx z hz) }
+  have hDR : locSubring P T s S ≤ R := by
+    refine (locSubring_le_iff P T s S).mpr ⟨fun a ha z hz j hj ↦ ?_, fun t ht z hz j hj ↦ ?_⟩
+    · -- a coefficient from `A₀` moves onto the numerator, where `I` absorbs it
+      have h := hz (⟨a, ha⟩ * j) (Ideal.mul_mem_left _ _ hj)
+      rw [MulMemClass.coe_mul, map_mul] at h
+      rw [mul_comm (algebraMap A S a) z, mul_assoc]
+      exact h
+    · -- a fraction is already in `A⁺[T/s]`
+      rw [mul_assoc]
+      exact mul_mem (hdiv t ht) (hz j hj)
+  -- `1 ∈ W` by `hI`, and multiplying by it turns `c ∈ R` back into `c ∈ W`
+  have h := hDR hc 1 (fun j hj ↦ by rw [one_mul]; exact hI j hj) i hi
+  rwa [mul_one] at h
+
+omit [IsTopologicalRing A] in
+/-- **`A⁺[T/s]` absorbs the first basic neighbourhood of zero**, inside `Aₛ` and before any
+completion: the image in `Aₛ` of `J = I · D`, for `D = A₀[T/s]` the ring of definition of the
+localised topology, lies in the subring `A⁺[T/s]` whose image `completedPlusSubringBase` is.
+
+This is the first step toward openness of `A_U⁺`, the one Huber-pair condition the file's
+definitions leave owing. Once `Aₛ` carries the localised topology — which needs
+`TauCeti.Huber.PairOfDefinition.HasDenominatorPower` — the sets `locIdealImage P T s S n` are a
+neighbourhood basis of zero, so absorbing the first of them is what makes `A⁺[T/s]` an open
+subgroup of `Aₛ`.
+
+Only the packaging is here. `J` is spanned over `D` by the image of `I`, so a span induction
+reduces the containment to the absorption itself,
+`TauCeti.Huber.PairOfDefinition.locSubring_mul_idealOfDefinition_mem_adjoin_plus`. -/
+theorem locIdealImage_one_le_adjoin_plus (P : PairOfDefinition A) (Aplus : Subring A)
+    (hIplus : ∀ j : P.ringOfDefinition, j ∈ P.idealOfDefinition → (j : A) ∈ Aplus)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
+    locIdealImage P T s S 1 ≤
+      (Algebra.adjoin Aplus
+        (Set.range fun t : T ↦ (divBy (t : A) s : S))).toSubring.toAddSubgroup := by
+  set E := Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))
+  -- The span induction carries a `D`-coefficient `c` along, so that the `smul` step can move a
+  -- fresh coefficient into it; every generator is absorbed by the previous theorem.
+  have hJ : ∀ d ∈ locIdeal P T s S ^ 1, ∀ c : locSubring P T s S,
+      ((c * d : locSubring P T s S) : S) ∈ E := by
+    intro d hd
+    rw [locIdeal_pow_eq_span, pow_one] at hd
+    induction hd using Submodule.span_induction with
+    | mem y hy =>
+      obtain ⟨i, hi, rfl⟩ := hy
+      intro c
+      rw [MulMemClass.coe_mul, toLocSubring_apply]
+      exact locSubring_mul_idealOfDefinition_mem_adjoin_plus P Aplus hIplus T s S c.2 hi
+    | zero =>
+      intro c
+      rw [mul_zero, ZeroMemClass.coe_zero]
+      exact zero_mem E
+    | add y z _ _ hy hz =>
+      intro c
+      rw [mul_add, AddMemClass.coe_add]
+      exact add_mem (hy c) (hz c)
+    | smul r y _ hy =>
+      intro c
+      rw [smul_eq_mul, ← mul_assoc]
+      exact hy (c * r)
+  intro x hx
+  obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P T s S 1).mp hx
+  exact Subring.mem_toAddSubgroup.mpr (Subalgebra.mem_toSubring.mpr (one_mul d ▸ hJ d hd 1))
 
 end Topological
 

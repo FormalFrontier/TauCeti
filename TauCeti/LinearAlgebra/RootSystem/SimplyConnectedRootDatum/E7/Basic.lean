@@ -138,7 +138,7 @@ private theorem e7Coroot_coe :
 
 /-- The 126 `E7` roots in the fundamental-weight basis. -/
 def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
-  toFun i := e7Coroot i ᵥ* CartanMatrix.E₇
+  toFun i := e7Coroot i ᵥ* CartanMatrix.E 7
   inj' := by
     intro i j hij
     apply e7Coroot.injective
@@ -149,12 +149,12 @@ def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
 
 /-- Each `E7` root is the `E7` Cartan matrix applied to the corresponding coroot. -/
 -- This is not a simp theorem because it would rewrite the root-table lemmas below.
-theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E₇ := (rfl)
+theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E 7 := (rfl)
 
 /-- The `E7` roots are the images of the coroots under the Cartan matrix, read on the left or,
 equivalently, on the right, the matrix being symmetric. -/
-theorem e7Root_eq_mulVec (i : Fin 126) : e7Root i = CartanMatrix.E₇ *ᵥ e7Coroot i := by
-  rw [e7Root_apply, ← mulVec_transpose, CartanMatrix.E₇_isSymm]
+theorem e7Root_eq_mulVec (i : Fin 126) : e7Root i = CartanMatrix.E 7 *ᵥ e7Coroot i := by
+  rw [e7Root_apply, ← mulVec_transpose, (CartanMatrix.E_isSymm 7)]
 
 /-- The negative half of the coroot table is the negation of the positive half. -/
 @[simp, grind =] theorem e7Coroot_addNat (i : Fin 63) :
@@ -186,7 +186,7 @@ lemma e7SimpleIndex_injective : Function.Injective e7SimpleIndex :=
 
 /-- The simple roots of the pinned `E₇` datum are the rows of the Bourbaki Cartan matrix. -/
 @[simp, grind =] theorem root_e7SimpleIndex (i : Fin 7) :
-    e7Root (e7SimpleIndex i) = CartanMatrix.E₇ i := by
+    e7Root (e7SimpleIndex i) = CartanMatrix.E 7 i := by
   rw [e7Root_apply, coroot_e7SimpleIndex, Matrix.single_one_vecMul]
   rfl
 
