@@ -115,6 +115,7 @@ noncomputable instance instModuleFiniteGeckCoordinateLattice :
   Module.Finite.of_basis (t.geckCoordinateBasis ht)
 
 /-- The Geck coordinate lattice has one basis vector for each Geck coordinate. -/
+@[simp]
 theorem finrank_geckCoordinateLattice :
     Module.finrank ℤ (t.geckCoordinateLattice ht) = Fintype.card (t.GeckIndex ht) :=
   Module.finrank_eq_card_basis (t.geckCoordinateBasis ht)
