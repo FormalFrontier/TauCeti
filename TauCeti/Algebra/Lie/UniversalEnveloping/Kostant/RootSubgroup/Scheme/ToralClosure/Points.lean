@@ -35,7 +35,7 @@ theorem and is not asserted here.
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralSubsystemPointsSubgroup`: the algebra-valued
   points of a toral-subsystem carrier, viewed in `GLₙ`.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralSubsystemPoints`:
+* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralSubsystemPoints_univ`:
   the full root-generated point subgroup is contained in the full toral point subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralSubsystemPoints`: every
   represented weight-torus point lies in each toral-subsystem carrier.
@@ -109,7 +109,7 @@ theorem mem_kostantToralSubsystemPointsSubgroup_iff (S : Set I)
 
 /-- Adjoining the weight torus can only enlarge the algebra-valued point subgroup cut out by the
 full root-generated defining ideal. -/
-theorem kostantGeneratedPointsSubgroup_le_toralSubsystemPoints
+theorem kostantGeneratedPointsSubgroup_le_toralSubsystemPoints_univ
     (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
     (A : Type v) [CommRing A] :
     kostantGeneratedPointsSubgroup e h ρ M hM hnil b A ≤
