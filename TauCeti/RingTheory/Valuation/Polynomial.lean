@@ -35,7 +35,7 @@ public section
 
 namespace Valuation
 
-variable {R L Γ₀ : Type*} [CommSemiring R] [CommRing L] [Algebra R L]
+variable {R L Γ₀ : Type*} [CommSemiring R] [Ring L] [Algebra R L]
   [LinearOrderedCommMonoidWithZero Γ₀]
 
 /-- **A valuation trivial on the coefficients is at most `1` on polynomial expressions in an

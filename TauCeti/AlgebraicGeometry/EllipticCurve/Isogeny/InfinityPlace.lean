@@ -89,6 +89,7 @@ instance : ((infinityPlace W₁).comap φ.fieldPullback.toRingHom).IsTrivialOn F
 
 /-- **The restricted place, evaluated on an affine function of the target**: it is the value at
 infinity of the pullback of that function. -/
+@[simp]
 theorem comap_infinityPlace_apply_algebraMap (c : W₂.CoordinateRing) :
     ((infinityPlace W₁).comap φ.fieldPullback.toRingHom)
         (algebraMap W₂.CoordinateRing W₂.FunctionField c)
