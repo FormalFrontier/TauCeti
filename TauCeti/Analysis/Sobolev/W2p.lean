@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Sobolev.GraphStep
-public import TauCeti.Analysis.Sobolev.W1p
+public import TauCeti.Analysis.Sobolev.W1p.Basic
 
 /-!
 # Second-order weak Sobolev spaces

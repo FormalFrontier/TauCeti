@@ -7,8 +7,8 @@ module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.Basic
 public import TauCeti.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.Cusp
+public import TauCeti.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.NormEDS
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Universal
-public import TauCeti.NumberTheory.EllipticDivisibilitySequence.NormEDS
 
 /-!
 # Division polynomials of the universal curve
@@ -55,19 +55,12 @@ first-order, and the same for `map_mul` and `map_pow`. That leaves the arithmeti
 `polyEval (cusp ℤ) 1 1 (C X) * n ^ 2 - (n + 1) * (n - 1) = 1`, which `ring` closes once `C X`
 evaluates to `1`.
 
-The remaining two companions, `polyEval_cusp_ψc` and `polyEval_cusp_ω`, need `ψc` and `two_mul_ω`,
-both part of the `ω` API that `DivisionPolynomial/Invariant.lean` records as not yet here. Those are
-ordinary missing prerequisites and arrive with `ω`.
-
-The companion transport for `ω` is **not** here. It cannot be: `WeierstrassCurve.ω` does not exist
-in this repository or in the pinned Mathlib, and neither does the `map_ω` such a proof would rewrite
-with. `DivisionPolynomial/Invariant.lean` lists both among what it deliberately leaves out, and
-records the chain still missing for them — the top of
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, the source's names for it; the
-denominator itself has landed as `reducedInvarDenom`. The
-lower three links are `isEllipticNet_normEDS`, `invarNum_mul_invarDenom` and
-`IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul`, all present, so what remains is
-`redInvar_normEDS`. `evalEval_ω` belongs with that work rather than here.
+The remaining companions — `polyEval_cusp_ψc`, `polyEval_cusp_ω` and the transport `evalEval_ω`
+— are **not** here, and no longer for want of prerequisites: `ψc`, `ω`, `two_mul_ω` and `map_ω`
+all live in `DivisionPolynomial/Omega.lean`, downstream of the reduced-invariant identity this
+passage used to track. They are the cusp-value slice's own topic: stating them here would add an
+`Omega.lean` import for three lemmas that ship together with that development, so they arrive
+with it instead.
 
 ## Provenance
 
@@ -92,8 +85,10 @@ The source's `polyEval_cusp_ψc` and `polyEval_cusp_ω` are excluded.
 The `evalEval_*` statements are the source's unchanged. Docstrings are added here, and the
 source's shared `variable {m n : ℤ}` is narrowed to `n`: of those five only `evalEval_ψ` and
 `evalEval_φ` carry an index, and both use `n` alone. `isEllSequence_ψᵤ` is stated upstream through
-an `abbrev ψᵤ` and its own `ψᵤ_eq_normEDS`; here the abbreviation is dropped and that equation is
-inlined as a `have`, so the statement is spelled on `fun n ↦ polyToField (curve.ψ n)` directly.
+an `abbrev ψᵤ` and its own `ψᵤ_eq_normEDS`; here the abbreviation is dropped, the identification
+of `ψ` with `normEDS` is the named `ψ_eq_normEDS` (`DivisionPolynomial/NormEDS.lean`), and a
+`have` transports it through `polyToField`, so the statement is spelled on
+`fun n ↦ polyToField (curve.ψ n)` directly.
 -/
 
 public section
@@ -142,7 +137,7 @@ lemma isEllipticSequence_polyToField_ψ :
   have h : (fun n : ℤ ↦ polyToField (curve.ψ n))
       = normEDS (polyToField curve.ψ₂) (polyToField (Polynomial.C curve.Ψ₃))
           (polyToField (Polynomial.C curve.preΨ₄)) := by
-    funext n; rw [← _root_.map_normEDS]; rfl
+    funext n; rw [ψ_eq_normEDS, _root_.map_normEDS]
   rw [h]
   exact isEllipticSequence_normEDS _ _ _
 

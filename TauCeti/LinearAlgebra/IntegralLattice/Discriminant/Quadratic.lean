@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+public import TauCeti.Algebra.AddCircle
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Bilinear
 public import TauCeti.LinearAlgebra.IntegralLattice.Even
@@ -86,11 +87,6 @@ private theorem dualCarrierHalfNormModOne_apply (L : IntegralLattice V)
       ((L.form x x / 2 : ℚ) : AddCircle (1 : ℚ)) :=
   rfl
 
-private theorem coe_rat_eq_zero_of_eq_int (q : ℚ) (z : ℤ) (hq : q = z) :
-    (q : AddCircle (1 : ℚ)) = 0 := by
-  subst q
-  exact (AddCircle.coe_eq_zero_iff (1 : ℚ)).mpr ⟨z, by simp⟩
-
 /-- For an even lattice, its original carrier lies in the radical of the half-norm modulo `Z` on
 the dual carrier.  This is the representative-independence condition for the discriminant
 quadratic map. -/
@@ -102,10 +98,10 @@ private theorem carrierInDual_le_radical_dualCarrierHalfNormModOne
   · rw [dualCarrierHalfNormModOne_apply]
     obtain ⟨z, hz⟩ := hL.exists_norm_eq_two_mul
       ⟨x, (L.mem_carrierInDual_iff x).mp hx⟩
-    apply coe_rat_eq_zero_of_eq_int _ z
+    refine (AddCircle.coe_eq_zero_iff_mem_one _).mpr (Submodule.mem_one.mpr ⟨z, ?_⟩)
     rw [L.norm_apply] at hz
-    rw [hz]
-    norm_num
+    rw [eq_intCast, hz]
+    ring
   · apply LinearMap.ext
     intro y
     rw [dualCarrierHalfNormModOne, QuadraticMap.polarBilin_apply_apply, LinearMap.zero_apply,
@@ -114,9 +110,9 @@ private theorem carrierInDual_le_radical_dualCarrierHalfNormModOne
     obtain ⟨z, hz⟩ := Submodule.mem_one.mp
       (y.2 x ((L.mem_carrierInDual_iff x).mp hx))
     rw [← AddCircle.coe_add]
-    apply coe_rat_eq_zero_of_eq_int _ z
+    refine (AddCircle.coe_eq_zero_iff_mem_one _).mpr (Submodule.mem_one.mpr ⟨z, ?_⟩)
     have hz' : L.form y x = (z : ℚ) := by simpa using hz.symm
-    rw [hz']
+    rw [eq_intCast, hz']
     ring
 
 /-- The discriminant quadratic map of an even integral lattice, in the half-norm convention.
@@ -136,6 +132,26 @@ theorem discriminantQuadraticMap_mk (L : IntegralLattice V) (hL : L.IsEven)
       ((L.form x x / 2 : ℚ) : AddCircle (1 : ℚ)) := by
   rw [discriminantQuadraticMap, QuadraticMap.lift_mk,
     dualCarrierHalfNormModOne_apply]
+
+/-- The discriminant quadratic value of a representative vanishes exactly when the ambient
+self-pairing is twice an integer. -/
+theorem discriminantQuadraticMap_mk_eq_zero_iff (L : IntegralLattice V) (hL : L.IsEven)
+    (x : L.dualCarrier) :
+    L.discriminantQuadraticMap hL (Submodule.Quotient.mk x) = 0 ↔
+      ∃ n : ℤ, L.form x x = ((2 * n : ℤ) : ℚ) := by
+  rw [discriminantQuadraticMap_mk, AddCircle.coe_eq_zero_iff_mem_one]
+  constructor
+  · intro h
+    obtain ⟨n, hn⟩ := Submodule.mem_one.mp h
+    rw [eq_intCast] at hn
+    refine ⟨n, ?_⟩
+    push_cast
+    linarith [hn]
+  · rintro ⟨n, hn⟩
+    refine Submodule.mem_one.mpr ⟨n, ?_⟩
+    rw [eq_intCast, hn]
+    push_cast
+    ring
 
 /-- The polar of the half-norm discriminant quadratic map is the discriminant pairing. -/
 @[simp]

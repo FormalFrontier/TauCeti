@@ -40,6 +40,8 @@ theory it rests on.
 ## Main results
 
 * `TauCeti.diamondOpCusp_mem_cuspFormsNew`: the new subspace is diamond-stable.
+* `TauCeti.diamondOpCusp_mem_cuspFormsOldMultiples`: so is the refined old subspace of
+  `TauCeti.cuspFormsOldMultiples`.
 * `TauCeti.iSup_inf_cuspFormsOld_cuspFormCharSpace`,
   `TauCeti.iSup_inf_cuspFormsNew_cuspFormCharSpace`: the old and the new subspace are each the
   supremum of their nebentypus components.
@@ -79,6 +81,28 @@ theorem diamondOpCusp_mem_cuspFormsNew (u : (ZMod N)ˣ)
   rw [cuspFormsNew_def] at hf ⊢
   exact CuspForm.diamondOpCusp_mem_peterssonOrthogonal
     (fun _ _ hg ↦ diamondOpCusp_mem_cuspFormsOld _ hg) u hf
+
+/-- **The refined old subspace is diamond-stable.** `⟨u⟩` sends a level-raised newform to the
+level-raise of `⟨u'⟩` applied to it, where `u'` is the reduction of `u`; the new subspace at the
+smaller level is itself diamond-stable, and the level condition `m ∣ M` is untouched. So the
+generators are permuted among themselves. -/
+theorem cuspFormsOldMultiples_map_diamondOpCusp_le (u : (ZMod N)ˣ) (m : ℕ) :
+    (cuspFormsOldMultiples N k m).map (diamondOpCusp k u) ≤ cuspFormsOldMultiples N k m := by
+  rw [Submodule.map_le_iff_le_comap]
+  refine cuspFormsOldMultiples_le fun M d h hM hm g hg ↦ ?_
+  have : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using h)⟩
+  have : NeZero M := ⟨fun hM' ↦ NeZero.ne N (by simpa [hM'] using h)⟩
+  rw [Submodule.mem_comap, CuspForm.diamondOpCusp_levelRaise h]
+  -- `levelRaiseₗ_apply` bridges the introduction rule's `levelRaiseₗ` to the bare `levelRaise`
+  -- that `diamondOpCusp_levelRaise` produced above
+  simpa only [CuspForm.levelRaiseₗ_apply] using
+    levelRaise_mem_cuspFormsOldMultiples h hM hm k _ (diamondOpCusp_mem_cuspFormsNew _ hg)
+
+/-- The refined old subspace is diamond-stable, in the membership form. -/
+theorem diamondOpCusp_mem_cuspFormsOldMultiples (u : (ZMod N)ˣ) {m : ℕ}
+    {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOldMultiples N k m) :
+    diamondOpCusp k u f ∈ cuspFormsOldMultiples N k m :=
+  cuspFormsOldMultiples_map_diamondOpCusp_le u m (Submodule.mem_map_of_mem hf)
 
 /-! ### The nebentypus components of the old and new subspaces -/
 
