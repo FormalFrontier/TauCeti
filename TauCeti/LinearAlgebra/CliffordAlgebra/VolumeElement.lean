@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
-public import Mathlib.Data.List.OfFn
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Basic
 public import Mathlib.LinearAlgebra.Span.Basic
 -- Private: `Nat.choose_succ_succ` and `Nat.choose_one_right` are used only inside the proof of
@@ -32,9 +31,8 @@ Both facts come from the single relation `ι Q a * ι Q b = -(ι Q b * ι Q a)` 
 other costs a sign `(-1) ^ n` when `m` is orthogonal to every factor
 (`CliffordAlgebra.prod_map_ι_mul_ι_of_forall_isOrtho`). When `m` is instead *one of* the factors,
 one of the `n` transpositions is a vector past itself, which is free, so the cost is
-`(-1) ^ (n - 1)` (`CliffordAlgebra.prod_map_ι_mul_ι_of_mem`). That sign does not depend on `m`, and
-the condition is linear in `m`, so it propagates from the factors to their span
-(`CliffordAlgebra.prod_map_ι_mul_ι_of_mem_span`).
+`(-1) ^ (n - 1)`. That sign does not depend on `m`, and the condition is linear in `m`, so it
+propagates from the factors to their span (`CliffordAlgebra.prod_map_ι_mul_ι_of_mem_span`).
 
 This is the even/odd dichotomy of the Clifford algebra as seen from the volume element. If the
 factors span `M` and there are **oddly** many of them, the volume element commutes with every
@@ -74,9 +72,6 @@ and, for the unit statement, that the product of the values `Q vᵢ` is a unit.
 * `CliffordAlgebra.prod_map_ι_mul_self`: the square of the volume element of a pairwise
   orthogonal list is the scalar `(-1) ^ (n.choose 2) * ∏ᵢ Q vᵢ`.
 * `CliffordAlgebra.isUnit_prod_map_ι`: it is a unit as soon as that scalar is.
-* `CliffordAlgebra.prod_map_ι_ofFn_mem_center_of_odd` and
-  `CliffordAlgebra.prod_map_ι_ofFn_mul_ι_of_even`: the two halves of the dichotomy for a family
-  indexed by `Fin n`.
 
 ## References
 
@@ -128,22 +123,13 @@ theorem prod_map_ι_mul_ι_of_forall_isOrtho {l : List M} {m : M}
       _ = ((-1 : R) ^ (a :: l).length) • (ι Q m * ((a :: l).map (ι Q)).prod) := by
           rw [smul_neg, List.length_cons, pow_succ, mul_neg_one, neg_smul]
 
-/-- The mirror image of `prod_map_ι_mul_ι_of_forall_isOrtho`: the same sign moves the vector
-back, the sign being its own inverse. Kept private, as it says nothing the public form does not:
-its only use is to read the crossing right-to-left inside `prod_map_ι_append_cons_mul_ι`. -/
-private theorem ι_mul_prod_map_ι_of_forall_isOrtho {l : List M} {m : M}
-    (h : ∀ x ∈ l, Q.IsOrtho x m) :
-    ι Q m * (l.map (ι Q)).prod = ((-1 : R) ^ l.length) • ((l.map (ι Q)).prod * ι Q m) := by
-  have hsign : ((-1 : R) ^ l.length) * (-1) ^ l.length = 1 := by
-    simpa using neg_one_pow_add_mul_neg_one_pow (R := R) l.length 0
-  rw [prod_map_ι_mul_ι_of_forall_isOrtho h, smul_smul, hsign, one_smul]
-
 /-- **A factor of the volume element crosses it at the cost of `(-1) ^ (n - 1)`**: of the `n`
 transpositions, the one exchanging the vector with the copy of itself inside the product is free.
 
 The list is presented split at the chosen occurrence of the vector, so that the two halves can be
-crossed separately. -/
-theorem prod_map_ι_append_cons_mul_ι {l₁ l₂ : List M} {a : M}
+crossed separately; that presentation is chosen for the induction, so the lemma is private and
+`prod_map_ι_mul_ι_of_mem_span` is the interface. -/
+private theorem prod_map_ι_append_cons_mul_ι {l₁ l₂ : List M} {a : M}
     (h₁ : ∀ x ∈ l₁, Q.IsOrtho x a) (h₂ : ∀ x ∈ l₂, Q.IsOrtho x a) :
     ((l₁ ++ a :: l₂).map (ι Q)).prod * ι Q a
       = ((-1 : R) ^ (l₁.length + l₂.length))
@@ -151,6 +137,9 @@ theorem prod_map_ι_append_cons_mul_ι {l₁ l₂ : List M} {a : M}
   have hmid : ((l₁ ++ a :: l₂).map (ι Q)).prod
       = (l₁.map (ι Q)).prod * (ι Q a * (l₂.map (ι Q)).prod) := by
     simp only [List.map_append, List.map_cons, List.prod_append, List.prod_cons]
+  -- Crossing `l₁` right-to-left costs the same sign, which is its own inverse.
+  have hsq : ((-1 : R) ^ l₁.length) * (-1) ^ l₁.length = 1 := by
+    simpa using neg_one_pow_add_mul_neg_one_pow (R := R) l₁.length 0
   calc ((l₁ ++ a :: l₂).map (ι Q)).prod * ι Q a
       = (l₁.map (ι Q)).prod * (ι Q a * ((l₂.map (ι Q)).prod * ι Q a)) := by
         rw [hmid]; simp only [mul_assoc]
@@ -163,12 +152,15 @@ theorem prod_map_ι_append_cons_mul_ι {l₁ l₂ : List M} {a : M}
         simp only [mul_assoc]
     _ = ((-1 : R) ^ (l₁.length + l₂.length))
           • (ι Q a * ((l₁ ++ a :: l₂).map (ι Q)).prod) := by
-        rw [← ι_mul_prod_map_ι_of_forall_isOrtho h₁, hmid]
+        rw [prod_map_ι_mul_ι_of_forall_isOrtho h₁, smul_smul, hsq, one_smul, hmid]
         simp only [mul_assoc]
 
 /-- **A factor of a pairwise orthogonal volume element crosses it at the cost of `(-1) ^ (n - 1)`.**
--/
-theorem prod_map_ι_mul_ι_of_mem {l : List M} (hl : l.Pairwise Q.IsOrtho) {a : M} (ha : a ∈ l) :
+
+This is the base case of `prod_map_ι_mul_ι_of_mem_span`, of which it is a special case once the
+factor is viewed in the span; that lemma is the interface. -/
+private theorem prod_map_ι_mul_ι_of_mem {l : List M} (hl : l.Pairwise Q.IsOrtho) {a : M}
+    (ha : a ∈ l) :
     (l.map (ι Q)).prod * ι Q a
       = ((-1 : R) ^ (l.length - 1)) • (ι Q a * (l.map (ι Q)).prod) := by
   obtain ⟨l₁, l₂, rfl⟩ := List.append_of_mem ha
@@ -248,7 +240,6 @@ theorem prod_map_ι_mul_ι_of_even_length {l : List M} (hl : l.Pairwise Q.IsOrth
 /-- **The square of the volume element of a pairwise orthogonal list is a scalar**,
 `(-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ`: interleaving the two copies of the product takes
 `n.choose 2` transpositions, and each pair of equal adjacent factors collapses to `Q vᵢ`. -/
-@[simp]
 theorem prod_map_ι_mul_self {l : List M} (hl : l.Pairwise Q.IsOrtho) :
     (l.map (ι Q)).prod * (l.map (ι Q)).prod
       = algebraMap R (CliffordAlgebra Q) (((-1 : R) ^ l.length.choose 2) * (l.map Q).prod) := by
@@ -282,38 +273,5 @@ theorem isUnit_prod_map_ι {l : List M} (hl : l.Pairwise Q.IsOrtho)
   refine isUnit_mul_self_iff.mp ?_
   rw [prod_map_ι_mul_self hl]
   exact ((isUnit_one.neg.pow _).mul h).map (algebraMap R (CliffordAlgebra Q))
-
-/-! ### Orthogonal families indexed by `Fin n` -/
-
-/-- The entries of `List.ofFn b` are exactly the values of `b`, so the two spans agree. -/
-private theorem span_setOf_mem_ofFn {n : ℕ} (b : Fin n → M) :
-    Submodule.span R {x : M | x ∈ List.ofFn b} = Submodule.span R (Set.range b) := by
-  congr 1
-  ext x
-  simp [List.mem_ofFn']
-
-/-- **The volume element of an orthogonal spanning family of odd size is central.** This is the
-basis-indexed form of `prod_map_ι_mem_center_of_odd_length`, intended for downstream use: the
-centre of the Clifford algebra of an odd-dimensional quadratic space contains the pseudoscalar. -/
-theorem prod_map_ι_ofFn_mem_center_of_odd {n : ℕ} {b : Fin n → M}
-    (hb : ∀ i j : Fin n, i ≠ j → Q.IsOrtho (b i) (b j)) (hn : Odd n)
-    (hspan : Submodule.span R (Set.range b) = ⊤) :
-    ((List.ofFn b).map (ι Q)).prod ∈ Subalgebra.center R (CliffordAlgebra Q) := by
-  refine prod_map_ι_mem_center_of_odd_length
-    (List.pairwise_ofFn.2 fun _ _ hij => hb _ _ hij.ne) (by rwa [List.length_ofFn]) ?_
-  rw [span_setOf_mem_ofFn]
-  exact hspan
-
-/-- **The volume element of an orthogonal spanning family of even size anticommutes with every
-generator.** This is the basis-indexed form of `prod_map_ι_mul_ι_of_even_length`, the even half of
-the dichotomy. -/
-theorem prod_map_ι_ofFn_mul_ι_of_even {n : ℕ} {b : Fin n → M}
-    (hb : ∀ i j : Fin n, i ≠ j → Q.IsOrtho (b i) (b j)) (hn : Even n)
-    (hspan : Submodule.span R (Set.range b) = ⊤) (m : M) :
-    ((List.ofFn b).map (ι Q)).prod * ι Q m = -(ι Q m * ((List.ofFn b).map (ι Q)).prod) := by
-  refine prod_map_ι_mul_ι_of_even_length
-    (List.pairwise_ofFn.2 fun _ _ hij => hb _ _ hij.ne) (by rwa [List.length_ofFn]) ?_
-  rw [span_setOf_mem_ofFn]
-  exact hspan.ge Submodule.mem_top
 
 end CliffordAlgebra

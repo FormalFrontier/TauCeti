@@ -209,11 +209,13 @@ private theorem hyperbolicBaseInclusion_ι (m : M) :
   rw [hyperbolicBaseInclusion, _root_.CliffordAlgebra.lift_ι_apply]
   simp [hyperbolicBaseGenerator]
 
-/-- The hyperbolic volume element is the ordered product of the two orthogonal vectors
-`(0, e₀)` and `(0, e₁)`, so the even half of the volume-element dichotomy applies to it. -/
+/-- The hyperbolic volume element anticommutes with every generator coming from the hyperbolic
+factor. -/
 private theorem hyperbolicVolume_anticomm_rightGenerator (v : Fin (1 + 1) → ℝ) :
     hyperbolicVolume Q * _root_.CliffordAlgebra.ι _ (0, v) =
       -(_root_.CliffordAlgebra.ι _ (0, v) * hyperbolicVolume Q) := by
+  -- The hyperbolic volume element is the ordered product of the two orthogonal vectors `(0, e₀)`
+  -- and `(0, e₁)`, so the even half of the volume-element dichotomy applies to it.
   have hpair : ([((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))] :
       List (M × (Fin (1 + 1) → ℝ))).Pairwise
         (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho := by
