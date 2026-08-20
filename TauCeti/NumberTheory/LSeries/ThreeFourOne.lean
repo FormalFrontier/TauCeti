@@ -82,7 +82,6 @@ theorem threeFourOneCombination_def (z : ℂ) :
     threeFourOneCombination z = 3 + 4 * z.re + (z ^ 2).re := (rfl)
 
 /-- The abstract finite combination with `3-4-1` weights is the usual concrete expression. -/
-@[simp]
 theorem trigonometricCombination_threeFourOne (z : ℂ) :
     trigonometricCombination Finset.univ threeFourOneWeight threeFourOneFrequency z =
       threeFourOneCombination z := by
@@ -111,7 +110,8 @@ theorem isNonnegativeTrigonometricCombination_threeFourOne :
   · intro i hi
     fin_cases i <;> norm_num [threeFourOneWeight]
   · intro z hz
-    simpa only [trigonometricCombination_threeFourOne] using threeFourOneCombination_nonneg hz
+    rw [trigonometricCombination_threeFourOne]
+    exact threeFourOneCombination_nonneg hz
 
 /-! ### Coefficient and Euler-factor forms -/
 
