@@ -6,9 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Module.Lattice
-public import TauCeti.Algebra.Lie.Sl2.Standard
+public import TauCeti.Algebra.Lie.Sl2.Representation
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Representation
 public import TauCeti.RingTheory.Binomial
 import Mathlib.Tactic.FinCases
 
@@ -43,8 +42,6 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
   `TauCeti.Sl2Std.dividedPower_lower_apply`: the integral coordinate formulas for the root
   divided powers.
 * `TauCeti.Sl2Std.ringChoose_diag_apply`: the coordinate formula for Cartan binomials.
-* `TauCeti.Sl2Std.representation_ι_slFinTwoBasis`: the enveloping representation sends the
-  standard `sl₂` basis to the raising, lowering, and Cartan operators.
 * `TauCeti.Sl2Std.kostantForm_apply_mem_integralLattice`: the rank-one Kostant form preserves
   the lattice.
 * `TauCeti.Sl2Std.kostantFormRep`: the canonical `ℤ`-algebra representation of the rank-one Kostant
@@ -170,51 +167,6 @@ theorem ringChoose_diag_apply [Algebra ℚ K]
     rw [← hop', smeval_diag_apply, hscalar']
   have : IsAddTorsionFree K := .of_module_rat K
   exact (nsmul_right_inj (Nat.factorial_ne_zero k)).mp heq
-
-/-- The canonical enveloping-algebra representation sends the standard `sl₂` basis elements to
-the raising, lowering, and Cartan operators. -/
-theorem representation_ι_slFinTwoBasis (i : Fin 3) :
-    TauCeti.UniversalEnvelopingAlgebra.representation K
-        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n)
-        (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
-      ![raise K n, lower K n, diag K n] i := by
-  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
-  ext v
-  rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
-  exact LinearMap.congr_fun (rep_apply_basis i) v
-
-/-- The enveloping-algebra representation on the standard module `V(n)`: the general
-`TauCeti.UniversalEnvelopingAlgebra.representation` at the Lie module `V(n)`. -/
-noncomputable def repEnveloping (K : Type*) [CommRing K] (n : ℕ) :
-    _root_.UniversalEnvelopingAlgebra K (LieAlgebra.SpecialLinear.sl (Fin 2) K) →ₐ[K]
-      Module.End K (Sl2Std K n) :=
-  TauCeti.UniversalEnvelopingAlgebra.representation K (LieAlgebra.SpecialLinear.sl (Fin 2) K)
-    (Sl2Std K n)
-
-/-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
-theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
-    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
-  (TauCeti.UniversalEnvelopingAlgebra.representation_ι K
-        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n) x).trans
-    (LinearMap.ext fun v => by
-      rw [LieModule.toEnd_apply_apply]
-      exact lie_eq_rep_apply x v)
-
-/-- The `simp`-normal form of `repEnveloping_ι`, stated for the canonical generators as `simp`
-writes them: `ι K x` unfolds to `mkAlgHom K _ (TensorAlgebra.ι K x)`. -/
-@[simp]
-theorem repEnveloping_ι' (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
-    repEnveloping K n
-      (_root_.UniversalEnvelopingAlgebra.mkAlgHom K
-        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (TensorAlgebra.ι K x)) = rep K n x := by
-  simpa using repEnveloping_ι (K := K) (n := n) x
-
-/-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
-raising, lowering, and Cartan operators. -/
-theorem repEnveloping_ι_slFinTwoBasis (i : Fin 3) :
-    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
-      ![raise K n, lower K n, diag K n] i := by
-  rw [repEnveloping_ι, rep_apply_basis]
 
 end GeneralCoefficients
 

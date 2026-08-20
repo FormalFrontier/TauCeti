@@ -8,17 +8,15 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
 /-!
-# The representation of an enveloping algebra on a Lie module
+# Central elements in enveloping-algebra representations
 
-A module over a Lie algebra `L` is the same thing as a module over the enveloping algebra `U(L)`.
-This file records the direction that a construction inside `U(L)` needs: a Lie module `M` carries
-an algebra map `U(L) →ₐ[R] Module.End R M` extending the Lie action, obtained from the universal
-property applied to `LieModule.toEnd`.
+The canonical algebra map from `U(L)` to the endomorphisms of a Lie module is defined in
+`TauCeti.Algebra.Lie.UniversalEnveloping.Basic`. This file develops the consequences of centrality:
+a central element acts by an endomorphism commuting with the Lie action, and an eigenvalue on a
+Lie-module generator therefore extends to the whole module.
 
 ## Main results
 
-* `TauCeti.UniversalEnvelopingAlgebra.representation_ι_apply`: a canonical Lie generator acts by
-  the Lie bracket.
 * `TauCeti.UniversalEnvelopingAlgebra.representation_lie_of_mem_center`: the image of a central
   element of `U(L)` commutes with the whole action, so its eigenspaces are Lie submodules.
 * `TauCeti.UniversalEnvelopingAlgebra.representation_apply_eq_smul_of_lieSpan_eq_top`: a central
