@@ -61,25 +61,12 @@ private theorem toGL_transvection_eq_transvectionUnit {A : Type*} [CommRing A]
     {i j : Fin 2} (hij : i ≠ j) (t : A) :
     Matrix.SpecialLinearGroup.toGL (Matrix.SpecialLinearGroup.transvection hij t) =
       TauCeti.transvectionUnit hij t := by
+  -- `transvectionUnit` is opaque outside its defining module, whose public coercion equation is
+  -- `coe_transvectionUnit`; compare the two `GL₂` elements through their underlying matrices.
   apply Matrix.GeneralLinearGroup.ext
   intro r s
-  change Matrix.transvection i j t r s =
-    (TauCeti.transvectionUnit hij t : Matrix (Fin 2) (Fin 2) A) r s
   rw [TauCeti.coe_transvectionUnit]
-
-/-- The first divided power of a root operator is the operator itself, so it maps one integral
-basis vector to the other and annihilates the remaining vector exactly as
-`TauCeti.Sl2Std.repEnveloping_root_apply_basis` says. -/
-private theorem integralDividedPower_one_apply_basis (i s : Fin 2) :
-    integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
-        (integralLattice 1).toAddSubgroup 1
-        (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ
-          (kostantForm_apply_mem_integralLattice 1) i 1 hv) (b s) =
-      if s = i.rev then b i else 0 := by
-  apply Subtype.ext
-  rw [coe_integralDividedPower_apply, Associative.dividedPower_one, Module.End.smul_def,
-    repEnveloping_root_apply_basis]
-  split <;> simp
+  rfl
 
 private theorem kostantRootSubgroupMatrix_apply_rankOne {A : Type*} [CommRing A]
     (i r s : Fin 2) (t : Multiplicative A) :
@@ -87,11 +74,10 @@ private theorem kostantRootSubgroupMatrix_apply_rankOne {A : Type*} [CommRing A]
         (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root i) b
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t) r s =
       Matrix.transvection i i.rev (Multiplicative.toAdd t) r s := by
-  rw [kostantRootSubgroupMatrix_apply, repr_kostantRootSubgroupPoints_baseChange,
-    nilpotencyClass_repEnveloping_root, Finset.sum_range_succ, Finset.sum_range_one,
-    integralDividedPower_zero, integralDividedPower_one_apply_basis]
-  simp only [Module.End.one_apply, Module.Basis.repr_self, MulEquiv.apply_symm_apply,
-    pow_zero, pow_one, Matrix.transvection, Matrix.add_apply]
+  rw [kostantRootSubgroupMatrix_apply,
+    kostantRootSubgroupPoints_apply_baseChange_basis_one]
+  simp only [map_add, Module.Basis.repr_self, Finsupp.add_apply, MulEquiv.apply_symm_apply,
+    Matrix.transvection, Matrix.add_apply]
   fin_cases i <;> fin_cases r <;> fin_cases s <;> simp
 
 /-- **The rank-one Kostant root subgroups are the standard transvections.** The matrix of a

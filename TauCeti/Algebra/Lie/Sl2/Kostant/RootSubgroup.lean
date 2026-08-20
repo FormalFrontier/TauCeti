@@ -21,6 +21,8 @@ coordinate lattice, so both resulting root-subgroup morphisms are closed immersi
   lattice, viewed as an additive subgroup.
 * `TauCeti.Sl2Std.repEnveloping_root_apply_basis`: each root operator maps one coordinate basis
   vector to the other and annihilates the remaining vector.
+* `TauCeti.Sl2Std.kostantRootSubgroupPoints_apply_baseChange_basis_one`: the resulting class-two
+  root-subgroup action on the base-changed coordinate basis.
 * `TauCeti.Sl2Std.nilpotencyClass_repEnveloping_root` and
   `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent, of class
   exactly two.
@@ -108,6 +110,31 @@ theorem nilpotencyClass_repEnveloping_root (i : Fin 2) :
 theorem isNilpotent_repEnveloping_root (i : Fin 2) :
     IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) :=
   ⟨2, (nilpotencyClass_eq_succ_iff.mp (nilpotencyClass_repEnveloping_root i)).1⟩
+
+private theorem integralDividedPower_one_apply_basis (i s : Fin 2) :
+    integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
+        (integralLattice 1).toAddSubgroup 1
+        (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ
+          (kostantForm_apply_mem_integralLattice 1) i 1 hv) (b s) =
+      if s = i.rev then b i else 0 := by
+  apply Subtype.ext
+  rw [coe_integralDividedPower_apply, Associative.dividedPower_one, Module.End.smul_def,
+    repEnveloping_root_apply_basis]
+  split <;> simp
+
+/-- A rank-one Kostant root-subgroup point acts on the base-changed integral basis by the
+class-two formula `v_s ↦ v_s + t v_i` when `s = i.rev`, and fixes `v_s` otherwise. -/
+theorem kostantRootSubgroupPoints_apply_baseChange_basis_one {A : Type*} [CommRing A]
+    (i s : Fin 2) (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    (kostantRootSubgroupPoints e h ρ (integralLattice 1).toAddSubgroup
+        (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root i) f).val
+        ((b).baseChange A s) =
+      (b).baseChange A s + if s = i.rev then
+        Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) • (b).baseChange A i else 0 := by
+  rw [Module.Basis.baseChange_apply, kostantRootSubgroupPoints_tmul,
+    nilpotencyClass_repEnveloping_root, Finset.sum_range_succ, Finset.sum_range_one,
+    integralDividedPower_zero, integralDividedPower_one_apply_basis]
+  split <;> simp [smul_tmul']
 
 /-- Every root operator in the standard two-dimensional `sl₂` representation has a unit root
 step on the integral coordinate basis. For the raising operator the step is `v₁ ↦ v₀`; for
