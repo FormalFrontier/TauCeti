@@ -53,7 +53,9 @@ in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected s
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
 containing its frontier: there the enclosing set must be known to contain the whole frontier, here
-only that the set is cut off from infinity. Neither implies the other.
+only that the set is cut off from infinity. The frontier route is the special case of the enclosure
+route obtained from `TauCeti.subset_filledHull_of_frontier_subset`; the enclosure route does not
+require the whole frontier to be caught.
 
 ## Generality
 
@@ -65,8 +67,9 @@ used, and the separation argument is the general Hahn–Banach one.
 * `TauCeti.filledHull_subset_closedConvexHull` — a filled hull lies in the closed convex hull.
 * `TauCeti.diam_filledHull` and `TauCeti.isBounded_filledHull` — filling preserves the diameter, and
   a filled hull is bounded exactly when the set filled is.
-* `TauCeti.IsPreconnected.diam_le_diam_of_disjoint` — a preconnected set that a bounded `K` cuts off
-  from infinity is no wider than `K`.
+* `TauCeti.diam_le_diam_of_subset_filledHull` and
+  `TauCeti.IsPreconnected.diam_le_diam_of_disjoint` — a set inside the filled hull of a bounded `K`,
+  in particular a preconnected set that `K` cuts off from infinity, is no wider than `K`.
 * `TauCeti.not_isBounded_halfSpace_lt` — an open half-space cut out by a nonzero continuous
   functional is unbounded, and `TauCeti.isBounded_closedConvexHull`,
   `TauCeti.diam_closedConvexHull` — the closed forms of the two convex-hull facts the width
@@ -188,14 +191,19 @@ theorem diam_filledHull : diam (filledHull K) = diam K := by
       _ = diam K := diam_closedConvexHull
   · rw [diam_eq_zero_of_unbounded (mt isBounded_filledHull.mp hKb), diam_eq_zero_of_unbounded hKb]
 
+/-- **Anything a bounded `K` cuts off from infinity is no wider than `K`.** A set inside the filled
+hull is no wider than the hull by `Metric.diam_mono`, and the hull is no wider than `K` by
+`TauCeti.diam_filledHull`. -/
+theorem diam_le_diam_of_subset_filledHull (hK : IsBounded K) (h : S ⊆ filledHull K) :
+    diam S ≤ diam K :=
+  (diam_mono h (isBounded_filledHull.mpr hK)).trans_eq diam_filledHull
+
 /-- **A preconnected set that a bounded `K` cuts off from infinity is no wider than `K`.** If `S` is
 preconnected, disjoint from `K`, and meets the filled hull of `K`, then it lies inside that hull by
 `TauCeti.IsPreconnected.subset_filledHull`, which is no wider than `K` by
 `TauCeti.diam_filledHull`. No regularity is asked of `K`. -/
 theorem IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : Disjoint S K)
     (hne : (S ∩ filledHull K).Nonempty) (hK : IsBounded K) : diam S ≤ diam K :=
-  calc diam S ≤ diam (filledHull K) :=
-        diam_mono (IsPreconnected.subset_filledHull hS hSK hne) (isBounded_filledHull.mpr hK)
-    _ = diam K := diam_filledHull
+  diam_le_diam_of_subset_filledHull hK (IsPreconnected.subset_filledHull hS hSK hne)
 
 end TauCeti
