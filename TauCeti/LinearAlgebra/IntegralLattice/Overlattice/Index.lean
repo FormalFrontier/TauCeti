@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.FreeModule.Finite.CardQuotient
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
+public import TauCeti.LinearAlgebra.IntegralLattice.Index
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic
 public import TauCeti.LinearAlgebra.IntegralLattice.Unimodular
 
@@ -27,13 +27,11 @@ order of that subgroup. Together with the correspondence of
 Nikulin's gluing theory: an even lattice glued along a subgroup `H` of `A_L` has discriminant
 `disc(L) / |H|²`, and is unimodular exactly when `|H|² = disc(L)`.
 
-The determinant statement is proved once, and in the generality it deserves: whenever two
-integral lattices share their ambient rational form and one carrier lies inside the other, their
-signed determinants differ by the square of the index. Extending carrier bases of the two
-lattices to bases of the ambient rational space, the index is the absolute determinant of the
-change-of-basis matrix by `AddSubgroup.relIndex_eq_abs_det`, while the Gram determinants differ
-by the square of that same determinant because a bilinear form's matrix transforms by
-congruence.
+The scaling law itself is not proved here: it is the general statement
+`TauCeti.IntegralLattice.discriminant_eq_mul_relIndex_sq` about an arbitrary pair of nested
+integral lattices sharing their ambient rational form, from
+`TauCeti.LinearAlgebra.IntegralLattice.Index`. What this file supplies is the identification of
+the index of an intermediate carrier with the order of the subgroup it cuts out in `A_L`.
 
 An integral intermediate carrier is packaged as an integral lattice in its own right through
 `IntermediateCarrier.IsIntegral.toIntegralLattice`, which keeps the ambient form and therefore
@@ -41,17 +39,14 @@ keeps nondegeneracy; evenness of the carrier makes it an even lattice.
 
 ## Main definitions
 
-* `TauCeti.IntegralLattice.IntermediateCarrier.relIndex`: the relative index `[N : M]` of two
-  intermediate carriers.
+* `TauCeti.IntegralLattice.IntermediateCarrier.relIndex`: the relative index of two intermediate
+  carriers `M N`, that is the index of `M ⊓ N` in `N`; it is `[N : M]` when `M ≤ N`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.index`: the index `[M : L]`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.toIntegralLattice`: an integral
   intermediate carrier, as an integral lattice for the same ambient form.
 
 ## Main results
 
-* `TauCeti.IntegralLattice.determinant_eq_mul_relIndex_sq` and
-  `TauCeti.IntegralLattice.discriminant_eq_mul_relIndex_sq`: the determinant and the discriminant
-  of a full sublattice scale by the square of the index.
 * `TauCeti.IntegralLattice.IntermediateCarrier.index_eq_natCard_discriminantSubgroup`: the index
   of an intermediate carrier is the order of the subgroup it cuts out in `A_L`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.index_intermediateCarrierOfDiscriminantSubgroup`:
@@ -74,68 +69,13 @@ keeps nondegeneracy; evenness of the carrier makes it an even lattice.
 
 public section
 
-open Matrix Module
-
 namespace TauCeti
 
-universe u v
+universe u
 
 namespace IntegralLattice
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
-
-/-! ## The determinant of a full sublattice -/
-
-/-- A carrier basis of an integral lattice generates the carrier as an additive subgroup of the
-ambient rational vector space. -/
-theorem carrier_toAddSubgroup_eq_closure_range (L : IntegralLattice V) {ι : Type v}
-    (b : Basis ι ℤ L) :
-    L.carrier.toAddSubgroup = AddSubgroup.closure (Set.range (b.extendOfIsLattice ℚ)) := by
-  apply AddSubgroup.toIntSubmodule.injective
-  rw [AddSubgroup.toIntSubmodule_closure, TauCeti.Basis.span_range_extendOfIsLattice,
-    Submodule.toIntSubmodule_toAddSubgroup, Submodule.restrictScalars_self]
-
-open Classical in
-/-- **The signed determinant of a full sublattice scales by the square of the index.** If two
-integral lattices share their ambient rational form and one carrier lies inside the other, the
-smaller determinant is the larger one times the square of the index. -/
-theorem determinant_eq_mul_relIndex_sq (L M : IntegralLattice V) (hform : L.form = M.form)
-    (hle : L.carrier ≤ M.carrier) :
-    L.determinant =
-      M.determinant * (L.carrier.toAddSubgroup.relIndex M.carrier.toAddSubgroup : ℤ) ^ 2 := by
-  classical
-  let bM : Basis (Module.Free.ChooseBasisIndex ℤ M) ℤ M := Module.Free.chooseBasis ℤ M
-  let eM := bM.extendOfIsLattice ℚ
-  let σ := (Module.Free.chooseBasis ℤ L).extendOfIsLattice ℚ |>.indexEquiv eM
-  let bL : Basis (Module.Free.ChooseBasisIndex ℤ M) ℤ L :=
-    (Module.Free.chooseBasis ℤ L).reindex σ
-  let eL := bL.extendOfIsLattice ℚ
-  have hidx : ((L.carrier.toAddSubgroup.relIndex M.carrier.toAddSubgroup : ℕ) : ℚ)
-      = |eM.det eL| :=
-    AddSubgroup.relIndex_eq_abs_det _ _ hle eL eM
-      (L.carrier_toAddSubgroup_eq_closure_range bL) (M.carrier_toAddSubgroup_eq_closure_range bM)
-  have hmat : (eM.toMatrix eL)ᵀ * LinearMap.BilinForm.toMatrix eM L.form * eM.toMatrix eL
-      = LinearMap.BilinForm.toMatrix eL L.form :=
-    LinearMap.BilinForm.toMatrix_mul_basis_toMatrix (b := eM) eL L.form
-  have hdetL : (L.determinant : ℚ) = Matrix.det (LinearMap.BilinForm.toMatrix eL L.form) := by
-    rw [L.determinant_eq_gramDet bL, L.intCast_gramDet bL]
-  have hdetM : (M.determinant : ℚ) = Matrix.det (LinearMap.BilinForm.toMatrix eM L.form) := by
-    rw [M.determinant_eq_gramDet bM, M.intCast_gramDet bM, hform]
-  apply Int.cast_injective (α := ℚ)
-  push_cast
-  rw [hdetL, ← hmat, Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose, ← hdetM,
-    ← Basis.det_apply, hidx]
-  ring_nf
-  rw [sq_abs]
-  ring
-
-/-- **The discriminant of a full sublattice scales by the square of the index.** -/
-theorem discriminant_eq_mul_relIndex_sq (L M : IntegralLattice V) (hform : L.form = M.form)
-    (hle : L.carrier ≤ M.carrier) :
-    L.discriminant =
-      M.discriminant * (L.carrier.toAddSubgroup.relIndex M.carrier.toAddSubgroup) ^ 2 := by
-  rw [discriminant_def, discriminant_def, L.determinant_eq_mul_relIndex_sq M hform hle,
-    Int.natAbs_mul, Int.natAbs_pow, Int.natAbs_natCast]
 
 namespace IntermediateCarrier
 
@@ -143,28 +83,25 @@ variable {L : IntegralLattice V}
 
 /-! ## The index of an intermediate carrier -/
 
-/-- The relative index `[N : M]` of two intermediate carriers, that is the order of the
-quotient group `N / M`. -/
-@[expose]
+/-- The relative index of two intermediate carriers `M N`: the index of `M ⊓ N` in `N`, that is
+the order of the quotient group `N / (M ⊓ N)`. When `M ≤ N` this is the index `[N : M]`, the
+order of `N / M`. -/
 noncomputable def relIndex (M N : L.IntermediateCarrier) : ℕ :=
   M.1.toAddSubgroup.relIndex N.1.toAddSubgroup
 
 /-- The index `[M : L]` of the lattice in an intermediate carrier, that is the order of the
 quotient group `M / L`. -/
-@[expose]
 noncomputable def index (M : L.IntermediateCarrier) : ℕ :=
   relIndex ⊥ M
 
-/-- The relative index of two intermediate carriers is the order of the quotient module. -/
+/-- The relative index of two intermediate carriers is the order of the quotient of the larger
+one by the intersection. -/
 theorem relIndex_eq_natCard_quotient (M N : L.IntermediateCarrier) :
-    relIndex M N = Nat.card (↥N.1 ⧸ M.1.submoduleOf N.1) := rfl
+    relIndex M N = Nat.card (↥N.1 ⧸ M.1.submoduleOf N.1) := (rfl)
 
 /-- The index of an intermediate carrier is the order of the quotient module `M / L`. -/
 theorem index_eq_natCard_quotient (M : L.IntermediateCarrier) :
-    index M = Nat.card (↥M.1 ⧸ L.carrier.submoduleOf M.1) := rfl
-
-/-- The index is the relative index over the bottom intermediate carrier. -/
-theorem index_eq_relIndex_bot (M : L.IntermediateCarrier) : index M = relIndex ⊥ M := rfl
+    index M = Nat.card (↥M.1 ⧸ L.carrier.submoduleOf M.1) := (rfl)
 
 /-- **The index is multiplicative in towers of intermediate carriers.** -/
 theorem relIndex_mul_relIndex {M N P : L.IntermediateCarrier} (hMN : M ≤ N) (hNP : N ≤ P) :
@@ -233,6 +170,7 @@ theorem index_intermediateCarrierOfDiscriminantSubgroup (H : AddSubgroup L.Discr
     L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup]
 
 /-- An intermediate carrier has index one exactly when it is the lattice itself. -/
+@[simp]
 theorem index_eq_one_iff (M : L.IntermediateCarrier) : index M = 1 ↔ M = ⊥ := by
   rw [index_eq_natCard_discriminantSubgroup, AddSubgroup.card_eq_one,
     ← L.discriminantSubgroup_bot, ← L.intermediateCarrierOrderIsoDiscriminantSubgroup_apply,
@@ -253,7 +191,6 @@ variable [L.IsNondegenerate]
 
 /-- An integral intermediate carrier is itself an integral lattice, for the same ambient
 rational form. -/
-@[expose]
 def IsIntegral.toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
     IntegralLattice V where
   carrier := M.1
@@ -265,12 +202,12 @@ def IsIntegral.toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M)
 /-- The carrier of the integral lattice attached to an integral intermediate carrier. -/
 @[simp]
 theorem IsIntegral.carrier_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.carrier = M.1 := rfl
+    hM.toIntegralLattice.carrier = M.1 := (rfl)
 
 /-- The integral lattice attached to an integral intermediate carrier keeps the ambient form. -/
 @[simp]
 theorem IsIntegral.form_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.form = L.form := rfl
+    hM.toIntegralLattice.form = L.form := (rfl)
 
 /-- An overlattice of a nondegenerate integral lattice is nondegenerate: it carries the same
 ambient form. -/
