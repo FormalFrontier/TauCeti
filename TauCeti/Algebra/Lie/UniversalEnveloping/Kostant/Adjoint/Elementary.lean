@@ -228,6 +228,7 @@ theorem adjointRootSubgroup_val_apply (α : Weight ℚ H L) (A : CommAlgCat.{w} 
   exact UniversalEnvelopingAlgebra.kostantRootSubgroupParam_val_apply _ _ _ _ _ _ _ A t z
 
 /-- A zero weight contributes the trivial element to the adjoint root subgroup. -/
+@[simp]
 theorem adjointRootSubgroup_eq_one_of_isZero (α : Weight ℚ H L) (hα : α.IsZero)
     (A : CommAlgCat.{w} ℤ) (t : Multiplicative A) :
     hx.adjointRootSubgroup α A t = 1 := by
@@ -282,6 +283,7 @@ theorem adjointElementaryGroup_def (A : CommAlgCat.{w} ℤ) :
   hx.adjointElementaryGroup_eq_def A
 
 /-- Every root-subgroup element belongs to the adjoint elementary Chevalley group. -/
+@[simp]
 theorem adjointRootSubgroup_mem_adjointElementaryGroup (α : Weight ℚ H L) (A : CommAlgCat.{w} ℤ)
     (t : Multiplicative A) :
     hx.adjointRootSubgroup α A t ∈ hx.adjointElementaryGroup A := by
