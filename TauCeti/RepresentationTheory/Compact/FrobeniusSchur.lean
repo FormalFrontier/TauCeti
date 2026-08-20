@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Averaging
 public import TauCeti.RepresentationTheory.Continuous.Character
+public import TauCeti.RepresentationTheory.Continuous.SquareCharacter
 public import TauCeti.RepresentationTheory.Tensor.Square
 import Mathlib.MeasureTheory.Group.Integral
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
@@ -39,7 +40,9 @@ The two square characters are not, a priori, characters of *continuous* represen
 symmetric and exterior square of a continuous representation carry a continuous action, but that
 is not what is used. The closed formulas `χ_{Sym²}(g) = ½(χ(g)² + χ(g²))` and
 `χ_{Λ²}(g) = ½(χ(g)² - χ(g²))`, valid because `2 ≠ 0`, exhibit both as continuous functions of `g`
-directly, and that is all integration needs.
+directly, and that is all integration needs; that continuity is
+`TauCeti/RepresentationTheory/Continuous/SquareCharacter.lean`, which needs neither a group nor a
+measure, and only the integrability it yields is proved here.
 
 For a **unitary** representation the indicator is real
 (`ContRepresentation.conj_frobeniusSchurIndicator`): conjugating the character inverts its
@@ -119,12 +122,6 @@ private theorem integrable_of_continuous {f : G → ℂ} (hf : Continuous f) :
 
 variable (π : ContRepresentation ℂ G V) (hπ : Continuous π)
 
-omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-/-- The character read along the squaring map `g ↦ g * g` is continuous. -/
-theorem continuous_character_mul_self :
-    Continuous fun g : G ↦ character π hπ (g * g) :=
-  (character π hπ).continuous.comp (continuous_id.mul continuous_id)
-
 /-- The character read along the squaring map is integrable against normalized Haar measure, so
 the Frobenius-Schur indicator below is a genuine average and not the Bochner integral's junk
 value. -/
@@ -144,6 +141,7 @@ theorem frobeniusSchurIndicator_def :
 
 /-- The Frobenius-Schur indicator of the trivial representation is its dimension: every character
 value is `dim V`, and Haar measure is normalized. On the line this is `ν₂ = 1`. -/
+@[simp]
 theorem frobeniusSchurIndicator_trivial :
     frobeniusSchurIndicator (ContRepresentation.trivial ℂ G V) continuous_const =
       (Module.finrank ℂ V : ℂ) := by
@@ -157,34 +155,6 @@ theorem frobeniusSchurIndicator_trivial :
 Over any field the difference of the symmetric-square and exterior-square characters is the
 character at the square, and their sum is the square of the character. Integrating both identities
 expresses the two square-character integrals through `ν₂(π)` and `∫ χ_π²`. -/
-
-omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-include hπ in
-/-- The symmetric-square character is continuous, being `½(χ(g)² + χ(g²))`. -/
-theorem continuous_character_symmetricPower_two :
-    Continuous fun g : G ↦ (π.toRepresentation.symmetricPower 2).character g := by
-  have h : (fun g : G ↦ (π.toRepresentation.symmetricPower 2).character g)
-      = fun g : G ↦ (character π hπ g ^ 2 + character π hπ (g * g)) / 2 := by
-    funext g
-    simpa only [coe_character] using
-      Representation.char_symmetricSquare π.toRepresentation g two_ne_zero
-  rw [h]
-  exact (((character π hπ).continuous.pow 2).add
-    (continuous_character_mul_self π hπ)).div_const 2
-
-omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-include hπ in
-/-- The exterior-square character is continuous, being `½(χ(g)² - χ(g²))`. -/
-theorem continuous_character_exteriorPower_two :
-    Continuous fun g : G ↦ (π.toRepresentation.exteriorPower 2).character g := by
-  have h : (fun g : G ↦ (π.toRepresentation.exteriorPower 2).character g)
-      = fun g : G ↦ (character π hπ g ^ 2 - character π hπ (g * g)) / 2 := by
-    funext g
-    simpa only [coe_character] using
-      Representation.char_exteriorSquare π.toRepresentation g two_ne_zero
-  rw [h]
-  exact (((character π hπ).continuous.pow 2).sub
-    (continuous_character_mul_self π hπ)).div_const 2
 
 include hπ in
 /-- The symmetric-square character is integrable against normalized Haar measure. -/
@@ -260,6 +230,7 @@ Conjugating the character inverts its argument
 (`TauCeti.ContRepresentation.character_apply_inv`), and `(g * g)⁻¹ = g⁻¹ * g⁻¹`, so the conjugate
 indicator is the Haar average of `g ↦ χ(g⁻¹ * g⁻¹)`. Haar measure on a compact group is inversion
 invariant, which returns that average to the original one. -/
+@[simp]
 theorem conj_frobeniusSchurIndicator (hunitary : IsUnitary π) :
     (starRingEnd ℂ) (frobeniusSchurIndicator π hπ) = frobeniusSchurIndicator π hπ := by
   rw [frobeniusSchurIndicator_def, ← integral_conj]
@@ -271,6 +242,7 @@ theorem conj_frobeniusSchurIndicator (hunitary : IsUnitary π) :
 
 /-- The Frobenius-Schur indicator of a unitary representation has vanishing imaginary part: it is
 a real number, the form in which the reality trichotomy `ν₂ ∈ {1, 0, -1}` is stated. -/
+@[simp]
 theorem im_frobeniusSchurIndicator (hunitary : IsUnitary π) :
     (frobeniusSchurIndicator π hπ).im = 0 :=
   Complex.conj_eq_iff_im.mp (conj_frobeniusSchurIndicator π hπ hunitary)
