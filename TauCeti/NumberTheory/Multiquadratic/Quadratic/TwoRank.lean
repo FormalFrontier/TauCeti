@@ -134,25 +134,15 @@ theorem twoRank_eq_ncard_ramifiedPrimes_sub_one
     have hrank : TauCeti.ClassGroup.twoRank (𝓞 K) = 0 := by
       have hclass : NumberField.classNumber K = 1 :=
         NumberField.classNumber_eq_one_iff.mpr hpid
-      have hpow := TauCeti.ClassGroup.two_pow_twoRank_le_card (𝓞 K)
-      rw [Nat.card_eq_fintype_card, ← NumberField.classNumber, hclass] at hpow
-      by_contra hrank
-      have hone : 1 < 2 ^ TauCeti.ClassGroup.twoRank (𝓞 K) :=
-        Nat.one_lt_pow hrank (by norm_num)
-      omega
+      rw [TauCeti.ClassGroup.twoRank_def, ← TauCeti.twoRank_def]
+      apply TauCeti.twoRank_of_odd_card
+      rw [Nat.card_eq_fintype_card, ← NumberField.classNumber, hclass]
+      exact odd_one
     have hram : ramifiedPrimes K = {2} := by
-      apply Set.eq_singleton_iff_unique_mem.mpr
-      refine ⟨(NumberField.mem_ramifiedPrimes_iff_dvd_discr Nat.prime_two).mpr ?_, ?_⟩
-      · rw [hdisc]
-        norm_num
-      · intro p hp
-        have hpprime := NumberField.prime_of_mem_ramifiedPrimes hp
-        have hpdivInt :=
-          (NumberField.mem_ramifiedPrimes_iff_dvd_discr hpprime).mp hp
-        rw [hdisc] at hpdivInt
-        have hpdiv : p ∣ 2 ^ 2 := by
-          exact_mod_cast (dvd_neg.mp hpdivInt)
-        exact Nat.prime_eq_prime_of_dvd_pow hpprime Nat.prime_two hpdiv
+      rw [← primeDiscriminantPrime_of_isEvenPrimeDiscriminant isEvenPrimeDiscriminant_neg_four]
+      apply ramifiedPrimes_eq_singleton (D := -4) isPrimeDiscriminant_neg_four
+      · rwa [primeDiscriminantRadicand_neg_four]
+      · exact hgen
     rw [hrank, hram, Set.ncard_singleton]
   · apply le_antisymm
     · exact twoRank_le_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by
