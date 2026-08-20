@@ -123,10 +123,11 @@ private lemma e_pow_mulVec_v_eq_zero_or_exists (s : b.support) {j : ι}
             exact neg_eq_iff_eq_neg.mp h.symm
         have hlbot : P.chainBotCoeff s l = P.chainBotCoeff s k + 1 :=
           P.chainBotCoeff_of_add hlin (by simpa [add_comm] using hlstep)
+        have he_v : e s *ᵥ v b k = (P.chainBotCoeff s k + 1 : ℚ) • v b l := by
+          simpa only [Matrix.lie_apply] using e_lie_v_ne (R := ℚ) hlstep
         right
         refine ⟨l, hl, by omega, ?_⟩
-        rw [show e s *ᵥ v b k = (P.chainBotCoeff s k + 1 : ℚ) • v b l by
-          simpa only [Matrix.lie_apply] using e_lie_v_ne (R := ℚ) hlstep]
+        rw [he_v]
         rw [smul_smul, hkbot, Nat.ascFactorial_succ]
         push_cast
         module
@@ -168,11 +169,12 @@ private lemma e_pow_mulVec_u (s j : b.support) : ∀ n : ℕ,
   | 0 => by rw [pow_zero, Matrix.one_mulVec]
   | 1 => by simpa only [pow_one, Matrix.lie_apply] using e_lie_u (R := ℚ) s j
   | n + 2 => by
+      have he_u : e s *ᵥ u j = |b.cartanMatrix s j| • v b s := by
+        simpa only [Matrix.lie_apply] using e_lie_u (R := ℚ) s j
+      have htwo : 2 = 1 + 1 := by omega
       have h2 : e s ^ 2 *ᵥ u j = 0 := by
-        rw [show 2 = 1 + 1 by omega, pow_succ, ← Matrix.mulVec_mulVec,
-          show e s *ᵥ u j = |b.cartanMatrix s j| • v b s by
-          simpa only [Matrix.lie_apply] using e_lie_u (R := ℚ) s j,
-          Matrix.mulVec_smul, pow_one, e_mulVec_v_self_eq_zero, smul_zero]
+        rw [htwo, pow_succ, ← Matrix.mulVec_mulVec, he_u, Matrix.mulVec_smul, pow_one,
+          e_mulVec_v_self_eq_zero, smul_zero]
       rw [pow_add, ← Matrix.mulVec_mulVec, h2, Matrix.mulVec_zero]
 
 private lemma e_pow_mulVec_v_neg (s : b.support) (n : ℕ) :
@@ -200,16 +202,18 @@ private lemma e_pow_mulVec_v_neg (s : b.support) (n : ℕ) :
   | 0 => rw [pow_zero, Matrix.one_mulVec]
   | .succ 0 => simpa only [pow_one] using hneg
   | .succ (.succ 0) =>
-      -- Pattern matching leaves the exponent in successor form; expose the numeral used below.
-      change e s ^ 2 *ᵥ v b (-s : ι) = (2 : ℚ) • v b s
-      rw [show 2 = 1 + 1 by omega, pow_succ, ← Matrix.mulVec_mulVec, pow_one, hneg, hu]
+      have htwo : 2 = 1 + 1 := by omega
+      have h2 : e s ^ 2 *ᵥ v b (-s : ι) = (2 : ℚ) • v b s := by
+        rw [htwo, pow_succ, ← Matrix.mulVec_mulVec, pow_one, hneg, hu]
+      convert h2 using 1
   | .succ (.succ (.succ k)) =>
+      have hthree : 3 = 2 + 1 := by omega
+      have h2u : e s ^ 2 *ᵥ u s = 0 := by simpa using e_pow_mulVec_u s s 2
       have h3 : e s ^ 3 *ᵥ v b (-s : ι) = 0 := by
-        rw [show 3 = 2 + 1 by omega, pow_succ, ← Matrix.mulVec_mulVec, hneg,
-          show e s ^ 2 *ᵥ u s = 0 by simpa using e_pow_mulVec_u s s 2]
-      -- The final match branch has exponent `k + 3` only after normalizing its successors.
-      change e s ^ (k + 3) *ᵥ v b (-s : ι) = 0
-      rw [pow_add, ← Matrix.mulVec_mulVec, h3, Matrix.mulVec_zero]
+        rw [hthree, pow_succ, ← Matrix.mulVec_mulVec, hneg, h2u]
+      have htail : e s ^ (k + 3) *ᵥ v b (-s : ι) = 0 := by
+        rw [pow_add, ← Matrix.mulVec_mulVec, h3, Matrix.mulVec_zero]
+      convert htail using 1
 
 private theorem exists_intCast_dividedPower_e_mulVec_single (s : b.support) (n : ℕ)
     (j q : b.support ⊕ ι) :
@@ -222,9 +226,11 @@ private theorem exists_intCast_dividedPower_e_mulVec_single (s : b.support) (n :
       ∃ z : ℤ, (z : ℚ) = ((c : ℚ) • v b j) q := by
     refine ⟨if q = Sum.inr j then c else 0, ?_⟩
     simp [v, Pi.single_apply]
-  rw [TauCeti.Associative.dividedPower_def, Matrix.smul_mulVec,
-    show Pi.single j 1 = match j with | Sum.inl j => u j | Sum.inr j => v b j by
-      cases j <;> rfl]
+  have hsingle : Pi.single j 1 = match j with
+      | Sum.inl j => u j
+      | Sum.inr j => v b j := by
+    cases j <;> rfl
+  rw [TauCeti.Associative.dividedPower_def, Matrix.smul_mulVec, hsingle]
   rcases j with j | j
   · rw [e_pow_mulVec_u]
     match n with
