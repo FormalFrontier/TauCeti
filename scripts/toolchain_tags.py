@@ -250,7 +250,12 @@ def assert_monotone(segments):
             continue
         ra, rb = release_of_toolchain(a), release_of_toolchain(b)
         if ra is None or rb is None:
-            continue  # a nightly or fork channel: unordered, not evidence of a move back
+            # Not "unordered, so ignore it". An unorderable toolchain makes the fast path's
+            # predicate false in the middle of the run, which is the non-monotone shape the
+            # binary search cannot survive, so it is the one case that must NOT be waived.
+            raise RuntimeError(
+                f"main's toolchain {a if ra is None else b!r} is not a Lean release, so the "
+                "segment order the base derivation binary-searches on is not defined")
         if release_lt(rb, ra):
             raise RuntimeError(
                 f"main's toolchain moved backward: {a} at {earlier['first_sha'][:8]} "
@@ -336,6 +341,7 @@ class Upstream:
         self.calls = 0
         self._repo_tags = None
         self._release_branches = None
+        self._verify_exists = None
 
     # ----- mathlib
 
@@ -461,16 +467,21 @@ class Upstream:
 
     # ----- this repository
 
-    def _matching_refs(self, prefix):
+    def _matching_refs(self, namespace, query=""):
         """{short name: (sha, object type)} for one `git/matching-refs` query.
 
-        One call for a whole namespace rather than one per release. Asking for eleven
-        tags individually is eleven round trips, and in a repository that has no tags
-        yet every one of them is a 404."""
+        One call for a whole namespace rather than one per release. Asking for eleven tags
+        individually is eleven round trips, and in a repository that has no tags yet every
+        one of them is a 404.
+
+        `namespace` is what gets stripped from the returned ref, `query` only narrows the
+        search. Conflating them is a real bug rather than a hypothetical: querying `tags/v`
+        and stripping `refs/tags/v` turned `refs/tags/v4.33.0` into the key `4.33.0`, while
+        every caller looks up `v4.33.0`, so every tag that existed was reported absent."""
         self.calls += 1
-        raw = _gh_optional(f"repos/{REPO}/git/matching-refs/{prefix}",
+        raw = _gh_optional(f"repos/{REPO}/git/matching-refs/{namespace}{query}",
                            jq='.[] | [.ref, .object.sha, .object.type] | @tsv') or ""
-        full = f"refs/{prefix}"
+        full = f"refs/{namespace}"
         out = {}
         for line in raw.splitlines():
             ref, sha, kind = line.split("\t")
@@ -479,7 +490,7 @@ class Upstream:
 
     def repo_tags(self):
         if self._repo_tags is None:
-            self._repo_tags = self._matching_refs("tags/v")
+            self._repo_tags = self._matching_refs("tags/", "v")
         return self._repo_tags
 
     def release_branches(self):
@@ -522,9 +533,24 @@ class Upstream:
         entry = self.release_branches().get(short)
         return entry[0] if entry else None
 
+    def verify_workflow_exists(self):
+        """Whether the release workflow is on the default branch at all.
+
+        Asked once, and separately, because the runs endpoint 404s both when the workflow
+        does not exist and when it exists but never ran on a commit. Reading those alike
+        made a missing release pipeline look like a pile of releases merely waiting to be
+        built."""
+        if self._verify_exists is None:
+            self.calls += 1
+            self._verify_exists = _gh_optional(
+                f"repos/{REPO}/actions/workflows/{VERIFY_WORKFLOW}") is not None
+        return self._verify_exists
+
     def verify_conclusion(self, sha):
-        """The newest conclusion of the release workflow on this commit, or None when
-        it has never run there. `None` means "not built yet", never "failed"."""
+        """The newest conclusion of the release workflow on this commit, or None when it
+        has never run there. `None` means "not built yet", never "failed"."""
+        if not self.verify_workflow_exists():
+            return None
         self.calls += 1
         raw = _gh_optional(
             f"repos/{REPO}/actions/workflows/{VERIFY_WORKFLOW}/runs"
@@ -616,20 +642,30 @@ def resolve_base(segments, release, mathlib_rev, up):
             return up.is_ancestor(usable[index]["mathlib_rev"], mathlib_rev)
 
     found = _last_true(len(usable), holds)
-    if found < 0:
-        return None, rule
-    base = usable[found]
-    # Verify the fast path's answer with one real ancestry query. The premise it rests
-    # on is an upstream habit rather than a contract, so the saving is worth one call
-    # but not the risk of trusting it unchecked.
-    if rule == "toolchain-fast-path" and not up.is_ancestor(base["mathlib_rev"], mathlib_rev):
+
+    def boundary_holds(index):
+        """Both sides of the answer, which is what makes it an answer.
+
+        Checking only that the chosen segment is an ancestor asks whether the base is
+        VALID, never whether it is the LAST valid one, and those come apart exactly when
+        the fast path's premise fails: if mathlib carried X, moved off it and came back,
+        earlier master commits also carry X and a later segment is a better base that the
+        toolchain comparison rejects. A too-early base means the release branch is cut from
+        a stale tree, permanently, so the successor must be checked too."""
+        if index >= 0 and not up.is_ancestor(usable[index]["mathlib_rev"], mathlib_rev):
+            return False
+        nxt = index + 1
+        if nxt < len(usable) and up.is_ancestor(usable[nxt]["mathlib_rev"], mathlib_rev):
+            return False
+        return True
+
+    if rule == "toolchain-fast-path" and not boundary_holds(found):
         rule = "ancestry-search"
         found = _last_true(len(usable), lambda i: up.is_ancestor(usable[i]["mathlib_rev"],
                                                                  mathlib_rev))
-        if found < 0:
-            return None, rule
-        base = usable[found]
-    return base, rule
+    if found < 0:
+        return None, rule
+    return usable[found], rule
 
 
 # --- the release commit's two files ------------------------------------------
@@ -750,7 +786,17 @@ def _target_of(segments, release, mathlib_rev, up):
     branch = RELEASE_BRANCH_FMT.format(release=release)
     head = up.branch_head(branch)
     if head:
-        return head, "release-branch", True, None, "release-branch"
+        # A branch in the right namespace is not evidence that its head is a release
+        # commit. Check the two facts that make it one before naming it as the target;
+        # scripts/check-release-commit.sh proves the rest (single parent, off a main
+        # ancestor, only the pin files changed) before anything is built from it.
+        try:
+            toolchain, pin = up.repo_pin_at(head)
+        except RuntimeError:
+            toolchain, pin = None, None
+        if toolchain == toolchain_for(release) and pin == mathlib_rev:
+            return head, "release-branch", True, None, "release-branch"
+        return None, "release-branch", True, None, "release-branch-invalid"
 
     base, rule = resolve_base(segments, release, mathlib_rev, up)
     if base is not None:
@@ -837,6 +883,12 @@ def classify(release, mathlib_rev, segments, up):
         return row
 
     if target is None:
+        if rule == "release-branch-invalid":
+            row["status"] = "blocked"
+            row["reason"] = (
+                f"{row['branch']} exists but its head does not pin mathlib {mathlib_rev[:8]} "
+                f"on {toolchain}; re-cut it from the base rather than tagging what is there")
+            return row
         if row["base_sha"]:
             # The base exists, so an exact release commit can be constructed; there is
             # simply no commit to name until someone does.
@@ -1017,8 +1069,13 @@ def recipe_for(row):
     return None
 
 
-def render_audit(rows, show_all=False):
+def render_audit(rows, show_all=False, verify_missing=False):
     parts = [POLICY_TEXT, "", render_table(rows, show_all), ""]
+    if verify_missing:
+        parts += [
+            f"NOTE: {VERIFY_WORKFLOW} is not on the default branch, so nothing can be built,",
+            "published or tagged yet and no release below can reach `verified`. The recipes",
+            "are correct but not yet runnable.", ""]
     recipes = [r for r in (recipe_for(row) for row in actionable(rows)) if r]
     if recipes:
         parts += ["Repairs", "-------", ""] + recipes
@@ -1246,7 +1303,7 @@ def _run_audit(args, segments, up):
     if args.json:
         print(rows_to_json(rows))
     else:
-        print(render_audit(rows, args.all))
+        print(render_audit(rows, args.all, not up.verify_workflow_exists()))
     if args.strict and any(r["status"] == "blocked" for r in rows):
         return 1
     return 0

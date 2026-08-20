@@ -301,6 +301,10 @@ class FakeUpstream:
 
     def repo_pin_at(self, sha):
         self.calls += 1
+        if sha not in self.pins:
+            # As the real one does when the API cannot read the commit. Returning something
+            # bland here would let a test pass without ever supplying the facts under test.
+            raise RuntimeError(f"no pins recorded for {sha}")
         return self.pins[sha]
 
     def manifest_at(self, sha):
@@ -459,6 +463,14 @@ class SegmentWalk(unittest.TestCase):
     def test_real_history_is_monotone(self):
         tt.assert_monotone(segments())
 
+    def test_an_unorderable_toolchain_fails_closed(self):
+        # The waiver for non-release toolchains was the one case the binary search cannot
+        # survive: the fast path's predicate goes false in the middle of the run.
+        segs = segments()[:3]
+        segs[1] = dict(segs[1], toolchain="leanprover/lean4:nightly-2026-01-01")
+        with self.assertRaises(RuntimeError):
+            tt.assert_monotone(segs)
+
     def test_a_backward_toolchain_move_fails_closed(self):
         # Base derivation binary-searches on monotonicity. If main ever moved backward
         # the search would return a silently wrong base, so this must raise.
@@ -587,11 +599,23 @@ class Classification(unittest.TestCase):
 
     def test_an_existing_release_branch_becomes_the_target(self):
         head = "a" * 40
-        up = FakeUpstream(branches={"v4.33.0": head})
+        up = FakeUpstream(branches={"v4.33.0": head},
+                          pins={head: ("leanprover/lean4:v4.33.0", REAL_TAGS["v4.33.0"])})
         row = self.row("v4.33.0", up)
         self.assertEqual(row["status"], "branch-ready")
         self.assertEqual(row["target_sha"], head)
         self.assertEqual(row["target_kind"], "release-branch")
+
+    def test_a_release_branch_pointing_anywhere_is_not_a_target(self):
+        # Creating `releases/vX` at an arbitrary commit must not make that commit the
+        # permanent tag target. The release workflow's own checker would refuse it later,
+        # but the audit should not be naming it in the meantime.
+        head = "a" * 40
+        up = FakeUpstream(branches={"v4.33.0": head},
+                          pins={head: ("leanprover/lean4:v4.33.0", "9" * 40)})
+        row = self.row("v4.33.0", up)
+        self.assertEqual(row["status"], "blocked")
+        self.assertIn("re-cut it", row["reason"])
 
     def test_the_inexact_rung_is_used_only_when_no_base_exists(self):
         row = self.row("v4.31.0-rc1")
@@ -939,6 +963,47 @@ class Report(unittest.TestCase):
 
 
 # --- the request budget and the cache ----------------------------------------
+
+class RefNamespaces(unittest.TestCase):
+    """The query prefix and the ref namespace are different things.
+
+    Querying `tags/v` and then stripping `refs/tags/v` keyed every tag without its leading
+    `v`, so every lookup missed and every existing tag was reported absent for ever. The
+    request-budget fake returned an empty tag namespace, which is precisely why no test
+    noticed."""
+
+    ROUTES = {
+        "repos/TauCetiProject/TauCeti/git/matching-refs/tags/v":
+            "refs/tags/v4.33.0\tdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\tcommit\n"
+            "refs/tags/v4.34.0-rc1\tcafebabecafebabecafebabecafebabecafebabe\ttag\n",
+        "repos/TauCetiProject/TauCeti/git/matching-refs/heads/releases/":
+            "refs/heads/releases/v4.33.0\tfeedfacefeedfacefeedfacefeedfacefeedface\tcommit\n",
+        "repos/TauCetiProject/TauCeti/git/tags/":
+            "1111111111111111111111111111111111111111",
+    }
+
+    def test_a_lightweight_tag_is_found_under_its_own_name(self):
+        with routed(self.ROUTES):
+            up = tt.Upstream(cache=tt.Cache(path=os.devnull))
+            self.assertEqual(up.tag_target("v4.33.0"),
+                             "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
+
+    def test_an_annotated_tag_is_peeled(self):
+        with routed(self.ROUTES):
+            up = tt.Upstream(cache=tt.Cache(path=os.devnull))
+            self.assertEqual(up.tag_target("v4.34.0-rc1"), "1" * 40)
+
+    def test_an_absent_tag_is_absent(self):
+        with routed(self.ROUTES):
+            up = tt.Upstream(cache=tt.Cache(path=os.devnull))
+            self.assertIsNone(up.tag_target("v4.31.0"))
+
+    def test_a_release_branch_is_found_under_its_short_name(self):
+        with routed(self.ROUTES):
+            up = tt.Upstream(cache=tt.Cache(path=os.devnull))
+            self.assertEqual(up.branch_head("releases/v4.33.0"),
+                             "feedfacefeedfacefeedfacefeedfacefeedface")
+
 
 class RequestBudget(unittest.TestCase):
     """The perf design, written as a test: reading a pin per commit rather than per
