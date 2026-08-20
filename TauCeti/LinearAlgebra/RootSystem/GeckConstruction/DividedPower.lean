@@ -30,10 +30,10 @@ come from Geck's construction in [Geck](Geck2017).
 
 ## Main declarations
 
-* `TauCeti.exists_intCast_dividedPower_geck_e_apply`: divided powers of raising matrices have
-  integer entries.
-* `TauCeti.exists_intCast_dividedPower_geck_f_apply`: divided powers of lowering matrices have
-  integer entries.
+* `TauCeti.RootPairing.GeckConstruction.exists_intCast_dividedPower_e_apply`: divided powers of
+  raising matrices have integer entries.
+* `TauCeti.RootPairing.GeckConstruction.exists_intCast_dividedPower_f_apply`: divided powers of
+  lowering matrices have integer entries.
 -/
 
 open Set
@@ -77,6 +77,8 @@ private lemma e_pow_mulVec_v_eq_zero_or_exists (s : b.support) {j : ι}
   have : Module.IsReflexive ℚ M := .of_isPerfPair P.toLinearMap
   have : IsAddTorsionFree M := .of_isTorsionFree ℚ M
   let _i := P.indexNeg
+  -- Keep the root index and its coefficient in the induction invariant: the successor step needs
+  -- both dependent witnesses, so splitting it off would merely restate the whole invariant.
   induction n with
   | zero =>
       refine Or.inr ⟨j, by simp, by simp, ?_⟩
@@ -84,8 +86,10 @@ private lemma e_pow_mulVec_v_eq_zero_or_exists (s : b.support) {j : ι}
       simp
   | succ n ih =>
       rcases ih with h0 | ⟨k, hkroot, hkbot, hkpow⟩
+      -- Once an iterate vanishes, every later iterate vanishes as well.
       · left
         rw [pow_succ', ← Matrix.mulVec_mulVec, h0, Matrix.mulVec_zero]
+      -- The ordinary root-string formula excludes the exceptional string through `-s`.
       have hks : k ≠ -s := by
         rintro rfl
         replace hkroot : P.root (-j) = (n + 1) • P.root s := by
@@ -101,6 +105,7 @@ private lemma e_pow_mulVec_v_eq_zero_or_exists (s : b.support) {j : ι}
           exact P.nsmul_notMem_range_root (n := n + 1) (i := s) ⟨-j, hkroot⟩
       rw [pow_succ', ← Matrix.mulVec_mulVec, hkpow, Matrix.mulVec_smul]
       by_cases hmem : P.root j + (n + 1) • P.root s ∈ range P.root
+      -- If the next root exists, advance its index and the rising-factorial coefficient together.
       · obtain ⟨l, hl⟩ := hmem
         have hlstep : P.root l = P.root s + P.root k := by
           rw [hl, hkroot]
@@ -125,6 +130,7 @@ private lemma e_pow_mulVec_v_eq_zero_or_exists (s : b.support) {j : ι}
         rw [smul_smul, hkbot, Nat.ascFactorial_succ]
         push_cast
         module
+      -- Otherwise the raising operator kills the current root vector.
       · left
         have hzero : P.root k + P.root s ≠ 0 := by
           intro h
@@ -194,12 +200,14 @@ private lemma e_pow_mulVec_v_neg (s : b.support) (n : ℕ) :
   | 0 => rw [pow_zero, Matrix.one_mulVec]
   | .succ 0 => simpa only [pow_one] using hneg
   | .succ (.succ 0) =>
+      -- Pattern matching leaves the exponent in successor form; expose the numeral used below.
       change e s ^ 2 *ᵥ v b (-s : ι) = (2 : ℚ) • v b s
       rw [show 2 = 1 + 1 by omega, pow_succ, ← Matrix.mulVec_mulVec, pow_one, hneg, hu]
   | .succ (.succ (.succ k)) =>
       have h3 : e s ^ 3 *ᵥ v b (-s : ι) = 0 := by
         rw [show 3 = 2 + 1 by omega, pow_succ, ← Matrix.mulVec_mulVec, hneg,
           show e s ^ 2 *ᵥ u s = 0 by simpa using e_pow_mulVec_u s s 2]
+      -- The final match branch has exponent `k + 3` only after normalizing its successors.
       change e s ^ (k + 3) *ᵥ v b (-s : ι) = 0
       rw [pow_add, ← Matrix.mulVec_mulVec, h3, Matrix.mulVec_zero]
 
@@ -306,9 +314,11 @@ private theorem exists_intCast_dividedPower_f_mulVec_single (s : b.support) (n :
   · exact exists_intCast_dividedPower_e_mulVec_single s n (.inr (-j)) (.inl q)
   · exact exists_intCast_dividedPower_e_mulVec_single s n (.inr (-j)) (.inr (-q))
 
+namespace RootPairing.GeckConstruction
+
 /-- Every entry of a divided power of a numbered raising operator in Geck's representation is
 an integer. -/
-theorem exists_intCast_dividedPower_geck_e_apply (s : b.support) (n : ℕ)
+theorem exists_intCast_dividedPower_e_apply (s : b.support) (n : ℕ)
     (i j : b.support ⊕ ι) :
     ∃ z : ℤ, (z : ℚ) = TauCeti.Associative.dividedPower n (e s) i j := by
   obtain ⟨z, hz⟩ := exists_intCast_dividedPower_e_mulVec_single s n j i
@@ -317,12 +327,14 @@ theorem exists_intCast_dividedPower_geck_e_apply (s : b.support) (n : ℕ)
 
 /-- Every entry of a divided power of a numbered lowering operator in Geck's representation is
 an integer. -/
-theorem exists_intCast_dividedPower_geck_f_apply (s : b.support) (n : ℕ)
+theorem exists_intCast_dividedPower_f_apply (s : b.support) (n : ℕ)
     (i j : b.support ⊕ ι) :
     ∃ z : ℤ, (z : ℚ) = TauCeti.Associative.dividedPower n (f s) i j := by
   obtain ⟨z, hz⟩ := exists_intCast_dividedPower_f_mulVec_single s n j i
   rw [Matrix.mulVec_single_one] at hz
   exact ⟨z, hz⟩
+
+end RootPairing.GeckConstruction
 
 end
 end
