@@ -302,8 +302,10 @@ theorem invariantsMap_comp {P : Type*} [AddGroup P] [DistribMulAction G P]
     (H : Subgroup G) :
     (invariantsMap f' hf' H).comp (invariantsMap f hf H) =
       invariantsMap (f'.comp f) (fun g m ↦ by
-        change f' (f (g • m)) = g • f' (f m)
-        rw [hf, hf']) H :=
+        simp only [AddMonoidHom.comp_apply]
+        calc
+          f' (f (g • m)) = f' (g • f m) := congrArg f' (hf g m)
+          _ = g • f' (f m) := hf' g (f m)) H :=
   AddMonoidHom.ext fun _ ↦ Subtype.ext (rfl)
 
 /-- The restricted map is the original map on underlying elements. -/
