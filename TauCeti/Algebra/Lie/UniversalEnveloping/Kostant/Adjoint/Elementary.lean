@@ -138,13 +138,6 @@ noncomputable def chevalleyLieLatticeEquivChevalleyLatticeAddSubgroup :
     hx.chevalleyLieLattice ≃ₗ[ℤ] chevalleyLatticeAddSubgroup x :=
   (AddEquiv.addSubgroupCongr hx.chevalleyLatticeAddSubgroup_eq.symm).toIntLinearEquiv
 
-omit [LieModule.IsTriangularizable ℚ H L] in
-/-- Membership in the additive-subgroup form of a Chevalley lattice is membership in its integral
-root--coroot span. -/
-theorem mem_chevalleyLatticeAddSubgroup_iff {y : L} :
-    y ∈ chevalleyLatticeAddSubgroup x ↔ y ∈ rootCorootSpan x :=
-  Iff.rfl
-
 include hx
 
 /-- **The Chevalley lattice is admissible in the shape the root subgroups consume.** This is
@@ -156,7 +149,8 @@ theorem chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup :
         UniversalEnvelopingAlgebra.representation ℚ L L u v ∈
           chevalleyLatticeAddSubgroup x := by
   intro u hu v hv
-  rw [mem_chevalleyLatticeAddSubgroup_iff] at hv ⊢
+  change v ∈ rootCorootSpan x at hv
+  change _ ∈ rootCorootSpan x
   exact hx.mem_chevalleyLieLattice_iff.1
     (hx.chevalleyKostantForm_apply_mem (by rwa [chevalleyKostantForm_def])
       (hx.mem_chevalleyLieLattice_iff.2 hv))
