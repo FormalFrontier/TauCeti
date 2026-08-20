@@ -106,20 +106,6 @@ theorem coe_geckCoordinateFinBasis (i : Fin (Fintype.card (t.GeckIndex ht))) :
       Pi.single ((Fintype.equivFin (t.GeckIndex ht)).symm i) 1 := by
   rw [geckCoordinateFinBasis, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
 
-noncomputable instance instModuleFreeGeckCoordinateLattice :
-    Module.Free ℤ (t.geckCoordinateLattice ht) :=
-  Module.Free.of_basis (t.geckCoordinateBasis ht)
-
-noncomputable instance instModuleFiniteGeckCoordinateLattice :
-    Module.Finite ℤ (t.geckCoordinateLattice ht) :=
-  Module.Finite.of_basis (t.geckCoordinateBasis ht)
-
-/-- The Geck coordinate lattice has one basis vector for each Geck coordinate. -/
-@[simp]
-theorem finrank_geckCoordinateLattice :
-    Module.finrank ℤ (t.geckCoordinateLattice ht) = Fintype.card (t.GeckIndex ht) :=
-  Module.finrank_eq_card_basis (t.geckCoordinateBasis ht)
-
 /-- The rational span of the Geck coordinate lattice is the whole Geck module. -/
 theorem span_geckCoordinateLattice_eq_top :
     Submodule.span ℚ (t.geckCoordinateLattice ht : Set (t.GeckIndex ht → ℚ)) = ⊤ := by
@@ -138,8 +124,8 @@ theorem geckCoordinateLattice_le_geckOrbit :
 instance instIsLatticeGeckCoordinateLattice :
     Submodule.IsLattice ℚ (t.geckCoordinateLattice ht) where
   fg := by
-    rw [← Module.Finite.iff_fg]
-    infer_instance
+    rw [geckCoordinateLattice]
+    exact Submodule.fg_span (Set.finite_range _)
   span_eq_top := t.span_geckCoordinateLattice_eq_top ht
 
 /-! ## Stability under integral matrices -/
