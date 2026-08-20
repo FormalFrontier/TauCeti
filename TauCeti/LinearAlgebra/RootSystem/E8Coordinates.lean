@@ -61,7 +61,7 @@ def e8DoubledSimpleRoot : Matrix (Fin 8) (Fin 8) ℤ :=
 /-- The doubled simple roots have the `E₈` Cartan matrix as their Gram matrix, up to the factor
 four that doubling introduces. -/
 lemma e8DoubledSimpleRoot_mul_transpose :
-    e8DoubledSimpleRoot * e8DoubledSimpleRootᵀ = (4 : ℤ) • CartanMatrix.E₈ := by decide
+    e8DoubledSimpleRoot * e8DoubledSimpleRootᵀ = (4 : ℤ) • CartanMatrix.E 8 := by decide
 
 private lemma e8DoubledSimpleRoot_sub_emod :
     ∀ i j : Fin 8, (e8DoubledSimpleRoot i j - e8DoubledSimpleRoot i 0) % 2 = 0 := by decide
