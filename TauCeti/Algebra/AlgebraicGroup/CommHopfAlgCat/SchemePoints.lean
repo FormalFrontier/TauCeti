@@ -10,7 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 
 /-!
-# Scheme-valued points of affine bialgebra spectra
+# Scheme-valued points of affine Hopf-algebra spectra
 
 For a commutative ring `R` and a same-universe commutative bialgebra `H`, this file identifies
 the convolution monoid of `H`-points with morphisms over `Spec R` into `Spec H`. It treats both
@@ -26,8 +26,10 @@ made, so the resulting monoid of points need not be commutative. The target
 The affine equivalence and its multiplicativity are Mathlib's
 `AlgebraicGeometry.Spec.mapMulEquiv`. The comparison for arbitrary test schemes upgrades
 Mathlib's `AlgebraicGeometry.algΓAlgSpecAdjunction` to a multiplicative equivalence. This file
-also provides transport across named scheme presentations and proves covariance in the value
-algebra and contravariance in the coordinate bialgebra.
+proves this comparison at bialgebra/monoid generality. It additionally records the Hopf-algebra
+case: transport across named `Grp`-presentations and the points-presheaf isomorphism for
+`CommHopfAlgCat`, together with covariance in the value algebra and contravariance in the
+coordinate algebra.
 
 ## Main declarations
 
@@ -35,10 +37,10 @@ algebra and contravariance in the coordinate bialgebra.
   an affine bialgebra spectrum are convolution points valued in its relative global sections.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_symm_apply`: the inverse comparison is the
   adjunction unit followed by the spectrum map of the convolution point.
-* `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_precomp`: the comparison is natural in the
-  test scheme.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapDomain`: the comparison is
   contravariantly natural in the coordinate bialgebra.
+* `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapPointsFunctor`: the Hopf-category form of
+  coordinate naturality for the relative comparison.
 * `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation`: Mathlib's spectrum-points equivalence with
   its target transported across a named presentation.
 * `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation_apply_left`: the underlying spectrum map of
@@ -48,7 +50,9 @@ algebra and contravariance in the coordinate bialgebra.
 * `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation_mapValue`: the same covariance after
   transport across a named presentation.
 * `TauCeti.CommHopfAlgCat.mapMulEquiv_mapDomain`: a coordinate bialgebra morphism
-  becomes postcomposition by its contravariant `hopfSpec` image.
+  becomes postcomposition by the induced relative spectrum morphism `Spec K ⟶ Spec H`.
+* `TauCeti.CommHopfAlgCat.mapMulEquiv_mapPointsFunctor`: the Hopf-category form of affine
+  coordinate naturality, phrased through `mapPointsFunctor` and `hopfSpec`.
 * `TauCeti.CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain`: contravariance for arbitrary
   named point equivalences characterized by their underlying spectrum maps.
 * `TauCeti.CommHopfAlgCat.pointsPresheafIsoSchemePointsPresheaf`: the natural comparison between
@@ -79,7 +83,41 @@ lemma mapMulEquiv_left
       Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) :=
   rfl
 
+/-- Mathlib's spectrum-points equivalence is contravariantly natural in the coordinate
+bialgebra. Precomposing a `K`-point by `f : H →ₐc[R] K` corresponds on spectra to
+postcomposing by the induced morphism `Spec K ⟶ Spec H`. -/
+theorem mapMulEquiv_mapDomain
+    {H K : Type u} [CommRing H] [CommRing K] [Bialgebra R H] [Bialgebra R K]
+    (A : CommAlgCat.{u} R) (f : H →ₐc[R] K)
+    (p : WithConv (K →ₐ[R] A)) :
+    AlgebraicGeometry.Spec.mapMulEquiv (AlgHom.mapDomain f p) =
+      AlgebraicGeometry.Spec.mapMulEquiv p ≫
+        (Spec.map (CommRingCat.ofHom f.toAlgHom.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) := by
+  apply Over.OverMorphism.ext
+  erw [Over.comp_left]
+  simp only [mapMulEquiv_left, OverClass.asOverHom_left, AlgHom.mapDomain_apply]
+  erw [← Spec.map_comp]
+  rfl
+
+/-- The Hopf-category form of contravariant naturality for Mathlib's spectrum-points
+equivalence. This packages the underlying bialgebra statement through `mapPointsFunctor` and
+the `hopfSpec` functor. -/
+theorem mapMulEquiv_mapPointsFunctor
+    {H K : _root_.CommHopfAlgCat.{u} R} (A : CommAlgCat.{u} R) (φ : H ⟶ K)
+    (p : HopfAlgebra.points (R := R) (H := K) A) :
+    AlgebraicGeometry.Spec.mapMulEquiv ((mapPointsFunctor φ).app A p) =
+      AlgebraicGeometry.Spec.mapMulEquiv p ≫
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom :=
+  mapMulEquiv_mapDomain A φ.hom p
+
 /-! ### Points of affine spectra on arbitrary test schemes -/
+
+private theorem algSpec_obj_eq_spec
+    (H : Type u) [CommRing H] [Algebra R H] :
+    (algSpec (CommRingCat.of R)).obj (Opposite.op (CommAlgCat.of R H)) =
+      (Spec (CommRingCat.of H)).asOver (Spec (CommRingCat.of R)) :=
+  rfl
 
 /-- The relative `Γ-Spec` adjunction as an equivalence between scheme-valued points and
 convolution points, before recording multiplicativity. -/
@@ -90,11 +128,10 @@ private noncomputable def schemePointsAlgΓEquiv
       WithConv (H →ₐ[R] ((algΓ (CommRingCat.of R)).obj T).unop) := by
   let e₀ := (algΓAlgSpecAdjunction (CommRingCat.of R)).homEquiv T
     (Opposite.op (CommAlgCat.of R H))
-  exact e₀.symm.trans
-    { toFun := fun f ↦ toConv f.unop.hom
-      invFun := fun f ↦ (CommAlgCat.ofHom f.ofConv).op
-      left_inv := by intro f; rfl
-      right_inv := by intro f; rfl }
+  exact (Equiv.cast (congrArg (fun X ↦ T ⟶ X) (algSpec_obj_eq_spec H).symm)).trans
+    (e₀.symm.trans
+      ((opEquiv ((algΓ (CommRingCat.of R)).obj T) (Opposite.op (CommAlgCat.of R H))).trans
+        (HopfAlgebra.pointsHomEquiv H ((algΓ (CommRingCat.of R)).obj T).unop)))
 
 /-- A private elaboration bridge between the adjunction's composite-functor target and the
 definitionally equal relative-spectrum presentation. Keeping this bridge opaque prevents
@@ -120,10 +157,11 @@ private theorem schemePointsAlgΓEquiv_symm_apply
     (schemePointsAlgΓEquiv H T).symm p =
       (algΓAlgSpecAdjunction (CommRingCat.of R)).unit.app T ≫
         (algSpec (CommRingCat.of R)).map (CommAlgCat.ofHom p.ofConv).op := by
-  -- `schemePointsAlgΓEquiv` only adds the opposite-category and `WithConv` wrappers to the
-  -- adjunction equivalence; removing those wrappers exposes Mathlib's characterization lemma.
+  rw [schemePointsAlgΓEquiv, Equiv.symm_trans_apply, Equiv.symm_trans_apply,
+    Equiv.symm_trans_apply,
+    HopfAlgebra.pointsHomEquiv_symm_apply]
   change ((algΓAlgSpecAdjunction (CommRingCat.of R)).homEquiv T
-    (Opposite.op (CommAlgCat.of R H))) (CommAlgCat.ofHom p.ofConv).op = _
+      (Opposite.op (CommAlgCat.of R H))) (CommAlgCat.ofHom p.ofConv).op = _
   rw [Adjunction.homEquiv_unit]
 
 private theorem algΓPointSchemePoint_eq_symm
@@ -186,41 +224,11 @@ theorem schemePointsAlgΓMulEquiv_symm_apply
     (T : Over (Spec (CommRingCat.of R)))
     (p : WithConv (H →ₐ[R] ((algΓ (CommRingCat.of R)).obj T).unop)) :
     (schemePointsAlgΓMulEquiv H T).symm p =
-      (algΓAlgSpecAdjunction (CommRingCat.of R)).unit.app T ≫
-        (algSpec (CommRingCat.of R)).map (CommAlgCat.ofHom p.ofConv).op :=
-  schemePointsAlgΓEquiv_symm_apply H T p
-
-/-- The global-sections comparison is natural in the test scheme. Precomposing a `T`-valued
-point by `φ : S ⟶ T` postcomposes its algebra point with the induced map `Γ(T) ⟶ Γ(S)`. -/
-theorem schemePointsAlgΓMulEquiv_precomp
-    (H : Type u) [CommRing H] [Bialgebra R H]
-    {S T : Over (Spec (CommRingCat.of R))} (φ : S ⟶ T)
-    (g : T ⟶ (Spec (CommRingCat.of H)).asOver (Spec (CommRingCat.of R))) :
-    schemePointsAlgΓMulEquiv H S (φ ≫ g) =
-      AlgHom.mapValue ((algΓ (CommRingCat.of R)).map φ).unop.hom
-        (schemePointsAlgΓMulEquiv H T g) := by
-  -- Unfolding only the opposite-category and `WithConv` wrappers reduces this to the public
-  -- left-naturality theorem for the adjunction's hom-set equivalence.
-  change (toConv _) = AlgHom.mapValue ((algΓ (CommRingCat.of R)).map φ).unop.hom (toConv _)
-  rw [AlgHom.mapValue_apply]
-  congr 1
-
-/-- Mathlib's spectrum-points equivalence is contravariantly natural in the coordinate
-bialgebra. Precomposing a `K`-point by `f : H →ₐc[R] K` corresponds on spectra to
-postcomposing by the induced morphism `Spec K ⟶ Spec H`. -/
-theorem mapMulEquiv_mapDomain
-    {H K : Type u} [CommRing H] [CommRing K] [Bialgebra R H] [Bialgebra R K]
-    (A : CommAlgCat.{u} R) (f : H →ₐc[R] K)
-    (p : WithConv (K →ₐ[R] A)) :
-    AlgebraicGeometry.Spec.mapMulEquiv (AlgHom.mapDomain f p) =
-      AlgebraicGeometry.Spec.mapMulEquiv p ≫
-        (Spec.map (CommRingCat.ofHom f.toAlgHom.toRingHom)).asOver
-          (Spec (CommRingCat.of R)) := by
-  apply Over.OverMorphism.ext
-  erw [Over.comp_left]
-  simp only [mapMulEquiv_left, OverClass.asOverHom_left, AlgHom.mapDomain_apply]
-  erw [← Spec.map_comp]
-  rfl
+      ((algΓAlgSpecAdjunction (CommRingCat.of R)).unit.app T :
+          T ⟶ (Spec (CommRingCat.of ((algΓ (CommRingCat.of R)).obj T).unop)).asOver
+            (Spec (CommRingCat.of R))) ≫
+        AlgebraicGeometry.Spec.mapMulEquiv p :=
+  schemePointsAlgΓMulEquiv_symm_apply_spec H T p
 
 /-- The global-sections comparison is contravariantly natural in the coordinate bialgebra.
 Postcomposing a scheme-valued point with `Spec f` is precomposition of its algebra point by `f`.
@@ -251,36 +259,19 @@ theorem schemePointsAlgΓMulEquiv_mapDomain
       congr 1
       exact (mapMulEquiv_mapDomain _ f (eK g)).symm
 
-/-- On an affine test scheme, the relative `Γ-Spec` comparison agrees with Mathlib's
-`Spec.mapMulEquiv` after mapping a point along the adjunction counit. -/
-theorem schemePointsAlgΓMulEquiv_symm_mapValue_counit
-    (H A : Type u) [CommRing H] [CommRing A] [Bialgebra R H] [Algebra R A]
-    (p : WithConv (H →ₐ[R] A)) :
-    (schemePointsAlgΓMulEquiv H
-      ((algSpec (CommRingCat.of R)).obj (Opposite.op (CommAlgCat.of R A)))).symm
-        (AlgHom.mapValue
-          ((algΓAlgSpecAdjunction (CommRingCat.of R)).counit.app
-            (Opposite.op (CommAlgCat.of R A))).unop.hom p) =
-      AlgebraicGeometry.Spec.mapMulEquiv p := by
-  rw [schemePointsAlgΓMulEquiv_symm_apply]
-  -- The adjunction triangle identity is stated using `algSpec.map`, whereas
-  -- `Spec.mapMulEquiv` uses the definitionally equal relative-spectrum presentation.
-  change (algΓAlgSpecAdjunction (CommRingCat.of R)).unit.app
-      ((algSpec (CommRingCat.of R)).obj (Opposite.op (CommAlgCat.of R A))) ≫
-    (algSpec (CommRingCat.of R)).map
-      ((algΓAlgSpecAdjunction (CommRingCat.of R)).counit.app
-        (Opposite.op (CommAlgCat.of R A)) ≫ (CommAlgCat.ofHom p.ofConv).op) = _
-  rw [Functor.map_comp, ← Category.assoc,
-    (algΓAlgSpecAdjunction (CommRingCat.of R)).right_triangle_components]
-  rfl
+/-- The Hopf-category form of coordinate naturality for the relative global-sections
+comparison. This packages the underlying bialgebra statement through `mapPointsFunctor` and
+the `hopfSpec` functor. -/
+theorem schemePointsAlgΓMulEquiv_mapPointsFunctor
+    {H K : _root_.CommHopfAlgCat.{u} R} (T : Over (Spec (CommRingCat.of R))) (φ : H ⟶ K)
+    (g : T ⟶ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K)).X) :
+    schemePointsAlgΓMulEquiv H T
+        (g ≫ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom) =
+      (mapPointsFunctor φ).app ((algΓ (CommRingCat.of R)).obj T).unop
+        (schemePointsAlgΓMulEquiv K T g) :=
+  schemePointsAlgΓMulEquiv_mapDomain T φ.hom g
 
 /-! ### Points on affine test schemes -/
-
-private lemma hopfSpec_map_left
-    {H K : _root_.CommHopfAlgCat.{u} R} (φ : H ⟶ K) :
-    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom.left =
-      Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) :=
-  rfl
 
 /-- Mathlib's spectrum-points equivalence with its target transported to an equal named scheme
 over `Spec R`.

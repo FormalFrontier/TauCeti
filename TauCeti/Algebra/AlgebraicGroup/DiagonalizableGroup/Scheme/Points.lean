@@ -283,8 +283,8 @@ theorem groupSchemePointsMulEquiv_groupSchemeMap {G H : FGCommGrpCat.{u}} (f : G
     (p ≫ (groupSchemeIsoSpec (R := R) H).hom)
   have hpcomp := congrArg
     (fun q => q ≫ hopfSpecMapAsOver (R := R) f) hp.symm
-  have hnat := (CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
-    (coordinateMap R f).hom.hom
+  have hnat := (CommHopfAlgCat.mapMulEquiv_mapPointsFunctor (CommAlgCat.of R A)
+    (coordinateMap R f).hom
     (AlgebraicGeometry.Spec.mapMulEquiv.symm
       (p ≫ (groupSchemeIsoSpec (R := R) H).hom))).symm
   exact hcomp.trans (hpcomp.trans hnat)

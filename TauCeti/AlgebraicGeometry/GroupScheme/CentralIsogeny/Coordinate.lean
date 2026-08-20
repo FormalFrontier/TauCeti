@@ -65,7 +65,7 @@ theorem schemePointsAlgΓMulEquiv_pointMap
         (pointMap ((hopfSpec (CommRingCat.of R)).map f.op) T g) =
       AlgHom.mapDomain f.hom (CommHopfAlgCat.schemePointsAlgΓMulEquiv K T g) := by
   rw [pointMap_apply]
-  exact CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapDomain T f.hom g
+  exact CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapPointsFunctor T f g
 
 /-- If the represented kernel Hopf ideal is central, then the induced affine group-scheme
 morphism has central kernel on points valued in every scheme over the base. -/
@@ -74,6 +74,7 @@ theorem hasCentralKernel_hopfSpec_map_of_isCentral_kernelHopfIdeal
     HasCentralKernel ((hopfSpec (CommRingCat.of R)).map f.op) := by
   rw [hasCentralKernel_iff_pointMap_ker_le_center]
   intro T g hg
+  -- The `hopfSpec` objects unfold to the relative spectrum presentations used by the comparison.
   let eK :
       (T ⟶ ((hopfSpec (CommRingCat.of R)).obj (Opposite.op K)).X) ≃*
         WithConv (K →ₐ[R] ((algΓ (CommRingCat.of R)).obj T).unop) :=
@@ -90,6 +91,7 @@ theorem hasCentralKernel_hopfSpec_map_of_isCentral_kernelHopfIdeal
         exact (schemePointsAlgΓMulEquiv_pointMap T f g).symm
       _ = eH 1 := congrArg eH (MonoidHom.mem_ker.mp hg)
       _ = 1 := map_one eH
+  rw [AlgHom.mapDomain_apply, ← CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
   have hmem : eK g ∈ CommHopfAlgCat.quotientPointsSubgroup K
       (CommHopfAlgCat.kernelHopfIdeal f) ((algΓ (CommRingCat.of R)).obj T).unop :=
     (CommHopfAlgCat.mapPointsFunctor_app_eq_one_iff f _ (eK g)).mp hmap
@@ -118,6 +120,7 @@ theorem isCentral_kernelHopfIdeal_of_hasCentralKernel_hopfSpec_map
       (CommHopfAlgCat.kernelHopfIdeal f) (CommAlgCat.ofHom φ) hg
   have hmap : (CommHopfAlgCat.mapPointsFunctor f).app (CommAlgCat.of R B) gB = 1 :=
     (CommHopfAlgCat.mapPointsFunctor_app_eq_one_iff f (CommAlgCat.of R B) gB).mpr hgB
+  -- The `hopfSpec` objects unfold to the relative spectrum presentations used by `mapMulEquiv`.
   let eH : WithConv (H →ₐ[R] B) ≃*
       ((Spec (CommRingCat.of B)).asOver (Spec (CommRingCat.of R)) ⟶
         ((hopfSpec (CommRingCat.of R)).obj (Opposite.op H)).X) :=
@@ -129,7 +132,7 @@ theorem isCentral_kernelHopfIdeal_of_hasCentralKernel_hopfSpec_map
   have hnat : eK gB ≫ ((hopfSpec (CommRingCat.of R)).map f.op).hom.hom =
       eH ((CommHopfAlgCat.mapPointsFunctor f).app (CommAlgCat.of R B) gB) := by
     dsimp only [eH, eK]
-    exact (CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R B) f.hom gB).symm
+    exact (CommHopfAlgCat.mapMulEquiv_mapPointsFunctor (CommAlgCat.of R B) f gB).symm
   have hsg : eK gB ≫ ((hopfSpec (CommRingCat.of R)).map f.op).hom.hom = 1 := by
     calc
       _ = eH ((CommHopfAlgCat.mapPointsFunctor f).app (CommAlgCat.of R B) gB) := hnat
