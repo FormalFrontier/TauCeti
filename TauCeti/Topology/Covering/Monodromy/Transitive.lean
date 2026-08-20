@@ -68,6 +68,7 @@ def isFiberwiseTransitive : ObjectProperty (FundamentalGroupoid X ⥤ Type u) :=
 variable {X}
 
 /-- Membership in the fibrewise transitive fundamental-groupoid action property. -/
+@[simp]
 theorem isFiberwiseTransitive_iff (F : FundamentalGroupoid X ⥤ Type u) :
     isFiberwiseTransitive X F ↔
       isFiberwisePretransitive X F ∧ ∀ x : FundamentalGroupoid X, Nonempty (F.obj x) :=
@@ -170,6 +171,7 @@ def transitiveMonodromyFunctor (X : TopCat.{u}) [LocallyPathConnectedSpace X]
 
 /-- The underlying action of transitive connected-cover monodromy is the ordinary monodromy
 action. -/
+@[simp]
 theorem transitiveMonodromyFunctor_obj_obj [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     (p : ConnectedCoveringSpace X) :
     ((transitiveMonodromyFunctor X).obj p).obj =
