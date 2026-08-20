@@ -138,14 +138,7 @@ def g2SpecialIsogeny :
   RootPairingIsogeny.ofMatrix _ g2SimplyConnectedRootDatum_toLinearMap g2SpecialIsogenyMatrix
     (g2SpecialIsogenyIndex_involutive.toPerm _) g2SpecialIsogenyExponent
     (fun i => by revert i; decide)
-    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
-      g2SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
-      g2SpecialIsogenyMatrix_transpose_mulVecLin_sq)
-    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
-      g2SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
-      g2SpecialIsogenyMatrix_transpose_mulVecLin_sq)
+    (by decide)
     (fun i => by
       simpa [g2SpecialIsogenyMatrix, g2SpecialIsogenyExponent, g2SpecialIsogenyIndex] using
         g2Root_specialIsogenyAction i)
@@ -296,14 +289,7 @@ noncomputable def f4SpecialIsogeny :
   RootPairingIsogeny.ofMatrix _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
     f4SpecialIsogenyMatrix (f4SpecialIsogenyIndex_involutive.toPerm _) f4SpecialIsogenyExponent
     (fun i => by revert i; decide)
-    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
-      f4SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
-      f4SpecialIsogenyMatrix_transpose_mulVecLin_sq)
-    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
-      f4SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
-      f4SpecialIsogenyMatrix_transpose_mulVecLin_sq)
+    (by decide)
     (fun i => by simpa using f4SpecialIsogeny_root_aux i)
     (fun i => by simpa using f4SpecialIsogeny_coroot_aux i)
 

@@ -10,6 +10,8 @@ public import Mathlib.GroupTheory.IndexNSmul
 public import Mathlib.LinearAlgebra.Matrix.ToLin
 public import Mathlib.LinearAlgebra.RootSystem.Hom
 
+import Mathlib.LinearAlgebra.Matrix.Adjugate
+
 /-!
 # Isogenies of root pairings
 
@@ -188,7 +190,7 @@ def smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module
   rw [smulId]
 
 /-- The composite of two linear maps with finite-index images again has finite-index image. -/
-lemma finiteIndex_range_comp (g : M₂ →ₗ[R] M₃) (f : M →ₗ[R] M₂)
+private lemma finiteIndex_range_comp (g : M₂ →ₗ[R] M₃) (f : M →ₗ[R] M₂)
     (hf : f.range.toAddSubgroup.FiniteIndex)
     (hgf : g.range.toAddSubgroup.FiniteIndex) : (g ∘ₗ f).range.toAddSubgroup.FiniteIndex := by
   rw [AddSubgroup.finiteIndex_iff]
@@ -266,38 +268,33 @@ open Matrix
 
 variable {n : ℕ}
 
-/-- An endomorphism of a torsion-free abelian group whose square is multiplication by a nonzero
-natural number is injective. -/
-lemma linearMap_injective_of_comp_self_eq_nsmul (A : (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ))
-    (c : ℕ) (hc : c ≠ 0)
-    (hsq : A ∘ₗ A = c • LinearMap.id) : Function.Injective A := by
-  intro x y hxy
-  apply AddSubgroup.distribSMulToLinearMap_injective_of_isTorsionFree hc
-  have h := congrArg A hxy
-  simpa only [← LinearMap.comp_apply, hsq, LinearMap.smul_apply, LinearMap.id_apply,
-    DistribSMul.toLinearMap_apply] using h
-
-/-- An endomorphism of a finite free abelian group whose square is multiplication by a nonzero
-natural number has finite-index image. -/
-lemma linearMap_finiteIndex_of_comp_self_eq_nsmul
-    (A : (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ)) (c : ℕ) (hc : c ≠ 0)
-    (hsq : A ∘ₗ A = c • LinearMap.id) : A.range.toAddSubgroup.FiniteIndex := by
-  have hcfinite : (nsmulAddMonoidHom (α := Fin n → ℤ) c).range.FiniteIndex := by
+private lemma matrix_mulVecLin_finiteIndex_of_det_ne_zero
+    (A : Matrix (Fin n) (Fin n) ℤ) (hA : A.det ≠ 0) :
+    A.mulVecLin.range.toAddSubgroup.FiniteIndex := by
+  let d := A.det.natAbs
+  have hd : d ≠ 0 := Int.natAbs_ne_zero.mpr hA
+  have hdFinite : (nsmulAddMonoidHom (α := Fin n → ℤ) d).range.FiniteIndex := by
     rw [AddSubgroup.finiteIndex_iff, AddSubgroup.index_range_nsmul]
-    exact pow_ne_zero _ hc
-  apply @AddSubgroup.finiteIndex_of_le (Fin n → ℤ) _ _ _ hcfinite
+    exact pow_ne_zero _ hd
+  apply @AddSubgroup.finiteIndex_of_le (Fin n → ℤ) _ _ _ hdFinite
   rintro _ ⟨x, rfl⟩
-  exact ⟨A x, LinearMap.congr_fun hsq x⟩
+  rcases le_total 0 A.det with hdet | hdet
+  · refine ⟨Matrix.cramer A x, ?_⟩
+    rw [Matrix.mulVecLin_apply, Matrix.mulVec_cramer]
+    exact congrArg (· • x) (Int.natAbs_of_nonneg hdet).symm
+  · refine ⟨-Matrix.cramer A x, ?_⟩
+    change A.mulVecLin (-Matrix.cramer A x) = d • x
+    rw [map_neg, Matrix.mulVecLin_apply, Matrix.mulVec_cramer, ← neg_smul]
+    exact congrArg (· • x) (Int.ofNat_natAbs_of_nonpos hdet).symm
 
 /-- An isogeny of a root datum on the coordinate lattices `Fin n → ℤ` with the dot-product
 pairing, presented by the integer matrix acting on the character lattice. The map on the
-cocharacter lattice is the transposed matrix, which is what the transpose condition forces. -/
+cocharacter lattice is the transposed matrix, which is what the transpose condition forces.
+Nonvanishing of the determinant supplies injectivity and finite-index image for both maps. -/
 def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
     (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
-    (hA : Function.Injective A.mulVecLin) (hAT : Function.Injective Aᵀ.mulVecLin)
-    (hAfinite : A.mulVecLin.range.toAddSubgroup.FiniteIndex)
-    (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hA : A.det ≠ 0)
     (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
     RootPairingIsogeny P P where
@@ -306,10 +303,10 @@ def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
   indexEquiv := e
   exponent := c
   exponent_pos := hc
-  weightMap_injective := hA
-  coweightMap_injective := hAT
-  weightMap_finiteIndex := hAfinite
-  coweightMap_finiteIndex := hATfinite
+  weightMap_injective := Matrix.mulVec_injective_of_det_ne_zero hA
+  coweightMap_injective := Matrix.mulVec_injective_of_det_ne_zero (by simpa using hA)
+  weightMap_finiteIndex := matrix_mulVecLin_finiteIndex_of_det_ne_zero A hA
+  coweightMap_finiteIndex := matrix_mulVecLin_finiteIndex_of_det_ne_zero Aᵀ (by simpa using hA)
   weight_coweight_transpose x y := by
     rw [hP, hP, Matrix.mulVecLin_apply, Matrix.mulVecLin_apply]
     exact (dotProduct_comm _ _).trans (dotProduct_transpose_mulVec A x y).symm
@@ -319,47 +316,37 @@ def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
 @[simp] theorem ofMatrix_weightMap (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
     (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
-    (hA : Function.Injective A.mulVecLin) (hAT : Function.Injective Aᵀ.mulVecLin)
-    (hAfinite : A.mulVecLin.range.toAddSubgroup.FiniteIndex)
-    (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hA : A.det ≠ 0)
     (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    (ofMatrix P hP A e c hc hA hAT hAfinite hATfinite hroot hcoroot).weightMap =
-      A.mulVecLin := by
+    (ofMatrix P hP A e c hc hA hroot hcoroot).weightMap = A.mulVecLin := by
   rw [ofMatrix]
 
 @[simp] theorem ofMatrix_coweightMap (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
     (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
-    (hA : Function.Injective A.mulVecLin) (hAT : Function.Injective Aᵀ.mulVecLin)
-    (hAfinite : A.mulVecLin.range.toAddSubgroup.FiniteIndex)
-    (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hA : A.det ≠ 0)
     (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    (ofMatrix P hP A e c hc hA hAT hAfinite hATfinite hroot hcoroot).coweightMap =
-      Aᵀ.mulVecLin := by
+    (ofMatrix P hP A e c hc hA hroot hcoroot).coweightMap = Aᵀ.mulVecLin := by
   rw [ofMatrix]
 
 @[simp] theorem ofMatrix_indexEquiv (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
     (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
-    (hA : Function.Injective A.mulVecLin) (hAT : Function.Injective Aᵀ.mulVecLin)
-    (hAfinite : A.mulVecLin.range.toAddSubgroup.FiniteIndex)
-    (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hA : A.det ≠ 0)
     (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    (ofMatrix P hP A e c hc hA hAT hAfinite hATfinite hroot hcoroot).indexEquiv = e := by
+    (ofMatrix P hP A e c hc hA hroot hcoroot).indexEquiv = e := by
   rw [ofMatrix]
 
 @[simp] theorem ofMatrix_exponent (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
     (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
-    (hA : Function.Injective A.mulVecLin) (hAT : Function.Injective Aᵀ.mulVecLin)
-    (hAfinite : A.mulVecLin.range.toAddSubgroup.FiniteIndex)
-    (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hA : A.det ≠ 0)
     (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) (i : ι) :
-    (ofMatrix P hP A e c hc hA hAT hAfinite hATfinite hroot hcoroot).exponent i = c i := by
+    (ofMatrix P hP A e c hc hA hroot hcoroot).exponent i = c i := by
   rw [ofMatrix]
 
 end Coordinates
