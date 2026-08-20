@@ -228,9 +228,9 @@ theorem cartanMatrix_mul_rootLength (t : DynkinType) (i j : Fin t.rank) :
   cases t with
   | A n => simpa using (CartanMatrix.A_isSymm n).apply j i
   | D n => simpa using (CartanMatrix.D_isSymm n).apply j i
-  | E6 => simpa using CartanMatrix.E₆_isSymm.apply j i
-  | E7 => simpa using CartanMatrix.E₇_isSymm.apply j i
-  | E8 => simpa using CartanMatrix.E₈_isSymm.apply j i
+  | E6 => simpa using (CartanMatrix.E_isSymm 6).apply j i
+  | E7 => simpa using (CartanMatrix.E_isSymm 7).apply j i
+  | E8 => simpa using (CartanMatrix.E_isSymm 8).apply j i
   | F4 =>
       simp only [cartanMatrix_F4, rootLength_F4]
       fin_cases i <;> fin_cases j <;> decide
