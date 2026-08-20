@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Calculus.Sard.FlatStratum
 public import TauCeti.Analysis.Calculus.Sard.IntermediateStratum
-import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.LocallyNull
 
 /-!
@@ -15,10 +14,11 @@ import TauCeti.MeasureTheory.Measure.LocallyNull
 
 This file proves that a sufficiently smooth map between finite-dimensional real normed spaces
 sends the set of points at which its Fréchet derivative vanishes to a set of additive Haar measure
-zero, with no restriction on the two dimensions. Since a linear map onto a one-dimensional space
-is surjective exactly when it is nonzero, this is the full Morse--Sard theorem whenever the target
-is one-dimensional: the critical values of a smooth real-valued function on a finite-dimensional
-real normed space form a null set, and its regular values are dense.
+zero, with no relation required between the two dimensions beyond a nontrivial target. Since a
+linear map onto a one-dimensional space is surjective exactly when it is nonzero, this is the full
+Morse--Sard theorem whenever the target is one-dimensional: the critical values of a smooth
+real-valued function on a finite-dimensional real normed space form a null set, and its regular
+values are dense.
 
 The proof is Morse's stratification argument, run by induction on the dimension of the source and
 assembling the two estimates already available. Write `Σ_i` for the set of points at which the
@@ -58,7 +58,7 @@ prerequisite for Sard--Smale and hence for every transversality argument downstr
 
 * `TauCeti.addHaar_image_eq_zero_of_fderiv_eq_zero`: the image of a set of points at which the
   derivative vanishes is null, for a map that is `C^k` at those points with `k` large enough.
-* `TauCeti.ContDiff.addHaar_image_setOf_fderiv_eq_zero`: its global form for a smooth map.
+* `TauCeti.ContDiff.addHaar_image_vanishingFDeriv_eq_zero`: its global form for a smooth map.
 * `TauCeti.ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one`: **Morse--Sard for a
   one-dimensional target**, with
   `TauCeti.ContDiff.dense_compl_image_criticalPoints_of_finrank_eq_one` the density of the regular
@@ -91,6 +91,42 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 /-- A finite smoothness exponent is not `∞`, the side condition of `ContDiffAt.contDiffOn`. -/
 private theorem natCast_ne_infty (m : ℕ) : (m : ℕ∞ω) ≠ ∞ := by simp
 
+omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] [Nontrivial F]
+  [FiniteDimensional ℝ E] in
+/-- The vanishing-derivative locus is covered by the flat stratum and the strata where
+vanishing stops at a finite order. -/
+private theorem subset_flatStratum_union_iUnion (f : E → F) (s : Set E) (N : ℕ)
+    (hs : ∀ x ∈ s, fderiv ℝ f x = 0) :
+    s ⊆ {x ∈ s | ∀ i, 1 ≤ i → i ≤ N → iteratedFDeriv ℝ i f x = 0} ∪
+      ⋃ i ∈ Set.Ico 1 N,
+        {x ∈ s | iteratedFDeriv ℝ i f x = 0 ∧ iteratedFDeriv ℝ (i + 1) f x ≠ 0} := by
+  classical
+  intro x hx
+  by_cases hflat : ∀ i, 1 ≤ i → i ≤ N → iteratedFDeriv ℝ i f x = 0
+  · exact Or.inl ⟨hx, hflat⟩
+  refine Or.inr ?_
+  push Not at hflat
+  obtain ⟨i, hi1, hiN, hine⟩ := hflat
+  have h1 : iteratedFDeriv ℝ 1 f x = 0 := by
+    rw [← norm_eq_zero, norm_iteratedFDeriv_one, hs x hx, norm_zero]
+  let p : ℕ → Prop := fun j ↦ iteratedFDeriv ℝ (j + 1) f x ≠ 0
+  have hp : ∃ j, p j := ⟨i - 1, by
+    change iteratedFDeriv ℝ (i - 1 + 1) f x ≠ 0
+    rwa [Nat.sub_add_cancel hi1]⟩
+  have hjpos : 0 < Nat.find hp := (Nat.find_pos hp).2 (by simpa [p] using h1)
+  have hjzero : iteratedFDeriv ℝ (Nat.find hp) f x = 0 := by
+    have hmin := Nat.find_min hp
+      (Nat.sub_lt hjpos (by omega) : Nat.find hp - 1 < Nat.find hp)
+    simp only [p, not_ne_iff] at hmin
+    rwa [Nat.sub_add_cancel hjpos] at hmin
+  have hjN : Nat.find hp < N := by
+    have hlast : p (i - 1) := by
+      change iteratedFDeriv ℝ (i - 1 + 1) f x ≠ 0
+      rwa [Nat.sub_add_cancel hi1]
+    have hji : Nat.find hp ≤ i - 1 := Nat.find_le (h := hp) hlast
+    omega
+  exact mem_biUnion ⟨hjpos, hjN⟩ ⟨hx, hjzero, Nat.find_spec hp⟩
+
 /-- The induction behind `TauCeti.addHaar_image_eq_zero_of_fderiv_eq_zero`, on the dimension `n`
 of the source. The source is quantified inside the statement because the induction step replaces
 it by the kernel of a linear functional, a space of dimension one less. -/
@@ -106,35 +142,11 @@ private theorem addHaar_image_eq_zero_of_fderiv_eq_zero_aux (n : ℕ) :
   | succ n ih =>
     intro E _ _ _ hE k hk f s hf hs
     have hF : 0 < finrank ℝ F := finrank_pos
-    have hkK : n + 2 ≤ k := by nlinarith
+    have hk' : n * n + n + 2 ≤ k := by nlinarith
+    have hkK : n + 2 ≤ k := by omega
     -- Split `s` into the innermost stratum, where the derivatives of order `1 ≤ i ≤ n + 1` all
     -- vanish, and the strata where the vanishing stops at some order `i < n + 1`.
-    have hsub : s ⊆ {x ∈ s | ∀ i, 1 ≤ i → i ≤ n + 1 → iteratedFDeriv ℝ i f x = 0} ∪
-        ⋃ i ∈ Set.Ico 1 (n + 1),
-          {x ∈ s | iteratedFDeriv ℝ i f x = 0 ∧ iteratedFDeriv ℝ (i + 1) f x ≠ 0} := by
-      intro x hx
-      by_cases hflat : ∀ i, 1 ≤ i → i ≤ n + 1 → iteratedFDeriv ℝ i f x = 0
-      · exact Or.inl ⟨hx, hflat⟩
-      refine Or.inr ?_
-      push Not at hflat
-      obtain ⟨i, hi1, hin, hine⟩ := hflat
-      have h1 : iteratedFDeriv ℝ 1 f x = 0 := by
-        ext m
-        simp [iteratedFDeriv_one_apply, hs x hx]
-      -- Descend from a nonvanishing derivative to the last order at which the derivatives vanish.
-      have key : ∀ j : ℕ, j + 1 ≤ n + 1 → iteratedFDeriv ℝ (j + 1) f x ≠ 0 →
-          ∃ i ∈ Set.Ico 1 (n + 1), x ∈
-            {x | x ∈ s ∧ iteratedFDeriv ℝ i f x = 0 ∧ iteratedFDeriv ℝ (i + 1) f x ≠ 0} := by
-        intro j
-        induction j with
-        | zero => exact fun _ hne ↦ absurd h1 hne
-        | succ j ihj =>
-          intro hjn hjne
-          by_cases hj : iteratedFDeriv ℝ (j + 1) f x = 0
-          · exact ⟨j + 1, ⟨Nat.le_add_left 1 j, by omega⟩, hx, hj, hjne⟩
-          · exact ihj (by omega) hj
-      obtain ⟨i', hi', hxB⟩ := key (i - 1) (by omega) (by rwa [Nat.sub_add_cancel hi1])
-      exact mem_biUnion hi' hxB
+    have hsub := subset_flatStratum_union_iUnion f s (n + 1) hs
     refine measure_mono_null (image_mono hsub) ?_
     rw [image_union, image_iUnion₂]
     refine measure_union_null ?_ ((measure_biUnion_null_iff (Set.to_countable _)).2 fun i hi ↦ ?_)
@@ -153,7 +165,7 @@ private theorem addHaar_image_eq_zero_of_fderiv_eq_zero_aux (n : ℕ) :
       refine measure_image_null_of_locally_null fun a ha ↦ ?_
       obtain ⟨has, hai, hai1⟩ := ha
       have hfa : ContDiffAt ℝ ((n * n + 1 + i : ℕ)) f a :=
-        (hf a has).of_le (mod_cast show n * n + 1 + i ≤ k by have := hi.2; nlinarith)
+        (hf a has).of_le (mod_cast show n * n + 1 + i ≤ k by have := hi.2; omega)
       obtain ⟨g, g', θ, -, -, -, -, -, hθ, -, hcover, hrank⟩ :=
         exists_parametrization_iteratedFDeriv_eq_zero (r := n * n + 1) hfa (by positivity) hai hai1
       obtain ⟨w, hw, hθw⟩ := hθ.contDiffOn (m := ((n * n + 1 : ℕ) : ℕ∞ω)) le_rfl
@@ -171,42 +183,45 @@ private theorem addHaar_image_eq_zero_of_fderiv_eq_zero_aux (n : ℕ) :
         obtain ⟨z, hz, rfl⟩ := hxV hxi
         exact ⟨z, ⟨hz, hxs⟩, rfl⟩
       · rintro z ⟨hzw, hzs⟩
-        exact ((hf (θ z) hzs).of_le (mod_cast show n * n + 1 ≤ k by nlinarith)).comp z (hθz z hzw)
+        exact ((hf (θ z) hzs).of_le (mod_cast show n * n + 1 ≤ k by omega)).comp z
+          (hθz z hzw)
       · rintro z ⟨hzw, hzs⟩
         have hone : (1 : ℕ∞ω) ≤ ((n * n + 1 : ℕ) : ℕ∞ω) := mod_cast Nat.le_add_left 1 (n * n)
         have hfz : DifferentiableAt ℝ f (θ z) :=
-          ((hf (θ z) hzs).of_le (mod_cast show 1 ≤ k by nlinarith)).differentiableAt_one
+          ((hf (θ z) hzs).of_le (mod_cast show 1 ≤ k by omega)).differentiableAt_one
         rw [fderiv_comp z hfz ((hθz z hzw).of_le hone).differentiableAt_one, hs (θ z) hzs,
           ContinuousLinearMap.zero_comp]
 
 /-- **Sard's theorem on the locus where the derivative vanishes.** Let `f` be a map between
 finite-dimensional real normed spaces with nontrivial target, and let `s` be a set at each point
-of which `f` is `C^k` and the Fréchet derivative of `f` vanishes. If
-`finrank ℝ E * finrank ℝ E + 1 ≤ k`, then `f '' s` has additive Haar measure zero.
+of which `f` is `C^n` and the Fréchet derivative of `f` vanishes. If
+`((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n`, then `f '' s` has additive Haar measure zero.
 
-There is no restriction on the two dimensions: the vanishing of the derivative, rather than a
-dimension count, is what the higher derivatives are used against. The bound on `k` is a
-sufficient one, not the sharp exponent of the Morse--Sard theorem. -/
-theorem addHaar_image_eq_zero_of_fderiv_eq_zero (hk : finrank ℝ E * finrank ℝ E + 1 ≤ k)
-    (hf : ∀ x ∈ s, ContDiffAt ℝ k f x) (hs : ∀ x ∈ s, fderiv ℝ f x = 0) : ν (f '' s) = 0 :=
-  addHaar_image_eq_zero_of_fderiv_eq_zero_aux ν (finrank ℝ E) E le_rfl k hk f s hf hs
+No relation between the two dimensions is required, beyond a nontrivial (positive-dimensional)
+target: the vanishing of the derivative, rather than a dimension count, is what the higher
+derivatives are used against. The smoothness bound is sufficient, not the sharp exponent of the
+Morse--Sard theorem. -/
+theorem addHaar_image_eq_zero_of_fderiv_eq_zero {n : ℕ∞ω}
+    (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n)
+    (hf : ∀ x ∈ s, ContDiffAt ℝ n f x) (hs : ∀ x ∈ s, fderiv ℝ f x = 0) : ν (f '' s) = 0 :=
+  addHaar_image_eq_zero_of_fderiv_eq_zero_aux ν (finrank ℝ E) E le_rfl
+    (finrank ℝ E * finrank ℝ E + 1) le_rfl f s (fun x hx ↦ (hf x hx).of_le hk) hs
 
-/-- The image under a smooth map of the whole locus where its Fréchet derivative vanishes has
-additive Haar measure zero, whatever the two finite dimensions. -/
-theorem ContDiff.addHaar_image_setOf_fderiv_eq_zero (hf : ContDiff ℝ ∞ f) :
+/-- The image under a sufficiently smooth map with nontrivial target of the whole locus where its
+Fréchet derivative vanishes has additive Haar measure zero, with no relation required between the
+two finite dimensions. -/
+theorem ContDiff.addHaar_image_vanishingFDeriv_eq_zero {n : ℕ∞ω} (hf : ContDiff ℝ n f)
+    (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
     ν (f '' {x | fderiv ℝ f x = 0}) = 0 :=
-  addHaar_image_eq_zero_of_fderiv_eq_zero ν le_rfl
-    (fun _ _ ↦ (contDiff_infty.mp hf _).contDiffAt) fun _ hx ↦ hx
+  addHaar_image_eq_zero_of_fderiv_eq_zero ν hk (fun _ _ ↦ hf.contDiffAt) fun _ hx ↦ hx
 
-/-- The complement of the image of the locus where the derivative of a smooth map vanishes is
-dense. -/
-theorem ContDiff.dense_compl_image_setOf_fderiv_eq_zero (hf : ContDiff ℝ ∞ f) :
-    Dense (f '' {x | fderiv ℝ f x = 0})ᶜ := by
-  let t : Set F := f '' {x | fderiv ℝ f x = 0}
-  have ht : (addHaar : Measure F) t = 0 :=
-    ContDiff.addHaar_image_setOf_fderiv_eq_zero (ν := addHaar) hf
-  have htc : ∀ᵐ x ∂(addHaar : Measure F), x ∈ tᶜ := ae_iff.mpr (by simpa using ht)
-  simpa only [ofPred_mem_eq, t] using Measure.dense_of_ae htc
+/-- The complement of the image of the locus where the derivative of a sufficiently smooth map
+with nontrivial target vanishes is dense. -/
+theorem ContDiff.dense_compl_image_vanishingFDeriv {n : ℕ∞ω} (hf : ContDiff ℝ n f)
+    (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
+    Dense (f '' {x | fderiv ℝ f x = 0})ᶜ :=
+  interior_eq_empty_iff_dense_compl.1 <| Measure.interior_eq_empty_of_null <|
+    ContDiff.addHaar_image_vanishingFDeriv_eq_zero (ν := addHaar) hf hk
 
 section OneDimensional
 
@@ -218,7 +233,7 @@ omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] [Nontrivial F]
   [FiniteDimensional ℝ E] in
 /-- A linear map into a one-dimensional space is surjective exactly when it is nonzero, so the
 critical points of a map into such a space are the points where its derivative vanishes. -/
-@[simp] theorem setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero :
+@[simp] theorem setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero_of_finrank_eq_one :
     {x | ¬ Surjective (fderiv ℝ f x)} = {x | fderiv ℝ f x = 0} := by
   let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
   ext x
@@ -228,29 +243,30 @@ critical points of a map into such a space are the points where its derivative v
     exact surjective_of_nonzero_of_finrank_eq_one (f := (fderiv ℝ f x : E →ₗ[ℝ] F)) hF
       fun hzero ↦ hx (ContinuousLinearMap.coe_injective hzero)
   · rintro hsurj h
-    obtain ⟨y, hy⟩ := exists_ne (0 : F)
-    obtain ⟨v, hv⟩ := hsurj y
-    rw [h] at hv
-    exact hy (by simpa using hv.symm)
+    have h1 : iteratedFDeriv ℝ 1 f x = 0 := by
+      rw [← norm_eq_zero, norm_iteratedFDeriv_one, h, norm_zero]
+    exact not_surjective_fderiv_of_iteratedFDeriv_one_eq_zero h1 hsurj
 
 omit [Nontrivial F] in
-/-- **Morse--Sard for a one-dimensional target.** The critical values of a smooth map from a
-finite-dimensional real normed space to a one-dimensional one, that is the values it takes at the
-points where its derivative is not surjective, form a set of additive Haar measure zero. -/
-theorem ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one (hf : ContDiff ℝ ∞ f) :
+/-- **Morse--Sard for a one-dimensional target.** The critical values of a sufficiently smooth map
+from a finite-dimensional real normed space to a one-dimensional one, that is the values it takes
+at the points where its derivative is not surjective, form a set of additive Haar measure zero. -/
+theorem ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one {n : ℕ∞ω}
+    (hf : ContDiff ℝ n f) (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
     ν (f '' {x | ¬ Surjective (fderiv ℝ f x)}) = 0 := by
   let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
-  rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero hF]
-  exact ContDiff.addHaar_image_setOf_fderiv_eq_zero ν hf
+  rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero_of_finrank_eq_one hF]
+  exact ContDiff.addHaar_image_vanishingFDeriv_eq_zero ν hf hk
 
 omit [Nontrivial F] in
-/-- The regular values of a smooth map from a finite-dimensional real normed space to a
-one-dimensional one are dense. -/
-theorem ContDiff.dense_compl_image_criticalPoints_of_finrank_eq_one (hf : ContDiff ℝ ∞ f) :
+/-- The regular values of a sufficiently smooth map from a finite-dimensional real normed space to
+a one-dimensional one are dense. -/
+theorem ContDiff.dense_compl_image_criticalPoints_of_finrank_eq_one {n : ℕ∞ω}
+    (hf : ContDiff ℝ n f) (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
     Dense (f '' {x | ¬ Surjective (fderiv ℝ f x)})ᶜ := by
   let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
-  rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero hF]
-  exact ContDiff.dense_compl_image_setOf_fderiv_eq_zero hf
+  rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero_of_finrank_eq_one hF]
+  exact ContDiff.dense_compl_image_vanishingFDeriv hf hk
 
 end OneDimensional
 

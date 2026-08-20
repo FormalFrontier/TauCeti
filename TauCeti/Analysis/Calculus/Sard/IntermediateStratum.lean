@@ -23,9 +23,9 @@ the `i`th derivative vanishes.
 `TauCeti.exists_parametrization_iteratedFDeriv_eq_zero` makes this reduction explicit. It gives a
 `C^r` parametrization `θ` from the kernel of a nonzero scalar functional, whose dimension is one
 less than that of the source. Locally, the zero set of the `i`th derivative is contained in the
-range of `θ`, and `θ` itself lies in a regular scalar level set containing that zero set. This is
-the induction-on-source-dimension input for proving that the images of the intermediate strata
-`Σ_i \ Σ_{i+1}` are null.
+image under `θ` of any prescribed neighbourhood of the origin, and `θ` itself lies in a regular
+scalar level set containing that zero set. This is the induction-on-source-dimension input for
+proving that the images of the intermediate strata `Σ_i \ Σ_{i+1}` are null.
 
 The scalar component is obtained by Hahn--Banach from a nonzero value of the derivative of
 `iteratedFDeriv ℝ i f`. The parametrization is Mathlib's implicit function for that scalar
