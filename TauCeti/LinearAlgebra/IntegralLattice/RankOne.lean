@@ -41,9 +41,9 @@ Lᵛ = (1 / (2m)) ℤe,   A_L ≅ ℤ / 2mℤ,   b_L(g, g) = 1 / (2m),   q_L(g) 
 with `g` generating `A_L` and `#A_L = |2m|`.  The quadratic value is in the half-norm convention
 fixed by `TauCeti.IntegralLattice.discriminantQuadraticMap`, so it is half of Nikulin's
 `ℚ/2ℤ`-valued `1 / (2m)`.  Both forms are computed on an arbitrary multiple `k • g`, which is what
-identifies the finite quadratic module rather than merely its order, and the polar identity
-`b_L(k • g, l • g) = q_L((k + l) • g) - q_L(k • g) - q_L(l • g)` is then checked directly against
-the displayed values.
+identifies the finite quadratic module rather than merely its order.  The two displayed forms are
+compatible: the polar of `q_L` on those elements is the displayed pairing,
+`q_L((k + l) • g) - q_L(k • g) - q_L(l • g) = b_L(k • g, l • g) = kl / (2m)`.
 
 Nonvanishing of `m` is carried as a `NeZero` instance, so that the nondegeneracy of `⟨2m⟩` — which
 the discriminant group needs in order to be finite — is available to instance synthesis.
@@ -370,8 +370,8 @@ theorem discriminantQuadraticMap_rankOneClass :
       ((1 / (4 * m) : ℚ) : AddCircle (1 : ℚ)) := by
   simpa using discriminantQuadraticMap_zsmul_rankOneClass m 1
 
-/-- **The displayed quadratic form polarizes to the displayed pairing.**  This is the rank-one
-compatibility check, obtained from the general polar theorem and the computed pairing table. -/
+/-- **The displayed quadratic form polarizes to the displayed pairing.**  The polar of `q_L` at
+`k • g` and `l • g` is the value `kl / (2m)` of `b_L` there. -/
 theorem polar_discriminantQuadraticMap_zsmul_rankOneClass (k l : ℤ) :
     QuadraticMap.polar ((rankOne m).discriminantQuadraticMap (isEven_rankOne m))
         (k • rankOneClass m) (l • rankOneClass m) =
