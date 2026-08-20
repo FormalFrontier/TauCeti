@@ -374,7 +374,7 @@ theorem exists_sq_sub_mul_sq_eq_norm_of_mod_four_ne_one (hmin : minpoly ℤ θ =
   obtain ⟨A, B, hz⟩ := exists_int_repr hmin hgen hsf (mod_four_eq_two_or_three hsf hd4) z
   refine ⟨A, B, ?_⟩
   have hzK : (z : K) = algebraMap ℚ K (A : ℚ) + algebraMap ℚ K (B : ℚ) * (θ : K) := by
-    rw [show ((z : K)) = ((A • (1 : 𝓞 K) + B • θ : 𝓞 K) : K) by rw [← hz]]
+    rw [hz]
     push_cast [zsmul_eq_mul]
     simp
   have hQ : Algebra.norm ℚ (z : K) = (A : ℚ) ^ 2 - ((d : ℤ) : ℚ) * (B : ℚ) ^ 2 :=

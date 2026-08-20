@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrimeProduct
+public import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Product
 public import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 public import TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient
 import Mathlib.RingTheory.Ideal.Norm.AbsNorm
@@ -35,9 +35,11 @@ room: if the `B`-coordinate vanishes, `m` is a square and so `m = 1`; if it does
 `m ≥ n/4` resp. `m ≥ n`, and the few surviving ratios `n/m` are excluded one by one. The upshot is
 `m = 1` or `m = n`, that is, `S = ∅` or `S` is the set of prime factors of `d`.
 
-Counting is then immediate: fixing a prime factor `q` of `d`, distinct subsets of the ramified
-primes avoiding `q` have distinct products of classes, because a coincidence would produce a
-relation supported away from `q` — and neither `∅` nor the prime factors of `d` is such a set.
+Counting is then immediate: fix a prime factor `q` of `d`. If two subsets of the ramified primes
+avoiding `q` have the same product of classes, their symmetric difference is a relation, and it
+too avoids `q`; so it is not the set of prime factors of `d`, which contains `q`, leaving only the
+empty relation — that is, the two subsets are equal. Distinct such subsets therefore have distinct
+products of classes.
 
 The radicand `d = -1` is genuinely excluded, not merely for convenience: there `t = 1` and the
 single ramified prime `2` has the *principal* prime `(1 + i)` above it, so the relation used here
@@ -92,7 +94,8 @@ private theorem eq_one_or_eq_of_four_mul_eq_sq_add {n m A B : ℤ} (hn : 1 < n) 
     have h2 : (2 : ℤ) ∣ A := Int.prime_two.dvd_of_dvd_pow ⟨2 * m, by rw [h4]; ring⟩
     obtain ⟨c, rfl⟩ := h2
     have hc : (4 : ℤ) * c ^ 2 = 4 * m := by linear_combination h4
-    exact eq_one_of_squarefree_of_eq_sq hmsf (show m = c ^ 2 by linarith)
+    have hmc : m = c ^ 2 := by linarith
+    exact eq_one_of_squarefree_of_eq_sq hmsf hmc
   · have hB1 : 1 ≤ B ^ 2 := by
       rcases lt_or_gt_of_ne hB with h' | h' <;> nlinarith
     obtain ⟨k, hk⟩ := hdvd
@@ -109,7 +112,8 @@ private theorem eq_one_or_eq_of_four_mul_eq_sq_add {n m A B : ℤ} (hn : 1 < n) 
     · left
       have hB2 : B ^ 2 = 1 := le_antisymm (by nlinarith [sq_nonneg A]) hB1
       rw [hk, hB2] at h
-      exact eq_one_of_squarefree_of_eq_sq hmsf (show m = A ^ 2 by linarith)
+      have hmA : m = A ^ 2 := by linarith
+      exact eq_one_of_squarefree_of_eq_sq hmsf hmA
 
 /-- The `d ≢ 1 (mod 4)` branch of the ramified-prime independence computation: a positive
 squarefree divisor `m` of `2n` with `n > 1` squarefree and `m` represented by the form
@@ -118,7 +122,8 @@ private theorem eq_one_or_eq_of_eq_sq_add {n m A B : ℤ} (hn : 1 < n) (hnsf : S
     (hm : 0 < m) (hmsf : Squarefree m) (hdvd : m ∣ 2 * n) (h : A ^ 2 + n * B ^ 2 = m) :
     m = 1 ∨ m = n := by
   rcases eq_or_ne B 0 with rfl | hB
-  · exact Or.inl (eq_one_of_squarefree_of_eq_sq hmsf (show m = A ^ 2 by linarith))
+  · have hmA : m = A ^ 2 := by linarith
+    exact Or.inl (eq_one_of_squarefree_of_eq_sq hmsf hmA)
   · have hB1 : 1 ≤ B ^ 2 := by
       rcases lt_or_gt_of_ne hB with h' | h' <;> nlinarith
     have hnpos : (0 : ℤ) < n := by omega
@@ -140,7 +145,8 @@ private theorem eq_one_or_eq_of_eq_sq_add {n m A B : ℤ} (hn : 1 < n) (hnsf : S
         have hBpm : B = -1 ∨ B = 1 := by omega
         rcases hBpm with rfl | rfl <;> norm_num
       rw [hB2, hm2n] at h
-      have := eq_one_of_squarefree_of_eq_sq hnsf (show n = A ^ 2 by linarith)
+      have hnA : n = A ^ 2 := by linarith
+      have := eq_one_of_squarefree_of_eq_sq hnsf hnA
       omega
     · right; omega
 
@@ -243,9 +249,10 @@ theorem prod_eq_one_or_prod_eq_natAbs_of_isPrincipal_prod
         simpa [Int.natAbs_mul] using Int.natAbs_dvd_natAbs.mpr h
       refine Nat.mem_primeFactors.mpr ⟨hpprime p hp, ?_, by omega⟩
       rcases ((hpprime p hp).dvd_mul).mp h4 with h' | h'
-      · have hp4 : p ∣ 2 ^ 2 := by rw [show (2 : ℕ) ^ 2 = 4 by norm_num]; exact h'
+      · have hfour : (4 : ℕ) = 2 ^ 2 := by norm_num
+        rw [hfour] at h'
         have hp2 : p = 2 := (Nat.prime_dvd_prime_iff_eq (hpprime p hp) Nat.prime_two).mp
-          ((hpprime p hp).dvd_of_dvd_pow hp4)
+          ((hpprime p hp).dvd_of_dvd_pow h')
         rw [hp2]
         exact ⟨d.natAbs, rfl⟩
       · exact h'.mul_left 2
@@ -289,9 +296,10 @@ theorem eq_empty_or_eq_primeFactors_of_prod_classGroupMk0_eq_one
 /-- **The ramified primes of an imaginary quadratic field span at least `2 ^ (t - 1)` classes.**
 Complementing `natCard_closure_image_classGroupMk0_le`: with `s` a finite set of ramified primes
 containing every prime factor of `d < -1`, the sub-products `∏_{p ∈ S} [𝔭_p]` over subsets `S` of
-`s` avoiding one chosen prime factor `q` of `d` are pairwise distinct, since two of them agreeing
-would give a relation supported away from `q`, which
-`eq_empty_or_eq_primeFactors_of_prod_classGroupMk0_eq_one` forbids. -/
+`s` avoiding one chosen prime factor `q` of `d` are pairwise distinct: if two of them agree, the
+symmetric difference of the two index sets is a relation avoiding `q`, so it is not the set of
+prime factors of `d`, and `eq_empty_or_eq_primeFactors_of_prod_classGroupMk0_eq_one` leaves only
+the empty relation, forcing the two index sets to be equal. -/
 theorem two_pow_le_natCard_closure_image_classGroupMk0
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) (hd : d < -1) {s : Finset ℕ}
@@ -308,7 +316,8 @@ theorem two_pow_le_natCard_closure_image_classGroupMk0
     have := hover p hp
     exact NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes hfin (hram p hp)
       (Q p : Ideal (𝓞 K))
-  obtain ⟨q, hq⟩ := Nat.nonempty_primeFactors.mpr (show 1 < d.natAbs by omega)
+  have hd1 : 1 < d.natAbs := by omega
+  obtain ⟨q, hq⟩ := Nat.nonempty_primeFactors.mpr hd1
   have hqs : q ∈ s := hs hq
   -- Distinct subsets of `s.erase q` give distinct sub-products.
   have hinj : Set.InjOn (fun S : Finset ℕ => ∏ p ∈ S, ClassGroup.mk0 (Q p))
