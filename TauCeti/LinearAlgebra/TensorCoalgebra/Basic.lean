@@ -34,14 +34,9 @@ public section
 
 open scoped BigOperators DirectSum TensorProduct
 
-namespace TauCeti
-
 universe uR uM uN
 
 variable (R : Type uR) (M : Type uM) [CommRing R] [AddCommGroup M] [Module R M]
-
-/-- The module of nonempty tensor words. -/
-abbrev ReducedTensorWords := ⨁ n : {n : ℕ // 0 < n}, TensorPower R n.1 M
 
 namespace TensorPower
 
@@ -80,6 +75,13 @@ theorem splitAt_tprod (n k : ℕ) (hk : k ≤ n) (x : Fin n → M) :
     congr 1
 
 end TensorPower
+
+namespace TauCeti
+
+variable (R : Type uR) (M : Type uM) [CommRing R] [AddCommGroup M] [Module R M]
+
+/-- The module of nonempty tensor words. -/
+abbrev ReducedTensorWords : Type _ := ⨁ n : {n : ℕ // 0 < n}, TensorPower R n.1 M
 
 namespace ReducedTensorWords
 
@@ -134,7 +136,7 @@ theorem deconcatenation_of_tprod (n : {n : ℕ // 0 < n}) (x : Fin n.1 → M) :
   simp only [deconcatenationComponent, LinearMap.sum_apply, LinearMap.comp_apply,
     TensorPower.splitAt_tprod, TensorProduct.map_tmul]
 
-@[simp]
+/-- On degree-one tensor words, reduced deconcatenation is zero. -/
 theorem deconcatenation_of_one (x : TensorPower R 1 M) :
     deconcatenation R M (of R M ⟨1, by omega⟩ x) = 0 := by
   rw [deconcatenation_of]
@@ -162,7 +164,6 @@ theorem map_of (f : M →ₗ[R] N) (n : {n : ℕ // 0 < n}) (x : TensorPower R n
   simp [map, of]
 
 /-- Mapping a pure tensor applies the map to each of its letters. -/
-@[simp]
 theorem map_of_tprod (f : M →ₗ[R] N) (n : {n : ℕ // 0 < n}) (x : Fin n.1 → M) :
     ReducedTensorWords.map (R := R) f (of R M n (PiTensorProduct.tprod R x)) =
       of R N n (PiTensorProduct.tprod R fun i ↦ f (x i)) := by
