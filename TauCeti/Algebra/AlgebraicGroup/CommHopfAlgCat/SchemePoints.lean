@@ -170,14 +170,23 @@ private theorem schemePointsAlgΓEquiv_symm_apply
       (Opposite.op (CommAlgCat.of R H))) (CommAlgCat.ofHom p.ofConv).op = _
   rw [Adjunction.homEquiv_unit]
 
+private theorem mapMulEquiv_eq_algSpec_map
+    (H : Type u) [CommRing H] [Bialgebra R H]
+    (A : Type u) [CommRing A] [Algebra R A]
+    (p : WithConv (H →ₐ[R] A)) :
+    AlgebraicGeometry.Spec.mapMulEquiv p =
+      (algSpec (CommRingCat.of R)).map (CommAlgCat.ofHom p.ofConv).op := by
+  apply Over.OverMorphism.ext
+  rw [mapMulEquiv_left, algSpec_map_left]
+  rfl
+
 private theorem algΓPointSchemePoint_eq_symm
     (H : Type u) [CommRing H] [Bialgebra R H]
     (T : Over (Spec (CommRingCat.of R)))
     (p : WithConv (H →ₐ[R] ((algΓ (CommRingCat.of R)).obj T).unop)) :
     algΓPointSchemePoint H T p = (schemePointsAlgΓEquiv H T).symm p := by
   rw [schemePointsAlgΓEquiv_symm_apply]
-  -- `algSpec.map` and `Spec.mapMulEquiv` present the same relative spectrum map.
-  rfl
+  exact congrArg (algΓUnitToSpec T ≫ ·) (mapMulEquiv_eq_algSpec_map H _ p)
 
 private theorem algΓPointSchemePoint_mul
     (H : Type u) [CommRing H] [Bialgebra R H]
