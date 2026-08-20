@@ -200,6 +200,7 @@ theorem restrictOpenTangentSpace_inner
 
 omit [IsManifold I n M] in
 /-- Forgetting `C^n` regularity after restricting a metric gives its fibrewise restriction. -/
+@[simp]
 theorem restrictOpenTangentSpace_toRiemannianMetric
     (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M) :
     (g.restrictOpenTangentSpace U).toRiemannianMetric =
@@ -263,6 +264,7 @@ noncomputable def Manifold.instRiemannianBundleOpen
 
 scoped[TauCeti] attribute [instance] Manifold.instRiemannianBundleOpen
 
+omit [IsManifold I n M] in
 /-- The restricted Riemannian bundle is continuous whenever the ambient bundle is continuous. -/
 theorem Manifold.instIsContinuousRiemannianBundleOpen
     [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
@@ -299,6 +301,7 @@ namespace Manifold
 omit [IsManifold I n M] [IsManifold I 1 M] in
 /-- The metric installed on an open submanifold is the fibrewise restriction of the ambient
 metric. -/
+@[simp]
 theorem riemannianBundleOpen_g
     [RiemannianBundle (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
     letI := instRiemannianBundleOpen (I := I) U
