@@ -33,8 +33,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 * `LinearMap.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
   difference from the identity is nilpotent.
 * `LinearMap.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
-* `LinearMap.GeneralLinearGroup.isUnipotent_iff_charpoly_eq`: the characteristic-polynomial
-  criterion over a field.
+* `LinearMap.GeneralLinearGroup.isUnipotent_iff_charpoly`: the characteristic-polynomial
+  criterion over an integral domain.
 * `LinearMap.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
 * `LinearMap.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
   unipotent.
@@ -78,11 +78,11 @@ theorem isUnipotent_def (g : GeneralLinearGroup K V) :
     IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
   Iff.rfl
 
-/-- Over a field, an automorphism is unipotent exactly when its characteristic polynomial is a
-power of `X - 1`. -/
-theorem isUnipotent_iff_charpoly_eq
-    {F : Type u} {W : Type v} [Field F] [AddCommGroup W] [Module F W]
-    [Module.Finite F W] (g : GeneralLinearGroup F W) :
+/-- Over an integral domain, an automorphism of a finite free module is unipotent exactly when its
+characteristic polynomial is a power of `X - 1`. -/
+theorem isUnipotent_iff_charpoly
+    {F : Type u} {W : Type v} [CommRing F] [IsDomain F] [AddCommGroup W] [Module F W]
+    [Module.Free F W] [Module.Finite F W] (g : GeneralLinearGroup F W) :
     IsUnipotent g ↔
       (g : End F W).charpoly = (Polynomial.X - 1) ^ Module.finrank F W := by
   rw [isUnipotent_def, LinearMap.isNilpotent_iff_charpoly]

@@ -50,7 +50,7 @@ noncomputable section
 
 variable {R : Type u} {H : Type v} {A : Type w}
 variable [Field R] [Semiring H] [_root_.HopfAlgebra R H]
-variable [Field A] [Algebra R A]
+variable [CommRing A] [Algebra R A]
 
 private theorem charpoly_conjugate {B : Type w} [CommRing B] [Algebra R B]
     (M : FGComoduleCat.{u, v, u} R H) (x y : WithConv (H →ₐ[R] B)) :
@@ -74,7 +74,7 @@ private theorem charpoly_endOfPoint_comp {B D : Type w} [CommRing B] [Algebra R 
     Matrix.map_map]
   apply congrArg Matrix.charpoly
   ext i j
-  rfl
+  simp [Matrix.map_apply]
 
 /-- Every point of the dynamic unipotent subgroup attached to a cocharacter is unipotent in
 every finite-dimensional representation. -/
@@ -154,15 +154,26 @@ theorem isUnipotentPoint_of_mem_unipotent
         simp
       _ = (1 : Matrix (Module.Free.ChooseBasisIndex R M)
           (Module.Free.ChooseBasisIndex R M) A).charpoly := hzeroCharpoly
-  apply (LinearMap.GeneralLinearGroup.isUnipotent_iff_charpoly_eq _).2
   have hcoe :
       ((LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g) :
           LinearMap.GeneralLinearGroup A (A ⊗[R] M)) : Module.End A (A ⊗[R] M)) =
         Comodule.endOfPoint M g.ofConv := by
     exact Comodule.pointsAction_toLinearMap M g
-  rw [hcoe, ← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange A),
-    Comodule.toMatrix_endOfPoint, hGCharpoly, Matrix.charpoly_one,
-    ← Module.finrank_eq_card_basis (b.baseChange A)]
+  rw [LinearMap.GeneralLinearGroup.isUnipotent_def, hcoe]
+  have hEndCharpoly :
+      (Comodule.endOfPoint M g.ofConv).charpoly =
+        (Polynomial.X - 1) ^ Fintype.card (Module.Free.ChooseBasisIndex R M) := by
+    rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange A),
+      Comodule.toMatrix_endOfPoint, hGCharpoly, Matrix.charpoly_one]
+  have hnilCharpoly :
+      (Comodule.endOfPoint M g.ofConv - 1).charpoly =
+        Polynomial.X ^ Fintype.card (Module.Free.ChooseBasisIndex R M) := by
+    have hchar := LinearMap.charpoly_sub_smul (Comodule.endOfPoint M g.ofConv) (1 : A)
+    rw [hEndCharpoly] at hchar
+    simpa using hchar
+  refine ⟨Fintype.card (Module.Free.ChooseBasisIndex R M), ?_⟩
+  rw [← @Polynomial.aeval_X_pow A, ← hnilCharpoly,
+    LinearMap.aeval_self_charpoly]
 
 end
 
