@@ -64,10 +64,9 @@ reindexing `normEDS_mul_complEDS_div` (`:1350`) is ported here too, under its so
 
 That reverses an earlier decision recorded in this file, and the reason is worth keeping: the
 reindexing was left out because what consumers took from it was the divisibility, stated directly
-here as `normEDS_dvd_normEDS_mul` and `isDvdSequence_normEDS`, so it had no call site. It has six
-now — the `reducedInvarDenom_of_emod_eq_*` branch lemmas of `ReducedInvariant.lean` each need the
-identity in divisor form, `W k * complEDS b c d k (n / k) = W n`, rather than the divisibility it
-witnesses. That file's
+here as `normEDS_dvd_normEDS_mul` and `isDvdSequence_normEDS`, so it had no call site. It has
+eight now: the reduced-invariant cancellation in `ReducedInvariant.lean` reindexes one or two
+complements through it in each of its six residue branches. The source file's
 header reads `Authors: David Kurniadi Angdinata`; following this repository's convention for
 adapted material the upstream authorship is credited here rather than in the copyright header.
 
