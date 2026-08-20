@@ -235,6 +235,15 @@ for a `q` that is unique once it is required to be monic. -/
 @[expose] def adicOfIrreducible {q : k[X]} (hq : Irreducible q) : Place k (RatFunc k) :=
   adic k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq)
 
+/-- The defining equation of `TauCeti.Place.adicOfIrreducible`: it is the place of the height-one
+prime `(q)`. This is deliberately not a `simp` lemma, since `adicOfIrreducible` is the simp
+normal form here: `TauCeti.Place.valuation_adicOfIrreducible`,
+`TauCeti.Place.degree_adicOfIrreducible` and the classification lemmas all rewrite it
+directly. -/
+theorem adicOfIrreducible_eq {q : k[X]} (hq : Irreducible q) :
+    adicOfIrreducible hq = adic k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) :=
+  (rfl)
+
 @[simp]
 theorem valuation_adicOfIrreducible {q : k[X]} (hq : Irreducible q) :
     (adicOfIrreducible hq).valuation =
@@ -257,13 +266,16 @@ theorem degree_adicOfIrreducible {q : k[X]} (hq : Irreducible q) :
 (Stichtenoth, Proposition 1.2.1(a)). -/
 def adicOfIrreducibleResidueFieldEquiv {q : k[X]} (hq : Irreducible q) :
     (k[X] ⧸ Ideal.span {q}) ≃ₐ[k] (adicOfIrreducible hq).ResidueField :=
-  adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq)
+  (Ideal.quotientEquivAlgOfEq k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm).trans
+    (adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq))
 
 @[simp]
 theorem adicOfIrreducibleResidueFieldEquiv_mk {q : k[X]} (hq : Irreducible q) (r : k[X]) :
     adicOfIrreducibleResidueFieldEquiv hq (Ideal.Quotient.mk (Ideal.span {q}) r) =
       adicResidueHom k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) r :=
-  adicResidueFieldEquiv_mk k (RatFunc k) _ r
+  (congrArg (fun x => adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) x)
+      (Ideal.quotientEquivAlgOfEq_mk k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm r)).trans
+    (adicResidueFieldEquiv_mk k (RatFunc k) _ r)
 
 /-! ### The classification -/
 
