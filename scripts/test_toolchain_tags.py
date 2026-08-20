@@ -640,6 +640,18 @@ class Classification(unittest.TestCase):
         self.assertEqual(row["status"], "tagged")
         self.assertFalse(row["exact"])
 
+    def test_a_tag_on_the_wrong_commit_of_an_exact_run_is_blocked(self):
+        # The policy word is "first". A tag placed on a later commit of the same run, or on
+        # main's tip, has the right toolchain and a pin at or after the release, so a check
+        # that asked only those questions would bless a permanent tag on the wrong commit.
+        wrong = REAL_SEGMENTS_RAW[-1][5]
+        up = FakeUpstream(repo_tags={"v4.34.0-rc1": wrong},
+                          pins={wrong: ("leanprover/lean4:v4.34.0-rc1",
+                                        REAL_SEGMENTS_RAW[-1][3])})
+        row = self.row("v4.34.0-rc1", up)
+        self.assertEqual(row["status"], "blocked")
+        self.assertIn("policy names", row["reason"])
+
     def test_a_tag_on_the_wrong_toolchain_is_blocked_and_never_moved(self):
         sha = "d" * 40
         up = FakeUpstream(repo_tags={"v4.33.0": sha},
@@ -1080,6 +1092,25 @@ class Alerts(unittest.TestCase):
         z = FakeZulip()
         tt.reconcile(z, [self.alert()], set(), dry_run=True)
         self.assertEqual((z.sent, z.updated), ([], []))
+
+    def test_the_alert_key_survives_a_change_of_status(self):
+        # needs-branch -> branch-ready is progress, not resolution. Keying on the status
+        # retired the old key, and the reconciler then edited the original message to a
+        # green tick for a release that was still untagged.
+        rows = tt.audit(segments(), FakeUpstream())
+        before = {a["key"] for a in tt.alerts_from(rows, FakeUpstream())}
+        moved = [dict(r, status="branch-ready", target_sha="a" * 40)
+                 if r["status"] == "needs-branch" else r for r in rows]
+        after = {a["key"] for a in tt.alerts_from(moved, FakeUpstream())}
+        self.assertEqual(before, after)
+
+    def test_a_built_but_untagged_release_still_alerts(self):
+        # `verified` is the state where the expensive part is done and only the one cheap
+        # irreversible step is missing. Silencing it let a release sit built and untagged
+        # for ever with the workflow green.
+        rows = [dict(r, status="verified") for r in tt.audit(segments(), FakeUpstream())
+                if r["status"] == "ready"][:1]
+        self.assertTrue(tt.alerts_from(rows, FakeUpstream()))
 
     def test_only_outstanding_releases_alert(self):
         rows = tt.audit(segments(), FakeUpstream())

@@ -767,15 +767,24 @@ def _target_of(segments, release, mathlib_rev, up):
     return None, None, True, None, rule
 
 
-def _tag_is_valid(tag_sha, release, mathlib_rev, up):
+def _tag_is_valid(tag_sha, release, mathlib_rev, up, target=None, target_exact=True):
     """(ok, why-not, exact) for a tag that already exists.
 
-    Rung-aware: an exact tag pins the mathlib tag commit itself, an inexact one pins a
-    master descendant of it. Both must carry the release's own toolchain."""
+    Rung-aware, and it checks WHICH commit, not merely a plausible one. An earlier version
+    accepted any commit carrying the release's toolchain whose pin was at or after the
+    mathlib tag, which blessed a tag placed on the wrong commit of an exact run: the
+    policy's load-bearing word is "first", and a permanent tag on the wrong commit is
+    exactly the error this tool exists to prevent. So when policy can name a target, the
+    tag must be on it."""
     toolchain, pin = up.repo_pin_at(tag_sha)
     want = toolchain_for(release)
     if toolchain != want:
         return False, f"is on {toolchain or 'no toolchain'}, not {want}", True
+    if target and tag_sha != target:
+        return False, (f"is on {tag_sha[:8]}, but policy names {target[:8]}"), target_exact
+    if target_exact and pin != mathlib_rev:
+        return False, (f"pins mathlib {(pin or 'nothing')[:8]}, but an exact tag for "
+                       f"{release} pins {mathlib_rev[:8]}"), True
     if pin == mathlib_rev:
         return True, None, True
     if pin and up.is_ancestor(mathlib_rev, pin):
@@ -815,11 +824,12 @@ def classify(release, mathlib_rev, segments, up):
         # Judge an existing tag by the pins it actually carries, not by re-deriving
         # what policy would name today. Otherwise deleting a `releases/vX` branch
         # after tagging, which is harmless, would read as a tag mismatch.
-        ok, why, exact = _tag_is_valid(tag_sha, release, mathlib_rev, up)
+        ok, why, exact = _tag_is_valid(tag_sha, release, mathlib_rev, up,
+                                       target=target, target_exact=row["exact"])
         row["exact"] = exact
         if ok:
             row["status"] = "tagged"
-            row["target_sha"], row["target_kind"] = tag_sha, row["target_kind"]
+            row["target_sha"] = tag_sha
         else:
             row["status"] = "blocked"
             row["reason"] = (f"the tag at {tag_sha[:8]} {why}; a published tag is never "
@@ -1114,7 +1124,7 @@ def alerts_from(rows, up, now=None):
     now = now or datetime.datetime.now(datetime.timezone.utc)
     out = []
     for row in rows:
-        if row["status"] in ("tagged", "out-of-scope", "verified"):
+        if row["status"] in ("tagged", "out-of-scope"):
             continue
         if row["status"] != "blocked":
             try:
@@ -1126,7 +1136,11 @@ def alerts_from(rows, up, now=None):
                 continue
         title = f"{row['release']} has no toolchain tag ({row['status']})"
         body = zp.zulip_sanitize(recipe_for(row) or row["reason"] or "")
-        out.append({"key": f"{row['status']}/{row['release']}".lower(),
+        # Keyed on the RELEASE, not on its status. Keying on the status meant that an
+        # ordinary step forward, needs-branch to branch-ready, retired the old key and the
+        # reconciler edited the original message to a green tick for a release that was
+        # still untagged. The status belongs in the title, where it can change freely.
+        out.append({"key": f"toolchain-tag/{row['release']}".lower(),
                     "title": zp.zulip_sanitize(title), "body": body})
     return out
 
@@ -1262,7 +1276,7 @@ def _run_alert(args, segments, up):
         rows = audit(segments, up)
     except Exception as exc:  # fail closed: resolve nothing when the audit itself broke
         zp.log(f"audit failed (non-fatal): {exc}")
-        failed = set(STATUSES)
+        failed = {"toolchain-tag"}
     alerts = alerts_from(rows, up) if rows else []
     zp.log(f"{len(alerts)} outstanding release(s): {sorted(a['key'] for a in alerts)}")
 

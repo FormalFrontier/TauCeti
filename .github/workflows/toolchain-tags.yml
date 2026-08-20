@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: read   # checkout the script; the audit reads refs through the API
+  actions: read    # the audit reads release-tag.yml's run conclusions per target commit
 
 concurrency:
   group: toolchain-tags
