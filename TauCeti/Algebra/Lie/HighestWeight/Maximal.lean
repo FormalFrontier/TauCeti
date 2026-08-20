@@ -342,7 +342,6 @@ theorem isGreatest_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top
 
 /-- A Lie submodule of a highest weight module lies in the maximal submodule exactly when it is
 proper. -/
-@[simp]
 theorem le_maximalSubmodule_iff_ne_top_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤)
     {N : LieSubmodule K L M} : N ≤ maximalSubmodule H M lam ↔ N ≠ ⊤ := by
@@ -513,7 +512,7 @@ theorem quotientMaximalSubmoduleEquivOfSurjectiveOfIsIrreducible_apply_mk
     (f : M →ₗ⁅K,L⁆ Q) (hf : Function.Surjective f) [Nontrivial Q]
     [LieModule.IsIrreducible K L Q] (m : M) :
     quotientMaximalSubmoduleEquivOfSurjectiveOfIsIrreducible hv hgen f hf
-        (LieSubmodule.Quotient.mk' (maximalSubmodule H M lam) m) = f m := by
+        (LieSubmodule.Quotient.mk (N := maximalSubmodule H M lam) m) = f m := by
   rfl
 
 end TauCeti
