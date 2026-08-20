@@ -165,14 +165,15 @@ private theorem backtrackElem_mul_mem_of_mem {a : pathAlgebra k (DoubledQuiver G
 
 /-! ### The redundancy of the long relators -/
 
-omit [Finite V] in
 /-- In a connected graph with at least three vertices, any two vertices have a neighbour outside
 the pair they form. This is the local hypothesis that makes the zigzag relations quadratic; it is
 what fails for the one-edge graph `A₂`. -/
-private theorem exists_adj_thirdVertex [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) (i m : V) :
+private theorem exists_adj_thirdVertex (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) (i m : V) :
     ∃ n : V, n ≠ i ∧ n ≠ m ∧ (G.Adj i n ∨ G.Adj m n) := by
   classical
+  have : Fintype V := Fintype.ofFinite V
+  rw [Nat.card_eq_fintype_card] at hcard
   obtain ⟨w, hwi, hwm⟩ : ∃ w : V, w ≠ i ∧ w ≠ m := by
     by_contra hcon
     push Not at hcon
@@ -197,8 +198,8 @@ private theorem exists_adj_thirdVertex [Fintype V] (hconn : G.Connected)
 
 /-- The heart of the redundancy theorem: an oriented edge out of `i` followed by a backtrack at `i`
 lies in the quadratic ideal. -/
-private theorem ofArrow_mul_backtrackElem_mem [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) {i j m : V} (hj : G.Adj i j) (hm : G.Adj i m) :
+private theorem ofArrow_mul_backtrackElem_mem (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) {i j m : V} (hj : G.Adj i j) (hm : G.Adj i m) :
     (ofArrow (arrow G hm) * backtrackElem G k hj : pathAlgebra k (DoubledQuiver G))
       ∈ quadraticZigzagIdeal k G := by
   refine mul_backtrackElem_mem_of_mem k G hj hm ?_
@@ -222,8 +223,8 @@ private theorem ofArrow_mul_backtrackElem_mem [Fintype V] (hconn : G.Connected)
       (ofArrow_mul_ofArrow_mem_quadraticZigzagIdeal k G hm hmn hni.symm)
 
 /-- Extending a length-two path by one arrow lands in the quadratic ideal. -/
-private theorem ofArrow_mul_ofPath_mem [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) {a c b : DoubledQuiver G} (q : _root_.Quiver.Path a c)
+private theorem ofArrow_mul_ofPath_mem (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) {a c b : DoubledQuiver G} (q : _root_.Quiver.Path a c)
     (hq : q.length = 2) (e : c ⟶ b) :
     (ofArrow e * ofPath ⟨a, c, q⟩ : pathAlgebra k (DoubledQuiver G))
       ∈ quadraticZigzagIdeal k G := by
@@ -244,24 +245,17 @@ private theorem ofArrow_mul_ofPath_mem [Fintype V] (hconn : G.Connected)
   · exact (quadraticZigzagIdeal k G).mul_mem_left _ _
       (ofArrow_mul_ofArrow_mem_quadraticZigzagIdeal k G h₁ h₂ hil)
 
-omit [Finite V] in
-/-- A path extended by an arrow is the arrow times the path, in the later-factor-first
-convention. -/
-private theorem ofPath_cons_eq {a c b : DoubledQuiver G} (q : _root_.Quiver.Path a c) (e : c ⟶ b) :
-    (ofPath ⟨a, b, q.cons e⟩ : pathAlgebra k (DoubledQuiver G)) = ofArrow e * ofPath ⟨a, c, q⟩ := by
-  rw [ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp]
-  rfl
-
 /-- Every path of length at least three lies in the quadratic ideal. -/
-private theorem ofPath_mem_quadraticZigzagIdeal [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) {a b : DoubledQuiver G} (p : _root_.Quiver.Path a b)
+private theorem ofPath_mem_quadraticZigzagIdeal (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) {a b : DoubledQuiver G} (p : _root_.Quiver.Path a b)
     (hp : 3 ≤ p.length) :
     (ofPath ⟨a, b, p⟩ : pathAlgebra k (DoubledQuiver G)) ∈ quadraticZigzagIdeal k G := by
   induction p with
   | nil => simp at hp
   | cons q e ih =>
     rw [_root_.Quiver.Path.length_cons] at hp
-    rw [ofPath_cons_eq]
+    rw [← _root_.Quiver.Path.comp_toPath_eq_cons, ← ofPath_mul_ofPath_of_comp e.toPath q,
+      ← ofArrow_eq_ofPath]
     rcases lt_or_ge q.length 3 with hlt | hge
     · exact ofArrow_mul_ofPath_mem k G hconn hcard q (by omega) e
     · exact (quadraticZigzagIdeal k G).mul_mem_left _ _ (ih hge)
@@ -272,10 +266,10 @@ quadratic relation ideals agree.
 
 The hypotheses are sharp for the roadmap's low-rank conventions. On the one-edge graph `A₂` the
 doubled quiver has no length-two path with distinct endpoints and only one backtrack at each
-vertex, so there are no quadratic relators at all and the quadratic ideal is `⊥`, while the
+vertex, so every quadratic relator is already zero and the quadratic ideal is `⊥`, while the
 uniform ideal kills the length-three paths. -/
-theorem zigzagIdeal_eq_quadraticZigzagIdeal [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) : zigzagIdeal k G = quadraticZigzagIdeal k G := by
+theorem zigzagIdeal_eq_quadraticZigzagIdeal (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) : zigzagIdeal k G = quadraticZigzagIdeal k G := by
   refine le_antisymm ?_ (quadraticZigzagIdeal_le_zigzagIdeal k G)
   rw [zigzagIdeal, TwoSidedIdeal.span_le]
   rintro x hx
@@ -359,7 +353,9 @@ noncomputable def zigzagLift (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
 @[simp]
 theorem zigzagLift_zigzagMk (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsZigzagRelator k G x → f x = 0) (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagLift k G f hf (zigzagMk k G x) = f x := (rfl)
+    zigzagLift k G f hf (zigzagMk k G x) = f x := by
+  rw [zigzagMk_apply, zigzagLift, Ideal.Quotient.liftₐ_apply]
+  exact Ideal.Quotient.lift_mk _ _ _
 
 /-- The lift is the unique algebra map whose composite with the quotient map is `f`. -/
 theorem zigzagLift_unique (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
@@ -372,8 +368,8 @@ theorem zigzagLift_unique (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
 
 /-- On a connected graph with at least three vertices an algebra map killing the quadratic
 relators already kills the whole relation ideal. -/
-theorem zigzagIdeal_le_ker_of_quadratic [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+theorem zigzagIdeal_le_ker_of_quadratic (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0) :
     zigzagIdeal k G ≤ TwoSidedIdeal.ker f := by
   rw [zigzagIdeal_eq_quadraticZigzagIdeal k G hconn hcard, quadraticZigzagIdeal,
@@ -382,8 +378,8 @@ theorem zigzagIdeal_le_ker_of_quadratic [Fintype V] (hconn : G.Connected)
 
 /-- For a connected graph with at least three vertices only the quadratic relations need to be
 checked: an algebra map killing them factors through the zigzag quotient. -/
-noncomputable def zigzagLiftOfQuadratic [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+noncomputable def zigzagLiftOfQuadratic (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0) :
     nonisolatedZigzagQuotient k G →ₐ[k] B :=
   zigzagLift k G f fun _ hx =>
@@ -392,15 +388,16 @@ noncomputable def zigzagLiftOfQuadratic [Fintype V] (hconn : G.Connected)
         (mem_zigzagIdeal_of_isZigzagRelator k G hx)
 
 @[simp]
-theorem zigzagLiftOfQuadratic_zigzagMk [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+theorem zigzagLiftOfQuadratic_zigzagMk (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0)
     (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagLiftOfQuadratic k G hconn hcard f hf (zigzagMk k G x) = f x := (rfl)
+    zigzagLiftOfQuadratic k G hconn hcard f hf (zigzagMk k G x) = f x := by
+  rw [zigzagLiftOfQuadratic, zigzagLift_zigzagMk]
 
 /-- The quadratic lift is the unique algebra map whose composite with the quotient map is `f`. -/
-theorem zigzagLiftOfQuadratic_unique [Fintype V] (hconn : G.Connected)
-    (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+theorem zigzagLiftOfQuadratic_unique (hconn : G.Connected)
+    (hcard : 3 ≤ Nat.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0)
     (g : nonisolatedZigzagQuotient k G →ₐ[k] B)
     (hg : ∀ x, g (zigzagMk k G x) = f x) :
