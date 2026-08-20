@@ -25,10 +25,9 @@ in an arbitrary pseudo-metric space.
 
 The one quantitative statement is about *shrinking* the cut. When the cut point `x` lies off `s`,
 the far side keeps two prescribed points of `s` once `ρ` is small enough, so the image of the far
-side under an injection stays at least as wide as the distance between their two images: the far
-side does not degenerate as the cut shrinks. Distinctness of those two images is what forces a
-genuine metric, rather than pseudo-metric, structure on both sides, and that statement alone is
-stated for one.
+side stays at least as wide as the distance between their two distinct images: the far side does
+not degenerate as the cut shrinks. Distinctness of those two images is what forces a genuine metric,
+rather than pseudo-metric, structure on both sides, and that statement alone is stated for one.
 
 The intended consumer is layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's
 boundary correspondence, through `TauCeti/Analysis/Complex/Conformal/Crosscut/Basic.lean` and
@@ -127,22 +126,19 @@ section Metric
 variable {X Y : Type*} [MetricSpace X] [MetricSpace Y] {f : X → Y} {s : Set X} {x : X}
 
 /-- **Cutting at a point off the set, the far side keeps a fixed width as the cut shrinks.** Let
-`s` have at least two points, let `x` lie off `s`, and let `f` be injective on `s` with bounded
-image. Then there are `d > 0` and `ρ₀ > 0` such that
+the image of `s` under `f` have at least two points, let `x` lie off `s`, and suppose the image is
+bounded. Then there are `d > 0` and `ρ₀ > 0` such that
 
 > `d ≤ diam (f '' (s \ closedBall x ρ))` for every `ρ ≤ ρ₀`.
 
-Two distinct points of `s` have distinct images by injectivity, and both stay off `closedBall x ρ`
-once `ρ` is below their distances to `x`, which are positive because `x` misses `s`. So `d` may be
-taken to be the distance between the two images, and `ρ₀` half the smaller of the two distances.
-
-No hypothesis relates `f` to the metric of `X`; only `f`'s injectivity and the boundedness of its
-image are used, the latter so that `Metric.dist_le_diam_of_mem` applies. -/
-theorem exists_pos_forall_le_diam_image_sdiff_closedBall (hs : ¬ s.Subsingleton) (hx : x ∉ s)
-    (hinj : InjOn f s) (hb : Bornology.IsBounded (f '' s)) :
+No hypothesis relates `f` to the metric of `X`. -/
+theorem exists_pos_forall_le_diam_image_sdiff_closedBall (hfs : ¬ (f '' s).Subsingleton)
+    (hx : x ∉ s) (hb : Bornology.IsBounded (f '' s)) :
     ∃ d > 0, ∃ ρ₀ > 0, ∀ ρ ≤ ρ₀, d ≤ diam (f '' (s \ closedBall x ρ)) := by
-  obtain ⟨z₁, hz₁, z₂, hz₂, hne⟩ := Set.not_subsingleton_iff.mp hs
-  have hd : 0 < dist (f z₁) (f z₂) := dist_pos.mpr fun h => hne (hinj hz₁ hz₂ h)
+  obtain ⟨y₁, hy₁, y₂, hy₂, hne⟩ := Set.not_subsingleton_iff.mp hfs
+  rcases hy₁ with ⟨z₁, hz₁, rfl⟩
+  rcases hy₂ with ⟨z₂, hz₂, rfl⟩
+  have hd : 0 < dist (f z₁) (f z₂) := dist_pos.mpr hne
   have h₁ : 0 < dist z₁ x := dist_pos.mpr fun h => hx (h ▸ hz₁)
   have h₂ : 0 < dist z₂ x := dist_pos.mpr fun h => hx (h ▸ hz₂)
   have hmin : 0 < min (dist z₁ x) (dist z₂ x) := lt_min h₁ h₂
