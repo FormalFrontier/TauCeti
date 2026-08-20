@@ -650,6 +650,7 @@ theorem exists_pairOfDefinition_ringOfDefinition_eq_tfae (B : Subring A) :
 
 /-- **Wedhorn Lemma 6.2 as a criterion:** the rings of definition of a Huber ring are exactly its
 open bounded subrings. -/
+@[simp]
 theorem exists_pairOfDefinition_ringOfDefinition_eq_iff (B : Subring A) :
     (∃ Q : PairOfDefinition A, Q.ringOfDefinition = B) ↔
       IsOpen (B : Set A) ∧ IsBounded (B : Set A) := by
