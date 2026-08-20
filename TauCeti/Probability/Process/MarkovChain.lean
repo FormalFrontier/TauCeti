@@ -230,6 +230,7 @@ theorem markovChainLaw_map_pair_succ [IsProbabilityMeasure ν] (n : ℕ) :
 /-- **The time-`n` laws of the chain satisfy the forward recursion**: the law at time `n + 1` is the
 law at time `n` pushed through the transition kernel. With `markovChainLaw_map_eval_zero` this
 identifies every one-dimensional marginal of the chain. -/
+@[simp]
 theorem markovChainLaw_map_eval_succ [IsProbabilityMeasure ν] (n : ℕ) :
     (markovChainLaw ν κ).map (fun x => x (n + 1))
       = κ ∘ₘ ((markovChainLaw ν κ).map fun x => x n) := by
