@@ -62,12 +62,13 @@ commutative ring.
 
 The denominator side reads `invarDenom (normEDS b c d) 1 m = W (m + 1) * W m * W (m - 1)`, and
 which of the three factors gives up `b = W 2` and `c = W 3` depends on `m` modulo `6` — hence the
-six-way split. Each branch reindexes a complement by `normEDS_mul_complEDS` (`Complement.lean`),
-`W k * complEDS b c d k n = W (n * k)`, taking `n = m / k` and turning `(m / k) * k` back into `m`
-with `Int.ediv_mul_cancel` on the divisibility that `m % 6 = r` supplies. The residues `0`, `1`
-and `5` go through the `6`-complement and rewrite `W 6` as `(W 5 - d ^ 2) * b * c`
-(`WeierstrassCurve.normEDS_six`, `Six.lean`); the residues `2`, `3` and `4` split the work between
-a `2`-complement and a `3`-complement.
+six-way split. Each branch reindexes one or two complements by `normEDS_mul_complEDS_div`
+(`Complement.lean`), `W k * complEDS b c d k (n / k) = W n`, which this development adds beside the
+identity it is derived from — `normEDS_mul_complEDS`, stated at `W (n * k)` — and which absorbs the
+`Int.ediv_mul_cancel` step on the divisibility that `m % 6 = r` supplies. The residues `0`, `1` and
+`5` go through the `6`-complement once each and rewrite `W 6` as `(W 5 - d ^ 2) * b * c`
+(`WeierstrassCurve.normEDS_six`, `Six.lean`); the residues `2`, `3` and `4` each split the work
+between a `2`-complement and a `3`-complement.
 
 Note that `b, c ≠ 0` over a domain would **not** by itself make `normEDS b c d 6` a
 nonzerodivisor — that needs `normEDS b c d 5 - d ^ 2 ≠ 0` as well — which is why the
@@ -76,13 +77,6 @@ statement hypothesis-free.
 
 The numerator needs none of this because its cancellation is an identity between polynomial
 expressions, proved by `ring` from the complement recurrences rather than through a division.
-
-The divisor form is `normEDS_mul_complEDS_div`, which this development adds to `Complement.lean`
-beside the identity it reindexes. Each residue reduces `W k * complEDS b c d k (n / k)` to
-`W n` by `normEDS_mul_complEDS` — which is stated at `W (n * k)` — followed
-by `Int.ediv_mul_cancel` on the divisibility that `m % 6 = r` supplies. The factor
-`W 5 - d ^ 2` carried by the residues `0`, `1` and `5` is `W 6` with `b * c` removed, which is
-`WeierstrassCurve.normEDS_six` (`Six.lean`).
 
 The other half of the reduced-invariant theory — `redInvar_normEDS ← invar₂_normEDS ←
 invar_normEDS ← net_normEDS`, written in the source's names — is complete: `net_normEDS` is

@@ -8,7 +8,7 @@ module
 public import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 public import TauCeti.Algebra.AlgebraicGroup.Connected.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
