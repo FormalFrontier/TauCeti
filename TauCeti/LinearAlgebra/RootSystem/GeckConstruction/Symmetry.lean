@@ -162,8 +162,8 @@ include hτ
 /-! ## Conjugating the numbered matrices -/
 
 omit [Finite ι] [Finite ι₂] [IsDomain R] in
-/-- Conjugating `RootPairing.GeckConstruction.h i` by the index permutation gives the matrix
-numbered by `τ i`, entrywise. Unlike `TauCeti.reindex_geckIndexEquiv_h` this needs neither a
+/-- Pulling back `RootPairing.GeckConstruction.h (τ i)` along the index equivalence gives the
+matrix numbered by `i`, entrywise. Unlike `TauCeti.reindex_geckIndexEquiv_h` this needs neither a
 `Fintype` nor a `DecidableEq` instance on the root index type. -/
 theorem submatrix_geckIndexEquiv_h (i : b.support) :
     (GeckConstruction.h (b := b₂) (τ i)).submatrix
@@ -176,8 +176,8 @@ theorem submatrix_geckIndexEquiv_h (i : b.support) :
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
       Matrix.zero_apply, diagonal_apply, Equiv.apply_eq_iff_eq, hτ, pairingIn_indexEquiv]
 
-/-- Conjugating `RootPairing.GeckConstruction.e i` by the index permutation gives the matrix
-numbered by `τ i`, entrywise. Unlike `TauCeti.reindex_geckIndexEquiv_e` this needs neither a
+/-- Pulling back `RootPairing.GeckConstruction.e (τ i)` along the index equivalence gives the
+matrix numbered by `i`, entrywise. Unlike `TauCeti.reindex_geckIndexEquiv_e` this needs neither a
 `Fintype` nor a `DecidableEq` instance on the root index type. -/
 theorem submatrix_geckIndexEquiv_e (i : b.support) :
     (GeckConstruction.e (b := b₂) (τ i)).submatrix
@@ -192,8 +192,8 @@ theorem submatrix_geckIndexEquiv_e (i : b.support) :
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_add_iff,
       chainBotCoeff_indexEquiv]
 
-/-- Conjugating `RootPairing.GeckConstruction.f i` by the index permutation gives the matrix
-numbered by `τ i`, entrywise. Unlike `TauCeti.reindex_geckIndexEquiv_f` this needs neither a
+/-- Pulling back `RootPairing.GeckConstruction.f (τ i)` along the index equivalence gives the
+matrix numbered by `i`, entrywise. Unlike `TauCeti.reindex_geckIndexEquiv_f` this needs neither a
 `Fintype` nor a `DecidableEq` instance on the root index type. -/
 theorem submatrix_geckIndexEquiv_f (i : b.support) :
     (GeckConstruction.f (b := b₂) (τ i)).submatrix
