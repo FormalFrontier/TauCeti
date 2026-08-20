@@ -10,9 +10,9 @@ public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 
 /-!
-# Arithmetic functions on the nonzero ideals of a number field
+# Arithmetic functions on the nonzero ideals of a field
 
-An *ideal arithmetic function* on a number field `K` is a complex-valued function on the
+An *ideal arithmetic function* for a field `K` is a complex-valued function on the
 nonzero integral ideals of `𝓞 K`, that is, on the submonoid `(Ideal (𝓞 K))⁰` of
 non-zero-divisors of the ideal monoid. This is the primary carrier for the whole
 `ArithmeticDirichletSeries` development: restricting to nonzero ideals from the start means
@@ -31,14 +31,14 @@ that is `TauCeti.IdealArithmeticFunction.zeroExtend`, which extends by the value
   ideal arithmetic function the extension vanishes exactly at `⊥`;
 * `TauCeti.IdealArithmeticFunction.exists_zeroExtend_eq_iff`: a function on all ideals is a
   zero extension exactly when it vanishes at `⊥`, whence
-  `TauCeti.IdealArithmeticFunction.one_ne_zeroExtend`: the everywhere-one function on all
+  `TauCeti.IdealArithmeticFunction.zeroExtend_ne_const_one`: the everywhere-one function on all
   ideals is not a zero extension.
 
 ## Implementation notes
 
 `IdealArithmeticFunction` is a reducible abbreviation for the function type, so the pointwise
 `ℂ`-module and pointwise multiplication structures are the ones inherited from `Pi`. Ideal
-convolution is a separate named operation, never the pointwise product.
+convolution (roadmap Layer 2) will be a separate named operation, never the pointwise product.
 
 ## References
 
@@ -53,18 +53,12 @@ open NumberField nonZeroDivisors
 
 variable {K : Type*} [Field K]
 
-/-- An **ideal arithmetic function** on a number field `K`: a complex-valued function on the
+/-- An **ideal arithmetic function** for a field `K`: a complex-valued function on the
 nonzero integral ideals of `𝓞 K`. The index type is the submonoid `(Ideal (𝓞 K))⁰` of
-non-zero-divisors of the ideal monoid, which for a Dedekind domain is exactly the set of
-ideals different from `⊥` (`TauCeti.Ideal.mem_nonZeroDivisors_iff_ne_bot`). -/
+non-zero-divisors of the ideal monoid, which is exactly the set of ideals different from `⊥`
+because `𝓞 K` is a domain (`mem_nonZeroDivisors_iff_ne_zero`). -/
 abbrev IdealArithmeticFunction (K : Type*) [Field K] : Type _ :=
   (Ideal (𝓞 K))⁰ → ℂ
-
-/-- An ideal of the ring of integers of a number field is a non-zero-divisor of the ideal
-monoid exactly when it is nonzero. -/
-theorem Ideal.mem_nonZeroDivisors_iff_ne_bot {I : Ideal (𝓞 K)} :
-    I ∈ (Ideal (𝓞 K))⁰ ↔ I ≠ ⊥ := by
-  simp [mem_nonZeroDivisors_iff_ne_zero (M₀ := Ideal (𝓞 K)) (x := I)]
 
 namespace IdealArithmeticFunction
 
@@ -81,8 +75,8 @@ theorem zeroExtend_coe (f : IdealArithmeticFunction K) (I : (Ideal (𝓞 K))⁰)
   simp [zeroExtend, I.2]
 
 theorem zeroExtend_of_ne_bot (f : IdealArithmeticFunction K) {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
-    f.zeroExtend I = f ⟨I, Ideal.mem_nonZeroDivisors_iff_ne_bot.mpr hI⟩ :=
-  f.zeroExtend_coe ⟨I, Ideal.mem_nonZeroDivisors_iff_ne_bot.mpr hI⟩
+    f.zeroExtend I = f ⟨I, mem_nonZeroDivisors_iff_ne_zero.mpr hI⟩ :=
+  f.zeroExtend_coe ⟨I, mem_nonZeroDivisors_iff_ne_zero.mpr hI⟩
 
 @[simp]
 theorem zeroExtend_bot (f : IdealArithmeticFunction K) : f.zeroExtend ⊥ = 0 := by
@@ -94,7 +88,7 @@ values, then its zero extension vanishes at exactly one ideal, namely `⊥`. -/
 theorem zeroExtend_eq_zero_iff_eq_bot {f : IdealArithmeticFunction K} (hf : ∀ I, f I ≠ 0)
     {I : Ideal (𝓞 K)} : f.zeroExtend I = 0 ↔ I = ⊥ := by
   refine ⟨fun h ↦ by_contra fun hI ↦ ?_, fun h ↦ h ▸ f.zeroExtend_bot⟩
-  exact hf ⟨I, Ideal.mem_nonZeroDivisors_iff_ne_bot.mpr hI⟩
+  exact hf ⟨I, mem_nonZeroDivisors_iff_ne_zero.mpr hI⟩
     (by rwa [f.zeroExtend_of_ne_bot hI] at h)
 
 theorem zeroExtend_injective :
@@ -120,7 +114,8 @@ theorem exists_zeroExtend_eq_iff {g : Ideal (𝓞 K) → ℂ} :
 extension of any ideal arithmetic function: a zero extension vanishes at `⊥`. Compare
 `TauCeti.IdealArithmeticFunction.zeroExtend_one_apply`, which computes the zero extension of
 the constant function `1` on the *nonzero* ideals. -/
-theorem one_ne_zeroExtend (f : IdealArithmeticFunction K) : f.zeroExtend ≠ 1 := by
+theorem zeroExtend_ne_const_one (f : IdealArithmeticFunction K) :
+    f.zeroExtend ≠ Function.const _ 1 := by
   intro h
   simpa using congrFun h ⊥
 
@@ -140,6 +135,30 @@ theorem zeroExtend_zero : (0 : IdealArithmeticFunction K).zeroExtend = 0 := by
 @[simp]
 theorem zeroExtend_add (f g : IdealArithmeticFunction K) :
     (f + g).zeroExtend = f.zeroExtend + g.zeroExtend := by
+  ext I
+  rcases eq_or_ne I ⊥ with rfl | hI
+  · simp
+  · simp [zeroExtend_of_ne_bot _ hI]
+
+@[simp]
+theorem zeroExtend_mul (f g : IdealArithmeticFunction K) :
+    (f * g).zeroExtend = f.zeroExtend * g.zeroExtend := by
+  ext I
+  rcases eq_or_ne I ⊥ with rfl | hI
+  · simp
+  · simp [zeroExtend_of_ne_bot _ hI]
+
+@[simp]
+theorem zeroExtend_neg (f : IdealArithmeticFunction K) :
+    (-f).zeroExtend = -f.zeroExtend := by
+  ext I
+  rcases eq_or_ne I ⊥ with rfl | hI
+  · simp
+  · simp [zeroExtend_of_ne_bot _ hI]
+
+@[simp]
+theorem zeroExtend_sub (f g : IdealArithmeticFunction K) :
+    (f - g).zeroExtend = f.zeroExtend - g.zeroExtend := by
   ext I
   rcases eq_or_ne I ⊥ with rfl | hI
   · simp
