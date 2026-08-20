@@ -69,6 +69,7 @@ jobs:
       stone-reason: ${{ steps.stone_close.outputs.reason }}
       stone-parked: ${{ steps.stone_close.outputs.parked }}
       stone-fkb: ${{ steps.stone_close.outputs.fkb }}
+      stone-closed: ${{ steps.stone_close.outputs.closed }}
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -189,7 +190,7 @@ jobs:
           fi
           echo "demoting: $reason"
           branch=""
-          parked=true
+          parked=false
           if [ -n "$RELEASE" ]; then
             branch="releases/$RELEASE"
             # Parking the head is what makes closing safe, so only "it is already there"
@@ -200,15 +201,16 @@ jobs:
             if err="$(gh api -X POST "repos/$REPO/git/refs" \
                         -f ref="refs/heads/$branch" -f sha="$HEAD_SHA" 2>&1 >/dev/null)"; then
               echo "parked the stone's head on $branch"
+              parked=true
             elif printf '%s' "$err" | grep -q "Reference already exists"; then
               at="$(gh api "repos/$REPO/git/ref/heads/$branch" --jq '.object.sha' 2>/dev/null || true)"
               if [ "$at" = "$HEAD_SHA" ]; then
                 echo "::notice::$branch already points at this head"
+                parked=true
               else
                 # Existence is not the fact the ref is meant to record. A branch pointing
                 # somewhere else must not stand in for a parked commit.
                 echo "::warning::$branch already exists but points at ${at:-an unreadable ref}, not $HEAD_SHA; not overwriting it"
-                parked=false
               fi
             else
               # Close anyway. An earlier version left the PR open here, which merely traded
@@ -217,7 +219,6 @@ jobs:
               # closed PR and in the alert; what is lost is the automatic route to a tag for
               # this one release, which is worth far less than the pin continuing to move.
               echo "::error::could not park the stone's head on $branch: $err"
-              parked=false
             fi
           else
             echo "::warning::no release marker on the stone, so its head is not parked on a branch"
@@ -232,6 +233,7 @@ jobs:
           else
             resumes="Ordinary dependency bumps resume from this run."
           fi
+          closed=true
           gh pr close "$PR" --repo "$REPO" --comment "Closing this stepping stone: $reason.
 
           $where
@@ -239,9 +241,16 @@ jobs:
           \`main\` as an ordinary PR, after which re-cut the branch; \`releases/*\` is a pin-only
           namespace and never a place code lands.
 
-          $resumes"
+          $resumes" || {
+            # Expiry is the fact; closing is only how it is recorded. If the close fails the
+            # stone is still demoted, or a persistent close error would suppress the ordinary
+            # bump every day for ever, which is the failure this whole policy exists to avoid.
+            echo "::error::could not close the stepping stone PR $PR; treating it as demoted anyway so bumps resume"
+            closed=false
+          }
           {
             echo "demoted=true"
+            echo "closed=$closed"
             echo "parked=$parked"
             echo "fkb=${FKB:+active}"
             echo "release=$RELEASE"
@@ -269,7 +278,11 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
-          TAG: ${{ steps.stone.outputs.rev }}
+          # From `rel`, the query, because this step runs BEFORE `stone`. Reading the
+          # action's output here left this empty, marked every release handled, and turned
+          # the whole stepping-stone path into a no-op without saying anything.
+          TAG: ${{ steps.rel.outputs.rev }}
+          M: ${{ steps.rel.outputs.commit }}
         run: |
           set -euo pipefail
           if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
@@ -283,9 +296,19 @@ jobs:
           if gh api "repos/$REPO/git/ref/tags/$TAG" >/dev/null 2>&1; then
             echo "handled=true" >> "$GITHUB_OUTPUT"; echo "$TAG is already tagged"; exit 0
           fi
-          if gh api "repos/$REPO/git/ref/heads/releases/$TAG" >/dev/null 2>&1; then
-            echo "handled=true" >> "$GITHUB_OUTPUT"
-            echo "$TAG already has a release branch"; exit 0
+          head="$(gh api "repos/$REPO/git/ref/heads/releases/$TAG" --jq '.object.sha' 2>/dev/null || true)"
+          if [ -n "$head" ]; then
+            # Existence is not the fact the branch stands for. A stale or mispointed
+            # `releases/` ref would otherwise mark the release handled for ever, and nothing
+            # would ever try again.
+            pinned="$(gh api "repos/$REPO/contents/lake-manifest.json?ref=$head" --jq '.content' 2>/dev/null \
+                        | base64 -d 2>/dev/null \
+                        | python3 -c 'import json,sys; print(next((p["rev"] for p in json.load(sys.stdin)["packages"] if p.get("name")=="mathlib"), ""))' 2>/dev/null || true)"
+            if [ "$pinned" = "$M" ]; then
+              echo "handled=true" >> "$GITHUB_OUTPUT"
+              echo "$TAG already has a release branch pinning $M"; exit 0
+            fi
+            echo "::warning::releases/$TAG exists at $head but pins ${pinned:-nothing recognisable}, not $M; treating $TAG as unhandled so a stepping stone can still put it on main"
           fi
           echo "handled=false" >> "$GITHUB_OUTPUT"
 
@@ -355,14 +378,22 @@ jobs:
       # ticks instead of one, and a stone whose demotion cannot park its head would be
       # re-created the next day for ever, because main's pin never passes the tag that
       # provokes it.
-      - name: Undo the stone's pin change if its PR could not be opened
+      # Whatever the stone left behind, the ordinary bump below must start from the tree
+      # this run was scheduled against. Restoring individual paths from HEAD is not enough:
+      # `open-bump-pr` may already have committed onto its own branch, in which case HEAD is
+      # the stone commit and restoring from it is a no-op, and a `lake update` that failed
+      # part way leaves state the undo never named. This is an ephemeral runner checkout, so
+      # putting the whole thing back to $GITHUB_SHA is both safe and the only way to be sure.
+      # `-fd` and not `-fdx`: ignored files include the tooling and caches this job needs.
+      - name: Restore the workspace when the stepping stone did not produce a PR
         if: >-
-          steps.stone.outputs.updated == 'true'
-          && steps.stone_pr.outcome != 'success'
+          steps.stone.outcome == 'failure'
+          || (steps.stone.outputs.updated == 'true' && steps.stone_pr.outcome != 'success')
         run: |
           set -euo pipefail
-          echo "::warning::the stepping stone's PR could not be opened; restoring the pins and letting the ordinary bump proceed"
-          git checkout HEAD -- lake-manifest.json lean-toolchain lakefile.toml
+          echo "::warning::the stepping stone did not produce a PR; restoring the workspace and letting the ordinary bump proceed"
+          git checkout --force "$GITHUB_SHA"
+          git clean -fd
           git status --short
 
       - name: Bump to latest mathlib
@@ -371,7 +402,8 @@ jobs:
           steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == ''
               || steps.stone_close.outputs.demoted == 'true')
-          && (steps.stone.outputs.updated != 'true'
+          && (steps.stone.outcome == 'failure'
+              || steps.stone.outputs.updated != 'true'
               || steps.stone_pr.outcome != 'success')
         uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
@@ -382,7 +414,8 @@ jobs:
           steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == ''
               || steps.stone_close.outputs.demoted == 'true')
-          && (steps.stone.outputs.updated != 'true'
+          && (steps.stone.outcome == 'failure'
+              || steps.stone.outputs.updated != 'true'
               || steps.stone_pr.outcome != 'success')
           && steps.bump.outputs.updated == 'true'
         uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
