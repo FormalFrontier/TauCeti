@@ -42,8 +42,7 @@ the classical genus theory in which this dichotomy is used.
 * `NumberField.primesOver_eq_singleton_of_map_eq_self`: a prime fixed by the nontrivial
   automorphism is the unique prime above the rational prime it lies over.
 * `NumberField.map_span_eq_of_notMem_ramifiedPrimes`: if that rational prime is moreover
-  unramified, then `p 𝓞 K = 𝔭`.
-* `NumberField.isPrincipal_of_notMem_ramifiedPrimes`: hence `𝔭` is principal.
+  unramified, then `p 𝓞 K = 𝔭`, so `𝔭` is principal.
 -/
 
 public section
@@ -114,16 +113,5 @@ theorem map_span_eq_of_notMem_ramifiedPrimes (hK : finrank ℚ K = 2) (hp : p.Pr
   rw [Ideal.map_algebraMap_eq_finsetProd_pow (by simp [hp.ne_zero]),
     Set.toFinset_congr (primesOver_eq_singleton_of_map_eq_self hK hp hf hσ 𝔭 hfix)]
   simp [he]
-
-/-- **A conjugation-stable prime over an unramified rational prime is principal.** It is generated
-by that rational prime, by `map_span_eq_of_notMem_ramifiedPrimes`. -/
-theorem isPrincipal_of_notMem_ramifiedPrimes (hK : finrank ℚ K = 2) (hp : p.Prime)
-    (hmem : p ∉ ramifiedPrimes K) {f : K ≃ₐ[ℚ] K} (hf : f ≠ 1) {σ : 𝓞 K ≃+* 𝓞 K}
-    (hσ : ∀ x : 𝓞 K, (σ x : K) = f x) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    [𝔭.LiesOver (span {(p : ℤ)})] (hfix : Ideal.map σ 𝔭 = 𝔭) :
-    Submodule.IsPrincipal 𝔭 :=
-  ⟨algebraMap ℤ (𝓞 K) (p : ℤ), by
-    rw [← map_span_eq_of_notMem_ramifiedPrimes hK hp hmem hf hσ 𝔭 hfix, Ideal.map_span,
-      Set.image_singleton, submodule_span_eq]⟩
 
 end NumberField
