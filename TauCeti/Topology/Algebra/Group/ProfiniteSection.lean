@@ -6,12 +6,13 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.Complement
-public import Mathlib.Order.Zorn
-public import Mathlib.Tactic.Group
-public import Mathlib.Topology.Algebra.ClopenNhdofOne
 public import Mathlib.Topology.Algebra.Group.Quotient
-public import Mathlib.Topology.Algebra.ProperAction.Basic
-public import Mathlib.Topology.Homeomorph.Lemmas
+
+import Mathlib.Order.Zorn
+import Mathlib.Tactic.Group
+import Mathlib.Topology.Algebra.ClopenNhdofOne
+import Mathlib.Topology.Algebra.ProperAction.Basic
+import Mathlib.Topology.Homeomorph.Lemmas
 
 /-!
 # Continuous sections of profinite quotients
@@ -24,13 +25,13 @@ for the projection `G ⧸ K → G ⧸ H` attached to a pair of subgroups `K ≤ 
 The proof produces a closed left transversal: a closed set meeting every left coset of `H` exactly
 once. Zorn's lemma, applied to the pairs `(K, C)` where `C` is a closed set meeting every left
 coset of `H` in exactly one coset of the subgroup `K ≤ H`, yields a minimal such pair; the
-refinement step `TauCeti.IsCosetSelection.exists_lt` shows a minimal pair has `K = ⊥`, which is
-exactly the transversal condition. That step is where the topology enters: an element `h ≠ 1` of
+refinement step shows a minimal pair has `K = ⊥`, which is exactly the transversal condition. That
+step is where the topology enters: an element `h ≠ 1` of
 `K` is separated from `1` by an open normal subgroup `N`, and the `N`-cosets inside a `K`-coset
 `xK` biject with the cosets of the image of `K` in the finite group `G ⧸ N`, so choosing one
 representative per coset there thins `C` down along a *clopen* condition, which preserves
-closedness. Passing to a chain is then purely set-theoretic: the intersection of a chain of such
-`C`'s still meets every coset, by Cantor's intersection theorem.
+closedness. Passing to a chain also uses compactness: Cantor's intersection theorem shows that the
+intersection of a chain of such `C`'s still meets every coset.
 
 ## Main results
 
@@ -61,7 +62,7 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 one left coset of the subgroup `K ≤ H`. For `K = H` the set `C = Set.univ` qualifies, and for
 `K = ⊥` the condition says exactly that `C` is a left transversal of `H`; the proof of
 `TauCeti.exists_isClosed_isComplement` walks from the first to the second. -/
-structure IsCosetSelection (H K : Subgroup G) (C : Set G) : Prop where
+private structure IsCosetSelection (H K : Subgroup G) (C : Set G) : Prop where
   /-- `C` is closed. -/
   isClosed : IsClosed C
   /-- The selected cosets are cosets of a subgroup of `H`. -/
@@ -76,7 +77,7 @@ structure IsCosetSelection (H K : Subgroup G) (C : Set G) : Prop where
 omit [IsTopologicalGroup G] in
 /-- The whole group is a selection of `H`-cosets at the level `K = H`: the starting point of the
 Zorn argument. -/
-theorem isCosetSelection_univ (H : Subgroup G) : IsCosetSelection H H Set.univ where
+private theorem isCosetSelection_univ (H : Subgroup G) : IsCosetSelection H H Set.univ where
   isClosed := isClosed_univ
   le := le_rfl
   mul_mem _ _ _ _ := Set.mem_univ _
@@ -85,7 +86,8 @@ theorem isCosetSelection_univ (H : Subgroup G) : IsCosetSelection H H Set.univ w
 
 /-- Selections are stable under intersections along a chain: this is the step of the Zorn argument
 that needs compactness, through Cantor's intersection theorem for the traces on a coset. -/
-theorem isCosetSelection_sInter [CompactSpace G] {H : Subgroup G} (hH : IsClosed (H : Set G))
+private theorem isCosetSelection_sInter [CompactSpace G] {H : Subgroup G}
+    (hH : IsClosed (H : Set G))
     {c : Set (Subgroup G × Set G)} (hne : c.Nonempty)
     (hc : ∀ p ∈ c, IsCosetSelection H p.1 p.2) (hchain : IsChain (· ≤ ·) c) :
     IsCosetSelection H (sInf (Prod.fst '' c)) (⋂₀ (Prod.snd '' c)) where
@@ -131,7 +133,7 @@ theorem isCosetSelection_sInter [CompactSpace G] {H : Subgroup G} (hH : IsClosed
 of `K`, the elements lying in one chosen coset of `N` produces a selection at the strictly smaller
 level `K ⊓ N`. The chosen coset is picked in the group `G ⧸ N`, so the extra condition cutting `C`
 down is the preimage of a set in a discrete space, and closedness survives. -/
-theorem IsCosetSelection.exists_lt [CompactSpace G] [TotallyDisconnectedSpace G]
+private theorem IsCosetSelection.exists_lt [CompactSpace G] [TotallyDisconnectedSpace G]
     {H K : Subgroup G} {C : Set G} (hsel : IsCosetSelection H K C) {h : G} (hhK : h ∈ K)
     (hh1 : h ≠ 1) :
     ∃ K' : Subgroup G, ∃ C' : Set G, IsCosetSelection H K' C' ∧ K' < K ∧ C' ⊆ C := by
