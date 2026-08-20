@@ -7,6 +7,7 @@ module
 
 import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Reductive
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.MultiplicativeType
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Reductive
 
 /-!
@@ -17,14 +18,16 @@ group schemes over a field. A group scheme is a torus when its coordinate Hopf a
 finite-rank split-torus coordinate ring after extension to an algebraic closure.
 
 The resulting full subcategory is anti-equivalent to torus coordinate Hopf algebras. Every object
-in it is reductive, synchronizing the theorem that tori are reductive between the coordinate and
-scheme models.
+in it is of multiplicative type and reductive, synchronizing these structural theorems between the
+coordinate and scheme models.
 
 ## Main declarations
 
 * `TauCeti.torusAffineGroupSchemeProperty`: the torus property for finite-type affine group
   schemes over a field.
 * `TauCeti.TorusAffineGroupSchemeCat`: the corresponding full subcategory.
+* `TauCeti.torusAffineGroupSchemeProperty.multiplicativeType`: every torus affine group scheme is
+  of multiplicative type.
 * `TauCeti.torusAffineGroupSchemeProperty.reductive`: every torus affine group scheme is
   reductive.
 * `TauCeti.smooth_of_torusAffineGroupSchemeProperty` and
@@ -81,6 +84,16 @@ abbrev TorusAffineGroupSchemeCat (k : Type u) [Field k] :=
   (torusAffineGroupSchemeProperty k).FullSubcategory
 
 namespace torusAffineGroupSchemeProperty
+
+/-- Every torus affine group scheme over a field is of multiplicative type. -/
+@[grind →]
+theorem multiplicativeType
+    (k : Type u) [Field k]
+    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
+    (hG : torusAffineGroupSchemeProperty k G) :
+    multiplicativeTypeAffineGroupSchemeProperty k G := by
+  rw [multiplicativeTypeAffineGroupSchemeProperty_iff]
+  exact ((torusAffineGroupSchemeProperty_iff k G).mp hG).multiplicativeType k _
 
 /-- **Every torus affine group scheme over a field is reductive.** -/
 @[grind →]
