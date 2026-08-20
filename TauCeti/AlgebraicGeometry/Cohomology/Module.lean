@@ -56,6 +56,8 @@ def _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul
     dsimp only [ModuleCat.hom_comp, ModuleCat.hom_ofHom, LinearMap.coe_comp,
       Function.comp_apply, LinearMap.lsmul_apply]
     rw [M.val.map_smul]
+    -- The restriction-of-scalars wrapper is transparent but has no lemma exposing this
+    -- pointwise goal, so normalize it to the presheaf action explicitly.
     change restrictGlobal V.unop r • M.val.map f x =
       X.ringCatSheaf.obj.map f (restrictGlobal U.unop r) • M.val.map f x
     congr 1
@@ -70,6 +72,9 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_app
     (globalSectionsSmul M r).app U = M.smul (X.presheaf.map U.leTop.op r) := by
   rfl
 
+-- In the next four proofs, sheaf-morphism extensionality leaves pointwise bundled-module goals.
+-- The wrappers have no pointwise equality lemmas, so each `change` records the corresponding
+-- public presheaf/module formulation before applying the ring and module laws.
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_zero
     (M : X.Modules) : globalSectionsSmul M 0 = 0 := by
@@ -127,6 +132,7 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_naturality
     (f : M ⟶ N) (r : Γ(X, ⊤)) :
     globalSectionsSmul M r ≫ f = f ≫ globalSectionsSmul N r := by
   ext U x
+  -- As above, extensionality exposes the underlying bundled maps only definitionally.
   change f.app U (X.presheaf.map U.leTop.op r • x) =
     X.presheaf.map U.leTop.op r • f.app U x
   exact f.app_smul _ _
@@ -164,6 +170,7 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomology_smul
     (M : X.Modules) (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
     r • x = (cohomologyFunctor X i).map (globalSectionsSmul M r) x :=
   by
+    -- `Module.compHom` exposes its action definitionally, without an accessor lemma.
     change cohomologyAction M i r x = _
     rfl
 
@@ -175,29 +182,20 @@ def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear
   toFun := (cohomologyFunctor X i).map f
   map_add' := map_add _
   map_smul' r x := by
-    change CategoryTheory.Sheaf.H.map
-        ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) i
-          (CategoryTheory.Sheaf.H.map
-            ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map
-              (globalSectionsSmul M r)) i x) =
-      CategoryTheory.Sheaf.H.map
-        ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map
-          (globalSectionsSmul N r)) i
-          (CategoryTheory.Sheaf.H.map
-            ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) i x)
-    rw [← CategoryTheory.Sheaf.H.map_comp_apply,
-      ← CategoryTheory.Sheaf.H.map_comp_apply]
-    congr 2
-    exact congrArg (fun g ↦ (_root_.SheafOfModules.toSheaf X.ringCatSheaf).map g)
-      (globalSectionsSmul_naturality f r)
+    -- Normalize only the scalar action supplied by `Module.compHom`; keep cohomology
+    -- abstract so functoriality, rather than `Sheaf.H` implementation details, proves it.
+    change (cohomologyFunctor X i).map f
+        ((cohomologyFunctor X i).map (globalSectionsSmul M r) x) =
+      (cohomologyFunctor X i).map (globalSectionsSmul N r)
+        ((cohomologyFunctor X i).map f x)
+    erw [← (cohomologyFunctor X i).map_comp_apply,
+      ← (cohomologyFunctor X i).map_comp_apply, globalSectionsSmul_naturality]
 
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_apply
     (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
     cohomologyMapLinear f i x = (cohomologyFunctor X i).map f x :=
-  by
-    change (cohomologyFunctor X i).map f x = _
-    rfl
+  by rfl
 
 /-- The canonical identification of zeroth cohomology with global sections is linear over global
 functions. -/
@@ -206,6 +204,8 @@ def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv
     Cohomology M 0 ≃ₗ[Γ(X, ⊤)] Γ(M, ⊤) where
   __ := cohomologyZeroEquiv M
   map_smul' r x := by
+    -- The inherited linear-equivalence fields have no accessor lemmas for their actions;
+    -- normalize them to the named cohomology and section operations.
     change cohomologyZeroEquiv M
         ((cohomologyFunctor X 0).map (globalSectionsSmul M r) x) =
       r • cohomologyZeroEquiv M x
@@ -223,9 +223,7 @@ def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv_apply
     (M : X.Modules) (x : Cohomology M 0) :
     cohomologyZeroLinearEquiv M x = cohomologyZeroEquiv M x :=
-  by
-    change cohomologyZeroEquiv M x = _
-    rfl
+  by rfl
 
 section Base
 
@@ -271,7 +269,6 @@ def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroBaseLinearEquiv
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroBaseLinearEquiv_apply
     (M : X.Modules) (x : Cohomology M 0) :
     cohomologyZeroBaseLinearEquiv R X M x = cohomologyZeroEquiv M x := by
-  change cohomologyZeroEquiv M x = _
   rfl
 
 end Base
