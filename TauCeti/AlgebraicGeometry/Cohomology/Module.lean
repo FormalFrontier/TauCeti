@@ -8,14 +8,17 @@ module
 public import TauCeti.AlgebraicGeometry.Cohomology.Basic
 
 /-!
-# The module structure on coherent cohomology
+# Scalar actions on the cohomology of a sheaf of modules on a scheme
 
 This file equips the cohomology of a sheaf of modules on a scheme with its canonical module
 structure over the ring of global functions. The construction first realizes a global function
-as a scalar endomorphism of the coefficient sheaf, then applies the cohomology functor.
+as a scalar endomorphism of the coefficient sheaf, then applies the cohomology functor. No
+coherence or quasi-coherence hypothesis is imposed on the coefficient sheaf.
 
 The resulting action agrees in degree zero with the usual action on global sections, and every
-map on cohomology induced by a morphism of coefficient sheaves is linear.
+map on cohomology induced by a morphism of coefficient sheaves is linear. For a scheme over a
+base commutative ring, restricting along the induced map on global functions gives the
+corresponding actions of the base ring.
 -/
 
 public section
