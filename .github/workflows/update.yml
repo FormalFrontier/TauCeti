@@ -20,10 +20,14 @@ name: Update Dependencies
 # someone having to construct it afterwards.
 #
 # A stepping stone must never be able to freeze dependency updates, so it has a hard
-# lifetime rather than a CI-colour test: at the next daily tick it has either merged or it
-# is demoted, whatever its colour, and demotion parks its head on `releases/<tag>` where a
-# human can dispatch release-tag.yml against it. A first-known-bad regression outranks it
-# entirely.
+# lifetime rather than a CI-colour test: once it is past that lifetime, which the daily run
+# checks, it is demoted whatever its colour, and demotion parks its head on `releases/<tag>`
+# where a human can dispatch release-tag.yml against it. Since the check runs on a schedule
+# the lifetime is a floor rather than an exact deadline: a stone opened shortly before a run
+# survives to the following one. A first-known-bad regression outranks it entirely.
+#
+# Nothing here may be the reason bumps stop. Failing to open the stone, and failing to park
+# its head on demotion, both fall through to the ordinary bump rather than holding the pin.
 #
 # Two limits worth knowing. The snapshot returns only the LATEST release reachable from the
 # last-known-good commit, so if two releases fall inside one gap, which is easy while a
@@ -63,6 +67,8 @@ jobs:
       stone-branch: ${{ steps.stone_close.outputs.branch }}
       stone-head: ${{ steps.stone_close.outputs.head }}
       stone-reason: ${{ steps.stone_close.outputs.reason }}
+      stone-parked: ${{ steps.stone_close.outputs.parked }}
+      stone-fkb: ${{ steps.stone_close.outputs.fkb }}
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -183,6 +189,7 @@ jobs:
           fi
           echo "demoting: $reason"
           branch=""
+          parked=true
           if [ -n "$RELEASE" ]; then
             branch="releases/$RELEASE"
             # Parking the head is what makes closing safe, so only "it is already there"
@@ -194,27 +201,49 @@ jobs:
                         -f ref="refs/heads/$branch" -f sha="$HEAD_SHA" 2>&1 >/dev/null)"; then
               echo "parked the stone's head on $branch"
             elif printf '%s' "$err" | grep -q "Reference already exists"; then
-              echo "::notice::$branch already exists; leaving it as it is"
+              at="$(gh api "repos/$REPO/git/ref/heads/$branch" --jq '.object.sha' 2>/dev/null || true)"
+              if [ "$at" = "$HEAD_SHA" ]; then
+                echo "::notice::$branch already points at this head"
+              else
+                # Existence is not the fact the ref is meant to record. A branch pointing
+                # somewhere else must not stand in for a parked commit.
+                echo "::warning::$branch already exists but points at ${at:-an unreadable ref}, not $HEAD_SHA; not overwriting it"
+                parked=false
+              fi
             else
+              # Close anyway. An earlier version left the PR open here, which merely traded
+              # one permanent freeze for another: every later run took the same path and
+              # bumps never resumed. Nothing is really lost, since the head sha is on the
+              # closed PR and in the alert; what is lost is the automatic route to a tag for
+              # this one release, which is worth far less than the pin continuing to move.
               echo "::error::could not park the stone's head on $branch: $err"
-              echo "::error::leaving the stepping stone OPEN rather than closing it and losing the commit"
-              echo "demoted=false" >> "$GITHUB_OUTPUT"
-              exit 0
+              parked=false
             fi
           else
             echo "::warning::no release marker on the stone, so its head is not parked on a branch"
           fi
+          if [ "$parked" = "true" ] && [ -n "$branch" ]; then
+            where="Its head is parked on \`$branch\`, still the commit that pins mathlib at \`$RELEASE\` exactly, so a human can dispatch \`release-tag.yml\` against it."
+          else
+            where="Its head \`$HEAD_SHA\` could NOT be parked on a branch. Record that sha now if this release is still wanted."
+          fi
+          if [ -n "$FKB" ]; then
+            resumes="An incompatibility is still active, so ordinary bumps stay suppressed until it clears; this stone is simply no longer part of why."
+          else
+            resumes="Ordinary dependency bumps resume from this run."
+          fi
           gh pr close "$PR" --repo "$REPO" --comment "Closing this stepping stone: $reason.
 
-          Its head is parked on \`$branch\`, which is still the commit that pins mathlib at
-          \`$RELEASE\` exactly, so \`release-tag.yml\` can build, publish and tag it from there.
+          $where
           If Tau Ceti genuinely does not compile at that mathlib commit, the fix belongs on
           \`main\` as an ordinary PR, after which re-cut the branch; \`releases/*\` is a pin-only
           namespace and never a place code lands.
 
-          Ordinary dependency bumps resume from this run."
+          $resumes"
           {
             echo "demoted=true"
+            echo "parked=$parked"
+            echo "fkb=${FKB:+active}"
             echo "release=$RELEASE"
             echo "branch=$branch"
             echo "head=$HEAD_SHA"
@@ -240,7 +269,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
-          TAG: ${{ steps.rel.outputs.rev }}
+          TAG: ${{ steps.stone.outputs.rev }}
         run: |
           set -euo pipefail
           if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
@@ -270,6 +299,13 @@ jobs:
       # auto-merge and destroy the two-pin-files-only property release-tag.yml relies on.
       - name: Pin mathlib at the release tag (stepping stone)
         id: stone
+        # A stepping stone is an optimisation: it puts the exact release commit on main
+        # instead of on a constructed branch. If preparing it fails, that is a worse tag
+        # story for one release, not a reason to stop dependency updates. Without this the
+        # failed step would trip the implicit success() guard on every later step, skipping
+        # the ordinary bump, and since no PR was opened there would be no clock and no
+        # demotion path to recover through: the same failure every day, for ever.
+        continue-on-error: true
         if: >-
           steps.fkb.outputs.commit == ''
           && steps.stone_state.outputs.open == ''
@@ -282,27 +318,34 @@ jobs:
           skip-build: true
 
       - name: Open or update the stepping-stone PR
+        id: stone_pr
+        continue-on-error: true   # same reason as above
         if: steps.stone.outputs.updated == 'true'
         uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           branch: ${{ env.STONE_BRANCH }}
-          title: "chore: pin mathlib at ${{ steps.rel.outputs.rev }} (release stepping stone)"
-          commit-message: "chore: pin mathlib at ${{ steps.rel.outputs.rev }}"
+          title: "chore: pin mathlib at ${{ steps.stone.outputs.rev }} (release stepping stone)"
+          commit-message: "chore: pin mathlib at ${{ steps.stone.outputs.rev }}"
+          # Every field below comes from `stone`, the step that actually moved the pin, not
+          # from the earlier `rel` query: the two read the snapshot independently and can
+          # disagree, and a marker naming a different release from the one the branch pins
+          # would park the wrong commit under that release's name, permanently.
+          #
           # `body` rather than `message`, which would sit above open-bump-pr's own footer.
           # That footer states that `lake build` was run against the new commit and
           # succeeded; with `skip-build: true` no build was run at all, and a PR that
           # advertises a build it never did is worse than one with no footer.
           body: |
-            The last-known-good bump is about to step over mathlib's `${{ steps.rel.outputs.rev }}`
+            The last-known-good bump is about to step over mathlib's `${{ steps.stone.outputs.rev }}`
             tag, which main's pin has not reached. This PR pins mathlib at that tag exactly
-            (`${{ steps.rel.outputs.commit }}`), so the release can be built, cached and tagged from
+            (`${{ steps.stone.outputs.commit }}`), so the release can be built, cached and tagged from
             a real main commit rather than from one constructed afterwards.
 
             Ordinary dependency bumps are held back until this merges. If it has not merged by
             the next daily run it is closed automatically and its head is parked on
-            `releases/${{ steps.rel.outputs.rev }}`, so nothing here can freeze the bump.
+            `releases/${{ steps.stone.outputs.rev }}`, so nothing here can freeze the bump.
 
-            <!--tauceti-stepping-stone:v1 ${{ steps.rel.outputs.rev }}-->
+            <!--tauceti-stepping-stone:v1 ${{ steps.stone.outputs.rev }}-->
           token: ${{ steps.app-token.outputs.token }}
           git-user-name: tauceti-review-bot[bot]
           git-user-email: 290224625+tauceti-review-bot[bot]@users.noreply.github.com
@@ -312,13 +355,24 @@ jobs:
       # ticks instead of one, and a stone whose demotion cannot park its head would be
       # re-created the next day for ever, because main's pin never passes the tag that
       # provokes it.
+      - name: Undo the stone's pin change if its PR could not be opened
+        if: >-
+          steps.stone.outputs.updated == 'true'
+          && steps.stone_pr.outcome != 'success'
+        run: |
+          set -euo pipefail
+          echo "::warning::the stepping stone's PR could not be opened; restoring the pins and letting the ordinary bump proceed"
+          git checkout HEAD -- lake-manifest.json lean-toolchain lakefile.toml
+          git status --short
+
       - name: Bump to latest mathlib
         id: bump
         if: >-
           steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == ''
               || steps.stone_close.outputs.demoted == 'true')
-          && steps.stone.outputs.updated != 'true'
+          && (steps.stone.outputs.updated != 'true'
+              || steps.stone_pr.outcome != 'success')
         uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
           preserve-lakefile: true
@@ -328,7 +382,8 @@ jobs:
           steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == ''
               || steps.stone_close.outputs.demoted == 'true')
-          && steps.stone.outputs.updated != 'true'
+          && (steps.stone.outputs.updated != 'true'
+              || steps.stone_pr.outcome != 'success')
           && steps.bump.outputs.updated == 'true'
         uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
@@ -363,6 +418,8 @@ jobs:
           ZULIP_TOPIC: Releases
           RELEASE: ${{ needs.bump.outputs.stone-release }}
           BRANCH: ${{ needs.bump.outputs.stone-branch }}
+          PARKED: ${{ needs.bump.outputs.stone-parked }}
+          FKB: ${{ needs.bump.outputs.stone-fkb }}
           HEAD_SHA: ${{ needs.bump.outputs.stone-head }}
           REASON: ${{ needs.bump.outputs.stone-reason }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -379,11 +436,17 @@ jobs:
           branch = os.environ.get("BRANCH") or ""
           head = (os.environ.get("HEAD_SHA") or "")[:8]
           reason = os.environ.get("REASON") or "it ran out of time"
-          lines = [
-              f"**The stepping stone for `{release}` was demoted**, because {reason}.",
-              "Ordinary mathlib bumps have resumed.",
-          ]
-          if branch:
+          lines = [f"**The stepping stone for `{release}` was demoted**, because {reason}."]
+          lines.append(
+              "An incompatibility is still active, so ordinary bumps stay suppressed until "
+              "it clears; this stone is no longer part of why."
+              if os.environ.get("FKB") else "Ordinary mathlib bumps have resumed.")
+          if os.environ.get("PARKED") == "false":
+              lines.append(
+                  f"Its head `{head}` could NOT be parked on a branch, so there is no durable "
+                  f"record of it beyond the closed PR and this message. If `{release}` is still "
+                  f"wanted, note that sha now and cut the branch by hand.")
+          elif branch:
               lines.append(
                   f"Its head `{head}` is parked on `{branch}`, which still pins mathlib at "
                   f"`{release}` exactly, so `release-tag.yml` can build, publish and tag it "

@@ -124,7 +124,7 @@ STONE_BRANCH = "hopscotch/tag-bump"
 # on main rather than having it parked on a release branch. Sixteen rather than twelve:
 # a stone is opened at about 17:00 and this runs hourly, so twelve would post at about
 # 05:00 on every stone that merely had not merged overnight, including ones progressing
-# perfectly well. Sixteen still leaves four hours before the closer acts.
+# perfectly well. Sixteen still leaves several hours before the closer acts.
 STONE_STUCK_HOURS = 16
 
 
