@@ -35,7 +35,7 @@ intersection of a chain of such `C`'s still meets every coset.
 
 ## Main results
 
-* `TauCeti.Subgroup.exists_isClosed_isComplement_left`: a closed subgroup of a profinite group has
+* `Subgroup.exists_isClosed_isComplement_left`: a closed subgroup of a profinite group has
   a closed left transversal, in Mathlib's sense `Subgroup.IsComplement`.
 * `TauCeti.exists_continuous_section`: the normalized continuous section `G ⧸ H → G`.
 * `TauCeti.exists_continuous_section_of_le`: the continuous section of `G ⧸ K → G ⧸ H` for `K ≤ H`.
@@ -61,7 +61,7 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 /-- `IsCosetSelection H K C` says that the closed set `C` meets every left coset of `H` in exactly
 one left coset of the subgroup `K ≤ H`. For `K = H` the set `C = Set.univ` qualifies, and for
 `K = ⊥` the condition says exactly that `C` is a left transversal of `H`; the proof of
-`TauCeti.Subgroup.exists_isClosed_isComplement_left` walks from the first to the second. -/
+`Subgroup.exists_isClosed_isComplement_left` walks from the first to the second. -/
 private structure IsCosetSelection (H K : Subgroup G) (C : Set G) : Prop where
   /-- `C` is closed. -/
   isClosed : IsClosed C
@@ -178,13 +178,12 @@ private theorem IsCosetSelection.exists_lt [CompactSpace G] [TotallyDisconnected
     have hone : φ (x⁻¹ * y) = 1 := by rw [map_mul, map_inv, hxy', inv_mul_cancel]
     exact Subgroup.mem_inf.mpr ⟨hK, (QuotientGroup.eq_one_iff _).mp hone⟩
 
-namespace Subgroup
-
 /-- **A closed subgroup of a profinite group has a closed left transversal.** The set `C` produced
 here meets every left coset of `H` in exactly one point and is closed, hence compact; that is what
 makes the induced bijection `C ≃ G ⧸ H` a homeomorphism in
 `TauCeti.exists_continuous_section`. -/
-theorem exists_isClosed_isComplement_left [CompactSpace G] [TotallyDisconnectedSpace G]
+theorem _root_.Subgroup.exists_isClosed_isComplement_left
+    [CompactSpace G] [TotallyDisconnectedSpace G]
     (H : Subgroup G) (hH : IsClosed (H : Set G)) :
     ∃ C : Set G, IsClosed C ∧ Subgroup.IsComplement C (H : Set G) := by
   obtain ⟨m, hm, hmin⟩ : ∃ m : Subgroup G × Set G, IsCosetSelection H m.1 m.2 ∧
@@ -215,8 +214,6 @@ theorem exists_isClosed_isComplement_left [CompactSpace G] [TotallyDisconnectedS
     have := hm.inv_mul_mem x hxC y hyC hxyH
     rwa [hbot, Subgroup.mem_bot] at this
   exact Subtype.ext (inv_mul_eq_one.mp this).symm
-
-end Subgroup
 
 /-- **Continuous sections of profinite quotients** (Ribes-Zalesskii, Proposition 2.2.2). For a
 closed subgroup `H` of a profinite group `G` the quotient map `G → G ⧸ H` has a continuous section
