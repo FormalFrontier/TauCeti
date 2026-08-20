@@ -66,9 +66,10 @@ results here are the even-dimensional half.
 
 * `TauCeti.spinPlusAction` and `TauCeti.spinMinusAction`: the actions of the even Clifford
   subalgebra on the two half-spin summands, as algebra homomorphisms.
-* `TauCeti.evenSpinAction`: the two of them together.
+* `TauCeti.evenSpinActionProd`: the two of them together.
 * `TauCeti.SpinPolarizationData.evenCliffordEquivProdEnd`: **the even structure theorem**, that
   `even Q` is the product of the endomorphism algebras of the two half-spin summands.
+* `TauCeti.SpinPolarizationData.evenCliffordEquivProdMatrix`: its matrix-algebra form.
 
 ## Main results
 
@@ -102,6 +103,20 @@ namespace TauCeti
 
 universe u v
 
+private theorem eq_bot_or_eq_top_of_surjective_action {K : Type u} [Field K]
+    {A M : Type*} [AddCommGroup M] [Module K M] (F : A → Module.End K M)
+    (hF : Function.Surjective F) (N : Submodule K M)
+    (hN : ∀ a : A, N.map (F a) ≤ N) : N = ⊥ ∨ N = ⊤ := by
+  rcases eq_or_ne N ⊥ with hbot | hbot
+  · exact Or.inl hbot
+  refine Or.inr (eq_top_iff.2 fun t _ => ?_)
+  obtain ⟨s, hs, hs0⟩ := N.exists_mem_ne_zero_of_ne_bot hbot
+  let _ : Nontrivial M := ⟨s, 0, hs0⟩
+  obtain ⟨g, hg⟩ := IsSimpleModule.toSpanSingleton_surjective (Module.End K M) hs0 t
+  rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hg
+  obtain ⟨a, rfl⟩ := hF g
+  exact hg ▸ hN a ⟨s, hs, rfl⟩
+
 /-! ### The spinor module is a simple Clifford module
 
 Nothing here needs an even dimension, a nondegenerate form, or an invertible `2`: the Fock action
@@ -124,92 +139,14 @@ theorem exists_spinAction_eq {s : ExteriorAlgebra K P.W} (hs : s ≠ 0)
   obtain ⟨x, rfl⟩ := spinAction_surjective P f
   exact ⟨x, hf⟩
 
-/-- **The spinor module is a simple Clifford module**: a submodule of `S = ⋀·W` invariant under
-every Clifford element is `⊥` or the whole of `S`. -/
+/-- **The invariant-subspace dichotomy for the spinor module**: a submodule of `S = ⋀·W`
+invariant under every Clifford element is `⊥` or the whole of `S`. The spinor module is nonzero,
+so this is its simplicity statement for the Clifford action. -/
 theorem eq_bot_or_eq_top_of_map_spinAction_le (N : Submodule K (ExteriorAlgebra K P.W))
     (hN : ∀ x : CliffordAlgebra Q, N.map (spinAction Q P x) ≤ N) : N = ⊥ ∨ N = ⊤ := by
-  rcases eq_or_ne N ⊥ with hbot | hbot
-  · exact Or.inl hbot
-  refine Or.inr (eq_top_iff.2 fun t _ => ?_)
-  obtain ⟨s, hs, hs0⟩ := N.exists_mem_ne_zero_of_ne_bot hbot
-  obtain ⟨x, hx⟩ := exists_spinAction_eq P hs0 t
-  exact hx ▸ hN x ⟨s, hs, rfl⟩
+  exact eq_bot_or_eq_top_of_surjective_action (spinAction Q P) (spinAction_surjective P) N hN
 
 end Simple
-
-/-! ### The even subalgebra acting on the two half-spin summands
-
-A polarization without a line summand makes an even Clifford element act by a parity-preserving
-operator, so it restricts to each of `S⁺` and `S⁻`. These restrictions are algebra homomorphisms,
-defined here over the commutative ring the polarization lives over; that they are jointly bijective
-is the even-dimensional statement of the next section. -/
-
-section Restrict
-
-variable {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
-  {Q : QuadraticForm K V}
-
-/-- **The action of the even Clifford subalgebra on the even half-spin summand** `S⁺`, for a
-polarization without a line summand: an even element preserves exterior parity, so the Fock action
-restricts to `S⁺`. -/
-noncomputable def spinPlusAction (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
-    (hline : P.line = ⊥) :
-    CliffordAlgebra.even Q →ₐ[K] Module.End K (spinPlus Q P) where
-  toFun x := (spinAction Q P x).restrict fun s hs => by
-    rw [spinPlus_def] at hs ⊢
-    exact spinAction_mem_evenOdd_of_mem_even P hline x.2 hs
-  map_one' := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  map_mul' _ _ := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  map_zero' := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  map_add' _ _ := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  commutes' _ := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-
-/-- **The action of the even Clifford subalgebra on the odd half-spin summand** `S⁻`. -/
-noncomputable def spinMinusAction (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
-    (hline : P.line = ⊥) :
-    CliffordAlgebra.even Q →ₐ[K] Module.End K (spinMinus Q P) where
-  toFun x := (spinAction Q P x).restrict fun s hs => by
-    rw [spinMinus_def] at hs ⊢
-    exact spinAction_mem_evenOdd_of_mem_even P hline x.2 hs
-  map_one' := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  map_mul' _ _ := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  map_zero' := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  map_add' _ _ := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-  commutes' _ := by refine LinearMap.ext fun s => Subtype.ext ?_; simp
-
-variable (P : SpinPolarizationData Q)
-
-/-- The action of an even Clifford element on `S⁺` is the Fock action. -/
-@[simp]
-theorem coe_spinPlusAction_apply (hline : P.line = ⊥) (x : CliffordAlgebra.even Q)
-    (s : spinPlus Q P) :
-    (spinPlusAction Q P hline x s : ExteriorAlgebra K P.W) = spinAction Q P x s :=
-  -- `(rfl)`, not `rfl`: the body of `spinPlusAction` is not `@[expose]`d.
-  (rfl)
-
-/-- The action of an even Clifford element on `S⁻` is the Fock action. -/
-@[simp]
-theorem coe_spinMinusAction_apply (hline : P.line = ⊥) (x : CliffordAlgebra.even Q)
-    (s : spinMinus Q P) :
-    (spinMinusAction Q P hline x s : ExteriorAlgebra K P.W) = spinAction Q P x s :=
-  -- `(rfl)`, not `rfl`: the body of `spinMinusAction` is not `@[expose]`d.
-  (rfl)
-
-/-- **The action of the even Clifford subalgebra on the two half-spin summands together.** -/
-noncomputable def evenSpinAction (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
-    (hline : P.line = ⊥) :
-    CliffordAlgebra.even Q →ₐ[K]
-      Module.End K (spinPlus Q P) × Module.End K (spinMinus Q P) :=
-  (spinPlusAction Q P hline).prod (spinMinusAction Q P hline)
-
-@[simp]
-theorem evenSpinAction_apply (hline : P.line = ⊥) (x : CliffordAlgebra.even Q) :
-    evenSpinAction Q P hline x =
-      (spinPlusAction Q P hline x, spinMinusAction Q P hline x) :=
-  -- `(rfl)`, not `rfl`: the body of `evenSpinAction` is not `@[expose]`d.
-  (rfl)
-
-end Restrict
 
 /-! ### The even structure theorem
 
@@ -223,6 +160,25 @@ section Even
 variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
   {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
   [Invertible (2 : K)] [FiniteDimensional K V]
+
+omit [Invertible (2 : K)] [FiniteDimensional K V] in
+private theorem spinAction_eq_zero_on_of_maps_le
+    (M N : Submodule K (ExteriorAlgebra K P.W)) (hMN : Disjoint M N)
+    {x₀ x₁ : CliffordAlgebra Q} (heven : M.map (spinAction Q P x₀) ≤ M)
+    (hodd : M.map (spinAction Q P x₁) ≤ N)
+    (hmap : M.map (spinAction Q P (x₀ + x₁)) ≤ M) :
+    Set.EqOn (spinAction Q P x₁) 0 M := by
+  intro s hs
+  have hN : spinAction Q P x₁ s ∈ N := hodd ⟨s, hs, rfl⟩
+  have hM : spinAction Q P x₁ s ∈ M := by
+    rw [map_add] at hmap
+    have hadd := hmap ⟨s, hs, rfl⟩
+    rw [LinearMap.add_apply] at hadd
+    simpa only [add_sub_cancel_left] using M.sub_mem hadd (heven ⟨s, hs, rfl⟩)
+  have : spinAction Q P x₁ s ∈ (⊥ : Submodule K (ExteriorAlgebra K P.W)) := by
+    rw [← disjoint_iff.1 hMN]
+    exact ⟨hM, hN⟩
+  simpa using this
 
 /-- **A Clifford element whose action preserves both half-spin summands is even.** Splitting it
 into an even and an odd part, the odd part acts by an operator that both preserves and reverses
@@ -241,40 +197,21 @@ theorem mem_even_of_map_spinPlus_le_of_map_spinMinus_le (hline : P.line = ⊥)
     rw [← Subalgebra.mem_toSubmodule, CliffordAlgebra.even_toSubmodule]
     exact hx₀
   -- The odd part acts by zero on each summand, so by zero.
-  have hsplit : ∀ s : ExteriorAlgebra K P.W,
-      spinAction Q P x₁ s = spinAction Q P (x₀ + x₁) s - spinAction Q P x₀ s := by
-    intro s
-    rw [map_add]
-    simp
-  have hzeroplus : ∀ s ∈ spinPlus Q P, spinAction Q P x₁ s = 0 := by
-    intro s hs
-    have h₁ : spinAction Q P x₁ s ∈ spinMinus Q P :=
-      map_spinAction_spinPlus_le_spinMinus P hline hx₁ ⟨s, hs, rfl⟩
-    have h₂ : spinAction Q P x₁ s ∈ spinPlus Q P := by
-      rw [hsplit s]
-      refine Submodule.sub_mem _ (hplus ⟨s, hs, rfl⟩) ?_
-      rw [spinPlus_def] at hs ⊢
-      exact spinAction_mem_evenOdd_of_mem_even P hline hx₀even hs
-    have : spinAction Q P x₁ s ∈ (⊥ : Submodule K (ExteriorAlgebra K P.W)) := by
-      rw [← spinPlus_inf_spinMinus P]; exact ⟨h₂, h₁⟩
-    simpa using this
-  have hzerominus : ∀ s ∈ spinMinus Q P, spinAction Q P x₁ s = 0 := by
-    intro s hs
-    have h₁ : spinAction Q P x₁ s ∈ spinPlus Q P :=
-      map_spinAction_spinMinus_le_spinPlus P hline hx₁ ⟨s, hs, rfl⟩
-    have h₂ : spinAction Q P x₁ s ∈ spinMinus Q P := by
-      rw [hsplit s]
-      refine Submodule.sub_mem _ (hminus ⟨s, hs, rfl⟩) ?_
-      rw [spinMinus_def] at hs ⊢
-      exact spinAction_mem_evenOdd_of_mem_even P hline hx₀even hs
-    have : spinAction Q P x₁ s ∈ (⊥ : Submodule K (ExteriorAlgebra K P.W)) := by
-      rw [← spinPlus_inf_spinMinus P]; exact ⟨h₁, h₂⟩
-    simpa using this
-  have hzero : spinAction Q P x₁ = 0 := by
-    refine LinearMap.ext fun s => ?_
-    have hssplit : s ∈ spinPlus Q P ⊔ spinMinus Q P := by simp
-    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hssplit
-    rw [map_add, hzeroplus a ha, hzerominus b hb, add_zero, LinearMap.zero_apply]
+  have hzeroplus : Set.EqOn (spinAction Q P x₁) 0 (spinPlus Q P) :=
+    spinAction_eq_zero_on_of_maps_le P (spinPlus Q P) (spinMinus Q P)
+      (isCompl_spinPlus_spinMinus P).disjoint
+      (by rintro _ ⟨s, hs, rfl⟩; rw [spinPlus_def] at hs ⊢
+          exact spinAction_mem_evenOdd_of_mem_even P hline hx₀even hs)
+      (map_spinAction_spinPlus_le_spinMinus P hline hx₁) hplus
+  have hzerominus : Set.EqOn (spinAction Q P x₁) 0 (spinMinus Q P) :=
+    spinAction_eq_zero_on_of_maps_le P (spinMinus Q P) (spinPlus Q P)
+      (isCompl_spinPlus_spinMinus P).symm.disjoint
+      (by rintro _ ⟨s, hs, rfl⟩; rw [spinMinus_def] at hs ⊢
+          exact spinAction_mem_evenOdd_of_mem_even P hline hx₀even hs)
+      (map_spinAction_spinMinus_le_spinPlus P hline hx₁) hminus
+  have hzero : spinAction Q P x₁ = 0 :=
+    LinearMap.ext_on_codisjoint (isCompl_spinPlus_spinMinus P).codisjoint
+      hzeroplus hzerominus
   have hx₁zero : x₁ = 0 :=
     spinAction_injective P (P.even_finrank_of_line_eq_bot hline) (by rw [hzero, map_zero])
   rw [hx₁zero, add_zero]
@@ -293,31 +230,31 @@ theorem exists_mem_even_spinAction_eq (hline : P.line = ⊥)
 /-- **The even subalgebra acts faithfully on the pair of half-spin summands.** An even element
 acting by zero on both acts by zero on their sum, which is all of `S`, and in even dimension the
 Fock action is faithful. -/
-theorem evenSpinAction_injective (hline : P.line = ⊥) :
-    Function.Injective (evenSpinAction Q P hline) := by
+theorem evenSpinActionProd_injective (hline : P.line = ⊥) :
+    Function.Injective (evenSpinActionProd Q P hline) := by
   refine (injective_iff_map_eq_zero _).2 fun x hx => ?_
-  rw [evenSpinAction_apply, Prod.mk_eq_zero] at hx
-  have hzero : spinAction Q P x = 0 := by
-    refine LinearMap.ext fun s => ?_
-    have hssplit : s ∈ spinPlus Q P ⊔ spinMinus Q P := by simp
-    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hssplit
-    have h₁ : spinAction Q P x a = 0 := by
-      have := congrArg (fun g : Module.End K (spinPlus Q P) => (g ⟨a, ha⟩ : ExteriorAlgebra K P.W))
-        hx.1
-      simpa using this
-    have h₂ : spinAction Q P x b = 0 := by
-      have := congrArg (fun g : Module.End K (spinMinus Q P) => (g ⟨b, hb⟩ : ExteriorAlgebra K P.W))
-        hx.2
-      simpa using this
-    rw [map_add, h₁, h₂, add_zero, LinearMap.zero_apply]
+  rw [evenSpinActionProd_apply, Prod.mk_eq_zero] at hx
+  have hzeroplus : Set.EqOn (spinAction Q P x) 0 (spinPlus Q P) := by
+    intro s hs
+    have := congrArg
+      (fun g : Module.End K (spinPlus Q P) => (g ⟨s, hs⟩ : ExteriorAlgebra K P.W)) hx.1
+    simpa using this
+  have hzerominus : Set.EqOn (spinAction Q P x) 0 (spinMinus Q P) := by
+    intro s hs
+    have := congrArg
+      (fun g : Module.End K (spinMinus Q P) => (g ⟨s, hs⟩ : ExteriorAlgebra K P.W)) hx.2
+    simpa using this
+  have hzero : spinAction Q P x = 0 :=
+    LinearMap.ext_on_codisjoint (isCompl_spinPlus_spinMinus P).codisjoint
+      hzeroplus hzerominus
   exact Subtype.ext
     (spinAction_injective P (P.even_finrank_of_line_eq_bot hline) (by simp [hzero]))
 
 /-- **The even subalgebra exhausts the pair of endomorphism algebras.** A pair of endomorphisms of
 the two summands assembles, along the splitting `S = S⁺ ⊕ S⁻`, into a parity-preserving
 endomorphism of `S`, and those are exactly the actions of even Clifford elements. -/
-theorem evenSpinAction_surjective (hline : P.line = ⊥) :
-    Function.Surjective (evenSpinAction Q P hline) := by
+theorem evenSpinActionProd_surjective (hline : P.line = ⊥) :
+    Function.Surjective (evenSpinActionProd Q P hline) := by
   rintro ⟨g₁, g₂⟩
   have hc := isCompl_spinPlus_spinMinus P
   set f : Module.End K (ExteriorAlgebra K P.W) :=
@@ -340,7 +277,7 @@ theorem evenSpinAction_surjective (hline : P.line = ⊥) :
     (by rintro _ ⟨s, hs, rfl⟩; rw [hfplus s hs]; exact (g₁ ⟨s, hs⟩).2)
     (by rintro _ ⟨s, hs, rfl⟩; rw [hfminus s hs]; exact (g₂ ⟨s, hs⟩).2)
   refine ⟨x, ?_⟩
-  rw [evenSpinAction_apply, Prod.mk.injEq]
+  rw [evenSpinActionProd_apply, Prod.mk.injEq]
   constructor
   · refine LinearMap.ext fun s => Subtype.ext ?_
     rw [coe_spinPlusAction_apply, hx, hfplus s s.2]
@@ -356,51 +293,58 @@ complementary. -/
 noncomputable def SpinPolarizationData.evenCliffordEquivProdEnd (hline : P.line = ⊥) :
     CliffordAlgebra.even Q ≃ₐ[K]
       Module.End K (spinPlus Q P) × Module.End K (spinMinus Q P) :=
-  AlgEquiv.ofBijective (evenSpinAction Q P hline)
-    ⟨evenSpinAction_injective P hline, evenSpinAction_surjective P hline⟩
+  AlgEquiv.ofBijective (evenSpinActionProd Q P hline)
+    ⟨evenSpinActionProd_injective P hline, evenSpinActionProd_surjective P hline⟩
 
 @[simp]
 theorem SpinPolarizationData.evenCliffordEquivProdEnd_apply (hline : P.line = ⊥)
     (x : CliffordAlgebra.even Q) :
-    P.evenCliffordEquivProdEnd hline x = evenSpinAction Q P hline x := by
+    P.evenCliffordEquivProdEnd hline x = evenSpinActionProd Q P hline x := by
   rw [evenCliffordEquivProdEnd]
   exact congrFun (AlgEquiv.coe_ofBijective _ _) x
 
+/-- **The matrix form of the even structure theorem**: in dimension `2 * l`, the even Clifford
+subalgebra is a product of two matrix algebras of size `2 ^ (l - 1)`. -/
+noncomputable def SpinPolarizationData.evenCliffordEquivProdMatrix {l : ℕ}
+    (hW : P.W ≠ ⊥) (hV : finrank K V = 2 * l) :
+    CliffordAlgebra.even Q ≃ₐ[K]
+      Matrix (Fin (2 ^ (l - 1))) (Fin (2 ^ (l - 1))) K ×
+        Matrix (Fin (2 ^ (l - 1))) (Fin (2 ^ (l - 1))) K := by
+  have hline := P.line_eq_bot_of_even_finrank (hV ▸ even_two_mul l)
+  have hWfin := P.finrank_W_of_finrank_eq_two_mul hV
+  have hplus : finrank K (spinPlus Q P) = 2 ^ (l - 1) := by
+    rw [finrank_spinPlus P hW, hWfin]
+  have hminus : finrank K (spinMinus Q P) = 2 ^ (l - 1) := by
+    rw [finrank_spinMinus P hW, hWfin]
+  exact (P.evenCliffordEquivProdEnd hline).trans
+    ((Algebra.endAlgEquivMatrix K _ hplus).prodCongr
+      (Algebra.endAlgEquivMatrix K _ hminus))
+
 /-! ### Simplicity and inequivalence of the two half-spin summands -/
 
-omit [Invertible (2 : K)] [FiniteDimensional K V] in
-/-- **The even half-spin summand is never zero**: it contains the scalar `1`, of exterior degree
-zero. Unlike `TauCeti.nontrivial_spinMinus` this needs no hypothesis on the isotropic summand. -/
-theorem nontrivial_spinPlus : Nontrivial (spinPlus Q P) :=
-  ⟨⟨1, by rw [spinPlus_def]; exact SetLike.one_mem_graded _⟩, 0,
-    fun h => one_ne_zero (congrArg Subtype.val h)⟩
+/-- The even Clifford action on `S⁺` is onto its full endomorphism algebra. -/
+theorem spinPlusAction_surjective (hline : P.line = ⊥) :
+    Function.Surjective (spinPlusAction Q P hline) := fun g => by
+  obtain ⟨x, hx⟩ := evenSpinActionProd_surjective P hline (g, 0)
+  rw [evenSpinActionProd_apply, Prod.mk.injEq] at hx
+  exact ⟨x, hx.1⟩
 
-omit [Invertible (2 : K)] in
-/-- **The odd half-spin summand is nonzero** as soon as the isotropic summand is: it has dimension
-`2 ^ (dim W - 1)`. For `W = ⊥` the spinor module is the ground field, entirely even, and this
-fails. -/
-theorem nontrivial_spinMinus (hW : P.W ≠ ⊥) : Nontrivial (spinMinus Q P) :=
-  nontrivial_of_finrank_pos (R := K) (by rw [finrank_spinMinus P hW]; positivity)
+/-- The even Clifford action on `S⁻` is onto its full endomorphism algebra. -/
+theorem spinMinusAction_surjective (hline : P.line = ⊥) :
+    Function.Surjective (spinMinusAction Q P hline) := fun g => by
+  obtain ⟨x, hx⟩ := evenSpinActionProd_surjective P hline (0, g)
+  rw [evenSpinActionProd_apply, Prod.mk.injEq] at hx
+  exact ⟨x, hx.2⟩
 
-/-- **The even half-spin summand is a simple module over the even Clifford subalgebra**: a subspace
-of `S⁺` invariant under every even Clifford element is `⊥` or all of `S⁺`. The even subalgebra acts
-through the full endomorphism algebra of `S⁺`, so a nonzero spinor of `S⁺` is carried to every
-other one. -/
+/-- **The invariant-subspace dichotomy for the even half-spin summand**: every subspace of `S⁺`
+invariant under the even Clifford subalgebra is `⊥` or all of `S⁺`. Combine this with
+`TauCeti.nontrivial_spinPlus` to obtain simplicity. -/
 theorem eq_bot_or_eq_top_of_map_spinPlusAction_le (hline : P.line = ⊥)
     (N : Submodule K (spinPlus Q P))
     (hN : ∀ x : CliffordAlgebra.even Q, N.map (spinPlusAction Q P hline x) ≤ N) :
-    N = ⊥ ∨ N = ⊤ := by
-  have := nontrivial_spinPlus P
-  rcases eq_or_ne N ⊥ with hbot | hbot
-  · exact Or.inl hbot
-  refine Or.inr (eq_top_iff.2 fun t _ => ?_)
-  obtain ⟨s, hs, hs0⟩ := N.exists_mem_ne_zero_of_ne_bot hbot
-  obtain ⟨g, hg⟩ := IsSimpleModule.toSpanSingleton_surjective
-    (Module.End K (spinPlus Q P)) hs0 t
-  rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hg
-  obtain ⟨x, hx⟩ := evenSpinAction_surjective P hline (g, 0)
-  rw [evenSpinAction_apply, Prod.mk.injEq] at hx
-  exact hg ▸ hx.1 ▸ hN x ⟨s, hs, rfl⟩
+    N = ⊥ ∨ N = ⊤ :=
+  eq_bot_or_eq_top_of_surjective_action (spinPlusAction Q P hline)
+    (spinPlusAction_surjective P hline) N hN
 
 /-- **The invariant-subspace dichotomy for the odd half-spin summand**: every subspace of `S⁻`
 invariant under the even Clifford subalgebra is `⊥` or all of `S⁻`. This remains true when `S⁻` is
@@ -408,29 +352,33 @@ zero; combine it with `TauCeti.nontrivial_spinMinus` to obtain simplicity when `
 theorem eq_bot_or_eq_top_of_map_spinMinusAction_le (hline : P.line = ⊥)
     (N : Submodule K (spinMinus Q P))
     (hN : ∀ x : CliffordAlgebra.even Q, N.map (spinMinusAction Q P hline x) ≤ N) :
-    N = ⊥ ∨ N = ⊤ := by
-  rcases eq_or_ne N ⊥ with hbot | hbot
-  · exact Or.inl hbot
-  refine Or.inr (eq_top_iff.2 fun t _ => ?_)
-  obtain ⟨s, hs, hs0⟩ := N.exists_mem_ne_zero_of_ne_bot hbot
-  let _ : Nontrivial (spinMinus Q P) := ⟨s, 0, hs0⟩
-  obtain ⟨g, hg⟩ := IsSimpleModule.toSpanSingleton_surjective
-    (Module.End K (spinMinus Q P)) hs0 t
-  rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hg
-  obtain ⟨x, hx⟩ := evenSpinAction_surjective P hline (0, g)
-  rw [evenSpinAction_apply, Prod.mk.injEq] at hx
-  exact hg ▸ hx.2 ▸ hN x ⟨s, hs, rfl⟩
+    N = ⊥ ∨ N = ⊤ :=
+  eq_bot_or_eq_top_of_surjective_action (spinMinusAction Q P hline)
+    (spinMinusAction_surjective P hline) N hN
 
 /-- **A map intertwining the two half-spin actions is zero.** The even subalgebra contains an
 element acting as the identity on `S⁺` and as zero on `S⁻`, and an intertwiner turns the first
 statement into the second. -/
-theorem eq_zero_of_intertwines_spinPlusAction (hline : P.line = ⊥)
+theorem eq_zero_of_intertwines_spinPlusAction_spinMinusAction (hline : P.line = ⊥)
     (φ : spinPlus Q P →ₗ[K] spinMinus Q P)
     (hφ : ∀ (x : CliffordAlgebra.even Q) (s : spinPlus Q P),
       φ (spinPlusAction Q P hline x s) = spinMinusAction Q P hline x (φ s)) :
     φ = 0 := by
-  obtain ⟨x, hx⟩ := evenSpinAction_surjective P hline (1, 0)
-  rw [evenSpinAction_apply, Prod.mk.injEq] at hx
+  obtain ⟨x, hx⟩ := evenSpinActionProd_surjective P hline (1, 0)
+  rw [evenSpinActionProd_apply, Prod.mk.injEq] at hx
+  refine LinearMap.ext fun s => ?_
+  have h := hφ x s
+  rw [hx.1, hx.2] at h
+  simpa using h
+
+/-- **A map intertwining the odd and even half-spin actions is zero.** -/
+theorem eq_zero_of_intertwines_spinMinusAction_spinPlusAction (hline : P.line = ⊥)
+    (φ : spinMinus Q P →ₗ[K] spinPlus Q P)
+    (hφ : ∀ (x : CliffordAlgebra.even Q) (s : spinMinus Q P),
+      φ (spinMinusAction Q P hline x s) = spinPlusAction Q P hline x (φ s)) :
+    φ = 0 := by
+  obtain ⟨x, hx⟩ := evenSpinActionProd_surjective P hline (0, 1)
+  rw [evenSpinActionProd_apply, Prod.mk.injEq] at hx
   refine LinearMap.ext fun s => ?_
   have h := hφ x s
   rw [hx.1, hx.2] at h
@@ -444,7 +392,7 @@ theorem not_exists_equiv_intertwines_spinPlusAction_spinMinusAction (hline : P.l
         e (spinPlusAction Q P hline x s) = spinMinusAction Q P hline x (e s) := by
   rintro ⟨e, he⟩
   have hzero : (e : spinPlus Q P →ₗ[K] spinMinus Q P) = 0 :=
-    eq_zero_of_intertwines_spinPlusAction P hline _ he
+    eq_zero_of_intertwines_spinPlusAction_spinMinusAction P hline _ he
   have := nontrivial_spinPlus P
   obtain ⟨s, hs⟩ := exists_ne (0 : spinPlus Q P)
   have hes : e s = 0 := by simpa using LinearMap.congr_fun hzero s
