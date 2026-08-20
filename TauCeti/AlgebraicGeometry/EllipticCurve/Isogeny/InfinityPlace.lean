@@ -113,7 +113,7 @@ theorem one_lt_infinityPlace_pullback_X :
   -- With `x₂` in the valuation ring, so is every polynomial in it.
   have hpoly : ∀ q : F[X], u (algebraMap F[X] W₂.FunctionField q) ≤ 1 := fun q ↦ by
     rw [algebraMap_eq_aeval]
-    exact u.aeval_le_one hle q
+    exact u.aeval_le_one (Valuation.IsTrivialOn.valuation_algebraMap_le_one (A := F) u) hle q
   -- And so is `y₂`: a pole of `y₂` would make the left-hand side of the Weierstrass equation of
   -- `W₂` — the product of two factors, each of value `v y₂` — dominate its right-hand side, which
   -- is a polynomial in `x₂` and so has value at most `1`.
