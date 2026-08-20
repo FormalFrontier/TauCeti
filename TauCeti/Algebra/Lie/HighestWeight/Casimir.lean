@@ -47,7 +47,9 @@ same scalar everywhere
 * `TauCeti.IsHighestWeightVector.representation_casimirElement_apply_eq_smul_weylVector`: the
   completed-square form `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`.
 * `TauCeti.IsHighestWeightVector.representation_casimirElement_apply_eq_smul_of_lieSpan_eq_top`:
-  on a highest weight module the Casimir element acts by that scalar on every vector.
+  on a highest weight module the Casimir element acts by that scalar on every vector;
+  `IsHighestWeightVector.representation_casimirElement_apply_eq_smul_weylVector_of_lieSpan_eq_top`
+  is the same statement with the square completed.
 
 ## References
 
@@ -226,6 +228,18 @@ theorem representation_casimirElement_apply_eq_smul_of_lieSpan_eq_top
       (invForm lam lam + invForm lam (twoWeylVector (IsKilling.rootSystem H) b)) • m :=
   representation_apply_eq_smul_of_lieSpan_eq_top (casimirElement_mem_center K L)
     hv.representation_casimirElement_apply_eq_smul hgen m
+
+/-- **The Casimir element acts on a highest weight module by its scalar, with the square
+completed**: `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`, where `ρ` is the Weyl vector. -/
+theorem representation_casimirElement_apply_eq_smul_weylVector_of_lieSpan_eq_top
+    (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) (m : M) :
+    representation K L M (casimirElement K L) m =
+      (invForm (lam + weylVector (IsKilling.rootSystem H) b)
+            (lam + weylVector (IsKilling.rootSystem H) b) -
+          invForm (weylVector (IsKilling.rootSystem H) b)
+            (weylVector (IsKilling.rootSystem H) b)) • m :=
+  representation_apply_eq_smul_of_lieSpan_eq_top (casimirElement_mem_center K L)
+    hv.representation_casimirElement_apply_eq_smul_weylVector hgen m
 
 end IsHighestWeightVector
 
