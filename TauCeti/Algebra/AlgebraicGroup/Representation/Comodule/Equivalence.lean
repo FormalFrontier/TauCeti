@@ -123,9 +123,12 @@ theorem ofComodule_toSemimoduleCat (M : ComoduleCat.{u, v, w} R H) :
   rfl
 
 /-- The point action associated to a comodule is the comodule point-action endomorphism. -/
+@[simp]
 theorem ofComodule_action_val (M : ComoduleCat.{u, v, w} R H)
     (A : CommAlgCat.{max u v w} R) (x : HopfAlgebra.points (H := H) A) :
-    ((ofComodule R H M).representation.action A x).val =
+    (@HopfAlgebra.PointRepresentation.action R H M _ _ _
+      (ofComodule R H M).isAddCommMonoid (ofComodule R H M).isModule
+      (ofComodule R H M).representation A x).val =
       Comodule.endOfPoint M x.ofConv :=
   HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint
     (inferInstance : Comodule R H M) A x
