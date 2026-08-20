@@ -290,9 +290,8 @@ def invariantsMap (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • 
 
 /-- Restriction to invariants preserves the identity map. -/
 @[simp]
-theorem invariantsMap_id (hId : ∀ (g : G) (m : M), AddMonoidHom.id M (g • m) =
-    g • AddMonoidHom.id M m) (H : Subgroup G) :
-    invariantsMap (AddMonoidHom.id M) hId H = AddMonoidHom.id _ :=
+theorem invariantsMap_id (H : Subgroup G) :
+    invariantsMap (AddMonoidHom.id M) (fun _ _ ↦ rfl) H = AddMonoidHom.id _ :=
   AddMonoidHom.ext fun _ ↦ Subtype.ext (rfl)
 
 /-- Restriction to invariants preserves composition. -/
@@ -300,10 +299,11 @@ theorem invariantsMap_id (hId : ∀ (g : G) (m : M), AddMonoidHom.id M (g • m)
 theorem invariantsMap_comp {P : Type*} [AddGroup P] [DistribMulAction G P]
     (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m)
     (f' : N →+ P) (hf' : ∀ (g : G) (n : N), f' (g • n) = g • f' n)
-    (hcomp : ∀ (g : G) (m : M), (f'.comp f) (g • m) = g • (f'.comp f) m)
     (H : Subgroup G) :
     (invariantsMap f' hf' H).comp (invariantsMap f hf H) =
-      invariantsMap (f'.comp f) hcomp H :=
+      invariantsMap (f'.comp f) (fun g m ↦ by
+        change f' (f (g • m)) = g • f' (f m)
+        rw [hf, hf']) H :=
   AddMonoidHom.ext fun _ ↦ Subtype.ext (rfl)
 
 /-- The restricted map is the original map on underlying elements. -/
