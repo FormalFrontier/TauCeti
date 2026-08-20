@@ -193,7 +193,6 @@ def diag : GL2Borel R →* Rˣ × Rˣ :=
 
 /-- The pair-valued diagonal projection is the two-coordinate packaging of the general diagonal
 projection. -/
-@[simp 900]
 theorem diag_eq (g : GL2Borel R) :
     diag g = (UpperTriangularGroup.diag g 0, UpperTriangularGroup.diag g 1) :=
   (rfl)
@@ -307,7 +306,8 @@ theorem eq_torusHom_mul_unipotentHom (g : GL2Borel R) :
     exact Units.mul_inv_cancel_left _ _
   refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
   fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.GeneralLinearGroup.upperRightHom, h]
+    simp [diag_eq, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.GeneralLinearGroup.upperRightHom, h]
 
 /-- **Coordinates on the Borel subgroup**: an element of `B` is exactly a pair of diagonal units
 together with a free upper-right entry. This is the set-level form of the decomposition
