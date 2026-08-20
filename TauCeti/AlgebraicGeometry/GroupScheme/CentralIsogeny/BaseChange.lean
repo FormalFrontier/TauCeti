@@ -74,16 +74,6 @@ private theorem mapPullbackAdj_homEquiv_symm_left
   -- computation rule in its public definition.
   rfl
 
-/-- The multiplication of a group object transported by `Over.pullback` is the lax-monoidal
-comparison map followed by the pullback of the original multiplication. -/
-private theorem pullbackMapGrp_mul
-    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k))
-    (G : Grp (Over (Spec (CommRingCat.of k)))) :
-    μ[((Over.pullback s).mapGrp.obj G).X] =
-      Functor.LaxMonoidal.μ (Over.pullback s) G.X G.X ≫
-        (Over.pullback s).map μ[G.X] :=
-  Functor.obj.μ_def (F := Over.pullback s) G.X
-
 /-- The adjunction between postcomposition and pullback identifies points of a base-changed group
 scheme with points of the original group scheme over the same test scheme viewed over the old
 base. This identification is multiplicative. -/
@@ -109,7 +99,7 @@ private noncomputable def baseChangePointMulEquiv
     simp only [Hom.mul_def, Over.comp_left, Over.lift_left,
       mapPullbackAdj_homEquiv_symm_left]
     rw [Functor.mapGrp_obj_X] at p q
-    rw [congrArg Over.Hom.left (pullbackMapGrp_mul s G), Over.comp_left]
+    erw [congrArg Over.Hom.left (Functor.obj.μ_def (F := Over.pullback s) G.X), Over.comp_left]
     have hmap :
         Over.Hom.left ((Over.pullback s).map μ[G.X]) ≫
             (Limits.pullback.fst G.X.hom s :
