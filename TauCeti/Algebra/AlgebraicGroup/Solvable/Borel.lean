@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
 public import TauCeti.Algebra.AlgebraicGroup.Solvable.Basic
 -- Solvability of the abstract upper-triangular matrix group supplies the instance used below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel.Solvable
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
 
 /-!
 # Geometric solvability of the upper-triangular Borel of `GL₂`

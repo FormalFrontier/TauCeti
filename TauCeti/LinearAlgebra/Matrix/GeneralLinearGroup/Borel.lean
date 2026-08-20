@@ -15,7 +15,7 @@ public import Mathlib.GroupTheory.Index
 -- `Matrix.BlockTriangular` occurs in the statement of `TauCeti.blockTriangular_id_iff`.
 public import Mathlib.LinearAlgebra.Matrix.Block
 -- The general upper-triangular group specializes to `TauCeti.GL2Borel` below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel.Basic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Basic
 -- Non-public: the order of `GL₂` over a finite field, and the number of units of a finite field,
 -- are used only inside the counting proofs, so downstream importers do not pay for them.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card

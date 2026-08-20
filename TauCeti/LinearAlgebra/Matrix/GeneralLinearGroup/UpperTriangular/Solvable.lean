@@ -5,10 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+-- `Group.IsSolvable` occurs in the public instance below.
+public import Mathlib.GroupTheory.Solvable
 -- The basic upper-triangular subgroup API and diagonal kernel identification.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel.Basic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Basic
 -- Nilpotence of the upper-unitriangular subgroup supplies the solvable kernel below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
 
 /-!
 # Solvability of upper-triangular general linear groups
