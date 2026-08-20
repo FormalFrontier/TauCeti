@@ -321,8 +321,9 @@ def equivProd : GL2Borel R ≃ (Rˣ × Rˣ) × R where
     rw [coe_mk, Matrix.eta_fin_two ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R)]
     simp [apply_one_zero g]
   right_inv p := by
-    change (diag ⟨mk p.1.1 p.1.2 p.2, mk_mem _ _ _⟩, p.2) = p
-    rw [diag_mk]
+    apply Prod.ext
+    · exact diag_mk _ _ _
+    · rfl
 
 @[simp]
 theorem equivProd_apply (g : GL2Borel R) :
