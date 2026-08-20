@@ -33,17 +33,15 @@ integral lattices sharing their ambient rational form, from
 `TauCeti.LinearAlgebra.IntegralLattice.Index`. What this file supplies is the identification of
 the index of an intermediate carrier with the order of the subgroup it cuts out in `A_L`.
 
-An integral intermediate carrier is packaged as an integral lattice in its own right through
-`IntermediateCarrier.IsIntegral.toIntegralLattice`, which keeps the ambient form and therefore
-keeps nondegeneracy; evenness of the carrier makes it an even lattice.
+The earlier overlattice theory packages an integral intermediate carrier as an integral lattice
+in its own right through `IntermediateCarrier.IsIntegral.toIntegralLattice`, which keeps the
+ambient form and therefore keeps nondegeneracy; evenness of the carrier makes it an even lattice.
 
 ## Main definitions
 
 * `TauCeti.IntegralLattice.IntermediateCarrier.relIndex`: the relative index of two intermediate
   carriers `M N`, that is the index of `M ⊓ N` in `N`; it is `[N : M]` when `M ≤ N`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.index`: the index `[M : L]`.
-* `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.toIntegralLattice`: an integral
-  intermediate carrier, as an integral lattice for the same ambient form.
 
 ## Main results
 
@@ -102,6 +100,17 @@ theorem relIndex_eq_natCard_quotient (M N : L.IntermediateCarrier) :
 /-- The index of an intermediate carrier is the order of the quotient module `M / L`. -/
 theorem index_eq_natCard_quotient (M : L.IntermediateCarrier) :
     index M = Nat.card (↥M.1 ⧸ L.carrier.submoduleOf M.1) := (rfl)
+
+/-- The relative index of an intermediate carrier in itself is one. -/
+@[simp]
+theorem relIndex_self (M : L.IntermediateCarrier) : relIndex M M = 1 := by
+  rw [relIndex_eq_natCard_quotient]
+  simp
+
+/-- Relative index from the lattice itself is the index of an intermediate carrier. -/
+@[simp]
+theorem relIndex_bot (M : L.IntermediateCarrier) : relIndex ⊥ M = index M := by
+  rw [relIndex_eq_natCard_quotient, index_eq_natCard_quotient, Set.Icc.coe_bot]
 
 /-- **The index is multiplicative in towers of intermediate carriers.** -/
 theorem relIndex_mul_relIndex {M N P : L.IntermediateCarrier} (hMN : M ≤ N) (hNP : N ≤ P) :
@@ -189,45 +198,13 @@ section IsNondegenerate
 
 variable [L.IsNondegenerate]
 
-/-- An integral intermediate carrier is itself an integral lattice, for the same ambient
-rational form. -/
-def IsIntegral.toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    IntegralLattice V where
-  carrier := M.1
-  form := L.form
-  isLattice := inferInstance
-  isSymm := L.isSymm
-  le_dual _ hx := L.form.mem_dualSubmodule.mpr fun _ hy ↦ isIntegral_def.mp hM _ hx _ hy
-
-/-- The carrier of the integral lattice attached to an integral intermediate carrier. -/
-@[simp]
-theorem IsIntegral.carrier_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.carrier = M.1 := (rfl)
-
-/-- The integral lattice attached to an integral intermediate carrier keeps the ambient form. -/
-@[simp]
-theorem IsIntegral.form_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.form = L.form := (rfl)
-
-/-- An overlattice of a nondegenerate integral lattice is nondegenerate: it carries the same
-ambient form. -/
-instance IsIntegral.instIsNondegenerate {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.IsNondegenerate :=
-  ⟨L.form_nondegenerate⟩
-
-/-- Regarding the lattice itself as an intermediate carrier returns the lattice. -/
-@[simp]
-theorem IsIntegral.toIntegralLattice_bot (hM : IsIntegral (⊥ : L.IntermediateCarrier)) :
-    hM.toIntegralLattice = L :=
-  IntegralLattice.ext rfl rfl
-
-/-- An even intermediate carrier is an even integral lattice. -/
-theorem IsEven.isEven_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsEven M) :
-    hM.isIntegral.toIntegralLattice.IsEven := by
-  rw [isEven_iff_forall_norm]
-  intro x
-  obtain ⟨n, hn⟩ := isEven_def.mp hM (x : V) x.2
-  exact ⟨n, by rw [norm_apply, IsIntegral.form_toIntegralLattice, ← norm_apply]; exact hn⟩
+private theorem carrier_relIndex_toIntegralLattice_eq_index {M : L.IntermediateCarrier}
+    (hM : IsIntegral M) : L.carrier.toAddSubgroup.relIndex
+      hM.toIntegralLattice.carrier.toAddSubgroup = index M := by
+  rw [index_eq_natCard_quotient, hM.carrier_toIntegralLattice,
+    AddSubgroup.relIndex, AddSubgroup.index]
+  apply Nat.card_congr
+  exact AddSubgroup.quotientEquivOfEq (by ext; rfl)
 
 /-- The index of the dual carrier is the discriminant of the lattice. -/
 @[simp]
@@ -242,14 +219,20 @@ theorem index_pos (M : L.IntermediateCarrier) : 0 < index M := by
 
 /-- **The signed determinant of an integral overlattice scales by the square of the index.** -/
 theorem IsIntegral.determinant_mul_sq_index {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.determinant * (index M : ℤ) ^ 2 = L.determinant :=
-  (L.determinant_eq_mul_relIndex_sq hM.toIntegralLattice rfl M.2.1).symm
+    hM.toIntegralLattice.determinant * (index M : ℤ) ^ 2 = L.determinant := by
+  rw [← carrier_relIndex_toIntegralLattice_eq_index hM]
+  exact (L.determinant_eq_mul_relIndex_sq hM.toIntegralLattice
+    (by rw [hM.form_toIntegralLattice])
+    (by rw [hM.carrier_toIntegralLattice]; exact M.2.1)).symm
 
 /-- **The discriminant of an integral overlattice scales by the square of the index:**
 `disc(M) · [M : L]² = disc(L)`. -/
 theorem IsIntegral.discriminant_mul_sq_index {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.discriminant * index M ^ 2 = L.discriminant :=
-  (L.discriminant_eq_mul_relIndex_sq hM.toIntegralLattice rfl M.2.1).symm
+    hM.toIntegralLattice.discriminant * index M ^ 2 = L.discriminant := by
+  rw [← carrier_relIndex_toIntegralLattice_eq_index hM]
+  exact (L.discriminant_eq_mul_relIndex_sq hM.toIntegralLattice
+    (by rw [hM.form_toIntegralLattice])
+    (by rw [hM.carrier_toIntegralLattice]; exact M.2.1)).symm
 
 /-- The square of the index of an integral overlattice divides the discriminant. -/
 theorem IsIntegral.sq_index_dvd_discriminant {M : L.IntermediateCarrier} (hM : IsIntegral M) :
