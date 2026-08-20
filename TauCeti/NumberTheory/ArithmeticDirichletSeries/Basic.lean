@@ -11,13 +11,13 @@ public import Mathlib.NumberTheory.NumberField.Basic
 /-!
 # Arithmetic functions on nonzero ideals
 
-An ideal-indexed Dirichlet series should not assign an arithmetic coefficient to the zero ideal.
-Indeed, the zero ideal has infinitely many formal factorizations `0 = 0 * I`, so including it in
-the carrier makes ideal convolution ill behaved. This file introduces the carrier used throughout
-the arithmetic-Dirichlet-series roadmap:
+For the intended number-field applications, an ideal-indexed Dirichlet series should not assign an
+arithmetic coefficient to the zero ideal. Excluding it ensures that ideal convolution never
+considers factorizations through the zero ideal. This file introduces the carrier used throughout
+the arithmetic-Dirichlet-series roadmap, parameterized over an arbitrary field:
 
-* `TauCeti.IdealArithmeticFunction K` is a complex-valued function on the nonzero integral ideals
-  of a number field `K`;
+* `TauCeti.IdealArithmeticFunction K` is a complex-valued function on the nonzero ideals of
+  `𝓞 K`;
 * `TauCeti.IdealArithmeticFunction.zeroExtend` is its canonical extension to all integral ideals,
   with value zero at the zero ideal;
 * `TauCeti.IdealArithmeticFunction.restrict` restricts a function on all ideals to the nonzero
@@ -55,12 +55,13 @@ open scoped nonZeroDivisors NumberField
 
 variable (K : Type*) [Field K]
 
-/-- An **ideal arithmetic function** on a number field `K`: a complex-valued function on its
-nonzero integral ideals.
+/-- An **ideal arithmetic function** over a field `K`: a complex-valued function on the nonzero
+ideals of `𝓞 K`.
 
 The domain is `(Ideal (𝓞 K))⁰`, Mathlib's non-zero-divisor submonoid. Since the ring of integers is
-a domain, its elements are exactly the ideals different from `⊥`. Keeping `⊥` out of the carrier
-ensures that later divisor sums see only finite factorizations. -/
+a domain, its elements are exactly the ideals different from `⊥`. For number fields, keeping `⊥`
+out of the carrier ensures that later divisor sums use only the nonzero-ideal factorization
+theory. -/
 abbrev IdealArithmeticFunction := (Ideal (𝓞 K))⁰ → ℂ
 
 namespace IdealArithmeticFunction
@@ -72,7 +73,7 @@ variable {K}
 Use `zeroExtend_bot` and `zeroExtend_coe` to simplify its two characteristic cases, rather than
 unfolding this definition. -/
 noncomputable def zeroExtend (f : IdealArithmeticFunction K) : Ideal (𝓞 K) → ℂ := fun I =>
-  if hI : I = ⊥ then 0 else f ⟨I, by simpa using hI⟩
+  Function.extend Subtype.val f 0 I
 
 /-- Restrict a function on all integral ideals to the nonzero ideals. -/
 def restrict (g : Ideal (𝓞 K) → ℂ) : IdealArithmeticFunction K := fun I => g I
@@ -89,14 +90,14 @@ theorem zeroExtend_bot (f : IdealArithmeticFunction K) : f.zeroExtend ⊥ = 0 :=
 /-- Away from `⊥`, the zero extension is the original ideal arithmetic function. -/
 theorem zeroExtend_of_ne (f : IdealArithmeticFunction K) {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
     f.zeroExtend I = f ⟨I, by simpa using hI⟩ := by
-  simp [zeroExtend, hI]
+  rw [zeroExtend]
+  exact Function.extend_val_apply (by simpa using hI)
 
 /-- The zero extension agrees with the original function on every nonzero ideal. -/
 @[simp]
 theorem zeroExtend_coe (f : IdealArithmeticFunction K) (I : (Ideal (𝓞 K))⁰) :
     f.zeroExtend I = f I := by
-  apply zeroExtend_of_ne
-  simpa using nonZeroDivisors.coe_ne_zero I
+  exact Subtype.val_injective.extend_apply f 0 I
 
 /-- Restricting a zero extension recovers the original ideal arithmetic function. -/
 @[simp]
@@ -123,9 +124,10 @@ theorem exists_zeroExtend_eq_iff {g : Ideal (𝓞 K) → ℂ} :
 
 /-- Zero extension is injective: its values on nonzero ideals retain the entire function. -/
 theorem zeroExtend_injective :
-    Function.Injective (zeroExtend : IdealArithmeticFunction K → Ideal (𝓞 K) → ℂ) := by
-  intro f g h
-  simpa only [restrict_zeroExtend] using congrArg restrict h
+    Function.Injective (zeroExtend : IdealArithmeticFunction K → Ideal (𝓞 K) → ℂ) :=
+  Function.extend_injective
+    (f := (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K))) Subtype.val_injective
+      (0 : Ideal (𝓞 K) → ℂ)
 
 /-- Two zero extensions agree exactly when the underlying ideal arithmetic functions agree. -/
 @[simp]
