@@ -189,22 +189,40 @@ theorem mem_ker_d1_iff {f : G → M} :
     f ∈ (d1 G M).ker ↔ groupCohomology.IsCocycle₁ f := by
   simp only [AddMonoidHom.mem_ker, funext_iff, Prod.forall, groupCohomology.IsCocycle₁]
   refine forall_congr' fun g => forall_congr' fun h => ?_
-  rw [d1_apply, Pi.zero_apply,
-    show g • f h - f (g * h) + f g = g • f h + f g - f (g * h) from by abel, sub_eq_zero, eq_comm]
+  rw [d1_apply, Pi.zero_apply]
+  constructor
+  · intro h'
+    calc
+      f (g * h) = f (g * h) + (g • f h - f (g * h) + f g) := by rw [h', add_zero]
+      _ = g • f h + f g := by abel
+  · intro h'
+    rw [h']
+    abel
 
 /-- The kernel of `d²` consists of the `2`-cocycles. -/
 theorem mem_ker_d2_iff {f : G × G → M} :
     f ∈ (d2 G M).ker ↔ groupCohomology.IsCocycle₂ f := by
   simp only [AddMonoidHom.mem_ker, funext_iff, Prod.forall, groupCohomology.IsCocycle₂]
   refine forall_congr' fun g => forall_congr' fun h => forall_congr' fun j => ?_
-  rw [d2_apply, Pi.zero_apply,
-    show g • f (h, j) - f (g * h, j) + f (g, h * j) - f (g, h)
-      = g • f (h, j) + f (g, h * j) - (f (g * h, j) + f (g, h)) from by abel, sub_eq_zero, eq_comm]
+  rw [d2_apply, Pi.zero_apply]
+  constructor
+  · intro h'
+    calc
+      f (g * h, j) + f (g, h) =
+          f (g * h, j) + f (g, h) +
+            (g • f (h, j) - f (g * h, j) + f (g, h * j) - f (g, h)) := by
+              rw [h', add_zero]
+      _ = g • f (h, j) + f (g, h * j) := by abel
+  · intro h'
+    calc
+      g • f (h, j) - f (g * h, j) + f (g, h * j) - f (g, h) =
+          (g • f (h, j) + f (g, h * j)) - (f (g * h, j) + f (g, h)) := by abel
+      _ = 0 := sub_eq_zero.mpr h'.symm
 
 variable (G M)
 
-/-- The `1`-coboundaries `B¹ = range d⁰`. Every such cochain is automatically continuous, which is
-why no intersection with `C¹` appears here and one does appear in `B²`. -/
+/-- The `1`-coboundaries `B¹ = range d⁰`, defined as an algebraic range. Under a continuous
+action, `TauCeti.ContCohomology.B1_le_C1` shows that these cochains are continuous. -/
 def B1 : AddSubgroup (G → M) := (d0 G M).range
 
 /-- Degree `0` of the explicit complex: the invariants `M^G`. Unlike `H¹` and `H²` this is a
@@ -216,6 +234,7 @@ abbrev H0 : AddSubgroup M := FixedPoints.addSubgroup G M
 variable {G M}
 
 /-- Membership in `B¹` is Mathlib's unbundled `1`-coboundary condition. -/
+@[simp]
 theorem mem_B1_iff {f : G → M} : f ∈ B1 G M ↔ groupCohomology.IsCoboundary₁ f := by
   simp only [B1, AddMonoidHom.mem_range, groupCohomology.IsCoboundary₁, funext_iff, d0_apply]
 
@@ -292,6 +311,7 @@ theorem mem_Z2_iff {f : G × G → M} :
     f ∈ Z2 G M ↔ Continuous f ∧ groupCohomology.IsCocycle₂ f := (Iff.rfl)
 
 /-- Membership in `B²` exhibits a *continuous* primitive. -/
+@[simp]
 theorem mem_B2_iff {f : G × G → M} :
     f ∈ B2 G M ↔ ∃ c : G → M, Continuous c ∧ d1 G M c = f := by
   simp only [B2, AddSubgroup.mem_map, mem_C1]
@@ -476,7 +496,15 @@ noncomputable def trivialH1Equiv :
 /-- `trivialH1Equiv` sends the class of a continuous `1`-cocycle to the homomorphism it is. -/
 @[simp]
 theorem trivialH1Equiv_apply (f : Z1 G M) :
-    trivialH1Equiv htriv (f : H1 G M) = trivialZ1Equiv htriv f := (rfl)
+    trivialH1Equiv htriv (f : H1 G M) = trivialZ1Equiv htriv f := by
+  simp only [trivialH1Equiv, AddEquiv.trans_apply,
+    QuotientAddGroup.quotientAddEquivOfEq_mk]
+  -- Expose `quotientBot` as its kernel lift so its representative rule applies explicitly.
+  change trivialZ1Equiv htriv
+      ((QuotientAddGroup.kerLift (AddMonoidHom.id (Z1 G M)))
+        (↑f : (Z1 G M) ⧸ (AddMonoidHom.id (Z1 G M)).ker)) = trivialZ1Equiv htriv f
+  rw [QuotientAddGroup.kerLift_mk]
+  rfl
 
 end TrivialAction
 
