@@ -235,7 +235,7 @@ def e8Coroot : Fin 240 ↪ (Fin 8 → ℤ) :=
 
 /-- The 240 `E8` roots in the fundamental-weight basis. -/
 def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
-  toFun i := e8Coroot i ᵥ* CartanMatrix.E₈
+  toFun i := e8Coroot i ᵥ* CartanMatrix.E 8
   inj' := by
     intro i j hij
     apply e8Coroot.injective
@@ -246,12 +246,12 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
 
 /-- The `E8` roots are obtained from the coroot coordinates using the Cartan matrix. -/
 theorem e8Root_apply (i : Fin 240) :
-    e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
+    e8Root i = e8Coroot i ᵥ* CartanMatrix.E 8 := (rfl)
 
 /-- The `E8` roots are the images of the coroots under the Cartan matrix, read on the left or,
 equivalently, on the right, the matrix being symmetric. -/
-theorem e8Root_eq_mulVec (i : Fin 240) : e8Root i = CartanMatrix.E₈ *ᵥ e8Coroot i := by
-  rw [e8Root_apply, ← mulVec_transpose, CartanMatrix.E₈_isSymm]
+theorem e8Root_eq_mulVec (i : Fin 240) : e8Root i = CartanMatrix.E 8 *ᵥ e8Coroot i := by
+  rw [e8Root_apply, ← mulVec_transpose, (CartanMatrix.E_isSymm 8)]
 
 /-- The coroot table is the concatenation of the positive coroots with their negatives. -/
 private theorem e8Coroot_coe :
@@ -274,12 +274,12 @@ private theorem e8Coroot_coe :
   rw [e8Root_apply, e8Root_apply, e8Coroot_addNat, e8Coroot_castAdd, Matrix.neg_vecMul]
 
 private theorem e8PositiveCoroot_norm_chunk (c : Fin 12) (i : Fin 10) :
-    (e8PositiveCoroot ⟨10 * c + i, by omega⟩ ᵥ* CartanMatrix.E₈) ⬝ᵥ
+    (e8PositiveCoroot ⟨10 * c + i, by omega⟩ ᵥ* CartanMatrix.E 8) ⬝ᵥ
       e8PositiveCoroot ⟨10 * c + i, by omega⟩ = 2 := by
   fin_cases c <;> decide +kernel +revert
 
 private theorem e8PositiveCoroot_norm (i : Fin 120) :
-    (e8PositiveCoroot i ᵥ* CartanMatrix.E₈) ⬝ᵥ e8PositiveCoroot i = 2 := by
+    (e8PositiveCoroot i ᵥ* CartanMatrix.E 8) ⬝ᵥ e8PositiveCoroot i = 2 := by
   let c : Fin 12 := ⟨(i : ℕ) / 10, by omega⟩
   let r : Fin 10 := ⟨(i : ℕ) % 10, by omega⟩
   have hi : i = ⟨10 * c + r, by omega⟩ := Fin.ext (by dsimp [c, r]; omega)
@@ -307,7 +307,7 @@ lemma e8SimpleIndex_injective : Function.Injective e8SimpleIndex :=
 
 /-- The simple roots of the pinned `E₈` datum are the rows of the Bourbaki Cartan matrix. -/
 @[simp] theorem root_e8SimpleIndex (i : Fin 8) :
-    e8Root (e8SimpleIndex i) = CartanMatrix.E₈ i := by
+    e8Root (e8SimpleIndex i) = CartanMatrix.E 8 i := by
   fin_cases i <;> decide
 
 /-- The simple coroots of the pinned `E₈` datum are the standard basis vectors. -/

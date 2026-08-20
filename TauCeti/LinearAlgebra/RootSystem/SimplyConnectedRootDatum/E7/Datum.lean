@@ -17,7 +17,7 @@ public section
 This file builds the pinned integral root datum of type `E₇` on the character and cocharacter
 lattices `Fin 7 → ℤ`. The character lattice is written in the fundamental-weight basis and the
 cocharacter lattice in the simple-coroot basis. Thus the `i`-th simple root is the `i`-th row of
-the Bourbaki-numbered Cartan matrix `CartanMatrix.E₇`, while the `i`-th simple coroot is the
+the Bourbaki-numbered Cartan matrix `CartanMatrix.E 7`, while the `i`-th simple coroot is the
 `i`-th standard basis vector.
 
 Reflection in a norm-two vector preserves the `E₇` Gram form. The completeness theorem
@@ -27,7 +27,7 @@ indices. In particular, no reflection table is needed.
 
 The coroots span their lattice, which is the simply connected condition consumed by the pinned
 Chevalley--Demazure construction. The roots instead span a sublattice of index two in the weight
-lattice, as recorded by the determinant of `CartanMatrix.E₇`.
+lattice, as recorded by the determinant of `CartanMatrix.E 7`.
 
 ## Main definitions
 
@@ -61,17 +61,17 @@ namespace DynkinType
 /-- The pairing of the pinned root and coroot tables is symmetric, as type `E₇` is simply laced. -/
 theorem e7Root_dotProduct_e7Coroot_comm (i j : Fin 126) :
     e7Root i ⬝ᵥ e7Coroot j = e7Root j ⬝ᵥ e7Coroot i := by
-  rw [e7Root_apply, e7Root_apply, vecMul_dotProduct_comm CartanMatrix.E₇_isSymm]
+  rw [e7Root_apply, e7Root_apply, vecMul_dotProduct_comm (CartanMatrix.E_isSymm 7)]
 
 private lemma exists_e7Coroot_reflection (i j : Fin 126) :
     ∃ k, e7Coroot k =
       e7Coroot j - (e7Root i ⬝ᵥ e7Coroot j) • e7Coroot i := by
-  have hnorm (k : Fin 126) : (e7Coroot k ᵥ* CartanMatrix.E₇) ⬝ᵥ e7Coroot k = 2 := by
+  have hnorm (k : Fin 126) : (e7Coroot k ᵥ* CartanMatrix.E 7) ⬝ᵥ e7Coroot k = 2 := by
     rw [← e7Root_apply]
     exact e7Root_dotProduct_coroot k
   refine exists_e7Coroot_eq ?_
-  rw [e7Root_apply, vecMul_dotProduct_comm CartanMatrix.E₇_isSymm (e7Coroot i) (e7Coroot j)]
-  exact (reflect_vecMul_dotProduct_self CartanMatrix.E₇_isSymm (hnorm i) (e7Coroot j)).trans
+  rw [e7Root_apply, vecMul_dotProduct_comm (CartanMatrix.E_isSymm 7) (e7Coroot i) (e7Coroot j)]
+  exact (reflect_vecMul_dotProduct_self (CartanMatrix.E_isSymm 7) (hnorm i) (e7Coroot j)).trans
     (hnorm j)
 
 /-! ## The pinned datum -/
@@ -91,7 +91,7 @@ noncomputable def e7SimplyConnectedRootDatum : RootDatum (Fin 126) (Fin 7 → �
       have hroot : e7Root k =
           e7Root j - (e7Root i ⬝ᵥ e7Coroot j) • e7Root i := by
         simpa only [sub_vecMul, smul_vecMul, ← e7Root_apply] using
-          congrArg (fun x : Fin 7 → ℤ ↦ x ᵥ* CartanMatrix.E₇) hk
+          congrArg (fun x : Fin 7 → ℤ ↦ x ᵥ* CartanMatrix.E 7) hk
       rw [e7Root_dotProduct_e7Coroot_comm] at hroot
       simpa [Module.preReflection_apply, dotProductEquiv_apply_apply] using hroot)
     (by
@@ -142,14 +142,14 @@ private lemma sum_smul_coroot_e7SimpleIndex (j : Fin 126) :
 
 private lemma sum_smul_root_e7SimpleIndex (j : Fin 126) :
     ∑ k : Fin 7, e7Coroot j k • e7Root (e7SimpleIndex k) = e7Root j := by
-  have h := congrArg CartanMatrix.E₇.mulVecLin (sum_smul_coroot_e7SimpleIndex j)
+  have h := congrArg (CartanMatrix.E 7).mulVecLin (sum_smul_coroot_e7SimpleIndex j)
   rw [map_sum] at h
   simpa only [map_zsmul, mulVecLin_apply, ← e7Root_eq_mulVec] using h
 
 private lemma linearIndependent_root_e7SimpleIndex :
     LinearIndependent ℤ fun i : Fin 7 ↦ e7Root (e7SimpleIndex i) := by
   simpa only [root_e7SimpleIndex] using
-    linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.E₇)
+    linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.E 7)
       (by rw [CartanMatrix.E₇_det]; norm_num)
 
 private lemma linearIndependent_coroot_e7SimpleIndex :
@@ -187,7 +187,7 @@ indices. -/
 matrix. -/
 theorem pairing_e7SimpleIndex (i j : Fin 7) :
     e7SimplyConnectedRootDatum.pairing (e7SimpleIndex i) (e7SimpleIndex j) =
-      CartanMatrix.E₇ i j := by
+      CartanMatrix.E 7 i j := by
   rw [e7SimplyConnectedRootDatum_pairing, root_e7SimpleIndex, coroot_e7SimpleIndex,
     dotProduct_single, mul_one]
 

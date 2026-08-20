@@ -255,21 +255,21 @@ theorem coxeterMatrix_D_ne_coxeterMatrix_D {n : ℕ} (hn : 4 ≤ n) :
 
 /-- **Type `E₆` has Coxeter matrix `CoxeterMatrix.E₆`.** -/
 @[simp] theorem coxeterMatrix_E6 : E6.coxeterMatrix = CoxeterMatrix.E₆ := by
-  refine coxeterMatrix_eq_of_isSimplyLaced (by simpa using CartanMatrix.isSimplyLaced_E₆) ?_
+  refine coxeterMatrix_eq_of_isSimplyLaced (by simpa using (CartanMatrix.isSimplyLaced_E 6)) ?_
   simp only [cartanMatrix_E6]
   intro i j
   fin_cases i <;> fin_cases j <;> decide
 
 /-- **Type `E₇` has Coxeter matrix `CoxeterMatrix.E₇`.** -/
 @[simp] theorem coxeterMatrix_E7 : E7.coxeterMatrix = CoxeterMatrix.E₇ := by
-  refine coxeterMatrix_eq_of_isSimplyLaced (by simpa using CartanMatrix.isSimplyLaced_E₇) ?_
+  refine coxeterMatrix_eq_of_isSimplyLaced (by simpa using (CartanMatrix.isSimplyLaced_E 7)) ?_
   simp only [cartanMatrix_E7]
   intro i j
   fin_cases i <;> fin_cases j <;> decide
 
 /-- **Type `E₈` has Coxeter matrix `CoxeterMatrix.E₈`.** -/
 @[simp] theorem coxeterMatrix_E8 : E8.coxeterMatrix = CoxeterMatrix.E₈ := by
-  refine coxeterMatrix_eq_of_isSimplyLaced (by simpa using CartanMatrix.isSimplyLaced_E₈) ?_
+  refine coxeterMatrix_eq_of_isSimplyLaced (by simpa using (CartanMatrix.isSimplyLaced_E 8)) ?_
   simp only [cartanMatrix_E8]
   intro i j
   fin_cases i <;> fin_cases j <;> decide
