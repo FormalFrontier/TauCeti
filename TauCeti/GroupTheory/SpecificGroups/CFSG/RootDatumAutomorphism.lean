@@ -83,7 +83,7 @@ the diagram permutation of the index. -/
 
 /-- The root-datum graph automorphism permutes the Bourbaki-numbered simple roots by the diagram
 permutation of the index. -/
-@[simp] theorem datumGraphAut_indexEquiv_simpleIndex (i : Fin d.1.rank) :
+theorem datumGraphAut_indexEquiv_simpleIndex (i : Fin d.1.rank) :
     d.datumGraphAut.indexEquiv (d.1.dynkinType.simpleIndex d.1.dynkinType_valid i) =
       d.1.dynkinType.simpleIndex d.1.dynkinType_valid (d.diagramPerm i) := by
   rw [datumGraphAut, DynkinType.diagramAut_indexEquiv, DynkinType.diagramRootPerm_simpleIndex]
@@ -102,7 +102,7 @@ permutation of the index. -/
 
 /-- Every coroot of the pinned datum has its simple-coroot coordinates permuted by the diagram
 permutation of the index. -/
-@[simp] theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
+theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
     (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
         (d.datumGraphAut.indexEquiv k) =
       fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot k
