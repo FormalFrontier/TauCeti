@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Normed.Module.Convex
 public import TauCeti.Topology.FilledHull
+public import TauCeti.Analysis.Normed.Module.Ball.Exterior
 import Mathlib.Analysis.LocallyConvex.Separation
 -- `NormedSpace.toLocallyConvexSpace`, needed to apply `geometric_hahn_banach_point_closed`.
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
@@ -74,6 +75,10 @@ used, and the separation argument is the general Hahn–Banach one.
   functional is unbounded, and `TauCeti.isBounded_closedConvexHull`,
   `TauCeti.diam_closedConvexHull` — the closed forms of the two convex-hull facts the width
   argument runs on.
+* `TauCeti.connectedComponentIn_compl_eq_of_unbounded_component` — the unbounded connected
+  component of the complement of a bounded set is unique (dimension at least two).
+* `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn` — of two points in
+  different components, at least one lies in the filled hull (dimension at least two).
 -/
 
 public section
@@ -205,5 +210,40 @@ preconnected, disjoint from `K`, and meets the filled hull of `K`, then it lies 
 theorem IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : Disjoint S K)
     (hne : (S ∩ filledHull K).Nonempty) (hK : IsBounded K) : diam S ≤ diam K :=
   diam_le_diam_of_subset_filledHull hK (IsPreconnected.subset_filledHull hS hSK hne)
+
+variable {x y : E}
+
+/-- **The unbounded component of the complement of a bounded set is unique** in a real normed space
+of dimension at least two. -/
+theorem connectedComponentIn_compl_eq_of_unbounded_component (h : 1 < Module.rank ℝ E)
+    (hK : IsBounded K) (hx : ¬ IsBounded (connectedComponentIn Kᶜ x))
+    (hy : ¬ IsBounded (connectedComponentIn Kᶜ y)) :
+    connectedComponentIn Kᶜ x = connectedComponentIn Kᶜ y := by
+  obtain ⟨R, hR⟩ := hK.subset_closedBall (0 : E)
+  have hext : (closedBall (0 : E) R)ᶜ ⊆ Kᶜ := compl_subset_compl.mpr hR
+  have hesc : ∀ z : E, ¬ IsBounded (connectedComponentIn Kᶜ z) →
+      ∃ z' ∈ connectedComponentIn Kᶜ z, z' ∈ (closedBall (0 : E) R)ᶜ := fun z hz => by
+    by_contra hcon
+    push Not at hcon
+    exact hz ((isBounded_closedBall (x := (0 : E)) (r := R)).subset fun w hw =>
+      notMem_compl_iff.mp (hcon w hw))
+  obtain ⟨x', hx'c, hx'R⟩ := hesc x hx
+  obtain ⟨y', hy'c, hy'R⟩ := hesc y hy
+  have h1 : y' ∈ connectedComponentIn Kᶜ x' :=
+    (isPreconnected_compl_closedBall h 0 R).subset_connectedComponentIn hx'R hext hy'R
+  rw [connectedComponentIn_eq hx'c, connectedComponentIn_eq h1, ← connectedComponentIn_eq hy'c]
+
+/-- **Two points in different components of the complement of a bounded set cannot both lie outside
+the filled hull** in a real normed space of dimension at least two. -/
+theorem mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn (h : 1 < Module.rank ℝ E)
+    (hK : IsBounded K) (hxy : y ∉ connectedComponentIn Kᶜ x) :
+    x ∈ filledHull K ∨ y ∈ filledHull K := by
+  by_cases hy : y ∈ K
+  · exact Or.inr (subset_filledHull hy)
+  · by_contra hcon
+    push Not at hcon
+    simp only [mem_filledHull_iff] at hcon
+    exact hxy ((connectedComponentIn_compl_eq_of_unbounded_component h hK hcon.1 hcon.2).symm ▸
+      mem_connectedComponentIn (mem_compl hy))
 
 end TauCeti
