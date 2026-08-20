@@ -150,7 +150,10 @@ noncomputable def weightTorusBaseChangeCoordinateMap
       (SplitTorus.characterGroup κ)).hom
 
 /-- The base-changed weight-torus coordinate map is the stated composite of the two coordinate
-base-change isomorphisms with the scalar extension of the map over `R`. -/
+base-change isomorphisms with the scalar extension of the map over `R`.
+
+The module system does not expose a definition's body outside its own module, so this is the
+form in which downstream files can rewrite with the definition. -/
 theorem weightTorusBaseChangeCoordinateMap_def
     (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
     (wt : Fin N → κ → ℤ) :
