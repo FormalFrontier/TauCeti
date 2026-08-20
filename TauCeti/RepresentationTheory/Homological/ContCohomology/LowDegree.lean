@@ -184,10 +184,11 @@ theorem d2_comp_d1 : (d2 G M).comp (d1 G M) = 0 := by
 
 variable {G M}
 
-/-- The kernel of `d¹` consists of the `1`-cocycles. -/
-theorem mem_ker_d1_iff {f : G → M} :
-    f ∈ (d1 G M).ker ↔ groupCohomology.IsCocycle₁ f := by
-  simp only [AddMonoidHom.mem_ker, funext_iff, Prod.forall, groupCohomology.IsCocycle₁]
+/-- A `1`-cochain is killed by `d¹` exactly when it is a `1`-cocycle. -/
+@[simp]
+theorem d1_eq_zero_iff {f : G → M} :
+    d1 G M f = 0 ↔ groupCohomology.IsCocycle₁ f := by
+  simp only [funext_iff, Prod.forall, groupCohomology.IsCocycle₁]
   refine forall_congr' fun g => forall_congr' fun h => ?_
   rw [d1_apply, Pi.zero_apply]
   constructor
@@ -199,10 +200,17 @@ theorem mem_ker_d1_iff {f : G → M} :
     rw [h']
     abel
 
-/-- The kernel of `d²` consists of the `2`-cocycles. -/
-theorem mem_ker_d2_iff {f : G × G → M} :
-    f ∈ (d2 G M).ker ↔ groupCohomology.IsCocycle₂ f := by
-  simp only [AddMonoidHom.mem_ker, funext_iff, Prod.forall, groupCohomology.IsCocycle₂]
+/-- The kernel of `d¹` consists of the `1`-cocycles. -/
+theorem mem_ker_d1_iff {f : G → M} :
+    f ∈ (d1 G M).ker ↔ groupCohomology.IsCocycle₁ f := by
+  simpa only [AddMonoidHom.mem_ker] using
+    (d1_eq_zero_iff (G := G) (M := M) (f := f))
+
+/-- A `2`-cochain is killed by `d²` exactly when it is a `2`-cocycle. -/
+@[simp]
+theorem d2_eq_zero_iff {f : G × G → M} :
+    d2 G M f = 0 ↔ groupCohomology.IsCocycle₂ f := by
+  simp only [funext_iff, Prod.forall, groupCohomology.IsCocycle₂]
   refine forall_congr' fun g => forall_congr' fun h => forall_congr' fun j => ?_
   rw [d2_apply, Pi.zero_apply]
   constructor
@@ -218,6 +226,12 @@ theorem mem_ker_d2_iff {f : G × G → M} :
       g • f (h, j) - f (g * h, j) + f (g, h * j) - f (g, h) =
           (g • f (h, j) + f (g, h * j)) - (f (g * h, j) + f (g, h)) := by abel
       _ = 0 := sub_eq_zero.mpr h'.symm
+
+/-- The kernel of `d²` consists of the `2`-cocycles. -/
+theorem mem_ker_d2_iff {f : G × G → M} :
+    f ∈ (d2 G M).ker ↔ groupCohomology.IsCocycle₂ f := by
+  simpa only [AddMonoidHom.mem_ker] using
+    (d2_eq_zero_iff (G := G) (M := M) (f := f))
 
 variable (G M)
 
@@ -292,7 +306,7 @@ def Z2 : AddSubgroup (G × G → M) :=
         exact congrArg Neg.neg (ha g h j) }
 
 /-- The `2`-coboundaries `B² = d¹(C¹)`, the image of the **continuous** `1`-cochains. Taking the
-image of all of `G → M` would give a strictly larger subgroup for a group with a discontinuous
+image of all of `G → M` can give a strictly larger subgroup for a group with a discontinuous
 `1`-cochain, and the resulting quotient would not be continuous cohomology. -/
 def B2 : AddSubgroup (G × G → M) := AddSubgroup.map (d1 G M) (C1 G M)
 
