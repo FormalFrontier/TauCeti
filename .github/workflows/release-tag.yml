@@ -63,6 +63,11 @@ on:
       APP_PRIVATE_KEY: { required: false }
       ZULIP_API_KEY: { required: false }
       ZULIP_EMAIL: { required: false }
+      # Declared, and passed by the backfill driver. A called workflow does NOT inherit the
+      # caller's repository secrets: only what is passed explicitly, or `secrets: inherit`,
+      # resolves in the callee. Without this the backfill would run a full from-source
+      # build for every release and then fail at the publish step for want of the key.
+      LAKE_CACHE_KEY: { required: false }
 
 permissions:
   contents: read
@@ -99,6 +104,29 @@ jobs:
           sparse-checkout: scripts
           persist-credentials: false
 
+      # An environment that does not exist is created implicitly, with no protection rules,
+      # and the job runs anyway. So the whole gating story would fail open silently if
+      # either environment were deleted, renamed, or stripped of its rules. Check it here,
+      # in the job that runs no repository code, before anything expensive starts.
+      - name: Check the publish and tag environments still carry their rules
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          for env in lake-cache-publish release-tags; do
+            if ! body="$(gh api "repos/$REPO/environments/$env" 2>&1)"; then
+              echo "::warning::could not read the $env environment ($body); not treating that as a verdict"
+              continue
+            fi
+            rules="$(printf '%s' "$body" | python3 -c 'import json,sys; print(" ".join(sorted(r["type"] for r in json.load(sys.stdin).get("protection_rules", []))))')"
+            echo "$env: $rules"
+            case "$rules" in
+              *branch_policy*) ;;
+              *) echo "::error::the $env environment has no deployment branch policy, so it gates nothing"; exit 1 ;;
+            esac
+          done
+
       - name: Validate the target and its release
         id: check
         env:
@@ -124,6 +152,7 @@ jobs:
       staged: ${{ steps.stage.outputs.staged }}
       reported-toolchain: ${{ steps.stage.outputs.toolchain }}
       reported-platform-independent: ${{ steps.stage.outputs.platform-independent }}
+      staged-entries: ${{ steps.stage.outputs.entries }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -281,6 +310,7 @@ jobs:
           lake build --no-build -o .lake/outputs.jsonl
           echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
           lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
+          printf 'entries=%s\n' "$(wc -l < .lake/outputs.jsonl)" >> "$GITHUB_OUTPUT"
           # `lake cache put-staged` does not configure the workspace, which is precisely what
           # keeps project code out of the publish job, so it cannot derive the toolchain and
           # platform halves of the upload scope. The publish job supplies them from the pin
@@ -341,12 +371,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions: {}
-    # The environment gates this job; it does not supply its key. LAKE_CACHE_KEY stays a
-    # repository secret, which a job declaring an `environment:` still sees, so there is no
-    # second copy to rotate. What the environment adds is the deployment branch policy,
-    # which GitHub applies to `github.ref` before the job may run at all and which a
-    # release branch's own copy of this file therefore cannot delete, plus the required
-    # reviewer sitting on top of it.
+    # The environment gates this JOB: GitHub applies the deployment branch policy to
+    # `github.ref`, and the required reviewer, before the job may run, so this workflow
+    # cannot publish from a run whose ref is a release branch.
+    #
+    # What it does NOT do is put the key out of reach. LAKE_CACHE_KEY is a REPOSITORY
+    # secret, and deployment branch policies protect environment secrets; any workflow on
+    # any branch of this repository can already read it, which is equally true of `ci.yml`
+    # today. Making it an environment secret on `lake-cache-publish`, and removing it from
+    # repository scope, is what would make the stronger claim true; that needs the value,
+    # which GitHub will not read back, so it means minting a fresh R2 token.
     environment: lake-cache-publish
     env:
       # The Lake that performs the UPLOAD, which is not the target's own. `lake cache
@@ -528,8 +562,6 @@ jobs:
             "${PLATFORM_ARGS[@]}"
 
       # A published tag claims a complete cache, so read it back before anything claims it.
-      # This also catches a partial upload, which `put-staged` alone would not report.
-      # A published tag claims a complete cache, so read it back before anything claims it.
       # This also catches a partial upload, which `put-staged` alone does not report.
       #
       # The two object layouts are not the same shape and neither is guessed here: the
@@ -544,6 +576,11 @@ jobs:
           TARGET_TOOLCHAIN: ${{ steps.toolchain.outputs.target }}
           REV: ${{ needs.resolve.outputs.sha }}
           PLATFORM_INDEPENDENT: ${{ needs.resolve.outputs.platform-independent }}
+          # What the build staged. It comes from the untrusted job, so it can only be read
+          # as a floor: a build that understated it would weaken this check, not pass one it
+          # should fail. What it does catch is the case that actually happens, a partial
+          # upload, and the case where a mapping was already at this key before the run.
+          STAGED_ENTRIES: ${{ needs.build.outputs.staged-entries }}
         run: |
           set -euo pipefail
           TRIPLE=x86_64-unknown-linux-gnu
@@ -565,8 +602,14 @@ jobs:
           curl -fsS "$url" -o "$RUNNER_TEMP/revision.jsonl" \
             || { echo "::error::no revision mapping was published at $url"; exit 1; }
           entries="$(wc -l < "$RUNNER_TEMP/revision.jsonl")"
-          echo "revision mapping entries: $entries"
+          echo "revision mapping entries: $entries (staged: ${STAGED_ENTRIES:-unknown})"
           [ "$entries" -gt 1 ] || { echo "::error::the published mapping is empty"; exit 1; }
+          case "${STAGED_ENTRIES:-}" in
+            ''|*[!0-9]*) echo "::warning::the build reported no staged entry count; only checking that the mapping is non-empty" ;;
+            *) [ "$entries" -ge "$STAGED_ENTRIES" ] || {
+                 echo "::error::the published mapping has $entries entries but this run staged $STAGED_ENTRIES; the upload was partial, or this is an older mapping that was already at that key"
+                 exit 1; } ;;
+          esac
           python3 - "$RUNNER_TEMP/revision.jsonl" > "$RUNNER_TEMP/hashes" <<'PY'
           import json, re, sys
 

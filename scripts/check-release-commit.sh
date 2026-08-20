@@ -82,7 +82,10 @@ case "$status" in
     KIND="main-commit"
     note "$SHA is an ancestor of main ($status)"
     ;;
-  diverged)
+  ahead|diverged)
+    # `ahead` when the branch was cut from main's CURRENT tip, `diverged` when it was cut
+    # from an older commit, which is the ordinary case since the base is chosen for its
+    # mathlib pin. Both are the same shape and both are checked identically below.
     KIND="release-branch"
     [ "$EXACT" = "true" ] \
       || fail "a release branch carries the exact pin; the inexact rung is only ever a main commit"
@@ -152,7 +155,7 @@ contents "$MATHLIB" "lean-toolchain" "$M" "$WORK/ml-toolchain" \
 contents "$MATHLIB" "lake-manifest.json" "$M" "$WORK/ml-manifest" \
   || fail "cannot read mathlib's lake-manifest.json at $M"
 
-TOOLCHAIN="$(tr -d '\n' < "$WORK/pr-toolchain")"
+TOOLCHAIN="$(tr -d '[:space:]' < "$WORK/pr-toolchain")"
 PINNED="$(python3 -c '
 import json,sys
 pkgs=[p for p in json.load(open(sys.argv[1]))["packages"] if p.get("name")=="mathlib"]
@@ -173,7 +176,7 @@ else
   # A main commit is already trusted; all that is in question is which release it names.
   want="leanprover/lean4:$RELEASE"
   [ "$TOOLCHAIN" = "$want" ] || fail "$SHA is on '$TOOLCHAIN', not '$want'"
-  upstream="$(tr -d '\n' < "$WORK/ml-toolchain")"
+  upstream="$(tr -d '[:space:]' < "$WORK/ml-toolchain")"
   [ "$upstream" = "$want" ] \
     || fail "mathlib's lean-toolchain at $RELEASE is '$upstream', so that tag does not name it"
   if [ "$EXACT" = "true" ]; then

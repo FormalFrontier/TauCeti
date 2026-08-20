@@ -61,11 +61,41 @@ to sign them, so the read host must be public; only uploads use a key.
 | `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://cache.taucetiproject.org/revisions` | `pr-build.yml` read |
 | `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/artifacts` | `ci.yml` upload |
 | `LAKE_CACHE_REVISION_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/revisions` | `ci.yml` upload |
-| `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml`, `publish-lake-cache` job only |
+| `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | the `publish-lake-cache` job of `ci.yml` and of `release-tag.yml`, and nowhere else |
 
 Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object keys are
 `artifacts/TauCetiProject/TauCeti/<hash>.art`, so the endpoint variables hold only the prefix and
 Lake appends the scope.
+
+## The second publisher
+
+`ci.yml` is no longer the only writer. `release-tag.yml` publishes once per Lean release,
+for a commit that is either an ancestor of `main` or one pin-only commit off such an
+ancestor, and `scripts/check-release-commit.sh` is what establishes that before anything is
+built. It differs from `ci.yml` in three ways that matter here.
+
+It may pass `--platform`. TauCeti declared `platformIndependent = true` on 2026-07-27, and
+Lake scopes a package without that declaration by platform, under
+`<repo>/pt/<triple>/tc/<toolchain>/<rev>`. Releases older than that date are published under
+that key, which is exactly the one their own consumers derive. `ci.yml` never does this, and
+its staging step still fails outright if the declaration goes missing from `main`.
+
+It uploads with a different Lake from the one that built. `lake cache put-staged` gained
+`--rev` and `--service` only in v4.34.0-rc1, so an older release's own Lake cannot be told
+which revision to publish under; the publish job installs a modern toolchain as the uploader
+and passes the target's toolchain as data through `--toolchain`.
+
+A missing `LAKE_CACHE_KEY` fails it, where `ci.yml` treats it as a notice and exits 0. A
+post-merge health check should stay green in an unconfigured repository; a release must not
+create a tag claiming a published cache when nothing was published.
+
+Its publish and tag jobs declare the `lake-cache-publish` and `release-tags` environments,
+whose deployment branch policy limits them to `main` and whose required reviewer is a human.
+That gates those jobs. It does not put the key out of reach: `LAKE_CACHE_KEY` is a
+repository secret, deployment branch policies protect environment secrets, and any workflow
+on any branch here can read a repository secret, which is as true of `ci.yml` as of this.
+Making it an environment secret and dropping it from repository scope is what would make the
+stronger claim true, and it needs a fresh R2 token, since GitHub will not read a secret back.
 
 ## Why the upload is its own job
 
