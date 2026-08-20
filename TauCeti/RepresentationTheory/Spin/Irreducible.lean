@@ -326,6 +326,23 @@ noncomputable def SpinPolarizationData.evenCliffordEquivProdMatrix {l : ℕ}
     ((Algebra.endAlgEquivMatrix K _ hplus).prodCongr
       (Algebra.endAlgEquivMatrix K _ hminus))
 
+/-- The matrix form of the even structure theorem is the pair of half-spin actions, followed by
+the chosen-basis identifications of their endomorphism algebras with matrix algebras. -/
+@[simp]
+theorem SpinPolarizationData.evenCliffordEquivProdMatrix_apply {l : ℕ}
+    (hW : P.W ≠ ⊥) (hV : finrank K V = 2 * l) (x : CliffordAlgebra.even Q) :
+    P.evenCliffordEquivProdMatrix hW hV x =
+      (Algebra.endAlgEquivMatrix K (spinPlus Q P)
+          (by rw [finrank_spinPlus P hW, P.finrank_W_of_finrank_eq_two_mul hV])
+          (spinPlusAction Q P (P.line_eq_bot_of_even_finrank (hV ▸ even_two_mul l)) x),
+        Algebra.endAlgEquivMatrix K (spinMinus Q P)
+          (by rw [finrank_spinMinus P hW, P.finrank_W_of_finrank_eq_two_mul hV])
+          (spinMinusAction Q P (P.line_eq_bot_of_even_finrank (hV ▸ even_two_mul l)) x)) := by
+  rw [evenCliffordEquivProdMatrix, AlgEquiv.trans_apply, AlgEquiv.prodCongr_apply,
+    Equiv.prodCongr_apply, Prod.map_apply, evenCliffordEquivProdEnd_apply,
+    evenSpinActionProd_apply]
+  rfl
+
 /-! ### Simplicity and inequivalence of the two half-spin summands -/
 
 /-- The even Clifford action on `S⁺` is onto its full endomorphism algebra. -/
