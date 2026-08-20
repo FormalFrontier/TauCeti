@@ -96,6 +96,10 @@ are the reason the carrier omits `⊥`.
 
 ## References
 
+* `TauCetiRoadmap/ArithmeticDirichletSeries/Suggested.lean`, whose Layer 0 carrier design is
+  adapted here. Unlike that sketch, the finite bad set is data on which vanishing is required,
+  rather than the exact zero locus, and `IsGood` is defined only on the underlying multiplicative
+  weight instead of being duplicated for unitary weights.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters II--III.
 -/
