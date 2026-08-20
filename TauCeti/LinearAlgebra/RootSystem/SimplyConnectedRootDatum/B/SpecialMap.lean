@@ -44,8 +44,8 @@ later lift, together with its action on root subgroups, before the Suzuki--Ree l
 * `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mulVec_root` and
   `TauCeti.DynkinType.b2SpecialIsogenyMatrix_transpose_mulVec_coroot`: the equations on the pinned
   datum.
-* `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mulVec_self` and its transpose counterpart: applying
-  the lattice map twice is multiplication by `2`.
+* `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mul_self` and its transpose counterpart: applying the
+  lattice map twice is multiplication by `2`.
 * `TauCeti.DynkinType.b2SpecialIsogenyExponent_mul_exponent`: the two rescaling exponents on an
   orbit multiply to the defining characteristic.
 
@@ -71,11 +71,18 @@ open scoped _root_.Matrix
 
 /-- The character-lattice matrix of the special length-exchanging map of the pinned `B₂` root
 datum, in the fundamental-weight basis. -/
-@[expose] def b2SpecialIsogenyMatrix : Matrix (Fin 2) (Fin 2) ℤ := !![0, 1; 2, 0]
+def b2SpecialIsogenyMatrix : Matrix (Fin 2) (Fin 2) ℤ := !![0, 1; 2, 0]
+
+/-- The explicit entries of the character-lattice special-isogeny matrix. -/
+theorem b2SpecialIsogenyMatrix_def : b2SpecialIsogenyMatrix = !![0, 1; 2, 0] := (rfl)
 
 /-- The permutation of the eight `B₂` roots induced by `TauCeti.DynkinType.b2SpecialIsogenyMatrix`.
 It exchanges long roots with short roots and commutes with root negation. -/
-@[expose] def b2SpecialIsogenyTableIndex : Fin 8 → Fin 8 := ![1, 0, 3, 2, 5, 4, 7, 6]
+def b2SpecialIsogenyTableIndex : Fin 8 → Fin 8 := ![1, 0, 3, 2, 5, 4, 7, 6]
+
+/-- The explicit values of the special permutation on the coordinate-table indices. -/
+theorem b2SpecialIsogenyTableIndex_def :
+    b2SpecialIsogenyTableIndex = ![1, 0, 3, 2, 5, 4, 7, 6] := (rfl)
 
 private lemma b2SpecialIsogenyTableIndex_involutive : Involutive b2SpecialIsogenyTableIndex := by
   intro i
@@ -126,14 +133,17 @@ private theorem b2SpecialIsogenyIndexEquiv_b2Index_simple (i : Fin 2) :
   rw [b2SpecialIsogenyIndexEquiv_b2Index, ← b2SpecialIsogenyTableIndexEquiv_apply,
     b2SpecialIsogenyTableIndexEquiv_simple]
 
+private theorem b2Index_castLE_eq_typeBSimpleIndex (i : Fin 2) :
+    b2Index (Fin.castLE (by omega) i) = typeBSimpleIndex 2 i := by
+  fin_cases i <;> simp
+
 /-- On the pinned simple-root indices, the special permutation is the rank-two length
 permutation. -/
 @[simp] theorem b2SpecialIsogenyIndexEquiv_typeBSimpleIndex (i : Fin 2) :
     b2SpecialIsogenyIndexEquiv (typeBSimpleIndex 2 i) =
       typeBSimpleIndex 2 (lengthPermRankTwo i) := by
-  fin_cases i
-  · simpa using b2SpecialIsogenyIndexEquiv_b2Index_simple 0
-  · simpa using b2SpecialIsogenyIndexEquiv_b2Index_simple 1
+  rw [← b2Index_castLE_eq_typeBSimpleIndex, b2SpecialIsogenyIndexEquiv_b2Index_simple,
+    b2Index_castLE_eq_typeBSimpleIndex]
 
 /-- The exponent of the special map on the native root indices of the pinned type `B₂` datum. -/
 noncomputable def b2SpecialIsogenyExponent (i : Fin (2 * 2 ^ 2)) : ℤ :=
@@ -166,7 +176,7 @@ private theorem b2SpecialIsogenyMatrix_transpose_mulVec_b2Coroot (i : Fin 8) :
 
 /-- **The special matrix carries every root of the pinned datum to its indexed image with the
 prescribed exponent.** -/
-theorem b2SpecialIsogenyMatrix_mulVec_root (i : Fin (2 * 2 ^ 2)) :
+@[simp] theorem b2SpecialIsogenyMatrix_mulVec_root (i : Fin (2 * 2 ^ 2)) :
     b2SpecialIsogenyMatrix *ᵥ (typeBSimplyConnectedRootDatum 2).root i =
       b2SpecialIsogenyExponent i •
         (typeBSimplyConnectedRootDatum 2).root (b2SpecialIsogenyIndexEquiv i) := by
@@ -177,7 +187,7 @@ theorem b2SpecialIsogenyMatrix_mulVec_root (i : Fin (2 * 2 ^ 2)) :
 
 /-- **The transposed special matrix satisfies the contragredient equation on every coroot of the
 pinned datum.** -/
-theorem b2SpecialIsogenyMatrix_transpose_mulVec_coroot
+@[simp] theorem b2SpecialIsogenyMatrix_transpose_mulVec_coroot
     (i : Fin (2 * 2 ^ 2)) :
     b2SpecialIsogenyMatrixᵀ *ᵥ
         (typeBSimplyConnectedRootDatum 2).coroot (b2SpecialIsogenyIndexEquiv i) =
@@ -187,41 +197,50 @@ theorem b2SpecialIsogenyMatrix_transpose_mulVec_coroot
     b2SpecialIsogenyExponent_b2Index, coroot_b2Index]
   exact b2SpecialIsogenyMatrix_transpose_mulVec_b2Coroot j
 
+/-- The square of the character-lattice special matrix is twice the identity matrix. -/
+theorem b2SpecialIsogenyMatrix_mul_self :
+    b2SpecialIsogenyMatrix * b2SpecialIsogenyMatrix =
+      (2 : ℤ) • (1 : Matrix (Fin 2) (Fin 2) ℤ) := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [b2SpecialIsogenyMatrix_def, Matrix.mul_apply, Fin.sum_univ_succ]
+
+/-- The square of the cocharacter-lattice special matrix is twice the identity matrix. -/
+theorem b2SpecialIsogenyMatrix_transpose_mul_self :
+    b2SpecialIsogenyMatrixᵀ * b2SpecialIsogenyMatrixᵀ =
+      (2 : ℤ) • (1 : Matrix (Fin 2) (Fin 2) ℤ) := by
+  rw [← Matrix.transpose_mul, b2SpecialIsogenyMatrix_mul_self, Matrix.transpose_smul,
+    Matrix.transpose_one]
+
 /-- Applying the character-lattice special map twice is multiplication by the characteristic
 `2`. -/
 theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
     b2SpecialIsogenyMatrix *ᵥ (b2SpecialIsogenyMatrix *ᵥ x) = (2 : ℤ) • x := by
-  funext i
-  fin_cases i <;>
-    simp [b2SpecialIsogenyMatrix, Matrix.mulVec, dotProduct, Fin.sum_univ_succ]
+  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_mul_self, Matrix.smul_mulVec,
+    Matrix.one_mulVec]
 
 /-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
 `2`. -/
 theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
     b2SpecialIsogenyMatrixᵀ *ᵥ (b2SpecialIsogenyMatrixᵀ *ᵥ x) = (2 : ℤ) • x := by
-  funext i
-  fin_cases i <;>
-    simp [b2SpecialIsogenyMatrix, Matrix.mulVec, dotProduct, Fin.sum_univ_succ]
+  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_transpose_mul_self,
+    Matrix.smul_mulVec, Matrix.one_mulVec]
 
 /-- The square relation for the character-lattice map, as an equality of linear maps. -/
 theorem b2SpecialIsogenyMatrix_mulVecLin_comp_self :
     b2SpecialIsogenyMatrix.mulVecLin ∘ₗ b2SpecialIsogenyMatrix.mulVecLin =
       (2 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  apply LinearMap.ext
-  intro x
-  simpa only [LinearMap.comp_apply, Matrix.mulVecLin_apply, LinearMap.smul_apply,
-    LinearMap.id_apply, DistribSMul.toLinearMap_apply] using
-      b2SpecialIsogenyMatrix_mulVec_self x
+  rw [← Matrix.mulVecLin_mul, b2SpecialIsogenyMatrix_mul_self]
+  ext x
+  simp
 
 /-- The square relation for the cocharacter-lattice map, as an equality of linear maps. -/
 theorem b2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self :
     b2SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ b2SpecialIsogenyMatrixᵀ.mulVecLin =
       (2 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  apply LinearMap.ext
-  intro x
-  simpa only [LinearMap.comp_apply, Matrix.mulVecLin_apply, LinearMap.smul_apply,
-    LinearMap.id_apply, DistribSMul.toLinearMap_apply] using
-      b2SpecialIsogenyMatrix_transpose_mulVec_self x
+  rw [← Matrix.mulVecLin_mul, b2SpecialIsogenyMatrix_transpose_mul_self]
+  ext x
+  simp
 
 /-! ## Length and exponent conventions -/
 
@@ -253,9 +272,7 @@ private theorem b2SpecialIsogenyExponent_b2Index_simple (i : Fin 2) :
 /-- On a pinned simple-root index, the special exponent is its normalised squared length. -/
 @[simp] theorem b2SpecialIsogenyExponent_typeBSimpleIndex (i : Fin 2) :
     b2SpecialIsogenyExponent (typeBSimpleIndex 2 i) = (B 2).rootLength i := by
-  fin_cases i
-  · simpa using b2SpecialIsogenyExponent_b2Index_simple 0
-  · simpa using b2SpecialIsogenyExponent_b2Index_simple 1
+  rw [← b2Index_castLE_eq_typeBSimpleIndex, b2SpecialIsogenyExponent_b2Index_simple]
 
 /-- At a pinned simple-root index, the special exponent is `1` exactly on a short node. -/
 theorem b2SpecialIsogenyExponent_typeBSimpleIndex_eq_one_iff (i : Fin 2) :
