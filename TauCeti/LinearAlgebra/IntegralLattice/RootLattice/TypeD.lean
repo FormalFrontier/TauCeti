@@ -644,38 +644,18 @@ theorem discriminant_typeDRootLattice : (typeDRootLattice n).discriminant = 4 :=
 
 /-! ## The discriminant quadratic form on the three classes -/
 
-omit [NeZero n] in
-variable {n} in
-/-- The discriminant quadratic value of a dual vector, in the half-norm convention. -/
-theorem discriminantQuadraticMap_typeD_mk (u : Fin n → ℚ)
-    (hu : u ∈ (typeDRootLattice n).dualCarrier) :
-    (typeDRootLattice n).discriminantQuadraticMap (isEven_typeDRootLattice n)
-        (Submodule.Quotient.mk ⟨u, hu⟩) =
-      (((typeDRootLattice n).form u u / 2 : ℚ) : AddCircle (1 : ℚ)) :=
-  discriminantQuadraticMap_mk _ _ _
-
-omit [NeZero n] in
-variable {n} in
-/-- The discriminant pairing of two dual vectors. -/
-theorem discriminantPairing_typeD_mk (u v : Fin n → ℚ)
-    (hu : u ∈ (typeDRootLattice n).dualCarrier) (hv : v ∈ (typeDRootLattice n).dualCarrier) :
-    (typeDRootLattice n).discriminantPairing (Submodule.Quotient.mk ⟨u, hu⟩)
-        (Submodule.Quotient.mk ⟨v, hv⟩) =
-      (((typeDRootLattice n).form u v : ℚ) : AddCircle (1 : ℚ)) :=
-  discriminantPairing_mk _ _ _
-
 /-- **The vector class has quadratic value `1 / 2`.** -/
 theorem discriminantQuadraticMap_typeDVectorClass :
     (typeDRootLattice n).discriminantQuadraticMap (isEven_typeDRootLattice n)
       (typeDVectorClass n) = ((1 / 2 : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [typeDVectorClass, discriminantQuadraticMap_typeD_mk,
+  rw [typeDVectorClass, discriminantQuadraticMap_mk,
     typeDRootLattice_form_typeDVector_self]
 
 /-- **The spinor class has quadratic value `n / 8`.** -/
 theorem discriminantQuadraticMap_typeDSpinorClass :
     (typeDRootLattice n).discriminantQuadraticMap (isEven_typeDRootLattice n)
       (typeDSpinorClass n) = (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [typeDSpinorClass, discriminantQuadraticMap_typeD_mk,
+  rw [typeDSpinorClass, discriminantQuadraticMap_mk,
     typeDRootLattice_form_typeDSpinor_self]
   congr 1
   ring
@@ -684,7 +664,7 @@ theorem discriminantQuadraticMap_typeDSpinorClass :
 theorem discriminantQuadraticMap_typeDCospinorClass :
     (typeDRootLattice n).discriminantQuadraticMap (isEven_typeDRootLattice n)
       (typeDCospinorClass n) = (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [typeDCospinorClass, discriminantQuadraticMap_typeD_mk,
+  rw [typeDCospinorClass, discriminantQuadraticMap_mk,
     typeDRootLattice_form_typeDCospinor_self]
   congr 1
   ring
@@ -694,7 +674,7 @@ values, distinguishes the two spinor classes of an even-rank `Dₙ`. -/
 theorem discriminantPairing_typeDSpinorClass_typeDCospinorClass :
     (typeDRootLattice n).discriminantPairing (typeDSpinorClass n) (typeDCospinorClass n) =
       ((((n : ℚ) - 2) / 4 : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [typeDSpinorClass, typeDCospinorClass, discriminantPairing_typeD_mk,
+  rw [typeDSpinorClass, typeDCospinorClass, discriminantPairing_mk,
     typeDRootLattice_form_typeDSpinor_typeDCospinor]
 
 /-! ## The group structure -/
