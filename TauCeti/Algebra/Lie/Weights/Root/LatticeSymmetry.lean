@@ -114,14 +114,22 @@ never infer it from the left-hand side. -/
 theorem map_mem_rootCorootSpan_iff (z : L) :
     g z ∈ rootCorootSpan x ↔ z ∈ rootCorootSpan x := by
   have hmap := map_rootCorootSpan_eq_of_map_root_eq_or_eq_neg g σ hroot hcoroot
+  have restrictScalars_symm_apply (w : L) :
+      (g.restrictScalars ℤ).symm w = g.symm w := by
+    apply g.injective
+    calc
+      g ((g.restrictScalars ℤ).symm w) =
+          (g.restrictScalars ℤ) ((g.restrictScalars ℤ).symm w) := by
+            rw [LinearEquiv.restrictScalars_apply]
+      _ = w := LinearEquiv.apply_symm_apply _ _
+      _ = g (g.symm w) := (g.apply_symm_apply w).symm
   calc
     g z ∈ rootCorootSpan x ↔
         g z ∈ (rootCorootSpan x).map (g.restrictScalars ℤ).toLinearMap := by rw [hmap]
     _ ↔ (g.restrictScalars ℤ).symm (g z) ∈ rootCorootSpan x :=
       Submodule.mem_map_equiv (rootCorootSpan x)
     _ ↔ z ∈ rootCorootSpan x := by
-      change g.symm (g z) ∈ rootCorootSpan x ↔ z ∈ rootCorootSpan x
-      rw [g.symm_apply_apply]
+      rw [restrictScalars_symm_apply, g.symm_apply_apply]
 
 /-- The integral linear automorphism of the root--coroot span induced by a compatible signed
 permutation of its root vectors and coroots. -/
@@ -186,8 +194,10 @@ noncomputable def chevalleyLieLatticeEquiv :
   map_lie' := by
     intro a b
     apply Subtype.ext
-    change g ⁅(a : L), (b : L)⁆ = ⁅g (a : L), g (b : L)⁆
-    exact g.map_lie (a : L) (b : L)
+    rw [LinearEquiv.toFun_eq_coe]
+    simpa only [LieSubalgebra.coe_bracket, LinearEquiv.ofSubmodules_apply,
+      LinearEquiv.restrictScalars_apply, LieEquiv.coe_toLinearEquiv] using
+      g.map_lie (a : L) (b : L)
 
 /-- The restricted integral Lie automorphism acts as the ambient Lie automorphism on underlying
 vectors. -/
