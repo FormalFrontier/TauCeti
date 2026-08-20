@@ -7,7 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.InfinityPlace.Unique
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
-public import TauCeti.RingTheory.Valuation.Polynomial
+import TauCeti.RingTheory.Valuation.Polynomial
 import Mathlib.RingTheory.Valuation.Integral
 
 /-!
@@ -35,7 +35,7 @@ integrality condition, and the Weierstrass equation of the target.
 
 * `TauCeti.Isogeny.one_lt_infinityPlace_pullback_X`: **the pulled-back coordinate has a pole at
   infinity**, `1 < v_∞ (φ x₂)`.
-* `TauCeti.Isogeny.comap_infinityPlace_isEquiv`: **the place at infinity restricts to the place at
+* `TauCeti.Isogeny.isEquiv_comap_infinityPlace`: **the place at infinity restricts to the place at
   infinity** along an isogeny.
 * `TauCeti.Isogeny.comap_infinityPlace_apply_algebraMap`: the restricted valuation, evaluated on
   the image of the target coordinate ring, is `v_∞ ∘ φ` — the computation rule the other two are
@@ -89,6 +89,7 @@ instance : ((infinityPlace W₁).comap φ.fieldPullback.toRingHom).IsTrivialOn F
 
 /-- **The restricted place, evaluated on an affine function of the target**: it is the value at
 infinity of the pullback of that function. -/
+@[simp]
 theorem comap_infinityPlace_apply_algebraMap (c : W₂.CoordinateRing) :
     ((infinityPlace W₁).comap φ.fieldPullback.toRingHom)
         (algebraMap W₂.CoordinateRing W₂.FunctionField c)
@@ -154,7 +155,7 @@ theorem one_lt_infinityPlace_pullback_X :
 /-- **An isogeny carries the place at infinity to the place at infinity**: the restriction of the
 source's place at infinity along the function-field pullback is equivalent to the target's. This is
 the place-level reading of `MapsInfinity`, that is, of `φ(O₁) = O₂`. -/
-theorem comap_infinityPlace_isEquiv :
+theorem isEquiv_comap_infinityPlace :
     ((infinityPlace W₁).comap φ.fieldPullback.toRingHom).IsEquiv (infinityPlace W₂) := by
   refine isEquiv_infinityPlace_of_one_lt _ ?_
   rw [IsScalarTower.algebraMap_apply F[X] W₂.CoordinateRing W₂.FunctionField,

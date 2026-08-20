@@ -49,7 +49,8 @@ The route has three steps, and none of them needs a Riemann–Roch theorem or a 
   `WeierstrassCurve.Affine.val_algebraMap_eq_pow_natDegree`: the value of a rational function, and
   of a polynomial, in `x`, as a power of `v x`; `val_algebraMap_le_pow` is the bound that also
   covers the zero polynomial.
-* `WeierstrassCurve.Affine.lt_val_mk_Y` and `WeierstrassCurve.Affine.val_mk_Y_sq`: `v x < v y` and
+* `WeierstrassCurve.Affine.val_X_lt_val_mk_Y` and `WeierstrassCurve.Affine.val_mk_Y_sq`:
+  `v x < v y` and
   `(v y) ^ 2 = (v x) ^ 3` — the pole orders `2` and `3`, for any such `v`.
 * `WeierstrassCurve.Affine.val_add_mul_mk_Y_le_one_iff`: the criterion the theorem is proved by,
   worth stating because it computes the valuation ring of every such `v` in closed form.
@@ -257,7 +258,7 @@ private theorem val_add_le :
 
 /-- **`y` has a higher pole than `x`.** If `v y ≤ v x` then the left-hand side of the Weierstrass
 equation has value at most `(v x) ^ 2`, while its right-hand side has value `(v x) ^ 3`. -/
-theorem lt_val_mk_Y :
+theorem val_X_lt_val_mk_Y :
     v (algebraMap F[X] W.FunctionField Polynomial.X)
       < v (algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.mk W Y)) := by
   by_contra hle
@@ -280,7 +281,7 @@ theorem val_mk_Y_sq :
       = v (algebraMap F[X] W.FunctionField Polynomial.X) ^ 3 := by
   rw [sq, ← val_mul_val_add v hx]
   congr 1
-  exact (v.map_add_eq_of_lt_left ((val_add_le v hx).trans_lt (lt_val_mk_Y v hx))).symm
+  exact (v.map_add_eq_of_lt_left ((val_add_le v hx).trans_lt (val_X_lt_val_mk_Y v hx))).symm
 
 omit [v.IsTrivialOn F] in
 /-- `v x` is a unit of the value group, being larger than `1`. -/
