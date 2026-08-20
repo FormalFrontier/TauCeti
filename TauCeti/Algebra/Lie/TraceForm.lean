@@ -49,10 +49,7 @@ variable (R L M : Type*) [CommRing R] [LieRing L] [LieAlgebra R L]
   [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
 
 /-- **The four-element cyclic identity for an invariant trace form.** Pairing the three ways of
-splitting `a`, `b`, `c`, `d` into two brackets, with `d` always in the second, gives zero.
-
-The proof moves each summand into the shape `B a _` using invariance and symmetry, and then reads
-the resulting sum of three inner brackets as the Leibniz rule for `⁅b, ⁅c, d⁆⁆`. -/
+splitting `a`, `b`, `c`, `d` into two brackets, with `d` always in the second, gives zero. -/
 theorem traceForm_lie_lie_cyclic_eq_zero (a b c d : L) :
     traceForm R L M ⁅a, b⁆ ⁅c, d⁆ + traceForm R L M ⁅b, c⁆ ⁅a, d⁆ +
       traceForm R L M ⁅c, a⁆ ⁅b, d⁆ = 0 := by

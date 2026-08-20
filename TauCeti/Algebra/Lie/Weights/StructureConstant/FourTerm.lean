@@ -54,8 +54,8 @@ it is an input to.
 
 ## Main results
 
-* `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`: reading a vanishing sum of four weights as the
-  three equations the relation below consumes.
+* `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`: reading a vanishing sum of four weights as an
+  equation between opposite pair sums.
 * `TauCeti.IsSl2System.killingForm_lie_lie_eq_mul_mul` and
   `TauCeti.IsSl2System.killingForm_lie_lie_eq_zero_of_rootSpace_add_eq_bot`: the evaluation of a
   paired Killing bracket, in the case where the first pair sums to a root and in the case where it
@@ -102,9 +102,8 @@ omit [CharZero K] in
 /-- If four weights sum to zero and a weight `μ` names the sum of the first two, then `-μ` names
 the sum of the last two.
 
-This discharges the three hypotheses of `TauCeti.IsSl2System.structureConstant_four_term` that
-pair `δ` with one of `α`, `β` and `γ`, which is how a caller holding `α + β + γ + δ = 0` reaches
-that statement. -/
+This derives the equations pairing `δ` with one of `α`, `β` and `γ` inside
+`TauCeti.IsSl2System.structureConstant_four_term`. -/
 theorem Weight.coe_neg_eq_add_of_coe_eq_add {μ : Weight K H L} {a b c d : H → K}
     (hsum : a + b + c + d = 0) (hμ : (μ : H → K) = a + b) :
     ((-μ : Weight K H L) : H → K) = c + d := by
@@ -151,25 +150,32 @@ that `μ = α + β`, `ν = β + γ` and `ρ = γ + α` are roots, so that the si
 are defined. Then the three products, each weighted by the Killing pairing of the opposite pair of
 root vectors it belongs to, sum to zero.
 
-The vanishing of `α + β + γ + δ` enters as the three equations naming `-μ`, `-ν` and `-ρ`, which
-is the form the structure constants consume; a caller holding the sum itself gets each of them
-from `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`. Requiring `μ`, `ν` and `ρ` to be roots already
-excludes the degenerate configurations in which two of the four weights are opposite, since a
-`Weight` is a root exactly when it is non-zero. -/
+Requiring `μ`, `ν` and `ρ` to be roots already excludes the degenerate configurations in which two
+of the four weights are opposite, since a `Weight` is a root exactly when it is non-zero. -/
 theorem structureConstant_four_term (μ ν ρ : Weight K H L)
     (hμ : μ.IsNonZero) (hν : ν.IsNonZero) (hρ : ρ.IsNonZero)
+    (hsum : (α : H → K) + β + γ + δ = 0)
     (hμαβ : (μ : H → K) = (α : H → K) + β)
-    (hμγδ : ((-μ : Weight K H L) : H → K) = (γ : H → K) + δ)
     (hνβγ : (ν : H → K) = (β : H → K) + γ)
-    (hναδ : ((-ν : Weight K H L) : H → K) = (α : H → K) + δ)
-    (hργα : (ρ : H → K) = (γ : H → K) + α)
-    (hρβδ : ((-ρ : Weight K H L) : H → K) = (β : H → K) + δ) :
-    hx.structureConstant α β μ hμ hμαβ * hx.structureConstant γ δ (-μ) hμ.neg hμγδ *
+    (hργα : (ρ : H → K) = (γ : H → K) + α) :
+    hx.structureConstant α β μ hμ hμαβ * hx.structureConstant γ δ (-μ) hμ.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add hsum hμαβ) *
           killingForm K L (x μ) (x (-μ)) +
-        hx.structureConstant β γ ν hν hνβγ * hx.structureConstant α δ (-ν) hν.neg hναδ *
+        hx.structureConstant β γ ν hν hνβγ * hx.structureConstant α δ (-ν) hν.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (β : H → K)) (b := γ) (c := α) (d := δ)
+            (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hνβγ) *
           killingForm K L (x ν) (x (-ν)) +
-        hx.structureConstant γ α ρ hρ hργα * hx.structureConstant β δ (-ρ) hρ.neg hρβδ *
+        hx.structureConstant γ α ρ hρ hργα * hx.structureConstant β δ (-ρ) hρ.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (γ : H → K)) (b := α) (c := β) (d := δ)
+            (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hργα) *
           killingForm K L (x ρ) (x (-ρ)) = 0 := by
+  have hμγδ := Weight.coe_neg_eq_add_of_coe_eq_add hsum hμαβ
+  have hναδ := Weight.coe_neg_eq_add_of_coe_eq_add
+    (a := (β : H → K)) (b := γ) (c := α) (d := δ)
+    (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hνβγ
+  have hρβδ := Weight.coe_neg_eq_add_of_coe_eq_add
+    (a := (γ : H → K)) (b := α) (c := β) (d := δ)
+    (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hργα
   rw [← hx.killingForm_lie_lie_eq_mul_mul α β γ δ μ hμ hμαβ hμγδ,
     ← hx.killingForm_lie_lie_eq_mul_mul β γ α δ ν hν hνβγ hναδ,
     ← hx.killingForm_lie_lie_eq_mul_mul γ α β δ ρ hρ hργα hρβδ]
@@ -180,15 +186,21 @@ summands are then negatives of one another. The pair left out is `γ + α`, whic
 recursion of Carter's §4.2 uses, where one decomposition of a root is compared with another. -/
 theorem structureConstant_four_term_of_rootSpace_add_eq_bot (μ ν : Weight K H L)
     (hμ : μ.IsNonZero) (hν : ν.IsNonZero)
+    (hsum : (α : H → K) + β + γ + δ = 0)
     (hμαβ : (μ : H → K) = (α : H → K) + β)
-    (hμγδ : ((-μ : Weight K H L) : H → K) = (γ : H → K) + δ)
     (hνβγ : (ν : H → K) = (β : H → K) + γ)
-    (hναδ : ((-ν : Weight K H L) : H → K) = (α : H → K) + δ)
     (hρ : rootSpace H ((γ : H → K) + α) = ⊥) :
-    hx.structureConstant α β μ hμ hμαβ * hx.structureConstant γ δ (-μ) hμ.neg hμγδ *
+    hx.structureConstant α β μ hμ hμαβ * hx.structureConstant γ δ (-μ) hμ.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add hsum hμαβ) *
           killingForm K L (x μ) (x (-μ)) +
-        hx.structureConstant β γ ν hν hνβγ * hx.structureConstant α δ (-ν) hν.neg hναδ *
+        hx.structureConstant β γ ν hν hνβγ * hx.structureConstant α δ (-ν) hν.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (β : H → K)) (b := γ) (c := α) (d := δ)
+            (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hνβγ) *
           killingForm K L (x ν) (x (-ν)) = 0 := by
+  have hμγδ := Weight.coe_neg_eq_add_of_coe_eq_add hsum hμαβ
+  have hναδ := Weight.coe_neg_eq_add_of_coe_eq_add
+    (a := (β : H → K)) (b := γ) (c := α) (d := δ)
+    (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hνβγ
   rw [← hx.killingForm_lie_lie_eq_mul_mul α β γ δ μ hμ hμαβ hμγδ,
     ← hx.killingForm_lie_lie_eq_mul_mul β γ α δ ν hν hνβγ hναδ]
   have hzero := hx.killingForm_lie_lie_eq_zero_of_rootSpace_add_eq_bot γ α β δ hρ
@@ -241,19 +253,22 @@ This is `TauCeti.IsSl2System.structureConstant_four_term` after replacing each K
 even. -/
 theorem structureConstant_four_term_invForm (μ ν ρ : Weight K H L)
     (hμ : μ.IsNonZero) (hν : ν.IsNonZero) (hρ : ρ.IsNonZero)
+    (hsum : (α : H → K) + β + γ + δ = 0)
     (hμαβ : (μ : H → K) = (α : H → K) + β)
-    (hμγδ : ((-μ : Weight K H L) : H → K) = (γ : H → K) + δ)
     (hνβγ : (ν : H → K) = (β : H → K) + γ)
-    (hναδ : ((-ν : Weight K H L) : H → K) = (α : H → K) + δ)
-    (hργα : (ρ : H → K) = (γ : H → K) + α)
-    (hρβδ : ((-ρ : Weight K H L) : H → K) = (β : H → K) + δ) :
-    hx.structureConstant α β μ hμ hμαβ * hx.structureConstant γ δ (-μ) hμ.neg hμγδ *
+    (hργα : (ρ : H → K) = (γ : H → K) + α) :
+    hx.structureConstant α β μ hμ hμαβ * hx.structureConstant γ δ (-μ) hμ.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add hsum hμαβ) *
           (invForm (μ : Dual K H) μ)⁻¹ +
-        hx.structureConstant β γ ν hν hνβγ * hx.structureConstant α δ (-ν) hν.neg hναδ *
+        hx.structureConstant β γ ν hν hνβγ * hx.structureConstant α δ (-ν) hν.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (β : H → K)) (b := γ) (c := α) (d := δ)
+            (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hνβγ) *
           (invForm (ν : Dual K H) ν)⁻¹ +
-        hx.structureConstant γ α ρ hρ hργα * hx.structureConstant β δ (-ρ) hρ.neg hρβδ *
+        hx.structureConstant γ α ρ hρ hργα * hx.structureConstant β δ (-ρ) hρ.neg
+          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (γ : H → K)) (b := α) (c := β) (d := δ)
+            (by simpa only [add_comm, add_left_comm, add_assoc] using hsum) hργα) *
           (invForm (ρ : Dual K H) ρ)⁻¹ = 0 := by
-  have hrel := hx.structureConstant_four_term α β γ δ μ ν ρ hμ hν hρ hμαβ hμγδ hνβγ hναδ hργα hρβδ
+  have hrel := hx.structureConstant_four_term α β γ δ μ ν ρ hμ hν hρ hsum hμαβ hνβγ hργα
   rw [hx.killingForm_root_neg_eq μ hμ, hx.killingForm_root_neg_eq ν hν,
     hx.killingForm_root_neg_eq ρ hρ] at hrel
   simp only [invForm_apply_apply, Weight.toLinear_apply]
