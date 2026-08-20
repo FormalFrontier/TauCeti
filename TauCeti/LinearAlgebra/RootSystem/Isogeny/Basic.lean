@@ -43,7 +43,7 @@ exponent i * Q.pairing (indexEquiv i) (indexEquiv j) = exponent j * P.pairing i 
 ```
 
 so an isogeny with a nonconstant exponent transforms the Cartan matrix rather than preserving it.
-That is exactly what a length-exchanging map of a doubly laced diagram does, and it is why
+That is exactly what a length-exchanging map of a non-simply-laced diagram does, and it is why
 `RootPairing.Hom`, whose index bijection preserves all Cartan integers, cannot express one.
 
 Isogenies compose, with exponents multiplying along the composite, and for each positive integer
@@ -112,9 +112,12 @@ structure RootPairingIsogeny (P : RootPairing ι R M N) (Q : RootPairing ι₂ R
   weightMap_finiteIndex : weightMap.range.toAddSubgroup.FiniteIndex
   /-- The image in the source coweight lattice has finite index. -/
   coweightMap_finiteIndex : coweightMap.range.toAddSubgroup.FiniteIndex
+  /-- The weight and coweight maps are transposes with respect to the two root pairings. -/
   weight_coweight_transpose : ∀ (x : M) (y : N₂),
     Q.toLinearMap (weightMap x) y = P.toLinearMap x (coweightMap y)
+  /-- The weight map sends each root to its prescribed positive integral multiple. -/
   root_weightMap : ∀ i, weightMap (P.root i) = (exponent i : R) • Q.root (indexEquiv i)
+  /-- The coweight map sends each corresponding coroot to the same integral multiple. -/
   coroot_coweightMap : ∀ i,
     coweightMap (Q.coroot (indexEquiv i)) = (exponent i : R) • P.coroot i
 
@@ -184,10 +187,9 @@ def smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module
     (smulId P c).exponent i = c := by
   rw [smulId]
 
-/-- The composite of two injective linear maps with finite-index images again has finite-index
-image. -/
+/-- The composite of two linear maps with finite-index images again has finite-index image. -/
 lemma finiteIndex_range_comp (g : M₂ →ₗ[R] M₃) (f : M →ₗ[R] M₂)
-    (hg : Function.Injective g) (hf : f.range.toAddSubgroup.FiniteIndex)
+    (hf : f.range.toAddSubgroup.FiniteIndex)
     (hgf : g.range.toAddSubgroup.FiniteIndex) : (g ∘ₗ f).range.toAddSubgroup.FiniteIndex := by
   rw [AddSubgroup.finiteIndex_iff]
   let A := (g ∘ₗ f).range.toAddSubgroup
@@ -212,8 +214,9 @@ lemma finiteIndex_range_comp (g : M₂ →ₗ[R] M₃) (f : M →ₗ[R] M₂)
       -- image of the top subgroup.
       change (∃ y, g y = x) ↔ ∃ y, y ∈ (⊤ : AddSubgroup M₂) ∧ g y = x
       simp
-    rw [hA, hB, AddSubgroup.relIndex_map_map_of_injective _ _ hg]
-    exact (@AddSubgroup.isFiniteRelIndex_of_finiteIndex M₂ _ f.range.toAddSubgroup ⊤ hf).1
+    rw [hA, hB, AddSubgroup.relIndex_map_map, top_sup_eq, AddSubgroup.relIndex_top_right]
+    let _ : f.range.toAddSubgroup.FiniteIndex := hf
+    exact (AddSubgroup.finiteIndex_of_le le_sup_left).index_ne_zero
   · exact hgf.index_ne_zero
 
 /-- The composite of two isogenies, whose exponent at an index is the product of the exponent of
@@ -227,10 +230,10 @@ def comp (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q) :
   exponent_pos i := mul_pos (f.exponent_pos i) (g.exponent_pos (f.indexEquiv i))
   weightMap_injective := g.weightMap_injective.comp f.weightMap_injective
   coweightMap_injective := f.coweightMap_injective.comp g.coweightMap_injective
-  weightMap_finiteIndex := finiteIndex_range_comp g.weightMap f.weightMap g.weightMap_injective
+  weightMap_finiteIndex := finiteIndex_range_comp g.weightMap f.weightMap
     f.weightMap_finiteIndex g.weightMap_finiteIndex
   coweightMap_finiteIndex := finiteIndex_range_comp f.coweightMap g.coweightMap
-    f.coweightMap_injective g.coweightMap_finiteIndex f.coweightMap_finiteIndex
+    g.coweightMap_finiteIndex f.coweightMap_finiteIndex
   weight_coweight_transpose x y := by
     rw [LinearMap.comp_apply, LinearMap.comp_apply, g.weight_coweight_transpose,
       f.weight_coweight_transpose]

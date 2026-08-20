@@ -13,11 +13,11 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2
 /-!
 # The special isogenies of `G₂` in characteristic three and of `F₄` in characteristic two
 
-A doubly laced irreducible root system whose two root lengths differ by the factor `p` admits, over
-a field of characteristic `p`, an isogeny of its root datum with itself which exchanges the two
-lengths. This happens for `B₂` and `F₄` at `p = 2` and for `G₂` at `p = 3`, and nowhere else. The
-resulting *special isogenies* of the pinned Chevalley groups are the ones whose odd powers cut out
-the Suzuki and Ree groups. This file constructs the two of them whose underlying pinned root data
+A non-simply-laced irreducible root system whose two root lengths differ by the factor `p` admits,
+over a field of characteristic `p`, an isogeny of its root datum with itself which exchanges the
+two lengths. This happens for `B₂` and `F₄` at `p = 2` and for `G₂` at `p = 3`, and nowhere else.
+The resulting *special isogenies* of the pinned Chevalley groups are the ones whose odd powers cut
+out the Suzuki and Ree groups. This file constructs the two whose underlying pinned root data
 `TauCeti.DynkinType.g2SimplyConnectedRootDatum` and `TauCeti.DynkinType.f4SimplyConnectedRootDatum`
 are already available in explicit coordinates.
 
@@ -116,18 +116,6 @@ at a short root and `3` at a long one. -/
 lemma g2SpecialIsogenyIndex_involutive : Function.Involutive g2SpecialIsogenyIndex :=
   fun i => by revert i; decide
 
-private lemma g2SpecialIsogeny_root_aux (i : Fin 12) :
-    g2SpecialIsogenyMatrix *ᵥ g2Root i =
-      g2SpecialIsogenyExponent i • g2Root (g2SpecialIsogenyIndex i) := by
-  simpa [g2SpecialIsogenyMatrix, g2SpecialIsogenyExponent, g2SpecialIsogenyIndex] using
-    g2Root_specialIsogenyAction i
-
-private lemma g2SpecialIsogeny_coroot_aux (i : Fin 12) :
-    g2SpecialIsogenyMatrixᵀ *ᵥ g2Coroot (g2SpecialIsogenyIndex i) =
-      g2SpecialIsogenyExponent i • g2Coroot i := by
-  simpa [g2SpecialIsogenyMatrix, g2SpecialIsogenyExponent, g2SpecialIsogenyIndex] using
-    g2Coroot_specialIsogenyAction i
-
 private lemma g2SpecialIsogenyMatrix_mulVecLin_sq :
     g2SpecialIsogenyMatrix.mulVecLin ∘ₗ g2SpecialIsogenyMatrix.mulVecLin =
       (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
@@ -158,8 +146,12 @@ def g2SpecialIsogeny :
       g2SpecialIsogenyMatrix_mulVecLin_sq)
     (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
       g2SpecialIsogenyMatrix_transpose_mulVecLin_sq)
-    (fun i => by simpa using g2SpecialIsogeny_root_aux i)
-    (fun i => by simpa using g2SpecialIsogeny_coroot_aux i)
+    (fun i => by
+      simpa [g2SpecialIsogenyMatrix, g2SpecialIsogenyExponent, g2SpecialIsogenyIndex] using
+        g2Root_specialIsogenyAction i)
+    (fun i => by
+      simpa [g2SpecialIsogenyMatrix, g2SpecialIsogenyExponent, g2SpecialIsogenyIndex] using
+        g2Coroot_specialIsogenyAction i)
 
 @[simp] lemma g2SpecialIsogeny_weightMap :
     g2SpecialIsogeny.weightMap = g2SpecialIsogenyMatrix.mulVecLin := by
