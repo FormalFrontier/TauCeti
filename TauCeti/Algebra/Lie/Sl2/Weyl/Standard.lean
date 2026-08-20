@@ -127,21 +127,15 @@ theorem isSl2Triple_ladder (hn : 0 < n) :
   lie_h_e_nsmul := by rw [lie_diag_raise, two_smul, two_nsmul]
   lie_h_f_nsmul := by rw [lie_diag_lower, two_smul, two_nsmul]
 
-/-- On the trivial standard module the raising operator vanishes. -/
-private theorem raise_zero : raise ℚ 0 = 0 := by
-  simpa using (raise_pow_eq_zero (K := ℚ) (n := 0))
-
-/-- On the trivial standard module the lowering operator vanishes. -/
-private theorem lower_zero : lower ℚ 0 = 0 := by
-  simpa using (lower_pow_eq_zero (K := ℚ) (n := 0))
-
 /-- **Conjugating the raising operator by the Weyl element.** The relation `n e n⁻¹ = -f`, written
 without the inverse. -/
 theorem weylUnit_mul_raise :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) * raise ℚ n =
       -(lower ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
+  · rw [show raise ℚ 0 = 0 by simpa using (raise_pow_eq_zero (K := ℚ) (n := 0)),
+      show lower ℚ 0 = 0 by simpa using (lower_pow_eq_zero (K := ℚ) (n := 0)),
+      mul_zero, zero_mul, neg_zero]
   have h := _root_.TauCeti.weylUnit_conj_e (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
     (isNilpotent_lower n ℚ)
   rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
@@ -155,7 +149,9 @@ theorem weylUnit_mul_lower :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) * lower ℚ n =
       -(raise ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
+  · rw [show raise ℚ 0 = 0 by simpa using (raise_pow_eq_zero (K := ℚ) (n := 0)),
+      show lower ℚ 0 = 0 by simpa using (lower_pow_eq_zero (K := ℚ) (n := 0)),
+      mul_zero, zero_mul, neg_zero]
   have h := _root_.TauCeti.weylUnit_conj_f (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
     (isNilpotent_lower n ℚ)
   rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
@@ -262,7 +258,8 @@ private theorem apply_last_exp_neg_lower_basis_zero :
       omega
     let i : Fin (n + 1) := ⟨b, by omega⟩
     have hi := lower_pow_basis_zero (K := ℚ) i
-    change ((lower ℚ n) ^ b) (basis ℚ n 0) = _ at hi
+    have hi_val : (i : ℕ) = b := by simp [i]
+    rw [hi_val] at hi
     rw [LinearMap.smul_apply, smul_apply, hpow b, hi]
     have hne : Fin.last n ≠ i := by
       intro hc
@@ -311,12 +308,6 @@ private theorem raise_basis_index_rev_castSucc (i : Fin n) :
   simp only [Fin.val_rev, Fin.val_succ, Fin.val_castSucc]
   omega
 
-/-- Casting the remaining string length commutes with subtraction. -/
-private theorem cast_sub_castSucc (i : Fin n) :
-    ((n - (i.castSucc : Fin (n + 1)).val : ℕ) : ℚ) =
-      (n : ℚ) - (((i.castSucc : Fin (n + 1)).val : ℕ) : ℚ) := by
-  simpa only [Fin.val_castSucc] using (Nat.cast_sub (R := ℚ) (le_of_lt i.isLt))
-
 /-- The sign change in the successor step lowers the exponent of `-1` by one. -/
 private theorem neg_neg_one_pow_succ_mul (m : ℕ) (c : ℚ) :
     -((-1 : ℚ) ^ (m + 1) * c) = c * (-1 : ℚ) ^ m := by
@@ -352,7 +343,8 @@ theorem weylUnit_apply_basis (i : Fin (n + 1)) :
       rw [Fin.val_rev]; omega
     rw [lower_basis_index_eq_succ, raise_basis_index_rev_castSucc, hm, hrevval] at hstep
     have hcast : (((m + 1 : ℕ) : ℚ)) = (n : ℚ) - (((i.castSucc : Fin (n + 1)).val : ℕ) : ℚ) := by
-      rw [← hm, cast_sub_castSucc]
+      rw [← hm]
+      simpa only [Fin.val_castSucc] using (Nat.cast_sub (R := ℚ) (le_of_lt i.isLt))
     rw [hcast] at hstep
     rw [hsucc]
     have hgoal : ((n : ℚ) - (((i.castSucc : Fin (n + 1)).val : ℕ) : ℚ)) •
@@ -461,12 +453,17 @@ sign `(-1) ^ n`. -/
       rw [LinearMap.smul_comp, weylLattice_comp_weylLattice, smul_smul, ← pow_add, ← two_mul,
         pow_mul, neg_one_sq, one_pow, one_smul])
 
+/-- The linear map underlying the lattice automorphism is the restricted Weyl element. -/
+@[simp]
+theorem weylLatticeEquiv_toLinearMap : (weylLatticeEquiv n).toLinearMap = weylLattice n := by
+  apply LinearEquiv.toLinearMap_ofLinearMap
+
 @[simp]
 theorem coe_weylLatticeEquiv_apply (v : integralLattice n) :
     (weylLatticeEquiv n v : Sl2Std ℚ n) = (weylUnit n : Module.End ℚ (Sl2Std ℚ n))
       (v : Sl2Std ℚ n) := by
-  change (weylLattice n v : Sl2Std ℚ n) = _
-  exact coe_weylLattice_apply n v
+  rw [← coe_weylLattice_apply n v]
+  exact congrArg Subtype.val (LinearMap.congr_fun (weylLatticeEquiv_toLinearMap n) v)
 
 attribute [irreducible] weylLatticeEquiv
 
