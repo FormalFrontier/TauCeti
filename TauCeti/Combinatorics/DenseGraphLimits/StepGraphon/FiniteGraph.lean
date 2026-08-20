@@ -186,7 +186,8 @@ theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (
           = if ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b) then 1 else 0 := fun ψ =>
       if_congr (forall_congr' fun a => forall_congr' fun b =>
         imp_congr_right fun _ => SimpleGraph.map_adj_apply) rfl rfl
-    rw [Finset.sum_congr rfl fun ψ _ => hcongr ψ, Finset.sum_boole, card_hom_eq_card_subtype,
+    rw [Finset.sum_congr rfl fun ψ _ => hcongr ψ, Finset.sum_boole,
+      card_hom_eq_card_adj_preserving_maps,
       Nat.card_eq_fintype_card, Fintype.card_subtype]
   have hpi := integral_pi_comp_cellIdx (V := V) hm
     (fun ν : V → ℕ => if ∀ a b, F.Adj a b → (G.map Fin.valEmbedding).Adj (ν a) (ν b)
@@ -205,7 +206,7 @@ theorem homDensity_top_finiteGraphGraphon_top :
     homDensity (⊤ : SimpleGraph (Fin 2)) (finiteGraphGraphon (⊤ : SimpleGraph (Fin 4)))
       = 3 / 4 := by
   have hcount : Nat.card ((⊤ : SimpleGraph (Fin 2)) →g (⊤ : SimpleGraph (Fin 4))) = 12 := by
-    rw [card_hom_eq_card_subtype, Nat.card_eq_fintype_card]
+    rw [card_hom_eq_card_adj_preserving_maps, Nat.card_eq_fintype_card]
     decide
   rw [homDensity_finiteGraphGraphon _ (by norm_num), homDensityFin_def, hcount]
   norm_num
@@ -215,7 +216,7 @@ a triangle to edges of the five-cycle, so the density vanishes exactly rather th
 theorem homDensity_top_finiteGraphGraphon_cycleGraph :
     homDensity (⊤ : SimpleGraph (Fin 3)) (finiteGraphGraphon (SimpleGraph.cycleGraph 5)) = 0 := by
   have hcount : Nat.card ((⊤ : SimpleGraph (Fin 3)) →g SimpleGraph.cycleGraph 5) = 0 := by
-    rw [card_hom_eq_card_subtype, Nat.card_eq_fintype_card]
+    rw [card_hom_eq_card_adj_preserving_maps, Nat.card_eq_fintype_card]
     decide
   rw [homDensity_finiteGraphGraphon _ (by norm_num), homDensityFin_def, hcount]
   norm_num

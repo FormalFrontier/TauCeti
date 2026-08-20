@@ -64,7 +64,8 @@ downstream modules should use.
 
 * `card_injective_hom_eq_labelledCopyCount`, `injHomDensity_eq_labelledCopyCount_div` — the bridge
   to Mathlib's counting primitive, at the level of the count and of the density;
-* `card_hom_eq_card_subtype` — homomorphisms are counted by the adjacency-preserving vertex maps;
+* `card_hom_eq_card_adj_preserving_maps` — homomorphisms are counted by the
+  adjacency-preserving vertex maps;
 * `homDensityFin_nonneg`, `homDensityFin_le_one`, `injHomDensity_nonneg`, `injHomDensity_le_one` —
   both densities lie in `[0, 1]`, unconditionally. The degenerate cases are included: when the host
   is empty and the pattern is not, numerator and denominator both vanish and `x / 0 = 0` gives `0`.
@@ -163,7 +164,7 @@ omit [Fintype V] [Fintype W] in
 The right-hand side is a subtype of a plain function type, which is where the counting arguments
 work: it is what a change of variables over the vertex assignments produces, and for concrete
 finite graphs it is decidable. -/
-theorem card_hom_eq_card_subtype :
+theorem card_hom_eq_card_adj_preserving_maps :
     Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
   Nat.card_congr
     { toFun := fun φ => ⟨⇑φ, fun _ _ h => φ.map_adj h⟩

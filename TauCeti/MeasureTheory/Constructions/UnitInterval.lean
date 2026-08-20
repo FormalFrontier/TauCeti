@@ -71,7 +71,8 @@ variable {m i : ℕ}
 `[0, 1/m), [1/m, 2/m), …, [(m-1)/m, 1]`.
 
 The `min` closes the top cell, so that `x = 1` is not a fibre of its own; see the module docstring.
-At `m = 0` the value is `0` and carries no meaning — every statement about it assumes `i < m`. -/
+At `m = 0` the value is `0` and carries no cell-index meaning; results that interpret the value as
+a valid cell index or compute cell volume require positivity or range hypotheses. -/
 def cellIdx (m : ℕ) (x : I) : ℕ := min ⌊(m : ℝ) * (x : ℝ)⌋₊ (m - 1)
 
 /-- The cell index is a valid index into `Fin m`. -/
