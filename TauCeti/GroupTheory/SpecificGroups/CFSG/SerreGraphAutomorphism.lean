@@ -73,45 +73,55 @@ theorem cartanMatrix_submatrix_diagramPerm :
   ext i j
   exact d.cartanMatrix_diagramPerm i j
 
+/-- The diagram permutation also preserves the transposed Cartan matrix used by the Serre
+presentation of the pinned Lie algebra. -/
+@[simp]
+theorem cartanMatrix_transpose_submatrix_diagramPerm :
+    (Matrix.transpose d.1.dynkinType.cartanMatrix).submatrix d.diagramPerm d.diagramPerm =
+      Matrix.transpose d.1.dynkinType.cartanMatrix := by
+  ext i j
+  exact d.cartanMatrix_diagramPerm j i
+
 /-- The graph automorphism of the Serre Lie algebra attached to a graph-twisted index.
 
 It is induced by the pinned permutation of the Bourbaki-numbered nodes. On an untwisted family the
 permutation is the identity; on `²Aₙ`, `²Dₙ`, `²E₆`, and `³D₄` it is respectively the chain
 reversal, fork exchange, `E₆` involution, or triality. -/
 noncomputable def serreGraphAut :
-    Matrix.ToLieAlgebra R d.1.dynkinType.cartanMatrix ≃ₗ⁅R⁆
-      Matrix.ToLieAlgebra R d.1.dynkinType.cartanMatrix :=
-  serreDiagramAut R d.1.dynkinType.cartanMatrix d.cartanMatrix_submatrix_diagramPerm
+    Matrix.ToLieAlgebra R (Matrix.transpose d.1.dynkinType.cartanMatrix) ≃ₗ⁅R⁆
+      Matrix.ToLieAlgebra R (Matrix.transpose d.1.dynkinType.cartanMatrix) :=
+  serreDiagramAut R (Matrix.transpose d.1.dynkinType.cartanMatrix)
+    d.cartanMatrix_transpose_submatrix_diagramPerm
 
 /-- The graph automorphism sends the `i`-th Cartan generator to the generator indexed by the
 diagram permutation. -/
 @[simp]
 theorem serreGraphAut_serreH (i : Fin d.1.rank) :
     d.serreGraphAut R
-        (serreH R d.1.dynkinType.cartanMatrix i) =
-      serreH R d.1.dynkinType.cartanMatrix (d.diagramPerm i) :=
-  serreDiagramAut_serreH R d.1.dynkinType.cartanMatrix
-    d.cartanMatrix_submatrix_diagramPerm i
+        (serreH R (Matrix.transpose d.1.dynkinType.cartanMatrix) i) =
+      serreH R (Matrix.transpose d.1.dynkinType.cartanMatrix) (d.diagramPerm i) :=
+  serreDiagramAut_serreH R (Matrix.transpose d.1.dynkinType.cartanMatrix)
+    d.cartanMatrix_transpose_submatrix_diagramPerm i
 
 /-- The graph automorphism sends the `i`-th positive simple-root generator to the generator indexed
 by the diagram permutation, without changing its sign. -/
 @[simp]
 theorem serreGraphAut_serreE (i : Fin d.1.rank) :
     d.serreGraphAut R
-        (serreE R d.1.dynkinType.cartanMatrix i) =
-      serreE R d.1.dynkinType.cartanMatrix (d.diagramPerm i) :=
-  serreDiagramAut_serreE R d.1.dynkinType.cartanMatrix
-    d.cartanMatrix_submatrix_diagramPerm i
+        (serreE R (Matrix.transpose d.1.dynkinType.cartanMatrix) i) =
+      serreE R (Matrix.transpose d.1.dynkinType.cartanMatrix) (d.diagramPerm i) :=
+  serreDiagramAut_serreE R (Matrix.transpose d.1.dynkinType.cartanMatrix)
+    d.cartanMatrix_transpose_submatrix_diagramPerm i
 
 /-- The graph automorphism sends the `i`-th negative simple-root generator to the generator indexed
 by the diagram permutation, without changing its sign. -/
 @[simp]
 theorem serreGraphAut_serreF (i : Fin d.1.rank) :
     d.serreGraphAut R
-        (serreF R d.1.dynkinType.cartanMatrix i) =
-      serreF R d.1.dynkinType.cartanMatrix (d.diagramPerm i) :=
-  serreDiagramAut_serreF R d.1.dynkinType.cartanMatrix
-    d.cartanMatrix_submatrix_diagramPerm i
+        (serreF R (Matrix.transpose d.1.dynkinType.cartanMatrix) i) =
+      serreF R (Matrix.transpose d.1.dynkinType.cartanMatrix) (d.diagramPerm i) :=
+  serreDiagramAut_serreF R (Matrix.transpose d.1.dynkinType.cartanMatrix)
+    d.cartanMatrix_transpose_submatrix_diagramPerm i
 
 /-- Applying the Serre graph automorphism `twistOrder` times is the identity. This is the uniform
 form of `γ² = 1` on `²Aₙ`, `²Dₙ`, and `²E₆`, and `γ³ = 1` on `³D₄`; on an untwisted family
@@ -119,17 +129,19 @@ the twist order is one and the automorphism itself is the identity. -/
 @[simp]
 theorem serreGraphAut_iterate_twistOrder :
     (d.serreGraphAut R : _ → _)^[d.twistOrder] = id :=
-  serreDiagramAut_iterate_eq_id R d.1.dynkinType.cartanMatrix
-    d.cartanMatrix_submatrix_diagramPerm d.diagramPerm_pow_twistOrder
+  serreDiagramAut_iterate_eq_id R (Matrix.transpose d.1.dynkinType.cartanMatrix)
+    d.cartanMatrix_transpose_submatrix_diagramPerm d.diagramPerm_pow_twistOrder
 
 /-- The Chevalley involution commutes with the graph automorphism selected by the index. The former
 exchanges positive and negative generators with a sign, while the latter applies the same node
 permutation to all three Serre-generator families. -/
 theorem serreChevalleyInvolution_comm_serreGraphAut :
-    (serreChevalleyInvolution R d.1.dynkinType.cartanMatrix).trans (d.serreGraphAut R) =
+    (serreChevalleyInvolution R (Matrix.transpose d.1.dynkinType.cartanMatrix)).trans
+        (d.serreGraphAut R) =
       (d.serreGraphAut R).trans
-        (serreChevalleyInvolution R d.1.dynkinType.cartanMatrix) :=
-  serreChevalleyInvolution_comm_serreDiagramAut R d.1.dynkinType.cartanMatrix
-    d.cartanMatrix_submatrix_diagramPerm
+        (serreChevalleyInvolution R (Matrix.transpose d.1.dynkinType.cartanMatrix)) :=
+  serreChevalleyInvolution_comm_serreDiagramAut R
+    (Matrix.transpose d.1.dynkinType.cartanMatrix)
+    d.cartanMatrix_transpose_submatrix_diagramPerm
 
 end TauCeti.GraphTwistedIndex

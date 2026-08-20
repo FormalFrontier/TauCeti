@@ -101,13 +101,16 @@ of `ψ` with `normEDS` is the named `ψ_eq_normEDS` (`DivisionPolynomial/NormEDS
 `have` transports it through `polyToField`, so the statement is spelled on
 `fun n ↦ polyToField (curve.ψ n)` directly.
 
-The nonvanishing block adapts, at the same `main` revision, `ψᵤ_ne_zero` (`:141`, respelt
+The nonvanishing block adapts, at the same `main` revision, `ψᵤ_ne_zero` (`:142`, respelt
 `polyToField_ψ_ne_zero` with the abbreviation dropped as above), `polyToField_φ_ne_zero` (`:148`,
 source name kept) and `polyToField_ψ₂Sq` (`:154`, here `polyToField_Ψ₂Sq`: the constant in its
-conclusion is `Ψ₂Sq`, capitalised). One departure beyond the
-`ψᵤ` respelling: the source rewrites through its `polyToField_polynomial`, which has no
-counterpart here — the vanishing of the Weierstrass polynomial is inlined as a `have` through
-`AdjoinRoot.mk_self`, the same step `Universal.lean`'s `equation_point` uses.
+conclusion is `Ψ₂Sq`, capitalised). The first two port essentially unchanged, both retracting to
+the cusp curve at `(1, 1)` through `ringEval`, where `ψₙ` reads off as `n` and `φₙ` as `1`. One
+departure beyond the `ψᵤ` respelling, and it is confined to `polyToField_Ψ₂Sq`: the source clears
+the Weierstrass polynomial by rewriting with its own `polyToField_polynomial`, which has no
+counterpart here, so the proof instead pushes the coordinate-ring identity
+`Affine.CoordinateRing.mk_ψ₂_sq` into the field of fractions, where that vanishing is already
+absorbed by the quotient.
 -/
 
 public section

@@ -22,10 +22,11 @@ point of `G` in the sense of `TauCeti.HopfAlgebra.IsCentralPoint`. As for normal
 algebra suffices to detect it, namely `(H ⧸ I) ⊗[R] H`, which carries the tautological point of
 the subgroup together with the tautological point of the ambient group.
 
-The main consequences record that the notion behaves as expected. A central Hopf ideal is normal,
-its closed subgroup has commutative point groups and cocommutative coordinate quotient, and the
-zero Hopf ideal — the one cutting out the whole group — is central exactly when `H` is
-cocommutative, that is, exactly when `G` is commutative.
+The main consequences record that the notion behaves as expected. Centrality is preserved by
+pullback along a bijective bialgebra morphism, a central Hopf ideal is normal, its closed subgroup
+has commutative point groups and cocommutative coordinate quotient, and the zero Hopf ideal — the
+one cutting out the whole group — is central exactly when `H` is cocommutative, that is, exactly
+when `G` is commutative.
 
 Centrality is *upward* closed in the lattice of Hopf ideals, since a larger Hopf ideal cuts out a
 smaller closed subgroup. It is not closed downwards, so this file does not construct a smallest
@@ -41,6 +42,8 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 
 * `TauCeti.CommHopfAlgCat.isCentral_iff_forall_isCentralPoint`: **a Hopf ideal is central exactly
   when the points it cuts out are central points over every value algebra.**
+* `TauCeti.HopfIdeal.IsCentral.comap_of_bijective`: centrality is preserved by pullback along a
+  bijective bialgebra morphism.
 * `TauCeti.HopfIdeal.IsCentral.isNormal`: a central Hopf ideal is normal.
 * `TauCeti.HopfIdeal.IsCentral.isCocomm_quotient`: the coordinate Hopf algebra of a central
   closed subgroup is cocommutative.
@@ -261,6 +264,32 @@ end CommHopfAlgCat
 namespace HopfIdeal
 
 variable {R : Type u} [CommRing R]
+
+/-- Pulling a central Hopf ideal back along a bijective bialgebra morphism preserves centrality.
+Contravariantly, an isomorphism of affine group schemes carries central closed subgroup schemes
+to central closed subgroup schemes. -/
+theorem IsCentral.comap_of_bijective {H K : Type v} [CommRing H] [CommRing K]
+    [HopfAlgebra R H] [HopfAlgebra R K] {I : HopfIdeal R K} (hI : I.IsCentral)
+    (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
+    (I.comap f hsurj).IsCentral := by
+  apply (CommHopfAlgCat.isCentral_iff_forall_isCentralPoint
+    (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
+  intro A g hg
+  let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
+  let E := AlgHom.mapDomainMulEquiv (A := A) e
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+    f hinj hsurj I A
+  have hg' : E.symm g ∈ CommHopfAlgCat.quotientPointsSubgroup
+      (_root_.CommHopfAlgCat.of R K) I A := by
+    apply (hmem (E.symm g)).mp
+    rw [E.apply_symm_apply]
+    exact hg
+  have hcentral := CommHopfAlgCat.isCentralPoint_of_mem_quotientPointsSubgroup
+    (_root_.CommHopfAlgCat.of R K) I hI A hg'
+  have htransport := hcentral.mapDomain_bialgEquiv e
+  simp only [BialgEquiv.toBialgHom_eq_coe] at htransport
+  rw [← AlgHom.mapDomainMulEquiv_apply e, E.apply_symm_apply] at htransport
+  exact htransport
 
 /-- **A central Hopf ideal is normal.** Its points commute with every point of the ambient group
 over the same value algebra, so they form a normal subgroup there, and normality of a Hopf ideal
