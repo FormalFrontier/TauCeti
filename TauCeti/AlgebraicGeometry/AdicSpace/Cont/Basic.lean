@@ -47,6 +47,9 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
 * `TauCeti.ValuationSpectrum.isContinuous_ofValuation_iff` : continuity may be tested on any
   representative, not only the canonical one — the well-definedness making `cont` meaningful.
   Membership `ofValuation w ∈ cont A` reduces to it through the `@[simp]` `mem_cont_iff`.
+* `TauCeti.ValuationSpectrum.isContinuous_trivialSection_iff` : the trivial valuation of a
+  prime is a continuous point exactly when that prime is open — **Remark 4.6**, and the
+  continuity input to Proposition 7.51.
 * `TauCeti.ValuationSpectrum.IsContinuous.comap` : **Remark 7.9**, that a continuous ring
   homomorphism pulls continuous points back to continuous points. Combined with `mem_cont_iff`
   this is exactly the statement that `comap φ` restricts to a map `Cont B → Cont A`; no separate
@@ -59,7 +62,8 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.7 and Remarks 7.8, 7.9.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.7 and Remarks 7.8, 7.9; Remark
+  4.6 and Proposition 7.51 for the trivial valuation of an open prime.
 
 ## Provenance
 
@@ -69,6 +73,11 @@ The corresponding development in AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache
 copied. Its `ValuationSpectrum.IsContinuous` also tests the canonical valuation, but because its
 valuation-level predicate quantifies over the ambient codomain it can only offer the one-way
 `isContinuous_ofValuation_of`; the `↔` here is what makes `cont` well defined.
+
+`isContinuous_trivialSection_iff` comes from a second file of that same project,
+`Adic spaces/AdicSpectrum.lean`, section `Prop752`, which runs the argument inline for maximal
+ideals on the way to Wedhorn 7.52(2). It is stated here for prime ideals as a named
+characterisation, so that the downstream development can cite it instead of repeating it.
 -/
 
 public section
@@ -119,6 +128,38 @@ simp-normal form. -/
 theorem isContinuous_ofValuation_iff {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]
     (w : Valuation A Γ₀) : (ofValuation w).IsContinuous ↔ w.IsContinuous :=
   (isEquiv_valuation_ofValuation w).isContinuous_iff
+
+/-- **A trivial-valuation point is continuous exactly when its prime ideal is open.** Every
+value set of `trivialSection p` is `∅` (testing below a vanishing value) or `p.asIdeal` itself
+(testing below a surviving value), so continuity amounts to openness of the prime; conversely
+the test below `1` recovers the ideal. This is the continuity interface of the sealed
+`trivialSection` — it rests on `trivialSection_vle_iff`, not on the definition's body.
+
+This is the continuity half of **Wedhorn Remark 4.6**, and the input Proposition 7.51 needs to
+exhibit an open prime as a support. The argument is AINTLIB's, from the `Prop752` section cited
+in this file's Provenance, separated out here as a standalone characterisation. -/
+theorem isContinuous_trivialSection_iff (p : PrimeSpectrum A) :
+    (trivialSection p).IsContinuous ↔ IsOpen (p.asIdeal : Set A) := by
+  classical
+  have hset : ∀ b : A,
+      {a : A | (trivialSection p).valuation a < (trivialSection p).valuation b}
+        = if b ∈ p.asIdeal then (∅ : Set A) else ↑p.asIdeal := by
+    intro b
+    ext a
+    simp only [Set.mem_ofPred_eq, ← not_le, valuation_le_iff, trivialSection_vle_iff, not_or,
+      not_not]
+    by_cases hb : b ∈ p.asIdeal <;> simp [hb]
+  rw [isContinuous_def, Valuation.isContinuous_def]
+  constructor
+  · intro h
+    have h1 : (1 : A) ∉ p.asIdeal := (Ideal.ne_top_iff_one _).mp p.isPrime.ne_top
+    have := h 1
+    rwa [hset 1, ite_eq_right h1] at this
+  · intro hp b
+    rw [hset b]
+    split_ifs
+    · exact isOpen_empty
+    · exact hp
 
 /-- **Wedhorn Remark 7.8(2).** Over a discrete ring every point is continuous. -/
 @[simp]

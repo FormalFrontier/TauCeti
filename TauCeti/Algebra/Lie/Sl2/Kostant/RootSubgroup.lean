@@ -68,7 +68,6 @@ local notation "b" => integralLatticeAddSubgroupBasis 1
 /-- **Each root operator maps one integral basis vector to the other.** In the standard
 two-dimensional `sl₂` representation the raising operator sends `v₁` to `v₀` and kills `v₀`, and
 the lowering operator sends `v₀` to `v₁` and kills `v₁`; both index changes are `Fin.rev`. -/
-@[simp]
 theorem repEnveloping_root_apply_basis (i s : Fin 2) :
     ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : Sl2Std ℚ 1) =
       if s = i.rev then (b i : Sl2Std ℚ 1) else 0 := by
@@ -86,7 +85,6 @@ theorem repEnveloping_root_apply_basis (i s : Fin 2) :
 
 /-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent of
 class exactly two: their square vanishes, and they are themselves nonzero. -/
-@[simp]
 theorem nilpotencyClass_repEnveloping_root (i : Fin 2) :
     nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2 := by
   refine nilpotencyClass_eq_succ_iff.mpr ⟨?_, ?_⟩

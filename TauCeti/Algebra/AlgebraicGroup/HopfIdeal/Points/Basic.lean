@@ -29,6 +29,8 @@ the point factors uniquely through the quotient algebra.
 * `CommHopfAlgCat.mem_range_quotientPointsHom_iff`: quotient points are exactly ambient
   points killing `I`.
 * `CommHopfAlgCat.quotientPointsSubgroup`: the subgroup of ambient points cut out by `I`.
+* `CommHopfAlgCat.instIsMulCommutativeQuotientPointsSubgroup`: when the quotient Hopf algebra is
+  cocommutative, the cut-out point subgroup is commutative.
 
 ## References
 
@@ -143,6 +145,14 @@ point-level closed subgroup represented by the quotient coordinate Hopf algebra 
     (I : HopfIdeal R H) (A : CommAlgCat.{w} R) :
     Subgroup (HopfAlgebra.points (R := R) (H := H) A) :=
   (quotientPointsHom H I A).hom.range
+
+/-- The points cut out by `I` form a commutative group whenever the quotient coordinate Hopf
+algebra is cocommutative. -/
+noncomputable instance instIsMulCommutativeQuotientPointsSubgroup
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H)
+    [Coalgebra.IsCocomm R (quotient H I)] (A : CommAlgCat.{w} R) :
+    IsMulCommutative (quotientPointsSubgroup H I A) :=
+  Subgroup.range_isMulCommutative (quotientPointsHom H I A).hom
 
 /-- Membership in the subgroup of points cut out by a Hopf ideal is vanishing on that ideal. -/
 @[simp]
