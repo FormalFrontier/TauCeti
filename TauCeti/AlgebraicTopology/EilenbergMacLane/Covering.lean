@@ -125,7 +125,7 @@ theorem isAspherical_of_subsingleton_homotopyGroup (hp : IsCoveringMap p)
 /-- **A path-connected covering space of a `K(G, 1)` is a `K(H, 1)`**, for `H` the subgroup of
 the fundamental group of the base that the cover recovers.
 
-The fundamental-group witness is `MulEquiv.ofInjective` applied to the injectivity of `p` on
+The fundamental-group witness is `MonoidHom.ofInjective` applied to the injectivity of `p` on
 fundamental groups; the recovered subgroup is by definition the range of that map. -/
 theorem isEilenbergMacLaneSpaceOne_totalSpace (hp : IsCoveringMap p)
     [PathConnectedSpace E] (he : p e = x) (h : IsAspherical X x) :

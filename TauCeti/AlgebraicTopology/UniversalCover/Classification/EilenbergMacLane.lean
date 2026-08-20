@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.Equiv.Opposite
 public import TauCeti.AlgebraicTopology.EilenbergMacLane.Covering
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
@@ -38,12 +37,8 @@ that stage are Eilenberg--Mac Lane spaces whenever the base is.
 
 ## Main declarations
 
-* `TauCeti.UniversalCover.subsingleton_homotopyGroup_iff`: the universal cover and its base
-  have the same homotopy groups in dimensions at least two.
 * `TauCeti.UniversalCover.isAspherical_iff`: **a space is aspherical exactly when the higher
   homotopy groups of its universal cover vanish**.
-* `TauCeti.UniversalCover.subsingleton_homotopyGroup_of_isAspherical`: **the universal cover
-  of an aspherical space is weakly contractible**.
 * `TauCeti.UniversalCover.isEilenbergMacLaneSpaceOne`: the resulting `K(G, 1)` recognition
   principle.
 * `TauCeti.UniversalCover.isAspherical_subgroupQuotient` and
@@ -69,13 +64,6 @@ namespace TauCeti.UniversalCover
 variable {X : Type*} [TopologicalSpace X] [LocallyPathConnectedSpace X] [PathConnectedSpace X]
   [SemilocallySimplyConnectedSpace X] (x₀ : X)
 
-/-- The universal cover and its base have the same homotopy groups in dimensions at least
-two, so one is trivial exactly when the other is. -/
-theorem subsingleton_homotopyGroup_iff (n : ℕ) :
-    Subsingleton (π_ (n + 2) (UniversalCover x₀) (basepointLift x₀ : UniversalCover x₀)) ↔
-      Subsingleton (π_ (n + 2) X x₀) :=
-  (isCoveringMap x₀).subsingleton_homotopyGroup_iff (proj_basepointLift x₀) n
-
 /-- **A space is aspherical exactly when the higher homotopy groups of its universal cover
 vanish.**
 
@@ -85,17 +73,11 @@ theorem isAspherical_iff :
     IsAspherical X x₀ ↔
       ∀ n : ℕ,
         Subsingleton (π_ (n + 2) (UniversalCover x₀) (basepointLift x₀ : UniversalCover x₀)) :=
-  ⟨fun h n ↦ (subsingleton_homotopyGroup_iff x₀ n).mpr (h.subsingleton_homotopyGroup n),
+  ⟨fun h n ↦ ((isCoveringMap x₀).subsingleton_homotopyGroup_iff
+      (proj_basepointLift x₀) n).mpr (h.subsingleton_homotopyGroup n),
     fun h ↦
       (isCoveringMap x₀).isAspherical_of_subsingleton_homotopyGroup proj_surjective
         (proj_basepointLift x₀) h⟩
-
-/-- **The universal cover of an aspherical space is weakly contractible**: all of its homotopy
-groups in positive dimensions are trivial. Dimension one is simple connectedness of the
-universal cover, and the higher dimensions are the asphericity of the base. -/
-theorem subsingleton_homotopyGroup_of_isAspherical (h : IsAspherical X x₀) (n : ℕ) :
-    Subsingleton (π_ (n + 1) (UniversalCover x₀) (basepointLift x₀ : UniversalCover x₀)) :=
-  (isCoveringMap x₀).subsingleton_homotopyGroup_of_isAspherical (proj_basepointLift x₀) h n
 
 /-- **A space whose universal cover has vanishing higher homotopy groups is a `K(G, 1)`**, for
 any group `G` isomorphic to its fundamental group. -/
