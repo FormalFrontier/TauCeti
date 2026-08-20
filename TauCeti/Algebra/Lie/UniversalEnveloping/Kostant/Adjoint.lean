@@ -159,7 +159,7 @@ theorem dividedPower_representation_mem (α : Weight ℚ H L) (n : ℕ) {y : L}
     UniversalEnvelopingAlgebra.representation ℚ L L
         (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α))) y ∈
       hx.chevalleyLieLattice := by
-  rw [Associative.map_dividedPower, UniversalEnvelopingAlgebra.representation_ι,
+  rw [Associative.map_dividedPower, UniversalEnvelopingAlgebra.representation_ι_ad,
     Associative.dividedPower_def, LinearMap.smul_apply]
   exact hx.inv_factorial_smul_ad_pow_mem_chevalleyLieLattice α n hy
 
@@ -172,7 +172,7 @@ theorem ringChoose_representation_mem (α : Weight ℚ H L) (n : ℕ) {y : L}
       hx.chevalleyLieLattice := by
   rw [Ring.map_choose (UniversalEnvelopingAlgebra.representation ℚ L L)
     (_root_.UniversalEnvelopingAlgebra.ι ℚ (coroot α : L)) n,
-    UniversalEnvelopingAlgebra.representation_ι]
+    UniversalEnvelopingAlgebra.representation_ι_ad]
   exact hx.ringChoose_ad_coroot_mem_chevalleyLieLattice α n hy
 
 /-- **The Chevalley lattice is an admissible lattice for the adjoint representation.** The Kostant

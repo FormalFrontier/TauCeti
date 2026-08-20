@@ -15,11 +15,6 @@ This file records the direction that a construction inside `U(L)` needs: a Lie m
 an algebra map `U(L) →ₐ[R] Module.End R M` extending the Lie action, obtained from the universal
 property applied to `LieModule.toEnd`.
 
-## Main definitions
-
-* `TauCeti.UniversalEnvelopingAlgebra.representation`: the algebra map `U(L) →ₐ[R] Module.End R M`
-  extending the action of `L` on a Lie module `M`.
-
 ## Main results
 
 * `TauCeti.UniversalEnvelopingAlgebra.representation_ι_apply`: a canonical Lie generator acts by
@@ -39,26 +34,6 @@ universe u v w
 variable (R : Type u) (L : Type v) (M : Type w)
 variable [CommRing R] [LieRing L] [LieAlgebra R L]
 variable [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
-
-local notation "U" => _root_.UniversalEnvelopingAlgebra R L
-
-/-- **The representation of `U(L)` on a Lie module `M`**: the algebra map extending the action of
-`L` on `M`, supplied by the universal property of the enveloping algebra. -/
-noncomputable def representation : U →ₐ[R] Module.End R M :=
-  _root_.UniversalEnvelopingAlgebra.lift R (LieModule.toEnd R L M)
-
--- Not a `simp` lemma: `simp` rewrites `ι` through Mathlib's
--- `UniversalEnvelopingAlgebra.ι_apply`, so this left-hand side is not in normal form.
-/-- The representation acts on a canonical Lie generator by the Lie action. -/
-theorem representation_ι (x : L) :
-    representation R L M (_root_.UniversalEnvelopingAlgebra.ι R x) = LieModule.toEnd R L M x :=
-  _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
-
-/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.representation_ι`: a canonical Lie
-generator acts by the Lie bracket. -/
-theorem representation_ι_apply (x : L) (m : M) :
-    representation R L M (_root_.UniversalEnvelopingAlgebra.ι R x) m = ⁅x, m⁆ := by
-  rw [representation_ι, LieModule.toEnd_apply_apply]
 
 variable {R L M}
 

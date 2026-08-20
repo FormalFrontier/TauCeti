@@ -201,13 +201,11 @@ which generate `U(L)` as an algebra. -/
 theorem casimirElement_mem_center :
     casimirElement K L ∈ Subalgebra.center K (UniversalEnvelopingAlgebra K L) := by
   refine Subalgebra.mem_center_iff.mpr fun u ↦ ?_
-  have hu : u ∈ (⊤ : Subalgebra K (UniversalEnvelopingAlgebra K L)) := Algebra.mem_top
-  rw [← TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι K L] at hu
-  induction hu using Algebra.adjoin_induction with
-  | mem x hx => obtain ⟨z, rfl⟩ := hx; exact ι_mul_casimirElement (K := K) z
+  induction u using TauCeti.UniversalEnvelopingAlgebra.induction_ι with
+  | ι z => exact ι_mul_casimirElement (K := K) z
   | algebraMap r => exact Algebra.commutes r _
-  | add x y _ _ hx hy => rw [add_mul, mul_add, hx, hy]
-  | mul x y _ _ hx hy => rw [mul_assoc, hy, ← mul_assoc, hx, mul_assoc]
+  | add x y hx hy => rw [add_mul, mul_add, hx, hy]
+  | mul x y hx hy => rw [mul_assoc, hy, ← mul_assoc, hx, mul_assoc]
 
 /-! ### The action on a Lie module -/
 

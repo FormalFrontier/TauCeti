@@ -17,6 +17,10 @@ additional structures such as filtrations, bialgebras, or antipodes.
 
 * `TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι`: a universal enveloping algebra is
   generated, as an algebra, by its canonical Lie generators.
+* `TauCeti.UniversalEnvelopingAlgebra.induction_ι`: the induction principle on the canonical Lie
+  generators that the previous statement supplies.
+* `TauCeti.UniversalEnvelopingAlgebra.representation`: the algebra homomorphism `U(L) → End M`
+  attached to a Lie module `M`, in particular the adjoint action of `U(L)` on `L` at `M = L`.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι`: an algebra representation maps the bracket of
   canonical Lie generators to the bracket of their images.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι_eq_smul`: a Lie-bracket eigenvector remains one
@@ -59,6 +63,60 @@ theorem adjoin_range_ι :
     _root_.Algebra.map_top]
   -- `mkAlgHom R L` is by definition the quotient map `RingCon.mkₐ R (ringCon R L)`.
   exact (AlgHom.range_eq_top _).2 (RingCon.mkₐ_surjective _)
+
+/-- **Induction on the canonical Lie generators.** A property of elements of `U(L)` that holds for
+the canonical Lie generators and the scalars, and is stable under sums and products, holds
+everywhere, since those generate `U(L)` as an `R`-algebra. -/
+@[elab_as_elim]
+theorem induction_ι {p : U → Prop}
+    (ι : ∀ x : L, p (_root_.UniversalEnvelopingAlgebra.ι R x))
+    (algebraMap : ∀ r : R, p (_root_.Algebra.algebraMap R U r))
+    (add : ∀ a b, p a → p b → p (a + b)) (mul : ∀ a b, p a → p b → p (a * b)) (u : U) : p u := by
+  have hu : u ∈ _root_.Algebra.adjoin R (Set.range ⇑(_root_.UniversalEnvelopingAlgebra.ι R)) := by
+    rw [adjoin_range_ι R L]; exact _root_.Algebra.mem_top
+  induction hu using _root_.Algebra.adjoin_induction with
+  | mem u hu => obtain ⟨x, rfl⟩ := hu; exact ι x
+  | algebraMap r => exact algebraMap r
+  | add a b _ _ ha hb => exact add a b ha hb
+  | mul a b _ _ ha hb => exact mul a b ha hb
+
+variable (M : Type w) [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
+
+/-- **The representation of a universal enveloping algebra on a Lie module**: the algebra
+homomorphism obtained from `LieModule.toEnd` by the universal property of `U(L)`. At `M = L` this
+is the adjoint action, since `LieAlgebra.ad R L` is `LieModule.toEnd R L L`. -/
+noncomputable def representation : U →ₐ[R] Module.End R M :=
+  _root_.UniversalEnvelopingAlgebra.lift R (LieModule.toEnd R L M)
+
+-- Neither this lemma nor its pointwise form below is a `simp` lemma: `simp` unfolds `ι` through
+-- Mathlib's `UniversalEnvelopingAlgebra.ι_apply`, so a left-hand side mentioning `ι` is not in
+-- simp-normal form. This is why Mathlib's own `lift_ι_apply` is not a `simp` lemma either;
+-- `representation_ι'` is the corresponding simp-normal form.
+/-- The representation acts on a canonical Lie generator by the Lie action. -/
+theorem representation_ι (x : L) :
+    representation R L M (_root_.UniversalEnvelopingAlgebra.ι R x) = LieModule.toEnd R L M x :=
+  _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
+
+/-- The representation on the Lie algebra itself acts on a canonical generator by the adjoint
+action. -/
+theorem representation_ι_ad (x : L) :
+    representation R L L (_root_.UniversalEnvelopingAlgebra.ι R x) = LieAlgebra.ad R L x :=
+  representation_ι R L L x
+
+/-- The `simp`-normal form of `TauCeti.UniversalEnvelopingAlgebra.representation_ι`, stated for
+the canonical generators as `simp` writes them. -/
+@[simp]
+theorem representation_ι' (x : L) :
+    representation R L M
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
+      LieModule.toEnd R L M x :=
+  _root_.UniversalEnvelopingAlgebra.lift_ι_apply' R _ x
+
+/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.representation_ι`: a Lie generator
+acts by the Lie bracket. -/
+theorem representation_ι_apply (x : L) (m : M) :
+    representation R L M (_root_.UniversalEnvelopingAlgebra.ι R x) m = ⁅x, m⁆ := by
+  rw [representation_ι, LieModule.toEnd_apply_apply]
 
 variable {R L}
 variable {B : Type w} [Ring B] [Algebra R B]

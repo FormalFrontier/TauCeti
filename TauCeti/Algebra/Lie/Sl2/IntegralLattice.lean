@@ -169,6 +169,39 @@ theorem ringChoose_diag_apply [Algebra ℚ K]
   have : IsAddTorsionFree K := .of_module_rat K
   exact (nsmul_right_inj (Nat.factorial_ne_zero k)).mp heq
 
+/-- The enveloping-algebra representation on the standard module `V(n)`: the general
+`TauCeti.UniversalEnvelopingAlgebra.representation` at the Lie module `V(n)`. -/
+noncomputable def repEnveloping (K : Type*) [CommRing K] (n : ℕ) :
+    _root_.UniversalEnvelopingAlgebra K (LieAlgebra.SpecialLinear.sl (Fin 2) K) →ₐ[K]
+      Module.End K (Sl2Std K n) :=
+  TauCeti.UniversalEnvelopingAlgebra.representation K (LieAlgebra.SpecialLinear.sl (Fin 2) K)
+    (Sl2Std K n)
+
+/-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
+theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
+    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
+  (TauCeti.UniversalEnvelopingAlgebra.representation_ι K
+        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n) x).trans
+    (LinearMap.ext fun v => by
+      rw [LieModule.toEnd_apply_apply]
+      exact lie_eq_rep_apply x v)
+
+/-- The `simp`-normal form of `repEnveloping_ι`, stated for the canonical generators as `simp`
+writes them: `ι K x` unfolds to `mkAlgHom K _ (TensorAlgebra.ι K x)`. -/
+@[simp]
+theorem repEnveloping_ι' (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
+    repEnveloping K n
+      (_root_.UniversalEnvelopingAlgebra.mkAlgHom K
+        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (TensorAlgebra.ι K x)) = rep K n x := by
+  simpa using repEnveloping_ι (K := K) (n := n) x
+
+/-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
+raising, lowering, and Cartan operators. -/
+theorem repEnveloping_ι_slFinTwoBasis (i : Fin 3) :
+    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
+      ![raise K n, lower K n, diag K n] i := by
+  rw [repEnveloping_ι, rep_apply_basis]
+
 end GeneralCoefficients
 
 variable (n : ℕ)
