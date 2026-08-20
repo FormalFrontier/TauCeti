@@ -201,6 +201,7 @@ theorem centerGroupSchemeIso_inv (e : H ≅ K) :
 
 /-- The isomorphism of centers commutes with their inclusions into the ambient affine group
 schemes. -/
+@[simp]
 theorem centerGroupSchemeIso_hom_comp_centerGroupSchemeι (e : H ≅ K) :
     (centerGroupSchemeIso e).hom ≫ centerGroupSchemeι K =
       centerGroupSchemeι H ≫
