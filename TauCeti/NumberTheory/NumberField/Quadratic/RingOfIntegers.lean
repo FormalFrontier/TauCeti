@@ -27,12 +27,18 @@ The content is the "no more integers" step: an algebraic integer `z` with `(z : 
 `d` is squarefree), and the residue `a² ≡ d·b² (mod 4)` fixes the coordinates: `2a, 2b` are both
 even when `d % 4 ≠ 1`, and are equal mod `2` (so `z ∈ ℤ + ℤ·ω`) when `d ≡ 1 (mod 4)`.
 
+The same coordinates give the **norm form** of `K`: writing the trace as `A` and twice the second
+coordinate as `B`, the norm of `z` is `(A² - d·B²)/4`, and the factor `4` disappears when
+`d ≢ 1 (mod 4)` because the coordinates are then integers.
+
 ## Main results
 
 * `NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
 * `NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
 * `NumberField.adjoin_halfGen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
 * `NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`: `discr K = d` for `d ≡ 1`.
+* `NumberField.exists_sq_sub_mul_sq_eq_four_mul_norm`: the norm form `4·N(z) = A² - d·B²`, and
+  `NumberField.exists_sq_sub_mul_sq_eq_norm_of_mod_four_ne_one`: `N(z) = A² - d·B²` for `d ≢ 1`.
 -/
 
 public section
@@ -308,16 +314,78 @@ theorem discr_eq_of_squarefree_of_mod_four_eq_one (hmin : minpoly ℤ θ = X ^ 2
   have hspan := span_eq_top_of_int_repr hbs' hb (exists_int_repr_one hmin hgen hsf hd4)
   exact_mod_cast discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int bs hb hspan hdd
 
-variable (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-  (hsf : Squarefree d) (hd4 : d % 4 ≠ 1)
-
-include hsf hd4 in
 /-- From squarefreeness and `d % 4 ≠ 1`, the residue is `2` or `3` (it is never `0`, as `4 ∤ d`). -/
-private theorem mod_four_eq_two_or_three : d % 4 = 2 ∨ d % 4 = 3 := by
+private theorem mod_four_eq_two_or_three (hsf : Squarefree d) (hd4 : d % 4 ≠ 1) :
+    d % 4 = 2 ∨ d % 4 = 3 := by
   have hnd4 : ¬ (4 : ℤ) ∣ d := fun h => by
     have h2 : IsUnit (2 : ℤ) := hsf 2 (by rw [(by norm_num : (2 : ℤ) * 2 = 4)]; exact h)
     rw [Int.isUnit_iff] at h2; omega
   omega
+
+/-- The norm of the generator is `-d`: the constant coefficient of `minpoly ℚ θ = X² - d`, up to
+the sign `(-1)^2`. -/
+private theorem norm_gen_eq_neg_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+    Algebra.norm ℚ (θ : K) = -((d : ℤ) : ℚ) := by
+  have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
+  set pb : PowerBasis ℚ K := PowerBasis.ofAdjoinEqTop' hint hgen
+  have hpbgen : pb.gen = (θ : K) := PowerBasis.ofAdjoinEqTop'_gen hint hgen
+  have hpbdim : pb.dim = 2 := by rw [← pb.finrank, finrank_rat_eq_two hmin hgen]
+  have hnorm := Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly pb
+  rw [hpbgen, hpbdim, minpoly_rat_quadratic hmin] at hnorm
+  simpa using hnorm
+
+/-- The norm of `z = a + c·θ` in the `{1, θ}`-coordinates is `a² - d·c²`. -/
+private theorem norm_eq_of_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) {z : 𝓞 K} {a c : ℚ}
+    (hz : (z : K) = algebraMap ℚ K a + algebraMap ℚ K c * (θ : K)) :
+    Algebra.norm ℚ (z : K) = a ^ 2 - ((d : ℤ) : ℚ) * c ^ 2 := by
+  have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
+  rw [hz, Algebra.IsQuadraticExtension.norm_algebraMap_add_algebraMap_mul ℚ K c a (θ : K),
+    trace_gen_eq_zero hmin, norm_gen_eq_neg_radicand hmin hgen]
+  ring
+
+/-- **The norm form of a quadratic field.** For squarefree `d`, every algebraic integer `z` of
+`K = ℚ(√d)` has `4·N(z) = A² - d·B²` for integers `A` (its trace) and `B`: the `{1, θ}`-coordinates
+of `z` are the half-integers `A/2` and `B/2` (`exists_half_int_coords`), and the norm of
+`a + c·θ` is `a² - d·c²`.
+
+This is the shape in which the norm of a quadratic integer is used arithmetically; when
+`d ≢ 1 (mod 4)` the factor `4` can be removed, see
+`exists_sq_sub_mul_sq_eq_norm_of_mod_four_ne_one`. -/
+theorem exists_sq_sub_mul_sq_eq_four_mul_norm (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (z : 𝓞 K) :
+    ∃ A B : ℤ, A ^ 2 - d * B ^ 2 = 4 * Algebra.norm ℤ z := by
+  obtain ⟨A, B, -, hz, -⟩ := exists_half_int_coords hmin hgen hsf z
+  refine ⟨A, B, ?_⟩
+  have hQ : Algebra.norm ℚ (z : K) = ((A : ℚ) / 2) ^ 2 - ((d : ℤ) : ℚ) * ((B : ℚ) / 2) ^ 2 :=
+    norm_eq_of_coords hmin hgen hz
+  have hcast : ((A ^ 2 - d * B ^ 2 : ℤ) : ℚ) = ((4 * Algebra.norm ℤ z : ℤ) : ℚ) := by
+    push_cast
+    rw [Algebra.coe_norm_int, hQ]
+    ring
+  exact_mod_cast hcast
+
+/-- **The norm form of a quadratic field when `d ≢ 1 (mod 4)`.** There the ring of integers is
+`ℤ[θ]`, so every algebraic integer is `A + B·θ` and its norm is exactly `A² - d·B²`. -/
+theorem exists_sq_sub_mul_sq_eq_norm_of_mod_four_ne_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hd4 : d % 4 ≠ 1) (z : 𝓞 K) :
+    ∃ A B : ℤ, A ^ 2 - d * B ^ 2 = Algebra.norm ℤ z := by
+  obtain ⟨A, B, hz⟩ := exists_int_repr hmin hgen hsf (mod_four_eq_two_or_three hsf hd4) z
+  refine ⟨A, B, ?_⟩
+  have hzK : (z : K) = algebraMap ℚ K (A : ℚ) + algebraMap ℚ K (B : ℚ) * (θ : K) := by
+    rw [show ((z : K)) = ((A • (1 : 𝓞 K) + B • θ : 𝓞 K) : K) by rw [← hz]]
+    push_cast [zsmul_eq_mul]
+    simp
+  have hQ : Algebra.norm ℚ (z : K) = (A : ℚ) ^ 2 - ((d : ℤ) : ℚ) * (B : ℚ) ^ 2 :=
+    norm_eq_of_coords hmin hgen hzK
+  have hcast : ((A ^ 2 - d * B ^ 2 : ℤ) : ℚ) = ((Algebra.norm ℤ z : ℤ) : ℚ) := by
+    push_cast
+    rw [Algebra.coe_norm_int, hQ]
+  exact_mod_cast hcast
+
+variable (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+  (hsf : Squarefree d) (hd4 : d % 4 ≠ 1)
 
 include hmin hgen hsf hd4 in
 /-- **The ring of integers is `ℤ[θ]` when `d ≢ 1 (mod 4)`.** For squarefree `d` with `d % 4 ≠ 1`,
