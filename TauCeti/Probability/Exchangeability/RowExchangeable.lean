@@ -101,15 +101,16 @@ variable {Ω α ι : Type*} [MeasurableSpace Ω] [MeasurableSpace α] [Countable
 
 /-- The array `Y` read as a process of columns: the `k`-th column is the vector of the `k`-th
 entries of all rows. -/
-@[expose]
 def arrayColumn (Y : ι × ℕ → Ω → α) (k : ℕ) (ω : Ω) : ι → α :=
   fun a => Y (a, k) ω
 
+-- The parentheses in `(rfl)` opt out of the exported-theorem exposure check, so that this, the
+-- complete computational API of `arrayColumn`, can be stated without exposing its body.
 omit [MeasurableSpace Ω] [MeasurableSpace α] [Countable ι] in
 @[simp]
 theorem arrayColumn_apply (Y : ι × ℕ → Ω → α) (k : ℕ) (ω : Ω) (a : ι) :
     arrayColumn Y k ω a = Y (a, k) ω :=
-  rfl
+  (rfl)
 
 /-- **Row exchangeability.** The law of the array is invariant under permuting the entries of each
 row by a permutation of time chosen separately for that row.
@@ -222,26 +223,29 @@ private theorem measurableSet_pairEventPath (F : Finset ι) {B : ι → Set α}
 
 /-- **The two-time pattern lemma.** Under row exchangeability the probability that every row of a
 finite set lands in its own target set at two prescribed times is the same for all choices of the
-two times, so long as the two times chosen in a given row are distinct.
+two times, so long as the two times chosen in each row of that set are distinct.
 
 This is the whole combinatorial input to the factorization theorem: each moment of the directing
 measure computes such a probability, with a different time pattern. -/
 theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
     (hY : ∀ p, AEMeasurable (Y p) μ) (F : Finset ι) {B : ι → Set α}
-    (hB : ∀ a ∈ F, MeasurableSet (B a)) {c d : ι → ℕ} (hcd : ∀ a, c a ≠ d a) :
+    (hB : ∀ a ∈ F, MeasurableSet (B a)) {c d : ι → ℕ} (hcd : ∀ a ∈ F, c a ≠ d a) :
     μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a} =
       μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B a ∧ Y (a, 1) ω ∈ B a} := by
   classical
-  -- A permutation of time in row `a` carrying `0` to `c a` and `1` to `d a`.
-  have hexists : ∀ a : ι, ∃ σ : Equiv.Perm ℕ, σ 0 = c a ∧ σ 1 = d a := by
+  -- A permutation of time in row `a` carrying `0` to `c a` and `1` to `d a`. Only the rows of `F`
+  -- are constrained, so rows outside `F` — where `c` and `d` may agree — take the identity.
+  have hexists : ∀ a : ι, ∃ σ : Equiv.Perm ℕ, a ∈ F → σ 0 = c a ∧ σ 1 = d a := by
     intro a
-    have h01 : Function.Injective (![0, 1] : Fin 2 → ℕ) := by
-      intro i j hij; fin_cases i <;> fin_cases j <;> simp_all
-    have hcd' : Function.Injective (![c a, d a] : Fin 2 → ℕ) := by
-      intro i j hij; fin_cases i <;> fin_cases j <;> simp_all [hcd a, (hcd a).symm]
-    obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ h01 hcd'
-    exact ⟨σ, by simpa using hσ 0, by simpa using hσ 1⟩
-  choose π hπ0 hπ1 using hexists
+    by_cases ha : a ∈ F
+    · have h01 : Function.Injective (![0, 1] : Fin 2 → ℕ) := by
+        intro i j hij; fin_cases i <;> fin_cases j <;> simp_all
+      have hcd' : Function.Injective (![c a, d a] : Fin 2 → ℕ) := by
+        intro i j hij; fin_cases i <;> fin_cases j <;> simp_all [hcd a ha, (hcd a ha).symm]
+      obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ h01 hcd'
+      exact ⟨σ, fun _ => ⟨by simpa using hσ 0, by simpa using hσ 1⟩⟩
+    · exact ⟨1, fun ha' => absurd ha' ha⟩
+  choose π hπ using hexists
   set A : Set (ι × ℕ → α) := {y : ι × ℕ → α | ∀ a ∈ F, y (a, 0) ∈ B a ∧ y (a, 1) ∈ B a} with hA
   have hAmeas : MeasurableSet A := measurableSet_pairEventPath F hB _ _
   have hLHS : (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) A =
@@ -250,7 +254,9 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
       (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)) hAmeas]
     congr 1
     ext ω
-    simp only [hA, Set.mem_preimage, Set.mem_ofPred_eq, hπ0, hπ1]
+    simp only [hA, Set.mem_preimage, Set.mem_ofPred_eq]
+    refine forall_congr' fun a => forall_congr' fun ha => ?_
+    rw [(hπ a ha).1, (hπ a ha).2]
   have hRHS : (μ.map fun ω (p : ι × ℕ) => Y p ω) A =
       μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B a ∧ Y (a, 1) ω ∈ B a} := by
     rw [Measure.map_apply_of_aemeasurable (aemeasurable_pi_lambda _ fun p => hY p) hAmeas]
@@ -304,7 +310,8 @@ private theorem RowExchangeable.measure_setOf_two_blocks_eq (h : RowExchangeable
       · rw [(hFval a ha).1, (hFval a ha).2]; exact h1 a ha
       · rw [(hGval a ha).1, (hGval a ha).2]; exact h2 a ha
   rw [← hglue, ← hsplit c d, ← hsplit (fun _ => 0) (fun _ => 1),
-    h.measure_setOf_forall_pair_eq hY (F ∪ G) (fun a ha => hB a (Finset.mem_union.mp ha)) hcd]
+    h.measure_setOf_forall_pair_eq hY (F ∪ G) (fun a ha => hB a (Finset.mem_union.mp ha))
+      fun a _ => hcd a]
 
 section Factorization
 
