@@ -156,53 +156,45 @@ theorem eq_valuation_of_forall_mem_asIdeal_iff {𝔭 : HeightOneSpectrum R}
     rw [key _ (𝔭.valuation_le_one n) hd, key _ (hR n) ((hone (d : R)).mp hd), hone n]
 
 variable (R) in
-/-- The height one prime of `R` at which a normalized valuation of `K` bounded by `1` on `R` is
-centred. Its adic valuation is `w` itself (`Valuation.valuation_heightOneSpectrum`), and it is the
-only height one prime with that property (`Valuation.eq_heightOneSpectrum`). -/
-def heightOneSpectrum (w : _root_.Valuation K ℤᵐ⁰) (hw : Function.Surjective w)
-    (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : HeightOneSpectrum R := by
-  letI : w.IsNontrivial := Valuation.isNontrivial_iff_exists_lt_one w |>.mpr <| by
-    obtain ⟨y, hy⟩ := hw (WithZero.exp (-1 : ℤ))
-    refine ⟨y, ?_, ?_⟩
-    · rintro rfl
-      rw [map_zero] at hy
-      exact WithZero.exp_ne_zero hy.symm
-    · rw [hy, ← WithZero.exp_zero (M := ℤ), WithZero.exp_lt_exp]
-      omega
-  exact
-    { asIdeal := centerIdeal R w hR
-      isPrime := isPrime_centerIdeal hR
-      ne_bot := centerIdeal_ne_bot hR }
+/-- The height one prime of `R` at which a nontrivial valuation of `K` bounded by `1` on `R` is
+centred. Once `w` is moreover normalized, its adic valuation is `w` itself
+(`Valuation.valuation_heightOneSpectrum`) and it is the only height one prime with that property
+(`Valuation.eq_heightOneSpectrum`). -/
+def heightOneSpectrum (w : _root_.Valuation K ℤᵐ⁰) [w.IsNontrivial]
+    (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : HeightOneSpectrum R where
+  asIdeal := centerIdeal R w hR
+  isPrime := isPrime_centerIdeal hR
+  ne_bot := centerIdeal_ne_bot hR
 
 /-- The underlying ideal of `heightOneSpectrum` is the centre ideal. -/
 @[simp]
-theorem asIdeal_heightOneSpectrum (hw : Function.Surjective w)
+theorem asIdeal_heightOneSpectrum [w.IsNontrivial]
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
-    (heightOneSpectrum R w hw hR).asIdeal = centerIdeal R w hR := (rfl)
+    (heightOneSpectrum R w hR).asIdeal = centerIdeal R w hR := (rfl)
 
 /-- **The adic valuation of the centre of `w` on `R` is `w` itself**: a normalized valuation of the
 fraction field of a Dedekind domain whose valuation ring contains that domain is adic. -/
 @[simp]
-theorem valuation_heightOneSpectrum (hw : Function.Surjective w)
+theorem valuation_heightOneSpectrum [w.IsNontrivial] (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
-    (heightOneSpectrum R w hw hR).valuation K = w :=
+    (heightOneSpectrum R w hR).valuation K = w :=
   eq_valuation_of_forall_mem_asIdeal_iff hw hR fun _ ↦ by
     rw [asIdeal_heightOneSpectrum, mem_centerIdeal]
 
 /-- A height one prime whose adic valuation is `w` is the centre of `w`. -/
-theorem eq_heightOneSpectrum {𝔮 : HeightOneSpectrum R} (hw : Function.Surjective w)
-    (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) (h : 𝔮.valuation K = w) :
-    𝔮 = heightOneSpectrum R w hw hR :=
+theorem eq_heightOneSpectrum {𝔮 : HeightOneSpectrum R} [w.IsNontrivial]
+    (hw : Function.Surjective w) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1)
+    (h : 𝔮.valuation K = w) : 𝔮 = heightOneSpectrum R w hR :=
   HeightOneSpectrum.eq_of_valuation_isEquiv_valuation (K := K)
     (by rw [h, valuation_heightOneSpectrum hw hR])
 
 variable (R) in
 /-- **A normalized valuation of the fraction field of a Dedekind domain `R` whose valuation ring
 contains `R` is the adic valuation of a unique height one prime of `R`.** -/
-theorem existsUnique_heightOneSpectrum_valuation_eq (hw : Function.Surjective w)
-    (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
+theorem existsUnique_heightOneSpectrum_valuation_eq [w.IsNontrivial]
+    (hw : Function.Surjective w) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     ∃! 𝔭 : HeightOneSpectrum R, 𝔭.valuation K = w :=
-  ⟨heightOneSpectrum R w hw hR, valuation_heightOneSpectrum hw hR,
+  ⟨heightOneSpectrum R w hR, valuation_heightOneSpectrum hw hR,
     fun _ h ↦ eq_heightOneSpectrum hw hR h⟩
 
 end Comparison

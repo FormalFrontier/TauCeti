@@ -102,14 +102,14 @@ include hR
 /-- The **centre** on an affine model `R` of a place `P` finite on `R`: the height one prime of
 `R` consisting of the elements with a zero at `P`. -/
 def center : HeightOneSpectrum R :=
-  P.valuation.heightOneSpectrum R P.valuation_surjective fun r ↦ P.mem_integers_iff.mp (hR r)
+  P.valuation.heightOneSpectrum R fun r ↦ P.mem_integers_iff.mp (hR r)
 
 /-- **The valuation of a place finite on an affine model is the adic valuation of its centre.**
 This is the exact, not merely up-to-equivalence, form of the correspondence between places and
 height one primes. -/
 @[simp]
 theorem valuation_center : (P.center hR).valuation F = P.valuation :=
-  Valuation.valuation_heightOneSpectrum _ _
+  Valuation.valuation_heightOneSpectrum P.valuation_surjective _
 
 /-- The centre of `P` on `R` consists of the elements of `R` at which the valuation of `P` is
 `< 1`. -/
@@ -131,7 +131,7 @@ theorem mem_center_asIdeal_iff_ord_pos {r : R} (hr : r ≠ 0) :
 /-- A height one prime whose adic valuation is that of `P` is the centre of `P`. -/
 theorem eq_center {𝔭 : HeightOneSpectrum R} (h : 𝔭.valuation F = P.valuation) :
     𝔭 = P.center hR :=
-  Valuation.eq_heightOneSpectrum _ _ h
+  Valuation.eq_heightOneSpectrum P.valuation_surjective _ h
 
 /-- **A place of `F / k` whose valuation ring contains an affine model `R` is the adic place of a
 unique height one prime of `R`** (Stichtenoth, Section III.2). -/
