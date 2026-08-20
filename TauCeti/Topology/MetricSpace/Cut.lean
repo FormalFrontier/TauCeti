@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Connected.Basic
+public import Mathlib.Topology.MetricSpace.Bounded
 public import Mathlib.Topology.MetricSpace.Pseudo.Lemmas
 
 /-!
@@ -21,6 +22,13 @@ preconnected subset of `s` missing the sphere lies entirely in one of them.
 Nothing beyond the containments `ball x ρ ⊆ closedBall x ρ` and `sphere x ρ ⊆ closedBall x ρ`, and
 the openness of a ball against the closedness of a closed ball, is used, so `s` is an arbitrary set
 in an arbitrary pseudo-metric space.
+
+The one quantitative statement is about *shrinking* the cut. When the cut point `x` lies off `s`,
+the far side keeps two prescribed points of `s` once `ρ` is small enough, so the image of the far
+side under an injection stays at least as wide as the distance between their two images: the far
+side does not degenerate as the cut shrinks. Distinctness of those two images is what forces a
+genuine metric, rather than pseudo-metric, structure on both sides, and that statement alone is
+stated for one.
 
 The intended consumer is layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's
 boundary correspondence, through `TauCeti/Analysis/Complex/Conformal/Crosscut/Basic.lean` and
@@ -41,6 +49,9 @@ use, and Mathlib has no form of the decomposition.
   image under an arbitrary map.
 * `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` — a preconnected subset of an open cut set
   missing the sphere lies on one side of it.
+* `TauCeti.exists_pos_forall_le_diam_image_sdiff_closedBall` — cutting at a point off the set, the
+  image of the far side stays at least as wide as a fixed positive number for every small enough
+  radius.
 -/
 
 public section
@@ -108,5 +119,40 @@ theorem subset_inter_ball_or_subset_sdiff_closedBall {s S : Set X} (hs : IsOpen 
   hS.subset_or_subset (hs.inter isOpen_ball) (hs.sdiff isClosed_closedBall)
     disjoint_inter_ball_sdiff_closedBall
     (sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (x := x) (s := s) ▸ hSsub)
+
+/-! ## The far side does not degenerate -/
+
+section Metric
+
+variable {X Y : Type*} [MetricSpace X] [MetricSpace Y] {f : X → Y} {s : Set X} {x : X}
+
+/-- **Cutting at a point off the set, the far side keeps a fixed width as the cut shrinks.** Let
+`s` have at least two points, let `x` lie off `s`, and let `f` be injective on `s` with bounded
+image. Then there are `d > 0` and `ρ₀ > 0` such that
+
+> `d ≤ diam (f '' (s \ closedBall x ρ))` for every `ρ ≤ ρ₀`.
+
+Two distinct points of `s` have distinct images by injectivity, and both stay off `closedBall x ρ`
+once `ρ` is below their distances to `x`, which are positive because `x` misses `s`. So `d` may be
+taken to be the distance between the two images, and `ρ₀` half the smaller of the two distances.
+
+No hypothesis relates `f` to the metric of `X`; only `f`'s injectivity and the boundedness of its
+image are used, the latter so that `Metric.dist_le_diam_of_mem` applies. -/
+theorem exists_pos_forall_le_diam_image_sdiff_closedBall (hs : ¬ s.Subsingleton) (hx : x ∉ s)
+    (hinj : InjOn f s) (hb : Bornology.IsBounded (f '' s)) :
+    ∃ d > 0, ∃ ρ₀ > 0, ∀ ρ ≤ ρ₀, d ≤ diam (f '' (s \ closedBall x ρ)) := by
+  obtain ⟨z₁, hz₁, z₂, hz₂, hne⟩ := Set.not_subsingleton_iff.mp hs
+  have hd : 0 < dist (f z₁) (f z₂) := dist_pos.mpr fun h => hne (hinj hz₁ hz₂ h)
+  have h₁ : 0 < dist z₁ x := dist_pos.mpr fun h => hx (h ▸ hz₁)
+  have h₂ : 0 < dist z₂ x := dist_pos.mpr fun h => hx (h ▸ hz₂)
+  have hmin : 0 < min (dist z₁ x) (dist z₂ x) := lt_min h₁ h₂
+  refine ⟨dist (f z₁) (f z₂), hd, min (dist z₁ x) (dist z₂ x) / 2, by linarith, fun ρ hρ => ?_⟩
+  have hmem : ∀ z, z ∈ s → min (dist z₁ x) (dist z₂ x) ≤ dist z x → z ∈ s \ closedBall x ρ :=
+    fun z hz hzd => ⟨hz, by simp only [mem_closedBall, not_le]; linarith⟩
+  exact dist_le_diam_of_mem (hb.subset (Set.image_mono Set.sdiff_subset))
+    (Set.mem_image_of_mem f (hmem z₁ hz₁ (min_le_left _ _)))
+    (Set.mem_image_of_mem f (hmem z₂ hz₂ (min_le_right _ _)))
+
+end Metric
 
 end TauCeti
