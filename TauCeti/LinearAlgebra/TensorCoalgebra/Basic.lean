@@ -21,7 +21,7 @@ the coalgebra-side input for the suspended bar construction in the `DGAInfinity`
 ## Main definitions
 
 * `TauCeti.ReducedTensorWords`: the direct sum of positive tensor powers.
-* `TauCeti.TensorPower.splitAt`: split a tensor power at a specified position.
+* `TensorPower.splitAt`: split a tensor power at a specified position.
 * `TauCeti.ReducedTensorWords.deconcatenation`: sum over every nontrivial cut of a tensor word.
 
 ## References
@@ -34,9 +34,9 @@ public section
 
 open scoped BigOperators DirectSum TensorProduct
 
-universe uR uM uN
+universe uR uM uN uP
 
-variable (R : Type uR) (M : Type uM) [CommRing R] [AddCommGroup M] [Module R M]
+variable (R : Type uR) (M : Type uM) [CommSemiring R] [AddCommMonoid M] [Module R M]
 
 namespace TensorPower
 
@@ -78,7 +78,7 @@ end TensorPower
 
 namespace TauCeti
 
-variable (R : Type uR) (M : Type uM) [CommRing R] [AddCommGroup M] [Module R M]
+variable (R : Type uR) (M : Type uM) [CommSemiring R] [AddCommMonoid M] [Module R M]
 
 /-- The module of nonempty tensor words. -/
 abbrev ReducedTensorWords : Type _ := ⨁ n : {n : ℕ // 0 < n}, TensorPower R n.1 M
@@ -99,6 +99,18 @@ noncomputable def component (n : {n : ℕ // 0 < n}) :
 theorem component_of (n : {n : ℕ // 0 < n}) (x : TensorPower R n.1 M) :
     component R M n (of R M n x) = x := by
   simp [component, of]
+
+/-- Projecting an included tensor power vanishes when the two lengths differ. -/
+@[simp]
+theorem component_of_of_ne {m n : {n : ℕ // 0 < n}} (h : m ≠ n) (x : TensorPower R m.1 M) :
+    component R M n (of R M m x) = 0 := by
+  simp [component, of, DirectSum.component.of, h]
+
+/-- Projecting an included tensor power returns the tensor power itself at the matching length
+and zero at every other length. -/
+theorem component_of' (m n : {n : ℕ // 0 < n}) (x : TensorPower R m.1 M) :
+    component R M n (of R M m x) = if h : m = n then h ▸ x else 0 := by
+  simp [component, of, DirectSum.component.of]
 
 /-- Deconcatenation on words of one fixed length, summed over all nontrivial cuts. -/
 noncomputable def deconcatenationComponent (n : {n : ℕ // 0 < n}) :
@@ -136,8 +148,8 @@ theorem deconcatenation_of_tprod (n : {n : ℕ // 0 < n}) (x : Fin n.1 → M) :
   simp only [deconcatenationComponent, LinearMap.sum_apply, LinearMap.comp_apply,
     TensorPower.splitAt_tprod, TensorProduct.map_tmul]
 
-/-- On degree-one tensor words, reduced deconcatenation is zero. -/
-theorem deconcatenation_of_one (x : TensorPower R 1 M) :
+/-- On tensor words of length one, reduced deconcatenation is zero. -/
+theorem deconcatenation_of_length_one (x : TensorPower R 1 M) :
     deconcatenation R M (of R M ⟨1, by omega⟩ x) = 0 := by
   rw [deconcatenation_of]
   unfold deconcatenationComponent
@@ -148,8 +160,8 @@ theorem deconcatenation_of_one (x : TensorPower R 1 M) :
 
 section Map
 
-variable {M : Type uM} {N : Type uN} [AddCommGroup M] [Module R M]
-  [AddCommGroup N] [Module R N]
+variable {M : Type uM} {N : Type uN} {P : Type uP} [AddCommMonoid M] [Module R M]
+  [AddCommMonoid N] [Module R N] [AddCommMonoid P] [Module R P]
 
 /-- Apply a linear map to every letter of a reduced tensor word. -/
 noncomputable def map (f : M →ₗ[R] N) : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R N :=
@@ -168,6 +180,25 @@ theorem map_of_tprod (f : M →ₗ[R] N) (n : {n : ℕ // 0 < n}) (x : Fin n.1 �
     ReducedTensorWords.map (R := R) f (of R M n (PiTensorProduct.tprod R x)) =
       of R N n (PiTensorProduct.tprod R fun i ↦ f (x i)) := by
   simp
+
+/-- Mapping the identity map over the letters is the identity. -/
+@[simp]
+theorem map_id : ReducedTensorWords.map (R := R) (LinearMap.id : M →ₗ[R] M) = LinearMap.id := by
+  apply DirectSum.linearMap_ext R
+  intro n
+  apply LinearMap.ext
+  intro x
+  simp [map, of]
+
+/-- Mapping a composite over the letters composes the two letterwise maps. -/
+theorem map_comp (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
+    ReducedTensorWords.map (R := R) (g ∘ₗ f) =
+      ReducedTensorWords.map (R := R) g ∘ₗ ReducedTensorWords.map (R := R) f := by
+  apply DirectSum.linearMap_ext R
+  intro n
+  apply LinearMap.ext
+  intro x
+  simp [map, of, PiTensorProduct.map_comp]
 
 /-- Reduced deconcatenation is natural with respect to linear maps of the letters. -/
 theorem deconcatenation_natural (f : M →ₗ[R] N) :
