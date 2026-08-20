@@ -37,6 +37,8 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
   `TauCeti.hopfSpec_obj_inv_left`: its three group operations.
 * `TauCeti.isCocomm_iff_isCommMonObj_hopfSpec`: cocommutativity corresponds to a commutative
   group object.
+* `TauCeti.instIsCommMonObjHopfSpec`: a cocommutative Hopf algebra has a commutative Hopf
+  spectrum.
 * `TauCeti.moduleFinite_iff_isFinite_hopfSpec`: module-finiteness corresponds to a finite
   structural morphism.
 * `TauCeti.moduleFlat_iff_flat_hopfSpec`: module-flatness corresponds to a flat structural
@@ -263,6 +265,11 @@ theorem isCocomm_iff_isCommMonObj_hopfSpec
     apply LinearMap.ext
     intro x
     exact LinearMap.congr_fun hlinear x
+
+/-- The Hopf spectrum of a cocommutative Hopf algebra is a commutative group object. -/
+instance instIsCommMonObjHopfSpec (H : CommHopfAlgCat.{u} R) [Coalgebra.IsCocomm R H] :
+    IsCommMonObj (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X) :=
+  (isCocomm_iff_isCommMonObj_hopfSpec R H).mp inferInstance
 
 /-- A Hopf spectrum is finite over its base exactly when its coordinate algebra is
 module-finite. -/
