@@ -266,7 +266,6 @@ private theorem neg_neg_one_pow_succ_mul (m : ℕ) (c : ℚ) :
 /-- **The Weyl element reverses the weight string with a sign.** It carries the coordinate basis
 vector `vᵢ` to `(-1) ^ (n - i) · v_{n - i}`, the reflection `s_α` of the weight lattice realised
 inside the group. -/
-@[simp]
 theorem weylUnit_apply_basis (i : Fin (n + 1)) :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (basis ℚ n i) =
       ((-1 : ℚ) ^ (n - (i : ℕ))) • basis ℚ n i.rev := by
@@ -346,7 +345,6 @@ theorem coe_inv_weylUnit :
     _ = ((-1 : ℚ) ^ n) • (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) := rfl
 
 /-- The Weyl element acts on every vector of `V(n)` by `(-1) ^ n` after two applications. -/
-@[simp]
 theorem weylUnit_weylUnit_apply (v : Sl2Std ℚ n) :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n))
         ((weylUnit n : Module.End ℚ (Sl2Std ℚ n)) v) = ((-1 : ℚ) ^ n) • v := by
@@ -357,7 +355,6 @@ theorem weylUnit_weylUnit_apply (v : Sl2Std ℚ n) :
 
 /-- **The matrix of the Weyl element.** It sends the `i`-th coordinate of the image to the
 reversed coordinate of the source, with the sign `(-1) ^ i`. -/
-@[simp]
 theorem weylUnit_apply_apply (v : Sl2Std ℚ n) (i : Fin (n + 1)) :
     ((weylUnit n : Module.End ℚ (Sl2Std ℚ n)) v) i = (-1 : ℚ) ^ (i : ℕ) * v i.rev := by
   have hrev : n - (i.rev : ℕ) = (i : ℕ) := by
@@ -424,7 +421,6 @@ private theorem kostantWeylUnit_eq :
 
 /-- On the standard integral lattice, the existing Kostant Weyl automorphism applies the
 coordinate Weyl element computed in this file. -/
-@[simp]
 theorem coe_kostantWeylRestrict_apply (v : MStd) :
     ((wℤ v : MStd) : Sl2Std ℚ n) =
       (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (v : Sl2Std ℚ n) := by
