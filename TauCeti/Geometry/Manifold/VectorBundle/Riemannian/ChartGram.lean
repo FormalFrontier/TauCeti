@@ -104,6 +104,12 @@ def chartGramMatrix (α : M) (x : M) :
     Matrix (Fin (Module.finrank ℝ E)) (Fin (Module.finrank ℝ E)) ℝ :=
   Matrix.gram ℝ fun i ↦ chartLocalFrame (I := I) α i x
 
+/-- An entry of the chart Gram matrix is the inner product of the corresponding frame vectors. -/
+@[simp]
+theorem chartGramMatrix_apply (α : M) (x : M) (i j : Fin (Module.finrank ℝ E)) :
+    chartGramMatrix (I := I) α x i j =
+      inner ℝ (chartLocalFrame (I := I) α i x) (chartLocalFrame (I := I) α j x) := (rfl)
+
 /-- The Gram matrix of the chart-local frame is positive-definite on the tangent-trivialization
 base set. -/
 theorem posDef_chartGramMatrix (α : M) {x : M}
