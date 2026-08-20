@@ -68,70 +68,50 @@ section ToMatrix
 
 variable (k : Type w) [CommSemiring k]
 
-/-- The linear map sending a path to the matrix unit in the row of its target and the column of
-its source. -/
-private noncomputable def toMatrixLinear :
-    pathAlgebra k (Kronecker A) →ₗ[k] Matrix (Fin 2) (Fin 2) k :=
-  (pathAlgebraBasis k (Kronecker A)).constr k fun x =>
-    Matrix.single (vertexEquiv x.2.1) (vertexEquiv x.1) 1
+/-- The matrix unit a path goes to: the one in the row of its target and the column of its
+source. -/
+private def toMatrixUnit (x : Quiver.TotalPath (Kronecker A)) : Matrix (Fin 2) (Fin 2) k :=
+  Matrix.single (vertexEquiv x.2.1) (vertexEquiv x.1) 1
 
-private theorem toMatrixLinear_single (x : Quiver.TotalPath (Kronecker A)) (c : k) :
-    toMatrixLinear k (PathAlgebra.single x c)
-      = Matrix.single (vertexEquiv x.2.1) (vertexEquiv x.1) c := by
-  have hb : pathAlgebraBasis k (Kronecker A) x = PathAlgebra.ofPath x :=
-    congrFun (coe_pathAlgebraBasis k (Kronecker A)) x
-  have hx : (PathAlgebra.single x c : pathAlgebra k (Kronecker A))
-      = c • pathAlgebraBasis k (Kronecker A) x := by
-    rw [hb, PathAlgebra.ofPath_eq_single, PathAlgebra.smul_single, mul_one]
-  rw [hx, map_smul, toMatrixLinear, Module.Basis.constr_basis, Matrix.smul_single, smul_eq_mul,
-    mul_one]
+/-- Concatenation of paths becomes multiplication of matrix units, the column of the first being
+the row of the second. -/
+private theorem toMatrixUnit_mul_toMatrixUnit_of_comp {a b c : Kronecker A} (p : Path a b)
+    (q : Path c a) :
+    toMatrixUnit k ⟨a, b, p⟩ * toMatrixUnit k ⟨c, a, q⟩ = toMatrixUnit k ⟨c, b, q.comp p⟩ := by
+  rw [toMatrixUnit, toMatrixUnit, toMatrixUnit, Matrix.single_mul_single_same, one_mul]
 
-/-- The two vertex idempotents go to the two diagonal matrix units, which sum to the identity
-matrix. -/
-private theorem toMatrixLinear_one :
-    toMatrixLinear k (1 : pathAlgebra k (Kronecker A)) = 1 := by
-  rw [PathAlgebra.one_def, sum_univ, map_add, PathAlgebra.vertexIdempotent_eq_single,
-    PathAlgebra.vertexIdempotent_eq_single, toMatrixLinear_single, toMatrixLinear_single,
-    ← Matrix.sum_single_one, Fin.sum_univ_two]
-  simp [add_comm]
+/-- Two paths that do not meet go to matrix units whose product vanishes, since `vertexEquiv` is
+injective. -/
+private theorem toMatrixUnit_mul_toMatrixUnit_of_not_composable
+    {x y : Quiver.TotalPath (Kronecker A)} (h : y.2.1 ≠ x.1) :
+    toMatrixUnit k x * toMatrixUnit k y = 0 := by
+  have hne : vertexEquiv x.1 ≠ vertexEquiv y.2.1 := fun hc => h (vertexEquiv.injective hc).symm
+  rw [toMatrixUnit, toMatrixUnit, Matrix.single_mul_single_of_ne (h := hne)]
 
-/-- Concatenation of paths becomes multiplication of matrix units: two paths meet exactly when the
-column of the first matrix unit is the row of the second, since `vertexEquiv` is injective. -/
-private theorem toMatrixLinear_mul (f g : pathAlgebra k (Kronecker A)) :
-    toMatrixLinear k (f * g) = toMatrixLinear k f * toMatrixLinear k g := by
-  induction f using PathAlgebra.induction_linear with
-  | zero => simp
-  | add f₁ f₂ ih₁ ih₂ => simp [add_mul, ih₁, ih₂]
-  | single x r =>
-    induction g using PathAlgebra.induction_linear with
-    | zero => simp
-    | add g₁ g₂ ih₁ ih₂ => simp [mul_add, ih₁, ih₂]
-    | single y s =>
-      by_cases h : y.2.1 = x.1
-      · obtain ⟨x₁, x₂, p⟩ := x
-        obtain ⟨y₁, y₂, q⟩ := y
-        subst h
-        rw [PathAlgebra.single_mul_single_of_comp, toMatrixLinear_single, toMatrixLinear_single,
-          toMatrixLinear_single, Matrix.single_mul_single_same]
-      · have hne : vertexEquiv x.1 ≠ vertexEquiv y.2.1 :=
-          fun hc => h (vertexEquiv.injective hc).symm
-        rw [PathAlgebra.single_mul_single_of_not_composable h, map_zero, toMatrixLinear_single,
-          toMatrixLinear_single, Matrix.single_mul_single_of_ne (h := hne)]
+/-- The two trivial paths go to the two diagonal matrix units, which sum to the identity matrix.
+The enumeration is left an argument, so that the sum can be taken over the one
+`TauCeti.PathAlgebra.liftAlgHom` asks for it over: `TauCeti.Quiver.Kronecker.vertexEquiv` transports
+the sum to the one over `Fin 2` whichever it is. -/
+private theorem sum_toMatrixUnit_nil (fq : Fintype (Kronecker A)) :
+    ∑ v ∈ @Finset.univ (Kronecker A) fq,
+        toMatrixUnit k (⟨v, v, Path.nil⟩ : Quiver.TotalPath (Kronecker A)) = 1 :=
+  (Fintype.sum_equiv vertexEquiv _ (fun i => Matrix.single i i (1 : k)) fun _ => rfl).trans
+    Matrix.sum_single_one
 
 /-- The path algebra of the generalized Kronecker quiver as `2 × 2` matrices: a path goes to the
-matrix unit in the row of its target and the column of its source. -/
+matrix unit in the row of its target and the column of its source. This is the universal property
+`TauCeti.PathAlgebra.liftAlgHom` applied to `toMatrixUnit`. -/
 private noncomputable def toMatrixAlgHom :
     pathAlgebra k (Kronecker A) →ₐ[k] Matrix (Fin 2) (Fin 2) k :=
-  AlgHom.ofLinearMap (toMatrixLinear k) (toMatrixLinear_one k) (toMatrixLinear_mul k)
-
-private theorem toMatrixAlgHom_toLinearMap :
-    (toMatrixAlgHom (A := A) k).toLinearMap = toMatrixLinear k := by
-  rw [toMatrixAlgHom, AlgHom.toLinearMap_ofLinearMap]
+  PathAlgebra.liftAlgHom k (toMatrixUnit k) (toMatrixUnit_mul_toMatrixUnit_of_comp k)
+    (toMatrixUnit_mul_toMatrixUnit_of_not_composable k)
+    (sum_toMatrixUnit_nil k (Fintype.ofFinite _))
 
 private theorem toMatrixAlgHom_single (x : Quiver.TotalPath (Kronecker A)) (c : k) :
     toMatrixAlgHom k (PathAlgebra.single x c)
       = Matrix.single (vertexEquiv x.2.1) (vertexEquiv x.1) c := by
-  rw [← AlgHom.toLinearMap_apply, toMatrixAlgHom_toLinearMap, toMatrixLinear_single]
+  rw [toMatrixAlgHom, PathAlgebra.liftAlgHom_single, toMatrixUnit, Matrix.smul_single,
+    smul_eq_mul, mul_one]
 
 end ToMatrix
 

@@ -33,7 +33,7 @@ is claimed here, so the construction is stated over an arbitrary commutative rin
 restriction. This is the ambient stage of the `SOₙ` worked example of the ReductiveGroups
 roadmap, built at the same boundary as the symplectic example (`TauCeti.Symplectic`):
 construction and points identification, with no smoothness or reductivity claim. The
-determinant-one cut `SOₙ` itself is the immediate follow-up on top of this file.
+determinant-one cut `SOₙ` itself is built on top of this file in `TauCeti.SpecialOrthogonal`.
 
 The three Hopf-ideal closure conditions are proved by matrix algebra rather than coordinate by
 coordinate, specializing the computations of the symplectic example to the constant form `1`.
@@ -447,7 +447,8 @@ private theorem ofConv_relationMatrix
 
 /-- An ambient point belongs to the subgroup cut out by the orthogonal Hopf ideal exactly when
 its matrix is orthogonal. This is the ambient membership criterion that further cuts consume;
-the determinant-one cut combines it with the special-linear one. -/
+the determinant-one cut (`TauCeti.SpecialOrthogonal`) combines it with the special-linear
+one. -/
 @[simp]
 theorem mem_definingPointsSubgroup_iff
     (g : HopfAlgebra.points (R := R)
@@ -505,7 +506,7 @@ private noncomputable def orthogonalGroupToPointsSubgroup
 
 /-- The unit attached to an orthogonal matrix wrapped from a general linear element is that
 element: both have the same underlying matrix. -/
-private theorem toUnits_mk (M : GL (Fin n) A)
+theorem toUnits_mk (M : GL (Fin n) A)
     (h : (M : Matrix (Fin n) (Fin n) A) ∈ Matrix.orthogonalGroup (Fin n) A) :
     Unitary.toUnits (⟨(M : Matrix (Fin n) (Fin n) A), h⟩ :
         Matrix.orthogonalGroup (Fin n) A) = M :=
