@@ -15,8 +15,9 @@ import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
 
 The coordinate Hopf algebra of the upper-triangular Borel subgroup of `GL₂` has a solvable group
 of geometric points. The existing point equivalence identifies that group with `GL2Borel` over an
-algebraic closure, while the latter is solvable because its diagonal quotient and unipotent kernel
-are abelian.
+algebraic closure. This group is solvable as the `Fin 2` case of
+`TauCeti.UpperTriangularGroup.instIsSolvable`: it has an abelian diagonal quotient and a nilpotent
+upper-unitriangular kernel.
 
 ## Main declaration
 

@@ -65,6 +65,7 @@ variable {m R}
 
 /-- Membership in the upper-triangular group means that the underlying matrix is upper
 triangular. -/
+@[simp]
 theorem mem_iff {g : GL m R} :
     g ∈ upperTriangularGroup m R ↔ (g : Matrix m m R).IsUpperTriangular :=
   Iff.rfl
@@ -101,20 +102,11 @@ def diagonalHom : (m → Rˣ) →* upperTriangularGroup m R :=
       rw [diagGL_coe]
       exact Matrix.diagonal_apply_ne _ (ne_of_gt hji)
 
-/-- The matrix underlying `diagonalHom t` is the corresponding diagonal matrix. -/
+/-- The element of `GL` underlying `diagonalHom t` is `diagGL t`. -/
 @[simp]
 theorem coe_diagonalHom (t : m → Rˣ) :
-    (((diagonalHom t : upperTriangularGroup m R) : GL m R) : Matrix m m R) =
-      Matrix.diagonal fun i ↦ (t i : R) := by
-  exact diagGL_coe t
-
-/-- The entries of `diagonalHom t` vanish off the diagonal and equal `t i` on it. -/
-@[simp]
-theorem diagonalHom_apply (t : m → Rˣ) (i j : m) :
-    (((diagonalHom t : upperTriangularGroup m R) : GL m R) : Matrix m m R) i j =
-      if i = j then (t i : R) else 0 := by
-  rw [coe_diagonalHom]
-  exact Matrix.diagonal_apply ..
+    ((diagonalHom t : upperTriangularGroup m R) : GL m R) = diagGL t := by
+  rw [diagonalHom, MonoidHom.codRestrict_apply]
 
 /-- Diagonal matrices form a section of the diagonal projection. -/
 @[simp]
@@ -132,10 +124,10 @@ theorem upperUnitriangularGroup_le_upperTriangularGroup :
     upperUnitriangularGroup m R ≤ upperTriangularGroup m R :=
   fun _ hg ↦ mem_iff.mpr (UpperUnitriangularGroup.mem_iff.mp hg).isUpperTriangular
 
-/-- Membership in the kernel of the diagonal projection is upper-unitriangularity of the
-underlying matrix. -/
+/-- The diagonal projection equals one exactly on elements whose underlying matrix is
+upper-unitriangular. -/
 @[simp]
-theorem mem_ker_diag_iff {g : upperTriangularGroup m R} :
+theorem diag_eq_one_iff {g : upperTriangularGroup m R} :
     diag g = 1 ↔ (g : GL m R) ∈ upperUnitriangularGroup m R := by
   constructor
   · intro hg
@@ -156,7 +148,7 @@ theorem ker_diag :
     (diag (m := m) (R := R)).ker =
       (upperUnitriangularGroup m R).subgroupOf (upperTriangularGroup m R) := by
   ext g
-  rw [MonoidHom.mem_ker, Subgroup.mem_subgroupOf, mem_ker_diag_iff]
+  rw [MonoidHom.mem_ker, Subgroup.mem_subgroupOf, diag_eq_one_iff]
 
 end UpperTriangularGroup
 

@@ -107,6 +107,7 @@ universe u
 
 /-- In size `2`, block triangularity for `id : Fin 2 → Fin 2` is the single vanishing condition on
 the lower-left entry. -/
+@[simp]
 theorem blockTriangular_id_iff {R : Type u} [Zero R] {M : Matrix (Fin 2) (Fin 2) R} :
     M.BlockTriangular id ↔ M 1 0 = 0 := by
   refine ⟨fun h => h (by decide), fun h i j hij => ?_⟩
@@ -154,7 +155,6 @@ namespace GL2Borel
 
 variable {R}
 
-@[simp]
 theorem mem_iff {g : GL (Fin 2) R} :
     g ∈ GL2Borel R ↔ (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 :=
   UpperTriangularGroup.mem_iff.trans blockTriangular_id_iff
@@ -164,24 +164,6 @@ theorem mem_iff {g : GL (Fin 2) R} :
 theorem apply_one_zero (g : GL2Borel R) :
     ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 :=
   mem_iff.mp g.2
-
-/-- The `(0, 0)` entry is multiplicative on the Borel subgroup: only the lower-left entry of the
-*right* factor is needed. -/
-theorem mul_apply_zero_zero {g h : GL (Fin 2) R} (hh : h ∈ GL2Borel R) :
-    ((g * h : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0
-      = (g : Matrix (Fin 2) (Fin 2) R) 0 0 * (h : Matrix (Fin 2) (Fin 2) R) 0 0 := by
-  rw [mem_iff] at hh
-  rw [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, hh]
-  ring
-
-/-- The `(1, 1)` entry is multiplicative on the Borel subgroup: only the lower-left entry of the
-*left* factor is needed. -/
-theorem mul_apply_one_one {g h : GL (Fin 2) R} (hg : g ∈ GL2Borel R) :
-    ((g * h : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 1
-      = (g : Matrix (Fin 2) (Fin 2) R) 1 1 * (h : Matrix (Fin 2) (Fin 2) R) 1 1 := by
-  rw [mem_iff] at hg
-  rw [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, hg]
-  ring
 
 variable (R)
 
@@ -209,15 +191,26 @@ def diag : GL2Borel R →* Rˣ × Rˣ :=
   (MonoidHom.mk' (fun t : Fin 2 → Rˣ ↦ (t 0, t 1)) fun _ _ ↦ rfl).comp
     (UpperTriangularGroup.diag (m := Fin 2) (R := R))
 
+/-- The pair-valued diagonal projection is the two-coordinate packaging of the general diagonal
+projection. -/
+@[simp 900]
+theorem diag_eq (g : GL2Borel R) :
+    diag g = (UpperTriangularGroup.diag g 0, UpperTriangularGroup.diag g 1) :=
+  (rfl)
+
 @[simp]
 theorem diag_fst_val (g : GL2Borel R) :
     (((diag g).1 : Rˣ) : R) = ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0 :=
-  UpperTriangularGroup.diag_apply_val g 0
+  by
+    rw [diag, MonoidHom.comp_apply]
+    exact UpperTriangularGroup.diag_apply_val g 0
 
 @[simp]
 theorem diag_snd_val (g : GL2Borel R) :
     (((diag g).2 : Rˣ) : R) = ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 1 :=
-  UpperTriangularGroup.diag_apply_val g 1
+  by
+    rw [diag, MonoidHom.comp_apply]
+    exact UpperTriangularGroup.diag_apply_val g 1
 
 @[simp]
 theorem diag_mk (a d : Rˣ) (b : R) : diag ⟨mk a d b, mk_mem a d b⟩ = (a, d) := by
@@ -253,6 +246,11 @@ theorem coe_torusHom (p : Rˣ × Rˣ) :
 @[simp]
 theorem diag_torusHom (p : Rˣ × Rˣ) : diag (torusHom p) = p := by
   ext <;> simp
+
+/-- The diagonal projection is surjective: the diagonal matrix `!![a, 0; 0, d]` realizes
+`(a, d)`. -/
+theorem diag_surjective : Function.Surjective (diag (R := R)) := fun p ↦
+  ⟨torusHom p, diag_torusHom p⟩
 
 /-- The **unipotent radical** `U`, as an additive character valued in the Borel subgroup: `b` is
 sent to `!![1, b; 0, 1]`. It is `Matrix.GeneralLinearGroup.upperRightHom` with its codomain
@@ -302,9 +300,10 @@ theorem eq_torusHom_mul_unipotentHom (g : GL2Borel R) :
         ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 1) := by
   -- The upper-right entry is the only one that needs the torus coordinate cancelled off.
   have h : ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0 *
-      ((((diag g).1⁻¹ : Rˣ) : R) * ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 1)
+      (((UpperTriangularGroup.diag g 0)⁻¹ : Rˣ) *
+        ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 1)
       = ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 1 := by
-    rw [← diag_fst_val g]
+    rw [← UpperTriangularGroup.diag_apply_val g 0]
     exact Units.mul_inv_cancel_left _ _
   refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
   fin_cases i <;> fin_cases j <;>
@@ -321,7 +320,9 @@ def equivProd : GL2Borel R ≃ (Rˣ × Rˣ) × R where
     refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
     rw [coe_mk, Matrix.eta_fin_two ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R)]
     simp [apply_one_zero g]
-  right_inv p := by simp
+  right_inv p := by
+    change (diag ⟨mk p.1.1 p.1.2 p.2, mk_mem _ _ _⟩, p.2) = p
+    rw [diag_mk]
 
 @[simp]
 theorem equivProd_apply (g : GL2Borel R) :
