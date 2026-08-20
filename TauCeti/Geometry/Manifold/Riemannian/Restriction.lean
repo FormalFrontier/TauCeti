@@ -111,7 +111,7 @@ theorem restrictOpenTangentSpace_inner
 
 /-- The restricted metric is the pullback of the ambient metric along the differential of the
 open-submanifold inclusion. -/
-theorem restrictOpenTangentSpace_inner_mfderiv_subtype_val [IsManifold I 1 M]
+theorem restrictOpenTangentSpace_inner_mfderiv_subtype_val
     (g : RiemannianMetric (fun x : M ↦ TangentSpace I x)) (U : Opens M)
     (x : U) (v w : TangentSpace I x) :
     (g.restrictOpenTangentSpace U).inner x v w =

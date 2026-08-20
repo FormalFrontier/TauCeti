@@ -100,10 +100,9 @@ private theorem eventually_tangentBundleCore_coordChange_open_eq
   simpa [tangentBundleCore_coordChange_achart, Function.comp_def, Opens.chartAt_eq,
     tangentSpaceOpenEquiv_apply] using DFunLike.congr_fun hd.symm z
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The differential of the inclusion of an open submanifold is the canonical tangent-space
 identification. -/
-theorem mfderiv_subtype_val [IsManifold I 1 M] {U : Opens M} (x : U) :
+theorem mfderiv_subtype_val {U : Opens M} (x : U) :
     mfderiv I I (Subtype.val : U → M) x =
       (tangentSpaceOpenEquiv (I := I) x).toContinuousLinearMap := by
   ext v
