@@ -222,6 +222,10 @@ theorem isGood_ofBadPrimes_iff (hS : S.Finite) {I : Ideal (𝓞 K)} :
     (ofBadPrimes S hS).IsGood I ↔ Ideal.IsPrimeTo I S := by
   simp only [IsGood, badPrimes_ofBadPrimes]
 
+private theorem monoidWithZeroHom_mul_apply {M N : Type*} [MulZeroOneClass M]
+    [CommMonoidWithZero N] (f g : M →*₀ N) (x : M) : (f * g) x = f x * g x :=
+  MonoidHom.mul_apply f.toMonoidHom g.toMonoidHom x
+
 /-- The pointwise product of two multiplicative ideal weights. -/
 noncomputable instance : Mul (MultiplicativeIdealWeight K) where
   mul χ ψ :=
@@ -230,8 +234,7 @@ noncomputable instance : Mul (MultiplicativeIdealWeight K) where
         refine (χ.finite_badPrimes.union ψ.finite_badPrimes).subset fun 𝔭 h𝔭 ↦ ?_
         have hzero :
             (χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom) 𝔭.asIdeal = 0 := h𝔭
-        rw [show (χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom) 𝔭.asIdeal =
-          χ 𝔭.asIdeal * ψ 𝔭.asIdeal from rfl] at hzero
+        rw [monoidWithZeroHom_mul_apply] at hzero
         exact mul_eq_zero.mp hzero }
 
 @[simp]
