@@ -31,24 +31,12 @@ central kernel and that every isogeny out of a commutative group scheme is centr
 
 * `TauCeti.GroupScheme.HasCentralKernel`: every functor-of-points kernel is central.
 * `TauCeti.GroupScheme.hasCentralKernel`: the corresponding morphism property.
-* `TauCeti.GroupScheme.pointMap_injective_of_mono`: a morphism monic in `Over X` induces an
-  injective map on points over every test scheme.
-* `TauCeti.GroupScheme.HasCentralKernel.precomp_of_mono`: central kernels are preserved by
-  precomposition with a morphism monic in `Over X`.
-* `TauCeti.GroupScheme.HasCentralKernel.postcomp_of_mono`: central kernels are preserved by
-  postcomposition with a morphism monic in `Over X`.
-* `TauCeti.GroupScheme.hasCentralKernel_comp_iff_of_mono`: postcomposition by a morphism monic in
-  `Over X` preserves and reflects central kernels.
-* `TauCeti.GroupScheme.hasCentralKernel_respectsIso`: having central kernel respects isomorphisms
-  of arrows.
 * `TauCeti.GroupScheme.isogenies`: the finite, flat, surjective morphism property on group schemes.
 * `TauCeti.GroupScheme.IsIsogeny`: the corresponding predicate on a group-scheme morphism.
 * `TauCeti.GroupScheme.centralIsogenies`: the central-isogeny morphism property.
 * `TauCeti.GroupScheme.IsCentralIsogeny`: an isogeny with central kernel.
 * `TauCeti.GroupScheme.isCentralIsogeny_iff_isIsogeny_and`: the predicate-level bridge to the two
   constituent properties.
-* `TauCeti.GroupScheme.centralIsogenies_respectsIso`: central isogenies respect isomorphisms of
-  arrows.
 
 ## References
 
@@ -71,7 +59,7 @@ open AlgebraicGeometry
 
 universe u
 
-variable {X : Scheme.{u}} {F G H K : Grp (Over X)}
+variable {X : Scheme.{u}} {G H K : Grp (Over X)}
 
 /-- The homomorphism induced by a group-scheme morphism on points valued in a test scheme over
 the base. -/
@@ -126,19 +114,13 @@ theorem hasCentralKernel_iff_pointMap_ker_le_center (f : G ⟶ H) :
     rw [commute_iff_eq]
     exact (Subgroup.mem_center_iff.mp (hf T ((MonoidHom.mem_ker).mpr hg)) h).symm
 
-/-- A group-scheme morphism monic in `Over X` induces an injective map on points over every test
-scheme. -/
-theorem pointMap_injective_of_mono (e : G ⟶ H) [Mono e.hom.hom] (T : Over X) :
-    Function.Injective (pointMap e T) :=
-  fun _ _ h ↦ (cancel_mono e.hom.hom).1 h
-
 /-- A group-scheme morphism with monic underlying morphism has central kernel: every point in its
 kernel is the identity. -/
 theorem hasCentralKernel_of_mono (f : G ⟶ H) [Mono f.hom.hom] : HasCentralKernel f := by
   intro T g hg h
   have hg_one : g = 1 := by
-    apply pointMap_injective_of_mono f T
-    simpa only [pointMap_apply, map_one] using hg
+    apply (cancel_mono f.hom.hom).1
+    simpa using hg
   rw [hg_one]
   exact Commute.one_left h
 
@@ -147,53 +129,6 @@ theorem hasCentralKernel_of_isCommMonObj (f : G ⟶ H) [IsCommMonObj G.X] :
     HasCentralKernel f := by
   intro T g _ h
   exact Commute.all g h
-
-/-- Precomposing with a morphism monic in `Over X` preserves the central-kernel condition. -/
-theorem HasCentralKernel.precomp_of_mono (e : F ⟶ G) [Mono e.hom.hom] (f : G ⟶ H)
-    (hf : HasCentralKernel f) : HasCentralKernel (e ≫ f) := by
-  rw [hasCentralKernel_iff_pointMap_ker_le_center] at hf ⊢
-  intro T g hg
-  have hg' : pointMap f T (pointMap e T g) = 1 := by
-    rw [← MonoidHom.comp_apply, ← pointMap_comp]
-    exact MonoidHom.mem_ker.mp hg
-  rw [Subgroup.mem_center_iff]
-  intro h
-  apply pointMap_injective_of_mono e T
-  rw [map_mul, map_mul]
-  exact (Subgroup.mem_center_iff.mp (hf T <| MonoidHom.mem_ker.mpr hg')
-    (pointMap e T h))
-
-/-- Postcomposing with a morphism monic in `Over X` preserves the central-kernel condition. -/
-theorem HasCentralKernel.postcomp_of_mono (f : G ⟶ H) (e : H ⟶ K) [Mono e.hom.hom]
-    (hf : HasCentralKernel f) : HasCentralKernel (f ≫ e) := by
-  rw [hasCentralKernel_iff_pointMap_ker_le_center] at hf ⊢
-  intro T g hg
-  apply hf T
-  rw [MonoidHom.mem_ker]
-  apply pointMap_injective_of_mono e T
-  rw [map_one, ← MonoidHom.comp_apply, ← pointMap_comp]
-  exact MonoidHom.mem_ker.mp hg
-
-/-- Postcomposition by a morphism monic in `Over X` preserves and reflects the central-kernel
-condition. -/
-theorem hasCentralKernel_comp_iff_of_mono (f : G ⟶ H) (e : H ⟶ K) [Mono e.hom.hom] :
-    HasCentralKernel (f ≫ e) ↔ HasCentralKernel f := by
-  constructor
-  · intro hfe T g hg h
-    apply hfe T g ?_ h
-    change pointMap (f ≫ e) T g = 1
-    rw [pointMap_comp, MonoidHom.comp_apply]
-    change pointMap f T g = 1 at hg
-    rw [hg, map_one]
-  · exact fun hf ↦ hf.postcomp_of_mono f e
-
-/-- Having central kernel is invariant under isomorphisms of arrows. -/
-instance hasCentralKernel_respectsIso : (hasCentralKernel X).RespectsIso := by
-  apply MorphismProperty.RespectsIso.mk
-  · intro _ _ _ e f hf
-    exact HasCentralKernel.precomp_of_mono e.hom f hf
-  · intro _ _ _ e f hf
-    exact HasCentralKernel.postcomp_of_mono f e.hom hf
 
 section Isogeny
 
@@ -281,11 +216,6 @@ end IsIsogeny
 def centralIsogenies (k : Type u) [Field k] :
     MorphismProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
   isogenies k ⊓ hasCentralKernel (Spec (CommRingCat.of k))
-
-/-- Central isogenies are invariant under pre- and postcomposition with isomorphisms. -/
-instance centralIsogenies_respectsIso : (centralIsogenies k).RespectsIso := by
-  unfold centralIsogenies
-  infer_instance
 
 /-- A central isogeny is an isogeny whose scheme-theoretic kernel is central, expressed on the
 functor of points over every test scheme. -/
