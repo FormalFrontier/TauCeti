@@ -726,24 +726,6 @@ private theorem continuous_uncurry_basedPath {α β : BasedPath x₀} (F : Path 
     continuous_subtype_val.comp F.continuous
   exact ContinuousMap.continuous_uncurry_of_continuous ⟨_, h1⟩
 
-/-- **A square with prescribed edges is a path homotopy.** A continuous map on `I × I` that
-restricts to `p` at `t = 0` and to `q` at `t = 1`, and is constant along each of the edges `s = 0`
-and `s = 1`, exhibits `p` and `q` as homotopic paths. -/
-private theorem homotopic_of_continuous_square {a b : X} {p q : Path a b} (K : I × I → X)
-    (hK_cont : Continuous K) (hK_zero : ∀ s, K (0, s) = p s) (hK_one : ∀ s, K (1, s) = q s)
-    (hK_left : ∀ t, K (t, 0) = a) (hK_right : ∀ t, K (t, 1) = b) : p.Homotopic q :=
-  ⟨{ toFun := K
-     continuous_toFun := hK_cont
-     map_zero_left := hK_zero
-     map_one_left := hK_one
-     prop' := by
-       intro t s hs
-       rcases hs with rfl | hs
-       · exact (hK_left t).trans p.source.symm
-       · rw [Set.mem_singleton_iff] at hs
-         subst hs
-         exact (hK_right t).trans p.target.symm }⟩
-
 private theorem joinedInSLSC_uFn_zero_left (s : I) :
     (joinedInSLSC_uFn (0, s) : ℝ) = max 0 (2 * (s : ℝ) - 1) := by
   simp [joinedInSLSC_uFn, joinedInSLSC_uReal]
@@ -846,7 +828,7 @@ public theorem toPath_homotopic_of_joinedIn_pathHomotopyTrivial
     rw [K_fn_apply, joinedInSLSC_uFn_one_right, joinedInSLSC_vFn_one_right, hF1_eq]; rfl
   -- The square deforms `α' ⬝ L` into `β ⬝ const`, and `L` is null-homotopic, so it collapses.
   exact (Path.Homotopic.trans_right_of_nullhomotopic hL_refl).symm.trans
-    ((homotopic_of_continuous_square K_fn hK_cont hK_zero hK_one hK_at_zero hK_at_one).trans
+    ((Path.homotopic_of_continuous_square K_fn hK_cont hK_zero hK_one hK_at_zero hK_at_one).trans
       (Path.Homotopic.trans_refl β.toPath))
 
 
