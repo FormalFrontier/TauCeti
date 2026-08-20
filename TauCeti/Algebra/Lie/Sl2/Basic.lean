@@ -361,11 +361,12 @@ variable {K : Type*} [CommRing K] {L : Type*} [LieRing L] [LieAlgebra K L] {h e 
 
 namespace IsSl2Triple
 
-/-- An `sl₂` triple is carried to an `sl₂` triple by an injective Lie algebra homomorphism. Only
-`h ≠ 0` needs the injectivity; the three bracket relations hold for any homomorphism. -/
+/-- An `sl₂` triple is carried to an `sl₂` triple by any Lie algebra homomorphism that does not
+kill the Cartan element. The three bracket relations hold for any homomorphism, so `φ h ≠ 0` is
+the only hypothesis needed; an injective `φ` supplies it from `t.h_ne_zero`. -/
 theorem map {L' : Type*} [LieRing L'] [LieAlgebra K L'] (t : IsSl2Triple h e f)
-    (φ : L →ₗ⁅K⁆ L') (hφ : Function.Injective φ) : IsSl2Triple (φ h) (φ e) (φ f) where
-  h_ne_zero hz := t.h_ne_zero (hφ (by simpa using hz))
+    (φ : L →ₗ⁅K⁆ L') (hφ : φ h ≠ 0) : IsSl2Triple (φ h) (φ e) (φ f) where
+  h_ne_zero := hφ
   lie_e_f := by rw [← LieHom.map_lie, t.lie_e_f]
   lie_h_e_nsmul := by rw [← LieHom.map_lie, t.lie_h_e_nsmul, map_nsmul]
   lie_h_f_nsmul := by rw [← LieHom.map_lie, t.lie_h_f_nsmul, map_neg, map_nsmul]

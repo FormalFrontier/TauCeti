@@ -271,7 +271,8 @@ theorem map_coroot_weightPerm {α : Weight K H L} (hα : α.IsNonZero) :
     rw [← weightPerm_neg σ hσ α]
     exact map_mem_rootSpace_weightPerm σ hσ hf
   rw [← hh]
-  exact (t.map (σ : L →ₗ⁅K⁆ L) σ.injective).h_eq_coroot
+  have hh' : (σ : L →ₗ⁅K⁆ L) h ≠ 0 := fun hz => t.h_ne_zero (σ.injective (by simpa using hz))
+  exact (t.map (σ : L →ₗ⁅K⁆ L) hh').h_eq_coroot
     (weightPerm_isNonZero σ hσ hα) he' hf'
 
 end Killing
