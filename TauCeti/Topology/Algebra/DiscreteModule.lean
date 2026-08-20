@@ -16,9 +16,10 @@ public import Mathlib.Topology.Algebra.OpenSubgroup
 
 A *discrete `G`-module* is an abelian group `M` with a continuous action of a topological group
 `G`, where `M` carries the discrete topology. These are the coefficients of continuous cochain
-cohomology. This file develops the two facts about them that every later statement rests on: the
-action of a profinite group on a discrete module is locally trivial, and the invariants of an open
-normal subgroup form a module over the finite quotient.
+cohomology. The declarations below work more generally for an additive group with a distributive
+`G`-action; specializing to an abelian group gives the usual discrete-module theory. This file
+develops local triviality of a profinite action and the induced finite-quotient actions on
+invariants.
 
 The unbundled classes `[AddGroup M] [DistribMulAction G M] [DiscreteTopology M]
 [ContinuousSMul G M]` are the hypotheses used throughout, rather than a new bundling structure, so
@@ -27,8 +28,8 @@ Profiniteness is likewise `[CompactSpace G] [TotallyDisconnectedSpace G]` on a t
 not the category `ProfiniteGrp`.
 
 The invariant subgroup `M ^ H` is Mathlib's `FixedPoints.addSubgroup H M`; no second name for it is
-introduced here. What is new is its `G`-module structure for normal `H`, the descent of that
-structure to `G ⧸ H`, and the finite-quotient theory below.
+introduced here. What is new is its distributive `G`-action for normal `H`, the descent of that
+action to `G ⧸ H`, and the finite-quotient theory below.
 
 ## Main results
 
@@ -38,11 +39,11 @@ structure to `G ⧸ H`, and the finite-quotient theory below.
   subgroup, together with `TauCeti.quotientToPermHom` exhibiting the action as one of the finite
   group `G ⧸ actionKernel G X`.
 * `TauCeti.iUnion_coe_fixedPoints_addSubgroup_eq_univ` and
-  `TauCeti.iSup_fixedPoints_addSubgroup_eq_top`: a discrete module over a profinite group is the
-  union of the invariants of the open normal subgroups, and
+  `TauCeti.iSup_fixedPoints_addSubgroup_eq_top`: a discrete additive `G`-group over a profinite
+  group is the union of the invariants of the open normal subgroups, and
   `TauCeti.directed_fixedPoints_addSubgroup` says that union is directed.
 * `TauCeti.distribMulActionFixedPoints` and `TauCeti.distribMulActionQuotientFixedPoints`: the
-  `G`- and `G ⧸ H`-module structures on `M ^ H` for normal `H`, the additive counterparts of
+  distributive `G`- and `G ⧸ H`-actions on `M ^ H` for normal `H`, the additive counterparts of
   Mathlib's `MulDistribMulAction (G ⧸ H) (FixedPoints.subgroup H α)`.
 * `TauCeti.invariantsInclusion` and `TauCeti.invariantsMap`: the coefficient half of the transition
   maps of the finite-quotient tower, with its equivariance, and the functoriality of `M ^ H` in the
@@ -50,9 +51,10 @@ structure to `G ⧸ H`, and the finite-quotient theory below.
 
 ## Roadmap
 
-This is the discrete-module half of Layer 0 of `TauCetiRoadmap/ProfiniteCohomology/README.md`,
-whose "Openness" and "Constructions" bullets it discharges. The remaining half of that layer is the
-continuous section of `G ⧸ K → G ⧸ H` for closed subgroups (Ribes-Zalesskii Prop. 2.2.2) and the
+This file partially addresses the "Openness" and "Constructions" bullets of Layer 0 of
+`TauCetiRoadmap/ProfiniteCohomology/README.md`: it proves local triviality, constructs the invariant
+actions, and supplies their transition maps. The remaining work includes the continuous section of
+`G ⧸ K → G ⧸ H` for closed subgroups (Ribes-Zalesskii Prop. 2.2.2), closure constructions, and the
 internal hom `M →+ N` with its conjugation action. Layer 4's description of continuous cohomology as
 a colimit over the finite quotients consumes the directed union and the transition maps below.
 -/
@@ -124,12 +126,19 @@ theorem quotientToPermHom_mk [Finite X] (g : G) (x : X) :
     quotientToPermHom G X (QuotientGroup.mk g) x = g • x :=
   (rfl)
 
+/-- `TauCeti.quotientToPermHom` is the standard quotient lift of the original permutation
+representation. This isolates the definitional unfolding needed to apply the quotient API. -/
+theorem quotientToPermHom_eq_lift [Finite X] :
+    quotientToPermHom G X =
+      QuotientGroup.lift (actionKernel G X).toSubgroup (toPermHom G X)
+        (le_of_eq (actionKernel_toSubgroup G X)) :=
+  (rfl)
+
 /-- The descended permutation representation is faithful. -/
 theorem quotientToPermHom_injective [Finite X] :
     Function.Injective (quotientToPermHom G X) := by
-  change Function.Injective
-    (QuotientGroup.lift (toPermHom G X).ker (toPermHom G X) le_rfl)
-  exact (QuotientGroup.injective_lift_iff (toPermHom G X).ker (toPermHom G X) le_rfl).2 rfl
+  rw [quotientToPermHom_eq_lift]
+  exact (QuotientGroup.injective_lift_iff _ _ _).2 (actionKernel_toSubgroup G X)
 
 variable [IsTopologicalGroup G] [CompactSpace G] [TotallyDisconnectedSpace G]
 
@@ -181,15 +190,15 @@ section Normal
 
 variable {H : Subgroup G} [H.Normal]
 
-/-- `M ^ H` is a `G`-submodule when `H` is normal: this is the additive counterpart of Mathlib's
-`MulAction G (fixedPoints H α)`, whose underlying `MulAction` it reuses. -/
+/-- `M ^ H` has a distributive `G`-action when `H` is normal: this is the additive counterpart of
+Mathlib's `MulAction G (fixedPoints H α)`, whose underlying `MulAction` it reuses. -/
 instance distribMulActionFixedPoints : DistribMulAction G (FixedPoints.addSubgroup H M) where
   __ := (inferInstance : MulAction G (fixedPoints H M))
   smul_zero g := Subtype.ext (smul_zero g)
   smul_add g a b := Subtype.ext (smul_add g (a : M) (b : M))
 
-/-- `H` acts trivially on `M ^ H`, so the `G`-module structure descends to the quotient `G ⧸ H`.
-This is the coefficient module of the finite-level cocycles. -/
+/-- `H` acts trivially on `M ^ H`, so the distributive `G`-action descends to the quotient `G ⧸ H`.
+For an abelian `M`, this is the coefficient module of the finite-level cocycles. -/
 instance distribMulActionQuotientFixedPoints :
     DistribMulAction (G ⧸ H) (FixedPoints.addSubgroup H M) where
   __ := (inferInstance : MulAction (G ⧸ H) (fixedPoints H M))
@@ -240,6 +249,17 @@ theorem invariantsInclusion_quotientMk_smul [H.Normal] [K.Normal] (h : K ≤ H) 
       (QuotientGroup.mk g : G ⧸ K) • invariantsInclusion h m :=
   (rfl)
 
+/-- The transition inclusion is equivariant along Mathlib's canonical quotient homomorphism
+`G ⧸ K →* G ⧸ H`. -/
+@[simp]
+theorem invariantsInclusion_quotient_smul [H.Normal] [K.Normal] (h : K ≤ H) (q : G ⧸ K)
+    (m : FixedPoints.addSubgroup H M) :
+    invariantsInclusion h
+        ((QuotientGroup.map K H (MonoidHom.id G) (fun _ hg ↦ h hg) q) • m) =
+      q • invariantsInclusion h m := by
+  induction q using QuotientGroup.induction_on
+  rfl
+
 variable (M) in
 /-- The transition inclusions are functorial in the subgroup: the identity inclusion is the
 identity. -/
@@ -267,6 +287,24 @@ def invariantsMap (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • 
     rw [← hf g, mem_fixedPoints_addSubgroup.1 m.2 g hg]⟩
   map_zero' := Subtype.ext f.map_zero
   map_add' a b := Subtype.ext (f.map_add (a : M) (b : M))
+
+/-- Restriction to invariants preserves the identity map. -/
+@[simp]
+theorem invariantsMap_id (hId : ∀ (g : G) (m : M), AddMonoidHom.id M (g • m) =
+    g • AddMonoidHom.id M m) (H : Subgroup G) :
+    invariantsMap (AddMonoidHom.id M) hId H = AddMonoidHom.id _ :=
+  AddMonoidHom.ext fun _ ↦ Subtype.ext (rfl)
+
+/-- Restriction to invariants preserves composition. -/
+@[simp]
+theorem invariantsMap_comp {P : Type*} [AddGroup P] [DistribMulAction G P]
+    (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m)
+    (f' : N →+ P) (hf' : ∀ (g : G) (n : N), f' (g • n) = g • f' n)
+    (hcomp : ∀ (g : G) (m : M), (f'.comp f) (g • m) = g • (f'.comp f) m)
+    (H : Subgroup G) :
+    (invariantsMap f' hf' H).comp (invariantsMap f hf H) =
+      invariantsMap (f'.comp f) hcomp H :=
+  AddMonoidHom.ext fun _ ↦ Subtype.ext (rfl)
 
 /-- The restricted map is the original map on underlying elements. -/
 @[simp]
@@ -325,14 +363,15 @@ variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 variable (M : Type*) [AddGroup M] [TopologicalSpace M] [DiscreteTopology M]
   [DistribMulAction G M] [ContinuousSMul G M]
 
-/-- Every element of a discrete module over a profinite group is invariant under some open normal
-subgroup. -/
+/-- Every element of a discrete additive `G`-group over a profinite group is invariant under some
+open normal subgroup. -/
 theorem exists_openNormalSubgroup_mem_fixedPoints (m : M) :
     ∃ U : OpenNormalSubgroup G, m ∈ FixedPoints.addSubgroup U.toSubgroup M := by
   obtain ⟨U, hU⟩ := exists_openNormalSubgroup_smul_eq G M m
   exact ⟨U, mem_fixedPoints_addSubgroup.2 hU⟩
 
-/-- **A discrete module over a profinite group is the union of its finite-level invariants.** -/
+/-- **A discrete additive `G`-group over a profinite group is the union of its finite-level
+invariants.** -/
 theorem iUnion_coe_fixedPoints_addSubgroup_eq_univ :
     ⋃ U : OpenNormalSubgroup G, (FixedPoints.addSubgroup U.toSubgroup M : Set M) = Set.univ := by
   refine Set.eq_univ_of_forall fun m ↦ ?_
@@ -347,8 +386,8 @@ theorem iSup_fixedPoints_addSubgroup_eq_top :
   exact le_iSup (fun U : OpenNormalSubgroup G ↦ FixedPoints.addSubgroup U.toSubgroup M) U hU
 
 omit [IsTopologicalGroup G] [CompactSpace G] [TotallyDisconnectedSpace G] in
-/-- A *finite* discrete module with a continuous `G`-action is already the invariants of a single
-open normal subgroup, namely the kernel of the action. -/
+/-- A *finite* discrete additive `G`-group with a continuous action is already the invariants of a
+single open normal subgroup, namely the kernel of the action. -/
 theorem exists_openNormalSubgroup_fixedPoints_addSubgroup_eq_top [Finite M] :
     ∃ U : OpenNormalSubgroup G, FixedPoints.addSubgroup U.toSubgroup M = ⊤ := by
   refine ⟨actionKernel G M, eq_top_iff.2 fun m _ ↦ ?_⟩
