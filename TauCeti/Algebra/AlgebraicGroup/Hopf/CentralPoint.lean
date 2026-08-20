@@ -36,6 +36,7 @@ commutative group functor exactly when `H` is cocommutative
 
 * `TauCeti.HopfAlgebra.IsCentralPoint`: centrality of a point of the functor of points.
 * `TauCeti.HopfAlgebra.center`: the central points as a subgroup of the group of points.
+* `TauCeti.HopfAlgebra.instIsMulCommutativeCenter`: the central points form a commutative group.
 
 ## Main results
 
@@ -156,6 +157,10 @@ theorem mem_center {g : WithConv (H →ₐ[R] A)} : g ∈ center R H A ↔ IsCen
 over larger value algebras. -/
 theorem center_le_center : center R H A ≤ Subgroup.center (WithConv (H →ₐ[R] A)) :=
   fun _ hg ↦ Subgroup.mem_center_iff.mpr fun h ↦ ((mem_center.mp hg).commute h).symm
+
+/-- The universally central points form a commutative group. -/
+noncomputable instance instIsMulCommutativeCenter : IsMulCommutative (center R H A) :=
+  IsMulCommutative.of_setLike_mul_comm fun _ ha b _ ↦ ((mem_center.mp ha).commute b).eq
 
 /-- The center is natural in the value algebra. -/
 theorem mapValue_mem_center {B : Type v} [CommRing B] [Algebra R B] (φ : A →ₐ[R] B)
