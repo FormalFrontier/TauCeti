@@ -147,12 +147,12 @@ def IsIntegral.toIntegralLattice (hM : IsIntegral M) : IntegralLattice V where
 
 /-- The carrier of the integral lattice attached to an integral intermediate carrier. -/
 @[simp]
-theorem IsIntegral.carrier_toIntegralLattice (hM : IsIntegral M) :
+theorem IsIntegral.toIntegralLattice_carrier (hM : IsIntegral M) :
     hM.toIntegralLattice.carrier = M.1 := (rfl)
 
 /-- The integral lattice attached to an integral intermediate carrier keeps the ambient form. -/
 @[simp]
-theorem IsIntegral.form_toIntegralLattice (hM : IsIntegral M) :
+theorem IsIntegral.toIntegralLattice_form (hM : IsIntegral M) :
     hM.toIntegralLattice.form = L.form := (rfl)
 
 /-- Regarding the lattice itself as an intermediate carrier returns the lattice. -/
@@ -167,7 +167,7 @@ theorem IsEven.isEven_toIntegralLattice (hM : IsEven M) :
   rw [isEven_iff_forall_norm]
   intro x
   obtain ⟨n, hn⟩ := isEven_def.mp hM (x : V) x.2
-  exact ⟨n, by rw [norm_apply, IsIntegral.form_toIntegralLattice, ← norm_apply]; exact hn⟩
+  exact ⟨n, by rw [norm_apply, IsIntegral.toIntegralLattice_form, ← norm_apply]; exact hn⟩
 
 end IsLattice
 

@@ -149,17 +149,15 @@ private theorem ker_toDiscriminantGroup (M : L.IntermediateCarrier) :
   rw [LinearMap.mem_ker, toDiscriminantGroup_apply, L.discriminantGroup_mk_eq_zero_iff,
     Submodule.submoduleOf, Submodule.mem_comap, Submodule.subtype_apply]
 
-private theorem coe_range_toDiscriminantGroup (M : L.IntermediateCarrier) :
-    (LinearMap.range (toDiscriminantGroup M) : Set L.DiscriminantGroup) =
-      (L.discriminantSubgroup M : Set L.DiscriminantGroup) := by
+private theorem range_toDiscriminantGroup (M : L.IntermediateCarrier) :
+    (toDiscriminantGroup M).toAddMonoidHom.range = L.discriminantSubgroup M := by
   ext z
   induction z using Submodule.Quotient.induction_on with
   | _ x =>
-    rw [SetLike.mem_coe, SetLike.mem_coe, LinearMap.mem_range,
-      L.mk_mem_discriminantSubgroup_iff]
+    rw [AddMonoidHom.mem_range, L.mk_mem_discriminantSubgroup_iff]
     constructor
     · rintro ⟨y, hy⟩
-      rw [toDiscriminantGroup_apply] at hy
+      rw [LinearMap.toAddMonoidHom_coe, toDiscriminantGroup_apply] at hy
       have hmem := (Submodule.Quotient.eq _).mp hy
       rw [L.mem_carrierInDual_iff, Submodule.coe_sub] at hmem
       have hx : (x : V) = (y : V) - ((y : V) - (x : V)) := by abel
@@ -172,9 +170,12 @@ private theorem coe_range_toDiscriminantGroup (M : L.IntermediateCarrier) :
 discriminant group.** -/
 theorem index_eq_natCard_discriminantSubgroup (M : L.IntermediateCarrier) :
     index M = Nat.card (L.discriminantSubgroup M) := by
-  rw [index_eq_natCard_quotient, ← ker_toDiscriminantGroup M]
-  exact Nat.card_congr ((toDiscriminantGroup M).quotKerEquivRange.toEquiv.trans
-    (Equiv.setCongr (coe_range_toDiscriminantGroup M)))
+  -- The index of `M` is the index of the additive subgroup `L` of `M`, which is the kernel of
+  -- the map to the discriminant group; `AddSubgroup.index_ker` then supplies the first
+  -- isomorphism theorem.
+  have hindex : index M = (L.carrier.submoduleOf M.1).toAddSubgroup.index := (rfl)
+  rw [hindex, ← ker_toDiscriminantGroup, LinearMap.ker_toAddSubgroup, AddSubgroup.index_ker,
+    range_toDiscriminantGroup]
 
 /-- **The index of the overlattice attached to a subgroup of the discriminant group is the order
 of that subgroup.** -/
@@ -219,6 +220,7 @@ private theorem range_dualCarrier_subtype :
 /-- **The relative index of two glued intermediate carriers is the relative index of the two
 subgroups of the discriminant group.** Both sides are read off the same quotient of the dual
 carrier, so no finiteness and no containment of `H` in `K` is needed. -/
+@[simp]
 theorem relIndex_intermediateCarrierOfDiscriminantSubgroup
     (H K : AddSubgroup L.DiscriminantGroup) :
     relIndex (L.intermediateCarrierOfDiscriminantSubgroup H)
@@ -262,7 +264,7 @@ variable {M : L.IntermediateCarrier} [M.1.IsLattice ℚ]
 
 private theorem carrier_relIndex_toIntegralLattice_eq_index (hM : IsIntegral M) :
     L.carrier.toAddSubgroup.relIndex hM.toIntegralLattice.carrier.toAddSubgroup = index M := by
-  rw [index_eq_natCard_quotient, hM.carrier_toIntegralLattice,
+  rw [index_eq_natCard_quotient, hM.toIntegralLattice_carrier,
     AddSubgroup.relIndex, AddSubgroup.index]
   apply Nat.card_congr
   exact AddSubgroup.quotientEquivOfEq (by ext; rfl)
@@ -272,8 +274,8 @@ theorem IsIntegral.determinant_mul_sq_index (hM : IsIntegral M) :
     hM.toIntegralLattice.determinant * (index M : ℤ) ^ 2 = L.determinant := by
   rw [← carrier_relIndex_toIntegralLattice_eq_index hM]
   exact (L.determinant_eq_mul_relIndex_sq hM.toIntegralLattice
-    (by rw [hM.form_toIntegralLattice])
-    (by rw [hM.carrier_toIntegralLattice]; exact M.2.1)).symm
+    (by rw [hM.toIntegralLattice_form])
+    (by rw [hM.toIntegralLattice_carrier]; exact M.2.1)).symm
 
 /-- **The discriminant of an integral overlattice scales by the square of the index:**
 `disc(M) · [M : L]² = disc(L)`. -/
@@ -281,8 +283,8 @@ theorem IsIntegral.discriminant_mul_sq_index (hM : IsIntegral M) :
     hM.toIntegralLattice.discriminant * index M ^ 2 = L.discriminant := by
   rw [← carrier_relIndex_toIntegralLattice_eq_index hM]
   exact (L.discriminant_eq_mul_relIndex_sq hM.toIntegralLattice
-    (by rw [hM.form_toIntegralLattice])
-    (by rw [hM.carrier_toIntegralLattice]; exact M.2.1)).symm
+    (by rw [hM.toIntegralLattice_form])
+    (by rw [hM.toIntegralLattice_carrier]; exact M.2.1)).symm
 
 /-- The square of the index of an integral overlattice divides the discriminant. -/
 theorem IsIntegral.sq_index_dvd_discriminant (hM : IsIntegral M) :
@@ -304,7 +306,7 @@ theorem IsIntegral.isUnimodular_iff (hM : IsIntegral M) :
       rw [← hM.toIntegralLattice.isUnimodular_def.mp h]
       infer_instance
     let _ : L.IsNondegenerate := ⟨by
-      rw [← hM.form_toIntegralLattice]
+      rw [← hM.toIntegralLattice_form]
       exact (hM.toIntegralLattice.isLattice_dualCarrier_iff_nondegenerate).mp hdual⟩
     rw [hM.toIntegralLattice.isUnimodular_iff_discriminant_eq_one] at h
     rw [← hM.discriminant_mul_sq_index, h, one_mul]
