@@ -362,7 +362,8 @@ theorem SeparatelyExchangeable.conditionallyIID_arrayCol [StandardBorelSpace α]
 /-! ## The two symmetries are distinct -/
 
 /-- The deterministic diagonal-indicator array over a sample space `S`: its `(i, j)` entry is
-`true` exactly when `i = j`. It is jointly but not separately exchangeable. -/
+`true` exactly when `i = j`. Under every measure it is jointly exchangeable, but under a
+probability measure it is not separately exchangeable. -/
 def diagIndicatorArray (S : Type*) : ℕ × ℕ → S → Bool :=
   fun p _ => decide (p.1 = p.2)
 
