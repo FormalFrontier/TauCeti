@@ -7,35 +7,31 @@ module
 
 public import Mathlib.Algebra.Group.Equiv.Opposite
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
+public import TauCeti.AlgebraicTopology.Sphere.SimplyConnected
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.FundamentalGroup.Basic
 public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Deck
 
 /-!
-# The fundamental group of real projective space from a simply connected sphere cover
+# The fundamental group of real projective space
 
-For `2 ≤ n`, assuming the covering unit sphere `Sⁿ` is simply connected (as developed
-upstream in Mathlib PR #28246), real projective `n`-space `RPⁿ` has fundamental group isomorphic
-to `ℤˣ` via the two-sheeted antipodal quotient `mk n`.
+For `2 ≤ n`, real projective `n`-space `RPⁿ` has fundamental group isomorphic to `ℤˣ` via the
+two-sheeted antipodal quotient `mk n`.
 
-The antipodal cover is a regular covering map with deck group `ℤˣ`.
-Under the assumption that the covering sphere is simply connected, the regular-cover comparison
-`TauCeti.Deck.IsRegular.fundamentalGroupEquiv` identifies the fundamental group of `RPⁿ` at any
-basepoint with the opposite of the deck group. Since `ℤˣ` is commutative, the opposite drops out,
-yielding
+The antipodal cover is a regular covering map with deck group `ℤˣ`, and the covering sphere `Sⁿ`
+is simply connected for `2 ≤ n` by `TauCeti.simplyConnectedSpace_euclideanSphere`. The
+regular-cover comparison `TauCeti.Deck.IsRegular.fundamentalGroupEquiv` therefore identifies the
+fundamental group of `RPⁿ` at any basepoint with the opposite of the deck group. Since `ℤˣ` is
+commutative, the opposite drops out, yielding
 
   `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`.
 
-As consequences, `RPⁿ` (for `2 ≤ n` and simply connected `Sⁿ`) has a fundamental group of order 2,
-a nontrivial fundamental group, is not simply connected, not contractible, and not homeomorphic to
-`ℝ`.
-
-The simple-connectivity instance for `Sⁿ`, which turns these conditional results into the usual
-unconditional computation, is being developed upstream in Mathlib PR #28246.
+As consequences, `RPⁿ` (for `2 ≤ n`) has a fundamental group of order 2, a nontrivial fundamental
+group, is not simply connected, not contractible, and not homeomorphic to `ℝ`.
 
 ## Main declarations
 
-* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`: for `2 ≤ n` and a simply connected
-  covering sphere, `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ` for any basepoint `x`
+* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`: for `2 ≤ n`,
+  `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ` for any basepoint `x`
   with a chosen lift `e`.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_apply_eq_iff`: characterization of the
   isomorphism on monodromy.
@@ -58,8 +54,9 @@ This is the deck-to-fundamental-group part of the `π₁(RPⁿ)` milestone in
 `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13. It consumes
 `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk` and
 `TauCeti.RealProjectiveSpace.deckMulEquiv` from
-`TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Deck`, and the regular-cover comparison
-of Stage 1. The equivalence construction and monodromy proof pattern are adapted from
+`TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Deck`, the simple connectivity of the
+covering sphere from `TauCeti.AlgebraicTopology.Sphere.SimplyConnected`, and the regular-cover
+comparison of Stage 1. The equivalence construction and monodromy proof pattern are adapted from
 `TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup` for the antipodal cover.
 -/
 
@@ -75,13 +72,13 @@ noncomputable section
 
 variable (n : ℕ)
 
-/-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) with a simply connected
-covering sphere is isomorphic to `ℤˣ`**, for any basepoint `x` with a chosen lift `e` in the sphere:
+/-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) is isomorphic to `ℤˣ`**,
+for any basepoint `x` with a chosen lift `e` in the sphere:
 `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`. -/
 def fundamentalGroupMulEquiv (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) :
     FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ :=
+  haveI := simplyConnectedSpace_euclideanSphere hn
   (Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e).trans
     ((MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
       (MulOpposite.opMulEquiv (M := ℤˣ)).symm)
@@ -91,12 +88,12 @@ class `γ` maps to `u : ℤˣ` exactly when its monodromy translate of the chose
 `u • (e : sphere _ 1)`. -/
 @[simp]
 lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x})
     (γ : FundamentalGroup (RealProjectiveSpace n) x) (u : ℤˣ) :
     fundamentalGroupMulEquiv n hn e γ = u ↔
       ((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
         u • (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
+  have := simplyConnectedSpace_euclideanSphere hn
   let F := Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e
   let T := (MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
     (MulOpposite.opMulEquiv (M := ℤˣ)).symm
@@ -119,7 +116,6 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
 translates the chosen lift by `u`. -/
 @[simp]
 lemma monodromy_fundamentalGroupMulEquiv_symm (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) (u : ℤˣ) :
     ((isCoveringMap_mk n).monodromy ((fundamentalGroupMulEquiv n hn e).symm u) e :
       sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
@@ -131,7 +127,6 @@ lemma monodromy_fundamentalGroupMulEquiv_symm (hn : 2 ≤ n)
 /-- A loop class maps to `1` under the fundamental group equivalence exactly when its monodromy
 fixes the chosen lift. -/
 lemma fundamentalGroupMulEquiv_eq_one_iff (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x})
     (γ : FundamentalGroup (RealProjectiveSpace n) x) :
     fundamentalGroupMulEquiv n hn e γ = 1 ↔
@@ -143,54 +138,47 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (hn : 2 ≤ n)
         (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) ↔
       (isCoveringMap_mk n).monodromy γ e = e))
 
-/-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) with a simply connected
-covering sphere is isomorphic to `ℤˣ` for any basepoint `x`**:
-`FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`. -/
+/-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) is isomorphic to `ℤˣ`
+for any basepoint `x`**: `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`. -/
 def fundamentalGroupMulEquivAt (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     (x : RealProjectiveSpace n) :
     FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ :=
   let h := mk_surjective n x
   fundamentalGroupMulEquiv n hn ⟨h.choose, Set.mem_singleton_iff.mpr h.choose_spec⟩
 
-/-- For `2 ≤ n` and a simply connected covering sphere, the fundamental group of `RPⁿ` has
+/-- For `2 ≤ n`, the fundamental group of `RPⁿ` has
 exactly two elements. -/
 theorem card_fundamentalGroup (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     (x : RealProjectiveSpace n) :
     Nat.card (FundamentalGroup (RealProjectiveSpace n) x) = 2 := by
   rw [Nat.card_congr (fundamentalGroupMulEquivAt n hn x).toEquiv, Nat.card_eq_fintype_card,
     Fintype.card_units_int]
 
-/-- For `2 ≤ n` and a simply connected covering sphere, the fundamental group of `RPⁿ` is
+/-- For `2 ≤ n`, the fundamental group of `RPⁿ` is
 nontrivial. -/
 theorem nontrivial_fundamentalGroup (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     (x : RealProjectiveSpace n) :
     Nontrivial (FundamentalGroup (RealProjectiveSpace n) x) := by
   have hunit : Nontrivial ℤˣ := ⟨(1 : ℤˣ), (-1 : ℤˣ), by decide⟩
   exact @Equiv.nontrivial _ _ (fundamentalGroupMulEquivAt n hn x).toEquiv hunit
 
-/-- For `2 ≤ n` and a simply connected covering sphere, real projective space `RPⁿ` is not
-simply connected. -/
+/-- For `2 ≤ n`, real projective space `RPⁿ` is not simply connected. -/
 theorem not_simplyConnectedSpace (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)] :
+ :
     ¬ SimplyConnectedSpace (RealProjectiveSpace n) := by
   let x : RealProjectiveSpace n := mk n (instNonemptySphere n).some
   have := nontrivial_fundamentalGroup n hn x
   exact not_simplyConnectedSpace_of_nontrivial_fundamentalGroup x
 
-/-- For `2 ≤ n` and a simply connected covering sphere, real projective space `RPⁿ` is not
-contractible. -/
+/-- For `2 ≤ n`, real projective space `RPⁿ` is not contractible. -/
 theorem not_contractibleSpace (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)] :
+ :
     ¬ ContractibleSpace (RealProjectiveSpace n) :=
   not_contractibleSpace_of_not_simplyConnectedSpace (not_simplyConnectedSpace n hn)
 
-/-- For `2 ≤ n` and a simply connected covering sphere, real projective space `RPⁿ` is not
-homeomorphic to `ℝ`. -/
+/-- For `2 ≤ n`, real projective space `RPⁿ` is not homeomorphic to `ℝ`. -/
 theorem isEmpty_homeomorph_real (hn : 2 ≤ n)
-    [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)] :
+ :
     IsEmpty (RealProjectiveSpace n ≃ₜ ℝ) :=
   isEmpty_homeomorph_real_of_not_simplyConnectedSpace (not_simplyConnectedSpace n hn)
 

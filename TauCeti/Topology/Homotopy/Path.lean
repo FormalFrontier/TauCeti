@@ -125,6 +125,24 @@ theorem exists_homotopy_forall_mem_of_isSimplyConnected {V : Set X} (hV : IsSimp
     (Path.map_codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) q hq), fun t x => ?_⟩
   simp
 
+/-- **A square with prescribed edges is a path homotopy.** A continuous map on `I × I` that
+restricts to `p` at `t = 0` and to `q` at `t = 1`, and is constant along each of the edges `s = 0`
+and `s = 1`, exhibits `p` and `q` as homotopic paths. -/
+theorem homotopic_of_continuous_square {a b : X} {p q : Path a b} (K : I × I → X)
+    (hK_cont : Continuous K) (hK_zero : ∀ s, K (0, s) = p s) (hK_one : ∀ s, K (1, s) = q s)
+    (hK_left : ∀ t, K (t, 0) = a) (hK_right : ∀ t, K (t, 1) = b) : p.Homotopic q :=
+  ⟨{ toFun := K
+     continuous_toFun := hK_cont
+     map_zero_left := hK_zero
+     map_one_left := hK_one
+     prop' := by
+       intro t s hs
+       rcases hs with rfl | hs
+       · exact (hK_left t).trans p.source.symm
+       · rw [Set.mem_singleton_iff] at hs
+         subst hs
+         exact (hK_right t).trans p.target.symm }⟩
+
 end Path
 
 namespace Path
