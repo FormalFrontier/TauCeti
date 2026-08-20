@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
-public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
-public import Mathlib.LinearAlgebra.Charpoly.ToMatrix
+import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
+import Mathlib.LinearAlgebra.Charpoly.ToMatrix
 
 /-!
 # Unipotence of the dynamic unipotent subgroup
@@ -63,6 +63,19 @@ private theorem charpoly_conjugate {B : Type w} [CommRing B] [Algebra R B]
     simp [LinearEquiv.conj_apply, Comodule.pointsAction_toLinearMap]
   rw [hEnd, LinearEquiv.charpoly_conj]
 
+private theorem charpoly_endOfPoint_comp {B D : Type w} [CommRing B] [Algebra R B]
+    [CommRing D] [Algebra R D] (M : FGComoduleCat.{u, v, u} R H)
+    (b : Basis (Module.Free.ChooseBasisIndex R M) R M) (g : H →ₐ[R] B) (f : B →ₐ[R] D) :
+    (Comodule.endOfPoint M (f.comp g)).charpoly =
+      (Comodule.endOfPoint M g).charpoly.map f := by
+  rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M (f.comp g)) (b.baseChange D),
+    ← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g) (b.baseChange B),
+    Comodule.toMatrix_endOfPoint, Comodule.toMatrix_endOfPoint, ← Matrix.charpoly_map,
+    Matrix.map_map]
+  apply congrArg Matrix.charpoly
+  ext i j
+  rfl
+
 /-- Every point of the dynamic unipotent subgroup attached to a cocharacter is unipotent in
 every finite-dimensional representation. -/
 theorem isUnipotentPoint_of_mem_unipotent
@@ -101,17 +114,25 @@ theorem isUnipotentPoint_of_mem_unipotent
   have hLaurentCharpoly :
       (P.map Polynomial.toLaurent).charpoly =
         (G.map LaurentPolynomial.C).charpoly := by
-    rw [hLaurentMatrix]
-    rw [← Comodule.toMatrix_endOfPoint b]
-    rw [LinearMap.charpoly_toMatrix]
-    rw [conjugate_apply, charpoly_conjugate]
-    rw [constPoint_apply]
-    rw [← LinearMap.charpoly_toMatrix
-      (Comodule.endOfPoint M
-        (toConv ((IsScalarTower.toAlgHom R A (LaurentPolynomial A)).comp g.ofConv)).ofConv)
-      (b.baseChange (LaurentPolynomial A))]
-    simp only [Comodule.toMatrix_endOfPoint, G, C, Matrix.map_map]
-    congr 2
+    let f := IsScalarTower.toAlgHom R A (LaurentPolynomial A)
+    have hf : (f : A →+* LaurentPolynomial A) = LaurentPolynomial.C := by
+      apply RingHom.ext
+      intro a
+      exact (LaurentPolynomial.C_eq_algebraMap a).symm
+    calc
+      (P.map Polynomial.toLaurent).charpoly =
+          (C.map (conjugate A l g).ofConv).charpoly := congrArg Matrix.charpoly hLaurentMatrix
+      _ = (Comodule.endOfPoint M (conjugate A l g).ofConv).charpoly := by
+        rw [← Comodule.toMatrix_endOfPoint b, LinearMap.charpoly_toMatrix]
+      _ = (Comodule.endOfPoint M (constPoint A g).ofConv).charpoly := by
+        rw [conjugate_apply, charpoly_conjugate]
+      _ = (Comodule.endOfPoint M (f.comp g.ofConv)).charpoly := by rw [constPoint_apply]
+      _ = (Comodule.endOfPoint M g.ofConv).charpoly.map f :=
+        charpoly_endOfPoint_comp M b g.ofConv f
+      _ = G.charpoly.map LaurentPolynomial.C := by
+        rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange A),
+          Comodule.toMatrix_endOfPoint, hf]
+      _ = (G.map LaurentPolynomial.C).charpoly := by rw [Matrix.charpoly_map]
   have hpolyCharpoly : P.charpoly = G.charpoly.map Polynomial.C := by
     apply Polynomial.map_injective _ Polynomial.toLaurent_injective
     calc
