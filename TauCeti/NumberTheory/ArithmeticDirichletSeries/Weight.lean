@@ -61,7 +61,8 @@ good primes; this is the engine behind both
 * `TauCeti.MultiplicativeIdealWeight.map` and `TauCeti.UnitaryIdealWeight.map`, with their
   equivalences `mapEquiv`: functoriality under an isomorphism `K ≃+* L` of the ambient fields,
   together with the identity and composition laws, the preservation of the pointwise product
-  (`map_one` and `map_mul` on both carriers) and the compatibilities
+  (`map_one` and `map_mul` on both carriers), the naturality of restriction, conjugation and norm
+  twists, and the compatibilities
   `TauCeti.MultiplicativeIdealWeight.badPrimes_map` and
   `TauCeti.MultiplicativeIdealWeight.toIdealArithmeticFunction_map`.
 
@@ -453,6 +454,13 @@ private theorem asIdeal_equivOfRingEquiv_symm (e : K ≃+* L) (𝔮 : HeightOneS
     ((HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e)).symm 𝔮).asIdeal =
       Ideal.comap (RingOfIntegers.mapRingEquiv e) 𝔮.asIdeal := rfl
 
+private theorem absNorm_comap_mapRingEquiv (e : K ≃+* L) (I : Ideal (𝓞 L)) :
+    Ideal.absNorm (Ideal.comap (RingOfIntegers.mapRingEquiv e) I) = Ideal.absNorm I := by
+  rw [Ideal.absNorm_apply, Ideal.absNorm_apply, Submodule.cardQuot_apply,
+    Submodule.cardQuot_apply]
+  exact Nat.card_congr (Ideal.quotientEquiv _ _ (RingOfIntegers.mapRingEquiv e)
+    (Ideal.map_comap_eq_self_of_equiv (RingOfIntegers.mapRingEquiv e) I).symm)
+
 /-- **Transport along an isomorphism of fields.** An isomorphism `e : K ≃+* L` carries a
 multiplicative ideal weight on `K` to one on `L`, by pulling ideals of `𝓞 L` back to `𝓞 K`
 along `NumberField.RingOfIntegers.mapRingEquiv e`. -/
@@ -533,6 +541,46 @@ theorem map_mul (e : K ≃+* L) (χ ψ : MultiplicativeIdealWeight K) :
     map e (χ * ψ) = map e χ * map e ψ := by
   ext I
   rw [map_apply, mul_apply, mul_apply, map_apply, map_apply]
+
+/-- Transport carries an indicator weight to the indicator of the image prime set. -/
+@[simp]
+theorem map_ofBadPrimes (e : K ≃+* L) (hS : S.Finite) :
+    map e (ofBadPrimes S hS) = ofBadPrimes
+      (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' S)
+      (hS.image _) := by
+  have hprimeTo (I : Ideal (𝓞 L)) :
+      Ideal.IsPrimeTo (Ideal.comap (RingOfIntegers.mapRingEquiv e) I) S ↔
+        Ideal.IsPrimeTo I
+          (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' S) := by
+    simpa [map_apply, ofBadPrimes_apply, IsGood, badPrimes_map] using
+      (map e (ofBadPrimes S hS)).apply_ne_zero_iff_isGood I
+  ext I
+  rw [map_apply, ofBadPrimes_apply, ofBadPrimes_apply, hprimeTo]
+
+/-- Transport commutes with restriction after carrying the excluded prime set forward. -/
+@[simp]
+theorem map_restrict (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) (hS : S.Finite) :
+    map e (χ.restrict S hS) =
+      (map e χ).restrict
+        (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' S)
+        (hS.image _) := by
+  rw [restrict, map_mul, map_ofBadPrimes, restrict]
+
+/-- Transport commutes with complex conjugation. -/
+@[simp]
+theorem map_conj (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) :
+    map e χ.conj = (map e χ).conj := by
+  ext I
+  rw [map_apply, conj_apply, conj_apply, map_apply]
+
+/-- Transport commutes with norm twists because absolute ideal norm is invariant under a ring
+equivalence. -/
+@[simp]
+theorem map_normTwist (e : K ≃+* L) (z : ℂ) (χ : MultiplicativeIdealWeight K) :
+    map e (normTwist z χ) = normTwist z (map e χ) := by
+  ext I
+  rw [map_apply, normTwist_apply, normTwist_apply, map_apply,
+    absNorm_comap_mapRingEquiv]
 
 end Transport
 
@@ -706,6 +754,35 @@ theorem map_mul (e : K ≃+* L) (χ ψ : UnitaryIdealWeight K) :
     map e (χ * ψ) = map e χ * map e ψ :=
   Subtype.ext (by
     rw [val_map, val_mul, val_mul, val_map, val_map, MultiplicativeIdealWeight.map_mul])
+
+/-- Transport commutes with restriction on unitary weights after carrying the excluded prime set
+forward. -/
+@[simp]
+theorem map_restrict (e : K ≃+* L) (χ : UnitaryIdealWeight K)
+    (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite) :
+    map e (χ.restrict S hS) =
+      (map e χ).restrict
+        (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' S)
+        (hS.image _) :=
+  Subtype.ext (by
+    rw [val_map, val_restrict, val_restrict, val_map,
+      MultiplicativeIdealWeight.map_restrict])
+
+/-- Transport commutes with complex conjugation on unitary weights. -/
+@[simp]
+theorem map_conj (e : K ≃+* L) (χ : UnitaryIdealWeight K) :
+    map e χ.conj = (map e χ).conj :=
+  Subtype.ext (by
+    rw [val_map, val_conj, val_conj, val_map, MultiplicativeIdealWeight.map_conj])
+
+/-- Transport commutes with purely imaginary norm twists on unitary weights. -/
+@[simp]
+theorem map_normTwist (e : K ≃+* L) (z : ℂ) (hz : z.re = 0)
+    (χ : UnitaryIdealWeight K) :
+    map e (normTwist z hz χ) = normTwist z hz (map e χ) :=
+  Subtype.ext (by
+    rw [val_map, val_normTwist, val_normTwist, val_map,
+      MultiplicativeIdealWeight.map_normTwist])
 
 end Transport
 
