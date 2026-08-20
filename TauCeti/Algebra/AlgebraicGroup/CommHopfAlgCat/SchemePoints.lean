@@ -61,7 +61,9 @@ open AlgebraicGeometry
 
 variable {R : Type u} [CommRing R]
 
-private lemma mapMulEquiv_left
+/-- The scheme morphism underlying the spectrum-points equivalence is induced by the underlying
+ring homomorphism of the algebra point. -/
+lemma mapMulEquiv_left
     {S T : Type u} [CommRing S] [CommRing T] [Bialgebra R S] [Algebra R T]
     (f : WithConv (S →ₐ[R] T)) :
     (AlgebraicGeometry.Spec.mapMulEquiv f).left =

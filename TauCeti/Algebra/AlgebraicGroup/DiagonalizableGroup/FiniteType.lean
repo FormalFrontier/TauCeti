@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Category.CommGrpCat.FiniteGeneration
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
@@ -40,6 +41,8 @@ scheme-side functor, or depend on the general Hopf-algebra/affine-group-scheme a
   algebra.
 * `TauCeti.DiagonalizableGroup.coordinateMap`: the coordinate morphism induced by a group
   homomorphism.
+* `TauCeti.DiagonalizableGroup.mapPointsFunctor_coordinateMap_app`: the induced map on points is
+  precomposition of characters.
 * `TauCeti.DiagonalizableGroup.coordinateMap_surjective_of_surjective`: a surjective
   character-group homomorphism induces a surjective coordinate morphism.
 * `TauCeti.DiagonalizableGroup.coordinateRingFunctor`: the group-algebra functor from
@@ -71,7 +74,7 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 namespace DiagonalizableGroup
 
@@ -97,6 +100,18 @@ theorem toBialgHom_coordinateMap {G H : FGCommGrpCat.{v}} (φ : G ⟶ H) :
     FiniteTypeCommHopfAlgCat.toBialgHom (coordinateMap R φ) =
       MonoidAlgebra.mapDomainBialgHom R (FGCommGrpCat.toMonoidHom φ) :=
   rfl
+
+/-- The map on algebra-valued points induced by a diagonalizable-group coordinate morphism is
+the contravariant point map given by precomposition of characters. -/
+-- Not `@[simp]`: simplification unfolds `coordinateMap` on the left before this lemma can apply.
+theorem mapPointsFunctor_coordinateMap_app {G H : FGCommGrpCat.{v}} (φ : G ⟶ H)
+    (A : CommAlgCat.{w} R)
+    (p : HopfAlgebra.points (R := R) (H := MonoidAlgebra R H) A) :
+    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R φ).hom).app A p =
+      pointsMap (FGCommGrpCat.toMonoidHom φ) p := by
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply, pointsMap_apply]
+  exact congrArg (fun f => WithConv.toConv (p.ofConv.comp f))
+    (congrArg BialgHom.toAlgHom (toBialgHom_coordinateMap R φ))
 
 /-- The coordinate map sends a group-algebra basis element to the basis element indexed
 by its image under the underlying group homomorphism.

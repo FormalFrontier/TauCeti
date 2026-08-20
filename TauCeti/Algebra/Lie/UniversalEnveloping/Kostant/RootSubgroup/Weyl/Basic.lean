@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Algebra.Lie.Sl2.WeylAutomorphism
+public import TauCeti.Algebra.Lie.Sl2.Weyl.Automorphism
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 
 /-!
