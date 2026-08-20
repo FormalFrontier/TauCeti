@@ -78,8 +78,8 @@ belong to the complex theory and are not proved here.
   of `spinRep`, so the splitting is one of representations.
 * `TauCeti.nontrivial_spinPlus` and `TauCeti.nontrivial_spinMinus`: neither summand is zero, the
   odd one as soon as `W` is nonzero.
-* `TauCeti.coe_spinPlusAction_spinGroup_eq_toRepresentation` and
-  `TauCeti.coe_spinMinusAction_spinGroup_eq_toRepresentation`: the two bundlings agree, in that
+* `TauCeti.coe_spinPlusAction_spinGroup_apply` and
+  `TauCeti.coe_spinMinusAction_spinGroup_apply`: the two bundlings agree, in that
   the even-subalgebra actions restrict along the spin group to the subrepresentations of
   `spinRep`.
 * `TauCeti.map_spinAction_spinPlus_le_spinMinus` and
@@ -356,7 +356,7 @@ theorem mem_spinMinusSubrep (hline : P.line = ⊥) {s : ExteriorAlgebra K P.W} :
 
 /-- The even-subalgebra action on `S⁺`, restricted to the spin group, is the representation
 carried by the even half-spin subrepresentation. -/
-theorem coe_spinPlusAction_spinGroup_eq_toRepresentation (hline : P.line = ⊥) (g : spinGroup Q)
+theorem coe_spinPlusAction_spinGroup_apply (hline : P.line = ⊥) (g : spinGroup Q)
     (s : spinPlus Q P) :
     (spinPlusAction Q P hline ⟨g, spinGroup.mem_even g.2⟩ s : ExteriorAlgebra K P.W) =
       ((spinPlusSubrep P hline).toRepresentation g
@@ -366,7 +366,7 @@ theorem coe_spinPlusAction_spinGroup_eq_toRepresentation (hline : P.line = ⊥) 
 
 /-- The even-subalgebra action on `S⁻`, restricted to the spin group, is the representation
 carried by the odd half-spin subrepresentation. -/
-theorem coe_spinMinusAction_spinGroup_eq_toRepresentation (hline : P.line = ⊥) (g : spinGroup Q)
+theorem coe_spinMinusAction_spinGroup_apply (hline : P.line = ⊥) (g : spinGroup Q)
     (s : spinMinus Q P) :
     (spinMinusAction Q P hline ⟨g, spinGroup.mem_even g.2⟩ s : ExteriorAlgebra K P.W) =
       ((spinMinusSubrep P hline).toRepresentation g

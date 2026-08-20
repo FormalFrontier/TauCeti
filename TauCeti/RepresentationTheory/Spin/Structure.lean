@@ -10,8 +10,11 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Dimension
 public import TauCeti.LinearAlgebra.Matrix.ToLin
 public import TauCeti.RepresentationTheory.Spin.Polarization.Exists
 public import TauCeti.RepresentationTheory.Spin.Representation
+public import TauCeti.RepresentationTheory.Spin.Dimension
 -- Private: `LinearMap.injective_iff_surjective_of_finrank_eq_finrank` is used only inside a proof.
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+-- Private: `LinearMap.ofIsCompl` and its evaluation lemmas are used only inside proofs.
+import Mathlib.LinearAlgebra.Projection
 -- Private: `IsSimpleRing.of_ringEquiv` is used only inside a proof.
 import Mathlib.RingTheory.SimpleRing.Congr
 
@@ -43,6 +46,11 @@ field of characteristic different from two, this specializes to the field-level 
 The direction of the argument is worth recording: the spin module is built first and the structure
 theorem is derived *from* it.
 
+The same action identifies the even Clifford subalgebra with the product of the endomorphism
+algebras of the exterior-parity summands `S⁺` and `S⁻`. Surjectivity onto that product is the
+substance: an endomorphism preserving both summands comes from a unique Clifford element, and its
+odd component must vanish because it both preserves and reverses parity.
+
 The odd-dimensional case is not proved here. There `finrank L = 1` and the count gives
 `finrank (CliffordAlgebra Q) = 2 * (2 ^ l) ^ 2`, so `TauCeti.spinAction` cannot be injective. Away
 from characteristic two the centre of the Clifford algebra of a nondegenerate odd-dimensional form
@@ -57,19 +65,26 @@ decomposition. Identifying the splitting is separate work.
   Fock action promoted to an algebra isomorphism onto `Module.End K (⋀·W)`.
 * `TauCeti.SpinPolarizationData.cliffordEquivMatrix`: the same isomorphism read in a basis of the
   spinor module, onto `Matrix (Fin (2 ^ l)) (Fin (2 ^ l)) K`.
+* `TauCeti.SpinPolarizationData.evenCliffordEquivProdEnd`: the even structure theorem in operator
+  form, onto the product of the endomorphism algebras of `S⁺` and `S⁻`.
+* `TauCeti.SpinPolarizationData.evenCliffordEquivProdMatrix`: its product-of-matrix-algebras form.
 
 ## Main results
 
 * `TauCeti.spinAction_bijective`: the Fock action is faithful, hence
   bijective, in even dimension.
+* `TauCeti.evenSpinActionProd_surjective`: the even Clifford action exhausts the paired
+  endomorphism algebras of the half-spin summands.
 * `CliffordAlgebra.nonempty_algEquiv_matrix_of_finrank_eq_two_mul`: the matrix-algebra equivalence
   over a separably closed field.
 
 ## References
 
-* W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), §20.1, Lemma 20.9: the
+* W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), §20.1, Lemma 20.9 and
+  Proposition 20.15: the
   Clifford algebra of an even-dimensional space acts on `⋀·W` through the full endomorphism
-  algebra, and the dimension count that makes the action an isomorphism.
+  algebra, the dimension count that makes the action an isomorphism, and the product decomposition
+  of the even subalgebra on the two half-spin summands.
 * C. Chevalley, *The Algebraic Theory of Spinors* (1954), Chapter II.
 * [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
   Layer 1, "The even-dimensional case".
@@ -77,7 +92,7 @@ decomposition. Identifying the splitting is separate work.
 
 public section
 
-open Module QuadraticMap
+open CliffordAlgebra Module QuadraticMap
 
 namespace TauCeti
 
@@ -203,6 +218,191 @@ theorem isCentral_cliffordAlgebra (P : SpinPolarizationData Q) (h : Even (finran
 end Structure
 
 end SpinPolarizationData
+
+/-! ### The even structure theorem
+
+For an even-dimensional polarized quadratic space the Fock action is an isomorphism
+`CliffordAlgebra Q ≃ₐ[K] Module.End K S`. Under it the even subalgebra is carried onto the
+endomorphisms preserving the parity splitting `S = S⁺ ⊕ S⁻`, which is the product of the two
+endomorphism algebras; that is the content of this section. -/
+
+section EvenStructure
+
+variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
+  {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+  [Invertible (2 : K)] [FiniteDimensional K V]
+
+omit [Invertible (2 : K)] [FiniteDimensional K V] in
+private theorem spinAction_eq_zero_on_of_maps_le
+    (M N : Submodule K (ExteriorAlgebra K P.W)) (hMN : Disjoint M N)
+    {x₀ x₁ : CliffordAlgebra Q} (heven : M.map (spinAction Q P x₀) ≤ M)
+    (hodd : M.map (spinAction Q P x₁) ≤ N)
+    (hmap : M.map (spinAction Q P (x₀ + x₁)) ≤ M) :
+    Set.EqOn (spinAction Q P x₁) 0 M := by
+  intro s hs
+  have hN : spinAction Q P x₁ s ∈ N := hodd ⟨s, hs, rfl⟩
+  have hM : spinAction Q P x₁ s ∈ M := by
+    rw [map_add] at hmap
+    have hadd := hmap ⟨s, hs, rfl⟩
+    rw [LinearMap.add_apply] at hadd
+    simpa only [add_sub_cancel_left] using M.sub_mem hadd (heven ⟨s, hs, rfl⟩)
+  have : spinAction Q P x₁ s ∈ (⊥ : Submodule K (ExteriorAlgebra K P.W)) := by
+    rw [← disjoint_iff.1 hMN]
+    exact ⟨hM, hN⟩
+  simpa using this
+
+/-- **A Clifford element whose action preserves both half-spin summands is even.** Splitting it
+into an even and an odd part, the odd part acts by an operator that both preserves and reverses
+exterior parity, so it acts by zero; in even dimension the Fock action is faithful, so the odd part
+itself vanishes. -/
+theorem mem_even_of_map_spinPlus_le_of_map_spinMinus_le (hline : P.line = ⊥)
+    {x : CliffordAlgebra Q}
+    (hplus : (spinPlus Q P).map (spinAction Q P x) ≤ spinPlus Q P)
+    (hminus : (spinMinus Q P).map (spinAction Q P x) ≤ spinMinus Q P) :
+    x ∈ CliffordAlgebra.even Q := by
+  have hxsplit : x ∈ evenOdd Q 0 ⊔ evenOdd Q 1 := by
+    rw [codisjoint_iff.1 (CliffordAlgebra.evenOdd_isCompl (Q := Q)).codisjoint]
+    trivial
+  obtain ⟨x₀, hx₀, x₁, hx₁, rfl⟩ := Submodule.mem_sup.1 hxsplit
+  have hx₀even : x₀ ∈ CliffordAlgebra.even Q := by
+    rw [← Subalgebra.mem_toSubmodule, CliffordAlgebra.even_toSubmodule]
+    exact hx₀
+  -- The odd part acts by zero on each summand, so by zero.
+  have hzeroplus : Set.EqOn (spinAction Q P x₁) 0 (spinPlus Q P) :=
+    spinAction_eq_zero_on_of_maps_le P (spinPlus Q P) (spinMinus Q P)
+      (isCompl_spinPlus_spinMinus P).disjoint
+      (by rintro _ ⟨s, hs, rfl⟩; rw [spinPlus_def] at hs ⊢
+          exact spinAction_mem_evenOdd_of_mem_even P hline hx₀even hs)
+      (map_spinAction_spinPlus_le_spinMinus P hline hx₁) hplus
+  have hzerominus : Set.EqOn (spinAction Q P x₁) 0 (spinMinus Q P) :=
+    spinAction_eq_zero_on_of_maps_le P (spinMinus Q P) (spinPlus Q P)
+      (isCompl_spinPlus_spinMinus P).symm.disjoint
+      (by rintro _ ⟨s, hs, rfl⟩; rw [spinMinus_def] at hs ⊢
+          exact spinAction_mem_evenOdd_of_mem_even P hline hx₀even hs)
+      (map_spinAction_spinMinus_le_spinPlus P hline hx₁) hminus
+  have hzero : spinAction Q P x₁ = 0 :=
+    LinearMap.ext_on_codisjoint (isCompl_spinPlus_spinMinus P).codisjoint
+      hzeroplus hzerominus
+  have hx₁zero : x₁ = 0 :=
+    spinAction_injective P (P.even_finrank_of_line_eq_bot hline) (by rw [hzero, map_zero])
+  rw [hx₁zero, add_zero]
+  exact hx₀even
+
+/-- **An endomorphism of the spinor module preserving both half-spin summands is the action of an
+even Clifford element.** -/
+theorem exists_mem_even_spinAction_eq (hline : P.line = ⊥)
+    (f : Module.End K (ExteriorAlgebra K P.W))
+    (hplus : (spinPlus Q P).map f ≤ spinPlus Q P)
+    (hminus : (spinMinus Q P).map f ≤ spinMinus Q P) :
+    ∃ x : CliffordAlgebra.even Q, spinAction Q P x = f := by
+  obtain ⟨y, rfl⟩ := spinAction_surjective P f
+  exact ⟨⟨y, mem_even_of_map_spinPlus_le_of_map_spinMinus_le P hline hplus hminus⟩, rfl⟩
+
+/-- **The even subalgebra acts faithfully on the pair of half-spin summands.** An even element
+acting by zero on both acts by zero on their sum, which is all of `S`, and in even dimension the
+Fock action is faithful. -/
+theorem evenSpinActionProd_injective (hline : P.line = ⊥) :
+    Function.Injective (evenSpinActionProd Q P hline) := by
+  refine (injective_iff_map_eq_zero _).2 fun x hx => ?_
+  rw [evenSpinActionProd_apply, Prod.mk_eq_zero] at hx
+  have hzeroplus : Set.EqOn (spinAction Q P x) 0 (spinPlus Q P) := by
+    intro s hs
+    have := congrArg
+      (fun g : Module.End K (spinPlus Q P) => (g ⟨s, hs⟩ : ExteriorAlgebra K P.W)) hx.1
+    simpa using this
+  have hzerominus : Set.EqOn (spinAction Q P x) 0 (spinMinus Q P) := by
+    intro s hs
+    have := congrArg
+      (fun g : Module.End K (spinMinus Q P) => (g ⟨s, hs⟩ : ExteriorAlgebra K P.W)) hx.2
+    simpa using this
+  have hzero : spinAction Q P x = 0 :=
+    LinearMap.ext_on_codisjoint (isCompl_spinPlus_spinMinus P).codisjoint
+      hzeroplus hzerominus
+  exact Subtype.ext
+    (spinAction_injective P (P.even_finrank_of_line_eq_bot hline) (by simp [hzero]))
+
+/-- **The even subalgebra exhausts the pair of endomorphism algebras.** A pair of endomorphisms of
+the two summands assembles, along the splitting `S = S⁺ ⊕ S⁻`, into a parity-preserving
+endomorphism of `S`, and those are exactly the actions of even Clifford elements. -/
+theorem evenSpinActionProd_surjective (hline : P.line = ⊥) :
+    Function.Surjective (evenSpinActionProd Q P hline) := by
+  rintro ⟨g₁, g₂⟩
+  have hc := isCompl_spinPlus_spinMinus P
+  set f : Module.End K (ExteriorAlgebra K P.W) :=
+    LinearMap.ofIsCompl hc ((spinPlus Q P).subtype ∘ₗ g₁) ((spinMinus Q P).subtype ∘ₗ g₂)
+    with hfdef
+  have hfplus : ∀ (s : ExteriorAlgebra K P.W) (hs : s ∈ spinPlus Q P),
+      f s = (g₁ ⟨s, hs⟩ : ExteriorAlgebra K P.W) := by
+    intro s hs
+    rw [hfdef]
+    exact LinearMap.ofIsCompl_apply_left hc ⟨s, hs⟩
+  have hfminus : ∀ (s : ExteriorAlgebra K P.W) (hs : s ∈ spinMinus Q P),
+      f s = (g₂ ⟨s, hs⟩ : ExteriorAlgebra K P.W) := by
+    intro s hs
+    rw [hfdef]
+    exact LinearMap.ofIsCompl_apply_right hc ⟨s, hs⟩
+  obtain ⟨x, hx⟩ := exists_mem_even_spinAction_eq P hline f
+    (by rintro _ ⟨s, hs, rfl⟩; rw [hfplus s hs]; exact (g₁ ⟨s, hs⟩).2)
+    (by rintro _ ⟨s, hs, rfl⟩; rw [hfminus s hs]; exact (g₂ ⟨s, hs⟩).2)
+  refine ⟨x, ?_⟩
+  rw [evenSpinActionProd_apply, Prod.mk.injEq]
+  constructor
+  · refine LinearMap.ext fun s => Subtype.ext ?_
+    rw [coe_spinPlusAction_apply, hx, hfplus s s.2]
+  · refine LinearMap.ext fun s => Subtype.ext ?_
+    rw [coe_spinMinusAction_apply, hx, hfminus s s.2]
+
+/-- **The even structure theorem**: for an even-dimensional polarized quadratic space the even
+Clifford subalgebra is the product of the endomorphism algebras of the two half-spin summands.
+
+This is the even-subalgebra companion of `TauCeti.SpinPolarizationData.cliffordEquivEnd`. It gives
+the invariant-subspace dichotomy for both summands, which is simplicity for `S⁺` and, when
+`P.W ≠ ⊥`, for `S⁻`; it also distinguishes their two even-Clifford actions. -/
+noncomputable def SpinPolarizationData.evenCliffordEquivProdEnd (hline : P.line = ⊥) :
+    CliffordAlgebra.even Q ≃ₐ[K]
+      Module.End K (spinPlus Q P) × Module.End K (spinMinus Q P) :=
+  AlgEquiv.ofBijective (evenSpinActionProd Q P hline)
+    ⟨evenSpinActionProd_injective P hline, evenSpinActionProd_surjective P hline⟩
+
+@[simp]
+theorem SpinPolarizationData.evenCliffordEquivProdEnd_apply (hline : P.line = ⊥)
+    (x : CliffordAlgebra.even Q) :
+    P.evenCliffordEquivProdEnd hline x = evenSpinActionProd Q P hline x := by
+  rw [evenCliffordEquivProdEnd]
+  exact congrFun (AlgEquiv.coe_ofBijective _ _) x
+
+/-- **The matrix form of the even structure theorem**: in dimension `2 * l`, the even Clifford
+subalgebra is a product of two matrix algebras of size `2 ^ (l - 1)`. -/
+noncomputable def SpinPolarizationData.evenCliffordEquivProdMatrix {l : ℕ}
+    (hW : P.W ≠ ⊥) (hV : finrank K V = 2 * l) :
+    CliffordAlgebra.even Q ≃ₐ[K]
+      Matrix (Fin (2 ^ (l - 1))) (Fin (2 ^ (l - 1))) K ×
+        Matrix (Fin (2 ^ (l - 1))) (Fin (2 ^ (l - 1))) K := by
+  have hline := P.line_eq_bot_of_even_finrank (hV ▸ even_two_mul l)
+  have hWfin := P.finrank_W_of_finrank_eq_two_mul hV
+  have hplus : finrank K (spinPlus Q P) = 2 ^ (l - 1) := by
+    rw [finrank_spinPlus P hW, hWfin]
+  have hminus : finrank K (spinMinus Q P) = 2 ^ (l - 1) := by
+    rw [finrank_spinMinus P hW, hWfin]
+  exact (P.evenCliffordEquivProdEnd hline).trans
+    ((Algebra.endAlgEquivMatrix K _ hplus).prodCongr
+      (Algebra.endAlgEquivMatrix K _ hminus))
+
+/-- The matrix form of the even structure theorem is the pair of half-spin actions, followed by
+the chosen-basis identifications of their endomorphism algebras with matrix algebras. -/
+@[simp]
+theorem SpinPolarizationData.evenCliffordEquivProdMatrix_apply {l : ℕ}
+    (hW : P.W ≠ ⊥) (hV : finrank K V = 2 * l) (x : CliffordAlgebra.even Q) :
+    P.evenCliffordEquivProdMatrix hW hV x =
+      (Algebra.endAlgEquivMatrix K (spinPlus Q P)
+          (by rw [finrank_spinPlus P hW, P.finrank_W_of_finrank_eq_two_mul hV])
+          (spinPlusAction Q P (P.line_eq_bot_of_even_finrank (hV ▸ even_two_mul l)) x),
+        Algebra.endAlgEquivMatrix K (spinMinus Q P)
+          (by rw [finrank_spinMinus P hW, P.finrank_W_of_finrank_eq_two_mul hV])
+          (spinMinusAction Q P (P.line_eq_bot_of_even_finrank (hV ▸ even_two_mul l)) x)) := by
+  simp [evenCliffordEquivProdMatrix]
+
+end EvenStructure
 
 end TauCeti
 
