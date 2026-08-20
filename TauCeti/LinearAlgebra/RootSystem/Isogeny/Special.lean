@@ -216,7 +216,7 @@ theorem g2SpecialIsogeny_comp_self :
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
 the squared length of that other node. This is the root-datum form of
 `τ (x_α (t)) = x_{σ(α)} (t ^ q)` with `q = 1` at a long simple root and `q = 3` at a short one. -/
-theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
+@[simp] theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
     g2SpecialIsogeny.weightMap
         (g2SimplyConnectedRootDatum.root (Fin.castAdd 10 (lengthPermRankTwo i))) =
       G2.rootLength (lengthPermRankTwo i) • g2SimplyConnectedRootDatum.root (Fin.castAdd 10 i) := by
@@ -367,7 +367,7 @@ theorem f4SpecialIsogeny_comp_self :
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
 the squared length of that other node. This is the root-datum form of
 `τ (x_α (t)) = x_{σ(α)} (t ^ q)` with `q = 1` at a long simple root and `q = 2` at a short one. -/
-theorem f4SpecialIsogeny_weightMap_root_castAdd (i : Fin 4) :
+@[simp] theorem f4SpecialIsogeny_weightMap_root_castAdd (i : Fin 4) :
     f4SpecialIsogeny.weightMap
         (f4SimplyConnectedRootDatum.root (Fin.castAdd 44 (lengthPermF4 i))) =
       F4.rootLength (lengthPermF4 i) • f4SimplyConnectedRootDatum.root (Fin.castAdd 44 i) := by
