@@ -166,7 +166,7 @@ private theorem b2SpecialIsogenyMatrix_transpose_mulVec_b2Coroot (i : Fin 8) :
 
 /-- **The special matrix carries every root of the pinned datum to its indexed image with the
 prescribed exponent.** -/
-@[simp] theorem b2SpecialIsogenyMatrix_mulVec_root (i : Fin (2 * 2 ^ 2)) :
+theorem b2SpecialIsogenyMatrix_mulVec_root (i : Fin (2 * 2 ^ 2)) :
     b2SpecialIsogenyMatrix *ᵥ (typeBSimplyConnectedRootDatum 2).root i =
       b2SpecialIsogenyExponent i •
         (typeBSimplyConnectedRootDatum 2).root (b2SpecialIsogenyIndexEquiv i) := by
@@ -177,7 +177,7 @@ prescribed exponent.** -/
 
 /-- **The transposed special matrix satisfies the contragredient equation on every coroot of the
 pinned datum.** -/
-@[simp] theorem b2SpecialIsogenyMatrix_transpose_mulVec_coroot
+theorem b2SpecialIsogenyMatrix_transpose_mulVec_coroot
     (i : Fin (2 * 2 ^ 2)) :
     b2SpecialIsogenyMatrixᵀ *ᵥ
         (typeBSimplyConnectedRootDatum 2).coroot (b2SpecialIsogenyIndexEquiv i) =
@@ -189,7 +189,7 @@ pinned datum.** -/
 
 /-- Applying the character-lattice special map twice is multiplication by the characteristic
 `2`. -/
-@[simp] theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
+theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
     b2SpecialIsogenyMatrix *ᵥ (b2SpecialIsogenyMatrix *ᵥ x) = (2 : ℤ) • x := by
   funext i
   fin_cases i <;>
@@ -197,7 +197,7 @@ pinned datum.** -/
 
 /-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
 `2`. -/
-@[simp] theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
+theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
     b2SpecialIsogenyMatrixᵀ *ᵥ (b2SpecialIsogenyMatrixᵀ *ᵥ x) = (2 : ℤ) • x := by
   funext i
   fin_cases i <;>
