@@ -63,6 +63,10 @@ built from `closure` in the forthcoming valuation-spectrum development of `Spv (
 Ported from the AINTLIB development `projects/AdicSpaces/Adic spaces/OrderedGroupConvex.lean`,
 adapted to the pinned Mathlib: the quotient order is obtained from Mathlib's condensation
 API (`Quotient.instLinearOrder` over order-connected fibers) rather than constructed by hand.
+
+`quotientMk_monotone` and `quotientMk_lt_one_of_notMem` come from a different AINTLIB file:
+`projects/AdicSpaces/Adic spaces/ValuationCoarsening.lean` at commit `37bbdaeb`, where they are
+the order facts the coarsening construction consumes.
 -/
 
 public section
@@ -638,6 +642,19 @@ instance quotientIsOrderedMonoid : IsOrderedMonoid (Γ ⧸ H.toSubgroup) where
       simp [mul_inv_rev, mul_comm, mul_assoc]
     rw [h]
     exact hab
+
+/-- The quotient map `Γ →* Γ ⧸ H.toSubgroup` is monotone. -/
+-- re-exports the condensation's `Quotient.mk_monotone`: importing modules cannot unfold the
+-- sealed `quotientLinearOrder`, so they must take monotonicity from here
+theorem quotientMk_monotone : Monotone (QuotientGroup.mk' H.toSubgroup) := Quotient.mk_monotone
+
+/-- An element at most `1` and outside `H` has class strictly below `1` in the quotient. -/
+theorem quotientMk_lt_one_of_notMem {a : Γ} (ha : a ≤ 1) (haH : a ∉ H) :
+    (QuotientGroup.mk' H.toSubgroup a : Γ ⧸ H.toSubgroup) < 1 := by
+  have hle : (QuotientGroup.mk' H.toSubgroup a : Γ ⧸ H.toSubgroup) ≤ 1 := by
+    simpa using H.quotientMk_monotone ha
+  refine hle.lt_of_ne fun heq ↦ haH ?_
+  exact (QuotientGroup.eq_one_iff a).mp (by simpa using heq)
 
 end Quotient
 

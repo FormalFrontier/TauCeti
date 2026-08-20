@@ -262,9 +262,9 @@ theorem schemePointsMulEquiv_comp_weightTorusRepresentation_apply
   have hGL := congrArg (GeneralLinear.schemePointsMulEquiv n A) hp
   have hTorus : SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) p =
       SplitTorus.pointsMulEquiv q := by
-    ext x
-    exact (SplitTorus.schemePointsMulEquiv_apply_coe p x).trans
-      (SplitTorus.pointsMulEquiv_apply_coe q x).symm
+    rw [SplitTorus.schemePointsMulEquiv_eq_freeAbelianCharEquiv,
+      DiagonalizableGroup.schemePointsMulEquiv_eq_pointsMulEquiv_groupSchemePointsMulEquiv,
+      SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv]
   rw [hGL, GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv]
   rw [GeneralLinear.pointsMulEquiv_apply]
   rw [hTorus]

@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.BaseChange.CentralPoint
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.CommonKernel
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 public import TauCeti.Algebra.HopfAlgebra.Kernel
@@ -45,6 +47,8 @@ along `h ↦ 1 ⊗ h`.
 * `TauCeti.CommHopfAlgCat.mem_quotientPointsSubgroup_baseChangeHopfIdeal_iff`: a point of the
   base change lies in the base-changed closed subgroup exactly when its restriction lies in the
   original one.
+* `TauCeti.CommHopfAlgCat.isCentral_baseChangeHopfIdeal`: base change preserves central Hopf
+  ideals.
 
 ## References
 
@@ -294,5 +298,25 @@ theorem mem_quotientPointsSubgroup_baseChangeHopfIdeal_iff (J : HopfIdeal k H)
       have := hg h ((HopfIdeal.mem_toIdeal (I := J)).mp hh)
       rwa [baseChangePointsMulEquiv_apply_apply] at this
     exact RingHom.mem_ker.mp (hle ((HopfIdeal.mem_toIdeal (I := baseChangeHopfIdeal J)).mpr hy))
+
+end TauCeti.CommHopfAlgCat
+
+namespace TauCeti.CommHopfAlgCat
+
+universe u v
+
+variable {k : Type u} {K : Type v} [CommRing k] [CommRing K] [Algebra k K]
+variable {H : _root_.CommHopfAlgCat.{v} k}
+
+/-- Base change preserves central Hopf ideals, or equivalently central closed subgroup schemes. -/
+theorem isCentral_baseChangeHopfIdeal {J : HopfIdeal k H} (hJ : J.IsCentral) :
+    (baseChangeHopfIdeal (K := K) J).IsCentral := by
+  rw [isCentral_iff_forall_isCentralPoint]
+  intro A g hg
+  have hrestrictMem :=
+    (mem_quotientPointsSubgroup_baseChangeHopfIdeal_iff (K := K) A J g).mp hg
+  have hrestrictCentral :=
+    isCentralPoint_of_mem_quotientPointsSubgroup H J hJ _ hrestrictMem
+  exact (isCentralPoint_baseChangePointsMulEquiv_iff H A g).mp hrestrictCentral
 
 end TauCeti.CommHopfAlgCat

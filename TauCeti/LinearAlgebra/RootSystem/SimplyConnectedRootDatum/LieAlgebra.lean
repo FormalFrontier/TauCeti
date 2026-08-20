@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Basis
 public import TauCeti.Algebra.Lie.Basis.Cartan
 public import TauCeti.Algebra.Lie.Basis.Reindex
+public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.ChevalleyInvolution
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Rational
 
 /-!
@@ -47,6 +48,9 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
 * `TauCeti.DynkinType.lieAlgebra`: the split Lie algebra of a valid Dynkin type.
 * `TauCeti.DynkinType.cartanSubalgebra`: its distinguished Cartan subalgebra.
 * `TauCeti.DynkinType.lieBasis`: its Chevalley generators, numbered by Bourbaki node.
+* `TauCeti.DynkinType.geckLieEquiv`: the identification of the named carrier with Geck's, as an
+  equivalence of Lie algebras.
+* `TauCeti.DynkinType.chevalleyInvolution`: its signed Chevalley involution.
 
 ## Main results
 
@@ -62,6 +66,11 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
   `TauCeti.DynkinType.isNilpotent_coe_lieBasis_f`: the raising and lowering generators are
   nilpotent matrices.
 * `TauCeti.DynkinType.finrank_cartanSubalgebra`: the Cartan subalgebra has dimension `t.rank`.
+* `TauCeti.DynkinType.geckLieEquiv_chevalleyInvolution`: the involution is Geck's, read through
+  that identification.
+* `TauCeti.DynkinType.chevalleyInvolution_lieBasis_h`,
+  `TauCeti.DynkinType.chevalleyInvolution_lieBasis_e` and
+  `TauCeti.DynkinType.chevalleyInvolution_lieBasis_f`: the involution on the numbered generators.
 
 ## References
 
@@ -214,6 +223,77 @@ def cartanBasis : Module.Basis (Fin t.rank) ℚ (t.cartanSubalgebra ht) :=
 /-- **The Cartan subalgebra has dimension the rank of the Dynkin diagram.** -/
 theorem finrank_cartanSubalgebra : Module.finrank ℚ (t.cartanSubalgebra ht) = t.rank := by
   simpa using (t.lieBasis ht).finrank_cartan
+
+/-! ## The Chevalley involution -/
+
+/-- The pinned Lie algebra and Geck's construction on the pinned rational base are the same
+subalgebra of matrices, `TauCeti.DynkinType.lieAlgebra_def`; this is that identification as an
+equivalence of Lie algebras. It carries Geck's automorphisms over to the named carrier without
+unfolding it. -/
+def geckLieEquiv :
+    t.lieAlgebra ht ≃ₗ⁅ℚ⁆ RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht) :=
+  LieEquiv.ofEq _ _ (by rw [lieAlgebra_def])
+
+/-- **The Chevalley involution of the pinned split Lie algebra**: the automorphism
+`hᵢ ↦ -hᵢ`, `eᵢ ↦ -fᵢ`, `fᵢ ↦ -eᵢ` of `TauCeti.DynkinType.lieAlgebra`. It is
+`TauCeti.geckChevalleyInvolution` of the pinned rational base, read against the Bourbaki
+numbering. -/
+def chevalleyInvolution : t.lieAlgebra ht ≃ₗ⁅ℚ⁆ t.lieAlgebra ht :=
+  ((t.geckLieEquiv ht).trans (geckChevalleyInvolution (t.rationalBase ht))).trans
+    (t.geckLieEquiv ht).symm
+
+/-- The pinned Chevalley involution is Geck's involution, read through the identification of the
+two carriers. -/
+@[simp]
+theorem geckLieEquiv_chevalleyInvolution (x : t.lieAlgebra ht) :
+    t.geckLieEquiv ht (t.chevalleyInvolution ht x) =
+      geckChevalleyInvolution (t.rationalBase ht) (t.geckLieEquiv ht x) :=
+  (t.geckLieEquiv ht).apply_symm_apply _
+
+-- The generator formulas for `TauCeti.geckChevalleyInvolution` are stated for the bundled
+-- subtype elements, so each Bourbaki-numbered generator is first written in that shape.
+private theorem geckLieEquiv_lieBasis_h (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).h i) =
+    ⟨RootPairing.GeckConstruction.h (t.simpleSupportEquiv ht i), h_mem_lieAlgebra _⟩ :=
+  Subtype.ext (t.coe_lieBasis_h ht i)
+
+private theorem geckLieEquiv_lieBasis_e (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).e i) =
+    ⟨RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i), e_mem_lieAlgebra _⟩ :=
+  Subtype.ext (t.coe_lieBasis_e ht i)
+
+private theorem geckLieEquiv_lieBasis_f (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).f i) =
+    ⟨RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i), f_mem_lieAlgebra _⟩ :=
+  Subtype.ext (t.coe_lieBasis_f ht i)
+
+/-- **The Chevalley involution negates each Cartan generator**, `hᵢ ↦ -hᵢ`. -/
+@[simp] theorem chevalleyInvolution_lieBasis_h (i : Fin t.rank) :
+    t.chevalleyInvolution ht ((t.lieBasis ht).h i) = -(t.lieBasis ht).h i := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
+    map_neg, geckLieEquiv_lieBasis_h]
+  exact geckChevalleyInvolution_h (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- **The Chevalley involution sends each raising generator to minus the lowering generator with
+the same Bourbaki number**, `eᵢ ↦ -fᵢ`. -/
+@[simp] theorem chevalleyInvolution_lieBasis_e (i : Fin t.rank) :
+    t.chevalleyInvolution ht ((t.lieBasis ht).e i) = -(t.lieBasis ht).f i := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
+    map_neg, geckLieEquiv_lieBasis_e, geckLieEquiv_lieBasis_f]
+  exact geckChevalleyInvolution_e (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- **The Chevalley involution sends each lowering generator to minus the raising generator with
+the same Bourbaki number**, `fᵢ ↦ -eᵢ`. -/
+@[simp] theorem chevalleyInvolution_lieBasis_f (i : Fin t.rank) :
+    t.chevalleyInvolution ht ((t.lieBasis ht).f i) = -(t.lieBasis ht).e i := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
+    map_neg, geckLieEquiv_lieBasis_e, geckLieEquiv_lieBasis_f]
+  exact geckChevalleyInvolution_f (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- The Chevalley involution of the pinned split Lie algebra is its own inverse. -/
+@[simp] theorem chevalleyInvolution_symm :
+    (t.chevalleyInvolution ht).symm = t.chevalleyInvolution ht := by
+  refine LieEquiv.ext fun x => ?_
+  rw [LieEquiv.symm_apply_eq, ← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht),
+    geckLieEquiv_chevalleyInvolution, geckLieEquiv_chevalleyInvolution]
+  exact (geckChevalleyInvolution_geckChevalleyInvolution (t.rationalBase ht) _).symm
 
 end
 
