@@ -495,16 +495,27 @@ class SteppingStoneTest(unittest.TestCase):
         self.assertEqual(len(alerts), 1)
         self.assertIn("one further daily tick", alerts[0]["body"])
 
-    def test_it_fires_before_the_closer_demotes(self):
-        # The alert is only useful while the PR is still open: landing a fix then keeps the
-        # exact release commit on main.
-        self.assertLess(sa.STONE_STUCK_HOURS, 20)
+    def test_the_hold_labels_match_the_workflow(self):
+        # update.yml hardcodes the same set when it decides whether a stone is parked. Two
+        # copies of a policy with nothing tying them together drift; this is the tie.
+        workflow = self._workflow()
+        for label in sa.HOLD_LABELS:
+            self.assertIn(f'"{label}"', workflow, f"{label} missing from update.yml")
+
+    def test_the_lifetime_matches_the_workflow(self):
+        # The detector is only useful if it fires BEFORE the closer demotes.
+        import re
+        match = re.search(r"STONE_LIFETIME_HOURS: \"(\d+)\"", self._workflow())
+        self.assertIsNotNone(match, "update.yml no longer declares STONE_LIFETIME_HOURS")
+        self.assertLess(sa.STONE_STUCK_HOURS, int(match.group(1)))
+
+    def _workflow(self):
+        import pathlib
+        return (pathlib.Path(__file__).resolve().parents[2]
+                / ".github/workflows/update.yml").read_text()
 
     def test_the_branch_matches_the_workflow(self):
-        import pathlib
-        workflow = (pathlib.Path(__file__).resolve().parents[2]
-                    / ".github/workflows/update.yml").read_text()
-        self.assertIn(f"STONE_BRANCH: {sa.STONE_BRANCH}", workflow)
+        self.assertIn(f"STONE_BRANCH: {sa.STONE_BRANCH}", self._workflow())
 
 
 if __name__ == "__main__":

@@ -121,8 +121,11 @@ LKG_BRANCH = "hopscotch/lkg-bump"  # keep in sync with update.yml's LKG_BRANCH
 STONE_BRANCH = "hopscotch/tag-bump"
 # update.yml demotes a stone at its next daily tick (STONE_LIFETIME_HOURS = 20). Alert
 # before that, so a human gets the chance to land a fix and keep the exact release commit
-# on main rather than having it parked on a release branch.
-STONE_STUCK_HOURS = 12
+# on main rather than having it parked on a release branch. Sixteen rather than twelve:
+# a stone is opened at about 17:00 and this runs hourly, so twelve would post at about
+# 05:00 on every stone that merely had not merged overnight, including ones progressing
+# perfectly well. Sixteen still leaves four hours before the closer acts.
+STONE_STUCK_HOURS = 16
 
 
 # Keys we generate use only this alphabet; the marker is anchored to the final

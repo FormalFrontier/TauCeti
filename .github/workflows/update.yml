@@ -21,8 +21,15 @@ name: Update Dependencies
 #
 # A stepping stone must never be able to freeze dependency updates, so it has a hard
 # lifetime rather than a CI-colour test: at the next daily tick it has either merged or it
-# is demoted, whatever its colour, and demotion parks its head on `releases/<tag>` where
-# release-tag.yml can still use it. A first-known-bad regression outranks it entirely.
+# is demoted, whatever its colour, and demotion parks its head on `releases/<tag>` where a
+# human can dispatch release-tag.yml against it. A first-known-bad regression outranks it
+# entirely.
+#
+# Two limits worth knowing. The snapshot returns only the LATEST release reachable from the
+# last-known-good commit, so if two releases fall inside one gap, which is easy while a
+# regression has suppressed this path for weeks, the older one is still stepped over and
+# has to be built from a constructed branch afterwards. And a regression appearing while a
+# stone is open demotes it immediately, forfeiting the on-main commit for that release.
 
 on:
   schedule:
@@ -113,7 +120,14 @@ jobs:
           if marker is None:
               # Without the marker there is no way to know which release the stone is for,
               # and demotion has to name a branch. Say so rather than guess.
-              print("::warning::the open stepping stone carries no release marker")
+              #
+              # To STDERR, and that is not a detail: this block's stdout IS $GITHUB_OUTPUT,
+              # and the runner rejects any line there that is not `key=value`, failing the
+              # step. Printing this diagnostic to stdout would have turned the
+              # marker-missing case, the one case this branch exists to report, into a hard
+              # failure of the daily bump on every subsequent run.
+              print("::warning::the open stepping stone carries no release marker",
+                    file=sys.stderr)
           print(f"open={pr['number']}")
           print(f"head={pr['headRefOid']}")
           print(f"age={age:.2f}")
@@ -171,10 +185,22 @@ jobs:
           branch=""
           if [ -n "$RELEASE" ]; then
             branch="releases/$RELEASE"
-            # 422 means the ref already exists, which is success for our purposes.
-            gh api -X POST "repos/$REPO/git/refs" \
-              -f ref="refs/heads/$branch" -f sha="$HEAD_SHA" >/dev/null 2>&1 \
-              || echo "::notice::$branch already exists or could not be created; not overwriting it"
+            # Parking the head is what makes closing safe, so only "it is already there"
+            # counts as success. Swallowing every error would let a ruleset or a permission
+            # gap silently discard the commit while the close comment claims it was kept,
+            # and would then re-create the same stone every day for ever, because main's pin
+            # never passes the tag that provokes it.
+            if err="$(gh api -X POST "repos/$REPO/git/refs" \
+                        -f ref="refs/heads/$branch" -f sha="$HEAD_SHA" 2>&1 >/dev/null)"; then
+              echo "parked the stone's head on $branch"
+            elif printf '%s' "$err" | grep -q "Reference already exists"; then
+              echo "::notice::$branch already exists; leaving it as it is"
+            else
+              echo "::error::could not park the stone's head on $branch: $err"
+              echo "::error::leaving the stepping stone OPEN rather than closing it and losing the commit"
+              echo "demoted=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           else
             echo "::warning::no release marker on the stone, so its head is not parked on a branch"
           fi
@@ -218,8 +244,12 @@ jobs:
         run: |
           set -euo pipefail
           if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
-            echo "::error::the snapshot returned '$TAG', which is not a release tag name"
-            exit 1
+            # Not fatal. This value comes from a third-party snapshot, and it is only used to
+            # decide whether to build a stepping stone; a schema change upstream must not be
+            # able to stop the daily bump, which is the one job that must never stop.
+            echo "::warning::the snapshot returned '$TAG', which is not a release tag name; skipping the stepping stone"
+            echo "handled=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           if gh api "repos/$REPO/git/ref/tags/$TAG" >/dev/null 2>&1; then
             echo "handled=true" >> "$GITHUB_OUTPUT"; echo "$TAG is already tagged"; exit 0
@@ -258,7 +288,11 @@ jobs:
           branch: ${{ env.STONE_BRANCH }}
           title: "chore: pin mathlib at ${{ steps.rel.outputs.rev }} (release stepping stone)"
           commit-message: "chore: pin mathlib at ${{ steps.rel.outputs.rev }}"
-          message: |
+          # `body` rather than `message`, which would sit above open-bump-pr's own footer.
+          # That footer states that `lake build` was run against the new commit and
+          # succeeded; with `skip-build: true` no build was run at all, and a PR that
+          # advertises a build it never did is worse than one with no footer.
+          body: |
             The last-known-good bump is about to step over mathlib's `${{ steps.rel.outputs.rev }}`
             tag, which main's pin has not reached. This PR pins mathlib at that tag exactly
             (`${{ steps.rel.outputs.commit }}`), so the release can be built, cached and tagged from
@@ -273,11 +307,17 @@ jobs:
           git-user-name: tauceti-review-bot[bot]
           git-user-email: 290224625+tauceti-review-bot[bot]@users.noreply.github.com
 
+      # The `demoted` disjunct is what makes "bumps resume in this same run" true. Without
+      # it a demotion run stops after closing the stone, every stone costs two frozen daily
+      # ticks instead of one, and a stone whose demotion cannot park its head would be
+      # re-created the next day for ever, because main's pin never passes the tag that
+      # provokes it.
       - name: Bump to latest mathlib
         id: bump
         if: >-
           steps.fkb.outputs.commit == ''
-          && steps.stone_state.outputs.open == ''
+          && (steps.stone_state.outputs.open == ''
+              || steps.stone_close.outputs.demoted == 'true')
           && steps.stone.outputs.updated != 'true'
         uses: leanprover-community/downstream-reports/.github/actions/bump-to-latest@62750c6a09e73013f9c23c7ee007c612793fe9a2
         with:
@@ -286,7 +326,8 @@ jobs:
       - name: Open or update PR
         if: >-
           steps.fkb.outputs.commit == ''
-          && steps.stone_state.outputs.open == ''
+          && (steps.stone_state.outputs.open == ''
+              || steps.stone_close.outputs.demoted == 'true')
           && steps.stone.outputs.updated != 'true'
           && steps.bump.outputs.updated == 'true'
         uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
@@ -379,6 +420,11 @@ jobs:
   open-issue:
     runs-on: ubuntu-latest
     needs: bump
+    # `always()` because the incompatibility path must outrank everything, including a
+    # failure in the bump job itself. Without it, one transient `gh` error, or any bug in
+    # the stepping-stone steps, would silently cost that day its regression tracking too.
+    # `track-incompatibility` is a no-op when no regression is reported.
+    if: ${{ always() && github.repository == 'TauCetiProject/TauCeti' }}
     permissions:
       issues: write
       contents: write
