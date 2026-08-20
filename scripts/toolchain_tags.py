@@ -868,6 +868,16 @@ def _tag_is_valid(tag_sha, release, mathlib_rev, up, target=None, target_exact=T
         # release branch is mutable: if it is later re-cut onto another exact-pin commit, a
         # correctly placed permanent tag would otherwise start reading as a mismatch.
         return False, (f"is on {tag_sha[:8]}, but policy names {target[:8]}"), target_exact
+    if target_kind != "main-commit":
+        # ...but declining to compare it with the branch must not leave the commit
+        # unchecked. Judge the tagged commit on its own shape, which is the property that
+        # made it taggable, rather than on a ref that has since moved.
+        shaped, why = up.release_branch_shape(tag_sha)
+        if shaped is None:
+            return False, f"is on {tag_sha[:8]}, whose shape could not be read ({why})", \
+                   target_exact
+        if not shaped:
+            return False, f"is on {tag_sha[:8]}, which {why}", target_exact
     if target_exact and pin != mathlib_rev:
         return False, (f"pins mathlib {(pin or 'nothing')[:8]}, but an exact tag for "
                        f"{release} pins {mathlib_rev[:8]}"), True

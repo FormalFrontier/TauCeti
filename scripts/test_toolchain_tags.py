@@ -634,6 +634,19 @@ class Classification(unittest.TestCase):
         self.assertIn("could not be read", row["reason"])
         self.assertNotIn("re-cut", row["reason"])
 
+    def test_a_tag_on_an_off_main_commit_of_the_wrong_shape_is_blocked(self):
+        # Declining to compare a release-branch tag with a branch that may have moved must
+        # not leave the tagged commit unchecked: an arbitrary off-main commit with the right
+        # two pins would otherwise read back as done, permanently.
+        tagged = "d" * 40
+        up = FakeUpstream(repo_tags={"v4.33.0": tagged},
+                          pins={tagged: ("leanprover/lean4:v4.33.0", REAL_TAGS["v4.33.0"])},
+                          shapes={tagged: (False, "changes TauCeti/Foo.lean, which is "
+                                                  "outside the two Lake pins")})
+        row = self.row("v4.33.0", up)
+        self.assertEqual(row["status"], "blocked")
+        self.assertIn("outside the two Lake pins", row["reason"])
+
     def test_a_tag_is_not_judged_against_a_branch_that_has_since_moved(self):
         # A permanent tag compared with a mutable branch head would start reading as a
         # mismatch the moment someone re-cut the branch onto another exact-pin commit.
