@@ -25,6 +25,11 @@ Tau Ceti work in [#42](https://github.com/TauCetiProject/TauCeti/pull/42).
 `SimplyConnectedSpace.paths_homotopic`, applied in a subspace `↥V`, yields a homotopy in the
 ambient space whose intermediate paths all stay in `V`. Analytic continuation consumes it in
 `Analysis/Complex/Conformal/GlobalBranch.lean`.
+
+`Path.homotopic_of_continuous_square` is likewise adapted from Kim Morrison's
+[#38292](https://github.com/leanprover-community/mathlib4/pull/38292). It moved here from
+`AlgebraicTopology/UniversalCover/BasedPath.lean` and is used by
+`AlgebraicTopology/Sphere/SimplyConnected.lean`.
 -/
 
 public section
@@ -246,6 +251,16 @@ theorem map_nullhomotopic_of_nullhomotopic {Y : Type*} [TopologicalSpace Y] {f :
   rw [hconst] at key
   exact Path.Homotopic.trans_right_cancel
     ((key.trans (Path.Homotopic.trans_refl _)).trans (Path.Homotopic.refl_trans _).symm)
+
+/-- A loop that stays in a set whose inclusion is null-homotopic is itself null-homotopic in the
+ambient space. -/
+theorem refl_of_forall_mem_of_nullhomotopic {s : Set X}
+    (hs : (ContinuousMap.mk (Subtype.val : s → X) continuous_subtype_val).Nullhomotopic)
+    {x : X} (γ : Path x x) (hγ : ∀ t, γ t ∈ s) : γ.Homotopic (Path.refl x) := by
+  have hx : x ∈ s := γ.source ▸ hγ 0
+  have hmap := map_nullhomotopic_of_nullhomotopic hs
+    (γ.codRestrict (x := ⟨x, hx⟩) (y := ⟨x, hx⟩) hγ)
+  rwa [Path.map_codRestrict] at hmap
 
 namespace Quotient
 variable {x₀ x₁ : X}

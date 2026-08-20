@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Module.Submodule.Union
-public import Mathlib.Analysis.InnerProductSpace.EuclideanDist
+public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import Mathlib.Analysis.Normed.Module.Connected
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import TauCeti.AlgebraicTopology.Sphere.Puncture
@@ -33,14 +33,14 @@ the sphere. And `Λ k t ≠ 0` also forces `k` to be `⌊N t⌋` or `⌊N t⌋ +
 span of two of the nodes. A finite family of proper subspaces of `E` cannot cover `E`
 (`Submodule.exists_forall_notMem_of_forall_ne_top`), and the spans of two vectors are proper
 exactly because the rank exceeds two, so the projected loop omits a point of the sphere. Loops
-omitting a point are null-homotopic by `TauCeti.homotopic_refl_of_notMem_range`.
+omitting a point are null-homotopic by `TauCeti.homotopic_refl_of_notMem_range_sphere`.
 
 Rank two is genuinely the boundary: the circle is not simply connected.
 
 ## Main declarations
 
-* `TauCeti.exists_homotopic_notMem_range`: every loop on the unit sphere is homotopic to a loop
-  that omits a point of the sphere.
+* `TauCeti.exists_homotopic_notMem_range_sphere`: every loop on the unit sphere is homotopic to a
+  loop that omits a point of the sphere.
 * `TauCeti.simplyConnectedSpace_sphere`: **the unit sphere of a real inner product space of rank
   greater than two is simply connected.**
 * `TauCeti.simplyConnectedSpace_euclideanSphere`: the case of `Sⁿ` for `2 ≤ n`.
@@ -160,7 +160,7 @@ private theorem nodeInterp_one (N : ℕ) (node : ℕ → E) : nodeInterp N node 
       rw [hatFunction_one_of_ne (Nat.lt_succ_iff.mp (Finset.mem_range.mp hk)) hkN, zero_smul]
   · exact fun hc => absurd (Finset.mem_range.mpr (Nat.lt_succ_self N)) hc
 
-/-- The interpolation at `t` lies on the geodesic chord of the two nodes straddling `t`. -/
+/-- The interpolation at `t` lies in the span of the two nodes straddling `t`. -/
 private theorem nodeInterp_mem_span (N : ℕ) (node : ℕ → E) (t : I) :
     nodeInterp N node t ∈
       Submodule.span ℝ {node ⌊(N : ℝ) * (t : ℝ)⌋₊, node (⌊(N : ℝ) * (t : ℝ)⌋₊ + 1)} := by
@@ -185,11 +185,23 @@ private theorem half_mul_sum_le_inner_nodeInterp {N : ℕ} {node : ℕ → E} {a
   · have := mul_le_mul_of_nonneg_left (h k hk).le (hatFunction_nonneg N k t)
     linarith
 
+private theorem span_pair_ne_top (h : 2 < Module.rank ℝ E) (a b : E) :
+    Submodule.span ℝ ({a, b} : Set E) ≠ ⊤ := by
+  intro hab
+  have hcard : Cardinal.mk ({a, b} : Set E) ≤ 2 :=
+    calc Cardinal.mk ({a, b} : Set E) ≤ Cardinal.mk ({b} : Set E) + 1 := Cardinal.mk_insert_le
+      _ = 2 := by rw [Cardinal.mk_singleton]; exact one_add_one_eq_two
+  have h2 : Module.rank ℝ ↥(Submodule.span ℝ ({a, b} : Set E)) ≤ 2 :=
+    (rank_span_le _).trans hcard
+  rw [hab, rank_top] at h2
+  exact absurd h2 (not_le.mpr h)
+
 /-- **Every loop on the unit sphere of a real inner product space of rank greater than two is
 homotopic to a loop that omits a point of the sphere.** The comparison loop is the radial
 projection of the piecewise linear interpolation of finitely many values of the loop, and the
 point it omits is obtained by avoiding the finitely many planes those values span. -/
-theorem exists_homotopic_notMem_range (h : 2 < Module.rank ℝ E) {x : sphere (0 : E) 1}
+theorem exists_homotopic_notMem_range_sphere (h : 2 < Module.rank ℝ E)
+    {x : sphere (0 : E) 1}
     (γ : Path x x) :
     ∃ γ' : Path x x, γ.Homotopic γ' ∧ ∃ p : sphere (0 : E) 1, p ∉ Set.range γ' := by
   have hγnorm : ∀ t, ‖((γ t : sphere (0 : E) 1) : E)‖ = 1 := fun t =>
@@ -266,24 +278,15 @@ theorem exists_homotopic_notMem_range (h : 2 < Module.rank ℝ E) {x : sphere (0
     simp only [nodeInterp_one, hnode, hnodeParamN, γ.target]
   -- The comparison loop.
   have hcontL : Continuous (nodeInterp N node) := continuous_nodeInterp N node
-  have hcontγ' : Continuous fun t : I =>
-      (⟨normalize (nodeInterp N node t),
-        mem_sphere_zero_iff_norm.mpr (norm_normalize (hLne t))⟩ : sphere (0 : E) 1) := by
-    refine Continuous.subtype_mk ?_ _
-    change Continuous fun t => ‖nodeInterp N node t‖⁻¹ • nodeInterp N node t
-    exact ((continuous_norm.comp hcontL).inv₀
-      (fun t => norm_ne_zero_iff.mpr (hLne t))).smul hcontL
+  let Lsphere := normalizeToSphere (nodeInterp N node) hcontL hLne
   have hx1 : ‖((x : sphere (0 : E) 1) : E)‖ = 1 := mem_sphere_zero_iff_norm.mp x.2
-  set γ' : Path x x :=
-    { toFun := fun t => ⟨normalize (nodeInterp N node t),
-        mem_sphere_zero_iff_norm.mpr (norm_normalize (hLne t))⟩
-      continuous_toFun := hcontγ'
+  let γ' : Path x x :=
+    { toFun := Lsphere
+      continuous_toFun := Lsphere.continuous
       source' := Subtype.ext (by
-        change normalize (nodeInterp N node 0) = ((x : sphere (0 : E) 1) : E)
-        rw [hL0, normalize_eq_self_of_norm_eq_one hx1])
+        rw [normalizeToSphere_apply, hL0, normalize_eq_self_of_norm_eq_one hx1])
       target' := Subtype.ext (by
-        change normalize (nodeInterp N node 1) = ((x : sphere (0 : E) 1) : E)
-        rw [hL1, normalize_eq_self_of_norm_eq_one hx1]) } with hγ'
+        rw [normalizeToSphere_apply, hL1, normalize_eq_self_of_norm_eq_one hx1]) }
   -- The straight-line homotopy between the loop and the comparison loop misses the origin.
   have hGne : ∀ z : I × I,
       (1 - (z.1 : ℝ)) • ((γ z.2 : sphere (0 : E) 1) : E) + (z.1 : ℝ) • nodeInterp N node z.2
@@ -304,61 +307,13 @@ theorem exists_homotopic_notMem_range (h : 2 < Module.rank ℝ E) {x : sphere (0
     rw [← hexp] at hpos
     simp only [hz, inner_zero_right] at hpos
     exact lt_irrefl 0 hpos
-  have hsquare : γ.Homotopic γ' := by
-    refine Path.homotopic_of_continuous_square
-      (fun z => ⟨normalize ((1 - (z.1 : ℝ)) • ((γ z.2 : sphere (0 : E) 1) : E)
-          + (z.1 : ℝ) • nodeInterp N node z.2),
-        mem_sphere_zero_iff_norm.mpr (norm_normalize (hGne z))⟩) ?_ ?_ ?_ ?_ ?_
-    · refine Continuous.subtype_mk ?_ _
-      have hg : Continuous fun z : I × I =>
-          (1 - (z.1 : ℝ)) • ((γ z.2 : sphere (0 : E) 1) : E)
-            + (z.1 : ℝ) • nodeInterp N node z.2 := by
-        have h1 : Continuous fun z : I × I => ((γ z.2 : sphere (0 : E) 1) : E) :=
-          hγcont.comp continuous_snd
-        have h2 : Continuous fun z : I × I => ((z.1 : ℝ)) :=
-          continuous_subtype_val.comp continuous_fst
-        exact ((continuous_const.sub h2).smul h1).add
-          (h2.smul (hcontL.comp continuous_snd))
-      change Continuous fun z => ‖_‖⁻¹ • _
-      exact ((continuous_norm.comp hg).inv₀ (fun z => norm_ne_zero_iff.mpr (hGne z))).smul hg
-    · intro s
-      refine Subtype.ext ?_
-      change normalize ((1 - ((0 : I) : ℝ)) • ((γ s : sphere (0 : E) 1) : E)
-        + ((0 : I) : ℝ) • nodeInterp N node s) = ((γ s : sphere (0 : E) 1) : E)
-      rw [Set.Icc.coe_zero]
-      simp only [sub_zero, one_smul, zero_smul, add_zero]
-      exact normalize_eq_self_of_norm_eq_one (hγnorm s)
-    · intro s
-      refine Subtype.ext ?_
-      change normalize ((1 - ((1 : I) : ℝ)) • ((γ s : sphere (0 : E) 1) : E)
-        + ((1 : I) : ℝ) • nodeInterp N node s) = normalize (nodeInterp N node s)
-      rw [Set.Icc.coe_one]
-      simp
-    · intro u
-      refine Subtype.ext ?_
-      change normalize ((1 - (u : ℝ)) • ((γ 0 : sphere (0 : E) 1) : E)
-        + (u : ℝ) • nodeInterp N node 0) = ((x : sphere (0 : E) 1) : E)
-      rw [hL0, γ.source, ← add_smul, sub_add_cancel, one_smul,
-        normalize_eq_self_of_norm_eq_one hx1]
-    · intro u
-      refine Subtype.ext ?_
-      change normalize ((1 - (u : ℝ)) • ((γ 1 : sphere (0 : E) 1) : E)
-        + (u : ℝ) • nodeInterp N node 1) = ((x : sphere (0 : E) 1) : E)
-      rw [hL1, γ.target, ← add_smul, sub_add_cancel, one_smul,
-        normalize_eq_self_of_norm_eq_one hx1]
+  have hsquare : γ.Homotopic γ' :=
+    Path.homotopic_of_normalize_segment_ne_zero γ γ' (nodeInterp N node) hcontL
+      (fun t => normalizeToSphere_apply (nodeInterp N node) hcontL hLne t) hL0 hL1 hGne
   -- The comparison loop lives in finitely many planes, which cannot cover `E`.
   have hVne : ∀ m : Fin (N + 1),
-      Submodule.span ℝ ({node (m : ℕ), node ((m : ℕ) + 1)} : Set E) ≠ ⊤ := by
-    intro m hm
-    have hcard : Cardinal.mk ({node (m : ℕ), node ((m : ℕ) + 1)} : Set E) ≤ 2 :=
-      calc Cardinal.mk ({node (m : ℕ), node ((m : ℕ) + 1)} : Set E)
-          ≤ Cardinal.mk ({node ((m : ℕ) + 1)} : Set E) + 1 := Cardinal.mk_insert_le
-        _ = 2 := by rw [Cardinal.mk_singleton]; exact one_add_one_eq_two
-    have h2 : Module.rank ℝ
-        ↥(Submodule.span ℝ ({node (m : ℕ), node ((m : ℕ) + 1)} : Set E)) ≤ 2 :=
-      (rank_span_le _).trans hcard
-    rw [hm, rank_top] at h2
-    exact absurd h2 (not_le.mpr h)
+      Submodule.span ℝ ({node (m : ℕ), node ((m : ℕ) + 1)} : Set E) ≠ ⊤ := fun m =>
+    span_pair_ne_top h _ _
   obtain ⟨w, hw⟩ := Submodule.exists_forall_notMem_of_forall_ne_top
     (fun m : Fin (N + 1) => Submodule.span ℝ ({node (m : ℕ), node ((m : ℕ) + 1)} : Set E)) hVne
   have hw0 : w ≠ 0 := fun h0 => hw ⟨0, Nat.succ_pos N⟩ (h0 ▸ Submodule.zero_mem _)
@@ -385,8 +340,8 @@ theorem simplyConnectedSpace_sphere (h : 2 < Module.rank ℝ E) :
     isPathConnected_iff_pathConnectedSpace.mp
       (isPathConnected_sphere (Cardinal.one_lt_two.trans h) 0 zero_le_one)
   refine simply_connected_iff_loops_nullhomotopic.mpr ⟨hpc, fun x γ => ?_⟩
-  obtain ⟨γ', hγγ', p, hp⟩ := exists_homotopic_notMem_range h γ
-  exact hγγ'.trans (homotopic_refl_of_notMem_range γ' hp)
+  obtain ⟨γ', hγγ', p, hp⟩ := exists_homotopic_notMem_range_sphere h γ
+  exact hγγ'.trans (homotopic_refl_of_notMem_range_sphere γ' hp)
 
 /-- **The `n`-sphere is simply connected for `2 ≤ n`.** -/
 theorem simplyConnectedSpace_euclideanSphere {n : ℕ} (hn : 2 ≤ n) :
