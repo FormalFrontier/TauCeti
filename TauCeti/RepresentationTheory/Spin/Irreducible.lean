@@ -37,25 +37,25 @@ and it comes from the full structure theorem `TauCeti.spinAction_bijective` toge
 parity bookkeeping of `TauCeti/RepresentationTheory/Spin/HalfSpin.lean`: an endomorphism of `S`
 preserving both summands is `spinAction x` for a unique `x`, whose odd component acts both
 parity-preservingly and parity-reversingly, hence acts as zero, hence vanishes. That is
-`TauCeti.mem_even_of_map_spinPlus_le_of_map_spinMinus_le`, and everything else follows from it: the
-two half-spin summands are simple over the even subalgebra
-(`TauCeti.eq_bot_or_eq_top_of_map_spinPlusAction_le`) because each factor is a full endomorphism
-algebra, and they are **inequivalent**
+`TauCeti.mem_even_of_map_spinPlus_le_of_map_spinMinus_le`, and everything else follows from it: each
+half-spin summand has no proper nonzero invariant subspace because its factor is a full
+endomorphism algebra, and they are **inequivalent**
 (`TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`) because the
 element of `even Q` acting as the identity on `S⁺` and as zero on `S⁻` kills any map that
 intertwines them.
 
-Simplicity is stated in its lattice form, as "an invariant subspace is `⊥` or everything", rather
-than as `IsSimpleModule`: `S⁺` and `S⁻` carry no `Module (even Q)` instance, and manufacturing one
-would mean a type synonym for a statement that reads no better through it.
+The invariant-subspace conclusions are stated in lattice form, as "an invariant subspace is `⊥`
+or everything", rather than as `IsSimpleModule`: `S⁺` and `S⁻` carry no `Module (even Q)` instance,
+and manufacturing one would mean a type synonym for a statement that reads no better through it.
 
 The hypothesis `P.line = ⊥` is the even-dimensional case, and it is exactly what makes the parity
 splitting a splitting of modules at all;
 `TauCeti.SpinPolarizationData.even_finrank_of_line_eq_bot` turns it into the evenness the structure
-theorem is stated with, so no separate parity hypothesis is carried. Simplicity of `S⁻` carries the
-further hypothesis `W ≠ ⊥`, which rules out only the zero-dimensional quadratic space: there
-`S = K` is entirely even, `S⁻` is zero, and there is nothing to be simple. `S⁺` always contains the
-scalars, so it needs no such hypothesis, and neither does the inequivalence.
+theorem is stated with, so no separate parity hypothesis is carried. The lattice dichotomy for
+`S⁻` needs no further hypothesis, since it also holds vacuously when `S⁻ = 0`. To conclude that
+`S⁻` is simple, combine it with `TauCeti.nontrivial_spinMinus`, whose hypothesis `W ≠ ⊥` rules out
+only the zero-dimensional quadratic space: there `S = K` is entirely even and `S⁻` is zero. `S⁺`
+always contains the scalars, so it needs no such hypothesis, and neither does the inequivalence.
 
 What is *not* proved here is irreducibility of the group representation `TauCeti.spinRep`, which
 asks more: that the `K`-span of `spinGroup Q` inside `even Q` is all of it. Nor is the
@@ -77,8 +77,9 @@ results here are the even-dimensional half.
 * `TauCeti.mem_even_of_map_spinPlus_le_of_map_spinMinus_le`: a Clifford element whose action
   preserves both half-spin summands is even.
 * `TauCeti.eq_bot_or_eq_top_of_map_spinPlusAction_le` and
-  `TauCeti.eq_bot_or_eq_top_of_map_spinMinusAction_le`: **the half-spin summands are simple** over
-  the even Clifford subalgebra.
+  `TauCeti.eq_bot_or_eq_top_of_map_spinMinusAction_le`: the two half-spin summands have no proper
+  nonzero invariant subspace. Together with `TauCeti.nontrivial_spinPlus` and
+  `TauCeti.nontrivial_spinMinus`, respectively, these say that the summands are simple.
 * `TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`: **the half-spin summands
   are inequivalent.**
 
@@ -401,7 +402,9 @@ theorem eq_bot_or_eq_top_of_map_spinPlusAction_le (hline : P.line = ⊥)
   rw [evenSpinAction_apply, Prod.mk.injEq] at hx
   exact hg ▸ hx.1 ▸ hN x ⟨s, hs, rfl⟩
 
-/-- **The odd half-spin summand is a simple module over the even Clifford subalgebra.** -/
+/-- **The invariant-subspace dichotomy for the odd half-spin summand**: every subspace of `S⁻`
+invariant under the even Clifford subalgebra is `⊥` or all of `S⁻`. This remains true when `S⁻` is
+zero; combine it with `TauCeti.nontrivial_spinMinus` to obtain simplicity when `P.W ≠ ⊥`. -/
 theorem eq_bot_or_eq_top_of_map_spinMinusAction_le (hline : P.line = ⊥)
     (N : Submodule K (spinMinus Q P))
     (hN : ∀ x : CliffordAlgebra.even Q, N.map (spinMinusAction Q P hline x) ≤ N) :
