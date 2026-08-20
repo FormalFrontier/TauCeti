@@ -41,8 +41,6 @@ good primes; this is the engine behind both
 * `Ideal.IsPrimeTo`: an ideal is nonzero and no prime of `S` divides it, with its
   multiplicativity (`Ideal.isPrimeTo_mul_iff`) and its induction principle
   (`Ideal.IsPrimeTo.induction_on`);
-* `IsDedekindDomain.HeightOneSpectrum.asIdeal_dvd_asIdeal_iff`: divisibility between
-  height-one primes is equality;
 * `TauCeti.MultiplicativeIdealWeight`: the general completely multiplicative carrier, its
   `TauCeti.MultiplicativeIdealWeight.badPrimes` and its good ideals
   (`TauCeti.MultiplicativeIdealWeight.IsGood`);
@@ -209,6 +207,7 @@ noncomputable def ofBadPrimes (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Fin
 open scoped Classical in
 /-- Defining equation of `TauCeti.MultiplicativeIdealWeight.ofBadPrimes`; its body is not
 exposed. -/
+@[simp]
 theorem ofBadPrimes_apply (hS : S.Finite) (I : Ideal (𝓞 K)) :
     ofBadPrimes S hS I = if Ideal.IsPrimeTo I S then 1 else 0 := (rfl)
 
@@ -221,8 +220,7 @@ theorem badPrimes_ofBadPrimes (hS : S.Finite) : (ofBadPrimes S hS).badPrimes = S
 @[simp]
 theorem isGood_ofBadPrimes_iff (hS : S.Finite) {I : Ideal (𝓞 K)} :
     (ofBadPrimes S hS).IsGood I ↔ Ideal.IsPrimeTo I S := by
-  change Ideal.IsPrimeTo I (ofBadPrimes S hS).badPrimes ↔ Ideal.IsPrimeTo I S
-  rw [badPrimes_ofBadPrimes]
+  simp only [IsGood, badPrimes_ofBadPrimes]
 
 /-- The pointwise product of two multiplicative ideal weights. -/
 noncomputable instance : Mul (MultiplicativeIdealWeight K) where
@@ -230,8 +228,11 @@ noncomputable instance : Mul (MultiplicativeIdealWeight K) where
     { toMonoidWithZeroHom := χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom
       finite_setOf_apply_eq_zero := by
         refine (χ.finite_badPrimes.union ψ.finite_badPrimes).subset fun 𝔭 h𝔭 ↦ ?_
-        change χ 𝔭.asIdeal = 0 ∨ ψ 𝔭.asIdeal = 0
-        exact mul_eq_zero.mp h𝔭 }
+        have hzero :
+            (χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom) 𝔭.asIdeal = 0 := h𝔭
+        rw [show (χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom) 𝔭.asIdeal =
+          χ 𝔭.asIdeal * ψ 𝔭.asIdeal from rfl] at hzero
+        exact mul_eq_zero.mp hzero }
 
 @[simp]
 theorem mul_apply (χ ψ : MultiplicativeIdealWeight K) (I : Ideal (𝓞 K)) :
@@ -243,18 +244,16 @@ noncomputable instance : One (MultiplicativeIdealWeight K) where
     { toMonoidWithZeroHom := 1
       finite_setOf_apply_eq_zero := by
         refine Set.finite_empty.subset fun 𝔭 h𝔭 ↦ ?_
-        change (1 : Ideal (𝓞 K) →*₀ ℂ) 𝔭.asIdeal = 0 at h𝔭
-        rw [MonoidWithZeroHom.one_apply_eq_zero_iff] at h𝔭
-        exact 𝔭.ne_bot h𝔭 }
+        exact 𝔭.ne_bot (MonoidWithZeroHom.one_apply_eq_zero_iff.mp h𝔭) }
 
 /-- The trivial weight is the indicator of the nonzero ideals. -/
+@[simp]
 theorem one_apply (I : Ideal (𝓞 K)) :
     (1 : MultiplicativeIdealWeight K) I = if I = ⊥ then 0 else 1 := by
   split_ifs with hI
   · subst I
     simp
-  · change (1 : Ideal (𝓞 K) →*₀ ℂ) I = 1
-    exact MonoidWithZeroHom.one_apply_of_ne_zero hI
+  · exact MonoidWithZeroHom.one_apply_of_ne_zero hI
 
 @[simp]
 theorem badPrimes_one : (1 : MultiplicativeIdealWeight K).badPrimes = ∅ := by
@@ -290,8 +289,7 @@ noncomputable instance : CommMonoid (MultiplicativeIdealWeight K) where
 @[simp]
 theorem isGood_one_iff {I : Ideal (𝓞 K)} :
     (1 : MultiplicativeIdealWeight K).IsGood I ↔ I ≠ ⊥ := by
-  change Ideal.IsPrimeTo I (1 : MultiplicativeIdealWeight K).badPrimes ↔ I ≠ ⊥
-  rw [badPrimes_one, Ideal.isPrimeTo_empty]
+  simp only [IsGood, badPrimes_one, Ideal.isPrimeTo_empty]
 
 /-- **Restriction away from a finite set of primes**: `χ` is left unchanged on the ideals prime
 to `S` and set to `0` on the others. -/
@@ -300,6 +298,7 @@ noncomputable def restrict (χ : MultiplicativeIdealWeight K)
   χ * ofBadPrimes S hS
 
 open scoped Classical in
+@[simp]
 theorem restrict_apply (χ : MultiplicativeIdealWeight K) (hS : S.Finite) (I : Ideal (𝓞 K)) :
     χ.restrict S hS I = if Ideal.IsPrimeTo I S then χ I else 0 := by
   by_cases h : Ideal.IsPrimeTo I S <;> simp [restrict, ofBadPrimes_apply, h]

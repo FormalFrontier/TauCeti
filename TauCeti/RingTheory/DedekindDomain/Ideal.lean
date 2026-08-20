@@ -29,13 +29,6 @@ namespace IsDedekindDomain.HeightOneSpectrum
 
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 
-/-- Divisibility between height-one primes of a Dedekind domain is equality: the only
-height-one prime dividing `𝔮` is `𝔮` itself. -/
-theorem asIdeal_dvd_asIdeal_iff {𝔭 𝔮 : HeightOneSpectrum R} :
-    𝔭.asIdeal ∣ 𝔮.asIdeal ↔ 𝔭 = 𝔮 :=
-  ⟨fun h ↦ asIdeal_injective ((prime_dvd_prime_iff_eq 𝔭.prime 𝔮.prime).mp h),
-    fun h ↦ h ▸ dvd_rfl⟩
-
 /-- Distinct height one primes are incomparable: a height one prime is not contained in any
 other one, since both are maximal. -/
 lemma exists_mem_notMem {v w : HeightOneSpectrum R} (h : w ≠ v) :
@@ -103,7 +96,8 @@ theorem isPrimeTo_mul_iff : IsPrimeTo (I * J) S ↔ IsPrimeTo I S ∧ IsPrimeTo 
 theorem isPrimeTo_asIdeal_iff {𝔭 : HeightOneSpectrum R} :
     IsPrimeTo 𝔭.asIdeal S ↔ 𝔭 ∉ S := by
   refine ⟨fun h h𝔭 ↦ h.not_dvd h𝔭 dvd_rfl, fun h𝔭 ↦ ⟨𝔭.ne_bot, fun 𝔮 h𝔮 hdvd ↦ h𝔭 ?_⟩⟩
-  rwa [HeightOneSpectrum.asIdeal_dvd_asIdeal_iff.mp hdvd] at h𝔮
+  exact HeightOneSpectrum.asIdeal_injective
+    ((prime_dvd_prime_iff_eq 𝔮.prime 𝔭.prime).mp hdvd) ▸ h𝔮
 
 /-- **Induction on ideals prime to `S`.** Such an ideal is a finite product of height-one
 primes outside `S`, so a property holding at `⊤` and stable under multiplication by a

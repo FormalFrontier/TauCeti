@@ -15,10 +15,10 @@ public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 An *ideal arithmetic function* for a field `K` is a complex-valued function on the
 nonzero integral ideals of `𝓞 K`, that is, on the submonoid `(Ideal (𝓞 K))⁰` of
 non-zero-divisors of the ideal monoid. This is the primary carrier for the whole
-`ArithmeticDirichletSeries` development: restricting to nonzero ideals from the start means
-that a divisor sum over the factorizations `B * C = A` of an ideal `A` is always finite,
-because the infinitely many formal factorizations `⊥ * J = ⊥` of the zero ideal are never
-in the index type.
+`ArithmeticDirichletSeries` development. For the number fields used in later layers,
+restricting to nonzero ideals permits finite divisor sums over factorizations `B * C = A`;
+in particular, the infinitely many formal factorizations `⊥ * J = ⊥` of the zero ideal are
+never in the index type.
 
 The counterpart to that choice is a canonical way back to functions on *all* ideals, and
 that is `TauCeti.IdealArithmeticFunction.zeroExtend`, which extends by the value `0` at `⊥`.
