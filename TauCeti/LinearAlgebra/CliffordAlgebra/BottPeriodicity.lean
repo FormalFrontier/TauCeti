@@ -224,15 +224,20 @@ private theorem hyperbolicVolume_anticomm_rightGenerator (v : Fin (1 + 1) → �
       {x : M × (Fin (1 + 1) → ℝ) |
         x ∈ ([((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))] :
           List (M × (Fin (1 + 1) → ℝ)))} := by
-    have hv : ((0 : M), v) = v 0 • ((0 : M), Pi.single 0 (1 : ℝ))
-        + v 1 • ((0 : M), Pi.single 1 (1 : ℝ)) := by
+    have hv : v 0 • ((0 : M), Pi.single 0 (1 : ℝ)) + v 1 • ((0 : M), Pi.single 1 (1 : ℝ))
+        = ((0 : M), v) := by
       refine Prod.ext (by simp) ?_
       funext i
       fin_cases i <;> simp
-    rw [hv]
-    exact Submodule.add_mem _
-      (Submodule.smul_mem _ _ (Submodule.subset_span (by simp)))
-      (Submodule.smul_mem _ _ (Submodule.subset_span (by simp)))
+    -- The membership set of a two-element list is the pair itself.
+    have hset : {x : M × (Fin (1 + 1) → ℝ) |
+        x ∈ ([((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))] :
+          List (M × (Fin (1 + 1) → ℝ)))}
+        = {((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))} := by
+      ext x
+      simp
+    rw [hset]
+    exact Submodule.mem_span_pair.mpr ⟨v 0, v 1, hv⟩
   have h := _root_.CliffordAlgebra.prod_map_ι_mul_ι_of_even_length hpair ⟨1, rfl⟩ hmem
   simpa [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁] using h
 

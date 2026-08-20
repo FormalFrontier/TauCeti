@@ -5,12 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Basic
-public import Mathlib.LinearAlgebra.Span.Basic
--- Private: `Nat.choose_succ_succ` and `Nat.choose_one_right` are used only inside the proof of
--- `CliffordAlgebra.prod_map_ι_mul_self`.
-import Mathlib.Data.Nat.Choose.Basic
 
 /-!
 # The volume element of a Clifford algebra
@@ -49,15 +44,17 @@ even-dimensional structure theorem only and records the odd-dimensional splittin
 unproved work; the volume element is the element that splitting is expected to run on.
 
 The square is a scalar,
-`ω * ω = (-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ` (`CliffordAlgebra.prod_map_ι_mul_self`), the sign
+`ω * ω = (-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ` (`CliffordAlgebra.prod_map_ι_sq_scalar`), the sign
 counting the `n.choose 2` transpositions needed to interleave two copies of the product. So the
-volume element is a unit as soon as the product of the values `Q vᵢ` is a unit
-(`CliffordAlgebra.isUnit_prod_map_ι`) — over a field, whenever no factor is isotropic.
+volume element is a unit as soon as the product of the values `Q vᵢ` is a unit — over a field,
+whenever no factor is isotropic. That last statement (`CliffordAlgebra.isUnit_prod_map_ι`) needs no
+orthogonality at all, each factor being a unit already because its square `Q vᵢ` is.
 
 Nothing here needs `2` to be invertible, a field, or any finiteness. Beyond pairwise orthogonality
-of the list, the only hypotheses are the ones each statement names: that the vector crossing the
-product lies in the span of the list (or that the list spans `M`, for the centrality statement),
-and, for the unit statement, that the product of the values `Q vᵢ` is a unit.
+of the list — which the unit statement does not even ask for — the only hypotheses are the ones
+each statement names: that the vector crossing the product lies in the span of the list (or that
+the list spans `M`, for the centrality statement), and, for the unit statement, that the product of
+the values `Q vᵢ` is a unit.
 
 ## Main results
 
@@ -69,9 +66,10 @@ and, for the unit statement, that the product of the values `Q vᵢ` is a unit.
   orthogonal spanning list of odd length is central.
 * `CliffordAlgebra.prod_map_ι_mul_ι_of_even_length`: of even length, it anticommutes with every
   generator in the span instead.
-* `CliffordAlgebra.prod_map_ι_mul_self`: the square of the volume element of a pairwise
+* `CliffordAlgebra.prod_map_ι_sq_scalar`: the square of the volume element of a pairwise
   orthogonal list is the scalar `(-1) ^ (n.choose 2) * ∏ᵢ Q vᵢ`.
-* `CliffordAlgebra.isUnit_prod_map_ι`: it is a unit as soon as that scalar is.
+* `CliffordAlgebra.isUnit_prod_map_ι`: an ordered product of generators — orthogonal or not — is
+  a unit as soon as the product of the values `Q vᵢ` is.
 
 ## References
 
@@ -211,11 +209,9 @@ theorem prod_map_ι_mem_center_of_odd_length {l : List M} (hl : l.Pairwise Q.IsO
     rwa [hpar.neg_one_pow, one_smul] at h
   rw [Subalgebra.mem_center_iff]
   intro y
-  induction y using CliffordAlgebra.induction with
-  | algebraMap r => exact Algebra.commutes r _
-  | ι m => exact (key m).symm
-  | mul x y hx hy => rw [mul_assoc, hy, ← mul_assoc, hx, mul_assoc]
-  | add x y hx hy => rw [add_mul, hx, hy, mul_add]
+  exact (Algebra.commute_of_mem_adjoin_of_forall_mem_commute (s := Set.range (ι Q))
+    ((adjoin_range_ι (Q := Q)).ge Algebra.mem_top)
+    (by rintro _ ⟨m, rfl⟩; exact key m)).symm.eq
 
 /-- **The volume element of an even number of pairwise orthogonal vectors anticommutes with every
 generator coming from their span**, the crossing sign `(-1) ^ (n - 1)` now being `-1`.
@@ -240,7 +236,7 @@ theorem prod_map_ι_mul_ι_of_even_length {l : List M} (hl : l.Pairwise Q.IsOrth
 /-- **The square of the volume element of a pairwise orthogonal list is a scalar**,
 `(-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ`: interleaving the two copies of the product takes
 `n.choose 2` transpositions, and each pair of equal adjacent factors collapses to `Q vᵢ`. -/
-theorem prod_map_ι_mul_self {l : List M} (hl : l.Pairwise Q.IsOrtho) :
+theorem prod_map_ι_sq_scalar {l : List M} (hl : l.Pairwise Q.IsOrtho) :
     (l.map (ι Q)).prod * (l.map (ι Q)).prod
       = algebraMap R (CliffordAlgebra Q) (((-1 : R) ^ l.length.choose 2) * (l.map Q).prod) := by
   induction l with
@@ -265,13 +261,20 @@ theorem prod_map_ι_mul_self {l : List M} (hl : l.Pairwise Q.IsOrtho) :
           rw [hchoose, List.map_cons, List.prod_cons, pow_add]
           ring
 
-/-- **The volume element is a unit as soon as the product of the values `Q vᵢ` is**, its square
-being that product up to sign. In particular the volume element of an orthogonal basis of a
+/-- **An ordered product of generators is a unit as soon as the product of the values `Q vᵢ` is.**
+
+No orthogonality is needed: each factor already squares to the scalar `Q vᵢ`, which is a unit
+because it divides the unit `∏ᵢ Q vᵢ`, so each factor is a unit and so is their product. For a
+pairwise orthogonal list this is the volume element, and `prod_map_ι_sq_scalar` identifies its
+square as that product up to sign; in particular the volume element of an orthogonal basis of a
 quadratic space over a field is a unit whenever no basis vector is isotropic. -/
-theorem isUnit_prod_map_ι {l : List M} (hl : l.Pairwise Q.IsOrtho)
-    (h : IsUnit ((l.map Q).prod)) : IsUnit ((l.map (ι Q)).prod) := by
+theorem isUnit_prod_map_ι {l : List M} (h : IsUnit ((l.map Q).prod)) :
+    IsUnit ((l.map (ι Q)).prod) := by
+  refine List.prod_isUnit fun x hx => ?_
+  obtain ⟨m, hm, rfl⟩ := List.mem_map.mp hx
+  have hQm : IsUnit (Q m) := List.prod_isUnit_iff.mp h _ (List.mem_map_of_mem hm)
   refine isUnit_mul_self_iff.mp ?_
-  rw [prod_map_ι_mul_self hl]
-  exact ((isUnit_one.neg.pow _).mul h).map (algebraMap R (CliffordAlgebra Q))
+  rw [ι_sq_scalar]
+  exact hQm.map (algebraMap R (CliffordAlgebra Q))
 
 end CliffordAlgebra
