@@ -254,6 +254,7 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
   [IsManifold I 1 M]
 
+omit [IsManifold I n M] [IsManifold I 1 M] in
 /-- An open submanifold inherits the ambient Riemannian bundle (fibrewise inner product). -/
 @[instance_reducible]
 noncomputable def Manifold.instRiemannianBundleOpen
