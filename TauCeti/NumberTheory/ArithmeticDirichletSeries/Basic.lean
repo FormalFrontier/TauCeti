@@ -5,16 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+public import Mathlib.RingTheory.Ideal.Basic
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
 # Arithmetic functions and multiplicative weights on the ideals of a number field
 
 An arithmetic Dirichlet series attached to a number field `K` is built from a complex-valued
-function on the integral ideals of `𝓞 K`. This file fixes the two carriers that every later
+function on the integral ideals of `𝓞 K`. This file fixes the carriers that every later
 construction — norm regrouping, ideal convolution, Euler products, Dirichlet density — is written
 against, and separates them from each other.
 
@@ -22,8 +24,14 @@ The **general carrier** is a function on the *nonzero* ideals. Excluding `⊥` i
 the multiplicative monoid of ideals every `J` satisfies `⊥ * J = ⊥`, so a divisor sum over the
 factorizations of `⊥` is an infinite sum. The nonzero ideals are exactly the non-zero-divisors of
 that monoid, which is Mathlib's `(Ideal (𝓞 K))⁰`, so the carrier is a submonoid and the
-convolution to come has a domain closed under multiplication. `zeroExtend` puts the excluded value
-back, always as `0`.
+convolution to come has a domain closed under multiplication.
+
+`zeroExtend` puts the excluded value back, always as `0`, and `restrict` restricts a function on
+all ideals to the nonzero ideals. The two operations are inverse precisely on functions vanishing
+at the zero ideal. The resulting existence-and-uniqueness API is recorded without exposing the
+implementation of `zeroExtend`: `TauCeti.IdealArithmeticFunction.existsUnique_zeroExtend_eq`
+characterizes its image, while `TauCeti.IdealArithmeticFunction.zeroExtend_injective` says that
+no information is lost.
 
 The **multiplicative carriers** are the completely multiplicative degree-one weights: an ideal
 weight is a `MonoidWithZeroHom` out of the ideals of `𝓞 K`, together with a finite set of *bad*
@@ -38,11 +46,11 @@ factorization into primes).
 Both carriers are deliberately narrow, and three rejection theorems record where their boundaries
 lie. The everywhere-one function on *all* ideals is not the zero extension of any arithmetic
 function and is not an ideal weight, because `map_zero` forces the value `0` at `⊥`
-(`not_exists_zeroExtend_apply_eq_one`, `MultiplicativeIdealWeight.not_exists_apply_eq_one`); the
-ideal Möbius function is not an ideal weight, because complete multiplicativity forces `χ 𝔭 = 0`
-as soon as `χ (𝔭 ^ 2) = 0`
-(`MultiplicativeIdealWeight.not_exists_apply_eq_neg_one_and_apply_sq_eq_zero`); and the twist
-when `z.re ≠ 0`, the twist `χ · N⁻ᶻ` has non-unit modulus at every good ideal of norm greater
+(`IdealArithmeticFunction.not_exists_zeroExtend_eq_one`,
+`MultiplicativeIdealWeight.not_exists_apply_eq_one`); the ideal Möbius function is not an ideal
+weight, because complete multiplicativity forces `χ 𝔭 = 0` as soon as `χ (𝔭 ^ 2) = 0`
+(`MultiplicativeIdealWeight.not_exists_apply_eq_neg_one_and_apply_sq_eq_zero`); and when
+`z.re ≠ 0`, the twist `χ · N⁻ᶻ` has non-unit modulus at every good ideal of norm greater
 than one, since its modulus there is `N(I) ^ (-Re z)`
 (`UnitaryIdealWeight.norm_apply_normTwist_ne_one`). Accordingly the arbitrary norm-twist
 construction lands in `MultiplicativeIdealWeight`, while `imaginaryNormTwist` stays inside
@@ -54,9 +62,9 @@ Dedekind domain, because the absolute norm that the twists and all of Layer 1 us
 
 ## Main definitions
 
-* `TauCeti.NonzeroIdeal`: the submonoid of nonzero integral ideals of `𝓞 K`.
-* `TauCeti.IdealArithmeticFunction`: a complex-valued function on `TauCeti.NonzeroIdeal K`.
+* `TauCeti.IdealArithmeticFunction`: a complex-valued function on `(Ideal (𝓞 K))⁰`.
 * `TauCeti.IdealArithmeticFunction.zeroExtend`: its canonical extension by `0` at `⊥`.
+* `TauCeti.IdealArithmeticFunction.restrict`: restricts a function on all ideals to nonzero ideals.
 * `TauCeti.MultiplicativeIdealWeight`: a completely multiplicative ideal weight with a finite set
   of bad height-one primes, together with `one`, `conj`, `pointwiseMul`, `restrict` and
   `normTwist`.
@@ -67,109 +75,200 @@ Dedekind domain, because the absolute norm that the twists and all of Layer 1 us
 
 ## Main results
 
+* `TauCeti.IdealArithmeticFunction.existsUnique_zeroExtend_eq`: a function on all ideals that
+  vanishes at `⊥` is the zero extension of a unique ideal arithmetic function.
 * `TauCeti.UnitaryIdealWeight.norm_apply_eq_one_of_isGood`: a unitary weight has modulus one at
   every good ideal, not only at the good height-one primes.
 * `TauCeti.UnitaryIdealWeight.norm_apply_normTwist_of_isGood`: the modulus of an arbitrary norm
   twist of a unitary weight at a good ideal is `N(I) ^ (-Re z)`.
-* `TauCeti.not_exists_zeroExtend_apply_eq_one`,
+* `TauCeti.IdealArithmeticFunction.not_exists_zeroExtend_eq_one`,
   `TauCeti.MultiplicativeIdealWeight.not_exists_apply_eq_one`,
   `TauCeti.MultiplicativeIdealWeight.not_exists_apply_eq_neg_one_and_apply_sq_eq_zero` and
   `TauCeti.UnitaryIdealWeight.norm_apply_normTwist_ne_one`: the rejection tests described above.
 
-## Roadmap
+## Roadmap role
 
-This is Layer 0 of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`, items 0.1 to 0.4, whose
+This is Layer **0** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`, items 0.1 to 0.4, whose
 export contract names `IdealArithmeticFunction`, `zeroExtend`, `MultiplicativeIdealWeight` and
 `UnitaryIdealWeight`. Layer 1 sums an `IdealArithmeticFunction` over the ideals of a fixed
 absolute norm to reach Mathlib's `LSeries`, and Layer 2 defines the convolution whose divisor sums
 are the reason the carrier omits `⊥`.
 
-The carrier signatures follow
-[`ArithmeticDirichletSeries/Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/ArithmeticDirichletSeries/Suggested.lean).
-This implementation retains its nonzero-ideal carrier and general-versus-unitary norm-twist
-split, but treats the bad set as data rather than the exact zero locus and defines `IsGood` only
-for `MultiplicativeIdealWeight`, reached from a unitary weight through its underlying weight.
+## References
+
+* J. Neukirch, *Algebraic Number Theory*, Chapter VII.
+* G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters II--III.
 -/
 
 public section
 
-open NumberField IsDedekindDomain
-open scoped nonZeroDivisors
-
 namespace TauCeti
+
+open NumberField IsDedekindDomain
+open scoped nonZeroDivisors NumberField
 
 section
 
 variable (K : Type*) [Field K]
 
-/-! ### Arithmetic functions on the nonzero ideals -/
+/-- An **ideal arithmetic function** over a field `K`: a complex-valued function on the nonzero
+ideals of `𝓞 K`.
 
-/-- The submonoid of **nonzero integral ideals** of a number field `K`, that is, the
-non-zero-divisor submonoid `(Ideal (𝓞 K))⁰` of the multiplicative monoid of ideals of `𝓞 K`.
-Divisor sums and factorizations index over this carrier, so the infinitely many formal
-factorizations `⊥ * J = ⊥` never enter a convolution. -/
-abbrev NonzeroIdeal : Submonoid (Ideal (𝓞 K)) := (Ideal (𝓞 K))⁰
-
-/-- A complex-valued **arithmetic function on the nonzero ideals** of a number field. -/
-abbrev IdealArithmeticFunction : Type _ := NonzeroIdeal K → ℂ
-
-variable {K}
-
-/-- An ideal of `𝓞 K` is a non-zero-divisor of the ideal monoid exactly when it is nonzero. -/
-theorem mem_nonzeroIdeal_iff {I : Ideal (𝓞 K)} : I ∈ NonzeroIdeal K ↔ I ≠ ⊥ := by
-  rw [mem_nonZeroDivisors_iff_ne_zero, Ideal.zero_eq_bot]
-
-/-- The ideal underlying a nonzero ideal is nonzero. -/
-theorem NonzeroIdeal.coe_ne_bot (I : NonzeroIdeal K) : (I : Ideal (𝓞 K)) ≠ ⊥ :=
-  mem_nonzeroIdeal_iff.1 I.2
+The domain is `(Ideal (𝓞 K))⁰`, Mathlib's non-zero-divisor submonoid. Since the ring of integers is
+a domain, its elements are exactly the ideals different from `⊥`. For number fields, keeping `⊥`
+out of the carrier ensures that later divisor sums use only the nonzero-ideal factorization
+theory. -/
+abbrev IdealArithmeticFunction := (Ideal (𝓞 K))⁰ → ℂ
 
 namespace IdealArithmeticFunction
 
-open Classical in
-/-- The canonical extension of an arithmetic function on the nonzero ideals to all ideals,
-by the value `0` at the excluded zero ideal `⊥`. -/
-noncomputable def zeroExtend (f : IdealArithmeticFunction K) (I : Ideal (𝓞 K)) : ℂ :=
-  if h : I = ⊥ then 0 else f ⟨I, mem_nonzeroIdeal_iff.2 h⟩
+variable {K}
 
-variable (f : IdealArithmeticFunction K)
+/-- Extend an ideal arithmetic function to all integral ideals by assigning zero to `⊥`.
 
-@[simp]
-theorem zeroExtend_bot : f.zeroExtend ⊥ = 0 := by simp [zeroExtend]
+Use `zeroExtend_bot` and `zeroExtend_coe` to simplify its two characteristic cases, rather than
+unfolding this definition. -/
+noncomputable def zeroExtend (f : IdealArithmeticFunction K) : Ideal (𝓞 K) → ℂ := fun I =>
+  Function.extend Subtype.val f 0 I
 
-theorem zeroExtend_of_ne_bot {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
-    f.zeroExtend I = f ⟨I, mem_nonzeroIdeal_iff.2 hI⟩ := by
-  simp [zeroExtend, hI]
+/-- Restrict a function on all integral ideals to the nonzero ideals. -/
+def restrict (g : Ideal (𝓞 K) → ℂ) : IdealArithmeticFunction K := fun I => g I
 
 @[simp]
-theorem zeroExtend_coe (I : NonzeroIdeal K) : f.zeroExtend (I : Ideal (𝓞 K)) = f I :=
-  f.zeroExtend_of_ne_bot (NonzeroIdeal.coe_ne_bot I)
+theorem restrict_apply (g : Ideal (𝓞 K) → ℂ) (I : (Ideal (𝓞 K))⁰) : restrict g I = g I := by
+  simp [restrict]
 
-/-- The zero extension determines the arithmetic function it came from. -/
-theorem zeroExtend_injective : Function.Injective (zeroExtend (K := K)) := fun f g h ↦ by
+/-- The zero extension is zero at the zero ideal. -/
+@[simp]
+theorem zeroExtend_bot (f : IdealArithmeticFunction K) : f.zeroExtend ⊥ = 0 := by
+  simp [zeroExtend]
+
+/-- Away from `⊥`, the zero extension is the original ideal arithmetic function. -/
+@[simp]
+theorem zeroExtend_of_ne (f : IdealArithmeticFunction K) {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
+    f.zeroExtend I = f ⟨I, by simpa using hI⟩ := by
+  rw [zeroExtend]
+  exact Function.extend_val_apply (by simpa using hI)
+
+/-- The zero extension agrees with the original function on every nonzero ideal. -/
+@[simp]
+theorem zeroExtend_coe (f : IdealArithmeticFunction K) (I : (Ideal (𝓞 K))⁰) :
+    f.zeroExtend I = f I := by
+  exact Subtype.val_injective.extend_apply f 0 I
+
+/-- Restricting a zero extension recovers the original ideal arithmetic function. -/
+@[simp]
+theorem restrict_zeroExtend (f : IdealArithmeticFunction K) : restrict f.zeroExtend = f := by
   funext I
-  simpa using congrFun h (I : Ideal (𝓞 K))
+  simp
 
-/-- A nowhere-vanishing arithmetic function has zero extension vanishing exactly at `⊥`: this is
-the precise sense in which `zeroExtend` adds no accidental zero. -/
-theorem zeroExtend_eq_zero_iff (hf : ∀ I, f I ≠ 0) {I : Ideal (𝓞 K)} :
-    f.zeroExtend I = 0 ↔ I = ⊥ := by
-  refine ⟨fun h ↦ by_contra fun hI ↦ ?_, fun h ↦ h ▸ f.zeroExtend_bot⟩
-  exact hf _ ((f.zeroExtend_of_ne_bot hI).symm.trans h)
+/-- Extending a restriction recovers a function on all ideals exactly when it vanishes at `⊥`. -/
+@[simp]
+theorem zeroExtend_restrict {g : Ideal (𝓞 K) → ℂ} (hg : g ⊥ = 0) :
+    (restrict g).zeroExtend = g := by
+  funext I
+  by_cases hI : I = ⊥
+  · simpa [hI] using hg.symm
+  · simp [hI]
+
+/-- A function on all ideals is a zero extension if and only if it vanishes at `⊥`. -/
+theorem exists_zeroExtend_eq_iff {g : Ideal (𝓞 K) → ℂ} :
+    (∃ f : IdealArithmeticFunction K, f.zeroExtend = g) ↔ g ⊥ = 0 := by
+  constructor
+  · rintro ⟨f, rfl⟩
+    exact zeroExtend_bot f
+  · intro hg
+    exact ⟨restrict g, zeroExtend_restrict hg⟩
+
+/-- Zero extension is injective: its values on nonzero ideals retain the entire function. -/
+theorem zeroExtend_injective :
+    Function.Injective (zeroExtend : IdealArithmeticFunction K → Ideal (𝓞 K) → ℂ) :=
+  Function.extend_injective
+    (f := (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K))) Subtype.val_injective
+      (0 : Ideal (𝓞 K) → ℂ)
+
+/-- Two zero extensions agree exactly when the underlying ideal arithmetic functions agree. -/
+@[simp]
+theorem zeroExtend_eq_iff {f g : IdealArithmeticFunction K} :
+    f.zeroExtend = g.zeroExtend ↔ f = g := zeroExtend_injective.eq_iff
+
+/-- A function on all ideals that vanishes at `⊥` is the zero extension of a unique ideal
+arithmetic function. -/
+theorem existsUnique_zeroExtend_eq {g : Ideal (𝓞 K) → ℂ} (hg : g ⊥ = 0) :
+    ∃! f : IdealArithmeticFunction K, f.zeroExtend = g := by
+  refine ⟨restrict g, zeroExtend_restrict hg, fun f hf => ?_⟩
+  exact zeroExtend_injective (hf.trans (zeroExtend_restrict hg).symm)
+
+/-- The zero extension is zero exactly at `⊥` when the original function has no zero values. -/
+theorem zeroExtend_eq_zero_iff (f : IdealArithmeticFunction K)
+    (hf : ∀ I, f I ≠ 0) {I : Ideal (𝓞 K)} : f.zeroExtend I = 0 ↔ I = ⊥ := by
+  constructor
+  · intro h
+    by_contra hI
+    exact hf ⟨I, by simpa using hI⟩ ((zeroExtend_of_ne f hI).symm.trans h)
+  · rintro rfl
+    exact zeroExtend_bot f
+
+/-- If the original function does not vanish, its zero extension is nonzero at every nonzero
+ideal. -/
+theorem zeroExtend_ne_zero (f : IdealArithmeticFunction K) (hf : ∀ I, f I ≠ 0)
+    {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) : f.zeroExtend I ≠ 0 := by
+  intro hzero
+  exact hI ((zeroExtend_eq_zero_iff f hf).mp hzero)
+
+/-! ## Compatibility with pointwise operations -/
+
+/-- Zero extension preserves the pointwise zero function. -/
+@[simp]
+theorem zeroExtend_zero : zeroExtend (0 : IdealArithmeticFunction K) = 0 := by
+  funext I
+  by_cases hI : I = ⊥ <;> simp [hI]
+
+/-- Zero extension preserves pointwise addition. -/
+@[simp]
+theorem zeroExtend_add (f g : IdealArithmeticFunction K) :
+    zeroExtend (f + g) = f.zeroExtend + g.zeroExtend := by
+  funext I
+  by_cases hI : I = ⊥ <;> simp [hI]
+
+/-- Zero extension preserves pointwise negation. -/
+@[simp]
+theorem zeroExtend_neg (f : IdealArithmeticFunction K) : zeroExtend (-f) = -f.zeroExtend := by
+  funext I
+  by_cases hI : I = ⊥ <;> simp [hI]
+
+/-- Zero extension preserves pointwise subtraction. -/
+@[simp]
+theorem zeroExtend_sub (f g : IdealArithmeticFunction K) :
+    zeroExtend (f - g) = f.zeroExtend - g.zeroExtend := by
+  funext I
+  by_cases hI : I = ⊥ <;> simp [hI]
+
+/-- Zero extension preserves pointwise complex scalar multiplication. -/
+@[simp]
+theorem zeroExtend_smul (c : ℂ) (f : IdealArithmeticFunction K) :
+    zeroExtend (c • f) = c • f.zeroExtend := by
+  funext I
+  by_cases hI : I = ⊥ <;> simp [hI]
+
+/-- Zero extension preserves pointwise multiplication. -/
+@[simp]
+theorem zeroExtend_mul (f g : IdealArithmeticFunction K) :
+    zeroExtend (f * g) = f.zeroExtend * g.zeroExtend := by
+  funext I
+  by_cases hI : I = ⊥ <;> simp [hI]
+
+/-- The everywhere-one function on all ideals is not the zero extension of an ideal arithmetic
+function, since its value at `⊥` is one rather than zero. This is the roadmap's zero-ideal
+rejection test. -/
+theorem not_exists_zeroExtend_eq_one :
+    ¬ ∃ f : IdealArithmeticFunction K, f.zeroExtend = (1 : Ideal (𝓞 K) → ℂ) := by
+  rw [exists_zeroExtend_eq_iff]
+  exact one_ne_zero
 
 end IdealArithmeticFunction
 
-variable (K) in
-/-- **Zero-ideal rejection test.** The function equal to `1` on every ideal is not the zero
-extension of any arithmetic function on the nonzero ideals: its value at `⊥` is forced to be `0`.
--/
-theorem not_exists_zeroExtend_apply_eq_one :
-    ¬ ∃ f : IdealArithmeticFunction K, ∀ I : Ideal (𝓞 K), f.zeroExtend I = 1 := by
-  rintro ⟨f, hf⟩
-  exact zero_ne_one (f.zeroExtend_bot.symm.trans (hf ⊥))
-
 /-! ### Completely multiplicative ideal weights -/
-
-variable (K)
 
 /-- A **multiplicative ideal weight** on a number field `K`: a completely multiplicative
 complex-valued function on the ideals of `𝓞 K`, packaged as a `MonoidWithZeroHom` so that the
@@ -351,7 +450,7 @@ theorem bad_pointwiseMul (ψ : MultiplicativeIdealWeight K) :
 def toIdealArithmeticFunction : IdealArithmeticFunction K := fun I ↦ χ (I : Ideal (𝓞 K))
 
 @[simp]
-theorem toIdealArithmeticFunction_apply (I : NonzeroIdeal K) :
+theorem toIdealArithmeticFunction_apply (I : (Ideal (𝓞 K))⁰) :
     χ.toIdealArithmeticFunction I = χ (I : Ideal (𝓞 K)) := (rfl)
 
 end MultiplicativeIdealWeight

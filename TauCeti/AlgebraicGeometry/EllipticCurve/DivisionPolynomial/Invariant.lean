@@ -54,11 +54,12 @@ identities listed below.
 
 ## What is deliberately not here
 
-`WeierstrassCurve.ω` itself and its API — `ω_spec`, `two_mul_ω`, `ψc`, `ψc_spec`, `ω_zero`,
-`ω_one`, `ψc_neg`, `map_ω`, `ω_neg` — are **not** in this file: `ω` is defined through
-`reducedInvarDenom` and `complEDS₂Aux`, so it belongs above the reduced-invariant layer rather
-than beside these identities. Every input `ω_spec` consumes now exists by name — the source's
-chain `redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS` has landed in full as
+`WeierstrassCurve.ω` itself and its API — `ω_spec`, `ω_def`, `two_mul_ω`, `ψc`, `ψc_def`,
+`ψ_mul_ψc`, `ω_zero`, `ω_one`, `ψc_neg`, `map_ψc`, `map_ω`, `ω_neg` — are **not** in this file;
+they live in `DivisionPolynomial/Omega.lean`. `ω` is defined through `reducedInvarDenom` and
+`complEDS₂Aux`, so it belongs above the reduced-invariant layer rather than beside these
+identities. Every input `ω_spec` consumes exists by name — the source's chain
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS` has landed in full as
 `reducedInvarNum_eq_reducedInvarDenom_mul` (`EllipticDivisibilitySequence/ReducedInvariant.lean`)
 ← `IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul` ← `invarNum_mul_invarDenom` ←
 `isEllipticNet_normEDS`. Nothing in this file depends on any of it.

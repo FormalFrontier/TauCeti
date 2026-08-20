@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Commutator
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 import TauCeti.Algebra.AlgebraicGroup.Hopf.CentralPoint
