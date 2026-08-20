@@ -27,6 +27,8 @@ coordinate Hopf algebras acts on points by pre-composition.
 
 * `CommHopfAlgCat.mapPointsFunctor`: a coordinate morphism `H ⟶ K` induces a natural
   transformation from the points functor of `K` to the points functor of `H`.
+* `CommHopfAlgCat.mapPointsFunctor_comp_app_apply`: pointwise contravariance under composition
+  of coordinate morphisms.
 * `CommHopfAlgCat.pointsFunctor`: the contravariant functor
   `(CommHopfAlgCat R)ᵒᵖ ⥤ CommAlgCat R ⥤ GrpCat`.
 
@@ -123,6 +125,15 @@ lemma mapPointsFunctor_comp {H K L : CommHopfAlgCat.{v} R} (φ : H ⟶ K) (ψ : 
   -- with `φ` by associativity of `AlgHom.comp`, which holds definitionally, and the residual
   -- `GrpCat.Hom.hom` wrapper has no rewrite lemma after the bump.
   rfl
+
+/-- Pointwise form of contravariance of `mapPointsFunctor` under composition. -/
+lemma mapPointsFunctor_comp_app_apply {H K L : CommHopfAlgCat.{v} R}
+    (φ : H ⟶ K) (ψ : K ⟶ L) (A : CommAlgCat.{w} R)
+    (f : HopfAlgebra.points (R := R) (H := L) A) :
+    (mapPointsFunctor (φ ≫ ψ)).app A f =
+      (mapPointsFunctor φ).app A ((mapPointsFunctor ψ).app A f) := by
+  rw [mapPointsFunctor_comp, NatTrans.comp_app]
+  exact GrpCat.comp_apply ((mapPointsFunctor ψ).app A) ((mapPointsFunctor φ).app A) f
 
 /-- The contravariant functor assigning to a commutative Hopf algebra its group-valued
 functor of points.

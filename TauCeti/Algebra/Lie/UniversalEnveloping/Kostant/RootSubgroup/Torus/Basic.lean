@@ -451,6 +451,15 @@ noncomputable def kostantTorusMatrix :
     (kostantTorusPoints M b wt A)
 
 omit [Module ℚ V] in
+/-- Writing a Kostant torus point in the chosen basis gives `kostantTorusMatrix`. -/
+@[simp]
+theorem basisMatrix_kostantTorusPoints (s : κ → Aˣ) :
+    Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
+        (kostantTorusPoints M b wt A s) =
+      kostantTorusMatrix M b wt s := by
+  rw [kostantTorusMatrix, MonoidHom.comp_apply, MulEquiv.toMonoidHom_eq_coe]
+
+omit [Module ℚ V] in
 private theorem kostantTorusMatrix_coe (s : κ → Aˣ) :
     (kostantTorusMatrix M b wt s : Matrix (Fin n) (Fin n) A) =
       LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
