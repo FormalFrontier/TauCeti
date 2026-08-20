@@ -231,7 +231,6 @@ theorem hodgeForm_isPosSemidef (P : Polarization hℂ hs) : P.hodgeForm.IsPosSem
   isNonneg := P.hodgeForm_isNonneg
 
 /-- The Hodge form vanishes on the diagonal only at zero. -/
-@[simp]
 theorem hodgeForm_self_eq_zero_iff (P : Polarization hℂ hs) {x : Vℂ} :
     P.hodgeForm x x = 0 ↔ x = 0 := by
   refine ⟨fun h ↦ ?_, fun h ↦ by simp [h]⟩
