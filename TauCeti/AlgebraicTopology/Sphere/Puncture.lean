@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Homotopy.Contractible
 public import TauCeti.Analysis.Normed.Module.Normalize
 public import TauCeti.Topology.Homotopy.Path
 -- Private: these supply the affine homotopy and the antipode inequality used in proofs below.
@@ -27,7 +26,7 @@ arbitrary loop off a point, which is done in
 
 ## Main declarations
 
-* `TauCeti.homotopic_of_normalize_segment_ne_zero`: radial projection of a straight-line
+* `TauCeti.homotopic_of_segment_ne_zero`: radial projection of a straight-line
   homotopy between sphere paths.
 * `TauCeti.contractibleSpace_sphere_compl_singleton`: the sphere minus one point is contractible.
 * `TauCeti.nullhomotopic_inclusion_sphere_compl_singleton`: the inclusion of the sphere minus a
@@ -125,7 +124,7 @@ end Segment
 /-- A path in the unit sphere is homotopic to the radial projection of a continuous comparison
 map when every point of their pointwise straight-line homotopy avoids the origin and the comparison
 map itself takes the source and target values at the two endpoints. -/
-theorem homotopic_of_normalize_segment_ne_zero {a b : sphere (0 : E) 1} (γ γ' : Path a b)
+theorem homotopic_of_segment_ne_zero {a b : sphere (0 : E) 1} (γ γ' : Path a b)
     (f : I → E) (hf : Continuous f)
     (hγ' : ∀ t, ((γ' t : sphere (0 : E) 1) : E) = normalize (f t))
     (hf_zero : f 0 = (a : E)) (hf_one : f 1 = (b : E))

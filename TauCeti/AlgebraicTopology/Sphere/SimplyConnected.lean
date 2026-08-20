@@ -72,8 +72,7 @@ namespace TauCeti
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- The `k`-th hat function of the subdivision of the unit interval into `N` equal parts: it
-peaks at `k / N` and vanishes outside `((k - 1)/N, (k + 1)/N)`. -/
+/-- The `k`-th hat-function formula for a subdivision into `N` equal parts. -/
 private def hatFunction (N k : ℕ) (t : I) : ℝ := max 0 (1 - |(N : ℝ) * (t : ℝ) - (k : ℝ)|)
 
 /-- The `k`-th subdivision node, clamped to the unit interval. -/
@@ -403,7 +402,7 @@ theorem exists_homotopic_notMem_range (h : 2 < Module.rank ℝ E)
     rintro ⟨u, t⟩
     exact segment_ne_zero_of_norm_sub_lt (hγnorm t) (hLclose t) u
   have hsquare : γ.Homotopic γ' :=
-    homotopic_of_normalize_segment_ne_zero γ γ' (nodeInterp N node) hcontL
+    homotopic_of_segment_ne_zero γ γ' (nodeInterp N node) hcontL
       (fun t => coe_normalizeToSphere_apply (nodeInterp N node) hcontL hLne t) hL0 hL1 hGne
   -- The comparison loop lives in finitely many planes, which cannot cover `E`.
   have hVne : ∀ m : Fin (N + 1),
