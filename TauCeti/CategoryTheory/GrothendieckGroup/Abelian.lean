@@ -287,7 +287,7 @@ attribute [local instance] comp_preservesFiniteLimits comp_preservesFiniteColimi
 theorem map_comp {K : Type u''} [Category.{v''} K] [Abelian K] [EssentiallySmall.{w''} K]
     (H : D ⥤ K) [H.Additive] [PreservesFiniteLimits H] [PreservesFiniteColimits H] :
     map (F ⋙ H) = (map H).comp (map F) :=
-  hom_ext fun X => by rw [map_of, AddMonoidHom.comp_apply, map_of, map_of, Functor.comp_obj]
+  hom_ext fun X => by simp
 
 /-- Naturally isomorphic exact functors induce the same map. -/
 theorem map_congr {F' : C ⥤ D} [F'.Additive] [PreservesFiniteLimits F'] [PreservesFiniteColimits F']
@@ -343,9 +343,7 @@ variable {C}
 theorem map_comp_fromSplit {D : Type u'} [Category.{v'} D] [Abelian D] [EssentiallySmall.{w'} D]
     (F : C ⥤ D) [F.Additive] [PreservesFiniteLimits F] [PreservesFiniteColimits F] :
     (map F).comp (fromSplit C) = (fromSplit D).comp (SplitK0.map F) :=
-  SplitK0.hom_ext fun X => by
-    rw [AddMonoidHom.comp_apply, AddMonoidHom.comp_apply, fromSplit_of, map_of, SplitK0.map_of,
-      fromSplit_of]
+  SplitK0.hom_ext fun X => by simp
 
 end Comparison
 
