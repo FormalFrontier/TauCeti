@@ -234,7 +234,6 @@ theorem invariantsInclusion_smul [H.Normal] [K.Normal] (h : K ≤ H) (g : G)
 /-- The transition inclusion is equivariant for the two finite-level actions, along the quotient
 homomorphism `G ⧸ K → G ⧸ H`. This is the equivariance that types the transition pair of the
 finite-quotient system. -/
-@[simp]
 theorem invariantsInclusion_quotientMk_smul [H.Normal] [K.Normal] (h : K ≤ H) (g : G)
     (m : FixedPoints.addSubgroup H M) :
     invariantsInclusion h ((QuotientGroup.mk g : G ⧸ H) • m) =
