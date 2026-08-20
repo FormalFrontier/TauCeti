@@ -103,21 +103,6 @@ private theorem I_zpow_conj_piece (p k : ℤ) :
     show 2 * (k - p) - k + 2 * k = 2 * p - k + 4 * (k - p) by ring,
     zpow_add₀ Complex.I_ne_zero, I_zpow_four_mul, mul_one]
 
-/-! ### Lattice conjugation against the Hodge decomposition
-
-The conjugation of a Hodge structure carried by a lattice is `latticeConj`; these two lemmas
-restate the abstract facts about the conjugation of a `HodgeStructureOn` in those terms. -/
-
-/-- Lattice conjugation carries the `p`-th Hodge component into the `(n-p)`-th. -/
-theorem latticeConj_mem_piece {p : ℤ} {x : Vℂ} (hx : x ∈ hs.piece p) :
-    latticeConj hℂ x ∈ hs.piece (n - p) := by
-  simpa using hs.conj_mem_piece hx
-
-/-- The Weil operator commutes with lattice conjugation. -/
-theorem latticeConj_weilOperator (x : Vℂ) :
-    latticeConj hℂ (hs.weilOperator x) = hs.weilOperator (latticeConj hℂ x) := by
-  simpa only [latticeConjugation_toEquiv_apply] using hs.conj_weilOperator x
-
 /-! ### The Weil operator is an isometry of the polarizing form -/
 
 namespace IsPolarization
@@ -174,7 +159,10 @@ theorem hodgeForm_apply (P : Polarization hℂ hs) (u v : Vℂ) :
 /-- The Hodge form is the conjugate of the classical expression `i^(p-q) Q u (conj v)`. -/
 theorem hodgeForm_eq_conj (P : Polarization hℂ hs) (u v : Vℂ) :
     P.hodgeForm u v = starRingEnd ℂ (P.Q (hs.weilOperator u) (latticeConj hℂ v)) := by
-  rw [← P.Q_conj, latticeConj_weilOperator, latticeConj_apply_apply, hodgeForm_apply]
+  rw [← P.Q_conj,
+    show latticeConj hℂ (hs.weilOperator u) = hs.weilOperator (latticeConj hℂ u) by
+      simpa only [latticeConjugation_toEquiv_apply] using hs.conj_weilOperator u,
+    latticeConj_apply_apply, hodgeForm_apply]
 
 /-- **The Hodge form is Hermitian.** -/
 theorem hodgeForm_isSymm (P : Polarization hℂ hs) : P.hodgeForm.IsSymm where
@@ -187,7 +175,9 @@ theorem hodgeForm_isSymm (P : Polarization hℂ hs) : P.hodgeForm.IsSymm where
         = P.Q (hs.weilOperator (hs.weilOperator u))
             (hs.weilOperator (latticeConj hℂ v)) := (P.Q_weilOperator _ _).symm
       _ = ((-1 : ℂ) ^ n) * P.Q u (hs.weilOperator (latticeConj hℂ v)) := by
-          rw [hs.weilOperator_weilOperator, map_smul, LinearMap.smul_apply, smul_eq_mul]
+          rw [show hs.weilOperator (hs.weilOperator u) = ((-1 : ℂ) ^ n) • u by
+            simpa using DFunLike.congr_fun hs.weilOperator_comp_weilOperator u,
+            map_smul, LinearMap.smul_apply, smul_eq_mul]
       _ = P.Q (hs.weilOperator (latticeConj hℂ v)) u := by
           rw [P.Q_symm_weight u (hs.weilOperator (latticeConj hℂ v)), negOnePow_cast]
 
@@ -199,7 +189,10 @@ theorem hodgeForm_latticeConj (P : Polarization hℂ hs) (u v : Vℂ) :
 /-- The Weil operator is unitary for the Hodge form. -/
 theorem hodgeForm_weilOperator (P : Polarization hℂ hs) (u v : Vℂ) :
     P.hodgeForm (hs.weilOperator u) (hs.weilOperator v) = P.hodgeForm u v := by
-  rw [hodgeForm_apply, hodgeForm_apply, latticeConj_weilOperator, P.Q_weilOperator]
+  rw [hodgeForm_apply, hodgeForm_apply,
+    show latticeConj hℂ (hs.weilOperator u) = hs.weilOperator (latticeConj hℂ u) by
+      simpa only [latticeConjugation_toEquiv_apply] using hs.conj_weilOperator u,
+    P.Q_weilOperator]
 
 /-! ### Positive definiteness -/
 
@@ -208,7 +201,8 @@ the second Hodge–Riemann relation. -/
 theorem hodgeForm_self_of_mem_piece (P : Polarization hℂ hs) {p : ℤ} {x : Vℂ}
     (hx : x ∈ hs.piece p) :
     P.hodgeForm x x = Complex.I ^ (2 * p - n) * P.Q x (latticeConj hℂ x) := by
-  rw [hodgeForm_apply, hs.weilOperator_apply_of_mem (latticeConj_mem_piece hx)]
+  rw [hodgeForm_apply, hs.weilOperator_apply_of_mem
+    (show latticeConj hℂ x ∈ hs.piece (n - p) by simpa using hs.conj_mem_piece hx)]
   simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
   rw [P.Q_symm_weight x (latticeConj hℂ x), negOnePow_cast, ← mul_assoc, I_zpow_conj_piece]
 
@@ -225,7 +219,8 @@ theorem hodgeForm_eq_zero_of_mem_piece (P : Polarization hℂ hs) {p p' : ℤ} (
     {x y : Vℂ} (hx : x ∈ hs.piece p) (hy : y ∈ hs.piece p') : P.hodgeForm x y = 0 := by
   rw [hodgeForm_apply, P.Q_def]
   exact P.isPolarization.orthogonal_piece (by omega)
-    (hs.weilOperator_mem_piece (latticeConj_mem_piece hx)) hy
+    (hs.weilOperator_mem_piece
+      (show latticeConj hℂ x ∈ hs.piece (n - p) by simpa using hs.conj_mem_piece hx)) hy
 
 /-- **The Hodge form is positive definite.** Expanding a nonzero vector into its Hodge components
 and using their orthogonality, the value on the diagonal is a sum of positive contributions, one
@@ -287,7 +282,7 @@ complex line: its Weil operator is the identity and its conjugation is complex c
 theorem tate_hodgeForm (m : ℤ) (x y : ℂ) :
     (tatePolarization m).hodgeForm x y = starRingEnd ℂ x * y := by
   rw [Polarization.hodgeForm_apply, latticeConj_tateLatticeMap, tate_weilOperator,
-    Polarization.Q_def, tatePolarization_Qint, integralFormToComplex_tateLatticeMap_mul]
+    Polarization.Q_def, tatePolarization, integralFormToComplex_tateLatticeMap_mul]
   simp
 
 end TauCeti.Hodge

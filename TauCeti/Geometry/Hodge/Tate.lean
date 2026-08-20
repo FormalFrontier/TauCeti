@@ -176,17 +176,12 @@ theorem isPolarization_tate (m : ℤ) :
       rw [hbot, Submodule.mem_bot] at hx
       exact absurd hx hx0
 
-/-- The Tate Hodge structure `ℤ(m)`, polarized by multiplication of integers. The body is
-exposed so that the projection lemma below holds by `rfl` outside this module. -/
+/-- The Tate Hodge structure `ℤ(m)`, polarized by multiplication of integers. The body is exposed
+so that its polarizing form can be evaluated outside this module. -/
 @[expose] def tatePolarization (m : ℤ) :
     Polarization isBaseChange_tateLatticeMap (tate m) where
   Qint := LinearMap.mul ℤ ℤ
   isPolarization := isPolarization_tate m
-
-/-- The polarizing form of `ℤ(m)` is multiplication of integers. -/
-@[simp]
-theorem tatePolarization_Qint (m : ℤ) : (tatePolarization m).Qint = LinearMap.mul ℤ ℤ :=
-  rfl
 
 /-- The Tate Hodge structure is polarizable. -/
 theorem isPolarizable_tate (m : ℤ) : IsPolarizable isBaseChange_tateLatticeMap (tate m) :=

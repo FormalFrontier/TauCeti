@@ -32,8 +32,6 @@ of the ambient space, rather than only on homogeneous vectors where `i^{p-q}` ma
 * `TauCeti.Hodge.HodgeStructureOn.weilOperator_piece`, `…_F`, `…_conjF`: `C` preserves the Hodge
   components and both filtrations.
 * `TauCeti.Hodge.HodgeStructureOn.weilOperator_comp_weilOperator`: `C ∘ C = (-1)^n`.
-* `TauCeti.Hodge.HodgeStructureOn.weilOperator_weilOperator`: the elementwise form of that
-  identity.
 * `TauCeti.Hodge.HodgeStructureOn.weilOperatorEquiv`: `C` bundled as a linear automorphism.
 * `TauCeti.Hodge.HodgeStructureOn.conj_weilOperator`: `C` commutes with the conjugation.
 * `TauCeti.Hodge.HodgeStructure.Hom.commutes_weilOperator`: morphisms commute with `C`.
@@ -143,11 +141,6 @@ theorem weilOperator_comp_weilOperator (hs : HodgeStructureOn W ω n) :
     rw [LinearMap.comp_apply, hs.weilOperator_apply_of_mem hx, map_smul,
       hs.weilOperator_apply_of_mem hx, smul_smul, I_zpow_mul_self,
       negOne_zpow_two_mul_sub, LinearMap.smul_apply, LinearMap.id_apply]
-
-/-- Elementwise form of the square of the Weil operator: `C (C x) = (-1)^n x`. -/
-theorem weilOperator_weilOperator (hs : HodgeStructureOn W ω n) (x : W) :
-    hs.weilOperator (hs.weilOperator x) = ((-1 : ℂ) ^ n) • x := by
-  simpa using DFunLike.congr_fun hs.weilOperator_comp_weilOperator x
 
 /-- The Weil operator squares to `-1` in odd weight, where it is therefore a complex structure. -/
 theorem weilOperator_comp_weilOperator_of_odd (hs : HodgeStructureOn W ω n) (hn : Odd n) :
