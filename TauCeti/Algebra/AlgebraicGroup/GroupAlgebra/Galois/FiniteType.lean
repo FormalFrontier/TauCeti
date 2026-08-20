@@ -82,18 +82,17 @@ theorem isIntegral_groupAlgebra_over_groupAlgebraInvariants
   exact Algebra.IsInvariant.isIntegral
     (groupAlgebraInvariants rho) (MonoidAlgebra L (Multiplicative M)) (L ≃ₐ[k] L)
 
-/-- If `L/k` is finite and the exponent group is finitely generated, the split group
-algebra is finite as a module over its invariant algebra. -/
+/-- If `L/k` is finite type with finite automorphism group and the exponent group is finitely
+generated, the split group algebra is finite as a module over its invariant algebra. -/
 theorem moduleFinite_groupAlgebra_over_groupAlgebraInvariants
-    [FiniteDimensional k L] [Module.Finite ℤ M]
+    [Algebra.FiniteType k L] [Finite (L ≃ₐ[k] L)] [Module.Finite ℤ M]
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     Module.Finite (groupAlgebraInvariants rho)
       (MonoidAlgebra L (Multiplicative M)) := by
   let _ : AddGroup.FG M := Module.Finite.iff_addGroup_fg.mp inferInstance
   let _ : Group.FG (Multiplicative M) := AddGroup.fg_iff_mul_fg.mp inferInstance
   let _ : Algebra.FiniteType k (MonoidAlgebra L (Multiplicative M)) :=
-    Algebra.FiniteType.trans (R := k) (S := L)
-      (Module.Finite.finiteType L) inferInstance
+    Algebra.FiniteType.trans (R := k) (S := L) inferInstance inferInstance
   let _ : Algebra.FiniteType (groupAlgebraInvariants rho)
       (MonoidAlgebra L (Multiplicative M)) :=
     Algebra.FiniteType.of_restrictScalars_finiteType k
@@ -103,17 +102,17 @@ theorem moduleFinite_groupAlgebra_over_groupAlgebraInvariants
     isIntegral_groupAlgebra_over_groupAlgebraInvariants rho
   exact Algebra.IsIntegral.finite
 
-/-- The invariant algebra of the automorphism action on the group algebra of a finitely generated
-abelian group is finite type over the ground field. -/
+/-- For a finite-type extension with finite automorphism group, the invariant algebra of the
+automorphism action on the group algebra of a finitely generated abelian group is finite type over
+the ground field. -/
 noncomputable instance instFiniteTypeGroupAlgebraInvariants
-    [FiniteDimensional k L] [Module.Finite ℤ M]
+    [Algebra.FiniteType k L] [Finite (L ≃ₐ[k] L)] [Module.Finite ℤ M]
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     Algebra.FiniteType k (groupAlgebraInvariants rho) := by
   let _ : AddGroup.FG M := Module.Finite.iff_addGroup_fg.mp inferInstance
   let _ : Group.FG (Multiplicative M) := AddGroup.fg_iff_mul_fg.mp inferInstance
   let _ : Algebra.FiniteType k (MonoidAlgebra L (Multiplicative M)) :=
-    Algebra.FiniteType.trans (R := k) (S := L)
-      (Module.Finite.finiteType L) inferInstance
+    Algebra.FiniteType.trans (R := k) (S := L) inferInstance inferInstance
   let _ : Module.Finite (groupAlgebraInvariants rho)
       (MonoidAlgebra L (Multiplicative M)) :=
     moduleFinite_groupAlgebra_over_groupAlgebraInvariants rho
