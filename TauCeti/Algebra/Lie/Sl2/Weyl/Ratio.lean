@@ -202,7 +202,6 @@ theorem scaledWeylUnit_conj_of_lie_eq_smul (ht : IsSl2Triple H E F) {y : A} {q :
     (hF.smul ((c⁻¹ : Rˣ) : R)) hye' hyf'
 
 /-- The scaled Weyl element negates the Cartan element of the triple. -/
-@[simp]
 theorem scaledWeylUnit_conj_h (ht : IsSl2Triple H E F) (c : Rˣ) :
     ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) * H *
         (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) = -H := by
@@ -213,7 +212,6 @@ theorem scaledWeylUnit_conj_h (ht : IsSl2Triple H E F) (c : Rˣ) :
 /-- **The scaled Weyl element carries the raising element to the lowering element**, scaled by
 `c⁻²`. For a Chevalley root pair this is `n_α(c) x_α(u) n_α(c)⁻¹ = x_{-α}(-c⁻² u)` read on the
 Lie-algebra generator. -/
-@[simp]
 theorem scaledWeylUnit_conj_e (ht : IsSl2Triple H E F) (c : Rˣ) :
     ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) * E *
         (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -230,7 +228,6 @@ theorem scaledWeylUnit_conj_e (ht : IsSl2Triple H E F) (c : Rˣ) :
 
 /-- **The scaled Weyl element carries the lowering element to the raising element**, scaled by
 `c²`. -/
-@[simp]
 theorem scaledWeylUnit_conj_f (ht : IsSl2Triple H E F) (c : Rˣ) :
     ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) * F *
         (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) = -((((c : Rˣ) : R) ^ 2) • E) := by
@@ -247,7 +244,6 @@ theorem scaledWeylUnit_conj_f (ht : IsSl2Triple H E F) (c : Rˣ) :
 /-- **Conjugating a root subgroup element by the scaled Weyl element.** The exponential of `u • E`
 is carried to the exponential of `-(c⁻² u) • F`; for a Chevalley root pair this is
 `n_α(c) x_α(u) n_α(c)⁻¹ = x_{-α}(-c⁻² u)`. -/
-@[simp]
 theorem scaledWeylUnit_conj_exp_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u : R) :
     ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (u • E) *
         (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -262,7 +258,6 @@ theorem scaledWeylUnit_conj_exp_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u : R) 
 
 /-- **Conjugating an opposite root subgroup element by the scaled Weyl element.** The exponential
 of `-(u • F)` is carried to the exponential of `(c² u) • E`. -/
-@[simp]
 theorem scaledWeylUnit_conj_exp_neg_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u : R) :
     ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (-(u • F)) *
         (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -296,7 +291,6 @@ theorem inv_scaledWeylUnit_conj_of_lie_eq_smul (ht : IsSl2Triple H E F) {y : A} 
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- The inverse scaled Weyl element negates the Cartan element. -/
-@[simp]
 theorem inv_scaledWeylUnit_conj_h (ht : IsSl2Triple H E F) (c : Rˣ) :
     (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) * H *
         ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) = -H := by
@@ -305,7 +299,6 @@ theorem inv_scaledWeylUnit_conj_h (ht : IsSl2Triple H E F) (c : Rˣ) :
   module
 
 /-- The inverse scaled Weyl element carries `E` to `-c⁻² • F`. -/
-@[simp]
 theorem inv_scaledWeylUnit_conj_e (ht : IsSl2Triple H E F) (c : Rˣ) :
     (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) * E *
         ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) =
@@ -320,7 +313,6 @@ theorem inv_scaledWeylUnit_conj_e (ht : IsSl2Triple H E F) (c : Rˣ) :
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- The inverse scaled Weyl element carries `F` to `-c² • E`. -/
-@[simp]
 theorem inv_scaledWeylUnit_conj_f (ht : IsSl2Triple H E F) (c : Rˣ) :
     (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) * F *
         ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) = -((((c : Rˣ) : R) ^ 2) • E) := by
@@ -334,7 +326,6 @@ theorem inv_scaledWeylUnit_conj_f (ht : IsSl2Triple H E F) (c : Rˣ) :
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- Conjugation of a root exponential by the inverse scaled Weyl element. -/
-@[simp]
 theorem inv_scaledWeylUnit_conj_exp_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u : R) :
     (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) * IsNilpotent.exp (u • E) *
         ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) =
@@ -349,7 +340,6 @@ theorem inv_scaledWeylUnit_conj_exp_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u :
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- Conjugation of an opposite-root exponential by the inverse scaled Weyl element. -/
-@[simp]
 theorem inv_scaledWeylUnit_conj_exp_neg_smul (ht : IsSl2Triple H E F) (c : Rˣ) (u : R) :
     (((scaledWeylUnit (R := R) hE hF c)⁻¹ : Aˣ) : A) * IsNilpotent.exp (-(u • F)) *
         ((scaledWeylUnit (R := R) hE hF c : Aˣ) : A) =
@@ -423,7 +413,6 @@ theorem weylRatio_conj_of_lie_eq_smul {y : A} {q : ℚ}
   module
 
 /-- **The Weyl ratio scales the raising element by `c²`.** -/
-@[simp]
 theorem weylRatio_conj_e (c : Rˣ) :
     ((weylRatio (R := R) hE hF c : Aˣ) : A) * E *
         (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) = (((c : Rˣ) : R) ^ 2) • E := by
@@ -431,7 +420,6 @@ theorem weylRatio_conj_e (c : Rˣ) :
     scaledWeylUnit_conj_f hE hF ht c, neg_neg]
 
 /-- **The Weyl ratio scales the lowering element by `c⁻²`.** -/
-@[simp]
 theorem weylRatio_conj_f (c : Rˣ) :
     ((weylRatio (R := R) hE hF c : Aˣ) : A) * F *
         (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) = (((c⁻¹ : Rˣ) : R) ^ 2) • F := by
@@ -439,7 +427,6 @@ theorem weylRatio_conj_f (c : Rˣ) :
     scaledWeylUnit_conj_e hE hF ht c, neg_neg]
 
 /-- **The Weyl ratio centralises the Cartan element of the triple.** -/
-@[simp]
 theorem weylRatio_conj_h (c : Rˣ) :
     ((weylRatio (R := R) hE hF c : Aˣ) : A) * H *
         (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) = H := by
@@ -448,7 +435,6 @@ theorem weylRatio_conj_h (c : Rˣ) :
 
 /-- **Conjugating a root subgroup element by the Weyl ratio.** For a Chevalley root pair this is
 the relation `h_α(c) x_α(u) h_α(c)⁻¹ = x_α(c² u)`. -/
-@[simp]
 theorem weylRatio_conj_exp_smul (c : Rˣ) (u : R) :
     ((weylRatio (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (u • E) *
         (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -461,7 +447,6 @@ theorem weylRatio_conj_exp_smul (c : Rˣ) (u : R) :
   simpa only [ConjAct.units_smul_def, ConjAct.ofConjAct_toConjAct] using haction
 
 /-- Conjugating the opposite root subgroup element by the Weyl ratio. -/
-@[simp]
 theorem weylRatio_conj_exp_neg_smul (c : Rˣ) (u : R) :
     ((weylRatio (R := R) hE hF c : Aˣ) : A) * IsNilpotent.exp (-(u • F)) *
         (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) =
@@ -488,7 +473,6 @@ theorem inv_weylRatio_conj_of_lie_eq_smul {y : A} {q : ℚ}
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- The inverse Weyl ratio centralises the Cartan element. -/
-@[simp]
 theorem inv_weylRatio_conj_h (c : Rˣ) :
     (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) * H *
         ((weylRatio (R := R) hE hF c : Aˣ) : A) = H :=
@@ -496,7 +480,6 @@ theorem inv_weylRatio_conj_h (c : Rˣ) :
     (ht.lie_lie_smul_f ℚ) c
 
 /-- The inverse Weyl ratio scales the raising element by `c⁻²`. -/
-@[simp]
 theorem inv_weylRatio_conj_e (c : Rˣ) :
     (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) * E *
         ((weylRatio (R := R) hE hF c : Aˣ) : A) = (((c⁻¹ : Rˣ) : R) ^ 2) • E := by
@@ -510,7 +493,6 @@ theorem inv_weylRatio_conj_e (c : Rˣ) :
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- The inverse Weyl ratio scales the lowering element by `c²`. -/
-@[simp]
 theorem inv_weylRatio_conj_f (c : Rˣ) :
     (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) * F *
         ((weylRatio (R := R) hE hF c : Aˣ) : A) = (((c : Rˣ) : R) ^ 2) • F := by
@@ -524,7 +506,6 @@ theorem inv_weylRatio_conj_f (c : Rˣ) :
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- Conjugation of a root exponential by the inverse Weyl ratio. -/
-@[simp]
 theorem inv_weylRatio_conj_exp_smul (c : Rˣ) (u : R) :
     (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) * IsNilpotent.exp (u • E) *
         ((weylRatio (R := R) hE hF c : Aˣ) : A) =
@@ -539,7 +520,6 @@ theorem inv_weylRatio_conj_exp_smul (c : Rˣ) (u : R) :
     ConjAct.ofConjAct_toConjAct, inv_inv] using haction
 
 /-- Conjugation of an opposite-root exponential by the inverse Weyl ratio. -/
-@[simp]
 theorem inv_weylRatio_conj_exp_neg_smul (c : Rˣ) (u : R) :
     (((weylRatio (R := R) hE hF c)⁻¹ : Aˣ) : A) * IsNilpotent.exp (-(u • F)) *
         ((weylRatio (R := R) hE hF c : Aˣ) : A) =
@@ -555,7 +535,6 @@ theorem inv_weylRatio_conj_exp_neg_smul (c : Rˣ) (u : R) :
 
 /-- **The Weyl ratio rescales the scaled Weyl elements**: conjugation by `h_α(c)` carries
 `n_α(u)` to `n_α(c² u)`. -/
-@[simp]
 theorem weylRatio_conj_scaledWeylUnit (c u : Rˣ) :
     weylRatio (R := R) hE hF c * scaledWeylUnit hE hF u * (weylRatio (R := R) hE hF c)⁻¹ =
       scaledWeylUnit hE hF (c ^ 2 * u) := by
