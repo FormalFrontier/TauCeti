@@ -39,8 +39,9 @@ iterating the split writes the pairs of `loopPath a₀ bs` as a `List.flatMap` o
 permutation of `bs` rearranges.
 
 Words are lists here, while `TauCeti.transitionCount` counts transitions of a
-`Fin (n + 1)`-indexed word; `TauCeti.transitionCount_getD` is the bridge, reading a list of
-length `n + 1` as such a word through `List.getD`.
+`Fin (n + 1)`-indexed word; the bridge is `TauCeti.transitionCount_getD`, in
+`TauCeti/Combinatorics/Enumerative/TransitionCount.lean`, which reads a list of length `n + 1` as
+such a word through `List.getD`.
 
 ## Main definitions
 
@@ -50,8 +51,6 @@ length `n + 1` as such a word through `List.getD`.
 
 ## Main results
 
-* `TauCeti.transitionCount_getD`: the transition counts of a list, read as a `Fin`-indexed word,
-  count its consecutive pairs.
 * `TauCeti.transitionCount_loopPathAt`: the transition counts of a loop are the sum of those of
   its excursion loops.
 * `TauCeti.transitionCount_loopPathAt_eq_of_perm`: reordering the excursions leaves them unchanged.
@@ -73,12 +72,9 @@ variable {α : Type*}
 
 /-! ## Consecutive pairs of a word
 
-Mathlib supplies `List.consecutivePairs`; the lemmas below are the API this file needs.
+Mathlib supplies `List.consecutivePairs`; the lemma below is the API this file needs, on top of
+`TauCeti.consecutivePairs_cons_cons`.
 -/
-
-theorem consecutivePairs_cons_cons (a b : α) (l : List α) :
-    (a :: b :: l).consecutivePairs = (a, b) :: (b :: l).consecutivePairs :=
-  rfl
 
 /-- Splitting a word at a letter `y` splits its consecutive pairs: those of the part up to and
 including `y`, followed by those of the part from `y` on. -/
@@ -94,32 +90,6 @@ theorem consecutivePairs_append_cons (l : List α) (y : α) (m : List α) :
           ((z :: l) ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := ih
       simp only [List.cons_append, consecutivePairs_cons_cons] at key ⊢
       rw [key]
-
-/-! ## The bridge to `Fin`-indexed words -/
-
-/-- **Transition counts count consecutive pairs.** Reading a list of length `n + 1` as a word
-indexed by `Fin (n + 1)`, its transition count from `a` to `b` is the number of occurrences of
-`(a, b)` among its consecutive pairs. -/
-theorem transitionCount_getD [DecidableEq α] (d a b : α) :
-    ∀ (n : ℕ) (l : List α), l.length = n + 1 →
-      transitionCount (fun i : Fin (n + 1) => l.getD i.val d) a b =
-        l.consecutivePairs.count (a, b)
-  | _, [], hl => by simp at hl
-  | n, [x], hl => by
-    obtain rfl : n = 0 := by simp only [List.length_cons, List.length_nil] at hl; omega
-    rw [transitionCount_eq_card_filter]
-    simp [List.consecutivePairs]
-  | n, x :: y :: t, hl => by
-    obtain rfl : n = t.length + 1 := by simp only [List.length_cons] at hl; omega
-    have hstep := transitionCount_comp_succ_add_zero
-      (w := fun i : Fin (t.length + 2) => (x :: y :: t).getD i.val d) a b
-    have htail : ((fun i : Fin (t.length + 2) => (x :: y :: t).getD i.val d) ∘ Fin.succ) =
-        fun i : Fin (t.length + 1) => (y :: t).getD i.val d := rfl
-    rw [htail] at hstep
-    rw [← hstep, transitionCount_getD d a b t.length (y :: t) rfl,
-      consecutivePairs_cons_cons, List.count_cons]
-    simp only [Fin.val_zero, Fin.val_one, List.getD_cons_zero, List.getD_cons_succ, beq_iff_eq,
-      Prod.mk.injEq]
 
 /-! ## Loops and their excursions -/
 
@@ -152,6 +122,7 @@ theorem loopSteps_cons (e : List α) (bs : List (List α)) :
     loopSteps (e :: bs) = e.length + 1 + loopSteps bs :=
   rfl
 
+@[simp]
 theorem length_loopPath (a₀ : α) (bs : List (List α)) :
     (loopPath a₀ bs).length = loopSteps bs + 1 := by
   induction bs with
@@ -169,19 +140,24 @@ theorem loopSteps_eq_of_perm {bs bs' : List (List α)} (h : bs.Perm bs') :
 @[expose] def loopPathAt (a₀ : α) (bs : List (List α)) (i : ℕ) : α :=
   (loopPath a₀ bs).getD i a₀
 
+theorem loopPathAt_def (a₀ : α) (bs : List (List α)) (i : ℕ) :
+    loopPathAt a₀ bs i = (loopPath a₀ bs).getD i a₀ :=
+  rfl
+
 @[simp]
 theorem loopPathAt_zero (a₀ : α) (bs : List (List α)) : loopPathAt a₀ bs 0 = a₀ := by
   cases bs <;> rfl
 
+@[simp]
 theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
     loopPathAt a₀ bs (loopSteps bs) = a₀ := by
   induction bs with
   | nil => rfl
   | cons e bs ih =>
-    rw [loopPathAt, loopPath_cons, loopSteps_cons]
-    rw [show e.length + 1 + loopSteps bs = (e.length + loopSteps bs) + 1 by omega,
-      List.getD_cons_succ, List.getD_append_right _ _ _ _ (by omega)]
-    simpa [loopPathAt] using ih
+    have hstep : e.length + 1 + loopSteps bs = e.length + loopSteps bs + 1 := by omega
+    rw [loopPathAt_def, loopPath_cons, loopSteps_cons, hstep, List.getD_cons_succ,
+      List.getD_append_right _ _ _ _ (by omega)]
+    simpa [loopPathAt_def] using ih
 
 /-- A loop always starts at its base letter. -/
 theorem loopPath_eq_cons_tail (a₀ : α) (bs : List (List α)) :
@@ -257,7 +233,7 @@ theorem transitionCount_loopPathAt (a₀ : α) (bs : List (List α)) {n : ℕ}
         transitionCount (fun i : Fin (e.length + 1 + 1) => loopPathAt a₀ [e] i.val) a b).sum := by
   classical
   subst hn
-  simp only [loopPathAt]
+  simp only [loopPathAt_def]
   rw [transitionCount_getD a₀ a b _ (loopPath a₀ bs) (length_loopPath a₀ bs),
     consecutivePairs_loopPath, List.count_flatMap]
   refine congrArg List.sum (List.map_congr_left fun e _ => ?_)
@@ -299,7 +275,7 @@ theorem exists_loopPath (a₀ : α) :
       omega
     obtain ⟨bs, hlen, havoid, hval⟩ :=
       ih (n - m) (by omega) (fun j => x (m + j)) (by simpa using hxm)
-        (by show x (m + (n - m)) = a₀; rw [show m + (n - m) = n by omega]; exact hn)
+        (by simpa [Nat.add_sub_cancel' hmn] using hn)
     refine ⟨(List.range (m - 1)).map (fun j => x (j + 1)) :: bs, ?_, ?_, ?_⟩
     · simp only [loopSteps_cons, List.length_map, List.length_range, hlen]
       omega
@@ -312,17 +288,18 @@ theorem exists_loopPath (a₀ : α) :
       · exact havoid e he
     · rintro (_ | j) hi
       · simpa using h0.symm
-      · rw [loopPathAt, loopPath_cons, List.getD_cons_succ]
+      · rw [loopPathAt_def, loopPath_cons, List.getD_cons_succ]
         by_cases hlt : j < m - 1
         · rw [List.getD_append _ _ _ _ (by simpa using hlt),
             List.getD_eq_getElem _ _ (by simpa using hlt)]
           simp
         · rw [List.getD_append_right _ _ _ _ (by simp; omega)]
           have hb := hval (j + 1 - m) (by omega)
-          rw [loopPathAt] at hb
+          rw [loopPathAt_def] at hb
+          have hidx : j - (m - 1) = j + 1 - m := by omega
+          have hshift : m + (j + 1 - m) = j + 1 := by omega
           simp only [List.length_map, List.length_range]
-          rw [show j - (m - 1) = j + 1 - m by omega, hb,
-            show m + (j + 1 - m) = j + 1 by omega]
+          rw [hidx, hb, hshift]
 
 /-- **A word that ends where it starts is the loop of its excursions.** The `Fin`-indexed form of
 `TauCeti.exists_loopPath`. -/
