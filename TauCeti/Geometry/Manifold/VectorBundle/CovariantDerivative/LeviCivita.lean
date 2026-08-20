@@ -46,8 +46,9 @@ endomorphism-valued one-form `CovariantDerivative.difference ∇ ∇'` vanishes.
 * `CovariantDerivative.IsLeviCivita.unique` and
   `CovariantDerivative.IsLeviCivita.difference_eq_zero`: uniqueness of the Levi-Civita
   connection.
-* `TauCeti.Manifold.koszul_sub_koszul_swap` and `TauCeti.Manifold.koszul_add_koszul_swap`: the
-  two symmetries of the Koszul expression from which the converse direction is read off.
+* `TauCeti.Manifold.koszul_sub_koszul_swap_first_two` and
+  `TauCeti.Manifold.koszul_add_koszul_swap_last_two`: the two symmetries of the Koszul expression
+  from which the converse direction is read off.
 * `TauCeti.Manifold.tensorialAt_koszul`: the Koszul expression is tensorial in its last
   argument.
 * `TauCeti.eq_of_forall_inner_section_eq`: a vector in a fibre of a Riemannian bundle is
@@ -126,7 +127,7 @@ private theorem inner_section_comm (Y Z : Π x : M, TangentSpace I x) :
 /-- Antisymmetrising the Koszul expression in its first two arguments returns twice the inner
 product of the Lie bracket with the third argument. This is the identity behind the torsion-free
 half of `CovariantDerivative.isLeviCivita_iff`. -/
-theorem koszul_sub_koszul_swap :
+theorem koszul_sub_koszul_swap_first_two :
     koszul I X Y Z x - koszul I Y X Z x = 2 * inner ℝ (mlieBracket I X Y x) (Z x) := by
   rw [koszul, koszul, inner_section_comm Z Y, inner_section_comm Y X, inner_section_comm X Z,
     mlieBracket_swap_apply (V := Y) (W := X)]
@@ -136,7 +137,7 @@ theorem koszul_sub_koszul_swap :
 /-- Symmetrising the Koszul expression in its last two arguments returns twice the derivative of
 their inner product along the first argument. This is the identity behind the metric half of
 `CovariantDerivative.isLeviCivita_iff`. -/
-theorem koszul_add_koszul_swap :
+theorem koszul_add_koszul_swap_last_two :
     koszul I Z X Y x + koszul I Z Y X x =
       2 * mvfderiv I (fun y ↦ inner ℝ (X y) (Y y)) x (Z x) := by
   rw [koszul, koszul, inner_section_comm Y X, inner_section_comm Y Z, inner_section_comm X Z,
@@ -144,9 +145,10 @@ theorem koszul_add_koszul_swap :
   simp only [inner_neg_left]
   ring
 
-section Tensorial
+section InnerDifferentiability
 
-variable [IsManifold I 2 M] [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
+variable [IsManifold I 1 M]
+  [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
 
 /-- The pointwise inner product of two sections of the tangent bundle that are differentiable at
 `x` is differentiable at `x`. This is the tangent-bundle specialisation of
@@ -157,7 +159,12 @@ theorem mdifferentiableAt_inner (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) 
   MDifferentiableAt.inner_bundle (IB := I) (F := E) (E := fun x : M ↦ TangentSpace I x)
     (b := id) hY hZ
 
-variable [CompleteSpace E]
+end InnerDifferentiability
+
+section Tensorial
+
+variable [IsManifold I 2 M] [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
+  [CompleteSpace E]
 
 /-- The Koszul expression is tensorial in its third argument: replacing `Z` by `f • Z` multiplies
 it by `f x`, and it is additive in `Z`. Together with
@@ -264,16 +271,18 @@ theorem isLeviCivita_iff :
       fun Z hZ ↦ ?_
     have hXY := h hX hY hZ
     have hYX := h hY hX hZ
-    have key := TauCeti.Manifold.koszul_sub_koszul_swap (I := I) (X := X) (Y := Y) (Z := Z) (x := x)
+    have key := TauCeti.Manifold.koszul_sub_koszul_swap_first_two
+      (I := I) (X := X) (Y := Y) (Z := Z) (x := x)
     rw [inner_sub_left]
     linarith
   · rw [CovariantDerivative.isMetricCompatible_iff]
     intro x X Y Z hX hY hZ
     have hXY := h hX hY hZ
     have hYX := h hX hZ hY
-    have key := TauCeti.Manifold.koszul_add_koszul_swap (I := I) (X := Y) (Y := Z) (Z := X) (x := x)
-    change mvfderiv I (fun y ↦ inner ℝ (Y y) (Z y)) x (X x) =
-      inner ℝ (cov Y x (X x)) (Z x) + inner ℝ (Y x) (cov Z x (X x))
+    have key := TauCeti.Manifold.koszul_add_koszul_swap_last_two
+      (I := I) (X := Y) (Y := Z) (Z := X) (x := x)
+    -- Normalize the beta-redexes introduced by the local notations in `isMetricCompatible_iff`.
+    simp only
     rw [real_inner_comm (cov Z x (X x)) (Y x)]
     linarith
 
