@@ -225,8 +225,10 @@ theorem testIntegral_comm [SFinite μ] (K : SymmKernel Ω μ) (u v : Ω → ℝ)
 
 /-- The inner integral of a kernel against a single test function, `x ↦ ∫ v(y) K(x,y)`.
 
-This is the partial pairing that the extremal step of the factor sandwich optimises over: the
-supremum over the remaining test function is attained at the sign of this function. -/
+This is the partial pairing that the extremal step of the factor sandwich optimises over.  When `μ`
+is finite and `v` is measurable and `[-1,1]`-valued — the hypotheses `exists_pm_one_left` carries —
+the supremum over the remaining test function is attained at the sign of this function.  The
+definition itself asks nothing of `v`. -/
 noncomputable def partialIntegral (K : SymmKernel Ω μ) (v : Ω → ℝ) (x : Ω) : ℝ :=
   ∫ y, v y * K x y ∂μ
 
@@ -251,20 +253,21 @@ theorem integrable_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {
   simp only [one_mul] at h
   exact h
 
-/-- A test integral is the integral of the left test function against the partial pairing. -/
-theorem testIntegral_eq_integral_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ)
-    {u v : Ω → ℝ}
-    (hu : Measurable u) (hv : Measurable v)
-    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+/-- A test integral is the integral of the left test function against the partial pairing.
+
+Only integrability of the product integrand is needed — that is all Fubini asks.  A caller with
+bounded measurable test functions gets it from `integrable_testIntegrand`. -/
+theorem testIntegral_eq_integral_partialIntegral [SFinite μ] (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (h : Integrable (fun p : Ω × Ω => u p.1 * v p.2 * K p.1 p.2) (μ.prod μ)) :
     K.testIntegral μ u v = ∫ x, u x * K.partialIntegral μ v x ∂μ := by
   have key : ∀ x, ∫ y, u x * v y * K x y ∂μ = u x * K.partialIntegral μ v x := by
     intro x
     rw [partialIntegral_def, ← integral_const_mul]
     exact integral_congr_ae (ae_of_all _ fun y => by ring)
-  rw [testIntegral_def, integral_prod _ (K.integrable_testIntegrand μ hu hv hu1 hv1)]
+  rw [testIntegral_def, integral_prod _ h]
   exact integral_congr_ae (ae_of_all _ fun x => key x)
 
-/-- The pairing is additive in the left test function, given integrability of both pieces. -/
+/-- The pairing is subtractive in the left test function, given integrability of both pieces. -/
 theorem testIntegral_sub_left (K : SymmKernel Ω μ) {u₁ u₂ v : Ω → ℝ}
     (h₁ : Integrable (fun p : Ω × Ω => u₁ p.1 * v p.2 * K p.1 p.2) (μ.prod μ))
     (h₂ : Integrable (fun p : Ω × Ω => u₂ p.1 * v p.2 * K p.1 p.2) (μ.prod μ)) :
@@ -274,7 +277,7 @@ theorem testIntegral_sub_left (K : SymmKernel Ω μ) {u₁ u₂ v : Ω → ℝ}
   simp only [Pi.sub_apply]
   ring
 
-/-- The pairing is additive in the right test function, given integrability of both pieces. -/
+/-- The pairing is subtractive in the right test function, given integrability of both pieces. -/
 theorem testIntegral_sub_right (K : SymmKernel Ω μ) {u v₁ v₂ : Ω → ℝ}
     (h₁ : Integrable (fun p : Ω × Ω => u p.1 * v₁ p.2 * K p.1 p.2) (μ.prod μ))
     (h₂ : Integrable (fun p : Ω × Ω => u p.1 * v₂ p.2 * K p.1 p.2) (μ.prod μ)) :
@@ -570,8 +573,10 @@ private theorem exists_pm_one_left (K : SymmKernel Ω μ) {u v : Ω → ℝ}
       intro x; by_cases hx : 0 ≤ g x <;> simp [hx]
     have hwm : Measurable fun x => if 0 ≤ g x then (1 : ℝ) else -1 :=
       Measurable.ite (measurableSet_le measurable_const hg) measurable_const measurable_const
-    rw [K.testIntegral_eq_integral_partialIntegral μ hu hv hu1 hv1,
-      K.testIntegral_eq_integral_partialIntegral μ hwm hv hw1 hv1, ← hg_def]
+    rw [K.testIntegral_eq_integral_partialIntegral μ
+        (K.integrable_testIntegrand μ hu hv hu1 hv1),
+      K.testIntegral_eq_integral_partialIntegral μ
+        (K.integrable_testIntegrand μ hwm hv hw1 hv1), ← hg_def]
     have hint : Integrable (fun x => u x * g x) μ :=
       Integrable.mono' hgint.abs (hu.mul hg).aestronglyMeasurable
         (ae_of_all _ fun x => by
