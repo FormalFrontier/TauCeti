@@ -38,8 +38,8 @@ image of the corresponding relation on `σ` under the homomorphism
 * `TauCeti.DynkinType.diagramRootPerm`: the induced permutation of the pinned root enumeration.
 * `TauCeti.DynkinType.rationalDiagramAut` and `TauCeti.DynkinType.diagramAut`: the induced
   automorphisms of the rational root system and of the pinned integral datum.
-* `TauCeti.DynkinType.diagramAutHom`: the two preceding automorphisms as a homomorphism out of
-  `diagramSymmetry`.
+* `TauCeti.DynkinType.diagramAutHom`: the homomorphism out of `diagramSymmetry` sending each
+  diagram symmetry to the automorphism `diagramAut` it induces on the pinned integral datum.
 
 ## Main results
 
@@ -134,16 +134,20 @@ matrix. -/
 def diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) : Equiv.Perm (Fin t.numRoots) :=
   (rationalDiagramAut ht hσ).indexEquiv
 
+/-- The defining equation of `TauCeti.DynkinType.diagramRootPerm`, so that proofs about the index
+permutation of the rational automorphism can be phrased against it without unfolding. -/
+private theorem indexEquiv_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
+    (rationalDiagramAut ht hσ).indexEquiv = diagramRootPerm ht hσ :=
+  rfl
+
 /-- The induced permutation of the root enumeration extends the node permutation along the Bourbaki
 numbering of the simple roots. -/
 @[simp] theorem diagramRootPerm_simpleIndex (hσ : σ ∈ t.diagramSymmetry) (i : Fin t.rank) :
     diagramRootPerm ht hσ (t.simpleIndex ht i) = t.simpleIndex ht (σ i) := by
   have h := equivOfCartanMatrixEq_indexEquiv_apply (t.rationalBase ht) (t.rationalBase ht)
     (supportPerm t ht σ) (cartanMatrix_supportPerm ht hσ) (t.simpleSupportEquiv ht i)
-  rw [diagramRootPerm, rationalDiagramAut]
-  rw [show t.simpleIndex ht i = ((t.simpleSupportEquiv ht i : Fin t.numRoots)) by
-    rw [coe_simpleSupportEquiv]]
-  rw [h, supportPerm_apply, coe_simpleSupportEquiv]
+  rw [diagramRootPerm, rationalDiagramAut, ← coe_simpleSupportEquiv, h, supportPerm_apply,
+    coe_simpleSupportEquiv]
 
 /-! ## The coordinates are permuted by the node permutation -/
 
@@ -155,12 +159,9 @@ private theorem weightMap_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
   apply (t.rationalBase ht).toWeightBasis.ext
   intro i
   obtain ⟨i, rfl⟩ := (t.simpleSupportEquiv ht).surjective i
-  rw [RootPairing.Base.toWeightBasis_apply, RootPairing.Hom.root_weightMap_apply]
-  rw [show ((rationalDiagramAut ht hσ).indexEquiv (t.simpleSupportEquiv ht i : Fin t.numRoots)) =
-      t.simpleIndex ht (σ i) by
-    rw [coe_simpleSupportEquiv]; exact diagramRootPerm_simpleIndex ht hσ i]
+  rw [RootPairing.Base.toWeightBasis_apply, RootPairing.Hom.root_weightMap_apply,
+    indexEquiv_rationalDiagramAut, coe_simpleSupportEquiv, diagramRootPerm_simpleIndex]
   ext k
-  rw [coe_simpleSupportEquiv]
   simp only [LinearEquiv.coe_coe, LinearEquiv.funCongrLeft_apply, LinearMap.funLeft_apply,
     root_rationalRootSystem, root_simpleIndex]
   exact congrArg _ (by simpa using hσ i (σ.symm k))
@@ -189,12 +190,17 @@ private theorem coweightEquiv_symm_rationalDiagramAut (hσ : σ ∈ t.diagramSym
   intro i
   obtain ⟨i, rfl⟩ := (t.simpleSupportEquiv ht).surjective i
   rw [RootPairing.Base.toCoweightBasis_apply]
-  rw [show ((RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht) (t.rationalRootSystem ht)
-        (rationalDiagramAut ht hσ)).symm : _ →ₗ[ℚ] _)
+  -- `equivOfCartanMatrixEq_coweightEquiv_symm_apply_coroot` is stated for the `LinearEquiv` itself,
+  -- whereas `RootPairing.Base.toCoweightBasis.ext` leaves the goal phrased against the underlying
+  -- `LinearMap`. The two applications are definitionally equal, so restating the lemma at the
+  -- coerced type is all that is needed to rewrite with it.
+  have hcoroot : ((RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
+        (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm : _ →ₗ[ℚ] _)
       ((t.rationalRootSystem ht).coroot (t.simpleSupportEquiv ht i : Fin t.numRoots)) =
-      (t.rationalRootSystem ht).coroot (supportPerm t ht σ (t.simpleSupportEquiv ht i)) from
+      (t.rationalRootSystem ht).coroot (supportPerm t ht σ (t.simpleSupportEquiv ht i)) :=
     equivOfCartanMatrixEq_coweightEquiv_symm_apply_coroot (t.rationalBase ht) (t.rationalBase ht)
-      (supportPerm t ht σ) (cartanMatrix_supportPerm ht hσ) (t.simpleSupportEquiv ht i)]
+      (supportPerm t ht σ) (cartanMatrix_supportPerm ht hσ) (t.simpleSupportEquiv ht i)
+  rw [hcoroot]
   ext k
   rw [supportPerm_apply, coe_simpleSupportEquiv, coe_simpleSupportEquiv]
   simp only [LinearEquiv.coe_coe, LinearEquiv.funCongrLeft_apply, LinearMap.funLeft_apply,
@@ -268,7 +274,7 @@ theorem funCongrLeft_comp_coroot (hσ : σ ∈ t.diagramSymmetry) :
 /-- **The diagram automorphism of the pinned simply connected root datum** attached to a symmetry of
 the Bourbaki-numbered Cartan matrix. Both lattice maps permute coordinates, and the root enumeration
 is permuted by `TauCeti.DynkinType.diagramRootPerm`. -/
-@[expose] def diagramAut (hσ : σ ∈ t.diagramSymmetry) :
+def diagramAut (hσ : σ ∈ t.diagramSymmetry) :
     (t.simplyConnectedRootDatum ht).Aut where
   weightMap := (LinearEquiv.funCongrLeft ℤ ℤ σ.symm).toLinearMap
   coweightMap := (LinearEquiv.funCongrLeft ℤ ℤ σ).toLinearMap
@@ -281,17 +287,17 @@ is permuted by `TauCeti.DynkinType.diagramRootPerm`. -/
 
 @[simp] theorem diagramAut_indexEquiv (hσ : σ ∈ t.diagramSymmetry) :
     (diagramAut ht hσ).indexEquiv = diagramRootPerm ht hσ :=
-  rfl
+  (rfl)
 
 /-- The weight map of the diagram automorphism permutes the fundamental-weight coordinates. -/
 @[simp] theorem diagramAut_weightMap (hσ : σ ∈ t.diagramSymmetry) :
     (diagramAut ht hσ).toHom.weightMap = (LinearEquiv.funCongrLeft ℤ ℤ σ.symm).toLinearMap :=
-  rfl
+  (rfl)
 
 /-- The coweight map of the diagram automorphism permutes the simple-coroot coordinates. -/
 @[simp] theorem diagramAut_coweightMap (hσ : σ ∈ t.diagramSymmetry) :
     (diagramAut ht hσ).toHom.coweightMap = (LinearEquiv.funCongrLeft ℤ ℤ σ).toLinearMap :=
-  rfl
+  (rfl)
 
 /-! ## Multiplicativity -/
 
@@ -342,14 +348,14 @@ theorem diagramAut_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramS
 /-- **The diagram automorphisms of the pinned datum, as a homomorphism** out of the symmetry group
 of the Bourbaki-numbered Cartan matrix. This is what converts a relation satisfied by a node
 permutation into the same relation for the automorphism it induces. -/
-@[expose] def diagramAutHom : t.diagramSymmetry →* (t.simplyConnectedRootDatum ht).Aut where
+def diagramAutHom : t.diagramSymmetry →* (t.simplyConnectedRootDatum ht).Aut where
   toFun g := diagramAut ht g.2
   map_one' := diagramAut_one ht
   map_mul' g₁ g₂ := diagramAut_mul ht g₁.2 g₂.2
 
 @[simp] theorem diagramAutHom_apply (g : t.diagramSymmetry) :
     diagramAutHom ht g = diagramAut ht g.2 :=
-  rfl
+  (rfl)
 
 /-- **A node permutation of finite order induces an automorphism satisfying the same relation.**
 This is the source of `γ ^ 2 = 1` for the order-two diagram symmetries of `Aₙ`, `Dₙ` and `E₆`, and
