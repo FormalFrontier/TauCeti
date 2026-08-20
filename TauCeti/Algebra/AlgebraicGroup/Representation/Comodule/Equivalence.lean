@@ -5,17 +5,18 @@ Authors: Codex
 -/
 module
 
-import Mathlib.CategoryTheory.ObjectProperty.Equivalence
+public import Mathlib.CategoryTheory.ObjectProperty.Equivalence
+public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Cat
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Morphism
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
 
 /-!
-# The category of point representations
+# The point-representation--comodule equivalence
 
 Let `H` be a commutative Hopf algebra over a commutative ring `R`. A point representation of the
 affine group represented by `H` is a natural action of every group of algebra-valued points on the
-corresponding scalar extension of a fixed `R`-module. This file bundles these representations into
-a category: morphisms are linear maps whose scalar extensions intertwine every point action.
+corresponding scalar extension of a fixed `R`-module. The objects and their value-algebra category
+live in the maximum universe of `R`, `H`, and their shared underlying-module universe.
 
 The fixed-module representation--comodule correspondence and its morphism criterion identify this
 category with the category of right `H`-comodules. Thus the functor-of-points and coordinate-Hopf-
@@ -23,20 +24,23 @@ algebra descriptions agree not only on objects, but also on morphisms.
 
 ## Main declarations
 
-* `TauCeti.PointRepresentationCat`: the category of natural point representations.
 * `TauCeti.PointRepresentationCat.toComodule`: the functor recovering the associated comodule.
 * `TauCeti.pointRepresentationCategoryEquivalence`: the equivalence between point
   representations and right comodules.
 * `TauCeti.FGPointRepresentationCat`: the finite-generation restriction, equivalent to
   `FGComoduleCat` and hence the finite-dimensional representation category over a field.
+* `TauCeti.FGPointRepresentationCat.toComodule`: the finite-generation restriction of the
+  comodule functor.
+* `TauCeti.fgPointRepresentationCategoryEquivalence`: the equivalence between finitely generated
+  point representations and comodules.
 
 ## References
 
 * J. S. Milne, *Basic Theory of Affine Group Schemes*, Chapter VIII, §§2, 4, and 6.
 * J. S. Milne, *Algebraic Groups* (2017), Chapter 4(a), Remark 4.1.
 
-This completes the categorical representation--comodule dictionary requested in Layer 1 of the
-ReductiveGroups roadmap.
+This supplies the categorical form of the Layer 1 representation--comodule dictionary in the
+ReductiveGroups roadmap; the monoidal and rigid refinements are not provided here.
 -/
 
 public section
@@ -50,147 +54,7 @@ universe u v w
 variable (R : Type u) [CommRing R]
 variable (H : Type v) [CommRing H] [HopfAlgebra R H]
 
-/-- The category of natural point representations of the affine group represented by `H`.
-
-An object is an `R`-module together with a natural action of the represented point groups on all
-of its scalar extensions. -/
-structure PointRepresentationCat extends SemimoduleCat.{w} R where
-  /-- The natural point action on the underlying module. -/
-  representation : HopfAlgebra.PointRepresentation (R := R) (H := H) (V := carrier)
-
 namespace PointRepresentationCat
-
-instance : CoeSort (PointRepresentationCat.{u, v, w} R H) (Type w) :=
-  ⟨fun V ↦ V.toSemimoduleCat⟩
-
-instance (V : PointRepresentationCat.{u, v, w} R H) : AddCommMonoid V :=
-  V.isAddCommMonoid
-
-instance (V : PointRepresentationCat.{u, v, w} R H) : Module R V :=
-  V.isModule
-
-/-- Bundle a natural point representation on an `R`-module. -/
-abbrev of (V : Type w) [AddCommMonoid V] [Module R V]
-    (Theta : HopfAlgebra.PointRepresentation (R := R) (H := H) (V := V)) :
-    PointRepresentationCat.{u, v, w} R H where
-  carrier := V
-  representation := Theta
-
-/-- A morphism of point representations is a linear map whose scalar extensions intertwine every
-algebra-valued point action. -/
-structure Hom (V W : PointRepresentationCat.{u, v, w} R H) where
-  /-- The underlying linear map. -/
-  toLinearMap : V →ₗ[R] W
-  /-- Every scalar extension of the linear map intertwines every point action. -/
-  intertwines : ∀ (A : CommAlgCat.{max u v w} R) (x : HopfAlgebra.points (H := H) A),
-    toLinearMap.baseChange A ∘ₗ (V.representation.action A x).val =
-      (W.representation.action A x).val ∘ₗ toLinearMap.baseChange A
-
-namespace Hom
-
-/-- The identity morphism of a point representation. -/
-def id (V : PointRepresentationCat.{u, v, w} R H) : Hom R H V V where
-  toLinearMap := LinearMap.id
-  intertwines A x := by simp
-
-/-- Composition of morphisms of point representations. -/
-def comp {U V W : PointRepresentationCat.{u, v, w} R H}
-    (g : Hom R H V W) (f : Hom R H U V) : Hom R H U W where
-  toLinearMap := g.toLinearMap.comp f.toLinearMap
-  intertwines A x := by
-    rw [LinearMap.baseChange_comp, LinearMap.comp_assoc, f.intertwines,
-      ← LinearMap.comp_assoc, g.intertwines, LinearMap.comp_assoc]
-
-private theorem id_toLinearMap (V : PointRepresentationCat.{u, v, w} R H) :
-    (id R H V).toLinearMap = LinearMap.id := by
-  rw [id]
-
-private theorem comp_toLinearMap {U V W : PointRepresentationCat.{u, v, w} R H}
-    (g : Hom R H V W) (f : Hom R H U V) :
-    (comp R H g f).toLinearMap = g.toLinearMap.comp f.toLinearMap := by
-  rw [comp]
-
-/-- Morphisms of point representations are equal when their underlying linear maps are equal. -/
-@[ext]
-theorem ext {V W : PointRepresentationCat.{u, v, w} R H} {f g : Hom R H V W}
-    (h : f.toLinearMap = g.toLinearMap) : f = g := by
-  cases f
-  cases g
-  simp_all
-
-end Hom
-
-instance category : Category (PointRepresentationCat.{u, v, w} R H) where
-  Hom := Hom R H
-  id := Hom.id R H
-  comp f g := Hom.comp R H g f
-  id_comp _ := Hom.ext R H (by simp only [Hom.comp_toLinearMap, Hom.id_toLinearMap,
-    LinearMap.comp_id])
-  comp_id _ := Hom.ext R H (by simp only [Hom.comp_toLinearMap, Hom.id_toLinearMap,
-    LinearMap.id_comp])
-  assoc _ _ _ := Hom.ext R H (by simp only [Hom.comp_toLinearMap, LinearMap.comp_assoc])
-
-instance {V W : PointRepresentationCat.{u, v, w} R H} : FunLike (Hom R H V W) V W where
-  coe f := f.toLinearMap
-  coe_injective _ _ h :=
-    Hom.ext R H <| LinearMap.ext fun v ↦ congrFun h v
-
-/-- `PointRepresentationCat` is concrete, with concrete morphisms the equivariant linear maps. -/
-instance concreteCategory :
-    ConcreteCategory (PointRepresentationCat.{u, v, w} R H) (Hom R H) where
-  hom f := f
-  ofHom f := f
-
-/-- The underlying linear map of a categorical morphism of point representations. -/
-abbrev homLinearMap {V W : PointRepresentationCat.{u, v, w} R H} (f : V ⟶ W) : V →ₗ[R] W :=
-  f.toLinearMap
-
-/-- Two categorical morphisms of point representations are equal when their underlying linear
-maps agree. -/
-theorem hom_ext_toLinearMap {V W : PointRepresentationCat.{u, v, w} R H} {f g : V ⟶ W}
-    (h : f.toLinearMap = g.toLinearMap) : f = g :=
-  Hom.ext R H h
-
-/-- Two categorical morphisms of point representations are equal when they agree on every
-vector. -/
-@[ext]
-theorem hom_ext {V W : PointRepresentationCat.{u, v, w} R H} {f g : V ⟶ W}
-    (h : ∀ v, f v = g v) : f = g :=
-  hom_ext_toLinearMap R H (LinearMap.ext h)
-
-/-- The identity morphism has the identity linear map underneath. -/
-@[simp]
-theorem toLinearMap_id (V : PointRepresentationCat.{u, v, w} R H) :
-    (CategoryStruct.id V).toLinearMap = LinearMap.id :=
-  Hom.id_toLinearMap R H V
-
-/-- Composition of representation morphisms is composition of their underlying linear maps. -/
-@[simp]
-theorem toLinearMap_comp {U V W : PointRepresentationCat.{u, v, w} R H}
-    (f : U ⟶ V) (g : V ⟶ W) :
-    (f ≫ g).toLinearMap = g.toLinearMap.comp f.toLinearMap :=
-  Hom.comp_toLinearMap R H g f
-
-/-- Forget a point representation to its underlying semimodule. -/
-instance hasForgetToSemimodule :
-    HasForget₂ (PointRepresentationCat.{u, v, w} R H) (SemimoduleCat.{w} R) where
-  forget₂ :=
-    { obj V := SemimoduleCat.of R V
-      map f := SemimoduleCat.ofHom f.toLinearMap }
-
-/-- The forgetful functor sends a point representation to its underlying semimodule. -/
-@[simp]
-theorem forget₂_obj (V : PointRepresentationCat.{u, v, w} R H) :
-    (forget₂ (PointRepresentationCat.{u, v, w} R H) (SemimoduleCat.{w} R)).obj V =
-      SemimoduleCat.of R V :=
-  (rfl)
-
-/-- The forgetful functor sends a representation morphism to its underlying linear map. -/
-@[simp]
-theorem forget₂_map {V W : PointRepresentationCat.{u, v, w} R H} (f : V ⟶ W) :
-    (forget₂ (PointRepresentationCat.{u, v, w} R H) (SemimoduleCat.{w} R)).map f =
-      SemimoduleCat.ofHom f.toLinearMap :=
-  (rfl)
 
 /-- Recover the right comodule underlying a natural point representation. -/
 @[expose] noncomputable def toComodule :
@@ -198,14 +62,13 @@ theorem forget₂_map {V W : PointRepresentationCat.{u, v, w} R H} (f : V ⟶ W)
   obj V :=
     { toSemimoduleCat := V.toSemimoduleCat
       instComodule := HopfAlgebra.PointRepresentation.toComodule V.representation }
-  map {V W} f := by
+  map {V W} f :=
     letI : Comodule R H V := HopfAlgebra.PointRepresentation.toComodule V.representation
     letI : Comodule R H W := HopfAlgebra.PointRepresentation.toComodule W.representation
-    exact ComoduleCat.ofHom (R := R) (C := H)
-      { toLinearMap := f.toLinearMap
-        map_coact :=
-          (HopfAlgebra.PointRepresentation.map_coact_iff_baseChange_comp_action
-            V.representation W.representation f.toLinearMap).mpr f.intertwines }
+    { toLinearMap := f.toLinearMap
+      map_coact :=
+        (HopfAlgebra.PointRepresentation.map_coact_iff_baseChange_comp_action
+          V.representation W.representation f.toLinearMap).mpr f.intertwines }
   map_id V := ComoduleCat.hom_ext (R := R) (C := H) fun v ↦
     LinearMap.congr_fun (toLinearMap_id R H V) v
   map_comp f g := ComoduleCat.hom_ext (R := R) (C := H) fun v ↦
@@ -242,11 +105,11 @@ noncomputable def toComoduleFullyFaithful :
         (HopfAlgebra.PointRepresentation.map_coact_iff_baseChange_comp_action
           V.representation W.representation f.toLinearMap).mp f.map_coact }
   map_preimage _ := ComoduleCat.hom_ext (R := R) (C := H) fun _ ↦ rfl
-  preimage_map _ := PointRepresentationCat.hom_ext_toLinearMap (R := R) (H := H) rfl
+  preimage_map _ := PointRepresentationCat.Hom.ext R H rfl
 
 /-- Bundle a right comodule as its associated natural point representation, preserving its
 underlying bundled semimodule. -/
-noncomputable def ofComodule (M : ComoduleCat.{u, v, w} R H) :
+@[expose] noncomputable def ofComodule (M : ComoduleCat.{u, v, w} R H) :
     PointRepresentationCat.{u, v, w} R H where
   toSemimoduleCat := M.toSemimoduleCat
   representation := HopfAlgebra.PointRepresentation.ofComodule
@@ -256,16 +119,16 @@ noncomputable def ofComodule (M : ComoduleCat.{u, v, w} R H) :
 semimodule. -/
 @[simp]
 theorem ofComodule_toSemimoduleCat (M : ComoduleCat.{u, v, w} R H) :
-    (ofComodule R H M).toSemimoduleCat = M.toSemimoduleCat := by
-  rw [ofComodule]
-
-/-- The point action associated to a comodule is the action induced by its coaction. -/
-@[simp]
-theorem ofComodule_representation (M : ComoduleCat.{u, v, w} R H) :
-    HEq (ofComodule R H M).representation
-      (HopfAlgebra.PointRepresentation.ofComodule (inferInstance : Comodule R H M)) := by
-  unfold ofComodule
+    (ofComodule R H M).toSemimoduleCat = M.toSemimoduleCat :=
   rfl
+
+/-- The point action associated to a comodule is the comodule point-action endomorphism. -/
+theorem ofComodule_action_val (M : ComoduleCat.{u, v, w} R H)
+    (A : CommAlgCat.{max u v w} R) (x : HopfAlgebra.points (H := H) A) :
+    ((ofComodule R H M).representation.action A x).val =
+      Comodule.endOfPoint M x.ofConv :=
+  HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint
+    (inferInstance : Comodule R H M) A x
 
 /-- Recovering the comodule associated to `ofComodule` returns the original bundled comodule. -/
 @[simp]
@@ -300,6 +163,31 @@ noncomputable def pointRepresentationCategoryEquivalence :
     PointRepresentationCat.{u, v, w} R H ≌ ComoduleCat.{u, v, w} R H :=
   (PointRepresentationCat.toComodule R H).asEquivalence
 
+/-- The forward functor of the point-representation equivalence is the concrete comodule
+functor. -/
+@[simp]
+theorem pointRepresentationCategoryEquivalence_functor :
+    (pointRepresentationCategoryEquivalence R H).functor =
+      PointRepresentationCat.toComodule R H := by
+  rw [pointRepresentationCategoryEquivalence, Functor.asEquivalence_functor]
+
+/-- The inverse equivalence sends a comodule to its associated point representation, up to the
+canonical isomorphism selected by `Functor.inv`. -/
+noncomputable def pointRepresentationCategoryEquivalence_inverse_obj_iso_ofComodule
+    (M : ComoduleCat.{u, v, w} R H) :
+    (pointRepresentationCategoryEquivalence R H).inverse.obj M ≅
+      PointRepresentationCat.ofComodule R H M := by
+  let hfunctorObj :
+      (pointRepresentationCategoryEquivalence R H).functor.obj
+          (PointRepresentationCat.ofComodule R H M) = M :=
+    congrArg (fun F ↦ F.obj (PointRepresentationCat.ofComodule R H M))
+        (pointRepresentationCategoryEquivalence_functor R H) |>.trans
+      (PointRepresentationCat.toComodule_obj_ofComodule R H M)
+  exact (pointRepresentationCategoryEquivalence R H).inverse.mapIso
+      (eqToIso hfunctorObj.symm) ≪≫
+    ((pointRepresentationCategoryEquivalence R H).unitIso.app
+      (PointRepresentationCat.ofComodule R H M)).symm
+
 /-- The object property of finite generation on natural point representations. Over a field this
 is finite-dimensionality of the representation. -/
 def PointRepresentationCat.isFG :
@@ -325,14 +213,50 @@ category of finite-dimensional representations of the affine group represented b
 abbrev FGPointRepresentationCat :=
   (PointRepresentationCat.isFG (R := R) (H := H)).FullSubcategory
 
-private noncomputable instance :
-    (ComoduleCat.isFG (R := R) (C := H) :
-      ObjectProperty (ComoduleCat.{u, v, w} R H)).IsClosedUnderIsomorphisms where
-  of_iso e h := by
-    let _ : Module.Finite R _ := h
-    exact Module.Finite.equiv (ComoduleCat.isoToLinearEquiv (R := R) (C := H) e)
+noncomputable instance PointRepresentationCat.isFG_isClosedUnderIsomorphisms :
+    (PointRepresentationCat.isFG (R := R) (H := H) :
+      ObjectProperty (PointRepresentationCat.{u, v, w} R H)).IsClosedUnderIsomorphisms where
+  of_iso {V W} e h := by
+    rw [PointRepresentationCat.isFG_iff] at h ⊢
+    let _ : Module.Finite R V := h
+    exact Module.Finite.equiv (PointRepresentationCat.isoToLinearEquiv (R := R) (H := H) e)
+
+/-- Finitely generated point representations and finitely generated comodules form equivalent
+categories. Over a field, this is the representation--comodule equivalence for finite-dimensional
+representations. -/
+@[expose] noncomputable def fgPointRepresentationCategoryEquivalence :
+    FGPointRepresentationCat.{u, v, w} R H ≌ FGComoduleCat.{u, v, w} R H :=
+  (PointRepresentationCat.toComodule R H).asEquivalence.congrFullSubcategory <| by
+    ext V
+    simp only [ObjectProperty.prop_inverseImage_iff, Functor.asEquivalence_functor,
+      PointRepresentationCat.toComodule_obj_isFG_iff]
 
 namespace FGPointRepresentationCat
+
+/-- The underlying type of a finitely generated point representation. -/
+@[expose, reducible]
+def carrier (V : FGPointRepresentationCat.{u, v, w} R H) : Type w :=
+  V.obj
+
+instance : CoeSort (FGPointRepresentationCat.{u, v, w} R H) (Type w) :=
+  ⟨carrier (R := R) (H := H)⟩
+
+attribute [coe] carrier
+
+instance (V : FGPointRepresentationCat.{u, v, w} R H) : AddCommMonoid V :=
+  inferInstanceAs (AddCommMonoid V.obj)
+
+instance (V : FGPointRepresentationCat.{u, v, w} R H) : Module R V :=
+  inferInstanceAs (Module R V.obj)
+
+/-- The underlying module of a finitely generated point representation is finitely generated. -/
+instance (V : FGPointRepresentationCat.{u, v, w} R H) : Module.Finite R V :=
+  V.property
+
+/-- The natural point action of a finitely generated point representation. -/
+abbrev representation (V : FGPointRepresentationCat.{u, v, w} R H) :
+    HopfAlgebra.PointRepresentation (R := R) (H := H) (V := V) :=
+  V.obj.representation
 
 /-- The inclusion of finitely generated point representations into all point representations. -/
 abbrev incl :
@@ -340,12 +264,10 @@ abbrev incl :
   (PointRepresentationCat.isFG (R := R) (H := H)).ι
 
 /-- Recover the finitely generated comodule underlying a finitely generated point
-representation. -/
-@[expose] noncomputable def toComodule :
+representation. This is the forward functor of `fgPointRepresentationCategoryEquivalence`. -/
+noncomputable abbrev toComodule :
     FGPointRepresentationCat.{u, v, w} R H ⥤ FGComoduleCat.{u, v, w} R H :=
-  (ComoduleCat.isFG (R := R) (C := H)).lift
-    (incl R H ⋙ PointRepresentationCat.toComodule R H) fun V ↦ by
-      exact (PointRepresentationCat.toComodule_obj_isFG_iff R H V.obj).2 V.property
+  (fgPointRepresentationCategoryEquivalence R H).functor
 
 /-- The ambient comodule underlying the finite comodule functor is the recovered comodule. -/
 @[simp]
@@ -370,23 +292,12 @@ theorem toComodule_map_toLinearMap {V W : FGPointRepresentationCat.{u, v, w} R H
 
 end FGPointRepresentationCat
 
-/-- Finitely generated point representations and finitely generated comodules form equivalent
-categories. Over a field, this is the representation--comodule equivalence for finite-dimensional
-representations. -/
-noncomputable def fgPointRepresentationCategoryEquivalence :
-    FGPointRepresentationCat.{u, v, w} R H ≌ FGComoduleCat.{u, v, w} R H :=
-  (pointRepresentationCategoryEquivalence R H).congrFullSubcategory <| by
-    ext V
-    simp only [ObjectProperty.prop_inverseImage_iff, pointRepresentationCategoryEquivalence,
-      Functor.asEquivalence_functor, PointRepresentationCat.toComodule_obj_isFG_iff]
-
-/-- The concrete finite-comodule functor is definitionally the forward functor constructed by
-`Equivalence.congrFullSubcategory`. -/
-private theorem fgPointRepresentationCategoryEquivalence_functor :
+/-- The forward functor of the finite point-representation equivalence is the concrete finite
+comodule functor. -/
+@[simp]
+theorem fgPointRepresentationCategoryEquivalence_functor :
     (fgPointRepresentationCategoryEquivalence R H).functor =
-      FGPointRepresentationCat.toComodule R H := by
-  unfold fgPointRepresentationCategoryEquivalence pointRepresentationCategoryEquivalence
-    FGPointRepresentationCat.toComodule
+      FGPointRepresentationCat.toComodule R H :=
   rfl
 
 namespace FGPointRepresentationCat
@@ -395,9 +306,8 @@ namespace FGPointRepresentationCat
 categories. -/
 noncomputable instance toComoduleIsEquivalence :
     (toComodule R H : FGPointRepresentationCat.{u, v, w} R H ⥤
-      FGComoduleCat.{u, v, w} R H).IsEquivalence := by
-  rw [← fgPointRepresentationCategoryEquivalence_functor R H]
-  infer_instance
+      FGComoduleCat.{u, v, w} R H).IsEquivalence :=
+  (fgPointRepresentationCategoryEquivalence R H).isEquivalence_functor
 
 end FGPointRepresentationCat
 
