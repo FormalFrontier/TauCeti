@@ -8,6 +8,7 @@ module
 public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop
+public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 public import Mathlib.RingTheory.AdjoinRoot
 
@@ -62,6 +63,12 @@ rather than from the brick criterion: for the Jordan blocks the endomorphism alg
 `k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick criterion does not apply, and an endomorphism is
 pinned down instead by its value at `1` -- it commutes with multiplication by the root, hence with
 multiplication by every power of it, and those powers are a basis.
+
+The quiver `•↺` itself -- `TauCeti.Quiver.OneLoop`, with its `Quiver` instance and its loop
+`TauCeti.Quiver.OneLoop.loop` -- is defined in
+`TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop`, the file that first needed it. That is
+what this file imports that module for: every declaration below mentions the quiver, and the
+path-algebra results cited under "References" are not what the import is for.
 
 `TauCeti.oneLoopRep` and `TauCeti.oneLoopNilpotentRep` carry `@[expose]` because the vertex space of
 the representation has to reduce to `k`, resp. to `k[X]/(Xⁿ⁺¹)`, for the statements below to
@@ -118,6 +125,7 @@ theorem oneLoopRep_map_loop (c : k) :
   Paths.lift_toPath _ _
 
 /-- The action of the loop, read on an element of the vertex space. -/
+@[simp]
 theorem oneLoopRep_map_loop_apply (c : k) (x : k) :
     ((oneLoopRep.{u, w} k c).map (Quiver.Hom.toPath Quiver.OneLoop.loop)).hom x = c * x := by
   rw [oneLoopRep_map_loop]
@@ -129,6 +137,7 @@ def oneLoopRepScalar {c d : k} (f : oneLoopRep.{u, w} k c ⟶ oneLoopRep.{u, w} 
   (f.app (Quiver.OneLoop.vertex : Paths Quiver.OneLoop)).hom (1 : k)
 
 /-- A morphism of scalar representations acts by multiplication by its scalar. -/
+@[simp]
 theorem oneLoopRepScalar_apply {c d : k} (f : oneLoopRep.{u, w} k c ⟶ oneLoopRep.{u, w} k d)
     (x : k) :
     (f.app (Quiver.OneLoop.vertex : Paths Quiver.OneLoop)).hom x = oneLoopRepScalar f * x := by
@@ -215,6 +224,7 @@ theorem oneLoopRepScalar_intertwine {c d : k}
 /-- **Every morphism of scalar representations is the one attached to its scalar**, so
 `TauCeti.oneLoopRepHom` and `TauCeti.oneLoopRepScalar` identify the morphisms `oneLoopRep k c ⟶
 oneLoopRep k d` with the scalars `s` satisfying `s * c = d * s`. -/
+@[simp]
 theorem oneLoopRepHom_oneLoopRepScalar {c d : k}
     (f : oneLoopRep.{u, w} k c ⟶ oneLoopRep.{u, w} k d) :
     oneLoopRepHom (oneLoopRepScalar f) (oneLoopRepScalar_intertwine f) = f :=
@@ -291,6 +301,7 @@ theorem oneLoopNilpotentRep_map_loop (n : ℕ) :
   Paths.lift_toPath _ _
 
 /-- The action of the loop, read on an element of the vertex space. -/
+@[simp]
 theorem oneLoopNilpotentRep_map_loop_apply (n : ℕ) (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) :
     ((oneLoopNilpotentRep.{u, w} k n).map (Quiver.Hom.toPath Quiver.OneLoop.loop)).hom x =
       AdjoinRoot.root ((X : k[X]) ^ (n + 1)) * x := by

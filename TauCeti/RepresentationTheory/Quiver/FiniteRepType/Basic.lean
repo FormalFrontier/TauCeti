@@ -5,8 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Category.ModuleCat.Biproducts
+public import Mathlib.CategoryTheory.Limits.FunctorCategory.BinaryBiproducts
 public import Mathlib.CategoryTheory.Skeletal
-public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
+public import TauCeti.RepresentationTheory.Quiver.Representation.Basic
 
 /-!
 # Finite representation type
@@ -33,8 +36,8 @@ finite-dimensional indecomposables is finite, so that "the indecomposables" may 
 
 * `TauCeti.not_isFiniteRepType_of_infinite`: an infinite family of pairwise non-isomorphic
   finite-dimensional indecomposables refutes finite representation type.
-* `TauCeti.IsFiniteRepType.finite_of_injective`: conversely, under finite representation type every
-  such family is indexed by a finite type.
+* `TauCeti.IsFiniteRepType.finite_of_pairwise_nonisomorphic`: conversely, under finite
+  representation type every such family is indexed by a finite type.
 
 ## Implementation notes
 
@@ -140,7 +143,7 @@ theorem not_isFiniteRepType_of_infinite [Infinite α] (hfin : ∀ a, IsFinDim k 
 /-- **Under finite representation type a family of pairwise non-isomorphic finite-dimensional
 indecomposables is finite.** This is the counting form of the property: only finitely many
 indecomposables are available to be listed. -/
-theorem IsFiniteRepType.finite_of_injective (h : IsFiniteRepType.{u, v, w, t} k Q)
+theorem IsFiniteRepType.finite_of_pairwise_nonisomorphic (h : IsFiniteRepType.{u, v, w, t} k Q)
     (hfin : ∀ a, IsFinDim k Q (M a)) (hind : ∀ a, Indecomposable (M a))
     (hne : ∀ a b, a ≠ b → ¬ Nonempty (M a ≅ M b)) : Finite α :=
   @Finite.of_injective _ _ h _ (toIndecSkeleton_injective hfin hind hne)
