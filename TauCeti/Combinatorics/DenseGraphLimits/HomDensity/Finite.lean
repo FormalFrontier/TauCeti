@@ -56,14 +56,15 @@ carrying decidability hypotheses that the analytic statements downstream would t
 
 * `TauCeti.DenseGraphLimits.homDensityFin` — the homomorphism density `t(F, G)`.
 * `TauCeti.DenseGraphLimits.injHomDensity` — the injective homomorphism density `t₀(F, G)`.
-
-Both bodies stay unexposed; `homDensityFin_def` and `injHomDensity_def` are the unfolding lemmas
-downstream modules should use.
+Both density bodies stay unexposed; `homDensityFin_def` and `injHomDensity_def` are the unfolding
+lemmas downstream modules should use.
 
 ## Main results
 
 * `card_injective_hom_eq_labelledCopyCount`, `injHomDensity_eq_labelledCopyCount_div` — the bridge
   to Mathlib's counting primitive, at the level of the count and of the density;
+* `card_hom_eq_card_adjPreservingMaps` — homomorphisms are counted by the
+  adjacency-preserving vertex maps;
 * `homDensityFin_nonneg`, `homDensityFin_le_one`, `injHomDensity_nonneg`, `injHomDensity_le_one` —
   both densities lie in `[0, 1]`, unconditionally. The degenerate cases are included: when the host
   is empty and the pattern is not, numerator and denominator both vanish and `x / 0 = 0` gives `0`.
@@ -153,6 +154,21 @@ theorem injHomDensity_eq_labelledCopyCount_div :
     injHomDensity F G =
       (G.labelledCopyCount F : ℝ) / ((Fintype.card W).descFactorial (Fintype.card V) : ℝ) := by
   rw [injHomDensity_def, card_injective_hom_eq_labelledCopyCount]
+
+/-! ### Homomorphisms as adjacency-preserving vertex maps -/
+
+private def relHomEquivPreservingMaps {α β : Type*} (r : α → α → Prop) (s : β → β → Prop) :
+    (r →r s) ≃ {f : α → β // ∀ a b, r a b → s (f a) (f b)} where
+  toFun φ := ⟨⇑φ, fun _ _ h => φ.map_rel h⟩
+  invFun ψ := ⟨ψ.1, fun {_ _} h => ψ.2 _ _ h⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+omit [Fintype V] [Fintype W] in
+/-- Homomorphisms and adjacency-preserving vertex maps are counted alike. -/
+theorem card_hom_eq_card_adjPreservingMaps :
+    Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
+  Nat.card_congr (relHomEquivPreservingMaps F.Adj G.Adj)
 
 /-! ### Both densities lie in `[0, 1]` -/
 

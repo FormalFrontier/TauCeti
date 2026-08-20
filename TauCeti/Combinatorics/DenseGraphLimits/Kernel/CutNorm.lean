@@ -32,6 +32,8 @@ pointwise algebra happens before integration; a later layer proves invariance un
   the same quantity.
 * `TauCeti.DenseGraphLimits.SymmKernel.testIntegral` is the integral of a kernel against a pair of
   test functions, of which a rectangle integral is the indicator case.
+* `TauCeti.DenseGraphLimits.SymmKernel.partialIntegral` is the pairing against one test function
+  only, the object the extremal step of the factor sandwich optimises over.
 * `TauCeti.DenseGraphLimits.cutNormSigned` is the signed cut norm: the same supremum taken over
   measurable `[-1,1]`-valued test functions rather than over indicators.
 
@@ -43,8 +45,8 @@ pointwise algebra happens before integration; a later layer proves invariance un
 * `cutNorm_le_integral_abs` bounds the cut norm by the `L¹` norm.
 * `abs_testIntegral_le_cutNormSigned` and `cutNormSigned_le` are the corresponding introduction and
   elimination rules for the signed cut norm.
-* `cutNorm_le_cutNormSigned` is the lower side of the factor sandwich relating the two.  The upper
-  side, `cutNormSigned_le_four_mul_cutNorm`, is a separate roadmap target and is not proved here.
+* `cutNorm_le_cutNormSigned` and `cutNormSigned_le_four_mul_cutNorm` are the two sides of the
+  factor sandwich relating the two forms.
 
 ## References
 
@@ -211,6 +213,80 @@ theorem testIntegral_indicator_one (K : SymmKernel Ω μ) {S T : Set Ω}
   refine integral_congr_ae (ae_of_all _ fun p => ?_)
   by_cases hp1 : p.1 ∈ S <;> by_cases hp2 : p.2 ∈ T <;> simp [hp1, hp2, Set.mem_prod]
 
+/-- Swapping the two test functions of a symmetric kernel leaves the pairing unchanged. -/
+theorem testIntegral_comm [SFinite μ] (K : SymmKernel Ω μ) (u v : Ω → ℝ) :
+    K.testIntegral μ u v = K.testIntegral μ v u := by
+  rw [testIntegral_def, testIntegral_def,
+    ← integral_prod_swap (fun p : Ω × Ω => v p.1 * u p.2 * K p.1 p.2)]
+  refine integral_congr_ae (ae_of_all _ fun p => ?_)
+  simp only [Prod.fst_swap, Prod.snd_swap]
+  rw [K.symm p.2 p.1]
+  ring
+
+/-- The inner integral of a kernel against a single test function, `x ↦ ∫ v(y) K(x,y)`.
+
+This is the partial pairing that the extremal step of the factor sandwich optimises over.  When `μ`
+is finite and `v` is measurable and `[-1,1]`-valued — the hypotheses `exists_pm_one_left` carries —
+the supremum over the remaining test function is attained at the sign of this function.  The
+definition itself asks nothing of `v`. -/
+noncomputable def partialIntegral (K : SymmKernel Ω μ) (v : Ω → ℝ) (x : Ω) : ℝ :=
+  ∫ y, v y * K x y ∂μ
+
+/-- The defining integral of `partialIntegral`. -/
+theorem partialIntegral_def (K : SymmKernel Ω μ) (v : Ω → ℝ) (x : Ω) :
+    K.partialIntegral μ v x = ∫ y, v y * K x y ∂μ := (rfl)
+
+/-- The partial pairing is measurable in the remaining variable. -/
+theorem measurable_partialIntegral [SFinite μ] (K : SymmKernel Ω μ) {v : Ω → ℝ}
+    (hv : Measurable v) :
+    Measurable (K.partialIntegral μ v) := by
+  have h : Measurable fun p : Ω × Ω => v p.2 * K p.1 p.2 :=
+    (hv.comp measurable_snd).mul K.measurable
+  exact h.stronglyMeasurable.integral_prod_right'.measurable
+
+/-- The partial pairing against a `[-1,1]`-valued test function is integrable. -/
+theorem integrable_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {v : Ω → ℝ}
+    (hv : Measurable v) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    Integrable (K.partialIntegral μ v) μ := by
+  have h1 : ∀ x : Ω, (fun _ : Ω => (1 : ℝ)) x ∈ Icc (-1 : ℝ) 1 := fun _ => by norm_num
+  have h := (K.integrable_testIntegrand μ measurable_const hv h1 hv1).integral_prod_left
+  simp only [one_mul] at h
+  exact h
+
+/-- A test integral is the integral of the left test function against the partial pairing.
+
+Only integrability of the product integrand is needed — that is all Fubini asks.  A caller with
+bounded measurable test functions gets it from `integrable_testIntegrand`. -/
+theorem testIntegral_eq_integral_partialIntegral [SFinite μ] (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (h : Integrable (fun p : Ω × Ω => u p.1 * v p.2 * K p.1 p.2) (μ.prod μ)) :
+    K.testIntegral μ u v = ∫ x, u x * K.partialIntegral μ v x ∂μ := by
+  have key : ∀ x, ∫ y, u x * v y * K x y ∂μ = u x * K.partialIntegral μ v x := by
+    intro x
+    rw [partialIntegral_def, ← integral_const_mul]
+    exact integral_congr_ae (ae_of_all _ fun y => by ring)
+  rw [testIntegral_def, integral_prod _ h]
+  exact integral_congr_ae (ae_of_all _ fun x => key x)
+
+/-- The pairing is subtractive in the left test function, given integrability of both pieces. -/
+theorem testIntegral_sub_left (K : SymmKernel Ω μ) {u₁ u₂ v : Ω → ℝ}
+    (h₁ : Integrable (fun p : Ω × Ω => u₁ p.1 * v p.2 * K p.1 p.2) (μ.prod μ))
+    (h₂ : Integrable (fun p : Ω × Ω => u₂ p.1 * v p.2 * K p.1 p.2) (μ.prod μ)) :
+    K.testIntegral μ (u₁ - u₂) v = K.testIntegral μ u₁ v - K.testIntegral μ u₂ v := by
+  rw [testIntegral_def, testIntegral_def, testIntegral_def, ← integral_sub h₁ h₂]
+  refine integral_congr_ae (ae_of_all _ fun p => ?_)
+  simp only [Pi.sub_apply]
+  ring
+
+/-- The pairing is subtractive in the right test function, given integrability of both pieces. -/
+theorem testIntegral_sub_right (K : SymmKernel Ω μ) {u v₁ v₂ : Ω → ℝ}
+    (h₁ : Integrable (fun p : Ω × Ω => u p.1 * v₁ p.2 * K p.1 p.2) (μ.prod μ))
+    (h₂ : Integrable (fun p : Ω × Ω => u p.1 * v₂ p.2 * K p.1 p.2) (μ.prod μ)) :
+    K.testIntegral μ u (v₁ - v₂) = K.testIntegral μ u v₁ - K.testIntegral μ u v₂ := by
+  rw [testIntegral_def, testIntegral_def, testIntegral_def, ← integral_sub h₁ h₂]
+  refine integral_congr_ae (ae_of_all _ fun p => ?_)
+  simp only [Pi.sub_apply]
+  ring
+
 end SymmKernel
 
 /-- The set form of the cut norm: the supremum of the absolute kernel integrals over measurable
@@ -228,9 +304,8 @@ noncomputable def cutNorm [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ := c
 `v`, of `|∫∫ u(x) v(y) K(x,y)|`.
 
 Relaxing the indicators of `cutNorm` to `[-1,1]`-valued functions can only increase the supremum
-(`cutNorm_le_cutNormSigned`), and increases it by at most a factor of `4`.  That upper side of the
-sandwich, `cutNormSigned_le_four_mul_cutNorm`, is a separate roadmap target and is not proved
-here.
+(`cutNorm_le_cutNormSigned`), and increases it by at most a factor of `4`
+(`cutNormSigned_le_four_mul_cutNorm`), so the two forms define the same topology.
 
 `[IsFiniteMeasure μ]` is required, as for `cutNorm`, and is not decoration: on an infinite measure
 the test integrals are unbounded — take `μ` Lebesgue, `K` the constant kernel `1`, and `u = v` the
@@ -480,6 +555,117 @@ theorem cutNorm_le_cutNormSigned (K : SymmKernel Ω μ) : cutNorm μ K ≤ cutNo
     (measurable_one.indicator hT) (fun x => ?_) fun y => ?_
   · by_cases hx : x ∈ S <;> simp [hx]
   · by_cases hy : y ∈ T <;> simp [hy]
+
+/-- The extremal step: replacing the left test function by the sign of the inner integral can only
+increase the pairing, and the replacement is `±1`-valued. -/
+private theorem exists_pm_one_left (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    ∃ w : Ω → ℝ, Measurable w ∧ (∀ x, w x = 1 ∨ w x = -1) ∧
+      |K.testIntegral μ u v| ≤ K.testIntegral μ w v := by
+  set g := K.partialIntegral μ v with hg_def
+  have hg : Measurable g := K.measurable_partialIntegral μ hv
+  have hgint : Integrable g μ := K.integrable_partialIntegral μ hv hv1
+  refine ⟨fun x => if 0 ≤ g x then 1 else -1, ?_, ?_, ?_⟩
+  · exact Measurable.ite (measurableSet_le measurable_const hg) measurable_const measurable_const
+  · intro x; by_cases hx : 0 ≤ g x <;> simp [hx]
+  · have hw1 : ∀ x, (if 0 ≤ g x then (1 : ℝ) else -1) ∈ Icc (-1 : ℝ) 1 := by
+      intro x; by_cases hx : 0 ≤ g x <;> simp [hx]
+    have hwm : Measurable fun x => if 0 ≤ g x then (1 : ℝ) else -1 :=
+      Measurable.ite (measurableSet_le measurable_const hg) measurable_const measurable_const
+    rw [K.testIntegral_eq_integral_partialIntegral μ
+        (K.integrable_testIntegrand μ hu hv hu1 hv1),
+      K.testIntegral_eq_integral_partialIntegral μ
+        (K.integrable_testIntegrand μ hwm hv hw1 hv1), ← hg_def]
+    have hint : Integrable (fun x => u x * g x) μ :=
+      Integrable.mono' hgint.abs (hu.mul hg).aestronglyMeasurable
+        (ae_of_all _ fun x => by
+          rw [Real.norm_eq_abs, abs_mul]
+          calc |u x| * |g x| ≤ 1 * |g x| := by gcongr; exact abs_le.2 (hu1 x)
+            _ = |g x| := one_mul _)
+    calc |∫ x, u x * g x ∂μ|
+        ≤ ∫ x, |u x * g x| ∂μ := abs_integral_le_integral_abs
+      _ ≤ ∫ x, |g x| ∂μ := by
+          refine integral_mono hint.abs hgint.abs fun x => ?_
+          rw [abs_mul]
+          calc |u x| * |g x| ≤ 1 * |g x| := by gcongr; exact abs_le.2 (hu1 x)
+            _ = |g x| := one_mul _
+      _ = ∫ x, (if 0 ≤ g x then (1 : ℝ) else -1) * g x ∂μ := by
+          refine integral_congr_ae (ae_of_all _ fun x => ?_)
+          by_cases hx : 0 ≤ g x
+          · simp [hx, abs_of_nonneg hx]
+          · simp [hx, abs_of_neg (lt_of_not_ge hx)]
+
+omit [MeasurableSpace Ω] in
+private theorem mem_Icc_of_pm {w : Ω → ℝ} (hw : ∀ x, w x = 1 ∨ w x = -1) (x : Ω) :
+    w x ∈ Icc (-1 : ℝ) 1 := by
+  rcases hw x with h | h <;> rw [h] <;> constructor <;> norm_num
+
+/-- A `±1`-valued measurable function is the indicator of a measurable set minus the indicator of
+its complement. -/
+private theorem exists_indicator_sub_of_pm {u : Ω → ℝ} (hu : Measurable u)
+    (hu' : ∀ x, u x = 1 ∨ u x = -1) :
+    ∃ S : Set Ω, MeasurableSet S ∧ u = S.indicator 1 - Sᶜ.indicator 1 := by
+  refine ⟨u ⁻¹' {1}, hu (measurableSet_singleton 1), ?_⟩
+  funext x
+  by_cases hx : u x = 1
+  · simp [Set.mem_preimage, hx]
+  · have hxS : x ∉ u ⁻¹' {1} := by simpa using hx
+    have hx' : u x = -1 := (hu' x).resolve_left hx
+    simp [hxS, hx']
+
+/-- The four-rectangle bound: a pairing of `±1`-valued test functions splits into the four
+rectangles cut out by the two sets, each bounded by the cut norm. -/
+private theorem abs_testIntegral_le_four_mul_cutNorm_of_pm (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu' : ∀ x, u x = 1 ∨ u x = -1) (hv' : ∀ y, v y = 1 ∨ v y = -1) :
+    |K.testIntegral μ u v| ≤ 4 * cutNorm μ K := by
+  obtain ⟨S, hS, hu_eq⟩ := exists_indicator_sub_of_pm hu hu'
+  obtain ⟨T, hT, hv_eq⟩ := exists_indicator_sub_of_pm hv hv'
+  have hind : ∀ A : Set Ω, MeasurableSet A → Measurable (A.indicator (1 : Ω → ℝ)) :=
+    fun _ hA => measurable_one.indicator hA
+  have hmem : ∀ (A : Set Ω) (x : Ω), A.indicator (1 : Ω → ℝ) x ∈ Icc (-1 : ℝ) 1 := by
+    intro A x
+    by_cases hx : x ∈ A <;> simp [hx]
+  rw [hv_eq, K.testIntegral_sub_right μ
+      (K.integrable_testIntegrand μ hu (hind T hT) (mem_Icc_of_pm hu') (hmem T))
+      (K.integrable_testIntegrand μ hu (hind Tᶜ hT.compl) (mem_Icc_of_pm hu') (hmem Tᶜ)),
+    hu_eq,
+    K.testIntegral_sub_left μ
+      (K.integrable_testIntegrand μ (hind S hS) (hind T hT) (hmem S) (hmem T))
+      (K.integrable_testIntegrand μ (hind Sᶜ hS.compl) (hind T hT) (hmem Sᶜ) (hmem T)),
+    K.testIntegral_sub_left μ
+      (K.integrable_testIntegrand μ (hind S hS) (hind Tᶜ hT.compl) (hmem S) (hmem Tᶜ))
+      (K.integrable_testIntegrand μ (hind Sᶜ hS.compl) (hind Tᶜ hT.compl) (hmem Sᶜ) (hmem Tᶜ)),
+    K.testIntegral_indicator_one μ hS hT, K.testIntegral_indicator_one μ hS.compl hT,
+    K.testIntegral_indicator_one μ hS hT.compl,
+    K.testIntegral_indicator_one μ hS.compl hT.compl]
+  obtain ⟨l1, r1⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS hT)
+  obtain ⟨l2, r2⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS.compl hT)
+  obtain ⟨l3, r3⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS hT.compl)
+  obtain ⟨l4, r4⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS.compl hT.compl)
+  exact abs_le.2 ⟨by linarith, by linarith⟩
+
+/-- **Upper side of the factor sandwich.** Relaxing indicators to `[-1,1]`-valued test functions
+increases the cut norm by at most a factor of `4`. -/
+theorem cutNormSigned_le_four_mul_cutNorm (K : SymmKernel Ω μ) :
+    cutNormSigned μ K ≤ 4 * cutNorm μ K := by
+  refine cutNormSigned_le μ fun u v hu hv hu1 hv1 => ?_
+  obtain ⟨w, hw, hw', hle⟩ := exists_pm_one_left μ K hu hv hu1 hv1
+  obtain ⟨z, hz, hz', hle2⟩ :=
+    exists_pm_one_left μ K hv hw hv1 (mem_Icc_of_pm hw')
+  have e1 : K.testIntegral μ w v = K.testIntegral μ v w := K.testIntegral_comm μ w v
+  have e2 : K.testIntegral μ z w = K.testIntegral μ w z := K.testIntegral_comm μ z w
+  have h4 : |K.testIntegral μ w z| ≤ 4 * cutNorm μ K :=
+    abs_testIntegral_le_four_mul_cutNorm_of_pm μ K hw hz hw' hz'
+  calc |K.testIntegral μ u v|
+      ≤ K.testIntegral μ w v := hle
+    _ = K.testIntegral μ v w := e1
+    _ ≤ |K.testIntegral μ v w| := le_abs_self _
+    _ ≤ K.testIntegral μ z w := hle2
+    _ = K.testIntegral μ w z := e2
+    _ ≤ |K.testIntegral μ w z| := le_abs_self _
+    _ ≤ 4 * cutNorm μ K := h4
 
 end DenseGraphLimits
 
