@@ -275,6 +275,7 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv_apply
 section Base
 
 variable (R : Type u) [CommRing R] (X : Scheme.{u}) [X.Over (Spec (.of R))]
+variable {M N : X.Modules}
 
 /-- The homomorphism from the base ring to global functions on a scheme over that ring. -/
 def _root_.AlgebraicGeometry.Scheme.Modules.baseRingToGlobalSections : R →+* Γ(X, ⊤) :=
@@ -301,6 +302,66 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.base_smul_cohomology
 lemma _root_.AlgebraicGeometry.Scheme.Modules.base_smul_globalSections
     (M : X.Modules) (r : R) (x : Γ(M, ⊤)) :
     r • x = baseRingToGlobalSections R X r • x :=
+  rfl
+
+/-- The map on cohomology induced by a morphism of coefficient sheaves on a scheme over a
+commutative ring is linear over the base ring. -/
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear
+    (f : M ⟶ N) (i : ℕ) :
+    Cohomology M i →ₗ[R] Cohomology N i where
+  toFun := (cohomologyFunctor X i).map f
+  map_add' := map_add _
+  map_smul' r x := by
+    rw [base_smul_cohomology]
+    -- Normalize the target's restricted action, whose `LinearMap.map_smul` goal retains
+    -- the identity ring homomorphism, to the existing global-functions linear map.
+    change cohomologyMapLinear f i ((baseRingToGlobalSections R X r) • x) =
+      (baseRingToGlobalSections R X r) • cohomologyMapLinear f i x
+    exact (cohomologyMapLinear f i).map_smul (baseRingToGlobalSections R X r) x
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_apply
+    (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
+    cohomologyMapBaseLinear R X f i x = (cohomologyFunctor X i).map f x :=
+  by
+    -- The base- and global-functions-linear maps have the same underlying additive map.
+    change cohomologyMapLinear f i x = _
+    exact cohomologyMapLinear_apply f i x
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_id
+    (M : X.Modules) (i : ℕ) :
+    cohomologyMapBaseLinear R X (𝟙 M) i = LinearMap.id := by
+  apply LinearMap.ext
+  exact (cohomologyFunctor X i).map_id_apply M
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_comp
+    {P : X.Modules} (f : M ⟶ N) (g : N ⟶ P) (i : ℕ) :
+    cohomologyMapBaseLinear R X (f ≫ g) i =
+      (cohomologyMapBaseLinear R X g i).comp (cohomologyMapBaseLinear R X f i) := by
+  apply LinearMap.ext
+  exact (cohomologyFunctor X i).map_comp_apply f g
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_zero
+    (M N : X.Modules) (i : ℕ) :
+    cohomologyMapBaseLinear R X (0 : M ⟶ N) i = 0 := by
+  apply LinearMap.ext
+  intro x
+  simp only [cohomologyMapBaseLinear_apply, LinearMap.zero_apply]
+  rw [Functor.map_zero]
+  rfl
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_add
+    (f g : M ⟶ N) (i : ℕ) :
+    cohomologyMapBaseLinear R X (f + g) i =
+      cohomologyMapBaseLinear R X f i + cohomologyMapBaseLinear R X g i := by
+  apply LinearMap.ext
+  intro x
+  simp only [cohomologyMapBaseLinear_apply, LinearMap.add_apply]
+  rw [Functor.map_add]
   rfl
 
 /-- For a scheme over a commutative ring, the canonical identification of zeroth cohomology with
