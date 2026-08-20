@@ -60,7 +60,8 @@ good primes; this is the engine behind both
   `TauCeti.UnitaryIdealWeight.toIdealArithmeticFunction` for its passage to the general carrier;
 * `TauCeti.MultiplicativeIdealWeight.map` and `TauCeti.UnitaryIdealWeight.map`, with their
   equivalences `mapEquiv`: functoriality under an isomorphism `K ≃+* L` of the ambient fields,
-  together with the identity and composition laws and the compatibilities
+  together with the identity and composition laws, the preservation of the pointwise product
+  (`map_one` and `map_mul` on both carriers) and the compatibilities
   `TauCeti.MultiplicativeIdealWeight.badPrimes_map` and
   `TauCeti.MultiplicativeIdealWeight.toIdealArithmeticFunction_map`.
 
@@ -518,6 +519,20 @@ theorem mapEquiv_apply (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) :
 theorem mapEquiv_symm_apply (e : K ≃+* L) (χ : MultiplicativeIdealWeight L) :
     (mapEquiv e).symm χ = map e.symm χ := (rfl)
 
+/-! Transport preserves the pointwise `CommMonoid` structure. -/
+
+@[simp]
+theorem map_one (e : K ≃+* L) : map e (1 : MultiplicativeIdealWeight K) = 1 :=
+  toIdealArithmeticFunction_injective <| by
+    rw [toIdealArithmeticFunction_map, toIdealArithmeticFunction_one,
+      IdealArithmeticFunction.map_one, toIdealArithmeticFunction_one]
+
+@[simp]
+theorem map_mul (e : K ≃+* L) (χ ψ : MultiplicativeIdealWeight K) :
+    map e (χ * ψ) = map e χ * map e ψ := by
+  ext I
+  rw [map_apply, mul_apply, mul_apply, map_apply, map_apply]
+
 end Transport
 
 end MultiplicativeIdealWeight
@@ -678,6 +693,18 @@ theorem mapEquiv_apply (e : K ≃+* L) (χ : UnitaryIdealWeight K) :
 @[simp]
 theorem mapEquiv_symm_apply (e : K ≃+* L) (χ : UnitaryIdealWeight L) :
     (mapEquiv e).symm χ = map e.symm χ := (rfl)
+
+/-! Transport preserves the pointwise `CommMonoid` structure of the unitary carrier too. -/
+
+@[simp]
+theorem map_one (e : K ≃+* L) : map e (1 : UnitaryIdealWeight K) = 1 :=
+  Subtype.ext (by rw [val_map, val_one, MultiplicativeIdealWeight.map_one, val_one])
+
+@[simp]
+theorem map_mul (e : K ≃+* L) (χ ψ : UnitaryIdealWeight K) :
+    map e (χ * ψ) = map e χ * map e ψ :=
+  Subtype.ext (by
+    rw [val_map, val_mul, val_mul, val_map, val_map, MultiplicativeIdealWeight.map_mul])
 
 end Transport
 

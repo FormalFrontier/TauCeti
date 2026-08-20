@@ -34,9 +34,12 @@ that is `TauCeti.IdealArithmeticFunction.zeroExtend`, which extends by the value
   `TauCeti.IdealArithmeticFunction.zeroExtend_ne_const_one`: the everywhere-one function on all
   ideals is not a zero extension;
 * `TauCeti.IdealArithmeticFunction.map` and `TauCeti.IdealArithmeticFunction.mapEquiv`:
-  functoriality under an isomorphism `K ≃+* L` of the ambient fields, with
-  `TauCeti.IdealArithmeticFunction.map_id`, `TauCeti.IdealArithmeticFunction.map_map` and the
-  compatibility `TauCeti.IdealArithmeticFunction.zeroExtend_map`.
+  functoriality under an isomorphism `K ≃+* L` of the ambient fields, evaluated by
+  `TauCeti.IdealArithmeticFunction.map_apply`, with
+  `TauCeti.IdealArithmeticFunction.map_id`, `TauCeti.IdealArithmeticFunction.map_map`, the
+  compatibility `TauCeti.IdealArithmeticFunction.zeroExtend_map` and the preservation of the
+  pointwise structure (`TauCeti.IdealArithmeticFunction.map_zero`, `map_one`, `map_add`,
+  `map_mul`, `map_neg`, `map_sub` and `map_smul`).
 
 ## Implementation notes
 
@@ -196,12 +199,24 @@ private theorem comap_mapRingEquiv_trans (e : K ≃+* L) (e' : L ≃+* M) (I : I
   ext x
   rw [Ideal.mem_comap, Ideal.mem_comap, Ideal.mem_comap, mapRingEquiv_trans_apply]
 
+private theorem comap_mapRingEquiv_eq_bot_iff (e : K ≃+* L) {I : Ideal (𝓞 L)} :
+    Ideal.comap (RingOfIntegers.mapRingEquiv e) I = ⊥ ↔ I = ⊥ := by
+  rw [← Ideal.map_symm]
+  exact Ideal.map_eq_bot_iff_of_injective (RingOfIntegers.mapRingEquiv e).symm.injective
+
 /-- **Transport along an isomorphism of fields.** An isomorphism `e : K ≃+* L` carries an ideal
 arithmetic function for `K` to one for `L`: the value at a nonzero ideal of `𝓞 L` is the value
 of `f` at its preimage in `𝓞 K` under `NumberField.RingOfIntegers.mapRingEquiv e`. -/
 noncomputable def map (e : K ≃+* L) (f : IdealArithmeticFunction K) :
     IdealArithmeticFunction L := fun J ↦
   f.zeroExtend (Ideal.comap (RingOfIntegers.mapRingEquiv e) (J : Ideal (𝓞 L)))
+
+/-- Defining equation of `TauCeti.IdealArithmeticFunction.map`: the value at a nonzero ideal
+of `𝓞 L` is the zero extension of `f` at its preimage in `𝓞 K`. -/
+@[simp]
+theorem map_apply (e : K ≃+* L) (f : IdealArithmeticFunction K) (J : (Ideal (𝓞 L))⁰) :
+    map e f J = f.zeroExtend (Ideal.comap (RingOfIntegers.mapRingEquiv e) (J : Ideal (𝓞 L))) :=
+  (rfl)
 
 /-- **Transport is compatible with extension by zero**: both extensions send an ideal of `𝓞 L`
 to the value of `f` at its preimage in `𝓞 K`, the zero ideal included. -/
@@ -243,6 +258,49 @@ theorem mapEquiv_apply (e : K ≃+* L) (f : IdealArithmeticFunction K) :
 @[simp]
 theorem mapEquiv_symm_apply (e : K ≃+* L) (f : IdealArithmeticFunction L) :
     (mapEquiv e).symm f = map e.symm f := (rfl)
+
+/-! Transport preserves the pointwise structure inherited from `Pi`. -/
+
+@[simp]
+theorem map_zero (e : K ≃+* L) : map e (0 : IdealArithmeticFunction K) = 0 := by
+  ext J
+  simp
+
+@[simp]
+theorem map_one (e : K ≃+* L) : map e (1 : IdealArithmeticFunction K) = 1 := by
+  ext J
+  have hJ : Ideal.comap (RingOfIntegers.mapRingEquiv e) (J : Ideal (𝓞 L)) ≠ ⊥ := fun h ↦
+    mem_nonZeroDivisors_iff_ne_zero.mp J.2 ((comap_mapRingEquiv_eq_bot_iff e).mp h)
+  simp [hJ]
+
+@[simp]
+theorem map_add (e : K ≃+* L) (f g : IdealArithmeticFunction K) :
+    map e (f + g) = map e f + map e g := by
+  ext J
+  simp
+
+@[simp]
+theorem map_mul (e : K ≃+* L) (f g : IdealArithmeticFunction K) :
+    map e (f * g) = map e f * map e g := by
+  ext J
+  simp
+
+@[simp]
+theorem map_neg (e : K ≃+* L) (f : IdealArithmeticFunction K) : map e (-f) = -map e f := by
+  ext J
+  simp
+
+@[simp]
+theorem map_sub (e : K ≃+* L) (f g : IdealArithmeticFunction K) :
+    map e (f - g) = map e f - map e g := by
+  ext J
+  simp
+
+@[simp]
+theorem map_smul (e : K ≃+* L) (c : ℂ) (f : IdealArithmeticFunction K) :
+    map e (c • f) = c • map e f := by
+  ext J
+  simp
 
 end Transport
 
