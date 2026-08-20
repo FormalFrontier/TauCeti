@@ -27,6 +27,8 @@ group-scheme base change is the pullback functor on the over category, lifted to
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §18.a.
+* Mathlib's `Over.mapPullbackAdj` and the cartesian-monoidal structure on `Over.pullback` provide
+  the point identification and its compatibility with multiplication.
 
 The base-change argument follows
 `TauCeti.AlgebraicGeometry.AbelianVariety.IsIsogeny.baseChange`.
@@ -59,6 +61,29 @@ theorem IsIsogeny.baseChange
     MorphismProperty.overPullbackMap _ _ hf.flat,
     MorphismProperty.overPullbackMap _ _ hf.surjective⟩
 
+/-- The underlying map of the inverse pullback-adjunction equivalence is postcomposition with the
+first pullback projection. -/
+private theorem mapPullbackAdj_homEquiv_symm_left
+    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k))
+    (G : Grp (Over (Spec (CommRingCat.of k))))
+    (T : Over (Spec (CommRingCat.of L)))
+    (p : T ⟶ ((Over.pullback s).mapGrp.obj G).X) :
+    Over.Hom.left (((Over.mapPullbackAdj s).homEquiv T G.X).symm p) =
+      Over.Hom.left p ≫ Limits.pullback.fst G.X.hom s := by
+  -- `mapPullbackAdj` has no projection lemma for its hom-equivalence; this is exactly the
+  -- computation rule in its public definition.
+  rfl
+
+/-- The multiplication of a group object transported by `Over.pullback` is the lax-monoidal
+comparison map followed by the pullback of the original multiplication. -/
+private theorem pullbackMapGrp_mul
+    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k))
+    (G : Grp (Over (Spec (CommRingCat.of k)))) :
+    μ[((Over.pullback s).mapGrp.obj G).X] =
+      Functor.LaxMonoidal.μ (Over.pullback s) G.X G.X ≫
+        (Over.pullback s).map μ[G.X] :=
+  Functor.obj.μ_def (F := Over.pullback s) G.X
+
 /-- The adjunction between postcomposition and pullback identifies points of a base-changed group
 scheme with points of the original group scheme over the same test scheme viewed over the old
 base. This identification is multiplicative. -/
@@ -79,28 +104,12 @@ private noncomputable def baseChangePointMulEquiv
         pLeft ≫ Limits.pullback.snd G.X.hom s =
           qLeft ≫ Limits.pullback.snd G.X.hom s :=
       p.w.trans q.w.symm
-    have hleft (r : T ⟶ ((Over.pullback s).mapGrp.obj G).X) :
-        Over.Hom.left (((Over.mapPullbackAdj s).homEquiv T G.X).symm r) =
-          Over.Hom.left r ≫ Limits.pullback.fst G.X.hom s :=
-      rfl
-    have hmulPoint :
-        Over.Hom.left (p * q) =
-          (Limits.pullback.lift pLeft qLeft hpq ≫
-              Over.Hom.left (Functor.LaxMonoidal.μ (Over.pullback s) G.X G.X)) ≫
-            Over.Hom.left ((Over.pullback s).map μ[G.X]) := (rfl)
     ext
-    rw [hleft (p * q), hmulPoint]
-    simp only [Hom.mul_def, Over.comp_left, Over.lift_left, hleft]
-    have hfst :
-        Limits.pullback.fst ((Over.pullback s).obj G.X).hom
-            ((Over.pullback s).obj G.X).hom =
-          Limits.pullback.fst (Limits.pullback.snd G.X.hom s)
-            (Limits.pullback.snd G.X.hom s) := (rfl)
-    have hsnd :
-        Limits.pullback.snd ((Over.pullback s).obj G.X).hom
-            ((Over.pullback s).obj G.X).hom =
-          Limits.pullback.snd (Limits.pullback.snd G.X.hom s)
-            (Limits.pullback.snd G.X.hom s) := (rfl)
+    rw [mapPullbackAdj_homEquiv_symm_left]
+    simp only [Hom.mul_def, Over.comp_left, Over.lift_left,
+      mapPullbackAdj_homEquiv_symm_left]
+    change T ⟶ (Over.pullback s).obj G.X at p q
+    rw [congrArg Over.Hom.left (pullbackMapGrp_mul s G), Over.comp_left]
     have hmap :
         Over.Hom.left ((Over.pullback s).map μ[G.X]) ≫
             (Limits.pullback.fst G.X.hom s :
@@ -131,11 +140,13 @@ private noncomputable def baseChangePointMulEquiv
             simpa only [Category.assoc] using congrArg (fun z ↦ z ≫ s) hpq) := by
       apply Limits.pullback.hom_ext
       · rw [Category.assoc, Category.assoc,
-          Over.μ_pullback_left_fst_fst G.X G.X, hfst]
-        simp only [Limits.pullback.lift_fst_assoc, Limits.pullback.lift_fst]
+          Over.μ_pullback_left_fst_fst G.X G.X]
+        simp only [Over.pullback_obj_hom, Limits.pullback.lift_fst_assoc,
+          Limits.pullback.lift_fst]
       · rw [Category.assoc, Category.assoc,
-          Over.μ_pullback_left_fst_snd G.X G.X, hsnd]
-        simp only [Limits.pullback.lift_snd_assoc, Limits.pullback.lift_snd]
+          Over.μ_pullback_left_fst_snd G.X G.X]
+        simp only [Over.pullback_obj_hom, Limits.pullback.lift_snd_assoc,
+          Limits.pullback.lift_snd]
     exact (hmap_assoc.trans
       (congrArg (fun z ↦ z ≫ Over.Hom.left μ[G.X]) hpair))
 
