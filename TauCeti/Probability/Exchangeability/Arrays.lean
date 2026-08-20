@@ -118,11 +118,18 @@ theorem pairReindex_apply (σ τ : Equiv.Perm ℕ) (x : ℕ × ℕ → α) (p : 
     pairReindex σ τ x p = x (σ p.1, τ p.2) :=
   (rfl)
 
-/-- Reindexing the two axes composes: a row permutation after a column permutation is the general
-two-axis reindexing. -/
-theorem pairReindex_comp (σ τ : Equiv.Perm ℕ) :
-    pairReindex (α := α) σ 1 ∘ pairReindex 1 τ = pairReindex σ τ :=
+/-- Reindexing both axes twice composes the corresponding permutations on each axis. -/
+@[simp]
+theorem pairReindex_comp (σ₁ τ₁ σ₂ τ₂ : Equiv.Perm ℕ) :
+    pairReindex (α := α) σ₁ τ₁ ∘ pairReindex σ₂ τ₂ =
+      pairReindex (σ₂ * σ₁) (τ₂ * τ₁) :=
   (rfl)
+
+/-- Reindexing both axes by the identity permutation leaves an array unchanged. -/
+@[simp]
+theorem pairReindex_one_one : pairReindex (α := α) 1 1 = id := by
+  funext x p
+  rfl
 
 /-! ## Rows, columns and the diagonal -/
 
@@ -263,6 +270,7 @@ theorem separatelyExchangeable_iff_axes {μ : Measure Ω} {X : ℕ × ℕ → Ω
       _ = ((μ.map fun ω p => X p ω).map (pairReindex 1 τ)).map (pairReindex σ 1) := by
           rw [Measure.map_map (measurable_pairReindex σ 1) (measurable_pairReindex 1 τ),
             pairReindex_comp]
+          simp only [one_mul, mul_one]
       _ = (μ.map fun ω p => X p ω).map (pairReindex σ 1) := by rw [hcol']
       _ = μ.map fun ω p => X p ω := hrow'
 
