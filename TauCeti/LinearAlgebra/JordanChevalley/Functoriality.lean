@@ -192,13 +192,8 @@ theorem comp_unipotentPart_eq_of_comp_eq
       (unipotentPart h : Module.End K W).comp f := by
   have hs := comp_semisimplePart_eq_of_comp_eq f g h hfg
   have hs_inv := comp_inv_eq_of_comp_eq f (semisimplePart g) (semisimplePart h) hs
-  have hug : unipotentPart g = (semisimplePart g)⁻¹ * g := by
-    apply mul_left_cancel (a := semisimplePart g)
-    simp
-  have huh : unipotentPart h = (semisimplePart h)⁻¹ * h := by
-    apply mul_left_cancel (a := semisimplePart h)
-    simp
-  rw [hug, huh]
+  rw [unipotentPart_eq_semisimplePart_inv_mul,
+    unipotentPart_eq_semisimplePart_inv_mul]
   apply LinearMap.ext
   intro x
   -- Expose multiplication of automorphisms as composition of their underlying endomorphisms.
