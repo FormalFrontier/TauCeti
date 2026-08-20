@@ -269,7 +269,6 @@ theorem rankOne_quadratic_generator (m : ℤ) [NeZero m] :
   norm_num
 
 /-- The discriminant group of `⟨2m⟩` has order `|2m|`. -/
-@[simp]
 theorem natCard_rankOne_discriminantGroup (m : ℤ) [NeZero m] :
     Nat.card (rankOne m).DiscriminantGroup = (2 * m).natAbs := by
   rw [(rankOne m).natCard_discriminantGroup, rankOne_discriminant]
