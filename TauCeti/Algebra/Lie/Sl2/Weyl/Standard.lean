@@ -418,7 +418,7 @@ theorem weylUnit_mem_integralLattice {v : Sl2Std ℚ n} (hv : v ∈ integralLatt
   ring
 
 /-- **The Weyl element as an endomorphism of the coordinate lattice.** -/
-@[expose] noncomputable def weylLatticeEnd : integralLattice n →ₗ[ℤ] integralLattice n :=
+noncomputable def weylLatticeEnd : integralLattice n →ₗ[ℤ] integralLattice n :=
   ((weylUnit n : Module.End ℚ (Sl2Std ℚ n)).restrictScalars ℤ).restrict
     fun _ hv => weylUnit_mem_integralLattice n hv
 
@@ -426,7 +426,7 @@ theorem weylUnit_mem_integralLattice {v : Sl2Std ℚ n} (hv : v ∈ integralLatt
 theorem coe_weylLatticeEnd_apply (v : integralLattice n) :
     (weylLatticeEnd n v : Sl2Std ℚ n) =
       (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (v : Sl2Std ℚ n) :=
-  rfl
+  (rfl)
 
 attribute [irreducible] weylLatticeEnd
 
@@ -446,7 +446,7 @@ theorem weylLatticeEnd_comp_weylLatticeEnd :
 
 /-- **The Weyl element is an automorphism of the coordinate lattice**, its own inverse up to the
 sign `(-1) ^ n`. -/
-@[expose] noncomputable def weylLatticeEquiv : integralLattice n ≃ₗ[ℤ] integralLattice n :=
+noncomputable def weylLatticeEquiv : integralLattice n ≃ₗ[ℤ] integralLattice n :=
   LinearEquiv.ofLinearMap (weylLatticeEnd n) (((-1 : ℤ) ^ n) • weylLatticeEnd n)
     (by
       rw [LinearMap.comp_smul, weylLatticeEnd_comp_weylLatticeEnd, smul_smul, ← pow_add, ← two_mul,
@@ -457,8 +457,8 @@ sign `(-1) ^ n`. -/
 
 /-- The linear map underlying the lattice automorphism is the restricted Weyl element. -/
 @[simp]
-theorem weylLatticeEquiv_toLinearMap : (weylLatticeEquiv n).toLinearMap = weylLatticeEnd n := by
-  apply LinearEquiv.toLinearMap_ofLinearMap
+theorem weylLatticeEquiv_toLinearMap : (weylLatticeEquiv n).toLinearMap = weylLatticeEnd n :=
+  (rfl)
 
 @[simp]
 theorem coe_weylLatticeEquiv_apply (v : integralLattice n) :
