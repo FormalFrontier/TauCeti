@@ -69,9 +69,8 @@ def upperTriangularGroup : Subgroup (GL m R) where
     simpa only [Set.mem_ofPred_eq, Units.val_mul] using hg.mul hh
   inv_mem' := by
     intro g hg
-    change ((g⁻¹ : GL m R) : Matrix m m R).IsUpperTriangular
-    rw [Matrix.coe_units_inv]
-    exact Matrix.blockTriangular_inv_of_blockTriangular hg
+    simpa only [Set.mem_ofPred_eq, Matrix.coe_units_inv] using
+      Matrix.blockTriangular_inv_of_blockTriangular hg
 
 namespace UpperTriangularGroup
 
@@ -89,49 +88,30 @@ theorem isUpperTriangular (g : upperTriangularGroup m R) :
     ((g : GL m R) : Matrix m m R).IsUpperTriangular :=
   g.2
 
-/-- The diagonal entry of an upper-triangular invertible matrix, packaged as a unit. -/
-def diagonalUnit (g : upperTriangularGroup m R) (i : m) : Rˣ where
-  val := ((g : GL m R) : Matrix m m R) i i
-  inv := g.1.inv i i
-  val_inv := by
-    have h := congrFun (congrFun (Units.val_inv g.1) i) i
-    have hginv := isUpperTriangular (g⁻¹)
-    change g.1.inv.IsUpperTriangular at hginv
-    rw [Matrix.mul_apply_diag_of_isUpperTriangular (isUpperTriangular g)
-      hginv i, Matrix.one_apply_eq] at h
-    exact h
-  inv_val := by
-    have h := congrFun (congrFun (Units.inv_val g.1) i) i
-    have hginv := isUpperTriangular (g⁻¹)
-    change g.1.inv.IsUpperTriangular at hginv
-    rw [Matrix.mul_apply_diag_of_isUpperTriangular hginv
-      (isUpperTriangular g) i, Matrix.one_apply_eq] at h
-    exact h
+/-- The diagonal projection from the upper-triangular group to the coordinatewise unit group.
 
-/-- The diagonal projection from the upper-triangular group to the coordinatewise unit group. -/
-def diag : upperTriangularGroup m R →* (m → Rˣ) where
-  toFun g i := diagonalUnit g i
-  map_one' := by
-    funext i
-    apply Units.ext
-    simp [diagonalUnit]
-  map_mul' g h := by
-    funext i
-    apply Units.ext
-    exact Matrix.mul_apply_diag_of_isUpperTriangular
-      (isUpperTriangular g) (isUpperTriangular h) i
+Reading off the diagonal is multiplicative on upper-triangular matrices, so it is a homomorphism
+to `m → R`; `MonoidHom.toHomUnits` lifts it to the units of that product ring because the source
+is a group, and `MulEquiv.piUnits` distributes those units over the product. -/
+def diag : upperTriangularGroup m R →* (m → Rˣ) :=
+  MulEquiv.piUnits.toMonoidHom.comp <| MonoidHom.toHomUnits
+    { toFun := fun g i ↦ ((g : GL m R) : Matrix m m R) i i
+      map_one' := by
+        funext i
+        simp
+      map_mul' := fun g h ↦ funext fun i ↦
+        Matrix.mul_apply_diag_of_isUpperTriangular (isUpperTriangular g) (isUpperTriangular h) i }
 
 /-- The value in `R` of the `i`-th coordinate of `diag g` is the `i`-th diagonal entry of `g`. -/
 @[simp]
 theorem diag_apply_val (g : upperTriangularGroup m R) (i : m) :
-    ((diag g i : Rˣ) : R) = ((g : GL m R) : Matrix m m R) i i :=
-  by simp [diag, diagonalUnit]
+    ((diag g i : Rˣ) : R) = ((g : GL m R) : Matrix m m R) i i := by
+  simp [diag]
 
 /-- The diagonal matrices give a homomorphic section of the diagonal projection. -/
 def diagonalHom : (m → Rˣ) →* upperTriangularGroup m R :=
   ((Units.map (Matrix.diagonalRingHom m R).toMonoidHom).comp
     (MulEquiv.piUnits).symm.toMonoidHom).codRestrict (upperTriangularGroup m R) fun t ↦ by
-      change (Matrix.diagonal fun i ↦ (t i : R)).IsUpperTriangular
       intro i j hji
       exact Matrix.diagonal_apply_ne _ (ne_of_gt hji)
 
