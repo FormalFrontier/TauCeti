@@ -6,9 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Compact.Averaging
-public import TauCeti.RepresentationTheory.Continuous.Character
 public import TauCeti.RepresentationTheory.Continuous.SquareCharacter
-public import TauCeti.RepresentationTheory.Tensor.Square
 import Mathlib.MeasureTheory.Group.Integral
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
@@ -33,8 +31,9 @@ so integrating that identity gives
 
 and the companion identity `χ(g)² = χ_{Sym²}(g) + χ_{Λ²}(g)` gives the two integrals separately in
 terms of `ν₂(π)` and `∫_G χ_π²`. Those two integrals are the (complexified) dimensions of the
-invariants of the two squares once the averaging projection of Layer 1 is available; here only the
-character-level identities are proved, which is what makes them independent of that development.
+invariants of the two squares once the projection onto invariants built from the Layer 0 averaging
+operator is available; here only the character-level identities are proved, which is what makes them
+independent of that development.
 
 The two square characters are not, a priori, characters of *continuous* representations: the
 symmetric and exterior square of a continuous representation carry a continuous action, but that
@@ -56,6 +55,8 @@ reality trichotomy, which needs the invariant-form dictionary and is not proved 
 
 ## Main statements
 
+* `ContRepresentation.frobeniusSchurIndicator_eq_of_equiv`: the indicator depends only on the
+  equivalence class of the representation.
 * `ContRepresentation.frobeniusSchurIndicator_eq_sub_integral`: **the indicator is the
   difference of the two square-character integrals**, `ν₂(π) = ∫ χ_{Sym²π} - ∫ χ_{Λ²π}`.
 * `ContRepresentation.integral_character_sq`: the two square-character integrals add up to
@@ -92,8 +93,8 @@ symmetric- and exterior-power representations of
 speak of, are built over a base ring in `Type`, so a general `RCLike` field in an arbitrary universe
 would not even let the statements be formed.
 
-This is Layer 6b of the
-[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+This is Layer 6b of the compact-groups roadmap, pinned in its
+[`Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/Suggested.lean),
 the compact-group half of the Frobenius-Schur reality invariant. The mathematical development
 follows Daniel Bump, *Lie Groups*, second edition, Chapter 2, and Bröcker-tom Dieck,
 *Representations of Compact Lie Groups*, Chapter II.
@@ -138,6 +139,15 @@ noncomputable def frobeniusSchurIndicator : ℂ :=
 theorem frobeniusSchurIndicator_def :
     frobeniusSchurIndicator π hπ = ∫ g, character π hπ (g * g) ∂(haarProb G) :=
   (rfl)
+
+/-- **Equivalent representations have the same Frobenius-Schur indicator**, since they have the
+same character (`Representation.char_iso`). The two continuity witnesses are unrelated: the
+indicator reads only the underlying representation, so nothing links them. -/
+theorem frobeniusSchurIndicator_eq_of_equiv {W : Type*} [NormedAddCommGroup W] [NormedSpace ℂ W]
+    [FiniteDimensional ℂ W] (σ : ContRepresentation ℂ G W) (hσ : Continuous σ)
+    (φ : Representation.Equiv π.toRepresentation σ.toRepresentation) :
+    frobeniusSchurIndicator π hπ = frobeniusSchurIndicator σ hσ := by
+  simp only [frobeniusSchurIndicator_def, coe_character, Representation.char_iso φ]
 
 /-- The Frobenius-Schur indicator of the trivial representation is its dimension: every character
 value is `dim V`, and Haar measure is normalized. On the line this is `ν₂ = 1`. -/
