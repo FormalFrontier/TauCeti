@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Sl2.KostantRootSubgroup
+public import TauCeti.Algebra.Lie.Sl2.Kostant.RootSubgroup
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Points
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 
@@ -57,8 +57,19 @@ local notation "h" => ![slFinTwoBasis ℚ 2]
 local notation "ρ" => repEnveloping ℚ 1
 local notation "b" => integralLatticeAddSubgroupBasis 1
 
-/-- The first divided power of a root operator is the operator itself, so it exchanges the two
-integral basis vectors exactly as `TauCeti.Sl2Std.repEnveloping_root_apply_basis` says. -/
+private theorem toGL_transvection_eq_transvectionUnit {A : Type*} [CommRing A]
+    {i j : Fin 2} (hij : i ≠ j) (t : A) :
+    Matrix.SpecialLinearGroup.toGL (Matrix.SpecialLinearGroup.transvection hij t) =
+      TauCeti.transvectionUnit hij t := by
+  apply Matrix.GeneralLinearGroup.ext
+  intro r s
+  change Matrix.transvection i j t r s =
+    (TauCeti.transvectionUnit hij t : Matrix (Fin 2) (Fin 2) A) r s
+  rw [TauCeti.coe_transvectionUnit]
+
+/-- The first divided power of a root operator is the operator itself, so it maps one integral
+basis vector to the other and annihilates the remaining vector exactly as
+`TauCeti.Sl2Std.repEnveloping_root_apply_basis` says. -/
 private theorem integralDividedPower_one_apply_basis (i s : Fin 2) :
     integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
         (integralLattice 1).toAddSubgroup 1
@@ -69,6 +80,19 @@ private theorem integralDividedPower_one_apply_basis (i s : Fin 2) :
   rw [coe_integralDividedPower_apply, Associative.dividedPower_one, Module.End.smul_def,
     repEnveloping_root_apply_basis]
   split <;> simp
+
+private theorem kostantRootSubgroupMatrix_apply_rankOne {A : Type*} [CommRing A]
+    (i r s : Fin 2) (t : Multiplicative A) :
+    kostantRootSubgroupMatrix e h ρ (integralLattice 1).toAddSubgroup
+        (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root i) b
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t) r s =
+      Matrix.transvection i i.rev (Multiplicative.toAdd t) r s := by
+  rw [kostantRootSubgroupMatrix_apply, repr_kostantRootSubgroupPoints_baseChange,
+    nilpotencyClass_repEnveloping_root, Finset.sum_range_succ, Finset.sum_range_one,
+    integralDividedPower_zero, integralDividedPower_one_apply_basis]
+  simp only [Module.End.one_apply, Module.Basis.repr_self, MulEquiv.apply_symm_apply,
+    pow_zero, pow_one, Matrix.transvection, Matrix.add_apply]
+  fin_cases i <;> fin_cases r <;> fin_cases s <;> simp
 
 /-- **The rank-one Kostant root subgroups are the standard transvections.** The matrix of a
 Kostant root-subgroup element for the root `i` is the determinant-one transvection at the index
@@ -82,12 +106,8 @@ theorem kostantRootSubgroupMatrix_eq_transvectionUnit {A : Type*} [CommRing A]
   obtain rfl : j = i.rev := by fin_cases i <;> fin_cases j <;> simp_all
   apply Matrix.GeneralLinearGroup.ext
   intro r s
-  rw [TauCeti.coe_transvectionUnit, kostantRootSubgroupMatrix_apply,
-    repr_kostantRootSubgroupPoints_baseChange, nilpotencyClass_repEnveloping_root,
-    Finset.sum_range_succ, Finset.sum_range_one, integralDividedPower_zero,
-    integralDividedPower_one_apply_basis]
-  fin_cases i <;> fin_cases r <;> fin_cases s <;>
-    simp [Matrix.transvection]
+  simpa only [TauCeti.coe_transvectionUnit] using
+    kostantRootSubgroupMatrix_apply_rankOne i r s t
 
 /-- In basis coordinates a rank-one Kostant root-subgroup parameter value is the standard
 transvection of the same parameter. -/
@@ -130,8 +150,8 @@ theorem map_kostantElementarySubgroup_le_range_toGL (A : Type) [CommRing A] :
       isNilpotent_repEnveloping_root b A fun i q => ?_
   have hrev : i ≠ i.rev := by fin_cases i <;> decide
   rw [← (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm_apply_apply q,
-    kostantRootSubgroupMatrix_eq_transvectionUnit hrev, TauCeti.transvectionUnit_def]
-  exact ⟨_, rfl⟩
+    kostantRootSubgroupMatrix_eq_transvectionUnit hrev]
+  exact ⟨_, toGL_transvection_eq_transvectionUnit hrev _⟩
 
 /-- **The rank-one elementary-group identification for the Kostant construction.** Over a field,
 the matrix image of the elementary group constructed from the standard two-dimensional `sl₂`
@@ -148,7 +168,7 @@ theorem map_kostantElementarySubgroup_eq_range_toGL (F : Type) [Field F] :
   -- reverse inclusion follows from `Matrix.SL2.transvection_induction`.
   induction g using Matrix.SL2.transvection_induction with
   | htransvec i j hij t =>
-    rw [← TauCeti.transvectionUnit_def]
+    rw [toGL_transvection_eq_transvectionUnit hij]
     exact transvectionUnit_mem_map_kostantElementarySubgroup F hij t
   | hmul g g' hg hg' => simpa only [map_mul] using mul_mem hg hg'
 

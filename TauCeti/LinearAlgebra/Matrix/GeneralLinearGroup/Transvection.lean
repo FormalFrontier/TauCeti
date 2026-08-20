@@ -110,12 +110,6 @@ torus. -/
 def transvectionUnit (hij : i ≠ j) (c : A) : GL n A :=
   SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c)
 
-/-- The public unfolding equation for `TauCeti.transvectionUnit`, exposing across the module
-boundary that it is the determinant-one transvection read in `GL n A`. -/
-theorem transvectionUnit_def (hij : i ≠ j) (c : A) :
-    transvectionUnit hij c = SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c) :=
-  (rfl)
-
 /-- The matrix underlying `TauCeti.transvectionUnit` is the transvection itself. -/
 @[simp]
 theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :

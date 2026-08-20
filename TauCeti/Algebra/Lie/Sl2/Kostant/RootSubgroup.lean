@@ -19,8 +19,8 @@ coordinate lattice, so both resulting root-subgroup morphisms are closed immersi
 
 * `TauCeti.Sl2Std.integralLatticeAddSubgroupBasis`: the coordinate basis of the standard integral
   lattice, viewed as an additive subgroup.
-* `TauCeti.Sl2Std.repEnveloping_root_apply_basis`: each root operator exchanges the two
-  coordinate basis vectors in one direction and annihilates the other.
+* `TauCeti.Sl2Std.repEnveloping_root_apply_basis`: each root operator maps one coordinate basis
+  vector to the other and annihilates the remaining vector.
 * `TauCeti.Sl2Std.nilpotencyClass_repEnveloping_root` and
   `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent, of class
   exactly two.
@@ -65,9 +65,10 @@ theorem coe_integralLatticeAddSubgroupBasis_apply (n : ℕ) (i : Fin (n + 1)) :
 
 local notation "b" => integralLatticeAddSubgroupBasis 1
 
-/-- **The two root operators exchange the two integral basis vectors.** In the standard
+/-- **Each root operator maps one integral basis vector to the other.** In the standard
 two-dimensional `sl₂` representation the raising operator sends `v₁` to `v₀` and kills `v₀`, and
 the lowering operator sends `v₀` to `v₁` and kills `v₁`; both index changes are `Fin.rev`. -/
+@[simp]
 theorem repEnveloping_root_apply_basis (i s : Fin 2) :
     ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : Sl2Std ℚ 1) =
       if s = i.rev then (b i : Sl2Std ℚ 1) else 0 := by
@@ -85,6 +86,7 @@ theorem repEnveloping_root_apply_basis (i s : Fin 2) :
 
 /-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent of
 class exactly two: their square vanishes, and they are themselves nonzero. -/
+@[simp]
 theorem nilpotencyClass_repEnveloping_root (i : Fin 2) :
     nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2 := by
   refine nilpotencyClass_eq_succ_iff.mpr ⟨?_, ?_⟩

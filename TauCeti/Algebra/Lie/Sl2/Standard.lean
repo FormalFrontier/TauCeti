@@ -499,6 +499,7 @@ theorem lower_basis (i : Fin (n + 1)) (h : (i : ℕ) < n) :
 /-- The lowering operator kills the lowest weight vector `vₙ`. This is the counterpart at the
 bottom of the string of `TauCeti.Sl2Std.raise_basis_zero`, and the case `i = n` that
 `TauCeti.Sl2Std.lower_basis` leaves out. -/
+@[simp]
 theorem lower_basis_last : lower K n (basis K n (Fin.last n)) = 0 := by
   funext j
   rw [lower_apply, zero_apply]
