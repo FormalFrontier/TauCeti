@@ -5,21 +5,21 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.Riemannian.Basic
+public import TauCeti.Geometry.Manifold.Riemannian.Basic
 public import TauCeti.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
 # Riemannian metrics on open submanifolds
 
-This file restricts a smooth Riemannian metric to an open submanifold. Mathlib models the tangent
+This file restricts a `C^n` Riemannian metric to an open submanifold. Mathlib models the tangent
 space of a manifold on the model vector space itself, so the restricted metric is pointwise the
-ambient metric; the content is that this family is smooth for the inherited manifold and tangent
+ambient metric; the content is that this family is `C^n` for the inherited manifold and tangent
 bundle structures.
 
 ## Main definitions
 
 * `Bundle.RiemannianMetric.restrictOpenTangentSpace`: restriction of a fibrewise Riemannian metric.
-* `Bundle.ContMDiffRiemannianMetric.restrictOpenTangentSpace`: restriction of a smooth Riemannian
+* `Bundle.ContMDiffRiemannianMetric.restrictOpenTangentSpace`: restriction of a `C^n` Riemannian
   metric.
 * `TauCeti.Manifold.contMDiffRiemannianMetricOpen`: the ambient instance metric restricted to an
   open submanifold.
@@ -121,50 +121,19 @@ end Bundle.RiemannianMetric
 
 namespace Bundle.ContMDiffRiemannianMetric
 
-section OfBundle
-
-variable
-  {EB : Type*} [NormedAddCommGroup EB] [NormedSpace ℝ EB]
-  {HB : Type*} [TopologicalSpace HB] {IB : ModelWithCorners ℝ EB HB} {n : ℕ∞ω}
-  {B : Type*} [TopologicalSpace B] [ChartedSpace HB B]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {V : B → Type*} [TopologicalSpace (TotalSpace F V)]
-  [∀ b, TopologicalSpace (V b)] [∀ b, AddCommGroup (V b)] [∀ b, Module ℝ (V b)]
-  [∀ b, IsTopologicalAddGroup (V b)] [∀ b, ContinuousConstSMul ℝ (V b)]
-  [FiberBundle F V] [VectorBundle ℝ F V]
-
-/-- Package the metric of a `C^n` Riemannian bundle as a smooth Riemannian metric. -/
-noncomputable def ofIsContMDiffRiemannianBundle
-    [RiemannianBundle V] [IsContMDiffRiemannianBundle IB n F V] :
-    ContMDiffRiemannianMetric IB n F V where
-  inner := RiemannianBundle.g.inner
-  symm := RiemannianBundle.g.symm
-  pos := RiemannianBundle.g.pos
-  isVonNBounded := RiemannianBundle.g.isVonNBounded
-  contMDiff := by
-    obtain ⟨g, hg, hinner⟩ :=
-      IsContMDiffRiemannianBundle.exists_contMDiff (IB := IB) (n := n) (F := F) (E := V)
-    convert hg using 1
-    funext x
-    congr 1
-    ext v w
-    exact hinner x v w
-
-end OfBundle
-
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H} {n : ℕ∞ω}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
   [IsManifold I 1 M]
 
-/-- Restrict a smooth Riemannian metric on a manifold to an open submanifold. -/
+/-- Restrict a `C^n` Riemannian metric on a manifold to an open submanifold. -/
 noncomputable def restrictOpenTangentSpace
     (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M) :
     ContMDiffRiemannianMetric I n E (fun x : U ↦ TangentSpace I x) :=
   { g.toRiemannianMetric.restrictOpenTangentSpace U with
   contMDiff x := by
-    -- Pull ambient smoothness back along the inclusion and compare the inherited and ambient
+    -- Pull ambient `C^n` regularity back along the inclusion and compare the inherited and ambient
     -- tangent-bundle coordinates on a common neighbourhood of `x`.
     rw [contMDiffAt_section]
     have h := g.contMDiff.contMDiffAt.comp x
@@ -218,7 +187,7 @@ noncomputable def restrictOpenTangentSpace
   }
 
 omit [IsManifold I n M] in
-/-- Restricting a smooth Riemannian metric evaluates the ambient metric through the canonical
+/-- Restricting a `C^n` Riemannian metric evaluates the ambient metric through the canonical
 tangent-space identification. -/
 @[simp]
 theorem restrictOpenTangentSpace_inner
@@ -230,7 +199,7 @@ theorem restrictOpenTangentSpace_inner
   exact Bundle.RiemannianMetric.restrictOpenTangentSpace_inner g.toRiemannianMetric U x v w
 
 omit [IsManifold I n M] in
-/-- Forgetting smoothness after restricting a metric gives its fibrewise restriction. -/
+/-- Forgetting `C^n` regularity after restricting a metric gives its fibrewise restriction. -/
 theorem restrictOpenTangentSpace_toRiemannianMetric
     (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M) :
     (g.restrictOpenTangentSpace U).toRiemannianMetric =
@@ -238,26 +207,6 @@ theorem restrictOpenTangentSpace_toRiemannianMetric
   rfl
 
 end Bundle.ContMDiffRiemannianMetric
-
-namespace Bundle.IsContinuousRiemannianBundle
-
-variable
-  {EB : Type*} [NormedAddCommGroup EB] [NormedSpace ℝ EB]
-  {HB : Type*} [TopologicalSpace HB] {IB : ModelWithCorners ℝ EB HB}
-  {B : Type*} [TopologicalSpace B] [ChartedSpace HB B]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {V : B → Type*} [TopologicalSpace (TotalSpace F V)]
-  [∀ b, NormedAddCommGroup (V b)] [∀ b, InnerProductSpace ℝ (V b)]
-  [FiberBundle F V] [VectorBundle ℝ F V]
-
-/-- A continuous Riemannian bundle is a `C^0` Riemannian bundle. This is deliberately a theorem,
-not an instance, because Mathlib avoids the corresponding inference path. -/
-theorem toIsContMDiffZero [IsContinuousRiemannianBundle F V] :
-    IsContMDiffRiemannianBundle IB 0 F V := by
-  obtain ⟨g, hg, hinner⟩ := IsContinuousRiemannianBundle.exists_continuous (F := F) (E := V)
-  exact ⟨g, contMDiff_zero_iff.mpr hg, hinner⟩
-
-end Bundle.IsContinuousRiemannianBundle
 
 namespace TauCeti.Manifold
 
@@ -267,7 +216,7 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
   [IsManifold I 1 M]
 
-/-- The smooth Riemannian metric on an open submanifold obtained by restricting the ambient
+/-- The `C^n` Riemannian metric on an open submanifold obtained by restricting the ambient
 metric. -/
 noncomputable def contMDiffRiemannianMetricOpen
     [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
@@ -275,51 +224,6 @@ noncomputable def contMDiffRiemannianMetricOpen
     ContMDiffRiemannianMetric I n E (fun x : U ↦ TangentSpace I x) :=
   (Bundle.ContMDiffRiemannianMetric.ofIsContMDiffRiemannianBundle
     (IB := I) (n := n) (F := E) (V := fun x : M ↦ TangentSpace I x)).restrictOpenTangentSpace U
-
-end TauCeti.Manifold
-
-namespace TauCeti
-
-variable
-  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H} {n : ℕ∞ω}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
-  [IsManifold I 1 M]
-
-/-- An open submanifold inherits the ambient Riemannian bundle (fibrewise inner product). -/
-@[expose, instance_reducible]
-noncomputable def Manifold.instRiemannianBundleOpen
-    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
-    (U : Opens M) :
-  RiemannianBundle (fun x : U ↦ TangentSpace I x) :=
-  ⟨RiemannianBundle.g.restrictOpenTangentSpace U⟩
-
-scoped[TauCeti] attribute [instance] Manifold.instRiemannianBundleOpen
-
-/-- The restricted Riemannian bundle is as continuous as the ambient smooth bundle. -/
-theorem Manifold.instIsContinuousRiemannianBundleOpen
-    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
-    [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
-    IsContinuousRiemannianBundle E (fun x : U ↦ TangentSpace I x) := by
-  let _ : IsContMDiffRiemannianBundle I 0 E (fun x : M ↦ TangentSpace I x) :=
-    IsContinuousRiemannianBundle.toIsContMDiffZero
-  let g := Manifold.contMDiffRiemannianMetricOpen (I := I) (n := 0) U
-  exact ⟨g.inner, g.contMDiff.continuous, fun _ _ _ ↦ rfl⟩
-
-scoped[TauCeti] attribute [instance] Manifold.instIsContinuousRiemannianBundleOpen
-
-omit [IsManifold I n M] in
-/-- The restricted Riemannian bundle is as smooth as the ambient one. -/
-theorem Manifold.instIsContMDiffRiemannianBundleOpen
-    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
-    [IsContMDiffRiemannianBundle I n E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
-    IsContMDiffRiemannianBundle I n E (fun x : U ↦ TangentSpace I x) := by
-  let g := Manifold.contMDiffRiemannianMetricOpen (I := I) (n := n) U
-  exact ⟨g.inner, g.contMDiff, fun _ _ _ ↦ rfl⟩
-
-scoped[TauCeti] attribute [instance] Manifold.instIsContMDiffRiemannianBundleOpen
-
-namespace Manifold
 
 omit [IsManifold I n M] in
 /-- The restricted Riemannian metric is the ambient metric under the canonical identification of
@@ -333,9 +237,64 @@ theorem contMDiffRiemannianMetricOpen_inner
       RiemannianBundle.g.inner (x : M)
         (tangentSpaceOpenEquiv (I := I) x v)
         (tangentSpaceOpenEquiv (I := I) x w) := by
-  exact Bundle.ContMDiffRiemannianMetric.restrictOpenTangentSpace_inner
+  simpa only [contMDiffRiemannianMetricOpen,
+    Bundle.ContMDiffRiemannianMetric.ofIsContMDiffRiemannianBundle_inner] using
+    Bundle.ContMDiffRiemannianMetric.restrictOpenTangentSpace_inner
     (Bundle.ContMDiffRiemannianMetric.ofIsContMDiffRiemannianBundle
       (IB := I) (n := n) (F := E) (V := fun x : M ↦ TangentSpace I x)) U x v w
+
+end TauCeti.Manifold
+
+namespace TauCeti
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H} {n : ℕ∞ω}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
+  [IsManifold I 1 M]
+
+/-- An open submanifold inherits the ambient Riemannian bundle (fibrewise inner product). -/
+@[instance_reducible]
+noncomputable def Manifold.instRiemannianBundleOpen
+    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+    (U : Opens M) :
+  RiemannianBundle (fun x : U ↦ TangentSpace I x) :=
+  ⟨RiemannianBundle.g.restrictOpenTangentSpace U⟩
+
+scoped[TauCeti] attribute [instance] Manifold.instRiemannianBundleOpen
+
+/-- The restricted Riemannian bundle is continuous whenever the ambient bundle is continuous. -/
+theorem Manifold.instIsContinuousRiemannianBundleOpen
+    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+    [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
+    IsContinuousRiemannianBundle E (fun x : U ↦ TangentSpace I x) := by
+  let _ : IsContMDiffRiemannianBundle I 0 E (fun x : M ↦ TangentSpace I x) :=
+    IsContinuousRiemannianBundle.toIsContMDiffZero
+  let g := Manifold.contMDiffRiemannianMetricOpen (I := I) (n := 0) U
+  exact ⟨g.inner, g.contMDiff.continuous, by
+    intro x v w
+    exact (Bundle.RiemannianMetric.restrictOpenTangentSpace_inner
+      RiemannianBundle.g U x v w).trans
+        (Manifold.contMDiffRiemannianMetricOpen_inner (I := I) (n := 0) U x v w).symm⟩
+
+scoped[TauCeti] attribute [instance] Manifold.instIsContinuousRiemannianBundleOpen
+
+omit [IsManifold I n M] in
+/-- The restricted Riemannian bundle is as `C^n` as the ambient one. -/
+theorem Manifold.instIsContMDiffRiemannianBundleOpen
+    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+    [IsContMDiffRiemannianBundle I n E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
+    IsContMDiffRiemannianBundle I n E (fun x : U ↦ TangentSpace I x) := by
+  let g := Manifold.contMDiffRiemannianMetricOpen (I := I) (n := n) U
+  exact ⟨g.inner, g.contMDiff, by
+    intro x v w
+    exact (Bundle.RiemannianMetric.restrictOpenTangentSpace_inner
+      RiemannianBundle.g U x v w).trans
+        (Manifold.contMDiffRiemannianMetricOpen_inner (I := I) (n := n) U x v w).symm⟩
+
+scoped[TauCeti] attribute [instance] Manifold.instIsContMDiffRiemannianBundleOpen
+
+namespace Manifold
 
 omit [IsManifold I n M] [IsManifold I 1 M] in
 /-- The metric installed on an open submanifold is the fibrewise restriction of the ambient
