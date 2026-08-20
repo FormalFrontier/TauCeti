@@ -56,7 +56,12 @@ good primes; this is the engine behind both
   `TauCeti.UnitaryIdealWeight.norm_eq_one` on all good ideals,
   `TauCeti.UnitaryIdealWeight.ofPowEqOne` for finite-order weights, and the operations
   `TauCeti.UnitaryIdealWeight.conj`, `TauCeti.UnitaryIdealWeight.restrict` and
-  `TauCeti.UnitaryIdealWeight.normTwist` (the last for the imaginary norm twists only).
+  `TauCeti.UnitaryIdealWeight.normTwist` (the last for the imaginary norm twists only);
+* `TauCeti.MultiplicativeIdealWeight.map` and `TauCeti.UnitaryIdealWeight.map`, with their
+  equivalences `mapEquiv`: functoriality under an isomorphism `K ≃+* L` of the ambient fields,
+  together with the identity and composition laws and the compatibilities
+  `TauCeti.MultiplicativeIdealWeight.badPrimes_map` and
+  `TauCeti.MultiplicativeIdealWeight.toIdealArithmeticFunction_map`.
 
 ## Rejection tests
 
@@ -222,19 +227,17 @@ theorem isGood_ofBadPrimes_iff (hS : S.Finite) {I : Ideal (𝓞 K)} :
     (ofBadPrimes S hS).IsGood I ↔ Ideal.IsPrimeTo I S := by
   simp only [IsGood, badPrimes_ofBadPrimes]
 
-private theorem monoidWithZeroHom_mul_apply {M N : Type*} [MulZeroOneClass M]
-    [CommMonoidWithZero N] (f g : M →*₀ N) (x : M) : (f * g) x = f x * g x :=
-  MonoidHom.mul_apply f.toMonoidHom g.toMonoidHom x
-
 /-- The pointwise product of two multiplicative ideal weights. -/
 noncomputable instance : Mul (MultiplicativeIdealWeight K) where
   mul χ ψ :=
     { toMonoidWithZeroHom := χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom
       finite_setOf_apply_eq_zero := by
         refine (χ.finite_badPrimes.union ψ.finite_badPrimes).subset fun 𝔭 h𝔭 ↦ ?_
-        have hzero :
-            (χ.toMonoidWithZeroHom * ψ.toMonoidWithZeroHom) 𝔭.asIdeal = 0 := h𝔭
-        rw [monoidWithZeroHom_mul_apply] at hzero
+        -- the product of two `→*₀` is built from the product of the underlying `→*`, so the
+        -- value of the product is computed by `MonoidHom.mul_apply`
+        have hzero : χ 𝔭.asIdeal * ψ 𝔭.asIdeal = 0 :=
+          (MonoidHom.mul_apply χ.toMonoidWithZeroHom.toMonoidHom
+            ψ.toMonoidWithZeroHom.toMonoidHom 𝔭.asIdeal).symm.trans h𝔭
         exact mul_eq_zero.mp hzero }
 
 @[simp]
@@ -434,6 +437,88 @@ theorem coe_ne_const_one (χ : MultiplicativeIdealWeight K) :
   intro h
   simpa using congrFun h ⊥
 
+/-!
+### Functoriality under an isomorphism of fields
+-/
+
+section Transport
+
+variable {L M : Type*} [Field L] [NumberField L] [Field M] [NumberField M]
+
+omit [NumberField K] [NumberField L] in
+private theorem asIdeal_equivOfRingEquiv_symm (e : K ≃+* L) (𝔮 : HeightOneSpectrum (𝓞 L)) :
+    ((HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e)).symm 𝔮).asIdeal =
+      Ideal.comap (RingOfIntegers.mapRingEquiv e) 𝔮.asIdeal := rfl
+
+/-- **Transport along an isomorphism of fields.** An isomorphism `e : K ≃+* L` carries a
+multiplicative ideal weight on `K` to one on `L`, by pulling ideals of `𝓞 L` back to `𝓞 K`
+along `NumberField.RingOfIntegers.mapRingEquiv e`. -/
+noncomputable def map (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) :
+    MultiplicativeIdealWeight L where
+  toMonoidWithZeroHom := χ.toMonoidWithZeroHom.comp
+    (Ideal.mapHom (RingOfIntegers.mapRingEquiv e).symm).toMonoidWithZeroHom
+  finite_setOf_apply_eq_zero := by
+    refine (χ.finite_badPrimes.image
+      (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e))).subset fun 𝔮 h𝔮 ↦ ?_
+    refine ⟨_, ?_, Equiv.apply_symm_apply _ 𝔮⟩
+    rw [mem_badPrimes, asIdeal_equivOfRingEquiv_symm]
+    simpa [badPrimes] using h𝔮
+
+@[simp]
+theorem map_apply (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) (I : Ideal (𝓞 L)) :
+    map e χ I = χ (Ideal.comap (RingOfIntegers.mapRingEquiv e) I) :=
+  congrArg ⇑χ (Ideal.map_symm (RingOfIntegers.mapRingEquiv e))
+
+/-- **The bad primes transport too**: they are carried along by the induced bijection of
+height-one spectra. -/
+@[simp]
+theorem badPrimes_map (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) :
+    (map e χ).badPrimes =
+      HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' χ.badPrimes := by
+  ext 𝔮
+  rw [Equiv.image_eq_preimage_symm, Set.mem_preimage, mem_badPrimes, mem_badPrimes,
+    asIdeal_equivOfRingEquiv_symm, map_apply]
+
+@[simp]
+theorem toIdealArithmeticFunction_map (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) :
+    (map e χ).toIdealArithmeticFunction =
+      IdealArithmeticFunction.map e χ.toIdealArithmeticFunction :=
+  IdealArithmeticFunction.zeroExtend_injective <| funext fun I ↦ by
+    rw [zeroExtend_toIdealArithmeticFunction, IdealArithmeticFunction.zeroExtend_map,
+      zeroExtend_toIdealArithmeticFunction, map_apply]
+
+@[simp]
+theorem map_id (χ : MultiplicativeIdealWeight K) : map (RingEquiv.refl K) χ = χ :=
+  toIdealArithmeticFunction_injective <| by
+    rw [toIdealArithmeticFunction_map, IdealArithmeticFunction.map_id]
+
+/-- **Transport is functorial**: transporting along `e` and then along `e'` is the same as
+transporting along `e.trans e'`. -/
+theorem map_map (e : K ≃+* L) (e' : L ≃+* M) (χ : MultiplicativeIdealWeight K) :
+    map e' (map e χ) = map (e.trans e') χ :=
+  toIdealArithmeticFunction_injective <| by
+    rw [toIdealArithmeticFunction_map, toIdealArithmeticFunction_map,
+      toIdealArithmeticFunction_map, IdealArithmeticFunction.map_map]
+
+/-- **Transport along an isomorphism of fields, as an equivalence** of the two carriers, with
+inverse the transport along `e.symm`. -/
+noncomputable def mapEquiv (e : K ≃+* L) :
+    MultiplicativeIdealWeight K ≃ MultiplicativeIdealWeight L where
+  toFun := map e
+  invFun := map e.symm
+  left_inv χ := by rw [map_map, e.self_trans_symm, map_id]
+  right_inv χ := by rw [map_map, e.symm_trans_self, map_id]
+
+@[simp]
+theorem mapEquiv_apply (e : K ≃+* L) (χ : MultiplicativeIdealWeight K) :
+    mapEquiv e χ = map e χ := (rfl)
+
+@[simp]
+theorem mapEquiv_symm_apply (e : K ≃+* L) (χ : MultiplicativeIdealWeight L) :
+    (mapEquiv e).symm χ = map e.symm χ := (rfl)
+
+end Transport
+
 end MultiplicativeIdealWeight
 
 /-!
@@ -550,6 +635,50 @@ noncomputable def restrict (χ : UnitaryIdealWeight K) (S : Set (HeightOneSpectr
 @[simp]
 theorem val_restrict (χ : UnitaryIdealWeight K) (S : Set (HeightOneSpectrum (𝓞 K)))
     (hS : S.Finite) : (restrict χ S hS).1 = χ.1.restrict S hS := (rfl)
+
+section Transport
+
+variable {L M : Type*} [Field L] [NumberField L] [Field M] [NumberField M]
+
+/-- **Transport along an isomorphism of fields preserves unitarity**: the transported weight has
+the same values as `χ`, read off at the corresponding primes. -/
+noncomputable def map (e : K ≃+* L) (χ : UnitaryIdealWeight K) : UnitaryIdealWeight L :=
+  ⟨MultiplicativeIdealWeight.map e χ.1, fun 𝔮 h𝔮 ↦ by
+    rw [MultiplicativeIdealWeight.badPrimes_map, Equiv.image_eq_preimage_symm,
+      Set.mem_preimage] at h𝔮
+    rw [MultiplicativeIdealWeight.map_apply,
+      ← MultiplicativeIdealWeight.asIdeal_equivOfRingEquiv_symm]
+    exact χ.2 _ h𝔮⟩
+
+@[simp]
+theorem val_map (e : K ≃+* L) (χ : UnitaryIdealWeight K) :
+    (map e χ).1 = MultiplicativeIdealWeight.map e χ.1 := (rfl)
+
+@[simp]
+theorem map_id (χ : UnitaryIdealWeight K) : map (RingEquiv.refl K) χ = χ :=
+  Subtype.ext (by rw [val_map, MultiplicativeIdealWeight.map_id])
+
+/-- **Transport is functorial** on the unitary carrier as well. -/
+theorem map_map (e : K ≃+* L) (e' : L ≃+* M) (χ : UnitaryIdealWeight K) :
+    map e' (map e χ) = map (e.trans e') χ :=
+  Subtype.ext (by rw [val_map, val_map, val_map, MultiplicativeIdealWeight.map_map])
+
+/-- **Transport along an isomorphism of fields, as an equivalence** of the unitary carriers. -/
+noncomputable def mapEquiv (e : K ≃+* L) : UnitaryIdealWeight K ≃ UnitaryIdealWeight L where
+  toFun := map e
+  invFun := map e.symm
+  left_inv χ := by rw [map_map, e.self_trans_symm, map_id]
+  right_inv χ := by rw [map_map, e.symm_trans_self, map_id]
+
+@[simp]
+theorem mapEquiv_apply (e : K ≃+* L) (χ : UnitaryIdealWeight K) :
+    mapEquiv e χ = map e χ := (rfl)
+
+@[simp]
+theorem mapEquiv_symm_apply (e : K ≃+* L) (χ : UnitaryIdealWeight L) :
+    (mapEquiv e).symm χ = map e.symm χ := (rfl)
+
+end Transport
 
 /-- The ideal arithmetic function underlying a unitary weight. -/
 abbrev toIdealArithmeticFunction (χ : UnitaryIdealWeight K) : IdealArithmeticFunction K :=

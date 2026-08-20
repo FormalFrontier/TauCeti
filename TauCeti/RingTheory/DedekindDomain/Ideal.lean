@@ -82,6 +82,9 @@ omit [IsDedekindDomain R] in
 theorem IsPrimeTo.mono (hST : S ⊆ T) (h : IsPrimeTo I T) : IsPrimeTo I S :=
   ⟨h.ne_bot, fun _𝔭 h𝔭 ↦ h.not_dvd (hST h𝔭)⟩
 
+/-- **Being prime to `S` is multiplicative.** A product of ideals is prime to `S` exactly when
+both factors are: neither factor may vanish, and a prime of `S` divides the product exactly when
+it divides one of the factors. -/
 @[simp]
 theorem isPrimeTo_mul_iff : IsPrimeTo (I * J) S ↔ IsPrimeTo I S ∧ IsPrimeTo J S := by
   simp only [IsPrimeTo, ne_eq, Ideal.mul_eq_bot, not_or]
