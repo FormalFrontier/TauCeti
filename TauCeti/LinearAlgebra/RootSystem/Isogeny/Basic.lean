@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Data.PNat.Basic
+public import Mathlib.GroupTheory.IndexNSmul
 public import Mathlib.LinearAlgebra.Matrix.ToLin
 public import Mathlib.LinearAlgebra.RootSystem.Hom
 
@@ -17,17 +19,19 @@ root. This is the notion of SGA III, Exposé XXI, 6.8, and it is what an isogeny
 schemes induces on root data; the special isogenies in characteristics two and three, which are not
 isomorphisms, are the reason the notion is needed at all.
 
-`TauCeti.RootPairingIsogeny P Q` carries the same data as Mathlib's `RootPairing.Hom P Q` — a
-linear map of weight spaces, its transpose on coweight spaces, and a bijection of index sets —
-together with a family `exponent : ι → R` of scalars, and it asks
+`TauCeti.RootPairingIsogeny P Q` carries a linear map of weight spaces, its transpose on coweight
+spaces, and a bijection of index sets, together with a family `exponent : ι → ℤ` of positive
+integers, and it asks
 
 ```text
 weightMap (P.root i) = exponent i • Q.root (indexEquiv i),
 coweightMap (Q.coroot (indexEquiv i)) = exponent i • P.coroot i.
 ```
 
-At `exponent = 1` these are exactly the two conditions defining a `RootPairing.Hom`, and
-`TauCeti.RootPairingIsogeny.ofHom` records that. The transpose condition is stated as the
+Both lattice maps are required to be injective with finite-index image. At `exponent = 1` the root
+and coroot equations are those of a `RootPairing.Hom`, and
+`TauCeti.RootPairingIsogeny.ofEquiv` turns a `RootPairing.Equiv` into an isogeny. The transpose
+condition is stated as the
 bilinear identity `Q.toLinearMap (weightMap x) y = P.toLinearMap x (coweightMap y)`, which is the
 unfolded form of the corresponding `RootPairing.Hom` field.
 
@@ -42,9 +46,10 @@ so an isogeny with a nonconstant exponent transforms the Cartan matrix rather th
 That is exactly what a length-exchanging map of a doubly laced diagram does, and it is why
 `RootPairing.Hom`, whose index bijection preserves all Cartan integers, cannot express one.
 
-Isogenies compose, with exponents multiplying along the composite, and for each scalar `c` the
-scaling `TauCeti.RootPairingIsogeny.smulId P c` is an isogeny of `P` with itself with constant
-exponent `c`. At `c` a prime `p` the latter is the root-datum shadow of the `p`-power Frobenius
+Isogenies compose, with exponents multiplying along the composite, and for each positive integer
+`c` the scaling `TauCeti.RootPairingIsogeny.smulId P c` is an isogeny of a finite free
+`ℤ`-root pairing `P` with itself with constant exponent `c`. At `c` a prime `p` the latter is the
+root-datum shadow of the `p`-power Frobenius
 isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the relation
 `τ ^ 2 = Frob_p` satisfied by a special isogeny.
 
@@ -55,7 +60,7 @@ isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the 
 * `TauCeti.RootPairingIsogeny.smulId`: multiplication by a scalar, as an isogeny.
 * `TauCeti.RootPairingIsogeny.ofMatrix`: an isogeny of a root datum on coordinate lattices,
   presented by an integer matrix.
-* `TauCeti.RootPairingIsogeny.ofHom`: a morphism of root pairings is an isogeny with all
+* `TauCeti.RootPairingIsogeny.ofEquiv`: an equivalence of root pairings is an isogeny with all
   exponents `1`.
 
 ## Main results
@@ -95,12 +100,23 @@ structure RootPairingIsogeny (P : RootPairing ι R M N) (Q : RootPairing ι₂ R
   coweightMap : N₂ →ₗ[R] N
   /-- A bijection on index sets. -/
   indexEquiv : ι ≃ ι₂
-  /-- The scalar by which the root at each index is rescaled. -/
-  exponent : ι → R
+  /-- The positive integer by which the root at each index is rescaled. -/
+  exponent : ι → ℤ
+  /-- Every root-rescaling exponent is positive. -/
+  exponent_pos : ∀ i, 0 < exponent i
+  /-- The map on the weight lattice is injective. -/
+  weightMap_injective : Function.Injective weightMap
+  /-- The contravariant map on the coweight lattice is injective. -/
+  coweightMap_injective : Function.Injective coweightMap
+  /-- The image in the target weight lattice has finite index. -/
+  weightMap_finiteIndex : weightMap.range.toAddSubgroup.FiniteIndex
+  /-- The image in the source coweight lattice has finite index. -/
+  coweightMap_finiteIndex : coweightMap.range.toAddSubgroup.FiniteIndex
   weight_coweight_transpose : ∀ (x : M) (y : N₂),
     Q.toLinearMap (weightMap x) y = P.toLinearMap x (coweightMap y)
-  root_weightMap : ∀ i, weightMap (P.root i) = exponent i • Q.root (indexEquiv i)
-  coroot_coweightMap : ∀ i, coweightMap (Q.coroot (indexEquiv i)) = exponent i • P.coroot i
+  root_weightMap : ∀ i, weightMap (P.root i) = (exponent i : R) • Q.root (indexEquiv i)
+  coroot_coweightMap : ∀ i,
+    coweightMap (Q.coroot (indexEquiv i)) = (exponent i : R) • P.coroot i
 
 namespace RootPairingIsogeny
 
@@ -108,7 +124,8 @@ variable {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} {S : Roo
 
 /-- The exponents of an isogeny intertwine the Cartan matrices of its source and target. -/
 theorem exponent_mul_pairing (f : RootPairingIsogeny P Q) (i j : ι) :
-    f.exponent i * Q.pairing (f.indexEquiv i) (f.indexEquiv j) = f.exponent j * P.pairing i j := by
+    (f.exponent i : R) * Q.pairing (f.indexEquiv i) (f.indexEquiv j) =
+      (f.exponent j : R) * P.pairing i j := by
   have h : Q.toLinearMap (f.weightMap (P.root i)) (Q.coroot (f.indexEquiv j)) =
       P.toLinearMap (P.root i) (f.coweightMap (Q.coroot (f.indexEquiv j))) :=
     f.weight_coweight_transpose _ _
@@ -116,19 +133,64 @@ theorem exponent_mul_pairing (f : RootPairingIsogeny P Q) (i j : ι) :
   simpa only [map_smul, LinearMap.smul_apply, smul_eq_mul,
     _root_.RootPairing.root_coroot_eq_pairing] using h
 
-/-- Multiplication by a scalar, as an isogeny of a root pairing with itself. At a prime `p` this
-is the isogeny of root data underlying the `p`-power Frobenius. -/
+/-- Multiplication by a positive integer, as an isogeny of a finite free `ℤ`-root pairing with
+itself. At a prime `p` this is the isogeny of root data underlying the `p`-power Frobenius. -/
 @[expose, simps]
-def smulId (P : RootPairing ι R M N) (c : R) : RootPairingIsogeny P P where
-  weightMap := c • LinearMap.id
-  coweightMap := c • LinearMap.id
+def smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module.Finite ℤ N]
+    (P : RootPairing ι ℤ M N) (c : ℕ+) : RootPairingIsogeny P P where
+  weightMap := (c : ℕ) • LinearMap.id
+  coweightMap := (c : ℕ) • LinearMap.id
   indexEquiv := Equiv.refl ι
   exponent := fun _ => c
+  exponent_pos _ := by exact_mod_cast c.pos
+  weightMap_injective :=
+    AddSubgroup.distribSMulToLinearMap_injective_of_isTorsionFree c.ne_zero
+  coweightMap_injective :=
+    AddSubgroup.distribSMulToLinearMap_injective_of_isTorsionFree c.ne_zero
+  weightMap_finiteIndex := by
+    rw [AddSubgroup.finiteIndex_iff]
+    change (nsmulAddMonoidHom (α := M) c).range.index ≠ 0
+    rw [AddSubgroup.index_range_nsmul]
+    exact pow_ne_zero _ c.ne_zero
+  coweightMap_finiteIndex := by
+    rw [AddSubgroup.finiteIndex_iff]
+    change (nsmulAddMonoidHom (α := N) c).range.index ≠ 0
+    rw [AddSubgroup.index_range_nsmul]
+    exact pow_ne_zero _ c.ne_zero
   weight_coweight_transpose x y := by
-    simp only [LinearMap.smul_apply, LinearMap.id_coe, id_eq, map_smul, LinearMap.smul_apply,
-      smul_eq_mul]
+    simp
   root_weightMap i := by simp
   coroot_coweightMap i := by simp
+
+/-- The composite of two injective linear maps with finite-index images again has finite-index
+image. -/
+lemma finiteIndex_range_comp (g : M₂ →ₗ[R] M₃) (f : M →ₗ[R] M₂)
+    (hg : Function.Injective g) (hf : f.range.toAddSubgroup.FiniteIndex)
+    (hgf : g.range.toAddSubgroup.FiniteIndex) : (g ∘ₗ f).range.toAddSubgroup.FiniteIndex := by
+  rw [AddSubgroup.finiteIndex_iff]
+  let A := (g ∘ₗ f).range.toAddSubgroup
+  let B := g.range.toAddSubgroup
+  have hAB : A ≤ B := by
+    intro x hx
+    obtain ⟨y, hy⟩ := hx
+    exact ⟨f y, hy⟩
+  rw [← AddSubgroup.relIndex_mul_index hAB]
+  apply mul_ne_zero
+  · have hA : A = f.range.toAddSubgroup.map g.toAddMonoidHom := by
+      ext x
+      simp only [A, AddSubgroup.mem_map]
+      constructor
+      · rintro ⟨y, rfl⟩
+        exact ⟨f y, ⟨y, rfl⟩, rfl⟩
+      · rintro ⟨_, ⟨y, rfl⟩, rfl⟩
+        exact ⟨y, rfl⟩
+    have hB : B = (⊤ : AddSubgroup M₂).map g.toAddMonoidHom := by
+      ext x
+      change (∃ y, g y = x) ↔ ∃ y, y ∈ (⊤ : AddSubgroup M₂) ∧ g y = x
+      simp
+    rw [hA, hB, AddSubgroup.relIndex_map_map_of_injective _ _ hg]
+    exact (@AddSubgroup.isFiniteRelIndex_of_finiteIndex M₂ _ f.range.toAddSubgroup ⊤ hf).1
+  · exact hgf.index_ne_zero
 
 /-- The composite of two isogenies, whose exponent at an index is the product of the exponent of
 the first at that index and the exponent of the second at its image. -/
@@ -138,16 +200,23 @@ def comp (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q) : RootPairing
   coweightMap := f.coweightMap ∘ₗ g.coweightMap
   indexEquiv := f.indexEquiv.trans g.indexEquiv
   exponent := fun i => f.exponent i * g.exponent (f.indexEquiv i)
+  exponent_pos i := mul_pos (f.exponent_pos i) (g.exponent_pos (f.indexEquiv i))
+  weightMap_injective := g.weightMap_injective.comp f.weightMap_injective
+  coweightMap_injective := f.coweightMap_injective.comp g.coweightMap_injective
+  weightMap_finiteIndex := finiteIndex_range_comp g.weightMap f.weightMap g.weightMap_injective
+    f.weightMap_finiteIndex g.weightMap_finiteIndex
+  coweightMap_finiteIndex := finiteIndex_range_comp f.coweightMap g.coweightMap
+    f.coweightMap_injective g.coweightMap_finiteIndex f.coweightMap_finiteIndex
   weight_coweight_transpose x y := by
     rw [LinearMap.comp_apply, LinearMap.comp_apply, g.weight_coweight_transpose,
       f.weight_coweight_transpose]
   root_weightMap i := by
     rw [LinearMap.comp_apply, f.root_weightMap, map_smul, g.root_weightMap, smul_smul]
-    rfl
+    simp only [Int.cast_mul, Equiv.trans_apply]
   coroot_coweightMap i := by
     rw [LinearMap.comp_apply, show (f.indexEquiv.trans g.indexEquiv) i =
       g.indexEquiv (f.indexEquiv i) from rfl, g.coroot_coweightMap, map_smul,
-      f.coroot_coweightMap, smul_smul, mul_comm]
+      f.coroot_coweightMap, smul_smul, mul_comm, Int.cast_mul]
 
 section Coordinates
 
@@ -155,19 +224,51 @@ open Matrix
 
 variable {n : ℕ}
 
+/-- An endomorphism of a torsion-free abelian group whose square is multiplication by a nonzero
+natural number is injective. -/
+lemma linearMap_injective_of_comp_self_eq_nsmul (A : (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ))
+    (c : ℕ) (hc : c ≠ 0)
+    (hsq : A ∘ₗ A = c • LinearMap.id) : Function.Injective A := by
+  intro x y hxy
+  apply AddSubgroup.distribSMulToLinearMap_injective_of_isTorsionFree hc
+  have h := congrArg A hxy
+  simpa only [← LinearMap.comp_apply, hsq, LinearMap.smul_apply, LinearMap.id_apply,
+    DistribSMul.toLinearMap_apply] using h
+
+/-- An endomorphism of a finite free abelian group whose square is multiplication by a nonzero
+natural number has finite-index image. -/
+lemma linearMap_finiteIndex_of_comp_self_eq_nsmul
+    (A : (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ)) (c : ℕ) (hc : c ≠ 0)
+    (hsq : A ∘ₗ A = c • LinearMap.id) : A.range.toAddSubgroup.FiniteIndex := by
+  have hcfinite : (nsmulAddMonoidHom (α := Fin n → ℤ) c).range.FiniteIndex := by
+    rw [AddSubgroup.finiteIndex_iff, AddSubgroup.index_range_nsmul]
+    exact pow_ne_zero _ hc
+  apply @AddSubgroup.finiteIndex_of_le (Fin n → ℤ) _ _ _ hcfinite
+  rintro _ ⟨x, rfl⟩
+  exact ⟨A x, LinearMap.congr_fun hsq x⟩
+
 /-- An isogeny of a root datum on the coordinate lattices `Fin n → ℤ` with the dot-product
 pairing, presented by the integer matrix acting on the character lattice. The map on the
 cocharacter lattice is the transposed matrix, which is what the transpose condition forces. -/
 @[expose, simps]
 def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
-    (e : Equiv.Perm ι) (c : ι → ℤ) (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
+    (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
+    (hA : Function.Injective A.mulVecLin) (hAT : Function.Injective Aᵀ.mulVecLin)
+    (hAfinite : A.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
+    (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
     RootPairingIsogeny P P where
   weightMap := A.mulVecLin
   coweightMap := Aᵀ.mulVecLin
   indexEquiv := e
   exponent := c
+  exponent_pos := hc
+  weightMap_injective := hA
+  coweightMap_injective := hAT
+  weightMap_finiteIndex := hAfinite
+  coweightMap_finiteIndex := hATfinite
   weight_coweight_transpose x y := by
     rw [hP, hP, Matrix.mulVecLin_apply, Matrix.mulVecLin_apply]
     exact (dotProduct_comm _ _).trans (dotProduct_transpose_mulVec A x y).symm
@@ -178,18 +279,34 @@ end Coordinates
 
 end RootPairingIsogeny
 
-/-- A morphism of root pairings is an isogeny all of whose exponents are `1`. -/
+/-- An equivalence of root pairings is an isogeny all of whose exponents are `1`. -/
 @[expose, simps]
-def RootPairingIsogeny.ofHom {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂}
-    (f : RootPairing.Hom P Q) : RootPairingIsogeny P Q where
-  weightMap := f.weightMap
-  coweightMap := f.coweightMap
-  indexEquiv := f.indexEquiv
+def RootPairingIsogeny.ofEquiv {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂}
+    (f : RootPairing.Equiv P Q) : RootPairingIsogeny P Q where
+  weightMap := f.toHom.weightMap
+  coweightMap := f.toHom.coweightMap
+  indexEquiv := f.toHom.indexEquiv
   exponent := fun _ => 1
+  exponent_pos _ := by norm_num
+  weightMap_injective := f.bijective_weightMap.injective
+  coweightMap_injective := f.bijective_coweightMap.injective
+  weightMap_finiteIndex := by
+    rw [AddSubgroup.finiteIndex_iff]
+    have hr : f.toHom.weightMap.range = ⊤ :=
+      LinearMap.range_eq_top.mpr f.bijective_weightMap.surjective
+    rw [hr, Submodule.top_toAddSubgroup, AddSubgroup.index_top]
+    exact one_ne_zero
+  coweightMap_finiteIndex := by
+    rw [AddSubgroup.finiteIndex_iff]
+    have hr : f.toHom.coweightMap.range = ⊤ :=
+      LinearMap.range_eq_top.mpr f.bijective_coweightMap.surjective
+    rw [hr, Submodule.top_toAddSubgroup, AddSubgroup.index_top]
+    exact one_ne_zero
   weight_coweight_transpose x y := by
     simpa using congrArg (fun g : Module.Dual R M => g x)
-      (_root_.RootPairing.Hom.weight_coweight_transpose_apply P Q y f)
-  root_weightMap i := by simp [_root_.RootPairing.Hom.root_weightMap_apply P Q i f]
-  coroot_coweightMap i := by simp [_root_.RootPairing.Hom.coroot_coweightMap_apply P Q _ f]
+      (_root_.RootPairing.Hom.weight_coweight_transpose_apply P Q y f.toHom)
+  root_weightMap i := by simp [_root_.RootPairing.Hom.root_weightMap_apply P Q i f.toHom]
+  coroot_coweightMap i := by
+    simp [_root_.RootPairing.Hom.coroot_coweightMap_apply P Q _ f.toHom]
 
 end TauCeti

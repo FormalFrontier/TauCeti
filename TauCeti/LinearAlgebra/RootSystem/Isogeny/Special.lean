@@ -126,6 +126,20 @@ private lemma g2SpecialIsogeny_coroot_aux (i : Fin 12) :
       g2SpecialIsogenyExponent i • g2Coroot i := by
   revert i; decide
 
+private lemma g2SpecialIsogenyMatrix_mulVecLin_sq :
+    g2SpecialIsogenyMatrix.mulVecLin ∘ₗ g2SpecialIsogenyMatrix.mulVecLin =
+      (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
+  refine LinearMap.ext fun x => funext fun i => ?_
+  fin_cases i <;>
+    simp [g2SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]
+
+private lemma g2SpecialIsogenyMatrix_transpose_mulVecLin_sq :
+    g2SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ g2SpecialIsogenyMatrixᵀ.mulVecLin =
+      (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
+  refine LinearMap.ext fun x => funext fun i => ?_
+  fin_cases i <;>
+    simp [g2SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]
+
 /-- **The special isogeny of the pinned `G₂` root datum**, belonging to characteristic three. Its
 character-lattice map is `TauCeti.DynkinType.g2SpecialIsogenyMatrix`; the map on cocharacters is
 the transposed matrix, and the two are related by the dot-product pairing of the datum. -/
@@ -133,6 +147,25 @@ the transposed matrix, and the two are related by the dot-product pairing of the
     RootPairingIsogeny g2SimplyConnectedRootDatum g2SimplyConnectedRootDatum :=
   RootPairingIsogeny.ofMatrix _ g2SimplyConnectedRootDatum_toLinearMap g2SpecialIsogenyMatrix
     (g2SpecialIsogenyIndex_involutive.toPerm _) g2SpecialIsogenyExponent
+    (fun i => by revert i; decide)
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;>
+          simp [g2SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]))
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;> simp [g2SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]))
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;>
+          simp [g2SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]))
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;> simp [g2SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]))
     (fun i => by simpa using g2SpecialIsogeny_root_aux i)
     (fun i => by simpa using g2SpecialIsogeny_coroot_aux i)
 
@@ -176,20 +209,6 @@ theorem g2SpecialIsogeny_exponent_eq_one_or (i : Fin 12) :
   simp only [g2SpecialIsogeny_exponent]
   revert i; decide
 
-private lemma g2SpecialIsogenyMatrix_mulVecLin_sq :
-    g2SpecialIsogenyMatrix.mulVecLin ∘ₗ g2SpecialIsogenyMatrix.mulVecLin =
-      (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  refine LinearMap.ext fun x => funext fun i => ?_
-  fin_cases i <;>
-    simp [g2SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]
-
-private lemma g2SpecialIsogenyMatrix_transpose_mulVecLin_sq :
-    g2SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ g2SpecialIsogenyMatrixᵀ.mulVecLin =
-      (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  refine LinearMap.ext fun x => funext fun i => ?_
-  fin_cases i <;>
-    simp [g2SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]
-
 /-- **The square of the special isogeny of `G₂` is scaling by three.** This is the root-datum form
 of the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
 theorem g2SpecialIsogeny_comp_self :
@@ -215,6 +234,7 @@ theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
       G2.rootLength (lengthPermRankTwo i) • g2SimplyConnectedRootDatum.root (Fin.castAdd 10 i) := by
   rw [g2SpecialIsogeny.root_weightMap, g2SpecialIsogeny_exponent_castAdd,
     g2SpecialIsogeny_indexEquiv_castAdd, lengthPermRankTwo_lengthPermRankTwo]
+  simp only [Int.cast_id]
 
 /-- The exponent of the special isogeny of `G₂` at a simple root is `1` exactly at the short
 node, which is the convention that the exceptional isogeny raises a long root parameter to the
@@ -260,6 +280,20 @@ private lemma f4SpecialIsogeny_coroot_aux (i : Fin 48) :
       f4SpecialIsogenyExponent i • f4Coroot i := by
   revert i; decide
 
+private lemma f4SpecialIsogenyMatrix_mulVecLin_sq :
+    f4SpecialIsogenyMatrix.mulVecLin ∘ₗ f4SpecialIsogenyMatrix.mulVecLin =
+      (2 : ℤ) • (LinearMap.id : (Fin 4 → ℤ) →ₗ[ℤ] (Fin 4 → ℤ)) := by
+  refine LinearMap.ext fun x => funext fun i => ?_
+  fin_cases i <;>
+    simp [f4SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]
+
+private lemma f4SpecialIsogenyMatrix_transpose_mulVecLin_sq :
+    f4SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ f4SpecialIsogenyMatrixᵀ.mulVecLin =
+      (2 : ℤ) • (LinearMap.id : (Fin 4 → ℤ) →ₗ[ℤ] (Fin 4 → ℤ)) := by
+  refine LinearMap.ext fun x => funext fun i => ?_
+  fin_cases i <;>
+    simp [f4SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]
+
 /-- **The special isogeny of the pinned `F₄` root datum**, belonging to characteristic two. Its
 character-lattice map is `TauCeti.DynkinType.f4SpecialIsogenyMatrix`; the map on cocharacters is
 the transposed matrix, and the two are related by the dot-product pairing of the datum. -/
@@ -267,6 +301,25 @@ the transposed matrix, and the two are related by the dot-product pairing of the
     RootPairingIsogeny f4SimplyConnectedRootDatum f4SimplyConnectedRootDatum :=
   RootPairingIsogeny.ofMatrix _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
     f4SpecialIsogenyMatrix (f4SpecialIsogenyIndex_involutive.toPerm _) f4SpecialIsogenyExponent
+    (fun i => by revert i; decide)
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;>
+          simp [f4SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]))
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;> simp [f4SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]))
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;>
+          simp [f4SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]))
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
+      (by
+        refine LinearMap.ext fun x => funext fun i => ?_
+        fin_cases i <;> simp [f4SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]))
     (fun i => by simpa using f4SpecialIsogeny_root_aux i)
     (fun i => by simpa using f4SpecialIsogeny_coroot_aux i)
 
@@ -310,20 +363,6 @@ theorem f4SpecialIsogeny_exponent_eq_one_or (i : Fin 48) :
   simp only [f4SpecialIsogeny_exponent]
   revert i; decide
 
-private lemma f4SpecialIsogenyMatrix_mulVecLin_sq :
-    f4SpecialIsogenyMatrix.mulVecLin ∘ₗ f4SpecialIsogenyMatrix.mulVecLin =
-      (2 : ℤ) • (LinearMap.id : (Fin 4 → ℤ) →ₗ[ℤ] (Fin 4 → ℤ)) := by
-  refine LinearMap.ext fun x => funext fun i => ?_
-  fin_cases i <;>
-    simp [f4SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]
-
-private lemma f4SpecialIsogenyMatrix_transpose_mulVecLin_sq :
-    f4SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ f4SpecialIsogenyMatrixᵀ.mulVecLin =
-      (2 : ℤ) • (LinearMap.id : (Fin 4 → ℤ) →ₗ[ℤ] (Fin 4 → ℤ)) := by
-  refine LinearMap.ext fun x => funext fun i => ?_
-  fin_cases i <;>
-    simp [f4SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]
-
 /-- **The square of the special isogeny of `F₄` is scaling by two.** This is the root-datum form of
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
 theorem f4SpecialIsogeny_comp_self :
@@ -349,6 +388,7 @@ theorem f4SpecialIsogeny_weightMap_root_castAdd (i : Fin 4) :
       F4.rootLength (lengthPermF4 i) • f4SimplyConnectedRootDatum.root (Fin.castAdd 44 i) := by
   rw [f4SpecialIsogeny.root_weightMap, f4SpecialIsogeny_exponent_castAdd,
     f4SpecialIsogeny_indexEquiv_castAdd, lengthPermF4_lengthPermF4]
+  simp only [Int.cast_id]
 
 /-- The exponent of the special isogeny of `F₄` at a simple root is `1` exactly at a short node,
 which is the convention that the exceptional isogeny raises a long root parameter to the first
