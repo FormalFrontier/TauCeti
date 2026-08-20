@@ -18,12 +18,13 @@ Baker–Campbell–Hausdorff map near the origin.
 
 ## Main definitions and results
 
-* `logOnePlusSeries`: the formal multilinear series for `log (1 + u)`.
-* `logOnePlusSeries_apply`: its homogeneous terms.
-* `logOnePlus`: its sum (and zero outside the radius of convergence).
-* `logOnePlus_eq_tsum`: the defining series equation.
-* `one_le_logOnePlusSeries_radius`: the radius of convergence is at least one.
-* `hasFPowerSeriesOnBall_logOnePlus`: the series represents `logOnePlus` on the unit ball.
+* `NormedSpace.logOnePlusSeries`: the formal multilinear series for `log (1 + u)`.
+* `NormedSpace.logOnePlusSeries_apply`: its homogeneous terms.
+* `NormedSpace.logOnePlus`: its sum.
+* `NormedSpace.logOnePlus_eq_tsum`: the defining series equation.
+* `NormedSpace.one_le_logOnePlusSeries_radius`: the radius of convergence is at least one.
+* `NormedSpace.hasFPowerSeriesOnBall_logOnePlus`: the series represents `logOnePlus` on the
+  unit ball.
 
 ## References
 
@@ -38,6 +39,8 @@ open scoped ENNReal Topology
 
 noncomputable section
 
+namespace NormedSpace
+
 variable (A : Type*) [NormedRing A] [NormedAlgebra ℝ A]
 
 /-- The formal multilinear series for `log (1 + u)` in a real normed algebra. -/
@@ -51,7 +54,7 @@ theorem logOnePlusSeries_apply {n : ℕ} (v : Fin n → A) :
       ((-1 : ℝ) ^ (n + 1) / n) • (List.ofFn v).prod := by
   simp [logOnePlusSeries, FormalMultilinearSeries.ofScalars]
 
-/-- The sum of the power series for `log (1 + u)`. It is zero outside its radius of convergence. -/
+/-- The `tsum` of the power series for `log (1 + u)`. -/
 def logOnePlus (u : A) : A :=
   (logOnePlusSeries A).sum u
 
@@ -108,9 +111,9 @@ theorem analyticAt_logOnePlus : AnalyticAt ℝ (logOnePlus A) 0 :=
 omit [CompleteSpace A] in
 @[simp]
 theorem logOnePlus_zero : logOnePlus A 0 = 0 := by
-  rw [logOnePlus_eq_tsum]
-  have h : (fun n : ℕ ↦ ((-1 : ℝ) ^ (n + 1) / n) • (0 : A) ^ n) = 0 := by
-    funext n
-    cases n <;> simp
-  rw [h]
-  exact tsum_zero
+  -- Expose the scalar-series sum so its generic zero theorem applies directly.
+  change FormalMultilinearSeries.ofScalarsSum (fun n : ℕ ↦ (-1 : ℝ) ^ (n + 1) / n) 0 = 0
+  rw [FormalMultilinearSeries.ofScalarsSum_zero]
+  norm_num
+
+end NormedSpace
