@@ -216,6 +216,7 @@ category of finite-dimensional representations of the affine group represented b
 abbrev FGPointRepresentationCat :=
   (PointRepresentationCat.isFG (R := R) (H := H)).FullSubcategory
 
+/-- Finite generation of point representations is preserved under categorical isomorphisms. -/
 noncomputable instance PointRepresentationCat.isFG_isClosedUnderIsomorphisms :
     (PointRepresentationCat.isFG (R := R) (H := H) :
       ObjectProperty (PointRepresentationCat.{u, v, w} R H)).IsClosedUnderIsomorphisms where
@@ -292,25 +293,6 @@ theorem toComodule_map_toLinearMap {V W : FGPointRepresentationCat.{u, v, w} R H
     (f : V ⟶ W) :
     ((toComodule R H).map f).hom.toLinearMap = f.hom.toLinearMap :=
   rfl
-
-end FGPointRepresentationCat
-
-/-- The forward functor of the finite point-representation equivalence is the concrete finite
-comodule functor. -/
-@[simp]
-theorem fgPointRepresentationCategoryEquivalence_functor :
-    (fgPointRepresentationCategoryEquivalence R H).functor =
-      FGPointRepresentationCat.toComodule R H :=
-  rfl
-
-namespace FGPointRepresentationCat
-
-/-- Recovering finite comodules from finite point representations is an equivalence of
-categories. -/
-noncomputable instance toComoduleIsEquivalence :
-    (toComodule R H : FGPointRepresentationCat.{u, v, w} R H ⥤
-      FGComoduleCat.{u, v, w} R H).IsEquivalence :=
-  (fgPointRepresentationCategoryEquivalence R H).isEquivalence_functor
 
 end FGPointRepresentationCat
 
