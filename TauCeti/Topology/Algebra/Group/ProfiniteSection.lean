@@ -35,8 +35,8 @@ intersection of a chain of such `C`'s still meets every coset.
 
 ## Main results
 
-* `TauCeti.exists_isClosed_isComplement`: a closed subgroup of a profinite group has a closed left
-  transversal, in Mathlib's sense `Subgroup.IsComplement`.
+* `TauCeti.Subgroup.exists_isClosed_isComplement_left`: a closed subgroup of a profinite group has
+  a closed left transversal, in Mathlib's sense `Subgroup.IsComplement`.
 * `TauCeti.exists_continuous_section`: the normalized continuous section `G ⧸ H → G`.
 * `TauCeti.exists_continuous_section_of_le`: the continuous section of `G ⧸ K → G ⧸ H` for `K ≤ H`.
 
@@ -61,7 +61,7 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 /-- `IsCosetSelection H K C` says that the closed set `C` meets every left coset of `H` in exactly
 one left coset of the subgroup `K ≤ H`. For `K = H` the set `C = Set.univ` qualifies, and for
 `K = ⊥` the condition says exactly that `C` is a left transversal of `H`; the proof of
-`TauCeti.exists_isClosed_isComplement` walks from the first to the second. -/
+`TauCeti.Subgroup.exists_isClosed_isComplement_left` walks from the first to the second. -/
 private structure IsCosetSelection (H K : Subgroup G) (C : Set G) : Prop where
   /-- `C` is closed. -/
   isClosed : IsClosed C
@@ -178,11 +178,13 @@ private theorem IsCosetSelection.exists_lt [CompactSpace G] [TotallyDisconnected
     have hone : φ (x⁻¹ * y) = 1 := by rw [map_mul, map_inv, hxy', inv_mul_cancel]
     exact Subgroup.mem_inf.mpr ⟨hK, (QuotientGroup.eq_one_iff _).mp hone⟩
 
+namespace Subgroup
+
 /-- **A closed subgroup of a profinite group has a closed left transversal.** The set `C` produced
 here meets every left coset of `H` in exactly one point and is closed, hence compact; that is what
 makes the induced bijection `C ≃ G ⧸ H` a homeomorphism in
 `TauCeti.exists_continuous_section`. -/
-theorem exists_isClosed_isComplement [CompactSpace G] [TotallyDisconnectedSpace G]
+theorem exists_isClosed_isComplement_left [CompactSpace G] [TotallyDisconnectedSpace G]
     (H : Subgroup G) (hH : IsClosed (H : Set G)) :
     ∃ C : Set G, IsClosed C ∧ Subgroup.IsComplement C (H : Set G) := by
   obtain ⟨m, hm, hmin⟩ : ∃ m : Subgroup G × Set G, IsCosetSelection H m.1 m.2 ∧
@@ -214,6 +216,8 @@ theorem exists_isClosed_isComplement [CompactSpace G] [TotallyDisconnectedSpace 
     rwa [hbot, Subgroup.mem_bot] at this
   exact Subtype.ext (inv_mul_eq_one.mp this).symm
 
+end Subgroup
+
 /-- **Continuous sections of profinite quotients** (Ribes-Zalesskii, Proposition 2.2.2). For a
 closed subgroup `H` of a profinite group `G` the quotient map `G → G ⧸ H` has a continuous section
 sending the identity coset to `1`. This is the statement that the transgression of a five-term
@@ -224,16 +228,16 @@ theorem exists_continuous_section [CompactSpace G] [TotallyDisconnectedSpace G]
     (H : Subgroup G) (hH : IsClosed (H : Set G)) :
     ∃ s : G ⧸ H → G, Continuous s ∧ (∀ x : G ⧸ H, (QuotientGroup.mk (s x) : G ⧸ H) = x) ∧
       s (QuotientGroup.mk 1) = 1 := by
-  obtain ⟨C, hCclosed, hC⟩ := exists_isClosed_isComplement H hH
+  obtain ⟨C, hCclosed, hC⟩ := Subgroup.exists_isClosed_isComplement_left H hH
   have : IsClosed (H : Set G) := hH
   have : CompactSpace C := isCompact_iff_compactSpace.mp hCclosed.isCompact
-  have hbij : Function.Bijective fun x : C => (QuotientGroup.mk (x : G) : G ⧸ H) :=
-    Subgroup.isComplement_subgroup_right_iff_bijective.mp hC
   have hcont : Continuous fun x : C => (QuotientGroup.mk (x : G) : G ⧸ H) :=
     QuotientGroup.continuous_mk.comp continuous_subtype_val
-  let e : C ≃ₜ G ⧸ H := Continuous.homeoOfEquivCompactToT2 (f := Equiv.ofBijective _ hbij) hcont
+  let e : C ≃ₜ G ⧸ H :=
+    Continuous.homeoOfEquivCompactToT2 (f := hC.leftQuotientEquiv.symm) hcont
   set s₀ : G ⧸ H → G := fun q => ((e.symm q : C) : G)
-  have hs₀sec : ∀ q, (QuotientGroup.mk (s₀ q) : G ⧸ H) = q := fun q => e.apply_symm_apply q
+  have hs₀sec : ∀ q, (QuotientGroup.mk (s₀ q) : G ⧸ H) = q :=
+    hC.quotientGroupMk_leftQuotientEquiv
   have hmem : s₀ (QuotientGroup.mk 1) ∈ H := by
     have := hs₀sec (QuotientGroup.mk 1)
     rw [QuotientGroup.eq, mul_one] at this
@@ -244,7 +248,7 @@ theorem exists_continuous_section [CompactSpace G] [TotallyDisconnectedSpace G]
       = QuotientGroup.mk (s₀ q) := (QuotientGroup.eq.mpr (by simpa using H.inv_mem hmem)).symm
     _ = q := hs₀sec q
 
-/-- **The continuous section of a projection between profinite quotients.** For subgroups
+/-- **The continuous section of a projection between quotients of a profinite group.** For subgroups
 `K ≤ H` of a profinite group with `H` closed, the projection `G ⧸ K → G ⧸ H` has a continuous
 section normalized at the identity coset. -/
 theorem exists_continuous_section_of_le [CompactSpace G] [TotallyDisconnectedSpace G]
@@ -254,6 +258,6 @@ theorem exists_continuous_section_of_le [CompactSpace G] [TotallyDisconnectedSpa
       s (QuotientGroup.mk 1) = QuotientGroup.mk 1 := by
   obtain ⟨t, hcont, hsec, h1⟩ := exists_continuous_section H hH
   exact ⟨fun x => QuotientGroup.mk (t x), QuotientGroup.continuous_mk.comp hcont,
-    fun x => hsec x, by simp [h1]⟩
+    fun x => by rw [Subgroup.quotientMapOfLE_apply_mk]; exact hsec x, by simp [h1]⟩
 
 end TauCeti
