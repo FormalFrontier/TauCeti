@@ -46,12 +46,12 @@ open AlgebraicGeometry CategoryTheory TensorProduct WithConv
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u
+universe u w z
 
 attribute [local instance high] Algebra.toModule
 
 variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
-variable {I κ : Type}
+variable {I : Type w} {κ : Type z}
 variable {V : Type} [AddCommGroup V] [Module ℚ V]
 
 variable (e : I → L) (h : κ → L)
