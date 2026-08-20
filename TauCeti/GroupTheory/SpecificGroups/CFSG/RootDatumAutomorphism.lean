@@ -67,6 +67,20 @@ def datumGraphAut :
     (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).Aut :=
   DynkinType.diagramAut d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry
 
+/-- The weight map of the root-datum graph automorphism permutes the fundamental-weight
+coordinates by the diagram permutation of the index. -/
+@[simp] theorem datumGraphAut_weightMap :
+    d.datumGraphAut.toHom.weightMap =
+      (LinearEquiv.funCongrLeft ℤ ℤ d.diagramPerm.symm).toLinearMap := by
+  rw [datumGraphAut, DynkinType.diagramAut_weightMap]
+
+/-- The coweight map of the root-datum graph automorphism permutes the simple-coroot coordinates by
+the diagram permutation of the index. -/
+@[simp] theorem datumGraphAut_coweightMap :
+    d.datumGraphAut.toHom.coweightMap =
+      (LinearEquiv.funCongrLeft ℤ ℤ d.diagramPerm).toLinearMap := by
+  rw [datumGraphAut, DynkinType.diagramAut_coweightMap]
+
 /-- The root-datum graph automorphism permutes the Bourbaki-numbered simple roots by the diagram
 permutation of the index. -/
 @[simp] theorem datumGraphAut_indexEquiv_simpleIndex (i : Fin d.1.rank) :
@@ -83,6 +97,17 @@ theorem root_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
         (d.diagramPerm.symm j) := by
   rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
   exact DynkinType.root_diagramRootPerm d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry k
+
+/-- Every coroot of the pinned datum has its simple-coroot coordinates permuted by the diagram
+permutation of the index. -/
+theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
+    (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
+        (d.datumGraphAut.indexEquiv k) =
+      fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot k
+        (d.diagramPerm.symm j) := by
+  rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
+  exact DynkinType.coroot_diagramRootPerm d.1.dynkinType_valid
+    d.diagramPerm_mem_diagramSymmetry k
 
 /-- **The order relation of the root-datum graph automorphism.** This is `γ ^ 2 = 1` for `²Aₙ`,
 `²Dₙ` and `²E₆`, `γ ^ 3 = 1` for `³D₄`, and the trivial relation on an untwisted family, all read

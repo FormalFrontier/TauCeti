@@ -153,7 +153,7 @@ numbering of the simple roots. -/
 
 /-- The weight map of the rational automorphism is the permutation of the fundamental-weight
 coordinates. -/
-private theorem weightMap_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
+@[simp] theorem weightMap_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
     (rationalDiagramAut ht hσ).toHom.weightMap =
       (LinearEquiv.funCongrLeft ℚ ℚ σ.symm).toLinearMap := by
   apply (t.rationalBase ht).toWeightBasis.ext
@@ -182,7 +182,7 @@ theorem root_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoot
 
 /-- The inverse coweight map of the rational automorphism is the permutation of the simple-coroot
 coordinates. -/
-private theorem coweightEquiv_symm_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
+@[simp] theorem coweightEquiv_symm_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
     ((RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht) (t.rationalRootSystem ht)
         (rationalDiagramAut ht hσ)).symm : _ →ₗ[ℚ] _) =
       (LinearEquiv.funCongrLeft ℚ ℚ σ.symm).toLinearMap := by
