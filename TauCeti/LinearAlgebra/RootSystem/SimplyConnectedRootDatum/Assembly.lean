@@ -340,17 +340,17 @@ private theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
   | E6 =>
     change Fin 6 at i
     rw [simplyConnectedRootDatum_E6, simpleIndex_E6, cartanMatrix_E6]
-    change e6SimplyConnectedRootDatum.root (e6SimpleIndex i) = CartanMatrix.E₆ i
+    change e6SimplyConnectedRootDatum.root (e6SimpleIndex i) = CartanMatrix.E 6 i
     rw [e6SimplyConnectedRootDatum_root, root_e6SimpleIndex]
   | E7 =>
     change Fin 7 at i
     rw [simplyConnectedRootDatum_E7, simpleIndex_E7, cartanMatrix_E7]
-    change e7SimplyConnectedRootDatum.root (e7SimpleIndex i) = CartanMatrix.E₇ i
+    change e7SimplyConnectedRootDatum.root (e7SimpleIndex i) = CartanMatrix.E 7 i
     rw [e7SimplyConnectedRootDatum_root, root_e7SimpleIndex]
   | E8 =>
     change Fin 8 at i
     rw [simplyConnectedRootDatum_E8, simpleIndex_E8, cartanMatrix_E8]
-    change e8SimplyConnectedRootDatum.root (e8SimpleIndex i) = CartanMatrix.E₈ i
+    change e8SimplyConnectedRootDatum.root (e8SimpleIndex i) = CartanMatrix.E 8 i
     rw [e8SimplyConnectedRootDatum_root, root_e8SimpleIndex]
   | F4 =>
     change Fin 4 at i

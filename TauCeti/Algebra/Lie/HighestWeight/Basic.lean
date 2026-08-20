@@ -51,6 +51,8 @@ combination of the simple coroots.
   root space* annihilates `v`, the positive nilradical being spanned by them.
 * `TauCeti.IsHighestWeightVector.unique`: a vector is a highest weight vector for at most one
   weight.
+* `TauCeti.IsHighestWeightVector.map` and `TauCeti.IsHighestWeightVector.congr`: morphisms with
+  nonzero image, and in particular equivalences, preserve highest weight vectors and their weights.
 * `TauCeti.IsHighestWeightVector.mem_genWeightSpace` and
   `TauCeti.IsHighestWeightVector.weight`: a highest weight vector really does exhibit `lam` as a
   weight of `M`, so the vocabulary is not vacuous.
@@ -90,7 +92,7 @@ namespace TauCeti
 
 open LieAlgebra LieModule Module
 
-universe u v w
+universe u v w w₁
 
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [IsKilling K L] [FiniteDimensional K L]
@@ -136,6 +138,22 @@ theorem lie_eq_smul (hv : IsHighestWeightVector b lam v) (x : H) : ⁅(x : L), v
 theorem lie_eq_zero_of_mem_positiveNilradical (hv : IsHighestWeightVector b lam v) {x : L}
     (hx : x ∈ positiveNilradical H b) : ⁅x, v⁆ = 0 :=
   (isHighestWeightVector_iff.mp hv).2.2 x hx
+
+variable {N : Type w₁} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
+
+/-- A morphism of Lie modules preserves a highest weight vector and its weight whenever its image
+is nonzero. -/
+theorem map (hv : IsHighestWeightVector b lam v) (f : M →ₗ⁅K,L⁆ N) (hf : f v ≠ 0) :
+    IsHighestWeightVector b lam (f v) := by
+  refine isHighestWeightVector_iff.mpr ⟨hf, fun x => ?_, fun x hx => ?_⟩
+  · rw [← f.map_lie, hv.lie_eq_smul x, map_smul]
+  · rw [← f.map_lie, hv.lie_eq_zero_of_mem_positiveNilradical hx, map_zero]
+
+/-- An equivalence of Lie modules preserves highest weight vectors and their weights. -/
+theorem congr (hv : IsHighestWeightVector b lam v) (e : M ≃ₗ⁅K,L⁆ N) :
+    IsHighestWeightVector b lam (e v) :=
+  hv.map (e : M →ₗ⁅K,L⁆ N) fun h =>
+    hv.ne_zero (e.injective (h.trans (map_zero e).symm))
 
 /-- Every positive root space annihilates a highest weight vector. -/
 theorem lie_eq_zero_of_mem_rootSpace (hv : IsHighestWeightVector b lam v) {α : H.root}
