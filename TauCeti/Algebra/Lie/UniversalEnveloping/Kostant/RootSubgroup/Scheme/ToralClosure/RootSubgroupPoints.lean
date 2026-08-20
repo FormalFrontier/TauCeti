@@ -5,7 +5,8 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Points
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
 
 /-!
 # Root subgroups on points of the toral Kostant closure
@@ -94,6 +95,7 @@ private theorem kostantRootSubgroupToralPoints_apply_def (i : I) (A : CommAlgCat
   rfl
 
 /-- The intrinsic root-subgroup point map is precomposition by its factored coordinate map. -/
+@[simp]
 theorem kostantRootSubgroupToralPoints_apply (i : I) (A : CommAlgCat.{v} ℤ)
     (q : HopfAlgebra.points
       (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) A) :
@@ -104,6 +106,7 @@ theorem kostantRootSubgroupToralPoints_apply (i : I) (A : CommAlgCat.{v} ℤ)
 
 /-- Including an intrinsic toral-closure root point into the ambient general linear group recovers
 the original represented root-subgroup point. -/
+@[simp]
 theorem quotientPointsHom_kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat.{v} ℤ)
     (q : HopfAlgebra.points
       (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) A) :
@@ -119,6 +122,8 @@ theorem quotientPointsHom_kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat
     kostantRootSubgroupToralPoints_apply,
     CommHopfAlgCat.mapPointsFunctor_app_apply_apply,
     CommHopfAlgCat.mapPointsFunctor_app_apply_apply]
+  -- Evaluating the point and removing `WithConv` leaves categorical composition, whose
+  -- underlying algebra homomorphism is definitionally `AlgHom.comp`.
   change q.ofConv
       (((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
         (kostantToralDefiningIdeal e h ρ M hM hnil b wt) ≫
@@ -126,7 +131,11 @@ theorem quotientPointsHom_kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat
   rw [mkQuotient_comp_kostantRootSubgroupToralCoordinateMap]
 
 /-- In general-linear coordinates, the intrinsic root point is the divided-power exponential
-matrix previously attached to the represented Kostant root subgroup. -/
+matrix previously attached to the represented Kostant root subgroup.
+
+This is not a simp lemma because `GeneralLinear.pointsMulEquiv_apply` first normalizes its
+left-hand side to `GeneralLinear.pointToGeneralLinear`; use it explicitly when that matrix form is
+needed. -/
 theorem pointsMulEquiv_quotientPointsHom_kostantRootSubgroupToralPoints
     (i : I) (A : Type v) [CommRing A]
     (q : HopfAlgebra.points
@@ -162,6 +171,7 @@ private theorem kostantRootSubgroupToralParam_apply_def (i : I) (A : CommAlgCat.
 
 /-- The parametrized intrinsic root subgroup is the point map evaluated on the corresponding
 point of `𝔾ₐ`. -/
+@[simp]
 theorem kostantRootSubgroupToralParam_apply (i : I) (A : CommAlgCat.{v} ℤ)
     (t : Multiplicative A) :
     kostantRootSubgroupToralParam e h ρ M hM hnil b wt i A t =
@@ -170,6 +180,7 @@ theorem kostantRootSubgroupToralParam_apply (i : I) (A : CommAlgCat.{v} ℤ)
   kostantRootSubgroupToralParam_apply_def e h ρ M hM hnil b wt i A t
 
 /-- The intrinsic root-subgroup point map is natural in the value algebra. -/
+@[simp]
 theorem mapPoints_kostantRootSubgroupToralPoints
     (i : I) {A B : CommAlgCat.{v} ℤ} (φ : A ⟶ B)
     (q : HopfAlgebra.points
@@ -184,6 +195,7 @@ theorem mapPoints_kostantRootSubgroupToralPoints
 
 /-- Base change sends the intrinsic root element with parameter `t` to the root element whose
 parameter is the image of `t`. -/
+@[simp]
 theorem mapPoints_kostantRootSubgroupToralParam
     (i : I) {A B : CommAlgCat.{v} ℤ} (φ : A ⟶ B) (t : Multiplicative A) :
     HopfAlgebra.mapPoints φ
@@ -197,7 +209,8 @@ theorem mapPoints_kostantRootSubgroupToralParam
 
 /-- Iterated Frobenius preserves each intrinsic root subgroup and raises its parameter to the
 `p ^ m`-th power. Over an algebraic closure of `𝔽_p`, this is the root-subgroup compatibility of
-the standard `q`-power Frobenius. -/
+the standard `q`-power Frobenius. The general simp lemma
+`mapPoints_kostantRootSubgroupToralParam` already normalizes this specialization. -/
 theorem mapPoints_iterateFrobeniusValueHom_kostantRootSubgroupToralParam
     (i : I) (p m : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p]
     (t : Multiplicative A) :
