@@ -593,6 +593,10 @@ jobs:
           TARGET_TOOLCHAIN: ${{ steps.toolchain.outputs.target }}
           REV: ${{ needs.resolve.outputs.sha }}
           PLATFORM_INDEPENDENT: ${{ needs.resolve.outputs.platform-independent }}
+          # Bound here too: this step compares the published mapping against the staged one,
+          # and under `set -u` an unbound $STAGING fails every otherwise successful publish
+          # just before the tag is created.
+          STAGING: ${{ runner.temp }}/lake-cache-staging
           # What the build staged. It comes from the untrusted job, so it can only be read
           # as a floor: a build that understated it would weaken this check, not pass one it
           # should fail. What it does catch is the case that actually happens, a partial

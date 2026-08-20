@@ -71,41 +71,23 @@ class StagingBlock(unittest.TestCase):
             found[path.name] = matches[0]
         return found
 
-    def test_the_staging_commands_are_identical(self):
-        """The commands that decide WHAT is staged must not drift.
+    def test_the_staged_tree_validation_is_identical(self):
+        """The check that decides what an attacker-chosen artifact NAME can do.
 
-        An explicit list rather than the whole body, because the two publishers
-        legitimately differ on exactly one point: `ci.yml` FAILS when the lakefile does
-        not declare `platformIndependent`, since it only ever builds main, where its
-        absence would mean someone had removed it, while `release-tag.yml` reaches commits
-        from before TauCeti declared it at all and publishes those under the
-        platform-scoped key their own consumers derive. Listing the essential lines keeps
-        that one difference from being a licence for any other."""
-        essential = [
-            "lake build >/dev/null",
-            "lake build --no-build -o .lake/outputs.jsonl",
-            'echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"',
-            'lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"',
-            'TOOLCHAIN="$(lake env printenv ELAN_TOOLCHAIN || true)"',
-            "printf 'toolchain=%s\\n' \"$TOOLCHAIN\" >> \"$GITHUB_OUTPUT\"",
-            'echo "staged=true" >> "$GITHUB_OUTPUT"',
-        ]
-        found = self.matched(STAGE, "staging")
-        for name, block in found.items():
-            lines = [line.strip() for line in block.splitlines()]
-            for line in essential:
-                with self.subTest(workflow=name, line=line):
-                    self.assertIn(line, lines)
+        Lake joins an artifact name to the staging directory without confining the result,
+        so a name like `0.art/../../../proc/self/environ` would make it PUT the publish
+        job's environment, key included, into a publicly readable bucket. Both publishers
+        must refuse that equally; the weaker one decides."""
+        found = self.matched(VALIDATE, "staged-tree validation")
+        first, second = list(found.values())
+        self.assertEqual(first, second,
+                         "the staged-tree check differs between the publishers")
 
-    def test_the_lake_commands_are_the_same_set(self):
-        # Anything invoking `lake` inside the staging block decides what ends up staged, so
-        # neither publisher may gain or lose one without the other.
-        found = self.matched(STAGE, "staging")
-        sets = []
-        for block in found.values():
-            sets.append(sorted(line.strip() for line in block.splitlines()
-                               if line.strip().startswith("lake ")))
-        self.assertEqual(sets[0], sets[1])
+    def test_the_validation_keeps_the_artifact_name_pattern(self):
+        # Named explicitly, so relaxing the pattern cannot pass merely by relaxing it in
+        # both copies at once.
+        for path in PUBLISHERS:
+            self.assertIn(r"\A[0-9A-Za-z]+(\.[0-9A-Za-z]+)*\Z", body(path), path.name)
 
     # The two blocks are allowed to differ in exactly these ways and no others, and each is
     # pinned to its exact text. Matching the platform branch by a pattern would let
