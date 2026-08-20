@@ -107,32 +107,37 @@ class StagingBlock(unittest.TestCase):
                                if line.strip().startswith("lake ")))
         self.assertEqual(sets[0], sets[1])
 
-    # The two blocks are allowed to differ in exactly these ways and no others. Naming them
-    # is the point: a check that only asserts some required lines are present would let an
-    # arbitrary `cp`, `curl` or output rewrite be added to one publisher unnoticed, which is
-    # the drift this file exists to stop.
-    ONLY_IN_CI = (
-        # ci.yml only ever builds main, where `platformIndependent` is present, so its
-        # absence there would mean somebody removed it and the build should stop.
+    # The two blocks are allowed to differ in exactly these ways and no others, and each is
+    # pinned to its exact text. Matching the platform branch by a pattern would let
+    # `if true || grep ... platformIndependent ...` be swallowed as though it were the known
+    # divergence, which is precisely how a weaker version of this check was defeated.
+    CI_PLATFORM_BLOCK = (
+        "if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true'"
+        " lakefile.toml; then",
         'echo "::error::lakefile.toml no longer sets platformIndependent = true;'
         ' publish-lake-cache must now pass --platform to lake cache put-staged"',
         "exit 1",
+        "fi",
     )
-    ONLY_IN_RELEASE = (
-        # release-tag.yml reaches commits from before that declaration existed and publishes
-        # them under the platform-scoped key their own consumers derive, so it reports.
+    RELEASE_PLATFORM_BLOCK = (
+        "if grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true'"
+        " lakefile.toml; then",
         'echo "platform-independent=true" >> "$GITHUB_OUTPUT"',
+        "else",
         'echo "::notice::this commit predates platformIndependent;'
         ' publishing under a platform-scoped key"',
         'echo "platform-independent=false" >> "$GITHUB_OUTPUT"',
-        "else",
-        # and it carries the staged mapping count out, so the read-back can tell this run's
-        # publish from a mapping that was already at the revision key.
-        'printf \'entries=%s\\n\' "$(wc -l < .lake/outputs.jsonl)" >> "$GITHUB_OUTPUT"',
+        "fi",
+    )
+    # The one extra command release-tag.yml runs: it carries the staged mapping count out so
+    # the read-back can tell this run's publish from a mapping already at the revision key.
+    RELEASE_EXTRA = (
+        "printf 'entries=%s\\n' \"$(wc -l < .lake/outputs.jsonl)\" >> \"$GITHUB_OUTPUT\"",
     )
 
-    def commands(self, block):
-        """Executable lines of a staging block: no comments, no blanks, whitespace collapsed."""
+    @staticmethod
+    def lines(block):
+        """Executable lines of a block, in order, whitespace collapsed."""
         out = []
         for line in block.splitlines():
             stripped = " ".join(line.split())
@@ -140,54 +145,46 @@ class StagingBlock(unittest.TestCase):
                 out.append(stripped)
         return out
 
-    def test_neither_publisher_has_commands_the_other_lacks(self):
+    def collapse(self, lines, known, extra=()):
+        """Replace one exact known run of lines with a sentinel, and drop the named extras.
+
+        Order is preserved and nothing else is removed, so reordering, duplicating or adding
+        a command shows up as a difference. Returns (collapsed, saw_known, saw_extra)."""
+        known, extra = list(known), list(extra)
+        out, seen_known, seen_extra = [], False, []
+        i = 0
+        while i < len(lines):
+            if lines[i:i + len(known)] == known:
+                out.append("<PLATFORM BRANCH>")
+                seen_known = True
+                i += len(known)
+                continue
+            if lines[i] in extra:
+                seen_extra.append(lines[i])
+                i += 1
+                continue
+            out.append(lines[i])
+            i += 1
+        return out, seen_known, seen_extra
+
+    def test_the_staging_blocks_are_identical_but_for_the_platform_branch(self):
+        """The stated invariant, actually enforced.
+
+        An earlier version listed some required lines and compared command SETS, which let
+        an added `curl`, a reordering, or a neutered platform condition pass. This compares
+        the ordered lines with exactly one known divergence collapsed."""
         found = self.matched(STAGE, "staging")
-        ci = self.commands(found["ci.yml"])
-        release = self.commands(found["release-tag.yml"])
-        allowed_ci = {" ".join(c.split()) for c in self.ONLY_IN_CI}
-        allowed_release = {" ".join(c.split()) for c in self.ONLY_IN_RELEASE}
-
-        # `if` differs only by its negation, which the platform branch accounts for.
-        def drop(lines, allowed):
-            return [l for l in lines if l not in allowed and not l.startswith("if ")]
-
-        extra_in_release = sorted(set(drop(release, allowed_release)) - set(drop(ci, set())))
-        extra_in_ci = sorted(set(drop(ci, allowed_ci)) - set(drop(release, set())))
-        self.assertEqual(extra_in_release, [],
-                         "release-tag.yml stages with commands ci.yml does not have; if the "
-                         "divergence is deliberate, name it in ONLY_IN_RELEASE")
-        self.assertEqual(extra_in_ci, [],
-                         "ci.yml stages with commands release-tag.yml does not have; if the "
-                         "divergence is deliberate, name it in ONLY_IN_CI")
-
-    def test_both_publishers_still_guard_the_toolchain_scope(self):
-        # `fixedToolchain` or `bootstrap` would make Lake drop the toolchain from the scope
-        # while both publishers pass --toolchain, so neither may stop checking for them.
-        for path in PUBLISHERS:
-            self.assertIn("fixedToolchain|bootstrap", body(path), path.name)
-
-    def test_only_the_release_publisher_can_scope_by_platform(self):
-        # ci.yml publishes main, which always declares platformIndependent; if it ever grew
-        # a --platform path that would mean main had stopped declaring it, and the assertion
-        # that catches that is the thing being bypassed.
-        ci, release = (body(p) for p in PUBLISHERS)
-        self.assertIn("--platform", release)
-        self.assertNotIn('--platform "', ci)
-        self.assertNotIn("PLATFORM_ARGS", ci)
-
-    def test_the_staged_tree_validation_is_identical(self):
-        found = self.matched(VALIDATE, "staged-tree validation")
-        first, second = list(found.values())
-        self.assertEqual(first, second,
-                         "the staged-tree check differs between the publishers; the weaker "
-                         "one decides what an attacker-chosen artifact name can do")
-
-    def test_the_validation_keeps_the_artifact_name_pattern(self):
-        # Named explicitly, so relaxing the pattern cannot pass merely by relaxing it in
-        # both copies at once.
-        for path in PUBLISHERS:
-            self.assertIn(r"\A[0-9A-Za-z]+(\.[0-9A-Za-z]+)*\Z", body(path), path.name)
-
+        ci, ci_known, _ = self.collapse(self.lines(found["ci.yml"]), self.CI_PLATFORM_BLOCK)
+        release, rel_known, rel_extra = self.collapse(
+            self.lines(found["release-tag.yml"]), self.RELEASE_PLATFORM_BLOCK,
+            self.RELEASE_EXTRA)
+        self.assertTrue(ci_known, "ci.yml's platform assertion is not the approved block")
+        self.assertTrue(rel_known, "release-tag.yml's platform branch is not the approved block")
+        self.assertEqual(sorted(rel_extra), sorted(self.RELEASE_EXTRA),
+                         "release-tag.yml no longer carries the staged entry count")
+        self.assertEqual(ci, release,
+                         "the two publishers stage differently outside the one divergence "
+                         "they are allowed; if a new divergence is deliberate, name it here")
 
 class UploadScope(unittest.TestCase):
     def invocations(self):

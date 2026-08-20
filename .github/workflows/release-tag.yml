@@ -127,7 +127,7 @@ jobs:
                        --jq '[.protection_rules[].type] | sort | join(",")')" \
               || { echo "::error::cannot read the $env environment; it may have been deleted or renamed, and a missing one is recreated with no rules"; exit 1; }
             names="$(gh api "repos/$REPO/environments/$env/deployment-branch-policies" \
-                       --jq '[.branch_policies[].name] | sort | join(",")')" \
+                       --jq '[.branch_policies[] | select(.type == "branch") | .name] | sort | join(",")')" \
               || { echo "::error::cannot read $env's deployment branch policies"; exit 1; }
             echo "$env: rules=[$rules] branches=[$names]"
             case ",$rules," in
@@ -141,7 +141,7 @@ jobs:
             # "protected branches" is not the same as main-only, and can admit every branch
             # when no branch protection exists, so require the custom policy to be exactly main.
             [ "$names" = "main" ] \
-              || { echo "::error::$env admits deployments from [$names], not from main alone"; exit 1; }
+              || { echo "::error::$env admits deployments from branch policies [$names], not from the main branch alone (a policy of type tag named main does not count)"; exit 1; }
           done
 
       - name: Validate the target and its release
@@ -626,24 +626,18 @@ jobs:
           # comparing against a count the build job reported, because it is the only way to
           # tell "this run published this mapping" from "a mapping was already at this key",
           # which is the normal state for a main commit ci.yml has already published.
-          staged_map="$(find "$STAGING" -maxdepth 1 -name '*.jsonl' -type f | head -2)"
-          if [ "$(printf '%s\n' "$staged_map" | grep -c .)" = 1 ]; then
-            if diff -q "$staged_map" "$RUNNER_TEMP/revision.jsonl" >/dev/null; then
-              echo "the published mapping is byte-identical to the one this run staged"
-            else
-              echo "::error::the published mapping differs from the one this run staged; the upload was partial, or an older mapping is still at that key"
-              exit 1
-            fi
-          else
-            # Fall back to the count, and say plainly that it is the weaker check.
-            echo "::warning::could not identify a single staged mapping file; falling back to an entry count, which cannot distinguish this run's mapping from one already at that key"
-            case "${STAGED_ENTRIES:-}" in
-              ''|*[!0-9]*) echo "::warning::the build reported no staged entry count either; only checking that the mapping is non-empty" ;;
-              *) [ "$entries" -ge "$STAGED_ENTRIES" ] || {
-                   echo "::error::the published mapping has $entries entries but this run staged $STAGED_ENTRIES"
-                   exit 1; } ;;
-            esac
-          fi
+          # `lake cache stage` writes the mappings to one fixed name. Anything else in the
+          # staging tree came from the untrusted build job, and there is no count to fall
+          # back on: a count cannot tell this run's mapping from one already at the key,
+          # which is the whole hole this comparison exists to close.
+          extra="$(find "$STAGING" -maxdepth 1 -name '*.jsonl' -type f ! -name outputs.jsonl)"
+          [ -z "$extra" ] \
+            || { echo "::error::unexpected .jsonl files in the staging tree: $extra"; exit 1; }
+          [ -f "$STAGING/outputs.jsonl" ] \
+            || { echo "::error::the staging tree has no outputs.jsonl, so there is nothing to compare the published mapping against"; exit 1; }
+          diff -q "$STAGING/outputs.jsonl" "$RUNNER_TEMP/revision.jsonl" >/dev/null \
+            || { echo "::error::the published mapping differs from the one this run staged; the upload was partial, or an older mapping is still at that key"; exit 1; }
+          echo "the published mapping is byte-identical to the one this run staged"
           python3 - "$RUNNER_TEMP/revision.jsonl" > "$RUNNER_TEMP/hashes" <<'PY'
           import json, re, sys
 

@@ -97,6 +97,13 @@ jobs:
 
   one:
     needs: plan
+    # A called workflow cannot elevate beyond what its caller grants, so the caller has to
+    # grant everything the callee's jobs ask for. `actions: read` is what resolve needs to
+    # read the publish and tag environments' protection rules; without it here the whole
+    # dispatch fails workflow validation rather than any individual job.
+    permissions:
+      contents: read
+      actions: read
     strategy:
       # One failing release must not abandon the rest: each is independent, and a release
       # that cannot be built is a fact to record rather than a reason to stop.
