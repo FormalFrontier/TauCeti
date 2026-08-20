@@ -6,14 +6,15 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.BaseChange
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Borel
 
 /-!
-# Base change of the toral Kostant closure
+# Base change of a toral Kostant subsystem
 
-The toral Kostant closure over `ℤ` is the closed subgroup scheme of `GLₙ` generated jointly by
-the represented root subgroups and a represented split torus. Its coordinate ring is the
-general-linear coordinate Hopf algebra modulo the `Set.univ` toral-subsystem defining ideal.
+For a set `S` of root indices, its toral Kostant subsystem over `ℤ` is the closed subgroup scheme
+of `GLₙ` generated jointly by the represented root subgroups indexed by `S` and a represented split
+torus. Its coordinate ring is the general-linear coordinate Hopf algebra modulo the corresponding
+toral-subsystem defining ideal.
 
 This file transports that presentation along `ℤ → A`. The base-changed defining ideal cuts out
 the specialized carrier, its quotient is canonically the base change of the original coordinate
@@ -26,9 +27,9 @@ algebras constructed directly over `A` is the next, independent comparison step.
 ## Main declarations
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangeIdeal`: the base change of the ideal
-  defining the toral closure.
+  defining the toral subsystem.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangeIso`: the quotient by that ideal is
-  the base change of the toral closure's coordinate ring.
+  the base change of the toral subsystem's coordinate ring.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToralBaseChangeCoordinateMap`: the
   base-changed factored root-subgroup map.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToralBaseChangeCoordinateMap`: the
@@ -61,97 +62,93 @@ variable (e : I → L) (h : κ → L)
 variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
 variable (M : AddSubgroup V)
 variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
-variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+variable (S : Set I)
+variable (hnil : ∀ i ∈ S, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 variable (A : Type*) [CommRing A]
 
-/-- The base change along `ℤ → A` of the Hopf ideal defining the toral Kostant closure. -/
+/-- The base change along `ℤ → A` of the Hopf ideal defining the toral Kostant subsystem. -/
 noncomputable def kostantToralBaseChangeIdeal :
     HopfIdeal A
       (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n)) :=
   CommHopfAlgCat.baseChangeHopfIdeal
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ (fun i _ ↦ hnil i))
+    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
 
-/-- The specialized defining ideal is the generic base change of the ideal of the toral closure
+/-- The specialized defining ideal is the generic base change of the ideal of the toral subsystem
 over `ℤ`. -/
 @[simp]
 theorem kostantToralBaseChangeIdeal_def :
-    kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A =
+    kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A =
       CommHopfAlgCat.baseChangeHopfIdeal
-        (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
-          (fun i _ ↦ hnil i)) := by
+        (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil) := by
   unfold kostantToralBaseChangeIdeal
   rfl
 
 /-- Quotienting by the specialized toral ideal agrees with base-changing the coordinate ring of
-the toral closure. -/
+the toral subsystem. -/
 noncomputable def kostantToralBaseChangeIso :
     CommHopfAlgCat.quotient
         (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-        (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) ≅
+        (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A) ≅
       CommHopfAlgCat.baseChange (K := A)
         (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
-            (fun i _ ↦ hnil i))) :=
+          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)) :=
   CommHopfAlgCat.quotientBaseChangeIso
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ (fun i _ ↦ hnil i))
+    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
 
 /-- The base-change identification is compatible with the quotient morphism presenting the toral
-closure over `ℤ`. -/
+subsystem over `ℤ`. -/
 @[simp]
 theorem mkQuotient_comp_kostantToralBaseChangeIso_hom :
     CommHopfAlgCat.mkQuotient
           (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-          (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) ≫
-        (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).hom =
+          (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A) ≫
+        (kostantToralBaseChangeIso e h ρ M hM S hnil b wt A).hom =
       CommHopfAlgCat.baseChangeMap
         (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
-            (fun i _ ↦ hnil i))) := by
+          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)) := by
   unfold kostantToralBaseChangeIdeal kostantToralBaseChangeIso
   exact CommHopfAlgCat.mkQuotient_comp_quotientBaseChangeIso_hom (K := A)
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ (fun i _ ↦ hnil i))
+    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
 
 /-- The `i`th factored root-subgroup coordinate map after base change: the base change of the map
-into the toral closure, read through its specialized quotient presentation. -/
-noncomputable def kostantRootSubgroupToralBaseChangeCoordinateMap (i : I) :
+into the toral subsystem, read through its specialized quotient presentation. -/
+noncomputable def kostantRootSubgroupToralBaseChangeCoordinateMap (i : S) :
     CommHopfAlgCat.quotient
         (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-        (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) ⟶
+        (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A) ⟶
       CommHopfAlgCat.baseChange (K := A) (AdditiveGroup.coordinateHopfAlgebra ℤ) :=
-  (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).hom ≫
+  (kostantToralBaseChangeIso e h ρ M hM S hnil b wt A).hom ≫
     CommHopfAlgCat.baseChangeMap
-      (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt Set.univ
-        (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩)
+      (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt S hnil i)
 
 /-- The specialized quotient map followed by the factored root-subgroup map is the base change of
 the original represented root-subgroup coordinate map. -/
 @[simp]
-theorem mkQuotient_comp_kostantRootSubgroupToralBaseChangeCoordinateMap (i : I) :
+theorem mkQuotient_comp_kostantRootSubgroupToralBaseChangeCoordinateMap (i : S) :
     CommHopfAlgCat.mkQuotient
           (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-          (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) ≫
-        kostantRootSubgroupToralBaseChangeCoordinateMap e h ρ M hM hnil b wt A i =
+          (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A) ≫
+        kostantRootSubgroupToralBaseChangeCoordinateMap e h ρ M hM S hnil b wt A i =
       CommHopfAlgCat.baseChangeMap
-        (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
+        (kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnil i.1 i.2) b) := by
   rw [kostantRootSubgroupToralBaseChangeCoordinateMap, ← Category.assoc,
     mkQuotient_comp_kostantToralBaseChangeIso_hom,
     ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
     mkQuotient_comp_kostantRootSubgroupToralSubsystemCoordinateMap]
 
 /-- The factored weight-torus coordinate map after base change: the base change of the map into
-the toral closure, read through its specialized quotient presentation. -/
+the toral subsystem, read through its specialized quotient presentation. -/
 noncomputable def kostantWeightTorusToralBaseChangeCoordinateMap :
     CommHopfAlgCat.quotient
         (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-        (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) ⟶
+        (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A) ⟶
       CommHopfAlgCat.baseChange (K := A)
         (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj :=
-  (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).hom ≫
+  (kostantToralBaseChangeIso e h ρ M hM S hnil b wt A).hom ≫
     CommHopfAlgCat.baseChangeMap
-      (kostantWeightTorusToralSubsystemCoordinateMap e h ρ M hM b wt Set.univ
-        (fun i _ ↦ hnil i))
+      (kostantWeightTorusToralSubsystemCoordinateMap e h ρ M hM b wt S hnil)
 
 /-- The specialized quotient map followed by the factored weight-torus map is the base change of
 the original represented weight-torus coordinate map. -/
@@ -159,8 +156,8 @@ the original represented weight-torus coordinate map. -/
 theorem mkQuotient_comp_kostantWeightTorusToralBaseChangeCoordinateMap :
     CommHopfAlgCat.mkQuotient
           (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-          (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) ≫
-        kostantWeightTorusToralBaseChangeCoordinateMap e h ρ M hM hnil b wt A =
+          (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A) ≫
+        kostantWeightTorusToralBaseChangeCoordinateMap e h ρ M hM S hnil b wt A =
       CommHopfAlgCat.baseChangeMap (GeneralLinear.weightTorusCoordinateMap wt) := by
   rw [kostantWeightTorusToralBaseChangeCoordinateMap, ← Category.assoc,
     mkQuotient_comp_kostantToralBaseChangeIso_hom,
@@ -168,27 +165,26 @@ theorem mkQuotient_comp_kostantWeightTorusToralBaseChangeCoordinateMap :
     mkQuotient_comp_kostantWeightTorusToralSubsystemCoordinateMap]
 
 /-- Every base-changed represented root-subgroup map kills the specialized toral defining ideal. -/
-theorem kostantToralBaseChangeIdeal_toIdeal_le_root_ker (i : I) :
-    (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A).toIdeal ≤
+theorem kostantToralBaseChangeIdeal_toIdeal_le_root_ker (i : S) :
+    (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A).toIdeal ≤
       RingHom.ker
         (CommHopfAlgCat.baseChangeMap (K := A)
-          (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).hom.toAlgHom.toRingHom :=
+          (kostantRootSubgroupCoordinateMap e h ρ M hM i.1
+            (hnil i.1 i.2) b)).hom.toAlgHom.toRingHom :=
   CommHopfAlgCat.baseChangeHopfIdeal_toIdeal_le_ker_baseChangeMap
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ (fun j _ ↦ hnil j))
-    (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
-    (kostantToralSubsystemDefiningIdeal_toIdeal_le_root_ker e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩)
+    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
+    (kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnil i.1 i.2) b)
+    (kostantToralSubsystemDefiningIdeal_toIdeal_le_root_ker e h ρ M hM b wt S hnil i)
 
 /-- The base-changed represented weight-torus map kills the specialized toral defining ideal. -/
 theorem kostantToralBaseChangeIdeal_toIdeal_le_torus_ker :
-    (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A).toIdeal ≤
+    (kostantToralBaseChangeIdeal e h ρ M hM S hnil b wt A).toIdeal ≤
       RingHom.ker
         (CommHopfAlgCat.baseChangeMap (K := A)
           (GeneralLinear.weightTorusCoordinateMap wt)).hom.toAlgHom.toRingHom :=
   CommHopfAlgCat.baseChangeHopfIdeal_toIdeal_le_ker_baseChangeMap
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ (fun i _ ↦ hnil i))
+    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
     (GeneralLinear.weightTorusCoordinateMap wt)
-    (kostantToralSubsystemDefiningIdeal_toIdeal_le_torus_ker e h ρ M hM b wt Set.univ
-      (fun i _ ↦ hnil i))
+    (kostantToralSubsystemDefiningIdeal_toIdeal_le_torus_ker e h ρ M hM b wt S hnil)
 
 end TauCeti.UniversalEnvelopingAlgebra

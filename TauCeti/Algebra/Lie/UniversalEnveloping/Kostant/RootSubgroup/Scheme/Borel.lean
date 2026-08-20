@@ -26,10 +26,11 @@ root-subgroup factorization remains a closed immersion under the same root-step 
 for the full generated carrier.
 
 When `S` is the set of positive roots, this is the scheme-level carrier corresponding to the
-pointwise solvable group `kostantTorusSubsystemSubgroup` constructed in
-`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel`. No maximal-solvability or
-Borel assertion is made here; those geometric statements remain necessary before this carrier can
-be used as the Borel component of a pinning.
+pointwise group `kostantTorusSubsystemSubgroup` constructed in
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel`, which is solvable under the
+bounded-height grading hypotheses of `isSolvable_kostantTorusSubsystemSubgroup`. No
+maximal-solvability or Borel assertion is made here; those geometric statements remain necessary
+before this carrier can be used as the Borel component of a pinning.
 
 ## Main declarations
 
