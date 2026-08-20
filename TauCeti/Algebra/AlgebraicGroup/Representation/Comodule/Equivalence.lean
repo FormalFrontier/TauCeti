@@ -173,7 +173,7 @@ theorem pointRepresentationCategoryEquivalence_functor :
 
 /-- The inverse equivalence sends a comodule to its associated point representation, up to the
 canonical isomorphism selected by `Functor.inv`. -/
-noncomputable def pointRepresentationCategoryEquivalence_inverse_obj_iso_ofComodule
+noncomputable def pointRepresentationCategoryEquivalence.inverseObjIsoOfComodule
     (M : ComoduleCat.{u, v, w} R H) :
     (pointRepresentationCategoryEquivalence R H).inverse.obj M ≅
       PointRepresentationCat.ofComodule R H M := by
