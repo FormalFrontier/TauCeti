@@ -10,14 +10,19 @@ public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Basic
 /-!
 # Base change of group-scheme isogenies
 
-This file proves that isogenies of group schemes over a field remain isogenies after base change
-along a morphism between spectra of fields. The point groups before and after base change are
-identified through the pullback adjunction, which shows that central kernels remain central. For a
-commutative source, the base-changed isogeny is central without any centrality hypothesis. The
-group-scheme base change is the pullback functor on the over category, lifted to group objects.
+This file proves that central kernels of group-scheme morphisms remain central after arbitrary
+base change, by identifying the point groups before and after base change through the pullback
+adjunction. Consequently, isogenies and central isogenies over a field remain so after base change
+along a morphism between spectra of fields. For a commutative source, the base-changed isogeny is
+central without any centrality hypothesis. The group-scheme base change is the pullback functor on
+the over category, lifted to group objects.
 
 ## Main declarations
 
+* `TauCeti.GroupScheme.baseChangePointMulEquiv`: the multiplicative point-group identification
+  furnished by the pullback adjunction.
+* `TauCeti.GroupScheme.HasCentralKernel.baseChange`: central kernels remain central after arbitrary
+  base change.
 * `TauCeti.GroupScheme.IsIsogeny.baseChange`: isogenies remain isogenies after base change.
 * `TauCeti.GroupScheme.IsCentralIsogeny.baseChange`: central isogenies remain central after base
   change.
@@ -61,12 +66,16 @@ theorem IsIsogeny.baseChange
     MorphismProperty.overPullbackMap _ _ hf.flat,
     MorphismProperty.overPullbackMap _ _ hf.surjective⟩
 
+end Field
+
+section BaseChange
+
+variable {X Y : Scheme.{u}} {G H : Grp (Over X)}
+
 /-- The underlying map of the inverse pullback-adjunction equivalence is postcomposition with the
 first pullback projection. -/
 private theorem mapPullbackAdj_homEquiv_symm_left
-    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k))
-    (G : Grp (Over (Spec (CommRingCat.of k))))
-    (T : Over (Spec (CommRingCat.of L)))
+    (s : Y ⟶ X) (G : Grp (Over X)) (T : Over Y)
     (p : T ⟶ ((Over.pullback s).mapGrp.obj G).X) :
     Over.Hom.left (((Over.mapPullbackAdj s).homEquiv T G.X).symm p) =
       Over.Hom.left p ≫ Limits.pullback.fst G.X.hom s := by
@@ -77,10 +86,8 @@ private theorem mapPullbackAdj_homEquiv_symm_left
 /-- The adjunction between postcomposition and pullback identifies points of a base-changed group
 scheme with points of the original group scheme over the same test scheme viewed over the old
 base. This identification is multiplicative. -/
-private noncomputable def baseChangePointMulEquiv
-    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k))
-    (G : Grp (Over (Spec (CommRingCat.of k))))
-    (T : Over (Spec (CommRingCat.of L))) :
+noncomputable def baseChangePointMulEquiv
+    (s : Y ⟶ X) (G : Grp (Over X)) (T : Over Y) :
     (T ⟶ ((Over.pullback s).mapGrp.obj G).X) ≃*
       ((Over.map s).obj T ⟶ G.X) where
   toFun p := ((Over.mapPullbackAdj s).homEquiv T G.X).symm p
@@ -141,19 +148,23 @@ private noncomputable def baseChangePointMulEquiv
       (congrArg (fun z ↦ z ≫ Over.Hom.left μ[G.X]) hpair))
 
 /-- The point-group equivalence is the underlying pullback-adjunction equivalence. -/
-private theorem baseChangePointMulEquiv_apply
-    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k))
-    (G : Grp (Over (Spec (CommRingCat.of k))))
-    (T : Over (Spec (CommRingCat.of L)))
+theorem baseChangePointMulEquiv_apply
+    (s : Y ⟶ X) (G : Grp (Over X)) (T : Over Y)
     (p : T ⟶ ((Over.pullback s).mapGrp.obj G).X) :
     baseChangePointMulEquiv s G T p =
       ((Over.mapPullbackAdj s).homEquiv T G.X).symm p := (rfl)
 
+/-- The inverse point-group equivalence is the forward pullback-adjunction equivalence. -/
+theorem baseChangePointMulEquiv_symm_apply
+    (s : Y ⟶ X) (G : Grp (Over X)) (T : Over Y)
+    (p : (Over.map s).obj T ⟶ G.X) :
+    (baseChangePointMulEquiv s G T).symm p =
+      (Over.mapPullbackAdj s).homEquiv T G.X p := (rfl)
+
 /-- The point-group identification intertwines a base-changed morphism with the original
 morphism. -/
-private theorem baseChangePointMulEquiv_pointMap
-    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k)) (f : G ⟶ H)
-    (T : Over (Spec (CommRingCat.of L)))
+theorem baseChangePointMulEquiv_pointMap
+    (s : Y ⟶ X) (f : G ⟶ H) (T : Over Y)
     (p : T ⟶ ((Over.pullback s).mapGrp.obj G).X) :
     baseChangePointMulEquiv s H T
         (pointMap ((Over.pullback s).mapGrp.map f) T p) =
@@ -162,14 +173,10 @@ private theorem baseChangePointMulEquiv_pointMap
     Functor.mapGrp_map_hom_hom]
   exact ((Over.mapPullbackAdj s).homEquiv_naturality_right_symm p f.hom.hom)
 
-/-- Base change along a morphism between spectra of fields preserves central isogenies. -/
-theorem IsCentralIsogeny.baseChange
-    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k)) {f : G ⟶ H}
-    (hf : IsCentralIsogeny f) :
-    IsCentralIsogeny ((Over.pullback s).mapGrp.map f) := by
-  rw [isCentralIsogeny_iff]
-  have hi := hf.isIsogeny.baseChange s
-  refine ⟨hi.isFinite, hi.flat, hi.surjective, ?_⟩
+/-- Arbitrary base change preserves central kernels of group-scheme morphisms. -/
+theorem HasCentralKernel.baseChange
+    (s : Y ⟶ X) {f : G ⟶ H} (hf : HasCentralKernel f) :
+    HasCentralKernel ((Over.pullback s).mapGrp.map f) := by
   rw [hasCentralKernel_iff_pointMap_ker_le_center]
   intro T p hp
   rw [Subgroup.mem_center_iff]
@@ -179,11 +186,27 @@ theorem IsCentralIsogeny.baseChange
     (MonoidHom.mem_ker).mp hp
   have hp' : pointMap f ((Over.map s).obj T) (eG p) = 1 := by
     rw [← baseChangePointMulEquiv_pointMap, hp₀, map_one]
-  have hf' := (hasCentralKernel_iff_pointMap_ker_le_center f).mp hf.hasCentralKernel
+  have hf' := (hasCentralKernel_iff_pointMap_ker_le_center f).mp hf
   have hc := Subgroup.mem_center_iff.mp
     (hf' ((Over.map s).obj T) ((MonoidHom.mem_ker).mpr hp')) (eG q)
   apply eG.injective
   simpa only [map_mul] using hc
+
+end BaseChange
+
+section Field
+
+variable {k L : Type u} [Field k] [Field L]
+variable {G H : Grp (Over (Spec (CommRingCat.of k)))}
+
+/-- Base change along a morphism between spectra of fields preserves central isogenies. -/
+theorem IsCentralIsogeny.baseChange
+    (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k)) {f : G ⟶ H}
+    (hf : IsCentralIsogeny f) :
+    IsCentralIsogeny ((Over.pullback s).mapGrp.map f) := by
+  rw [isCentralIsogeny_iff]
+  have hi := hf.isIsogeny.baseChange s
+  exact ⟨hi.isFinite, hi.flat, hi.surjective, hf.hasCentralKernel.baseChange s⟩
 
 /-- The base change of an isogeny from a commutative group scheme is a central isogeny. -/
 theorem IsIsogeny.baseChange_isCentral_of_isCommMonObj
