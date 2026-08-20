@@ -107,17 +107,9 @@ variable {k : Type u} [Field k]
 
 /-- Central isogenies are invariant under pre- and postcomposition with isomorphisms. -/
 instance centralIsogenies_respectsIso : (centralIsogenies k).RespectsIso := by
-  apply MorphismProperty.RespectsIso.mk
-  · intro _ _ _ e f hf
-    have hf' := (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mp hf
-    exact (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel (e.hom ≫ f)).mpr
-      ⟨MorphismProperty.RespectsIso.precomp (isogenies k) e.hom f hf'.1,
-        hf'.2.precomp_of_mono e.hom f⟩
-  · intro _ _ _ e f hf
-    have hf' := (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mp hf
-    exact (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel (f ≫ e.hom)).mpr
-      ⟨MorphismProperty.RespectsIso.postcomp (isogenies k) e.hom f hf'.1,
-        hf'.2.postcomp_of_mono f e.hom⟩
+  rw [centralIsogenies_eq]
+  exact MorphismProperty.RespectsIso.inf (isogenies k)
+    (hasCentralKernel (Spec (CommRingCat.of k)))
 
 end Isogeny
 

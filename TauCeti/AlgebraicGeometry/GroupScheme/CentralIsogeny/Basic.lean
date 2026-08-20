@@ -238,6 +238,12 @@ theorem isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel (f : G ⟶ H) :
     IsCentralIsogeny f ↔ IsIsogeny f ∧ HasCentralKernel f :=
   Iff.rfl
 
+/-- Central isogenies are the intersection of isogenies and morphisms with central kernel. -/
+theorem centralIsogenies_eq :
+    centralIsogenies k = isogenies k ⊓ hasCentralKernel (Spec (CommRingCat.of k)) := by
+  ext _ _ f
+  exact isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f
+
 /-- A morphism is a central isogeny exactly when its underlying scheme morphism is finite, flat,
 and surjective and its kernel is central on all scheme-valued points. -/
 theorem isCentralIsogeny_iff (f : G ⟶ H) :
