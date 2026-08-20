@@ -57,7 +57,9 @@ weaker and flagged by the linter.
 * `TauCeti.IsRationalRep.exists_forall_diagGL_eq_sum_smul`: the Laurent expansion of a rational
   representation on the diagonal torus.
 * `TauCeti.apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul`: the coefficients of such an
-  expansion take their values in the weight space of their exponent.
+  expansion take their values in the weight space of their exponent. This step mentions no
+  rationality, so it is stated over an arbitrary infinite field; only the three results whose
+  hypothesis is the `ℂ`-pinned `TauCeti.IsRationalRep` are stated over `ℂ`.
 * `TauCeti.IsRationalRep.iSup_weightSpace_eq_top` and
   `TauCeti.IsRationalRep.isInternal_weightSpace`: **a rational representation of `GL n ℂ` is the
   internal direct sum of its weight spaces.**
@@ -74,11 +76,15 @@ public section
 
 open Matrix
 
-universe u
+universe u v
 
 namespace TauCeti
 
-variable {n : ℕ} {W : Type u} [AddCommGroup W] [Module ℂ W]
+variable {n : ℕ}
+
+section Expansion
+
+variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ρ : Representation ℂ (GL (Fin n) ℂ) W}
 
 /-- **The Laurent expansion of a rational representation on the diagonal torus.** The action of
@@ -116,33 +122,44 @@ theorem IsRationalRep.exists_forall_diagGL_eq_sum_smul (h : IsRationalRep ρ) :
   rw [map_smul, LinearEquiv.apply_symm_apply]
   rw [Matrix.smul_apply, Matrix.of_apply, smul_eq_mul, mul_comm]
 
+end Expansion
+
+section Coefficients
+
+variable {K : Type v} [Field K] [Infinite K]
+variable {W : Type u} [AddCommGroup W] [Module K W]
+variable {ρ : Representation K (GL (Fin n) K) W}
+
 /-- **The coefficients of a Laurent expansion take their values in the weight spaces.** If the
 torus acts through a finite sum `∑ l ∈ S, (∏ i, tᵢ ^ lᵢ) • A l`, then every value of `A l` is a
 weight vector of weight `l`. Nothing is claimed here about `A l` being idempotent, or acting as
 the identity on the weight space of `l`; only its image is located.
+
+Nothing in this statement refers to rationality, so the base field is an arbitrary infinite field:
+the argument only needs distinct characters of the torus to stay linearly independent.
 
 The proof compares the expansion of `ρ (diagGL (s * t))` with the composite
 `ρ (diagGL s) ∘ ρ (diagGL t)`: both are combinations of the characters with `End`-valued
 coefficients, and distinct characters are linearly independent
 (`TauCeti.linearIndependent_weightCharHom`), so the coefficients agree term by term. -/
 theorem apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul {S : Finset (Fin n → ℤ)}
-    {A : (Fin n → ℤ) → Module.End ℂ W}
-    (hA : ∀ t : Fin n → ℂˣ, ρ (diagGL t) = ∑ l ∈ S, weightCharHom ℂ l t • A l)
+    {A : (Fin n → ℤ) → Module.End K W}
+    (hA : ∀ t : Fin n → Kˣ, ρ (diagGL t) = ∑ l ∈ S, weightCharHom K l t • A l)
     {l : Fin n → ℤ} (hl : l ∈ S) (w : W) : A l w ∈ weightSpace ρ l := by
-  have hψ : ∀ (ψ : W →ₗ[ℂ] ℂ) (t : Fin n → ℂˣ) (v : W),
-      ψ (ρ (diagGL t) v) = ∑ l' ∈ S, weightCharHom ℂ l' t * ψ (A l' v) := by
+  have hψ : ∀ (ψ : W →ₗ[K] K) (t : Fin n → Kˣ) (v : W),
+      ψ (ρ (diagGL t) v) = ∑ l' ∈ S, weightCharHom K l' t * ψ (A l' v) := by
     intro ψ t v
     rw [hA t, LinearMap.sum_apply, map_sum]
     exact Finset.sum_congr rfl fun l' _ ↦ by
       rw [LinearMap.smul_apply, map_smul, smul_eq_mul]
-  have hcoeff : ∀ (ψ : W →ₗ[ℂ] ℂ) (s : Fin n → ℂˣ),
-      ψ (ρ (diagGL s) (A l w)) = weightCharHom ℂ l s * ψ (A l w) := by
+  have hcoeff : ∀ (ψ : W →ₗ[K] K) (s : Fin n → Kˣ),
+      ψ (ρ (diagGL s) (A l w)) = weightCharHom K l s * ψ (A l w) := by
     intro ψ s
-    have hli := linearIndependent_weightCharHom (K := ℂ) (κ := Fin n)
+    have hli := linearIndependent_weightCharHom (K := K) (κ := Fin n)
     rw [linearIndependent_iff'] at hli
     have hsum : ∑ l' ∈ S,
-        (ψ (ρ (diagGL s) (A l' w)) - weightCharHom ℂ l' s * ψ (A l' w)) •
-          ⇑(weightCharHom ℂ l') = 0 := by
+        (ψ (ρ (diagGL s) (A l' w)) - weightCharHom K l' s * ψ (A l' w)) •
+          ⇑(weightCharHom K l') = 0 := by
       funext t
       have e1 := hψ (ψ ∘ₗ ρ (diagGL s)) t w
       have e2 := hψ ψ (s * t) w
@@ -150,26 +167,33 @@ theorem apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul {S : Finset (Fin n �
         rw [map_mul, map_mul, Module.End.mul_apply]
       rw [e3] at e2
       simp only [LinearMap.coe_comp, Function.comp_apply] at e1
-      have e4 : ∑ l' ∈ S, weightCharHom ℂ l' t * ψ (ρ (diagGL s) (A l' w))
-          = ∑ l' ∈ S, weightCharHom ℂ l' s * weightCharHom ℂ l' t * ψ (A l' w) := by
+      have e4 : ∑ l' ∈ S, weightCharHom K l' t * ψ (ρ (diagGL s) (A l' w))
+          = ∑ l' ∈ S, weightCharHom K l' s * weightCharHom K l' t * ψ (A l' w) := by
         rw [← e1, e2]
         exact Finset.sum_congr rfl fun l' _ ↦ by rw [map_mul, mul_assoc]
       rw [Finset.sum_apply, Pi.zero_apply]
       have e5 : ∀ l' : Fin n → ℤ,
-          ((ψ (ρ (diagGL s) (A l' w)) - weightCharHom ℂ l' s * ψ (A l' w)) •
-            ⇑(weightCharHom ℂ l')) t
-            = weightCharHom ℂ l' t * ψ (ρ (diagGL s) (A l' w))
-              - weightCharHom ℂ l' s * weightCharHom ℂ l' t * ψ (A l' w) := by
+          ((ψ (ρ (diagGL s) (A l' w)) - weightCharHom K l' s * ψ (A l' w)) •
+            ⇑(weightCharHom K l')) t
+            = weightCharHom K l' t * ψ (ρ (diagGL s) (A l' w))
+              - weightCharHom K l' s * weightCharHom K l' t * ψ (A l' w) := by
         intro l'
         rw [Pi.smul_apply, smul_eq_mul, sub_mul]
         ring
       rw [Finset.sum_congr rfl fun l' _ ↦ e5 l', Finset.sum_sub_distrib, e4, sub_self]
     exact sub_eq_zero.mp (hli S _ hsum l hl)
-  set b := Module.Basis.ofVectorSpace ℂ W
+  set b := Module.Basis.ofVectorSpace K W
   refine (mem_weightSpace_iff ρ l (A l w)).mpr fun s ↦ b.ext_elem fun i ↦ ?_
   rw [← Module.Basis.coord_apply, ← Module.Basis.coord_apply, map_smul, smul_eq_mul,
-    ← weightCharHom_apply ℂ l s]
+    ← weightCharHom_apply K l s]
   exact hcoeff (b.coord i) s
+
+end Coefficients
+
+section Decomposition
+
+variable {W : Type u} [AddCommGroup W] [Module ℂ W]
+variable {ρ : Representation ℂ (GL (Fin n) ℂ) W}
 
 /-- **The weight spaces of a rational representation span it.** Evaluating the Laurent expansion
 at the identity of the torus writes the identity endomorphism as the sum of the expansion
@@ -202,5 +226,7 @@ theorem IsRationalRep.isInternal_weightSpace (h : IsRationalRep ρ) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace ρ l :=
   (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
     ⟨iSupIndep_weightSpace weightChar_injective ρ, h.iSup_weightSpace_eq_top⟩
+
+end Decomposition
 
 end TauCeti
