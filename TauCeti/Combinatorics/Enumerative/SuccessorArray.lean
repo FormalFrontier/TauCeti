@@ -144,11 +144,13 @@ theorem visitCount_succ [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ) :
     exact h
 
 /-- One more visit is counted when the sequence has the specified value. -/
+@[simp]
 theorem visitCount_succ_of_eq (h : x n = a) : visitCount x a (n + 1) = visitCount x a n + 1 := by
   classical
   rw [visitCount_succ, ite_eq_left h]
 
 /-- No visit is added when the sequence has a different value. -/
+@[simp]
 theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCount x a n := by
   classical
   rw [visitCount_succ, ite_eq_right h]
@@ -174,6 +176,7 @@ section Reconstruction
 variable {α : Type*} {x y : ℕ → α} {a a₀ : α} {s : α → ℕ → α} {i n : ℕ}
 
 /-- At a visit to `a`, the sequence moves to the corresponding entry of its successor array. -/
+@[simp]
 theorem successorArray_visitCount_of_eq (h : x n = a) :
     successorArray x a (visitCount x a n) = x (n + 1) := by
   rw [successorArray, visitTime_visitCount h]
