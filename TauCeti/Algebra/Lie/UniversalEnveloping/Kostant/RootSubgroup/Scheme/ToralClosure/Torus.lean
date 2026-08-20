@@ -86,6 +86,7 @@ private theorem weightTorusCoordinateMap_eq_diagonalCoordinateMap [Fintype κ] :
         (DiagonalizableGroup.charOfPoint p.ofConv
           (SplitTorus.weightCharacter (wt y)) : H) =
           MonoidAlgebra.single (SplitTorus.weightCharacter (wt y)) 1 := by
+      rw [DiagonalizableGroup.charOfPoint_apply_coe]
       rfl
     have hleft := congrArg (fun q =>
         ((GeneralLinear.pointsMulEquiv n q : Matrix.GeneralLinearGroup (Fin n) H) :
@@ -156,17 +157,5 @@ noncomputable def kostantWeightTorusInToral
     ClosedSubgroupScheme (kostantToralGroupScheme e h ρ M hM hnil b wt) :=
   have _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
   ClosedSubgroupScheme.mk (kostantWeightTorusToToral e h ρ M hM hnil b wt)
-
-/-- The underlying subobject of the closed weight torus in the toral closure is represented by
-the factored weight-torus morphism. -/
-@[simp]
-theorem coe_kostantWeightTorusInToral
-    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
-    let _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
-    (kostantWeightTorusInToral e h ρ M hM hnil b wt hwt).1 =
-      Subobject.mk (kostantWeightTorusToToral e h ρ M hM hnil b wt) := by
-  have _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
-  rw [kostantWeightTorusInToral]
-  exact ClosedSubgroupScheme.coe_mk _
 
 end TauCeti.UniversalEnvelopingAlgebra
