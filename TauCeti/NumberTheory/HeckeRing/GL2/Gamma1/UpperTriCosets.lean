@@ -93,26 +93,12 @@ namespace HeckeRing.GL2
 
 variable {N p : ℕ}
 
-/-- The entries of the image of an integral matrix under `mapGL ℚ` are the casts of its
-entries. -/
-private lemma coe_mapGL_apply (σ : SL(2, ℤ)) (i j : Fin 2) :
-    (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) i j = ((σ i j : ℤ) : ℚ) := by
-  simp [mapGL_coe_matrix]
-
-/-- The rational matrix of `mapGL ℚ σ` is the entrywise cast of the integral one. -/
-private lemma coe_mapGL_eq_map (σ : SL(2, ℤ)) :
-    (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      (σ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ℚ) := by
-  ext i j
-  rw [coe_mapGL_apply]
-  simp
-
 /-- The rational matrix of `mapGL ℚ σ` in `!![…]` form. -/
 private lemma coe_mapGL_fin_two (σ : SL(2, ℤ)) :
     (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) =
       !![((σ 0 0 : ℤ) : ℚ), ((σ 0 1 : ℤ) : ℚ); ((σ 1 0 : ℤ) : ℚ), ((σ 1 1 : ℤ) : ℚ)] := by
+  rw [mapGL_coe_matrix]
   ext i j
-  rw [coe_mapGL_apply]
   fin_cases i <;> fin_cases j <;> simp
 
 /-- `diag(1, p) ∈ Δ₀(N)`, for every level `N`: the upper-left entry is `1`, a unit modulo
@@ -149,8 +135,10 @@ lemma diagCosetGamma1_def (N p : ℕ) :
 /-- The rational matrix of a power of the translation matrix `T`. -/
 private lemma coe_mapGL_T_zpow (n : ℤ) :
     (↑(mapGL ℚ (ModularGroup.T ^ n)) : Matrix (Fin 2) (Fin 2) ℚ) = !![1, (n : ℚ); 0, 1] := by
-  rw [coe_mapGL_eq_map, ModularGroup.coe_T_zpow]
   ext i j
+  rw [mapGL_coe_matrix]
+  change (((ModularGroup.T ^ n) i j : ℤ) : ℚ) = _
+  rw [ModularGroup.coe_T_zpow]
   fin_cases i <;> fin_cases j <;> simp
 
 /-- **`diag(1, p) · Tᵇ = !![1, b; 0, p]`.** Right multiplication by the `b`-th power of the
