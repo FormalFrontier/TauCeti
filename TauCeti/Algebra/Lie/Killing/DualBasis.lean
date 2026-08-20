@@ -65,7 +65,7 @@ theorem killingForm_killingDualBasis (b : Module.Basis ι K L) (i j : ι) :
 
 /-- Coordinates in the Killing-dual basis are Killing pairings against `b`. -/
 @[simp]
-theorem killingDualBasis_repr (b : Module.Basis ι K L) (v : L) (i : ι) :
+theorem killingDualBasis_repr_apply (b : Module.Basis ι K L) (v : L) (i : ι) :
     (killingDualBasis b).repr v i = killingForm K L (b i) v :=
   (LinearMap.BilinForm.dualBasis_repr_apply _ b v i).trans
     (LieModule.traceForm_comm K L L v (b i))
@@ -78,21 +78,21 @@ theorem killingDualBasis_killingDualBasis (b : Module.Basis ι K L) :
   LinearMap.BilinForm.dualBasis_dualBasis _ killingForm_isSymm b
 
 /-- Coordinates in `b` are Killing pairings against the Killing-dual basis. -/
-theorem repr_eq_killingForm (b : Module.Basis ι K L) (v : L) (i : ι) :
+theorem repr_apply_eq_killingForm (b : Module.Basis ι K L) (v : L) (i : ι) :
     b.repr v i = killingForm K L v (killingDualBasis b i) := by
   conv_lhs => rw [← killingDualBasis_killingDualBasis b]
-  rw [killingDualBasis_repr, LieModule.traceForm_comm]
+  rw [killingDualBasis_repr_apply, LieModule.traceForm_comm]
 
 /-- **Expansion in `b`**, with the coefficients read off by the Killing-dual basis. -/
 theorem sum_killingForm_smul_basis (b : Module.Basis ι K L) (v : L) :
     ∑ i, killingForm K L v (killingDualBasis b i) • b i = v := by
   conv_rhs => rw [← b.sum_repr v]
-  exact sum_congr rfl fun i _ ↦ by rw [repr_eq_killingForm]
+  exact sum_congr rfl fun i _ ↦ by rw [repr_apply_eq_killingForm]
 
 /-- **Expansion in the Killing-dual basis**, with the coefficients read off by `b`. -/
 theorem sum_killingForm_smul_killingDualBasis (b : Module.Basis ι K L) (v : L) :
     ∑ i, killingForm K L (b i) v • killingDualBasis b i = v := by
   conv_rhs => rw [← (killingDualBasis b).sum_repr v]
-  exact sum_congr rfl fun i _ ↦ by rw [killingDualBasis_repr]
+  exact sum_congr rfl fun i _ ↦ by rw [killingDualBasis_repr_apply]
 
 end TauCeti
