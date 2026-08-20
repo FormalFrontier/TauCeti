@@ -32,8 +32,8 @@ finiteness, as the roadmap asks.
 
 The cost is only assumed lower semicontinuous, not continuous, and this is the point: the costs of
 interest, such as `edist` raised to a power or a `{0, ∞}`-valued constraint, are lower
-semicontinuous, and lower semicontinuity is exactly the half of continuity that survives an
-infimum.
+semicontinuous, and lower semicontinuity is exactly what guarantees attainment of the infimum on
+the compact set of couplings.
 
 ## Main statements
 
