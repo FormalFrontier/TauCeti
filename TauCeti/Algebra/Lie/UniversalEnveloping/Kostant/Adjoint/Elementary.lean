@@ -165,7 +165,7 @@ include hx
 `TauCeti.IsChevalleySystem.chevalleyKostantForm_apply_mem` with the Kostant form written out as the
 generic one of the root vectors and the coroots. -/
 theorem chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup :
-    ∀ u ∈ UniversalEnvelopingAlgebra.kostantForm x fun α : Weight ℚ H L => (coroot α : L),
+    ∀ u ∈ UniversalEnvelopingAlgebra.kostantForm x (corootFamily H),
       ∀ v ∈ chevalleyLatticeAddSubgroup x,
         UniversalEnvelopingAlgebra.representation ℚ L L u v ∈
           chevalleyLatticeAddSubgroup x := by
@@ -184,7 +184,7 @@ noncomputable def adjointRootSubgroup (α : Weight ℚ H L) (A : CommAlgCat.{w} 
     Multiplicative A →* LinearMap.GeneralLinearGroup A
       (A ⊗[ℤ] chevalleyLatticeAddSubgroup x) :=
   UniversalEnvelopingAlgebra.kostantRootSubgroupParam x
-    (fun α : Weight ℚ H L => (coroot α : L))
+    (corootFamily H)
     (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
     hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α
     (hx.toIsSl2System.isNilpotent_representation_rootVector α) A
@@ -194,7 +194,7 @@ noncomputable def adjointRootSubgroup (α : Weight ℚ H L) (A : CommAlgCat.{w} 
 private theorem adjointRootSubgroup_eq_def (α : Weight ℚ H L) (A : CommAlgCat.{w} ℤ) :
     hx.adjointRootSubgroup α A =
       UniversalEnvelopingAlgebra.kostantRootSubgroupParam x
-        (fun α : Weight ℚ H L => (coroot α : L))
+        (corootFamily H)
         (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α
         (hx.toIsSl2System.isNilpotent_representation_rootVector α) A :=
@@ -205,7 +205,7 @@ attached to a Chevalley system. -/
 theorem adjointRootSubgroup_def (α : Weight ℚ H L) (A : CommAlgCat.{w} ℤ) :
     hx.adjointRootSubgroup α A =
       UniversalEnvelopingAlgebra.kostantRootSubgroupParam x
-        (fun α : Weight ℚ H L => (coroot α : L))
+        (corootFamily H)
         (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α
         (hx.toIsSl2System.isNilpotent_representation_rootVector α) A :=
@@ -220,7 +220,7 @@ theorem adjointRootSubgroup_val_apply (α : Weight ℚ H L) (A : CommAlgCat.{w} 
           (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α))) (chevalleyLatticeAddSubgroup x)
         (fun n _ hv =>
           UniversalEnvelopingAlgebra.dividedPower_apply_mem_of_kostantForm_apply_mem
-            x (fun β : Weight ℚ H L => (coroot β : L))
+            x (corootFamily H)
             (UniversalEnvelopingAlgebra.representation ℚ L L)
             hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α n hv)
         (Multiplicative.toAdd t) z := by
@@ -255,7 +255,7 @@ theorem adjointRootSubgroup_eq_one_of_isZero (α : Weight ℚ H L) (hα : α.IsZ
 noncomputable def adjointElementaryGroup (A : CommAlgCat.{w} ℤ) :
     Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] chevalleyLatticeAddSubgroup x)) :=
   UniversalEnvelopingAlgebra.kostantElementarySubgroup x
-    (fun α : Weight ℚ H L => (coroot α : L))
+    (corootFamily H)
     (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
     hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup
     hx.toIsSl2System.isNilpotent_representation_rootVector A
@@ -265,7 +265,7 @@ noncomputable def adjointElementaryGroup (A : CommAlgCat.{w} ℤ) :
 private theorem adjointElementaryGroup_eq_def (A : CommAlgCat.{w} ℤ) :
     hx.adjointElementaryGroup A =
       UniversalEnvelopingAlgebra.kostantElementarySubgroup x
-        (fun α : Weight ℚ H L => (coroot α : L))
+        (corootFamily H)
         (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup
         hx.toIsSl2System.isNilpotent_representation_rootVector A :=
@@ -276,7 +276,7 @@ attached to a Chevalley system. -/
 theorem adjointElementaryGroup_def (A : CommAlgCat.{w} ℤ) :
     hx.adjointElementaryGroup A =
       UniversalEnvelopingAlgebra.kostantElementarySubgroup x
-        (fun α : Weight ℚ H L => (coroot α : L))
+        (corootFamily H)
         (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup
         hx.toIsSl2System.isNilpotent_representation_rootVector A :=

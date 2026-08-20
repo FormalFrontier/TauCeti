@@ -20,8 +20,11 @@ The resulting functor is faithful: a map over `X` is determined by all of its re
 fibres. Over a locally path-connected base, its fullness is proved in
 `TauCeti.Topology.Covering.Monodromy.Full`, and its restriction from connected covers to
 fibrewise pretransitive actions is packaged in
-`TauCeti.Topology.Covering.Monodromy.Connected`. Reconstruction and the characterization of the
-essential image are the remaining topological content of the classification of covering spaces by
+`TauCeti.Topology.Covering.Monodromy.Connected`. Over a path-connected, locally path-connected,
+semilocally simply connected base a connected cover can moreover be reconstructed from its
+action, which makes the connected restriction an equivalence
+(`TauCeti.ConnectedCoveringSpace.monodromyEquivalence`); the essential image over a general base
+is the remaining topological content of the classification of covering spaces by
 fundamental-groupoid actions.
 
 ## Main declarations
