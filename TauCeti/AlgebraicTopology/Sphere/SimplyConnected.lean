@@ -18,8 +18,9 @@ The unit sphere of a real normed space `E` with `2 < Module.rank ℝ E` is simpl
 in particular `Sⁿ` is simply connected for `2 ≤ n`.
 
 The proof is the classical one, in the form that avoids any smoothing or simplicial
-approximation. A loop `γ` is compared with the *piecewise geodesic* loop through the `N + 1`
-values `γ(k/N)`, where `N` is chosen so fine that `‖γ s - γ t‖ < 1` whenever `|s - t| ≤ 1/N`.
+approximation. A loop `γ` is compared with the radial projection of the piecewise-linear
+interpolation through the `N + 1` values `γ(k/N)`, where `N` is chosen so fine that
+`‖γ s - γ t‖ < 1` whenever `|s - t| ≤ 1/N`.
 That comparison loop is written as a single global formula rather than by gluing pieces: it is
 the radial projection to the sphere of
 
