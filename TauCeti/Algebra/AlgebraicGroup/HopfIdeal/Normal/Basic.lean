@@ -245,29 +245,19 @@ theorem IsNormal.comap_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal) (f : H
   intro A
   let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
   let E := AlgHom.mapDomainMulEquiv (A := A) e
-  have hmem (g : HopfAlgebra.points (R := R) (H := K) A) :
-      E g ∈ CommHopfAlgCat.quotientPointsSubgroup
-          (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
-        g ∈ CommHopfAlgCat.quotientPointsSubgroup
-          (_root_.CommHopfAlgCat.of R K) I A := by
-    rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
-      CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
-    constructor
-    · intro hg y hy
-      obtain ⟨x, rfl⟩ := hsurj y
-      exact hg x (mem_comap.mpr hy)
-    · intro hg x hx
-      exact hg (f x) (mem_comap.mp hx)
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+    f hinj hsurj I A
   constructor
   intro n hn g
   have hn' : E.symm n ∈ CommHopfAlgCat.quotientPointsSubgroup
       (_root_.CommHopfAlgCat.of R K) I A := by
-    rw [← hmem]
-    simpa using hn
+    apply (hmem (E.symm n)).mp
+    rw [E.apply_symm_apply]
+    exact hn
   have hconj := (CommHopfAlgCat.quotientPointsSubgroup_normal
     (_root_.CommHopfAlgCat.of R K) I hI A).conj_mem (E.symm n) hn' (E.symm g)
-  rw [← hmem] at hconj
-  simpa using hconj
+  have hconj' := (hmem _).mpr hconj
+  simpa only [E, e, map_mul, map_inv, MulEquiv.apply_symm_apply] using hconj'
 
 end HopfIdeal
 

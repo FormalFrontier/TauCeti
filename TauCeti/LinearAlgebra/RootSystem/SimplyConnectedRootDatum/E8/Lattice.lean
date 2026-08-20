@@ -27,7 +27,7 @@ that a direct construction would have to tabulate and check.
 
 ## The argument
 
-The `E₈` norm `(v ᵥ* CartanMatrix.E₈) ⬝ᵥ v` is the Gram form of the simple-coroot basis, so the
+The `E₈` norm `(v ᵥ* CartanMatrix.E 8) ⬝ᵥ v` is the Gram form of the simple-coroot basis, so the
 norm-two vectors are the minimal vectors of the `E₈` lattice, read in that basis. They are counted
 in the Euclidean model instead, where the lattice is described by congruences rather than by a Gram
 matrix. To keep the coordinates integral the model is scaled by two: `IsDoubledE8` describes
@@ -189,7 +189,7 @@ private def e8DoubledEmbed (v : Fin 8 → ℤ) : Fin 8 → ℤ := v ᵥ* e8Doubl
 
 /-- Reading the simple-coroot coordinates in the doubled model multiplies the `E₈` norm by four. -/
 private theorem e8DoubledEmbed_dotProduct_self (v : Fin 8 → ℤ) :
-    e8DoubledEmbed v ⬝ᵥ e8DoubledEmbed v = 4 * ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ v) := by
+    e8DoubledEmbed v ⬝ᵥ e8DoubledEmbed v = 4 * ((v ᵥ* CartanMatrix.E 8) ⬝ᵥ v) := by
   rw [e8DoubledEmbed]
   nth_rewrite 2 [← Matrix.mulVec_transpose]
   rw [dotProduct_mulVec, Matrix.vecMul_vecMul, e8DoubledSimpleRoot_mul_transpose,
@@ -199,7 +199,7 @@ private theorem e8DoubledEmbed_dotProduct_self (v : Fin 8 → ℤ) :
 private theorem e8DoubledEmbed_injective : Function.Injective e8DoubledEmbed := by
   intro v w h
   apply sub_eq_zero.mp
-  refine Matrix.eq_zero_of_vecMul_eq_zero (M := CartanMatrix.E₈)
+  refine Matrix.eq_zero_of_vecMul_eq_zero (M := CartanMatrix.E 8)
     (by rw [CartanMatrix.E₈_det]; norm_num) ?_
   have h0 : (v - w) ᵥ* e8DoubledSimpleRoot = 0 := by
     rw [Matrix.sub_vecMul]
@@ -231,10 +231,10 @@ private theorem isDoubledE8_e8DoubledEmbed (v : Fin 8 → ℤ) : IsDoubledE8 (e8
 /-- **The listed `E₈` coroots are all the norm-two vectors of the simple-coroot lattice.** The
 enumeration of the two hundred and forty coroots is complete: nothing of norm two is missing from
 it. -/
-theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2) :
+theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E 8) ⬝ᵥ v = 2) :
     ∃ k, e8Coroot k = v := by
   classical
-  have hmin : ∀ w : Fin 8 → ℤ, (w ᵥ* CartanMatrix.E₈) ⬝ᵥ w = 2 →
+  have hmin : ∀ w : Fin 8 → ℤ, (w ᵥ* CartanMatrix.E 8) ⬝ᵥ w = 2 →
       e8DoubledEmbed w ∈ e8DoubledMinimalSet := by
     intro w hw
     exact mem_e8DoubledMinimalSet_of_isDoubledE8 (isDoubledE8_e8DoubledEmbed w)
