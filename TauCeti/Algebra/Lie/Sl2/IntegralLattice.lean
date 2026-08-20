@@ -43,6 +43,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
   `TauCeti.Sl2Std.dividedPower_lower_apply`: the integral coordinate formulas for the root
   divided powers.
 * `TauCeti.Sl2Std.ringChoose_diag_apply`: the coordinate formula for Cartan binomials.
+* `TauCeti.Sl2Std.representation_ι_slFinTwoBasis`: the enveloping representation sends the
+  standard `sl₂` basis to the raising, lowering, and Cartan operators.
 * `TauCeti.Sl2Std.kostantForm_apply_mem_integralLattice`: the rank-one Kostant form preserves
   the lattice.
 * `TauCeti.Sl2Std.kostantFormRep`: the canonical `ℤ`-algebra representation of the rank-one Kostant
@@ -168,6 +170,18 @@ theorem ringChoose_diag_apply [Algebra ℚ K]
     rw [← hop', smeval_diag_apply, hscalar']
   have : IsAddTorsionFree K := .of_module_rat K
   exact (nsmul_right_inj (Nat.factorial_ne_zero k)).mp heq
+
+/-- The canonical enveloping-algebra representation sends the standard `sl₂` basis elements to
+the raising, lowering, and Cartan operators. -/
+theorem representation_ι_slFinTwoBasis (i : Fin 3) :
+    TauCeti.UniversalEnvelopingAlgebra.representation K
+        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n)
+        (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
+      ![raise K n, lower K n, diag K n] i := by
+  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
+  ext v
+  rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
+  exact LinearMap.congr_fun (rep_apply_basis i) v
 
 /-- The enveloping-algebra representation on the standard module `V(n)`: the general
 `TauCeti.UniversalEnvelopingAlgebra.representation` at the Lie module `V(n)`. -/
@@ -341,14 +355,8 @@ noncomputable def kostantFormRep :
             (![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] i)) =
           ![raise ℚ n, lower ℚ n] i := by
         fin_cases i
-        · rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
-          ext v
-          rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
-          simpa using LinearMap.congr_fun (rep_apply_basis (K := ℚ) (n := n) 0) v
-        · rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
-          ext v
-          rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
-          simpa using LinearMap.congr_fun (rep_apply_basis (K := ℚ) (n := n) 1) v
+        · simpa using representation_ι_slFinTwoBasis (K := ℚ) (n := n) 0
+        · simpa using representation_ι_slFinTwoBasis (K := ℚ) (n := n) 1
       rw [TauCeti.Associative.map_dividedPower, hrep]
       fin_cases i
       · exact dividedPower_raise_mem_integralLattice n k hv
@@ -358,10 +366,7 @@ noncomputable def kostantFormRep :
       have hrep : TauCeti.UniversalEnvelopingAlgebra.representation ℚ 𝔰𝔩₂ (Sl2Std ℚ n)
           (_root_.UniversalEnvelopingAlgebra.ι ℚ (![slFinTwoBasis ℚ 2] i)) = diag ℚ n := by
         fin_cases i
-        rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι]
-        ext v
-        rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
-        simpa using LinearMap.congr_fun (rep_apply_basis (K := ℚ) (n := n) 2) v
+        simpa using representation_ι_slFinTwoBasis (K := ℚ) (n := n) 2
       rw [Ring.map_choose, hrep]
       exact ringChoose_diag_mem_integralLattice n k hv)
 

@@ -39,14 +39,6 @@ local notation "h" => ![slFinTwoBasis ℚ 2]
 local notation "ρ" => TauCeti.UniversalEnvelopingAlgebra.representation ℚ
   (LieAlgebra.SpecialLinear.sl (Fin 2) ℚ) (Sl2Std ℚ 1)
 
-private theorem representation_ι_slFinTwoBasis_one (i : Fin 3) :
-    ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ i)) =
-      ![raise ℚ 1, lower ℚ 1, diag ℚ 1] i := by
-  rw [representation_ι]
-  ext v
-  rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
-  exact LinearMap.congr_fun (rep_apply_basis i) v
-
 /-- The coordinate basis of the standard integral `sl₂` lattice, viewed through its underlying
 additive subgroup as required by the Kostant root-subgroup construction. -/
 noncomputable def integralLatticeAddSubgroupBasis (n : ℕ) :
@@ -76,11 +68,11 @@ theorem isNilpotent_representation_root (i : Fin 2) :
   fin_cases i
   · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
       Matrix.cons_val_zero]
-    rw [representation_ι_slFinTwoBasis_one 0]
+    rw [representation_ι_slFinTwoBasis (n := 1) 0]
     exact ⟨2, raise_pow_eq_zero⟩
   · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
       Matrix.cons_val_one, Matrix.cons_val_fin_one]
-    rw [representation_ι_slFinTwoBasis_one 1]
+    rw [representation_ι_slFinTwoBasis (n := 1) 1]
     exact ⟨2, lower_pow_eq_zero⟩
 
 /-- Every root operator in the standard two-dimensional `sl₂` representation has a unit root
@@ -96,7 +88,7 @@ theorem exists_unit_rootStep_representation_one (i : Fin 2) :
   · refine ⟨0, 1, 1, isUnit_one, ?_, ?_⟩
     · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
         Matrix.cons_val_zero]
-      rw [representation_ι_slFinTwoBasis_one,
+      rw [representation_ι_slFinTwoBasis,
         coe_integralLatticeAddSubgroupBasis_apply,
         coe_integralLatticeAddSubgroupBasis_apply]
       simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Matrix.cons_val_zero, one_smul]
@@ -104,14 +96,14 @@ theorem exists_unit_rootStep_representation_one (i : Fin 2) :
       norm_num
     · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
         Matrix.cons_val_zero]
-      rw [representation_ι_slFinTwoBasis_one,
+      rw [representation_ι_slFinTwoBasis,
         coe_integralLatticeAddSubgroupBasis_apply]
       have hz := DFunLike.congr_fun (raise_pow_eq_zero (K := ℚ) (n := 1)) (basis ℚ 1 1)
       simpa [pow_two, Module.End.mul_apply] using hz
   · refine ⟨1, 0, 1, isUnit_one, ?_, ?_⟩
     · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
         Matrix.cons_val_one, Matrix.cons_val_fin_one]
-      rw [representation_ι_slFinTwoBasis_one,
+      rw [representation_ι_slFinTwoBasis,
         coe_integralLatticeAddSubgroupBasis_apply,
         coe_integralLatticeAddSubgroupBasis_apply]
       simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Matrix.cons_val_one,
@@ -120,7 +112,7 @@ theorem exists_unit_rootStep_representation_one (i : Fin 2) :
       norm_num
     · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
         Matrix.cons_val_one, Matrix.cons_val_fin_one]
-      rw [representation_ι_slFinTwoBasis_one,
+      rw [representation_ι_slFinTwoBasis,
         coe_integralLatticeAddSubgroupBasis_apply]
       have hz := DFunLike.congr_fun (lower_pow_eq_zero (K := ℚ) (n := 1)) (basis ℚ 1 0)
       simpa [pow_two, Module.End.mul_apply] using hz
