@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Killing.DualBasis
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
+public import Mathlib.Algebra.Lie.Killing
+public import Mathlib.LinearAlgebra.BilinearForm.Properties
 
 /-!
 # The Casimir element of a universal enveloping algebra
@@ -47,6 +48,7 @@ canonical choice this development needs and the one the roadmap pins.
 
 ## Main definitions
 
+* `TauCeti.killingDualBasis`: the basis dual to a given one under the Killing form.
 * `TauCeti.casimirElement`: the Casimir element of `U(L)`.
 
 ## Main results
@@ -55,12 +57,10 @@ canonical choice this development needs and the one the roadmap pins.
   and its Killing-dual basis `y`, so the basis chosen in the definition does not matter.
 * `TauCeti.ι_mul_casimirElement`: the Casimir element commutes with every canonical Lie generator.
 * `TauCeti.casimirElement_mem_center`: **the Casimir element is central in `U(L)`.**
-* `TauCeti.representation_casimirElement_apply`: the Casimir element acts on a Lie module by the
-  double bracket along any basis of `L` and its Killing-dual basis.
 
 The remaining statement about `casimirElement`, that it acts on a highest weight module of weight
-`λ` by the scalar `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`, is not proved here: the roadmap orders that computation
-after the construction of the irreducible highest weight modules `L(λ)`.
+`λ` by the scalar `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`, is not proved here: it is phrased in terms of the
+highest weight modules `L(λ)` and of the invariant form on weights, neither of which exists yet.
 
 ## References
 
@@ -79,6 +79,63 @@ universe u v w
 
 variable {K : Type u} {L : Type v} [Field K] [LieRing L] [LieAlgebra K L]
   [LieAlgebra.IsKilling K L]
+
+/-! ### The Killing-dual basis -/
+
+section DualBasis
+
+variable {ι : Type*} [DecidableEq ι] [Fintype ι]
+
+omit [LieAlgebra.IsKilling K L] in
+/-- The Killing form is symmetric, in the bundled `LinearMap.BilinForm.IsSymm` form that the
+dual-basis API asks for; Mathlib supplies it as the unbundled `LieModule.traceForm_isSymm`. -/
+private theorem killingForm_isSymm : (killingForm K L).IsSymm :=
+  LinearMap.BilinForm.isSymm_def.mpr fun x y ↦ LieModule.traceForm_comm K L L x y
+
+/-- The basis of `L` **dual to `b` under the Killing form**: `κ (b i) (killingDualBasis b j)` is
+`1` when `i = j` and `0` otherwise (`TauCeti.killingForm_killingDualBasis`). -/
+noncomputable def killingDualBasis (b : Module.Basis ι K L) : Module.Basis ι K L :=
+  (killingForm K L).dualBasis (LieAlgebra.IsKilling.killingForm_nondegenerate K L) b
+
+/-- The defining biorthogonality of the Killing-dual basis. -/
+@[simp]
+theorem killingForm_killingDualBasis (b : Module.Basis ι K L) (i j : ι) :
+    killingForm K L (b i) (killingDualBasis b j) = if i = j then 1 else 0 :=
+  LinearMap.BilinForm.apply_dualBasis_right _ killingForm_isSymm b i j
+
+/-- Coordinates in the Killing-dual basis are Killing pairings against `b`. -/
+@[simp]
+theorem killingDualBasis_repr (b : Module.Basis ι K L) (v : L) (i : ι) :
+    (killingDualBasis b).repr v i = killingForm K L (b i) v :=
+  (LinearMap.BilinForm.dualBasis_repr_apply _ b v i).trans
+    (LieModule.traceForm_comm K L L v (b i))
+
+/-- Conjugating twice returns the original basis: the Killing-dual basis of the Killing-dual
+basis of `b` is `b`. -/
+@[simp]
+theorem killingDualBasis_killingDualBasis (b : Module.Basis ι K L) :
+    killingDualBasis (killingDualBasis b) = b :=
+  LinearMap.BilinForm.dualBasis_dualBasis _ killingForm_isSymm b
+
+/-- Coordinates in `b` are Killing pairings against the Killing-dual basis. -/
+theorem repr_eq_killingForm (b : Module.Basis ι K L) (v : L) (i : ι) :
+    b.repr v i = killingForm K L v (killingDualBasis b i) := by
+  conv_lhs => rw [← killingDualBasis_killingDualBasis b]
+  rw [killingDualBasis_repr, LieModule.traceForm_comm]
+
+/-- **Expansion in `b`**, with the coefficients read off by the Killing-dual basis. -/
+theorem sum_killingForm_smul_basis (b : Module.Basis ι K L) (v : L) :
+    ∑ i, killingForm K L v (killingDualBasis b i) • b i = v := by
+  conv_rhs => rw [← b.sum_repr v]
+  exact sum_congr rfl fun i _ ↦ by rw [repr_eq_killingForm]
+
+/-- **Expansion in the Killing-dual basis**, with the coefficients read off by `b`. -/
+theorem sum_killingForm_smul_killingDualBasis (b : Module.Basis ι K L) (v : L) :
+    ∑ i, killingForm K L (b i) v • killingDualBasis b i = v := by
+  conv_rhs => rw [← (killingDualBasis b).sum_repr v]
+  exact sum_congr rfl fun i _ ↦ by rw [killingDualBasis_repr]
+
+end DualBasis
 
 /-! ### The canonical invariant element `∑ᵢ xᵢ ⊗ yᵢ`
 
@@ -206,19 +263,5 @@ theorem casimirElement_mem_center :
   | algebraMap r => exact Algebra.commutes r _
   | add x y hx hy => rw [add_mul, mul_add, hx, hy]
   | mul x y hx hy => rw [mul_assoc, hy, ← mul_assoc, hx, mul_assoc]
-
-/-! ### The action on a Lie module -/
-
-variable {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-
-open _root_.TauCeti.UniversalEnvelopingAlgebra (representation representation_ι_apply) in
-/-- **The Casimir element acts by the double bracket along any basis** of `L` and its Killing-dual
-basis: the two canonical generators of each summand act one after the other. -/
-theorem representation_casimirElement_apply {ι' : Type*} [DecidableEq ι'] [Fintype ι']
-    (bs : Module.Basis ι' K L) (m : M) :
-    representation K L M (casimirElement K L) m = ∑ i, ⁅bs i, ⁅killingDualBasis bs i, m⁆⁆ := by
-  rw [casimirElement_eq_sum bs, map_sum, LinearMap.sum_apply]
-  exact sum_congr rfl fun i _ ↦ by
-    rw [map_mul, Module.End.mul_apply, representation_ι_apply, representation_ι_apply]
 
 end TauCeti
