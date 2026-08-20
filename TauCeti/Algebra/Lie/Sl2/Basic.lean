@@ -70,6 +70,8 @@ that composes to zero is already zero.
   so an action of it that composes to zero is zero.
 * `IsSl2Triple.eq_two_of_lie_h_e_eq_smul`: the raising eigenvalue of an `sl₂` triple is
   forced to be two in a torsion-free module.
+* `IsSl2Triple.rescale`: rescaling the raising element by a unit and the lowering element by its
+  inverse preserves an `sl₂` triple.
 
 ## Implementation notes
 
@@ -113,6 +115,17 @@ theorem _root_.IsSl2Triple.eq_two_of_lie_h_e_eq_smul {S H : Type*} [CommRing S] 
     rw [sub_smul, ← ha, ← t.lie_h_e_smul S, sub_self]
   exact sub_eq_zero.mp
     ((NoZeroSMulDivisors.eq_zero_or_eq_zero_of_smul_eq_zero hzero).resolve_right t.e_ne_zero)
+
+/-- **Rescaling an `sl₂` triple by a unit of the base ring.** Scaling the raising element by `c`
+and the lowering element by `c⁻¹` leaves their bracket, hence the Cartan element, unchanged. -/
+theorem _root_.IsSl2Triple.rescale {S L : Type*} [CommRing S] [LieRing L] [LieAlgebra S L]
+    {h e f : L} (t : IsSl2Triple h e f) (c : Sˣ) :
+    IsSl2Triple h ((c : S) • e) (((c⁻¹ : Sˣ) : S) • f) where
+  h_ne_zero := t.h_ne_zero
+  lie_e_f := by
+    rw [smul_lie, lie_smul, t.lie_e_f, smul_smul, Units.mul_inv, one_smul]
+  lie_h_e_nsmul := by rw [lie_smul, t.lie_h_e_nsmul, smul_comm]
+  lie_h_f_nsmul := by rw [lie_smul, t.lie_h_f_nsmul, smul_neg, smul_comm]
 
 variable (R : Type*) [CommRing R] {n : Type*} [DecidableEq n] [Fintype n]
 

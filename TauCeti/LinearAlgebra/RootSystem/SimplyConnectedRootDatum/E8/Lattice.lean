@@ -27,7 +27,7 @@ that a direct construction would have to tabulate and check.
 
 ## The argument
 
-The `E₈` norm `(v ᵥ* CartanMatrix.E₈) ⬝ᵥ v` is the Gram form of the simple-coroot basis, so the
+The `E₈` norm `(v ᵥ* CartanMatrix.E 8) ⬝ᵥ v` is the Gram form of the simple-coroot basis, so the
 norm-two vectors are the minimal vectors of the `E₈` lattice, read in that basis. They are counted
 in the Euclidean model instead, where the lattice is described by congruences rather than by a Gram
 matrix. To keep the coordinates integral the model is scaled by two: `IsDoubledE8` describes
@@ -114,6 +114,39 @@ private lemma abs_le_two_of_dotProduct_self {x : Fin 8 → ℤ} (hx : x ⬝ᵥ x
     exact Finset.single_le_sum (fun i _ ↦ mul_self_nonneg (x i)) (Finset.mem_univ j)
   constructor <;> nlinarith [hsq]
 
+/-- **A norm-eight integer vector with every coordinate even is twice a norm-two vector.**
+
+The index type is an arbitrary `Fintype`; the dimension plays no part. -/
+private theorem exists_eq_two_smul_of_forall_even {ι : Type*} [Fintype ι] {x : ι → ℤ}
+    (heven : ∀ j, (2 : ℤ) ∣ x j) (hnorm : x ⬝ᵥ x = 8) :
+    ∃ y : ι → ℤ, x = (2 : ℤ) • y ∧ y ⬝ᵥ y = 2 := by
+  -- halving each coordinate divides the norm by four, so `8` becomes `2`
+  choose y hy using heven
+  have hx2y : x = (2 : ℤ) • y := funext fun j ↦ by
+    simp only [Pi.smul_apply, smul_eq_mul, hy j]
+  refine ⟨y, hx2y, ?_⟩
+  have h : x ⬝ᵥ x = 4 * (y ⬝ᵥ y) := by
+    rw [hx2y]
+    simp only [smul_dotProduct, dotProduct_smul, smul_eq_mul]
+    ring
+  omega
+
+/-- **For a `±1` vector in eight coordinates whose sum is divisible by four, the number of `+1`
+coordinates is even.** -/
+private theorem even_card_filter_eq_one {x : Fin 8 → ℤ} (hvals : ∀ j, x j = 1 ∨ x j = -1)
+    (hsum : (4 : ℤ) ∣ ∑ j, x j) :
+    Even (Finset.univ.filter (fun j ↦ x j = 1)).card := by
+  classical
+  -- Counting `+1`s against `-1`s turns the sum into `2 * card - 8`.
+  have hcount : ∑ j, x j = 2 * ((Finset.univ.filter (fun j ↦ x j = 1)).card : ℤ) - 8 := by
+    have hpoint : ∀ j ∈ Finset.univ, x j = 2 * (if x j = 1 then (1 : ℤ) else 0) - 1 :=
+      fun j _ ↦ by rcases hvals j with h | h <;> simp [h]
+    rw [Finset.sum_congr rfl hpoint, Finset.sum_sub_distrib, ← Finset.mul_sum, Finset.sum_boole]
+    simp
+  obtain ⟨c, hc⟩ := hsum
+  rw [Nat.even_iff]
+  omega
+
 /-- A vector of the doubled lattice of norm eight is in the candidate minimal set. -/
 private theorem mem_e8DoubledMinimalSet_of_isDoubledE8 {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x)
     (hnorm : x ⬝ᵥ x = 8) : x ∈ e8DoubledMinimalSet := by
@@ -126,15 +159,7 @@ private theorem mem_e8DoubledMinimalSet_of_isDoubledE8 {x : Fin 8 → ℤ} (hlat
       obtain ⟨c, hc⟩ := h0
       obtain ⟨d, hd⟩ := hpar j
       exact ⟨c + d, by omega⟩
-    choose y hy using fun j ↦ heven j
-    have hx2y : x = (2 : ℤ) • y := funext fun j ↦ by
-      simp only [Pi.smul_apply, smul_eq_mul, hy j]
-    have hnorm_y : y ⬝ᵥ y = 2 := by
-      have h : x ⬝ᵥ x = 4 * (y ⬝ᵥ y) := by
-        rw [hx2y]
-        simp only [smul_dotProduct, dotProduct_smul, smul_eq_mul]
-        ring
-      omega
+    obtain ⟨y, hx2y, hnorm_y⟩ := exists_eq_two_smul_of_forall_even heven hnorm
     obtain ⟨k, hk⟩ := (typeDRootEquiv 8 (by omega)).surjective ⟨y, hnorm_y⟩
     rw [e8DoubledMinimalSet, Finset.mem_union]
     left
@@ -147,21 +172,11 @@ private theorem mem_e8DoubledMinimalSet_of_isDoubledE8 {x : Fin 8 → ℤ} (hlat
       obtain ⟨d, hd⟩ := hpar j
       have := hbound j
       omega
-    set t : Finset (Fin 8) := Finset.univ.filter (fun j ↦ x j = 1) with ht
-    have hcount : ∑ j, x j = 2 * (t.card : ℤ) - 8 := by
-      have hpoint : ∀ j ∈ Finset.univ, x j = 2 * (if x j = 1 then (1 : ℤ) else 0) - 1 :=
-        fun j _ ↦ by rcases hvals j with h | h <;> simp [h]
-      rw [Finset.sum_congr rfl hpoint, Finset.sum_sub_distrib, ← Finset.mul_sum, Finset.sum_boole,
-        ← ht]
-      simp
-    have hparity : Even t.card := by
-      obtain ⟨c, hc⟩ := hsum
-      rw [Nat.even_iff]
-      omega
+    have hparity := even_card_filter_eq_one hvals hsum
     rw [e8DoubledMinimalSet, Finset.mem_union]
     right
     refine Finset.mem_image.mpr ⟨⟨fun j ↦ x j = 1, ?_⟩, Finset.mem_univ _, ?_⟩
-    · simpa [ht] using hparity
+    · simpa using hparity
     · ext j
       dsimp [e8DoubledOddMinimalVector]
       rcases hvals j with h | h <;> simp [h]
@@ -174,7 +189,7 @@ private def e8DoubledEmbed (v : Fin 8 → ℤ) : Fin 8 → ℤ := v ᵥ* e8Doubl
 
 /-- Reading the simple-coroot coordinates in the doubled model multiplies the `E₈` norm by four. -/
 private theorem e8DoubledEmbed_dotProduct_self (v : Fin 8 → ℤ) :
-    e8DoubledEmbed v ⬝ᵥ e8DoubledEmbed v = 4 * ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ v) := by
+    e8DoubledEmbed v ⬝ᵥ e8DoubledEmbed v = 4 * ((v ᵥ* CartanMatrix.E 8) ⬝ᵥ v) := by
   rw [e8DoubledEmbed]
   nth_rewrite 2 [← Matrix.mulVec_transpose]
   rw [dotProduct_mulVec, Matrix.vecMul_vecMul, e8DoubledSimpleRoot_mul_transpose,
@@ -184,7 +199,7 @@ private theorem e8DoubledEmbed_dotProduct_self (v : Fin 8 → ℤ) :
 private theorem e8DoubledEmbed_injective : Function.Injective e8DoubledEmbed := by
   intro v w h
   apply sub_eq_zero.mp
-  refine Matrix.eq_zero_of_vecMul_eq_zero (M := CartanMatrix.E₈)
+  refine Matrix.eq_zero_of_vecMul_eq_zero (M := CartanMatrix.E 8)
     (by rw [CartanMatrix.E₈_det]; norm_num) ?_
   have h0 : (v - w) ᵥ* e8DoubledSimpleRoot = 0 := by
     rw [Matrix.sub_vecMul]
@@ -216,10 +231,10 @@ private theorem isDoubledE8_e8DoubledEmbed (v : Fin 8 → ℤ) : IsDoubledE8 (e8
 /-- **The listed `E₈` coroots are all the norm-two vectors of the simple-coroot lattice.** The
 enumeration of the two hundred and forty coroots is complete: nothing of norm two is missing from
 it. -/
-theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2) :
+theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E 8) ⬝ᵥ v = 2) :
     ∃ k, e8Coroot k = v := by
   classical
-  have hmin : ∀ w : Fin 8 → ℤ, (w ᵥ* CartanMatrix.E₈) ⬝ᵥ w = 2 →
+  have hmin : ∀ w : Fin 8 → ℤ, (w ᵥ* CartanMatrix.E 8) ⬝ᵥ w = 2 →
       e8DoubledEmbed w ∈ e8DoubledMinimalSet := by
     intro w hw
     exact mem_e8DoubledMinimalSet_of_isDoubledE8 (isDoubledE8_e8DoubledEmbed w)

@@ -203,16 +203,7 @@ private theorem not_isPrincipal_primeAboveTwo
   intro hprincipal
   let _ : Submodule.IsPrincipal P := hprincipal
   let z : 𝓞 K := Submodule.IsPrincipal.generator P
-  let _ : (span {(2 : ℤ)} : Ideal ℤ).IsMaximal :=
-    ((Ideal.span_singleton_prime (by norm_num)).mpr
-      (Int.prime_iff_natAbs_prime.mpr (by decide))).isMaximal (by norm_num)
-  let _ : P.IsMaximal := (inferInstance : P.IsPrime).isMaximal
-    (Ideal.ne_bot_of_liesOver_of_ne_bot (p := span {(2 : ℤ)}) (by norm_num) P)
-  have hnormP : P.absNorm = 2 := by
-    rw [Ideal.absNorm_eq_pow_inertiaDeg' P Nat.prime_two,
-      Ideal.inertiaDeg'_eq_inertiaDeg,
-      inertiaDeg_eq_one_of_mem_ramifiedPrimes hfin hram P]
-    norm_num
+  have hnormP : P.absNorm = 2 := absNorm_eq_of_mem_ramifiedPrimes hfin hram P
   have hnormz : (Algebra.norm ℤ z).natAbs = 2 := by
     have hzspan : Ideal.span {z} = P := by
       exact Submodule.IsPrincipal.span_singleton_generator P

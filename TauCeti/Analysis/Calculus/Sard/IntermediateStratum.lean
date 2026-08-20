@@ -23,9 +23,9 @@ the `i`th derivative vanishes.
 `TauCeti.exists_parametrization_iteratedFDeriv_eq_zero` makes this reduction explicit. It gives a
 `C^r` parametrization `θ` from the kernel of a nonzero scalar functional, whose dimension is one
 less than that of the source. Locally, the zero set of the `i`th derivative is contained in the
-range of `θ`, and `θ` itself lies in a regular scalar level set containing that zero set. This is
-the induction-on-source-dimension input for proving that the images of the intermediate strata
-`Σ_i \ Σ_{i+1}` are null.
+image under `θ` of any prescribed neighbourhood of the origin, and `θ` itself lies in a regular
+scalar level set containing that zero set. This is the induction-on-source-dimension input for
+proving that the images of the intermediate strata `Σ_i \ Σ_{i+1}` are null.
 
 The scalar component is obtained by Hahn--Banach from a nonzero value of the derivative of
 `iteratedFDeriv ℝ i f`. The parametrization is Mathlib's implicit function for that scalar
@@ -64,7 +64,8 @@ does not. Then there are a scalar component `g` of the `i`th derivative, its non
 `g'`, and a `C^r` parametrization `θ` from `ker g'` such that:
 
 * every zero of `iteratedFDeriv ℝ i f` is a zero of `g`;
-* locally at `a`, every zero of `iteratedFDeriv ℝ i f` lies in the range of `θ`;
+* locally at `a`, every zero of `iteratedFDeriv ℝ i f` lies in the image under `θ` of any
+  prescribed neighbourhood of the origin;
 * locally at the origin, `θ` lies in the regular level set `g = 0`; and
 * `ker g'` has dimension one less than `E`.
 
@@ -82,7 +83,7 @@ theorem exists_parametrization_iteratedFDeriv_eq_zero
       θ 0 = a ∧
       ContDiffAt ℝ r θ 0 ∧
       (∀ᶠ z in 𝓝 0, g (θ z) = 0) ∧
-      (∀ᶠ x in 𝓝 a, iteratedFDeriv ℝ i f x = 0 → x ∈ range θ) ∧
+      (∀ V ∈ 𝓝 (0 : ↥g'.ker), ∀ᶠ x in 𝓝 a, iteratedFDeriv ℝ i f x = 0 → x ∈ θ '' V) ∧
       finrank ℝ ↥g'.ker + 1 = finrank ℝ E := by
   let instCompleteE : CompleteSpace E := FiniteDimensional.complete ℝ E
   have hr' : (r : ℕ∞ω) ≠ 0 := by exact_mod_cast hr
@@ -180,9 +181,18 @@ theorem exists_parametrization_iteratedFDeriv_eq_zero
   have hzero : ∀ x, iteratedFDeriv ℝ i f x = 0 → g x = 0 := by
     intro x hx
     simp [g, hx]
-  have hcover : ∀ᶠ x in 𝓝 a, iteratedFDeriv ℝ i f x = 0 → x ∈ range theta := by
-    filter_upwards [phi.implicitFunction_apply_image] with x hx hxi
-    refine ⟨phi.rightFun x, ?_⟩
+  have hcover : ∀ V ∈ 𝓝 (0 : ↥g'.ker),
+      ∀ᶠ x in 𝓝 a, iteratedFDeriv ℝ i f x = 0 → x ∈ theta '' V := by
+    intro V hV
+    -- The witness is `phi.rightFun x = projection (x - a)`, which tends to `0` as `x` tends to
+    -- `a`, so it lands in `V` for `x` close enough to `a`.
+    have hright : ContinuousAt phi.rightFun a := by
+      simp only [phi]
+      fun_prop
+    have hzeroright : phi.rightFun a = 0 := by simp [phi, projection]
+    have hmem : ∀ᶠ x in 𝓝 a, phi.rightFun x ∈ V := hright.eventually_mem (by rwa [hzeroright])
+    filter_upwards [phi.implicitFunction_apply_image, hmem] with x hx hxV hxi
+    refine ⟨phi.rightFun x, hxV, ?_⟩
     dsimp only [theta]
     rw [← hzero x hxi]
     simpa only [phi] using hx

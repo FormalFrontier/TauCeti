@@ -144,6 +144,7 @@ SCHEDULERS = {
     "housekeeping.yml":      ("queue housekeeping",        7),
     "zulip-healthcheck.yml": ("zulip healthcheck",        15),
     "merge-sweep.yml":       ("merge sweep",               4),
+    "toolchain-tags.yml":    ("toolchain tag audit",      30),
 }
 # A PR carrying any of these labels is intentionally parked; never "stranded".
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
