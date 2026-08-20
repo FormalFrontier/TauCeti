@@ -76,8 +76,7 @@ integer-valued. -/
 theorem mem_geckCoordinateLattice_iff {v : t.GeckIndex ht → ℚ} :
     v ∈ t.geckCoordinateLattice ht ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = v i := by
   rw [geckCoordinateLattice, Module.Basis.mem_span_iff_repr_mem]
-  simp only [Pi.basisFun_repr, Set.mem_range, eq_comm]
-  rfl
+  simp only [Pi.basisFun_repr, algebraMap_int_eq, Int.coe_castRingHom, Set.mem_range]
 
 /-- The standard coordinate basis of the Geck coordinate lattice. -/
 def geckCoordinateBasis : Module.Basis (t.GeckIndex ht) ℤ (t.geckCoordinateLattice ht) :=
