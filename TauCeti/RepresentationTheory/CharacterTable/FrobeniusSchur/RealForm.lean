@@ -13,6 +13,7 @@ public import Mathlib.LinearAlgebra.Complex.Module
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import TauCeti.RepresentationTheory.BaseChange
 public import TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.Trichotomy
+public import TauCeti.RepresentationTheory.InvariantForm.Average
 public import TauCeti.RepresentationTheory.Irreducible
 -- Private: `LinearMap.trace_baseChange` and `LinearMap.trace_conj'` are used only inside proofs.
 import Mathlib.LinearAlgebra.Trace
@@ -28,10 +29,12 @@ tensors `1 ⊗ₜ w` are asked for, which is enough because those generate `ℂ 
 `ρ g` is conjugate to the base change of `σ g`).  A representation is **realizable over `ℝ`** when
 it admits a real form.  `Representation.IsRealForm` allows any carrier for the real form,
 while `Representation.IsRealizableOverReal` pins it to `Fin (finrank ℂ V) → ℝ`, so that the
-predicate needs no type existential; transporting a real form on an arbitrary carrier to the pinned
-one along a basis is not built here.  Pinning the carrier by the dimension is only faithful in
-finite dimension -- `finrank ℂ V = 0` for an infinite-dimensional `V`, which would make the pinned
-carrier the zero space -- so `Representation.IsRealizableOverReal` carries
+predicate needs no type existential; nothing is lost by pinning it, because
+`Representation.IsRealForm.isRealizableOverReal` transports a real form on an arbitrary
+finite-dimensional carrier to the pinned one along a real basis.  Pinning the carrier by the
+dimension is only faithful in finite dimension -- `finrank ℂ V = 0` for an infinite-dimensional
+`V`, which would make the pinned carrier the zero space -- so
+`Representation.IsRealizableOverReal` carries
 `FiniteDimensional ℂ V` as a conjunct of its statement, and
 `Representation.isRealizableOverReal_iff` drops it again once it is available as an instance.  The
 infinite-dimensional case is outside the scope of the pinned predicate; `Representation.IsRealForm`
@@ -42,17 +45,17 @@ goes from a real form to the indicator: **an irreducible representation with a r
 orthogonal**, `ν₂(ρ) = 1`.  The route is the one the trichotomy already asks for, an invariant
 symmetric form.  A real representation of a finite group carries a nonzero invariant symmetric
 form, obtained by averaging the coordinate dot product of a basis over the group
-(`Representation.averageForm`); the base change of that form to `ℂ ⊗[ℝ] W`
+(`Representation.exists_isInvariantForm_isSymm_ne_zero`, in
+`TauCeti.RepresentationTheory.InvariantForm.Average`); the base change of that form to `ℂ ⊗[ℝ] W`
 (`LinearMap.BilinForm.baseChange`) stays symmetric, stays invariant for the base-changed
 representation (`TauCeti.Representation.IsInvariantForm.baseChange`), and stays nonzero because
 `ℝ → ℂ` is injective; transported along the isomorphism it is a nonzero invariant symmetric form on
 `V`, and `TauCeti.Representation.frobeniusSchurIndicator_eq_one_of_isSymm` reads off the indicator.
 
-The averaging step is where finiteness of `G` enters, and it is the only place: everything about
-real forms below is stated for an arbitrary group.  Positivity is what makes the averaged form
-nonzero -- the average of a sum of squares over the group is at least its value at the identity --
-so it is the ordering of `ℝ`, not a division by `|G|`, that does the work, and no invertibility of
-`|G|` is needed to produce the form.
+The averaging step is where finiteness of `G` enters, and it is the only place: the real-form
+vocabulary and its transports never invert a group element, so they are stated here for a
+representation of an arbitrary monoid, and only the passage to the indicator asks for a finite
+group.
 
 The **converse** -- that an irreducible representation with `ν₂(ρ) = 1` is realizable over `ℝ` --
 is not proved here.  It is a strictly stronger statement than the existence of an invariant
@@ -63,18 +66,12 @@ from the two of them, whose fixed points are the real form.  That construction i
 
 ## Main definitions
 
-* `Representation.averageForm`: the average of a bilinear form over a finite group.
 * `Representation.IsRealForm`: `σ` is a real form of `ρ`.
 * `Representation.IsRealizableOverReal`: `ρ` admits a real form on a carrier pinned by the
   dimension of `V`.
 
 ## Main results
 
-* `Representation.isInvariantForm_averageForm`: the average of a bilinear form is
-  invariant.
-* `Representation.exists_isInvariantForm_isSymm_ne_zero`: **a real representation of a
-  finite group on a nontrivial finite-dimensional space carries a nonzero invariant symmetric
-  form.**
 * `TauCeti.Representation.IsInvariantForm.baseChange`: the base change of an invariant form is
   invariant.
 * `Representation.IsRealForm.map_baseChange`: a real form conjugates `ρ g` into the base
@@ -84,6 +81,8 @@ from the two of them, whose fixed points are the real form.  That construction i
   (`Representation.IsRealForm.conj_character`).
 * `Representation.IsRealForm.exists_isInvariantForm`: a real form transports a nonzero
   invariant symmetric real form to a nonzero invariant symmetric complex form.
+* `Representation.IsRealForm.isRealizableOverReal`: a real form on an arbitrary
+  finite-dimensional carrier makes `ρ` realizable over `ℝ` in the pinned sense.
 * `Representation.IsRealForm.frobeniusSchurIndicator_eq_one` and
   `Representation.frobeniusSchurIndicator_eq_one_of_isRealizableOverReal`: **an
   irreducible representation realizable over `ℝ` has Frobenius-Schur indicator `1`.**
@@ -149,104 +148,11 @@ namespace Representation
 
 open TauCeti.Representation
 
-/-! ### Averaging a bilinear form over a finite group -/
-
-section Average
-
-variable {k G W : Type*} [CommSemiring k] [Group G] [Fintype G] [AddCommMonoid W] [Module k W]
-
-/-- The **average** of a bilinear form over a finite group: `∑_g B (σ g ·) (σ g ·)`.  No division
-by `|G|` is performed, so no invertibility of the group order is needed; the sum is already
-invariant. -/
-def averageForm (σ : Representation k G W) (B : BilinForm k W) : BilinForm k W :=
-  ∑ g : G, B.comp (σ g) (σ g)
-
-@[simp]
-theorem averageForm_apply (σ : Representation k G W) (B : BilinForm k W) (x y : W) :
-    averageForm σ B x y = ∑ g : G, B (σ g x) (σ g y) := by
-  simp [averageForm, BilinForm.comp_apply]
-
-/-- The average of a bilinear form over a finite group is invariant: reindexing the sum by right
-translation absorbs the group element. -/
-theorem isInvariantForm_averageForm (σ : Representation k G W) (B : BilinForm k W) :
-    IsInvariantForm σ (averageForm σ B) := by
-  rw [isInvariantForm_iff]
-  intro h x y
-  simp only [averageForm_apply]
-  refine Eq.trans ?_ (Fintype.sum_equiv (Equiv.mulRight h)
-    (fun g : G => B (σ (g * h) x) (σ (g * h) y)) (fun g : G => B (σ g x) (σ g y))
-    fun g => rfl)
-  exact Finset.sum_congr rfl fun g _ => by
-    simp only [map_mul, Module.End.mul_apply]
-
-/-- The average of a symmetric bilinear form is symmetric. -/
-theorem averageForm_isSymm {σ : Representation k G W} {B : BilinForm k W} (hB : B.IsSymm) :
-    (averageForm σ B).IsSymm :=
-  ⟨fun x y => by
-    simpa only [averageForm_apply] using
-      Finset.sum_congr rfl fun g (_ : g ∈ Finset.univ) => hB.eq (σ g x) (σ g y)⟩
-
-end Average
-
-/-! ### A nonzero invariant symmetric form on a real representation -/
-
-section RealAverage
-
-variable {G W : Type*} [Group G] [Finite G] [AddCommGroup W] [Module ℝ W]
-
-/-- **A real representation of a finite group carries a nonzero invariant symmetric form.**  Take
-the dot product read in a basis and average it over the group; averaging preserves symmetry, and
-the average of a positive semidefinite form is at least its value at the identity, hence still
-positive definite.  This is the real input to the orthogonality of a representation with a real
-form. -/
-theorem exists_isInvariantForm_isSymm_ne_zero (σ : Representation ℝ G W)
-    [FiniteDimensional ℝ W] [Nontrivial W] :
-    ∃ B : BilinForm ℝ W, IsInvariantForm σ B ∧ B.IsSymm ∧ B ≠ 0 := by
-  classical
-  have : Fintype G := Fintype.ofFinite G
-  set b := Module.finBasis ℝ W with hb
-  set B₀ : BilinForm ℝ W := Matrix.toBilin b 1 with hB₀
-  have hB₀apply : ∀ x y : W, B₀ x y = ∑ i, b.repr x i * b.repr y i := by
-    intro x y
-    simp [hB₀, Matrix.toBilin_apply, Matrix.one_apply, Finset.sum_ite_eq]
-  have hB₀symm : B₀.IsSymm :=
-    ⟨fun x y => by
-      simpa only [hB₀apply] using
-        Finset.sum_congr rfl fun i (_ : i ∈ Finset.univ) => mul_comm _ _⟩
-  have hB₀nonneg : ∀ x : W, 0 ≤ B₀ x x := fun x => by
-    rw [hB₀apply]
-    exact Finset.sum_nonneg fun i _ => mul_self_nonneg _
-  refine ⟨averageForm σ B₀, isInvariantForm_averageForm σ B₀, averageForm_isSymm hB₀symm, ?_⟩
-  obtain ⟨x, hx⟩ := exists_ne (0 : W)
-  have hpos : 0 < B₀ x x := by
-    rw [hB₀apply]
-    obtain ⟨i, hi⟩ : ∃ i, b.repr x i ≠ 0 := by
-      by_contra hcon
-      push Not at hcon
-      refine hx (b.repr.injective ?_)
-      rw [map_zero]
-      ext j
-      simp [hcon j]
-    exact Finset.sum_pos' (fun j _ => mul_self_nonneg _)
-      ⟨i, Finset.mem_univ i, mul_self_pos.mpr hi⟩
-  have hle : B₀ (σ 1 x) (σ 1 x) ≤ averageForm σ B₀ x x := by
-    rw [averageForm_apply]
-    exact Finset.single_le_sum (f := fun g : G => B₀ (σ g x) (σ g x))
-      (fun g _ => hB₀nonneg _) (Finset.mem_univ 1)
-  intro hzero
-  rw [map_one] at hle
-  simp only [Module.End.one_apply] at hle
-  rw [hzero] at hle
-  simp only [LinearMap.zero_apply] at hle
-  exact absurd (lt_of_lt_of_le hpos hle) (lt_irrefl 0)
-
-end RealAverage
-
 /-! ### Real forms -/
 
 section RealForm
 
-variable {G : Type*} [Group G] {V : Type*} [AddCommGroup V] [Module ℂ V]
+variable {G : Type*} [Monoid G] {V : Type*} [AddCommGroup V] [Module ℂ V]
   {W : Type*} [AddCommGroup W] [Module ℝ W]
 variable {ρ : Representation ℂ G V} {σ : Representation ℝ G W}
 
@@ -351,6 +257,31 @@ theorem isRealizableOverReal_iff [FiniteDimensional ℂ V] :
     IsRealizableOverReal ρ ↔
       ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ :=
   and_iff_right ‹FiniteDimensional ℂ V›
+
+/-- **A real form on an arbitrary carrier realizes `ρ` over `ℝ`.**  Reading `σ` in a real basis of
+`W` moves it to the pinned carrier: complexification does not change the dimension,
+`finrank ℂ (ℂ ⊗[ℝ] W) = finrank ℝ W`, so a basis of `W` is indexed by `Fin (finrank ℂ V)`, and
+conjugating `σ` by the resulting coordinate isomorphism turns the real form into one on
+`Fin (finrank ℂ V) → ℝ`.  This is what makes `Representation.IsRealizableOverReal` usable from a
+real form carried by whatever space it naturally lives on. -/
+theorem IsRealForm.isRealizableOverReal [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) :
+    IsRealizableOverReal ρ := by
+  obtain ⟨e, he⟩ := h
+  have hV : FiniteDimensional ℂ V := Module.Finite.equiv e
+  have hrank : finrank ℝ W = finrank ℂ V := by
+    rw [← e.finrank_eq, Module.finrank_baseChange]
+  refine ⟨hV, ?_⟩
+  let f : W ≃ₗ[ℝ] (Fin (finrank ℂ V) → ℝ) :=
+    ((Module.finBasis ℝ W).reindex (finCongr hrank)).equivFun
+  refine ⟨{ toFun := fun g => f.conj (σ g)
+            map_one' := by simp [Module.End.one_eq_id]
+            map_mul' := fun g g' => by
+              rw [map_mul, Module.End.mul_eq_comp, LinearEquiv.conj_comp,
+                Module.End.mul_eq_comp] }, ?_⟩
+  refine ⟨(f.symm.baseChange ℝ ℂ _ _).trans e, fun g x => ?_⟩
+  simp only [MonoidHom.coe_mk, OneHom.coe_mk, LinearEquiv.trans_apply,
+    LinearEquiv.baseChange_tmul, LinearEquiv.conj_apply_apply, LinearEquiv.symm_apply_apply]
+  exact he g (f.symm x)
 
 end RealForm
 
