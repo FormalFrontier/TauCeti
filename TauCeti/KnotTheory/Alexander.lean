@@ -99,6 +99,7 @@ theorem alexanderMatrix_apply (V : Matrix ι ι R) (i j : ι) :
   simp [alexanderMatrix]
 
 /-- Transposing the Alexander matrix transposes the underlying matrix. -/
+@[simp]
 theorem transpose_alexanderMatrix (V : Matrix ι ι R) :
     (alexanderMatrix V)ᵀ = alexanderMatrix Vᵀ := by
   ext i j
@@ -311,10 +312,15 @@ as an explicit hypothesis. -/
 noncomputable def alexander (V : Matrix ι ι R) : R[T;T⁻¹] :=
   T (-((Fintype.card ι / 2 : ℕ) : ℤ)) * (alexanderMatrix V).det
 
+/-- The defining formula for the Alexander polynomial of an arbitrary finite matrix. -/
+theorem alexander_def (V : Matrix ι ι R) :
+    alexander V = T (-((Fintype.card ι / 2 : ℕ) : ℤ)) * (alexanderMatrix V).det := by
+  rw [alexander]
+
 /-- The Alexander polynomial of a matrix of size `2 * g`, with the genus `g` named. -/
 theorem alexander_eq_of_card {g : ℕ} (V : Matrix ι ι R) (h : Fintype.card ι = 2 * g) :
     alexander V = T (-(g : ℤ)) * (alexanderMatrix V).det := by
-  rw [alexander, h]
+  rw [alexander_def, h]
   norm_num
 
 /-- **The Alexander polynomial is symmetric**: `Δ(t⁻¹) = Δ(t)`. This is exactly what the
@@ -348,6 +354,7 @@ theorem alexander_congruence_of_det_sq_eq_one {P : Matrix ι ι R} (V : Matrix �
 
 /-- Reversing the orientation of the Seifert surface transposes its Seifert matrix and leaves the
 Alexander polynomial unchanged. -/
+@[simp]
 theorem alexander_transpose (V : Matrix ι ι R) : alexander Vᵀ = alexander V := by
   rw [alexander, alexander, det_alexanderMatrix_transpose]
 
@@ -443,9 +450,21 @@ theorem alexander_fin_two (V : Matrix (Fin 2) (Fin 2) R) :
 surface (Lickorish, *An Introduction to Knot Theory*, Chapter 6). -/
 def trefoilSeifertMatrix : Matrix (Fin 2) (Fin 2) ℤ := !![-1, 1; 0, -1]
 
+/-- The entries of the right-handed trefoil's Seifert matrix. -/
+@[simp]
+theorem trefoilSeifertMatrix_apply (i j : Fin 2) :
+    trefoilSeifertMatrix i j = !![-1, 1; 0, -1] i j := by
+  rw [trefoilSeifertMatrix]
+
 /-- The Seifert matrix of the figure-eight knot, read off the standard genus-one Seifert
 surface. -/
 def figureEightSeifertMatrix : Matrix (Fin 2) (Fin 2) ℤ := !![1, 1; 0, -1]
+
+/-- The entries of the figure-eight knot's Seifert matrix. -/
+@[simp]
+theorem figureEightSeifertMatrix_apply (i j : Fin 2) :
+    figureEightSeifertMatrix i j = !![1, 1; 0, -1] i j := by
+  rw [figureEightSeifertMatrix]
 
 /-- The Alexander polynomial of the right-handed trefoil is `t - 1 + t⁻¹`. -/
 theorem alexander_trefoilSeifertMatrix :
