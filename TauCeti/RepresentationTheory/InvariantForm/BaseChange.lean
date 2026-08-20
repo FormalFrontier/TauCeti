@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.BilinearForm.TensorProduct
+public import TauCeti.LinearAlgebra.BilinearForm.Isometry
 public import TauCeti.RepresentationTheory.BaseChange
 public import TauCeti.RepresentationTheory.InvariantForm
 
@@ -14,9 +14,9 @@ public import TauCeti.RepresentationTheory.InvariantForm
 
 Extending the scalars of a representation along an algebra `R → A` extends the scalars of its
 invariant forms: the base change `LinearMap.BilinForm.baseChange` of an invariant form is invariant
-for the base-changed representation `Representation.baseChange`.  Both sides are determined by
-their values on pure tensors, where they are the original form and the original action, so the
-statement reduces to invariance over `R`.
+for the base-changed representation `Representation.baseChange`.  Invariance is elementwise the
+statement that each `ρ g` is an isometry of the form, so this is
+`TauCeti.BilinForm.IsIsometry.baseChange` applied one group element at a time.
 
 ## Main results
 
@@ -37,24 +37,15 @@ namespace Representation
 variable {R A G W : Type*} [CommSemiring R] [CommSemiring A] [Algebra R A] [Monoid G]
   [AddCommMonoid W] [Module R W]
 
-/-- **The base change of an invariant form is invariant** for the base-changed representation.  The
-two base changes are matched on pure tensors, where both are the original form and the original
-action, and extended by bilinearity. -/
+/-- **The base change of an invariant form is invariant** for the base-changed representation:
+each base-changed action `(σ g).baseChange A` is an isometry of the base-changed form, by
+`TauCeti.BilinForm.IsIsometry.baseChange`. -/
 theorem IsInvariantForm.baseChange {σ : Representation R G W} {B : BilinForm R W}
     (hB : IsInvariantForm σ B) :
     IsInvariantForm (Representation.baseChange A σ) (B.baseChange A) := by
-  rw [isInvariantForm_iff]
-  intro g u v
-  simp only [Representation.baseChange_apply]
-  induction u using TensorProduct.induction_on with
-  | zero => simp
-  | add u₁ u₂ h₁ h₂ => simp only [map_add, LinearMap.add_apply, h₁, h₂]
-  | tmul a w =>
-    induction v using TensorProduct.induction_on with
-    | zero => simp
-    | add v₁ v₂ h₁ h₂ => simp only [map_add, h₁, h₂]
-    | tmul a' w' =>
-      simp only [LinearMap.baseChange_tmul, BilinForm.baseChange_tmul, hB.apply g w w']
+  rw [isInvariantForm_iff_isIsometry]
+  intro g
+  simpa only [Representation.baseChange_apply] using (hB.isIsometry g).baseChange A
 
 end Representation
 

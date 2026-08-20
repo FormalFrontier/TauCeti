@@ -61,10 +61,12 @@ section Monoid
 
 variable {k G W : Type*} [CommSemiring k] [Monoid G] [Fintype G] [AddCommMonoid W] [Module k W]
 
-/-- The **sum of a bilinear form over the conjugates** of a representation of a finite group,
-`∑_g B (σ g ·) (σ g ·)`.  No division by `|G|` is performed, so no invertibility of the group order
-is needed; the plain sum is already invariant.  The name follows Mathlib's
-`MonoidAlgebra.sumOfConjugates`, the same undivided sum for a linear map. -/
+/-- The **sum of a bilinear form over the conjugates** of a representation of a finite monoid,
+`∑_g B (σ g ·) (σ g ·)`.  No division by `|G|` is performed, so no invertibility of the monoid order
+is needed; when `G` is a group the plain sum is already invariant
+(`Representation.isInvariantForm_sumOfConjugatesForm`), which is what the reindexing of the sum by
+right translation needs.  The name follows Mathlib's `MonoidAlgebra.sumOfConjugates`, the same
+undivided sum for a linear map. -/
 def sumOfConjugatesForm (σ : Representation k G W) (B : BilinForm k W) : BilinForm k W :=
   ∑ g : G, B.comp (σ g) (σ g)
 

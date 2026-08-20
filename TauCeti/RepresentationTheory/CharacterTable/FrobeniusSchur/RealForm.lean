@@ -29,8 +29,10 @@ the coordinate dot product of a basis over the conjugates
 `TauCeti.RepresentationTheory.InvariantForm.SumOfConjugates`); a real form transports it to a
 nonzero invariant symmetric form on `V`
 (`Representation.IsRealForm.exists_isInvariantForm_isSymm_ne_zero`), and
-`TauCeti.Representation.frobeniusSchurIndicator_eq_one_of_isSymm` reads off the indicator.  The
-summing step is where finiteness of `G` enters, and it is the only place.
+`TauCeti.Representation.frobeniusSchurIndicator_eq_one_of_isSymm` reads off the indicator.
+Finiteness of `G` is used twice over: the indicator itself and the trichotomy consumed here are
+stated for a finite group, and the summing step needs it again to build the invariant form.  The
+real-form vocabulary is the part that needs none of it.
 
 The **converse** -- that an irreducible representation with `ν₂(ρ) = 1` is realizable over `ℝ` --
 is not proved here.  It is a strictly stronger statement than the existence of an invariant

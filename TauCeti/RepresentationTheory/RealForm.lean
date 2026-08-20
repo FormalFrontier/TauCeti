@@ -24,13 +24,11 @@ complexification of `σ`.  A representation is **realizable over `ℝ`** when it
 `Representation.IsRealizableOverReal` pins it to `Fin (finrank ℂ V) → ℝ`, so that the predicate
 needs no type existential; nothing is lost by pinning it, because
 `Representation.IsRealForm.isRealizableOverReal` transports a real form on an arbitrary
-finite-dimensional carrier to the pinned one along a real basis.  Pinning the carrier by the
-dimension is only faithful in finite dimension -- `finrank ℂ V = 0` for an infinite-dimensional
-`V`, which would make the pinned carrier the zero space -- so
-`Representation.IsRealizableOverReal` carries `FiniteDimensional ℂ V` as a conjunct of its
-statement, recovered by `Representation.IsRealizableOverReal.finiteDimensional`.  The
-infinite-dimensional case is outside the scope of the pinned predicate;
-`Representation.IsRealForm` is the notion to use there.
+finite-dimensional carrier to the pinned one along a real basis.  The pinned predicate needs no
+finite-dimensionality hypothesis either: the pinned carrier is finite-dimensional, so it already
+implies `FiniteDimensional ℂ V` (`Representation.IsRealizableOverReal.finiteDimensional`).  For an
+infinite-dimensional `V` it is therefore simply false, and `Representation.IsRealForm` is the
+notion to use there.
 
 Everything here is for a representation of an arbitrary monoid: the real-form vocabulary and its
 transports never invert a group element, and the passage to the Frobenius-Schur indicator that
@@ -55,9 +53,8 @@ only where it sums over the group.
   nonzero invariant symmetric real form to a nonzero invariant symmetric complex form.
 * `Representation.IsRealForm.isRealizableOverReal`: a real form on an arbitrary
   finite-dimensional carrier makes `ρ` realizable over `ℝ` in the pinned sense.
-* `Representation.IsRealizableOverReal.finiteDimensional` and
-  `Representation.IsRealizableOverReal.exists_isRealForm`: the two conjuncts of
-  `Representation.IsRealizableOverReal`, each recoverable on its own.
+* `Representation.IsRealizableOverReal.finiteDimensional`: a representation realizable over `ℝ` is
+  finite-dimensional.
 
 ## References
 
@@ -104,8 +101,9 @@ theorem isRealForm_iff :
 
 /-- The intertwining condition on pure tensors upgrades to the whole complexification: an
 isomorphism intertwining on `1 ⊗ₜ w` carries the base change of `σ g` to `ρ g`.  Both sides are
-`ℂ`-linear, so it is enough to check them on the generators `a ⊗ₜ w`. -/
-theorem map_baseChange_of_map_one_tmul {e : (ℂ ⊗[ℝ] W) ≃ₗ[ℂ] V}
+`ℂ`-linear, so it is enough to check them on the generators `a ⊗ₜ w`.  This is the content of
+`Representation.isRealForm_iff_nonempty_equiv`, which is the public form of the statement. -/
+private theorem map_baseChange_of_map_one_tmul {e : (ℂ ⊗[ℝ] W) ≃ₗ[ℂ] V}
     (he : ∀ (g : G) (w : W), e (1 ⊗ₜ[ℝ] σ g w) = ρ g (e (1 ⊗ₜ[ℝ] w))) (g : G)
     (u : ℂ ⊗[ℝ] W) : e (Representation.baseChange ℂ σ g u) = ρ g (e u) := by
   simp only [Representation.baseChange_apply]
@@ -113,10 +111,8 @@ theorem map_baseChange_of_map_one_tmul {e : (ℂ ⊗[ℝ] W) ≃ₗ[ℂ] V}
   | zero => simp
   | add u₁ u₂ h₁ h₂ => simp only [map_add, h₁, h₂]
   | tmul a w =>
-    have hsmul : ∀ v : W, (a ⊗ₜ[ℝ] v : ℂ ⊗[ℝ] W) = a • (1 ⊗ₜ[ℝ] v) := by
-      intro v
-      rw [TensorProduct.smul_tmul' a (1 : ℂ) v, smul_eq_mul, mul_one]
-    rw [LinearMap.baseChange_tmul, hsmul (σ g w), hsmul w, map_smul, map_smul, map_smul, he g w]
+    rw [LinearMap.baseChange_tmul, TensorProduct.tmul_eq_smul_one_tmul a (σ g w),
+      TensorProduct.tmul_eq_smul_one_tmul a w, map_smul, map_smul, map_smul, he g w]
 
 /-- **A real form is an equivalence of representations from the complexification.**  This is the
 characterization of `Representation.IsRealForm` against `Representation.baseChange`: checking the
@@ -189,29 +185,34 @@ Pinning the carrier avoids a type existential; a real form on an arbitrary carri
 `Representation.IsRealForm`, and every result about the indicator is proved from that more general
 notion.
 
-Finite-dimensionality of `V` is part of the statement, not an ambient hypothesis: `finrank ℂ V`
-is `0` for an infinite-dimensional `V`, so without it the pinned carrier would degenerate to the
-zero space and the predicate would say nothing about real forms.  The infinite-dimensional case is
-outside the scope of this notion; use `Representation.IsRealForm` there. -/
+Pinning the carrier by the dimension costs nothing: the pinned carrier is finite-dimensional, so a
+real form on it already forces `V` to be finite-dimensional
+(`Representation.IsRealizableOverReal.finiteDimensional`), and conversely every real form on a
+finite-dimensional carrier transports to the pinned one
+(`Representation.IsRealForm.isRealizableOverReal`).  For an infinite-dimensional `V` the predicate
+is therefore simply false -- `finrank ℂ V` is then `0` and the pinned carrier is the zero space --
+and `Representation.IsRealForm` is the notion to use there. -/
 def IsRealizableOverReal : Prop :=
-  FiniteDimensional ℂ V ∧ ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ
-
-/-- The finite-dimensionality carried by `Representation.IsRealizableOverReal`. -/
-theorem IsRealizableOverReal.finiteDimensional (h : IsRealizableOverReal ρ) :
-    FiniteDimensional ℂ V :=
-  h.1
+  ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ
 
 /-- The real form carried by `Representation.IsRealizableOverReal`. -/
 theorem IsRealizableOverReal.exists_isRealForm (h : IsRealizableOverReal ρ) :
     ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ :=
-  h.2
+  h
 
-/-- `Representation.IsRealizableOverReal` unfolded, with the finite-dimensionality it carries
-already available as an instance. -/
-theorem isRealizableOverReal_iff [FiniteDimensional ℂ V] :
+/-- `Representation.IsRealizableOverReal` unfolded. -/
+theorem isRealizableOverReal_iff :
     IsRealizableOverReal ρ ↔
       ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ :=
-  and_iff_right ‹FiniteDimensional ℂ V›
+  (Iff.rfl)
+
+/-- **A representation realizable over `ℝ` is finite-dimensional.**  The pinned carrier
+`Fin (finrank ℂ V) → ℝ` is finite-dimensional, so `V`, being the complexification of it, is too.
+This is what makes pinning the carrier by the dimension faithful. -/
+theorem IsRealizableOverReal.finiteDimensional (h : IsRealizableOverReal ρ) :
+    FiniteDimensional ℂ V := by
+  obtain ⟨_, hσ⟩ := h
+  exact hσ.finiteDimensional
 
 /-- **A real form on an arbitrary carrier realizes `ρ` over `ℝ`.**  Reading `σ` in a real basis of
 `W` moves it to the pinned carrier: complexification does not change the dimension
@@ -223,7 +224,6 @@ theorem IsRealForm.isRealizableOverReal [FiniteDimensional ℝ W] (h : IsRealFor
     IsRealizableOverReal ρ := by
   have hrank := h.finrank_eq
   obtain ⟨e, he⟩ := h
-  refine ⟨Module.Finite.equiv e, ?_⟩
   let f : W ≃ₗ[ℝ] (Fin (finrank ℂ V) → ℝ) :=
     ((Module.finBasis ℝ W).reindex (finCongr hrank)).equivFun
   refine ⟨{ toFun := fun g => f.conj (σ g)
