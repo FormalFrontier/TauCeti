@@ -35,6 +35,8 @@ coordinate algebra.
 
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv`: maps from an arbitrary relative scheme to
   an affine bialgebra spectrum are convolution points valued in its relative global sections.
+* `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_apply`: the forward comparison applies
+  relative global sections and then the adjunction counit.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_symm_apply`: the inverse comparison is the
   adjunction unit followed by the spectrum map of the convolution point.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapDomain`: the comparison is
@@ -160,6 +162,10 @@ private theorem schemePointsAlgΓEquiv_symm_apply
   rw [schemePointsAlgΓEquiv, Equiv.symm_trans_apply, Equiv.symm_trans_apply,
     Equiv.symm_trans_apply,
     HopfAlgebra.pointsHomEquiv_symm_apply]
+  -- The remaining `Equiv.cast` transports the relative-spectrum presentation, while
+  -- `opEquiv` reverses the bundled algebra morphism. These wrappers are definitionally the
+  -- displayed adjunction hom-equivalence application; there is no morphism-level rewrite for
+  -- the cast through the three composed equivalences.
   change ((algΓAlgSpecAdjunction (CommRingCat.of R)).homEquiv T
       (Opposite.op (CommAlgCat.of R H))) (CommAlgCat.ofHom p.ofConv).op = _
   rw [Adjunction.homEquiv_unit]
@@ -209,6 +215,24 @@ noncomputable def schemePointsAlgΓMulEquiv
         _ = (schemePointsAlgΓEquiv H T).symm
             (schemePointsAlgΓEquiv H T g * schemePointsAlgΓEquiv H T h) :=
           algΓPointSchemePoint_eq_symm H T _ }
+
+/-- The forward relative `Γ-Spec` comparison applies relative global sections to the scheme
+point and composes with the adjunction counit, then regards the resulting algebra morphism as a
+convolution point. -/
+@[simp]
+theorem schemePointsAlgΓMulEquiv_apply
+    (H : Type u) [CommRing H] [Bialgebra R H]
+    (T : Over (Spec (CommRingCat.of R)))
+    (g : T ⟶ (Spec (CommRingCat.of H)).asOver (Spec (CommRingCat.of R))) :
+    schemePointsAlgΓMulEquiv H T g =
+      WithConv.toConv (((algΓ (CommRingCat.of R)).map g ≫
+        (algΓAlgSpecAdjunction (CommRingCat.of R)).counit.app
+          (Opposite.op (CommAlgCat.of R H))).unop.hom) := by
+  change schemePointsAlgΓEquiv H T g = _
+  unfold schemePointsAlgΓEquiv
+  simp only [Equiv.trans_apply, HopfAlgebra.pointsHomEquiv_apply,
+    Adjunction.homEquiv_counit]
+  rfl
 
 private theorem schemePointsAlgΓMulEquiv_symm_apply_spec
     (H : Type u) [CommRing H] [Bialgebra R H]
