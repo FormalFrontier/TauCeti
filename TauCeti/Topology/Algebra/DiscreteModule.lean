@@ -20,7 +20,7 @@ cohomology. This file develops the two facts about them that every later stateme
 action of a profinite group on a discrete module is locally trivial, and the invariants of an open
 normal subgroup form a module over the finite quotient.
 
-The unbundled classes `[AddCommGroup M] [DistribMulAction G M] [DiscreteTopology M]
+The unbundled classes `[AddGroup M] [DistribMulAction G M] [DiscreteTopology M]
 [ContinuousSMul G M]` are the hypotheses used throughout, rather than a new bundling structure, so
 that instance search composes them freely and each statement carries exactly the classes it needs.
 Profiniteness is likewise `[CompactSpace G] [TotallyDisconnectedSpace G]` on a topological group and
@@ -124,6 +124,13 @@ theorem quotientToPermHom_mk [Finite X] (g : G) (x : X) :
     quotientToPermHom G X (QuotientGroup.mk g) x = g • x :=
   (rfl)
 
+/-- The descended permutation representation is faithful. -/
+theorem quotientToPermHom_injective [Finite X] :
+    Function.Injective (quotientToPermHom G X) := by
+  change Function.Injective
+    (QuotientGroup.lift (toPermHom G X).ker (toPermHom G X) le_rfl)
+  exact (QuotientGroup.injective_lift_iff (toPermHom G X).ker (toPermHom G X) le_rfl).2 rfl
+
 variable [IsTopologicalGroup G] [CompactSpace G] [TotallyDisconnectedSpace G]
 
 /-- **Local triviality of a discrete action.** Over a profinite group every point of a discrete
@@ -139,7 +146,7 @@ end DiscreteAction
 
 section Invariants
 
-variable {G : Type*} [Group G] {M : Type*} [AddCommGroup M] [DistribMulAction G M]
+variable {G : Type*} [Group G] {M : Type*} [AddGroup M] [DistribMulAction G M]
 
 /-- Membership in `M ^ H`, in the subgroup-membership form the statements below use. -/
 theorem mem_fixedPoints_addSubgroup {H : Subgroup G} {m : M} :
@@ -218,6 +225,7 @@ theorem coe_invariantsInclusion (h : K ≤ H) (m : FixedPoints.addSubgroup H M) 
   (rfl)
 
 /-- The transition inclusion is `G`-equivariant. -/
+@[simp]
 theorem invariantsInclusion_smul [H.Normal] [K.Normal] (h : K ≤ H) (g : G)
     (m : FixedPoints.addSubgroup H M) :
     invariantsInclusion h (g • m) = g • invariantsInclusion h m :=
@@ -226,6 +234,7 @@ theorem invariantsInclusion_smul [H.Normal] [K.Normal] (h : K ≤ H) (g : G)
 /-- The transition inclusion is equivariant for the two finite-level actions, along the quotient
 homomorphism `G ⧸ K → G ⧸ H`. This is the equivariance that types the transition pair of the
 finite-quotient system. -/
+@[simp]
 theorem invariantsInclusion_quotientMk_smul [H.Normal] [K.Normal] (h : K ≤ H) (g : G)
     (m : FixedPoints.addSubgroup H M) :
     invariantsInclusion h ((QuotientGroup.mk g : G ⧸ H) • m) =
@@ -241,6 +250,7 @@ theorem invariantsInclusion_refl (H : Subgroup G) :
   AddMonoidHom.ext fun _ ↦ Subtype.ext (rfl)
 
 /-- The transition inclusions are functorial in the subgroup: they compose. -/
+@[simp]
 theorem invariantsInclusion_comp {L : Subgroup G} (h : K ≤ H) (h' : L ≤ K) :
     (invariantsInclusion (M := M) h').comp (invariantsInclusion h) =
       invariantsInclusion (h'.trans h) :=
@@ -248,7 +258,7 @@ theorem invariantsInclusion_comp {L : Subgroup G} (h : K ≤ H) (h' : L ≤ K) :
 
 section Map
 
-variable {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+variable {N : Type*} [AddGroup N] [DistribMulAction G N]
 
 /-- A `G`-equivariant additive map restricts to the invariants of any subgroup. This is the
 functoriality of `M ^ H` in the coefficients. -/
@@ -267,6 +277,7 @@ theorem coe_invariantsMap (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) 
   (rfl)
 
 /-- Restriction to the invariants is equivariant for the `G`-actions of a normal subgroup. -/
+@[simp]
 theorem invariantsMap_smul (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m)
     (H : Subgroup G) [H.Normal] (g : G) (m : FixedPoints.addSubgroup H M) :
     invariantsMap f hf H (g • m) = g • invariantsMap f hf H m :=
@@ -286,7 +297,7 @@ end Invariants
 section FiniteLevel
 
 variable (G : Type*) [Group G] [TopologicalSpace G]
-variable (M : Type*) [AddCommGroup M] [DistribMulAction G M]
+variable (M : Type*) [AddGroup M] [DistribMulAction G M]
 
 /-- The finite-level invariants form a directed family: the open normal subgroups are closed under
 intersection, and the invariants grow as the subgroup shrinks. Layer 4's colimit is filtered for
@@ -300,9 +311,8 @@ theorem directed_fixedPoints_addSubgroup :
 
 variable [IsTopologicalGroup G] [TopologicalSpace M] [DiscreteTopology M]
 
-/-- For an open normal subgroup `U` the finite-level coefficients `M ^ U` are again discrete, and
-the action of the finite discrete group `G ⧸ U` on them is continuous. These are the coefficients
-of the cocycles of the finite quotient. -/
+/-- For an open normal subgroup `U` the invariant coefficients `M ^ U` are again discrete, and the
+action of the discrete quotient group `G ⧸ U` on them is continuous. -/
 theorem continuousSMul_quotient_fixedPoints (U : OpenNormalSubgroup G) :
     ContinuousSMul (G ⧸ U.toSubgroup) (FixedPoints.addSubgroup U.toSubgroup M) :=
   ⟨continuous_of_discreteTopology⟩
@@ -313,7 +323,7 @@ section ProfiniteInvariants
 
 variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [TotallyDisconnectedSpace G]
-variable (M : Type*) [AddCommGroup M] [TopologicalSpace M] [DiscreteTopology M]
+variable (M : Type*) [AddGroup M] [TopologicalSpace M] [DiscreteTopology M]
   [DistribMulAction G M] [ContinuousSMul G M]
 
 /-- Every element of a discrete module over a profinite group is invariant under some open normal
@@ -338,8 +348,8 @@ theorem iSup_fixedPoints_addSubgroup_eq_top :
   exact le_iSup (fun U : OpenNormalSubgroup G ↦ FixedPoints.addSubgroup U.toSubgroup M) U hU
 
 omit [IsTopologicalGroup G] [CompactSpace G] [TotallyDisconnectedSpace G] in
-/-- A *finite* discrete module over a profinite group is already the invariants of a single open
-normal subgroup, namely the kernel of the action. -/
+/-- A *finite* discrete module with a continuous `G`-action is already the invariants of a single
+open normal subgroup, namely the kernel of the action. -/
 theorem exists_openNormalSubgroup_fixedPoints_addSubgroup_eq_top [Finite M] :
     ∃ U : OpenNormalSubgroup G, FixedPoints.addSubgroup U.toSubgroup M = ⊤ := by
   refine ⟨actionKernel G M, eq_top_iff.2 fun m _ ↦ ?_⟩
