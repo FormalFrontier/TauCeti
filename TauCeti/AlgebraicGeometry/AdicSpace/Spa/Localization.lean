@@ -62,9 +62,6 @@ localisation — is not constructed here; it is the remaining half of the roadma
   `T` and `s` is all of `Spa (A_U, A_U⁺)`.
 * `TauCeti.ValuationSpectrum.spa_completedPlusSubring_eq_empty_of_rationalSubset_eq_empty` : an
   empty rational subset has a coordinate ring with empty adic spectrum.
-* `TauCeti.ValuationSpectrum.spaComapLoc_preimage_rationalSubset` : rational subsets of
-  `Spa (A, A⁺)` pull back to rational subsets of `Spa (A_U, A_U⁺)`, presented by the images of
-  the defining data.
 
 ## Provenance
 
@@ -310,24 +307,6 @@ theorem spa_completedPlusSubring_eq_empty_of_rationalSubset_eq_empty (P : PairOf
   have := spaComapLoc_mem_rationalSubset P Aplus T s S hden ⟨v, hv⟩
   rw [h] at this
   exact this
-
-open scoped Classical in
-/-- **Rational subsets pull back to rational subsets.** The preimage of `R(T'/s')` under
-`spaComapLoc` is the rational subset of `Spa (A_U, A_U⁺)` presented by the images of `T'` and
-`s'`. -/
-theorem spaComapLoc_preimage_rationalSubset (P : PairOfDefinition A) (Aplus : Subring A)
-    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
-    (hden : HasDenominatorPower P T s S) (T' : Finset A) (s' : A) :
-    letI := locUniformSpace P T s S hden
-    letI := isUniformAddGroup_locUniformSpace P T s S hden
-    letI := isTopologicalRing_locUniformSpace P T s S hden
-    spaComapLoc P Aplus T s S hden ⁻¹' (Subtype.val ⁻¹' rationalSubset Aplus T' s') =
-      Subtype.val ⁻¹' rationalSubset (completedPlusSubring P Aplus T s S hden)
-        (T'.image (toCompletionLoc P T s S hden)) (toCompletionLoc P T s S hden s') := by
-  let _ := locUniformSpace P T s S hden
-  have _ := isUniformAddGroup_locUniformSpace P T s S hden
-  have _ := isTopologicalRing_locUniformSpace P T s S hden
-  exact spaComap_preimage_rationalSubset _ _ _ _ _ _ _
 
 end TauCeti.ValuationSpectrum
 
