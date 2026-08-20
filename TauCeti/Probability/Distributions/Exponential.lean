@@ -5,8 +5,9 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Probability.Distributions.PDFInstances
+public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Moments.Variance
+import TauCeti.Probability.Distributions.PDFInstances
 import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 
@@ -16,7 +17,7 @@ import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 The mean and variance of `ProbabilityTheory.expMeasure r`:
 
 ```text
-∫ x ∂(expMeasure r) = r⁻¹        Var[id; expMeasure r] = (r ^ 2)⁻¹
+∫ x, x ∂(expMeasure r) = r⁻¹        Var[id; expMeasure r] = (r ^ 2)⁻¹
 ```
 
 **Both come from one moment formula.** `integral_pow_id_expMeasure` computes every moment,
@@ -30,11 +31,10 @@ is `n !`.  Nothing here integrates by parts or reproves a convergence result —
 states integrability of that integrand only at rate `r = 1` (`GammaIntegral_convergent`), so
 `integrableOn_gammaIntegrand` transports it to a general rate by scaling.
 
-**`n ≠ 0` constrains the *route*, not the result.** At `n = 0` the integrand `x ^ n * pdf x`
-does not vanish at the origin, so it is not the indicator of `Ioi 0` that the Gamma integral
-needs — the private `integrand_eq_indicator` is false there, not merely unproved.  The moment
-formula itself holds at `n = 0`, both sides being `1`, and is stated without the hypothesis;
-only the Gamma-integral branch of its proof carries it.
+**The moment formula holds at every `n`; its Gamma-integral route does not.** At `n = 0` the
+integrand `x ^ n * pdf x` does not vanish at the origin, so it is not the indicator of `Ioi 0`
+that route needs, and the private `integrand_eq_indicator` carries `n ≠ 0` for that reason.  The
+zero case is discharged from the probability-measure instance instead.
 
 ## Main results
 
@@ -45,8 +45,7 @@ only the Gamma-integral branch of its proof carries it.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, exponential — the mean and
-  variance.  The mgf, cgf, characteristic function, memorylessness, and the minimum of two
-  independent exponentials are separate targets and are not built here.
+  variance.
 -/
 
 public section
@@ -135,9 +134,8 @@ private theorem integrable_pow_id_expMeasure (hr : 0 < r) (hn : n ≠ 0) :
 The mean and the second moment below are the `n = 1` and `n = 2` cases; stating the general formula
 avoids running the same density transport and Gamma-integral argument twice.
 
-`n = 0` is not excluded.  It needs a separate line only because the Gamma-integral route runs
-through `integrand_eq_indicator`, which genuinely fails there; the *statement* holds, both sides
-being `1` because `expMeasure r` is a probability measure. -/
+At `n = 0` both sides are `1`, from the probability-measure instance; the Gamma-integral route is
+used for positive `n`. -/
 theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
     ∫ x, x ^ n ∂(expMeasure r) = (Nat.factorial n : ℝ) / r ^ n := by
   rcases eq_or_ne n 0 with rfl | hn
