@@ -65,7 +65,6 @@ variable {m R}
 
 /-- Membership in the upper-triangular group means that the underlying matrix is upper
 triangular. -/
-@[simp]
 theorem mem_iff {g : GL m R} :
     g ∈ upperTriangularGroup m R ↔ (g : Matrix m m R).IsUpperTriangular :=
   Iff.rfl
@@ -137,8 +136,7 @@ theorem upperUnitriangularGroup_le_upperTriangularGroup :
 underlying matrix. -/
 @[simp]
 theorem mem_ker_diag_iff {g : upperTriangularGroup m R} :
-    g ∈ (diag (m := m) (R := R)).ker ↔ (g : GL m R) ∈ upperUnitriangularGroup m R := by
-  rw [MonoidHom.mem_ker]
+    diag g = 1 ↔ (g : GL m R) ∈ upperUnitriangularGroup m R := by
   constructor
   · intro hg
     apply UpperUnitriangularGroup.mem_iff.mpr
@@ -158,7 +156,7 @@ theorem ker_diag :
     (diag (m := m) (R := R)).ker =
       (upperUnitriangularGroup m R).subgroupOf (upperTriangularGroup m R) := by
   ext g
-  rw [Subgroup.mem_subgroupOf, mem_ker_diag_iff]
+  rw [MonoidHom.mem_ker, Subgroup.mem_subgroupOf, mem_ker_diag_iff]
 
 end UpperTriangularGroup
 
