@@ -89,16 +89,18 @@ variable (n : ℕ)
 /-! ## The Weyl element -/
 
 /-- The raising operator of `V(n)` is nilpotent. -/
-theorem isNilpotent_raise : IsNilpotent (raise ℚ n) := ⟨n + 1, raise_pow_eq_zero⟩
+theorem isNilpotent_raise (K : Type*) [CommRing K] : IsNilpotent (raise K n) :=
+  ⟨n + 1, raise_pow_eq_zero⟩
 
 /-- The lowering operator of `V(n)` is nilpotent. -/
-theorem isNilpotent_lower : IsNilpotent (lower ℚ n) := ⟨n + 1, lower_pow_eq_zero⟩
+theorem isNilpotent_lower (K : Type*) [CommRing K] : IsNilpotent (lower K n) :=
+  ⟨n + 1, lower_pow_eq_zero⟩
 
 /-- **The Weyl element of `V(n)`**, the unit `exp e · exp (-f) · exp e` of
 `Module.End ℚ (Sl2Std ℚ n)`. It is Chevalley's `n_α = x_α(1) x_{-α}(-1) x_α(1)` in the rank-one
 representation of highest weight `n`. -/
 noncomputable def weylUnit : (Module.End ℚ (Sl2Std ℚ n))ˣ :=
-  _root_.TauCeti.weylUnit (isNilpotent_raise n) (isNilpotent_lower n)
+  _root_.TauCeti.weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ)
 
 /-- The Weyl element of `V(n)` is the threefold product of exponentials. -/
 theorem coe_weylUnit :
@@ -127,15 +129,11 @@ theorem isSl2Triple_ladder (hn : 0 < n) :
 
 /-- On the trivial standard module the raising operator vanishes. -/
 private theorem raise_zero : raise ℚ 0 = 0 := by
-  refine LinearMap.ext fun v => funext fun i => ?_
-  rw [raise_apply, dite_eq_right (Nat.not_lt_zero _), LinearMap.zero_apply, zero_apply]
+  simpa using (raise_pow_eq_zero (K := ℚ) (n := 0))
 
 /-- On the trivial standard module the lowering operator vanishes. -/
 private theorem lower_zero : lower ℚ 0 = 0 := by
-  refine LinearMap.ext fun v => funext fun i => ?_
-  have : (i : ℕ) = 0 := Nat.lt_one_iff.mp i.isLt
-  rw [lower_apply, dite_eq_right (by omega : ¬ 0 < (i : ℕ)), LinearMap.zero_apply,
-    zero_apply]
+  simpa using (lower_pow_eq_zero (K := ℚ) (n := 0))
 
 /-- **Conjugating the raising operator by the Weyl element.** The relation `n e n⁻¹ = -f`, written
 without the inverse. -/
@@ -144,10 +142,10 @@ theorem weylUnit_mul_raise :
       -(lower ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
-  have h := _root_.TauCeti.weylUnit_conj_e (isSl2Triple_ladder n hn) (isNilpotent_raise n)
-    (isNilpotent_lower n)
-  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n) (isNilpotent_lower n),
-    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise n) (isNilpotent_lower n)] at h
+  have h := _root_.TauCeti.weylUnit_conj_e (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
+    (isNilpotent_lower n ℚ)
+  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
+    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ)] at h
   rw [← neg_mul]
   exact (Units.mul_inv_eq_iff_eq_mul _).mp h
 
@@ -158,10 +156,10 @@ theorem weylUnit_mul_lower :
       -(raise ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
-  have h := _root_.TauCeti.weylUnit_conj_f (isSl2Triple_ladder n hn) (isNilpotent_raise n)
-    (isNilpotent_lower n)
-  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n) (isNilpotent_lower n),
-    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise n) (isNilpotent_lower n)] at h
+  have h := _root_.TauCeti.weylUnit_conj_f (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
+    (isNilpotent_lower n ℚ)
+  rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
+    ← _root_.TauCeti.coe_inv_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ)] at h
   rw [← neg_mul]
   exact (Units.mul_inv_eq_iff_eq_mul _).mp h
 
@@ -236,7 +234,7 @@ private theorem exp_raise_basis_zero :
     IsNilpotent.exp (raise ℚ n) (basis ℚ n 0) = basis ℚ n 0 := by
   obtain ⟨g, -, hg⟩ := exists_exp_raise_eq n
   rw [hg, LinearMap.add_apply, Module.End.one_apply, Module.End.mul_apply, raise_basis_zero,
-    show g 0 = 0 from g.map_zero, add_zero]
+    g.map_zero, add_zero]
 
 /-- The lowest coordinate of `exp (-f) · v₀` is the sign `(-1) ^ n`: only the last term of the
 exponential series reaches it, and its falling-factorial coefficient cancels the factorial. -/
@@ -250,26 +248,26 @@ private theorem apply_last_exp_neg_lower_basis_zero :
     have : (-(lower ℚ n)) = ((-1 : ℚ) • lower ℚ n) := by
       rw [neg_smul, one_smul]
     rw [this, smul_pow, LinearMap.smul_apply]
-  rw [IsNilpotent.exp_eq_sum hnil, LinearMap.sum_apply, sum_apply, Finset.sum_eq_single n]
-  · rw [LinearMap.smul_apply, smul_apply, hpow n,
-      show ((lower ℚ n) ^ n) (basis ℚ n 0) =
-        ((lower ℚ n) ^ ((Fin.last n : Fin (n + 1)) : ℕ)) (basis ℚ n 0) by simp,
-      lower_pow_basis_zero (Fin.last n)]
+  rw [IsNilpotent.exp_eq_sum hnil, LinearMap.sum_apply, TauCeti.Sl2Std.sum_apply,
+    Finset.sum_eq_single n]
+  · have hlast := lower_pow_basis_zero (K := ℚ) (Fin.last n)
+    simp only [Fin.val_last] at hlast
+    rw [LinearMap.smul_apply, smul_apply, hpow n, hlast]
     have hfac : ((n ! : ℕ) : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero n)
-    simp [Fin.val_last, smul_apply, basis_apply, prod_range_sub_cast]
+    simp [smul_apply, basis_apply, prod_range_sub_cast]
     field_simp
   · intro b hb hbn
     have hblt : b < n := by
       have := Finset.mem_range.mp hb
       omega
-    rw [LinearMap.smul_apply, smul_apply, hpow b,
-      show ((lower ℚ n) ^ b) (basis ℚ n 0) =
-        ((lower ℚ n) ^ ((⟨b, by omega⟩ : Fin (n + 1)) : ℕ)) (basis ℚ n 0) by rfl,
-      lower_pow_basis_zero (⟨b, by omega⟩ : Fin (n + 1))]
-    have hne : Fin.last n ≠ (⟨b, by omega⟩ : Fin (n + 1)) := by
+    let i : Fin (n + 1) := ⟨b, by omega⟩
+    have hi := lower_pow_basis_zero (K := ℚ) i
+    change ((lower ℚ n) ^ b) (basis ℚ n 0) = _ at hi
+    rw [LinearMap.smul_apply, smul_apply, hpow b, hi]
+    have hne : Fin.last n ≠ i := by
       intro hc
       have := congrArg Fin.val hc
-      simp only [Fin.val_last] at this
+      simp only [Fin.val_last, i] at this
       omega
     simp [hne]
   · intro hc
@@ -295,9 +293,40 @@ theorem weylUnit_apply_basis_zero :
 
 /-! ## The Weyl element reverses the string -/
 
+/-- The successor produced by `lower_basis` agrees with `Fin.succ`. -/
+private theorem lower_basis_index_eq_succ (i : Fin n) :
+    (⟨(i.castSucc : Fin (n + 1)).val + 1, by
+        have hi := i.isLt
+        simp only [Fin.val_castSucc]
+        omega⟩ : Fin (n + 1)) = i.succ := by
+  ext
+  simp
+
+/-- Raising the reversal of `i.castSucc` produces the reversal of `i.succ`. -/
+private theorem raise_basis_index_rev_castSucc (i : Fin n) :
+    (⟨(((i.castSucc : Fin (n + 1)).rev : Fin (n + 1)) : ℕ) - 1, by
+        simp only [Fin.val_rev, Fin.val_castSucc]
+        omega⟩ : Fin (n + 1)) = i.succ.rev := by
+  ext
+  simp only [Fin.val_rev, Fin.val_succ, Fin.val_castSucc]
+  omega
+
+/-- Casting the remaining string length commutes with subtraction. -/
+private theorem cast_sub_castSucc (i : Fin n) :
+    ((n - (i.castSucc : Fin (n + 1)).val : ℕ) : ℚ) =
+      (n : ℚ) - (((i.castSucc : Fin (n + 1)).val : ℕ) : ℚ) := by
+  simpa only [Fin.val_castSucc] using (Nat.cast_sub (R := ℚ) (le_of_lt i.isLt))
+
+/-- The sign change in the successor step lowers the exponent of `-1` by one. -/
+private theorem neg_neg_one_pow_succ_mul (m : ℕ) (c : ℚ) :
+    -((-1 : ℚ) ^ (m + 1) * c) = c * (-1 : ℚ) ^ m := by
+  rw [pow_succ]
+  ring
+
 /-- **The Weyl element reverses the weight string with a sign.** It carries the coordinate basis
 vector `vᵢ` to `(-1) ^ (n - i) · v_{n - i}`, the reflection `s_α` of the weight lattice realised
 inside the group. -/
+@[simp]
 theorem weylUnit_apply_basis (i : Fin (n + 1)) :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (basis ℚ n i) =
       ((-1 : ℚ) ^ (n - (i : ℕ))) • basis ℚ n i.rev := by
@@ -319,18 +348,11 @@ theorem weylUnit_apply_basis (i : Fin (n + 1)) :
       (weylUnit_mul_lower n)
     simp only [Module.End.mul_apply, LinearMap.neg_apply] at hstep
     rw [lower_basis _ hlt, map_smul, ih, map_smul, raise_basis] at hstep
-    have hidx : (⟨(i.castSucc : Fin (n + 1)).val + 1, by omega⟩ : Fin (n + 1)) = i.succ := by
-      ext; simp
     have hrevval : (((i.castSucc : Fin (n + 1)).rev : Fin (n + 1)) : ℕ) = m + 1 := by
       rw [Fin.val_rev]; omega
-    have hrevidx : (⟨(((i.castSucc : Fin (n + 1)).rev : Fin (n + 1)) : ℕ) - 1, by omega⟩ :
-        Fin (n + 1)) = i.succ.rev := by
-      ext
-      simp only [Fin.val_rev, Fin.val_succ, Fin.val_castSucc]
-      omega
-    rw [hidx, hrevidx, hm, hrevval] at hstep
+    rw [lower_basis_index_eq_succ, raise_basis_index_rev_castSucc, hm, hrevval] at hstep
     have hcast : (((m + 1 : ℕ) : ℚ)) = (n : ℚ) - (((i.castSucc : Fin (n + 1)).val : ℕ) : ℚ) := by
-      rw [← hm, Nat.cast_sub (le_of_lt hlt)]
+      rw [← hm, cast_sub_castSucc]
     rw [hcast] at hstep
     rw [hsucc]
     have hgoal : ((n : ℚ) - (((i.castSucc : Fin (n + 1)).val : ℕ) : ℚ)) •
@@ -339,8 +361,7 @@ theorem weylUnit_apply_basis (i : Fin (n + 1)) :
           (((-1 : ℚ) ^ m) • basis ℚ n i.succ.rev) := by
       rw [hstep, smul_smul, smul_smul, ← neg_smul]
       congr 1
-      rw [pow_succ]
-      ring
+      rw [neg_neg_one_pow_succ_mul]
     exact smul_right_injective (Sl2Std ℚ n) hcoef hgoal
 
 /-! ## The square of the Weyl element -/
@@ -359,6 +380,7 @@ theorem coe_weylUnit_sq :
   omega
 
 /-- The Weyl element acts on every vector of `V(n)` by `(-1) ^ n` after two applications. -/
+@[simp]
 theorem weylUnit_weylUnit_apply (v : Sl2Std ℚ n) :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n))
         ((weylUnit n : Module.End ℚ (Sl2Std ℚ n)) v) = ((-1 : ℚ) ^ n) • v := by
@@ -369,6 +391,7 @@ theorem weylUnit_weylUnit_apply (v : Sl2Std ℚ n) :
 
 /-- **The matrix of the Weyl element.** It sends the `i`-th coordinate of the image to the
 reversed coordinate of the source, with the sign `(-1) ^ i`. -/
+@[simp]
 theorem weylUnit_apply_apply (v : Sl2Std ℚ n) (i : Fin (n + 1)) :
     ((weylUnit n : Module.End ℚ (Sl2Std ℚ n)) v) i = (-1 : ℚ) ^ (i : ℕ) * v i.rev := by
   have hrev : n - (i.rev : ℕ) = (i : ℕ) := by
@@ -376,7 +399,7 @@ theorem weylUnit_apply_apply (v : Sl2Std ℚ n) (i : Fin (n + 1)) :
     simp only [Fin.val_rev]
     omega
   conv_lhs => rw [← (basis ℚ n).sum_repr v]
-  rw [map_sum, sum_apply, Finset.sum_eq_single i.rev]
+  rw [map_sum, TauCeti.Sl2Std.sum_apply, Finset.sum_eq_single i.rev]
   · rw [map_smul, weylUnit_apply_basis, Fin.rev_rev, smul_apply, smul_apply, basis_apply,
       ite_eq_left rfl, basis_repr_apply, hrev, mul_one]
     ring
@@ -411,16 +434,21 @@ theorem coe_weylLattice_apply (v : integralLattice n) :
     (weylLattice n v : Sl2Std ℚ n) = (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) (v : Sl2Std ℚ n) :=
   rfl
 
+attribute [irreducible] weylLattice
+
 /-- **The integral form of the relation `n ^ 2 = (-1) ^ n`.** The Weyl element squares to the
 integer scalar `(-1) ^ n` already on the coordinate lattice, before any denominator is
 available. -/
 theorem weylLattice_comp_weylLattice :
     (weylLattice n) ∘ₗ (weylLattice n) = ((-1 : ℤ) ^ n) • LinearMap.id := by
+  have hcast : ((-1 : ℚ) ^ n) = ((((-1 : ℤ) ^ n : ℤ) : ℚ)) := by
+    push_cast
+    ring
   refine LinearMap.ext fun v => ?_
   refine Subtype.ext ?_
   rw [LinearMap.comp_apply, coe_weylLattice_apply, coe_weylLattice_apply,
     weylUnit_weylUnit_apply, LinearMap.smul_apply, LinearMap.id_coe, id_eq, SetLike.val_smul,
-    show ((-1 : ℚ) ^ n) = ((((-1 : ℤ) ^ n : ℤ) : ℚ)) by push_cast; ring, Int.cast_smul_eq_zsmul]
+    hcast, Int.cast_smul_eq_zsmul]
 
 /-- **The Weyl element is an automorphism of the coordinate lattice**, its own inverse up to the
 sign `(-1) ^ n`. -/
@@ -436,8 +464,11 @@ sign `(-1) ^ n`. -/
 @[simp]
 theorem coe_weylLatticeEquiv_apply (v : integralLattice n) :
     (weylLatticeEquiv n v : Sl2Std ℚ n) = (weylUnit n : Module.End ℚ (Sl2Std ℚ n))
-      (v : Sl2Std ℚ n) :=
-  rfl
+      (v : Sl2Std ℚ n) := by
+  change (weylLattice n v : Sl2Std ℚ n) = _
+  exact coe_weylLattice_apply n v
+
+attribute [irreducible] weylLatticeEquiv
 
 /-- **The relation over an arbitrary ring of points.** Base changing the integral Weyl element
 along `ℤ → A` keeps the relation `n ^ 2 = (-1) ^ n`, so it holds on the `A`-points of the lattice
