@@ -96,6 +96,7 @@ jobs:
       # underneath itself, so its age means what it says.
       - name: Look for an open stepping stone
         id: stone_state
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
@@ -159,6 +160,7 @@ jobs:
       # re-opening the same PR.
       - name: Demote a stepping stone that has run out of time
         id: stone_close
+        continue-on-error: true
         if: steps.stone_state.outputs.open != ''
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -262,6 +264,7 @@ jobs:
       # Only when nothing else owns the pin: no active regression, and no stone still open.
       - name: Look up the latest mathlib release reachable from the last-known-good commit
         id: rel
+        continue-on-error: true
         if: >-
           steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == '' || steps.stone_close.outputs.demoted == 'true')
@@ -274,6 +277,7 @@ jobs:
       # machine needs no store of its own, exactly as stuck_alerts.py needs none.
       - name: Has this release already been handled?
         id: stone_handled
+        continue-on-error: true
         if: steps.rel.outputs.rev != ''
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -398,8 +402,13 @@ jobs:
 
       - name: Bump to latest mathlib
         id: bump
+        # `!cancelled()` rather than the implicit success(): a failure in ANY of the
+        # optional stepping-stone steps above must not be able to stop the bump. That guard
+        # is how this workflow acquired a new way to freeze the pin in each of four review
+        # rounds, so the condition names what it depends on instead of inheriting it.
         if: >-
-          steps.fkb.outputs.commit == ''
+          !cancelled()
+          && steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == ''
               || steps.stone_close.outputs.demoted == 'true')
           && (steps.stone.outcome == 'failure'
@@ -410,8 +419,13 @@ jobs:
           preserve-lakefile: true
 
       - name: Open or update PR
+        # `!cancelled()` rather than the implicit success(): a failure in ANY of the
+        # optional stepping-stone steps above must not be able to stop the bump. That guard
+        # is how this workflow acquired a new way to freeze the pin in each of four review
+        # rounds, so the condition names what it depends on instead of inheriting it.
         if: >-
-          steps.fkb.outputs.commit == ''
+          !cancelled()
+          && steps.fkb.outputs.commit == ''
           && (steps.stone_state.outputs.open == ''
               || steps.stone_close.outputs.demoted == 'true')
           && (steps.stone.outcome == 'failure'
