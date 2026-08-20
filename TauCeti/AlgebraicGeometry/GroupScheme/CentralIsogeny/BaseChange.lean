@@ -108,7 +108,7 @@ private noncomputable def baseChangePointMulEquiv
     rw [mapPullbackAdj_homEquiv_symm_left]
     simp only [Hom.mul_def, Over.comp_left, Over.lift_left,
       mapPullbackAdj_homEquiv_symm_left]
-    change T ⟶ (Over.pullback s).obj G.X at p q
+    rw [Functor.mapGrp_obj_X] at p q
     rw [congrArg Over.Hom.left (pullbackMapGrp_mul s G), Over.comp_left]
     have hmap :
         Over.Hom.left ((Over.pullback s).map μ[G.X]) ≫
