@@ -26,9 +26,9 @@ coordinates `ω₁ = ∑ⱼ ((n - j) / (n + 1)) αⱼ` that the inverse Cartan m
 coordinates are verified against the lattice, not assumed:
 `form_typeAFundamentalWeight_simpleRoot` proves `⟨ω₁, αᵢ⟩ = δ_{i,0}` directly from the row
 combinations of `CartanMatrix.A n`, which then gives `⟨ω₁, ω₁⟩ = n / (n + 1)` and hence the
-displayed half-norm value.  The class of `ω₁` has additive order exactly `n + 1` because its
-last simple-root coordinate is `1 / (n + 1)`, and the discriminant group has that same order, so
-`ω₁` generates.
+displayed half-norm value.  When `n > 0`, the class of `ω₁` has additive order exactly `n + 1`
+because its last simple-root coordinate is `1 / (n + 1)`; at rank zero, the order statement is
+trivial.  The discriminant group has that same order, so `ω₁` generates.
 
 The half-norm convention is the one fixed by the integral-lattices roadmap: `q_L(x) = ⟨x,x⟩ / 2`
 in `ℚ/ℤ`.  Nikulin's full-norm value for this row is `n / (n + 1)`.
@@ -80,13 +80,16 @@ noncomputable def typeARootLattice : IntegralLattice (Fin n → ℚ) :=
 
 This is sealed rather than an `abbrev`: reducibility would let `Pi.basisFun_apply` rewrite
 underneath it, taking the Gram-matrix and pairing lemmas below out of `simp` normal form. -/
-@[expose] noncomputable def typeASimpleRoot (i : Fin n) : Fin n → ℚ := Pi.basisFun ℚ (Fin n) i
+noncomputable def typeASimpleRoot (i : Fin n) : Fin n → ℚ := Pi.basisFun ℚ (Fin n) i
 
 /-- The `i`-th simple root is the `i`-th standard coordinate vector. -/
 @[simp]
 theorem typeASimpleRoot_apply (i j : Fin n) :
     typeASimpleRoot n i j = if j = i then 1 else 0 := by
   simp [typeASimpleRoot, Pi.single_apply]
+
+private theorem typeASimpleRoot_eq_basisFun (i : Fin n) :
+    typeASimpleRoot n i = Pi.basisFun ℚ (Fin n) i := rfl
 
 /-- The form of the type `Aₙ` root lattice, expanded in the standard coordinates. -/
 theorem typeARootLattice_form_apply (x y : Fin n → ℚ) :
@@ -169,12 +172,12 @@ theorem natCard_discriminantGroup_typeARootLattice :
 
 /-- The first fundamental weight of type `Aₙ`, in simple-root coordinates:
 `ω₁ = ∑ⱼ ((n - j) / (n + 1)) αⱼ`. -/
-@[expose] noncomputable def typeAFundamentalWeight : Fin n → ℚ :=
+noncomputable def typeAFundamentalWeight : Fin n → ℚ :=
   fun j ↦ ((n : ℚ) - j.val) / ((n : ℚ) + 1)
 
 @[simp]
 theorem typeAFundamentalWeight_apply (j : Fin n) :
-    typeAFundamentalWeight n j = ((n : ℚ) - j.val) / ((n : ℚ) + 1) := rfl
+    typeAFundamentalWeight n j = ((n : ℚ) - j.val) / ((n : ℚ) + 1) := (rfl)
 
 variable {n}
 
@@ -264,25 +267,23 @@ theorem typeAFundamentalWeight_mem_dualCarrier :
   induction hy using Submodule.span_induction with
   | mem x hx =>
       obtain ⟨i, rfl⟩ := hx
-      rw [show (Pi.basisFun ℚ (Fin n) i) = typeASimpleRoot n i from rfl,
-        form_typeAFundamentalWeight_simpleRoot]
+      rw [← typeASimpleRoot_eq_basisFun, form_typeAFundamentalWeight_simpleRoot]
       split_ifs
       · exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
       · exact Submodule.mem_one.mpr ⟨0, by norm_num⟩
   | zero => simp
   | add a b _ _ ha hb => simpa using add_mem ha hb
   | smul c a _ ha =>
-      rw [show (typeARootLattice n).form (typeAFundamentalWeight n) (c • a) =
-          c • (typeARootLattice n).form (typeAFundamentalWeight n) a from map_zsmul _ _ _]
+      rw [map_zsmul]
       exact Submodule.smul_mem (1 : Submodule ℤ ℚ) c ha
 
 /-- The first fundamental weight, as a vector of the dual lattice. -/
-@[expose] noncomputable def typeAFundamentalWeightDual : (typeARootLattice n).dualCarrier :=
+noncomputable def typeAFundamentalWeightDual : (typeARootLattice n).dualCarrier :=
   ⟨typeAFundamentalWeight n, typeAFundamentalWeight_mem_dualCarrier n⟩
 
 @[simp]
 theorem coe_typeAFundamentalWeightDual :
-    (typeAFundamentalWeightDual n : Fin n → ℚ) = typeAFundamentalWeight n := rfl
+    (typeAFundamentalWeightDual n : Fin n → ℚ) = typeAFundamentalWeight n := (rfl)
 
 /-- The discriminant class of the first fundamental weight. -/
 noncomputable def typeAFundamentalWeightClass :
@@ -290,7 +291,8 @@ noncomputable def typeAFundamentalWeightClass :
   Submodule.Quotient.mk (typeAFundamentalWeightDual n)
 
 /-- **An integer multiple of the first fundamental weight lies in the root lattice exactly when
-`n + 1` divides it**: the last simple-root coordinate of `ω₁` is `1 / (n + 1)`. -/
+`n + 1` divides it**.  For `n > 0`, this is forced by the last simple-root coordinate
+`1 / (n + 1)` of `ω₁`; at rank zero, the result is trivial. -/
 theorem zsmul_typeAFundamentalWeightClass_eq_zero_iff (k : ℤ) :
     k • typeAFundamentalWeightClass n = 0 ↔ ((n : ℤ) + 1) ∣ k := by
   classical
@@ -365,8 +367,7 @@ theorem discriminantQuadraticMap_typeAFundamentalWeightClass :
   have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
   rw [typeAFundamentalWeightClass, discriminantQuadraticMap_mk]
   congr 1
-  rw [show ((typeAFundamentalWeightDual n : Fin n → ℚ)) = typeAFundamentalWeight n from rfl,
-    form_typeAFundamentalWeight_self]
+  rw [coe_typeAFundamentalWeightDual, form_typeAFundamentalWeight_self]
   field_simp
 
 end IntegralLattice

@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.Block
 public import Mathlib.LinearAlgebra.Matrix.Cartan
+public import TauCeti.LinearAlgebra.Matrix.Triangular
 
 /-!
 # Row combinations and the determinant of the type `A` Cartan matrix
@@ -76,7 +76,7 @@ theorem cartanTypeAEntry_comm (i j : ℕ) : cartanTypeAEntry i j = cartanTypeAEn
 
 /-- **A row of the type `A` Cartan matrix combined against a weight vector.** The two conditional
 terms are the neighbours of `i` that stay inside the index range `range n`. -/
-theorem sum_cartanTypeAEntry_mul {R : Type*} [CommRing R] (n i : ℕ) (hin : i < n) (w : ℕ → R) :
+theorem sum_cartanTypeAEntry_mul {R : Type*} [Ring R] (n i : ℕ) (hin : i < n) (w : ℕ → R) :
     ∑ j ∈ range n, ((cartanTypeAEntry i j : ℤ) : R) * w j =
       2 * w i - (if i + 1 < n then w (i + 1) else 0) - (if 0 < i then w (i - 1) else 0) := by
   classical
@@ -85,7 +85,7 @@ theorem sum_cartanTypeAEntry_mul {R : Type*} [CommRing R] (n i : ℕ) (hin : i <
         (if j + 1 = i then -w j else 0) := by
     intro j _
     rw [cartanTypeAEntry_eq]
-    split_ifs <;> push_cast <;> ring
+    split_ifs <;> push_cast <;> simp [two_mul]
   have hlast : ∑ j ∈ range n, (if j + 1 = i then -w j else 0) =
       if 0 < i then -w (i - 1) else 0 := by
     obtain _ | k := i
@@ -101,7 +101,7 @@ theorem sum_cartanTypeAEntry_mul {R : Type*} [CommRing R] (n i : ℕ) (hin : i <
     Finset.sum_ite_eq' (range n) i fun j ↦ 2 * w j,
     Finset.sum_ite_eq' (range n) (i + 1) fun j ↦ -w j, hlast]
   simp only [mem_range]
-  split_ifs <;> ring
+  split_ifs <;> simp [two_mul] <;> abel
 
 /-! ## The determinant -/
 
