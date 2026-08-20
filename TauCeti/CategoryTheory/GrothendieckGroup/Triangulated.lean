@@ -56,6 +56,9 @@ The biproduct triangles are distinguished, so the class map is additive on bipro
 
 ## References
 
+* [Tau Ceti's Grothendieck groups, Cartan maps, and Euler forms roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/README.md),
+  Layer 2's triangulated `K₀` target and its accompanying
+  [`Suggested.lean` formal sketch](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/Suggested.lean).
 * Charles A. Weibel, *The K-book: An Introduction to Algebraic K-theory*, Chapter II,
   Exercise II.9.15, where `K₀` of a triangulated category is presented by the distinguished
   triangles, and Section 6 for the presentation engine consumed here.
@@ -319,7 +322,7 @@ variable (C) in
 /-- The identity functor induces the identity of triangulated `K₀`. -/
 @[simp]
 theorem map_id : map (𝟭 C) = AddMonoidHom.id (TriangulatedK0 C) :=
-  hom_ext fun X => by rw [map_of, AddMonoidHom.id_apply, Functor.id_obj]
+  PresentedK0.map_id _
 
 /-- The induced maps of a composite of triangulated functors compose. -/
 @[simp]
@@ -327,12 +330,12 @@ theorem map_comp {K : Type u''} [Category.{v''} K] [Preadditive K] [HasZeroObjec
     [HasShift K ℤ] [∀ n : ℤ, (shiftFunctor K n).Additive] [Pretriangulated K]
     [EssentiallySmall.{w''} K] (H : D ⥤ K) [H.CommShift ℤ] [H.IsTriangulated] :
     map (F ⋙ H) = (map H).comp (map F) :=
-  hom_ext fun X => by rw [map_of, AddMonoidHom.comp_apply, map_of, map_of, Functor.comp_obj]
+  PresentedK0.map_comp F H _ _ _
 
 /-- Naturally isomorphic triangulated functors induce the same map. -/
 theorem map_congr {F' : C ⥤ D} [F'.CommShift ℤ] [F'.IsTriangulated] (e : F ≅ F') :
     map F = map F' :=
-  hom_ext fun X => by rw [map_of, map_of, of_congr (e.app X)]
+  PresentedK0.map_congr (fun X => ⟨e.app X⟩) _ _
 
 end Functoriality
 
@@ -363,7 +366,7 @@ lemma mapEquiv_toAddMonoidHom (e : C ≌ D) [e.functor.CommShift ℤ] [e.inverse
     [e.IsTriangulated] :
     ((mapEquiv e : TriangulatedK0 C ≃+ TriangulatedK0 D) : TriangulatedK0 C →+ TriangulatedK0 D) =
       map e.functor :=
-  hom_ext fun X => by simp
+  PresentedK0.mapEquiv_toAddMonoidHom e _ _
 
 end Equivalence
 
