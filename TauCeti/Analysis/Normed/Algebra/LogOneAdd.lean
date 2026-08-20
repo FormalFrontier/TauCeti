@@ -48,8 +48,10 @@ variable (𝕂 A : Type*) [Field 𝕂] [Ring A] [Algebra 𝕂 A]
 variable [TopologicalSpace A] [IsTopologicalRing A]
 
 /-- The formal multilinear series for `log (1 + u)` in a topological algebra. -/
-def logOneAddSeries : FormalMultilinearSeries 𝕂 A A :=
+def logOneAddSeries [CharZero 𝕂] : FormalMultilinearSeries 𝕂 A A :=
   FormalMultilinearSeries.ofScalars A fun n ↦ (-1 : 𝕂) ^ (n + 1) / n
+
+variable [CharZero 𝕂]
 
 /-- The homogeneous terms of `logOneAddSeries`. -/
 @[simp high]
@@ -126,7 +128,7 @@ end Normed
 
 section Algebra
 
-variable (𝕂 A : Type*) [Field 𝕂] [Ring A] [Algebra 𝕂 A]
+variable (𝕂 A : Type*) [Field 𝕂] [CharZero 𝕂] [Ring A] [Algebra 𝕂 A]
 variable [TopologicalSpace A] [IsTopologicalRing A]
 
 /-- `logOneAdd` vanishes at zero. -/
