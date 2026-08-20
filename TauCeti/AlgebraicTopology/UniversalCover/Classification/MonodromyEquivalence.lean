@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.AlgebraicTopology.FundamentalGroup.Basic
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Reconstruction
 public import TauCeti.CategoryTheory.Groupoid.ConnectedFunctor
 public import TauCeti.Topology.Covering.Monodromy.Transitive
@@ -39,7 +40,7 @@ what produces the universal cover the reconstruction quotients.
 
 ## Main declarations
 
-* `FundamentalGroupoid.nonempty_hom`: the fundamental groupoid of a path-connected
+* `TauCeti.FundamentalGroupoid.nonempty_hom`: the fundamental groupoid of a path-connected
   space is connected.
 * `TauCeti.FundamentalGroupoidAction.basepointMulAction`: the action of `π₁(X, x₀)` on the value
   of a fundamental-groupoid action at `x₀`.
@@ -65,16 +66,6 @@ noncomputable section
 open CategoryTheory Topology
 
 universe u
-
-namespace FundamentalGroupoid
-
-/-- In the fundamental groupoid of a path-connected space every object receives a morphism from
-every other one, so the groupoid is connected. -/
-theorem nonempty_hom {X : Type u} [TopologicalSpace X] [PathConnectedSpace X]
-    (x y : FundamentalGroupoid X) : Nonempty (x ⟶ y) :=
-  ⟨Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath x.as y.as)⟩
-
-end FundamentalGroupoid
 
 namespace TauCeti
 
@@ -126,7 +117,8 @@ theorem exists_monodromyFunctor_iso (F : FundamentalGroupoid X ⥤ Type u)
     FundamentalGroupoidAction.nonempty_of_isFiberwiseTransitive hF (FundamentalGroupoid.mk x₀)
   refine ⟨UniversalCover.stabilizerCover x₀ a, ⟨?_⟩⟩
   refine eqToIso (CoveringSpace.monodromyFunctor_obj _) ≪≫
-    TauCeti.Groupoid.natIsoOfEnd (FundamentalGroupoid.nonempty_hom (FundamentalGroupoid.mk x₀))
+    TauCeti.Groupoid.natIsoOfEnd
+      (TauCeti.FundamentalGroupoid.nonempty_hom (FundamentalGroupoid.mk x₀))
       (UniversalCover.transitiveActionFiberEquiv x₀ a).toIso (fun g => ?_)
   refine ConcreteCategory.hom_ext _ _ fun z => ?_
   simp only [types_comp_apply]

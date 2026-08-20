@@ -86,7 +86,7 @@ theorem nonempty_of_isFiberwiseTransitive {F : FundamentalGroupoid X ⥤ Type u}
 
 variable (X)
 
-/-- Fibrewise transitivity is weaker than fibrewise pretransitivity. -/
+/-- Fibrewise transitivity is stronger than fibrewise pretransitivity. -/
 theorem isFiberwiseTransitive_le : isFiberwiseTransitive X ≤ isFiberwisePretransitive X :=
   inf_le_left
 
