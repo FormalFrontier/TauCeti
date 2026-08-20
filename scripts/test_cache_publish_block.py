@@ -107,6 +107,59 @@ class StagingBlock(unittest.TestCase):
                                if line.strip().startswith("lake ")))
         self.assertEqual(sets[0], sets[1])
 
+    # The two blocks are allowed to differ in exactly these ways and no others. Naming them
+    # is the point: a check that only asserts some required lines are present would let an
+    # arbitrary `cp`, `curl` or output rewrite be added to one publisher unnoticed, which is
+    # the drift this file exists to stop.
+    ONLY_IN_CI = (
+        # ci.yml only ever builds main, where `platformIndependent` is present, so its
+        # absence there would mean somebody removed it and the build should stop.
+        'echo "::error::lakefile.toml no longer sets platformIndependent = true;'
+        ' publish-lake-cache must now pass --platform to lake cache put-staged"',
+        "exit 1",
+    )
+    ONLY_IN_RELEASE = (
+        # release-tag.yml reaches commits from before that declaration existed and publishes
+        # them under the platform-scoped key their own consumers derive, so it reports.
+        'echo "platform-independent=true" >> "$GITHUB_OUTPUT"',
+        'echo "::notice::this commit predates platformIndependent;'
+        ' publishing under a platform-scoped key"',
+        'echo "platform-independent=false" >> "$GITHUB_OUTPUT"',
+        "else",
+        # and it carries the staged mapping count out, so the read-back can tell this run's
+        # publish from a mapping that was already at the revision key.
+        'printf \'entries=%s\\n\' "$(wc -l < .lake/outputs.jsonl)" >> "$GITHUB_OUTPUT"',
+    )
+
+    def commands(self, block):
+        """Executable lines of a staging block: no comments, no blanks, whitespace collapsed."""
+        out = []
+        for line in block.splitlines():
+            stripped = " ".join(line.split())
+            if stripped and not stripped.startswith("#"):
+                out.append(stripped)
+        return out
+
+    def test_neither_publisher_has_commands_the_other_lacks(self):
+        found = self.matched(STAGE, "staging")
+        ci = self.commands(found["ci.yml"])
+        release = self.commands(found["release-tag.yml"])
+        allowed_ci = {" ".join(c.split()) for c in self.ONLY_IN_CI}
+        allowed_release = {" ".join(c.split()) for c in self.ONLY_IN_RELEASE}
+
+        # `if` differs only by its negation, which the platform branch accounts for.
+        def drop(lines, allowed):
+            return [l for l in lines if l not in allowed and not l.startswith("if ")]
+
+        extra_in_release = sorted(set(drop(release, allowed_release)) - set(drop(ci, set())))
+        extra_in_ci = sorted(set(drop(ci, allowed_ci)) - set(drop(release, set())))
+        self.assertEqual(extra_in_release, [],
+                         "release-tag.yml stages with commands ci.yml does not have; if the "
+                         "divergence is deliberate, name it in ONLY_IN_RELEASE")
+        self.assertEqual(extra_in_ci, [],
+                         "ci.yml stages with commands release-tag.yml does not have; if the "
+                         "divergence is deliberate, name it in ONLY_IN_CI")
+
     def test_both_publishers_still_guard_the_toolchain_scope(self):
         # `fixedToolchain` or `bootstrap` would make Lake drop the toolchain from the scope
         # while both publishers pass --toolchain, so neither may stop checking for them.

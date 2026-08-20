@@ -87,6 +87,9 @@ jobs:
     if: ${{ github.repository == 'TauCetiProject/TauCeti' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read   # read the target's two pin files and main's history through the API
+      actions: read    # read the publish and tag environments' protection rules
     outputs:
       sha: ${{ steps.check.outputs.sha }}
       release: ${{ steps.check.outputs.release }}
@@ -113,18 +116,32 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
+          # Fail closed on everything, the read included. An earlier version warned and
+          # carried on when the API errored, which covers the deleted-or-renamed case this
+          # step exists to catch: a referenced environment that does not exist is recreated
+          # by GitHub with no protection rules at all, and the job then proceeds ungated. A
+          # check that could not read the environment has established nothing.
           for env in lake-cache-publish release-tags; do
-            if ! body="$(gh api "repos/$REPO/environments/$env" 2>&1)"; then
-              echo "::warning::could not read the $env environment ($body); not treating that as a verdict"
-              continue
-            fi
-            rules="$(printf '%s' "$body" | python3 -c 'import json,sys; print(" ".join(sorted(r["type"] for r in json.load(sys.stdin).get("protection_rules", []))))')"
-            echo "$env: $rules"
-            case "$rules" in
-              *branch_policy*) ;;
-              *) echo "::error::the $env environment has no deployment branch policy, so it gates nothing"; exit 1 ;;
+            rules="$(gh api "repos/$REPO/environments/$env" \
+                       --jq '[.protection_rules[].type] | sort | join(",")')" \
+              || { echo "::error::cannot read the $env environment; it may have been deleted or renamed, and a missing one is recreated with no rules"; exit 1; }
+            names="$(gh api "repos/$REPO/environments/$env/deployment-branch-policies" \
+                       --jq '[.branch_policies[].name] | sort | join(",")')" \
+              || { echo "::error::cannot read $env's deployment branch policies"; exit 1; }
+            echo "$env: rules=[$rules] branches=[$names]"
+            case ",$rules," in
+              *,branch_policy,*) ;;
+              *) echo "::error::$env has no deployment branch policy, so it gates nothing"; exit 1 ;;
             esac
+            case ",$rules," in
+              *,required_reviewers,*) ;;
+              *) echo "::error::$env has no required reviewer"; exit 1 ;;
+            esac
+            # "protected branches" is not the same as main-only, and can admit every branch
+            # when no branch protection exists, so require the custom policy to be exactly main.
+            [ "$names" = "main" ] \
+              || { echo "::error::$env admits deployments from [$names], not from main alone"; exit 1; }
           done
 
       - name: Validate the target and its release
@@ -604,12 +621,29 @@ jobs:
           entries="$(wc -l < "$RUNNER_TEMP/revision.jsonl")"
           echo "revision mapping entries: $entries (staged: ${STAGED_ENTRIES:-unknown})"
           [ "$entries" -gt 1 ] || { echo "::error::the published mapping is empty"; exit 1; }
-          case "${STAGED_ENTRIES:-}" in
-            ''|*[!0-9]*) echo "::warning::the build reported no staged entry count; only checking that the mapping is non-empty" ;;
-            *) [ "$entries" -ge "$STAGED_ENTRIES" ] || {
-                 echo "::error::the published mapping has $entries entries but this run staged $STAGED_ENTRIES; the upload was partial, or this is an older mapping that was already at that key"
-                 exit 1; } ;;
-          esac
+          # The staged mappings are in the staging tree: `lake cache stage` copies them
+          # there alongside the artifacts. Comparing against them is worth far more than
+          # comparing against a count the build job reported, because it is the only way to
+          # tell "this run published this mapping" from "a mapping was already at this key",
+          # which is the normal state for a main commit ci.yml has already published.
+          staged_map="$(find "$STAGING" -maxdepth 1 -name '*.jsonl' -type f | head -2)"
+          if [ "$(printf '%s\n' "$staged_map" | grep -c .)" = 1 ]; then
+            if diff -q "$staged_map" "$RUNNER_TEMP/revision.jsonl" >/dev/null; then
+              echo "the published mapping is byte-identical to the one this run staged"
+            else
+              echo "::error::the published mapping differs from the one this run staged; the upload was partial, or an older mapping is still at that key"
+              exit 1
+            fi
+          else
+            # Fall back to the count, and say plainly that it is the weaker check.
+            echo "::warning::could not identify a single staged mapping file; falling back to an entry count, which cannot distinguish this run's mapping from one already at that key"
+            case "${STAGED_ENTRIES:-}" in
+              ''|*[!0-9]*) echo "::warning::the build reported no staged entry count either; only checking that the mapping is non-empty" ;;
+              *) [ "$entries" -ge "$STAGED_ENTRIES" ] || {
+                   echo "::error::the published mapping has $entries entries but this run staged $STAGED_ENTRIES"
+                   exit 1; } ;;
+            esac
+          fi
           python3 - "$RUNNER_TEMP/revision.jsonl" > "$RUNNER_TEMP/hashes" <<'PY'
           import json, re, sys
 
@@ -689,6 +723,14 @@ jobs:
               obj="$(gh api "repos/$REPO/git/tags/$obj" --jq '.object.sha')"
             fi
             if [ "$obj" = "$SHA" ]; then
+              # Only an annotated tag counts as done. A lightweight tag is just a ref: it
+              # carries none of the toolchain, mathlib rev, exactness or provenance this job
+              # records, and exiting 0 on one would leave the release permanently
+              # unattested while every report called it tagged.
+              if [ "$kind" != "tag" ]; then
+                echo "::error::$RELEASE already points at $SHA but is a lightweight tag, so it carries no release message; a human must remove it before this can create the annotated one"
+                exit 1
+              fi
               echo "::notice::$RELEASE already tags $SHA; nothing to do"
               exit 0
             fi
@@ -724,7 +766,12 @@ jobs:
   # only the Zulip credentials, exactly as nightly-verify.yml reports.
   report:
     needs: [resolve, build, publish-lake-cache, tag]
+    # The same repository and ref guard as every other job. Without it a dispatch off main
+    # skips all four of them, and since a skipped dependency is not a success this job would
+    # fire and post to Zulip with the repository credentials, reporting a failure that is
+    # really just the workflow declining to run.
     if: ${{ always() && github.repository == 'TauCetiProject/TauCeti'
+            && github.ref == 'refs/heads/main'
             && (needs.resolve.result != 'success' || needs.build.result != 'success'
                 || needs.publish-lake-cache.result != 'success' || needs.tag.result != 'success') }}
     runs-on: ubuntu-latest

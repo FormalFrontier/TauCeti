@@ -226,6 +226,8 @@ if [ -n "$existing" ]; then
   fi
   [ "$tagged" = "$SHA" ] \
     || fail "$RELEASE already tags $tagged; a published tag is never moved"
+  [ "${2:-}" = "tag" ] \
+    || fail "$RELEASE already points at $SHA but is a lightweight tag, carrying none of the release attestation; a human must remove it before an annotated tag can be created"
   note "$RELEASE already tags $SHA; the tag job will report it and do nothing"
 fi
 
