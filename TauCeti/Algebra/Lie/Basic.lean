@@ -39,6 +39,8 @@ noncomputable def ofBijective (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective
 @[simp]
 theorem ofBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) (m : M) :
     ofBijective f hf m = f m := by
+  -- `LieModuleEquiv` has no projection lemma exposing the underlying `LinearEquiv`, so reveal that
+  -- representation boundary before applying the corresponding linear-equivalence interface lemma.
   change (LinearEquiv.ofBijective (f : M →ₗ[R] N) hf) m = f m
   exact LinearEquiv.ofBijective_apply _ _
 

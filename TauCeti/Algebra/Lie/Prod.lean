@@ -99,8 +99,7 @@ def prod (f : P →ₗ⁅R,L⁆ M) (g : P →ₗ⁅R,L⁆ N) : P →ₗ⁅R,L⁆
 
 @[simp] theorem prod_apply (f : P →ₗ⁅R,L⁆ M) (g : P →ₗ⁅R,L⁆ N) (p : P) :
     prod f g p = (f p, g p) := by
-  change LinearMap.prod (f : P →ₗ[R] M) (g : P →ₗ[R] N) p = (f p, g p)
-  rfl
+  exact LinearMap.prod_apply (f : P →ₗ[R] M) (g : P →ₗ[R] N) p
 
 @[simp]
 theorem fst_prod (f : P →ₗ⁅R,L⁆ M) (g : P →ₗ⁅R,L⁆ N) :
