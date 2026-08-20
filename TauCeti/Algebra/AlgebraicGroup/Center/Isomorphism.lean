@@ -199,14 +199,22 @@ theorem centerGroupSchemeIso_inv (e : H ≅ K) :
   rw [centerGroupSchemeIso]
   simp
 
+/-- The monoidal structure underlying the canonical braided structure on relative spectrum. -/
+noncomputable local instance centerAlgSpecMonoidal :
+    (AlgebraicGeometry.algSpec (CommRingCat.of k)).Monoidal :=
+  AlgebraicGeometry.braidedAlgSpec.toMonoidal
+
 /-- The isomorphism of centers commutes with their inclusions into the ambient affine group
 schemes. -/
 @[simp]
 theorem centerGroupSchemeIso_hom_comp_centerGroupSchemeι (e : H ≅ K) :
-    (centerGroupSchemeIso e).hom ≫ centerGroupSchemeι K =
+    (AlgebraicGeometry.algSpec (CommRingCat.of k)).mapGrp.map
+        ((commHopfAlgCatEquivCogrpCommAlgCat k).functor.map
+          (centerCoordinateMap e.symm)).unop ≫ centerGroupSchemeι K =
       centerGroupSchemeι H ≫
         (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map e.inv.op := by
-  rw [centerGroupSchemeIso_hom]
+  change (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map
+      (centerCoordinateMap e.symm).op ≫ centerGroupSchemeι K = _
   simp only [centerGroupSchemeι]
   rw [quotientSpecι_def, quotientSpecι_def,
     ← (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map_comp,
