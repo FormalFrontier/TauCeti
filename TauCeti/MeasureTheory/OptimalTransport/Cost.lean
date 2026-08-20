@@ -301,6 +301,17 @@ theorem lintegral_le (h : IsOptimalCoupling c π μ ν) (hσ : IsCoupling σ μ 
     ∫⁻ z, c z ∂π ≤ ∫⁻ z, c z ∂σ :=
   h.lintegral_eq.trans_le (transportCost_le_lintegral hσ c)
 
+/-- Pushing an optimal coupling forward along measurable equivalences gives an optimal coupling
+for the pushed-forward marginals and the transported cost. -/
+protected theorem map (e : X ≃ᵐ X') (f : Y ≃ᵐ Y') {c : X' × Y' → ℝ≥0∞}
+    (hc : Measurable c) (h : IsOptimalCoupling (fun z ↦ c (e z.1, f z.2)) π μ ν) :
+    IsOptimalCoupling c (π.map (Prod.map e f)) (μ.map e) (ν.map f) where
+  toIsCoupling := h.toIsCoupling.map e.measurable f.measurable
+  lintegral_eq := by
+    rw [lintegral_map hc (e.measurable.prodMap f.measurable),
+      ← transportCost_comp_prodMap e f hc μ ν]
+    exact h.lintegral_eq
+
 /-- Exchanging the two coordinates of an optimal coupling gives an optimal coupling for the
 exchanged cost. -/
 protected theorem swap (hc : Measurable c) (h : IsOptimalCoupling c π μ ν) :
