@@ -34,11 +34,8 @@ structure is introduced for it, matching Mathlib's treatment of `IsManifold`.
 
 ## Main results
 
-* `TauCeti.plGroupoid_le_contDiffGroupoid_zero` and `TauCeti.plGroupoid_le_continuousGroupoid`:
-  the forgetful inclusion "PL implies Top". Its mathematical content is that a PL map is
-  continuous (`TauCeti.IsPLOn.continuousOn`); the second statement is the first one composed with
-  Mathlib's identification of `continuousGroupoid H` with the largest groupoid, which is why it
-  reads as `le_top`.
+* `TauCeti.plGroupoid_le_contDiffGroupoid_zero`: the forgetful inclusion "PL implies Top". Its
+  mathematical content is that a PL map is continuous (`TauCeti.IsPLOn.continuousOn`).
 * `TauCeti.ofSet_mem_plGroupoid` and the `ClosedUnderRestriction (plGroupoid I)` instance: the
   identity of an open set is PL, so the groupoid is closed under restriction, as every structure
   groupoid used to define manifolds must be.
@@ -123,12 +120,6 @@ theorem plGroupoid_le_contDiffGroupoid_zero : plGroupoid I ≤ contDiffGroupoid 
   intro f s hfs
   exact contDiffOn_zero.2 hfs.continuousOn
 
-/-- Every PL open partial homeomorphism is a topological one. Mathlib identifies
-`continuousGroupoid H` with the largest structure groupoid on `H`, so at that level of generality
-the inclusion carries no information; `TauCeti.plGroupoid_le_contDiffGroupoid_zero` is the form
-with content. -/
-theorem plGroupoid_le_continuousGroupoid : plGroupoid I ≤ continuousGroupoid H := le_top
-
 /-- The identity of an open set belongs to the PL groupoid. -/
 theorem ofSet_mem_plGroupoid {s : Set H} (hs : IsOpen s) :
     OpenPartialHomeomorph.ofSet s hs ∈ plGroupoid I := by
@@ -182,7 +173,6 @@ theorem doubleRight_symm_apply (y : ℝ) :
 /-- `TauCeti.doubleRight` is an element of the PL groupoid of the trivial model on `ℝ`. -/
 theorem doubleRight_mem_plGroupoid :
     doubleRight.toOpenPartialHomeomorph ∈ plGroupoid 𝓘(ℝ, ℝ) := by
-  obtain ⟨A, hA⟩ := exists_continuousAffineMap_real_id
   obtain ⟨B, hB⟩ : ∃ B : ℝ →ᴬ[ℝ] ℝ, ∀ x : ℝ, B x = 2 * x :=
     ⟨((2 : ℝ) • ContinuousLinearMap.id ℝ ℝ).toContinuousAffineMap, fun _ => rfl⟩
   obtain ⟨C, hC⟩ : ∃ C : ℝ →ᴬ[ℝ] ℝ, ∀ x : ℝ, C x = x / 2 :=
@@ -190,13 +180,15 @@ theorem doubleRight_mem_plGroupoid :
       simp [div_eq_inv_mul]⟩
   rw [mem_plGroupoid_iff]
   constructor
-  · refine isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := A) (B := B) (fun x hx => ?_) (fun x hx => ?_) _
-    · simp [hA, mem_Iic.1 hx]
+  · refine isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := ContinuousAffineMap.id ℝ ℝ) (B := B)
+      (fun x hx => ?_) (fun x hx => ?_) _
+    · simp [mem_Iic.1 hx]
     · rcases eq_or_lt_of_le (mem_Ici.1 hx) with h | h
       · simp [hB, ← h]
       · simp [hB, not_le.2 h]
-  · refine isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := A) (B := C) (fun x hx => ?_) (fun x hx => ?_) _
-    · simp [hA, mem_Iic.1 hx]
+  · refine isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := ContinuousAffineMap.id ℝ ℝ) (B := C)
+      (fun x hx => ?_) (fun x hx => ?_) _
+    · simp [mem_Iic.1 hx]
     · rcases eq_or_lt_of_le (mem_Ici.1 hx) with h | h
       · simp [hC, ← h]
       · simp [hC, not_le.2 h]

@@ -248,23 +248,22 @@ affine. The criterion is what the concrete examples of the PL groupoid are built
 absolute value pins down that `TauCeti.IsPLOn` is strictly weaker than affineness rather than a
 roundabout way of saying it. -/
 
-/-- The identity of `ℝ`, as a continuous affine map. -/
-theorem exists_continuousAffineMap_real_id : ∃ A : ℝ →ᴬ[ℝ] ℝ, ∀ x : ℝ, A x = x :=
-  ⟨(ContinuousLinearMap.id ℝ ℝ).toContinuousAffineMap, fun _ => rfl⟩
-
 /-- A map of `ℝ` that agrees with a continuous affine map on each of the two closed half-lines is
 piecewise linear. -/
 theorem isPLOn_of_eqOn_Iic_of_eqOn_Ici {h : ℝ → ℝ} {A B : ℝ →ᴬ[ℝ] ℝ} (hA : EqOn h A (Iic 0))
     (hB : EqOn h B (Ici 0)) (s : Set ℝ) : IsPLOn h s := by
-  obtain ⟨N, hN⟩ := exists_continuousAffineMap_real_id
   have hIic : IsConvexPolyhedron (Iic (0 : ℝ)) := by
-    have hset : Iic (0 : ℝ) = {x : ℝ | N x ≤ 0} := by ext x; simp [hN]
+    have hset : Iic (0 : ℝ) = {x : ℝ | (ContinuousAffineMap.id ℝ ℝ) x ≤ 0} := by
+      ext x
+      simp
     rw [hset]
-    exact isConvexPolyhedron_setOf_le N
+    exact isConvexPolyhedron_setOf_le (ContinuousAffineMap.id ℝ ℝ)
   have hIci : IsConvexPolyhedron (Ici (0 : ℝ)) := by
-    have hset : Ici (0 : ℝ) = {x : ℝ | (-N) x ≤ 0} := by ext x; simp [hN]
+    have hset : Ici (0 : ℝ) = {x : ℝ | (-(ContinuousAffineMap.id ℝ ℝ)) x ≤ 0} := by
+      ext x
+      simp
     rw [hset]
-    exact isConvexPolyhedron_setOf_le (-N)
+    exact isConvexPolyhedron_setOf_le (-(ContinuousAffineMap.id ℝ ℝ))
   refine (isPiecewiseAffineOn_of_finite (ι := Bool) (f := h) (V := univ)
     (C := fun b => cond b (Iic (0 : ℝ)) (Ici (0 : ℝ))) (A := fun b => cond b A B)
     ?_ ?_ ?_).isPLOn.mono (subset_univ s)
@@ -292,10 +291,10 @@ theorem not_exists_continuousAffineMap_eq {h : E → F} {x y : E}
 
 /-- The absolute value on `ℝ` is piecewise linear: the two half-lines are its cells. -/
 theorem isPLOn_abs (s : Set ℝ) : IsPLOn (fun x : ℝ => |x|) s := by
-  obtain ⟨A, hA⟩ := exists_continuousAffineMap_real_id
-  exact isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := -A) (B := A)
-    (fun x hx => by simp [hA, abs_of_nonpos (mem_Iic.1 hx)])
-    (fun x hx => by simp [hA, abs_of_nonneg (mem_Ici.1 hx)]) s
+  exact isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := -(ContinuousAffineMap.id ℝ ℝ))
+    (B := ContinuousAffineMap.id ℝ ℝ)
+    (fun x hx => by simp [abs_of_nonpos (mem_Iic.1 hx)])
+    (fun x hx => by simp [abs_of_nonneg (mem_Ici.1 hx)]) s
 
 /-- The absolute value on `ℝ` is not affine, so the piecewise-linear maps are strictly more than
 the affine ones. -/
