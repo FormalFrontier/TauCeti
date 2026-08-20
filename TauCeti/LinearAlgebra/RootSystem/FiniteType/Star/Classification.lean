@@ -203,42 +203,42 @@ private noncomputable def starIndexEquivE (c : ℕ) : StarIndex ![1, 2, c] ≃ F
 
 private theorem starCartanMatrix_one_two_two_eq_submatrix_E6 :
     starCartanMatrix ![1, 2, 2] =
-      CartanMatrix.E₆.submatrix (starIndexEquivE 2) (starIndexEquivE 2) := by
+      (CartanMatrix.E 6).submatrix (starIndexEquivE 2) (starIndexEquivE 2) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
+  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases j <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases i <;> fin_cases s <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases i <;> fin_cases j <;> fin_cases s <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
 
 private theorem starCartanMatrix_one_two_three_eq_submatrix_E7 :
     starCartanMatrix ![1, 2, 3] =
-      CartanMatrix.E₇.submatrix (starIndexEquivE 3) (starIndexEquivE 3) := by
+      (CartanMatrix.E 7).submatrix (starIndexEquivE 3) (starIndexEquivE 3) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
+  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases j <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases i <;> fin_cases s <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases i <;> fin_cases j <;> fin_cases s <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
 
 private theorem starCartanMatrix_one_two_four_eq_submatrix_E8 :
     starCartanMatrix ![1, 2, 4] =
-      CartanMatrix.E₈.submatrix (starIndexEquivE 4) (starIndexEquivE 4) := by
+      (CartanMatrix.E 8).submatrix (starIndexEquivE 4) (starIndexEquivE 4) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
+  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases j <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases i <;> fin_cases s <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
   · fin_cases i <;> fin_cases j <;> fin_cases s <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E]
 
 private theorem isFiniteType_starCartanMatrix_one_two_two :
     IsFiniteType (starCartanMatrix ![1, 2, 2]) := by

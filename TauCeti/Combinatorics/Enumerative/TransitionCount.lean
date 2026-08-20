@@ -97,6 +97,17 @@ theorem occCount_comp_castSucc_add_last [DecidableEq α] {n : ℕ} (w : Fin (n +
   rw [occCount_eq_sum, occCount_eq_sum, Fin.sum_univ_castSucc]
   rfl
 
+/-- Splitting off the last transition: the transitions in a word are those in its initial segment
+together with a possible transition at the final position. -/
+theorem transitionCount_comp_castSucc_add_last [DecidableEq α] {n : ℕ}
+    (w : Fin (n + 2) → α) (a b : α) :
+    transitionCount (w ∘ Fin.castSucc) a b +
+        (if w (Fin.castSucc (Fin.last n)) = a ∧ w (Fin.last (n + 1)) = b then 1 else 0) =
+      transitionCount w a b := by
+  rw [transitionCount_eq_card_filter, transitionCount_eq_card_filter, Finset.card_filter,
+    Finset.card_filter, Fin.sum_univ_castSucc]
+  rfl
+
 /-- Splitting off the first position: the occurrences of `a` in a word are those in its final
 segment together with a possible occurrence at the first position. -/
 theorem occCount_comp_succ_add_zero [DecidableEq α] {n : ℕ} (w : Fin (n + 1) → α) (a : α) :
