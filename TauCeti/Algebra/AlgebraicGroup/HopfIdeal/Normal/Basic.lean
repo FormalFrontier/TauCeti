@@ -26,7 +26,9 @@ the ambient group of points.
 
 Normal Hopf ideals are closed under arbitrary suprema. Every Hopf ideal has a normal core: the
 largest normal Hopf ideal below it. This normal-core API is the Hopf-ideal analogue of Mathlib's
-`Subgroup.normalCore`.
+`Subgroup.normalCore` at the level of the ideal lattice. Since the ideal-to-subgroup dictionary is
+contravariant, `J.normalCore` cuts out the smallest normal closed subgroup containing the subgroup
+cut out by `J`, namely its normal closure.
 
 ## Main declarations
 
@@ -106,7 +108,10 @@ theorem isNormal_sSup {s : Set (HopfIdeal R H)} (hs : ∀ I ∈ s, I.IsNormal) :
   rw [sSup_eq_iSup']
   exact isNormal_iSup fun I ↦ hs I I.property
 
-/-- The largest normal Hopf ideal contained in `J`. -/
+/-- The largest normal Hopf ideal contained in `J`.
+
+Contravariantly, it cuts out the smallest normal closed subgroup containing the subgroup cut out
+by `J`, namely its normal closure. -/
 noncomputable def normalCore (J : HopfIdeal R H) : HopfIdeal R H :=
   sSup {I | I.IsNormal ∧ I ≤ J}
 
@@ -120,35 +125,30 @@ theorem normalCore_le (J : HopfIdeal R H) : J.normalCore ≤ J := by
   rw [normalCore]
   exact sSup_le fun I hI ↦ hI.2
 
-/-- Every normal Hopf ideal below `J` lies below the normal core of `J`. -/
-theorem le_normalCore (I J : HopfIdeal R H) (hI : I.IsNormal) (hIJ : I ≤ J) :
-    I ≤ J.normalCore := by
-  rw [normalCore]
-  exact le_sSup ⟨hI, hIJ⟩
-
 /-- A normal Hopf ideal lies below the normal core of `J` exactly when it lies below `J`. -/
 theorem le_normalCore_iff_of_isNormal (I J : HopfIdeal R H) (hI : I.IsNormal) :
-    I ≤ J.normalCore ↔ I ≤ J :=
-  ⟨fun h ↦ h.trans J.normalCore_le, le_normalCore I J hI⟩
+    I ≤ J.normalCore ↔ I ≤ J := by
+  constructor
+  · exact fun h ↦ h.trans J.normalCore_le
+  · intro h
+    rw [normalCore]
+    exact le_sSup ⟨hI, h⟩
 
 /-- The normal-core operator is monotone. -/
 theorem normalCore_mono {I J : HopfIdeal R H} (hIJ : I ≤ J) :
     I.normalCore ≤ J.normalCore :=
-  le_normalCore I.normalCore J (isNormal_normalCore I) (I.normalCore_le.trans hIJ)
+  (le_normalCore_iff_of_isNormal I.normalCore J (isNormal_normalCore I)).mpr
+    (I.normalCore_le.trans hIJ)
 
-/-- A normal Hopf ideal equals its normal core. -/
-theorem normalCore_eq_self_of_isNormal (J : HopfIdeal R H) (hJ : J.IsNormal) :
-    J.normalCore = J :=
-  le_antisymm J.normalCore_le (le_normalCore J J hJ le_rfl)
+/-- A Hopf ideal equals its normal core exactly when it is normal. -/
+theorem normalCore_eq_self_iff (J : HopfIdeal R H) : J.normalCore = J ↔ J.IsNormal :=
+  ⟨fun h ↦ h ▸ isNormal_normalCore J, fun h ↦
+    le_antisymm J.normalCore_le ((le_normalCore_iff_of_isNormal J J h).mpr le_rfl)⟩
 
 /-- Taking the normal core twice has the same effect as taking it once. -/
 @[simp]
 theorem normalCore_idempotent (J : HopfIdeal R H) : J.normalCore.normalCore = J.normalCore :=
-  normalCore_eq_self_of_isNormal J.normalCore (isNormal_normalCore J)
-
-/-- A Hopf ideal equals its normal core exactly when it is normal. -/
-theorem normalCore_eq_self_iff (J : HopfIdeal R H) : J.normalCore = J ↔ J.IsNormal :=
-  ⟨fun h ↦ h ▸ isNormal_normalCore J, normalCore_eq_self_of_isNormal J⟩
+  (normalCore_eq_self_iff J.normalCore).mpr (isNormal_normalCore J)
 
 end HopfIdeal
 

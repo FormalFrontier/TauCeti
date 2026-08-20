@@ -83,7 +83,7 @@ theorem normalCommonKernelHopfIdeal_eq_commonKernelHopfIdeal_of_isNormal
     (f : ∀ i, H ⟶ K i) (h : (commonKernelHopfIdeal f).IsNormal) :
     normalCommonKernelHopfIdeal f = commonKernelHopfIdeal f := by
   rw [normalCommonKernelHopfIdeal]
-  exact HopfIdeal.normalCore_eq_self_of_isNormal _ h
+  exact (HopfIdeal.normalCore_eq_self_iff _).mpr h
 
 /-- Every member of the defining family kills the normal common-kernel ideal. -/
 theorem normalCommonKernelHopfIdeal_toIdeal_le_ker (f : ∀ i, H ⟶ K i) (i : ι) :
