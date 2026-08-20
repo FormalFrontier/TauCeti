@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
 public import TauCeti.LinearAlgebra.IntegralLattice.Index
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic
 public import TauCeti.LinearAlgebra.IntegralLattice.Unimodular
@@ -17,15 +16,18 @@ Let `L` be an integral lattice and let `L ≤ M ≤ Lᵛ` be an intermediate car
 computes the two numerical invariants of the gluing correspondence:
 
 ```text
-[M : L] = #(M / L) = |M / L ≤ A_L|,      disc(M) · [M : L]² = disc(L).
+[M : L] = #(M / L) = |M / L ≤ A_L|,      disc(M) · [M : L]² = disc(L)  (for `M` integral).
 ```
 
-The first equality is the index in the group-theoretic sense, and the second says that enlarging
-a lattice by a subgroup of its discriminant group divides the discriminant by the square of the
-order of that subgroup. Together with the correspondence of
-`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic` this is the numerical half of
-Nikulin's gluing theory: an even lattice glued along a subgroup `H` of `A_L` has discriminant
-`disc(L) / |H|²`, and is unimodular exactly when `|H|² = disc(L)`.
+The first equality is the index in the group-theoretic sense and holds for every intermediate
+carrier. The second needs `M` to be integral, so that `M` is itself an integral lattice and has a
+discriminant of its own; it says that enlarging a lattice by a subgroup of its discriminant group
+divides the discriminant by the square of the order of that subgroup. By the correspondence of
+`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic`, integrality of the carrier glued
+along a subgroup `H` of `A_L` is the vanishing of the discriminant pairing on `H`, that is the
+isotropy of `H` when `L` is nondegenerate. So this is the numerical half of Nikulin's gluing
+theory: an even lattice glued along an isotropic subgroup `H` has discriminant `disc(L) / |H|²`,
+and is unimodular exactly when `|H|² = disc(L)`.
 
 The scaling law itself is not proved here: it is the general statement
 `TauCeti.IntegralLattice.discriminant_eq_mul_relIndex_sq` about an arbitrary pair of nested
@@ -52,11 +54,14 @@ ambient form and therefore keeps nondegeneracy; evenness of the carrier makes it
 * `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_mul_relIndex` and
   `TauCeti.IntegralLattice.IntermediateCarrier.natCard_mul_relIndex`: multiplicativity of the
   index along a chain of intermediate carriers, and along the corresponding chain of subgroups.
+* `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_intermediateCarrierOfDiscriminantSubgroup`:
+  the relative index of two glued carriers is the relative index of the two subgroups.
 * `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.discriminant_mul_sq_index` and
   `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.discriminant_mul_sq_natCard`:
-  `disc(M) · [M : L]² = disc(L)`, and its form `disc(L_H) · |H|² = disc(L)`.
+  `disc(M) · [M : L]² = disc(L)` for an integral carrier `M`, and its form
+  `disc(L_H) · |H|² = disc(L)` when the carrier glued along `H` is integral.
 * `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.isUnimodular_iff_sq_natCard`: the
-  overlattice glued along `H` is unimodular exactly when `|H|² = disc(L)`.
+  integral overlattice glued along `H` is unimodular exactly when `|H|² = disc(L)`.
 
 ## References
 
@@ -92,8 +97,8 @@ quotient group `M / L`. -/
 noncomputable def index (M : L.IntermediateCarrier) : ℕ :=
   relIndex ⊥ M
 
-/-- The relative index of two intermediate carriers is the order of the quotient of the larger
-one by the intersection. -/
+/-- The relative index of two intermediate carriers `M N` is the order of the quotient
+`N / (M ⊓ N)`; when `M ≤ N` this is the order of `N / M`. -/
 theorem relIndex_eq_natCard_quotient (M N : L.IntermediateCarrier) :
     relIndex M N = Nat.card (↥N.1 ⧸ M.1.submoduleOf N.1) := (rfl)
 
@@ -153,9 +158,7 @@ private theorem coe_range_toDiscriminantGroup (M : L.IntermediateCarrier) :
     · rintro ⟨y, hy⟩
       rw [toDiscriminantGroup_apply] at hy
       have hmem := (Submodule.Quotient.eq _).mp hy
-      rw [L.mem_carrierInDual_iff] at hmem
-      have hcoe : ((⟨(y : V), M.2.2 y.2⟩ - x : L.dualCarrier) : V) = (y : V) - (x : V) := rfl
-      rw [hcoe] at hmem
+      rw [L.mem_carrierInDual_iff, Submodule.coe_sub] at hmem
       have hx : (x : V) = (y : V) - ((y : V) - (x : V)) := by abel
       rw [hx]
       exact sub_mem y.2 (M.2.1 hmem)
@@ -197,6 +200,18 @@ theorem natCard_mul_relIndex {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ 
 section IsNondegenerate
 
 variable [L.IsNondegenerate]
+
+/-- **The relative index of two glued intermediate carriers is the relative index of the two
+subgroups of the discriminant group.** Nondegeneracy enters only through the finiteness of the
+discriminant group, which is what lets the order of `H` be cancelled. -/
+theorem relIndex_intermediateCarrierOfDiscriminantSubgroup
+    {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ K) :
+    relIndex (L.intermediateCarrierOfDiscriminantSubgroup H)
+      (L.intermediateCarrierOfDiscriminantSubgroup K) = H.relIndex K := by
+  refine Nat.eq_of_mul_eq_mul_left (n := Nat.card H) Nat.card_pos ?_
+  rw [natCard_mul_relIndex h, AddSubgroup.relIndex,
+    ← Nat.card_congr (AddSubgroup.addSubgroupOfEquivOfLe h).toEquiv]
+  exact (AddSubgroup.card_mul_index _).symm
 
 private theorem carrier_relIndex_toIntegralLattice_eq_index {M : L.IntermediateCarrier}
     (hM : IsIntegral M) : L.carrier.toAddSubgroup.relIndex

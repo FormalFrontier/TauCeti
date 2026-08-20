@@ -131,51 +131,51 @@ theorem IsEven.isIntegral {M : L.IntermediateCarrier} (hM : IsEven M) : IsIntegr
   push_cast at ha hb hc ⊢
   linarith [hadd, ha, hb, hc]
 
-section IsNondegenerate
+section IsLattice
 
-variable [L.IsNondegenerate]
+variable {M : L.IntermediateCarrier} [M.1.IsLattice ℚ]
 
-/-- An integral intermediate carrier is itself an integral lattice, for the same ambient
-rational form. -/
-def IsIntegral.toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    IntegralLattice V where
+/-- An integral intermediate carrier which is itself a full `ℤ`-lattice is an integral lattice,
+for the same ambient rational form. Over a nondegenerate lattice every intermediate carrier is
+such a lattice, by `TauCeti.IntegralLattice.instIsLatticeIntermediateCarrier`. -/
+def IsIntegral.toIntegralLattice (hM : IsIntegral M) : IntegralLattice V where
   carrier := M.1
   form := L.form
-  isLattice := inferInstance
+  isLattice := ‹M.1.IsLattice ℚ›
   isSymm := L.isSymm
   le_dual _ hx := L.form.mem_dualSubmodule.mpr fun _ hy ↦ isIntegral_def.mp hM _ hx _ hy
 
 /-- The carrier of the integral lattice attached to an integral intermediate carrier. -/
 @[simp]
-theorem IsIntegral.carrier_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
+theorem IsIntegral.carrier_toIntegralLattice (hM : IsIntegral M) :
     hM.toIntegralLattice.carrier = M.1 := (rfl)
 
 /-- The integral lattice attached to an integral intermediate carrier keeps the ambient form. -/
 @[simp]
-theorem IsIntegral.form_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsIntegral M) :
+theorem IsIntegral.form_toIntegralLattice (hM : IsIntegral M) :
     hM.toIntegralLattice.form = L.form := (rfl)
-
-/-- An overlattice of a nondegenerate integral lattice is nondegenerate: it carries the same
-ambient form. -/
-instance IsIntegral.instIsNondegenerate {M : L.IntermediateCarrier} (hM : IsIntegral M) :
-    hM.toIntegralLattice.IsNondegenerate :=
-  ⟨L.form_nondegenerate⟩
 
 /-- Regarding the lattice itself as an intermediate carrier returns the lattice. -/
 @[simp]
-theorem IsIntegral.toIntegralLattice_bot (hM : IsIntegral (⊥ : L.IntermediateCarrier)) :
-    hM.toIntegralLattice = L :=
+theorem IsIntegral.toIntegralLattice_bot [(⊥ : L.IntermediateCarrier).1.IsLattice ℚ]
+    (hM : IsIntegral (⊥ : L.IntermediateCarrier)) : hM.toIntegralLattice = L :=
   IntegralLattice.ext rfl rfl
 
 /-- An even intermediate carrier is an even integral lattice. -/
-theorem IsEven.isEven_toIntegralLattice {M : L.IntermediateCarrier} (hM : IsEven M) :
+theorem IsEven.isEven_toIntegralLattice (hM : IsEven M) :
     hM.isIntegral.toIntegralLattice.IsEven := by
   rw [isEven_iff_forall_norm]
   intro x
   obtain ⟨n, hn⟩ := isEven_def.mp hM (x : V) x.2
   exact ⟨n, by rw [norm_apply, IsIntegral.form_toIntegralLattice, ← norm_apply]; exact hn⟩
 
-end IsNondegenerate
+end IsLattice
+
+/-- An overlattice of a nondegenerate integral lattice is nondegenerate: it carries the same
+ambient form. -/
+instance IsIntegral.instIsNondegenerate [L.IsNondegenerate] {M : L.IntermediateCarrier}
+    (hM : IsIntegral M) : hM.toIntegralLattice.IsNondegenerate :=
+  ⟨L.form_nondegenerate⟩
 
 /-- **Integrality is vanishing of the discriminant pairing.** An intermediate carrier is
 integral exactly when the discriminant pairing vanishes on its subgroup of the discriminant
