@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Points
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Generated
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel
 
 /-!
@@ -35,6 +35,8 @@ theorem and is not asserted here.
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralSubsystemPointsSubgroup`: the algebra-valued
   points of a toral-subsystem carrier, viewed in `GLₙ`.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantToralSubsystemPointsSubgroup_mono`: inclusion of root
+  index sets induces inclusion of the corresponding point subgroups.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralSubsystemPoints_univ`:
   the full root-generated point subgroup is contained in the full toral point subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralSubsystemPoints`: every
@@ -95,6 +97,18 @@ theorem kostantToralSubsystemPointsSubgroup_def (S : Set I)
         (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil) A := by
   rw [kostantToralSubsystemPointsSubgroup]
 
+/-- Enlarging the selected root-index set enlarges the corresponding algebra-valued point
+subgroup. -/
+theorem kostantToralSubsystemPointsSubgroup_mono {S T : Set I}
+    (hnil : ∀ i ∈ T, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (hST : S ⊆ T) (A : Type v) [CommRing A] :
+    kostantToralSubsystemPointsSubgroup e h ρ M hM b wt S
+        (fun i hi ↦ hnil i (hST hi)) A ≤
+      kostantToralSubsystemPointsSubgroup e h ρ M hM b wt T hnil A := by
+  simpa only [kostantToralSubsystemPointsSubgroup_def] using
+    GeneralLinear.hopfIdealPointsSubgroup_le_of_le n
+      (kostantToralSubsystemDefiningIdeal_anti e h ρ M hM b wt hnil hST) A
+
 /-- Membership in the points of a toral subsystem is vanishing on its defining Hopf ideal. -/
 @[simp]
 theorem mem_kostantToralSubsystemPointsSubgroup_iff (S : Set I)
@@ -129,18 +143,9 @@ theorem kostantRootSubgroupMatrix_mem_toralSubsystemPoints (S : Set I)
       (CommAlgCat.of ℤ A)) :
     kostantRootSubgroupMatrix e h ρ M hM i.1 (hnil i.1 i.2) b q ∈
       kostantToralSubsystemPointsSubgroup e h ρ M hM b wt S hnil A := by
-  have hmatrix : GeneralLinear.pointsMulEquiv n
-      ((CommHopfAlgCat.mapPointsFunctor
-        (kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnil i.1 i.2) b)).app
-          (CommAlgCat.of ℤ A) q) =
-      kostantRootSubgroupMatrix e h ρ M hM i.1 (hnil i.1 i.2) b q := by
-    rw [CommHopfAlgCat.mapPointsFunctor_app_apply, GeneralLinear.pointsMulEquiv_apply]
-    exact pointsMulEquiv_kostantRootSubgroupCoordinateMap
-      e h ρ M hM i.1 (hnil i.1 i.2) b A q
-  rw [kostantToralSubsystemPointsSubgroup_def, ← hmatrix]
-  exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_mem_hopfIdealPointsSubgroup n
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
-    (kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnil i.1 i.2) b)
+  rw [kostantToralSubsystemPointsSubgroup_def]
+  exact kostantRootSubgroupMatrix_mem_hopfIdealPointsSubgroup e h ρ M hM b i.1
+    (hnil i.1 i.2) (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)
     (kostantToralSubsystemDefiningIdeal_toIdeal_le_root_ker e h ρ M hM b wt S hnil i) A q
 
 end Finite
