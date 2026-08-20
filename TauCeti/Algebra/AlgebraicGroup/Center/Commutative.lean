@@ -17,8 +17,7 @@ more general fact that the coordinate Hopf algebra of every central closed subgr
 cocommutative.
 
 The cocommutativity result supplies the commutative-group-object structure on the Hopf spectrum,
-registered here on the canonical `centerGroupScheme` and transparently bundled as
-`centerCommGroupScheme`.
+registered here on the canonical `centerGroupScheme` and bundled as `centerCommGroupScheme`.
 
 ## Main declarations
 
@@ -28,6 +27,8 @@ registered here on the canonical `centerGroupScheme` and transparently bundled a
   commutative group object.
 * `TauCeti.CommHopfAlgCat.centerCommGroupScheme`: the center bundled as a commutative group
   scheme.
+* `TauCeti.CommHopfAlgCat.centerCommGroupScheme_toGrp`: its underlying group scheme is the
+  canonical center group scheme.
 
 ## References
 
@@ -64,9 +65,15 @@ instance isCommMonObj_centerGroupScheme (H : _root_.CommHopfAlgCat.{u} k) :
   (isCentral_centerDefiningIdeal H).isCommMonObj_quotientSpec
 
 /-- The center of an affine group scheme, bundled as a commutative group scheme. -/
-noncomputable abbrev centerCommGroupScheme (H : _root_.CommHopfAlgCat.{u} k) :
+noncomputable def centerCommGroupScheme (H : _root_.CommHopfAlgCat.{u} k) :
     CommGrp (Over (Spec (CommRingCat.of k))) :=
   CommGrp.mk (centerGroupScheme H).X
+
+/-- The underlying group scheme of the bundled commutative center is the canonical center. -/
+@[simp]
+theorem centerCommGroupScheme_toGrp (H : _root_.CommHopfAlgCat.{u} k) :
+    (centerCommGroupScheme H).toGrp = centerGroupScheme H :=
+  by rw [centerCommGroupScheme]
 
 end Scheme
 
