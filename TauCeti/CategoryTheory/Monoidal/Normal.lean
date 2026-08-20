@@ -103,6 +103,7 @@ theorem normalConjugation_one_right (φ : H ⟶ G) [IsMonHom.Normal φ] (g : X �
   simp [lift_normalConjugation_comp]
 
 /-- Conjugation by a product is successive conjugation, with the right factor acting first. -/
+@[simp]
 theorem normalConjugation_mul_left (φ : H ⟶ G) [IsMonHom.Normal φ]
     (g₁ g₂ : X ⟶ G) (h : X ⟶ H) :
     lift (g₁ * g₂) h ≫ normalConjugation φ =
@@ -112,6 +113,7 @@ theorem normalConjugation_mul_left (φ : H ⟶ G) [IsMonHom.Normal φ]
   group
 
 /-- Conjugation preserves multiplication in a normal subgroup object. -/
+@[simp]
 theorem normalConjugation_mul_right (φ : H ⟶ G) [IsMonHom.Normal φ]
     (g : X ⟶ G) (h₁ h₂ : X ⟶ H) :
     lift g (h₁ * h₂) ≫ normalConjugation φ =
