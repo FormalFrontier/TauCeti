@@ -30,6 +30,7 @@ the precise affine-group statement that the geometric fibre is the trivial group
 
 * `TauCeti.reductiveCommHopfAlgProperty`: reductivity for finite-type commutative Hopf algebras
   over a field.
+* `TauCeti.ReductiveCommHopfAlgCat`: the corresponding full subcategory.
 * `TauCeti.reductiveCommHopfAlgProperty.eq_augmentation`: every connected normal smooth
   unipotent closed subgroup of a reductive group's geometric fibre is trivial.
 * `TauCeti.reductiveCommHopfAlgProperty.bot_eq_augmentation`: the zero Hopf ideal of a reductive
@@ -96,6 +97,10 @@ instance (k : Type u) [Field k] :
     (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=
   inferInstanceAs ((geometricNormalSubgroupFreeCommHopfAlgProperty k
     (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))).IsClosedUnderIsomorphisms)
+
+/-- The category of reductive finite-type commutative Hopf algebras over a field. -/
+abbrev ReductiveCommHopfAlgCat (k : Type u) [Field k] :=
+  (reductiveCommHopfAlgProperty k).FullSubcategory
 
 namespace reductiveCommHopfAlgProperty
 

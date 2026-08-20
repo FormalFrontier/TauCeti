@@ -7,6 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 public import Mathlib.LinearAlgebra.RootSystem.Irreducible
+public import TauCeti.LinearAlgebra.RootSystem.InvariantSubmodule
 import Mathlib.Combinatorics.SimpleGraph.Hasse
 
 public section
@@ -29,6 +30,8 @@ every edge of the Dynkin diagram, so the simple roots span the whole space insid
 
 * `TauCeti.RootPairing.isIrreducible_of_connected_diagramGraph_cartanMatrix`: a connected base
   diagram makes a root system irreducible.
+* `TauCeti.RootPairing.eq_bot_of_forall_root_not_mem`: a submodule invariant under the simple
+  reflections and containing no simple root is trivial.
 * `TauCeti.DynkinType.connected_diagramGraph_cartanMatrix`: every valid standard Dynkin diagram is
   connected.
 * `TauCeti.HasCartanType.isIrreducible`: a root system of valid Cartan type is irreducible.
@@ -232,6 +235,33 @@ namespace RootPairing
 variable {K M N ι : Type*} [Field K] [CharZero K] [AddCommGroup M] [Module K M]
   [AddCommGroup N] [Module K N] {P : RootPairing ι K M N} [P.IsCrystallographic]
 
+omit [P.IsCrystallographic] in
+/-- **A submodule invariant under the simple reflections and containing no simple root is
+trivial.** If `q` is invariant under the reflection at each element of the base's support and
+misses the root there, then `q = ⊥`.
+
+Invariance is asked at the support only, not under every reflection of `P`. -/
+theorem eq_bot_of_forall_root_not_mem [P.IsRootSystem] {b : P.Base} {q : Submodule K M}
+    (hinv : ∀ i : b.support, q ∈ Module.End.invtSubmodule (P.reflection i))
+    (h : ∀ i : b.support, P.root i ∉ q) : q = ⊥ := by
+  -- Missing every simple root puts `q` inside all the simple coroot kernels; the coweight basis
+  -- then kills every pairing, and perfection of the pairing forces `q` to vanish.
+  have hle : q ≤ ⨅ i : b.support, LinearMap.ker (P.coroot' i) :=
+    le_iInf fun i ↦ (Submodule.mem_invtSubmodule_reflection_iff (P.flip.root_coroot_two i)
+      (Submodule.disjoint_span_singleton_of_notMem (h i))).mp (hinv i)
+  refine eq_bot_iff.mpr fun x hx => ?_
+  apply P.toPerfPair.injective
+  apply LinearMap.ext
+  intro y
+  rw [map_zero, ← b.toCoweightBasis.sum_repr y, map_sum]
+  apply Finset.sum_eq_zero
+  intro i _
+  have hz : (P.toPerfPair x) (b.toCoweightBasis i) = 0 := by
+    have hallker : ∀ j : b.support, x ∈ LinearMap.ker (P.coroot' j) := by
+      simpa using hle hx
+    simpa using LinearMap.mem_ker.mp (hallker i)
+  rw [map_smul, hz, smul_zero]
+
 /-- A crystallographic root system with a connected Dynkin diagram is irreducible.
 
 Characteristic zero ensures that a nonzero integral Cartan entry stays nonzero in the field when
@@ -245,35 +275,14 @@ theorem isIrreducible_of_connected_diagramGraph_cartanMatrix [P.IsRootSystem] (b
   intro q hinv hq
   have hsimple : ∃ i : b.support, P.root i ∈ q := by
     by_contra! h
-    have hle : q ≤ ⨅ i : b.support, LinearMap.ker (P.coroot' i) := by
-      refine le_iInf fun i ↦ _root_.RootPairing.invtRootSubmodule.le_ker_coroot' ⟨q, ?_⟩ (h i)
-      exact P.mem_invtRootSubmodule_iff.mpr hinv
-    have : q ≤ ⊥ := by
-      intro x hx
-      apply P.toPerfPair.injective
-      apply LinearMap.ext
-      intro y
-      rw [map_zero, ← b.toCoweightBasis.sum_repr y, map_sum]
-      apply Finset.sum_eq_zero
-      intro i hi
-      have hz : (P.toPerfPair x) (b.toCoweightBasis i) = 0 := by
-        have hallker : ∀ j : b.support, x ∈ LinearMap.ker (P.coroot' j) := by
-          simpa using hle hx
-        simpa using LinearMap.mem_ker.mp (hallker i)
-      rw [map_smul, hz, smul_zero]
-    exact hq (eq_bot_iff.mpr this)
+    exact hq (eq_bot_of_forall_root_not_mem (b := b) (fun i ↦ hinv i) h)
   obtain ⟨i, hi⟩ := hsimple
+  -- adjacency in the diagram is exactly nonvanishing of the Cartan entry, hence of the pairing
   have propagate {u v : b.support} (hadj : (diagramGraph b.cartanMatrix).Adj u v)
-      (hu : P.root u ∈ q) : P.root v ∈ q := by
-    have hrefl : P.reflection v (P.root u) ∈ q :=
-      (Module.End.mem_invtSubmodule _).mp (hinv v) hu
-    have hpair : P.pairing u v ≠ 0 := by
-      intro hp
-      exact (diagramGraph_adj.mp hadj).2.1
-        (b.cartanMatrix_apply_eq_zero_iff_pairing.mpr hp)
-    have hsmul : P.pairing u v • P.root v ∈ q := by
-      simpa only [P.reflection_apply_root, sub_sub_cancel] using q.sub_mem hu hrefl
-    exact (q.smul_mem_iff hpair).mp hsmul
+      (hu : P.root u ∈ q) : P.root v ∈ q :=
+    root_mem_of_pairing_ne_zero (hinv v)
+      (fun hp ↦ (diagramGraph_adj.mp hadj).2.1
+        (b.cartanMatrix_apply_eq_zero_iff_pairing.mpr hp)) hu
   have hall : ∀ j : b.support, P.root j ∈ q := by
     intro j
     obtain ⟨w⟩ := hconn.preconnected i j
