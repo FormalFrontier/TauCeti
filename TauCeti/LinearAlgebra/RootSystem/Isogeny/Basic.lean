@@ -19,7 +19,7 @@ root. This is the notion of SGA III, Exposé XXI, 6.8, and it is what an isogeny
 schemes induces on root data; the special isogenies in characteristics two and three, which are not
 isomorphisms, are the reason the notion is needed at all.
 
-`TauCeti.RootPairing.Isogeny P Q` carries a linear map of weight spaces, its transpose on coweight
+`TauCeti.RootPairingIsogeny P Q` carries a linear map of weight spaces, its transpose on coweight
 spaces, and a bijection of index sets, together with a family `exponent : ι → ℤ` of positive
 integers, and it asks
 
@@ -30,13 +30,13 @@ coweightMap (Q.coroot (indexEquiv i)) = exponent i • P.coroot i.
 
 Both lattice maps are required to be injective with finite-index image. At `exponent = 1` the root
 and coroot equations are those of a `RootPairing.Hom`, and
-`TauCeti.RootPairing.Isogeny.ofEquiv` turns a `RootPairing.Equiv` into an isogeny. The transpose
+`TauCeti.RootPairingIsogeny.ofEquiv` turns a `RootPairing.Equiv` into an isogeny. The transpose
 condition is stated as the
 bilinear identity `Q.toLinearMap (weightMap x) y = P.toLinearMap x (coweightMap y)`, which is the
 unfolded form of the corresponding `RootPairing.Hom` field.
 
 The two conditions are not independent of the pairings: they force
-`TauCeti.RootPairing.Isogeny.exponent_mul_pairing`,
+`TauCeti.RootPairingIsogeny.exponent_mul_pairing`,
 
 ```text
 exponent i * Q.pairing (indexEquiv i) (indexEquiv j) = exponent j * P.pairing i j,
@@ -47,7 +47,7 @@ That is exactly what a length-exchanging map of a doubly laced diagram does, and
 `RootPairing.Hom`, whose index bijection preserves all Cartan integers, cannot express one.
 
 Isogenies compose, with exponents multiplying along the composite, and for each positive integer
-`c` the scaling `TauCeti.RootPairing.Isogeny.smulId P c` is an isogeny of a finite free
+`c` the scaling `TauCeti.RootPairingIsogeny.smulId P c` is an isogeny of a finite free
 `ℤ`-root pairing `P` with itself with constant exponent `c`. At `c` a prime `p` the latter is the
 root-datum shadow of the `p`-power Frobenius
 isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the relation
@@ -55,17 +55,17 @@ isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the 
 
 ## Main definitions
 
-* `TauCeti.RootPairing.Isogeny`: an isogeny of root pairings.
-* `TauCeti.RootPairing.Isogeny.comp`: the composite of two isogenies.
-* `TauCeti.RootPairing.Isogeny.smulId`: multiplication by a scalar, as an isogeny.
-* `TauCeti.RootPairing.Isogeny.ofMatrix`: an isogeny of a root datum on coordinate lattices,
+* `TauCeti.RootPairingIsogeny`: an isogeny of root pairings.
+* `TauCeti.RootPairingIsogeny.comp`: the composite of two isogenies.
+* `TauCeti.RootPairingIsogeny.smulId`: multiplication by a scalar, as an isogeny.
+* `TauCeti.RootPairingIsogeny.ofMatrix`: an isogeny of a root datum on coordinate lattices,
   presented by an integer matrix.
-* `TauCeti.RootPairing.Isogeny.ofEquiv`: an equivalence of root pairings is an isogeny with all
+* `TauCeti.RootPairingIsogeny.ofEquiv`: an equivalence of root pairings is an isogeny with all
   exponents `1`.
 
 ## Main results
 
-* `TauCeti.RootPairing.Isogeny.exponent_mul_pairing`: the exponents intertwine the two Cartan
+* `TauCeti.RootPairingIsogeny.exponent_mul_pairing`: the exponents intertwine the two Cartan
   matrices.
 
 ## References
@@ -93,7 +93,7 @@ each coroot to the same multiple of a coroot.
 With all exponents equal to `1` this is a `RootPairing.Hom`; the extra generality is what an
 isogeny of reductive group schemes that is not an isomorphism induces on root data. -/
 @[ext]
-structure RootPairing.Isogeny (P : RootPairing ι R M N) (Q : RootPairing ι₂ R M₂ N₂) where
+structure RootPairingIsogeny (P : RootPairing ι R M N) (Q : RootPairing ι₂ R M₂ N₂) : Type _ where
   /-- A linear map on weight space. -/
   weightMap : M →ₗ[R] M₂
   /-- A contravariant linear map on coweight space. -/
@@ -118,12 +118,12 @@ structure RootPairing.Isogeny (P : RootPairing ι R M N) (Q : RootPairing ι₂ 
   coroot_coweightMap : ∀ i,
     coweightMap (Q.coroot (indexEquiv i)) = (exponent i : R) • P.coroot i
 
-namespace RootPairing.Isogeny
+namespace RootPairingIsogeny
 
 variable {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} {S : RootPairing ι₃ R M₃ N₃}
 
 /-- The exponents of an isogeny intertwine the Cartan matrices of its source and target. -/
-theorem exponent_mul_pairing (f : RootPairing.Isogeny P Q) (i j : ι) :
+theorem exponent_mul_pairing (f : RootPairingIsogeny P Q) (i j : ι) :
     (f.exponent i : R) * Q.pairing (f.indexEquiv i) (f.indexEquiv j) =
       (f.exponent j : R) * P.pairing i j := by
   have h : Q.toLinearMap (f.weightMap (P.root i)) (Q.coroot (f.indexEquiv j)) =
@@ -136,7 +136,7 @@ theorem exponent_mul_pairing (f : RootPairing.Isogeny P Q) (i j : ι) :
 /-- Multiplication by a positive integer, as an isogeny of a finite free `ℤ`-root pairing with
 itself. At a prime `p` this is the isogeny of root data underlying the `p`-power Frobenius. -/
 def smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module.Finite ℤ N]
-    (P : RootPairing ι ℤ M N) (c : ℕ+) : RootPairing.Isogeny P P where
+    (P : RootPairing ι ℤ M N) (c : ℕ+) : RootPairingIsogeny P P where
   weightMap := (c : ℕ) • LinearMap.id
   coweightMap := (c : ℕ) • LinearMap.id
   indexEquiv := Equiv.refl ι
@@ -218,8 +218,8 @@ lemma finiteIndex_range_comp (g : M₂ →ₗ[R] M₃) (f : M →ₗ[R] M₂)
 
 /-- The composite of two isogenies, whose exponent at an index is the product of the exponent of
 the first at that index and the exponent of the second at its image. -/
-def comp (g : RootPairing.Isogeny Q S) (f : RootPairing.Isogeny P Q) :
-    RootPairing.Isogeny P S where
+def comp (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q) :
+    RootPairingIsogeny P S where
   weightMap := g.weightMap ∘ₗ f.weightMap
   coweightMap := f.coweightMap ∘ₗ g.coweightMap
   indexEquiv := f.indexEquiv.trans g.indexEquiv
@@ -241,19 +241,19 @@ def comp (g : RootPairing.Isogeny Q S) (f : RootPairing.Isogeny P Q) :
     rw [LinearMap.comp_apply, Equiv.trans_apply, g.coroot_coweightMap, map_smul,
       f.coroot_coweightMap, smul_smul, mul_comm, Int.cast_mul]
 
-@[simp] theorem comp_weightMap (g : RootPairing.Isogeny Q S) (f : RootPairing.Isogeny P Q) :
+@[simp] theorem comp_weightMap (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q) :
     (comp g f).weightMap = g.weightMap ∘ₗ f.weightMap := by
   rw [comp]
 
-@[simp] theorem comp_coweightMap (g : RootPairing.Isogeny Q S) (f : RootPairing.Isogeny P Q) :
+@[simp] theorem comp_coweightMap (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q) :
     (comp g f).coweightMap = f.coweightMap ∘ₗ g.coweightMap := by
   rw [comp]
 
-@[simp] theorem comp_indexEquiv (g : RootPairing.Isogeny Q S) (f : RootPairing.Isogeny P Q) :
+@[simp] theorem comp_indexEquiv (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q) :
     (comp g f).indexEquiv = f.indexEquiv.trans g.indexEquiv := by
   rw [comp]
 
-@[simp] theorem comp_exponent (g : RootPairing.Isogeny Q S) (f : RootPairing.Isogeny P Q)
+@[simp] theorem comp_exponent (g : RootPairingIsogeny Q S) (f : RootPairingIsogeny P Q)
     (i : ι) : (comp g f).exponent i = f.exponent i * g.exponent (f.indexEquiv i) := by
   rw [comp]
 
@@ -297,7 +297,7 @@ def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
     (hATfinite : Aᵀ.mulVecLin.range.toAddSubgroup.FiniteIndex)
     (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
     (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    RootPairing.Isogeny P P where
+    RootPairingIsogeny P P where
   weightMap := A.mulVecLin
   coweightMap := Aᵀ.mulVecLin
   indexEquiv := e
@@ -361,11 +361,11 @@ def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
 
 end Coordinates
 
-end RootPairing.Isogeny
+end RootPairingIsogeny
 
 /-- An equivalence of root pairings is an isogeny all of whose exponents are `1`. -/
-def RootPairing.Isogeny.ofEquiv {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂}
-    (f : RootPairing.Equiv P Q) : RootPairing.Isogeny P Q where
+def RootPairingIsogeny.ofEquiv {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂}
+    (f : RootPairing.Equiv P Q) : RootPairingIsogeny P Q where
   weightMap := f.toHom.weightMap
   coweightMap := f.toHom.coweightMap
   indexEquiv := f.toHom.indexEquiv
@@ -392,32 +392,32 @@ def RootPairing.Isogeny.ofEquiv {P : RootPairing ι R M N} {Q : RootPairing ι�
   coroot_coweightMap i := by
     simp [_root_.RootPairing.Hom.coroot_coweightMap_apply P Q _ f.toHom]
 
-@[simp] theorem RootPairing.Isogeny.ofEquiv_weightMap
+@[simp] theorem RootPairingIsogeny.ofEquiv_weightMap
     {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} (f : RootPairing.Equiv P Q) :
-    (RootPairing.Isogeny.ofEquiv f).weightMap = f.toHom.weightMap := by
-  rw [RootPairing.Isogeny.ofEquiv]
+    (RootPairingIsogeny.ofEquiv f).weightMap = f.toHom.weightMap := by
+  rw [RootPairingIsogeny.ofEquiv]
 
-@[simp] theorem RootPairing.Isogeny.ofEquiv_coweightMap
+@[simp] theorem RootPairingIsogeny.ofEquiv_coweightMap
     {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} (f : RootPairing.Equiv P Q) :
-    (RootPairing.Isogeny.ofEquiv f).coweightMap = f.toHom.coweightMap := by
-  rw [RootPairing.Isogeny.ofEquiv]
+    (RootPairingIsogeny.ofEquiv f).coweightMap = f.toHom.coweightMap := by
+  rw [RootPairingIsogeny.ofEquiv]
 
-@[simp] theorem RootPairing.Isogeny.ofEquiv_indexEquiv
+@[simp] theorem RootPairingIsogeny.ofEquiv_indexEquiv
     {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} (f : RootPairing.Equiv P Q) :
-    (RootPairing.Isogeny.ofEquiv f).indexEquiv = f.toHom.indexEquiv := by
-  rw [RootPairing.Isogeny.ofEquiv]
+    (RootPairingIsogeny.ofEquiv f).indexEquiv = f.toHom.indexEquiv := by
+  rw [RootPairingIsogeny.ofEquiv]
 
-@[simp] theorem RootPairing.Isogeny.ofEquiv_exponent
+@[simp] theorem RootPairingIsogeny.ofEquiv_exponent
     {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} (f : RootPairing.Equiv P Q) (i : ι) :
-    (RootPairing.Isogeny.ofEquiv f).exponent i = 1 := by
-  rw [RootPairing.Isogeny.ofEquiv]
+    (RootPairingIsogeny.ofEquiv f).exponent i = 1 := by
+  rw [RootPairingIsogeny.ofEquiv]
 
-namespace RootPairing.Isogeny
+namespace RootPairingIsogeny
 
 variable {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} {S : RootPairing ι₃ R M₃ N₃}
 
 /-- The identity isogeny of a root pairing. -/
-def id (P : RootPairing ι R M N) : RootPairing.Isogeny P P :=
+def id (P : RootPairing ι R M N) : RootPairingIsogeny P P :=
   ofEquiv (RootPairing.Equiv.id P)
 
 @[simp] theorem id_weightMap (P : RootPairing ι R M N) :
@@ -440,11 +440,11 @@ def id (P : RootPairing ι R M N) : RootPairing.Isogeny P P :=
   rw [id, ofEquiv]
 
 /-- Composing an isogeny on the right with the identity isogeny does not change it. -/
-@[simp] theorem comp_id (f : RootPairing.Isogeny P Q) : comp (id Q) f = f := by
+@[simp] theorem comp_id (f : RootPairingIsogeny P Q) : comp (id Q) f = f := by
   ext <;> simp [comp, id, ofEquiv]
 
 /-- Composing an isogeny on the left with the identity isogeny does not change it. -/
-@[simp] theorem id_comp (f : RootPairing.Isogeny P Q) : comp f (id P) = f := by
+@[simp] theorem id_comp (f : RootPairingIsogeny P Q) : comp f (id P) = f := by
   ext <;> simp [comp, id, ofEquiv]
 
 variable {ι₄ M₄ N₄ : Type*} [AddCommGroup M₄] [Module R M₄]
@@ -452,10 +452,10 @@ variable {ι₄ M₄ N₄ : Type*} [AddCommGroup M₄] [Module R M₄]
   {T : RootPairing ι₄ R M₄ N₄}
 
 /-- Composition of root-pairing isogenies is associative. -/
-@[simp] theorem comp_assoc (h : RootPairing.Isogeny S T) (g : RootPairing.Isogeny Q S)
-    (f : RootPairing.Isogeny P Q) : comp (comp h g) f = comp h (comp g f) := by
+@[simp] theorem comp_assoc (h : RootPairingIsogeny S T) (g : RootPairingIsogeny Q S)
+    (f : RootPairingIsogeny P Q) : comp (comp h g) f = comp h (comp g f) := by
   ext <;> simp [comp, mul_assoc]
 
-end RootPairing.Isogeny
+end RootPairingIsogeny
 
 end TauCeti

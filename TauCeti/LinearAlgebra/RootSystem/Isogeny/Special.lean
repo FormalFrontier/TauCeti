@@ -23,7 +23,7 @@ are already available in explicit coordinates.
 
 ## The construction
 
-Both are instances of `TauCeti.RootPairing.Isogeny.ofMatrix`, so all four pieces of data are
+Both are instances of `TauCeti.RootPairingIsogeny.ofMatrix`, so all four pieces of data are
 explicit integer tables and no carrier is chosen from an existence theorem. The character and
 cocharacter lattices are `Fin t.rank → ℤ` in the fundamental-weight and simple-coroot bases, and
 the whole isogeny is determined by the single matrix acting on the character lattice: the
@@ -146,17 +146,17 @@ private lemma g2SpecialIsogenyMatrix_transpose_mulVecLin_sq :
 character-lattice map is `TauCeti.DynkinType.g2SpecialIsogenyMatrix`; the map on cocharacters is
 the transposed matrix, and the two are related by the dot-product pairing of the datum. -/
 def g2SpecialIsogeny :
-    RootPairing.Isogeny g2SimplyConnectedRootDatum g2SimplyConnectedRootDatum :=
-  RootPairing.Isogeny.ofMatrix _ g2SimplyConnectedRootDatum_toLinearMap g2SpecialIsogenyMatrix
+    RootPairingIsogeny g2SimplyConnectedRootDatum g2SimplyConnectedRootDatum :=
+  RootPairingIsogeny.ofMatrix _ g2SimplyConnectedRootDatum_toLinearMap g2SpecialIsogenyMatrix
     (g2SpecialIsogenyIndex_involutive.toPerm _) g2SpecialIsogenyExponent
     (fun i => by revert i; decide)
-    (RootPairing.Isogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
       g2SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairing.Isogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 3 (by norm_num)
       g2SpecialIsogenyMatrix_transpose_mulVecLin_sq)
-    (RootPairing.Isogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
       g2SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairing.Isogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 3 (by norm_num)
       g2SpecialIsogenyMatrix_transpose_mulVecLin_sq)
     (fun i => by simpa using g2SpecialIsogeny_root_aux i)
     (fun i => by simpa using g2SpecialIsogeny_coroot_aux i)
@@ -214,16 +214,16 @@ theorem g2SpecialIsogeny_exponent_eq_one_or_eq_three (i : Fin 12) :
 of the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
 theorem g2SpecialIsogeny_comp_self :
     g2SpecialIsogeny.comp g2SpecialIsogeny =
-      RootPairing.Isogeny.smulId g2SimplyConnectedRootDatum 3 := by
-  refine RootPairing.Isogeny.ext ?_ ?_ ?_ ?_
+      RootPairingIsogeny.smulId g2SimplyConnectedRootDatum 3 := by
+  refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using g2SpecialIsogenyMatrix_mulVecLin_sq
   · simpa using g2SpecialIsogenyMatrix_transpose_mulVecLin_sq
   · ext i
-    simpa only [RootPairing.Isogeny.comp_indexEquiv, RootPairing.Isogeny.smulId_indexEquiv,
+    simpa only [RootPairingIsogeny.comp_indexEquiv, RootPairingIsogeny.smulId_indexEquiv,
       Equiv.trans_apply, Equiv.refl_apply, g2SpecialIsogeny_indexEquiv_apply] using
       congrArg Fin.val (g2SpecialIsogenyIndex_involutive i)
   · funext i
-    rw [RootPairing.Isogeny.comp_exponent, RootPairing.Isogeny.smulId_exponent]
+    rw [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
     norm_num
 
 /-- **The defining relation of the special isogeny of `G₂` on the simple roots.** The character
@@ -300,17 +300,17 @@ private lemma f4SpecialIsogenyMatrix_transpose_mulVecLin_sq :
 character-lattice map is `TauCeti.DynkinType.f4SpecialIsogenyMatrix`; the map on cocharacters is
 the transposed matrix, and the two are related by the dot-product pairing of the datum. -/
 noncomputable def f4SpecialIsogeny :
-    RootPairing.Isogeny f4SimplyConnectedRootDatum f4SimplyConnectedRootDatum :=
-  RootPairing.Isogeny.ofMatrix _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
+    RootPairingIsogeny f4SimplyConnectedRootDatum f4SimplyConnectedRootDatum :=
+  RootPairingIsogeny.ofMatrix _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
     f4SpecialIsogenyMatrix (f4SpecialIsogenyIndex_involutive.toPerm _) f4SpecialIsogenyExponent
     (fun i => by revert i; decide)
-    (RootPairing.Isogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
       f4SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairing.Isogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
+    (RootPairingIsogeny.linearMap_injective_of_comp_self_eq_nsmul _ 2 (by norm_num)
       f4SpecialIsogenyMatrix_transpose_mulVecLin_sq)
-    (RootPairing.Isogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
       f4SpecialIsogenyMatrix_mulVecLin_sq)
-    (RootPairing.Isogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
+    (RootPairingIsogeny.linearMap_finiteIndex_of_comp_self_eq_nsmul _ 2 (by norm_num)
       f4SpecialIsogenyMatrix_transpose_mulVecLin_sq)
     (fun i => by simpa using f4SpecialIsogeny_root_aux i)
     (fun i => by simpa using f4SpecialIsogeny_coroot_aux i)
@@ -368,16 +368,16 @@ theorem f4SpecialIsogeny_exponent_eq_one_or_eq_two (i : Fin 48) :
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
 theorem f4SpecialIsogeny_comp_self :
     f4SpecialIsogeny.comp f4SpecialIsogeny =
-      RootPairing.Isogeny.smulId f4SimplyConnectedRootDatum 2 := by
-  refine RootPairing.Isogeny.ext ?_ ?_ ?_ ?_
+      RootPairingIsogeny.smulId f4SimplyConnectedRootDatum 2 := by
+  refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using f4SpecialIsogenyMatrix_mulVecLin_sq
   · simpa using f4SpecialIsogenyMatrix_transpose_mulVecLin_sq
   · ext i
-    simpa only [RootPairing.Isogeny.comp_indexEquiv, RootPairing.Isogeny.smulId_indexEquiv,
+    simpa only [RootPairingIsogeny.comp_indexEquiv, RootPairingIsogeny.smulId_indexEquiv,
       Equiv.trans_apply, Equiv.refl_apply, f4SpecialIsogeny_indexEquiv_apply] using
       congrArg Fin.val (f4SpecialIsogenyIndex_involutive i)
   · funext i
-    rw [RootPairing.Isogeny.comp_exponent, RootPairing.Isogeny.smulId_exponent]
+    rw [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
     norm_num
 
 /-- **The defining relation of the special isogeny of `F₄` on the simple roots.** The character
