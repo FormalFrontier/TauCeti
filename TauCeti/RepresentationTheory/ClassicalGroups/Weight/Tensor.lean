@@ -28,14 +28,17 @@ weight spaces (`TauCeti.iSupIndep_weightSpace`) through
 that distinct weights give distinct characters of the torus, and with it the coefficients: over
 `𝔽₂` the torus is trivial and nothing is independent.
 
-The determinant powers are the worked case. All of `det ^ m` sits in the single weight `fun _ ↦ m`
-(`TauCeti.weightSpace_detPowerRep`), and once weights are separated every other weight space of
-`det ^ m` vanishes (`TauCeti.weightSpace_detPowerRep_eq_bot`), so the sum over pairs collapses to
-one term: tensoring with `det ^ m` **translates** the weights of a representation by the constant
-sequence `m` (`TauCeti.weightSpace_tprod_detPowerRep`). What is proved here is exactly that
-translation of weight spaces; it is the step that the classification of the irreducible rational
-representations of `GL n` as `det`-twists of the polynomial ones runs on, but that classification
-needs the highest-weight theory and is not proved here.
+The determinant powers are the worked case, and they need neither ingredient above. Because
+`det ^ m` is the one-dimensional representation on which the torus acts by the character of the
+constant weight `fun _ ↦ m`, the identification `W ⊗[k] k ≃ₗ[k] W` carries the action of
+`ρ ⊗ det ^ m` to the action of `ρ` rescaled by that one character, which cancels off the
+eigen-relation. So tensoring with `det ^ m` **translates** the weights of an *arbitrary*
+representation by the constant sequence `m` (`TauCeti.weightSpace_tprod_detPowerRep`), over a
+commutative ring, with no separation of weights and no assumption that `ρ` is weight-decomposed.
+What is proved here is exactly that translation of weight spaces; it is the step that the
+classification of the irreducible rational representations of `GL n` as `det`-twists of the
+polynomial ones runs on, but that classification needs the highest-weight theory and is not proved
+here.
 
 ## Main results
 
@@ -49,9 +52,9 @@ needs the highest-weight theory and is not proved here.
 * `TauCeti.isInternal_weightSpace_tprod`: **a tensor product of weight-decomposed representations
   is weight-decomposed.**
 * `TauCeti.weightSpace_tprod_detPowerRep` and
-  `TauCeti.map_rid_weightSpace_tprod_detPowerRep`: tensoring with `det ^ m` translates weights by
-  the constant sequence `m`, the second statement reading the translation through
-  `W ⊗[k] k ≃ₗ[k] W`.
+  `TauCeti.map_rid_weightSpace_tprod_detPowerRep`: **tensoring with `det ^ m` translates weights
+  by the constant sequence `m`**, for an arbitrary representation, the second statement reading
+  the translation through `W ⊗[k] k ≃ₗ[k] W`.
 
 ## Implementation notes
 
@@ -147,6 +150,74 @@ theorem iSup_weightSpace_tprod_eq_top (hρ : ⨆ a : Fin n → ℤ, weightSpace 
   top_le_iff.mp <| (iSup_iSup_map₂_weightSpace_eq_top hρ hσ).ge.trans <|
     iSup_mono fun l ↦ iSup_map₂_weightSpace_le_weightSpace_tprod ρ σ l
 
+/-! ## The determinant twist -/
+
+/-- The identification `W ⊗[k] k ≃ₗ[k] W` carries the action of `ρ ⊗ det ^ m` to the action of `ρ`
+rescaled by `det ^ m`. -/
+private theorem rid_tprod_detPowerRep_apply (ρ : Representation k (GL (Fin n) k) W) (m : ℤ)
+    (g : GL (Fin n) k) (x : W ⊗[k] k) :
+    TensorProduct.rid k W ((ρ.tprod (detPowerRep k n m)) g x)
+      = (↑(GeneralLinearGroup.det g ^ m) : k) • ρ g (TensorProduct.rid k W x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul w c =>
+    rw [Representation.tprod_apply, TensorProduct.map_tmul, detPowerRep_apply,
+      TensorProduct.rid_tmul, TensorProduct.rid_tmul, map_smul, smul_smul]
+  | add x y hx hy => rw [map_add, map_add, map_add, map_add, hx, hy, smul_add]
+
+/-- **A vector of `ρ ⊗ det ^ m` has weight `l` exactly when the vector of `ρ` it corresponds to
+under `W ⊗[k] k ≃ₗ[k] W` has weight `l - m`.** A torus element acts on `det ^ m` by the character
+of the constant weight `m`, so the twist multiplies every character by that one; the constant
+weight is then cancelled off the eigen-relation, which is why no separation of weights and no
+decomposition of `ρ` is involved. -/
+private theorem mem_weightSpace_tprod_detPowerRep_iff (ρ : Representation k (GL (Fin n) k) W)
+    (m : ℤ) (l : Fin n → ℤ) (x : W ⊗[k] k) :
+    x ∈ weightSpace (ρ.tprod (detPowerRep k n m)) l ↔
+      TensorProduct.rid k W x ∈ weightSpace ρ (l - fun _ ↦ m) := by
+  rw [mem_weightSpace_iff, mem_weightSpace_iff]
+  refine forall_congr' fun t ↦ ?_
+  have hl : weightChar k l t = (∏ i, t i) ^ m * weightChar k (l - fun _ ↦ m) t := by
+    conv_lhs => rw [show l = (fun _ ↦ m) + (l - fun _ ↦ m) by abel]
+    rw [weightChar_add, MonoidHom.mul_apply, weightChar_const]
+  rw [← (TensorProduct.rid k W).injective.eq_iff, rid_tprod_detPowerRep_apply, map_smul,
+    det_diagGL, hl, Units.val_mul, mul_smul]
+  exact (Units.isUnit _).smul_left_cancel
+
+/-- The vectors `w ⊗ₜ c` with `w` in a submodule `S` of `W` are exactly the vectors that
+`W ⊗[k] k ≃ₗ[k] W` sends into `S`. -/
+private theorem map₂_mk_top_eq_comap_rid (S : Submodule k W) :
+    Submodule.map₂ (TensorProduct.mk k W k) S ⊤
+      = Submodule.comap (TensorProduct.rid k W).toLinearMap S := by
+  refine le_antisymm (Submodule.map₂_le.mpr fun w hw c _ ↦ ?_) fun x hx ↦ ?_
+  · simpa using Submodule.smul_mem _ c hw
+  · rw [← (TensorProduct.rid k W).symm_apply_apply x, TensorProduct.rid_symm_apply]
+    exact Submodule.apply_mem_map₂ _ hx Submodule.mem_top
+
+/-- **Tensoring with `det ^ m` translates weights by the constant sequence `m`**: the weight-`l`
+space of `ρ ⊗ det ^ m` consists of the tensors `w ⊗ₜ c` with `w` of weight `l - m`. This holds for
+every representation `ρ` over every commutative ring, since `det ^ m` is the one-dimensional
+representation on which the torus acts by the character of the constant weight `m`. Nothing beyond
+this translation of weight spaces is claimed: it is the computation underlying the classification
+of the irreducible rational representations of `GL n` as `det`-twists of the polynomial ones,
+which is not proved here. -/
+theorem weightSpace_tprod_detPowerRep (ρ : Representation k (GL (Fin n) k) W) (m : ℤ)
+    (l : Fin n → ℤ) :
+    weightSpace (ρ.tprod (detPowerRep k n m)) l
+      = Submodule.map₂ (TensorProduct.mk k W k) (weightSpace ρ (l - fun _ ↦ m)) ⊤ := by
+  rw [map₂_mk_top_eq_comap_rid]
+  exact SetLike.ext fun x ↦ mem_weightSpace_tprod_detPowerRep_iff ρ m l x
+
+/-- **The determinant twist read through `W ⊗[k] k ≃ₗ[k] W`**: the weight-`l` space of
+`ρ ⊗ det ^ m` corresponds to the weight-`(l - m)` space of `ρ`. This is
+`TauCeti.weightSpace_tprod_detPowerRep` with the trailing scalar factor discarded. -/
+theorem map_rid_weightSpace_tprod_detPowerRep (ρ : Representation k (GL (Fin n) k) W) (m : ℤ)
+    (l : Fin n → ℤ) :
+    Submodule.map (TensorProduct.rid k W).toLinearMap
+        (weightSpace (ρ.tprod (detPowerRep k n m)) l)
+      = weightSpace ρ (l - fun _ ↦ m) := by
+  rw [weightSpace_tprod_detPowerRep, map₂_mk_top_eq_comap_rid,
+    Submodule.map_comap_eq_of_surjective (TensorProduct.rid k W).surjective]
+
 end CommRing
 
 /-! ## Weights add
@@ -197,43 +268,6 @@ theorem isInternal_weightSpace_tprod_stdRep
     DirectSum.IsInternal fun l : Fin n → ℤ ↦
       weightSpace ((stdRep k n).tprod (stdRep k n)) l :=
   isInternal_weightSpace_tprod hchar iSup_weightSpace_stdRep iSup_weightSpace_stdRep
-
-/-! ## The determinant twist -/
-
-/-- **Tensoring with `det ^ m` translates weights by the constant sequence `m`.** Under the
-canonical identification `W ⊗[k] k ≃ₗ[k] W` this reads: the weight-`l` space of `ρ ⊗ det ^ m` is
-the weight-`(l - m)` space of `ρ`. Nothing beyond this translation of weight spaces is claimed: it
-is the computation underlying the classification of the irreducible rational representations of
-`GL n` as `det`-twists of the polynomial ones, which is not proved here. -/
-theorem weightSpace_tprod_detPowerRep (hchar : Function.Injective (weightChar k (κ := Fin n)))
-    (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤) (m : ℤ) (l : Fin n → ℤ) :
-    weightSpace (ρ.tprod (detPowerRep k n m)) l
-      = Submodule.map₂ (TensorProduct.mk k W k) (weightSpace ρ (l - fun _ ↦ m)) ⊤ := by
-  rw [weightSpace_tprod hchar hρ (iSup_weightSpace_detPowerRep_eq_top m) l]
-  refine le_antisymm (iSup_le fun a ↦ ?_) ?_
-  · by_cases ha : a = l - fun _ ↦ m
-    · rw [ha, sub_sub_cancel, weightSpace_detPowerRep]
-    · have hne : (l - a) ≠ fun _ ↦ m := fun hcontra ↦ ha (by rw [← hcontra, sub_sub_cancel])
-      rw [weightSpace_detPowerRep_eq_bot hchar hne, Submodule.map₂_bot_right]
-      exact bot_le
-  · exact le_trans (le_of_eq (by rw [sub_sub_cancel, weightSpace_detPowerRep]))
-      (le_iSup _ (l - fun _ ↦ m))
-
-/-- **The determinant twist read through `W ⊗[k] k ≃ₗ[k] W`**: the weight-`l` space of
-`ρ ⊗ det ^ m` corresponds to the weight-`(l - m)` space of `ρ`. This is
-`TauCeti.weightSpace_tprod_detPowerRep` with the trailing scalar factor discarded. -/
-theorem map_rid_weightSpace_tprod_detPowerRep
-    (hchar : Function.Injective (weightChar k (κ := Fin n)))
-    (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤) (m : ℤ) (l : Fin n → ℤ) :
-    Submodule.map (TensorProduct.rid k W).toLinearMap
-        (weightSpace (ρ.tprod (detPowerRep k n m)) l)
-      = weightSpace ρ (l - fun _ ↦ m) := by
-  rw [weightSpace_tprod_detPowerRep hchar hρ, Submodule.map_map₂]
-  refine le_antisymm (Submodule.map₂_le.mpr fun w hw c _ ↦ ?_) fun w hw ↦ ?_
-  · simpa using Submodule.smul_mem _ c hw
-  · have hone : (1 : k) ∈ (⊤ : Submodule k k) := Submodule.mem_top
-    simpa using Submodule.apply_mem_map₂
-      ((TensorProduct.mk k W k).compr₂ (TensorProduct.rid k W).toLinearMap) hw hone
 
 end Field
 
