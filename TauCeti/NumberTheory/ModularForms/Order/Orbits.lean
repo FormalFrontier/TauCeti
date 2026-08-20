@@ -101,7 +101,6 @@ lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] (f
 /-- **The elliptic-weighted vanishing order of `f` on an orbit**: `ord_P f / e_P`, the summand
 of the valence formula in its uniform form `∑_P (1 / e_P) · ord_P f + ord_∞ f = k / 12`. The
 weight is `1` on all but the two elliptic orbits, where it is `1/2` and `1/3`. -/
-@[expose]
 noncomputable def weightedOrderOfVanishingOnOrbit [SlashInvariantFormClass F 𝒮ℒ k] (f : F)
     (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ :=
   (orderOfVanishingOnOrbit f q : ℚ) / (ModularGroup.ellipticOrder q : ℚ)
@@ -111,7 +110,7 @@ lemma weightedOrderOfVanishingOnOrbit_def [SlashInvariantFormClass F 𝒮ℒ k] 
     (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
     weightedOrderOfVanishingOnOrbit f q =
       (orderOfVanishingOnOrbit f q : ℚ) / (ModularGroup.ellipticOrder q : ℚ) :=
-  rfl
+  (rfl)
 
 /-- Evaluating the weighted order on the orbit of `p` recovers the pointwise order divided by
 the elliptic order of that orbit. -/
@@ -132,6 +131,7 @@ lemma weightedOrderOfVanishingOnOrbit_of_orbit_ne_I_of_orbit_ne_ρ
   norm_num
 
 /-- At the orbit of `i` the weight is `1/2`, from `e_i = 2`. -/
+@[simp]
 lemma weightedOrderOfVanishingOnOrbit_I [SlashInvariantFormClass F 𝒮ℒ k] (f : F) :
     weightedOrderOfVanishingOnOrbit f (Quotient.mk'' UpperHalfPlane.I) =
       (orderOfVanishingAt ⇑f UpperHalfPlane.I : ℚ) / 2 := by
@@ -139,6 +139,7 @@ lemma weightedOrderOfVanishingOnOrbit_I [SlashInvariantFormClass F 𝒮ℒ k] (f
   norm_num
 
 /-- At the orbit of `ρ` the weight is `1/3`, from `e_ρ = 3`. -/
+@[simp]
 lemma weightedOrderOfVanishingOnOrbit_ρ [SlashInvariantFormClass F 𝒮ℒ k] (f : F) :
     weightedOrderOfVanishingOnOrbit f (Quotient.mk'' ρ) =
       (orderOfVanishingAt ⇑f ρ : ℚ) / 3 := by

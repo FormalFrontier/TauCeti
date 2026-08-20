@@ -56,7 +56,7 @@ in the uniform form is there a single weight per orbit to redistribute.
   bound
   `12 · ord_P f ≤ k · e_P` on a single orbit, and
   `TauCeti.ModularForm.orderOfVanishingOnOrbit_eq_zero_of_weight_mul_ellipticOrder_lt_twelve`,
-  the vanishing it forces when `k · e_P < 12`.
+  the nonvanishing it forces when `k · e_P < 12`.
 
 ## References
 
@@ -188,7 +188,7 @@ theorem twelve_mul_orderOfVanishingOnOrbit_le_mul_ellipticOrder
       (k : ℚ) * (ModularGroup.ellipticOrder q : ℚ) := by linarith
   exact_mod_cast this
 
-/-- **A small enough weighted degree forces vanishing at an orbit**: if `k · e_P < 12`, a
+/-- **A small enough weighted degree forces nonvanishing at an orbit**: if `k · e_P < 12`, a
 zero at `P` would make the single-orbit bound impossible. -/
 theorem orderOfVanishingOnOrbit_eq_zero_of_weight_mul_ellipticOrder_lt_twelve
     [ModularFormClass F 𝒮ℒ k] (f : F) (hf : (⇑f : ℍ → ℂ) ≠ 0)
