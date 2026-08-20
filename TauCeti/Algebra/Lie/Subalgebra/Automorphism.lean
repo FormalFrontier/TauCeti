@@ -23,7 +23,7 @@ commutativity. What the automorphism does to the root spaces of `H` is in
 
 * `LieSubalgebra.map_symm_eq_self_of_map_eq_self`: the inverse of a normalising automorphism
   normalises the subalgebra as well.
-* `TauCeti.restrictAut_symm`: restricting the inverse gives the inverse of Mathlib's restriction.
+* `TauCeti.ofSubalgebras_symm`: restricting the inverse gives the inverse of Mathlib's restriction.
 -/
 
 public section
@@ -53,7 +53,7 @@ namespace TauCeti
 
 /-- The inverse of the restriction of a normalising automorphism is the restriction of the inverse
 automorphism. -/
-theorem restrictAut_symm :
+theorem ofSubalgebras_symm :
     (e.ofSubalgebras H H he).symm =
       e.symm.ofSubalgebras H H (LieSubalgebra.map_symm_eq_self_of_map_eq_self e he) :=
   LieEquiv.ext fun _ => rfl

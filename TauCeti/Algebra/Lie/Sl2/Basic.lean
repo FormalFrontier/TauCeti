@@ -57,8 +57,8 @@ that composes to zero is already zero.
   element in the triple is `TauCeti.eq_smul_single_add_smul_single_add_smul_singleSubSingle`.
 * `IsSl2Triple.isSl2Triple_restrict`: an arbitrary triple regarded inside the subalgebra that it
   generates.
-* `IsSl2Triple.map`: the image of a triple under an injective Lie algebra homomorphism is a
-  triple.
+* `IsSl2Triple.map`: the image of a triple under a Lie algebra homomorphism that does not kill its
+  Cartan element is a triple.
 * `IsSl2Triple.lieSubmoduleOfStable`: a submodule stable under the raising and lowering elements of
   a triple is a Lie submodule over the subalgebra they generate.
 * `TauCeti.lieHomOfSl2Basis`: from a basis obeying the `sl₂` relations, three elements of another

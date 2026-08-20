@@ -261,9 +261,13 @@ theorem weightPerm_symm_neg (α : Weight K H L) :
     rw [Equiv.apply_symm_apply, weightPerm_neg, Equiv.apply_symm_apply]
 
 /-- A normalising automorphism sends the coroot of a root to the coroot of the permuted root. -/
-theorem map_coroot_weightPerm {α : Weight K H L} (hα : α.IsNonZero) :
+theorem map_coroot_weightPerm {α : Weight K H L} :
     σ (LieAlgebra.IsKilling.coroot α : L) =
       (LieAlgebra.IsKilling.coroot (weightPerm σ hσ α) : L) := by
+  by_cases hα : α.IsZero
+  · simp only [LieAlgebra.IsKilling.coroot_eq_zero_iff.mpr hα,
+      LieAlgebra.IsKilling.coroot_eq_zero_iff.mpr ((weightPerm_isZero_iff σ hσ).mpr hα),
+      ZeroMemClass.coe_zero, map_zero]
   obtain ⟨h, e, f, t, he, hf⟩ := LieAlgebra.IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
   have hh : h = (LieAlgebra.IsKilling.coroot α : L) := t.h_eq_coroot hα he hf
   have he' : σ e ∈ rootSpace H (weightPerm σ hσ α) := map_mem_rootSpace_weightPerm σ hσ he
@@ -305,7 +309,7 @@ theorem map : IsSl2System fun α => σ (x ((weightPerm σ hσ).symm α)) where
   lie_neg α hα := by
     have hβ : ((weightPerm σ hσ).symm α).IsNonZero := weightPerm_symm_isNonZero σ hσ hα
     rw [weightPerm_symm_neg, ← σ.map_lie, hx.lie_neg _ hβ,
-      map_coroot_weightPerm σ hσ hβ, Equiv.apply_symm_apply]
+      map_coroot_weightPerm σ hσ, Equiv.apply_symm_apply]
   eq_zero_of_isZero α hα := by
     rw [hx.eq_zero_of_isZero _ ((weightPerm_symm_isZero_iff σ hσ).mpr hα), map_zero]
 
