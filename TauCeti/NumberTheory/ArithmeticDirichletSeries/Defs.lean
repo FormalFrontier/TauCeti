@@ -79,6 +79,7 @@ theorem zeroExtend_coe (f : IdealArithmeticFunction K) (I : (Ideal (𝓞 K))⁰)
     f.zeroExtend I = f I :=
   Subtype.val_injective.extend_apply f 0 I
 
+@[simp]
 theorem zeroExtend_of_ne_bot (f : IdealArithmeticFunction K) {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
     f.zeroExtend I = f ⟨I, mem_nonZeroDivisors_iff_ne_zero.mpr hI⟩ :=
   f.zeroExtend_coe ⟨I, mem_nonZeroDivisors_iff_ne_zero.mpr hI⟩
@@ -128,7 +129,7 @@ theorem zeroExtend_one_apply (I : Ideal (𝓞 K)) :
     (1 : IdealArithmeticFunction K).zeroExtend I = if I = ⊥ then 0 else 1 := by
   rcases eq_or_ne I ⊥ with rfl | hI
   · simp
-  · simp [zeroExtend_of_ne_bot _ hI, hI]
+  · simp [hI]
 
 @[simp]
 theorem zeroExtend_zero : (0 : IdealArithmeticFunction K).zeroExtend = 0 :=

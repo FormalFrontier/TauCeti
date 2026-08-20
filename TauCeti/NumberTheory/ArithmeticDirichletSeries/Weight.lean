@@ -56,7 +56,8 @@ good primes; this is the engine behind both
   `TauCeti.UnitaryIdealWeight.norm_eq_one` on all good ideals,
   `TauCeti.UnitaryIdealWeight.ofPowEqOne` for finite-order weights, and the operations
   `TauCeti.UnitaryIdealWeight.conj`, `TauCeti.UnitaryIdealWeight.restrict` and
-  `TauCeti.UnitaryIdealWeight.normTwist` (the last for the imaginary norm twists only);
+  `TauCeti.UnitaryIdealWeight.normTwist` (the last for the imaginary norm twists only), and
+  `TauCeti.UnitaryIdealWeight.toIdealArithmeticFunction` for its passage to the general carrier;
 * `TauCeti.MultiplicativeIdealWeight.map` and `TauCeti.UnitaryIdealWeight.map`, with their
   equivalences `mapEquiv`: functoriality under an isomorphism `K ≃+* L` of the ambient fields,
   together with the identity and composition laws and the compatibilities
@@ -680,9 +681,27 @@ theorem mapEquiv_symm_apply (e : K ≃+* L) (χ : UnitaryIdealWeight L) :
 
 end Transport
 
-/-- The ideal arithmetic function underlying a unitary weight. -/
-abbrev toIdealArithmeticFunction (χ : UnitaryIdealWeight K) : IdealArithmeticFunction K :=
+/-- The ideal arithmetic function underlying a unitary weight: the restriction of the
+underlying multiplicative weight to the nonzero ideals. -/
+def toIdealArithmeticFunction (χ : UnitaryIdealWeight K) : IdealArithmeticFunction K :=
   χ.1.toIdealArithmeticFunction
+
+@[simp]
+theorem toIdealArithmeticFunction_apply (χ : UnitaryIdealWeight K) (I : (Ideal (𝓞 K))⁰) :
+    χ.toIdealArithmeticFunction I = χ.1 I := (rfl)
+
+/-- A unitary weight is recovered from its underlying ideal arithmetic function by extending
+by zero, just as in `TauCeti.MultiplicativeIdealWeight.zeroExtend_toIdealArithmeticFunction`. -/
+@[simp]
+theorem zeroExtend_toIdealArithmeticFunction (χ : UnitaryIdealWeight K) :
+    χ.toIdealArithmeticFunction.zeroExtend = ⇑χ.1 :=
+  χ.1.zeroExtend_toIdealArithmeticFunction
+
+/-- **A unitary weight is determined by its ideal arithmetic function.** -/
+theorem toIdealArithmeticFunction_injective :
+    Function.Injective
+      (toIdealArithmeticFunction : UnitaryIdealWeight K → IdealArithmeticFunction K) :=
+  fun _ _ h ↦ Subtype.ext (MultiplicativeIdealWeight.toIdealArithmeticFunction_injective h)
 
 end UnitaryIdealWeight
 
