@@ -49,14 +49,12 @@ in the uniform form is there a single weight per orbit to redistribute.
 ## Main declarations
 
 * `valence_formula` (in `TauCeti.ModularForm`): the valence formula.
-* `TauCeti.ModularForm.weightedOrderOfVanishingOnOrbit`: the summand `ord_P f / e_P` of its
-  uniform form.
 * `TauCeti.ModularForm.valence_formula_weighted`: the uniform form.
-* `TauCeti.ModularForm.twelve_mul_orderOfVanishingOnOrbit_le_mul_ellipticOrder`: the resulting
-  bound
+* `TauCeti.ModularForm.twelve_mul_orderOfVanishingOnOrbit_le_weight_mul_ellipticOrder`: the
+  resulting bound
   `12 · ord_P f ≤ k · e_P` on a single orbit, and
   `TauCeti.ModularForm.orderOfVanishingOnOrbit_eq_zero_of_weight_mul_ellipticOrder_lt_twelve`,
-  the nonvanishing it forces when `k · e_P < 12`.
+  the vanishing-order-zero conclusion it forces when `k · e_P < 12`.
 
 ## References
 
@@ -107,48 +105,6 @@ variable {F : Type*} [FunLike F ℍ ℂ] {k : ℤ}
 
 /-! ### The uniform form, weighted by the elliptic orders -/
 
-/-- **Splitting the uniform divisor sum at the two elliptic orbits.** Away from them the weight
-is `1`, so the sum over all orbits is the non-elliptic sum of `valence_formula` plus the two
-weighted elliptic terms. -/
-lemma finsum_weightedOrderOfVanishingOnOrbit_eq [ModularFormClass F 𝒮ℒ k] (f : F) :
-    (∑ᶠ q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ,
-      weightedOrderOfVanishingOnOrbit f q) =
-      ((∑ᶠ q : NonEllipticOrbit, orderOfVanishingOnOrbit f q.val : ℤ) : ℚ)
-        + (orderOfVanishingAt ⇑f UpperHalfPlane.I : ℚ) / 2
-        + (orderOfVanishingAt ⇑f ρ : ℚ) / 3 := by
-  classical
-  set S : Set (MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :=
-    {Quotient.mk'' UpperHalfPlane.I, Quotient.mk'' ρ} with hSdef
-  have hmem : ∀ q, q ∈ Sᶜ ↔ (q ≠ Quotient.mk'' UpperHalfPlane.I ∧ q ≠ Quotient.mk'' ρ) := by
-    intro q
-    simp [hSdef, not_or]
-  -- the two-element part contributes the weighted elliptic terms
-  have hpair : (∑ᶠ q ∈ S, weightedOrderOfVanishingOnOrbit f q) =
-      (orderOfVanishingAt ⇑f UpperHalfPlane.I : ℚ) / 2
-        + (orderOfVanishingAt ⇑f ρ : ℚ) / 3 := by
-    rw [hSdef, finsum_mem_pair ModularGroup.orbit_mk_I_ne_orbit_mk_ρ,
-      weightedOrderOfVanishingOnOrbit_I, weightedOrderOfVanishingOnOrbit_ρ]
-  -- the complement is the non-elliptic orbit type, on which the weight is trivial
-  have hcompl : (∑ᶠ q ∈ Sᶜ, weightedOrderOfVanishingOnOrbit f q) =
-      ((∑ᶠ q : NonEllipticOrbit, orderOfVanishingOnOrbit f q.val : ℤ) : ℚ) := by
-    have hcast := AddMonoidHom.map_finsum_of_injective (Int.castAddHom ℚ) Int.cast_injective
-      fun q : NonEllipticOrbit ↦ orderOfVanishingOnOrbit f q.val
-    have hval : (∑ᶠ q ∈ Sᶜ, weightedOrderOfVanishingOnOrbit f q) =
-        ∑ᶠ q ∈ Sᶜ, ((orderOfVanishingOnOrbit f q : ℤ) : ℚ) :=
-      finsum_mem_congr rfl fun q hq ↦
-        weightedOrderOfVanishingOnOrbit_of_orbit_ne_I_of_orbit_ne_ρ f
-          ((hmem q).1 hq).1 ((hmem q).1 hq).2
-    rw [hval, ← finsum_set_coe_eq_finsum_mem,
-      ← finsum_comp_equiv (Equiv.subtypeEquivRight fun q ↦ (hmem q).symm)
-        (f := fun q : (Sᶜ : Set _) ↦ ((orderOfVanishingOnOrbit f q.val : ℤ) : ℚ))]
-    simpa using hcast.symm
-  have hsplit := finsum_mem_add_sdiff' (f := weightedOrderOfVanishingOnOrbit f)
-    (Set.subset_univ S)
-    ((hasFiniteSupport_weightedOrderOfVanishingOnOrbit f).inter_of_right Set.univ)
-  rw [finsum_mem_univ, ← Set.compl_eq_univ_sdiff, hpair, hcompl] at hsplit
-  rw [← hsplit]
-  ring
-
 /-- **The valence formula, uniformly over the orbit space.** For a nonzero weight-`k` modular
 form on `SL₂(ℤ)`, weighting each orbit by the reciprocal of its elliptic order,
 
@@ -162,7 +118,7 @@ theorem valence_formula_weighted [ModularFormClass F 𝒮ℒ k] (f : F) (hf : (�
     (∑ᶠ q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ, weightedOrderOfVanishingOnOrbit f q)
       + (qExpansionOrderAtCusp 1 ⇑f : ℚ) = (k : ℚ) / 12 := by
   have key := valence_formula f hf
-  rw [finsum_weightedOrderOfVanishingOnOrbit_eq f]
+  rw [finsum_weightedOrderOfVanishingOnOrbit_eq_finsum_nonElliptic_add_elliptic f]
   refine Rat.cast_injective (α := ℂ) ?_
   push_cast
   linear_combination key
@@ -171,7 +127,7 @@ theorem valence_formula_weighted [ModularFormClass F 𝒮ℒ k] (f : F) (hf : (�
 
 /-- **The mass at one orbit is bounded by the total mass**: every other term of the uniform
 valence formula is nonnegative, so `12 · ord_P f ≤ k · e_P` for a nonzero form. -/
-theorem twelve_mul_orderOfVanishingOnOrbit_le_mul_ellipticOrder
+theorem twelve_mul_orderOfVanishingOnOrbit_le_weight_mul_ellipticOrder
     [ModularFormClass F 𝒮ℒ k] (f : F)
     (hf : (⇑f : ℍ → ℂ) ≠ 0) (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
     12 * orderOfVanishingOnOrbit f q ≤ k * ModularGroup.ellipticOrder q := by
@@ -183,21 +139,26 @@ theorem twelve_mul_orderOfVanishingOnOrbit_le_mul_ellipticOrder
   have he : (0 : ℚ) < (ModularGroup.ellipticOrder q : ℚ) := by
     exact_mod_cast ModularGroup.ellipticOrder_pos q
   have hle : weightedOrderOfVanishingOnOrbit f q ≤ (k : ℚ) / 12 := by linarith
-  rw [weightedOrderOfVanishingOnOrbit_def, div_le_div_iff₀ he (by norm_num)] at hle
+  have hle' := mul_le_mul_of_nonneg_left hle he.le
+  rw [ellipticOrder_mul_weightedOrderOfVanishingOnOrbit] at hle'
   have : (12 : ℚ) * (orderOfVanishingOnOrbit f q : ℚ) ≤
-      (k : ℚ) * (ModularGroup.ellipticOrder q : ℚ) := by linarith
+      (k : ℚ) * (ModularGroup.ellipticOrder q : ℚ) := by nlinarith
   exact_mod_cast this
 
-/-- **A small enough weighted degree forces nonvanishing at an orbit**: if `k · e_P < 12`, a
-zero at `P` would make the single-orbit bound impossible. -/
+/-- **A small enough weighted degree forces vanishing order zero at an orbit.** If `f` is
+nonzero, this says that `f` does not vanish there; the statement also covers the zero form under
+the convention that its vanishing order is zero. -/
 theorem orderOfVanishingOnOrbit_eq_zero_of_weight_mul_ellipticOrder_lt_twelve
-    [ModularFormClass F 𝒮ℒ k] (f : F) (hf : (⇑f : ℍ → ℂ) ≠ 0)
+    [ModularFormClass F 𝒮ℒ k] (f : F)
     {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ}
     (hk : k * ModularGroup.ellipticOrder q < 12) :
     orderOfVanishingOnOrbit f q = 0 := by
-  have hbound := twelve_mul_orderOfVanishingOnOrbit_le_mul_ellipticOrder f hf q
-  have := orderOfVanishingOnOrbit_nonneg f q
-  omega
+  rcases eq_or_ne (⇑f : ℍ → ℂ) 0 with hf | hf
+  · induction q using Quotient.inductionOn' with
+    | _ p => simp [hf]
+  · have hbound := twelve_mul_orderOfVanishingOnOrbit_le_weight_mul_ellipticOrder f hf q
+    have := orderOfVanishingOnOrbit_nonneg f q
+    omega
 
 end ModularForm
 

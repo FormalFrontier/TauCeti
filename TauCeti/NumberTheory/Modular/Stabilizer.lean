@@ -53,8 +53,8 @@ literally the `q` with `q ≠ ⟦i⟧` and `q ≠ ⟦ρ⟧`.
   elliptic orders `e_i = 2`, `e_ρ = 3` and `e_P = 1`.
 * `TauCeti.ModularGroup.ellipticOrder`: those orders assembled into a single function `e_P` on
   the orbit space, with `TauCeti.ModularGroup.ellipticOrder_I`,
-  `TauCeti.ModularGroup.ellipticOrder_ρ`, `TauCeti.ModularGroup.ellipticOrder_eq_one_iff`,
-  `TauCeti.ModularGroup.ellipticOrder_pos` and
+  `TauCeti.ModularGroup.ellipticOrder_ρ`, `TauCeti.ModularGroup.ellipticOrder_pos`,
+  `TauCeti.ModularGroup.ellipticOrder_le_three` and
   `TauCeti.ModularGroup.cardStabilizerOnOrbit_eq_two_mul_ellipticOrder`.
 
 ## References
@@ -292,19 +292,23 @@ theorem ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ
 
 /-- **The elliptic order is positive**, so the weight `1 / e_P` is defined and nonzero. -/
 theorem ellipticOrder_pos (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) : 0 < ellipticOrder q := by
-  by_cases hI : q = Quotient.mk'' I
-  · rw [hI, ellipticOrder_I]; omega
-  by_cases hρ : q = Quotient.mk'' ρ
-  · rw [hρ, ellipticOrder_ρ]; omega
-  · rw [ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ hI hρ]; omega
+  induction q using Quotient.inductionOn' with
+  | _ z =>
+    have h := card_stabilizer_eq_two_mul_card_stabilizer_psl z
+    have : 0 < Nat.card (stabilizer SL(2, ℤ) z) := Nat.card_pos
+    rw [ellipticOrder_mk]
+    omega
 
-/-- **`e_P = 1` characterises the non-elliptic orbits.** -/
-theorem ellipticOrder_eq_one_iff {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ} :
-    ellipticOrder q = 1 ↔ q ≠ Quotient.mk'' I ∧ q ≠ Quotient.mk'' ρ := by
-  refine ⟨fun h ↦ ⟨fun hI ↦ ?_, fun hρ ↦ ?_⟩,
-    fun h ↦ ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ h.1 h.2⟩
-  · rw [hI, ellipticOrder_I] at h; omega
-  · rw [hρ, ellipticOrder_ρ] at h; omega
+/-- **Every elliptic order is at most `3`.** -/
+theorem ellipticOrder_le_three (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
+    ellipticOrder q ≤ 3 := by
+  by_cases hI : q = Quotient.mk'' I
+  · rw [hI, ellipticOrder_I]
+    omega
+  by_cases hρ : q = Quotient.mk'' ρ
+  · rw [hρ, ellipticOrder_ρ]
+  · rw [ellipticOrder_eq_one_of_orbit_ne_I_of_orbit_ne_ρ hI hρ]
+    omega
 
 end ModularGroup
 

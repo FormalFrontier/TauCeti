@@ -32,6 +32,8 @@ empty. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.Or
   zero form having empty support.
 * `TauCeti.ModularForm.weightedOrderOfVanishingOnOrbit`: the elliptic-weighted order
   `ord_P f / e_P`, together with its values and finite-support properties.
+* `TauCeti.ModularForm.finsum_weightedOrderOfVanishingOnOrbit_eq_finsum_nonElliptic_add_elliptic`:
+  the uniform weighted sum split into its non-elliptic and two elliptic parts.
 * `TauCeti.ModularForm.sum_orderOfVanishingAt_eq_finsum_orbit`: a divisor sum over an arbitrary
   index set, reindexed over the orbits its points represent, given that the index-to-orbit
   composite is injective.
@@ -49,6 +51,8 @@ empty. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.Or
 
 * [AINTLIB `LeanModularForms`](https://github.com/CBirkbeck/AINTLIB) — the valence-formula
   development this file ports onto the current Mathlib pin.
+* [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005],
+  Chapter 3 — the elliptic-weighted divisor summand; new here, not part of the AINTLIB port above.
 -/
 
 public noncomputable section
@@ -114,6 +118,7 @@ lemma weightedOrderOfVanishingOnOrbit_def [SlashInvariantFormClass F 𝒮ℒ k] 
 
 /-- Evaluating the weighted order on the orbit of `p` recovers the pointwise order divided by
 the elliptic order of that orbit. -/
+@[simp]
 lemma weightedOrderOfVanishingOnOrbit_mk [SlashInvariantFormClass F 𝒮ℒ k] (f : F) (p : ℍ) :
     weightedOrderOfVanishingOnOrbit f (Quotient.mk'' p) =
       (orderOfVanishingAt ⇑f p : ℚ) /
@@ -121,7 +126,7 @@ lemma weightedOrderOfVanishingOnOrbit_mk [SlashInvariantFormClass F 𝒮ℒ k] (
   rw [weightedOrderOfVanishingOnOrbit_def, orderOfVanishingOnOrbit_mk]
 
 /-- Off the two elliptic orbits the weight is `1`, so the summand is the plain order. -/
-lemma weightedOrderOfVanishingOnOrbit_of_orbit_ne_I_of_orbit_ne_ρ
+lemma weightedOrderOfVanishingOnOrbit_eq_orderOfVanishingOnOrbit_of_orbit_ne_I_of_orbit_ne_ρ
     [SlashInvariantFormClass F 𝒮ℒ k] (f : F)
     {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ} (hI : q ≠ Quotient.mk'' UpperHalfPlane.I)
     (hρ : q ≠ Quotient.mk'' ρ) :
@@ -131,7 +136,6 @@ lemma weightedOrderOfVanishingOnOrbit_of_orbit_ne_I_of_orbit_ne_ρ
   norm_num
 
 /-- At the orbit of `i` the weight is `1/2`, from `e_i = 2`. -/
-@[simp]
 lemma weightedOrderOfVanishingOnOrbit_I [SlashInvariantFormClass F 𝒮ℒ k] (f : F) :
     weightedOrderOfVanishingOnOrbit f (Quotient.mk'' UpperHalfPlane.I) =
       (orderOfVanishingAt ⇑f UpperHalfPlane.I : ℚ) / 2 := by
@@ -139,12 +143,20 @@ lemma weightedOrderOfVanishingOnOrbit_I [SlashInvariantFormClass F 𝒮ℒ k] (f
   norm_num
 
 /-- At the orbit of `ρ` the weight is `1/3`, from `e_ρ = 3`. -/
-@[simp]
 lemma weightedOrderOfVanishingOnOrbit_ρ [SlashInvariantFormClass F 𝒮ℒ k] (f : F) :
     weightedOrderOfVanishingOnOrbit f (Quotient.mk'' ρ) =
       (orderOfVanishingAt ⇑f ρ : ℚ) / 3 := by
   rw [weightedOrderOfVanishingOnOrbit_mk, ModularGroup.ellipticOrder_ρ]
   norm_num
+
+/-- Multiplying the weighted order by the elliptic order recovers the plain vanishing order. -/
+lemma ellipticOrder_mul_weightedOrderOfVanishingOnOrbit
+    [SlashInvariantFormClass F 𝒮ℒ k] (f : F)
+    (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
+    (ModularGroup.ellipticOrder q : ℚ) * weightedOrderOfVanishingOnOrbit f q =
+      (orderOfVanishingOnOrbit f q : ℚ) := by
+  rw [weightedOrderOfVanishingOnOrbit_def]
+  exact mul_div_cancel₀ _ (by exact_mod_cast (ModularGroup.ellipticOrder_pos q).ne')
 
 /-- Every elliptic-weighted order is nonnegative: a modular form is holomorphic and the
 weights are positive. -/
@@ -260,6 +272,48 @@ lemma hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic [ModularFormClass F �
     Function.HasFiniteSupport fun q : NonEllipticOrbit ↦ orderOfVanishingOnOrbit f q.val :=
   Function.HasFiniteSupport.fun_comp_of_injective Subtype.val_injective
     (hasFiniteSupport_orderOfVanishingOnOrbit f)
+
+/-- **Splitting the uniform divisor sum at the two elliptic orbits.** Away from them the weight
+is `1`, so the sum over all orbits is the non-elliptic sum plus the two weighted elliptic terms. -/
+lemma finsum_weightedOrderOfVanishingOnOrbit_eq_finsum_nonElliptic_add_elliptic
+    [ModularFormClass F 𝒮ℒ k] (f : F) :
+    (∑ᶠ q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ,
+      weightedOrderOfVanishingOnOrbit f q) =
+      ((∑ᶠ q : NonEllipticOrbit, orderOfVanishingOnOrbit f q.val : ℤ) : ℚ)
+        + (orderOfVanishingAt ⇑f UpperHalfPlane.I : ℚ) / 2
+        + (orderOfVanishingAt ⇑f ρ : ℚ) / 3 := by
+  classical
+  set S : Set (MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :=
+    {Quotient.mk'' UpperHalfPlane.I, Quotient.mk'' ρ} with hSdef
+  have hmem : ∀ q, q ∈ Sᶜ ↔ (q ≠ Quotient.mk'' UpperHalfPlane.I ∧ q ≠ Quotient.mk'' ρ) := by
+    intro q
+    simp [hSdef, not_or]
+  -- the two-element part contributes the weighted elliptic terms
+  have hpair : (∑ᶠ q ∈ S, weightedOrderOfVanishingOnOrbit f q) =
+      (orderOfVanishingAt ⇑f UpperHalfPlane.I : ℚ) / 2
+        + (orderOfVanishingAt ⇑f ρ : ℚ) / 3 := by
+    rw [hSdef, finsum_mem_pair ModularGroup.orbit_mk_I_ne_orbit_mk_ρ,
+      weightedOrderOfVanishingOnOrbit_I, weightedOrderOfVanishingOnOrbit_ρ]
+  -- the complement is the non-elliptic orbit type, on which the weight is trivial
+  have hcompl : (∑ᶠ q ∈ Sᶜ, weightedOrderOfVanishingOnOrbit f q) =
+      ((∑ᶠ q : NonEllipticOrbit, orderOfVanishingOnOrbit f q.val : ℤ) : ℚ) := by
+    have hcast := AddMonoidHom.map_finsum_of_injective (Int.castAddHom ℚ) Int.cast_injective
+      fun q : NonEllipticOrbit ↦ orderOfVanishingOnOrbit f q.val
+    have hval : (∑ᶠ q ∈ Sᶜ, weightedOrderOfVanishingOnOrbit f q) =
+        ∑ᶠ q ∈ Sᶜ, ((orderOfVanishingOnOrbit f q : ℤ) : ℚ) :=
+      finsum_mem_congr rfl fun q hq ↦
+        weightedOrderOfVanishingOnOrbit_eq_orderOfVanishingOnOrbit_of_orbit_ne_I_of_orbit_ne_ρ
+          f ((hmem q).1 hq).1 ((hmem q).1 hq).2
+    rw [hval, ← finsum_set_coe_eq_finsum_mem,
+      ← finsum_comp_equiv (Equiv.subtypeEquivRight fun q ↦ (hmem q).symm)
+        (f := fun q : (Sᶜ : Set _) ↦ ((orderOfVanishingOnOrbit f q.val : ℤ) : ℚ))]
+    simpa using hcast.symm
+  have hsplit := finsum_mem_add_sdiff' (f := weightedOrderOfVanishingOnOrbit f)
+    (Set.subset_univ S)
+    ((hasFiniteSupport_weightedOrderOfVanishingOnOrbit f).inter_of_right Set.univ)
+  rw [finsum_mem_univ, ← Set.compl_eq_univ_sdiff, hpair, hcompl] at hsplit
+  rw [← hsplit]
+  ring
 
 end ModularForm
 
