@@ -21,10 +21,10 @@ condition says precisely that it is weakly contractible.
 
 This turns the Galois correspondence of Stage 2 into a statement about Eilenberg--Mac Lane
 spaces. Every subgroup `H ≤ π₁(X, x₀)` is realised by the connected cover
-`UniversalCover x₀ / H`, whose fundamental group is `Hᵐᵒᵖ`, hence `H`; when `X` is a
+`UniversalCover x₀ / H`, whose fundamental group is `Hᵐᵒᵖ`, hence isomorphic to `H`; when `X` is a
 `K(G, 1)` that cover is aspherical too, so it is a `K(H, 1)`. In particular every subgroup of
-the fundamental group of a `K(G, 1)` is itself the fundamental group of a `K(H, 1)`, realised
-on the nose as a covering space of `X`.
+the fundamental group of a `K(G, 1)` is isomorphic to the fundamental group of a `K(H, 1)`
+realised as a covering space of `X`.
 
 The general covering-space input is
 `IsCoveringMap.isAspherical_totalSpace`; the only work here is to supply the
@@ -98,8 +98,8 @@ theorem isAspherical_subgroupQuotient (h : IsAspherical X x₀) :
 
 /-- **The cover attached to `H ≤ π₁(X, x₀)` over a `K(G, 1)` is a `K(H, 1)`.**
 
-So every subgroup of the fundamental group of an aspherical space is realised, on the nose, as
-the fundamental group of an aspherical covering space of it. The `ᵐᵒᵖ` recorded by
+So every subgroup of the fundamental group of an aspherical space is isomorphic to the
+fundamental group of an aspherical covering space of it. The `ᵐᵒᵖ` recorded by
 `TauCeti.UniversalCover.SubgroupQuotient.fundamentalGroupEquiv` disappears along
 `MulEquiv.inv'`. -/
 theorem isEilenbergMacLaneSpaceOne_subgroupQuotient (h : IsAspherical X x₀) :
