@@ -101,26 +101,24 @@ lemma b2Root_dotProduct_b2Coroot_self (k : Fin 8) : b2Root k ⬝ᵥ b2Coroot k =
 /-- The last four coroots are the negatives of the first four. -/
 @[simp] lemma b2Coroot_add_four (k : Fin 8) : b2Coroot (k + 4) = -b2Coroot k := by decide +revert
 
-/-- Reflection in the `i`-th Bourbaki simple root of the pinned rank-two type `B` datum, as a
-permutation of its root indices. -/
-@[expose] def b2SimpleReflection (i : Fin 2) : Equiv.Perm (Fin (2 * 2 ^ 2)) :=
-  (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 i)
-
-/-- `TauCeti.DynkinType.b2SimpleReflection` is the datum's reflection permutation at a simple
-index. -/
-lemma b2SimpleReflection_apply (i : Fin 2) (k : Fin (2 * 2 ^ 2)) :
-    b2SimpleReflection i k =
-      (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 i) k :=
-  rfl
-
 /-- The eight root indices of the pinned rank-two type `B` datum, named by reflection words in the
 two Bourbaki simple indices and ordered as `TauCeti.DynkinType.b2Root` is. -/
 @[expose] def b2Index : Fin 8 → Fin (2 * 2 ^ 2) :=
   ![typeBSimpleIndex 2 0, typeBSimpleIndex 2 1,
-    b2SimpleReflection 0 (typeBSimpleIndex 2 1), b2SimpleReflection 1 (typeBSimpleIndex 2 0),
-    b2SimpleReflection 0 (typeBSimpleIndex 2 0), b2SimpleReflection 1 (typeBSimpleIndex 2 1),
-    b2SimpleReflection 0 (b2SimpleReflection 1 (typeBSimpleIndex 2 1)),
-    b2SimpleReflection 1 (b2SimpleReflection 0 (typeBSimpleIndex 2 0))]
+    (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 0)
+      (typeBSimpleIndex 2 1),
+    (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 1)
+      (typeBSimpleIndex 2 0),
+    (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 0)
+      (typeBSimpleIndex 2 0),
+    (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 1)
+      (typeBSimpleIndex 2 1),
+    (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 0)
+      ((typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 1)
+        (typeBSimpleIndex 2 1)),
+    (typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 1)
+      ((typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 0)
+        (typeBSimpleIndex 2 0))]
 
 /-- The first named index is the first Bourbaki simple root. -/
 @[simp] lemma b2Index_zero : b2Index 0 = typeBSimpleIndex 2 0 := rfl
@@ -165,103 +163,62 @@ private lemma b2_simple_coroot (i : Fin 2) :
   rw [coroot_typeBSimpleIndex]
   fin_cases i <;> decide
 
-private lemma b2_root_two : (typeBSimplyConnectedRootDatum 2).root (b2Index 2) = b2Root 2 := by
-  rw [show b2Index 2 = b2SimpleReflection 0 (typeBSimpleIndex 2 1) from rfl,
-    b2SimpleReflection_apply, b2_root_reflectionPerm, b2_simple_root, b2_simple_root,
-    b2_simple_coroot]
-  decide
+private lemma b2_reflectionPerm_simple (i : Fin 2) {j : Fin (2 * 2 ^ 2)} {k l : Fin 8}
+    (hroot : (typeBSimplyConnectedRootDatum 2).root j = b2Root k)
+    (hcoroot : (typeBSimplyConnectedRootDatum 2).coroot j = b2Coroot k)
+    (hroot_reflection :
+      b2Root k -
+          (b2Root k ⬝ᵥ b2Coroot (Fin.castLE (by omega) i)) •
+            b2Root (Fin.castLE (by omega) i) =
+        b2Root l)
+    (hcoroot_reflection :
+      b2Coroot k -
+          (b2Root (Fin.castLE (by omega) i) ⬝ᵥ b2Coroot k) •
+            b2Coroot (Fin.castLE (by omega) i) =
+        b2Coroot l) :
+    (typeBSimplyConnectedRootDatum 2).root
+          ((typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 i) j) =
+        b2Root l ∧
+      (typeBSimplyConnectedRootDatum 2).coroot
+          ((typeBSimplyConnectedRootDatum 2).reflectionPerm (typeBSimpleIndex 2 i) j) =
+        b2Coroot l := by
+  constructor
+  · rw [b2_root_reflectionPerm, hroot, b2_simple_root, b2_simple_coroot, hroot_reflection]
+  · rw [b2_coroot_reflectionPerm, hcoroot, b2_simple_root, b2_simple_coroot,
+      hcoroot_reflection]
 
-private lemma b2_coroot_two :
-    (typeBSimplyConnectedRootDatum 2).coroot (b2Index 2) = b2Coroot 2 := by
-  rw [show b2Index 2 = b2SimpleReflection 0 (typeBSimpleIndex 2 1) from rfl,
-    b2SimpleReflection_apply, b2_coroot_reflectionPerm, b2_simple_coroot, b2_simple_coroot,
-    b2_simple_root]
-  decide
-
-private lemma b2_root_three : (typeBSimplyConnectedRootDatum 2).root (b2Index 3) = b2Root 3 := by
-  rw [show b2Index 3 = b2SimpleReflection 1 (typeBSimpleIndex 2 0) from rfl,
-    b2SimpleReflection_apply, b2_root_reflectionPerm, b2_simple_root, b2_simple_root,
-    b2_simple_coroot]
-  decide
-
-private lemma b2_coroot_three :
-    (typeBSimplyConnectedRootDatum 2).coroot (b2Index 3) = b2Coroot 3 := by
-  rw [show b2Index 3 = b2SimpleReflection 1 (typeBSimpleIndex 2 0) from rfl,
-    b2SimpleReflection_apply, b2_coroot_reflectionPerm, b2_simple_coroot, b2_simple_coroot,
-    b2_simple_root]
-  decide
-
-private lemma b2_root_four : (typeBSimplyConnectedRootDatum 2).root (b2Index 4) = b2Root 4 := by
-  rw [show b2Index 4 = b2SimpleReflection 0 (typeBSimpleIndex 2 0) from rfl,
-    b2SimpleReflection_apply, b2_root_reflectionPerm, b2_simple_root, b2_simple_coroot]
-  decide
-
-private lemma b2_coroot_four :
-    (typeBSimplyConnectedRootDatum 2).coroot (b2Index 4) = b2Coroot 4 := by
-  rw [show b2Index 4 = b2SimpleReflection 0 (typeBSimpleIndex 2 0) from rfl,
-    b2SimpleReflection_apply, b2_coroot_reflectionPerm, b2_simple_coroot, b2_simple_root]
-  decide
-
-private lemma b2_root_five : (typeBSimplyConnectedRootDatum 2).root (b2Index 5) = b2Root 5 := by
-  rw [show b2Index 5 = b2SimpleReflection 1 (typeBSimpleIndex 2 1) from rfl,
-    b2SimpleReflection_apply, b2_root_reflectionPerm, b2_simple_root, b2_simple_coroot]
-  decide
-
-private lemma b2_coroot_five :
-    (typeBSimplyConnectedRootDatum 2).coroot (b2Index 5) = b2Coroot 5 := by
-  rw [show b2Index 5 = b2SimpleReflection 1 (typeBSimpleIndex 2 1) from rfl,
-    b2SimpleReflection_apply, b2_coroot_reflectionPerm, b2_simple_coroot, b2_simple_root]
-  decide
-
-private lemma b2_root_six : (typeBSimplyConnectedRootDatum 2).root (b2Index 6) = b2Root 6 := by
-  rw [show b2Index 6 = b2SimpleReflection 0 (b2Index 5) from rfl, b2SimpleReflection_apply,
-    b2_root_reflectionPerm, b2_root_five, b2_simple_root, b2_simple_coroot]
-  decide
-
-private lemma b2_coroot_six :
-    (typeBSimplyConnectedRootDatum 2).coroot (b2Index 6) = b2Coroot 6 := by
-  rw [show b2Index 6 = b2SimpleReflection 0 (b2Index 5) from rfl, b2SimpleReflection_apply,
-    b2_coroot_reflectionPerm, b2_coroot_five, b2_simple_coroot, b2_simple_root]
-  decide
-
-private lemma b2_root_seven : (typeBSimplyConnectedRootDatum 2).root (b2Index 7) = b2Root 7 := by
-  rw [show b2Index 7 = b2SimpleReflection 1 (b2Index 4) from rfl, b2SimpleReflection_apply,
-    b2_root_reflectionPerm, b2_root_four, b2_simple_root, b2_simple_coroot]
-  decide
-
-private lemma b2_coroot_seven :
-    (typeBSimplyConnectedRootDatum 2).coroot (b2Index 7) = b2Coroot 7 := by
-  rw [show b2Index 7 = b2SimpleReflection 1 (b2Index 4) from rfl, b2SimpleReflection_apply,
-    b2_coroot_reflectionPerm, b2_coroot_four, b2_simple_coroot, b2_simple_root]
-  decide
+private lemma b2_root_coroot_b2Index (k : Fin 8) :
+    (typeBSimplyConnectedRootDatum 2).root (b2Index k) = b2Root k ∧
+      (typeBSimplyConnectedRootDatum 2).coroot (b2Index k) = b2Coroot k := by
+  fin_cases k
+  · exact ⟨b2_simple_root 0, b2_simple_coroot 0⟩
+  · exact ⟨b2_simple_root 1, b2_simple_coroot 1⟩
+  · exact b2_reflectionPerm_simple 0 (b2_simple_root 1) (b2_simple_coroot 1)
+      (by decide) (by decide)
+  · exact b2_reflectionPerm_simple 1 (b2_simple_root 0) (b2_simple_coroot 0)
+      (by decide) (by decide)
+  · exact b2_reflectionPerm_simple 0 (b2_simple_root 0) (b2_simple_coroot 0)
+      (by decide) (by decide)
+  · exact b2_reflectionPerm_simple 1 (b2_simple_root 1) (b2_simple_coroot 1)
+      (by decide) (by decide)
+  · have h := b2_reflectionPerm_simple 1 (b2_simple_root 1) (b2_simple_coroot 1)
+      (l := 5) (by decide) (by decide)
+    exact b2_reflectionPerm_simple 0 h.1 h.2 (by decide) (by decide)
+  · have h := b2_reflectionPerm_simple 0 (b2_simple_root 0) (b2_simple_coroot 0)
+      (l := 4) (by decide) (by decide)
+    exact b2_reflectionPerm_simple 1 h.1 h.2 (by decide) (by decide)
 
 /-! ## The table is the datum -/
 
 /-- **The eight named indices carry the tabulated roots.** -/
 @[simp] theorem root_b2Index (k : Fin 8) :
     (typeBSimplyConnectedRootDatum 2).root (b2Index k) = b2Root k := by
-  fin_cases k
-  · exact b2_simple_root 0
-  · exact b2_simple_root 1
-  · exact b2_root_two
-  · exact b2_root_three
-  · exact b2_root_four
-  · exact b2_root_five
-  · exact b2_root_six
-  · exact b2_root_seven
+  exact (b2_root_coroot_b2Index k).1
 
 /-- **The eight named indices carry the tabulated coroots.** -/
 @[simp] theorem coroot_b2Index (k : Fin 8) :
     (typeBSimplyConnectedRootDatum 2).coroot (b2Index k) = b2Coroot k := by
-  fin_cases k
-  · exact b2_simple_coroot 0
-  · exact b2_simple_coroot 1
-  · exact b2_coroot_two
-  · exact b2_coroot_three
-  · exact b2_coroot_four
-  · exact b2_coroot_five
-  · exact b2_coroot_six
-  · exact b2_coroot_seven
+  exact (b2_root_coroot_b2Index k).2
 
 /-- The eight reflection words name eight distinct root indices. -/
 theorem b2Index_injective : Injective b2Index := fun k l h =>
