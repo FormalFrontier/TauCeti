@@ -43,9 +43,13 @@ variable {ι : Type*}
 
 /-- The real trigonometric combination with weights `c` and frequencies `m`, evaluated at a
 complex phase `z`. On the unit circle, `(z ^ k).re` is a cosine. -/
-@[expose] def trigonometricCombination
+def trigonometricCombination
     (s : Finset ι) (c : ι → ℝ) (m : ι → ℕ) (z : ℂ) : ℝ :=
   ∑ i ∈ s, c i * (z ^ m i).re
+
+/-- The defining finite-sum formula for `trigonometricCombination`. -/
+theorem trigonometricCombination_def (s : Finset ι) (c : ι → ℝ) (m : ι → ℕ) (z : ℂ) :
+    trigonometricCombination s c m z = ∑ i ∈ s, c i * (z ^ m i).re := (rfl)
 
 /-- The assertion that a finite trigonometric combination is nonnegative at every complex phase
 in the closed unit disk. -/
@@ -80,7 +84,7 @@ theorem sum_re_neg_log_one_sub_nonneg
       (∑ i ∈ s, c i * ((((a : ℂ) * z ^ m i) ^ n / n).re)) =
         (a ^ n / (n : ℝ)) * trigonometricCombination s c m (z ^ n) := by
     simp only [mul_pow, ← ofReal_pow, div_natCast_re, ofReal_re, mul_re, ofReal_im, zero_mul,
-      sub_zero, trigonometricCombination, Finset.mul_sum]
+      sub_zero, trigonometricCombination_def, Finset.mul_sum]
     apply Finset.sum_congr rfl
     intro i _
     rw [← pow_mul, mul_comm (m i) n]

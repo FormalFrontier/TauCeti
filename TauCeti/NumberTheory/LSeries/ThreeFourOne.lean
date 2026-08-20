@@ -58,20 +58,42 @@ def threeFourOneFrequency : Fin 3 → ℕ := ![0, 1, 2]
 /-- The `3-4-1` trigonometric expression evaluated at a complex phase. -/
 def threeFourOneCombination (z : ℂ) : ℝ := 3 + 4 * z.re + (z ^ 2).re
 
+/-- The first `3-4-1` weight is `3`. -/
+@[simp] theorem threeFourOneWeight_zero : threeFourOneWeight 0 = 3 := (rfl)
+
+/-- The second `3-4-1` weight is `4`. -/
+@[simp] theorem threeFourOneWeight_one : threeFourOneWeight 1 = 4 := (rfl)
+
+/-- The third `3-4-1` weight is `1`. -/
+@[simp] theorem threeFourOneWeight_two : threeFourOneWeight 2 = 1 := (rfl)
+
+/-- The first `3-4-1` frequency is `0`. -/
+@[simp] theorem threeFourOneFrequency_zero : threeFourOneFrequency 0 = 0 := (rfl)
+
+/-- The second `3-4-1` frequency is `1`. -/
+@[simp] theorem threeFourOneFrequency_one : threeFourOneFrequency 1 = 1 := (rfl)
+
+/-- The third `3-4-1` frequency is `2`. -/
+@[simp] theorem threeFourOneFrequency_two : threeFourOneFrequency 2 = 2 := (rfl)
+
+/-- The defining formula for `threeFourOneCombination`. -/
+theorem threeFourOneCombination_def (z : ℂ) :
+    threeFourOneCombination z = 3 + 4 * z.re + (z ^ 2).re := (rfl)
+
 /-- The abstract finite combination with `3-4-1` weights is the usual concrete expression. -/
 @[simp]
 theorem trigonometricCombination_threeFourOne (z : ℂ) :
     trigonometricCombination Finset.univ threeFourOneWeight threeFourOneFrequency z =
       threeFourOneCombination z := by
-  simp only [trigonometricCombination, threeFourOneCombination, threeFourOneWeight,
-    threeFourOneFrequency, Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
-    Matrix.cons_val_succ, pow_zero, pow_one, one_re, mul_one, one_mul, add_zero]
-  ring_nf
+  rw [trigonometricCombination_def, threeFourOneCombination_def, Fin.sum_univ_three]
+  simp only [threeFourOneWeight_zero, threeFourOneWeight_one, threeFourOneWeight_two,
+    threeFourOneFrequency_zero, threeFourOneFrequency_one, threeFourOneFrequency_two,
+    pow_zero, pow_one, one_re, mul_one, one_mul]
 
 /-- On the unit circle the `3-4-1` expression is twice a square. -/
 theorem threeFourOneCombination_eq_two_mul_sq {z : ℂ} (hz : ‖z‖ = 1) :
     threeFourOneCombination z = 2 * (z.re + 1) ^ 2 := by
-  rw [threeFourOneCombination, pow_two, mul_re, ← sq, ← sq,
+  rw [threeFourOneCombination_def, pow_two, mul_re, ← sq, ← sq,
     ← Complex.sq_norm_sub_sq_re, hz]
   ring
 
@@ -79,7 +101,7 @@ theorem threeFourOneCombination_eq_two_mul_sq {z : ℂ} (hz : ‖z‖ = 1) :
 theorem threeFourOneCombination_nonneg {z : ℂ} (hz : ‖z‖ ≤ 1) :
     0 ≤ threeFourOneCombination z := by
   have hnorm : ‖z‖ ^ 2 ≤ 1 := pow_le_one₀ (norm_nonneg z) hz
-  rw [threeFourOneCombination, pow_two, mul_re, ← sq, ← sq,
+  rw [threeFourOneCombination_def, pow_two, mul_re, ← sq, ← sq,
     ← Complex.sq_norm_sub_sq_re]
   nlinarith [sq_nonneg (z.re + 1)]
 
@@ -101,9 +123,10 @@ theorem threeFourOne_re_neg_log_one_sub_nonneg {a : ℝ} (ha₀ : 0 ≤ a) (ha�
       (-log (1 - a * z ^ 2)).re := by
   have h := sum_re_neg_log_one_sub_nonneg
     isNonnegativeTrigonometricCombination_threeFourOne ha₀ ha₁ hz
-  simpa only [Fin.sum_univ_succ, Fin.sum_univ_zero, threeFourOneWeight,
-    threeFourOneFrequency, Matrix.cons_val_zero, Matrix.cons_val_succ, pow_zero, pow_one, mul_one,
-    one_mul, add_zero, add_assoc] using h
+  simpa only [trigonometricCombination_def, Fin.sum_univ_three, threeFourOneWeight_zero,
+    threeFourOneWeight_one, threeFourOneWeight_two, threeFourOneFrequency_zero,
+    threeFourOneFrequency_one, threeFourOneFrequency_two, pow_zero, pow_one, mul_one,
+    one_mul] using h
 
 end
 
