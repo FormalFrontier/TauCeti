@@ -106,19 +106,58 @@ theorem twoRank_le_ncard_ramifiedPrimes_sub_one [IsTotallyComplex K]
   rw [← hcard]
   exact (Nat.pow_le_pow_iff_right (le_refl 2)).mp hpow
 
-/-- **The `2`-rank formula for an imaginary quadratic field.** For `K = ℚ(√d)` with `d < -1`
+/-- **The `2`-rank formula for an imaginary quadratic field.** For `K = ℚ(√d)` with `d < 0`
 squarefree, the `2`-rank of `Cl(𝓞 K)` is exactly `t - 1`, where `t` is the number of rational
 primes ramifying in `K`. -/
 theorem twoRank_eq_ncard_ramifiedPrimes_sub_one
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hd : d < -1) :
+    (hsf : Squarefree d) (hd : d < 0) :
     TauCeti.ClassGroup.twoRank (𝓞 K) = (ramifiedPrimes K).ncard - 1 := by
   let _ : IsTotallyComplex K :=
-    NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin (by omega)
-  apply le_antisymm
-  · exact twoRank_le_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by
-      have hdabs : (1 : ℤ) < |d| := by rw [abs_of_neg (by omega)]; omega
-      rwa [Int.abs_eq_natAbs, Nat.one_lt_cast] at hdabs)
-  · exact ncard_ramifiedPrimes_sub_one_le_twoRank hmin hgen hsf hd
+    NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin hd
+  by_cases hgauss : d = -1
+  · subst d
+    have hfin : Module.finrank ℚ K = 2 := NumberField.finrank_rat_eq_two hmin hgen
+    have hreal : InfinitePlace.nrRealPlaces K = 0 :=
+      NumberField.IsTotallyComplex.nrRealPlaces_eq_zero K
+    have hcomplex : InfinitePlace.nrComplexPlaces K = 1 := by
+      have hsignature := InfinitePlace.card_add_two_mul_card_eq_rank K
+      rw [hreal, hfin] at hsignature
+      omega
+    have hdisc : NumberField.discr K = -4 := by
+      simpa using NumberField.discr_eq_four_mul_of_mod_four_ne_one hmin hgen hsf (by norm_num)
+    have hpid : IsPrincipalIdealRing (𝓞 K) := by
+      apply RingOfIntegers.isPrincipalIdealRing_of_abs_discr_lt
+      rw [hdisc, hcomplex, hfin]
+      norm_num [abs_of_nonneg]
+      nlinarith [Real.pi_gt_three]
+    have hrank : TauCeti.ClassGroup.twoRank (𝓞 K) = 0 := by
+      have hclass : NumberField.classNumber K = 1 :=
+        NumberField.classNumber_eq_one_iff.mpr hpid
+      have hpow := TauCeti.ClassGroup.two_pow_twoRank_le_card (𝓞 K)
+      rw [Nat.card_eq_fintype_card, ← NumberField.classNumber, hclass] at hpow
+      by_contra hrank
+      have hone : 1 < 2 ^ TauCeti.ClassGroup.twoRank (𝓞 K) :=
+        Nat.one_lt_pow hrank (by norm_num)
+      omega
+    have hram : ramifiedPrimes K = {2} := by
+      apply Set.eq_singleton_iff_unique_mem.mpr
+      refine ⟨(NumberField.mem_ramifiedPrimes_iff_dvd_discr Nat.prime_two).mpr ?_, ?_⟩
+      · rw [hdisc]
+        norm_num
+      · intro p hp
+        have hpprime := NumberField.prime_of_mem_ramifiedPrimes hp
+        have hpdivInt :=
+          (NumberField.mem_ramifiedPrimes_iff_dvd_discr hpprime).mp hp
+        rw [hdisc] at hpdivInt
+        have hpdiv : p ∣ 2 ^ 2 := by
+          exact_mod_cast (dvd_neg.mp hpdivInt)
+        exact Nat.prime_eq_prime_of_dvd_pow hpprime Nat.prime_two hpdiv
+    rw [hrank, hram, Set.ncard_singleton]
+  · apply le_antisymm
+    · exact twoRank_le_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by
+        have hdabs : (1 : ℤ) < |d| := by rw [abs_of_neg hd]; omega
+        rwa [Int.abs_eq_natAbs, Nat.one_lt_cast] at hdabs)
+    · exact ncard_ramifiedPrimes_sub_one_le_twoRank hmin hgen hsf (by omega)
 
 end TauCeti.Multiquadratic
