@@ -465,14 +465,6 @@ theorem isOpen_setOf_isTopologicallyNilpotent :
 
 /-! ### Wedhorn Lemma 6.2: the rings of definition are the open bounded subrings -/
 
-/-- The span of a pointwise power of a set is the corresponding power of its span.
-
-This is `Submodule.span_pow`, restated with `Ideal.span`: the two are definitionally equal, but
-only this spelling is found by `rw` in a goal about ideals. -/
-private theorem ideal_span_pow {R : Type*} [CommRing R] (s : Set R) (n : ℕ) :
-    Ideal.span s ^ n = Ideal.span (s ^ n) :=
-  Submodule.span_pow s n
-
 namespace PairOfDefinition
 
 omit [IsTopologicalRing A] [IsHuberRing A] in
@@ -566,7 +558,10 @@ theorem exists_pairOfDefinition_ringOfDefinition_eq (B : Subring A)
   -- `Gk` spans `I ^ (k₀ + 1)`, and `S` is its copy inside `B`.
   have hspan : Ideal.span ((G ^ (k₀ + 1) : Finset P.ringOfDefinition) :
       Set P.ringOfDefinition) = P.idealOfDefinition ^ (k₀ + 1) := by
-    rw [Finset.coe_pow, ← ideal_span_pow, hG]
+    rw [Finset.coe_pow]
+    change Submodule.span P.ringOfDefinition ((G : Set P.ringOfDefinition) ^ (k₀ + 1)) = _
+    rw [← Submodule.span_pow]
+    exact congrArg (· ^ (k₀ + 1)) hG
   have hGkB : ∀ z ∈ G ^ (k₀ + 1), (z : A) ∈ B := fun z hz ↦
     hk ((P.mem_idealImage _).mpr ⟨z, hspan ▸ Ideal.subset_span hz, rfl⟩)
   set S : Set B :=
@@ -598,7 +593,7 @@ theorem exists_pairOfDefinition_ringOfDefinition_eq (B : Subring A)
     obtain ⟨V, hV, hVB⟩ := isBounded_iff.mp hbdd (W : Set A) (W.isOpen.mem_nhds W.zero_mem)
     obtain ⟨m, -, hm⟩ := P.hasBasis_nhds_zero.mem_iff.mp hV
     refine ⟨m, fun x hx ↦ hUs (hWU ?_)⟩
-    rw [ideal_span_pow] at hx
+    rw [Submodule.span_pow] at hx
     obtain ⟨f, hf, rfl⟩ := Submodule.mem_span_set.mp hx
     have hcoe_sum : ((∑ i ∈ f.support, f i • i : B) : A) = ∑ i ∈ f.support, ((f i • i : B) : A) :=
       map_sum B.subtype _ _
