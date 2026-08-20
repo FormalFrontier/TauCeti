@@ -118,9 +118,9 @@ theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
     (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) q r hv'
   have hmatrix := congrArg
     (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom) hpin
-  rw [kostantTorusMatrix, kostantRootSubgroupMatrix_def,
-    MonoidHom.comp_apply, MonoidHom.comp_apply, MonoidHom.comp_apply]
-  simpa only [map_mul, q, r] using hmatrix
+  rw [← basisMatrix_kostantTorusPoints, kostantRootSubgroupMatrix_def,
+    MonoidHom.comp_apply, MonoidHom.comp_apply]
+  simpa only [map_mul, q, r, MulEquiv.toMonoidHom_eq_coe] using hmatrix
 
 /-- **The pinning equation in the toral Kostant group scheme.** Conjugation by the torus point
 `t(s)` sends the `i`th root-subgroup point with parameter `u` to the same root subgroup with

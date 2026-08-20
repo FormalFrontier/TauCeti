@@ -444,7 +444,6 @@ variable {A : Type*} [CommRing A] [Algebra ℤ A]
 
 omit [Module ℚ V] in
 /-- The torus attached to a weight basis, in the matrix coordinates of that basis. -/
-@[expose]
 noncomputable def kostantTorusMatrix :
     (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A :=
   (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
