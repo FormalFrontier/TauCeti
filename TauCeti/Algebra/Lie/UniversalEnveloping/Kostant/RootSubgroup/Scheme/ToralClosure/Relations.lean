@@ -33,14 +33,17 @@ assumption on the constructed group scheme.
 * `TauCeti.UniversalEnvelopingAlgebra.
   kostantWeightTorusToToral_conj_kostantRootSubgroupToToral`: the conjugation form of the pinning
   equation.
+* `TauCeti.UniversalEnvelopingAlgebra.
+  kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam`: the same equation with its
+  root-subgroup parameter read directly in the value ring.
 
 ## References
 
-This is the torus--root-subgroup equation in a pinning of the Chevalley--Demazure group scheme;
-see J. E. Humphreys, *Linear Algebraic Groups*, Section 26, and R. W. Carter, *Simple Groups of
-Lie Type*, Sections 4.4 and 7.1. It advances the Pinnings and Root subgroup maps targets of Layer
-9 of `TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of the CFSGStatement
-roadmap.
+This is the torus--root-subgroup compatibility equation intended for the future pinning of the
+Chevalley--Demazure group scheme; see J. E. Humphreys, *Linear Algebraic Groups*, Section 26, and
+R. W. Carter, *Simple Groups of Lie Type*, Sections 4.4 and 7.1. It advances the Pinnings and Root
+subgroup maps targets of Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, consumed by
+milestone L0 of the CFSGStatement roadmap.
 -/
 
 public section
@@ -148,5 +151,25 @@ theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
     e h ρ M hM b wt hwt hnil A hα s u
   exact congrArg Multiplicative.toAdd
     ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _)
+
+/-- **The pinning equation with the root-subgroup parameter read in the value ring.**
+Conjugation by `t(s)` sends `x_i(u)` to `x_i(α(s) u)` inside the toral carrier. -/
+@[simp]
+theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
+    {i : I} {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ κ).X)
+    (u : A) :
+    (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom) *
+        ((AdditiveGroup.schemePointsMulEquiv A).symm (Multiplicative.ofAdd u) ≫
+          (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) *
+        (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) * u)) ≫
+        (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom := by
+  simpa using kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
+    e h ρ M hM b wt hwt hnil A hα s
+      ((AdditiveGroup.schemePointsMulEquiv A).symm (Multiplicative.ofAdd u))
 
 end TauCeti.UniversalEnvelopingAlgebra
