@@ -30,9 +30,11 @@ is `n !`.  Nothing here integrates by parts or reproves a convergence result —
 states integrability of that integrand only at rate `r = 1` (`GammaIntegral_convergent`), so
 `integrableOn_gammaIntegrand` transports it to a general rate by scaling.
 
-**`n ≠ 0` is not decoration.** At `n = 0` the integrand `x ^ n * pdf x` does not vanish at the
-origin, so it is not the indicator of `Ioi 0` that the Gamma integral needs; the hypothesis is what
-makes the pointwise identity true rather than true off a null set.
+**`n ≠ 0` constrains the *route*, not the result.** At `n = 0` the integrand `x ^ n * pdf x`
+does not vanish at the origin, so it is not the indicator of `Ioi 0` that the Gamma integral
+needs — the private `integrand_eq_indicator` is false there, not merely unproved.  The moment
+formula itself holds at `n = 0`, both sides being `1`, and is stated without the hypothesis;
+only the Gamma-integral branch of its proof carries it.
 
 ## Main results
 
@@ -128,12 +130,19 @@ private theorem integrable_pow_id_expMeasure (hr : 0 < r) (hn : n ≠ 0) :
     funext htoReal, integrand_eq_indicator hn, integrable_indicator_iff measurableSet_Ioi]
   exact (integrableOn_gammaIntegrand (by positivity) hr).const_mul r
 
-/-- **The moments of the exponential law.** `∫ x ^ n ∂(expMeasure r) = n ! / r ^ n`.
+/-- **The moments of the exponential law.** `∫ x ^ n ∂(expMeasure r) = n ! / r ^ n`, for every `n`.
 
 The mean and the second moment below are the `n = 1` and `n = 2` cases; stating the general formula
-avoids running the same density transport and Gamma-integral argument twice. -/
-theorem integral_pow_id_expMeasure (hr : 0 < r) (hn : n ≠ 0) :
+avoids running the same density transport and Gamma-integral argument twice.
+
+`n = 0` is not excluded.  It needs a separate line only because the Gamma-integral route runs
+through `integrand_eq_indicator`, which genuinely fails there; the *statement* holds, both sides
+being `1` because `expMeasure r` is a probability measure. -/
+theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
     ∫ x, x ^ n ∂(expMeasure r) = (Nat.factorial n : ℝ) / r ^ n := by
+  rcases eq_or_ne n 0 with rfl | hn
+  · have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+    simp
   rw [integral_expMeasure hr, integrand_eq_indicator hn,
     integral_indicator measurableSet_Ioi, integral_const_mul,
     integral_rpow_mul_exp_neg_mul_Ioi (by positivity) hr, Real.Gamma_nat_eq_factorial,
@@ -144,11 +153,11 @@ theorem integral_pow_id_expMeasure (hr : 0 < r) (hn : n ≠ 0) :
 
 /-- **The mean of the exponential law** with rate `r` is `r⁻¹`. -/
 theorem integral_id_expMeasure (hr : 0 < r) : ∫ x, x ∂(expMeasure r) = r⁻¹ := by
-  simpa using integral_pow_id_expMeasure hr one_ne_zero
+  simpa using integral_pow_id_expMeasure hr 1
 
 /-- The second moment of the exponential law with rate `r` is `2 / r ^ 2`. -/
 theorem integral_sq_id_expMeasure (hr : 0 < r) : ∫ x, x ^ 2 ∂(expMeasure r) = 2 / r ^ 2 := by
-  simpa using integral_pow_id_expMeasure hr two_ne_zero
+  simpa using integral_pow_id_expMeasure hr 2
 
 /-- **The variance of the exponential law** with rate `r` is `(r ^ 2)⁻¹`. -/
 theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = (r ^ 2)⁻¹ := by
