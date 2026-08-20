@@ -63,8 +63,10 @@ theorem killingForm_killingDualBasis (b : Module.Basis ι K L) (i j : ι) :
     killingForm K L (b i) (killingDualBasis b j) = if i = j then 1 else 0 :=
   LinearMap.BilinForm.apply_dualBasis_right _ killingForm_isSymm b i j
 
-/-- Coordinates in the Killing-dual basis are Killing pairings against `b`. -/
-@[simp]
+/-- Coordinates in the Killing-dual basis are Killing pairings against `b`.
+
+Not a `simp` lemma: `killingDualBasis` is reducible, so `LinearMap.BilinForm.dualBasis_repr_apply`
+already rewrites the left-hand side, and it lands on the opposite argument order. -/
 theorem killingDualBasis_repr_apply (b : Module.Basis ι K L) (v : L) (i : ι) :
     (killingDualBasis b).repr v i = killingForm K L (b i) v :=
   (LinearMap.BilinForm.dualBasis_repr_apply _ b v i).trans
