@@ -304,6 +304,8 @@ private lemma groupSchemePointsMulEquiv_comp_diagonalTorus
     (SplitTorus.characterGroup (ULift.{u} (Fin N))) p
   have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
     (diagonalTorusCoordinateMap (R := R) (N := N)).hom q
+  -- `mapMulEquiv_mapDomain` states the spectrum morphism through its underlying bialgebra map;
+  -- the Hopf-spectrum functor packages that same map in definitionally equal category wrappers.
   change AlgebraicGeometry.Spec.mapMulEquiv
       ((CommHopfAlgCat.mapPointsFunctor
         (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R A) q) =
