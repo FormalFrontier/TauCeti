@@ -46,9 +46,9 @@ only where it sums over the group.
 
 * `Representation.isRealForm_iff_nonempty_equiv`: a real form is exactly an equivalence of
   representations from the complexification of `σ` to `ρ`.
-* `Representation.IsRealForm.character_eq`: the character of a representation with a real
+* `Representation.IsRealForm.char_eq`: the character of a representation with a real
   form is the character of that real form, in particular real-valued
-  (`Representation.IsRealForm.conj_character`).
+  (`Representation.IsRealForm.conj_char`).
 * `Representation.IsRealForm.exists_isInvariantForm_isSymm_ne_zero`: a real form transports a
   nonzero invariant symmetric real form to a nonzero invariant symmetric complex form.
 * `Representation.IsRealForm.isRealizableOverReal`: a real form on an arbitrary
@@ -128,8 +128,8 @@ theorem isRealForm_iff_nonempty_equiv :
     simpa [Equiv.toLinearEquiv_apply] using φ.isIntertwining (g := g) (v := 1 ⊗ₜ[ℝ] w)
 
 /-- The character of a representation with a real form is the character of that real form.  In
-particular it takes real values (`Representation.IsRealForm.conj_character`). -/
-theorem IsRealForm.character_eq [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) (g : G) :
+particular it takes real values (`Representation.IsRealForm.conj_char`). -/
+theorem IsRealForm.char_eq [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) (g : G) :
     ρ.character g = (σ.character g : ℂ) := by
   obtain ⟨φ⟩ := isRealForm_iff_nonempty_equiv.mp h
   rw [← congrFun (char_iso φ) g]
@@ -137,9 +137,9 @@ theorem IsRealForm.character_eq [FiniteDimensional ℝ W] (h : IsRealForm ρ σ)
     LinearMap.trace_baseChange, Complex.coe_algebraMap]
 
 /-- The character of a representation with a real form is fixed by complex conjugation. -/
-theorem IsRealForm.conj_character [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) (g : G) :
+theorem IsRealForm.conj_char [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) (g : G) :
     (starRingEnd ℂ) (ρ.character g) = ρ.character g := by
-  rw [h.character_eq g, Complex.conj_ofReal]
+  rw [h.char_eq g, Complex.conj_ofReal]
 
 /-- The complex dimension of a representation is the real dimension of any of its real forms:
 complexification does not change the dimension. -/
