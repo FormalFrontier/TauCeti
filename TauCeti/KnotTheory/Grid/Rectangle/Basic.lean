@@ -27,6 +27,11 @@ where the states exchange rows, and agreement everywhere else. This is the shape
 the grid differential; the `IsEmptyFor` and `AvoidsMarkings` predicates record the two
 finite-set disjointness conditions used for empty rectangles and marking-avoiding rectangles.
 
+`AvoidsMarkings` currently uses the same open grid-line interior as `IsEmptyFor`. Thus it treats
+marking indices as lattice points, not as the southwest corners of square-centred markings. The
+Lane G.2 grading correction does not silently change this Lane G.3 differential convention;
+changing it requires a separate update of the blocked-rectangle and small-grid differential API.
+
 ## Main definitions
 
 * `TauCeti.GridRectangle`: a toroidal rectangle, represented by its four cyclic sides.
@@ -218,8 +223,10 @@ theorem isEmptyFor_of_le_two (hn : n ≤ 2) (R : GridRectangle n) (x : GridState
   rw [IsEmptyFor, R.interior_eq_empty_of_le_two hn]
   simp
 
-/-- A rectangle avoids the markings of a grid diagram when its interior contains no `O` or
-`X` marking. -/
+/-- A rectangle avoids the markings of a grid diagram when its open grid-line interior contains
+no `O` or `X` marking index. This is the existing differential convention; unlike the grading
+pairing, it does not yet interpret the index as the southwest corner of a square-centred
+marking. -/
 def AvoidsMarkings (G : GridDiagram n) : Prop :=
   Disjoint R.interior (G.OSet ∪ G.XSet)
 
