@@ -64,6 +64,7 @@ downstream modules should use.
 
 * `card_injective_hom_eq_labelledCopyCount`, `injHomDensity_eq_labelledCopyCount_div` — the bridge
   to Mathlib's counting primitive, at the level of the count and of the density;
+* `card_hom_eq_card_subtype` — homomorphisms are counted by the adjacency-preserving vertex maps;
 * `homDensityFin_nonneg`, `homDensityFin_le_one`, `injHomDensity_nonneg`, `injHomDensity_le_one` —
   both densities lie in `[0, 1]`, unconditionally. The degenerate cases are included: when the host
   is empty and the pattern is not, numerator and denominator both vanish and `x / 0 = 0` gives `0`.
@@ -153,6 +154,22 @@ theorem injHomDensity_eq_labelledCopyCount_div :
     injHomDensity F G =
       (G.labelledCopyCount F : ℝ) / ((Fintype.card W).descFactorial (Fintype.card V) : ℝ) := by
   rw [injHomDensity_def, card_injective_hom_eq_labelledCopyCount]
+
+/-! ### Homomorphisms as adjacency-preserving vertex maps -/
+
+omit [Fintype V] [Fintype W] in
+/-- A homomorphism is exactly a vertex map preserving adjacency, so the two are counted alike.
+
+The right-hand side is a subtype of a plain function type, which is where the counting arguments
+work: it is what a change of variables over the vertex assignments produces, and for concrete
+finite graphs it is decidable. -/
+theorem card_hom_eq_card_subtype :
+    Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
+  Nat.card_congr
+    { toFun := fun φ => ⟨⇑φ, fun _ _ h => φ.map_adj h⟩
+      invFun := fun ψ => ⟨ψ.1, fun {_ _} h => ψ.2 _ _ h⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl }
 
 /-! ### Both densities lie in `[0, 1]` -/
 
