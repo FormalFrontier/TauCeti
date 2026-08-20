@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.MarkovExchangeable
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
+public import TauCeti.Probability.Process.MarkovChain
 
 /-!
 # Mixtures of Markov chains
@@ -60,6 +61,11 @@ chains (`threeCycle_mixedMarkovChain`), but is not exchangeable and so not mixed
   is the degenerate mixture.
 * `TauCeti.Probability.MixedIIDWith.mixedMarkovChainWith`: a mixed i.i.d. process is a mixture of
   Markov chains with state-independent rows.
+* `TauCeti.Probability.markovChainLaw_mixedMarkovChainWith`: the homogeneous Markov chain of an
+  initial law and a transition kernel is the degenerate mixture with those constant witnesses, and
+  `TauCeti.Probability.markovChainLaw_markovExchangeable` is its Markov exchangeability. These make
+  the two classes non-vacuous at an arbitrary transition kernel, rather than only at the hypothesis
+  that some product form of the finite path laws holds.
 
 ## References
 
@@ -309,6 +315,51 @@ theorem MixedIID.mixedMarkovChain [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} (h : MixedIID μ X) : MixedMarkovChain μ X := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
   exact MixedMarkovChain.of_witnesses hν.mixedMarkovChainWith
+
+section MarkovChain
+
+open ProbabilityTheory
+
+variable (ν : Measure α) [IsProbabilityMeasure ν] (κ : Kernel α α) [IsMarkovKernel κ]
+
+/-- The finite path masses of the homogeneous Markov chain of `ν` and `κ`, read through
+`prefixLaw` for its coordinate process. This is the product form
+`markovExchangeable_of_prefixLaw_singleton_eq` and
+`mixedMarkovChainWith_const_of_prefixLaw_singleton_eq` ask for, so it is what supplies those two
+theorems with genuine instances. -/
+theorem markovChainLaw_prefixLaw_singleton [MeasurableSingletonClass α]
+    (n : ℕ) (w : Fin (n + 1) → α) :
+    prefixLaw (markovChainLaw ν κ) (fun i x => x i) (n + 1) {w}
+      = ν {w 0} * ∏ i : Fin n, κ (w i.castSucc) {w i.succ} := by
+  rw [prefixLaw_def, blockLaw_def]
+  exact markovChainLaw_map_prefix_apply_singleton ν κ n w
+
+/-- **A homogeneous Markov chain is Markov exchangeable.** Its finite path masses factor as an
+initial weight times a product of transition weights, and such a product depends on the path only
+through its first state and its transition counts. -/
+theorem markovChainLaw_markovExchangeable [Countable α] [MeasurableSingletonClass α] :
+    MarkovExchangeable (markovChainLaw ν κ) fun i x => x i :=
+  markovExchangeable_of_prefixLaw_singleton_eq
+    (fun i => (measurable_pi_apply i).aemeasurable) (fun a => ν {a}) (fun a b => κ a {b})
+    (markovChainLaw_prefixLaw_singleton ν κ)
+
+/-- **A homogeneous Markov chain is the degenerate mixture of Markov chains** at its own initial
+law and transition kernel: the two witnesses are the constant ones. This is the source of genuine
+`MixedMarkovChain` processes at an arbitrary transition kernel. -/
+theorem markovChainLaw_mixedMarkovChainWith [Countable α] [MeasurableSingletonClass α] :
+    MixedMarkovChainWith (markovChainLaw ν κ) (fun i x => x i)
+      (fun _ => (⟨ν, inferInstance⟩ : ProbabilityMeasure α))
+      fun _ a => (⟨κ a, inferInstance⟩ : ProbabilityMeasure α) :=
+  mixedMarkovChainWith_const_of_prefixLaw_singleton_eq
+    (fun i => (measurable_pi_apply i).aemeasurable) ⟨ν, inferInstance⟩
+    (fun a => ⟨κ a, inferInstance⟩) (markovChainLaw_prefixLaw_singleton ν κ)
+
+/-- **A homogeneous Markov chain is a mixture of Markov chains**, existential form. -/
+theorem markovChainLaw_mixedMarkovChain [Countable α] [MeasurableSingletonClass α] :
+    MixedMarkovChain (markovChainLaw ν κ) fun i x => x i :=
+  MixedMarkovChain.of_witnesses (markovChainLaw_mixedMarkovChainWith ν κ)
+
+end MarkovChain
 
 end Probability
 

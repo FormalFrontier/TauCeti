@@ -58,6 +58,9 @@ names around it. The cardinality identity is still expressed through the squarin
 * `TauCeti.card_elementaryTwoQuotient_eq_index_square`: the quotient cardinality as the index of
   the subgroup of squares.
 * `TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|G/G²| = |{g | g² = 1}|`.
+* `TauCeti.card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one` and
+  `TauCeti.le_twoRank_of_card_eq_two_pow`: a subgroup of exponent dividing two bounds the
+  elementary-2 quotient, hence the 2-rank, from below.
 * `TauCeti.twoRank` and `TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the 2-rank, with
   `|G/G²| = 2 ^ twoRank`, and `TauCeti.twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow` its
   inversion (`|G/G²| = 2 ^ n → twoRank G = n`).
@@ -417,6 +420,24 @@ theorem two_pow_twoRank_le_card :
     2 ^ twoRank G ≤ Nat.card G := by
   rw [← card_elementaryTwoQuotient_eq_two_pow_twoRank]
   exact card_elementaryTwoQuotient_le_card G
+
+/-- **A subgroup of exponent dividing two is no larger than the maximal elementary-2 quotient.**
+Such a subgroup sits inside the 2-torsion `{g | g² = 1}`, which is equinumerous with `G / G²`
+(`card_elementaryTwoQuotient_eq_card_twoTorsion`). This is how an explicit family of independent
+2-torsion elements bounds the 2-rank from below. -/
+theorem card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one {H : Subgroup G}
+    (hH : ∀ x ∈ H, x ^ 2 = 1) : Nat.card H ≤ Nat.card (ElementaryTwoQuotient G) := by
+  rw [card_elementaryTwoQuotient_eq_card_twoTorsion]
+  exact Nat.card_le_card_of_injective (fun x => ⟨(x : G), hH x x.2⟩)
+    fun _ _ hxy => Subtype.ext (by simpa using hxy)
+
+/-- **A subgroup of exponent dividing two and order `2 ^ r` forces the 2-rank to be at least `r`.**
+The rank form of `card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one`. -/
+theorem le_twoRank_of_card_eq_two_pow {H : Subgroup G} {r : ℕ} (hH : ∀ x ∈ H, x ^ 2 = 1)
+    (hcard : Nat.card H = 2 ^ r) : r ≤ twoRank G := by
+  have h := card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one G hH
+  rw [hcard, card_elementaryTwoQuotient_eq_two_pow_twoRank] at h
+  exact (Nat.pow_le_pow_iff_right one_lt_two).mp h
 
 end FiniteCardinality
 

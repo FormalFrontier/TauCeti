@@ -64,45 +64,23 @@ end Ring
 private theorem IsUpperUnitriangular.units_inv [Ring R] (g : (Matrix m m R)ˣ)
     (hg : (g : Matrix m m R).IsUpperUnitriangular) :
     ((g⁻¹ : (Matrix m m R)ˣ) : Matrix m m R).IsUpperUnitriangular := by
-  let N : Matrix m m R := (g : Matrix m m R) - 1
-  let x : Matrix m m R := -N
-  let S : Matrix m m R := ∑ i ∈ Finset.range (Fintype.card m), x ^ i
-  have hNtri : N.IsUpperTriangular :=
-    hg.isUpperTriangular.sub Matrix.blockTriangular_one
-  have hxtri : x.IsUpperTriangular := hNtri.neg
-  have hNdiag : ∀ i, N i i = 0 := by
-    intro i
-    simp [N, hg.apply_diag i]
+  -- `g = 1 - x` with `x` strictly upper triangular, so the truncated geometric series in `x` is a
+  -- two-sided inverse of `g`, and it is upper unitriangular
+  let x : Matrix m m R := -((g : Matrix m m R) - 1)
+  have hxtri : x.IsUpperTriangular :=
+    (hg.isUpperTriangular.sub Matrix.blockTriangular_one).neg
   have hxdiag : ∀ i, x i i = 0 := by
     intro i
-    simp [x, hNdiag i]
+    simp [x, hg.apply_diag i]
   have hxpow : x ^ Fintype.card m = 0 :=
     Matrix.pow_card_eq_zero_of_isUpperTriangular_of_diag_eq_zero hxtri hxdiag
   have hg_eq : (g : Matrix m m R) = 1 - x := by
-    simp [x, N]
-  have hS : S.IsUpperUnitriangular := by
-    rw [Matrix.isUpperUnitriangular_def]
-    refine ⟨?_, ?_⟩
-    · intro i j hji
-      simp only [S, Matrix.sum_apply]
-      apply Finset.sum_eq_zero
-      intro k _
-      exact (hxtri.pow k) hji
-    · intro i
-      have hm : 0 < Fintype.card m := Fintype.card_pos_iff.mpr ⟨i⟩
-      have hpow_diag : ∀ k : ℕ, (x ^ k) i i = (x i i) ^ k := by
-        intro k
-        induction k with
-        | zero => simp
-        | succ k ih =>
-            rw [pow_succ,
-              Matrix.mul_apply_diag_of_isUpperTriangular (hxtri.pow k) hxtri, ih]
-            exact (pow_succ _ _).symm
-      simp only [S, Matrix.sum_apply, hpow_diag, hxdiag i]
-      simp [hm.ne']
+    simp [x]
+  have hS : (∑ i ∈ Finset.range (Fintype.card m), x ^ i).IsUpperUnitriangular :=
+    isUpperUnitriangular_geom_sum_card_of_isUpperTriangular_of_diag_eq_zero hxtri hxdiag
   let u : (Matrix m m R)ˣ :=
     { val := g
-      inv := S
+      inv := ∑ i ∈ Finset.range (Fintype.card m), x ^ i
       val_inv := by
         rw [hg_eq, mul_neg_geom_sum, hxpow, sub_zero]
       inv_val := by

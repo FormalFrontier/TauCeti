@@ -8,6 +8,8 @@ module
 public import Mathlib.RingTheory.MvPowerSeries.Basic
 public import Mathlib.Topology.Algebra.Nonarchimedean.Basic
 public import Mathlib.Order.Filter.ZeroAndBoundedAtFilter
+import Mathlib.Data.Finsupp.Encodable
+import TauCeti.Topology.LiftTendstoCofinite
 import TauCeti.Order.Filter.ZeroAndBoundedAtFilter
 import TauCeti.RingTheory.Huber.Bounded
 
@@ -39,6 +41,10 @@ where the convergent/restricted power series ring is (5.6.1) in §5.6.
   restricted series are `A`-linearly isomorphic.
 * `restrictedMvPowerSeriesSubmoduleMap`: `M ↦ M⟨T₁, …, Tₖ⟩` is functorial in zero-continuous
   `A`-linear maps, with `IsRestricted.map` at the predicate level and the two functor laws.
+* `restrictedMvPowerSeriesSubmoduleMap_surjective`: that functor preserves **open** surjections
+  out of a module with a countable neighbourhood basis at `0` — the lifted coefficients can then
+  be chosen to still tend to `0`, which lifting them one at a time does not give. This is what
+  lets Wedhorn's Remark 8.29 descend from a presentation.
 * `restrictedMvPowerSeriesSubmodule_ext`: coefficientwise agreement is equality in `M⟨T₁, …, Tₖ⟩`
   — the elimination rule `MvPowerSeries.ext` cannot supply at module coefficients.
 * `coeff_coe_smul_restrictedMvPowerSeriesSubring`: the scalar action on `A⟨T₁, …, Tₖ⟩` is
@@ -71,10 +77,17 @@ coefficient binders — `[Zero]` and a topology, where the original asked for a 
 `IsRestricted.smul`, `restrictedMvPowerSeriesSubmodule`, `mem_restrictedMvPowerSeriesSubmodule`,
 `isRestricted_pi_iff`, `restrictedMvPowerSeriesSubmodulePiEquiv` and
 `restrictedMvPowerSeriesSubringLinearEquiv`, each with its computation lemmas, together with
-`IsRestricted.map`, `restrictedMvPowerSeriesSubmoduleMap` and its laws, and
+`IsRestricted.map`, `restrictedMvPowerSeriesSubmoduleMap` with its laws and
+`restrictedMvPowerSeriesSubmoduleMap_surjective`, and
 `coeff_coe_smul_restrictedMvPowerSeriesSubring`.
 
 **None of those has an AINTLIB counterpart**, for three different reasons.
+
+`restrictedMvPowerSeriesSubmoduleMap_surjective` has none for the same reason as the rest of the
+induced-map material: AINTLIB states restricted series over a coefficient *ring* only, so it has no
+induced map at module coefficients and a fortiori no surjectivity statement about one. Wedhorn
+Remark 8.29 is credited for the mathematics; the lifting construction it delegates to
+(`TauCeti.exists_lift_tendsto_cofinite_nhds`) is original here too.
 
 The two product statements — `isRestricted_pi_iff` and `restrictedMvPowerSeriesSubmodulePiEquiv` —
 have none because the source states restrictedness only for a single coefficient module and never
@@ -561,6 +574,50 @@ theorem restrictedMvPowerSeriesSubmoduleMap_comp {k : ℕ} {A M N P : Type*} [Se
       restrictedMvPowerSeriesSubmoduleMap (ψ.comp φ) (hψ.comp_of_eq hφ (map_zero φ)) :=
   LinearMap.ext fun _ ↦ restrictedMvPowerSeriesSubmodule_ext fun _ ↦ by
     simp [coeff_restrictedMvPowerSeriesSubmoduleMap]
+
+/-- **A strict surjection stays surjective on restricted series.** If `φ` is a surjective
+`A`-linear map which is continuous at `0` and carries the neighbourhoods of `0` onto
+neighbourhoods of `0`, and `M` has a countable neighbourhood basis at `0`, then every restricted
+series with coefficients in `N` is the image of one with coefficients in `M`.
+
+Countability of `𝓝 (0 : M)` is what supplies the antitone basis the lifted coefficients are drawn
+from, so it is a genuine restriction on `M` and not bookkeeping.
+
+Surjectivity coefficientwise is immediate from surjectivity of `φ`; what is not, and what openness
+supplies, is that the chosen preimages can be made to *converge*. Lifting each coefficient
+independently can leave the lifts spread out even though the original coefficients tend to `0`, in
+which case the lift is a power series but not a restricted one. See
+`TauCeti.exists_lift_tendsto_cofinite_nhds`, where the choice is made.
+
+This is the step Wedhorn's Remark 8.29 needs in order to descend from a presentation: applied to a
+presentation `Aᵐ ↠ M`, together with the finite free case, it is what makes the comparison map for
+a finitely generated `M` surjective.
+
+The hypothesis is the filter inequality the proof actually consumes rather than `IsOpenMap φ`,
+which is strictly stronger here: these modules carry `ContinuousAdd` rather than
+`IsTopologicalAddGroup`, so without translation invariance global openness does not follow from
+openness at `0`. A caller holding `IsOpenMap φ` — over a Tate ring, from
+`TauCeti.Huber.IsTateRing.isOpenMap` — passes `map_zero φ ▸ hopen.nhds_le 0`. -/
+theorem restrictedMvPowerSeriesSubmoduleMap_surjective {k : ℕ} {A M N : Type*} [Semiring A]
+    [AddCommMonoid M] [TopologicalSpace M] [Module A M] [ContinuousAdd M]
+    [ContinuousConstSMul A M] [(nhds (0 : M)).IsCountablyGenerated]
+    [AddCommMonoid N] [TopologicalSpace N] [Module A N] [ContinuousAdd N]
+    [ContinuousConstSMul A N] (φ : M →ₗ[A] N) (hφ : ContinuousAt φ 0)
+    (hsurj : Function.Surjective φ)
+    (hopen : nhds (0 : N) ≤ Filter.map φ (nhds (0 : M))) :
+    Function.Surjective (restrictedMvPowerSeriesSubmoduleMap (k := k) φ hφ) := by
+  intro g
+  obtain ⟨f, hfg, hf⟩ := TauCeti.exists_lift_tendsto_cofinite_nhds φ hsurj hopen
+    (fun s ↦ ((g : MvPowerSeries (Fin k) N) : (Fin k →₀ ℕ) → N) s)
+    (isRestricted_iff.mp (mem_restrictedMvPowerSeriesSubmodule.mp g.2))
+  -- `MvPowerSeries (Fin k) M` is a plain `def` for `(Fin k →₀ ℕ) → M`, and the lift `f` is produced
+  -- at the bare function type. The `show` is what makes it elaborate as a series so that
+  -- `IsRestricted` applies — the file's standing idiom, documented at `IsRestricted.map`.
+  refine ⟨⟨show MvPowerSeries (Fin k) M from f,
+      mem_restrictedMvPowerSeriesSubmodule.mpr (isRestricted_iff.mpr hf)⟩,
+    restrictedMvPowerSeriesSubmodule_ext fun s ↦ ?_⟩
+  rw [coeff_restrictedMvPowerSeriesSubmoduleMap]
+  exact hfg s
 
 /-- **`A⟨T₁, …, Tₖ⟩` as a submodule over itself**: at `M = A` the subring and the submodule cut
 out the same series, so they are `A`-linearly isomorphic.
