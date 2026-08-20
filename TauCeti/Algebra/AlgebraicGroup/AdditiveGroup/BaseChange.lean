@@ -6,9 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
-public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Basic
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.Bialgebra.SymmetricAlgebra.BaseChange
 
 /-!
@@ -36,12 +34,6 @@ additive-group worked example in the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv`: the rank-one specialization for `𝔾ₐ`.
-* `TauCeti.AdditiveGroup.coordinateHopfAlgebraBaseChangeIso`: its bundled
-  commutative-Hopf-algebra form, when the extension ring's universe contains the base ring's.
-* `TauCeti.AdditiveGroup.coordinateHopfAlgebraBaseChangeIso_hom_apply_tmul_ι`,
-  `TauCeti.AdditiveGroup.coordinateHopfAlgebraBaseChangeIso_hom_apply_tmul_one` and
-  `TauCeti.AdditiveGroup.coordinateHopfAlgebraBaseChangeIso_inv_apply_ι`: its coordinate formulas
-  on the additive generator and the scalar copies, in both directions.
 * `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv_tmul_ι`: its forward coordinate formula.
 * `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv_tmul_one`: its formula on scalar copies.
 * `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv_symm_ι`: the inverse formula for the additive
@@ -236,64 +228,6 @@ theorem gaScalarTensorBialgEquiv_symm_ι (s : K) :
         (gaScalarTensorBialgEquiv (k := k) (K := K)
           (s ⊗ₜ[k] SymmetricAlgebra.ι k k 1)) := congrArg _ h.symm
     _ = _ := BialgEquiv.symm_apply_apply _ _
-
-open CategoryTheory in
-/-- **Base change of the bundled `𝔾ₐ` coordinate Hopf algebra is the `𝔾ₐ` coordinate Hopf
-algebra over the new base.**
-
-This is the categorical form of `gaScalarTensorBialgEquiv`, mirroring
-`GeneralLinear.coordinateHopfAlgebraBaseChangeIso`. The extension ring's carrier universe must
-contain the base ring's carrier universe; in particular, this covers `ℤ → K` for `K` in any
-universe. The underlying bialgebra equivalence has no such restriction. -/
-noncomputable def coordinateHopfAlgebraBaseChangeIso
-    (k : Type u) (K : Type max u v) [CommRing k] [CommRing K] [Algebra k K] :
-    CommHopfAlgCat.baseChange (K := K) (coordinateHopfAlgebra k) ≅
-      coordinateHopfAlgebra K :=
-  (CommHopfAlgCat.ofIsoSelf
-      (CommHopfAlgCat.baseChange (K := K) (coordinateHopfAlgebra k))).symm ≪≫
-    CommHopfAlgCat.isoMk (gaScalarTensorBialgEquiv (k := k) (K := K)) ≪≫
-      CommHopfAlgCat.ofIsoSelf (coordinateHopfAlgebra K)
-
-open CategoryTheory in
-/-- The bundled base-change isomorphism has the same action on the additive coordinate generator
-as the underlying bialgebra equivalence. -/
-@[simp]
-theorem coordinateHopfAlgebraBaseChangeIso_hom_apply_tmul_ι
-    (k : Type u) (K : Type max u v) [CommRing k] [CommRing K] [Algebra k K] (s : K) (r : k) :
-    (coordinateHopfAlgebraBaseChangeIso k K).hom
-        (s ⊗ₜ[k] SymmetricAlgebra.ι k k r) =
-      s • SymmetricAlgebra.ι K K (algebraMap k K r) := by
-  simp only [coordinateHopfAlgebraBaseChangeIso, Iso.trans_hom, comp_apply,
-    CommHopfAlgCat.ofIsoSelf_hom, CommHopfAlgCat.isoMk_hom, Iso.symm_hom,
-    CommHopfAlgCat.ofIsoSelf_inv]
-  exact gaScalarTensorBialgEquiv_tmul_ι (k := k) (K := K) s r
-
-open CategoryTheory in
-/-- The bundled base-change isomorphism identifies the scalar copy of `K` on both sides. -/
-@[simp]
-theorem coordinateHopfAlgebraBaseChangeIso_hom_apply_tmul_one
-    (k : Type u) (K : Type max u v) [CommRing k] [CommRing K] [Algebra k K] (s : K) :
-    (coordinateHopfAlgebraBaseChangeIso k K).hom (s ⊗ₜ[k] 1) =
-      algebraMap K (SymmetricAlgebra K K) s := by
-  simp only [coordinateHopfAlgebraBaseChangeIso, Iso.trans_hom, comp_apply,
-    CommHopfAlgCat.ofIsoSelf_hom, CommHopfAlgCat.isoMk_hom, Iso.symm_hom,
-    CommHopfAlgCat.ofIsoSelf_inv]
-  exact gaScalarTensorBialgEquiv_tmul_one (k := k) (K := K) s
-
-open CategoryTheory in
-/-- The inverse bundled base-change isomorphism sends the additive coordinate generator back to
-its scalar pure tensor. -/
-@[simp]
-theorem coordinateHopfAlgebraBaseChangeIso_inv_apply_ι
-    (k : Type u) (K : Type max u v) [CommRing k] [CommRing K] [Algebra k K] (s : K) :
-    (coordinateHopfAlgebraBaseChangeIso k K).inv (SymmetricAlgebra.ι K K s) =
-      s ⊗ₜ[k] SymmetricAlgebra.ι k k 1 := by
-  -- The inverse of the categorical composite reduces to `ofHom` of the symmetric bialgebra
-  -- equivalence between two identity morphisms. Its coercion to a function is definitionally the
-  -- symmetric equivalence, but `ofHom_apply` is deliberately not a simp lemma.
-  change (gaScalarTensorBialgEquiv (k := k) (K := K)).symm
-      (SymmetricAlgebra.ι K K s) = _
-  exact gaScalarTensorBialgEquiv_symm_ι (k := k) (K := K) s
 
 end GaCoordinateBialgebra
 
