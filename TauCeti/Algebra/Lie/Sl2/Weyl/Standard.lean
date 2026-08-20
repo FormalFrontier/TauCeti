@@ -127,15 +127,21 @@ theorem isSl2Triple_ladder (hn : 0 < n) :
   lie_h_e_nsmul := by rw [lie_diag_raise, two_smul, two_nsmul]
   lie_h_f_nsmul := by rw [lie_diag_lower, two_smul, two_nsmul]
 
+/-- On the trivial standard module the raising operator vanishes. -/
+private theorem raise_zero : raise ℚ 0 = 0 := by
+  simpa using (raise_pow_eq_zero (K := ℚ) (n := 0))
+
+/-- On the trivial standard module the lowering operator vanishes. -/
+private theorem lower_zero : lower ℚ 0 = 0 := by
+  simpa using (lower_pow_eq_zero (K := ℚ) (n := 0))
+
 /-- **Conjugating the raising operator by the Weyl element.** The relation `n e n⁻¹ = -f`, written
 without the inverse. -/
 theorem weylUnit_mul_raise :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) * raise ℚ n =
       -(lower ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · rw [show raise ℚ 0 = 0 by simpa using (raise_pow_eq_zero (K := ℚ) (n := 0)),
-      show lower ℚ 0 = 0 by simpa using (lower_pow_eq_zero (K := ℚ) (n := 0)),
-      mul_zero, zero_mul, neg_zero]
+  · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
   have h := _root_.TauCeti.weylUnit_conj_e (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
     (isNilpotent_lower n ℚ)
   rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
@@ -149,9 +155,7 @@ theorem weylUnit_mul_lower :
     (weylUnit n : Module.End ℚ (Sl2Std ℚ n)) * lower ℚ n =
       -(raise ℚ n * (weylUnit n : Module.End ℚ (Sl2Std ℚ n))) := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · rw [show raise ℚ 0 = 0 by simpa using (raise_pow_eq_zero (K := ℚ) (n := 0)),
-      show lower ℚ 0 = 0 by simpa using (lower_pow_eq_zero (K := ℚ) (n := 0)),
-      mul_zero, zero_mul, neg_zero]
+  · rw [raise_zero, lower_zero, mul_zero, zero_mul, neg_zero]
   have h := _root_.TauCeti.weylUnit_conj_f (isSl2Triple_ladder n hn) (isNilpotent_raise n ℚ)
     (isNilpotent_lower n ℚ)
   rw [← _root_.TauCeti.coe_weylUnit (isNilpotent_raise n ℚ) (isNilpotent_lower n ℚ),
