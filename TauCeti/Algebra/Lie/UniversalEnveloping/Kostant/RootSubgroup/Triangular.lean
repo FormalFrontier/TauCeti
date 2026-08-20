@@ -84,7 +84,7 @@ theorem repr_integralDividedPower_eq_zero_of_not_lt
   · exact fun heq ↦ hrs (horder hn heq)
 
 include e hM in
-/-- Every positive divided power of a positive root operator is strictly upper triangular in an
+/-- Every positive divided power of a positive root operator is upper triangular in an
 ordered weight basis. -/
 theorem isUpperTriangular_toMatrix_integralDividedPower
     (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
@@ -117,19 +117,30 @@ theorem isUpperUnitriangular_kostantRootSubgroupMatrix {A : Type*} [CommRing A]
     (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     ((kostantRootSubgroupMatrix e h ρ M hM i hnil b f :
         Matrix.GeneralLinearGroup η A) : Matrix η η A).IsUpperUnitriangular := by
+  have hentry (r s : η) :
+      kostantRootSubgroupMatrix e h ρ M hM i hnil b f r s =
+        ∑ n ∈ Finset.range
+            (nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))),
+          b.repr (integralDividedPower
+              (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M n
+              (fun _ hv ↦ dividedPower_apply_mem_of_kostantForm_apply_mem
+                e h ρ hM i n hv) (b s)) r •
+            Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) ^ n := by
+    rw [kostantRootSubgroupMatrix_apply, Module.Basis.baseChange_apply,
+      kostantRootSubgroupPoints_tmul, map_sum, Finsupp.finsetSum_apply]
+    refine Finset.sum_congr rfl fun n _ ↦ ?_
+    rw [Module.Basis.baseChange_repr_tmul, mul_one]
   rw [Matrix.isUpperUnitriangular_def]
   constructor
   · intro r s hsr
-    rw [kostantRootSubgroupMatrix_apply, Module.Basis.baseChange_apply,
-      kostantRootSubgroupPoints_tmul, map_sum, Finsupp.finsetSum_apply]
+    rw [hentry]
     apply Finset.sum_eq_zero
     intro n _
     by_cases hn : n = 0
     · subst n
       have hrs : s ≠ r := ne_of_lt hsr
       simp [integralDividedPower_zero, hrs]
-    · rw [Module.Basis.baseChange_repr_tmul,
-        repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
+    · rw [repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
           (r := r) (s := s) (not_lt_of_ge hsr.le) (Nat.pos_of_ne_zero hn)]
       simp
   · intro r
@@ -142,13 +153,11 @@ theorem isUpperUnitriangular_kostantRootSubgroupMatrix {A : Type*} [CommRing A]
         have happ := LinearMap.congr_fun hpow ((b r : M) : V)
         simpa using happ
       exact b.ne_zero r (Subtype.ext hbzero)
-    rw [kostantRootSubgroupMatrix_apply, Module.Basis.baseChange_apply,
-      kostantRootSubgroupPoints_tmul, map_sum, Finsupp.finsetSum_apply]
+    rw [hentry]
     rw [Finset.sum_eq_single 0]
     · simp [integralDividedPower_zero]
     · intro n _ hn
-      rw [Module.Basis.baseChange_repr_tmul,
-        repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
+      rw [repr_integralDividedPower_eq_zero_of_not_lt e h ρ M hM b wt hwt hα horder
           (lt_irrefl r) (Nat.pos_of_ne_zero hn)]
       simp
     · intro hzero
