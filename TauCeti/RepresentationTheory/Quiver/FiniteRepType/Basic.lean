@@ -7,8 +7,8 @@ module
 
 public import Mathlib.Algebra.Category.ModuleCat.Biproducts
 public import Mathlib.CategoryTheory.Limits.FunctorCategory.BinaryBiproducts
-public import Mathlib.CategoryTheory.Skeletal
 public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
+public import TauCeti.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.Quiver.Representation.Basic
 
 /-!
@@ -54,10 +54,9 @@ same, and it stays meaningful over an infinite quiver.
 
 The skeleton is Mathlib's `CategoryTheory.Skeleton`, so `IsFiniteRepType` is a finiteness statement
 about an honest type of isomorphism classes rather than about a hand-rolled quotient. The bridge in
-both proofs below is `CategoryTheory.toSkeleton_eq_toSkeleton_iff`, that two objects have the same
-class exactly when they are isomorphic, followed by
-`CategoryTheory.ObjectProperty.isoHom_inv_id_hom` and its partner, which turn an isomorphism of the
-full subcategory into an isomorphism of the underlying representations.
+both proofs below is `CategoryTheory.ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso`,
+that two objects of a full subcategory have the same class in its skeleton exactly when they are
+isomorphic in the ambient category.
 
 The two results are stated for a family `M : α → QuiverRep k Q` rather than for a set of
 representations: a family is what the worked examples produce -- the loop quiver's family is
@@ -89,6 +88,9 @@ def IsFinDim (k : Type u) (Q : Type v) [Field k] [Quiver.{w} Q]
 
 variable {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q]
 
+/-- **The elimination and introduction rule for `TauCeti.IsFinDim`**: it is finite-dimensionality
+at every vertex. -/
+@[simp]
 theorem isFinDim_iff {M : QuiverRep.{u, v, w, t} k Q} :
     IsFinDim k Q M ↔ ∀ v : Paths Q, FiniteDimensional k (M.obj v) :=
   Iff.rfl
@@ -128,9 +130,8 @@ private theorem toIndecSkeleton_injective (hfin : ∀ a, IsFinDim k Q (M a))
     Function.Injective fun a ↦ toIndecSkeleton (hfin a) (hind a) := by
   intro a b hab
   by_contra hne'
-  exact hne a b hne' ((toSkeleton_eq_toSkeleton_iff.mp hab).map
-    fun e ↦ ⟨e.hom.hom, e.inv.hom, ObjectProperty.isoHom_inv_id_hom e,
-      ObjectProperty.isoInv_hom_id_hom e⟩)
+  exact hne a b hne'
+    ((ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso _ _ _).mp hab)
 
 /-- **An infinite family of pairwise non-isomorphic finite-dimensional indecomposables refutes
 finite representation type.** This is how a quiver is shown to have infinite representation type:

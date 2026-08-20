@@ -14,8 +14,8 @@ public import Mathlib.Data.Fintype.Basic
 The loop quiver `•↺` has a single vertex and a single arrow from it to itself. It is the smallest
 quiver that is not acyclic, which makes it the standard boundary case of the theory: its path
 algebra is the infinite-dimensional `k[X]`
-(`TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop`), and it has infinite representation
-type over every field (`TauCeti.RepresentationTheory.Quiver.FiniteRepType.OneLoop`).
+(`TauCeti.RepresentationTheory.Quiver.OneLoop.PathAlgebra`), and it has infinite representation
+type over every field (`TauCeti.RepresentationTheory.Quiver.OneLoop.FiniteRepType`).
 
 This file carries only the vertex and arrow data, so that both of those developments can rest on
 it without one depending on the other.

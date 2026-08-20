@@ -17,7 +17,7 @@ source to the target for each element of an arrow type `A`. Taking `A = Fin 2` g
 *Kronecker quiver* `• ⇉ •`, the smallest connected acyclic quiver that is not of Dynkin type and
 hence the boundary case of Gabriel's theorem; `A = Fin 1` gives the `A₂` quiver `• → •`. (Dropping
 acyclicity there would be wrong: the one-loop quiver of
-`TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop` is connected, smaller, and not of Dynkin
+`TauCeti.RepresentationTheory.Quiver.OneLoop.Basic` is connected, smaller, and not of Dynkin
 type.)
 
 This file constructs the quiver and classifies its paths: it is acyclic, and its only nontrivial
@@ -44,7 +44,7 @@ paths are the arrows themselves. The dimension of its path algebra is computed i
 
 This file supplies the “Kronecker quiver” worked example of
 `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`, alongside the one-loop
-quiver of `TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop`. See Derksen--Weyman, *An
+quiver of `TauCeti.RepresentationTheory.Quiver.OneLoop.Basic`. See Derksen--Weyman, *An
 Introduction to Quiver Representations*, and Assem--Simson--Skowroński, *Elements of the
 Representation Theory of Associative Algebras I*, Ch. II.
 -/

@@ -266,6 +266,7 @@ theorem eq_of_nonempty_oneLoopRep_iso {c d : k}
   exact mul_left_cancel₀ hne (by rw [oneLoopRepScalar_intertwine e.hom, mul_comm])
 
 /-- Two scalar representations of `•↺` are isomorphic exactly when their scalars agree. -/
+@[simp]
 theorem nonempty_oneLoopRep_iso_iff {c d : k} :
     Nonempty (oneLoopRep.{u, w} k c ≅ oneLoopRep.{u, w} k d) ↔ c = d :=
   ⟨eq_of_nonempty_oneLoopRep_iso, by rintro rfl; exact ⟨Iso.refl _⟩⟩
