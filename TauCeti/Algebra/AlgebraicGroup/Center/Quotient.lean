@@ -96,7 +96,8 @@ theorem centerPointwiseQuotientMk_apply
   exact pointwiseQuotientMk_apply H (centerDefiningIdeal H)
     (isNormal_centerDefiningIdeal H) A g
 
-/-- The kernel of `G(A) ⟶ G(A) / Z(G)(A)` is exactly the center of the point group. -/
+/-- The kernel of `G(A) ⟶ G(A) / Z(G)(A)` is exactly the `A`-points of the represented
+center. -/
 theorem centerPointwiseQuotientMk_ker :
     (centerPointwiseQuotientMk H A).hom.ker = HopfAlgebra.center k H A := by
   exact (pointwiseQuotientMk_ker H (centerDefiningIdeal H)
@@ -131,13 +132,6 @@ noncomputable def centerQuotientFppfProjection (H : _root_.CommHopfAlgCat.{u} k)
     pointsFppfGroupObject H ⟶ centerQuotientFppfSheaf H :=
   fppfQuotientProjection H (centerDefiningIdeal H) (isNormal_centerDefiningIdeal H)
 
-/-- The center-quotient projection is the general fppf quotient projection for the center's
-defining ideal. -/
-theorem centerQuotientFppfProjection_def (H : _root_.CommHopfAlgCat.{u} k) :
-    centerQuotientFppfProjection H =
-      fppfQuotientProjection H (centerDefiningIdeal H) (isNormal_centerDefiningIdeal H) := by
-  rw [centerQuotientFppfProjection]
-
 /-- Maps from the center quotient to an fppf sheaf group are equivalent to maps from the
 pointwise center quotient into its underlying presheaf. -/
 noncomputable def centerQuotientFppfHomEquiv (H : _root_.CommHopfAlgCat.{u} k)
@@ -155,6 +149,28 @@ noncomputable def centerQuotientFppfLift (H : _root_.CommHopfAlgCat.{u} k)
       (isNormal_centerDefiningIdeal H) ⟶ fppfGroupObjectToPresheaf F) :
     centerQuotientFppfSheaf H ⟶ F :=
   (centerQuotientFppfHomEquiv H F).symm f
+
+/-- The universal-property equivalence sends the center-quotient lift back to the supplied map. -/
+@[simp]
+theorem centerQuotientFppfHomEquiv_centerQuotientFppfLift
+    (H : _root_.CommHopfAlgCat.{u} k)
+    (F : Grp (Sheaf (CommAlgCat.fppfTopology k) (Type (u + 1))))
+    (f : pointwiseQuotientPresheafGrp H (centerDefiningIdeal H)
+      (isNormal_centerDefiningIdeal H) ⟶ fppfGroupObjectToPresheaf F) :
+    centerQuotientFppfHomEquiv H F (centerQuotientFppfLift H F f) = f :=
+  (centerQuotientFppfHomEquiv H F).apply_symm_apply f
+
+/-- A morphism from the center quotient is determined by its image under the universal-property
+equivalence. -/
+theorem centerQuotientFppfLift_unique (H : _root_.CommHopfAlgCat.{u} k)
+    (F : Grp (Sheaf (CommAlgCat.fppfTopology k) (Type (u + 1))))
+    (f : pointwiseQuotientPresheafGrp H (centerDefiningIdeal H)
+      (isNormal_centerDefiningIdeal H) ⟶ fppfGroupObjectToPresheaf F)
+    (g : centerQuotientFppfSheaf H ⟶ F)
+    (hg : centerQuotientFppfHomEquiv H F g = f) :
+    g = centerQuotientFppfLift H F f := by
+  apply (centerQuotientFppfHomEquiv H F).injective
+  rw [hg, centerQuotientFppfHomEquiv_centerQuotientFppfLift]
 
 /-- The projection to the fppf center quotient is an epimorphism. -/
 instance instEpiCenterQuotientFppfProjection (H : _root_.CommHopfAlgCat.{u} k) :
