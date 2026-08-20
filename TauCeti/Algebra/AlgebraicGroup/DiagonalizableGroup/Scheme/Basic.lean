@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 
 /-!
 # Diagonalizable group schemes
@@ -48,6 +48,10 @@ ring in `Type u`.
 * `TauCeti.DiagonalizableGroup.isAffine_groupScheme`: `D(G)` is affine.
 * `TauCeti.DiagonalizableGroup.locallyOfFiniteType_groupScheme`: `D(G) ⟶ Spec R` is
   locally of finite type.
+* `TauCeti.DiagonalizableGroup.finiteTypeGroupScheme`: `D(G)` bundled as a finite-type affine
+  group scheme.
+* `TauCeti.DiagonalizableGroup.finiteTypeGroupSchemeIso`: its comparison with the object produced
+  by the finite-type Hopf/group-scheme anti-equivalence.
 * `TauCeti.DiagonalizableGroup.schemeFunctor_faithful` and
   `TauCeti.DiagonalizableGroup.schemeFunctor_full`: faithfulness over a nontrivial base and
   fullness over a base with connected prime spectrum.
@@ -288,6 +292,31 @@ instance locallyOfFiniteType_groupScheme (G : FGCommGrpCat.{u}) :
     rw [← AlgebraicGeometry.specOverSpec_over]
     infer_instance
   exact locallyOfFiniteType_comp _ _
+
+/-- The diagonalizable group scheme `D(G)` bundled as a finite-type affine group scheme. -/
+noncomputable def finiteTypeGroupScheme (G : FGCommGrpCat.{u}) :
+    FiniteTypeAffineGroupSchemeCat (CommRingCat.of R) :=
+  ⟨⟨groupScheme R G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩,
+    (finiteTypeAffineGroupSchemeProperty_iff _ _).2
+      (locallyOfFiniteType_groupScheme R G)⟩
+
+/-- The underlying group scheme of the bundled finite-type `D(G)` is `groupScheme R G`. -/
+@[simp]
+theorem finiteTypeGroupScheme_obj_obj (G : FGCommGrpCat.{u}) :
+    (finiteTypeGroupScheme R G).obj.obj = groupScheme R G := by
+  rfl
+
+/-- The finite-type Hopf/group-scheme anti-equivalence sends the coordinate ring `R[G]` to the
+bundled diagonalizable group scheme `D(G)`. -/
+noncomputable def finiteTypeGroupSchemeIso (G : FGCommGrpCat.{u}) :
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor.obj
+        (Opposite.op (coordinateRing R G)) ≅
+      finiteTypeGroupScheme R G :=
+  finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorObjIso R
+      (Opposite.op (coordinateRing R G)) ≪≫
+    (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+      ((affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+        (eqToIso (groupScheme_def R G).symm))
 
 /-- Every object produced by the diagonalizable group-scheme functor is affine. -/
 instance isAffine_schemeFunctor_obj (G : (FGCommGrpCat.{u})ᵒᵖ) :

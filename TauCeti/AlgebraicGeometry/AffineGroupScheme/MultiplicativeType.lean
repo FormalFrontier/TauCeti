@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 import TauCeti.CategoryTheory.ObjectProperty
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 
@@ -27,8 +26,6 @@ category.
 * `TauCeti.multiplicativeTypeAffineGroupSchemeProperty`: the multiplicative-type property for
   finite-type affine group schemes over a field.
 * `TauCeti.MultiplicativeTypeAffineGroupSchemeCat`: the corresponding full subcategory.
-* `TauCeti.DiagonalizableGroup.multiplicativeTypeAffineGroupSchemeProperty_groupScheme`: every
-  canonical finite-type diagonalizable group scheme is of multiplicative type.
 * `TauCeti.multiplicativeTypeCommHopfAlgCatOpEquivMultiplicativeTypeAffineGroupSchemeCat`: the
   restricted affine Hopf/group-scheme anti-equivalence.
 
@@ -81,43 +78,6 @@ instance (k : Type u) [Field k] :
 /-- The category of finite-type affine group schemes of multiplicative type over a field. -/
 abbrev MultiplicativeTypeAffineGroupSchemeCat (k : Type u) [Field k] :=
   (multiplicativeTypeAffineGroupSchemeProperty k).FullSubcategory
-
-namespace DiagonalizableGroup
-
-/-- The canonical finite-type diagonalizable group scheme `D(G)` is of multiplicative type. -/
-@[grind =>]
-theorem multiplicativeTypeAffineGroupSchemeProperty_groupScheme
-    (k : Type u) [Field k] (G : FGCommGrpCat.{u}) :
-    multiplicativeTypeAffineGroupSchemeProperty k
-      ⟨⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩,
-        (finiteTypeAffineGroupSchemeProperty_iff _ _).2
-          (locallyOfFiniteType_groupScheme k G)⟩ := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H : FiniteTypeCommHopfAlgCat.{u, u} k := coordinateRing k G
-  let D : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k) :=
-    ⟨⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩,
-      (finiteTypeAffineGroupSchemeProperty_iff _ _).2
-        (locallyOfFiniteType_groupScheme k G)⟩
-  have hE : multiplicativeTypeAffineGroupSchemeProperty k (E.functor.obj (op H)) := by
-    rw [multiplicativeTypeAffineGroupSchemeProperty_iff]
-    exact (multiplicativeTypeCommHopfAlgProperty k).prop_of_iso
-      (Iso.unop (E.unitIso.app (op H))).symm (multiplicativeType_coordinateRing k G)
-  let eGrp :
-      ((affineGroupSchemeProperty (CommRingCat.of k)).ι.obj
-        ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj
-          (E.functor.obj (op H)))) ≅ D.obj.obj :=
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app
-        (op H) ≪≫
-      eqToIso (groupScheme_def k G).symm
-  let eAffine :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj
-          (E.functor.obj (op H)) ≅ D.obj :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso eGrp
-  let e : E.functor.obj (op H) ≅ D :=
-    (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso eAffine
-  exact (multiplicativeTypeAffineGroupSchemeProperty k).prop_of_iso e hE
-
-end DiagonalizableGroup
 
 /-- Under the finite-type affine Hopf/group-scheme anti-equivalence, the inverse image of the
 multiplicative-type property on group schemes is the multiplicative-type property on coordinate
