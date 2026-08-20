@@ -196,12 +196,11 @@ private theorem sum_hatFunction_eq_one (N : ℕ) (t : I) :
     have hrestrict := Finset.sum_subset hsubset hzero
     have hhatm : hatFunction N m t = 1 - (r - m) := by
       unfold hatFunction
-      rw [show (N : ℝ) * (t : ℝ) - (m : ℝ) = r - m by rw [hr],
+      rw [← hr,
         abs_of_nonneg (by simpa [hr, hm] using h1), max_eq_right (by linarith [h2])]
     have hhatnext : hatFunction N (m + 1) t = r - m := by
       unfold hatFunction
-      rw [show (N : ℝ) * (t : ℝ) - ((m + 1 : ℕ) : ℝ) = r - (m + 1) by
-        push_cast; rw [hr]]
+      rw [← hr, Nat.cast_add, Nat.cast_one]
       rw [abs_of_nonpos (by simpa [hr, hm] using h2.le), max_eq_right (by linarith [h1])]
       ring
     rw [← hrestrict]

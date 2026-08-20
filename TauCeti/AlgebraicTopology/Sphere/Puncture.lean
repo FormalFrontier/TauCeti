@@ -82,10 +82,8 @@ private noncomputable def normalizeSegmentToSphere {Y : Type*} [TopologicalSpace
     (ContinuousMap.Homotopy.affine F G).continuous fun z => by
       have hline : (ContinuousMap.Homotopy.affine F G) z =
           (1 - (z.1 : ℝ)) • f z.2 + (z.1 : ℝ) • g z.2 := by
-        rw [ContinuousMap.Homotopy.affine_apply, AffineMap.lineMap_apply]
-        change (z.1 : ℝ) • (g z.2 - f z.2) + f z.2 = _
-        rw [smul_sub, sub_smul, one_smul]
-        abel
+        rw [ContinuousMap.Homotopy.affine_apply, AffineMap.lineMap_apply_module]
+        rfl
       rw [hline]
       exact h0 z
 
@@ -100,11 +98,8 @@ private theorem coe_normalizeSegmentToSphere_apply (u : I) (y : Y) :
     ((normalizeSegmentToSphere f g hf hg h0 (u, y) : sphere (0 : E) 1) : E) =
       normalize ((1 - (u : ℝ)) • f y + (u : ℝ) • g y) := by
   rw [normalizeSegmentToSphere, coe_normalizeToSphere_apply,
-    ContinuousMap.Homotopy.affine_apply, AffineMap.lineMap_apply]
-  congr 1
-  change (u : ℝ) • (g y - f y) + f y = _
-  rw [smul_sub, sub_smul, one_smul]
-  abel
+    ContinuousMap.Homotopy.affine_apply, AffineMap.lineMap_apply_module]
+  rfl
 
 /-- The segment homotopy starts at the radial projection of `f`. -/
 private theorem coe_normalizeSegmentToSphere_zero_left (y : Y) :
