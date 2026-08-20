@@ -26,6 +26,7 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 ## Main results
 
 * `TauCeti.successorArray_visitCount`: the defining step relation of the successor array.
+* `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
 * `TauCeti.pathOfSuccessors_successorArray`: reconstruction inverts the successor decomposition.
 
@@ -73,6 +74,7 @@ private def pathOfSuccessorsUpTo (a₀ : α) (s : α → ℕ → α) : ℕ → �
 def pathOfSuccessors (a₀ : α) (s : α → ℕ → α) (n : ℕ) : α :=
   pathOfSuccessorsUpTo a₀ s n n
 
+-- These private witnesses let the exported equations keep the definition bodies unexposed.
 private theorem visitCount_def_private (x : ℕ → α) (a : α) (n : ℕ) :
     visitCount x a n = occCount (fun i : Fin n => x i.val) a :=
   rfl
@@ -114,7 +116,7 @@ theorem visitCount_eq_count [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ)
   rw [visitCount, occCount_eq_sum, Nat.count_eq_card_filter_range, Finset.card_filter,
     Fin.sum_univ_eq_sum_range (fun i => if x i = a then 1 else 0) n]
 
-@[simp]
+@[simp, grind =]
 theorem visitCount_zero (x : ℕ → α) (a : α) : visitCount x a 0 = 0 := by
   classical
   rw [visitCount_eq_count, Nat.count_zero]
@@ -125,20 +127,30 @@ theorem visitCount_congr (h : ∀ i < n, x i = y i) : visitCount x a n = visitCo
     funext fun i => h i.val i.isLt]
 
 /-- Splitting a visit count at the final index. -/
-theorem visitCount_succ (x : ℕ → α) (a : α) (n : ℕ) :
+@[grind =]
+theorem visitCount_succ [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ) :
     visitCount x a (n + 1) =
       if x n = a then visitCount x a n + 1 else visitCount x a n := by
-  rw [visitCount_eq_count, visitCount_eq_count, Nat.count_succ]
-  split_ifs <;> simp
+  rw [visitCount_def, visitCount_def]
+  have h := (occCount_comp_castSucc_add_last (w := fun i : Fin (n + 1) => x i.val) a).symm
+  -- Normalize the finite-word endpoints while leaving `occCount` opaque.
+  change occCount (fun i : Fin (n + 1) => x i.val) a =
+    occCount (fun i : Fin n => x i.val) a + (if x n = a then 1 else 0) at h
+  by_cases hx : x n = a
+  · rw [ite_eq_left hx] at h ⊢
+    exact h
+  · rw [ite_eq_right hx, Nat.add_zero] at h
+    rw [ite_eq_right hx]
+    exact h
 
 /-- One more visit is counted when the sequence has the specified value. -/
-@[simp]
 theorem visitCount_succ_of_eq (h : x n = a) : visitCount x a (n + 1) = visitCount x a n + 1 := by
+  classical
   rw [visitCount_succ, ite_eq_left h]
 
 /-- No visit is added when the sequence has a different value. -/
-@[simp]
 theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCount x a n := by
+  classical
   rw [visitCount_succ, ite_eq_right h]
 
 /-- A time at which `x` has value `a` is the visit indexed by the number of earlier visits. -/

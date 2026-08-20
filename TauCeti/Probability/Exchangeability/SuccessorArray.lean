@@ -12,27 +12,9 @@ public import TauCeti.Probability.Exchangeability.Basic
 /-!
 # The successor array of a path
 
-Read a sequence `x : ℕ → α` as the trajectory of a walk on the state space `α`. For each state `a`
-list the times at which the walk sits at `a`, and record the state it moves to next. This is the
-**successor array**
-
-```text
-successorArray x a k = x (visitTime x a k + 1),
-```
-
-the state entered just after the `k`-th visit of `x` to `a`. Together with the initial state
-`x 0` it is a complete encoding: the walk is rebuilt from it by following, at each visit to a
-state, that state's next unused successor. `pathOfSuccessors` performs the rebuilding and
-`pathOfSuccessors_successorArray` is the round trip
-
-```text
-pathOfSuccessors (x 0) (successorArray x) = x.
-```
-
-Neither direction needs a recurrence hypothesis. Rebuilding is total because it is defined by
-finite-horizon recursion, and the round trip only ever consults entries `successorArray x a k` for
-which a `k`-th visit to `a` genuinely occurred. `Nat.nth` makes the remaining entries in the
-successor array junk, and they are never read.
+The combinatorial successor-array encoding and its inverse are defined in
+`TauCeti.Combinatorics.Enumerative.SuccessorArray`. This file relates that encoding to transition
+counts and proves that both directions of the change of variables are measurable.
 
 ## Why this is the Diaconis–Freedman decomposition
 
@@ -43,23 +25,10 @@ this identity into within-row exchangeability requires the later endpoint and re
 that step is not proved here. The measurable encoding proved here is what will transfer a future
 representation of the joint law of `(x 0, successorArray x)` back to the law of the path.
 
-## Main definitions
-
-* `TauCeti.visitCount`: the number of visits of a sequence to a state before a time.
-* `TauCeti.visitTime`: the time of the `k`-th visit of a sequence to a state.
-* `TauCeti.successorArray`: the state entered just after the `k`-th visit to a state.
-* `TauCeti.pathOfSuccessors`: the sequence rebuilt from an initial state and a
-  successor array.
-
 ## Main results
 
-* `TauCeti.successorArray_visitCount`: the defining step relation, that the sequence
-  moves from `x n` to the successor indexed by the number of earlier visits to `x n`.
-* `TauCeti.pathOfSuccessors_successorArray`: rebuilding inverts the decomposition.
 * `TauCeti.Probability.transitionCount_prefixProj`: the transition counts of a prefix are the
   occurrence counts in the rows of the successor array.
-* `TauCeti.visitTime_eq_iff`: the fibres of the visit times, which is what makes the
-  decomposition measurable.
 * `TauCeti.Probability.measurable_pathOfSuccessors` and
   `TauCeti.Probability.measurable_successorArray`: both directions are measurable.
 * `TauCeti.Probability.map_pathOfSuccessors_map_apply_zero_prodMk_successorArray`: every law on
@@ -100,17 +69,31 @@ private theorem transitionCount_prefixProj_succ_add_ite (x : ℕ → α) (n : �
       transitionCount (prefixProj α (n + 1) x) a b +
         if x n = a ∧ x (n + 1) = b then 1 else 0 := by
   classical
-  rw [transitionCount_eq_card_filter, transitionCount_eq_card_filter, Finset.card_filter,
-    Finset.card_filter, Fin.sum_univ_castSucc]
-  refine congrArg₂ _ (Finset.sum_congr rfl fun i _ => ?_) ?_
-  · by_cases h : x i.val = a ∧ x (i.val + 1) = b <;> simp [prefixProj_apply, h]
-  · by_cases h : x n = a ∧ x (n + 1) = b <;> simp [prefixProj_apply, h]
+  have h := (transitionCount_comp_castSucc_add_last
+    (w := prefixProj α (n + 2) x) a b).symm
+  have hprefix : prefixProj α (n + 2) x ∘ Fin.castSucc = prefixProj α (n + 1) x := by
+    funext i
+    rfl
+  rw [hprefix] at h
+  -- Normalize the two final indices while leaving `transitionCount` opaque.
+  change transitionCount (prefixProj α (n + 2) x) a b =
+    transitionCount (prefixProj α (n + 1) x) a b +
+      (if x n = a ∧ x (n + 1) = b then 1 else 0) at h
+  exact h
 
-private theorem transitionCount_prefixProj_eq_card_filter
+/-- A visit count is the occurrence count of the corresponding finite prefix. -/
+theorem visitCount_eq_occCount_prefixProj (x : ℕ → α) (a : α) (n : ℕ) :
+    visitCount x a n = occCount (prefixProj α n x) a := by
+  rw [visitCount_def]
+  rfl
+
+private theorem transitionCount_prefixProj_eq_occCount
     (x : ℕ → α) (n : ℕ) (a b : α) :
     transitionCount (prefixProj α (n + 1) x) a b =
-      ((Finset.range (visitCount x a n)).filter fun k => successorArray x a k = b).card := by
+      occCount (prefixProj α (visitCount x a n) (successorArray x a)) b := by
   classical
+  rw [← visitCount_eq_occCount_prefixProj (successorArray x a) b (visitCount x a n),
+    visitCount_eq_count, Nat.count_eq_card_filter_range]
   induction n with
   | zero => simp [transitionCount_eq_card_filter]
   | succ n ih =>
@@ -119,8 +102,7 @@ private theorem transitionCount_prefixProj_eq_card_filter
     · rw [visitCount_succ_of_eq hx, Finset.range_add_one, Finset.filter_insert,
         successorArray_visitCount_of_eq hx]
       by_cases hb : x (n + 1) = b
-      · simp [hb, hx]
-      · simp [hb, hx]
+      <;> simp [hb, hx]
     · rw [visitCount_succ_of_ne hx]
       simp [hx]
 
@@ -131,9 +113,8 @@ theorem transitionCount_prefixProj (x : ℕ → α) (n : ℕ) (a b : α) :
     transitionCount (prefixProj α (n + 1) x) a b =
       visitCount (successorArray x a) b (visitCount x a n) := by
   classical
-  rw [transitionCount_prefixProj_eq_card_filter,
-    visitCount_eq_count (successorArray x a) b (visitCount x a n),
-    Nat.count_eq_card_filter_range]
+  rw [transitionCount_prefixProj_eq_occCount,
+    ← visitCount_eq_occCount_prefixProj (successorArray x a) b (visitCount x a n)]
 
 end TransitionCounts
 
@@ -144,7 +125,7 @@ variable {α : Type*} [MeasurableSpace α] [MeasurableSingletonClass α] {a : α
 /-- The event that a path has a specified value at a specified index. -/
 private theorem measurableSet_apply_eq (a : α) (n : ℕ) :
     MeasurableSet {x : ℕ → α | x n = a} := by
-  -- The equality event is definitionally the preimage of the singleton.
+  -- Writing the set-builder as a preimage lets `measurable_pi_apply` infer its target set.
   change MeasurableSet ((fun x : ℕ → α => x n) ⁻¹' {a})
   exact measurable_pi_apply n (measurableSet_singleton a)
 
@@ -167,6 +148,12 @@ theorem measurable_visitCount (a : α) (n : ℕ) :
     Measurable fun x : ℕ → α => visitCount x a n :=
   measurable_visitCount_comp a n fun i _ => measurable_pi_apply i
 
+/-- The event witnessing that index `n` is the `k`-th visit to `a` is measurable. -/
+private theorem measurableSet_isVisitWitness (a : α) (k n : ℕ) :
+    MeasurableSet {x : ℕ → α | x n = a ∧ visitCount x a n = k} :=
+  (measurableSet_apply_eq a n).inter
+    (measurable_visitCount a n (measurableSet_singleton k))
+
 /-- Visit times are measurable functions of the path. Each fibre is described by
 `visitTime_eq_iff` as a countable Boolean combination of coordinate events. -/
 theorem measurable_visitTime (a : α) (k : ℕ) :
@@ -176,24 +163,23 @@ theorem measurable_visitTime (a : α) (k : ℕ) :
       ({x : ℕ → α | x m = a} ∩ {x : ℕ → α | visitCount x a m = k}) ∪
         {x : ℕ → α | m = 0 ∧ ∀ n, ¬(x n = a ∧ visitCount x a n = k)} := by
     ext x
-    simpa [Set.mem_preimage, Set.mem_singleton_iff] using visitTime_eq_iff (x := x) (a := a)
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff, Set.mem_union, Set.mem_inter_iff,
+      Set.mem_ofPred_eq] using visitTime_eq_iff (x := x) (a := a)
   rw [hrw]
   refine MeasurableSet.union
-    ((measurableSet_apply_eq a m).inter
-      (measurable_visitCount a m (measurableSet_singleton k)))
+    (measurableSet_isVisitWitness a k m)
     ?_
   by_cases hm : m = 0
   · have hiInter : {x : ℕ → α | m = 0 ∧ ∀ n, ¬(x n = a ∧ visitCount x a n = k)} =
         ⋂ n, ({x : ℕ → α | x n = a} ∩ {x : ℕ → α | visitCount x a n = k})ᶜ := by
       ext x
-      simp [hm, Set.mem_iInter]
+      simp only [Set.mem_ofPred_eq, hm, true_and, Set.mem_iInter, Set.mem_compl_iff,
+        Set.mem_inter_iff]
     rw [hiInter]
-    exact MeasurableSet.iInter fun n =>
-      ((measurableSet_apply_eq a n).inter
-        (measurable_visitCount a n (measurableSet_singleton k))).compl
+    exact MeasurableSet.iInter fun n => (measurableSet_isVisitWitness a k n).compl
   · have hempty : {x : ℕ → α | m = 0 ∧ ∀ n, ¬(x n = a ∧ visitCount x a n = k)} = ∅ := by
       ext x
-      simp [hm]
+      simp only [Set.mem_ofPred_eq, hm, false_and, Set.mem_empty_iff_false]
     rw [hempty]
     exact MeasurableSet.empty
 
