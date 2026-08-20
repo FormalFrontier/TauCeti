@@ -7,6 +7,8 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Basic
 
+import Mathlib.LinearAlgebra.CliffordAlgebra.Inversion
+
 /-!
 # The volume element of a Clifford algebra
 
@@ -264,8 +266,8 @@ theorem prod_map_ι_sq_scalar {l : List M} (hl : l.Pairwise Q.IsOrtho) :
 
 /-- **An ordered product of generators is a unit as soon as the product of the values `Q vᵢ` is.**
 
-No orthogonality is needed: each factor already squares to the scalar `Q vᵢ`, which is a unit
-because it divides the unit `∏ᵢ Q vᵢ`, so each factor is a unit and so is their product. For a
+No orthogonality is needed: each `Q vᵢ` divides the unit `∏ᵢ Q vᵢ`, hence is a unit, so each
+factor `ι Q vᵢ` is a unit by `CliffordAlgebra.isUnit_ι_of_isUnit` and so is their product. For a
 pairwise orthogonal list this is the volume element, and `prod_map_ι_sq_scalar` identifies its
 square as that product up to sign; in particular the volume element of an orthogonal basis of a
 quadratic space over a field is a unit whenever no basis vector is isotropic. -/
@@ -274,8 +276,6 @@ theorem isUnit_prod_map_ι {l : List M} (h : IsUnit ((l.map Q).prod)) :
   refine List.prod_isUnit fun x hx => ?_
   obtain ⟨m, hm, rfl⟩ := List.mem_map.mp hx
   have hQm : IsUnit (Q m) := List.prod_isUnit_iff.mp h _ (List.mem_map_of_mem hm)
-  refine isUnit_mul_self_iff.mp ?_
-  rw [ι_sq_scalar]
-  exact hQm.map (algebraMap R (CliffordAlgebra Q))
+  exact isUnit_ι_of_isUnit Q hQm
 
 end CliffordAlgebra
