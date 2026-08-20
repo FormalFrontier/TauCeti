@@ -170,7 +170,6 @@ def basepointLift (x₀ : X) : (proj : UniversalCover x₀ → X) ⁻¹' {x₀} 
       exact BasedPath.endpoint_ofPath _)⟩
 
 /-- The endpoint projection sends the constant-path point to the basepoint. -/
-@[simp]
 theorem proj_basepointLift (x₀ : X) : proj (basepointLift x₀ : UniversalCover x₀) = x₀ :=
   (basepointLift x₀).2
 
