@@ -154,20 +154,6 @@ variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
 
 /-! ### Invariant-subspace dichotomies and inequivalence of the two half-spin actions -/
 
-/-- The even Clifford action on `S⁺` is onto its full endomorphism algebra. -/
-theorem spinPlusAction_surjective (hline : P.line = ⊥) :
-    Function.Surjective (spinPlusAction Q P hline) := fun g => by
-  obtain ⟨x, hx⟩ := evenSpinActionProd_surjective P hline (g, 0)
-  rw [evenSpinActionProd_apply, Prod.mk.injEq] at hx
-  exact ⟨x, hx.1⟩
-
-/-- The even Clifford action on `S⁻` is onto its full endomorphism algebra. -/
-theorem spinMinusAction_surjective (hline : P.line = ⊥) :
-    Function.Surjective (spinMinusAction Q P hline) := fun g => by
-  obtain ⟨x, hx⟩ := evenSpinActionProd_surjective P hline (0, g)
-  rw [evenSpinActionProd_apply, Prod.mk.injEq] at hx
-  exact ⟨x, hx.2⟩
-
 /-- **The invariant-subspace dichotomy for the even half-spin summand**: every subspace of `S⁺`
 invariant under the even Clifford subalgebra is `⊥` or all of `S⁺`. Combine this with
 `TauCeti.nontrivial_spinPlus` to obtain simplicity. -/

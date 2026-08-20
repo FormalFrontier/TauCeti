@@ -9,7 +9,6 @@ public import TauCeti.Algebra.CentralSimple.End
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Dimension
 public import TauCeti.LinearAlgebra.Matrix.ToLin
 public import TauCeti.RepresentationTheory.Spin.Polarization.Exists
-public import TauCeti.RepresentationTheory.Spin.Representation
 public import TauCeti.RepresentationTheory.Spin.Dimension
 -- Private: `LinearMap.injective_iff_surjective_of_finrank_eq_finrank` is used only inside a proof.
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
@@ -351,6 +350,20 @@ theorem evenSpinActionProd_surjective (hline : P.line = ⊥) :
     rw [coe_spinPlusAction_apply, hx, hfplus s s.2]
   · refine LinearMap.ext fun s => Subtype.ext ?_
     rw [coe_spinMinusAction_apply, hx, hfminus s s.2]
+
+/-- The even Clifford action on `S⁺` is onto its full endomorphism algebra. -/
+theorem spinPlusAction_surjective (hline : P.line = ⊥) :
+    Function.Surjective (spinPlusAction Q P hline) := by
+  intro g
+  obtain ⟨x, hx⟩ := Prod.fst_surjective.comp (evenSpinActionProd_surjective P hline) g
+  exact ⟨x, by simpa only [Function.comp_apply, evenSpinActionProd_apply] using hx⟩
+
+/-- The even Clifford action on `S⁻` is onto its full endomorphism algebra. -/
+theorem spinMinusAction_surjective (hline : P.line = ⊥) :
+    Function.Surjective (spinMinusAction Q P hline) := by
+  intro g
+  obtain ⟨x, hx⟩ := Prod.snd_surjective.comp (evenSpinActionProd_surjective P hline) g
+  exact ⟨x, by simpa only [Function.comp_apply, evenSpinActionProd_apply] using hx⟩
 
 /-- **The even structure theorem**: for an even-dimensional polarized quadratic space the even
 Clifford subalgebra is the product of the endomorphism algebras of the two half-spin summands.
