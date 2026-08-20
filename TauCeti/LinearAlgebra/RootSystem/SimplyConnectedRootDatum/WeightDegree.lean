@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.Height
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.KostantForm
 
@@ -76,8 +75,7 @@ theorem intCast_geckWeight_inr (k : Fin t.numRoots) :
       (t.rationalRootSystem ht).root k := by
   funext i
   rw [geckWeight_inr]
-  change (algebraMap ℤ ℚ)
-    ((t.rationalRootSystem ht).pairingIn ℤ k (t.simpleSupportEquiv ht i)) = _
+  rw [← eq_intCast (algebraMap ℤ ℚ)]
   rw [(t.rationalRootSystem ht).algebraMap_pairingIn ℤ k (t.simpleSupportEquiv ht i),
     ← RootPairing.root_coroot_eq_pairing, toLinearMap_rationalRootSystem,
     coe_simpleSupportEquiv]
