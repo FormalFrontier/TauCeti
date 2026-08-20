@@ -30,10 +30,10 @@ state, that state's next unused successor. `pathOfSuccessors` performs the rebui
 pathOfSuccessors (x 0) (successorArray x) = x.
 ```
 
-Neither direction needs a recurrence hypothesis. The rebuilding always terminates on a value
-because `Nat.nth` is total, and the round trip only ever consults entries `successorArray x a k`
-for which a `k`-th visit to `a` genuinely occurred; entries beyond a state's last visit are junk
-and are never read.
+Neither direction needs a recurrence hypothesis. Rebuilding is total because it is defined by
+finite-horizon recursion, and the round trip only ever consults entries `successorArray x a k` for
+which a `k`-th visit to `a` genuinely occurred. `Nat.nth` makes the remaining entries in the
+successor array junk, and they are never read.
 
 ## Why this is the Diaconis–Freedman decomposition
 
@@ -113,7 +113,7 @@ def successorArray (x : ℕ → α) (a : α) (k : ℕ) : α :=
 
 /-- The finite-horizon recursion rebuilding a sequence from an initial state `a₀` and a successor
 array `s`: `pathOfSuccessorsUpTo a₀ s n` agrees with the rebuilt sequence at every time `i ≤ n`,
-and repeats the value at time `n + 1` beyond that horizon. Each step reads the successor of the
+and repeats the value at time `n` beyond that horizon. Each step reads the successor of the
 current state indexed by the number of earlier visits to it. -/
 private def pathOfSuccessorsUpTo (a₀ : α) (s : α → ℕ → α) : ℕ → ℕ → α
   | 0 => fun _ => a₀
@@ -153,12 +153,14 @@ theorem visitCount_congr (h : ∀ i < n, x i = y i) : visitCount x a n = visitCo
   rw [visitCount, visitCount, hpref]
 
 /-- One more visit is counted at a time when the sequence sits at the state. -/
+@[simp]
 theorem visitCount_succ_of_eq (h : x n = a) : visitCount x a (n + 1) = visitCount x a n + 1 := by
   classical
   rw [visitCount_eq_count, visitCount_eq_count, Nat.count_succ]
   simp [h]
 
 /-- No further visit is counted at a time when the sequence sits elsewhere. -/
+@[simp]
 theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCount x a n := by
   classical
   rw [visitCount_eq_count, visitCount_eq_count, Nat.count_succ]
@@ -166,6 +168,7 @@ theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCo
 
 /-- **A time at which the sequence sits at `a` is the time of a visit to `a`**, namely of the
 visit indexed by the number of earlier visits. -/
+@[simp]
 theorem visitTime_visitCount (h : x n = a) : visitTime x a (visitCount x a n) = n := by
   classical
   rw [visitTime, visitCount_eq_count, Nat.nth_count h]
@@ -188,12 +191,14 @@ variable {α : Type*} {x : ℕ → α} {a a₀ : α} {s : α → ℕ → α} {i 
 
 /-- **The step relation of the successor array**, at a time known to sit at the state `a`: the
 sequence moves to the successor of `a` indexed by the number of earlier visits to `a`. -/
+@[simp]
 theorem successorArray_visitCount_of_eq (h : x n = a) :
     successorArray x a (visitCount x a n) = x (n + 1) := by
   rw [successorArray, visitTime_visitCount h]
 
 /-- **The step relation of the successor array.** From time `n` the sequence moves to the
 successor of its current state indexed by the number of earlier visits to that state. -/
+@[simp]
 theorem successorArray_visitCount (x : ℕ → α) (n : ℕ) :
     successorArray x (x n) (visitCount x (x n) n) = x (n + 1) :=
   successorArray_visitCount_of_eq rfl
@@ -232,6 +237,7 @@ private theorem pathOfSuccessorsUpTo_of_le (a₀ : α) (s : α → ℕ → α) (
 /-- **The recursion defining the rebuilt sequence.** Each step reads the successor of the current
 state indexed by the number of earlier visits to it — the step relation
 `successorArray_visitCount`, transported to the rebuilt sequence. -/
+@[simp]
 theorem pathOfSuccessors_succ (a₀ : α) (s : α → ℕ → α) (n : ℕ) :
     pathOfSuccessors a₀ s (n + 1) =
       s (pathOfSuccessors a₀ s n)
@@ -243,6 +249,7 @@ theorem pathOfSuccessors_succ (a₀ : α) (s : α → ℕ → α) (n : ℕ) :
 
 /-- **Rebuilding inverts the successor decomposition.** A sequence is recovered from its initial
 state and its successor array. -/
+@[simp]
 theorem pathOfSuccessors_successorArray (x : ℕ → α) :
     pathOfSuccessors (x 0) (successorArray x) = x := by
   funext n
@@ -319,8 +326,8 @@ theorem measurable_visitCount (a : α) (n : ℕ) :
         fun x => if x n = a then visitCount x a n + 1 else visitCount x a n := by
       funext x
       by_cases hx : x n = a
-      · simp [visitCount_succ_of_eq hx, hx]
-      · simp [visitCount_succ_of_ne hx, hx]
+      · simp [hx]
+      · simp [hx]
     rw [hrw]
     exact Measurable.ite (measurableSet_coord_eq a n) (Measurable.of_discrete.comp ih) ih
 
@@ -407,8 +414,8 @@ private theorem measurable_pathOfSuccessors_and_visitCount (n : ℕ) :
           else visitCount (pathOfSuccessors q.1 q.2) a n := by
         funext q
         by_cases hq : pathOfSuccessors q.1 q.2 n = a
-        · simp [visitCount_succ_of_eq hq, hq]
-        · simp [visitCount_succ_of_ne hq, hq]
+        · simp [hq]
+        · simp [hq]
       rw [hrw]
       have hmem : MeasurableSet {q : α × (α → ℕ → α) | pathOfSuccessors q.1 q.2 n = a} := by
         have h : MeasurableSet
