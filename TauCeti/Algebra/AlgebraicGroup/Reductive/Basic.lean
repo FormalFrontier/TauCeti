@@ -92,17 +92,6 @@ theorem reductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
   geometricNormalSubgroupFreeCommHopfAlgProperty_iff k
     (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) H
 
-/-- Reductivity is the geometric normal-subgroup-freeness property whose candidate subgroups
-are smooth and unipotent. -/
-theorem reductiveCommHopfAlgProperty_eq_geometricNormalSubgroupFree
-    (k : Type u) [Field k] :
-    reductiveCommHopfAlgProperty k =
-      geometricNormalSubgroupFreeCommHopfAlgProperty k
-        (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) := by
-  ext H
-  rw [reductiveCommHopfAlgProperty_iff,
-    geometricNormalSubgroupFreeCommHopfAlgProperty_iff]
-
 /-- Reductivity is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
     (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=
