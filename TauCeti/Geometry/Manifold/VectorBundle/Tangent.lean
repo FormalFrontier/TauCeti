@@ -41,7 +41,12 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
 /-- The canonical identification between the tangent space of an open submanifold and the ambient
-tangent space. Both are Mathlib's type synonym for the common model vector space. -/
+tangent space. Both are Mathlib's type synonym for the common model vector space.
+
+This is deliberately a named equivalence rather than `ContinuousLinearEquiv.refl 𝕜 E`: because
+`TangentSpace` is not reducible, a statement phrased with `refl` is type-correct only after
+unfolding it, so `rw` and `simp` fail on such statements. Mathlib introduces
+`NormedSpace.fromTangentSpace` for the analogous identification for the same reason. -/
 noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
     TangentSpace I x ≃L[𝕜] TangentSpace I (x : M) where
   toFun v := v
