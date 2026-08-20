@@ -49,15 +49,36 @@ noncomputable def restrictOpen
   inner x :=
     let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
     e.symm.arrowCongr (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ)) (g.inner x.1)
-  symm x v w := g.symm x.1 v w
-  pos x v hv := g.pos x.1 v hv
+  symm x v w := by
+    simpa only [ContinuousLinearEquiv.arrowCongr_apply, ContinuousLinearEquiv.symm_symm,
+      ContinuousLinearEquiv.refl_apply,
+      TauCeti.Manifold.tangentSpaceOpenEquiv_apply] using g.symm x.1 v w
+  pos x v hv := by
+    simpa only [ContinuousLinearEquiv.arrowCongr_apply, ContinuousLinearEquiv.symm_symm,
+      ContinuousLinearEquiv.refl_apply,
+      TauCeti.Manifold.tangentSpaceOpenEquiv_apply] using g.pos x.1 v hv
   continuousAt x := by
     let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
     have h := (g.continuousAt x.1).comp_of_eq e.continuousAt (map_zero e)
     apply h.congr_of_eventuallyEq
     filter_upwards with v
     rfl
-  isVonNBounded x := g.isVonNBounded x.1
+  isVonNBounded x := by
+    let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
+    let restrictedInner :=
+      e.symm.arrowCongr (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ)) (g.inner x.1)
+    change Bornology.IsVonNBounded ℝ {v | restrictedInner v v < 1}
+    have heq : {v | restrictedInner v v < 1} =
+        e.symm.toContinuousLinearMap '' {v | g.inner x.1 v v < 1} := by
+      ext v
+      change restrictedInner v v < 1 ↔ v ∈ e.symm '' {v | g.inner x.1 v v < 1}
+      rw [show v ∈ e.symm '' {v | g.inner x.1 v v < 1} ↔
+          e v ∈ {v | g.inner x.1 v v < 1} from
+        Set.mem_image_equiv (f := e.symm.toEquiv)]
+      simp only [restrictedInner, ContinuousLinearEquiv.arrowCongr_apply,
+        ContinuousLinearEquiv.symm_symm, ContinuousLinearEquiv.refl_apply, Set.mem_ofPred_eq]
+    rw [heq]
+    exact (g.isVonNBounded x.1).image e.symm.toContinuousLinearMap
 
 /-- Restricting a Riemannian metric evaluates the ambient metric through the canonical tangent-space
 identification. -/
@@ -87,10 +108,30 @@ noncomputable def restrictOpen
   inner x :=
     let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
     e.symm.arrowCongr (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ)) (g.inner x.1)
-  symm x v w := g.symm x.1 v w
+  symm x v w := by
+    simpa only [ContinuousLinearEquiv.arrowCongr_apply, ContinuousLinearEquiv.symm_symm,
+      ContinuousLinearEquiv.refl_apply,
+      TauCeti.Manifold.tangentSpaceOpenEquiv_apply] using g.symm x.1 v w
   pos x v hv := by
-    exact g.pos x.1 v hv
-  isVonNBounded x := g.isVonNBounded x.1
+    simpa only [ContinuousLinearEquiv.arrowCongr_apply, ContinuousLinearEquiv.symm_symm,
+      ContinuousLinearEquiv.refl_apply,
+      TauCeti.Manifold.tangentSpaceOpenEquiv_apply] using g.pos x.1 v hv
+  isVonNBounded x := by
+    let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
+    let restrictedInner :=
+      e.symm.arrowCongr (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ)) (g.inner x.1)
+    change Bornology.IsVonNBounded ℝ {v | restrictedInner v v < 1}
+    have heq : {v | restrictedInner v v < 1} =
+        e.symm.toContinuousLinearMap '' {v | g.inner x.1 v v < 1} := by
+      ext v
+      change restrictedInner v v < 1 ↔ v ∈ e.symm '' {v | g.inner x.1 v v < 1}
+      rw [show v ∈ e.symm '' {v | g.inner x.1 v v < 1} ↔
+          e v ∈ {v | g.inner x.1 v v < 1} from
+        Set.mem_image_equiv (f := e.symm.toEquiv)]
+      simp only [restrictedInner, ContinuousLinearEquiv.arrowCongr_apply,
+        ContinuousLinearEquiv.symm_symm, ContinuousLinearEquiv.refl_apply, Set.mem_ofPred_eq]
+    rw [heq]
+    exact (g.isVonNBounded x.1).image e.symm.toContinuousLinearMap
   contMDiff x := by
     rw [contMDiffAt_section]
     have h := g.contMDiff.contMDiffAt.comp x
@@ -120,7 +161,7 @@ noncomputable def restrictOpen
       hyU, hyUhom, hyMhom, ContinuousLinearMap.coe_comp, Function.comp_apply,
       ContinuousLinearEquiv.arrowCongr_apply,
       ite_true]
-    simp [TauCeti.Manifold.tangentSpaceOpenEquiv]
+    simp [TauCeti.Manifold.tangentSpaceOpenEquiv_apply]
     have hsymm' (z : E) :
         TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
             ((trivializationAt E (TangentSpace I : U → Type _) x).symm y z) =
@@ -134,7 +175,7 @@ noncomputable def restrictOpen
         ((trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) v,
           (trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) w) :=
       Prod.ext (hsymm' v) (hsymm' w)
-    simpa [TauCeti.Manifold.tangentSpaceOpenEquiv] using
+    simpa [TauCeti.Manifold.tangentSpaceOpenEquiv_apply] using
       congrArg (fun p : TangentSpace I (y : M) × TangentSpace I (y : M) ↦
         g.inner (y : M) p.1 p.2) hp
 

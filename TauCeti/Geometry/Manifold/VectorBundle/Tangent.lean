@@ -37,7 +37,6 @@ variable
 
 /-- The canonical identification between the tangent space of an open submanifold and the ambient
 tangent space. Both are Mathlib's type synonym for the common model vector space. -/
-@[expose]
 noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
     TangentSpace I x ≃L[ℝ] TangentSpace I (x : M) where
   toFun v := v
@@ -50,13 +49,13 @@ noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
 @[simp]
 theorem tangentSpaceOpenEquiv_apply {U : Opens M} (x : U) (v : TangentSpace I x) :
     tangentSpaceOpenEquiv (I := I) x v = v := by
-  rfl
+  exact (rfl)
 
 @[simp]
 theorem tangentSpaceOpenEquiv_symm_apply {U : Opens M} (x : U)
     (v : TangentSpace I (x : M)) :
     (tangentSpaceOpenEquiv (I := I) x).symm v = v := by
-  rfl
+  exact (rfl)
 
 /-- Near a point of an open submanifold, its inverse tangent-bundle trivialization agrees with the
 ambient inverse trivialization under the canonical tangent-space identification. -/
@@ -107,6 +106,10 @@ theorem tangentSpaceOpenEquiv_trivializationAt_symmL_eventuallyEq
     htrans.fderivWithin_eq_of_nhds
   rw [TangentBundle.symmL_trivializationAt_eq_core hyU',
     TangentBundle.symmL_trivializationAt_eq_core hyM']
+  -- The preceding rewrites identify the two `symmL` maps with core coordinate changes, but their
+  -- applications still use the definitional identification `TangentSpace I b = E`. The following
+  -- `change` intentionally unfolds those map coercions and the local `tangentSpaceOpenEquiv`; no
+  -- application-level rewrite lemma exposes this conversion.
   change (tangentBundleCore I U).coordChange (achart H x) (achart H y) y z =
     (tangentBundleCore I M).coordChange (achart H (x : M)) (achart H (y : M)) (y : M) z
   simpa [tangentBundleCore_coordChange_achart, Function.comp_def, Opens.chartAt_eq,
