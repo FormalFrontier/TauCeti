@@ -59,6 +59,14 @@ def datumGraphAut :
   DynkinType.diagramAut d.1.dynkinType_valid
     (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm)
 
+/-- The root-datum graph automorphism acts on the full root enumeration by the permutation induced
+from the diagram permutation of the index. -/
+@[simp] theorem datumGraphAut_indexEquiv :
+    d.datumGraphAut.indexEquiv =
+      DynkinType.diagramRootPerm d.1.dynkinType_valid
+        (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) := by
+  rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
+
 /-- The weight map of the root-datum graph automorphism permutes the fundamental-weight
 coordinates by the diagram permutation of the index. -/
 @[simp] theorem datumGraphAut_weightMap :

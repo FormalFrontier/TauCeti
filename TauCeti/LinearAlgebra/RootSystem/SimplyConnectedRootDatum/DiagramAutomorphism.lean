@@ -134,11 +134,15 @@ matrix. -/
 def diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) : Equiv.Perm (Fin t.numRoots) :=
   (rationalDiagramAut ht hσ).indexEquiv
 
-/-- The defining equation of `TauCeti.DynkinType.diagramRootPerm`, so that proofs about the index
-permutation of the rational automorphism can be phrased against it without unfolding. -/
 private theorem indexEquiv_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
     (rationalDiagramAut ht hσ).indexEquiv = diagramRootPerm ht hσ :=
   rfl
+
+/-- The rational diagram automorphism acts on the root enumeration by
+`TauCeti.DynkinType.diagramRootPerm`. -/
+@[simp] theorem rationalDiagramAut_indexEquiv (hσ : σ ∈ t.diagramSymmetry) :
+    (rationalDiagramAut ht hσ).indexEquiv = diagramRootPerm ht hσ :=
+  indexEquiv_rationalDiagramAut ht hσ
 
 /-- The induced permutation of the root enumeration extends the node permutation along the Bourbaki
 numbering of the simple roots. -/
@@ -160,7 +164,7 @@ coordinates. -/
   intro i
   obtain ⟨i, rfl⟩ := (t.simpleSupportEquiv ht).surjective i
   rw [RootPairing.Base.toWeightBasis_apply, RootPairing.Hom.root_weightMap_apply,
-    indexEquiv_rationalDiagramAut, coe_simpleSupportEquiv, diagramRootPerm_simpleIndex]
+    rationalDiagramAut_indexEquiv, coe_simpleSupportEquiv, diagramRootPerm_simpleIndex]
   ext k
   simp only [LinearEquiv.coe_coe, LinearEquiv.funCongrLeft_apply, LinearMap.funLeft_apply,
     root_rationalRootSystem, root_simpleIndex]
