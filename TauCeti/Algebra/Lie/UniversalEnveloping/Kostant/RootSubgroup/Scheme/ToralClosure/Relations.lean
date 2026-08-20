@@ -118,7 +118,7 @@ theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
     (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) q r hv'
   have hmatrix := congrArg
     (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom) hpin
-  rw [kostantTorusMatrix_def, kostantRootSubgroupMatrix_def,
+  rw [kostantTorusMatrix, kostantRootSubgroupMatrix_def,
     MonoidHom.comp_apply, MonoidHom.comp_apply, MonoidHom.comp_apply]
   simpa only [map_mul, q, r] using hmatrix
 
