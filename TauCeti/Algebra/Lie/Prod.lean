@@ -32,6 +32,7 @@ product.
 * `TauCeti.LieModuleHom.inl` and `TauCeti.LieModuleHom.inr`: the two inclusions.
 * `TauCeti.LieModuleHom.prod`: the pairing of two morphisms with the same domain.
 * `TauCeti.LieModuleEquiv.prodComm`: swapping the factors is an equivalence.
+* `TauCeti.lie_prod_apply`: the componentwise bracket on a product.
 -/
 
 namespace TauCeti
@@ -51,15 +52,15 @@ instance instLieRingModule : LieRingModule L (M × N) where
   lie_add x p q := Prod.ext (lie_add x p.1 q.1) (lie_add x p.2 q.2)
   leibniz_lie x y p := Prod.ext (leibniz_lie x y p.1) (leibniz_lie x y p.2)
 
-@[simp]
-theorem lie_apply (x : L) (p : M × N) : ⁅x, p⁆ = (⁅x, p.1⁆, ⁅x, p.2⁆) := rfl
-
 instance instLieModule [LieAlgebra R L] [LieModule R L M] [LieModule R L N] :
     LieModule R L (M × N) where
   smul_lie t x p := Prod.ext (smul_lie t x p.1) (smul_lie t x p.2)
   lie_smul t x p := Prod.ext (lie_smul t x p.1) (lie_smul t x p.2)
 
 end Prod
+
+@[simp]
+theorem lie_prod_apply (x : L) (p : M × N) : ⁅x, p⁆ = (⁅x, p.1⁆, ⁅x, p.2⁆) := rfl
 
 namespace LieModuleHom
 
@@ -75,18 +76,18 @@ def snd : M × N →ₗ⁅R,L⁆ N :=
 
 /-- The inclusion of the first factor into a product of Lie modules. -/
 def inl : M →ₗ⁅R,L⁆ M × N :=
-  { LinearMap.inl R M N with map_lie' := by simp [Prod.lie_apply] }
+  { LinearMap.inl R M N with map_lie' := by simp [lie_prod_apply] }
 
 /-- The inclusion of the second factor into a product of Lie modules. -/
 def inr : N →ₗ⁅R,L⁆ M × N :=
-  { LinearMap.inr R M N with map_lie' := by simp [Prod.lie_apply] }
+  { LinearMap.inr R M N with map_lie' := by simp [lie_prod_apply] }
 
 variable {R L M N}
 variable {P : Type*} [AddCommGroup P] [Module R P] [LieRingModule L P]
 
 /-- Pair two morphisms of Lie modules with the same domain. -/
 def prod (f : P →ₗ⁅R,L⁆ M) (g : P →ₗ⁅R,L⁆ N) : P →ₗ⁅R,L⁆ M × N :=
-  { LinearMap.prod f g with map_lie' := by simp [Prod.lie_apply] }
+  { LinearMap.prod f g with map_lie' := by simp [lie_prod_apply] }
 
 @[simp] theorem fst_apply (p : M × N) : fst R L M N p = p.1 := (rfl)
 
@@ -122,7 +123,7 @@ namespace LieModuleEquiv
 /-- Swapping the factors is an equivalence of product Lie modules. -/
 def prodComm : (M × N) ≃ₗ⁅R,L⁆ (N × M) where
   __ := LinearEquiv.prodComm R M N
-  map_lie' := by simp [Prod.lie_apply]
+  map_lie' := by simp [lie_prod_apply]
 
 omit [LieAlgebra R L] [LieModule R L M] [LieModule R L N] in
 @[simp]

@@ -99,8 +99,8 @@ private theorem isHighestWeightVector_prod (hv : IsHighestWeightVector b lam v)
     (hw : IsHighestWeightVector b lam w) : IsHighestWeightVector b lam ((v, w) : M × N) :=
   isHighestWeightVector_iff.mpr
     ⟨fun h => hv.ne_zero (Prod.mk_eq_zero.mp h).1, fun x => by
-      rw [Prod.lie_apply, hv.lie_eq_smul x, hw.lie_eq_smul x, Prod.smul_mk], fun x hx => by
-      rw [Prod.lie_apply, hv.lie_eq_zero_of_mem_positiveNilradical hx,
+      rw [lie_prod_apply, hv.lie_eq_smul x, hw.lie_eq_smul x, Prod.smul_mk], fun x hx => by
+      rw [lie_prod_apply, hv.lie_eq_zero_of_mem_positiveNilradical hx,
         hw.lie_eq_zero_of_mem_positiveNilradical hx, Prod.mk_zero_zero]⟩
 
 /-- A highest weight vector of `M`, pushed into `M × N` along the first inclusion, is again one. -/
