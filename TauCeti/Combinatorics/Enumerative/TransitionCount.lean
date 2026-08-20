@@ -115,6 +115,16 @@ theorem occCount_comp_succ_add_zero [DecidableEq α] {n : ℕ} (w : Fin (n + 1) 
   rw [occCount_eq_sum, occCount_eq_sum, Fin.sum_univ_succ, Nat.add_comm]
   rfl
 
+/-- Splitting off the first transition: the transitions in a word are those in its final segment
+together with a possible transition at the first position. -/
+theorem transitionCount_comp_succ_add_zero [DecidableEq α] {n : ℕ}
+    (w : Fin (n + 2) → α) (a b : α) :
+    transitionCount (w ∘ Fin.succ) a b + (if w 0 = a ∧ w 1 = b then 1 else 0) =
+      transitionCount w a b := by
+  rw [transitionCount_eq_card_filter, transitionCount_eq_card_filter, Finset.card_filter,
+    Finset.card_filter, Fin.sum_univ_succ, Nat.add_comm]
+  rfl
+
 /-- Summing the transitions out of `a` counts the positions carrying `a` other than the last one.
 The index set `S` only has to contain the successors of transitions in `w`. -/
 theorem sum_transitionCount_right {n : ℕ} (w : Fin (n + 1) → α) {S : Finset α}
