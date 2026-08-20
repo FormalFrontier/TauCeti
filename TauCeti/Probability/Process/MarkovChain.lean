@@ -16,12 +16,13 @@ builds the law `markovChainLaw ν κ` of the associated homogeneous Markov chain
 space `ℕ → α`, and computes its finite-dimensional laws.
 
 The construction is Mathlib's Ionescu–Tulcea measure `ProbabilityTheory.Kernel.trajMeasure` for the
-sequence of kernels that reads the current state off the trajectory so far and steps by `κ`. All
-this file adds is that homogeneous specialization together with the two facts that identify the
-resulting measure: its time-zero marginal is `ν`, and it has the Markov property
-`markovChainLaw_map_prefix_prod`, which recursively determines the law of a prefix of length
-`n + 1` from the law of a prefix of length `n`. On a state space with measurable singletons that
-recursion unwinds to the familiar product formula `markovChainLaw_map_prefix_apply_singleton`,
+time-indexed homogeneous kernel family that reads the current state off the trajectory so far and
+steps by the fixed transition kernel `κ`. All this file adds is that homogeneous specialization
+together with the two facts that identify the resulting measure: its time-zero marginal is `ν`,
+and it has the Markov property `markovChainLaw_map_prefix_succ_eq_compProd`, which recursively
+determines the law of a prefix of length `n + 1` from the law of a prefix of length `n`. On a state
+space with measurable singletons that recursion unwinds to the familiar product formula
+`markovChainLaw_map_prefix_apply_singleton`,
 
 ```text
 ℙ(X₀ = w 0, …, X n = w n) = ν {w 0} * ∏ i, κ (w i) {w (i + 1)},
@@ -38,8 +39,9 @@ consumed downstream.
 ## Main results
 
 * `TauCeti.Probability.markovChainLaw_map_eval_zero` — the chain starts from `ν`.
-* `TauCeti.Probability.markovChainLaw_map_prefix_prod` — the Markov property: the joint law of a
-  prefix and of the next state is the prefix law extended by one `κ`-step from its last coordinate.
+* `TauCeti.Probability.markovChainLaw_map_prefix_succ_eq_compProd` — the Markov property: the joint
+  law of a prefix and of the next state is the prefix law extended by one `κ`-step from its last
+  coordinate.
 * `TauCeti.Probability.markovChainLaw_map_pair_succ`,
   `TauCeti.Probability.markovChainLaw_map_eval_succ` — the two-coordinate form of the Markov
   property and the forward recursion for the one-dimensional marginals.
@@ -117,7 +119,8 @@ private instance (κ : Kernel α α) [IsMarkovKernel κ] (n : ℕ) : IsMarkovKer
   inferInstanceAs (IsMarkovKernel (κ.comap _ _))
 
 /-- **The path law of a homogeneous Markov chain** with initial law `ν` and transition kernel `κ`:
-the Ionescu–Tulcea measure of the constant kernel family `markovStep κ`. -/
+the Ionescu–Tulcea measure of the time-indexed homogeneous family `markovStep κ` induced by the
+fixed transition kernel `κ`. -/
 def markovChainLaw (ν : Measure α) (κ : Kernel α α) [IsMarkovKernel κ] : Measure (ℕ → α) :=
   Kernel.trajMeasure (X := fun _ => α) ν (markovStep κ)
 
@@ -162,7 +165,7 @@ theorem markovChainLaw_map_eval_zero :
 `(X 0, …, X n)` and of the next state `X (n + 1)` is the prefix law extended by one `κ`-step out of
 the last coordinate of the prefix. Together with `markovChainLaw_map_eval_zero` this determines all
 the finite-dimensional laws of the chain. -/
-theorem markovChainLaw_map_prefix_prod [IsProbabilityMeasure ν] (n : ℕ) :
+theorem markovChainLaw_map_prefix_succ_eq_compProd [IsProbabilityMeasure ν] (n : ℕ) :
     (markovChainLaw ν κ).map (fun x => ((fun i : Fin (n + 1) => x i.1), x (n + 1)))
       = ((markovChainLaw ν κ).map fun x (i : Fin (n + 1)) => x i.1) ⊗ₘ
         κ.comap (fun w : Fin (n + 1) → α => w (Fin.last n))
@@ -221,7 +224,7 @@ theorem markovChainLaw_map_pair_succ [IsProbabilityMeasure ν] (n : ℕ) :
     _ = (((markovChainLaw ν κ).map fun x (i : Fin (n + 1)) => x i.1) ⊗ₘ
           κ.comap (fun w : Fin (n + 1) → α => w (Fin.last n)) hlast).map
           (Prod.map (fun w : Fin (n + 1) → α => w (Fin.last n)) id) := by
-        rw [markovChainLaw_map_prefix_prod]
+        rw [markovChainLaw_map_prefix_succ_eq_compProd]
     _ = ((markovChainLaw ν κ).map fun x (i : Fin (n + 1)) => x i.1).map
           (fun w : Fin (n + 1) → α => w (Fin.last n)) ⊗ₘ κ :=
         TauCeti.Measure.map_prodMap_compProd_comap _ _ hlast
@@ -272,7 +275,8 @@ theorem markovChainLaw_map_prefix_apply_singleton [IsProbabilityMeasure ν]
       · exact h.1 j
     rw [Measure.map_apply (by fun_prop) (measurableSet_singleton w), hpre,
       ← Measure.map_apply hprod (measurableSet_singleton _),
-      markovChainLaw_map_prefix_prod, Measure.compProd_apply (measurableSet_singleton _)]
+      markovChainLaw_map_prefix_succ_eq_compProd, Measure.compProd_apply
+        (measurableSet_singleton _)]
     have hint : ∀ v : Fin (n + 1) → α,
         (κ.comap (fun y : Fin (n + 1) → α => y (Fin.last n))
             (measurable_pi_apply (Fin.last n))) v
