@@ -22,9 +22,12 @@ different:
 * `JointlyExchangeable μ X` — the law is unchanged when the **same** permutation is applied to both
   axes, by `(i, j) ↦ (σ i, σ j)`.
 
-Separate exchangeability is the stronger notion (`SeparatelyExchangeable.jointlyExchangeable`); the
-joint one is what a symmetric array, such as the adjacency array of an exchangeable random graph,
-satisfies, since a symmetric array is generally destroyed by permuting the rows alone.
+Separate exchangeability is the stronger notion (`SeparatelyExchangeable.jointlyExchangeable`).
+Joint exchangeability is the one to ask of a *symmetric* array `X (i, j) = X (j, i)`, such as the
+adjacency array of an exchangeable random graph. Symmetry is a pathwise condition and by itself
+gives no invariance of the law; the point is rather that a joint reindexing `(i, j) ↦ (σ i, σ j)`
+carries a symmetric array to a symmetric array, whereas permuting the rows alone does not, so joint
+exchangeability is the invariance a symmetric array can consistently be asked to have.
 
 The main theorem here is the first step of the standard route to the Aldous–Hoover representation:
 the **rows of a separately exchangeable array form an exchangeable sequence of random paths**
@@ -107,51 +110,47 @@ variable {α Ω : Type*}
 
 /-- Reindex an array-shaped path by a permutation of each axis: the `(i, j)`-entry of
 `pairReindex σ τ x` is `x (σ i, τ j)`. This is the two-axis analogue of `permReindex`. -/
-@[expose]
 def pairReindex (σ τ : Equiv.Perm ℕ) (x : ℕ × ℕ → α) : ℕ × ℕ → α :=
   fun p => x (σ p.1, τ p.2)
 
 @[simp]
 theorem pairReindex_apply (σ τ : Equiv.Perm ℕ) (x : ℕ × ℕ → α) (p : ℕ × ℕ) :
     pairReindex σ τ x p = x (σ p.1, τ p.2) :=
-  rfl
+  (rfl)
 
 /-- Reindexing the two axes composes: a row permutation after a column permutation is the general
 two-axis reindexing. -/
 theorem pairReindex_comp (σ τ : Equiv.Perm ℕ) :
     pairReindex (α := α) σ 1 ∘ pairReindex 1 τ = pairReindex σ τ :=
-  rfl
+  (rfl)
 
 /-! ## Rows, columns and the diagonal -/
 
 /-- The `i`-th row of an array, as a random element of path space. -/
-@[expose]
 def arrayRow (X : ℕ × ℕ → Ω → α) (i : ℕ) : Ω → (ℕ → α) :=
   fun ω j => X (i, j) ω
 
 /-- The `j`-th column of an array, as a random element of path space. -/
-@[expose]
 def arrayCol (X : ℕ × ℕ → Ω → α) (j : ℕ) : Ω → (ℕ → α) :=
   fun ω i => X (i, j) ω
 
 /-- The diagonal of an array, as a process. -/
-@[expose]
 def arrayDiag (X : ℕ × ℕ → Ω → α) (i : ℕ) : Ω → α :=
   X (i, i)
 
 @[simp]
 theorem arrayRow_apply (X : ℕ × ℕ → Ω → α) (i : ℕ) (ω : Ω) (j : ℕ) :
     arrayRow X i ω j = X (i, j) ω :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem arrayCol_apply (X : ℕ × ℕ → Ω → α) (j : ℕ) (ω : Ω) (i : ℕ) :
     arrayCol X j ω i = X (i, j) ω :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem arrayDiag_apply (X : ℕ × ℕ → Ω → α) (i : ℕ) : arrayDiag X i = X (i, i) :=
-  rfl
+  (rfl)
 
 variable [MeasurableSpace α] [MeasurableSpace Ω]
 
@@ -172,16 +171,36 @@ theorem aemeasurable_arrayCol {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
 
 /-- **Separate exchangeability.** The law of the array `X` is unchanged when its two axes are
 permuted independently. -/
-@[expose]
 def SeparatelyExchangeable (μ : Measure Ω) (X : ℕ × ℕ → Ω → α) : Prop :=
   ∀ σ τ : Equiv.Perm ℕ, (μ.map fun ω p => X (σ p.1, τ p.2) ω) = μ.map fun ω p => X p ω
 
 /-- **Joint exchangeability.** The law of the array `X` is unchanged when one and the same
-permutation is applied to both of its axes. This is the symmetry available to a symmetric array,
-which separate exchangeability would destroy. -/
-@[expose]
+permutation is applied to both of its axes.
+
+This, rather than separate exchangeability, is the hypothesis one puts on a *symmetric* array
+`X (i, j) = X (j, i)`: reindexing both axes by the same permutation preserves pathwise symmetry,
+while permuting the rows alone destroys it. Symmetry alone is not an exchangeability assumption —
+it constrains the sample path, not the law. -/
 def JointlyExchangeable (μ : Measure Ω) (X : ℕ × ℕ → Ω → α) : Prop :=
   ∀ σ : Equiv.Perm ℕ, (μ.map fun ω p => X (σ p.1, σ p.2) ω) = μ.map fun ω p => X p ω
+
+/-- **The invariance law defining separate exchangeability**, as a restatement: the array law is
+unchanged along every pair of axis permutations. This is the simp normal form of the predicate, and
+serves as both its introduction and its elimination rule. -/
+@[simp]
+theorem separatelyExchangeable_iff {μ : Measure Ω} {X : ℕ × ℕ → Ω → α} :
+    SeparatelyExchangeable μ X ↔
+      ∀ σ τ : Equiv.Perm ℕ, (μ.map fun ω p => X (σ p.1, τ p.2) ω) = μ.map fun ω p => X p ω :=
+  (Iff.rfl)
+
+/-- **The invariance law defining joint exchangeability**, as a restatement: the array law is
+unchanged along every diagonal pair of axis permutations. This is the simp normal form of the
+predicate, and serves as both its introduction and its elimination rule. -/
+@[simp]
+theorem jointlyExchangeable_iff {μ : Measure Ω} {X : ℕ × ℕ → Ω → α} :
+    JointlyExchangeable μ X ↔
+      ∀ σ : Equiv.Perm ℕ, (μ.map fun ω p => X (σ p.1, σ p.2) ω) = μ.map fun ω p => X p ω :=
+  (Iff.rfl)
 
 /-- **Separate exchangeability implies joint exchangeability**: permuting both axes by the same
 permutation is the special case `τ = σ`. -/
@@ -280,14 +299,14 @@ theorem SeparatelyExchangeable.exchangeable_arrayCol {μ : Measure Ω} {X : ℕ 
 
 /-- **Each single row of a separately exchangeable array is a fully exchangeable sequence.** This
 is the column half of the symmetry, read off at one row index. -/
-theorem SeparatelyExchangeable.fullyExchangeable_within_row {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+theorem SeparatelyExchangeable.fullyExchangeable_row {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) (i : ℕ) :
     FullyExchangeable μ fun j => X (i, j) := fun τ =>
   h.map_comp hX 1 τ (F := fun x j => x (i, j)) (measurable_pi_lambda _ fun _ =>
     measurable_pi_apply _)
 
 /-- **Each single column of a separately exchangeable array is a fully exchangeable sequence.** -/
-theorem SeparatelyExchangeable.fullyExchangeable_within_col {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+theorem SeparatelyExchangeable.fullyExchangeable_col {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) (j : ℕ) :
     FullyExchangeable μ fun i => X (i, j) := fun σ =>
   h.map_comp hX σ 1 (F := fun x i => x (i, j)) (measurable_pi_lambda _ fun _ =>
@@ -304,8 +323,8 @@ theorem SeparatelyExchangeable.map_entry_eq {μ : Measure Ω} {X : ℕ × ℕ �
 /-! ## The diagonal of a jointly exchangeable array -/
 
 /-- **The diagonal of a jointly exchangeable array is a fully exchangeable sequence.** Separate
-exchangeability is not needed, and this is the reason joint exchangeability is the right symmetry
-for a symmetric array: it still constrains the diagonal. -/
+exchangeability is not needed: joint exchangeability alone already constrains the diagonal, which
+is what makes it a useful hypothesis on a jointly exchangeable symmetric array. -/
 theorem JointlyExchangeable.fullyExchangeable_arrayDiag {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     FullyExchangeable μ (arrayDiag X) := fun σ =>
@@ -344,9 +363,15 @@ theorem SeparatelyExchangeable.conditionallyIID_arrayCol [StandardBorelSpace α]
 
 /-- The deterministic diagonal-indicator array over a sample space `S`: its `(i, j)` entry is
 `true` exactly when `i = j`. It is jointly but not separately exchangeable. -/
-@[expose]
 def diagIndicatorArray (S : Type*) : ℕ × ℕ → S → Bool :=
   fun p _ => decide (p.1 = p.2)
+
+/-- The entries of the diagonal-indicator array: constant in the sample point, and `true` exactly
+on the diagonal. -/
+@[simp]
+theorem diagIndicatorArray_apply (S : Type*) (p : ℕ × ℕ) (s : S) :
+    diagIndicatorArray S p s = decide (p.1 = p.2) :=
+  (rfl)
 
 /-- The diagonal-indicator array is jointly exchangeable: permuting both axes by one injective map
 leaves the array itself, not merely its law, unchanged. -/
