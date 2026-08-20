@@ -69,6 +69,7 @@ theorem mem_range_root_weightMap_iff {m : M} :
 
 /-- The index bijection of an equivalence of root pairings preserves the integral Cartan
 pairing. -/
+@[simp]
 theorem pairingIn_indexEquiv [FaithfulSMul ℤ R] [P.IsCrystallographic] [P₂.IsCrystallographic]
     (i j : ι) : P₂.pairingIn ℤ (g.indexEquiv i) (g.indexEquiv j) = P.pairingIn ℤ i j := by
   refine FaithfulSMul.algebraMap_injective ℤ R ?_
@@ -76,6 +77,7 @@ theorem pairingIn_indexEquiv [FaithfulSMul ℤ R] [P.IsCrystallographic] [P₂.I
 
 /-- The index bijection of an equivalence of root pairings commutes with the negation of indices,
 because its weight map is linear. -/
+@[simp]
 theorem indexEquiv_neg (i : ι) :
     letI := P.indexNeg
     letI := P₂.indexNeg
@@ -87,6 +89,7 @@ theorem indexEquiv_neg (i : ι) :
 
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β + γ` between roots. -/
+@[simp]
 theorem root_indexEquiv_add_iff (k i j : ι) :
     P₂.root (g.indexEquiv k) = P₂.root (g.indexEquiv i) + P₂.root (g.indexEquiv j) ↔
       P.root k = P.root i + P.root j := by
@@ -96,6 +99,7 @@ theorem root_indexEquiv_add_iff (k i j : ι) :
 
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β - γ` between roots. -/
+@[simp]
 theorem root_indexEquiv_sub_iff (k i j : ι) :
     P₂.root (g.indexEquiv k) = P₂.root (g.indexEquiv j) - P₂.root (g.indexEquiv i) ↔
       P.root k = P.root j - P.root i := by
@@ -105,6 +109,7 @@ theorem root_indexEquiv_sub_iff (k i j : ι) :
 
 /-- The index bijection of an equivalence of root pairings preserves and reflects linear
 independence of a pair of roots. -/
+@[simp]
 theorem linearIndependent_root_indexEquiv_iff (i j : ι) :
     LinearIndependent R ![P₂.root (g.indexEquiv i), P₂.root (g.indexEquiv j)] ↔
       LinearIndependent R ![P.root i, P.root j] := by
@@ -123,6 +128,7 @@ variable [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R]
 
 /-- The index bijection of an equivalence of root pairings preserves the number of steps one may
 add `α` to `β` and stay among the roots. -/
+@[simp]
 theorem chainTopCoeff_indexEquiv (i j : ι) :
     P₂.chainTopCoeff (g.indexEquiv i) (g.indexEquiv j) = P.chainTopCoeff i j := by
   by_cases h : LinearIndependent R ![P.root i, P.root j]
@@ -141,6 +147,7 @@ theorem chainTopCoeff_indexEquiv (i j : ι) :
 
 /-- The index bijection of an equivalence of root pairings preserves the number of steps one may
 subtract `α` from `β` and stay among the roots. -/
+@[simp]
 theorem chainBotCoeff_indexEquiv (i j : ι) :
     P₂.chainBotCoeff (g.indexEquiv i) (g.indexEquiv j) = P.chainBotCoeff i j := by
   by_cases h : LinearIndependent R ![P.root i, P.root j]
