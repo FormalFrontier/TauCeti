@@ -30,6 +30,8 @@ that it preserves their common-kernel Hopf ideal, so it descends to the quotient
   the generated Kostant group scheme.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom`:
   the pinning equation `γ ∘ xᵢ = x_{σ i}`.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv`:
+  the corresponding inverse pinning equation.
 
 ## References
 
@@ -99,6 +101,8 @@ private theorem map_kostantNumberedSymmetryMatrix {A B : Type} [CommRing A] [Com
     hintertwine
   rw [kostantNumberedSymmetryMatrix, kostantNumberedSymmetryMatrix,
     Units.coe_map, Units.coe_map]
+  -- `Units.map` and `GeneralLinearGroup.map` expose their underlying matrices only by
+  -- reduction; there is no conversion lemma from this entrywise goal to `hmatrix`.
   change φ ((LinearMap.toMatrixAlgEquiv (b.baseChange A))
       (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ.toAddEquiv M hθM).val i j) =
     (LinearMap.toMatrixAlgEquiv (b.baseChange B))
@@ -169,6 +173,8 @@ private noncomputable def generalLinearPointsNumberedSymmetryNatIso :
       apply MonoidHom.ext
       intro f
       rw [GrpCat.comp_apply, GrpCat.comp_apply]
+      -- Cancelling the object transports leaves the underlying `MulEquiv`; its application
+      -- is definitionally the displayed pointwise operation, but has no named rewrite lemma.
       change generalLinearPointsNumberedSymmetryMulEquiv M b θ hθM B
           (HopfAlgebra.mapPoints φ f) =
         HopfAlgebra.mapPoints φ
@@ -176,6 +182,8 @@ private noncomputable def generalLinearPointsNumberedSymmetryNatIso :
       apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := B) n).injective
       simp only [HopfAlgebra.mapPoints]
       rw [pointsMulEquiv_generalLinearPointsNumberedSymmetryMulEquiv]
+      -- `mapPoints` is implemented by `AlgHom.mapValue`; exposing that implementation is
+      -- necessary before the public `pointsMulEquiv_mapValue` theorem can rewrite the goal.
       change kostantNumberedSymmetryMatrix M b θ hθM B *
             GeneralLinear.pointsMulEquiv n (AlgHom.mapValue φ.hom f) *
           (kostantNumberedSymmetryMatrix M b θ hθM B)⁻¹ =
@@ -213,14 +221,20 @@ private theorem pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinat
       (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.op =
         (CommHopfAlgCat.pointsFunctor (R := ℤ)).preimage
           (generalLinearPointsNumberedSymmetryNatIso M b θ hθM).hom := rfl
+  -- Fix the concrete presentation of the point before moving between the two functor APIs;
+  -- their agreement below is mediated by `pointsFunctor.map_preimage`, not a rewrite lemma.
   change GeneralLinear.pointsMulEquiv n
       ((CommHopfAlgCat.mapPointsFunctor
         (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).app A f) = _
+  -- `mapPointsFunctor` is definitionally the opposite-coordinate morphism under
+  -- `pointsFunctor`; expose that representation so `hcoordinate` can rewrite its argument.
   change GeneralLinear.pointsMulEquiv n
       (((CommHopfAlgCat.pointsFunctor (R := ℤ)).map
         (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.op).app A f) = _
   rw [hcoordinate]
   rw [happ]
+  -- `NatIso.ofComponents` stores this component through equality transports; after `happ`
+  -- those transports reduce to the underlying pointwise `MulEquiv`, with no named theorem.
   change GeneralLinear.pointsMulEquiv n
       (generalLinearPointsNumberedSymmetryMulEquiv M b θ hθM A f) = _
   exact pointsMulEquiv_generalLinearPointsNumberedSymmetryMulEquiv M b θ hθM A f
@@ -474,5 +488,18 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom (i : I) :
     kostantGeneratedCoordinateNumberedSymmetryIso_hom_comp_rootMap]
   exact (kostantRootSubgroupToGenerated_def
     e h ρ M hM hnil b (σ i)).symm
+
+include hθe hσ in
+/-- The inverse generated group-scheme symmetry carries the `σ i`th root subgroup back to the
+`i`th root subgroup, without changing its additive parameter. -/
+@[simp]
+theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv (i : I) :
+    kostantRootSubgroupToGenerated e h ρ M hM hnil b (σ i) ≫
+        (kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ).inv =
+      kostantRootSubgroupToGenerated e h ρ M hM hnil b i := by
+  rw [← kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom
+    e h ρ M hM hnil b σ θ hθM hθe hσ i]
+  simp only [Category.assoc, Iso.hom_inv_id, Category.comp_id]
 
 end TauCeti.UniversalEnvelopingAlgebra
