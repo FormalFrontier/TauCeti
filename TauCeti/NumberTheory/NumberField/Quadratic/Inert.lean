@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
-public import Mathlib.NumberTheory.RamificationInertia.Galois
+import Mathlib.NumberTheory.RamificationInertia.Galois
 
 /-!
 # A conjugation-stable prime over an unramified rational prime is inert

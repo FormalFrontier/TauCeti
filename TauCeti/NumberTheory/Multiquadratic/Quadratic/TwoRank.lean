@@ -88,7 +88,7 @@ theorem twoRank_le_ncard_ramifiedPrimes_sub_one [IsTotallyComplex K]
   have hinj : Nat.card {Cl : ClassGroup (𝓞 K) // Cl ^ 2 = 1} ≤
       Nat.card (Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (s : Set ℕ))) := by
     refine Nat.card_le_card_of_injective
-      (fun Cl => ⟨Cl.1, NumberField.mem_closure_of_sq_eq_one hmin hgen hscoe.ge
+      (fun Cl => ⟨Cl.1, hscoe.symm ▸ NumberField.mem_closure_of_sq_eq_one hmin hgen
         (fun p hp => hprime p (hsram p hp)) (fun p hp => hover p (hsram p hp)) Cl.2⟩)
       ?_
     intro a b h

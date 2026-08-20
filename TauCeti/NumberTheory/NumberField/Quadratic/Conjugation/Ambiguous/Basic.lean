@@ -68,7 +68,7 @@ namespace NumberField
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
 /-- Pushing an ideal forward twice along an involutive ring automorphism returns it. -/
-theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommRing R] {f : R ≃+* R}
+theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommSemiring R] {f : R ≃+* R}
     (hf : Function.Involutive f) (I : Ideal R) : Ideal.map f (Ideal.map f I) = I := by
   have hcomp : (f : R →+* R).comp (f : R →+* R) = RingHom.id R := RingHom.ext hf
   rw [← Ideal.map_coe (f := f) I, ← Ideal.map_coe (f := f) (Ideal.map (f : R →+* R) I),
