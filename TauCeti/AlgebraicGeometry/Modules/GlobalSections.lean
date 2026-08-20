@@ -146,11 +146,7 @@ def _root_.AlgebraicGeometry.Scheme.Modules.baseRingToGlobalSections : R →+* �
   ((Scheme.ΓSpecIso (.of R)).inv ≫ (X ↘ Spec (.of R)).appTop).hom
 
 /-- The base ring acts through the pullback along the structure morphism: `r` is sent to the
-global function obtained by pulling back the function on `Spec R` corresponding to `r`.
-
-As above, the parentheses in `(rfl)` are the module system's, the body of
-`baseRingToGlobalSections` not being `@[expose]`d; this is the equation consumers use in place
-of unfolding the definition. -/
+global function obtained by pulling back the function on `Spec R` corresponding to `r`. -/
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.baseRingToGlobalSections_apply (r : R) :
     baseRingToGlobalSections R X r =
