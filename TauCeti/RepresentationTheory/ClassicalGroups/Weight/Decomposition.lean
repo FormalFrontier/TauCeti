@@ -18,8 +18,10 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.LaurentFunctions
 # The weight-space decomposition of a rational representation
 
 A rational representation of `GL n ℂ` is the internal direct sum of its weight spaces: the
-diagonal torus is simultaneously diagonalizable on it, and its joint eigencharacters are exactly
-the characters `t ↦ ∏ i, tᵢ ^ lᵢ` of the torus. This file proves that
+diagonal torus is simultaneously diagonalizable on it, and every joint eigencharacter occurring in
+it is among the monomial characters `t ↦ ∏ i, tᵢ ^ lᵢ` of the torus. Which of those characters
+actually occur — equivalently, which weight spaces are nonzero — is not determined here; the
+decomposition is indexed by all of `Fin n → ℤ`. This file proves that
 (`TauCeti.IsRationalRep.isInternal_weightSpace`), completing the decomposition that
 `TauCeti.RepresentationTheory.ClassicalGroups.Weight.Basic` establishes only for the standard
 representation.
@@ -189,8 +191,11 @@ theorem IsRationalRep.iSup_weightSpace_eq_top (h : IsRationalRep ρ) :
     (apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul hA hl w)
 
 /-- **The weight-space decomposition.** A rational representation of `GL n ℂ` is the internal
-direct sum of its weight spaces: the diagonal torus is simultaneously diagonalizable on it, with
-the characters `t ↦ ∏ i, tᵢ ^ lᵢ` as its joint eigencharacters. The roadmap pins this statement
+direct sum of its weight spaces: the diagonal torus is simultaneously diagonalizable on it, and the
+decomposition is indexed by the integer weights `l`, the summand at `l` being the joint eigenspace
+of the character `t ↦ ∏ i, tᵢ ^ lᵢ`. The sum runs over all of `Fin n → ℤ`; which weights actually
+occur — that is, for which `l` the summand is nonzero — is not part of the statement. The roadmap
+pins this statement
 as `weightSpace_isInternal`; it is named for its conclusion here, matching the standard-
 representation case `TauCeti.isInternal_weightSpace_stdRep`. -/
 theorem IsRationalRep.isInternal_weightSpace (h : IsRationalRep ρ) :

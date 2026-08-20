@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 -- `TauCeti.weightChar`, the characters of the split torus, and `TauCeti.weightChar_injective`.
-public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
 -- The `Subalgebra` structure the span of the characters is upgraded to.
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 -- Non-public: Artin's independence of characters, used only inside the proof of
