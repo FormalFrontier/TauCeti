@@ -105,7 +105,10 @@ theorem ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot {α β : Weight K H L} (hα :
   rw [genWeightSpace_chainTopCoeff_add_one_nsmul_add (⇑α) β hα] at hmem
   have hzero : ((toEnd K L L x) ^ (chainTopCoeff (⇑α) β + 1)) y = 0 := by
     simpa using hmem
-  rw [hexp, Nat.add_sub_cancel, show ((ad K L) x : Module.End K L) = toEnd K L L x from rfl]
+  have hadt : ((ad K L) x : Module.End K L) = toEnd K L L x := by
+    ext z
+    simp
+  rw [hexp, Nat.add_sub_cancel, hadt]
   rw [pow_succ] at hzero
   simpa [Module.End.mul_apply] using hzero
 

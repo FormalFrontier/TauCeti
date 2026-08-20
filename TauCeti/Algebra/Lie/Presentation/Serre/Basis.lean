@@ -104,7 +104,10 @@ private theorem ad_pow_succ_toNat_eq_zero {x y z m : L} {ht : IsSl2Triple z x y}
   obtain ⟨k, hk⟩ := P.exists_nat
   have hnk : n = (k : ℤ) := by exact_mod_cast hk
   have htn : n.toNat = k := by omega
-  rw [show ad K L y = toEnd K L L y from rfl, htn]
+  -- Mathlib states the `sl₂` string API for `LieModule.toEnd`, so the adjoint action is written
+  -- in that shape first; the two agree extensionally on the adjoint module.
+  have hadt : (ad K L y : Module.End K L) = toEnd K L L y := by ext w; simp
+  rw [hadt, htn]
   exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
 
 /-- **The higher Serre relation on the raising generators of a Lie algebra basis.** -/
