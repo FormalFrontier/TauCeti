@@ -13,17 +13,19 @@ import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
 import TauCeti.Analysis.Normed.Module.Ball.Cut
 
 /-!
-# The near side of a small crosscut, and the continuity theorem it yields
+# A conditional near-side reduction for boundary continuity
 
 Let `f` be a conformal map of a disc `ball c r` onto a bounded domain `Ω = f '' ball c r` whose
 frontier is a Jordan curve, and cut the disc at a point `ζ` of its bounding circle by the circle
 `sphere ζ ρ`. This file assembles the crosscut machinery of the surrounding directory into the
-statement layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md` — the Jordan-domain case of
-the Carathéodory boundary correspondence — is after: at every point of the bounding circle the
-*near side* `f '' (ball c r ∩ ball ζ ρ)` can be made arbitrarily narrow by taking `ρ` small, so `f`
-has a limit at every boundary point and extends continuously to `closedBall c r`.
+conditional reduction toward layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md` — the
+Jordan-domain case of the Carathéodory boundary correspondence. Under the plane-separation input
+spelled out below, at every point of the bounding circle the *near side*
+`f '' (ball c r ∩ ball ζ ρ)` can be made arbitrarily narrow by taking `ρ` small, so `f` has a limit
+at every boundary point and extends continuously to `closedBall c r`.
 
-One input is not proved: that a Jordan curve `J` is a limit of points of its inside,
+This file does not establish the unconditional L5 theorem. One input is not proved: that a Jordan
+curve `J` is a limit of points of its inside,
 `J ⊆ closure (filledHull J \ J)`. It is carried as an explicit hypothesis, asked only of the
 Jordan curves that lie in `closure Ω`. Everything else the argument needs is discharged here.
 
@@ -76,9 +78,10 @@ theorem turns out to consume, which is what `ConformalMapping/STATUS.md` asks to
 before separation is attacked. It is not an empty hypothesis: for the model Jordan curve, a
 circle, it is `TauCeti.sphere_subset_closure_filledHull_sphere_sdiff` of
 `TauCeti/Analysis/Normed/Module/FilledHull.lean`, where it needs no separation theory at all.
-Nothing here weakens the conclusion in exchange: with the hypothesis
-discharged, the theorems below are the L5 milestone for the disc, in the exact form
-`Conformal/BoundaryCorrespondence.lean` packages into a boundary homeomorphism.
+Nothing here weakens the conditional conclusion in exchange: the theorems below isolate the one
+remaining plane-separation prerequisite for the continuity half of the L5 milestone. They do not
+claim that milestone unconditionally; once the prerequisite is proved separately, their conclusion
+has the form `Conformal/BoundaryCorrespondence.lean` packages into a boundary homeomorphism.
 
 ## Generality
 
