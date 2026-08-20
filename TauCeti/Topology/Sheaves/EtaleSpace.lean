@@ -39,7 +39,7 @@ variable {X : TopCat.{v}} {C : Type u} [Category.{v} C] {CC : C → Type v}
 variable {F : X.Presheaf C}
 
 /-- A section of a presheaf, viewed as a section of the étalé projection. -/
-noncomputable def germSection (F : X.Presheaf C) (U : Opens X)
+@[expose] noncomputable def germSection (F : X.Presheaf C) (U : Opens X)
     (s : ToType (F.obj (Opposite.op U))) :
     U → F.EtaleSpace :=
   fun x ↦ ⟨x, F.germ U x x.2 s⟩
