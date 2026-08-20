@@ -25,6 +25,13 @@ Tau Ceti work in [#42](https://github.com/TauCetiProject/TauCeti/pull/42).
 `SimplyConnectedSpace.paths_homotopic`, applied in a subspace `↥V`, yields a homotopy in the
 ambient space whose intermediate paths all stay in `V`. Analytic continuation consumes it in
 `Analysis/Complex/Conformal/GlobalBranch.lean`.
+
+`Path.homotopic_of_continuous_square` is likewise adapted from Kim Morrison's
+[#38292](https://github.com/leanprover-community/mathlib4/pull/38292). It is used by
+`AlgebraicTopology/UniversalCover/BasedPath.lean`, where it previously lived privately, and by
+`AlgebraicTopology/Sphere/Puncture.lean`. The lemma
+`Path.Homotopic.refl_of_forall_mem_of_nullhomotopic` is not from #38292; it was factored out of
+`AlgebraicTopology/SemilocallySimplyConnected/Basic.lean`.
 -/
 
 public section
@@ -124,6 +131,24 @@ theorem exists_homotopy_forall_mem_of_isSimplyConnected {V : Set X} (hV : IsSimp
     (Path.map_codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) p hp)
     (Path.map_codRestrict (x := ⟨a, haV⟩) (y := ⟨b, hbV⟩) q hq), fun t x => ?_⟩
   simp
+
+/-- **A square with prescribed edges is a path homotopy.** A continuous map on `I × I` that
+restricts to `p` at `t = 0` and to `q` at `t = 1`, and is constant along each of the edges `s = 0`
+and `s = 1`, exhibits `p` and `q` as homotopic paths. -/
+theorem homotopic_of_continuous_square {a b : X} {p q : Path a b} (K : I × I → X)
+    (hK_cont : Continuous K) (hK_zero : ∀ s, K (0, s) = p s) (hK_one : ∀ s, K (1, s) = q s)
+    (hK_left : ∀ t, K (t, 0) = a) (hK_right : ∀ t, K (t, 1) = b) : p.Homotopic q :=
+  ⟨{ toFun := K
+     continuous_toFun := hK_cont
+     map_zero_left := hK_zero
+     map_one_left := hK_one
+     prop' := by
+       intro t s hs
+       rcases hs with rfl | hs
+       · exact (hK_left t).trans p.source.symm
+       · rw [Set.mem_singleton_iff] at hs
+         subst hs
+         exact (hK_right t).trans p.target.symm }⟩
 
 end Path
 
@@ -228,6 +253,16 @@ theorem map_nullhomotopic_of_nullhomotopic {Y : Type*} [TopologicalSpace Y] {f :
   rw [hconst] at key
   exact Path.Homotopic.trans_right_cancel
     ((key.trans (Path.Homotopic.trans_refl _)).trans (Path.Homotopic.refl_trans _).symm)
+
+/-- A loop that stays in a set whose inclusion is null-homotopic is itself null-homotopic in the
+ambient space. -/
+theorem refl_of_forall_mem_of_nullhomotopic {s : Set X}
+    (hs : (ContinuousMap.mk (Subtype.val : s → X) continuous_subtype_val).Nullhomotopic)
+    {x : X} (γ : Path x x) (hγ : ∀ t, γ t ∈ s) : γ.Homotopic (Path.refl x) := by
+  have hx : x ∈ s := γ.source ▸ hγ 0
+  have hmap := map_nullhomotopic_of_nullhomotopic hs
+    (γ.codRestrict (x := ⟨x, hx⟩) (y := ⟨x, hx⟩) hγ)
+  rwa [Path.map_codRestrict] at hmap
 
 namespace Quotient
 variable {x₀ x₁ : X}
