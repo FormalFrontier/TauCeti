@@ -160,6 +160,15 @@ def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyAction
     rw [globalSectionsSmul_add, Functor.map_add]
     rfl
 
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyAction_apply
+    (M : X.Modules) (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
+    cohomologyAction M i r x =
+      (cohomologyFunctor X i).map (globalSectionsSmul M r) x := by
+  simp only [cohomologyAction]
+  exact DFunLike.congr_fun (AddCommGrpCat.homAddEquiv_apply
+    ((cohomologyFunctor X i).map (globalSectionsSmul M r))) x
+
 /-- Cohomology is canonically a module over the ring of global functions. -/
 instance _root_.AlgebraicGeometry.Scheme.Modules.cohomologyModule
     (M : X.Modules) (i : ℕ) : Module Γ(X, ⊤) (Cohomology M i) :=
@@ -196,6 +205,41 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_apply
     (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
     cohomologyMapLinear f i x = (cohomologyFunctor X i).map f x :=
   by rfl
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_id
+    (M : X.Modules) (i : ℕ) :
+    cohomologyMapLinear (𝟙 M) i = LinearMap.id := by
+  apply LinearMap.ext
+  exact (cohomologyFunctor X i).map_id_apply M
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_comp
+    {P : X.Modules} (f : M ⟶ N) (g : N ⟶ P) (i : ℕ) :
+    cohomologyMapLinear (f ≫ g) i =
+      (cohomologyMapLinear g i).comp (cohomologyMapLinear f i) := by
+  apply LinearMap.ext
+  exact (cohomologyFunctor X i).map_comp_apply f g
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_zero
+    (M N : X.Modules) (i : ℕ) :
+    cohomologyMapLinear (0 : M ⟶ N) i = 0 := by
+  apply LinearMap.ext
+  intro x
+  simp only [cohomologyMapLinear_apply, LinearMap.zero_apply]
+  rw [Functor.map_zero]
+  rfl
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_add
+    (f g : M ⟶ N) (i : ℕ) :
+    cohomologyMapLinear (f + g) i = cohomologyMapLinear f i + cohomologyMapLinear g i := by
+  apply LinearMap.ext
+  intro x
+  simp only [cohomologyMapLinear_apply, LinearMap.add_apply]
+  rw [Functor.map_add]
+  rfl
 
 /-- The canonical identification of zeroth cohomology with global sections is linear over global
 functions. -/
