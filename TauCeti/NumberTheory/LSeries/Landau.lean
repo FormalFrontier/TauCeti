@@ -131,22 +131,6 @@ def HasAnalyticExtensionAt (a : ℕ → ℂ) (σ : ℝ) : Prop :=
   ∃ r : ℝ, 0 < r ∧ ∃ F : ℂ → ℂ, DifferentiableOn ℂ F (ball (σ : ℂ) r) ∧
     ∀ s ∈ ball (σ : ℂ) r, σ < s.re → F s = LSeries a s
 
-namespace HasAnalyticExtensionAt
-
-/-- Introduction lemma for an analytic extension across a real point. -/
-theorem of_differentiableOn {r : ℝ} (hr : 0 < r) {F : ℂ → ℂ}
-    (hF : DifferentiableOn ℂ F (ball ((σ : ℝ) : ℂ) r))
-    (hFa : ∀ s ∈ ball ((σ : ℝ) : ℂ) r, σ < s.re → F s = LSeries a s) :
-    HasAnalyticExtensionAt a σ :=
-  ⟨r, hr, F, hF, hFa⟩
-
-/-- Elimination lemma for an analytic extension across a real point. -/
-theorem exists_extension (h : HasAnalyticExtensionAt a σ) :
-    ∃ r : ℝ, 0 < r ∧ ∃ F : ℂ → ℂ, DifferentiableOn ℂ F (ball ((σ : ℝ) : ℂ) r) ∧
-      ∀ s ∈ ball ((σ : ℝ) : ℂ) r, σ < s.re → F s = LSeries a s := h
-
-end HasAnalyticExtensionAt
-
 private lemma sub_lt_re_of_mem_ball {σ r : ℝ} {s : ℂ}
     (hs : s ∈ ball ((σ : ℝ) : ℂ) r) : σ - r < s.re := by
   have key : |s.re - σ| ≤ dist s ((σ : ℝ) : ℂ) := by
@@ -162,7 +146,7 @@ lemma hasAnalyticExtensionAt_of_abscissaOfAbsConv_lt {σ : ℝ}
     (h : LSeries.abscissaOfAbsConv a < σ) : HasAnalyticExtensionAt a σ := by
   obtain ⟨σ', h₁, h₂⟩ := EReal.exists_between_coe_real h
   have h₂' : σ' < σ := mod_cast h₂
-  refine .of_differentiableOn (r := σ - σ') (by linarith) ?_ fun _ _ _ ↦ rfl
+  refine ⟨σ - σ', by linarith, LSeries a, ?_, fun _ _ _ ↦ rfl⟩
   refine (LSeries_differentiableOn a).mono fun s hs ↦ ?_
   have hσ' : σ' < s.re := by
     have := sub_lt_re_of_mem_ball hs
@@ -174,7 +158,7 @@ private lemma exists_differentiableOn_patch {σ : ℝ}
     ∃ δ : ℝ, 0 < δ ∧ ∃ G : ℂ → ℂ,
       DifferentiableOn ℂ G (ball (((σ + 1 : ℝ) : ℂ)) (1 + δ)) ∧
         Set.EqOn G (LSeries a) {s : ℂ | σ < s.re} := by
-  obtain ⟨r, hr, F, hF, hFeq⟩ := h.exists_extension
+  obtain ⟨r, hr, F, hF, hFeq⟩ := h
   set δ : ℝ := min (r ^ 2 / 4) 1 with hδdef
   have hδpos : 0 < δ := lt_min (by positivity) one_pos
   have hδ1 : δ ≤ 1 := min_le_right _ _
@@ -193,11 +177,8 @@ private lemma exists_differentiableOn_patch {σ : ℝ}
   have hGF : Set.EqOn G F (ball ((σ : ℝ) : ℂ) r) := by
     intro s hs
     by_cases hsσ : σ < s.re
-    · change (if σ < s.re then LSeries a s else F s) = F s
-      rw [ite_eq_left hsσ]
-      exact (hFeq s hs hsσ).symm
-    · change (if σ < s.re then LSeries a s else F s) = F s
-      exact ite_eq_right hsσ
+    · simpa [hGdef, hsσ] using (hFeq s hs hsσ).symm
+    · simp [hGdef, hsσ]
   have hsub : ∀ s ∈ ball (((σ + 1 : ℝ) : ℂ)) (1 + δ),
       σ < s.re ∨ s ∈ ball ((σ : ℝ) : ℂ) r := by
     intro s hs
@@ -360,8 +341,7 @@ theorem abscissaOfAbsConv_le_of_differentiableOn (ha : 0 ≤ a)
   set σ : ℝ := (LSeries.abscissaOfAbsConv a).toReal with hσdef
   have habs : LSeries.abscissaOfAbsConv a = (σ : EReal) := (EReal.coe_toReal hfin hbot).symm
   have hσ₁σ : σ₁ < σ := by rw [habs] at hlt; exact_mod_cast hlt
-  refine landau ha habs (HasAnalyticExtensionAt.of_differentiableOn
-    (a := a) (σ := σ) (F := F) (r := σ - σ₁) (by linarith) ?_ ?_)
+  refine landau ha habs ⟨σ - σ₁, by linarith, F, ?_, ?_⟩
   · refine hF.mono fun s hs ↦ ?_
     have := sub_lt_re_of_mem_ball hs
     exact Set.mem_ofPred.mpr (by linarith)
