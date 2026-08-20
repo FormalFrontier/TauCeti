@@ -16,10 +16,10 @@ times. Mathlib's `Nat.nth_count` identifies it whenever a witness is available: 
 bookkeeping — the *only if* half, including the degenerate branch — which is what a case analysis
 on the value of `nth p k` needs.
 
-`TauCeti.nth_eq_iff_count_eq` supplies it: `nth p k = m` exactly when `m` is a counting witness, or
-else `m = 0` and no counting witness exists at all. The two branches are mutually exclusive apart
-from the accidental overlap at `m = 0`, and a counting witness is unique when it exists, because
-`Nat.count p` strictly increases across a point where `p` holds.
+`TauCeti.nth_eq_iff` supplies it: `nth p k = m` exactly when `m` is a counting witness, or else
+`m = 0` and no counting witness exists at all. The two branches are mutually exclusive, and a
+counting witness is unique when it exists, because `Nat.count p` strictly increases across a point
+where `p` holds.
 
 The degenerate branch is not a technicality that can be assumed away: `nth p k = 0` really does
 happen when `p` has at most `k` witnesses, and a description of the fibres of `nth` has to name
@@ -31,7 +31,7 @@ finitely many of the values of `x`.
 
 * `TauCeti.nth_eq_zero_of_forall_count_ne`: with no counting witness, `Nat.nth` takes its junk
   value.
-* `TauCeti.nth_eq_iff_count_eq`: the fibres of `Nat.nth p`.
+* `TauCeti.nth_eq_iff`: the fibres of `Nat.nth p`.
 -/
 
 public section
@@ -52,7 +52,7 @@ theorem nth_eq_zero_of_forall_count_ne {p : ℕ → Prop} [DecidablePred p] {k :
 /-- **The fibres of `Nat.nth p`.** The value `Nat.nth p k` is `m` exactly when either `m` is the
 counting witness for `k` — it satisfies `p` and has exactly `k` predecessors satisfying `p` — or
 there is no counting witness at all and `m` is the junk value `0`. -/
-theorem nth_eq_iff_count_eq {p : ℕ → Prop} [DecidablePred p] {k m : ℕ} :
+theorem nth_eq_iff {p : ℕ → Prop} [DecidablePred p] {k m : ℕ} :
     Nat.nth p k = m ↔
       (p m ∧ Nat.count p m = k) ∨ (m = 0 ∧ ∀ n, ¬(p n ∧ Nat.count p n = k)) := by
   constructor

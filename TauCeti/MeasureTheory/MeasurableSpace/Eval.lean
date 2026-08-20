@@ -14,11 +14,12 @@ Mathlib's `Measurable.eval` evaluates a measurable map into a product at a **fix
 This file records the variant where the coordinate is itself a measurable function of the point,
 which is what a recursion whose next index is read off the current state needs.
 
-The hypotheses on the index type are the usual ones for such a statement: countably many
-coordinates, each of them a measurable set, so that the fibres of the index map cut the domain into
-countably many measurable pieces on which the evaluation is an ordinary coordinate projection.
-Both are necessary — for an uncountable index type the diagonal `fun (x, i) => x i` is already not
-measurable for the product σ-algebra.
+The hypotheses on the index type are standard sufficient conditions for such a statement:
+countably many coordinates, each of them a measurable set, so that the fibres of the index map cut
+the domain into countably many measurable pieces on which the evaluation is an ordinary coordinate
+projection. They are not individually necessary in degenerate cases. For suitable nontrivial
+measurable spaces over an uncountable index type, however, the diagonal `fun (x, i) => x i` need not
+be measurable for the product σ-algebra.
 
 ## Main results
 
