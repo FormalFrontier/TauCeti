@@ -238,7 +238,8 @@ private theorem ofArrow_mul_ofPath_mem [Fintype V] (hconn : G.Connected)
   obtain rfl : e = arrow G h₃ := Subsingleton.elim _ _
   rw [← ofArrow_mul_ofArrow]
   rcases eq_or_ne i l with rfl | hil
-  · rw [show arrow G h₂ = arrow G h₁.symm from Subsingleton.elim _ _, ofArrow_symm_mul_ofArrow]
+  · have h₂_eq : arrow G h₂ = arrow G h₁.symm := Subsingleton.elim _ _
+    rw [h₂_eq, ofArrow_symm_mul_ofArrow]
     exact ofArrow_mul_backtrackElem_mem k G hconn hcard h₁ h₃
   · exact (quadraticZigzagIdeal k G).mul_mem_left _ _
       (ofArrow_mul_ofArrow_mem_quadraticZigzagIdeal k G h₁ h₂ hil)
@@ -297,13 +298,13 @@ noncomputable abbrev nonisolatedZigzagQuotient : Type _ :=
   pathAlgebra k (DoubledQuiver G) ⧸ (zigzagIdeal k G).asIdeal
 
 /-- The quotient map from the path algebra of the doubled quiver onto the zigzag quotient. -/
-@[expose] noncomputable def zigzagMk :
+noncomputable def zigzagMk :
     pathAlgebra k (DoubledQuiver G) →ₐ[k] nonisolatedZigzagQuotient k G :=
   Ideal.Quotient.mkₐ k _
 
 /-- The quotient map is the ring-theoretic quotient map of the relation ideal. -/
 theorem zigzagMk_apply (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagMk k G x = Ideal.Quotient.mk (zigzagIdeal k G).asIdeal x := rfl
+    zigzagMk k G x = Ideal.Quotient.mk (zigzagIdeal k G).asIdeal x := (rfl)
 
 /-- The kernel of the quotient map is the relation ideal. -/
 @[simp]
@@ -317,12 +318,14 @@ theorem zigzagMk_eq_zero_of_isZigzagRelator {x : pathAlgebra k (DoubledQuiver G)
   (zigzagMk_eq_zero_iff k G).mpr (mem_zigzagIdeal_of_isZigzagRelator k G hx)
 
 /-- A length-two path whose endpoints differ dies in the zigzag quotient. -/
+@[simp]
 theorem zigzagMk_ofPath_eq_zero_of_ne {i j : DoubledQuiver G} (p : _root_.Quiver.Path i j)
     (hp : p.length = 2) (hij : i ≠ j) : zigzagMk k G (ofPath ⟨i, j, p⟩) = 0 :=
   zigzagMk_eq_zero_of_isZigzagRelator k G
     (IsZigzagRelator.quadratic (IsQuadraticZigzagRelator.nonreturn p hp hij))
 
 /-- A path of length at least three dies in the zigzag quotient. -/
+@[simp]
 theorem zigzagMk_ofPath_eq_zero_of_three_le (x : Quiver.TotalPath (DoubledQuiver G))
     (hx : 3 ≤ x.2.2.length) : zigzagMk k G (ofPath x) = 0 :=
   zigzagMk_eq_zero_of_isZigzagRelator k G (IsZigzagRelator.long_path x hx)
@@ -348,7 +351,7 @@ theorem zigzagIdeal_le_ker (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
 
 /-- The universal property of the zigzag quotient: an algebra map out of the path algebra which
 kills every uniform relator factors through the quotient. -/
-@[expose] noncomputable def zigzagLift (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+noncomputable def zigzagLift (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsZigzagRelator k G x → f x = 0) : nonisolatedZigzagQuotient k G →ₐ[k] B :=
   Ideal.Quotient.liftₐ _ f fun _ ha =>
     (TwoSidedIdeal.mem_ker f).mp <| zigzagIdeal_le_ker k G f hf (TwoSidedIdeal.mem_asIdeal.mp ha)
@@ -356,7 +359,16 @@ kills every uniform relator factors through the quotient. -/
 @[simp]
 theorem zigzagLift_zigzagMk (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsZigzagRelator k G x → f x = 0) (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagLift k G f hf (zigzagMk k G x) = f x := rfl
+    zigzagLift k G f hf (zigzagMk k G x) = f x := (rfl)
+
+/-- The lift is the unique algebra map whose composite with the quotient map is `f`. -/
+theorem zigzagLift_unique (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+    (hf : ∀ x, IsZigzagRelator k G x → f x = 0)
+    (g : nonisolatedZigzagQuotient k G →ₐ[k] B)
+    (hg : ∀ x, g (zigzagMk k G x) = f x) : g = zigzagLift k G f hf := by
+  apply Ideal.Quotient.algHom_ext k
+  ext x
+  exact (hg x).trans (zigzagLift_zigzagMk k G f hf x).symm
 
 /-- On a connected graph with at least three vertices an algebra map killing the quadratic
 relators already kills the whole relation ideal. -/
@@ -370,7 +382,7 @@ theorem zigzagIdeal_le_ker_of_quadratic [Fintype V] (hconn : G.Connected)
 
 /-- For a connected graph with at least three vertices only the quadratic relations need to be
 checked: an algebra map killing them factors through the zigzag quotient. -/
-@[expose] noncomputable def zigzagLiftOfQuadratic [Fintype V] (hconn : G.Connected)
+noncomputable def zigzagLiftOfQuadratic [Fintype V] (hconn : G.Connected)
     (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0) :
     nonisolatedZigzagQuotient k G →ₐ[k] B :=
@@ -384,7 +396,18 @@ theorem zigzagLiftOfQuadratic_zigzagMk [Fintype V] (hconn : G.Connected)
     (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0)
     (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagLiftOfQuadratic k G hconn hcard f hf (zigzagMk k G x) = f x := rfl
+    zigzagLiftOfQuadratic k G hconn hcard f hf (zigzagMk k G x) = f x := (rfl)
+
+/-- The quadratic lift is the unique algebra map whose composite with the quotient map is `f`. -/
+theorem zigzagLiftOfQuadratic_unique [Fintype V] (hconn : G.Connected)
+    (hcard : 3 ≤ Fintype.card V) (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
+    (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0)
+    (g : nonisolatedZigzagQuotient k G →ₐ[k] B)
+    (hg : ∀ x, g (zigzagMk k G x) = f x) :
+    g = zigzagLiftOfQuadratic k G hconn hcard f hf := by
+  apply Ideal.Quotient.algHom_ext k
+  ext x
+  exact (hg x).trans (zigzagLiftOfQuadratic_zigzagMk k G hconn hcard f hf x).symm
 
 end Lift
 
