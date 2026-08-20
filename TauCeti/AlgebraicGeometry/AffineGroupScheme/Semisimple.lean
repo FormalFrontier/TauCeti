@@ -5,6 +5,7 @@ Authors: Codex
 -/
 module
 
+import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.Semisimple.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
@@ -127,9 +128,8 @@ theorem semisimpleAffineGroupSchemeProperty_inverseImage
     (semisimpleAffineGroupSchemeProperty k).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       (semisimpleCommHopfAlgProperty k).op := by
-  exact objectProperty_inverseImage_equivalence_inverse
-    (semisimpleCommHopfAlgProperty k).op
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
+  unfold semisimpleAffineGroupSchemeProperty
+  exact ObjectProperty.inverseImage_functor_inverseImage_inverse _ _
 
 /-- `Spec` restricts to an anti-equivalence from semisimple finite-type commutative Hopf algebras
 to semisimple affine group schemes. -/

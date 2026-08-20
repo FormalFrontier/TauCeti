@@ -30,6 +30,10 @@ pointwise algebra happens before integration; a later layer proves invariance un
 * `TauCeti.DenseGraphLimits.cutNorm` is the supremum of the absolute rectangle integrals.
 * `TauCeti.DenseGraphLimits.cutNormSet` is the separately roadmap-pinned textbook set-form name for
   the same quantity.
+* `TauCeti.DenseGraphLimits.SymmKernel.testIntegral` is the integral of a kernel against a pair of
+  test functions, of which a rectangle integral is the indicator case.
+* `TauCeti.DenseGraphLimits.cutNormSigned` is the signed cut norm: the same supremum taken over
+  measurable `[-1,1]`-valued test functions rather than over indicators.
 
 ## Main results
 
@@ -37,13 +41,17 @@ pointwise algebra happens before integration; a later layer proves invariance un
   supremum.
 * `cutNorm_zero`, `cutNorm_neg`, `cutNorm_add_le`, and `cutNorm_smul` are the seminorm laws.
 * `cutNorm_le_integral_abs` bounds the cut norm by the `L¹` norm.
+* `abs_testIntegral_le_cutNormSigned` and `cutNormSigned_le` are the corresponding introduction and
+  elimination rules for the signed cut norm.
+* `cutNorm_le_cutNormSigned` is the lower side of the factor sandwich relating the two.  The upper
+  side, `cutNormSigned_le_four_mul_cutNorm`, is a separate roadmap target and is not proved here.
 
 ## References
 
 * L. Lovász, *Large Networks and Graph Limits*, §8.2.1.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, §4.
-* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 1 — the cut norm and its set form;
-  the signatures follow `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
+* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 1 — the cut norm, its set form, and
+  the signed form; the signatures follow `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
 * The definition and rectangle-integral interface follow `Graphon/CutNorm.lean` in
   `cameronfreer/graphon` (Apache 2.0) at commit
   `6eccca5bbe5c9df46d7129bf59575b8b9b1d6699`; the strict-kernel integrability and full seminorm
@@ -146,6 +154,63 @@ theorem abs_rectIntegral_le_integral_abs [IsFiniteMeasure μ]
     _ ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
       setIntegral_le_integral K.integrable_uncurry.abs (ae_of_all _ fun _ => abs_nonneg _)
 
+/-- The integral of a symmetric kernel against a pair of test functions:
+`∫∫ u(x) v(y) K(x,y)`.
+
+This generalises `rectIntegral`, which is the case of two indicator functions
+(`testIntegral_indicator_one`), and is the quantity the signed cut norm takes a supremum of. -/
+noncomputable def testIntegral (K : SymmKernel Ω μ) (u v : Ω → ℝ) : ℝ :=
+  ∫ p, u p.1 * v p.2 * K p.1 p.2 ∂(μ.prod μ)
+
+/-- A test integral is the product-measure integral of `u ⊗ v · K`. -/
+theorem testIntegral_def (K : SymmKernel Ω μ) (u v : Ω → ℝ) :
+    K.testIntegral μ u v = ∫ p, u p.1 * v p.2 * K p.1 p.2 ∂(μ.prod μ) := (rfl)
+
+/-- The integrand of a test integral is integrable when the test functions are measurable and
+`[-1,1]`-valued: it is then dominated pointwise by `|K|`, which is integrable. -/
+theorem integrable_testIntegrand [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    Integrable (fun p : Ω × Ω => u p.1 * v p.2 * K p.1 p.2) (μ.prod μ) := by
+  refine Integrable.mono' K.integrable_uncurry.abs
+    (((hu.comp measurable_fst).mul (hv.comp measurable_snd)).mul
+      K.measurable).aestronglyMeasurable (ae_of_all _ fun p => ?_)
+  rw [Real.norm_eq_abs, abs_mul, abs_mul]
+  calc |u p.1| * |v p.2| * |K p.1 p.2|
+      ≤ 1 * 1 * |K p.1 p.2| := by
+        gcongr
+        · exact abs_le.2 (hu1 p.1)
+        · exact abs_le.2 (hv1 p.2)
+    _ = |K p.1 p.2| := by ring
+
+/-- Every `[-1,1]`-test integral is bounded by the `L¹` norm of the kernel.  This is the bound that
+makes the signed cut norm's supremum a supremum of a bounded set. -/
+theorem abs_testIntegral_le_integral_abs [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    |K.testIntegral μ u v| ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) := by
+  rw [testIntegral_def]
+  refine abs_integral_le_integral_abs.trans ?_
+  refine integral_mono (K.integrable_testIntegrand μ hu hv hu1 hv1).abs
+    K.integrable_uncurry.abs fun p => ?_
+  rw [abs_mul, abs_mul]
+  calc |u p.1| * |v p.2| * |K p.1 p.2|
+      ≤ 1 * 1 * |K p.1 p.2| := by
+        gcongr
+        · exact abs_le.2 (hu1 p.1)
+        · exact abs_le.2 (hv1 p.2)
+    _ = |K p.1 p.2| := by ring
+
+/-- Testing against two indicator functions recovers the rectangle integral.  This is what makes
+the set form of the cut norm a special case of the signed form. -/
+@[simp]
+theorem testIntegral_indicator_one (K : SymmKernel Ω μ) {S T : Set Ω}
+    (hS : MeasurableSet S) (hT : MeasurableSet T) :
+    K.testIntegral μ (S.indicator 1) (T.indicator 1) = K.rectIntegral μ S T := by
+  rw [testIntegral_def, rectIntegral_def, ← integral_indicator (hS.prod hT)]
+  refine integral_congr_ae (ae_of_all _ fun p => ?_)
+  by_cases hp1 : p.1 ∈ S <;> by_cases hp2 : p.2 ∈ T <;> simp [hp1, hp2, Set.mem_prod]
+
 end SymmKernel
 
 /-- The set form of the cut norm: the supremum of the absolute kernel integrals over measurable
@@ -158,6 +223,26 @@ noncomputable def cutNormSet [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :
 /-- The cut norm of a symmetric kernel: the supremum over measurable sets `S` and `T` of the
 absolute integral over `S × T`. -/
 noncomputable def cutNorm [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
+
+/-- The **signed cut norm**: the supremum, over measurable `[-1,1]`-valued test functions `u` and
+`v`, of `|∫∫ u(x) v(y) K(x,y)|`.
+
+Relaxing the indicators of `cutNorm` to `[-1,1]`-valued functions can only increase the supremum
+(`cutNorm_le_cutNormSigned`), and increases it by at most a factor of `4`.  That upper side of the
+sandwich, `cutNormSigned_le_four_mul_cutNorm`, is a separate roadmap target and is not proved
+here.
+
+`[IsFiniteMeasure μ]` is required, as for `cutNorm`, and is not decoration: on an infinite measure
+the test integrals are unbounded — take `μ` Lebesgue, `K` the constant kernel `1`, and `u = v` the
+indicator of `[0, n]`, giving `n²` — so the conditionally complete supremum on `ℝ` would collapse to
+its junk value `0` for a kernel that is nowhere near zero.  Finiteness is what makes
+`abs_testIntegral_le_integral_abs` bound the range, and hence what makes this a faithful
+supremum. -/
+noncomputable def cutNormSigned [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :=
+  let ν : FiniteMeasure Ω := ⟨μ, inferInstance⟩
+  ⨆ (u : Ω → ℝ) (_ : Measurable u) (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1)
+    (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+    |K.testIntegral (ν : Measure Ω) u v|
 
 variable [IsFiniteMeasure μ]
 
@@ -293,6 +378,108 @@ theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
   rw [cutNorm_eq_cutNormSet, cutNormSet_def, cutNorm_eq_cutNormSet, cutNormSet_def]
   simp only [SymmKernel.rectIntegral_smul, abs_mul,
     Real.mul_iSup_of_nonneg (abs_nonneg c)]
+
+/-- The signed cut norm is the iterated supremum over measurable `[-1,1]`-valued test functions. -/
+theorem cutNormSigned_def (K : SymmKernel Ω μ) :
+    cutNormSigned μ K =
+      ⨆ (u : Ω → ℝ) (_ : Measurable u) (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1)
+        (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+        |K.testIntegral μ u v| := (rfl)
+
+/-  The supremum defining `cutNormSigned` has six binders, so bounding it from below at a chosen
+pair of test functions needs the range at each level to be bounded above.  The five private lemmas
+below strip one binder each, all with the same `L¹` bound; they play the role that
+`iSup_right_le_integral_abs` and its siblings play for `cutNorm`. -/
+private theorem iSup_mem_right_le_integral_abs (K : SymmKernel Ω μ) (u v : Ω → ℝ)
+    (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv : Measurable v) :
+    (⨆ (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
+      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  Real.iSup_le (fun hv1 => K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1)
+    (integral_abs_nonneg μ K)
+
+private theorem iSup_measurable_right_le_integral_abs (K : SymmKernel Ω μ) (u v : Ω → ℝ)
+    (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) :
+    (⨆ (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
+      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  Real.iSup_le (fun hv => iSup_mem_right_le_integral_abs μ K u v hu hu1 hv)
+    (integral_abs_nonneg μ K)
+
+private theorem iSup_fun_right_le_integral_abs (K : SymmKernel Ω μ) (u : Ω → ℝ)
+    (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) :
+    (⨆ (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+      |K.testIntegral μ u v|) ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  Real.iSup_le (fun v => iSup_measurable_right_le_integral_abs μ K u v hu hu1)
+    (integral_abs_nonneg μ K)
+
+private theorem iSup_mem_left_le_integral_abs (K : SymmKernel Ω μ) (u : Ω → ℝ)
+    (hu : Measurable u) :
+    (⨆ (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (v : Ω → ℝ) (_ : Measurable v)
+      (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
+      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  Real.iSup_le (fun hu1 => iSup_fun_right_le_integral_abs μ K u hu hu1) (integral_abs_nonneg μ K)
+
+private theorem iSup_measurable_left_le_integral_abs (K : SymmKernel Ω μ) (u : Ω → ℝ) :
+    (⨆ (_ : Measurable u) (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (v : Ω → ℝ) (_ : Measurable v)
+      (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
+      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  Real.iSup_le (fun hu => iSup_mem_left_le_integral_abs μ K u hu) (integral_abs_nonneg μ K)
+
+/-- Every `[-1,1]`-test integral is bounded by the signed cut norm.  This is the introduction rule
+for the supremum, mirroring `abs_rectIntegral_le_cutNorm`. -/
+theorem abs_testIntegral_le_cutNormSigned (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    |K.testIntegral μ u v| ≤ cutNormSigned μ K := by
+  rw [cutNormSigned_def]
+  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun u' =>
+    iSup_measurable_left_le_integral_abs μ K u') u ?_
+  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
+    iSup_mem_left_le_integral_abs μ K u hu) hu ?_
+  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
+    iSup_fun_right_le_integral_abs μ K u hu hu1) hu1 ?_
+  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun v' =>
+    iSup_measurable_right_le_integral_abs μ K u v' hu hu1) v ?_
+  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
+    iSup_mem_right_le_integral_abs μ K u v hu hu1 hv) hv ?_
+  exact le_ciSup (bddAbove_range_of_forall_le fun _ =>
+    K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1) hv1
+
+/-- To prove an upper bound on the signed cut norm, it suffices to prove it for every pair of
+measurable `[-1,1]`-valued test functions.  Nonnegativity of the bound is not a hypothesis: it
+follows by testing against the zero function. -/
+theorem cutNormSigned_le {K : SymmKernel Ω μ} {C : ℝ}
+    (h : ∀ u v : Ω → ℝ, Measurable u → Measurable v → (∀ x, u x ∈ Icc (-1 : ℝ) 1) →
+      (∀ y, v y ∈ Icc (-1 : ℝ) 1) → |K.testIntegral μ u v| ≤ C) :
+    cutNormSigned μ K ≤ C := by
+  have hzero : ∀ x : Ω, (0 : Ω → ℝ) x ∈ Icc (-1 : ℝ) 1 := fun _ => by norm_num
+  have hC : 0 ≤ C := by
+    simpa [SymmKernel.testIntegral_def] using
+      h 0 0 measurable_const measurable_const hzero hzero
+  rw [cutNormSigned_def]
+  exact Real.iSup_le (fun u => Real.iSup_le (fun hu => Real.iSup_le (fun hu1 =>
+    Real.iSup_le (fun v => Real.iSup_le (fun hv => Real.iSup_le (fun hv1 =>
+      h u v hu hv hu1 hv1) hC) hC) hC) hC) hC) hC
+
+/-- The signed cut norm is nonnegative. -/
+theorem cutNormSigned_nonneg (K : SymmKernel Ω μ) : 0 ≤ cutNormSigned μ K := by
+  rw [cutNormSigned_def]
+  exact Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ =>
+    Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => abs_nonneg _
+
+/-- The signed cut norm is bounded by the `L¹` norm of the kernel, as the cut norm is. -/
+theorem cutNormSigned_le_integral_abs (K : SymmKernel Ω μ) :
+    cutNormSigned μ K ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  cutNormSigned_le μ fun _ _ hu hv hu1 hv1 => K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1
+
+/-- **Lower side of the factor sandwich.** The cut norm is at most the signed cut norm: indicators
+are `[-1,1]`-valued test functions, so the signed supremum ranges over more pairs. -/
+theorem cutNorm_le_cutNormSigned (K : SymmKernel Ω μ) : cutNorm μ K ≤ cutNormSigned μ K := by
+  refine cutNorm_le μ fun S hS T hT => ?_
+  rw [← K.testIntegral_indicator_one μ hS hT]
+  refine abs_testIntegral_le_cutNormSigned μ K (measurable_one.indicator hS)
+    (measurable_one.indicator hT) (fun x => ?_) fun y => ?_
+  · by_cases hx : x ∈ S <;> simp [hx]
+  · by_cases hy : y ∈ T <;> simp [hy]
 
 end DenseGraphLimits
 
