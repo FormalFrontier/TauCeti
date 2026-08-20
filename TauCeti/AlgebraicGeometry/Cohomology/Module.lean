@@ -75,6 +75,8 @@ instance _root_.AlgebraicGeometry.Scheme.Modules.cohomologyModule
     (M : X.Modules) (i : ℕ) : Module Γ(X, ⊤) (Cohomology M i) :=
   Module.compHom (Cohomology M i) (cohomologyAction M i)
 
+/-- Scalar multiplication on cohomology is induced by the cohomology map of the corresponding
+scalar endomorphism of the coefficient sheaf. -/
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomology_smul
     (M : X.Modules) (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :

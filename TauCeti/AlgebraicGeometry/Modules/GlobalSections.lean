@@ -127,6 +127,7 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsAction_apply
     globalSectionsAction M r = globalSectionsSmul M r :=
   by rfl
 
+/-- Multiplication by a global function is natural in the sheaf of modules. -/
 @[reassoc]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsSmul_naturality
     (f : M ⟶ N) (r : Γ(X, ⊤)) :
