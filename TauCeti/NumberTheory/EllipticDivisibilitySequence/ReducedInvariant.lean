@@ -7,7 +7,7 @@ module
 
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.ComplAux
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Complement
-public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant.Basic
+public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant.NormEDS
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Six
 
 /-!
@@ -44,11 +44,14 @@ by which the elliptic-net identities reach the division polynomials in the Lutz�
 * `IsEllipticNet.invarDenom_normEDS_one_eq_reducedInvarDenom_mul`: `invarDenom (normEDS b c d) 1 m`
   is `reducedInvarDenom b c d m * (b * c)` — the cancellation the reduced denominator is named
   for, with no hypotheses.
-* `reducedInvarDenom_of_emod_eq_zero` and its five siblings: the per-residue elimination
+* `reducedInvarDenom_of_emod_six_eq_zero` and its five siblings: the per-residue elimination
   principle, one lemma per branch, so a consumer holding `m % 6 = r` reaches its branch without
   discharging the preceding `if` conditions.
 * `reducedInvarDenom_zero`, `reducedInvarDenom_one`, `reducedInvarDenom_two`: its values at the
   small indices; the last is what fixes the normalisation.
+* `reducedInvarNum_eq_reducedInvarDenom_mul`: the reduced invariant identity,
+  `reducedInvarNum b c d m = reducedInvarDenom b c d m * (d + b ^ 4)`, with no hypothesis on
+  `b`, `c`, `d`.
 
 ## Both cancellations, and why neither needs a hypothesis
 
@@ -59,12 +62,13 @@ commutative ring.
 
 The denominator side reads `invarDenom (normEDS b c d) 1 m = W (m + 1) * W m * W (m - 1)`, and
 which of the three factors gives up `b = W 2` and `c = W 3` depends on `m` modulo `6` — hence the
-six-way split. Each branch reindexes a complement by `normEDS_mul_complEDS` (`Complement.lean`),
-`W k * complEDS b c d k n = W (n * k)`, taking `n = m / k` and turning `(m / k) * k` back into `m`
-with `Int.ediv_mul_cancel` on the divisibility that `m % 6 = r` supplies. The residues `0`, `1`
-and `5` go through the `6`-complement and rewrite `W 6` as `(W 5 - d ^ 2) * b * c`
-(`WeierstrassCurve.normEDS_six`, `Six.lean`); the residues `2`, `3` and `4` split the work between
-a `2`-complement and a `3`-complement.
+six-way split. Each branch reindexes one or two complements by `normEDS_mul_complEDS_div`
+(`Complement.lean`), `W k * complEDS b c d k (n / k) = W n`, which this development adds beside the
+identity it is derived from — `normEDS_mul_complEDS`, stated at `W (n * k)` — and which absorbs the
+`Int.ediv_mul_cancel` step on the divisibility that `m % 6 = r` supplies. The residues `0`, `1` and
+`5` go through the `6`-complement once each and rewrite `W 6` as `(W 5 - d ^ 2) * b * c`
+(`WeierstrassCurve.normEDS_six`, `Six.lean`); the residues `2`, `3` and `4` each split the work
+between a `2`-complement and a `3`-complement.
 
 Note that `b, c ≠ 0` over a domain would **not** by itself make `normEDS b c d 6` a
 nonzerodivisor — that needs `normEDS b c d 5 - d ^ 2 ≠ 0` as well — which is why the
@@ -74,28 +78,30 @@ statement hypothesis-free.
 The numerator needs none of this because its cancellation is an identity between polynomial
 expressions, proved by `ring` from the complement recurrences rather than through a division.
 
-The divisor form is `normEDS_mul_complEDS_div`, which this development adds to `Complement.lean`
-beside the identity it reindexes. Each residue reduces `W k * complEDS b c d k (n / k)` to
-`W n` by `normEDS_mul_complEDS` — which is stated at `W (n * k)` — followed
-by `Int.ediv_mul_cancel` on the divisibility that `m % 6 = r` supplies. The factor
-`W 5 - d ^ 2` carried by the residues `0`, `1` and `5` is `W 6` with `b * c` removed, which is
-`WeierstrassCurve.normEDS_six` (`Six.lean`).
+The other half of the reduced-invariant theory — `redInvar_normEDS ← invar₂_normEDS ←
+invar_normEDS ← net_normEDS`, written in the source's names — is complete: `net_normEDS` is
+`isEllipticNet_normEDS` (`NormEDS.lean`), `invar_normEDS` is `invarNum_mul_invarDenom`
+(`Invariant/Basic.lean`), `invar₂_normEDS` is `invarNum_normEDS_one_mul_eq_invarDenom_mul`
+(`Invariant/NormEDS.lean`), and `redInvar_normEDS` is
+`reducedInvarNum_eq_reducedInvarDenom_mul` below.
 
-For the other half of the reduced-invariant theory — `redInvar_normEDS ← invar₂_normEDS ←
-invar_normEDS ← net_normEDS`, written in the source's names — every lower link has now landed:
-`net_normEDS` is `isEllipticNet_normEDS` (`NormEDS.lean`), `invar_normEDS` is
-`invarNum_mul_invarDenom` (`Invariant/Basic.lean`), and `invar₂_normEDS` is
-`invarNum_normEDS_one_mul_eq_invarDenom_mul` (`Invariant/NormEDS.lean`), so `redInvar_normEDS`
-alone remains there.
-
-Everything below is independent of all of that: nothing carries an ellipticity hypothesis, and the
-source discharges the ellipticity variables over exactly this block.
+Everything below **except the final identity** is independent of all of that: no other
+declaration carries an ellipticity hypothesis, and the source discharges the ellipticity
+variables over exactly this block. `reducedInvarNum_eq_reducedInvarDenom_mul` is the exception —
+its proof consumes the two cancellations of this file together with
+`invarNum_normEDS_one_mul_eq_invarDenom_mul` from the chain above.
 
 ## Provenance
 
 Ported from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in the AINTLIB
 **NagellLutz** project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0), at the revision
-`TauCetiRoadmap` pins for that project, `dev/modular-curves @ 9fec8eba7652`. Declarations
+`TauCetiRoadmap` pins for that project, `dev/modular-curves @ 9fec8eba7652`. The reduced
+invariant identity was ported later, read at `main @ 1c1c74664e40071c2c2165bc55ca2616a67ccd6b`:
+`reducedInvarNum_eq_reducedInvarDenom_mul` adapts that file's `redInvar_normEDS` (`:1514`) and
+its private `_of_mem` form adapts `redInvar_normEDS_of_mem_nonZeroDivisors` (`:1506`), respelt
+`reducedInvar*` like the rest of this file; both are byte-identical at the two revisions, and
+the earlier pin is kept for the block below so each declaration cites the revision it was read
+at. Declarations
 `invarNum_normEDS`, `redInvarNum`, `compl₂EDS_eq_redInvarNum_sub`,
 `invarNum_eq_redInvarNum_mul` and `map_redInvarNum` for the numerator, and `redInvarDenom`,
 `redInvarDenom_zero`, `redInvarDenom_one`, `redInvarDenom_two`, `map_redInvarDenom` and
@@ -110,9 +116,10 @@ the cancellation `invarDenom_eq_redInvarDenom_mul`, where HasseWeil spells it
 `f (redInvarDenom …) = redInvarDenom (f b) …`, where HasseWeil states the converse. This file
 carries the NagellLutz spelling and the NagellLutz orientation in both places.
 
-Six declarations here are **not** from that file: the `reducedInvarDenom_of_emod_eq_*` branch
-lemmas have no counterpart in the source, which eliminates the split inline. The divisor-form
-complement identity they rest on lives in `Complement.lean` as `normEDS_mul_complEDS_div`.
+Six declarations here are **not** from that file: the `reducedInvarDenom_of_emod_six_eq_*` branch
+lemmas have no counterpart in the source, which eliminates the split inline. The cancellation
+proof below reaches each branch through the divisor-form identity `normEDS_mul_complEDS_div`
+(`Complement.lean`) directly.
 
 The source's `invarDenom_eq_redInvarDenom_mul`, which identifies the denominator formula as the
 cancelled quotient, is ported here as
@@ -202,8 +209,8 @@ equation lemma is how a consumer computes with it.
 
 Not `@[simp]`, but **not** for `reducedInvarNum_def`'s reason. There the point is that `simp`
 should never unfold the term at all. Here it should: the whole content of `reducedInvarDenom` is
-the residue split, so the six `reducedInvarDenom_of_emod_eq_*` lemmas below *are* `@[simp]` and do
-unfold it — each into a single product, once the residue is known.
+the residue split, so the six `reducedInvarDenom_of_emod_six_eq_*` lemmas below *are* `@[simp]`
+and do unfold it — each into a single product, once the residue is known.
 
 What is wrong is unfolding it into the six-way `if` chain, which is what tagging this lemma would
 do: every goal mentioning `reducedInvarDenom` would acquire five undischarged conditions, and the
@@ -227,47 +234,47 @@ theorem reducedInvarDenom_def : reducedInvarDenom b c d m =
     else
       complEDS b c d 3 (m / 3) * complEDS b c d 2 ((m - 1) / 2) * normEDS b c d (m + 1) := (rfl)
 
-/-- The residue-`0` branch, selected. The six `reducedInvarDenom_of_emod_eq_*` lemmas are the
+/-- The residue-`0` branch, selected. The six `reducedInvarDenom_of_emod_six_eq_*` lemmas are the
 elimination principle for `reducedInvarDenom`: the whole content of the definition is the split, so
 a consumer that knows `m % 6` should reach its branch directly rather than rewriting by
 `reducedInvarDenom_def` and discharging the preceding `if` conditions by hand. -/
 @[simp]
-theorem reducedInvarDenom_of_emod_eq_zero (h : m % 6 = 0) :
+theorem reducedInvarDenom_of_emod_six_eq_zero (h : m % 6 = 0) :
     reducedInvarDenom b c d m = (normEDS b c d 5 - d ^ 2) * complEDS b c d 6 (m / 6) *
       normEDS b c d (m + 1) * normEDS b c d (m - 1) := by
   simp [reducedInvarDenom_def, h]
 
 /-- The residue-`1` branch, selected. -/
 @[simp]
-theorem reducedInvarDenom_of_emod_eq_one (h : m % 6 = 1) :
+theorem reducedInvarDenom_of_emod_six_eq_one (h : m % 6 = 1) :
     reducedInvarDenom b c d m = (normEDS b c d 5 - d ^ 2) * complEDS b c d 6 ((m - 1) / 6) *
       normEDS b c d (m + 1) * normEDS b c d m := by
   simp [reducedInvarDenom_def, h]
 
 /-- The residue-`5` branch, selected. -/
 @[simp]
-theorem reducedInvarDenom_of_emod_eq_five (h : m % 6 = 5) :
+theorem reducedInvarDenom_of_emod_six_eq_five (h : m % 6 = 5) :
     reducedInvarDenom b c d m = (normEDS b c d 5 - d ^ 2) * complEDS b c d 6 ((m + 1) / 6) *
       normEDS b c d m * normEDS b c d (m - 1) := by
   simp [reducedInvarDenom_def, h]
 
 /-- The residue-`2` branch, selected. -/
 @[simp]
-theorem reducedInvarDenom_of_emod_eq_two (h : m % 6 = 2) :
+theorem reducedInvarDenom_of_emod_six_eq_two (h : m % 6 = 2) :
     reducedInvarDenom b c d m =
       complEDS b c d 3 ((m + 1) / 3) * complEDS b c d 2 (m / 2) * normEDS b c d (m - 1) := by
   simp [reducedInvarDenom_def, h]
 
 /-- The residue-`4` branch, selected. -/
 @[simp]
-theorem reducedInvarDenom_of_emod_eq_four (h : m % 6 = 4) :
+theorem reducedInvarDenom_of_emod_six_eq_four (h : m % 6 = 4) :
     reducedInvarDenom b c d m =
       complEDS b c d 3 ((m - 1) / 3) * complEDS b c d 2 (m / 2) * normEDS b c d (m + 1) := by
   simp [reducedInvarDenom_def, h]
 
 /-- The residue-`3` branch, selected — the final `else`, so no positive condition remains. -/
 @[simp]
-theorem reducedInvarDenom_of_emod_eq_three (h : m % 6 = 3) :
+theorem reducedInvarDenom_of_emod_six_eq_three (h : m % 6 = 3) :
     reducedInvarDenom b c d m =
       complEDS b c d 3 (m / 3) * complEDS b c d 2 ((m - 1) / 2) * normEDS b c d (m + 1) := by
   simp [reducedInvarDenom_def, h]
@@ -276,7 +283,7 @@ theorem reducedInvarDenom_of_emod_eq_three (h : m % 6 = 3) :
 `m = 0` the residue-`0` branch is `(W 5 - d ^ 2) * complEDS b c d 6 0 * normEDS b c d 1 *
 normEDS b c d (-1)`, whose `normEDS` factors are `1` and `-1`, and `complEDS_zero` kills it. -/
 -- Not `@[simp]`: with the per-residue lemmas tagged, `simp` derives this from
--- `reducedInvarDenom_of_emod_eq_zero`, and `simpNF` rejects the redundant annotation.
+-- `reducedInvarDenom_of_emod_six_eq_zero`, and `simpNF` rejects the redundant annotation.
 theorem reducedInvarDenom_zero : reducedInvarDenom b c d 0 = 0 := by
   simp
 
@@ -308,14 +315,7 @@ namespace IsEllipticNet
 /-- **The cancellation `reducedInvarDenom` is named for**: the invariant denominator of a
 normalised EDS at `s = 1` is `reducedInvarDenom` times `b * c`. This is what identifies the
 six-way formula as the denominator with its constant factor removed, and so what gives the
-definition its meaning.
-
-**Unconditional over any commutative ring.** Each residue reindexes a complement through
-`normEDS_mul_complEDS` (`Complement.lean`), which holds with no nonzerodivisor hypothesis on
-`normEDS b c d k`; the divisibility that `Int.ediv_mul_cancel` needs comes from `m % 6 = r`
-itself. The residues `0`, `1` and `5` additionally rewrite `normEDS b c d 6` through
-`WeierstrassCurve.normEDS_six` (`Six.lean`), which is likewise an identity rather than a
-hypothesis.
+definition its meaning. Unconditional over any commutative ring.
 
 The **priority is load-bearing**, exactly as for the numerator counterpart. `invarDenom_def` is
 itself `@[simp]`, and at equal priority it wins on this term: with a plain `@[simp]` the left-hand
@@ -325,29 +325,31 @@ folded at `reducedInvarDenom b c d m * (b * c)`. -/
 @[simp high]
 theorem invarDenom_normEDS_one_eq_reducedInvarDenom_mul :
     invarDenom (normEDS b c d) 1 m = reducedInvarDenom b c d m * (b * c) := by
+  -- Split on `m % 6`; each branch reindexes one or two complements through
+  -- `normEDS_mul_complEDS_div`, on the divisibility that `m % 6 = r` supplies.
   have hcase : m % 6 = 0 ∨ m % 6 = 1 ∨ m % 6 = 2 ∨ m % 6 = 3 ∨ m % 6 = 4 ∨ m % 6 = 5 := by omega
   rw [invarDenom_def]
   rcases hcase with h | h | h | h | h | h
-  · rw [reducedInvarDenom_of_emod_eq_zero b c d m h,
-    ← normEDS_mul_complEDS_div 6 m (by omega),
-      WeierstrassCurve.normEDS_six]
+  · rw [reducedInvarDenom_of_emod_six_eq_zero b c d m h,
+      ← normEDS_mul_complEDS_div 6 m (by omega), WeierstrassCurve.normEDS_six]
     ring
-  · rw [reducedInvarDenom_of_emod_eq_one b c d m h,
-    ← normEDS_mul_complEDS_div 6 (m - 1) (by omega),
-      WeierstrassCurve.normEDS_six]
+  · rw [reducedInvarDenom_of_emod_six_eq_one b c d m h,
+      ← normEDS_mul_complEDS_div 6 (m - 1) (by omega), WeierstrassCurve.normEDS_six]
     ring
-  · rw [reducedInvarDenom_of_emod_eq_two b c d m h,
-    ← normEDS_mul_complEDS_div 3 (m + 1) (by omega),
-      ← normEDS_mul_complEDS_div 2 m (by omega), normEDS_two, normEDS_three]; ring
-  · rw [reducedInvarDenom_of_emod_eq_three b c d m h,
-    ← normEDS_mul_complEDS_div 3 m (by omega),
-      ← normEDS_mul_complEDS_div 2 (m - 1) (by omega), normEDS_two, normEDS_three]; ring
-  · rw [reducedInvarDenom_of_emod_eq_four b c d m h,
-    ← normEDS_mul_complEDS_div 3 (m - 1) (by omega),
-      ← normEDS_mul_complEDS_div 2 m (by omega), normEDS_two, normEDS_three]; ring
-  · rw [reducedInvarDenom_of_emod_eq_five b c d m h,
-    ← normEDS_mul_complEDS_div 6 (m + 1) (by omega),
-      WeierstrassCurve.normEDS_six]
+  · rw [reducedInvarDenom_of_emod_six_eq_two b c d m h,
+      ← normEDS_mul_complEDS_div 3 (m + 1) (by omega),
+      ← normEDS_mul_complEDS_div 2 m (by omega), normEDS_two, normEDS_three]
+    ring
+  · rw [reducedInvarDenom_of_emod_six_eq_three b c d m h,
+      ← normEDS_mul_complEDS_div 3 m (by omega),
+      ← normEDS_mul_complEDS_div 2 (m - 1) (by omega), normEDS_two, normEDS_three]
+    ring
+  · rw [reducedInvarDenom_of_emod_six_eq_four b c d m h,
+      ← normEDS_mul_complEDS_div 3 (m - 1) (by omega),
+      ← normEDS_mul_complEDS_div 2 m (by omega), normEDS_two, normEDS_three]
+    ring
+  · rw [reducedInvarDenom_of_emod_six_eq_five b c d m h,
+      ← normEDS_mul_complEDS_div 6 (m + 1) (by omega), WeierstrassCurve.normEDS_six]
     ring
 
 /-- **The cancellation `reducedInvarNum` is named for**: the invariant numerator of a normalised EDS
@@ -357,8 +359,9 @@ the reduced form the one the division-polynomial identities are stated over.
 The **priority is load-bearing**, not decoration. `invarNum_def` is itself `@[simp]`, and at equal
 priority it wins on this term: with a plain `@[simp]` here, `simp` still rewrites
 `invarNum (normEDS b c d) 1 m` to the fully expanded formula and this lemma never fires. At `high`
-it fires first, and because `reducedInvarNum_def` is deliberately *not* `@[simp]` the result then
-stays folded at `reducedInvarNum b c d m * b`, which is the normal form this file exists to name. -/
+it fires first, and because `reducedInvarNum_def` is deliberately *not* `@[simp]` the result never
+unfolds; `reducedInvarNum_eq_reducedInvarDenom_mul` carries it one step further, so the simp
+normal form is `reducedInvarDenom b c d m * (d + b ^ 4) * b`. -/
 @[simp high]
 theorem invarNum_normEDS_one_eq_reducedInvarNum_mul :
     invarNum (normEDS b c d) 1 m = reducedInvarNum b c d m * b := by
@@ -372,7 +375,8 @@ end IsEllipticNet
 variable {F : Type*} [FunLike F R S] [RingHomClass F R S] (f : F)
 
 /-- The reduced numerator is natural in the coefficient ring. -/
-@[simp]
+-- Not `@[simp]`: with `reducedInvarNum_eq_reducedInvarDenom_mul` in the set, `simp` derives this
+-- from `map_reducedInvarDenom`, and `simpNF` rejects the redundant annotation.
 theorem map_reducedInvarNum :
     f (reducedInvarNum b c d m) = reducedInvarNum (f b) (f c) (f d) m := by
   simp [reducedInvarNum_def, map_ofNat]
@@ -384,3 +388,36 @@ not depend on the ring, so a ring map passes it unchanged. -/
 theorem map_reducedInvarDenom :
     f (reducedInvarDenom b c d m) = reducedInvarDenom (f b) (f c) (f d) m := by
   simp [reducedInvarDenom_def, apply_ite f]
+
+section ReducedInvariantIdentity
+
+open MvPolynomial NormEDSParam
+open scoped nonZeroDivisors
+
+/-- `reducedInvarNum_eq_reducedInvarDenom_mul` under nonzerodivisor hypotheses on `b` and `c`. -/
+private theorem reducedInvarNum_eq_reducedInvarDenom_mul_of_mem (hb : b ∈ R⁰) (hc : c ∈ R⁰) :
+    reducedInvarNum b c d m = reducedInvarDenom b c d m * (d + b ^ 4) := by
+  rw [← mul_cancel_right_mem_nonZeroDivisors hb, ← mul_cancel_right_mem_nonZeroDivisors hc,
+    ← IsEllipticNet.invarNum_normEDS_one_eq_reducedInvarNum_mul,
+    IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul,
+    IsEllipticNet.invarDenom_normEDS_one_eq_reducedInvarDenom_mul]
+  ring
+
+/-- **The reduced invariant identity**: for a normalised EDS the reduced numerator is the
+reduced denominator times `d + b ^ 4`, for every `m` and with no hypothesis on `b`, `c`, `d` —
+the source's `redInvar_normEDS`. `@[simp]` as the canonical elimination rule for
+`reducedInvarNum`: the rewrite removes the `reducedInvarNum` head, chaining after
+`invarNum_normEDS_one_eq_reducedInvarNum_mul` rather than racing it, and
+`reducedInvarNum_def` is deliberately outside the simp set. -/
+@[simp]
+theorem reducedInvarNum_eq_reducedInvarDenom_mul :
+    reducedInvarNum b c d m = reducedInvarDenom b c d m * (d + b ^ 4) := by
+  -- Prove it where `b` and `c` are nonzerodivisors — the universal parameters — and specialise.
+  have huniv := reducedInvarNum_eq_reducedInvarDenom_mul_of_mem
+    (b := (X B : MvPolynomial NormEDSParam ℤ)) (c := X C) (d := X D) (m := m)
+    (mem_nonZeroDivisors_of_ne_zero (X_ne_zero (R := ℤ) B))
+    (mem_nonZeroDivisors_of_ne_zero (X_ne_zero (R := ℤ) C))
+  simpa only [map_reducedInvarNum, map_reducedInvarDenom, map_mul, map_add, map_pow, aeval_X]
+    using congr(aeval (NormEDSParam.rec b c d) $huniv)
+
+end ReducedInvariantIdentity

@@ -112,9 +112,9 @@ omit [LieModule.IsTriangularizable ℚ H L] in
 zero**: the Cartan subalgebra is abelian, so every `ad α∨` annihilates it. -/
 theorem isCartanWeightVector_cartan (y : H) :
     UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) 0 (y : L) :=
+      (UniversalEnvelopingAlgebra.representation ℚ L L) 0 (y : L) :=
   (UniversalEnvelopingAlgebra.isCartanWeightVector_iff _ _).2 fun α => by
-    rw [corootFamily_apply, UniversalEnvelopingAlgebra.adjointRepresentation_ι,
+    rw [corootFamily_apply, UniversalEnvelopingAlgebra.representation_ι_ad,
       LieAlgebra.ad_apply, lie_cartan_cartan_eq_zero]
     simp
 
@@ -123,7 +123,7 @@ omit [LieModule.IsTriangularizable ℚ H L] in
 the Cartan subalgebra. -/
 theorem isCartanWeightVector_coroot (β : Weight ℚ H L) :
     UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) 0 ((coroot β : H) : L) :=
+      (UniversalEnvelopingAlgebra.representation ℚ L L) 0 ((coroot β : H) : L) :=
   isCartanWeightVector_cartan (coroot β)
 
 namespace IsSl2System
@@ -136,9 +136,9 @@ include hx
 `TauCeti.rootCartanWeight β`. -/
 theorem isCartanWeightVector_rootVector (β : Weight ℚ H L) :
     UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (rootCartanWeight β) (x β) :=
+      (UniversalEnvelopingAlgebra.representation ℚ L L) (rootCartanWeight β) (x β) :=
   (UniversalEnvelopingAlgebra.isCartanWeightVector_iff _ _).2 fun α => by
-    rw [corootFamily_apply, UniversalEnvelopingAlgebra.adjointRepresentation_ι,
+    rw [corootFamily_apply, UniversalEnvelopingAlgebra.representation_ι_ad,
       LieAlgebra.ad_apply, hx.lie_coroot_rootVector α β]
 
 /-- **The integral root--coroot span lies in the span of the integral joint weight spaces.** Its
@@ -147,11 +147,11 @@ coroot operators with integer eigenvalues. -/
 theorem mem_iSup_jointWeightSpace (y : (rootCorootSpan x).toAddSubgroup) :
     (y : L) ∈ ⨆ μ : Weight ℚ H L → ℤ,
       UniversalEnvelopingAlgebra.jointWeightSpace (corootFamily H)
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) μ := by
+        (UniversalEnvelopingAlgebra.representation ℚ L L) μ := by
   have hle : rootCorootSpan x ≤
       (⨆ μ : Weight ℚ H L → ℤ,
         UniversalEnvelopingAlgebra.jointWeightSpace (corootFamily H)
-          (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) μ).restrictScalars ℤ := by
+          (UniversalEnvelopingAlgebra.representation ℚ L L) μ).restrictScalars ℤ := by
     rw [rootCorootSpan_le_iff]
     refine ⟨fun β => ?_, fun β => ?_⟩
     · exact (Submodule.restrictScalars_mem ℤ _ _).2 (Submodule.mem_iSup_of_mem (rootCartanWeight β)
@@ -173,7 +173,7 @@ arbitrary family `x` no such claim is made. -/
 noncomputable abbrev rootCorootWeightBasisCard (x : Weight ℚ H L → L) : ℕ :=
   Nat.card (Σ μ : Weight ℚ H L → ℤ, Module.Free.ChooseBasisIndex ℤ
     (UniversalEnvelopingAlgebra.weightSublattice (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+      (UniversalEnvelopingAlgebra.representation ℚ L L)
       (rootCorootSpan x).toAddSubgroup μ))
 
 namespace IsChevalleySystem
@@ -187,7 +187,7 @@ include hx
 theorem kostantForm_apply_mem_rootCorootSpan :
     ∀ u ∈ UniversalEnvelopingAlgebra.kostantForm x (corootFamily H),
       ∀ y ∈ (rootCorootSpan x).toAddSubgroup,
-        UniversalEnvelopingAlgebra.adjointRepresentation ℚ L u y ∈
+        UniversalEnvelopingAlgebra.representation ℚ L L u y ∈
           (rootCorootSpan x).toAddSubgroup := by
   intro u hu y hy
   rw [Submodule.mem_toAddSubgroup, ← hx.mem_chevalleyLieLattice_iff] at hy ⊢
@@ -198,7 +198,7 @@ Humphreys' Lemma 27.1 for the adjoint admissible lattice: the decomposition itse
 unlike the bases of the summands chosen below. -/
 theorem isInternal_weightSublattice [DecidableEq (Weight ℚ H L → ℤ)] :
     DirectSum.IsInternal (UniversalEnvelopingAlgebra.weightSublattice (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+      (UniversalEnvelopingAlgebra.representation ℚ L L)
       (rootCorootSpan x).toAddSubgroup) :=
   UniversalEnvelopingAlgebra.isInternal_weightSublattice x (corootFamily H) _ _
     hx.kostantForm_apply_mem_rootCorootSpan hx.toIsSl2System.mem_iSup_jointWeightSpace
@@ -210,7 +210,7 @@ noncomputable def chevalleyWeightBasis :
     Module.Basis
       (Σ μ : Weight ℚ H L → ℤ, Module.Free.ChooseBasisIndex ℤ
         (UniversalEnvelopingAlgebra.weightSublattice (corootFamily H)
-          (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+          (UniversalEnvelopingAlgebra.representation ℚ L L)
           (rootCorootSpan x).toAddSubgroup μ))
       ℤ (rootCorootSpan x).toAddSubgroup :=
   UniversalEnvelopingAlgebra.kostantWeightBasis x (corootFamily H) _ _
@@ -221,7 +221,7 @@ weight basis of the Chevalley lattice, so the whole `kostantWeightBasis` API app
 theorem chevalleyWeightBasis_def :
     hx.chevalleyWeightBasis =
       UniversalEnvelopingAlgebra.kostantWeightBasis x (corootFamily H)
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (rootCorootSpan x).toAddSubgroup
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (rootCorootSpan x).toAddSubgroup
         hx.kostantForm_apply_mem_rootCorootSpan hx.toIsSl2System.mem_iSup_jointWeightSpace :=
   (rfl)
 
@@ -230,10 +230,10 @@ of its index. -/
 theorem isCartanWeightVector_chevalleyWeightBasis
     (a : Σ μ : Weight ℚ H L → ℤ, Module.Free.ChooseBasisIndex ℤ
       (UniversalEnvelopingAlgebra.weightSublattice (corootFamily H)
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+        (UniversalEnvelopingAlgebra.representation ℚ L L)
         (rootCorootSpan x).toAddSubgroup μ)) :
     UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) a.1
+      (UniversalEnvelopingAlgebra.representation ℚ L L) a.1
       ((hx.chevalleyWeightBasis a : (rootCorootSpan x).toAddSubgroup) : L) := by
   rw [hx.chevalleyWeightBasis_def]
   exact UniversalEnvelopingAlgebra.isCartanWeightVector_kostantWeightBasis x (corootFamily H) _ _
@@ -252,7 +252,7 @@ API apply to it. -/
 theorem chevalleyWeightBasisFin_def :
     hx.chevalleyWeightBasisFin =
       UniversalEnvelopingAlgebra.kostantWeightBasisFin x (corootFamily H)
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (rootCorootSpan x).toAddSubgroup
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (rootCorootSpan x).toAddSubgroup
         hx.kostantForm_apply_mem_rootCorootSpan hx.toIsSl2System.mem_iSup_jointWeightSpace :=
   (rfl)
 
@@ -266,7 +266,7 @@ noncomputable def chevalleyWeightFin :
 theorem chevalleyWeightFin_def :
     hx.chevalleyWeightFin =
       UniversalEnvelopingAlgebra.kostantWeightFin x (corootFamily H)
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (rootCorootSpan x).toAddSubgroup
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (rootCorootSpan x).toAddSubgroup
         hx.kostantForm_apply_mem_rootCorootSpan hx.toIsSl2System.mem_iSup_jointWeightSpace :=
   (rfl)
 
@@ -275,7 +275,7 @@ theorem chevalleyWeightFin_def :
 the pinning takes as given. -/
 theorem isCartanWeightVector_chevalleyWeightBasisFin (i : Fin (rootCorootWeightBasisCard x)) :
     UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (hx.chevalleyWeightFin i)
+      (UniversalEnvelopingAlgebra.representation ℚ L L) (hx.chevalleyWeightFin i)
       ((hx.chevalleyWeightBasisFin i : (rootCorootSpan x).toAddSubgroup) : L) :=
   UniversalEnvelopingAlgebra.isCartanWeightVector_kostantWeightBasisFin x (corootFamily H) _ _
     hx.kostantForm_apply_mem_rootCorootSpan hx.toIsSl2System.mem_iSup_jointWeightSpace i
@@ -323,11 +323,11 @@ that identifies the character by which the torus acts on each weight component. 
 theorem chevalleyTorusPoints_tmul_of_isCartanWeightVector {A : Type*} [CommRing A] [Algebra ℤ A]
     {μ : Weight ℚ H L → ℤ} {m : (rootCorootSpan x).toAddSubgroup}
     (hm : UniversalEnvelopingAlgebra.IsCartanWeightVector (corootFamily H)
-      (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) μ (m : L))
+      (UniversalEnvelopingAlgebra.representation ℚ L L) μ (m : L))
     (s : Weight ℚ H L → Aˣ) (a : A) :
     (hx.chevalleyTorusPoints A s).val (a ⊗ₜ[ℤ] m) = ((torusCharacter s μ : A) * a) ⊗ₜ[ℤ] m :=
   UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_of_isCartanWeightVector x (corootFamily H)
-    (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) _
+    (UniversalEnvelopingAlgebra.representation ℚ L L) _
     hx.kostantForm_apply_mem_rootCorootSpan
     hx.chevalleyWeightBasisFin hx.chevalleyWeightFin
     hx.isCartanWeightVector_chevalleyWeightBasisFin hm s a
