@@ -9,6 +9,7 @@ public import Mathlib.GroupTheory.SpecificGroups.Cyclic
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 public import TauCeti.LinearAlgebra.Matrix.CartanTypeA
+import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
 
 /-!
 # The root lattice of type `Aₙ` and its discriminant form
@@ -116,12 +117,11 @@ matrix `CartanMatrix.A n`.** -/
 theorem form_typeASimpleRoot_typeASimpleRoot (i j : Fin n) :
     (typeARootLattice n).form (typeASimpleRoot n i) (typeASimpleRoot n j) =
       ((CartanMatrix.A n i j : ℤ) : ℚ) := by
-  classical
-  rw [typeARootLattice_form_simpleRoot]
-  rw [show (∑ k, (typeASimpleRoot n i) k * ((CartanMatrix.A n k j : ℤ) : ℚ)) =
-      ∑ k : Fin n, if k = i then ((CartanMatrix.A n k j : ℤ) : ℚ) else 0 from
-    Finset.sum_congr rfl fun k _ ↦ by rw [typeASimpleRoot_apply]; split_ifs <;> ring]
-  simp
+  have h := congrArg (fun z : ℤ ↦ (z : ℚ))
+    (integralForm_ofGramMatrix_apply (Pi.basisFun ℚ (Fin n)) (CartanMatrix.A n)
+      (CartanMatrix.A_isSymm n) i j)
+  simpa only [integralForm_cast, ofGramMatrix.coe_basis, typeARootLattice,
+    typeASimpleRoot_eq_basisFun] using h
 
 /-- A vector belongs to the type `Aₙ` root lattice exactly when all of its simple-root
 coordinates are integers. -/
@@ -131,21 +131,16 @@ theorem mem_typeARootLattice_carrier_iff (x : Fin n → ℚ) :
   rw [typeARootLattice, ofGramMatrix_carrier, Module.Basis.mem_span_iff_repr_mem]
   simp [Pi.basisFun_repr]
 
-/-- The type `Aₙ` Cartan matrix is nonsingular, so the root lattice is nondegenerate. -/
-theorem det_cartanMatrixA_ne_zero : (CartanMatrix.A n).det ≠ 0 := by
-  rw [det_cartanMatrixA]
-  omega
-
 noncomputable instance instIsNondegenerateTypeARootLattice :
     (typeARootLattice n).IsNondegenerate := by
   refine isNondegenerate_ofGramMatrix _ _ _ ?_
-  convert det_cartanMatrixA_ne_zero n
+  convert (isFiniteType_cartanMatrix_A n).det_ne_zero
 
 /-- The type `Aₙ` root lattice is even: every diagonal Cartan entry is `2`. -/
 theorem isEven_typeARootLattice : (typeARootLattice n).IsEven := by
   rw [typeARootLattice, isEven_ofGramMatrix_iff]
   intro i
-  rw [cartanMatrixA_apply, cartanTypeAEntry_self]
+  rw [← chainEntry_eq_cartanMatrix_A, chainEntry_self]
   exact even_two
 
 /-- **The determinant of the type `Aₙ` root lattice is `n + 1`.** -/
@@ -184,32 +179,25 @@ variable {n}
 private theorem natCast_add_one_ne_zero : ((n : ℚ) + 1) ≠ 0 := by positivity
 
 /-- The row combination of `CartanMatrix.A n` against the fundamental-weight coordinates. -/
-private theorem sum_cartanTypeAEntry_mul_weight (i : ℕ) (hin : i < n) :
-    ∑ k ∈ range n, ((cartanTypeAEntry i k : ℤ) : ℚ) * (((n : ℚ) - k) / ((n : ℚ) + 1)) =
+private theorem sum_chainEntry_mul_weight (i : ℕ) (hin : i < n) :
+    ∑ k ∈ range n, ((chainEntry i k : ℤ) : ℚ) * (((n : ℚ) - k) / ((n : ℚ) + 1)) =
       if i = 0 then 1 else 0 := by
   have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
-  rw [sum_cartanTypeAEntry_mul n i hin fun k ↦ ((n : ℚ) - k) / ((n : ℚ) + 1)]
-  have hprev : (if 0 < i then ((n : ℚ) - ((i - 1 : ℕ) : ℚ)) / ((n : ℚ) + 1) else 0) =
-      if 0 < i then ((n : ℚ) - (i : ℚ) + 1) / ((n : ℚ) + 1) else 0 := by
-    split_ifs with hi
-    · rw [Nat.cast_sub hi, Nat.cast_one]
-      ring_nf
-    · rfl
-  rw [hprev]
-  split_ifs with h₁ h₂ h₃ h₄ h₅
-  all_goals try (exfalso; omega)
-  all_goals push_cast
+  have hweight : ∀ k : ℕ,
+      ((n : ℚ) - k) / ((n : ℚ) + 1) =
+        (-1 / ((n : ℚ) + 1)) * (k : ℚ) + (n : ℚ) / ((n : ℚ) + 1) := by
+    intro k
+    field_simp
+    ring
+  rw [Finset.sum_congr rfl fun k _ ↦ by rw [hweight],
+    sum_range_chainEntry_mul_affine hin]
+  split_ifs with h₁ h₂ h₃
   all_goals field_simp
-  all_goals
-    first
-      | linarith
-      | (have hzero : (i : ℚ) = 0 := by exact_mod_cast (show i = 0 by omega)
-         linarith)
-      | (have hedge : (i : ℚ) + 1 = (n : ℚ) := by exact_mod_cast (show i + 1 = n by omega)
-         linarith)
-      | (have hzero : (i : ℚ) = 0 := by exact_mod_cast (show i = 0 by omega)
-         have hedge : (i : ℚ) + 1 = (n : ℚ) := by exact_mod_cast (show i + 1 = n by omega)
-         linarith)
+  all_goals ring_nf
+  all_goals subst i
+  all_goals have hn_one : n = 1 := by omega
+  all_goals subst n
+  all_goals norm_num
 
 variable (n)
 
@@ -221,16 +209,16 @@ theorem form_typeAFundamentalWeight_simpleRoot (i : Fin n) :
   classical
   rw [typeARootLattice_form_simpleRoot]
   have hconv : (∑ k, (typeAFundamentalWeight n) k * ((CartanMatrix.A n k i : ℤ) : ℚ)) =
-      ∑ k ∈ range n, ((cartanTypeAEntry i.val k : ℤ) : ℚ) *
+      ∑ k ∈ range n, ((chainEntry i.val k : ℤ) : ℚ) *
         (((n : ℚ) - k) / ((n : ℚ) + 1)) := by
     rw [← Fin.sum_univ_eq_sum_range
-      (fun k ↦ ((cartanTypeAEntry i.val k : ℤ) : ℚ) * (((n : ℚ) - k) / ((n : ℚ) + 1))) n]
+      (fun k ↦ ((chainEntry i.val k : ℤ) : ℚ) * (((n : ℚ) - k) / ((n : ℚ) + 1))) n]
     refine Finset.sum_congr rfl fun k _ ↦ ?_
-    rw [cartanMatrixA_apply, cartanTypeAEntry_comm]
+    rw [← chainEntry_eq_cartanMatrix_A, chainEntry_comm]
     simp only [typeAFundamentalWeight]
     ring
   rw [hconv]
-  exact sum_cartanTypeAEntry_mul_weight i.val i.isLt
+  exact sum_chainEntry_mul_weight i.val i.isLt
 
 /-- **The self-pairing of the first fundamental weight is `n / (n + 1)`.** -/
 theorem form_typeAFundamentalWeight_self :

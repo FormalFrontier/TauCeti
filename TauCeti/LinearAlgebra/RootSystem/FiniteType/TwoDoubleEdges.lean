@@ -195,7 +195,7 @@ private theorem sum_fin_chainEntry_mul_twoDoubleEdgeMark (i : Fin (m + 3)) :
         - (if (i : ℕ) = 0 then 0 else twoDoubleEdgeMarkNat m b ((i : ℕ) - 1))
         - (if (i : ℕ) + 1 = m + 3 then 0 else twoDoubleEdgeMarkNat m b ((i : ℕ) + 1)) := by
   have h := sum_range_chainEntry_mul (R := ℚ) (n := m + 3) (m := (i : ℕ)) i.isLt
-    (fun u ↦ twoDoubleEdgeMarkNat m b (u - 1))
+    (twoDoubleEdgeMarkNat m b)
   rw [Fin.sum_univ_eq_sum_range
     (fun s ↦ ((chainEntry (i : ℕ) s : ℤ) : ℚ) * twoDoubleEdgeMarkNat m b s)]
   simpa using h

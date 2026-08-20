@@ -288,13 +288,13 @@ private theorem chainEntry_arm_row {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
         + ∑ s ∈ Finset.range n, (chainEntry (m + 1) (s + 1) : ℚ) * g (s + 1)
       = 2 * g (m + 1) - g m - (if m + 1 = n then 0 else g (m + 2)) := by
   simp only [chainEntry_succ_succ]
-  rw [sum_range_chainEntry_mul hm]
+  rw [sum_range_chainEntry_mul hm (fun s ↦ g (s + 1))]
   rcases eq_or_ne m 0 with rfl | hm0
-  · rw [chainEntry_succ_left, ite_eq_left rfl]
-    push_cast
+  · rw [chainEntry_succ_left]
+    simp
     ring
   · rw [chainEntry_eq_zero (Nat.succ_ne_zero m) (fun h ↦ hm0 (by omega)) (by omega),
-      ite_eq_right hm0]
+      ite_eq_right hm0, Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr hm0)]
     push_cast
     ring
 

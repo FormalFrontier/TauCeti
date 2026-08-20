@@ -5,15 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import TauCeti.LinearAlgebra.Matrix.Triangular
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 
 /-!
 # Row combinations and the determinant of the type `A` Cartan matrix
 
 Mathlib's `CartanMatrix.A n` is the tridiagonal matrix carrying `2` on the diagonal and `-1` on the
-two neighbouring diagonals. This file evaluates the combination `∑ j, CartanMatrix.A n i j * w j`
-of its `i`-th row against an arbitrary weight vector, and uses the resulting formula to compute
+two neighbouring diagonals. Using its identification with `TauCeti.chainEntry`, this file computes
 
 ```text
 (CartanMatrix.A n).det = n + 1.
@@ -27,10 +26,6 @@ the weights themselves assemble into a lower triangular matrix whose `i`-th diag
 
 ## Main declarations
 
-* `TauCeti.cartanTypeAEntry`: the entries of `CartanMatrix.A n` as a function of the underlying
-  natural-number indices.
-* `TauCeti.cartanTypeAEntry_eq`: those entries as a combination of three indicator functions.
-* `TauCeti.sum_cartanTypeAEntry_mul`: the combination of a row against an arbitrary weight vector.
 * `TauCeti.det_cartanMatrixA`: the determinant of `CartanMatrix.A n` is `n + 1`.
 
 ## References
@@ -44,64 +39,6 @@ public section
 namespace TauCeti
 
 open Finset
-
-/-- The entry of the type `A` Cartan matrix at a pair of natural-number indices: `2` on the
-diagonal, `-1` at the two neighbours, and `0` elsewhere. -/
-def cartanTypeAEntry (i j : ℕ) : ℤ :=
-  if i = j then 2 else if i + 1 = j ∨ j + 1 = i then -1 else 0
-
-/-- The type `A` Cartan matrix depends only on the natural numbers underlying its indices. -/
-theorem cartanMatrixA_apply (n : ℕ) (i j : Fin n) :
-    CartanMatrix.A n i j = cartanTypeAEntry i.val j.val := by
-  simp only [CartanMatrix.A, Matrix.of_apply, cartanTypeAEntry, Fin.ext_iff]
-
-/-- The diagonal entries of the type `A` Cartan matrix are `2`. -/
-@[simp]
-theorem cartanTypeAEntry_self (i : ℕ) : cartanTypeAEntry i i = 2 := by
-  simp [cartanTypeAEntry]
-
-/-- The entry function of the type `A` Cartan matrix, written as a combination of the three
-indicator functions of its diagonal and its two neighbouring diagonals. -/
-theorem cartanTypeAEntry_eq (i j : ℕ) :
-    cartanTypeAEntry i j =
-      2 * (if j = i then 1 else 0) - (if j = i + 1 then 1 else 0) -
-        (if j + 1 = i then 1 else 0) := by
-  simp only [cartanTypeAEntry]
-  split_ifs <;> omega
-
-/-- The natural-number entry function of the type `A` Cartan matrix is symmetric. -/
-theorem cartanTypeAEntry_comm (i j : ℕ) : cartanTypeAEntry i j = cartanTypeAEntry j i := by
-  simp only [cartanTypeAEntry]
-  split_ifs <;> first | rfl | (exfalso; omega)
-
-/-- **A row of the type `A` Cartan matrix combined against a weight vector.** The two conditional
-terms are the neighbours of `i` that stay inside the index range `range n`. -/
-theorem sum_cartanTypeAEntry_mul {R : Type*} [Ring R] (n i : ℕ) (hin : i < n) (w : ℕ → R) :
-    ∑ j ∈ range n, ((cartanTypeAEntry i j : ℤ) : R) * w j =
-      2 * w i - (if i + 1 < n then w (i + 1) else 0) - (if 0 < i then w (i - 1) else 0) := by
-  classical
-  have hsplit : ∀ j ∈ range n, ((cartanTypeAEntry i j : ℤ) : R) * w j =
-      (if j = i then 2 * w j else 0) + (if j = i + 1 then -w j else 0) +
-        (if j + 1 = i then -w j else 0) := by
-    intro j _
-    rw [cartanTypeAEntry_eq]
-    split_ifs <;> push_cast <;> simp [two_mul]
-  have hlast : ∑ j ∈ range n, (if j + 1 = i then -w j else 0) =
-      if 0 < i then -w (i - 1) else 0 := by
-    obtain _ | k := i
-    · simp
-    · have hcond : ∀ j : ℕ, (j + 1 = k + 1) ↔ (j = k) := fun j ↦ by omega
-      have hk : k < n := by omega
-      rw [show (∑ j ∈ range n, if j + 1 = k + 1 then -w j else 0) =
-          ∑ j ∈ range n, if j = k then -w j else 0 from
-        Finset.sum_congr rfl fun j _ ↦ by simp only [hcond j],
-        Finset.sum_ite_eq' (range n) k fun j ↦ -w j]
-      simp [hk]
-  rw [sum_congr rfl hsplit, sum_add_distrib, sum_add_distrib,
-    Finset.sum_ite_eq' (range n) i fun j ↦ 2 * w j,
-    Finset.sum_ite_eq' (range n) (i + 1) fun j ↦ -w j, hlast]
-  simp only [mem_range]
-  split_ifs <;> simp [two_mul] <;> abel
 
 /-! ## The determinant -/
 
@@ -121,14 +58,14 @@ private theorem rowWeightMatrix_mul_cartanMatrixA (n : ℕ) :
   classical
   ext i j
   have hsum : (rowWeightMatrix n * CartanMatrix.A n) i j =
-      ∑ k ∈ range n, cartanTypeAEntry j.val k * (if k ≤ i.val then (k : ℤ) + 1 else 0) := by
+      ∑ k ∈ range n, chainEntry j.val k * (if k ≤ i.val then (k : ℤ) + 1 else 0) := by
     rw [Matrix.mul_apply, ← Fin.sum_univ_eq_sum_range
-      (fun k ↦ cartanTypeAEntry j.val k * (if k ≤ i.val then (k : ℤ) + 1 else 0)) n]
+      (fun k ↦ chainEntry j.val k * (if k ≤ i.val then (k : ℤ) + 1 else 0)) n]
     refine Finset.sum_congr rfl fun k _ ↦ ?_
-    rw [cartanMatrixA_apply, cartanTypeAEntry_comm]
+    rw [← chainEntry_eq_cartanMatrix_A, chainEntry_comm]
     simp only [rowWeightMatrix, Matrix.of_apply]
     ring
-  have hrow := sum_cartanTypeAEntry_mul (R := ℤ) n j.val j.isLt
+  have hrow := sum_range_chainEntry_mul (R := ℤ) j.isLt
     (fun k ↦ if k ≤ i.val then (k : ℤ) + 1 else 0)
   simp only [Int.cast_id] at hrow
   rw [hsum, hrow]
