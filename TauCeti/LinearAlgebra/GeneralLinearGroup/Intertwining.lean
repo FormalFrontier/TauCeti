@@ -17,6 +17,8 @@ different modules, so the relation is not a statement inside one monoid and Math
 
 ## Main declarations
 
+* `LinearMap.GeneralLinearGroup.commute_ofLinearEquiv_iff`: conversion from linear equivalences
+  to the general linear group preserves and reflects commutation.
 * `LinearMap.GeneralLinearGroup.comp_inv_eq_of_comp_eq`: an intertwiner of two automorphisms also
   intertwines their inverses.
 -/
@@ -29,6 +31,13 @@ universe u v w
 
 variable {K : Type u} {V : Type v} {W : Type w}
 variable [Semiring K] [AddCommMonoid V] [Module K V] [AddCommMonoid W] [Module K W]
+
+/-- Two linear equivalences commute if and only if their images in the general linear group
+commute. -/
+theorem commute_ofLinearEquiv_iff (f g : V ≃ₗ[K] V) :
+    Commute (ofLinearEquiv f) (ofLinearEquiv g) ↔ Commute f g := by
+  rw [commute_iff_eq, commute_iff_eq, ← ofLinearEquiv_mul, ← ofLinearEquiv_mul]
+  exact Function.Injective.eq_iff (generalLinearEquiv K V).symm.injective
 
 /-- **Intertwining passes to inverses.** If `f` intertwines the automorphisms `a` and `b`, then it
 intertwines `a⁻¹` and `b⁻¹`. -/

@@ -36,6 +36,8 @@ the finite-type coordinate-Hopf-algebra category.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient`: the quotient morphism.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient_ker`: its kernel characterization.
 * `TauCeti.FiniteTypeCommHopfAlgCat.liftQuotient`: the induced morphism out of a quotient.
+* `TauCeti.CommHopfAlgCat.toIdeal_le_ker_of_mkQuotient_comp`: a morphism factoring through
+  the quotient by a Hopf ideal kills that ideal.
 * `TauCeti.CommHopfAlgCat.quotientMapOfLe`: the morphism `H ⧸ I ⟶ H ⧸ J` induced by
   `I ≤ J`.
 * `TauCeti.CommHopfAlgCat.quotientBotIso`: quotienting by the zero Hopf ideal does not
@@ -154,6 +156,15 @@ lemma liftQuotient_unique (I : HopfIdeal R H) (f : H ⟶ K)
     _ = f.hom h := by rw [hg]
     _ = (liftQuotient I f hf).hom (Ideal.Quotient.mkₐ R I.toIdeal h) :=
       (liftQuotient_mk I f hf h).symm
+
+/-- A surjective morphism remains surjective after factoring through a Hopf-ideal quotient. -/
+theorem liftQuotient_surjective_of_surjective (I : HopfIdeal R H) (f : H ⟶ K)
+    (hf : I.toIdeal ≤ RingHom.ker f.hom.toAlgHom.toRingHom)
+    (hsurj : Function.Surjective f.hom) :
+    Function.Surjective (liftQuotient I f hf).hom := by
+  intro y
+  obtain ⟨x, rfl⟩ := hsurj y
+  exact ⟨Ideal.Quotient.mkₐ R I.toIdeal x, liftQuotient_mk I f hf x⟩
 
 /-- Auxiliary quotient isomorphism when the source ideal is the kernel of the composite
 with the target quotient morphism. -/
@@ -307,6 +318,18 @@ lemma toIdeal_le_ker_mkQuotient_of_le
     I.toIdeal ≤ RingHom.ker (mkQuotient H J).hom.toAlgHom.toRingHom := by
   rw [mkQuotient_ker]
   exact HopfIdeal.toIdeal_le_toIdeal.mpr hIJ
+
+/-- A morphism out of `H` that factors through the quotient by `I` kills `I`. -/
+lemma toIdeal_le_ker_of_mkQuotient_comp {I : HopfIdeal R H} {g : quotient H I ⟶ K}
+    {f : H ⟶ K} (hg : mkQuotient H I ≫ g = f) :
+    I.toIdeal ≤ RingHom.ker f.hom.toAlgHom.toRingHom := by
+  intro x hx
+  have hx0 : (mkQuotient H I).hom x = 0 := (mkQuotient_eq_zero_iff H I x).mpr hx
+  rw [RingHom.mem_ker, ← hg]
+  -- The ring-hom coercion of a composite is definitionally the composite of the underlying
+  -- maps; no lemma states this for the whole `hom.toAlgHom.toRingHom` coercion chain.
+  change g.hom ((mkQuotient H I).hom x) = 0
+  rw [hx0, map_zero]
 
 /-- The coordinate morphism `H ⧸ I ⟶ H ⧸ J` induced by an inclusion `I ≤ J` of Hopf
 ideals.

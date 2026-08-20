@@ -6,7 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.BaseChange
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Reduced
 
 public section
 
@@ -27,18 +29,18 @@ linearly independent in a space of dimension `t.rank`, and the coroots span, bec
 did over `ℤ`. The pinned base and the Bourbaki-numbered Cartan matrix survive the base change
 unchanged, so the rational system realizes the same Dynkin type as the datum it comes from.
 
-What is *not* proved here is that the rational system is reduced and irreducible. Both are
-properties of the explicit root tables rather than of the base change: irreducibility is false over
-`ℤ`, so it cannot be transported at all, and reducedness has not been established for the pinned
-tables. They are the two remaining hypotheses of Geck's construction
-`RootPairing.GeckConstruction.lieAlgebra`, which is what turns this root system into the split
-semisimple Lie algebra whose Chevalley basis a Chevalley--Demazure group scheme is built from.
+The rational system is also reduced and irreducible, which are the two remaining hypotheses of
+Geck's Chevalley basis `RootPairing.GeckConstruction.basis`. Reducedness holds already over `ℤ`,
+where it is a property of the explicit root tables, and transports by the general theorem
+`TauCeti.isReduced_rootPairingBaseChange`. Irreducibility is not available integrally and is
+instead deduced over `ℚ` from connectedness of the pinned Dynkin diagram.
 
 ## Main definitions
 
 * `TauCeti.DynkinType.rationalRootSystem`: the pinned datum of a valid Dynkin type, base-changed
   to `ℚ`.
 * `TauCeti.DynkinType.rationalBase`: its Bourbaki-numbered base.
+* `TauCeti.DynkinType.simpleSupportEquiv`: the Bourbaki numbering of the support of that base.
 
 ## Main results
 
@@ -46,6 +48,11 @@ semisimple Lie algebra whose Chevalley basis a Chevalley--Demazure group scheme 
 * `TauCeti.DynkinType.hasCartanType_rationalRootSystem`: the rational system realizes its own
   Dynkin type against the pinned numbering.
 * `TauCeti.DynkinType.pairingIn_rationalRootSystem`: its Cartan integers are those of the datum.
+* `TauCeti.DynkinType.instIsReducedRationalRootSystem` and
+  `TauCeti.DynkinType.instIsIrreducibleRationalRootSystem`: the rational system is reduced and
+  irreducible.
+* `TauCeti.DynkinType.cartanMatrix_rationalBase`: read through the Bourbaki numbering, the Cartan
+  matrix of the pinned base is the standard Cartan matrix of the Dynkin type.
 
 ## References
 
@@ -146,6 +153,14 @@ instance instIsRootSystemRationalRootSystem : (t.rationalRootSystem ht).IsRootSy
   span_root_eq_top := span_range_root_rationalRootSystem_eq_top t ht
   span_coroot_eq_top := span_range_coroot_rationalRootSystem_eq_top t ht
 
+/-! ## The rational system is reduced and irreducible -/
+
+/-- **The rational system is reduced.** This is reducedness of the pinned integral datum
+transported along the injective base change from `ℤ` to `ℚ`. -/
+instance instIsReducedRationalRootSystem : (t.rationalRootSystem ht).IsReduced := by
+  let _ := isReduced_simplyConnectedRootDatum t ht
+  exact isReduced_rootPairingBaseChange ℚ _ _
+
 /-! ## Acceptance: the rational system realizes its own Dynkin type -/
 
 /-- **The rational system has Cartan type `t`.** The base change leaves both the support of the
@@ -157,6 +172,50 @@ theorem hasCartanType_rationalRootSystem :
   refine (hasCartanType_iff _ _).2 ⟨(supportEquivRootPairingBaseChangeBase ℚ _ _ _).trans e,
     fun i j => ?_⟩
   exact (cartanMatrix_rootPairingBaseChangeBase ℚ _ _ _ i j).trans (he _ _)
+
+/-- **The rational system is irreducible.** The pinned Dynkin diagram of a valid type is connected,
+which over a field of characteristic zero forces irreducibility. -/
+instance instIsIrreducibleRationalRootSystem : (t.rationalRootSystem ht).IsIrreducible :=
+  (hasCartanType_rationalRootSystem t ht).isIrreducible ht
+
+/-! ## The Bourbaki numbering of the base support -/
+
+theorem mem_support_rationalBase {k : Fin t.numRoots} :
+    k ∈ (t.rationalBase ht).support ↔ (k : ℕ) < t.rank := by
+  rw [support_rationalBase, mem_support_simplyConnectedBase]
+
+/-- **The Bourbaki numbering of the pinned base.** Bourbaki node `i`, at `Fin` index `i - 1`, is
+the element `t.simpleIndex ht i` of the support of `TauCeti.DynkinType.rationalBase`. Downstream
+constructions index simple roots by `Fin t.rank` and reach the support through this equivalence, so
+that no second numbering of the nodes is introduced. -/
+def simpleSupportEquiv : Fin t.rank ≃ (t.rationalBase ht).support :=
+  (t.simpleSupportEquivSimplyConnectedBase ht).trans
+    (supportEquivRootPairingBaseChangeBase ℚ _ _ _).symm
+
+@[simp] theorem coe_simpleSupportEquiv (i : Fin t.rank) :
+    ((t.simpleSupportEquiv ht i : Fin t.numRoots)) = t.simpleIndex ht i := by
+  let e := supportEquivRootPairingBaseChangeBase ℚ (t.simplyConnectedRootDatum ht)
+    (toLinearMap_simplyConnectedRootDatum t ht) (t.simplyConnectedBase ht)
+  let x := t.simpleSupportEquivSimplyConnectedBase ht i
+  have hcoe : ((e.symm x : Fin t.numRoots)) = (x : Fin t.numRoots) := by
+    calc
+      (e.symm x : Fin t.numRoots) = (e (e.symm x) : Fin t.numRoots) :=
+        (coe_supportEquivRootPairingBaseChangeBase ℚ _ _ _ (e.symm x)).symm
+      _ = (x : Fin t.numRoots) := congrArg Subtype.val (e.apply_symm_apply x)
+  calc
+    ((t.simpleSupportEquiv ht i : Fin t.numRoots)) = (e.symm x : Fin t.numRoots) := rfl
+    _ = (x : Fin t.numRoots) := hcoe
+    _ = t.simpleIndex ht i := coe_simpleSupportEquivSimplyConnectedBase t ht i
+
+/-- **The Cartan matrix of the pinned base is the standard Cartan matrix of the Dynkin type**, read
+through the Bourbaki numbering. This is what lets a construction stated against
+`RootPairing.Base.cartanMatrix` be read off `TauCeti.DynkinType.cartanMatrix`. -/
+@[simp] theorem cartanMatrix_rationalBase (i j : Fin t.rank) :
+    (t.rationalBase ht).cartanMatrix (t.simpleSupportEquiv ht i) (t.simpleSupportEquiv ht j) =
+      t.cartanMatrix i j := by
+  rw [RootPairing.Base.cartanMatrix, RootPairing.Base.cartanMatrixIn_def,
+    coe_simpleSupportEquiv, coe_simpleSupportEquiv, pairingIn_rationalRootSystem,
+    pairingIn_simpleIndex]
 
 end
 

@@ -57,6 +57,19 @@ private theorem exists_mulEquiv_finsupp_int
     b.repr.toAddEquiv.trans (Finsupp.domCongr eι)
   exact ⟨_, ⟨AddEquiv.toMultiplicative e⟩⟩
 
+/-- **A finitely generated torsion-free commutative group has the coordinate ring of a split
+torus.** For such a `G` there is a rank `n` and an isomorphism of diagonalizable coordinate rings
+between the character group of `ULift (Fin n)` and `G`. -/
+private theorem exists_iso_coordinateRing_characterGroup (K : Type u) [CommRing K]
+    (G : FGCommGrpCat.{u}) [IsMulTorsionFree G] :
+    ∃ n : ℕ, Nonempty (DiagonalizableGroup.coordinateRing K
+        (SplitTorus.characterGroup (ULift.{u} (Fin n))) ≅
+      DiagonalizableGroup.coordinateRing K G) := by
+  obtain ⟨n, ⟨e⟩⟩ := exists_mulEquiv_finsupp_int G
+  exact ⟨n, ⟨ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk
+    (MonoidAlgebra.domCongrBialgEquiv K K
+      ((AddEquiv.toMultiplicative (Finsupp.domCongr Equiv.ulift)).trans e.symm))⟩⟩
+
 namespace torusCommHopfAlgProperty
 
 /-- **A finite-type commutative Hopf algebra over a field is a torus if and only if it is a
@@ -84,34 +97,18 @@ theorem iff_multiplicativeType_and_geometricallyConnected_and_geometricallyReduc
         (DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G).obj :=
       (geometricallyReducedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso i'.symm
         (geometricallyReducedCommHopfAlgProperty.baseChange (AlgebraicClosure k) hreduced)
-    let coordinateRingObjIso :
-        _root_.CommHopfAlgCat.of (AlgebraicClosure k)
-            (MonoidAlgebra (AlgebraicClosure k) G) ≅
-          (DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G).obj :=
-      Iso.refl _
-    have hconnectedMonoid :=
-      (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
-        coordinateRingObjIso hconnected'
-    have hreducedMonoid :=
-      (geometricallyReducedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
-        coordinateRingObjIso hreduced'
+    -- The coordinate ring of a diagonalizable group *is* the group algebra, so the two properties
+    -- transfer to it without an intervening isomorphism.
     let _ : ConnectedSpace
         (PrimeSpectrum (MonoidAlgebra (AlgebraicClosure k) G)) :=
-      hconnectedMonoid.connectedSpace (AlgebraicClosure k)
+      hconnected'.connectedSpace (AlgebraicClosure k)
         (_root_.CommHopfAlgCat.of (AlgebraicClosure k)
           (MonoidAlgebra (AlgebraicClosure k) G))
-    let _ : IsReduced (MonoidAlgebra (AlgebraicClosure k) G) := hreducedMonoid.isReduced
+    let _ : IsReduced (MonoidAlgebra (AlgebraicClosure k) G) := hreduced'.isReduced
     let _ : IsMulTorsionFree G :=
       isMulTorsionFree_of_isReduced_monoidAlgebra_of_connectedSpace
         (AlgebraicClosure k) G
-    obtain ⟨n, ⟨e⟩⟩ := exists_mulEquiv_finsupp_int G
-    let e' : SplitTorus.characterGroup (ULift.{u} (Fin n)) ≃* G :=
-      (AddEquiv.toMultiplicative (Finsupp.domCongr Equiv.ulift)).trans e.symm
-    let j : DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
-          (SplitTorus.characterGroup (ULift.{u} (Fin n))) ≅
-        DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G :=
-      ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk
-        (MonoidAlgebra.domCongrBialgEquiv (AlgebraicClosure k) (AlgebraicClosure k) e')
+    obtain ⟨n, ⟨j⟩⟩ := exists_iso_coordinateRing_characterGroup (AlgebraicClosure k) G
     rw [torusCommHopfAlgProperty_iff]
     exact ⟨n, ⟨j ≪≫ i⟩⟩
 

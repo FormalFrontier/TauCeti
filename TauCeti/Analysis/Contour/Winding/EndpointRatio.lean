@@ -36,7 +36,9 @@ directions that
 `tendsto_normalize_sub_nhdsGT` and `tendsto_normalize_sub_nhdsLT` identify with the outgoing and
 reversed incoming tangents, that is with the summands of `crossingAngle`. Summing the pieces
 around the closed curve is what turns the endpoint arguments into
-`n_{z₀}(Λ) - Σ_ℓ crossingAngle Λ t_ℓ / 2π ∈ ℤ`.
+`n_{z₀}(Λ) - Σ_ℓ crossingAngle Λ t_ℓ / 2π ∈ ℤ`; that conclusion is
+`TauCeti.Contour.IsPwC1ImmersionOn.exists_int_windingNumber_eq_add_sum_crossingAngle`, which
+uses the piecewise-`C¹` endpoint-ratio identity below for its avoiding pieces.
 
 ## Main results
 
