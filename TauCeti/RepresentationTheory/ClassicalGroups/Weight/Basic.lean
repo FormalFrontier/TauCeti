@@ -56,9 +56,6 @@ The definitions themselves need only a commutative ring, and are stated there.
 * `TauCeti.weightSpace_detPowerRep`: all of `det ^ m` has the constant weight `m`, that is, its
   weight space at the constant sequence `m` is `⊤`. Over a general commutative ring this says
   nothing about the other weight spaces — over `𝔽₂` all of them are `⊤` as well.
-* `TauCeti.iSup_weightSpace_detPowerRep_eq_top`: the weight spaces of `det ^ m` span it.
-* `TauCeti.weightSpace_detPowerRep_eq_bot`: **off the constant weight `m` the representation
-  `det ^ m` has no weight vectors**, once distinct weights give distinct characters.
 
 ## Implementation notes
 
@@ -137,7 +134,7 @@ theorem span_basisFun_le_weightSpace_stdRep (i : Fin n) :
   exact basisFun_mem_weightSpace_stdRep i
 
 /-- The weight spaces of the standard representation span it, being its coordinate lines. -/
-theorem iSup_weightSpace_stdRep :
+theorem iSup_weightSpace_stdRep_eq_top :
     ⨆ l : Fin n → ℤ, weightSpace (stdRep k n) l = ⊤ := by
   refine top_le_iff.mp ?_
   rw [← (Pi.basisFun k (Fin n)).span_eq, Submodule.span_le]
@@ -157,15 +154,9 @@ theorem weightSpace_detPowerRep (m : ℤ) :
   intro t
   rw [detPowerRep_apply, weightChar_const, smul_eq_mul, det_diagGL]
 
-/-- The weight spaces of the determinant powers span, since the constant weight `m` already
-carries all of `det ^ m`. -/
-theorem iSup_weightSpace_detPowerRep_eq_top (m : ℤ) :
-    ⨆ l : Fin n → ℤ, weightSpace (detPowerRep k n m) l = ⊤ :=
-  top_le_iff.mp <| (weightSpace_detPowerRep (k := k) (n := n) m).ge.trans (le_iSup _ _)
-
 end CommRing
 
-/-! ## Separating weights: the standard representation and the determinant powers
+/-! ## The weight spaces of the standard representation
 
 Here the coefficients must separate weights, in the sense that `l ↦ weightChar k l` is injective;
 `TauCeti.weightChar_injective` supplies that over an infinite field. -/
@@ -212,19 +203,6 @@ theorem weightSpace_stdRep_single (hchar : Function.Injective (weightChar k (κ 
       exact one_ne_zero hone.symm
     simp [hzero, Pi.basisFun_apply, hji]
 
-/-- **Off the constant weight `m` the representation `det ^ m` has no weight vectors.** Over a
-general commutative ring this fails: over `𝔽₂` the torus is trivial and every weight space of
-`det ^ m` is `⊤`. -/
-theorem weightSpace_detPowerRep_eq_bot (hchar : Function.Injective (weightChar k (κ := Fin n)))
-    {m : ℤ} {l : Fin n → ℤ} (hl : l ≠ fun _ ↦ m) :
-    weightSpace (detPowerRep k n m) l = ⊥ := by
-  refine (Submodule.eq_bot_iff _).mpr fun x hx ↦ ?_
-  by_contra hx0
-  refine hl (hchar (MonoidHom.ext fun t ↦ Units.ext (mul_right_cancel₀ hx0 ?_)))
-  have h := apply_of_mem_weightSpace hx t
-  rw [detPowerRep_apply, smul_eq_mul] at h
-  rw [← h, weightChar_const, det_diagGL]
-
 end Domain
 
 section Field
@@ -248,7 +226,7 @@ weight-space decomposition in its smallest instance. -/
 theorem isInternal_weightSpace_stdRep (hchar : Function.Injective (weightChar k (κ := Fin n))) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (stdRep k n) l :=
   (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-    ⟨iSupIndep_weightSpace hchar _, iSup_weightSpace_stdRep⟩
+    ⟨iSupIndep_weightSpace hchar _, iSup_weightSpace_stdRep_eq_top⟩
 
 end Field
 
