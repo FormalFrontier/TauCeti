@@ -51,6 +51,8 @@ smallest Young diagram containing `c`.  At an addable cell â€” and only there â€
 ## References
 
 * [W. Fulton, *Young Tableaux*][fulton1997], Section 1.1.
+* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
+  Layer 8: Schur-Weyl duality
 -/
 
 public section

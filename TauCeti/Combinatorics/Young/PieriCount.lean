@@ -39,6 +39,8 @@ deleted corner are literally the same cell `(i, rᵢ)`, so the two counts agree.
 ## References
 
 * [W. Fulton, *Young Tableaux*][fulton1997], Section 2.2.
+* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
+  Layer 8: Schur-Weyl duality
 -/
 
 public section

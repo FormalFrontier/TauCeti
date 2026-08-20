@@ -48,6 +48,8 @@ by the inductive hypothesis and the binomial theorem.
 * [W. Fulton, *Young Tableaux*][fulton1997], Section 8.1.
 * [R. Goodman and N. R. Wallach, *Symmetry, Representations, and Invariants*][goodman2009],
   Chapter 9.
+* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
+  Layer 8: Schur-Weyl duality
 -/
 
 public section
