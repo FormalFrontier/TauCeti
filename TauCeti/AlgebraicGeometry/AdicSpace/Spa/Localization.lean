@@ -241,7 +241,6 @@ This is the point of passing to `A_U`: the conditions `v(t) ≤ v(s) ≠ 0` that
 sub-unit. It is the degenerate case of Wedhorn's comparison of rational subsets of `U` with
 rational subsets of `X` (§8.2), and it is what makes `Spa (A_U, A_U⁺)` a candidate for `U`
 rather than for a proper subset of it. -/
-@[simp]
 theorem rationalSubset_image_toCompletionLoc_eq_spa (P : PairOfDefinition A) (Aplus : Subring A)
     (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S) :
