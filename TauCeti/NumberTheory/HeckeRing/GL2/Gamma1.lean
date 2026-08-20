@@ -42,9 +42,12 @@ Chris Birkbeck).
 
 * `HeckeRing.GL2.Gamma1Image_le_Gamma0Image`: `Γ₁(N) ≤ Γ₀(N)` in `GL₂(ℚ)`.
 * `HeckeRing.GL2.Gamma1Image_le_Delta0`: `Γ₁(N) ≤ Δ₀(N)`, the special case of the Γ₀ result.
+* `HeckeRing.GL2.out_mem_glpos_of_delta0`: the chosen representative of a double coset of
+  `Δ₀(N)` has positive determinant.
 * `HeckeRing.GL2.Delta0_le_commensurator_Gamma1Image`: `Δ₀(N)` lies in the commensurator
   of `Γ₁(N)`.
-* the `IsHeckeTriple (Delta0 N) (Gamma1Image N) (Gamma1Image N)` instance.
+* the `IsHeckeTriple (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))`
+  instance.
 
 ## References
 
@@ -83,6 +86,15 @@ lemma Gamma1Image_le_Gamma0Image : Gamma1Image N ≤ Gamma0Image N := by
 lemma Gamma1Image_le_Delta0 : (Gamma1Image N).toSubmonoid ≤ Delta0 N :=
   fun _ hg ↦ Gamma0Image_le_Delta0 N (Gamma1Image_le_Gamma0Image N hg)
 
+/-- The chosen representative of a double coset of `Δ₀(N)` has positive determinant, whatever the
+two flanking subgroups: `Δ₀(N)` consists of integral matrices of positive determinant. This is the
+positivity hypothesis the Hecke operators on modular forms of level `N` carry, discharged once for
+this semigroup. -/
+lemma out_mem_glpos_of_delta0 {Γ₁ Γ₂ : Subgroup (GL (Fin 2) ℚ)}
+    (D : HeckeCoset (Delta0 N) Γ₁ Γ₂) :
+    (D.out : GL (Fin 2) ℚ) ∈ Matrix.GLPos (Fin 2) ℚ :=
+  posDetInt_le_glpos 2 (Delta0_le_posDetInt N D.out.2)
+
 variable [NeZero N]
 
 /-- `Γ₁(N)` is commensurable with `SL₂(ℤ)`: it has finite index in it. -/
@@ -97,8 +109,13 @@ lemma Delta0_le_commensurator_Gamma1Image :
   exact (Delta0_le_posDetInt N).trans (posDetInt_le_commensurator 2)
 
 /-- **The Hecke triple of `Γ₁(N)`**: `Γ₁(N) ≤ Δ₀(N) ≤ commensurator(Γ₁(N))` inside
-`GL₂(ℚ)` — the setting of the Hecke operators on modular forms of level `N`. -/
-instance : IsHeckeTriple (Delta0 N) (Gamma1Image N) (Gamma1Image N) :=
+`GL₂(ℚ)` — the setting of the Hecke operators on modular forms of level `N`.
+
+Stated at the unfolded `(Gamma1 N).map (mapGL ℚ)` rather than at `Gamma1Image N`: instance search
+unfolds neither, and the unfolded spelling is the one consumers meet, since the level of a
+modular form of level `N` is written `(Gamma1 N).map (mapGL ℝ)` and its rational companion
+arrives in the same shape. -/
+instance : IsHeckeTriple (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) :=
   IsHeckeTriple.of_diagonal (Gamma1Image_le_Delta0 N) (Delta0_le_commensurator_Gamma1Image N)
 
 end HeckeRing.GL2

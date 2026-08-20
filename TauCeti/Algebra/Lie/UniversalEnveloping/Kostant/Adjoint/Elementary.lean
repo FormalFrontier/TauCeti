@@ -105,10 +105,10 @@ include hx
 
 /-- Every root vector of a normalised system acts nilpotently in the adjoint representation of the
 enveloping algebra, so its divided-power exponential is available over every value ring. -/
-theorem isNilpotent_adjointRepresentation_rootVector (α : Weight ℚ H L) :
-    IsNilpotent (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
+theorem isNilpotent_representation_rootVector (α : Weight ℚ H L) :
+    IsNilpotent (UniversalEnvelopingAlgebra.representation ℚ L L
       (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α))) := by
-  rw [UniversalEnvelopingAlgebra.adjointRepresentation_ι]
+  rw [UniversalEnvelopingAlgebra.representation_ι_ad]
   exact hx.isNilpotent_ad_rootVector α
 
 end IsSl2System
@@ -167,7 +167,7 @@ generic one of the root vectors and the coroots. -/
 theorem chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup :
     ∀ u ∈ UniversalEnvelopingAlgebra.kostantForm x fun α : Weight ℚ H L => (coroot α : L),
       ∀ v ∈ chevalleyLatticeAddSubgroup x,
-        UniversalEnvelopingAlgebra.adjointRepresentation ℚ L u v ∈
+        UniversalEnvelopingAlgebra.representation ℚ L L u v ∈
           chevalleyLatticeAddSubgroup x := by
   intro u hu v hv
   rw [mem_chevalleyLatticeAddSubgroup_iff] at hv ⊢
@@ -185,9 +185,9 @@ noncomputable def adjointRootSubgroup (α : Weight ℚ H L) (A : CommAlgCat.{w} 
       (A ⊗[ℤ] chevalleyLatticeAddSubgroup x) :=
   UniversalEnvelopingAlgebra.kostantRootSubgroupParam x
     (fun α : Weight ℚ H L => (coroot α : L))
-    (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (chevalleyLatticeAddSubgroup x)
+    (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
     hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α
-    (hx.toIsSl2System.isNilpotent_adjointRepresentation_rootVector α) A
+    (hx.toIsSl2System.isNilpotent_representation_rootVector α) A
 
 -- The public unfolding lemma below cannot unfold `adjointRootSubgroup` itself: the module system
 -- only lets an exported theorem unfold exposed definitions.
@@ -195,9 +195,9 @@ private theorem adjointRootSubgroup_eq_def (α : Weight ℚ H L) (A : CommAlgCat
     hx.adjointRootSubgroup α A =
       UniversalEnvelopingAlgebra.kostantRootSubgroupParam x
         (fun α : Weight ℚ H L => (coroot α : L))
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (chevalleyLatticeAddSubgroup x)
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α
-        (hx.toIsSl2System.isNilpotent_adjointRepresentation_rootVector α) A :=
+        (hx.toIsSl2System.isNilpotent_representation_rootVector α) A :=
   rfl
 
 /-- The adjoint root subgroup is the generic parametrized Kostant root subgroup of the data
@@ -206,9 +206,9 @@ theorem adjointRootSubgroup_def (α : Weight ℚ H L) (A : CommAlgCat.{w} ℤ) :
     hx.adjointRootSubgroup α A =
       UniversalEnvelopingAlgebra.kostantRootSubgroupParam x
         (fun α : Weight ℚ H L => (coroot α : L))
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (chevalleyLatticeAddSubgroup x)
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α
-        (hx.toIsSl2System.isNilpotent_adjointRepresentation_rootVector α) A :=
+        (hx.toIsSl2System.isNilpotent_representation_rootVector α) A :=
   hx.adjointRootSubgroup_eq_def α A
 
 /-- The adjoint root-subgroup element acts through the base-changed divided-power exponential. -/
@@ -216,12 +216,12 @@ theorem adjointRootSubgroup_val_apply (α : Weight ℚ H L) (A : CommAlgCat.{w} 
     (t : Multiplicative A) (z : A ⊗[ℤ] chevalleyLatticeAddSubgroup x) :
     (hx.adjointRootSubgroup α A t).val z =
       baseChangeExp
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
+        (UniversalEnvelopingAlgebra.representation ℚ L L
           (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α))) (chevalleyLatticeAddSubgroup x)
         (fun n _ hv =>
           UniversalEnvelopingAlgebra.dividedPower_apply_mem_of_kostantForm_apply_mem
             x (fun β : Weight ℚ H L => (coroot β : L))
-            (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L)
+            (UniversalEnvelopingAlgebra.representation ℚ L L)
             hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup α n hv)
         (Multiplicative.toAdd t) z := by
   rw [adjointRootSubgroup_def]
@@ -231,7 +231,7 @@ theorem adjointRootSubgroup_val_apply (α : Weight ℚ H L) (A : CommAlgCat.{w} 
 theorem adjointRootSubgroup_eq_one_of_isZero (α : Weight ℚ H L) (hα : α.IsZero)
     (A : CommAlgCat.{w} ℤ) (t : Multiplicative A) :
     hx.adjointRootSubgroup α A t = 1 := by
-  have had : UniversalEnvelopingAlgebra.adjointRepresentation ℚ L
+  have had : UniversalEnvelopingAlgebra.representation ℚ L L
       (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α)) = 0 := by
     rw [hx.toIsSl2System.eq_zero_of_isZero α hα, map_zero, map_zero]
   have hzero : ∀ n, ∀ v ∈ chevalleyLatticeAddSubgroup x,
@@ -255,9 +255,9 @@ noncomputable def adjointElementaryGroup (A : CommAlgCat.{w} ℤ) :
     Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] chevalleyLatticeAddSubgroup x)) :=
   UniversalEnvelopingAlgebra.kostantElementarySubgroup x
     (fun α : Weight ℚ H L => (coroot α : L))
-    (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (chevalleyLatticeAddSubgroup x)
+    (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
     hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup
-    hx.toIsSl2System.isNilpotent_adjointRepresentation_rootVector A
+    hx.toIsSl2System.isNilpotent_representation_rootVector A
 
 -- The public unfolding lemma below cannot unfold `adjointElementaryGroup` itself: the module
 -- system only lets an exported theorem unfold exposed definitions.
@@ -265,9 +265,9 @@ private theorem adjointElementaryGroup_eq_def (A : CommAlgCat.{w} ℤ) :
     hx.adjointElementaryGroup A =
       UniversalEnvelopingAlgebra.kostantElementarySubgroup x
         (fun α : Weight ℚ H L => (coroot α : L))
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (chevalleyLatticeAddSubgroup x)
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup
-        hx.toIsSl2System.isNilpotent_adjointRepresentation_rootVector A :=
+        hx.toIsSl2System.isNilpotent_representation_rootVector A :=
   rfl
 
 /-- The adjoint elementary Chevalley group is the generic Kostant elementary subgroup of the data
@@ -276,9 +276,9 @@ theorem adjointElementaryGroup_def (A : CommAlgCat.{w} ℤ) :
     hx.adjointElementaryGroup A =
       UniversalEnvelopingAlgebra.kostantElementarySubgroup x
         (fun α : Weight ℚ H L => (coroot α : L))
-        (UniversalEnvelopingAlgebra.adjointRepresentation ℚ L) (chevalleyLatticeAddSubgroup x)
+        (UniversalEnvelopingAlgebra.representation ℚ L L) (chevalleyLatticeAddSubgroup x)
         hx.chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup
-        hx.toIsSl2System.isNilpotent_adjointRepresentation_rootVector A :=
+        hx.toIsSl2System.isNilpotent_representation_rootVector A :=
   hx.adjointElementaryGroup_eq_def A
 
 /-- Every root-subgroup element belongs to the adjoint elementary Chevalley group. -/

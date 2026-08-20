@@ -40,6 +40,13 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 * `TauCeti.cartanMatrix_A_graphPermA`, `TauCeti.cartanMatrix_D_graphPermD`,
   `TauCeti.cartanMatrix_E6_graphPermE6` and `TauCeti.cartanMatrix_D4_trialityPermD4`: each graph
   permutation is an automorphism of the corresponding Cartan matrix.
+* `TauCeti.cartanMatrix_B2_lengthPermRankTwo`, `TauCeti.cartanMatrix_G2_lengthPermRankTwo` and
+  `TauCeti.cartanMatrix_F4_lengthPermF4`: each length permutation instead carries its Cartan matrix
+  to the transposed matrix, and `TauCeti.cartanMatrix_B2_submatrix_lengthPermRankTwo_ne` and its
+  two counterparts record that this is a different matrix, so a length permutation is not a
+  diagram symmetry.
+* `TauCeti.lengthPermRankTwo_lengthPermRankTwo` and `TauCeti.lengthPermF4_lengthPermF4`: the length
+  permutations are involutions.
 -/
 
 public section
@@ -172,6 +179,26 @@ theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
 /-- Exchanging the two rank-two nodes twice is the identity. -/
 @[simp] theorem lengthPermRankTwo_sq : lengthPermRankTwo ^ 2 = 1 := by decide
 
+/-- Exchanging the two rank-two nodes is an involution. -/
+@[simp] theorem lengthPermRankTwo_lengthPermRankTwo (i : Fin 2) :
+    lengthPermRankTwo (lengthPermRankTwo i) = i :=
+  Equiv.swap_apply_self 0 1 i
+
+/-- The two rank-two nodes are distinct, so exchanging them is not the identity. -/
+theorem lengthPermRankTwo_ne_one : lengthPermRankTwo ≠ 1 := by decide
+
+/-- Exchanging the two rank-two nodes has order exactly two. -/
+@[simp] theorem orderOf_lengthPermRankTwo : orderOf lengthPermRankTwo = 2 :=
+  orderOf_eq_prime lengthPermRankTwo_sq lengthPermRankTwo_ne_one
+
+/-- Reversal of a chain is an involution. -/
+@[simp] theorem graphPermA_graphPermA (n : ℕ) (i : Fin n) : graphPermA n (graphPermA n i) = i := by
+  simp only [graphPermA, Fin.revPerm_apply, Fin.rev_rev]
+
+/-- Reversing the `F₄` diagram is an involution. -/
+@[simp] theorem lengthPermF4_lengthPermF4 (i : Fin 4) : lengthPermF4 (lengthPermF4 i) = i :=
+  graphPermA_graphPermA 4 i
+
 /-- Reversal is an automorphism of the type-`A` Cartan matrix. -/
 @[simp] theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
     (DynkinType.A n).cartanMatrix (graphPermA n i) (graphPermA n j) =
@@ -253,5 +280,56 @@ private lemma cartanMatrix_D_swap_fork (n : ℕ) (hn : 4 ≤ n) (a b : Fin n) (h
     DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
       ¬ DynkinType.F4.IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4, lengthPermF4, graphPermA]
+
+/-! ### The length permutations transpose the Cartan matrix
+
+A length-exchanging permutation is not a symmetry of its diagram: it carries the Cartan matrix to
+the transposed matrix, which is the Cartan matrix of the dual diagram. That is the reason the
+families `²B₂`, `²G₂` and `²F₄` are built from an odd power of a half-Frobenius rather than from a
+graph automorphism composed with a field Frobenius, and it is what makes the exceptional isogeny
+attach the two different exponents `1` and `p` to the two root lengths. -/
+
+/-- The rank-two length permutation carries the `B₂` Cartan matrix to its transpose. -/
+@[simp] theorem cartanMatrix_B2_lengthPermRankTwo (i j : Fin 2) :
+    (DynkinType.B 2).cartanMatrix (lengthPermRankTwo i) (lengthPermRankTwo j) =
+      (DynkinType.B 2).cartanMatrix j i := by
+  fin_cases i <;> fin_cases j <;> simp [DynkinType.cartanMatrix_B, CartanMatrix.B]
+
+/-- The rank-two length permutation carries the `G₂` Cartan matrix to its transpose. -/
+@[simp] theorem cartanMatrix_G2_lengthPermRankTwo (i j : Fin 2) :
+    DynkinType.G2.cartanMatrix (lengthPermRankTwo i) (lengthPermRankTwo j) =
+      DynkinType.G2.cartanMatrix j i := by
+  fin_cases i <;> fin_cases j <;> simp [DynkinType.cartanMatrix_G2, CartanMatrix.G₂]
+
+/-- Diagram reversal carries the `F₄` Cartan matrix to its transpose. -/
+@[simp] theorem cartanMatrix_F4_lengthPermF4 (i j : Fin 4) :
+    DynkinType.F4.cartanMatrix (lengthPermF4 i) (lengthPermF4 j) =
+      DynkinType.F4.cartanMatrix j i := by
+  fin_cases i <;> fin_cases j <;>
+    simp [DynkinType.cartanMatrix_F4, CartanMatrix.F₄, lengthPermF4, graphPermA]
+
+/-- The rank-two length permutation is not an automorphism of the `B₂` Cartan matrix: the entry it
+moves to the corner `(0, 1)` is `-1` rather than `-2`. -/
+theorem cartanMatrix_B2_submatrix_lengthPermRankTwo_ne :
+    (DynkinType.B 2).cartanMatrix.submatrix lengthPermRankTwo lengthPermRankTwo ≠
+      (DynkinType.B 2).cartanMatrix := fun h => by
+  have := congrFun (congrFun h 0) 1
+  simp [Matrix.submatrix_apply, DynkinType.cartanMatrix_B, CartanMatrix.B] at this
+
+/-- The rank-two length permutation is not an automorphism of the `G₂` Cartan matrix. -/
+theorem cartanMatrix_G2_submatrix_lengthPermRankTwo_ne :
+    DynkinType.G2.cartanMatrix.submatrix lengthPermRankTwo lengthPermRankTwo ≠
+      DynkinType.G2.cartanMatrix := fun h => by
+  have := congrFun (congrFun h 0) 1
+  simp [Matrix.submatrix_apply, DynkinType.cartanMatrix_G2, CartanMatrix.G₂] at this
+
+/-- Diagram reversal is not an automorphism of the `F₄` Cartan matrix: it exchanges the two entries
+`-1` and `-2` across the double bond. -/
+theorem cartanMatrix_F4_submatrix_lengthPermF4_ne :
+    DynkinType.F4.cartanMatrix.submatrix lengthPermF4 lengthPermF4 ≠ DynkinType.F4.cartanMatrix :=
+  fun h => by
+  have := congrFun (congrFun h 1) 2
+  simp [Matrix.submatrix_apply, DynkinType.cartanMatrix_F4, CartanMatrix.F₄, lengthPermF4,
+    graphPermA] at this
 
 end TauCeti

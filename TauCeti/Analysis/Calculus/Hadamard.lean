@@ -33,23 +33,62 @@ universe u v
 variable {E : Type u} {F : Type v} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F]
 
+/-- The weighted average of `g` along the segment from `x` to `x + v`. -/
+noncomputable def segmentAverage (w : ℝ → ℝ) (g : E → F) (x v : E) : F :=
+  ∫ t in (0 : ℝ)..1, w t • g (x + t • v)
+
+/-- A weighted segment average written as an integral over the compact unit interval. -/
+theorem segmentAverage_eq_integral_Icc (w : ℝ → ℝ) (g : E → F) (x : E) :
+    segmentAverage w g x = fun v ↦ ∫ t in Set.Icc (0 : ℝ) 1, w t • g (x + t • v) := by
+  funext v
+  rw [segmentAverage, intervalIntegral.integral_of_le zero_le_one,
+    ← integral_Icc_eq_integral_Ioc]
+
+/-- A weighted segment average depends smoothly on its displacement when its weight and integrand
+are smooth. -/
+theorem ContDiff.contDiff_segmentAverage [CompleteSpace F] {n : ℕ∞} {w : ℝ → ℝ} {g : E → F}
+    (hw : ContDiff ℝ n w) (hg : ContDiff ℝ n g) (x : E) :
+    ContDiff ℝ n (segmentAverage w g x) := by
+  rw [segmentAverage_eq_integral_Icc]
+  apply contDiff_integral_Icc_of_contDiff n
+  exact (hw.comp (by fun_prop)).smul (hg.comp (by fun_prop))
+
+/-- A continuous linear map commutes with a weighted segment average. -/
+theorem ContinuousLinearMap.segmentAverage_apply
+    [CompleteSpace F] {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G] [CompleteSpace G]
+    (L : F →L[ℝ] G) (w : ℝ → ℝ) (g : E → F) (x v : E)
+    (h : IntervalIntegrable (fun t : ℝ ↦ w t • g (x + t • v)) volume 0 1) :
+    L (segmentAverage w g x v) = ∫ t in (0 : ℝ)..1, L (w t • g (x + t • v)) := by
+  rw [segmentAverage]
+  exact (L.intervalIntegral_comp_comm h).symm
+
+/-- At zero displacement, a weighted segment average is the integral of the weight times the
+value of the integrand at the basepoint. -/
+@[simp]
+theorem segmentAverage_zero [CompleteSpace F] (w : ℝ → ℝ) (g : E → F) (x : E) :
+    segmentAverage w g x 0 = (∫ t in (0 : ℝ)..1, w t) • g x := by
+  rw [segmentAverage]
+  simp only [smul_zero, add_zero]
+  exact intervalIntegral.integral_smul_const w (g x)
+
 /-- The averaged derivative along the segment from `x` to `y`. -/
 noncomputable def hadamardFactor (f : E → F) (x y : E) : E →L[ℝ] F :=
-  ∫ t in (0 : ℝ)..1, fderiv ℝ f (x + t • (y - x))
+  segmentAverage (fun _ ↦ 1) (fderiv ℝ f) x (y - x)
 
 /-- The averaged derivative written as an integral over the compact unit interval. -/
 theorem hadamardFactor_eq_integral_Icc (f : E → F) (x : E) :
     hadamardFactor f x = fun y ↦ ∫ t in Set.Icc (0 : ℝ) 1,
       fderiv ℝ f (x + t • (y - x)) := by
   funext y
-  rw [hadamardFactor, intervalIntegral.integral_of_le zero_le_one,
+  rw [hadamardFactor, segmentAverage, intervalIntegral.integral_of_le zero_le_one,
     ← integral_Icc_eq_integral_Ioc]
+  simp
 
 /-- At the basepoint, the averaged derivative is the ordinary derivative. -/
 @[simp]
 theorem hadamardFactor_self [CompleteSpace F] (f : E → F) (x : E) :
     hadamardFactor f x x = fderiv ℝ f x := by
-  simp [hadamardFactor]
+  simp [hadamardFactor, segmentAverage]
 
 /-- If `f` is `n + 1` times continuously differentiable, its Hadamard factor is `n` times
 continuously differentiable in the endpoint. -/
@@ -57,10 +96,9 @@ theorem ContDiff.contDiff_hadamardFactor_of_succ
     {F : Type v} [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
     (n : ℕ∞) (f : E → F) (hf : ContDiff ℝ (n + 1) f) (x : E) :
     ContDiff ℝ n (hadamardFactor f x) := by
-  rw [hadamardFactor_eq_integral_Icc]
-  apply contDiff_integral_Icc_of_contDiff n
   have hd : ContDiff ℝ n (fderiv ℝ f) := hf.fderiv_right (m := n) (by norm_num)
-  exact hd.comp <| by fun_prop
+  exact ((by fun_prop : ContDiff ℝ n fun _ : ℝ ↦ (1 : ℝ)).contDiff_segmentAverage hd x).comp
+    (by fun_prop)
 
 /-- First-order Taylor expansion along a segment, with its coefficient bundled as a continuous
 linear map. -/
@@ -73,7 +111,9 @@ theorem ContDiff.sub_eq_hadamardFactor_apply [CompleteSpace F]
       volume 0 1 := by
     apply Continuous.intervalIntegrable
     exact (hf.fderiv_right (m := 0) (by norm_num)).continuous.comp (by fun_prop)
-  rw [hadamardFactor, ContinuousLinearMap.intervalIntegral_apply hIntegrable (y - x)]
+  rw [hadamardFactor, segmentAverage]
+  simp only [one_smul]
+  rw [ContinuousLinearMap.intervalIntegral_apply hIntegrable (y - x)]
   simpa [sub_eq_iff_eq_add, add_comm] using hTaylor
 
 /-- For a smooth function, the averaged derivative in Hadamard's factorization depends smoothly on

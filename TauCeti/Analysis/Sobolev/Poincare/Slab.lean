@@ -310,28 +310,36 @@ theorem eLpNorm_le_eLpNorm_fderiv_of_support_subset_slab (hu : ContDiff ℝ 1 u)
         rw [lintegral_eq_lintegral_slabChart hmf]
 
 omit [CompleteSpace F] in
-/-- **The Poincaré inequality on a ball.** A `C¹` function on `ℝ^{n+1}` supported in the ball of
-radius `R` about the origin satisfies `‖u‖_p ≤ 2R ‖Du‖_p` for every `1 ≤ p < ∞`.
+/-- Membership in a Euclidean ball bounds every coordinate by the corresponding slab. -/
+theorem apply_mem_Icc_of_mem_ball {c x : EuclideanSpace ℝ (Fin (n + 1))} {R : ℝ}
+    (hx : x ∈ Metric.ball c R) (i : Fin (n + 1)) : x i ∈ Icc (c i - R) (c i + R) := by
+  have hnorm : ‖x - c‖ < R := by simpa only [Metric.mem_ball, dist_eq_norm] using hx
+  have hi := (PiLp.norm_apply_le (x - c) i).trans hnorm.le
+  rw [Real.norm_eq_abs, WithLp.ofLp_sub, Pi.sub_apply, abs_le] at hi
+  constructor <;> linarith
 
-This is the shape the estimate takes on a bounded domain: any `Ω ⊆ Metric.ball 0 R` sits inside
-a slab of width `2R`, so the constant may be taken to be twice the radius. It is not the optimal
+omit [CompleteSpace F] in
+/-- **The Poincaré inequality on a ball.** A `C¹` function on `ℝ^{n+1}` supported in a ball of
+radius `R` satisfies `‖u‖_p ≤ 2R ‖Du‖_p` for every `1 ≤ p < ∞`.
+
+This is the shape the estimate takes on a bounded domain: any `Ω ⊆ Metric.ball c R` sits inside a
+slab of width `2R`, so the constant may be taken to be twice the radius. It is not the optimal
 constant — for the ball the sharp one is smaller — but it is explicit and depends on nothing but
 `R`, as the roadmap asks. -/
-theorem eLpNorm_le_eLpNorm_fderiv_of_support_subset_ball {R : ℝ} (hu : ContDiff ℝ 1 u)
-    (hsupp : Function.support u ⊆ Metric.ball 0 R) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞) :
+theorem eLpNorm_le_eLpNorm_fderiv_of_support_subset_ball
+    {c : EuclideanSpace ℝ (Fin (n + 1))} {R : ℝ} (hu : ContDiff ℝ 1 u)
+    (hsupp : Function.support u ⊆ Metric.ball c R) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞) :
     eLpNorm u p volume ≤ ENNReal.ofReal (2 * R) * eLpNorm (fderiv ℝ u) p volume := by
   rcases le_or_gt R 0 with hR | hR
   · rw [Metric.ball_eq_empty.2 hR, subset_empty_iff, Function.support_eq_empty_iff] at hsupp
     simp [hsupp]
-  have hslab : ∀ x ∈ Function.support u, x (0 : Fin (n + 1)) ∈ Icc (-R) R := by
-    intro x hx
-    have hx' : ‖x‖ < R := by simpa using hsupp hx
-    have := (PiLp.norm_apply_le x (0 : Fin (n + 1))).trans hx'.le
-    rw [Real.norm_eq_abs, abs_le] at this
-    exact this
-  have hwidth : R - -R = 2 * R := by ring
+  have hslab : ∀ x ∈ Function.support u,
+      x (0 : Fin (n + 1)) ∈ Icc (c 0 - R) (c 0 + R) :=
+    fun x hx => apply_mem_Icc_of_mem_ball (hsupp hx) 0
+  have hwidth : (c 0 + R) - (c 0 - R) = 2 * R := by ring
   simpa [hwidth] using
-    eLpNorm_le_eLpNorm_fderiv_of_support_subset_slab hu (by linarith : (-R : ℝ) ≤ R) hslab hp hp'
+    eLpNorm_le_eLpNorm_fderiv_of_support_subset_slab hu
+      (by linarith : c 0 - R ≤ c 0 + R) hslab hp hp'
 
 end Slab
 
