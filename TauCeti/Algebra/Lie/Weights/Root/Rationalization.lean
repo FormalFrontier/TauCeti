@@ -20,10 +20,9 @@ instance and applies the generic Lie-lattice rationalization theorem to obtain
 ℚ ⊗[ℤ] hx.chevalleyLieLattice ≃ₗ⁅ℚ⁆ L.
 ```
 
-It also selects a finite basis of the integral lattice, indexed by the dimension of `L`. This is
-the basis shape required by the matrix-coordinate and Kostant root-subgroup constructions. The
-basis is not claimed to be an additional root-vector normalization: all pinned mathematical data
-remain in the Chevalley system and in the named root and coroot generators.
+No basis of the integral lattice is chosen here: the `Fin`-indexed basis that the matrix-coordinate
+and Kostant root-subgroup constructions read is the weight basis of the Kostant lane, which is a
+basis of weight vectors rather than an arbitrary one.
 
 ## Main declarations
 
@@ -31,8 +30,6 @@ remain in the Chevalley system and in the named root and coroot generators.
   full integral lattice.
 * `TauCeti.IsChevalleySystem.chevalleyLieLatticeRationalization`: its scalar extension recovers
   the ambient rational Lie algebra as a Lie algebra.
-* `TauCeti.IsChevalleySystem.chevalleyLieLatticeFinBasis`: a finite basis indexed by
-  `Fin (finrank ℚ L)` for use in matrix constructions.
 
 ## References
 
@@ -97,17 +94,6 @@ theorem chevalleyLieLatticeRationalization_symm_coe (z : hx.chevalleyLieLattice)
   by
     rw [chevalleyLieLatticeRationalization]
     exact LieSubalgebra.rationalizationEquiv_symm_coe hx.chevalleyLieLattice z
-
-/-- A finite basis of the Chevalley Lie lattice indexed by the dimension of the ambient rational
-Lie algebra.
-
-This is an arbitrary module basis of the already pinned root--coroot lattice. It is intended for
-matrix coordinates; it does not replace or renormalize the Chevalley system's named root vectors
-and coroots. -/
-noncomputable def chevalleyLieLatticeFinBasis :
-    Module.Basis (Fin (Module.finrank ℚ L)) ℤ hx.chevalleyLieLattice :=
-  Module.finBasisOfFinrankEq ℤ hx.chevalleyLieLattice
-    (Submodule.IsLattice.finrank_eq_finrank hx.chevalleyLieLattice.toSubmodule)
 
 end IsChevalleySystem
 
