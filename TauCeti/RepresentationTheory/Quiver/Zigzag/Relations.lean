@@ -305,10 +305,6 @@ noncomputable abbrev nonisolatedZigzagQuotient : Type _ :=
 theorem zigzagMk_apply (x : pathAlgebra k (DoubledQuiver G)) :
     zigzagMk k G x = Ideal.Quotient.mk (zigzagIdeal k G).asIdeal x := rfl
 
-/-- Every element of the zigzag quotient comes from a path-algebra element. -/
-theorem zigzagMk_surjective : Function.Surjective (zigzagMk k G) :=
-  Ideal.Quotient.mkₐ_surjective k _
-
 /-- The kernel of the quotient map is the relation ideal. -/
 @[simp]
 theorem zigzagMk_eq_zero_iff {x : pathAlgebra k (DoubledQuiver G)} :
@@ -361,11 +357,6 @@ kills every uniform relator factors through the quotient. -/
 theorem zigzagLift_zigzagMk (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsZigzagRelator k G x → f x = 0) (x : pathAlgebra k (DoubledQuiver G)) :
     zigzagLift k G f hf (zigzagMk k G x) = f x := rfl
-
-/-- Two algebra maps out of the zigzag quotient agree as soon as they agree on the path algebra. -/
-theorem zigzagQuotient_algHom_ext {F₁ F₂ : nonisolatedZigzagQuotient k G →ₐ[k] B}
-    (h : F₁.comp (zigzagMk k G) = F₂.comp (zigzagMk k G)) : F₁ = F₂ :=
-  Ideal.Quotient.algHom_ext k h
 
 /-- On a connected graph with at least three vertices an algebra map killing the quadratic
 relators already kills the whole relation ideal. -/
