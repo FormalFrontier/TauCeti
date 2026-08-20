@@ -51,10 +51,12 @@ noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
   continuous_toFun := continuous_id
   continuous_invFun := continuous_id
 
+@[simp]
 theorem tangentSpaceOpenEquiv_apply {U : Opens M} (x : U) (v : TangentSpace I x) :
     tangentSpaceOpenEquiv (I := I) x v = v := by
   exact (rfl)
 
+@[simp]
 theorem tangentSpaceOpenEquiv_symm_apply {U : Opens M} (x : U)
     (v : TangentSpace I (x : M)) :
     (tangentSpaceOpenEquiv (I := I) x).symm v = v := by
@@ -102,12 +104,12 @@ private theorem eventually_tangentBundleCore_coordChange_open_eq
 
 /-- The differential of the inclusion of an open submanifold is the canonical tangent-space
 identification. -/
+@[simp]
 theorem mfderiv_subtype_val {U : Opens M} (x : U) :
     mfderiv I I (Subtype.val : U → M) x =
       (tangentSpaceOpenEquiv (I := I) x).toContinuousLinearMap := by
   ext v
-  change mfderiv I I (Subtype.val : U → M) x v = v
-  rw [mfderiv]
+  rw [ContinuousLinearEquiv.coe_coe, tangentSpaceOpenEquiv_apply, mfderiv]
   simp only [contMDiff_subtype_val.mdifferentiableAt one_ne_zero, ↓reduceIte]
   have h : writtenInExtChartAt I I x (Subtype.val : U → M) =ᶠ[
       nhdsWithin (extChartAt I x x) (Set.range I)] id := by
@@ -121,8 +123,12 @@ theorem mfderiv_subtype_val {U : Opens M} (x : U) :
       simpa only [Set.mem_preimage, I.left_inv] using hyT
     simp only [writtenInExtChartAt, Function.comp_apply, extChartAt,
       OpenPartialHomeomorph.extend_coe, OpenPartialHomeomorph.extend_coe_symm, I.left_inv, id_eq]
-    rw [show ((chartAt H x).symm z : M) = (chartAt H (x : M)).symm z from
-      (chartAt H (x : M)).subtypeRestr_symm_apply ⟨x⟩ hzT]
+    -- The chart of `U` at `x` is by definition the subtype restriction of the ambient chart, so
+    -- its inverse followed by the inclusion is the ambient inverse chart on the restricted target.
+    have hsymm : ((chartAt H x).symm z : M) = (chartAt H (x : M)).symm z := by
+      rw [Opens.chartAt_eq]
+      exact (chartAt H (x : M)).subtypeRestr_symm_apply ⟨x⟩ hzT
+    rw [hsymm]
     simp only [(chartAt H (x : M)).right_inv
         ((chartAt H (x : M)).subtypeRestr_target_subset ⟨x⟩ hzT)]
   have hxRange : extChartAt I x x ∈ Set.range I :=

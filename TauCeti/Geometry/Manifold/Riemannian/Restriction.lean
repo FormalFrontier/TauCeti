@@ -79,24 +79,21 @@ noncomputable def restrictOpenTangentSpace
     exact g.pos x.1 _
       ((TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x).toLinearEquiv.map_ne_zero_iff.mpr hv)
   continuousAt x := by
-    let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
-    have h := (g.continuousAt x.1).comp_of_eq e.continuousAt (map_zero e)
-    -- `ContinuousAt.comp_of_eq` records the same function through composition notation.
-    change ContinuousAt ((fun v ↦ g.inner x.1 v v) ∘ e) 0
-    exact h
+    have h : ContinuousAt (fun v : TangentSpace I x ↦
+        g.inner x.1 (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x v)
+          (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x v)) 0 :=
+      (g.continuousAt x.1).comp_of_eq
+        (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x).continuousAt (map_zero _)
+    simpa only [restrictedTangentInner_apply] using h
   isVonNBounded x := by
-    let e := TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x
     have heq : {v | restrictedTangentInner g x v v < 1} =
-        e.symm.toContinuousLinearMap '' {v | g.inner x.1 v v < 1} := by
-      ext v
-      change restrictedTangentInner g x v v < 1 ↔
-        v ∈ e.symm '' {v | g.inner x.1 v v < 1}
-      rw [show v ∈ e.symm '' {v | g.inner x.1 v v < 1} ↔
-          e v ∈ {v | g.inner x.1 v v < 1} from
-        Set.mem_image_equiv (f := e.symm.toEquiv)]
-      exact Iff.rfl
+        (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x).symm.toContinuousLinearMap ''
+          {v | g.inner x.1 v v < 1} := by
+      simp only [restrictedTangentInner_apply, ContinuousLinearEquiv.coe_coe,
+        ContinuousLinearEquiv.image_symm_eq_preimage, Set.preimage_ofPred_eq]
     rw [heq]
-    exact (g.isVonNBounded x.1).image e.symm.toContinuousLinearMap
+    exact (g.isVonNBounded x.1).image
+      (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) x).symm.toContinuousLinearMap
 
 /-- Restricting a Riemannian metric evaluates the ambient metric through the canonical tangent-space
 identification. -/
