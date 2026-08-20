@@ -81,13 +81,6 @@ the diagram permutation of the index. -/
       (LinearEquiv.funCongrLeft ℤ ℤ d.diagramPerm).toLinearMap := by
   rw [datumGraphAut, DynkinType.diagramAut_coweightMap]
 
-/-- The root-datum graph automorphism permutes the Bourbaki-numbered simple roots by the diagram
-permutation of the index. -/
-theorem datumGraphAut_indexEquiv_simpleIndex (i : Fin d.1.rank) :
-    d.datumGraphAut.indexEquiv (d.1.dynkinType.simpleIndex d.1.dynkinType_valid i) =
-      d.1.dynkinType.simpleIndex d.1.dynkinType_valid (d.diagramPerm i) := by
-  rw [datumGraphAut, DynkinType.diagramAut_indexEquiv, DynkinType.diagramRootPerm_simpleIndex]
-
 /-- Every root of the pinned datum has its fundamental-weight coordinates permuted by the diagram
 permutation of the index. -/
 @[simp] theorem root_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
@@ -98,17 +91,6 @@ permutation of the index. -/
   rw [← RootPairing.Equiv.root_indexEquiv_eq_smul]
   rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
   exact DynkinType.root_diagramRootPerm d.1.dynkinType_valid
-    (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
-
-/-- Every coroot of the pinned datum has its simple-coroot coordinates permuted by the diagram
-permutation of the index. -/
-theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
-    (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
-        (d.datumGraphAut.indexEquiv k) =
-      fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot k
-        (d.diagramPerm.symm j) := by
-  rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
-  exact DynkinType.coroot_diagramRootPerm d.1.dynkinType_valid
     (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
 
 /-- **The order relation of the root-datum graph automorphism.** This is `γ ^ 2 = 1` for `²Aₙ`,

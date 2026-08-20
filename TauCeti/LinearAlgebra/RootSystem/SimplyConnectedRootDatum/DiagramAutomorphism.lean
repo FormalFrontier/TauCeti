@@ -226,6 +226,8 @@ coordinates. -/
   apply (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
     (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm.injective
   rw [LinearEquiv.symm_apply_apply]
+  -- The inverse coweight equivalence is used here through its underlying `LinearMap`; `change`
+  -- only exposes that definitionally equal coercion so the preceding characterization can rewrite.
   change x = ((RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
     (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm : _ →ₗ[ℚ] _)
       ((LinearEquiv.funCongrLeft ℚ ℚ σ).toLinearMap x)
@@ -325,7 +327,7 @@ def diagramAut (hσ : σ ∈ t.diagramSymmetry) :
 
 /-- The induced permutation of the root enumeration is determined by its effect on coordinates, so
 the construction is multiplicative in the node permutation. -/
-theorem diagramRootPerm_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramSymmetry) :
+@[simp] theorem diagramRootPerm_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramSymmetry) :
     diagramRootPerm ht (t.diagramSymmetry.mul_mem hσ hτ) =
       diagramRootPerm ht hσ * diagramRootPerm ht hτ := by
   refine Equiv.ext fun k =>
@@ -336,35 +338,26 @@ theorem diagramRootPerm_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.dia
     congrFun (root_diagramRootPerm ht hτ k) (σ.symm j)]
   simp [Equiv.Perm.mul_def]
 
-theorem diagramRootPerm_one :
+@[simp] theorem diagramRootPerm_one :
     diagramRootPerm ht t.diagramSymmetry.one_mem = 1 := by
   refine Equiv.ext fun k =>
     (t.simplyConnectedRootDatum ht).root.injective (funext fun j => ?_)
   rw [congrFun (root_diagramRootPerm ht t.diagramSymmetry.one_mem k) j]
   rfl
 
-/-- An automorphism of a root pairing is determined by its map of weight spaces: the index
-permutation is read off the roots, which the weight map moves, and the coweight map is its inverse
-transpose. This is Mathlib's `RootPairing.Hom.weightHom_injective` for the automorphism group. -/
-private theorem aut_eq_of_weightMap_eq {ι' R' M' N' : Type*} [CommRing R'] [AddCommGroup M']
-    [Module R' M'] [AddCommGroup N'] [Module R' N'] {P : RootPairing ι' R' M' N'} {f g : P.Aut}
-    (h : f.toHom.weightMap = g.toHom.weightMap) : f = g := by
-  have hfg : f.toHom = g.toHom := RootPairing.Hom.weightHom_injective P h
-  exact RootPairing.Equiv.ext (congrArg RootPairing.Hom.weightMap hfg)
-    (congrArg RootPairing.Hom.coweightMap hfg) (congrArg RootPairing.Hom.indexEquiv hfg)
-
 /-- The diagram automorphism attached to the identity node permutation is the identity. -/
-theorem diagramAut_one : diagramAut ht t.diagramSymmetry.one_mem = 1 := by
-  refine aut_eq_of_weightMap_eq (LinearMap.ext fun x => funext fun j => ?_)
-  simp only [diagramAut_weightMap, RootPairing.Equiv.toHom_one, RootPairing.Hom.weightMap_one,
-    LinearEquiv.coe_coe, LinearEquiv.funCongrLeft_apply, LinearMap.funLeft_apply,
-    LinearMap.id_coe, id_eq]
+@[simp] theorem diagramAut_one : diagramAut ht t.diagramSymmetry.one_mem = 1 := by
+  apply RootPairing.Equiv.weightHom_injective (t.simplyConnectedRootDatum ht)
+  apply LinearEquiv.toLinearMap_injective
+  refine LinearMap.ext fun x => funext fun j => ?_
   rfl
 
 /-- The construction is multiplicative in the node permutation. -/
-theorem diagramAut_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramSymmetry) :
+@[simp] theorem diagramAut_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramSymmetry) :
     diagramAut ht (t.diagramSymmetry.mul_mem hσ hτ) = diagramAut ht hσ * diagramAut ht hτ := by
-  refine aut_eq_of_weightMap_eq (LinearMap.ext fun x => funext fun j => ?_)
+  apply RootPairing.Equiv.weightHom_injective (t.simplyConnectedRootDatum ht)
+  apply LinearEquiv.toLinearMap_injective
+  refine LinearMap.ext fun x => funext fun j => ?_
   simp [RootPairing.Equiv.mul_eq_comp, Equiv.Perm.mul_def]
 
 /-- **The diagram automorphisms of the pinned datum, as a homomorphism** out of the symmetry group
