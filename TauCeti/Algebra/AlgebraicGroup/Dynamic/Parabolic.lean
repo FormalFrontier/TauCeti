@@ -227,7 +227,6 @@ theorem mapValue_pointsHom (u : Aˣ) :
   rw [AlgHom.mapValue_apply, MultiplicativeGroup.comp_point]
 
 /-- The induced map on Laurent coefficient algebras fixes the Laurent variable. -/
-@[simp]
 theorem map_genericUnit :
     Units.map (AddMonoidAlgebra.mapAlgHom ℤ φ).toMonoidHom (genericUnit A) = genericUnit B :=
   Units.ext ((AddMonoidAlgebra.mapAlgHom_single φ (1 : ℤ) 1).trans (by rw [map_one]; rfl))
@@ -243,7 +242,6 @@ theorem mapValue_constPoint (g : WithConv (H →ₐ[R] A)) :
     AlgHom.mapValue_comp, MonoidHom.comp_apply]
 
 /-- The generic point of a cocharacter is natural in the value algebra. -/
-@[simp]
 theorem mapValue_genericPoint :
     AlgHom.mapValue (AddMonoidAlgebra.mapAlgHom ℤ φ) (genericPoint A l) = genericPoint B l := by
   rw [genericPoint, genericPoint, mapValue_pointsHom, map_genericUnit]
