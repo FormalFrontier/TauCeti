@@ -276,6 +276,16 @@ noncomputable def kostantRootSubgroupToToralSubsystem (S : Set I)
     (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
       (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt S hnil i).op
 
+/-- The selected root-subgroup morphism into a toral-subsystem carrier is the spectrum map of its
+factored coordinate morphism, after the canonical identification of the additive group scheme. -/
+theorem kostantRootSubgroupToToralSubsystem_def (S : Set I)
+    (hnil : ∀ j ∈ S, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)))) (i : S) :
+    kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i =
+      eqToHom (AdditiveGroup.groupScheme_def ℤ) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+          (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt S hnil i).op := by
+  rw [kostantRootSubgroupToToralSubsystem]
+
 /-- Factoring a selected root subgroup through its toral-subsystem carrier and then including
 into `GLₙ` recovers the represented root-subgroup morphism. -/
 @[simp]
@@ -334,6 +344,16 @@ noncomputable def kostantWeightTorusToToralSubsystem (S : Set I)
   eqToHom (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)) ≫
     (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
       (kostantWeightTorusToralSubsystemCoordinateMap e h ρ M hM b wt S hnil).op
+
+/-- The weight-torus morphism into a toral-subsystem carrier is the spectrum map of its factored
+coordinate morphism, after the canonical presentation of the split torus. -/
+theorem kostantWeightTorusToToralSubsystem_def (S : Set I)
+    (hnil : ∀ i ∈ S, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))) :
+    kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil =
+      eqToHom (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+          (kostantWeightTorusToralSubsystemCoordinateMap e h ρ M hM b wt S hnil).op := by
+  rw [kostantWeightTorusToToralSubsystem]
 
 /-- Factoring the weight torus through a toral-subsystem carrier and then including into `GLₙ`
 recovers the represented weight-torus morphism. -/

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 public section
 
@@ -61,7 +62,8 @@ legitimate because a positive root is never cancelled inside the cone
   `TauCeti.sub_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top`
   restates that for a weight given as a linear form, and
   `TauCeti.eq_of_isHighestWeightVector_of_lieSpan_eq_top` deduces that a module is a highest weight
-  module for at most one weight.
+  module for at most one weight;
+  `TauCeti.IsHighestWeightVector.unique_of_isIrreducible` specializes this to irreducible modules.
 * `TauCeti.genWeightSpace_eq_span_singleton_of_isHighestWeightVector_of_lieSpan_eq_top`: the
   `lam`-weight space of a highest weight module is the line spanned by its highest weight vector.
 * `TauCeti.exists_eq_smul_of_isHighestWeightVector_of_lieSpan_eq_top`: consequently any highest
@@ -340,6 +342,14 @@ theorem eq_of_isHighestWeightVector_of_lieSpan_eq_top {w : M} {mu : Dual K H}
       hw hgw hv.genWeightSpace_ne_bot
   exact sub_eq_zero.mp
     (eq_zero_of_add_eq_zero_of_mem_posRootCone (IsKilling.rootSystem H) b hlam hmu (by abel))
+
+/-- An irreducible module carries highest weight vectors of at most one weight. -/
+theorem IsHighestWeightVector.unique_of_isIrreducible [LieModule.IsIrreducible K L M]
+    {w : M} {mu : Dual K H} (hv : IsHighestWeightVector b lam v)
+    (hw : IsHighestWeightVector b mu w) : lam = mu :=
+  eq_of_isHighestWeightVector_of_lieSpan_eq_top hv
+    (lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero) hw
+    (lieSpan_singleton_eq_top_of_ne_zero hw.ne_zero)
 
 /-! ### The highest weight line -/
 

@@ -47,7 +47,13 @@ zero.**
 
 Both hypotheses are used, and only where stated: nonarchimedean makes the open subgroups a basis
 of `𝓝 0` at all, and countable generation of `𝓝 0` is what extracts an antitone *sequence* from
-that basis. Global first countability is more than is needed and is not assumed. -/
+that basis.
+
+Countable generation of `𝓝 0` and `FirstCountableTopology G` are in fact equivalent under these
+hypotheses, since `NonarchimedeanAddGroup` extends `IsTopologicalAddGroup`:
+`TauCeti.SeparatelyContinuousAdd.toFirstCountableTopology` gives one direction and
+`FirstCountableTopology.nhds_generated_countable` the other. The `𝓝 0` form is stated because it
+is the one the proof consumes. -/
 theorem exists_antitone_basis_openAddSubgroup [(𝓝 (0 : G)).IsCountablyGenerated]
     [NonarchimedeanAddGroup G] :
     ∃ V : ℕ → OpenAddSubgroup G, (𝓝 (0 : G)).HasAntitoneBasis fun n ↦ (V n : Set G) := by

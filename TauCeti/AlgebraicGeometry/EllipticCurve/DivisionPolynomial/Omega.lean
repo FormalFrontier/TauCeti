@@ -64,8 +64,9 @@ stated in the module docstring of pinned Mathlib's
 characteristic-zero universal ring and `ωₙ` its image under the universal morphism. This file
 discharges that docstring's `TODO: the bivariate polynomials ωₙ`. The remaining declarations
 with no source counterpart are the equation lemmas `ψc_def` and `ω_def` (the module system
-keeps both bodies unexposed, so each needs a named handle), `map_ψc`, and the two
-`baseChange_*` forms, which follow Mathlib's sibling `baseChange_ψ`/`baseChange_φ`.
+keeps both bodies unexposed, so each needs a named handle), the value lemmas `ψc_zero`,
+`ψc_one` and `ψc_two` (the `complEDS₂` values read at the curve's parameters), `map_ψc`, and
+the two `baseChange_*` forms, which follow Mathlib's sibling `baseChange_ψ`/`baseChange_φ`.
 -/
 
 open Polynomial
@@ -94,6 +95,9 @@ theorem ψc_def : W.ψc = complEDS₂ W.ψ₂ (C W.Ψ₃) (C W.preΨ₄) := (rfl
 
 /-- `ψc` at `1` is `ψ₂`, matching `ψ 1 * ψc 1 = ψ 2`. -/
 @[simp] theorem ψc_one : W.ψc 1 = W.ψ₂ := by rw [ψc_def, complEDS₂_one]
+
+/-- `ψc` at `2` is `preΨ₄`, matching `ψ 2 * ψc 2 = ψ 4`. -/
+@[simp] theorem ψc_two : W.ψc 2 = C W.preΨ₄ := by rw [ψc_def, complEDS₂_two]
 
 /-- The `ω` family of division polynomials: `ω n` gives the second coordinate in Jacobian
 coordinates of scalar multiplication by `n`. -/
