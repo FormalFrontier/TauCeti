@@ -43,6 +43,9 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   inducing map. This is what lets a ring of definition carry an ideal of definition that natively
   lives in a merely equivalent ring, which is what `TauCeti.Huber.PairOfDefinition` needs.
 * `TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`: a Huber ring is nonarchimedean.
+* `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`: its neighbourhoods of zero are
+  countably generated. With the previous bullet these are exactly the two hypotheses Henkel's open
+  mapping theorem asks of the underlying group, so both are instances.
 * `TauCeti.Huber.IsHuberRing.quotient`: a quotient of a Huber ring is a Huber ring.
 * `TauCeti.Huber.PairOfDefinition.isBounded_ringOfDefinition`: a ring of definition is bounded,
   hence `A₀ ≤ A°` (`TauCeti.Huber.PairOfDefinition.le_powerBoundedSubring`). This is the
@@ -463,6 +466,20 @@ variable (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRing A] [Is
 /-- Every Huber ring is nonarchimedean. This is what makes `A°` a subring. -/
 instance (priority := 100) IsHuberRing.toNonarchimedeanRing : NonarchimedeanRing A :=
   IsHuberRing.nonempty_pairOfDefinition.elim fun P ↦ P.toNonarchimedeanRing
+
+/-- **The neighbourhoods of zero in a Huber ring are countably generated.** The images of the
+powers of an ideal of definition are a basis of `𝓝 0` indexed by `ℕ`
+(`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`), and a basis indexed by a countable type
+generates a countably generated filter.
+
+This is one of the two hypotheses Henkel's open mapping theorem asks of a topological group, the
+other being `TauCeti.Huber.IsHuberRing.toNonarchimedeanRing` above: nonarchimedean makes the open
+subgroups a basis at zero, and countable generation extracts an antitone *sequence* from that
+basis (`NonarchimedeanAddGroup.exists_antitone_basis_openAddSubgroup`). Being an instance is the
+point — it is what lets a Huber ring be handed to that theorem without the caller discharging
+anything. -/
+instance IsHuberRing.isCountablyGenerated_nhds_zero : (𝓝 (0 : A)).IsCountablyGenerated :=
+  IsHuberRing.nonempty_pairOfDefinition.elim fun P ↦ P.hasBasis_nhds_zero.isCountablyGenerated
 
 /-- Wedhorn Corollary 6.4: the power-bounded subring of a Huber ring is open. -/
 theorem isOpen_powerBoundedSubring : IsOpen (powerBoundedSubring A : Set A) := by
