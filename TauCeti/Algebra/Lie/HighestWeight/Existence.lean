@@ -22,7 +22,7 @@ This file proves that `M` carries a highest weight vector for `b`
 (`TauCeti.exists_isHighestWeightVector`), and hence, by
 `TauCeti.IsHighestWeightVector.isDominantIntegral`, that `M` has a dominant integral weight.
 For irreducible `M`, its highest weight is unique by
-`TauCeti.eq_of_isHighestWeightVector_of_lieSpan_eq_top` from
+`TauCeti.IsHighestWeightVector.unique_of_isIrreducible` from
 `TauCeti/Algebra/Lie/HighestWeight/Module.lean`.
 
 The vector is produced from a *maximal* weight: a weight `χ` such that `α + χ` is a weight of `M`
@@ -224,16 +224,14 @@ theorem exists_isHighestWeightVector_and_isDominantIntegral_of_irreducible
   exact ⟨lam, v, hv, hv.isDominantIntegral⟩
 
 /-- **Uniqueness of the highest weight.** A finite-dimensional irreducible module has a unique
-highest weight. This follows from
-`TauCeti.eq_of_isHighestWeightVector_of_lieSpan_eq_top`. -/
+highest weight. This follows from `TauCeti.IsHighestWeightVector.unique_of_isIrreducible`. -/
 private theorem existsUnique_highestWeight_of_finiteDimensional_irreducible
     [LieModule.IsIrreducible K L M] :
     ∃! lam : Dual K H, ∃ v : M, IsHighestWeightVector b lam v := by
-  obtain ⟨lam, v, hv, hspan_v⟩ := exists_isHighestWeightVector_and_lieSpan_eq_top (M := M) b
+  obtain ⟨lam, v, hv, -⟩ := exists_isHighestWeightVector_and_lieSpan_eq_top (M := M) b
   refine ⟨lam, ⟨v, hv⟩, ?_⟩
   rintro mu ⟨w, hw⟩
-  exact eq_of_isHighestWeightVector_of_lieSpan_eq_top hw
-    (lieSpan_singleton_eq_top_of_ne_zero hw.ne_zero) hv hspan_v
+  exact hw.unique_of_isIrreducible hv
 
 /-- **Uniqueness of the dominant integral highest weight.** A finite-dimensional irreducible module
 has a unique dominant integral highest weight. The dominance conjunct is automatic from the highest
