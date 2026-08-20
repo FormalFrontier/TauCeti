@@ -57,22 +57,10 @@ only that the set is cut off from infinity. The frontier route is the special ca
 route obtained from `TauCeti.subset_filledHull_of_frontier_subset`; the enclosure route does not
 require the whole frontier to be caught.
 
-Beside the width statements the file records the model case of that open item, the one Jordan
-curve whose inside is available with no separation theory at all: a *sphere*. The complement of
-`sphere x r` is the union of the two open sets `ball x r` and `(closedBall x r)ᶜ`, so the component
-of an interior point cannot leave the ball and is bounded; hence `closedBall x r` lies in the
-filled hull, the inside contains `ball x r`, and every point of the sphere is a limit of points of
-that inside. So the hypothesis carried by
-`TauCeti/Analysis/Complex/Conformal/Crosscut/NearSide.lean` is satisfied by the model curve, and is
-not an empty one. Nothing is claimed here about the *other* component being unbounded, which is
-what an equality `filledHull (sphere x r) = closedBall x r` would need.
-
 ## Generality
 
 The width statements are stated for an arbitrary real normed space — nothing about the plane is
-used, and the separation argument is the general Hahn–Banach one. The sphere statements ask for a
-normed space only through `closure_ball`; the containment of the closed ball in the filled hull
-uses nothing but the metric.
+used, and the separation argument is the general Hahn–Banach one.
 
 ## Main results
 
@@ -86,9 +74,6 @@ uses nothing but the metric.
   functional is unbounded, and `TauCeti.isBounded_closedConvexHull`,
   `TauCeti.diam_closedConvexHull` — the closed forms of the two convex-hull facts the width
   argument runs on.
-* `TauCeti.closedBall_subset_filledHull_sphere` and
-  `TauCeti.sphere_subset_closure_filledHull_sphere_sdiff` — the filled hull of a sphere contains the
-  closed ball it bounds, and the sphere is a limit of points of its inside.
 -/
 
 public section
@@ -220,64 +205,5 @@ preconnected, disjoint from `K`, and meets the filled hull of `K`, then it lies 
 theorem IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : Disjoint S K)
     (hne : (S ∩ filledHull K).Nonempty) (hK : IsBounded K) : diam S ≤ diam K :=
   diam_le_diam_of_subset_filledHull hK (IsPreconnected.subset_filledHull hS hSK hne)
-
-/-! ## The inside of a sphere -/
-
-section Sphere
-
-variable {X : Type*} [PseudoMetricSpace X] {x : X} {r : ℝ}
-
-/-- **A sphere fills to at least the closed ball it bounds.** The complement of `sphere x r` is the
-union of the two disjoint open sets `ball x r` and `(closedBall x r)ᶜ`, so the connected component
-of a point of the open ball stays inside that ball and is therefore bounded; a point of the sphere
-lies in the hull already.
-
-Only the metric is used, so no linear structure is asked for. The reverse inclusion is a different
-matter: it says that the *outer* component is unbounded, which needs the exterior of a ball to be
-connected. -/
-theorem closedBall_subset_filledHull_sphere : closedBall x r ⊆ filledHull (sphere x r) := by
-  have hcompl : (sphere x r)ᶜ = ball x r ∪ (closedBall x r)ᶜ := by
-    ext y
-    simp only [mem_compl_iff, mem_sphere, mem_union, mem_ball, mem_closedBall, not_le]
-    exact ⟨fun h => Ne.lt_or_gt h, fun h => h.elim ne_of_lt fun h' => (ne_of_lt h').symm⟩
-  intro y hy
-  rcases eq_or_lt_of_le (mem_closedBall.mp hy) with h | h
-  · exact subset_filledHull (mem_sphere.mpr h)
-  · have hyc : y ∈ (sphere x r)ᶜ := by
-      simp only [mem_compl_iff, mem_sphere]
-      exact h.ne
-    have hbb : IsBounded (ball x r) := isBounded_ball
-    rw [mem_filledHull_iff]
-    refine hbb.subset ?_
-    refine (isPreconnected_connectedComponentIn.subset_or_subset isOpen_ball
-      isClosed_closedBall.isOpen_compl
-      (Set.disjoint_left.mpr fun a ha hb => hb (ball_subset_closedBall ha))
-      (hcompl ▸ connectedComponentIn_subset _ _)).resolve_right fun hsub => ?_
-    exact hsub (mem_connectedComponentIn hyc) hy
-
-end Sphere
-
-section SphereNormed
-
-variable {x : E} {r : ℝ}
-
-/-- **A sphere is a limit of points of its inside.** The inside of a sphere of positive radius —
-that is, `filledHull (sphere x r) \ sphere x r` — contains the open ball it bounds, by
-`TauCeti.closedBall_subset_filledHull_sphere`, and the sphere lies in the closure of that ball by
-`closure_ball`.
-
-This is the statement `J ⊆ closure (filledHull J \ J)` — the open plane-separation item of layer
-**L5** of `TauCetiRoadmap/ConformalMapping/README.md`, recorded in the roadmap section of
-`TauCeti/Topology/FilledHull.lean` — verified for the model Jordan curve, where it needs no
-separation theory. -/
-theorem sphere_subset_closure_filledHull_sphere_sdiff (hr : 0 < r) :
-    sphere x r ⊆ closure (filledHull (sphere x r) \ sphere x r) := by
-  refine Subset.trans ?_ (closure_mono fun y hy =>
-    ⟨closedBall_subset_filledHull_sphere (ball_subset_closedBall hy),
-      fun hy' => absurd (mem_sphere.mp hy') (mem_ball.mp hy).ne⟩)
-  rw [closure_ball x hr.ne']
-  exact sphere_subset_closedBall
-
-end SphereNormed
 
 end TauCeti
