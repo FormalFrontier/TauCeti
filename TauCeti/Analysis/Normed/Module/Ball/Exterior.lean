@@ -6,21 +6,25 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Normed.Module.Connected
+public import TauCeti.Topology.FilledHull
 
 /-!
-# The exterior of a closed ball is preconnected
+# The exterior of a ball is connected, and the unbounded component is unique
 
 In a real normed space of dimension at least two the complement of a closed ball is preconnected:
 it is the union, over the radii `M` exceeding the ball's, of the spheres of radius `M`, strung
-together along a single ray from the centre.
-
-The consequences for bounded sets — uniqueness of the unbounded component and the filled-hull
-alternative — are in `TauCeti/Analysis/Normed/Module/FilledHull.lean`.
+together along a single ray from the centre. Consequently the complement of a *bounded* set has at
+most one unbounded connected component, and two points of the complement that lie in different
+components cannot both be outside `TauCeti.filledHull K`.
 
 ## Main results
 
 * `TauCeti.isPreconnected_compl_closedBall` — the exterior of a closed ball is preconnected in a
   real normed space of dimension at least two.
+* `TauCeti.connectedComponentIn_compl_eq_of_unbounded_component` — the unbounded connected
+  component of the complement of a bounded set is unique (dimension at least two).
+* `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn` — of two points in
+  different components, at least one lies in the filled hull (dimension at least two).
 
 This is a prerequisite of the planar-separation step of the `ConformalMapping` roadmap (L5).
 
@@ -35,7 +39,7 @@ namespace TauCeti
 
 open Bornology Metric Set
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {K : Set E} {x y : E}
 
 /-- **The exterior of a closed ball is preconnected** in a real normed space of dimension at least
 two. -/
@@ -75,5 +79,38 @@ theorem isPreconnected_compl_closedBall (h : 1 < Module.rank ℝ E) (x : E) (r :
     exact fun _ => Or.inr (hLmem _ (by linarith))
   · refine IsPreconnected.union (x + M • u) ?_ (hLmem M hM) (isPreconnected_sphere h x M) hLc
     rw [mem_sphere, hdist M (hr.trans hM.le)]
+
+/-- **The unbounded component of the complement of a bounded set is unique** in a real normed space
+of dimension at least two. -/
+theorem connectedComponentIn_compl_eq_of_unbounded_component (h : 1 < Module.rank ℝ E)
+    (hK : IsBounded K) (hx : ¬ IsBounded (connectedComponentIn Kᶜ x))
+    (hy : ¬ IsBounded (connectedComponentIn Kᶜ y)) :
+    connectedComponentIn Kᶜ x = connectedComponentIn Kᶜ y := by
+  obtain ⟨R, hR⟩ := hK.subset_closedBall (0 : E)
+  have hext : (closedBall (0 : E) R)ᶜ ⊆ Kᶜ := compl_subset_compl.mpr hR
+  have hesc : ∀ z : E, ¬ IsBounded (connectedComponentIn Kᶜ z) →
+      ∃ z' ∈ connectedComponentIn Kᶜ z, z' ∈ (closedBall (0 : E) R)ᶜ := fun z hz => by
+    by_contra hcon
+    push Not at hcon
+    exact hz ((isBounded_closedBall (x := (0 : E)) (r := R)).subset fun w hw =>
+      notMem_compl_iff.mp (hcon w hw))
+  obtain ⟨x', hx'c, hx'R⟩ := hesc x hx
+  obtain ⟨y', hy'c, hy'R⟩ := hesc y hy
+  have h1 : y' ∈ connectedComponentIn Kᶜ x' :=
+    (isPreconnected_compl_closedBall h 0 R).subset_connectedComponentIn hx'R hext hy'R
+  rw [connectedComponentIn_eq hx'c, connectedComponentIn_eq h1, ← connectedComponentIn_eq hy'c]
+
+/-- **Two points in different components of the complement of a bounded set cannot both lie outside
+the filled hull** in a real normed space of dimension at least two. -/
+theorem mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn (h : 1 < Module.rank ℝ E)
+    (hK : IsBounded K) (hxy : y ∉ connectedComponentIn Kᶜ x) :
+    x ∈ filledHull K ∨ y ∈ filledHull K := by
+  by_cases hy : y ∈ K
+  · exact Or.inr (subset_filledHull hy)
+  · by_contra hcon
+    push Not at hcon
+    simp only [mem_filledHull_iff] at hcon
+    exact hxy ((connectedComponentIn_compl_eq_of_unbounded_component h hK hcon.1 hcon.2).symm ▸
+      mem_connectedComponentIn (mem_compl hy))
 
 end TauCeti
