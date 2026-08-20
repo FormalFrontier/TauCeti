@@ -111,7 +111,6 @@ noncomputable def hodgeForm (P : Polarization hℂ hs) :
   (P.Q ∘ₗ hs.weilOperator) ∘ₛₗ latticeConj hℂ
 
 /-- The value of the Hodge form, in terms of the complex form of the polarization. -/
-@[simp]
 theorem hodgeForm_apply (P : Polarization hℂ hs) (u v : Vℂ) :
     P.hodgeForm u v = P.Q (hs.weilOperator (latticeConj hℂ u)) v :=
   (rfl)
