@@ -32,7 +32,7 @@ algebra descriptions agree not only on objects, but also on morphisms.
 * `TauCeti.FGPointRepresentationCat.toComodule`: the finite-generation restriction of the
   comodule functor.
 * `TauCeti.fgPointRepresentationCategoryEquivalence`: the equivalence between finitely generated
-  point representations and comodules.
+  point representations and finitely generated comodules.
 
 ## References
 
@@ -57,7 +57,7 @@ variable (H : Type v) [CommRing H] [HopfAlgebra R H]
 namespace PointRepresentationCat
 
 /-- Recover the right comodule underlying a natural point representation. -/
-@[expose] noncomputable def toComodule :
+noncomputable def toComodule :
     PointRepresentationCat.{u, v, w} R H ⥤ ComoduleCat.{u, v, w} R H where
   obj V :=
     { toSemimoduleCat := V.toSemimoduleCat
@@ -78,21 +78,21 @@ namespace PointRepresentationCat
 @[simp]
 theorem toComodule_obj_toSemimoduleCat (V : PointRepresentationCat.{u, v, w} R H) :
     ((toComodule R H).obj V).toSemimoduleCat = V.toSemimoduleCat :=
-  rfl
+  (rfl)
 
 /-- The coaction on the image of a point representation is its recovered coaction. -/
 @[simp]
 theorem toComodule_obj_coact (V : PointRepresentationCat.{u, v, w} R H) :
-    Comodule.coact (R := R) (C := H) (M := (toComodule R H).obj V) =
+    HEq (Comodule.coact (R := R) (C := H) (M := (toComodule R H).obj V))
       (HopfAlgebra.PointRepresentation.toComodule V.representation).coact :=
-  rfl
+  (HEq.rfl)
 
 /-- The comodule functor leaves the underlying linear map of a morphism unchanged. -/
 @[simp]
 theorem toComodule_map_toLinearMap {V W : PointRepresentationCat.{u, v, w} R H}
     (f : V ⟶ W) :
-    ((toComodule R H).map f).toLinearMap = f.toLinearMap :=
-  rfl
+    HEq ((toComodule R H).map f).toLinearMap f.toLinearMap :=
+  (HEq.rfl)
 
 /-- The comodule functor is fully faithful: colinearity is exactly equivariance for all
 algebra-valued point actions. -/
@@ -109,7 +109,7 @@ noncomputable def toComoduleFullyFaithful :
 
 /-- Bundle a right comodule as its associated natural point representation, preserving its
 underlying bundled semimodule. -/
-@[expose] noncomputable def ofComodule (M : ComoduleCat.{u, v, w} R H) :
+noncomputable def ofComodule (M : ComoduleCat.{u, v, w} R H) :
     PointRepresentationCat.{u, v, w} R H where
   toSemimoduleCat := M.toSemimoduleCat
   representation := HopfAlgebra.PointRepresentation.ofComodule
@@ -120,17 +120,17 @@ semimodule. -/
 @[simp]
 theorem ofComodule_toSemimoduleCat (M : ComoduleCat.{u, v, w} R H) :
     (ofComodule R H M).toSemimoduleCat = M.toSemimoduleCat :=
-  rfl
+  (rfl)
 
 /-- The point action associated to a comodule is the comodule point-action endomorphism. -/
 @[simp]
 theorem ofComodule_action_val (M : ComoduleCat.{u, v, w} R H)
     (A : CommAlgCat.{max u v w} R) (x : HopfAlgebra.points (H := H) A) :
-    (@HopfAlgebra.PointRepresentation.action R H M _ _ _
+    HEq (@HopfAlgebra.PointRepresentation.action R H (ofComodule R H M) _ _ _
       (ofComodule R H M).isAddCommMonoid (ofComodule R H M).isModule
-      (ofComodule R H M).representation A x).val =
-      Comodule.endOfPoint M x.ofConv :=
-  HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint
+      (ofComodule R H M).representation A x).val
+      (Comodule.endOfPoint M x.ofConv) :=
+  heq_of_eq <| HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint
     (inferInstance : Comodule R H M) A x
 
 /-- Recovering the comodule associated to `ofComodule` returns the original bundled comodule. -/
@@ -228,7 +228,7 @@ noncomputable instance PointRepresentationCat.isFG_isClosedUnderIsomorphisms :
 /-- Finitely generated point representations and finitely generated comodules form equivalent
 categories. Over a field, this is the representation--comodule equivalence for finite-dimensional
 representations. -/
-@[expose] noncomputable def fgPointRepresentationCategoryEquivalence :
+noncomputable def fgPointRepresentationCategoryEquivalence :
     FGPointRepresentationCat.{u, v, w} R H ≌ FGComoduleCat.{u, v, w} R H :=
   (PointRepresentationCat.toComodule R H).asEquivalence.congrFullSubcategory <| by
     ext V
@@ -278,21 +278,21 @@ noncomputable abbrev toComodule :
 theorem toComodule_obj_obj (V : FGPointRepresentationCat.{u, v, w} R H) :
     ((toComodule R H).obj V).obj =
       (PointRepresentationCat.toComodule R H).obj V.obj :=
-  rfl
+  (rfl)
 
 /-- The coaction on the finite comodule functor is the recovered coaction. -/
 @[simp]
 theorem toComodule_obj_coact (V : FGPointRepresentationCat.{u, v, w} R H) :
-    Comodule.coact (R := R) (C := H) (M := (toComodule R H).obj V) =
+    HEq (Comodule.coact (R := R) (C := H) (M := (toComodule R H).obj V))
       (HopfAlgebra.PointRepresentation.toComodule V.obj.representation).coact :=
-  rfl
+  (HEq.rfl)
 
 /-- The finite comodule functor leaves the underlying linear map of a morphism unchanged. -/
 @[simp]
 theorem toComodule_map_toLinearMap {V W : FGPointRepresentationCat.{u, v, w} R H}
     (f : V ⟶ W) :
-    ((toComodule R H).map f).hom.toLinearMap = f.hom.toLinearMap :=
-  rfl
+    HEq ((toComodule R H).map f).hom.toLinearMap f.hom.toLinearMap :=
+  (HEq.rfl)
 
 end FGPointRepresentationCat
 
