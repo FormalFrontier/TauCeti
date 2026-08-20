@@ -9,8 +9,8 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Subsy
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Triangular
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
 -- The coordinate comparison between `kostantRootSubgroupParam` and its basis matrix is used only
--- in the containment proof, so the scheme-points module is not re-exported.
-import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Points
+-- in the containment proof, so it is not re-exported.
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.ElementaryCoordinate
 
 /-!
 # Upper-unitriangular positive Kostant subsystem groups
@@ -123,7 +123,8 @@ theorem coe_kostantSubsystemUpperUnitriangular (A : Type v) [CommRing A]
       Matrix.GeneralLinearGroup η A) =
       Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
         (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) := by
-  rfl
+  rw [kostantSubsystemUpperUnitriangular]
+  simp only [MonoidHom.codRestrict_apply, MonoidHom.comp_apply, Subgroup.subtype_apply]
 
 /-- The upper-unitriangular representation of a positive Kostant subsystem group is injective. -/
 theorem kostantSubsystemUpperUnitriangular_injective (A : Type v) [CommRing A] :
