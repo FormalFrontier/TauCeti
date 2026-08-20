@@ -30,8 +30,10 @@ step past the top of the string the root space vanishes.
 
 Together with `TauCeti.serreLift` this presents `L` as a quotient of the Serre algebra of its own
 Cartan matrix, `TauCeti.exists_surjective_serreLift_of_base`. The corresponding statement for
-Mathlib's bundled `LieAlgebra.Basis` needs none of the hypotheses above and is proved by
-`sl₂`-strings instead, in `TauCeti/Algebra/Lie/Presentation/Serre/Basis.lean`.
+Mathlib's bundled `LieAlgebra.Basis` avoids the Killing-form, finite-dimensionality, splitting
+Cartan and triangularizability hypotheses, but retains characteristic zero and requires the Lie
+algebra to be torsion-free and Noetherian over the coefficient domain. It is proved by `sl₂`-strings
+instead, in `TauCeti/Algebra/Lie/Presentation/Serre/Basis.lean`.
 
 Note that the Cartan matrix is transposed on the way: `TauCeti.IsSerreSystem` follows Serre's
 convention `⁅Hᵢ, Eⱼ⁆ = CMᵢⱼ Eⱼ`, whereas `RootPairing.Base.cartanMatrix i j` is `⟨αᵢ, αⱼ∨⟩`.
