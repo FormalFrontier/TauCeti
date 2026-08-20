@@ -169,23 +169,22 @@ def g2SpecialIsogeny :
 /-- On the two simple roots, the index bijection of the special isogeny of `G₂` is the pinned
 length-exchanging permutation. -/
 @[simp] theorem g2SpecialIsogeny_indexEquiv_castAdd (i : Fin 2) :
-    g2SpecialIsogeny.indexEquiv (Fin.castAdd 10 i) = Fin.castAdd 10 (lengthPermRankTwo i) := by
-  simp only [g2SpecialIsogeny_indexEquiv_apply, lengthPermRankTwo_apply]
+    g2SpecialIsogenyIndex (Fin.castAdd 10 i) = Fin.castAdd 10 (lengthPermRankTwo i) := by
+  simp only [lengthPermRankTwo_apply]
   revert i; decide
 
 /-- On the two simple roots, the exponent of the special isogeny of `G₂` is the normalised squared
 root length: `1` at the short node `0` and `3` at the long node `1`. -/
 @[simp] theorem g2SpecialIsogeny_exponent_castAdd (i : Fin 2) :
-    g2SpecialIsogeny.exponent (Fin.castAdd 10 i) = G2.rootLength i := by
-  rw [rootLength_G2, g2SpecialIsogeny_exponent]
+    g2SpecialIsogenyExponent (Fin.castAdd 10 i) = G2.rootLength i := by
+  rw [rootLength_G2]
   revert i; decide
 
 /-- The exponents of the special isogeny of `G₂` at a root and at its image multiply to the
 characteristic. -/
 @[simp] theorem g2SpecialIsogeny_exponent_mul_exponent (i : Fin 12) :
-    g2SpecialIsogeny.exponent i *
-      g2SpecialIsogeny.exponent (g2SpecialIsogeny.indexEquiv i) = 3 := by
-  simp only [g2SpecialIsogeny_exponent, g2SpecialIsogeny_indexEquiv_apply]
+    g2SpecialIsogenyExponent i *
+      g2SpecialIsogenyExponent (g2SpecialIsogenyIndex i) = 3 := by
   revert i; decide
 
 /-- Every exponent of the special isogeny of `G₂` is `1` or the characteristic. -/
@@ -210,7 +209,8 @@ theorem g2SpecialIsogeny_comp_self :
     simp only [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
     have hthree : ((3 : ℕ+) : ℤ) = 3 := by norm_num
     rw [hthree]
-    exact g2SpecialIsogeny_exponent_mul_exponent i
+    simpa only [g2SpecialIsogeny_exponent, g2SpecialIsogeny_indexEquiv_apply] using
+      g2SpecialIsogeny_exponent_mul_exponent i
 
 /-- **The defining relation of the special isogeny of `G₂` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
@@ -220,8 +220,10 @@ theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
     g2SpecialIsogeny.weightMap
         (g2SimplyConnectedRootDatum.root (Fin.castAdd 10 (lengthPermRankTwo i))) =
       G2.rootLength (lengthPermRankTwo i) • g2SimplyConnectedRootDatum.root (Fin.castAdd 10 i) := by
-  rw [g2SpecialIsogeny.root_weightMap, g2SpecialIsogeny_exponent_castAdd,
-    g2SpecialIsogeny_indexEquiv_castAdd, lengthPermRankTwo_lengthPermRankTwo]
+  rw [g2SpecialIsogeny.root_weightMap]
+  simp only [g2SpecialIsogeny_exponent, g2SpecialIsogeny_indexEquiv_apply,
+    g2SpecialIsogeny_exponent_castAdd, g2SpecialIsogeny_indexEquiv_castAdd,
+    lengthPermRankTwo_lengthPermRankTwo]
   simp only [Int.cast_id]
 
 /-- The exponent of the special isogeny of `G₂` at a simple root is `1` exactly at the short
@@ -229,6 +231,7 @@ node, which is the convention that the exceptional isogeny raises a long root pa
 first power and a short one to the characteristic. -/
 theorem g2SpecialIsogeny_exponent_castAdd_eq_one_iff (i : Fin 2) :
     g2SpecialIsogeny.exponent (Fin.castAdd 10 i) = 1 ↔ ¬ G2.IsLongSimpleRoot i := by
+  rw [g2SpecialIsogeny_exponent]
   rw [g2SpecialIsogeny_exponent_castAdd, rootLength_G2, isLongSimpleRoot_G2]
   fin_cases i <;> simp
 
@@ -317,23 +320,22 @@ noncomputable def f4SpecialIsogeny :
 /-- On the four simple roots, the index bijection of the special isogeny of `F₄` is the pinned
 length-exchanging permutation, the reversal of the diagram. -/
 @[simp] theorem f4SpecialIsogeny_indexEquiv_castAdd (i : Fin 4) :
-    f4SpecialIsogeny.indexEquiv (Fin.castAdd 44 i) = Fin.castAdd 44 (lengthPermF4 i) := by
-  simp only [f4SpecialIsogeny_indexEquiv_apply, lengthPermF4_apply]
+    f4SpecialIsogenyIndex (Fin.castAdd 44 i) = Fin.castAdd 44 (lengthPermF4 i) := by
+  simp only [lengthPermF4_apply]
   revert i; decide
 
 /-- On the four simple roots, the exponent of the special isogeny of `F₄` is the normalised squared
 root length: `2` at the long nodes `0` and `1` and `1` at the short nodes `2` and `3`. -/
 @[simp] theorem f4SpecialIsogeny_exponent_castAdd (i : Fin 4) :
-    f4SpecialIsogeny.exponent (Fin.castAdd 44 i) = F4.rootLength i := by
-  rw [rootLength_F4, f4SpecialIsogeny_exponent]
+    f4SpecialIsogenyExponent (Fin.castAdd 44 i) = F4.rootLength i := by
+  rw [rootLength_F4]
   revert i; decide
 
 /-- The exponents of the special isogeny of `F₄` at a root and at its image multiply to the
 characteristic. -/
 @[simp] theorem f4SpecialIsogeny_exponent_mul_exponent (i : Fin 48) :
-    f4SpecialIsogeny.exponent i *
-      f4SpecialIsogeny.exponent (f4SpecialIsogeny.indexEquiv i) = 2 := by
-  simp only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply]
+    f4SpecialIsogenyExponent i *
+      f4SpecialIsogenyExponent (f4SpecialIsogenyIndex i) = 2 := by
   revert i; decide
 
 /-- Every exponent of the special isogeny of `F₄` is `1` or the characteristic. -/
@@ -358,7 +360,8 @@ theorem f4SpecialIsogeny_comp_self :
     simp only [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
     have htwo : ((2 : ℕ+) : ℤ) = 2 := by norm_num
     rw [htwo]
-    exact f4SpecialIsogeny_exponent_mul_exponent i
+    simpa only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply] using
+      f4SpecialIsogeny_exponent_mul_exponent i
 
 /-- **The defining relation of the special isogeny of `F₄` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
@@ -368,8 +371,10 @@ theorem f4SpecialIsogeny_weightMap_root_castAdd (i : Fin 4) :
     f4SpecialIsogeny.weightMap
         (f4SimplyConnectedRootDatum.root (Fin.castAdd 44 (lengthPermF4 i))) =
       F4.rootLength (lengthPermF4 i) • f4SimplyConnectedRootDatum.root (Fin.castAdd 44 i) := by
-  rw [f4SpecialIsogeny.root_weightMap, f4SpecialIsogeny_exponent_castAdd,
-    f4SpecialIsogeny_indexEquiv_castAdd, lengthPermF4_lengthPermF4]
+  rw [f4SpecialIsogeny.root_weightMap]
+  simp only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply,
+    f4SpecialIsogeny_exponent_castAdd, f4SpecialIsogeny_indexEquiv_castAdd,
+    lengthPermF4_lengthPermF4]
   simp only [Int.cast_id]
 
 /-- The exponent of the special isogeny of `F₄` at a simple root is `1` exactly at a short node,
@@ -377,6 +382,7 @@ which is the convention that the exceptional isogeny raises a long root paramete
 power and a short one to the characteristic. -/
 theorem f4SpecialIsogeny_exponent_castAdd_eq_one_iff (i : Fin 4) :
     f4SpecialIsogeny.exponent (Fin.castAdd 44 i) = 1 ↔ ¬ F4.IsLongSimpleRoot i := by
+  rw [f4SpecialIsogeny_exponent]
   rw [f4SpecialIsogeny_exponent_castAdd, rootLength_F4, isLongSimpleRoot_F4]
   fin_cases i <;> simp
 
