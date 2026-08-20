@@ -31,6 +31,8 @@ the point factors uniquely through the quotient algebra.
 * `CommHopfAlgCat.quotientPointsSubgroup`: the subgroup of ambient points cut out by `I`.
 * `CommHopfAlgCat.instIsMulCommutativeQuotientPointsSubgroup`: when the quotient Hopf algebra is
   cocommutative, the cut-out point subgroup is commutative.
+* `CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff`: transport of
+  quotient-subgroup membership along a bialgebra equivalence.
 
 ## References
 
@@ -161,6 +163,24 @@ lemma mem_quotientPointsSubgroup_iff (H : _root_.CommHopfAlgCat.{v} R)
     (g : HopfAlgebra.points (R := R) (H := H) A) :
     g ∈ quotientPointsSubgroup H I A ↔ ∀ h : H, h ∈ I → g.ofConv h = 0 :=
   mem_range_quotientPointsHom_iff H I A g
+
+/-- Precomposition by a bijective bialgebra morphism identifies the points cut out by a Hopf
+ideal with the points cut out by its pullback. -/
+theorem mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+    {H K : Type v} [CommRing H] [CommRing K] [HopfAlgebra R H] [HopfAlgebra R K]
+    (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f)
+    (I : HopfIdeal R K) (A : CommAlgCat.{w} R)
+    (g : HopfAlgebra.points (R := R) (H := K) A) :
+    AlgHom.mapDomainMulEquiv (A := A) (BialgEquiv.ofBijective f ⟨hinj, hsurj⟩) g ∈
+        quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
+      g ∈ quotientPointsSubgroup (_root_.CommHopfAlgCat.of R K) I A := by
+  rw [mem_quotientPointsSubgroup_iff, mem_quotientPointsSubgroup_iff]
+  constructor
+  · intro hg y hy
+    obtain ⟨x, rfl⟩ := hsurj y
+    exact hg x (HopfIdeal.mem_comap.mpr hy)
+  · intro hg x hx
+    exact hg (f x) (HopfIdeal.mem_comap.mp hx)
 
 /-- The included quotient point belongs to the subgroup cut out by the Hopf ideal. -/
 lemma quotientPointsHom_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
