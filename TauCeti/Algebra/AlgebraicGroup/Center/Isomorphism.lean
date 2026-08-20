@@ -78,13 +78,13 @@ theorem comap_centerDefiningIdeal (e : H ≅ K) :
 
 /-- The isomorphism on coordinate Hopf algebras obtained by restricting an ambient isomorphism
 to the centers. -/
-@[expose] noncomputable def centerCoordinateIso (e : H ≅ K) :
+noncomputable def centerCoordinateIso (e : H ≅ K) :
     quotient H (centerDefiningIdeal H) ≅ quotient K (centerDefiningIdeal K) :=
   eqToIso (congrArg (quotient H) (comap_centerDefiningIdeal e).symm) ≪≫
     quotientIsoOfIso e (centerDefiningIdeal K)
 
 /-- The coordinate morphism obtained by restricting an ambient isomorphism to the centers. -/
-@[expose] noncomputable def centerCoordinateMap (e : H ≅ K) :
+noncomputable def centerCoordinateMap (e : H ≅ K) :
     quotient H (centerDefiningIdeal H) ⟶ quotient K (centerDefiningIdeal K) :=
   (centerCoordinateIso e).hom
 
@@ -92,7 +92,7 @@ to the centers. -/
 @[simp]
 theorem centerCoordinateIso_hom (e : H ≅ K) :
     (centerCoordinateIso e).hom = centerCoordinateMap e :=
-  rfl
+  (rfl)
 
 /-- Restriction to centers commutes with the two ambient quotient morphisms. -/
 @[simp]
@@ -175,7 +175,7 @@ variable {H K : _root_.CommHopfAlgCat.{u} k}
 
 /-- An isomorphism of affine group schemes represented by commutative Hopf algebras restricts to
 an isomorphism of their center group schemes. -/
-@[expose] noncomputable def centerGroupSchemeIso (e : H ≅ K) :
+noncomputable def centerGroupSchemeIso (e : H ≅ K) :
     centerGroupScheme H ≅ centerGroupScheme K :=
   ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).mapIso (centerCoordinateIso e).op).symm
 
@@ -204,6 +204,15 @@ noncomputable local instance centerAlgSpecMonoidal :
     (AlgebraicGeometry.algSpec (CommRingCat.of k)).Monoidal :=
   AlgebraicGeometry.braidedAlgSpec.toMonoidal
 
+/-- Mapping a Hopf-algebra morphism through `algSpec.mapGrp` is the morphism obtained by mapping it
+through the composite functor `hopfSpec`. -/
+private theorem algSpec_mapGrp_map_eq_hopfSpec_map {A B : _root_.CommHopfAlgCat.{u} k}
+    (f : A ⟶ B) :
+    (AlgebraicGeometry.algSpec (CommRingCat.of k)).mapGrp.map
+        ((commHopfAlgCatEquivCogrpCommAlgCat k).functor.map f).unop =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op := by
+  simp only [Functor.comp_map, Functor.leftOp_map, Quiver.Hom.unop_op]
+
 /-- The isomorphism of centers commutes with their inclusions into the ambient affine group
 schemes. -/
 @[simp]
@@ -213,8 +222,7 @@ theorem centerGroupSchemeIso_hom_comp_centerGroupSchemeι (e : H ≅ K) :
           (centerCoordinateMap e.symm)).unop ≫ centerGroupSchemeι K =
       centerGroupSchemeι H ≫
         (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map e.inv.op := by
-  change (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map
-      (centerCoordinateMap e.symm).op ≫ centerGroupSchemeι K = _
+  rw [algSpec_mapGrp_map_eq_hopfSpec_map]
   simp only [centerGroupSchemeι]
   rw [quotientSpecι_def, quotientSpecι_def,
     ← (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map_comp,
