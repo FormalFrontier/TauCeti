@@ -465,16 +465,15 @@ theorem RowExchangeable.ae_apply_pi_union [IsFiniteMeasure μ] (h : RowExchangea
   have hfm : Measurable f := ENNReal.measurable_toReal.comp hmCD
   have hgm : Measurable g :=
     (ENNReal.measurable_toReal.comp hmC).mul (ENNReal.measurable_toReal.comp hmD)
-  have hmul1 : ∀ x y : ℝ, |x| ≤ 1 → |y| ≤ 1 → |x * y| ≤ 1 := by
-    intro x y hx hy
-    rw [abs_mul]
-    nlinarith [abs_nonneg x, abs_nonneg y]
   have hf1 : ∀ ω, |f ω| ≤ 1 := fun ω => by
     rw [hf, abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _
   have hg1 : ∀ ω, |g ω| ≤ 1 := fun ω => by
     rw [hg]
-    exact hmul1 _ _ (by rw [abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _)
-      (by rw [abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _)
+    simpa [Real.norm_eq_abs] using norm_mul_le_of_le
+      (a₁ := ((lam ω : Measure (ι → α)) C).toReal)
+      (a₂ := ((lam ω : Measure (ι → α)) D).toReal) (r₁ := 1) (r₂ := 1)
+      (by rw [Real.norm_eq_abs, abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _)
+      (by rw [Real.norm_eq_abs, abs_of_nonneg ENNReal.toReal_nonneg]; exact hle1 ω _)
   have hI1 : ∫ ω, f ω * f ω ∂μ = T.toReal := by
     have hrw : (fun ω => f ω * f ω) = fun ω =>
         ((lam ω : Measure (ι → α)) (C ∩ D) * (lam ω : Measure (ι → α)) (C ∩ D)).toReal := by
@@ -517,15 +516,24 @@ theorem RowExchangeable.ae_apply_pi_union [IsFiniteMeasure μ] (h : RowExchangea
   have e1 : Integrable (fun ω => f ω * f ω) μ :=
     Integrable.of_bound (hfm.mul hfm).aestronglyMeasurable 1
       (.of_forall fun ω => by
-        simpa [Real.norm_eq_abs] using hmul1 _ _ (hf1 ω) (hf1 ω))
+        simpa [Real.norm_eq_abs] using norm_mul_le_of_le
+          (a₁ := f ω) (a₂ := f ω) (r₁ := 1) (r₂ := 1)
+          (by simpa only [Real.norm_eq_abs] using hf1 ω)
+          (by simpa only [Real.norm_eq_abs] using hf1 ω))
   have e2 : Integrable (fun ω => f ω * g ω) μ :=
     Integrable.of_bound (hfm.mul hgm).aestronglyMeasurable 1
       (.of_forall fun ω => by
-        simpa [Real.norm_eq_abs] using hmul1 _ _ (hf1 ω) (hg1 ω))
+        simpa [Real.norm_eq_abs] using norm_mul_le_of_le
+          (a₁ := f ω) (a₂ := g ω) (r₁ := 1) (r₂ := 1)
+          (by simpa only [Real.norm_eq_abs] using hf1 ω)
+          (by simpa only [Real.norm_eq_abs] using hg1 ω))
   have e3 : Integrable (fun ω => g ω * g ω) μ :=
     Integrable.of_bound (hgm.mul hgm).aestronglyMeasurable 1
       (.of_forall fun ω => by
-        simpa [Real.norm_eq_abs] using hmul1 _ _ (hg1 ω) (hg1 ω))
+        simpa [Real.norm_eq_abs] using norm_mul_le_of_le
+          (a₁ := g ω) (a₂ := g ω) (r₁ := 1) (r₂ := 1)
+          (by simpa only [Real.norm_eq_abs] using hg1 ω)
+          (by simpa only [Real.norm_eq_abs] using hg1 ω))
   have hexp : (fun ω => (f ω - g ω) ^ 2)
       = fun ω => f ω * f ω - 2 * (f ω * g ω) + g ω * g ω := by funext ω; ring
   have e2' : Integrable (fun ω => 2 * (f ω * g ω)) μ := e2.const_mul 2
