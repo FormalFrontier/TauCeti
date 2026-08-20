@@ -66,18 +66,34 @@ open _root_.Matrix Module Set Submodule
 namespace DynkinType
 
 /-- The roots of `G2` in the fundamental-weight basis, with simple roots first. -/
-@[expose] def g2Root : Fin 12 ↪ (Fin 2 → ℤ) where
+def g2Root : Fin 12 ↪ (Fin 2 → ℤ) where
   toFun := ![
     ![2, -1], ![-3, 2], ![-1, 1], ![1, 0], ![3, -1], ![0, 1],
     ![-2, 1], ![3, -2], ![1, -1], ![-1, 0], ![-3, 1], ![0, -1]]
   inj' := by decide
 
 /-- The coroots of `G2` in the simple-coroot basis, ordered compatibly with `g2Root`. -/
-@[expose] def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
+def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
   toFun := ![
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
   inj' := by decide
+
+/-- The matrix action on the roots needed to construct the special isogeny of `G₂`. -/
+theorem g2Root_specialIsogenyAction (i : Fin 12) :
+    !![0, 3; 1, 0] *ᵥ g2Root i =
+      (![1, 3, 1, 1, 3, 3, 1, 3, 1, 1, 3, 3] i : ℤ) •
+        g2Root (![1, 0, 4, 5, 2, 3, 7, 6, 10, 11, 8, 9] i) := by
+  revert i
+  decide
+
+/-- The transposed matrix action on the coroots needed to construct the special isogeny of `G₂`. -/
+theorem g2Coroot_specialIsogenyAction (i : Fin 12) :
+    (!![0, 3; 1, 0] : Matrix (Fin 2) (Fin 2) ℤ)ᵀ *ᵥ
+        g2Coroot (![1, 0, 4, 5, 2, 3, 7, 6, 10, 11, 8, 9] i) =
+      (![1, 3, 1, 1, 3, 3, 1, 3, 1, 1, 3, 3] i : ℤ) • g2Coroot i := by
+  revert i
+  decide
 
 /-- The simple roots of `G2` sit at the first two indices, where they are the rows of its
 Bourbaki-numbered Cartan matrix. -/
