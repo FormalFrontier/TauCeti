@@ -8,7 +8,6 @@ module
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Comap
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Plus
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Restriction
-public import TauCeti.RingTheory.Valuation.ValuativeRel.Basic
 
 /-!
 # The adic spectrum of a rational localisation lies over the rational subset
@@ -50,9 +49,6 @@ localisation — is not constructed here; it is the remaining half of the roadma
 
 ## Main results
 
-* `TauCeti.ValuationSpectrum.comap_mem_rationalSubset` : the general criterion — if a continuous
-  homomorphism `φ : A →+* B` carries `A⁺` into `B⁺`, inverts `s`, and sends every `t ∈ T` to an
-  element `φ t · (φ s)⁻¹` of `B⁺`, then every point of `Spa (B, B⁺)` pulls back into `R(T/s)`.
 * `TauCeti.ValuationSpectrum.spaComapLoc_mem_rationalSubset` and
   `TauCeti.ValuationSpectrum.range_spaComapLoc_subset` : the rational localisation satisfies that
   criterion, so `Spa (A_U, A_U⁺)` lies over `R(T/s)`.
@@ -81,31 +77,7 @@ open TauCeti.Localization
 
 namespace TauCeti.ValuationSpectrum
 
-variable {A B : Type*} [CommRing A] [TopologicalSpace A] [CommRing B] [TopologicalSpace B]
-
-/-! ### The general criterion -/
-
-/-- **A point of `Spa (B, B⁺)` pulls back into `R(T/s)` as soon as `φ` inverts `s` and makes the
-fractions `t/s` sub-unit.**
-
-The hypotheses are exactly the universal property of a rational localisation, read at the level
-of elements: `c` is the inverse of `φ s`, and `φ t * c` — the image of `t/s` — lies in the plus
-ring of the target. No Huber hypothesis is used, and `T` is arbitrary: the numerator ideal need
-not be open, because the *definition* of `R(T/s)` does not ask for it. -/
-theorem comap_mem_rationalSubset {φ : A →+* B} (hφ : Continuous φ) {Aplus : Subring A}
-    {Bplus : Subring B} (hplus : ∀ a ∈ Aplus, φ a ∈ Bplus) (T : Finset A) (s : A) {c : B}
-    (hc : φ s * c = 1) (hT : ∀ t ∈ T, φ t * c ∈ Bplus) {v : Spv B} (hv : v ∈ spa Bplus) :
-    comap φ v ∈ rationalSubset Aplus T s := by
-  rw [mem_rationalSubset_iff]
-  refine ⟨comap_mem_spa hφ hplus hv, fun t ht ↦ ?_, ?_⟩
-  · have hsub : v.toValuativeRel.vle (φ t * c) 1 := ((mem_spa_iff Bplus v).mp hv).2 _ (hT t ht)
-    have hclear : φ t * c * φ s = φ t := by
-      rw [mul_assoc, mul_comm c, hc, mul_one]
-    rw [comap_vle]
-    simpa only [hclear, one_mul] using v.toValuativeRel.mul_vle_mul_left hsub (φ s)
-  · have hunit : IsUnit (φ s) := ⟨⟨φ s, c, hc, by rw [mul_comm]; exact hc⟩, rfl⟩
-    rw [comap_vle, map_zero]
-    exact @TauCeti.ValuativeRel.not_vle_zero_of_isUnit B _ v.toValuativeRel _ hunit
+variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
 /-! ### The rational localisation
 
@@ -269,6 +241,7 @@ This is the point of passing to `A_U`: the conditions `v(t) ≤ v(s) ≠ 0` that
 sub-unit. It is the degenerate case of Wedhorn's comparison of rational subsets of `U` with
 rational subsets of `X` (§8.2), and it is what makes `Spa (A_U, A_U⁺)` a candidate for `U`
 rather than for a proper subset of it. -/
+@[simp]
 theorem rationalSubset_image_toCompletionLoc_eq_spa (P : PairOfDefinition A) (Aplus : Subring A)
     (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S) :
@@ -281,13 +254,16 @@ theorem rationalSubset_image_toCompletionLoc_eq_spa (P : PairOfDefinition A) (Ap
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
-  refine Set.Subset.antisymm (rationalSubset_subset_spa _ _ _) fun v hv ↦ ?_
-  rw [← comap_preimage_rationalSubset_inter_spa (toCompletionLoc P T s S hden)
-    (continuous_toCompletionLoc P T s S hden)
-    (fun _ ha ↦ toCompletionLoc_mem_completedPlusSubring P Aplus T s S hden ha) T s]
-  refine ⟨?_, hv⟩
-  simpa only [Set.mem_preimage, spaComapLoc_val] using
-    spaComapLoc_mem_rationalSubset P Aplus T s S hden ⟨v, hv⟩
+  have hu : IsUnit (toCompletionLoc P T s S hden s) :=
+    isUnit_toCompletionLoc_of_dvd P T s S hden dvd_rfl
+  have hc : toCompletionLoc P T s S hden s * ↑hu.unit⁻¹ = 1 := by
+    have h := hu.unit.mul_inv
+    rwa [hu.unit_spec] at h
+  refine rationalSubset_image_eq_spa (toCompletionLoc P T s S hden)
+    (completedPlusSubring P Aplus T s S hden) T s hc fun t ht ↦ ?_
+  rw [toCompletionLoc_unit_inv_eq P T s S hden (mul_one s).symm hu, toCompletionLoc_apply,
+    ← UniformSpace.Completion.coe_mul, divBy_one, algebraMap_mul_invSelf]
+  exact divBy_mem_completedPlusSubring P Aplus T s S hden ht
 
 /-- **The coordinate ring of an empty rational subset has empty adic spectrum.** Every point of
 `Spa (A_U, A_U⁺)` lies over a point of `R(T/s)`, so there is none to have when `R(T/s)` is
