@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
+public import Mathlib.LinearAlgebra.Matrix.DotProduct
 public import TauCeti.RepresentationTheory.InvariantForm
 
 /-!
@@ -31,6 +32,8 @@ the field, not a division by `|G|`, that does the work.
 
 ## Main results
 
+* `Representation.sumOfConjugatesForm_eq_norm`: that sum is the `Representation.norm` of the form
+  for the conjugation action of `G` on bilinear forms.
 * `Representation.isInvariantForm_sumOfConjugatesForm`: that sum is invariant.
 * `Representation.isSymm_sumOfConjugatesForm`: that sum is symmetric if the form is.
 * `Representation.exists_isInvariantForm_isSymm_ne_zero`: **a representation of a finite group on a
@@ -64,9 +67,9 @@ variable {k G W : Type*} [CommSemiring k] [Monoid G] [Fintype G] [AddCommMonoid 
 /-- The **sum of a bilinear form over the conjugates** of a representation of a finite monoid,
 `∑_g B (σ g ·) (σ g ·)`.  No division by `|G|` is performed, so no invertibility of the monoid order
 is needed; when `G` is a group the plain sum is already invariant
-(`Representation.isInvariantForm_sumOfConjugatesForm`), which is what the reindexing of the sum by
-right translation needs.  The name follows Mathlib's `MonoidAlgebra.sumOfConjugates`, the same
-undivided sum for a linear map. -/
+(`Representation.isInvariantForm_sumOfConjugatesForm`), being the `Representation.norm` of `B` for
+the conjugation action of `G` on bilinear forms.  The name follows Mathlib's
+`MonoidAlgebra.sumOfConjugates`, the same undivided sum for a linear map. -/
 def sumOfConjugatesForm (σ : Representation k G W) (B : BilinForm k W) : BilinForm k W :=
   ∑ g : G, B.comp (σ g) (σ g)
 
@@ -88,19 +91,28 @@ section Group
 
 variable {k G W : Type*} [CommSemiring k] [Group G] [Fintype G] [AddCommMonoid W] [Module k W]
 
+/-- **The conjugate sum of a form is the norm of the form** for the conjugation action of `G` on
+bilinear forms, `Representation.linHom σ σ.dual`: the two sums differ only by the reindexing
+`g ↦ g⁻¹`, since the conjugation action moves `σ g⁻¹` into both arguments. -/
+theorem sumOfConjugatesForm_eq_norm (σ : Representation k G W) (B : BilinForm k W) :
+    sumOfConjugatesForm σ B = norm (linHom σ σ.dual) B := by
+  ext x y
+  rw [sumOfConjugatesForm_apply, norm]
+  simp only [LinearMap.sum_apply, linHom_apply, LinearMap.coe_comp, Function.comp_apply,
+    dual_apply, Module.Dual.transpose_apply]
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun g => by simp
+
 /-- The sum of a bilinear form over the conjugates of a representation of a finite group is
-invariant: reindexing the sum by right translation absorbs the group element. -/
+invariant: it is a norm for the conjugation action of `G` on bilinear forms
+(`Representation.sumOfConjugatesForm_eq_norm`), and a norm is fixed by that action. -/
 @[simp]
 theorem isInvariantForm_sumOfConjugatesForm (σ : Representation k G W) (B : BilinForm k W) :
     IsInvariantForm σ (sumOfConjugatesForm σ B) := by
-  rw [isInvariantForm_iff]
+  rw [isInvariantForm_iff, sumOfConjugatesForm_eq_norm]
   intro h x y
-  simp only [sumOfConjugatesForm_apply]
-  refine Eq.trans ?_ (Fintype.sum_equiv (Equiv.mulRight h)
-    (fun g : G => B (σ (g * h) x) (σ (g * h) y)) (fun g : G => B (σ g x) (σ g y))
-    fun g => rfl)
-  exact Finset.sum_congr rfl fun g _ => by
-    simp only [map_mul, Module.End.mul_apply]
+  simpa only [linHom_apply, LinearMap.coe_comp, Function.comp_apply, dual_apply,
+    Module.Dual.transpose_apply, inv_inv] using
+    DFunLike.congr_fun (DFunLike.congr_fun (self_norm_apply (linHom σ σ.dual) h⁻¹ B) x) y
 
 end Group
 
@@ -123,22 +135,20 @@ theorem exists_isInvariantForm_isSymm_ne_zero (σ : Representation k G W)
   have : Fintype G := Fintype.ofFinite G
   set b := Module.finBasis k W with hb
   set B₀ : BilinForm k W := Matrix.toBilin b 1 with hB₀
-  have hB₀apply : ∀ x y : W, B₀ x y = ∑ i, b.repr x i * b.repr y i := by
+  have hB₀apply : ∀ x y : W, B₀ x y = ⇑(b.repr x) ⬝ᵥ ⇑(b.repr y) := by
     intro x y
-    simp [hB₀, Matrix.toBilin_apply, Matrix.one_apply, Finset.sum_ite_eq]
+    simp [hB₀, Matrix.toBilin_apply, Matrix.one_apply, Finset.sum_ite_eq, dotProduct]
   have hB₀symm : B₀.IsSymm := (Matrix.isSymm_toBilin_iff_isSymm b).mpr Matrix.isSymm_one
   have hB₀nonneg : ∀ x : W, 0 ≤ B₀ x x := fun x => by
-    rw [hB₀apply]
+    rw [hB₀apply, dotProduct]
     exact Finset.sum_nonneg fun i _ => mul_self_nonneg _
   refine ⟨sumOfConjugatesForm σ B₀, isInvariantForm_sumOfConjugatesForm σ B₀,
     isSymm_sumOfConjugatesForm hB₀symm, ?_⟩
   obtain ⟨x, hx⟩ := exists_ne (0 : W)
   have hpos : 0 < B₀ x x := by
-    rw [hB₀apply]
-    obtain ⟨i, hi⟩ : ∃ i, b.repr x i ≠ 0 := by
-      simpa using Finsupp.ne_iff.mp fun h => hx (b.repr.map_eq_zero_iff.mp h)
-    exact Finset.sum_pos' (fun j _ => mul_self_nonneg _)
-      ⟨i, Finset.mem_univ i, mul_self_pos.mpr hi⟩
+    refine (hB₀nonneg x).lt_of_ne (Ne.symm ?_)
+    rw [hB₀apply, ne_eq, dotProduct_self_eq_zero, Finsupp.coe_eq_zero]
+    exact fun h => hx (b.repr.map_eq_zero_iff.mp h)
   have hle : B₀ x x ≤ sumOfConjugatesForm σ B₀ x x := by
     rw [sumOfConjugatesForm_apply]
     simpa using Finset.single_le_sum (f := fun g : G => B₀ (σ g x) (σ g x))

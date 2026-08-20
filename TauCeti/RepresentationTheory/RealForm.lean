@@ -195,12 +195,8 @@ and `Representation.IsRealForm` is the notion to use there. -/
 def IsRealizableOverReal : Prop :=
   ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ
 
-/-- The real form carried by `Representation.IsRealizableOverReal`. -/
-theorem IsRealizableOverReal.exists_isRealForm (h : IsRealizableOverReal ρ) :
-    ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ :=
-  h
-
-/-- `Representation.IsRealizableOverReal` unfolded. -/
+/-- `Representation.IsRealizableOverReal` unfolded: it is the existence of a real form on the
+pinned carrier, and this is the elimination principle for it. -/
 theorem isRealizableOverReal_iff :
     IsRealizableOverReal ρ ↔
       ∃ σ : Representation ℝ G (Fin (finrank ℂ V) → ℝ), IsRealForm ρ σ :=

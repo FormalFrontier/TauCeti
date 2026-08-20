@@ -92,7 +92,7 @@ is the "realizable" half of the orthogonality criterion; the converse, that indi
 a real form, is not proved here. -/
 theorem frobeniusSchurIndicator_eq_one_of_isRealizableOverReal [ρ.IsIrreducible]
     (h : IsRealizableOverReal ρ) : frobeniusSchurIndicator ρ = 1 := by
-  obtain ⟨σ, hσ⟩ := h.exists_isRealForm
+  obtain ⟨σ, hσ⟩ := isRealizableOverReal_iff.mp h
   exact hσ.frobeniusSchurIndicator_eq_one
 
 end Orthogonal
