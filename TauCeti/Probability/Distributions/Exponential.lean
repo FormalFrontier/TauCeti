@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Moments.Variance
 import TauCeti.Probability.Distributions.PDFInstances
+import TauCeti.MeasureTheory.Integral.ExpDecay
 import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 
@@ -25,11 +26,11 @@ The mean and variance of `ProbabilityTheory.expMeasure r`:
 Proving those two separately would repeat the same density transport and Gamma-integral argument
 twice, so the general statement is the one proved and the two specializations are `simpa` from it.
 
-**The engine is Mathlib's Gamma integral.** `integral_rpow_mul_exp_neg_mul_Ioi` evaluates
-`∫ t in Ioi 0, t ^ (a - 1) * exp (-(r * t))` as `(1 / r) ^ a * Γ a`; at `a = n + 1` the Gamma factor
-is `n !`.  Nothing here integrates by parts or reproves a convergence result — except that Mathlib
-states integrability of that integrand only at rate `r = 1` (`GammaIntegral_convergent`), so
-`integrableOn_gammaIntegrand` transports it to a general rate by scaling.
+**The engine is `TauCeti.MeasureTheory.Integral.ExpDecay`.** `integral_pow_mul_exp_neg_mul_Ioi`
+already evaluates `∫ t in Ioi 0, t ^ n * exp (-(a * t))` as `n ! / a ^ (n + 1)`, and
+`integrableOn_pow_mul_exp_neg_mul_Ioi` supplies the matching integrability.  Nothing analytic is
+reproved here; the work is the density transport that turns an integral against `expMeasure` into
+one of those.
 
 **The moment formula holds at every `n`; its Gamma-integral route does not.** At `n = 0` the
 integrand `x ^ n * pdf x` does not vanish at the origin, so it is not the indicator of `Ioi 0`
@@ -80,18 +81,6 @@ private theorem expMeasure_eq_withDensity (r : ℝ) :
 private theorem exponentialPDF_apply (r x : ℝ) :
     exponentialPDF r x = ENNReal.ofReal (exponentialPDFReal r x) := (rfl)
 
-/-- Integrability of the Gamma integrand at a general rate.  Mathlib proves this at `r = 1`
-(`GammaIntegral_convergent`); the general case follows by scaling. -/
-private theorem integrableOn_gammaIntegrand (ha : 0 < a) (hr : 0 < r) :
-    IntegrableOn (fun x => x ^ (a - 1) * exp (-(r * x))) (Ioi 0) := by
-  have h : IntegrableOn (fun x => exp (-(r * x)) * (r * x) ^ (a - 1)) (Ioi 0) := by
-    have := (integrableOn_Ioi_comp_mul_left_iff
-      (fun t => exp (-t) * t ^ (a - 1)) 0 hr).2 (by simpa using Real.GammaIntegral_convergent ha)
-    simpa using this
-  refine IntegrableOn.congr_fun (h.const_mul ((r ^ (a - 1))⁻¹)) (fun x hx => ?_) measurableSet_Ioi
-  rw [Real.mul_rpow hr.le (le_of_lt hx)]
-  field_simp
-
 /-- An integral against `expMeasure` is a density integral against `volume`. -/
 private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
     ∫ x, g x ∂(expMeasure r) = ∫ x, exponentialPDFReal r x * g x := by
@@ -109,13 +98,12 @@ private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
 `n = 0` the left side is the density itself, which does not vanish at the origin. -/
 private theorem integrand_eq_indicator (hn : n ≠ 0) :
     (fun x => exponentialPDFReal r x * x ^ n)
-      = (Ioi (0:ℝ)).indicator (fun x => r * (x ^ ((n : ℝ) + 1 - 1) * exp (-(r * x)))) := by
+      = (Ioi (0:ℝ)).indicator (fun x => r * (x ^ n * exp (-(r * x)))) := by
   funext x
   by_cases hx : (0:ℝ) < x
   · rw [Set.indicator_of_mem (mem_Ioi.mpr hx), exponentialPDFReal_apply]
     split_ifs with h
-    · rw [add_sub_cancel_right, Real.rpow_natCast]
-      ring
+    · ring
     · exact absurd hx.le h
   · rw [Set.indicator_of_notMem (by simpa using hx), exponentialPDFReal_apply]
     have hx' : x ≤ 0 := not_lt.mp hx
@@ -127,6 +115,7 @@ private theorem integrand_eq_indicator (hn : n ≠ 0) :
 /-- **Every moment of the exponential law is integrable.**  This is not implied by the moment
 formula below: Lean's integral is defined for non-integrable functions too, so an integral equality
 alone says nothing about finiteness. -/
+@[simp]
 theorem integrable_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
     Integrable (fun x => x ^ n) (expMeasure r) := by
   have hprob : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
@@ -141,7 +130,7 @@ theorem integrable_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
   rw [expMeasure_eq_withDensity,
     integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
     funext htoReal, integrand_eq_indicator hn, integrable_indicator_iff measurableSet_Ioi]
-  exact (integrableOn_gammaIntegrand (by positivity) hr).const_mul r
+  exact (integrableOn_pow_mul_exp_neg_mul_Ioi n hr).const_mul r
 
 /-- **The moments of the exponential law.** `∫ x ^ n ∂(expMeasure r) = n ! / r ^ n`, for every `n`.
 
@@ -150,6 +139,7 @@ avoids running the same density transport and Gamma-integral argument twice.
 
 At `n = 0` both sides are `1`, from the probability-measure instance; the Gamma-integral route is
 used for positive `n`. -/
+@[simp]
 theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
     ∫ x, x ^ n ∂(expMeasure r) = (Nat.factorial n : ℝ) / r ^ n := by
   rcases eq_or_ne n 0 with rfl | hn
@@ -157,13 +147,12 @@ theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
     simp
   rw [integral_expMeasure hr, integrand_eq_indicator hn,
     integral_indicator measurableSet_Ioi, integral_const_mul,
-    integral_rpow_mul_exp_neg_mul_Ioi (by positivity) hr, Real.Gamma_nat_eq_factorial,
-    ← Nat.cast_succ, Real.rpow_natCast]
+    integral_pow_mul_exp_neg_mul_Ioi n hr]
   field_simp
-  rw [one_div, inv_pow, pow_succ]
-  field_simp
+  ring
 
 /-- **The mean of the exponential law** with rate `r` is `r⁻¹`. -/
+@[simp]
 theorem integral_id_expMeasure (hr : 0 < r) : ∫ x, x ∂(expMeasure r) = r⁻¹ := by
   simpa using integral_pow_id_expMeasure hr 1
 
@@ -172,6 +161,7 @@ theorem integral_sq_id_expMeasure (hr : 0 < r) : ∫ x, x ^ 2 ∂(expMeasure r) 
   simpa using integral_pow_id_expMeasure hr 2
 
 /-- **The variance of the exponential law** with rate `r` is `(r ^ 2)⁻¹`. -/
+@[simp]
 theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = (r ^ 2)⁻¹ := by
   have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   have h₂ : Integrable (fun x => id x ^ 2) (expMeasure r) :=
