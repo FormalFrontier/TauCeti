@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Complex.Basic
-public import Mathlib.LinearAlgebra.SesquilinearForm.Basic
 public import TauCeti.Geometry.Hodge.WeilOperator
 
 /-!
@@ -145,11 +144,13 @@ theorem hodgeForm_isSymm (P : Polarization hℂ hs) : P.hodgeForm.IsSymm where
           rw [P.Q_symm_weight u (hs.weilOperator (latticeConj hℂ v)), negOnePow_cast]
 
 /-- Conjugating both arguments of the Hodge form conjugates its value. -/
+@[simp]
 theorem hodgeForm_latticeConj (P : Polarization hℂ hs) (u v : Vℂ) :
     P.hodgeForm (latticeConj hℂ u) (latticeConj hℂ v) = starRingEnd ℂ (P.hodgeForm u v) := by
   rw [hodgeForm_apply, latticeConj_apply_apply, hodgeForm_eq_conj, Complex.conj_conj]
 
 /-- The Weil operator is unitary for the Hodge form. -/
+@[simp]
 theorem hodgeForm_weilOperator (P : Polarization hℂ hs) (u v : Vℂ) :
     P.hodgeForm (hs.weilOperator u) (hs.weilOperator v) = P.hodgeForm u v := by
   have hconj : latticeConj hℂ (hs.weilOperator u) =
@@ -231,6 +232,7 @@ theorem hodgeForm_isPosSemidef (P : Polarization hℂ hs) : P.hodgeForm.IsPosSem
   isNonneg := P.hodgeForm_isNonneg
 
 /-- The Hodge form vanishes on the diagonal only at zero. -/
+@[simp]
 theorem hodgeForm_self_eq_zero_iff (P : Polarization hℂ hs) {x : Vℂ} :
     P.hodgeForm x x = 0 ↔ x = 0 := by
   refine ⟨fun h ↦ ?_, fun h ↦ by simp [h]⟩
@@ -248,6 +250,7 @@ end Polarization
 
 /-- The Hodge form of the polarized Tate structure `ℤ(m)` is the standard Hermitian form of the
 complex line: its Weil operator is the identity and its conjugation is complex conjugation. -/
+@[simp]
 theorem tate_hodgeForm_apply (m : ℤ) (x y : ℂ) :
     (tatePolarization m).hodgeForm x y = starRingEnd ℂ x * y := by
   rw [Polarization.hodgeForm_apply, latticeConj_tateLatticeMap, tate_weilOperator,

@@ -261,6 +261,7 @@ end IsPolarization
 namespace Polarization
 
 /-- The Weil operator is an isometry of the complex form of a polarization. -/
+@[simp]
 theorem Q_weilOperator (P : Polarization hℂ hs) (x y : Vℂ) :
     P.Q (hs.weilOperator x) (hs.weilOperator y) = P.Q x y := by
   rw [P.Q_def]
