@@ -86,9 +86,9 @@ classification for an arbitrary `sl₂`.
 `sl (Fin 2) K`-action is not canonical on a plain function space, and registering it there as an
 instance would give every `Fin m → K` a surprise Lie module structure. The synonym is `@[expose]`d
 so that its coordinates are still directly available, and `TauCeti.Sl2Std.add_apply`,
-`TauCeti.Sl2Std.smul_apply`, `TauCeti.Sl2Std.sub_apply`, `TauCeti.Sl2Std.neg_apply` and
-`TauCeti.Sl2Std.zero_apply` restate the pointwise operations that `Pi` lemmas can no longer reach
-through it.
+`TauCeti.Sl2Std.smul_apply`, `TauCeti.Sl2Std.sub_apply`, `TauCeti.Sl2Std.neg_apply`,
+`TauCeti.Sl2Std.zero_apply` and `TauCeti.Sl2Std.sum_apply` restate the pointwise operations that
+`Pi` lemmas can no longer reach through it.
 
 The three ladder operators are `@[expose]`d for the same reason. They are defined by a
 `Module.End` literal, and unfolding that literal is exactly what proves their coordinate equations
@@ -589,6 +589,11 @@ theorem raise_pow_eq_zero : (raise K n) ^ (n + 1) = 0 := by
   rw [LinearMap.zero_apply, zero_apply]
   exact raise_pow_apply_eq_zero _ _ _ (by omega)
 
+/-- On the trivial standard module the raising operator vanishes. -/
+@[simp]
+theorem raise_zero : raise K 0 = 0 := by
+  simpa using (raise_pow_eq_zero (K := K) (n := 0))
+
 /-- The raising operator of `V(n)` is nilpotent. -/
 theorem isNilpotent_raise : IsNilpotent (raise K n) :=
   ⟨n + 1, raise_pow_eq_zero⟩
@@ -661,6 +666,11 @@ theorem lower_pow_eq_zero : (lower K n) ^ (n + 1) = 0 := by
   rw [LinearMap.zero_apply, zero_apply]
   exact lower_pow_apply_eq_zero _ _ _ (by have := i.isLt; omega)
 
+/-- On the trivial standard module the lowering operator vanishes. -/
+@[simp]
+theorem lower_zero : lower K 0 = 0 := by
+  simpa using (lower_pow_eq_zero (K := K) (n := 0))
+
 /-- The lowering operator of `V(n)` is nilpotent. -/
 theorem isNilpotent_lower : IsNilpotent (lower K n) :=
   ⟨n + 1, lower_pow_eq_zero⟩
@@ -682,6 +692,26 @@ end Sl2Std
 end CommRing
 
 namespace Sl2Std
+
+section Triple
+
+variable {K : Type*} [CommRing K] {n : ℕ}
+
+/-- The standard-module Cartan and ladder operators form an `sl₂` triple whenever the highest
+weight is nonzero in the coefficient ring. -/
+theorem isSl2Triple_diag_raise_lower (hn : (n : K) ≠ 0) :
+    IsSl2Triple (diag K n) (raise K n) (lower K n) where
+  h_ne_zero := by
+    intro hc
+    have h0 : diag K n (basis K n 0) 0 = (0 : Sl2Std K n) 0 := by rw [hc]; rfl
+    rw [diag_apply, basis_apply, zero_apply, ite_eq_left rfl, Fin.val_zero, mul_one,
+      Nat.cast_zero, mul_zero, sub_zero] at h0
+    exact hn h0
+  lie_e_f := lie_raise_lower
+  lie_h_e_nsmul := by rw [lie_diag_raise, two_smul, two_nsmul]
+  lie_h_f_nsmul := by rw [lie_diag_lower, two_smul, two_nsmul]
+
+end Triple
 
 section Domain
 
@@ -757,6 +787,36 @@ theorem eq_smul_basis_zero_of_raise_eq_zero [CharZero K] {v : Sl2Std K n} (h : r
       have h1 : ((((i : ℕ) - 1 + 1 : ℕ)) : K) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
       rwa [Nat.cast_add, Nat.cast_one] at h1
     exact (mul_eq_zero.1 h').resolve_left hne
+
+/-! ### The kernel of the lowering operator -/
+
+/-- **The kernel of the lowering operator is the lowest weight line.** In characteristic zero the
+coefficients `n - i + 1` are nonzero until the end of the string, so a vector killed by `f` has all
+coordinates but the last equal to zero. -/
+theorem eq_smul_basis_last_of_lower_eq_zero [CharZero K] {v : Sl2Std K n}
+    (h : lower K n v = 0) : v = v (Fin.last n) • basis K n (Fin.last n) := by
+  funext j
+  rw [smul_apply, basis_apply]
+  by_cases hj : j = Fin.last n
+  · rw [hj, ite_eq_left rfl, mul_one]
+  · have hjn : (j : ℕ) < n := by
+      have h1 := j.isLt
+      have h2 : (j : ℕ) ≠ n := fun hc => hj (Fin.ext hc)
+      omega
+    have hzero := congrFun h (⟨(j : ℕ) + 1, by omega⟩ : Fin (n + 1))
+    rw [lower_apply, dite_eq_left (Nat.succ_pos (j : ℕ)), zero_apply] at hzero
+    have hback : (⟨((⟨(j : ℕ) + 1, by omega⟩ : Fin (n + 1)) : ℕ) - 1, by omega⟩ :
+        Fin (n + 1)) = j := by ext; simp
+    rw [hback] at hzero
+    have hcoeff : (n : K) - (((j : ℕ) + 1 : ℕ) : K) + 1 ≠ 0 := by
+      rw [Nat.cast_add, Nat.cast_one]
+      have hcast : ((n - (j : ℕ) : ℕ) : K) ≠ 0 :=
+        Nat.cast_ne_zero.mpr (Nat.sub_ne_zero_of_lt hjn)
+      convert hcast using 1
+      rw [Nat.cast_sub (le_of_lt hjn)]
+      ring
+    have hvj : v j = 0 := (mul_eq_zero.mp hzero).resolve_left hcoeff
+    rw [hvj, ite_eq_right hj, mul_zero]
 
 end Domain
 
