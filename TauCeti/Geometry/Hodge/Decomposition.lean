@@ -35,8 +35,6 @@ Hodge II*, §1.2.1, and Voisin, *Hodge Theory and Complex Algebraic Geometry I*,
   sum of the ambient complex vector space.
 * `TauCeti.Hodge.HodgeStructureOn.decomposition`: that direct sum as a linear equivalence.
 * `TauCeti.Hodge.HodgeStructureOn.piece_induction_on`: induction along the Hodge decomposition.
-* `TauCeti.Hodge.HodgeStructureOn.exists_sum_piece`: every vector is a finite sum of Hodge
-  components.
 -/
 
 public section
@@ -176,34 +174,6 @@ theorem piece_induction_on (hs : HodgeStructureOn W ω n) {motive : W → Prop} 
     rw [hs.iSup_piece_eq_top]
     exact Submodule.mem_top
   exact Submodule.iSup_induction (motive := motive) hs.piece hx mem zero add
-
-/-- Every vector is a finite sum of Hodge components: there are a finite set of degrees and a
-family of vectors, the one of degree `p` lying in the `p`-th Hodge component and vanishing off
-that finite set, which sums to the given vector. -/
-theorem exists_sum_piece (hs : HodgeStructureOn W ω n) (x : W) :
-    ∃ (s : Finset ℤ) (f : ℤ → W), (∀ p, f p ∈ hs.piece p) ∧ (∀ p ∉ s, f p = 0) ∧
-      x = ∑ p ∈ s, f p := by
-  classical
-  refine hs.piece_induction_on (motive := fun w ↦ ∃ (s : Finset ℤ) (f : ℤ → W),
-    (∀ p, f p ∈ hs.piece p) ∧ (∀ p ∉ s, f p = 0) ∧ w = ∑ p ∈ s, f p) x ?_ ?_ ?_
-  · intro p y hy
-    refine ⟨{p}, fun q ↦ if q = p then y else 0, fun q ↦ ?_, fun q hq ↦ ?_, by simp⟩
-    · by_cases hqp : q = p
-      · subst hqp
-        simpa using hy
-      · simp [hqp]
-    · rw [Finset.mem_singleton] at hq
-      simp [hq]
-  · exact ⟨∅, 0, fun p ↦ Submodule.zero_mem _, fun p _ ↦ rfl, by simp⟩
-  · rintro y z ⟨s, f, hf, hfs, rfl⟩ ⟨t, g, hg, hgt, rfl⟩
-    refine ⟨s ∪ t, f + g, fun p ↦ Submodule.add_mem _ (hf p) (hg p), fun p hp ↦ ?_, ?_⟩
-    · have hps : p ∉ s := fun h ↦ hp (Finset.mem_union_left _ h)
-      have hpt : p ∉ t := fun h ↦ hp (Finset.mem_union_right _ h)
-      simp [hfs p hps, hgt p hpt]
-    · simp only [Pi.add_apply, Finset.sum_add_distrib]
-      congr 1
-      · exact Finset.sum_subset Finset.subset_union_left fun p _ hp ↦ hfs p hp
-      · exact Finset.sum_subset Finset.subset_union_right fun p _ hp ↦ hgt p hp
 
 /-- Two complex-linear maps out of the ambient space that agree on every Hodge component are
 equal. -/

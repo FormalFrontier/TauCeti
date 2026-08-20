@@ -88,12 +88,6 @@ private theorem negOne_zpow_eq_I_zpow (k : ℤ) : (-1 : ℂ) ^ k = Complex.I ^ (
     rw [show (2 : ℤ) = ((2 : ℕ) : ℤ) from rfl, zpow_natCast, Complex.I_sq]
   rw [zpow_mul, h]
 
-/-- Every fourth power of `i` is one. -/
-private theorem I_zpow_four_mul (k : ℤ) : Complex.I ^ (4 * k) = 1 := by
-  have h : Complex.I ^ (4 : ℤ) = 1 := by
-    rw [show (4 : ℤ) = ((4 : ℕ) : ℤ) from rfl, zpow_natCast, Complex.I_pow_four]
-  rw [zpow_mul, h, one_zpow]
-
 /-- The exponent bookkeeping behind the value of the Hodge form on a Hodge component: the scalar
 `i^(2(k-p)-k)` by which the Weil operator acts on the conjugate component, corrected by the
 weight sign `(-1)^k`, is the scalar `i^(2p-k)` of the second Hodge–Riemann relation. -/
@@ -101,7 +95,8 @@ private theorem I_zpow_conj_piece (p k : ℤ) :
     Complex.I ^ (2 * (k - p) - k) * (-1 : ℂ) ^ k = Complex.I ^ (2 * p - k) := by
   rw [negOne_zpow_eq_I_zpow, ← zpow_add₀ Complex.I_ne_zero,
     show 2 * (k - p) - k + 2 * k = 2 * p - k + 4 * (k - p) by ring,
-    zpow_add₀ Complex.I_ne_zero, I_zpow_four_mul, mul_one]
+    zpow_add₀ Complex.I_ne_zero, Complex.I_zpow_eq_zpow_mod (4 * (k - p)), Int.mul_emod_right,
+    zpow_zero, mul_one]
 
 /-! ### The Weil operator is an isometry of the polarizing form -/
 
@@ -227,9 +222,13 @@ and using their orthogonality, the value on the diagonal is a sum of positive co
 for each nonzero component. -/
 theorem hodgeForm_self_pos (P : Polarization hℂ hs) {x : Vℂ} (hx : x ≠ 0) :
     0 < P.hodgeForm x x := by
-  obtain ⟨s, f, hf, -, rfl⟩ := hs.exists_sum_piece x
-  have hexpand : P.hodgeForm (∑ p ∈ s, f p) (∑ p ∈ s, f p) =
-      ∑ p ∈ s, P.hodgeForm (f p) (f p) := by
+  have hmem : x ∈ ⨆ p, hs.piece p := by
+    rw [hs.iSup_piece_eq_top]
+    exact Submodule.mem_top
+  obtain ⟨f, hf, rfl⟩ := (Submodule.mem_iSup_iff_exists_finsupp hs.piece x).mp hmem
+  rw [Finsupp.sum] at hx ⊢
+  have hexpand : P.hodgeForm (∑ p ∈ f.support, f p) (∑ p ∈ f.support, f p) =
+      ∑ p ∈ f.support, P.hodgeForm (f p) (f p) := by
     rw [map_sum]
     refine Finset.sum_congr rfl fun q hq ↦ ?_
     rw [map_sum, LinearMap.sum_apply]
@@ -240,7 +239,7 @@ theorem hodgeForm_self_pos (P : Polarization hℂ hs) {x : Vℂ} (hx : x ≠ 0) 
   · rcases eq_or_ne (f p) 0 with h0 | h0
     · simp [h0]
     · exact (P.hodgeForm_pos_of_mem_piece (hf p) h0).le
-  · obtain ⟨p, hp, hfp⟩ : ∃ p ∈ s, f p ≠ 0 := by
+  · obtain ⟨p, hp, hfp⟩ : ∃ p ∈ f.support, f p ≠ 0 := by
       by_contra hcon
       push Not at hcon
       exact hx (Finset.sum_eq_zero hcon)
