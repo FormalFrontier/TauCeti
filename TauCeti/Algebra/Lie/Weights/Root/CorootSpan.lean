@@ -38,7 +38,7 @@ ReductiveGroups roadmap, which is in turn consumed by CFSGStatement milestone L0
 * `TauCeti.rootCorootSpan`: their span over `ℤ`.
 * `TauCeti.corootFamily`: the coroots as a family indexed by the weights of `L`.
 * `TauCeti.rootCartanWeight`: the Cartan integers `β α∨` as a `ℤ`-valued weight of `β`.
-* `TauCeti.corootFamily_eq_zero_of_isZero` and `TauCeti.rootCartanWeight_eq_zero_of_isZero`: both
+* `TauCeti.coe_coroot_eq_zero_of_isZero` and `TauCeti.rootCartanWeight_eq_zero_of_isZero`: both
   vanish at the zero weight, the one index that indexing by all weights adds to the roots.
 * `TauCeti.lie_coroot_coroot_eq_zero` and `TauCeti.IsSl2System.lie_coroot_rootVector`: the two
   bracket computations against a coroot, in their integral form.
@@ -115,7 +115,7 @@ theorem rootCorootSpan_le_iff {x : Weight K H L → L} {P : Submodule ℤ L} :
 variable (H) in
 /-- The coroots of `L`, as a family indexed by the **weights** of `L`. The index runs over all
 weights and not only the roots: at the zero weight the value is `0` by
-`TauCeti.corootFamily_eq_zero_of_isZero`, so that index contributes nothing to any span or product
+`TauCeti.coe_coroot_eq_zero_of_isZero`, so that index contributes nothing to any span or product
 taken over this family.
 
 This is the family of distinguished Cartan vectors of `TauCeti.chevalleyKostantForm`. -/
@@ -143,11 +143,11 @@ theorem intCast_rootCartanWeight_apply (α β : Weight K H L) :
     ((rootCartanWeight β α : ℤ) : K) = β (coroot α) := by
   rw [rootCartanWeight, apply_coroot_eq_cast α β]
 
-/-- The coroot family vanishes at the zero weight, which is why indexing it by all weights rather
-than by the roots costs nothing. -/
-@[simp] theorem corootFamily_eq_zero_of_isZero {α : Weight K H L} (hα : α.IsZero) :
-    corootFamily H α = 0 := by
-  rw [corootFamily_apply, coroot_eq_zero_iff.2 hα, ZeroMemClass.coe_zero]
+/-- A coroot at the zero weight vanishes in the ambient Lie algebra, which is why indexing the
+coroot family by all weights rather than by the roots costs nothing. -/
+@[simp] theorem coe_coroot_eq_zero_of_isZero {α : Weight K H L} (hα : α.IsZero) :
+    ((coroot α : H) : L) = 0 := by
+  rw [coroot_eq_zero_iff.2 hα, ZeroMemClass.coe_zero]
 
 /-- Every root has Cartan integer zero at the zero weight, the coroot there being zero. -/
 @[simp] theorem rootCartanWeight_eq_zero_of_isZero (β : Weight K H L) {α : Weight K H L}
