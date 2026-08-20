@@ -33,8 +33,8 @@ preserves this finite lattice.
 * `TauCeti.DynkinType.geckCoordinateBasis`: its standard coordinate basis.
 * `TauCeti.DynkinType.geckCoordinateFinBasis`: the same basis indexed by a finite ordinal, as
   required by the general-linear group-scheme construction.
-* `TauCeti.DynkinType.geckRepresentation_lieBasis_h_mem_geckCoordinateLattice` and its raising
-  and lowering analogues: stability under the numbered Chevalley generators.
+* `TauCeti.DynkinType.geckRepresentation_lieBasis_e_mem_geckCoordinateLattice` and its lowering
+  analogue: stability under the numbered root generators.
 * `TauCeti.DynkinType.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice`:
   stability under every Cartan binomial operator.
 
@@ -106,12 +106,6 @@ theorem coe_geckCoordinateFinBasis (i : Fin (Fintype.card (t.GeckIndex ht))) :
       Pi.single ((Fintype.equivFin (t.GeckIndex ht)).symm i) 1 := by
   rw [geckCoordinateFinBasis, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
 
-/-- The rational span of the Geck coordinate lattice is the whole Geck module. -/
-theorem span_geckCoordinateLattice_eq_top :
-    Submodule.span ℚ (t.geckCoordinateLattice ht : Set (t.GeckIndex ht → ℚ)) = ⊤ := by
-  rw [geckCoordinateLattice, Submodule.span_span_of_tower,
-    (Pi.basisFun ℚ (t.GeckIndex ht)).span_eq]
-
 /-- The coordinate lattice is contained in the integral orbit of the pinned Kostant form, since
 the latter contains every standard coordinate vector. -/
 theorem geckCoordinateLattice_le_geckOrbit :
@@ -126,7 +120,9 @@ instance instIsLatticeGeckCoordinateLattice :
   fg := by
     rw [geckCoordinateLattice]
     exact Submodule.fg_span (Set.finite_range _)
-  span_eq_top := t.span_geckCoordinateLattice_eq_top ht
+  span_eq_top := by
+    rw [geckCoordinateLattice, Submodule.span_span_of_tower,
+      (Pi.basisFun ℚ (t.GeckIndex ht)).span_eq]
 
 /-! ## Stability under integral matrices -/
 
@@ -142,20 +138,6 @@ private theorem matrix_mulVec_mem_geckCoordinateLattice
   choose w hw using hv
   refine ⟨∑ j, a j * w j, ?_⟩
   simp only [Int.cast_sum, Int.cast_mul, ha, hw, Matrix.mulVec, dotProduct]
-
-private theorem geck_h_has_integer_entries (i : Fin t.rank) (j k : t.GeckIndex ht) :
-    ∃ z : ℤ, (z : ℚ) =
-      RootPairing.GeckConstruction.h (t.simpleSupportEquiv ht i) j k := by
-  classical
-  cases j <;> cases k
-  · exact ⟨0, by simp [RootPairing.GeckConstruction.h]⟩
-  · exact ⟨0, by simp [RootPairing.GeckConstruction.h]⟩
-  · exact ⟨0, by simp [RootPairing.GeckConstruction.h]⟩
-  · simp only [RootPairing.GeckConstruction.h, Matrix.fromBlocks_apply₂₂,
-      Matrix.diagonal_apply]
-    split_ifs
-    · exact ⟨_, rfl⟩
-    · exact ⟨0, rfl⟩
 
 private theorem geck_e_has_integer_entries (i : Fin t.rank) (j k : t.GeckIndex ht) :
     ∃ z : ℤ, (z : ℚ) =
@@ -218,16 +200,6 @@ private theorem geck_f_has_integer_entries (i : Fin t.rank) (j k : t.GeckIndex h
           · exact ⟨0, rfl⟩
 
 /-! ## The numbered Chevalley generators -/
-
-/-- A numbered Cartan generator preserves the Geck coordinate lattice. -/
-theorem geckRepresentation_lieBasis_h_mem_geckCoordinateLattice (i : Fin t.rank)
-    {v : t.GeckIndex ht → ℚ} (hv : v ∈ t.geckCoordinateLattice ht) :
-    t.geckRepresentation ht
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) v ∈
-      t.geckCoordinateLattice ht := by
-  rw [t.geckRepresentation_ι_apply ht, t.coe_lieBasis_h ht]
-  exact t.matrix_mulVec_mem_geckCoordinateLattice ht _
-    (t.geck_h_has_integer_entries ht i) hv
 
 /-- A numbered raising generator preserves the Geck coordinate lattice. -/
 theorem geckRepresentation_lieBasis_e_mem_geckCoordinateLattice (i : Fin t.rank)
