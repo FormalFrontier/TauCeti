@@ -11,6 +11,7 @@ public import Mathlib.Probability.Distributions.Uniform
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
@@ -57,7 +58,12 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
   logarithm meaningful;
 * `cgf_id_uniformMeasure_zero` and `cgf_id_uniformMeasure` — the cumulant generating function, split
   the same way;
-* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
+* `charFun_uniformMeasure_zero` and `charFun_uniformMeasure` — the characteristic function,
+  likewise;
+* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one;
+* `measurable_uniformMeasure` — the family is measurable in its endpoints, so it can be used as a
+  kernel. The other families' parameter measurability is in
+  `TauCeti/Probability/Distributions/Measurability.lean`.
 
 ## Implementation
 
@@ -69,9 +75,8 @@ side condition.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — the characteristic function and parameter measurability — are not built
-  here.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3 — the uniform family:
+  its measure, density, cdf, moments, and transforms — together with the uniform case of item 4.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -354,6 +359,45 @@ theorem cgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
       Real.log ((Real.exp (t * b) - Real.exp (t * a)) / ((b - a) * t)) := by
   rw [cgf, mgf_id_uniformMeasure hab ht]
 
+/-! ### The characteristic function
+
+Kept clear of the real mgf development above: this is a complex-valued calculation, and the only
+thing it borrows is `uniformMeasure_eq_smul`. It splits at `t = 0` for the same reason the mgf
+does — the quotient has a removable singularity there. -/
+
+/-- The characteristic function of the uniform law at `0` is `1`. -/
+theorem charFun_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
+    charFun (uniformMeasure a b) 0 = 1 := by
+  have := isProbabilityMeasure_uniformMeasure hab
+  simp [charFun_zero]
+
+/-- **The characteristic function of the uniform law**, away from the removable singularity. -/
+theorem charFun_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
+    charFun (uniformMeasure a b) t
+      = (Complex.exp (Complex.I * b * t) - Complex.exp (Complex.I * a * t))
+          / (Complex.I * ((b - a : ℝ)) * t) := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hc : (Complex.I * t) ≠ 0 := by
+    simp [Complex.I_ne_zero, Complex.ofReal_ne_zero.mpr ht]
+  rw [charFun, uniformMeasure_eq_smul, integral_smul_measure]
+  simp only [Real.inner_apply]
+  rw [← intervalIntegral.integral_of_le hab.le]
+  have hx : ∀ x : ℝ, Complex.exp (↑(x * t) * Complex.I) = Complex.exp (Complex.I * t * x) := by
+    intro x
+    congr 1
+    push_cast
+    ring
+  simp only [hx]
+  rw [integral_exp_mul_complex hc, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le,
+    Complex.real_smul]
+  have he : ∀ y : ℝ, Complex.exp (Complex.I * y * t) = Complex.exp (Complex.I * t * y) := by
+    intro y
+    congr 1
+    ring
+  rw [he b, he a]
+  push_cast
+  field_simp
+
 /-! ### Affine transport
 
 Every uniform law is an affine image of the standard one on `Set.Ioc 0 1`. This is what lets a
@@ -400,6 +444,33 @@ theorem map_uniformMeasure_affine {a b : ℝ} (hab : a < b) :
   rw [h01, ← preimage_affine_Ioc hab, ← Measure.restrict_map hmeas measurableSet_Ioc,
     map_volume_affine (ne_of_gt hba), abs_of_pos hba, Measure.restrict_smul,
     uniformMeasure_eq_smul, ENNReal.ofReal_inv_of_pos hba]
+
+/-! ### Measurability in the endpoints -/
+
+/-- Mathlib's uniform density on `Set.Ioc a b` is measurable jointly in the two endpoints and the
+point.
+
+This is the input `MeasureTheory.measurable_withDensity` needs; `measurable_uniformPDF_Ioc_volume`
+fixes the endpoints and is too weak for it. -/
+@[fun_prop]
+theorem measurable_uncurry_uniformPDF :
+    Measurable fun q : (ℝ × ℝ) × ℝ => pdf.uniformPDF (Set.Ioc q.1.1 q.1.2) q.2 volume := by
+  have hset : MeasurableSet {q : (ℝ × ℝ) × ℝ | q.2 ∈ Set.Ioc q.1.1 q.1.2} := by
+    simpa only [Set.mem_Ioc, Set.ofPred_and] using
+      (measurableSet_lt measurable_fst.fst measurable_snd).inter
+        (measurableSet_le measurable_snd measurable_fst.snd)
+  simp only [pdf.uniformPDF_ite, Real.volume_Ioc]
+  exact Measurable.ite hset (by fun_prop) measurable_const
+
+/-- **The uniform family is measurable in its endpoints.**
+
+With `MeasureTheory.Measure` carrying the Giry measurable structure, this is what lets a uniform law
+with random endpoints be assembled into a `ProbabilityTheory.Kernel`. No `a < b` hypothesis: on a
+degenerate interval the value is the zero measure, which is where the map is constant. -/
+@[fun_prop]
+theorem measurable_uniformMeasure : Measurable fun p : ℝ × ℝ => uniformMeasure p.1 p.2 := by
+  simp only [uniformMeasure_eq_withDensity]
+  exact measurable_withDensity (μ := volume) measurable_uncurry_uniformPDF
 
 end Probability
 

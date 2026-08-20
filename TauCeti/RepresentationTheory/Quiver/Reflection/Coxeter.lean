@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVector
+public import TauCeti.RepresentationTheory.Quiver.Reflection.Iterate
+import TauCeti.RepresentationTheory.Quiver.Reflection.EulerForm
 
 /-!
 # The Coxeter transformation on the dimension vectors of a quiver
@@ -98,6 +100,21 @@ theorem vertexPreReflectionList_apply_cons (i : Q) (l : List Q) (d : Q → ℤ) 
     vertexPreReflectionList Q (i :: l) d
       = vertexPreReflectionList Q l (vertexPreReflection Q i d) := by
   rw [vertexPreReflectionList_cons, Module.End.mul_apply]
+
+omit [Quiver Q] [∀ a b : Q, Fintype (a ⟶ b)] in
+/-- The composite of the simple reflections along a word is unchanged by reflecting the quiver
+structure at a vertex. -/
+theorem vertexPreReflectionList_reflectAt (q : _root_.Quiver.{v} Q)
+    (hq : ∀ a b : Q, Fintype (@_root_.Quiver.Hom Q q a b)) (i : Q) (l : List Q) :
+    @vertexPreReflectionList Q (Quiver.reflectAt q i) _ (@Quiver.instFintypeReflectHom Q q hq i) _ l
+      = @vertexPreReflectionList Q q _ hq _ l := by
+  induction l with
+  | nil => rw [vertexPreReflectionList_nil, vertexPreReflectionList_nil]
+  | cons j l ih =>
+    rw [vertexPreReflectionList_cons, vertexPreReflectionList_cons, ih]
+    congr 1
+    refine LinearMap.ext fun d ↦ funext fun t ↦ ?_
+    exact vertexPreReflection_reflect_apply (V := Q) i j d t
 
 /-- Concatenating two words composes their reflection products, the first word acting first. -/
 theorem vertexPreReflectionList_append (l₁ l₂ : List Q) :

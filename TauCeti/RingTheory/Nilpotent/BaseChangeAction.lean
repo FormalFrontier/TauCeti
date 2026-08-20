@@ -36,6 +36,8 @@ characteristic.
 * `TauCeti.integralDividedPower`: a divided-power operator restricted to an invariant additive
   subgroup.
 * `TauCeti.mul_integralDividedPower`: multiplication formula for restricted divided powers.
+* `TauCeti.baseChange_integralDividedPower_eq_zero_of_le`: a restricted divided power
+  vanishes on base change above the nilpotency index.
 * `TauCeti.baseChangeExp`: the finite divided-power exponential on `R ⊗[ℤ] M` for an element of `A`.
 * `TauCeti.map_baseChangeExp`: naturality of the exponential under a map of parameter rings.
 * `TauCeti.baseChangeExp_add`: its one-parameter group law.
@@ -292,12 +294,16 @@ private theorem baseChange_mul_integralDividedPower
   rw [← LinearMap.baseChange_mul, mul_integralDividedPower]
   exact map_nsmul (Module.End.baseChangeHom ℤ R M) _ _
 
-private theorem baseChange_integralDividedPower_eq_zero_of_le
-    (x : A) (M : S)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    {k n : ℕ} (hk : x ^ k = 0) (hkn : k ≤ n) :
-    (integralDividedPower x M n (hM n)).baseChange R = 0 := by
-  rw [integralDividedPower_eq_zero_of_le x M n (hM n) hk hkn, LinearMap.baseChange_zero]
+/-- **A restricted divided power vanishes on base change above the nilpotency index.** If
+`x ^ k = 0` and `k ≤ n`, the base change of `integralDividedPower x M n` is the zero map.
+
+This is the truncation fact every finite expansion of `baseChangeExp` needs: it is what makes the
+terms outside the truncation bound drop out. -/
+theorem baseChange_integralDividedPower_eq_zero_of_le (x : A) (M : S) {n : ℕ}
+    (hn : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    {k : ℕ} (hk : x ^ k = 0) (hkn : k ≤ n) :
+    (integralDividedPower x M n hn).baseChange R = 0 := by
+  rw [integralDividedPower_eq_zero_of_le x M n hn hk hkn, LinearMap.baseChange_zero]
 
 /-- The base-changed exponential expanded over any truncation bound `k` satisfying `x ^ k = 0`. -/
 theorem baseChangeExp_of_pow_eq_zero (x : A) (M : S)
@@ -311,7 +317,7 @@ theorem baseChangeExp_of_pow_eq_zero (x : A) (M : S)
   rw [mem_range] at hn hnot
   have hn_ge : nilpotencyClass x ≤ n := not_lt.1 hnot
   have hpow : x ^ nilpotencyClass x = 0 := pow_nilpotencyClass ⟨k, hk⟩
-  rw [baseChange_integralDividedPower_eq_zero_of_le x M hM hpow hn_ge, smul_zero]
+  rw [baseChange_integralDividedPower_eq_zero_of_le x M (hM n) hpow hn_ge, smul_zero]
 
 /-- The base-changed exponential acts on a pure tensor by the divided-power formula over any
 truncation bound `k` satisfying `x ^ k = 0`. -/
@@ -405,7 +411,7 @@ theorem baseChangeExp_add (x : A) (M : S)
   symm
   apply sum_pow_smul_mul_sum_pow_smul (fun n => (integralDividedPower x M n (hM n)).baseChange R)
   · intro n hn
-    exact baseChange_integralDividedPower_eq_zero_of_le x M hM
+    exact baseChange_integralDividedPower_eq_zero_of_le x M (hM n)
       (pow_nilpotencyClass hx) hn
   · exact baseChange_mul_integralDividedPower x M hM
 

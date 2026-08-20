@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.CategoryTheory.Exact.ExactStructure
+public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 
 /-!
 # Opposite exact structures
@@ -76,6 +77,15 @@ definitionally equal `E.Conflation S.op.unop`. -/
 theorem op_conflation_op_iff (E : ConflationClass C) (S : ShortComplex C) :
     E.op.Conflation S.op ↔ E.Conflation S :=
   Iff.rfl
+
+/-- The inverse image of opposite conflations under the short-complex opposite equivalence is
+the opposite of the original conflation property. -/
+theorem op_conflation_inverseImage (E : ConflationClass C) :
+    E.op.Conflation.inverseImage (ShortComplex.opEquiv C).functor = E.Conflation.op := by
+  ext S
+  rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.op_iff]
+  simp only [ShortComplex.opEquiv_functor, ShortComplex.opFunctor_obj]
+  exact E.op_conflation_op_iff S.unop
 
 /-- The inflations of the opposite conflation class are the opposites of its deflations. -/
 theorem op_inflations (E : ConflationClass C) : E.op.inflations = E.deflations.op := by

@@ -11,13 +11,14 @@ public import Mathlib.LinearAlgebra.TensorProduct.Map
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
-# Conjugation on complexifications of integral modules
+# Conjugation and maps on complexifications of integral modules
 
 This file packages a conjugation on a complex vector space as a conjugate-linear involution and
 constructs the canonical conjugation on any abstract complexification of an integral module.
 The construction uses Mathlib's `IsBaseChange` interface: it transports coordinatewise conjugation
 on `ℂ ⊗[ℤ] V` to an arbitrary complex base-change model and is uniquely characterized by fixing the
-image of `V`.
+image of `V`. The same interface canonically complexifies integral linear maps between abstract
+complexification models.
 
 ## Main declarations
 
@@ -27,6 +28,8 @@ image of `V`.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
   module.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
+* `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
+  complexification models.
 
 The base-change design follows the Hodge structures roadmap and the discussion by Johan Commelin,
 Andrew Yang, Kevin Buzzard, and Joël Riou in the `#mathlib4` Zulip thread *Complexifications with a
@@ -231,5 +234,99 @@ theorem latticeConjugation_toEquiv_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
   simp
 
 end Abstract
+
+section IntegralMaps
+
+universe u₁ v₁ u₂ v₂ u₃ v₃
+
+variable {V₁ : Type u₁} {V₂ : Type u₂} {V₃ : Type u₃}
+variable {W₁ : Type v₁} {W₂ : Type v₂} {W₃ : Type v₃}
+variable [AddCommGroup V₁] [AddCommGroup V₂] [AddCommGroup V₃]
+variable [AddCommGroup W₁] [Module ℂ W₁]
+variable [AddCommGroup W₂] [Module ℂ W₂]
+variable [AddCommGroup W₃] [Module ℂ W₃]
+variable {ι₁ : V₁ →ₗ[ℤ] W₁} {ι₂ : V₂ →ₗ[ℤ] W₂} {ι₃ : V₃ →ₗ[ℤ] W₃}
+
+/-- The complexification of an integral linear map between abstract complexification models. -/
+noncomputable def integralMapToComplex (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) : W₁ →ₗ[ℂ] W₂ :=
+  h₁.lift (ι₂ ∘ₗ f)
+
+/-- Complexification agrees with the target lattice map on integral vectors. -/
+@[simp]
+theorem integralMapToComplex_apply_ι (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) (x : V₁) :
+    integralMapToComplex h₁ ι₂ f (ι₁ x) = ι₂ (f x) :=
+  h₁.lift_eq (ι₂ ∘ₗ f) x
+
+/-- Complexification sends the identity integral map to the identity complex map. -/
+@[simp]
+theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
+    integralMapToComplex h₁ ι₁ (LinearMap.id : V₁ →ₗ[ℤ] V₁) = LinearMap.id :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification sends the zero integral map to the zero complex map. -/
+@[simp]
+theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) :
+    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves addition of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f g : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (f + g) =
+      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves negation of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves subtraction of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_sub (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f g : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (f - g) =
+      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves natural-number multiples of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_nsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℕ)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves integer multiples of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_zsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℤ)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves composition of integral linear maps. -/
+theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁) (h₂ : IsBaseChange ℂ ι₂)
+    (ι₃ : V₃ →ₗ[ℤ] W₃) (f : V₁ →ₗ[ℤ] V₂) (g : V₂ →ₗ[ℤ] V₃) :
+    integralMapToComplex h₁ ι₃ (g ∘ₗ f) =
+      integralMapToComplex h₂ ι₃ g ∘ₗ integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- The complexification of an integral map commutes with lattice-induced conjugation. -/
+@[simp]
+theorem integralMapToComplex_commutes_conj (h₁ : IsBaseChange ℂ ι₁)
+    (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) (x : W₁) :
+    integralMapToComplex h₁ ι₂ f (latticeConj h₁ x) =
+      latticeConj h₂ (integralMapToComplex h₁ ι₂ f x) := by
+  induction x using h₁.inductionOn with
+  | zero => simp
+  | tmul x => simp
+  | smul z x hx => simp [hx]
+  | add x y hx hy => simp [hx, hy]
+
+end IntegralMaps
 
 end TauCeti.Hodge
