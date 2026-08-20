@@ -14,13 +14,15 @@ public import TauCeti.RingTheory.DedekindDomain.AdicValuation
 
 An *affine model* of `F / k` is a Dedekind `k`-subalgebra `R` of `F` whose fraction field is `F`;
 the standard example is the integral closure `R_x` of `k[x]` in `F` for a transcendental `x`. This
-file proves that the places of `F / k` whose valuation ring contains `R` are exactly the height
-one primes of `R`, in the strong sense that the valuation of such a place *equals* — not merely
-is equivalent to — the normalized `𝔭`-adic valuation of a unique height one prime `𝔭` of `R`.
-The prime in question is the centre `{r : R | ord_P r > 0}` of the place on `R`, so the
-valuation ring of the place is the localization of `R` there.
+file proves the forward direction of the places ↔ height one primes correspondence: a place of
+`F / k` whose valuation ring contains `R` is the adic place of a *unique* height one prime `𝔭` of
+`R`, in the strong sense that the valuation of the place *equals* — not merely is equivalent to —
+the normalized `𝔭`-adic valuation. The prime in question is the centre `{r : R | ord_P r > 0}` of
+the place on `R`, so the valuation ring of the place is the localization of `R` there. The converse
+— that every height one prime of `R` arises this way, which upgrades this injection into a
+bijection — is not proved here; it belongs to the module constructing a place from a prime.
 
-This is the "places ↔ height one primes" half of the affine-model dictionary that reduces divisor
+This is the "places → height one primes" half of the affine-model dictionary that reduces divisor
 theory on the finite chart of a model to Mathlib's factorization calculus for fractional ideals.
 Which places are finite on `R_x` is settled by the two order-of-`x` criteria below: `k[x]` lies in
 the valuation ring of `P` exactly when `x` has no pole at `P`, and the valuation ring, being
@@ -36,8 +38,14 @@ integrally closed, then swallows everything integral over `k[x]`.
   valuation of the place, and `TauCeti.Place.center_injective` showing that a place finite on a
   model is determined by its centre.
 * `TauCeti.Place.existsUnique_valuation_eq`: the uniqueness statement, and
-  `TauCeti.Place.integers_eq_valuationSubringAtPrime`: the valuation ring of the place is the
+  `TauCeti.Place.valuationSubringAtPrime_eq_integers`: the valuation ring of the place is the
   localization of the model at the centre.
+
+## Implementation notes
+
+`TauCeti.Place.center` is `@[expose]`d, and it is the only definition here that is: its
+characterization lemma `TauCeti.Place.mem_center_asIdeal` holds by `rfl`, and the proof term of an
+exported theorem may unfold only exposed definitions.
 
 ## References
 
@@ -45,7 +53,7 @@ integrally closed, then swallows everything integral over `k[x]`.
   Sections I.1 and III.2.
 -/
 
-@[expose] public section
+public section
 
 open IsDedekindDomain
 
@@ -104,6 +112,7 @@ include hR
 
 /-- The **centre** on an affine model `R` of a place `P` finite on `R`: the height one prime of
 `R` consisting of the elements with a zero at `P`. -/
+@[expose]
 def center : HeightOneSpectrum R :=
   P.valuation.heightOneSpectrum R P.valuation_surjective fun r ↦ P.mem_integers_iff.mp (hR r)
 
@@ -142,7 +151,7 @@ theorem existsUnique_valuation_eq :
 
 /-- The valuation ring of a place finite on an affine model is the localization of the model at
 the centre of the place. -/
-theorem integers_eq_valuationSubringAtPrime :
+theorem valuationSubringAtPrime_eq_integers :
     HeightOneSpectrum.valuationSubringAtPrime F (P.center hR) = P.integers := by
   rw [HeightOneSpectrum.valuationSubringAtPrime_eq_valuationSubring, P.valuation_center hR]
   exact SetLike.ext fun _ ↦ P.mem_integers_iff.symm

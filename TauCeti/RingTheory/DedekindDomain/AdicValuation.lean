@@ -40,9 +40,14 @@ valuations are bounded by `1` on `R` and are `< 1` on the same elements of `R`, 
 Mathlib's `IsDedekindDomain.HeightOneSpectrum.exists_primeCompl_mul_eq_or_mul_eq`, which writes an
 arbitrary element of `K` as a fraction with denominator outside `𝔭`, in one of the two possible
 directions.
+
+`Valuation.centerIdeal` and `Valuation.heightOneSpectrum` are `@[expose]`d, and only they are:
+their characterization lemmas `Valuation.mem_centerIdeal` and
+`Valuation.asIdeal_heightOneSpectrum` hold by `rfl`, and the proof term of an exported theorem may
+unfold only exposed definitions.
 -/
 
-@[expose] public section
+public section
 
 open scoped WithZero
 
@@ -60,6 +65,7 @@ variable (R) in
 of elements of `R` of positive valuation. It is prime (`Valuation.centerIdeal_isPrime`), and it is
 nonzero as soon as `w` is nontrivial and `K` is the fraction field of `R`
 (`Valuation.centerIdeal_ne_bot`). -/
+@[expose]
 def centerIdeal (w : _root_.Valuation K ℤᵐ⁰) (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     Ideal R where
   carrier := {r : R | w (algebraMap R K r) < 1}
@@ -84,6 +90,8 @@ theorem eq_one_of_notMem_centerIdeal {r : R} (hR : ∀ r : R, w (algebraMap R K 
     (hr : r ∉ centerIdeal R w hR) : w (algebraMap R K r) = 1 :=
   le_antisymm (hR r) (not_lt.mp (mt mem_centerIdeal.mpr hr))
 
+/-- The centre of a valuation bounded by `1` on `R` is a prime ideal of `R`: off the centre the
+valuation takes the value `1`, so a product of two elements off the centre again has value `1`. -/
 theorem centerIdeal_isPrime (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     (centerIdeal R w hR).IsPrime := by
   refine Ideal.isPrime_iff.mpr ⟨fun h ↦ ?_, fun {a b} hab ↦ ?_⟩
@@ -96,6 +104,9 @@ theorem centerIdeal_isPrime (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
         eq_one_of_notMem_centerIdeal hR hc.2, one_mul]
     exact absurd (h ▸ mem_centerIdeal.mp hab) (lt_irrefl 1)
 
+/-- The centre of a surjective valuation of the fraction field `K` of `R` is a nonzero ideal of
+`R`: an element of `K` of value `exp (-1)` is a fraction `a / b` whose numerator `a` is a nonzero
+element of the centre. -/
 theorem centerIdeal_ne_bot [IsDomain R] [IsFractionRing R K] (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : centerIdeal R w hR ≠ ⊥ := by
   obtain ⟨y, hy⟩ := hw (WithZero.exp (-1 : ℤ))
@@ -104,8 +115,8 @@ theorem centerIdeal_ne_bot [IsDomain R] [IsFractionRing R K] (hw : Function.Surj
     rw [map_zero] at hy
     exact WithZero.exp_ne_zero hy.symm
   have hy1 : w y < 1 := by
-    rw [hy]
-    simpa using WithZero.exp_lt_exp.mpr (show (-1 : ℤ) < 0 by norm_num)
+    rw [hy, ← WithZero.exp_zero (M := ℤ), WithZero.exp_lt_exp]
+    omega
   obtain ⟨ab, hab⟩ := IsLocalization.surj (nonZeroDivisors R) y
   have hb : algebraMap R K (ab.2 : R) ≠ 0 :=
     IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors ab.2.2
@@ -171,6 +182,7 @@ variable (R) in
 /-- The height one prime of `R` at which a normalized valuation of `K` bounded by `1` on `R` is
 centred. Its adic valuation is `w` itself (`Valuation.valuation_heightOneSpectrum`), and it is the
 only height one prime with that property (`Valuation.eq_heightOneSpectrum`). -/
+@[expose]
 def heightOneSpectrum (w : _root_.Valuation K ℤᵐ⁰) (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) : HeightOneSpectrum R where
   asIdeal := centerIdeal R w hR
@@ -184,6 +196,7 @@ theorem asIdeal_heightOneSpectrum (hw : Function.Surjective w)
 
 /-- **The adic valuation of the centre of `w` on `R` is `w` itself**: a normalized valuation of the
 fraction field of a Dedekind domain whose valuation ring contains that domain is adic. -/
+@[simp]
 theorem valuation_heightOneSpectrum (hw : Function.Surjective w)
     (hR : ∀ r : R, w (algebraMap R K r) ≤ 1) :
     (heightOneSpectrum R w hw hR).valuation K = w :=
