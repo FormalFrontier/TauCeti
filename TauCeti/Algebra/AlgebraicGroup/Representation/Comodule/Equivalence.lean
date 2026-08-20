@@ -5,6 +5,7 @@ Authors: Codex
 -/
 module
 
+import Mathlib.CategoryTheory.ObjectProperty.Equivalence
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Morphism
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
 
@@ -251,6 +252,21 @@ noncomputable def ofComodule (M : ComoduleCat.{u, v, w} R H) :
   representation := HopfAlgebra.PointRepresentation.ofComodule
     (inferInstance : Comodule R H M)
 
+/-- The point representation associated to a comodule has the same underlying bundled
+semimodule. -/
+@[simp]
+theorem ofComodule_toSemimoduleCat (M : ComoduleCat.{u, v, w} R H) :
+    (ofComodule R H M).toSemimoduleCat = M.toSemimoduleCat := by
+  rw [ofComodule]
+
+/-- The point action associated to a comodule is the action induced by its coaction. -/
+@[simp]
+theorem ofComodule_representation (M : ComoduleCat.{u, v, w} R H) :
+    HEq (ofComodule R H M).representation
+      (HopfAlgebra.PointRepresentation.ofComodule (inferInstance : Comodule R H M)) := by
+  unfold ofComodule
+  rfl
+
 /-- Recovering the comodule associated to `ofComodule` returns the original bundled comodule. -/
 @[simp]
 theorem toComodule_obj_ofComodule (M : ComoduleCat.{u, v, w} R H) :
@@ -278,6 +294,12 @@ noncomputable instance toComoduleIsEquivalence :
 
 end PointRepresentationCat
 
+/-- Natural point representations of an affine group and comodules over its coordinate Hopf
+algebra form equivalent categories. -/
+noncomputable def pointRepresentationCategoryEquivalence :
+    PointRepresentationCat.{u, v, w} R H ≌ ComoduleCat.{u, v, w} R H :=
+  (PointRepresentationCat.toComodule R H).asEquivalence
+
 /-- The object property of finite generation on natural point representations. Over a field this
 is finite-dimensionality of the representation. -/
 def PointRepresentationCat.isFG :
@@ -302,6 +324,13 @@ theorem PointRepresentationCat.toComodule_obj_isFG_iff
 category of finite-dimensional representations of the affine group represented by `H`. -/
 abbrev FGPointRepresentationCat :=
   (PointRepresentationCat.isFG (R := R) (H := H)).FullSubcategory
+
+private noncomputable instance :
+    (ComoduleCat.isFG (R := R) (C := H) :
+      ObjectProperty (ComoduleCat.{u, v, w} R H)).IsClosedUnderIsomorphisms where
+  of_iso e h := by
+    let _ : Module.Finite R _ := h
+    exact Module.Finite.equiv (ComoduleCat.isoToLinearEquiv (R := R) (C := H) e)
 
 namespace FGPointRepresentationCat
 
@@ -339,68 +368,37 @@ theorem toComodule_map_toLinearMap {V W : FGPointRepresentationCat.{u, v, w} R H
     ((toComodule R H).map f).hom.toLinearMap = f.hom.toLinearMap :=
   rfl
 
-/-- The finite comodule functor is fully faithful. -/
-noncomputable def toComoduleFullyFaithful :
-    (toComodule R H : FGPointRepresentationCat.{u, v, w} R H ⥤
-      FGComoduleCat.{u, v, w} R H).FullyFaithful where
-  preimage {V W} f := ObjectProperty.homMk <|
-    (PointRepresentationCat.toComoduleFullyFaithful R H).preimage f.hom
-  map_preimage _ := by
-    apply ObjectProperty.hom_ext
-    exact (PointRepresentationCat.toComoduleFullyFaithful R H).map_preimage _
-  preimage_map _ := by
-    apply ObjectProperty.hom_ext
-    exact (PointRepresentationCat.toComoduleFullyFaithful R H).preimage_map _
-
-/-- Every finitely generated comodule is represented by a finitely generated natural point
-representation. -/
-noncomputable instance toComoduleEssSurj :
-    (toComodule R H : FGPointRepresentationCat.{u, v, w} R H ⥤
-      FGComoduleCat.{u, v, w} R H).EssSurj :=
-  Functor.EssSurj.mk fun M ↦ by
-    let V : FGPointRepresentationCat.{u, v, w} R H :=
-      ⟨PointRepresentationCat.ofComodule R H M.obj, M.property⟩
-    refine ⟨V, ⟨(ComoduleCat.isFG (R := R) (C := H)).isoMk ?_⟩⟩
-    exact eqToIso (PointRepresentationCat.toComodule_obj_ofComodule R H M.obj)
-
-/-- Recovering finite comodules from finite point representations is an equivalence of
-categories. -/
-noncomputable instance toComoduleIsEquivalence :
-    (toComodule R H : FGPointRepresentationCat.{u, v, w} R H ⥤
-      FGComoduleCat.{u, v, w} R H).IsEquivalence where
-  faithful := (toComoduleFullyFaithful R H).faithful
-  full := (toComoduleFullyFaithful R H).full
-  essSurj := inferInstance
-
 end FGPointRepresentationCat
-
-/-- Natural point representations of an affine group and comodules over its coordinate Hopf
-algebra form equivalent categories. -/
-noncomputable def pointRepresentationCategoryEquivalence :
-    PointRepresentationCat.{u, v, w} R H ≌ ComoduleCat.{u, v, w} R H :=
-  (PointRepresentationCat.toComodule R H).asEquivalence
 
 /-- Finitely generated point representations and finitely generated comodules form equivalent
 categories. Over a field, this is the representation--comodule equivalence for finite-dimensional
 representations. -/
 noncomputable def fgPointRepresentationCategoryEquivalence :
     FGPointRepresentationCat.{u, v, w} R H ≌ FGComoduleCat.{u, v, w} R H :=
-  (FGPointRepresentationCat.toComodule R H).asEquivalence
+  (pointRepresentationCategoryEquivalence R H).congrFullSubcategory <| by
+    ext V
+    simp only [ObjectProperty.prop_inverseImage_iff, pointRepresentationCategoryEquivalence,
+      Functor.asEquivalence_functor, PointRepresentationCat.toComodule_obj_isFG_iff]
 
-/-- The forward functor in the finite representation--comodule equivalence recovers the
-underlying finite comodule. -/
-@[simp]
-theorem fgPointRepresentationCategoryEquivalence_functor :
+/-- The concrete finite-comodule functor is definitionally the forward functor constructed by
+`Equivalence.congrFullSubcategory`. -/
+private theorem fgPointRepresentationCategoryEquivalence_functor :
     (fgPointRepresentationCategoryEquivalence R H).functor =
-      FGPointRepresentationCat.toComodule R H :=
-  by rw [fgPointRepresentationCategoryEquivalence, Functor.asEquivalence_functor]
+      FGPointRepresentationCat.toComodule R H := by
+  unfold fgPointRepresentationCategoryEquivalence pointRepresentationCategoryEquivalence
+    FGPointRepresentationCat.toComodule
+  rfl
 
-/-- The forward functor in the categorical representation--comodule equivalence recovers the
-underlying comodule. -/
-@[simp]
-theorem pointRepresentationCategoryEquivalence_functor :
-    (pointRepresentationCategoryEquivalence R H).functor =
-      PointRepresentationCat.toComodule R H :=
-  by rw [pointRepresentationCategoryEquivalence, Functor.asEquivalence_functor]
+namespace FGPointRepresentationCat
+
+/-- Recovering finite comodules from finite point representations is an equivalence of
+categories. -/
+noncomputable instance toComoduleIsEquivalence :
+    (toComodule R H : FGPointRepresentationCat.{u, v, w} R H ⥤
+      FGComoduleCat.{u, v, w} R H).IsEquivalence := by
+  rw [← fgPointRepresentationCategoryEquivalence_functor R H]
+  infer_instance
+
+end FGPointRepresentationCat
 
 end TauCeti
