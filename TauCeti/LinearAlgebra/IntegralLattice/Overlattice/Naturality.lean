@@ -91,7 +91,11 @@ def intermediateCarrierEquiv (e : Isometry L M) :
   (OrderIso.Icc (Submodule.orderIsoMapComap e.ambientEquiv) L.carrier L.dualCarrier).trans
     (OrderIso.setCongr _ _ (by
       simp only [Submodule.orderIsoMapComap_apply]
-      rw [e.map_carrier_ambientEquiv, e.map_dualCarrier_ambientEquiv]))
+      have hambient : e.ambientEquiv.toLinearMap =
+          ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).toLinearMap := by
+        ext x
+        simp
+      rw [e.map_dualCarrier_ambientEquiv, hambient, e.map_carrier]))
 
 /-- The carrier transported along an isometry is the image of the original carrier. -/
 theorem coe_intermediateCarrierEquiv (e : Isometry L M) (P : L.IntermediateCarrier) :
