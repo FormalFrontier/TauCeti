@@ -228,13 +228,21 @@ theorem covariantDerivative_eq_of_localFrame_eq [Finite ι]
 
 omit [Fintype ι] [CompleteSpace 𝕜] [FiniteDimensional 𝕜 F]
   [∀ x, IsTopologicalAddGroup (V x)] [∀ x, ContinuousSMul 𝕜 (V x)] in
-/-- A local frame is dual to its own coefficient functionals. -/
+/-- A local frame is dual to its own coefficient functionals on the basis sections at `x`. -/
 @[simp]
-theorem localFrameCoeff_localFrame [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
-    e.localFrameCoeff I b i x (e.localFrame b j x) = if i = j then 1 else 0 := by
-  rw [e.localFrameCoeff_apply_of_mem_baseSet b hx (e.localFrame b j) i,
+theorem localFrameCoeff_basisAt [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
+    e.localFrameCoeff I b i x (e.basisAt b hx j) = if i = j then 1 else 0 := by
+  rw [← e.localFrame_apply_of_mem_baseSet b hx,
+    e.localFrameCoeff_apply_of_mem_baseSet b hx (e.localFrame b j) i,
     e.localFrame_apply_of_mem_baseSet b hx, Basis.repr_self, Finsupp.single_apply]
   simp [eq_comm]
+
+omit [Fintype ι] [CompleteSpace 𝕜] [FiniteDimensional 𝕜 F]
+  [∀ x, IsTopologicalAddGroup (V x)] [∀ x, ContinuousSMul 𝕜 (V x)] in
+/-- A local frame is dual to its own coefficient functionals. -/
+theorem localFrameCoeff_localFrame [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
+    e.localFrameCoeff I b i x (e.localFrame b j x) = if i = j then 1 else 0 := by
+  rw [e.localFrame_apply_of_mem_baseSet b hx, localFrameCoeff_basisAt b hx]
 
 /-! ### The Christoffel form -/
 
@@ -339,7 +347,6 @@ def christoffelMap [Fintype ι] (hcov : IsCovariantDerivativeOn E cov e.baseSet)
 /-- The Christoffel symbols of a `C^n` covariant derivative are `C^n` on the base set of the
 trivialization defining the frame. -/
 theorem contMDiffOn_christoffelSymbol {n : ℕ∞ω}
-    [IsManifold I (n + 1) M]
     [ContMDiffVectorBundle n E (TangentSpace I : M → Type _) I]
     [ContMDiffVectorBundle (n + 1) E (TangentSpace I : M → Type _) I]
     [ContMDiffCovariantDerivativeOn E n cov e.baseSet] (i j k : ι) :
@@ -400,7 +407,6 @@ theorem christoffelMap_apply_basis [Fintype ι]
 
 /-- The scalar basis coefficients of the model-space Christoffel map are precisely the
 Christoffel symbols. -/
-@[simp]
 theorem coord_christoffelMap_apply_basis [Fintype ι]
     (hcov : IsCovariantDerivativeOn E cov e.baseSet) (hx : x ∈ e.baseSet) (i j k : ι) :
     b.coord k (christoffelMap b hcov x (b j) (b i)) =
@@ -435,7 +441,6 @@ private theorem christoffelMap_eq_of_mem [Fintype ι]
 the trivialization defining its coordinates. -/
 theorem contMDiffOn_christoffelMap [Fintype ι] {n : ℕ∞ω}
     (hcov : IsCovariantDerivativeOn E cov e.baseSet)
-    [IsManifold I (n + 1) M]
     [ContMDiffVectorBundle n E (TangentSpace I : M → Type _) I]
     [ContMDiffVectorBundle (n + 1) E (TangentSpace I : M → Type _) I]
     [ContMDiffCovariantDerivativeOn E n cov e.baseSet] :
