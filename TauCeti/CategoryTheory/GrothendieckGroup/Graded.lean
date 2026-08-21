@@ -7,7 +7,6 @@ module
 
 public import TauCeti.CategoryTheory.Exact.Graded
 public import TauCeti.CategoryTheory.GrothendieckGroup.Abelian
-public import Mathlib.Data.Int.Cast.Lemmas
 
 /-!
 # The grading shift on exact `K₀`
@@ -95,18 +94,14 @@ theorem shiftEquiv_unique (f : ExactK0 E.toExactStructure →+ ExactK0 E.toExact
 `[M] ↦ [M{n}]`.  Mathlib writes the automorphism group of an additive group additively, so the
 `n`-fold shift is `n • E.shiftEquiv`; the Laurent-module repackaging of this action, in which it
 becomes multiplication by `qⁿ`, belongs to the coefficient layer downstream. -/
-@[expose]
 noncomputable def shiftZPow : ℤ →+ AddAut (ExactK0 E.toExactStructure) :=
   zmultiplesHom _ E.shiftEquiv
 
 @[simp]
-lemma shiftZPow_apply (n : ℤ) : E.shiftZPow n = n • E.shiftEquiv := rfl
-
-lemma shiftZPow_zero_apply (x : ExactK0 E.toExactStructure) : E.shiftZPow 0 x = x := by
-  simp
-
-lemma shiftZPow_one : E.shiftZPow 1 = E.shiftEquiv := by
-  simp
+lemma shiftZPow_apply (n : ℤ) : E.shiftZPow n = n • E.shiftEquiv :=
+  -- `(rfl)` rather than `rfl`: a bare `rfl` proof would demand that `shiftZPow` be `@[expose]`,
+  -- and this lemma is the supported unfolding interface instead.
+  (rfl)
 
 /-- The generator of the `ℤ`-action is the shift itself: `[M{1}]` is the class of `M{1}`. -/
 lemma shiftZPow_one_apply_of (X : C) :
@@ -124,21 +119,15 @@ lemma shiftZPow_neg_one_apply_of (X : C) :
       (ExactK0.of (E.shift.inverse.obj X) : ExactK0 E.toExactStructure) := by
   rw [shiftZPow_neg_one_apply, shiftEquiv_symm_of]
 
-/-- The `ℤ`-action is an action: shifting by `m + n` is shifting by `n` and then by `m`. -/
-lemma shiftZPow_add_apply (m n : ℤ) (x : ExactK0 E.toExactStructure) :
-    E.shiftZPow (m + n) x = E.shiftZPow m (E.shiftZPow n x) := by
-  rw [map_add]
-  rfl
-
 /-- Shifting by `n + 1` is shifting by `n` and then once more: this is `[M{n+1}] = [(M{n}){1}]`. -/
 lemma shiftZPow_add_one_apply (n : ℤ) (x : ExactK0 E.toExactStructure) :
     E.shiftZPow (n + 1) x = E.shiftEquiv (E.shiftZPow n x) := by
-  rw [add_comm, shiftZPow_add_apply, shiftZPow_one]
+  rw [add_comm, map_add, AddAut.add_apply, shiftZPow_apply, one_zsmul]
 
 /-- Shifting by `n - 1` is shifting by `n` and then back once. -/
 lemma shiftZPow_sub_one_apply (n : ℤ) (x : ExactK0 E.toExactStructure) :
     E.shiftZPow (n - 1) x = E.shiftEquiv.symm (E.shiftZPow n x) := by
-  rw [sub_eq_neg_add, shiftZPow_add_apply, shiftZPow_neg_one_apply]
+  rw [sub_eq_neg_add, map_add, AddAut.add_apply, shiftZPow_neg_one_apply]
 
 end Shift
 
@@ -176,11 +165,6 @@ theorem lift_shiftEquiv (a : ShiftInvariant E σ) (x : ExactK0 E.toExactStructur
   have key : a.lift.comp E.shiftEquiv.toAddMonoidHom = (σ : G ≃+ G).toAddMonoidHom.comp a.lift :=
     ExactK0.hom_ext fun X => by simp [a.map_shift X]
   simpa using DFunLike.congr_fun key x
-
-/-- Any homomorphism agreeing with a shift-compatible invariant on object classes is its lift. -/
-theorem lift_unique (a : ShiftInvariant E σ) (f : ExactK0 E.toExactStructure →+ G)
-    (hf : ∀ X : C, f (ExactK0.of X) = a.obj X) : f = a.lift :=
-  ExactK0.lift_unique _ f hf
 
 /-- **The universal property of exact `K₀` in the graded setting**: for a fixed automorphism `σ`
 of `G`, conflation-additive invariants compatible with the grading shift through `σ` correspond
@@ -304,8 +288,11 @@ graded canonical exact structure**, and that shift is the map `TauCeti.AbelianK0
 induced by the grading autoequivalence.  So the graded abelian Grothendieck group needs no
 construction of its own: it is the graded exact one for `TauCeti.ExactStructure.abelian`.
 
-Since the two homomorphisms agree on the classes of objects, `TauCeti.ExactK0.hom_ext` upgrades
-this to their equality. -/
+The comparison is stated on the classes of objects, which generate.  It is not upgraded to an
+equality of homomorphisms: the two sides are indexed by `(abelian A e).toExactStructure` and by
+`TauCeti.ExactStructure.abelian A`, which agree only by unfolding `abelian`, so a composite of
+the two maps is not type-correct at `implicit` transparency and `AddMonoidHom` extensionality is
+unavailable. -/
 theorem abelian_shiftEquiv_toExactK0_of (e : A ≌ A) [e.functor.Additive] (X : A) :
     (abelian A e).shiftEquiv (AbelianK0.toExactK0 A (AbelianK0.of X)) =
       AbelianK0.toExactK0 A (AbelianK0.mapEquiv e (AbelianK0.of X)) := by

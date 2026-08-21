@@ -32,6 +32,8 @@ which is the form in which it is usually checked.
   arbitrary additive autoequivalence, no compatibility being needed in either case.
 * `TauCeti.GradedConflationExact`: a graded conflation-exact functor, namely a conflation-exact
   functor together with a chosen commutation isomorphism with the two grading shifts.
+* `TauCeti.GradedExactEquiv`: a graded exact equivalence, namely an equivalence whose functor and
+  whose inverse are conflation-exact, carrying such a commutation isomorphism.
 
 ## Main results
 
@@ -124,7 +126,6 @@ variable {C : Type u₁} [Category.{v₁} C] [Preadditive C] [HasZeroObject C]
 
 /-- Build a graded exact structure from a shift which both preserves and reflects conflations.
 This is the form in which the hypothesis is usually available. -/
-@[expose]
 def ofReflects (E : ExactStructure C) (e : C ≌ C) [e.functor.Additive]
     (he : E.IsConflationExact E e.functor) (hr : E.ReflectsConflations E e.functor) :
     GradedExactStructure C where
@@ -137,19 +138,20 @@ def ofReflects (E : ExactStructure C) (e : C ≌ C) [e.functor.Additive]
 theorem ofReflects_toExactStructure (E : ExactStructure C) (e : C ≌ C) [e.functor.Additive]
     (he : E.IsConflationExact E e.functor) (hr : E.ReflectsConflations E e.functor) :
     (ofReflects E e he hr).toExactStructure = E :=
-  rfl
+  -- `(rfl)` rather than `rfl`: a bare `rfl` proof would demand that `ofReflects` be `@[expose]`,
+  -- and the projection lemmas are the supported interface instead.
+  (rfl)
 
 @[simp]
 theorem ofReflects_shift (E : ExactStructure C) (e : C ≌ C) [e.functor.Additive]
     (he : E.IsConflationExact E e.functor) (hr : E.ReflectsConflations E e.functor) :
     (ofReflects E e he hr).shift = e :=
-  rfl
+  (rfl)
 
 variable (C) in
 /-- The split exact structure, graded by an arbitrary additive autoequivalence: every additive
 functor preserves split conflations, so no compatibility between the shift and the exact
 structure has to be checked. -/
-@[expose]
 noncomputable def split (e : C ≌ C) [e.functor.Additive] : GradedExactStructure C where
   toExactStructure := ExactStructure.split C
   shift := e
@@ -159,11 +161,11 @@ noncomputable def split (e : C ≌ C) [e.functor.Additive] : GradedExactStructur
 @[simp]
 theorem split_toExactStructure (e : C ≌ C) [e.functor.Additive] :
     (split C e).toExactStructure = ExactStructure.split C :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem split_shift (e : C ≌ C) [e.functor.Additive] : (split C e).shift = e :=
-  rfl
+  (rfl)
 
 variable {A : Type u₁} [Category.{v₁} A] [Abelian A]
 
@@ -230,5 +232,66 @@ protected def comp {F : C ⥤ D} {H : D ⥤ K} [F.Additive] [H.Additive]
       (Functor.associator _ _ _).symm
 
 end GradedConflationExact
+
+/-- A **graded exact equivalence** between graded exact categories: an equivalence of the
+underlying additive categories whose functor and whose inverse are both conflation-exact,
+together with a chosen isomorphism commuting the functor with the two grading shifts.
+
+Conflation-exactness of the inverse is again an extra hypothesis, for the reason recorded on
+`TauCeti.GradedExactStructure`: it is what makes the induced map on Grothendieck groups
+invertible. -/
+structure GradedExactEquiv {C : Type u₁} {D : Type u₂}
+    [Category.{v₁} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
+    [Category.{v₂} D] [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D]
+    (E : GradedExactStructure C) (E' : GradedExactStructure D) where
+  /-- The underlying equivalence of the additive categories. -/
+  equiv : C ≌ D
+  /-- The underlying equivalence is additive. -/
+  [functor_additive : equiv.functor.Additive]
+  /-- The equivalence is conflation-exact. -/
+  isConflationExact : E.toExactStructure.IsConflationExact E'.toExactStructure equiv.functor
+  /-- The inverse equivalence is conflation-exact. -/
+  inverse_isConflationExact :
+    E'.toExactStructure.IsConflationExact E.toExactStructure equiv.inverse
+  /-- The chosen isomorphism commuting the equivalence with the two grading shifts. -/
+  commShift : E.shift.functor ⋙ equiv.functor ≅ equiv.functor ⋙ E'.shift.functor
+
+attribute [instance] GradedExactEquiv.functor_additive
+
+namespace GradedExactEquiv
+
+variable {C : Type u₁} {D : Type u₂} {K : Type u₃}
+variable [Category.{v₁} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
+variable [Category.{v₂} D] [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D]
+variable [Category.{v₃} K] [Preadditive K] [HasZeroObject K] [HasBinaryBiproducts K]
+variable {E : GradedExactStructure C} {E' : GradedExactStructure D} {E'' : GradedExactStructure K}
+
+/-- The graded conflation-exact functor underlying a graded exact equivalence. -/
+def toGradedConflationExact (h : GradedExactEquiv E E') :
+    GradedConflationExact E E' h.equiv.functor where
+  isConflationExact := h.isConflationExact
+  commShift := h.commShift
+
+/-- The identity equivalence is a graded exact equivalence. -/
+protected def refl (E : GradedExactStructure C) : GradedExactEquiv E E :=
+  haveI : (CategoryTheory.Equivalence.refl (C := C)).functor.Additive :=
+    inferInstanceAs (𝟭 C).Additive
+  { equiv := CategoryTheory.Equivalence.refl
+    isConflationExact := ExactStructure.IsConflationExact.id
+    inverse_isConflationExact := ExactStructure.IsConflationExact.id
+    commShift := Functor.rightUnitor _ ≪≫ (Functor.leftUnitor _).symm }
+
+/-- A composite of graded exact equivalences is a graded exact equivalence, for the composed
+commutation isomorphism. -/
+protected def trans (h : GradedExactEquiv E E') (h' : GradedExactEquiv E' E'') :
+    GradedExactEquiv E E'' :=
+  haveI : (h.equiv.trans h'.equiv).functor.Additive :=
+    inferInstanceAs (h.equiv.functor ⋙ h'.equiv.functor).Additive
+  { equiv := h.equiv.trans h'.equiv
+    isConflationExact := h.isConflationExact.comp h'.isConflationExact
+    inverse_isConflationExact := h'.inverse_isConflationExact.comp h.inverse_isConflationExact
+    commShift := (h.toGradedConflationExact.comp h'.toGradedConflationExact).commShift }
+
+end GradedExactEquiv
 
 end TauCeti
