@@ -109,27 +109,6 @@ theorem pbwGradedGenerator_apply (x : L) :
               (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap 1)) :=
   (rfl)
 
-/-- Degree-one PBW generators commute in the associated graded. -/
-theorem commute_pbwGradedGenerator (x y : L) :
-    Commute (pbwGradedGenerator R L x) (pbwGradedGenerator R L y) := by
-  rw [commute_iff_eq, pbwGradedGenerator_apply, pbwGradedGenerator_apply,
-    associatedGraded_of_mul_of, associatedGraded_of_mul_of]
-  congr 1
-  rw [gradedMul_apply_mk, gradedMul_apply_mk]
-  apply (Submodule.Quotient.eq _).mpr
-  rw [mem_previousRestricted_iff, wordFiltrationPrevious_succ]
-  change _root_.UniversalEnvelopingAlgebra.ι R x *
-      _root_.UniversalEnvelopingAlgebra.ι R y -
-        _root_.UniversalEnvelopingAlgebra.ι R y *
-          _root_.UniversalEnvelopingAlgebra.ι R x ∈
-            wordFiltration
-              (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap 1
-  have hcomm := mul_sub_mul_eq_map_ι_lie (AlgHom.id R U) x y
-  simp only [AlgHom.id_apply] at hcomm
-  rw [hcomm]
-  exact apply_mem_wordFiltration_one
-    (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap ⁅x, y⁆
-
 private theorem prod_map_ι_mul_sub_prod_map_ι_mem_pbwFiltrationPrevious
     {i j : ℕ} (l₁ l₂ : List L) (hl₁ : l₁.length ≤ i) (hl₂ : l₂.length ≤ j) :
     (l₁.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod *
@@ -292,23 +271,6 @@ private theorem prod_pbwGradedGenerator (l : List L) :
         sub_self]
       exact Submodule.zero_mem _
 
-private theorem span_pbwWords_eq_wordFiltration (k : ℕ) :
-    Submodule.span R {a | ∃ l : List L, l.length ≤ k ∧
-      (l.map fun x =>
-        (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap x).prod = a} =
-      wordFiltration
-        (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k := by
-  let f : L →ₗ[R] U :=
-    (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap
-  change Submodule.span R {a | ∃ l : List L, l.length ≤ k ∧
-    (l.map fun x => f x).prod = a} = wordFiltration f k
-  have hid : Submodule.span R (Set.range (id : L → L)) = ⊤ := by
-    apply top_unique
-    intro x _
-    exact Submodule.subset_span ⟨x, rfl⟩
-  simpa only [id_eq] using
-    span_prod_map_eq_wordFiltration f id hid k
-
 private theorem pbwHomogeneous_mem_map_range (k : ℕ) (x : wordFiltration
     (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k) :
     DirectSum.of (PBWGradedPiece R L) k (Submodule.Quotient.mk x) ∈
@@ -317,7 +279,10 @@ private theorem pbwHomogeneous_mem_map_range (k : ℕ) (x : wordFiltration
     (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap
   let s : Submodule R U := Submodule.span R {a | ∃ l : List L, l.length ≤ k ∧
     (l.map fun z => f z).prod = a}
-  have hs : s = wordFiltration f k := span_pbwWords_eq_wordFiltration R L k
+  have hid : Submodule.span R (Set.range (id : L → L)) = ⊤ := by
+    rw [Set.range_id, Submodule.span_univ]
+  have hs : s = wordFiltration f k := by
+    simpa only [id_eq] using span_prod_map_eq_wordFiltration f id hid k
   let e : s ≃ₗ[R] wordFiltration f k := LinearEquiv.ofEq _ _ hs
   let q : s →ₗ[R] PBWAssociatedGraded R L :=
     (DirectSum.lof R ℕ (PBWGradedPiece R L) k).comp
