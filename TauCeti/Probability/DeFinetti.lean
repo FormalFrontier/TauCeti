@@ -68,9 +68,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
 * `deFinetti_empiricalMeasure` — on a Polish state space, the directing measure is the almost-sure
   weak limit of the empirical measures themselves, with
   `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` its conditional form;
-* `deFinetti_coding` — the functional form of the representation: jointly with its directing
-  measure, an exchangeable process is the coordinatewise image of an independent i.i.d. uniform
-  sequence under the fixed measurable map `unitIntervalCoding`, with
+* `deFinetti_coding` — the functional form of the representation: the joint law of the directing
+  measure and an exchangeable process is the law of their coded pair, formed from an independent
+  i.i.d. uniform sequence under the fixed measurable map `unitIntervalCoding`, with
   `exchangeableLaw_iff_exists_coding` the resulting path-law equivalence.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the

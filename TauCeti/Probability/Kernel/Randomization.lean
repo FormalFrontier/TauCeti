@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+public import TauCeti.Probability.Kernel.ProbabilityMeasure
 public import Mathlib.Probability.Kernel.Representation
 public import Mathlib.Probability.ProductMeasure
 
@@ -31,8 +31,6 @@ representation.
 
 ## Main definitions
 
-* `TauCeti.Probability.samplingKernel` — the tautological Markov kernel
-  `ProbabilityMeasure α → α`, which samples from its own parameter.
 * `TauCeti.Probability.unitIntervalCoding` — the coding map above.
 
 ## Main results
@@ -40,9 +38,7 @@ representation.
 * `TauCeti.Probability.map_volume_unitIntervalCoding` — the coding map transports the uniform law
   on `I` to its parameter.
 * `TauCeti.Probability.map_infinitePi_volume_unitIntervalCoding` — applying it coordinatewise to
-  i.i.d. uniform noise produces the countable power of the parameter.
-* `TauCeti.Probability.exists_measurable_uncurry_map_volume_eq` — the same statement for a
-  measurable family of probability measures indexed by an arbitrary parameter space.
+  i.i.d. uniform noise produces the `ι`-fold power of the parameter for an arbitrary index type.
 
 ## Implementation
 
@@ -70,21 +66,6 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- **The tautological Markov kernel.** It sends a probability measure to itself, viewed as a
-random element of `α`; sampling from it is sampling from its own parameter. -/
--- `@[expose]` is forced by the exported `rfl`-unfold `samplingKernel_apply` below.
-@[expose]
-def samplingKernel (α : Type*) [MeasurableSpace α] : Kernel (ProbabilityMeasure α) α :=
-  ⟨fun P => (P : Measure α), measurable_subtype_coe⟩
-
-@[simp]
-theorem samplingKernel_apply (P : ProbabilityMeasure α) :
-    samplingKernel α P = (P : Measure α) :=
-  rfl
-
-instance : IsMarkovKernel (samplingKernel α) :=
-  ⟨fun P => P.2⟩
-
 variable (α)
 
 /-- **The coding map of a standard Borel space.** A jointly measurable
@@ -99,6 +80,7 @@ def unitIntervalCoding [StandardBorelSpace α] [Nonempty α] : ProbabilityMeasur
 variable [StandardBorelSpace α] [Nonempty α]
 
 /-- The coding map is jointly measurable in the parameter and the uniform variable. -/
+@[fun_prop]
 theorem measurable_uncurry_unitIntervalCoding :
     Measurable (Function.uncurry (unitIntervalCoding α)) :=
   (Kernel.exists_measurable_map_eq_unitInterval (samplingKernel α)).choose_spec.1
@@ -106,6 +88,7 @@ theorem measurable_uncurry_unitIntervalCoding :
 variable {α}
 
 /-- The coding map is measurable in the uniform variable, for each fixed parameter. -/
+@[fun_prop]
 theorem measurable_unitIntervalCoding (P : ProbabilityMeasure α) :
     Measurable (unitIntervalCoding α P) :=
   (measurable_uncurry_unitIntervalCoding α).of_uncurry_left
@@ -115,10 +98,20 @@ parameter. -/
 @[simp]
 theorem map_volume_unitIntervalCoding (P : ProbabilityMeasure α) :
     (volume : Measure I).map (unitIntervalCoding α P) = (P : Measure α) :=
-  (Kernel.exists_measurable_map_eq_unitInterval (samplingKernel α)).choose_spec.2 P
+  calc
+    (volume : Measure I).map (unitIntervalCoding α P) = samplingKernel α P :=
+      (Kernel.exists_measurable_map_eq_unitInterval (samplingKernel α)).choose_spec.2 P
+    _ = (P : Measure α) := samplingKernel_apply P
+
+/-- The coordinatewise coding of an `ι`-indexed uniform family is measurable. -/
+theorem measurable_pi_unitIntervalCoding {ι : Type*} (P : ProbabilityMeasure α) :
+    Measurable fun u : ι → I => fun i => unitIntervalCoding α P (u i) :=
+  measurable_pi_lambda _ fun i =>
+    (measurable_unitIntervalCoding P).comp (measurable_pi_apply i)
 
 /-- **Coding a product law by i.i.d. uniform noise.** Applying the coding map coordinatewise to an
-i.i.d. uniform family produces the countable power of the parameter. -/
+i.i.d. uniform family produces the `ι`-fold power of the parameter, for an arbitrary index type. -/
+@[simp]
 theorem map_infinitePi_volume_unitIntervalCoding {ι : Type*} (P : ProbabilityMeasure α) :
     (Measure.infinitePi fun _ : ι => (volume : Measure I)).map
         (fun u i => unitIntervalCoding α P (u i))
@@ -126,17 +119,6 @@ theorem map_infinitePi_volume_unitIntervalCoding {ι : Type*} (P : ProbabilityMe
   rw [Measure.infinitePi_map_pi (μ := fun _ : ι => (volume : Measure I))
     (f := fun _ : ι => unitIntervalCoding α P) fun _ => measurable_unitIntervalCoding P]
   simp
-
-/-- **Randomizing a measurable family of probability measures.** Over an arbitrary parameter space,
-a measurable family `Q` of probability measures on a standard Borel space is the family of laws of
-a single jointly measurable function of the parameter and one uniform variable. -/
-theorem exists_measurable_uncurry_map_volume_eq {T : Type*} [MeasurableSpace T]
-    {Q : T → ProbabilityMeasure α} (hQ : Measurable Q) :
-    ∃ f : T → I → α, Measurable (Function.uncurry f) ∧
-      ∀ t, (volume : Measure I).map (f t) = (Q t : Measure α) :=
-  ⟨fun t => unitIntervalCoding α (Q t),
-    (measurable_uncurry_unitIntervalCoding α).comp (hQ.prodMap measurable_id),
-    fun t => map_volume_unitIntervalCoding (Q t)⟩
 
 end Probability
 

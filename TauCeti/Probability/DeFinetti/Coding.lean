@@ -16,6 +16,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegr
 -- proofs.
 import TauCeti.Probability.DeFinetti.Theorem
 import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
+import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
 # The coding representation of an exchangeable sequence
@@ -35,31 +36,29 @@ with
 (ν, X) =ᵈ (ν, (f ν ϑᵢ)ᵢ).
 ```
 
-So an exchangeable sequence is a fixed measurable function of one random parameter — its directing
-measure — and an independent i.i.d. uniform noise sequence, with all the randomness of the sequence
-carried by the noise. This is the sequence case of the representations in the Aldous–Hoover family,
-and the shape in which those representations are stated.
+Thus, in distribution, an exchangeable sequence is a fixed measurable function of one random
+parameter — its directing measure — and an independent i.i.d. uniform noise sequence, with all the
+randomness of the sequence carried by the noise. This is the sequence case of the representations
+in the Aldous–Hoover family, and the shape in which those representations are stated.
 
 The function is `unitIntervalCoding α` of
 `TauCeti.Probability.Kernel.Randomization`, the same one for every process on `α`; only the law of
 the parameter changes. The converse holds for an arbitrary jointly measurable `f`, without a
 standard Borel hypothesis and for an arbitrary parameter space and arbitrary exchangeable noise
-(`exchangeableLaw_map_prod`), so the two together characterize exchangeability
+(`exchangeableLaw_map_prod_coding`), so the two together characterize exchangeability
 (`exchangeableLaw_iff_exists_coding`).
 
 ## Main results
 
-* `TauCeti.Probability.exchangeableLaw_map_prod` — a coordinatewise measurable function of a
-  parameter and exchangeable noise has an exchangeable law.
 * `TauCeti.Probability.map_prod_unitIntervalCoding_eq_deFinettiBarycenter` and
   `TauCeti.Probability.map_prod_unitIntervalCoding_eq_iidMixtureLaw` — coding a mixing law by
   uniform noise reproduces the de Finetti barycenter, and, keeping the parameter, the canonical
   conditionally i.i.d. law.
 * `TauCeti.Probability.ConditionallyIIDWith.jointPathLaw_eq_map_unitIntervalCoding` — the joint law
   of a directing measure and its process is the law of the coded pair.
-* `TauCeti.Probability.deFinetti_coding` — **the representation**: an exchangeable process has a
-  directing measure jointly with which it is a measurable function of independent uniform noise.
-* `TauCeti.Probability.ExchangeableLaw.eq_map_unitIntervalCoding` and
+* `TauCeti.Probability.deFinetti_coding` — **the representation**: the joint law of an exchangeable
+  process and its directing measure is the law of the coded parameter-noise pair.
+* `TauCeti.Probability.ExchangeableLaw.exists_eq_map_unitIntervalCoding` and
   `TauCeti.Probability.exchangeableLaw_iff_exists_coding` — the path-law forms, the second an
   equivalence.
 
@@ -96,37 +95,6 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-section Converse
-
-variable {T β : Type*} [MeasurableSpace T] [MeasurableSpace β]
-
-/-- Joint measurability of a coordinatewise coding map. -/
-theorem measurable_codingPath {f : T → β → α} (hf : Measurable (Function.uncurry f)) :
-    Measurable fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i) :=
-  measurable_pi_lambda _ fun i =>
-    hf.comp (measurable_fst.prodMk ((measurable_pi_apply i).comp measurable_snd))
-
-/-- **Any coding produces an exchangeable law.** Applying a jointly measurable `f` coordinatewise to
-a parameter and an exchangeable noise sequence independent of it gives an exchangeable law.
-
-The symmetry is inherited from the noise: permuting the time index of the output is permuting the
-time index of the noise, which leaves the noise law unchanged. Neither a standard Borel hypothesis
-nor any property of the parameter space is used. -/
-theorem exchangeableLaw_map_prod (π : Measure T) [SFinite π] {ρ : Measure (ℕ → β)} [SFinite ρ]
-    (hρ : ExchangeableLaw ρ) {f : T → β → α} (hf : Measurable (Function.uncurry f)) :
-    ExchangeableLaw ((π.prod ρ).map fun p i => f p.1 (p.2 i)) := by
-  refine ExchangeableLaw.intro fun τ => ?_
-  have hG := measurable_codingPath (α := α) hf
-  have hcomp : permReindex (α := α) τ ∘ (fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i))
-      = (fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i)) ∘
-        Prod.map (id : T → T) (permReindex (α := β) τ) := rfl
-  have hpermα : Measurable (permReindex (α := α) τ) := measurable_reindex τ
-  have hpermβ : Measurable (permReindex (α := β) τ) := measurable_reindex τ
-  rw [Measure.map_map hpermα hG, hcomp, ← Measure.map_map hG (measurable_id.prodMap hpermβ),
-    ← Measure.map_prod_map π ρ measurable_id hpermβ, Measure.map_id, hρ.map_permReindex τ]
-
-end Converse
-
 section Coding
 
 variable [StandardBorelSpace α] [Nonempty α]
@@ -135,22 +103,7 @@ variable [StandardBorelSpace α] [Nonempty α]
 theorem measurable_unitIntervalCodingPath :
     Measurable fun p : ProbabilityMeasure α × (ℕ → I) =>
       fun i => unitIntervalCoding α p.1 (p.2 i) :=
-  measurable_codingPath (measurable_uncurry_unitIntervalCoding α)
-
-/-- **Coding a mixing law.** Drawing a probability measure from `π`, then coding an independent
-i.i.d. uniform sequence by it, produces the de Finetti barycenter of `π`. -/
-theorem map_prod_unitIntervalCoding_eq_deFinettiBarycenter (π : Measure (ProbabilityMeasure α)) :
-    (π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
-        (fun p i => unitIntervalCoding α p.1 (p.2 i))
-      = deFinettiBarycenter π := by
-  refine Measure.ext fun s hs => ?_
-  rw [Measure.map_apply measurable_unitIntervalCodingPath hs,
-    Measure.prod_apply (measurable_unitIntervalCodingPath hs), deFinettiBarycenter_apply π hs]
-  refine lintegral_congr fun P => ?_
-  have hcode : Measurable fun u : ℕ → I => fun i => unitIntervalCoding α P (u i) :=
-    measurable_pi_lambda _ fun i => (measurable_unitIntervalCoding P).comp (measurable_pi_apply i)
-  rw [← map_infinitePi_volume_unitIntervalCoding (ι := ℕ) P, Measure.map_apply hcode hs]
-  rfl
+  measurable_pi_uncurry_prod (measurable_uncurry_unitIntervalCoding α)
 
 /-- **Coding a mixing law, keeping the parameter.** Retaining the drawn probability measure as a
 coordinate, the same construction produces the canonical conditionally i.i.d. law `iidMixtureLaw`:
@@ -168,12 +121,36 @@ theorem map_prod_unitIntervalCoding_eq_iidMixtureLaw (π : Measure (ProbabilityM
     Measure.bind_apply hs (TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const
       (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id).aemeasurable]
   refine lintegral_congr fun P => ?_
-  have hcode : Measurable fun u : ℕ → I => fun i => unitIntervalCoding α P (u i) :=
-    measurable_pi_lambda _ fun i => (measurable_unitIntervalCoding P).comp (measurable_pi_apply i)
   rw [Measure.dirac_prod, Measure.map_apply measurable_prodMk_left hs, id_eq,
     ← map_infinitePi_volume_unitIntervalCoding (ι := ℕ) P,
-    Measure.map_apply hcode (measurable_prodMk_left hs)]
+    Measure.map_apply (measurable_pi_unitIntervalCoding P) (measurable_prodMk_left hs)]
+  -- Both preimages are `{u | (P, fun i => unitIntervalCoding α P (u i)) ∈ s}`.
   rfl
+
+/-- **Coding a mixing law.** Drawing a probability measure from `π`, then coding an independent
+i.i.d. uniform sequence by it, produces the de Finetti barycenter of `π`. -/
+theorem map_prod_unitIntervalCoding_eq_deFinettiBarycenter (π : Measure (ProbabilityMeasure α)) :
+    (π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
+        (fun p i => unitIntervalCoding α p.1 (p.2 i))
+      = deFinettiBarycenter π := by
+  have hG : Measurable fun p : ProbabilityMeasure α × (ℕ → I) =>
+      (p.1, fun i => unitIntervalCoding α p.1 (p.2 i)) :=
+    measurable_fst.prodMk measurable_unitIntervalCodingPath
+  calc
+    (π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
+          (fun p i => unitIntervalCoding α p.1 (p.2 i))
+        = ((π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
+            (fun p => (p.1, fun i => unitIntervalCoding α p.1 (p.2 i)))).map Prod.snd := by
+              rw [Measure.map_map measurable_snd hG]
+              rfl
+    _ = (iidMixtureLaw π id).map Prod.snd := by
+          rw [map_prod_unitIntervalCoding_eq_iidMixtureLaw]
+    _ = deFinettiBarycenter π := by
+          rw [iidMixtureLaw_def, TauCeti.MeasureTheory.map_bind
+            (TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const
+              (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id).aemeasurable
+            measurable_snd, deFinettiBarycenter_def]
+          simp
 
 /-- **The coding representation of a conditionally i.i.d. process.** The joint law of a directing
 measure and the whole path is the joint law of a parameter drawn from the mixing law and the path
@@ -190,9 +167,9 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_map_unitIntervalCoding {μ : Measur
   rw [h.jointPathLaw_eq_iidMixtureLaw hX, map_prod_unitIntervalCoding_eq_iidMixtureLaw]
 
 /-- **The coding representation of an exchangeable process.** An exchangeable sequence in a nonempty
-standard Borel space has a directing measure `ν` — it is conditionally i.i.d. `ν` — jointly with
-which it is the coordinatewise image of an independent i.i.d. uniform sequence under one fixed
-measurable map.
+standard Borel space has a directing measure `ν` — it is conditionally i.i.d. `ν` — such that the
+joint law of `(ν, X)` equals the law of the pair obtained by applying one fixed measurable map
+coordinatewise to `ν` and independent i.i.d. uniform noise.
 
 This is the functional form of de Finetti's theorem: all the randomness of the sequence beyond its
 directing measure is the uniform noise. -/
@@ -208,7 +185,8 @@ theorem deFinetti_coding {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω 
 /-- **The coding representation of an exchangeable path law.** An exchangeable probability measure
 on `ℕ → α` is the law of a coded i.i.d. uniform sequence, for a mixing law on
 `ProbabilityMeasure α`. -/
-theorem ExchangeableLaw.eq_map_unitIntervalCoding {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+theorem ExchangeableLaw.exists_eq_map_unitIntervalCoding {ρ : Measure (ℕ → α)}
+    [IsProbabilityMeasure ρ]
     (hρ : ExchangeableLaw ρ) :
     ∃ π : ProbabilityMeasure (ProbabilityMeasure α),
       ρ = ((π : Measure (ProbabilityMeasure α)).prod
@@ -232,13 +210,14 @@ theorem exchangeableLaw_iff_exists_coding {ρ : Measure (ℕ → α)} [IsProbabi
                 (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
               fun p i => f p.1 (p.2 i) := by
   refine ⟨fun hρ => ?_, fun ⟨π, f, hf, hρ⟩ => ?_⟩
-  · obtain ⟨π, hπ⟩ := hρ.eq_map_unitIntervalCoding
+  · obtain ⟨π, hπ⟩ := hρ.exists_eq_map_unitIntervalCoding
     exact ⟨π, unitIntervalCoding α, measurable_uncurry_unitIntervalCoding α, hπ⟩
   · have : IsProbabilityMeasure (π : Measure (ProbabilityMeasure α)) := π.2
     have hnoise : ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (volume : Measure I)) := by
-      simpa using exchangeableLaw_infinitePi_const (⟨volume, inferInstance⟩ : ProbabilityMeasure I)
+      simpa only [ProbabilityMeasure.coe_mk] using
+        exchangeableLaw_infinitePi_const (⟨volume, inferInstance⟩ : ProbabilityMeasure I)
     rw [hρ]
-    exact exchangeableLaw_map_prod _ hnoise hf
+    exact exchangeableLaw_map_prod_coding _ hnoise hf
 
 /-- The path-law form of `deFinetti_coding`: the law of an exchangeable process is the law of a
 coded i.i.d. uniform sequence. -/
@@ -250,7 +229,7 @@ theorem exists_pathLaw_eq_map_unitIntervalCoding {μ : Measure Ω} [IsProbabilit
         fun p i => unitIntervalCoding α p.1 (p.2 i) := by
   have : IsProbabilityMeasure (pathLaw μ X) :=
     Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX_meas)
-  exact ((exchangeable_iff_exchangeableLaw_pathLaw hX_meas).mp hX).eq_map_unitIntervalCoding
+  exact ((exchangeable_iff_exchangeableLaw_pathLaw hX_meas).mp hX).exists_eq_map_unitIntervalCoding
 
 end Coding
 
