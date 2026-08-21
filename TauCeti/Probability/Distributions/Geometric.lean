@@ -19,12 +19,15 @@ import Mathlib.Data.Nat.Choose.Cast
 This file develops moments and transforms of Mathlib's geometric measure, using the convention
 that the random variable counts failures before the first success.  It also records its cumulative
 mass and memoryless tail identity.  Mathlib totalizes the zero-success parameter by
-`geometricMeasure 0 = Measure.dirac 0`; the boundary formulas are stated separately.
+`geometricMeasure 0 = Measure.dirac 0`; the boundary formulas are stated separately.  The
+hypothesis `p ≠ 0` used throughout only excludes that totalized boundary: it still admits the
+degenerate endpoint `p = 1`, where the law is Dirac at zero and the formulas below specialize to
+the constant random variable `0`.
 
 ## Main results
 
 * `integral_id_map_cast_geometricMeasure` and `variance_id_map_cast_geometricMeasure` compute the
-  mean and variance of the real cast of a nondegenerate geometric law.
+  mean and variance of the real cast of a nonzero-parameter geometric law.
 * `integrableExpSet_id_map_cast_geometricMeasure` and `mgf_id_map_cast_geometricMeasure` give its
   exact moment-generating domain and moment-generating function.
 * `charFun_map_cast_geometricMeasure` computes its characteristic function.
@@ -103,20 +106,22 @@ theorem integrable_exp_mul_id_map_cast_geometricMeasure_iff (hp : p ≠ 0) (t : 
   have hexp (n : ℕ) : exp (t * (n : ℝ)) = (exp t) ^ n := by
     rw [mul_comm, Real.exp_nat_mul]
   simp_rw [Function.comp_apply, Real.norm_eq_abs, abs_exp, hexp]
-  rw [show (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p *
-      ((exp t) ^ n)) = fun n ↦ (p : ℝ) * (((1 - (p : ℝ)) * exp t) ^ n) by
-        funext n; rw [mul_pow]; ring]
-  rw [summable_mul_left_iff (coe_ne_zero hp), summable_geometric_iff_norm_lt_one,
+  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ((exp t) ^ n)) =
+      fun n ↦ (p : ℝ) * (((1 - (p : ℝ)) * exp t) ^ n) := by
+    funext n
+    rw [mul_pow]
+    ring
+  rw [hfun, summable_mul_left_iff (coe_ne_zero hp), summable_geometric_iff_norm_lt_one,
     Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (one_sub_coe_nonneg p) (exp_nonneg t))]
 
-/-- The exact moment-generating domain of the real cast of a nondegenerate geometric law. -/
+/-- The exact moment-generating domain of the real cast of a nonzero-parameter geometric law. -/
 theorem integrableExpSet_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     integrableExpSet id ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       {t | (1 - (p : ℝ)) * exp t < 1} := by
   ext t
   exact integrable_exp_mul_id_map_cast_geometricMeasure_iff hp t
 
-/-- The moment-generating function of the real cast of a nondegenerate geometric law. -/
+/-- The moment-generating function of the real cast of a nonzero-parameter geometric law. -/
 theorem mgf_id_map_cast_geometricMeasure (hp : p ≠ 0)
     (ht : (1 - (p : ℝ)) * exp t < 1) :
     mgf id ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) t =
@@ -127,42 +132,50 @@ theorem mgf_id_map_cast_geometricMeasure (hp : p ≠ 0)
   have hexp (n : ℕ) : exp (t * (n : ℝ)) = (exp t) ^ n := by
     rw [mul_comm, Real.exp_nat_mul]
   simp_rw [smul_eq_mul, hexp]
-  rw [show (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p *
-      (((exp t) ^ n))) = fun n ↦ (p : ℝ) * (((1 - (p : ℝ)) * exp t) ^ n) by
-        funext n; rw [mul_pow]; ring,
-    tsum_mul_left, tsum_geometric_of_norm_lt_one]
+  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ((exp t) ^ n)) =
+      fun n ↦ (p : ℝ) * (((1 - (p : ℝ)) * exp t) ^ n) := by
+    funext n
+    rw [mul_pow]
+    ring
+  rw [hfun, tsum_mul_left, tsum_geometric_of_norm_lt_one]
   · simp [div_eq_mul_inv]
   · simpa [Real.norm_eq_abs,
       abs_of_nonneg (one_sub_coe_nonneg p)] using ht
 
-/-- The cumulant-generating function of the real cast of a nondegenerate geometric law. -/
+/-- The cumulant-generating function of the real cast of a nonzero-parameter geometric law. -/
 theorem cgf_id_map_cast_geometricMeasure (hp : p ≠ 0)
     (ht : (1 - (p : ℝ)) * exp t < 1) :
     cgf id ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) t =
       log ((p : ℝ) / (1 - (1 - (p : ℝ)) * exp t)) := by
   rw [cgf, mgf_id_map_cast_geometricMeasure hp ht]
 
-/-- The mean of the real cast of a nondegenerate geometric law. -/
+/-- The mean of the real cast of a nonzero-parameter geometric law. -/
 theorem integral_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     ∫ x, x ∂((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       (1 - (p : ℝ)) / (p : ℝ) := by
   rw [integral_map (by fun_prop) (by fun_prop), integral_geometricMeasure hp]
   simp_rw [smul_eq_mul]
-  rw [show (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * (n : ℝ)) =
-      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) * (1 - (p : ℝ)) ^ n) by funext n; ring,
-    tsum_mul_left, tsum_coe_mul_geometric_of_norm_lt_one (abs_one_sub_coe_lt_one hp)]
+  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * (n : ℝ)) =
+      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) * (1 - (p : ℝ)) ^ n) := by
+    funext n
+    ring
+  rw [hfun, tsum_mul_left,
+    tsum_coe_mul_geometric_of_norm_lt_one (abs_one_sub_coe_lt_one hp)]
   field_simp [coe_ne_zero hp]
   ring
 
-/-- The second raw moment of the real cast of a nondegenerate geometric law. -/
+/-- The second raw moment of the real cast of a nonzero-parameter geometric law. -/
 theorem integral_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     ∫ x, x ^ 2 ∂((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       (1 - (p : ℝ)) * (2 - (p : ℝ)) / (p : ℝ) ^ 2 := by
   rw [integral_map (by fun_prop) (by fun_prop), integral_geometricMeasure hp]
   simp_rw [smul_eq_mul]
-  rw [show (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ((n : ℝ) ^ 2)) =
-      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) ^ 2 * (1 - (p : ℝ)) ^ n) by funext n; ring,
-    tsum_mul_left, (hasSum_sq_mul_geometric (abs_one_sub_coe_lt_one hp)).tsum_eq]
+  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ((n : ℝ) ^ 2)) =
+      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) ^ 2 * (1 - (p : ℝ)) ^ n) := by
+    funext n
+    ring
+  rw [hfun, tsum_mul_left,
+    (hasSum_sq_mul_geometric (abs_one_sub_coe_lt_one hp)).tsum_eq]
   field_simp [coe_ne_zero hp]
   ring
 
@@ -174,14 +187,15 @@ private theorem integrable_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
   simp only [Function.comp_apply]
   have hs := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 2
     (abs_one_sub_coe_lt_one hp)
-  rw [show (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ‖((n : ℕ) : ℝ) ^ 2‖) =
-      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) ^ 2 * (1 - (p : ℝ)) ^ n) by
-        funext n
-        rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg (n : ℝ))]
-        ring]
+  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ‖((n : ℕ) : ℝ) ^ 2‖) =
+      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) ^ 2 * (1 - (p : ℝ)) ^ n) := by
+    funext n
+    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg (n : ℝ))]
+    ring
+  rw [hfun]
   exact hs.mul_left (p : ℝ)
 
-/-- The variance of the real cast of a nondegenerate geometric law. -/
+/-- The variance of the real cast of a nonzero-parameter geometric law. -/
 theorem variance_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     variance id ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       (1 - (p : ℝ)) / (p : ℝ) ^ 2 := by
@@ -196,30 +210,32 @@ theorem variance_id_map_cast_geometricMeasure (hp : p ≠ 0) :
   field_simp [coe_ne_zero hp]
   ring
 
-/-- The characteristic function of the real cast of a nondegenerate geometric law. -/
+/-- The characteristic function of the real cast of a nonzero-parameter geometric law. -/
 theorem charFun_map_cast_geometricMeasure (hp : p ≠ 0) (t : ℝ) :
     charFun ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) t =
       (p : ℂ) / (1 - (1 - (p : ℂ)) * Complex.exp (Complex.I * t)) := by
   rw [charFun_apply_real, integral_map (by fun_prop) (by fun_prop), integral_geometricMeasure hp]
   have hexp (n : ℕ) : Complex.exp (((t : ℂ) * ((n : ℝ) : ℂ)) * Complex.I) =
       Complex.exp (Complex.I * t) ^ n := by
-    rw [show ((t : ℂ) * ((n : ℝ) : ℂ)) * Complex.I = n * (Complex.I * t) by push_cast; ring,
-      Complex.exp_nat_mul]
-  rw [show (fun n : ℕ ↦ ((1 - (p : ℝ)) ^ n * p : ℝ) •
+    have hmul : ((t : ℂ) * ((n : ℝ) : ℂ)) * Complex.I = n * (Complex.I * t) := by
+      push_cast
+      ring
+    rw [hmul, Complex.exp_nat_mul]
+  have hfun : (fun n : ℕ ↦ ((1 - (p : ℝ)) ^ n * p : ℝ) •
       Complex.exp ((t : ℂ) * ((n : ℝ) : ℂ) * Complex.I)) =
-      fun n ↦ (p : ℂ) * (((1 - (p : ℂ)) * Complex.exp (Complex.I * t)) ^ n) by
-        funext n
-        rw [hexp n, mul_pow, Complex.real_smul]
-        push_cast
-        ring,
-    tsum_mul_left, tsum_geometric_of_norm_lt_one]
+      fun n ↦ (p : ℂ) * (((1 - (p : ℂ)) * Complex.exp (Complex.I * t)) ^ n) := by
+    funext n
+    rw [hexp n, mul_pow, Complex.real_smul]
+    push_cast
+    ring
+  rw [hfun, tsum_mul_left, tsum_geometric_of_norm_lt_one]
   · simp [div_eq_mul_inv]
   · have hnorm : ‖1 - (p : ℂ)‖ = |1 - (p : ℝ)| := by
       rw [← Complex.ofReal_one, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
     rw [norm_mul, hnorm, Complex.norm_exp]
     simpa [Complex.mul_re, abs_of_nonneg (one_sub_coe_nonneg p)] using one_sub_coe_lt_one hp
 
-/-- The cumulative mass of a nondegenerate geometric law on its native carrier. -/
+/-- The cumulative mass of a nonzero-parameter geometric law on its native carrier. -/
 theorem geometricMeasure_real_Iic (hp : p ≠ 0) (n : ℕ) :
     (geometricMeasure p).real {k | k ≤ n} = 1 - (1 - (p : ℝ)) ^ (n + 1) := by
   have hset : {k : ℕ | k ≤ n} = (Finset.Iic n : Set ℕ) := by ext k; simp
@@ -231,7 +247,7 @@ theorem geometricMeasure_real_Iic (hp : p ≠ 0) (n : ℕ) :
   convert h using 1
   ring
 
-/-- The upper-tail mass of a nondegenerate geometric law on its native carrier. -/
+/-- The upper-tail mass of a nonzero-parameter geometric law on its native carrier. -/
 theorem geometricMeasure_real_Ici (hp : p ≠ 0) (n : ℕ) :
     (geometricMeasure p).real {k | n ≤ k} = (1 - (p : ℝ)) ^ n := by
   have hcompl : {k : ℕ | n ≤ k} = {k : ℕ | k < n}ᶜ := by ext k; simp
@@ -249,17 +265,17 @@ theorem geometricMeasure_real_Ici (hp : p ≠ 0) (n : ℕ) :
       rw [geom_sum_mul_of_le_one (sub_le_self 1 p.2.1)]
       ring
 
-/-- The geometric law is memoryless for every parameter, in a division-free form that also makes
-the normalization explicit. -/
+/-- The geometric law is memoryless for every parameter: the mass of the tail beyond `n + m`
+is the product of the masses of the tails beyond `n` and beyond `m`. -/
 theorem geometricMeasure_memoryless (p : unitInterval) (n m : ℕ) :
-    (geometricMeasure p).real {k | n + m ≤ k} * (geometricMeasure p).real Set.univ =
+    (geometricMeasure p).real {k | n + m ≤ k} =
       (geometricMeasure p).real {k | n ≤ k} * (geometricMeasure p).real {k | m ≤ k} := by
   by_cases hp : p = 0
   · subst p
     rcases n with _ | n <;> rcases m with _ | m <;>
       simp [geometricMeasure, measureReal_def]
   · rw [geometricMeasure_real_Ici hp, geometricMeasure_real_Ici hp,
-      geometricMeasure_real_Ici hp, probReal_univ, mul_one, pow_add]
+      geometricMeasure_real_Ici hp, pow_add]
 
 /-- Conditional form of geometric memorylessness, stated only when the conditioning tail has
 nonzero mass. -/
@@ -340,14 +356,14 @@ theorem geometricMeasure_real_Iic_zero (n : ℕ) :
   rw [measureReal_def, Measure.dirac_apply_of_mem (by simp)]
   simp
 
-/-- A real random variable with a nondegenerate geometric law has mean `(1 - p) / p`. -/
+/-- A real random variable with a nonzero-parameter geometric law has mean `(1 - p) / p`. -/
 theorem integral_of_hasLaw_map_cast_geometricMeasure {Ω : Type*} [MeasurableSpace Ω]
     {P : Measure Ω} {X : Ω → ℝ} (hp : p ≠ 0)
     (hX : HasLaw X ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) P) :
     P[X] = (1 - (p : ℝ)) / (p : ℝ) := by
   rw [hX.integral_eq, integral_id_map_cast_geometricMeasure hp]
 
-/-- A real random variable with a nondegenerate geometric law has variance `(1 - p) / p²`. -/
+/-- A real random variable with a nonzero-parameter geometric law has variance `(1 - p) / p²`. -/
 theorem variance_of_hasLaw_map_cast_geometricMeasure {Ω : Type*} [MeasurableSpace Ω]
     {P : Measure Ω} {X : Ω → ℝ} (hp : p ≠ 0)
     (hX : HasLaw X ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) P) :
