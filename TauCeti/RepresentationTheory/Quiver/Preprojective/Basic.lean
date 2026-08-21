@@ -193,20 +193,40 @@ section BacktrackProducts
 variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
 
 /-- The displayed word `a a*` is the head backtrack under later-factor-first multiplication. -/
-@[simp]
 theorem ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
     ofArrow (Symmetrify.of.map a) * ofArrow (Quiver.reverse (Symmetrify.of.map a))
       = headBacktrackElem k a := by
   rw [ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp,
     headBacktrackElem_eq_ofPath]
 
-/-- The displayed word `a* a` is the tail backtrack under later-factor-first multiplication. -/
+/-- Simp-normal form of the head-backtrack path. -/
 @[simp]
+theorem ofPath_headBacktrack_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
+    @ofPath k (Symmetrify Q) _ (symmetrifyQuiver Q)
+        ⟨Symmetrify.of.obj j, Symmetrify.of.obj j,
+          (Quiver.reverse (Sum.inl a)).toPath.cons (Sum.inl a)⟩
+      = headBacktrackElem k a := by
+  rw [headBacktrackElem]
+  simp only [Symmetrify.of_map, id_eq]
+  congr 1
+
+/-- The displayed word `a* a` is the tail backtrack under later-factor-first multiplication. -/
 theorem ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
     ofArrow (Quiver.reverse (Symmetrify.of.map a)) * ofArrow (Symmetrify.of.map a)
       = tailBacktrackElem k a := by
   rw [ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp,
     tailBacktrackElem_eq_ofPath]
+
+/-- Simp-normal form of the tail-backtrack path. -/
+@[simp]
+theorem ofPath_tailBacktrack_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
+    @ofPath k (Symmetrify Q) _ (symmetrifyQuiver Q)
+        ⟨Symmetrify.of.obj i, Symmetrify.of.obj i,
+          (Quiver.Hom.toPath (Sum.inl a)).cons (Quiver.reverse (Sum.inl a))⟩
+      = tailBacktrackElem k a := by
+  rw [tailBacktrackElem]
+  simp only [Symmetrify.of_map, id_eq]
+  congr 1
 
 end BacktrackProducts
 
@@ -418,7 +438,7 @@ noncomputable def preprojectiveLift (hf : f (preprojectiveRelator k Q) = 0) :
 
 /-- The local-relations form of the universal property: a map killing every vertex-corner relator
 descends to the preprojective algebra. -/
-noncomputable def preprojectiveLift_of_forall_localPreprojectiveRelator
+noncomputable def preprojectiveLiftOfForallLocalPreprojectiveRelator
     (hf : ∀ v : Q, f (localPreprojectiveRelator k v) = 0) :
     preprojectiveAlgebra k Q →ₐ[k] B :=
   preprojectiveLift f <| by
@@ -437,7 +457,7 @@ theorem preprojectiveLift_preprojectiveMk (hf : f (preprojectiveRelator k Q) = 0
 
 theorem preprojectiveLift_of_forall_localPreprojectiveRelator_comp_preprojectiveMk
     (hf : ∀ v : Q, f (localPreprojectiveRelator k v) = 0) :
-    (preprojectiveLift_of_forall_localPreprojectiveRelator f hf).comp
+    (preprojectiveLiftOfForallLocalPreprojectiveRelator f hf).comp
       (preprojectiveMk k Q) = f := by
   apply preprojectiveLift_comp_preprojectiveMk
 
@@ -445,7 +465,7 @@ theorem preprojectiveLift_of_forall_localPreprojectiveRelator_comp_preprojective
 theorem preprojectiveLift_of_forall_localPreprojectiveRelator_preprojectiveMk
     (hf : ∀ v : Q, f (localPreprojectiveRelator k v) = 0)
     (x : pathAlgebra k (Symmetrify Q)) :
-    preprojectiveLift_of_forall_localPreprojectiveRelator f hf (preprojectiveMk k Q x) = f x :=
+    preprojectiveLiftOfForallLocalPreprojectiveRelator f hf (preprojectiveMk k Q x) = f x :=
   AlgHom.congr_fun
     (preprojectiveLift_of_forall_localPreprojectiveRelator_comp_preprojectiveMk f hf) x
 
@@ -463,7 +483,7 @@ quotient map. -/
 theorem preprojectiveLift_of_forall_localPreprojectiveRelator_unique
     (hf : ∀ v : Q, f (localPreprojectiveRelator k v) = 0)
     (g : preprojectiveAlgebra k Q →ₐ[k] B) (hg : g.comp (preprojectiveMk k Q) = f) :
-    g = preprojectiveLift_of_forall_localPreprojectiveRelator f hf := by
+    g = preprojectiveLiftOfForallLocalPreprojectiveRelator f hf := by
   refine AlgHom.ext fun y => ?_
   obtain ⟨x, rfl⟩ := preprojectiveMk_surjective k Q y
   rw [preprojectiveLift_of_forall_localPreprojectiveRelator_preprojectiveMk, ← hg,
