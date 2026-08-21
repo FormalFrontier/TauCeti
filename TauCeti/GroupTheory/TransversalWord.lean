@@ -7,7 +7,6 @@ module
 
 public import Mathlib.GroupTheory.GroupAction.Quotient
 public import Mathlib.Tactic.Group
-public import Mathlib.Topology.Algebra.Group.Quotient
 
 /-!
 # The transversal word of a subgroup
@@ -17,8 +16,9 @@ picking a representative of each coset. The **transversal word**
 ```
 ℓᵗ_u(γ) = (t u)⁻¹ * γ * t (γ⁻¹ • u)
 ```
-measures the failure of `γ * t u` to be the chosen representative of its own coset. It lies in `U`
-whenever `t` really is a transversal, and it is a `1`-cocycle for the action of `G` on `G ⧸ U`:
+measures the failure of `γ * t (γ⁻¹ • u)` to be the chosen representative `t u` of its coset. It
+lies in `U` whenever `t` really is a transversal, and it is a `1`-cocycle for the action of `G` on
+`G ⧸ U`:
 ```
 ℓᵗ_u(γ) * ℓᵗ_{γ⁻¹ • u}(η) = ℓᵗ_u(γ * η).
 ```
@@ -28,8 +28,9 @@ namely `TauCeti.lWord_mem`, `TauCeti.lWord_mul_lWord`, and
 `TauCeti.transversal_mul_lWord`, the last of which is the rewriting rule
 `t u * ℓᵗ_u(γ) = γ * t (γ⁻¹ • u)` that turns a `U`-cocycle relation into a `G`-cocycle relation.
 It also records how the word changes when the transversal does (`TauCeti.transversalDiff` and
-`TauCeti.transversalDiff_mul_lWord`), and continuity of `γ ↦ ℓᵗ_u(γ)` for an open subgroup of a
-topological group.
+`TauCeti.transversalDiff_mul_lWord`). Continuity of `γ ↦ ℓᵗ_u(γ)` for an open subgroup of a
+topological group is `TauCeti.continuous_lWord`, in
+`TauCeti/Topology/Algebra/Group/TransversalWord.lean`; nothing in this file needs a topology.
 
 The transversal is a variable throughout, and no condition is imposed on it except where one is
 needed: only `lWord_mem` and `transversalDiff_mem` ask that `t` be a transversal at all.
@@ -37,7 +38,8 @@ needed: only `lWord_mem` and `transversalDiff_mem` ask that `t` be a transversal
 ## Implementation notes
 
 Mathlib's `Subgroup.LeftTransversal` bundles a *set* of coset representatives, with
-`Subgroup.leftQuotientEquiv` turning it into a map `G ⧸ U ≃ S`. The formulas that consume the
+`Subgroup.IsComplement.leftQuotientEquiv`, applied to the complement proof `S.2` of such an `S`,
+turning it into an equivalence `G ⧸ U ≃ S`. The formulas that consume the
 transversal word index sums by `G ⧸ U`, so a transversal is taken here in the equivalent form of a
 map `t : G ⧸ U → G` satisfying `↑(t u) = u`; `Quotient.out` is the canonical example.
 
@@ -87,14 +89,16 @@ theorem lWord_inv (u : G ⧸ U) (γ : G) : lWord U t u γ⁻¹ = (lWord U t (γ 
   rw [inv_inv, inv_mul_cancel, lWord_one] at h
   exact mul_eq_one_iff_eq_inv.mp h
 
-/-- At the coset of the identity, and for a transversal normalized by `t 1 = 1`, the transversal
-word of an element of `U` is that element again. This is the reduction that identifies the
-restriction of a cochain to `U` inside a corestriction sum. -/
-theorem lWord_mk_one_of_mem (h1 : t (QuotientGroup.mk 1) = 1) {γ : G} (hγ : γ ∈ U) :
-    lWord U t (QuotientGroup.mk 1) γ = γ := by
+/-- At the coset of the identity, the transversal word of an element of `U` is that element
+conjugated by the chosen representative of that coset: no hypothesis on `t` is needed, and for a
+transversal normalized by `t 1 = 1` the word is the element itself. This is the reduction that
+identifies the restriction of a cochain to `U` inside a corestriction sum. -/
+theorem lWord_mk_one_of_mem {γ : G} (hγ : γ ∈ U) :
+    lWord U t (QuotientGroup.mk 1) γ =
+      (t (QuotientGroup.mk 1))⁻¹ * γ * t (QuotientGroup.mk 1) := by
   have h : (γ⁻¹ • (QuotientGroup.mk 1 : G ⧸ U)) = QuotientGroup.mk 1 := by
     simpa [QuotientGroup.eq] using hγ
-  simp [lWord_def, h, h1]
+  rw [lWord_def, h]
 
 section IsTransversal
 
@@ -110,7 +114,8 @@ theorem lWord_mem (u : G ⧸ U) (γ : G) : lWord U t u γ ∈ U := by
 end IsTransversal
 
 /-- The **difference of two transversals**, `d^{t,t'}_u = (t u)⁻¹ * t' u`. It lies in `U` when both
-are transversals, and it conjugates one transversal word into the other. -/
+are transversals, and it intertwines the two transversal words in the twisted form
+`d_u * ℓᵗ'_u(γ) = ℓᵗ_u(γ) * d_{γ⁻¹ • u}` (`TauCeti.transversalDiff_mul_lWord`). -/
 def transversalDiff (u : G ⧸ U) : G := (t u)⁻¹ * t' u
 
 theorem transversalDiff_def (u : G ⧸ U) : transversalDiff U t t' u = (t u)⁻¹ * t' u := (rfl)
@@ -139,20 +144,5 @@ theorem transversalDiff_mul_lWord (u : G ⧸ U) (γ : G) :
       lWord U t u γ * transversalDiff U t t' (γ⁻¹ • u) := by
   rw [transversalDiff_def, transversalDiff_def, lWord_def, lWord_def]
   group
-
-section Topology
-
-variable [TopologicalSpace G] [ContinuousMul G] [ContinuousInv G]
-
-/-- For an *open* subgroup `U` the transversal word `γ ↦ ℓᵗ_u(γ)` is continuous, for any map `t`
-at all: the quotient `G ⧸ U` is discrete, so `γ ↦ t (γ⁻¹ • u)` is locally constant. -/
-theorem continuous_lWord (hU : IsOpen (U : Set G)) (u : G ⧸ U) : Continuous (lWord U t u) := by
-  have : DiscreteTopology (G ⧸ U) := QuotientGroup.discreteTopology hU
-  have h : lWord U t u = fun γ : G => (t u)⁻¹ * γ * t (γ⁻¹ • u) := funext (lWord_def U t u)
-  rw [h]
-  exact (continuous_const.mul continuous_id).mul
-    (continuous_of_discreteTopology.comp (continuous_inv.smul continuous_const))
-
-end Topology
 
 end TauCeti
