@@ -10,13 +10,15 @@ public import Mathlib.Topology.Algebra.Module.Basic
 /-!
 # Quotients of a discrete topological module
 
-The quotient of a discrete topological module by a submodule is discrete: the quotient map is a
-quotient map of topological spaces, so every subset of the quotient has open preimage and is
-therefore open.
+The quotient of a discrete topological module by a submodule is discrete, since in a discrete
+module every submodule is open.
 
-This is the `Submodule.Quotient` counterpart of Mathlib's `QuotientAddGroup.discreteTopology`,
-which is stated for the quotient of a topological additive group by an *open* subgroup; in a
-discrete module every submodule is open.
+Mathlib's `QuotientAddGroup.discreteTopology` is the statement for the quotient of a topological
+additive group by an *open* subgroup, and supplies the whole proof; because it is a theorem
+rather than an instance (Mathlib notes that `IsOpen` would have to be a class for that), instance
+search cannot use it, so this file records the discrete case for `M ⧸ p` as an instance. This is
+the same bridge from `QuotientAddGroup` to `Submodule.Quotient` that Mathlib's own
+`Submodule.topologicalAddGroup_quotient` and `Submodule.t3_quotient_of_isClosed` provide.
 -/
 
 public section
@@ -28,7 +30,6 @@ variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M] [TopologicalSpace 
 
 /-- The quotient of a discrete topological module by a submodule is discrete. -/
 instance discreteTopology (p : Submodule R M) : DiscreteTopology (M ⧸ p) :=
-  discreteTopology_iff_forall_isOpen.2 fun _ ↦
-    p.isOpenQuotientMap_mkQ.isQuotientMap.isOpen_preimage.mp (isOpen_discrete _)
+  QuotientAddGroup.discreteTopology (N := p.toAddSubgroup) (isOpen_discrete _)
 
 end Submodule.Quotient
