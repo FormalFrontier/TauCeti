@@ -139,7 +139,7 @@ anything about the elements of that module. -/
 
 variable {R G M}
 
-@[simp] lemma ofDiscreteModule_ρ_apply (g : G) (m : M) :
+@[simp] lemma ofDiscreteModule_ρ_apply_apply (g : G) (m : M) :
     (ofDiscreteModule R G M).ρ g m = g • m := (rfl)
 
 end OfDiscreteModule
@@ -190,7 +190,7 @@ discrete modules is every discrete object, smooth or not
     ofDiscreteModule R G X.V = X := by
   have h : (ofDiscreteModule R G X.V).ρ = X.ρ :=
     DFunLike.ext _ _ fun g ↦ ContinuousLinearMap.ext fun (x : X.V) ↦
-      (ofDiscreteModule_ρ_apply g x).trans (TopRep.distribMulAction_smul X g x)
+      (ofDiscreteModule_ρ_apply_apply g x).trans (TopRep.distribMulAction_smul X g x)
   -- The two objects have the same underlying module by construction, and `X` is `TopRep.of X.ρ`
   -- by structure eta, so they agree as soon as their operators do.
   exact congrArg (TopRep.of (X := X.V)) h
