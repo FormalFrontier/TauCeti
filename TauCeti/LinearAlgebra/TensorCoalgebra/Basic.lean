@@ -106,12 +106,6 @@ theorem component_of_of_ne {m n : {n : ℕ // 0 < n}} (h : m ≠ n) (x : TensorP
     component R M n (of R M m x) = 0 := by
   simp [component, of, DirectSum.component.of, h]
 
-/-- Projecting an included tensor power returns the tensor power itself at the matching length
-and zero at every other length. -/
-theorem component_of' (m n : {n : ℕ // 0 < n}) (x : TensorPower R m.1 M) :
-    component R M n (of R M m x) = if h : m = n then h ▸ x else 0 := by
-  simp [component, of, DirectSum.component.of]
-
 /-- Deconcatenation on words of one fixed length, summed over all nontrivial cuts. -/
 noncomputable def deconcatenationComponent (n : {n : ℕ // 0 < n}) :
     TensorPower R n.1 M →ₗ[R] ReducedTensorWords R M ⊗[R] ReducedTensorWords R M :=
