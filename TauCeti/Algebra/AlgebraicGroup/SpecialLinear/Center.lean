@@ -55,15 +55,15 @@ namespace TauCeti
 
 namespace SpecialLinear
 
-universe u
+universe u v w
 
 variable {R : Type u} [CommRing R]
 variable (n : ℕ)
 
-/-- The center of the special linear group in positive rank is the group of `n`th roots of
-unity. This specializes Mathlib's finite-index-type equivalence to matrices indexed by `Fin n`. -/
+/-- For `0 < n`, the center of the special linear group is the group of `n`th roots of unity.
+This specializes Mathlib's finite-index-type equivalence to matrices indexed by `Fin n`. -/
 noncomputable def centerMulEquivRootsOfUnity (hn : 0 < n)
-    (A : Type u) [CommRing A] :
+    (A : Type v) [CommRing A] :
     Subgroup.center (Matrix.SpecialLinearGroup (Fin n) A) ≃* rootsOfUnity n A :=
   (Matrix.SpecialLinearGroup.center_equiv_rootsOfUnity' (R := A)
     (⟨0, hn⟩ : Fin n)).trans <| MulEquiv.subgroupCongr <| by
@@ -71,7 +71,7 @@ noncomputable def centerMulEquivRootsOfUnity (hn : 0 < n)
 
 /-- The inverse center equivalence sends a root of unity to its scalar matrix. -/
 theorem coe_centerMulEquivRootsOfUnity_symm_apply (hn : 0 < n)
-    (A : Type u) [CommRing A] (ζ : rootsOfUnity n A) :
+    (A : Type v) [CommRing A] (ζ : rootsOfUnity n A) :
     (((centerMulEquivRootsOfUnity n hn A).symm ζ :
         Matrix.SpecialLinearGroup (Fin n) A) : Matrix (Fin n) (Fin n) A) =
       Matrix.scalar (Fin n) ((ζ : Aˣ) : A) := by
@@ -90,7 +90,7 @@ theorem coe_centerMulEquivRootsOfUnity_symm_apply (hn : 0 < n)
   rfl
 
 /-- Send a roots-of-unity point to the corresponding scalar special-linear point. -/
-noncomputable def scalarRootsPoints (hn : 0 < n) {A : Type u} [CommRing A] [Algebra R A] :
+noncomputable def scalarRootsPoints (hn : 0 < n) {A : Type v} [CommRing A] [Algebra R A] :
     WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R n →ₐ[R] A) :=
   (TauCeti.SpecialLinear.pointsMulEquiv (R := R) (A := A) n).symm.toMonoidHom.comp
@@ -102,7 +102,7 @@ noncomputable def scalarRootsPoints (hn : 0 < n) {A : Type u} [CommRing A] [Alge
 attached to a root of unity. -/
 @[simp]
 theorem pointsMulEquiv_scalarRootsPoints (hn : 0 < n)
-    {A : Type u} [CommRing A] [Algebra R A]
+    {A : Type v} [CommRing A] [Algebra R A]
     (f : WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A)) :
     TauCeti.SpecialLinear.pointsMulEquiv (R := R) (A := A) n
         (scalarRootsPoints n hn f) =
@@ -112,7 +112,7 @@ theorem pointsMulEquiv_scalarRootsPoints (hn : 0 < n)
 
 /-- The central special-linear matrix attached to a root of unity is a scalar matrix. -/
 theorem coe_pointsMulEquiv_scalarRootsPoints (hn : 0 < n)
-    {A : Type u} [CommRing A] [Algebra R A]
+    {A : Type v} [CommRing A] [Algebra R A]
     (f : WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A)) :
     ((TauCeti.SpecialLinear.pointsMulEquiv (R := R) (A := A) n
         (scalarRootsPoints n hn f) :
@@ -122,9 +122,9 @@ theorem coe_pointsMulEquiv_scalarRootsPoints (hn : 0 < n)
   rw [pointsMulEquiv_scalarRootsPoints]
   exact coe_centerMulEquivRootsOfUnity_symm_apply n hn A _
 
-/-- The scalar roots-of-unity map is injective in positive rank. -/
+/-- For `0 < n`, the scalar roots-of-unity map is injective. -/
 theorem scalarRootsPoints_injective (hn : 0 < n)
-    {A : Type u} [CommRing A] [Algebra R A] :
+    {A : Type v} [CommRing A] [Algebra R A] :
     Function.Injective (scalarRootsPoints (R := R) n hn (A := A)) := by
   intro f g hfg
   apply (RootsOfUnityGroup.pointsMulEquiv (R := R) (A := A) n).injective
@@ -136,7 +136,7 @@ theorem scalarRootsPoints_injective (hn : 0 < n)
 
 /-- The scalar roots-of-unity construction is natural in the value algebra. -/
 theorem mapValue_scalarRootsPoints (hn : 0 < n)
-    {A B : Type u} [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
+    {A : Type v} {B : Type w} [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
     (φ : A →ₐ[R] B)
     (f : WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A)) :
     AlgHom.mapValue (H := coordinateHopfAlgebra R n) φ (scalarRootsPoints n hn f) =
@@ -145,7 +145,6 @@ theorem mapValue_scalarRootsPoints (hn : 0 < n)
   apply (SpecialLinear.pointsMulEquiv (R := R) (A := B) n).injective
   have hmap := SpecialLinear.pointsMulEquiv_mapValue (R := R) (A := A) (B := B) n φ
     (scalarRootsPoints n hn f)
-  rw [HopfAlgebra.mapPoints_apply, CommAlgCat.hom_ofHom, ← AlgHom.mapValue_apply] at hmap
   rw [hmap, pointsMulEquiv_scalarRootsPoints]
   apply SetCoe.ext
   ext i j
@@ -191,7 +190,15 @@ noncomputable def scalarRootsCenterHom (hn : 0 < n) (A : CommAlgCat.{u} k) :
     (CommHopfAlgCat.centerPointsSubgroup (coordinateHopfAlgebra k n) A)
     (scalarRootsPoints_mem_centerPointsSubgroup n hn)
 
-/-- In positive rank, scalar roots of unity give every universally central point of `SLₙ`. -/
+/-- The value of `scalarRootsCenterHom` is the underlying scalar special-linear point. -/
+@[simp]
+theorem coe_scalarRootsCenterHom_apply (hn : 0 < n) (A : CommAlgCat.{u} k)
+    (f : HopfAlgebra.points (R := k)
+      (H := MonoidAlgebra k (Multiplicative (ZMod n))) A) :
+    (scalarRootsCenterHom n hn A f).1 = scalarRootsPoints n hn f := by
+  rfl
+
+/-- For `0 < n`, scalar roots of unity give every universally central point of `SLₙ`. -/
 theorem scalarRootsCenterHom_bijective (hn : 0 < n) (A : CommAlgCat.{u} k) :
     Function.Bijective (scalarRootsCenterHom n hn A) := by
   constructor
@@ -217,8 +224,7 @@ theorem scalarRootsCenterHom_bijective (hn : 0 < n) (A : CommAlgCat.{u} k) :
       centerMulEquivRootsOfUnity n hn A c
     refine ⟨(RootsOfUnityGroup.pointsMulEquiv (R := k) (A := A) n).symm ζ, ?_⟩
     apply Subtype.ext
-    change scalarRootsPoints n hn
-      ((RootsOfUnityGroup.pointsMulEquiv (R := k) (A := A) n).symm ζ) = g.1
+    rw [coe_scalarRootsCenterHom_apply]
     apply (SpecialLinear.pointsMulEquiv (R := k) (A := A) n).injective
     rw [pointsMulEquiv_scalarRootsPoints, MulEquiv.apply_symm_apply]
     exact congrArg Subtype.val
@@ -253,11 +259,19 @@ noncomputable def scalarRootsCenterNatIso (hn : 0 < n) :
     intro A B φ
     ext f
     apply Subtype.ext
-    change scalarRootsPoints n hn
-        (AlgHom.mapValue (H := MonoidAlgebra k (Multiplicative (ZMod n))) φ.hom f) =
+    change ((scalarRootsCenterHom n hn B)
+        (AlgHom.mapValue (H := MonoidAlgebra k (Multiplicative (ZMod n))) φ.hom f)).1 =
       AlgHom.mapValue (H := coordinateHopfAlgebra k n) φ.hom
-        (scalarRootsPoints n hn f)
-    exact (mapValue_scalarRootsPoints n hn φ.hom f).symm)
+        ((scalarRootsCenterHom n hn A f).1)
+    calc
+      _ = scalarRootsPoints n hn
+          (AlgHom.mapValue (H := MonoidAlgebra k (Multiplicative (ZMod n))) φ.hom f) :=
+        coe_scalarRootsCenterHom_apply n hn B _
+      _ = AlgHom.mapValue (H := coordinateHopfAlgebra k n) φ.hom
+          (scalarRootsPoints n hn f) :=
+        (mapValue_scalarRootsPoints n hn φ.hom f).symm
+      _ = _ := congrArg (AlgHom.mapValue (H := coordinateHopfAlgebra k n) φ.hom)
+        (coe_scalarRootsCenterHom_apply n hn A f).symm)
 
 /-- The natural isomorphism sends a `μₙ`-point to its scalar matrix. -/
 @[simp]
@@ -287,7 +301,7 @@ noncomputable def scalarRootsCenterCoordinatePointsNatIso (hn : 0 < n) :
       (coordinateHopfAlgebra k n)
       (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))).symm
 
-/-- The coordinate Hopf algebra of the center of positive-rank `SLₙ` is the group algebra of
+/-- For `0 < n`, the coordinate Hopf algebra of the center of `SLₙ` is the group algebra of
 `Multiplicative (ZMod n)`, the coordinate Hopf algebra of `μₙ`. -/
 noncomputable def centerCoordinateIso (hn : 0 < n) :
     CommHopfAlgCat.quotient (coordinateHopfAlgebra k n)
