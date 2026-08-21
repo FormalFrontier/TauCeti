@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
-public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
 
 /-!
 # Weights of the split torus as characters

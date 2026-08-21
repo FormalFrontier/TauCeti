@@ -60,6 +60,13 @@ elaborate there anyway. Dot notation on `hπ` works under either namespace; the 
 forced by the lint rule and matches `TauCeti.MultiCoupling`.
 
 This is Layer 0, item 1 of the optimal-transport roadmap.
+
+## References
+
+* C. Villani, *Optimal Transport: Old and New*, Grundlehren 338, 2009, Chapter 1
+  ("Couplings and changes of variables"), Definition 1.1, which is this relation for two
+  probability measures. `TauCeti.IsCoupling` states it for arbitrary measures, so the
+  probability case is the bundled `TauCeti.Coupling`.
 -/
 
 public section

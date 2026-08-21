@@ -28,7 +28,7 @@ on the whole of its source.  Nondegeneracy is the one from
 its dual, is a linear homeomorphism.  In finite dimensions that is the classical condition that
 the Hessian be a nondegenerate bilinear form, so this is the classical Morse lemma; in infinite
 dimensions it is the strong nondegeneracy of Morse theory on Banach and Hilbert manifolds, and
-the statement is the Morse--Palais lemma.
+the statement is the Morse--Palais lemma of Palais (1969).
 
 The proof is Palais's.  Write `f (x + v) - f x - fderiv ℝ f x v = 2⁻¹ * B v v v`, where `B v` is
 the **averaged Hessian** `TauCeti.hessianAverage f x v`, the average of the second derivative
@@ -76,6 +76,9 @@ is not proved.
 
 ## References
 
+* R. S. Palais, *The Morse lemma for Banach spaces*, Bull. Amer. Math. Soc. **75** (1969),
+  968--971, for the statement proved here: the theorem below asks only that `E` be a Banach
+  space, which is that note's setting rather than the Hilbert one.
 * R. S. Palais, *Morse theory on Hilbert manifolds*, Topology **2** (1963), 299--340, Section 2,
   for the proof by an operator square root used here.
 * J. Milnor, *Morse Theory*, Annals of Mathematics Studies 51, 1963, Lemma 2.2, for the classical
