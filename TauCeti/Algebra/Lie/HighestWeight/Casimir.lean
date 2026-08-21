@@ -54,6 +54,8 @@ submodule by centrality and it contains the generator.
   vector of weight `λ` to `(⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩) • v`.
 * `TauCeti.casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top`: on a highest weight module
   the Casimir element acts by that scalar on every vector.
+* `TauCeti.invForm_add_weylVector_sub_invForm_weylVector`: the scalar expanded as
+  `⟨λ, λ⟩ + ∑_{α > 0} ⟨λ, α⟩`, the shape in which its sign is read off.
 
 ## Implementation notes
 
@@ -370,7 +372,7 @@ private theorem representation_casimirElement_apply_eq_sum
 /-- **The Casimir scalar, expanded.** `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩` is `⟨λ, λ⟩` plus the sum of the
 pairings of `λ` with the positive roots, the cross terms of the square contributing
 `2⟨λ, ρ⟩ = ⟨λ, 2ρ⟩`. -/
-private theorem invForm_add_weylVector_sub_invForm_weylVector :
+theorem invForm_add_weylVector_sub_invForm_weylVector :
     invForm (lam + weylVector (IsKilling.rootSystem H) base)
           (lam + weylVector (IsKilling.rootSystem H) base) -
         invForm (weylVector (IsKilling.rootSystem H) base)
