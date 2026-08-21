@@ -101,6 +101,7 @@ theorem restrict_toEquiv_apply (ω : Conjugation W) {U : Submodule ℂ W}
 /-- Conjugating inside a stable subspace is conjugating in the ambient space: the image of an
 intersection with the subspace under the restricted conjugation is the intersection with the
 conjugate subspace. -/
+@[simp]
 theorem map_restrict_comap_subtype (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (A : Submodule ℂ W) :
     (A.comap U.subtype).map (ω.restrict hU).toEquiv.toLinearMap =

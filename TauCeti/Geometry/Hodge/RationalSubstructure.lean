@@ -111,6 +111,7 @@ theorem conjugation_toEquiv_apply (W : RationalHodgeSubstructure hℚ hs) (x : W
   simp [conjugation]
 
 /-- Conjugating inside the complexification is conjugating in the ambient complexification. -/
+@[simp]
 theorem map_comap_subtype_conjugation (W : RationalHodgeSubstructure hℚ hs)
     (A : Submodule ℂ Vℂ) :
     (A.comap W.WC.subtype).map W.conjugation.toEquiv.toLinearMap =
@@ -139,7 +140,8 @@ noncomputable def hodgeStructure (W : RationalHodgeSubstructure hℚ hs) :
     exact ⟨p, by rw [hp]; exact Submodule.comap_subtype_eq_top.2 le_top⟩
   opposed p := by
     rw [W.map_comap_subtype_conjugation, ← hs.conjF_def]
-    exact isCompl_comap_subtype (hs.isCompl_F_conjF p).disjoint (W.WC_le_inf_F_sup_inf_conjF p)
+    exact TauCeti.Submodule.isCompl_comap_subtype (hs.isCompl_F_conjF p).disjoint
+      (W.WC_le_inf_F_sup_inf_conjF p)
 
 /-- The induced Hodge filtration is the ambient filtration intersected with the
 complexification. -/

@@ -18,8 +18,8 @@ not a consequence of spanning the ambient module.
 
 ## Main results
 
-* `TauCeti.isCompl_comap_subtype`: a disjoint pair of submodules whose intersections with `U` span
-  `U` restricts to a complementary pair of submodules of `U`.
+* `TauCeti.Submodule.isCompl_comap_subtype`: a disjoint pair of submodules whose intersections with
+  `U` span `U` restricts to a complementary pair of submodules of `U`.
 -/
 
 public section
@@ -28,7 +28,9 @@ namespace TauCeti
 
 universe u v
 
-variable {R : Type u} {M : Type v} [Ring R] [AddCommGroup M] [Module R M]
+namespace Submodule
+
+variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
 
 /-- A disjoint pair of submodules whose intersections with a subspace `U` span `U` cuts `U` into a
 complementary pair of submodules. -/
@@ -43,5 +45,7 @@ theorem isCompl_comap_subtype {U A B : Submodule R M} (hAB : Disjoint A B)
     rw [Submodule.map_sup, Submodule.map_comap_subtype, Submodule.map_comap_subtype,
       Submodule.map_subtype_top]
     exact le_antisymm (sup_le inf_le_left inf_le_left) hU
+
+end Submodule
 
 end TauCeti
