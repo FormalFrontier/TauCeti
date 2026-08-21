@@ -142,7 +142,8 @@ finite-type affine group. -/
 theorem isUnipotentRadicalCandidate_augmentation
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     IsUnipotentRadicalCandidate H (augmentation k H) := by
-  refine ⟨(CommHopfAlgCat.isCentral_augmentation H.obj).isNormal, ?_, ?_⟩
+  refine IsUnipotentRadicalCandidate.mk
+    (CommHopfAlgCat.isCentral_augmentation H.obj).isNormal ?_ ?_
   · exact (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
       ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
         (_root_.CommHopfAlgCat.{u} k)).mapIso (quotientAugmentationIso H).symm)
