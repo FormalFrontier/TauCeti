@@ -63,11 +63,19 @@ open scoped _root_.Matrix
 /-- The squared lengths of the forty-eight roots of the pinned `F₄` datum, in the index order of
 `TauCeti.DynkinType.f4Root` and normalised as `TauCeti.DynkinType.rootLength` normalises the
 simple ones: `1` on a short root and `2` on a long one. -/
-@[expose] def f4Length : Fin 48 → ℤ :=
+def f4Length : Fin 48 → ℤ :=
   ![2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1,
     1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 2, 2,
     2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1,
     1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 2, 2]
+
+/-- The explicit squared lengths of the roots in the pinned `F₄` table. -/
+theorem f4Length_def :
+    f4Length =
+      ![2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1,
+        1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 2, 2,
+        2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1,
+        1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 2, 2] := (rfl)
 
 /-- On the four simple roots the length table is `TauCeti.DynkinType.rootLength`: the first two
 Bourbaki nodes of `F₄` are long and the last two are short. -/

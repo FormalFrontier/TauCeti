@@ -145,10 +145,12 @@ of the diagram**, namely reversal of the four-node chain. -/
 
 private theorem f4SpecialIsogenyMatrix_mulVec_f4Root (i : Fin 48) :
     f4SpecialIsogenyMatrix *ᵥ f4Root i = f4Length i • f4Root (f4SpecialIsogenyIndex i) := by
+  rw [f4Length_def]
   decide +revert
 
 private theorem f4SpecialIsogenyMatrix_transpose_mulVec_f4Coroot (i : Fin 48) :
     f4SpecialIsogenyMatrixᵀ *ᵥ f4Coroot (f4SpecialIsogenyIndex i) = f4Length i • f4Coroot i := by
+  rw [f4Length_def]
   decide +revert
 
 /-- **The special matrix carries every root of the pinned datum to its indexed image with the
@@ -224,16 +226,19 @@ which it multiplies. -/
 /-- The exponents at a root index and its image multiply to the characteristic `2`. -/
 @[simp] theorem f4Length_mul_f4Length_specialIsogenyIndex (i : Fin 48) :
     f4Length i * f4Length (f4SpecialIsogenyIndex i) = 2 := by
+  rw [f4Length_def]
   decide +revert
 
 /-- **The special permutation exchanges long roots with short ones.** -/
 @[simp] theorem f4Length_specialIsogenyIndex_eq_one_iff (i : Fin 48) :
     f4Length (f4SpecialIsogenyIndex i) = 1 ↔ f4Length i = 2 := by
+  rw [f4Length_def]
   decide +revert
 
 private theorem f4Length_mul_dotProduct_specialIsogenyIndex (i j : Fin 48) :
     f4Length i * (f4Root (f4SpecialIsogenyIndex i) ⬝ᵥ f4Coroot (f4SpecialIsogenyIndex j)) =
       f4Length j * (f4Root i ⬝ᵥ f4Coroot j) := by
+  rw [f4Length_def]
   decide +revert
 
 /-- **The Cartan integers transform by the rule a special isogeny forces.** Writing `α'` for the
