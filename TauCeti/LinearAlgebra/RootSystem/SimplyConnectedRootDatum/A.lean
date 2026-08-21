@@ -797,7 +797,7 @@ theorem typeAGraphAut_ne_one {n : ℕ} (hn : 2 ≤ n) : typeAGraphAut n ≠ 1 :=
 /-- **The graph automorphism preserves the pinned base.** Its permutation of root indices maps the
 first `n` indices onto themselves, so the automorphism is a symmetry of the pinning and not merely
 of the root system. -/
-theorem support_map_typeASimplyConnectedBase_typeAGraphAut (n : ℕ) :
+@[simp] theorem support_map_typeASimplyConnectedBase_typeAGraphAut (n : ℕ) :
     ((typeASimplyConnectedBase n).map (typeAGraphAut n)).support =
       (typeASimplyConnectedBase n).support := by
   classical
