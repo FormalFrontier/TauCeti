@@ -51,8 +51,6 @@ and nonzero.
 
 * `TauCeti.invForm_eq_sum_root`: the invariant form is the sum over the roots of the products of
   the coordinates the roots define.
-* `TauCeti.IsIntegralWeight`: a weight takes integer values on every coroot, with
-  `TauCeti.isIntegralWeight_iff` unfolding it.
 * `TauCeti.exists_pos_rat_invForm_root_self`: a root has positive rational length.
 * `TauCeti.IsIntegralWeight.exists_pos_rat_invForm_self`: the invariant form of a nonzero integral
   weight with itself is a positive rational.
@@ -71,7 +69,7 @@ namespace TauCeti
 
 open Finset LieAlgebra LieAlgebra.IsKilling LieModule Module
 
-universe u v w
+universe u v
 
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [IsKilling K L] [FiniteDimensional K L]
@@ -79,23 +77,19 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 
 /-! ### The invariant form as a sum over the roots -/
 
-/-- **The restricted Killing form is the sum over the roots**: `κ(x, y) = ∑_α α x * α y`. This is
-`LieAlgebra.IsKilling.restrict_killingForm_eq_sum` read as an identity of scalars. -/
-theorem traceForm_eq_sum_root (x y : H) :
-    traceForm K H L x y = ∑ α ∈ H.root, (α : Module.Dual K H) x * (α : Module.Dual K H) y := by
-  rw [show traceForm K H L = _ from
-    (restrict_killingForm (R := K) (L := L) H).symm.trans restrict_killingForm_eq_sum]
-  simp
-
 /-- **The invariant form is the sum over the roots**: `⟨a, b⟩ = ∑_α ⟨α, a⟩ ⟨α, b⟩`. The roots
 supply a coordinate system in which the form is a sum of products of coordinates, which is all that
 positivity needs. -/
 theorem invForm_eq_sum_root (a b : Module.Dual K H) :
     invForm a b =
       ∑ α ∈ H.root, invForm (α : Module.Dual K H) a * invForm (α : Module.Dual K H) b := by
-  rw [invForm_apply_apply_eq_traceForm, traceForm_eq_sum_root]
+  rw [invForm_apply_apply_eq_traceForm, ← restrict_killingForm K L H,
+    restrict_killingForm_eq_sum]
+  simp only [LinearMap.sum_apply, LinearMap.smulRight_apply, LinearMap.smul_apply, smul_eq_mul,
+    Weight.toLinear_apply]
   exact Finset.sum_congr rfl fun α _ ↦ by
     rw [invForm_apply_apply (α : Module.Dual K H) a, invForm_apply_apply (α : Module.Dual K H) b]
+    simp only [Weight.toLinear_apply]
 
 /-- **A weight orthogonal to every root vanishes.** This is the span of the roots, in the form in
 which the sum-over-roots identity delivers it. -/
@@ -113,11 +107,12 @@ theorem exists_int_traceForm_coroot_self (α : Weight K H L) :
     ∃ n : ℤ, 0 ≤ n ∧ traceForm K H L (coroot α) (coroot α) = (n : K) := by
   refine ⟨∑ β ∈ H.root, (chainBotCoeff α β - chainTopCoeff α β) ^ 2,
     Finset.sum_nonneg fun _ _ ↦ sq_nonneg _, ?_⟩
-  rw [traceForm_eq_sum_root]
+  rw [← restrict_killingForm K L H, restrict_killingForm_eq_sum]
+  simp only [LinearMap.sum_apply, LinearMap.smulRight_apply, LinearMap.smul_apply, smul_eq_mul,
+    Weight.toLinear_apply]
   push_cast
   refine Finset.sum_congr rfl fun β _ ↦ ?_
-  rw [show (β : Module.Dual K H) (coroot α) =
-    ((chainBotCoeff α β - chainTopCoeff α β : ℤ) : K) from apply_coroot_eq_cast α β]
+  rw [apply_coroot_eq_cast α β]
   push_cast
   ring
 
@@ -143,31 +138,12 @@ theorem exists_pos_rat_invForm_root_self {α : Weight K H L} (hα : α.IsNonZero
 
 /-! ### Integral weights -/
 
-/-- A weight is **integral** when it takes integer values on every coroot.
-
-The weights of a finite-dimensional module are integral (`TauCeti.isIntegralWeight_of_weight`), and
-so are the dominant integral weights of the highest-weight classification; this is the hypothesis
-under which the invariant form is positive definite. -/
-def IsIntegralWeight (lam : Module.Dual K H) : Prop :=
-  ∀ α : Weight K H L, ∃ n : ℤ, lam (coroot α) = (n : K)
-
-omit [CharZero K] [IsTriangularizable K H L] in
-/-- The defining condition on an integral weight. -/
-theorem isIntegralWeight_iff {lam : Module.Dual K H} :
-    IsIntegralWeight lam ↔ ∀ α : Weight K H L, ∃ n : ℤ, lam (coroot α) = (n : K) :=
-  Iff.rfl
-
-/-- **The weights of a finite-dimensional module are integral.** -/
-theorem isIntegralWeight_of_weight {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M]
-    [LieModule K L M] [FiniteDimensional K M] (χ : Weight K H M) :
-    IsIntegralWeight (χ : Module.Dual K H) :=
-  fun α ↦ exists_int_apply_coroot χ α
-
 /-- **An integral weight has rational coordinates**: `⟨lam, α⟩ = ⟨α, α⟩ lam(α^∨) / 2` is rational,
 both factors being so. -/
 theorem IsIntegralWeight.exists_rat_invForm_root {lam : Module.Dual K H}
     (hlam : IsIntegralWeight lam) (α : Weight K H L) :
     ∃ q : ℚ, invForm lam (α : Module.Dual K H) = (q : K) := by
+  unfold IsIntegralWeight at hlam
   rcases eq_or_ne (α : Module.Dual K H) 0 with h | h
   · exact ⟨0, by rw [h, map_zero, Rat.cast_zero]⟩
   have hα : α.IsNonZero := fun hz ↦ h (Weight.coe_toLinear_eq_zero_iff.mpr hz)

@@ -22,8 +22,8 @@ element `Ω` acts on a highest weight module of weight `lam`, namely
 
 This file proves that this scalar is **nonzero** as soon as `lam` is a nonzero dominant integral
 weight (`TauCeti.casimirScalar_ne_zero`), while `Ω` acts by zero on a module with trivial action
-(`TauCeti.representation_casimirElement_eq_zero_of_isTrivial`). Together these two statements are
-what makes `Ω` separate the trivial module from the nontrivial finite-dimensional irreducibles,
+(`TauCeti.representation_casimirElement_apply_eq_zero_of_isTrivial`). Together these statements make
+`Ω` separate the trivial module from the nontrivial finite-dimensional irreducibles,
 the mechanism behind Weyl's complete reducibility theorem: on an extension of the trivial module
 by a nontrivial irreducible, the Casimir element acts by two different scalars on the two pieces,
 so its kernel splits the extension.
@@ -41,20 +41,19 @@ the root length being positive and `lam(α^∨)` a natural number by dominance. 
 plus nonnegative rationals is nonzero, and a nonzero rational stays nonzero in a field of
 characteristic zero.
 
-Dominance is essential, not decoration: for a general integral `lam` the two summands have opposite
-signs and `c(lam)` really can vanish, as it does at every `lam` on the shifted cone
-`⟨lam + ρ, lam + ρ⟩ = ⟨ρ, ρ⟩`.
+Dominance is essential, not decoration: for a general integral `lam` the two summands can have
+opposite signs and `c(lam)` can vanish. For example, `lam = -2ρ` is integral and satisfies
+`lam + ρ = -ρ`, hence `c(lam) = 0`.
 
 ## Main results
 
-* `TauCeti.IsDominantIntegral.isIntegralWeight`: a dominant integral weight is integral.
 * `TauCeti.casimirScalar_ne_zero` and `TauCeti.casimirScalar_eq_zero_iff`: the Casimir scalar of a
   dominant integral weight vanishes exactly at the zero weight.
 * `TauCeti.casimir_apply_ne_zero_of_isHighestWeightVector_of_lieSpan_eq_top`: on a highest weight
   module with nonzero dominant integral highest weight, the Casimir element kills no nonzero
   vector.
-* `TauCeti.representation_casimirElement_eq_zero_of_isTrivial`: on a module with trivial action the
-  Casimir element acts by zero.
+* `TauCeti.representation_casimirElement_apply_eq_zero_of_isTrivial`: on a module with trivial
+  action the Casimir element acts by zero.
 
 ## References
 
@@ -76,35 +75,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
   {base : (IsKilling.rootSystem H).Base} {lam : Module.Dual K H}
-
-/-! ### Dominant integral weights are integral -/
-
-/-- **A dominant integral weight is integral**: it takes integer values on every coroot, not just
-natural values on the simple ones. A coroot is the coroot of a positive root or the negative of
-one, and on a positive coroot dominance gives a natural value. -/
-theorem IsDominantIntegral.isIntegralWeight (hlam : IsDominantIntegral base lam) :
-    IsIntegralWeight lam := by
-  rw [isIntegralWeight_iff]
-  intro α
-  rcases eq_or_ne (α : Module.Dual K H) 0 with h | h
-  · refine ⟨0, ?_⟩
-    rw [show coroot α = 0 from coroot_eq_zero_iff.mpr (Weight.coe_toLinear_eq_zero_iff.mp h)]
-    simp
-  have hα : α.IsNonZero := fun hz ↦ h (Weight.coe_toLinear_eq_zero_iff.mpr hz)
-  obtain ⟨i, rfl⟩ : ∃ i : H.root, (i : Weight K H L) = α :=
-    ⟨⟨α, by simpa [LieSubalgebra.root] using hα⟩, rfl⟩
-  rcases mem_posRoots_or_mem_negRoots (IsKilling.rootSystem H) base i with hi | hi
-  · obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi
-    exact ⟨n, by simpa using hn⟩
-  · have hi' : -i ∈ posRoots (IsKilling.rootSystem H) base := by
-      rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg]
-      exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots (IsKilling.rootSystem H) base i).mpr
-        hi
-    obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi'
-    refine ⟨-n, ?_⟩
-    rw [IsKilling.rootSystem_coroot_apply, IsKilling.val_neg_root, coroot_neg, map_neg] at hn
-    push_cast
-    linear_combination -hn
 
 /-! ### The Casimir scalar of a dominant integral weight -/
 
@@ -185,7 +155,8 @@ theorem casimir_apply_ne_zero_of_isHighestWeightVector_of_lieSpan_eq_top {v : M}
 omit [CharZero K] in
 /-- **The Casimir element acts by zero on a module with trivial action.** Every summand
 `xᵢ yᵢ` of `Ω` acts by a double bracket, and brackets vanish. -/
-theorem representation_casimirElement_eq_zero_of_isTrivial [LieModule.IsTrivial L M] (m : M) :
+theorem representation_casimirElement_apply_eq_zero_of_isTrivial [LieModule.IsTrivial L M]
+    (m : M) :
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m = 0 := by
   classical
   rw [casimirElement_eq_sum (Module.finBasis K L), map_sum, LinearMap.sum_apply]

@@ -15,8 +15,9 @@ public section
 
 Let `L` be a finite-dimensional Lie algebra with non-degenerate Killing form over a field of
 characteristic zero, let `H` be a splitting Cartan subalgebra, and let `M` be a finite-dimensional
-`L`-module. This file proves that the weights of `M` are **integral**: for every weight `χ` of `M`
-and every root `α`, the scalar `χ (α^∨)` is an integer.
+`L`-module. This file defines when a linear form is an **integral weight** and proves that module
+weights are integral: for every weight `χ` of `M` and every root `α`, the scalar `χ (α^∨)` is an
+integer.
 
 The proof here is the standard reduction to rank one that organises the whole highest-weight
 theory. A nonzero root `α` carries an `sl₂` triple `⟨eₐ, hₐ, fₐ⟩` with `eₐ ∈ Lα`, `fₐ ∈ L₍₋α₎` and,
@@ -42,10 +43,13 @@ root is what forces its weight to be dominant integral.
 
 ## Main results
 
+* `TauCeti.IsIntegralWeight`: a linear form takes integer values on every coroot.
 * `TauCeti.exists_int_of_hasEigenvalue_coroot`: every eigenvalue of a coroot `α^∨` acting on a
   finite-dimensional module is an integer.
 * `TauCeti.exists_int_apply_coroot`: **integrality of weights.** For a weight `χ` of a
   finite-dimensional module and a root `α`, the value `χ (α^∨)` is an integer.
+* `TauCeti.isIntegralWeight_of_weight`: a weight of a finite-dimensional module is an integral
+  weight.
 * `TauCeti.exists_int_apply_of_mem_span_coroot`: a weight of a finite-dimensional module is
   `ℤ`-valued on the whole coroot lattice, the `ℤ`-span of the coroots.
 * `TauCeti.exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero` and
@@ -116,6 +120,10 @@ theorem genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast {α : Weight K H L}
 
 /-! ### Integrality of weights -/
 
+/-- A weight is **integral** when it takes integer values on every coroot. -/
+@[expose] def IsIntegralWeight (lam : Module.Dual K H) : Prop :=
+  ∀ α : Weight K H L, ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K)
+
 /-- **Integrality of the weights of a finite-dimensional module.** For every weight `χ` of a
 finite-dimensional module `M` over a Killing-semisimple Lie algebra and every root `α`, the value
 `χ (α^∨)` is an integer.
@@ -129,6 +137,11 @@ dominance conditions of the highest-weight classification use. -/
 theorem exists_int_apply_coroot (χ : Weight K H M) (α : Weight K H L) :
     ∃ z : ℤ, χ (IsKilling.coroot α) = (z : K) :=
   exists_int_of_hasEigenvalue_coroot (χ.hasEigenvalueAt _)
+
+/-- **The weights of a finite-dimensional module are integral.** -/
+theorem isIntegralWeight_of_weight (χ : Weight K H M) :
+    IsIntegralWeight (χ : Module.Dual K H) :=
+  fun α ↦ exists_int_apply_coroot χ α
 
 /-- **A weight is `ℤ`-valued on the coroot lattice.** The coroots of a Killing-semisimple Lie
 algebra span a `ℤ`-lattice in the Cartan subalgebra, and every weight of a finite-dimensional
