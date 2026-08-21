@@ -138,6 +138,12 @@ restriction of a function analytic on a neighbourhood of every point of `U`. -/
 def IsHolomorphicSection {U : Opens (TopCat.of ℂ)} (f : U → E) : Prop :=
   ∃ g : ℂ → E, AnalyticOnNhd ℂ g U ∧ ∀ x : U, f x = g x
 
+/-- **Being a holomorphic section is being the restriction of a function analytic on a
+neighbourhood of every point.** `TauCeti.IsHolomorphicSection` does not expose its body, so this
+is how a consumer of the sheaf introduces or eliminates it. -/
+theorem isHolomorphicSection_iff {U : Opens (TopCat.of ℂ)} {f : U → E} :
+    IsHolomorphicSection f ↔ ∃ g : ℂ → E, AnalyticOnNhd ℂ g U ∧ ∀ x : U, f x = g x := Iff.rfl
+
 /-- Being holomorphic is stable under restriction to a smaller open set. -/
 theorem IsHolomorphicSection.mono {U V : Opens (TopCat.of ℂ)} (h : U ≤ V) {f : V → E}
     (hf : IsHolomorphicSection f) :
