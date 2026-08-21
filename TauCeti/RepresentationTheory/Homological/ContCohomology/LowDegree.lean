@@ -390,9 +390,9 @@ end Inverse
 
 section Continuity
 
-variable {G : Type u} [Monoid G] [TopologicalSpace G]
+variable {G : Type u} [TopologicalSpace G]
   {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DistribMulAction G M] [ContinuousSMul G M]
+  [DistribSMul G M] [ContinuousSMul G M]
 
 /-- Every `1`-coboundary is continuous. -/
 theorem continuous_d0 (m : M) : Continuous (d0 G M m) :=
@@ -406,13 +406,23 @@ theorem B1_le_C1 : B1 G M ≤ C1 G M := by
   obtain ⟨m, rfl⟩ := AddMonoidHom.mem_range.1 hf
   exact continuous_d0 m
 
+end Continuity
+
+section ContinuityAction
+
+variable {G : Type u} [Monoid G] [TopologicalSpace G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M] [ContinuousSMul G M]
+
+variable (G M)
+
 /-- `d ∘ d = 0` in the form the degree-`1` quotient needs. -/
 theorem B1_le_Z1 : B1 G M ≤ Z1 G M := by
   intro f hf
   obtain ⟨m, rfl⟩ := AddMonoidHom.mem_range.1 hf
   exact mem_Z1_iff.2 ⟨continuous_d0 m, mem_ker_d1_iff.1 (AddMonoidHom.mem_ker.2 (d1_d0_apply m))⟩
 
-end Continuity
+end ContinuityAction
 
 section ContinuityMul
 
