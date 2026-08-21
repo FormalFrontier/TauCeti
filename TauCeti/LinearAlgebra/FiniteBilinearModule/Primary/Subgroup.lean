@@ -22,7 +22,7 @@ primes different from `p` are automatically orthogonal.
 
 ## Main results
 
-* `TauCeti.FiniteBilinearModule.primaryPart`: the part of a subgroup in one primary component.
+* `TauCeti.AddSubgroup.primaryPart`: the part of a subgroup in one primary component.
 * `TauCeti.FiniteBilinearModule.isIsotropic_iff_primaryPart`: bilinear isotropy can be checked on
   every primary part.
 * `TauCeti.FiniteQuadraticModule.isIsotropic_iff_primaryPart`: quadratic isotropy can be checked on
@@ -43,20 +43,26 @@ public section
 
 namespace TauCeti
 
+namespace AddSubgroup
+
+variable {G : Type*} [AddCommGroup G]
+
+/-- The `p`-primary part of `H`, regarded as a subgroup of the ambient `p`-primary component. -/
+def primaryPart (H : AddSubgroup G) (p : ℕ) :
+    AddSubgroup (AddCommGroup.primaryComponent G p) :=
+  H.comap (AddCommGroup.primaryComponent G p).subtype
+
+@[simp]
+theorem mem_primaryPart_iff (H : AddSubgroup G) (p : ℕ)
+    (x : AddCommGroup.primaryComponent G p) :
+    x ∈ primaryPart H p ↔ (x : G) ∈ H :=
+  Iff.rfl
+
+end AddSubgroup
+
 namespace FiniteBilinearModule
 
 variable (A : FiniteBilinearModule)
-
-/-- The `p`-primary part of `H`, regarded as a subgroup of the ambient `p`-primary component. -/
-def primaryPart (H : AddSubgroup A) (p : ℕ) :
-    AddSubgroup (AddCommGroup.primaryComponent A p) :=
-  H.comap (AddCommGroup.primaryComponent A p).subtype
-
-@[simp]
-theorem mem_primaryPart_iff (H : AddSubgroup A) (p : ℕ)
-    (x : AddCommGroup.primaryComponent A p) :
-    x ∈ A.primaryPart H p ↔ (x : A) ∈ H :=
-  Iff.rfl
 
 private theorem coe_mem_primaryComponent_of_mem_primaryComponent
     (H : AddSubgroup A) (p : ℕ) (x : AddCommGroup.primaryComponent H p) :
@@ -77,7 +83,8 @@ primary component is isotropic for the restricted pairing. -/
 theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
     A.IsIsotropic H ↔
       ∀ p : ℕ, p.Prime →
-        (A.restrict (AddCommGroup.primaryComponent A p)).IsIsotropic (A.primaryPart H p) := by
+        (A.restrict (AddCommGroup.primaryComponent A p)).IsIsotropic
+          (TauCeti.AddSubgroup.primaryPart H p) := by
   constructor
   · intro hH p _
     rw [(A.restrict (AddCommGroup.primaryComponent A p)).isIsotropic_def]
@@ -114,11 +121,11 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
 
 /-- Orthogonal complementation commutes with passage to a prime-primary component. -/
 theorem primaryPart_orthogonalComplement (H : AddSubgroup A) {p : ℕ} (hp : p.Prime) :
-    A.primaryPart (A.orthogonalComplement H) p =
+    TauCeti.AddSubgroup.primaryPart (A.orthogonalComplement H) p =
       (A.restrict (AddCommGroup.primaryComponent A p)).orthogonalComplement
-        (A.primaryPart H p) := by
+        (TauCeti.AddSubgroup.primaryPart H p) := by
   ext x
-  rw [A.mem_primaryPart_iff]
+  rw [TauCeti.AddSubgroup.mem_primaryPart_iff]
   constructor
   · intro hx
     rw [(A.restrict (AddCommGroup.primaryComponent A p)).mem_orthogonalComplement_iff]
@@ -140,9 +147,9 @@ theorem primaryPart_orthogonalComplement (H : AddSubgroup A) {p : ℕ} (hp : p.P
     by_cases hqp : q.1 = p
     · let yq : AddCommGroup.primaryComponent A p :=
         ⟨((yd q : H) : A), hqp ▸ hyq⟩
-      have hyqH : yq ∈ A.primaryPart H p := (yd q).1.2
+      have hyqH : yq ∈ TauCeti.AddSubgroup.primaryPart H p := (yd q).1.2
       exact (A.restrict (AddCommGroup.primaryComponent A p)).mem_orthogonalComplement_iff
-        (A.primaryPart H p) x |>.mp hx yq hyqH
+        (TauCeti.AddSubgroup.primaryPart H p) x |>.mp hx yq hyqH
     · exact A.pairing_eq_zero_of_mem_primaryComponent hp hq (Ne.symm hqp) x.2 hyq
 
 end FiniteBilinearModule
@@ -157,7 +164,7 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
     A.IsIsotropic H ↔
       ∀ p : ℕ, p.Prime →
         (A.restrict (AddCommGroup.primaryComponent A p)).IsIsotropic
-          (A.toFiniteBilinearModule.primaryPart H p) := by
+          (TauCeti.AddSubgroup.primaryPart H p) := by
   constructor
   · intro hH p _
     apply (A.restrict (AddCommGroup.primaryComponent A p)).isIsotropic_def.mpr
