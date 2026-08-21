@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.Coxeter.Matrix
 public import Mathlib.GroupTheory.Perm.Sign
 public import TauCeti.GroupTheory.Coxeter.Artin
+public import TauCeti.GroupTheory.Coxeter.Matrix
+public import TauCeti.GroupTheory.Perm.Basic
 
 /-!
 # The Artin braid group
@@ -53,7 +54,7 @@ that a mis-stated relator set would cause.
 * `TauCeti.BraidGroup.permHom_surjective`: every permutation of the strands underlies a braid.
 * `TauCeti.BraidGroup.not_commute_sigma` and `TauCeti.BraidGroup.exists_not_commute`: generators
   sharing a strand do not commute, so `BraidGroup n` is nonabelian for `n ≥ 3`.
-* `TauCeti.BraidGroup.sq_sigma_mem_pureSubgroup`: the square of a generator is a pure braid.
+* `TauCeti.BraidGroup.sigma_sq_mem_pureSubgroup`: the square of a generator is a pure braid.
 
 ## References
 
@@ -72,50 +73,6 @@ diagram hub.
 public section
 
 namespace TauCeti
-
-/-- Three distinct points: the transpositions `(a b)` and `(b c)` satisfy the braid relation.
-This is the symmetric group's half of the type-`A` Artin-Tits relations. -/
-theorem swap_braid {α : Type*} [DecidableEq α] {a b c : α} (hab : a ≠ b) (hac : a ≠ c)
-    (hcb : c ≠ b) :
-    Equiv.swap a b * Equiv.swap b c * Equiv.swap a b =
-      Equiv.swap b c * Equiv.swap a b * Equiv.swap b c :=
-  calc Equiv.swap a b * Equiv.swap b c * Equiv.swap a b
-      = Equiv.swap b a * Equiv.swap c b * Equiv.swap b a := by
-        rw [Equiv.swap_comm a b, Equiv.swap_comm b c]
-    _ = Equiv.swap a c := Equiv.swap_mul_swap_mul_swap hcb (Ne.symm hac)
-    _ = Equiv.swap c a := Equiv.swap_comm a c
-    _ = Equiv.swap b c * Equiv.swap a b * Equiv.swap b c :=
-        (Equiv.swap_mul_swap_mul_swap hab hac).symm
-
-section CoxeterMatrixA
-
-variable {m : ℕ} {i j : Fin m}
-
-/-- The entries of Mathlib's type-`A` Coxeter matrix, unfolded. -/
-theorem coxeterMatrixA_apply (i j : Fin m) :
-    CoxeterMatrix.A m i j =
-      if i = j then 1 else if (j : ℕ) + 1 = i ∨ (i : ℕ) + 1 = j then 3 else 2 :=
-  rfl
-
-/-- Neighbouring indices of the type-`A` Coxeter matrix carry the entry `3`. -/
-theorem coxeterMatrixA_eq_three (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
-    CoxeterMatrix.A m i j = 3 := by
-  rw [coxeterMatrixA_apply]
-  split_ifs with h₁ h₂
-  · exact absurd (congrArg Fin.val h₁) (by omega)
-  · rfl
-  · exact absurd h.symm h₂
-
-/-- Indices of the type-`A` Coxeter matrix at distance at least two carry the entry `2`. -/
-theorem coxeterMatrixA_eq_two (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
-    CoxeterMatrix.A m i j = 2 := by
-  rw [coxeterMatrixA_apply]
-  split_ifs with h₁ h₂
-  · exact absurd (congrArg Fin.val h₁) (by omega)
-  · exact absurd h₂ (by omega)
-  · rfl
-
-end CoxeterMatrixA
 
 /-- The Artin braid group on `n` strands: the Artin-Tits group of the Coxeter matrix of type
 `A (n - 1)`, whose Coxeter group is the symmetric group on the `n` strands. -/
@@ -141,21 +98,65 @@ theorem sigma_eq_gen (i : Fin (n - 1)) :
 
 /-- Disjoint crossings commute. -/
 theorem sigma_mul_sigma_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
-    sigma i * sigma j = sigma j * sigma i :=
-  ArtinGroup.gen_mul_gen_comm _ (coxeterMatrixA_eq_two h)
+    sigma i * sigma j = sigma j * sigma i := by
+  simpa only [sigma_eq_gen] using ArtinGroup.gen_mul_gen_comm _ (coxeterMatrixA_eq_two h)
 
 /-- Crossings sharing a strand satisfy the braid relation. -/
 theorem sigma_braid {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
-    sigma i * sigma j * sigma i = sigma j * sigma i * sigma j :=
-  ArtinGroup.gen_braid _ (coxeterMatrixA_eq_three h)
+    sigma i * sigma j * sigma i = sigma j * sigma i * sigma j := by
+  simpa only [sigma_eq_gen] using ArtinGroup.gen_braid _ (coxeterMatrixA_eq_three h)
 
+/-- Every elementary braid is nontrivial. -/
 @[simp]
-theorem sigma_ne_one (i : Fin (n - 1)) : sigma i ≠ 1 :=
-  ArtinGroup.gen_ne_one _ i
+theorem sigma_ne_one (i : Fin (n - 1)) : sigma i ≠ 1 := by
+  simpa only [sigma_eq_gen] using ArtinGroup.gen_ne_one _ i
 
+/-- Every elementary braid has infinite order. -/
 @[simp]
-theorem orderOf_sigma (i : Fin (n - 1)) : orderOf (sigma i) = 0 :=
-  ArtinGroup.orderOf_gen _ i
+theorem orderOf_sigma (i : Fin (n - 1)) : orderOf (sigma i) = 0 := by
+  simpa only [sigma_eq_gen] using ArtinGroup.orderOf_gen _ i
+
+/-- The universal property of the braid-group presentation: a family satisfying distant
+commutation and the adjacent braid relation extends to a homomorphism from `BraidGroup n`. -/
+def lift {G : Type*} [Group G] (f : Fin (n - 1) → G)
+    (hcomm : ∀ {i j : Fin (n - 1)},
+      (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i → f i * f j = f j * f i)
+    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i →
+      f i * f j * f i = f j * f i * f j) :
+    BraidGroup n →* G :=
+  ArtinGroup.lift _ f <| by
+    intro i j
+    rcases eq_or_ne i j with rfl | hij
+    · rfl
+    have hv : (i : ℕ) ≠ (j : ℕ) := fun h ↦ hij (Fin.ext h)
+    by_cases hadj : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i
+    · rw [prod_map_braidWord_of_eq_three _ _ (coxeterMatrixA_eq_three hadj),
+        prod_map_braidWord_of_eq_three _ _ (coxeterMatrixA_eq_three hadj.symm)]
+      exact (hbraid hadj).symm
+    · have h2 : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i := by omega
+      rw [prod_map_braidWord_of_eq_two _ _ (coxeterMatrixA_eq_two h2),
+        prod_map_braidWord_of_eq_two _ _ (coxeterMatrixA_eq_two h2.symm)]
+      exact hcomm h2
+
+/-- The homomorphism constructed by `BraidGroup.lift` takes each elementary braid to its
+prescribed value. -/
+@[simp]
+theorem lift_sigma {G : Type*} [Group G] (f : Fin (n - 1) → G) (hcomm) (hbraid)
+    (i : Fin (n - 1)) : lift f hcomm hbraid (sigma i) = f i := by
+  simpa only [lift, sigma_eq_gen] using ArtinGroup.lift_gen _ f _ i
+
+/-- Two homomorphisms from a braid group are equal if they agree on every elementary braid. -/
+@[ext]
+theorem hom_ext {G : Type*} [Group G] {f g : BraidGroup n →* G}
+    (h : ∀ i, f (sigma i) = g (sigma i)) : f = g :=
+  ArtinGroup.hom_ext _ fun i ↦ by simpa only [sigma_eq_gen] using h i
+
+/-- The homomorphism supplied by `BraidGroup.lift` is the unique homomorphism with the prescribed
+values on the elementary braids. -/
+theorem lift_unique {G : Type*} [Group G] (f : Fin (n - 1) → G) (hcomm) (hbraid)
+    (g : BraidGroup n →* G) (hg : ∀ i, g (sigma i) = f i) :
+    g = lift f hcomm hbraid :=
+  hom_ext fun i ↦ (hg i).trans (lift_sigma f hcomm hbraid i).symm
 
 /-- The lower of the two strands crossed by `sigma i`. -/
 def strand (i : Fin (n - 1)) : Fin n := ⟨i, by have := i.isLt; omega⟩
@@ -181,6 +182,7 @@ theorem transposition_eq_swap_castSucc_succ {m : ℕ} (i : Fin m) :
     transposition (n := m + 1) i = Equiv.swap i.castSucc i.succ :=
   (rfl)
 
+/-- The adjacent transpositions underlying disjoint elementary braids commute. -/
 theorem transposition_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
     transposition i * transposition j = transposition j * transposition i := by
   have hnd : [strand i, strandSucc i, strand j, strandSucc j].Nodup := by
@@ -189,6 +191,8 @@ theorem transposition_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j :
     omega
   exact (Equiv.Perm.disjoint_swap_swap hnd).commute.eq
 
+/-- The adjacent transpositions underlying neighbouring elementary braids satisfy the braid
+relation. -/
 theorem transposition_braid {i j : Fin (n - 1)}
     (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     transposition i * transposition j * transposition i =
@@ -229,8 +233,8 @@ def permHom (n : ℕ) : BraidGroup n →* Equiv.Perm (Fin n) :=
       exact transposition_comm h2
 
 @[simp]
-theorem permHom_sigma (i : Fin (n - 1)) : permHom n (sigma i) = transposition i :=
-  ArtinGroup.lift_gen _ _ _ i
+theorem permHom_sigma (i : Fin (n - 1)) : permHom n (sigma i) = transposition i := by
+  simpa only [permHom, sigma_eq_gen] using ArtinGroup.lift_gen _ transposition _ i
 
 /-- Every permutation of the strands is realised by a braid. -/
 theorem permHom_surjective (n : ℕ) : Function.Surjective (permHom n) := by
@@ -253,7 +257,7 @@ instance : (pureSubgroup n).Normal := (permHom n).normal_ker
 
 /-- The square of an elementary braid is a pure braid: the two strands cross twice and end where
 they started. -/
-theorem sq_sigma_mem_pureSubgroup (i : Fin (n - 1)) : sigma i ^ 2 ∈ pureSubgroup n := by
+theorem sigma_sq_mem_pureSubgroup (i : Fin (n - 1)) : sigma i ^ 2 ∈ pureSubgroup n := by
   rw [mem_pureSubgroup, map_pow, permHom_sigma, transposition_eq_swap, sq, Equiv.swap_mul_self]
 
 /-- Two elementary braids sharing a strand do not commute. -/

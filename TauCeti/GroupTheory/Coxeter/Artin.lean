@@ -7,6 +7,7 @@ module
 
 public import Mathlib.GroupTheory.Coxeter.Basic
 public import Mathlib.GroupTheory.OrderOfElement
+public import TauCeti.GroupTheory.FreeGroup.Basic
 
 /-!
 # Artin-Tits groups
@@ -79,14 +80,6 @@ namespace TauCeti
 
 variable {B G N W : Type*} [Group G] [Monoid N] [Group W]
 
-/-- A monoid homomorphism out of a free group spells out a word in the generators letter by
-letter. This is `map_list_prod` packaged for words `ω : List B` read through `FreeGroup.of`, the
-form in which the Artin-Tits relators are written. -/
-theorem map_prod_map_freeGroupOf (φ : FreeGroup B →* N) (ω : List B) :
-    φ ((ω.map FreeGroup.of).prod) = (ω.map fun i ↦ φ (FreeGroup.of i)).prod := by
-  rw [map_list_prod, List.map_map]
-  rfl
-
 /-- The alternating word of length `2`. Mathlib defines `CoxeterSystem.alternatingWord` by
 recursion; this case and the next are the ones the rank-two relations below need. -/
 theorem alternatingWord_two (i i' : B) : CoxeterSystem.alternatingWord i i' 2 = [i, i'] := rfl
@@ -105,6 +98,13 @@ particular on the diagonal. -/
 def artinRelation (i i' : B) : FreeGroup B :=
   ((CoxeterSystem.braidWord M i i').map FreeGroup.of).prod *
     (((CoxeterSystem.braidWord M i' i).map FreeGroup.of).prod)⁻¹
+
+/-- The defining equation of an Artin-Tits relator. -/
+theorem artinRelation_def (i i' : B) :
+    artinRelation M i i' =
+      ((CoxeterSystem.braidWord M i i').map FreeGroup.of).prod *
+        (((CoxeterSystem.braidWord M i' i).map FreeGroup.of).prod)⁻¹ :=
+  (rfl)
 
 /-- The set of all Artin-Tits relators of a Coxeter matrix. -/
 def artinRelationsSet : Set (FreeGroup B) := Set.range (uncurry (artinRelation M))
@@ -133,7 +133,7 @@ theorem ArtinGroup.prod_map_gen_braidWord (i i' : B) :
     ((CoxeterSystem.braidWord M i i').map (ArtinGroup.gen M)).prod =
       ((CoxeterSystem.braidWord M i' i).map (ArtinGroup.gen M)).prod := by
   have hmem := artinRelation_mem_artinRelationsSet M i i'
-  rw [artinRelation] at hmem
+  rw [artinRelation_def] at hmem
   have h := PresentedGroup.mk_eq_mk_of_mul_inv_mem hmem
   rw [map_prod_map_freeGroupOf, map_prod_map_freeGroupOf] at h
   exact h
@@ -177,7 +177,7 @@ def ArtinGroup.lift (f : B → G)
     ArtinGroup M →* G :=
   PresentedGroup.toGroup (f := f) <| by
     rintro r ⟨⟨i, i'⟩, rfl⟩
-    simp only [uncurry, artinRelation, map_mul, map_inv, map_prod_map_freeGroupOf,
+    simp only [uncurry, artinRelation_def, map_mul, map_inv, map_prod_map_freeGroupOf,
       FreeGroup.lift_apply_of, mul_inv_eq_one]
     exact hf i i'
 
@@ -228,10 +228,12 @@ theorem ArtinGroup.gen_pow_eq_one_iff (i : B) (k : ℕ) :
     ArtinGroup.gen M i ^ k = 1 ↔ k = 0 := by
   rw [← zpow_natCast, ArtinGroup.gen_zpow_eq_one_iff, Int.natCast_eq_zero]
 
+/-- Every standard Artin-Tits generator has infinite order. -/
 @[simp]
 theorem ArtinGroup.orderOf_gen (i : B) : orderOf (ArtinGroup.gen M i) = 0 :=
   orderOf_eq_zero_iff'.mpr fun k hk h ↦ hk.ne' ((ArtinGroup.gen_pow_eq_one_iff M i k).mp h)
 
+/-- Every standard Artin-Tits generator is nontrivial. -/
 @[simp]
 theorem ArtinGroup.gen_ne_one (i : B) : ArtinGroup.gen M i ≠ 1 := by
   intro h
