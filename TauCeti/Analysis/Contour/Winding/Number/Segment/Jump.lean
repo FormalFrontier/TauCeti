@@ -13,16 +13,20 @@ import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 # The winding number of a straight segment and its one-sided limits
 
 The winding number of the straight segment `t ↦ v · t + z₀` about a point beside it is the
-logarithmic increment `(2πi)⁻¹ (log (b - q) - log (a - q))`. Its one-sided limits at an interior
+logarithmic increment `(2πi)⁻¹ (log (b - q) - log (a - q))`, valid whenever the differences
+`(t : ℂ) - q` stay in the slit plane over `[a, b]`. Its one-sided limits at an interior
 point differ by exactly `1`.
 
-This extends the segment winding API (`SegmentSum.lean`) with the explicit formula for a single
-straight piece and the one-sided limit behaviour.
+This extends the segment winding API (`Segment/Basic.lean`) with the explicit formula for a
+single straight piece and the one-sided limit behaviour. The jump formula is the analytic input
+to the winding decomposition of HW Proposition 2.2 (ContourIntegration roadmap, Layer 1).
 
 ## Main results
 
-* `TauCeti.Contour.windingNumber_segment_of_im_ne_zero` — **the winding number formula for a
-  straight segment.**
+* `TauCeti.Contour.windingNumber_segment` — **the winding number formula for a straight
+  segment, under a slit-plane hypothesis.**
+* `TauCeti.Contour.windingNumber_segment_of_im_ne_zero` — **specialization when the
+  reference point has nonzero imaginary part.**
 * `TauCeti.Contour.tendsto_windingNumber_segment_add_mul_I` and
   `TauCeti.Contour.tendsto_windingNumber_segment_sub_mul_I` — **one-sided limits at an interior
   point, from the left and from the right.**
@@ -45,18 +49,19 @@ namespace TauCeti.Contour
 variable {v z₀ q : ℂ} {a b s : ℝ}
 
 /-- **The winding number of a straight segment about a point beside it** is the increment of the
-principal logarithm. -/
-theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (a b : ℝ) :
+principal logarithm, valid whenever `(t : ℂ) - q` lies in the slit plane throughout `[a, b]`.
+This covers both the nonreal case (`q.im ≠ 0`) and real points before the segment
+(`q.re < a`). -/
+theorem windingNumber_segment (hv : v ≠ 0)
+    (hslit : ∀ t ∈ uIcc a b, (t : ℂ) - q ∈ slitPlane) :
     windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
       = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) := by
   rw [windingNumber_affine (γ := fun t : ℝ => (t : ℂ)) (c := v) (d := z₀) (z₀ := q) hv]
-  have hslit : ∀ t : ℝ, (t : ℂ) - q ∈ slitPlane := fun t =>
-    mem_slitPlane_iff.mpr (Or.inr (by simpa using hq))
-  have hne : ∀ t : ℝ, (t : ℂ) - q ≠ 0 := fun t => slitPlane_ne_zero (hslit t)
+  have hne : ∀ t ∈ uIcc a b, (t : ℂ) - q ≠ 0 := fun t ht => slitPlane_ne_zero (hslit t ht)
   have h_cont : ContinuousOn (fun t : ℝ => (t : ℂ)) (uIcc a b) :=
     (by fun_prop : Continuous fun t : ℝ => (t : ℂ)).continuousOn
-  have h_avoid : ∀ t ∈ uIcc a b, (t : ℂ) ≠ q := fun t _ => by
-    intro h; exact hne t (by rw [h, sub_self])
+  have h_avoid : ∀ t ∈ uIcc a b, (t : ℂ) ≠ q := fun t ht => by
+    intro h; exact hne t ht (by rw [h, sub_self])
   have h_integrand : ∀ t : ℝ,
       ((t : ℂ) - q)⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t = ((t : ℂ) - q)⁻¹ := by
     intro t
@@ -64,7 +69,7 @@ theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (a 
     rw [this, mul_one]
   have h_intble : IntervalIntegrable (fun t : ℝ => ((t : ℂ) - q)⁻¹) volume a b := by
     refine ContinuousOn.intervalIntegrable ?_
-    exact ContinuousOn.inv₀ (by fun_prop) fun t _ => hne t
+    exact ContinuousOn.inv₀ (by fun_prop) fun t ht => hne t ht
   have h_int : IntervalIntegrable
       (fun t : ℝ => ((t : ℂ) - q)⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t)
       volume a b :=
@@ -77,7 +82,14 @@ theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (a 
   rw [h_div]
   exact integral_deriv_div_eq_log_sub_log countable_empty
     (by fun_prop) (fun t _ => (ofRealCLM.hasDerivAt.sub_const q))
-    (fun t ht => hslit t) (h_intble.congr fun t _ => by rw [one_div])
+    (fun t ht => hslit t ht) (h_intble.congr fun t _ => by rw [one_div])
+
+/-- **The winding number of a straight segment about a nonreal point.** Specialization of
+`windingNumber_segment` when `q.im ≠ 0`, which guarantees the slit-plane condition. -/
+theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) :
+    windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
+      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) :=
+  windingNumber_segment hv (fun t _ => mem_slitPlane_iff.mpr (Or.inr (by simpa using hq)))
 
 /-- The difference `(r : ℂ) - (s + σ h I)` tends to `(r : ℂ) - s` as `h → 0⁺`. -/
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
@@ -119,7 +131,7 @@ theorem tendsto_windingNumber_segment_add_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
         = windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s + h * I) + z₀) := by
     filter_upwards [self_mem_nhdsWithin] with h hh
     have him : ((s : ℂ) + h * I).im ≠ 0 := by simpa using hh.ne'
-    rw [windingNumber_segment_of_im_ne_zero hv him a b]
+    rw [windingNumber_segment_of_im_ne_zero hv him]
     simp
   refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 1) ?_))
   have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
@@ -147,7 +159,7 @@ theorem tendsto_windingNumber_segment_sub_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
         = windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s - h * I) + z₀) := by
     filter_upwards [self_mem_nhdsWithin] with h hh
     have him : ((s : ℂ) - h * I).im ≠ 0 := by simpa using hh.ne'
-    rw [windingNumber_segment_of_im_ne_zero hv him a b]
+    rw [windingNumber_segment_of_im_ne_zero hv him]
     simp [sub_eq_add_neg]
   refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 (-1)) ?_))
   have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((-1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
