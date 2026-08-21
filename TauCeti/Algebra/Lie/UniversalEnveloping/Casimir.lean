@@ -64,7 +64,13 @@ highest weight modules `L(λ)` and of the invariant form on weights, neither of 
 
 ## References
 
-* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §6.2.
+* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 1--3*, Chapter I, §3, no. 7 ("Casimir
+  element"), Proposition 11: the element `c = Σᵢ eᵢ eᵢ'` lies in the centre of the enveloping
+  algebra and is independent of the basis, which are the two statements proved here. Bourbaki
+  states it for an arbitrary invariant bilinear form whose restriction to an ideal is
+  nondegenerate, the generality noted above.
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §6.2, for the
+  Killing-form case and the eigenvalue computation this file does not do.
 * [Highest weight roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md),
   Layer 5, "The Casimir element".
 -/
