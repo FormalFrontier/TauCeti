@@ -85,6 +85,12 @@ theorem mem_dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLatti
     rw [orthogonalSum_form, orthogonalSumForm_apply]
     exact Submodule.add_mem _ (hx z.1 hz.1) (hy z.2 hz.2)
 
+/-- The dual carrier of an orthogonal sum is the product of the two dual carriers. -/
+theorem dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).dualCarrier = L.dualCarrier.prod M.dualCarrier := by
+  ext x
+  rw [L.mem_dualCarrier_orthogonalSum M x, Submodule.mem_prod]
+
 /-- The dual carrier of an orthogonal sum is canonically the product of the dual carriers. -/
 def orthogonalSumDualCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).dualCarrier ≃ₗ[ℤ] L.dualCarrier × M.dualCarrier where

@@ -46,6 +46,8 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
   chosen basis of `L.carrier`.
 * `TauCeti.IntegralLattice.dualSubmodule_flip_dualCarrier`: double duality with `form.flip`.
 * `TauCeti.IntegralLattice.dualSubmodule_dualCarrier`: dualizing twice recovers `L`.
+* `TauCeti.IntegralLattice.Isometry.map_dualCarrier`: an isometry maps the dual carrier onto the
+  dual carrier.
 * `TauCeti.IntegralLattice.Isometry.dualCarrierEquiv`: transport of dual carriers by an isometry.
 
 ## References
@@ -252,6 +254,15 @@ theorem apply_mem_dualCarrier_iff (e : Isometry L M) (x : V) :
     have hxy := hx (e.symm y) ((e.symm.apply_mem_carrier_iff y).2 hy)
     rw [← e.map_app x (e.symm y), e.apply_symm_apply] at hxy
     exact hxy
+
+/-- The ambient integral equivalence of an isometry maps the source dual carrier onto the target
+dual carrier. -/
+@[simp]
+theorem map_dualCarrier (e : Isometry L M) :
+    L.dualCarrier.map e.ambientEquiv.toLinearMap = M.dualCarrier := by
+  ext y
+  rw [Submodule.mem_map_equiv]
+  simpa using e.symm.apply_mem_dualCarrier_iff y
 
 /-- An isometry restricts to an integral linear equivalence of dual carriers. -/
 def dualCarrierEquiv (e : Isometry L M) : L.dualCarrier ≃ₗ[ℤ] M.dualCarrier :=

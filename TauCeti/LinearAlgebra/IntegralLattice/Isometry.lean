@@ -28,6 +28,8 @@ composition) follows Mathlib's `LinearMap.BilinForm.IsometryEquiv` API in
 
 * `TauCeti.IntegralLattice.Isometry`: a form-preserving rational linear equivalence mapping one
   integral carrier onto another.
+* `TauCeti.IntegralLattice.Isometry.ambientEquiv`: the ambient equivalence of an isometry, read
+  over `ℤ`.
 * `TauCeti.IntegralLattice.Isometry.carrierEquiv`: restriction of an isometry to the carriers.
 * `TauCeti.IntegralLattice.Isometry.carrierBasisEquiv`: transport of carrier bases along an
   isometry.
@@ -206,6 +208,44 @@ theorem trans_assoc (e : Isometry L M) (f : Isometry M N) {X : Type*}
 theorem coe_symm (e : Isometry L M) : ⇑e.symm = ⇑(e : V ≃ₗ[ℚ] W).symm := by
   funext y
   simp only [symm]
+  rfl
+
+/-- The ambient rational equivalence of an integral-lattice isometry, read as an equivalence of
+the underlying `ℤ`-modules. Carriers, dual carriers, and every submodule between them are
+transported along this equivalence. -/
+def ambientEquiv (e : Isometry L M) : V ≃ₗ[ℤ] W :=
+  (e : V ≃ₗ[ℚ] W).restrictScalars ℤ
+
+@[simp]
+theorem ambientEquiv_apply (e : Isometry L M) (x : V) : e.ambientEquiv x = e x := (rfl)
+
+@[simp]
+theorem ambientEquiv_symm_apply (e : Isometry L M) (y : W) : e.ambientEquiv.symm y = e.symm y := by
+  rw [coe_symm]
+  rfl
+
+/-- The ambient integral equivalence of an isometry maps the source carrier onto the target
+carrier. -/
+@[simp]
+theorem map_carrier_ambientEquiv (e : Isometry L M) :
+    L.carrier.map e.ambientEquiv.toLinearMap = M.carrier :=
+  e.map_carrier
+
+@[simp]
+theorem ambientEquiv_refl (L : IntegralLattice V) :
+    (refl L).ambientEquiv = LinearEquiv.refl ℤ V := by
+  ext x
+  rfl
+
+@[simp]
+theorem ambientEquiv_symm (e : Isometry L M) : e.symm.ambientEquiv = e.ambientEquiv.symm := by
+  ext y
+  rw [ambientEquiv_apply, ambientEquiv_symm_apply]
+
+@[simp]
+theorem ambientEquiv_trans (e : Isometry L M) (f : Isometry M N) :
+    (e.trans f).ambientEquiv = e.ambientEquiv.trans f.ambientEquiv := by
+  ext x
   rfl
 
 /-- Restrict an integral-lattice isometry to an integral linear equivalence of its carriers. -/
