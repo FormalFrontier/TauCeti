@@ -351,34 +351,6 @@ theorem geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice
 
 /-! ## The Kostant form preserves the coordinate lattice -/
 
-/-- The subring of enveloping-algebra elements whose represented action preserves the Geck
-coordinate lattice. It is the preimage of the lattice stabilizer under the defining
-representation; only its universal property is used. -/
-private noncomputable def latticeStabilizer :
-    Subring (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)) where
-  carrier :=
-    {u | ∀ v ∈ t.geckCoordinateLattice ht,
-      t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht}
-  mul_mem' ha hb v hv := by
-    rw [map_mul, Module.End.mul_apply]
-    exact ha _ (hb v hv)
-  one_mem' v hv := by simp [hv]
-  add_mem' ha hb v hv := by rw [map_add]; exact add_mem (ha v hv) (hb v hv)
-  zero_mem' v _ := by simp
-  neg_mem' ha v hv := by rw [map_neg]; exact neg_mem (ha v hv)
-
-private theorem dividedPower_rootGenerator_mem_latticeStabilizer
-    (i : Fin t.rank ⊕ Fin t.rank) (n : ℕ) :
-    Associative.dividedPower n
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i)) ∈
-      t.latticeStabilizer ht := fun _v hv =>
-  t.geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice ht i n hv
-
-private theorem ringChoose_h_mem_latticeStabilizer (i : Fin t.rank) (n : ℕ) :
-    Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) n ∈
-      t.latticeStabilizer ht := fun _v hv =>
-  t.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice ht i n hv
-
 /-- **The pinned simple-generator Kostant form preserves the Geck coordinate lattice.** Every
 integral-form translate of a lattice vector stays in the lattice. Together with
 `TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` this identifies the integral orbit of the
@@ -387,12 +359,18 @@ theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice
     {u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)}
     (hu : u ∈ t.kostantForm ht) {v : t.GeckIndex ht → ℚ}
     (hv : v ∈ t.geckCoordinateLattice ht) :
-    t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht := by
-  have hle : t.kostantForm ht ≤ t.latticeStabilizer ht :=
-    (t.kostantForm_le_iff ht _).2
-      ⟨fun i n => t.dividedPower_rootGenerator_mem_latticeStabilizer ht i n,
-       fun i n => t.ringChoose_h_mem_latticeStabilizer ht i n⟩
-  exact hle hu v hv
+    t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht :=
+  UniversalEnvelopingAlgebra.kostantForm_apply_mem
+    (e := (t.lieBasis ht).rootGenerator) (h := (t.lieBasis ht).h)
+    (ρ := t.geckRepresentation ht) (N := t.geckCoordinateLattice ht)
+    (fun i n _ hv =>
+      t.geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice ht i n hv)
+    (fun i n _ hv =>
+      t.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice ht i n hv)
+    (u := u)
+    (hu := by
+      rw [← LieAlgebra.Basis.kostantForm_def]
+      exact t.kostantForm_def ht ▸ hu) hv
 
 /-- The integral orbit of the standard coordinate vectors is contained in the coordinate
 lattice, because the Kostant form preserves the lattice and each coordinate vector lies in it. -/
