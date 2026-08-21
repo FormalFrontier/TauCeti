@@ -798,7 +798,7 @@ theorem typeAGraphAut_ne_one {n : ℕ} (hn : 2 ≤ n) : typeAGraphAut n ≠ 1 :=
 first `n` indices onto themselves, so the automorphism is a symmetry of the pinning and not merely
 of the root system. -/
 @[simp] theorem support_map_typeASimplyConnectedBase_typeAGraphAut (n : ℕ) :
-    ((typeASimplyConnectedBase n).map (typeAGraphAut n)).support =
+    Finset.image (typeAGraphAut n).indexEquiv (typeASimplyConnectedBase n).support =
       (typeASimplyConnectedBase n).support := by
   classical
   have hmem : ∀ k : Fin (n * (n + 1)), (k : ℕ) < n →
@@ -810,7 +810,7 @@ of the root system. -/
   have hsymm : (typeAGraphAut n).indexEquiv.symm = (typeAGraphAut n).indexEquiv :=
     typeAGraphIndexPerm_symm
   refine Finset.ext fun k => ?_
-  rw [RootPairing.Base.support_map_eq, Finset.mem_image]
+  rw [Finset.mem_image]
   refine ⟨?_, fun hk => ⟨(typeAGraphAut n).indexEquiv.symm k, ?_, Equiv.apply_symm_apply _ _⟩⟩
   · rintro ⟨l, hl, rfl⟩
     exact mem_typeASimplyConnectedBase_support.mpr
