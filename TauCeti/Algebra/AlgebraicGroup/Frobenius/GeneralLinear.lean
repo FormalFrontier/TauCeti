@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.FixedPoints
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Frobenius
 
 /-!
 # The Frobenius on the matrix points of a closed subgroup scheme of `GLₙ`
@@ -31,12 +32,16 @@ the field of `q` elements inside `A`, so the last statement is `G(𝔽_q) ≃* G
 subgroup scheme `G` of `GLₙ` defined over `ℤ`. Nothing here asserts that either side is finite, and
 no algebraic closedness, field, or finite-type hypothesis is used.
 
+The purely matrix-level description of the invertible matrices fixed by the entrywise Frobenius,
+which needs no coordinate ring, is
+`TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/Frobenius.lean`.
+
 ## Main definitions
 
 * `TauCeti.GeneralLinear.iterateFrobeniusHopfIdealPoints`: the `p ^ k`-power Frobenius as a group
   endomorphism of the matrix points cut out by a Hopf ideal.
-* `TauCeti.GeneralLinear.frobeniusFixedHopfIdealInclusion`: the entrywise inclusion of the matrix
-  points valued in the Frobenius-fixed subring.
+* `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsInclusion`: the entrywise inclusion of the
+  matrix points valued in the Frobenius-fixed subring.
 * `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`: the resulting isomorphism onto the
   Frobenius-fixed points.
 
@@ -45,17 +50,15 @@ no algebraic closedness, field, or finite-type hypothesis is used.
 * `TauCeti.GeneralLinear.pointToGeneralLinear_iterateFrobeniusPoints` and
   `TauCeti.GeneralLinear.pointsMulEquiv_iterateFrobeniusPoints`: the Frobenius on general-linear
   points is the entrywise Frobenius on matrices.
-* `TauCeti.GeneralLinear.mem_fixedSubgroup_map_iterateFrobenius_iff`: an invertible matrix is fixed
-  by the entrywise Frobenius exactly when all of its entries are.
-* `TauCeti.GeneralLinear.fixedSubgroup_map_iterateFrobenius_le_of_dvd`: the entrywise-fixed
-  subgroups grow along divisibility of the exponent.
 * `TauCeti.GeneralLinear.map_fixedSubgroup_iterateFrobeniusPoints`: the point equivalence carries
   the Frobenius-fixed points onto the entrywise-fixed matrices.
+* `TauCeti.GeneralLinear.iterateFrobeniusHopfIdealPoints_eq_self_iff`: a matrix point of the closed
+  subgroup scheme is Frobenius-fixed exactly when all of its entries are.
 * `TauCeti.GeneralLinear.map_subtype_fixedSubgroup_iterateFrobeniusHopfIdealPoints`: the fixed
   points of the restricted Frobenius, read in `GLₙ(A)`.
 * `TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring` and
-  `TauCeti.GeneralLinear.range_frobeniusFixedHopfIdealInclusion`: those fixed points are the points
-  of the same subgroup scheme over the Frobenius-fixed subring.
+  `TauCeti.GeneralLinear.range_frobeniusFixedHopfIdealPointsInclusion`: those fixed points are the
+  points of the same subgroup scheme over the Frobenius-fixed subring.
 
 ## Roadmap
 
@@ -95,6 +98,32 @@ private lemma toRingHom_toIntAlgHom {R S : Type*} [Ring R] [Ring S] (φ : R →+
 
 variable (n p k : ℕ)
 
+section RingHomTransport
+
+variable (I : HopfIdeal ℤ (coordinateHopfAlgebra ℤ n))
+variable {A B : Type w} [CommRing A] [CommRing B]
+
+/-- Applying a ring homomorphism entrywise preserves the matrix points cut out by a Hopf ideal
+over `ℤ`. Private: it is `TauCeti.GeneralLinear.map_mem_hopfIdealPointsSubgroup` read through
+`toRingHom_toIntAlgHom`, since the points consume `ℤ`-algebra homomorphisms while the two maps this
+file applies to them — the Frobenius and the inclusion of the Frobenius-fixed subring — are ring
+homomorphisms. -/
+private theorem mapRingHom_mem_hopfIdealPointsSubgroup (φ : A →+* B)
+    {g : Matrix.GeneralLinearGroup (Fin n) A} (hg : g ∈ hopfIdealPointsSubgroup n I A) :
+    Matrix.GeneralLinearGroup.map φ g ∈ hopfIdealPointsSubgroup n I B := by
+  have h := map_mem_hopfIdealPointsSubgroup n I φ.toIntAlgHom hg
+  rwa [toRingHom_toIntAlgHom] at h
+
+/-- The map of matrix points induced by a ring homomorphism of value rings applies it entrywise.
+Private, for the same reason as `mapRingHom_mem_hopfIdealPointsSubgroup`. -/
+private theorem coe_mapRingHomHopfIdealPointsSubgroup (φ : A →+* B)
+    (g : hopfIdealPointsSubgroup n I A) :
+    (mapHopfIdealPointsSubgroup n I φ.toIntAlgHom g : Matrix.GeneralLinearGroup (Fin n) B) =
+      Matrix.GeneralLinearGroup.map φ g := by
+  rw [coe_mapHopfIdealPointsSubgroup, toRingHom_toIntAlgHom]
+
+end RingHomTransport
+
 section Points
 
 variable {A : Type w} [CommRing A] [ExpChar A p]
@@ -107,10 +136,12 @@ theorem pointToGeneralLinear_iterateFrobeniusPoints
     pointToGeneralLinear (R := ℤ) n (Bialgebra.iterateFrobeniusPoints p k f) =
       Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)
         (pointToGeneralLinear (R := ℤ) n f) := by
-  refine Matrix.GeneralLinearGroup.ext fun i j => ?_
-  rw [Matrix.GeneralLinearGroup.map_apply, pointToGeneralLinear_apply,
-    pointToGeneralLinear_apply, Bialgebra.iterateFrobeniusPoints_apply_apply,
-    iterateFrobenius_def]
+  -- The Frobenius on points is `AlgHom.mapValue` along the Frobenius of the value algebra; the
+  -- module system does not expose that definition, so name the identification here.
+  have hmapValue : Bialgebra.iterateFrobeniusPoints p k f =
+      AlgHom.mapValue (H := coordinateHopfAlgebra ℤ n) (iterateFrobenius A p k).toIntAlgHom f := by
+    rw [Bialgebra.iterateFrobeniusPoints_apply, AlgHom.mapValue_apply]
+  rw [hmapValue, pointToGeneralLinear_mapValue, toRingHom_toIntAlgHom]
 
 /-- The `p ^ k`-power Frobenius on the points of the general linear coordinate Hopf algebra is the
 entrywise `p ^ k`-power map on invertible matrices.
@@ -133,42 +164,6 @@ theorem pointsMulEquiv_comp_iterateFrobeniusPoints :
         (pointsMulEquiv (R := ℤ) (A := A) n).toMonoidHom :=
   MonoidHom.ext (pointsMulEquiv_iterateFrobeniusPoints n p k)
 
-/-- An invertible matrix is fixed by the entrywise `p ^ k`-power Frobenius exactly when every one
-of its entries lies in the Frobenius-fixed subring. -/
-theorem mem_fixedSubgroup_map_iterateFrobenius_iff
-    (g : Matrix.GeneralLinearGroup (Fin n) A) :
-    g ∈ fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) ↔
-      ∀ i j, (g : Matrix (Fin n) (Fin n) A) i j ∈ frobeniusFixedSubring A p k := by
-  rw [mem_fixedSubgroup]
-  constructor
-  · intro hg i j
-    rw [mem_frobeniusFixedSubring, ← iterateFrobenius_def,
-      ← Matrix.GeneralLinearGroup.map_apply, hg]
-  · intro hg
-    refine Matrix.GeneralLinearGroup.ext fun i j => ?_
-    rw [Matrix.GeneralLinearGroup.map_apply, iterateFrobenius_def]
-    exact mem_frobeniusFixedSubring.mp (hg i j)
-
-/-- The zeroth Frobenius iterate fixes every invertible matrix.
-
-Deliberately not `@[simp]`: `iterateFrobenius_zero` already rewrites the ring homomorphism to the
-identity, after which `Matrix.GeneralLinearGroup.map_id` and `fixedSubgroup_eq_top_iff` close the
-goal, so a `simp` attribute here would be redundant. -/
-theorem fixedSubgroup_map_iterateFrobenius_zero :
-    fixedSubgroup (Matrix.GeneralLinearGroup.map (n := Fin n) (iterateFrobenius A p 0)) = ⊤ := by
-  rw [iterateFrobenius_zero, Matrix.GeneralLinearGroup.map_id]
-  exact fixedSubgroup_eq_top_iff.mpr rfl
-
-/-- The subgroups of entrywise Frobenius-fixed matrices grow along divisibility of the exponent.
-In the motivating case this is the inclusion `GLₙ(𝔽_{p ^ m}) ⊆ GLₙ(𝔽_{p ^ l})`. -/
-theorem fixedSubgroup_map_iterateFrobenius_le_of_dvd {m l : ℕ} (hml : m ∣ l) :
-    fixedSubgroup (Matrix.GeneralLinearGroup.map (n := Fin n) (iterateFrobenius A p m)) ≤
-      fixedSubgroup (Matrix.GeneralLinearGroup.map (n := Fin n) (iterateFrobenius A p l)) :=
-  fun g hg =>
-  (mem_fixedSubgroup_map_iterateFrobenius_iff n p l g).mpr fun i j =>
-    frobeniusFixedSubring_le_of_dvd hml
-      ((mem_fixedSubgroup_map_iterateFrobenius_iff n p m g).mp hg i j)
-
 /-- The point equivalence carries the Frobenius-fixed points of the general linear coordinate Hopf
 algebra onto the invertible matrices fixed entrywise by the Frobenius. -/
 theorem map_fixedSubgroup_iterateFrobeniusPoints :
@@ -185,22 +180,15 @@ section ClosedSubgroup
 variable (I : HopfIdeal ℤ (coordinateHopfAlgebra ℤ n))
 variable {A : Type w} [CommRing A] [ExpChar A p]
 
-/-- The entrywise `p ^ k`-power Frobenius preserves the matrix points cut out by a Hopf ideal over
-`ℤ`: a closed subgroup scheme of `GLₙ` defined over `ℤ` is stable under Frobenius. -/
-theorem map_iterateFrobenius_mem_hopfIdealPointsSubgroup
-    {g : Matrix.GeneralLinearGroup (Fin n) A} (hg : g ∈ hopfIdealPointsSubgroup n I A) :
-    Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g ∈ hopfIdealPointsSubgroup n I A := by
-  have h := map_mem_hopfIdealPointsSubgroup n I (iterateFrobenius A p k).toIntAlgHom hg
-  rwa [toRingHom_toIntAlgHom] at h
-
 variable (A) in
 /-- The `p ^ k`-power Frobenius as a group endomorphism of the matrix points cut out by a Hopf
 ideal over `ℤ`.
 
-This is the untwisted Steinberg endomorphism of a Chevalley carrier presented as a closed subgroup
-scheme of `GLₙ` over `ℤ`. Unlike `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup` along a general
-value-algebra homomorphism, it is an *endomorphism*, so it has a fixed subgroup and an iteration
-law. -/
+For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p` and a Hopf ideal presenting a
+Chevalley carrier, this is the untwisted Steinberg endomorphism of that carrier; for `k = 0`, or
+in characteristic zero, it is the identity. Unlike
+`TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup` along a general value-algebra homomorphism, it
+is an *endomorphism*, so it has a fixed subgroup and an iteration law. -/
 noncomputable def iterateFrobeniusHopfIdealPoints :
     hopfIdealPointsSubgroup n I A →* hopfIdealPointsSubgroup n I A :=
   mapHopfIdealPointsSubgroup n I (iterateFrobenius A p k).toIntAlgHom
@@ -210,8 +198,8 @@ Frobenius. -/
 @[simp]
 theorem coe_iterateFrobeniusHopfIdealPoints (g : hopfIdealPointsSubgroup n I A) :
     (iterateFrobeniusHopfIdealPoints n p k I A g : Matrix.GeneralLinearGroup (Fin n) A) =
-      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g := by
-  rw [iterateFrobeniusHopfIdealPoints, coe_mapHopfIdealPointsSubgroup, toRingHom_toIntAlgHom]
+      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g :=
+  coe_mapRingHomHopfIdealPointsSubgroup n I (iterateFrobenius A p k) g
 
 /-- Entrywise, the Frobenius endomorphism of the matrix points cut out by a Hopf ideal raises each
 entry to the `p ^ k`-th power. -/
@@ -223,23 +211,38 @@ theorem coe_iterateFrobeniusHopfIdealPoints_apply
   rw [coe_iterateFrobeniusHopfIdealPoints, Matrix.GeneralLinearGroup.map_apply,
     iterateFrobenius_def]
 
+/-- A matrix point of a closed subgroup scheme is fixed by the Frobenius endomorphism exactly when
+every one of its entries lies in the Frobenius-fixed subring. Since `TauCeti.mem_fixedSubgroup`
+rewrites membership in `fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)` to the equation
+below, this is the membership criterion for the group of rational points. -/
+@[simp]
+theorem iterateFrobeniusHopfIdealPoints_eq_self_iff (x : hopfIdealPointsSubgroup n I A) :
+    iterateFrobeniusHopfIdealPoints n p k I A x = x ↔
+      ∀ i j, ((x : Matrix.GeneralLinearGroup (Fin n) A) : Matrix (Fin n) (Fin n) A) i j ∈
+        frobeniusFixedSubring A p k := by
+  rw [← SetLike.coe_eq_coe, coe_iterateFrobeniusHopfIdealPoints,
+    Matrix.GeneralLinearGroup.map_iterateFrobenius_eq_self_iff]
+
 /-- The zeroth Frobenius iterate is the identity on the matrix points cut out by a Hopf ideal. -/
 @[simp]
 theorem iterateFrobeniusHopfIdealPoints_zero :
     iterateFrobeniusHopfIdealPoints n p 0 I A = MonoidHom.id _ := by
-  refine MonoidHom.ext fun g => Subtype.ext ?_
-  rw [coe_iterateFrobeniusHopfIdealPoints, iterateFrobenius_zero,
-    Matrix.GeneralLinearGroup.map_id, MonoidHom.id_apply, MonoidHom.id_apply]
+  have h : (iterateFrobenius A p 0).toIntAlgHom = AlgHom.id ℤ A := by
+    rw [iterateFrobenius_zero]
+    exact AlgHom.ext fun _ => rfl
+  rw [iterateFrobeniusHopfIdealPoints, h, mapHopfIdealPointsSubgroup_id]
 
 /-- Frobenius iterates add under composition on the matrix points cut out by a Hopf ideal. -/
 theorem iterateFrobeniusHopfIdealPoints_add (m : ℕ) :
     iterateFrobeniusHopfIdealPoints n p (k + m) I A =
       (iterateFrobeniusHopfIdealPoints n p k I A).comp
         (iterateFrobeniusHopfIdealPoints n p m I A) := by
-  refine MonoidHom.ext fun g => Subtype.ext ?_
-  rw [coe_iterateFrobeniusHopfIdealPoints, MonoidHom.comp_apply,
-    coe_iterateFrobeniusHopfIdealPoints, coe_iterateFrobeniusHopfIdealPoints,
-    iterateFrobenius_add, Matrix.GeneralLinearGroup.map_comp, MonoidHom.comp_apply]
+  have h : (iterateFrobenius A p (k + m)).toIntAlgHom =
+      (iterateFrobenius A p k).toIntAlgHom.comp (iterateFrobenius A p m).toIntAlgHom := by
+    rw [iterateFrobenius_add]
+    exact AlgHom.ext fun _ => rfl
+  rw [iterateFrobeniusHopfIdealPoints, iterateFrobeniusHopfIdealPoints,
+    iterateFrobeniusHopfIdealPoints, h, mapHopfIdealPointsSubgroup_comp]
 
 /-- The points of a closed subgroup scheme fixed by the Frobenius, read as a subgroup of `GLₙ(A)`,
 are the points of that subgroup scheme that the entrywise Frobenius fixes. -/
@@ -281,13 +284,12 @@ theorem map_hopfIdealPointsSubgroup_frobeniusFixedSubring :
         fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) := by
   refine le_antisymm ?_ ?_
   · rintro _ ⟨g, hg, rfl⟩
-    refine Subgroup.mem_inf.mpr ⟨?_, ?_⟩
-    · have h := map_mem_hopfIdealPointsSubgroup n I
-        (frobeniusFixedSubring A p k).subtype.toIntAlgHom hg
-      rwa [toRingHom_toIntAlgHom] at h
-    · refine (mem_fixedSubgroup_map_iterateFrobenius_iff n p k _).mpr fun i j => ?_
-      rw [Matrix.GeneralLinearGroup.map_apply, Subring.coe_subtype]
-      exact SetLike.coe_mem _
+    refine Subgroup.mem_inf.mpr
+      ⟨mapRingHom_mem_hopfIdealPointsSubgroup n I (frobeniusFixedSubring A p k).subtype hg, ?_⟩
+    refine mem_fixedSubgroup.mpr
+      ((Matrix.GeneralLinearGroup.map_iterateFrobenius_eq_self_iff p k _).mpr fun i j => ?_)
+    rw [Matrix.GeneralLinearGroup.map_apply, Subring.coe_subtype]
+    exact SetLike.coe_mem _
   · intro g hg
     obtain ⟨hgI, hgF⟩ := Subgroup.mem_inf.mp hg
     -- Read the matrix as a point. It is Frobenius-fixed, hence valued in the fixed subring, and
@@ -295,11 +297,21 @@ theorem map_hopfIdealPointsSubgroup_frobeniusFixedSubring :
     have hfix : (pointsMulEquiv (R := ℤ) n).symm g ∈
         fixedSubgroup (Bialgebra.iterateFrobeniusPoints p k
           (H := coordinateHopfAlgebra ℤ n) (A := A)) := by
-      refine mem_fixedSubgroup.mpr ((pointsMulEquiv (R := ℤ) n).injective ?_)
-      rw [pointsMulEquiv_iterateFrobeniusPoints, MulEquiv.apply_symm_apply]
-      exact mem_fixedSubgroup.mp hgF
+      rw [← map_fixedSubgroup_iterateFrobeniusPoints n p k] at hgF
+      obtain ⟨f, hf, rfl⟩ := hgF
+      rwa [MulEquiv.coe_toMonoidHom, MulEquiv.symm_apply_apply]
     rw [← Bialgebra.range_frobeniusFixedInclusion p k] at hfix
     obtain ⟨f, hf⟩ := hfix
+    -- `Bialgebra.frobeniusFixedInclusion` is `AlgHom.mapValue` along the inclusion of the fixed
+    -- subring, which is the form the naturality of the point equivalence consumes; the module
+    -- system does not expose that definition, so name the identification here.
+    have hfmap : AlgHom.mapValue (H := coordinateHopfAlgebra ℤ n)
+        (frobeniusFixedSubring A p k).subtype.toIntAlgHom f =
+          (pointsMulEquiv (R := ℤ) n).symm g := by
+      rw [← hf]
+      refine WithConv.ofConv_injective (AlgHom.ext fun x => ?_)
+      rw [AlgHom.mapValue_apply, ofConv_toConv, AlgHom.comp_apply, RingHom.toIntAlgHom_apply,
+        Subring.coe_subtype, Bialgebra.frobeniusFixedInclusion_apply_apply]
     refine ⟨pointsMulEquiv (R := ℤ) n f, ?_, ?_⟩
     · refine (mem_hopfIdealPointsSubgroup_iff n I _ _).mpr fun x hx => ?_
       rw [MulEquiv.symm_apply_apply]
@@ -307,16 +319,16 @@ theorem map_hopfIdealPointsSubgroup_frobeniusFixedSubring :
         (mem_hopfIdealPointsSubgroup_iff n I A g).mp hgI x hx
       rw [← hf, Bialgebra.frobeniusFixedInclusion_apply_apply] at h0
       exact Subtype.ext h0
-    · refine Matrix.GeneralLinearGroup.ext fun i j => ?_
-      rw [Matrix.GeneralLinearGroup.map_apply, pointsMulEquiv_apply, pointToGeneralLinear_apply,
-        Subring.coe_subtype, ← Bialgebra.frobeniusFixedInclusion_apply_apply, hf,
-        ← pointToGeneralLinear_apply, ← pointsMulEquiv_apply, MulEquiv.apply_symm_apply]
+    · have h := pointsMulEquiv_mapValue (R := ℤ) n
+        (frobeniusFixedSubring A p k).subtype.toIntAlgHom f
+      rw [toRingHom_toIntAlgHom, hfmap, MulEquiv.apply_symm_apply] at h
+      exact h.symm
 
 variable (A) in
 /-- The entrywise inclusion of the matrix points of a closed subgroup scheme valued in the
 Frobenius-fixed subring of `A` into its `A`-valued matrix points. In the motivating case this is
 `G(𝔽_q) → G(A)`. -/
-noncomputable def frobeniusFixedHopfIdealInclusion :
+noncomputable def frobeniusFixedHopfIdealPointsInclusion :
     hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k) →*
       hopfIdealPointsSubgroup n I A :=
   mapHopfIdealPointsSubgroup n I (frobeniusFixedSubring A p k).subtype.toIntAlgHom
@@ -324,38 +336,40 @@ noncomputable def frobeniusFixedHopfIdealInclusion :
 /-- The inclusion of the rational points reads each entry of a matrix over the Frobenius-fixed
 subring as an element of `A`. -/
 @[simp]
-theorem coe_frobeniusFixedHopfIdealInclusion
+theorem coe_frobeniusFixedHopfIdealPointsInclusion
     (g : hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k)) :
-    (frobeniusFixedHopfIdealInclusion n p k I A g : Matrix.GeneralLinearGroup (Fin n) A) =
-      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
-  rw [frobeniusFixedHopfIdealInclusion, coe_mapHopfIdealPointsSubgroup, toRingHom_toIntAlgHom]
+    (frobeniusFixedHopfIdealPointsInclusion n p k I A g : Matrix.GeneralLinearGroup (Fin n) A) =
+      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g :=
+  coe_mapRingHomHopfIdealPointsSubgroup n I (frobeniusFixedSubring A p k).subtype g
+
+/-- Entrywise, the inclusion of the rational points is the inclusion of the Frobenius-fixed
+subring on each entry. -/
+theorem coe_frobeniusFixedHopfIdealPointsInclusion_apply
+    (g : hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k)) (i j : Fin n) :
+    ((frobeniusFixedHopfIdealPointsInclusion n p k I A g :
+        Matrix.GeneralLinearGroup (Fin n) A) : Matrix (Fin n) (Fin n) A) i j =
+      (((g : Matrix.GeneralLinearGroup (Fin n) ↥(frobeniusFixedSubring A p k)) :
+        Matrix (Fin n) (Fin n) ↥(frobeniusFixedSubring A p k)) i j : A) := by
+  rw [coe_frobeniusFixedHopfIdealPointsInclusion, Matrix.GeneralLinearGroup.map_apply,
+    Subring.coe_subtype]
 
 /-- Reading a matrix point over the Frobenius-fixed subring as one over `A` loses no
 information. -/
-theorem frobeniusFixedHopfIdealInclusion_injective :
-    Function.Injective (frobeniusFixedHopfIdealInclusion n p k I A) := by
-  intro g g' hgg'
-  have h := congrArg
-    (fun x : hopfIdealPointsSubgroup n I A => (x : Matrix.GeneralLinearGroup (Fin n) A)) hgg'
-  rw [coe_frobeniusFixedHopfIdealInclusion, coe_frobeniusFixedHopfIdealInclusion] at h
-  refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => Subtype.ext ?_)
-  have hij := congrFun (congrFun (congrArg (fun x : Matrix.GeneralLinearGroup (Fin n) A =>
-    (x : Matrix (Fin n) (Fin n) A)) h) i) j
-  rwa [Matrix.GeneralLinearGroup.map_apply, Matrix.GeneralLinearGroup.map_apply] at hij
+theorem frobeniusFixedHopfIdealPointsInclusion_injective :
+    Function.Injective (frobeniusFixedHopfIdealPointsInclusion n p k I A) :=
+  mapHopfIdealPointsSubgroup_injective n I (frobeniusFixedSubring A p k).subtype_injective
 
 /-- The rational points of a closed subgroup scheme are exactly the points fixed by its Frobenius
 endomorphism. This is `TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring`
 read inside the point group of the subgroup scheme rather than inside `GLₙ(A)`. -/
-theorem range_frobeniusFixedHopfIdealInclusion :
-    (frobeniusFixedHopfIdealInclusion n p k I A).range =
+theorem range_frobeniusFixedHopfIdealPointsInclusion :
+    (frobeniusFixedHopfIdealPointsInclusion n p k I A).range =
       fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A) := by
   refine le_antisymm ?_ ?_
   · rintro _ ⟨g, rfl⟩
-    refine mem_fixedSubgroup.mpr (Subtype.ext ?_)
-    rw [coe_iterateFrobeniusHopfIdealPoints]
-    refine (mem_fixedSubgroup_map_iterateFrobenius_iff n p k _).mpr fun i j => ?_
-    rw [coe_frobeniusFixedHopfIdealInclusion, Matrix.GeneralLinearGroup.map_apply,
-      Subring.coe_subtype]
+    refine mem_fixedSubgroup.mpr
+      ((iterateFrobeniusHopfIdealPoints_eq_self_iff n p k I _).mpr fun i j => ?_)
+    rw [coe_frobeniusFixedHopfIdealPointsInclusion_apply]
     exact SetLike.coe_mem _
   · intro x hx
     have hmem : (x : Matrix.GeneralLinearGroup (Fin n) A) ∈
@@ -365,7 +379,8 @@ theorem range_frobeniusFixedHopfIdealInclusion :
         ← map_subtype_fixedSubgroup_iterateFrobeniusHopfIdealPoints n p k I]
       exact ⟨x, hx, rfl⟩
     obtain ⟨g, hg, hgx⟩ := hmem
-    exact ⟨⟨g, hg⟩, Subtype.ext (by rw [coe_frobeniusFixedHopfIdealInclusion]; exact hgx)⟩
+    exact ⟨⟨g, hg⟩, Subtype.ext (by
+      rw [coe_frobeniusFixedHopfIdealPointsInclusion]; exact hgx)⟩
 
 variable (A) in
 /-- **The rational points of a closed subgroup scheme of `GLₙ` are the Frobenius-fixed points.**
@@ -375,15 +390,15 @@ fixed points of its Frobenius. -/
 noncomputable def frobeniusFixedHopfIdealPointsMulEquiv :
     hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k) ≃*
       fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A) :=
-  (MonoidHom.ofInjective (frobeniusFixedHopfIdealInclusion_injective n p k I)).trans
-    (MulEquiv.subgroupCongr (range_frobeniusFixedHopfIdealInclusion n p k I))
+  (MonoidHom.ofInjective (frobeniusFixedHopfIdealPointsInclusion_injective n p k I)).trans
+    (MulEquiv.subgroupCongr (range_frobeniusFixedHopfIdealPointsInclusion n p k I))
 
 /-- The isomorphism onto the Frobenius-fixed points is the inclusion of the rational points. -/
 @[simp]
 theorem coe_frobeniusFixedHopfIdealPointsMulEquiv
     (g : hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k)) :
     (frobeniusFixedHopfIdealPointsMulEquiv n p k I A g : hopfIdealPointsSubgroup n I A) =
-      frobeniusFixedHopfIdealInclusion n p k I A g := by
+      frobeniusFixedHopfIdealPointsInclusion n p k I A g := by
   rw [frobeniusFixedHopfIdealPointsMulEquiv, MulEquiv.coe_trans, Function.comp_apply,
     MulEquiv.subgroupCongr_apply, MonoidHom.ofInjective_apply]
 
@@ -391,12 +406,25 @@ theorem coe_frobeniusFixedHopfIdealPointsMulEquiv
 Frobenius-fixed subring: including it back into the `A`-valued points returns the point one started
 from. -/
 @[simp]
-theorem frobeniusFixedHopfIdealInclusion_frobeniusFixedHopfIdealPointsMulEquiv_symm_apply
+theorem frobeniusFixedHopfIdealPointsInclusion_frobeniusFixedHopfIdealPointsMulEquiv_symm_apply
     (x : fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)) :
-    frobeniusFixedHopfIdealInclusion n p k I A
+    frobeniusFixedHopfIdealPointsInclusion n p k I A
         ((frobeniusFixedHopfIdealPointsMulEquiv n p k I A).symm x) =
       (x : hopfIdealPointsSubgroup n I A) := by
   rw [← coe_frobeniusFixedHopfIdealPointsMulEquiv, MulEquiv.apply_symm_apply]
+
+/-- Entrywise form: the entries of the matrix over the Frobenius-fixed subring produced by the
+inverse of the isomorphism are the entries of the Frobenius-fixed point it came from. -/
+@[simp]
+theorem coe_frobeniusFixedHopfIdealPointsMulEquiv_symm_apply_apply
+    (x : fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)) (i j : Fin n) :
+    (((((frobeniusFixedHopfIdealPointsMulEquiv n p k I A).symm x :
+          Matrix.GeneralLinearGroup (Fin n) ↥(frobeniusFixedSubring A p k)) :
+        Matrix (Fin n) (Fin n) ↥(frobeniusFixedSubring A p k)) i j : A)) =
+      (((x : hopfIdealPointsSubgroup n I A) : Matrix.GeneralLinearGroup (Fin n) A) :
+        Matrix (Fin n) (Fin n) A) i j := by
+  rw [← coe_frobeniusFixedHopfIdealPointsInclusion_apply,
+    frobeniusFixedHopfIdealPointsInclusion_frobeniusFixedHopfIdealPointsMulEquiv_symm_apply]
 
 end RationalPoints
 
