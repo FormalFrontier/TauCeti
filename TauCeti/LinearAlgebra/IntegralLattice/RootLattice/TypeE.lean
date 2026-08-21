@@ -11,11 +11,12 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.StandardCoordinates
 public import TauCeti.LinearAlgebra.IntegralLattice.Unimodular
+import Mathlib.Data.ZMod.QuotientGroup
 
 /-!
 # The exceptional root lattices `E₆`, `E₇`, `E₈` and their discriminant forms
 
-The positive root lattice of an exceptional simply laced type is the integral lattice whose Gram
+The root lattice of an exceptional simply laced type is the integral lattice whose Gram
 matrix in the simple-root basis is the corresponding Cartan matrix.  This file constructs the three
 of them inside `Fin n → ℚ`, proves them even and nondegenerate, and computes their discriminant
 forms:
@@ -61,6 +62,10 @@ the branch node of the diagram is `α₄`, and `α₂` is the short arm.
   fundamental weights `ϖ₁` and `ϖ₇`.
 * `TauCeti.IntegralLattice.typeE₆DiscriminantGroupEquiv`: `ZMod 3 ≃+ A_{E₆}`.
 * `TauCeti.IntegralLattice.typeE₇DiscriminantGroupEquiv`: `ZMod 2 ≃+ A_{E₇}`.
+* `TauCeti.IntegralLattice.typeE₆StandardQuadraticModule` and its type-`E₇` analogue: the
+  standard cyclic quadratic modules on `ZMod 3` and `ZMod 2`.
+* `TauCeti.IntegralLattice.typeE₆DiscriminantQuadraticIsometry` and its type-`E₇` analogue:
+  the standard cyclic modules are isometric to the corresponding discriminant forms.
 * `TauCeti.IntegralLattice.discriminantQuadraticMap_typeE₆MinusculeWeightClass`: `q(ϖ₁) = 2/3`.
 * `TauCeti.IntegralLattice.discriminantQuadraticMap_typeE₇MinusculeWeightClass`: `q(ϖ₇) = 3/4`.
 * `TauCeti.IntegralLattice.isUnimodular_typeE₈RootLattice`: `E₈` is unimodular, so its discriminant
@@ -84,17 +89,81 @@ namespace IntegralLattice
 
 open Finset
 
+/- Cyclic quadratic-module construction used below. -/
+
+private def intBilin (a : AddCircle (1 : ℚ)) : LinearMap.BilinMap ℤ ℤ (AddCircle (1 : ℚ)) :=
+  LinearMap.mk₂ ℤ (fun x y : ℤ ↦ (x * y) • a)
+    (fun x y z ↦ by rw [add_mul, add_smul])
+    (fun r x y ↦ by rw [smul_eq_mul, mul_assoc, mul_smul])
+    (fun x y z ↦ by rw [mul_add, add_smul])
+    (fun r x y ↦ by rw [smul_eq_mul, mul_left_comm, mul_smul])
+
+private def intQuadratic (a : AddCircle (1 : ℚ)) : QuadraticMap ℤ ℤ (AddCircle (1 : ℚ)) :=
+  (intBilin a).toQuadraticMap
+
+private theorem zmultiples_le_radical_intQuadratic (n : ℕ) (a : AddCircle (1 : ℚ))
+    (hq : ((n : ℤ) * n) • a = 0) (hp : (2 * (n : ℤ)) • a = 0) :
+    (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule ≤ (intQuadratic a).radical := by
+  intro x hx
+  obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
+  constructor
+  · change (((k * (n : ℤ)) * (k * n)) • a) = 0
+    have hcoeff : (k * (n : ℤ)) * (k * n) = (k * k) * (n * n) := by ring
+    rw [hcoeff, mul_smul, hq, smul_zero]
+  · apply LinearMap.ext
+    intro y
+    change QuadraticMap.polar (intQuadratic a) (k • (n : ℤ)) y = 0
+    rw [intQuadratic, LinearMap.BilinMap.polar_toQuadraticMap]
+    simp only [intBilin, LinearMap.mk₂_apply, smul_eq_mul]
+    change ((k * (n : ℤ) * y) • a) + ((y * (k * n)) • a) = 0
+    rw [← add_smul]
+    have hcoeff : k * (n : ℤ) * y + y * (k * n) = (k * y) * (2 * n) := by ring
+    rw [hcoeff, mul_smul, hp, smul_zero]
+
+private def intQuotientEquivZMod (n : ℕ) :
+    (ℤ ⧸ (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule) ≃ₗ[ℤ] ZMod n :=
+  { Int.quotientZMultiplesNatEquivZMod n with
+    map_smul' := by
+      intro k x
+      convert! (Int.quotientZMultiplesNatEquivZMod n).toAddMonoidHom.map_zsmul k x using 1 }
+
+private def cyclicQuadraticMap (n : ℕ) (a : AddCircle (1 : ℚ))
+    (hq : ((n : ℤ) * n) • a = 0) (hp : (2 * (n : ℤ)) • a = 0) :
+    QuadraticMap ℤ (ZMod n) (AddCircle (1 : ℚ)) :=
+  ((intQuadratic a).lift (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule
+      (zmultiples_le_radical_intQuadratic n a hq hp)).comp
+      (intQuotientEquivZMod n).symm.toLinearMap
+
+private theorem cyclicQuadraticMap_one (n : ℕ) (a : AddCircle (1 : ℚ))
+    (hq : ((n : ℤ) * n) • a = 0) (hp : (2 * (n : ℤ)) • a = 0) :
+    cyclicQuadraticMap n a hq hp 1 = a := by
+  unfold cyclicQuadraticMap
+  rw [QuadraticMap.comp_apply]
+  have he : (intQuotientEquivZMod n).symm 1 = Submodule.Quotient.mk (1 : ℤ) := by
+    apply (intQuotientEquivZMod n).injective
+    rw [LinearEquiv.apply_symm_apply]
+    have hs : (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).symm
+        (QuotientAddGroup.mk 1) = QuotientAddGroup.mk 1 := by
+      apply (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).injective
+      rw [AddEquiv.apply_symm_apply, QuotientAddGroup.quotientAddEquivOfEq_mk]
+    change (1 : ZMod n) = Int.quotientZMultiplesNatEquivZMod n (QuotientAddGroup.mk 1)
+    rw [Int.quotientZMultiplesNatEquivZMod, AddEquiv.trans_apply, hs]
+    change (1 : ZMod n) = ((1 : ℤ) : ZMod n)
+    simp
+  change (intQuadratic a).lift (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule _
+    ((intQuotientEquivZMod n).symm 1) = a
+  rw [he, QuadraticMap.lift_mk]
+  simp [intQuadratic, intBilin]
+
 /-! ## The root lattice of type `E₆` -/
 
-/-- The positive root lattice of type `E₆`: the rank-six integral lattice on `Fin 6 → ℚ` whose Gram
+/-- The root lattice of type `E₆`: the rank-six integral lattice on `Fin 6 → ℚ` whose Gram
 matrix in the standard basis of simple roots is `CartanMatrix.E 6`. -/
 noncomputable def typeE₆RootLattice : IntegralLattice (Fin 6 → ℚ) :=
   ofGramMatrix (Pi.basisFun ℚ (Fin 6)) (CartanMatrix.E 6) (CartanMatrix.E_isSymm 6)
 
-/-- The `i`-th simple root of the type `E₆` root lattice, as a vector of the ambient space.
-
-This is sealed rather than an `abbrev`: reducibility would let `Pi.basisFun_apply` rewrite
-underneath it, taking the Gram-matrix and pairing lemmas below out of `simp` normal form. -/
+/-- The `i`-th simple root of the type `E₆` root lattice, as a vector of the ambient space. -/
+-- This is sealed so `Pi.basisFun_apply` does not rewrite beneath it and destabilize the simp API.
 noncomputable def typeE₆SimpleRoot (i : Fin 6) : Fin 6 → ℚ := Pi.basisFun ℚ (Fin 6) i
 
 /-- The `i`-th simple root of type `E₆` is the `i`-th standard coordinate vector. -/
@@ -149,10 +218,8 @@ theorem discriminant_typeE₆RootLattice : typeE₆RootLattice.discriminant = 3 
   rw [discriminant_def, determinant_typeE₆RootLattice]
   decide
 
-/-- **The discriminant group of the type `E₆` root lattice has order `3`.**
-
-This is deliberately not a `simp` lemma: `Nat.card_eq_fintype_card` rewrites the left-hand side,
-so the `simpNF` linter rejects the tagged form. -/
+/-- **The discriminant group of the type `E₆` root lattice has order `3`.** -/
+-- This is not a `simp` lemma because `Nat.card_eq_fintype_card` rewrites its left-hand side.
 theorem natCard_discriminantGroup_typeE₆RootLattice :
     Nat.card typeE₆RootLattice.DiscriminantGroup = 3 := by
   rw [natCard_discriminantGroup, discriminant_typeE₆RootLattice]
@@ -318,17 +385,89 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
+private theorem typeE₆QuadraticValue_sq_torsion :
+    (9 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
+  change ((((9 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
+  rw [QuotientAddGroup.eq_zero_iff]
+  exact ⟨6, by norm_num⟩
+
+private theorem typeE₆QuadraticValue_polar_torsion :
+    (6 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
+  change ((((6 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
+  rw [QuotientAddGroup.eq_zero_iff]
+  exact ⟨4, by norm_num⟩
+
+/-- The quadratic map on `ZMod 3` whose generator has value `2/3`. -/
+noncomputable def typeE₆StandardQuadraticMap :
+    QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
+  cyclicQuadraticMap 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
+    typeE₆QuadraticValue_sq_torsion typeE₆QuadraticValue_polar_torsion
+
+/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`. -/
+@[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule where
+  toFiniteBilinearModule := {
+    carrier := ZMod 3
+    pairing := {
+      toFun := fun x ↦ (typeE₆StandardQuadraticMap.polarBilin x).toAddMonoidHom
+      map_zero' := by ext y; change typeE₆StandardQuadraticMap.polarBilin 0 y = 0; simp
+      map_add' := by
+        intro x y
+        ext z
+        change typeE₆StandardQuadraticMap.polarBilin (x + y) z =
+          typeE₆StandardQuadraticMap.polarBilin x z +
+            typeE₆StandardQuadraticMap.polarBilin y z
+        simp }
+    pairing_comm := fun x y ↦ QuadraticMap.polar_comm typeE₆StandardQuadraticMap x y }
+  quadratic := typeE₆StandardQuadraticMap
+  polar_eq_pairing' := fun _ _ ↦ rfl
+
+/-- The generator of the standard type-`E₆` quadratic map has value `2/3`. -/
+@[simp]
+theorem typeE₆StandardQuadraticMap_one :
+    typeE₆StandardQuadraticMap 1 =
+      (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ)) :=
+  cyclicQuadraticMap_one 3 _ _ _
+
+/-- The standard cyclic quadratic module of type `E₆` is isometric to the discriminant
+quadratic module of the `E₆` root lattice. -/
+noncomputable def typeE₆DiscriminantQuadraticIsometry :
+    FiniteQuadraticModule.Isometry typeE₆StandardQuadraticModule
+      (typeE₆RootLattice.discriminantQuadraticModule isEven_typeE₆RootLattice) where
+  toLinearEquiv := typeE₆DiscriminantGroupEquiv.toIntLinearEquiv
+  map_app' x := by
+    change ZMod 3 at x
+    obtain ⟨k, rfl⟩ := ZMod.intCast_surjective x
+    change typeE₆RootLattice.discriminantQuadraticMap isEven_typeE₆RootLattice
+      (typeE₆DiscriminantGroupEquiv (k : ZMod 3)) =
+      typeE₆StandardQuadraticMap (k : ZMod 3)
+    rw [← zsmul_one, map_zsmul, QuadraticMap.map_smul, QuadraticMap.map_smul,
+      typeE₆DiscriminantGroupEquiv_apply_one,
+      discriminantQuadraticMap_typeE₆MinusculeWeightClass,
+      typeE₆StandardQuadraticMap_one]
+
+/-- The underlying additive equivalence of the type-`E₆` quadratic isometry. -/
+@[simp]
+theorem typeE₆DiscriminantQuadraticIsometry_toAddEquiv :
+    typeE₆DiscriminantQuadraticIsometry.toAddEquiv = typeE₆DiscriminantGroupEquiv := by
+  rw [typeE₆DiscriminantQuadraticIsometry]
+  rfl
+
+/-- The type-`E₆` quadratic isometry acts through the discriminant-group equivalence. -/
+@[simp]
+theorem typeE₆DiscriminantQuadraticIsometry_apply (x : ZMod 3) :
+    typeE₆DiscriminantQuadraticIsometry x = typeE₆DiscriminantGroupEquiv x := by
+  rw [typeE₆DiscriminantQuadraticIsometry]
+  rfl
+
 /-! ## The root lattice of type `E₇` -/
 
-/-- The positive root lattice of type `E₇`: the rank-seven integral lattice on `Fin 7 → ℚ` whose
+/-- The root lattice of type `E₇`: the rank-seven integral lattice on `Fin 7 → ℚ` whose
 Gram matrix in the standard basis of simple roots is `CartanMatrix.E 7`. -/
 noncomputable def typeE₇RootLattice : IntegralLattice (Fin 7 → ℚ) :=
   ofGramMatrix (Pi.basisFun ℚ (Fin 7)) (CartanMatrix.E 7) (CartanMatrix.E_isSymm 7)
 
-/-- The `i`-th simple root of the type `E₇` root lattice, as a vector of the ambient space.
-
-This is sealed rather than an `abbrev`: reducibility would let `Pi.basisFun_apply` rewrite
-underneath it, taking the Gram-matrix and pairing lemmas below out of `simp` normal form. -/
+/-- The `i`-th simple root of the type `E₇` root lattice, as a vector of the ambient space. -/
+-- This is sealed so `Pi.basisFun_apply` does not rewrite beneath it and destabilize the simp API.
 noncomputable def typeE₇SimpleRoot (i : Fin 7) : Fin 7 → ℚ := Pi.basisFun ℚ (Fin 7) i
 
 /-- The `i`-th simple root of type `E₇` is the `i`-th standard coordinate vector. -/
@@ -383,10 +522,8 @@ theorem discriminant_typeE₇RootLattice : typeE₇RootLattice.discriminant = 2 
   rw [discriminant_def, determinant_typeE₇RootLattice]
   decide
 
-/-- **The discriminant group of the type `E₇` root lattice has order `2`.**
-
-This is deliberately not a `simp` lemma: `Nat.card_eq_fintype_card` rewrites the left-hand side,
-so the `simpNF` linter rejects the tagged form. -/
+/-- **The discriminant group of the type `E₇` root lattice has order `2`.** -/
+-- This is not a `simp` lemma because `Nat.card_eq_fintype_card` rewrites its left-hand side.
 theorem natCard_discriminantGroup_typeE₇RootLattice :
     Nat.card typeE₇RootLattice.DiscriminantGroup = 2 := by
   rw [natCard_discriminantGroup, discriminant_typeE₇RootLattice]
@@ -552,17 +689,83 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
+private theorem typeE₇QuadraticValue_torsion :
+    (4 : ℤ) • ((((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
+  change ((((4 : ℚ) * (3 / 4)) : ℚ) : AddCircle (1 : ℚ)) = 0
+  rw [QuotientAddGroup.eq_zero_iff]
+  exact ⟨3, by norm_num⟩
+
+/-- The quadratic map on `ZMod 2` whose generator has value `3/4`. -/
+noncomputable def typeE₇StandardQuadraticMap :
+    QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
+  cyclicQuadraticMap 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
+    typeE₇QuadraticValue_torsion typeE₇QuadraticValue_torsion
+
+/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`. -/
+@[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule where
+  toFiniteBilinearModule := {
+    carrier := ZMod 2
+    pairing := {
+      toFun := fun x ↦ (typeE₇StandardQuadraticMap.polarBilin x).toAddMonoidHom
+      map_zero' := by ext y; change typeE₇StandardQuadraticMap.polarBilin 0 y = 0; simp
+      map_add' := by
+        intro x y
+        ext z
+        change typeE₇StandardQuadraticMap.polarBilin (x + y) z =
+          typeE₇StandardQuadraticMap.polarBilin x z +
+            typeE₇StandardQuadraticMap.polarBilin y z
+        simp }
+    pairing_comm := fun x y ↦ QuadraticMap.polar_comm typeE₇StandardQuadraticMap x y }
+  quadratic := typeE₇StandardQuadraticMap
+  polar_eq_pairing' := fun _ _ ↦ rfl
+
+/-- The generator of the standard type-`E₇` quadratic map has value `3/4`. -/
+@[simp]
+theorem typeE₇StandardQuadraticMap_one :
+    typeE₇StandardQuadraticMap 1 =
+      (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) :=
+  cyclicQuadraticMap_one 2 _ _ _
+
+/-- The standard cyclic quadratic module of type `E₇` is isometric to the discriminant
+quadratic module of the `E₇` root lattice. -/
+noncomputable def typeE₇DiscriminantQuadraticIsometry :
+    FiniteQuadraticModule.Isometry typeE₇StandardQuadraticModule
+      (typeE₇RootLattice.discriminantQuadraticModule isEven_typeE₇RootLattice) where
+  toLinearEquiv := typeE₇DiscriminantGroupEquiv.toIntLinearEquiv
+  map_app' x := by
+    change ZMod 2 at x
+    obtain ⟨k, rfl⟩ := ZMod.intCast_surjective x
+    change typeE₇RootLattice.discriminantQuadraticMap isEven_typeE₇RootLattice
+      (typeE₇DiscriminantGroupEquiv (k : ZMod 2)) =
+      typeE₇StandardQuadraticMap (k : ZMod 2)
+    rw [← zsmul_one, map_zsmul, QuadraticMap.map_smul, QuadraticMap.map_smul,
+      typeE₇DiscriminantGroupEquiv_apply_one,
+      discriminantQuadraticMap_typeE₇MinusculeWeightClass,
+      typeE₇StandardQuadraticMap_one]
+
+/-- The underlying additive equivalence of the type-`E₇` quadratic isometry. -/
+@[simp]
+theorem typeE₇DiscriminantQuadraticIsometry_toAddEquiv :
+    typeE₇DiscriminantQuadraticIsometry.toAddEquiv = typeE₇DiscriminantGroupEquiv := by
+  rw [typeE₇DiscriminantQuadraticIsometry]
+  rfl
+
+/-- The type-`E₇` quadratic isometry acts through the discriminant-group equivalence. -/
+@[simp]
+theorem typeE₇DiscriminantQuadraticIsometry_apply (x : ZMod 2) :
+    typeE₇DiscriminantQuadraticIsometry x = typeE₇DiscriminantGroupEquiv x := by
+  rw [typeE₇DiscriminantQuadraticIsometry]
+  rfl
+
 /-! ## The root lattice of type `E₈` -/
 
-/-- The positive root lattice of type `E₈`: the rank-eight integral lattice on `Fin 8 → ℚ` whose
+/-- The root lattice of type `E₈`: the rank-eight integral lattice on `Fin 8 → ℚ` whose
 Gram matrix in the standard basis of simple roots is `CartanMatrix.E 8`. -/
 noncomputable def typeE₈RootLattice : IntegralLattice (Fin 8 → ℚ) :=
   ofGramMatrix (Pi.basisFun ℚ (Fin 8)) (CartanMatrix.E 8) (CartanMatrix.E_isSymm 8)
 
-/-- The `i`-th simple root of the type `E₈` root lattice, as a vector of the ambient space.
-
-This is sealed rather than an `abbrev`: reducibility would let `Pi.basisFun_apply` rewrite
-underneath it, taking the Gram-matrix and pairing lemmas below out of `simp` normal form. -/
+/-- The `i`-th simple root of the type `E₈` root lattice, as a vector of the ambient space. -/
+-- This is sealed so `Pi.basisFun_apply` does not rewrite beneath it and destabilize the simp API.
 noncomputable def typeE₈SimpleRoot (i : Fin 8) : Fin 8 → ℚ := Pi.basisFun ℚ (Fin 8) i
 
 /-- The `i`-th simple root of type `E₈` is the `i`-th standard coordinate vector. -/
@@ -634,10 +837,8 @@ instance instSubsingletonDiscriminantGroupTypeE₈RootLattice :
   typeE₈RootLattice.isUnimodular_iff_subsingleton_discriminantGroup.mp
     isUnimodular_typeE₈RootLattice
 
-/-- **The discriminant group of the type `E₈` root lattice has order `1`.**
-
-This is deliberately not a `simp` lemma: `Nat.card_eq_fintype_card` rewrites the left-hand side,
-so the `simpNF` linter rejects the tagged form. -/
+/-- **The discriminant group of the type `E₈` root lattice has order `1`.** -/
+-- This is not a `simp` lemma because `Nat.card_eq_fintype_card` rewrites its left-hand side.
 theorem natCard_discriminantGroup_typeE₈RootLattice :
     Nat.card typeE₈RootLattice.DiscriminantGroup = 1 := by
   rw [natCard_discriminantGroup, discriminant_typeE₈RootLattice]
