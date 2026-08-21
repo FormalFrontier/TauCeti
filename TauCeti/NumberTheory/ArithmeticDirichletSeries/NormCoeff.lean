@@ -6,9 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Basic
-public import Mathlib.Data.Set.Card.Arithmetic
 public import Mathlib.NumberTheory.ArithmeticFunction.Defs
-public import Mathlib.NumberTheory.NumberField.DedekindZeta
+public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
 # Regrouping ideal arithmetic functions by absolute norm
@@ -20,9 +19,7 @@ function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` ca
 is available from `ArithmeticFunction.map_zero`.
 
 The construction is bundled as a complex-linear map.  The basic API records the value at one and
-compatibility with complex conjugation.  For the constant-one ideal arithmetic function, the
-positive coefficients are the numbers of integral ideals of the corresponding norm; hence its
-`LSeries` is Mathlib's `NumberField.dedekindZeta`.
+compatibility with complex conjugation.
 
 ## Roadmap role
 
@@ -84,7 +81,7 @@ theorem hasFiniteSupport_normCoeff_summand (f : IdealArithmeticFunction K) (n : 
 
 /-- There is a unique nonzero integral ideal of absolute norm one, namely the unit ideal. -/
 @[simp]
-theorem normCoeff_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 := by
+theorem normCoeff_apply_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 := by
   rw [normCoeff_apply]
   have hfiber :
       {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = 1} = {1} := by
@@ -99,39 +96,5 @@ theorem normCoeff_star_apply (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K (fun I ↦ (starRingEnd ℂ) (f I)) n = star (normCoeff K f n) := by
   simp only [normCoeff_apply]
   exact ((starAddEquiv : ℂ ≃+ ℂ).map_finsum_mem f (finite_normFiber K n)).symm
-
-private noncomputable def normFiberEquiv (n : ℕ) (hn : n ≠ 0) :
-    {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) = n} ≃
-      {I : Ideal (𝓞 K) // Ideal.absNorm I = n} where
-  toFun I := ⟨I.1, I.2⟩
-  invFun I := ⟨⟨I.1, by
-    rw [mem_nonZeroDivisors_iff_ne_zero]
-    intro hI
-    apply hn
-    rw [← I.2, Ideal.absNorm_eq_zero_iff]
-    simpa only [Submodule.zero_eq_bot] using hI⟩, I.2⟩
-  left_inv I := rfl
-  right_inv I := rfl
-
-/-- For positive `n`, the coefficient of the constant-one ideal arithmetic function is the number
-of integral ideals of absolute norm `n`. -/
-theorem normCoeff_one_apply_of_ne_zero (n : ℕ) (hn : n ≠ 0) :
-    normCoeff K (1 : IdealArithmeticFunction K) n =
-      (Nat.card {I : Ideal (𝓞 K) // Ideal.absNorm I = n} : ℂ) := by
-  rw [normCoeff_apply]
-  rw [finsum_mem_eq_finite_toFinset_sum _ (finite_normFiber K n)]
-  simp only [Pi.one_apply, Finset.sum_const, nsmul_eq_mul, mul_one]
-  norm_cast
-  rw [← Set.ncard_eq_toFinset_card
-    {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n} (finite_normFiber K n),
-    ← Nat.card_coe_set_eq]
-  exact Nat.card_congr (normFiberEquiv K n hn)
-
-/-- The `LSeries` obtained from the constant-one ideal arithmetic function is Mathlib's Dedekind
-zeta function.  The two coefficient functions differ at `0`, which `LSeries` ignores. -/
-theorem LSeries_normCoeff_one (s : ℂ) :
-    LSeries (normCoeff K (1 : IdealArithmeticFunction K)) s = NumberField.dedekindZeta K s := by
-  unfold NumberField.dedekindZeta
-  exact LSeries_congr (fun hn ↦ normCoeff_one_apply_of_ne_zero K _ hn) s
 
 end TauCeti
