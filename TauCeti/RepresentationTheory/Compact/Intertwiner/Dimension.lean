@@ -7,7 +7,6 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Character.Basic
 public import TauCeti.RepresentationTheory.Compact.Invariants
-public import TauCeti.RepresentationTheory.Continuous.LinHom
 
 /-!
 # The character integral counts the intertwiners
@@ -32,7 +31,11 @@ For a **unitary** `π` the character at an inverse is the conjugate of the chara
 (`TauCeti.ContRepresentation.character_apply_inv`), so the integrand becomes `conj χ_π · χ_ρ`, the
 `L²` pairing of the two characters. In that form the theorem is the quantitative statement behind
 Schur orthogonality: the pairing of the characters of two irreducibles is the dimension of the
-space of intertwiners between them, which Schur's lemma makes `1` or `0`.
+space of intertwiners between them. That dimension is `0` when the two admit no nonzero
+intertwiner, and for an irreducible against itself it is the dimension of its endomorphism
+division algebra — which Schur's lemma makes `1` only over algebraically closed scalars, and which
+over `ℝ` is `1`, `2` or `4`. This is why `TauCeti.ContRepresentation.character_orthonormal_self`
+carries `[IsAlgClosed 𝕜]` while `character_orthonormal_distinct` does not.
 
 ## Main statements
 
@@ -107,7 +110,7 @@ theorem integral_character_mul_eq_zero_iff :
   constructor
   · exact fun h f ↦ h _ (toContinuousLinearMap_mem_invariants_linHom π ρ f)
   · intro h T hT
-    exact h ⟨T, (mem_invariants_linHom_iff π ρ T).1 hT⟩
+    exact h ⟨T, (mem_linHom_invariants_iff_isIntertwining π ρ T).1 hT⟩
 
 end Counting
 
@@ -135,8 +138,10 @@ theorem integral_star_character_mul_eq_finrank_contIntertwiningMap (hunitary : I
 
 /-- **The `L²` inner product of the two characters is the dimension of the space of intertwiners.**
 This is the compact-group form of Mathlib's `FDRep.scalar_product_char_eq_finrank_equivariant`, and
-the quantitative statement of which both character orthogonality relations are the irreducible
-case. -/
+the quantitative statement of which the two character orthogonality relations are the irreducible
+case: `0` when there is no nonzero intertwiner, and `1` for an irreducible against itself once the
+scalars are algebraically closed, so that Schur's lemma makes its endomorphism algebra
+one-dimensional. -/
 theorem inner_characterLp_eq_finrank_contIntertwiningMap (hunitary : IsUnitary π) :
     ⟪characterLp π hπ, characterLp ρ hρ⟫_𝕜
       = (Module.finrank 𝕜 (ContIntertwiningMap π ρ) : 𝕜) := by
