@@ -378,10 +378,14 @@ lemma cartanMatrix_apply_of_adj {t : AffineDynkinType} (ht : t.IsGraphical) {i j
     (h : t.graph.Adj i j) : t.cartanMatrix i j = -1 := by
   simp [cartanMatrix_apply ht, h, h.ne]
 
-/-- Away from `A₁`, two distinct non-adjacent nodes contribute the entry `0`. -/
-lemma cartanMatrix_apply_of_not_adj {t : AffineDynkinType} (ht : t.IsGraphical) {i j : Fin t.nodes}
-    (hij : i ≠ j) (h : ¬ t.graph.Adj i j) : t.cartanMatrix i j = 0 := by
-  simp [cartanMatrix_apply ht, hij, h]
+/-- Two distinct non-adjacent nodes contribute the entry `0`. -/
+lemma cartanMatrix_apply_of_not_adj {t : AffineDynkinType} {i j : Fin t.nodes} (hij : i ≠ j)
+    (h : ¬ t.graph.Adj i j) : t.cartanMatrix i j = 0 := by
+  by_cases ht : t = A 1
+  · subst t
+    rw [graph_A, SimpleGraph.cycleGraph_two_eq_top] at h
+    exact (h ((SimpleGraph.top_adj i j).2 hij)).elim
+  · simp [cartanMatrix_apply ht, hij, h]
 
 /-- The generalized Cartan matrix of an affine simply-laced diagram is symmetric, `A₁` included:
 the diagram is simply laced, so no entry records a length ratio. -/
@@ -409,7 +413,7 @@ theorem graph_eq_diagramGraph_cartanMatrix (t : AffineDynkinType) :
     · rw [cartanMatrix_apply_of_adj h hadj]; norm_num
     · rw [cartanMatrix_apply_of_adj h hadj.symm]; norm_num
     · by_contra hadj
-      rw [cartanMatrix_apply_of_not_adj h hne hadj] at h1
+      rw [cartanMatrix_apply_of_not_adj hne hadj] at h1
       exact h1 rfl
 
 /-- **The `A₁` Cartan matrix is not `2I` minus a simple-graph adjacency matrix.** Its off-diagonal
