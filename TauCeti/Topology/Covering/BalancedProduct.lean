@@ -123,22 +123,23 @@ variable (A) in
 theorem continuous_proj (hqc : Continuous q) : Continuous (proj A hq) :=
   (hqc.comp continuous_fst).quotient_lift _
 
-variable [DiscreteTopology A]
-
 variable (A) in
 /-- The class map onto the balanced product is a quotient covering map for the diagonal action,
-as soon as the action on `E` is one: a neighbourhood `U` of `e` with pairwise disjoint translates
-gives the neighbourhood `U ×ˢ univ` of `(e, a)`, whose translates are again pairwise disjoint. -/
-theorem isQuotientCoveringMap_mk (hqc : IsQuotientCoveringMap q G) :
+as soon as the action on `E` is one and the action on `A` is continuous: a neighbourhood `U` of
+`e` with pairwise disjoint translates gives the neighbourhood `U ×ˢ univ` of `(e, a)`, whose
+translates are again pairwise disjoint. -/
+theorem isQuotientCoveringMap_mk [ContinuousConstSMul G A]
+    (hqc : IsQuotientCoveringMap q G) :
     IsQuotientCoveringMap
       (Quotient.mk (MulAction.orbitRel G (E × A)) : E × A → BalancedProduct G E A) G := by
   have : ContinuousConstSMul G E := hqc.toContinuousConstSMul
-  have : ContinuousConstSMul G A := ⟨fun _ => continuous_of_discreteTopology⟩
   refine isQuotientCoveringMap_quotientMk_of_smul_disjoint fun p => ?_
   obtain ⟨U, hU, hdisj⟩ := hqc.disjoint p.1
   refine ⟨U ×ˢ Set.univ, prod_mem_nhds hU Filter.univ_mem, fun g hg => hdisj g ?_⟩
   obtain ⟨z, ⟨w, hw, hwz⟩, hz⟩ := hg
   exact ⟨z.1, ⟨w.1, hw.1, congrArg Prod.fst hwz⟩, hz.1⟩
+
+variable [DiscreteTopology A]
 
 variable (A) in
 /-- The evenly covered neighbourhood of `q e` cut out by a set `U` around `e` whose `G`-translates
@@ -147,6 +148,7 @@ private theorem isEvenlyCovered_of_smul_disjoint [Nonempty A] (hqc : IsQuotientC
     {U : Set E} (hUo : IsOpen U) (hdisj : ∀ g : G, ((g • ·) '' U ∩ U).Nonempty → g = 1) {e : E}
     (heU : e ∈ U) :
     IsEvenlyCovered (proj A hq) (q e) (proj A hq ⁻¹' {q e}) := by
+  let _ : ContinuousConstSMul G A := ⟨fun _ => continuous_of_discreteTopology⟩
   have hcsG : ContinuousConstSMul G E := hqc.toContinuousConstSMul
   have ht := isQuotientCoveringMap_mk A hqc
   have hrc : Continuous (proj A hq) := continuous_proj A hq hqc.continuous
@@ -245,6 +247,7 @@ If `q : E → X` presents `X` as the quotient of `E` by a group `G` in the sense
 `IsQuotientCoveringMap`, and `A` is a discrete `G`-set, then the descended projection of the
 balanced product `E ×_G A` to `X` is a covering map. -/
 theorem isCoveringMap_proj (hqc : IsQuotientCoveringMap q G) : IsCoveringMap (proj A hq) := by
+  let _ : ContinuousConstSMul G A := ⟨fun _ => continuous_of_discreteTopology⟩
   cases isEmpty_or_nonempty A with
   | inl _ =>
     have : IsEmpty (BalancedProduct G E A) := ⟨fun z => by
@@ -258,6 +261,12 @@ theorem isCoveringMap_proj (hqc : IsQuotientCoveringMap q G) : IsCoveringMap (pr
     refine isEvenlyCovered_of_smul_disjoint A hq hqc isOpen_interior (fun g hg => hdisj g ?_)
       (mem_interior_iff_mem_nhds.mpr hU)
     exact hg.mono (Set.inter_subset_inter (Set.image_mono interior_subset) interior_subset)
+
+end Covering
+
+section Fiber
+
+variable [TopologicalSpace E] [TopologicalSpace X]
 
 variable (A) in
 /-- **The fibre of the balanced product over `q e` is `A`.** The bijection sends `a` to the class
@@ -274,7 +283,7 @@ noncomputable def fiberEquiv (hqc : IsQuotientCoveringMap q G) {x : X} (e : q �
     rw [IsCancelSMul.eq_one_of_smul (congrArg Prod.fst hg1), one_smul] at hg1
     exact (Prod.ext_iff.mp hg1).2.symm
   · rintro ⟨z, hz⟩
-    obtain ⟨⟨w, b⟩, rfl⟩ := (isQuotientCoveringMap_mk A hqc).surjective z
+    obtain ⟨⟨w, b⟩, rfl⟩ := Quotient.mk''_surjective z
     rw [Set.mem_preimage, Set.mem_singleton_iff, proj_mk] at hz
     obtain ⟨g, hg⟩ := hqc.apply_eq_iff_mem_orbit.mp (hz.trans e.2.symm)
     have hge : g • (e : E) = w := hg
@@ -291,7 +300,7 @@ theorem fiberEquiv_apply_coe (hqc : IsQuotientCoveringMap q G) {x : X} (e : q �
     (fiberEquiv A hq hqc e a : BalancedProduct G E A) = mk G (e : E) a :=
   (rfl)
 
-end Covering
+end Fiber
 
 end BalancedProduct
 
