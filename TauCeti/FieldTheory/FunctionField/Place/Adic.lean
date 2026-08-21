@@ -181,7 +181,6 @@ def adicResidueHom : R →+* (adic k F p).ResidueField :=
   (IsLocalRing.residue _).comp (algebraMap R (adic k F p).integers)
 
 /-- Reduction at an adic place is the residue of the image in its valuation ring. -/
-@[simp]
 theorem adicResidueHom_apply (r : R) :
     adicResidueHom k F p r =
       IsLocalRing.residue (adic k F p).integers (algebraMap R (adic k F p).integers r) :=
