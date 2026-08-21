@@ -29,6 +29,8 @@ directions before taking products.
 * `TauCeti.Grid.card_cIoo_add_card_cIoo_swap`: the two arc lengths add to `n - 2`.
 * `TauCeti.Grid.cIoo_image_rev`: reversing a clockwise open arc by `Fin.rev` gives the clockwise
   open arc with reversed, exchanged endpoints.
+* `TauCeti.Grid.cIco`: the clockwise half-open arc, the one-dimensional shape of the squares a
+  toroidal rectangle covers, and `TauCeti.Grid.mem_cIco`, its membership criterion.
 * `TauCeti.Grid.Noninterleaving`: two endpoint pairs lie on the same cyclic side of each other.
 * `TauCeti.Grid.noninterleaving_rev`: non-interleaving is preserved by reversing every endpoint
   with `Fin.rev`, exchanging the two endpoints within each pair.
@@ -117,6 +119,88 @@ theorem right_notMem_cIoo (a b : Fin n) : b ∉ cIoo a b := by
     cases hinside with
     | inl hlt => exact hab hlt
     | inr hlt => exact Nat.lt_irrefl b.val hlt
+
+/-- The clockwise half-open cyclic interval from `a` to `b` in `Fin n`.
+
+This is the arc that starts at `a` and stops just before `b`, so it is the open arc `cIoo a b`
+with its initial endpoint restored, and it is empty when the two endpoints agree. It is the
+one-dimensional shape of the set of *squares* a toroidal rectangle covers, whereas `cIoo` is the
+shape of the set of grid *points* strictly inside it. Mathlib's circular-order intervals stop at
+`Set.cIcc` and `Set.cIoo` precisely because a half-open circular interval cannot be described
+without separating the degenerate case, which is why the definition below is by cases. -/
+noncomputable def cIco (a b : Fin n) : Finset (Fin n) :=
+  if a = b then ∅ else insert a (cIoo a b)
+
+/-- Between distinct endpoints the half-open cyclic interval is the open one with its initial
+endpoint restored. -/
+theorem cIco_of_ne {a b : Fin n} (h : a ≠ b) : cIco a b = insert a (cIoo a b) := by
+  simp only [cIco, h, ite_false]
+
+/-- The half-open cyclic interval from a point to itself is empty. -/
+@[simp]
+theorem cIco_self (a : Fin n) : cIco a a = ∅ := by
+  simp only [cIco, ite_true]
+
+/-- Membership in a clockwise half-open cyclic interval, unfolded as inequalities between the
+standard representatives. Only the comparison against the initial endpoint is weakened relative
+to `Grid.mem_cIoo`. -/
+@[simp]
+theorem mem_cIco (a b x : Fin n) :
+    x ∈ cIco a b ↔
+      a ≠ b ∧
+        if a.val < b.val then
+          a.val ≤ x.val ∧ x.val < b.val
+        else
+          a.val ≤ x.val ∨ x.val < b.val := by
+  by_cases hab : a = b
+  · simp [hab]
+  · simp only [cIco_of_ne hab, Finset.mem_insert, mem_cIoo, hab, ne_eq, not_false_eq_true,
+      true_and, ← Fin.val_inj]
+    split_ifs with h <;> omega
+
+/-- The non-wrapping description of a half-open cyclic interval: when the initial endpoint
+precedes the terminal one, the arc is the ordinary half-open interval between them. -/
+theorem mem_cIco_of_left_lt_right {a b : Fin n} (h : a.val < b.val) (x : Fin n) :
+    x ∈ cIco a b ↔ a.val ≤ x.val ∧ x.val < b.val := by
+  rw [mem_cIco]
+  have hab : a ≠ b := fun e => by simp [e] at h
+  simp [hab, h]
+
+/-- The wrapping description of a half-open cyclic interval: when the terminal endpoint precedes
+the initial one, the arc runs off the top and reappears at the bottom. -/
+theorem mem_cIco_of_right_lt_left {a b : Fin n} (h : b.val < a.val) (x : Fin n) :
+    x ∈ cIco a b ↔ a.val ≤ x.val ∨ x.val < b.val := by
+  rw [mem_cIco]
+  have hab : a ≠ b := fun e => by simp [e] at h
+  simp [hab, Nat.not_lt_of_gt h]
+
+/-- The initial endpoint of a nondegenerate half-open cyclic interval belongs to it. -/
+theorem left_mem_cIco {a b : Fin n} (h : a ≠ b) : a ∈ cIco a b := by
+  rw [cIco_of_ne h]
+  exact Finset.mem_insert_self _ _
+
+/-- The terminal endpoint is not in its half-open cyclic interval. -/
+theorem right_notMem_cIco (a b : Fin n) : b ∉ cIco a b := by
+  by_cases hab : a = b
+  · simp [hab]
+  · rw [cIco_of_ne hab, Finset.mem_insert]
+    exact fun h => h.elim (fun hba => hab hba.symm) (right_notMem_cIoo a b)
+
+/-- A point of a half-open cyclic interval other than its initial endpoint lies in the open
+interval with the same endpoints. -/
+theorem mem_cIoo_of_mem_cIco {a b x : Fin n} (h : x ∈ cIco a b) (hx : x ≠ a) : x ∈ cIoo a b := by
+  by_cases hab : a = b
+  · rw [hab, cIco_self] at h
+    exact absurd h (Finset.notMem_empty x)
+  · rw [cIco_of_ne hab, Finset.mem_insert] at h
+    exact h.resolve_left hx
+
+/-- The open cyclic interval is contained in the half-open one with the same endpoints. -/
+theorem cIoo_subset_cIco (a b : Fin n) : cIoo a b ⊆ cIco a b := by
+  by_cases hab : a = b
+  · simp [hab]
+  · rw [cIco_of_ne hab]
+    exact Finset.subset_insert _ _
 
 /-- Two oriented cyclic intervals have non-interleaving endpoint pairs.
 
