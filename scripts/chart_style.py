@@ -9,13 +9,18 @@ TEXT = "#eef2fb"
 MUTED = "#9aa6c9"
 # Deliberately concrete, and deliberately not `system-ui`/`ui-sans-serif`. These
 # charts are served as `<img src="...svg">`, so each SVG is an isolated document
-# with no page CSS and no webfont, and the stack is resolved by the host OS. On
-# macOS that means San Francisco, which is split into SF Text and SF Display with
-# a switch near 20px and glyph IDs that are out of sync between the two; at least
-# one Mac renders the chart titles, the text that crosses that boundary, as
-# overlapping nonsense while the smaller subtitles and ticks beside them are fine.
-# Named faces sidestep the question and narrow how much the cards vary between
-# platforms, which the hand-tuned label spacing in these scripts likes.
+# with no page CSS and no webfont: the family is whatever the host OS resolves.
+# One Mac viewing the statistics page rendered every chart title as overlapping
+# accented-Latin nonsense while the subtitle and axis labels in the same file
+# stayed clean. Titles are the text that crosses 20px once a card is fitted to
+# the 1100px page column, whatever its viewBox width, since css_px below turns a
+# 19-unit title into 19 * 1100 / 980, about 21.3 CSS px. That boundary is where
+# macOS has historically switched between optical variants of its system font
+# whose glyph IDs disagree, so text shaped against one and drawn with the other
+# comes out scrambled; Chromium documents the failure and its own fix for it in
+# https://web.dev/blog/more-variable-font-options-in-chromium-83 . Whether a
+# current macOS and browser still reach that path is not something this
+# repository can establish, and naming real faces avoids the question.
 FONT_FAMILY = "'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif"
 
 # The participation card established the site's chart typography at this native width.
