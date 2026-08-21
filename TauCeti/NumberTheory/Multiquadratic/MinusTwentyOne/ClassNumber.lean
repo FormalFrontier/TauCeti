@@ -39,9 +39,9 @@ The main theorem is stated for any number field with an integral generator of mi
 The argument is the standard Minkowski computation; see D. A. Cox, *Primes of the Form
 x² + ny²*, Chapter 5.
 
-The formal proof structure follows
-`TauCeti.NumberTheory.Multiquadratic.MinusFive.ClassNumber`, with the norm classification and
-ramified-prime argument adapted to discriminant `-84`.
+The formal source and proof-structure template is
+`TauCeti.NumberTheory.Multiquadratic.MinusFive.ClassNumber`; its norm classification and
+ramified-prime argument are adapted here to discriminant `-84`.
 
 ## Main results
 
