@@ -201,6 +201,7 @@ section BacktrackProducts
 variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
 
 /-- The displayed word `a a*` is the head backtrack under later-factor-first multiplication. -/
+@[simp]
 theorem ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
     ofArrow (Symmetrify.of.map a) * ofArrow (Quiver.reverse (Symmetrify.of.map a))
       = headBacktrackElem k a := by
@@ -219,6 +220,7 @@ theorem ofPath_headBacktrack_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
   congr 1
 
 /-- The displayed word `a* a` is the tail backtrack under later-factor-first multiplication. -/
+@[simp]
 theorem ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
     ofArrow (Quiver.reverse (Symmetrify.of.map a)) * ofArrow (Symmetrify.of.map a)
       = tailBacktrackElem k a := by
