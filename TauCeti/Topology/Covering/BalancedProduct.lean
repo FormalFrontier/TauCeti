@@ -279,6 +279,8 @@ noncomputable def fiberEquiv (hqc : IsQuotientCoveringMap q G) {x : X} (e : q �
     obtain ⟨g, hg⟩ := hqc.apply_eq_iff_mem_orbit.mp (hz.trans e.2.symm)
     have hge : g • (e : E) = w := hg
     refine ⟨g⁻¹ • b, Subtype.ext ?_⟩
+    -- `fiberEquiv_apply_coe` is only available after this `Equiv.ofBijective` construction.
+    -- Here `change` exposes its defining map after `Subtype.ext` removes the fibre wrapper.
     change mk G (e : E) (g⁻¹ • b) = mk G w b
     rw [← mk_smul_left g (e : E) b, hge]
 

@@ -73,11 +73,7 @@ variable {X : Type u} [TopologicalSpace X] [LocallyPathConnectedSpace X] [PathCo
 of the universal cover with `A`. -/
 abbrev ActionCover : Type u := BalancedProduct (FundamentalGroup X x₀) (UniversalCover x₀) A
 
-/-- The projection of the cover attached to `A` down to the base.
-
-This wrapper is `@[expose]` because every statement about it below is the corresponding statement
-about `TauCeti.BalancedProduct.proj`, read through the definition. -/
-@[expose]
+/-- The projection of the cover attached to `A` down to the base. -/
 def actionCoverProj : ActionCover x₀ A → X :=
   BalancedProduct.proj A fun g e => proj_smul g e
 
@@ -97,11 +93,7 @@ theorem continuous_actionCoverProj : Continuous (actionCoverProj x₀ A) :=
 theorem isCoveringMap_actionCoverProj : IsCoveringMap (actionCoverProj x₀ A) :=
   BalancedProduct.isCoveringMap_proj A _ isQuotientCoveringMap
 
-/-- The cover attached to a `π₁(X, x₀)`-set, bundled as a covering space over `X`.
-
-`@[expose]` for the same reason as `actionCoverProj`: the total-space and projection equations
-below are `TauCeti.CoveringSpace.mk_coe` and `…mk_proj` read through this definition. -/
-@[expose]
+/-- The cover attached to a `π₁(X, x₀)`-set, bundled as a covering space over `X`. -/
 def actionCoveringSpace : CoveringSpace (TopCat.of X) :=
   CoveringSpace.mk (TopCat.ofHom ⟨actionCoverProj x₀ A, continuous_actionCoverProj x₀ A⟩)
     (isCoveringMap_actionCoverProj x₀ A)
@@ -138,7 +130,7 @@ def actionCoverFiberTransport :
 
 /-- On underlying points, fibre transport applies the characteristic homeomorphism. -/
 @[simp]
-private theorem actionCoverFiberTransport_apply_coe
+theorem actionCoverFiberTransport_apply_coe
     (e : ⇑(actionCoveringSpace x₀ A).proj ⁻¹' {x₀}) :
     (actionCoverFiberTransport x₀ A e : ActionCover x₀ A) =
       actionCoverTotalSpaceHomeomorph x₀ A e :=
@@ -164,7 +156,6 @@ theorem actionCoverFiberTransport_apply_monodromy (g : FundamentalGroup X x₀)
 
 /-- **The fibre of the cover attached to `A` over `x₀` is `A`.** A point of `A` labels the class
 of the pair it forms with the constant-path point of the universal cover. -/
-@[expose]
 def actionCoverFiberEquiv : A ≃ actionCoverProj x₀ A ⁻¹' {x₀} :=
   BalancedProduct.fiberEquiv A _ isQuotientCoveringMap (basepointLift x₀)
 
@@ -193,6 +184,8 @@ theorem monodromy_actionCoverFiberEquiv (g : FundamentalGroup X x₀) (a : A) :
   rw [hbase, ← key]
   refine Subtype.ext ?_
   rw [TauCeti.IsCoveringMap.fiberMap_apply_coe, actionCoverFiberEquiv_apply_coe]
+  -- The application lemmas expose the maps, but leave coercions from the two fibre subtypes.
+  -- This reduction records exactly their underlying points before rewriting quotient classes.
   change BalancedProduct.mk (FundamentalGroup X x₀)
       ((isCoveringMap x₀).monodromy g (basepointLift x₀) : UniversalCover x₀) a =
     BalancedProduct.mk (FundamentalGroup X x₀) (basepointLift x₀ : UniversalCover x₀) (g • a)
