@@ -7,19 +7,19 @@ module
 
 public import Mathlib.Algebra.Category.ModuleCat.Biproducts
 public import Mathlib.CategoryTheory.Limits.FunctorCategory.BinaryBiproducts
-public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 public import TauCeti.CategoryTheory.Skeletal
-public import TauCeti.RepresentationTheory.Quiver.Representation.Basic
+public import TauCeti.RepresentationTheory.Quiver.Representation.FiniteDimensional
 
 /-!
 # Finite representation type
 
 A quiver has **finite representation type** when it has only finitely many isomorphism classes of
-finite-dimensional indecomposable representations. This file gives that notion its two definitions
--- pointwise finite-dimensionality `TauCeti.IsFinDim`, and `TauCeti.IsFiniteRepType` itself, the
-finiteness of the skeleton of the full subcategory of finite-dimensional indecomposables -- and the
-criterion by which the property is refuted: an infinite family of pairwise non-isomorphic
-finite-dimensional indecomposables.
+finite-dimensional indecomposable representations. This file defines `TauCeti.IsFiniteRepType`, the
+finiteness of the skeleton of the full subcategory of finite-dimensional indecomposables, whose
+objects are the representations that are pointwise finite-dimensional
+(`TauCeti.IsFinDim`, from `TauCeti.RepresentationTheory.Quiver.Representation.FiniteDimensional`)
+and indecomposable; and it proves the criterion by which the property is refuted: an infinite
+family of pairwise non-isomorphic finite-dimensional indecomposables.
 
 Both directions of that criterion are proved, because both are used. The refuting direction is what
 exhibits a quiver of infinite representation type; the affirming direction is what a quiver of
@@ -28,7 +28,6 @@ finite-dimensional indecomposables is finite, so that "the indecomposables" may 
 
 ## Main definitions
 
-* `TauCeti.IsFinDim`: a representation is finite-dimensional at every vertex.
 * `TauCeti.IsFiniteRepType`: the quiver has finitely many finite-dimensional indecomposables up to
   isomorphism.
 
@@ -41,12 +40,7 @@ finite-dimensional indecomposables is finite, so that "the indecomposables" may 
 
 ## Implementation notes
 
-`IsFinDim` is stated vertex by vertex rather than as a single finiteness of the total space: the
-category of representations is a functor category, with no ambient module to be finite over, and
-over an infinite vertex set the two conditions genuinely differ. Over a finite quiver they agree,
-and that is the setting the theory is meant for.
-
-Neither definition carries `[Finite Q]`. The roadmap pins `IsFiniteRepType` with that instance
+The definition does not carry `[Finite Q]`. The roadmap pins `IsFiniteRepType` with that instance
 binder, to record the intended setting, but nothing in the statement consumes it and an unused
 instance argument is a linter error here; a consumer that needs a finite vertex set -- Gabriel's
 dichotomy does -- states it where it is used. Dropping it costs nothing: the definition reads the
@@ -78,29 +72,7 @@ open CategoryTheory CategoryTheory.Limits
 
 universe u v w t
 
-/-- **Pointwise finite-dimensionality** of a quiver representation: the vector space at every
-vertex is finite-dimensional. Over a finite quiver this is total finite-dimensionality, and it is
-the finiteness condition under which the indecomposables can be counted; the functor category
-itself contains infinite-dimensional objects. -/
-def IsFinDim (k : Type u) (Q : Type v) [Field k] [Quiver.{w} Q]
-    (M : QuiverRep.{u, v, w, t} k Q) : Prop :=
-  ∀ v : Paths Q, FiniteDimensional k (M.obj v)
-
 variable {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q]
-
-/-- **The elimination and introduction rule for `TauCeti.IsFinDim`**: it is finite-dimensionality
-at every vertex. -/
-@[simp]
-theorem isFinDim_iff {M : QuiverRep.{u, v, w, t} k Q} :
-    IsFinDim k Q M ↔ ∀ v : Paths Q, FiniteDimensional k (M.obj v) :=
-  Iff.rfl
-
-/-- Finite-dimensionality at each vertex transports along an isomorphism of representations. -/
-theorem IsFinDim.of_iso {M N : QuiverRep.{u, v, w, t} k Q} (h : IsFinDim k Q M) (e : M ≅ N) :
-    IsFinDim k Q N := by
-  intro v
-  have := h v
-  exact (e.app v).toLinearEquiv.finiteDimensional
 
 variable (k Q) in
 /-- **Finite representation type**: the quiver `Q` has only finitely many isomorphism classes of
@@ -109,6 +81,14 @@ skeleton of the full subcategory they span, so that "isomorphism class" is Mathl
 def IsFiniteRepType : Prop :=
   Finite (Skeleton (ObjectProperty.FullSubcategory
     (fun M : QuiverRep.{u, v, w, t} k Q ↦ IsFinDim k Q M ∧ Indecomposable M)))
+
+/-- **The elimination and introduction rule for `TauCeti.IsFiniteRepType`**: it is the finiteness
+of the skeleton of the full subcategory of finite-dimensional indecomposable representations. -/
+@[simp]
+theorem isFiniteRepType_iff :
+    IsFiniteRepType.{u, v, w, t} k Q ↔ Finite (Skeleton (ObjectProperty.FullSubcategory
+      (fun M : QuiverRep.{u, v, w, t} k Q ↦ IsFinDim k Q M ∧ Indecomposable M))) :=
+  Iff.rfl
 
 section Criterion
 
