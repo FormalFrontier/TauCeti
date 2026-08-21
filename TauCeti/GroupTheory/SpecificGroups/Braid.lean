@@ -126,8 +126,18 @@ namespace BraidGroup
 variable {n : ℕ}
 
 /-- The elementary braid `σ i`, crossing strand `i` over strand `i + 1`. -/
-@[expose]
 def sigma (i : Fin (n - 1)) : BraidGroup n := ArtinGroup.gen (CoxeterMatrix.A (n - 1)) i
+
+-- The definitions in this namespace keep their bodies sealed, and the characteristic lemmas
+-- below are their whole public interface. Those lemmas are proved by `(rfl)` rather than `rfl`
+-- because a theorem proved by a syntactic `rfl` is inferred to be `@[defeq]`, and an exported
+-- `@[defeq]` theorem forces every definition it unfolds to be `@[expose]`d.
+
+/-- An elementary braid is a standard Artin-Tits generator. This is the bridge that carries the
+universal property `TauCeti.ArtinGroup.lift` and its computation rule over to `BraidGroup`. -/
+theorem sigma_eq_gen (i : Fin (n - 1)) :
+    sigma i = ArtinGroup.gen (CoxeterMatrix.A (n - 1)) i :=
+  (rfl)
 
 /-- Disjoint crossings commute. -/
 theorem sigma_mul_sigma_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
@@ -148,26 +158,28 @@ theorem orderOf_sigma (i : Fin (n - 1)) : orderOf (sigma i) = 0 :=
   ArtinGroup.orderOf_gen _ i
 
 /-- The lower of the two strands crossed by `sigma i`. -/
-@[expose]
 def strand (i : Fin (n - 1)) : Fin n := ⟨i, by have := i.isLt; omega⟩
 
 /-- The upper of the two strands crossed by `sigma i`. -/
-@[expose]
 def strandSucc (i : Fin (n - 1)) : Fin n := ⟨i + 1, by have := i.isLt; omega⟩
 
-@[simp] theorem val_strand (i : Fin (n - 1)) : (strand i : ℕ) = i := rfl
+@[simp] theorem val_strand (i : Fin (n - 1)) : (strand i : ℕ) = i := (rfl)
 
-@[simp] theorem val_strandSucc (i : Fin (n - 1)) : (strandSucc i : ℕ) = i + 1 := rfl
+@[simp] theorem val_strandSucc (i : Fin (n - 1)) : (strandSucc i : ℕ) = i + 1 := (rfl)
 
 /-- The transposition of the two strands crossed by `sigma i`. -/
-@[expose]
 def transposition (i : Fin (n - 1)) : Equiv.Perm (Fin n) :=
   Equiv.swap (strand i) (strandSucc i)
+
+/-- The defining equation of `TauCeti.BraidGroup.transposition`. -/
+theorem transposition_eq_swap (i : Fin (n - 1)) :
+    transposition i = Equiv.swap (strand i) (strandSucc i) :=
+  (rfl)
 
 /-- The transposition underlying an elementary braid is Mathlib's adjacent-swap generator. -/
 theorem transposition_eq_swap_castSucc_succ {m : ℕ} (i : Fin m) :
     transposition (n := m + 1) i = Equiv.swap i.castSucc i.succ :=
-  rfl
+  (rfl)
 
 theorem transposition_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
     transposition i * transposition j = transposition j * transposition i := by
@@ -195,7 +207,7 @@ theorem transposition_braid {i j : Fin (n - 1)}
     simp only [ne_eq, Fin.ext_iff, val_strand, val_strandSucc]; omega
   have hcb : strandSucc j ≠ strandSucc i := by
     simp only [ne_eq, Fin.ext_iff, val_strandSucc]; omega
-  rw [transposition, transposition, hji]
+  rw [transposition_eq_swap, transposition_eq_swap, hji]
   exact swap_braid hab hac hcb
 
 /-- The underlying permutation of the strands of a braid. -/
@@ -242,7 +254,7 @@ instance : (pureSubgroup n).Normal := (permHom n).normal_ker
 /-- The square of an elementary braid is a pure braid: the two strands cross twice and end where
 they started. -/
 theorem sq_sigma_mem_pureSubgroup (i : Fin (n - 1)) : sigma i ^ 2 ∈ pureSubgroup n := by
-  rw [mem_pureSubgroup, map_pow, permHom_sigma, transposition, sq, Equiv.swap_mul_self]
+  rw [mem_pureSubgroup, map_pow, permHom_sigma, transposition_eq_swap, sq, Equiv.swap_mul_self]
 
 /-- Two elementary braids sharing a strand do not commute. -/
 theorem not_commute_sigma {i j : Fin (n - 1)}
@@ -263,7 +275,8 @@ theorem not_commute_sigma {i j : Fin (n - 1)}
     simp only [ne_eq, Fin.ext_iff, val_strandSucc]; omega
   intro hcomm
   have h₁ := congrArg (permHom n) hcomm.eq
-  rw [map_mul, map_mul, permHom_sigma, permHom_sigma, transposition, transposition, hji] at h₁
+  rw [map_mul, map_mul, permHom_sigma, permHom_sigma, transposition_eq_swap,
+    transposition_eq_swap, hji] at h₁
   have h₂ := congrArg (fun σ : Equiv.Perm (Fin n) ↦ σ (strand i)) h₁
   simp only [Equiv.Perm.mul_apply, Equiv.swap_apply_of_ne_of_ne hab hac,
     Equiv.swap_apply_left] at h₂

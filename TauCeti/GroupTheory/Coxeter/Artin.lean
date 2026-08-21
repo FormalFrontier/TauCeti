@@ -77,12 +77,12 @@ open Function List
 
 namespace TauCeti
 
-variable {B G W : Type*} [Group G] [Group W]
+variable {B G N W : Type*} [Group G] [Monoid N] [Group W]
 
-/-- A group homomorphism out of a free group spells out a word in the generators letter by letter.
-This is `map_list_prod` packaged for words `ω : List B` read through `FreeGroup.of`, the form in
-which the Artin-Tits relators are written. -/
-theorem map_prod_map_freeGroupOf (φ : FreeGroup B →* G) (ω : List B) :
+/-- A monoid homomorphism out of a free group spells out a word in the generators letter by
+letter. This is `map_list_prod` packaged for words `ω : List B` read through `FreeGroup.of`, the
+form in which the Artin-Tits relators are written. -/
+theorem map_prod_map_freeGroupOf (φ : FreeGroup B →* N) (ω : List B) :
     φ ((ω.map FreeGroup.of).prod) = (ω.map fun i ↦ φ (FreeGroup.of i)).prod := by
   rw [map_list_prod, List.map_map]
   rfl
@@ -102,13 +102,11 @@ variable (M : CoxeterMatrix B)
 /-- The Artin-Tits relator of a Coxeter matrix `M` at a pair of indices: the quotient of the two
 alternating words of length `M i i'` in `i` and `i'`. It is trivial when `M i i' ∈ {0, 1}`, in
 particular on the diagonal. -/
-@[expose]
 def artinRelation (i i' : B) : FreeGroup B :=
   ((CoxeterSystem.braidWord M i i').map FreeGroup.of).prod *
     (((CoxeterSystem.braidWord M i' i).map FreeGroup.of).prod)⁻¹
 
 /-- The set of all Artin-Tits relators of a Coxeter matrix. -/
-@[expose]
 def artinRelationsSet : Set (FreeGroup B) := Set.range (uncurry (artinRelation M))
 
 theorem artinRelation_mem_artinRelationsSet (i i' : B) :
@@ -127,7 +125,6 @@ Unlike the Coxeter group of `M`, the generators are not required to be involutio
 abbrev ArtinGroup : Type _ := PresentedGroup (artinRelationsSet M)
 
 /-- The standard generator `σ i` of the Artin-Tits group of `M`. -/
-@[expose]
 def ArtinGroup.gen (i : B) : ArtinGroup M := PresentedGroup.of i
 
 /-- The defining relation of the Artin-Tits group: the two alternating words of length `M i i'`
@@ -144,13 +141,13 @@ theorem ArtinGroup.prod_map_gen_braidWord (i i' : B) :
 /-- A word of length `2` in the standard alternating pattern, evaluated through any family `f`.
 Together with `TauCeti.prod_map_braidWord_of_eq_three` this is how a rank-two entry of `M` turns
 the abstract Artin-Tits relation into a readable equation. -/
-theorem prod_map_braidWord_of_eq_two (f : B → G) {i i' : B} (h : M i i' = 2) :
+theorem prod_map_braidWord_of_eq_two (f : B → N) {i i' : B} (h : M i i' = 2) :
     ((CoxeterSystem.braidWord M i i').map f).prod = f i * f i' := by
   rw [CoxeterSystem.braidWord, h, alternatingWord_two]
   simp
 
 /-- A word of length `3` in the standard alternating pattern, evaluated through any family `f`. -/
-theorem prod_map_braidWord_of_eq_three (f : B → G) {i i' : B} (h : M i i' = 3) :
+theorem prod_map_braidWord_of_eq_three (f : B → N) {i i' : B} (h : M i i' = 3) :
     ((CoxeterSystem.braidWord M i i').map f).prod = f i' * f i * f i' := by
   rw [CoxeterSystem.braidWord, h, alternatingWord_three]
   simp [mul_assoc]
