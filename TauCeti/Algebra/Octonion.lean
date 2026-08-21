@@ -486,11 +486,6 @@ theorem conj_mul_add_conj_mul (x y : Octonion R) :
   · ring
   · module
 
-/-- The polar form of the norm is `2 N` on the diagonal. -/
-theorem polar_normQuadraticForm_self (x : Octonion R) :
-    QuadraticMap.polar (normQuadraticForm R) x x = 2 * norm x := by
-  simp [norm_def]
-
 /-! ### Alternativity -/
 
 /-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. -/
