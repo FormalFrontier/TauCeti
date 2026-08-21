@@ -25,20 +25,23 @@ homomorphism `G → G ⧸ S` together with the inclusion `Xˢ ↪ X`.
 
 ## Main definitions
 
-* `TauCeti.ContRepresentation.toInvariants`: the representation of `G` on the invariants of `π|_S`.
-* `TauCeti.ContRepresentation.quotientToInvariants`: the representation of `G ⧸ S` on the
+* `ContRepresentation.toInvariants`: the representation of `G` on the invariants of `π|_S`.
+* `ContRepresentation.quotientToInvariants`: the representation of `G ⧸ S` on the
   invariants of `π|_S`.
-* `TauCeti.TopRep.quotientToInvariants`: the same construction in the category `TopRep`.
-* `TauCeti.TopRep.quotientToInvariantsι`: the inclusion of the invariants into the ambient object,
+* `TopRep.quotientToInvariants`: the same construction in the category `TopRep`.
+* `TopRep.quotientToInvariantsι`: the inclusion of the invariants into the ambient object,
   as a morphism of `G`-objects.
-* `TauCeti.TopRep.quotientToInvariantsFunctor`: the functor `X ↦ Xˢ`.
+* `TopRep.quotientToInvariantsFunctor`: the functor `X ↦ Xˢ`.
 
 ## Main results
 
-* `TauCeti.ContRepresentation.apply_mem_invariants_restrict`: the invariants of `π|_S` are a
+* `ContRepresentation.apply_mem_invariants_restrict`: the invariants of `π|_S` are a
   `G`-stable submodule when `S` is normal.
-* `TauCeti.ContRepresentation.invariants_restrict_bot`,
-  `TauCeti.ContRepresentation.invariants_restrict_top`: the two degenerate subgroups.
+* `ContRepresentation.invariants_restrict_bot`,
+  `ContRepresentation.invariants_restrict_top`: the two degenerate subgroups.
+
+These declarations live in the root `ContRepresentation` and `TopRep` namespaces, rather than
+under `TauCeti`, so that dot notation on the Mathlib types they extend elaborates.
 -/
 
 -- The bodies of the definitions below are exposed: the categorical statements downstream compare
@@ -46,9 +49,7 @@ homomorphism `G → G ⧸ S` together with the inclusion `Xˢ ↪ X`.
 -- homomorphisms, which is a definitional matter that no equational lemma can replace.
 @[expose] public section
 
-open CategoryTheory ContRepresentation
-
-namespace TauCeti
+open CategoryTheory TauCeti.ContRepresentation
 
 namespace ContRepresentation
 
@@ -92,7 +93,9 @@ continuous counterpart of `Representation.toInvariants`. -/
 abbrev toInvariants : ContRepresentation R G (π.restrict S.subtype).invariants :=
   subrepresentation π _ (apply_mem_invariants_restrict π S)
 
-@[simp]
+-- Not `@[simp]`: `toInvariants` is reducible, so `simp` already reaches this statement through
+-- `coe_subrepresentation_apply`.
+/-- The action on the invariants of `π|_S` is the ambient action, read on the underlying vectors. -/
 theorem coe_toInvariants_apply (g : G) (v : (π.restrict S.subtype).invariants) :
     ((toInvariants π S g v : (π.restrict S.subtype).invariants) : V) = π g (v : V) :=
   coe_subrepresentation_apply g v
@@ -115,7 +118,9 @@ theorem quotientToInvariants_mk (g : G) :
     quotientToInvariants π S (g : G ⧸ S) = toInvariants π S g :=
   (rfl)
 
-@[simp]
+-- Not `@[simp]`: `simp` already reaches this statement through `quotientToInvariants_mk` and
+-- `coe_subrepresentation_apply`.
+/-- The `G ⧸ S`-action on the invariants of `π|_S`, read on the underlying vectors. -/
 theorem coe_quotientToInvariants_mk_apply (g : G) (v : (π.restrict S.subtype).invariants) :
     ((quotientToInvariants π S (g : G ⧸ S) v : (π.restrict S.subtype).invariants) : V) =
       π g (v : V) := by
@@ -125,7 +130,7 @@ end ContRepresentation
 
 namespace TopRep
 
-open ContRepresentation _root_.TopRep
+open ContRepresentation
 
 variable {R : Type*} [Ring R] [TopologicalSpace R] {G : Type*} [Group G]
   (X : TopRep R G) (S : Subgroup G) [S.Normal]
@@ -189,5 +194,3 @@ noncomputable def quotientToInvariantsFunctor (S : Subgroup G) [S.Normal] :
   map_comp _ _ := quotientToInvariantsMap_comp _ _ _
 
 end TopRep
-
-end TauCeti

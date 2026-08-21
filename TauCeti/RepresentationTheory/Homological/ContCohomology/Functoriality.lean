@@ -21,7 +21,7 @@ the continuous-cohomology theory uses, each with its composition law:
   `continuousCohomologyFunctor`;
 * **restriction** along the inclusion of an arbitrary subgroup, carrying the subspace topology;
 * **inflation** along a quotient map `G → G ⧸ N` for a normal subgroup `N`, with the invariants
-  `Xᴺ` of `TauCeti.TopRep.quotientToInvariants` as coefficients.
+  `Xᴺ` of `TopRep.quotientToInvariants` as coefficients.
 
 Restriction and inflation are natural in the coefficients, and this is recorded by the two natural
 transformations `resNatTrans` and `inflNatTrans`, matching the shape of Mathlib's discrete
