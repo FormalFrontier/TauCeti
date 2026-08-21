@@ -164,6 +164,11 @@ def strandSucc (i : Fin (n - 1)) : Fin n := ⟨i + 1, by have := i.isLt; omega�
 def transposition (i : Fin (n - 1)) : Equiv.Perm (Fin n) :=
   Equiv.swap (strand i) (strandSucc i)
 
+/-- The transposition underlying an elementary braid is Mathlib's adjacent-swap generator. -/
+theorem transposition_eq_swap_castSucc_succ {m : ℕ} (i : Fin m) :
+    transposition (n := m + 1) i = Equiv.swap i.castSucc i.succ :=
+  rfl
+
 theorem transposition_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
     transposition i * transposition j = transposition j * transposition i := by
   have hnd : [strand i, strandSucc i, strand j, strandSucc j].Nodup := by
@@ -172,9 +177,17 @@ theorem transposition_comm {i j : Fin (n - 1)} (h : (i : ℕ) + 2 ≤ j ∨ (j :
     omega
   exact (Equiv.Perm.disjoint_swap_swap hnd).commute.eq
 
-theorem transposition_braid {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+theorem transposition_braid {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     transposition i * transposition j * transposition i =
       transposition j * transposition i * transposition j := by
+  suffices hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
+      transposition i * transposition j * transposition i =
+        transposition j * transposition i * transposition j by
+    rcases h with h | h
+    · exact hforward h
+    · exact (hforward h).symm
+  intro i j h
   have hji : strand j = strandSucc i := Fin.ext (by simp [h])
   have hab : strand i ≠ strandSucc i := by
     simp only [ne_eq, Fin.ext_iff, val_strand, val_strandSucc]; omega
@@ -196,8 +209,8 @@ def permHom (n : ℕ) : BraidGroup n →* Equiv.Perm (Fin n) :=
     · rw [prod_map_braidWord_of_eq_three _ _ (coxeterMatrixA_eq_three hadj),
         prod_map_braidWord_of_eq_three _ _ (coxeterMatrixA_eq_three hadj.symm)]
       rcases hadj with h | h
-      · exact (transposition_braid h).symm
-      · exact transposition_braid h
+      · exact (transposition_braid (Or.inl h)).symm
+      · exact transposition_braid (Or.inl h)
     · have h2 : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i := by omega
       rw [prod_map_braidWord_of_eq_two _ _ (coxeterMatrixA_eq_two h2),
         prod_map_braidWord_of_eq_two _ _ (coxeterMatrixA_eq_two h2.symm)]
@@ -216,7 +229,7 @@ theorem permHom_surjective (n : ℕ) : Function.Surjective (permHom n) := by
       Subgroup.closure_eq_top_of_mclosure_eq_top (Equiv.Perm.mclosure_swap_castSucc_succ m)
     rw [← MonoidHom.range_eq_top, eq_top_iff, ← htop, Subgroup.closure_le]
     rintro _ ⟨i, rfl⟩
-    exact ⟨sigma i, by rw [permHom_sigma]; rfl⟩
+    exact ⟨sigma i, by rw [permHom_sigma, transposition_eq_swap_castSucc_succ]⟩
 
 /-- The pure braid group: the braids that return every strand to its own position. -/
 def pureSubgroup (n : ℕ) : Subgroup (BraidGroup n) := (permHom n).ker
@@ -232,8 +245,15 @@ theorem sq_sigma_mem_pureSubgroup (i : Fin (n - 1)) : sigma i ^ 2 ∈ pureSubgro
   rw [mem_pureSubgroup, map_pow, permHom_sigma, transposition, sq, Equiv.swap_mul_self]
 
 /-- Two elementary braids sharing a strand do not commute. -/
-theorem not_commute_sigma {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+theorem not_commute_sigma {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     ¬ Commute (sigma i) (sigma j) := by
+  suffices hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
+      ¬ Commute (sigma i) (sigma j) by
+    rcases h with h | h
+    · exact hforward h
+    · exact fun hcomm ↦ hforward h hcomm.symm
+  intro i j h
   have hji : strand j = strandSucc i := Fin.ext (by simp [h])
   have hab : strand i ≠ strandSucc i := by
     simp only [ne_eq, Fin.ext_iff, val_strand, val_strandSucc]; omega
@@ -253,7 +273,7 @@ theorem not_commute_sigma {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
 share a strand, so they do not commute. -/
 theorem exists_not_commute (h : 3 ≤ n) :
     ∃ a b : BraidGroup n, ¬ Commute a b :=
-  ⟨sigma ⟨0, by omega⟩, sigma ⟨1, by omega⟩, not_commute_sigma rfl⟩
+  ⟨sigma ⟨0, by omega⟩, sigma ⟨1, by omega⟩, not_commute_sigma (Or.inl rfl)⟩
 
 end BraidGroup
 

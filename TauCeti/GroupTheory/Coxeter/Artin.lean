@@ -189,6 +189,19 @@ theorem ArtinGroup.lift_gen (f : B → G) (hf) (i : B) :
     ArtinGroup.lift M f hf (ArtinGroup.gen M i) = f i :=
   PresentedGroup.toGroup.of _
 
+/-- Two homomorphisms from an Artin–Tits group are equal if they agree on every standard
+generator. -/
+@[ext]
+theorem ArtinGroup.hom_ext {f g : ArtinGroup M →* G}
+    (h : ∀ i, f (ArtinGroup.gen M i) = g (ArtinGroup.gen M i)) : f = g :=
+  PresentedGroup.ext h
+
+/-- The homomorphism supplied by `ArtinGroup.lift` is the unique homomorphism with the prescribed
+values on the standard generators. -/
+theorem ArtinGroup.lift_unique (f : B → G) (hf) (g : ArtinGroup M →* G)
+    (hg : ∀ i, g (ArtinGroup.gen M i) = f i) : g = ArtinGroup.lift M f hf :=
+  ArtinGroup.hom_ext M fun i ↦ (hg i).trans (ArtinGroup.lift_gen M f hf i).symm
+
 /-- The exponent-sum homomorphism, sending every standard generator to `1 : ℤ`. It is well defined
 because the two sides of every Artin-Tits relation are words of the same length; this is what
 fails for the Coxeter presentation, where `σ i * σ i = 1` has sides of lengths `2` and `0`. -/
@@ -245,6 +258,8 @@ theorem ArtinGroup.toCoxeterGroup_gen (i : B) :
     ArtinGroup.toCoxeterGroup cs (ArtinGroup.gen M i) = cs.simple i :=
   ArtinGroup.lift_gen M _ _ i
 
+/-- The canonical map from the Artin–Tits group onto the associated Coxeter group is
+surjective. -/
 theorem ArtinGroup.toCoxeterGroup_surjective :
     Function.Surjective (ArtinGroup.toCoxeterGroup cs) := by
   rw [← MonoidHom.range_eq_top, eq_top_iff, ← cs.subgroup_closure_range_simple,
