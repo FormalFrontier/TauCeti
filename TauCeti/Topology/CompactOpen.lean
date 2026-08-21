@@ -22,13 +22,13 @@ product topology, which is not discrete.
 
 public section
 
-namespace TauCeti
+namespace ContinuousMap
 
 variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
 
 /-- The compact-open topology on the continuous maps from a compact space to a discrete space is
 discrete. -/
-instance ContinuousMap.discreteTopology [CompactSpace X] [DiscreteTopology Y] :
+instance discreteTopology [CompactSpace X] [DiscreteTopology Y] :
     DiscreteTopology C(X, Y) := by
   rw [discreteTopology_iff_isOpen_singleton]
   intro f
@@ -37,11 +37,11 @@ instance ContinuousMap.discreteTopology [CompactSpace X] [DiscreteTopology Y] :
       ⋂ y ∈ Set.range f, {g : C(X, Y) | Set.MapsTo g (f ⁻¹' {y}) {y}} := by
     ext g
     simp only [Set.mem_singleton_iff, Set.mem_iInter, Set.mem_ofPred_eq]
-    refine ⟨?_, fun h ↦ _root_.ContinuousMap.ext fun x ↦ h (f x) ⟨x, rfl⟩ rfl⟩
+    refine ⟨?_, fun h ↦ ext fun x ↦ h (f x) ⟨x, rfl⟩ rfl⟩
     rintro rfl _ _ _ hx
     exact hx
   rw [hset]
-  exact hfin.isOpen_biInter fun y _ ↦ _root_.ContinuousMap.isOpen_setOfPred_mapsTo
+  exact hfin.isOpen_biInter fun y _ ↦ isOpen_setOfPred_mapsTo
     (isClosed_singleton.preimage f.continuous).isCompact (isOpen_discrete _)
 
-end TauCeti
+end ContinuousMap

@@ -21,14 +21,14 @@ discrete module every submodule is open.
 
 public section
 
-namespace TauCeti
+namespace Submodule.Quotient
 
 variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M] [TopologicalSpace M]
   [ContinuousAdd M] [DiscreteTopology M]
 
 /-- The quotient of a discrete topological module by a submodule is discrete. -/
-instance Submodule.Quotient.discreteTopology (p : Submodule R M) : DiscreteTopology (M ⧸ p) :=
+instance discreteTopology (p : Submodule R M) : DiscreteTopology (M ⧸ p) :=
   discreteTopology_iff_forall_isOpen.2 fun _ ↦
     p.isOpenQuotientMap_mkQ.isQuotientMap.isOpen_preimage.mp (isOpen_discrete _)
 
-end TauCeti
+end Submodule.Quotient

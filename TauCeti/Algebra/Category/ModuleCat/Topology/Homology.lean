@@ -16,8 +16,8 @@ Mathlib proves that `TopModuleCat R` is a `CategoryWithHomology` by exhibiting, 
 complex `S`, the kernel `TopModuleCat.ker S.g` with its subspace topology and the cokernel
 `TopModuleCat.coker` with its quotient topology as left and right homology data. That argument is
 run inside the instance, so the resulting identifications are not available by name. This file
-names them: `TauCeti.ShortComplex.cyclesIsoKer` identifies `S.cycles` with the honest kernel of
-`S.g`, and `TauCeti.ShortComplex.homologyIsoCoker` identifies `S.homology` with the honest cokernel
+names them: `ShortComplex.cyclesIsoKer` identifies `S.cycles` with the honest kernel of
+`S.g`, and `ShortComplex.homologyIsoCoker` identifies `S.homology` with the honest cokernel
 of `S.toCycles`. Mathlib's `ShortComplex.cyclesIsoKernel` and `ShortComplex.homologyIsoCokernelLift`
 are the analogous statements for the *categorical* `kernel` and `cokernel`, which say nothing about
 which topology those objects carry; the point of the two isomorphisms below is that the topology is
@@ -32,14 +32,11 @@ rather than between the quotient topologies the cochain spaces happen to carry.
 
 public section
 
-namespace TauCeti
-
 open CategoryTheory Limits
 
-namespace ShortComplex
+namespace CategoryTheory.ShortComplex
 
-variable {R : Type*} [Ring R] [TopologicalSpace R]
-  (S : CategoryTheory.ShortComplex (TopModuleCat R))
+variable {R : Type*} [Ring R] [TopologicalSpace R] (S : ShortComplex (TopModuleCat R))
 
 /-- The cycles of a short complex of topological modules are the kernel of `S.g`, carrying the
 subspace topology. -/
@@ -71,7 +68,7 @@ theorem discreteTopology_homology [DiscreteTopology S.X₂] : DiscreteTopology S
   have := discreteTopology_cycles S
   (homologyIsoCoker S).toContinuousLinearEquiv.toHomeomorph.isEmbedding.discreteTopology
 
-end ShortComplex
+end CategoryTheory.ShortComplex
 
 namespace HomologicalComplex
 
@@ -93,5 +90,3 @@ theorem discreteTopology_homology [DiscreteTopology (K.X n)] : DiscreteTopology 
   ShortComplex.discreteTopology_homology (K.sc n)
 
 end HomologicalComplex
-
-end TauCeti
