@@ -42,6 +42,11 @@ unrestricted construction is larger than the smooth discrete subcategory.
   `TopRep R G`, read off from its operators.
 * `TauCeti.ofDiscreteModuleMap`: a `G`-equivariant `R`-linear map of discrete modules as a
   morphism of `TopRep R G`.
+* `TauCeti.SmoothDiscreteTopRep`, `TauCeti.smoothDiscreteι`: the smooth discrete objects as a full
+  subcategory of `TopRep R G`, and its inclusion.
+* `TauCeti.DiscreteRep`: the discrete `G`-modules with continuous `G`-action as a category, the
+  source side of the dictionary in bundled form.
+* `TauCeti.toSmoothDiscrete`, `TauCeti.ofSmoothDiscrete`: the two translations as functors.
 
 ## Main results
 
@@ -55,6 +60,8 @@ unrestricted construction is larger than the smooth discrete subcategory.
   `G`-equivariant `R`-linear maps.
 * `TauCeti.IsSmoothDiscrete.res`: smoothness is inherited by restriction along a continuous
   homomorphism.
+* `TauCeti.discreteRepEquivSmoothTopRep`: the two translations are an equivalence of categories
+  between `TauCeti.DiscreteRep R G` and `TauCeti.SmoothDiscreteTopRep R G`.
 * `TauCeti.not_isSmoothDiscrete_ofDiscreteModule_units_zmod`: a discrete object that is not
   smooth, so the subcategory is proper and the continuity hypothesis above is needed.
 
@@ -160,8 +167,10 @@ variable {R}
 
 /-- Smoothness is inherited by restriction along a continuous homomorphism: the stabilizers of
 the restricted object are the preimages under `φ` of the stabilizers of `X`. The restriction is
-written `TopRep.of (X.ρ.restrict φ)` rather than `TopRep.res φ X` only so that `G` may be a monoid;
-Mathlib states `TopRep.res` for a group, and it unfolds to this object. -/
+written `TopRep.of (X.ρ.restrict φ)` rather than `TopRep.res φ X` only so that `G` may be a
+monoid: Mathlib declares `TopRep.res` under a `[Group G]` section variable. Nothing is lost,
+because `TopRep.res` is a reducible abbreviation for exactly this object, so for a group `G` this
+lemma proves the goal `IsSmoothDiscrete R (TopRep.res φ X)` verbatim. -/
 lemma IsSmoothDiscrete.res {H : Type*} [Monoid H] [TopologicalSpace H] {φ : H →* G}
     (hφ : Continuous φ) {X : TopRep R G} (hX : IsSmoothDiscrete R X) :
     IsSmoothDiscrete R (TopRep.of (X.ρ.restrict φ)) :=
@@ -313,6 +322,109 @@ variable {R G M N}
     ((ofDiscreteModuleHomEquiv R G M N).symm f).hom m = f m := (rfl)
 
 end Dictionary
+
+/-! ### The equivalence of coefficient categories -/
+
+section CoefficientEquivalence
+
+variable (R : Type u) [Ring R] [TopologicalSpace R]
+  (G : Type v) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+
+/-- The full subcategory of `TopRep R G` on the smooth discrete objects: the half of `TopRep R G`
+that the dictionary is an equivalence with. -/
+abbrev SmoothDiscreteTopRep : Type _ :=
+  ObjectProperty.FullSubcategory (fun X : TopRep.{w} R G ↦ IsSmoothDiscrete R X)
+
+/-- The inclusion of the smooth discrete subcategory into `TopRep R G`. This is how an object of
+the subcategory reaches Mathlib's continuous cohomology functor, which is defined on all of
+`TopRep R G`. -/
+abbrev smoothDiscreteι : SmoothDiscreteTopRep.{u, v, w} R G ⥤ TopRep.{w} R G :=
+  ObjectProperty.ι _
+
+/-- A discrete `G`-module with continuous `G`-action, bundled: the source side of the dictionary
+as a category, so that the dictionary can be an equivalence rather than a constructor. The fields
+are exactly the instances `TauCeti.ofDiscreteModule` and
+`TauCeti.ofDiscreteModule_isSmoothDiscrete` ask for. -/
+structure DiscreteRep where
+  /-- the underlying module -/
+  V : Type w
+  [addCommGroup : AddCommGroup V]
+  [module : Module R V]
+  [topologicalSpace : TopologicalSpace V]
+  [discreteTopology : DiscreteTopology V]
+  [distribMulAction : DistribMulAction G V]
+  [smulCommClass : SMulCommClass G R V]
+  [continuousSMulRing : ContinuousSMul R V]
+  [continuousSMul : ContinuousSMul G V]
+
+attribute [instance] DiscreteRep.addCommGroup DiscreteRep.module DiscreteRep.topologicalSpace
+  DiscreteRep.discreteTopology DiscreteRep.distribMulAction DiscreteRep.smulCommClass
+  DiscreteRep.continuousSMulRing DiscreteRep.continuousSMul
+
+variable {R G}
+
+/-- The underlying module of a smooth discrete object is discrete. Recording this as a local
+instance is what lets `TauCeti.ofDiscreteModule` be applied to it below. -/
+local instance instDiscreteTopologyOfSmoothDiscrete (X : SmoothDiscreteTopRep.{u, v, w} R G) :
+    DiscreteTopology X.obj.V := X.property.discreteTopology
+
+/-- The derived action on a smooth discrete object is continuous. -/
+local instance instContinuousSMulOfSmoothDiscrete (X : SmoothDiscreteTopRep.{u, v, w} R G) :
+    ContinuousSMul G X.obj.V := X.property.continuousSMul
+
+/-- The object of `TopRep R G` named by a discrete `G`-module. -/
+abbrev DiscreteRep.toTopRep (X : DiscreteRep R G) : TopRep R G := ofDiscreteModule R G X.V
+
+/-- Morphisms of discrete `G`-modules are the morphisms of `TopRep R G` between the objects they
+name, which by `TauCeti.ofDiscreteModuleHomEquiv` are exactly the `G`-equivariant `R`-linear maps.
+Taking the category structure from `TopRep` this way makes the dictionary fully faithful by
+construction. -/
+instance : Category.{w} (DiscreteRep.{u, v, w} R G) :=
+  inferInstanceAs (Category (InducedCategory _ DiscreteRep.toTopRep))
+
+variable (R G)
+
+/-- The dictionary going in, as a functor: a discrete `G`-module with continuous `G`-action goes
+to the smooth discrete object it names. -/
+abbrev toSmoothDiscrete : DiscreteRep.{u, v, w} R G ⥤ SmoothDiscreteTopRep.{u, v, w} R G :=
+  ObjectProperty.lift _ (inducedFunctor DiscreteRep.toTopRep)
+    fun X ↦ ofDiscreteModule_isSmoothDiscrete R G X.V
+
+/-- The dictionary coming back, as a functor: a smooth discrete object goes to its underlying
+module, with the action read off from its operators by `TopRep.distribMulAction`. -/
+abbrev ofSmoothDiscrete : SmoothDiscreteTopRep.{u, v, w} R G ⥤ DiscreteRep.{u, v, w} R G where
+  obj X := { V := X.obj.V }
+  -- Equivariance for the derived actions is `TopRep.distribMulAction_smul` on each side of the
+  -- intertwining identity that `φ` already carries.
+  map {X Y} φ := InducedCategory.homMk (ofDiscreteModuleMap
+    (M := X.obj.V) (N := Y.obj.V) φ.hom.hom.toContinuousLinearMap.toLinearMap
+    fun g x ↦ (congrArg _ (TopRep.distribMulAction_smul X.obj g x)).trans
+      ((φ.hom.hom.isIntertwining g x).trans
+        (TopRep.distribMulAction_smul Y.obj g (φ.hom.hom x)).symm))
+  map_id X := InducedCategory.hom_ext
+    (ofDiscreteModuleMap_id (R := R) (G := G) (M := X.obj.V))
+  map_comp {X Y Z} _ _ := InducedCategory.hom_ext
+    (ofDiscreteModuleMap_comp (R := R) (G := G) (M := X.obj.V) (N := Y.obj.V) (P := Z.obj.V)
+      _ _ _ _)
+
+/-- **The dictionary is an equivalence of categories** between the discrete `G`-modules with
+continuous `G`-action and the smooth discrete objects of `TopRep R G`. Both round trips are the
+identity: `TauCeti.ofDiscreteModule_eq_self` says so on objects, so every component is an identity
+morphism, and `TauCeti.ofDiscreteModuleMap_hom_apply` says so on morphisms, which is what the two
+naturality squares check pointwise. -/
+def discreteRepEquivSmoothTopRep :
+    DiscreteRep.{u, v, w} R G ≌ SmoothDiscreteTopRep.{u, v, w} R G where
+  functor := toSmoothDiscrete R G
+  inverse := ofSmoothDiscrete R G
+  -- Each naturality square reads `f ≫ 𝟙 = 𝟙 ≫ f'`, with `f'` the round trip's rewrapping of
+  -- `f`. Comparing the two underlying maps at a point, both are the map underlying `f`: that is
+  -- what `TauCeti.ofDiscreteModuleMap_hom_apply` states, and here it is definitional.
+  unitIso := NatIso.ofComponents (fun _ ↦ Iso.refl _) fun _ ↦
+    InducedCategory.hom_ext (TopRep.hom_ext (DFunLike.ext _ _ fun _ ↦ rfl))
+  counitIso := NatIso.ofComponents (fun _ ↦ Iso.refl _) fun _ ↦
+    ObjectProperty.hom_ext _ (TopRep.hom_ext (DFunLike.ext _ _ fun _ ↦ rfl))
+
+end CoefficientEquivalence
 
 /-! ### The smooth discrete subcategory is proper -/
 
