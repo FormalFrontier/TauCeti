@@ -131,18 +131,14 @@ def rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) : (t.rationalRootSystem 
 
 /-- **The permutation of the pinned root enumeration** realized by a symmetry of the Cartan
 matrix. -/
-def diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) : Equiv.Perm (Fin t.numRoots) :=
+@[expose] def diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) : Equiv.Perm (Fin t.numRoots) :=
   (rationalDiagramAut ht hσ).indexEquiv
-
-private theorem indexEquiv_rationalDiagramAut (hσ : σ ∈ t.diagramSymmetry) :
-    (rationalDiagramAut ht hσ).indexEquiv = diagramRootPerm ht hσ :=
-  rfl
 
 /-- The rational diagram automorphism acts on the root enumeration by
 `TauCeti.DynkinType.diagramRootPerm`. -/
 @[simp] theorem rationalDiagramAut_indexEquiv (hσ : σ ∈ t.diagramSymmetry) :
     (rationalDiagramAut ht hσ).indexEquiv = diagramRootPerm ht hσ :=
-  indexEquiv_rationalDiagramAut ht hσ
+  rfl
 
 /-- The induced permutation of the root enumeration extends the node permutation along the Bourbaki
 numbering of the simple roots. -/
