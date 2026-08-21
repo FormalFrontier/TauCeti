@@ -405,10 +405,25 @@ private theorem mul_norm_sq_le_of_gradient_sub_value_bound {A B q : ℝ}
 
 variable [DecidableEq ι]
 
-noncomputable local instance : SeminormedAddCommGroup (W1p mu Omega 2) := inferInstance
-noncomputable local instance : NormedSpace ℝ (W1p mu Omega 2) := inferInstance
-noncomputable local instance : SeminormedAddCommGroup (W1p0 mu Omega 2) := inferInstance
-noncomputable local instance : NormedSpace ℝ (W1p0 mu Omega 2) := inferInstance
+/-- Shortcut seminormed group instance on `W^{1,2}(Ω)` to aid instance search for continuous
+bilinear forms. -/
+noncomputable local instance instSeminormedAddCommGroupW1p :
+    SeminormedAddCommGroup (W1p mu Omega 2) := inferInstance
+
+/-- Shortcut normed space instance on `W^{1,2}(Ω)` to aid instance search for continuous
+bilinear forms. -/
+noncomputable local instance instNormedSpaceW1p :
+    NormedSpace ℝ (W1p mu Omega 2) := inferInstance
+
+/-- Shortcut seminormed group instance on `W^{1,2}_0(Ω)` to aid instance search for continuous
+bilinear forms. -/
+noncomputable local instance instSeminormedAddCommGroupW1p0 :
+    SeminormedAddCommGroup (W1p0 mu Omega 2) := inferInstance
+
+/-- Shortcut normed space instance on `W^{1,2}_0(Ω)` to aid instance search for continuous
+bilinear forms. -/
+noncomputable local instance instNormedSpaceW1p0 :
+    NormedSpace ℝ (W1p0 mu Omega 2) := inferInstance
 
 omit [mu.IsAddHaarMeasure] [DecidableEq ι] in
 /-- Bounded measurable coefficients define an essentially bounded field of pointwise energy
