@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.Weights.Automorphism
 public import TauCeti.Algebra.Lie.Weights.Chevalley.Involution
+public import TauCeti.Algebra.Lie.Weights.StructureConstant.FourTerm
 
 /-!
 # Rescaling a normalised system against an automorphism inverting the Cartan subalgebra
@@ -63,7 +64,6 @@ Chevalley involution is already visible on a presentation of `L`.
 
 * `TauCeti.map_eq_self_of_forall_mem_apply_eq_neg` and `TauCeti.weightPerm_eq_neg`: an automorphism
   acting by `-1` on `H` normalises `H` and inverts every weight.
-* `TauCeti.coe_neg_eq_add_neg_of_coe_eq_add`: a root sum read at the opposite roots.
 * `TauCeti.IsSl2System.exists_ne_zero_map_eq_smul_neg` and
   `TauCeti.IsSl2System.ne_zero_of_map_eq_smul_neg`: the automorphism scales each root vector into
   the opposite root space, by a nonzero scalar.
@@ -109,20 +109,6 @@ universe u v
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
-
-/-! ## The weight equation at the opposite roots -/
-
-omit [CharZero K] in
-/-- The weight equation `γ = α + β` read at the opposite roots.
-
-The four-weight form of the same computation, for a vanishing sum of four weights, is
-`TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`. -/
-theorem coe_neg_eq_add_neg_of_coe_eq_add (α β γ : Weight K H L)
-    (hαβ : (γ : H → K) = (α : H → K) + β) :
-    ((-γ : Weight K H L) : H → K) =
-      ((-α : Weight K H L) : H → K) + ((-β : Weight K H L) : H → K) := by
-  rw [Weight.coe_neg, Weight.coe_neg, Weight.coe_neg, hαβ]
-  abel
 
 /-! ## Automorphisms inverting the Cartan subalgebra -/
 
@@ -201,7 +187,10 @@ theorem mul_structureConstant_eq_of_map_eq_smul_neg (α β γ : Weight K H L) (h
     (hαβ : (γ : H → K) = (α : H → K) + β) {a b c : K}
     (ha : ω (x α) = a • x (-α)) (hb : ω (x β) = b • x (-β)) (hc : ω (x γ) = c • x (-γ)) :
     c * hx.structureConstant α β γ hγ hαβ = a * b *
-      hx.structureConstant (-α) (-β) (-γ) hγ.neg (coe_neg_eq_add_neg_of_coe_eq_add α β γ hαβ) := by
+      hx.structureConstant (-α) (-β) (-γ) hγ.neg
+        (Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
+          (c := (-α : Weight K H L)) (d := (-β : Weight K H L))
+          (by simp [add_assoc]) hαβ) := by
   refine smul_left_injective K (hx.ne_zero (-γ) hγ.neg) ?_
   calc (c * hx.structureConstant α β γ hγ hαβ) • x (-γ)
       = hx.structureConstant α β γ hγ hαβ • (c • x (-γ)) := by
@@ -214,10 +203,14 @@ theorem mul_structureConstant_eq_of_map_eq_smul_neg (α β γ : Weight K H L) (h
     _ = (a * b) • ⁅x (-α), x (-β)⁆ := by rw [smul_lie, lie_smul, smul_smul]
     _ = (a * b) •
           (hx.structureConstant (-α) (-β) (-γ) hγ.neg
-            (coe_neg_eq_add_neg_of_coe_eq_add α β γ hαβ) • x (-γ)) := by
+            (Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
+              (c := (-α : Weight K H L)) (d := (-β : Weight K H L))
+              (by simp [add_assoc]) hαβ) • x (-γ)) := by
         rw [hx.lie_eq_structureConstant_smul (-α) (-β) (-γ) hγ.neg]
     _ = (a * b * hx.structureConstant (-α) (-β) (-γ) hγ.neg
-          (coe_neg_eq_add_neg_of_coe_eq_add α β γ hαβ)) • x (-γ) := by rw [smul_smul]
+          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
+            (c := (-α : Weight K H L)) (d := (-β : Weight K H L))
+            (by simp [add_assoc]) hαβ)) • x (-γ) := by rw [smul_smul]
 
 /-- **The multiplicativity relation with the opposite structure constant eliminated.** Multiplying
 `TauCeti.IsSl2System.mul_structureConstant_eq_of_map_eq_smul_neg` by `N(α, β)` and using
