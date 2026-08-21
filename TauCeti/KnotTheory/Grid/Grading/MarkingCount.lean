@@ -52,12 +52,12 @@ itself is a priori only rational, and a marking-free rectangle preserves it outr
 
 ## Main results
 
-* `TauCeti.GridDiagram.alexander_sub_alexander_eq_card`: the Alexander grading change across a
-  rectangle move is the number of `X`-markings in the squares the rectangle covers minus the
-  number of `O`-markings there.
-* `TauCeti.GridDiagram.maslovO_sub_maslovO_eq_card`,
-  `TauCeti.GridDiagram.maslovX_sub_maslovX_eq_card`: the Maslov grading changes across an *empty*
-  rectangle move are one minus twice the corresponding marking count.
+* `TauCeti.GridDiagram.alexander_sub_alexander_eq_card_sub_card`: the Alexander grading change
+  across a rectangle move is the number of `X`-markings in the squares the rectangle covers minus
+  the number of `O`-markings there.
+* `TauCeti.GridDiagram.maslovO_sub_maslovO_eq_one_sub_two_mul_card`,
+  `TauCeti.GridDiagram.maslovX_sub_maslovX_eq_one_sub_two_mul_card`: the Maslov grading changes
+  across an *empty* rectangle move are one minus twice the corresponding marking count.
 * `TauCeti.GridDiagram.alexander_eq_of_disjoint_squares`,
   `TauCeti.GridDiagram.maslovO_sub_maslovO_eq_one_of_disjoint_squares`: a marking-avoiding empty
   rectangle move preserves the Alexander grading and drops the Maslov grading by one.
@@ -277,7 +277,7 @@ private theorem sum_pointSet_side_product (R : GridRectangle n) (w : GridState n
   rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum,
     ← Finset.mul_sum, Finset.sum_const, GridState.sum_ite_mem_columns,
     GridState.sum_ite_mem_rows, GridState.sum_ite_mem_product, GridState.card_pointSet,
-    nsmul_eq_mul, squares]
+    nsmul_eq_mul, squares_def]
   ring
 
 /-- The four-corner alternating pairing of a toroidal rectangle against the occupied squares of a
@@ -390,10 +390,8 @@ private theorem J_corner_alternating_inter (hR : R.IsEmpty) :
           (if R.right.val < R.left.val then (1 : ℚ) else 0) *
             (if R.top.val < R.bottom.val then (1 : ℚ) else 0) := by
   have hside := R.toGridRectangle.sum_pointSet_side_product x
-  rw [show R.toGridRectangle.left = R.left from rfl,
-    show R.toGridRectangle.right = R.right from rfl,
-    show R.toGridRectangle.bottom = R.bottom from rfl,
-    show R.toGridRectangle.top = R.top from rfl, R.pointSet_inter_squares hR,
+  rw [toGridRectangle_left, toGridRectangle_right, toGridRectangle_bottom, toGridRectangle_top,
+    R.pointSet_inter_squares hR,
     Finset.card_singleton, Nat.cast_one] at hside
   have halt := GridPoint.J_corner_alternating R.left R.right R.bottom R.top
     (x.pointSet ∩ y.pointSet) fun q hq => R.avoids_sides_of_mem_pointSet_inter hq
@@ -422,10 +420,8 @@ private theorem maslov_change_eq_of_isEmpty (hR : R.IsEmpty) (w : GridState n) :
               GridPoint.JCenter {(R.right, R.bottom)} w.pointSet)) =
       1 - 2 * ((w.pointSet ∩ R.toGridRectangle.squares).card : ℚ) := by
   have hcenter := R.toGridRectangle.JCenter_corner_alternating_pointSet w
-  rw [show R.toGridRectangle.left = R.left from rfl,
-    show R.toGridRectangle.right = R.right from rfl,
-    show R.toGridRectangle.bottom = R.bottom from rfl,
-    show R.toGridRectangle.top = R.top from rfl] at hcenter
+  rw [toGridRectangle_left, toGridRectangle_right, toGridRectangle_bottom,
+    toGridRectangle_top] at hcenter
   linear_combination 2 * R.J_corner_corner + 2 * R.J_corner_alternating_inter hR -
     2 * hcenter
 
@@ -441,17 +437,14 @@ squares the rectangle covers minus the number of `O`-markings there.
 This is the closed form of `GridDiagram.alexander_change_rectangle`: the corner pairings evaluate
 to marking counts, and the corrections recording how the rectangle wraps around the torus are the
 same for the two marking sets, so they cancel. -/
-theorem alexander_sub_alexander_eq_card (R : GridRectangleBetween x y) :
+theorem alexander_sub_alexander_eq_card_sub_card (R : GridRectangleBetween x y) :
     G.alexander x - G.alexander y =
       ((G.XSet ∩ R.toGridRectangle.squares).card : ℚ) -
         ((G.OSet ∩ R.toGridRectangle.squares).card : ℚ) := by
-  have hleft : R.toGridRectangle.left = R.left := rfl
-  have hright : R.toGridRectangle.right = R.right := rfl
-  have hbottom : R.toGridRectangle.bottom = R.bottom := rfl
-  have htop : R.toGridRectangle.top = R.top := rfl
   have hX := R.toGridRectangle.JCenter_corner_alternating_pointSet G.X
   have hO := R.toGridRectangle.JCenter_corner_alternating_pointSet G.O
-  rw [hleft, hright, hbottom, htop] at hX hO
+  rw [GridRectangleBetween.toGridRectangle_left, GridRectangleBetween.toGridRectangle_right,
+    GridRectangleBetween.toGridRectangle_bottom, GridRectangleBetween.toGridRectangle_top] at hX hO
   rw [G.alexander_change_rectangle R, XSet, OSet, hX, hO]
   ring
 
@@ -460,7 +453,8 @@ of `O`-markings in the squares the rectangle covers.
 
 Unlike the Alexander formula, this one needs the rectangle to be empty: the source state's
 occupied squares inside the rectangle would otherwise contribute. -/
-theorem maslovO_sub_maslovO_eq_card (R : GridRectangleBetween x y) (hR : R.IsEmpty) :
+theorem maslovO_sub_maslovO_eq_one_sub_two_mul_card (R : GridRectangleBetween x y)
+    (hR : R.IsEmpty) :
     G.maslovO x - G.maslovO y =
       1 - 2 * ((G.OSet ∩ R.toGridRectangle.squares).card : ℚ) := by
   rw [G.maslovO_change_rectangle R, OSet]
@@ -468,21 +462,22 @@ theorem maslovO_sub_maslovO_eq_card (R : GridRectangleBetween x y) (hR : R.IsEmp
 
 /-- The `X`-Maslov grading change across an empty rectangle move is one minus twice the number of
 `X`-markings in the squares the rectangle covers. -/
-theorem maslovX_sub_maslovX_eq_card (R : GridRectangleBetween x y) (hR : R.IsEmpty) :
+theorem maslovX_sub_maslovX_eq_one_sub_two_mul_card (R : GridRectangleBetween x y)
+    (hR : R.IsEmpty) :
     G.maslovX x - G.maslovX y =
       1 - 2 * ((G.XSet ∩ R.toGridRectangle.squares).card : ℚ) := by
   rw [G.maslovX_change_rectangle R, XSet]
   exact R.maslov_change_eq_of_isEmpty hR G.X
 
-/-- An empty rectangle move whose squares carry no marking drops the `O`-Maslov grading by
-exactly one. Together with `GridDiagram.alexander_eq_of_disjoint_squares` this is the bidegree
-`(-1, 0)` of a marking-avoiding empty rectangle. -/
+/-- An empty rectangle move whose squares carry no `O`-marking drops the `O`-Maslov grading by
+exactly one. Under the stronger marking-avoidance hypothesis of
+`GridDiagram.alexander_eq_of_disjoint_squares`, this gives the Maslov part of bidegree `(-1, 0)`. -/
 theorem maslovO_sub_maslovO_eq_one_of_disjoint_squares (R : GridRectangleBetween x y)
-    (hR : R.IsEmpty) (h : Disjoint R.toGridRectangle.squares (G.OSet ∪ G.XSet)) :
+    (hR : R.IsEmpty) (h : Disjoint R.toGridRectangle.squares G.OSet) :
     G.maslovO x - G.maslovO y = 1 := by
   have hO : G.OSet ∩ R.toGridRectangle.squares = ∅ :=
-    Finset.disjoint_iff_inter_eq_empty.mp (h.mono_right Finset.subset_union_left).symm
-  rw [G.maslovO_sub_maslovO_eq_card R hR, hO]
+    Finset.disjoint_iff_inter_eq_empty.mp h.symm
+  rw [G.maslovO_sub_maslovO_eq_one_sub_two_mul_card R hR, hO]
   norm_num
 
 /-- A rectangle move whose squares carry no marking preserves the Alexander grading. -/
@@ -493,7 +488,7 @@ theorem alexander_eq_of_disjoint_squares (R : GridRectangleBetween x y)
     Finset.disjoint_iff_inter_eq_empty.mp (h.mono_right Finset.subset_union_left).symm
   have hX : G.XSet ∩ R.toGridRectangle.squares = ∅ :=
     Finset.disjoint_iff_inter_eq_empty.mp (h.mono_right Finset.subset_union_right).symm
-  have key := G.alexander_sub_alexander_eq_card R
+  have key := G.alexander_sub_alexander_eq_card_sub_card R
   rw [hO, hX] at key
   simp only [Finset.card_empty, Nat.cast_zero, sub_self] at key
   exact sub_eq_zero.mp key
@@ -503,7 +498,7 @@ though the Alexander grading is a priori only rational. -/
 theorem exists_int_alexander_sub_alexander (R : GridRectangleBetween x y) :
     ∃ m : ℤ, G.alexander x - G.alexander y = (m : ℚ) :=
   ⟨(G.XSet ∩ R.toGridRectangle.squares).card - (G.OSet ∩ R.toGridRectangle.squares).card, by
-    rw [G.alexander_sub_alexander_eq_card R]
+    rw [G.alexander_sub_alexander_eq_card_sub_card R]
     push_cast
     ring⟩
 

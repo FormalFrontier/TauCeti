@@ -53,7 +53,7 @@ half-open shape of the domain they are counted in, follows Ozsváth--Stipsicz--S
 Homology for Knots and Links*, Chapters 3.1--3.2 and 4.1.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -98,31 +98,19 @@ column and row indices lie in the two half-open arcs. -/
 noncomputable def squares : Finset (Fin n × Fin n) :=
   R.columnSpan ×ˢ R.rowSpan
 
+/-- The covered squares are the product of the covered columns and rows. -/
+theorem squares_def : R.squares = R.columnSpan ×ˢ R.rowSpan :=
+  (rfl)
+
 /-- Membership in the covered squares is membership in both one-dimensional half-open arcs. -/
 @[simp]
 theorem mem_squares (p : Fin n × Fin n) :
     p ∈ R.squares ↔ p.1 ∈ R.columnSpan ∧ p.2 ∈ R.rowSpan := by
   simp [squares]
 
-/-- A square is covered exactly when its column and row lie in the corresponding half-open
-cyclic intervals. -/
-theorem mk_mem_squares (c r : Fin n) :
-    (c, r) ∈ R.squares ↔ c ∈ Grid.cIco R.left R.right ∧ r ∈ Grid.cIco R.bottom R.top := by
-  simp
-
 /-- Every grid point strictly inside a rectangle names a square that the rectangle covers. -/
 theorem interior_subset_squares : R.interior ⊆ R.squares :=
   Finset.product_subset_product R.columnInterior_subset_columnSpan R.rowInterior_subset_rowSpan
-
-/-- A rectangle covers no square if its two vertical sides coincide. -/
-@[simp]
-theorem squares_eq_empty_of_left_eq_right (h : R.left = R.right) : R.squares = ∅ := by
-  simp [squares, columnSpan, h]
-
-/-- A rectangle covers no square if its two horizontal sides coincide. -/
-@[simp]
-theorem squares_eq_empty_of_bottom_eq_top (h : R.bottom = R.top) : R.squares = ∅ := by
-  simp [squares, rowSpan, h]
 
 /-- The number of covered squares is the product of the numbers of covered columns and covered
 rows. -/

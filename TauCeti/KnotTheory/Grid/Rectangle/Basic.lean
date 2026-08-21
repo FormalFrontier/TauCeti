@@ -436,6 +436,26 @@ def toGridRectangle : GridRectangle n where
   bottom := R.bottom
   top := R.top
 
+/-- The associated toroidal rectangle has the same initial vertical side. -/
+@[simp]
+theorem toGridRectangle_left : R.toGridRectangle.left = R.left :=
+  rfl
+
+/-- The associated toroidal rectangle has the same terminal vertical side. -/
+@[simp]
+theorem toGridRectangle_right : R.toGridRectangle.right = R.right :=
+  rfl
+
+/-- The associated toroidal rectangle has the same initial horizontal side. -/
+@[simp]
+theorem toGridRectangle_bottom : R.toGridRectangle.bottom = R.bottom :=
+  rfl
+
+/-- The associated toroidal rectangle has the same terminal horizontal side. -/
+@[simp]
+theorem toGridRectangle_top : R.toGridRectangle.top = R.top :=
+  rfl
+
 /-- The opposite oriented rectangle, obtained by reversing the two side columns.
 
 If `R` goes from `x` to `y`, then `R.symm` goes from `y` back to `x`. It has the same two
