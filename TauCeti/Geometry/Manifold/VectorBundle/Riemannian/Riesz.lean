@@ -106,6 +106,17 @@ theorem rieszDual_eq_sum_chartLocalFrame (a : M) {x : M}
   let v : Fin (Module.finrank ℝ E) → ℝ := fun j ↦ φ (chartLocalFrame (I := I) a j x)
   let e := (trivializationAt E (TangentSpace I) a).basisAt (Module.finBasis ℝ E)
     (by simpa only [TangentBundle.trivializationAt_baseSet] using hx)
+  -- The trivialization basis `e` is the chart-local frame read in the fibre over `x`.
+  have he (k : Fin (Module.finrank ℝ E)) : e k = chartLocalFrame (I := I) a k x := by
+    simpa only [e] using (chartLocalFrame_apply_of_mem_chart_source (I := I) a hx k).symm
+  -- The Gram matrix records the frame inner products, and is symmetric because it is Hermitian.
+  have hGram (i k : Fin (Module.finrank ℝ E)) :
+      inner ℝ (chartLocalFrame (I := I) a i x) (chartLocalFrame (I := I) a k x) = G i k :=
+    (chartGramMatrix_apply (I := I) a x i k).symm
+  have hsymm (i k : Fin (Module.finrank ℝ E)) : G i k = G k i := by
+    simpa only [star_trivial] using (posDef_chartGramMatrix (I := I) a
+      (by simpa only [TangentBundle.trivializationAt_baseSet] using hx)).isHermitian.apply k i
+  have hGGinv : G * Ginv = 1 := chartGramMatrix_mul_chartInvGramMatrix (I := I) a hx
   apply InnerProductSpace.ext_inner_right_basis e
   intro k
   symm
@@ -114,26 +125,14 @@ theorem rieszDual_eq_sum_chartLocalFrame (a : M) {x : M}
     inner ℝ (∑ i, (Ginv *ᵥ v) i • chartLocalFrame (I := I) a i x) (e k) =
         (G *ᵥ (Ginv *ᵥ v)) k := by
       simp only [sum_inner, real_inner_smul_left, Matrix.mulVec, dotProduct]
-      apply Finset.sum_congr rfl
-      intro i _
-      rw [show e k = chartLocalFrame (I := I) a k x by
-        simpa only [e] using (chartLocalFrame_apply_of_mem_chart_source (I := I) a hx k).symm]
-      have hHermitian := (posDef_chartGramMatrix (I := I) a
-        (by simpa only [TangentBundle.trivializationAt_baseSet] using hx)).isHermitian
-      rw [show inner ℝ (chartLocalFrame (I := I) a i x)
-          (chartLocalFrame (I := I) a k x) = G i k by
-        exact (chartGramMatrix_apply (I := I) a x i k).symm]
-      rw [show G i k = G k i by
-        simpa only [star_trivial] using hHermitian.apply k i]
+      refine Finset.sum_congr rfl fun i _ ↦ ?_
+      rw [he k, hGram i k, hsymm i k]
       ring
     _ = ((G * Ginv) *ᵥ v) k := by rw [Matrix.mulVec_mulVec]
     _ = v k := by
-      rw [show G * Ginv = 1 by
-        exact chartGramMatrix_mul_chartInvGramMatrix (I := I) a hx]
+      rw [hGGinv]
       exact congrFun (Matrix.one_mulVec v) k
-    _ = φ (e k) := by
-      rw [show e k = chartLocalFrame (I := I) a k x by
-        simpa only [e] using (chartLocalFrame_apply_of_mem_chart_source (I := I) a hx k).symm]
+    _ = φ (e k) := by rw [he k]
 
 section Smooth
 
@@ -151,28 +150,32 @@ theorem contMDiffOn_rieszDual (a : M)
       (fun y : M ↦ TotalSpace.mk' E y
         (rieszDual (I := I) y (Φ y)))
       (chartAt H a).source := by
+  -- The inverse Gram entries and the frame are smooth on the chart source, once their
+  -- hypotheses are restated over `(chartAt H a).source` instead of the trivialization base set.
+  have hGinv (i j : Fin (Module.finrank ℝ E)) :
+      ContMDiffOn I 𝓘(ℝ) n (fun y ↦ chartInvGramMatrix (I := I) a y i j)
+        (chartAt H a).source := by
+    simpa only [TangentBundle.trivializationAt_baseSet] using
+      contMDiffOn_chartInvGramMatrix_entry (I := I) (n := n) a i j
+  have hframe (i : Fin (Module.finrank ℝ E)) :
+      ContMDiffOn I (I.prod 𝓘(ℝ, E)) n
+        (fun y : M ↦ TotalSpace.mk' E y (chartLocalFrame (I := I) a i y))
+        (chartAt H a).source := by
+    simpa only [TangentBundle.trivializationAt_baseSet] using
+      contMDiffOn_chartLocalFrame (I := I) (n := n) a i
   let c : Fin (Module.finrank ℝ E) → M → ℝ := fun i y ↦
     ∑ j, chartInvGramMatrix (I := I) a y i j *
       Φ y (chartLocalFrame (I := I) a j y)
   have hc (i : Fin (Module.finrank ℝ E)) :
       ContMDiffOn I 𝓘(ℝ) n (c i) (chartAt H a).source := by
     dsimp only [c]
-    exact contMDiffOn_finsetSum fun j _ ↦
-      (show ContMDiffOn I 𝓘(ℝ) n
-          (fun y ↦ chartInvGramMatrix (I := I) a y i j) (chartAt H a).source by
-        simpa only [TangentBundle.trivializationAt_baseSet] using
-          (contMDiffOn_chartInvGramMatrix_entry (I := I) (n := n) a i j)).mul (hΦ j)
+    exact contMDiffOn_finsetSum fun j _ ↦ (hGinv i j).mul (hΦ j)
   have hform : ContMDiffOn I (I.prod 𝓘(ℝ, E)) n
       (fun y : M ↦ TotalSpace.mk' E y
         (∑ i, c i y • chartLocalFrame (I := I) a i y))
       (chartAt H a).source := by
     refine ContMDiffOn.sum_section fun i _ ↦ ?_
-    have hframe := contMDiffOn_chartLocalFrame (I := I) (n := n) a i
-    have hframe' : ContMDiffOn I (I.prod 𝓘(ℝ, E)) n
-        (fun y : M ↦ TotalSpace.mk' E y (chartLocalFrame (I := I) a i y))
-        (chartAt H a).source := by
-      simpa only [TangentBundle.trivializationAt_baseSet] using hframe
-    exact ContMDiffOn.smul_section (hc i) hframe'
+    exact ContMDiffOn.smul_section (hc i) (hframe i)
   refine hform.congr fun y hy ↦ ?_
   simpa only [c, Matrix.mulVec, dotProduct] using congrArg (TotalSpace.mk' E y)
     (rieszDual_eq_sum_chartLocalFrame (I := I) a hy (Φ y))
@@ -187,25 +190,28 @@ theorem contMDiffAt_rieszDual (a : M) {x : M} (hx : x ∈ (chartAt H a).source)
       (fun y : M ↦ TotalSpace.mk' E y
         (rieszDual (I := I) y (Φ y))) x := by
   have hopen : IsOpen (chartAt H a).source := (chartAt H a).open_source
+  -- The same two smoothness facts as in `contMDiffOn_rieszDual`, localized at `x`.
+  have hGinv (i j : Fin (Module.finrank ℝ E)) :
+      ContMDiffOn I 𝓘(ℝ) n (fun y ↦ chartInvGramMatrix (I := I) a y i j)
+        (chartAt H a).source := by
+    simpa only [TangentBundle.trivializationAt_baseSet] using
+      contMDiffOn_chartInvGramMatrix_entry (I := I) (n := n) a i j
+  have hframe (i : Fin (Module.finrank ℝ E)) :
+      ContMDiffAt I (I.prod 𝓘(ℝ, E)) n
+        (fun y : M ↦ TotalSpace.mk' E y (chartLocalFrame (I := I) a i y)) x := by
+    have : ContMDiffOn I (I.prod 𝓘(ℝ, E)) n
+        (fun y : M ↦ TotalSpace.mk' E y (chartLocalFrame (I := I) a i y))
+        (chartAt H a).source := by
+      simpa only [TangentBundle.trivializationAt_baseSet] using
+        contMDiffOn_chartLocalFrame (I := I) (n := n) a i
+    exact this.contMDiffAt (hopen.mem_nhds hx)
   let c : Fin (Module.finrank ℝ E) → M → ℝ := fun i y ↦
     ∑ j, chartInvGramMatrix (I := I) a y i j *
       Φ y (chartLocalFrame (I := I) a j y)
   have hc (i : Fin (Module.finrank ℝ E)) : ContMDiffAt I 𝓘(ℝ) n (c i) x := by
     dsimp only [c]
     exact contMDiffAt_finsetSum fun j _ ↦
-      ((show ContMDiffOn I 𝓘(ℝ) n
-          (fun y ↦ chartInvGramMatrix (I := I) a y i j) (chartAt H a).source by
-        simpa only [TangentBundle.trivializationAt_baseSet] using
-          (contMDiffOn_chartInvGramMatrix_entry (I := I) (n := n) a i j)).contMDiffAt
-            (hopen.mem_nhds hx)).mul (hΦ j)
-  have hframe (i : Fin (Module.finrank ℝ E)) :
-      ContMDiffAt I (I.prod 𝓘(ℝ, E)) n
-        (fun y : M ↦ TotalSpace.mk' E y (chartLocalFrame (I := I) a i y)) x :=
-    (show ContMDiffOn I (I.prod 𝓘(ℝ, E)) n
-        (fun y : M ↦ TotalSpace.mk' E y (chartLocalFrame (I := I) a i y))
-        (chartAt H a).source by
-      simpa only [TangentBundle.trivializationAt_baseSet] using
-        (contMDiffOn_chartLocalFrame (I := I) (n := n) a i)).contMDiffAt (hopen.mem_nhds hx)
+      ((hGinv i j).contMDiffAt (hopen.mem_nhds hx)).mul (hΦ j)
   have hform : ContMDiffAt I (I.prod 𝓘(ℝ, E)) n
       (fun y : M ↦ TotalSpace.mk' E y
         (∑ i, c i y • chartLocalFrame (I := I) a i y)) x := by
