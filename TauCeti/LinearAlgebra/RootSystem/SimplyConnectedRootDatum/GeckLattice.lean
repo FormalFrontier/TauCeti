@@ -298,27 +298,6 @@ private theorem geckRepresentation_dividedPower_ι_apply (x : t.lieAlgebra ht) (
   rw [Associative.map_dividedPower, t.geckRepresentation_ι ht, ← h,
     Matrix.toLinAlgEquiv'_apply]
 
-/-- Every entry of a divided power of a numbered raising matrix is an integer. This transports
-the root-string computation of
-`RootPairing.GeckConstruction.exists_intCast_dividedPower_e_apply` into the Bourbaki-numbered
-pinned indexing. -/
-private theorem geck_e_dividedPower_has_integer_entries (i : Fin t.rank) (n : ℕ)
-    (j k : t.GeckIndex ht) :
-    ∃ z : ℤ, (z : ℚ) =
-      Associative.dividedPower n
-        (RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i)) j k :=
-  TauCeti.RootPairing.GeckConstruction.exists_intCast_dividedPower_e_apply
-    (t.simpleSupportEquiv ht i) n j k
-
-/-- Every entry of a divided power of a numbered lowering matrix is an integer. -/
-private theorem geck_f_dividedPower_has_integer_entries (i : Fin t.rank) (n : ℕ)
-    (j k : t.GeckIndex ht) :
-    ∃ z : ℤ, (z : ℚ) =
-      Associative.dividedPower n
-        (RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i)) j k :=
-  TauCeti.RootPairing.GeckConstruction.exists_intCast_dividedPower_f_apply
-    (t.simpleSupportEquiv ht i) n j k
-
 /-- **Every divided power of a numbered root generator preserves the Geck coordinate lattice.**
 This is the root-operator half of the statement that the whole Kostant form preserves the
 lattice; the Cartan half is
@@ -335,11 +314,13 @@ theorem geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice
   | inl i =>
       rw [LieAlgebra.Basis.rootGenerator_inl, t.coe_lieBasis_e ht]
       exact t.matrix_mulVec_mem_geckCoordinateLattice ht _
-        (t.geck_e_dividedPower_has_integer_entries ht i n) hv
+        (fun j k => RootPairing.GeckConstruction.exists_intCast_dividedPower_e_apply
+          (t.simpleSupportEquiv ht i) n j k) hv
   | inr i =>
       rw [LieAlgebra.Basis.rootGenerator_inr, t.coe_lieBasis_f ht]
       exact t.matrix_mulVec_mem_geckCoordinateLattice ht _
-        (t.geck_f_dividedPower_has_integer_entries ht i n) hv
+        (fun j k => RootPairing.GeckConstruction.exists_intCast_dividedPower_f_apply
+          (t.simpleSupportEquiv ht i) n j k) hv
 
 /-! ## The Kostant form preserves the coordinate lattice -/
 
