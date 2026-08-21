@@ -212,7 +212,6 @@ theorem checkerboardLattice_form : (checkerboardLattice n).form = Matrix.toBilin
   ofSubmodule_form _ _ _ _
 
 /-- The form of the checkerboard lattice is the standard dot product. -/
-@[simp]
 theorem checkerboardLattice_form_apply (x y : Fin n → ℚ) :
     (checkerboardLattice n).form x y = ∑ i, x i * y i := by
   rw [checkerboardLattice_form, checkerboardAmbientForm_apply]
