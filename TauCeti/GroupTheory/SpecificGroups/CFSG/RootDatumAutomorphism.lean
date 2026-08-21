@@ -93,6 +93,17 @@ permutation of the index. -/
   exact DynkinType.root_diagramRootPerm d.1.dynkinType_valid
     (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
 
+/-- Every coroot of the pinned datum has its simple-coroot coordinates permuted by the diagram
+permutation of the index. -/
+@[simp] theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
+    (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
+        (d.datumGraphAut.indexEquiv k) =
+      fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot k
+        (d.diagramPerm.symm j) := by
+  rw [datumGraphAut, DynkinType.diagramAut_indexEquiv]
+  exact DynkinType.coroot_diagramRootPerm d.1.dynkinType_valid
+    (DynkinType.mem_diagramSymmetry_iff.mpr d.cartanMatrix_diagramPerm) k
+
 /-- **The order relation of the root-datum graph automorphism.** This is `γ ^ 2 = 1` for `²Aₙ`,
 `²Dₙ` and `²E₆`, `γ ^ 3 = 1` for `³D₄`, and the trivial relation on an untwisted family, all read
 off the twist order recorded by the index. -/
