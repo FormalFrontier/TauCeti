@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
 
 /-!
 # The upper-triangular Borel as a dynamic parabolic of `GL₂`
@@ -22,11 +23,10 @@ of `GL₂`, conjugation sends a matrix `!![a, b; c, d]` to
 the origin exactly when `c = 0`: the dynamic parabolic `P(lambda)` is the upper-triangular Borel.
 For such a matrix the limit at the origin is its diagonal part.
 
-The construction is made on convolution points and then recovered as a bialgebra morphism by
-the full faithfulness of the functor of points. The extension over the origin is exhibited by the
-polynomial matrix `!![a, Xb; 0, d]`; the converse reads the coefficient of `T⁻¹` in the lower-left
-entry. Thus the result holds over every commutative base ring and every commutative value algebra,
-including rings with zero divisors.
+The cocharacter is the rank-one specialization of the general weight-torus construction. The
+extension over the origin is exhibited by the polynomial matrix `!![a, Xb; 0, d]`; the converse
+reads the coefficient of `T⁻¹` in the lower-left entry. Thus the result holds over every
+commutative base ring and every commutative value algebra, including rings with zero divisors.
 
 ## Main declarations
 
@@ -86,60 +86,28 @@ theorem pointsMulEquiv_dynamicCocharacterPoints
       diagGL (dynamicDiagonalUnits (MultiplicativeGroup.pointsMulEquiv f)) := by
   simp [dynamicCocharacterPoints]
 
-variable {B : Type w} [CommRing B] [Algebra R B]
-
-/-- The standard dynamic cocharacter on points is natural in the value algebra. -/
-theorem mapValue_dynamicCocharacterPoints (phi : A →ₐ[R] B)
-    (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
-    AlgHom.mapValue phi (dynamicCocharacterPoints f) =
-      dynamicCocharacterPoints (AlgHom.mapValue phi f) := by
-  apply (pointsMulEquiv (R := R) (A := B) 2).injective
-  rw [pointsMulEquiv_mapValue, pointsMulEquiv_dynamicCocharacterPoints,
-    pointsMulEquiv_dynamicCocharacterPoints]
-  ext i j
-  by_cases hij : i = j
-  · subst j
-    simp only [Matrix.GeneralLinearGroup.map_apply, diagGL_apply, ite_eq_left]
-    fin_cases i
-    · exact congrArg Units.val
-        (MultiplicativeGroup.pointsMulEquiv_mapValue phi f)
-    · simp [dynamicDiagonalUnits]
-  · simp [Matrix.GeneralLinearGroup.map_apply, diagGL_apply, hij]
-
 end Points
 
 section Coordinate
 
-/-- The natural transformation on points given by `t ↦ diag(t, 1)`. -/
-noncomputable def dynamicCocharacterPointsMap :
-    HopfAlgebra.pointsFunctor (R := R) (H := LaurentPolynomial R) ⟶
-      HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R 2) where
-  app A := GrpCat.ofHom (dynamicCocharacterPoints (R := R) (A := A))
-  naturality _ _ phi := by
-    ext f
-    exact (mapValue_dynamicCocharacterPoints phi.hom f).symm
+/-- The rank-one weights `(1, 0)` defining the standard dynamic cocharacter of `GL₂`. -/
+private def dynamicWeights : Fin 2 → ULift.{u} Unit → ℤ :=
+  fun i _ => if i = 0 then 1 else 0
+
+/-- The group algebra of the rank-one character lattice in its Laurent-polynomial
+presentation. -/
+private noncomputable def rankOneCharacterBialgEquiv :
+    MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) ≃ₐc[R]
+      LaurentPolynomial R :=
+  (MonoidAlgebra.domCongrBialgEquiv R R
+      (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))).trans
+    (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
 
 /-- The coordinate Hopf-algebra morphism of the cocharacter `t ↦ diag(t, 1)`. -/
 noncomputable def dynamicCocharacterCoordinateMap :
     coordinateHopfAlgebra R 2 ⟶ _root_.CommHopfAlgCat.of R (LaurentPolynomial R) :=
-  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
-    (X := Opposite.op (_root_.CommHopfAlgCat.of R (LaurentPolynomial R)))
-    (Y := Opposite.op (coordinateHopfAlgebra R 2))
-    (dynamicCocharacterPointsMap.{u, u} (R := R))).unop
-
-/-- Precomposition by the coordinate morphism is the constructed cocharacter on points. -/
-theorem mapPointsFunctor_dynamicCocharacterCoordinateMap :
-    (CommHopfAlgCat.mapPointsFunctor.{u, u, u}
-      (dynamicCocharacterCoordinateMap (R := R)) :
-      HopfAlgebra.pointsFunctor (R := R) (H := LaurentPolynomial R) ⟶
-        HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R 2)) =
-      (dynamicCocharacterPointsMap.{u, u} (R := R)) := by
-  unfold dynamicCocharacterCoordinateMap
-  rw [← CommHopfAlgCat.pointsFunctor_map]
-  exact Functor.map_preimage
-    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+  weightTorusCoordinateMap (R := R) dynamicWeights ≫
+    _root_.CommHopfAlgCat.ofHom (rankOneCharacterBialgEquiv (R := R)).toBialgHom
 
 /-- On every value algebra, the coordinate cocharacter induces `t ↦ diag(t, 1)` on points. -/
 @[simp]
@@ -148,28 +116,59 @@ theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
     (CommHopfAlgCat.mapPointsFunctor
       (dynamicCocharacterCoordinateMap (R := R))).app A f =
       dynamicCocharacterPoints f := by
-  let K := LaurentPolynomial R
-  let p : WithConv (K →ₐ[R] K) :=
-    toConv (AlgHom.id R _)
-  have hp :
-      (CommHopfAlgCat.mapPointsFunctor
-        (dynamicCocharacterCoordinateMap (R := R))).app
-          (CommAlgCat.of R K) p = dynamicCocharacterPoints p := by
-    rw [mapPointsFunctor_dynamicCocharacterCoordinateMap, dynamicCocharacterPointsMap]
-    exact GrpCat.ofHom_apply dynamicCocharacterPoints p
-  have hfp : AlgHom.mapValue (H := K) f.ofConv p = f := by
-    simp only [AlgHom.mapValue_apply, p, AlgHom.comp_id, WithConv.toConv_ofConv]
-  have hnat :
-      AlgHom.mapValue (H := coordinateHopfAlgebra R 2) f.ofConv
-          ((CommHopfAlgCat.mapPointsFunctor
-            (dynamicCocharacterCoordinateMap (R := R))).app (CommAlgCat.of R K) p) =
-        (CommHopfAlgCat.mapPointsFunctor
-          (dynamicCocharacterCoordinateMap (R := R))).app A
-            (AlgHom.mapValue (H := K) f.ofConv p) := by
-    exact DFunLike.congr_fun
-      (AlgHom.mapValue_mapDomain
-        (dynamicCocharacterCoordinateMap (R := R)).hom f.ofConv) p
-  rw [← hfp, ← hnat, hp, mapValue_dynamicCocharacterPoints]
+  let q : WithConv
+      (MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) →ₐ[R] A) :=
+    (CommHopfAlgCat.mapPointsFunctor
+      (_root_.CommHopfAlgCat.ofHom
+        (rankOneCharacterBialgEquiv (R := R)).toBialgHom)).app A f
+  rw [dynamicCocharacterCoordinateMap,
+    CommHopfAlgCat.mapPointsFunctor_comp_app_apply]
+  change (CommHopfAlgCat.mapPointsFunctor
+    (weightTorusCoordinateMap (R := R) dynamicWeights)).app A q = _
+  rw [mapPointsFunctor_weightTorusCoordinateMap_app]
+  have hq : SplitTorus.pointsMulEquiv q (ULift.up ()) =
+      MultiplicativeGroup.pointsMulEquiv f := by
+    ext
+    rw [SplitTorus.pointsMulEquiv_apply_coe,
+      MultiplicativeGroup.pointsMulEquiv_apply,
+      MultiplicativeGroup.unitOfPoint_val]
+    simp only [q, CommHopfAlgCat.mapPointsFunctor_app_apply,
+      WithConv.ofConv_toConv, AlgHom.comp_apply]
+    congr 1
+    rw [rankOneCharacterBialgEquiv]
+    simp only [CommHopfAlgCat.hom_ofHom]
+    change (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
+        ((MonoidAlgebra.domCongrBialgEquiv R R
+          (AddEquiv.toMultiplicative
+            (Finsupp.uniqueAddEquiv (ULift.up ()))))
+          (MonoidAlgebra.single
+            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1)) =
+      LaurentPolynomial.T 1
+    apply (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm_apply_eq.mpr
+    apply MonoidAlgebra.coeffEquiv.injective
+    change ((MonoidAlgebra.domCongrBialgEquiv R R
+        (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ()))))
+          (MonoidAlgebra.single
+            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1)).coeff =
+      ((AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ)
+        (LaurentPolynomial.T 1)).coeff
+    rw [MonoidAlgebra.coeff_domCongrBialgEquiv_apply,
+      AddMonoidAlgebra.coeff_toMultiplicativeBialgEquiv_apply]
+    simp only [MonoidAlgebra.coeff_single, LaurentPolynomial.T,
+      AddMonoidAlgebra.coeff_single, Finsupp.mapDomain_single]
+    apply congrArg (fun x => Finsupp.single x (1 : R))
+    apply congrArg (fun z : ℤ => Multiplicative.ofAdd z)
+    change (Finsupp.uniqueAddEquiv (ULift.up ()))
+      (Finsupp.single (ULift.up ()) 1) = 1
+    rw [Finsupp.uniqueAddEquiv_apply, Finsupp.single_eq_same]
+  apply (pointsMulEquiv (R := R) (A := A) 2).injective
+  rw [pointsMulEquiv_diagonalTorusPoints,
+    pointsMulEquiv_dynamicCocharacterPoints]
+  congr 1
+  funext i
+  rw [diagonalTorusCoordinates_pointsMap_weightCharacterMap]
+  fin_cases i <;>
+    simp [dynamicWeights, dynamicDiagonalUnits, torusCharacter_def, hq]
 
 /-- The bialgebra morphism representing the standard cocharacter `t ↦ diag(t, 1)`. -/
 noncomputable def dynamicCocharacter :
@@ -188,7 +187,6 @@ theorem pointsHom_dynamicCocharacter (t : Aˣ) :
       dynamicCocharacterPoints
         ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) := by
   rw [Cocharacter.pointsHom_apply]
-  -- Expose the component of the recovered natural transformation so its pointwise API applies.
   change (CommHopfAlgCat.mapPointsFunctor
       (dynamicCocharacterCoordinateMap (R := R))).app (CommAlgCat.of R A)
         ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) = _
