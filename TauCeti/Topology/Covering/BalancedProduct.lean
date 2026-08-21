@@ -41,7 +41,9 @@ there for an abstract presentation of `E / H` rather than for a fixed model.
 * `TauCeti.BalancedProduct.isQuotientCoveringMap_mk`: the class map `E × A → E ×_G A` is one such.
 * `TauCeti.BalancedProduct.isCoveringMap_proj`: **the balanced product of a quotient covering map
   with a discrete set is a covering map.**
-* `TauCeti.BalancedProduct.fiberEquiv`: its fibre over `q e` is `A`, through `a ↦ ⟦(e, a)⟧`.
+* `TauCeti.BalancedProduct.fiberEquiv`: its fibre over `q e` is `A`, through `a ↦ ⟦(e, a)⟧`. This
+  last bijection is purely algebraic: it uses no topology, only that the action on `E` is free and
+  that the fibres of `q` are its orbits.
 
 ## References
 
@@ -89,13 +91,9 @@ abbrev mk (G : Type*) [Group G] [MulAction G E] [MulAction G A] (e : E) (a : A) 
     BalancedProduct G E A :=
   Quotient.mk (MulAction.orbitRel G (E × A)) (e, a)
 
-/-- Two pairs have the same class exactly when they lie in the same diagonal orbit. -/
-theorem mk_eq_mk_iff {e e' : E} {a a' : A} :
-    mk G e a = mk G e' a' ↔ (e, a) ∈ MulAction.orbit G (e', a') :=
-  Quotient.eq''
-
 /-- Moving a point of `E × A` by `g` in the first coordinate is the same as moving it by `g⁻¹`
 in the second. -/
+@[simp]
 theorem mk_smul_left (g : G) (e : E) (a : A) : mk G (g • e) a = mk G e (g⁻¹ • a) :=
   Quotient.sound ⟨g, by simp⟩
 
@@ -171,7 +169,7 @@ private theorem isEvenlyCovered_of_smul_disjoint [Nonempty A] (hqc : IsQuotientC
   have hkey : ∀ {u u' : E} {a a' : A}, u ∈ U → u' ∈ U → mk G u a = mk G u' a' →
       u = u' ∧ a = a' := by
     intro u u' a a' hu hu' hEq
-    obtain ⟨g, hg⟩ := mk_eq_mk_iff.mp hEq
+    obtain ⟨g, hg⟩ := Quotient.eq''.mp hEq
     have hg1 : g • (u', a') = (u, a) := hg
     have hgu : g • u' = u := congrArg Prod.fst hg1
     rw [hdisj g ⟨u, ⟨u', hu', hgu⟩, hu⟩, one_smul] at hg1
@@ -266,26 +264,27 @@ end Covering
 
 section Fiber
 
-variable [TopologicalSpace E] [TopologicalSpace X]
-
 variable (A) in
-/-- **The fibre of the balanced product over `q e` is `A`.** The bijection sends `a` to the class
-of `(e, a)`; it depends on the chosen point `e` of the fibre of `q`. -/
-noncomputable def fiberEquiv (hqc : IsQuotientCoveringMap q G) {x : X} (e : q ⁻¹' {x}) :
+/-- **The fibre of the balanced product over `x` is `A`.** The bijection sends `a` to the class
+of `(e, a)`; it depends on the chosen point `e` of the fibre of `q`.
+
+Only two consequences of `q` being a quotient covering map are used, and neither involves a
+topology: the action on `E` is free, and points of `E` with the same image lie in one orbit. -/
+noncomputable def fiberEquiv [IsCancelSMul G E]
+    (hfiber : ∀ {e₁ e₂ : E}, q e₁ = q e₂ → e₁ ∈ MulAction.orbit G e₂) {x : X} (e : q ⁻¹' {x}) :
     A ≃ proj A hq ⁻¹' {x} := by
-  have hcancel : IsCancelSMul G E := hqc.isCancelSMul
   refine Equiv.ofBijective (fun a => ⟨mk G (e : E) a, ?_⟩) ⟨?_, ?_⟩
   · rw [Set.mem_preimage, Set.mem_singleton_iff, proj_mk]
     exact e.2
   · intro a a' hEq
-    obtain ⟨g, hg⟩ := mk_eq_mk_iff.mp (congrArg Subtype.val hEq)
+    obtain ⟨g, hg⟩ := Quotient.eq''.mp (congrArg Subtype.val hEq)
     have hg1 : g • ((e : E), a') = ((e : E), a) := hg
     rw [IsCancelSMul.eq_one_of_smul (congrArg Prod.fst hg1), one_smul] at hg1
     exact (Prod.ext_iff.mp hg1).2.symm
   · rintro ⟨z, hz⟩
     obtain ⟨⟨w, b⟩, rfl⟩ := Quotient.mk''_surjective z
     rw [Set.mem_preimage, Set.mem_singleton_iff, proj_mk] at hz
-    obtain ⟨g, hg⟩ := hqc.apply_eq_iff_mem_orbit.mp (hz.trans e.2.symm)
+    obtain ⟨g, hg⟩ := hfiber (hz.trans e.2.symm)
     have hge : g • (e : E) = w := hg
     refine ⟨g⁻¹ • b, Subtype.ext ?_⟩
     -- `fiberEquiv_apply_coe` is only available after this `Equiv.ofBijective` construction.
@@ -296,8 +295,10 @@ noncomputable def fiberEquiv (hqc : IsQuotientCoveringMap q G) {x : X} (e : q �
 variable (A) in
 /-- The fibre bijection of the balanced product sends `a` to the class of `(e, a)`. -/
 @[simp]
-theorem fiberEquiv_apply_coe (hqc : IsQuotientCoveringMap q G) {x : X} (e : q ⁻¹' {x}) (a : A) :
-    (fiberEquiv A hq hqc e a : BalancedProduct G E A) = mk G (e : E) a :=
+theorem fiberEquiv_apply_coe [IsCancelSMul G E]
+    (hfiber : ∀ {e₁ e₂ : E}, q e₁ = q e₂ → e₁ ∈ MulAction.orbit G e₂) {x : X} (e : q ⁻¹' {x})
+    (a : A) :
+    (fiberEquiv A hq hfiber e a : BalancedProduct G E A) = mk G (e : E) a :=
   (rfl)
 
 end Fiber

@@ -112,18 +112,20 @@ theorem actionCoveringSpace_proj :
   CoveringSpace.mk_proj _ _
 
 /-- The characteristic equality of total spaces, viewed as a homeomorphism. -/
-def actionCoverTotalSpaceHomeomorph : (actionCoveringSpace x₀ A : TopCat) ≃ₜ ActionCover x₀ A :=
+private def actionCoverTotalSpaceHomeomorph :
+    (actionCoveringSpace x₀ A : TopCat) ≃ₜ ActionCover x₀ A :=
   TopCat.homeoOfIso (eqToIso (actionCoveringSpace_coe x₀ A))
 
 /-- The characteristic total-space homeomorphism commutes with the two projections. -/
 @[simp]
-theorem actionCoverProj_actionCoverTotalSpaceHomeomorph (e : (actionCoveringSpace x₀ A : TopCat)) :
+private theorem actionCoverProj_actionCoverTotalSpaceHomeomorph
+    (e : (actionCoveringSpace x₀ A : TopCat)) :
     actionCoverProj x₀ A (actionCoverTotalSpaceHomeomorph x₀ A e) =
       (actionCoveringSpace x₀ A).proj e :=
   (DFunLike.congr_fun (congrArg TopCat.Hom.hom (actionCoveringSpace_proj x₀ A)) e).symm
 
 /-- Transport from the fibre of the bundled cover to the fibre of its projection. -/
-def actionCoverFiberTransport :
+private def actionCoverFiberTransport :
     ⇑(actionCoveringSpace x₀ A).proj ⁻¹' {x₀} ≃ actionCoverProj x₀ A ⁻¹' {x₀} :=
   ((actionCoverTotalSpaceHomeomorph x₀ A).subtype fun e => by
     simp only [Set.mem_preimage, Set.mem_singleton_iff]
@@ -131,7 +133,7 @@ def actionCoverFiberTransport :
 
 /-- On underlying points, fibre transport applies the characteristic homeomorphism. -/
 @[simp]
-theorem actionCoverFiberTransport_apply_coe
+private theorem actionCoverFiberTransport_apply_coe
     (e : ⇑(actionCoveringSpace x₀ A).proj ⁻¹' {x₀}) :
     (actionCoverFiberTransport x₀ A e : ActionCover x₀ A) =
       actionCoverTotalSpaceHomeomorph x₀ A e :=
@@ -139,7 +141,7 @@ theorem actionCoverFiberTransport_apply_coe
 
 /-- Fibre transport commutes with monodromy. -/
 @[simp]
-theorem actionCoverFiberTransport_apply_monodromy (g : FundamentalGroup X x₀)
+private theorem actionCoverFiberTransport_apply_monodromy (g : FundamentalGroup X x₀)
     (e : ⇑(actionCoveringSpace x₀ A).proj ⁻¹' {x₀}) :
     actionCoverFiberTransport x₀ A
         ((actionCoveringSpace x₀ A).isCoveringMap_proj.monodromy g e) =
@@ -159,14 +161,16 @@ omit [TopologicalSpace A] [DiscreteTopology A] in
 /-- **The fibre of the cover attached to `A` over `x₀` is `A`.** A point of `A` labels the class
 of the pair it forms with the constant-path point of the universal cover. -/
 def actionCoverFiberEquiv : A ≃ actionCoverProj x₀ A ⁻¹' {x₀} :=
-  BalancedProduct.fiberEquiv A _ isQuotientCoveringMap (basepointLift x₀)
+  BalancedProduct.fiberEquiv A _ (fun h => proj_eq_iff_mem_orbit.mp h) (basepointLift x₀)
 
-omit [TopologicalSpace A] [DiscreteTopology A] in
+omit [LocallyPathConnectedSpace X] [PathConnectedSpace X] [SemilocallySimplyConnectedSpace X]
+  [TopologicalSpace A] [DiscreteTopology A] in
 @[simp]
 theorem actionCoverFiberEquiv_apply_coe (a : A) :
     (actionCoverFiberEquiv x₀ A a : ActionCover x₀ A) =
       BalancedProduct.mk (FundamentalGroup X x₀) (basepointLift x₀ : UniversalCover x₀) a :=
-  BalancedProduct.fiberEquiv_apply_coe A _ isQuotientCoveringMap (basepointLift x₀) a
+  BalancedProduct.fiberEquiv_apply_coe A _ (fun h => proj_eq_iff_mem_orbit.mp h)
+    (basepointLift x₀) a
 
 /-- **The fibre identification is equivariant**: the monodromy of a loop class on the fibre of
 the cover attached to `A` is the action of that loop class on `A`. -/
