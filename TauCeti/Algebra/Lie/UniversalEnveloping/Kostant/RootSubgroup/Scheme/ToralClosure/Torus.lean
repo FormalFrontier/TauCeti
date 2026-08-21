@@ -158,4 +158,16 @@ noncomputable def kostantWeightTorusInToral
   have _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
   ClosedSubgroupScheme.mk (kostantWeightTorusToToral e h ρ M hM hnil b wt)
 
+/-- The underlying subobject of the closed weight torus in the toral closure is represented by
+the factored weight-torus morphism. -/
+@[simp]
+theorem coe_kostantWeightTorusInToral
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    let _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
+    (kostantWeightTorusInToral e h ρ M hM hnil b wt hwt).1 =
+      Subobject.mk (kostantWeightTorusToToral e h ρ M hM hnil b wt) := by
+  have _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
+  rw [kostantWeightTorusInToral]
+  exact ClosedSubgroupScheme.coe_mk _
+
 end TauCeti.UniversalEnvelopingAlgebra
