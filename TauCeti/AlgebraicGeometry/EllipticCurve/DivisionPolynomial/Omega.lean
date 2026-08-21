@@ -46,12 +46,17 @@ and naturality in the coefficient ring for both families.
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], Exercise 3.7, which defines
   the `(ψ, φ, ω)` triple and whose part (d) is the identity `[m]P = (φₘ/ψₘ², ωₘ/ψₘ³)` that makes
-  `ω` the `Y`-coordinate numerator. That exercise is stated in short Weierstrass form and
-  normalises by `4y ωₘ = ψₘ₋₁² ψₘ₊₂ - ψₘ₋₂ ψₘ₊₁²`, a right-hand side that `ψ_mul_ψc` reads as
-  `ψ₂ ψcₘ`; with `a₁ = a₃ = 0`, where `ψ₂ = 2y`, it therefore says `2 ωₘ = ψcₘ`. `ω_spec` below
-  is the long-Weierstrass form, agreeing with Silverman's `ωₘ` exactly when `a₁ = a₃ = 0`: its
-  extra `a₁ φₘ ψₘ + a₃ ψₘ³` is what keeps part (d) true for a general Weierstrass equation. The
-  identity itself is proved in the scalar-multiplication development, not here.
+  `ω` a `Y`-coordinate numerator. The exercise is posed for a general Weierstrass equation
+  `y² + a₁xy + a₃y = x³ + a₂x² + a₄x + a₆`, the short form being offered only as an optional
+  simplification. Its printed normalisation `4y ωₘ = ψₘ₋₁² ψₘ₊₂ + ψₘ₋₂ ψₘ₊₁²` is corrected by
+  Silverman's errata (the entry `Pages 105-106, Exercise 3.7` of
+  `math.brown.edu/johsilve/AEC/AECErrata2013.pdf`) to
+  `2 (2y + a₁x + a₃) ωₘ = ψₘ₋₁² ψₘ₊₂ - ψₘ₋₂ ψₘ₊₁²`, whose right-hand side `ψ_mul_ψc` reads as
+  `ψ₂ ψcₘ`: Silverman's `ωₘ` is `ψcₘ / 2`. `ω_spec` below differs from that by the
+  `a₁ φₘ ψₘ + a₃ ψₘ³` it carries, so the two agree exactly when `a₁ = a₃ = 0`. Silverman's
+  `ωₘ/ψₘ³` evaluates to `(2Y + a₁X + a₃)/2` at `[m]P`, where the `ω` defined here evaluates to
+  the `Y`-coordinate itself, which is what `ω_one` records at `m = 1`. That identity is proved in
+  the scalar-multiplication development, not here.
 
 ## Provenance
 
