@@ -23,8 +23,8 @@ The transition maps therefore run *opposite* to the quotient homomorphisms, and 
 functor on the opposite of the index poset. This file builds it over the open normal subgroups of
 a topological group, which is the index poset the profinite colimit theorem uses. That theorem —
 that the colimit of this system computes the continuous cohomology of `G` — needs `G` profinite
-and the coefficients discrete, and is not stated here: nothing below assumes either hypothesis,
-and no comparison map to continuous cohomology is constructed.
+and the coefficients discrete, and is not stated here: no construction or law below assumes
+either hypothesis, and no comparison map to continuous cohomology is constructed.
 
 The finite-level tower built here is the one the standard accounts of profinite cohomology
 describe; the references below state the colimit theorem this system is the source of.
@@ -55,10 +55,13 @@ describe; the references below state the colimit theorem this system is the sour
 
 ## Implementation notes
 
-Everything except the two functors is stated for arbitrary normal subgroups `V ≤ U` of an
-arbitrary group, since that is all the proofs use. Openness enters only through the index poset
-`OpenNormalSubgroup G`, and profiniteness nowhere: neither is a hypothesis of any statement here.
-They are what the later colimit theorem adds, over this same index poset, together with
+Everything except the two `OpenNormalSubgroup`-indexed functors and the comparison theorem is
+stated for arbitrary normal subgroups `V ≤ U` of an arbitrary group, since that is all the proofs
+use. Openness enters only through the index poset `OpenNormalSubgroup G`. Profiniteness enters
+only in `TauCeti.toFiniteQuotientFunctor_map_hom_hom`, which quantifies over an object of
+`ProfiniteGrp` because it compares with a functor Mathlib defines on that category; it is a
+hypothesis of no construction and of no transition law here. What the later colimit theorem adds,
+over this same index poset, is profiniteness of `G` as an unbundled hypothesis together with
 discreteness of the coefficients, in order to identify the colimit with continuous cohomology.
 
 `finiteQuotientMap` is Mathlib's `QuotientGroup.map` at the identity of `G`, the same map
@@ -76,7 +79,10 @@ lemma cannot even be written down.
 
 This implements the six milestones of the "The system" bullet of Layer 4 of the human-authored
 roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`, together with the functoriality of the
-whole system in the coefficients that the same bullet asks for.
+whole system in the coefficients that the same bullet asks for. The colimit theorem of that same
+layer is separate, and stays out: it is stated on the explicit low-degree complex and compared
+with the canonical object, so it consumes the roadmap's Layers 2 and 3, neither of which the
+system built here uses — every ingredient below is Mathlib's.
 
 ## References
 
@@ -196,6 +202,7 @@ theorem finiteLevelTransition_refl (U : Subgroup G) [U.Normal] (n : ℕ) :
 /-- The second functor law: for `W ≤ V ≤ U` the transition from the `U`-level to the `W`-level is
 the composite through the `V`-level. With `TauCeti.finiteLevelTransition_refl` this says the
 finite-quotient system is a functor on the opposite of the poset of normal subgroups. -/
+@[reassoc]
 theorem finiteLevelTransition_comp (hWV : W ≤ V) (hVU : V ≤ U) (n : ℕ) :
     finiteLevelTransition A (hWV.trans hVU) n =
       finiteLevelTransition A hVU n ≫ finiteLevelTransition A hWV n := by
