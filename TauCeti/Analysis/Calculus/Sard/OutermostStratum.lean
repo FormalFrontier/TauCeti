@@ -11,6 +11,8 @@ import Mathlib.Analysis.Normed.Module.HahnBanach
 import Mathlib.Analysis.Normed.Operator.Bilinear
 import Mathlib.MeasureTheory.Measure.Prod
 import TauCeti.Analysis.Calculus.Sard.EqualDimension
+import TauCeti.Analysis.Normed.Operator.Surjective
+import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.LocallyNull
 
 /-!
@@ -40,8 +42,10 @@ hyperplane. A point of a hyperplane is critical for `f` exactly when it is criti
 restricted map `G t`, whose source has one dimension less, so the induction hypothesis makes every
 slice of the image of the critical set null, and Fubini finishes. Compactness enters only to make
 the slicing legitimate: an image with null slices need not be null unless it is measurable, so the
-argument runs over the compact pieces `crit f ∩ closedBall a r`, which
-`TauCeti.isOpen_setOf_surjective` identifies as compact.
+argument runs over the pieces `crit f ∩ closedBall a r`. These are compact because
+`TauCeti.isOpen_setOf_surjective` makes the surjective operators an open set, so the critical
+locus, its preimage under the continuous derivative, is closed on the ball, and a closed subset of
+a compact ball is compact.
 
 The induction is on the dimension of the source, and both spaces are quantified inside the
 statement carried through it, since the induction step replaces each of them by a
@@ -52,8 +56,6 @@ in the descent, since the inverse function theorem returns a local inverse as sm
 
 ## Main results
 
-* `TauCeti.isOpen_setOf_surjective`: surjectivity onto a finite-dimensional space is an open
-  condition on continuous linear maps.
 * `TauCeti.addHaar_image_criticalPoints_eq_zero`: the critical values taken on an open set form a
   null set.
 * `TauCeti.ContDiff.addHaar_image_criticalPoints_eq_zero`: **the Morse--Sard theorem**, its global
@@ -82,62 +84,14 @@ universe u v
 section Surjective
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
 
-/-- Surjectivity onto a finite-dimensional space is an open condition on continuous linear maps.
-
-A surjection `A` onto a finite-dimensional space admits a continuous linear right inverse `R`, and
-then `B ∘ R` is within distance `‖B - A‖ * ‖R‖` of the identity, hence injective and so, the
-target being finite-dimensional, surjective as soon as `B` is close enough to `A`. -/
-theorem isOpen_setOf_surjective : IsOpen {A : E →L[ℝ] F | Surjective A} := by
-  rw [Metric.isOpen_iff]
-  rintro A (hA : Surjective A)
-  obtain ⟨R₀, hR₀⟩ := (A : E →ₗ[ℝ] F).exists_rightInverse_of_surjective
-    (LinearMap.range_eq_top.2 hA)
-  set R : F →L[ℝ] E := R₀.toContinuousLinearMap with hRdef
-  have hAR : ∀ y, A (R y) = y := fun y ↦ by
-    have := congrArg (fun g : F →ₗ[ℝ] F ↦ g y) hR₀
-    simpa [hRdef] using this
-  refine ⟨(‖R‖ + 1)⁻¹, by positivity, fun B hB ↦ ?_⟩
-  have hBA : ‖B - A‖ < (‖R‖ + 1)⁻¹ := by
-    rwa [Metric.mem_ball, dist_eq_norm] at hB
-  have hlt : ‖B - A‖ * ‖R‖ < 1 := by
-    have h₁ : ‖B - A‖ * ‖R‖ ≤ (‖R‖ + 1)⁻¹ * ‖R‖ :=
-      mul_le_mul_of_nonneg_right hBA.le (norm_nonneg R)
-    have h₂ : (‖R‖ + 1)⁻¹ * ‖R‖ < 1 := by
-      rw [inv_mul_eq_div, div_lt_one (by positivity)]
-      linarith
-    linarith
-  have key : ∀ y : F, ‖B (R y) - y‖ ≤ ‖B - A‖ * ‖R‖ * ‖y‖ := by
-    intro y
-    have hsub : B (R y) - y = (B - A) (R y) := by simp [hAR]
-    rw [hsub]
-    calc ‖(B - A) (R y)‖ ≤ ‖B - A‖ * ‖R y‖ := (B - A).le_opNorm _
-      _ ≤ ‖B - A‖ * (‖R‖ * ‖y‖) := by gcongr; exact R.le_opNorm y
-      _ = ‖B - A‖ * ‖R‖ * ‖y‖ := by ring
-  have hinj : Injective ((B.comp R : F →L[ℝ] F) : F →ₗ[ℝ] F) := by
-    rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
-    intro y hy
-    by_contra hy0
-    have h1 : ‖y‖ ≤ ‖B - A‖ * ‖R‖ * ‖y‖ := by
-      have hy' : B (R y) = 0 := hy
-      have := key y
-      rw [hy', zero_sub, norm_neg] at this
-      exact this
-    have h2 : 0 < ‖y‖ := norm_pos_iff.2 hy0
-    nlinarith
-  intro w
-  obtain ⟨y, hy⟩ := LinearMap.injective_iff_surjective.1 hinj w
-  exact ⟨R y, by simpa using hy⟩
-
-omit [FiniteDimensional ℝ F] in
 /-- A map into a trivial space has no critical points, every linear map into it being
 surjective. -/
 private theorem setOf_not_surjective_fderiv_eq_empty [Subsingleton F] (g : E → F) :
     {x | ¬ Surjective (fderiv ℝ g x)} = ∅ :=
   eq_empty_of_forall_notMem fun _ hx ↦ hx fun _ ↦ ⟨0, Subsingleton.elim _ _⟩
 
-omit [FiniteDimensional ℝ F] in
 /-- If a continuous linear map `A` hits every vector annihilated by a functional `φ`, and `φ ∘ A`
 does not vanish identically, then `A` is surjective: rescaling gives `v₁` with `φ (A v₁) = 1`, and
 then `w - φ w • A v₁` is annihilated by `φ`, hence in the range. -/
