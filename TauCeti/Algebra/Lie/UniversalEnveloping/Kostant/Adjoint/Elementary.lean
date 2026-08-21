@@ -149,6 +149,7 @@ theorem chevalleyKostantForm_apply_mem_chevalleyLatticeAddSubgroup :
         UniversalEnvelopingAlgebra.representation ℚ L L u v ∈
           chevalleyLatticeAddSubgroup x := by
   intro u hu v hv
+  -- Expose the carrier of the abbreviation without duplicating its definitional membership fact.
   change v ∈ rootCorootSpan x at hv
   change _ ∈ rootCorootSpan x
   exact hx.mem_chevalleyLieLattice_iff.1
