@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.ForwardDiff
+import Mathlib.Analysis.Normed.Group.Pointwise
 import TauCeti.Analysis.PositiveDefinite.Kernel.Kolmogorov
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 
@@ -29,12 +31,20 @@ Applying Bochner's theorem to those differences makes the corresponding alternat
 of the spatial Bochner measures positive, the time-regularity input required to assemble the BCR
 representing measure.
 
-## Main declaration
+## Main declarations
 
+* `TauCeti.timeDifference`: the one-step alternating time difference, the negative of Mathlib's
+  forward difference `fwdDiff` in the direction `(h, 0)`.
+* `TauCeti.listTimeDifference`: the alternating difference along a finite list of time steps, and
+  `TauCeti.iteratedTimeDifference`: its equal-step specialization.
 * `TauCeti.IsSemigroupGroupPD.timeDifference`: a bounded BCR-positive-definite function remains
   positive definite after subtracting a nonnegative forward time translate.
-* `TauCeti.IsSemigroupGroupPD.iteratedTimeDifference`: every iterated alternating time difference
-  of a bounded BCR-positive-definite function is positive definite.
+* `TauCeti.IsSemigroupGroupPD.listTimeDifference` and
+  `TauCeti.IsSemigroupGroupPD.iteratedTimeDifference`: every alternating time difference of a
+  bounded BCR-positive-definite function, along arbitrary or repeated steps, is positive definite.
+* `TauCeti.isBounded_range_listTimeDifference` and
+  `TauCeti.isBounded_range_iteratedTimeDifference`: those differences stay bounded, so they can be
+  differenced again.
 
 ## References
 
@@ -48,7 +58,7 @@ representing measure.
 public section
 
 open ComplexConjugate InnerProductSpace Set
-open scoped ComplexOrder NNReal
+open scoped ComplexOrder NNReal Pointwise
 
 namespace TauCeti
 
@@ -105,34 +115,77 @@ universe u
 variable {V : Type u} [AddCommGroup V] {F : ℝ≥0 × V → ℂ}
 
 /-- The first alternating time difference with step `h`:
-`timeDifference h F (t, v) = F (t, v) - F (t + h, v)`. -/
+`timeDifference h F (t, v) = F (t, v) - F (t + h, v)`. It is the negative of Mathlib's forward
+difference `fwdDiff` in the direction `(h, 0)`. -/
 def timeDifference (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) : ℝ≥0 × V → ℂ :=
-  fun p => F p - F (p.1 + h, p.2)
+  -fwdDiff (h, 0) F
 
-omit [AddCommGroup V] in
 /-- The first time difference evaluated at a point. -/
 @[simp]
 theorem timeDifference_apply (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) (p : ℝ≥0 × V) :
     timeDifference h F p = F p - F (p.1 + h, p.2) := by
-  rw [timeDifference]
+  have hp : p + (h, 0) = (p.1 + h, p.2) := by simp [Prod.ext_iff]
+  simp [timeDifference, fwdDiff, hp]
+
+/-- The alternating time difference along a finite list of steps, one application of
+`timeDifference` per entry of the list. -/
+def listTimeDifference (l : List ℝ≥0) (F : ℝ≥0 × V → ℂ) : ℝ≥0 × V → ℂ :=
+  l.foldr timeDifference F
+
+/-- Differencing along no steps at all is the identity. -/
+@[simp]
+theorem listTimeDifference_nil (F : ℝ≥0 × V → ℂ) : listTimeDifference [] F = F := by
+  rw [listTimeDifference, List.foldr_nil]
+
+/-- Differencing along `h :: l` is one further first difference with step `h`. -/
+@[simp]
+theorem listTimeDifference_cons (h : ℝ≥0) (l : List ℝ≥0) (F : ℝ≥0 × V → ℂ) :
+    listTimeDifference (h :: l) F = timeDifference h (listTimeDifference l F) := by
+  rw [listTimeDifference, List.foldr_cons, ← listTimeDifference]
 
 /-- The `n`-th alternating time difference, obtained by iterating `timeDifference h`. -/
 def iteratedTimeDifference (n : ℕ) (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) : ℝ≥0 × V → ℂ :=
   (timeDifference h)^[n] F
 
-omit [AddCommGroup V] in
 /-- The zeroth time difference is the original function. -/
 @[simp]
 theorem iteratedTimeDifference_zero (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) :
     iteratedTimeDifference 0 h F = F := by
   simp [iteratedTimeDifference]
 
-omit [AddCommGroup V] in
 /-- The successor time difference is one further first difference. -/
 @[simp]
 theorem iteratedTimeDifference_succ (n : ℕ) (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) :
     iteratedTimeDifference (n + 1) h F = timeDifference h (iteratedTimeDifference n h F) := by
   simp only [iteratedTimeDifference, Function.iterate_succ_apply']
+
+/-- Iterating the step `h` is differencing along the constant list of `n` copies of `h`. -/
+theorem iteratedTimeDifference_eq_listTimeDifference (n : ℕ) (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) :
+    iteratedTimeDifference n h F = listTimeDifference (List.replicate n h) F := by
+  induction n with
+  | zero => simp
+  | succ n ih => rw [iteratedTimeDifference_succ, ih, List.replicate_succ, listTimeDifference_cons]
+
+/-- Boundedness is preserved by taking a first time difference. -/
+theorem isBounded_range_timeDifference (hbounded : Bornology.IsBounded (range F)) (h : ℝ≥0) :
+    Bornology.IsBounded (range (timeDifference h F)) :=
+  (hbounded.sub hbounded).subset <| by
+    rintro _ ⟨p, rfl⟩
+    exact ⟨F p, mem_range_self p, F (p.1 + h, p.2), mem_range_self _,
+      (timeDifference_apply h F p).symm⟩
+
+/-- Boundedness is preserved by differencing along any finite list of steps. -/
+theorem isBounded_range_listTimeDifference (hbounded : Bornology.IsBounded (range F))
+    (l : List ℝ≥0) : Bornology.IsBounded (range (listTimeDifference l F)) := by
+  induction l with
+  | nil => simpa using hbounded
+  | cons h l ih => simpa using isBounded_range_timeDifference ih h
+
+/-- Boundedness is preserved by every iterated time difference. -/
+theorem isBounded_range_iteratedTimeDifference (hbounded : Bornology.IsBounded (range F)) (n : ℕ)
+    (h : ℝ≥0) : Bornology.IsBounded (range (iteratedTimeDifference n h F)) := by
+  rw [iteratedTimeDifference_eq_listTimeDifference]
+  exact isBounded_range_listTimeDifference hbounded _
 
 namespace IsSemigroupGroupPD
 
@@ -250,35 +303,24 @@ theorem timeDifference (hF : IsSemigroupGroupPD F)
   simp only [add_zero, timeDifference_apply]
   ring_nf
 
-omit [AddCommGroup V] in
-/-- Boundedness is preserved by taking a first time difference. -/
-theorem isBounded_range_timeDifference (hbounded : Bornology.IsBounded (range F)) (h : ℝ≥0) :
-    Bornology.IsBounded (range (TauCeti.timeDifference h F)) := by
-  rw [isBounded_iff_forall_norm_le] at hbounded ⊢
-  obtain ⟨C, hC⟩ := hbounded
-  refine ⟨2 * C, ?_⟩
-  rintro _ ⟨p, rfl⟩
-  calc
-    ‖TauCeti.timeDifference h F p‖ ≤ ‖F p‖ + ‖F (p.1 + h, p.2)‖ := norm_sub_le _ _
-    _ ≤ C + C := add_le_add (hC _ ⟨p, rfl⟩) (hC _ ⟨(p.1 + h, p.2), rfl⟩)
-    _ = 2 * C := by ring
+/-- Every alternating time difference along a finite list of steps of a bounded
+BCR-positive-definite function is again semigroup-group positive definite. -/
+theorem listTimeDifference (hF : IsSemigroupGroupPD F)
+    (hbounded : Bornology.IsBounded (range F)) (l : List ℝ≥0) :
+    IsSemigroupGroupPD (TauCeti.listTimeDifference l F) := by
+  induction l with
+  | nil => simpa using hF
+  | cons h l ih =>
+      rw [TauCeti.listTimeDifference_cons]
+      exact ih.timeDifference (isBounded_range_listTimeDifference hbounded l) h
 
 /-- Every iterated alternating time difference of a bounded BCR-positive-definite function is
 again semigroup-group positive definite. -/
 theorem iteratedTimeDifference (hF : IsSemigroupGroupPD F)
     (hbounded : Bornology.IsBounded (range F)) (n : ℕ) (h : ℝ≥0) :
     IsSemigroupGroupPD (TauCeti.iteratedTimeDifference n h F) := by
-  have hpair : ∀ n : ℕ,
-      IsSemigroupGroupPD (TauCeti.iteratedTimeDifference n h F) ∧
-        Bornology.IsBounded (range (TauCeti.iteratedTimeDifference n h F)) := by
-    intro k
-    induction k with
-    | zero => exact ⟨hF, hbounded⟩
-    | succ k ih =>
-        rw [show k + 1 = Nat.succ k by omega, Nat.succ_eq_add_one,
-          TauCeti.iteratedTimeDifference_succ]
-        exact ⟨ih.1.timeDifference ih.2 h, isBounded_range_timeDifference ih.2 h⟩
-  exact (hpair n).1
+  rw [TauCeti.iteratedTimeDifference_eq_listTimeDifference]
+  exact hF.listTimeDifference hbounded _
 
 end IsSemigroupGroupPD
 
