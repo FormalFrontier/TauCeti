@@ -89,10 +89,12 @@ def act {X : C} (g : X ⟶ G) (n : X ⟶ N) : X ⟶ N :=
 theorem one_act_apply {X : C} (n : X ⟶ N) : A.act (1 : X ⟶ G) n = n :=
   A.one_act X n
 
+@[simp]
 theorem mul_act_apply {X : C} (g h : X ⟶ G) (n : X ⟶ N) :
     A.act (g * h) n = A.act g (A.act h n) :=
   A.mul_act X g h n
 
+@[simp]
 theorem act_mul_apply {X : C} (g : X ⟶ G) (n m : X ⟶ N) :
     A.act g (n * m) = A.act g n * A.act g m :=
   A.act_mul X g n m
@@ -117,6 +119,11 @@ def toMulAut {X : C} (g : X ⟶ G) : MulAut (X ⟶ N) where
 theorem toMulAut_apply {X : C} (g : X ⟶ G) (n : X ⟶ N) :
     A.toMulAut g n = A.act g n :=
   by rfl
+
+@[simp]
+theorem act_one_apply {X : C} (g : X ⟶ G) : A.act g 1 = 1 := by
+  change A.toMulAut g 1 = 1
+  exact map_one (A.toMulAut g)
 
 /-- The action homomorphism from generalized points of `G` to automorphisms of the generalized
 points of `N`. -/
