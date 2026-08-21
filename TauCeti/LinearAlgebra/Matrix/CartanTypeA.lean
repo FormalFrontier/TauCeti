@@ -66,8 +66,8 @@ private theorem rowWeightMatrix_mul_cartanMatrixA (n : ℕ) :
     simp only [rowWeightMatrix, Matrix.of_apply]
     ring
   have hrow := sum_range_chainEntry_mul (R := ℤ) j.isLt
-    (fun k ↦ if k ≤ i.val then (k : ℤ) + 1 else 0)
-  simp only [Int.cast_id] at hrow
+    (fun u ↦ if u - 1 ≤ i.val then ((u - 1 : ℕ) : ℤ) + 1 else 0)
+  simp only [Int.cast_id, Nat.add_sub_cancel] at hrow
   rw [hsum, hrow]
   simp only [weightedRowMatrix, Matrix.of_apply]
   have hj : j.val < n := j.isLt
