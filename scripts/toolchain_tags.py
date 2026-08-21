@@ -8,20 +8,19 @@ Mathlib tags every Lean release, so a project on Lean v4.34.0 can check out math
 
 `vX` is the first commit on `main` whose `lean-toolchain` is `leanprover/lean4:X`.
 `--create` tags that commit once its post-merge CI has passed and its oleans are in the
-Lake cache. Both facts are already recorded, so no rebuild is needed to check them.
+Lake cache. The tool reads both from what is already recorded, without rebuilding.
 
 Mathlib puts its `vX` tag on the commit that bumps its own `lean-toolchain` to X, and
 `scripts/check-bump.sh` requires Tau Ceti's toolchain to match mathlib's at whatever it
 pins. The first `main` commit on toolchain X therefore pins mathlib at or after mathlib's
-`vX` tag, without this tool comparing pins or asking mathlib for anything but the list of
-releases. The pin is usually a little past the tag; the tag message gives it.
+`vX` tag. The pin is usually a little past it; the tag message gives it.
 
 ## What it leaves to a human
 
-Only commits on `main` are tagged. A release `main` never ran on is reported `unreachable`.
-Two things cause that: the daily bump stepped over the release's window on mathlib master,
-which for a stable release has been fifteen hours, or mathlib cut the release on its
-`stable` branch, which `check-bump.sh` will not let this repository pin.
+The tool tags only commits on `main`, and reports a release `main` never ran on as
+`unreachable`. Two things cause that: the daily bump stepped over the release's window on
+mathlib master, which for a stable release has been fifteen hours, or mathlib cut the
+release on its `stable` branch, which `check-bump.sh` will not let this repository pin.
 
 Tagging one anyway takes four steps. `v4.33.0` was done this way:
 
@@ -38,13 +37,12 @@ Tagging one anyway takes four steps. `v4.33.0` was done this way:
   4. Create the annotated tag, recording that the commit was constructed.
 
 The report then shows the release as `tagged`, notes the commit was constructed, and says
-whether it found a cache. `--create` will not do any of this: step 2 is a build, and the
-whole thing should be someone's decision.
+whether it found a cache. `--create` does not do any of this; step 2 is a build.
 
 Releases older than `EARLIEST_RELEASE` are out of scope, because the Lake cache does not
 reach back that far.
 
-Tags are never moved. A tag that does not match the rule is reported, not changed.
+If a tag does not match the rule, the tool reports it and changes nothing.
 
 ## Usage
 
@@ -261,19 +259,19 @@ check-bump.sh requires this repository's toolchain to match mathlib's at whateve
 so such a commit pins mathlib at or after mathlib's `vX` tag. The tag message gives the pin.
 
 A tag is created once that commit's post-merge CI has passed and its oleans are in the Lake
-artifact cache, so a checkout builds without recompiling the library. Both facts are already
-recorded; checking them needs no rebuild.
+artifact cache, so a checkout builds without recompiling the library. The tool reads both
+from what is already recorded, without rebuilding.
 
-Only commits on main are tagged. A release main never ran on is reported `unreachable`:
-either the daily bump stepped over its window on mathlib master, or mathlib cut it on its
-`stable` branch, which check-bump.sh will not let this repository pin. Tagging one anyway
-takes four manual steps, including a build; v4.33.0 was done that way, and the steps are in
-this script's module docstring.
+The tool tags only commits on main, and reports a release main never ran on as
+`unreachable`: either the daily bump stepped over its window on mathlib master, or mathlib
+cut it on its `stable` branch, which check-bump.sh will not let this repository pin. Tagging
+one anyway takes four manual steps, including a build. v4.33.0 was done that way; the steps
+are in this script's module docstring.
 
-Releases older than %s are out of scope, because the Lake cache does not reach back that
-far.
+Releases older than %s are out of scope, because the Lake cache has no
+older entries.
 
-Tags are never moved. A tag that does not match the rule is reported, not changed.
+If a tag does not match the rule, the tool reports it and changes nothing.
 """ % EARLIEST_RELEASE
 
 STATUSES = ("tagged", "ready", "blocked", "unreachable", "out-of-scope")
