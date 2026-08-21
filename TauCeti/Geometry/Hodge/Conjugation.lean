@@ -79,7 +79,7 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
   simpa only [ω.toEquiv_symm] using h
 
 /-- A conjugation restricted to a stable complex subspace is involutive. -/
-theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
     Function.Involutive (ω.toEquiv.toLinearMap.restrict hU) := fun x ↦ by
   ext
