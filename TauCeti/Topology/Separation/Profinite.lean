@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Category.LightProfinite.Injective
+public import Mathlib.Topology.Connected.TotallyDisconnected
 public import Mathlib.Topology.ContinuousMap.Basic
 
+import Mathlib.Topology.Category.LightProfinite.Injective
 import Mathlib.Topology.Homeomorph.Lemmas
 
 /-!
