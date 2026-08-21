@@ -36,8 +36,9 @@ transformations `resNatTrans` and `inflNatTrans`, matching the shape of Mathlib'
 
 ## Main results
 
-* `TauCeti.ContinuousCohomology.res_comp_res`: restricting to `S` and then to a subgroup of `S`
-  is restricting to the composite subgroup.
+* `TauCeti.ContinuousCohomology.coeffMap_comp`,
+  `TauCeti.ContinuousCohomology.res_comp_res` and
+  `TauCeti.ContinuousCohomology.infl_comp_infl`: the composition laws of the three named maps.
 * `TauCeti.ContinuousCohomology.coeffMap_comp_res` and
   `TauCeti.ContinuousCohomology.coeffMap_comp_infl`: naturality of restriction and of inflation in
   the coefficients.
@@ -198,6 +199,22 @@ noncomputable def inflNatTrans (n : ℕ) :
 @[simp]
 theorem inflNatTrans_app (X : TopRep R G) (n : ℕ) : (inflNatTrans R N n).app X = infl N X n :=
   (rfl)
+
+/-- Inflating from `(G ⧸ N) ⧸ P` to `G ⧸ N` and then from `G ⧸ N` to `G` is the map induced by the
+composite quotient homomorphism together with the composite inclusion `(Xᴺ)ᴾ ↪ Xᴺ ↪ X` of
+coefficients. -/
+@[reassoc]
+theorem infl_comp_infl (P : Subgroup (G ⧸ N)) [P.Normal] (X : TopRep R G) (n : ℕ) :
+    infl P (TopRep.quotientToInvariants X N) n ≫ infl N X n =
+      _root_.ContinuousCohomology.map
+        ((ContinuousMonoidHom.quotientMk P).comp (ContinuousMonoidHom.quotientMk N))
+        ((TopRep.resFunctor (ContinuousMonoidHom.quotientMk N : G →* G ⧸ N)).map
+            (TopRep.quotientToInvariantsι (TopRep.quotientToInvariants X N) P) ≫
+          TopRep.quotientToInvariantsι X N) n :=
+  (_root_.ContinuousCohomology.map_comp (ContinuousMonoidHom.quotientMk P)
+    (ContinuousMonoidHom.quotientMk N)
+    (TopRep.quotientToInvariantsι (TopRep.quotientToInvariants X N) P)
+    (TopRep.quotientToInvariantsι X N) n).symm
 
 end Infl
 
