@@ -302,8 +302,14 @@ private lemma groupSchemePointsMulEquiv_comp_diagonalTorus
             (SplitTorus.characterGroup (ULift.{u} (Fin N))) p)) := by
   let q := DiagonalizableGroup.groupSchemePointsMulEquiv (R := R) (A := A)
     (SplitTorus.characterGroup (ULift.{u} (Fin N))) p
-  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
-    (diagonalTorusCoordinateMap (R := R) (N := N)) q
+  have hmap : AlgebraicGeometry.Spec.mapMulEquiv
+      ((CommHopfAlgCat.mapPointsFunctor
+        (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R A) q) =
+      AlgebraicGeometry.Spec.mapMulEquiv q ≫
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap (R := R) (N := N)).op).hom.hom :=
+    CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
+      (diagonalTorusCoordinateMap (R := R) (N := N)).hom q
   rw [mapPointsFunctor_diagonalTorusCoordinateMap_app] at hmap
   apply Over.OverMorphism.ext
   rw [groupSchemePointMulEquiv_apply_left, Over.comp_left]
