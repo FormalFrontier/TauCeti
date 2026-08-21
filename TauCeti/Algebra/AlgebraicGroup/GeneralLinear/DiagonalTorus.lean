@@ -91,7 +91,7 @@ noncomputable def diagonalTorusPoints :
     WithConv (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ)) →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R N →ₐ[R] A) :=
   (pointsMulEquiv (R := R) (A := A) N).symm.toMonoidHom.comp
-    ((diagGL (k := A) (n := N)).comp
+    ((diagGL (k := A)).comp
       ((diagonalTorusCoordinates (N := N) (A := A)).comp
         (SplitTorus.pointsMulEquiv (R := R) (A := A)).toMonoidHom))
 

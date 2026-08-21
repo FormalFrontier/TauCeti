@@ -145,6 +145,7 @@ variable {R : Type u} [CommRing R]
 
 /-- The Weyl element is not upper triangular: its lower-left entry is `1`. -/
 theorem gl2WeylElement_notMem_gl2Borel [Nontrivial R] : GL2WeylElement R ∉ GL2Borel R := by
+  rw [GL2Borel.mem_iff]
   simp
 
 namespace GL2Borel

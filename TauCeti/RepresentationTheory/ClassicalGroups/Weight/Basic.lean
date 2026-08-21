@@ -12,7 +12,7 @@ public import TauCeti.RepresentationTheory.ClassicalGroups.Torus
 -- The determinant powers, the worked one-dimensional example at the end of the file.
 public import TauCeti.RepresentationTheory.ClassicalGroups.Determinant
 -- The characters `TauCeti.weightChar` of a split torus, and their injectivity in weight.
-public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
 -- The independence of the joint eigenspaces of a representation, indexed by characters.
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 
@@ -27,8 +27,8 @@ the standard representation is the internal direct sum of its weight spaces, whi
 coordinate lines.
 
 The scalar `∏ i, tᵢ ^ lᵢ` is the split-torus character `TauCeti.weightChar k l`, built in
-`TauCeti.LinearAlgebra.Basis.DiagonalTorus`. The weight space is an intersection of eigenspaces,
-one for each point of the torus, so independence is the independence of the joint eigenspaces of a
+`TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic`. The weight space is an intersection of
+eigenspaces, one for each point of the torus, so independence is that of the joint eigenspaces of a
 representation indexed by characters — `TauCeti.iSupIndep_iInf_eigenspace_unitHom` — transported
 along `l ↦ TauCeti.weightChar k l`. That transport needs the map to be injective, and that is
 where the coefficients enter: over `𝔽₂` the torus is trivial
