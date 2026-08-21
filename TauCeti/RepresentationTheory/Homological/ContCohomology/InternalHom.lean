@@ -66,10 +66,13 @@ the object downstream cohomology is meant to be applied to. The two actions on `
 `G` acts trivially on the source (`homAction_eq_smul`).
 
 `Representation.linHom` is the same conjugation construction for `k`-linear maps `V →ₗ[k] W` of
-bundled representations. It is not used as the definition here because the coefficient theory of
-the roadmap is written in the unbundled classes `[AddCommGroup M] [DistribMulAction G M]` and its
-cochains take values in `M →+ N`, a type distinct from `M →ₗ[ℤ] N`; the identification of the two
-constructions is `toIntLinearMap_homAction`.
+bundled representations. It is not used as the definition here for two reasons. Its carrier is
+`V →ₗ[k] W`, a type distinct from the `M →+ N` in which the roadmap's cochains take values, so
+routing through it would still need a bespoke definition round-tripping along
+`AddMonoidHom.toIntLinearMap` and `LinearMap.toAddMonoidHom`; and taking `k = ℤ` forces
+`Module ℤ M` and `Module ℤ N`, hence `AddCommGroup` on both sides, whereas everything below needs
+only `AddMonoid M` and `AddCommMonoid N`. The identification of the two constructions, in the
+generality where `Representation.linHom` is available, is `toIntLinearMap_homAction`.
 
 Mathlib puts no topology on `M →+ N`. Discreteness of the internal hom enters here through the
 discreteness of the ambient function space `M → N`, which is what
@@ -88,11 +91,10 @@ variable {G : Type*} [Group G] {M : Type*} [AddMonoid M] [DistribMulAction G M]
 
 /-- The conjugation action of `G` on the internal hom `M →+ N`, sending `φ` to
 `m ↦ g • φ (g⁻¹ • m)`. This is the action making evaluation equivariant; see
-`homAction_apply_smul`. -/
-def homAction (g : G) (φ : M →+ N) : M →+ N where
-  toFun m := g • φ (g⁻¹ • m)
-  map_zero' := by simp
-  map_add' m₁ m₂ := by simp
+`homAction_apply_smul`. It is assembled from Mathlib's `DistribSMul.toAddMonoidHom`, which bundles
+each `g • ·` as an additive homomorphism, so that additivity comes from `AddMonoidHom.comp`. -/
+def homAction (g : G) (φ : M →+ N) : M →+ N :=
+  (DistribSMul.toAddMonoidHom N g).comp (φ.comp (DistribSMul.toAddMonoidHom M g⁻¹))
 
 @[simp]
 theorem homAction_apply (g : G) (φ : M →+ N) (m : M) : homAction g φ m = g • φ (g⁻¹ • m) := (rfl)
