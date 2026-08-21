@@ -211,6 +211,7 @@ noncomputable def residueHomOfPrime : R →ₐ[k] (ofPrime k F 𝔭).ResidueFiel
       exact congrArg (IsLocalRing.residue _)
         (Subtype.ext (IsScalarTower.algebraMap_apply k R F c).symm) }
 
+@[simp]
 theorem residueHomOfPrime_apply (r : R) : residueHomOfPrime k F 𝔭 r =
     IsLocalRing.residue (ofPrime k F 𝔭).integers (algebraMap R (ofPrime k F 𝔭).integers r) :=
   (rfl)
