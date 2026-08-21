@@ -148,6 +148,7 @@ def jetField (u : W1p mu Omega p) : E → ℝ × E :=
 
 omit [FiniteDimensional ℝ E] in
 /-- The value-gradient jet field evaluated at a point. -/
+@[simp]
 theorem jetField_apply (u : W1p mu Omega p) (x : E) :
     jetField u x = (W1p.value u x, W1p.gradient u x) :=
   by
@@ -228,10 +229,13 @@ theorem jetLpL_apply_ae (u : W1p mu Omega 2) :
       (EuclideanSpace ℝ ι)).toContinuousLinearMap.coeFn_compLpL (u : Sobolev1JetLp mu Omega 2),
     W1p.value_apply_ae u, W1p.gradient_apply_ae u] with x hjet hvalue hgradient
   rw [jetField_apply]
-  change (((WithLp.prodContinuousLinearEquiv 2 ℝ ℝ
-    (EuclideanSpace ℝ ι)).toContinuousLinearMap.compLpL 2
-      (mu.restrict Omega)) (u : Sobolev1JetLp mu Omega 2)) x = _
-  rw [hjet]
+  -- `jetLpL` is the ambient jet inclusion followed by the `Lᵖ` action of the product
+  -- identification; name that equation so the pointwise `compLpL` lemma applies.
+  have hcomp : jetLpL u =
+      ((WithLp.prodContinuousLinearEquiv 2 ℝ ℝ
+        (EuclideanSpace ℝ ι)).toContinuousLinearMap.compLpL 2 (mu.restrict Omega))
+        (u : Sobolev1JetLp mu Omega 2) := (rfl)
+  rw [hcomp, hjet]
   simpa only [WithLp.prodContinuousLinearEquiv_apply] using
     Prod.ext hvalue.symm hgradient.symm
 
@@ -317,6 +321,16 @@ def energyFormH1 (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
     (b : EuclideanSpace ℝ ι → EuclideanSpace ℝ ι) (c : EuclideanSpace ℝ ι → ℝ)
     (u v : W1p mu Omega 2) : ℝ :=
   energyFormIntegral (mu.restrict Omega) a b c (jetField u) (jetField v)
+
+/-- The energy form on `H¹(Ω)` is the raw-jet energy integral of
+`TauCeti.PDE.energyFormIntegral` evaluated on the two Sobolev jet fields: the unfolding lemma
+that lets the raw-jet API act on `H¹` statements. -/
+theorem energyFormH1_eq_energyFormIntegral (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
+    (b : EuclideanSpace ℝ ι → EuclideanSpace ℝ ι) (c : EuclideanSpace ℝ ι → ℝ)
+    (u v : W1p mu Omega 2) :
+    energyFormH1 a b c u v =
+      energyFormIntegral (mu.restrict Omega) a b c (jetField u) (jetField v) :=
+  (rfl)
 
 /-- The energy form on `H¹(Ω)` is the integral of the pointwise energy density over `Ω`. -/
 theorem energyFormH1_def (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
@@ -717,9 +731,8 @@ theorem mul_norm_gradient_sq_le_energyFormH1_self_of_zero_drift
     (hmem.mono fun x hx xi => by
       simpa [toQuadraticForm'_eq_dotProduct] using h.lower_bound hx xi)
     (hmem.mono hc_nonneg) ((integrable_norm_jetField_snd_sq u).const_mul lam) henergy_zero
-  rw [← integral_norm_jetField_snd_sq_eq_norm_gradient_sq u, ← integral_const_mul]
-  change (∫ x, lam * ‖(jetField u x).2‖ ^ 2 ∂mu.restrict Omega) ≤
-    energyFormIntegral (mu.restrict Omega) a b c (jetField u) (jetField u)
+  rw [← integral_norm_jetField_snd_sq_eq_norm_gradient_sq u, ← integral_const_mul,
+    energyFormH1_eq_energyFormIntegral]
   exact key.trans_eq (energyFormIntegral_congr_ae (μ := mu.restrict Omega)
     (a := a) (b := fun _ => 0) (c := c) (U := jetField u) (V := jetField u)
     Filter.EventuallyEq.rfl hb_zero_ae.symm Filter.EventuallyEq.rfl

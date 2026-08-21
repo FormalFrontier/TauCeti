@@ -376,8 +376,11 @@ ambient value-gradient jet. -/
 theorem W1p.value_apply_ae (u : W1p mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
       W1p.value u x = WithLp.fst ((u : Sobolev1JetLp mu Omega p) x) := by
-  change ∀ᵐ x ∂mu.restrict Omega,
-    Sobolev1JetLp.value (u : Sobolev1JetLp mu Omega p) x = _
+  -- `W1p.valueL` is the ambient jet projection precomposed with the inclusion, so the two
+  -- value components are the same `Lᵖ` class; name that equation instead of relying on it
+  -- silently.
+  have hvalue : W1p.value u = Sobolev1JetLp.value (u : Sobolev1JetLp mu Omega p) := (rfl)
+  rw [hvalue]
   exact Sobolev1JetLp.value_apply_ae (u : Sobolev1JetLp mu Omega p)
 
 omit [FiniteDimensional ℝ E] in
@@ -386,8 +389,11 @@ ambient value-gradient jet. -/
 theorem W1p.gradient_apply_ae (u : W1p mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
       W1p.gradient u x = WithLp.snd ((u : Sobolev1JetLp mu Omega p) x) := by
-  change ∀ᵐ x ∂mu.restrict Omega,
-    Sobolev1JetLp.gradient (u : Sobolev1JetLp mu Omega p) x = _
+  -- As for `W1p.value_apply_ae`: the Sobolev gradient is the ambient jet gradient of the
+  -- underlying jet, so record that equation before appealing to the ambient lemma.
+  have hgradient : W1p.gradient u = Sobolev1JetLp.gradient (u : Sobolev1JetLp mu Omega p) :=
+    (rfl)
+  rw [hgradient]
   exact Sobolev1JetLp.gradient_apply_ae (u : Sobolev1JetLp mu Omega p)
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
