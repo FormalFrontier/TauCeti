@@ -74,6 +74,49 @@ private theorem apply_iterate_right (hshift : ∀ p q, K (σ p) q = K p (σ q)) 
     K p (σ^[n] q) = K (σ^[n] p) q := by
   simpa using (apply_iterate_add hshift 0 n p q).symm
 
+/-- The quadratic forms of a positive-definite kernel along the iterates of a symmetric shift
+assemble into a positive-semidefinite **Hankel** matrix: for a fixed finite family of points `v`
+and coefficients `c`, the sequence `a n = ∑ᵢⱼ conj (cᵢ) · K (σⁿ (v i)) (v j) · cⱼ` has
+`(m, n) ↦ a (m + n)` positive semidefinite. Its entries are real because `K` is Hermitian and the
+shift can be moved between the two arguments, and its quadratic forms are quadratic forms of `K`
+itself, taken at the shifted points. -/
+private theorem posSemidef_hankel_of_iterate_shift {ι : Type v} [Fintype ι] {a : ℕ → 𝕜}
+    (hK : Matrix.PosSemidef K) (hshift : ∀ p q, K (σ p) q = K p (σ q)) {v : ι → α} {c : ι → 𝕜}
+    (hadef : ∀ n, a n = ∑ i, ∑ j, star (c i) * K (σ^[n] (v i)) (v j) * c j) :
+    Matrix.PosSemidef fun m n : ℕ => a (m + n) := by
+  have hherm : ∀ p q : α, star (K p q) = K q p :=
+    (posSemidef_iff_finite_sum.{u, v, v}.mp hK).1
+  refine posSemidef_iff_finite_sum.{u, 0, v}.mpr ⟨fun m n => ?_, ?_⟩
+  · -- the entries are real, by Hermitian symmetry of `K` and the shift symmetry
+    have hstar : ∀ k : ℕ, star (a k) = a k := by
+      intro k
+      simp only [hadef, star_sum, star_mul', star_star]
+      rw [Finset.sum_comm]
+      refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+      rw [hherm, apply_iterate_right hshift]
+      ring
+    rw [hstar, Nat.add_comm]
+  · intro κ _ w e
+    have h := (posSemidef_iff_finite_sum.{u, v, v}.mp hK).2 (ι := κ × ι)
+      (fun p => σ^[w p.1] (v p.2)) (fun p => e p.1 * c p.2)
+    have hexp : ∀ s t : κ, star (e s) * a (w s + w t) * e t =
+        ∑ i, ∑ j, star (e s * c i) *
+          K (σ^[w s] (v i)) (σ^[w t] (v j)) * (e t * c j) := by
+      intro s t
+      simp only [hadef, Finset.mul_sum, Finset.sum_mul, star_mul',
+        apply_iterate_add hshift (w s) (w t)]
+      exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring
+    calc (0 : 𝕜) ≤ ∑ p : κ × ι, ∑ q : κ × ι, star (e p.1 * c p.2) *
+          K (σ^[w p.1] (v p.2)) (σ^[w q.1] (v q.2)) * (e q.1 * c q.2) := h
+      _ = ∑ s, ∑ i, ∑ t, ∑ j, star (e s * c i) *
+            K (σ^[w s] (v i)) (σ^[w t] (v j)) * (e t * c j) := by
+          simp only [Fintype.sum_prod_type]
+      _ = ∑ s, ∑ t, ∑ i, ∑ j, star (e s * c i) *
+            K (σ^[w s] (v i)) (σ^[w t] (v j)) * (e t * c j) := by
+          exact Finset.sum_congr rfl fun s _ => Finset.sum_comm
+      _ = ∑ s, ∑ t, star (e s) * a (w s + w t) * e t := by
+          simp only [hexp]
+
 /-- **The difference of a bounded positive-definite kernel and its shift is positive definite.**
 Here `σ` is a *symmetric* shift, `K (σ p) q = K p (σ q)`, and `K` is bounded in norm by `C`.
 Boundedness is essential: for the (unbounded) kernel `(p, q) ↦ exp (p + q)` on `ℝ` and the shift
@@ -89,37 +132,7 @@ theorem posSemidef_sub_comp_shift {C : ℝ} (hK : Matrix.PosSemidef K)
   -- the Hankel sequence attached to the finite family `(v, c)`
   let a : ℕ → 𝕜 := fun n => ∑ i, ∑ j, star (c i) * K (σ^[n] (v i)) (v j) * c j
   have hadef : ∀ n, a n = ∑ i, ∑ j, star (c i) * K (σ^[n] (v i)) (v j) * c j := fun _ => rfl
-  have hHankel : Matrix.PosSemidef fun m n : ℕ => a (m + n) := by
-    refine posSemidef_iff_finite_sum.{u, 0, v}.mpr ⟨fun m n => ?_, ?_⟩
-    · -- the entries are real, by Hermitian symmetry of `K` and the shift symmetry
-      have hstar : ∀ k : ℕ, star (a k) = a k := by
-        intro k
-        simp only [hadef, star_sum, star_mul', star_star]
-        rw [Finset.sum_comm]
-        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        rw [hherm, apply_iterate_right hshift]
-        ring
-      rw [hstar, Nat.add_comm]
-    · intro κ _ w e
-      have h := (posSemidef_iff_finite_sum.{u, v, v}.mp hK).2 (ι := κ × ι)
-        (fun p => σ^[w p.1] (v p.2)) (fun p => e p.1 * c p.2)
-      have hexp : ∀ s t : κ, star (e s) * a (w s + w t) * e t =
-          ∑ i, ∑ j, star (e s * c i) *
-            K (σ^[w s] (v i)) (σ^[w t] (v j)) * (e t * c j) := by
-        intro s t
-        simp only [hadef, Finset.mul_sum, Finset.sum_mul, star_mul',
-          apply_iterate_add hshift (w s) (w t)]
-        exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring
-      calc (0 : 𝕜) ≤ ∑ p : κ × ι, ∑ q : κ × ι, star (e p.1 * c p.2) *
-            K (σ^[w p.1] (v p.2)) (σ^[w q.1] (v q.2)) * (e q.1 * c q.2) := h
-        _ = ∑ s, ∑ i, ∑ t, ∑ j, star (e s * c i) *
-              K (σ^[w s] (v i)) (σ^[w t] (v j)) * (e t * c j) := by
-            simp only [Fintype.sum_prod_type]
-        _ = ∑ s, ∑ t, ∑ i, ∑ j, star (e s * c i) *
-              K (σ^[w s] (v i)) (σ^[w t] (v j)) * (e t * c j) := by
-            exact Finset.sum_congr rfl fun s _ => Finset.sum_comm
-        _ = ∑ s, ∑ t, star (e s) * a (w s + w t) * e t := by
-            simp only [hexp]
+  have hHankel := posSemidef_hankel_of_iterate_shift hK hshift hadef
   have hbda : ∀ n, ‖a n‖ ≤ ∑ i, ∑ j, ‖c i‖ * ‖c j‖ * C := by
     intro n
     refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun i _ => ?_)

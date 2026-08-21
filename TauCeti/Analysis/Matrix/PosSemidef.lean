@@ -118,10 +118,10 @@ variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-! ## Bounded positive-semidefinite Hankel sequences -/
 
-/-- The numerical core of the Hankel estimate: a bounded sequence of reals whose squares satisfy
-the Cauchy--Schwarz inequality `b n ^ 2 ≤ b 0 * b (n + n)` cannot increase at the first step. If it
-did, the ratio `r = b 1 / b 0` would exceed `1` and the doubling inequality would push
-`b (2 ^ k)` past `b 0 * r ^ (2 ^ k)`, which is unbounded. -/
+/-- The numerical core of the Hankel estimate: a bounded sequence of reals with `0 ≤ b 0` whose
+squares satisfy the Cauchy--Schwarz inequality `b n ^ 2 ≤ b 0 * b (n + n)` cannot increase at the
+first step. If it did, the ratio `r = b 1 / b 0` would exceed `1` and the doubling inequality would
+push `b (2 ^ k)` past `b 0 * r ^ (2 ^ k)`, which is unbounded. -/
 private theorem apply_one_le_apply_zero_of_sq_le_mul {b : ℕ → ℝ} {D : ℝ} (hb0 : 0 ≤ b 0)
     (hsq : ∀ n, b n ^ 2 ≤ b 0 * b (n + n)) (hbd : ∀ n, b n ≤ D) : b 1 ≤ b 0 := by
   rcases le_or_gt (b 1) (b 0) with hle | hlt
@@ -151,19 +151,14 @@ private theorem apply_one_le_apply_zero_of_sq_le_mul {b : ℕ → ℝ} {D : ℝ}
           rw [hsplit, pow_add, sq]
         rw [hrw, hsplit]
         nlinarith [mul_pos hb0pos hpow]
-  obtain ⟨k, hk⟩ := exists_nat_gt ((D / b 0 - 1) / (r - 1))
-  have hkr : D / b 0 - 1 < k * (r - 1) := (div_lt_iff₀ (by linarith)).mp hk
-  have hD : D < b 0 * (1 + k * (r - 1)) := by
-    have h : D / b 0 < 1 + k * (r - 1) := by linarith
+  obtain ⟨k, hk⟩ := pow_unbounded_of_one_lt (D / b 0) hr1
+  have hD : D < b 0 * r ^ k := by
     rw [mul_comm]
-    exact (div_lt_iff₀ hb0pos).mp h
-  have hbern : 1 + k * (r - 1) ≤ r ^ k := by
-    simpa using one_add_mul_le_pow (by linarith : (-2 : ℝ) ≤ r - 1) k
+    exact (div_lt_iff₀ hb0pos).mp hk
   have hmono : r ^ k ≤ r ^ 2 ^ k :=
     pow_le_pow_right₀ hr1.le (Nat.le_of_lt k.lt_two_pow_self)
-  have hchain : b 0 * (1 + k * (r - 1)) ≤ D :=
-    le_trans (le_trans (mul_le_mul_of_nonneg_left (hbern.trans hmono) hb0pos.le) (key k))
-      (hbd _)
+  have hchain : b 0 * r ^ k ≤ D :=
+    le_trans (le_trans (mul_le_mul_of_nonneg_left hmono hb0pos.le) (key k)) (hbd _)
   linarith
 
 /-- **A bounded positive-semidefinite Hankel sequence does not increase at the first step.**
