@@ -43,8 +43,10 @@ this one along `LinearMap.toContinuousLinearMap`.
 
 * `ContRepresentation.continuous_linHom`: the Hom representation of two representations
   with continuous operator-valued action again has one.
-* `ContRepresentation.mem_linHom_invariants_iff_isIntertwining`: an operator is invariant exactly
-  when it intertwines.
+* `ContRepresentation.linHom_apply_eq_self_iff_isIntertwining`: an operator is fixed by the
+  conjugation action exactly when it intertwines, and
+  `ContRepresentation.mem_linHom_invariants_iff_isIntertwining`: the same read on the invariant
+  subspace.
 * `ContRepresentation.character_linHom`: its character is `χ_π(g⁻¹) · χ_ρ(g)`.
 
 ## References
@@ -52,7 +54,7 @@ this one along `LinearMap.toContinuousLinearMap`.
 The algebraic originals are Mathlib's: `Representation.linHom` for the conjugation action,
 `Representation.mem_linHom_invariants_iff_isIntertwining` and
 `Representation.invariantsEquivIntertwiningMap` for the identification of its invariants with the
-intertwiners — of which `ContRepresentation.mem_linHom_invariants_iff_isIntertwining` and
+intertwiners — of which `ContRepresentation.linHom_apply_eq_self_iff_isIntertwining` and
 `ContRepresentation.invariantsEquivContIntertwiningMap` are the continuous analogues, the first
 proved by transporting the algebraic one — and `Representation.char_linHom` for the character.
 
@@ -124,23 +126,37 @@ variable {𝕜 G V W : Type*} [NontriviallyNormedField 𝕜] [Group G]
   [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedAddCommGroup W] [NormedSpace 𝕜 W]
   (π : ContRepresentation 𝕜 G V) (ρ : ContRepresentation 𝕜 G W)
 
-/-- **An operator is invariant in the Hom representation exactly when it intertwines.** This is
+/-- **An operator fixed by the conjugation action is exactly one that intertwines.** This is
 Mathlib's `Representation.mem_linHom_invariants_iff_isIntertwining` for the algebraic Hom
 representation, read on the operator space: the invariance equation `ρ g ∘ T ∘ π g⁻¹ = T` and the
 intertwining equation `T ∘ π g = ρ g ∘ T` are equations of continuous linear maps exactly when
 their underlying linear maps agree.
 
-This is not a `simp` lemma: `ContRepresentation.mem_invariants` is one, so the left-hand side is
-not in simp-normal form, and tagging it makes `simpNF` report "left-hand side simplifies". -/
-theorem mem_linHom_invariants_iff_isIntertwining (T : V →L[𝕜] W) :
-    T ∈ (linHom π ρ).invariants ↔ ∀ g : G, T.comp (π g) = (ρ g).comp T := by
+The left-hand side is the simp-normal form of `T ∈ (linHom π ρ).invariants`, which
+`ContRepresentation.mem_invariants` and `ContRepresentation.linHom_apply` — both `simp` lemmas —
+reduce to it; stating the lemma this way, exactly as Mathlib states its algebraic original, is what
+makes it usable by `simp`. `ContRepresentation.mem_linHom_invariants_iff_isIntertwining` is the
+same fact phrased in terms of the invariant subspace. -/
+@[simp]
+theorem linHom_apply_eq_self_iff_isIntertwining (T : V →L[𝕜] W) :
+    (∀ g : G, (ρ g).comp (T.comp (π g⁻¹)) = T) ↔ ∀ g : G, T.comp (π g) = (ρ g).comp T := by
   have key := Representation.mem_linHom_invariants_iff_isIntertwining (ρ := π.toRepresentation)
     (σ := ρ.toRepresentation) (T : V →ₗ[𝕜] W)
   rw [Representation.isIntertwiningMap_iff] at key
   simp only [LinearMap.ext_iff, LinearMap.comp_apply, ContinuousLinearMap.coe_coe] at key
-  simp only [ContRepresentation.mem_invariants, linHom_apply, ContinuousLinearMap.ext_iff,
-    ContinuousLinearMap.comp_apply]
+  simp only [ContinuousLinearMap.ext_iff, ContinuousLinearMap.comp_apply]
   exact key
+
+/-- **An operator is invariant in the Hom representation exactly when it intertwines.** This is
+`ContRepresentation.linHom_apply_eq_self_iff_isIntertwining` phrased in terms of the invariant
+subspace, the form in which the invariants of the Hom representation are consumed.
+
+This is not a `simp` lemma: `ContRepresentation.mem_invariants` is one, so the left-hand side is
+not in simp-normal form, and tagging it makes `simpNF` report "left-hand side simplifies". -/
+theorem mem_linHom_invariants_iff_isIntertwining (T : V →L[𝕜] W) :
+    T ∈ (linHom π ρ).invariants ↔ ∀ g : G, T.comp (π g) = (ρ g).comp T := by
+  simp only [ContRepresentation.mem_invariants, linHom_apply,
+    linHom_apply_eq_self_iff_isIntertwining]
 
 /-- A continuous intertwiner is an invariant operator of the Hom representation. -/
 theorem toContinuousLinearMap_mem_invariants_linHom (f : ContIntertwiningMap π ρ) :
@@ -173,7 +189,8 @@ end Invariants
 
 section Character
 
-variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+variable {𝕜 G V W : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Group G]
+  [TopologicalSpace G] [IsTopologicalGroup G]
   [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
   [NormedAddCommGroup W] [NormedSpace 𝕜 W] [FiniteDimensional 𝕜 W]
   (π : ContRepresentation 𝕜 G V) (ρ : ContRepresentation 𝕜 G W)
