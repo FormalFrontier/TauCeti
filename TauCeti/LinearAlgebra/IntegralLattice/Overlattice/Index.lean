@@ -55,7 +55,7 @@ lattice.
 * `TauCeti.IntegralLattice.IntermediateCarrier.index_intermediateCarrierOfDiscriminantSubgroup`:
   `[L_H : L] = |H|`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_mul_relIndex` and
-  `TauCeti.IntegralLattice.IntermediateCarrier.natCard_mul_relIndex`: multiplicativity of the
+  `TauCeti.IntegralLattice.natCard_mul_relIndex_discriminantSubgroup`: multiplicativity of the
   index along a chain of intermediate carriers, and along the corresponding chain of subgroups.
 * `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_eq_relIndex_discriminantSubgroup`: relative
   index is preserved by the intermediate-carrier/discriminant-subgroup correspondence.
@@ -65,8 +65,8 @@ lattice.
   `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.discriminant_mul_natCard_sq`:
   `disc(M) · [M : L]² = disc(L)` for an integral carrier `M`, and its form
   `disc(L_H) · |H|² = disc(L)` when the carrier glued along `H` is integral.
-* `TauCeti.IntegralLattice.IntermediateCarrier.IsIntegral.isUnimodular_iff_natCard_sq`: the
-  integral overlattice glued along `H` is unimodular exactly when `|H|² = disc(L)`.
+* `IntermediateCarrier.IsIntegral.isUnimodular_iff_natCard_sq_eq_discriminant`:
+  the integral overlattice glued along `H` is unimodular exactly when `|H|² = disc(L)`.
 
 ## References
 
@@ -85,6 +85,13 @@ namespace IntegralLattice
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
+/-- Multiplicativity of the index along a chain of subgroups of a discriminant group. -/
+theorem natCard_mul_relIndex_discriminantSubgroup {L : IntegralLattice V}
+    {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ K) :
+    Nat.card H * H.relIndex K = Nat.card K := by
+  rw [← AddSubgroup.relIndex_bot_left H, ← AddSubgroup.relIndex_bot_left K]
+  exact AddSubgroup.relIndex_mul_relIndex ⊥ H K bot_le h
+
 namespace IntermediateCarrier
 
 variable {L : IntegralLattice V}
@@ -94,24 +101,26 @@ variable {L : IntegralLattice V}
 /-- The relative index of two intermediate carriers `M N`: the index of `M ⊓ N` in `N`, that is
 the order of the quotient group `N / (M ⊓ N)`. When `M ≤ N` this is the index `[N : M]`, the
 order of `N / M`. -/
-@[expose]
 noncomputable def relIndex (M N : L.IntermediateCarrier) : ℕ :=
   M.1.toAddSubgroup.relIndex N.1.toAddSubgroup
 
 /-- The index `[M : L]` of the lattice in an intermediate carrier, that is the order of the
 quotient group `M / L`. -/
-@[expose]
 noncomputable def index (M : L.IntermediateCarrier) : ℕ :=
   relIndex ⊥ M
 
 /-- The relative index of intermediate carriers is their relative index as additive subgroups. -/
 theorem relIndex_def (M N : L.IntermediateCarrier) :
-    relIndex M N = M.1.toAddSubgroup.relIndex N.1.toAddSubgroup := rfl
+    relIndex M N = M.1.toAddSubgroup.relIndex N.1.toAddSubgroup := (rfl)
 
 /-- The index of an intermediate carrier is its carrier's relative index over the original
 lattice. -/
 theorem index_def (M : L.IntermediateCarrier) :
-    index M = L.carrier.toAddSubgroup.relIndex M.1.toAddSubgroup := rfl
+    index M = L.carrier.toAddSubgroup.relIndex M.1.toAddSubgroup := (rfl)
+
+/-- Relative index from the lattice itself is the index of an intermediate carrier. -/
+@[simp]
+theorem relIndex_bot_left (M : L.IntermediateCarrier) : relIndex ⊥ M = index M := (rfl)
 
 /-- The relative index of two intermediate carriers `M N` is the order of the quotient
 `N / (M ⊓ N)`; when `M ≤ N` this is the order of `N / M`. -/
@@ -124,18 +133,12 @@ theorem relIndex_eq_natCard_quotient (M N : L.IntermediateCarrier) :
 /-- The index of an intermediate carrier is the order of the quotient module `M / L`. -/
 theorem index_eq_natCard_quotient (M : L.IntermediateCarrier) :
     index M = Nat.card (↥M.1 ⧸ L.carrier.submoduleOf M.1) := by
-  rw [index_def, AddSubgroup.relIndex, AddSubgroup.index_eq_card]
-  exact Nat.card_congr (AddSubgroup.quotientEquivOfEq
-    (Submodule.toAddSubgroup_submoduleOf L.carrier M.1).symm)
+  simpa using relIndex_eq_natCard_quotient (⊥ : L.IntermediateCarrier) M
 
 /-- The relative index of an intermediate carrier in itself is one. -/
 @[simp]
 theorem relIndex_self (M : L.IntermediateCarrier) : relIndex M M = 1 := by
   rw [relIndex_def, AddSubgroup.relIndex_self]
-
-/-- Relative index from the lattice itself is the index of an intermediate carrier. -/
-@[simp]
-theorem relIndex_bot_left (M : L.IntermediateCarrier) : relIndex ⊥ M = index M := rfl
 
 /-- **The index is multiplicative in towers of intermediate carriers.** -/
 theorem relIndex_mul_relIndex {M N P : L.IntermediateCarrier} (hMN : M ≤ N) (hNP : N ≤ P) :
@@ -234,14 +237,6 @@ theorem index_eq_one_iff (M : L.IntermediateCarrier) : index M = 1 ↔ M = ⊥ :
     ← L.intermediateCarrierOrderIsoDiscriminantSubgroup_apply]
   exact L.intermediateCarrierOrderIsoDiscriminantSubgroup.injective.eq_iff
 
-/-- Multiplicativity of the index along a chain of subgroups of the discriminant group. -/
-theorem natCard_mul_relIndex {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ K) :
-    Nat.card H * H.relIndex K = Nat.card K := by
-  rw [← index_intermediateCarrierOfDiscriminantSubgroup H,
-    ← index_intermediateCarrierOfDiscriminantSubgroup K,
-    ← relIndex_intermediateCarrierOfDiscriminantSubgroup H K]
-  exact index_mul_relIndex ((L.intermediateCarrierOfDiscriminantSubgroup_le_iff H K).mpr h)
-
 section IsNondegenerate
 
 variable [L.IsNondegenerate]
@@ -301,7 +296,7 @@ theorem IsIntegral.discriminant_eq_discriminant_div_index_sq (hM : IsIntegral M)
 
 /-- **An integral overlattice is unimodular exactly when the square of its index exhausts the
 discriminant of the lattice.** -/
-theorem IsIntegral.isUnimodular_iff_index_sq (hM : IsIntegral M) :
+theorem IsIntegral.isUnimodular_iff_index_sq_eq_discriminant (hM : IsIntegral M) :
     hM.toIntegralLattice.IsUnimodular ↔ index M ^ 2 = L.discriminant := by
   constructor
   · intro h
@@ -331,11 +326,13 @@ theorem IsIntegral.discriminant_mul_natCard_sq {H : AddSubgroup L.DiscriminantGr
 
 /-- **The overlattice glued along a subgroup of the discriminant group is unimodular exactly when
 the square of the order of that subgroup is the discriminant.** -/
-theorem IsIntegral.isUnimodular_iff_natCard_sq {H : AddSubgroup L.DiscriminantGroup}
+theorem IsIntegral.isUnimodular_iff_natCard_sq_eq_discriminant
+    {H : AddSubgroup L.DiscriminantGroup}
     [(L.intermediateCarrierOfDiscriminantSubgroup H).1.IsLattice ℚ]
     (hH : IsIntegral (L.intermediateCarrierOfDiscriminantSubgroup H)) :
     hH.toIntegralLattice.IsUnimodular ↔ Nat.card H ^ 2 = L.discriminant := by
-  rw [hH.isUnimodular_iff_index_sq, index_intermediateCarrierOfDiscriminantSubgroup H]
+  rw [hH.isUnimodular_iff_index_sq_eq_discriminant,
+    index_intermediateCarrierOfDiscriminantSubgroup H]
 
 end IsLattice
 
