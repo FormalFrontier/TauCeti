@@ -198,14 +198,23 @@ end Backtracks
 
 section BacktrackProducts
 
+section
+
 variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
 
 /-- The displayed word `a a*` is the head backtrack under later-factor-first multiplication. -/
 theorem ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
-    ofArrow (Symmetrify.of.map a) * ofArrow (Quiver.reverse (Symmetrify.of.map a))
+    (ofArrow (Symmetrify.of.map a) : pathAlgebra k (Symmetrify Q)) *
+        ofArrow (Quiver.reverse (Symmetrify.of.map a))
       = headBacktrackElem k a := by
   rw [ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp,
     headBacktrackElem_def]
+
+end
+
+section
+
+variable (k : Type w) {Q : Type u} [Semiring k] [Quiver.{v + 1} Q]
 
 /-- Simp-normal form of the head-backtrack path. -/
 @[simp]
@@ -218,12 +227,25 @@ theorem ofPath_headBacktrack_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
   simp only [Symmetrify.of_map, id_eq]
   congr 1
 
+end
+
+section
+
+variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
+
 /-- The displayed word `a* a` is the tail backtrack under later-factor-first multiplication. -/
 theorem ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
-    ofArrow (Quiver.reverse (Symmetrify.of.map a)) * ofArrow (Symmetrify.of.map a)
+    (ofArrow (Quiver.reverse (Symmetrify.of.map a)) : pathAlgebra k (Symmetrify Q)) *
+        ofArrow (Symmetrify.of.map a)
       = tailBacktrackElem k a := by
   rw [ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp,
     tailBacktrackElem_def]
+
+end
+
+section
+
+variable (k : Type w) {Q : Type u} [Semiring k] [Quiver.{v + 1} Q]
 
 /-- Simp-normal form of the tail-backtrack path. -/
 @[simp]
@@ -235,6 +257,8 @@ theorem ofPath_tailBacktrack_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
   rw [tailBacktrackElem]
   simp only [Symmetrify.of_map, id_eq]
   congr 1
+
+end
 
 end BacktrackProducts
 
