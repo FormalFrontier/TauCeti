@@ -7,8 +7,8 @@ module
 
 public import Mathlib.Algebra.Group.TransferInstance
 public import Mathlib.RepresentationTheory.Basic
+public import Mathlib.Topology.Algebra.ClopenNhdofOne
 public import Mathlib.Topology.Algebra.MulAction
-public import TauCeti.RepresentationTheory.Homological.ContCohomology.Discrete
 
 /-!
 # The internal hom of two discrete modules over a profinite group
@@ -422,18 +422,20 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [Comp
   [TotallyDisconnectedSpace G]
   {M : Type*} [AddMonoid M] [TopologicalSpace M] [DiscreteTopology M] [DistribMulAction G M]
   [ContinuousSMul G M] [Finite M]
-  {N : Type*} [AddCommMonoid N] [TopologicalSpace N] [DiscreteTopology N] [DistribMulAction G N]
+  {N : Type*} [AddMonoid N] [TopologicalSpace N] [DiscreteTopology N] [DistribMulAction G N]
   [ContinuousSMul G N]
 
 /-- Over a profinite group, a homomorphism from a finite discrete module to a discrete module is
-fixed by an open normal subgroup. This is `exists_openNormalSubgroup_smul_eq_self` for the discrete
-`G`-module `InternalHom G M N`, read back on `M →+ N`; it is the form used by the finite-quotient
-system for continuous cohomology. -/
+fixed by an open normal subgroup: the open set `isOpen_setOf_homAction_eq_self` of group elements
+fixing it is a neighbourhood of the identity, hence contains one. This is the form used by the
+finite-quotient system for continuous cohomology. It is proved from that openness directly rather
+than as the stabilizer statement for the discrete `G`-module `InternalHom G M N`, because the
+additive structure of that carrier needs a commutative codomain, which this statement does not. -/
 theorem exists_openNormalSubgroup_homAction_eq_self (φ : M →+ N) :
     ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, homAction u φ = φ := by
-  obtain ⟨U, hU⟩ := exists_openNormalSubgroup_smul_eq_self (G := G) (M := InternalHom G M N)
-    (InternalHom.of G φ)
-  exact ⟨U, fun u hu => by simpa using congrArg InternalHom.toAddMonoidHom (hU u hu)⟩
+  obtain ⟨U, hU⟩ := ProfiniteGrp.exist_openNormalSubgroup_sub_open_nhds_of_one
+    (isOpen_setOf_homAction_eq_self φ) (homAction_one (G := G) φ)
+  exact ⟨U, fun _ hu => hU hu⟩
 
 end Profinite
 
