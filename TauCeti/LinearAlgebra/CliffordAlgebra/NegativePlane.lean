@@ -37,9 +37,9 @@ proved at the end of the file.
 
 The generic statement is proved with `Cliff(0,2)` rather than `ℍ` on the right, and the
 quaternions are reached at the very end by transporting along
-`TauCeti.realCliffordZeroTwoEquivQuaternion`. That keeps every identity the proof needs — that the
-volume element squares to `-1`, and that it anticommutes with the generators of the plane — a
-Clifford computation in `Cliff(0,2)` rather than a computation with quaternion quadruples.
+`TauCeti.realCliffordZeroTwoEquivQuaternion`. That keeps the whole construction independent of the
+quaternion model; the model is used only for the two identities the volume element has to satisfy,
+which it inherits from the quaternion unit `k` it corresponds to.
 
 The forward map is built from the universal property on the explicit generator
 `(m, v) ↦ ι m ⊗ₜ ω + 1 ⊗ₜ ι v`, and its inverse from the two commuting inclusions
@@ -79,57 +79,6 @@ namespace TauCeti
 
 /-! ### The volume element of the negative definite plane -/
 
-private theorem realCliffordZeroTwoBasis_zero_zero :
-    (Pi.single 0 1 : Fin (0 + 2) → ℝ) 0 = 1 :=
-  Pi.single_eq_same _ _
-
-private theorem realCliffordZeroTwoBasis_zero_one :
-    (Pi.single 0 1 : Fin (0 + 2) → ℝ) 1 = 0 :=
-  Pi.single_eq_of_ne (by decide) _
-
-private theorem realCliffordZeroTwoBasis_one_zero :
-    (Pi.single 1 1 : Fin (0 + 2) → ℝ) 0 = 0 :=
-  Pi.single_eq_of_ne (by decide) _
-
-private theorem realCliffordZeroTwoBasis_one_one :
-    (Pi.single 1 1 : Fin (0 + 2) → ℝ) 1 = 1 :=
-  Pi.single_eq_same _ _
-
-/-- Orthogonality in the signature `(0,2)` form is the vanishing of the coordinate pairing. -/
-private theorem realCliffordForm_zero_two_isOrtho {v w : Fin (0 + 2) → ℝ}
-    (h : v 0 * w 0 + v 1 * w 1 = 0) : (realCliffordForm 0 2).IsOrtho v w := by
-  simp only [QuadraticMap.IsOrtho, realCliffordForm_zero_two_apply, Pi.add_apply]
-  linear_combination (-2 : ℝ) * h
-
-private theorem realCliffordZeroTwoBasis_isOrtho :
-    (realCliffordForm 0 2).IsOrtho (Pi.single 0 1) (Pi.single 1 1) := by
-  refine realCliffordForm_zero_two_isOrtho ?_
-  rw [realCliffordZeroTwoBasis_zero_zero, realCliffordZeroTwoBasis_zero_one,
-    realCliffordZeroTwoBasis_one_zero, realCliffordZeroTwoBasis_one_one]
-  ring
-
-private theorem realCliffordForm_zero_two_basis_zero :
-    realCliffordForm 0 2 (Pi.single 0 1) = -1 := by
-  rw [realCliffordForm_zero_two_apply, realCliffordZeroTwoBasis_zero_zero,
-    realCliffordZeroTwoBasis_zero_one]
-  ring
-
-private theorem realCliffordForm_zero_two_basis_one :
-    realCliffordForm 0 2 (Pi.single 1 1) = -1 := by
-  rw [realCliffordForm_zero_two_apply, realCliffordZeroTwoBasis_one_zero,
-    realCliffordZeroTwoBasis_one_one]
-  ring
-
-/-- Every generator of `Cliff(0,2)` is a combination of the two coordinate generators. -/
-private theorem realCliffordZeroTwo_ι_eq (v : Fin (0 + 2) → ℝ) :
-    CliffordAlgebra.ι (realCliffordForm 0 2) v =
-      v 0 • CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) +
-        v 1 • CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := by
-  rw [← map_smul, ← map_smul, ← map_add]
-  congr 1
-  ext i
-  fin_cases i <;> simp
-
 /-- The **volume element** of the negative definite plane: the product of the two coordinate
 generators of `Cliff(0,2)`. It squares to `-1` and anticommutes with every generator, which is
 what drives the negative-plane recurrence below. -/
@@ -144,78 +93,34 @@ theorem realCliffordZeroTwoVolume_def :
       CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) *
         CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := (rfl)
 
+/-- Under `Cliff(0,2) ≅ ℍ` the volume element is the quaternion unit `k = ij`. -/
+theorem realCliffordZeroTwoEquivQuaternion_volume :
+    realCliffordZeroTwoEquivQuaternion realCliffordZeroTwoVolume = ⟨0, 0, 0, 1⟩ := by
+  have h : (⟨0, 1, 0, 0⟩ : ℍ[ℝ]) * ⟨0, 0, 1, 0⟩ = ⟨0, 0, 0, 1⟩ := by ext <;> simp
+  rw [realCliffordZeroTwoVolume_def, map_mul, realCliffordZeroTwoEquivQuaternion_ι,
+    realCliffordZeroTwoEquivQuaternion_ι]
+  exact h
+
 /-- The volume element of the negative definite plane squares to `-1`. -/
+@[simp]
 theorem realCliffordZeroTwoVolume_sq :
     realCliffordZeroTwoVolume * realCliffordZeroTwoVolume = -1 := by
-  have hswap : CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) *
-      CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) =
-      -(CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) *
-        CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1)) :=
-    CliffordAlgebra.ι_mul_ι_comm_of_isOrtho realCliffordZeroTwoBasis_isOrtho.symm
-  rw [realCliffordZeroTwoVolume]
-  calc
-    CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 1 1) *
-          (CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 1 1))
-        = CliffordAlgebra.ι _ (Pi.single 0 1) *
-            (CliffordAlgebra.ι _ (Pi.single 1 1) * CliffordAlgebra.ι _ (Pi.single 0 1)) *
-              CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := by
-          noncomm_ring
-    _ = -(CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 0 1) *
-            (CliffordAlgebra.ι _ (Pi.single 1 1) *
-              CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1))) := by
-          rw [hswap]; noncomm_ring
-    _ = -1 := by
-          rw [CliffordAlgebra.ι_sq_scalar, CliffordAlgebra.ι_sq_scalar,
-            realCliffordForm_zero_two_basis_zero, realCliffordForm_zero_two_basis_one]
-          simp
+  have h : (⟨0, 0, 0, 1⟩ : ℍ[ℝ]) * ⟨0, 0, 0, 1⟩ = -1 := by ext <;> simp
+  apply realCliffordZeroTwoEquivQuaternion.injective
+  rw [map_mul, map_neg, map_one, realCliffordZeroTwoEquivQuaternion_volume]
+  exact h
 
 /-- The volume element of the negative definite plane anticommutes with every generator. -/
 theorem realCliffordZeroTwoVolume_anticomm (v : Fin (0 + 2) → ℝ) :
     realCliffordZeroTwoVolume * CliffordAlgebra.ι (realCliffordForm 0 2) v +
       CliffordAlgebra.ι (realCliffordForm 0 2) v * realCliffordZeroTwoVolume = 0 := by
-  have hswap : CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) *
-      CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) =
-      -(CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) *
-        CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1)) :=
-    CliffordAlgebra.ι_mul_ι_comm_of_isOrtho realCliffordZeroTwoBasis_isOrtho.symm
-  have h₀ : realCliffordZeroTwoVolume *
-        CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) +
-      CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) * realCliffordZeroTwoVolume = 0 := by
-    rw [realCliffordZeroTwoVolume]
-    calc
-      CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 1 1) *
-            CliffordAlgebra.ι _ (Pi.single 0 1) +
-          CliffordAlgebra.ι _ (Pi.single 0 1) *
-            (CliffordAlgebra.ι _ (Pi.single 0 1) *
-              CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1))
-          = CliffordAlgebra.ι _ (Pi.single 0 1) *
-              (CliffordAlgebra.ι _ (Pi.single 1 1) * CliffordAlgebra.ι _ (Pi.single 0 1)) +
-            CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 0 1) *
-              CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := by noncomm_ring
-      _ = 0 := by rw [hswap]; noncomm_ring
-  have h₁ : realCliffordZeroTwoVolume *
-        CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) +
-      CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) * realCliffordZeroTwoVolume = 0 := by
-    rw [realCliffordZeroTwoVolume]
-    calc
-      CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 1 1) *
-            CliffordAlgebra.ι _ (Pi.single 1 1) +
-          CliffordAlgebra.ι _ (Pi.single 1 1) *
-            (CliffordAlgebra.ι _ (Pi.single 0 1) *
-              CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1))
-          = CliffordAlgebra.ι _ (Pi.single 0 1) *
-              (CliffordAlgebra.ι _ (Pi.single 1 1) *
-                CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1)) +
-            CliffordAlgebra.ι _ (Pi.single 1 1) * CliffordAlgebra.ι _ (Pi.single 0 1) *
-              CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := by noncomm_ring
-      _ = 0 := by rw [hswap]; noncomm_ring
-  have key : ∀ a b c d : CliffordAlgebra (realCliffordForm 0 2),
-      v 0 • a + v 1 • b + (v 0 • c + v 1 • d) = v 0 • (a + c) + v 1 • (b + d) := by
-    intro a b c d
-    simp only [smul_add]
-    abel
-  rw [realCliffordZeroTwo_ι_eq v, mul_add, add_mul, mul_smul_comm, mul_smul_comm,
-    smul_mul_assoc, smul_mul_assoc, key, h₀, h₁, smul_zero, smul_zero, add_zero]
+  have h : ∀ a b : ℝ, (⟨0, 0, 0, 1⟩ : ℍ[ℝ]) * ⟨0, a, b, 0⟩ + ⟨0, a, b, 0⟩ * ⟨0, 0, 0, 1⟩ = 0 := by
+    intro a b
+    ext <;> simp
+  apply realCliffordZeroTwoEquivQuaternion.injective
+  rw [map_add, map_mul, map_mul, map_zero, realCliffordZeroTwoEquivQuaternion_volume,
+    realCliffordZeroTwoEquivQuaternion_ι]
+  exact h (v 0) (v 1)
 
 end TauCeti
 
@@ -512,7 +417,7 @@ theorem negativePlaneEquivTensor_ι (x : M × (Fin (0 + 2) → ℝ)) :
 
 /-- The inverse of `negativePlaneEquivTensor` on the tensor representing an old generator. -/
 @[simp]
-theorem negativePlaneEquivTensor_symm_apply_base (m : M) :
+theorem negativePlaneEquivTensor_symm_apply_ι_base (m : M) :
     (negativePlaneEquivTensor Q).symm
         (_root_.CliffordAlgebra.ι (-Q) m ⊗ₜ[ℝ] TauCeti.realCliffordZeroTwoVolume) =
       _root_.CliffordAlgebra.ι _ (m, 0) :=
@@ -520,7 +425,7 @@ theorem negativePlaneEquivTensor_symm_apply_base (m : M) :
 
 /-- The inverse of `negativePlaneEquivTensor` on the tensor representing a new generator. -/
 @[simp]
-theorem negativePlaneEquivTensor_symm_apply_plane (v : Fin (0 + 2) → ℝ) :
+theorem negativePlaneEquivTensor_symm_apply_ι_plane (v : Fin (0 + 2) → ℝ) :
     (negativePlaneEquivTensor Q).symm
         ((1 : _root_.CliffordAlgebra (-Q)) ⊗ₜ[ℝ]
           _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 0 2) v) =
@@ -562,6 +467,48 @@ def realCliffordNegativePlaneSplitIsometry (p q : ℕ) :
     (realCliffordForm p (q + 1 + 1)).IsometryEquiv
       ((realCliffordForm p q).prod (realCliffordForm 0 2)) :=
   realCliffordSplitIsometry p 0 q 2
+
+/-- The positive coordinates retained by `realCliffordNegativePlaneSplitIsometry`. -/
+@[simp]
+theorem realCliffordNegativePlaneSplitIsometry_fst_pos (p q : ℕ)
+    (v : Fin (p + (q + 1 + 1)) → ℝ) (i : Fin p) :
+    (realCliffordNegativePlaneSplitIsometry p q v).1 (Fin.castAdd q i) =
+      v (Fin.castAdd (q + 1 + 1) i) := by
+  -- The bundled-isometry coercion does not expose the shared splitter with `dsimp`.
+  change (realCliffordSplitIsometry p 0 q 2 v).1 _ = _
+  rw [realCliffordSplitIsometry_fst_pos]
+  congr 1
+
+/-- The negative coordinates retained by `realCliffordNegativePlaneSplitIsometry`. -/
+@[simp]
+theorem realCliffordNegativePlaneSplitIsometry_fst_neg (p q : ℕ)
+    (v : Fin (p + (q + 1 + 1)) → ℝ) (i : Fin q) :
+    (realCliffordNegativePlaneSplitIsometry p q v).1 (Fin.natAdd p i) =
+      v (Fin.natAdd p i.castSucc.castSucc) := by
+  -- The bundled-isometry coercion does not expose the shared splitter with `dsimp`.
+  change (realCliffordSplitIsometry p 0 q 2 v).1 _ = _
+  rw [realCliffordSplitIsometry_fst_neg]
+  congr 1
+
+/-- The first of the two negative coordinates extracted by
+`realCliffordNegativePlaneSplitIsometry`. -/
+@[simp]
+theorem realCliffordNegativePlaneSplitIsometry_snd_zero (p q : ℕ)
+    (v : Fin (p + (q + 1 + 1)) → ℝ) :
+    (realCliffordNegativePlaneSplitIsometry p q v).2 0 =
+      v (Fin.natAdd p (Fin.last q).castSucc) := by
+  convert realCliffordSplitIsometry_snd_neg p 0 q 2 v (0 : Fin 2) using 1 <;>
+    congr
+
+/-- The second of the two negative coordinates extracted by
+`realCliffordNegativePlaneSplitIsometry`. -/
+@[simp]
+theorem realCliffordNegativePlaneSplitIsometry_snd_one (p q : ℕ)
+    (v : Fin (p + (q + 1 + 1)) → ℝ) :
+    (realCliffordNegativePlaneSplitIsometry p q v).2 1 =
+      v (Fin.natAdd p (Fin.last (q + 1))) := by
+  convert realCliffordSplitIsometry_snd_neg p 0 q 2 v (1 : Fin 2) using 1 <;>
+    congr
 
 /-- **The negative-plane signature recurrence** `Cliff(p, q + 2) ≅ Cliff(q, p) ⊗ ℍ`: two extra
 negative generators switch the signature and tensor with the quaternions. This is the companion
