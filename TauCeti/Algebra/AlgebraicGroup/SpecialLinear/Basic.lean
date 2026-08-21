@@ -508,10 +508,9 @@ noncomputable def pointsNatIso :
       intro A B phi
       ext f
       apply ULift.ext
-      change (pointsMulEquiv (R := R) (A := B) n)
-          (AlgHom.mapValue (H := coordinateHopfAlgebra R n) phi.hom f) =
-        Matrix.SpecialLinearGroup.map phi.hom.toRingHom
-          ((pointsMulEquiv (R := R) (A := A) n) f)
+      -- The natural isomorphism is still being constructed, so no component rewrite lemma is
+      -- available here. The functor maps and `MulEquiv.toGrpIso` reduce definitionally; after
+      -- removing the universe lift, the square is exactly the named pointwise naturality result.
       exact pointsMulEquiv_mapValue (R := R) (A := A) (B := B) n phi.hom f)
 
 /-- After transport along `specialLinearFunctor_obj`, the forward component of `pointsNatIso` is

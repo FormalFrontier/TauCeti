@@ -70,6 +70,7 @@ noncomputable def centerMulEquivRootsOfUnity (hn : 0 < n)
       rw [Fintype.card_fin]
 
 /-- The inverse center equivalence sends a root of unity to its scalar matrix. -/
+@[simp]
 theorem coe_centerMulEquivRootsOfUnity_symm_apply (hn : 0 < n)
     (A : Type v) [CommRing A] (ζ : rootsOfUnity n A) :
     (((centerMulEquivRootsOfUnity n hn A).symm ζ :
@@ -111,6 +112,7 @@ theorem pointsMulEquiv_scalarRootsPoints (hn : 0 < n)
   simp [scalarRootsPoints]
 
 /-- The central special-linear matrix attached to a root of unity is a scalar matrix. -/
+@[simp]
 theorem coe_pointsMulEquiv_scalarRootsPoints (hn : 0 < n)
     {A : Type v} [CommRing A] [Algebra R A]
     (f : WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A)) :
@@ -259,19 +261,10 @@ noncomputable def scalarRootsCenterNatIso (hn : 0 < n) :
     intro A B φ
     ext f
     apply Subtype.ext
-    change ((scalarRootsCenterHom n hn B)
-        (AlgHom.mapValue (H := MonoidAlgebra k (Multiplicative (ZMod n))) φ.hom f)).1 =
-      AlgHom.mapValue (H := coordinateHopfAlgebra k n) φ.hom
-        ((scalarRootsCenterHom n hn A f).1)
-    calc
-      _ = scalarRootsPoints n hn
-          (AlgHom.mapValue (H := MonoidAlgebra k (Multiplicative (ZMod n))) φ.hom f) :=
-        coe_scalarRootsCenterHom_apply n hn B _
-      _ = AlgHom.mapValue (H := coordinateHopfAlgebra k n) φ.hom
-          (scalarRootsPoints n hn f) :=
-        (mapValue_scalarRootsPoints n hn φ.hom f).symm
-      _ = _ := congrArg (AlgHom.mapValue (H := coordinateHopfAlgebra k n) φ.hom)
-        (coe_scalarRootsCenterHom_apply n hn A f).symm)
+    -- The component and its application lemma cannot be used while this natural isomorphism is
+    -- being constructed. After subgroup extensionality, `codRestrict` and the restricted functor
+    -- map reduce definitionally, leaving precisely the scalar-point naturality theorem.
+    exact (mapValue_scalarRootsPoints n hn φ.hom f).symm)
 
 /-- The natural isomorphism sends a `μₙ`-point to its scalar matrix. -/
 @[simp]
