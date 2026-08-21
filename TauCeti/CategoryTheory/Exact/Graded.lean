@@ -107,16 +107,6 @@ theorem conflation_shift_inverse_iff (S : ShortComplex C) :
     E.toExactStructure.Conflation (S.map E.shift.inverse) ↔ E.toExactStructure.Conflation S :=
   ExactStructure.conflation_map_iff E.shift_inverse_exact E.shift_inverse_reflectsConflations S
 
-/-- The grading shift preserves inflations. -/
-theorem isInflation_shift_map {X Y : C} {i : X ⟶ Y} (hi : E.toExactStructure.IsInflation i) :
-    E.toExactStructure.IsInflation (E.shift.functor.map i) :=
-  E.shift_exact.map_isInflation hi
-
-/-- The grading shift preserves deflations. -/
-theorem isDeflation_shift_map {Y Z : C} {p : Y ⟶ Z} (hp : E.toExactStructure.IsDeflation p) :
-    E.toExactStructure.IsDeflation (E.shift.functor.map p) :=
-  E.shift_exact.map_isDeflation hp
-
 end Basic
 
 section Construct
@@ -173,7 +163,6 @@ variable (A) in
 /-- The canonical exact structure of an abelian category, graded by an arbitrary additive
 autoequivalence: an equivalence preserves all finite limits and colimits, so again no
 compatibility has to be checked. -/
-@[expose]
 noncomputable def abelian (e : A ≌ A) [e.functor.Additive] : GradedExactStructure A where
   toExactStructure := ExactStructure.abelian A
   shift := e
@@ -183,11 +172,11 @@ noncomputable def abelian (e : A ≌ A) [e.functor.Additive] : GradedExactStruct
 @[simp]
 theorem abelian_toExactStructure (e : A ≌ A) [e.functor.Additive] :
     (abelian A e).toExactStructure = ExactStructure.abelian A :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem abelian_shift (e : A ≌ A) [e.functor.Additive] : (abelian A e).shift = e :=
-  rfl
+  (rfl)
 
 end Construct
 
@@ -280,6 +269,22 @@ protected def refl (E : GradedExactStructure C) : GradedExactEquiv E E :=
     isConflationExact := ExactStructure.IsConflationExact.id
     inverse_isConflationExact := ExactStructure.IsConflationExact.id
     commShift := Functor.rightUnitor _ ≪≫ (Functor.leftUnitor _).symm }
+
+/-- The inverse of a graded exact equivalence is a graded exact equivalence. -/
+protected def symm (h : GradedExactEquiv E E') : GradedExactEquiv E' E :=
+  haveI : h.equiv.symm.functor.Additive := inferInstanceAs h.equiv.inverse.Additive
+  { equiv := h.equiv.symm
+    isConflationExact := h.inverse_isConflationExact
+    inverse_isConflationExact := h.isConflationExact
+    commShift :=
+      (Functor.leftUnitor _).symm ≪≫
+        Functor.isoWhiskerRight h.equiv.counitIso.symm _ ≪≫
+        Functor.associator _ _ _ ≪≫
+        Functor.isoWhiskerLeft _ (Functor.associator _ _ _).symm ≪≫
+        Functor.isoWhiskerLeft _ (Functor.isoWhiskerRight h.commShift.symm _) ≪≫
+        Functor.isoWhiskerLeft _ (Functor.associator _ _ _) ≪≫
+        Functor.isoWhiskerLeft _ (Functor.isoWhiskerLeft _ h.equiv.unitIso.symm) ≪≫
+        Functor.isoWhiskerLeft _ (Functor.rightUnitor _) }
 
 /-- A composite of graded exact equivalences is a graded exact equivalence, for the composed
 commutation isomorphism. -/

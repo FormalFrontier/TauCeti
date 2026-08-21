@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.CategoryTheory.Exact.Graded
-public import TauCeti.CategoryTheory.GrothendieckGroup.Abelian
+public import TauCeti.CategoryTheory.GrothendieckGroup.Exact
 
 /-!
 # The grading shift on exact `K₀`
@@ -19,9 +19,8 @@ sending `[M]` to `[M{1}]`.  Iterating it gives the `ℤ`-action
 `[M{n}] = qⁿ [M]`.
 
 The underlying group of a graded exact category is not a new object: it is the exact `K₀` of the
-underlying exact structure.  Nothing is redefined here, and consequently the graded abelian
-Grothendieck group is `TauCeti.AbelianK0` with the shift below, and the shift of the graded split
-Grothendieck group is `TauCeti.SplitK0.mapEquiv` of the grading shift, which
+underlying exact structure.  Nothing is redefined here.  In particular, the shift of the graded
+split Grothendieck group is `TauCeti.SplitK0.mapEquiv` of the grading shift, which
 `TauCeti.GradedExactStructure.fromSplit_shiftEquiv` compares with the present one.
 
 ## Main definitions
@@ -278,28 +277,6 @@ theorem fromSplit_shiftEquiv (x : SplitK0 C) :
     DFunLike.congr_fun key x
 
 end Comparison
-
-section AbelianCase
-
-variable {A : Type u} [Category.{v} A] [Abelian A] [EssentiallySmall.{w} A]
-
-/-- **The graded abelian Grothendieck group is `TauCeti.AbelianK0` carrying the shift of the
-graded canonical exact structure**, and that shift is the map `TauCeti.AbelianK0.mapEquiv`
-induced by the grading autoequivalence.  So the graded abelian Grothendieck group needs no
-construction of its own: it is the graded exact one for `TauCeti.ExactStructure.abelian`.
-
-The comparison is stated on the classes of objects, which generate.  It is not upgraded to an
-equality of homomorphisms: the two sides are indexed by `(abelian A e).toExactStructure` and by
-`TauCeti.ExactStructure.abelian A`, which agree only by unfolding `abelian`, so a composite of
-the two maps is not type-correct at `implicit` transparency and `AddMonoidHom` extensionality is
-unavailable. -/
-theorem abelian_shiftEquiv_toExactK0_of (e : A ≌ A) [e.functor.Additive] (X : A) :
-    (abelian A e).shiftEquiv (AbelianK0.toExactK0 A (AbelianK0.of X)) =
-      AbelianK0.toExactK0 A (AbelianK0.mapEquiv e (AbelianK0.of X)) := by
-  simp only [AbelianK0.toExactK0_of, AbelianK0.mapEquiv_of]
-  exact shiftEquiv_of (abelian A e) X
-
-end AbelianCase
 
 end GradedExactStructure
 
