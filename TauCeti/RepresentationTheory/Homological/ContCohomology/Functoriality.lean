@@ -45,9 +45,7 @@ transformations `resNatTrans` and `inflNatTrans`, matching the shape of Mathlib'
 * `TauCeti.ContinuousCohomology.map_congr`: two compatible pairs that agree induce the same map.
 -/
 
--- The bodies of the definitions below are exposed, as in the Mathlib files they extend: the
--- composition laws compare compatible pairs built from them, which is a definitional matter.
-@[expose] public section
+public section
 
 open CategoryTheory
 
@@ -87,6 +85,7 @@ noncomputable def coeffMap {X Y : TopRep R G} (f : X ⟶ Y) (n : ℕ) :
 theorem coeffMap_id (X : TopRep R G) (n : ℕ) : coeffMap (𝟙 X) n = 𝟙 _ :=
   _root_.ContinuousCohomology.map_id X n
 
+/-- Coefficient maps preserve composition. -/
 @[reassoc]
 theorem coeffMap_comp {X Y Z : TopRep R G} (f : X ⟶ Y) (g : Y ⟶ Z) (n : ℕ) :
     coeffMap (f ≫ g) n = coeffMap f n ≫ coeffMap g n :=
@@ -97,9 +96,10 @@ end CoeffMap
 
 variable (G)
 
+-- Exposed: the generated `@[simps]` field lemmas are `rfl`-proofs about this body.
 /-- The `n`-th continuous cohomology of a topological group `G` as a functor in the coefficients.
 Its action on morphisms is `coeffMap`. -/
-@[simps]
+@[expose, simps]
 noncomputable def continuousCohomologyFunctor (n : ℕ) : TopRep R G ⥤ TopModuleCat R where
   obj X := continuousCohomology n X
   map f := coeffMap f n

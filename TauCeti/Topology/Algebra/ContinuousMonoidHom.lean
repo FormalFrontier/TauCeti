@@ -17,7 +17,7 @@ Mathlib's `Subgroup.subtype` and `QuotientGroup.mk'` are bare `MonoidHom`s, and 
 packages the two, for a topological group and the subspace and quotient topologies.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -25,8 +25,10 @@ namespace ContinuousMonoidHom
 
 variable {G : Type*} [Group G] [TopologicalSpace G]
 
+-- Both definitions below are exposed: downstream, `TopRep.res` objects taken along them have to
+-- be definitionally the ones taken along the bare `Subgroup.subtype` and `QuotientGroup.mk'`.
 /-- The inclusion of a subgroup, carrying the subspace topology, as a continuous homomorphism. -/
-def subgroupSubtype (S : Subgroup G) : S →ₜ* G where
+@[expose] def subgroupSubtype (S : Subgroup G) : S →ₜ* G where
   __ := S.subtype
   continuous_toFun := continuous_subtype_val
 
@@ -36,7 +38,7 @@ theorem coe_subgroupSubtype (S : Subgroup G) : (subgroupSubtype S : S →* G) = 
 
 /-- The projection onto the quotient by a normal subgroup, carrying the quotient topology, as a
 continuous homomorphism. -/
-def quotientMk (N : Subgroup G) [N.Normal] : G →ₜ* G ⧸ N where
+@[expose] def quotientMk (N : Subgroup G) [N.Normal] : G →ₜ* G ⧸ N where
   __ := QuotientGroup.mk' N
   continuous_toFun := continuous_quot_mk
 

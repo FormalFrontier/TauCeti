@@ -44,10 +44,7 @@ These declarations live in the root `ContRepresentation` and `TopRep` namespaces
 under `TauCeti`, so that dot notation on the Mathlib types they extend elaborates.
 -/
 
--- The bodies of the definitions below are exposed: the categorical statements downstream compare
--- the objects they build with restrictions of those objects along identity and composite
--- homomorphisms, which is a definitional matter that no equational lemma can replace.
-@[expose] public section
+public section
 
 open CategoryTheory TauCeti.ContRepresentation
 
@@ -140,11 +137,12 @@ subgroup `S ≤ G`. This is the coefficient half of inflation. -/
 abbrev quotientToInvariants : TopRep R (G ⧸ S) :=
   of (ContRepresentation.quotientToInvariants X.ρ S)
 
+-- Exposed: the `rfl`-proof of `quotientToInvariantsι_apply` below reads off the underlying map.
 /-- The inclusion `Xˢ ↪ X` of the `S`-invariants into the ambient object, as a morphism of
 `G`-objects, where `Xˢ` is a `G`-object by restriction along `G → G ⧸ S`. Together with the
 quotient homomorphism it is the compatible pair defining inflation; it is the continuous
 counterpart of `Representation.quotientToInvariants_lift`. -/
-def quotientToInvariantsι :
+@[expose] def quotientToInvariantsι :
     res (QuotientGroup.mk' S : G →* G ⧸ S) (quotientToInvariants X S) ⟶ X :=
   ofHom
     { toContinuousLinearMap := (X.ρ.restrict S.subtype).invariants.subtypeL
@@ -155,8 +153,10 @@ theorem quotientToInvariantsι_apply (v : (X.ρ.restrict S.subtype).invariants) 
     quotientToInvariantsι X S v = (v : X) :=
   (rfl)
 
+-- Exposed: the `rfl`-proof of `coe_quotientToInvariantsMap_apply` below reads off the underlying
+-- map, and `quotientToInvariantsMap_id` and `_comp` are proved by `ext`.
 /-- A morphism `f : X ⟶ Y` of topological `G`-representations restricts to the `S`-invariants. -/
-def quotientToInvariantsMap {X Y : TopRep R G} (f : X ⟶ Y) (S : Subgroup G) [S.Normal] :
+@[expose] def quotientToInvariantsMap {X Y : TopRep R G} (f : X ⟶ Y) (S : Subgroup G) [S.Normal] :
     quotientToInvariants X S ⟶ quotientToInvariants Y S :=
   ofHom
     { toContinuousLinearMap := (f.hom.restrict S.subtype).mapInvariants
@@ -182,10 +182,11 @@ theorem quotientToInvariantsMap_comp {X Y Z : TopRep R G} (f : X ⟶ Y) (g : Y �
   ext v
   rfl
 
+-- Exposed: the generated `@[simps]` field lemmas are `rfl`-proofs about this body.
 variable (R G) in
 /-- The functor sending a topological `G`-representation `X` to the `G ⧸ S`-representation on
 `Xˢ`; the continuous counterpart of `Rep.quotientToInvariantsFunctor`. -/
-@[simps]
+@[expose, simps]
 noncomputable def quotientToInvariantsFunctor (S : Subgroup G) [S.Normal] :
     TopRep R G ⥤ TopRep R (G ⧸ S) where
   obj X := quotientToInvariants X S
