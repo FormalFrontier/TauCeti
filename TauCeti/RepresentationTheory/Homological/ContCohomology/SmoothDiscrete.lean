@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.CategoryTheory.Action.Continuous
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RepresentationTheory.Continuous.TopRep
 public import Mathlib.Topology.Algebra.MulAction
@@ -20,10 +21,10 @@ unbundled classes.
 
 This file cuts out the subcategory where such a dictionary does exist. `TauCeti.IsSmoothDiscrete`
 says that the underlying module is discrete and that every set `{g | X.ρ g x = x}` is open, which
-for a discrete module is exactly continuity of the action; `TauCeti.ofDiscreteModule` turns a
-discrete `G`-module into an object of `TopRep R G`; and on the discrete `G`-modules whose
-`G`-action is continuous — not on all of them — the two translations are shown to be mutually
-inverse, both on objects and on morphisms.
+for a discrete module over a topological *group* is exactly continuity of the action;
+`TauCeti.ofDiscreteModule` turns a discrete `G`-module into an object of `TopRep R G`; and on the
+discrete `G`-modules whose `G`-action is continuous — not on all of them — the two translations are
+shown to be mutually inverse, both on objects and on morphisms.
 
 The construction `TauCeti.ofDiscreteModule` itself is available for *every* discrete `G`-module,
 since a discrete module makes each operator continuous whatever the action does in the group
@@ -42,21 +43,25 @@ unrestricted construction is larger than the smooth discrete subcategory.
   `TopRep R G`, read off from its operators.
 * `TauCeti.ofDiscreteModuleMap`: a `G`-equivariant `R`-linear map of discrete modules as a
   morphism of `TopRep R G`.
-* `TauCeti.SmoothDiscreteTopRep`, `TauCeti.smoothDiscreteι`: the smooth discrete objects as a full
-  subcategory of `TopRep R G`, and its inclusion.
-* `TauCeti.DiscreteRep`: the discrete `G`-modules with continuous `G`-action as a category, the
-  source side of the dictionary in bundled form.
+* `TauCeti.SmoothDiscreteTopRep`: the smooth discrete objects as a full subcategory of
+  `TopRep R G`.
+* `TauCeti.DiscreteRep`, `TauCeti.DiscreteRepHom`: the discrete `G`-modules with continuous
+  `G`-action as a category, the source side of the dictionary in bundled form.
 * `TauCeti.toSmoothDiscrete`, `TauCeti.ofSmoothDiscrete`: the two translations as functors.
 
 ## Main results
 
 * `TauCeti.isSmoothDiscrete_iff_continuousSMul`: for a topological group, smoothness of a discrete
   object is continuity of the action map `G × X.V → X.V`.
+* `TauCeti.isSmoothDiscrete_iff_isContinuous`: the predicate is Mathlib's `Action.IsContinuous`
+  together with discreteness, read on `Action (TopModuleCat R) G` through
+  `TopRep.toActionTopModFunc`, so the subcategory below is Mathlib's `DiscreteContAction` carried
+  across `TopRep.TopRepEquivActionTop` rather than a second notion.
 * `TauCeti.ofDiscreteModule_isSmoothDiscrete`: a discrete `G`-module with continuous `G`-action
   lands in the subcategory.
 * `TauCeti.ofDiscreteModule_eq_self`: conversely, a discrete object *is* the image of its own
   underlying module.
-* `TauCeti.ofDiscreteModuleHomEquiv`: morphisms between objects in the image are exactly the
+* `TauCeti.ofDiscreteModuleHomAddEquiv`: morphisms between objects in the image are exactly the
   `G`-equivariant `R`-linear maps.
 * `TauCeti.IsSmoothDiscrete.res`: smoothness is inherited by restriction along a continuous
   homomorphism.
@@ -65,9 +70,23 @@ unrestricted construction is larger than the smooth discrete subcategory.
 * `TauCeti.not_isSmoothDiscrete_ofDiscreteModule_units_zmod`: a discrete object that is not
   smooth, so the subcategory is proper and the continuity hypothesis above is needed.
 
-This implements the "smooth discrete objects" and "the categorical dictionary" milestones of
-Layer 1 of the human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`. The
-carrier `TopRep` and its functoriality are Mathlib's, and are consumed rather than restated.
+## Roadmap
+
+This serves Layer 1 of the human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`,
+whose "smooth discrete objects" and "the categorical dictionary" bullets it addresses. What is
+delivered here is the predicate `TauCeti.IsSmoothDiscrete`, its closure under restriction, and the
+dictionary in both directions up to the equivalence of categories; the closure of the smooth
+discrete objects under finite products, subobjects and quotients, which the first of those bullets
+also asks for, is not yet statable, because Mathlib's `TopRep` carries no limit, subobject or
+quotient API to state it against.
+
+The names, signatures and structure fields below follow the human-authored
+`TauCetiRoadmap/ProfiniteCohomology/Suggested.lean`, which fixes `TauCeti.IsSmoothDiscrete` and its
+two fields, `TauCeti.ofDiscreteModule`, `TauCeti.ofDiscreteModule_isSmoothDiscrete`,
+`TauCeti.ofDiscreteModuleMap`, `TauCeti.SmoothDiscreteTopRep`, `TauCeti.DiscreteRep` and its field
+list, `TauCeti.DiscreteRepHom`, `TauCeti.toSmoothDiscrete`, `TauCeti.ofSmoothDiscrete` and
+`TauCeti.discreteRepEquivSmoothTopRep`. The carrier `TopRep` and its functoriality are Mathlib's,
+and are consumed rather than restated.
 -/
 
 public section
@@ -80,14 +99,18 @@ elaborate as dot notation. -/
 
 namespace TopRep
 
+section Monoid
+
 variable {R : Type*} [Ring R] [TopologicalSpace R] {G : Type*} [Monoid G]
 
 /-- The `G`-action on the underlying module of an object of `TopRep R G`, read off from its
 operators. This is the object half of the translation back to Mathlib's unbundled classes. It is
 not a global instance: `X.V` is a projection, so instance search would attempt it on every action
-goal. Files that need it declare it a `local instance`, as this one does below. Its whole public
-behaviour is `TopRep.distribMulAction_smul`, so consumers never need the body. -/
-@[instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
+goal. Files that need it declare it a `local instance`, as this one does below. Its behaviour is
+`TopRep.distribMulAction_smul`; the body is `@[expose]`d only because the round trip of the
+dictionary below (`TauCeti.discreteRepEquivSmoothTopRep`) returns an object carrying this very
+instance, and identifying it with the one it started from is a definitional step. -/
+@[expose, instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
   smul g x := X.ρ g x
   one_smul x := congr($(map_one X.ρ) x)
   mul_smul g h x := congr($(map_mul X.ρ g h) x)
@@ -102,6 +125,25 @@ attribute [local instance] distribMulAction
 /-- The derived `G`-action commutes with the scalars, because every operator is `R`-linear. -/
 lemma smulCommClass (X : TopRep R G) : SMulCommClass G R X.V :=
   ⟨fun g r x ↦ map_smul (X.ρ g) r x⟩
+
+end Monoid
+
+section Group
+
+variable {R : Type*} [Ring R] [TopologicalSpace R] {G : Type*} [Group G]
+
+attribute [local instance] distribMulAction
+
+/-- The point stabilizers of the derived action, as sets, are the sets `{g | X.ρ g x = x}` that
+`TauCeti.IsSmoothDiscrete` is phrased with. This is the bridge between Mathlib's
+`MulAction.stabilizer`, in which `continuousSMul_iff_stabilizer_isOpen` is stated, and that
+phrasing. -/
+lemma coe_stabilizer (X : TopRep R G) (x : X.V) :
+    (MulAction.stabilizer G x : Set G) = {g : G | X.ρ g x = x} := by
+  ext g
+  simp [MulAction.mem_stabilizer_iff]
+
+end Group
 
 end TopRep
 
@@ -173,8 +215,13 @@ because `TopRep.res` is a reducible abbreviation for exactly this object, so for
 lemma proves the goal `IsSmoothDiscrete R (TopRep.res φ X)` verbatim. -/
 lemma IsSmoothDiscrete.res {H : Type*} [Monoid H] [TopologicalSpace H] {φ : H →* G}
     (hφ : Continuous φ) {X : TopRep R G} (hX : IsSmoothDiscrete R X) :
-    IsSmoothDiscrete R (TopRep.of (X.ρ.restrict φ)) :=
-  ⟨hX.discreteTopology, fun x ↦ (hX.stabilizer_isOpen x).preimage hφ⟩
+    IsSmoothDiscrete R (TopRep.of (X.ρ.restrict φ)) := by
+  refine ⟨hX.discreteTopology, fun x ↦ ?_⟩
+  have hpre : {h : H | (TopRep.of (X.ρ.restrict φ)).ρ h x = x} = φ ⁻¹' {g : G | X.ρ g x = x} := by
+    ext h
+    simp
+  rw [hpre]
+  exact (hX.stabilizer_isOpen x).preimage hφ
 
 omit [TopologicalSpace G] in
 /-- A discrete object is the image of its own underlying module under the dictionary; openness of
@@ -202,9 +249,16 @@ preimage of the open set `{m}` under the continuous map `g ↦ g • m`. -/
 lemma ofDiscreteModule_isSmoothDiscrete (M : Type w) [AddCommGroup M] [Module R M]
     [TopologicalSpace M] [DiscreteTopology M] [DistribMulAction G M] [SMulCommClass G R M]
     [ContinuousSMul R M] [ContinuousSMul G M] :
-    IsSmoothDiscrete R (ofDiscreteModule R G M) :=
-  ⟨‹DiscreteTopology M›, fun (m : M) ↦
-    IsOpen.preimage (f := fun g : G ↦ g • m) (by fun_prop) (isOpen_discrete {m})⟩
+    IsSmoothDiscrete R (ofDiscreteModule R G M) := by
+  refine ⟨‹DiscreteTopology M›, fun (m : M) ↦ ?_⟩
+  have hpre : {g : G | (ofDiscreteModule R G M).ρ g m = m} = (fun g : G ↦ g • m) ⁻¹' {m} := by
+    ext g
+    -- After `ofDiscreteModule_ρ_apply_apply` both sides read `g • m = m`; the last step is the
+    -- membership in the singleton, which `simp` leaves at reducible transparency.
+    simp
+    rfl
+  rw [hpre]
+  exact (isOpen_discrete {m}).preimage (by fun_prop)
 
 end IsSmoothDiscrete
 
@@ -218,6 +272,7 @@ variable {R : Type u} [Ring R] [TopologicalSpace R]
 lemma isSmoothDiscrete_iff_continuousSMul (X : TopRep R G) [DiscreteTopology X.V] :
     IsSmoothDiscrete R X ↔ ContinuousSMul G X.V := by
   rw [continuousSMul_iff_stabilizer_isOpen]
+  simp only [X.coe_stabilizer]
   exact ⟨fun h x ↦ h.stabilizer_isOpen x, fun h ↦ ⟨‹_›, h⟩⟩
 
 /-- The derived action on a smooth discrete object is continuous, so the underlying module of such
@@ -227,6 +282,24 @@ lemma IsSmoothDiscrete.continuousSMul {X : TopRep R G} (hX : IsSmoothDiscrete R 
     ContinuousSMul G X.V :=
   haveI := hX.discreteTopology
   (isSmoothDiscrete_iff_continuousSMul X).1 hX
+
+/-- Smoothness is Mathlib's continuity condition on the corresponding object of
+`Action (TopModuleCat R) G`, transported along `TopRep.toActionTopModFunc`: the two conditions of
+`TauCeti.IsSmoothDiscrete` are exactly `ContAction.IsDiscrete` and `Action.IsContinuous` there. So
+the smooth discrete objects of `TopRep R G` are the objects `TopRep.TopRepEquivActionTop` carries
+into `DiscreteContAction (TopModuleCat R) G`, and this file introduces no second notion. The
+predicate is nonetheless stated on `TopRep R G` directly, because that is the carrier
+`continuousCohomology` is defined on. -/
+lemma isSmoothDiscrete_iff_isContinuous (X : TopRep.{w} R G) :
+    IsSmoothDiscrete R X ↔
+      DiscreteTopology X.V ∧ (TopRep.toActionTopModFunc.obj X).IsContinuous := by
+  constructor
+  · intro h
+    have := h.discreteTopology
+    exact ⟨h.discreteTopology, (isSmoothDiscrete_iff_continuousSMul X).1 h⟩
+  · rintro ⟨hd, hc⟩
+    have := hd
+    exact (isSmoothDiscrete_iff_continuousSMul X).2 hc
 
 end SmoothOverGroup
 
@@ -244,8 +317,10 @@ variable (N : Type w) [AddCommGroup N] [Module R N] [TopologicalSpace N] [Discre
 variable {R G M N}
 
 /-- A `G`-equivariant `R`-linear map of discrete modules as a morphism of `TopRep R G`.
-Continuity is automatic, the source being discrete. -/
-def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m) :
+Continuity is automatic, the source being discrete. The body is `@[expose]`d for the same reason
+as `TauCeti.ofDiscreteModule`'s: the equivalence of categories below is built from this
+constructor, and an exposed definition may only be built from exposed ones. -/
+@[expose] def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m) :
     ofDiscreteModule R G M ⟶ ofDiscreteModule R G N :=
   TopRep.ofHom
     { toContinuousLinearMap := ⟨f, continuous_of_discreteTopology⟩
@@ -291,7 +366,7 @@ with continuous `G`-action, where the two objects are smooth, this is the morphi
 equivalence between the discrete `G`-modules with continuous `G`-action and the smooth discrete
 objects; continuity in the group variable is irrelevant to the statement, so it is proved here
 without that hypothesis. -/
-def ofDiscreteModuleHomEquiv :
+def ofDiscreteModuleHomAddEquiv :
     (ofDiscreteModule R G M ⟶ ofDiscreteModule R G N) ≃+
       Representation.IntertwiningMap (Representation.ofDistribMulAction R G M)
         (Representation.ofDistribMulAction R G N) where
@@ -312,34 +387,30 @@ def ofDiscreteModuleHomEquiv :
 
 variable {R G M N}
 
-@[simp] lemma ofDiscreteModuleHomEquiv_apply
+@[simp] lemma ofDiscreteModuleHomAddEquiv_apply_apply
     (φ : ofDiscreteModule R G M ⟶ ofDiscreteModule R G N) (m : M) :
-    ofDiscreteModuleHomEquiv R G M N φ m = φ.hom m := (rfl)
+    ofDiscreteModuleHomAddEquiv R G M N φ m = φ.hom m := (rfl)
 
-@[simp] lemma ofDiscreteModuleHomEquiv_symm_apply
+@[simp] lemma ofDiscreteModuleHomAddEquiv_symm_apply_hom_apply
     (f : Representation.IntertwiningMap (Representation.ofDistribMulAction R G M)
       (Representation.ofDistribMulAction R G N)) (m : M) :
-    ((ofDiscreteModuleHomEquiv R G M N).symm f).hom m = f m := (rfl)
+    ((ofDiscreteModuleHomAddEquiv R G M N).symm f).hom m = f m := (rfl)
 
 end Dictionary
 
-/-! ### The equivalence of coefficient categories -/
+/-! ### The two coefficient categories -/
 
-section CoefficientEquivalence
+section CoefficientCategories
 
 variable (R : Type u) [Ring R] [TopologicalSpace R]
-  (G : Type v) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  (G : Type v) [Monoid G] [TopologicalSpace G]
 
 /-- The full subcategory of `TopRep R G` on the smooth discrete objects: the half of `TopRep R G`
-that the dictionary is an equivalence with. -/
+that the dictionary is an equivalence with. Its inclusion into `TopRep R G`, which is how such an
+object reaches `continuousCohomology n` and `ContinuousCohomology.map`, is
+`ObjectProperty.ι (fun X : TopRep R G ↦ IsSmoothDiscrete R X)`. -/
 abbrev SmoothDiscreteTopRep : Type _ :=
   ObjectProperty.FullSubcategory (fun X : TopRep.{w} R G ↦ IsSmoothDiscrete R X)
-
-/-- The inclusion of the smooth discrete subcategory into `TopRep R G`. This is how an object of
-the subcategory reaches Mathlib's continuous cohomology functor, which is defined on all of
-`TopRep R G`. -/
-abbrev smoothDiscreteι : SmoothDiscreteTopRep.{u, v, w} R G ⥤ TopRep.{w} R G :=
-  ObjectProperty.ι _
 
 /-- A discrete `G`-module with continuous `G`-action, bundled: the source side of the dictionary
 as a category, so that the dictionary can be an equivalence rather than a constructor. The fields
@@ -363,66 +434,130 @@ attribute [instance] DiscreteRep.addCommGroup DiscreteRep.module DiscreteRep.top
 
 variable {R G}
 
-/-- The underlying module of a smooth discrete object is discrete. Recording this as a local
-instance is what lets `TauCeti.ofDiscreteModule` be applied to it below. -/
-local instance instDiscreteTopologyOfSmoothDiscrete (X : SmoothDiscreteTopRep.{u, v, w} R G) :
-    DiscreteTopology X.obj.V := X.property.discreteTopology
+/-- A morphism of discrete `G`-modules: a `G`-equivariant `R`-linear map. Continuity, which the
+roadmap lists as a third field, is automatic on discrete modules
+(`continuous_of_discreteTopology`), so it is not carried here. -/
+@[ext] structure DiscreteRepHom (X Y : DiscreteRep.{u, v, w} R G) where
+  /-- the underlying linear map -/
+  toLinearMap : X.V →ₗ[R] Y.V
+  /-- equivariance -/
+  equivariant : ∀ (g : G) (x : X.V), toLinearMap (g • x) = g • toLinearMap x
 
-/-- The derived action on a smooth discrete object is continuous. -/
-local instance instContinuousSMulOfSmoothDiscrete (X : SmoothDiscreteTopRep.{u, v, w} R G) :
-    ContinuousSMul G X.obj.V := X.property.continuousSMul
+/-- The discrete `G`-modules with continuous `G`-action form a category under the `G`-equivariant
+`R`-linear maps. Unlike a category structure transported from `TopRep R G`, this makes the
+dictionary's full faithfulness (`TauCeti.ofDiscreteModuleHomAddEquiv`) a theorem rather than a
+definitional identity. -/
+instance : Category.{w} (DiscreteRep.{u, v, w} R G) where
+  Hom X Y := DiscreteRepHom X Y
+  id X := ⟨LinearMap.id, fun _ _ ↦ rfl⟩
+  comp f g := ⟨g.toLinearMap ∘ₗ f.toLinearMap, fun a x ↦ by
+    simp only [LinearMap.comp_apply, f.equivariant, g.equivariant]⟩
 
-/-- The object of `TopRep R G` named by a discrete `G`-module. -/
-abbrev DiscreteRep.toTopRep (X : DiscreteRep R G) : TopRep R G := ofDiscreteModule R G X.V
+/-- Two morphisms of discrete `G`-modules agree as soon as their underlying linear maps do. -/
+@[ext] lemma DiscreteRep.hom_ext {X Y : DiscreteRep.{u, v, w} R G} {f g : X ⟶ Y}
+    (h : DiscreteRepHom.toLinearMap f = DiscreteRepHom.toLinearMap g) : f = g :=
+  DiscreteRepHom.ext h
 
-/-- Morphisms of discrete `G`-modules are the morphisms of `TopRep R G` between the objects they
-name, which by `TauCeti.ofDiscreteModuleHomEquiv` are exactly the `G`-equivariant `R`-linear maps.
-Taking the category structure from `TopRep` this way makes the dictionary fully faithful by
-construction. -/
-instance : Category.{w} (DiscreteRep.{u, v, w} R G) :=
-  inferInstanceAs (Category (InducedCategory _ DiscreteRep.toTopRep))
+@[simp] lemma DiscreteRep.id_toLinearMap (X : DiscreteRep.{u, v, w} R G) :
+    DiscreteRepHom.toLinearMap (𝟙 X) = LinearMap.id := (rfl)
+
+@[simp] lemma DiscreteRep.comp_toLinearMap {X Y Z : DiscreteRep.{u, v, w} R G} (f : X ⟶ Y)
+    (g : Y ⟶ Z) : (f ≫ g).toLinearMap = g.toLinearMap ∘ₗ f.toLinearMap := (rfl)
 
 variable (R G)
 
 /-- The dictionary going in, as a functor: a discrete `G`-module with continuous `G`-action goes
-to the smooth discrete object it names. -/
-abbrev toSmoothDiscrete : DiscreteRep.{u, v, w} R G ⥤ SmoothDiscreteTopRep.{u, v, w} R G :=
-  ObjectProperty.lift _ (inducedFunctor DiscreteRep.toTopRep)
-    fun X ↦ ofDiscreteModule_isSmoothDiscrete R G X.V
+to the smooth discrete object it names, and an equivariant map to the morphism it names. -/
+@[expose] def toSmoothDiscrete :
+    DiscreteRep.{u, v, w} R G ⥤ SmoothDiscreteTopRep.{u, v, w} R G where
+  obj X := ⟨ofDiscreteModule R G X.V, ofDiscreteModule_isSmoothDiscrete R G X.V⟩
+  map f := ObjectProperty.homMk (ofDiscreteModuleMap f.toLinearMap f.equivariant)
+  map_id _ := ObjectProperty.hom_ext _ ofDiscreteModuleMap_id
+  map_comp f g := ObjectProperty.hom_ext _
+    (ofDiscreteModuleMap_comp f.toLinearMap f.equivariant g.toLinearMap g.equivariant)
+
+@[simp] lemma toSmoothDiscrete_obj_obj (X : DiscreteRep.{u, v, w} R G) :
+    ((toSmoothDiscrete R G).obj X).obj = ofDiscreteModule R G X.V := (rfl)
+
+@[simp] lemma toSmoothDiscrete_map_hom_apply {X Y : DiscreteRep.{u, v, w} R G} (f : X ⟶ Y)
+    (x : X.V) : ((toSmoothDiscrete R G).map f).hom.hom x = f.toLinearMap x := (rfl)
+
+end CoefficientCategories
+
+/-! ### The equivalence of coefficient categories -/
+
+/-- The underlying module of a smooth discrete object is discrete. Recording this as a local
+instance is what lets `TauCeti.ofDiscreteModule` be applied to it below. -/
+local instance instDiscreteTopologyOfSmoothDiscrete {R : Type u} [Ring R] [TopologicalSpace R]
+    {G : Type v} [Monoid G] [TopologicalSpace G] (X : SmoothDiscreteTopRep.{u, v, w} R G) :
+    DiscreteTopology X.obj.V :=
+  X.property.discreteTopology
+
+/-- The derived action on a smooth discrete object is continuous. -/
+local instance instContinuousSMulOfSmoothDiscrete {R : Type u} [Ring R] [TopologicalSpace R]
+    {G : Type v} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    (X : SmoothDiscreteTopRep.{u, v, w} R G) : ContinuousSMul G X.obj.V :=
+  X.property.continuousSMul
+
+section CoefficientEquivalence
+
+variable (R : Type u) [Ring R] [TopologicalSpace R]
+  (G : Type v) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 
 /-- The dictionary coming back, as a functor: a smooth discrete object goes to its underlying
 module, with the action read off from its operators by `TopRep.distribMulAction`. -/
-abbrev ofSmoothDiscrete : SmoothDiscreteTopRep.{u, v, w} R G ⥤ DiscreteRep.{u, v, w} R G where
+@[expose] def ofSmoothDiscrete :
+    SmoothDiscreteTopRep.{u, v, w} R G ⥤ DiscreteRep.{u, v, w} R G where
   obj X := { V := X.obj.V }
   -- Equivariance for the derived actions is `TopRep.distribMulAction_smul` on each side of the
   -- intertwining identity that `φ` already carries.
-  map {X Y} φ := InducedCategory.homMk (ofDiscreteModuleMap
-    (M := X.obj.V) (N := Y.obj.V) φ.hom.hom.toContinuousLinearMap.toLinearMap
-    fun g x ↦ (congrArg _ (TopRep.distribMulAction_smul X.obj g x)).trans
-      ((φ.hom.hom.isIntertwining g x).trans
-        (TopRep.distribMulAction_smul Y.obj g (φ.hom.hom x)).symm))
-  map_id X := InducedCategory.hom_ext
-    (ofDiscreteModuleMap_id (R := R) (G := G) (M := X.obj.V))
-  map_comp {X Y Z} _ _ := InducedCategory.hom_ext
-    (ofDiscreteModuleMap_comp (R := R) (G := G) (M := X.obj.V) (N := Y.obj.V) (P := Z.obj.V)
-      _ _ _ _)
+  map {X Y} φ :=
+    { toLinearMap := φ.hom.hom.toContinuousLinearMap.toLinearMap
+      equivariant := fun g x ↦ (congrArg _ (TopRep.distribMulAction_smul X.obj g x)).trans
+        ((φ.hom.hom.isIntertwining g x).trans
+          (TopRep.distribMulAction_smul Y.obj g (φ.hom.hom x)).symm) }
+  map_id _ := DiscreteRepHom.ext (LinearMap.ext fun _ ↦ rfl)
+  map_comp _ _ := DiscreteRepHom.ext (LinearMap.ext fun _ ↦ rfl)
+
+@[simp] lemma ofSmoothDiscrete_obj_V (X : SmoothDiscreteTopRep.{u, v, w} R G) :
+    ((ofSmoothDiscrete R G).obj X).V = X.obj.V := (rfl)
+
+@[simp] lemma ofSmoothDiscrete_map_toLinearMap_apply {X Y : SmoothDiscreteTopRep.{u, v, w} R G}
+    (φ : X ⟶ Y) (x : X.obj.V) :
+    ((ofSmoothDiscrete R G).map φ).toLinearMap x = φ.hom.hom x := (rfl)
+
+/-- The action carried by the module read off a smooth discrete object is the object's own
+action. -/
+@[simp] lemma ofSmoothDiscrete_obj_smul (X : SmoothDiscreteTopRep.{u, v, w} R G) (g : G)
+    (x : ((ofSmoothDiscrete R G).obj X).V) : g • x = X.obj.ρ g x := (rfl)
 
 /-- **The dictionary is an equivalence of categories** between the discrete `G`-modules with
-continuous `G`-action and the smooth discrete objects of `TopRep R G`. Both round trips are the
-identity: `TauCeti.ofDiscreteModule_eq_self` says so on objects, so every component is an identity
-morphism, and `TauCeti.ofDiscreteModuleMap_hom_apply` says so on morphisms, which is what the two
-naturality squares check pointwise. -/
-def discreteRepEquivSmoothTopRep :
+continuous `G`-action and the smooth discrete objects of `TopRep R G`. It is the identity on
+underlying modules in both directions, the action being read off by `TopRep.distribMulAction`, so
+every component of the unit and of the counit is an identity morphism. -/
+@[expose] def discreteRepEquivSmoothTopRep :
     DiscreteRep.{u, v, w} R G ≌ SmoothDiscreteTopRep.{u, v, w} R G where
   functor := toSmoothDiscrete R G
   inverse := ofSmoothDiscrete R G
-  -- Each naturality square reads `f ≫ 𝟙 = 𝟙 ≫ f'`, with `f'` the round trip's rewrapping of
-  -- `f`. Comparing the two underlying maps at a point, both are the map underlying `f`: that is
-  -- what `TauCeti.ofDiscreteModuleMap_hom_apply` states, and here it is definitional.
-  unitIso := NatIso.ofComponents (fun _ ↦ Iso.refl _) fun _ ↦
-    InducedCategory.hom_ext (TopRep.hom_ext (DFunLike.ext _ _ fun _ ↦ rfl))
-  counitIso := NatIso.ofComponents (fun _ ↦ Iso.refl _) fun _ ↦
+  -- Both round trips return the module, or the object, they started from, so every component is
+  -- an identity morphism and naturality is the dictionary's own morphism laws at a point.
+  unitIso := NatIso.ofComponents (fun X ↦ Iso.refl X) fun _ ↦
+    DiscreteRep.hom_ext (LinearMap.ext fun _ ↦ rfl)
+  counitIso := NatIso.ofComponents (fun X ↦ Iso.refl X) fun _ ↦
     ObjectProperty.hom_ext _ (TopRep.hom_ext (DFunLike.ext _ _ fun _ ↦ rfl))
+
+@[simp] lemma discreteRepEquivSmoothTopRep_functor :
+    (discreteRepEquivSmoothTopRep R G).functor = toSmoothDiscrete R G := (rfl)
+
+@[simp] lemma discreteRepEquivSmoothTopRep_inverse :
+    (discreteRepEquivSmoothTopRep R G).inverse = ofSmoothDiscrete R G := (rfl)
+
+@[simp] lemma discreteRepEquivSmoothTopRep_unitIso_hom_app (X : DiscreteRep.{u, v, w} R G) :
+    (discreteRepEquivSmoothTopRep R G).unitIso.hom.app X = 𝟙 X := (rfl)
+
+@[simp] lemma discreteRepEquivSmoothTopRep_counitIso_hom_app
+    (X : SmoothDiscreteTopRep.{u, v, w} R G) :
+    (discreteRepEquivSmoothTopRep R G).counitIso.hom.app X = 𝟙 X := (rfl)
 
 end CoefficientEquivalence
 
@@ -451,7 +586,8 @@ it rather than on the construction. -/
 lemma not_isSmoothDiscrete_ofDiscreteModule_units_zmod :
     ¬ IsSmoothDiscrete ℤ (ofDiscreteModule ℤ (ZMod 3)ˣ (ZMod 3)) := by
   intro h
-  have hopen : IsOpen {g : (ZMod 3)ˣ | g • (1 : ZMod 3) = 1} := h.stabilizer_isOpen (1 : ZMod 3)
+  have hopen := h.stabilizer_isOpen (1 : ZMod 3)
+  simp only [ofDiscreteModule_ρ_apply_apply] at hopen
   rcases (TopologicalSpace.isOpen_top_iff _).1 hopen with h₀ | h₁
   · exact Set.eq_empty_iff_forall_notMem.1 h₀ 1 (one_smul _ _)
   · have hneg : (-1 : (ZMod 3)ˣ) • (1 : ZMod 3) = 1 := Set.eq_univ_iff_forall.1 h₁ (-1)
