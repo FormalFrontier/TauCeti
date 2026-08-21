@@ -316,9 +316,12 @@ theorem rankOneDiscriminantEquiv_rankOneClass :
     rankOneDiscriminantEquiv m (rankOneClass m) = 1 := by
   have h : (rankOneDualEquiv m).symm (rankOneDualGen m) = 1 := by
     rw [← rankOneDualEquiv_one, LinearEquiv.symm_apply_apply]
-  have key : rankOneDiscriminantEquiv m (rankOneClass m) =
-      (((rankOneDualEquiv m).symm (rankOneDualGen m) : ℤ) : ZMod (2 * m).natAbs) := rfl
-  rw [key, h, Int.cast_one]
+  have hmk : ∀ k : ℤ, Int.quotientSpanEquivZMod (2 * m) (Submodule.Quotient.mk k) =
+      (k : ZMod (2 * m).natAbs) := fun k ↦ by simp
+  rw [rankOneDiscriminantEquiv, rankOneClass, AddEquiv.trans_apply, LinearEquiv.coe_toAddEquiv,
+    LinearEquiv.coe_addEquiv_apply, Submodule.Quotient.equiv_apply, Submodule.mapQ_apply,
+    LinearEquiv.coe_coe, RingEquiv.toAddEquiv_eq_coe, RingEquiv.coe_toAddEquiv, hmk, h,
+    Int.cast_one]
 
 /-- The cyclic identification carries the `k`-th multiple of the distinguished class to the
 residue of `k`. -/
