@@ -24,6 +24,8 @@ value algebra.
 
 * `CommHopfAlgCat.quotientPointsSubgroup_antitone`: the cut-out point subgroup is antitone in
   the Hopf ideal.
+* `CommHopfAlgCat.quotientPointsSubgroup_sup`: the point subgroup cut out by a join of Hopf
+  ideals is the intersection of the point subgroups cut out by the joinands.
 * `CommHopfAlgCat.quotientPointsSubgroupInclusion`: the bundled natural inclusion between
   subgroup functors induced by `I ≤ J`.
 * `CommHopfAlgCat.mapQuotientPointsSubgroup_inclusion_apply`: these inclusions commute with
@@ -93,6 +95,23 @@ theorem quotientPointsSubgroup_bot (H : _root_.CommHopfAlgCat.{v} R)
     rw [mem_quotientPointsSubgroup_iff]
     intro h hh
     rw [HopfIdeal.mem_bot.mp hh, map_zero]
+
+/-- The point subgroup cut out by a join of Hopf ideals is the intersection of the point
+subgroups cut out by the joinands: a point vanishes on `I ⊔ J` exactly when it vanishes on
+`I` and on `J`. -/
+theorem quotientPointsSubgroup_sup (H : _root_.CommHopfAlgCat.{v} R)
+    (I J : HopfIdeal R H) (A : CommAlgCat.{w} R) :
+    quotientPointsSubgroup H (I ⊔ J) A =
+      quotientPointsSubgroup H I A ⊓ quotientPointsSubgroup H J A := by
+  refine le_antisymm
+    (le_inf (quotientPointsSubgroup_le_of_le H le_sup_left A)
+      (quotientPointsSubgroup_le_of_le H le_sup_right A))
+    fun g hg => ?_
+  obtain ⟨hI, hJ⟩ := Subgroup.mem_inf.mp hg
+  rw [mem_quotientPointsSubgroup_iff] at hI hJ ⊢
+  intro x hx
+  obtain ⟨y, hy, z, hz, rfl⟩ := HopfIdeal.mem_sup.mp hx
+  rw [map_add, hI y hy, hJ z hz, add_zero]
 
 /-- The subgroup inclusions associated to `I ≤ J` commute with maps of value algebras. -/
 @[simp]

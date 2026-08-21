@@ -21,14 +21,15 @@ northeast of them, and dually over the right points. Specializing the left (or r
 a singleton turns each `J`-pairing against a single grid square into a plain count of the strictly
 comparable points of the other set.
 
-The singleton pairings are exactly the corner terms `GridPoint.J {corner} P` produced by the
-rectangle grading-change localizations (`GradingChange.lean`), where the four corners of a
-rectangle move are paired against the `O`- and `X`-marking sets. Reading each such term as the
-number of markings strictly northeast or southwest of the corner is the counting form those
-localizations feed into.
+The fiberwise statements are proved first for the relation-parametric `GridPoint.ICount`, so the
+strict `I`-pairing here and the weak half of the marking pairing in `JFunction/Center.lean` share
+the same counting API. That companion module records the resulting `JCenter` singleton formulas.
 
 ## Main results
 
+* `TauCeti.GridPoint.ICount_eq_sum_card_filter`,
+  `TauCeti.GridPoint.ICount_eq_sum_card_filter_right`: an arbitrary ordered relation count as a
+  sum of fiber counts.
 * `TauCeti.GridPoint.I_eq_sum_card_filter`, `TauCeti.GridPoint.I_eq_sum_card_filter_right`: the
   ordered southwest count as a sum of fiber counts over the left (resp. right) point set.
 * `TauCeti.GridPoint.I_singleton_left`, `TauCeti.GridPoint.I_singleton_right`: the ordered
@@ -46,7 +47,7 @@ localizations feed into.
 This supplies a prerequisite for `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.2,
 "Gradings. The `J`-function, `M_O`, `M_X`, `A`; ... grading-change formulas across a rectangle."
 The `J`-function is the symmetrized northeast/southwest point-pair count of Ozsváth--Stipsicz--
-Szabó, *Grid Homology for Knots and Links*, Chapter 3.2.
+Szabó, *Grid Homology for Knots and Links*, Chapter 4.3.
 -/
 
 public section
@@ -57,33 +58,61 @@ namespace GridPoint
 
 variable {n : ℕ}
 
+/-- An ordered relation count is the sum, over the left points, of its right fibers. -/
+theorem ICount_eq_sum_card_filter
+    (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (s t : Finset (Fin n × Fin n)) :
+    ICount r s t = ∑ p ∈ s, (t.filter fun q => r p q).card := by
+  classical
+  rw [ICount_def, Finset.card_filter, Finset.sum_product]
+  exact Finset.sum_congr rfl fun p _ => (Finset.card_filter _ _).symm
+
+/-- An ordered relation count is the sum, over the right points, of its left fibers. -/
+theorem ICount_eq_sum_card_filter_right
+    (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (s t : Finset (Fin n × Fin n)) :
+    ICount r s t = ∑ q ∈ t, (s.filter fun p => r p q).card := by
+  classical
+  rw [ICount_def, Finset.card_filter, Finset.sum_product_right]
+  exact Finset.sum_congr rfl fun q _ => (Finset.card_filter _ _).symm
+
+/-- The ordered relation count of a singleton on the left is the corresponding right fiber. -/
+theorem ICount_singleton_left
+    (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
+    ICount r {p} t = (t.filter fun q => r p q).card := by
+  rw [ICount_eq_sum_card_filter, Finset.sum_singleton]
+
+/-- The ordered relation count of a singleton on the right is the corresponding left fiber. -/
+theorem ICount_singleton_right
+    (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
+    ICount r s {p} = (s.filter fun q => r q p).card := by
+  rw [ICount_eq_sum_card_filter_right, Finset.sum_singleton]
+
 /-- The ordered southwest count `I s t` is the sum, over the left points `p ∈ s`, of the number of
 points of `t` strictly northeast of `p`. -/
 theorem I_eq_sum_card_filter (s t : Finset (Fin n × Fin n)) :
-    I s t = ∑ p ∈ s, (t.filter fun q => IsSouthWest p q).card := by
-  classical
-  rw [I_def, Finset.card_filter, Finset.sum_product]
-  exact Finset.sum_congr rfl fun p _ => (Finset.card_filter _ _).symm
+    I s t = ∑ p ∈ s, (t.filter fun q => IsSouthWest p q).card :=
+  ICount_eq_sum_card_filter _ s t
 
 /-- The ordered southwest count `I s t` is the sum, over the right points `q ∈ t`, of the number of
 points of `s` strictly southwest of `q`. -/
 theorem I_eq_sum_card_filter_right (s t : Finset (Fin n × Fin n)) :
-    I s t = ∑ q ∈ t, (s.filter fun p => IsSouthWest p q).card := by
-  classical
-  rw [I_def, Finset.card_filter, Finset.sum_product_right]
-  exact Finset.sum_congr rfl fun q _ => (Finset.card_filter _ _).symm
+    I s t = ∑ q ∈ t, (s.filter fun p => IsSouthWest p q).card :=
+  ICount_eq_sum_card_filter_right _ s t
 
 /-- The ordered southwest count of a single grid square against a point set `t` is the number of
 points of `t` strictly northeast of it. -/
 theorem I_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
-    I {p} t = (t.filter fun q => IsSouthWest p q).card := by
-  rw [I_eq_sum_card_filter, Finset.sum_singleton]
+    I {p} t = (t.filter fun q => IsSouthWest p q).card :=
+  ICount_singleton_left _ p t
 
 /-- The ordered southwest count of a point set `s` against a single grid square is the number of
 points of `s` strictly southwest of it. -/
 theorem I_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
-    I s {p} = (s.filter fun q => IsSouthWest q p).card := by
-  rw [I_eq_sum_card_filter_right, Finset.sum_singleton]
+    I s {p} = (s.filter fun q => IsSouthWest q p).card :=
+  ICount_singleton_right _ s p
 
 /-- The symmetrized numerator of the `J`-function against a single grid square splits into the two
 directed counts: the points of `t` strictly northeast of the square and the points strictly

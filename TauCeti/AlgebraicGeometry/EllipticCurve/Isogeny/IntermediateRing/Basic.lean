@@ -105,6 +105,22 @@ a fixed extension with the algebra structures supplied as instance arguments, wh
 takes the pullback-induced structure locally and assumes no separability. None of the declarations
 below is a transcription of a source declaration.
 
+**`instTorsionFreeB` is unported but not missing, and should stay unported.** Its content is
+available from the two embeddings below composed with Mathlib's
+`Module.isTorsionFree_iff_algebraMap_injective`: a consumer holding the corestricted algebra
+structures writes
+
+```
+Module.isTorsionFree_iff_algebraMap_injective.mpr φ.toIntermediateRing_injective
+Module.isTorsionFree_iff_algebraMap_injective.mpr φ.pullbackToIntermediateRing_injective
+```
+
+for the source and target sides. Named `isTorsionFree_intermediateRing` lemmas of exactly that shape
+were written and then **deleted in review**, as one-step wrappers of that `iff` with no in-repo
+consumer: a `theorem` carrying an explicit pointwise hypothesis can never be selected by instance
+search, so it saves a caller nothing over the one-liner. Read "not ported" as "deliberately
+absent, content reachable in one step" rather than as a gap to be filled.
+
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2.

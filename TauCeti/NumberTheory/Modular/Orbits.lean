@@ -35,6 +35,7 @@ half-arc.
   when it is `i`.
 * `TauCeti.ModularGroup.orbit_mk_eq_ρ_iff`: a point of `𝒟` lies in the orbit of `ρ` exactly
   when it is `ρ` or `ρ + 1`.
+* `TauCeti.ModularGroup.orbit_mk_I_ne_orbit_mk_ρ`: the two elliptic orbits are distinct.
 * `TauCeti.ModularGroup.orbit_mk_injOn_fd_left`: the orbit map is injective on `𝒟` minus the
   right vertical edge and the right half-arc.
 
@@ -220,6 +221,11 @@ lemma orbit_mk_eq_ρ_iff {p : ℍ} (hp : p ∈ 𝒟) :
   · rintro (rfl | rfl)
     · rfl
     · simpa using orbit_mk_int_vadd 1 ρ
+
+/-- **The two elliptic orbits are distinct.** -/
+theorem orbit_mk_I_ne_orbit_mk_ρ :
+    (Quotient.mk'' I : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' ρ :=
+  fun h ↦ I_ne_ρ ((orbit_mk_eq_I_iff _root_.ModularGroup.ρ_mem_fd).mp h.symm).symm
 
 /-- The orbit map is injective on the part of `𝒟` left of the boundary identifications: the
 points with `re < 1/2` which, if on the unit circle, have `re < 0`. `T` moves the right

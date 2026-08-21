@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
+import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # The conormal sequence of a closed affine subgroup
@@ -62,9 +63,9 @@ variable [CommRing k] [CommRing H] [HopfAlgebra k H]
 /-- A Hopf ideal is contained in the augmentation ideal. -/
 private theorem toIdeal_le_augmentationIdeal (I : HopfIdeal k H) :
     I.toIdeal ≤ Bialgebra.AugmentationIdeal k H := by
-  intro x hx
-  rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
-  exact I.counit_eq_zero (mem_toIdeal.mp hx)
+  have hI := toIdeal_le_toIdeal.mpr I.le_augmentation
+  rw [augmentation_toIdeal] at hI
+  exact hI
 
 /-- The image of a closed subgroup's defining Hopf ideal in the ambient augmentation cotangent
 space. This is the conormal space at the identity, equivalently

@@ -21,8 +21,7 @@ b (x + K) (y + K) = b x y.
 The resulting module is nondegenerate exactly when `K` is the whole radical, since the radical of
 the quotient is the image of `rad(A)`. Taking `K = rad(A)` therefore gives the canonical
 nondegenerate quotient, and other choices of `K` arise when a specific subgroup is being divided
-out, as for the orthogonal quotients in
-`TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Quotient`.
+out.
 
 Both `quotientOfLeRadical` and `radicalQuotient` are exposed, so their carriers reduce to the
 `Submodule` quotient and a map out of either can be built directly with `Submodule.liftQ` or

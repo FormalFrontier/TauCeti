@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Topology.Bornology.Basic
 public import Mathlib.Topology.Connected.Basic
+import TauCeti.Topology.Frontier
 
 /-!
 # Filling in the bounded complementary components of a set
@@ -63,6 +64,8 @@ separation, or any other regularity of `K`.
   changes nothing.
 * `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
   filled hull lies in it.
+* `TauCeti.subset_filledHull_of_frontier_subset` — a bounded set whose frontier `K` swallows
+  lies in the filled hull, with no connectivity asked of it.
 -/
 
 public section
@@ -115,5 +118,31 @@ theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint
   intro y hy
   rw [mem_filledHull_iff, ← connectedComponentIn_eq (hScomp hy)]
   exact mem_filledHull_iff.mp hxH
+
+/-- **A bounded set whose frontier lies in `K` is cut off from infinity by `K`.** A point of
+`S \ K` lies in `interior S`, since every non-interior point of `S` lies on `frontier S ⊆ K`. Its
+connected component in `Kᶜ` cannot leave `interior S`: were it to, it would meet
+`frontier (interior S) ⊆ frontier S ⊆ K` by `TauCeti.IsPreconnected.inter_frontier_nonempty`,
+while lying in `Kᶜ`. So that component is bounded because `S` is. Points of `S ∩ K` lie in the
+filled hull directly.
+
+Unlike `TauCeti.IsPreconnected.subset_filledHull` this asks nothing of the connectivity of `S` and
+nothing about the hull being met, at the price of asking `K` to swallow the whole frontier — the
+same trade as between `TauCeti.diam_le_diam_of_frontier_subset` and
+`TauCeti.IsPreconnected.diam_le_diam_of_disjoint`. -/
+theorem subset_filledHull_of_frontier_subset (hSb : IsBounded S) (hfr : frontier S ⊆ K) :
+    S ⊆ filledHull K := by
+  intro x hx
+  by_cases hxK : x ∈ K
+  · exact subset_filledHull hxK
+  have hxKc : x ∈ Kᶜ := hxK
+  have hxi : x ∈ interior S := (mem_interior_iff_notMem_frontier hx).2 fun h => hxK (hfr h)
+  have hcomp : connectedComponentIn Kᶜ x ⊆ interior S := by
+    by_contra h
+    obtain ⟨y, hy, hyi⟩ := not_subset.mp h
+    obtain ⟨z, hz, hzf⟩ := IsPreconnected.inter_frontier_nonempty
+      isPreconnected_connectedComponentIn ⟨x, mem_connectedComponentIn hxKc, hxi⟩ ⟨y, hy, hyi⟩
+    exact connectedComponentIn_subset _ _ hz (hfr (frontier_interior_subset hzf))
+  exact mem_filledHull_iff.mpr (hSb.subset (hcomp.trans interior_subset))
 
 end TauCeti

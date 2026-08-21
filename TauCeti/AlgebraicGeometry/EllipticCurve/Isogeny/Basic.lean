@@ -68,6 +68,22 @@ theorem mapsInfinity_iff {W₁ W₂ : WeierstrassCurve.Affine F}
         (algebraMap W₁.CoordinateRing W₁.FunctionField x) :=
   Iff.rfl
 
+/-- A coordinate pullback maps infinity to infinity if a fixed positive power of every source
+coordinate function is pulled back from the target. -/
+theorem mapsInfinity_of_pow {W₁ W₂ : WeierstrassCurve.Affine F}
+    (pullback : CoordinatePullback W₁ W₂) {n : ℕ} (hn : 0 < n)
+    (h : ∀ z : W₁.CoordinateRing, ∃ w : W₂.CoordinateRing,
+      pullback w = algebraMap W₁.CoordinateRing W₁.FunctionField z ^ n) :
+    pullback.MapsInfinity := by
+  rw [mapsInfinity_iff]
+  let _ := pullback.toRingHom.toAlgebra
+  intro z
+  obtain ⟨w, hw⟩ := h z
+  refine IsIntegral.of_pow hn ?_
+  rw [← hw]
+  rw [← AlgHom.coe_toRingHom, ← RingHom.algebraMap_toAlgebra pullback.toRingHom]
+  exact isIntegral_algebraMap
+
 /-- The identity coordinate pullback, embedding a coordinate ring into its fraction field. -/
 noncomputable def id (W : WeierstrassCurve.Affine F) : CoordinatePullback W W :=
   IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField

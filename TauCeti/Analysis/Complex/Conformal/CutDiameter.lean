@@ -147,15 +147,15 @@ the image `f '' (U ∩ ball ζ ρ)` of the crosscut neighbourhood is covered by 
 
 This is `TauCeti.frontier_image_subset_image_union_frontier_image` for the near side of the
 crosscut, the two sides of which are disjoint and open and cover the domain apart from the crosscut
-arc by `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. That lemma asks nothing of `f`
-beyond openness and disjointness of the images of the two sides, so
+arc by `TauCeti.eq_inter_ball_union_sdiff_closedBall_union_inter_sphere`. That lemma asks nothing of
+`f` beyond openness and disjointness of the images of the two sides, so
 `TauCeti.isOpen_image_of_differentiableOn_of_injOn` is the only place the analytic hypotheses enter,
 and `Disjoint.image` reads the disjointness off injectivity alone. -/
 theorem frontier_image_inter_ball_subset (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
     (hinj : InjOn f U) :
     frontier (f '' (U ∩ ball ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
-  have hcov : U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ := by
-    rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
+  have hcov :=
+    eq_inter_ball_union_sdiff_closedBall_union_inter_sphere (s := U) (x := ζ) (ρ := ρ)
   exact frontier_image_subset_image_union_frontier_image
     (isOpen_image_of_differentiableOn_of_injOn (hUo.inter isOpen_ball)
       (hd.mono inter_subset_left) (hinj.mono inter_subset_left))
@@ -172,8 +172,11 @@ theorem frontier_image_sdiff_closedBall_subset (hUo : IsOpen U) (hd : Differenti
     (hinj : InjOn f U) :
     frontier (f '' (U \ closedBall ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ frontier (f '' U) := by
   have hcov : U = U \ closedBall ζ ρ ∪ U ∩ ball ζ ρ ∪ U ∩ sphere ζ ρ := by
-    rw [union_comm (U \ closedBall ζ ρ), ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall,
-      sdiff_union_inter]
+    calc
+      U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ :=
+        eq_inter_ball_union_sdiff_closedBall_union_inter_sphere
+      _ = U \ closedBall ζ ρ ∪ U ∩ ball ζ ρ ∪ U ∩ sphere ζ ρ := by
+        rw [union_comm (U ∩ ball ζ ρ)]
   exact frontier_image_subset_image_union_frontier_image
     (isOpen_image_of_differentiableOn_of_injOn (hUo.sdiff isClosed_closedBall)
       (hd.mono sdiff_subset) (hinj.mono sdiff_subset))

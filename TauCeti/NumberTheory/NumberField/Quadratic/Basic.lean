@@ -27,6 +27,7 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 * `NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
 * `NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
 * `NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `NumberField.coe_gen_ne_zero`: the generator is nonzero.
 * `NumberField.not_isSquare_radicand`: the radicand is not a rational square.
 * `NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
 * `NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
@@ -97,6 +98,11 @@ theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     simpa [natDegree_X_sub_C] using Polynomial.natDegree_le_of_dvd hdvd (X_sub_C_ne_zero q)
   rw [hq, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C] at h1
   norm_num at h1
+
+/-- The generator of a quadratic presentation is **nonzero**: it is irrational
+(`gen_notMem_range`), whereas `0` is rational. -/
+theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := fun h0 =>
+  gen_notMem_range hmin ⟨0, by rw [map_zero, h0]⟩
 
 /-- **The radicand of a quadratic presentation is not a rational square.** Were `d = q²`, the
 factorization `(θ - q)(θ + q) = θ² - d = 0` would force `θ = ±q ∈ ℚ`. -/

@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RepresentationTheory.FDRep
 public import Mathlib.RepresentationTheory.Intertwining
+public import TauCeti.RepresentationTheory.FDRep
 
 /-!
 # Isomorphism of representations and of the modules they carry
@@ -30,6 +30,8 @@ theory counts, while the objects being classified are representations.
 * `TauCeti.fdRepIsoOfAsModuleLinearEquiv`: over a commutative ring, and for module-finite carriers,
   such an isomorphism of modules is an isomorphism of the objects of `FDRep k G` that the
   representations name.
+* `TauCeti.nonempty_fdRepIso_iff`: the two notions of isomorphism agree on `FDRep k G`, so a
+  classification proved for representations reads off as a classification of objects.
 -/
 
 public section
@@ -105,5 +107,25 @@ noncomputable def fdRepIsoOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ
     FDRep.of ρ ≅ FDRep.of σ :=
   (CategoryTheory.forget₂ (FDRep k G) (Rep k G)).preimageIso
     (Rep.mkIso (Representation.equivOfAsModuleLinearEquiv f))
+
+/-- **The two notions of isomorphism agree on `FDRep k G`.** Two objects are isomorphic exactly when
+the representations they carry are equivalent, so a classification of representations up to
+equivalence is a classification of the objects of `FDRep k G` up to isomorphism. -/
+theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
+    Nonempty (X ≅ Y) ↔ Nonempty (_root_.Representation.Equiv X.ρ Y.ρ) :=
+  by
+    constructor
+    · rintro ⟨i⟩
+      have e := _root_.Representation.equivOfIso
+        ((CategoryTheory.forget₂ (FDRep k G) (Rep k G)).mapIso i)
+      -- Transport the equivalence along the forgetful functor's representation comparison.
+      rw [FDRep.forget₂_ρ, FDRep.forget₂_ρ] at e
+      exact ⟨e⟩
+    · rintro ⟨φ⟩
+      have i := fdRepIsoOfAsModuleLinearEquiv
+        (Representation.asModuleLinearEquivOfEquiv φ)
+      -- `FDRep.of_ρ_eq_self` records the definitional object identifications here.
+      rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
+      exact ⟨i⟩
 
 end TauCeti

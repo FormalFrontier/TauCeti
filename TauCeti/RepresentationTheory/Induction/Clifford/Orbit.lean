@@ -75,10 +75,11 @@ into the classical one about the conjugate representation `{}^g V`.
 
 This file proves the **single-orbit** half of the **Clifford's theorem** milestone of Layer 5 of
 `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`: "its irreducible
-`N`-constituents form a single `G`-orbit".  The rest of that milestone -- that the constituents
-occur with a common multiplicity `e`, and the resulting decomposition
-`Res_N W ≅ e · ⨁ᵢ {}^{gᵢ} V` indexed by a transversal of the inertia group -- needs the
-multiplicity API the roadmap lists as the layer's prerequisite and is not proved here.
+`N`-constituents form a single `G`-orbit".  That the constituents share one multiplicity is the
+other half, proved in `TauCeti/RepresentationTheory/Induction/Clifford/Multiplicity.lean` from the
+single-orbit statements below.  What remains of the milestone is the packaged decomposition
+`Res_N W ≅ e · ⨁ᵢ {}^{gᵢ} V` indexed by a transversal of the inertia group, which is not proved
+here.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.

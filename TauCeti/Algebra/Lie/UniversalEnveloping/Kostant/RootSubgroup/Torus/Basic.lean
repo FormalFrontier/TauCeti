@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
-public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
@@ -448,6 +448,15 @@ noncomputable def kostantTorusMatrix :
     (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A :=
   (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
     (kostantTorusPoints M b wt A)
+
+omit [Module ℚ V] in
+/-- Writing a Kostant torus point in the chosen basis gives `kostantTorusMatrix`. -/
+@[simp]
+theorem basisMatrix_kostantTorusPoints (s : κ → Aˣ) :
+    Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
+        (kostantTorusPoints M b wt A s) =
+      kostantTorusMatrix M b wt s := by
+  rw [kostantTorusMatrix, MonoidHom.comp_apply, MulEquiv.toMonoidHom_eq_coe]
 
 omit [Module ℚ V] in
 private theorem kostantTorusMatrix_coe (s : κ → Aˣ) :

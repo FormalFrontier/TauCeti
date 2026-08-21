@@ -33,7 +33,7 @@ Buzzard, and Joël Riou.
   complexification.
 * `TauCeti.Hodge.HodgeStructureOn.piece`: the Hodge component `H^{p,n-p}`.
 * `TauCeti.Hodge.HodgeStructureOn.conj_piece`: conjugation exchanges `H^{p,n-p}` and
-  `H^{n-p,p}`.
+  `H^{n-p,p}`, with `TauCeti.Hodge.HodgeStructureOn.conj_mem_piece` its elementwise form.
 * `TauCeti.Hodge.HodgeStructureOn.IsEffective`: the filtration is supported in bidegrees with
   both indices nonnegative.
 -/
@@ -174,6 +174,11 @@ theorem conj_piece (hs : HodgeStructureOn W ω n) (p : ℤ) :
     (hs.piece p).map ω.toEquiv.toLinearMap = hs.piece (n - p) := by
   rw [piece_def, Submodule.map_inf _ ω.toEquiv.injective, conjF_def, ω.map_map_eq_self,
     piece_def, conjF_def, sub_sub_cancel, inf_comm]
+
+/-- Elementwise form of the exchange of Hodge components by conjugation. -/
+theorem conj_mem_piece (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W} (hx : x ∈ hs.piece p) :
+    ω.toEquiv x ∈ hs.piece (n - p) :=
+  hs.conj_piece p ▸ Submodule.mem_map_of_mem hx
 
 /-- A weight-`n` Hodge structure is effective when its Hodge filtration begins at `F 0 = ⊤`.
 Equivalently, it ends at `F (n + 1) = ⊥`, and its Hodge components can occur only when both

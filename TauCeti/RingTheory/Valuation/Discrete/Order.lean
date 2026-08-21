@@ -214,22 +214,37 @@ theorem valuationSubring_ne_top_of_surjective (v : _root_.Valuation F ℤᵐ⁰)
   rw [mem_valuationSubring_iff_ord_nonneg v, ord_inv, ht] at ht'
   omega
 
+/-- **Equivalent valuations agree on which elements have nonnegative order.** Equivalence
+identifies the valuation subrings, and membership of the subring is exactly nonnegativity of the
+additive order.
+
+Only equivalence is needed; neither valuation has to be surjective. -/
+theorem IsEquiv.ord_nonneg_iff {v w : _root_.Valuation F ℤᵐ⁰} (h : v.IsEquiv w)
+    (f : F) : 0 ≤ ord v f ↔ 0 ≤ ord w f := by
+  rw [← mem_valuationSubring_iff_ord_nonneg v, ← mem_valuationSubring_iff_ord_nonneg w,
+    _root_.Valuation.mem_valuationSubring_iff, _root_.Valuation.mem_valuationSubring_iff]
+  exact h.le_one_iff_le_one
+
+/-- **Equivalent valuations agree on which elements have order zero.** This is the additive-order
+analogue of `Valuation.IsEquiv.eq_one_iff_eq_one`: away from `0`, order zero says the valuation is
+`1`, so the two valuations have the same units. The junk value `ord v 0 = 0` is absorbed on both
+sides.
+
+Only equivalence is needed; neither valuation has to be surjective. -/
+theorem IsEquiv.ord_eq_zero_iff {v w : _root_.Valuation F ℤᵐ⁰} (h : v.IsEquiv w)
+    (f : F) : ord v f = 0 ↔ ord w f = 0 := by
+  -- Nonnegativity at `f` and at `f⁻¹` together pin the order to zero, and `ord_inv` turns the
+  -- second into nonpositivity at `f`.
+  have hf := h.ord_nonneg_iff f
+  have hinv := h.ord_nonneg_iff f⁻¹
+  rw [ord_inv, ord_inv] at hinv
+  omega
+
 /-- Two equivalent normalized `ℤᵐ⁰`-valuations are equal. -/
 theorem eq_of_isEquiv_of_surjective {v w : _root_.Valuation F ℤᵐ⁰}
     (hv : Function.Surjective v) (hw : Function.Surjective w) (h : v.IsEquiv w) : v = w := by
-  -- Equivalence identifies the valuation rings, so it preserves the sign and vanishing
-  -- of the associated additive orders.
-  have hmem : ∀ f : F, 0 ≤ ord v f ↔ 0 ≤ ord w f := fun f => by
-    rw [← mem_valuationSubring_iff_ord_nonneg v, ← mem_valuationSubring_iff_ord_nonneg w]
-    exact h.le_one_iff_le_one
-  have hle : ∀ f : F, ord v f ≤ 0 ↔ ord w f ≤ 0 := fun f => by
-    have h' := hmem f⁻¹
-    rw [ord_inv, ord_inv] at h'
-    omega
-  have hzero : ∀ f : F, ord v f = 0 ↔ ord w f = 0 := fun f => by
-    have h₁ := hmem f
-    have h₂ := hle f
-    omega
+  have hmem := h.ord_nonneg_iff
+  have hzero := h.ord_eq_zero_iff
   -- Choose order-one elements for both normalized valuations and compare their orders.
   obtain ⟨t, ht⟩ := ord_surjective v hv 1
   obtain ⟨s, hs⟩ := ord_surjective w hw 1

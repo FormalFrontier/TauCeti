@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Geometry.Hodge.Structure
+public import TauCeti.Geometry.Hodge.Polarization
 public import Mathlib.LinearAlgebra.Dimension.Finite
 
 /-!
@@ -17,7 +17,8 @@ The Tate structure `ℤ(m)` is the rank-one pure Hodge structure of weight `-2m`
 
 This is the first concrete nonzero inhabitant of `TauCeti.Hodge.HodgeStructure`. Besides fixing the
 weight and filtration-shift conventions needed by later Tate twists, it verifies directly that the
-opposed-filtration definition has the intended rank-one objects.
+opposed-filtration definition has the intended rank-one objects. Multiplication of integers
+polarizes it, so it also witnesses that the Hodge–Riemann relations are satisfiable.
 
 The convention follows the Hodge structures roadmap and standard Hodge-theory notation; see
 Voisin, *Hodge Theory and Complex Algebraic Geometry I*, §7.
@@ -28,6 +29,8 @@ Voisin, *Hodge Theory and Complex Algebraic Geometry I*, §7.
 * `TauCeti.Hodge.tate_F`: its filtration is `⊤` exactly in degrees at most `-m`.
 * `TauCeti.Hodge.tate_piece`: its only nonzero Hodge component has bidegree `(-m,-m)`.
 * `TauCeti.Hodge.finrank_tate_piece`: its Hodge number there is one and all others are zero.
+* `TauCeti.Hodge.isPolarization_tate`: multiplication of integers satisfies the Hodge–Riemann
+  relations for it, and `TauCeti.Hodge.tatePolarization` bundles that as a polarization.
 -/
 
 public section
@@ -128,5 +131,58 @@ theorem finrank_tate_piece (m p : ℤ) :
     Module.finrank ℂ ((tate m).piece p) = if p = -m then 1 else 0 := by
   rw [tate_piece, apply_ite (fun S : Submodule ℂ ℂ ↦ Module.finrank ℂ S)]
   simp
+
+/-! ### The polarization of a Tate structure -/
+
+/-- The conjugation of the Tate complexification is complex conjugation. -/
+theorem latticeConj_tateLatticeMap (z : ℂ) :
+    latticeConj isBaseChange_tateLatticeMap z = starRingEnd ℂ z := by
+  have huniq := latticeConj_unique isBaseChange_tateLatticeMap (starRingEnd ℂ).toSemilinearMap
+    (fun v ↦ by simp)
+  exact congrArg (fun f ↦ f z) huniq.symm
+
+/-- The complexification of integer multiplication is complex multiplication. -/
+theorem integralFormToComplex_tateLatticeMap_mul :
+    integralFormToComplex isBaseChange_tateLatticeMap (LinearMap.mul ℤ ℤ) =
+      LinearMap.mul ℂ ℂ :=
+  (integralFormToComplex_unique isBaseChange_tateLatticeMap _ _ fun x y ↦ by simp).symm
+
+/-- Multiplication of integers satisfies the Hodge–Riemann relations for `ℤ(m)`. -/
+theorem isPolarization_tate (m : ℤ) :
+    IsPolarization isBaseChange_tateLatticeMap (tate m) (LinearMap.mul ℤ ℤ) where
+  symm_weight x y := by
+    rw [Int.negOnePow_even _ ⟨-m, by ring⟩]
+    simp [mul_comm]
+  nondegenerate := ⟨fun x hx ↦ by simpa using hx 1, fun y hy ↦ by simpa using hy 1⟩
+  orthogonal p x hx y hy := by
+    by_cases hp : p ≤ -m
+    · have hcond : ¬ -2 * m + 1 - p ≤ -m := by omega
+      have hbot : (tate m).F (-2 * m + 1 - p) = (⊥ : Submodule ℂ ℂ) := by
+        rw [tate_F]
+        exact ite_eq_right hcond
+      rw [hbot, Submodule.mem_bot] at hy
+      simp [hy]
+    · have hbot : (tate m).F p = (⊥ : Submodule ℂ ℂ) := by simp [hp]
+      rw [hbot, Submodule.mem_bot] at hx
+      simp [hx]
+  positive p x hx hx0 := by
+    by_cases hp : p = -m
+    · subst hp
+      have hexp : 2 * -m - -2 * m = 0 := by ring
+      rw [hexp, zpow_zero, one_mul, integralFormToComplex_tateLatticeMap_mul,
+        latticeConj_tateLatticeMap]
+      simpa [Complex.mul_conj] using Complex.normSq_pos.mpr hx0
+    · have hbot : (tate m).piece p = (⊥ : Submodule ℂ ℂ) := by simp [hp]
+      rw [hbot, Submodule.mem_bot] at hx
+      exact absurd hx hx0
+
+/-- The Tate Hodge structure `ℤ(m)`, polarized by multiplication of integers. -/
+def tatePolarization (m : ℤ) : Polarization isBaseChange_tateLatticeMap (tate m) where
+  Qint := LinearMap.mul ℤ ℤ
+  isPolarization := isPolarization_tate m
+
+/-- The Tate Hodge structure is polarizable. -/
+theorem isPolarizable_tate (m : ℤ) : IsPolarizable isBaseChange_tateLatticeMap (tate m) :=
+  (tatePolarization m).isPolarizable
 
 end TauCeti.Hodge
