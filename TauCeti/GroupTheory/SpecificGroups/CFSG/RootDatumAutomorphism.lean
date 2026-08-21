@@ -95,7 +95,7 @@ permutation of the index. -/
 
 /-- Every coroot of the pinned datum has its simple-coroot coordinates permuted by the diagram
 permutation of the index. -/
-@[simp] theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
+theorem coroot_datumGraphAut_indexEquiv (k : Fin d.1.dynkinType.numRoots) :
     (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
         (d.datumGraphAut.indexEquiv k) =
       fun j => (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot k
