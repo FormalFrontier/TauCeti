@@ -53,8 +53,13 @@ type `M ⊗[A] MvPowerSeries (Fin k) A →ₗ[A] MvPowerSeries (Fin k) M`.
   `restrictedMvPowerSeriesFinPiEquiv`, so it is an isomorphism — the base case the finitely
   generated statement reduces to.
 
-The isomorphism for a general finitely generated `M` — Remark 8.29 proper, which needs `M`
-presented over a complete strongly noetherian Tate ring — is not proved here.
+* `restrictedMvPowerSeriesBaseChange_surjective_of_presentation`: **Remark 8.29's comparison map
+  is surjective** for an `M` presented by a surjection `Aᵐ ↠ M` that is continuous at `0` and
+  pushes the neighbourhoods of `0` forward. Only the presentation is used — no noetherian
+  hypothesis and no property of its kernel, both of which belong to injectivity.
+
+The *injectivity* half for a general finitely generated `M` — and so Remark 8.29 proper, which
+needs `M` presented over a complete strongly noetherian Tate ring — is not proved here.
 
 ## Implementation notes
 
@@ -86,12 +91,23 @@ finite free case runs through Mathlib's `TensorProduct.comm` and `TensorProduct.
 everything else — the restricted comparison map, its coefficient lemmas, and the identification
 `restrictedMvPowerSeriesFinPiEquiv` — is this repository's own.
 
-AINTLIB, the roadmap's designated prior formalisation for this layer, has no counterpart to
-compare against: it states restricted power series only over a coefficient *ring*, never over a
-module, so `M⟨T₁, …, Tₖ⟩` and hence Remark 8.29's comparison do not appear there. That was checked
-against `RestrictedPowerSeries.lean` and the three `TateAlgebra*.lean` files, whose `Submodule`
-occurrences are ideals of the coefficient ring viewed as submodules rather than module
-coefficients.
+AINTLIB (`github.com/CBirkbeck/AINTLIB` @ `37bbdaeb9`, Apache-2.0), the roadmap's designated prior
+formalisation for this layer, **does** have counterparts, and they were consulted rather than
+ported: `Adic spaces/RestrictedModule.lean` defines `restrictedModule` and `restrictedModule.map`
+at module coefficients with `restrictedModule_map_surjective`, and
+`Adic spaces/Wedhorn828.lean` proves `muMap_bijective_of_finite` — Remark 8.29 in full, both
+halves, for `Module.Finite A M`.
+
+An earlier revision of this section claimed the opposite. That claim came from grepping this
+repository's vocabulary (`restrictedMvPowerSeries`) against a source that names the same objects
+`restrictedModule` and `muMap`, and it was wrong.
+
+The hypotheses differ, which is why this is a separate development rather than a port. AINTLIB
+fixes `M` to carry the *module topology* and assumes `Module.Finite A M`, deriving openness of
+`Aⁿ ↠ M` from its own `IsModuleTopology.isOpenMap_of_surjective_of_finite`, which the pinned
+Mathlib does not have; its section variables also include `HasLocLiftPowerBounded`, the typeclass
+this repository deliberately replaced. The statement here instead takes a strict presentation as a
+hypothesis and so carries no Tate, noetherian, completeness or module-topology assumption at all.
 
 ## References
 
@@ -360,6 +376,37 @@ theorem restrictedMvPowerSeriesBaseChange_fin_bijective :
     funext fun x ↦ (restrictedMvPowerSeriesBaseChangeFinEquiv_apply x).symm
   rw [h]
   exact (restrictedMvPowerSeriesBaseChangeFinEquiv k n A).bijective
+
+/-- **Remark 8.29's comparison map is surjective for a finitely generated module.** If `M` is
+presented by a surjection `Aᵐ ↠ M` that is continuous at `0` and pushes the neighbourhoods of `0`
+forward, then every restricted series with coefficients in `M` comes from `M ⊗[A] A⟨T₁, …, Tₖ⟩`.
+
+The three ingredients meet here and each supplies one thing. The presentation lifts a restricted
+series over `M` to one over `Aᵐ` (`restrictedMvPowerSeriesSubmoduleMap_surjective`, where `hmap` is
+what makes the lifted coefficients converge); the finite free case identifies that with a tensor
+(`restrictedMvPowerSeriesBaseChange_fin_bijective`); and naturality carries it back down
+(`restrictedMvPowerSeriesSubmoduleMap_baseChange`). No noetherian hypothesis and no property of
+the kernel are needed — those enter only for *injectivity*, which is the other half of Remark 8.29
+and is not proved here.
+
+`hmap` is stated as the filter inequality the proof consumes rather than as `IsOpenMap p`, which is
+strictly stronger: `M` carries `ContinuousAdd` rather than `IsTopologicalAddGroup`, so without
+translation invariance global openness does not follow from openness at `0`. A caller holding
+`IsOpenMap p` passes `map_zero p ▸ hopen.nhds_le 0`; over a complete Tate ring that open map is
+`TauCeti.Huber.IsTateRing.isOpenMap`. -/
+theorem restrictedMvPowerSeriesBaseChange_surjective_of_presentation {m : ℕ} {M : Type*}
+    [AddCommMonoid M] [TopologicalSpace M] [Module A M] [ContinuousAdd M]
+    [ContinuousSMul A M] [(nhds (0 : Fin m → A)).IsCountablyGenerated]
+    (p : (Fin m → A) →ₗ[A] M) (hp : ContinuousAt p 0) (hsurj : Function.Surjective p)
+    (hmap : nhds (0 : M) ≤ Filter.map p (nhds (0 : Fin m → A))) :
+    Function.Surjective (restrictedMvPowerSeriesBaseChange :
+      TensorProduct A M (restrictedMvPowerSeriesSubring k A) →
+        restrictedMvPowerSeriesSubmodule k A M) := by
+  intro y
+  obtain ⟨x, hx⟩ := restrictedMvPowerSeriesSubmoduleMap_surjective (k := k) p hp hsurj hmap y
+  obtain ⟨z, hz⟩ := (restrictedMvPowerSeriesBaseChange_fin_bijective (k := k) (n := m)).2 x
+  exact ⟨TensorProduct.map p LinearMap.id z, by
+    rw [← restrictedMvPowerSeriesSubmoduleMap_baseChange p hp z, hz, hx]⟩
 
 end FiniteFree
 
