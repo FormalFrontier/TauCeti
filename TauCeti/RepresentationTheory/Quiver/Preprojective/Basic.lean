@@ -80,9 +80,10 @@ phrased with it and with the two backtracks rather than with raw vertices and ar
 ## References
 
 This is the first clause of Layer 4 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, which asks
-for `Π_k(Q) = kQ̄ / (ρ)` "using the two-sided span, its grading, local relations, quotient universal
-property", together with the identification of the displayed words under later-factor-first
-multiplication. See Crawley-Boevey, *Quiver algebras, weighted projective lines, and the
+to define the preprojective algebra `Π_k(Q)` as the doubled path algebra modulo `(ρ)`, using the
+two-sided span, its grading, local relations, and quotient universal property, together with the
+identification of the displayed words under later-factor-first multiplication. See Crawley-Boevey,
+*Quiver algebras, weighted projective lines, and the
 Deligne--Simpson problem*, Section 1, and Etingof--Eu, *Koszulity and the Hilbert series of
 preprojective algebras*, Section 1.
 -/
@@ -106,7 +107,7 @@ section Backtracks
 
 variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
 
-/-- The vertex idempotent of the doubled path algebra `kQ̄` at a vertex `v` of `Q`. This is
+/-- The vertex idempotent of the doubled path algebra at a vertex `v` of `Q`. This is
 `TauCeti.PathAlgebra.vertexIdempotent` for the quiver `Quiver.Symmetrify Q`; it carries a name of
 its own because the two vertex types are definitionally equal, so nothing but an explicit choice
 keeps the doubled quiver structure from being replaced by that of `Q`. -/
@@ -203,7 +204,7 @@ variable {Q}
 ρ_v = ∑_{head a = v} a a* - ∑_{tail a = v} a* a,
 ```
 
-which lives in the corner `e_v kQ̄ e_v`. -/
+which lives in the corner cut out by `e_v`. -/
 noncomputable def localPreprojectiveRelator (v : Q) : pathAlgebra k (Symmetrify Q) :=
   (∑ i : Q, ∑ a : (i ⟶ v), headBacktrackElem k a) -
     ∑ j : Q, ∑ a : (v ⟶ j), tailBacktrackElem k a
