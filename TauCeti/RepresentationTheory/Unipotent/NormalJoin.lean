@@ -26,12 +26,12 @@ of the multiplication image with products of points of the two source subgroups.
 
 ## Main declarations
 
-* `Representation.exists_common_fixed_vector_of_normal_isUnipotent`: two subgroups, one normalized
-  by the other, acting unipotently have a common nonzero fixed vector.
-* `Representation.exists_basis_isUpperUnitriangular_of_normal_isUnipotent`: if they generate the
-  ambient group, it is simultaneously upper unitriangular.
-* `Representation.isNilpotent_sub_one_of_mem_sup_of_normal_isUnipotent`: the corresponding result
-  for an arbitrary join inside a larger group.
+* `Representation.exists_common_fixed_vector_of_le_normalizer_isUnipotent`: two subgroups, one
+  normalized by the other, acting unipotently have a common nonzero fixed vector.
+* `Representation.exists_basis_isUpperUnitriangular_of_le_normalizer_isUnipotent`: if they generate
+  the ambient group, it is simultaneously upper unitriangular.
+* `Representation.isNilpotent_sub_one_of_mem_sup_of_le_normalizer_isUnipotent`: the corresponding
+  result for an arbitrary join inside a larger group.
 
 ## References
 
@@ -94,7 +94,7 @@ private theorem _root_.Representation.exists_common_fixed_vector_of_normal_isUni
 /-- **Common fixed vector for two unipotent subgroups, one normalized by the other.**
 If `W` normalizes `U` and both subgroups act unipotently in a nonzero finite-dimensional
 representation, they fix a common nonzero vector. -/
-theorem _root_.Representation.exists_common_fixed_vector_of_normal_isUnipotent
+theorem _root_.Representation.exists_common_fixed_vector_of_le_normalizer_isUnipotent
     [FiniteDimensional K V] [Nontrivial V]
     (rho : Representation K G V) (U W : Subgroup G)
     (hWU : W ≤ Subgroup.normalizer (U : Set G))
@@ -131,7 +131,7 @@ private theorem _root_.Representation.isNilpotent_sub_one_of_normal_isUnipotent
       by_cases hV : Nontrivial V
       · let _ : Nontrivial V := hV
         obtain ⟨x, hx, hxU, hxW⟩ :=
-          rho.exists_common_fixed_vector_of_normal_isUnipotent U W hWU hU hW
+          rho.exists_common_fixed_vector_of_le_normalizer_isUnipotent U W hWU hU hW
         have hfixed (z : G) : rho z x = x := by
           have hz : z ∈ U ⊔ W := by rw [hUW]; exact Subgroup.mem_top z
           obtain ⟨u, hu, w, hw, rfl⟩ :=
@@ -197,7 +197,7 @@ simultaneously upper unitriangular.
 The generation hypothesis is the natural form used for a product subgroup: after restricting an
 ambient representation to `U ⊔ W`, the images of `U` and `W` generate the whole restricted group.
 -/
-theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_normal_isUnipotent
+theorem _root_.Representation.exists_basis_isUpperUnitriangular_of_le_normalizer_isUnipotent
     [FiniteDimensional K V]
     (rho : Representation K G V) (U W : Subgroup G)
     (hWU : W ≤ Subgroup.normalizer (U : Set G))
@@ -214,7 +214,7 @@ unipotently.
 
 This is the form used for products of subgroup schemes: normalization makes the setwise product a
 subgroup, and that product is the join. -/
-theorem _root_.Representation.isNilpotent_sub_one_of_mem_sup_of_normal_isUnipotent
+theorem _root_.Representation.isNilpotent_sub_one_of_mem_sup_of_le_normalizer_isUnipotent
     [FiniteDimensional K V]
     (rho : Representation K G V) (U W : Subgroup G)
     (hWU : W ≤ Subgroup.normalizer (U : Set G))
