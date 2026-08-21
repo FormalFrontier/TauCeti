@@ -268,14 +268,14 @@ def adicOfIrreducibleResidueFieldEquiv {q : k[X]} (hq : Irreducible q) :
     (k[X] ⧸ Ideal.span {q}) ≃ₐ[k] (adicOfIrreducible hq).ResidueField :=
   (Ideal.quotientEquivAlgOfEq k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm).trans
     ((adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq)).trans
-      (residueFieldEquivOfEq (adicOfIrreducible_def hq).symm))
+      (AlgEquiv.cast (R := k) (adicOfIrreducible_def hq).symm))
 
 @[simp]
 theorem adicOfIrreducibleResidueFieldEquiv_mk {q : k[X]} (hq : Irreducible q) (r : k[X]) :
     adicOfIrreducibleResidueFieldEquiv hq (Ideal.Quotient.mk (Ideal.span {q}) r) =
-      residueFieldEquivOfEq (adicOfIrreducible_def hq).symm
+      AlgEquiv.cast (R := k) (adicOfIrreducible_def hq).symm
         (adicResidueHom k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) r) :=
-  congrArg (residueFieldEquivOfEq (adicOfIrreducible_def hq).symm)
+  congrArg (AlgEquiv.cast (R := k) (adicOfIrreducible_def hq).symm)
     ((congrArg
       (fun x => adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) x)
       (Ideal.quotientEquivAlgOfEq_mk k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm r)).trans
