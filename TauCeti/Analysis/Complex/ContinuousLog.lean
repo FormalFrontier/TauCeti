@@ -48,8 +48,9 @@ For `a b : ℂ` the **Borsuk map** of the pair is `z ↦ (z - a) / (z - b)`, def
 `{a, b}`. Its logarithms detect how a set sits between the two points: the main theorem here is
 that if `b` lies in the connected component of `a` in the complement of a closed `K`, then the
 Borsuk map has a continuous logarithm on `K`
-(`TauCeti.hasContinuousLogOn_sub_div_sub`). Equivalently, in contrapositive form: a set on which
-the Borsuk map admits no continuous logarithm *separates* `a` from `b`.
+(`TauCeti.hasContinuousLogOn_sub_div_sub`). Equivalently, in contrapositive form: if the Borsuk map
+admits no continuous logarithm on `K`, then `b ∉ connectedComponentIn Kᶜ a` — which, once both
+points are known to lie outside `K`, says that `K` *separates* `a` from `b`.
 
 The proof is a connectedness argument on the second point, not a construction. Call `w`
 *good* if `z ↦ (z - a) / (z - w)` has a continuous logarithm on `K`. The point `a` is good, its
@@ -344,8 +345,9 @@ theorem hasContinuousLogOn_sub_div_sub_of_norm_lt (h : ∀ z ∈ K, ‖w - w'‖
 `a` in the complement of a closed set `K`, then the Borsuk map `z ↦ (z - a) / (z - b)` has a
 continuous logarithm on `K`.
 
-Contrapositively: a closed set carrying no continuous logarithm of the Borsuk map of `a` and `b`
-separates the two points.
+Contrapositively: if a closed set `K` carries no continuous logarithm of the Borsuk map of `a` and
+`b`, then `b ∉ connectedComponentIn Kᶜ a`; for `a`, `b` outside `K` that says the two points lie in
+different components of `Kᶜ`, and otherwise one of them lies in `K` itself.
 
 The proof moves the second point rather than constructing the logarithm. The set of points `w` of
 `Kᶜ` for which `z ↦ (z - a) / (z - w)` has a logarithm on `K` is open, because displacing `w` by
@@ -430,7 +432,8 @@ theorem hasContinuousLogOn_sub_div_sub (hK : IsClosed K) (hb : b ∈ connectedCo
 /-- **A bounded closed set with no continuous logarithm of a Borsuk map encloses one of the two
 points.** This is `TauCeti.hasContinuousLogOn_sub_div_sub` read through
 `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn`: failure of the logarithm
-puts `a` and `b` in different components of `Kᶜ`, and of two such points at most one can lie in the
+gives `b ∉ connectedComponentIn Kᶜ a`, so either one of the two points lies in `K`, and hence in the
+filled hull outright, or they lie in different components of `Kᶜ`, of which at most one can be the
 unbounded component of a bounded set's complement.
 
 It is the form in which an obstruction to a logarithm delivers the enclosure hypothesis of
