@@ -172,7 +172,7 @@ theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
   rw [← hfp, ← hnat, hp, mapValue_dynamicCocharacterPoints]
 
 /-- The bialgebra morphism representing the standard cocharacter `t ↦ diag(t, 1)`. -/
-noncomputable abbrev dynamicCocharacter :
+noncomputable def dynamicCocharacter :
     coordinateHopfAlgebra R 2 →ₐc[R] LaurentPolynomial R :=
   (dynamicCocharacterCoordinateMap (R := R)).hom
 
@@ -295,22 +295,22 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_one
 /-- Applying the inclusion `A[X] → A[T;T⁻¹]` to a general-linear point applies that
 inclusion entrywise to its matrix. -/
 theorem pointsMulEquiv_ofPolyPoint
-    (F : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] Polynomial A)) :
-    pointsMulEquiv 2 (Cocharacter.ofPolyPoint A F) =
+    {n : ℕ} (F : WithConv (coordinateHopfAlgebra R n →ₐ[R] Polynomial A)) :
+    pointsMulEquiv n (Cocharacter.ofPolyPoint A F) =
       Matrix.GeneralLinearGroup.map
-        (Polynomial.toLaurentAlg.restrictScalars R).toRingHom (pointsMulEquiv 2 F) := by
+        (Polynomial.toLaurentAlg.restrictScalars R).toRingHom (pointsMulEquiv n F) := by
   rw [Cocharacter.ofPolyPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
 
 /-- Evaluating a polynomial-valued point at zero evaluates every matrix entry at zero. -/
 theorem pointsMulEquiv_evalZeroPoint
-    (F : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] Polynomial A)) :
-    pointsMulEquiv 2 (Cocharacter.evalZeroPoint A F) =
+    {n : ℕ} (F : WithConv (coordinateHopfAlgebra R n →ₐ[R] Polynomial A)) :
+    pointsMulEquiv n (Cocharacter.evalZeroPoint A F) =
       Matrix.GeneralLinearGroup.map
-        ((Polynomial.aeval (0 : A)).restrictScalars R).toRingHom (pointsMulEquiv 2 F) := by
+        ((Polynomial.aeval (0 : A)).restrictScalars R).toRingHom (pointsMulEquiv n F) := by
   rw [Cocharacter.evalZeroPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
 
 /-- The polynomial matrix `!![a, bX; 0, d]`, regarded as a polynomial-valued `GL₂` point. -/
-noncomputable def dynamicPolynomialExtension (a d : Aˣ) (b : A) :
+private noncomputable def dynamicPolynomialExtension (a d : Aˣ) (b : A) :
     WithConv (coordinateHopfAlgebra R 2 →ₐ[R] Polynomial A) :=
   (pointsMulEquiv (R := R) (A := Polynomial A) 2).symm <|
     GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
@@ -318,7 +318,7 @@ noncomputable def dynamicPolynomialExtension (a d : Aˣ) (b : A) :
 
 /-- The matrix of `dynamicPolynomialExtension` is `!![a, bX; 0, d]`. -/
 -- Not `@[simp]`: `pointsMulEquiv_apply` already supplies the simp-normal left-hand side.
-theorem pointsMulEquiv_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
+private theorem pointsMulEquiv_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
     pointsMulEquiv 2 (dynamicPolynomialExtension (R := R) a d b) =
       GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
         (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X) := by
@@ -326,7 +326,7 @@ theorem pointsMulEquiv_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
 
 /-- The polynomial matrix `!![a, bX; 0, d]` extends the conjugate of
 `!![a, b; 0, d]` by `diag(T, 1)`. -/
-theorem ofPolyPoint_dynamicPolynomialExtension
+private theorem ofPolyPoint_dynamicPolynomialExtension
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) (a d : Aˣ) (b : A)
     (hmatrix : pointsMulEquiv 2 g = GL2Borel.mk a d b) :
     Cocharacter.ofPolyPoint A (dynamicPolynomialExtension (R := R) a d b) =
@@ -371,7 +371,7 @@ theorem ofPolyPoint_dynamicPolynomialExtension
     simp [GL2Borel.coe_mk]
 
 /-- Evaluating `!![a, bX; 0, d]` at zero gives its diagonal part. -/
-theorem pointsMulEquiv_evalZero_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
+private theorem pointsMulEquiv_evalZero_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
     pointsMulEquiv 2
         (Cocharacter.evalZeroPoint A (dynamicPolynomialExtension (R := R) a d b)) =
       GL2Borel.mk a d 0 := by
@@ -383,6 +383,7 @@ theorem pointsMulEquiv_evalZero_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
     simp [GL2Borel.coe_mk]
 
 /-- Membership in the dynamic parabolic for `t ↦ diag(t, 1)` is exactly upper triangularity. -/
+@[simp]
 theorem mem_dynamicParabolic_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.parabolic A (dynamicCocharacter (R := R)) ↔
