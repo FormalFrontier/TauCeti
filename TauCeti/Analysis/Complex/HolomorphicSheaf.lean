@@ -139,19 +139,18 @@ restriction of a function analytic on a neighbourhood of every point of `U`. -/
 def IsHolomorphicSection {U : Opens (TopCat.of ℂ)} (f : U → E) : Prop :=
   ∃ g : ℂ → E, AnalyticOnNhd ℂ g U ∧ ∀ x : U, f x = g x
 
-variable (E) in
-/-- Being holomorphic is stable under restriction. -/
-def holomorphicPrelocal : TopCat.PrelocalPredicate fun _ : TopCat.of ℂ => E where
-  pred f := IsHolomorphicSection f
-  res i f hf := by
-    obtain ⟨g, hg, hfg⟩ := hf
-    refine ⟨g, hg.mono (SetLike.coe_subset_coe.mpr i.le), fun x => ?_⟩
-    exact hfg _
+/-- Being holomorphic is stable under restriction to a smaller open set. -/
+theorem IsHolomorphicSection.mono {U V : Opens (TopCat.of ℂ)} (h : U ≤ V) {f : V → E}
+    (hf : IsHolomorphicSection f) :
+    IsHolomorphicSection fun x : U => f ⟨x.1, SetLike.le_def.mp h x.2⟩ := by
+  obtain ⟨g, hg, hfg⟩ := hf
+  exact ⟨g, hg.mono (SetLike.coe_subset_coe.mpr h), fun x => hfg _⟩
 
 variable (E) in
 /-- Being holomorphic is a local condition. -/
 private def holomorphicLocal : TopCat.LocalPredicate fun _ : TopCat.of ℂ => E where
-  toPrelocalPredicate := holomorphicPrelocal E
+  pred f := IsHolomorphicSection f
+  res i _ hf := hf.mono i.le
   locality {U} f hloc := by
     refine ⟨Function.extend Subtype.val f (fun _ => 0), fun z hz => ?_, fun x =>
       (Subtype.val_injective.extend_apply f _ x).symm⟩
@@ -166,7 +165,9 @@ private def holomorphicLocal : TopCat.LocalPredicate fun _ : TopCat.of ℂ => E 
 variable (E) in
 /-- The presheaf of holomorphic functions on `ℂ` with values in `E`. -/
 @[expose] noncomputable def holomorphicPresheaf : (TopCat.of ℂ).Presheaf (Type) :=
-  TopCat.subpresheafToTypes (holomorphicPrelocal E)
+  TopCat.subpresheafToTypes
+    ({ pred := fun {_} f => IsHolomorphicSection f
+       res := fun i _ hf => hf.mono i.le } : TopCat.PrelocalPredicate fun _ : TopCat.of ℂ => E)
 
 variable (E) in
 /-- The sheaf of holomorphic functions on `ℂ` with values in `E`. -/
