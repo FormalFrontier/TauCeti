@@ -5,11 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Combinatorics.Quiver.Symmetric
 public import Mathlib.RingTheory.Ideal.Quotient.Operations
 public import Mathlib.RingTheory.TwoSidedIdeal.Kernel
 public import Mathlib.RingTheory.TwoSidedIdeal.Operations
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
+public import TauCeti.RepresentationTheory.Quiver.Symmetrify
 
 /-!
 # The additive preprojective algebra of a finite quiver
@@ -55,12 +55,12 @@ may be built by checking either.
 ## Main results
 
 * `TauCeti.sum_localPreprojectiveRelator`: the global relator is the sum of the local ones.
-* `TauCeti.doubledVertexIdempotent_mul_preprojectiveRelator_mul_doubledVertexIdempotent`:
+* `TauCeti.preprojectiveRelator_vertexCorner_eq_localPreprojectiveRelator`:
   conjugating the global relator by a vertex idempotent returns the local relator at that vertex.
 * `TauCeti.preprojectiveIdeal_eq_span_range_localPreprojectiveRelator`: **the global relation and
   the family of local relations generate the same two-sided ideal.**
-* `TauCeti.sum_preprojectiveMk_headBacktrackElem`: the defining relation, read in `Π_k(Q)`: at
-  every vertex the incoming loops sum to the outgoing ones.
+* `TauCeti.sum_preprojectiveMk_headBacktrackElem_eq_sum_preprojectiveMk_tailBacktrackElem`: the
+  defining relation, read in `Π_k(Q)`: at every vertex the incoming loops sum to the outgoing ones.
 * `TauCeti.preprojectiveLift_unique`: the lift of a relation-killing map is the only one.
 
 ## Implementation notes
@@ -95,12 +95,6 @@ namespace TauCeti
 open _root_.Quiver PathAlgebra
 
 universe u v w
-
-/-! ### Finiteness of the doubled quiver -/
-
-/-- Typeclass search does not unfold the `Symmetrify` type synonym to reuse `Finite Q`. -/
-instance instFiniteSymmetrify (Q : Type u) [Finite Q] : Finite (Symmetrify Q) :=
-  inferInstanceAs (Finite Q)
 
 /-! ### Vertices and the two backtracks of an arrow -/
 
@@ -244,7 +238,7 @@ theorem doubledVertexIdempotent_mul_localPreprojectiveRelator_of_ne {u v : Q} (h
 /-- **The local relator is the corner of the global one**: conjugating `ρ` by the idempotent at `v`
 returns `ρ_v`. Together with `TauCeti.sum_localPreprojectiveRelator` this says that the single
 global relation and the family of local relations carry the same information. -/
-theorem doubledVertexIdempotent_mul_preprojectiveRelator_mul_doubledVertexIdempotent (v : Q) :
+theorem preprojectiveRelator_vertexCorner_eq_localPreprojectiveRelator (v : Q) :
     doubledVertexIdempotent k v * preprojectiveRelator k Q * doubledVertexIdempotent k v
       = localPreprojectiveRelator k v := by
   rw [← sum_localPreprojectiveRelator, Finset.mul_sum, Finset.sum_mul, Finset.sum_eq_single v]
@@ -276,7 +270,7 @@ variable {Q}
 
 theorem localPreprojectiveRelator_mem_preprojectiveIdeal (v : Q) :
     localPreprojectiveRelator k v ∈ preprojectiveIdeal k Q := by
-  rw [← doubledVertexIdempotent_mul_preprojectiveRelator_mul_doubledVertexIdempotent]
+  rw [← preprojectiveRelator_vertexCorner_eq_localPreprojectiveRelator]
   exact TwoSidedIdeal.mul_mem_right _ _ _
     (TwoSidedIdeal.mul_mem_left _ _ _ (preprojectiveRelator_mem_preprojectiveIdeal k Q))
 
@@ -312,13 +306,13 @@ noncomputable abbrev preprojectiveAlgebra : Type _ :=
   pathAlgebra k (Symmetrify Q) ⧸ (preprojectiveIdeal k Q).asIdeal
 
 /-- The quotient map onto the preprojective algebra. -/
-@[expose]
 noncomputable def preprojectiveMk :
     pathAlgebra k (Symmetrify Q) →ₐ[k] preprojectiveAlgebra k Q :=
   Ideal.Quotient.mkₐ k _
 
 theorem preprojectiveMk_apply (f : pathAlgebra k (Symmetrify Q)) :
-    preprojectiveMk k Q f = Ideal.Quotient.mk (preprojectiveIdeal k Q).asIdeal f := rfl
+    preprojectiveMk k Q f = Ideal.Quotient.mk (preprojectiveIdeal k Q).asIdeal f := by
+  rw [preprojectiveMk, Ideal.Quotient.mkₐ_eq_mk]
 
 theorem preprojectiveMk_surjective : Function.Surjective (preprojectiveMk k Q) :=
   Ideal.Quotient.mk_surjective
@@ -342,7 +336,8 @@ theorem preprojectiveMk_localPreprojectiveRelator (v : Q) :
 
 /-- **The defining relation of the preprojective algebra**, read at a vertex `v` of `Q`: the head
 backtracks of the arrows into `v` sum to the tail backtracks of the arrows out of `v`. -/
-theorem sum_preprojectiveMk_headBacktrackElem (v : Q) :
+theorem sum_preprojectiveMk_headBacktrackElem_eq_sum_preprojectiveMk_tailBacktrackElem
+    (v : Q) :
     (∑ i : Q, ∑ a : (i ⟶ v), preprojectiveMk k Q (headBacktrackElem k a))
       = ∑ j : Q, ∑ a : (v ⟶ j), preprojectiveMk k Q (tailBacktrackElem k a) := by
   have h := preprojectiveMk_localPreprojectiveRelator k v
@@ -377,20 +372,20 @@ theorem preprojectiveIdeal_le_ker_of_forall_localPreprojectiveRelator
 
 /-- **The universal property of the preprojective algebra**: an algebra map out of the doubled path
 algebra which kills the global relator descends to `Π_k(Q)`. -/
-@[expose]
 noncomputable def preprojectiveLift (hf : f (preprojectiveRelator k Q) = 0) :
     preprojectiveAlgebra k Q →ₐ[k] B :=
   Ideal.Quotient.liftₐ _ f fun _ ha =>
     (TwoSidedIdeal.mem_ker f).1 (preprojectiveIdeal_le_ker f hf (TwoSidedIdeal.mem_asIdeal.1 ha))
 
+theorem preprojectiveLift_comp_preprojectiveMk (hf : f (preprojectiveRelator k Q) = 0) :
+    (preprojectiveLift f hf).comp (preprojectiveMk k Q) = f := by
+  rw [preprojectiveLift, preprojectiveMk, Ideal.Quotient.liftₐ_comp]
+
 @[simp]
 theorem preprojectiveLift_preprojectiveMk (hf : f (preprojectiveRelator k Q) = 0)
     (x : pathAlgebra k (Symmetrify Q)) :
-    preprojectiveLift f hf (preprojectiveMk k Q x) = f x := rfl
-
-theorem preprojectiveLift_comp_preprojectiveMk (hf : f (preprojectiveRelator k Q) = 0) :
-    (preprojectiveLift f hf).comp (preprojectiveMk k Q) = f :=
-  AlgHom.ext fun _ => rfl
+    preprojectiveLift f hf (preprojectiveMk k Q x) = f x :=
+  AlgHom.congr_fun (preprojectiveLift_comp_preprojectiveMk f hf) x
 
 /-- **The lift is the only one**: the quotient map is surjective, so an algebra map on `Π_k(Q)` is
 determined by its composite with it. -/
