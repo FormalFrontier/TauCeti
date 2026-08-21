@@ -34,7 +34,8 @@ instance search composes them freely.
 
 * `TauCeti.fixedPointsInclusion`: the coefficient half of a transition map of the finite-quotient
   tower, with its equivariance along `G ⧸ K →* G ⧸ H` and its identity and composition laws.
-* `TauCeti.fixedPointsMap`: the functoriality of `M ^ H` in the coefficient module.
+* `TauCeti.fixedPointsMap` and `TauCeti.fixedPointsQuotientMap`: the functoriality of `M ^ H` in
+  the coefficient module, additively and as a `G ⧸ H`-equivariant map.
 * `TauCeti.directed_fixedPoints_addSubgroup` and `TauCeti.continuousSMulQuotientFixedPoints`:
   the invariants over the open normal subgroups form a directed family, and each carries a
   continuous action of the discrete quotient group.
@@ -164,6 +165,34 @@ theorem fixedPointsMap_quotient_smul (f : M →+[G] N) (H : Subgroup G) [H.Norma
     fixedPointsMap f H (q • m) = q • fixedPointsMap f H m := by
   induction q using QuotientGroup.induction_on with
   | H g => simp
+
+/-- For normal `H`, restriction to the invariants is a `G ⧸ H`-equivariant additive map. -/
+def fixedPointsQuotientMap (f : M →+[G] N) (H : Subgroup G) [H.Normal] :
+    FixedPoints.addSubgroup H M →+[G ⧸ H] FixedPoints.addSubgroup H N where
+  toAddMonoidHom := fixedPointsMap f H
+  map_smul' := fixedPointsMap_quotient_smul f H
+
+/-- The quotient-equivariant map is the original map on underlying elements. -/
+@[simp]
+theorem coe_fixedPointsQuotientMap (f : M →+[G] N) (H : Subgroup G) [H.Normal]
+    (m : FixedPoints.addSubgroup H M) :
+    (fixedPointsQuotientMap f H m : N) = f (m : M) := by
+  rfl
+
+/-- Quotient-equivariant restriction to invariants preserves the identity map. -/
+@[simp]
+theorem fixedPointsQuotientMap_id (H : Subgroup G) [H.Normal] :
+    fixedPointsQuotientMap (DistribMulActionHom.id G : M →+[G] M) H =
+      DistribMulActionHom.id (G ⧸ H) :=
+  DistribMulActionHom.ext fun _ ↦ Subtype.ext <| by simp
+
+/-- Quotient-equivariant restriction to invariants preserves composition. -/
+@[simp]
+theorem fixedPointsQuotientMap_comp_fixedPointsQuotientMap {P : Type*} [AddGroup P]
+    [DistribMulAction G P] (f : M →+[G] N) (f' : N →+[G] P) (H : Subgroup G) [H.Normal] :
+    (fixedPointsQuotientMap f' H).comp (fixedPointsQuotientMap f H) =
+      fixedPointsQuotientMap (f'.comp f) H :=
+  DistribMulActionHom.ext fun _ ↦ Subtype.ext <| by simp
 
 /-- Restriction to the invariants commutes with the transition inclusions. -/
 theorem fixedPointsMap_comp_fixedPointsInclusion (f : M →+[G] N) (h : K ≤ H) :
