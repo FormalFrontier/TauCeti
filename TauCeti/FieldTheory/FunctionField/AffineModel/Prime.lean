@@ -42,9 +42,11 @@ that divisor theory on the finite chart of a model is exactly the ideal theory o
 * `TauCeti.Place.center_ofPrime` and `TauCeti.Place.ofPrime_center`: the two constructions are
   mutually inverse, and `TauCeti.Place.exists_eq_ofPrime_iff` identifies the places in the image
   as exactly the places finite on the model.
-* `TauCeti.Place.ord_ofPrime_algebraMap`: the coefficient formula `ord_P r = mult_𝔭 (r)`.
-* `TauCeti.Place.residueFieldAlgEquivOfPrime`: the residue field of the place of `𝔭` is `R ⧸ 𝔭`,
-  whence `TauCeti.Place.degree_ofPrime`: `deg P = [R ⧸ 𝔭 : k]`.
+* `TauCeti.Place.ord_ofPrime_algebraMap`: the coefficient formula `ord_P r = mult_𝔭 (r)`, for
+  `r ≠ 0`; `TauCeti.Place.ord_algebraMap_eq_multiplicity_center` is the same formula read off the
+  centre of a place finite on the model.
+* `TauCeti.Place.quotientAlgEquivResidueFieldOfPrime`: the residue field of the place of `𝔭` is
+  `R ⧸ 𝔭`, whence `TauCeti.Place.degree_ofPrime`: `deg P = [R ⧸ 𝔭 : k]`.
 
 ## References
 
@@ -79,9 +81,7 @@ noncomputable def ofPrime (𝔭 : HeightOneSpectrum R) : Place k F where
   valuation_surjective := 𝔭.valuation_surjective F
   isTrivialOn := ⟨fun c hc ↦ by
     rw [IsScalarTower.algebraMap_apply k R F, HeightOneSpectrum.valuation_eq_one_iff_notMem]
-    exact fun h ↦ 𝔭.isPrime.ne_top (Ideal.eq_top_of_isUnit_mem _ h
-      (isUnit_iff_exists_inv.mpr ⟨algebraMap k R c⁻¹, by
-        rw [← map_mul, mul_inv_cancel₀ hc, map_one]⟩))⟩
+    exact Ideal.notMem_of_isUnit _ ((isUnit_iff_ne_zero.mpr hc).map (algebraMap k R))⟩
 
 variable (𝔭 : HeightOneSpectrum R)
 
@@ -104,9 +104,10 @@ theorem valuation_ofPrime_algebraMap_lt_one_iff {r : R} :
     (ofPrime k F 𝔭).valuation (algebraMap R F r) < 1 ↔ r ∈ 𝔭.asIdeal := by
   rw [valuation_ofPrime, HeightOneSpectrum.valuation_lt_one_iff_mem]
 
-/-- **The coefficient formula on the finite chart**: the order at the place of `𝔭` of an element
-of the model is the multiplicity of `𝔭` in the ideal it generates. This is what turns a divisor
-supported on the finite chart into a factorization of ideals. -/
+/-- **The coefficient formula on the finite chart**: the order at the place of `𝔭` of a nonzero
+element of the model is the multiplicity of `𝔭` in the ideal it generates. This is what turns a
+divisor supported on the finite chart into a factorization of ideals. The hypothesis `r ≠ 0`
+guards the junk values `ord_P 0 = 0` and `multiplicity 𝔭 ⊥ = 1`. -/
 theorem ord_ofPrime_algebraMap {r : R} (hr : r ≠ 0) :
     (ofPrime k F 𝔭).ord (algebraMap R F r) = multiplicity 𝔭.asIdeal (Ideal.span {r}) := by
   have hr' : algebraMap R F r ≠ 0 := (map_ne_zero_iff _ (IsFractionRing.injective R F)).mpr hr
@@ -134,9 +135,8 @@ theorem ofPrime_center (P : Place k F) (hR : ∀ r : R, algebraMap R F r ∈ P.i
 /-- The valuation ring of the place of `𝔭` is the localization of the model at `𝔭`. -/
 theorem valuationSubringAtPrime_eq_integers_ofPrime (𝔭 : HeightOneSpectrum R) :
     HeightOneSpectrum.valuationSubringAtPrime F 𝔭 = (ofPrime k F 𝔭).integers := by
-  have h := (ofPrime k F 𝔭).valuationSubringAtPrime_eq_integers
-    (algebraMap_mem_integers_ofPrime k F 𝔭)
-  rwa [center_ofPrime] at h
+  rw [HeightOneSpectrum.valuationSubringAtPrime_eq_valuationSubring, ← valuation_ofPrime k F 𝔭]
+  exact SetLike.ext fun _ ↦ (ofPrime k F 𝔭).mem_integers_iff.symm
 
 variable (R) in
 /-- **The places of `F / k` finite on an affine model `R` are exactly the height one primes of
@@ -155,7 +155,7 @@ theorem heightOneSpectrumEquiv_apply
     heightOneSpectrumEquiv k F R P = P.1.center P.2 := (rfl)
 
 @[simp]
-theorem heightOneSpectrumEquiv_symm_apply (𝔭 : HeightOneSpectrum R) :
+theorem coe_heightOneSpectrumEquiv_symm_apply (𝔭 : HeightOneSpectrum R) :
     ((heightOneSpectrumEquiv k F R).symm 𝔭).1 = ofPrime k F 𝔭 := (rfl)
 
 /-- Distinct height one primes of a model give distinct places. -/
@@ -170,26 +170,41 @@ theorem exists_eq_ofPrime_iff (P : Place k F) :
   ⟨fun ⟨𝔭, h⟩ r ↦ h ▸ algebraMap_mem_integers_ofPrime k F 𝔭 r,
     fun hR ↦ ⟨P.center hR, ofPrime_center k F P hR⟩⟩
 
+/-- **The coefficient formula at a place finite on an affine model**: the order at `P` of a
+nonzero element of the model is the multiplicity of the centre of `P` in the ideal it generates.
+This is `TauCeti.Place.ord_ofPrime_algebraMap` in the form in which
+`TauCeti.Place.exists_eq_ofPrime_iff` hands a place of the finite chart over. -/
+theorem ord_algebraMap_eq_multiplicity_center (P : Place k F)
+    (hR : ∀ r : R, algebraMap R F r ∈ P.integers) {r : R} (hr : r ≠ 0) :
+    P.ord (algebraMap R F r) = multiplicity (P.center hR).asIdeal (Ideal.span {r}) := by
+  conv_lhs => rw [← ofPrime_center k F P hR]
+  exact ord_ofPrime_algebraMap k F (P.center hR) hr
+
 end Correspondence
 
 section ResidueField
 
 variable (k F) (𝔭 : HeightOneSpectrum R)
 
-/-- The elements of an affine model, viewed inside the valuation ring of the place of one of its
-height one primes. -/
-noncomputable def toIntegersOfPrime : R →+* (ofPrime k F 𝔭).integers :=
-  (algebraMap R F).codRestrict _ (algebraMap_mem_integers_ofPrime k F 𝔭)
+/-- An affine model lies in the valuation ring of the place of each of its height one primes, so
+that valuation ring is an `R`-algebra. -/
+noncomputable instance : Algebra R (ofPrime k F 𝔭).integers :=
+  ((algebraMap R F).codRestrict _ (algebraMap_mem_integers_ofPrime k F 𝔭)).toAlgebra
+
+/-- The `R`-algebra structure on the valuation ring of the place of `𝔭` is the one induced by
+the inclusion of the model in `F`. -/
+instance : IsScalarTower R (ofPrime k F 𝔭).integers F := .of_algebraMap_eq fun _ ↦ rfl
 
 @[simp]
-theorem coe_toIntegersOfPrime (r : R) :
-    (toIntegersOfPrime k F 𝔭 r : F) = algebraMap R F r := (rfl)
+theorem coe_algebraMap_integers_ofPrime (r : R) :
+    (algebraMap R (ofPrime k F 𝔭).integers r : F) = algebraMap R F r := (rfl)
 
 /-- **Evaluation of the elements of an affine model at the place of one of its height one
 primes**, as a map of `k`-algebras `R → F_P`. It is surjective with kernel `𝔭`, which is the
-content of `TauCeti.Place.residueFieldAlgEquivOfPrime`. -/
+content of `TauCeti.Place.quotientAlgEquivResidueFieldOfPrime`. -/
 noncomputable def residueHomOfPrime : R →ₐ[k] (ofPrime k F 𝔭).ResidueField :=
-  { (IsLocalRing.residue (ofPrime k F 𝔭).integers).comp (toIntegersOfPrime k F 𝔭) with
+  { (IsLocalRing.residue (ofPrime k F 𝔭).integers).comp
+      (algebraMap R (ofPrime k F 𝔭).integers) with
     commutes' := fun c ↦ by
       rw [IsScalarTower.algebraMap_apply k (ofPrime k F 𝔭).integers (ofPrime k F 𝔭).ResidueField,
         IsLocalRing.ResidueField.algebraMap_eq]
@@ -197,63 +212,44 @@ noncomputable def residueHomOfPrime : R →ₐ[k] (ofPrime k F 𝔭).ResidueFiel
         (Subtype.ext (IsScalarTower.algebraMap_apply k R F c).symm) }
 
 theorem residueHomOfPrime_apply (r : R) : residueHomOfPrime k F 𝔭 r =
-    IsLocalRing.residue (ofPrime k F 𝔭).integers (toIntegersOfPrime k F 𝔭 r) := (rfl)
+    IsLocalRing.residue (ofPrime k F 𝔭).integers (algebraMap R (ofPrime k F 𝔭).integers r) :=
+  (rfl)
 
 /-- **The elements of the model that vanish at the place of `𝔭` are exactly the elements of
 `𝔭`.** -/
+@[simp]
 theorem ker_residueHomOfPrime : RingHom.ker (residueHomOfPrime k F 𝔭) = 𝔭.asIdeal := by
   ext r
   rw [RingHom.mem_ker, residueHomOfPrime_apply,
-    (ofPrime k F 𝔭).residue_eq_zero_iff_valuation_lt_one, coe_toIntegersOfPrime,
+    (ofPrime k F 𝔭).residue_eq_zero_iff_valuation_lt_one, coe_algebraMap_integers_ofPrime,
     valuation_ofPrime_algebraMap_lt_one_iff]
 
-/-- **Every residue at the place of `𝔭` is the residue of an element of the model.** A function
-integral at the place is a fraction `n / d` of elements of the model with `d ∉ 𝔭`; inverting `d`
-in the field `R ⧸ 𝔭` produces an element of `R` with the same residue. -/
+/-- **Every residue at the place of `𝔭` is the residue of an element of the model.** This is
+Mathlib's approximation theorem for the `𝔭`-adic valuation, at the accuracy `1`: a function
+integral at the place is within `1` of an element of the model, so the two have the same
+residue. -/
 theorem residueHomOfPrime_surjective : Function.Surjective (residueHomOfPrime k F 𝔭) := by
   intro y
   obtain ⟨a, rfl⟩ := IsLocalRing.residue_surjective y
-  obtain ⟨n, d, hnd⟩ := HeightOneSpectrum.exists_primeCompl_mul_eq_of_integer 𝔭 (a : F)
-    (by rw [← valuation_ofPrime k F 𝔭]; exact (ofPrime k F 𝔭).mem_integers_iff.mp a.2)
-  obtain ⟨c, hmem⟩ : ∃ c : R, n - (d : R) * c ∈ 𝔭.asIdeal := by
-    obtain ⟨y, i, hi, hyd⟩ := 𝔭.isMaximal.exists_inv d.2
-    refine ⟨y * n, ?_⟩
-    have h : n - (d : R) * (y * n) = i * n := by linear_combination (-n) * hyd
-    exact h ▸ Ideal.mul_mem_right n _ hi
+  obtain ⟨c, hc⟩ := HeightOneSpectrum.exists_valuation_sub_lt_of_integer 𝔭
+    (by rw [← valuation_ofPrime k F 𝔭]; exact (ofPrime k F 𝔭).mem_integers_iff.mp a.2) 1
+  rw [Units.val_one] at hc
   refine ⟨c, ?_⟩
-  have hcoe : ((a - toIntegersOfPrime k F 𝔭 c : (ofPrime k F 𝔭).integers) : F)
-      = (a : F) - algebraMap R F c := by
-    push_cast
-    rw [coe_toIntegersOfPrime]
-  have hdval : (ofPrime k F 𝔭).valuation (algebraMap R F (d : R)) = 1 := by
-    rw [valuation_ofPrime, HeightOneSpectrum.valuation_eq_one_iff_notMem]
-    exact d.2
-  have hprod : ((a : F) - algebraMap R F c) * algebraMap R F (d : R)
-      = algebraMap R F (n - (d : R) * c) := by
-    rw [map_sub, map_mul, sub_mul, hnd]
-    ring
-  have hzero : IsLocalRing.residue (ofPrime k F 𝔭).integers
-      (a - toIntegersOfPrime k F 𝔭 c) = 0 := by
-    rw [(ofPrime k F 𝔭).residue_eq_zero_iff_valuation_lt_one]
-    calc (ofPrime k F 𝔭).valuation ((a - toIntegersOfPrime k F 𝔭 c : (ofPrime k F 𝔭).integers) : F)
-        = (ofPrime k F 𝔭).valuation ((a : F) - algebraMap R F c) *
-            (ofPrime k F 𝔭).valuation (algebraMap R F (d : R)) := by rw [hcoe, hdval, mul_one]
-      _ = (ofPrime k F 𝔭).valuation (algebraMap R F (n - (d : R) * c)) := by
-            rw [← map_mul, hprod]
-      _ < 1 := (valuation_ofPrime_algebraMap_lt_one_iff k F 𝔭).mpr hmem
-  rw [residueHomOfPrime_apply]
-  exact (sub_eq_zero.mp (by rwa [map_sub] at hzero)).symm
+  rw [residueHomOfPrime_apply, ← sub_eq_zero, ← map_sub,
+    (ofPrime k F 𝔭).residue_eq_zero_iff_valuation_lt_one, valuation_ofPrime]
+  push_cast [coe_algebraMap_integers_ofPrime]
+  exact hc
 
 /-- **The residue field of the place of a height one prime `𝔭` of an affine model is `R ⧸ 𝔭`**,
 as `k`-algebras. -/
-noncomputable def residueFieldAlgEquivOfPrime :
+noncomputable def quotientAlgEquivResidueFieldOfPrime :
     (R ⧸ 𝔭.asIdeal) ≃ₐ[k] (ofPrime k F 𝔭).ResidueField :=
   (Ideal.quotientEquivAlgOfEq k (ker_residueHomOfPrime k F 𝔭).symm).trans
     (Ideal.quotientKerAlgEquivOfSurjective (residueHomOfPrime_surjective k F 𝔭))
 
 @[simp]
-theorem residueFieldAlgEquivOfPrime_mk (r : R) :
-    residueFieldAlgEquivOfPrime k F 𝔭 (Ideal.Quotient.mk 𝔭.asIdeal r)
+theorem quotientAlgEquivResidueFieldOfPrime_mk (r : R) :
+    quotientAlgEquivResidueFieldOfPrime k F 𝔭 (Ideal.Quotient.mk 𝔭.asIdeal r)
       = residueHomOfPrime k F 𝔭 r := (rfl)
 
 /-- **The degree of the place of `𝔭` is the residue degree of `𝔭`**: the weight a divisor
@@ -261,7 +257,7 @@ attaches to a place of the finite chart is the one Mathlib's ideal theory attach
 corresponding prime. -/
 theorem degree_ofPrime : (ofPrime k F 𝔭).degree = Module.finrank k (R ⧸ 𝔭.asIdeal) := by
   rw [(ofPrime k F 𝔭).degree_eq_finrank]
-  exact ((residueFieldAlgEquivOfPrime k F 𝔭).toLinearEquiv.finrank_eq).symm
+  exact ((quotientAlgEquivResidueFieldOfPrime k F 𝔭).toLinearEquiv.finrank_eq).symm
 
 /-- The degree of a place finite on an affine model is the residue degree of its centre. -/
 theorem degree_eq_finrank_quotient_center (P : Place k F)
