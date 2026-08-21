@@ -56,17 +56,6 @@ universe u
 
 variable {R : Type u} [CommRing R]
 
-/-- The map on scheme-valued points of an affine Hopf-spectrum morphism becomes precomposition
-by its coordinate Hopf morphism on relative global sections. -/
-theorem schemePointsAlgΓMulEquiv_pointMap
-    {H K : CommHopfAlgCat.{u} R} (T : Over (Spec (CommRingCat.of R))) (f : H ⟶ K)
-    (g : T ⟶ ((hopfSpec (CommRingCat.of R)).obj (Opposite.op K)).X) :
-    CommHopfAlgCat.schemePointsAlgΓMulEquiv H T
-        (pointMap ((hopfSpec (CommRingCat.of R)).map f.op) T g) =
-      AlgHom.mapDomain f.hom (CommHopfAlgCat.schemePointsAlgΓMulEquiv K T g) := by
-  rw [pointMap_apply]
-  exact CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapPointsFunctor T f g
-
 /-- If the represented kernel Hopf ideal is central, then the induced affine group-scheme
 morphism has central kernel on points valued in every scheme over the base. -/
 theorem hasCentralKernel_hopfSpec_map_of_isCentral_kernelHopfIdeal
@@ -88,7 +77,8 @@ theorem hasCentralKernel_hopfSpec_map_of_isCentral_kernelHopfIdeal
       AlgHom.mapDomain f.hom (eK g) =
           eH (pointMap ((hopfSpec (CommRingCat.of R)).map f.op) T g) := by
         dsimp only [eH, eK]
-        exact (schemePointsAlgΓMulEquiv_pointMap T f g).symm
+        rw [pointMap_apply]
+        exact (CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapDomain T f.hom g).symm
       _ = eH 1 := congrArg eH (MonoidHom.mem_ker.mp hg)
       _ = 1 := map_one eH
   rw [AlgHom.mapDomain_apply, ← CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
@@ -132,7 +122,8 @@ theorem isCentral_kernelHopfIdeal_of_hasCentralKernel_hopfSpec_map
   have hnat : eK gB ≫ ((hopfSpec (CommRingCat.of R)).map f.op).hom.hom =
       eH ((CommHopfAlgCat.mapPointsFunctor f).app (CommAlgCat.of R B) gB) := by
     dsimp only [eH, eK]
-    exact (CommHopfAlgCat.mapMulEquiv_mapPointsFunctor (CommAlgCat.of R B) f gB).symm
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+    exact (CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R B) f.hom gB).symm
   have hsg : eK gB ≫ ((hopfSpec (CommRingCat.of R)).map f.op).hom.hom = 1 := by
     calc
       _ = eH ((CommHopfAlgCat.mapPointsFunctor f).app (CommAlgCat.of R B) gB) := hnat

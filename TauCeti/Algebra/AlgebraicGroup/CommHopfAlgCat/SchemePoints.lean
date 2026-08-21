@@ -43,8 +43,6 @@ coordinate algebra.
   test scheme.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapDomain`: the comparison is
   contravariantly natural in the coordinate bialgebra.
-* `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapPointsFunctor`: the Hopf-category form of
-  coordinate naturality for the relative comparison.
 * `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation`: Mathlib's spectrum-points equivalence with
   its target transported across a named presentation.
 * `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation_apply_left`: the underlying spectrum map of
@@ -55,8 +53,6 @@ coordinate algebra.
   transport across a named presentation.
 * `TauCeti.CommHopfAlgCat.mapMulEquiv_mapDomain`: a coordinate bialgebra morphism
   becomes postcomposition by the induced relative spectrum morphism `Spec K ⟶ Spec H`.
-* `TauCeti.CommHopfAlgCat.mapMulEquiv_mapPointsFunctor`: the Hopf-category form of affine
-  coordinate naturality, phrased through `mapPointsFunctor` and `hopfSpec`.
 * `TauCeti.CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain`: contravariance for arbitrary
   named point equivalences characterized by their underlying spectrum maps.
 * `TauCeti.CommHopfAlgCat.pointsPresheafIsoSchemePointsPresheaf`: the natural comparison between
@@ -103,17 +99,6 @@ theorem mapMulEquiv_mapDomain
   simp only [mapMulEquiv_left, OverClass.asOverHom_left, AlgHom.mapDomain_apply]
   erw [← Spec.map_comp]
   rfl
-
-/-- The Hopf-category form of contravariant naturality for Mathlib's spectrum-points
-equivalence. This packages the underlying bialgebra statement through `mapPointsFunctor` and
-the `hopfSpec` functor. -/
-theorem mapMulEquiv_mapPointsFunctor
-    {H K : _root_.CommHopfAlgCat.{u} R} (A : CommAlgCat.{u} R) (φ : H ⟶ K)
-    (p : HopfAlgebra.points (R := R) (H := K) A) :
-    AlgebraicGeometry.Spec.mapMulEquiv ((mapPointsFunctor φ).app A p) =
-      AlgebraicGeometry.Spec.mapMulEquiv p ≫
-        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom :=
-  mapMulEquiv_mapDomain A φ.hom p
 
 /-! ### Points of affine spectra on arbitrary test schemes -/
 
@@ -309,18 +294,6 @@ theorem schemePointsAlgΓMulEquiv_mapDomain
       rw [Category.assoc]
       congr 1
       exact (mapMulEquiv_mapDomain _ f (eK g)).symm
-
-/-- The Hopf-category form of coordinate naturality for the relative global-sections
-comparison. This packages the underlying bialgebra statement through `mapPointsFunctor` and
-the `hopfSpec` functor. -/
-theorem schemePointsAlgΓMulEquiv_mapPointsFunctor
-    {H K : _root_.CommHopfAlgCat.{u} R} (T : Over (Spec (CommRingCat.of R))) (φ : H ⟶ K)
-    (g : T ⟶ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K)).X) :
-    schemePointsAlgΓMulEquiv H T
-        (g ≫ ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom) =
-      (mapPointsFunctor φ).app ((algΓ (CommRingCat.of R)).obj T).unop
-        (schemePointsAlgΓMulEquiv K T g) :=
-  schemePointsAlgΓMulEquiv_mapDomain T φ.hom g
 
 /-! ### Points on affine test schemes -/
 
