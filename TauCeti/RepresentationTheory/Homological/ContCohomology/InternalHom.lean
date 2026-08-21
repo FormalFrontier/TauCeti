@@ -108,9 +108,11 @@ generality where `Representation.linHom` is available, is `toIntLinearMap_homAct
 Mathlib puts no topology on `M →+ N`. Discreteness of the internal hom enters here through the
 discreteness of the ambient function space `M → N`, which is what
 `isOpen_setOfPred_homAction_eq_self` rests on. `InternalHom G M N` carries the discrete topology by
-definition, with no hypothesis on `M` or `N`: that is the intended topology precisely in the
-discrete setting this file is written for, namely finite discrete `M` and discrete `N`, which is
-also exactly where the action is continuous. For infinite `M` the internal hom in the category of
+definition, with no hypothesis on `M` or `N`: that is the intended topology in the discrete setting
+this file is written for, namely finite discrete `M` and discrete `N`, which is also the setting in
+which the action is proved continuous below. Those hypotheses are sufficient for that continuity,
+not necessary — a trivial action on an infinite `M`, for instance, is continuous too — and it is
+sufficiency that is established here. For infinite `M` the internal hom in the category of
 discrete `G`-modules is the sub-object of homomorphisms with open stabilizer, which is not
 `InternalHom G M N`; nothing here claims otherwise.
 -/
@@ -282,8 +284,8 @@ conjugation action `g • φ = homAction g φ`. It is a one-field wrapper around
 `M →+ N` itself because Mathlib registers the codomain-pointwise action on the latter; this is the
 type on which continuous cohomology of the internal hom is to be taken. The group `G` is a phantom
 parameter, recording which action is meant. The type carries the discrete topology unconditionally,
-and is the internal hom of *discrete* `G`-modules exactly in the setting this file is written for:
-`M` finite discrete and `N` discrete, which is also where the action is continuous. -/
+and is the internal hom of *discrete* `G`-modules in the setting this file establishes: `M` finite
+discrete and `N` discrete, which is sufficient for the action to be continuous. -/
 @[ext]
 structure InternalHom (G : Type*) (M : Type*) [AddMonoid M] (N : Type*) [AddMonoid N] where
   /-- Regard an additive homomorphism as an element of the internal hom. -/
