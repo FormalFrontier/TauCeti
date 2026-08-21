@@ -74,9 +74,12 @@ form as a bundled continuous bilinear map on `H¹(Ω)`
 (`TauCeti.PDE.energyFormH1L`), by restricting the existing
 `TauCeti.PDE.energyFormLpVariable` along the Sobolev jet inclusion. Restricting further along the
 closed-subspace inclusion gives `TauCeti.PDE.energyFormH1L0` on `H¹₀(Ω)`. These forms have the
-shape required by Lax--Milgram; proving coercivity additionally requires a Poincaré inequality
-on `H¹₀(Ω)` and positivity of the resulting constant, such as the sufficient condition
-`βP < λ`. This file supplies the lower bounds but does not package an `IsCoercive` proof.
+shape required by Lax--Milgram; coercivity is a further step, and the route supplied here is the
+Poincaré one: a Poincaré inequality on `H¹₀(Ω)` together with positivity of the resulting
+constant, such as the sufficient condition `βP < λ`. That route is not the only one — the mass
+floor `μ > β²/2λ` recorded above already gives a lower bound with no negative term, hence
+coercivity on all of `H¹(Ω)` and no Poincaré inequality anywhere. Either way, this file supplies
+the lower bounds and does not package an `IsCoercive` proof.
 
 Everything is stated with explicit constants `λ, Λ, β, γ, P`, as the roadmap's standing
 hypotheses require, and coefficient bounds are inline hypotheses `∀ x ∈ Ω, ‖b x‖ ≤ β` rather
