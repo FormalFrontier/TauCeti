@@ -71,6 +71,7 @@ variable {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y] {μ : Probability
 /-- Being a coupling, read on bundled probability measures: the two marginal pushforwards are the
 prescribed marginals. This is the form in which the coupling condition is a pair of preimages of
 points under continuous maps. -/
+@[simp]
 theorem isCoupling_toMeasure_iff {π : ProbabilityMeasure (X × Y)} :
     IsCoupling π.toMeasure μ.toMeasure ν.toMeasure ↔
       π.map measurable_fst.aemeasurable = μ ∧ π.map measurable_snd.aemeasurable = ν := by
@@ -132,17 +133,14 @@ end Tight
 
 section Compact
 
-/-! Prokhorov's theorem asks the underlying space to be Hausdorff and Borel, and the direct method
-downstream asks it to be pseudometrizable, so the two factors are taken to be second countable
-Borel metrizable spaces: their product is then again one, which is what the theorems below need.
-Metrizability is asked of the topology, not of a chosen distance, so these statements apply to a
-space that is only known to be metrizable — in particular to a Mathlib `PolishSpace`, which carries
-no `MetricSpace` instance. -/
+/-! Prokhorov's theorem asks the underlying space to be Hausdorff and Borel. Closedness of the
+coupling set additionally asks that the two spaces of probability measures be `T1`; these are the
+hypotheses exposed below, without choosing a metric on either factor. -/
 
-variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace.MetrizableSpace X]
-  [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X] [TopologicalSpace Y]
-  [TopologicalSpace.MetrizableSpace Y] [MeasurableSpace Y] [BorelSpace Y]
-  [SecondCountableTopology Y]
+variable {X Y : Type*} [TopologicalSpace X] [T2Space X] [MeasurableSpace X]
+  [BorelSpace X] [T1Space (ProbabilityMeasure X)]
+  [TopologicalSpace Y] [T2Space Y] [MeasurableSpace Y] [BorelSpace Y]
+  [T1Space (ProbabilityMeasure Y)] [SecondCountableTopologyEither X Y]
 
 /-- **The couplings of two tight probability measures are weakly compact.** The set is tight by
 `TauCeti.isTightMeasureSet_setOfPred_isCoupling`, hence relatively compact by Prokhorov's theorem,
