@@ -103,8 +103,9 @@ variable [AddCommGroup M] [Module R M]
 variable (A) in
 /-- **Nondegeneracy descends along any base change of integral domains.** On a finite free module,
 nondegeneracy of a bilinear form is nonvanishing of the determinant of its Gram matrix, and the
-structure map sends that determinant to the one downstairs, so a nondegenerate base change forces
-a nondegenerate form. No hypothesis on the structure map is needed. -/
+structure map sends that determinant to the determinant of the base-changed Gram matrix, so a
+nondegenerate base change forces a nondegenerate form. No hypothesis on the structure map is
+needed. -/
 theorem nondegenerate_of_nondegenerate_baseChange [Finite ι] [IsDomain R] [IsDomain A]
     (B : LinearMap.BilinForm R M) (b : Basis ι R M) (h : (B.baseChange A).Nondegenerate) :
     B.Nondegenerate := by
@@ -118,6 +119,7 @@ theorem nondegenerate_of_nondegenerate_baseChange [Finite ι] [IsDomain R] [IsDo
 /-- **Nondegeneracy is preserved and reflected by an injective base change of integral domains.**
 On a finite free module, nondegeneracy of a bilinear form is nonvanishing of the determinant of its
 Gram matrix, and an injective structure map neither creates nor destroys that. -/
+@[simp]
 theorem nondegenerate_baseChange_iff [Finite ι] [IsDomain A] [FaithfulSMul R A]
     (B : LinearMap.BilinForm R M) (b : Basis ι R M) :
     (B.baseChange A).Nondegenerate ↔ B.Nondegenerate := by

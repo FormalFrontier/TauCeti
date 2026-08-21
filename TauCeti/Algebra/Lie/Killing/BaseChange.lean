@@ -102,6 +102,7 @@ theorem isKilling_of_isKilling_baseChange [IsDomain R] [IsKilling A (A ⊗[R] L)
 /-- **The Killing property under an injective base change.** For a finite free Lie algebra over an
 integral domain, and an injective structure map into a second integral domain, the base change is
 Killing exactly when the original is. -/
+@[simp]
 theorem isKilling_baseChange_iff [FaithfulSMul R A] :
     IsKilling A (A ⊗[R] L) ↔ IsKilling R L := by
   have : IsDomain R :=
