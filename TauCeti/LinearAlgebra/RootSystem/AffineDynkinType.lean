@@ -8,15 +8,14 @@ module
 public import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 public import TauCeti.Combinatorics.SimpleGraph.Connected
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 
 /-!
 # Affine simply-laced Dynkin diagrams
 
-The simply-laced affine diagrams carry one node more than the finite simply-laced diagram they
-extend. Throughout this file a name such as `Aₙ` or `E₆` refers to the *affine* diagram, matching
-the constructors below; the finite type it extends is `TauCeti.AffineDynkinType.finiteType`.
+The simply-laced affine diagrams carry one node more than the corresponding finite simply-laced
+diagram. Throughout this file a name such as `Aₙ` or `E₆` refers to the *affine* diagram, matching
+the constructors below.
 
 This file introduces the diagrams as an enumeration `TauCeti.AffineDynkinType`, attaches to each
 its node count, its underlying `SimpleGraph` on `Fin t.nodes`, and its generalized Cartan matrix,
@@ -71,7 +70,6 @@ number, which reduces connectedness to a single induction. Explicitly:
   classification are pairwise distinct.
 * `TauCeti.AffineDynkinType.IsGraphical`: the diagrams other than `A₁`, those whose generalized
   Cartan matrix is read off a simple graph.
-* `TauCeti.AffineDynkinType.finiteType`: the finite Dynkin type an affine diagram extends.
 * `TauCeti.AffineDynkinType.graph`: the underlying simple graph.
 * `TauCeti.AffineDynkinType.cartanMatrix`: the generalized Cartan matrix.
 * `TauCeti.AffineDynkinType.marks`: the marks, and `.affineNode`, the node whose mark is `1`.
@@ -105,7 +103,7 @@ public section
 
 namespace TauCeti
 
-open _root_.Matrix SimpleGraph
+open _root_.Matrix _root_.SimpleGraph
 
 /-- The simply-laced affine Dynkin diagrams: the families `Aₙ` and `Dₙ`, whose constructors accept
 every natural number, together with the three exceptional diagrams. The ranges on which these are
@@ -148,31 +146,6 @@ lemma nodes_pos (t : AffineDynkinType) : 0 < t.nodes := by cases t <;> simp
 
 instance (t : AffineDynkinType) : NeZero t.nodes := ⟨(t.nodes_pos).ne'⟩
 
-/-- The finite Dynkin type that an affine simply-laced diagram extends. It has one node fewer
-(`TauCeti.AffineDynkinType.nodes_eq_rank_finiteType_add_one`), the missing node being
-`TauCeti.AffineDynkinType.affineNode`; the identification of the deleted diagram with the finite
-one is not proved here. -/
-def finiteType : AffineDynkinType → DynkinType
-  | .A n => .A n
-  | .D n => .D n
-  | .E6 => .E6
-  | .E7 => .E7
-  | .E8 => .E8
-
-@[simp] lemma finiteType_A (n : ℕ) : (A n).finiteType = .A n := (rfl)
-@[simp] lemma finiteType_D (n : ℕ) : (D n).finiteType = .D n := (rfl)
-@[simp] lemma finiteType_E6 : E6.finiteType = .E6 := (rfl)
-@[simp] lemma finiteType_E7 : E7.finiteType = .E7 := (rfl)
-@[simp] lemma finiteType_E8 : E8.finiteType = .E8 := (rfl)
-
-/-- An affine simply-laced diagram has one node more than the finite type it extends. -/
-lemma nodes_eq_rank_finiteType_add_one (t : AffineDynkinType) :
-    t.nodes = t.finiteType.rank + 1 := by cases t <;> rfl
-
-/-- The finite type extended by an affine simply-laced diagram is simply laced. -/
-lemma isSimplyLaced_finiteType (t : AffineDynkinType) : t.finiteType.IsSimplyLaced := by
-  cases t <;> simp
-
 /-- The ranges on which the affine simply-laced diagrams are pairwise distinct. Outside them the
 names are degenerate or repeat one another: `A₀` names no diagram, while `D₃` is `A₃` and `D₂`
 is `A₁ × A₁`. -/
@@ -192,13 +165,6 @@ instance : DecidablePred Valid := fun t ↦
 @[simp] lemma valid_E6 : E6.Valid := trivial
 @[simp] lemma valid_E7 : E7.Valid := trivial
 @[simp] lemma valid_E8 : E8.Valid := trivial
-
-/-- A valid affine simply-laced diagram extends a valid finite Dynkin type. -/
-lemma Valid.finiteType {t : AffineDynkinType} (ht : t.Valid) : t.finiteType.Valid := by
-  cases t with
-  | A n => simpa using ht
-  | D n => simpa using ht
-  | E6 | E7 | E8 => simp
 
 /-- The affine simply-laced diagrams whose generalized Cartan matrix is `2I - A` for the adjacency
 matrix `A` of the underlying simple graph, namely every diagram but `A₁`, whose two nodes carry a
@@ -326,7 +292,7 @@ lemma graph_E8_adj (i j : Fin E8.nodes) : E8.graph.Adj i j ↔
 `n - 1` is joined to node `1`, and node `n` is joined to node `n - 3`, so every node other than `0`
 has a neighbour with a smaller number. -/
 private theorem graph_D_connected {n : ℕ} (hn : 4 ≤ n) : (D n).graph.Connected := by
-  refine connected_fin_of_exists_adj_lt (D n).nodes_pos fun i hi ↦ ?_
+  refine SimpleGraph.connected_fin_of_exists_adj_lt (D n).nodes_pos fun i hi ↦ ?_
   have hi' : (i : ℕ) < n + 1 := i.isLt
   -- In each branch the neighbour is named by its node number. The `hval` equations are `rfl`, and
   -- are stated only so that the `omega` calls after them can read that number off the `Fin.mk`.
@@ -347,9 +313,9 @@ theorem graph_connected {t : AffineDynkinType} (ht : t.Valid) : t.graph.Connecte
   cases t with
   | A n => exact (graph_A n) ▸ SimpleGraph.cycleGraph_connected
   | D n => exact graph_D_connected ht
-  | E6 => exact connected_fin_of_exists_adj_lt E6.nodes_pos (by decide)
-  | E7 => exact connected_fin_of_exists_adj_lt E7.nodes_pos (by decide)
-  | E8 => exact connected_fin_of_exists_adj_lt E8.nodes_pos (by decide)
+  | E6 => exact SimpleGraph.connected_fin_of_exists_adj_lt E6.nodes_pos (by decide)
+  | E7 => exact SimpleGraph.connected_fin_of_exists_adj_lt E7.nodes_pos (by decide)
+  | E8 => exact SimpleGraph.connected_fin_of_exists_adj_lt E8.nodes_pos (by decide)
 
 /-! ## The generalized Cartan matrix -/
 
@@ -419,7 +385,7 @@ lemma cartanMatrix_apply_of_not_adj {t : AffineDynkinType} (ht : t.IsGraphical) 
 
 /-- The generalized Cartan matrix of an affine simply-laced diagram is symmetric, `A₁` included:
 the diagram is simply laced, so no entry records a length ratio. -/
-lemma cartanMatrix_isSymm (t : AffineDynkinType) : t.cartanMatrix.IsSymm := by
+lemma isSymm_cartanMatrix (t : AffineDynkinType) : t.cartanMatrix.IsSymm := by
   by_cases h : t = A 1
   · subst h
     refine Matrix.IsSymm.ext fun i j ↦ ?_
@@ -446,10 +412,10 @@ theorem graph_eq_diagramGraph_cartanMatrix (t : AffineDynkinType) :
       rw [cartanMatrix_apply_of_not_adj h hne hadj] at h1
       exact h1 rfl
 
-/-- **`A₁` is not the diagram of a simple graph.** Its off-diagonal entry is `-2`, while `2I - A`
-has off-diagonal entries `0` and `-1` for the adjacency matrix `A` of any simple graph. This is why
-every statement above reading an entry of `cartanMatrix` off `graph` assumes
-`TauCeti.AffineDynkinType.IsGraphical`. -/
+/-- **The `A₁` Cartan matrix is not `2I` minus a simple-graph adjacency matrix.** Its off-diagonal
+entry is `-2`, while `2I - A` has off-diagonal entries `0` and `-1` for the adjacency matrix `A`
+of any simple graph. This is why every statement above reading an entry of `cartanMatrix` off
+`graph` assumes `TauCeti.AffineDynkinType.IsGraphical`. -/
 theorem cartanMatrix_A_one_ne_two_smul_one_sub_adjMatrix (G : SimpleGraph (Fin (A 1).nodes))
     [DecidableRel G.Adj] : (A 1).cartanMatrix ≠ (2 : ℤ) • 1 - G.adjMatrix ℤ := by
   intro h
@@ -476,10 +442,11 @@ leaves `0`, `n - 2`, `n - 1` and `n`. -/
 private def dMarks (n : ℕ) (i : Fin (n + 1)) : ℤ :=
   if 1 ≤ (i : ℕ) ∧ (i : ℕ) ≤ n - 3 then 2 else 1
 
-/-- The **marks** of an affine simply-laced diagram: the positive integer vector `δ` killed by the
-generalized Cartan matrix (`TauCeti.AffineDynkinType.cartanMatrix_mulVec_marks_eq_zero`),
-normalized so that `δ` is `1` at `TauCeti.AffineDynkinType.affineNode`. Away from `A₁` this is the
-local balance condition `2 δᵢ = ∑_{j ∼ i} δⱼ` at every node. -/
+/-- The **marks** of an affine simply-laced diagram: a positive integer vector `δ`, normalized so
+that `δ` is `1` at `TauCeti.AffineDynkinType.affineNode`. For a valid type it is killed by the
+generalized Cartan matrix (`TauCeti.AffineDynkinType.cartanMatrix_mulVec_marks_eq_zero`), and for
+a valid type away from `A₁` this is the local balance condition
+`2 δᵢ = ∑_{j ∼ i} δⱼ` at every node. -/
 def marks : (t : AffineDynkinType) → Fin t.nodes → ℤ
   | .A _ => fun _ ↦ 1
   | .D n => dMarks n
@@ -498,8 +465,7 @@ def marks : (t : AffineDynkinType) → Fin t.nodes → ℤ
 @[simp] lemma marks_E8 : E8.marks = ![6, 3, 4, 2, 5, 4, 3, 2, 1] := (rfl)
 
 /-- The **affine node** of an affine simply-laced diagram: the distinguished node at which the
-marks are normalized to `1` (`TauCeti.AffineDynkinType.marks_affineNode`). It is the node whose
-deletion leaves the finite diagram of `TauCeti.AffineDynkinType.finiteType`. -/
+marks are normalized to `1` (`TauCeti.AffineDynkinType.marks_affineNode`). -/
 def affineNode : (t : AffineDynkinType) → Fin t.nodes
   | .A _ => 0
   | .D _ => 0
@@ -540,16 +506,6 @@ private lemma sum_neighborFinset_eq {V : Type*} [Fintype V] {G : SimpleGraph V}
   refine Finset.sum_congr (Finset.ext fun j ↦ ?_) fun _ _ ↦ rfl
   rw [SimpleGraph.mem_neighborFinset, hs]
 
-/-- The neighbours of a node of `Dₙ`, as an arithmetic condition on node numbers: the packed form
-`TauCeti.AffineDynkinType.graph_D_adj`, transported to the relation the graph is built from. -/
-private lemma adj_dRel_iff {n : ℕ} (hn : 4 ≤ n) (i j : Fin (n + 1)) :
-    (SimpleGraph.fromRel (dRel n)).Adj i j ↔
-      ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) ≤ n - 2) ∨ ((j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) ≤ n - 2) ∨
-        ((i : ℕ) = 1 ∧ (j : ℕ) = n - 1) ∨ ((j : ℕ) = 1 ∧ (i : ℕ) = n - 1) ∨
-          ((i : ℕ) = n - 3 ∧ (j : ℕ) = n) ∨ ((j : ℕ) = n - 3 ∧ (i : ℕ) = n) := by
-  have h := graph_D_adj (n := n) hn (i := i) (j := j)
-  rwa [graph_D] at h
-
 /-- The sum of the marks of `Dₙ` over the neighbours of a node, once those neighbours have been
 listed. Each of the seven node roles below supplies its own list and reads the resulting sum off
 with `omega`; this is the step they share. -/
@@ -569,45 +525,52 @@ private lemma sum_dMarks_neighborFinset {n : ℕ} (hn : 4 ≤ n) (i : Fin (n + 1
   have hi : (i : ℕ) < n + 1 := i.isLt
   by_cases c0 : (i : ℕ) = 0
   · rw [sum_dMarks_of_adj_iff i [⟨1, by omega⟩] (by simp) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega
   by_cases c1 : (i : ℕ) = 1
   · rw [sum_dMarks_of_adj_iff i [⟨0, by omega⟩, ⟨2, by omega⟩, ⟨n - 1, by omega⟩]
       (by simp [Fin.ext_iff]; omega) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega
   by_cases c2 : (i : ℕ) ≤ n - 4
   · rw [sum_dMarks_of_adj_iff i [⟨(i : ℕ) - 1, by omega⟩, ⟨(i : ℕ) + 1, by omega⟩]
       (by simp [Fin.ext_iff]) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega
   by_cases c3 : (i : ℕ) = n - 3
   · rw [sum_dMarks_of_adj_iff i [⟨n - 4, by omega⟩, ⟨n - 2, by omega⟩, ⟨n, by omega⟩]
       (by simp [Fin.ext_iff]; omega) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega
   by_cases c4 : (i : ℕ) = n - 2
   · rw [sum_dMarks_of_adj_iff i [⟨n - 3, by omega⟩] (by simp) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega
   by_cases c5 : (i : ℕ) = n - 1
   · rw [sum_dMarks_of_adj_iff i [⟨1, by omega⟩] (by simp) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega
   · rw [sum_dMarks_of_adj_iff i [⟨n - 3, by omega⟩] (by simp) fun j ↦ by
-      rw [adj_dRel_iff hn]; simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
+      rw [← graph_D, graph_D_adj hn]
+      simp only [List.mem_cons, List.not_mem_nil, or_false, Fin.ext_iff]
       omega]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, dMarks]
     split_ifs <;> omega

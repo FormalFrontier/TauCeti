@@ -126,7 +126,7 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
   | D n =>
       have hn := valid_D.mp ht
       have hconn : (diagramGraph (CartanMatrix.D n)).Connected := by
-        refine connected_fin_of_exists_adj_lt (by omega) fun i hi ↦ ?_
+        refine SimpleGraph.connected_fin_of_exists_adj_lt (by omega) fun i hi ↦ ?_
         by_cases hlast : (i : ℕ) = n - 1
         · let j : Fin n := ⟨n - 3, by omega⟩
           have hji : j = ⟨n - 3, by omega⟩ := rfl

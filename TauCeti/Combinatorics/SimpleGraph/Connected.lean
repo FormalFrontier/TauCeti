@@ -19,13 +19,13 @@ affine alike, a two-line check, and this file states the induction once for all 
 
 ## Main results
 
-* `TauCeti.connected_fin_of_exists_adj_lt`: a graph on `Fin n` in which every nonzero vertex has an
-  adjacent vertex with a smaller number is connected.
+* `TauCeti.SimpleGraph.connected_fin_of_exists_adj_lt`: a graph on `Fin n` in which every nonzero
+  vertex has an adjacent vertex with a smaller number is connected.
 -/
 
 namespace TauCeti
 
-open SimpleGraph
+namespace SimpleGraph
 
 /-- **A graph on `Fin n` in which every vertex other than `0` has a neighbour with a smaller number
 is connected.** Every vertex reaches `0` by descending along such neighbours. -/
@@ -43,5 +43,7 @@ theorem connected_fin_of_exists_adj_lt {n : ℕ} {G : SimpleGraph (Fin n)} (hn :
           exact (ih (j : ℕ) (hi ▸ hji) j rfl).trans hadj.reachable
   have : Nonempty (Fin n) := ⟨z⟩
   exact ⟨fun i j ↦ (hreach i).symm.trans (hreach j)⟩
+
+end SimpleGraph
 
 end TauCeti
