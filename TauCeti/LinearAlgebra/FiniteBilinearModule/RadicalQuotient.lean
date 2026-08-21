@@ -36,6 +36,8 @@ Both `quotientOfLeRadical` and `radicalQuotient` are exposed, so their carriers 
   exactly when the subgroup exhausts the radical.
 * `TauCeti.FiniteBilinearModule.card_quotientOfLeRadical`: the order of the quotient is the index
   of the subgroup.
+* `TauCeti.FiniteBilinearModule.quotientOfLeRadicalMk_eq_iff`: two elements have the same class
+  exactly when they differ by an element of the subgroup.
 * `TauCeti.FiniteBilinearModule.radicalQuotient`: the nondegenerate quotient by the radical.
 
 ## References
@@ -144,6 +146,13 @@ theorem quotientOfLeRadicalMk_eq_zero_iff (K : AddSubgroup A) (hK : K ≤ A.radi
     A.quotientOfLeRadicalMk K hK x = 0 ↔ x ∈ K := by
   rw [← AddMonoidHom.mem_ker, A.quotientOfLeRadicalMk_ker K hK]
 
+/-- Two elements have the same class in the quotient exactly when they differ by an element of the
+subgroup. -/
+@[simp]
+theorem quotientOfLeRadicalMk_eq_iff (K : AddSubgroup A) (hK : K ≤ A.radical) (x y : A) :
+    A.quotientOfLeRadicalMk K hK x = A.quotientOfLeRadicalMk K hK y ↔ x - y ∈ K := by
+  rw [← sub_eq_zero, ← map_sub, A.quotientOfLeRadicalMk_eq_zero_iff K hK]
+
 /-- **The radical of the quotient** is the image of the radical: quotienting by a subgroup of the
 radical does not create new degeneracy. -/
 theorem radical_quotientOfLeRadical (K : AddSubgroup A) (hK : K ≤ A.radical) :
@@ -210,6 +219,13 @@ theorem radicalQuotientMk_surjective : Function.Surjective (radicalQuotientMk A)
 @[simp]
 theorem radicalQuotientMk_ker : (radicalQuotientMk A).ker = A.radical :=
   A.quotientOfLeRadicalMk_ker A.radical le_rfl
+
+/-- Two elements have the same class in the radical quotient exactly when they differ by an
+element of the radical. -/
+@[simp]
+theorem radicalQuotientMk_eq_iff (x y : A) :
+    A.radicalQuotientMk x = A.radicalQuotientMk y ↔ x - y ∈ A.radical :=
+  A.quotientOfLeRadicalMk_eq_iff A.radical le_rfl x y
 
 /-- Quotienting a finite bilinear module by its radical produces a nondegenerate module. -/
 theorem isNondegenerate_radicalQuotient : (radicalQuotient A).IsNondegenerate :=
