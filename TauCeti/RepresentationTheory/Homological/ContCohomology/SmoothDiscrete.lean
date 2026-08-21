@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RepresentationTheory.Continuous.TopRep
-public import Mathlib.RepresentationTheory.Intertwining
 public import Mathlib.Topology.Algebra.MulAction
 
 /-!
@@ -159,6 +158,15 @@ structure IsSmoothDiscrete (X : TopRep R G) : Prop where
 
 variable {R}
 
+/-- Smoothness is inherited by restriction along a continuous homomorphism: the stabilizers of
+the restricted object are the preimages under `φ` of the stabilizers of `X`. The restriction is
+written `TopRep.of (X.ρ.restrict φ)` rather than `TopRep.res φ X` only so that `G` may be a monoid;
+Mathlib states `TopRep.res` for a group, and it unfolds to this object. -/
+lemma IsSmoothDiscrete.res {H : Type*} [Monoid H] [TopologicalSpace H] {φ : H →* G}
+    (hφ : Continuous φ) {X : TopRep R G} (hX : IsSmoothDiscrete R X) :
+    IsSmoothDiscrete R (TopRep.of (X.ρ.restrict φ)) :=
+  ⟨hX.discreteTopology, fun x ↦ (hX.stabilizer_isOpen x).preimage hφ⟩
+
 omit [TopologicalSpace G] in
 /-- A discrete object is the image of its own underlying module under the dictionary; openness of
 the stabilizers plays no part, and a smooth discrete object supplies the discreteness through
@@ -194,17 +202,7 @@ end IsSmoothDiscrete
 section SmoothOverGroup
 
 variable {R : Type u} [Ring R] [TopologicalSpace R]
-  {G : Type v} [Group G] [TopologicalSpace G]
-
-/-- Smoothness is inherited by restriction along a continuous homomorphism: the stabilizers of
-`TopRep.res φ X` are the preimages under `φ` of the stabilizers of `X`. Only `TopRep.res`, which
-Mathlib states for a group, forces `G` to be one here; `H` may be any monoid. -/
-lemma IsSmoothDiscrete.res {H : Type*} [Monoid H] [TopologicalSpace H] {φ : H →* G}
-    (hφ : Continuous φ) {X : TopRep R G} (hX : IsSmoothDiscrete R X) :
-    IsSmoothDiscrete R (TopRep.res φ X) :=
-  ⟨hX.discreteTopology, fun x ↦ (hX.stabilizer_isOpen x).preimage hφ⟩
-
-variable [IsTopologicalGroup G]
+  {G : Type v} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 
 /-- For a discrete object of `TopRep R G`, smoothness is continuity of the action map
 `G × X.V → X.V`. -/
@@ -248,6 +246,8 @@ def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • 
     (hf : ∀ (g : G) (m : M), f (g • m) = g • f m) (m : M) :
     (ofDiscreteModuleMap f hf).hom m = f m := (rfl)
 
+/-- The morphism half of the dictionary preserves identities: the identity linear map of a discrete
+module becomes the identity morphism of the object it names. -/
 @[simp] lemma ofDiscreteModuleMap_id :
     ofDiscreteModuleMap (LinearMap.id (R := R) (M := M)) (fun _ _ ↦ rfl) =
       𝟙 (ofDiscreteModule R G M) := by
@@ -257,6 +257,8 @@ def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • 
   exact (ofDiscreteModuleMap_hom_apply _ _ m).trans
     (TopRep.id_apply (ofDiscreteModule R G M) m).symm
 
+/-- The morphism half of the dictionary preserves composition: the composite of two `G`-equivariant
+`R`-linear maps becomes the composite of the two morphisms they name. -/
 @[simp] lemma ofDiscreteModuleMap_comp {P : Type w} [AddCommGroup P] [Module R P]
     [TopologicalSpace P] [DiscreteTopology P] [DistribMulAction G P] [SMulCommClass G R P]
     [ContinuousSMul R P]
@@ -284,8 +286,7 @@ def ofDiscreteModuleHomEquiv :
     (ofDiscreteModule R G M ⟶ ofDiscreteModule R G N) ≃+
       Representation.IntertwiningMap (Representation.ofDistribMulAction R G M)
         (Representation.ofDistribMulAction R G N) where
-  toFun φ := (φ.hom.toContinuousLinearMap.toLinearMap).intertwiningMap_of_isIntertwiningMap _ _
-    fun g m ↦ φ.hom.isIntertwining g m
+  toFun φ := φ.hom.toIntertwiningMap
   invFun f := ofDiscreteModuleMap f.toLinearMap fun g m ↦ f.isIntertwining _ _ g m
   -- Both round trips rewrap the *same* underlying function, so it is enough to compare the two
   -- sides at a point, where `TauCeti.ofDiscreteModuleMap_hom_apply` identifies them.
