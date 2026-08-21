@@ -27,7 +27,9 @@ combinatorial expression in which no weight-space vector occurs.
   a root.
 * `TauCeti.pairingIn_indexEquiv`: the index bijection preserves pairings valued in a coefficient
   subring.
-* `TauCeti.indexEquiv_reflectionPerm`: it commutes with `RootPairing.reflectionPerm`.
+* `TauCeti.indexEquiv_reflectionPerm`: it commutes with `RootPairing.reflectionPerm`, and therefore
+  with the negation of an index, which is `RootPairing.reflectionPerm i i` by definition and is
+  rewritten to that form by the `simp` lemma `RootPairing.indexNeg_neg`.
 * `TauCeti.root_indexEquiv_eq_add_iff` and `TauCeti.root_indexEquiv_eq_sub_iff`: it preserves and
   reflects the relations `α = β + γ` and `α = β - γ` between roots.
 * `TauCeti.linearIndependent_root_indexEquiv_iff`: it preserves and reflects linear independence of
