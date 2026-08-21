@@ -36,7 +36,8 @@ H⁰(G, M) = M^G,   H¹(G, M) = Z¹/B¹,   H²(G, M) = Z²/B².
 * `TauCeti.ContCohomology.B1`, `B2`: the coboundaries, `range d⁰` and the image `d¹(C¹)` of the
   *continuous* `1`-cochains.
 * `TauCeti.ContCohomology.H0`, `H1`, `H2`, their class maps `H1pi`, `H2pi`, and the discrete
-  carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology.
+  carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology, together
+  with their identifications `discreteH1Equiv`, `discreteH2Equiv` with `H1` and `H2`.
 
 ## Main statements
 
@@ -147,9 +148,6 @@ def d0 : M →+ (G → M) where
 /-- The `1`-coboundaries `B¹ = range d⁰`, defined as an algebraic range. Under a continuous
 action, `TauCeti.ContCohomology.B1_le_C1` shows that these cochains are continuous. -/
 def B1 : AddSubgroup (G → M) := (d0 G M).range
-
-/-- `B¹` is the range of `d⁰`, in the shape `AddMonoidHom.mem_range` applies to. -/
-theorem B1_eq_range : B1 G M = (d0 G M).range := (rfl)
 
 variable {G M}
 
@@ -342,12 +340,6 @@ theorem mem_B2_iff {f : G × G → M} :
 
 variable (G M)
 
-/-- `Z¹` is the intersection of the continuous cochains with the kernel of `d¹`. -/
-theorem Z1_eq_inf_ker : Z1 G M = C1 G M ⊓ (d1 G M).ker := (rfl)
-
-/-- `Z²` is the intersection of the continuous cochains with the kernel of `d²`. -/
-theorem Z2_eq_inf_ker : Z2 G M = C2 G M ⊓ (d2 G M).ker := (rfl)
-
 /-- Continuous `1`-cocycles are continuous `1`-cochains. -/
 theorem Z1_le_C1 : Z1 G M ≤ C1 G M := inf_le_left
 
@@ -503,6 +495,16 @@ noncomputable instance [ContinuousMul G] [ContinuousSMul G M] : AddCommGroup (Di
 instance [ContinuousMul G] [ContinuousSMul G M] : TopologicalSpace (DiscreteH2 G M) := ⊥
 
 instance [ContinuousMul G] [ContinuousSMul G M] : DiscreteTopology (DiscreteH2 G M) := ⟨rfl⟩
+
+/-- The identity as an additive equivalence, so that the quotient-class computations on
+representatives stay available after passing to the discrete object. -/
+noncomputable def discreteH1Equiv [ContinuousSMul G M] : DiscreteH1 G M ≃+ H1 G M :=
+  AddEquiv.refl _
+
+/-- The degree-`2` counterpart of `TauCeti.ContCohomology.discreteH1Equiv`. -/
+noncomputable def discreteH2Equiv [ContinuousMul G] [ContinuousSMul G M] :
+    DiscreteH2 G M ≃+ H2 G M :=
+  AddEquiv.refl _
 
 /-- Every class in `H¹` is represented by a continuous `1`-cocycle. -/
 theorem H1pi_surjective [ContinuousSMul G M] : Function.Surjective (H1pi G M) :=
