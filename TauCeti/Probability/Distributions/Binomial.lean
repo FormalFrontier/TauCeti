@@ -247,6 +247,9 @@ native binomial law, with as many trials as the index type has elements. -/
 theorem iIndepFun.hasLaw_sum_bernoulli {ι : Type*} [Fintype ι] {p : unitInterval} {X : ι → Ω → ℕ}
     (hindep : iIndepFun X P) (hX : ∀ i, HasLaw (X i) Ber((1 : ℕ), 0, p) P) :
     HasLaw (fun ω ↦ ∑ i, X i ω) Bin(Fintype.card ι, p) P := by
+  -- `Bin(ℝ, n, p)` is *notation* for `Bin(n, p).map (Nat.cast : ℕ → ℝ)`, not a wrapper
+  -- definition, so the `map_eq` field of `hnatCast` is a syntactic identity rather than an
+  -- unfolding; stating it as a standalone lemma is a syntactic tautology.
   have hcast (i : ι) :
       HasLaw (fun ω ↦ (X i ω : ℝ)) Bin(ℝ, 1, p) P := by
     have hnatCast : HasLaw (Nat.cast : ℕ → ℝ) Bin(ℝ, 1, p) Bin(1, p) :=
