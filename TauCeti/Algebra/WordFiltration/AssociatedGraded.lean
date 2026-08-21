@@ -188,6 +188,7 @@ theorem gradedMul_apply_mk (f : M →ₗ[R] A) (i j : ℕ) (x : wordFiltration f
   exact gradedPreMul_apply f i j x y
 
 /-- Casting a quotient class between equal degrees casts its filtration representative. -/
+@[simp]
 theorem gradedPiece_cast_mk (f : M →ₗ[R] A) {i j : ℕ}
     (h : i = j) (x : wordFiltration f i) :
     cast (congrArg (GradedPiece f) h) (Submodule.Quotient.mk x) =
@@ -197,6 +198,7 @@ theorem gradedPiece_cast_mk (f : M →ₗ[R] A) {i j : ℕ}
 
 /-- Casting a filtered element between equal degrees does not change its value in the ambient
 algebra. -/
+@[simp]
 theorem wordFiltration_coe_cast (f : M →ₗ[R] A) {i j : ℕ}
     (h : i = j) (x : wordFiltration f i) :
     ((cast (congrArg (fun k => ↥(wordFiltration f k)) h) x : wordFiltration f j) :

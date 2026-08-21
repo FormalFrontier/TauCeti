@@ -99,6 +99,7 @@ noncomputable def pbwGradedGenerator : L →ₗ[R] PBWAssociatedGraded R L :=
           (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap)))
 
 /-- The PBW graded generator is the degree-one quotient class of `ι(x)`. -/
+@[simp]
 theorem pbwGradedGenerator_apply (x : L) :
     pbwGradedGenerator R L x =
       DirectSum.of (PBWGradedPiece R L) 1
