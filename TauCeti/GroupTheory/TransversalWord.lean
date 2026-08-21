@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.GroupTheory.GroupAction.Quotient
-public import Mathlib.Tactic.Group
+import Mathlib.Tactic.Group
 
 /-!
 # The transversal word of a subgroup
