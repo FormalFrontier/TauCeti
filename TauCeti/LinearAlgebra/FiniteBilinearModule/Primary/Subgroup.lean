@@ -120,6 +120,7 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
           xp (xd p).1.2 yp (yd p).1.2
 
 /-- Orthogonal complementation commutes with passage to a prime-primary component. -/
+@[simp]
 theorem primaryPart_orthogonalComplement (H : AddSubgroup A) {p : ℕ} (hp : p.Prime) :
     AddSubgroup.primaryPart (A.orthogonalComplement H) p =
       (A.restrict (AddCommGroup.primaryComponent A p)).orthogonalComplement
