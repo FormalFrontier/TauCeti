@@ -210,6 +210,18 @@ def cache_published(toolchain, sha):
     raise RuntimeError(f"the cache answered HTTP {code} for {url}; that is not a verdict")
 
 
+def mathlib_releases():
+    """Every Lean release mathlib has tagged, oldest first.
+
+    One request, and the only thing this tool asks mathlib. It is needed because the set of
+    toolchains `main` ran on is not the set of releases: a release main stepped over, or
+    could never have pinned, has no era here and would otherwise be missing from a report
+    whose entire job is to say which releases have no tag."""
+    raw = gh("repos/leanprover-community/mathlib4/git/matching-refs/tags/v", jq=".[].ref")
+    names = {ref.rsplit("/", 1)[-1] for ref in raw.splitlines()}
+    return sorted((n for n in names if parse_release(n)), key=release_key)
+
+
 def existing_tags():
     """{release: commit} for the release tags this repository already has."""
     raw = gh_optional(f"repos/{REPO}/git/matching-refs/tags/",
@@ -241,22 +253,38 @@ A tag is created only once that commit's post-merge CI has passed and its oleans
 Lake artifact cache, so a checkout builds without recompiling the library. Neither needs a
 rebuild: main already did the work.
 
-A release main never ran on gets no tag, and nothing here will construct one. Releases
-older than %s are out of scope: the Lake cache does not reach back that far, so a tag could
-not promise a usable cache.
+A release main never ran on gets no tag, and nothing here will construct one, but it is
+still reported: either the daily bump stepped over its window on mathlib master, or mathlib
+cut it on its `stable` branch and check-bump.sh could never have let this repository pin it.
+Releases older than %s are out of scope: the Lake cache does not reach back that far, so a
+tag could not promise a usable cache.
 
 Tags are never moved. If one disagrees with this rule, that is a question for a human.
 """ % EARLIEST_RELEASE
 
-STATUSES = ("tagged", "ready", "blocked", "out-of-scope")
+STATUSES = ("tagged", "ready", "blocked", "unreachable", "out-of-scope")
 
 
 def audit(ref=None):
-    """One row per toolchain main has run on, oldest first."""
+    """One row per Lean release in scope, oldest first.
+
+    Per RELEASE, not per era: a release main never ran on still needs an answer, and
+    "not mentioned" is not an answer."""
     tags = existing_tags()
+    by_release = {era["release"]: era for era in eras(ref)}
+    if not by_release:
+        raise RuntimeError("main has never run on a Lean release toolchain")
+    oldest = min(by_release, key=release_key)
     rows = []
-    for era in eras(ref):
-        release, sha = era["release"], era["commit"]
+
+    for release in sorted(set(mathlib_releases()) | set(by_release), key=release_key):
+        if release_key(release) < release_key(oldest):
+            continue          # predates this repository entirely; not our business
+        era = by_release.get(release)
+        if era is None:
+            rows.append(_unreachable_row(release, tags))
+            continue
+        sha = era["commit"]
         row = dict(era, status=None, reason=None, mathlib_rev=mathlib_pin(sha),
                    tagged_at=tags.get(release))
         if release_key(release) < release_key(EARLIEST_RELEASE):
@@ -291,12 +319,30 @@ def audit(ref=None):
     return rows
 
 
+def _unreachable_row(release, tags):
+    """A release main never ran on. There is no commit to tag and nothing will construct
+    one, so the only useful thing the report can do is say so and why."""
+    row = {"release": release, "toolchain": toolchain_for(release), "commit": None,
+           "index": None, "mathlib_rev": None, "tagged_at": tags.get(release),
+           "status": "unreachable",
+           "reason": "main never ran on this toolchain, so there is no commit to tag"}
+    if release_key(release) < release_key(EARLIEST_RELEASE):
+        row["status"] = "out-of-scope"
+        row["reason"] = f"predates {EARLIEST_RELEASE}, before the Lake cache existed"
+    return row
+
+
+def toolchain_for(release):
+    return TOOLCHAIN_PREFIX + release
+
+
 def render(rows):
     lines = [POLICY, ""]
     head = f"{'release':14s} {'status':12s} {'commit':9s} {'mathlib':9s} note"
     lines += [head, "-" * max(len(head), 72)]
     for row in rows:
-        lines.append(f"{row['release']:14s} {row['status']:12s} {row['commit'][:8]:9s} "
+        lines.append(f"{row['release']:14s} {row['status']:12s} "
+                     f"{(row['commit'] or '-')[:8]:9s} "
                      f"{(row['mathlib_rev'] or '-')[:8]:9s} {row['reason'] or ''}")
     ready = [r for r in rows if r["status"] == "ready"]
     lines.append("")
@@ -311,6 +357,15 @@ def render(rows):
     if blocked:
         lines += ["", "Needing a human:", ""]
         lines += [f"    {r['release']}: {r['reason']}" for r in blocked]
+    unreachable = [r for r in rows if r["status"] == "unreachable"]
+    if unreachable:
+        lines += ["", "No tag is possible for these, and none will be constructed:", ""]
+        lines += [f"    {r['release']}: {r['reason']}" for r in unreachable]
+        lines += ["",
+                  "    Either the daily bump stepped over the release's window on mathlib",
+                  "    master, which for a stable release has been as short as fifteen hours,",
+                  "    or mathlib cut it on its `stable` branch, which check-bump.sh could",
+                  "    never have let this repository pin at all."]
     return "\n".join(lines) + "\n"
 
 

@@ -33,10 +33,16 @@ and recorded it.
 
 ## What it does not cover
 
-A release `main` never ran on gets no tag, and nothing here will construct one. Today that
-is `v4.33.0`, whose window on Mathlib master was fifteen hours and which the daily bump
-stepped straight over, and the patch releases `v4.32.1` and `v4.32.2`, which Mathlib cut on
-its `stable` branch and which `check-bump.sh` could never have let this repository pin.
+A release `main` never ran on gets no tag, and nothing here will construct one, but the
+report still lists it as `unreachable` rather than leaving it out: an audit whose job is to
+say which releases have no tag is not allowed to answer by omission. Today that is
+`v4.33.0`, whose window on Mathlib master was fifteen hours and which the daily bump stepped
+straight over, and the patch releases `v4.32.1` and `v4.32.2`, which Mathlib cut on its
+`stable` branch and which `check-bump.sh` could never have let this repository pin at all.
+
+Knowing which of those two it is matters. A stepped-over release is a near miss the bump
+could avoid another day; a `stable`-branch release is permanently out of reach and no
+amount of automation here will change that.
 
 Releases older than `v4.33.0-rc1` are out of scope, because the Lake cache does not reach
 back that far and a tag could not promise a usable one. That bound is `EARLIEST_RELEASE` in

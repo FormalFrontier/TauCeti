@@ -176,6 +176,59 @@ class Report(unittest.TestCase):
             self.assertIn(row["status"], tt.STATUSES)
 
 
+class UnreachableReleases(unittest.TestCase):
+    """A release main never ran on must be REPORTED, not omitted.
+
+    The audit exists to say which releases have no tag. Walking only the toolchains main
+    ran on answered a different question and left `v4.33.0`, which the daily bump stepped
+    over, and the two `stable`-branch patch releases silently absent."""
+
+    def test_a_skipped_release_is_unreachable_not_missing(self):
+        row = tt._unreachable_row("v4.33.0", {})
+        self.assertEqual(row["status"], "unreachable")
+        self.assertIsNone(row["commit"])
+        self.assertIn("never ran", row["reason"])
+
+    def test_a_skipped_release_below_the_cutoff_is_out_of_scope(self):
+        # v4.32.1 is both unreachable and older than the cache; the cache bound is the
+        # more useful thing to say, since it applies to its neighbours too.
+        row = tt._unreachable_row("v4.32.1", {})
+        self.assertEqual(row["status"], "out-of-scope")
+        self.assertIn(tt.EARLIEST_RELEASE, row["reason"])
+
+    def test_the_report_explains_why_no_tag_is_possible(self):
+        rows = [tt._unreachable_row("v4.33.0", {})]
+        text = tt.render(rows)
+        self.assertIn("No tag is possible", text)
+        self.assertIn("stepped over", text)
+        self.assertIn("stable", text)
+
+    def test_a_table_row_without_a_commit_renders(self):
+        text = tt.render([tt._unreachable_row("v4.33.0", {})])
+        self.assertIn("v4.33.0", text)
+
+    def test_the_audit_covers_releases_main_never_ran_on(self):
+        original = {name: getattr(tt, name)
+                    for name in ("mathlib_releases", "eras", "existing_tags",
+                                 "mathlib_pin", "ci_passed", "cache_published")}
+        for name, value in original.items():
+            self.addCleanup(setattr, tt, name, value)
+        tt.mathlib_releases = lambda: ["v4.33.0-rc1", "v4.33.0", "v4.34.0-rc1"]
+        tt.eras = lambda ref=None: [
+            {"release": "v4.33.0-rc1", "toolchain": "leanprover/lean4:v4.33.0-rc1",
+             "commit": "a" * 40, "index": 1},
+            {"release": "v4.34.0-rc1", "toolchain": "leanprover/lean4:v4.34.0-rc1",
+             "commit": "b" * 40, "index": 2},
+        ]
+        tt.existing_tags = lambda: {"v4.33.0-rc1": "a" * 40}
+        tt.mathlib_pin = lambda sha: "c" * 40
+        tt.ci_passed = lambda sha: "success"
+        tt.cache_published = lambda toolchain, sha: True
+        rows = {r["release"]: r["status"] for r in tt.audit()}
+        self.assertEqual(rows, {"v4.33.0-rc1": "tagged", "v4.33.0": "unreachable",
+                                "v4.34.0-rc1": "ready"})
+
+
 class CommandLine(unittest.TestCase):
     def test_create_without_a_release_or_all_is_an_error(self):
         original = tt.audit
