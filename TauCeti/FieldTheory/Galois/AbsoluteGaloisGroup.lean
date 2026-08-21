@@ -27,7 +27,7 @@ the algebraic closure, with `TauCeti.AbsoluteGaloisGroup F = Gal(SeparableClosur
 the carrier every Galois-cohomological statement is written against.
 
 Which of the two closures is used is not a matter of taste.
-`TauCeti.mem_perfectClosure_iff_forall_fixed` says
+`TauCeti.mem_perfectClosure_iff_fixed` says
 that the elements of a normal `E/F` fixed by every `F`-automorphism are exactly the elements purely
 inseparable over `F`. So for an imperfect `F` the fixed field of `Field.absoluteGaloisGroup F` is
 the purely inseparable closure of `F` and not `F` itself, while over the separable closure
@@ -42,17 +42,17 @@ legitimate to state a theorem for one and use it for the other.
   of topological groups, for any normal extension.
 * `TauCeti.absoluteGaloisGroupRestrictEquiv`: its specialisation comparing
   `Field.absoluteGaloisGroup K` with `TauCeti.AbsoluteGaloisGroup K`.
-* `TauCeti.mem_perfectClosure_iff_forall_fixed`: the fixed field of `Gal(E/F)` for a normal
+* `TauCeti.mem_perfectClosure_iff_fixed`: the fixed field of `Gal(E/F)` for a normal
   extension `E/F` is the relative perfect closure of `F` in `E`.
 
 This is the "the group, fixed once" milestone of Layer 9 of the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`; that layer's warning about the algebraic closure is
-`mem_perfectClosure_iff_forall_fixed` here.
+`mem_perfectClosure_iff_fixed` here.
 
 ## References
 
-* J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., Ch. I §2 and
-  Ch. IV, for the convention that the absolute Galois group is taken at the separable closure.
+* J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., Ch. VI §1, for the
+  convention that the absolute Galois group of a field is taken at its separable closure.
 -/
 
 public section
@@ -63,11 +63,38 @@ namespace TauCeti
 
 variable (F E : Type*) [Field F] [Field E] [Algebra F E]
 
+section Auxiliary
+
+variable {F E}
+
+/-- Raising to the `q ^ n`-th power, for `q` the exponential characteristic of `F`, is injective
+on a field extension of `F`. -/
+private theorem eq_of_pow_ringExpChar_pow_eq {a b : E} {n : ℕ}
+    (h : a ^ ringExpChar F ^ n = b ^ ringExpChar F ^ n) : a = b :=
+  have : ExpChar E (ringExpChar F) :=
+    expChar_of_injective_algebraMap (algebraMap F E).injective _
+  iterateFrobenius_inj E (ringExpChar F) n h
+
+/-- The preimage of a finite intermediate field `M` of `E/F` under an `F`-algebra map `g` into `E`
+is finite over `F`: it is `F`-isomorphic to its image under `g`, which is contained in `M`. -/
+private theorem finiteDimensional_comap {L : Type*} [Field L] [Algebra F L] (g : L →ₐ[F] E)
+    (M : IntermediateField F E) [FiniteDimensional F M] : FiniteDimensional F (M.comap g) :=
+  have hle : (M.comap g).map g ≤ M := (IntermediateField.map_comap_eq g M).le.trans inf_le_left
+  Module.Finite.of_injective
+    (((IntermediateField.inclusion hle).comp
+      (IntermediateField.equivMap (M.comap g) g).toAlgHom).toLinearMap)
+    ((IntermediateField.inclusion_injective hle).comp
+      (IntermediateField.equivMap (M.comap g) g).injective)
+
+end Auxiliary
+
 section Normal
 
 variable [Normal F E]
 
 /-! ### Restriction to the separable closure -/
+
+namespace AlgEquiv
 
 /-- An `F`-automorphism of a normal extension `E/F` that is the identity on the separable closure
 of `F` in `E` is the identity: what is left of the extension is purely inseparable. -/
@@ -76,8 +103,7 @@ theorem restrictNormalHom_separableClosure_injective :
       (AlgEquiv.restrictNormalHom (F := F) (K₁ := E) (separableClosure F E)) := by
   rw [← MonoidHom.ker_eq_bot_iff, IntermediateField.restrictNormalHom_ker]
   have h : Subsingleton Gal(E/(separableClosure F E)) :=
-    ⟨fun a b ↦ AlgEquiv.ext fun x ↦
-      AlgHom.congr_fun (Subsingleton.elim a.toAlgHom b.toAlgHom) x⟩
+    AlgEquiv.coe_toAlgHom_injective.subsingleton
   have h' : Subsingleton (separableClosure F E).fixingSubgroup :=
     (IntermediateField.fixingSubgroupEquiv _).toEquiv.subsingleton
   exact Subgroup.eq_bot_of_subsingleton _
@@ -90,6 +116,8 @@ theorem restrictNormalHom_separableClosure_bijective :
   ⟨restrictNormalHom_separableClosure_injective F E,
     AlgEquiv.restrictNormalHom_surjective E⟩
 
+end AlgEquiv
+
 variable {F E}
 
 /-- A homomorphism into `Gal(E/F)` lifting the automorphisms of the separable closure is
@@ -97,48 +125,38 @@ continuous.
 
 This is the criterion the inverse of `separableClosureRestrictEquiv` is checked against, and it is
 where the topologies are compared: the fixing subgroup of a finite subextension `M` of `E` is
-pulled back to the fixing subgroup of the trace of `M` on `separableClosure F E`, because every
-element of `M` has a `q`-th power root of itself inside that trace. -/
+pulled back to the fixing subgroup of `M ∩ separableClosure F E`, because for every `x ∈ M` the
+power `x ^ q ^ n` lies in that intersection for some `n`, where `q` is the exponential
+characteristic. -/
 private theorem continuous_of_algebraMap_comm (s : Gal(separableClosure F E/F) → Gal(E/F))
     (hmul : ∀ a b, s (a * b) = s a * s b)
     (hs : ∀ (τ : Gal(separableClosure F E/F)) (y : separableClosure F E),
       s τ (algebraMap (separableClosure F E) E y) =
         algebraMap (separableClosure F E) E (τ y)) :
     Continuous s := by
-  have hEq : ExpChar E (ringExpChar F) :=
-    expChar_of_injective_algebraMap (algebraMap F E).injective _
   have hSq : ExpChar (separableClosure F E) (ringExpChar F) :=
     expChar_of_injective_algebraMap (algebraMap F (separableClosure F E)).injective _
   refine continuous_of_continuousAt_one (MonoidHom.mk' s hmul)
     (continuousAt_def.mpr fun N hN ↦ ?_)
   rw [map_one, krullTopology_mem_nhds_one_iff] at hN
   obtain ⟨M, hM, hMN⟩ := hN
+  have : FiniteDimensional F M := hM
   rw [krullTopology_mem_nhds_one_iff]
-  -- `M.comap g` is the trace of `M` on the separable closure.
-  set g : separableClosure F E →ₐ[F] E := IsScalarTower.toAlgHom F _ E
-  refine ⟨M.comap g, ?_, fun τ hτ ↦ hMN ?_⟩
-  · -- It is finite over `F` because it embeds `F`-linearly into `M`.
-    have : Module.Finite F M := hM
-    exact Module.Finite.of_injective
-      ({ toFun := fun x : M.comap g ↦ (⟨g x, x.2⟩ : M)
-         map_add' := fun _ _ ↦ Subtype.ext (map_add g _ _)
-         map_smul' := fun _ _ ↦ Subtype.ext (map_smul g _ _) } : M.comap g →ₗ[F] M)
-      fun a b h ↦ by
-        have hab : g a = g b := congrArg (fun z : M ↦ (z : E)) h
-        exact Subtype.ext (g.injective hab)
-  · -- Each `x ∈ M` has `x ^ q ^ n` in the trace, hence fixed, hence `x` itself is fixed.
-    rw [SetLike.mem_coe, IntermediateField.mem_fixingSubgroup_iff]
-    intro x hx
-    obtain ⟨n, y, hy⟩ := IsPurelyInseparable.pow_mem (separableClosure F E) (ringExpChar F) x
-    -- `M.comap g` is by definition the set of `y` with `g y ∈ M`.
-    have hyM : g y ∈ M := by
-      have hgy : g y = x ^ ringExpChar F ^ n := hy
-      rw [hgy]
-      exact pow_mem hx _
-    have hτy : τ y = y := (IntermediateField.mem_fixingSubgroup_iff _ _).mp hτ y hyM
-    have hpow : (s τ x) ^ ringExpChar F ^ n = x ^ ringExpChar F ^ n := by
-      rw [← hy, ← map_pow, ← hy, hs τ y, hτy]
-    simpa [iterateFrobenius_def] using (iterateFrobenius E (ringExpChar F) n).injective hpow
+  -- `M.comap g` is `M ∩ separableClosure F E`.
+  set g : separableClosure F E →ₐ[F] E := IsScalarTower.toAlgHom F _ E with hg
+  refine ⟨M.comap g, finiteDimensional_comap g M, fun τ hτ ↦ hMN ?_⟩
+  -- Each `x ∈ M` has `x ^ q ^ n` in that intersection, hence fixed, hence `x` itself is fixed.
+  rw [SetLike.mem_coe, IntermediateField.mem_fixingSubgroup_iff]
+  intro x hx
+  obtain ⟨n, y, hy⟩ := IsPurelyInseparable.pow_mem (separableClosure F E) (ringExpChar F) x
+  -- `M.comap g` is by definition the set of `y` with `g y ∈ M`.
+  have hyM : g y ∈ M := by
+    rw [hg, IsScalarTower.toAlgHom_apply, hy]
+    exact pow_mem hx _
+  have hτy : τ y = y := (IntermediateField.mem_fixingSubgroup_iff _ _).mp hτ y hyM
+  have hpow : (s τ x) ^ ringExpChar F ^ n = x ^ ringExpChar F ^ n := by
+    rw [← hy, ← map_pow, ← hy, hs τ y, hτy]
+  exact eq_of_pow_ringExpChar_pow_eq (F := F) hpow
 
 variable (F E)
 
@@ -146,22 +164,22 @@ variable (F E)
 `Gal(E/F) ≃ₜ* Gal(separableClosure F E / F)`, for a normal extension `E/F`. -/
 def separableClosureRestrictEquiv : Gal(E/F) ≃ₜ* Gal(separableClosure F E/F) where
   __ := MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
-    (restrictNormalHom_separableClosure_bijective F E)
+    (AlgEquiv.restrictNormalHom_separableClosure_bijective F E)
   continuous_toFun := InfiniteGalois.restrictNormalHom_continuous _
   continuous_invFun := by
     set e := MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
-      (restrictNormalHom_separableClosure_bijective F E)
+      (AlgEquiv.restrictNormalHom_separableClosure_bijective F E)
     refine continuous_of_algebraMap_comm e.symm (map_mul e.symm) fun τ y ↦ ?_
     conv_rhs => rw [← e.apply_symm_apply τ]
     exact (AlgEquiv.restrictNormal_commutes _ _ y).symm
 
 variable {F E}
 
-@[simp]
 theorem separableClosureRestrictEquiv_apply (σ : Gal(E/F)) :
     separableClosureRestrictEquiv F E σ = AlgEquiv.restrictNormalHom (separableClosure F E) σ :=
   (rfl)
 
+@[simp]
 theorem coe_separableClosureRestrictEquiv_apply (σ : Gal(E/F)) (x : separableClosure F E) :
     (separableClosureRestrictEquiv F E σ x : E) = σ x :=
   AlgEquiv.restrictNormal_commutes _ _ x
@@ -178,17 +196,16 @@ theorem separableClosureRestrictEquiv_symm_apply_coe (τ : Gal(separableClosure 
 /-- **The fixed field of `Gal(E/F)` for a normal extension `E/F` is the relative perfect closure**
 of `F` in `E`, and not `F`. The two agree exactly when `E/F` has no nontrivial purely inseparable
 part, so for `E` an algebraic closure they agree exactly when `F` is perfect. -/
-theorem mem_perfectClosure_iff_forall_fixed {x : E} :
+theorem mem_perfectClosure_iff_fixed {x : E} :
     x ∈ perfectClosure F E ↔ ∀ σ : Gal(E/F), σ x = x := by
-  have hEq : ExpChar E (ringExpChar F) :=
-    expChar_of_injective_algebraMap (algebraMap F E).injective _
   have hSq : ExpChar (separableClosure F E) (ringExpChar F) :=
     expChar_of_injective_algebraMap (algebraMap F (separableClosure F E)).injective _
   refine ⟨fun hx σ ↦ ?_, fun hx ↦ ?_⟩
-  · obtain ⟨n, a, ha⟩ := (mem_perfectClosure_iff_pow_mem (F := F) (E := E) (ringExpChar F)).mp hx
-    have hpow : (σ x) ^ ringExpChar F ^ n = x ^ ringExpChar F ^ n := by
-      rw [← map_pow, ← ha, AlgEquiv.commutes]
-    simpa [iterateFrobenius_def] using (iterateFrobenius E (ringExpChar F) n).injective hpow
+  · -- `perfectClosure F E` is purely inseparable over `F`, so `σ` and the inclusion are the same
+    -- `F`-algebra map on it.
+    exact AlgHom.congr_fun
+      (Subsingleton.elim (σ.toAlgHom.comp (perfectClosure F E).val) (perfectClosure F E).val)
+      ⟨x, hx⟩
   · -- Push `x` into the separable closure by a `q`-th power, where the fixed field is `F`.
     obtain ⟨n, y, hy⟩ := IsPurelyInseparable.pow_mem (separableClosure F E) (ringExpChar F) x
     have hfix : ∀ τ : Gal(separableClosure F E/F), τ y = y := fun τ ↦ by
@@ -222,6 +239,22 @@ isomorphism `Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K`. -/
 def absoluteGaloisGroupRestrictEquiv :
     Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K :=
   separableClosureRestrictEquiv K (AlgebraicClosure K)
+
+/-- `absoluteGaloisGroupRestrictEquiv` is `separableClosureRestrictEquiv` at the algebraic closure;
+this makes the general API reachable at the specialisation. -/
+theorem absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K)) :
+    absoluteGaloisGroupRestrictEquiv K σ =
+      separableClosureRestrictEquiv K (AlgebraicClosure K) σ :=
+  (rfl)
+
+/-- The inverse of `absoluteGaloisGroupRestrictEquiv` is the inverse of
+`separableClosureRestrictEquiv` at the algebraic closure; combined with
+`separableClosureRestrictEquiv_symm_apply_coe` this computes the automorphism of
+`AlgebraicClosure K` extending a given automorphism of `SeparableClosure K`. -/
+theorem absoluteGaloisGroupRestrictEquiv_symm_apply (τ : AbsoluteGaloisGroup K) :
+    (absoluteGaloisGroupRestrictEquiv K).symm τ =
+      (separableClosureRestrictEquiv K (AlgebraicClosure K)).symm τ :=
+  (rfl)
 
 @[simp]
 theorem coe_absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K))
