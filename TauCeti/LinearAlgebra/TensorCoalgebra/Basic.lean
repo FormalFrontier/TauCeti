@@ -185,6 +185,7 @@ theorem map_id : ReducedTensorWords.map (R := R) (LinearMap.id : M →ₗ[R] M) 
   simp [map, of]
 
 /-- Mapping a composite over the letters composes the two letterwise maps. -/
+@[simp]
 theorem map_comp (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
     ReducedTensorWords.map (R := R) (g ∘ₗ f) =
       ReducedTensorWords.map (R := R) g ∘ₗ ReducedTensorWords.map (R := R) f := by
