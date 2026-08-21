@@ -98,6 +98,7 @@ universe u v w
 
 /-! ### Finiteness of the doubled quiver -/
 
+/-- Typeclass search does not unfold the `Symmetrify` type synonym to reuse `Finite Q`. -/
 instance instFiniteSymmetrify (Q : Type u) [Finite Q] : Finite (Symmetrify Q) :=
   inferInstanceAs (Finite Q)
 
