@@ -26,8 +26,10 @@ The two halves are proved at their own generality and for their own reasons.
 projections is continuous for the weak topology, and being a coupling of `μ` and `ν` says exactly
 that the two pushforwards are `μ` and `ν`; so the coupling set is an intersection of two preimages
 of points. That is closed as soon as points are closed in the two spaces of marginals, which is
-the `T1Space` hypothesis carried here and is automatic in the Borel regime, where those spaces are
-Hausdorff.
+the `T1Space` hypothesis carried here. Mathlib derives it from
+`MeasureTheory.ProbabilityMeasure.t2Space`, whose hypotheses are `BorelSpace` together with
+`HasOuterApproxClosed` — so it is available on the metrizable factors the later sections work
+with, but is asked for explicitly here rather than assumed.
 
 *Compactness* is Prokhorov's theorem. Tightness of the coupling set follows from tightness of the
 two marginals alone: a compact rectangle `K₁ ×ˢ K₂` misses at most the mass its two sides miss,
@@ -63,25 +65,6 @@ open scoped ENNReal NNReal Topology
 
 namespace TauCeti
 
-section Marginal
-
-variable {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y] {μ : ProbabilityMeasure X}
-  {ν : ProbabilityMeasure Y}
-
-/-- Being a coupling, read on bundled probability measures: the two marginal pushforwards are the
-prescribed marginals. This is the form in which the coupling condition is a pair of preimages of
-points under continuous maps. -/
-@[simp]
-theorem isCoupling_toMeasure_iff {π : ProbabilityMeasure (X × Y)} :
-    IsCoupling π.toMeasure μ.toMeasure ν.toMeasure ↔
-      π.map measurable_fst.aemeasurable = μ ∧ π.map measurable_snd.aemeasurable = ν := by
-  rw [← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_fst.aemeasurable),
-    ← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_snd.aemeasurable),
-    ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_map]
-  exact ⟨fun h ↦ ⟨h.fst_eq, h.snd_eq⟩, fun h ↦ ⟨h.1, h.2⟩⟩
-
-end Marginal
-
 section Closed
 
 variable {X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
@@ -90,8 +73,9 @@ variable {X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
 /-- **The couplings of two probability measures are weakly closed.** The coupling set is the
 intersection of the preimages of `{μ}` and `{ν}` under the two marginal maps, both of which are
 continuous for the topology of convergence in distribution. The `T1Space` hypotheses are what make
-the two singletons closed; in the Borel regime they hold, because the spaces of probability
-measures are then Hausdorff. -/
+the two singletons closed; they hold whenever the two factors are `HasOuterApproxClosed` — in
+particular whenever they are metrizable — since the spaces of probability measures are then
+Hausdorff by `MeasureTheory.ProbabilityMeasure.t2Space`. -/
 theorem isClosed_setOfPred_isCoupling [T1Space (ProbabilityMeasure X)]
     [T1Space (ProbabilityMeasure Y)] (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) :
     IsClosed {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ.toMeasure ν.toMeasure} := by

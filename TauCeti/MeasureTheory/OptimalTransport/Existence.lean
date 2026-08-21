@@ -31,9 +31,9 @@ theorem still produces an optimal plan, of cost `∞`; the statement separates e
 finiteness, as the roadmap asks.
 
 The cost is only assumed lower semicontinuous, not continuous, and this is the point: the costs of
-interest, such as `edist` raised to a power or a `{0, ∞}`-valued constraint, are lower
-semicontinuous, and lower semicontinuity is exactly what guarantees attainment of the infimum on
-the compact set of couplings.
+interest, such as `edist` raised to a power or the `{0, ∞}`-valued indicator of a closed constraint
+set, are lower semicontinuous, and lower semicontinuity is exactly what guarantees attainment of
+the infimum on the compact set of couplings.
 
 ## Main statements
 
@@ -66,15 +66,15 @@ open scoped ENNReal NNReal Topology
 
 namespace TauCeti
 
-/-! The two factors are second countable Borel metrizable spaces, the hypotheses under which the
-coupling set is weakly compact. Metrizability is asked of the topology, not of a chosen distance,
-so a space known only to be Polish qualifies; the pseudometric that the direct method runs on is
-installed inside the proofs. -/
+/-! The two factors are Borel metrizable spaces, one of the two second countable — the hypotheses
+under which the product is a Borel space and the coupling set is weakly compact. Metrizability is
+asked of the topology, not of a chosen distance, so a space known only to be Polish qualifies; the
+pseudometric that the direct method runs on is installed inside the proofs. -/
 
 variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace.MetrizableSpace X]
-  [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X] [TopologicalSpace Y]
+  [MeasurableSpace X] [BorelSpace X] [TopologicalSpace Y]
   [TopologicalSpace.MetrizableSpace Y] [MeasurableSpace Y] [BorelSpace Y]
-  [SecondCountableTopology Y] {c : X × Y → ℝ≥0∞}
+  [SecondCountableTopologyEither X Y] {c : X × Y → ℝ≥0∞}
 
 /-- **Primal attainment for a lower semicontinuous cost.** If both marginals are tight, the
 transport cost of `μ` and `ν` is attained: some coupling `π` satisfies
