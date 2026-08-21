@@ -43,6 +43,8 @@ In the namespace `NumberField`, all for `Module.finrank ℚ K = 2`:
 * `ramificationIdx_eq_two_of_mem_ramifiedPrimes` and `inertiaDeg_eq_one_of_mem_ramifiedPrimes`:
   that prime has `e = 2` and `f = 1`.
 * `absNorm_eq_of_mem_ramifiedPrimes`: its absolute norm is `p`.
+* `TauCeti.NumberField.eq_of_absNorm_eq_of_mem_ramifiedPrimes`: every ideal of absolute norm `p`
+  is that unique prime.
 * `map_span_eq_sq_of_mem_ramifiedPrimes`: `p 𝓞 K = 𝔭 ^ 2`.
 * `map_eq_self_of_mem_ramifiedPrimes`: any ring automorphism of `𝓞 K` fixes `𝔭`.
 * `mem_ramifiedPrimes_iff_ramificationIdx_eq_two`: conversely, `e = 2` characterises the ramified
@@ -211,3 +213,27 @@ theorem mem_ramifiedPrimes_iff_ramificationIdx_eq_two :
   omega
 
 end NumberField
+
+namespace TauCeti.NumberField
+
+variable {K : Type*} [Field K] [NumberField K] {p : ℕ}
+
+/-- **An ideal of prime norm is the unique prime above a ramified rational prime.** If `p`
+ramifies in a quadratic number field, every ideal of absolute norm `p` equals the caller's chosen
+prime `𝔭` above `p`. -/
+theorem eq_of_absNorm_eq_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
+    (hmem : p ∈ _root_.NumberField.ramifiedPrimes K) (𝔭 I : Ideal (𝓞 K)) [𝔭.IsPrime]
+    [𝔭.LiesOver (span {(p : ℤ)})] (hI : I.absNorm = p) : I = 𝔭 := by
+  have hpprime := _root_.NumberField.prime_of_mem_ramifiedPrimes hmem
+  have hirr : Irreducible I.absNorm := by rw [hI]; exact hpprime
+  let _ : I.IsPrime := Ideal.isPrime_of_irreducible_absNorm hirr
+  have hprimeNorm : I.absNorm.Prime := by rw [hI]; exact hpprime
+  let _ : I.LiesOver (span {(p : ℤ)}) := ⟨by
+    simpa [hI, Ideal.under_def] using Ideal.span_singleton_absNorm (I := I) hprimeNorm⟩
+  have hmemI : I ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, inferInstance⟩
+  have hset : (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) = {𝔭} :=
+    _root_.NumberField.primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭
+  have : I ∈ ({𝔭} : Set (Ideal (𝓞 K))) := hset ▸ hmemI
+  simpa using this
+
+end TauCeti.NumberField

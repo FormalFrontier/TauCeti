@@ -11,6 +11,7 @@ import Mathlib.Analysis.Real.Pi.Bounds
 import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Independence
 import TauCeti.NumberTheory.NumberField.ClassGroupElementaryTwoQuotient
 import TauCeti.NumberTheory.NumberField.IntegralSqrt
+import TauCeti.NumberTheory.NumberField.PrimeIdeal
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
@@ -36,6 +37,10 @@ The main theorem is stated for any number field with an integral generator of mi
 
 The argument is the standard Minkowski computation; see D. A. Cox, *Primes of the Form
 x² + ny²*, Chapter 5.
+
+The formal proof structure follows
+`TauCeti.NumberTheory.Multiquadratic.MinusFive.ClassNumber`, with the norm classification and
+ramified-prime argument adapted to discriminant `-84`.
 
 ## Main results
 
@@ -97,23 +102,6 @@ private theorem minkowski_bound_lt_six
       rw [div_lt_iff₀ Real.pi_pos]
       nlinarith [Real.pi_gt_d2]
 
-/-- An ideal of prime norm `p` is the unique prime above `p` when `p` ramifies in a quadratic
-number field. -/
-private theorem eq_primeAbove_of_absNorm_eq {p : ℕ} (hp : p.Prime)
-    (hfin : finrank ℚ K = 2) (hram : p ∈ ramifiedPrimes K)
-    (P I : Ideal (𝓞 K)) [P.IsPrime] [P.LiesOver (span {(p : ℤ)})]
-    (hI : I.absNorm = p) : I = P := by
-  have hirr : Irreducible I.absNorm := by rw [hI]; exact hp
-  let _ : I.IsPrime := Ideal.isPrime_of_irreducible_absNorm hirr
-  have hprimeNorm : I.absNorm.Prime := by rw [hI]; exact hp
-  let _ : I.LiesOver (span {(p : ℤ)}) := ⟨by
-    simpa [hI, Ideal.under_def] using Ideal.span_singleton_absNorm (I := I) hprimeNorm⟩
-  have hmem : I ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, inferInstance⟩
-  have hset : (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) = {P} :=
-    primesOver_eq_singleton_of_mem_ramifiedPrimes hfin hram P
-  have : I ∈ ({P} : Set (Ideal (𝓞 K))) := hset ▸ hmem
-  simpa using this
-
 /-- In a quadratic number field where `2` ramifies, every ideal of norm `4` is principal. -/
 private theorem isPrincipal_of_absNorm_eq_four (hfin : finrank ℚ K = 2)
     (hram : 2 ∈ ramifiedPrimes K) (I : Ideal (𝓞 K)) (hI : I.absNorm = 4) :
@@ -130,7 +118,7 @@ private theorem isPrincipal_of_absNorm_eq_four (hfin : finrank ℚ K = 2)
     rw [map_mul, hI, hPnorm] at hnorm
     omega
   have hJP : J = P :=
-    eq_primeAbove_of_absNorm_eq Nat.prime_two hfin hram P J hJnorm
+    eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P J hJnorm
   rw [hIJ, hJP, ← pow_two, ← map_span_eq_sq_of_mem_ramifiedPrimes hfin hram P,
     Ideal.map_span, Set.image_singleton]
   exact ⟨algebraMap ℤ (𝓞 K) 2, rfl⟩
@@ -209,14 +197,15 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
     · simp only [candidates, Finset.mem_insert]
       right; left
       rw [← hIC]
-      have hIP : I.1 = P2 := eq_primeAbove_of_absNorm_eq Nat.prime_two hfin hram_two P2 I.1 hnorm
+      have hIP : I.1 = P2 :=
+        eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram_two P2 I.1 hnorm
       apply congrArg ClassGroup.mk0
       exact Subtype.ext hIP
     · simp only [candidates, Finset.mem_insert]
       right; right; left
       rw [← hIC]
       have hIP : I.1 = P3 :=
-        eq_primeAbove_of_absNorm_eq (by decide) hfin hram_three P3 I.1 hnorm
+        eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram_three P3 I.1 hnorm
       apply congrArg ClassGroup.mk0
       exact Subtype.ext hIP
     · simp only [candidates, Finset.mem_insert]
@@ -263,21 +252,8 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
           (Finset.card_image_le : (primesFive.attach.image classFive).card ≤
             primesFive.attach.card)
       _ ≤ 5 := by
-        have hcard : primesFive.card ≤ finrank ℚ K := by
-          calc
-            primesFive.card = ∑ _q : p5.primesOver (𝓞 K), 1 := by
-              rw [Finset.sum_const, smul_eq_mul, mul_one, Finset.card_univ,
-                ← Nat.card_eq_fintype_card, Nat.card_coe_set_eq,
-                ← IsDedekindDomain.coe_primesOverFinset hp5ne (𝓞 K),
-                Set.ncard_coe_finset]
-            _ ≤ ∑ q : p5.primesOver (𝓞 K),
-                q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ :=
-              Finset.sum_le_sum fun q _ => Nat.one_le_iff_ne_zero.mpr
-                (Nat.mul_ne_zero (Ideal.ramificationIdx_pos q.1 ℤ).ne'
-                  (Ideal.inertiaDeg_pos q.1 ℤ).ne')
-            _ = finrank ℤ (𝓞 K) :=
-              Ideal.sum_ramification_inertia_eq_finrank p5 (𝓞 K)
-            _ = finrank ℚ K := NumberField.RingOfIntegers.rank K
+        have hcard : primesFive.card ≤ finrank ℚ K :=
+          card_primesOverFinset_le_finrank (K := K) hp5ne
         omega
   have hram_card : 3 ≤ (ramifiedPrimes K).ncard := by
     have hsubset : ({2, 3, 7} : Set ℕ) ⊆ ramifiedPrimes K := by
