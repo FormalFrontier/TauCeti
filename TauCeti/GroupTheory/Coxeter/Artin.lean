@@ -82,10 +82,11 @@ variable {B G N W : Type*} [Group G] [Monoid N] [Group W]
 
 /-- The alternating word of length `2`. Mathlib defines `CoxeterSystem.alternatingWord` by
 recursion; this case and the next are the ones the rank-two relations below need. -/
-theorem alternatingWord_two (i i' : B) : CoxeterSystem.alternatingWord i i' 2 = [i, i'] := rfl
+private theorem alternatingWord_two (i i' : B) :
+    CoxeterSystem.alternatingWord i i' 2 = [i, i'] := rfl
 
 /-- The alternating word of length `3`. -/
-theorem alternatingWord_three (i i' : B) :
+private theorem alternatingWord_three (i i' : B) :
     CoxeterSystem.alternatingWord i i' 3 = [i', i, i'] := rfl
 
 section Relations

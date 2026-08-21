@@ -207,34 +207,19 @@ theorem transposition_braid {i j : Fin (n - 1)}
   have hji : strand j = strandSucc i := Fin.ext (by simp [h])
   have hab : strand i ≠ strandSucc i := by
     simp only [ne_eq, Fin.ext_iff, val_strand, val_strandSucc]; omega
-  have hac : strand i ≠ strandSucc j := by
-    simp only [ne_eq, Fin.ext_iff, val_strand, val_strandSucc]; omega
   have hcb : strandSucc j ≠ strandSucc i := by
     simp only [ne_eq, Fin.ext_iff, val_strandSucc]; omega
   rw [transposition_eq_swap, transposition_eq_swap, hji]
-  exact swap_braid hab hac hcb
+  exact swap_braid hab hcb
 
-/-- The underlying permutation of the strands of a braid. -/
+/-- The underlying permutation of the strands of a braid, obtained from the universal property
+`TauCeti.BraidGroup.lift` and the two relations satisfied by the adjacent transpositions. -/
 def permHom (n : ℕ) : BraidGroup n →* Equiv.Perm (Fin n) :=
-  ArtinGroup.lift _ transposition <| by
-    intro i j
-    rcases eq_or_ne i j with rfl | hij
-    · rfl
-    have hv : (i : ℕ) ≠ (j : ℕ) := fun h ↦ hij (Fin.ext h)
-    by_cases hadj : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i
-    · rw [prod_map_braidWord_of_eq_three _ _ (coxeterMatrixA_eq_three hadj),
-        prod_map_braidWord_of_eq_three _ _ (coxeterMatrixA_eq_three hadj.symm)]
-      rcases hadj with h | h
-      · exact (transposition_braid (Or.inl h)).symm
-      · exact transposition_braid (Or.inl h)
-    · have h2 : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i := by omega
-      rw [prod_map_braidWord_of_eq_two _ _ (coxeterMatrixA_eq_two h2),
-        prod_map_braidWord_of_eq_two _ _ (coxeterMatrixA_eq_two h2.symm)]
-      exact transposition_comm h2
+  lift transposition transposition_comm transposition_braid
 
 @[simp]
 theorem permHom_sigma (i : Fin (n - 1)) : permHom n (sigma i) = transposition i := by
-  simpa only [permHom, sigma_eq_gen] using ArtinGroup.lift_gen _ transposition _ i
+  rw [permHom, lift_sigma]
 
 /-- Every permutation of the strands is realised by a braid. -/
 theorem permHom_surjective (n : ℕ) : Function.Surjective (permHom n) := by
