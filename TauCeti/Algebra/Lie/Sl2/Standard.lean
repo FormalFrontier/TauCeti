@@ -387,6 +387,14 @@ theorem lie_eq_rep_apply (x : SpecialLinear.sl (Fin 2) K) (v : Sl2Std K n) :
     ⁅x, v⁆ = rep K n x v :=
   LieRingModule.compLieHom_apply (Sl2Std K n) (rep K n) x v
 
+/-- The endomorphism of `V(n)` by which an element of `sl (Fin 2) K` acts is the one given by
+`TauCeti.Sl2Std.rep`. This is the `Module.End`-valued form of
+`TauCeti.Sl2Std.lie_eq_rep_apply`. -/
+@[simp]
+theorem toEnd_eq_rep (x : SpecialLinear.sl (Fin 2) K) :
+    toEnd K (SpecialLinear.sl (Fin 2) K) (Sl2Std K n) x = rep K n x :=
+  LinearMap.ext fun v => by rw [toEnd_apply_apply, lie_eq_rep_apply]
+
 /-- The representation sends the standard basis of `sl (Fin 2) K` to the ladder operators. -/
 theorem rep_apply_basis (i : Fin 3) :
     rep K n (slFinTwoBasis K i) = ![raise K n, lower K n, diag K n] i :=

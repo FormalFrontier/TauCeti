@@ -16,8 +16,6 @@ the standard basis of `sl (Fin 2)` in the module `TauCeti.Sl2Std K n`.
 
 ## Main result
 
-* `TauCeti.Sl2Std.representation_ι'`: the simp-normal specialization of the canonical
-  enveloping representation on every `sl₂` generator.
 * `TauCeti.Sl2Std.representation_ι_slFinTwoBasis`: the canonical enveloping representation sends
   the standard `sl₂` basis to the raising, lowering, and Cartan operators.
 -/
@@ -30,14 +28,6 @@ open scoped Matrix
 
 variable {K : Type*} [CommRing K] {n : ℕ}
 
-/-- The simp-normal specialization of the canonical enveloping-algebra representation on an
-element of `sl (Fin 2) K`. -/
-@[simp]
-theorem representation_ι' (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
-    LieModule.toEnd K (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n) x = rep K n x := by
-  ext v
-  rw [LieModule.toEnd_apply_apply, lie_eq_rep_apply]
-
 /-- The canonical enveloping-algebra representation sends the standard `sl₂` basis elements to
 the raising, lowering, and Cartan operators. -/
 theorem representation_ι_slFinTwoBasis (i : Fin 3) :
@@ -45,6 +35,6 @@ theorem representation_ι_slFinTwoBasis (i : Fin 3) :
         (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n)
         (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
       ![raise K n, lower K n, diag K n] i := by
-  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι, representation_ι', rep_apply_basis]
+  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι, toEnd_eq_rep, rep_apply_basis]
 
 end TauCeti.Sl2Std
