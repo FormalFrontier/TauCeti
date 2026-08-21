@@ -27,8 +27,8 @@ verbatim to holomorphic germs (`TauCeti.monodromy_theorem_etaleSpace`).
 
 ## The dictionary
 
-Given that each `f t` is analytic at `γ t` and that `γ` is continuous, the two remaining clauses of
-a continuation — that nearby parameter times carry the same germ — and continuity of
+Given that each `f t` is analytic at `γ t`, the two remaining clauses of a continuation — that the
+path is continuous and that nearby parameter times carry the same germ — and continuity of
 `t ↦ germPoint (f t) (γ t)` say the same thing, and the proof is a translation in both directions
 of the same fact about the étalé topology, namely that the germs of one section over one open set
 form a neighbourhood of each of them:
@@ -43,8 +43,9 @@ form a neighbourhood of each of them:
   of two analytic functions — is the locality clause.
 
 The base point of the lift is `γ t` by construction (`TauCeti.HolomorphicPresheaf.base_germPoint`),
-so no separate lifting condition has to be stated. In the other direction a continuous map into
-the étalé space is a continuation of its own representatives
+so no separate lifting condition has to be stated, and continuity of `γ` itself need not be
+assumed: it is continuity of the lift composed with the continuous étalé projection. In the other
+direction a continuous map into the étalé space is a continuation of its own representatives
 (`TauCeti.isAnalyticContinuationAlong_repFun`), so the two notions are interchangeable rather than
 merely comparable.
 
@@ -75,12 +76,15 @@ lifting, in the vocabulary the deck-group and uniformization consumers of layer 
 
 ## Generality
 
-The germs are germs of maps `ℂ → ℂ`, the target of the sheaf built in
-`TauCeti/Analysis/Complex/HolomorphicSheaf.lean`, whereas `TauCeti.IsAnalyticContinuationAlong` is
-stated for maps `ℂ → E` into a complex Banach space; the specialisation is discussed there, and is
-the one the conformal-mapping consumers use. The parameter space `X` and the parameter set `s` are
-arbitrary, as in `Conformal/Continuation/Basic.lean`: nothing below needs the parameter set to be
-an interval, and the monodromy statement is the only place the unit interval appears.
+The germs are germs of maps `ℂ → E` into a complex Banach space `E`, the generality of both
+`TauCeti.IsAnalyticContinuationAlong` and the sheaf built in
+`TauCeti/Analysis/Complex/HolomorphicSheaf.lean`. The two restrictions on `E` are the ones that
+file records: `Type` rather than `Type*`, for a universe reason of Mathlib's étalé space, and
+completeness, which `AnalyticAt.exists_ball_analyticOnNhd` asks for. Neither is needed by
+`TauCeti.monodromy_theorem_etaleSpace`, which touches no germ, so it is stated without
+completeness. The parameter space `X` and the parameter set `s` are arbitrary, as in
+`Conformal/Continuation/Basic.lean`: nothing below needs the parameter set to be an interval, and
+the monodromy statement is the only place the unit interval appears.
 
 ## References
 
@@ -94,20 +98,22 @@ namespace TauCeti
 
 open CategoryTheory Metric Opposite Set TopologicalSpace Topology unitInterval
 
-variable {X : Type*} [TopologicalSpace X] {f : X → ℂ → ℂ} {γ : X → ℂ} {s : Set X}
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+  {X : Type*} [TopologicalSpace X] {f : X → ℂ → E} {γ : X → ℂ} {s : Set X}
 
 /-! ### A continuation along a path is a continuous lift -/
 
 /-- **Analytic continuation along a path is a continuous lift to the étalé space of holomorphic
-germs.** Assume each `f t` is analytic at `γ t` and that `γ` is continuous on the parameter set.
-Then `f` is an analytic continuation along `γ` exactly when the germ it carries, read as a point
-of the étalé space of holomorphic germs, depends continuously on the parameter.
+germs.** Assume each `f t` is analytic at `γ t`. Then `f` is an analytic continuation along `γ`
+exactly when the germ it carries, read as a point of the étalé space of holomorphic germs, depends
+continuously on the parameter.
 
-The lifting condition itself needs no hypothesis: the germ point of `f t` at `γ t` sits over
-`γ t` by construction. So the content of the equivalence is that the locality clause of a
-continuation — nearby parameter times carry the same germ — is continuity in the étalé
-topology. -/
-theorem isAnalyticContinuationAlong_iff_continuousOn_germPoint (hγ : ContinuousOn γ s)
+Neither remaining clause of a continuation has to be assumed. The lifting condition is automatic,
+the germ point of `f t` at `γ t` sitting over `γ t` by construction, and continuity of `γ` is
+continuity of the lift composed with the étalé projection. So the content of the equivalence is
+that the locality clause of a continuation — nearby parameter times carry the same germ — is
+continuity in the étalé topology. -/
+theorem isAnalyticContinuationAlong_iff_continuousOn_germPoint
     (hf : ∀ t ∈ s, AnalyticAt ℂ (f t) (γ t)) :
     IsAnalyticContinuationAlong f γ s ↔
       ContinuousOn (fun t => HolomorphicPresheaf.germPoint (f t) (γ t)) s := by
@@ -118,9 +124,13 @@ theorem isAnalyticContinuationAlong_iff_continuousOn_germPoint (hγ : Continuous
       (HolomorphicPresheaf.continuousOn_germPoint
         (U := ⟨ball (γ t₀) r, isOpen_ball⟩) hball).continuousAt
           (isOpen_ball.mem_nhds (mem_ball_self hr))
-    refine (hat.comp_continuousWithinAt (hγ t₀ ht₀)).congr_of_eventuallyEq ?_ rfl
+    refine (hat.comp_continuousWithinAt (hcont.continuousOn t₀ ht₀)).congr_of_eventuallyEq ?_ rfl
     filter_upwards [hcont.locallyEq t₀ ht₀] with t ht using HolomorphicPresheaf.germPoint_congr ht
   · intro hcont
+    have hγ : ContinuousOn γ s := by
+      have hbase := (TopCat.Presheaf.EtaleSpace.continuous_base
+        (holomorphicPresheaf E)).comp_continuousOn hcont
+      simpa only [Function.comp_def, HolomorphicPresheaf.base_germPoint] using hbase
     refine ⟨hγ, hf, fun t ht => ?_⟩
     obtain ⟨r, hr, hball⟩ := (hf t ht).exists_ball_analyticOnNhd
     set B : Opens (TopCat.of ℂ) := ⟨ball (γ t) r, isOpen_ball⟩
@@ -129,7 +139,7 @@ theorem isAnalyticContinuationAlong_iff_continuousOn_germPoint (hγ : Continuous
     have hsec : HolomorphicPresheaf.sectionFun sec =ᶠ[𝓝 (γ t)] f t :=
       Filter.eventuallyEq_of_mem (isOpen_ball.mem_nhds hbB)
         (HolomorphicPresheaf.sectionFun_toSection hball)
-    have hgerm : holomorphicPresheaf.germ B (γ t) hbB sec =
+    have hgerm : (holomorphicPresheaf E).germ B (γ t) hbB sec =
         (HolomorphicPresheaf.germPoint (f t) (γ t)).germ :=
       (HolomorphicPresheaf.germAt_eq_germ_of_eventuallyEq hbB sec hsec).symm
     have hnbhd := TopCat.Presheaf.EtaleSpace.eventually_nhds
@@ -151,8 +161,7 @@ continuation itself. -/
 theorem IsAnalyticContinuationAlong.continuousOn_germPoint
     (hcont : IsAnalyticContinuationAlong f γ s) :
     ContinuousOn (fun t => HolomorphicPresheaf.germPoint (f t) (γ t)) s :=
-  (isAnalyticContinuationAlong_iff_continuousOn_germPoint hcont.continuousOn
-    hcont.analyticAt).mp hcont
+  (isAnalyticContinuationAlong_iff_continuousOn_germPoint hcont.analyticAt).mp hcont
 
 /-- **A continuous map into the étalé space continues its own representatives.** Choosing at each
 parameter time a holomorphic representative of the germ carried there gives an analytic
@@ -161,17 +170,17 @@ continuation along the base path of the lift.
 Together with `TauCeti.IsAnalyticContinuationAlong.continuousOn_germPoint` this says that
 continuations along a path and continuous lifts of it are the same data, up to the choice of a
 representative for a germ. -/
-theorem isAnalyticContinuationAlong_repFun {Γ : X → holomorphicPresheaf.EtaleSpace}
+theorem isAnalyticContinuationAlong_repFun {Γ : X → (holomorphicPresheaf E).EtaleSpace}
     (hΓ : ContinuousOn Γ s) :
     IsAnalyticContinuationAlong (fun t => HolomorphicPresheaf.repFun (Γ t))
       (fun t => (Γ t).base) s := by
   refine (isAnalyticContinuationAlong_iff_continuousOn_germPoint
-    ((TopCat.Presheaf.EtaleSpace.continuous_base holomorphicPresheaf).comp_continuousOn hΓ)
     (fun t _ => HolomorphicPresheaf.analyticAt_repFun (Γ t))).mpr ?_
-  simpa only [Function.comp_apply, HolomorphicPresheaf.germPoint_repFun] using hΓ
+  simpa only [HolomorphicPresheaf.germPoint_repFun] using hΓ
 
 /-! ### Monodromy -/
 
+omit [CompleteSpace E] in
 /-- **The monodromy theorem, in étalé-space form.** If the rows `h (t, ·)` of a homotopy rel
 endpoints of paths in `ℂ` all lift continuously to the étalé space of holomorphic germs, from one
 and the same starting germ, then all the lifts finish at the same germ.
@@ -183,7 +192,7 @@ hypotheses — that it is a local homeomorphism and that it is separated — are
 `TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint`, which turns a continuation into
 such a lift, it is the covering-space reading of `TauCeti.monodromy_theorem`. -/
 theorem monodromy_theorem_etaleSpace {c₀ c₁ : C(I, ℂ)} (h : c₀.HomotopyRel c₁ {0, 1})
-    (Γ : I → C(I, holomorphicPresheaf.EtaleSpace))
+    (Γ : I → C(I, (holomorphicPresheaf E).EtaleSpace))
     (hlift : ∀ t x, (Γ t x).base = h (t, x)) (hstart : ∀ t, Γ t 0 = Γ 0 0) (t : I) :
     Γ t 1 = Γ 0 1 :=
   HolomorphicPresheaf.isLocalHomeomorph_base.monodromy_theorem

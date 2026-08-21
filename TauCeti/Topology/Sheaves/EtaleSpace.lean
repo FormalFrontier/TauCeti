@@ -39,10 +39,17 @@ variable {X : TopCat.{v}} {C : Type u} [Category.{v} C] {CC : C → Type v}
 variable {F : X.Presheaf C}
 
 /-- A section of a presheaf, viewed as a section of the étalé projection. -/
-@[expose] noncomputable def germSection (F : X.Presheaf C) (U : Opens X)
+noncomputable def germSection (F : X.Presheaf C) (U : Opens X)
     (s : ToType (F.obj (Opposite.op U))) :
     U → F.EtaleSpace :=
   fun x ↦ ⟨x, F.germ U x x.2 s⟩
+
+/-- The germ section written out: over `x`, it is the pair of `x` and the germ of `s` at `x`.
+This is the characteristic property of `TauCeti.TopCat.Presheaf.EtaleSpace.germSection`, and the
+form in which a concrete germ map is identified with it. -/
+theorem germSection_apply (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x : U) :
+    germSection F U s x = ⟨x, F.germ U x x.2 s⟩ :=
+  (rfl)
 
 @[simp]
 theorem base_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x : U) :
