@@ -47,8 +47,8 @@ above correct rather than merely plausible.
 * `TauCeti.ArtinGroup M`: the Artin-Tits group of `M`.
 * `TauCeti.ArtinGroup.gen M i`: its standard generator at the index `i`.
 * `TauCeti.ArtinGroup.lift`: the universal property.
-* `TauCeti.ArtinGroup.closure_range_gen` and `TauCeti.ArtinGroup.gen_induction`: generation by the
-  standard generators and its induction principle.
+* `TauCeti.ArtinGroup.closure_range_gen` and `TauCeti.ArtinGroup.gen_induction_on`: generation by
+  the standard generators and its induction principle.
 * `TauCeti.ArtinGroup.toCoxeterGroup`: the canonical map onto a Coxeter group with matrix `M`.
 * `TauCeti.ArtinGroup.exponentSum`: the total exponent of a word in the standard generators.
 
@@ -141,7 +141,7 @@ theorem ArtinGroup.closure_range_gen :
 
 /-- To prove a predicate for every Artin-Tits group element, it suffices to prove it for the
 identity and standard generators and show that it is preserved by multiplication and inverse. -/
-theorem ArtinGroup.gen_induction {p : ArtinGroup M → Prop} (g : ArtinGroup M)
+theorem ArtinGroup.gen_induction_on {p : ArtinGroup M → Prop} (g : ArtinGroup M)
     (gen : ∀ i : B, p (ArtinGroup.gen M i)) (one : p 1)
     (mul : ∀ g g' : ArtinGroup M, p g → p g' → p (g * g'))
     (inv : ∀ g : ArtinGroup M, p g → p g⁻¹) : p g := by

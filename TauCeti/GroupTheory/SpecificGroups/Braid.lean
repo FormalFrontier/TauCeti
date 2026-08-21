@@ -55,8 +55,8 @@ cause.
 
 * `TauCeti.BraidGroup.sigma_mul_sigma_comm` and `TauCeti.BraidGroup.sigma_braid`: the two defining
   relations, in their classical index form.
-* `TauCeti.BraidGroup.closure_range_sigma` and `TauCeti.BraidGroup.sigma_induction`: generation by
-  the elementary braids and its induction principle.
+* `TauCeti.BraidGroup.closure_range_sigma` and `TauCeti.BraidGroup.sigma_induction_on`:
+  generation by the elementary braids and its induction principle.
 * `TauCeti.BraidGroup.permHom_surjective`: every permutation of the strands underlies a braid.
 * `TauCeti.BraidGroup.not_commute_sigma` and `TauCeti.BraidGroup.exists_not_commute`: generators
   sharing a strand do not commute, so `BraidGroup n` is nonabelian for `n ≥ 3`.
@@ -155,11 +155,11 @@ theorem closure_range_sigma : Subgroup.closure (Set.range (sigma (n := n))) = �
 
 /-- To prove a predicate for every braid, it suffices to prove it for the identity and elementary
 braids and show that it is preserved by multiplication and inverse. -/
-theorem sigma_induction {p : BraidGroup n → Prop} (b : BraidGroup n)
+theorem sigma_induction_on {p : BraidGroup n → Prop} (b : BraidGroup n)
     (sigma : ∀ i : Fin (n - 1), p (BraidGroup.sigma i)) (one : p 1)
     (mul : ∀ b b' : BraidGroup n, p b → p b' → p (b * b'))
     (inv : ∀ b : BraidGroup n, p b → p b⁻¹) : p b := by
-  apply ArtinGroup.gen_induction _ b
+  apply ArtinGroup.gen_induction_on _ b
   · intro i
     simpa only [sigma_eq_gen] using sigma i
   · exact one
