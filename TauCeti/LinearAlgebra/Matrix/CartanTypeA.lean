@@ -26,7 +26,7 @@ the weights themselves assemble into a lower triangular matrix whose `i`-th diag
 
 ## Main declarations
 
-* `TauCeti.det_cartanMatrixA`: the determinant of `CartanMatrix.A n` is `n + 1`.
+* `CartanMatrix.A_det`: the determinant of `CartanMatrix.A n` is `n + 1`.
 
 ## References
 
@@ -36,9 +36,9 @@ the weights themselves assemble into a lower triangular matrix whose `i`-th diag
 
 public section
 
-namespace TauCeti
+namespace CartanMatrix
 
-open Finset
+open Finset TauCeti
 
 /-! ## The determinant -/
 
@@ -117,9 +117,9 @@ private theorem prod_range_add_one_ne_zero (m : ℕ) :
 
 /-- **The determinant of the type `A` Cartan matrix of rank `n` is `n + 1`.** -/
 @[simp]
-theorem det_cartanMatrixA (n : ℕ) : (CartanMatrix.A n).det = (n : ℤ) + 1 := by
+theorem A_det (n : ℕ) : (A n).det = (n : ℤ) + 1 := by
   have hmul := congrArg Matrix.det (rowWeightMatrix_mul_cartanMatrixA n)
   rw [Matrix.det_mul, det_rowWeightMatrix, det_weightedRowMatrix, prod_range_add_two] at hmul
   exact mul_left_cancel₀ (prod_range_add_one_ne_zero n) (by linarith [hmul])
 
-end TauCeti
+end CartanMatrix

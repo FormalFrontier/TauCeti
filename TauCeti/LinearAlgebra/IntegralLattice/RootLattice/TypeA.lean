@@ -147,7 +147,7 @@ theorem isEven_typeARootLattice : (typeARootLattice n).IsEven := by
 @[simp]
 theorem determinant_typeARootLattice : (typeARootLattice n).determinant = (n : ℤ) + 1 := by
   rw [typeARootLattice, determinant_ofGramMatrix]
-  convert det_cartanMatrixA n
+  convert CartanMatrix.A_det n
 
 /-- The discriminant of the type `Aₙ` root lattice is `n + 1`. -/
 @[simp]
@@ -191,13 +191,21 @@ private theorem sum_chainEntry_mul_weight (i : ℕ) (hin : i < n) :
     ring
   rw [Finset.sum_congr rfl fun k _ ↦ by rw [hweight],
     sum_range_chainEntry_mul_affine hin]
-  split_ifs with h₁ h₂ h₃
-  all_goals field_simp
-  all_goals ring_nf
-  all_goals subst i
-  all_goals have hn_one : n = 1 := by omega
-  all_goals subst n
-  all_goals norm_num
+  by_cases hi : i = 0
+  · subst i
+    simp only [ite_true, Nat.zero_add]
+    by_cases hn_one : 1 = n
+    · subst n
+      norm_num
+    · simp only [hn_one, ite_false]
+      field_simp
+      ring
+  · simp only [hi, ite_false]
+    by_cases hend : i + 1 = n
+    · simp only [hend, ite_true]
+      field_simp
+      ring
+    · simp only [hend, ite_false]
 
 variable (n)
 
