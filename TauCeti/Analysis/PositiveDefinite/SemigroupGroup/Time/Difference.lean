@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.ForwardDiff
+import Mathlib.Algebra.Group.ForwardDiff
 import Mathlib.Analysis.Normed.Group.Pointwise
 import TauCeti.Analysis.PositiveDefinite.Kernel.Kolmogorov
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
@@ -34,7 +34,7 @@ representing measure.
 ## Main declarations
 
 * `TauCeti.timeDifference`: the one-step alternating time difference, the negative of Mathlib's
-  forward difference `fwdDiff` in the direction `(h, 0)`.
+  forward difference `fwdDiff` applied in the time coordinate.
 * `TauCeti.listTimeDifference`: the alternating difference along a finite list of time steps, and
   `TauCeti.iteratedTimeDifference`: its equal-step specialization.
 * `TauCeti.IsSemigroupGroupPD.timeDifference`: a bounded BCR-positive-definite function remains
@@ -112,20 +112,27 @@ private lemma antitone_of_nonneg_logConvex_bddAbove {u : ℕ → ℝ}
 
 universe u
 
-variable {V : Type u} [AddCommGroup V] {F : ℝ≥0 × V → ℂ}
+section
+
+variable {V : Type u} {F : ℝ≥0 × V → ℂ}
 
 /-- The first alternating time difference with step `h`:
 `timeDifference h F (t, v) = F (t, v) - F (t + h, v)`. It is the negative of Mathlib's forward
-difference `fwdDiff` in the direction `(h, 0)`. -/
+difference `fwdDiff` applied in the time coordinate. -/
 def timeDifference (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) : ℝ≥0 × V → ℂ :=
-  -fwdDiff (h, 0) F
+  fun p => -fwdDiff h (fun t => F (t, p.2)) p.1
 
 /-- The first time difference evaluated at a point. -/
 @[simp]
 theorem timeDifference_apply (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) (p : ℝ≥0 × V) :
     timeDifference h F p = F p - F (p.1 + h, p.2) := by
-  have hp : p + (h, 0) = (p.1 + h, p.2) := by simp [Prod.ext_iff]
-  simp [timeDifference, fwdDiff, hp]
+  simp [timeDifference, fwdDiff]
+
+/-- The time difference with step zero is the zero function. -/
+@[simp]
+theorem timeDifference_zero (F : ℝ≥0 × V → ℂ) : timeDifference 0 F = 0 := by
+  ext p
+  simp
 
 /-- The alternating time difference along a finite list of steps, one application of
 `timeDifference` per entry of the list. -/
@@ -187,6 +194,10 @@ theorem isBounded_range_iteratedTimeDifference (hbounded : Bornology.IsBounded (
   rw [iteratedTimeDifference_eq_listTimeDifference]
   exact isBounded_range_listTimeDifference hbounded _
 
+end
+
+variable {V : Type u} [AddCommGroup V] {F : ℝ≥0 × V → ℂ}
+
 namespace IsSemigroupGroupPD
 
 /-- A bounded BCR-positive-definite function remains positive definite after subtracting a forward
@@ -203,7 +214,7 @@ theorem timeDifference (hF : IsSemigroupGroupPD F)
     change conj (F (p.1 + q.1, p.2 - q.2)) -
         conj (F (p.1 + q.1 + h, p.2 - q.2)) = _
     rw [hF.conj_symm p q]
-    rw [show p.1 + q.1 + h = (p.1 + h) + q.1 by ac_rfl]
+    rw [add_right_comm p.1 q.1 h]
     have hs := hF.conj_symm (p.1 + h, p.2) q
     rw [hs]
     simp only [add_comm, add_left_comm]
@@ -226,8 +237,7 @@ theorem timeDifference (hF : IsSemigroupGroupPD F)
     intro i _
     apply Finset.sum_congr rfl
     intro j _
-    rw [show (p i).1 + a + ((p j).1 + b) =
-      (p i).1 + (p j).1 + (a + b) by ac_rfl]
+    rw [add_add_add_comm]
     ring
   have hq_inner (s : ℝ≥0) : q s = ‖w (s / 2)‖ ^ 2 := by
     rw [← inner_self_eq_norm_sq (𝕜 := ℂ) (w (s / 2)), hinner, add_halves]
