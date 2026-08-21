@@ -138,21 +138,29 @@ theorem tailBacktrackElem_def {i j : Q} (a : i ⟶ j) :
       (Quiver.reverse (Symmetrify.of.map a)).toPath⟩ := by
   rw [tailBacktrackElem]
 
+/-- Left multiplication by the head vertex idempotent fixes the head backtrack, placing it in the
+head vertex corner. -/
 @[simp]
 theorem doubledVertexIdempotent_mul_headBacktrackElem {i j : Q} (a : i ⟶ j) :
     doubledVertexIdempotent k j * headBacktrackElem k a = headBacktrackElem k a := by
   rw [doubledVertexIdempotent, headBacktrackElem_def, vertexIdempotent_mul_ofPath]
 
+/-- Right multiplication by the head vertex idempotent fixes the head backtrack, placing it in the
+head vertex corner. -/
 @[simp]
 theorem headBacktrackElem_mul_doubledVertexIdempotent {i j : Q} (a : i ⟶ j) :
     headBacktrackElem k a * doubledVertexIdempotent k j = headBacktrackElem k a := by
   rw [doubledVertexIdempotent, headBacktrackElem_def, ofPath_mul_vertexIdempotent]
 
+/-- Left multiplication by the tail vertex idempotent fixes the tail backtrack, placing it in the
+tail vertex corner. -/
 @[simp]
 theorem doubledVertexIdempotent_mul_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
     doubledVertexIdempotent k i * tailBacktrackElem k a = tailBacktrackElem k a := by
   rw [doubledVertexIdempotent, tailBacktrackElem_def, vertexIdempotent_mul_ofPath]
 
+/-- Right multiplication by the tail vertex idempotent fixes the tail backtrack, placing it in the
+tail vertex corner. -/
 @[simp]
 theorem tailBacktrackElem_mul_doubledVertexIdempotent {i j : Q} (a : i ⟶ j) :
     tailBacktrackElem k a * doubledVertexIdempotent k i = tailBacktrackElem k a := by
@@ -193,6 +201,7 @@ section BacktrackProducts
 variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
 
 /-- The displayed word `a a*` is the head backtrack under later-factor-first multiplication. -/
+@[simp]
 theorem ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
     ofArrow (Symmetrify.of.map a) * ofArrow (Quiver.reverse (Symmetrify.of.map a))
       = headBacktrackElem k a := by
@@ -211,6 +220,7 @@ theorem ofPath_headBacktrack_eq_headBacktrackElem {i j : Q} (a : i ⟶ j) :
   congr 1
 
 /-- The displayed word `a* a` is the tail backtrack under later-factor-first multiplication. -/
+@[simp]
 theorem ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
     ofArrow (Quiver.reverse (Symmetrify.of.map a)) * ofArrow (Symmetrify.of.map a)
       = tailBacktrackElem k a := by
@@ -459,7 +469,10 @@ theorem preprojectiveLift_of_forall_localPreprojectiveRelator_comp_preprojective
     (hf : ∀ v : Q, f (localPreprojectiveRelator k v) = 0) :
     (preprojectiveLiftOfForallLocalPreprojectiveRelator f hf).comp
       (preprojectiveMk k Q) = f := by
-  apply preprojectiveLift_comp_preprojectiveMk
+  simpa only [preprojectiveLiftOfForallLocalPreprojectiveRelator] using
+    preprojectiveLift_comp_preprojectiveMk f (by
+      rw [← sum_localPreprojectiveRelator, map_sum]
+      exact Finset.sum_eq_zero fun v _ => hf v)
 
 @[simp]
 theorem preprojectiveLift_of_forall_localPreprojectiveRelator_preprojectiveMk
