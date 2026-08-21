@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Complex.Module
 public import Mathlib.RepresentationTheory.Character
+public import Mathlib.RingTheory.Finiteness.Descent
 public import TauCeti.RepresentationTheory.InvariantForm.BaseChange
 
 /-!
@@ -23,12 +24,13 @@ complexification of `σ`.  A representation is **realizable over `ℝ`** when it
 `Representation.IsRealForm` allows any carrier for the real form, while
 `Representation.IsRealizableOverReal` pins it to `Fin (finrank ℂ V) → ℝ`, so that the predicate
 needs no type existential; nothing is lost by pinning it, because
-`Representation.IsRealForm.isRealizableOverReal` transports a real form on an arbitrary
-finite-dimensional carrier to the pinned one along a real basis.  The pinned predicate needs no
-finite-dimensionality hypothesis either: the pinned carrier is finite-dimensional, so it already
-implies `FiniteDimensional ℂ V` (`Representation.IsRealizableOverReal.finiteDimensional`).  For an
-infinite-dimensional `V` it is therefore simply false, and `Representation.IsRealForm` is the
-notion to use there.
+`Representation.IsRealForm.isRealizableOverReal` transports a real form of a finite-dimensional
+representation to the pinned carrier along a real basis (the carrier of the real form is then
+finite-dimensional too, by `Representation.IsRealForm.finiteDimensional_iff`).  The pinned
+predicate needs no finite-dimensionality hypothesis either: the pinned carrier is
+finite-dimensional, so it already implies `FiniteDimensional ℂ V`
+(`Representation.IsRealizableOverReal.finiteDimensional`).  For an infinite-dimensional `V` it is
+therefore simply false, and `Representation.IsRealForm` is the notion to use there.
 
 Everything here is for a representation of an arbitrary monoid: the real-form vocabulary and its
 transports never invert a group element, and the passage to the Frobenius-Schur indicator that
@@ -51,8 +53,10 @@ only where it sums over the group.
   (`Representation.IsRealForm.conj_char`).
 * `Representation.IsRealForm.exists_isInvariantForm_isSymm_ne_zero`: a real form transports a
   nonzero invariant symmetric real form to a nonzero invariant symmetric complex form.
-* `Representation.IsRealForm.isRealizableOverReal`: a real form on an arbitrary
-  finite-dimensional carrier makes `ρ` realizable over `ℝ` in the pinned sense.
+* `Representation.IsRealForm.finiteDimensional_iff`: a real form is finite-dimensional exactly when
+  the representation it is a form of is.
+* `Representation.IsRealForm.isRealizableOverReal`: a real form of a finite-dimensional
+  representation makes `ρ` realizable over `ℝ` in the pinned sense.
 * `Representation.IsRealizableOverReal.finiteDimensional`: a representation realizable over `ℝ` is
   finite-dimensional.
 
@@ -148,11 +152,22 @@ theorem IsRealForm.finrank_eq (h : IsRealForm ρ σ) :
   obtain ⟨e, -⟩ := h
   rw [← e.finrank_eq, Module.finrank_baseChange]
 
-/-- A representation with a finite-dimensional real form is finite-dimensional. -/
-theorem IsRealForm.finiteDimensional [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) :
-    FiniteDimensional ℂ V := by
+/-- **A real form is finite-dimensional exactly when the representation it is a form of is.**
+Finiteness passes from `W` to `V` because `V` is the complexification `ℂ ⊗[ℝ] W` up to isomorphism,
+and back down because `ℂ` is faithfully flat over `ℝ`
+(`Module.Finite.of_finite_tensorProduct_of_faithfullyFlat`).  Both directions are available with no
+finiteness in the ambient context, so a consumer holding finiteness on either side gets it on the
+other; comparing dimensions instead (`Representation.IsRealForm.finrank_eq`) would say nothing when
+the common dimension is `0`. -/
+theorem IsRealForm.finiteDimensional_iff (h : IsRealForm ρ σ) :
+    FiniteDimensional ℝ W ↔ FiniteDimensional ℂ V := by
   obtain ⟨e, -⟩ := h
-  exact Module.Finite.equiv e
+  constructor
+  · intro _
+    exact Module.Finite.equiv e
+  · intro _
+    have : Module.Finite ℂ (ℂ ⊗[ℝ] W) := Module.Finite.equiv e.symm
+    exact Module.Finite.of_finite_tensorProduct_of_faithfullyFlat ℂ
 
 /-- **A real form transports invariant symmetric forms.**  The base change to `ℂ` of a nonzero
 invariant symmetric form on the real side, read through the isomorphism, is a nonzero invariant
@@ -208,16 +223,21 @@ This is what makes pinning the carrier by the dimension faithful. -/
 theorem IsRealizableOverReal.finiteDimensional (h : IsRealizableOverReal ρ) :
     FiniteDimensional ℂ V := by
   obtain ⟨_, hσ⟩ := h
-  exact hσ.finiteDimensional
+  exact hσ.finiteDimensional_iff.mp inferInstance
 
 /-- **A real form on an arbitrary carrier realizes `ρ` over `ℝ`.**  Reading `σ` in a real basis of
 `W` moves it to the pinned carrier: complexification does not change the dimension
 (`Representation.IsRealForm.finrank_eq`), so a basis of `W` is indexed by `Fin (finrank ℂ V)`, and
 conjugating `σ` by the resulting coordinate isomorphism turns the real form into one on
 `Fin (finrank ℂ V) → ℝ`.  This is what makes `Representation.IsRealizableOverReal` usable from a
-real form carried by whatever space it naturally lives on. -/
-theorem IsRealForm.isRealizableOverReal [FiniteDimensional ℝ W] (h : IsRealForm ρ σ) :
+real form carried by whatever space it naturally lives on.
+
+Finiteness is asked of `V`, the representation the conclusion speaks about; the carrier `W` of the
+real form inherits it through `Representation.IsRealForm.finiteDimensional_iff`, which also takes a
+consumer who has finiteness on the real side the other way. -/
+theorem IsRealForm.isRealizableOverReal [FiniteDimensional ℂ V] (h : IsRealForm ρ σ) :
     IsRealizableOverReal ρ := by
+  have : FiniteDimensional ℝ W := h.finiteDimensional_iff.mpr inferInstance
   have hrank := h.finrank_eq
   obtain ⟨e, he⟩ := h
   let f : W ≃ₗ[ℝ] (Fin (finrank ℂ V) → ℝ) :=

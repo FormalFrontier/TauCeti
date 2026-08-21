@@ -79,15 +79,16 @@ transporting it along the real form makes the complex representation carry one t
 exactly the orthogonal case of the Frobenius-Schur trichotomy.
 
 No finiteness is assumed of the real form: irreducibility over a finite group already makes `V`
-finite-dimensional (`Representation.IsIrreducible.finiteDimensional`), and a real form has
-the same dimension as the representation it is a form of
-(`Representation.IsRealForm.finrank_eq`), so `W` inherits both finiteness and nontriviality. -/
+finite-dimensional (`Representation.IsIrreducible.finiteDimensional`), which `W` inherits
+(`Representation.IsRealForm.finiteDimensional_iff`), and a real form has the same dimension as the
+representation it is a form of (`Representation.IsRealForm.finrank_eq`), so `W` is nontrivial
+too. -/
 theorem IsRealForm.frobeniusSchurIndicator_eq_one [ρ.IsIrreducible] (h : IsRealForm ρ σ) :
     frobeniusSchurIndicator ρ = 1 := by
   have : FiniteDimensional ℂ V := IsIrreducible.finiteDimensional ‹ρ.IsIrreducible›
   have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
+  have : FiniteDimensional ℝ W := h.finiteDimensional_iff.mpr inferInstance
   have hrank : finrank ℝ W = finrank ℂ V := h.finrank_eq
-  have : FiniteDimensional ℝ W := Module.finite_of_finrank_pos (hrank ▸ Module.finrank_pos)
   have : Nontrivial W :=
     Module.nontrivial_of_finrank_pos (R := ℝ) (hrank ▸ Module.finrank_pos)
   obtain ⟨B, hB, hsymm, hB0⟩ := σ.exists_isInvariantForm_isSymm_ne_zero
