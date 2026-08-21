@@ -231,13 +231,31 @@ abbrev AbsoluteGaloisGroup := Gal(SeparableClosure K/K)
 restricting an automorphism of an algebraic closure of `K` to the separable closure is an
 isomorphism `Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K`.
 
-The body is `@[expose]`d, so this is definitionally `separableClosureRestrictEquiv K
-(AlgebraicClosure K)` downstream and the general API — `separableClosureRestrictEquiv_apply`,
-`coe_separableClosureRestrictEquiv_apply`, `separableClosureRestrictEquiv_symm_apply_coe` —
-applies to it directly. -/
-@[expose] def absoluteGaloisGroupRestrictEquiv :
+The body is not exposed. `absoluteGaloisGroupRestrictEquiv_apply` and
+`absoluteGaloisGroupRestrictEquiv_symm_apply` are what make the general API reachable here; they
+are stated on applications rather than on the two isomorphisms themselves, because
+`Field.absoluteGaloisGroup K` carries its own derived group and topology instances, so an equation
+between the isomorphisms is not usable by `rw`. -/
+def absoluteGaloisGroupRestrictEquiv :
     Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K :=
   separableClosureRestrictEquiv K (AlgebraicClosure K)
+
+/-- The comparison isomorphism sends `σ` where `separableClosureRestrictEquiv` at an algebraic
+closure does; this reduces the specialisation to the general `separableClosureRestrictEquiv_apply`
+and `coe_separableClosureRestrictEquiv_apply`. -/
+theorem absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K)) :
+    absoluteGaloisGroupRestrictEquiv K σ =
+      separableClosureRestrictEquiv K (AlgebraicClosure K) σ :=
+  (rfl)
+
+/-- The inverse of the comparison isomorphism extends `τ` the way the inverse of
+`separableClosureRestrictEquiv` at an algebraic closure does; with
+`separableClosureRestrictEquiv_symm_apply_coe` this computes the automorphism of
+`AlgebraicClosure K` extending a given automorphism of `SeparableClosure K`. -/
+theorem absoluteGaloisGroupRestrictEquiv_symm_apply (τ : AbsoluteGaloisGroup K) :
+    (absoluteGaloisGroupRestrictEquiv K).symm τ =
+      (separableClosureRestrictEquiv K (AlgebraicClosure K)).symm τ :=
+  (rfl)
 
 /-- An automorphism of an algebraic closure of `K` and its image in `AbsoluteGaloisGroup K` take
 the same value on an element of `SeparableClosure K`, computed in the algebraic closure. -/
