@@ -91,8 +91,8 @@ theorem indexEquiv_reflectionPerm (f : P.Hom P₂) (i j : ι) :
     Hom.root_weightMap_apply, Hom.root_weightMap_apply]
 
 /-- The diagonal case of `TauCeti.indexEquiv_reflectionPerm`, stated separately for rewriting root
-negation through `RootPairing.indexNeg`. -/
-@[simp]
+negation through `RootPairing.indexNeg`. It is not a `simp` lemma: the general form already
+rewrites the diagonal case. -/
 theorem indexEquiv_reflectionPerm_self (f : P.Hom P₂) (i : ι) :
     f.indexEquiv (P.reflectionPerm i i) =
       P₂.reflectionPerm (f.indexEquiv i) (f.indexEquiv i) :=
