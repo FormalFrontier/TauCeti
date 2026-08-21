@@ -70,8 +70,8 @@ theorem Kernel.measurable_probabilityMeasure (κ : Kernel β Ω) [IsMarkovKernel
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- **The tautological Markov kernel.** It sends a probability measure to itself, viewed as a
-random element of `α`; sampling from it is sampling from its own parameter. -/
+/-- **The tautological Markov kernel.** It sends each bundled probability measure to its
+underlying measure on `α`, so the fibre at `P` is `P` itself. -/
 def samplingKernel (α : Type*) [MeasurableSpace α] : Kernel (ProbabilityMeasure α) α :=
   ⟨fun P => (P : Measure α), measurable_subtype_coe⟩
 

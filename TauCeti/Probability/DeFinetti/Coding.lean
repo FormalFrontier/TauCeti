@@ -12,10 +12,9 @@ public import TauCeti.Probability.Kernel.Randomization
 public import TauCeti.Probability.DeFinetti.Barycenter
 -- Public: `jointPathLaw` and `iidMixtureLaw` appear in the joint statements.
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegration
--- Non-public: de Finetti's theorem and the exchangeability of an i.i.d. law are used only inside
--- proofs.
+-- Non-public: de Finetti's theorem is used only inside proofs.
 import TauCeti.Probability.DeFinetti.Theorem
-import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
+import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
@@ -109,6 +108,7 @@ theorem measurable_unitIntervalCodingPath :
 coordinate, the same construction produces the canonical conditionally i.i.d. law `iidMixtureLaw`:
 the parameter is not merely a mixing representative of the coded sequence but its directing
 measure. -/
+@[simp]
 theorem map_prod_unitIntervalCoding_eq_iidMixtureLaw (π : Measure (ProbabilityMeasure α)) :
     (π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
         (fun p => (p.1, fun i => unitIntervalCoding α p.1 (p.2 i)))
@@ -129,6 +129,7 @@ theorem map_prod_unitIntervalCoding_eq_iidMixtureLaw (π : Measure (ProbabilityM
 
 /-- **Coding a mixing law.** Drawing a probability measure from `π`, then coding an independent
 i.i.d. uniform sequence by it, produces the de Finetti barycenter of `π`. -/
+@[simp]
 theorem map_prod_unitIntervalCoding_eq_deFinettiBarycenter (π : Measure (ProbabilityMeasure α)) :
     (π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
         (fun p i => unitIntervalCoding α p.1 (p.2 i))

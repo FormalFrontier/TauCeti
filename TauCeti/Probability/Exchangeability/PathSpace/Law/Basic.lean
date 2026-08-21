@@ -8,7 +8,9 @@ module
 public import TauCeti.Probability.Exchangeability.Basic
 public import TauCeti.Probability.Exchangeability.PermutationExtension
 public import Mathlib.Dynamics.Ergodic.MeasurePreserving
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.Probability.ProductMeasure
+import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Exchangeable laws on path space
@@ -71,11 +73,24 @@ theorem ExchangeableLaw.measurePreserving_permReindex {ρ : Measure (ℕ → α)
   ⟨measurable_reindex π, hρ.map_permReindex π⟩
 
 /-- Joint measurability of a coordinatewise map on a parameter and a path. -/
-theorem measurable_pi_uncurry_prod {T β : Type*} [MeasurableSpace T] [MeasurableSpace β]
+theorem measurable_pi_uncurry_prod {T β ι : Type*} [MeasurableSpace T] [MeasurableSpace β]
     {f : T → β → α} (hf : Measurable (Function.uncurry f)) :
-    Measurable fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i) :=
+    Measurable fun p : T × (ι → β) => fun i => f p.1 (p.2 i) :=
   measurable_pi_lambda _ fun i =>
     hf.comp (measurable_fst.prodMk ((measurable_pi_apply i).comp measurable_snd))
+
+/-- **An i.i.d. product law is exchangeable.** Reindexing a constant product law by a
+permutation leaves every factor unchanged. -/
+theorem exchangeableLaw_infinitePi_const (P : ProbabilityMeasure α) :
+    ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
+  intro π
+  have hperm : permReindex (α := α) π = fun x i => x (π i) := by
+    funext x i
+    rw [permReindex_apply]
+  rw [hperm]
+  simpa only using
+    Measure.map_infinitePi_infinitePi_of_inj
+      (P := fun _ : ℕ => (P : Measure α)) π.injective
 
 /-- **Coordinatewise coding preserves exchangeability.** Applying a jointly measurable `f`
 coordinatewise to a parameter and an independent exchangeable noise sequence gives an
@@ -85,7 +100,7 @@ theorem exchangeableLaw_map_prod_coding {T β : Type*} [MeasurableSpace T] [Meas
     (hρ : ExchangeableLaw ρ) {f : T → β → α} (hf : Measurable (Function.uncurry f)) :
     ExchangeableLaw ((π.prod ρ).map fun p i => f p.1 (p.2 i)) := by
   refine ExchangeableLaw.intro fun τ => ?_
-  have hG := measurable_pi_uncurry_prod (α := α) hf
+  have hG := measurable_pi_uncurry_prod (α := α) (ι := ℕ) hf
   have hcomp : permReindex (α := α) τ ∘ (fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i))
       = (fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i)) ∘
         Prod.map (id : T → T) (permReindex (α := β) τ) := rfl
