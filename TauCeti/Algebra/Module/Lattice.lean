@@ -26,7 +26,7 @@ domain rationalizes to its ambient vector space over the fraction field.
   lattice.
 * `TauCeti.Submodule.IsLattice.toAddSubgroup_eq_closure_range_extendOfIsLattice`: the additive
   closure of an extended lattice basis is the lattice's underlying additive subgroup.
-* `TauCeti.Submodule.toAddSubgroup_submoduleOf`: taking the underlying additive subgroup commutes
+* `Submodule.toAddSubgroup_submoduleOf`: taking the underlying additive subgroup commutes
   with restricting a submodule to another submodule.
 * `TauCeti.Submodule.IsLattice.finrank_eq_finrank`: a full lattice and its ambient space have the
   same finrank.
@@ -83,8 +83,8 @@ section
 
 /-- Taking the underlying additive subgroup commutes with restricting a submodule to another
 submodule. -/
-theorem Submodule.toAddSubgroup_submoduleOf {R V : Type*} [Ring R] [AddCommGroup V] [Module R V]
-    (p q : Submodule R V) :
+theorem _root_.Submodule.toAddSubgroup_submoduleOf {R V : Type*} [Ring R] [AddCommGroup V]
+    [Module R V] (p q : Submodule R V) :
     (p.submoduleOf q).toAddSubgroup = p.toAddSubgroup.addSubgroupOf q.toAddSubgroup := rfl
 
 variable {V : Type*} [AddCommGroup V] [Module ℚ V]
