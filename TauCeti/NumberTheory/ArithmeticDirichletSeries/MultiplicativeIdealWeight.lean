@@ -437,6 +437,14 @@ omit [NumberField K] in
 theorem toMultiplicativeIdealWeight_one :
     (one K).toMultiplicativeIdealWeight = MultiplicativeIdealWeight.one K := (rfl)
 
+omit [NumberField K] in
+@[simp]
+theorem one_apply (I : Ideal (𝓞 K)) : one K I = if I = ⊥ then 0 else 1 := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem bad_one : (one K).bad = ∅ := (rfl)
+
 variable {K}
 
 /-- The **complex conjugate** of a unitary ideal weight. -/
@@ -450,6 +458,14 @@ omit [NumberField K] in
 @[simp]
 theorem toMultiplicativeIdealWeight_conj :
     χ.conj.toMultiplicativeIdealWeight = χ.toMultiplicativeIdealWeight.conj := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem conj_apply (I : Ideal (𝓞 K)) : χ.conj I = starRingEnd ℂ (χ I) := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem bad_conj : χ.conj.bad = χ.bad := (rfl)
 
 /-- The **pointwise product** of two unitary ideal weights, with the union of their bad sets. -/
 noncomputable def pointwiseMul (ψ : UnitaryIdealWeight K) : UnitaryIdealWeight K where
@@ -465,6 +481,16 @@ omit [NumberField K] in
 theorem toMultiplicativeIdealWeight_pointwiseMul (ψ : UnitaryIdealWeight K) :
     (χ.pointwiseMul ψ).toMultiplicativeIdealWeight =
       χ.toMultiplicativeIdealWeight.pointwiseMul ψ.toMultiplicativeIdealWeight := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem pointwiseMul_apply (ψ : UnitaryIdealWeight K) (I : Ideal (𝓞 K)) :
+    χ.pointwiseMul ψ I = χ I * ψ I := (rfl)
+
+omit [NumberField K] in
+@[simp]
+theorem bad_pointwiseMul (ψ : UnitaryIdealWeight K) :
+    (χ.pointwiseMul ψ).bad = χ.bad ∪ ψ.bad := (rfl)
 
 /-- The **restriction** of a unitary ideal weight away from a finite set `S` of height-one primes,
 which is again unitary: a height-one prime outside `χ.bad ∪ S` is prime to `S`, because a
@@ -485,6 +511,16 @@ noncomputable def restrict (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite
 theorem toMultiplicativeIdealWeight_restrict (S : Set (HeightOneSpectrum (𝓞 K)))
     (hS : S.Finite) : (χ.restrict S hS).toMultiplicativeIdealWeight =
       χ.toMultiplicativeIdealWeight.restrict S hS := (rfl)
+
+open Classical in
+@[simp]
+theorem restrict_apply (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite)
+    (I : Ideal (𝓞 K)) :
+    χ.restrict S hS I = if ∀ 𝔭 ∈ S, ¬ 𝔭.asIdeal ∣ I then χ I else 0 := (rfl)
+
+@[simp]
+theorem bad_restrict (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite) :
+    (χ.restrict S hS).bad = χ.bad ∪ S := (rfl)
 
 /-- **The modulus of an arbitrary norm twist at a good ideal.** Twisting a unitary weight by
 `N⁻ᶻ` gives modulus `N(I) ^ (-Re z)`. -/
@@ -523,6 +559,13 @@ noncomputable def imaginaryNormTwist (t : ℝ) : UnitaryIdealWeight K where
 theorem toMultiplicativeIdealWeight_imaginaryNormTwist (t : ℝ) :
     (χ.imaginaryNormTwist t).toMultiplicativeIdealWeight =
       χ.toMultiplicativeIdealWeight.normTwist (Complex.I * t) := (rfl)
+
+@[simp]
+theorem imaginaryNormTwist_apply (t : ℝ) (I : Ideal (𝓞 K)) :
+    χ.imaginaryNormTwist t I = χ I * (Ideal.absNorm I : ℂ) ^ (-(Complex.I * t)) := (rfl)
+
+@[simp]
+theorem bad_imaginaryNormTwist (t : ℝ) : (χ.imaginaryNormTwist t).bad = χ.bad := (rfl)
 
 end UnitaryIdealWeight
 
