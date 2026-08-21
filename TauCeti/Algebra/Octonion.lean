@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.CrossProduct
 public import Mathlib.LinearAlgebra.Dimension.Constructions
+public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 public import Mathlib.RingTheory.Finiteness.Prod
 
 /-!
@@ -55,6 +56,10 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 * `TauCeti.Octonion.self_mul_conj` and `TauCeti.Octonion.conj_mul_self`:
   `x * x̄ = x̄ * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
+* `TauCeti.Octonion.normQuadraticForm`: the norm, bundled as a `QuadraticForm`, so that Mathlib's
+  `QuadraticMap.polar` API supplies the associated symmetric bilinear form; that form is visible
+  inside the algebra as `TauCeti.Octonion.mul_conj_add_mul_conj`,
+  `x * conj y + y * conj x = ⟨x, y⟩ · 1`.
 * `TauCeti.Octonion.left_alternative`, `TauCeti.Octonion.right_alternative` and
   `TauCeti.Octonion.flexible`: `𝕆` is **alternative** and **flexible**.
 * `TauCeti.Octonion.moufang_left`, `TauCeti.Octonion.moufang_right` and
@@ -86,9 +91,10 @@ componentwise operations, and `TauCeti.Octonion.linearEquivProd` packages a vect
 tuple of its four entries, an `R`-linear isomorphism, which is what the dimension count runs
 through.
 
-The norm is left as a bare map `Octonion R → R`, as the roadmap pins it. Packaging it as a
-`QuadraticForm R (Octonion R)` — its polarization is the trace form `x, y ↦ trace (x * conj y)` —
-is deferred.  The derivation algebra `Der 𝕆` is not deferred: it is
+The norm is available both as the bare map `Octonion R → R` the roadmap pins and, through
+`TauCeti.Octonion.normQuadraticForm`, as a `QuadraticForm R (Octonion R)`; the bundled form is what
+gives its polarization Mathlib's bilinearity and symmetry API for free. The derivation algebra
+`Der 𝕆` is
 `TauCeti.derivationLieAlgebra R (Octonion R)`, built in `TauCeti/Algebra/Lie/Derivation.lean`.
 
 ## References
@@ -423,6 +429,67 @@ theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
   -- two dot products of the norm need.
   simp [norm_def, dotProduct_comm]
   ring
+
+/-! ### The norm as a quadratic form -/
+
+/-- **The norm is a quadratic form.** Its companion is the bilinear map
+`(x, y) ↦ a b' + a' b - v ⬝ᵥ w' - v' ⬝ᵥ w`, the polarization of the determinant of a vector matrix.
+Packaging the norm this way makes Mathlib's `QuadraticMap.polar` API — symmetry, bilinearity in each
+argument, and `QuadraticMap.polar_self` — available for the associated symmetric form, which is what
+the Hermitian matrix algebras over `𝕆` are built from. -/
+def normQuadraticForm (R : Type*) [CommRing R] : QuadraticForm R (Octonion R) where
+  toFun := norm
+  toFun_smul a x := by simp [smul_eq_mul]; ring
+  exists_companion' :=
+    ⟨LinearMap.mk₂ R (fun x y => x.a * y.b + y.a * x.b - x.v ⬝ᵥ y.w - y.v ⬝ᵥ x.w)
+      (fun _ _ _ => by simp [add_dotProduct, dotProduct_add]; ring)
+      (fun _ _ _ => by simp [smul_dotProduct, dotProduct_smul, smul_eq_mul]; ring)
+      (fun _ _ _ => by simp [add_dotProduct, dotProduct_add]; ring)
+      (fun _ _ _ => by simp [smul_dotProduct, dotProduct_smul, smul_eq_mul]; ring),
+      fun _ _ => by simp [norm_def, add_dotProduct, dotProduct_add]; ring⟩
+
+@[simp] theorem normQuadraticForm_apply (x : Octonion R) : normQuadraticForm R x = norm x := (rfl)
+
+/-- The polar form of the norm, read off the entries of the two vector matrices. Stated for
+`QuadraticMap.polar` rather than for `QuadraticMap.polarBilin`, which `simp` unfolds to it. Not a
+`simp` lemma: the polar form is the interface the Hermitian matrix algebras are stated against, and
+`simp` should not take it apart into coordinates behind their backs. -/
+theorem polar_normQuadraticForm_apply (x y : Octonion R) :
+    QuadraticMap.polar (normQuadraticForm R) x y =
+      x.a * y.b + y.a * x.b - x.v ⬝ᵥ y.w - y.v ⬝ᵥ x.w := by
+  simp [QuadraticMap.polar, norm_def, add_dotProduct, dotProduct_add]
+  ring
+
+/-- **The polar form of the norm is visible inside the algebra**: `x * conj y + y * conj x` is
+the scalar
+`⟨x, y⟩ · 1`. Together with `TauCeti.Octonion.self_mul_conj`, which is the case `y = x`, this is
+what makes the symmetric form of a composition algebra an algebraic, not merely a quadratic,
+datum. -/
+theorem mul_conj_add_mul_conj (x y : Octonion R) :
+    x * conj y + y * conj x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
+  -- The two vector entries cancel in pairs by `Matrix.cross_anticomm`, which is used at the
+  -- entries it is needed at rather than in its `simp` orientation.
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;>
+    simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
+      polar_normQuadraticForm_apply]
+  · ring
+  · ring
+  · module
+
+/-- The mirror of `TauCeti.Octonion.mul_conj_add_mul_conj`, with the conjugates on the left. -/
+theorem conj_mul_add_conj_mul (x y : Octonion R) :
+    conj x * y + conj y * x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;>
+    simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
+      polar_normQuadraticForm_apply]
+  · ring
+  · ring
+  · module
+
+/-- The polar form of the norm is `2 N` on the diagonal. -/
+theorem polar_normQuadraticForm_self (x : Octonion R) :
+    QuadraticMap.polar (normQuadraticForm R) x x = 2 * norm x := by
+  simp [norm_def]
 
 /-! ### Alternativity -/
 
