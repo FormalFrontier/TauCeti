@@ -72,16 +72,18 @@ corresponding root of the pinned rational root system. -/
 theorem intCast_geckWeight_inr (k : Fin t.numRoots) :
     (fun i ↦ (t.geckWeight ht (Sum.inr k) i : ℚ)) =
       (t.rationalRootSystem ht).root k := by
-  funext i
-  rw [geckWeight_inr]
-  rw [← eq_intCast (algebraMap ℤ ℚ)]
-  rw [(t.rationalRootSystem ht).algebraMap_pairingIn ℤ k (t.simpleSupportEquiv ht i),
-    ← RootPairing.root_coroot_eq_pairing, toLinearMap_rationalRootSystem,
-    coe_simpleSupportEquiv]
+  ext i
   have hcoroot : (t.rationalRootSystem ht).coroot (t.simpleIndex ht i) = Pi.single i 1 := by
     ext j
     by_cases hij : i = j <;> simp [hij]
-  rw [hcoroot, dotProduct_single, mul_one]
+  calc
+    (t.geckWeight ht (Sum.inr k) i : ℚ) =
+        (t.rationalRootSystem ht).pairing k (t.simpleIndex ht i) := by
+      simpa only [geckWeight_inr, coe_simpleSupportEquiv, eq_intCast] using
+        (t.rationalRootSystem ht).algebraMap_pairingIn ℤ k (t.simpleSupportEquiv ht i)
+    _ = (t.rationalRootSystem ht).root k i := by
+      simp only [← RootPairing.root_coroot_eq_pairing, toLinearMap_rationalRootSystem,
+        hcoroot, dotProduct_single, mul_one]
 
 /-- The degree of a root coordinate in Geck's defining representation is the height of that root
 relative to the pinned base. -/
@@ -116,9 +118,8 @@ theorem weightDegree_cartanMatrix_row (i : Fin t.rank) :
     t.weightDegree ht (fun j ↦ t.cartanMatrix i j) = 1 := by
   have hweight : (fun j ↦ t.cartanMatrix i j) =
       t.geckWeight ht (Sum.inr (t.simpleIndex ht i)) := by
-    funext j
-    rw [geckWeight_inr, coe_simpleSupportEquiv, pairingIn_rationalRootSystem,
-      pairingIn_simpleIndex]
+    ext j
+    simp
   have hi := (t.simpleSupportEquiv ht i).property
   rw [coe_simpleSupportEquiv] at hi
   rw [hweight, weightDegree_geckWeight_inr,
