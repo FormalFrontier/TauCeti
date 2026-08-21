@@ -44,11 +44,11 @@ itself are those pinned in `TauCeti.Hodge.IsPolarization`.
 * `TauCeti.Hodge.Polarization.hodgeForm`: the Hodge form of a polarization.
 * `TauCeti.Hodge.Polarization.hodgeForm_eq_conj`: it is the conjugate of the alternate-convention
   whole-space form `Q (C u) (conj v)`.
-* `TauCeti.Hodge.Polarization.hodgeForm_isSymm`: it is Hermitian.
+* `TauCeti.Hodge.Polarization.isSymm_hodgeForm`: it is Hermitian.
 * `TauCeti.Hodge.Polarization.hodgeForm_eq_zero_of_mem_piece`: distinct Hodge components are
   orthogonal for it.
 * `TauCeti.Hodge.Polarization.hodgeForm_self_pos`: it is positive definite.
-* `TauCeti.Hodge.Polarization.hodgeForm_isPosSemidef` and
+* `TauCeti.Hodge.Polarization.isPosSemidef_hodgeForm` and
   `TauCeti.Hodge.Polarization.hodgeForm_nondegenerate`: the packaged consequences.
 * `TauCeti.Hodge.tate_hodgeForm_apply`: the Hodge form of the polarized Tate structure `ℤ(m)` is the
   standard Hermitian form of the complex line.
@@ -126,7 +126,7 @@ theorem hodgeForm_eq_conj (P : Polarization hℂ hs) (u v : Vℂ) :
   rw [← P.Q_conj, hconj, latticeConj_apply_apply, hodgeForm_apply]
 
 /-- **The Hodge form is Hermitian.** -/
-theorem hodgeForm_isSymm (P : Polarization hℂ hs) : P.hodgeForm.IsSymm where
+theorem isSymm_hodgeForm (P : Polarization hℂ hs) : P.hodgeForm.IsSymm where
   eq u v := by
     have hconj : starRingEnd ℂ (P.hodgeForm u v) =
         P.Q (hs.weilOperator u) (latticeConj hℂ v) := by
@@ -222,13 +222,13 @@ theorem hodgeForm_self_nonneg (P : Polarization hℂ hs) (x : Vℂ) : 0 ≤ P.ho
   · exact (P.hodgeForm_self_pos hx).le
 
 /-- The Hodge form is nonnegative, in Mathlib's packaging. -/
-theorem hodgeForm_isNonneg (P : Polarization hℂ hs) : P.hodgeForm.IsNonneg :=
+theorem isNonneg_hodgeForm (P : Polarization hℂ hs) : P.hodgeForm.IsNonneg :=
   ⟨P.hodgeForm_self_nonneg⟩
 
 /-- The Hodge form is positive semidefinite, in Mathlib's packaging. -/
-theorem hodgeForm_isPosSemidef (P : Polarization hℂ hs) : P.hodgeForm.IsPosSemidef where
-  isSymm := P.hodgeForm_isSymm
-  isNonneg := P.hodgeForm_isNonneg
+theorem isPosSemidef_hodgeForm (P : Polarization hℂ hs) : P.hodgeForm.IsPosSemidef where
+  isSymm := P.isSymm_hodgeForm
+  isNonneg := P.isNonneg_hodgeForm
 
 /-- The Hodge form vanishes on the diagonal only at zero. -/
 @[simp]
