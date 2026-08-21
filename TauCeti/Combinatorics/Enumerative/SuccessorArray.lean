@@ -25,6 +25,7 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 
 ## Main results
 
+* `TauCeti.visitCount_monotone`: visit counts are monotone in the horizon.
 * `TauCeti.successorArray_visitCount`: the defining step relation of the successor array.
 * `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
@@ -120,6 +121,12 @@ theorem visitCount_eq_count [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ)
 theorem visitCount_zero (x : ℕ → α) (a : α) : visitCount x a 0 = 0 := by
   classical
   rw [visitCount_eq_count, Nat.count_zero]
+
+/-- Visit counts are monotone in the horizon. -/
+theorem visitCount_monotone (x : ℕ → α) (a : α) : Monotone (visitCount x a) := by
+  classical
+  intro m n hmn
+  simpa only [visitCount_eq_count] using Nat.count_monotone (fun i => x i = a) hmn
 
 /-- Visit counts before `n` depend only on sequence values before `n`. -/
 theorem visitCount_congr (h : ∀ i < n, x i = y i) : visitCount x a n = visitCount y a n := by
