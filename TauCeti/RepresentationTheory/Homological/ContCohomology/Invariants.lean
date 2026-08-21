@@ -124,7 +124,6 @@ variable {N : Type*} [AddGroup N] [DistribMulAction G N]
 
 /-- A `G`-equivariant additive map restricts to the invariants of any subgroup. This is the
 functoriality of `M ^ H` in the coefficients. -/
-@[expose]
 def fixedPointsMap (f : M →+[G] N) (H : Subgroup G) :
     FixedPoints.addSubgroup H M →+ FixedPoints.addSubgroup H N where
   toFun m := ⟨f (m : M), f.toMulActionHom.map_mem_fixedPoints (H := H.toSubmonoid) m.2⟩
@@ -135,7 +134,7 @@ def fixedPointsMap (f : M →+[G] N) (H : Subgroup G) :
 @[simp]
 theorem coe_fixedPointsMap (f : M →+[G] N) (H : Subgroup G)
     (m : FixedPoints.addSubgroup H M) :
-    (fixedPointsMap f H m : N) = f (m : M) :=
+    (fixedPointsMap f H m : N) = f (m : M) := by
   rfl
 
 /-- Restriction to invariants preserves the identity map. -/
