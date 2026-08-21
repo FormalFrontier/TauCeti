@@ -50,10 +50,10 @@ submodule by centrality and it contains the generator.
 
 ## Main results
 
-* `TauCeti.casimir_smul_of_isHighestWeightVector`: the Casimir element sends a highest weight
-  vector of weight `λ` to `(⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩) • v`.
-* `TauCeti.casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top`: on a highest weight module
-  the Casimir element acts by that scalar on every vector.
+* `TauCeti.representation_casimirElement_apply_of_isHighestWeightVector`: the Casimir element
+  sends a highest weight vector of weight `λ` to `(⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩) • v`.
+* `TauCeti.casimir_smul_of_isHighestWeightVector`: on a highest weight module the Casimir element
+  acts by that scalar on every vector.
 
 ## Implementation notes
 
@@ -71,10 +71,9 @@ without a case distinction on whether the zero functional is a weight at all.
 
 This is the "Casimir element" item of Layer 5 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, whose target signature
-`casimir_smul_of_isHighestWeightVector` is pinned in the accompanying `Suggested.lean`. The
-unadorned name goes to the statement on the generator, from which the statement on the whole
-module, `casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top`, follows by adding the
-cyclicity hypothesis its name records.
+`casimir_smul_of_isHighestWeightVector` is pinned in the accompanying `Suggested.lean`. The helper
+`representation_casimirElement_apply_of_isHighestWeightVector` proves the scalar statement on the
+generator; the pinned theorem extends it to the whole module using cyclicity.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §22.1, where
   the Casimir element is shown to act on a standard cyclic module of highest weight `λ` by the
@@ -390,7 +389,8 @@ private theorem invForm_add_weylVector_sub_invForm_weylVector :
 /-- **The Casimir eigenvalue on a highest weight vector.** The Casimir element sends a highest
 weight vector of weight `lam` to `(⟨lam + ρ, lam + ρ⟩ - ⟨ρ, ρ⟩) • v`, where `ρ` is the Weyl
 vector of `base`. -/
-theorem casimir_smul_of_isHighestWeightVector (hv : IsHighestWeightVector base lam v) :
+theorem representation_casimirElement_apply_of_isHighestWeightVector
+    (hv : IsHighestWeightVector base lam v) :
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) v =
       (invForm (lam + weylVector (IsKilling.rootSystem H) base)
             (lam + weylVector (IsKilling.rootSystem H) base) -
@@ -403,7 +403,7 @@ theorem casimir_smul_of_isHighestWeightVector (hv : IsHighestWeightVector base l
 weight vector of weight `lam`, the Casimir element acts by the scalar
 `⟨lam + ρ, lam + ρ⟩ - ⟨ρ, ρ⟩`. Centrality of the Casimir element makes the set where it acts by
 that scalar a Lie submodule, and it contains the generator. -/
-theorem casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top
+theorem casimir_smul_of_isHighestWeightVector
     (hv : IsHighestWeightVector base lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) (m : M) :
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m =
       (invForm (lam + weylVector (IsKilling.rootSystem H) base)
@@ -434,7 +434,7 @@ theorem casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top
         exact LinearMap.mem_ker.mpr (by rw [hcentral, hw0, lie_zero]) }
   have hvN : v ∈ N :=
     LinearMap.mem_ker.mpr ((hker v).mpr
-      (casimir_smul_of_isHighestWeightVector hv))
+      (representation_casimirElement_apply_of_isHighestWeightVector hv))
   have hNtop : N = ⊤ := by
     rw [← top_le_iff, ← hgen]
     exact LieSubmodule.lieSpan_le.mpr (by simpa using hvN)
