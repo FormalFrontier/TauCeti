@@ -324,7 +324,8 @@ theorem chevalleyInvolution_cartan (x : t.cartanSubalgebra ht) :
 hypothesis used to restrict it to the Cartan and to form its induced permutation of weights. -/
 @[simp]
 theorem map_chevalleyInvolution_cartanSubalgebra :
-    (t.cartanSubalgebra ht).map (t.chevalleyInvolution ht).toLieHom =
+    ((RootPairing.GeckConstruction.cartanSubalgebra (t.rationalBase ht)).comap
+        (t.lieAlgebra ht).incl).map (t.chevalleyInvolution ht).toLieHom =
       t.cartanSubalgebra ht := by
   ext y
   constructor
@@ -345,7 +346,9 @@ pointwise negation. -/
 @[simp]
 theorem chevalleyInvolution_ofSubalgebras_apply (x : t.cartanSubalgebra ht) :
     (t.chevalleyInvolution ht).ofSubalgebras (t.cartanSubalgebra ht)
-        (t.cartanSubalgebra ht) (t.map_chevalleyInvolution_cartanSubalgebra ht) x = -x := by
+        (t.cartanSubalgebra ht) (by
+          simpa only [cartanSubalgebra_def] using
+            t.map_chevalleyInvolution_cartanSubalgebra ht) x = -x := by
   apply Subtype.ext
   rw [LieEquiv.ofSubalgebras_apply, t.chevalleyInvolution_cartan ht]
   rfl
@@ -355,7 +358,9 @@ subalgebra is also pointwise negation. -/
 @[simp]
 theorem chevalleyInvolution_ofSubalgebras_symm_apply (x : t.cartanSubalgebra ht) :
     ((t.chevalleyInvolution ht).ofSubalgebras (t.cartanSubalgebra ht)
-        (t.cartanSubalgebra ht) (t.map_chevalleyInvolution_cartanSubalgebra ht)).symm x = -x := by
+        (t.cartanSubalgebra ht) (by
+          simpa only [cartanSubalgebra_def] using
+            t.map_chevalleyInvolution_cartanSubalgebra ht)).symm x = -x := by
   apply Subtype.ext
   rw [LieEquiv.ofSubalgebras_symm_apply, t.chevalleyInvolution_symm ht,
     t.chevalleyInvolution_cartan ht]
@@ -369,7 +374,9 @@ theorem comp_chevalleyInvolution_ofSubalgebras_symm
     (χ : t.cartanSubalgebra ht → ℚ) ∘
         ((t.chevalleyInvolution ht).ofSubalgebras (t.cartanSubalgebra ht)
           (t.cartanSubalgebra ht)
-          (t.map_chevalleyInvolution_cartanSubalgebra ht)).symm = -(χ : _ → ℚ) := by
+          (by
+            simpa only [cartanSubalgebra_def] using
+              t.map_chevalleyInvolution_cartanSubalgebra ht)).symm = -(χ : _ → ℚ) := by
   funext x
   rw [Function.comp_apply, t.chevalleyInvolution_ofSubalgebras_symm_apply ht]
   simp
@@ -384,7 +391,9 @@ theorem map_rootSpace_chevalleyInvolution
           t.lieAlgebra ht →ₗ[ℚ] t.lieAlgebra ht) =
       (LieAlgebra.rootSpace (t.cartanSubalgebra ht) (-χ)).toSubmodule := by
   rw [map_rootSpace_eq (t.chevalleyInvolution ht)
-    (t.map_chevalleyInvolution_cartanSubalgebra ht)]
+    (by
+      simpa only [cartanSubalgebra_def] using
+        t.map_chevalleyInvolution_cartanSubalgebra ht)]
   congr 2
   exact t.comp_chevalleyInvolution_ofSubalgebras_symm ht χ
 
