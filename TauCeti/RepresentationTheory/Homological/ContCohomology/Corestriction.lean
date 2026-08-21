@@ -47,7 +47,7 @@ correct for trivial coefficients and wrong in general.
 Independence of the transversal is a theorem and not a definitional convenience, which is why the
 transversal is a variable of `explicitCor0Transversal` before the public `explicitCor0` fixes it.
 In positive degrees the corresponding statement changes the cochain by a coboundary; in degree `0`
-the cochain itself is unchanged.
+the two norms are equal as maps `M^U → M^G`.
 
 This implements the degree-`0` part of the Layer 6 milestone "Corestriction in degrees `0, 1, 2`"
 of the human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes
@@ -57,8 +57,8 @@ the displayed formula and the normalization `cor ∘ res = index • id`.
 
 The normalization `cor ∘ res = (G : U) • id` is Neukirch–Schmidt–Wingberg, *Cohomology of Number
 Fields*, 2nd ed., (1.5.7), and Serre, *Local Fields*, VII §7 Prop. 6. Both state it as an identity
-of cohomology classes; degree `0` is the one degree in which it already holds on cochains, because
-a degree-`0` cochain is an invariant element.
+of cohomology classes; in degree `0` no passage to classes is needed, because a degree-`0` cocycle
+*is* an invariant element and `H⁰(G, M) = M^G` is the group the theorem below is stated on.
 -/
 
 public section
@@ -172,8 +172,8 @@ theorem mapFixedPoints_explicitCor0Transversal {N : Type*} [AddCommGroup N]
 
 /-- **`cor⁰ ∘ res⁰ = (G : U) • id`**, for a variable transversal: on an element fixed by all of
 `G` every summand of the norm is the element itself. Unlike its counterparts in degrees `1` and
-`2`, this identity already holds on cochains, because a degree-`0` cochain is an invariant
-element. -/
+`2`, this identity needs no coboundary correction: a degree-`0` cocycle is exactly an invariant
+element, so the statement is already one about elements of `H⁰(G, M) = M^G`. -/
 theorem explicitCor0Transversal_comp_res0 (m : FixedPoints.addSubgroup G M) :
     explicitCor0Transversal G M U t ht (explicitRes0 G M U m) = U.index • m := by
   have hm : ∀ u : G ⧸ U, t u • (m : M) = (m : M) := fun u =>
