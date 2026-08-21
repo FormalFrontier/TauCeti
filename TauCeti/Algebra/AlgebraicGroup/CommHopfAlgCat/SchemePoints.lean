@@ -237,6 +237,8 @@ theorem schemePointsAlgΓMulEquiv_apply
       WithConv.toConv (((algΓ (CommRingCat.of R)).map g ≫
         (algΓAlgSpecAdjunction (CommRingCat.of R)).counit.app
           (Opposite.op (CommAlgCat.of R H))).unop.hom) := by
+  -- `schemePointsAlgΓMulEquiv` is a structure update of `schemePointsAlgΓEquiv` that only
+  -- supplies `map_mul'`; expose their definitionally identical forward maps for simplification.
   change schemePointsAlgΓEquiv H T g = _
   unfold schemePointsAlgΓEquiv
   simp only [Equiv.trans_apply, HopfAlgebra.pointsHomEquiv_apply,
