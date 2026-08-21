@@ -34,6 +34,8 @@ overlattice with this quotient is the lattice-side statement and is not yet form
 * `TauCeti.FiniteBilinearModule.orthogonalQuotient`: the induced module on `H^⊥` modulo the part
   of `H` it contains.
 * `TauCeti.FiniteBilinearModule.orthogonalQuotient_pairing_mk`: the representative formula.
+* `TauCeti.FiniteBilinearModule.orthogonalQuotientMk_eq_iff`: two elements have the same class
+  exactly when they differ by an element of `H`.
 * `TauCeti.FiniteBilinearModule.radical_restrict_orthogonalComplement`: the radical of the
   restricted pairing.
 * `TauCeti.FiniteBilinearModule.isNondegenerate_orthogonalQuotient_iff`: the orthogonal quotient
@@ -131,6 +133,14 @@ theorem orthogonalQuotientMk_eq_zero_iff (H : AddSubgroup A) (x : A.orthogonalCo
     A.orthogonalQuotientMk H x = 0 ↔ (x : A) ∈ H := by
   rw [← AddMonoidHom.mem_ker, A.orthogonalQuotientMk_ker H]
   exact AddSubgroup.mem_addSubgroupOf
+
+/-- Two elements of `H^⊥` have the same class in the orthogonal quotient exactly when they differ
+by an element of `H`. -/
+@[simp]
+theorem orthogonalQuotientMk_eq_iff (H : AddSubgroup A) (x y : A.orthogonalComplement H) :
+    A.orthogonalQuotientMk H x = A.orthogonalQuotientMk H y ↔ (x : A) - y ∈ H := by
+  rw [← sub_eq_zero, ← map_sub, A.orthogonalQuotientMk_eq_zero_iff H]
+  exact Iff.rfl
 
 /-- The radical of the pairing restricted to `H^⊥` is the part of the double orthogonal complement
 `H^⊥⊥ = H ⊔ rad(A)` lying inside `H^⊥`. -/
