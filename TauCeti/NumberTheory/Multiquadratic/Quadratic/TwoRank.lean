@@ -35,8 +35,11 @@ The matching lower bound needs the Artin map identifying `Gal(K_gen/K)` with `Cl
 not proved here. For a real quadratic field the statement itself changes: the `t - 1` formula is
 about the narrow class group, and the ordinary `2`-rank can be smaller.
 
-See D. A. Cox, *Primes of the Form x² + ny²*, Chapter 3, and F. Lemmermeyer, *Reciprocity Laws*,
-Chapter 6.
+See F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2, which runs the same
+route: its Proposition 2.9 is the Hilbert-90 descent realising an ambiguous class by an ambiguous
+ideal, and its "first inequality" `#Cl⁺/Cl⁺² ≤ 2^(t-1)` is the bound proved here. D. A. Cox,
+*Primes of the Form x² + ny²*, §6.A has the same statement for field discriminants, and §3.B the
+form-theoretic genus theory it descends from.
 
 ## Main result
 
