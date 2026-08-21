@@ -37,8 +37,8 @@ coordinate algebra in the basic reductive example.
   `GLₙ`-points.
 * `TauCeti.GeneralLinear.scalarTorusCenterNatIso`: the natural isomorphism from `𝔾ₘ`-points
   to the represented center of `GLₙ`.
-* `TauCeti.GeneralLinear.centerCoordinateIso`: the center coordinate Hopf algebra of `GLₙ`
-  is the Laurent-polynomial Hopf algebra.
+* `TauCeti.GeneralLinear.centerCoordinateLaurentIso`: the center coordinate Hopf algebra of
+  `GLₙ` is the Laurent-polynomial Hopf algebra.
 
 ## References
 
@@ -54,13 +54,13 @@ namespace TauCeti
 
 namespace GeneralLinear
 
-universe u
+universe u w w'
 
 variable {R : Type u} [CommRing R]
 variable (n : ℕ)
 
 /-- Send a multiplicative-group point to the corresponding scalar general-linear point. -/
-noncomputable def scalarTorusPoints {A : Type u} [CommRing A] [Algebra R A] :
+noncomputable def scalarTorusPoints {A : Type w} [CommRing A] [Algebra R A] :
     WithConv (R[T;T⁻¹] →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R n →ₐ[R] A) :=
   (pointsMulEquiv (R := R) (A := A) n).symm.toMonoidHom.comp
@@ -70,7 +70,7 @@ noncomputable def scalarTorusPoints {A : Type u} [CommRing A] [Algebra R A] :
 /-- Under the standard point equivalences, `scalarTorusPoints` is the usual scalar-matrix
 homomorphism. -/
 @[simp]
-theorem pointToGeneralLinear_scalarTorusPoints {A : Type u} [CommRing A] [Algebra R A]
+theorem pointToGeneralLinear_scalarTorusPoints {A : Type w} [CommRing A] [Algebra R A]
     (f : WithConv (R[T;T⁻¹] →ₐ[R] A)) :
     pointToGeneralLinear n (scalarTorusPoints n f) =
       Matrix.GeneralLinearGroup.scalar (Fin n)
@@ -78,7 +78,7 @@ theorem pointToGeneralLinear_scalarTorusPoints {A : Type u} [CommRing A] [Algebr
   simp [scalarTorusPoints]
 
 /-- The scalar-matrix construction is natural in the value algebra. -/
-theorem mapValue_scalarTorusPoints {A B : Type u} [CommRing A] [CommRing B]
+theorem mapValue_scalarTorusPoints {A : Type w} {B : Type w'} [CommRing A] [CommRing B]
     [Algebra R A] [Algebra R B] (φ : A →ₐ[R] B)
     (f : WithConv (R[T;T⁻¹] →ₐ[R] A)) :
     AlgHom.mapValue (H := coordinateHopfAlgebra R n) φ (scalarTorusPoints n f) =
@@ -91,11 +91,11 @@ theorem mapValue_scalarTorusPoints {A B : Type u} [CommRing A] [CommRing B]
     _ = pointsMulEquiv n (scalarTorusPoints n (AlgHom.mapValue φ f)) := by
       simp only [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints,
         MultiplicativeGroup.pointsMulEquiv_mapValue, Matrix.GeneralLinearGroup.map_scalar]
-      rfl
+      exact congrArg (Matrix.GeneralLinearGroup.scalar (Fin n)) (Units.ext rfl)
 
 /-- Scalar multiplication is injective in positive rank, stated on the represented point
 groups. -/
-theorem scalarTorusPoints_injective (hn : 0 < n) {A : Type u} [CommRing A] [Algebra R A] :
+theorem scalarTorusPoints_injective (hn : 0 < n) {A : Type w} [CommRing A] [Algebra R A] :
     Function.Injective (scalarTorusPoints (R := R) n (A := A)) := by
   intro f g hfg
   apply (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).injective
@@ -111,6 +111,19 @@ theorem scalarTorusPoints_injective (hn : 0 < n) {A : Type u} [CommRing A] [Alge
   apply (Matrix.scalar_inj (n := Fin n)).mp
   simpa only [Matrix.GeneralLinearGroup.coe_scalar] using congrArg Units.val hmat
 
+/-- Scalar points are universally central over any commutative base ring. -/
+theorem scalarTorusPoints_isCentralPoint {A : Type u} [CommRing A] [Algebra R A]
+    (f : WithConv (R[T;T⁻¹] →ₐ[R] A)) :
+    HopfAlgebra.IsCentralPoint (scalarTorusPoints n f) := by
+  rw [HopfAlgebra.isCentralPoint_def]
+  intro B _ _ φ g
+  apply (pointsMulEquiv (R := R) (A := B) n).injective
+  simpa only [map_mul, mapValue_scalarTorusPoints, pointsMulEquiv_apply,
+    pointToGeneralLinear_scalarTorusPoints]
+    using Matrix.GeneralLinearGroup.scalar_commute
+      (MultiplicativeGroup.pointsMulEquiv (R := R) (A := B) (AlgHom.mapValue φ f))
+      (pointsMulEquiv (R := R) (A := B) n g)
+
 section Center
 
 variable {k : Type u} [Field k]
@@ -120,15 +133,8 @@ theorem scalarTorusPoints_mem_centerPointsSubgroup {A : Type u} [CommRing A] [Al
     (f : WithConv (k[T;T⁻¹] →ₐ[k] A)) :
     scalarTorusPoints n f ∈ CommHopfAlgCat.centerPointsSubgroup
       (coordinateHopfAlgebra k n) (CommAlgCat.of k A) := by
-  rw [CommHopfAlgCat.mem_centerPointsSubgroup_iff,
-    HopfAlgebra.isCentralPoint_def]
-  intro B _ _ φ g
-  apply (pointsMulEquiv (R := k) (A := B) n).injective
-  simpa only [map_mul, mapValue_scalarTorusPoints, pointsMulEquiv_apply,
-    pointToGeneralLinear_scalarTorusPoints]
-    using Matrix.GeneralLinearGroup.scalar_commute
-      (MultiplicativeGroup.pointsMulEquiv (R := k) (A := B) (AlgHom.mapValue φ f))
-      (pointsMulEquiv (R := k) (A := B) n g)
+  rw [CommHopfAlgCat.mem_centerPointsSubgroup_iff]
+  exact scalarTorusPoints_isCentralPoint n f
 
 /-- The scalar-matrix map with codomain restricted to the represented center. -/
 noncomputable def scalarTorusCenterHom (A : CommAlgCat.{u} k) :
@@ -140,7 +146,7 @@ noncomputable def scalarTorusCenterHom (A : CommAlgCat.{u} k) :
 
 /-- The underlying value of `scalarTorusCenterHom` is the scalar-matrix point. -/
 @[simp]
-theorem scalarTorusCenterHom_apply (A : CommAlgCat.{u} k)
+theorem coe_scalarTorusCenterHom_apply (A : CommAlgCat.{u} k)
     (f : HopfAlgebra.points (R := k) (H := k[T;T⁻¹]) A) :
     (scalarTorusCenterHom n A f :
       HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) =
@@ -158,19 +164,43 @@ theorem scalarTorusCenterHom_bijective (hn : 0 < n) (A : CommAlgCat.{u} k) :
     have hgcentral :
         pointsMulEquiv (R := k) (A := A) n g.1 ∈
           Subgroup.center (Matrix.GeneralLinearGroup (Fin n) A) := by
-      apply MulEquivClass.apply_mem_center
-      apply HopfAlgebra.center_le_center
-      rw [← CommHopfAlgCat.centerPointsSubgroup_eq_center]
-      exact g.2
+      have hgcenter :
+          g.1 ∈ Subgroup.center
+            (HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) := by
+        apply HopfAlgebra.center_le_center
+        rw [← CommHopfAlgCat.centerPointsSubgroup_eq_center]
+        exact g.2
+      exact (Subgroup.centerCongr (pointsMulEquiv (R := k) (A := A) n)
+        ⟨g.1, hgcenter⟩).2
     rw [Matrix.GeneralLinearGroup.center_eq_range_scalar] at hgcentral
     obtain ⟨a, ha⟩ := hgcentral
     refine ⟨(MultiplicativeGroup.pointsMulEquiv (R := k) (A := A)).symm a, ?_⟩
     apply Subtype.ext
-    rw [scalarTorusCenterHom_apply]
+    rw [coe_scalarTorusCenterHom_apply]
     apply (pointsMulEquiv (R := k) (A := A) n).injective
     rw [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints,
       MulEquiv.apply_symm_apply]
     exact ha
+
+/-- A general-linear point is universally central exactly when it is a scalar point. -/
+theorem mem_centerPointsSubgroup_iff_exists_scalarTorusPoints (hn : 0 < n)
+    (A : CommAlgCat.{u} k)
+    (g : HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) :
+    g ∈ CommHopfAlgCat.centerPointsSubgroup (coordinateHopfAlgebra k n) A ↔
+      ∃ f : HopfAlgebra.points (R := k) (H := k[T;T⁻¹]) A,
+        scalarTorusPoints n f = g := by
+  constructor
+  · intro hg
+    obtain ⟨f, hf⟩ := (scalarTorusCenterHom_bijective n hn A).2 ⟨g, hg⟩
+    refine ⟨f, ?_⟩
+    calc
+      scalarTorusPoints n f =
+          (scalarTorusCenterHom n A f :
+            HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) :=
+        (coe_scalarTorusCenterHom_apply n A f).symm
+      _ = g := congrArg Subtype.val hf
+  · rintro ⟨f, rfl⟩
+    exact scalarTorusPoints_mem_centerPointsSubgroup n f
 
 /-- For every value algebra, scalar matrices identify the multiplicative group with the
 represented center of `GLₙ`. -/
@@ -196,7 +226,7 @@ private theorem scalarTorusCenterHom_natural {A B : CommAlgCat.{u} k} (φ : A �
       scalarTorusCenterHom n B (AlgHom.mapValue (H := k[T;T⁻¹]) φ.hom f) := by
   apply Subtype.ext
   rw [CommHopfAlgCat.coe_mapQuotientPointsSubgroup_apply,
-    scalarTorusCenterHom_apply, scalarTorusCenterHom_apply]
+    coe_scalarTorusCenterHom_apply, coe_scalarTorusCenterHom_apply]
   exact mapValue_scalarTorusPoints n φ.hom f
 
 /-- Scalar matrices identify the multiplicative-group functor with the represented center
@@ -238,7 +268,7 @@ noncomputable def scalarTorusCenterCoordinatePointsNatIso (hn : 0 < n) :
 
 /-- The coordinate Hopf algebra of the center of positive-rank `GLₙ` is the Laurent-polynomial
 Hopf algebra of `𝔾ₘ`. -/
-noncomputable def centerCoordinateIso (hn : 0 < n) :
+noncomputable def centerCoordinateLaurentIso (hn : 0 < n) :
     CommHopfAlgCat.quotient (coordinateHopfAlgebra k n)
         (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n)) ≅
       CommHopfAlgCat.of k k[T;T⁻¹] :=
@@ -246,11 +276,13 @@ noncomputable def centerCoordinateIso (hn : 0 < n) :
     (CommHopfAlgCat.pointsFunctor (R := k))).preimageIso
       (scalarTorusCenterCoordinatePointsNatIso n hn)
 
-/-- Applying the functor of points to `centerCoordinateIso` recovers the scalar-matrix natural
-isomorphism used to construct it. -/
-theorem pointsFunctor_mapIso_centerCoordinateIso (hn : 0 < n) :
-    (CommHopfAlgCat.pointsFunctor (R := k)).mapIso (centerCoordinateIso n hn).op =
+/-- Applying the functor of points to `centerCoordinateLaurentIso` recovers the scalar-matrix
+natural isomorphism used to construct it. -/
+theorem pointsFunctor_mapIso_centerCoordinateLaurentIso (hn : 0 < n) :
+    (CommHopfAlgCat.pointsFunctor (R := k)).mapIso (centerCoordinateLaurentIso n hn).op =
       scalarTorusCenterCoordinatePointsNatIso n hn := by
+  unfold centerCoordinateLaurentIso
+  rw [Iso.unop_op]
   apply Iso.ext
   exact (Functor.FullyFaithful.ofFullyFaithful
     (CommHopfAlgCat.pointsFunctor (R := k))).map_preimage _
