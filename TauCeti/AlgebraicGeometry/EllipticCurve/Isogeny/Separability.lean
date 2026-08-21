@@ -35,7 +35,8 @@ this file names those two parts and records that they multiply to the degree.
 * `TauCeti.Isogeny.separableDegree_pos` and `TauCeti.Isogeny.inseparableDegree_pos`: both are
   positive, so neither factor is degenerate.
 * `TauCeti.Isogeny.separableDegree_id` and `TauCeti.Isogeny.inseparableDegree_id`: both are `1`
-  for the identity isogeny.
+  for the identity isogeny, whence `TauCeti.Isogeny.isSeparable_id` — the identity is separable,
+  as an instance.
 * `TauCeti.Isogeny.separableDegree_comp` and `TauCeti.Isogeny.inseparableDegree_comp`: both are
   multiplicative under composition, matching `degree_comp`.
 * `TauCeti.Isogeny.separableDegree_eq_degree_of_isSeparable` and
@@ -227,6 +228,16 @@ theorem inseparableDegree_eq_one_iff_isSeparable (φ : Isogeny W₁ W₂) :
     φ.inseparableDegree = 1 ↔
       Algebra.IsSeparable φ.fieldPullback.fieldRange W₁.FunctionField :=
   φ.inseparableDegree_def ▸ (isSeparable_iff_finInsepDegree_eq_one _ _).symm
+
+/-- **The identity isogeny is separable.** Its function-field pullback is the identity, so the
+extension it measures is trivial; concretely, `inseparableDegree_id` reads `1`, which by
+`inseparableDegree_eq_one_iff_isSeparable` is separability.
+
+An `instance`, so that results carrying separability as a hypothesis apply to `id W` with nothing
+to supply — `Isogeny.pushClass_id` is the consumer. -/
+instance isSeparable_id (W : WeierstrassCurve.Affine F) :
+    Algebra.IsSeparable (id W).fieldPullback.fieldRange W.FunctionField :=
+  ((id W).inseparableDegree_eq_one_iff_isSeparable).1 (inseparableDegree_id W)
 
 variable {W₃ : WeierstrassCurve.Affine F}
 
