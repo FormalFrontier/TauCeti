@@ -85,11 +85,8 @@ variable {L : IntegralLattice V} {M : IntegralLattice W} {N : IntegralLattice U}
 
 /-- **An isometry transports intermediate carriers.** The ambient equivalence of a lattice
 isometry maps the carrier onto the carrier and the dual carrier onto the dual carrier, so it
-restricts to an order isomorphism between the intervals of intermediate carriers.
-
-The construction is exposed so that the underlying carrier of a transported carrier reduces to
-the image submodule; see `coe_intermediateCarrierEquiv`. -/
-@[expose] def intermediateCarrierEquiv (e : Isometry L M) :
+restricts to an order isomorphism between the intervals of intermediate carriers. -/
+def intermediateCarrierEquiv (e : Isometry L M) :
     L.IntermediateCarrier ≃o M.IntermediateCarrier :=
   (OrderIso.Icc (Submodule.orderIsoMapComap e.ambientEquiv) L.carrier L.dualCarrier).trans
     (OrderIso.setCongr _ _ (by
@@ -101,8 +98,8 @@ theorem coe_intermediateCarrierEquiv (e : Isometry L M) (P : L.IntermediateCarri
     (e.intermediateCarrierEquiv P).1 = P.1.map e.ambientEquiv.toLinearMap :=
   -- Mathlib's `OrderIso.Icc` and `OrderIso.setCongr` both act by the underlying map on the
   -- coerced element, and `⇑e.ambientEquiv` is `⇑e.ambientEquiv.toLinearMap`, so both sides are
-  -- definitionally the same submodule.
-  rfl
+  -- definitionally the same submodule. The parentheses keep `intermediateCarrierEquiv` sealed.
+  (rfl)
 
 /-- Membership in a transported carrier is membership of the preimage in the original carrier. -/
 @[simp]
@@ -232,11 +229,8 @@ theorem isEven_intermediateCarrierEquiv_iff (e : Isometry L M) (P : L.Intermedia
     exact ⟨n, by rwa [← e.norm_apply (e.symm x), apply_symm_apply] at hn⟩
 
 /-- Restriction of the intermediate-carrier transport to the carriers cut out by a pair of
-predicates corresponding under the transport.
-
-The construction is exposed so that the underlying intermediate carrier of a restricted transport
-reduces to the transported carrier; see `coe_intermediateCarrierEquivSubtype`. -/
-@[expose] def intermediateCarrierEquivSubtype (e : Isometry L M)
+predicates corresponding under the transport. -/
+def intermediateCarrierEquivSubtype (e : Isometry L M)
     {p : L.IntermediateCarrier → Prop} {q : M.IntermediateCarrier → Prop}
     (h : ∀ P, p P ↔ q (e.intermediateCarrierEquiv P)) :
     {P : L.IntermediateCarrier // p P} ≃o {Q : M.IntermediateCarrier // q Q} where
@@ -251,7 +245,7 @@ theorem coe_intermediateCarrierEquivSubtype (e : Isometry L M)
     (h : ∀ P, p P ↔ q (e.intermediateCarrierEquiv P)) (P : {P : L.IntermediateCarrier // p P}) :
     (e.intermediateCarrierEquivSubtype h P : M.IntermediateCarrier) =
       e.intermediateCarrierEquiv P.1 :=
-  rfl
+  (rfl)
 
 /-- The inverse of a restricted transport acts through the inverse intermediate-carrier
 transport. -/
@@ -261,7 +255,7 @@ theorem coe_intermediateCarrierEquivSubtype_symm (e : Isometry L M)
     (h : ∀ P, p P ↔ q (e.intermediateCarrierEquiv P)) (Q : {Q : M.IntermediateCarrier // q Q}) :
     ((e.intermediateCarrierEquivSubtype h).symm Q : L.IntermediateCarrier) =
       e.intermediateCarrierEquiv.symm Q.1 :=
-  rfl
+  (rfl)
 
 /-- **An isometry transports integral intermediate carriers.** This is the restriction of
 `intermediateCarrierEquiv` to the integral carriers on both sides. -/
