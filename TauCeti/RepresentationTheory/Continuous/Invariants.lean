@@ -56,6 +56,9 @@ variable {R G V : Type*} [Ring R] [Group G] [AddCommGroup V] [TopologicalSpace V
 
 omit [S.Normal] in
 variable {π S} in
+-- Not `@[simp]`: `simp` already normalizes the left-hand side to the right-hand side through
+-- `mem_invariants`, `restrict_apply_apply` and `Subtype.forall`, so the attribute would make this
+-- a `simpNF` violation. This is the `rw`-usable form of that normalization.
 /-- Membership in the invariants of `π|_S`, in terms of elements of `G` lying in `S`. -/
 theorem mem_invariants_restrict {v : V} :
     v ∈ (π.restrict S.subtype).invariants ↔ ∀ s ∈ S, π s v = v :=
