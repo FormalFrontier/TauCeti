@@ -91,9 +91,10 @@ written `(rfl)` rather than `rfl` because the module system rejects the latter f
 theorem whose proof unfolds a definition that is not `@[expose]`d, and nothing here needs to be
 exposed.
 
-Continuity in the group variable (`continuous_homAction_apply`) needs only a discrete source: `φ`
-is then automatically continuous, and the two actions occurring in `g • φ (g⁻¹ • m)` are continuous
-by hypothesis.
+Continuity in the group variable (`continuous_homAction_apply`) needs only that `φ` itself be
+continuous, the two actions occurring in `g • φ (g⁻¹ • m)` being continuous by hypothesis; the
+discrete source of the intended setting enters only where that continuity is discharged, by
+`continuous_of_discreteTopology`.
 
 `Representation.linHom` is the same conjugation construction for `k`-linear maps `V →ₗ[k] W` of
 bundled representations. It is not used as the definition here for two reasons. Its carrier is
@@ -191,6 +192,7 @@ theorem homAction_apply_smul (g : G) (φ : M →+ N) (m : M) : homAction g φ (g
 
 /-- A group element fixes `φ` for the conjugation action exactly when `φ` commutes with its
 action. -/
+@[simp]
 theorem homAction_eq_self_iff {g : G} {φ : M →+ N} :
     homAction g φ = φ ↔ ∀ m : M, φ (g • m) = g • φ m := by
   constructor
@@ -244,34 +246,34 @@ end IntLinearMap
 section Topology
 
 variable {G : Type*} [Group G] [TopologicalSpace G] [ContinuousInv G]
-  {M : Type*} [AddMonoid M] [TopologicalSpace M] [DiscreteTopology M] [DistribMulAction G M]
-  [ContinuousSMul G M]
+  {M : Type*} [AddMonoid M] [TopologicalSpace M] [DistribMulAction G M] [ContinuousSMul G M]
   {N : Type*} [AddMonoid N] [TopologicalSpace N] [DistribMulAction G N] [ContinuousSMul G N]
 
-/-- Each value of the conjugation action is continuous in the group variable. Only the source `M`
-is required to be discrete. -/
-theorem continuous_homAction_apply (φ : M →+ N) (m : M) :
+/-- Each value of the conjugation action is continuous in the group variable, as soon as `φ`
+itself is continuous. -/
+theorem continuous_homAction_apply {φ : M →+ N} (hφ : Continuous φ) (m : M) :
     Continuous fun g : G => homAction g φ m := by
   simp only [homAction_apply]
-  exact continuous_id.smul
-    ((continuous_of_discreteTopology (f := φ)).comp (continuous_inv.smul continuous_const))
+  exact continuous_id.smul (hφ.comp (continuous_inv.smul continuous_const))
 
-/-- The conjugation action is continuous into the ambient function space `M → N`. -/
-theorem continuous_homAction_coe (φ : M →+ N) :
+/-- The conjugation action is continuous into the ambient function space `M → N`, as soon as `φ`
+itself is continuous. -/
+theorem continuous_homAction_coe {φ : M →+ N} (hφ : Continuous φ) :
     Continuous fun g : G => ((homAction g φ : M →+ N) : M → N) :=
-  continuous_pi fun m => continuous_homAction_apply φ m
+  continuous_pi fun m => continuous_homAction_apply hφ m
 
 /-- For a finite discrete `M` and a discrete `N` the set of group elements fixing `φ` is open.
 This is what the `ContinuousSMul G (InternalHom G M N)` instance below rests on, through
 `continuousSMul_iff_stabilizer_isOpen`. -/
-theorem isOpen_setOfPred_homAction_eq_self [Finite M] [DiscreteTopology N] (φ : M →+ N) :
-    IsOpen {g : G | homAction g φ = φ} := by
+theorem isOpen_setOfPred_homAction_eq_self [DiscreteTopology M] [Finite M] [DiscreteTopology N]
+    (φ : M →+ N) : IsOpen {g : G | homAction g φ = φ} := by
   have hset : {g : G | homAction g φ = φ}
       = (fun g : G => ((homAction g φ : M →+ N) : M → N)) ⁻¹' {(φ : M → N)} := by
     ext g
     simp [DFunLike.coe_fn_eq]
   rw [hset]
-  exact (continuous_homAction_coe φ).isOpen_preimage _ (isOpen_discrete _)
+  exact (continuous_homAction_coe continuous_of_discreteTopology).isOpen_preimage _
+    (isOpen_discrete _)
 
 end Topology
 
@@ -384,7 +386,9 @@ instance : MulAction G (InternalHom G M N) where
 
 /-- The fixed points of the internal hom are the `G`-equivariant homomorphisms. This is the
 degree-zero invariants of the conjugation action, phrased through Mathlib's
-`MulAction.fixedPoints`, which is the invariants object the surrounding development uses. -/
+`MulAction.fixedPoints`, which is the invariants object the surrounding development uses. It is
+deliberately not `@[simp]`: Mathlib's `MulAction.mem_fixedPoints` already rewrites the left-hand
+side, so a `simp` attribute here would be shadowed and the `simpNF` linter rejects it. -/
 theorem mem_fixedPoints_iff {φ : InternalHom G M N} :
     φ ∈ MulAction.fixedPoints G (InternalHom G M N) ↔
       ∀ (g : G) (m : M), φ.toAddMonoidHom (g • m) = g • φ.toAddMonoidHom m := by
