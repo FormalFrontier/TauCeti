@@ -15,9 +15,9 @@ public import TauCeti.NumberTheory.EllipticDivisibilitySequence.ReducedInvariant
 
 `ω n` is the bivariate polynomial that the scalar-multiplication development identifies as the
 second (Jacobian) coordinate of multiplication by `n` on a Weierstrass curve — that
-identification is proved there, not here. This file supplies the polynomial itself, completing
-the `(φ, ψ)` pair of Mathlib's division-polynomial API: it defines `ω` and the 2-complement
-`ψc` of `ψ`, and proves the defining identity
+identification belongs there, not here, and is not yet in the library. This file supplies the
+polynomial itself, completing the `(φ, ψ)` pair of Mathlib's division-polynomial API: it defines
+`ω` and the 2-complement `ψc` of `ψ`, and proves the defining identity
 
 `2 ω n + a₁ φ n ψ n + a₃ (ψ n)³ = ψc n`,
 
@@ -48,8 +48,10 @@ and naturality in the coefficient ring for both families.
   the `(ψ, φ, ω)` triple for a general Weierstrass equation
   `y² + a₁xy + a₃y = x³ + a₂x² + a₄x + a₆` (the short form is offered there only as an optional
   simplification), and whose part (d), `[m]P = (φₘ/ψₘ², ωₘ/ψₘ³)`, is what makes `ω` a
-  `Y`-coordinate numerator. That identity is proved in the scalar-multiplication development, not
-  here, and it is the thing that fixes the normalisation of `ω` taken here.
+  `Y`-coordinate numerator and fixes the normalisation of `ω` taken here. Part (d) has no Lean
+  statement anywhere in this library yet: `DivisionPolynomial/ZSMul.lean` defines `smulY n` as
+  `ωₙ/ψₙ³`, but identifying that rational function with the `Y`-coordinate of `n • P` remains to
+  be proved.
 
   The exercise's own recurrence fixes a different normalisation, and the two part company off the
   short form. Its printed `4y ωₘ = ψₘ₋₁² ψₘ₊₂ + ψₘ₋₂ ψₘ₊₁²` is corrected by Silverman's errata
