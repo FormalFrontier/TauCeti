@@ -430,12 +430,10 @@ def top : Fin n :=
   x R.right
 
 /-- The initial horizontal side is the row occupied by the source state in the initial column. -/
-@[simp]
 theorem bottom_def : R.bottom = x R.left :=
   rfl
 
 /-- The terminal horizontal side is the row occupied by the source state in the terminal column. -/
-@[simp]
 theorem top_def : R.top = x R.right :=
   rfl
 
