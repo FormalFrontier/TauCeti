@@ -7,7 +7,6 @@ module
 
 public import Mathlib.GroupTheory.Coxeter.Basic
 public import Mathlib.GroupTheory.OrderOfElement
-public import TauCeti.GroupTheory.FreeGroup.Basic
 
 /-!
 # Artin-Tits groups
@@ -136,7 +135,7 @@ theorem ArtinGroup.prod_map_gen_braidWord (i i' : B) :
   have hmem := artinRelation_mem_artinRelationsSet M i i'
   rw [artinRelation_def] at hmem
   have h := PresentedGroup.mk_eq_mk_of_mul_inv_mem hmem
-  rw [map_prod_map_freeGroupOf, map_prod_map_freeGroupOf] at h
+  rw [← List.prod_map_hom, ← List.prod_map_hom] at h
   exact h
 
 /-- A word of length `2` in the standard alternating pattern, evaluated through any family `f`.
@@ -178,8 +177,12 @@ def ArtinGroup.lift (f : B → G)
     ArtinGroup M →* G :=
   PresentedGroup.toGroup (f := f) <| by
     rintro r ⟨⟨i, i'⟩, rfl⟩
-    simp only [uncurry, artinRelation_def, map_mul, map_inv, map_prod_map_freeGroupOf,
-      FreeGroup.lift_apply_of, mul_inv_eq_one]
+    simp only [uncurry, artinRelation_def, map_mul, map_inv, ← List.prod_map_hom,
+      mul_inv_eq_one]
+    have hcomp : (⇑(FreeGroup.lift f) ∘ FreeGroup.of) = f := by
+      funext j
+      exact FreeGroup.lift_apply_of
+    rw [hcomp]
     exact hf i i'
 
 @[simp]
