@@ -229,26 +229,15 @@ abbrev AbsoluteGaloisGroup := Gal(SeparableClosure K/K)
 
 /-- **Mathlib's absolute Galois group and `AbsoluteGaloisGroup` are the same topological group**:
 restricting an automorphism of an algebraic closure of `K` to the separable closure is an
-isomorphism `Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K`. -/
-def absoluteGaloisGroupRestrictEquiv :
+isomorphism `Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K`.
+
+The body is `@[expose]`d, so this is definitionally `separableClosureRestrictEquiv K
+(AlgebraicClosure K)` downstream and the general API — `separableClosureRestrictEquiv_apply`,
+`coe_separableClosureRestrictEquiv_apply`, `separableClosureRestrictEquiv_symm_apply_coe` —
+applies to it directly. -/
+@[expose] def absoluteGaloisGroupRestrictEquiv :
     Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K :=
   separableClosureRestrictEquiv K (AlgebraicClosure K)
-
-/-- `absoluteGaloisGroupRestrictEquiv` is `separableClosureRestrictEquiv` at the algebraic closure;
-this makes the general API reachable at the specialisation. -/
-theorem absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K)) :
-    absoluteGaloisGroupRestrictEquiv K σ =
-      separableClosureRestrictEquiv K (AlgebraicClosure K) σ :=
-  (rfl)
-
-/-- The inverse of `absoluteGaloisGroupRestrictEquiv` is the inverse of
-`separableClosureRestrictEquiv` at the algebraic closure; combined with
-`separableClosureRestrictEquiv_symm_apply_coe` this computes the automorphism of
-`AlgebraicClosure K` extending a given automorphism of `SeparableClosure K`. -/
-theorem absoluteGaloisGroupRestrictEquiv_symm_apply (τ : AbsoluteGaloisGroup K) :
-    (absoluteGaloisGroupRestrictEquiv K).symm τ =
-      (separableClosureRestrictEquiv K (AlgebraicClosure K)).symm τ :=
-  (rfl)
 
 /-- An automorphism of an algebraic closure of `K` and its image in `AbsoluteGaloisGroup K` take
 the same value on an element of `SeparableClosure K`, computed in the algebraic closure. -/
