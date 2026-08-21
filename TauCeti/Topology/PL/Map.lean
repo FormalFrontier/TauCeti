@@ -16,7 +16,7 @@ A map is *piecewise linear* — PL, and piecewise *affine* would be the more hon
 is affine on each cell of a polyhedral decomposition of its domain. This file builds that
 predicate in the shape the PL structure groupoid needs, and proves the closure properties which
 make it a `Pregroupoid` property: restriction to a subset, locality, invariance under changing the
-map on nothing, and closure under composition.
+map off the set, and closure under composition.
 
 ## The shape of the definition
 
@@ -31,10 +31,10 @@ Two predicates are defined, one on top of the other.
 Both weakenings of the textbook notion of a polyhedral *subdivision* are deliberate, and are what
 make the predicate usable as a `Pregroupoid` property on open subsets of a model space.
 
-The cells are asked only to *cover* the set, not to be contained in it. An open subset of a model
-space is not a union of polyhedra, so a subdivision *of* the set would not exist for the sets the
-groupoid quantifies over, and the covering form restricts to subsets for free
-(`TauCeti.IsPiecewiseAffineOn.mono`).
+The cells are asked only to *cover* the set, not to be contained in it. A non-closed open subset of
+a model space cannot be a locally finite union of the closed polyhedra used here, so a locally
+finite subdivision *of* the set would not exist for the sets the groupoid quantifies over. The
+covering form restricts to subsets for free (`TauCeti.IsPiecewiseAffineOn.mono`).
 
 Finiteness is asked for only near each point. A piecewise-linear map may genuinely have infinitely
 many pieces — a breakpoint at every integer, say — so a globally finite decomposition is not a

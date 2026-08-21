@@ -24,19 +24,18 @@ Given a model with corners `I : ModelWithCorners ℝ E H`, a map `f : H → H` i
 quadrant models, so PL manifolds with boundary and with corners come out of the same definition as
 boundaryless ones, with no separate half-space predicate.
 
-A *PL manifold* is then a charted space `M` over `H` with `HasGroupoid M (plGroupoid I)`. No new
+A *PL manifold* is then a charted space `M` over `H` with `HasGroupoid M (PLGroupoid I)`. No new
 structure is introduced for it, matching Mathlib's treatment of `IsManifold`.
 
 ## Main definitions
 
-* `TauCeti.plPregroupoid`: the pregroupoid of maps of `H` that are PL read in the model.
-* `TauCeti.plGroupoid`: the structure groupoid of PL open partial homeomorphisms of `H`.
+* `TauCeti.PLPregroupoid`: the pregroupoid of maps of `H` that are PL read in the model.
+* `TauCeti.PLGroupoid`: the structure groupoid of PL open partial homeomorphisms of `H`.
 
 ## Main results
 
-* `TauCeti.plGroupoid_le_contDiffGroupoid_zero`: the forgetful inclusion "PL implies Top". Its
-  mathematical content is that a PL map is continuous (`TauCeti.IsPLOn.continuousOn`).
-* `TauCeti.ofSet_mem_plGroupoid` and the `ClosedUnderRestriction (plGroupoid I)` instance: the
+* `TauCeti.PLGroupoid_le_continuousGroupoid`: the forgetful inclusion "PL implies Top".
+* `TauCeti.ofSet_mem_PLGroupoid` and the `ClosedUnderRestriction (PLGroupoid I)` instance: the
   identity of an open set is PL, so the groupoid is closed under restriction. `HasGroupoid` does
   not itself ask for this, but the standard constructions downstream of it do — restricting a
   chart to an open subset (`StructureGroupoid.restr_mem_maximalAtlas`) and the charted-space
@@ -64,14 +63,14 @@ variable {E H : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [TopologicalSp
 
 /-- Reading a map of `H` in the model through `I` turns it into a map between subsets of `E`;
 the identity `I ∘ I.symm` read this way is the identity of `range I`, and is therefore PL. This is
-the workhorse behind both the identity axiom of `TauCeti.plPregroupoid` and the fact that
-`TauCeti.plGroupoid` is closed under restriction. -/
+the workhorse behind both the identity axiom of `TauCeti.PLPregroupoid` and the fact that
+`TauCeti.PLGroupoid` is closed under restriction. -/
 theorem isPLOn_comp_symm (s : Set H) : IsPLOn (I ∘ I.symm) (I.symm ⁻¹' s ∩ range I) :=
   (isPLOn_id _).congr fun _ hx => I.right_inv hx.2
 
 /-- Given a model with corners `(E, H)`, the pregroupoid of PL transformations of `H`: those maps
 that are piecewise linear when read in `E` through `I`. -/
-def plPregroupoid : Pregroupoid H where
+def PLPregroupoid : Pregroupoid H where
   property f s := IsPLOn (I ∘ f ∘ I.symm) (I.symm ⁻¹' s ∩ range I)
   comp {f g u v} hf hg _ _ _ := by
     have hcomp : I ∘ (g ∘ f) ∘ I.symm = (I ∘ g ∘ I.symm) ∘ I ∘ f ∘ I.symm := by ext x; simp
@@ -104,46 +103,41 @@ def plPregroupoid : Pregroupoid H where
 
 /-- Given a model with corners `(E, H)`, the groupoid of invertible PL transformations of `H`:
 the open partial homeomorphisms that are PL, with PL inverse, when read in `E` through `I`. -/
-def plGroupoid : StructureGroupoid H :=
-  Pregroupoid.groupoid (plPregroupoid I)
+def PLGroupoid : StructureGroupoid H :=
+  Pregroupoid.groupoid (PLPregroupoid I)
 
-/-- Membership in `TauCeti.plGroupoid`, unfolded: both the map and its inverse are PL when read in
+/-- Membership in `TauCeti.PLGroupoid`, unfolded: both the map and its inverse are PL when read in
 the model. -/
-theorem mem_plGroupoid_iff {e : OpenPartialHomeomorph H H} :
-    e ∈ plGroupoid I ↔ IsPLOn (I ∘ e ∘ I.symm) (I.symm ⁻¹' e.source ∩ range I) ∧
+theorem mem_PLGroupoid_iff {e : OpenPartialHomeomorph H H} :
+    e ∈ PLGroupoid I ↔ IsPLOn (I ∘ e ∘ I.symm) (I.symm ⁻¹' e.source ∩ range I) ∧
       IsPLOn (I ∘ e.symm ∘ I.symm) (I.symm ⁻¹' e.target ∩ range I) :=
   mem_groupoid_of_pregroupoid
 
-/-- A PL map is continuous, so a PL structure refines a topological one. This is the honest form
-of the "PL implies Top" inclusion: `contDiffGroupoid 0 I` *is* the groupoid of continuous
-transition maps, and the content of the statement is `TauCeti.IsPLOn.continuousOn`. -/
-theorem plGroupoid_le_contDiffGroupoid_zero : plGroupoid I ≤ contDiffGroupoid 0 I := by
-  rw [plGroupoid, contDiffGroupoid]
-  apply groupoid_of_pregroupoid_le
-  intro f s hfs
-  exact contDiffOn_zero.2 hfs.continuousOn
+/-- A PL structure refines the topological structure groupoid. -/
+theorem PLGroupoid_le_continuousGroupoid : PLGroupoid I ≤ continuousGroupoid H :=
+  le_top
 
 /-- The identity of an open set belongs to the PL groupoid. -/
-theorem ofSet_mem_plGroupoid {s : Set H} (hs : IsOpen s) :
-    OpenPartialHomeomorph.ofSet s hs ∈ plGroupoid I := by
-  rw [plGroupoid, mem_groupoid_of_pregroupoid]
+theorem ofSet_mem_PLGroupoid {s : Set H} (hs : IsOpen s) :
+    OpenPartialHomeomorph.ofSet s hs ∈ PLGroupoid I := by
+  rw [PLGroupoid, mem_groupoid_of_pregroupoid]
   suffices h : IsPLOn (I ∘ I.symm) (I.symm ⁻¹' s ∩ range I) by
-    simp [h, plPregroupoid]
+    simp [h, PLPregroupoid]
   exact isPLOn_comp_symm I s
 
 /-- The PL groupoid is closed under restriction: the restriction of a PL chart to an open subset
 is again PL. This is what the constructions on open subsets of a PL manifold ask for. -/
-instance : ClosedUnderRestriction (plGroupoid I) :=
+instance : ClosedUnderRestriction (PLGroupoid I) :=
   (closedUnderRestriction_iff_id_le _).mpr
     (by
       rw [StructureGroupoid.le_iff]
       rintro e ⟨s, hs, hes⟩
-      exact (plGroupoid I).mem_of_eqOnSource' _ _ (ofSet_mem_plGroupoid I hs) hes)
+      exact (PLGroupoid I).mem_of_eqOnSource' _ _ (ofSet_mem_PLGroupoid I hs) hes)
 
 /-! ### A non-affine element of the PL groupoid
 
 The PL groupoid of the trivial model on `ℝ` contains a homeomorphism that agrees with no affine
-map. So `TauCeti.plGroupoid` is strictly larger than the groupoid of affine transition maps, and
+map. So `TauCeti.PLGroupoid` is strictly larger than the groupoid of affine transition maps, and
 the definition above is not a roundabout way of asking for affineness. -/
 
 /-- The piecewise-linear homeomorphism of `ℝ` that is the identity on the non-positive half-line
@@ -175,14 +169,14 @@ theorem doubleRight_symm_apply (y : ℝ) :
     doubleRight.symm y = if y ≤ 0 then y else y / 2 := (rfl)
 
 /-- `TauCeti.doubleRight` is an element of the PL groupoid of the trivial model on `ℝ`. -/
-theorem doubleRight_mem_plGroupoid :
-    doubleRight.toOpenPartialHomeomorph ∈ plGroupoid 𝓘(ℝ, ℝ) := by
+theorem doubleRight_mem_PLGroupoid :
+    doubleRight.toOpenPartialHomeomorph ∈ PLGroupoid 𝓘(ℝ, ℝ) := by
   obtain ⟨B, hB⟩ : ∃ B : ℝ →ᴬ[ℝ] ℝ, ∀ x : ℝ, B x = 2 * x :=
     ⟨((2 : ℝ) • ContinuousLinearMap.id ℝ ℝ).toContinuousAffineMap, fun _ => rfl⟩
   obtain ⟨C, hC⟩ : ∃ C : ℝ →ᴬ[ℝ] ℝ, ∀ x : ℝ, C x = x / 2 :=
     ⟨((2⁻¹ : ℝ) • ContinuousLinearMap.id ℝ ℝ).toContinuousAffineMap, fun x => by
       simp [div_eq_inv_mul]⟩
-  rw [mem_plGroupoid_iff]
+  rw [mem_PLGroupoid_iff]
   constructor
   · refine isPLOn_of_eqOn_Iic_of_eqOn_Ici (A := ContinuousAffineMap.id ℝ ℝ) (B := B)
       (fun x hx => ?_) (fun x hx => ?_) _

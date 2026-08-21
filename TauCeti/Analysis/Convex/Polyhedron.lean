@@ -33,8 +33,8 @@ polyhedron is assembled.
 
 ## Main results
 
-* `TauCeti.isConvexPolyhedron_iInter`: the defining form, with the inequalities indexed by an
-  arbitrary finite type rather than by `Fin n`.
+* `TauCeti.isConvexPolyhedron_setOf_forall`: the defining form, with the inequalities indexed by
+  an arbitrary finite type rather than by `Fin n`.
 * `TauCeti.IsConvexPolyhedron.isClosed` and `TauCeti.IsConvexPolyhedron.convex`: a convex
   polyhedron is closed and convex, which is what its name claims.
 * `TauCeti.IsConvexPolyhedron.inter`: an intersection of two convex polyhedra is one.
@@ -59,7 +59,7 @@ def IsConvexPolyhedron (s : Set E) : Prop :=
 /-- The solution set of a finite family of non-strict affine inequalities, indexed by an arbitrary
 finite type, is a convex polyhedron. This is the form in which the definition is used: the
 constructions below produce their inequalities indexed by sums and products of index types. -/
-theorem isConvexPolyhedron_iInter {ι : Type*} [Finite ι] (g : ι → (E →ᴬ[ℝ] ℝ)) :
+theorem isConvexPolyhedron_setOf_forall {ι : Type*} [Finite ι] (g : ι → (E →ᴬ[ℝ] ℝ)) :
     IsConvexPolyhedron {x : E | ∀ i, g i x ≤ 0} := by
   obtain ⟨n, ⟨e⟩⟩ := Finite.exists_equiv_fin ι
   refine ⟨n, fun k => g (e.symm k), ?_⟩
@@ -104,7 +104,7 @@ theorem IsConvexPolyhedron.inter (hs : IsConvexPolyhedron s) (ht : IsConvexPolyh
     ext x
     simp [Sum.forall]
   rw [hsum]
-  exact isConvexPolyhedron_iInter _
+  exact isConvexPolyhedron_setOf_forall _
 
 /-- The preimage of a convex polyhedron under a continuous affine map is a convex polyhedron:
 precompose each defining inequality with the map. -/
