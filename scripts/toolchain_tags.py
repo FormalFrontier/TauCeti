@@ -332,8 +332,20 @@ def _unreachable_row(release, tags):
         # the top of an existing tag is the report contradicting the repository.
         row["status"] = "tagged"
         row["commit"] = row["tagged_at"]
-        row["reason"] = ("constructed by hand: main never ran on this toolchain, so this "
-                         "is not a main commit and carries no published Lake cache")
+        # Whether it has a cache is a question, not an assumption. Nothing publishes for a
+        # commit off main automatically, so the usual answer is no, but one can be uploaded
+        # by hand and this said otherwise for as long as it took someone to notice.
+        try:
+            cached = cache_published(row["toolchain"], row["commit"])
+        except RuntimeError:
+            cached = None
+        row["reason"] = "constructed by hand: main never ran on this toolchain"
+        if cached is True:
+            row["reason"] += ", and a Lake cache was published for it"
+        elif cached is False:
+            row["reason"] += ", and it has no published Lake cache, so a checkout recompiles"
+        else:
+            row["reason"] += "; its Lake cache could not be checked"
         return row
     if release_key(release) < release_key(EARLIEST_RELEASE):
         row["status"] = "out-of-scope"

@@ -47,9 +47,15 @@ amount of automation here will change that.
 Such a release can still be tagged by hand, off a `main` commit, and `v4.33.0` was: one
 commit off `afb1aacb`, the last `main` commit before the bump jumped, changing only the two
 pin files so that no source differs from that commit. It was built from source against
-mathlib v4.33.0 and passes the audits, but nothing publishes a Lake cache for a commit off
-`main`, so a checkout recompiles the library. The report calls such a tag `tagged` and says
-it was constructed; `--create` will never make one.
+mathlib v4.33.0, passes the audits, and its oleans were uploaded to the Lake cache by hand,
+so a checkout of it builds without recompiling: verified from a fresh clone, 7439 targets
+up to date in eighteen seconds.
+
+Nothing publishes for a commit off `main` automatically, so that upload was a manual step
+(`lake cache stage`, then `lake cache put-staged` from a modern Lake with `--rev` and
+`--toolchain`, since v4.33.0's own Lake has neither flag). The report therefore asks the
+cache rather than assuming: it calls such a tag `tagged`, says it was constructed by hand,
+and says whether a cache was found. `--create` will never make one.
 
 Releases older than `v4.33.0-rc1` are out of scope, because the Lake cache does not reach
 back that far and a tag could not promise a usable one. That bound is `EARLIEST_RELEASE` in
