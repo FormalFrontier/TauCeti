@@ -28,6 +28,11 @@ open scoped Matrix
 
 variable {K : Type*} [CommRing K] {n : ℕ}
 
+-- This is not a `simp` lemma: `simp` unfolds `ι` through Mathlib's
+-- `UniversalEnvelopingAlgebra.ι_apply`, so this left-hand side is not in simp-normal form.
+-- Normalizing it needs no new `simp` lemma: `TauCeti.UniversalEnvelopingAlgebra.representation_ι'`,
+-- `TauCeti.Sl2Std.toEnd_eq_rep` and `TauCeti.Sl2Std.rep_apply_basis` are all `simp` lemmas, so
+-- `simp` alone rewrites the left-hand side to the right-hand side.
 /-- The canonical enveloping-algebra representation sends the standard `sl₂` basis elements to
 the raising, lowering, and Cartan operators. -/
 theorem representation_ι_slFinTwoBasis (i : Fin 3) :

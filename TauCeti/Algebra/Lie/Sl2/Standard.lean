@@ -396,6 +396,7 @@ theorem toEnd_eq_rep (x : SpecialLinear.sl (Fin 2) K) :
   LinearMap.ext fun v => by rw [toEnd_apply_apply, lie_eq_rep_apply]
 
 /-- The representation sends the standard basis of `sl (Fin 2) K` to the ladder operators. -/
+@[simp]
 theorem rep_apply_basis (i : Fin 3) :
     rep K n (slFinTwoBasis K i) = ![raise K n, lower K n, diag K n] i :=
   lieHomOfSl2Basis_apply ..
