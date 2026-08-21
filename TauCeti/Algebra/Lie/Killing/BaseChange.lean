@@ -102,9 +102,13 @@ theorem isKilling_baseChange_iff [FaithfulSMul R A] :
     IsKilling A (A ⊗[R] L) ↔ IsKilling R L := by
   have : IsDomain R :=
     Function.Injective.isDomain (algebraMap R A) (FaithfulSMul.algebraMap_injective R A)
-  rw [isKilling_iff_killingForm_nondegenerate, isKilling_iff_killingForm_nondegenerate,
-    show killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A from
-      traceForm_baseChange R L L A]
+  -- `killingForm` is Mathlib's reducible abbreviation for the trace form of the adjoint
+  -- representation, so `LieModule.traceForm_baseChange` says that the Killing form of `A ⊗[R] L`
+  -- is the base change of the Killing form of `L`. `rw` matches up to instances only, so it does
+  -- not see the abbreviation; the equation is named here at its `killingForm` spelling.
+  have hform : killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A :=
+    traceForm_baseChange R L L A
+  rw [isKilling_iff_killingForm_nondegenerate, isKilling_iff_killingForm_nondegenerate, hform]
   exact nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)
 
 /-! The intended application is a field extension, where every hypothesis above is automatic. -/
