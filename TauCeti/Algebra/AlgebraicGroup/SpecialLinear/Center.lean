@@ -96,15 +96,21 @@ noncomputable def scalarRootsPoints {A : Type v} [CommRing A] [Algebra R A] :
   (TauCeti.SpecialLinear.pointsMulEquiv (R := R) (A := A) n).symm.toMonoidHom.comp
     (({
       toFun ζ := ⟨Matrix.scalar (Fin n) (((ζ : Aˣ) : A)), by
+        -- `Matrix.scalar` is defined as a diagonal matrix, while the available determinant
+        -- lemma is stated for `Matrix.diagonal`; expose that representation before rewriting.
         change (Matrix.diagonal fun _ : Fin n ↦ (((ζ : Aˣ) : A))).det = 1
         rw [Matrix.det_diagonal]
         simpa using congrArg Units.val ζ.property⟩
       map_one' := by
         apply Subtype.ext
+        -- The special-linear group inherits its identity through the matrix subtype, so after
+        -- subtype extensionality this reduction exposes the underlying scalar-matrix identity.
         change Matrix.scalar (Fin n) (1 : A) = 1
         exact map_one (Matrix.scalar (Fin n))
       map_mul' ζ ξ := by
         apply Subtype.ext
+        -- Likewise, subtype multiplication and the coercions from roots of unity reduce to the
+        -- underlying matrix product; this is the form recognized by the scalar-matrix simp API.
         change Matrix.scalar (Fin n) ((((ζ * ξ : rootsOfUnity n A) : Aˣ) : A)) =
           Matrix.scalar (Fin n) (((ζ : Aˣ) : A)) *
             Matrix.scalar (Fin n) (((ξ : Aˣ) : A))
@@ -127,6 +133,8 @@ theorem pointsMulEquiv_scalarRootsPoints {A : Type v} [CommRing A] [Algebra R A]
         simpa using congrArg Units.val
           (RootsOfUnityGroup.pointsMulEquiv (R := R) (A := A) n f).property⟩ :
         Matrix.SpecialLinearGroup (Fin n) A) := by
+  -- This is the application lemma for `scalarRootsPoints` itself, so no earlier propositional
+  -- rewrite can expose its defining composite. Unfold just far enough to use `apply_symm_apply`.
   change (TauCeti.SpecialLinear.pointsMulEquiv (R := R) (A := A) n)
     ((TauCeti.SpecialLinear.pointsMulEquiv (R := R) (A := A) n).symm _) = _
   rw [MulEquiv.apply_symm_apply]
