@@ -328,13 +328,16 @@ private theorem pbwHomogeneous_mem_map_range (k : ℕ) (x : wordFiltration
         convert pbwWord_mem_map_range R L k l hl using 1
         all_goals rfl
       simpa only [hla] using hresult
-    · rw [show (⟨0, _⟩ : s) = 0 from rfl, map_zero]
+    · have hzero : (⟨0, s.zero_mem⟩ : s) = 0 := Subtype.ext rfl
+      rw [hzero, map_zero]
       exact (pbwAssociatedGradedMap R L).range.zero_mem
     · intro a b ha hb hqa hqb
-      rw [show (⟨a + b, _⟩ : s) = ⟨a, ha⟩ + ⟨b, hb⟩ from rfl, map_add]
+      have hadd : (⟨a + b, s.add_mem ha hb⟩ : s) = ⟨a, ha⟩ + ⟨b, hb⟩ := Subtype.ext rfl
+      rw [hadd, map_add]
       exact (pbwAssociatedGradedMap R L).range.add_mem hqa hqb
     · intro r a ha hqa
-      rw [show (⟨r • a, _⟩ : s) = r • ⟨a, ha⟩ from rfl, map_smul]
+      have hsmul : (⟨r • a, s.smul_mem r ha⟩ : s) = r • ⟨a, ha⟩ := Subtype.ext rfl
+      rw [hsmul, map_smul]
       exact (pbwAssociatedGradedMap R L).range.smul_mem hqa r
   have hx : (x : U) ∈ s := by
     rw [hs]
