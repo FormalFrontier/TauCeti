@@ -14,7 +14,7 @@ public section
 # The Weyl element of a standard `sl₂`-module
 
 The two ladder operators of `TauCeti.Sl2Std K n`, raising and lowering, are nilpotent over any
-characteristic-zero field `K`, so they carry a Weyl element
+characteristic-zero domain `K` equipped with a `ℚ`-algebra structure, so they carry a Weyl element
 
 ```text
 n = exp e · exp (-f) · exp e
@@ -87,9 +87,9 @@ namespace TauCeti.Sl2Std
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
-section CharZeroField
+section CharZeroDomain
 
-variable (K : Type*) [Field K] [CharZero K] (n : ℕ)
+variable (K : Type*) [CommRing K] [IsDomain K] [Algebra ℚ K] [CharZero K] (n : ℕ)
 
 /-! ## The Weyl element -/
 
@@ -100,6 +100,7 @@ noncomputable def weylUnit : (Module.End K (Sl2Std K n))ˣ :=
   _root_.TauCeti.weylUnit (isNilpotent_raise (K := K) (n := n))
     (isNilpotent_lower (K := K) (n := n))
 
+omit [IsDomain K] [CharZero K] in
 /-- The Weyl element of `V(n)` is the threefold product of exponentials. -/
 theorem coe_weylUnit :
     ((weylUnit K n : (Module.End K (Sl2Std K n))ˣ) : Module.End K (Sl2Std K n)) =
@@ -107,6 +108,7 @@ theorem coe_weylUnit :
         IsNilpotent.exp (raise K n) :=
   _root_.TauCeti.coe_weylUnit _ _
 
+omit [IsDomain K] [CharZero K] in
 /-- Convert a conjugation identity for the standard Weyl element into a multiplication identity. -/
 private theorem weylUnit_mul_of_conj_eq_neg {x y : Module.End K (Sl2Std K n)}
     (h : IsNilpotent.exp (raise K n) * IsNilpotent.exp (-(lower K n)) *
@@ -122,6 +124,7 @@ private theorem weylUnit_mul_of_conj_eq_neg {x y : Module.End K (Sl2Std K n)}
   rw [← neg_mul]
   exact (Units.mul_inv_eq_iff_eq_mul _).mp h
 
+omit [IsDomain K] in
 /-- **Conjugating the raising operator by the Weyl element.** The relation `n e n⁻¹ = -f`, written
 without the inverse. -/
 theorem weylUnit_mul_raise :
@@ -134,6 +137,7 @@ theorem weylUnit_mul_raise :
     (isNilpotent_raise (K := K) (n := n)) (isNilpotent_lower (K := K) (n := n))
   exact weylUnit_mul_of_conj_eq_neg K n h
 
+omit [IsDomain K] in
 /-- **Conjugating the lowering operator by the Weyl element.** The relation `n f n⁻¹ = -e`, written
 without the inverse. -/
 theorem weylUnit_mul_lower :
@@ -148,35 +152,40 @@ theorem weylUnit_mul_lower :
 
 /-! ## The base case of the string -/
 
-/-- The exponential series of a nilpotent operator on `V(n)`, with its factorial coefficients read
-in `K` instead of in `ℚ`. -/
-private theorem exp_eq_sum_natCast_inv_smul {x : Module.End K (Sl2Std K n)} {k : ℕ}
+omit [IsDomain K] [CharZero K] in
+/-- The exponential series of a nilpotent operator on `V(n)`, with its rational factorial
+coefficients mapped to `K`. -/
+private theorem exp_eq_sum_algebraMap_smul {x : Module.End K (Sl2Std K n)} {k : ℕ}
     (hx : x ^ k = 0) :
-    IsNilpotent.exp x = ∑ i ∈ range k, (((i ! : ℕ) : K))⁻¹ • x ^ i := by
+    IsNilpotent.exp x =
+      ∑ i ∈ range k, algebraMap ℚ K (((i ! : ℕ) : ℚ)⁻¹) • x ^ i := by
   rw [IsNilpotent.exp_eq_sum hx]
   refine Finset.sum_congr rfl fun i _ => ?_
-  rw [← algebraMap_smul (R := ℚ) K ((i ! : ℕ) : ℚ)⁻¹ (x ^ i), map_inv₀, map_natCast]
+  rw [algebraMap_smul]
 
+omit [IsDomain K] [CharZero K] in
 /-- The exponential of the raising operator differs from the identity by a multiple of the raising
 operator, on either side: the series has no constant term beyond `1`. -/
 private theorem exists_exp_raise_eq :
     ∃ g : Module.End K (Sl2Std K n),
       IsNilpotent.exp (raise K n) = 1 + raise K n * g ∧
         IsNilpotent.exp (raise K n) = 1 + g * raise K n := by
-  refine ⟨∑ i ∈ range n, (((i + 1)! : ℕ) : K)⁻¹ • (raise K n) ^ i, ?_, ?_⟩
-  · rw [exp_eq_sum_natCast_inv_smul K n (raise_pow_eq_zero (K := K) (n := n)),
-      Finset.sum_range_succ', Nat.factorial_zero, pow_zero, Nat.cast_one, inv_one, one_smul,
-      add_comm]
+  refine ⟨∑ i ∈ range n,
+    algebraMap ℚ K ((((i + 1)! : ℕ) : ℚ)⁻¹) • (raise K n) ^ i, ?_, ?_⟩
+  · rw [exp_eq_sum_algebraMap_smul K n (raise_pow_eq_zero (K := K) (n := n)),
+      Finset.sum_range_succ', Nat.factorial_zero, pow_zero, Nat.cast_one, inv_one, map_one,
+      one_smul, add_comm]
     congr 1
     rw [Finset.mul_sum]
     exact Finset.sum_congr rfl fun i _ => by rw [pow_succ', mul_smul_comm]
-  · rw [exp_eq_sum_natCast_inv_smul K n (raise_pow_eq_zero (K := K) (n := n)),
-      Finset.sum_range_succ', Nat.factorial_zero, pow_zero, Nat.cast_one, inv_one, one_smul,
-      add_comm]
+  · rw [exp_eq_sum_algebraMap_smul K n (raise_pow_eq_zero (K := K) (n := n)),
+      Finset.sum_range_succ', Nat.factorial_zero, pow_zero, Nat.cast_one, inv_one, map_one,
+      one_smul, add_comm]
     congr 1
     rw [Finset.sum_mul]
     exact Finset.sum_congr rfl fun i _ => by rw [pow_succ, smul_mul_assoc]
 
+omit [IsDomain K] [CharZero K] in
 /-- The raising operator does not reach the lowest coordinate, so neither does its exponential. -/
 private theorem exp_raise_apply_last (v : Sl2Std K n) :
     (IsNilpotent.exp (raise K n) v) (Fin.last n) = v (Fin.last n) := by
@@ -184,6 +193,7 @@ private theorem exp_raise_apply_last (v : Sl2Std K n) :
   rw [hg, LinearMap.add_apply, Module.End.one_apply, add_apply, Module.End.mul_apply, raise_apply,
     dite_eq_right (by simp : ¬ ((Fin.last n : Fin (n + 1)) : ℕ) < n), add_zero]
 
+omit [IsDomain K] [CharZero K] in
 /-- The exponential of the raising operator fixes the highest weight vector, which it kills. -/
 private theorem exp_raise_basis_zero :
     IsNilpotent.exp (raise K n) (basis K n 0) = basis K n 0 := by
@@ -191,6 +201,7 @@ private theorem exp_raise_basis_zero :
   rw [hg, LinearMap.add_apply, Module.End.one_apply, Module.End.mul_apply, raise_basis_zero,
     g.map_zero, add_zero]
 
+omit [IsDomain K] [CharZero K] in
 /-- The lowest coordinate of `exp (-f) · v₀` is the sign `(-1) ^ n`: only the last term of the
 exponential series reaches it, and its falling-factorial coefficient cancels the factorial. -/
 private theorem exp_neg_lower_basis_zero_apply_last :
@@ -203,17 +214,23 @@ private theorem exp_neg_lower_basis_zero_apply_last :
     have : (-(lower K n)) = ((-1 : K) • lower K n) := by
       rw [neg_smul, one_smul]
     rw [this, smul_pow, LinearMap.smul_apply]
-  rw [exp_eq_sum_natCast_inv_smul K n hnil, LinearMap.sum_apply, TauCeti.Sl2Std.sum_apply,
+  rw [exp_eq_sum_algebraMap_smul K n hnil, LinearMap.sum_apply, TauCeti.Sl2Std.sum_apply,
     Finset.sum_eq_single n]
   · have hlast := lower_pow_basis_zero (K := K) (Fin.last n)
     simp only [Fin.val_last] at hlast
     rw [LinearMap.smul_apply, smul_apply, hpow n, hlast]
-    have hfac : ((n ! : ℕ) : K) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero n)
+    have hfacQ : ((n ! : ℕ) : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero n)
+    have hcancel : algebraMap ℚ K (((n ! : ℕ) : ℚ)⁻¹) * ((n ! : ℕ) : K) = 1 := by
+      rw [← map_natCast (algebraMap ℚ K) (n !), ← map_mul, inv_mul_cancel₀ hfacQ, map_one]
     have hprod : ∏ j ∈ range n, ((n : K) - j) = (n ! : K) := by
       rw [Finset.prod_range_natCast_sub, ← Nat.descFactorial_eq_prod_range,
         Nat.descFactorial_self]
     simp only [smul_apply, basis_apply, hprod, ite_true]
-    field_simp [hfac]
+    calc
+      algebraMap ℚ K (((n ! : ℕ) : ℚ)⁻¹) * ((-1 : K) ^ n * (((n ! : ℕ) : K) * 1)) =
+          (-1 : K) ^ n *
+            (algebraMap ℚ K (((n ! : ℕ) : ℚ)⁻¹) * ((n ! : ℕ) : K)) := by ring
+      _ = (-1 : K) ^ n := by rw [hcancel, mul_one]
   · intro b hb hbn
     have hblt : b < n := by
       have := Finset.mem_range.mp hb
@@ -376,7 +393,7 @@ theorem weylUnit_apply_apply (v : Sl2Std K n) (i : Fin (n + 1)) :
   · intro hc
     exact absurd (Finset.mem_univ i.rev) hc
 
-end CharZeroField
+end CharZeroDomain
 
 /-! ## The canonical Kostant Weyl element over `ℤ` and its points -/
 
