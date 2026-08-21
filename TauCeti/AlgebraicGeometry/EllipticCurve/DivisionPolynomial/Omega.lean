@@ -42,6 +42,14 @@ and naturality in the coefficient ring for both families.
 * `WeierstrassCurve.map_ψc`, `.map_ω`, `.baseChange_ψc`, `.baseChange_ω`: naturality in the
   coefficient ring, in both the ring-hom and the algebra-tower form of the `ψ`/`φ` siblings.
 
+## References
+
+* [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], Exercise 3.7, which defines
+  the `(ψ, φ, ω)` triple and whose part (d) is the identity `[m]P = (φₘ/ψₘ², ωₘ/ψₘ³)` that makes
+  `ω` the `Y`-coordinate numerator. Silverman normalises by `4y ωₘ = ψₘ₋₁² ψₘ₊₂ + ψₘ₋₂ ψₘ₊₁²`;
+  `ω_spec` below is the equivalent long-Weierstrass form, and the identity itself is proved in
+  the scalar-multiplication development, not here.
+
 ## Provenance
 
 Ported from J. Xu and D. K. Angdinata's `LutzNagell/DivisionPolynomialOmega.lean` in AINTLIB
