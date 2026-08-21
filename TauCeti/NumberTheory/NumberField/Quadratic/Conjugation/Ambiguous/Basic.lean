@@ -50,8 +50,8 @@ the classical ambiguous class number formula.
 
 ## Main results
 
-* `NumberField.mul_conj_eq_mul_conj_of_associated`: associated norms with a positive norm product
-  are equal, the archimedean input to the descent.
+* `NumberField.mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated`:
+  associated norms with a positive norm product are equal, the archimedean input to the descent.
 * `NumberField.exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one`: a `2`-torsion ideal
   class of an imaginary quadratic field is the class of an ambiguous ideal.
 * `NumberField.classGroupMk0_sq_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self`: conversely, the
@@ -87,7 +87,7 @@ This is where the archimedean input enters the ambiguous class number formula. F
 field the norm of a nonzero element is automatically positive; for a real quadratic field the
 positivity has to come from total positivity of `x y`, which is what the *narrow* class group
 supplies. -/
-theorem mul_conj_eq_mul_conj_of_associated
+theorem mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) {x y : 𝓞 K}
     (hnorm : 0 < Algebra.norm ℚ ((x : K) * (y : K)))
     (hassoc : Associated (x * ringOfIntegersQuadraticConj hmin hgen x)
@@ -176,7 +176,7 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one [IsTotallyCo
       _ = Ideal.span {y} * (Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K))) := by rw [hxy2]
       _ = Ideal.span {y} * Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K)) := by ring
   have hnorm : x * σ x = y * σ y :=
-    mul_conj_eq_mul_conj_of_associated hmin hgen
+    mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated hmin hgen
       (norm_pos_of_isTotallyPositive (by
         simpa using mul_ne_zero (RingOfIntegers.coe_ne_zero_iff.mpr hx)
           (RingOfIntegers.coe_ne_zero_iff.mpr hy)) (by simp))

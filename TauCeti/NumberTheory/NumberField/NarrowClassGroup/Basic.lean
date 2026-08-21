@@ -223,13 +223,6 @@ noncomputable def mk0 : (Ideal (𝓞 K))⁰ →* NarrowClassGroup K :=
     toClassGroup (mk0 I) = ClassGroup.mk0 I := by
   rw [← mk_mk0, toClassGroup_mk, ClassGroup.mk_mk0]
 
-omit [NumberField K] in
-/-- A nonzero element spans a nonzero ideal. -/
-private theorem span_singleton_mem_nonZeroDivisors {a : 𝓞 K} (ha : a ≠ 0) :
-    Ideal.span {a} ∈ (Ideal (𝓞 K))⁰ :=
-  mem_nonZeroDivisors_iff_ne_zero.mpr fun h =>
-    ha (Ideal.span_singleton_eq_bot.mp (by rwa [← Ideal.zero_eq_bot]))
-
 /-- **A principal ideal with a totally positive generator has trivial narrow class.** -/
 theorem mk0_eq_one_of_isTotallyPositive {a : 𝓞 K} (ha : a ≠ 0)
     (hpos : IsTotallyPositive (a : K)) {I : (Ideal (𝓞 K))⁰}
@@ -274,24 +267,24 @@ theorem mk0_surjective : Function.Surjective (mk0 : (Ideal (𝓞 K))⁰ → Narr
   have ha : a ≠ 0 := fun h => by
     rw [h, map_zero, zero_div] at hab
     exact u.ne_zero hab.symm
+  have hspa : Ideal.span {a} ∈ (Ideal (𝓞 K))⁰ :=
+    Ideal.span_singleton_nonZeroDivisors.mpr (mem_nonZeroDivisors_iff_ne_zero.mpr ha)
+  have hspb : Ideal.span {b} ∈ (Ideal (𝓞 K))⁰ :=
+    Ideal.span_singleton_nonZeroDivisors.mpr (mem_nonZeroDivisors_iff_ne_zero.mpr hb)
   -- Write the unit `u = a / b` as a ratio, so its principal class splits into two integral ones.
   have hsplit : u = Units.mk0 (a : K) (RingOfIntegers.coe_ne_zero_iff.mpr ha) *
       (Units.mk0 (b : K) (RingOfIntegers.coe_ne_zero_iff.mpr hb))⁻¹ := by
     refine Units.ext ?_
     rw [Units.val_mul, Units.val_inv_eq_inv_val, Units.val_mk0, Units.val_mk0, ← div_eq_mul_inv]
     exact hab.symm
-  have hb2 : (mk0 ⟨Ideal.span {b}, span_singleton_mem_nonZeroDivisors hb⟩)⁻¹ =
-      mk0 ⟨Ideal.span {b}, span_singleton_mem_nonZeroDivisors hb⟩ := by
+  have hb2 : (mk0 ⟨Ideal.span {b}, hspb⟩)⁻¹ = mk0 ⟨Ideal.span {b}, hspb⟩ := by
     rw [inv_eq_iff_mul_eq_one, ← sq]
     exact mk0_sq_eq_one_of_eq_span_singleton hb rfl
-  have hprin : mk0 ⟨Ideal.span {a}, span_singleton_mem_nonZeroDivisors ha⟩ *
-      mk0 ⟨Ideal.span {b}, span_singleton_mem_nonZeroDivisors hb⟩ = mkPrincipal u := by
+  have hprin : mk0 ⟨Ideal.span {a}, hspa⟩ * mk0 ⟨Ideal.span {b}, hspb⟩ = mkPrincipal u := by
     rw [hsplit, map_mul, map_inv,
-      mkPrincipal_coe_eq_mk0 (I := ⟨Ideal.span {a}, span_singleton_mem_nonZeroDivisors ha⟩) ha rfl,
-      mkPrincipal_coe_eq_mk0 (I := ⟨Ideal.span {b}, span_singleton_mem_nonZeroDivisors hb⟩) hb rfl,
-      hb2]
-  refine ⟨(⟨Ideal.span {a}, span_singleton_mem_nonZeroDivisors ha⟩ *
-    ⟨Ideal.span {b}, span_singleton_mem_nonZeroDivisors hb⟩) * J, ?_⟩
+      mkPrincipal_coe_eq_mk0 (I := ⟨Ideal.span {a}, hspa⟩) ha rfl,
+      mkPrincipal_coe_eq_mk0 (I := ⟨Ideal.span {b}, hspb⟩) hb rfl, hb2]
+  refine ⟨(⟨Ideal.span {a}, hspa⟩ * ⟨Ideal.span {b}, hspb⟩) * J, ?_⟩
   rw [map_mul, map_mul, hprin, hu]
   group
 
@@ -332,24 +325,24 @@ theorem mk0_eq_mk0_iff {I J : (Ideal (𝓞 K))⁰} :
         mul_comm _ ((J : Ideal (𝓞 K)) : FractionalIdeal (𝓞 K)⁰ K)]
       exact hmul
   · rintro ⟨x, y, hx, hy, hpos, heq⟩
-    have hxy : mk0 ⟨Ideal.span {x}, span_singleton_mem_nonZeroDivisors hx⟩ =
-        mk0 ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩ := by
-      have hone : mk0 ⟨Ideal.span {x}, span_singleton_mem_nonZeroDivisors hx⟩ *
-          mk0 ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩ = 1 := by
+    have hspx : Ideal.span {x} ∈ (Ideal (𝓞 K))⁰ :=
+      Ideal.span_singleton_nonZeroDivisors.mpr (mem_nonZeroDivisors_iff_ne_zero.mpr hx)
+    have hspy : Ideal.span {y} ∈ (Ideal (𝓞 K))⁰ :=
+      Ideal.span_singleton_nonZeroDivisors.mpr (mem_nonZeroDivisors_iff_ne_zero.mpr hy)
+    have hxy : mk0 ⟨Ideal.span {x}, hspx⟩ = mk0 ⟨Ideal.span {y}, hspy⟩ := by
+      have hone : mk0 ⟨Ideal.span {x}, hspx⟩ * mk0 ⟨Ideal.span {y}, hspy⟩ = 1 := by
         rw [← map_mul]
         refine mk0_eq_one_of_isTotallyPositive (a := x * y) (mul_ne_zero hx hy) ?_ ?_
         · push_cast
           exact hpos
         · rw [Submonoid.coe_mul, Ideal.span_singleton_mul_span_singleton]
-      have hyinv : (mk0 ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩)⁻¹ =
-          mk0 ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩ := by
+      have hyinv : (mk0 ⟨Ideal.span {y}, hspy⟩)⁻¹ = mk0 ⟨Ideal.span {y}, hspy⟩ := by
         rw [inv_eq_iff_mul_eq_one, ← sq]
         exact mk0_sq_eq_one_of_eq_span_singleton hy rfl
       rw [← hyinv, eq_inv_iff_mul_eq_one]
       exact hone
     have hprod := congrArg mk0 (Subtype.ext heq :
-      (⟨Ideal.span {x}, span_singleton_mem_nonZeroDivisors hx⟩ * I : (Ideal (𝓞 K))⁰) =
-        ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩ * J)
+      (⟨Ideal.span {x}, hspx⟩ * I : (Ideal (𝓞 K))⁰) = ⟨Ideal.span {y}, hspy⟩ * J)
     rw [map_mul, map_mul, hxy] at hprod
     exact mul_left_cancel hprod
 

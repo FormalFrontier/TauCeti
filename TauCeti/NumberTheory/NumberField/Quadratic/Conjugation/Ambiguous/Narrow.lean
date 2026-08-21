@@ -31,8 +31,8 @@ Two archimedean inputs replace total complexity, and both come from total positi
   so it is trivial in `Cl⁺(K)`. Consequently `2`-torsion narrow classes are the `σ`-fixed ones.
 * Writing the fixed-class relation as `(x) σJ = (y) J` with `x y` totally positive, the norm of
   `x y` is positive (`NumberField.norm_pos_of_isTotallyPositive`), which is exactly the input that
-  `mul_conj_eq_mul_conj_of_associated` needs to force `x σx = y σy`. Hilbert 90 then produces `ε`
-  with `x ε = y σε`, and `I = (ε) J` is ambiguous.
+  `mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated` needs to force
+  `x σx = y σy`. Hilbert 90 then produces `ε` with `x ε = y σε`, and `I = (ε) J` is ambiguous.
 
 The last step is where the narrow group earns its keep. In the ordinary class group `(ε) J` and `J`
 have the same class automatically; narrowly one must know that `(ε)` has a totally positive
@@ -137,7 +137,7 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one
       _ = Ideal.span {y} * (Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K))) := by rw [hxy2]
       _ = Ideal.span {y} * Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K)) := by ring
   have hnorm : x * σ x = y * σ y :=
-    mul_conj_eq_mul_conj_of_associated hmin hgen
+    mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated hmin hgen
       (norm_pos_of_isTotallyPositive (mul_ne_zero hxK hyK) hpos)
       (Ideal.span_singleton_eq_span_singleton.mp hspan)
   -- Hilbert 90 produces the twisting element.

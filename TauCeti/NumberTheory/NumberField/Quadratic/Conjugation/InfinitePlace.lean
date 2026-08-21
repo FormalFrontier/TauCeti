@@ -29,8 +29,6 @@ group for real quadratic fields, where the ordinary descent fails.
 
 ## Main results
 
-* `NumberField.realRingHom_eq_of_gen_eq`: a ring homomorphism `K →+* ℝ` is determined by its value
-  on a field generator.
 * `NumberField.realRingHom_eq_or_eq_comp_quadraticConj`: two real embeddings of a quadratic field
   either agree or differ by quadratic conjugation.
 * `NumberField.isTotallyPositive_or_isTotallyPositive_neg_of_isTotallyPositive_div_quadraticConj`:
@@ -45,14 +43,6 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- **A real embedding of a number field is determined by the image of a generator.** Two ring
-homomorphisms `K →+* ℝ` agreeing on `x` agree on `Algebra.adjoin ℚ {x} = K`. -/
-theorem realRingHom_eq_of_gen_eq {x : K} (hgen : Algebra.adjoin ℚ {x} = ⊤) {ρ₁ ρ₂ : K →+* ℝ}
-    (h : ρ₁ x = ρ₂ x) : ρ₁ = ρ₂ := by
-  have halg : ρ₁.toRatAlgHom = ρ₂.toRatAlgHom :=
-    AlgHom.ext_of_adjoin_eq_top hgen (by rintro y rfl; exact h)
-  exact RingHom.ext fun y => by simpa using AlgHom.congr_fun halg y
-
 /-- **The real embeddings of a quadratic field differ by conjugation.** Since `ρ θ` squares to the
 rational `d` for every ring homomorphism `ρ : K →+* ℝ`, two of them send `θ` to the same square root
 of `d` — in which case they agree — or to opposite ones, in which case one is the other precomposed
@@ -60,15 +50,21 @@ with quadratic conjugation. -/
 theorem realRingHom_eq_or_eq_comp_quadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (φ ψ : K →+* ℝ) :
     ψ = φ ∨ ∀ x : K, ψ x = φ (quadraticConj hmin hgen x) := by
+  -- A ring homomorphism `K →+* ℝ` is a `ℚ`-algebra homomorphism, so `θ` generating `K` over `ℚ`
+  -- means it is determined by the value it gives `θ`.
+  have hdet : ∀ ρ₁ ρ₂ : K →+* ℝ, ρ₁ (θ : K) = ρ₂ (θ : K) → ρ₁ = ρ₂ := fun ρ₁ ρ₂ h => by
+    have halg : ρ₁.toRatAlgHom = ρ₂.toRatAlgHom :=
+      AlgHom.ext_of_adjoin_eq_top hgen (by rintro y rfl; exact h)
+    exact RingHom.ext fun y => by simpa using AlgHom.congr_fun halg y
   have hsq : ∀ ρ : K →+* ℝ, ρ (θ : K) ^ 2 = ((d : ℚ) : ℝ) := fun ρ => by
     rw [← map_pow, coe_gen_sq_ratCast hmin, eq_ratCast (algebraMap ℚ K), map_ratCast]
   have hfac : (ψ (θ : K) - φ (θ : K)) * (ψ (θ : K) + φ (θ : K)) = 0 := by
     linear_combination hsq ψ - hsq φ
   rcases mul_eq_zero.mp hfac with h | h
-  · exact Or.inl (realRingHom_eq_of_gen_eq hgen (by linarith))
+  · exact Or.inl (hdet _ _ (by linarith))
   · refine Or.inr fun x => ?_
     have hcomp : ψ = φ.comp ((quadraticConj hmin hgen).toAlgHom : K →ₐ[ℚ] K) := by
-      refine realRingHom_eq_of_gen_eq hgen ?_
+      refine hdet _ _ ?_
       simp only [RingHom.coe_comp, Function.comp_apply, AlgHom.coe_toRingHom,
         AlgEquiv.toAlgHom_apply, quadraticConj_gen, map_neg]
       linarith
