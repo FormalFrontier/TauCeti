@@ -230,21 +230,6 @@ theorem zeroExtend_one_apply (I : Ideal (𝓞 K)) :
   · simp
   · simp [hI]
 
-/-- Alias for `zeroExtend_of_ne`. -/
-theorem zeroExtend_of_ne_bot (f : IdealArithmeticFunction K) {I : Ideal (𝓞 K)} (hI : I ≠ ⊥) :
-    f.zeroExtend I = f ⟨I, mem_nonZeroDivisors_iff_ne_zero.mpr hI⟩ :=
-  f.zeroExtend_of_ne hI
-
-/-- Alias for `zeroExtend_eq_iff`. -/
-theorem zeroExtend_inj {f g : IdealArithmeticFunction K} :
-    f.zeroExtend = g.zeroExtend ↔ f = g :=
-  zeroExtend_eq_iff
-
-/-- Alias for `zeroExtend_eq_zero_iff`. -/
-theorem zeroExtend_eq_zero_iff_eq_bot {f : IdealArithmeticFunction K} (hf : ∀ I, f I ≠ 0)
-    {I : Ideal (𝓞 K)} : f.zeroExtend I = 0 ↔ I = ⊥ :=
-  zeroExtend_eq_zero_iff f hf
-
 /-!
 ### Functoriality under an isomorphism of fields
 -/

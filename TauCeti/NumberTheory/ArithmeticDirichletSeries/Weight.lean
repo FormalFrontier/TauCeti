@@ -409,7 +409,7 @@ theorem zeroExtend_toIdealArithmeticFunction (χ : MultiplicativeIdealWeight K) 
   ext I
   rcases eq_or_ne I ⊥ with rfl | hI
   · simp
-  · simp [IdealArithmeticFunction.zeroExtend_of_ne_bot _ hI]
+  · simp [IdealArithmeticFunction.zeroExtend_of_ne _ hI]
 
 theorem toIdealArithmeticFunction_injective :
     Function.Injective
