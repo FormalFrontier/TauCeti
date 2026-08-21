@@ -10,19 +10,16 @@ about it. It prints the rule with its report, so nothing below is needed to act 
 
 **`vX` is the first commit on `main` whose `lean-toolchain` is `leanprover/lean4:X`.**
 
-That is the whole policy, and it is deliberately not cleverer than that.
+Mathlib puts its `vX` tag on the commit that bumps its own `lean-toolchain` to X, and
+`scripts/check-bump.sh` requires this repository's toolchain to match Mathlib's at whatever
+it pins. The first `main` commit on toolchain X therefore pins Mathlib at or after Mathlib's
+`vX` tag. Finding every tag target means reading `lean-toolchain` at the few commits that
+change it, and nothing else.
 
-It gives the property worth having for free. Mathlib puts its own `vX` tag on the commit
-that bumps its `lean-toolchain` to X, and `scripts/check-bump.sh` already forces this
-repository's toolchain to equal Mathlib's at whatever it pins. So the first `main` commit
-on toolchain X necessarily pins Mathlib at or after Mathlib's own `vX` tag. Nothing has to
-compute that, compare pins, derive a base, or ask Mathlib anything: reading `lean-toolchain`
-at the handful of commits that change it is enough to find every tag target.
-
-An earlier design chased *exact* Mathlib pins, which meant constructing release commits on
-their own branches, building them from source, and publishing their caches, none of which
-survived review. The pin being a little past Mathlib's tag is not worth that machinery. The
-tag message records the pin so a reader can see for themselves.
+An earlier design aimed at *exact* Mathlib pins. That required constructing release commits
+on their own branches, building them from source, and publishing their caches, and it did
+not survive review. A pin a little past Mathlib's tag is not worth that much machinery; the
+tag message gives the pin.
 
 ## What a tag promises
 
@@ -69,9 +66,8 @@ python3 scripts/toolchain_tags.py --create v4.34.0     # one tag
 python3 scripts/toolchain_tags.py --create --all       # every ready release
 ```
 
-Run it after a bump lands on a new toolchain. It is deliberately not on a schedule: every
-run of `--create` leaves a permanent tag, and there is no hurry that justifies making that
-unattended. Creating a tag needs a `gh` login with write access; the report needs only read.
+Run it after a bump lands on a new toolchain. There is no schedule, because every run of
+`--create` leaves a permanent tag and nothing here is urgent enough to do unattended. Creating a tag needs a `gh` login with write access; the report needs only read.
 
 Tags are never moved. If one disagrees with the rule, the tool reports it and stops; that
 is a question for a human, and no instruction it prints will delete or force a tag.

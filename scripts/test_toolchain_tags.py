@@ -147,7 +147,7 @@ class Report(unittest.TestCase):
 
     def test_the_rule_is_part_of_the_output(self):
         text = tt.render(self.ROWS)
-        self.assertIn("FIRST commit on `main`", text)
+        self.assertIn("first commit on `main`", text)
         self.assertIn("Tags are never moved", text)
 
     def test_it_names_the_command_for_each_ready_release(self):
@@ -277,7 +277,7 @@ class CommandLine(unittest.TestCase):
         out = io.StringIO()
         with redirect_stdout(out), self.assertRaises(SystemExit):
             tt.main(["--help"])
-        self.assertIn("FIRST commit on `main`", out.getvalue())
+        self.assertIn("first commit on `main`", out.getvalue())
 
 
 if __name__ == "__main__":
