@@ -21,7 +21,7 @@ The series calculation for the moment-generating function follows the calculatio
 obtained by differentiating the moment-generating function.
 -/
 
-@[expose] public section
+public section
 
 open MeasureTheory ProbabilityTheory Real
 open scoped NNReal Nat
@@ -87,20 +87,27 @@ theorem integral_sq_map_cast_poissonMeasure (r : ℝ≥0) :
       simpa only [Pi.pow_apply] using (iteratedDeriv_mgf_zero (by simp) 2).symm
     _ = (r : ℝ) ^ 2 + r := by
       rw [mgf_id_map_cast_poissonMeasure, iteratedDeriv_succ, iteratedDeriv_one]
-      have hderiv : deriv (fun t : ℝ ↦ exp ((r : ℝ) * (exp t - 1))) =
-          fun t ↦ (r : ℝ) * exp t * exp ((r : ℝ) * (exp t - 1)) := by
-        ext t
-        rw [_root_.deriv_exp (by fun_prop), deriv_fun_mul (by fun_prop) (by fun_prop),
-          deriv_fun_sub (by fun_prop) (by fun_prop)]
-        simp only [deriv_const', zero_mul, Real.deriv_exp, sub_zero, zero_add]
+      have hfirst (t : ℝ) :
+          HasDerivAt (fun t : ℝ ↦ exp ((r : ℝ) * (exp t - 1)))
+            ((r : ℝ) * exp t * exp ((r : ℝ) * (exp t - 1))) t := by
+        have hinner : HasDerivAt (fun t : ℝ ↦ (r : ℝ) * (exp t - 1))
+            ((r : ℝ) * exp t) t := by
+          simpa using ((Real.hasDerivAt_exp t).sub_const 1).const_mul (r : ℝ)
+        convert hinner.exp using 1
         ring
-      rw [hderiv, deriv_fun_mul (by fun_prop) (by fun_prop),
-        deriv_fun_mul (by fun_prop) (by fun_prop), _root_.deriv_exp (by fun_prop)]
-      simp only [deriv_const', exp_zero, mul_one, deriv_id'', zero_add, sub_self, mul_zero]
-      rw [_root_.deriv_exp (by fun_prop), deriv_fun_mul (by fun_prop) (by fun_prop),
-        deriv_fun_sub (by fun_prop) (by fun_prop)]
-      simp only [exp_zero, sub_self, mul_zero, deriv_const', Real.deriv_exp, sub_zero,
-        mul_one, zero_add, one_mul]
+      have hsecond (t : ℝ) :
+          HasDerivAt ((fun t : ℝ ↦ (r : ℝ) * exp t) *
+              fun t : ℝ ↦ exp ((r : ℝ) * (exp t - 1)))
+            ((r : ℝ) * exp t * exp ((r : ℝ) * (exp t - 1)) +
+              (r : ℝ) * exp t * ((r : ℝ) * exp t * exp ((r : ℝ) * (exp t - 1)))) t :=
+        ((Real.hasDerivAt_exp t).const_mul (r : ℝ)).mul (hfirst t)
+      have hderiv : deriv (fun t : ℝ ↦ exp ((r : ℝ) * (exp t - 1))) =
+          (fun t : ℝ ↦ (r : ℝ) * exp t) *
+            fun t : ℝ ↦ exp ((r : ℝ) * (exp t - 1)) := by
+        funext t
+        simpa only [Pi.mul_apply] using (hfirst t).deriv
+      rw [hderiv, (hsecond 0).deriv]
+      simp only [exp_zero, sub_self, mul_zero, mul_one]
       ring
 
 /-- The variance of a real-valued Poisson law is its rate. -/
