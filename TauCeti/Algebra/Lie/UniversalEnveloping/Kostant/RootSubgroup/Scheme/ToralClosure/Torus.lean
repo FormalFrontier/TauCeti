@@ -22,10 +22,10 @@ coordinate-map construction used by the toral closure and the comodule construct
 closed-immersion criterion is already available. Since the inclusion of the toral closure in
 `GL_n` is a closed immersion, closedness descends from their composite to the factored torus.
 
-For Chevalley weight data this supplies the torus component of a pinning on the assembled carrier.
-Identifying it as a maximal torus and constructing the compatible Borel remain part of Layer 9 of
-the ReductiveGroups roadmap, on the path to the ambient groups required by milestone L0 of the
-CFSGStatement roadmap.
+For Chevalley weight data this supplies the closed embedding needed toward constructing the torus
+component of a pinning on the assembled carrier. Identifying it as a maximal torus and constructing
+the compatible Borel remain part of Layer 9 of the ReductiveGroups roadmap, on the path to the
+ambient groups required by milestone L0 of the CFSGStatement roadmap.
 
 ## Main declarations
 
