@@ -37,7 +37,7 @@ diamond operators of the ModularForms roadmap (Layer 0), where it realizes every
 * `Matrix.SpecialLinearGroup.coe_mapGL_fin_two`: the entrywise matrix of `mapGL ℚ` on `SL₂(ℤ)`.
 * `Matrix.SpecialLinearGroup.bezout_of_lowerRow`, together with
   `Matrix.SpecialLinearGroup.coprime_of_lowerRow` and
-  `Matrix.SpecialLinearGroup.intCast_mul_of_lowerRow`: a bottom row `(N, p)` is a Bézout
+  `Matrix.SpecialLinearGroup.intCast_mul_eq_one_of_lowerRow`: a bottom row `(N, p)` is a Bézout
   relation, so it forces `p` and `N` to be coprime, and the diagonal entries to be mutually
   inverse modulo `N`.
 * `Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one`: the centre of `SL₂` is
@@ -87,7 +87,7 @@ lemma coprime_of_lowerRow {N p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : �
 
 /-- If the bottom row of `σ ∈ SL₂(ℤ)` is `(N, p)`, then its upper-left entry `m` satisfies
 `m p = 1` in `ZMod N`. -/
-lemma intCast_mul_of_lowerRow {N p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+lemma intCast_mul_eq_one_of_lowerRow {N p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
     (hσ11 : σ 1 1 = (p : ℤ)) : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
   have h := congrArg (Int.cast : ℤ → ZMod N) (bezout_of_lowerRow hσ10 hσ11)
   push_cast at h ⊢

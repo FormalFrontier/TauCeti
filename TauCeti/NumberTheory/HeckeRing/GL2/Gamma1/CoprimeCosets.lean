@@ -152,7 +152,7 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep_none_of_dvd (hp : 0 < p)
     ⟨⟨_, hdet⟩, rfl⟩
   -- `m p ≡ 1 (mod N)`, the congruence that puts the left factor in `Γ₁(N)`
   have hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 :=
-    intCast_mul_of_lowerRow hσ10 hσ11
+    intCast_mul_eq_one_of_lowerRow hσ10 hσ11
   refine ⟨δ, ?_, ?_⟩
   · refine (Gamma1_mem N δ).mpr ⟨?_, ?_, ?_⟩
     · have h : ((γ 0 0 - γ 0 1 * (N : ℤ) : ℤ) : ZMod N) = 1 := by
@@ -204,7 +204,7 @@ lemma exists_mem_Gamma1_natDiagGL_mul_eq_primeRep_none (hp : 0 < p) (hσ10 : σ 
   obtain ⟨γ, hγmat⟩ : ∃ γ : SL(2, ℤ), (γ : Matrix (Fin 2) (Fin 2) ℤ) =
       !![σ 0 0 * (p : ℤ), σ 0 1; (N : ℤ), 1] := ⟨⟨_, hdet⟩, rfl⟩
   have hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 :=
-    intCast_mul_of_lowerRow hσ10 hσ11
+    intCast_mul_eq_one_of_lowerRow hσ10 hσ11
   refine ⟨γ, (Gamma1_mem N γ).mpr ⟨?_, ?_, ?_⟩, ?_⟩
   · simpa [hγmat] using hmp
   · simp [hγmat]
