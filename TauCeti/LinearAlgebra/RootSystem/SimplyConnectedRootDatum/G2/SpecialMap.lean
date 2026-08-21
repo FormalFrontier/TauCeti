@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.LinearAlgebra.Matrix.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.Length
 
@@ -48,16 +49,17 @@ own.
 * `TauCeti.DynkinType.g2SpecialIsogenyMatrix_mulVec_root` and
   `TauCeti.DynkinType.g2SpecialIsogenyMatrix_transpose_mulVec_coroot`: the equations on the pinned
   datum.
-* `TauCeti.DynkinType.g2SpecialIsogenyMatrix_mul_self` and its transpose counterpart: applying the
-  lattice map twice is multiplication by `3`.
+* `TauCeti.DynkinType.g2SpecialIsogenyMatrix_mul_self`: the square of the lattice map is
+  multiplication by `3`. Its consequences for the transposed matrix, for vectors and for the
+  induced linear map are the generic lemmas of `TauCeti/LinearAlgebra/Matrix/SpecialMap.lean`.
 * `TauCeti.DynkinType.det_g2SpecialIsogenyMatrix`: the map has determinant `-3`, so it is an
   isogeny and not a lattice automorphism.
-* `TauCeti.DynkinType.g2Length_mul_g2Length_specialIsogenyIndex`: the two rescaling exponents on an
-  orbit multiply to the defining characteristic.
+* `TauCeti.DynkinType.g2Length_mul_g2Length_g2SpecialIsogenyIndex`: the two rescaling exponents on
+  an orbit multiply to the defining characteristic.
 * `TauCeti.DynkinType.g2SpecialIsogenyIndex_castLE`: on the two simple roots the index permutation
   is `TauCeti.lengthPermRankTwo`, the pinned length-exchanging permutation of the diagram.
-* `TauCeti.DynkinType.g2Length_mul_pairing_g2SpecialIsogenyIndex`: the Cartan integers transform by
-  the rule a special isogeny forces.
+* `TauCeti.DynkinType.g2Length_mul_pairing_g2SpecialIsogenyIndexEquiv`: the Cartan integers
+  transform by the rule a special isogeny forces.
 
 ## References
 
@@ -89,7 +91,7 @@ theorem g2SpecialIsogenyMatrix_def : g2SpecialIsogenyMatrix = !![0, 3; 1, 0] := 
 /-- The permutation of the twelve `G₂` roots induced by
 `TauCeti.DynkinType.g2SpecialIsogenyMatrix`. It exchanges long roots with short roots and commutes
 with root negation. -/
-@[expose] def g2SpecialIsogenyIndex : Fin 12 → Fin 12 :=
+def g2SpecialIsogenyIndex : Fin 12 → Fin 12 :=
   ![1, 0, 4, 5, 2, 3, 7, 6, 10, 11, 8, 9]
 
 /-- The explicit values of the special permutation on the root indices. -/
@@ -132,11 +134,20 @@ of the diagram.** -/
 
 /-! ## Action on the pinned root datum -/
 
-private theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
+/-- **The special matrix carries every tabulated root to its indexed image with the prescribed
+exponent.** This is the simp-normal form of
+`TauCeti.DynkinType.g2SpecialIsogenyMatrix_mulVec_root`, since
+`TauCeti.DynkinType.g2SimplyConnectedRootDatum_root` rewrites the datum's roots to the table. -/
+theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
     g2SpecialIsogenyMatrix *ᵥ g2Root i = g2Length i • g2Root (g2SpecialIsogenyIndex i) := by
   decide +revert
 
-private theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
+/-- **The transposed special matrix satisfies the contragredient equation on every tabulated
+coroot.** This is the simp-normal form of
+`TauCeti.DynkinType.g2SpecialIsogenyMatrix_transpose_mulVec_coroot`, since
+`TauCeti.DynkinType.g2SimplyConnectedRootDatum_coroot` rewrites the datum's coroots to the
+table. -/
+theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
     g2SpecialIsogenyMatrixᵀ *ᵥ g2Coroot (g2SpecialIsogenyIndex i) = g2Length i • g2Coroot i := by
   decide +revert
 
@@ -165,43 +176,6 @@ theorem g2SpecialIsogenyMatrix_mul_self :
   fin_cases i <;> fin_cases j <;>
     simp [g2SpecialIsogenyMatrix_def, Matrix.mul_apply, Fin.sum_univ_succ]
 
-/-- The square of the cocharacter-lattice special matrix is three times the identity matrix. -/
-theorem g2SpecialIsogenyMatrix_transpose_mul_self :
-    g2SpecialIsogenyMatrixᵀ * g2SpecialIsogenyMatrixᵀ =
-      (3 : ℤ) • (1 : Matrix (Fin 2) (Fin 2) ℤ) := by
-  rw [← Matrix.transpose_mul, g2SpecialIsogenyMatrix_mul_self, Matrix.transpose_smul,
-    Matrix.transpose_one]
-
-/-- Applying the character-lattice special map twice is multiplication by the characteristic
-`3`. -/
-theorem g2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
-    g2SpecialIsogenyMatrix *ᵥ (g2SpecialIsogenyMatrix *ᵥ x) = (3 : ℤ) • x := by
-  rw [Matrix.mulVec_mulVec, g2SpecialIsogenyMatrix_mul_self, Matrix.smul_mulVec,
-    Matrix.one_mulVec]
-
-/-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
-`3`. -/
-theorem g2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
-    g2SpecialIsogenyMatrixᵀ *ᵥ (g2SpecialIsogenyMatrixᵀ *ᵥ x) = (3 : ℤ) • x := by
-  rw [Matrix.mulVec_mulVec, g2SpecialIsogenyMatrix_transpose_mul_self,
-    Matrix.smul_mulVec, Matrix.one_mulVec]
-
-/-- The square relation for the character-lattice map, as an equality of linear maps. -/
-theorem g2SpecialIsogenyMatrix_mulVecLin_comp_self :
-    g2SpecialIsogenyMatrix.mulVecLin ∘ₗ g2SpecialIsogenyMatrix.mulVecLin =
-      (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  rw [← Matrix.mulVecLin_mul, g2SpecialIsogenyMatrix_mul_self]
-  ext x
-  simp
-
-/-- The square relation for the cocharacter-lattice map, as an equality of linear maps. -/
-theorem g2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self :
-    g2SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ g2SpecialIsogenyMatrixᵀ.mulVecLin =
-      (3 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  rw [← Matrix.mulVecLin_mul, g2SpecialIsogenyMatrix_transpose_mul_self]
-  ext x
-  simp
-
 /-- **The special map is an isogeny and not an automorphism of the character lattice**: its
 determinant is `-3`, of absolute value the characteristic. -/
 @[simp] theorem det_g2SpecialIsogenyMatrix : g2SpecialIsogenyMatrix.det = -3 := by
@@ -211,12 +185,12 @@ determinant is `-3`, of absolute value the characteristic. -/
 /-! ## Length and exponent conventions -/
 
 /-- The exponents at a root index and its image multiply to the characteristic `3`. -/
-@[simp] theorem g2Length_mul_g2Length_specialIsogenyIndex (i : Fin 12) :
+@[simp] theorem g2Length_mul_g2Length_g2SpecialIsogenyIndex (i : Fin 12) :
     g2Length i * g2Length (g2SpecialIsogenyIndex i) = 3 := by
   decide +revert
 
 /-- **The special permutation exchanges long roots with short ones.** -/
-@[simp] theorem g2Length_specialIsogenyIndex_eq_one_iff (i : Fin 12) :
+@[simp] theorem g2Length_g2SpecialIsogenyIndex_eq_one_iff (i : Fin 12) :
     g2Length (g2SpecialIsogenyIndex i) = 1 ↔ g2Length i = 3 := by
   decide +revert
 
@@ -224,12 +198,13 @@ determinant is `-3`, of absolute value the characteristic. -/
 image of a root `α` under the special permutation, pairing the root equation against the coroot
 equation gives `ℓ(α) ⟨α', β'∨⟩ = ℓ(β) ⟨α, β∨⟩`. No diagram automorphism satisfies this, since the
 two lengths differ. -/
-theorem g2Length_mul_pairing_g2SpecialIsogenyIndex (i j : Fin 12) :
+theorem g2Length_mul_pairing_g2SpecialIsogenyIndexEquiv (i j : Fin 12) :
     g2Length i *
         g2SimplyConnectedRootDatum.pairing
           (g2SpecialIsogenyIndexEquiv i) (g2SpecialIsogenyIndexEquiv j) =
       g2Length j * g2SimplyConnectedRootDatum.pairing i j := by
   simp only [g2SimplyConnectedRootDatum_pairing, g2SpecialIsogenyIndexEquiv_apply]
-  decide +revert
+  exact mul_dotProduct_eq_of_mulVec_eq_smul g2SpecialIsogenyMatrix_mulVec_g2Root
+    g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot i j
 
 end TauCeti.DynkinType

@@ -11,21 +11,22 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.Basic
 public section
 
 /-!
-# Simple-root coordinates and squared lengths of the pinned `G₂` roots
+# Squared lengths of the pinned `G₂` roots
 
 `TauCeti.DynkinType.g2SimplyConnectedRootDatum` tabulates its twelve roots in the
-fundamental-weight basis and its twelve coroots in the simple-coroot basis. Neither table displays
-the *simple-root* coordinates of a root, and neither displays how long a root is. Both are needed
-by a consumer that has to distinguish long roots from short ones, which is what a
-characteristic-three special isogeny of type `G₂` does.
+fundamental-weight basis and its twelve coroots in the simple-coroot basis, and
+`TauCeti.DynkinType.g2Coeff` records their simple-root coordinates. None of those tables displays
+how long a root is, which a consumer that has to distinguish long roots from short ones needs, and
+which is what a characteristic-three special isogeny of type `G₂` does.
 
-This file supplies the two missing tables, in the pinned index order
+This file supplies the missing squared-length table, in the pinned index order
 
 ```text
 α₁,  α₂,  α₁ + α₂,  2 α₁ + α₂,  3 α₁ + α₂,  3 α₁ + 2 α₂
 ```
 
-on the positive roots, index `k + 6` being the negative of index `k`.
+on the positive roots, index `k + 6` being the negative of index `k`. It also records the sign
+pattern of `TauCeti.DynkinType.g2Coeff` and the uniqueness of the expansion it tabulates.
 
 `TauCeti.DynkinType.g2Length` is normalised as `TauCeti.DynkinType.rootLength` normalises the
 simple roots: `1` on the six short roots `± α₁, ± (α₁ + α₂), ± (2 α₁ + α₂)` and `3` on the six long
@@ -36,13 +37,12 @@ expanding `β∨ = 2 β / (β, β)` on the simple coroots, and
 
 ## Main definitions
 
-* `TauCeti.DynkinType.g2Coeff`: the simple-root coordinates of the twelve roots.
-* `TauCeti.DynkinType.g2Length`: their squared lengths.
+* `TauCeti.DynkinType.g2Length`: the squared lengths of the twelve roots.
 
 ## Main results
 
-* `TauCeti.DynkinType.g2Root_eq_smul_add_smul` and `TauCeti.DynkinType.eq_g2Coeff_of_root_eq`: the
-  coordinate table expands the roots on the two simple ones, and is the only table that does.
+* `TauCeti.DynkinType.eq_g2Coeff_of_root_eq`: the coordinate table
+  `TauCeti.DynkinType.g2Coeff` is the only one that expands the roots on the two simple ones.
 * `TauCeti.DynkinType.g2Length_mul_g2Coroot` and
   `TauCeti.DynkinType.eq_g2Length_of_mul_g2Coroot`: the length table is the one forced by the two
   simple lengths.
@@ -60,32 +60,20 @@ characteristics two and three" bullet of Layer 9 of `TauCetiRoadmap/ReductiveGro
 matching the rank-two type `B` tables of
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/B/RankTwo.lean`.
 -/
-
 namespace TauCeti.DynkinType
 
 open Function
 
-/-- The simple-root coordinates of the twelve roots of the pinned `G₂` datum, in the index order of
-`TauCeti.DynkinType.g2Root`. -/
-@[expose] def g2Coeff : Fin 12 → (Fin 2 → ℤ) :=
-  ![![1, 0], ![0, 1], ![1, 1], ![2, 1], ![3, 1], ![3, 2],
-    ![-1, 0], ![0, -1], ![-1, -1], ![-2, -1], ![-3, -1], ![-3, -2]]
-
-/-- Each tabulated root is the tabulated combination of the two simple roots. -/
-theorem g2Root_eq_smul_add_smul (k : Fin 12) :
-    g2Root k = g2Coeff k 0 • g2Root 0 + g2Coeff k 1 • g2Root 1 := by
-  decide +revert
-
 private lemma g2_smul_add_smul_inj {a b a' b' : ℤ}
     (h : a • g2Root 0 + b • g2Root 1 = a' • g2Root 0 + b' • g2Root 1) : a = a' ∧ b = b' := by
-  have h0 := congrFun h 0
-  have h1 := congrFun h 1
-  simp only [g2Root, Function.Embedding.coeFn_mk, Pi.add_apply, Pi.smul_apply, smul_eq_mul,
-    Matrix.cons_val_zero, Matrix.cons_val_one] at h0 h1
-  omega
+  have hz : (a - a') • g2Root 0 + (b - b') • g2Root 1 = 0 := by
+    rw [sub_smul, sub_smul, sub_add_sub_comm, h, sub_self]
+  obtain ⟨h0, h1⟩ := (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).1
+    g2Root_linearIndepOn_zero_one _ _ hz
+  exact ⟨sub_eq_zero.1 h0, sub_eq_zero.1 h1⟩
 
-/-- The two simple roots are linearly independent, so the expansion above determines the
-coefficients. -/
+/-- The two simple roots are linearly independent, so the expansion
+`TauCeti.DynkinType.g2Root_eq_smul_add_smul` determines the coefficients. -/
 theorem eq_g2Coeff_of_root_eq {k : Fin 12} {c : Fin 2 → ℤ}
     (h : g2Root k = c 0 • g2Root 0 + c 1 • g2Root 1) : c = g2Coeff k := by
   obtain ⟨h0, h1⟩ := g2_smul_add_smul_inj (h.symm.trans (g2Root_eq_smul_add_smul k))
