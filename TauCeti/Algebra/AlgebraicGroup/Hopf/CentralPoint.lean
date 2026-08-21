@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
+public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
@@ -47,6 +47,9 @@ commutative group functor exactly when `H` is cocommutative
   tensor-factor points in the reversed order is the flipped comultiplication.
 * `TauCeti.HopfAlgebra.isCentralPoint_id_iff_isCocomm`: the tautological point is central exactly
   when `H` is cocommutative.
+* `TauCeti.HopfAlgebra.IsCentralPoint.mapDomain_bialgEquiv` and
+  `TauCeti.HopfAlgebra.isCentralPoint_mapDomain_bialgEquiv_iff`: centrality is invariant under a
+  change of coordinate bialgebra by an equivalence.
 
 ## References
 
@@ -103,6 +106,44 @@ theorem IsCentralPoint.mapValue {g : WithConv (H →ₐ[R] A)} (hg : IsCentralPo
   intro C _ _ ψ h
   rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp]
   exact hg (ψ.comp φ) h
+
+section CoordinateEquiv
+
+variable {K : Type v} [Ring K] [_root_.Bialgebra R K]
+
+/-- Precomposition by a bialgebra equivalence preserves universal centrality of points. -/
+theorem IsCentralPoint.mapDomain_bialgEquiv {g : WithConv (K →ₐ[R] A)}
+    (hg : IsCentralPoint g) (e : H ≃ₐc[R] K) :
+    IsCentralPoint (AlgHom.mapDomain (A := A) e.toBialgHom g) := by
+  intro B _ _ φ h
+  let E := AlgHom.mapDomainMulEquiv (A := B) e
+  have hc := hg φ (E.symm h)
+  have hc' := hc.map E.toMonoidHom
+  simp only [MulEquiv.coe_toMonoidHom] at hc'
+  have hnatural :
+      E (AlgHom.mapValue (H := K) φ g) =
+        AlgHom.mapValue (H := H) φ (AlgHom.mapDomain (A := A) e.toBialgHom g) :=
+    DFunLike.congr_fun (AlgHom.mapValue_mapDomain e.toBialgHom φ) g
+  rw [hnatural, E.apply_symm_apply] at hc'
+  exact hc'
+
+/-- Precomposition by a bialgebra equivalence preserves and reflects universal centrality of
+points. This is invariance of the center of the functor of points under a change of coordinate
+Hopf algebra. -/
+theorem isCentralPoint_mapDomain_bialgEquiv_iff (e : H ≃ₐc[R] K)
+    (g : WithConv (K →ₐ[R] A)) :
+    IsCentralPoint (AlgHom.mapDomain (A := A) e.toBialgHom g) ↔ IsCentralPoint g := by
+  constructor
+  · intro hg
+    have htransport := hg.mapDomain_bialgEquiv e.symm
+    simp only [BialgEquiv.toBialgHom_eq_coe] at htransport
+    rw [← AlgHom.mapDomainMulEquiv_apply (A := A) e,
+      ← AlgHom.mapDomainMulEquiv_symm_apply (A := A) e,
+      (AlgHom.mapDomainMulEquiv (A := A) e).symm_apply_apply] at htransport
+    exact htransport
+  · exact fun hg ↦ hg.mapDomain_bialgEquiv e
+
+end CoordinateEquiv
 
 /-- The identity point is central. -/
 theorem isCentralPoint_one : IsCentralPoint (1 : WithConv (H →ₐ[R] A)) := by
