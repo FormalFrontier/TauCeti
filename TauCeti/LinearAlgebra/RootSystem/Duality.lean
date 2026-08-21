@@ -184,15 +184,15 @@ reversed. -/
   | E6 =>
       change E6.cartanMatrix i j = E6.cartanMatrix j i
       rw [cartanMatrix_E6]
-      exact CartanMatrix.E₆_isSymm.apply j i
+      exact (CartanMatrix.E_isSymm 6).apply j i
   | E7 =>
       change E7.cartanMatrix i j = E7.cartanMatrix j i
       rw [cartanMatrix_E7]
-      exact CartanMatrix.E₇_isSymm.apply j i
+      exact (CartanMatrix.E_isSymm 7).apply j i
   | E8 =>
       change E8.cartanMatrix i j = E8.cartanMatrix j i
       rw [cartanMatrix_E8]
-      exact CartanMatrix.E₈_isSymm.apply j i
+      exact (CartanMatrix.E_isSymm 8).apply j i
   | B n =>
       change Fin n at i j
       change (C n).cartanMatrix i j = (B n).cartanMatrix j i
