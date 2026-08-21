@@ -122,8 +122,7 @@ theorem toMulAut_apply {X : C} (g : X ⟶ G) (n : X ⟶ N) :
 
 @[simp]
 theorem act_one_apply {X : C} (g : X ⟶ G) : A.act g 1 = 1 := by
-  change A.toMulAut g 1 = 1
-  exact map_one (A.toMulAut g)
+  simpa only [toMulAut_apply] using map_one (A.toMulAut g)
 
 /-- The action homomorphism from generalized points of `G` to automorphisms of the generalized
 points of `N`. -/
@@ -138,9 +137,7 @@ theorem toMulAutHom_apply {X : C} (g : X ⟶ G) (n : X ⟶ N) :
   by rfl
 
 /-- The presheaf of ordinary semidirect products induced by an internal group action. -/
--- The body is exposed because the dependent object type must reduce in the representability API.
-@[expose]
-def pointSemidirectProduct : Cᵒᵖ ⥤ GrpCat.{v} where
+private def pointSemidirectProduct : Cᵒᵖ ⥤ GrpCat.{v} where
   obj X := GrpCat.of ((unop X ⟶ N) ⋊[A.toMulAutHom (unop X)] (unop X ⟶ G))
   map {X Y} f := GrpCat.ofHom
     { toFun := fun x ↦ ⟨f.unop ≫ x.left, f.unop ≫ x.right⟩
@@ -213,24 +210,40 @@ noncomputable def pointMulEquiv (X : C) :
   letI := A.semidirectProductGrpObj
   exact (A.pointIso.app (op X)).groupIsoToMulEquiv
 
+private theorem pointMulEquiv_apply {X : C} (f : X ⟶ N ⊗ G) :
+    letI := A.semidirectProductGrpObj
+    A.pointMulEquiv X f =
+      (⟨f ≫ fst N G, f ≫ snd N G⟩ :
+        (X ⟶ N) ⋊[A.toMulAutHom X] (X ⟶ G)) :=
+  rfl
+
+private theorem pointMulEquiv_symm_apply_aux {X : C}
+    (f : (X ⟶ N) ⋊[A.toMulAutHom X] (X ⟶ G)) :
+    letI := A.semidirectProductGrpObj
+    (A.pointMulEquiv X).symm f = lift f.left f.right :=
+  rfl
+
 @[simp]
 theorem pointMulEquiv_left {X : C} (f : X ⟶ N ⊗ G) :
     letI := A.semidirectProductGrpObj
     (A.pointMulEquiv X f).left = f ≫ fst N G :=
-  by rfl
+  by
+    exact congrArg SemidirectProduct.left (A.pointMulEquiv_apply f)
 
 @[simp]
 theorem pointMulEquiv_right {X : C} (f : X ⟶ N ⊗ G) :
     letI := A.semidirectProductGrpObj
     (A.pointMulEquiv X f).right = f ≫ snd N G :=
-  by rfl
+  by
+    exact congrArg SemidirectProduct.right (A.pointMulEquiv_apply f)
 
 @[simp]
 theorem pointMulEquiv_symm_apply {X : C}
     (f : (X ⟶ N) ⋊[A.toMulAutHom X] (X ⟶ G)) :
     letI := A.semidirectProductGrpObj
     (A.pointMulEquiv X).symm f = lift f.left f.right :=
-  by rfl
+  by
+    exact A.pointMulEquiv_symm_apply_aux f
 
 /-- The natural inclusion of the normal factor into the pointwise semidirect product. -/
 private def inlNatTrans : (yonedaGrp (C := C)).obj (Grp.mk N) ⟶
