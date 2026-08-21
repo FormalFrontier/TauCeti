@@ -30,8 +30,9 @@ The index is the **full** coset index `[SL(2, ℤ) : Γ]`, not the projective on
 the weight is read on the matrix stabiliser rather than on the projective order `e_P`. That is the
 only choice under which both sides are correct in odd weight with `-I ∉ Γ`, where the projective
 norm is not even well defined; the projective statement
-`Σ_P (1 / e_P) · ord_P f = k · [SL(2, ℤ) : ±Γ] / 12` is obtained by multiplying
-this identity by `|{±I} ∩ Γ| / 2`. See
+`Σ_P (1 / e_P) · ord_P f + (|{±I} ∩ Γ| / 2) · ord_∞(Nm f) =
+  k · [SL(2, ℤ) : ±Γ] / 12` is obtained by multiplying this identity by
+`|{±I} ∩ Γ| / 2`. See
 `TauCeti.ModularForm.weightedOrderOfVanishingOnSubgroupOrbit`.
 
 ## Main declarations
@@ -88,7 +89,8 @@ The weight is written through the **matrix** stabiliser order, not through the p
 when `-I ∈ Γ` and `2 / e_P` when `-I ∉ Γ`. That is the right normalisation for the norm map,
 whose weight is `k · [SL(2, ℤ) : Γ]` for the **full** coset index: both sides of the general-level
 formula double when `-I ∉ Γ`, and dividing by `2` there recovers the projective statement
-`∑_P (1 / e_P) · ord_P f = k · [SL(2, ℤ) : ±Γ] / 12`.
+`∑_P (1 / e_P) · ord_P f + (|{±I} ∩ Γ| / 2) · ord_∞(Nm f) =
+  k · [SL(2, ℤ) : ±Γ] / 12`.
 
 At level one this is the same weight: `weightedOrderOfVanishingOnOrbit_eq_two_mul_div` below. -/
 noncomputable def weightedOrderOfVanishingOnSubgroupOrbit
