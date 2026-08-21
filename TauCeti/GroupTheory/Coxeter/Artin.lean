@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.Coxeter.Basic
 public import Mathlib.GroupTheory.OrderOfElement
+public import TauCeti.GroupTheory.Coxeter.Basic
 
 /-!
 # Artin-Tits groups
@@ -47,15 +47,20 @@ above correct rather than merely plausible.
 * `TauCeti.ArtinGroup M`: the Artin-Tits group of `M`.
 * `TauCeti.ArtinGroup.gen M i`: its standard generator at the index `i`.
 * `TauCeti.ArtinGroup.lift`: the universal property.
+* `TauCeti.ArtinGroup.closure_range_gen` and `TauCeti.ArtinGroup.gen_induction`: generation by the
+  standard generators and its induction principle.
 * `TauCeti.ArtinGroup.toCoxeterGroup`: the canonical map onto a Coxeter group with matrix `M`.
 * `TauCeti.ArtinGroup.exponentSum`: the total exponent of a word in the standard generators.
 
 ## Main results
 
+* `TauCeti.prod_map_alternatingWord_two` and `TauCeti.prod_map_alternatingWord_three`: the
+  rank-two alternating-word evaluation rules used below.
 * `TauCeti.ArtinGroup.prod_map_gen_braidWord`: the defining braid relation holds.
 * `TauCeti.ArtinGroup.gen_mul_gen_comm` and `TauCeti.ArtinGroup.gen_braid`: the rank-two form of
   that relation, at an entry `M i i' = 2` and at an entry `M i i' = 3`.
 * `TauCeti.ArtinGroup.toCoxeterGroup_surjective`: the map to the Coxeter group is surjective.
+* `TauCeti.ArtinGroup.hom_ext`: homomorphisms are determined by the standard generators.
 * `TauCeti.ArtinGroup.gen_ne_one` and `TauCeti.ArtinGroup.orderOf_gen`: a standard generator is
   nontrivial, indeed of infinite order. These are the non-degeneracy statements which distinguish
   the Artin-Tits presentation from the Coxeter presentation on the same generators.
@@ -77,16 +82,7 @@ open Function List
 
 namespace TauCeti
 
-variable {B G N W : Type*} [Group G] [Monoid N] [Group W]
-
-/-- The alternating word of length `2`. Mathlib defines `CoxeterSystem.alternatingWord` by
-recursion; this case and the next are the ones the rank-two relations below need. -/
-private theorem alternatingWord_two (i i' : B) :
-    CoxeterSystem.alternatingWord i i' 2 = [i, i'] := rfl
-
-/-- The alternating word of length `3`. -/
-private theorem alternatingWord_three (i i' : B) :
-    CoxeterSystem.alternatingWord i i' 3 = [i', i, i'] := rfl
+variable {B G W : Type*} [Group G] [Group W]
 
 section Relations
 
@@ -127,6 +123,35 @@ abbrev ArtinGroup : Type _ := PresentedGroup (artinRelationsSet M)
 /-- The standard generator `σ i` of the Artin-Tits group of `M`. -/
 def ArtinGroup.gen (i : B) : ArtinGroup M := PresentedGroup.of i
 
+/-- Mathlib's presented-group generator is the standard Artin-Tits generator. -/
+@[simp]
+theorem ArtinGroup.of_eq_gen (i : B) :
+    (PresentedGroup.of i : ArtinGroup M) = ArtinGroup.gen M i :=
+  (rfl)
+
+/-- The standard generators generate the Artin-Tits group. -/
+@[simp]
+theorem ArtinGroup.closure_range_gen :
+    Subgroup.closure (Set.range (ArtinGroup.gen M)) = ⊤ := by
+  have hof : (PresentedGroup.of : B → ArtinGroup M) = ArtinGroup.gen M := by
+    funext i
+    exact ArtinGroup.of_eq_gen M i
+  rw [← hof]
+  exact PresentedGroup.closure_range_of (artinRelationsSet M)
+
+/-- To prove a predicate for every Artin-Tits group element, it suffices to prove it for the
+identity and standard generators and show that it is preserved by multiplication and inverse. -/
+theorem ArtinGroup.gen_induction {p : ArtinGroup M → Prop} (g : ArtinGroup M)
+    (gen : ∀ i : B, p (ArtinGroup.gen M i)) (one : p 1)
+    (mul : ∀ g g' : ArtinGroup M, p g → p g' → p (g * g'))
+    (inv : ∀ g : ArtinGroup M, p g → p g⁻¹) : p g := by
+  have hg : g ∈ Subgroup.closure (Set.range (ArtinGroup.gen M)) := by
+    rw [ArtinGroup.closure_range_gen]
+    exact Subgroup.mem_top g
+  exact Subgroup.closure_induction
+    (fun x ⟨i, hi⟩ ↦ hi ▸ gen i) one
+    (fun x y _ _ hx hy ↦ mul x y hx hy) (fun x _ hx ↦ inv x hx) hg
+
 /-- The defining relation of the Artin-Tits group: the two alternating words of length `M i i'`
 in the standard generators `σ i` and `σ i'` have the same product. -/
 theorem ArtinGroup.prod_map_gen_braidWord (i i' : B) :
@@ -136,28 +161,21 @@ theorem ArtinGroup.prod_map_gen_braidWord (i i' : B) :
   rw [artinRelation_def] at hmem
   have h := PresentedGroup.mk_eq_mk_of_mul_inv_mem hmem
   rw [← List.prod_map_hom, ← List.prod_map_hom] at h
+  have hof : (⇑(PresentedGroup.mk (artinRelationsSet M)) ∘ FreeGroup.of) =
+      ArtinGroup.gen M := by
+    funext j
+    exact ArtinGroup.of_eq_gen M j
+  rw [hof] at h
   exact h
-
-/-- A word of length `2` in the standard alternating pattern, evaluated through any family `f`.
-Together with `TauCeti.prod_map_braidWord_of_eq_three` this is how a rank-two entry of `M` turns
-the abstract Artin-Tits relation into a readable equation. -/
-theorem prod_map_braidWord_of_eq_two (f : B → N) {i i' : B} (h : M i i' = 2) :
-    ((CoxeterSystem.braidWord M i i').map f).prod = f i * f i' := by
-  rw [CoxeterSystem.braidWord, h, alternatingWord_two]
-  simp
-
-/-- A word of length `3` in the standard alternating pattern, evaluated through any family `f`. -/
-theorem prod_map_braidWord_of_eq_three (f : B → N) {i i' : B} (h : M i i' = 3) :
-    ((CoxeterSystem.braidWord M i i').map f).prod = f i' * f i * f i' := by
-  rw [CoxeterSystem.braidWord, h, alternatingWord_three]
-  simp [mul_assoc]
 
 /-- Two standard generators commute when the corresponding entry of `M` is `2`. -/
 theorem ArtinGroup.gen_mul_gen_comm {i i' : B} (h : M i i' = 2) :
     ArtinGroup.gen M i * ArtinGroup.gen M i' = ArtinGroup.gen M i' * ArtinGroup.gen M i := by
   have h' : M i' i = 2 := by rw [M.symmetric i' i]; exact h
   have hb := ArtinGroup.prod_map_gen_braidWord M i i'
-  rwa [prod_map_braidWord_of_eq_two M _ h, prod_map_braidWord_of_eq_two M _ h'] at hb
+  rw [CoxeterSystem.braidWord, h, CoxeterSystem.braidWord, h',
+    prod_map_alternatingWord_two, prod_map_alternatingWord_two] at hb
+  exact hb
 
 /-- Two standard generators satisfy the length-three braid relation when the corresponding entry
 of `M` is `3`. -/
@@ -166,7 +184,8 @@ theorem ArtinGroup.gen_braid {i i' : B} (h : M i i' = 3) :
       ArtinGroup.gen M i' * ArtinGroup.gen M i * ArtinGroup.gen M i' := by
   have h' : M i' i = 3 := by rw [M.symmetric i' i]; exact h
   have hb := ArtinGroup.prod_map_gen_braidWord M i i'
-  rw [prod_map_braidWord_of_eq_three M _ h, prod_map_braidWord_of_eq_three M _ h'] at hb
+  rw [CoxeterSystem.braidWord, h, CoxeterSystem.braidWord, h',
+    prod_map_alternatingWord_three, prod_map_alternatingWord_three] at hb
   exact hb.symm
 
 /-- The universal property of the Artin-Tits presentation: a family `f` of elements of a group
@@ -188,20 +207,18 @@ def ArtinGroup.lift (f : B → G)
 @[simp]
 theorem ArtinGroup.lift_gen (f : B → G) (hf) (i : B) :
     ArtinGroup.lift M f hf (ArtinGroup.gen M i) = f i :=
-  PresentedGroup.toGroup.of _
+  by
+    rw [← ArtinGroup.of_eq_gen]
+    exact PresentedGroup.toGroup.of _
 
 /-- Two homomorphisms from an Artin–Tits group are equal if they agree on every standard
 generator. -/
 @[ext]
 theorem ArtinGroup.hom_ext {f g : ArtinGroup M →* G}
-    (h : ∀ i, f (ArtinGroup.gen M i) = g (ArtinGroup.gen M i)) : f = g :=
-  PresentedGroup.ext h
-
-/-- The homomorphism supplied by `ArtinGroup.lift` is the unique homomorphism with the prescribed
-values on the standard generators. -/
-theorem ArtinGroup.lift_unique (f : B → G) (hf) (g : ArtinGroup M →* G)
-    (hg : ∀ i, g (ArtinGroup.gen M i) = f i) : g = ArtinGroup.lift M f hf :=
-  ArtinGroup.hom_ext M fun i ↦ (hg i).trans (ArtinGroup.lift_gen M f hf i).symm
+    (h : ∀ i, f (ArtinGroup.gen M i) = g (ArtinGroup.gen M i)) : f = g := by
+  apply PresentedGroup.ext
+  intro i
+  simpa only [ArtinGroup.of_eq_gen] using h i
 
 /-- The exponent-sum homomorphism, sending every standard generator to `1 : ℤ`. It is well defined
 because the two sides of every Artin-Tits relation are words of the same length; this is what

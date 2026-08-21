@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.Perm.Support
+public import Mathlib.Algebra.Group.End
 
 /-!
 # Elementary facts about permutations
