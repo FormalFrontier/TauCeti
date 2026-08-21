@@ -56,12 +56,10 @@ noncomputable def tangentSpaceOpenEquiv {U : Opens M} (x : U) :
   continuous_toFun := continuous_id
   continuous_invFun := continuous_id
 
-@[simp]
 theorem tangentSpaceOpenEquiv_apply {U : Opens M} (x : U) (v : TangentSpace I x) :
     tangentSpaceOpenEquiv (I := I) x v = v := by
   exact (rfl)
 
-@[simp]
 theorem tangentSpaceOpenEquiv_symm_apply {U : Opens M} (x : U)
     (v : TangentSpace I (x : M)) :
     (tangentSpaceOpenEquiv (I := I) x).symm v = v := by
@@ -104,8 +102,14 @@ private theorem eventually_tangentBundleCore_coordChange_open_eq
           (Set.range I) (I (chartAt H (x : M) (y : M))) :=
     htrans.fderivWithin_eq_of_nhds
   ext z
-  simpa [tangentBundleCore_coordChange_achart, Function.comp_def, Opens.chartAt_eq,
-    tangentSpaceOpenEquiv_apply] using DFunLike.congr_fun hd.symm z
+  simpa only [tangentBundleCore_coordChange, OpenPartialHomeomorph.extend, coe_achart,
+    PartialEquiv.coe_trans, ModelWithCorners.toPartialEquiv_coe,
+    PartialHomeomorph.toFun_eq_coe, OpenPartialHomeomorph.coe_toPartialHomeomorph,
+    PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_toPartialEquiv_symm,
+    OpenPartialHomeomorph.coe_toPartialHomeomorph_symm,
+    ModelWithCorners.toPartialEquiv_coe_symm, Function.comp_apply, Opens.chartAt_eq,
+    OpenPartialHomeomorph.subtypeRestr_coe, Set.domRestrict, Function.comp_def] using
+      DFunLike.congr_fun hd.symm z
 
 /-- The differential of the inclusion of an open submanifold is the canonical tangent-space
 identification. -/
@@ -114,8 +118,8 @@ theorem mfderiv_subtype_val {U : Opens M} (x : U) :
     mfderiv I I (Subtype.val : U → M) x =
       (tangentSpaceOpenEquiv (I := I) x).toContinuousLinearMap := by
   ext v
-  rw [ContinuousLinearEquiv.coe_coe, tangentSpaceOpenEquiv_apply, mfderiv]
-  simp only [contMDiff_subtype_val.mdifferentiableAt one_ne_zero, ↓reduceIte]
+  rw [ContinuousLinearEquiv.coe_coe, tangentSpaceOpenEquiv_apply,
+    (contMDiff_subtype_val.mdifferentiableAt one_ne_zero).mfderiv]
   have h : writtenInExtChartAt I I x (Subtype.val : U → M) =ᶠ[
       nhdsWithin (extChartAt I x x) (Set.range I)] id := by
     have hmem : I.symm ⁻¹' (chartAt H x).target ∩ Set.range I ∈
@@ -159,12 +163,9 @@ theorem eventually_tangentSpaceOpenEquiv_symmL_trivializationAt_eq
         (mem_baseSet_trivializationAt E (TangentSpace I : M → Type _) (x : M))),
     eventually_tangentBundleCore_coordChange_open_eq (I := I) x] with y hyU hyM hcoord
   intro z
-  have hyU' : y ∈ (chartAt H x).source := by
-    simpa using hyU
-  have hyM' : (y : M) ∈ (chartAt H (x : M)).source := by
-    exact hyM
-  rw [TangentBundle.symmL_trivializationAt_eq_core hyU',
-    TangentBundle.symmL_trivializationAt_eq_core hyM']
+  rw [TangentBundle.trivializationAt_baseSet] at hyU hyM
+  rw [TangentBundle.symmL_trivializationAt_eq_core hyU,
+    TangentBundle.symmL_trivializationAt_eq_core hyM]
   -- The preceding rewrites identify the two `symmL` maps with core coordinate changes, but their
   -- applications still use the definitional identification `TangentSpace I b = E`. The following
   -- `change` intentionally unfolds those map coercions and the local `tangentSpaceOpenEquiv`; no

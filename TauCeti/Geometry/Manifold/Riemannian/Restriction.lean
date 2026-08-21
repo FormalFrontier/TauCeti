@@ -27,9 +27,18 @@ bundle structures.
   `TauCeti.Manifold.instIsContinuousRiemannianBundleOpen`, and
   `TauCeti.Manifold.instIsContMDiffRiemannianBundleOpen`: the corresponding scoped instances.
 
-The three instances are in the `TauCeti` scope; use `open scoped TauCeti` to install them. In
-particular, under the usual separation hypotheses this makes `EMetricSpace.ofRiemannianMetric`
-available on the open submanifold.
+## Main results
+
+* `Bundle.RiemannianMetric.restrictOpenTangentSpace_inner_mfderiv_subtype_val`: the restricted
+  metric is the pullback along the differential of the inclusion.
+* `TauCeti.Manifold.riemannianBundleOpen_g`: the installed metric is the fibrewise restriction.
+* `TauCeti.Manifold.inner_tangentSpace_open`, `TauCeti.Manifold.norm_tangentSpace_open`, and
+  `TauCeti.Manifold.enorm_tangentSpace_open`: the installed inner product and norms agree with
+  their ambient counterparts under the canonical tangent-space identification.
+
+The three instances are in the `TauCeti` scope; use `open scoped TauCeti` to install them. Given an
+ambient `RiemannianBundle` and `IsContinuousRiemannianBundle`, together with `IsManifold I 1 M` and
+`T3Space M`, this makes `EMetricSpace.ofRiemannianMetric I U` applicable to the open submanifold.
 
 ## References
 
@@ -127,64 +136,80 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I n M]
   [IsManifold I 1 M]
 
+omit [IsManifold I n M] in
+private theorem eventually_restrictOpenTangentSpace_inCoordinates_eq
+    (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M)
+    (x : U) :
+    (fun y : U ↦
+      (trivializationAt (E →L[ℝ] E →L[ℝ] ℝ)
+        (fun z : U ↦ TangentSpace I z →L[ℝ] TangentSpace I z →L[ℝ] ℝ) x
+          (TotalSpace.mk' _ y
+            ((g.toRiemannianMetric.restrictOpenTangentSpace U).inner y))).2) =ᶠ[nhds x]
+    (fun y : U ↦
+      (trivializationAt (E →L[ℝ] E →L[ℝ] ℝ)
+        (fun z : M ↦ TangentSpace I z →L[ℝ] TangentSpace I z →L[ℝ] ℝ) (x : M)
+          (TotalSpace.mk' _ (y : M) (g.inner (y : M)))).2) := by
+  filter_upwards [
+    (trivializationAt E (TangentSpace I : U → Type _) x).open_baseSet.mem_nhds
+      (mem_baseSet_trivializationAt E (TangentSpace I : U → Type _) x),
+    continuousAt_subtype_val.eventually
+      ((trivializationAt E (TangentSpace I : M → Type _) x.1).open_baseSet.mem_nhds
+        (mem_baseSet_trivializationAt E (TangentSpace I : M → Type _) x.1)),
+    TauCeti.Manifold.eventually_tangentSpaceOpenEquiv_symmL_trivializationAt_eq
+      (I := I) x] with y hyU hyM hsymm
+  have hyUhom : y ∈ (trivializationAt (E →L[ℝ] ℝ)
+      (fun z : U ↦ TangentSpace I z →L[ℝ] ℝ) x).baseSet := by
+    rw [hom_trivializationAt_baseSet]
+    exact ⟨hyU, by simp⟩
+  have hyMhom : (y : M) ∈ (trivializationAt (E →L[ℝ] ℝ)
+      (fun z : M ↦ TangentSpace I z →L[ℝ] ℝ) (x : M)).baseSet := by
+    rw [hom_trivializationAt_baseSet]
+    exact ⟨hyM, by simp⟩
+  ext v w
+  simp only [hom_trivializationAt_apply, ContinuousLinearMap.inCoordinates,
+    Trivialization.continuousLinearMapAt_apply, Trivialization.symmL_apply,
+    Trivialization.linearMapAt_apply, hyU, hyUhom, hyMhom, ContinuousLinearMap.coe_comp,
+    Function.comp_apply, ite_true]
+  rw [Bundle.RiemannianMetric.restrictOpenTangentSpace_inner]
+  simp only [Trivial.fiberBundle_trivializationAt', Trivial.trivialization_baseSet,
+    Set.mem_univ, ite_true, Trivial.trivialization_apply,
+    Bundle.ContMDiffRiemannianMetric.toRiemannianMetric_inner]
+  have hsymm' (z : E) :
+      TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
+          ((trivializationAt E (TangentSpace I : U → Type _) x).symm y z) =
+        (trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) z := by
+    simpa only [Trivialization.symmL_apply _ hyU] using hsymm z
+  have hp :
+      (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
+          ((trivializationAt E (TangentSpace I : U → Type _) x).symm y v),
+        TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
+          ((trivializationAt E (TangentSpace I : U → Type _) x).symm y w)) =
+      ((trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) v,
+        (trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) w) :=
+    Prod.ext (hsymm' v) (hsymm' w)
+  simpa only using congrArg
+    (fun p : TangentSpace I (y : M) × TangentSpace I (y : M) ↦ g.inner (y : M) p.1 p.2) hp
+
+omit [IsManifold I n M] in
+private theorem contMDiffAt_restrictOpenTangentSpace
+    (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M)
+    (x : U) :
+    ContMDiffAt I (I.prod 𝓘(ℝ, E →L[ℝ] E →L[ℝ] ℝ)) n
+      (fun y : U ↦ TotalSpace.mk' (E →L[ℝ] E →L[ℝ] ℝ) y
+        ((g.toRiemannianMetric.restrictOpenTangentSpace U).inner y)) x := by
+  rw [contMDiffAt_section]
+  have h := g.contMDiff.contMDiffAt.comp x
+    (contMDiff_subtype_val (I := I) (U := U)).contMDiffAt
+  rw [contMDiffAt_totalSpace] at h
+  exact h.2.congr_of_eventuallyEq (eventually_restrictOpenTangentSpace_inCoordinates_eq g U x)
+
+omit [IsManifold I n M] in
 /-- Restrict a `C^n` Riemannian metric on a manifold to an open submanifold. -/
 noncomputable def restrictOpenTangentSpace
     (g : ContMDiffRiemannianMetric I n E (fun x : M ↦ TangentSpace I x)) (U : Opens M) :
     ContMDiffRiemannianMetric I n E (fun x : U ↦ TangentSpace I x) :=
   { g.toRiemannianMetric.restrictOpenTangentSpace U with
-  contMDiff x := by
-    -- Pull ambient `C^n` regularity back along the inclusion and compare the inherited and ambient
-    -- tangent-bundle coordinates on a common neighbourhood of `x`.
-    rw [contMDiffAt_section]
-    have h := g.contMDiff.contMDiffAt.comp x
-      (contMDiff_subtype_val (I := I) (U := U)).contMDiffAt
-    rw [contMDiffAt_totalSpace] at h
-    apply h.2.congr_of_eventuallyEq
-    filter_upwards [
-      (trivializationAt E (TangentSpace I : U → Type _) x).open_baseSet.mem_nhds
-        (mem_baseSet_trivializationAt E (TangentSpace I : U → Type _) x),
-      continuousAt_subtype_val.eventually
-        ((trivializationAt E (TangentSpace I : M → Type _) x.1).open_baseSet.mem_nhds
-          (mem_baseSet_trivializationAt E (TangentSpace I : M → Type _) x.1)),
-      TauCeti.Manifold.eventually_tangentSpaceOpenEquiv_symmL_trivializationAt_eq
-        (I := I) x] with y hyU hyM hsymm
-    have hyU' : y ∈ (chartAt H x).source := by simpa using hyU
-    have hyM' : (y : M) ∈ (chartAt H (x : M)).source := hyM
-    have hyUhom : y ∈ (trivializationAt (E →L[ℝ] ℝ)
-        (fun z : U ↦ TangentSpace I z →L[ℝ] ℝ) x).baseSet := by
-      simpa using hyU'
-    have hyMhom : (y : M) ∈ (trivializationAt (E →L[ℝ] ℝ)
-        (fun z : M ↦ TangentSpace I z →L[ℝ] ℝ) (x : M)).baseSet := by
-      simpa using hyM'
-    ext v w
-    simp only [hom_trivializationAt_apply, ContinuousLinearMap.inCoordinates,
-      Trivialization.continuousLinearMapAt_apply, Trivialization.symmL_apply,
-      Trivialization.linearMapAt_apply,
-      hyU, hyUhom, hyMhom, ContinuousLinearMap.coe_comp, Function.comp_apply,
-      ite_true]
-    rw [Bundle.RiemannianMetric.restrictOpenTangentSpace_inner]
-    simp only [Trivial.fiberBundle_trivializationAt', Trivial.trivialization_baseSet,
-      Set.mem_univ, ite_true, Trivial.trivialization_apply,
-      Bundle.ContMDiffRiemannianMetric.toRiemannianMetric,
-      Bundle.ContMDiffRiemannianMetric.toContinuousRiemannianMetric,
-      Bundle.ContinuousRiemannianMetric.toRiemannianMetric]
-    have hsymm' (z : E) :
-        TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
-            ((trivializationAt E (TangentSpace I : U → Type _) x).symm y z) =
-          (trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) z := by
-      simpa only [Trivialization.symmL_apply _ hyU] using hsymm z
-    have hp :
-        (TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
-            ((trivializationAt E (TangentSpace I : U → Type _) x).symm y v),
-          TauCeti.Manifold.tangentSpaceOpenEquiv (I := I) y
-            ((trivializationAt E (TangentSpace I : U → Type _) x).symm y w)) =
-        ((trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) v,
-          (trivializationAt E (TangentSpace I : M → Type _) (x : M)).symmL ℝ (y : M) w) :=
-      Prod.ext (hsymm' v) (hsymm' w)
-    simpa only using
-      congrArg (fun p : TangentSpace I (y : M) × TangentSpace I (y : M) ↦
-        g.inner (y : M) p.1 p.2) hp
-  }
+    contMDiff x := contMDiffAt_restrictOpenTangentSpace g U x }
 
 omit [IsManifold I n M] in
 /-- Restricting a `C^n` Riemannian metric evaluates the ambient metric through the canonical
@@ -244,6 +269,19 @@ theorem contMDiffRiemannianMetricOpen_inner
     (Bundle.ContMDiffRiemannianMetric.ofIsContMDiffRiemannianBundle
       (IB := I) (n := n) (F := E) (V := fun x : M ↦ TangentSpace I x)) U x v w
 
+omit [IsManifold I n M] in
+/-- Forgetting regularity from the restricted `C^n` metric gives the restricted ambient metric. -/
+@[simp]
+theorem contMDiffRiemannianMetricOpen_toRiemannianMetric
+    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+    [IsContMDiffRiemannianBundle I n E (fun x : M ↦ TangentSpace I x)]
+    (U : Opens M) :
+    (contMDiffRiemannianMetricOpen (I := I) (n := n) U).toRiemannianMetric =
+      RiemannianBundle.g.restrictOpenTangentSpace U := by
+  simp only [contMDiffRiemannianMetricOpen,
+    Bundle.ContMDiffRiemannianMetric.restrictOpenTangentSpace_toRiemannianMetric,
+    Bundle.ContMDiffRiemannianMetric.ofIsContMDiffRiemannianBundle_toRiemannianMetric]
+
 end TauCeti.Manifold
 
 namespace TauCeti
@@ -266,36 +304,37 @@ noncomputable def Manifold.instRiemannianBundleOpen
 scoped[TauCeti] attribute [instance] Manifold.instRiemannianBundleOpen
 
 omit [IsManifold I n M] in
-/-- The restricted Riemannian bundle is continuous whenever the ambient bundle is continuous. -/
-theorem Manifold.instIsContinuousRiemannianBundleOpen
-    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
-    [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
-    IsContinuousRiemannianBundle E (fun x : U ↦ TangentSpace I x) := by
-  let _ : IsContMDiffRiemannianBundle I 0 E (fun x : M ↦ TangentSpace I x) :=
-    IsContinuousRiemannianBundle.toIsContMDiffZero
-  let g := Manifold.contMDiffRiemannianMetricOpen (I := I) (n := 0) U
-  exact ⟨g.inner, g.contMDiff.continuous, by
-    intro x v w
-    exact (Bundle.RiemannianMetric.restrictOpenTangentSpace_inner
-      RiemannianBundle.g U x v w).trans
-        (Manifold.contMDiffRiemannianMetricOpen_inner (I := I) (n := 0) U x v w).symm⟩
-
-scoped[TauCeti] attribute [instance] Manifold.instIsContinuousRiemannianBundleOpen
-
-omit [IsManifold I n M] in
 /-- The restricted Riemannian bundle is as `C^n` as the ambient one. -/
 theorem Manifold.instIsContMDiffRiemannianBundleOpen
     [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
     [IsContMDiffRiemannianBundle I n E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
+    letI := Manifold.instRiemannianBundleOpen (I := I) U
     IsContMDiffRiemannianBundle I n E (fun x : U ↦ TangentSpace I x) := by
   let g := Manifold.contMDiffRiemannianMetricOpen (I := I) (n := n) U
   exact ⟨g.inner, g.contMDiff, by
     intro x v w
+    rw [RiemannianBundle.inner_eq]
     exact (Bundle.RiemannianMetric.restrictOpenTangentSpace_inner
       RiemannianBundle.g U x v w).trans
         (Manifold.contMDiffRiemannianMetricOpen_inner (I := I) (n := n) U x v w).symm⟩
 
 scoped[TauCeti] attribute [instance] Manifold.instIsContMDiffRiemannianBundleOpen
+
+omit [IsManifold I n M] in
+/-- The restricted Riemannian bundle is continuous whenever the ambient bundle is continuous. -/
+theorem Manifold.instIsContinuousRiemannianBundleOpen
+    [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+    [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)] (U : Opens M) :
+    letI := Manifold.instRiemannianBundleOpen (I := I) U
+    IsContinuousRiemannianBundle E (fun x : U ↦ TangentSpace I x) := by
+  let _ : IsContMDiffRiemannianBundle I 0 E (fun x : M ↦ TangentSpace I x) :=
+    IsContinuousRiemannianBundle.toIsContMDiffRiemannianBundle
+  let _ : IsContMDiffRiemannianBundle I 0 E (fun x : U ↦ TangentSpace I x) :=
+    Manifold.instIsContMDiffRiemannianBundleOpen (I := I) (n := 0) U
+  exact IsContMDiffRiemannianBundle.toIsContinuousRiemannianBundle
+    (IB := I) (F := E) (V := fun x : U ↦ TangentSpace I x)
+
+scoped[TauCeti] attribute [instance] Manifold.instIsContinuousRiemannianBundleOpen
 
 namespace Manifold
 
@@ -320,6 +359,7 @@ theorem inner_tangentSpace_open
     letI := instRiemannianBundleOpen (I := I) U
     inner ℝ v w = RiemannianBundle.g.inner (x : M)
       (tangentSpaceOpenEquiv (I := I) x v) (tangentSpaceOpenEquiv (I := I) x w) := by
+  rw [RiemannianBundle.inner_eq]
   exact Bundle.RiemannianMetric.restrictOpenTangentSpace_inner RiemannianBundle.g U x v w
 
 omit [IsManifold I n M] [IsManifold I 1 M] in
@@ -331,8 +371,20 @@ theorem norm_tangentSpace_open
     (x : U) (v : TangentSpace I x) :
     letI := instRiemannianBundleOpen (I := I) U
     ‖v‖ = ‖tangentSpaceOpenEquiv (I := I) x v‖ := by
-  rw [norm_eq_sqrt_real_inner, norm_eq_sqrt_real_inner, inner_tangentSpace_open]
-  congr 1
+  rw [norm_eq_sqrt_real_inner, norm_eq_sqrt_real_inner, inner_tangentSpace_open,
+    RiemannianBundle.inner_eq]
+
+omit [IsManifold I n M] [IsManifold I 1 M] in
+/-- The nonnegative norm installed on an open submanifold is the ambient Riemannian nonnegative
+norm under the canonical tangent-space identification. -/
+@[simp]
+theorem nnnorm_tangentSpace_open
+    [RiemannianBundle (fun x : M ↦ TangentSpace I x)] (U : Opens M)
+    (x : U) (v : TangentSpace I x) :
+    letI := instRiemannianBundleOpen (I := I) U
+    ‖v‖₊ = ‖tangentSpaceOpenEquiv (I := I) x v‖₊ := by
+  apply NNReal.eq
+  exact norm_tangentSpace_open U x v
 
 omit [IsManifold I n M] [IsManifold I 1 M] in
 /-- The extended norm installed on an open submanifold is the ambient Riemannian extended norm
@@ -343,6 +395,6 @@ theorem enorm_tangentSpace_open
     (x : U) (v : TangentSpace I x) :
     letI := instRiemannianBundleOpen (I := I) U
     ‖v‖ₑ = ‖tangentSpaceOpenEquiv (I := I) x v‖ₑ := by
-  simp only [enorm, nnnorm, norm_tangentSpace_open]
+  rw [enorm_eq_nnnorm, enorm_eq_nnnorm, nnnorm_tangentSpace_open]
 
 end TauCeti.Manifold
