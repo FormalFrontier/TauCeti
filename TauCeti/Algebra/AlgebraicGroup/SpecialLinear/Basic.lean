@@ -428,19 +428,8 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
         (AlgHom.mapValue (H := coordinateHopfAlgebra R n) phi f) =
       Matrix.SpecialLinearGroup.map phi.toRingHom
         ((pointsMulEquiv (R := R) (A := A) n) f) := by
-  have hquot :
-      CommHopfAlgCat.quotientPointsHom
-          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-          (CommAlgCat.of R B) (AlgHom.mapValue phi f) =
-        AlgHom.mapValue phi
-          (CommHopfAlgCat.quotientPointsHom
-            (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-            (CommAlgCat.of R A) f) := by
-    rw [CommHopfAlgCat.quotientPointsHom_apply,
-      CommHopfAlgCat.quotientPointsHom_apply, AlgHom.mapValue_apply]
-    rfl
   apply Matrix.SpecialLinearGroup.toGL_injective
-  rw [← pointsMulEquiv_toGL, hquot]
+  rw [← pointsMulEquiv_toGL, ← CommHopfAlgCat.mapValue_quotientPointsHom]
   rw [GeneralLinear.pointsMulEquiv_mapValue, pointsMulEquiv_toGL]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
