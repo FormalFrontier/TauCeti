@@ -41,23 +41,6 @@ This completes the componentwise-isotropy and orthogonal-complement part of Laye
 
 public section
 
-namespace AddSubgroup
-
-variable {G : Type*} [AddCommGroup G]
-
-/-- The `p`-primary part of `H`, regarded as a subgroup of the ambient `p`-primary component. -/
-def primaryPart (H : AddSubgroup G) (p : ℕ) :
-    AddSubgroup (AddCommGroup.primaryComponent G p) :=
-  H.comap (AddCommGroup.primaryComponent G p).subtype
-
-@[simp]
-theorem mem_primaryPart_iff (H : AddSubgroup G) (p : ℕ)
-    (x : AddCommGroup.primaryComponent G p) :
-    x ∈ primaryPart H p ↔ (x : G) ∈ H :=
-  Iff.rfl
-
-end AddSubgroup
-
 namespace TauCeti
 
 namespace FiniteBilinearModule
@@ -90,7 +73,8 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
     rw [(A.restrict (AddCommGroup.primaryComponent A p)).isIsotropic_def]
     rw [A.isIsotropic_def] at hH
     intro x hx y hy
-    exact hH x.1 hx y.1 hy
+    exact hH x.1 (AddSubgroup.mem_primaryPart_iff H p x |>.mp hx)
+      y.1 (AddSubgroup.mem_primaryPart_iff H p y |>.mp hy)
   · intro hprimary
     rw [A.isIsotropic_def]
     intro x hx y hy
@@ -117,7 +101,8 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
           ⟨((yd p : H) : A), A.coe_mem_primaryComponent_of_mem_primaryComponent H p (yd p)⟩
         exact (A.restrict (AddCommGroup.primaryComponent A p.1)).isIsotropic_def.mp
           (hprimary p.1 (Nat.prime_of_mem_primeFactors p.2))
-          xp (xd p).1.2 yp (yd p).1.2
+          xp (AddSubgroup.mem_primaryPart_iff H p.1 xp |>.mpr (xd p).1.2)
+          yp (AddSubgroup.mem_primaryPart_iff H p.1 yp |>.mpr (yd p).1.2)
 
 /-- Orthogonal complementation commutes with passage to a prime-primary component. -/
 @[simp]
@@ -131,7 +116,8 @@ theorem primaryPart_orthogonalComplement (H : AddSubgroup A) {p : ℕ} (hp : p.P
   · intro hx
     rw [(A.restrict (AddCommGroup.primaryComponent A p)).mem_orthogonalComplement_iff]
     intro y hy
-    exact A.mem_orthogonalComplement_iff H x.1 |>.mp hx y.1 hy
+    exact A.mem_orthogonalComplement_iff H x.1 |>.mp hx y.1
+      (AddSubgroup.mem_primaryPart_iff H p y |>.mp hy)
   · intro hx
     rw [A.mem_orthogonalComplement_iff]
     intro y hy
@@ -148,7 +134,8 @@ theorem primaryPart_orthogonalComplement (H : AddSubgroup A) {p : ℕ} (hp : p.P
     by_cases hqp : q.1 = p
     · let yq : AddCommGroup.primaryComponent A p :=
         ⟨((yd q : H) : A), hqp ▸ hyq⟩
-      have hyqH : yq ∈ AddSubgroup.primaryPart H p := (yd q).1.2
+      have hyqH : yq ∈ AddSubgroup.primaryPart H p :=
+        AddSubgroup.mem_primaryPart_iff H p yq |>.mpr (yd q).1.2
       exact (A.restrict (AddCommGroup.primaryComponent A p)).mem_orthogonalComplement_iff
         (AddSubgroup.primaryPart H p) x |>.mp hx yq hyqH
     · exact A.pairing_eq_zero_of_mem_primaryComponent hp hq (Ne.symm hqp) x.2 hyq
@@ -171,7 +158,7 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
     apply (A.restrict (AddCommGroup.primaryComponent A p)).isIsotropic_def.mpr
     rw [A.isIsotropic_def] at hH
     intro x hx
-    exact hH x.1 hx
+    exact hH x.1 (AddSubgroup.mem_primaryPart_iff H p x |>.mp hx)
   · intro hprimary
     rw [A.isIsotropic_def]
     intro x hx
@@ -193,7 +180,8 @@ theorem isIsotropic_iff_primaryPart (H : AddSubgroup A) :
           ⟨((xd p : H) : A),
             A.toFiniteBilinearModule.coe_mem_primaryComponent_of_mem_primaryComponent H p (xd p)⟩
         exact (A.restrict (AddCommGroup.primaryComponent A p.1)).isIsotropic_def.mp
-          (hprimary p.1 (Nat.prime_of_mem_primeFactors p.2)) xp (xd p).1.2
+          (hprimary p.1 (Nat.prime_of_mem_primeFactors p.2)) xp
+          (AddSubgroup.mem_primaryPart_iff H p.1 xp |>.mpr (xd p).1.2)
 
 end FiniteQuadraticModule
 
