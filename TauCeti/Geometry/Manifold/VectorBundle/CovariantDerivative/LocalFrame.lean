@@ -282,7 +282,7 @@ variable
   {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [FiniteDimensional 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 2 M]
   {ι : Type*} (b : Basis ι 𝕜 E)
   {e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)} [MemTrivializationAtlas e]
   {x : M}
@@ -418,24 +418,14 @@ theorem coord_christoffelMap_apply_basis [Fintype ι]
 private theorem christoffelMap_eq_of_mem [Fintype ι]
     (hcov : IsCovariantDerivativeOn E cov e.baseSet) (hx : x ∈ e.baseSet) :
     christoffelMap b hcov x = christoffelMapOfSymbols I b e cov x := by
-  apply ContinuousLinearMap.ext
-  intro u
-  have hout : (christoffelMap b hcov x).toLinearMap =
-      (christoffelMapOfSymbols I b e cov x).toLinearMap := by
-    apply b.ext
-    intro j
-    apply ContinuousLinearMap.ext
-    intro v
-    have hin : ((christoffelMap b hcov x) (b j)).toLinearMap =
-        ((christoffelMapOfSymbols I b e cov x) (b j)).toLinearMap := by
-      apply b.ext
-      intro i
-      change christoffelMap b hcov x (b j) (b i) =
-        christoffelMapOfSymbols I b e cov x (b j) (b i)
-      rw [christoffelMap_apply_basis b hcov hx i j,
-        christoffelMapOfSymbols_apply_basis b i j]
-    exact LinearMap.congr_fun hin v
-  exact LinearMap.congr_fun hout u
+  -- Both sides are continuous linear maps, so they are determined by their underlying linear
+  -- maps (`ContinuousLinearMap.coe_injective`), hence by their values on the basis `b`; the
+  -- coercion is transparent on applications by `ContinuousLinearMap.coe_coe`.
+  refine ContinuousLinearMap.coe_injective (b.ext fun j ↦ ?_)
+  simp only [ContinuousLinearMap.coe_coe]
+  refine ContinuousLinearMap.coe_injective (b.ext fun i ↦ ?_)
+  simp only [ContinuousLinearMap.coe_coe]
+  rw [christoffelMap_apply_basis b hcov hx i j, christoffelMapOfSymbols_apply_basis b i j]
 
 /-- The model-space Christoffel map of a `C^n` covariant derivative is `C^n` on the base set of
 the trivialization defining its coordinates. -/
