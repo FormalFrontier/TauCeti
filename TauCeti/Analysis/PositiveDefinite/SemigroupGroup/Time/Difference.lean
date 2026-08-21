@@ -22,9 +22,12 @@ positive definite on `ℝ≥0 × V` and increases — and enters through the mom
 `TauCeti.posSemidef_sub_comp_shift`, applied to the BCR kernel and the time shift, which is
 symmetric for that kernel because the time variables enter through their sum.
 
-Iterating gives the alternating sign law `(-1) ^ n Δⁿ F ≥ 0` for Mathlib's forward difference
-operator `Δ_[(h, 0)]`, and, along the zero-spatial axis, the classical statement that
-`t ↦ F (t, 0)` is *completely monotone in the finite-difference sense*:
+Iterating gives that the alternating iterated differences `(-1) ^ n Δⁿ F`, for Mathlib's forward
+difference operator `Δ_[(h, 0)]`, are again semigroup-group positive definite. That is a statement
+about quadratic forms, not a pointwise sign: nonnegativity of the values themselves is asserted
+only along the zero-spatial axis, where positive definiteness specializes to the sign law
+`0 ≤ (-1) ^ n Δⁿ F (t, 0)` and hence to the classical statement that `t ↦ F (t, 0)` is *completely
+monotone in the finite-difference sense*:
 
 `0 ≤ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k h, 0)`.
 
@@ -44,6 +47,8 @@ existence half must integrate.
   semigroup-group positive-definite function is semigroup-group positive definite.
 * `TauCeti.IsSemigroupGroupPD.neg_one_pow_mul_fwdDiff_iter`: the alternating iterated forward
   differences in the time variable are semigroup-group positive definite.
+* `TauCeti.IsSemigroupGroupPD.neg_one_pow_mul_fwdDiff_iter_apply_nonneg`: those alternating
+  differences are nonnegative at each point of the zero-spatial axis.
 * `TauCeti.IsSemigroupGroupPD.alternating_sum_nonneg`: the time axis `t ↦ F (t, 0)` is completely
   monotone in the finite-difference sense.
 * `TauCeti.IsSemigroupGroupPD.timeAxis_sub_nonneg` and
