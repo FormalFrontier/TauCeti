@@ -60,7 +60,8 @@ square is unchanged, but only the signed one inverts the unsigned forward map, p
   two negative coordinates of a standard signature form;
 * `TauCeti.realCliffordQuaternionRecurrenceEquiv`: the standard-signature recurrence
   `Cliff(p, q + 2) ≅ Cliff(q, p) ⊗ᵣ ℍ`;
-* `TauCeti.realCliffordFourNegativeStepEquiv`: `Cliff(p, q + 4) ≅ Cliff(p, q) ⊗ᵣ M₂(ℝ) ⊗ᵣ ℍ`.
+* `TauCeti.realCliffordFourNegativeRecurrenceEquiv`:
+  `Cliff(p, q + 4) ≅ Cliff(p, q) ⊗ᵣ M₂(ℝ) ⊗ᵣ ℍ`.
 
 ## References
 
@@ -134,6 +135,14 @@ generators of `Cliff(0,2)`. It squares to `-1` and anticommutes with every gener
 what drives the negative-plane recurrence below. -/
 noncomputable def realCliffordZeroTwoVolume : CliffordAlgebra (realCliffordForm 0 2) :=
   CliffordAlgebra.ι _ (Pi.single 0 1) * CliffordAlgebra.ι _ (Pi.single 1 1)
+
+/-- The defining equation of the volume element: it is the product of the two coordinate
+generators of `Cliff(0,2)`. This is deliberately not a `simp` lemma — the volume element is the
+normal form, and the lemmas below which mention it do so in that form. -/
+theorem realCliffordZeroTwoVolume_def :
+    realCliffordZeroTwoVolume =
+      CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 0 1) *
+        CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := (rfl)
 
 /-- The volume element of the negative definite plane squares to `-1`. -/
 theorem realCliffordZeroTwoVolume_sq :
@@ -497,7 +506,7 @@ theorem negativePlaneEquivTensor_ι (x : M × (Fin (0 + 2) → ℝ)) :
       _root_.CliffordAlgebra.ι (-Q) x.1 ⊗ₜ[ℝ] TauCeti.realCliffordZeroTwoVolume +
         (1 : _root_.CliffordAlgebra (-Q)) ⊗ₜ[ℝ]
           _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 0 2) x.2 := by
-  change negativePlaneToTensor Q (_root_.CliffordAlgebra.ι _ x) = _
+  rw [negativePlaneEquivTensor, AlgEquiv.ofAlgHom_apply]
   conv_lhs => rw [← Prod.fst_add_snd x]
   rw [map_add, map_add, negativePlaneToTensor_ι_base, negativePlaneToTensor_ι_plane]
 
@@ -529,6 +538,7 @@ noncomputable def negativePlaneEquivQuaternion :
 
 /-- `negativePlaneEquivQuaternion` sends an old generator to `ι m ⊗ ω` and a new one to the
 imaginary quaternion `v 0 · i + v 1 · j`, both read through `Cliff(0,2) ≅ ℍ`. -/
+@[simp]
 theorem negativePlaneEquivQuaternion_ι (x : M × (Fin (0 + 2) → ℝ)) :
     negativePlaneEquivQuaternion Q (_root_.CliffordAlgebra.ι _ x) =
       _root_.CliffordAlgebra.ι (-Q) x.1 ⊗ₜ[ℝ]
@@ -570,6 +580,7 @@ noncomputable def realCliffordQuaternionRecurrenceEquiv (p q : ℕ) :
 splits off the last two negative coordinates, the generic recurrence multiplies the remaining
 generator by the plane's volume element, and the negation isometry restores standard signature
 coordinates. -/
+@[simp]
 theorem realCliffordQuaternionRecurrenceEquiv_ι (p q : ℕ)
     (v : Fin (p + (q + 1 + 1)) → ℝ) :
     realCliffordQuaternionRecurrenceEquiv p q (CliffordAlgebra.ι _ v) =
@@ -591,11 +602,32 @@ theorem realCliffordQuaternionRecurrenceEquiv_ι (p q : ℕ)
 /-- **The four-negative-generator recurrence** `Cliff(p, q + 4) ≅ Cliff(p, q) ⊗ M₂(ℝ) ⊗ ℍ`,
 obtained by composing the negative-plane recurrence with the positive-plane one: four extra
 negative generators restore the original signature. -/
-noncomputable def realCliffordFourNegativeStepEquiv (p q : ℕ) :
+noncomputable def realCliffordFourNegativeRecurrenceEquiv (p q : ℕ) :
     CliffordAlgebra (realCliffordForm p (q + 1 + 1 + 1 + 1)) ≃ₐ[ℝ]
       (CliffordAlgebra (realCliffordForm p q) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ) ⊗[ℝ] ℍ[ℝ] :=
   (realCliffordQuaternionRecurrenceEquiv p (q + 1 + 1)).trans
     (Algebra.TensorProduct.congr (realCliffordSignatureSwitchRecurrenceEquiv q p)
       (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] _))
+
+/-- The four-negative-generator recurrence on a Clifford generator: the negative-plane recurrence
+splits off two of the four new coordinates, and the signature-switch recurrence transports the
+remaining generator back to the original signature. -/
+@[simp]
+theorem realCliffordFourNegativeRecurrenceEquiv_ι (p q : ℕ)
+    (v : Fin (p + (q + 1 + 1 + 1 + 1)) → ℝ) :
+    realCliffordFourNegativeRecurrenceEquiv p q (CliffordAlgebra.ι _ v) =
+      realCliffordSignatureSwitchRecurrenceEquiv q p
+            (CliffordAlgebra.ι (realCliffordForm (q + 1 + 1) p)
+              (realCliffordFormNegIsometry p (q + 1 + 1)
+                (realCliffordNegativePlaneSplitIsometry p (q + 1 + 1) v).1)) ⊗ₜ[ℝ]
+          realCliffordZeroTwoEquivQuaternion realCliffordZeroTwoVolume +
+        (1 : CliffordAlgebra (realCliffordForm p q) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ) ⊗ₜ[ℝ]
+          realCliffordZeroTwoEquivQuaternion
+            (CliffordAlgebra.ι (realCliffordForm 0 2)
+              (realCliffordNegativePlaneSplitIsometry p (q + 1 + 1) v).2) := by
+  simp only [realCliffordFourNegativeRecurrenceEquiv, AlgEquiv.trans_apply,
+    realCliffordQuaternionRecurrenceEquiv_ι, map_add, Algebra.TensorProduct.congr_apply,
+    Algebra.TensorProduct.map_tmul, AlgEquiv.refl_toAlgHom, AlgHom.coe_id, id_eq,
+    AlgEquiv.coe_toAlgHom, map_one]
 
 end TauCeti
