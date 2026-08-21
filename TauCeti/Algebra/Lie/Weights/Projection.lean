@@ -47,8 +47,9 @@ The projection is built from `DirectSum.coeLinearMap`, whose bijectivity is exac
 `DirectSum.IsInternal.ofBijective_coeLinearMap_of_mem` computes it on each summand directly, and
 the trace computation can go through `LinearMap.trace_eq_sum_trace_restrict`.
 
-A `DecidableEq (Weight K L M)` hypothesis is carried because `DirectSum` needs it; it is
-propositionally irrelevant, and callers supply it with `Classical.dec` or `classical`.
+`DirectSum` needs a `DecidableEq (Weight K L M)`. The projection is noncomputable in any case, so
+that choice is made classically inside the definition instead of being carried as a hypothesis:
+the API is stated without any decidability assumption.
 
 ## References
 
@@ -72,8 +73,9 @@ section Triangularizable
 
 variable (K : Type u) (L : Type v) (M : Type w) [Field K] [LieRing L] [LieAlgebra K L]
   [LieRing.IsNilpotent L] [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-  [FiniteDimensional K M] [LieModule.IsTriangularizable K L M] [DecidableEq (Weight K L M)]
+  [FiniteDimensional K M] [LieModule.IsTriangularizable K L M]
 
+open scoped Classical in
 /-- **The projection onto a generalized weight space** along the sum of the other weight spaces,
 for a finite-dimensional triangularizable module. -/
 noncomputable def genWeightSpaceProjection (χ : Weight K L M) : M →ₗ[K] M :=
@@ -95,6 +97,7 @@ theorem genWeightSpaceProjection_apply_mem (χ : Weight K L M) (m : M) :
 @[simp]
 theorem genWeightSpaceProjection_apply_of_mem {χ : Weight K L M} {m : M}
     (hm : m ∈ genWeightSpace M (χ : L → K)) : genWeightSpaceProjection K L M χ m = m := by
+  classical
   have := DirectSum.IsInternal.ofBijective_coeLinearMap_of_mem
     (isInternal_genWeightSpace K L M) (i := χ) (x := m) hm
   simpa [genWeightSpaceProjection, ← DirectSum.apply_eq_component] using congrArg Subtype.val this
@@ -105,6 +108,7 @@ Not `@[simp]`: the weight `ψ` occurs only in the hypotheses, so `simp` could no
 The `simp`-usable consequence is `TauCeti.genWeightSpaceProjection_apply_apply_of_ne`. -/
 theorem genWeightSpaceProjection_apply_of_mem_of_ne {χ ψ : Weight K L M} (h : ψ ≠ χ) {m : M}
     (hm : m ∈ genWeightSpace M (ψ : L → K)) : genWeightSpaceProjection K L M χ m = 0 := by
+  classical
   have := DirectSum.IsInternal.ofBijective_coeLinearMap_of_mem_ne
     (isInternal_genWeightSpace K L M) h hm
   simpa [genWeightSpaceProjection, ← DirectSum.apply_eq_component] using congrArg Subtype.val this
@@ -126,6 +130,7 @@ theorem genWeightSpaceProjection_apply_apply_of_ne {χ ψ : Weight K L M} (h : �
 single vector. -/
 theorem sum_genWeightSpaceProjection_apply (m : M) :
     ∑ χ : Weight K L M, genWeightSpaceProjection K L M χ m = m := by
+  classical
   let A : Weight K L M → Submodule K M := fun ψ ↦ (genWeightSpace M (ψ : L → K)).toSubmodule
   let e := LinearEquiv.ofBijective (DirectSum.coeLinearMap A) (isInternal_genWeightSpace K L M)
   have hproj : ∀ χ : Weight K L M,
@@ -152,6 +157,7 @@ theorem mapsTo_genWeightSpaceProjection (χ ψ : Weight K L M) :
 theorem trace_genWeightSpaceProjection (χ : Weight K L M) :
     LinearMap.trace K M (genWeightSpaceProjection K L M χ) =
       finrank K (genWeightSpace M (χ : L → K)) := by
+  classical
   have hmaps : ∀ ψ : Weight K L M, ∀ x ∈ (genWeightSpace M (ψ : L → K)).toSubmodule,
       genWeightSpaceProjection K L M χ x ∈ (genWeightSpace M (ψ : L → K)).toSubmodule :=
     fun ψ _ hx ↦ mapsTo_genWeightSpaceProjection χ ψ hx
@@ -180,9 +186,8 @@ open LieAlgebra.IsKilling
 
 variable {K : Type u} {L : Type v} [Field K] [LieRing L] [LieAlgebra K L]
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L] (H : LieSubalgebra K L)
-  [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L] [DecidableEq (Weight K H L)]
+  [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
 
-omit [DecidableEq (Weight K H L)] in
 /-- Two weights whose weight spaces are not Killing-orthogonal are opposite. -/
 private theorem weight_add_ne_zero {χ ψ : Weight K H L} (h : χ ≠ -ψ) :
     (χ : H → K) + (ψ : H → K) ≠ 0 := fun hc ↦

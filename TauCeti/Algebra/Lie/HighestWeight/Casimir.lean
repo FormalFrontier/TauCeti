@@ -50,10 +50,10 @@ submodule by centrality and it contains the generator.
 
 ## Main results
 
-* `TauCeti.representation_casimirElement_apply_of_isHighestWeightVector`: the Casimir element sends
-  a highest weight vector of weight `λ` to `(⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩) • v`.
-* `TauCeti.representation_casimirElement_apply_of_isHighestWeightVector_of_lieSpan_eq_top`: on a
-  highest weight module the Casimir element acts by that scalar on every vector.
+* `TauCeti.casimir_smul_of_isHighestWeightVector`: the Casimir element sends a highest weight
+  vector of weight `λ` to `(⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩) • v`.
+* `TauCeti.casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top`: on a highest weight module
+  the Casimir element acts by that scalar on every vector.
 
 ## Implementation notes
 
@@ -71,7 +71,10 @@ without a case distinction on whether the zero functional is a weight at all.
 
 This is the "Casimir element" item of Layer 5 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, whose target signature
-`casimir_smul_of_isHighestWeightVector` is pinned in the accompanying `Suggested.lean`.
+`casimir_smul_of_isHighestWeightVector` is pinned in the accompanying `Suggested.lean`. The
+unadorned name goes to the statement on the generator, from which the statement on the whole
+module, `casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top`, follows by adding the
+cyclicity hypothesis its name records.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §22.1, where
   the Casimir element is shown to act on a standard cyclic module of highest weight `λ` by the
@@ -131,20 +134,15 @@ private theorem killingExtend_apply (lam : Module.Dual K H) (x : L) :
     killingExtend lam x =
       killingForm K L (((IsKilling.cartanEquivDual H).symm lam : H) : L) x := (rfl)
 
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
-  [IsTriangularizable K H L] in
-/-- The trace form of the Cartan subalgebra acting on `L` is the restricted Killing form, read on
-a pair of elements. This is `LieAlgebra.restrict_killingForm` with both arguments supplied. -/
-private theorem traceForm_cartan_eq_killingForm (x y : H) :
-    traceForm K H L x y = killingForm K L (x : L) (y : L) := by
-  rw [← LieAlgebra.restrict_killingForm (R := K) (L := L) H,
-    LinearMap.BilinForm.restrict_apply, LinearMap.domRestrict_apply]
-
 omit [CharZero K] [IsTriangularizable K H L] in
 /-- On the Cartan subalgebra the extension is the weight itself. -/
 private theorem killingExtend_apply_cartan (lam : Module.Dual K H) (x : H) :
     killingExtend lam (x : L) = lam x := by
-  rw [killingExtend_apply, ← traceForm_cartan_eq_killingForm]
+  have hres : killingForm K L (((IsKilling.cartanEquivDual H).symm lam : H) : L) (x : L) =
+      traceForm K H L ((IsKilling.cartanEquivDual H).symm lam) x := by
+    rw [← LieAlgebra.restrict_killingForm (R := K) (L := L) H,
+      LinearMap.BilinForm.restrict_apply, LinearMap.domRestrict_apply]
+  rw [killingExtend_apply, hres]
   conv_rhs => rw [← (IsKilling.cartanEquivDual H).apply_symm_apply lam]
   rw [IsKilling.cartanEquivDual_apply_apply, traceForm_apply_apply, Module.End.mul_eq_comp]
 
@@ -159,10 +157,6 @@ private theorem killingExtend_apply_eq_zero (lam : Module.Dual K H) {χ : Weight
   exact ((IsKilling.cartanEquivDual H).symm lam).2
 
 /-! ### Splitting the Casimir sum along the root spaces -/
-
-section Split
-
-variable [DecidableEq (Weight K H L)]
 
 omit [CharZero K] in
 /-- Opposite root-space projections are a Killing-adjoint pair. -/
@@ -228,13 +222,11 @@ private theorem sum_killingExtend_genWeightSpaceProjection_mul (lam : Module.Dua
   · exact mul_eq_zero_of_left
       (killingExtend_apply_eq_zero lam hχ (genWeightSpaceProjection_apply_mem χ x)) _
 
-end Split
-
 /-! ### The three kinds of term -/
 
 section Terms
 
-variable [DecidableEq (Weight K H L)] {base : (IsKilling.rootSystem H).Base}
+variable {base : (IsKilling.rootSystem H).Base}
   {lam : Module.Dual K H} {v : M} {ι : Type*} [DecidableEq ι] [Fintype ι]
   (bs : Module.Basis ι K L)
 
@@ -317,7 +309,6 @@ section Eigenvalue
 
 variable {base : (IsKilling.rootSystem H).Base} {lam : Module.Dual K H} {v : M}
 
-open scoped Classical in
 /-- The Casimir element sends a highest weight vector of weight `lam` to
 `(⟨lam, lam⟩ + ∑_{α > 0} ⟨lam, α⟩) • v`. -/
 private theorem representation_casimirElement_apply_eq_sum
@@ -325,6 +316,7 @@ private theorem representation_casimirElement_apply_eq_sum
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) v =
       (invForm lam lam + ∑ i ∈ posRootsFinset (IsKilling.rootSystem H) base,
         invForm lam ((IsKilling.rootSystem H).root i)) • v := by
+  classical
   set bs := Module.finBasis K L
   set ys := killingDualBasis bs
   set u : Weight K H L → K := fun χ ↦ ∑ i,
@@ -398,8 +390,7 @@ private theorem invForm_add_weylVector_sub_invForm_weylVector :
 /-- **The Casimir eigenvalue on a highest weight vector.** The Casimir element sends a highest
 weight vector of weight `lam` to `(⟨lam + ρ, lam + ρ⟩ - ⟨ρ, ρ⟩) • v`, where `ρ` is the Weyl
 vector of `base`. -/
-theorem representation_casimirElement_apply_of_isHighestWeightVector
-    (hv : IsHighestWeightVector base lam v) :
+theorem casimir_smul_of_isHighestWeightVector (hv : IsHighestWeightVector base lam v) :
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) v =
       (invForm (lam + weylVector (IsKilling.rootSystem H) base)
             (lam + weylVector (IsKilling.rootSystem H) base) -
@@ -412,7 +403,7 @@ theorem representation_casimirElement_apply_of_isHighestWeightVector
 weight vector of weight `lam`, the Casimir element acts by the scalar
 `⟨lam + ρ, lam + ρ⟩ - ⟨ρ, ρ⟩`. Centrality of the Casimir element makes the set where it acts by
 that scalar a Lie submodule, and it contains the generator. -/
-theorem representation_casimirElement_apply_of_isHighestWeightVector_of_lieSpan_eq_top
+theorem casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector base lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) (m : M) :
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m =
       (invForm (lam + weylVector (IsKilling.rootSystem H) base)
@@ -443,7 +434,7 @@ theorem representation_casimirElement_apply_of_isHighestWeightVector_of_lieSpan_
         exact LinearMap.mem_ker.mpr (by rw [hcentral, hw0, lie_zero]) }
   have hvN : v ∈ N :=
     LinearMap.mem_ker.mpr ((hker v).mpr
-      (representation_casimirElement_apply_of_isHighestWeightVector hv))
+      (casimir_smul_of_isHighestWeightVector hv))
   have hNtop : N = ⊤ := by
     rw [← top_le_iff, ← hgen]
     exact LieSubmodule.lieSpan_le.mpr (by simpa using hvN)
