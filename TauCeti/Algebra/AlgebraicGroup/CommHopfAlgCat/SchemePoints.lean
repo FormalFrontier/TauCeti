@@ -39,6 +39,8 @@ coordinate algebra.
   relative global sections and then the adjunction counit.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_symm_apply`: the inverse comparison is the
   adjunction unit followed by the spectrum map of the convolution point.
+* `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_precomp`: the comparison is natural in the
+  test scheme.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapDomain`: the comparison is
   contravariantly natural in the coordinate bialgebra.
 * `TauCeti.CommHopfAlgCat.schemePointsAlgΓMulEquiv_mapPointsFunctor`: the Hopf-category form of
@@ -254,6 +256,7 @@ private theorem schemePointsAlgΓMulEquiv_symm_apply_spec
 
 /-- The inverse relative `Γ-Spec` comparison is the adjunction unit followed by the affine
 spectrum point represented by `p`. -/
+@[simp]
 theorem schemePointsAlgΓMulEquiv_symm_apply
     (H : Type u) [CommRing H] [Bialgebra R H]
     (T : Over (Spec (CommRingCat.of R)))
@@ -264,6 +267,19 @@ theorem schemePointsAlgΓMulEquiv_symm_apply
             (Spec (CommRingCat.of R))) ≫
         AlgebraicGeometry.Spec.mapMulEquiv p :=
   schemePointsAlgΓMulEquiv_symm_apply_spec H T p
+
+/-- The global-sections comparison is natural in the test scheme. Precomposing a `T`-valued
+point by `φ : S ⟶ T` postcomposes its algebra point with the induced map `Γ(T) ⟶ Γ(S)`. -/
+theorem schemePointsAlgΓMulEquiv_precomp
+    (H : Type u) [CommRing H] [Bialgebra R H]
+    {S T : Over (Spec (CommRingCat.of R))} (φ : S ⟶ T)
+    (g : T ⟶ (Spec (CommRingCat.of H)).asOver (Spec (CommRingCat.of R))) :
+    schemePointsAlgΓMulEquiv H S (φ ≫ g) =
+      AlgHom.mapValue ((algΓ (CommRingCat.of R)).map φ).unop.hom
+        (schemePointsAlgΓMulEquiv H T g) := by
+  rw [schemePointsAlgΓMulEquiv_apply, schemePointsAlgΓMulEquiv_apply,
+    AlgHom.mapValue_apply]
+  congr 1
 
 /-- The global-sections comparison is contravariantly natural in the coordinate bialgebra.
 Postcomposing a scheme-valued point with `Spec f` is precomposition of its algebra point by `f`.
