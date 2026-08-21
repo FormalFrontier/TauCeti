@@ -645,6 +645,7 @@ theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :
   rw [A.isIsotropic_iff_le_orthogonalComplement, ← hH]
 
 /-- An isometry carries orthogonal complements to orthogonal complements. -/
+@[simp]
 theorem Isometry.map_orthogonalComplement {B : FiniteBilinearModule} (f : Isometry A B)
     (H : AddSubgroup A) :
     (A.orthogonalComplement H).map f.toAddEquiv =
