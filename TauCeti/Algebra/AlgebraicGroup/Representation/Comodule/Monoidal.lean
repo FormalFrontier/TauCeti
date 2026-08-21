@@ -8,8 +8,6 @@ module
 public import Mathlib.CategoryTheory.Monoidal.Braided.Transport
 public import Mathlib.CategoryTheory.Monoidal.Rigid.OfEquivalence
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Equivalence
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.TensorProduct
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Trivial
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Rigid
 
 /-!
@@ -21,11 +19,6 @@ transports the established monoidal structure on finite comodules across the cat
 point-representation--comodule equivalence. The resulting equivalence is monoidal by
 construction. Commutativity of the coordinate Hopf algebra supplies the symmetric braiding, and
 over a field rigidity transports back along the monoidal equivalence.
-
-The transported tensor is canonical up to the equivalence's unit and counit. The fixed-module
-dictionary already identifies the diagonal point action with the diagonal comodule coaction;
-the imported `ofComodule_tensor` and `toComodule_tensor` theorems expose that identification on
-the underlying modules.
 
 ## Main declarations
 
@@ -59,12 +52,6 @@ variable (R : Type u) [CommRing R]
 variable (H : Type v) [CommRing H] [HopfAlgebra R H]
 
 namespace FGPointRepresentationCat
-
-/-- The tensor operations on finite point representations, transported from finite comodules
-along the representation--comodule equivalence. -/
-noncomputable instance instMonoidalCategoryStruct :
-    MonoidalCategoryStruct (FGPointRepresentationCat.{u, v, u} R H) :=
-  Monoidal.transportStruct (fgPointRepresentationCategoryEquivalence R H).symm
 
 /-- Finite natural point representations form a monoidal category. Its tensor structure is
 transported from the diagonal tensor product of finite comodules. -/
