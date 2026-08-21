@@ -504,8 +504,12 @@ theorem W1p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq (u : W1p mu Omega 2) :
     ‖u‖ ^ 2 = ‖W1p.value u‖ ^ 2 + ‖W1p.gradient u‖ ^ 2 :=
   norm_sq_eq_norm_value_sq_add_norm_gradient_sq_ambient u.1
 
-/-- The integral of the squared pointwise norm of an `L²` function is its squared `L²` norm. -/
-theorem integral_norm_sq_eq_norm_sq {alpha F : Type*} [MeasurableSpace alpha]
+/-- The integral of the squared pointwise norm of an `L²` function is its squared `L²` norm.
+
+Kept `private`: the natural home for this generic `Lp` fact is the root `MeasureTheory.Lp`
+namespace, which is unreachable from inside `namespace TauCeti`, and its only uses are the two
+Sobolev specializations below. -/
+private theorem integral_norm_sq_eq_norm_sq {alpha F : Type*} [MeasurableSpace alpha]
     {m : Measure alpha} [NormedAddCommGroup F] [InnerProductSpace ℝ F] (f : Lp F 2 m) :
     ∫ x, ‖f x‖ ^ 2 ∂m = ‖f‖ ^ 2 := by
   refine Eq.symm ?_
