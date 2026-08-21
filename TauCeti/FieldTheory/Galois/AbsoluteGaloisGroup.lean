@@ -162,19 +162,16 @@ theorem separableClosureRestrictEquiv_apply (σ : Gal(E/F)) :
     separableClosureRestrictEquiv F E σ = AlgEquiv.restrictNormalHom (separableClosure F E) σ :=
   (rfl)
 
-theorem algebraMap_separableClosureRestrictEquiv_apply (σ : Gal(E/F))
-    (x : separableClosure F E) :
-    algebraMap (separableClosure F E) E (separableClosureRestrictEquiv F E σ x) =
-      σ (algebraMap (separableClosure F E) E x) :=
+theorem coe_separableClosureRestrictEquiv_apply (σ : Gal(E/F)) (x : separableClosure F E) :
+    (separableClosureRestrictEquiv F E σ x : E) = σ x :=
   AlgEquiv.restrictNormal_commutes _ _ x
 
 @[simp]
-theorem algebraMap_separableClosureRestrictEquiv_symm_apply (τ : Gal(separableClosure F E/F))
+theorem separableClosureRestrictEquiv_symm_apply_coe (τ : Gal(separableClosure F E/F))
     (x : separableClosure F E) :
-    (separableClosureRestrictEquiv F E).symm τ (algebraMap (separableClosure F E) E x) =
-      algebraMap (separableClosure F E) E (τ x) := by
+    (separableClosureRestrictEquiv F E).symm τ (x : E) = (τ x : E) := by
   conv_rhs => rw [← (separableClosureRestrictEquiv F E).apply_symm_apply τ]
-  exact (algebraMap_separableClosureRestrictEquiv_apply _ x).symm
+  exact (coe_separableClosureRestrictEquiv_apply _ x).symm
 
 /-! ### The fixed field of a normal extension -/
 
@@ -198,8 +195,8 @@ theorem mem_perfectClosure_iff_forall_fixed {x : E} :
       have h2 : (separableClosureRestrictEquiv F E).symm τ
           (algebraMap (separableClosure F E) E y) = algebraMap (separableClosure F E) E y := by
         rw [hy, map_pow, hx]
-      rw [algebraMap_separableClosureRestrictEquiv_symm_apply] at h2
-      exact (algebraMap (separableClosure F E) E).injective h2
+      rw [IntermediateField.algebraMap_apply, separableClosureRestrictEquiv_symm_apply_coe] at h2
+      exact Subtype.ext h2
     obtain ⟨b, hb⟩ := (InfiniteGalois.mem_range_algebraMap_iff_fixed y).mpr hfix
     exact (mem_perfectClosure_iff_pow_mem (F := F) (E := E) (ringExpChar F)).mpr
       ⟨n, b, by rw [IsScalarTower.algebraMap_apply F (separableClosure F E) E, hb, hy]⟩
@@ -227,12 +224,10 @@ def absoluteGaloisGroupRestrictEquiv :
   separableClosureRestrictEquiv K (AlgebraicClosure K)
 
 @[simp]
-theorem algebraMap_absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K))
+theorem coe_absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K))
     (x : SeparableClosure K) :
-    algebraMap (SeparableClosure K) (AlgebraicClosure K)
-        (absoluteGaloisGroupRestrictEquiv K σ x) =
-      σ (algebraMap (SeparableClosure K) (AlgebraicClosure K) x) :=
-  algebraMap_separableClosureRestrictEquiv_apply _ x
+    (absoluteGaloisGroupRestrictEquiv K σ x : AlgebraicClosure K) = σ x :=
+  coe_separableClosureRestrictEquiv_apply _ x
 
 /-- The absolute Galois group of a separably closed field is trivial. -/
 instance [IsSepClosed K] : Subsingleton (AbsoluteGaloisGroup K) := by
