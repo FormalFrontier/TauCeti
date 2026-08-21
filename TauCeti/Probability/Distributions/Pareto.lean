@@ -36,6 +36,9 @@ bases are positive, so Mathlib's improper-integral criterion for real powers app
 
 ## References
 
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, the Pareto target — the
+  mean and its non-integrability threshold, the variance and its non-integrability threshold,
+  the cdf, and `integrableExpSet id (paretoMeasure t r) = Set.Iic 0`.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
   Chapter 20.
 * `Mathlib.Probability.Distributions.Pareto`, whose density normalization is reused here.
@@ -60,6 +63,19 @@ private theorem paretoPDF_toReal (ht : 0 < t) (hr : 0 < r) (x : ℝ) :
   · simpa [paretoPDFReal, hx] using paretoPDFReal_nonneg ht.le hr.le x
   · exact le_rfl
 
+/-- The Pareto density times `x ^ q` is, on the support, the constant `r * t ^ r` times the
+single real power `x ^ (q - r - 1)`, and vanishes off the support. -/
+private theorem paretoPDF_toReal_mul_rpow (ht : 0 < t) (hr : 0 < r) (q x : ℝ) :
+    (paretoPDF t r x).toReal * x ^ q =
+      Set.indicator (Set.Ici t) (fun y => r * t ^ r * y ^ (q - r - 1)) x := by
+  rw [paretoPDF_toReal ht hr]
+  by_cases hx : t ≤ x
+  · have hx0 : 0 < x := ht.trans_le hx
+    have hexponent : -(r + 1) + q = q - r - 1 := by ring
+    simp only [Set.indicator_apply, Set.mem_Ici, hx, ite_true]
+    rw [mul_assoc, ← Real.rpow_add hx0, hexponent]
+  · simp [hx]
+
 private theorem paretoPDF_lt_top (t r : ℝ) :
     (∀ᵐ x : ℝ ∂volume, paretoPDF t r x < ∞) := by
   filter_upwards with x
@@ -82,21 +98,11 @@ theorem integrable_rpow_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) (q : ℝ) :
     Integrable (fun x : ℝ => x ^ q) (paretoMeasure t r) ↔ q < r := by
   rw [paretoMeasure, integrable_withDensity_iff (TauCeti.Probability.measurable_paretoPDF t r)
     (paretoPDF_lt_top t r)]
-  simp only [paretoPDF_toReal ht hr]
-  have hfun : (fun x : ℝ => x ^ q * if t ≤ x then r * t ^ r * x ^ (-(r + 1)) else 0) =
-      Set.indicator (Set.Ici t) (fun x => (r * t ^ r) * x ^ (q - r - 1)) := by
+  have hfun : (fun x : ℝ => x ^ q * (paretoPDF t r x).toReal) =
+      Set.indicator (Set.Ici t) (fun y => r * t ^ r * y ^ (q - r - 1)) := by
     funext x
-    by_cases hx : t ≤ x
-    · simp only [Set.indicator_apply, Set.mem_Ici, hx, ite_true]
-      have hx0 : 0 < x := ht.trans_le hx
-      calc
-        x ^ q * (r * t ^ r * x ^ (-(r + 1))) =
-            (r * t ^ r) * (x ^ q * x ^ (-(r + 1))) := by ring
-        _ = (r * t ^ r) * x ^ (q - r - 1) := by
-          rw [← Real.rpow_add hx0]
-          congr 2
-          ring
-    · simp [hx]
+    rw [mul_comm]
+    exact paretoPDF_toReal_mul_rpow ht hr q x
   rw [hfun, integrable_indicator_iff measurableSet_Ici]
   rw [integrableOn_congr_set_ae Ioi_ae_eq_Ici.symm]
   have hc : IsUnit (r * t ^ r) := isUnit_iff_ne_zero.mpr <|
@@ -116,18 +122,10 @@ theorem integral_rpow_paretoMeasure (ht : 0 < t) (hr : 0 < r) (hq : q < r) :
     ∫ x : ℝ, x ^ q ∂paretoMeasure t r = r * t ^ q / (r - q) := by
   rw [paretoMeasure, integral_withDensity_eq_integral_toReal_smul
     (TauCeti.Probability.measurable_paretoPDF t r) (paretoPDF_lt_top t r)]
-  simp only [smul_eq_mul, paretoPDF_toReal ht hr]
-  have hfun : (fun x : ℝ =>
-      (if t ≤ x then r * t ^ r * x ^ (-(r + 1)) else 0) * x ^ q) =
-      Set.indicator (Set.Ici t) (fun x => (r * t ^ r) * x ^ (q - r - 1)) := by
-    funext x
-    by_cases hx : t ≤ x
-    · simp only [Set.indicator_apply, Set.mem_Ici, hx, ite_true]
-      have hx0 : 0 < x := ht.trans_le hx
-      rw [mul_assoc, mul_comm (x ^ (-(r + 1))), ← Real.rpow_add hx0]
-      congr 2
-      ring
-    · simp [hx]
+  simp only [smul_eq_mul]
+  have hfun : (fun x : ℝ => (paretoPDF t r x).toReal * x ^ q) =
+      Set.indicator (Set.Ici t) (fun y => r * t ^ r * y ^ (q - r - 1)) :=
+    funext fun x => paretoPDF_toReal_mul_rpow ht hr q x
   rw [hfun, integral_indicator measurableSet_Ici, integral_Ici_eq_integral_Ioi,
     integral_const_mul, integral_Ioi_rpow_of_lt (by linarith) ht]
   have hexponent : q - r - 1 + 1 = q - r := by ring
