@@ -21,9 +21,9 @@ surjective.
 
 ## Main declaration
 
-* `TauCeti.AlgHom.comp_surjective_of_comap_surjective`: a map surjective on prime spectra is
+* `AlgHom.comp_surjective_of_comap_surjective`: a map surjective on prime spectra is
   surjective on algebraically closed points when its codomain algebra is of finite type.
-* `TauCeti.AlgHom.comp_surjective_of_faithfullyFlat`: precomposition along a faithfully flat map
+* `AlgHom.comp_surjective_of_faithfullyFlat`: precomposition along a faithfully flat map
   is surjective on algebraically closed points when the source algebra is of finite type.
 
 ## References
@@ -38,7 +38,7 @@ finite-type affine group onto the scheme-theoretic image of a faithfully flat gr
 
 public section
 
-namespace TauCeti.AlgHom
+namespace AlgHom
 
 universe u v w
 
@@ -100,4 +100,4 @@ theorem comp_surjective_of_faithfullyFlat (f : A →ₐ[k] B)
   comp_surjective_of_comap_surjective f
     (RingHom.FaithfullyFlat.iff_flat_and_comap_surjective.mp hf).2
 
-end TauCeti.AlgHom
+end AlgHom
