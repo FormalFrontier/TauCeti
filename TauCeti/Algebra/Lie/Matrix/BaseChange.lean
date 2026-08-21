@@ -19,13 +19,13 @@ Mathlib's algebra equivalence `matrixEquivTensor`; on a pure tensor it sends
 
 ## Main definitions
 
-* `TauCeti.Matrix.scalarExtensionLieEquiv`: the Lie equivalence
+* `TauCeti.scalarExtensionMatrixLieEquiv`: the Lie equivalence
   `A ⊗[R] Matrix n n R ≃ Matrix n n A`.
 -/
 
 public section
 
-namespace TauCeti.Matrix
+namespace TauCeti
 
 open scoped TensorProduct
 
@@ -36,7 +36,7 @@ variable (n R A : Type*) [Fintype n] [DecidableEq n]
 
 /-- **Scalar extension commutes with forming a matrix Lie algebra.** This is the canonical
 `A`-linear Lie equivalence from the scalar extension of `R`-matrices to `A`-matrices. -/
-noncomputable def scalarExtensionLieEquiv :
+noncomputable def scalarExtensionMatrixLieEquiv :
     A ⊗[R] _root_.Matrix n n R ≃ₗ⁅A⁆ _root_.Matrix n n A where
   toFun := (matrixEquivTensor n R A).symm
   invFun := matrixEquivTensor n R A
@@ -66,8 +66,8 @@ noncomputable def scalarExtensionLieEquiv :
 /-- On a pure tensor, the scalar-extension equivalence applies the structure map entrywise and
 then scales the resulting matrix. -/
 @[simp]
-theorem scalarExtensionLieEquiv_tmul (a : A) (M : _root_.Matrix n n R) :
-    scalarExtensionLieEquiv n R A (a ⊗ₜ[R] M) = a • M.map (algebraMap R A) :=
+theorem scalarExtensionMatrixLieEquiv_tmul (a : A) (M : Matrix n n R) :
+    scalarExtensionMatrixLieEquiv n R A (a ⊗ₜ[R] M) = a • M.map (algebraMap R A) :=
   matrixEquivTensor_apply_symm n R A a M
 
-end TauCeti.Matrix
+end TauCeti

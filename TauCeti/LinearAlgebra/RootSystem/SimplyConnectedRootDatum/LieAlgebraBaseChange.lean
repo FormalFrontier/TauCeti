@@ -62,10 +62,6 @@ abbrev baseChangeBase : (t.rootSystemBaseChange ht K).Base :=
   rootPairingBaseChangeBase K (t.rationalRootSystem ht)
     (t.toLinearMap_rationalRootSystem ht) (t.rationalBase ht)
 
-@[simp] theorem support_baseChangeBase :
-    (t.baseChangeBase ht K).support = (t.rationalBase ht).support :=
-  support_rootPairingBaseChangeBase ..
-
 /-- The support of the scalar-extended base is canonically the support of the rational base. -/
 def supportBaseChangeEquiv :
     (t.baseChangeBase ht K).support ≃ (t.rationalBase ht).support :=
@@ -235,7 +231,7 @@ noncomputable def ambientLieAlgebraBaseChangeEquiv :
     LieEquiv K (K ⊗[ℚ] Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ)
       (Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
         ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) :=
-  (TauCeti.Matrix.scalarExtensionLieEquiv (t.GeckIndex ht) ℚ K).trans
+  (TauCeti.scalarExtensionMatrixLieEquiv (t.GeckIndex ht) ℚ K).trans
     (Matrix.reindexAlgEquiv K K (t.geckIndexBaseChangeEquiv ht K).symm).toLieEquiv
 
 @[simp] theorem ambientLieAlgebraBaseChangeEquiv_tmul (a : K)
