@@ -17,12 +17,13 @@ import Mathlib.Probability.Independence.Integration
 This file defines the probability-generating function of a natural-number-valued random variable
 and establishes its basic measure-theoretic API.  The central results relate it to Mathlib's
 moment-generating function and show that it turns sums of independent random variables into
-products.  For parameters of absolute value at most one, the required integrability is automatic
-under a finite measure; outside that interval it is stated explicitly.
+products.  The file then computes the generating functions of the standard discrete families:
+Bernoulli, binomial, Poisson, and geometric, the last one on its exact integrability domain.
 
-These results implement the generic part of the probability-generating-function target in
-`TauCetiRoadmap/StandardDistributions/README.md`, Layer 1.  The distribution-specific formulas and
-coefficient-recovery theorem build on this interface.
+These results implement the definition, the generic API and the distribution-specific formulas of
+the probability-generating-function target in `TauCetiRoadmap/StandardDistributions/README.md`,
+Layer 1.  Recovering the coefficients at the origin, and the resulting uniqueness theorem, remain
+future work.
 
 The Poisson series calculation follows the proof pattern of Mathlib's
 `ProbabilityTheory.charFun_map_cast_poissonMeasure`: both factor the Poisson weights out of the
@@ -33,10 +34,10 @@ corresponding measure-integral formulas directly.
 
 * `TauCeti.Probability.pgf` — the probability-generating function.
 * `TauCeti.Probability.pgf_exp` — evaluation at `exp t` is a moment-generating function.
-* `TauCeti.Probability.pgf_add_of_indepFun` — multiplicativity for an independent sum under explicit
-  integrability hypotheses.
-* `TauCeti.Probability.pgf_add_of_indepFun_of_abs_le_one` — multiplicativity on the closed unit
-  interval under a finite measure.
+* `TauCeti.Probability.integrable_pow_of_abs_le_one` — on the closed unit interval the integrand is
+  integrable under a finite measure.
+* `TauCeti.Probability.IndepFun.pgf_add` and `TauCeti.Probability.iIndepFun.pgf_sum` —
+  multiplicativity over binary and finite sums of independent random variables.
 * `TauCeti.Probability.pgf_bernoulliMeasure`, `pgf_binomial`, `pgf_poissonMeasure`, and
   `pgf_geometricMeasure` — the standard discrete-family formulas.
 -/
@@ -58,6 +59,12 @@ respect to a measure `μ`. -/
 def pgf (X : Ω → ℕ) (μ : Measure Ω) (t : ℝ) : ℝ :=
   ∫ ω, t ^ X ω ∂μ
 
+/-- The defining integral formula for the probability-generating function.  This is the canonical
+way to unfold `pgf`, which is otherwise sealed. -/
+-- The parentheses around `rfl` opt this proof out of the exported-theorem exposure check, which
+-- keeps `pgf` itself sealed.
+theorem pgf_def (X : Ω → ℕ) (μ : Measure Ω) (t : ℝ) : pgf X μ t = ∫ ω, t ^ X ω ∂μ := (rfl)
+
 /-- The probability-generating function is unchanged by replacing the random variable almost
 everywhere. -/
 theorem pgf_congr_ae {X Y : Ω → ℕ} (hXY : X =ᵐ[μ] Y) : pgf X μ = pgf Y μ := by
@@ -68,23 +75,24 @@ theorem pgf_congr_ae {X Y : Ω → ℕ} (hXY : X =ᵐ[μ] Y) : pgf X μ = pgf Y 
 @[simp]
 theorem pgf_zero_measure (X : Ω → ℕ) : pgf X (0 : Measure Ω) = 0 := by
   funext t
-  simp [pgf]
+  simp [pgf_def]
 
 /-- Evaluation of a probability-generating function at one gives the total mass. -/
 @[simp]
 theorem pgf_one (X : Ω → ℕ) : pgf X μ 1 = μ.real Set.univ := by
-  simp [pgf]
+  simp [pgf_def]
 
 /-- A constant natural-number-valued random variable has the expected monomial generating
 function. -/
+@[simp]
 theorem pgf_const (n : ℕ) (t : ℝ) : pgf (fun _ : Ω => n) μ t = μ.real Set.univ * t ^ n := by
-  simp [pgf]
+  simp [pgf_def]
 
 /-- The probability-generating function can be computed on the law of the random variable. -/
 theorem pgf_map {X : Ω → ℕ} (hX : AEMeasurable X μ) (t : ℝ) :
     pgf id (μ.map X) t = pgf X μ t := by
-  rw [pgf, pgf, integral_map hX (measurable_id.const_pow t).aestronglyMeasurable]
-  rfl
+  rw [pgf_def, pgf_def, integral_map hX (measurable_id.const_pow t).aestronglyMeasurable]
+  simp only [id_eq]
 
 /-- Random variables with a given law have the same probability-generating function as that law. -/
 theorem HasLaw.pgf_eq {X : Ω → ℕ} {ν : Measure ℕ} (hX : HasLaw X ν μ) (t : ℝ) :
@@ -95,7 +103,7 @@ theorem HasLaw.pgf_eq {X : Ω → ℕ} {ν : Measure ℕ} (hX : HasLaw X ν μ) 
 function of the real-valued cast of the random variable. -/
 theorem pgf_exp (X : Ω → ℕ) (μ : Measure Ω) (t : ℝ) :
     pgf X μ (Real.exp t) = mgf (fun ω => (X ω : ℝ)) μ t := by
-  simp only [pgf, mgf, ← Real.exp_nat_mul]
+  simp only [pgf_def, mgf, ← Real.exp_nat_mul]
   congr 1
   funext ω
   rw [Nat.cast_comm, mul_comm]
@@ -108,76 +116,30 @@ theorem integrable_pow_of_abs_le_one [IsFiniteMeasure μ] {X : Ω → ℕ} (hX :
   filter_upwards with ω
   simpa only [Real.norm_eq_abs, abs_pow, norm_one] using pow_le_one₀ (abs_nonneg t) ht
 
-/-- The probability-generating function of a sum of independent natural-number-valued random
-variables is the product of their generating functions whenever both factor integrands are
-integrable. -/
-theorem pgf_add_of_indepFun {X Y : Ω → ℕ} (hXY : IndepFun X Y μ) {t : ℝ}
-    (hintX : Integrable (fun ω => t ^ X ω) μ)
-    (hintY : Integrable (fun ω => t ^ Y ω) μ) :
+/-- The probability-generating function of a sum of two independent natural-number-valued random
+variables is the product of their generating functions. -/
+theorem IndepFun.pgf_add {X Y : Ω → ℕ} (hXY : IndepFun X Y μ) (hX : AEMeasurable X μ)
+    (hY : AEMeasurable Y μ) (t : ℝ) :
     pgf (X + Y) μ t = pgf X μ t * pgf Y μ t := by
   have hindep : IndepFun (fun ω => t ^ X ω) (fun ω => t ^ Y ω) μ :=
     hXY.comp (measurable_id.const_pow t) (measurable_id.const_pow t)
-  simp_rw [pgf, Pi.add_apply, pow_add]
-  exact hindep.integral_mul_eq_mul_integral
-    hintX.aestronglyMeasurable hintY.aestronglyMeasurable
-
-/-- On the closed unit interval, the probability-generating function of an independent sum is the
-product of the generating functions; integrability is automatic under a finite measure. -/
-theorem pgf_add_of_indepFun_of_abs_le_one [IsFiniteMeasure μ] {X Y : Ω → ℕ}
-    (hXY : IndepFun X Y μ)
-    (hX : Measurable X) (hY : Measurable Y) {t : ℝ} (ht : |t| ≤ 1) :
-    pgf (X + Y) μ t = pgf X μ t * pgf Y μ t :=
-  pgf_add_of_indepFun hXY (integrable_pow_of_abs_le_one hX.aemeasurable ht)
-    (integrable_pow_of_abs_le_one hY.aemeasurable ht)
-
-/-- Integrability of the probability-generating-function integrand passes from independent
-summands to their finite sum. -/
-private theorem integrable_pow_finsetSum_of_iIndepFun {ι : Type*} {X : ι → Ω → ℕ}
-    (h_indep : iIndepFun X μ) (h_meas : ∀ i, AEMeasurable (X i) μ) {s : Finset ι} {t : ℝ}
-    (h_int : ∀ i ∈ s, Integrable (fun ω => t ^ X i ω) μ) :
-    Integrable (fun ω => t ^ (∑ i ∈ s, X i) ω) μ := by
-  have : IsProbabilityMeasure μ := h_indep.isProbabilityMeasure
-  classical
-  induction s using Finset.induction_on with
-  | empty =>
-      simpa only [Finset.sum_apply, Finset.sum_empty, pow_zero] using
-        (integrable_const (1 : ℝ) : Integrable (fun _ : Ω => (1 : ℝ)) μ)
-  | insert i s hi hrec =>
-      have hs_int : ∀ j ∈ s, Integrable (fun ω => t ^ X j ω) μ := fun j hj =>
-        h_int j (Finset.mem_insert_of_mem hj)
-      have hindep : IndepFun (X i) (∑ j ∈ s, X j) μ :=
-        (h_indep.indepFun_finsetSum_of_notMem₀ h_meas hi).symm
-      rw [Finset.sum_insert hi]
-      simp_rw [Pi.add_apply, pow_add]
-      exact (hindep.comp (measurable_id.const_pow t) (measurable_id.const_pow t)).integrable_mul
-        (h_int i (Finset.mem_insert_self i s)) (hrec hs_int)
+  simp_rw [pgf_def, Pi.add_apply, pow_add]
+  exact hindep.integral_mul_eq_mul_integral (hX.const_pow t).aestronglyMeasurable
+    (hY.const_pow t).aestronglyMeasurable
 
 /-- A probability-generating function turns a finite sum of independent random variables into the
-product of their generating functions, whenever the individual integrands are integrable. -/
-theorem pgf_finsetSum_of_iIndepFun {ι : Type*} {X : ι → Ω → ℕ} (h_indep : iIndepFun X μ)
-    (h_meas : ∀ i, AEMeasurable (X i) μ) (s : Finset ι) {t : ℝ}
-    (h_int : ∀ i ∈ s, Integrable (fun ω => t ^ X i ω) μ) :
+product of their generating functions. -/
+theorem iIndepFun.pgf_sum {ι : Type*} {X : ι → Ω → ℕ} (h_indep : iIndepFun X μ)
+    (h_meas : ∀ i, AEMeasurable (X i) μ) (s : Finset ι) (t : ℝ) :
     pgf (∑ i ∈ s, X i) μ t = ∏ i ∈ s, pgf (X i) μ t := by
   have : IsProbabilityMeasure μ := h_indep.isProbabilityMeasure
   classical
   induction s using Finset.induction_on with
-  | empty => simp [pgf]
+  | empty => simp [pgf_def]
   | insert i s hi hrec =>
-      have hs_int : ∀ j ∈ s, Integrable (fun ω => t ^ X j ω) μ := fun j hj =>
-        h_int j (Finset.mem_insert_of_mem hj)
       rw [Finset.sum_insert hi, Finset.prod_insert hi,
-        pgf_add_of_indepFun (h_indep.indepFun_finsetSum_of_notMem₀ h_meas hi).symm
-          (h_int i (Finset.mem_insert_self i s))
-          (integrable_pow_finsetSum_of_iIndepFun h_indep h_meas hs_int), hrec hs_int]
-
-/-- On the closed unit interval, a probability-generating function turns any finite sum of
-independent measurable random variables into the product of their generating functions. -/
-theorem pgf_finsetSum_of_iIndepFun_of_abs_le_one {ι : Type*} {X : ι → Ω → ℕ}
-    (h_indep : iIndepFun X μ) (h_meas : ∀ i, Measurable (X i)) (s : Finset ι) {t : ℝ}
-    (ht : |t| ≤ 1) : pgf (∑ i ∈ s, X i) μ t = ∏ i ∈ s, pgf (X i) μ t := by
-  have : IsProbabilityMeasure μ := h_indep.isProbabilityMeasure
-  exact pgf_finsetSum_of_iIndepFun h_indep (fun i => (h_meas i).aemeasurable) s fun i _ =>
-    integrable_pow_of_abs_le_one (h_meas i).aemeasurable ht
+        IndepFun.pgf_add (h_indep.indepFun_finsetSum_of_notMem₀ h_meas hi).symm (h_meas i)
+          (Finset.aemeasurable_sum s fun j _ => h_meas j) t, hrec]
 
 section NamedDistributions
 
@@ -186,15 +148,17 @@ open scoped NNReal ProbabilityTheory unitInterval
 /-- The probability-generating function of a Bernoulli distribution. -/
 theorem pgf_bernoulliMeasure (p : unitInterval) (t : ℝ) :
     pgf id Ber((1 : ℕ), 0, p) t = 1 - (p : ℝ) + (p : ℝ) * t := by
-  rw [pgf, integral_bernoulliMeasure]
+  rw [pgf_def, integral_bernoulliMeasure]
   simp
   ring
 
 /-- The probability-generating function of a binomial distribution. -/
 theorem pgf_binomial (n : ℕ) (p : unitInterval) (t : ℝ) :
     pgf id (binomial n p) t = (1 - (p : ℝ) + (p : ℝ) * t) ^ n := by
-  rw [pgf, integral_binomial, ← Nat.range_succ_eq_Iic,
-    show 1 - (p : ℝ) + (p : ℝ) * t = (p : ℝ) * t + (1 - p) by ring, add_pow]
+  -- `add_pow` expands `(x + y) ^ n` with the binomial weights attached to `x`, so the base has to
+  -- be reordered to put the factor `p * t` first.
+  have hbase : 1 - (p : ℝ) + (p : ℝ) * t = (p : ℝ) * t + (1 - (p : ℝ)) := add_comm _ _
+  rw [pgf_def, integral_binomial, ← Nat.range_succ_eq_Iic, hbase, add_pow]
   simp only [smul_eq_mul, id_eq]
   apply Finset.sum_congr rfl
   intro k hk
@@ -203,7 +167,7 @@ theorem pgf_binomial (n : ℕ) (p : unitInterval) (t : ℝ) :
 /-- The probability-generating function of a Poisson distribution. -/
 theorem pgf_poissonMeasure (r : ℝ≥0) (t : ℝ) :
     pgf id (poissonMeasure r) t = Real.exp ((r : ℝ) * (t - 1)) := by
-  rw [pgf, integral_poissonMeasure]
+  rw [pgf_def, integral_poissonMeasure]
   simp only [smul_eq_mul, id_eq]
   calc
     ∑' n : ℕ, (Real.exp (-r) * (r : ℝ) ^ n / n.factorial) * t ^ n =
@@ -223,7 +187,7 @@ theorem pgf_poissonMeasure (r : ℝ≥0) (t : ℝ) :
 probability-generating function is identically one. -/
 @[simp]
 theorem pgf_geometricMeasure_zero (t : ℝ) : pgf id (geometricMeasure 0) t = 1 := by
-  simp [pgf, geometricMeasure]
+  simp [pgf_def, geometricMeasure]
 
 /-- For a nonzero success probability, the geometric probability-generating-function integrand
 is integrable exactly on the open interval determined by the geometric-series ratio. -/
@@ -241,20 +205,13 @@ theorem integrable_pow_geometricMeasure_iff {p : unitInterval} (hp : p ≠ 0) (t
     Real.norm_eq_abs]
   simp only [abs_mul, abs_abs, abs_of_nonneg (by grind : 0 ≤ 1 - (p : ℝ))]
 
-/-- Outside the geometric-series domain, the geometric probability-generating-function integrand
-is not integrable. -/
-theorem not_integrable_pow_geometricMeasure {p : unitInterval} (hp : p ≠ 0) {t : ℝ}
-    (ht : 1 ≤ |(1 - (p : ℝ)) * t|) :
-    ¬Integrable (fun n : ℕ => t ^ n) (geometricMeasure p) := by
-  rw [integrable_pow_geometricMeasure_iff hp]
-  exact not_lt.mpr ht
-
-/-- The probability-generating function of a nondegenerate geometric distribution, on its exact
-integrability domain. -/
+/-- The probability-generating function of a geometric distribution with nonzero parameter, on its
+exact integrability domain.  The boundary case `p = 1`, whose law is a Dirac mass at zero, is
+included. -/
 theorem pgf_geometricMeasure {p : unitInterval} (hp : p ≠ 0) {t : ℝ}
     (ht : |(1 - (p : ℝ)) * t| < 1) :
     pgf id (geometricMeasure p) t = (p : ℝ) / (1 - (1 - (p : ℝ)) * t) := by
-  rw [pgf, integral_geometricMeasure hp]
+  rw [pgf_def, integral_geometricMeasure hp]
   simp only [smul_eq_mul, id_eq]
   calc
     ∑' n : ℕ, ((1 - (p : ℝ)) ^ n * p) * t ^ n =
