@@ -26,6 +26,9 @@ ordinary functor of points.
   points valued in the coefficient algebra.
 * `TauCeti.Bialgebra.CounitAlgebra.pointsMulEquiv_eq_mapValue`: the identification is
   postcomposition with `TauCeti.Bialgebra.CounitAlgebra.algEquivSelf`.
+* `TauCeti.Bialgebra.CounitAlgebra.pointsMulEquiv_mapValue` and
+  `TauCeti.Bialgebra.CounitAlgebra.mapValue_pointsMulEquiv_symm_apply`: the identification is
+  natural in the coefficient algebra.
 
 This is coefficient bookkeeping for the adjoint action of Layer 2, "Lie algebra and the adjoint
 representation", of the ReductiveGroups roadmap.
@@ -90,6 +93,37 @@ theorem pointsMulEquiv_symm_apply (f : WithConv (H →ₐ[R] B)) (h : H) :
     (algEquivSelf R H B).symm (f.ofConv h)
   rw [AlgHom.mapValue_apply, ofConv_toConv, AlgHom.comp_apply]
   rfl
+
+section Naturality
+
+variable {C : Type*} [CommSemiring C] [Algebra R C]
+
+/-- The counit-points equivalence is natural in the coefficient algebra. -/
+theorem pointsMulEquiv_mapValue (phi : B →ₐ[R] C)
+    (g : WithConv (H →ₐ[R] CounitAlgebra R H B)) :
+    pointsMulEquiv R H C
+        (AlgHom.mapValue (H := H)
+          (mapAlgHom (R := R) (A := H) (B := B) (C := C) phi) g) =
+      AlgHom.mapValue (H := H) phi (pointsMulEquiv R H B g) := by
+  apply WithConv.ofConv_injective
+  ext h
+  simp only [AlgHom.mapValue_apply, pointsMulEquiv_apply, AlgHom.coe_comp,
+    Function.comp_apply, mapAlgHom_apply]
+  calc
+    _ = phi (g.ofConv h) := algEquivSelf_apply (R := R) (A := H) (B := C) _
+    _ = _ := congrArg phi (algEquivSelf_apply (R := R) (A := H) (B := B) _).symm
+
+/-- Naturality of the inverse counit-points equivalence in the coefficient algebra. -/
+theorem mapValue_pointsMulEquiv_symm_apply (phi : B →ₐ[R] C)
+    (f : WithConv (H →ₐ[R] B)) :
+    AlgHom.mapValue (H := H)
+        (mapAlgHom (R := R) (A := H) (B := B) (C := C) phi)
+        ((pointsMulEquiv R H B).symm f) =
+      (pointsMulEquiv R H C).symm (AlgHom.mapValue (H := H) phi f) := by
+  apply (pointsMulEquiv R H C).injective
+  rw [pointsMulEquiv_mapValue, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
+
+end Naturality
 
 end Bialgebra.CounitAlgebra
 

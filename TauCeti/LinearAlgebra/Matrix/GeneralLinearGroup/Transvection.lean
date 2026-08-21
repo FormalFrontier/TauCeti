@@ -77,6 +77,18 @@ section Products
 
 variable [Fintype n]
 
+/-- Multiplying a matrix unit on the left and right by diagonal matrices rescales its nonzero
+entry by the corresponding diagonal entries. -/
+theorem diagonal_mul_single_mul_diagonal {v w : n → A} (c : A) :
+    diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
+  ext a b
+  rw [Matrix.mul_assoc]
+  simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
+  by_cases h : i = a ∧ j = b
+  · obtain ⟨rfl, rfl⟩ := h
+    simp [mul_assoc]
+  · simp [h]
+
 /-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
 corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
 another. -/
@@ -85,15 +97,8 @@ theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a
   have hd : diagonal v * diagonal w = (1 : Matrix n n A) := by
     rw [Matrix.diagonal_mul_diagonal]
     exact Matrix.diagonal_eq_one.2 (by ext a; exact hvw a)
-  have hs : diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
-    ext a b
-    rw [Matrix.mul_assoc]
-    simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
-    by_cases h : i = a ∧ j = b
-    · obtain ⟨rfl, rfl⟩ := h
-      simp [mul_assoc]
-    · simp [h]
-  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd, hs]
+  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd,
+    diagonal_mul_single_mul_diagonal]
 
 end Products
 

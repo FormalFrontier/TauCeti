@@ -31,11 +31,10 @@ product `g ⋆ d ⋆ g⁻¹` on `Xᵢⱼ` runs over `comul Xᵢⱼ = ∑ₖ Xᵢ
 of the conjugated tangent matrix is the double sum `∑ₖ ∑ₗ gᵢₗ dₗₖ (g⁻¹)ₖⱼ`, which is the
 `(i, j)` entry of the matrix product.
 
-Specializing to the diagonal torus diagonalizes the adjoint representation: conjugation by
-`diag(t)` multiplies the `(i, j)` entry by `tᵢ tⱼ⁻¹`. So the matrix unit `Eᵢⱼ` spans a weight
-line for the character `εᵢ - εⱼ` of the diagonal torus, and the diagonal matrices — the tangent
-space of the torus itself — are fixed. For `i ≠ j` these characters are the roots of `GLₙ` and
-the matrix units are its root vectors.
+Specializing to the diagonal torus computes the expected eigenvalues of the adjoint
+representation: conjugation by `diag(t)` multiplies the `(i, j)` entry by `tᵢ tⱼ⁻¹`. Thus the
+matrix units have the eigenvalue formulas needed for a future formal weight decomposition, and
+the diagonal matrices — the tangent space of the torus itself — are fixed.
 
 ## Main declarations
 
@@ -43,15 +42,15 @@ the matrix units are its root vectors.
   in the counit algebra of the coordinate ring, where the tangent vectors live.
 * `TauCeti.GeneralLinear.tangentMatrix_adDerivation`: **the adjoint action of `GLₙ` on its
   tangent space is conjugation of matrices.**
-* `TauCeti.GeneralLinear.tangentMatrix_adDerivation_of_diagGL` and
-  `TauCeti.GeneralLinear.tangentMatrix_adDerivation_symm_diagGL`: conjugation by a diagonal point
-  scales the `(i, j)` entry by `tᵢ tⱼ⁻¹`.
-* `TauCeti.GeneralLinear.tangentMatrix_adDerivation_single`: the matrix unit `Eᵢⱼ` is a weight
-  vector for the character `εᵢ - εⱼ` of the diagonal torus.
+* `TauCeti.GeneralLinear.tangentMatrix_adDerivation_apply_of_diagGL` and
+  `TauCeti.GeneralLinear.tangentMatrix_adDerivation_apply_symm_diagGL`: conjugation by a diagonal
+  point scales the `(i, j)` entry by `tᵢ tⱼ⁻¹`.
+* `TauCeti.GeneralLinear.tangentMatrix_adDerivation_single`: the corresponding eigenvalue
+  computation for a matrix unit `Eᵢⱼ`.
 * `TauCeti.GeneralLinear.tangentMatrix_adDerivation_diagonal`: the tangent space of the diagonal
   torus is fixed by the adjoint action of the torus.
-* `TauCeti.GeneralLinear.tangentMatrix_adDerivation_diagonalTorusPoints`: the same computation
-  for a point of the diagonal torus of `GLₙ`, indexed by its split-torus coordinates.
+* `TauCeti.GeneralLinear.tangentMatrix_adDerivation_apply_diagonalTorusPoints`: the same
+  computation for a point of the diagonal torus of `GLₙ`, indexed by its split-torus coordinates.
 
 ## References
 
@@ -61,9 +60,9 @@ the matrix units are its root vectors.
 
 Layer 2 of `TauCetiRoadmap/ReductiveGroups/README.md` asks for the adjoint action
 `Ad : G → GL(Lie G)`, and Layer 7 asks for the root datum of a split pair `(G, T)`, read off the
-weight decomposition of `Lie G` under `T`. This file supplies that decomposition for the worked
-example `GLₙ` with its diagonal torus, the roadmap's prescribed check that the definitions are
-honest.
+weight decomposition of `Lie G` under `T`. This file supplies the eigenvalue computations needed
+for that future decomposition in the worked example `GLₙ` with its diagonal torus, the roadmap's
+prescribed check that the definitions are honest.
 -/
 
 public section
@@ -175,7 +174,7 @@ variable {t : Fin n → Bˣ}
 
 /-- Conjugation by a diagonal point of `GLₙ` scales the `(i, j)` entry of a tangent matrix by
 the character `tᵢ tⱼ⁻¹` of the diagonal torus. -/
-theorem tangentMatrix_adDerivation_of_diagGL (hg : counitPointsMulEquiv n g = diagGL t)
+theorem tangentMatrix_adDerivation_apply_of_diagGL (hg : counitPointsMulEquiv n g = diagGL t)
     (i j : Fin n) :
     tangentMatrix n (Derivation.adDerivation B g d) i j =
       (t i : B) * tangentMatrix n d i j * ((t j)⁻¹ : Bˣ) := by
@@ -185,38 +184,31 @@ theorem tangentMatrix_adDerivation_of_diagGL (hg : counitPointsMulEquiv n g = di
 
 /-- Conjugation by the diagonal point with coordinates `t`, with no hypothesis to discharge:
 every invertible matrix, in particular every diagonal one, is the matrix of a unique point. -/
-theorem tangentMatrix_adDerivation_symm_diagGL (i j : Fin n) :
+theorem tangentMatrix_adDerivation_apply_symm_diagGL (i j : Fin n) :
     tangentMatrix n
         (Derivation.adDerivation B
           ((counitPointsMulEquiv (R := R) (B := B) n).symm (diagGL t)) d) i j =
       (t i : B) * tangentMatrix n d i j * ((t j)⁻¹ : Bˣ) :=
-  tangentMatrix_adDerivation_of_diagGL
+  tangentMatrix_adDerivation_apply_of_diagGL
     ((counitPointsMulEquiv (R := R) (B := B) n).apply_symm_apply _) i j
 
-/-- The matrix unit `Eᵢⱼ` is a weight vector of the adjoint representation of `GLₙ` for the
-character `εᵢ - εⱼ` of the diagonal torus: conjugation by `diag(t)` rescales it by `tᵢ tⱼ⁻¹`.
-
-For `i ≠ j` this character is a root of `GLₙ` and `Eᵢⱼ` is the corresponding root vector. -/
+/-- The matrix-unit eigenvalue computation for the adjoint action: conjugation by `diag(t)`
+rescales `Eᵢⱼ` by `tᵢ tⱼ⁻¹`. -/
 theorem tangentMatrix_adDerivation_single (hg : counitPointsMulEquiv n g = diagGL t)
     {i j : Fin n} {c : B} (hd : tangentMatrix n d = Matrix.single i j c) :
     tangentMatrix n (Derivation.adDerivation B g d) =
       Matrix.single i j ((t i : B) * c * ((t j)⁻¹ : Bˣ)) := by
-  ext a b
-  rw [tangentMatrix_adDerivation_of_diagGL hg, hd, Matrix.single_apply, Matrix.single_apply]
-  split_ifs with hab
-  · rw [hab.1, hab.2]
-  · rw [mul_zero, zero_mul]
+  rw [tangentMatrix_adDerivation, hg, hd, ← map_inv diagGL t, diagGL_coe, diagGL_coe,
+    diagonal_mul_single_mul_diagonal, Pi.inv_apply]
 
 /-- The tangent space of the diagonal torus is fixed by the adjoint action of the torus: a
-diagonal tangent matrix is unchanged by conjugation by a diagonal point.
-
-Equivalently, the diagonal matrices lie in the zero weight space of the adjoint representation
-restricted to the diagonal torus. -/
+diagonal tangent matrix is unchanged by conjugation by a diagonal point. This is the fixed-vector
+computation needed to identify the zero-weight space in a future formal decomposition. -/
 theorem tangentMatrix_adDerivation_diagonal (hg : counitPointsMulEquiv n g = diagGL t)
     {x : Fin n → B} (hd : tangentMatrix n d = Matrix.diagonal x) :
     tangentMatrix n (Derivation.adDerivation B g d) = Matrix.diagonal x := by
   ext a b
-  rw [tangentMatrix_adDerivation_of_diagGL hg, hd]
+  rw [tangentMatrix_adDerivation_apply_of_diagGL hg, hd]
   by_cases hab : a = b
   · subst hab
     rw [Matrix.diagonal_apply_eq, mul_comm ((t a : B)) (x a), mul_assoc, Units.mul_inv, mul_one]
@@ -225,28 +217,25 @@ theorem tangentMatrix_adDerivation_diagonal (hg : counitPointsMulEquiv n g = dia
 /-- The adjoint action of a point of the diagonal torus of `GLₙ`: it multiplies the `(i, j)`
 entry of a tangent matrix by the character `tᵢ tⱼ⁻¹` read off the split-torus coordinates of
 the point. -/
-theorem tangentMatrix_adDerivation_diagonalTorusPoints
-    (s : WithConv (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) →ₐ[R]
-      Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B))
+theorem tangentMatrix_adDerivation_apply_diagonalTorusPoints
+    (s : WithConv (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) →ₐ[R] B))
     (i j : Fin n) :
-    tangentMatrix n (Derivation.adDerivation B (diagonalTorusPoints s) d) i j =
-      ((SplitTorus.pointsMulEquiv (AlgHom.mapValue
-            (Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B).toAlgHom s)
-          (ULift.up i) : B)) * tangentMatrix n d i j *
-        (((SplitTorus.pointsMulEquiv (AlgHom.mapValue
-            (Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B).toAlgHom s)
-          (ULift.up j))⁻¹ : Bˣ) : B) := by
-  have hg : counitPointsMulEquiv n (diagonalTorusPoints (R := R)
-        (A := Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B) s) =
-      diagGL fun a => SplitTorus.pointsMulEquiv (AlgHom.mapValue
-        (Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B).toAlgHom s)
-        (ULift.up a) := by
-    rw [counitPointsMulEquiv_eq_pointsMulEquiv, mapValue_diagonalTorusPoints,
+    tangentMatrix n (Derivation.adDerivation B
+        ((Bialgebra.CounitAlgebra.pointsMulEquiv R (coordinateHopfAlgebra R n) B).symm
+          (diagonalTorusPoints s)) d) i j =
+      (SplitTorus.pointsMulEquiv s (ULift.up i) : B) * tangentMatrix n d i j *
+        (((SplitTorus.pointsMulEquiv s (ULift.up j))⁻¹ : Bˣ) : B) := by
+  have hg : counitPointsMulEquiv n
+        ((Bialgebra.CounitAlgebra.pointsMulEquiv R (coordinateHopfAlgebra R n) B).symm
+          (diagonalTorusPoints s)) =
+      diagGL fun a => SplitTorus.pointsMulEquiv s (ULift.up a) := by
+    rw [counitPointsMulEquiv_eq_pointsMulEquiv,
+      ← Bialgebra.CounitAlgebra.pointsMulEquiv_eq_mapValue, MulEquiv.apply_symm_apply,
       pointsMulEquiv_diagonalTorusPoints]
     congr 1
     funext a
     exact diagonalTorusCoordinates_apply _ a
-  exact tangentMatrix_adDerivation_of_diagGL hg i j
+  exact tangentMatrix_adDerivation_apply_of_diagGL hg i j
 
 end
 
