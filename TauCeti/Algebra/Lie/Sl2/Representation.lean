@@ -45,8 +45,6 @@ theorem representation_ι_slFinTwoBasis (i : Fin 3) :
         (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n)
         (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
       ![raise K n, lower K n, diag K n] i := by
-  ext v
-  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι_apply,
-    lie_eq_rep_apply, rep_apply_basis]
+  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι, representation_ι', rep_apply_basis]
 
 end TauCeti.Sl2Std
