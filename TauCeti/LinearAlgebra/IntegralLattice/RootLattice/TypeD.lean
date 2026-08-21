@@ -115,6 +115,7 @@ def checkerboardCarrier : Submodule ℤ (Fin n → ℚ) where
 variable {n}
 
 /-- Membership in the checkerboard carrier: every coordinate is an integer and their sum is even. -/
+@[simp]
 theorem mem_checkerboardCarrier_iff (x : Fin n → ℚ) :
     x ∈ checkerboardCarrier n ↔ (∀ i, ∃ z : ℤ, x i = (z : ℚ)) ∧ ∃ m : ℤ, ∑ i, x i = 2 * (m : ℚ) :=
   Iff.rfl
@@ -211,6 +212,7 @@ theorem checkerboardLattice_form : (checkerboardLattice n).form = Matrix.toBilin
   ofSubmodule_form _ _ _ _
 
 /-- The form of the checkerboard lattice is the standard dot product. -/
+@[simp]
 theorem checkerboardLattice_form_apply (x y : Fin n → ℚ) :
     (checkerboardLattice n).form x y = ∑ i, x i * y i := by
   rw [checkerboardLattice_form, checkerboardAmbientForm_apply]
@@ -281,6 +283,7 @@ variable {n} in
 lattice vector exactly when all of its coordinate differences are integers and its doubled last
 coordinate is an integer.  Equivalently the dual lattice is `ℤⁿ ∪ (s + ℤⁿ)` for the
 half-sum `s`. -/
+@[simp]
 theorem mem_checkerboardLattice_dualCarrier_iff (y : Fin n → ℚ) :
     y ∈ (checkerboardLattice n).dualCarrier ↔
       (∀ i, ∃ z : ℤ, y i - y (checkerboardLastIndex n) = (z : ℚ)) ∧
