@@ -127,13 +127,13 @@ noncomputable def tailBacktrackElem {i j : Q} (a : i ⟶ j) : pathAlgebra k (Sym
     (Quiver.reverse (Symmetrify.of.map a)).toPath⟩
 
 /-- The head backtrack is the basis element of the length-two path `a*` followed by `a`. -/
-theorem headBacktrackElem_eq_ofPath {i j : Q} (a : i ⟶ j) :
+theorem headBacktrackElem_def {i j : Q} (a : i ⟶ j) :
     headBacktrackElem k a = ofPath ⟨_, _, (Quiver.reverse (Symmetrify.of.map a)).toPath.comp
       (Symmetrify.of.map a).toPath⟩ := by
   rw [headBacktrackElem]
 
 /-- The tail backtrack is the basis element of the length-two path `a` followed by `a*`. -/
-theorem tailBacktrackElem_eq_ofPath {i j : Q} (a : i ⟶ j) :
+theorem tailBacktrackElem_def {i j : Q} (a : i ⟶ j) :
     tailBacktrackElem k a = ofPath ⟨_, _, (Symmetrify.of.map a).toPath.comp
       (Quiver.reverse (Symmetrify.of.map a)).toPath⟩ := by
   rw [tailBacktrackElem]
@@ -141,49 +141,49 @@ theorem tailBacktrackElem_eq_ofPath {i j : Q} (a : i ⟶ j) :
 @[simp]
 theorem doubledVertexIdempotent_mul_headBacktrackElem {i j : Q} (a : i ⟶ j) :
     doubledVertexIdempotent k j * headBacktrackElem k a = headBacktrackElem k a := by
-  rw [doubledVertexIdempotent, headBacktrackElem_eq_ofPath, vertexIdempotent_mul_ofPath]
+  rw [doubledVertexIdempotent, headBacktrackElem_def, vertexIdempotent_mul_ofPath]
 
 @[simp]
 theorem headBacktrackElem_mul_doubledVertexIdempotent {i j : Q} (a : i ⟶ j) :
     headBacktrackElem k a * doubledVertexIdempotent k j = headBacktrackElem k a := by
-  rw [doubledVertexIdempotent, headBacktrackElem_eq_ofPath, ofPath_mul_vertexIdempotent]
+  rw [doubledVertexIdempotent, headBacktrackElem_def, ofPath_mul_vertexIdempotent]
 
 @[simp]
 theorem doubledVertexIdempotent_mul_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
     doubledVertexIdempotent k i * tailBacktrackElem k a = tailBacktrackElem k a := by
-  rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath, vertexIdempotent_mul_ofPath]
+  rw [doubledVertexIdempotent, tailBacktrackElem_def, vertexIdempotent_mul_ofPath]
 
 @[simp]
 theorem tailBacktrackElem_mul_doubledVertexIdempotent {i j : Q} (a : i ⟶ j) :
     tailBacktrackElem k a * doubledVertexIdempotent k i = tailBacktrackElem k a := by
-  rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath, ofPath_mul_vertexIdempotent]
+  rw [doubledVertexIdempotent, tailBacktrackElem_def, ofPath_mul_vertexIdempotent]
 
 /-- A vertex idempotent away from the head of `a` annihilates the head backtrack on the left. -/
 @[simp]
 theorem doubledVertexIdempotent_mul_headBacktrackElem_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ j) :
     doubledVertexIdempotent k u * headBacktrackElem k a = 0 := by
-  rw [doubledVertexIdempotent, headBacktrackElem_eq_ofPath,
+  rw [doubledVertexIdempotent, headBacktrackElem_def,
     vertexIdempotent_mul_ofPath_of_ne _ h]
 
 /-- A vertex idempotent away from the head of `a` annihilates the head backtrack on the right. -/
 @[simp]
 theorem headBacktrackElem_mul_doubledVertexIdempotent_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ j) :
     headBacktrackElem k a * doubledVertexIdempotent k u = 0 := by
-  rw [doubledVertexIdempotent, headBacktrackElem_eq_ofPath,
+  rw [doubledVertexIdempotent, headBacktrackElem_def,
     ofPath_mul_vertexIdempotent_of_ne _ h]
 
 /-- A vertex idempotent away from the tail of `a` annihilates the tail backtrack on the left. -/
 @[simp]
 theorem doubledVertexIdempotent_mul_tailBacktrackElem_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ i) :
     doubledVertexIdempotent k u * tailBacktrackElem k a = 0 := by
-  rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath,
+  rw [doubledVertexIdempotent, tailBacktrackElem_def,
     vertexIdempotent_mul_ofPath_of_ne _ h]
 
 /-- A vertex idempotent away from the tail of `a` annihilates the tail backtrack on the right. -/
 @[simp]
 theorem tailBacktrackElem_mul_doubledVertexIdempotent_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ i) :
     tailBacktrackElem k a * doubledVertexIdempotent k u = 0 := by
-  rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath,
+  rw [doubledVertexIdempotent, tailBacktrackElem_def,
     ofPath_mul_vertexIdempotent_of_ne _ h]
 
 end Backtracks
@@ -197,7 +197,7 @@ theorem ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem {i j : Q} (a : i ⟶ j)
     ofArrow (Symmetrify.of.map a) * ofArrow (Quiver.reverse (Symmetrify.of.map a))
       = headBacktrackElem k a := by
   rw [ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp,
-    headBacktrackElem_eq_ofPath]
+    headBacktrackElem_def]
 
 /-- Simp-normal form of the head-backtrack path. -/
 @[simp]
@@ -215,7 +215,7 @@ theorem ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem {i j : Q} (a : i ⟶ j)
     ofArrow (Quiver.reverse (Symmetrify.of.map a)) * ofArrow (Symmetrify.of.map a)
       = tailBacktrackElem k a := by
   rw [ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp,
-    tailBacktrackElem_eq_ofPath]
+    tailBacktrackElem_def]
 
 /-- Simp-normal form of the tail-backtrack path. -/
 @[simp]
