@@ -24,7 +24,7 @@ intertwiners**: `ρ g ∘ T ∘ π g⁻¹ = T` for every `g` says precisely that
 
 Together these turn a character integral into the dimension of a space of intertwiners: over a
 compact group, Haar-averaging this representation counts its invariants, which is what
-`TauCeti/RepresentationTheory/Compact/IntertwinerDimension.lean` does.
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Dimension.lean` does.
 
 The carrier is the operator space `V →L[𝕜] W`, not `V →ₗ[𝕜] W`: a `ContRepresentation` acts by
 continuous linear maps on a topological module, and the operator norm is what makes the operators
@@ -64,7 +64,7 @@ namespace ContRepresentation
 
 section Definition
 
-variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G]
+variable {𝕜 G V W : Type*} [NontriviallyNormedField 𝕜] [Group G] [TopologicalSpace G]
   [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedAddCommGroup W] [NormedSpace 𝕜 W]
 
 /-- **The Hom representation** of two continuous representations: `G` acts on the operators
@@ -115,7 +115,7 @@ end Definition
 
 section Invariants
 
-variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G]
+variable {𝕜 G V W : Type*} [NontriviallyNormedField 𝕜] [Group G] [TopologicalSpace G]
   [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedAddCommGroup W] [NormedSpace 𝕜 W]
   (π : ContRepresentation 𝕜 G V) (ρ : ContRepresentation 𝕜 G W)
 
