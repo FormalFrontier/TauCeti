@@ -7,9 +7,11 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Cotangent
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
-public import TauCeti.Algebra.AlgebraicGroup.Trivial
+import TauCeti.Algebra.AlgebraicGroup.Trivial
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 
 /-!
@@ -76,19 +78,6 @@ def IsUnipotentRadicalCandidate (H : FiniteTypeCommHopfAlgCat.{u, u} k)
       (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
     smoothUnipotentCommHopfAlgProperty k
       (FiniteTypeCommHopfAlgCat.quotient H I)
-
-/-- Characterization of an unipotent-radical candidate by normality, connectedness, and smooth
-unipotence of the quotient coordinate algebra. -/
-@[simp]
-theorem isUnipotentRadicalCandidate_iff (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (I : HopfIdeal k H) :
-    IsUnipotentRadicalCandidate H I ↔
-      I.IsNormal ∧
-        geometricallyConnectedCommHopfAlgProperty k
-          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
-        smoothUnipotentCommHopfAlgProperty k
-          (FiniteTypeCommHopfAlgCat.quotient H I) :=
-  Iff.rfl
 
 namespace IsUnipotentRadicalCandidate
 
