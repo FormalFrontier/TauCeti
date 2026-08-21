@@ -160,7 +160,7 @@ theorem natCard_discriminantGroup_typeE₆RootLattice :
 
 /-- The simple-root coordinates of `3ϖ₁` in type `E₆`, from Bourbaki plate V:
 `3ϖ₁ = 4α₁ + 3α₂ + 5α₃ + 6α₄ + 4α₅ + 2α₆`. -/
-@[expose] def typeE₆WeightCoeff : Fin 6 → ℤ := ![4, 3, 5, 6, 4, 2]
+private def typeE₆WeightCoeff : Fin 6 → ℤ := ![4, 3, 5, 6, 4, 2]
 
 /-- The minuscule fundamental weight `ϖ₁` of type `E₆`, in simple-root coordinates. -/
 noncomputable def typeE₆MinusculeWeight : Fin 6 → ℚ :=
@@ -168,8 +168,9 @@ noncomputable def typeE₆MinusculeWeight : Fin 6 → ℚ :=
 
 @[simp]
 theorem typeE₆MinusculeWeight_apply (j : Fin 6) :
-    typeE₆MinusculeWeight j = (typeE₆WeightCoeff j : ℚ) / 3 := by
-  rw [typeE₆MinusculeWeight]
+    typeE₆MinusculeWeight j =
+      ((![4, 3, 5, 6, 4, 2] : Fin 6 → ℤ) j : ℚ) / 3 := by
+  rw [typeE₆MinusculeWeight, typeE₆WeightCoeff]
 
 /-- The row combinations of `CartanMatrix.E 6` against the coordinates of `3ϖ₁`. -/
 private theorem sum_cartanMatrixE₆_mul_weightCoeff :
@@ -187,7 +188,7 @@ private theorem sum_cartanMatrixE₆_mul_minusculeWeight (i : Fin 6) :
   have hexp : (∑ j, (((CartanMatrix.E 6) i j : ℤ) : ℚ) * typeE₆MinusculeWeight j)
       = (∑ j, (((CartanMatrix.E 6) i j : ℤ) : ℚ) * ((typeE₆WeightCoeff j : ℤ) : ℚ)) / 3 := by
     rw [Finset.sum_div]
-    exact Finset.sum_congr rfl fun j _ ↦ by rw [typeE₆MinusculeWeight_apply]; ring
+    exact Finset.sum_congr rfl fun j _ ↦ by rw [typeE₆MinusculeWeight]; ring
   rw [hexp, hcast]
   split_ifs <;> norm_num
 
@@ -207,7 +208,7 @@ theorem form_typeE₆MinusculeWeight_self :
   simp_rw [sum_cartanMatrixE₆_mul_minusculeWeight]
   rw [Finset.sum_eq_single_of_mem 0 (Finset.mem_univ 0)]
   · have hcoeff : typeE₆WeightCoeff 0 = 4 := by decide
-    rw [typeE₆MinusculeWeight_apply, hcoeff]
+    rw [typeE₆MinusculeWeight, hcoeff]
     norm_num
   · intro b _ hb
     simp [hb]
@@ -246,7 +247,7 @@ theorem zsmul_typeE₆MinusculeWeightClass_eq_zero_iff (k : ℤ) :
   · intro h
     obtain ⟨z, hz⟩ := h 0
     simp only [typeE₆MinusculeWeightDual, SetLike.val_smul, Pi.smul_apply,
-      typeE₆MinusculeWeight_apply, zsmul_eq_mul] at hz
+      typeE₆MinusculeWeight, zsmul_eq_mul] at hz
     have hcoeff : typeE₆WeightCoeff 0 = 4 := by decide
     rw [hcoeff] at hz
     push_cast at hz
@@ -258,7 +259,7 @@ theorem zsmul_typeE₆MinusculeWeightClass_eq_zero_iff (k : ℤ) :
   · rintro ⟨m, rfl⟩ i
     refine ⟨m * typeE₆WeightCoeff i, ?_⟩
     simp only [typeE₆MinusculeWeightDual, SetLike.val_smul, Pi.smul_apply,
-      typeE₆MinusculeWeight_apply, zsmul_eq_mul]
+      typeE₆MinusculeWeight, zsmul_eq_mul]
     push_cast
     ring
 
@@ -276,7 +277,7 @@ theorem addOrderOf_typeE₆MinusculeWeightClass :
   exact_mod_cast h
 
 /-- **The class of the minuscule weight `ϖ₁` generates the discriminant group of type `E₆`.** -/
-theorem zmultiples_typeE₆MinusculeWeightClass :
+theorem zmultiples_typeE₆MinusculeWeightClass_eq_top :
     AddSubgroup.zmultiples typeE₆MinusculeWeightClass = ⊤ := by
   apply AddSubgroup.eq_top_of_card_eq
   rw [Nat.card_zmultiples, addOrderOf_typeE₆MinusculeWeightClass,
@@ -287,11 +288,11 @@ of the minuscule weight `ϖ₁` as the image of `1`. -/
 noncomputable def typeE₆DiscriminantGroupEquiv :
     ZMod 3 ≃+ typeE₆RootLattice.DiscriminantGroup :=
   zmodAddEquivOfGenerator
-    (fun x ↦ by rw [zmultiples_typeE₆MinusculeWeightClass]; exact AddSubgroup.mem_top x)
+    (fun x ↦ by rw [zmultiples_typeE₆MinusculeWeightClass_eq_top]; exact AddSubgroup.mem_top x)
     natCard_discriminantGroup_typeE₆RootLattice
 
 @[simp]
-theorem typeE₆DiscriminantGroupEquiv_one :
+theorem typeE₆DiscriminantGroupEquiv_apply_one :
     typeE₆DiscriminantGroupEquiv 1 = typeE₆MinusculeWeightClass :=
   zmodAddEquivOfGenerator_apply_one _ _
 
@@ -392,7 +393,7 @@ theorem natCard_discriminantGroup_typeE₇RootLattice :
 
 /-- The simple-root coordinates of `2ϖ₇` in type `E₇`, from Bourbaki plate VI:
 `2ϖ₇ = 2α₁ + 3α₂ + 4α₃ + 6α₄ + 5α₅ + 4α₆ + 3α₇`. -/
-@[expose] def typeE₇WeightCoeff : Fin 7 → ℤ := ![2, 3, 4, 6, 5, 4, 3]
+private def typeE₇WeightCoeff : Fin 7 → ℤ := ![2, 3, 4, 6, 5, 4, 3]
 
 /-- The minuscule fundamental weight `ϖ₇` of type `E₇`, in simple-root coordinates. -/
 noncomputable def typeE₇MinusculeWeight : Fin 7 → ℚ :=
@@ -400,8 +401,9 @@ noncomputable def typeE₇MinusculeWeight : Fin 7 → ℚ :=
 
 @[simp]
 theorem typeE₇MinusculeWeight_apply (j : Fin 7) :
-    typeE₇MinusculeWeight j = (typeE₇WeightCoeff j : ℚ) / 2 := by
-  rw [typeE₇MinusculeWeight]
+    typeE₇MinusculeWeight j =
+      ((![2, 3, 4, 6, 5, 4, 3] : Fin 7 → ℤ) j : ℚ) / 2 := by
+  rw [typeE₇MinusculeWeight, typeE₇WeightCoeff]
 
 /-- The row combinations of `CartanMatrix.E 7` against the coordinates of `2ϖ₇`. -/
 private theorem sum_cartanMatrixE₇_mul_weightCoeff :
@@ -419,7 +421,7 @@ private theorem sum_cartanMatrixE₇_mul_minusculeWeight (i : Fin 7) :
   have hexp : (∑ j, (((CartanMatrix.E 7) i j : ℤ) : ℚ) * typeE₇MinusculeWeight j)
       = (∑ j, (((CartanMatrix.E 7) i j : ℤ) : ℚ) * ((typeE₇WeightCoeff j : ℤ) : ℚ)) / 2 := by
     rw [Finset.sum_div]
-    exact Finset.sum_congr rfl fun j _ ↦ by rw [typeE₇MinusculeWeight_apply]; ring
+    exact Finset.sum_congr rfl fun j _ ↦ by rw [typeE₇MinusculeWeight]; ring
   rw [hexp, hcast]
   split_ifs <;> norm_num
 
@@ -439,7 +441,7 @@ theorem form_typeE₇MinusculeWeight_self :
   simp_rw [sum_cartanMatrixE₇_mul_minusculeWeight]
   rw [Finset.sum_eq_single_of_mem 6 (Finset.mem_univ 6)]
   · have hcoeff : typeE₇WeightCoeff 6 = 3 := by decide
-    rw [typeE₇MinusculeWeight_apply, hcoeff]
+    rw [typeE₇MinusculeWeight, hcoeff]
     norm_num
   · intro b _ hb
     simp [hb]
@@ -478,7 +480,7 @@ theorem zsmul_typeE₇MinusculeWeightClass_eq_zero_iff (k : ℤ) :
   · intro h
     obtain ⟨z, hz⟩ := h 1
     simp only [typeE₇MinusculeWeightDual, SetLike.val_smul, Pi.smul_apply,
-      typeE₇MinusculeWeight_apply, zsmul_eq_mul] at hz
+      typeE₇MinusculeWeight, zsmul_eq_mul] at hz
     have hcoeff : typeE₇WeightCoeff 1 = 3 := by decide
     rw [hcoeff] at hz
     push_cast at hz
@@ -490,7 +492,7 @@ theorem zsmul_typeE₇MinusculeWeightClass_eq_zero_iff (k : ℤ) :
   · rintro ⟨m, rfl⟩ i
     refine ⟨m * typeE₇WeightCoeff i, ?_⟩
     simp only [typeE₇MinusculeWeightDual, SetLike.val_smul, Pi.smul_apply,
-      typeE₇MinusculeWeight_apply, zsmul_eq_mul]
+      typeE₇MinusculeWeight, zsmul_eq_mul]
     push_cast
     ring
 
@@ -508,7 +510,7 @@ theorem addOrderOf_typeE₇MinusculeWeightClass :
   exact_mod_cast h
 
 /-- **The class of the minuscule weight `ϖ₇` generates the discriminant group of type `E₇`.** -/
-theorem zmultiples_typeE₇MinusculeWeightClass :
+theorem zmultiples_typeE₇MinusculeWeightClass_eq_top :
     AddSubgroup.zmultiples typeE₇MinusculeWeightClass = ⊤ := by
   apply AddSubgroup.eq_top_of_card_eq
   rw [Nat.card_zmultiples, addOrderOf_typeE₇MinusculeWeightClass,
@@ -519,11 +521,11 @@ of the minuscule weight `ϖ₇` as the image of `1`. -/
 noncomputable def typeE₇DiscriminantGroupEquiv :
     ZMod 2 ≃+ typeE₇RootLattice.DiscriminantGroup :=
   zmodAddEquivOfGenerator
-    (fun x ↦ by rw [zmultiples_typeE₇MinusculeWeightClass]; exact AddSubgroup.mem_top x)
+    (fun x ↦ by rw [zmultiples_typeE₇MinusculeWeightClass_eq_top]; exact AddSubgroup.mem_top x)
     natCard_discriminantGroup_typeE₇RootLattice
 
 @[simp]
-theorem typeE₇DiscriminantGroupEquiv_one :
+theorem typeE₇DiscriminantGroupEquiv_apply_one :
     typeE₇DiscriminantGroupEquiv 1 = typeE₇MinusculeWeightClass :=
   zmodAddEquivOfGenerator_apply_one _ _
 
