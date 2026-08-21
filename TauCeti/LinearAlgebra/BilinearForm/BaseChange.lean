@@ -119,7 +119,6 @@ theorem nondegenerate_of_nondegenerate_baseChange [Finite ι] [IsDomain R] [IsDo
 /-- **Nondegeneracy is preserved and reflected by an injective base change of integral domains.**
 On a finite free module, nondegeneracy of a bilinear form is nonvanishing of the determinant of its
 Gram matrix, and an injective structure map neither creates nor destroys that. -/
-@[simp]
 theorem nondegenerate_baseChange_iff [Finite ι] [IsDomain A] [FaithfulSMul R A]
     (B : LinearMap.BilinForm R M) (b : Basis ι R M) :
     (B.baseChange A).Nondegenerate ↔ B.Nondegenerate := by
