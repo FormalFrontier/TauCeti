@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.IntegralCurve.ExistUnique
 public import Mathlib.Geometry.Manifold.IntegralCurve.Transform
+public import Mathlib.Geometry.Manifold.IntegralCurve.UniformTime
 public import TauCeti.Analysis.ODE.UniformTime
 public import TauCeti.Geometry.Manifold.IntegralCurve.Basic
 
@@ -86,17 +86,6 @@ theorem exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo [CompleteSpace E] [
     · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).2
     · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).1
 
-namespace IsMIntegralCurveAt
-
-/-- Being a local integral curve only depends on the germ of the curve. -/
-theorem congr_of_eventuallyEq {γ' : ℝ → M} (h : IsMIntegralCurveAt γ v t₀)
-    (heq : γ' =ᶠ[𝓝 t₀] γ) : IsMIntegralCurveAt γ' v t₀ := by
-  rw [IsMIntegralCurveAt] at h ⊢
-  filter_upwards [h, heq.eventually_nhds, heq] with t ht htg htg'
-  exact htg' ▸ ht.congr_of_eventuallyEq htg
-
-end IsMIntegralCurveAt
-
 namespace IsMIntegralCurveOn
 
 variable [CompleteSpace E] [IsManifold I 1 M] [BoundarylessManifold I M] [T2Space M]
@@ -134,38 +123,11 @@ theorem exists_gt_isMIntegralCurveOn_Ioo
     exact isMIntegralCurveOn_comp_sub.2 hα
   have hβ0 : β t₁ = γ t₁ := by simpa [hβdef] using hα0
   have hbc : b < t₁ + ε := by linarith
-  -- the two curves agree on the overlap, by uniqueness
-  set c₀ : ℝ := max a (t₁ - ε) with hc₀
-  have hc₀t₁ : c₀ < t₁ := max_lt ht₁a (by linarith)
-  have heq : EqOn γ β (Ioo c₀ b) :=
-    isMIntegralCurveOn_Ioo_eqOn_of_contMDiff_boundaryless ⟨hc₀t₁, ht₁b⟩ hv
-      (hγ.mono fun t ht ↦ ⟨lt_of_le_of_lt (le_max_left _ _) ht.1, ht.2⟩)
-      (hβ.mono fun t ht ↦ ⟨lt_of_le_of_lt (le_max_right _ _) ht.1, ht.2.trans hbc⟩) hβ0.symm
   -- glue the two curves at time `t₁`
-  refine ⟨t₁ + ε, hbc, fun t ↦ if t ≤ t₁ then γ t else β t, ?_, fun t ht ↦ ?_⟩
-  · refine IsMIntegralCurveAt.isMIntegralCurveOn fun t ht ↦ ?_
-    rcases lt_or_ge t t₁ with h | h
-    · refine (hγ.isMIntegralCurveAt (Ioo_mem_nhds ht.1 (h.trans ht₁b))).congr_of_eventuallyEq ?_
-      filter_upwards [Iio_mem_nhds h] with s hs
-      simp [le_of_lt (mem_Iio.mp hs)]
-    · have htc₀ : c₀ < t := lt_of_lt_of_le hc₀t₁ h
-      refine (hβ.isMIntegralCurveAt (Ioo_mem_nhds (by
-        simp only [hc₀, max_lt_iff] at htc₀; linarith [htc₀.2]) ht.2)).congr_of_eventuallyEq ?_
-      have htmem : t ∈ Ioo c₀ b ∪ Ioi t₁ := by
-        rcases h.lt_or_eq with hh | hh
-        · exact Or.inr hh
-        · exact Or.inl ⟨hh ▸ hc₀t₁, hh ▸ ht₁b⟩
-      filter_upwards [(isOpen_Ioo.union isOpen_Ioi).mem_nhds htmem] with s hs
-      rcases hs with hs | hs
-      · by_cases hst : s ≤ t₁
-        · simp only [hst, ite_true]
-          exact heq hs
-        · simp [hst]
-      · simp [not_le.mpr (mem_Ioi.mp hs)]
-  · by_cases hst : t ≤ t₁
-    · simp [hst]
-    · simp only [hst, ite_false]
-      exact (heq ⟨hc₀t₁.trans (not_le.mp hst), ht.2⟩).symm
+  refine ⟨t₁ + ε, hbc, piecewise (Ioo a b) γ β, ?_, piecewise_eqOn _ _ _⟩
+  exact (isMIntegralCurveOn_piecewise hv hγ hβ
+    ⟨⟨ht₁a, ht₁b⟩, ⟨by linarith, by linarith⟩⟩ hβ0.symm).mono
+      (Ioo_subset_Ioo_union_Ioo le_rfl (by linarith) le_rfl)
 
 /-- **The finite-endpoint extension criterion**, sequential form. If `u n → b` from inside
 `Ioo a b` and `γ (u n) → y`, then `γ` extends past `b`. -/
@@ -222,34 +184,10 @@ theorem exists_lt_isMIntegralCurveOn_Ioo
     exact isMIntegralCurveOn_comp_sub.2 hα
   have hβ0 : β t₁ = γ t₁ := by simpa [hβdef] using hα0
   have hca : t₁ - ε < a := by linarith
-  set c₁ : ℝ := min b (t₁ + ε) with hc₁
-  have ht₁c₁ : t₁ < c₁ := lt_min ht₁b (by linarith)
-  have heq : EqOn γ β (Ioo a c₁) :=
-    isMIntegralCurveOn_Ioo_eqOn_of_contMDiff_boundaryless ⟨ht₁a, ht₁c₁⟩ hv
-      (hγ.mono fun t ht ↦ ⟨ht.1, lt_of_lt_of_le ht.2 (min_le_left _ _)⟩)
-      (hβ.mono fun t ht ↦ ⟨hca.trans ht.1, lt_of_lt_of_le ht.2 (min_le_right _ _)⟩) hβ0.symm
-  refine ⟨t₁ - ε, hca, fun t ↦ if t₁ ≤ t then γ t else β t, ?_, fun t ht ↦ ?_⟩
-  · refine IsMIntegralCurveAt.isMIntegralCurveOn fun t ht ↦ ?_
-    rcases lt_or_ge t₁ t with h | h
-    · refine (hγ.isMIntegralCurveAt (Ioo_mem_nhds (ht₁a.trans h) ht.2)).congr_of_eventuallyEq ?_
-      filter_upwards [Ioi_mem_nhds h] with s hs
-      simp [le_of_lt (mem_Ioi.mp hs)]
-    · refine (hβ.isMIntegralCurveAt (Ioo_mem_nhds ht.1 (by linarith))).congr_of_eventuallyEq ?_
-      have htmem : t ∈ Ioo a c₁ ∪ Iio t₁ := by
-        rcases h.lt_or_eq with hh | hh
-        · exact Or.inr hh
-        · exact Or.inl ⟨hh ▸ ht₁a, hh ▸ ht₁c₁⟩
-      filter_upwards [(isOpen_Ioo.union isOpen_Iio).mem_nhds htmem] with s hs
-      rcases hs with hs | hs
-      · by_cases hst : t₁ ≤ s
-        · simp only [hst, ite_true]
-          exact heq hs
-        · simp [hst]
-      · simp [not_le.mpr (mem_Iio.mp hs)]
-  · by_cases hst : t₁ ≤ t
-    · simp [hst]
-    · simp only [hst, ite_false]
-      exact (heq ⟨ht.1, (not_le.mp hst).trans ht₁c₁⟩).symm
+  refine ⟨t₁ - ε, hca, piecewise (Ioo a b) γ β, ?_, piecewise_eqOn _ _ _⟩
+  exact (isMIntegralCurveOn_piecewise hv hγ hβ
+    ⟨⟨ht₁a, ht₁b⟩, ⟨by linarith, by linarith⟩⟩ hβ0.symm).mono
+      (union_comm _ _ ▸ Ioo_subset_Ioo_union_Ioo le_rfl (by linarith) le_rfl)
 
 /-- **The finite-endpoint extension criterion at the left endpoint**, sequential form. -/
 theorem exists_lt_isMIntegralCurveOn_Ioo_of_tendsto
@@ -262,7 +200,8 @@ theorem exists_lt_isMIntegralCurveOn_Ioo_of_tendsto
   exact map_mono (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within u hub
     (Eventually.of_forall fun n ↦ (hu n).1))
 
-/-- **The escape lemma at the left endpoint.** -/
+/-- **The escape lemma at the left endpoint.** An integral curve on `Ioo a b` that admits no
+extension before its finite left endpoint eventually leaves every compact set as `t → a⁺`. -/
 theorem eventually_notMem_nhdsGT
     (hγ : IsMIntegralCurveOn γ v (Ioo a b)) (hab : a < b)
     (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))

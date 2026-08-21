@@ -138,6 +138,7 @@ theorem mem_closedBall_of_hasDerivWithinAt_Icc {t₀ ε : ℝ} (hε : 0 ≤ ε)
     linarith
   -- the left half follows by reflecting the time variable, which negates the vector field
   have hleft : ∀ t ∈ Icc (t₀ - ε) t₀, f t ∈ closedBall c R := by
+    have hreflect_t₀ : 2 * t₀ - t₀ = t₀ := by ring
     have hsub : ∀ s ∈ Icc t₀ (t₀ + ε), 2 * t₀ - s ∈ Icc (t₀ - ε) (t₀ + ε) := by
       intro s hs; constructor <;> [linarith [hs.2]; linarith [hs.1]]
     have hF : ∀ s ∈ Icc t₀ (t₀ + ε),
@@ -151,14 +152,15 @@ theorem mem_closedBall_of_hasDerivWithinAt_Icc {t₀ ε : ℝ} (hε : 0 ≤ ε)
     have hG : ∀ y ∈ closedBall c R, ‖(fun y ↦ -g y) y‖ ≤ L := by
       intro y hy; simpa using hg y hy
     have hstart' : ‖(fun s ↦ f (2 * t₀ - s)) t₀ - c‖ + L * ε < R := by
-      simpa [show 2 * t₀ - t₀ = t₀ by ring] using hstart
+      simpa [hreflect_t₀] using hstart
     have := norm_sub_le_of_hasDerivWithinAt_Icc (f := fun s ↦ f (2 * t₀ - s)) (g := fun y ↦ -g y)
       (c := c) hF hG hL (by simpa using hstart')
     intro t ht
     have hs : 2 * t₀ - t ∈ Icc t₀ (t₀ + ε) := by
       constructor <;> [linarith [ht.2]; linarith [ht.1]]
     have h1 := this _ hs
-    simp only [show 2 * t₀ - (2 * t₀ - t) = t by ring, show 2 * t₀ - t₀ = t₀ by ring] at h1
+    have hreflect_t : 2 * t₀ - (2 * t₀ - t) = t := by ring
+    simp only [hreflect_t, hreflect_t₀] at h1
     have h2 : ‖f t - c‖ ≤ ‖f t - f t₀‖ + ‖f t₀ - c‖ := by
       rw [← sub_add_sub_cancel (f t) (f t₀) c]; exact norm_add_le _ _
     have h3 : L * (2 * t₀ - t - t₀) ≤ L * ε := mul_le_mul_of_nonneg_left (by linarith [ht.1]) hL
@@ -204,8 +206,9 @@ theorem exists_forall_mem_ball_exists_forall_mem_Ioo_hasDerivAt [CompleteSpace E
   set r' : ℝ≥0 := a' / 2 with hr'def
   have hr'lt : r' < a' := NNReal.half_lt_self ha'pos.ne'
   obtain ⟨ε, hε, hpl'⟩ := (hpl t₀).exists_shrink_radius hε₀ (min_le_left a ρ') hr'lt
+  have ha'coe_pos : (0 : ℝ) < (a' : ℝ) := by exact_mod_cast ha'pos
   have hr'pos : (0 : ℝ) < r' := by
-    simpa [hr'def] using (half_pos (show (0:ℝ) < a' by exact_mod_cast ha'pos))
+    simpa [hr'def] using half_pos ha'coe_pos
   refine ⟨r', hr'pos, ε, hε, fun x hx ↦ ?_⟩
   obtain ⟨α, hα0, hα⟩ := hpl'.exists_eq_forall_mem_Icc_hasDerivWithinAt
     (ball_subset_closedBall hx)
