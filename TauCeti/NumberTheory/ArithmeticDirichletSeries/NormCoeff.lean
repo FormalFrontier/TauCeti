@@ -16,9 +16,10 @@ public import Mathlib.NumberTheory.NumberField.DedekindZeta
 This file defines `TauCeti.normCoeff`, the ordinary arithmetic function obtained by summing an
 `IdealArithmeticFunction` over each fibre of the absolute norm.  These fibres are finite by
 `Ideal.finite_setOfPred_absNorm_eq`, so the coefficients are honest finite sums.  The resulting
-function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` carrier.
+function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` carrier; that value
+is available from `ArithmeticFunction.map_zero`.
 
-The basic API records the values at zero and one and compatibility with the additive operations,
+The basic API records the value at one and compatibility with the additive operations,
 complex scalar multiplication, and complex conjugation.  For the constant-one ideal arithmetic
 function, the positive coefficients are the numbers of integral ideals of the corresponding norm;
 hence its `LSeries` is Mathlib's `NumberField.dedekindZeta`.
@@ -70,14 +71,6 @@ theorem normCoeff_summand_hasFiniteSupport (f : IdealArithmeticFunction K) (n : 
     (Set.indicator
       {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n} f).HasFiniteSupport :=
   (finite_normFiber K n).subset Set.support_indicator_subset
-
-/-- The zeroth norm coefficient is zero. -/
-@[simp]
-theorem normCoeff_zero (f : IdealArithmeticFunction K) : normCoeff K f 0 = 0 := by
-  rw [normCoeff_apply]
-  apply finsum_mem_eq_zero_of_forall_eq_zero
-  intro I hI
-  exact (mem_nonZeroDivisors_iff_ne_zero.mp I.property (Ideal.absNorm_eq_zero_iff.mp hI)).elim
 
 /-- There is a unique nonzero integral ideal of absolute norm one, namely the unit ideal. -/
 @[simp]
