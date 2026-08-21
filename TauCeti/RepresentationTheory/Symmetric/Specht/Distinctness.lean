@@ -51,6 +51,41 @@ private theorem asAlgebraHom_comp_apply (e : Fin lam.card ≃ Fin m.card)
       simpa only [map_add, LinearMap.add_apply] using congrArg₂ (fun u v => u + v) ha hb
   | single g r => simp [Representation.asAlgebraHom_single]
 
+/-- **A transposition of two entries in the same column negates the transported column
+antisymmetrizer.** -/
+private theorem transportedColumnAntisymmetrizer_mul_single_swap
+    (e : Fin lam.card ≃ Fin m.card) (t : YoungTableau lam) {x y : Fin m.card} (hxy : x ≠ y)
+    (hcol : colIndex t (e.symm x) = colIndex t (e.symm y)) :
+    transportedColumnAntisymmetrizer e t * MonoidAlgebra.single (Equiv.swap x y) (1 : ℚ) =
+      -transportedColumnAntisymmetrizer e t := by
+  -- Transport the untransported antisymmetry relation along `e`, then evaluate the sign of a
+  -- transposition.
+  have hp₀ : Equiv.swap (e.symm x) (e.symm y) ∈ colSubgroup t := swap_mem_colSubgroup hcol
+  have hp : e.permCongrHom (Equiv.swap (e.symm x) (e.symm y)) = Equiv.swap x y := by
+    -- `permCongrHom` is conjugation by `e`, which is what `Equiv.symm_trans_swap_trans` computes
+    change (e.symm.trans (Equiv.swap (e.symm x) (e.symm y))).trans e = _
+    rw [Equiv.symm_trans_swap_trans, e.apply_symm_apply, e.apply_symm_apply]
+  -- Transport along the bundled `MonoidAlgebra.domCongr`, not the bare `mapDomainAlgHom`: the two
+  -- are the same algebra map (`MonoidAlgebra.domCongr_toAlgHom`), but only the bundled one carries
+  -- the `single` computation `MonoidAlgebra.domCongr_single`.
+  have h := congrArg (MonoidAlgebra.domCongr ℚ ℚ e.permCongrHom)
+    (mul_columnAntisymmetrizer_right t ⟨Equiv.swap (e.symm x) (e.symm y), hp₀⟩)
+  rw [map_mul, map_smul] at h
+  have hsingle :
+      MonoidAlgebra.domCongr ℚ ℚ e.permCongrHom
+          (MonoidAlgebra.single (Equiv.swap (e.symm x) (e.symm y)) 1) =
+        MonoidAlgebra.single (Equiv.swap x y) 1 := by
+    rw [MonoidAlgebra.domCongr_single, hp]
+  rw [hsingle] at h
+  -- `h` is phrased in the unfolded `mapDomainAlgHom … (columnAntisymmetrizer t)`; fold it back
+  -- into `transportedColumnAntisymmetrizer`, which is that expression by definition. A `rw` cannot
+  -- do this: the definition is not an equation lemma.
+  change transportedColumnAntisymmetrizer e t * MonoidAlgebra.single (Equiv.swap x y) 1 =
+    ((Equiv.Perm.sign (Equiv.swap (e.symm x) (e.symm y)) : ℤ) : ℚ) •
+      transportedColumnAntisymmetrizer e t at h
+  rw [h, Equiv.Perm.sign_swap (e.symm.injective.ne hxy)]
+  simp
+
 private theorem transportedColumnAntisymmetrizer_single_eq_zero
     (e : Fin lam.card ≃ Fin m.card) (t : YoungTableau lam)
     (q : Equiv.Perm (Fin m.card) ⧸ youngSubgroup (shapePartition m))
@@ -59,56 +94,14 @@ private theorem transportedColumnAntisymmetrizer_single_eq_zero
     (hfix : Equiv.swap x y • q = q) :
     (permutationModule (shapePartition m)).ρ.asAlgebraHom
         (transportedColumnAntisymmetrizer e t) (MonoidAlgebra.single q 1) = 0 := by
-  let p₀ : Equiv.Perm (Fin lam.card) := Equiv.swap (e.symm x) (e.symm y)
-  let p : Equiv.Perm (Fin m.card) := e.permCongrHom p₀
-  have hp₀ : p₀ ∈ colSubgroup t := swap_mem_colSubgroup hcol
-  have hp : p = Equiv.swap x y := by
-    apply Equiv.ext
-    intro z
-    -- Unfold conjugation just far enough to apply `Equiv.map_swap`.
-    change e (Equiv.swap (e.symm x) (e.symm y) (e.symm z)) = Equiv.swap x y z
-    simpa using e.injective.map_swap (e.symm x) (e.symm y) (e.symm z)
-  have hfix' : (permutationModule (shapePartition m)).ρ p (MonoidAlgebra.single q (1 : ℚ)) =
-      MonoidAlgebra.single q 1 := by
-    rw [Representation.ofMulAction_single, hp, hfix]
-  have hneg : transportedColumnAntisymmetrizer e t * MonoidAlgebra.single p (1 : ℚ) =
-      -transportedColumnAntisymmetrizer e t := by
-    have h := congrArg
-      (MonoidAlgebra.mapDomainAlgHom ℚ ℚ e.permCongrHom.toMonoidHom)
-      (mul_columnAntisymmetrizer_right t ⟨p₀, hp₀⟩)
-    rw [map_mul, map_smul] at h
-    have hsingle :
-        (MonoidAlgebra.mapDomainAlgHom ℚ ℚ e.permCongrHom.toMonoidHom)
-            (MonoidAlgebra.single p₀ 1) = MonoidAlgebra.single p 1 := by
-      -- Expose the underlying `mapDomain` operation so its basis lemma applies.
-      change MonoidAlgebra.mapDomain e.permCongrHom (MonoidAlgebra.single p₀ 1) = _
-      rw [MonoidAlgebra.mapDomain_single]
-    rw [hsingle] at h
-    -- Rewrite the transported definitions while retaining the useful equation `h`.
-    change transportedColumnAntisymmetrizer e t * MonoidAlgebra.single p 1 =
-      ((Equiv.Perm.sign p₀ : ℤ) : ℚ) • transportedColumnAntisymmetrizer e t at h
-    rw [hp] at h
-    rw [hp]
-    calc
-      transportedColumnAntisymmetrizer e t * MonoidAlgebra.single (Equiv.swap x y) 1 =
-          ((Equiv.Perm.sign p₀ : ℤ) : ℚ) • transportedColumnAntisymmetrizer e t := by
-        exact h
-      _ = -transportedColumnAntisymmetrizer e t := by
-        rw [Equiv.Perm.sign_swap (e.symm.injective.ne hxy)]
-        simp
-  have key : (permutationModule (shapePartition m)).ρ.asAlgebraHom
-        (transportedColumnAntisymmetrizer e t) (MonoidAlgebra.single q 1) =
-      -((permutationModule (shapePartition m)).ρ.asAlgebraHom
-        (transportedColumnAntisymmetrizer e t) (MonoidAlgebra.single q 1)) := by
-    conv_lhs => rw [← hfix']
-    rw [← Representation.asAlgebraHom_single_one (permutationModule (shapePartition m)).ρ,
-      ← Module.End.mul_apply, ← map_mul, hneg, map_neg, LinearMap.neg_apply]
-  have htwo : (2 : ℚ) • (permutationModule (shapePartition m)).ρ.asAlgebraHom
-      (transportedColumnAntisymmetrizer e t) (MonoidAlgebra.single q 1) = 0 := by
-    rw [two_smul]
-    nth_rewrite 2 [key]
-    exact add_neg_cancel _
-  exact (smul_eq_zero.mp htwo).resolve_left two_ne_zero
+  have hfix' : (permutationModule (shapePartition m)).ρ (Equiv.swap x y)
+      (MonoidAlgebra.single q (1 : ℚ)) = MonoidAlgebra.single q 1 := by
+    rw [Representation.ofMulAction_single, hfix]
+  -- the permutation module is a `ℚ`-vector space, so doubling is injective on it
+  have : IsAddTorsionFree (permutationModule (shapePartition m)) := .of_module_rat _
+  exact Representation.asAlgebraHom_eq_zero_of_mul_single_eq_neg
+    (nsmul_right_injective two_ne_zero) _ hfix'
+    (transportedColumnAntisymmetrizer_mul_single_swap e t hxy hcol)
 
 private theorem coe_toRepresentation_apply {G V : Type*} [Group G]
     [AddCommGroup V] [Module ℚ V] {ρ : Representation ℚ G V}
