@@ -322,6 +322,7 @@ theorem chevalleyInvolution_cartan (x : t.cartanSubalgebra ht) :
 
 /-- The pinned Chevalley involution normalizes the distinguished Cartan subalgebra. This is the
 hypothesis used to restrict it to the Cartan and to form its induced permutation of weights. -/
+@[simp]
 theorem map_chevalleyInvolution_cartanSubalgebra :
     (t.cartanSubalgebra ht).map (t.chevalleyInvolution ht).toLieHom =
       t.cartanSubalgebra ht := by
@@ -375,6 +376,7 @@ theorem comp_chevalleyInvolution_ofSubalgebras_symm
 
 /-- **The pinned Chevalley involution exchanges opposite root spaces.** For every Cartan
 functional `χ`, it carries the `χ`-root space onto the root space indexed by `-χ`. -/
+@[simp]
 theorem map_rootSpace_chevalleyInvolution
     (χ : Module.Dual ℚ (t.cartanSubalgebra ht)) :
     (LieAlgebra.rootSpace (t.cartanSubalgebra ht) χ).toSubmodule.map
