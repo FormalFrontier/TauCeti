@@ -6,31 +6,33 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.BaseChange
-public import Mathlib.Algebra.Lie.Killing
+public import TauCeti.Algebra.Lie.Killing.Basic
 public import TauCeti.LinearAlgebra.BilinearForm.BaseChange
 
 /-!
 # The Killing property under base change
 
 `LieAlgebra.IsKilling R L` says that the Killing form of `L` is nonsingular. This file proves that
-for a finite free Lie algebra over an integral domain the property neither gains nor loses content
-under an injective base change into a second integral domain:
+for a finite free Lie algebra over an integral domain the property descends along any base change
+into a second integral domain, and that an injective base change loses nothing either:
 
 ```text
-IsKilling A (A ⊗[R] L) ↔ IsKilling R L.
+IsKilling A (A ⊗[R] L) → IsKilling R L,  and  IsKilling A (A ⊗[R] L) ↔ IsKilling R L.
 ```
 
-Both halves are useful, and the two are proved together because they are the two directions of one
-equivalence. The forward direction transports a semisimplicity statement *down* from a large
-coefficient ring to a small one, which is what a construction over `ℚ` needs when the available
-theorem is stated over an algebraically closed field. The backward direction transports it *up*,
-which is what a base-changed Lie algebra needs before Mathlib's `IsKilling` machinery applies to it.
+Both halves are useful. The descent direction transports a semisimplicity statement *down* from a
+large coefficient ring to a small one, which is what a construction over `ℚ` needs when the
+available theorem is stated over an algebraically closed field; it asks nothing of the structure
+map, so it also covers reduction `ℤ → 𝔽ₚ`. The ascent direction transports the property *up*,
+which is what a base-changed Lie algebra needs before Mathlib's `IsKilling` machinery applies to
+it, and there injectivity is genuinely needed.
 
 The mathematical content is entirely in the Gram matrix. Mathlib's `LieModule.traceForm_baseChange`
 already says that the Killing form of `A ⊗[R] L` is the base change of the Killing form of `L`, and
-`TauCeti.nondegenerate_baseChange_iff` says that an injective base change of integral domains
-preserves and reflects nondegeneracy of a bilinear form on a finite free module. What remains is to
-read `IsKilling` as nondegeneracy of the Killing form in both directions;
+`TauCeti.nondegenerate_of_nondegenerate_baseChange` and
+`TauCeti.nondegenerate_baseChange_iff` say how a base change of integral domains reflects
+and preserves nondegeneracy of a bilinear form on a finite free module. What remains is to read
+`IsKilling` as nondegeneracy of the Killing form in both directions;
 `TauCeti.isKilling_of_killingForm_nondegenerate` is the direction Mathlib does not already provide.
 
 Nothing here needs the coefficients to be a field, and no characteristic hypothesis appears: the
@@ -39,12 +41,11 @@ between semisimplicity and the Killing property, not the base change of the Kill
 
 ## Main declarations
 
-* `TauCeti.isKilling_of_killingForm_nondegenerate`: a Lie algebra whose Killing form is
-  nondegenerate is Killing, the converse of `LieAlgebra.IsKilling.killingForm_nondegenerate`.
-* `TauCeti.isKilling_baseChange_iff`: the Killing property transfers in both directions along an
-  injective base change of integral domains.
-* `TauCeti.isKilling_of_isKilling_baseChange`: the descent direction, in the form a consumer holding
-  a theorem over a larger coefficient ring applies.
+* `TauCeti.isKilling_of_isKilling_baseChange`: the Killing property descends along any base change
+  of integral domains, in the form a consumer holding a theorem over a larger coefficient ring
+  applies.
+* `TauCeti.isKilling_baseChange_iff`: along an injective base change of integral domains the
+  descent is an equivalence.
 
 ## Roadmap
 
@@ -80,41 +81,38 @@ namespace TauCeti
 open LieAlgebra LieModule
 
 variable (R A L : Type*) [CommRing R] [CommRing A] [Algebra R A]
-variable [LieRing L] [LieAlgebra R L]
-
-/-- A Lie algebra whose Killing form is nondegenerate is Killing.
-
-This is the converse of `LieAlgebra.IsKilling.killingForm_nondegenerate`, and the two together say
-that `LieAlgebra.IsKilling` is exactly nondegeneracy of the Killing form. -/
-theorem isKilling_of_killingForm_nondegenerate (h : (killingForm R L).Nondegenerate) :
-    IsKilling R L := by
-  refine ⟨(LieSubmodule.eq_bot_iff _).mpr fun x hx ↦ h.1 x fun y ↦ ?_⟩
-  simp only [LieIdeal.mem_killingCompl, LieSubmodule.mem_top, forall_true_left] at hx
-  rw [traceForm_comm R L L x y]
-  exact hx y
-
-variable [IsDomain R] [IsDomain A] [FaithfulSMul R A] [Module.Free R L] [Module.Finite R L]
-
-/-- **The Killing property under base change.** For a finite free Lie algebra over an integral
-domain, and an injective structure map into a second integral domain, the base change is Killing
-exactly when the original is. -/
-theorem isKilling_baseChange_iff : IsKilling A (A ⊗[R] L) ↔ IsKilling R L := by
-  -- `killingForm` is Mathlib's abbreviation for the trace form of the adjoint representation, so
-  -- `LieModule.traceForm_baseChange` states exactly this.
-  have hform : killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A :=
-    traceForm_baseChange R L L A
-  have key : (killingForm A (A ⊗[R] L)).Nondegenerate ↔ (killingForm R L).Nondegenerate := by
-    rw [hform]
-    exact nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)
-  exact ⟨fun _ ↦ isKilling_of_killingForm_nondegenerate R L
-      (key.mp (IsKilling.killingForm_nondegenerate A (A ⊗[R] L))),
-    fun _ ↦ isKilling_of_killingForm_nondegenerate A (A ⊗[R] L)
-      (key.mpr (IsKilling.killingForm_nondegenerate R L))⟩
+variable [LieRing L] [LieAlgebra R L] [Module.Free R L] [Module.Finite R L]
+variable [IsDomain A]
 
 /-- **Descent of the Killing property.** A finite free Lie algebra over an integral domain is
-Killing as soon as some injective base change of it into an integral domain is. -/
-theorem isKilling_of_isKilling_baseChange [IsKilling A (A ⊗[R] L)] : IsKilling R L :=
-  (isKilling_baseChange_iff R A L).mp inferInstance
+Killing as soon as some base change of it into an integral domain is; the structure map is
+unrestricted, so this covers reduction of an integral form as well as extension of scalars. -/
+theorem isKilling_of_isKilling_baseChange [IsDomain R] [IsKilling A (A ⊗[R] L)] :
+    IsKilling R L := by
+  -- `killingForm` is Mathlib's abbreviation for the trace form of the adjoint representation, so
+  -- `LieModule.traceForm_baseChange` says that the Killing form of `A ⊗[R] L` is the base change
+  -- of the Killing form of `L`.
+  have hform : killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A :=
+    traceForm_baseChange R L L A
+  refine isKilling_of_killingForm_nondegenerate R L
+    (nondegenerate_of_nondegenerate_baseChange A _ (Module.Free.chooseBasis R L) ?_)
+  rw [← hform]
+  exact IsKilling.killingForm_nondegenerate A (A ⊗[R] L)
+
+/-- **The Killing property under an injective base change.** For a finite free Lie algebra over an
+integral domain, and an injective structure map into a second integral domain, the base change is
+Killing exactly when the original is. -/
+theorem isKilling_baseChange_iff [FaithfulSMul R A] :
+    IsKilling A (A ⊗[R] L) ↔ IsKilling R L := by
+  have : IsDomain R :=
+    Function.Injective.isDomain (algebraMap R A) (FaithfulSMul.algebraMap_injective R A)
+  have hform : killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A :=
+    traceForm_baseChange R L L A
+  refine ⟨fun _ ↦ isKilling_of_isKilling_baseChange R A L, fun _ ↦ ?_⟩
+  refine isKilling_of_killingForm_nondegenerate A (A ⊗[R] L) ?_
+  rw [hform]
+  exact (nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)).mpr
+    (IsKilling.killingForm_nondegenerate R L)
 
 /-! The intended application is a field extension, where every hypothesis above is automatic. -/
 
