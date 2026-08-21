@@ -16,8 +16,8 @@ the standard basis of `sl (Fin 2)` in the module `TauCeti.Sl2Std K n`.
 
 ## Main result
 
-* `TauCeti.Sl2Std.representation_ι`: the canonical enveloping representation agrees with
-  `TauCeti.Sl2Std.rep` on every `sl₂` generator.
+* `TauCeti.Sl2Std.representation_ι'`: the simp-normal form of the canonical enveloping
+  representation on every `sl₂` generator.
 * `TauCeti.Sl2Std.representation_ι_slFinTwoBasis`: the canonical enveloping representation sends
   the standard `sl₂` basis to the raising, lowering, and Cartan operators.
 -/
@@ -30,14 +30,17 @@ open scoped Matrix
 
 variable {K : Type*} [CommRing K] {n : ℕ}
 
-/-- The canonical enveloping-algebra representation agrees with `TauCeti.Sl2Std.rep` on every
-element of `sl (Fin 2) K`. -/
-theorem representation_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
+/-- The simp-normal form of the canonical enveloping-algebra representation on an element of
+`sl (Fin 2) K`. -/
+@[simp]
+theorem representation_ι' (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
     TauCeti.UniversalEnvelopingAlgebra.representation K
         (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n)
-        (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x := by
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom K
+          (LieAlgebra.SpecialLinear.sl (Fin 2) K) (TensorAlgebra.ι K x)) = rep K n x := by
   ext v
-  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι_apply, lie_eq_rep_apply]
+  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι',
+    LieModule.toEnd_apply_apply, lie_eq_rep_apply]
 
 /-- The canonical enveloping-algebra representation sends the standard `sl₂` basis elements to
 the raising, lowering, and Cartan operators. -/
@@ -46,6 +49,8 @@ theorem representation_ι_slFinTwoBasis (i : Fin 3) :
         (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n)
         (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
       ![raise K n, lower K n, diag K n] i := by
-  rw [representation_ι, rep_apply_basis]
+  ext v
+  rw [TauCeti.UniversalEnvelopingAlgebra.representation_ι_apply,
+    lie_eq_rep_apply, rep_apply_basis]
 
 end TauCeti.Sl2Std
