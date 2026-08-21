@@ -107,14 +107,17 @@ private theorem zmultiples_le_radical_intQuadratic (n : ℕ) (a : AddCircle (1 :
   intro x hx
   obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
   constructor
+  -- Evaluate the quadratic map on this explicit generator multiple.
   · change (((k * (n : ℤ)) * (k * n)) • a) = 0
     have hcoeff : (k * (n : ℤ)) * (k * n) = (k * k) * (n * n) := by ring
     rw [hcoeff, mul_smul, hq, smul_zero]
   · apply LinearMap.ext
     intro y
+    -- The second radical condition is the vanishing of the polar map.
     change QuadraticMap.polar (intQuadratic a) (k • (n : ℤ)) y = 0
     rw [intQuadratic, LinearMap.BilinMap.polar_toQuadraticMap]
     simp only [intBilin, LinearMap.mk₂_apply, smul_eq_mul]
+    -- Expose the two evaluations of the underlying integer bilinear map.
     change ((k * (n : ℤ) * y) • a) + ((y * (k * n)) • a) = 0
     rw [← add_smul]
     have hcoeff : k * (n : ℤ) * y + y * (k * n) = (k * y) * (2 * n) := by ring
@@ -146,14 +149,29 @@ private theorem cyclicQuadraticMap_one (n : ℕ) (a : AddCircle (1 : ℚ))
         (QuotientAddGroup.mk 1) = QuotientAddGroup.mk 1 := by
       apply (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).injective
       rw [AddEquiv.apply_symm_apply, QuotientAddGroup.quotientAddEquivOfEq_mk]
+    -- Expose the composition defining the quotient-to-`ZMod` equivalence.
     change (1 : ZMod n) = Int.quotientZMultiplesNatEquivZMod n (QuotientAddGroup.mk 1)
     rw [Int.quotientZMultiplesNatEquivZMod, AddEquiv.trans_apply, hs]
+    -- The generator of `ZMod n` is definitionally the image of the integer generator.
     change (1 : ZMod n) = ((1 : ℤ) : ZMod n)
     simp
+  -- Expose the lifted quadratic map at the quotient representative.
   change (intQuadratic a).lift (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule _
     ((intQuotientEquivZMod n).symm 1) = a
   rw [he, QuadraticMap.lift_mk]
   simp [intQuadratic, intBilin]
+
+private noncomputable def quadraticMapIsometryOfGenerator (n : ℕ) [NeZero n]
+    {A : Type*} [AddCommGroup A]
+    (q : QuadraticMap ℤ (ZMod n) (AddCircle (1 : ℚ)))
+    (r : QuadraticMap ℤ A (AddCircle (1 : ℚ))) (e : ZMod n ≃+ A)
+    (he : r (e 1) = q 1) : q.IsometryEquiv r where
+  toLinearEquiv := e.toIntLinearEquiv
+  map_app' x := by
+    obtain ⟨k, rfl⟩ := ZMod.intCast_surjective x
+    -- Identify the bundled linear equivalence with its underlying additive equivalence.
+    change r (e (k : ZMod n)) = q (k : ZMod n)
+    rw [← zsmul_one, map_zsmul, r.map_smul, q.map_smul, he]
 
 /-! ## The root lattice of type `E₆` -/
 
@@ -387,12 +405,14 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
 
 private theorem typeE₆QuadraticValue_sq_torsion :
     (9 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
+  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
   change ((((9 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
   rw [QuotientAddGroup.eq_zero_iff]
   exact ⟨6, by norm_num⟩
 
 private theorem typeE₆QuadraticValue_polar_torsion :
     (6 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
+  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
   change ((((6 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
   rw [QuotientAddGroup.eq_zero_iff]
   exact ⟨4, by norm_num⟩
@@ -407,16 +427,7 @@ noncomputable def typeE₆StandardQuadraticMap :
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule where
   toFiniteBilinearModule := {
     carrier := ZMod 3
-    pairing := {
-      toFun := fun x ↦ (typeE₆StandardQuadraticMap.polarBilin x).toAddMonoidHom
-      map_zero' := by ext y; change typeE₆StandardQuadraticMap.polarBilin 0 y = 0; simp
-      map_add' := by
-        intro x y
-        ext z
-        change typeE₆StandardQuadraticMap.polarBilin (x + y) z =
-          typeE₆StandardQuadraticMap.polarBilin x z +
-            typeE₆StandardQuadraticMap.polarBilin y z
-        simp }
+    pairing := LinearMap.toAddMonoidHom'.comp typeE₆StandardQuadraticMap.polarBilin.toAddMonoidHom
     pairing_comm := fun x y ↦ QuadraticMap.polar_comm typeE₆StandardQuadraticMap x y }
   quadratic := typeE₆StandardQuadraticMap
   polar_eq_pairing' := fun _ _ ↦ rfl
@@ -432,18 +443,12 @@ theorem typeE₆StandardQuadraticMap_one :
 quadratic module of the `E₆` root lattice. -/
 noncomputable def typeE₆DiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry typeE₆StandardQuadraticModule
-      (typeE₆RootLattice.discriminantQuadraticModule isEven_typeE₆RootLattice) where
-  toLinearEquiv := typeE₆DiscriminantGroupEquiv.toIntLinearEquiv
-  map_app' x := by
-    change ZMod 3 at x
-    obtain ⟨k, rfl⟩ := ZMod.intCast_surjective x
-    change typeE₆RootLattice.discriminantQuadraticMap isEven_typeE₆RootLattice
-      (typeE₆DiscriminantGroupEquiv (k : ZMod 3)) =
-      typeE₆StandardQuadraticMap (k : ZMod 3)
-    rw [← zsmul_one, map_zsmul, QuadraticMap.map_smul, QuadraticMap.map_smul,
-      typeE₆DiscriminantGroupEquiv_apply_one,
-      discriminantQuadraticMap_typeE₆MinusculeWeightClass,
-      typeE₆StandardQuadraticMap_one]
+      (typeE₆RootLattice.discriminantQuadraticModule isEven_typeE₆RootLattice) :=
+  quadraticMapIsometryOfGenerator 3 typeE₆StandardQuadraticMap
+    (typeE₆RootLattice.discriminantQuadraticMap isEven_typeE₆RootLattice)
+    typeE₆DiscriminantGroupEquiv (by
+      rw [typeE₆DiscriminantGroupEquiv_apply_one,
+        discriminantQuadraticMap_typeE₆MinusculeWeightClass, typeE₆StandardQuadraticMap_one])
 
 /-- The underlying additive equivalence of the type-`E₆` quadratic isometry. -/
 @[simp]
@@ -691,6 +696,7 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
 
 private theorem typeE₇QuadraticValue_torsion :
     (4 : ℤ) • ((((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
+  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
   change ((((4 : ℚ) * (3 / 4)) : ℚ) : AddCircle (1 : ℚ)) = 0
   rw [QuotientAddGroup.eq_zero_iff]
   exact ⟨3, by norm_num⟩
@@ -705,16 +711,7 @@ noncomputable def typeE₇StandardQuadraticMap :
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule where
   toFiniteBilinearModule := {
     carrier := ZMod 2
-    pairing := {
-      toFun := fun x ↦ (typeE₇StandardQuadraticMap.polarBilin x).toAddMonoidHom
-      map_zero' := by ext y; change typeE₇StandardQuadraticMap.polarBilin 0 y = 0; simp
-      map_add' := by
-        intro x y
-        ext z
-        change typeE₇StandardQuadraticMap.polarBilin (x + y) z =
-          typeE₇StandardQuadraticMap.polarBilin x z +
-            typeE₇StandardQuadraticMap.polarBilin y z
-        simp }
+    pairing := LinearMap.toAddMonoidHom'.comp typeE₇StandardQuadraticMap.polarBilin.toAddMonoidHom
     pairing_comm := fun x y ↦ QuadraticMap.polar_comm typeE₇StandardQuadraticMap x y }
   quadratic := typeE₇StandardQuadraticMap
   polar_eq_pairing' := fun _ _ ↦ rfl
@@ -730,18 +727,12 @@ theorem typeE₇StandardQuadraticMap_one :
 quadratic module of the `E₇` root lattice. -/
 noncomputable def typeE₇DiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry typeE₇StandardQuadraticModule
-      (typeE₇RootLattice.discriminantQuadraticModule isEven_typeE₇RootLattice) where
-  toLinearEquiv := typeE₇DiscriminantGroupEquiv.toIntLinearEquiv
-  map_app' x := by
-    change ZMod 2 at x
-    obtain ⟨k, rfl⟩ := ZMod.intCast_surjective x
-    change typeE₇RootLattice.discriminantQuadraticMap isEven_typeE₇RootLattice
-      (typeE₇DiscriminantGroupEquiv (k : ZMod 2)) =
-      typeE₇StandardQuadraticMap (k : ZMod 2)
-    rw [← zsmul_one, map_zsmul, QuadraticMap.map_smul, QuadraticMap.map_smul,
-      typeE₇DiscriminantGroupEquiv_apply_one,
-      discriminantQuadraticMap_typeE₇MinusculeWeightClass,
-      typeE₇StandardQuadraticMap_one]
+      (typeE₇RootLattice.discriminantQuadraticModule isEven_typeE₇RootLattice) :=
+  quadraticMapIsometryOfGenerator 2 typeE₇StandardQuadraticMap
+    (typeE₇RootLattice.discriminantQuadraticMap isEven_typeE₇RootLattice)
+    typeE₇DiscriminantGroupEquiv (by
+      rw [typeE₇DiscriminantGroupEquiv_apply_one,
+        discriminantQuadraticMap_typeE₇MinusculeWeightClass, typeE₇StandardQuadraticMap_one])
 
 /-- The underlying additive equivalence of the type-`E₇` quadratic isometry. -/
 @[simp]
