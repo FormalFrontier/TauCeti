@@ -57,9 +57,10 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
   `x * x̄ = x̄ * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
 * `TauCeti.Octonion.normQuadraticForm`: the norm, bundled as a `QuadraticForm`, so that Mathlib's
-  `QuadraticMap.polar` API supplies the associated symmetric bilinear form; that form is visible
+  `QuadraticMap.polar` API supplies the associated symmetric bilinear form. That form is visible
   inside the algebra as `TauCeti.Octonion.mul_conj_add_mul_conj`,
-  `x * conj y + y * conj x = ⟨x, y⟩ · 1`.
+  `x * conj y + y * conj x = QuadraticMap.polar (normQuadraticForm R) x y • 1`, and it is the trace
+  form of the composition algebra, `TauCeti.Octonion.trace_mul_conj`.
 * `TauCeti.Octonion.left_alternative`, `TauCeti.Octonion.right_alternative` and
   `TauCeti.Octonion.flexible`: `𝕆` is **alternative** and **flexible**.
 * `TauCeti.Octonion.moufang_left`, `TauCeti.Octonion.moufang_right` and
@@ -437,54 +438,63 @@ theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
 Packaging the norm this way makes Mathlib's `QuadraticMap.polar` API — symmetry, bilinearity in each
 argument, and `QuadraticMap.polar_self` — available for the associated symmetric form, which is what
 the Hermitian matrix algebras over `𝕆` are built from. -/
-def normQuadraticForm (R : Type*) [CommRing R] : QuadraticForm R (Octonion R) where
-  toFun := norm
-  toFun_smul a x := by simp [smul_eq_mul]; ring
-  exists_companion' :=
-    ⟨LinearMap.mk₂ R (fun x y => x.a * y.b + y.a * x.b - x.v ⬝ᵥ y.w - y.v ⬝ᵥ x.w)
-      (fun _ _ _ => by simp [add_dotProduct, dotProduct_add]; ring)
-      (fun _ _ _ => by simp [smul_dotProduct, dotProduct_smul, smul_eq_mul]; ring)
-      (fun _ _ _ => by simp [add_dotProduct, dotProduct_add]; ring)
-      (fun _ _ _ => by simp [smul_dotProduct, dotProduct_smul, smul_eq_mul]; ring),
-      fun _ _ => by simp [norm_def, add_dotProduct, dotProduct_add]; ring⟩
+def normQuadraticForm (R : Type*) [CommRing R] : QuadraticForm R (Octonion R) :=
+  -- `QuadraticMap.ofPolar` asks only for the two left-argument laws and derives the right-argument
+  -- ones from `QuadraticMap.polar_comm`.
+  QuadraticMap.ofPolar norm (fun _ _ => by simp [smul_eq_mul]; ring)
+    (fun _ _ _ => by
+      simp [QuadraticMap.polar, norm_def, add_dotProduct, dotProduct_add]; ring)
+    (fun _ _ _ => by
+      simp [QuadraticMap.polar, norm_def, smul_dotProduct, dotProduct_smul, smul_eq_mul]; ring)
 
 @[simp] theorem normQuadraticForm_apply (x : Octonion R) : normQuadraticForm R x = norm x := (rfl)
 
 /-- The polar form of the norm, read off the entries of the two vector matrices. Stated for
 `QuadraticMap.polar` rather than for `QuadraticMap.polarBilin`, which `simp` unfolds to it. Not a
-`simp` lemma: the polar form is the interface the Hermitian matrix algebras are stated against, and
-`simp` should not take it apart into coordinates behind their backs. -/
-theorem polar_normQuadraticForm_apply (x y : Octonion R) :
+`simp` lemma: the polar form and its half `QuadraticMap.associated` are the interface the Hermitian
+matrix algebras are stated against, and `simp` should not take it apart into coordinates behind
+their backs. -/
+theorem polar_normQuadraticForm (x y : Octonion R) :
     QuadraticMap.polar (normQuadraticForm R) x y =
       x.a * y.b + y.a * x.b - x.v ⬝ᵥ y.w - y.v ⬝ᵥ x.w := by
   simp [QuadraticMap.polar, norm_def, add_dotProduct, dotProduct_add]
   ring
 
-/-- **The polar form of the norm is visible inside the algebra**: `x * conj y + y * conj x` is
-the scalar
-`⟨x, y⟩ · 1`. Together with `TauCeti.Octonion.self_mul_conj`, which is the case `y = x`, this is
-what makes the symmetric form of a composition algebra an algebraic, not merely a quadratic,
-datum. -/
+/-- The polar form of the norm is unchanged by conjugating both arguments: conjugation is additive
+and preserves the norm. -/
+theorem polar_normQuadraticForm_conj (x y : Octonion R) :
+    QuadraticMap.polar (normQuadraticForm R) (conj x) (conj y) =
+      QuadraticMap.polar (normQuadraticForm R) x y := by
+  simp [polar_normQuadraticForm]
+  ring
+
+/-- **The polar form of the norm is the trace form** `(x, y) ↦ trace (x * conj y)`: the two
+descriptions of the symmetric bilinear form of a composition algebra agree. -/
+theorem trace_mul_conj (x y : Octonion R) :
+    trace (x * conj y) = QuadraticMap.polar (normQuadraticForm R) x y := by
+  simp [polar_normQuadraticForm, dotProduct_comm]
+  ring
+
+/-- **The polar form of the norm is visible inside the algebra**: `x * conj y + y * conj x` is the
+scalar `QuadraticMap.polar (normQuadraticForm R) x y · 1`. Together with
+`TauCeti.Octonion.self_mul_conj`, which is the case `y = x` up to a factor of `2`, this is what
+makes the symmetric form of a composition algebra an algebraic, not merely a quadratic, datum. -/
 theorem mul_conj_add_mul_conj (x y : Octonion R) :
     x * conj y + y * conj x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
   -- The two vector entries cancel in pairs by `Matrix.cross_anticomm`, which is used at the
   -- entries it is needed at rather than in its `simp` orientation.
   refine Octonion.ext ?_ ?_ ?_ ?_ <;>
     simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
-      polar_normQuadraticForm_apply]
+      polar_normQuadraticForm]
   · ring
   · ring
   · module
 
-/-- The mirror of `TauCeti.Octonion.mul_conj_add_mul_conj`, with the conjugates on the left. -/
+/-- The mirror of `TauCeti.Octonion.mul_conj_add_mul_conj`, with the conjugates on the left: it is
+that identity at `(conj x, conj y)`, since the polar form is conjugation-invariant. -/
 theorem conj_mul_add_conj_mul (x y : Octonion R) :
     conj x * y + conj y * x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
-  refine Octonion.ext ?_ ?_ ?_ ?_ <;>
-    simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
-      polar_normQuadraticForm_apply]
-  · ring
-  · ring
-  · module
+  simpa [polar_normQuadraticForm_conj] using mul_conj_add_mul_conj (conj x) (conj y)
 
 /-! ### Alternativity -/
 

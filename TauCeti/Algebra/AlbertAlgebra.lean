@@ -23,19 +23,20 @@ form a ring (their entries do not associate), so `Matrix.mul` would carry no alg
 inherit, and the subtype would still have to be given its multiplication by hand.
 
 Carrying out the matrix product `½ (A B + B A)` on that data leaves an expression in the octonion
-multiplication and in the symmetric form `⟨x, y⟩ = ½ (x * conj y + y * conj x)` of the norm: the
-diagonal of the product is `d i * e i + ⟨x (i + 1), y (i + 1)⟩ + ⟨x (i + 2), y (i + 2)⟩`, and the
-entries are
+multiplication and in the symmetric bilinear form of the split-octonion norm. That form is Mathlib's
+`β = QuadraticMap.associated (TauCeti.Octonion.normQuadraticForm R)` — half the polar form, and the
+scalar `½ (x * conj y + y * conj x)` — so the bilinearity and symmetry the product needs are
+Mathlib's. The diagonal of the product is
+`d i * e i + β (x (i + 1)) (y (i + 1)) + β (x (i + 2)) (y (i + 2))`, and the entries are
 `½ ((d (i + 1) + d (i + 2)) • y i + (e (i + 1) + e (i + 2)) • x i)` corrected by the conjugate of
-`½ (x (i + 1) * y (i + 2) + y (i + 1) * x (i + 2))`. That expression *is* the definition below; the
-symmetric form is `QuadraticMap.polar` of `TauCeti.Octonion.normQuadraticForm`, halved, so the
-bilinearity and symmetry the product needs are Mathlib's.
+`½ (x (i + 1) * y (i + 2) + y (i + 1) * x (i + 2))`. That expression *is* the definition below.
 
 The product is commutative, `R`-bilinear, and unital with the identity matrix as its unit, and the
-three diagonal matrix units form a complete orthogonal frame of idempotents. The **Jordan identity**
+three diagonal idempotents form a complete orthogonal frame. The **Jordan identity**
 `(A ∘ B) ∘ A² = A ∘ (B ∘ A²)` — that is, `IsCommJordan (AlbertAlgebra R)` — is **not proved here**;
-it is the one remaining clause of the roadmap target this file otherwise discharges, and it is the
-reason `H₃(𝕆)` is an exceptional Jordan algebra rather than merely a commutative one.
+it is what makes `H₃(𝕆)` an exceptional Jordan algebra rather than merely a commutative one, and it
+deserves its own file. The same roadmap unit also pins `finrank_derivationAlbert`
+(`finrank (Der H₃(𝕆)) = 52`) and `derivationAlbert_equiv_f4`, which are not proved here either.
 
 Everything is stated over a commutative ring. The invertibility of `2` is genuinely needed: the
 symmetrized product of matrices is a halved sum, and over `ℤ` the halved symmetric form of the split
@@ -44,34 +45,33 @@ are well behaved, as `StrongRankCondition` and nothing more.
 
 ## Main definitions
 
-* `TauCeti.AlbertAlgebra`: the split Albert algebra over `R`, with its
-  `NonUnitalNonAssocCommRing` and `Module R` structure, the two scalar towers, and its unit.
+* `TauCeti.AlbertAlgebra`: the split Albert algebra over `R`, with its `NonAssocCommRing` and
+  `Module R` structure and the two scalar towers.
 * `TauCeti.AlbertAlgebra.trace`: the trace `d 0 + d 1 + d 2`, an `R`-linear functional.
 * `TauCeti.AlbertAlgebra.traceZero`: the trace-zero subspace `J₀`, the kernel of the trace.
-* `TauCeti.AlbertAlgebra.diagIdem`: the three diagonal matrix units `E₀`, `E₁`, `E₂`.
+* `TauCeti.AlbertAlgebra.diagIdempotent`: the three diagonal idempotents `E₀`, `E₁`, `E₂`.
 
 ## Main results
 
 * `TauCeti.AlbertAlgebra.finrank_eq_twentySeven`: `H₃(𝕆)` is `27`-dimensional.
 * `TauCeti.AlbertAlgebra.finrank_traceZero`: the trace-zero subspace is `26`-dimensional.
-* the `NonUnitalNonAssocCommRing` and `MulOneClass` instances: the product is `R`-bilinear and
-  commutative, and the identity matrix is a two-sided unit. Mathlib has no class for a unital
-  commutative non-associative ring, so unitality is recorded by the second instance rather than
-  bundled into the first.
-* `TauCeti.AlbertAlgebra.diagIdem_mul_diagIdem` and `TauCeti.AlbertAlgebra.sum_diagIdem`: the
-  diagonal matrix units are orthogonal idempotents summing to `1`.
+* the `NonAssocCommRing` instance: the product is `R`-bilinear and commutative, and the identity
+  matrix is a two-sided unit. It is `NonAssocCommRing` and not `CommRing` because the product is
+  not associative, and it subsumes the `NonUnitalNonAssocCommRing` the roadmap pins.
+* `TauCeti.AlbertAlgebra.diagIdempotent_mul_diagIdempotent` and
+  `TauCeti.AlbertAlgebra.sum_diagIdempotent`: the diagonal idempotents are orthogonal and sum
+  to `1`.
 
 ## Implementation notes
 
-The additive and module structures are built directly on the componentwise operations, and
-`TauCeti.AlbertAlgebra.linearEquivProd` packages a Hermitian matrix as the pair of its diagonal and
-its octonion entries, an `R`-linear isomorphism, which is what both dimension counts run through.
-This mirrors `TauCeti/Algebra/Octonion.lean`, and for the same reason: a transport along an
-injection would have to name that injection inside an instance body.
+The additive and module structures are transported along
+`TauCeti.AlbertAlgebra.addEquivProd`, which packages a Hermitian matrix as the pair of its diagonal
+and its octonion entries; `TauCeti.AlbertAlgebra.linearEquivProd` upgrades it to an `R`-linear
+isomorphism, which is what both dimension counts run through.
 
 No definition here is exposed; consumers work through the projection `simp` lemmas
-`TauCeti.AlbertAlgebra.mul_diag` and `TauCeti.AlbertAlgebra.mul_off`, which read the two components
-of a product, rather than through any definition body.
+`TauCeti.AlbertAlgebra.mul_diag` and `TauCeti.AlbertAlgebra.mul_offDiag`, which read the two
+components of a product, rather than through any definition body.
 
 ## References
 
@@ -83,7 +83,8 @@ it as `AlbertAlgebra`, `finrank_albertAlgebra`, `albertTrace`, `traceZeroAlbert`
 `finrank_traceZeroAlbert`; those are the declarations below, named inside the `AlbertAlgebra`
 namespace, as the split octonions of `TauCeti/Algebra/Octonion.lean` are named inside `Octonion`.
 That roadmap's `## Ordering` marks this unit as buildable from scratch at any time, independently of
-every other layer. The remaining pinned clause `isCommJordan_albertAlgebra` is not proved here.
+every other layer. The pinned clauses `isCommJordan_albertAlgebra`, `finrank_derivationAlbert` and
+`derivationAlbert_equiv_f4` are not proved here.
 
 The model is P. Jordan, J. von Neumann and E. Wigner, *On an algebraic generalization of the quantum
 mechanical formalism*, Ann. of Math. 35 (1934); see also T. A. Springer and F. D. Veldkamp,
@@ -101,9 +102,9 @@ octonions, recorded as its scalar diagonal together with its three octonion entr
 structure AlbertAlgebra (R : Type*) where
   /-- The scalar diagonal of the Hermitian matrix. -/
   diag : Fin 3 → R
-  /-- The octonion entries: `off i` is the entry in position `(i + 1, i + 2)`, and the entry in
+  /-- The octonion entries: `offDiag i` is the entry in position `(i + 1, i + 2)`, and the entry in
   position `(i + 2, i + 1)` is its conjugate. -/
-  off : Fin 3 → Octonion R
+  offDiag : Fin 3 → Octonion R
 
 namespace AlbertAlgebra
 
@@ -114,80 +115,79 @@ variable {R S : Type*}
 instance [Zero R] : Zero (AlbertAlgebra R) := ⟨0, 0⟩
 
 @[simp] theorem zero_diag [Zero R] : (0 : AlbertAlgebra R).diag = 0 := (rfl)
-@[simp] theorem zero_off [Zero R] : (0 : AlbertAlgebra R).off = 0 := (rfl)
+@[simp] theorem zero_offDiag [Zero R] : (0 : AlbertAlgebra R).offDiag = 0 := (rfl)
 
 instance [Zero R] : Inhabited (AlbertAlgebra R) := ⟨0⟩
 
 instance [Zero R] [One R] : One (AlbertAlgebra R) := ⟨1, 0⟩
 
 @[simp] theorem one_diag [Zero R] [One R] : (1 : AlbertAlgebra R).diag = 1 := (rfl)
-@[simp] theorem one_off [Zero R] [One R] : (1 : AlbertAlgebra R).off = 0 := (rfl)
+@[simp] theorem one_offDiag [Zero R] [One R] : (1 : AlbertAlgebra R).offDiag = 0 := (rfl)
 
 instance [Add R] : Add (AlbertAlgebra R) :=
-  ⟨fun A B => ⟨A.diag + B.diag, A.off + B.off⟩⟩
+  ⟨fun A B => ⟨A.diag + B.diag, A.offDiag + B.offDiag⟩⟩
 
 @[simp] theorem add_diag [Add R] (A B : AlbertAlgebra R) : (A + B).diag = A.diag + B.diag := (rfl)
-@[simp] theorem add_off [Add R] (A B : AlbertAlgebra R) : (A + B).off = A.off + B.off := (rfl)
+@[simp] theorem add_offDiag [Add R] (A B : AlbertAlgebra R) :
+    (A + B).offDiag = A.offDiag + B.offDiag := (rfl)
 
-instance [Neg R] : Neg (AlbertAlgebra R) := ⟨fun A => ⟨-A.diag, -A.off⟩⟩
+instance [Neg R] : Neg (AlbertAlgebra R) := ⟨fun A => ⟨-A.diag, -A.offDiag⟩⟩
 
 @[simp] theorem neg_diag [Neg R] (A : AlbertAlgebra R) : (-A).diag = -A.diag := (rfl)
-@[simp] theorem neg_off [Neg R] (A : AlbertAlgebra R) : (-A).off = -A.off := (rfl)
+@[simp] theorem neg_offDiag [Neg R] (A : AlbertAlgebra R) : (-A).offDiag = -A.offDiag := (rfl)
 
 instance [Sub R] : Sub (AlbertAlgebra R) :=
-  ⟨fun A B => ⟨A.diag - B.diag, A.off - B.off⟩⟩
+  ⟨fun A B => ⟨A.diag - B.diag, A.offDiag - B.offDiag⟩⟩
 
 @[simp] theorem sub_diag [Sub R] (A B : AlbertAlgebra R) : (A - B).diag = A.diag - B.diag := (rfl)
-@[simp] theorem sub_off [Sub R] (A B : AlbertAlgebra R) : (A - B).off = A.off - B.off := (rfl)
+@[simp] theorem sub_offDiag [Sub R] (A B : AlbertAlgebra R) :
+    (A - B).offDiag = A.offDiag - B.offDiag := (rfl)
 
 instance [SMul S R] : SMul S (AlbertAlgebra R) :=
-  ⟨fun s A => ⟨s • A.diag, s • A.off⟩⟩
+  ⟨fun s A => ⟨s • A.diag, s • A.offDiag⟩⟩
 
 @[simp] theorem smul_diag [SMul S R] (s : S) (A : AlbertAlgebra R) :
     (s • A).diag = s • A.diag := (rfl)
 
-@[simp] theorem smul_off [SMul S R] (s : S) (A : AlbertAlgebra R) :
-    (s • A).off = s • A.off := (rfl)
+@[simp] theorem smul_offDiag [SMul S R] (s : S) (A : AlbertAlgebra R) :
+    (s • A).offDiag = s • A.offDiag := (rfl)
 
-instance [AddCommGroup R] : AddCommGroup (AlbertAlgebra R) where
-  add_assoc _ _ _ := by ext <;> simp [add_assoc]
-  zero_add _ := by ext <;> simp
-  add_zero _ := by ext <;> simp
-  neg_add_cancel _ := by ext <;> simp
-  sub_eq_add_neg _ _ := by ext <;> simp [sub_eq_add_neg]
-  add_comm _ _ := by ext <;> simp [add_comm]
-  nsmul n A := n • A
-  nsmul_zero _ := by ext <;> simp
-  nsmul_succ _ _ := by ext <;> simp [succ_nsmul]
-  zsmul n A := n • A
-  zsmul_zero' _ := by ext <;> simp
-  zsmul_succ' _ _ := by ext <;> simp [add_zsmul]
-  zsmul_neg' _ _ := by ext <;> simp [add_zsmul, succ_nsmul]
+/-- The components of a Hermitian matrix, as an additive isomorphism with the pair of its scalar
+diagonal and its octonion entries. The additive and module structures are transported along it, and
+`TauCeti.AlbertAlgebra.linearEquivProd` upgrades it to an `R`-linear isomorphism. -/
+def addEquivProd (R : Type*) [Add R] :
+    AlbertAlgebra R ≃+ (Fin 3 → R) × (Fin 3 → Octonion R) where
+  toFun A := (A.diag, A.offDiag)
+  invFun p := ⟨p.1, p.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+  map_add' _ _ := rfl
+
+@[simp] theorem addEquivProd_apply [Add R] (A : AlbertAlgebra R) :
+    addEquivProd R A = (A.diag, A.offDiag) := (rfl)
+
+instance [AddCommGroup R] : AddCommGroup (AlbertAlgebra R) := by
+  apply (addEquivProd R).injective.addCommGroup <;> intros <;> simp
 
 instance [Monoid S] [AddCommGroup R] [DistribMulAction S R] :
-    DistribMulAction S (AlbertAlgebra R) where
-  one_smul _ := by ext <;> simp
-  mul_smul _ _ _ := by ext <;> simp [mul_smul]
-  smul_zero _ := by ext <;> simp
-  smul_add _ _ _ := by ext <;> simp
+    DistribMulAction S (AlbertAlgebra R) :=
+  (addEquivProd R).injective.distribMulAction (addEquivProd R).toAddMonoidHom fun _ _ => by simp
 
-instance [Semiring S] [AddCommGroup R] [Module S R] : Module S (AlbertAlgebra R) where
-  add_smul _ _ _ := by ext <;> simp [add_smul]
-  zero_smul _ := by ext <;> simp
+instance [Semiring S] [AddCommGroup R] [Module S R] : Module S (AlbertAlgebra R) :=
+  (addEquivProd R).injective.module _ (addEquivProd R).toAddMonoidHom fun _ _ => by simp
+
+instance [AddCommGroup R] [One R] : AddCommGroupWithOne (AlbertAlgebra R) where
+  __ := (inferInstance : AddCommGroup (AlbertAlgebra R))
+  one := 1
 
 /-- The components of a Hermitian matrix, as an `R`-linear isomorphism with the pair of its scalar
 diagonal and its octonion entries. -/
 def linearEquivProd (R : Type*) [CommRing R] :
-    AlbertAlgebra R ≃ₗ[R] (Fin 3 → R) × (Fin 3 → Octonion R) where
-  toFun A := (A.diag, A.off)
-  invFun p := ⟨p.1, p.2⟩
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
+    AlbertAlgebra R ≃ₗ[R] (Fin 3 → R) × (Fin 3 → Octonion R) :=
+  { addEquivProd R with map_smul' := fun _ _ => rfl }
 
 @[simp] theorem linearEquivProd_apply [CommRing R] (A : AlbertAlgebra R) :
-    linearEquivProd R A = (A.diag, A.off) := (rfl)
+    linearEquivProd R A = (A.diag, A.offDiag) := (rfl)
 
 @[simp] theorem linearEquivProd_symm_apply [CommRing R] (p : (Fin 3 → R) × (Fin 3 → Octonion R)) :
     (linearEquivProd R).symm p = ⟨p.1, p.2⟩ := (rfl)
@@ -211,43 +211,46 @@ theorem finrank_eq_twentySeven (R : Type*) [CommRing R] [StrongRankCondition R] 
 variable [CommRing R]
 
 /-- The symmetrized matrix product `A ∘ B = ½ (A B + B A)`, written out on the diagonal and on the
-octonion entries of a Hermitian matrix. The symmetric form of the octonion norm enters on the
-diagonal, and the conjugate of a symmetrized octonion product off it. -/
+octonion entries of a Hermitian matrix. The symmetric bilinear form associated with the octonion
+norm — Mathlib's `QuadraticMap.associated`, half the polar form — enters on the diagonal, and the
+conjugate of a symmetrized octonion product off it. -/
 instance [Invertible (2 : R)] : Mul (AlbertAlgebra R) :=
   ⟨fun A B =>
     ⟨fun i => A.diag i * B.diag i
-        + ⅟(2 : R) *
-            QuadraticMap.polar (Octonion.normQuadraticForm R) (A.off (i + 1)) (B.off (i + 1))
-        + ⅟(2 : R) *
-            QuadraticMap.polar (Octonion.normQuadraticForm R) (A.off (i + 2)) (B.off (i + 2)),
+        + QuadraticMap.associated (Octonion.normQuadraticForm R)
+            (A.offDiag (i + 1)) (B.offDiag (i + 1))
+        + QuadraticMap.associated (Octonion.normQuadraticForm R)
+            (A.offDiag (i + 2)) (B.offDiag (i + 2)),
       fun i =>
-        ⅟(2 : R) • ((A.diag (i + 1) + A.diag (i + 2)) • B.off i
-            + (B.diag (i + 1) + B.diag (i + 2)) • A.off i)
+        ⅟(2 : R) • ((A.diag (i + 1) + A.diag (i + 2)) • B.offDiag i
+            + (B.diag (i + 1) + B.diag (i + 2)) • A.offDiag i)
           + Octonion.conj
-              (⅟(2 : R) • (A.off (i + 1) * B.off (i + 2) + B.off (i + 1) * A.off (i + 2)))⟩⟩
+              (⅟(2 : R) • (A.offDiag (i + 1) * B.offDiag (i + 2)
+                + B.offDiag (i + 1) * A.offDiag (i + 2)))⟩⟩
 
 @[simp] theorem mul_diag [Invertible (2 : R)] (A B : AlbertAlgebra R) (i : Fin 3) :
     (A * B).diag i = A.diag i * B.diag i
-      + ⅟(2 : R) *
-          QuadraticMap.polar (Octonion.normQuadraticForm R) (A.off (i + 1)) (B.off (i + 1))
-      + ⅟(2 : R) *
-          QuadraticMap.polar (Octonion.normQuadraticForm R) (A.off (i + 2)) (B.off (i + 2)) :=
+      + QuadraticMap.associated (Octonion.normQuadraticForm R)
+          (A.offDiag (i + 1)) (B.offDiag (i + 1))
+      + QuadraticMap.associated (Octonion.normQuadraticForm R)
+          (A.offDiag (i + 2)) (B.offDiag (i + 2)) :=
   (rfl)
 
-@[simp] theorem mul_off [Invertible (2 : R)] (A B : AlbertAlgebra R) (i : Fin 3) :
-    (A * B).off i =
-      ⅟(2 : R) • ((A.diag (i + 1) + A.diag (i + 2)) • B.off i
-          + (B.diag (i + 1) + B.diag (i + 2)) • A.off i)
+@[simp] theorem mul_offDiag [Invertible (2 : R)] (A B : AlbertAlgebra R) (i : Fin 3) :
+    (A * B).offDiag i =
+      ⅟(2 : R) • ((A.diag (i + 1) + A.diag (i + 2)) • B.offDiag i
+          + (B.diag (i + 1) + B.diag (i + 2)) • A.offDiag i)
         + Octonion.conj
-            (⅟(2 : R) • (A.off (i + 1) * B.off (i + 2) + B.off (i + 1) * A.off (i + 2))) :=
+            (⅟(2 : R) • (A.offDiag (i + 1) * B.offDiag (i + 2)
+              + B.offDiag (i + 1) * A.offDiag (i + 2))) :=
   (rfl)
 
 section Product
 
 variable [Invertible (2 : R)]
 
-instance : NonUnitalNonAssocCommRing (AlbertAlgebra R) where
-  __ := (inferInstance : AddCommGroup (AlbertAlgebra R))
+instance : NonAssocCommRing (AlbertAlgebra R) where
+  __ := (inferInstance : AddCommGroupWithOne (AlbertAlgebra R))
   left_distrib A B C := by
     refine AlbertAlgebra.ext (funext fun i => ?_) (funext fun i => ?_)
     · simp [mul_add]
@@ -256,7 +259,7 @@ instance : NonUnitalNonAssocCommRing (AlbertAlgebra R) where
       module
   right_distrib A B C := by
     refine AlbertAlgebra.ext (funext fun i => ?_) (funext fun i => ?_)
-    · simp [add_mul, mul_add]
+    · simp [add_mul]
       abel
     · simp [mul_add, add_mul, smul_add]
       module
@@ -266,11 +269,9 @@ instance : NonUnitalNonAssocCommRing (AlbertAlgebra R) where
     refine AlbertAlgebra.ext (funext fun i => ?_) (funext fun i => ?_) <;> simp
   mul_comm A B := by
     refine AlbertAlgebra.ext (funext fun i => ?_) (funext fun i => ?_)
-    · simp [QuadraticMap.polar_comm (Octonion.normQuadraticForm R) (B.off _), mul_comm]
+    · simp [QuadraticMap.associated_isSymm R (Octonion.normQuadraticForm R) (B.offDiag _), mul_comm]
     · simp
       module
-
-instance : MulOneClass (AlbertAlgebra R) where
   one_mul A := by
     refine AlbertAlgebra.ext (funext fun i => ?_) (funext fun i => ?_)
     · simp
@@ -290,7 +291,7 @@ instance : SMulCommClass R (AlbertAlgebra R) (AlbertAlgebra R) where
 instance : IsScalarTower R (AlbertAlgebra R) (AlbertAlgebra R) where
   smul_assoc r A B := by
     refine AlbertAlgebra.ext (funext fun i => ?_) (funext fun i => ?_)
-    · simp [mul_add, mul_left_comm, mul_assoc]
+    · simp [mul_add, mul_assoc]
     · simp [mul_smul_comm, smul_mul_assoc]
       module
 
@@ -330,7 +331,7 @@ entries: a vanishing trace forces the last diagonal entry. Private: it exists on
 dimension count in `TauCeti.AlbertAlgebra.finrank_traceZero`. -/
 private def traceZeroLinearEquivProd (R : Type*) [CommRing R] :
     traceZero R ≃ₗ[R] (R × R) × (Fin 3 → Octonion R) where
-  toFun A := ((A.1.diag 0, A.1.diag 1), A.1.off)
+  toFun A := ((A.1.diag 0, A.1.diag 1), A.1.offDiag)
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   invFun p := ⟨⟨![p.1.1, p.1.2, -(p.1.1 + p.1.2)], p.2⟩, by simp [Fin.sum_univ_three]⟩
@@ -340,8 +341,7 @@ private def traceZeroLinearEquivProd (R : Type*) [CommRing R] :
       have h0 : (A : AlbertAlgebra R).diag 0 + (A : AlbertAlgebra R).diag 1
           + (A : AlbertAlgebra R).diag 2 = 0 := by
         simpa [Fin.sum_univ_three] using mem_traceZero.mp A.2
-      rw [eq_neg_iff_add_eq_zero, ← h0]
-      ring
+      exact eq_neg_of_add_eq_zero_right h0
     refine Subtype.ext (AlbertAlgebra.ext (funext fun i => ?_) rfl)
     fin_cases i <;> simp [h]
   right_inv _ := rfl
@@ -356,17 +356,17 @@ theorem finrank_traceZero (R : Type*) [CommRing R] [StrongRankCondition R] :
 
 /-! ### The diagonal frame of idempotents -/
 
-/-- The `i`-th **diagonal matrix unit** `Eᵢ` of `H₃(𝕆)`: the Hermitian matrix with a single `1` in
+/-- The `i`-th **diagonal idempotent** `Eᵢ` of `H₃(𝕆)`: the Hermitian matrix with a single `1` in
 position `(i, i)`. -/
-def diagIdem (R : Type*) [CommRing R] (i : Fin 3) : AlbertAlgebra R := ⟨Pi.single i 1, 0⟩
+def diagIdempotent (R : Type*) [CommRing R] (i : Fin 3) : AlbertAlgebra R := ⟨Pi.single i 1, 0⟩
 
-@[simp] theorem diagIdem_diag (i : Fin 3) : (diagIdem R i).diag = Pi.single i 1 := (rfl)
-@[simp] theorem diagIdem_off (i : Fin 3) : (diagIdem R i).off = 0 := (rfl)
+@[simp] theorem diagIdempotent_diag (i : Fin 3) : (diagIdempotent R i).diag = Pi.single i 1 := (rfl)
+@[simp] theorem diagIdempotent_offDiag (i : Fin 3) : (diagIdempotent R i).offDiag = 0 := (rfl)
 
-/-- **The diagonal matrix units are orthogonal idempotents**: `Eᵢ ∘ Eⱼ` is `Eᵢ` when `i = j` and
-`0` otherwise. -/
-theorem diagIdem_mul_diagIdem [Invertible (2 : R)] (i j : Fin 3) :
-    diagIdem R i * diagIdem R j = if i = j then diagIdem R i else 0 := by
+/-- **The diagonal idempotents are orthogonal**: `Eᵢ ∘ Eⱼ` is `Eᵢ` when `i = j` and `0`
+otherwise. -/
+@[simp] theorem diagIdempotent_mul_diagIdempotent [Invertible (2 : R)] (i j : Fin 3) :
+    diagIdempotent R i * diagIdempotent R j = if i = j then diagIdempotent R i else 0 := by
   rcases eq_or_ne i j with rfl | h
   · refine AlbertAlgebra.ext (funext fun k => ?_) (funext fun k => ?_)
     · rcases eq_or_ne k i with rfl | hk
@@ -377,16 +377,16 @@ theorem diagIdem_mul_diagIdem [Invertible (2 : R)] (i j : Fin 3) :
     · by_cases hk : k = i <;> simp [Pi.single_apply, hk, h]
     · simp [h]
 
-/-- The diagonal matrix units add up to the identity matrix. -/
-theorem sum_diagIdem : ∑ i, diagIdem R i = 1 := by
+/-- The diagonal idempotents add up to the identity matrix. -/
+@[simp] theorem sum_diagIdempotent : ∑ i, diagIdempotent R i = 1 := by
   refine AlbertAlgebra.ext (funext fun k => ?_) (funext fun k => ?_)
   · fin_cases k <;> simp [Fin.sum_univ_three]
   · simp [Fin.sum_univ_three]
 
-/-- Each diagonal matrix unit has trace `1`, so the frame accounts for the whole trace of the
+/-- Each diagonal idempotent has trace `1`, so the frame accounts for the whole trace of the
 identity. Not a `simp` lemma: `TauCeti.AlbertAlgebra.trace_apply` already takes its left-hand side
 apart, and `simp` proves it outright. -/
-theorem trace_diagIdem (i : Fin 3) : trace (diagIdem R i) = 1 := by
+theorem trace_diagIdempotent (i : Fin 3) : trace (diagIdempotent R i) = 1 := by
   simp [Pi.single_apply]
 
 end AlbertAlgebra
