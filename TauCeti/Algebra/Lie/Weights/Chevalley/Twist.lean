@@ -119,6 +119,7 @@ omit [CharZero K] [LieAlgebra.IsKilling K L] [FiniteDimensional K L] [H.IsCartan
 include hω in
 /-- An automorphism acting by `-1` on a subalgebra normalises it, since a subalgebra is closed
 under negation. -/
+@[simp]
 theorem map_eq_self_of_forall_mem_apply_eq_neg : H.map (ω : L →ₗ⁅K⁆ L) = H := by
   refine le_antisymm (fun z hz ↦ ?_) (fun z hz ↦ ?_)
   · rw [LieSubalgebra.mem_map] at hz
@@ -131,6 +132,7 @@ include hω in
 /-- **An automorphism acting by `-1` on the Cartan subalgebra inverts every weight.** The induced
 permutation of the weights is negation, so the automorphism carries the root space of `α` onto the
 root space of `-α`. -/
+@[simp]
 theorem weightPerm_eq_neg (α : Weight K H L) :
     weightPerm ω (map_eq_self_of_forall_mem_apply_eq_neg ω hω) α = -α := by
   have hsymm : ∀ y : H, ω.symm (y : L) = -(y : L) := by
@@ -172,7 +174,8 @@ theorem ne_zero_of_map_eq_smul_neg {α : Weight K H L} (hα : α.IsNonZero) {c :
 
 include hω in
 /-- **The scalars at `α` and `-α` are inverse to one another.** This is the constraint the
-normalisation `⁅x α, x (-α)⁆ = α^∨` imposes on them; nothing else about them is forced. -/
+normalisation `⁅x α, x (-α)⁆ = α^∨` imposes on an opposite pair; the constraints coming from a
+root sum are recorded separately below. -/
 theorem mul_eq_one_of_map_eq_smul_neg {α : Weight K H L} (hα : α.IsNonZero) {c d : K}
     (hc : ω (x α) = c • x (-α)) (hd : ω (x (-α)) = d • x α) : c * d = 1 := by
   refine hx.mul_eq_one_of_map_eq_smul ω (map_eq_self_of_forall_mem_apply_eq_neg ω hω) hα ?_ ?_
