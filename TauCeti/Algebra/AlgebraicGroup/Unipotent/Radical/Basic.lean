@@ -83,6 +83,16 @@ namespace IsUnipotentRadicalCandidate
 
 variable {H : FiniteTypeCommHopfAlgCat.{u, u} k} {I : HopfIdeal k H}
 
+/-- A normal Hopf ideal with geometrically connected, smooth unipotent quotient is a
+unipotent-radical candidate. -/
+theorem mk (h_normal : I.IsNormal)
+    (h_connected : geometricallyConnectedCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I).obj)
+    (h_smoothUnipotent : smoothUnipotentCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I)) :
+    IsUnipotentRadicalCandidate H I :=
+  ⟨h_normal, h_connected, h_smoothUnipotent⟩
+
 /-- A unipotent-radical candidate is normal in the ambient affine group. -/
 theorem isNormal (hI : IsUnipotentRadicalCandidate H I) : I.IsNormal :=
   hI.1
