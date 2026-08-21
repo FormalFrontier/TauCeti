@@ -83,7 +83,7 @@ theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (a 
     intro t
     rw [(hasDerivAt_segment v z₀ t).deriv]
     have : v * (t : ℂ) + z₀ - (v * q + z₀) = v * ((t : ℂ) - q) := by ring
-    rw [this, mul_inv, mul_comm, ← mul_assoc, mul_inv_cancel₀ hv, one_mul]
+    rw [this]; field_simp
   have h_log : ∀ t : ℝ, HasDerivAt (fun t : ℝ => log ((t : ℂ) - q)) (((t : ℂ) - q)⁻¹) t := by
     intro t
     have h1 : HasDerivAt (fun t : ℝ => (t : ℂ) - q) 1 t := by
@@ -101,8 +101,7 @@ theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (a 
   rw [intervalIntegral.integral_congr (fun t _ => h_integrand t)]
   exact intervalIntegral.integral_eq_sub_of_hasDerivAt (fun t _ => h_log t) h_intble
 
-/-- The points `v (s + h i) + z₀` and `v (s - h i) + z₀` approach `v s + z₀` as `h → 0`;
-this is the common continuity input of the two one-sided limits below, recorded once. -/
+/-- The difference `(r : ℂ) - (s + σ h I)` tends to `(r : ℂ) - s` as `h → 0⁺`. -/
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
     Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝[>] 0) (𝓝 ((r : ℂ) - s)) := by
   have : Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝 0)
@@ -124,7 +123,8 @@ private theorem re_neg_of_mem_Ioo (hs : s ∈ Ioo a b) : ((a : ℂ) - s).re < 0 
   simp only [sub_re, ofReal_re]; linarith [hs.1]
 
 private theorem norm_ofReal_sub_of_mem_Ioo (hs : s ∈ Ioo a b) : ‖(a : ℂ) - s‖ = s - a := by
-  rw [← ofReal_sub, norm_real, Real.norm_eq_abs, abs_sub_comm, abs_of_pos (by linarith [hs.1])]
+  simp only [← ofReal_sub, norm_real, Real.norm_eq_abs]
+  rw [abs_sub_comm, abs_of_pos (by linarith [hs.1])]
 
 /-- **The winding number of a segment about a point approaching from the left.** The near endpoint
 term approaches the negative real axis from below. -/
