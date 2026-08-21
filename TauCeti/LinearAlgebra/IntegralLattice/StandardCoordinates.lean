@@ -83,7 +83,6 @@ theorem form_ofGramMatrix_basisFun_right (x : ι → ℚ) (i : ι) :
 
 /-- The Gram matrix of a Gram-matrix lattice in its standard coordinate basis is the given
 matrix. -/
-@[simp]
 theorem form_ofGramMatrix_basisFun_basisFun (i j : ι) :
     (ofGramMatrix (Pi.basisFun ℚ ι) G hG).form
         (Pi.basisFun ℚ ι i) (Pi.basisFun ℚ ι j) = ((G i j : ℤ) : ℚ) := by
@@ -96,7 +95,6 @@ theorem form_ofGramMatrix_basisFun_basisFun (i j : ι) :
 
 /-- A vector belongs to a Gram-matrix lattice exactly when all of its standard coordinates are
 integers. -/
-@[simp]
 theorem mem_ofGramMatrix_basisFun_carrier_iff (x : ι → ℚ) :
     x ∈ (ofGramMatrix (Pi.basisFun ℚ ι) G hG).carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   classical
