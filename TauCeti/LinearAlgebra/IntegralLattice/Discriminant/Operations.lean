@@ -58,7 +58,6 @@ variable [AddCommGroup V] [Module ℚ V] [AddCommGroup W] [Module ℚ W]
 
 /-- Membership in the dual carrier of an orthogonal sum is componentwise membership in the two
 dual carriers. -/
-@[simp]
 theorem mem_dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W)
     (x : V × W) :
     x ∈ (L.orthogonalSum M).dualCarrier ↔ x.1 ∈ L.dualCarrier ∧ x.2 ∈ M.dualCarrier := by
