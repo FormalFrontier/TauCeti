@@ -149,17 +149,19 @@ private theorem _root_.Representation.isNilpotent_sub_one_of_normal_isUnipotent
           rw [hp_fixed z ⟨y, hy⟩]
           exact hy
         let q : Representation K G (V ⧸ p) := rho.quotient p hp
+        have quotient_sub_one_eq_mapQ (z : G)
+            (hsub : p ≤ p.comap (rho z - 1)) :
+            q z - 1 = p.mapQ p (rho z - 1) hsub := by
+          ext y
+          simp only [Representation.quotient_apply, LinearMap.coe_comp, Function.comp_apply,
+            Submodule.mkQ_apply, LinearMap.sub_apply, Submodule.mapQ_apply, End.one_apply,
+            Submodule.Quotient.mk_sub, q]
         have hq (z : G) (hz : IsNilpotent (rho z - 1)) : IsNilpotent (q z - 1) := by
           have hsub : p ≤ p.comap (rho z - 1) := by
             intro y hy
             rw [Submodule.mem_comap]
             simpa only [LinearMap.sub_apply, Module.End.one_apply] using p.sub_mem (hp z hy) hy
-          have heq : q z - 1 = p.mapQ p (rho z - 1) hsub := by
-            ext y
-            simp only [Representation.quotient_apply, LinearMap.coe_comp, Function.comp_apply,
-              Submodule.mkQ_apply, LinearMap.sub_apply, Submodule.mapQ_apply, End.one_apply,
-              Submodule.Quotient.mk_sub, q]
-          rw [heq]
+          rw [quotient_sub_one_eq_mapQ z hsub]
           exact Module.End.IsNilpotent.mapQ hsub hz
         have hqdim : finrank K (V ⧸ p) < d := by
           have hsum := Module.finrank_quotient_add_finrank_le p
@@ -167,17 +169,12 @@ private theorem _root_.Representation.isNilpotent_sub_one_of_normal_isUnipotent
           omega
         obtain ⟨n, hn⟩ := ih (finrank K (V ⧸ p)) hqdim q
           (fun u ↦ hq u (hU u)) (fun w ↦ hq w (hW w)) rfl
-        let f : Module.End K V := rho g - 1
-        have hsub : p ≤ p.comap f := by
+        have hsub : p ≤ p.comap (rho g - 1) := by
           intro y hy
           rw [Submodule.mem_comap]
-          simpa only [f, LinearMap.sub_apply, Module.End.one_apply] using p.sub_mem (hp g hy) hy
-        have heq : q g - 1 = p.mapQ p f hsub := by
-          ext y
-          simp only [Representation.quotient_apply, LinearMap.coe_comp, Function.comp_apply,
-            Submodule.mkQ_apply, LinearMap.sub_apply, Submodule.mapQ_apply, End.one_apply,
-            Submodule.Quotient.mk_sub, q, f]
-        rw [heq] at hn
+          simpa only [LinearMap.sub_apply, Module.End.one_apply] using p.sub_mem (hp g hy) hy
+        rw [quotient_sub_one_eq_mapQ g hsub] at hn
+        let f : Module.End K V := rho g - 1
         refine ⟨n + 1, ?_⟩
         ext y
         rw [pow_succ', Module.End.mul_apply]
