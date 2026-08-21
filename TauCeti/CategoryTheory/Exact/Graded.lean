@@ -42,8 +42,9 @@ which is the form in which it is usually checked.
 
 ## References
 
-* Zsuzsanna Dancso and Anthony Licata, *Odd Khovanov homology for hyperplane arrangements*,
-  Section 2.2, where graded categories and their `q`-linear Grothendieck groups are set up.
+* Theo Bühler, *Exact categories*, Expositiones Mathematicae **28** (2010), 1–69,
+  <https://arxiv.org/abs/0811.1480>, Section 2, for the exact structures which the grading shift
+  is required here to preserve and to reflect.
 * `TauCetiRoadmap/GrothendieckEulerForms/README.md`, Layer 2, which fixes the normalization
   `[M{1}] = q[M]` used downstream and requires the shift to be part of the data of a graded
   exact category.
@@ -98,11 +99,13 @@ theorem shift_inverse_reflectsConflations :
 
 /-- **A short complex is a conflation exactly when its shift is.**  This is the precise sense in
 which the grading shift is an isomorphism of exact categories. -/
+@[simp]
 theorem conflation_shift_iff (S : ShortComplex C) :
     E.toExactStructure.Conflation (S.map E.shift.functor) ↔ E.toExactStructure.Conflation S :=
   ExactStructure.conflation_map_iff E.shift_exact E.shift_reflectsConflations S
 
 /-- A short complex is a conflation exactly when its inverse shift is. -/
+@[simp]
 theorem conflation_shift_inverse_iff (S : ShortComplex C) :
     E.toExactStructure.Conflation (S.map E.shift.inverse) ↔ E.toExactStructure.Conflation S :=
   ExactStructure.conflation_map_iff E.shift_inverse_exact E.shift_inverse_reflectsConflations S
