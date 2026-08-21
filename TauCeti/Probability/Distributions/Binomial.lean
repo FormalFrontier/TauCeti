@@ -89,6 +89,20 @@ The calculation below is adapted from the proof proposed in mathlib4 PR #40916 a
 the pinned Mathlib contains its prerequisite mean theorem but not yet its variance theorem.
 -/
 
+/-- The binomial weights of rank `m` sum to `1`; the normalization identity behind the variance
+calculation below. -/
+private theorem sum_binomial_weight (p : unitInterval) (m : ℕ) :
+    ∑ x ∈ Finset.range (m + 1), (m.choose x : ℝ) * (p : ℝ) ^ x * (1 - p : ℝ) ^ (m - x) = 1 := by
+  calc
+    _ = ∑ x ∈ Finset.range (m + 1), (p : ℝ) ^ x * (1 - p : ℝ) ^ (m - x) * m.choose x :=
+      Finset.sum_congr rfl fun x _ ↦ by ring
+    _ = 1 := by rw [← add_pow]; simp
+
+/-- A binomial sum of a constant `c` of rank `m` evaluates to `c`. -/
+private theorem sum_binomial_weight_mul (p : unitInterval) (m : ℕ) (c : ℝ) :
+    ∑ x ∈ Finset.range (m + 1), (m.choose x : ℝ) * (p : ℝ) ^ x * (1 - p : ℝ) ^ (m - x) * c = c := by
+  rw [← Finset.sum_mul, sum_binomial_weight, one_mul]
+
 /-- The variance of a real-valued binomial random variable with parameters `n` and `p` is
 `p(1-p)n`. -/
 theorem variance_of_hasLaw_binomial {n : ℕ} {p : unitInterval} {X : Ω → ℝ}
@@ -152,8 +166,7 @@ theorem variance_of_hasLaw_binomial {n : ℕ} {p : unitInterval} {X : Ω → ℝ
           group
         · simp_rw [pow_add]
           group
-        · rw [← Finset.sum_mul, mul_left_eq_self₀]
-          grind [add_pow p.val (1 - p) (n + 2), one_pow]
+        · exact sum_binomial_weight_mul p (n + 2) _
       -- Evaluate the normalized sums at `p + (1 - p) = 1` by the binomial theorem.
       _ = ∑ x ∈ Finset.range (n + 1), n.choose x * p.val ^ (x + 2) *
             (1 - p) ^ (n + 1 - (x + 1)) * (n + 2) * (n + 1) +
@@ -162,15 +175,7 @@ theorem variance_of_hasLaw_binomial {n : ℕ} {p : unitInterval} {X : Ω → ℝ
         · norm_cast
           simp_rw [Finset.sum_range_succ', ← Nat.add_one_mul_choose_eq]
           grind
-        all_goals
-          have hbinomial := add_pow p.val (1 - p) (n + 1)
-          simp only [add_sub_cancel, one_pow] at hbinomial
-          rw [← Finset.sum_mul, mul_left_eq_self₀]
-          left
-          nth_rw 2 [hbinomial]
-          congr
-          ext
-          group
+        all_goals exact sum_binomial_weight_mul p (n + 1) _
       _ = (∑ x ∈ Finset.range (n + 1), n.choose x * p.val ^ x *
             (1 - p) ^ (n + 1 - (x + 1))) * (p * p * (n + 2) * (n + 1)) +
           (1 - p * (n + 2)) * p * (n + 2) := by
@@ -179,14 +184,8 @@ theorem variance_of_hasLaw_binomial {n : ℕ} {p : unitInterval} {X : Ω → ℝ
       _ = p.val * p * (n + 2) * (n + 1) +
           (1 - p * (n + 2)) * p * (n + 2) := by
         congrm ?_ + _
-        have hbinomial := add_pow p.val (1 - p) n
-        simp only [add_sub_cancel, one_pow] at hbinomial
-        rw [mul_left_eq_self₀]
-        left
-        nth_rw 2 [hbinomial]
-        congr
-        ext
-        grind
+        simp only [Nat.add_sub_add_right]
+        rw [sum_binomial_weight, one_mul]
       _ = _ := by grind
 
 /-- The variance of the real-valued binomial measure itself. -/
@@ -244,11 +243,11 @@ theorem binomial_conv_binomial (n m : ℕ) (p : unitInterval) :
   exact map_cast_binomial_conv_real n m p
 
 /-- A finite sum of independent Bernoulli variables with common success probability `p` has the
-native binomial law. -/
-theorem iIndepFun.hasLaw_sum_bernoulli {n : ℕ} {p : unitInterval} {X : Fin n → Ω → ℕ}
+native binomial law, with as many trials as the index type has elements. -/
+theorem iIndepFun.hasLaw_sum_bernoulli {ι : Type*} [Fintype ι] {p : unitInterval} {X : ι → Ω → ℕ}
     (hindep : iIndepFun X P) (hX : ∀ i, HasLaw (X i) Ber((1 : ℕ), 0, p) P) :
-    HasLaw (fun ω ↦ ∑ i, X i ω) Bin(n, p) P := by
-  have hcast (i : Fin n) :
+    HasLaw (fun ω ↦ ∑ i, X i ω) Bin(Fintype.card ι, p) P := by
+  have hcast (i : ι) :
       HasLaw (fun ω ↦ (X i ω : ℝ)) Bin(ℝ, 1, p) P := by
     have hnatCast : HasLaw (Nat.cast : ℕ → ℝ) Bin(ℝ, 1, p) Bin(1, p) :=
       ⟨Measurable.of_discrete.aemeasurable, rfl⟩
@@ -260,22 +259,23 @@ theorem iIndepFun.hasLaw_sum_bernoulli {n : ℕ} {p : unitInterval} {X : Fin n �
       hindep.comp (fun _ ↦ (Nat.cast : ℕ → ℝ)) (fun _ ↦ Measurable.of_discrete)
   let _ : IsProbabilityMeasure P := hindep.isProbabilityMeasure
   have hsumCast :
-      P.map (fun ω ↦ ∑ i, (X i ω : ℝ)) = Bin(ℝ, n, p) := by
+      P.map (fun ω ↦ ∑ i, (X i ω : ℝ)) = Bin(ℝ, Fintype.card ι, p) := by
     apply Measure.ext_of_charFun
     ext t
     calc
       charFun (P.map (fun ω ↦ ∑ i, (X i ω : ℝ))) t =
           (∏ i, charFun (P.map (fun ω ↦ (X i ω : ℝ)))) t := by
         exact congrFun (hindepCast.charFun_map_fun_sum_eq_prod fun i ↦ (hcast i).aemeasurable) t
-      _ = ∏ _i : Fin n,
+      _ = ∏ _i : ι,
           (1 - (p : ℂ) + (p : ℂ) * Complex.exp (Complex.I * t)) := by
         rw [Fintype.prod_apply]
         apply Finset.prod_congr rfl
         intro i hi
         rw [(hcast i).map_eq, charFun_map_cast_binomial]
         simp
-      _ = (1 - (p : ℂ) + (p : ℂ) * Complex.exp (Complex.I * t)) ^ n := by simp
-      _ = charFun Bin(ℝ, n, p) t := (charFun_map_cast_binomial n p t).symm
+      _ = (1 - (p : ℂ) + (p : ℂ) * Complex.exp (Complex.I * t)) ^ Fintype.card ι := by simp
+      _ = charFun Bin(ℝ, Fintype.card ι, p) t :=
+        (charFun_map_cast_binomial (Fintype.card ι) p t).symm
   refine ⟨Finset.aemeasurable_fun_sum Finset.univ fun i _ ↦ (hX i).aemeasurable, ?_⟩
   apply (MeasurableEmbedding.natCast (α := ℝ)).map_injective
   rw [AEMeasurable.map_map_of_aemeasurable Measurable.of_discrete.aemeasurable
