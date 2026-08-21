@@ -59,13 +59,11 @@ theorem variance_id_bernoulliMeasure (p : I) :
   ring_nf
 
 /-- A real-valued Bernoulli random variable with success probability `p` has mean `p`. -/
-@[simp]
 theorem integral_of_hasLaw_bernoulliMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {p : I} (hX : HasLaw X Ber((1 : ℝ), 0, p) P) : P[X] = (p : ℝ) := by
   rw [hX.integral_eq, integral_id_bernoulliMeasure]
 
 /-- A real-valued Bernoulli random variable with success probability `p` has variance `p(1-p)`. -/
-@[simp]
 theorem variance_of_hasLaw_bernoulliMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {p : I} (hX : HasLaw X Ber((1 : ℝ), 0, p) P) :
     Var[X; P] = (p : ℝ) * (1 - p) := by
