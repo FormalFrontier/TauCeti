@@ -50,8 +50,8 @@ describe; the references below state the colimit theorem this system is the sour
   restriction along `finiteQuotientMap`, which is what makes `transitionPair` a compatible pair.
 * `TauCeti.finiteLevelTransition_refl` and `TauCeti.finiteLevelTransition_comp`: the two functor
   laws, which are what make the transition maps a system on the opposite poset.
-* `TauCeti.finiteLevelTransition_naturality`: a morphism of coefficients commutes with the
-  transition maps.
+* `TauCeti.transitionPair_naturality` and `TauCeti.finiteLevelTransition_naturality`: a morphism
+  of coefficients commutes with the transition pairs, and hence with the transition maps.
 
 ## Implementation notes
 
@@ -240,6 +240,24 @@ theorem finiteLevelFunctor_map (U : Subgroup G) [U.Normal] (n : ℕ) (f : A ⟶ 
         ((Rep.quotientToInvariantsFunctor k U).map f) n :=
   (rfl)
 
+/-- The coefficient square of the finite-quotient system: a transition pair is natural in the
+coefficients. Applying a morphism `f : A ⟶ B` on `V`-invariants after the inclusion `A^U ↪ A^V`
+is applying it on `U`-invariants and then including `B^U ↪ B^V`; both composites send `m : A^U`
+to `f m`. It is stated on the underlying linear maps because that is the form in which
+`groupCohomology.map_congr` compares two compatible pairs, and it is the substance of
+`TauCeti.finiteLevelTransition_naturality`. -/
+theorem transitionPair_naturality (f : A ⟶ B) (hVU : V ≤ U) :
+    ((Rep.resFunctor (MonoidHom.id (G ⧸ V))).map (transitionPair A hVU) ≫
+          (Rep.quotientToInvariantsFunctor k V).map f).hom.toLinearMap =
+      ((Rep.resFunctor (finiteQuotientMap hVU)).map ((Rep.quotientToInvariantsFunctor k U).map f) ≫
+          transitionPair B hVU).hom.toLinearMap := by
+  simp only [Rep.res_obj_ρ, Rep.quotientToInvariantsFunctor, Rep.invariantsFunctor_map_hom,
+    Rep.resMap_hom_toLinearMap, Rep.hom_comp, ConcreteCategory.hom_ofHom,
+    IntertwiningMap.comp_toLinearMap, transitionPair_hom_toLinearMap]
+  refine LinearMap.ext fun x => Subtype.ext ?_
+  simp only [LinearMap.codRestrict_apply, LinearMap.coe_comp, IntertwiningMap.coe_toLinearMap,
+    Submodule.coe_subtype, Function.comp_apply, invariantsInclusion_apply_coe]
+
 /-- A morphism of coefficients commutes with the transition maps of the finite-quotient system.
 This is the naturality of `TauCeti.finiteQuotientSystem` in the coefficient representation. -/
 theorem finiteLevelTransition_naturality (f : A ⟶ B) (hVU : V ≤ U) (n : ℕ) :
@@ -250,7 +268,12 @@ theorem finiteLevelTransition_naturality (f : A ⟶ B) (hVU : V ≤ U) (n : ℕ)
       (transitionPair A hVU) _ n).symm ?_
   refine Eq.trans ?_ (groupCohomology.map_comp (MonoidHom.id (G ⧸ U)) (finiteQuotientMap hVU) _
       (transitionPair B hVU) n)
-  exact groupCohomology.map_congr (by simp) rfl n
+  -- The two compatible pairs have the same group half, and the same coefficient half by the
+  -- square above.
+  exact groupCohomology.map_congr
+    (show (finiteQuotientMap hVU).comp (MonoidHom.id (G ⧸ V)) =
+      (MonoidHom.id (G ⧸ U)).comp (finiteQuotientMap hVU) by simp)
+    (transitionPair_naturality f hVU) n
 
 end Coefficients
 
