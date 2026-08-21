@@ -14,9 +14,10 @@ public import TauCeti.GroupTheory.TransversalWord
 For a subgroup `U` of a group `G` and a map `t : G ⧸ U → G`, the transversal word
 `ℓᵗ_u(γ) = (t u)⁻¹ * γ * t (γ⁻¹ • u)` of `TauCeti.lWord` is a purely group-theoretic construction.
 This file adds the one statement about it that needs a topology: if `G` is a topological group and
-`U` is *open*, then `γ ↦ ℓᵗ_u(γ)` is continuous (`TauCeti.continuous_lWord`). Openness of `U` makes
-`G ⧸ U` discrete, so the only non-constant ingredient `γ ↦ t (γ⁻¹ • u)` is locally constant and no
-continuity is required of `t` itself.
+`U` is *open*, then `γ ↦ ℓᵗ_u(γ)` is continuous (`TauCeti.continuous_lWord`). Of the three factors,
+`(t u)⁻¹` is constant and `γ ↦ γ` is the continuous identity; the only one whose continuity is not
+immediate is `γ ↦ t (γ⁻¹ • u)`, and openness of `U` makes `G ⧸ U` discrete, so that factor is
+locally constant and no continuity is required of `t` itself.
 
 This is the continuity clause of the transversal calculus of the Layer 6 milestone of the
 human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`. It lives here, rather
