@@ -28,6 +28,13 @@ which have no business importing Lie-algebra theory use it.
 
 * `Matrix.mul_apply_diag_of_isUpperTriangular` — the diagonal of a product of upper-triangular
   matrices is the pointwise product of the diagonals.
+* `Matrix.pow_apply_diag_of_isUpperTriangular` — the diagonal of a power of an upper-triangular
+  matrix is the corresponding power of the diagonal entry.
+* `Matrix.isUpperUnitriangular_geom_sum_of_isUpperTriangular_of_diag_eq_zero` — the geometric
+  series in a strictly upper-triangular matrix is upper unitriangular, for any truncation that is
+  positive whenever the index type is inhabited, and
+  `Matrix.isUpperUnitriangular_geom_sum_card_of_isUpperTriangular_of_diag_eq_zero` for the
+  truncation at the size of the matrix.
 * `Matrix.inv_apply_diag_mul_of_isUpperTriangular` — on the diagonal, the inverse inverts
   entrywise: `M⁻¹ i i * M i i = 1`.
 * `Matrix.inv_apply_diag_of_isUpperTriangular` — where an upper-triangular matrix carries a `1`
@@ -176,6 +183,48 @@ theorem mul_apply_diag_of_isUpperTriangular (hA : A.IsUpperTriangular)
     · rw [hA h, zero_mul]
     · rw [hB h, mul_zero]
   · exact fun h ↦ absurd (Finset.mem_univ i) h
+
+/-- The diagonal of a power of an upper-triangular matrix is the corresponding power of the
+diagonal entry. -/
+@[simp]
+theorem pow_apply_diag_of_isUpperTriangular {T : Type*} [Semiring T] {M : Matrix n n T}
+    (hM : M.IsUpperTriangular) (k : ℕ) (i : n) : (M ^ k) i i = M i i ^ k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      rw [pow_succ, mul_apply_diag_of_isUpperTriangular (hM.pow k) hM, ih, ← pow_succ]
+
+/-- **A geometric series in a strictly upper-triangular matrix is upper unitriangular**, for any
+truncation `k` that is positive whenever the index type is inhabited.
+
+Over an empty index type both conditions are vacuous, so nothing is asked of `k` there. -/
+theorem isUpperUnitriangular_geom_sum_of_isUpperTriangular_of_diag_eq_zero
+    {T : Type*} [Semiring T] {M : Matrix n n T} (hM : M.IsUpperTriangular)
+    (hdiag : ∀ i, M i i = 0) {k : ℕ} (hk : Nonempty n → 0 < k) :
+    (∑ j ∈ Finset.range k, M ^ j).IsUpperUnitriangular := by
+  -- below the diagonal every power vanishes; on the diagonal every power after the zeroth does,
+  -- leaving the `1` that `M ^ 0` contributes -- and the index `i` is itself the inhabitant that
+  -- makes the range nonempty
+  rw [Matrix.isUpperUnitriangular_def]
+  refine ⟨?_, ?_⟩
+  · intro i j hji
+    simp only [Matrix.sum_apply]
+    exact Finset.sum_eq_zero fun l _ ↦ (hM.pow l) hji
+  · intro i
+    simp only [Matrix.sum_apply, pow_apply_diag_of_isUpperTriangular hM, hdiag i]
+    simp [zero_pow_eq, hk ⟨i⟩]
+
+/-- **The geometric series in a strictly upper-triangular matrix, truncated at the size of the
+matrix, is upper unitriangular.**
+
+This is the truncation that appears when inverting `1 - M`, being the exponent at which `M` has
+already died (`Matrix.pow_card_eq_zero_of_isUpperTriangular_of_diag_eq_zero`). -/
+theorem isUpperUnitriangular_geom_sum_card_of_isUpperTriangular_of_diag_eq_zero
+    {T : Type*} [Semiring T] {M : Matrix n n T} (hM : M.IsUpperTriangular)
+    (hdiag : ∀ i, M i i = 0) :
+    (∑ j ∈ Finset.range (Fintype.card n), M ^ j).IsUpperUnitriangular :=
+  isUpperUnitriangular_geom_sum_of_isUpperTriangular_of_diag_eq_zero hM hdiag
+    fun _ ↦ Fintype.card_pos
 
 variable {S : Type*} [CommRing S] {M : Matrix n n S}
 
