@@ -95,7 +95,7 @@ theorem isTotallyPositive_sq {x : K} (hx : x ≠ 0) : IsTotallyPositive (x ^ 2) 
 
 /-- A positive rational integer is totally positive in any number field: every real embedding fixes
 it. -/
-theorem isTotallyPositive_intCast [NumberField K] {n : ℤ} (hn : 0 < n) :
+theorem isTotallyPositive_intCast {n : ℤ} (hn : 0 < n) :
     IsTotallyPositive ((n : ℤ) : K) :=
   isTotallyPositive_iff.mpr fun w hw => by
     rw [map_intCast]
