@@ -37,7 +37,7 @@ mass and memoryless tail identity.  Mathlib totalizes the zero-success parameter
   Wiley, 2005, Chapter 5.
 -/
 
-@[expose] public section
+public section
 
 open MeasureTheory ProbabilityTheory Real Set
 open scoped ENNReal NNReal
@@ -191,8 +191,7 @@ theorem variance_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
       (integrable_sq_id_map_cast_geometricMeasure hp)
   rw [variance_eq_sub hmem]
-  change (∫ x, x ^ 2 ∂((geometricMeasure p).map (Nat.cast : ℕ → ℝ))) -
-      (∫ x, x ∂((geometricMeasure p).map (Nat.cast : ℕ → ℝ))) ^ 2 = _
+  simp only [Pi.pow_apply, id_eq]
   rw [integral_sq_id_map_cast_geometricMeasure hp, integral_id_map_cast_geometricMeasure hp]
   field_simp [coe_ne_zero hp]
   ring
@@ -280,12 +279,8 @@ theorem geometricMeasure_cond_Ici (p : unitInterval) (n m : ℕ)
       ext k
       simp only [Set.mem_inter_iff, Set.mem_ofPred_eq]
       omega
-    rw [hinter]
-    change ((geometricMeasure p).real {k | n ≤ k})⁻¹ *
-        (geometricMeasure p).real {k | n + m ≤ k} =
-      (geometricMeasure p).real {k | m ≤ k}
-    rw [geometricMeasure_real_Ici hp, geometricMeasure_real_Ici hp,
-      geometricMeasure_real_Ici hp, pow_add]
+    rw [hinter, ← measureReal_def, ← measureReal_def, geometricMeasure_real_Ici hp,
+      geometricMeasure_real_Ici hp, geometricMeasure_real_Ici hp, pow_add]
     have hn' : (1 - (p : ℝ)) ^ n ≠ 0 := by
       rw [← geometricMeasure_real_Ici hp]
       exact (measureReal_ne_zero_iff (μ := geometricMeasure p) (s := {k | n ≤ k})).2 hn
