@@ -146,20 +146,26 @@ private theorem continuous_of_algebraMap_comm (s : Gal(separableClosure F E/F) �
 
 variable (F E)
 
+/-- Restriction to the separable closure as a group isomorphism, for a normal extension `E/F`.
+
+This is the underlying multiplicative equivalence of `separableClosureRestrictEquiv`, named so
+that the structure field and the inverse-continuity proof below refer to one and the same term
+rather than to two separately built copies identified by definitional unfolding. -/
+private def separableClosureRestrictMulEquiv : Gal(E/F) ≃* Gal(separableClosure F E/F) :=
+  MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
+    ⟨AlgEquiv.restrictNormalHom_separableClosure_injective F E,
+      AlgEquiv.restrictNormalHom_surjective E⟩
+
 /-- **Restriction to the separable closure is an isomorphism of topological groups**
 `Gal(E/F) ≃ₜ* Gal(separableClosure F E / F)`, for a normal extension `E/F`. -/
 def separableClosureRestrictEquiv : Gal(E/F) ≃ₜ* Gal(separableClosure F E/F) where
-  __ := MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
-    ⟨AlgEquiv.restrictNormalHom_separableClosure_injective F E,
-      AlgEquiv.restrictNormalHom_surjective E⟩
+  __ := separableClosureRestrictMulEquiv F E
   continuous_toFun := InfiniteGalois.restrictNormalHom_continuous _
-  continuous_invFun := by
-    set e := MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
-      ⟨AlgEquiv.restrictNormalHom_separableClosure_injective F E,
-        AlgEquiv.restrictNormalHom_surjective E⟩
-    refine continuous_of_algebraMap_comm e.symm (map_mul e.symm) fun τ y ↦ ?_
-    conv_rhs => rw [← e.apply_symm_apply τ]
-    exact (AlgEquiv.restrictNormal_commutes _ _ y).symm
+  continuous_invFun :=
+    continuous_of_algebraMap_comm (separableClosureRestrictMulEquiv F E).symm
+      (map_mul _) fun τ y ↦ by
+        conv_rhs => rw [← (separableClosureRestrictMulEquiv F E).apply_symm_apply τ]
+        exact (AlgEquiv.restrictNormal_commutes _ _ y).symm
 
 variable {F E}
 
@@ -231,30 +237,20 @@ abbrev AbsoluteGaloisGroup := Gal(SeparableClosure K/K)
 restricting an automorphism of an algebraic closure of `K` to the separable closure is an
 isomorphism `Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K`.
 
-The body is not exposed. `absoluteGaloisGroupRestrictEquiv_apply` and
-`absoluteGaloisGroupRestrictEquiv_symm_apply` are what make the general API reachable here; they
-are stated on applications rather than on the two isomorphisms themselves, because
-`Field.absoluteGaloisGroup K` carries its own derived group and topology instances, so an equation
-between the isomorphisms is not usable by `rw`. -/
+Its forward map is restriction, `absoluteGaloisGroupRestrictEquiv_apply`, and both directions are
+computed on elements of `SeparableClosure K` by `coe_absoluteGaloisGroupRestrictEquiv_apply` and
+`absoluteGaloisGroupRestrictEquiv_symm_apply_coe`. Those lemmas are stated on applications rather
+than on the isomorphisms themselves, because `Field.absoluteGaloisGroup K` carries its own derived
+group and topology instances, so an equation between the isomorphisms is not usable by `rw`. -/
 def absoluteGaloisGroupRestrictEquiv :
     Field.absoluteGaloisGroup K ≃ₜ* AbsoluteGaloisGroup K :=
   separableClosureRestrictEquiv K (AlgebraicClosure K)
 
-/-- The comparison isomorphism sends `σ` where `separableClosureRestrictEquiv` at an algebraic
-closure does; this reduces the specialisation to the general `separableClosureRestrictEquiv_apply`
-and `coe_separableClosureRestrictEquiv_apply`. -/
+/-- The comparison isomorphism is the restriction map `AlgEquiv.restrictNormalHom`, which is what
+identifies it with the map Mathlib's API is about. -/
 theorem absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K)) :
     absoluteGaloisGroupRestrictEquiv K σ =
-      separableClosureRestrictEquiv K (AlgebraicClosure K) σ :=
-  (rfl)
-
-/-- The inverse of the comparison isomorphism extends `τ` the way the inverse of
-`separableClosureRestrictEquiv` at an algebraic closure does; with
-`separableClosureRestrictEquiv_symm_apply_coe` this computes the automorphism of
-`AlgebraicClosure K` extending a given automorphism of `SeparableClosure K`. -/
-theorem absoluteGaloisGroupRestrictEquiv_symm_apply (τ : AbsoluteGaloisGroup K) :
-    (absoluteGaloisGroupRestrictEquiv K).symm τ =
-      (separableClosureRestrictEquiv K (AlgebraicClosure K)).symm τ :=
+      AlgEquiv.restrictNormalHom (separableClosure K (AlgebraicClosure K)) σ :=
   (rfl)
 
 /-- An automorphism of an algebraic closure of `K` and its image in `AbsoluteGaloisGroup K` take
@@ -264,6 +260,19 @@ theorem coe_absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/
     (x : SeparableClosure K) :
     (absoluteGaloisGroupRestrictEquiv K σ x : AlgebraicClosure K) = σ x :=
   coe_separableClosureRestrictEquiv_apply _ x
+
+/-- The automorphism of `AlgebraicClosure K` extending `τ : AbsoluteGaloisGroup K` agrees with `τ`
+on `SeparableClosure K`; this is what computes the inverse of the comparison isomorphism.
+
+The coercion to a function carries its type argument explicitly because
+`Field.absoluteGaloisGroup K` is a plain definition, so elaboration does not see an element of it
+as a function on `AlgebraicClosure K` on its own. -/
+@[simp]
+theorem absoluteGaloisGroupRestrictEquiv_symm_apply_coe (τ : AbsoluteGaloisGroup K)
+    (x : SeparableClosure K) :
+    DFunLike.coe (F := Gal(AlgebraicClosure K/K)) ((absoluteGaloisGroupRestrictEquiv K).symm τ)
+        (x : AlgebraicClosure K) = (τ x : AlgebraicClosure K) :=
+  separableClosureRestrictEquiv_symm_apply_coe _ x
 
 /-- The absolute Galois group of a separably closed field is trivial. -/
 instance [IsSepClosed K] : Subsingleton (AbsoluteGaloisGroup K) := by
