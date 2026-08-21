@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.Chain
-public import Mathlib.LinearAlgebra.RootSystem.Hom
 
 /-!
 # What an equivalence of root pairings preserves
@@ -90,14 +89,6 @@ theorem indexEquiv_reflectionPerm (f : P.Hom P₂) (i j : ι) :
     reflection_apply_root, reflection_apply_root, map_sub, map_smul, f.pairing,
     Hom.root_weightMap_apply, Hom.root_weightMap_apply]
 
-/-- The diagonal case of `TauCeti.indexEquiv_reflectionPerm`, stated separately for rewriting root
-negation through `RootPairing.indexNeg`. It is not a `simp` lemma: the general form already
-rewrites the diagonal case. -/
-theorem indexEquiv_reflectionPerm_self (f : P.Hom P₂) (i : ι) :
-    f.indexEquiv (P.reflectionPerm i i) =
-      P₂.reflectionPerm (f.indexEquiv i) (f.indexEquiv i) :=
-  indexEquiv_reflectionPerm f i i
-
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β + γ` between roots. -/
 @[simp]
@@ -162,7 +153,7 @@ subtract `α` from `β` and stay among the roots. -/
 theorem chainBotCoeff_indexEquiv (i j : ι) :
     P₂.chainBotCoeff (g.indexEquiv i) (g.indexEquiv j) = P.chainBotCoeff i j := by
   rw [← P₂.chainTopCoeff_reflectionPerm_left, ← P.chainTopCoeff_reflectionPerm_left,
-    ← indexEquiv_reflectionPerm_self g.toHom, chainTopCoeff_indexEquiv]
+    ← indexEquiv_reflectionPerm g.toHom, chainTopCoeff_indexEquiv]
 
 end Chain
 

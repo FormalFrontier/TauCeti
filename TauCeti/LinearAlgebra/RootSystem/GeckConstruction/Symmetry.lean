@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.OfAssociative
-public import Mathlib.LinearAlgebra.Matrix.Reindex
 public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Basic
 public import TauCeti.LinearAlgebra.RootSystem.EquivInvariance
 
@@ -222,7 +220,7 @@ private theorem submatrix_geckIndexEquiv_e (i : b.support) :
     simp only [submatrix_apply, geckIndexEquiv_apply_inl, geckIndexEquiv_apply_inr,
       GeckConstruction.e,
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
-      Matrix.zero_apply, of_apply, hτ, indexNeg_neg, ← indexEquiv_reflectionPerm_self g.toHom,
+      Matrix.zero_apply, of_apply, hτ, indexNeg_neg, ← indexEquiv_reflectionPerm g.toHom,
       Equiv.apply_eq_iff_eq,
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_eq_add_iff,
       chainBotCoeff_indexEquiv]
@@ -240,7 +238,7 @@ private theorem submatrix_geckIndexEquiv_f (i : b.support) :
     simp only [submatrix_apply, geckIndexEquiv_apply_inl, geckIndexEquiv_apply_inr,
       GeckConstruction.f,
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
-      Matrix.zero_apply, of_apply, hτ, indexNeg_neg, ← indexEquiv_reflectionPerm_self g.toHom,
+      Matrix.zero_apply, of_apply, hτ, indexNeg_neg, ← indexEquiv_reflectionPerm g.toHom,
       Equiv.apply_eq_iff_eq,
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_eq_sub_iff,
       chainTopCoeff_indexEquiv]
