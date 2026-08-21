@@ -13,21 +13,21 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic
 
 The intermediate-carrier correspondence of
 `TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Basic` attaches to an integral lattice `L` the
-order isomorphism between carriers `L ≤ M ≤ Lᵛ` and subgroups of `A_L = Lᵛ / L`, and
+order isomorphism between carriers `L ≤ P ≤ Lᵛ` and subgroups of `A_L = Lᵛ / L`, and
 `TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic` cuts out the integral and even
 carriers inside it. This file proves that the whole package is natural, in the two directions the
 theory uses it.
 
 An isometry `e : L ≃ M` transports intermediate carriers along its ambient equivalence, and the
 resulting order isomorphism commutes with the discriminant-subgroup correspondence: the subgroup
-of `A_M` attached to `e(N)` is the image of the subgroup of `A_L` attached to `N` under the
+of `A_M` attached to `e(P)` is the image of the subgroup of `A_L` attached to `P` under the
 induced equivalence `A_L ≃ A_M`. Integrality and evenness of an intermediate carrier are
 invariants of the transport, so the two refined correspondences are natural as well, and for
 nondegenerate lattices the induced equivalence of discriminant groups carries orthogonal
 complements to orthogonal complements and isotropic subgroups to isotropic subgroups.
 
 For an orthogonal direct sum, a pair of intermediate carriers assembles into the intermediate
-carrier `N₁ ⊕ N₂` of `L ⊥ M`, order-embedding the pairs into the carriers of the sum. Its
+carrier `P₁ ⊕ P₂` of `L ⊥ M`, order-embedding the pairs into the carriers of the sum. Its
 subgroup of `A_(L ⊥ M) ≃ A_L × A_M` is the product subgroup, and it is integral, respectively
 even, exactly when both components are.
 
@@ -35,20 +35,28 @@ even, exactly when both components are.
 
 * `TauCeti.IntegralLattice.Isometry.intermediateCarrierEquiv`: transport of intermediate carriers
   along a lattice isometry.
-* `TauCeti.IntegralLattice.Isometry.discriminantSubgroup_intermediateCarrierEquiv`: the transport
-  commutes with the discriminant-subgroup correspondence.
+* `TauCeti.IntegralLattice.Isometry.discriminantSubgroup_intermediateCarrierEquiv` and
+  `IntegralLattice.Isometry.intermediateCarrierEquiv_intermediateCarrierOfDiscriminantSubgroup`:
+  the transport commutes with the discriminant-subgroup correspondence and with its inverse-image
+  construction.
 * `TauCeti.IntegralLattice.Isometry.isIntegral_intermediateCarrierEquiv_iff` and
   `TauCeti.IntegralLattice.Isometry.isEven_intermediateCarrierEquiv_iff`: integrality and evenness
   of an intermediate carrier are isometry invariants.
 * `TauCeti.IntegralLattice.Isometry.integralIntermediateCarrierEquiv` and
   `TauCeti.IntegralLattice.Isometry.evenIntermediateCarrierEquiv`: the corresponding transports
   restricted to integral and even intermediate carriers.
-* `TauCeti.IntegralLattice.Isometry.map_orthogonalComplement_discriminantSubgroup`: an isometry
+* `TauCeti.IntegralLattice.Isometry.map_orthogonalComplement_discriminantGroupEquiv`: an isometry
   carries orthogonal complements in the discriminant group to orthogonal complements.
+* `TauCeti.IntegralLattice.Isometry.isIsotropic_map_discriminantGroupEquiv_iff`: an isometry
+  transports isotropic subgroups of the discriminant group.
 * `TauCeti.IntegralLattice.orthogonalSumIntermediateCarrier`: the intermediate carrier of an
   orthogonal sum assembled from a pair of intermediate carriers.
-* `TauCeti.IntegralLattice.discriminantSubgroup_orthogonalSumIntermediateCarrier`: its subgroup of
-  the discriminant group is the product subgroup.
+* `TauCeti.IntegralLattice.map_discriminantSubgroup_orthogonalSumIntermediateCarrier` and
+  `IntegralLattice.orthogonalSumIntermediateCarrier_intermediateCarrierOfDiscriminantSubgroup`:
+  its subgroup of the discriminant group is the product subgroup, in both directions.
+* `TauCeti.IntegralLattice.isIntegral_orthogonalSumIntermediateCarrier_iff` and
+  `TauCeti.IntegralLattice.isEven_orthogonalSumIntermediateCarrier_iff`: integrality and evenness
+  of an assembled carrier are componentwise.
 
 ## References
 
@@ -77,25 +85,24 @@ variable {L : IntegralLattice V} {M : IntegralLattice W} {N : IntegralLattice U}
 
 /-- **An isometry transports intermediate carriers.** The ambient equivalence of a lattice
 isometry maps the carrier onto the carrier and the dual carrier onto the dual carrier, so it
-restricts to an order isomorphism between the intervals of intermediate carriers. -/
-def intermediateCarrierEquiv (e : Isometry L M) :
+restricts to an order isomorphism between the intervals of intermediate carriers.
+
+The construction is exposed so that the underlying carrier of a transported carrier reduces to
+the image submodule; see `coe_intermediateCarrierEquiv`. -/
+@[expose] def intermediateCarrierEquiv (e : Isometry L M) :
     L.IntermediateCarrier ≃o M.IntermediateCarrier :=
   (OrderIso.Icc (Submodule.orderIsoMapComap e.ambientEquiv) L.carrier L.dualCarrier).trans
     (OrderIso.setCongr _ _ (by
       simp only [Submodule.orderIsoMapComap_apply]
-      rw [e.map_carrier_ambientEquiv, e.map_dualCarrier]))
-
-/-- Implementation lemma exposing the application of the two interval order isomorphisms used by
-`intermediateCarrierEquiv`. -/
-private theorem coe_intermediateCarrierEquiv_impl (e : Isometry L M)
-    (P : L.IntermediateCarrier) :
-    (e.intermediateCarrierEquiv P).1 = P.1.map e.ambientEquiv.toLinearMap :=
-  rfl
+      rw [e.map_carrier_ambientEquiv, e.map_dualCarrier_ambientEquiv]))
 
 /-- The carrier transported along an isometry is the image of the original carrier. -/
 theorem coe_intermediateCarrierEquiv (e : Isometry L M) (P : L.IntermediateCarrier) :
     (e.intermediateCarrierEquiv P).1 = P.1.map e.ambientEquiv.toLinearMap :=
-  e.coe_intermediateCarrierEquiv_impl P
+  -- Mathlib's `OrderIso.Icc` and `OrderIso.setCongr` both act by the underlying map on the
+  -- coerced element, and `⇑e.ambientEquiv` is `⇑e.ambientEquiv.toLinearMap`, so both sides are
+  -- definitionally the same submodule.
+  rfl
 
 /-- Membership in a transported carrier is membership of the preimage in the original carrier. -/
 @[simp]
@@ -128,6 +135,13 @@ theorem intermediateCarrierEquiv_symm (e : Isometry L M) :
   refine Subtype.ext (Submodule.ext fun y ↦ ?_)
   rw [mem_intermediateCarrierEquiv_iff, mem_intermediateCarrierEquiv_iff, symm_symm,
     apply_symm_apply]
+
+/-- Membership in an inversely transported carrier is membership of the image in the original
+carrier. -/
+@[simp]
+theorem mem_intermediateCarrierEquiv_symm_iff (e : Isometry L M) (Q : M.IntermediateCarrier)
+    (x : V) : x ∈ (e.intermediateCarrierEquiv.symm Q).1 ↔ e x ∈ Q.1 := by
+  rw [← intermediateCarrierEquiv_symm, mem_intermediateCarrierEquiv_iff, symm_symm]
 
 /-- The transport along a composite isometry is the composite transport. -/
 @[simp]
@@ -217,14 +231,44 @@ theorem isEven_intermediateCarrierEquiv_iff (e : Isometry L M) (P : L.Intermedia
     obtain ⟨n, hn⟩ := h (e.symm x) ((e.mem_intermediateCarrierEquiv_iff P x).mp hx)
     exact ⟨n, by rwa [← e.norm_apply (e.symm x), apply_symm_apply] at hn⟩
 
+/-- Restriction of the intermediate-carrier transport to the carriers cut out by a pair of
+predicates corresponding under the transport.
+
+The construction is exposed so that the underlying intermediate carrier of a restricted transport
+reduces to the transported carrier; see `coe_intermediateCarrierEquivSubtype`. -/
+@[expose] def intermediateCarrierEquivSubtype (e : Isometry L M)
+    {p : L.IntermediateCarrier → Prop} {q : M.IntermediateCarrier → Prop}
+    (h : ∀ P, p P ↔ q (e.intermediateCarrierEquiv P)) :
+    {P : L.IntermediateCarrier // p P} ≃o {Q : M.IntermediateCarrier // q Q} where
+  toEquiv := e.intermediateCarrierEquiv.toEquiv.subtypeEquiv h
+  map_rel_iff' := e.intermediateCarrierEquiv.le_iff_le
+
+/-- A restricted transport acts through `intermediateCarrierEquiv` on underlying intermediate
+carriers. -/
+@[simp]
+theorem coe_intermediateCarrierEquivSubtype (e : Isometry L M)
+    {p : L.IntermediateCarrier → Prop} {q : M.IntermediateCarrier → Prop}
+    (h : ∀ P, p P ↔ q (e.intermediateCarrierEquiv P)) (P : {P : L.IntermediateCarrier // p P}) :
+    (e.intermediateCarrierEquivSubtype h P : M.IntermediateCarrier) =
+      e.intermediateCarrierEquiv P.1 :=
+  rfl
+
+/-- The inverse of a restricted transport acts through the inverse intermediate-carrier
+transport. -/
+@[simp]
+theorem coe_intermediateCarrierEquivSubtype_symm (e : Isometry L M)
+    {p : L.IntermediateCarrier → Prop} {q : M.IntermediateCarrier → Prop}
+    (h : ∀ P, p P ↔ q (e.intermediateCarrierEquiv P)) (Q : {Q : M.IntermediateCarrier // q Q}) :
+    ((e.intermediateCarrierEquivSubtype h).symm Q : L.IntermediateCarrier) =
+      e.intermediateCarrierEquiv.symm Q.1 :=
+  rfl
+
 /-- **An isometry transports integral intermediate carriers.** This is the restriction of
 `intermediateCarrierEquiv` to the integral carriers on both sides. -/
 def integralIntermediateCarrierEquiv (e : Isometry L M) :
     {P : L.IntermediateCarrier // IntermediateCarrier.IsIntegral P} ≃o
-      {Q : M.IntermediateCarrier // IntermediateCarrier.IsIntegral Q} where
-  toEquiv := e.intermediateCarrierEquiv.toEquiv.subtypeEquiv fun P ↦
-    (e.isIntegral_intermediateCarrierEquiv_iff P).symm
-  map_rel_iff' := e.intermediateCarrierEquiv.le_iff_le
+      {Q : M.IntermediateCarrier // IntermediateCarrier.IsIntegral Q} :=
+  e.intermediateCarrierEquivSubtype fun P ↦ (e.isIntegral_intermediateCarrierEquiv_iff P).symm
 
 /-- The integral-carrier transport acts through `intermediateCarrierEquiv` on underlying
 intermediate carriers. -/
@@ -232,9 +276,8 @@ intermediate carriers. -/
 theorem integralIntermediateCarrierEquiv_apply_coe (e : Isometry L M)
     (P : {P : L.IntermediateCarrier // IntermediateCarrier.IsIntegral P}) :
     (e.integralIntermediateCarrierEquiv P : M.IntermediateCarrier) =
-      e.intermediateCarrierEquiv P.1 := by
-  rw [integralIntermediateCarrierEquiv]
-  rfl
+      e.intermediateCarrierEquiv P.1 :=
+  e.coe_intermediateCarrierEquivSubtype _ P
 
 /-- The inverse integral-carrier transport acts through the inverse intermediate-carrier
 transport. -/
@@ -242,47 +285,35 @@ transport. -/
 theorem integralIntermediateCarrierEquiv_symm_apply_coe (e : Isometry L M)
     (Q : {Q : M.IntermediateCarrier // IntermediateCarrier.IsIntegral Q}) :
     (e.integralIntermediateCarrierEquiv.symm Q : L.IntermediateCarrier) =
-      e.intermediateCarrierEquiv.symm Q.1 := by
-  rw [integralIntermediateCarrierEquiv]
-  rfl
+      e.intermediateCarrierEquiv.symm Q.1 :=
+  e.coe_intermediateCarrierEquivSubtype_symm _ Q
 
 /-- The identity isometry acts identically on integral intermediate carriers. -/
 @[simp]
 theorem integralIntermediateCarrierEquiv_refl (L : IntegralLattice V) :
     (Isometry.refl L).integralIntermediateCarrierEquiv =
-      OrderIso.refl {P : L.IntermediateCarrier // IntermediateCarrier.IsIntegral P} := by
-  apply RelIso.ext
-  intro P
-  apply Subtype.ext
-  simp
+      OrderIso.refl {P : L.IntermediateCarrier // IntermediateCarrier.IsIntegral P} :=
+  RelIso.ext fun P ↦ Subtype.ext (by simp)
 
 /-- Integral-carrier transport along an inverse isometry is inverse transport. -/
 @[simp]
 theorem integralIntermediateCarrierEquiv_symm (e : Isometry L M) :
-    e.symm.integralIntermediateCarrierEquiv = e.integralIntermediateCarrierEquiv.symm := by
-  apply RelIso.ext
-  intro Q
-  apply Subtype.ext
-  simp
+    e.symm.integralIntermediateCarrierEquiv = e.integralIntermediateCarrierEquiv.symm :=
+  RelIso.ext fun Q ↦ Subtype.ext (by simp)
 
 /-- Integral-carrier transport along a composite isometry is composite transport. -/
 @[simp]
 theorem integralIntermediateCarrierEquiv_trans (e : Isometry L M) (f : Isometry M N) :
     (e.trans f).integralIntermediateCarrierEquiv =
-      e.integralIntermediateCarrierEquiv.trans f.integralIntermediateCarrierEquiv := by
-  apply RelIso.ext
-  intro P
-  apply Subtype.ext
-  simp
+      e.integralIntermediateCarrierEquiv.trans f.integralIntermediateCarrierEquiv :=
+  RelIso.ext fun P ↦ Subtype.ext (by simp)
 
 /-- **An isometry transports even intermediate carriers.** This is the restriction of
 `intermediateCarrierEquiv` to the even carriers on both sides. -/
 def evenIntermediateCarrierEquiv (e : Isometry L M) :
     {P : L.IntermediateCarrier // IntermediateCarrier.IsEven P} ≃o
-      {Q : M.IntermediateCarrier // IntermediateCarrier.IsEven Q} where
-  toEquiv := e.intermediateCarrierEquiv.toEquiv.subtypeEquiv fun P ↦
-    (e.isEven_intermediateCarrierEquiv_iff P).symm
-  map_rel_iff' := e.intermediateCarrierEquiv.le_iff_le
+      {Q : M.IntermediateCarrier // IntermediateCarrier.IsEven Q} :=
+  e.intermediateCarrierEquivSubtype fun P ↦ (e.isEven_intermediateCarrierEquiv_iff P).symm
 
 /-- The even-carrier transport acts through `intermediateCarrierEquiv` on underlying intermediate
 carriers. -/
@@ -290,85 +321,64 @@ carriers. -/
 theorem evenIntermediateCarrierEquiv_apply_coe (e : Isometry L M)
     (P : {P : L.IntermediateCarrier // IntermediateCarrier.IsEven P}) :
     (e.evenIntermediateCarrierEquiv P : M.IntermediateCarrier) =
-      e.intermediateCarrierEquiv P.1 := by
-  rw [evenIntermediateCarrierEquiv]
-  rfl
+      e.intermediateCarrierEquiv P.1 :=
+  e.coe_intermediateCarrierEquivSubtype _ P
 
 /-- The inverse even-carrier transport acts through the inverse intermediate-carrier transport. -/
 @[simp]
 theorem evenIntermediateCarrierEquiv_symm_apply_coe (e : Isometry L M)
     (Q : {Q : M.IntermediateCarrier // IntermediateCarrier.IsEven Q}) :
     (e.evenIntermediateCarrierEquiv.symm Q : L.IntermediateCarrier) =
-      e.intermediateCarrierEquiv.symm Q.1 := by
-  rw [evenIntermediateCarrierEquiv]
-  rfl
+      e.intermediateCarrierEquiv.symm Q.1 :=
+  e.coe_intermediateCarrierEquivSubtype_symm _ Q
 
 /-- The identity isometry acts identically on even intermediate carriers. -/
 @[simp]
 theorem evenIntermediateCarrierEquiv_refl (L : IntegralLattice V) :
     (Isometry.refl L).evenIntermediateCarrierEquiv =
-      OrderIso.refl {P : L.IntermediateCarrier // IntermediateCarrier.IsEven P} := by
-  apply RelIso.ext
-  intro P
-  apply Subtype.ext
-  simp
+      OrderIso.refl {P : L.IntermediateCarrier // IntermediateCarrier.IsEven P} :=
+  RelIso.ext fun P ↦ Subtype.ext (by simp)
 
 /-- Even-carrier transport along an inverse isometry is inverse transport. -/
 @[simp]
 theorem evenIntermediateCarrierEquiv_symm (e : Isometry L M) :
-    e.symm.evenIntermediateCarrierEquiv = e.evenIntermediateCarrierEquiv.symm := by
-  apply RelIso.ext
-  intro Q
-  apply Subtype.ext
-  simp
+    e.symm.evenIntermediateCarrierEquiv = e.evenIntermediateCarrierEquiv.symm :=
+  RelIso.ext fun Q ↦ Subtype.ext (by simp)
 
 /-- Even-carrier transport along a composite isometry is composite transport. -/
 @[simp]
 theorem evenIntermediateCarrierEquiv_trans (e : Isometry L M) (f : Isometry M N) :
     (e.trans f).evenIntermediateCarrierEquiv =
-      e.evenIntermediateCarrierEquiv.trans f.evenIntermediateCarrierEquiv := by
-  apply RelIso.ext
-  intro P
-  apply Subtype.ext
-  simp
+      e.evenIntermediateCarrierEquiv.trans f.evenIntermediateCarrierEquiv :=
+  RelIso.ext fun P ↦ Subtype.ext (by simp)
 
 /-! ## Orthogonal complements and isotropy -/
 
-variable [L.IsNondegenerate]
+variable [L.IsNondegenerate] [M.IsNondegenerate]
 
-/-- **An isometry carries the orthogonal complement of a discriminant subgroup to the orthogonal
-complement of the transported subgroup.** Nondegeneracy of the target lattice is transported from
-the source by the isometry. -/
-theorem map_orthogonalComplement_discriminantSubgroup (e : Isometry L M)
-    (P : L.IntermediateCarrier) :
-    (L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P)).map
-        (@discriminantBilinearIsometry V _ _ W _ _ L M e _
-          e.isNondegenerate).toAddEquiv =
-      (@discriminantBilinearModule W _ _ M e.isNondegenerate).orthogonalComplement
-        (M.discriminantSubgroup (e.intermediateCarrierEquiv P)) := by
-  let f := @discriminantBilinearIsometry V _ _ W _ _ L M e _ e.isNondegenerate
-  have hf := @discriminantBilinearIsometry_toAddEquiv V _ _ W _ _ L M e _
-    e.isNondegenerate
-  have hmap := FiniteBilinearModule.Isometry.map_orthogonalComplement
-    L.discriminantBilinearModule f (L.discriminantSubgroup P)
-  rw [discriminantSubgroup_intermediateCarrierEquiv, ← hf]
-  exact hmap
+/-- **An isometry carries orthogonal complements in the discriminant group to orthogonal
+complements.** -/
+@[simp]
+theorem map_orthogonalComplement_discriminantGroupEquiv (e : Isometry L M)
+    (H : AddSubgroup L.DiscriminantGroup) :
+    (L.discriminantBilinearModule.orthogonalComplement H).map
+        (e.discriminantGroupEquiv.toAddEquiv : L.DiscriminantGroup →+ M.DiscriminantGroup) =
+      M.discriminantBilinearModule.orthogonalComplement (H.map
+        (e.discriminantGroupEquiv.toAddEquiv : L.DiscriminantGroup →+ M.DiscriminantGroup)) := by
+  rw [← discriminantBilinearIsometry_toAddEquiv]
+  exact FiniteBilinearModule.Isometry.map_orthogonalComplement L.discriminantBilinearModule
+    e.discriminantBilinearIsometry H
 
-/-- **Isotropy is an isometry invariant of a discriminant subgroup**, the discriminant-group form
-of the invariance of integrality of an intermediate carrier. -/
-theorem isIsotropic_discriminantSubgroup_intermediateCarrierEquiv_iff (e : Isometry L M)
-    (P : L.IntermediateCarrier) :
-    (@discriminantBilinearModule W _ _ M e.isNondegenerate).IsIsotropic
-        (M.discriminantSubgroup (e.intermediateCarrierEquiv P)) ↔
-      L.discriminantBilinearModule.IsIsotropic (L.discriminantSubgroup P) := by
-  let f := @discriminantBilinearIsometry V _ _ W _ _ L M e _ e.isNondegenerate
-  have hf := @discriminantBilinearIsometry_toAddEquiv V _ _ W _ _ L M e _
-    e.isNondegenerate
-  rw [discriminantSubgroup_intermediateCarrierEquiv]
-  have hiso := FiniteBilinearModule.Isometry.isIsotropic_map_iff
-    L.discriminantBilinearModule f (L.discriminantSubgroup P)
-  rw [hf] at hiso
-  exact hiso
+/-- **Isotropy in the discriminant group is an isometry invariant.** -/
+@[simp]
+theorem isIsotropic_map_discriminantGroupEquiv_iff (e : Isometry L M)
+    (H : AddSubgroup L.DiscriminantGroup) :
+    M.discriminantBilinearModule.IsIsotropic (H.map
+        (e.discriminantGroupEquiv.toAddEquiv : L.DiscriminantGroup →+ M.DiscriminantGroup)) ↔
+      L.discriminantBilinearModule.IsIsotropic H := by
+  rw [← discriminantBilinearIsometry_toAddEquiv]
+  exact FiniteBilinearModule.Isometry.isIsotropic_map_iff L.discriminantBilinearModule
+    e.discriminantBilinearIsometry H
 
 end Isometry
 
@@ -398,7 +408,7 @@ theorem mem_orthogonalSumIntermediateCarrier_iff (P : L.IntermediateCarrier)
     p ∈ (orthogonalSumIntermediateCarrier L M P Q).1 ↔ p.1 ∈ P.1 ∧ p.2 ∈ Q.1 :=
   Submodule.mem_prod
 
-/-- Assembling the two source lattices gives the orthogonal sum itself. -/
+/-- Assembling the two carriers gives the carrier of the orthogonal sum. -/
 @[simp]
 theorem orthogonalSumIntermediateCarrier_bot :
     orthogonalSumIntermediateCarrier L M ⊥ ⊥ = ⊥ := by
@@ -437,6 +447,7 @@ theorem orthogonalSumIntermediateCarrier_le_iff (P P' : L.IntermediateCarrier)
 canonical equivalence `A_(L ⊥ M) ≃ A_L × A_M`, a class lies in the subgroup of the assembled
 carrier exactly when each component lies in the subgroup of the corresponding component
 carrier. -/
+@[simp]
 theorem mem_discriminantSubgroup_orthogonalSumIntermediateCarrier_iff
     (P : L.IntermediateCarrier) (Q : M.IntermediateCarrier)
     (z : (L.orthogonalSum M).DiscriminantGroup) :
@@ -453,7 +464,7 @@ theorem mem_discriminantSubgroup_orthogonalSumIntermediateCarrier_iff
 /-- **The discriminant subgroup of an assembled carrier is the product subgroup**, as an equality
 of subgroups of `A_L × A_M`. -/
 @[simp]
-theorem discriminantSubgroup_orthogonalSumIntermediateCarrier (P : L.IntermediateCarrier)
+theorem map_discriminantSubgroup_orthogonalSumIntermediateCarrier (P : L.IntermediateCarrier)
     (Q : M.IntermediateCarrier) :
     ((L.orthogonalSum M).discriminantSubgroup
         (orthogonalSumIntermediateCarrier L M P Q)).map
@@ -469,6 +480,26 @@ theorem discriminantSubgroup_orthogonalSumIntermediateCarrier (P : L.Intermediat
     rw [mem_discriminantSubgroup_orthogonalSumIntermediateCarrier_iff,
       (L.discriminantGroupOrthogonalSumEquiv M).apply_symm_apply]
     exact hz
+
+/-- **Assembling commutes with the inverse-image construction.** The carrier of `L ⊥ M` attached
+to the preimage of a product subgroup `H × K ≤ A_L × A_M` is assembled from the carriers attached
+to `H` and to `K`. -/
+theorem orthogonalSumIntermediateCarrier_intermediateCarrierOfDiscriminantSubgroup
+    (H : AddSubgroup L.DiscriminantGroup) (K : AddSubgroup M.DiscriminantGroup) :
+    orthogonalSumIntermediateCarrier L M (L.intermediateCarrierOfDiscriminantSubgroup H)
+        (M.intermediateCarrierOfDiscriminantSubgroup K) =
+      (L.orthogonalSum M).intermediateCarrierOfDiscriminantSubgroup
+        ((H.prod K).comap (L.discriminantGroupOrthogonalSumEquiv M).toAddEquiv) := by
+  have hmap := map_discriminantSubgroup_orthogonalSumIntermediateCarrier
+    (L.intermediateCarrierOfDiscriminantSubgroup H) (M.intermediateCarrierOfDiscriminantSubgroup K)
+  rw [discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup,
+    discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup] at hmap
+  refine (L.orthogonalSum M).intermediateCarrierOrderIsoDiscriminantSubgroup.injective ?_
+  rw [intermediateCarrierOrderIsoDiscriminantSubgroup_apply,
+    intermediateCarrierOrderIsoDiscriminantSubgroup_apply,
+    discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup, ← hmap,
+    AddSubgroup.comap_map_eq_self_of_injective
+      (L.discriminantGroupOrthogonalSumEquiv M).toAddEquiv.injective]
 
 /-- **Integrality of an assembled carrier is componentwise.** -/
 @[simp]

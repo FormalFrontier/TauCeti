@@ -41,6 +41,10 @@ subgroup can be degenerate.
 
 * `TauCeti.FiniteBilinearModule.Isometry.map_orthogonalComplement`: an isometry carries
   orthogonal complements to orthogonal complements.
+* `TauCeti.FiniteBilinearModule.Isometry.isIsotropic_map_iff`: an isometry transports isotropic
+  subgroups.
+* `TauCeti.FiniteBilinearModule.Isometry.isLagrangian_map_iff`: an isometry transports Lagrangian
+  subgroups.
 -/
 
 public section
