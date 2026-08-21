@@ -10,7 +10,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Trian
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
 -- The coordinate comparison between `kostantRootSubgroupParam` and its basis matrix is used only
 -- in the containment proof, so it is not re-exported.
-import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.ElementaryCoordinate
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary.Coordinate
 
 /-!
 # Upper-unitriangular positive Kostant subsystem groups
