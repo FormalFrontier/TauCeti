@@ -125,6 +125,7 @@ theorem form_typeASimpleRoot_typeASimpleRoot (i j : Fin n) :
 
 /-- A vector belongs to the type `Aₙ` root lattice exactly when all of its simple-root
 coordinates are integers. -/
+@[simp]
 theorem mem_typeARootLattice_carrier_iff (x : Fin n → ℚ) :
     x ∈ (typeARootLattice n).carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   classical
@@ -352,7 +353,7 @@ noncomputable def typeADiscriminantGroupEquiv :
     (natCard_discriminantGroup_typeARootLattice n)
 
 @[simp]
-theorem typeADiscriminantGroupEquiv_one :
+theorem typeADiscriminantGroupEquiv_apply_one :
     typeADiscriminantGroupEquiv n 1 = typeAFundamentalWeightClass n :=
   zmodAddEquivOfGenerator_apply_one _ _
 
