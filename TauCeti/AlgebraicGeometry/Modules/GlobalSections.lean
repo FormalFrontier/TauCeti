@@ -155,8 +155,9 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.baseRingToGlobalSections_apply (r 
   (rfl)
 
 /-- Global sections of a sheaf of modules on a scheme over a commutative ring form a module over
-the base ring. -/
-instance _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsBaseModule
+the base ring. The priority is below the default so that the canonical action of
+`Γ(X, ⊤)` is still the one found when the base ring is the ring of global functions itself. -/
+instance (priority := 900) _root_.AlgebraicGeometry.Scheme.Modules.globalSectionsBaseModule
     (M : X.Modules) : Module R Γ(M, ⊤) :=
   Module.compHom Γ(M, ⊤) (baseRingToGlobalSections R X)
 
