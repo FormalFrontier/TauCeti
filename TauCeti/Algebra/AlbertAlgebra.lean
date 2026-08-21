@@ -166,6 +166,9 @@ def addEquivProd (R : Type*) [Add R] :
 @[simp] theorem addEquivProd_apply [Add R] (A : AlbertAlgebra R) :
     addEquivProd R A = (A.diag, A.offDiag) := (rfl)
 
+@[simp] theorem addEquivProd_symm_apply [Add R] (p : (Fin 3 → R) × (Fin 3 → Octonion R)) :
+    (addEquivProd R).symm p = ⟨p.1, p.2⟩ := (rfl)
+
 instance [AddCommGroup R] : AddCommGroup (AlbertAlgebra R) := by
   apply (addEquivProd R).injective.addCommGroup <;> intros <;> simp
 
