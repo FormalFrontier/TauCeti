@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Ring.Action.Submonoid
-public import Mathlib.GroupTheory.GroupAction.FixingSubgroup
 public import Mathlib.GroupTheory.GroupAction.OfQuotient
 
 /-!
@@ -19,7 +18,7 @@ latter to a `MulDistribMulAction` on `FixedPoints.subgroup H α`. This file is t
 counterpart of that refinement: for a distributive action on an additive monoid it upgrades both of
 Mathlib's `MulAction`s to `DistribMulAction`s on `FixedPoints.addSubmonoid H M`, records the
 coercion lemmas that characterise the two actions on the `AddSubgroup` carrier, and computes the
-fixed points of `⊥` and `⊤` together with their monotonicity in the subgroup.
+fixed points of `⊥` and `⊤`.
 
 Nothing here is specific to a topology or to cohomology; the continuous-cohomology use is in
 `TauCeti/RepresentationTheory/Homological/ContCohomology/Invariants.lean`.
@@ -29,7 +28,6 @@ Nothing here is specific to a topology or to cohomology; the continuous-cohomolo
 * `TauCeti.fixedPoints_bot` and `TauCeti.fixedPoints_top`: the fixed points of the trivial subgroup
   are everything and those of `⊤` are those of the whole group, with their `AddSubgroup` corollaries
   `TauCeti.fixedPoints_addSubgroup_bot` and `TauCeti.fixedPoints_addSubgroup_top`.
-* `TauCeti.fixedPoints_addSubgroup_antitone`: the invariants grow as the subgroup shrinks.
 * `TauCeti.distribMulActionFixedPointsAddSubmonoid` and
   `TauCeti.distribMulActionQuotientFixedPointsAddSubmonoid`: the distributive `G`- and
   `G ⧸ H`-actions on the fixed points of a normal `H`, with their `AddSubgroup` forms and the
@@ -101,13 +99,6 @@ variable (G) in
 theorem fixedPoints_addSubgroup_top :
     FixedPoints.addSubgroup (⊤ : Subgroup G) M = FixedPoints.addSubgroup G M :=
   SetLike.coe_injective <| fixedPoints_top G M
-
-/-- The invariants grow as the subgroup shrinks. This is Mathlib's `fixedPoints_subgroup_antitone`
-transported across the `SetLike` carrier of `FixedPoints.addSubgroup`, whose underlying set is
-`MulAction.fixedPoints` by definition. -/
-theorem fixedPoints_addSubgroup_antitone :
-    Antitone fun H : Subgroup G ↦ FixedPoints.addSubgroup H M :=
-  fun _ _ h ↦ fixedPoints_subgroup_antitone G M h
 
 variable {M}
 variable {H : Subgroup G} [H.Normal]

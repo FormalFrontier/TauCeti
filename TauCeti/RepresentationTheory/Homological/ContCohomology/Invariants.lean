@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.GroupTheory.GroupAction.FixingSubgroup
 public import Mathlib.GroupTheory.GroupAction.Hom
 public import Mathlib.Topology.Algebra.OpenSubgroup
 public import TauCeti.GroupTheory.GroupAction.FixedPoints
@@ -71,7 +72,7 @@ variable {H K : Subgroup G}
 invariants of `H` include into the invariants of `K`. -/
 def fixedPointsInclusion (h : K ≤ H) :
     FixedPoints.addSubgroup H M →+ FixedPoints.addSubgroup K M :=
-  AddSubgroup.inclusion (fixedPoints_addSubgroup_antitone M h)
+  AddSubgroup.inclusion (fixedPoints_subgroup_antitone G M h)
 
 /-- The transition inclusion does not move an element of `M`. Together with
 `TauCeti.coe_smul_fixedPoints_addSubgroup` this is the equivariance of `M ^ H ↪ M`. -/
@@ -214,7 +215,7 @@ intersection, and the invariants grow as the subgroup shrinks. Layer 4's colimit
 this reason. -/
 theorem directed_fixedPoints_addSubgroup :
     Directed (· ≤ ·) fun U : OpenNormalSubgroup G ↦ FixedPoints.addSubgroup U.toSubgroup M :=
-  Antitone.directed_le fun _ _ h ↦ fixedPoints_addSubgroup_antitone M h
+  Antitone.directed_le fun _ _ h ↦ fixedPoints_subgroup_antitone G M h
 
 variable [SeparatelyContinuousMul G] [TopologicalSpace M] [DiscreteTopology M]
 
