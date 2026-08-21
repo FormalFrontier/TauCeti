@@ -61,12 +61,14 @@ private lemma gaussian_absolute_moment_algebra (n : ℕ) {v : ℝ} (hv : 0 < v) 
         ((2 * v)⁻¹ ^ (-((n : ℝ) + 1) / 2) * Gamma (((n : ℝ) + 1) / 2)) =
       (2 * v) ^ ((n : ℝ) / 2) * Gamma (((n : ℝ) + 1) / 2) / √π := by
   have hv₂ : 0 < 2 * v := mul_pos two_pos hv
-  rw [show 2 * π * v = π * (2 * v) by ring, Real.sqrt_mul pi_pos.le,
+  have hradicand : 2 * π * v = π * (2 * v) := by ring
+  have hneg : -((n : ℝ) + 1) / 2 = -(((n : ℝ) + 1) / 2) := by ring
+  have hsplit : ((n : ℝ) + 1) / 2 = (n : ℝ) / 2 + 1 / 2 := by ring
+  rw [hradicand, Real.sqrt_mul pi_pos.le,
     Real.sqrt_eq_rpow, Real.sqrt_eq_rpow,
-    show -((n : ℝ) + 1) / 2 = -(((n : ℝ) + 1) / 2) by ring,
+    hneg,
     Real.inv_rpow hv₂.le, Real.rpow_neg hv₂.le, inv_inv]
-  rw [show ((n : ℝ) + 1) / 2 = (n : ℝ) / 2 + 1 / 2 by ring,
-    Real.rpow_add hv₂]
+  rw [hsplit, Real.rpow_add hv₂]
   field_simp [Real.sqrt_ne_zero'.mpr pi_pos, (Real.rpow_pos_of_pos hv₂ _).ne']
 
 /-- The `n`th absolute centered moment of a real Gaussian distribution. -/
@@ -101,8 +103,9 @@ theorem integral_abs_sub_pow_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
       congr with x
       rw [gaussianPDFReal]
       simp only [sub_zero]
-      rw [show -(x ^ 2) / (2 * (v : ℝ)) = -(2 * (v : ℝ))⁻¹ * x ^ 2 by
-        field_simp]
+      have hexponent : -(x ^ 2) / (2 * (v : ℝ)) = -(2 * (v : ℝ))⁻¹ * x ^ 2 := by
+        field_simp
+      rw [hexponent]
       ring
     _ = (√(2 * π * (v : ℝ)))⁻¹ *
         ((2 * (v : ℝ))⁻¹ ^ (-((n : ℝ) + 1) / 2) * Gamma (((n : ℝ) + 1) / 2)) := by
@@ -117,14 +120,17 @@ theorem centralMoment_id_two_mul_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) 
       (v : ℝ) ^ n * (2 * n - 1 : ℕ)‼ := by
   simp only [centralMoment, Pi.sub_apply, Pi.pow_apply, id_eq]
   rw [integral_id_gaussianReal]
-  rw [show (∫ x, (x - m) ^ (2 * n) ∂gaussianReal m v) =
-      ∫ x, |x - m| ^ (2 * n) ∂gaussianReal m v by
+  have heven_abs : (∫ x, (x - m) ^ (2 * n) ∂gaussianReal m v) =
+      ∫ x, |x - m| ^ (2 * n) ∂gaussianReal m v := by
     congr with x
-    simp only [pow_mul, sq_abs]]
+    simp only [pow_mul, sq_abs]
+  rw [heven_abs]
   rw [integral_abs_sub_pow_gaussianReal]
-  rw [show ((2 * n : ℕ) : ℝ) / 2 = (n : ℝ) by norm_num, Real.rpow_natCast,
-    show (((2 * n : ℕ) : ℝ) + 1) / 2 = (n : ℝ) + 1 / 2 by push_cast; ring,
-    Real.Gamma_nat_add_half]
+  have hhalf_even : ((2 * n : ℕ) : ℝ) / 2 = (n : ℝ) := by norm_num
+  have hhalf_succ : (((2 * n : ℕ) : ℝ) + 1) / 2 = (n : ℝ) + 1 / 2 := by
+    push_cast
+    ring
+  rw [hhalf_even, Real.rpow_natCast, hhalf_succ, Real.Gamma_nat_add_half]
   field_simp [Real.sqrt_ne_zero'.mpr pi_pos]
   simp only [mul_pow]
 
@@ -136,9 +142,10 @@ theorem centralMoment_id_two_mul_add_one_gaussianReal (m : ℝ) (v : ℝ≥0) (n
   rw [integral_id_gaussianReal]
   have hmap : (gaussianReal m v).map (fun x ↦ x - m) = gaussianReal 0 v := by
     simpa using gaussianReal_map_sub_const (μ := m) (v := v) m
-  rw [show (∫ x, (x - m) ^ (2 * n + 1) ∂gaussianReal m v) =
-      ∫ x, x ^ (2 * n + 1) ∂(gaussianReal m v).map (fun x ↦ x - m) by
-    rw [integral_map (by fun_prop) (by fun_prop)]]
+  have hcentered_map : (∫ x, (x - m) ^ (2 * n + 1) ∂gaussianReal m v) =
+      ∫ x, x ^ (2 * n + 1) ∂(gaussianReal m v).map (fun x ↦ x - m) := by
+    rw [integral_map (by fun_prop) (by fun_prop)]
+  rw [hcentered_map]
   rw [hmap]
   have hsym : (gaussianReal 0 v).map (fun x : ℝ ↦ -x) = gaussianReal 0 v := by
     simpa using gaussianReal_map_neg (μ := 0) (v := v)
