@@ -71,14 +71,19 @@ namespace TauCeti
 
 universe u v
 
-variable {n : Type*} [DecidableEq n] {A : Type u} [CommRing A] {i j k l : n}
+variable {n : Type*} [DecidableEq n] {A : Type u} {i j k l : n}
 
 section Products
 
 variable [Fintype n]
 
+section
+
+variable [Semiring A]
+
 /-- Multiplying a matrix unit on the left and right by diagonal matrices rescales its nonzero
 entry by the corresponding diagonal entries. -/
+@[simp]
 theorem diagonal_mul_single_mul_diagonal {v w : n → A} (c : A) :
     diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
   ext a b
@@ -88,6 +93,10 @@ theorem diagonal_mul_single_mul_diagonal {v w : n → A} (c : A) :
   · obtain ⟨rfl, rfl⟩ := h
     simp [mul_assoc]
   · simp [h]
+
+end
+
+variable [CommRing A]
 
 /-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
 corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
@@ -101,6 +110,8 @@ theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a
     diagonal_mul_single_mul_diagonal]
 
 end Products
+
+variable [CommRing A]
 
 /-! ## Transvections as invertible matrices -/
 

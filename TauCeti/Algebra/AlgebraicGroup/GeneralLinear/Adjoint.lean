@@ -144,6 +144,7 @@ private theorem ofConv_convMul_apply_X
 The tangent vector `Ad g d = g ⋆ d ⋆ g⁻¹` has tangent matrix `g X g⁻¹`, where `X` is the tangent
 matrix of `d` and `g` is read as an invertible matrix through
 `TauCeti.GeneralLinear.counitPointsMulEquiv`. -/
+@[simp]
 theorem tangentMatrix_adDerivation :
     tangentMatrix n (Derivation.adDerivation B g d) =
       (counitPointsMulEquiv n g : Matrix (Fin n) (Fin n) B) * tangentMatrix n d *
