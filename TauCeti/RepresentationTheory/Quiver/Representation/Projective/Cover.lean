@@ -31,8 +31,9 @@ Hitting it is already enough, with no hypothesis on `Q` at all: `Pᵢ` is *gener
 vector of the trivial path, so a morphism into `Pᵢ` whose image contains it is a **split**
 epimorphism (`TauCeti.isSplitEpi_of_app_eq_indecProjRepBasis_nil`). The splitting is written down
 by the universal property of `Pᵢ`: the element hitting the basis vector is exactly the datum a
-morphism *out of* `Pᵢ` needs, and the two composites are the identity because an endomorphism of
-`Pᵢ` fixing that basis vector is the identity (`TauCeti.eq_id_of_app_indecProjRepBasis_nil`). The
+morphism *out of* `Pᵢ` needs, and that section followed by the morphism is the identity because an
+endomorphism of `Pᵢ` fixing that basis vector is the identity
+(`TauCeti.eq_id_of_app_indecProjRepBasis_nil`). The
 essential-epimorphism statement is the composite of that generation lemma with the line lemma
 above.
 
@@ -68,7 +69,8 @@ is built here.
 * `TauCeti.eq_id_of_comp_indecProjRepToSimpleRep`: the cover is rigid — an endomorphism of `Pᵢ`
   commuting with it is the identity.
 * `TauCeti.exists_isSplitEpi_of_epi_to_simpleRep`: the cover is minimal — every projective
-  representation mapping onto `Sᵢ` retracts onto `Pᵢ`.
+  representation mapping onto `Sᵢ` retracts onto `Pᵢ`, by a retraction that factors the given map
+  through the cover.
 
 ## References
 
@@ -227,16 +229,17 @@ theorem eq_id_of_comp_indecProjRepToSimpleRep {i : Q}
   rw [← happ, hf, indecProjRepToSimpleRep_app_nil]
 
 /-- **The cover is minimal**: with no nontrivial path `i → i`, every projective representation
-mapping onto `Sᵢ` retracts onto `Pᵢ`, so `Pᵢ` is a direct summand of it. Projectivity lifts the
-map to `Pᵢ` along the cover, and
-`TauCeti.isSplitEpi_of_epi_comp_indecProjRepToSimpleRep` splits the lift. -/
+mapping onto `Sᵢ` retracts onto `Pᵢ`, so `Pᵢ` is a direct summand of it. The retraction is
+produced over the given map, factoring it through the cover. Projectivity lifts the map to `Pᵢ`
+along the cover, and `TauCeti.isSplitEpi_of_epi_comp_indecProjRepToSimpleRep` splits the lift. -/
 theorem exists_isSplitEpi_of_epi_to_simpleRep {i : Q}
     (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
     {X : QuiverRep k Q} [Projective X] (f : X ⟶ simpleRep k Q i) (hf : Epi f) :
-    ∃ g : X ⟶ indecProjRep k Q i, IsSplitEpi g := by
-  refine ⟨Projective.factorThru f (indecProjRepToSimpleRep k i), ?_⟩
-  refine isSplitEpi_of_epi_comp_indecProjRepToSimpleRep k h _ ?_
-  rw [Projective.factorThru_comp]
+    ∃ g : X ⟶ indecProjRep k Q i, g ≫ indecProjRepToSimpleRep k i = f ∧ IsSplitEpi g := by
+  have hcomp : Projective.factorThru f (indecProjRepToSimpleRep k i)
+      ≫ indecProjRepToSimpleRep k i = f := Projective.factorThru_comp _ _
+  refine ⟨_, hcomp, isSplitEpi_of_epi_comp_indecProjRepToSimpleRep k h _ ?_⟩
+  rw [hcomp]
   exact hf
 
 end Cover
