@@ -100,8 +100,8 @@ continuations along *homotopic* paths, and in the étale-space picture is an ins
 abstract `IsLocalHomeomorph.monodromy_theorem` (`Mathlib/Topology/Homotopy/Lifting.lean`), whose
 docstring describes exactly this application; the uniqueness proved here is the concrete form of
 the separatedness hypothesis that abstract theorem consumes. That étale space is built in
-`TauCeti/Analysis/Complex/HolomorphicSheaf.lean`, and monodromy is deduced from the abstract
-theorem through it in `Conformal/Continuation/Etale.lean`.
+`TauCeti/Analysis/Complex/HolomorphicSheaf.lean`, and `Conformal/Continuation/Etale.lean` supplies
+the continuation/lift correspondence needed to apply the abstract theorem to it.
 
 ## Main definitions and results
 

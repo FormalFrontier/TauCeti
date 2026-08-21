@@ -83,7 +83,8 @@ criterion `IsCoveringMap.existsUnique_continuousMap_lifts` for a simply connecte
 (`Mathlib/Topology/Homotopy/Lifting.lean`), but consuming them for germs of holomorphic functions
 require the étale space of those germs as a topological space, which Mathlib does not have;
 `TauCeti/Analysis/Complex/HolomorphicSheaf.lean` builds it and `Conformal/Continuation/Etale.lean`
-consumes the abstract monodromy theorem through it. Mathlib's simple-connectivity and path
+supplies the continuation/lift correspondence needed to apply the abstract theorem to it.
+Mathlib's simple-connectivity and path
 homotopy APIs are consumed rather than restated: `IsSimplyConnected.isPathConnected` here, and
 `SimplyConnectedSpace.paths_homotopic` with `Path.Homotopy.map` through
 `Path.exists_homotopy_forall_mem_of_isSimplyConnected`. So is its metric thickening of a compact

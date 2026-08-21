@@ -70,7 +70,8 @@ representatives have the same germ, and the identity theorem on the disc — con
 both representatives are analytic — would propagate that agreement from `y` back to `x`, making
 the two germs equal. Separatedness is exactly the hypothesis Mathlib's abstract monodromy theorem
 `IsLocalHomeomorph.monodromy_theorem` asks for, and its docstring names analytic continuation as
-the intended application; `Conformal/Continuation/Etale.lean` supplies that application.
+the intended application; `Conformal/Continuation/Etale.lean` supplies the continuation/lift
+correspondence needed to apply it.
 
 ## Main results
 

@@ -12,8 +12,8 @@ public import TauCeti.Analysis.Complex.HolomorphicSheaf
 # Analytic continuation as a lift to the étalé space of holomorphic germs
 
 `Conformal/Continuation/Basic.lean` defines `TauCeti.IsAnalyticContinuationAlong` — a family `f`
-of functions carrying, at each parameter time `t`, a germ at `γ t`, locally constant in `t` — and
-its docstring records, without proof, that
+of functions carrying, at each parameter time `t`, a germ at `γ t`, locally represented by a
+single holomorphic function — and its docstring records, without proof, that
 
 > reading the germs as points of the étale space of holomorphic germs over `ℂ`, the condition says
 > precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`.
