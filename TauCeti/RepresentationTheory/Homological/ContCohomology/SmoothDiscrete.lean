@@ -29,7 +29,7 @@ mutually inverse there, both on objects and on morphisms.
 
 * `TauCeti.ofDiscreteModule`: a discrete `G`-module as an object of `TopRep R G`.
 * `TauCeti.IsSmoothDiscrete`: the objects of `TopRep R G` in the image of that dictionary.
-* `TauCeti.TopRep.distribMulAction`: the `G`-action on the underlying module of an object of
+* `TopRep.distribMulAction`: the `G`-action on the underlying module of an object of
   `TopRep R G`, read off from its operators.
 * `TauCeti.ofDiscreteModuleMap`: a `G`-equivariant `R`-linear map of discrete modules as a
   morphism of `TopRep R G`.
@@ -52,6 +52,38 @@ carrier `TopRep` and its functoriality are Mathlib's, and are consumed rather th
 -/
 
 public section
+
+/-! ### The action on the underlying module
+
+`TopRep` is Mathlib's type, so its namespace is Mathlib's: the derived action and its companions
+sit in the root `TopRep` namespace, not under `TauCeti`, which is what makes `X.distribMulAction`
+elaborate as dot notation. -/
+
+namespace TopRep
+
+variable {R : Type*} [Ring R] [TopologicalSpace R] {G : Type*} [Monoid G]
+
+/-- The `G`-action on the underlying module of an object of `TopRep R G`, read off from its
+operators. This is the object half of the translation back to Mathlib's unbundled classes. It is
+not a global instance: `X.V` is a projection, so instance search would attempt it on every action
+goal. Files that need it declare it a `local instance`, as this one does below. -/
+@[instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
+  smul g x := X.ρ g x
+  one_smul x := congr($(map_one X.ρ) x)
+  mul_smul g h x := congr($(map_mul X.ρ g h) x)
+  smul_zero g := map_zero (X.ρ g)
+  smul_add g x y := map_add (X.ρ g) x y
+
+attribute [local instance] distribMulAction
+
+@[simp] lemma distribMulAction_smul (X : TopRep R G) (g : G) (x : X.V) :
+    g • x = X.ρ g x := (rfl)
+
+/-- The derived `G`-action commutes with the scalars, because every operator is `R`-linear. -/
+lemma smulCommClass (X : TopRep R G) : SMulCommClass G R X.V :=
+  ⟨fun g r x ↦ map_smul (X.ρ g) r x⟩
+
+end TopRep
 
 namespace TauCeti
 
@@ -88,34 +120,6 @@ variable {R G M}
     (ofDiscreteModule R G M).ρ g m = g • m := (rfl)
 
 end OfDiscreteModule
-
-/-! ### The action on the underlying module -/
-
-section Action
-
-variable {R : Type u} [Ring R] [TopologicalSpace R] {G : Type v} [Monoid G]
-
-/-- The `G`-action on the underlying module of an object of `TopRep R G`, read off from its
-operators. This is the object half of the translation back to Mathlib's unbundled classes. It is
-not a global instance: `X.V` is a projection, so instance search would attempt it on every action
-goal. Files that need it declare it a `local instance`, as this one does. -/
-@[instance_reducible] def TopRep.distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
-  smul g x := X.ρ g x
-  one_smul x := congr($(map_one X.ρ) x)
-  mul_smul g h x := congr($(map_mul X.ρ g h) x)
-  smul_zero g := map_zero (X.ρ g)
-  smul_add g x y := map_add (X.ρ g) x y
-
-attribute [local instance] TopRep.distribMulAction
-
-@[simp] lemma TopRep.distribMulAction_smul (X : TopRep R G) (g : G) (x : X.V) :
-    g • x = X.ρ g x := (rfl)
-
-/-- The derived `G`-action commutes with the scalars, because every operator is `R`-linear. -/
-lemma TopRep.smulCommClass (X : TopRep R G) : SMulCommClass G R X.V :=
-  ⟨fun g r x ↦ map_smul (X.ρ g) r x⟩
-
-end Action
 
 attribute [local instance] TopRep.distribMulAction TopRep.smulCommClass
 
@@ -257,14 +261,14 @@ end Dictionary
 section NotSmooth
 
 /-- The coefficients of the non-example below carry the discrete topology. -/
-local instance : TopologicalSpace (ZMod 3) := ⊥
+local instance instTopologicalSpaceZModThree : TopologicalSpace (ZMod 3) := ⊥
 
 /-- The topology chosen just above is by definition the discrete one. -/
-local instance : DiscreteTopology (ZMod 3) := ⟨rfl⟩
+local instance instDiscreteTopologyZModThree : DiscreteTopology (ZMod 3) := ⟨rfl⟩
 
 /-- The group of the non-example below carries the indiscrete topology, whose only open sets are
 `∅` and the whole group. -/
-local instance : TopologicalSpace (ZMod 3)ˣ := ⊤
+local instance instTopologicalSpaceUnitsZModThree : TopologicalSpace (ZMod 3)ˣ := ⊤
 
 /-- An object of `TopRep R G` whose underlying module is discrete need not be smooth. Here the
 two-element group `(ZMod 3)ˣ` acts on the discrete module `ZMod 3` by multiplication, so the
