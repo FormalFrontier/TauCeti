@@ -155,18 +155,13 @@ section Invariants
 
 variable {G : Type*} [Group G] {M : Type*} [AddGroup M] [DistribMulAction G M]
 
-/-- Membership in `M ^ H`, in the subgroup-membership form the statements below use. -/
-theorem mem_fixedPoints_addSubgroup {H : Subgroup G} {m : M} :
-    m ∈ FixedPoints.addSubgroup H M ↔ ∀ g ∈ H, g • m = m := by
-  simp [Subtype.forall]
-
 variable (M) in
 /-- The invariants shrink as the subgroup grows. This is the order-theoretic content of the
 transition maps of the finite-quotient tower. -/
 theorem fixedPoints_addSubgroup_antitone :
     Antitone fun H : Subgroup G ↦ FixedPoints.addSubgroup H M := by
   intro H K hHK m hm
-  rw [mem_fixedPoints_addSubgroup] at hm ⊢
+  simp only [FixedPoints.mem_addSubgroup, Subtype.forall, Subgroup.mk_smul] at hm ⊢
   exact fun g hg ↦ hm g (hHK hg)
 
 variable (M) in
@@ -281,8 +276,9 @@ variable {N : Type*} [AddGroup N] [DistribMulAction G N]
 functoriality of `M ^ H` in the coefficients. -/
 def invariantsMap (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m) (H : Subgroup G) :
     FixedPoints.addSubgroup H M →+ FixedPoints.addSubgroup H N where
-  toFun m := ⟨f (m : M), mem_fixedPoints_addSubgroup.2 fun g hg ↦ by
-    rw [← hf g, mem_fixedPoints_addSubgroup.1 m.2 g hg]⟩
+  toFun m := ⟨f (m : M), (FixedPoints.mem_addSubgroup _ _ _).2 fun g ↦ by
+    rw [Subgroup.smul_def, ← hf, ← Subgroup.smul_def,
+      (FixedPoints.mem_addSubgroup _ _ _).1 m.2 g]⟩
   map_zero' := Subtype.ext f.map_zero
   map_add' a b := Subtype.ext (f.map_add (a : M) (b : M))
 
@@ -376,7 +372,7 @@ open normal subgroup. -/
 theorem exists_openNormalSubgroup_mem_fixedPoints (m : M) :
     ∃ U : OpenNormalSubgroup G, m ∈ FixedPoints.addSubgroup U.toSubgroup M := by
   obtain ⟨U, hU⟩ := exists_openNormalSubgroup_smul_eq G M m
-  exact ⟨U, mem_fixedPoints_addSubgroup.2 hU⟩
+  exact ⟨U, (FixedPoints.mem_addSubgroup _ _ _).2 fun g ↦ hU g g.2⟩
 
 /-- **A discrete additive `G`-group over a profinite group is the union of its finite-level
 invariants.** -/
@@ -399,7 +395,7 @@ single open normal subgroup, namely the kernel of the action. -/
 theorem exists_openNormalSubgroup_fixedPoints_addSubgroup_eq_top [Finite M] :
     ∃ U : OpenNormalSubgroup G, FixedPoints.addSubgroup U.toSubgroup M = ⊤ := by
   refine ⟨actionKernel G M, eq_top_iff.2 fun m _ ↦ ?_⟩
-  exact mem_fixedPoints_addSubgroup.2 fun g hg ↦ (mem_actionKernel G M).1 hg m
+  exact (FixedPoints.mem_addSubgroup _ _ _).2 fun g ↦ (mem_actionKernel G M).1 g.2 m
 
 end ProfiniteInvariants
 
