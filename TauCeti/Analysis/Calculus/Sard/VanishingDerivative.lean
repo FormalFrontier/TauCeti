@@ -43,13 +43,10 @@ is a convenient sufficient bound rather than the sharp one. Morse--Sard holds al
 maps with `k ≥ max 1 (finrank ℝ E - finrank ℝ F + 1)`; recovering that sharp exponent needs a
 more careful induction than the one run here, and smooth maps satisfy every bound in sight.
 
-What is still missing for the general Morse--Sard theorem is the outermost stratum, the set of
-critical points at which the derivative is nonzero but not surjective; Milnor handles it by a
-Fubini argument on a local fibration of the source. Combined with
-`TauCeti.Differentiable.addHaar_image_criticalPoints_eq_zero` (equal dimensions) and
-`TauCeti.Differentiable.addHaar_image_not_surjective_fderiv_eq_zero_of_finrank_lt_finrank`
-(smaller source), Morse--Sard is now available whenever `finrank ℝ E ≤ finrank ℝ F`, and, in any
-source dimension, whenever `finrank ℝ F = 1`.
+The remaining stratum of the general Morse--Sard theorem, the set of critical points at which the
+derivative is nonzero but not surjective, is handled by a Fubini argument on a local fibration of
+the source in `TauCeti.Analysis.Calculus.Sard.OutermostStratum`, where the theorem itself is
+assembled; the results here are what that argument runs its induction against.
 
 This is Lane F0 of the analytic Heegaard Floer roadmap, where finite-dimensional Sard is the
 prerequisite for Sard--Smale and hence for every transversality argument downstream.

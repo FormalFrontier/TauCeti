@@ -58,7 +58,7 @@ variable {E F : Type*}
 omit [FiniteDimensional ℝ E] in
 /-- A continuous linear equivalence is nonsingular for any additive Haar measures on its source
 and target. -/
-private theorem ContinuousLinearEquiv.quasiMeasurePreserving_addHaar
+theorem ContinuousLinearEquiv.quasiMeasurePreserving_addHaar
     (μ : Measure E) (ν : Measure F) [IsAddHaarMeasure μ] [IsAddHaarMeasure ν]
     (e : E ≃L[ℝ] F) : QuasiMeasurePreserving e μ ν :=
   ⟨e.continuous.measurable, absolutelyContinuous_isAddHaarMeasure (μ.map e) ν⟩
