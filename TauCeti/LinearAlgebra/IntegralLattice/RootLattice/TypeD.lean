@@ -14,10 +14,11 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 This file constructs the *checkerboard lattice* `{x ∈ ℤⁿ | ∑ xᵢ is even}` inside `ℚⁿ`, computes
 its dual lattice, and identifies its discriminant form.  For `n ≥ 4` this is the positive root
 lattice of type `Dₙ` in the Conway--Sloane coordinate model, and the discriminant form computed
-here is the `Dₙ` row of the ADE table.  The same coordinate formula defines a lattice at every
-rank, including the low ranks `n ≤ 3` at which the Dynkin type `Dₙ` is not defined and where the
-lattice may have no roots at all, as for `n = 1`; nothing below needs `4 ≤ n`, so the declarations
-are named after the coordinate model rather than after the Dynkin type.
+here is the `Dₙ` row of the ADE table.  The same coordinate formula defines the underlying lattice
+at every rank.  The dual description, named representatives, and order-four discriminant results
+below assume `n > 0`; they include the low ranks `1 ≤ n ≤ 3`, at which the Dynkin type `Dₙ` is not
+defined and where the lattice may have no roots at all, as for `n = 1`.  None of those results needs
+`4 ≤ n`, so the declarations are named after the coordinate model rather than after the Dynkin type.
 
 The lattice carries the standard dot product.  It is even, because a sum of squares of integers is
 congruent modulo two to the sum of those integers.  Its dual lattice is `ℤⁿ ∪ (s + ℤⁿ)`, described
@@ -421,19 +422,19 @@ theorem checkerboardLattice_form_checkerboardCospinor (x : Fin n → ℚ) :
   rw [checkerboardCospinor, map_sub, checkerboardLattice_form_checkerboardSpinor,
     checkerboardLattice_form_checkerboardVector]
 
-/-- **The vector class has norm one.** -/
+/-- **The vector representative has norm one.** -/
 theorem checkerboardLattice_form_checkerboardVector_self :
     (checkerboardLattice n).form (checkerboardVector n) (checkerboardVector n) = 1 := by
   rw [checkerboardLattice_form_checkerboardVector, checkerboardVector_checkerboardLastIndex]
 
 omit [NeZero n] in
-/-- **The spinor class has norm `n / 4`.** -/
+/-- **The spinor representative has norm `n / 4`.** -/
 theorem checkerboardLattice_form_checkerboardSpinor_self :
     (checkerboardLattice n).form (checkerboardSpinor n) (checkerboardSpinor n) = (n : ℚ) / 4 := by
   rw [checkerboardLattice_form_checkerboardSpinor, sum_checkerboardSpinor]
   ring
 
-/-- **The cospinor class has norm `n / 4`.** -/
+/-- **The cospinor representative has norm `n / 4`.** -/
 theorem checkerboardLattice_form_checkerboardCospinor_self :
     (checkerboardLattice n).form (checkerboardCospinor n) (checkerboardCospinor n) =
       (n : ℚ) / 4 := by
@@ -678,6 +679,7 @@ theorem discriminant_checkerboardLattice : (checkerboardLattice n).discriminant 
 /-! ## The discriminant quadratic form on the three classes -/
 
 /-- **The vector class has quadratic value `1 / 2`.** -/
+@[simp]
 theorem discriminantQuadraticMap_checkerboardVectorClass :
     (checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n)
       (checkerboardVectorClass n) = ((1 / 2 : ℚ) : AddCircle (1 : ℚ)) := by
@@ -685,6 +687,7 @@ theorem discriminantQuadraticMap_checkerboardVectorClass :
     checkerboardLattice_form_checkerboardVector_self]
 
 /-- **The spinor class has quadratic value `n / 8`.** -/
+@[simp]
 theorem discriminantQuadraticMap_checkerboardSpinorClass :
     (checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n)
       (checkerboardSpinorClass n) = (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
@@ -694,6 +697,7 @@ theorem discriminantQuadraticMap_checkerboardSpinorClass :
   ring
 
 /-- **The cospinor class also has quadratic value `n / 8`.** -/
+@[simp]
 theorem discriminantQuadraticMap_checkerboardCospinorClass :
     (checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n)
       (checkerboardCospinorClass n) = (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
@@ -703,6 +707,7 @@ theorem discriminantQuadraticMap_checkerboardCospinorClass :
   ring
 
 /-- **The spinor and cospinor classes pair to `(n - 2) / 4`.** -/
+@[simp]
 theorem discriminantPairing_checkerboardSpinorClass_checkerboardCospinorClass :
     (checkerboardLattice n).discriminantPairing (checkerboardSpinorClass n)
         (checkerboardCospinorClass n) =
