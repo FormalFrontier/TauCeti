@@ -5,13 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
--- `Matrix.mulVecLin` occurs in the statements below.
 public import Mathlib.LinearAlgebra.Matrix.ToLin
 
 public section
 
 /-!
-# The identities forced by the character-lattice matrix of a special map
+# The identity forced by the character-lattice matrix of a special map
 
 At the level of a root datum, a special isogeny is pinned by a square matrix `A` together with a
 permutation `σ` of the root indices and a rescaling exponent `ℓ`, subject to the two equations
@@ -20,25 +19,19 @@ permutation `σ` of the root indices and a rescaling exponent `ℓ`, subject to 
 A *ᵥ root i = ℓ i • root (σ i),    Aᵀ *ᵥ coroot (σ j) = ℓ j • coroot j
 ```
 
-and, for the isogeny to square to the Frobenius, `A * A = c • 1`. Everything those equations imply
-without using the root datum is collected here once, so that the per-type files record only the
-tables and the equations themselves.
+The Cartan-integer identity that these equations imply without using the root datum is collected
+here once, so that the per-type files record only the tables and the equations themselves.
 
 ## Main results
 
-* `TauCeti.transpose_mul_transpose_of_mul_self_eq_smul_one`,
-  `TauCeti.mulVec_mulVec_of_mul_self_eq_smul_one` and
-  `TauCeti.mulVecLin_comp_mulVecLin_of_mul_self_eq_smul_one`: a matrix squaring to `c • 1` acts as
-  multiplication by `c` when applied twice, on the transposed matrix, on vectors, and as a linear
-  map.
 * `TauCeti.mul_dotProduct_eq_of_mulVec_eq_smul`: the two displayed equations force the Cartan
   integers, computed as dot products, to transform by `ℓ i ⟨root (σ i), coroot (σ j)⟩ =
   ℓ j ⟨root i, coroot j⟩`.
 
 ## References
 
-The lattice-level special-isogeny equations these lemmas abstract are those of R. Steinberg,
-*Endomorphisms of Linear Algebraic Groups*, §11. The statements themselves are the type-independent
+The lattice-level special-isogeny equations this lemma abstracts are those of R. Steinberg,
+*Endomorphisms of Linear Algebraic Groups*, §11. The statement is the type-independent
 core of the per-type files
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/B/SpecialMap.lean` and
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/G2/SpecialMap.lean`, where they were
@@ -49,30 +42,7 @@ namespace TauCeti
 
 open _root_.Matrix
 
-variable {n : Type*} [Fintype n] {R : Type*} [CommRing R] {A : Matrix n n R} {c : R}
-
-section DecidableEq
-
-variable [DecidableEq n]
-
-/-- If a matrix squares to a scalar matrix, then so does its transpose. -/
-theorem transpose_mul_transpose_of_mul_self_eq_smul_one (h : A * A = c • (1 : Matrix n n R)) :
-    Aᵀ * Aᵀ = c • (1 : Matrix n n R) := by
-  rw [← transpose_mul, h, transpose_smul, transpose_one]
-
-/-- A matrix squaring to `c • 1` rescales every vector by `c` when applied twice. -/
-theorem mulVec_mulVec_of_mul_self_eq_smul_one (h : A * A = c • (1 : Matrix n n R)) (x : n → R) :
-    A *ᵥ (A *ᵥ x) = c • x := by
-  rw [mulVec_mulVec, h, smul_mulVec, one_mulVec]
-
-/-- The square relation of a matrix squaring to `c • 1`, as an equality of linear maps. -/
-theorem mulVecLin_comp_mulVecLin_of_mul_self_eq_smul_one (h : A * A = c • (1 : Matrix n n R)) :
-    A.mulVecLin ∘ₗ A.mulVecLin = c • (LinearMap.id : (n → R) →ₗ[R] (n → R)) := by
-  refine LinearMap.ext fun x => ?_
-  simpa only [LinearMap.comp_apply, mulVecLin_apply, LinearMap.smul_apply, LinearMap.id_apply]
-    using mulVec_mulVec_of_mul_self_eq_smul_one h x
-
-end DecidableEq
+variable {n : Type*} [Fintype n] {R : Type*} [CommSemiring R] {A : Matrix n n R}
 
 /-- **The Cartan integers transform by the rule the special-isogeny equations force.** If a matrix
 `A` carries each member of a family `v` to a rescaled member, and its transpose carries the

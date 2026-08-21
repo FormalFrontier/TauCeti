@@ -25,8 +25,7 @@ This file supplies the missing squared-length table, in the pinned index order
 α₁,  α₂,  α₁ + α₂,  2 α₁ + α₂,  3 α₁ + α₂,  3 α₁ + 2 α₂
 ```
 
-on the positive roots, index `k + 6` being the negative of index `k`. It also records the sign
-pattern of `TauCeti.DynkinType.g2Coeff` and the uniqueness of the expansion it tabulates.
+on the positive roots, index `k + 6` being the negative of index `k`.
 
 `TauCeti.DynkinType.g2Length` is normalised as `TauCeti.DynkinType.rootLength` normalises the
 simple roots: `1` on the six short roots `± α₁, ± (α₁ + α₂), ± (2 α₁ + α₂)` and `3` on the six long
@@ -41,8 +40,6 @@ expanding `β∨ = 2 β / (β, β)` on the simple coroots, and
 
 ## Main results
 
-* `TauCeti.DynkinType.eq_g2Coeff_of_root_eq`: the coordinate table
-  `TauCeti.DynkinType.g2Coeff` is the only one that expands the roots on the two simple ones.
 * `TauCeti.DynkinType.g2Length_mul_g2Coroot` and
   `TauCeti.DynkinType.eq_g2Length_of_mul_g2Coroot`: the length table is the one forced by the two
   simple lengths.
@@ -64,36 +61,6 @@ namespace TauCeti.DynkinType
 
 open Function
 
-private lemma g2_smul_add_smul_inj {a b a' b' : ℤ}
-    (h : a • g2Root 0 + b • g2Root 1 = a' • g2Root 0 + b' • g2Root 1) : a = a' ∧ b = b' := by
-  have hz : (a - a') • g2Root 0 + (b - b') • g2Root 1 = 0 := by
-    rw [sub_smul, sub_smul, sub_add_sub_comm, h, sub_self]
-  obtain ⟨h0, h1⟩ := (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).1
-    g2Root_linearIndepOn_zero_one _ _ hz
-  exact ⟨sub_eq_zero.1 h0, sub_eq_zero.1 h1⟩
-
-/-- The two simple roots are linearly independent, so the expansion
-`TauCeti.DynkinType.g2Root_eq_smul_add_smul` determines the coefficients. -/
-theorem eq_g2Coeff_of_root_eq {k : Fin 12} {c : Fin 2 → ℤ}
-    (h : g2Root k = c 0 • g2Root 0 + c 1 • g2Root 1) : c = g2Coeff k := by
-  obtain ⟨h0, h1⟩ := g2_smul_add_smul_inj (h.symm.trans (g2Root_eq_smul_add_smul k))
-  funext i
-  fin_cases i
-  · exact h0
-  · exact h1
-
-/-- The six positive roots come first: their simple-root coordinates are nonnegative. -/
-theorem g2Coeff_nonneg (k : Fin 12) (hk : (k : ℕ) < 6) (i : Fin 2) : 0 ≤ g2Coeff k i := by
-  decide +revert
-
-/-- The six negative roots come last: their simple-root coordinates are nonpositive. -/
-theorem g2Coeff_nonpos (k : Fin 12) (hk : 6 ≤ (k : ℕ)) (i : Fin 2) : g2Coeff k i ≤ 0 := by
-  decide +revert
-
-/-- The last six roots are the negatives of the first six, in simple-root coordinates. -/
-@[simp] theorem g2Coeff_add_six (k : Fin 12) : g2Coeff (k + 6) = -g2Coeff k := by
-  decide +revert
-
 /-- The squared lengths of the twelve roots of the pinned `G₂` datum, normalised as
 `TauCeti.DynkinType.rootLength` normalises the simple ones: `1` on the six short roots
 `± α₁, ± (α₁ + α₂), ± (2 α₁ + α₂)` and `3` on the six long ones
@@ -105,10 +72,12 @@ theorem g2Coeff_nonpos (k : Fin 12) (hk : 6 ≤ (k : ℕ)) (i : Fin 2) : g2Coeff
 expanded on the simple coroots. -/
 theorem g2Length_mul_g2Coroot (k : Fin 12) (i : Fin 2) :
     g2Length k * g2Coroot k i = g2Coeff k i * G2.rootLength i := by
-  rw [rootLength_G2]
+  rw [rootLength_G2, g2Coroot_apply]
   decide +revert
 
-private lemma g2_exists_g2Coroot_ne_zero (k : Fin 12) : ∃ i, g2Coroot k i ≠ 0 := by decide +revert
+private lemma g2_exists_g2Coroot_ne_zero (k : Fin 12) : ∃ i, g2Coroot k i ≠ 0 := by
+  rw [g2Coroot_apply]
+  decide +revert
 
 /-- No coroot vanishes, so `TauCeti.DynkinType.g2Length_mul_g2Coroot` determines the length
 table. -/

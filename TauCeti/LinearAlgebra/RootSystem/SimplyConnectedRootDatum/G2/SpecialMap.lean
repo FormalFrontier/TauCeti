@@ -50,8 +50,7 @@ own.
   `TauCeti.DynkinType.g2SpecialIsogenyMatrix_transpose_mulVec_coroot`: the equations on the pinned
   datum.
 * `TauCeti.DynkinType.g2SpecialIsogenyMatrix_mul_self`: the square of the lattice map is
-  multiplication by `3`. Its consequences for the transposed matrix, for vectors and for the
-  induced linear map are the generic lemmas of `TauCeti/LinearAlgebra/Matrix/SpecialMap.lean`.
+  multiplication by `3`.
 * `TauCeti.DynkinType.det_g2SpecialIsogenyMatrix`: the map has determinant `-3`, so it is an
   isogeny and not a lattice automorphism.
 * `TauCeti.DynkinType.g2Length_mul_g2Length_g2SpecialIsogenyIndex`: the two rescaling exponents on
@@ -138,8 +137,9 @@ of the diagram.** -/
 exponent.** This is the simp-normal form of
 `TauCeti.DynkinType.g2SpecialIsogenyMatrix_mulVec_root`, since
 `TauCeti.DynkinType.g2SimplyConnectedRootDatum_root` rewrites the datum's roots to the table. -/
-theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
+@[simp] theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
     g2SpecialIsogenyMatrix *ᵥ g2Root i = g2Length i • g2Root (g2SpecialIsogenyIndex i) := by
+  rw [g2Root_apply, g2Root_apply]
   decide +revert
 
 /-- **The transposed special matrix satisfies the contragredient equation on every tabulated
@@ -147,8 +147,9 @@ coroot.** This is the simp-normal form of
 `TauCeti.DynkinType.g2SpecialIsogenyMatrix_transpose_mulVec_coroot`, since
 `TauCeti.DynkinType.g2SimplyConnectedRootDatum_coroot` rewrites the datum's coroots to the
 table. -/
-theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
+@[simp] theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
     g2SpecialIsogenyMatrixᵀ *ᵥ g2Coroot (g2SpecialIsogenyIndex i) = g2Length i • g2Coroot i := by
+  rw [g2Coroot_apply, g2Coroot_apply]
   decide +revert
 
 /-- **The special matrix carries every root of the pinned datum to its indexed image with the
