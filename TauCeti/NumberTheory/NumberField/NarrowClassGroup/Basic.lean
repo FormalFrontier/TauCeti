@@ -245,7 +245,7 @@ theorem mk0_sq_eq_one_of_eq_span_singleton {a : 𝓞 K} (ha : a ≠ 0) {I : (Ide
     (hI : (I : Ideal (𝓞 K)) = Ideal.span {a}) : mk0 I ^ 2 = 1 := by
   rw [← map_pow]
   refine mk0_eq_one_of_isTotallyPositive (a := a ^ 2) (pow_ne_zero 2 ha) ?_ ?_
-  · rw [show ((a ^ 2 : 𝓞 K) : K) = (a : K) ^ 2 from by push_cast; ring]
+  · push_cast
     exact isTotallyPositive_sq (RingOfIntegers.coe_ne_zero_iff.mpr ha)
   · rw [SubmonoidClass.coe_pow, hI, ← Ideal.span_singleton_pow]
 
@@ -338,7 +338,7 @@ theorem mk0_eq_mk0_iff {I J : (Ideal (𝓞 K))⁰} :
           mk0 ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩ = 1 := by
         rw [← map_mul]
         refine mk0_eq_one_of_isTotallyPositive (a := x * y) (mul_ne_zero hx hy) ?_ ?_
-        · rw [show ((x * y : 𝓞 K) : K) = (x : K) * (y : K) from by push_cast; ring]
+        · push_cast
           exact hpos
         · rw [Submonoid.coe_mul, Ideal.span_singleton_mul_span_singleton]
       have hyinv : (mk0 ⟨Ideal.span {y}, span_singleton_mem_nonZeroDivisors hy⟩)⁻¹ =

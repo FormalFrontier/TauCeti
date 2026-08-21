@@ -30,7 +30,7 @@ group for real quadratic fields, where the ordinary descent fails.
 ## Main results
 
 * `NumberField.realRingHom_eq_of_gen_eq`: a ring homomorphism `K →+* ℝ` is determined by its value
-  on the generator `θ`.
+  on a field generator.
 * `NumberField.realRingHom_eq_or_eq_comp_quadraticConj`: two real embeddings of a quadratic field
   either agree or differ by quadratic conjugation.
 * `NumberField.isTotallyPositive_or_isTotallyPositive_neg_of_isTotallyPositive_div_quadraticConj`:
@@ -45,13 +45,13 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- **A real embedding of a quadratic field is determined by the image of the generator.** Two ring
-homomorphisms `K →+* ℝ` agreeing on `θ` agree on `Algebra.adjoin ℚ {θ} = K`. -/
-theorem realRingHom_eq_of_gen_eq (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) {ρ₁ ρ₂ : K →+* ℝ}
-    (h : ρ₁ (θ : K) = ρ₂ (θ : K)) : ρ₁ = ρ₂ := by
+/-- **A real embedding of a number field is determined by the image of a generator.** Two ring
+homomorphisms `K →+* ℝ` agreeing on `x` agree on `Algebra.adjoin ℚ {x} = K`. -/
+theorem realRingHom_eq_of_gen_eq {x : K} (hgen : Algebra.adjoin ℚ {x} = ⊤) {ρ₁ ρ₂ : K →+* ℝ}
+    (h : ρ₁ x = ρ₂ x) : ρ₁ = ρ₂ := by
   have halg : ρ₁.toRatAlgHom = ρ₂.toRatAlgHom :=
-    AlgHom.ext_of_adjoin_eq_top hgen (by rintro x rfl; exact h)
-  exact RingHom.ext fun x => by simpa using AlgHom.congr_fun halg x
+    AlgHom.ext_of_adjoin_eq_top hgen (by rintro y rfl; exact h)
+  exact RingHom.ext fun y => by simpa using AlgHom.congr_fun halg y
 
 /-- **The real embeddings of a quadratic field differ by conjugation.** Since `ρ θ` squares to the
 rational `d` for every ring homomorphism `ρ : K →+* ℝ`, two of them send `θ` to the same square root

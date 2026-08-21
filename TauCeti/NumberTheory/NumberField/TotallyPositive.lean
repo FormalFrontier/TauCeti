@@ -198,8 +198,9 @@ theorem norm_pos_of_isTotallyPositive {x : K} (hx : x ≠ 0) (hpos : IsTotallyPo
           ⟨hmem, fun y hy => Finset.card_le_one.mp hcard.le y hy _ hmem⟩,
         Finset.prod_singleton, hw.mult_eq_one, pow_one, ← embedding_of_isReal_apply hw]
       -- Total positivity identifies the real embedding with the place.
-      rw [show w x = embedding_of_isReal hw x from by
-        rw [← norm_embedding_of_isReal hw, Real.norm_eq_abs, abs_of_pos (hpos w hw)]]
+      have hval : w x = embedding_of_isReal hw x := by
+        rw [← norm_embedding_of_isReal hw, Real.norm_eq_abs, abs_of_pos (hpos w hw)]
+      rw [hval]
     · -- A complex place has the conjugate pair `embedding w`, `conj (embedding w)` above it.
       have hne : embedding w ≠ ComplexEmbedding.conjugate (embedding w) := fun h =>
         hw (isReal_iff.mpr (ComplexEmbedding.isReal_iff.mpr h.symm))

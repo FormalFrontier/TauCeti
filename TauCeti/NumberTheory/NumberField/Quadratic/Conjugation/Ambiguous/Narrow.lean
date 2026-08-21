@@ -75,12 +75,14 @@ theorem mk0_map_ringOfIntegersQuadraticConj_eq_inv (hmin : minpoly ℤ θ = X ^ 
   rw [eq_inv_iff_mul_eq_one, mul_comm, ← map_mul]
   obtain ⟨m, hm⟩ := (IsPrincipalIdealRing.principal (Ideal.relNorm ℤ (I : Ideal (𝓞 K)))).principal
   set n : ℤ := (m.natAbs : ℤ) with hn
+  -- `Ideal.span` is `Submodule.span` on the nose, so `Int.span_natAbs` rewrites the generator
+  -- produced by principality into the nonnegative one.
+  have hnatAbs : Submodule.span ℤ {m} = Ideal.span ({(m.natAbs : ℤ)} : Set ℤ) :=
+    (Int.span_natAbs m).symm
   have hspan : ((I * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) =
       Ideal.span {algebraMap ℤ (𝓞 K) n} := by
     rw [Submonoid.coe_mul, hJ, mul_map_ringOfIntegersQuadraticConj_eq_map_relNorm hmin hgen, hm,
-      show (Submodule.span ℤ {m}) = Ideal.span ({(m.natAbs : ℤ)} : Set ℤ) from
-        (Int.span_natAbs m).symm,
-      Ideal.map_span, Set.image_singleton, hn]
+      hnatAbs, Ideal.map_span, Set.image_singleton, hn]
   have hne : algebraMap ℤ (𝓞 K) n ≠ 0 := by
     intro h0
     refine mem_nonZeroDivisors_iff_ne_zero.mp (I * J).2 ?_
@@ -153,8 +155,8 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one
     rw [div_eq_div_iff hσεK hxK]
     linear_combination hεK'
   have hposε : IsTotallyPositive ((ε : K) / quadraticConj hmin hgen (ε : K)) := by
-    rw [hratio, show (y : K) / (x : K) = (x : K) * (y : K) * ((x : K) ^ 2)⁻¹ from by
-      field_simp]
+    have hsplit : (y : K) / (x : K) = (x : K) * (y : K) * ((x : K) ^ 2)⁻¹ := by field_simp
+    rw [hratio, hsplit]
     exact hpos.mul (isTotallyPositive_sq hxK).inv
   have hεpos : mk0 (⟨Ideal.span {ε} * (J : Ideal (𝓞 K)),
       mem_nonZeroDivisors_iff_ne_zero.mpr hI0⟩ : (Ideal (𝓞 K))⁰) = mk0 J := by
@@ -167,7 +169,7 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one
         hmin hgen hposε with hcase | hcase
       · exact mk0_eq_one_of_isTotallyPositive hε0 hcase rfl
       · refine mk0_eq_one_of_isTotallyPositive (a := -ε) (neg_ne_zero.mpr hε0) ?_ ?_
-        · rw [show ((-ε : 𝓞 K) : K) = -(ε : K) from by push_cast; ring]
+        · push_cast
           exact hcase
         · rw [Ideal.span_singleton_neg]
     rw [hprod, map_mul, hone, one_mul]
