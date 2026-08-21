@@ -54,8 +54,9 @@ than built in this layer.
 * `TauCeti.IsLocallyBicollared`: every point of the domain has an open neighbourhood on which the
   restriction is bicollared.
 
-The last two are `def`s, so `TauCeti.isBicollared_iff` and `TauCeti.isLocallyBicollared_iff` are
-what unfolds them downstream.
+The last two are `def`s whose bodies the module system does not expose, so
+`TauCeti.isBicollared_iff` and `TauCeti.isLocallyBicollared_iff` are the only way to introduce or
+eliminate them downstream.
 
 ## Main results
 
@@ -112,14 +113,15 @@ def IsLocallyBicollared (f : N → M) : Prop :=
 
 variable {f : N → M} {b : N × ℝ → M}
 
-/-- Being bicollared spelled out: some open embedding of `N × ℝ` has `f` as its zero slice. This
-is the characterisation to use downstream, where the definition of `TauCeti.IsBicollared` is not
-unfolded. -/
+/-- Being bicollared spelled out: some open embedding of `N × ℝ` has `f` as its zero slice. The
+module system does not expose the body of `TauCeti.IsBicollared`, so a downstream file cannot
+unfold it; this lemma is how the definition is introduced and eliminated there. -/
 theorem isBicollared_iff : IsBicollared f ↔ ∃ b : N × ℝ → M, IsBicollar f b := Iff.rfl
 
 /-- Being locally bicollared spelled out: every point of the domain has an open neighbourhood on
-which the restriction of the map is bicollared. This is the characterisation to use downstream,
-where the definition of `TauCeti.IsLocallyBicollared` is not unfolded. -/
+which the restriction of the map is bicollared. The module system does not expose the body of
+`TauCeti.IsLocallyBicollared`, so a downstream file cannot unfold it; this lemma is how the
+definition is introduced and eliminated there. -/
 theorem isLocallyBicollared_iff : IsLocallyBicollared f ↔
     ∀ x : N, ∃ U : Set N, IsOpen U ∧ x ∈ U ∧ IsBicollared (f ∘ ((↑) : U → N)) := Iff.rfl
 
@@ -242,6 +244,8 @@ theorem restrict (h : IsLocallyBicollared f) {U : Set N} (hU : IsOpen U) :
   let R : Set V := ((↑) : V → N) ⁻¹' U
   have hW : IsOpen W := hV.preimage continuous_subtype_val
   have hR : IsOpen R := hU.preimage continuous_subtype_val
+  -- `W` and `R` are the two readings of `U ∩ V`, one as a subset of `U` and one as a subset of
+  -- `V`; the homeomorphism between them only re-brackets the pair of membership proofs.
   let e : W ≃ₜ R := {
     toFun y := ⟨⟨y.1.1, y.2⟩, y.1.2⟩
     invFun y := ⟨⟨y.1.1, y.2⟩, y.1.2⟩
@@ -251,7 +255,11 @@ theorem restrict (h : IsLocallyBicollared f) {U : Set N} (hU : IsOpen U) :
     continuous_invFun := by fun_prop
   }
   refine ⟨W, hW, hxV, ?_⟩
-  simpa [Function.comp_def, e] using (hb.restrict hR).comp_homeomorph e
+  -- Both routes out of `W` send `y` to `f y.1.1`: going through `V` reindexes the subtype and
+  -- nothing else. Recording that as an equality of functions keeps the reindexing in view.
+  have hcomp : ((f ∘ ((↑) : V → N)) ∘ ((↑) : R → V)) ∘ ⇑e = (f ∘ ((↑) : U → N)) ∘ ((↑) : W → U) :=
+    funext fun _ => rfl
+  exact hcomp ▸ (hb.restrict hR).comp_homeomorph e
 
 /-- Local bicollars are carried along by open embeddings of the ambient space. -/
 theorem isOpenEmbedding_comp {g : M → P} (h : IsLocallyBicollared f)
@@ -265,9 +273,13 @@ theorem comp_homeomorph (h : IsLocallyBicollared f) (e : N' ≃ₜ N) :
     IsLocallyBicollared (f ∘ e) := by
   intro x
   obtain ⟨U, hU, hexU, hb⟩ := h (e x)
+  -- `eU` is `e` itself, read as a homeomorphism onto `U` from the part of `N'` it lands in.
   let eU : (e ⁻¹' U) ≃ₜ U := e.subtype fun _ => Iff.rfl
   refine ⟨e ⁻¹' U, hU.preimage e.continuous, hexU, ?_⟩
-  simpa [Function.comp_def, eU] using hb.comp_homeomorph eU
+  -- Composing with `eU` and then including `U` is composing with `e`, on the nose.
+  have hcomp : (f ∘ ((↑) : U → N)) ∘ ⇑eU = (f ∘ ⇑e) ∘ ((↑) : (e ⁻¹' U) → N') :=
+    funext fun _ => rfl
+  exact hcomp ▸ hb.comp_homeomorph eU
 
 end IsLocallyBicollared
 
