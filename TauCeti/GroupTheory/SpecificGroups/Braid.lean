@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.GroupTheory.Perm.Cycle.Type
-public import Mathlib.GroupTheory.Perm.Sign
 public import TauCeti.GroupTheory.Coxeter.Artin
 public import TauCeti.GroupTheory.Coxeter.Matrix
 public import TauCeti.GroupTheory.Perm.Basic
