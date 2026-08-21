@@ -62,8 +62,6 @@ Chevalley involution is already visible on a presentation of `L`.
 
 ## Main results
 
-* `TauCeti.map_eq_self_of_forall_mem_apply_eq_neg` and `TauCeti.weightPerm_eq_neg`: an automorphism
-  acting by `-1` on `H` normalises `H` and inverts every weight.
 * `TauCeti.IsSl2System.exists_ne_zero_map_eq_smul_neg` and
   `TauCeti.IsSl2System.ne_zero_of_map_eq_smul_neg`: the automorphism scales each root vector into
   the opposite root space, by a nonzero scalar.
@@ -110,42 +108,7 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
 
-/-! ## Automorphisms inverting the Cartan subalgebra -/
-
 variable (ω : L ≃ₗ⁅K⁆ L) (hω : ∀ y ∈ H, ω y = -y)
-
-omit [CharZero K] [LieAlgebra.IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
-  [LieModule.IsTriangularizable K H L] in
-include hω in
-/-- An automorphism acting by `-1` on a subalgebra normalises it, since a subalgebra is closed
-under negation. -/
-@[simp]
-theorem map_eq_self_of_forall_mem_apply_eq_neg : H.map (ω : L →ₗ⁅K⁆ L) = H := by
-  refine le_antisymm (fun z hz ↦ ?_) (fun z hz ↦ ?_)
-  · rw [LieSubalgebra.mem_map] at hz
-    obtain ⟨y, hy, rfl⟩ := hz
-    simpa [hω y hy] using neg_mem hy
-  · rw [LieSubalgebra.mem_map]
-    exact ⟨-z, neg_mem hz, by simp [hω (-z) (neg_mem hz)]⟩
-
-include hω in
-/-- **An automorphism acting by `-1` on the Cartan subalgebra inverts every weight.** The induced
-permutation of the weights is negation, so the automorphism carries the root space of `α` onto the
-root space of `-α`. -/
-@[simp]
-theorem weightPerm_eq_neg (α : Weight K H L) :
-    weightPerm ω (map_eq_self_of_forall_mem_apply_eq_neg ω hω) α = -α := by
-  have hsymm : ∀ y : H, ω.symm (y : L) = -(y : L) := by
-    intro y
-    have h₁ : ω (-(y : L)) = (y : L) := by rw [hω _ (neg_mem y.2), neg_neg]
-    calc ω.symm (y : L) = ω.symm (ω (-(y : L))) := by rw [h₁]
-      _ = -(y : L) := ω.symm_apply_apply _
-  ext y
-  have hy : (ω.ofSubalgebras H H (map_eq_self_of_forall_mem_apply_eq_neg ω hω)).symm y = -y := by
-    refine Subtype.ext ?_
-    rw [LieEquiv.ofSubalgebras_symm_apply, hsymm y]
-    simp
-  rw [weightPerm_apply_apply, hy, map_neg, Weight.coe_neg, Pi.neg_apply]
 
 /-! ## The scalars by which the automorphism moves a normalised family -/
 
