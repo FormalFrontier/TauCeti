@@ -13,11 +13,14 @@ import TauCeti.MeasureTheory.Integral.ExpDecay
 /-!
 # Moments of the exponential law
 
-The mean and variance of `ProbabilityTheory.expMeasure r`:
+The mean and variance of `ProbabilityTheory.expMeasure r`, for a positive rate `0 < r`:
 
 ```text
 ∫ x, x ∂(expMeasure r) = r⁻¹        Var[id; expMeasure r] = (r ^ 2)⁻¹
 ```
+
+Every result below carries that hypothesis: at `r ≤ 0` the law is not a probability measure
+and the identities fail.
 
 **Both come from one moment formula.** `integral_pow_expMeasure` computes every moment,
 `∫ x ^ n = n ! / r ^ n`, and the mean and the second moment are its `n = 1` and `n = 2` cases.
@@ -37,8 +40,8 @@ zero case is discharged from the probability-measure instance instead.
 
 ## Main results
 
-* `integrable_pow_expMeasure` — every moment is integrable;
-* `integral_pow_expMeasure` — the `n`-th moment, `n ! / r ^ n`;
+* `integrable_pow_expMeasure` — every moment is integrable, for `0 < r`;
+* `integral_pow_expMeasure` — the `n`-th moment, `n ! / r ^ n`, for `0 < r`;
 * `integral_id_expMeasure`, `integral_sq_expMeasure` — the mean and the second moment;
 * `variance_id_expMeasure` — the variance.
 
@@ -70,25 +73,17 @@ private theorem exponentialPDFReal_apply (x : ℝ) :
     ring
   · rfl
 
-/-- `expMeasure` is a `withDensity` measure by definition.  Named so the proofs below rewrite with
-it rather than repeating a bare definitional conversion. -/
-private theorem expMeasure_eq_withDensity (r : ℝ) :
-    expMeasure r = volume.withDensity (exponentialPDF r) := (rfl)
-
-/-- The `ℝ≥0∞`-valued density is `ENNReal.ofReal` of the real one, by definition. -/
-private theorem exponentialPDF_apply (r x : ℝ) :
-    exponentialPDF r x = ENNReal.ofReal (exponentialPDFReal r x) := (rfl)
-
 /-- An integral against `expMeasure` is a density integral against `volume`. -/
 private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
     ∫ x, g x ∂(expMeasure r) = ∫ x, exponentialPDFReal r x * g x := by
-  have hmeas : Measurable (exponentialPDF r) := measurable_gammaPDF 1 r
-  have key : ∀ x : ℝ, (exponentialPDF r x).toReal • g x = exponentialPDFReal r x * g x := by
+  have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
+  have key : ∀ x : ℝ, (gammaPDF 1 r x).toReal • g x = exponentialPDFReal r x * g x := by
     intro x
-    rw [smul_eq_mul, exponentialPDF_apply,
-      ENNReal.toReal_ofReal (exponentialPDFReal_nonneg hr x)]
-  rw [expMeasure_eq_withDensity,
-    integral_withDensity_eq_integral_toReal_smul hmeas
+    rw [smul_eq_mul]
+    unfold gammaPDF exponentialPDFReal
+    rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
+  unfold expMeasure gammaMeasure
+  rw [integral_withDensity_eq_integral_toReal_smul hmeas
       (ae_of_all _ fun x => ENNReal.ofReal_lt_top)]
   exact integral_congr_ae (ae_of_all _ fun x => key x)
 
@@ -119,14 +114,15 @@ theorem integrable_pow_expMeasure (hr : 0 < r) (n : ℕ) :
   have hprob : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   rcases eq_or_ne n 0 with rfl | hn
   · simp
-  have hmeas : Measurable (exponentialPDF r) := measurable_gammaPDF 1 r
+  have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
   have htoReal : ∀ x : ℝ,
-      x ^ n * (exponentialPDF r x).toReal = exponentialPDFReal r x * x ^ n := by
+      x ^ n * (gammaPDF 1 r x).toReal = exponentialPDFReal r x * x ^ n := by
     intro x
-    rw [exponentialPDF_apply, ENNReal.toReal_ofReal (exponentialPDFReal_nonneg hr x)]
+    unfold gammaPDF exponentialPDFReal
+    rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
     ring
-  rw [expMeasure_eq_withDensity,
-    integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
+  unfold expMeasure gammaMeasure
+  rw [integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
     funext htoReal, integrand_eq_indicator hn, integrable_indicator_iff measurableSet_Ioi]
   exact (integrableOn_pow_mul_exp_neg_mul_Ioi n hr).const_mul r
 
