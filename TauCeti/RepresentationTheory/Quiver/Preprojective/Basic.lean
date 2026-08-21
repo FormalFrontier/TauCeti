@@ -82,8 +82,10 @@ phrased with it and with the two backtracks rather than with raw vertices and ar
 This is the first clause of Layer 4 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, which asks
 to define the preprojective algebra `Π_k(Q)` as the doubled path algebra modulo `(ρ)`, using the
 two-sided span, its grading, local relations, and quotient universal property, together with the
-identification of the displayed words under later-factor-first multiplication. See Crawley-Boevey,
-*Quiver algebras, weighted projective lines, and the
+identification of the displayed words under later-factor-first multiplication. The relator, ideal,
+and quotient declarations follow the formal prototype in
+`TauCetiRoadmap/ZigzagPreprojective/Suggested.lean`. See Crawley-Boevey, *Quiver algebras, weighted
+projective lines, and the
 Deligne--Simpson problem*, Section 1, and Etingof--Eu, *Koszulity and the Hilbert series of
 preprojective algebras*, Section 1.
 -/
@@ -100,7 +102,7 @@ universe u v w
 
 section Backtracks
 
-variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q]
+variable (k : Type w) {Q : Type u} [Semiring k] [Quiver.{v + 1} Q]
 
 /-- The vertex idempotent of the doubled path algebra at a vertex `v` of `Q`. This is
 `TauCeti.PathAlgebra.vertexIdempotent` for the quiver `Quiver.Symmetrify Q`; it carries a name of
@@ -114,25 +116,27 @@ the head `j` of `a` which traverses the formal reverse `a*` and then `a`. In Tau
 later-factor-first convention this is the product `ofArrow a * ofArrow (reverse a)`, which is the
 word displayed `a a*` in the literature. -/
 noncomputable def headBacktrackElem {i j : Q} (a : i ⟶ j) : pathAlgebra k (Symmetrify Q) :=
-  ofArrow (Symmetrify.of.map a) * ofArrow (Quiver.reverse (Symmetrify.of.map a))
+  ofPath ⟨_, _, (Quiver.reverse (Symmetrify.of.map a)).toPath.comp
+    (Symmetrify.of.map a).toPath⟩
 
 /-- The **tail backtrack** of an arrow `a : i ⟶ j`: the length-two loop of the doubled quiver at
 the tail `i` of `a` which traverses `a` and then its formal reverse `a*`. This is the word
 displayed `a* a`. -/
 noncomputable def tailBacktrackElem {i j : Q} (a : i ⟶ j) : pathAlgebra k (Symmetrify Q) :=
-  ofArrow (Quiver.reverse (Symmetrify.of.map a)) * ofArrow (Symmetrify.of.map a)
+  ofPath ⟨_, _, (Symmetrify.of.map a).toPath.comp
+    (Quiver.reverse (Symmetrify.of.map a)).toPath⟩
 
 /-- The head backtrack is the basis element of the length-two path `a*` followed by `a`. -/
 theorem headBacktrackElem_eq_ofPath {i j : Q} (a : i ⟶ j) :
     headBacktrackElem k a = ofPath ⟨_, _, (Quiver.reverse (Symmetrify.of.map a)).toPath.comp
       (Symmetrify.of.map a).toPath⟩ := by
-  rw [headBacktrackElem, ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp]
+  rw [headBacktrackElem]
 
 /-- The tail backtrack is the basis element of the length-two path `a` followed by `a*`. -/
 theorem tailBacktrackElem_eq_ofPath {i j : Q} (a : i ⟶ j) :
     tailBacktrackElem k a = ofPath ⟨_, _, (Symmetrify.of.map a).toPath.comp
       (Quiver.reverse (Symmetrify.of.map a)).toPath⟩ := by
-  rw [tailBacktrackElem, ofArrow_eq_ofPath, ofArrow_eq_ofPath, ofPath_mul_ofPath_of_comp]
+  rw [tailBacktrackElem]
 
 @[simp]
 theorem doubledVertexIdempotent_mul_headBacktrackElem {i j : Q} (a : i ⟶ j) :
@@ -155,24 +159,28 @@ theorem tailBacktrackElem_mul_doubledVertexIdempotent {i j : Q} (a : i ⟶ j) :
   rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath, ofPath_mul_vertexIdempotent]
 
 /-- A vertex idempotent away from the head of `a` annihilates the head backtrack on the left. -/
+@[simp]
 theorem doubledVertexIdempotent_mul_headBacktrackElem_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ j) :
     doubledVertexIdempotent k u * headBacktrackElem k a = 0 := by
   rw [doubledVertexIdempotent, headBacktrackElem_eq_ofPath,
     vertexIdempotent_mul_ofPath_of_ne _ h]
 
 /-- A vertex idempotent away from the head of `a` annihilates the head backtrack on the right. -/
+@[simp]
 theorem headBacktrackElem_mul_doubledVertexIdempotent_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ j) :
     headBacktrackElem k a * doubledVertexIdempotent k u = 0 := by
   rw [doubledVertexIdempotent, headBacktrackElem_eq_ofPath,
     ofPath_mul_vertexIdempotent_of_ne _ h]
 
 /-- A vertex idempotent away from the tail of `a` annihilates the tail backtrack on the left. -/
+@[simp]
 theorem doubledVertexIdempotent_mul_tailBacktrackElem_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ i) :
     doubledVertexIdempotent k u * tailBacktrackElem k a = 0 := by
   rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath,
     vertexIdempotent_mul_ofPath_of_ne _ h]
 
 /-- A vertex idempotent away from the tail of `a` annihilates the tail backtrack on the right. -/
+@[simp]
 theorem tailBacktrackElem_mul_doubledVertexIdempotent_of_ne {i j u : Q} (a : i ⟶ j) (h : u ≠ i) :
     tailBacktrackElem k a * doubledVertexIdempotent k u = 0 := by
   rw [doubledVertexIdempotent, tailBacktrackElem_eq_ofPath,
@@ -229,11 +237,20 @@ theorem localPreprojectiveRelator_mul_doubledVertexIdempotent (v : Q) :
 
 /-- The local relator at `v` is annihilated by every other vertex idempotent: it lies in the corner
 at `v`. -/
+@[simp]
 theorem doubledVertexIdempotent_mul_localPreprojectiveRelator_of_ne {u v : Q} (h : u ≠ v) :
     doubledVertexIdempotent k u * localPreprojectiveRelator k v = 0 := by
   simp only [localPreprojectiveRelator, mul_sub, Finset.mul_sum,
     doubledVertexIdempotent_mul_headBacktrackElem_of_ne _ _ h,
     doubledVertexIdempotent_mul_tailBacktrackElem_of_ne _ _ h, Finset.sum_const_zero, sub_self]
+
+/-- The local relator at `v` is annihilated on the right by every other vertex idempotent. -/
+@[simp]
+theorem localPreprojectiveRelator_mul_doubledVertexIdempotent_of_ne {u v : Q} (h : u ≠ v) :
+    localPreprojectiveRelator k v * doubledVertexIdempotent k u = 0 := by
+  simp only [localPreprojectiveRelator, sub_mul, Finset.sum_mul,
+    headBacktrackElem_mul_doubledVertexIdempotent_of_ne _ _ h,
+    tailBacktrackElem_mul_doubledVertexIdempotent_of_ne _ _ h, Finset.sum_const_zero, sub_self]
 
 /-- **The local relator is the corner of the global one**: conjugating `ρ` by the idempotent at `v`
 returns `ρ_v`. Together with `TauCeti.sum_localPreprojectiveRelator` this says that the single
