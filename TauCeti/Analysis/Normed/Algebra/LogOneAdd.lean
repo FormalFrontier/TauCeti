@@ -49,7 +49,8 @@ variable [TopologicalSpace A] [IsTopologicalRing A]
 
 /-- The formal multilinear series for `log (1 + u)` in a topological algebra. -/
 def logOneAddSeries [CharZero 𝕂] : FormalMultilinearSeries 𝕂 A A :=
-  FormalMultilinearSeries.ofScalars A fun n ↦ (-1 : 𝕂) ^ (n + 1) / n
+  FormalMultilinearSeries.ofScalars A fun n ↦
+    (-1 : 𝕂) ^ (n + 1) / Nat.castEmbedding n
 
 variable [CharZero 𝕂]
 
@@ -59,7 +60,7 @@ theorem logOneAddSeries_apply {n : ℕ} (v : Fin n → A) :
     logOneAddSeries 𝕂 A n v =
       ((-1 : 𝕂) ^ (n + 1) / n) • (List.ofFn v).prod := by
   simp only [logOneAddSeries, FormalMultilinearSeries.ofScalars,
-    smul_apply, ContinuousMultilinearMap.mkPiAlgebraFin_apply]
+    Nat.castEmbedding_apply, smul_apply, ContinuousMultilinearMap.mkPiAlgebraFin_apply]
 
 /-- The `tsum` of the power series for `log (1 + u)`. -/
 def logOneAdd (u : A) : A :=
@@ -108,7 +109,7 @@ theorem summable_logOneAdd {u : A} (hu : ‖u‖ < 1) :
   rw [← FormalMultilinearSeries.ofScalars_apply_eq']
   have hed : edist u 0 < 1 := by
     simpa only [edist_dist, dist_zero_right, ENNReal.ofReal_lt_one] using hu
-  simpa only [logOneAddSeries] using
+  simpa only [logOneAddSeries, Nat.castEmbedding_apply] using
     (logOneAddSeries 𝕂 A).summable
       (hed.trans_le (one_le_logOneAddSeries_radius 𝕂 A))
 
@@ -135,8 +136,8 @@ variable [TopologicalSpace A] [IsTopologicalRing A]
 @[simp]
 theorem logOneAdd_zero : logOneAdd 𝕂 A 0 = 0 := by
   unfold logOneAdd logOneAddSeries
-  simpa only [FormalMultilinearSeries.ofScalarsSum, zero_add, pow_one, Nat.cast_zero,
-    div_zero, zero_smul] using
+  simpa only [Nat.castEmbedding_apply, FormalMultilinearSeries.ofScalarsSum, zero_add,
+    pow_one, Nat.cast_zero, div_zero, zero_smul] using
     (FormalMultilinearSeries.ofScalarsSum_zero
       (E := A) (c := fun n : ℕ ↦ (-1 : 𝕂) ^ (n + 1) / n))
 
