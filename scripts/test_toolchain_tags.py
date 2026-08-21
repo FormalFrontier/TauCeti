@@ -196,7 +196,7 @@ class UnreachableReleases(unittest.TestCase):
         self.assertEqual(row["status"], "out-of-scope")
         self.assertIn(tt.EARLIEST_RELEASE, row["reason"])
 
-    def _with_cache(self, answer):
+    def _with_cache_answer(self, answer):
         original = tt.cache_published
         self.addCleanup(setattr, tt, "cache_published", original)
         def fake(toolchain, sha):
@@ -209,7 +209,7 @@ class UnreachableReleases(unittest.TestCase):
         # A release main never ran on can still be tagged by hand off a main commit. The
         # report saying "no tag is possible" over the top of an existing tag would be the
         # tool contradicting the repository.
-        self._with_cache(False)
+        self._with_cache_answer(False)
         row = tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})
         self.assertEqual(row["status"], "tagged")
         self.assertEqual(row["commit"], "e" * 40)
@@ -220,15 +220,15 @@ class UnreachableReleases(unittest.TestCase):
         # Nothing publishes for a commit off main automatically, so "no cache" is the usual
         # answer, but one can be uploaded by hand. Asserting it rather than asking made the
         # report wrong the moment that happened.
-        self._with_cache(True)
+        self._with_cache_answer(True)
         self.assertIn("a Lake cache was published",
                       tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})["reason"])
-        self._with_cache(False)
+        self._with_cache_answer(False)
         self.assertIn("no published Lake cache",
                       tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})["reason"])
 
     def test_an_unreadable_cache_is_not_reported_as_absent(self):
-        self._with_cache(RuntimeError("the cache answered HTTP 500"))
+        self._with_cache_answer(RuntimeError("the cache answered HTTP 500"))
         self.assertIn("could not be checked",
                       tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})["reason"])
 
