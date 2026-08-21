@@ -243,9 +243,6 @@ theorem binomial_conv_binomial (n m : ℕ) (p : unitInterval) :
   rw [← Nat.coe_castAddMonoidHom, Measure.map_conv_addMonoidHom _ (by fun_prop)]
   exact map_cast_binomial_conv_real n m p
 
-private theorem map_natCast_binomial (n : ℕ) (p : unitInterval) :
-    Measure.map (Nat.cast : ℕ → ℝ) Bin(n, p) = Bin(ℝ, n, p) := rfl
-
 /-- A finite sum of independent Bernoulli variables with common success probability `p` has the
 native binomial law. -/
 theorem iIndepFun.hasLaw_sum_bernoulli {n : ℕ} {p : unitInterval} {X : Fin n → Ω → ℕ}
@@ -254,7 +251,7 @@ theorem iIndepFun.hasLaw_sum_bernoulli {n : ℕ} {p : unitInterval} {X : Fin n �
   have hcast (i : Fin n) :
       HasLaw (fun ω ↦ (X i ω : ℝ)) Bin(ℝ, 1, p) P := by
     have hnatCast : HasLaw (Nat.cast : ℕ → ℝ) Bin(ℝ, 1, p) Bin(1, p) :=
-      ⟨Measurable.of_discrete.aemeasurable, map_natCast_binomial 1 p⟩
+      ⟨Measurable.of_discrete.aemeasurable, rfl⟩
     have hi := hX i
     rw [← binomial_one_eq_bernoulliMeasure] at hi
     simpa [Function.comp_def] using hnatCast.comp hi
