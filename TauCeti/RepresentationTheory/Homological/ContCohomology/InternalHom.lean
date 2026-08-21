@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.TransferInstance
 public import Mathlib.RepresentationTheory.Basic
-public import Mathlib.Topology.Algebra.ClopenNhdofOne
 public import Mathlib.Topology.Algebra.MulAction
+public import TauCeti.RepresentationTheory.Homological.ContCohomology.Discrete
 
 /-!
 # The internal hom of two discrete modules over a profinite group
@@ -34,26 +35,35 @@ equivariance is `homAction_apply_smul` below.
 * `TauCeti.homAction`: the conjugation action of `G` on `M →+ N`, with the action laws
   `homAction_one` and `homAction_mul` and the additivity laws `homAction_zero` and
   `homAction_add`.
+* `TauCeti.InternalHom`: the carrier `M →+ N` equipped with that action, as a `DistribMulAction`
+  instance. Its `TauCeti.InternalHom.of` and `TauCeti.InternalHom.toAddMonoidHom` translate to and
+  from `M →+ N`.
 
 ## Main results
 
-* `TauCeti.homAction_apply_smul`: evaluation is equivariant.
+* `TauCeti.homAction_apply_smul`: evaluation is equivariant; on the carrier this is
+  `TauCeti.InternalHom.smul_apply_smul`.
 * `TauCeti.homAction_eq_self_iff`: `g` fixes `φ` exactly when `φ` commutes with the action of `g`;
   so `φ` is fixed by all of `G` exactly when it is `G`-equivariant
   (`TauCeti.forall_homAction_eq_self_iff`).
 * `TauCeti.isOpen_setOf_homAction_eq_self`: for finite discrete `M` and discrete `N` the set of
-  group elements fixing `φ` is open, which is continuity of the conjugation action on the discrete
-  module `M →+ N`.
+  group elements fixing `φ` is open. This is what makes `TauCeti.InternalHom` a discrete `G`-module:
+  it carries a `DiscreteTopology` and a `ContinuousSMul G` instance.
 * `TauCeti.exists_openNormalSubgroup_homAction_eq_self`: over a profinite group that set contains
   an open normal subgroup.
 
 ## Implementation notes
 
 Mathlib already puts the codomain-pointwise action `(g • φ) m = g • φ m` on `M →+ N`, as the
-instance in `Mathlib/Algebra/GroupWithZero/Action/Hom.lean`, so the conjugation action cannot be
-registered as an instance on the same type; it is a plain function of `g`, and its action and
-additivity laws are the four lemmas listed above. The two actions agree when `G` acts trivially on
-the source (`homAction_eq_smul`).
+instance in `Mathlib/Algebra/GroupWithZero/Action/Hom.lean`, and that action is not the conjugation
+one, so the conjugation action cannot be registered on `M →+ N` itself: instance search would be
+incoherent, and continuous cohomology of `M →+ N` would silently pick up the pointwise action.
+The conjugation action is therefore introduced twice over. It is first the plain function
+`homAction` of `g`, whose action and additivity laws are the four lemmas listed above; this is the
+form in which the roadmap names it and the form in which the lemmas about evaluation read. It is
+then registered as a genuine `DistribMulAction` on the wrapper `InternalHom G M N`, which is
+the object downstream cohomology is meant to be applied to. The two actions on `M →+ N` agree when
+`G` acts trivially on the source (`homAction_eq_smul`).
 
 `Representation.linHom` is the same conjugation construction for `k`-linear maps `V →ₗ[k] W` of
 bundled representations. It is not used as the definition here because the coefficient theory of
@@ -63,7 +73,8 @@ constructions is `toIntLinearMap_homAction`.
 
 Mathlib puts no topology on `M →+ N`. Discreteness of the internal hom enters here through the
 discreteness of the ambient function space `M → N`, which is what
-`isOpen_setOf_homAction_eq_self` rests on.
+`isOpen_setOf_homAction_eq_self` rests on; `InternalHom G M N` then carries the discrete topology
+outright, and finiteness of `M` is what its `ContinuousSMul` instance needs.
 -/
 
 public section
@@ -189,8 +200,8 @@ theorem continuous_homAction_coe (φ : M →+ N) :
 
 /-- For a finite discrete `M` and a discrete `N` the set of group elements fixing `φ` is open.
 Since `M →+ N` is discrete as a subspace of `M → N`, this openness is what continuity of the
-conjugation action amounts to; compare `continuousSMul_iff_stabilizer_isOpen`, which cannot be
-applied literally because the conjugation action is not an instance. -/
+conjugation action amounts to; it is fed to `continuousSMul_iff_stabilizer_isOpen` to produce the
+`ContinuousSMul G (InternalHom G M N)` instance below. -/
 theorem isOpen_setOf_homAction_eq_self [Finite M] [DiscreteTopology N] (φ : M →+ N) :
     IsOpen {g : G | homAction g φ = φ} := by
   have hset : {g : G | homAction g φ = φ}
@@ -202,6 +213,106 @@ theorem isOpen_setOf_homAction_eq_self [Finite M] [DiscreteTopology N] (φ : M �
 
 end Topology
 
+/-- The internal hom of two `G`-modules: the additive homomorphisms `M →+ N` carrying the
+conjugation action `g • φ = homAction g φ`. It is a one-field wrapper around `M →+ N` rather than
+`M →+ N` itself because Mathlib registers the codomain-pointwise action on the latter; this is the
+type on which continuous cohomology of the internal hom is to be taken. -/
+structure InternalHom (G : Type*) [Group G] (M : Type*) [AddMonoid M] [DistribMulAction G M]
+    (N : Type*) [AddCommMonoid N] [DistribMulAction G N] where
+  /-- Regard an additive homomorphism as an element of the internal hom. -/
+  of (G) ::
+  /-- Regard an element of the internal hom as an additive homomorphism, forgetting the action. -/
+  toAddMonoidHom : M →+ N
+
+namespace InternalHom
+
+variable (G : Type*) [Group G] {M : Type*} [AddMonoid M] [DistribMulAction G M]
+  {N : Type*} [AddCommMonoid N] [DistribMulAction G N]
+
+/-- The internal hom and `M →+ N` have the same elements; they differ only in their `G`-action. -/
+@[expose]
+def equivAddMonoidHom : InternalHom G M N ≃ (M →+ N) where
+  toFun := toAddMonoidHom
+  invFun := of G
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+instance : AddCommMonoid (InternalHom G M N) := (equivAddMonoidHom G).addCommMonoid
+
+variable {G}
+
+@[simp]
+theorem of_toAddMonoidHom (φ : InternalHom G M N) : of G φ.toAddMonoidHom = φ := rfl
+
+theorem toAddMonoidHom_inj {φ ψ : InternalHom G M N} :
+    φ.toAddMonoidHom = ψ.toAddMonoidHom ↔ φ = ψ :=
+  ⟨fun h => by rw [← of_toAddMonoidHom φ, ← of_toAddMonoidHom ψ, h], fun h => h ▸ rfl⟩
+
+@[simp]
+theorem toAddMonoidHom_zero : (0 : InternalHom G M N).toAddMonoidHom = 0 := rfl
+
+@[simp]
+theorem toAddMonoidHom_add (φ ψ : InternalHom G M N) :
+    (φ + ψ).toAddMonoidHom = φ.toAddMonoidHom + ψ.toAddMonoidHom := rfl
+
+@[simp]
+theorem of_zero : of G (0 : M →+ N) = 0 := rfl
+
+@[simp]
+theorem of_add (φ ψ : M →+ N) : of G (φ + ψ) = of G φ + of G ψ := rfl
+
+/-- The conjugation action of `G` on the internal hom. -/
+instance : SMul G (InternalHom G M N) where
+  smul g φ := of G (homAction g φ.toAddMonoidHom)
+
+@[simp]
+theorem toAddMonoidHom_smul (g : G) (φ : InternalHom G M N) :
+    (g • φ).toAddMonoidHom = homAction g φ.toAddMonoidHom := rfl
+
+@[simp]
+theorem smul_of (g : G) (φ : M →+ N) : g • of G φ = of G (homAction g φ) := rfl
+
+instance : DistribMulAction G (InternalHom G M N) where
+  one_smul φ := by simp [← toAddMonoidHom_inj]
+  mul_smul g h φ := by simp [← toAddMonoidHom_inj, homAction_mul]
+  smul_zero g := by simp [← toAddMonoidHom_inj]
+  smul_add g φ ψ := by simp [← toAddMonoidHom_inj]
+
+/-- Evaluation is equivariant for the action on the internal hom. This is the roadmap's evaluation
+pairing, in the form in which the duality cup products consume it. -/
+theorem smul_apply_smul (g : G) (φ : InternalHom G M N) (m : M) :
+    (g • φ).toAddMonoidHom (g • m) = g • φ.toAddMonoidHom m :=
+  homAction_apply_smul g _ m
+
+/-- The invariants of the internal hom are the `G`-equivariant homomorphisms. -/
+theorem forall_smul_eq_self_iff {φ : InternalHom G M N} :
+    (∀ g : G, g • φ = φ) ↔
+      ∀ (g : G) (m : M), φ.toAddMonoidHom (g • m) = g • φ.toAddMonoidHom m := by
+  simp only [← toAddMonoidHom_inj, toAddMonoidHom_smul]
+  exact forall_homAction_eq_self_iff
+
+/-- The internal hom of discrete modules is discrete. -/
+instance : TopologicalSpace (InternalHom G M N) := ⊥
+
+instance : DiscreteTopology (InternalHom G M N) := ⟨rfl⟩
+
+/-- For a finite discrete `M` and a discrete `N` over a topological group, the conjugation action
+on the internal hom is continuous: this is the statement that `InternalHom G M N` is again a
+discrete `G`-module. -/
+instance [TopologicalSpace G] [IsTopologicalGroup G] [TopologicalSpace M] [DiscreteTopology M]
+    [ContinuousSMul G M] [Finite M] [TopologicalSpace N] [DiscreteTopology N]
+    [ContinuousSMul G N] : ContinuousSMul G (InternalHom G M N) := by
+  refine continuousSMul_iff_stabilizer_isOpen.mpr fun φ => ?_
+  have hset : (MulAction.stabilizer G φ : Set G)
+      = {g : G | homAction g φ.toAddMonoidHom = φ.toAddMonoidHom} := by
+    ext g
+    simp only [SetLike.mem_coe, MulAction.mem_stabilizer_iff, Set.mem_ofPred_eq,
+      ← toAddMonoidHom_inj, toAddMonoidHom_smul]
+  rw [hset]
+  exact isOpen_setOf_homAction_eq_self _
+
+end InternalHom
+
 section Profinite
 
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
@@ -212,14 +323,14 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [Comp
   [ContinuousSMul G N]
 
 /-- Over a profinite group, a homomorphism from a finite discrete module to a discrete module is
-fixed by an open normal subgroup. This is the statement that the internal hom is again a discrete
-`G`-module, in the form used by the finite-quotient system for continuous cohomology. -/
+fixed by an open normal subgroup. This is `exists_openNormalSubgroup_smul_eq_self` for the discrete
+`G`-module `InternalHom G M N`, read back on `M →+ N`; it is the form used by the finite-quotient
+system for continuous cohomology. -/
 theorem exists_openNormalSubgroup_homAction_eq_self (φ : M →+ N) :
     ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, homAction u φ = φ := by
-  have h1 : (1 : G) ∈ {g : G | homAction g φ = φ} := homAction_one φ
-  obtain ⟨U, hU⟩ := ProfiniteGrp.exist_openNormalSubgroup_sub_open_nhds_of_one
-    (isOpen_setOf_homAction_eq_self φ) h1
-  exact ⟨U, fun u hu => hU hu⟩
+  obtain ⟨U, hU⟩ := exists_openNormalSubgroup_smul_eq_self (G := G) (M := InternalHom G M N)
+    (InternalHom.of G φ)
+  exact ⟨U, fun u hu => by simpa using congrArg InternalHom.toAddMonoidHom (hU u hu)⟩
 
 end Profinite
 
