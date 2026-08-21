@@ -5,10 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Data.ZMod.ValMinAbs
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Dihedral
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Dihedral
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.Basic
 
 /-!
 # The rational Dixon computation for the dihedral group of order six
@@ -16,13 +15,18 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Dihedral
 This file runs the rational stage of the Dixon--Schneider character-table algorithm for
 `DihedralGroup 3`, which is isomorphic to the symmetric group on three letters. The class data are
 numbered by `TauCeti.dihedralClassData 3`; its three classes have sizes `1`, `2`, and `3`,
-represented by the identity, a nontrivial rotation, and a reflection.
+represented by the identity, a nontrivial rotation, and a reflection. Their class count, sizes, and
+structure constants are evaluated in
+`TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Dihedral`.
 
-The simultaneous eigenvector search is carried out over `ZMod 7`, using the certified Dixon prime
-`TauCeti.dihedralGroupThreeDixonPrimeData`. Its three output rows are proved to be exactly the
-reductions of the displayed integral central-character table. Applying `ZMod.valMinAbs` recovers
-those rows over the integers, and the central-to-ordinary conversion gives the usual character
-table with degrees `1`, `1`, and `2`.
+The simultaneous eigenvector search is carried out over `ZMod 7`, using
+`TauCeti.isGoodDixonPrime_dihedralGroup_three_seven`; the corresponding prime and certificate are
+bundled by `TauCeti.dihedralGroupThreeDixonPrimeData`. Its three output rows are proved to be
+exactly the reductions of the displayed integral central-character table. Applying `ZMod.valMinAbs`
+recovers those rows over the integers. The displayed degrees and ordinary table are checked against
+this output by the degree identity, degree-square sum, and weighted row orthogonality. This file
+does not identify the displayed rows with `TauCeti.characterTable` or prove
+`TauCeti.IsCharacterTableSpec`.
 
 Completeness is proved without evaluating the whole search: the displayed rows satisfy the
 class-algebra equations, and the good-prime structure theorem says that the search has exactly
@@ -31,8 +35,8 @@ three outputs.
 ## Main definitions
 
 * `TauCeti.dihedralGroupThreeCentralCharacterTable`: the three integral central-character rows.
-* `TauCeti.dihedralGroupThreeModularCentralRows`: their reductions modulo `7`.
-* `TauCeti.dihedralGroupThreeCharacterTable`: the resulting ordinary integral character table.
+* `TauCeti.dihedralGroupThreeCharacterDegrees`: the displayed degrees `1`, `1`, and `2`.
+* `TauCeti.dihedralGroupThreeCharacterTable`: the displayed ordinary integral table.
 
 ## Main results
 
@@ -63,30 +67,8 @@ namespace TauCeti
 
 open Matrix
 
-local instance dihedralGroupThreeFactPrime : Fact (Nat.Prime 7) := ⟨by decide⟩
-
 /-- The numbered conjugacy classes of the dihedral group of order six. -/
 abbrev DihedralGroupThreeClassIndex := Fin (dihedralClassData 3).numClasses
-
-/-- **The dihedral group of order six has three conjugacy classes.** -/
-@[simp]
-theorem numClasses_dihedralClassData_three : (dihedralClassData 3).numClasses = 3 := by
-  decide
-
-/-- **The numbered conjugacy classes have sizes `1`, `2`, and `3`.** They are the identity,
-the two nontrivial rotations, and the three reflections. -/
-theorem card_classFinset_dihedralClassData_three :
-    (dihedralClassData 3).classes.map Finset.card = [1, 2, 3] := by
-  decide
-
-/-- **The structure constants of the dihedral group of order six.** This is the complete integral
-input to its Dixon--Schneider computation, evaluated by the kernel. -/
-theorem structureConstantTable_dihedralClassData_three :
-    (dihedralClassData 3).structureConstantTable =
-      [[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-       [[0, 1, 0], [2, 1, 0], [0, 0, 2]],
-       [[0, 0, 1], [0, 0, 2], [3, 3, 0]]] := by
-  decide
 
 /-- **The integral central-character table of the dihedral group of order six.** Columns follow
 the class numbering above: identity, nontrivial rotations, and reflections. -/
@@ -106,20 +88,9 @@ theorem dihedralGroupThreeCentralCharacterTable_apply
          1, -1,  0] i j := by
   rfl
 
-/-- The displayed central-character rows reduced modulo the certified Dixon prime `7`. -/
-def dihedralGroupThreeModularCentralRows :
-    Finset (DihedralGroupThreeClassIndex → ZMod 7) :=
-  Finset.univ.image fun i j => (dihedralGroupThreeCentralCharacterTable i j : ZMod 7)
-
-/-- A modular row is displayed exactly when it is the reduction of a row of the integral table. -/
-@[simp]
-theorem mem_dihedralGroupThreeModularCentralRows_iff
-    {a : DihedralGroupThreeClassIndex → ZMod 7} :
-    a ∈ dihedralGroupThreeModularCentralRows ↔
-      ∃ i, (fun j => (dihedralGroupThreeCentralCharacterTable i j : ZMod 7)) = a := by
-  simp [dihedralGroupThreeModularCentralRows]
-
-/-- Every displayed integral row satisfies the numbered class-algebra eigenrow equations. -/
+/-- Every displayed integral row satisfies the numbered class-algebra eigenrow equations. In
+particular, its modular reduction below comes from a characteristic-zero central character rather
+than being an eigenrow created by reduction. -/
 theorem isModularEigenrow_dihedralGroupThreeCentralCharacterTable_int
     (i : DihedralGroupThreeClassIndex) :
     (dihedralClassData 3).IsModularEigenrow
@@ -141,70 +112,44 @@ matrices. -/
 theorem isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod
     (i : DihedralGroupThreeClassIndex) :
     (dihedralClassData 3).IsModularEigenrow
-      (fun j => (dihedralGroupThreeCentralCharacterTable i j : ZMod 7)) := by
-  rw [(dihedralClassData 3).isModularEigenrow_iff]
-  fin_cases i <;> decide
+      (fun j => (dihedralGroupThreeCentralCharacterTable i j :
+        ZMod dihedralGroupThreeDixonPrimeData.p)) :=
+  (isModularEigenrow_dihedralGroupThreeCentralCharacterTable_int i).map
+    (Int.castRingHom (ZMod dihedralGroupThreeDixonPrimeData.p))
 
 /-- The explicit set of modular rows has three elements. -/
 @[simp]
 theorem card_dihedralGroupThreeModularCentralRows :
-    dihedralGroupThreeModularCentralRows.card = 3 := by
+    ((dihedralClassData 3).modularCentralRows 7
+      dihedralGroupThreeCentralCharacterTable).card = (dihedralClassData 3).numClasses := by
   decide
 
 /-- **The executable modular central-character search returns precisely the three reductions in
 `TauCeti.dihedralGroupThreeCentralCharacterTable`.** -/
 theorem dihedralGroupThree_centralCharacterSearch :
-    (dihedralClassData 3).centralCharacterSearch (F := ZMod 7) =
-      dihedralGroupThreeModularCentralRows := by
-  symm
-  apply Finset.eq_of_subset_of_card_le
-  · rw [dihedralGroupThreeModularCentralRows, Finset.image_subset_iff]
-    intro i _
-    rw [(dihedralClassData 3).mem_centralCharacterSearch]
-    exact ⟨by fin_cases i <;> decide,
-      isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod i⟩
-  · rw [(dihedralClassData 3).card_centralCharacterSearch_of_isGoodDixonPrime
-      isGoodDixonPrime_dihedralGroup_three_seven,
-      card_dihedralGroupThreeModularCentralRows, numClasses_dihedralClassData_three]
-
-/-- **Signed least representatives modulo `7` recover every entry of the integral
-central-character table.** -/
-theorem dihedralGroupThree_valMinAbs_centralCharacterTable
-    (i j : DihedralGroupThreeClassIndex) :
-    ((dihedralGroupThreeCentralCharacterTable i j : ZMod 7)).valMinAbs =
-      dihedralGroupThreeCentralCharacterTable i j := by
-  rw [dihedralGroupThreeCentralCharacterTable_apply]
-  apply ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt
-  fin_cases i <;> fin_cases j <;> decide
-
-/-- The signed integral rows obtained from the modular search. -/
-def dihedralGroupThreeLiftedCentralRows :
-    Finset (DihedralGroupThreeClassIndex → ℤ) :=
-  ((dihedralClassData 3).centralCharacterSearch (F := ZMod 7)).image
-    fun a j => (a j).valMinAbs
+    (dihedralClassData 3).centralCharacterSearch
+        (F := ZMod dihedralGroupThreeDixonPrimeData.p) =
+      (dihedralClassData 3).modularCentralRows dihedralGroupThreeDixonPrimeData.p
+        dihedralGroupThreeCentralCharacterTable :=
+  (dihedralClassData 3).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime
+    dihedralGroupThreeDixonPrimeData.isGoodDixonPrime dihedralGroupThreeCentralCharacterTable
+    (by intro i; fin_cases i <;> decide)
+    isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod
+    (by simpa only [dihedralGroupThreeDixonPrimeData_p] using
+      card_dihedralGroupThreeModularCentralRows)
 
 /-- **The rational lift of the modular search is exactly the displayed integral
 central-character table, up to row order.** -/
 theorem dihedralGroupThree_liftedCentralRows :
-    dihedralGroupThreeLiftedCentralRows =
+    (dihedralClassData 3).liftedCentralRows dihedralGroupThreeDixonPrimeData.p =
       Finset.univ.image fun i => dihedralGroupThreeCentralCharacterTable i := by
-  rw [dihedralGroupThreeLiftedCentralRows, dihedralGroupThree_centralCharacterSearch,
-    dihedralGroupThreeModularCentralRows, Finset.image_image]
-  apply Finset.image_congr
-  intro i _
-  funext j
-  exact dihedralGroupThree_valMinAbs_centralCharacterTable i j
+  apply (dihedralClassData 3).liftedCentralRows_eq_image_of_centralCharacterSearch_eq
+    dihedralGroupThreeCentralCharacterTable dihedralGroupThree_centralCharacterSearch
+  intro i j
+  rw [dihedralGroupThreeDixonPrimeData_p, dihedralGroupThreeCentralCharacterTable_apply]
+  fin_cases i <;> fin_cases j <;> decide
 
-/-- A lifted row occurs exactly when it is a row of the displayed integral table. -/
-@[simp]
-theorem mem_dihedralGroupThreeLiftedCentralRows_iff
-    {a : DihedralGroupThreeClassIndex → ℤ} :
-    a ∈ dihedralGroupThreeLiftedCentralRows ↔
-      ∃ i, dihedralGroupThreeCentralCharacterTable i = a := by
-  rw [dihedralGroupThree_liftedCentralRows]
-  simp
-
-/-- The degrees attached to the three central-character rows. -/
+/-- The displayed degrees attached to the three central-character rows. -/
 def dihedralGroupThreeCharacterDegrees : DihedralGroupThreeClassIndex → ℕ :=
   ![1, 1, 2]
 
@@ -214,8 +159,9 @@ theorem dihedralGroupThreeCharacterDegrees_apply (i : DihedralGroupThreeClassInd
     dihedralGroupThreeCharacterDegrees i = ![1, 1, 2] i := by
   rfl
 
-/-- **The integral character table produced by the rational Dixon computation for the dihedral
-group of order six.** -/
+/-- **The displayed integral ordinary table for the dihedral group of order six.** Its consistency
+with the lifted central-character rows is checked below; this definition is not itself derived from
+the search or identified here with `TauCeti.characterTable`. -/
 def dihedralGroupThreeCharacterTable :
     Matrix DihedralGroupThreeClassIndex DihedralGroupThreeClassIndex ℤ :=
   !![1,  1,  1;
@@ -231,8 +177,8 @@ theorem dihedralGroupThreeCharacterTable_apply (i j : DihedralGroupThreeClassInd
          2, -1,  0] i j := by
   rfl
 
-/-- **Division-free conversion from central characters to ordinary characters.** For every row
-`i` and class `j`, `degree i * omega i j = |K_j| * chi i j`. -/
+/-- **The displayed central-character and ordinary tables satisfy the division-free conversion
+identity.** For every row `i` and class `j`, `degree i * omega i j = |K_j| * chi i j`. -/
 theorem dihedralGroupThree_degree_mul_centralCharacterTable
     (i j : DihedralGroupThreeClassIndex) :
     (dihedralGroupThreeCharacterDegrees i : ℤ) *
