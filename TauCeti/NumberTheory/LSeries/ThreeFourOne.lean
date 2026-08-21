@@ -97,22 +97,21 @@ theorem threeFourOneCombination_eq_two_mul_sq {z : ℂ} (hz : ‖z‖ = 1) :
     ← Complex.sq_norm_sub_sq_re, hz]
   ring
 
-/-- The `3-4-1` expression is nonnegative on the closed complex unit disk. -/
-theorem threeFourOneCombination_nonneg {z : ℂ} (hz : ‖z‖ ≤ 1) :
-    0 ≤ threeFourOneCombination z := by
-  have hnorm : ‖z‖ ^ 2 ≤ 1 := pow_le_one₀ (norm_nonneg z) hz
-  rw [threeFourOneCombination_def, pow_two, mul_re, ← sq, ← sq,
-    ← Complex.sq_norm_sub_sq_re]
-  nlinarith [sq_nonneg (z.re + 1)]
-
 /-- The weights and frequencies of the `3-4-1` expression form a finite nonnegative
 trigonometric combination. -/
 theorem isNonnegativeTrigonometricCombination_threeFourOne :
     IsNonnegativeTrigonometricCombination Finset.univ threeFourOneWeight
       threeFourOneFrequency := by
   intro z hz
-  rw [trigonometricCombination_threeFourOne]
-  exact threeFourOneCombination_nonneg hz.le
+  rw [trigonometricCombination_threeFourOne, threeFourOneCombination_eq_two_mul_sq hz]
+  positivity
+
+/-- The `3-4-1` expression is nonnegative on the closed complex unit disk. -/
+theorem threeFourOneCombination_nonneg {z : ℂ} (hz : ‖z‖ ≤ 1) :
+    0 ≤ threeFourOneCombination z := by
+  rw [← trigonometricCombination_threeFourOne]
+  exact trigonometricCombination_nonneg_of_boundary
+    isNonnegativeTrigonometricCombination_threeFourOne hz
 
 /-! ### Euler-factor form -/
 
