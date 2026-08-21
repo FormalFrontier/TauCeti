@@ -271,7 +271,8 @@ theorem d2_comp_d1 : (d2 G M).comp (d1 G M) = 0 := by
 /-- Degree `0` of the explicit complex: the invariants `M^G`. Unlike `H¹` and `H²` this is a
 subgroup and not a quotient. It is named because the low-degree corestriction, the connecting
 maps and the `(0, q)` and `(q, 0)` cup shapes all need a degree-`0` carrier to be stated
-against. -/
+against. Membership is exposed by Mathlib's `FixedPoints.mem_addSubgroup`, which applies directly
+to this abbreviation. -/
 abbrev H0 : AddSubgroup M := FixedPoints.addSubgroup G M
 
 variable {G M}
