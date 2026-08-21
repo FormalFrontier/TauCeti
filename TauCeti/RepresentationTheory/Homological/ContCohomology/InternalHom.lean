@@ -43,7 +43,10 @@ discharges the proofs.
 * `TauCeti.InternalHom`: the carrier `M →+ N` equipped with that action, as a `DistribMulAction`
   instance. Its `TauCeti.InternalHom.of` and `TauCeti.InternalHom.toAddMonoidHom` translate to and
   from `M →+ N`, and `TauCeti.InternalHom.addEquivAddMonoidHom` bundles that translation as an
-  additive equivalence; the latter is the carrier-level form of the roadmap's evaluation pairing.
+  additive equivalence, forgetting the action.
+* `TauCeti.InternalHom.evalPairing`: evaluation out of the internal hom,
+  `InternalHom G M N →+ (M →+ N)`, which is the roadmap's `evalPairing` on the carrier that carries
+  the conjugation action; its equivariance is `TauCeti.InternalHom.evalPairing_equivariant`.
 
 ## Main results
 
@@ -76,13 +79,13 @@ the source (`homAction_eq_smul_of_smul_eq_self`).
 
 The additive structure on `InternalHom G M N` is transported from `M →+ N` along the equivalence
 `equivAddMonoidHom`, as an `AddCommMonoid` in general and as an `AddCommGroup` when `N` is one.
-Both `equivAddMonoidHom` and its bundled form `addEquivAddMonoidHom` carry `@[expose]`: the module
-system rejects a `rfl` proof of an *exported* theorem that has to unfold an unexposed definition,
-and the lemmas describing the transported structure (`toAddMonoidHom_zero`, `toAddMonoidHom_add`,
-`of_zero`, `of_add`, their group-level counterparts, and the two application lemmas of
-`addEquivAddMonoidHom`) are exactly such theorems; they hold by `Equiv.add_def`/`Equiv.zero_def` on
-the transported instance. Those lemmas are the intended interface, so nothing downstream should
-need to unfold the transported instance itself.
+The lemmas describing the transported structure (`toAddMonoidHom_zero`, `toAddMonoidHom_add`,
+`of_zero`, `of_add`, their group-level counterparts, and the application lemmas of
+`addEquivAddMonoidHom` and `evalPairing`) hold by `Equiv.add_def`/`Equiv.zero_def` on the
+transported instance, hence definitionally; they are written `(rfl)` rather than `rfl` because the
+module system rejects the latter for an *exported* theorem whose proof unfolds a definition that is
+not `@[expose]`d, and neither equivalence needs to be exposed. Those lemmas are the intended
+interface, so nothing downstream should need to unfold the transported instance itself.
 
 Continuity in the group variable (`continuous_homAction_apply`) needs only a discrete source: `φ`
 is then automatically continuous, and the two actions occurring in `g • φ (g⁻¹ • m)` are continuous
@@ -114,7 +117,7 @@ namespace TauCeti
 section Action
 
 variable {G : Type*} [Group G] {M : Type*} [AddMonoid M] [DistribMulAction G M]
-  {N : Type*} [AddCommMonoid N] [DistribMulAction G N]
+  {N : Type*} [AddMonoid N] [DistribMulAction G N]
 
 /-- The conjugation action of `G` on the internal hom `M →+ N`, sending `φ` to
 `m ↦ g • φ (g⁻¹ • m)`. This is the action making evaluation equivariant; see
@@ -130,6 +133,7 @@ theorem homAction_one (φ : M →+ N) : homAction (1 : G) φ = φ := by
   ext m
   simp
 
+@[simp]
 theorem homAction_mul (g h : G) (φ : M →+ N) :
     homAction (g * h) φ = homAction g (homAction h φ) := by
   ext m
@@ -140,11 +144,19 @@ theorem homAction_zero (g : G) : homAction g (0 : M →+ N) = 0 := by
   ext m
   simp
 
+section AddCommMonoid
+
+variable {N : Type*} [AddCommMonoid N] [DistribMulAction G N]
+
+/-- The conjugation action is additive in the homomorphism. This is the only one of the four laws
+that needs the pointwise addition on `M →+ N`, hence a commutative codomain. -/
 @[simp]
 theorem homAction_add (g : G) (φ ψ : M →+ N) :
     homAction g (φ + ψ) = homAction g φ + homAction g ψ := by
   ext m
   simp
+
+end AddCommMonoid
 
 /-- Evaluation `(φ, m) ↦ φ m` is equivariant for the conjugation action on `M →+ N`. This is the
 equivariance that makes the duality cup pairings well typed, and it is what fixes the direction of
@@ -174,7 +186,7 @@ theorem homAction_id (g : G) : homAction g (AddMonoidHom.id N) = AddMonoidHom.id
   homAction_eq_self_iff.mpr fun _ => rfl
 
 /-- The conjugation action is functorial for composition of homomorphisms. -/
-theorem homAction_comp {P : Type*} [AddCommMonoid P] [DistribMulAction G P] (g : G) (φ : M →+ N)
+theorem homAction_comp {P : Type*} [AddMonoid P] [DistribMulAction G P] (g : G) (φ : M →+ N)
     (ψ : N →+ P) : homAction g (ψ.comp φ) = (homAction g ψ).comp (homAction g φ) := by
   ext m
   simp
@@ -209,7 +221,7 @@ section Topology
 variable {G : Type*} [Group G] [TopologicalSpace G] [ContinuousInv G]
   {M : Type*} [AddMonoid M] [TopologicalSpace M] [DiscreteTopology M] [DistribMulAction G M]
   [ContinuousSMul G M]
-  {N : Type*} [AddCommMonoid N] [TopologicalSpace N] [DistribMulAction G N] [ContinuousSMul G N]
+  {N : Type*} [AddMonoid N] [TopologicalSpace N] [DistribMulAction G N] [ContinuousSMul G N]
 
 /-- Each value of the conjugation action is continuous in the group variable. Only the source `M`
 is required to be discrete. -/
@@ -259,7 +271,6 @@ variable (G : Type*) [Group G] {M : Type*} [AddMonoid M] [DistribMulAction G M]
   {N : Type*} [AddCommMonoid N] [DistribMulAction G N]
 
 /-- The internal hom and `M →+ N` have the same elements; they differ only in their `G`-action. -/
-@[expose]
 def equivAddMonoidHom : InternalHom G M N ≃ (M →+ N) where
   toFun := toAddMonoidHom
   invFun := of G
@@ -269,21 +280,27 @@ def equivAddMonoidHom : InternalHom G M N ≃ (M →+ N) where
 instance : AddCommMonoid (InternalHom G M N) := fast_instance% (equivAddMonoidHom G).addCommMonoid
 
 /-- The internal hom and `M →+ N` are the same additive monoid; they differ only in their
-`G`-action. This is the carrier-level form of the roadmap's evaluation pairing: an additive map out
-of the internal hom, whose equivariance is `InternalHom.smul_apply_smul`. -/
-@[expose]
+`G`-action. This is the additive carrier equivalence, forgetting the action. -/
 def addEquivAddMonoidHom : InternalHom G M N ≃+ (M →+ N) :=
   { equivAddMonoidHom G with map_add' := fun _ _ => rfl }
+
+/-- Evaluation out of the internal hom, bundled as an additive homomorphism: this is the roadmap's
+`evalPairing`, on the carrier that carries the conjugation action. Its equivariance is
+`evalPairing_equivariant`. -/
+def evalPairing : InternalHom G M N →+ (M →+ N) := (addEquivAddMonoidHom G).toAddMonoidHom
 
 variable {G}
 
 @[simp]
 theorem addEquivAddMonoidHom_apply (φ : InternalHom G M N) :
-    addEquivAddMonoidHom G φ = φ.toAddMonoidHom := rfl
+    addEquivAddMonoidHom G φ = φ.toAddMonoidHom := (rfl)
 
 @[simp]
 theorem addEquivAddMonoidHom_symm_apply (φ : M →+ N) :
-    (addEquivAddMonoidHom G).symm φ = of G φ := rfl
+    (addEquivAddMonoidHom G).symm φ = of G φ := (rfl)
+
+@[simp]
+theorem evalPairing_apply (φ : InternalHom G M N) : evalPairing G φ = φ.toAddMonoidHom := (rfl)
 
 @[simp]
 theorem of_toAddMonoidHom (φ : InternalHom G M N) : of G φ.toAddMonoidHom = φ := rfl
@@ -294,17 +311,17 @@ theorem toAddMonoidHom_inj {φ ψ : InternalHom G M N} :
   InternalHom.ext_iff.symm
 
 @[simp]
-theorem toAddMonoidHom_zero : (0 : InternalHom G M N).toAddMonoidHom = 0 := rfl
+theorem toAddMonoidHom_zero : (0 : InternalHom G M N).toAddMonoidHom = 0 := (rfl)
 
 @[simp]
 theorem toAddMonoidHom_add (φ ψ : InternalHom G M N) :
-    (φ + ψ).toAddMonoidHom = φ.toAddMonoidHom + ψ.toAddMonoidHom := rfl
+    (φ + ψ).toAddMonoidHom = φ.toAddMonoidHom + ψ.toAddMonoidHom := (rfl)
 
 @[simp]
-theorem of_zero : of G (0 : M →+ N) = 0 := rfl
+theorem of_zero : of G (0 : M →+ N) = 0 := (rfl)
 
 @[simp]
-theorem of_add (φ ψ : M →+ N) : of G (φ + ψ) = of G φ + of G ψ := rfl
+theorem of_add (φ ψ : M →+ N) : of G (φ + ψ) = of G φ + of G ψ := (rfl)
 
 section AddCommGroup
 
@@ -316,17 +333,17 @@ instance : AddCommGroup (InternalHom G M N) := fast_instance% (equivAddMonoidHom
 
 @[simp]
 theorem toAddMonoidHom_neg (φ : InternalHom G M N) :
-    (-φ).toAddMonoidHom = -φ.toAddMonoidHom := rfl
+    (-φ).toAddMonoidHom = -φ.toAddMonoidHom := (rfl)
 
 @[simp]
 theorem toAddMonoidHom_sub (φ ψ : InternalHom G M N) :
-    (φ - ψ).toAddMonoidHom = φ.toAddMonoidHom - ψ.toAddMonoidHom := rfl
+    (φ - ψ).toAddMonoidHom = φ.toAddMonoidHom - ψ.toAddMonoidHom := (rfl)
 
 @[simp]
-theorem of_neg (φ : M →+ N) : of G (-φ) = -of G φ := rfl
+theorem of_neg (φ : M →+ N) : of G (-φ) = -of G φ := (rfl)
 
 @[simp]
-theorem of_sub (φ ψ : M →+ N) : of G (φ - ψ) = of G φ - of G ψ := rfl
+theorem of_sub (φ ψ : M →+ N) : of G (φ - ψ) = of G φ - of G ψ := (rfl)
 
 end AddCommGroup
 
@@ -348,10 +365,18 @@ instance : DistribMulAction G (InternalHom G M N) where
   smul_add g φ ψ := by ext m; simp
 
 /-- Evaluation is equivariant for the action on the internal hom; the carrier form of
-`homAction_apply_smul`, i.e. the roadmap's `evalPairing_equivariant`. -/
+`homAction_apply_smul`. Its restatement through the bundled pairing is
+`evalPairing_equivariant`. -/
 theorem smul_apply_smul (g : G) (φ : InternalHom G M N) (m : M) :
     (g • φ).toAddMonoidHom (g • m) = g • φ.toAddMonoidHom m :=
   homAction_apply_smul g _ m
+
+/-- The evaluation pairing is `G`-equivariant: this is the roadmap's `evalPairing_equivariant`,
+`smul_apply_smul` read through the bundled `evalPairing`. -/
+theorem evalPairing_equivariant (g : G) (φ : InternalHom G M N) (m : M) :
+    evalPairing G (g • φ) (g • m) = g • evalPairing G φ m := by
+  simp only [evalPairing_apply]
+  exact smul_apply_smul g φ m
 
 /-- The invariants of the internal hom are the `G`-equivariant homomorphisms. -/
 theorem forall_smul_eq_self_iff {φ : InternalHom G M N} :
