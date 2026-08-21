@@ -15,8 +15,8 @@ import TauCeti.RingTheory.FiniteType.PointSeparation
 /-!
 # Algebraically closed points of faithfully flat algebras
 
-Let `K` be an algebraically closed extension of a field `k`, and let `f : A →ₐ[k] B` be
-faithfully flat and of finite type. Every `K`-point of `A` lifts to a `K`-point of `B`.
+Let `K` be an algebraically closed field over a commutative ring `k`, and let `f : A →ₐ[k] B`
+be faithfully flat and of finite type. Every `K`-point of `A` lifts to a `K`-point of `B`.
 
 Faithful flatness first gives a prime of `B` over the kernel of the prescribed point. The affine
 Nullstellensatz then gives a `K`-point of `B` whose kernel contains that prime. Its restriction to
@@ -49,7 +49,7 @@ namespace AlgHom
 universe u v w x
 
 variable {k : Type u} {A : Type v} {B : Type w} {K : Type x}
-variable [Field k]
+variable [CommRing k]
 variable [CommRing A] [Algebra k A]
 variable [CommRing B] [Algebra k B]
 variable [Field K] [Algebra k K] [IsAlgClosed K]
@@ -120,10 +120,10 @@ theorem surjective_comp_right_of_comap_surjective (f : A →ₐ[k] B) (hft : f.F
   exact exists_comp_eq_of_comap_eq_ker f hft p P hP
 
 /-- Precomposition along a faithfully flat morphism is surjective on points valued in an
-algebraically closed extension field, provided the morphism is of finite type.
+algebraically closed field over the base ring, provided the morphism is of finite type.
 
 In scheme language, a faithfully flat morphism of finite type `Spec B ⟶ Spec A` is surjective
-on `K`-points for every algebraically closed extension `K` of `k`. -/
+on `K`-points for every algebraically closed field `K` with a `k`-algebra structure. -/
 theorem surjective_comp_right_of_faithfullyFlat (f : A →ₐ[k] B) (hft : f.FiniteType)
     (hf : f.toRingHom.FaithfullyFlat) :
     Function.Surjective (fun q : B →ₐ[k] K ↦ q.comp f) :=
