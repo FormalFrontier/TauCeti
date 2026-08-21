@@ -22,8 +22,10 @@ type.)
 
 This file constructs the quiver and classifies its paths: it is acyclic, and its only nontrivial
 paths are the arrows themselves. The dimension of its path algebra is computed in
-`TauCeti.RepresentationTheory.Quiver.Kronecker.PathAlgebra`, and its Euler and Tits forms in
-`TauCeti.RepresentationTheory.Quiver.Kronecker.EulerForm`.
+`TauCeti.RepresentationTheory.Quiver.Kronecker.PathAlgebra`, its Euler and Tits forms in
+`TauCeti.RepresentationTheory.Quiver.Kronecker.EulerForm`, and its representation type -- infinite
+as soon as there are two arrows -- in
+`TauCeti.RepresentationTheory.Quiver.Kronecker.FiniteRepType`.
 
 ## Main definitions
 

@@ -9,6 +9,8 @@ public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.OneLoop.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+public import TauCeti.RingTheory.LocalRing.Basic
+public import TauCeti.RingTheory.Polynomial.Truncated
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 public import Mathlib.RingTheory.AdjoinRoot
 
@@ -64,7 +66,9 @@ Indecomposability is proved throughout from `TauCeti.indecomposable_of_idempoten
 rather than from the brick criterion: for the Jordan blocks the endomorphism algebra is
 `k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick criterion does not apply, and an endomorphism is
 pinned down instead by its value at `1` -- it commutes with multiplication by the root, hence with
-multiplication by every power of it, and those powers are a basis.
+multiplication by every power of it, and those powers are a basis. That the value is then `0` or
+`1` is locality of the truncated polynomial algebra, from
+`TauCeti.RingTheory.Polynomial.Truncated`.
 
 The quiver `•↺` itself -- `TauCeti.Quiver.OneLoop`, with its `Quiver` instance and its loop
 `TauCeti.Quiver.OneLoop.loop` -- is defined in
@@ -310,12 +314,6 @@ theorem oneLoopNilpotentRep_map_loop_apply (n : ℕ) (x : AdjoinRoot ((X : k[X])
   rw [oneLoopNilpotentRep_map_loop]
   rfl
 
-/-- `k[X]/(Xⁿ⁺¹)` has dimension `n + 1` over `k`: the powers of the root form a basis. -/
-private theorem finrank_adjoinRoot_X_pow (n : ℕ) :
-    Module.finrank k (AdjoinRoot ((X : k[X]) ^ (n + 1))) = n + 1 := by
-  rw [(AdjoinRoot.powerBasis' (monic_X_pow (R := k) (n + 1))).finrank]
-  simp
-
 /-- `TauCeti.oneLoopNilpotentRep k n` is finite-dimensional: its vertex space is `k[X]/(Xⁿ⁺¹)`. -/
 theorem isFinDim_oneLoopNilpotentRep (n : ℕ) :
     IsFinDim k Quiver.OneLoop (oneLoopNilpotentRep.{u, w} k n) :=
@@ -325,7 +323,7 @@ theorem isFinDim_oneLoopNilpotentRep (n : ℕ) :
 theorem dimVector_oneLoopNilpotentRep (n : ℕ) (v : Quiver.OneLoop) :
     dimVector (oneLoopNilpotentRep.{u, w} k n) v = n + 1 := by
   rw [dimVector_apply, oneLoopNilpotentRep_obj]
-  exact finrank_adjoinRoot_X_pow n
+  exact finrank_adjoinRoot_X_pow k (n + 1)
 
 /-- `TauCeti.oneLoopNilpotentRep k n` is nonzero: its vertex space has dimension `n + 1`. -/
 theorem not_isZero_oneLoopNilpotentRep (n : ℕ) :
@@ -385,36 +383,10 @@ private theorem oneLoopNilpotentRepApp_root_mul {n : ℕ}
   exact h.trans (oneLoopNilpotentRep_map_loop_apply.{u, w} n
     ((f.app (Quiver.OneLoop.vertex : Paths Quiver.OneLoop)).hom x))
 
-/-- The root of `Xⁿ⁺¹` is nilpotent in `k[X]/(Xⁿ⁺¹)`. -/
-private theorem isNilpotent_root_X_pow (n : ℕ) :
-    IsNilpotent (AdjoinRoot.root ((X : k[X]) ^ (n + 1))) :=
-  ⟨n + 1, by rw [← AdjoinRoot.mk_X, ← map_pow, AdjoinRoot.mk_self]⟩
-
-/-- The only idempotents of `k[X]/(Xⁿ⁺¹)` are `0` and `1`: an element with vanishing constant term
-is nilpotent, so an idempotent is congruent to `0` or to `1` modulo a nilpotent. -/
-private theorem eq_zero_or_one_of_isIdempotentElem {n : ℕ}
-    {m : AdjoinRoot ((X : k[X]) ^ (n + 1))} (hm : IsIdempotentElem m) : m = 0 ∨ m = 1 := by
-  have hev : ((X : k[X]) ^ (n + 1)).eval₂ (RingHom.id k) 0 = 0 := by simp
-  have hnil : ∀ x : AdjoinRoot ((X : k[X]) ^ (n + 1)),
-      AdjoinRoot.lift (RingHom.id k) (0 : k) hev x = 0 → IsNilpotent x := by
-    intro x hx
-    induction x using AdjoinRoot.induction_on with
-    | ih p =>
-      have hp : p.coeff 0 = 0 := by
-        rw [Polynomial.coeff_zero_eq_eval_zero]
-        simpa [AdjoinRoot.lift_mk, Polynomial.eval] using hx
-      obtain ⟨q, rfl⟩ := Polynomial.X_dvd_iff.mpr hp
-      rw [map_mul, AdjoinRoot.mk_X]
-      exact (Commute.all _ _).isNilpotent_mul_right (isNilpotent_root_X_pow n)
-  rcases IsIdempotentElem.iff_eq_zero_or_one.mp (hm.map (AdjoinRoot.lift (RingHom.id k)
-    (0 : k) hev)) with h0 | h1
-  · exact Or.inl (hm.eq_zero_of_isNilpotent (hnil m h0))
-  · refine Or.inr (sub_eq_zero.mp ?_).symm
-    exact hm.one_sub.eq_zero_of_isNilpotent (hnil _ (by rw [map_sub, map_one, h1, sub_self]))
-
 /-- **`TauCeti.oneLoopNilpotentRep k n` is indecomposable.** An endomorphism commutes with
 multiplication by the root, hence is multiplication by its value at `1`; if it is idempotent so is
-that value, and the only idempotents of `k[X]/(Xⁿ⁺¹)` are `0` and `1`. -/
+that value, and `k[X]/(Xⁿ⁺¹)` is a local ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), so its only
+idempotents are `0` and `1`. -/
 theorem indecomposable_oneLoopNilpotentRep (n : ℕ) :
     Indecomposable (oneLoopNilpotentRep.{u, w} k n) := by
   refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_oneLoopNilpotentRep n) fun e he ↦ ?_
@@ -439,7 +411,7 @@ theorem indecomposable_oneLoopNilpotentRep (n : ℕ) :
     simp only [oneLoopNilpotentRepApp_comp, LinearMap.comp_apply] at h
     rw [hmul_apply (oneLoopNilpotentRepApp e 1)] at h
     exact h
-  rcases eq_zero_or_one_of_isIdempotentElem hidem with h0 | h1
+  rcases IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hidem with h0 | h1
   · refine Or.inl (oneLoopNilpotentRep_hom_ext ?_)
     rw [hmul, h0, oneLoopNilpotentRepApp_zero]
     exact LinearMap.ext fun x ↦ by simp
