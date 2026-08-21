@@ -53,18 +53,32 @@ canonical choice this development needs and the one the roadmap pins.
 
 ## Main results
 
+* `TauCeti.sum_killingForm_killingDualBasis_eq_trace`: the sum `∑ᵢ κ (p xᵢ) yᵢ` is the trace of the
+  endomorphism `p`.
+* `TauCeti.sum_apply_killingDualBasis_of_isAdjointPair`: a pair of endomorphisms adjoint for the
+  Killing form may be moved from the first slot of `f` to the second.
 * `TauCeti.casimirElement_eq_sum`: the Casimir element is `∑ᵢ xᵢ yᵢ` for **any** basis `x` of `L`
   and its Killing-dual basis `y`, so the basis chosen in the definition does not matter.
 * `TauCeti.ι_mul_casimirElement`: the Casimir element commutes with every canonical Lie generator.
 * `TauCeti.casimirElement_mem_center`: **the Casimir element is central in `U(L)`.**
 
 The remaining statement about `casimirElement`, that it acts on a highest weight module of weight
-`λ` by the scalar `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`, is not proved here: it is phrased in terms of the
-highest weight modules `L(λ)` and of the invariant form on weights, neither of which exists yet.
+`λ` by the scalar `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`, is not proved here but in
+`TauCeti/Algebra/Lie/HighestWeight/Casimir.lean`, which is where the highest weight vectors and the
+invariant form on weights that it is phrased in are available.
 
 ## References
 
-* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §6.2.
+* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 1--3*, Chapter I, §3, no. 7 ("Casimir
+  element"), Proposition 11: given an invariant bilinear form whose restriction to an ideal `a` is
+  nondegenerate, the element `c = Σᵢ eᵢ eᵢ'` built from a basis of `a` and the dual basis of `a`
+  is independent of that basis and commutes with the whole Lie algebra.  Taking `a` to be all of
+  `L` and the form to be the Killing form gives the two statements proved here; Bourbaki is
+  strictly more general, since the form may be degenerate on `L` and the sum then runs over a basis
+  of the proper ideal `a`, which is beyond the generality noted above.
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §6.2, which builds
+  the Casimir element of the trace form of a faithful representation of a semisimple Lie algebra;
+  the Killing form is the case of the adjoint representation.
 * [Highest weight roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md),
   Layer 5, "The Casimir element".
 -/
@@ -135,6 +149,15 @@ theorem sum_killingForm_smul_killingDualBasis (b : Module.Basis ι K L) (v : L) 
   conv_rhs => rw [← (killingDualBasis b).sum_repr v]
   exact sum_congr rfl fun i _ ↦ by rw [killingDualBasis_repr]
 
+/-- **The sum `∑ᵢ κ (p xᵢ) yᵢ` along a basis and its Killing-dual basis is the trace of `p`.**  The
+Killing-dual basis reads off the coordinates in `b` (`TauCeti.repr_eq_killingForm`), so the sum is
+the sum of the diagonal entries of the matrix of `p`. -/
+theorem sum_killingForm_killingDualBasis_eq_trace (b : Module.Basis ι K L) (p : L →ₗ[K] L) :
+    ∑ i, killingForm K L (p (b i)) (killingDualBasis b i) = LinearMap.trace K L p := by
+  rw [LinearMap.trace_eq_matrix_trace K b]
+  simp only [Matrix.trace, Matrix.diag_apply, LinearMap.toMatrix_apply]
+  exact sum_congr rfl fun i _ ↦ (repr_eq_killingForm b (p (b i)) i).symm
+
 end DualBasis
 
 /-! ### The canonical invariant element `∑ᵢ xᵢ ⊗ yᵢ`
@@ -165,6 +188,29 @@ theorem sum_apply_killingDualBasis_eq {ι ι' : Type*} [DecidableEq ι] [Fintype
   conv_lhs => rw [← sum_killingForm_smul_killingDualBasis c (killingDualBasis b i)]
   rw [map_sum]
   exact sum_congr rfl fun j _ ↦ map_smul _ _ _
+
+/-- **A Killing-adjoint pair of operators may be moved from one slot to the other.**  If `κ (p x) y`
+is `κ x (q y)` then applying `p` to the basis vectors and applying `q` to their Killing duals give
+the same sum, because both expand to `∑ᵢ ∑ⱼ κ (p xᵢ) yⱼ • f xⱼ yᵢ`. -/
+theorem sum_apply_killingDualBasis_of_isAdjointPair {ι : Type*} [DecidableEq ι] [Fintype ι]
+    (b : Module.Basis ι K L) {p q : L →ₗ[K] L}
+    (hpq : LinearMap.IsAdjointPair (killingForm K L) (killingForm K L) p q) :
+    ∑ i, f (p (b i)) (killingDualBasis b i) = ∑ i, f (b i) (q (killingDualBasis b i)) := by
+  have expand₁ : ∀ i : ι, f (p (b i)) (killingDualBasis b i)
+      = ∑ j, killingForm K L (p (b i)) (killingDualBasis b j) •
+          f (b j) (killingDualBasis b i) := by
+    intro i
+    conv_lhs => rw [← sum_killingForm_smul_basis b (p (b i))]
+    rw [map_sum, LinearMap.sum_apply]
+    exact sum_congr rfl fun j _ ↦ by rw [map_smul, LinearMap.smul_apply]
+  have expand₂ : ∀ i : ι, f (b i) (q (killingDualBasis b i))
+      = ∑ j, killingForm K L (p (b j)) (killingDualBasis b i) •
+          f (b i) (killingDualBasis b j) := by
+    intro i
+    conv_lhs => rw [← sum_killingForm_smul_killingDualBasis b (q (killingDualBasis b i))]
+    rw [map_sum]
+    exact sum_congr rfl fun j _ ↦ by rw [map_smul, hpq (b j) (killingDualBasis b i)]
+  rw [sum_congr rfl fun i _ ↦ expand₁ i, sum_congr rfl fun i _ ↦ expand₂ i, Finset.sum_comm]
 
 /-- **The element `∑ᵢ xᵢ ⊗ yᵢ` is invariant under the adjoint action.**  Read through a bilinear
 map `f`, the Leibniz expansion of the adjoint action of `z` vanishes, because the two coefficient
