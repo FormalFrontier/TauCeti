@@ -36,6 +36,8 @@ group-scheme realization.
 
 * `TauCeti.SplitTorus.groupScheme`: the finite-rank split torus group scheme.
 * `TauCeti.SplitTorus.schemePointsMulEquiv`: its scheme-valued points are `sigma → Aˣ`.
+* `TauCeti.SplitTorus.schemePointsMulEquiv_eq_freeAbelianCharEquiv`: the scheme-points
+  equivalence factors through the diagonalizable-group character equivalence.
 * `TauCeti.SplitTorus.characterGroupSchemeMap`: a lattice character as a group-scheme
   morphism to `𝔾ₘ`.
 * `TauCeti.SplitTorus.cocharacterGroupSchemeMap`: a lattice cocharacter as a group-scheme
@@ -77,6 +79,17 @@ noncomputable def schemePointsMulEquiv [Finite sigma] :
       (groupScheme R sigma).X) ≃* (sigma → Aˣ) :=
   (DiagonalizableGroup.schemePointsMulEquiv (R := R) (A := A)
     (characterGroup sigma)).trans freeAbelianCharEquiv
+
+/-- The split-torus scheme-points equivalence is the free-abelian character equivalence applied
+to the underlying diagonalizable-group character. -/
+theorem schemePointsMulEquiv_eq_freeAbelianCharEquiv [Finite sigma]
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R sigma).X) :
+    schemePointsMulEquiv (R := R) (A := A) p =
+      freeAbelianCharEquiv
+        (DiagonalizableGroup.schemePointsMulEquiv
+          (R := R) (A := A) (characterGroup sigma) p) := by
+  rw [schemePointsMulEquiv, MulEquiv.trans_apply]
 
 /-- The `i`-th coordinate of a scheme-valued point is its value on the group-algebra
 monomial for the `i`-th standard character. -/
@@ -164,11 +177,7 @@ theorem multiplicativeGroupSchemePointsMulEquiv_characterGroupSchemeMap [Finite 
       have hcoord (i : sigma) :
           freeAbelianCharEquiv chi i =
             schemePointsMulEquiv (R := R) (A := A) p i := by
-        apply Units.ext
-        rw [freeAbelianCharEquiv_apply,
-          DiagonalizableGroup.schemePointsMulEquiv_apply_coe,
-          schemePointsMulEquiv_apply_coe]
-        rfl
+        rw [schemePointsMulEquiv_eq_freeAbelianCharEquiv]
       -- `characterGroup sigma` is the bundled abbreviation for the free multiplicative
       -- lattice; this aligns that representation with the unbundled character `chi`.
       calc
