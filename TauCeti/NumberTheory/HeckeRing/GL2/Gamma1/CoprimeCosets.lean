@@ -1,0 +1,409 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.UpperTriCosets
+
+import Mathlib.Algebra.Field.ZMod
+
+/-!
+# The double coset `Γ₁(N) · diag(1, p) · Γ₁(N)` at a prime `p ∤ N`
+
+`Gamma1/UpperTriCosets.lean` decomposes this double coset at `p ∣ N`, where the `p`
+representatives `!![1, b; 0, p]` exhaust it. At a prime `p ∤ N` they do not: there is exactly one
+further right coset, and this file produces it, giving Diamond–Shurman's Proposition 5.2.1 in its
+remaining case,
+
+`Γ₁(N) · diag(1, p) · Γ₁(N) = (⋃_{b < p} Γ₁(N) · !![1, b; 0, p])  ∪  Γ₁(N) · σ · diag(p, 1)`,
+
+a disjoint union of `p + 1` **right** cosets. Here `σ = !![m, n; N, p]` is any integral matrix
+with `m p − n N = 1`: an element of `Γ₀(N)`, *not* of `Γ₁(N)`, and it is that twist which later
+supplies the factor `χ(p)` in the Hecke recurrence at a good prime.
+
+## Where the hypotheses enter
+
+The whole statement is carried by the bottom row of `σ`. Its two entries `N` and `p` together
+with `det σ = 1` say exactly `m p − n N = 1` (`bezout_of_lowerRow`), so such a `σ` exists
+precisely when `p` and `N` are coprime (`coprime_of_lowerRow`, and `gamma0Twist` for the converse,
+built from `Nat.gcdA` / `Nat.gcdB`). Everything below is stated for an arbitrary such `σ`, which
+keeps the coprimality implicit in the data rather than as a side hypothesis, and lets the caller
+supply whichever Bézout witness it already has.
+
+Primality is used **once**, and only in the forward inclusion: writing `γ = !![a, b; c, d]` for
+an element of `Γ₁(N)`, the product `diag(1, p) · γ` lands in an upper-triangular coset as soon as
+the congruence `a j ≡ b (mod p)` is solvable, which for `p ∤ a` needs `a` invertible modulo `p`.
+The complementary case `p ∣ a` is where the twisted coset is used, and it needs no primality:
+
+`diag(1, p) · γ = !![a − b N, b m − a′ n; p(c − d N), p d m − c n] · σ · diag(p, 1)`,  `a = p a′`,
+
+whose left factor has determinant `(a d − b c)(m p − n N) = 1` and lies in `Γ₁(N)` because
+`N ∣ c` and `m p ≡ 1 (mod N)`. (For composite `p ∤ N` neither branch covers a `γ` with
+`1 < gcd(a, p) < p`, and indeed the coset count is then not `p + 1`.)
+
+Disjointness of the last coset from the others is integrality: comparing `σ · diag(p, 1)` with
+`!![1, b; 0, p]` forces `p ∣ n`, which `m p − n N = 1` forbids.
+
+## Main definitions
+
+* `HeckeRing.GL2.gamma0Twist`: the Bézout matrix `!![gcdA, −gcdB; N, p]`, a witness `σ` for
+  coprime `p` and `N`, with `gamma0Twist_mem_Gamma0` and
+  `gamma0Twist_toHomUnits_Gamma0Map` recording that it is the `Γ₀(N)` element of lower-right
+  entry the unit `p mod N`.
+* `HeckeRing.GL2.primeRep`: the `p + 1` right-coset representatives, indexed by `Option (Fin p)`
+  — `some b` the upper-triangular `!![1, b; 0, p]`, `none` the twisted `σ · diag(p, 1)`.
+
+## Main results
+
+* `HeckeRing.GL2.bezout_of_lowerRow`, `HeckeRing.GL2.coprime_of_lowerRow`: the bottom row of `σ`
+  is a Bézout relation for `p` and `N`.
+* `HeckeRing.GL2.exists_mem_Gamma1_natDiagGL_mul_twist`: the factorisation of `diag(1, p) · γ`
+  through the twisted representative, for `p ∣ a`.
+* `HeckeRing.GL2.exists_mem_Gamma1_natDiagGL_mul_eq_primeRep_none`:
+  `diag(1, p) · !![m p, n; N, 1] = σ · diag(p, 1)` with `!![m p, n; N, 1] ∈ Γ₁(N)` — the reverse
+  inclusion for the twisted coset.
+* `HeckeRing.GL2.op_primeRep_smul_injective`: the `p + 1` right cosets are pairwise distinct.
+* `HeckeRing.GL2.doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime`: **the decomposition**,
+  and `HeckeRing.GL2.doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets_of_prime` the same
+  statement read at the chosen representative of `diagCosetGamma1 N p`, which is the shape the
+  slash sum of `ModularForms/HeckeSlash/Independence.lean` consumes.
+
+## Provenance
+
+No code is transcribed. The statement is Diamond–Shurman Proposition 5.2.1 in the case `p ∤ N`,
+proved here for this repository's own representative families `natDiagGL`, `upperTriRep` and
+`scaleRep`. The AINTLIB `LeanModularForms` project (Chris Birkbeck, Apache-2.0) organises the same
+case as the `heckeT_p_coprime` branch of `heckeT_p_all`
+(`LeanModularForms/HeckeRIngs/GL2/HeckeT_n.lean`), on the operator rather than the coset side;
+the coset statement below is what identifies the two, and is proved from the group law here.
+
+## References
+
+* [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005],
+  Proposition 5.2.1.
+* [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
+  §3.4–3.5.
+-/
+
+public section
+
+open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup DoubleCoset HeckeRing.GLn
+
+open scoped MatrixGroups Pointwise
+
+namespace HeckeRing.GL2
+
+variable {N p : ℕ} {σ : SL(2, ℤ)}
+
+/-- **The bottom row of `σ` is a Bézout relation.** If the bottom row of an `SL₂(ℤ)` matrix is
+`(N, p)`, then its determinant identity reads `m p − n N = 1` for the top row `(m, n)`. This is
+the only property of the twist that the decomposition uses. -/
+lemma bezout_of_lowerRow (hσ10 : σ 1 0 = (N : ℤ)) (hσ11 : σ 1 1 = (p : ℤ)) :
+    σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := by
+  have hdet : σ 0 0 * σ 1 1 - σ 0 1 * σ 1 0 = 1 := by
+    have := σ.2
+    rwa [Matrix.det_fin_two] at this
+  rwa [hσ10, hσ11] at hdet
+
+/-- **Such a twist exists only for coprime `p` and `N`.** The Bézout relation of
+`bezout_of_lowerRow` exhibits `1` as an integral combination of `p` and `N`. -/
+lemma coprime_of_lowerRow (hσ10 : σ 1 0 = (N : ℤ)) (hσ11 : σ 1 1 = (p : ℤ)) :
+    Nat.Coprime p N :=
+  Nat.isCoprime_iff_coprime.mp
+    ⟨σ 0 0, -σ 0 1, by linear_combination bezout_of_lowerRow hσ10 hσ11⟩
+
+/-- **The Bézout twist** `!![gcdA(p, N), −gcdB(p, N); N, p]`, the canonical witness for the
+converse of `coprime_of_lowerRow`: an `SL₂(ℤ)` matrix with bottom row `(N, p)`, hence an element
+of `Γ₀(N)` with lower-right entry `p`. It exists exactly because `p` and `N` are coprime, and its
+top row is Mathlib's extended-Euclid pair. -/
+noncomputable def gamma0Twist (N p : ℕ) (h : Nat.Coprime p N) : SL(2, ℤ) :=
+  ⟨!![Nat.gcdA p N, -Nat.gcdB p N; (N : ℤ), (p : ℤ)], by
+    have hb : ((Nat.gcd p N : ℕ) : ℤ) = p * Nat.gcdA p N + N * Nat.gcdB p N :=
+      Nat.gcd_eq_gcd_ab p N
+    rw [show Nat.gcd p N = 1 from h] at hb
+    push_cast at hb
+    rw [Matrix.det_fin_two_of]
+    linear_combination -hb⟩
+
+/-- The matrix of the Bézout twist. -/
+@[simp] lemma coe_gamma0Twist (h : Nat.Coprime p N) :
+    ((gamma0Twist N p h : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) =
+      !![Nat.gcdA p N, -Nat.gcdB p N; (N : ℤ), (p : ℤ)] := (rfl)
+
+/-- The lower-left entry of the Bézout twist is `N`, so it lies in `Γ₀(N)`. -/
+@[simp] lemma gamma0Twist_apply_one_zero (h : Nat.Coprime p N) :
+    (gamma0Twist N p h) 1 0 = (N : ℤ) := by
+  rw [show ((gamma0Twist N p h : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) = _ from coe_gamma0Twist h]
+  simp
+
+/-- The lower-right entry of the Bézout twist is `p`: it is the `Γ₀(N)` element through which the
+diamond operator `⟨p⟩` is computed. -/
+@[simp] lemma gamma0Twist_apply_one_one (h : Nat.Coprime p N) :
+    (gamma0Twist N p h) 1 1 = (p : ℤ) := by
+  rw [show ((gamma0Twist N p h : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) = _ from coe_gamma0Twist h]
+  simp
+
+/-- **The Bézout twist lies in `Γ₀(N)`**, its lower-left entry being `N`. Together with
+`gamma0Twist_apply_one_one` this is what makes slashing by it the diamond operator `⟨p⟩`. -/
+lemma gamma0Twist_mem_Gamma0 (h : Nat.Coprime p N) : gamma0Twist N p h ∈ Gamma0 N := by
+  rw [Gamma0_mem, gamma0Twist_apply_one_zero h]
+  simp
+
+/-- The lower-right entry of the Bézout twist, read as a unit of `ZMod N`: it is the class of
+`p`. This is what makes slashing by the twist the diamond operator `⟨p⟩`. -/
+lemma gamma0Twist_toHomUnits_Gamma0Map (h : Nat.Coprime p N) :
+    (Gamma0Map N).toHomUnits ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩ =
+      ZMod.unitOfCoprime p h :=
+  Units.ext (by simp [Gamma0Map, gamma0Twist_apply_one_one h])
+
+/-- **The `p + 1` right-coset representatives of the good-prime `Tₚ`.** The `p` upper-triangular
+matrices `!![1, b; 0, p]`, indexed by `some b`, together with the twisted diagonal
+`σ · diag(p, 1)`, indexed by `none`. The index type `Option (Fin p)` is what the slash-sum
+machinery of `HeckeSlash/Independence.lean` sums over. -/
+noncomputable def primeRep (σ : SL(2, ℤ)) (p : ℕ) : Option (Fin p) → GL (Fin 2) ℚ
+  | some b => upperTriRep p b
+  | none => mapGL ℚ σ * scaleRep p
+
+/-- The representative indexed by `some b` is the `b`-th upper-triangular matrix. -/
+@[simp] lemma primeRep_some (σ : SL(2, ℤ)) (p : ℕ) (b : Fin p) :
+    primeRep σ p (some b) = upperTriRep p b := (rfl)
+
+/-- The representative indexed by `none` is the twisted diagonal `σ · diag(p, 1)`. -/
+@[simp] lemma primeRep_none (σ : SL(2, ℤ)) (p : ℕ) :
+    primeRep σ p none = mapGL ℚ σ * scaleRep p := (rfl)
+
+/-- The matrix of the twisted representative: `σ · diag(p, 1) = !![m p, n; N p, p]`. -/
+lemma coe_primeRep_none (hp : 0 < p) :
+    (↑(primeRep σ p none) : Matrix (Fin 2) (Fin 2) ℚ) =
+      !![((σ 0 0 : ℤ) : ℚ) * (p : ℚ), ((σ 0 1 : ℤ) : ℚ);
+        ((σ 1 0 : ℤ) : ℚ) * (p : ℚ), ((σ 1 1 : ℤ) : ℚ)] := by
+  rw [primeRep_none, Units.val_mul, coe_mapGL_fin_two, coe_scaleRep p hp, Matrix.mul_fin_two]
+  congrm !![?_, ?_; ?_, ?_] <;> ring1
+
+/-- **The forward factorisation through the twisted coset.** For `γ = !![a, b; c, d] ∈ Γ₁(N)`
+with `p ∣ a`, the product `diag(1, p) · γ` lies in the right coset `Γ₁(N) · σ · diag(p, 1)`:
+
+`diag(1, p) · γ = !![a − b N, b m − a′ n; p(c − d N), p d m − c n] · σ · diag(p, 1)`,  `a = p a′`.
+
+No primality is used, and the divisibility `p ∣ a` is what makes the upper-right entry of the
+left factor integral. -/
+lemma exists_mem_Gamma1_natDiagGL_mul_twist (hp : 0 < p) (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N) (hpa : (p : ℤ) ∣ γ 0 0) :
+    ∃ δ : SL(2, ℤ), δ ∈ Gamma1 N ∧
+      natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * primeRep σ p none := by
+  obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
+  obtain ⟨a', ha'⟩ := hpa
+  have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := bezout_of_lowerRow hσ10 hσ11
+  have hγdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := by
+    have := γ.2
+    rwa [Matrix.det_fin_two] at this
+  -- the new left factor
+  have hdet : (!![γ 0 0 - γ 0 1 * (N : ℤ), γ 0 1 * σ 0 0 - a' * σ 0 1;
+      (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)), (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1] :
+      Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+    rw [Matrix.det_fin_two_of]
+    linear_combination hγdet + (γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0) * hσdet +
+      (σ 0 1 * (γ 1 1 * (N : ℤ) - γ 1 0)) * ha'
+  obtain ⟨δ, hδmat⟩ : ∃ δ : SL(2, ℤ), (δ : Matrix (Fin 2) (Fin 2) ℤ) =
+      !![γ 0 0 - γ 0 1 * (N : ℤ), γ 0 1 * σ 0 0 - a' * σ 0 1;
+        (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)), (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1] :=
+    ⟨⟨_, hdet⟩, rfl⟩
+  -- `m p ≡ 1 (mod N)`, the congruence that puts the left factor in `Γ₁(N)`
+  have hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
+    have := congrArg (Int.cast : ℤ → ZMod N) hσdet
+    push_cast at this ⊢
+    rw [ZMod.natCast_self] at this
+    linear_combination this
+  refine ⟨δ, ?_, ?_⟩
+  · refine (Gamma1_mem N δ).mpr ⟨?_, ?_, ?_⟩
+    · have h : ((γ 0 0 - γ 0 1 * (N : ℤ) : ℤ) : ZMod N) = 1 := by
+        push_cast
+        rw [ha, ZMod.natCast_self]
+        ring
+      simpa [hδmat] using h
+    · have h : (((p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 : ℤ) : ZMod N) = 1 := by
+        push_cast at hmp ⊢
+        rw [hc]
+        linear_combination (((γ 1 1 : ℤ) : ZMod N)) * hmp + hd
+      simpa [hδmat] using h
+    · have h : (((p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) : ℤ) : ZMod N) = 0 := by
+        push_cast
+        rw [hc, ZMod.natCast_self]
+        ring
+      simpa [hδmat] using h
+  · refine Units.ext ?_
+    have e00 : (δ 0 0 : ℤ) = γ 0 0 - γ 0 1 * (N : ℤ) := by rw [hδmat]; simp
+    have e01 : (δ 0 1 : ℤ) = γ 0 1 * σ 0 0 - a' * σ 0 1 := by rw [hδmat]; simp
+    have e10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) := by rw [hδmat]; simp
+    have e11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 := by rw [hδmat]; simp
+    have hσdetQ : ((σ 0 0 : ℤ) : ℚ) * (p : ℚ) - ((σ 0 1 : ℤ) : ℚ) * (N : ℚ) = 1 := by
+      exact_mod_cast congrArg (Int.cast : ℤ → ℚ) hσdet
+    have haQ : ((γ 0 0 : ℤ) : ℚ) = (p : ℚ) * ((a' : ℤ) : ℚ) := by
+      exact_mod_cast congrArg (Int.cast : ℤ → ℚ) ha'
+    rw [Units.val_mul, Units.val_mul, coe_natDiagGL_one hp, coe_primeRep_none hp,
+      coe_mapGL_fin_two γ, coe_mapGL_fin_two δ, e00, e01, e10, e11, hσ10, hσ11,
+      Matrix.mul_fin_two, Matrix.mul_fin_two]
+    push_cast
+    congrm !![?_, ?_; ?_, ?_]
+    · linear_combination (-(p : ℚ) * ((a' : ℤ) : ℚ)) * hσdetQ +
+        (1 - ((σ 0 0 : ℤ) : ℚ) * (p : ℚ)) * haQ
+    · linear_combination (-((γ 0 1 : ℤ) : ℚ)) * hσdetQ - ((σ 0 1 : ℤ) : ℚ) * haQ
+    · linear_combination (-(p : ℚ) * ((γ 1 0 : ℤ) : ℚ)) * hσdetQ
+    · linear_combination (-(p : ℚ) * ((γ 1 1 : ℤ) : ℚ)) * hσdetQ
+
+/-- **The witness for the reverse inclusion.** The matrix `!![m p, n; N, 1]` lies in `Γ₁(N)` —
+its determinant is the Bézout relation and `m p ≡ 1 (mod N)` — and moving it across
+`diag(1, p)` produces exactly the twisted representative. -/
+lemma exists_mem_Gamma1_natDiagGL_mul_eq_primeRep_none (hp : 0 < p) (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) :
+    ∃ γ : SL(2, ℤ), γ ∈ Gamma1 N ∧
+      natDiagGL 2 ![1, p] * mapGL ℚ γ = primeRep σ p none := by
+  have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := bezout_of_lowerRow hσ10 hσ11
+  have hdet : (!![σ 0 0 * (p : ℤ), σ 0 1; (N : ℤ), 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+    rw [Matrix.det_fin_two_of]
+    linear_combination hσdet
+  obtain ⟨γ, hγmat⟩ : ∃ γ : SL(2, ℤ), (γ : Matrix (Fin 2) (Fin 2) ℤ) =
+      !![σ 0 0 * (p : ℤ), σ 0 1; (N : ℤ), 1] := ⟨⟨_, hdet⟩, rfl⟩
+  have hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
+    have := congrArg (Int.cast : ℤ → ZMod N) hσdet
+    push_cast at this ⊢
+    rw [ZMod.natCast_self] at this
+    linear_combination this
+  refine ⟨γ, (Gamma1_mem N γ).mpr ⟨?_, ?_, ?_⟩, ?_⟩
+  · simpa [hγmat] using hmp
+  · simp [hγmat]
+  · simp [hγmat]
+  · refine Units.ext ?_
+    have e00 : (γ 0 0 : ℤ) = σ 0 0 * (p : ℤ) := by rw [hγmat]; simp
+    have e01 : (γ 0 1 : ℤ) = σ 0 1 := by rw [hγmat]; simp
+    have e10 : (γ 1 0 : ℤ) = (N : ℤ) := by rw [hγmat]; simp
+    have e11 : (γ 1 1 : ℤ) = 1 := by rw [hγmat]; simp
+    rw [Units.val_mul, coe_natDiagGL_one hp, coe_primeRep_none hp, coe_mapGL_fin_two γ,
+      e00, e01, e10, e11, hσ10, hσ11, Matrix.mul_fin_two]
+    push_cast
+    congrm !![?_, ?_; ?_, ?_] <;> ring1
+
+/-- **The forward inclusion.** For a prime `p` and `γ ∈ Γ₁(N)`, the product `diag(1, p) · γ` lies
+in one of the `p + 1` right cosets: an upper-triangular one when `p ∤ a`, where the congruence
+`a j ≡ b (mod p)` is solvable because `a` is then invertible modulo the prime `p`, and the
+twisted one when `p ∣ a`. -/
+lemma exists_mem_Gamma1_natDiagGL_mul_primeRep (hp : p.Prime) (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N) :
+    ∃ (i : Option (Fin p)) (δ : SL(2, ℤ)), δ ∈ Gamma1 N ∧
+      natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * primeRep σ p i := by
+  by_cases hpa : (p : ℤ) ∣ γ 0 0
+  · obtain ⟨δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul_twist hp.pos hσ10 hσ11 hγ hpa
+    exact ⟨none, δ, hδ, heq⟩
+  · have : Fact p.Prime := ⟨hp⟩
+    have : NeZero p := ⟨hp.pos.ne'⟩
+    have ha : ((γ 0 0 : ℤ) : ZMod p) ≠ 0 := fun hz ↦
+      hpa ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hz)
+    set j : ZMod p := ((γ 0 1 : ℤ) : ZMod p) / ((γ 0 0 : ℤ) : ZMod p) with hjdef
+    have hjlt : j.val < p := ZMod.val_lt j
+    have hdvd : (p : ℤ) ∣ γ 0 1 - γ 0 0 * (j.val : ℕ) := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      push_cast
+      rw [ZMod.natCast_val, ZMod.cast_id, hjdef]
+      field_simp
+      ring
+    obtain ⟨δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul_of_dvd hp.pos hγ hjlt hdvd
+    exact ⟨some ⟨j.val, hjlt⟩, δ, hδ, by rw [primeRep_some]; exact heq⟩
+
+/-- **The `p + 1` right cosets are pairwise distinct.** The `p` upper-triangular ones are
+separated by `op_upperTriRep_smul_injective`; separating the twisted one from them is
+integrality. If `Γ₁(N) · !![1, b; 0, p] = Γ₁(N) · σ · diag(p, 1)`, comparing the top rows gives
+`n = p (m b + σ'₀₁)` for some `σ' ∈ Γ₁(N)`, so `p ∣ n`, and then `m p − n N = 1` makes `p` a
+divisor of `1`. -/
+theorem op_primeRep_smul_injective (hp : p.Prime) (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) :
+    Function.Injective fun i : Option (Fin p) ↦
+      MulOpposite.op (primeRep σ p i) • (((Gamma1 N).map (mapGL ℚ)) : Set (GL (Fin 2) ℚ)) := by
+  have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := bezout_of_lowerRow hσ10 hσ11
+  -- the twisted coset is not one of the upper-triangular ones
+  have hne : ∀ b : Fin p,
+      MulOpposite.op (primeRep σ p (some b)) • (((Gamma1 N).map (mapGL ℚ)) :
+          Set (GL (Fin 2) ℚ)) ≠
+        MulOpposite.op (primeRep σ p none) • (((Gamma1 N).map (mapGL ℚ)) :
+          Set (GL (Fin 2) ℚ)) := by
+    intro b heq
+    obtain ⟨τ, hτ, hτeq⟩ := Subgroup.mem_map.mp ((rightCoset_eq_iff _).mp heq)
+    have hmul : (mapGL ℚ τ : GL (Fin 2) ℚ) * upperTriRep p b = primeRep σ p none := by
+      rw [hτeq, ← primeRep_some σ p b, inv_mul_cancel_right]
+    have hmat : (↑(mapGL ℚ τ) : Matrix (Fin 2) (Fin 2) ℚ) * !![1, (b : ℚ); 0, (p : ℚ)] =
+        (↑(primeRep σ p none) : Matrix (Fin 2) (Fin 2) ℚ) := by
+      rw [← coe_upperTriRep, ← Units.val_mul, hmul]
+    rw [coe_mapGL_fin_two, coe_primeRep_none hp.pos, Matrix.mul_fin_two] at hmat
+    have h00 : ((τ 0 0 : ℤ) : ℚ) = ((σ 0 0 : ℤ) : ℚ) * (p : ℚ) := by
+      simpa using congrFun (congrFun hmat 0) 0
+    have h01 : ((τ 0 0 : ℤ) : ℚ) * (b : ℚ) + ((τ 0 1 : ℤ) : ℚ) * (p : ℚ) = ((σ 0 1 : ℤ) : ℚ) := by
+      simpa using congrFun (congrFun hmat 0) 1
+    rw [h00] at h01
+    have hn : (σ 0 1 : ℤ) = (p : ℤ) * (σ 0 0 * (b : ℕ) + τ 0 1) := by
+      have hQ : ((σ 0 1 : ℤ) : ℚ) = (((p : ℤ) * (σ 0 0 * (b : ℕ) + τ 0 1) : ℤ) : ℚ) := by
+        push_cast at h01 ⊢
+        linarith
+      exact_mod_cast hQ
+    have hdvd : (p : ℤ) ∣ 1 :=
+      ⟨σ 0 0 - (σ 0 0 * (b : ℕ) + τ 0 1) * (N : ℤ), by linear_combination -hσdet - (N : ℤ) * hn⟩
+    have hle := Int.le_of_dvd one_pos hdvd
+    have htwo : 2 ≤ (p : ℤ) := by exact_mod_cast hp.two_le
+    omega
+  rintro (_ | b₁) (_ | b₂) h
+  · rfl
+  · exact absurd h.symm (hne b₂)
+  · exact absurd h (hne b₁)
+  · simpa using op_upperTriRep_smul_injective (G := Gamma1 N) (by simpa using h)
+
+/-- **The `Tₚ` double coset at a prime `p ∤ N` is the union of `p + 1` right cosets.**
+`Γ₁(N) · diag(1, p) · Γ₁(N) = ⋃_{j < p} Γ₁(N) · !![1, j; 0, p]  ∪  Γ₁(N) · σ · diag(p, 1)`,
+Diamond–Shurman's Proposition 5.2.1 in the case `p ∤ N` — the coprimality being carried by the
+existence of the twist `σ` rather than stated separately (`coprime_of_lowerRow`).
+
+The inclusion `⊆` is `exists_mem_Gamma1_natDiagGL_mul_primeRep` and is where primality enters;
+`⊇` is `natDiagGL_mul_mapGL_T_zpow` on the upper-triangular cosets and
+`exists_mem_Gamma1_natDiagGL_mul_eq_primeRep_none` on the twisted one. That the union is disjoint
+is `op_primeRep_smul_injective`. -/
+theorem doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime (hp : p.Prime)
+    (hσ10 : σ 1 0 = (N : ℤ)) (hσ11 : σ 1 1 = (p : ℤ)) :
+    doubleCoset (natDiagGL 2 ![1, p]) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
+      ⋃ i : Option (Fin p), MulOpposite.op (primeRep σ p i) •
+        ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
+  refine Set.Subset.antisymm (fun x hx ↦ ?_) (Set.iUnion_subset fun i x hx ↦ ?_)
+  · obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := mem_doubleCoset.mp hx
+    obtain ⟨γ₂, hγ₂, rfl⟩ := Subgroup.mem_map.mp hg₂
+    obtain ⟨i, δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul_primeRep hp hσ10 hσ11 hγ₂
+    refine Set.mem_iUnion.mpr ⟨i, (mem_rightCoset_iff _).mpr ?_⟩
+    have hx' : g₁ * natDiagGL 2 ![1, p] * mapGL ℚ γ₂ * (primeRep σ p i)⁻¹ = g₁ * mapGL ℚ δ := by
+      rw [mul_assoc g₁, heq, mul_assoc, mul_inv_cancel_right]
+    rw [hx']
+    exact mul_mem hg₁ (Subgroup.mem_map_of_mem _ hδ)
+  · obtain ⟨γ, hγ, hγeq⟩ : ∃ γ : SL(2, ℤ), γ ∈ Gamma1 N ∧
+        natDiagGL 2 ![1, p] * mapGL ℚ γ = primeRep σ p i := by
+      cases i with
+      | none => exact exists_mem_Gamma1_natDiagGL_mul_eq_primeRep_none hp.pos hσ10 hσ11
+      | some b =>
+        exact ⟨ModularGroup.T ^ (b : ℤ), T_zpow_mem_Gamma1 N _, by
+          rw [primeRep_some, natDiagGL_mul_mapGL_T_zpow hp.pos b]⟩
+    refine mem_doubleCoset.mpr ⟨x * (primeRep σ p i)⁻¹, (mem_rightCoset_iff _).mp hx,
+      mapGL ℚ γ, Subgroup.mem_map_of_mem _ hγ, ?_⟩
+    rw [mul_assoc, hγeq, inv_mul_cancel_right]
+
+/-- The decomposition of `doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime`, read at the
+chosen representative `D.out` of `diagCosetGamma1 N p` — the shape the slash-sum machinery of
+`HeckeSlash/Independence.lean` consumes. -/
+theorem doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets_of_prime (hp : p.Prime)
+    (hσ10 : σ 1 0 = (N : ℤ)) (hσ11 : σ 1 1 = (p : ℤ)) :
+    doubleCoset ((diagCosetGamma1 N p).out : GL (Fin 2) ℚ)
+        ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
+      ⋃ i : Option (Fin p), MulOpposite.op (primeRep σ p i) •
+        ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
+  have hout : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (diagCosetGamma1 N p).out = diagCosetGamma1 N p := Quotient.out_eq _
+  rw [HeckeCoset.eq_iff.mp (hout.trans (diagCosetGamma1_def N p)),
+    doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime hp hσ10 hσ11]
+
+end HeckeRing.GL2
+
+end

@@ -47,6 +47,8 @@ these representatives are in `GL2/UpperTriangularDelta0.lean`.
   `a = ![1, p]`, as an identity of natural numbers — the two fibres `Fin (![1, p] 1 / ![1, p] 0)`
   is `Fin (p / 1)`, which `finCongr` carries to `Fin p` along `p / 1 = p`.
 
+* `HeckeRing.GL2.coe_mapGL_fin_two`: the `!![…]` matrix of `mapGL ℚ σ`, the entrywise form in
+  which the coset computations of this directory read an `SL₂(ℤ)` matrix.
 * `HeckeRing.GL2.coe_upperTriRep`: the entrywise description of the representative:
   `!![1, b; 0, p]`.
 * `HeckeRing.GL2.upperTriRep_apply_one_zero`: the representatives are upper triangular — the
@@ -83,9 +85,21 @@ public section
 
 namespace HeckeRing.GL2
 
-open HeckeRing.GLn
+open HeckeRing.GLn Matrix.SpecialLinearGroup
+
+open scoped MatrixGroups
 
 variable (p : ℕ)
+
+/-- **The rational matrix of `mapGL ℚ σ` in `!![…]` form.** This is `mapGL_coe_matrix` read at
+`n = 2`, where the entrywise description is the one the coset computations of this directory
+match against. -/
+lemma coe_mapGL_fin_two (σ : SL(2, ℤ)) :
+    (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      !![((σ 0 0 : ℤ) : ℚ), ((σ 0 1 : ℤ) : ℚ); ((σ 1 0 : ℤ) : ℚ), ((σ 1 1 : ℤ) : ℚ)] := by
+  rw [Matrix.SpecialLinearGroup.mapGL_coe_matrix]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
 
 /-- At `n = 2` there is exactly one ordered index pair, `(0, 1)`, so `UpperTriEntries` is a
 function on a one-element type. -/
