@@ -203,6 +203,7 @@ variable (n)
 
 /-- **The first fundamental weight pairs to `1` with the first simple root and to `0` with the
 others.** -/
+@[simp]
 theorem form_typeAFundamentalWeight_simpleRoot (i : Fin n) :
     (typeARootLattice n).form (typeAFundamentalWeight n) (typeASimpleRoot n i) =
       if i.val = 0 then 1 else 0 := by
@@ -221,6 +222,7 @@ theorem form_typeAFundamentalWeight_simpleRoot (i : Fin n) :
   exact sum_chainEntry_mul_weight i.val i.isLt
 
 /-- **The self-pairing of the first fundamental weight is `n / (n + 1)`.** -/
+@[simp]
 theorem form_typeAFundamentalWeight_self :
     (typeARootLattice n).form (typeAFundamentalWeight n) (typeAFundamentalWeight n) =
       (n : ℚ) / ((n : ℚ) + 1) := by
@@ -348,6 +350,7 @@ theorem typeADiscriminantGroupEquiv_one :
 
 /-- **The discriminant quadratic value of the first fundamental weight is `n / (2 (n + 1))`**, in
 the half-norm convention. -/
+@[simp]
 theorem discriminantQuadraticMap_typeAFundamentalWeightClass :
     (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
         (typeAFundamentalWeightClass n) =

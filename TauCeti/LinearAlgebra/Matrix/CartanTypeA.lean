@@ -82,9 +82,9 @@ private theorem det_rowWeightMatrix (n : ℕ) :
       have : i.val < j.val := Fin.lt_def.mp hij
       omega
     simp only [rowWeightMatrix, Matrix.of_apply, hnot, ite_false]
-  rw [Matrix.det_of_isLowerTriangular _ htri,
-    show (∏ i : Fin n, rowWeightMatrix n i i) = ∏ i : Fin n, ((i.val : ℤ) + 1) from
-      Finset.prod_congr rfl fun i _ ↦ by simp [rowWeightMatrix]]
+  have hdiag : (∏ i : Fin n, rowWeightMatrix n i i) = ∏ i : Fin n, ((i.val : ℤ) + 1) :=
+    Finset.prod_congr rfl fun i _ ↦ by simp [rowWeightMatrix]
+  rw [Matrix.det_of_isLowerTriangular _ htri, hdiag]
   exact Fin.prod_univ_eq_prod_range (fun i ↦ ((i : ℤ) + 1)) n
 
 private theorem det_weightedRowMatrix (n : ℕ) :
@@ -96,9 +96,9 @@ private theorem det_weightedRowMatrix (n : ℕ) :
     have h1 : ¬ (j.val = i.val) := by omega
     have h2 : ¬ (j.val = i.val + 1) := by omega
     simp only [weightedRowMatrix, Matrix.of_apply, h1, h2, ite_false]
-  rw [Matrix.det_of_isUpperTriangular htri,
-    show (∏ i : Fin n, weightedRowMatrix n i i) = ∏ i : Fin n, ((i.val : ℤ) + 2) from
-      Finset.prod_congr rfl fun i _ ↦ by simp [weightedRowMatrix]]
+  have hdiag : (∏ i : Fin n, weightedRowMatrix n i i) = ∏ i : Fin n, ((i.val : ℤ) + 2) :=
+    Finset.prod_congr rfl fun i _ ↦ by simp [weightedRowMatrix]
+  rw [Matrix.det_of_isUpperTriangular htri, hdiag]
   exact Fin.prod_univ_eq_prod_range (fun i ↦ ((i : ℤ) + 2)) n
 
 private theorem prod_range_add_two (m : ℕ) :
@@ -116,6 +116,7 @@ private theorem prod_range_add_one_ne_zero (m : ℕ) :
   positivity
 
 /-- **The determinant of the type `A` Cartan matrix of rank `n` is `n + 1`.** -/
+@[simp]
 theorem det_cartanMatrixA (n : ℕ) : (CartanMatrix.A n).det = (n : ℤ) + 1 := by
   have hmul := congrArg Matrix.det (rowWeightMatrix_mul_cartanMatrixA n)
   rw [Matrix.det_mul, det_rowWeightMatrix, det_weightedRowMatrix, prod_range_add_two] at hmul
