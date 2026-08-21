@@ -142,6 +142,7 @@ omit [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R] [P.IsCrystallographic]
   [P₂.IsCrystallographic] in
 /-- The coordinate permutation intertwines the action of a matrix with the action of its
 conjugate. -/
+@[simp]
 theorem geckModuleEquiv_mulVec (A : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R)
     (v : (b.support ⊕ ι) → R) :
     geckModuleEquiv g τ (A *ᵥ v) =

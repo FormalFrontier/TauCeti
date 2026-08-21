@@ -60,6 +60,7 @@ variable {ι ι₂ R M N M₂ N₂ : Type*} [CommRing R]
   {P : RootPairing ι R M N} {P₂ : RootPairing ι₂ R M₂ N₂} (g : P.Equiv P₂)
 
 /-- An equivalence of root pairings carries roots to roots, and carries nothing else to a root. -/
+@[simp]
 theorem mem_range_root_weightMap_iff {m : M} :
     g.toHom.weightMap m ∈ range P₂.root ↔ m ∈ range P.root := by
   refine ⟨fun ⟨l, hl⟩ => ⟨g.indexEquiv.symm l, g.bijective_weightMap.injective ?_⟩,
