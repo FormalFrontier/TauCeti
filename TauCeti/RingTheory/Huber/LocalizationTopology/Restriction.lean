@@ -144,6 +144,24 @@ theorem toCompletionLoc_unit_inv_eq {a r : A} (h : s = a * r)
   rw [hu.unit_spec, toCompletionLoc_apply, ← UniformSpace.Completion.coe_mul, ← divBy_mul, ← h,
     divBy_self, UniformSpace.Completion.coe_one]
 
+/-- Multiplying the image of `t` by the inverse of the image of the denominator gives the
+distinguished fraction `t/s` in `A⟨T/s⟩`. -/
+theorem toCompletionLoc_mul_unit_inv_eq_divBy (t : A)
+    (hu : letI := locUniformSpace P T s S hden
+      letI := isUniformAddGroup_locUniformSpace P T s S hden
+      letI := isTopologicalRing_locUniformSpace P T s S hden
+      IsUnit (toCompletionLoc P T s S hden s)) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    toCompletionLoc P T s S hden t * ↑hu.unit⁻¹ =
+      ((divBy t s : S) : UniformSpace.Completion S) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  rw [toCompletionLoc_unit_inv_eq P T s S hden (mul_one s).symm hu, toCompletionLoc_apply,
+    ← UniformSpace.Completion.coe_mul, divBy_one, algebraMap_mul_invSelf]
+
 /-- **`t/a` is power-bounded when `t * r` is a numerator.** If the denominator factors as
 `s = a * r` and `t * r` lies in `T`, then `t/a` is the distinguished fraction `(t * r)/s`, which is
 power-bounded.

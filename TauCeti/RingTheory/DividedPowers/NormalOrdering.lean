@@ -9,7 +9,6 @@ public import TauCeti.RingTheory.DividedPowers.Associative
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Abel
 import Mathlib.Tactic.Module
-import Mathlib.Tactic.NoncommRing
 
 /-!
 # Normal ordering divided powers with a central commutator
@@ -69,28 +68,6 @@ open Finset
 
 variable {A : Type*} [Semiring A]
 
-/-- Moving one element across an ordinary power when its commutator commutes with the element being
-powered. This is kept private because the divided-power form below is the integral interface used by
-normal ordering. -/
-private theorem mul_pow_of_commutator_eq {x y z : A} (hxy : x * y = y * x + z)
-    (hyz : Commute y z) (n : ℕ) :
-    x * y ^ n = y ^ n * x + n • (y ^ (n - 1) * z) := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-      cases n with
-      | zero => simpa using hxy
-      | succ n =>
-          simp only [Nat.add_sub_cancel] at ih ⊢
-          rw [pow_succ, ← mul_assoc, ih, add_mul, mul_assoc (y ^ (n + 1)) x y,
-            hxy, mul_add]
-          -- Expose the final successor separately: rewriting `add_nsmul` on `n + 2` directly
-          -- would split the coefficient as `n` and `2`, rather than the required `n + 1` and `1`.
-          rw [show n + 2 = (n + 1) + 1 by omega, add_nsmul, one_nsmul]
-          noncomm_ring [hyz.eq, pow_succ]
-          simp only [nsmul_eq_mul, Nat.cast_add, Nat.cast_ofNat, mul_one]
-          noncomm_ring
-
 variable [Algebra ℚ A]
 
 /-- **First-order divided-power normal ordering.** If `x * y = y * x + z` and `z` commutes
@@ -107,7 +84,8 @@ theorem mul_dividedPower_of_commutator_eq {x y z : A} (hxy : x * y = y * x + z)
     x * dividedPower (n + 1) y =
       dividedPower (n + 1) y * x + dividedPower n y * z := by
   simp only [dividedPower_def]
-  rw [mul_smul_comm, smul_mul_assoc, mul_pow_of_commutator_eq hxy hyz, smul_add]
+  rw [mul_smul_comm, smul_mul_assoc, mul_pow_eq_pow_mul_add_nsmul_of_commutator_eq hxy hyz,
+    smul_add]
   simp only [Nat.add_sub_cancel]
   congr 1
   rw [smul_mul_assoc, ← Nat.cast_smul_eq_nsmul ℚ, ← mul_smul]
