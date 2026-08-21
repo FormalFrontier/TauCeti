@@ -160,16 +160,12 @@ theorem spaComapLoc_mem_rationalSubset (P : PairOfDefinition A) (Aplus : Subring
   have hc : toCompletionLoc P T s S hden s * ↑hu.unit⁻¹ = 1 := by
     have h := hu.unit.mul_inv
     rwa [hu.unit_spec] at h
-  have hinv : (↑hu.unit⁻¹ : UniformSpace.Completion S) =
-      ((divBy 1 s : S) : UniformSpace.Completion S) :=
-    toCompletionLoc_unit_inv_eq P T s S hden (mul_one s).symm hu
   rw [spaComapLoc_val]
   refine comap_mem_rationalSubset (continuous_toCompletionLoc P T s S hden)
     (fun _ ha ↦ toCompletionLoc_mem_completedPlusSubring P Aplus T s S hden ha) T s hc
     (fun t ht ↦ ?_) v.2
   -- and `t` times that inverse is the fraction `t/s`, which lies in `A_U⁺`
-  rw [hinv, toCompletionLoc_apply, ← UniformSpace.Completion.coe_mul, divBy_one,
-    algebraMap_mul_invSelf]
+  rw [toCompletionLoc_mul_unit_inv_eq_divBy P T s S hden t hu]
   exact divBy_mem_completedPlusSubring P Aplus T s S hden ht
 
 /-- The range of `spaComapLoc` is contained in the rational subset `R(T/s)`, as a subset of the
@@ -260,8 +256,7 @@ theorem rationalSubset_image_toCompletionLoc_eq_spa (P : PairOfDefinition A) (Ap
     rwa [hu.unit_spec] at h
   refine rationalSubset_image_eq_spa (toCompletionLoc P T s S hden)
     (completedPlusSubring P Aplus T s S hden) T s hc fun t ht ↦ ?_
-  rw [toCompletionLoc_unit_inv_eq P T s S hden (mul_one s).symm hu, toCompletionLoc_apply,
-    ← UniformSpace.Completion.coe_mul, divBy_one, algebraMap_mul_invSelf]
+  rw [toCompletionLoc_mul_unit_inv_eq_divBy P T s S hden t hu]
   exact divBy_mem_completedPlusSubring P Aplus T s S hden ht
 
 /-- **The coordinate ring of an empty rational subset has empty adic spectrum.** Every point of
