@@ -69,16 +69,16 @@ private def rootsE8 : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
 
 /-- The standard Cartan matrix of type `E₈` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
-  have hgram : _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ))
+  have hgram : _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E 8 i j : ℚ))
       = rootsE8ᴴ * rootsE8 := by
     ext i j
     -- The `(i, j)` entry of the Gram matrix of the doubled rows is four times the Cartan entry.
     have hrow : ∑ k, e8DoubledSimpleRoot i k * e8DoubledSimpleRoot j k
-        = 4 * CartanMatrix.E₈ i j := by
+        = 4 * CartanMatrix.E 8 i j := by
       have h := congrFun (congrFun e8DoubledSimpleRoot_mul_transpose i) j
       simpa [_root_.Matrix.mul_apply, _root_.Matrix.transpose_apply] using h
     have hrowQ : ∑ k, (e8DoubledSimpleRoot i k : ℚ) * (e8DoubledSimpleRoot j k : ℚ)
-        = 4 * (CartanMatrix.E₈ i j : ℚ) := by exact_mod_cast hrow
+        = 4 * (CartanMatrix.E 8 i j : ℚ) := by exact_mod_cast hrow
     -- Halving both factors divides each term of that sum by four.
     have hpoint : ∀ k : Fin 8, (2 : ℚ)⁻¹ * (e8DoubledSimpleRoot i k : ℚ) *
         ((2 : ℚ)⁻¹ * (e8DoubledSimpleRoot j k : ℚ))
@@ -89,24 +89,24 @@ theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
       _root_.Matrix.map_apply, star_trivial, smul_eq_mul]
     rw [Finset.sum_congr rfl fun k _ ↦ hpoint k, ← Finset.mul_sum, hrowQ]
     ring
-  have hdet : CartanMatrix.E₈.det ≠ 0 := by rw [CartanMatrix.E₈_det]; norm_num
+  have hdet : (CartanMatrix.E 8).det ≠ 0 := by rw [CartanMatrix.E₈_det]; norm_num
   rw [cartanMatrix_E8]
-  exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero CartanMatrix.E₈_diag
-    CartanMatrix.E₈_off_diag_nonpos (d := fun _ ↦ 1) (fun _ ↦ by positivity) hgram hdet
+  exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero (CartanMatrix.E_diag 8)
+    (CartanMatrix.E_off_diag_nonpos 8) (d := fun _ ↦ 1) (fun _ ↦ by positivity) hgram hdet
 
 /-- The `E₆` Cartan matrix is the principal submatrix of the `E₈` one on the first six nodes: in
 Bourbaki's numbering the exceptional `E` diagrams are nested, `E₆ ⊂ E₇ ⊂ E₈`. -/
 theorem cartanMatrix_E6_eq_submatrix_E8 :
-    CartanMatrix.E₆
-      = CartanMatrix.E₈.submatrix (Fin.castAdd 2 : Fin 6 → Fin 8) (Fin.castAdd 2) := by
+    CartanMatrix.E 6
+      = (CartanMatrix.E 8).submatrix (Fin.castAdd 2 : Fin 6 → Fin 8) (Fin.castAdd 2) := by
   ext i j
   fin_cases i <;> fin_cases j <;> decide
 
 /-- The `E₇` Cartan matrix is the principal submatrix of the `E₈` one on the first seven nodes: in
 Bourbaki's numbering the exceptional `E` diagrams are nested, `E₆ ⊂ E₇ ⊂ E₈`. -/
 theorem cartanMatrix_E7_eq_submatrix_E8 :
-    CartanMatrix.E₇
-      = CartanMatrix.E₈.submatrix (Fin.castAdd 1 : Fin 7 → Fin 8) (Fin.castAdd 1) := by
+    CartanMatrix.E 7
+      = (CartanMatrix.E 8).submatrix (Fin.castAdd 1 : Fin 7 → Fin 8) (Fin.castAdd 1) := by
   ext i j
   fin_cases i <;> fin_cases j <;> decide
 
