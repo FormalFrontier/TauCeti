@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basic
-public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.Ordered
+public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.LeadingTerm
 public import TauCeti.Algebra.WordFiltration.AssociatedGraded
 
 /-!
@@ -27,9 +27,10 @@ and proves that it is surjective. Surjectivity is the spanning half of PBW read 
 graded: every filtered word of degree strictly below its ambient graded piece vanishes, while a
 word of exact degree is a product of degree-one classes.
 
-Injectivity of this map is the remaining PBW theorem. Once it is established, the map becomes the
-associated-graded isomorphism used by the triangular decomposition and the construction of Verma
-modules.
+Under the standard hypotheses ensuring PBW over a commutative ring, such as projectivity of `L` as
+an `R`-module, injectivity of this map is the remaining PBW theorem. Once established in the
+roadmap's general-field setting, the resulting associated-graded isomorphism feeds the triangular
+decomposition and the construction of Verma modules.
 
 ## Main definitions and results
 
@@ -150,37 +151,13 @@ theorem mul_sub_mul_mem_pbwFiltrationPrevious {i j : ℕ} {x y : U}
       q.comap (LinearMap.mulLeft R a - LinearMap.mulRight R a)
     have hright : pbwFiltration R L j ≤ right :=
       (pbwFiltration_le_iff R L).2 fun l₂ hl₂ => by
-        change a * (l₂.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod -
-            (l₂.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod * a ∈ q
-        exact prod_map_ι_mul_sub_prod_map_ι_mem_pbwFiltrationPrevious
-          R L l₁ l₂ hl₁ hl₂
-    change a * y - y * a ∈ q
-    exact hright hy
-  change x ∈ left
-  exact hleft hx
-
-private theorem pbwGradedPiece_cast_mk {i j : ℕ} (h : i = j)
-    (x : wordFiltration
-      (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap i) :
-    cast (congrArg
-        (GradedPiece
-          (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap) h)
-        (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk
-        (cast (congrArg (fun k => ↥(wordFiltration
-          (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k)) h) x) := by
-  subst j
-  rfl
-
-private theorem pbwFiltration_coe_cast {i j : ℕ} (h : i = j)
-    (x : wordFiltration
-      (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap i) :
-    ((cast (congrArg (fun k => ↥(wordFiltration
-        (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k)) h) x :
-      wordFiltration
-        (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap j) : U) = x := by
-  subst j
-  rfl
+        simpa only [right, q, Submodule.mem_comap, LinearMap.sub_apply,
+          LinearMap.mulLeft_apply, LinearMap.mulRight_apply] using
+          prod_map_ι_mul_sub_prod_map_ι_mem_pbwFiltrationPrevious R L l₁ l₂ hl₁ hl₂
+    simpa only [left, right, q, a, Submodule.mem_comap, LinearMap.sub_apply,
+      LinearMap.mulLeft_apply, LinearMap.mulRight_apply] using hright hy
+  simpa only [left, q, Submodule.mem_comap, LinearMap.sub_apply,
+    LinearMap.mulLeft_apply, LinearMap.mulRight_apply] using hleft hx
 
 /-- Multiplication of PBW homogeneous pieces is commutative after reindexing the degree. -/
 theorem pbwGradedMul_comm (i j : ℕ) (x : PBWGradedPiece R L i)
@@ -200,11 +177,11 @@ theorem pbwGradedMul_comm (i j : ℕ) (x : PBWGradedPiece R L i)
           have hy : (y : U) ∈ pbwFiltration R L j := by
             rw [pbwFiltration_def]
             exact y.property
-          rw [gradedMul_apply_mk, pbwGradedPiece_cast_mk, gradedMul_apply_mk]
+          rw [gradedMul_apply_mk, gradedPiece_cast_mk, gradedMul_apply_mk]
           all_goals try exact Nat.add_comm i j
           apply (Submodule.Quotient.eq _).mpr
           rw [mem_previousRestricted_iff, Submodule.coe_sub,
-            pbwFiltration_coe_cast R L (Nat.add_comm i j),
+            wordFiltration_coe_cast _ (Nat.add_comm i j),
             ← pbwFiltrationPrevious_def R L]
           simpa only [Nat.add_comm i j, Submodule.coe_mk] using
             mul_sub_mul_mem_pbwFiltrationPrevious R L hx hy
@@ -263,13 +240,55 @@ private theorem prod_pbwGradedGenerator (l : List L) :
       apply Sigma.ext h
       simp only [GradedMonoid.mk]
       apply heq_of_cast_eq (congrArg (PBWGradedPiece R L) h)
-      rw [pbwGradedPiece_cast_mk]
+      rw [gradedPiece_cast_mk]
       all_goals try exact h
       apply (Submodule.Quotient.eq _).mpr
-      rw [mem_previousRestricted_iff, Submodule.coe_sub, pbwFiltration_coe_cast R L h]
+      rw [mem_previousRestricted_iff, Submodule.coe_sub, wordFiltration_coe_cast _ h]
       simp only [List.map_append, List.map_singleton, List.prod_append, List.prod_singleton,
         sub_self]
       exact Submodule.zero_mem _
+
+private theorem pbwWord_mem_map_range (k : ℕ) (l : List L) (hl : l.length ≤ k) :
+    DirectSum.of (PBWGradedPiece R L) k
+        (Submodule.Quotient.mk
+          (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
+            prod_map_mem_wordFiltration
+              (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap hl⟩ :
+            wordFiltration
+              (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k)) ∈
+      (pbwAssociatedGradedMap R L).range := by
+  rcases hl.eq_or_lt with hl | hl
+  · subst k
+    refine ⟨(l.map (SymmetricAlgebra.ι R L)).prod, ?_⟩
+    rw [map_list_prod]
+    have hlist : List.map (pbwAssociatedGradedMap R L).toRingHom
+          (l.map (SymmetricAlgebra.ι R L)) =
+        l.map (pbwGradedGenerator R L) := by
+      rw [List.map_map]
+      apply List.map_congr_left
+      intro z _
+      exact pbwAssociatedGradedMap_ι R L z
+    rw [hlist, prod_pbwGradedGenerator]
+  · have hprevious : (l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod ∈
+        pbwFiltrationPrevious R L k := by
+      cases k with
+      | zero => omega
+      | succ k =>
+          rw [pbwFiltrationPrevious_succ]
+          exact prod_map_ι_mem_pbwFiltration R L (Nat.lt_succ_iff.mp hl)
+    have hzero : (Submodule.Quotient.mk
+        (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
+          prod_map_mem_wordFiltration
+            (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap
+              (Nat.le_of_lt hl)⟩ :
+          wordFiltration
+            (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k) :
+        PBWGradedPiece R L k) = 0 := by
+      rw [Submodule.Quotient.mk_eq_zero, mem_previousRestricted_iff]
+      rw [← pbwFiltrationPrevious_def R L]
+      exact hprevious
+    rw [hzero, map_zero]
+    exact (pbwAssociatedGradedMap R L).range.zero_mem
 
 private theorem pbwHomogeneous_mem_map_range (k : ℕ) (x : wordFiltration
     (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k) :
@@ -287,6 +306,15 @@ private theorem pbwHomogeneous_mem_map_range (k : ℕ) (x : wordFiltration
   let q : s →ₗ[R] PBWAssociatedGraded R L :=
     (DirectSum.lof R ℕ (PBWGradedPiece R L) k).comp
       ((Submodule.mkQ (previousRestricted f k)).comp e.toLinearMap)
+  have hq_eq (a : U) (ha : a ∈ s) :
+      q ⟨a, ha⟩ =
+        DirectSum.of (PBWGradedPiece R L) k
+          (Submodule.Quotient.mk
+            (⟨a, hs ▸ ha⟩ : wordFiltration f k)) := by
+    simp only [q, LinearMap.comp_apply, Submodule.mkQ_apply]
+    apply congrArg (DirectSum.of (PBWGradedPiece R L) k)
+    apply congrArg Submodule.Quotient.mk
+    exact Subtype.ext (LinearEquiv.coe_ofEq_apply hs _)
   have hq (a : U) (ha : a ∈ s) : q ⟨a, ha⟩ ∈ (pbwAssociatedGradedMap R L).range := by
     refine Submodule.span_induction (p := fun a ha =>
       q ⟨a, ha⟩ ∈ (pbwAssociatedGradedMap R L).range) ?_ ?_ ?_ ?_ ha
@@ -296,87 +324,24 @@ private theorem pbwHomogeneous_mem_map_range (k : ℕ) (x : wordFiltration
         exact ⟨l, hl, rfl⟩
       have hresult : q ⟨(l.map fun z => f z).prod, hword⟩ ∈
           (pbwAssociatedGradedMap R L).range := by
-        rcases hl.eq_or_lt with hl | hl
-        · subst k
-          refine ⟨(l.map (SymmetricAlgebra.ι R L)).prod, ?_⟩
-          rw [map_list_prod]
-          have hlist : List.map (pbwAssociatedGradedMap R L).toRingHom
-                (l.map (SymmetricAlgebra.ι R L)) =
-              l.map (pbwGradedGenerator R L) := by
-            rw [List.map_map]
-            apply List.map_congr_left
-            intro z _
-            exact pbwAssociatedGradedMap_ι R L z
-          rw [hlist]
-          rw [prod_pbwGradedGenerator]
-          have hcoe : ((e ⟨(l.map fun z => f z).prod, hword⟩ :
-              wordFiltration f l.length) : U) = (l.map fun z => f z).prod := by
-            change (((LinearEquiv.ofEq s (wordFiltration f l.length) hs)
-              ⟨(l.map fun z => f z).prod, hword⟩ : wordFiltration f l.length) : U) = _
-            exact LinearEquiv.coe_ofEq_apply hs _
-          simp only [q, LinearMap.comp_apply]
-          apply congrArg (DirectSum.of (PBWGradedPiece R L) l.length)
-          apply (Submodule.Quotient.eq _).mpr
-          rw [mem_previousRestricted_iff, Submodule.coe_sub]
-          change (l.map fun z => f z).prod -
-            ((e ⟨(l.map fun z => f z).prod, hword⟩ : wordFiltration f l.length) : U) ∈
-              wordFiltrationPrevious f l.length
-          rw [hcoe, sub_self]
-          exact Submodule.zero_mem _
-        · have hprevious : (l.map fun z => f z).prod ∈
-              wordFiltrationPrevious f k := by
-            cases k with
-            | zero => omega
-            | succ k =>
-                rw [wordFiltrationPrevious_succ]
-                exact prod_map_mem_wordFiltration f (Nat.lt_succ_iff.mp hl)
-          have hzero : (Submodule.Quotient.mk
-              (e ⟨(l.map fun z => f z).prod, hword⟩) : GradedPiece f k) = 0 := by
-            rw [Submodule.Quotient.mk_eq_zero, mem_previousRestricted_iff]
-            have hcoe : ((e ⟨(l.map fun z => f z).prod, hword⟩ :
-                wordFiltration f k) : U) = (l.map fun z => f z).prod := by
-              change (((LinearEquiv.ofEq s (wordFiltration f k) hs)
-                ⟨(l.map fun z => f z).prod, hword⟩ : wordFiltration f k) : U) = _
-              exact LinearEquiv.coe_ofEq_apply hs _
-            simpa only [hcoe] using hprevious
-          change q ⟨(l.map fun z => f z).prod, hword⟩ ∈ _
-          change (DirectSum.lof R ℕ (GradedPiece f) k)
-            ((Submodule.mkQ (previousRestricted f k))
-              (e ⟨(l.map fun z => f z).prod, hword⟩)) ∈ _
-          rw [Submodule.mkQ_apply, hzero, map_zero]
-          exact (pbwAssociatedGradedMap R L).range.zero_mem
+        rw [hq_eq]
+        convert pbwWord_mem_map_range R L k l hl using 1
+        all_goals rfl
       simpa only [hla] using hresult
-    · change q (0 : s) ∈ (pbwAssociatedGradedMap R L).range
-      rw [map_zero]
+    · rw [show (⟨0, _⟩ : s) = 0 from rfl, map_zero]
       exact (pbwAssociatedGradedMap R L).range.zero_mem
     · intro a b ha hb hqa hqb
-      change q (⟨a, ha⟩ + ⟨b, hb⟩) ∈ (pbwAssociatedGradedMap R L).range
-      rw [map_add]
+      rw [show (⟨a + b, _⟩ : s) = ⟨a, ha⟩ + ⟨b, hb⟩ from rfl, map_add]
       exact (pbwAssociatedGradedMap R L).range.add_mem hqa hqb
     · intro r a ha hqa
-      change q (r • ⟨a, ha⟩) ∈ (pbwAssociatedGradedMap R L).range
-      rw [map_smul]
+      rw [show (⟨r • a, _⟩ : s) = r • ⟨a, ha⟩ from rfl, map_smul]
       exact (pbwAssociatedGradedMap R L).range.smul_mem hqa r
   have hx : (x : U) ∈ s := by
     rw [hs]
     exact x.property
   have hr := hq (x : U) hx
-  have heq : q ⟨(x : U), hx⟩ =
-      DirectSum.of (PBWGradedPiece R L) k (Submodule.Quotient.mk x) := by
-    simp only [q, LinearMap.comp_apply]
-    apply congrArg (DirectSum.of (PBWGradedPiece R L) k)
-    apply (Submodule.Quotient.eq _).mpr
-    rw [mem_previousRestricted_iff, Submodule.coe_sub]
-    have hcoe : ((e ⟨(x : U), hx⟩ : wordFiltration f k) : U) = x := by
-      change (((LinearEquiv.ofEq s (wordFiltration f k) hs)
-        ⟨(x : U), hx⟩ : wordFiltration f k) : U) = _
-      exact LinearEquiv.coe_ofEq_apply hs _
-    change ((e ⟨(x : U), hx⟩ : wordFiltration f k) : U) - (x : U) ∈
-      wordFiltrationPrevious f k
-    rw [hcoe, sub_self]
-    exact Submodule.zero_mem _
-  rw [heq] at hr
-  exact hr
+  rw [hq_eq] at hr
+  simpa only [f] using hr
 
 /-- The canonical map from the symmetric algebra onto the PBW associated graded is surjective. -/
 theorem pbwAssociatedGradedMap_surjective :
