@@ -14,14 +14,14 @@ public import TauCeti.Topology.Algebra.Module.Quotient
 
 Mathlib proves that `TopModuleCat R` is a `CategoryWithHomology` by exhibiting, for a short
 complex `S`, the kernel `TopModuleCat.ker S.g` with its subspace topology and the cokernel
-`TopModuleCat.coker` with its quotient topology as left and right homology data. That argument is
-run inside the instance, so the resulting identifications are not available by name. This file
-names them: `ShortComplex.cyclesIsoKer` identifies `S.cycles` with the honest kernel of
-`S.g`, and `ShortComplex.homologyIsoCoker` identifies `S.homology` with the honest cokernel
-of `S.toCycles`. Mathlib's `ShortComplex.cyclesIsoKernel` and `ShortComplex.homologyIsoCokernelLift`
-are the analogous statements for the *categorical* `kernel` and `cokernel`, which say nothing about
-which topology those objects carry; the point of the two isomorphisms below is that the topology is
-the subspace topology on a kernel and the quotient topology on a cokernel.
+`TopModuleCat.coker` with its quotient topology as left and right homology data. On the cycles
+side the resulting identification is available generically, as
+`ShortComplex.isoCyclesOfIsLimit (TopModuleCat.isLimitKer S.g) : TopModuleCat.ker S.g ≅ S.cycles`;
+on the homology side there is no such generic statement, so this file names it:
+`ShortComplex.homologyIsoCoker` identifies `S.homology` with the honest cokernel of `S.toCycles`.
+Mathlib's `ShortComplex.homologyIsoCokernelLift` is the analogous statement for the *categorical*
+`cokernel`, which says nothing about which topology that object carries; the point of the
+isomorphism below is that the topology is the quotient topology on a cokernel.
 
 The consequence recorded here is that homology in `TopModuleCat R` inherits discreteness: a short
 complex whose middle term is discrete has discrete cycles and discrete homology, and likewise
@@ -38,15 +38,6 @@ namespace CategoryTheory.ShortComplex
 
 variable {R : Type*} [Ring R] [TopologicalSpace R] (S : ShortComplex (TopModuleCat R))
 
-/-- The cycles of a short complex of topological modules are the kernel of `S.g`, carrying the
-subspace topology. -/
-noncomputable def cyclesIsoKer : S.cycles ≅ TopModuleCat.ker S.g :=
-  IsLimit.conePointUniqueUpToIso S.cyclesIsKernel (TopModuleCat.isLimitKer S.g)
-
-@[reassoc (attr := simp)]
-theorem cyclesIsoKer_hom_comp_kerι : (cyclesIsoKer S).hom ≫ TopModuleCat.kerι S.g = S.iCycles :=
-  IsLimit.conePointUniqueUpToIso_hom_comp _ _ WalkingParallelPair.zero
-
 /-- The homology of a short complex of topological modules is the cokernel of `S.toCycles`,
 carrying the quotient topology. -/
 noncomputable def homologyIsoCoker : S.homology ≅ TopModuleCat.coker S.toCycles :=
@@ -60,7 +51,11 @@ theorem homologyπ_comp_homologyIsoCoker_hom :
 
 /-- The cycles of a short complex of topological modules with discrete middle term are discrete. -/
 theorem discreteTopology_cycles [DiscreteTopology S.X₂] : DiscreteTopology S.cycles :=
-  (cyclesIsoKer S).toContinuousLinearEquiv.toHomeomorph.isEmbedding.discreteTopology
+  -- the point of the kernel fork is `TopModuleCat.ker S.g` by definition, but not syntactically,
+  -- so the ascription is what lets the subtype topology be found by instance search
+  let e : S.cycles ≅ TopModuleCat.ker S.g :=
+    (S.isoCyclesOfIsLimit (TopModuleCat.isLimitKer S.g)).symm
+  e.toContinuousLinearEquiv.toHomeomorph.isEmbedding.discreteTopology
 
 /-- The homology of a short complex of topological modules with discrete middle term is
 discrete. -/
