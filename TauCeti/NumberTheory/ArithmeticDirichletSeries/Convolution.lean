@@ -205,7 +205,6 @@ theorem convolution_apply (f g : IdealArithmeticFunction K) (A : (Ideal (𝓞 K)
   (rfl)
 
 /-- At the unit ideal, convolution is the product of the two values there. -/
-@[simp]
 theorem convolution_apply_one (f g : IdealArithmeticFunction K) :
     convolution f g 1 = f 1 * g 1 := by
   simp
@@ -331,7 +330,6 @@ theorem convolutionPow_succ (f : IdealArithmeticFunction K) (n : ℕ) :
   (rfl)
 
 /-- The first convolution power is the function itself. -/
-@[simp]
 theorem convolutionPow_one (f : IdealArithmeticFunction K) : convolutionPow f 1 = f := by
   rw [convolutionPow_succ, convolutionPow_zero, delta_convolution]
 
