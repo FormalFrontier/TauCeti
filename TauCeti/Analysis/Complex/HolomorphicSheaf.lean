@@ -205,7 +205,7 @@ theorem analyticOnNhd_sectionFun (s : (holomorphicPresheaf E).obj (op U)) :
   exact (hfg ⟨y, hy⟩).symm
 
 /-- Restricting a section along an inclusion of open sets restricts its underlying function. -/
-theorem map_val_apply (i : U ⟶ V) (s : (holomorphicPresheaf E).obj (op V)) (y : U) :
+private theorem map_val_apply (i : U ⟶ V) (s : (holomorphicPresheaf E).obj (op V)) (y : U) :
     ((holomorphicPresheaf E).map i.op s).1 y = s.1 ⟨y.1, SetLike.le_def.mp i.le y.2⟩ := rfl
 
 /-- A function analytic on a neighbourhood of every point of `U`, read as a section over `U`. -/

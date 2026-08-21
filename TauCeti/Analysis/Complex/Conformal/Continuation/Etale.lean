@@ -148,19 +148,11 @@ theorem isAnalyticContinuationAlong_iff_continuousOn_germPoint
     exact h₂.trans (Filter.eventuallyEq_of_mem (isOpen_ball.mem_nhds hbu)
       (HolomorphicPresheaf.sectionFun_toSection hball))
 
-/-- **A continuation along a path is a continuous lift**, the forward half of
-`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint` with its hypotheses read off the
-continuation itself. -/
-theorem IsAnalyticContinuationAlong.continuousOn_germPoint
-    (hcont : IsAnalyticContinuationAlong f γ s) :
-    ContinuousOn (fun t => HolomorphicPresheaf.germPoint (f t) (γ t)) s :=
-  (isAnalyticContinuationAlong_iff_continuousOn_germPoint hcont.analyticAt).mp hcont
-
 /-- **A continuous map into the étalé space continues its own representatives.** Choosing at each
 parameter time a holomorphic representative of the germ carried there gives an analytic
 continuation along the base path of the lift.
 
-Together with `TauCeti.IsAnalyticContinuationAlong.continuousOn_germPoint` this says that
+Together with `TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint` this says that
 continuations along a path and continuous lifts of it are the same data, up to the choice of a
 representative for a germ. -/
 theorem isAnalyticContinuationAlong_repFun {Γ : X → (holomorphicPresheaf E).EtaleSpace}
