@@ -29,17 +29,18 @@ sufficient uniform hypothesis rather than a necessary one: a proof carrying
 
 Hitting it is already enough, with no hypothesis on `Q` at all: `Pᵢ` is *generated* by the basis
 vector of the trivial path, so a morphism into `Pᵢ` whose image contains it is a **split**
-epimorphism (`TauCeti.isSplitEpi_of_app_eq_indecProjRepBasis_nil`). The splitting is written down
-by the universal property of `Pᵢ`: the element hitting the basis vector is exactly the datum a
-morphism *out of* `Pᵢ` needs, and that section followed by the morphism is the identity because an
-endomorphism of `Pᵢ` fixing that basis vector is the identity
-(`TauCeti.eq_id_of_app_indecProjRepBasis_nil`). The
-essential-epimorphism statement is the composite of that generation lemma with the line lemma
-above.
+epimorphism. That half of the argument is quiver-independent structure theory of `Pᵢ` and lives
+upstream, beside the universal property it is a corollary of, in
+`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`
+(`TauCeti.isSplitEpi_of_app_eq_indecProjRepBasis_nil`, together with the line lemma and
+`TauCeti.eq_id_of_app_indecProjRepBasis_nil_eq_self`). The essential-epimorphism statement below
+is the composite of that generation lemma with the line lemma.
 
 Two consequences package the cover: the comparison morphism admits no endomorphism of `Pᵢ` over
-`Sᵢ` other than the identity (uniqueness), and every projective representation mapping onto `Sᵢ`
-has `Pᵢ` as a direct summand (minimality).
+`Sᵢ` other than the identity (rigidity), and every projective representation mapping onto `Sᵢ`
+has `Pᵢ` as a direct summand (minimality). Rigidity is an ingredient of the uniqueness of "the"
+projective cover, not that uniqueness itself: that any two projective covers of `Sᵢ` are
+isomorphic over `Sᵢ` is a statement about two different covers, and is not proved here.
 
 The cover is stated in the category of representations, not through the module-level
 `TauCeti.IsProjectiveCover`. It is the categorical reading of the *same* condition: over an
@@ -51,13 +52,16 @@ two further bridges — the identification of the image of `Pᵢ` with the left 
 the comparison of an essential epimorphism of `ModuleCat` with a superfluous kernel — and neither
 is built here.
 
+Every statement here compares `Pᵢ` with `Sᵢ`, so every statement here takes the field in the
+universe `max v w` of the vertices and the arrows: that is the restriction under which the two
+objects lie in a common category at all, and the implementation notes of
+`TauCeti.RepresentationTheory.Quiver.Representation.Comparison` document it. The generation
+lemmas mention only `Pᵢ` and carry no such restriction, which is a second reason they live
+upstream in `TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic` rather than
+here.
+
 ## Main results
 
-* `TauCeti.exists_eq_smul_indecProjRepBasis_nil`: when the trivial path is the only path `i → i`,
-  `(Pᵢ)ᵢ` is the line spanned by the basis vector of that path.
-* `TauCeti.eq_id_of_app_indecProjRepBasis_nil`: an endomorphism of `Pᵢ` fixing that basis vector
-  is the identity, and `TauCeti.isSplitEpi_of_app_eq_indecProjRepBasis_nil`: a morphism into `Pᵢ`
-  hitting it is a split epimorphism. Neither needs any hypothesis on `Q`.
 * `TauCeti.eq_indecProjRepBasis_nil_of_app_eq_simpleRepGenerator` and
   `TauCeti.exists_app_eq_indecProjRepBasis_nil`: with no nontrivial path `i → i`, `Pᵢ ↠ Sᵢ`
   separates that basis vector from the rest of `(Pᵢ)ᵢ`, so a morphism into `Pᵢ` that is onto `Sᵢ`
@@ -66,11 +70,11 @@ is built here.
   `TauCeti.epi_of_epi_comp_indecProjRepToSimpleRep`: **`Pᵢ ↠ Sᵢ` is an essential epimorphism** —
   in the sharper form that every `g : X ⟶ Pᵢ` whose composite with it is an epimorphism is
   already a *split* epimorphism — so `Pᵢ` is the projective cover of `Sᵢ`.
-* `TauCeti.eq_id_of_comp_indecProjRepToSimpleRep`: the cover is rigid — an endomorphism of `Pᵢ`
-  commuting with it is the identity.
-* `TauCeti.exists_isSplitEpi_of_epi_to_simpleRep`: the cover is minimal — every projective
-  representation mapping onto `Sᵢ` retracts onto `Pᵢ`, by a retraction that factors the given map
-  through the cover.
+* `TauCeti.eq_id_of_comp_indecProjRepToSimpleRep_eq_self`: the cover is rigid — an endomorphism of
+  `Pᵢ` commuting with it is the identity.
+* `TauCeti.exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi`: the cover is minimal — every
+  projective representation mapping onto `Sᵢ` retracts onto `Pᵢ`, by a retraction that factors the
+  given map through the cover.
 
 ## References
 
@@ -89,65 +93,7 @@ namespace TauCeti
 
 open CategoryTheory CategoryTheory.Limits
 
-universe u v w
-
-section Generation
-
-variable (k : Type u) {Q : Type v} [Field k] [Quiver.{w} Q]
-
-/-- **`(Pᵢ)ᵢ` is a line when the trivial path is the only path `i → i`**: it is then spanned by
-the basis vector of that path. This is the one place the hypothesis on `Q` enters the projective
-cover below, and it fails for the one-loop quiver, where `(Pᵢ)ᵢ` is `k[X]`. Only closed paths at
-`i` matter, so an acyclic `Q` supplies the hypothesis as `hQ.eq_nil`. -/
-theorem exists_eq_smul_indecProjRepBasis_nil (i : Q)
-    (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil) (v : (indecProjRep k Q i).obj i) :
-    ∃ c : k, v = c • indecProjRepBasis k i i Quiver.Path.nil := by
-  have hrange : Set.range ⇑(indecProjRepBasis k i i)
-      = {indecProjRepBasis k i i Quiver.Path.nil} := by
-    refine Set.eq_singleton_iff_unique_mem.mpr ⟨⟨Quiver.Path.nil, rfl⟩, ?_⟩
-    rintro _ ⟨p, rfl⟩
-    rw [h p]
-  have hmem : v ∈ Submodule.span k {indecProjRepBasis k i i Quiver.Path.nil} := by
-    rw [← hrange, (indecProjRepBasis k i i).span_eq]
-    exact Submodule.mem_top
-  obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.1 hmem
-  exact ⟨c, hc.symm⟩
-
-/-- **An endomorphism of `Pᵢ` fixing the basis vector of the trivial path is the identity.** A
-morphism out of `Pᵢ` is determined by the image of that basis vector
-(`TauCeti.indecProjRepHom_app_nil_self`), and the identity is the morphism attached to the basis
-vector itself. -/
-theorem eq_id_of_app_indecProjRepBasis_nil {i : Q} (f : indecProjRep k Q i ⟶ indecProjRep k Q i)
-    (hf : f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil)
-      = indecProjRepBasis k i i Quiver.Path.nil) :
-    f = 𝟙 (indecProjRep k Q i) :=
-  calc f = indecProjRepHom i (indecProjRep k Q i)
-        (f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil)) :=
-        (indecProjRepHom_app_nil_self f).symm
-    _ = indecProjRepHom i (indecProjRep k Q i) (indecProjRepBasis k i i Quiver.Path.nil) := by
-        rw [hf]
-    _ = 𝟙 (indecProjRep k Q i) := indecProjRepHom_app_nil_self (𝟙 (indecProjRep k Q i))
-
-/-- **`Pᵢ` is generated by the basis vector of the trivial path**: a morphism into `Pᵢ` whose
-image at `i` contains that basis vector is a *split* epimorphism. The splitting is the morphism
-that the universal property of `Pᵢ` attaches to a preimage, and the composite is the identity by
-`TauCeti.eq_id_of_app_indecProjRepBasis_nil`. No hypothesis on the quiver is needed. -/
-theorem isSplitEpi_of_app_eq_indecProjRepBasis_nil {i : Q} {X : QuiverRep k Q}
-    (g : X ⟶ indecProjRep k Q i) {x : X.obj ((Paths.of Q).obj i)}
-    (hx : g.app ((Paths.of Q).obj i) x = indecProjRepBasis k i i Quiver.Path.nil) :
-    IsSplitEpi g := by
-  refine IsSplitEpi.mk' ⟨indecProjRepHom i X x, eq_id_of_app_indecProjRepBasis_nil k _ ?_⟩
-  -- Composition of morphisms of representations is componentwise, and componentwise it is
-  -- composition of linear maps, so the value at the basis vector is the value of `g` at `x`.
-  have happ : (indecProjRepHom i X x ≫ g).app ((Paths.of Q).obj i)
-        (indecProjRepBasis k i i Quiver.Path.nil)
-      = g.app ((Paths.of Q).obj i) ((indecProjRepHom i X x).app ((Paths.of Q).obj i)
-        (indecProjRepBasis k i i Quiver.Path.nil)) := rfl
-  rw [happ, indecProjRepHom_app_nil, hx]
-
-end Generation
-
-section Cover
+universe v w
 
 variable (k : Type (max v w)) {Q : Type v} [Field k] [Quiver.{w} Q]
 
@@ -213,26 +159,25 @@ theorem epi_of_epi_comp_indecProjRepToSimpleRep {i : Q}
   infer_instance
 
 /-- **The cover is rigid**: with no nontrivial path `i → i`, an endomorphism of `Pᵢ` commuting
-with `Pᵢ ↠ Sᵢ` is the identity, not merely an isomorphism. This is the uniqueness half of "the"
-projective cover, in its sharpest form: `Pᵢ ↠ Sᵢ` admits no automorphism over `Sᵢ` at all. -/
-theorem eq_id_of_comp_indecProjRepToSimpleRep {i : Q}
+with `Pᵢ ↠ Sᵢ` is the identity, not merely an isomorphism; in particular `Pᵢ ↠ Sᵢ` admits no
+automorphism over `Sᵢ` other than the identity. Rigidity is an ingredient of the uniqueness of
+"the" projective cover; uniqueness itself — that any two projective covers of `Sᵢ` are isomorphic
+over `Sᵢ` — is a statement about two different covers and is not proved here. -/
+theorem eq_id_of_comp_indecProjRepToSimpleRep_eq_self {i : Q}
     (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
     (f : indecProjRep k Q i ⟶ indecProjRep k Q i)
     (hf : f ≫ indecProjRepToSimpleRep k i = indecProjRepToSimpleRep k i) :
     f = 𝟙 (indecProjRep k Q i) := by
-  refine eq_id_of_app_indecProjRepBasis_nil k f
+  refine eq_id_of_app_indecProjRepBasis_nil_eq_self k f
     (eq_indecProjRepBasis_nil_of_app_eq_simpleRepGenerator k h ?_)
-  have happ : (f ≫ indecProjRepToSimpleRep k i).app ((Paths.of Q).obj i)
-        (indecProjRepBasis k i i Quiver.Path.nil)
-      = (indecProjRepToSimpleRep k i).app ((Paths.of Q).obj i)
-        (f.app ((Paths.of Q).obj i) (indecProjRepBasis k i i Quiver.Path.nil)) := rfl
-  rw [← happ, hf, indecProjRepToSimpleRep_app_nil]
+  rw [← indecProjRepHomEquiv_apply, ← indecProjRepHomEquiv_comp, hf,
+    indecProjRepHomEquiv_apply, indecProjRepToSimpleRep_app_nil]
 
 /-- **The cover is minimal**: with no nontrivial path `i → i`, every projective representation
 mapping onto `Sᵢ` retracts onto `Pᵢ`, so `Pᵢ` is a direct summand of it. The retraction is
 produced over the given map, factoring it through the cover. Projectivity lifts the map to `Pᵢ`
 along the cover, and `TauCeti.isSplitEpi_of_epi_comp_indecProjRepToSimpleRep` splits the lift. -/
-theorem exists_isSplitEpi_of_epi_to_simpleRep {i : Q}
+theorem exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi {i : Q}
     (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
     {X : QuiverRep k Q} [Projective X] (f : X ⟶ simpleRep k Q i) (hf : Epi f) :
     ∃ g : X ⟶ indecProjRep k Q i, g ≫ indecProjRepToSimpleRep k i = f ∧ IsSplitEpi g := by
@@ -241,7 +186,5 @@ theorem exists_isSplitEpi_of_epi_to_simpleRep {i : Q}
   refine ⟨_, hcomp, isSplitEpi_of_epi_comp_indecProjRepToSimpleRep k h _ ?_⟩
   rw [hcomp]
   exact hf
-
-end Cover
 
 end TauCeti
