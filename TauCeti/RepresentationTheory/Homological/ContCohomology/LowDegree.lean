@@ -61,10 +61,10 @@ The differentials and the cocycle identities follow the conventions of Mathlib's
 
 The cocycle conditions are spelled by Mathlib's unbundled predicates
 `groupCohomology.IsCocycle₁` and `groupCohomology.IsCocycle₂`, and
-`TauCeti.ContCohomology.mem_ker_d1_iff` and `mem_ker_d2_iff` identify them with the kernels of the
-differentials, so that `Zⁱ = Cⁱ ⊓ ker dⁱ` — which is how `Z1` and `Z2` are *defined*, taking their
-closure under the group operations from `AddMonoidHom.ker` — is stated in that spelling by
-`mem_Z1_iff` and `mem_Z2_iff`.
+`TauCeti.ContCohomology.d1_apply_eq_zero_iff` and `d2_apply_eq_zero_iff` identify them with the
+vanishing of the differentials, so that `Zⁱ = Cⁱ ⊓ ker dⁱ` — which is how `Z1` and `Z2` are
+*defined*, taking their closure under the group operations from `AddMonoidHom.ker` — is stated in
+that spelling by `mem_Z1_iff` and `mem_Z2_iff`.
 
 Mathlib's bundled `groupCohomology.cocycles₁` and `cocycles₂` are *not* reused here: they are
 stated for `Rep k G`, which forces the coefficient ring and the group into a single universe, and
@@ -82,10 +82,10 @@ Cochains are not normalised: `f 1 = 0` in degree `1` and the degree-`2` normalis
 lemmas `map_one_of_mem_Z1`, `map_one_fst_of_mem_Z2` and `map_one_snd_of_mem_Z2`, never
 definitional conditions.
 
-`H1` and `H2` take the continuity hypotheses under which `B1_le_Z1` and `B2_le_Z2` hold, so that
-the subgroup divided out really is the whole of `B¹`, respectively `B²`, and not just the part of
-it lying in the cocycles. Their denominators are the ranges of the corresponding subgroup
-inclusions, so those hypotheses are part of the constructions.
+`H1` and `H2` divide `Z¹` and `Z²` by the coboundaries *viewed inside the cocycles*, in the
+`AddSubgroup.addSubgroupOf` spelling the roadmap fixes; no continuity hypothesis enters the types.
+That the subgroup divided out is then the whole of `B¹`, respectively `B²`, is exactly
+`TauCeti.ContCohomology.B1_le_Z1` and `B2_le_Z2`, which stay available as theorems.
 
 This implements the "the complex" milestone of Layer 2 of the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes every convention above and whose
@@ -166,15 +166,14 @@ variable (htriv : ∀ (g : G) (m : M), g • m = m)
 include htriv
 
 /-- For a trivial action `d⁰` vanishes. -/
-theorem d0_eq_zero_of_smul_eq_self (m : M) : d0 G M m = 0 := by
-  ext g
-  simp [htriv g m]
+theorem d0_eq_zero_of_smul_eq_self : d0 G M = 0 :=
+  AddMonoidHom.ext fun m => funext fun g => by simp [htriv g m]
 
 /-- For a trivial action there are no nonzero `1`-coboundaries. -/
 theorem B1_eq_bot_of_smul_eq_self : B1 G M = ⊥ := by
   refine eq_bot_iff.2 fun f hf => ?_
   obtain ⟨m, rfl⟩ := AddMonoidHom.mem_range.1 hf
-  simpa using d0_eq_zero_of_smul_eq_self htriv m
+  simp [d0_eq_zero_of_smul_eq_self htriv]
 
 end TrivialAction
 
@@ -213,34 +212,23 @@ theorem d1_apply (f : G → M) (g h : G) : d1 G M f (g, h) = g • f h - f (g * 
 theorem d2_apply (f : G × G → M) (g h j : G) :
     d2 G M f (g, h, j) = g • f (h, j) - f (g * h, j) + f (g, h * j) - f (g, h) := (rfl)
 
-/-- A `1`-cochain is killed by `d¹` exactly when it is a `1`-cocycle. -/
+/-- A `1`-cochain is killed by `d¹` exactly when it is a `1`-cocycle. Together with Mathlib's
+`AddMonoidHom.mem_ker` this is the description of `ker d¹` that `Z¹` is built from. -/
 @[simp]
-theorem d1_eq_zero_iff {f : G → M} :
+theorem d1_apply_eq_zero_iff {f : G → M} :
     d1 G M f = 0 ↔ groupCohomology.IsCocycle₁ f := by
   simp only [funext_iff, Prod.forall, groupCohomology.IsCocycle₁]
   refine forall_congr' fun g => forall_congr' fun h => ?_
   rw [d1_apply, Pi.zero_apply, sub_add_eq_add_sub, sub_eq_zero, eq_comm]
 
-/-- The kernel of `d¹` consists of the `1`-cocycles. -/
-theorem mem_ker_d1_iff {f : G → M} :
-    f ∈ (d1 G M).ker ↔ groupCohomology.IsCocycle₁ f := by
-  simpa only [AddMonoidHom.mem_ker] using
-    (d1_eq_zero_iff (G := G) (M := M) (f := f))
-
 /-- A `2`-cochain is killed by `d²` exactly when it is a `2`-cocycle. -/
 @[simp]
-theorem d2_eq_zero_iff {f : G × G → M} :
+theorem d2_apply_eq_zero_iff {f : G × G → M} :
     d2 G M f = 0 ↔ groupCohomology.IsCocycle₂ f := by
   simp only [funext_iff, Prod.forall, groupCohomology.IsCocycle₂]
   refine forall_congr' fun g => forall_congr' fun h => forall_congr' fun j => ?_
   rw [d2_apply, Pi.zero_apply, sub_add_eq_add_sub, sub_sub, sub_eq_zero, eq_comm,
     add_comm (f (g * h, j))]
-
-/-- The kernel of `d²` consists of the `2`-cocycles. -/
-theorem mem_ker_d2_iff {f : G × G → M} :
-    f ∈ (d2 G M).ker ↔ groupCohomology.IsCocycle₂ f := by
-  simpa only [AddMonoidHom.mem_ker] using
-    (d2_eq_zero_iff (G := G) (M := M) (f := f))
 
 end CocycleConditions
 
@@ -279,17 +267,17 @@ variable {G M}
 /-- `d¹ ∘ d⁰ = 0`, evaluated at a `0`-cochain. This is the form a consumer of the complex uses;
 the composed form needs unfolding before it can rewrite. -/
 @[simp]
-theorem d1_d0_apply (m : M) : d1 G M (d0 G M m) = 0 :=
+theorem d1_comp_d0_apply (m : M) : d1 G M (d0 G M m) = 0 :=
   DFunLike.congr_fun (d1_comp_d0 G M) m
 
 /-- `d² ∘ d¹ = 0`, evaluated at a `1`-cochain. -/
 @[simp]
-theorem d2_d1_apply (f : G → M) : d2 G M (d1 G M f) = 0 :=
+theorem d2_comp_d1_apply (f : G → M) : d2 G M (d1 G M f) = 0 :=
   DFunLike.congr_fun (d2_comp_d1 G M) f
 
 /-- For a trivial action `H⁰(G, M) = M`. -/
 theorem H0_eq_top_of_smul_eq_self (htriv : ∀ (g : G) (m : M), g • m = m) : H0 G M = ⊤ :=
-  eq_top_iff.2 fun m _ g => htriv g m
+  eq_top_iff.2 fun m _ => (FixedPoints.mem_addSubgroup G M m).2 fun g => htriv g m
 
 end Complex
 
@@ -323,20 +311,36 @@ variable {G M}
 @[simp]
 theorem mem_Z1_iff {f : G → M} :
     f ∈ Z1 G M ↔ Continuous f ∧ groupCohomology.IsCocycle₁ f :=
-  AddSubgroup.mem_inf.trans (and_congr mem_C1_iff mem_ker_d1_iff)
+  AddSubgroup.mem_inf.trans
+    (and_congr mem_C1_iff (AddMonoidHom.mem_ker.trans d1_apply_eq_zero_iff))
 
 /-- A cochain is a continuous `2`-cocycle exactly when it is continuous and satisfies the
 `2`-cocycle identity. -/
 @[simp]
 theorem mem_Z2_iff {f : G × G → M} :
     f ∈ Z2 G M ↔ Continuous f ∧ groupCohomology.IsCocycle₂ f :=
-  AddSubgroup.mem_inf.trans (and_congr mem_C2_iff mem_ker_d2_iff)
+  AddSubgroup.mem_inf.trans
+    (and_congr mem_C2_iff (AddMonoidHom.mem_ker.trans d2_apply_eq_zero_iff))
 
 /-- Membership in `B²` exhibits a *continuous* primitive. -/
 @[simp]
 theorem mem_B2_iff {f : G × G → M} :
     f ∈ B2 G M ↔ ∃ c : G → M, Continuous c ∧ d1 G M c = f := by
   simp only [B2, AddSubgroup.mem_map, mem_C1_iff]
+
+/-- Membership in `B²`, with the primitive spelled out pointwise as in Mathlib's unbundled
+`2`-coboundary condition. This is the degree-`2` counterpart of
+`TauCeti.ContCohomology.mem_B1_iff`, which can be stated with `groupCohomology.IsCoboundary₁`
+itself because `B¹` carries no continuity restriction on the primitive. -/
+theorem mem_B2_iff' {f : G × G → M} :
+    f ∈ B2 G M ↔ ∃ c : G → M, Continuous c ∧ ∀ g h : G, g • c h - c (g * h) + c g = f (g, h) := by
+  simp only [mem_B2_iff, funext_iff, Prod.forall, d1_apply]
+
+/-- A continuous `2`-coboundary satisfies Mathlib's unbundled `2`-coboundary condition. -/
+theorem isCoboundary₂_of_mem_B2 {f : G × G → M} (hf : f ∈ B2 G M) :
+    groupCohomology.IsCoboundary₂ f := by
+  obtain ⟨c, -, hc⟩ := mem_B2_iff'.1 hf
+  exact ⟨c, hc⟩
 
 variable (G M)
 
@@ -389,7 +393,7 @@ variable {G : Type u} [TopologicalSpace G]
   [DistribSMul G M] [ContinuousSMul G M]
 
 /-- Every `1`-coboundary is continuous. -/
-theorem continuous_d0 (m : M) : Continuous (d0 G M m) :=
+theorem continuous_d0_apply (m : M) : Continuous (d0 G M m) :=
   (continuous_id.smul continuous_const).sub continuous_const
 
 variable (G M)
@@ -398,148 +402,143 @@ variable (G M)
 theorem B1_le_C1 : B1 G M ≤ C1 G M := by
   intro f hf
   obtain ⟨m, rfl⟩ := AddMonoidHom.mem_range.1 hf
-  exact continuous_d0 m
+  exact continuous_d0_apply m
 
 end Continuity
 
+section ContinuityMul
+
+/-! `d¹` preserves continuity already at the level at which `d¹` itself is defined: a
+multiplication on `G` and a distributive scalar action, with no unit and no associativity. -/
+
+variable {G : Type u} [Mul G] [TopologicalSpace G] [ContinuousMul G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribSMul G M] [ContinuousSMul G M]
+
+/-- `d¹` preserves continuity. -/
+theorem continuous_d1_apply {f : G → M} (hf : Continuous f) : Continuous (d1 G M f) :=
+  ((continuous_fst.smul (hf.comp continuous_snd)).sub
+    (hf.comp (continuous_fst.mul continuous_snd))).add (hf.comp continuous_fst)
+
+end ContinuityMul
+
 section ContinuityAction
 
-variable {G : Type u} [Monoid G] [TopologicalSpace G]
-  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+variable (G : Type u) [Monoid G] [TopologicalSpace G]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
-
-variable (G M)
 
 /-- `d ∘ d = 0` in the form the degree-`1` quotient needs. -/
 theorem B1_le_Z1 : B1 G M ≤ Z1 G M := by
   intro f hf
   obtain ⟨m, rfl⟩ := AddMonoidHom.mem_range.1 hf
-  exact mem_Z1_iff.2 ⟨continuous_d0 m, mem_ker_d1_iff.1 (AddMonoidHom.mem_ker.2 (d1_d0_apply m))⟩
+  exact mem_Z1_iff.2 ⟨continuous_d0_apply m, d1_apply_eq_zero_iff.1 (d1_comp_d0_apply m)⟩
 
 end ContinuityAction
 
-section ContinuityMul
+section ContinuityMulAction
 
-variable {G : Type u} [Monoid G] [TopologicalSpace G] [ContinuousMul G]
-  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+variable (G : Type u) [Monoid G] [TopologicalSpace G] [ContinuousMul G]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
-
-/-- `d¹` preserves continuity. -/
-theorem continuous_d1 {f : G → M} (hf : Continuous f) : Continuous (d1 G M f) :=
-  ((continuous_fst.smul (hf.comp continuous_snd)).sub
-    (hf.comp (continuous_fst.mul continuous_snd))).add (hf.comp continuous_fst)
-
-variable (G M)
 
 /-- `d ∘ d = 0` in the form the degree-`2` quotient needs. -/
 theorem B2_le_Z2 : B2 G M ≤ Z2 G M := by
   intro f hf
   obtain ⟨c, hc, rfl⟩ := mem_B2_iff.1 hf
-  exact mem_Z2_iff.2 ⟨continuous_d1 hc, mem_ker_d2_iff.1 (AddMonoidHom.mem_ker.2 (d2_d1_apply c))⟩
+  exact mem_Z2_iff.2 ⟨continuous_d1_apply hc, d2_apply_eq_zero_iff.1 (d2_comp_d1_apply c)⟩
 
 /-- `2`-coboundaries are continuous `2`-cochains. -/
 theorem B2_le_C2 : B2 G M ≤ C2 G M := (B2_le_Z2 G M).trans (Z2_le_C2 G M)
 
-end ContinuityMul
+end ContinuityMulAction
 
 section Cohomology
 
-variable (G : Type u) [Monoid G] [TopologicalSpace G]
+variable (G : Type u) [Mul G] [TopologicalSpace G]
   (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DistribMulAction G M]
+  [DistribSMul G M]
 
 /-- The first continuous cohomology group `H¹(G, M) = Z¹/B¹`.
 
-`ContinuousSMul` is what makes `B¹` a subgroup of `Z¹` (`TauCeti.ContCohomology.B1_le_Z1`). The
-denominator is the range of that inclusion, so the construction uses the continuity hypothesis
-and divides out by the whole of `B¹`.
+The denominator is `B¹` viewed inside `Z¹`, in Mathlib's `AddSubgroup.addSubgroupOf` spelling, so
+that no continuity hypothesis enters the type. That the subgroup divided out is then the whole of
+`B¹` is `TauCeti.ContCohomology.B1_le_Z1`, which holds as soon as the action is continuous.
 
 `H¹` is used as a bare additive group. It does inherit a quotient topology from the *pointwise*
-topology on `G → M`, and that topology is not the intended one — for an infinite profinite `G` it
-is not discrete — so the comparison of Layer 3 is stated against `DiscreteH1`. -/
-abbrev H1 [ContinuousSMul G M] :=
-  (Z1 G M) ⧸ (AddSubgroup.inclusion (B1_le_Z1 G M)).range
+topology on `G → M`, and that topology is not the intended one: it need not be discrete, the
+roadmap's witness being trivial `ZMod 2` coefficients on a product of infinitely many copies of
+`C₂`, where no finite set of evaluations isolates the zero character. The comparison of Layer 3 is
+therefore stated against `DiscreteH1`. -/
+abbrev H1 := (Z1 G M) ⧸ ((B1 G M).addSubgroupOf (Z1 G M))
 
 /-- The second continuous cohomology group `H²(G, M) = Z²/B²`.
 
-The two continuity hypotheses are those of `TauCeti.ContCohomology.B2_le_Z2`; the denominator is
-the range of this inclusion and hence is the whole of `B²`. As for `H¹` the inherited quotient
-topology is not the intended one, and `H²` is used as a bare additive group. -/
-abbrev H2 [ContinuousMul G] [ContinuousSMul G M] :=
-  (Z2 G M) ⧸ (AddSubgroup.inclusion (B2_le_Z2 G M)).range
+As for `H¹` the denominator is `B²` viewed inside `Z²`, and the subgroup divided out is the whole
+of `B²` under the hypotheses of `TauCeti.ContCohomology.B2_le_Z2`. The inherited quotient topology
+is again not the intended one, and `H²` is used as a bare additive group. -/
+abbrev H2 := (Z2 G M) ⧸ ((B2 G M).addSubgroupOf (Z2 G M))
 
 /-- The class map in degree `1`. -/
-abbrev H1pi [ContinuousSMul G M] : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
+abbrev H1pi : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
 
 /-- The class map in degree `2`. -/
-abbrev H2pi [ContinuousMul G] [ContinuousSMul G M] : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
+abbrev H2pi : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
 
 /-- `H¹(G, M)` equipped with the discrete topology used by the comparison with canonical
 continuous cohomology. -/
-def DiscreteH1 [ContinuousSMul G M] : Type _ := H1 G M
+def DiscreteH1 : Type _ := H1 G M
 
-noncomputable instance [ContinuousSMul G M] : AddCommGroup (DiscreteH1 G M) :=
+noncomputable instance : AddCommGroup (DiscreteH1 G M) :=
   inferInstanceAs (AddCommGroup (H1 G M))
 
-instance [ContinuousSMul G M] : TopologicalSpace (DiscreteH1 G M) := ⊥
+instance : TopologicalSpace (DiscreteH1 G M) := ⊥
 
-instance [ContinuousSMul G M] : DiscreteTopology (DiscreteH1 G M) := ⟨rfl⟩
+instance : DiscreteTopology (DiscreteH1 G M) := ⟨rfl⟩
 
 /-- `H²(G, M)` equipped with the discrete topology used by the comparison with canonical
 continuous cohomology. -/
-def DiscreteH2 [ContinuousMul G] [ContinuousSMul G M] : Type _ := H2 G M
+def DiscreteH2 : Type _ := H2 G M
 
-noncomputable instance [ContinuousMul G] [ContinuousSMul G M] : AddCommGroup (DiscreteH2 G M) :=
+noncomputable instance : AddCommGroup (DiscreteH2 G M) :=
   inferInstanceAs (AddCommGroup (H2 G M))
 
-instance [ContinuousMul G] [ContinuousSMul G M] : TopologicalSpace (DiscreteH2 G M) := ⊥
+instance : TopologicalSpace (DiscreteH2 G M) := ⊥
 
-instance [ContinuousMul G] [ContinuousSMul G M] : DiscreteTopology (DiscreteH2 G M) := ⟨rfl⟩
+instance : DiscreteTopology (DiscreteH2 G M) := ⟨rfl⟩
 
 /-- The identity as an additive equivalence, so that the quotient-class computations on
 representatives stay available after passing to the discrete object. -/
-noncomputable def discreteH1Equiv [ContinuousSMul G M] : DiscreteH1 G M ≃+ H1 G M :=
+noncomputable def discreteH1Equiv : DiscreteH1 G M ≃+ H1 G M :=
   AddEquiv.refl _
 
 /-- The degree-`2` counterpart of `TauCeti.ContCohomology.discreteH1Equiv`. -/
-noncomputable def discreteH2Equiv [ContinuousMul G] [ContinuousSMul G M] :
-    DiscreteH2 G M ≃+ H2 G M :=
+noncomputable def discreteH2Equiv : DiscreteH2 G M ≃+ H2 G M :=
   AddEquiv.refl _
-
-/-- Every class in `H¹` is represented by a continuous `1`-cocycle. -/
-theorem H1pi_surjective [ContinuousSMul G M] : Function.Surjective (H1pi G M) :=
-  QuotientAddGroup.mk'_surjective _
-
-/-- Every class in `H²` is represented by a continuous `2`-cocycle. -/
-theorem H2pi_surjective [ContinuousMul G] [ContinuousSMul G M] :
-    Function.Surjective (H2pi G M) :=
-  QuotientAddGroup.mk'_surjective _
 
 variable {G M}
 
 /-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H1pi_eq_zero_iff [ContinuousSMul G M] {f : Z1 G M} :
+theorem H1pi_eq_zero_iff {f : Z1 G M} :
     H1pi G M f = 0 ↔ (f : G → M) ∈ B1 G M := by
-  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff,
-    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf]
+  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
 /-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H2pi_eq_zero_iff [ContinuousMul G] [ContinuousSMul G M] {f : Z2 G M} :
+theorem H2pi_eq_zero_iff {f : Z2 G M} :
     H2pi G M f = 0 ↔ (f : G × G → M) ∈ B2 G M := by
-  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff,
-    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf]
+  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
 /-- Two continuous `1`-cocycles have the same class exactly when they differ by a coboundary. -/
-theorem H1pi_eq_iff [ContinuousSMul G M] {f f' : Z1 G M} :
+theorem H1pi_eq_iff {f f' : Z1 G M} :
     H1pi G M f = H1pi G M f' ↔ (f : G → M) - f' ∈ B1 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
-    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
+    AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
 
 /-- Two continuous `2`-cocycles have the same class exactly when they differ by a coboundary. -/
-theorem H2pi_eq_iff [ContinuousMul G] [ContinuousSMul G M] {f f' : Z2 G M} :
+theorem H2pi_eq_iff {f f' : Z2 G M} :
     H2pi G M f = H2pi G M f' ↔ (f : G × G → M) - f' ∈ B2 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
-    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
+    AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
 
 end Cohomology
 
@@ -551,6 +550,23 @@ variable {G : Type u} [Monoid G] [TopologicalSpace G]
 
 include htriv
 
+/-- For a trivial action a continuous `1`-cocycle is additive: the cocycle identity loses its
+scalar and becomes `f (a * b) = f a + f b`. -/
+theorem map_mul_of_mem_Z1_of_smul_eq_self {f : G → M} (hf : f ∈ Z1 G M) (a b : G) :
+    f (a * b) = f a + f b := by
+  have h := (mem_Z1_iff.1 hf).2 a b
+  rw [htriv a (f b)] at h
+  exact h.trans (add_comm _ _)
+
+/-- For a trivial action the pointwise `Multiplicative.toAdd` of a continuous homomorphism
+`G → Multiplicative M` is a continuous `1`-cocycle. -/
+theorem mem_Z1_of_continuousMonoidHom_of_smul_eq_self
+    (φ : ContinuousMonoidHom G (Multiplicative M)) :
+    (fun g => Multiplicative.toAdd (φ g)) ∈ Z1 G M :=
+  mem_Z1_iff.2 ⟨map_continuous φ, fun a b => by
+    simp only [htriv a (Multiplicative.toAdd (φ b)), map_mul φ a b, toAdd_mul]
+    exact add_comm _ _⟩
+
 /-- For a trivial action the continuous `1`-cocycles are exactly the continuous homomorphisms
 `G → Multiplicative M`. This is the continuous analogue of Mathlib's
 `groupCohomology.cocycles₁IsoOfIsTrivial`. -/
@@ -558,16 +574,11 @@ def Z1EquivOfSmulEqSelf : Z1 G M ≃+ Additive (ContinuousMonoidHom G (Multiplic
   toFun f := Additive.ofMul
     { toMonoidHom :=
         MonoidHom.mk' (fun g => Multiplicative.ofAdd ((f : G → M) g)) fun a b => by
-          have h := (mem_Z1_iff.1 f.2).2 a b
-          rw [htriv a ((f : G → M) b)] at h
-          exact h.trans (add_comm _ _)
+          rw [map_mul_of_mem_Z1_of_smul_eq_self htriv f.2 a b, ofAdd_add]
       continuous_toFun := (mem_Z1_iff.1 f.2).1 }
   invFun φ :=
     ⟨fun g => Multiplicative.toAdd ((Additive.toMul φ) g),
-      mem_Z1_iff.2 ⟨map_continuous (Additive.toMul φ), fun a b => by
-        rw [htriv a (Multiplicative.toAdd ((Additive.toMul φ) b))]
-        exact (congrArg Multiplicative.toAdd (map_mul (Additive.toMul φ) a b)).trans
-          (add_comm _ _)⟩⟩
+      mem_Z1_of_continuousMonoidHom_of_smul_eq_self htriv (Additive.toMul φ)⟩
   left_inv f := Subtype.ext rfl
   right_inv φ := Additive.toMul.injective (DFunLike.ext _ _ fun _ => rfl)
   map_add' f g := Additive.toMul.injective (DFunLike.ext _ _ fun _ => rfl)
@@ -596,8 +607,6 @@ variable {G : Type u} [Monoid G] [TopologicalSpace G]
 
 include htriv
 
-variable [ContinuousSMul G M]
-
 /-- For a trivial action `H¹(G, M)` is the group of continuous homomorphisms
 `G →ₜ* Multiplicative M`. This is the continuous analogue of Mathlib's
 `groupCohomology.H1IsoOfIsTrivial`.
@@ -607,8 +616,8 @@ group of abstract homomorphisms, which for a profinite group is enormous. -/
 noncomputable def H1EquivOfSmulEqSelf :
     H1 G M ≃+ Additive (ContinuousMonoidHom G (Multiplicative M)) :=
   (QuotientAddGroup.quotientAddEquivOfEq
-      (M := (AddSubgroup.inclusion (B1_le_Z1 G M)).range) (N := ⊥) (by
-        rw [AddSubgroup.inclusion_range, B1_eq_bot_of_smul_eq_self htriv]
+      (M := (B1 G M).addSubgroupOf (Z1 G M)) (N := ⊥) (by
+        rw [B1_eq_bot_of_smul_eq_self htriv]
         exact AddSubgroup.bot_addSubgroupOf _)).trans
     (QuotientAddGroup.quotientBot.trans (Z1EquivOfSmulEqSelf htriv))
 
