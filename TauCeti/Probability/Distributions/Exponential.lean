@@ -167,8 +167,10 @@ theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
   congr 2
   ring
 
-/-- The identity belongs to every finite `Lᵖ` space under a positive-rate exponential law. -/
-lemma memLp_fun_id_expMeasure (hr : 0 < r) (p : ℝ≥0) :
+/-- The identity belongs to every finite `Lᵖ` space under a positive-rate exponential law.
+Stated for `fun x => x` so that it can be fed to the `variance` API below; `memLp_id_expMeasure`
+is the public form. -/
+private lemma memLp_fun_id_expMeasure (hr : 0 < r) (p : ℝ≥0) :
     MemLp (fun x : ℝ => x) p (expMeasure r) := by
   apply memLp_of_mem_interior_integrableExpSet
   rw [integrableExpSet_fun_id_expMeasure hr, interior_Iio]
@@ -326,14 +328,5 @@ theorem hasLaw_min_expMeasure_of_indepFun {Ω : Type*} {mΩ : MeasurableSpace Ω
     rw [ite_eq_left hx, ite_eq_left hx, ite_eq_left hx, ← exp_add, hexp]
   · rw [ite_eq_right hx, ite_eq_right hx, ite_eq_right hx]
     norm_num
-
-/-- The law of the minimum of two independent exponential variables is exponential, with rate the
-sum of the two rates. -/
-theorem map_min_eq_expMeasure_of_indepFun {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω}
-    {X Y : Ω → ℝ} {r s : ℝ} (hr : 0 < r) (hs : 0 < s)
-    (hXY : IndepFun X Y P) (hX : HasLaw X (expMeasure r) P)
-    (hY : HasLaw Y (expMeasure s) P) :
-    P.map (fun ω => min (X ω) (Y ω)) = expMeasure (r + s) :=
-  (hasLaw_min_expMeasure_of_indepFun hr hs hXY hX hY).map_eq
 
 end ProbabilityTheory
