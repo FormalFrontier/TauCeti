@@ -254,7 +254,7 @@ private lemma cartanMatrix_D_swap_fork (n : ℕ) (hn : 4 ≤ n) (a b : Fin n) (h
 @[simp] theorem cartanMatrix_E6_graphPermE6 (i j : Fin 6) :
     DynkinType.E6.cartanMatrix (graphPermE6 i) (graphPermE6 j) =
       DynkinType.E6.cartanMatrix i j := by
-  fin_cases i <;> fin_cases j <;> simp [DynkinType.cartanMatrix_E6, CartanMatrix.E₆]
+  fin_cases i <;> fin_cases j <;> simp [DynkinType.cartanMatrix_E6, CartanMatrix.E]
 
 /-- The pinned triality permutation is an automorphism of the type-`D₄` Cartan matrix. -/
 @[simp] theorem cartanMatrix_D4_trialityPermD4 (i j : Fin 4) :

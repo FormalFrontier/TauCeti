@@ -19,7 +19,7 @@ public section
 This file constructs the pinned integral root datum of type `E₆` on the character and cocharacter
 lattices `Fin 6 → ℤ`. The character lattice is written in the fundamental-weight basis and the
 cocharacter lattice in the simple-coroot basis, so that the `i`-th simple root is the `i`-th row of
-the Bourbaki-numbered Cartan matrix `CartanMatrix.E₆` and the `i`-th simple coroot is the `i`-th
+the Bourbaki-numbered Cartan matrix `CartanMatrix.E 6` and the `i`-th simple coroot is the `i`-th
 standard basis vector.
 
 ## The coordinates
@@ -30,7 +30,7 @@ same simple-root coordinates, so a single stored vector determines both: if a co
 coordinates `c`, then the root has coordinates `⟨β, αⱼ^∨⟩ = ∑ i, cᵢ ⟨αᵢ, αⱼ^∨⟩`, that is, the
 Cartan-matrix image of `c`. That relation is `TauCeti.DynkinType.e6Root_eq_mulVec`, and it is what
 makes every later step structural rather than a second table: the root reflections are the image of
-the coroot reflections under a linear map, and the pairing is symmetric because `CartanMatrix.E₆`
+the coroot reflections under a linear map, and the pairing is symmetric because `CartanMatrix.E 6`
 is.
 
 The seventy-two roots — the count fixed by `TauCeti.DynkinType.numRoots` — are ordered with the six
@@ -41,7 +41,7 @@ coordinates are the Bourbaki marks `(1, 2, 2, 3, 2, 1)`.
 
 Only the coroots are asked to span their lattice, and only that half is recorded, in
 `TauCeti.DynkinType.corootSpan_e6SimplyConnectedRootDatum_eq_top`. The roots span the root lattice,
-which sits inside the weight lattice with index `3` — the determinant of `CartanMatrix.E₆` — so the
+which sits inside the weight lattice with index `3` — the determinant of `CartanMatrix.E 6` — so the
 datum carries no `RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected"
 means here.
 
@@ -59,7 +59,7 @@ means here.
 * `TauCeti.DynkinType.e6Root_eq_mulVec`: the root coordinates are the Cartan-matrix image of the
   coroot coordinates.
 * `TauCeti.DynkinType.root_e6SimpleIndex` and `TauCeti.DynkinType.coroot_e6SimpleIndex`: the `i`-th
-  simple root is the `i`-th row of `CartanMatrix.E₆` and the `i`-th simple coroot is
+  simple root is the `i`-th row of `CartanMatrix.E 6` and the `i`-th simple coroot is
   `Pi.single i 1`, which is what pins the two lattices as the weight and coroot lattices.
 * `TauCeti.DynkinType.hasCartanType_e6SimplyConnectedRootDatum`: the pinned base has Cartan type
   `E6`.
@@ -107,9 +107,9 @@ def e6Coroot : Fin 72 ↪ (Fin 6 → ℤ) where
 
 /-- The roots of type `E₆` in the fundamental-weight basis, ordered compatibly with
 `TauCeti.DynkinType.e6Coroot`. They are derived from the coroot coordinates by the Cartan-matrix
-map, and the first six are the rows of `CartanMatrix.E₆`. -/
+map, and the first six are the rows of `CartanMatrix.E 6`. -/
 def e6Root : Fin 72 ↪ (Fin 6 → ℤ) where
-  toFun i := CartanMatrix.E₆ *ᵥ e6Coroot i
+  toFun i := CartanMatrix.E 6 *ᵥ e6Coroot i
   inj' := (Matrix.mulVec_injective_of_det_ne_zero (by
     rw [CartanMatrix.E₆_det]
     norm_num)).comp e6Coroot.injective
@@ -139,12 +139,12 @@ lemma e6SimpleIndex_injective : Function.Injective e6SimpleIndex :=
 /-- **The root coordinates are the Cartan-matrix image of the coroot coordinates.**
 Writing a coroot as `β^∨ = ∑ i, cᵢ αᵢ^∨` in the simple coroots, the pairings of `β` against the
 simple coroots are `⟨β, αⱼ^∨⟩ = ∑ i, cᵢ ⟨αᵢ, αⱼ^∨⟩`, which is the `j`-th entry of the
-Cartan-matrix image of `c` because `CartanMatrix.E₆` is symmetric.
+Cartan-matrix image of `c` because `CartanMatrix.E 6` is symmetric.
 
 This is deliberately not a `simp` lemma: unfolding a root into the Cartan-matrix image of its
 coroot is a change of representation, not a normal form, and it would take the left-hand sides of
 the lemmas below out of normal form. -/
-theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E₆ *ᵥ e6Coroot j := by
+theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E 6 *ᵥ e6Coroot j := by
   simp only [e6Root, Function.Embedding.coeFn_mk]
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
@@ -153,20 +153,20 @@ coroot lattice, so that the datum is the simply connected one. -/
   decide +kernel +revert
 
 /-- **The simple roots are the rows of the Cartan matrix.** In the fundamental-weight basis the
-`i`-th simple root of the pinned type `E₆` datum is the `i`-th row of `CartanMatrix.E₆`, which is
+`i`-th simple root of the pinned type `E₆` datum is the `i`-th row of `CartanMatrix.E 6`, which is
 what pins the character lattice as the weight lattice. -/
-@[simp] theorem root_e6SimpleIndex (i : Fin 6) : e6Root (e6SimpleIndex i) = CartanMatrix.E₆ i := by
+@[simp] theorem root_e6SimpleIndex (i : Fin 6) : e6Root (e6SimpleIndex i) = CartanMatrix.E 6 i := by
   rw [e6Root_eq_mulVec, coroot_e6SimpleIndex, Matrix.mulVec_single_one]
-  exact funext (CartanMatrix.E₆_isSymm.apply i)
+  exact funext ((CartanMatrix.E_isSymm 6).apply i)
 
 /-- The pairing of the pinned tables is symmetric. This is the simply-laced feature of `E₆`: the
-pairing is the symmetric bilinear form attached to `CartanMatrix.E₆`, read on the shared
+pairing is the symmetric bilinear form attached to `CartanMatrix.E 6`, read on the shared
 simple-root coordinates of a root and its coroot. -/
 theorem e6Root_dotProduct_e6Coroot_comm (i j : Fin 72) :
     e6Root i ⬝ᵥ e6Coroot j = e6Root j ⬝ᵥ e6Coroot i := by
   rw [e6Root_eq_mulVec, e6Root_eq_mulVec, ← vecMul_transpose, ← vecMul_transpose,
-    CartanMatrix.E₆_isSymm.eq]
-  exact vecMul_dotProduct_comm CartanMatrix.E₆_isSymm _ _
+    (CartanMatrix.E_isSymm 6).eq]
+  exact vecMul_dotProduct_comm (CartanMatrix.E_isSymm 6) _ _
 
 /-- The second half of the table lists the negatives of the coroots in the first half. -/
 @[simp] theorem e6Coroot_e6NegativeIndex (i : Fin 36) :
@@ -360,8 +360,8 @@ private lemma e6ReflectionIndex_coroot (i j : Fin 72) :
 they need no second table. -/
 private lemma e6ReflectionIndex_root (i j : Fin 72) :
     e6Root j - (e6Root j ⬝ᵥ e6Coroot i) • e6Root i = e6Root (e6ReflectionIndex i j) := by
-  have h : CartanMatrix.E₆ *ᵥ (e6Coroot j - (e6Root i ⬝ᵥ e6Coroot j) • e6Coroot i) =
-      CartanMatrix.E₆ *ᵥ e6Coroot (e6ReflectionIndex i j) :=
+  have h : CartanMatrix.E 6 *ᵥ (e6Coroot j - (e6Root i ⬝ᵥ e6Coroot j) • e6Coroot i) =
+      CartanMatrix.E 6 *ᵥ e6Coroot (e6ReflectionIndex i j) :=
     congrArg _ (e6ReflectionIndex_coroot i j)
   rw [mulVec_sub, mulVec_smul] at h
   simp only [← e6Root_eq_mulVec] at h
@@ -454,7 +454,7 @@ private lemma e6Coroot_eq_sum (i : Fin 36) :
 
 private lemma e6Root_eq_sum (i : Fin 36) :
     ∑ k, e6PositiveCoefficient i k • e6Root (e6SimpleIndex k) = e6Root (e6PositiveIndex i) := by
-  have h := congrArg CartanMatrix.E₆.mulVecLin (e6Coroot_eq_sum i)
+  have h := congrArg (CartanMatrix.E 6).mulVecLin (e6Coroot_eq_sum i)
   rw [map_sum] at h
   simpa only [map_nsmul, mulVecLin_apply, ← e6Root_eq_mulVec] using h
 
@@ -482,7 +482,7 @@ private lemma mem_or_neg_mem_of_eq_sum (f : Fin 72 → (Fin 6 → ℤ))
 private lemma linearIndepOn_e6Root :
     LinearIndepOn ℤ e6Root (e6SimpleSupport : Set (Fin 72)) := by
   rw [coe_e6SimpleSupport, linearIndepOn_range_iff e6SimpleIndex_injective]
-  have hcomp : e6Root ∘ e6SimpleIndex = fun i => CartanMatrix.E₆ i :=
+  have hcomp : e6Root ∘ e6SimpleIndex = fun i => CartanMatrix.E 6 i :=
     funext root_e6SimpleIndex
   rw [hcomp]
   exact Matrix.linearIndependent_rows_of_det_ne_zero (by rw [CartanMatrix.E₆_det]; norm_num)
@@ -517,7 +517,7 @@ matrix.** This pins the node order independently of the existential relabelling 
 `TauCeti.HasCartanType`. -/
 theorem pairing_e6SimpleIndex (i j : Fin 6) :
     e6SimplyConnectedRootDatum.pairing (e6SimpleIndex i) (e6SimpleIndex j) =
-      CartanMatrix.E₆ i j := by
+      CartanMatrix.E 6 i j := by
   rw [e6SimplyConnectedRootDatum_pairing, root_e6SimpleIndex, coroot_e6SimpleIndex,
     dotProduct_single, mul_one]
 
@@ -533,7 +533,7 @@ private def e6BaseEquiv : e6SimplyConnectedBase.support ≃ Fin 6 where
     simp
 
 /-- **The pinned datum of type `E₆` has Cartan type `E6`.** Its Bourbaki-numbered base realizes the
-standard Cartan matrix `CartanMatrix.E₆`, with the node numbering of `TauCeti.DynkinType`. -/
+standard Cartan matrix `CartanMatrix.E 6`, with the node numbering of `TauCeti.DynkinType`. -/
 theorem hasCartanType_e6SimplyConnectedRootDatum :
     HasCartanType e6SimplyConnectedRootDatum e6SimplyConnectedBase E6 := by
   rw [hasCartanType_iff]
