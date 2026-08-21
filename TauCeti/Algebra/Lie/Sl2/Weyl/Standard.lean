@@ -93,6 +93,7 @@ variable (K : Type*) [CommRing K] [IsDomain K] [Algebra ℚ K] [CharZero K] (n :
 
 /-! ## The Weyl element -/
 
+omit [IsDomain K] [CharZero K] in
 /-- **The Weyl element of `V(n)`**, the unit `exp e · exp (-f) · exp e` of
 `Module.End K (Sl2Std K n)`. It is Chevalley's `n_α = x_α(1) x_{-α}(-1) x_α(1)` in the rank-one
 representation of highest weight `n`. -/
