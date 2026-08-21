@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Probability.Distributions.Pareto
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
+public import TauCeti.Probability.Distributions.PDFInstances
 
 /-!
 # Elementary theory of the Pareto distribution
@@ -68,10 +68,7 @@ private theorem paretoPDF_lt_top (t r : ℝ) :
 
 private theorem ae_paretoMeasure_mem_Ici (t r : ℝ) :
     ∀ᵐ x : ℝ ∂paretoMeasure t r, t ≤ x := by
-  have hmeas : Measurable (paretoPDF t r) := by
-    change Measurable fun x => ENNReal.ofReal (paretoPDFReal t r x)
-    exact (measurable_paretoPDFReal t r).ennreal_ofReal
-  rw [paretoMeasure, ae_withDensity_iff hmeas]
+  rw [paretoMeasure, ae_withDensity_iff (TauCeti.Probability.measurable_paretoPDF t r)]
   filter_upwards with x
   intro hpdf
   by_contra htx
@@ -80,12 +77,11 @@ private theorem ae_paretoMeasure_mem_Ici (t r : ℝ) :
 
 /-- A real power is integrable under a nondegenerate Pareto law exactly below the shape
 parameter. -/
+@[simp]
 theorem integrable_rpow_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) (q : ℝ) :
     Integrable (fun x : ℝ => x ^ q) (paretoMeasure t r) ↔ q < r := by
-  have hmeas : Measurable (paretoPDF t r) := by
-    change Measurable fun x => ENNReal.ofReal (paretoPDFReal t r x)
-    exact (measurable_paretoPDFReal t r).ennreal_ofReal
-  rw [paretoMeasure, integrable_withDensity_iff hmeas (paretoPDF_lt_top t r)]
+  rw [paretoMeasure, integrable_withDensity_iff (TauCeti.Probability.measurable_paretoPDF t r)
+    (paretoPDF_lt_top t r)]
   simp only [paretoPDF_toReal ht hr]
   have hfun : (fun x : ℝ => x ^ q * if t ≤ x then r * t ^ r * x ^ (-(r + 1)) else 0) =
       Set.indicator (Set.Ici t) (fun x => (r * t ^ r) * x ^ (q - r - 1)) := by
@@ -105,22 +101,21 @@ theorem integrable_rpow_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) (q : ℝ) :
   rw [integrableOn_congr_set_ae Ioi_ae_eq_Ici.symm]
   have hc : IsUnit (r * t ^ r) := isUnit_iff_ne_zero.mpr <|
     mul_ne_zero hr.ne' (Real.rpow_pos_of_pos ht _).ne'
-  change Integrable (fun x : ℝ => (r * t ^ r) * x ^ (q - r - 1))
-      (volume.restrict (Ioi t)) ↔ q < r
-  rw [integrable_const_mul_iff hc]
-  change IntegrableOn (fun x : ℝ => x ^ (q - r - 1)) (Ioi t) ↔ q < r
-  rw [integrableOn_Ioi_rpow_iff ht]
+  have hconst :
+      IntegrableOn (fun x : ℝ => (r * t ^ r) * x ^ (q - r - 1)) (Ioi t) ↔
+        IntegrableOn (fun x : ℝ => x ^ (q - r - 1)) (Ioi t) := by
+    simpa only [IntegrableOn] using
+      (integrable_const_mul_iff (μ := volume.restrict (Ioi t)) hc
+        (fun x : ℝ => x ^ (q - r - 1)))
+  rw [hconst, integrableOn_Ioi_rpow_iff ht]
   constructor <;> intro h <;> linarith
 
 /-- The `q`-th real-power moment of a Pareto law is `r * t ^ q / (r - q)` below the
 shape parameter. -/
 theorem integral_rpow_paretoMeasure (ht : 0 < t) (hr : 0 < r) (hq : q < r) :
     ∫ x : ℝ, x ^ q ∂paretoMeasure t r = r * t ^ q / (r - q) := by
-  have hmeas : Measurable (paretoPDF t r) := by
-    change Measurable fun x => ENNReal.ofReal (paretoPDFReal t r x)
-    exact (measurable_paretoPDFReal t r).ennreal_ofReal
   rw [paretoMeasure, integral_withDensity_eq_integral_toReal_smul
-    hmeas (paretoPDF_lt_top t r)]
+    (TauCeti.Probability.measurable_paretoPDF t r) (paretoPDF_lt_top t r)]
   simp only [smul_eq_mul, paretoPDF_toReal ht hr]
   have hfun : (fun x : ℝ =>
       (if t ≤ x then r * t ^ r * x ^ (-(r + 1)) else 0) * x ^ q) =
@@ -135,13 +130,16 @@ theorem integral_rpow_paretoMeasure (ht : 0 < t) (hr : 0 < r) (hq : q < r) :
     · simp [hx]
   rw [hfun, integral_indicator measurableSet_Ici, integral_Ici_eq_integral_Ioi,
     integral_const_mul, integral_Ioi_rpow_of_lt (by linarith) ht]
-  rw [show q - r - 1 + 1 = q - r by ring]
+  have hexponent : q - r - 1 + 1 = q - r := by ring
+  rw [hexponent]
   have hpow : t ^ r * t ^ (q - r) = t ^ q := by
     rw [← Real.rpow_add ht]
     congr 1
     ring
   rw [← hpow]
-  field_simp [show q - r ≠ 0 by linarith, show r - q ≠ 0 by linarith]
+  have hqr_ne : q - r ≠ 0 := by linarith
+  have hrq_ne : r - q ≠ 0 := by linarith
+  field_simp [hqr_ne, hrq_ne]
   ring
 
 /-- The mean of a Pareto law is `r * t / (r - 1)` when `1 < r`. -/
@@ -150,10 +148,13 @@ theorem integral_id_paretoMeasure (ht : 0 < t) (hr : 1 < r) :
   simpa [Real.rpow_one] using integral_rpow_paretoMeasure ht (by linarith) hr
 
 /-- The identity is integrable under a Pareto law exactly when the shape exceeds `1`. -/
+@[simp]
 theorem integrable_id_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) :
     Integrable id (paretoMeasure t r) ↔ 1 < r := by
-  change Integrable (fun x : ℝ => x) (paretoMeasure t r) ↔ 1 < r
-  simpa [Real.rpow_one] using integrable_rpow_paretoMeasure_iff ht hr 1
+  have hid_rpow : (id : ℝ → ℝ) = fun x => x ^ (1 : ℝ) := by
+    funext x
+    simp only [id_eq, Real.rpow_one]
+  rw [hid_rpow, integrable_rpow_paretoMeasure_iff ht hr]
 
 /-- At or below shape `1`, a nondegenerate Pareto law has no finite mean. -/
 theorem not_integrable_id_paretoMeasure (ht : 0 < t) (hr : 0 < r) (h : r ≤ 1) :
@@ -168,6 +169,7 @@ theorem integral_sq_paretoMeasure (ht : 0 < t) (hr : 2 < r) :
   simpa [Real.rpow_two] using h
 
 /-- Squaring is integrable under a Pareto law exactly when the shape exceeds `2`. -/
+@[simp]
 theorem integrable_sq_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) :
     Integrable (fun x : ℝ => x ^ 2) (paretoMeasure t r) ↔ 2 < r := by
   simpa [Real.rpow_two] using integrable_rpow_paretoMeasure_iff ht hr 2
@@ -187,14 +189,16 @@ theorem variance_id_paretoMeasure (ht : 0 < t) (hr : 2 < r) :
     rw [memLp_two_iff_integrable_sq measurable_id.aestronglyMeasurable]
     simpa [id_eq] using (integrable_sq_paretoMeasure_iff ht (by linarith)).mpr hr
   rw [variance_eq_sub hmem]
-  change (∫ x : ℝ, x ^ 2 ∂paretoMeasure t r) -
-      (∫ x : ℝ, x ∂paretoMeasure t r) ^ 2 = _
+  simp only [Pi.pow_apply, id_eq]
   rw [integral_id_paretoMeasure ht (by linarith), integral_sq_paretoMeasure ht hr]
-  field_simp [show r - 1 ≠ 0 by linarith, show r - 2 ≠ 0 by linarith]
+  have hr1_ne : r - 1 ≠ 0 := by linarith
+  have hr2_ne : r - 2 ≠ 0 := by linarith
+  field_simp [hr1_ne, hr2_ne]
   ring
 
 /-- The cdf of a nondegenerate Pareto law: it vanishes below the threshold and equals
 `1 - (t / x) ^ r` on and above it. -/
+@[simp]
 theorem cdf_paretoMeasure_eq (ht : 0 < t) (hr : 0 < r) (x : ℝ) :
     cdf (paretoMeasure t r) x = if x < t then 0 else 1 - (t / x) ^ r := by
   rw [cdf_paretoMeasure_eq_integral ht hr]
@@ -229,7 +233,8 @@ theorem cdf_paretoMeasure_eq (ht : 0 < t) (hr : 0 < r) (x : ℝ) :
       exact fun h => (ht.trans_le h.1).ne' rfl
     rw [intervalIntegral.integral_const_mul, integral_rpow
       (Or.inr ⟨by linarith, hzero⟩)]
-    rw [show -(r + 1) + 1 = -r by ring, Real.rpow_neg ht.le,
+    have hexponent : -(r + 1) + 1 = -r := by ring
+    rw [hexponent, Real.rpow_neg ht.le,
       Real.rpow_neg hx0.le, Real.div_rpow ht.le hx0.le]
     field_simp [hr.ne', (Real.rpow_pos_of_pos ht r).ne', (Real.rpow_pos_of_pos hx0 r).ne']
     ring
@@ -247,6 +252,7 @@ theorem integrable_exp_mul_id_paretoMeasure_of_nonpos (ht : 0 < t) (hr : 0 < r)
 
 /-- The exponential of a multiple of the identity is integrable under a nondegenerate Pareto
 law exactly when the rate is nonpositive. -/
+@[simp]
 theorem integrable_exp_mul_id_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) (u : ℝ) :
     Integrable (fun x : ℝ => Real.exp (u * x)) (paretoMeasure t r) ↔ u ≤ 0 := by
   refine ⟨fun h => ?_, integrable_exp_mul_id_paretoMeasure_of_nonpos ht hr⟩
@@ -260,6 +266,7 @@ theorem integrable_exp_mul_id_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) (u : �
 
 /-- The exact exponential-integrability domain of the identity under a nondegenerate Pareto law
 is the nonpositive half-line. -/
+@[simp]
 theorem integrableExpSet_id_paretoMeasure (ht : 0 < t) (hr : 0 < r) :
     integrableExpSet id (paretoMeasure t r) = Set.Iic 0 := by
   ext u
