@@ -325,16 +325,6 @@ def energyFormH1 (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
     (u v : W1p mu Omega 2) : ℝ :=
   energyFormIntegral (mu.restrict Omega) a b c (jetField u) (jetField v)
 
-/-- The energy form on `H¹(Ω)` is the raw-jet energy integral of
-`TauCeti.PDE.energyFormIntegral` evaluated on the two Sobolev jet fields: the unfolding lemma
-that lets the raw-jet API act on `H¹` statements. -/
-theorem energyFormH1_eq_energyFormIntegral (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
-    (b : EuclideanSpace ℝ ι → EuclideanSpace ℝ ι) (c : EuclideanSpace ℝ ι → ℝ)
-    (u v : W1p mu Omega 2) :
-    energyFormH1 a b c u v =
-      energyFormIntegral (mu.restrict Omega) a b c (jetField u) (jetField v) :=
-  (rfl)
-
 /-- The energy form on `H¹(Ω)` is the integral of the pointwise energy density over `Ω`. -/
 theorem energyFormH1_def (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
     (b : EuclideanSpace ℝ ι → EuclideanSpace ℝ ι) (c : EuclideanSpace ℝ ι → ℝ)
@@ -735,11 +725,12 @@ theorem mul_norm_gradient_sq_le_energyFormH1_self_of_zero_drift
       simpa [toQuadraticForm'_eq_dotProduct] using h.lower_bound hx xi)
     (hmem.mono hc_nonneg) ((integrable_norm_jetField_snd_sq u).const_mul lam) henergy_zero
   rw [← integral_norm_jetField_snd_sq_eq_norm_gradient_sq u, ← integral_const_mul,
-    energyFormH1_eq_energyFormIntegral]
-  exact key.trans_eq (energyFormIntegral_congr_ae (μ := mu.restrict Omega)
+    energyFormH1_def]
+  exact key.trans_eq ((energyFormIntegral_congr_ae (μ := mu.restrict Omega)
     (a := a) (b := fun _ => 0) (c := c) (U := jetField u) (V := jetField u)
     Filter.EventuallyEq.rfl hb_zero_ae.symm Filter.EventuallyEq.rfl
-      Filter.EventuallyEq.rfl Filter.EventuallyEq.rfl)
+      Filter.EventuallyEq.rfl Filter.EventuallyEq.rfl).trans
+        (energyFormIntegral_def _ _ _ _ _ _))
 
 /-- **An `H¹`-norm lower bound with no drift.** When the drift vanishes on `Ω` there is no
 condition: a Poincaré inequality alone gives
