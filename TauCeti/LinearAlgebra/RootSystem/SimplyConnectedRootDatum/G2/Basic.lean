@@ -66,14 +66,14 @@ open _root_.Matrix Module Set Submodule
 namespace DynkinType
 
 /-- The roots of `G2` in the fundamental-weight basis, with simple roots first. -/
-def g2Root : Fin 12 ↪ (Fin 2 → ℤ) where
+@[expose] def g2Root : Fin 12 ↪ (Fin 2 → ℤ) where
   toFun := ![
     ![2, -1], ![-3, 2], ![-1, 1], ![1, 0], ![3, -1], ![0, 1],
     ![-2, 1], ![3, -2], ![1, -1], ![-1, 0], ![-3, 1], ![0, -1]]
   inj' := by decide
 
 /-- The coroots of `G2` in the simple-coroot basis, ordered compatibly with `g2Root`. -/
-def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
+@[expose] def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
   toFun := ![
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
