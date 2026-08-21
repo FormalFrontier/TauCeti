@@ -22,8 +22,8 @@ Distributions*, volume 1, Chapter 13.
 ## Main results
 
 * `integral_abs_sub_pow_gaussianReal` evaluates every absolute centered moment.
-* `centralMoment_two_mul_gaussianReal` evaluates the even centered moments.
-* `centralMoment_two_mul_add_one_gaussianReal` says that every odd centered moment vanishes.
+* `centralMoment_id_two_mul_gaussianReal` evaluates the even centered moments.
+* `centralMoment_id_two_mul_add_one_gaussianReal` says that every odd centered moment vanishes.
 -/
 
 public section
@@ -70,6 +70,7 @@ private lemma gaussian_absolute_moment_algebra (n : ℕ) {v : ℝ} (hv : 0 < v) 
   field_simp [Real.sqrt_ne_zero'.mpr pi_pos, (Real.rpow_pos_of_pos hv₂ _).ne']
 
 /-- The `n`th absolute centered moment of a real Gaussian distribution. -/
+@[simp]
 theorem integral_abs_sub_pow_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
     ∫ x, |x - m| ^ n ∂gaussianReal m v =
       (2 * (v : ℝ)) ^ ((n : ℝ) / 2) * Gamma (((n : ℝ) + 1) / 2) / √π := by
@@ -79,8 +80,7 @@ theorem integral_abs_sub_pow_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
     | zero =>
         simp only [gaussianReal_zero_var, MeasureTheory.integral_dirac, pow_zero, Nat.cast_zero,
           zero_div, Real.rpow_zero, zero_add]
-        change 1 = 1 * Gamma (1 / 2) / √π
-        rw [Real.Gamma_one_half_eq]
+        rw [one_mul, Real.Gamma_one_half_eq]
         field_simp [Real.sqrt_ne_zero'.mpr pi_pos]
     | succ n =>
         simp only [gaussianReal_zero_var, MeasureTheory.integral_dirac, sub_self, abs_zero,
@@ -111,11 +111,11 @@ theorem integral_abs_sub_pow_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
 
 /-- The `2n`th centered moment of a real Gaussian distribution is
 `vⁿ (2n - 1)‼`. -/
-theorem centralMoment_two_mul_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
+@[simp]
+theorem centralMoment_id_two_mul_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
     centralMoment id (2 * n) (gaussianReal m v) =
       (v : ℝ) ^ n * (2 * n - 1 : ℕ)‼ := by
-  simp only [centralMoment, Pi.sub_apply, Pi.pow_apply]
-  change (∫ x, (x - ∫ y, y ∂gaussianReal m v) ^ (2 * n) ∂gaussianReal m v) = _
+  simp only [centralMoment, Pi.sub_apply, Pi.pow_apply, id_eq]
   rw [integral_id_gaussianReal]
   rw [show (∫ x, (x - m) ^ (2 * n) ∂gaussianReal m v) =
       ∫ x, |x - m| ^ (2 * n) ∂gaussianReal m v by
@@ -129,10 +129,10 @@ theorem centralMoment_two_mul_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
   simp only [mul_pow]
 
 /-- Every odd centered moment of a real Gaussian distribution vanishes. -/
-theorem centralMoment_two_mul_add_one_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
+@[simp]
+theorem centralMoment_id_two_mul_add_one_gaussianReal (m : ℝ) (v : ℝ≥0) (n : ℕ) :
     centralMoment id (2 * n + 1) (gaussianReal m v) = 0 := by
-  simp only [centralMoment, Pi.sub_apply, Pi.pow_apply]
-  change (∫ x, (x - ∫ y, y ∂gaussianReal m v) ^ (2 * n + 1) ∂gaussianReal m v) = _
+  simp only [centralMoment, Pi.sub_apply, Pi.pow_apply, id_eq]
   rw [integral_id_gaussianReal]
   have hmap : (gaussianReal m v).map (fun x ↦ x - m) = gaussianReal 0 v := by
     simpa using gaussianReal_map_sub_const (μ := m) (v := v) m
