@@ -44,8 +44,8 @@ a maximal-dimension candidate contains every other one and is the unipotent radi
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Proposition 17.4.
-* A. Borel, *Linear Algebraic Groups*, Proposition 14.4.
+* J. S. Milne, *Algebraic Groups* (2017), Proposition 6.42 and §§6.45–6.46.
+* A. Borel, *Linear Algebraic Groups*, §11.21.
 
 This advances Layer 5, "The unipotent radical", of the ReductiveGroups roadmap. It supplies the
 maximal-dimension choice used after closure of connected normal smooth unipotent subgroups under
