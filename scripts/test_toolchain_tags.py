@@ -147,8 +147,8 @@ class Report(unittest.TestCase):
 
     def test_the_rule_is_part_of_the_output(self):
         text = tt.render(self.ROWS)
-        self.assertIn("FIRST commit on `main`", text)
-        self.assertIn("Tags are never moved", text)
+        self.assertIn("first commit on `main`", text)
+        self.assertIn("reports it and changes nothing", text)
 
     def test_it_names_the_command_for_each_ready_release(self):
         text = tt.render(self.ROWS)
@@ -196,16 +196,41 @@ class UnreachableReleases(unittest.TestCase):
         self.assertEqual(row["status"], "out-of-scope")
         self.assertIn(tt.EARLIEST_RELEASE, row["reason"])
 
+    def _with_cache_answer(self, answer):
+        original = tt.cache_published
+        self.addCleanup(setattr, tt, "cache_published", original)
+        def fake(toolchain, sha):
+            if isinstance(answer, Exception):
+                raise answer
+            return answer
+        tt.cache_published = fake
+
     def test_a_hand_made_tag_on_an_unreachable_release_is_reported_as_tagged(self):
         # A release main never ran on can still be tagged by hand off a main commit. The
         # report saying "no tag is possible" over the top of an existing tag would be the
         # tool contradicting the repository.
+        self._with_cache_answer(False)
         row = tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})
         self.assertEqual(row["status"], "tagged")
         self.assertEqual(row["commit"], "e" * 40)
         self.assertIn("constructed by hand", row["reason"])
-        self.assertIn("no published Lake cache", row["reason"])
         self.assertNotIn("No tag is possible", tt.render([row]))
+
+    def test_whether_a_hand_made_tag_has_a_cache_is_checked_not_assumed(self):
+        # Nothing publishes for a commit off main automatically, so "no cache" is the usual
+        # answer, but one can be uploaded by hand. Asserting it rather than asking made the
+        # report wrong the moment that happened.
+        self._with_cache_answer(True)
+        self.assertIn("a Lake cache was published",
+                      tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})["reason"])
+        self._with_cache_answer(False)
+        self.assertIn("no published Lake cache",
+                      tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})["reason"])
+
+    def test_an_unreadable_cache_is_not_reported_as_absent(self):
+        self._with_cache_answer(RuntimeError("the cache answered HTTP 500"))
+        self.assertIn("could not be checked",
+                      tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})["reason"])
 
     def test_the_report_explains_why_no_tag_is_possible(self):
         rows = [tt._unreachable_row("v4.33.0", {})]
@@ -240,6 +265,206 @@ class UnreachableReleases(unittest.TestCase):
                                 "v4.34.0-rc1": "ready"})
 
 
+class Digest(unittest.TestCase):
+    """What counts as a change worth posting."""
+
+    ROWS = [{"release": "v4.33.0", "status": "tagged"},
+            {"release": "v4.34.0", "status": "ready"}]
+
+    def test_it_ignores_order(self):
+        self.assertEqual(tt.state_digest(self.ROWS),
+                         tt.state_digest(list(reversed(self.ROWS))))
+
+    def test_a_pending_release_is_not_a_change(self):
+        # The whole point. A bump lands, CI has not finished, and the report gains a
+        # `pending` row. Posting then would say "wait", and posting again when the waiting
+        # ended would be the only message anyone wanted.
+        plus = self.ROWS + [{"release": "v4.35.0", "status": "pending"}]
+        self.assertEqual(tt.state_digest(self.ROWS), tt.state_digest(plus))
+
+    def test_an_out_of_scope_release_is_not_a_change(self):
+        plus = self.ROWS + [{"release": "v4.30.0", "status": "out-of-scope"}]
+        self.assertEqual(tt.state_digest(self.ROWS), tt.state_digest(plus))
+
+    def test_becoming_ready_is_a_change(self):
+        after = [{"release": "v4.33.0", "status": "tagged"},
+                 {"release": "v4.35.0", "status": "ready"}]
+        self.assertNotEqual(tt.state_digest(self.ROWS), tt.state_digest(after))
+
+    def test_becoming_tagged_is_a_change(self):
+        after = [dict(r, status="tagged") for r in self.ROWS]
+        self.assertNotEqual(tt.state_digest(self.ROWS), tt.state_digest(after))
+
+    def test_a_reworded_reason_is_not_a_change(self):
+        # The digest is over statuses, so editing prose does not post a message claiming
+        # something happened.
+        worded = [dict(r, reason="anything at all") for r in self.ROWS]
+        self.assertEqual(tt.state_digest(self.ROWS), tt.state_digest(worded))
+
+
+class DigestCause(unittest.TestCase):
+    """A blocked release whose CAUSE changes must repost, or the visible reason stays wrong."""
+
+    def test_a_different_ci_conclusion_is_a_change(self):
+        failed = [{"release": "v4.34.0", "status": "blocked", "commit": "a" * 40,
+                   "ci": "failure"}]
+        cancelled = [dict(failed[0], ci="cancelled")]
+        self.assertNotEqual(tt.state_digest(failed), tt.state_digest(cancelled))
+
+    def test_ci_passing_but_no_cache_differs_from_ci_failing(self):
+        no_cache = [{"release": "v4.34.0", "status": "blocked", "commit": "a" * 40,
+                     "ci": "success"}]
+        ci_failed = [dict(no_cache[0], ci="failure")]
+        self.assertNotEqual(tt.state_digest(no_cache), tt.state_digest(ci_failed))
+
+
+class PostContent(unittest.TestCase):
+    ROWS = [{"release": "v4.32.0", "status": "out-of-scope", "commit": "1" * 40,
+             "mathlib_rev": "a" * 40, "reason": "predates the cache"},
+            {"release": "v4.34.0", "status": "ready", "commit": "2" * 40,
+             "mathlib_rev": "b" * 40, "reason": None}]
+
+    def test_it_carries_the_command_and_the_output(self):
+        content = tt.post_content(self.ROWS, "0" * 16)
+        self.assertIn("python3 scripts/toolchain_tags.py", content)
+        self.assertIn("v4.34.0", content)
+        self.assertEqual(content.count("```"), 4, "two fenced blocks")
+
+    def test_it_ends_with_a_readable_marker(self):
+        content = tt.post_content(self.ROWS, "abcdef0123456789")
+        self.assertEqual(tt.MARKER_RE.search(content).group(1), "abcdef0123456789")
+
+    def test_it_collapses_the_rows_that_never_change(self):
+        content = tt.post_content(self.ROWS, "0" * 16)
+        self.assertIn("out of scope", content)
+        self.assertNotIn("v4.32.0        out-of-scope", content)
+
+    def test_it_omits_the_policy_header(self):
+        self.assertNotIn("Tau Ceti toolchain tags", tt.post_content(self.ROWS, "0" * 16))
+
+    def test_the_advertised_command_reproduces_the_output(self):
+        # The message shows a command and its output. An earlier version showed the plain
+        # command while displaying output with the policy stripped and rows collapsed,
+        # which no run of that command would produce.
+        content = tt.post_content(self.ROWS, "0" * 16)
+        command = content.split("```")[1].strip()
+        self.assertEqual(command, "python3 scripts/toolchain_tags.py --brief")
+        shown = content.split("```text")[1].split("```")[0].strip()
+        produced = tt.render(self.ROWS, include_policy=False, collapse_old=True).strip()
+        self.assertEqual(shown, produced)
+
+
+class FakeZulip:
+    def __init__(self, messages=None, bot_id=7):
+        self.messages = list(messages or [])
+        self.bot_id = bot_id
+        self.sent = []
+
+    def my_user_id(self):
+        return self.bot_id
+
+    def get_messages(self, narrow):
+        return self.messages
+
+    def send_message(self, content):
+        self.sent.append(content)
+
+
+class PostIfChanged(unittest.TestCase):
+    ROWS = PostContent.ROWS
+
+    def _zulip(self, fake):
+        self.addCleanup(setattr, tt.zp, "Zulip", tt.zp.Zulip)
+        self.addCleanup(setattr, tt.zp, "check", tt.zp.check)
+        tt.zp.Zulip = lambda *a, **k: fake
+        tt.zp.check = lambda z: None
+        for name, value in (("ZULIP_EMAIL", "bot@example.com"),
+                            ("ZULIP_API_KEY", "key")):
+            old = os.environ.get(name)
+            os.environ[name] = value
+            self.addCleanup(lambda n=name, o=old:
+                            os.environ.__setitem__(n, o) if o else os.environ.pop(n, None))
+
+    def _message(self, digest, sender=7):
+        return {"id": 1, "sender_id": sender,
+                "content": ("whatever\n"
+                            f"<!--toolchain-tags:v1 {digest}-->")}
+
+    def test_it_posts_when_nothing_has_been_posted(self):
+        fake = FakeZulip()
+        self._zulip(fake)
+        self.assertTrue(tt.post_if_changed(self.ROWS))
+        self.assertEqual(len(fake.sent), 1)
+
+    def test_it_says_nothing_when_the_state_is_unchanged(self):
+        digest = tt.state_digest(self.ROWS)
+        fake = FakeZulip([self._message(digest)])
+        self._zulip(fake)
+        self.assertFalse(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.sent, [])
+
+    def test_it_posts_when_the_state_changed(self):
+        fake = FakeZulip([self._message("0" * 16)])
+        self._zulip(fake)
+        self.assertTrue(tt.post_if_changed(self.ROWS))
+
+    def test_it_ignores_messages_from_other_accounts(self):
+        # A human replying in the topic must not be mistaken for the last report.
+        digest = tt.state_digest(self.ROWS)
+        fake = FakeZulip([self._message(digest, sender=7),
+                          {"id": 2, "sender_id": 99, "content": "looks good to me"}])
+        self._zulip(fake)
+        self.assertFalse(tt.post_if_changed(self.ROWS))
+
+    def test_it_reads_the_newest_of_several_reports(self):
+        old = self._message(tt.state_digest(self.ROWS))
+        newer = dict(self._message("0" * 16), id=5)
+        fake = FakeZulip([old, newer])
+        self._zulip(fake)
+        self.assertTrue(tt.post_if_changed(self.ROWS))
+
+    def test_dry_run_posts_nothing(self):
+        fake = FakeZulip()
+        self._zulip(fake)
+        with redirect_stdout(io.StringIO()):
+            self.assertFalse(tt.post_if_changed(self.ROWS, dry_run=True))
+        self.assertEqual(fake.sent, [])
+
+
+class WaitForCI(unittest.TestCase):
+    def _ci(self, answers):
+        self.addCleanup(setattr, tt, "ci_passed", tt.ci_passed)
+        seq = list(answers)
+        tt.ci_passed = lambda sha: seq.pop(0) if seq else None
+
+    def test_it_returns_as_soon_as_ci_concludes(self):
+        self._ci(["success"])
+        slept = []
+        self.assertEqual(tt.wait_for_ci("a" * 40, sleep=slept.append), "success")
+        self.assertEqual(slept, [], "no reason to sleep once the answer is in")
+
+    def test_it_waits_while_ci_is_unfinished(self):
+        self._ci([None, None, "failure"])
+        slept = []
+        self.assertEqual(tt.wait_for_ci("a" * 40, sleep=slept.append), "failure")
+        self.assertEqual(len(slept), 2)
+
+    def test_a_timeout_returns_none(self):
+        self._ci([])
+        self.assertIsNone(tt.wait_for_ci("a" * 40, timeout_minutes=0, sleep=lambda s: None))
+
+    def test_a_timeout_makes_the_run_red(self):
+        # A timeout posts nothing, because the release stays `pending` and the digest
+        # ignores it. Exiting 0 as well would make a release that never got reported look
+        # exactly like a quiet night.
+        self._ci([])
+        self.addCleanup(setattr, tt, "fetch_main", tt.fetch_main)
+        tt.fetch_main = lambda: None
+        with redirect_stdout(io.StringIO()):
+            code = tt.main(["--post", "--wait-for-ci", "a" * 40, "--wait-minutes", "0"])
+        self.assertEqual(code, 1)
+
+
 class CommandLine(unittest.TestCase):
     def test_create_without_a_release_or_all_is_an_error(self):
         original = tt.audit
@@ -252,7 +477,7 @@ class CommandLine(unittest.TestCase):
         out = io.StringIO()
         with redirect_stdout(out), self.assertRaises(SystemExit):
             tt.main(["--help"])
-        self.assertIn("FIRST commit on `main`", out.getvalue())
+        self.assertIn("first commit on `main`", out.getvalue())
 
 
 if __name__ == "__main__":
