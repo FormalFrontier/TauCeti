@@ -30,8 +30,9 @@ The index is the **full** coset index `[SL(2, ℤ) : Γ]`, not the projective on
 the weight is read on the matrix stabiliser rather than on the projective order `e_P`. That is the
 only choice under which both sides are correct in odd weight with `-I ∉ Γ`, where the projective
 norm is not even well defined; the projective statement
-`Σ_P (1 / e_P) · ord_P f = k · [SL(2, ℤ) : ±Γ] / 12` is this one divided by
-`|{±I} ∩ Γ|` on both sides. See `TauCeti.ModularForm.weightedOrderOfVanishingOnSubgroupOrbit`.
+`Σ_P (1 / e_P) · ord_P f = k · [SL(2, ℤ) : ±Γ] / 12` is obtained by multiplying
+this identity by `|{±I} ∩ Γ| / 2`. See
+`TauCeti.ModularForm.weightedOrderOfVanishingOnSubgroupOrbit`.
 
 ## Main declarations
 
@@ -47,11 +48,12 @@ norm is not even well defined; the projective statement
   general-level weights of `f` over the `Γ`-orbits inside it.
 * `TauCeti.ModularForm.finsum_weightedOrderOfVanishingOnSubgroupOrbit_eq_finsum_norm`: the global
   form of the same statement, the two divisor sums being equal.
-* `TauCeti.ModularForm.valence_formula_finiteIndex`: **the general-level valence formula**, with
-  the cusp term still read at level one on the norm.
-* `TauCeti.ModularForm.twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le` and
-  `TauCeti.ModularForm.orderOfVanishingOnSubgroupOrbit_eq_zero_of_lt_twentyFour`: the single-orbit
-  consequences, bounding the mass at one orbit by the total.
+* `valence_formula_finiteIndex_norm`: **the norm-intermediate general-level valence formula**,
+  with the cusp term still read at level one on the norm.
+* `twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le_weight_mul_index_mul_cardStabilizer`
+  and
+  `orderOfVanishingOnSubgroupOrbit_eq_zero_of_weight_mul_index_mul_cardStabilizer_lt_twentyFour`:
+  the single-orbit consequences, bounding the mass at one orbit by the total.
 
 ## Implementation notes
 
@@ -232,6 +234,27 @@ lemma weightedOrderOfVanishingOnSubgroupOrbit_def
       2 * (orderOfVanishingOnSubgroupOrbit f o : ℚ) / (cardStabilizerOnOrbit o : ℚ) :=
   (rfl)
 
+/-- Evaluating the weighted order on the orbit of `p` recovers twice the pointwise order divided
+by the order of its stabiliser in `Γ`. -/
+@[simp]
+lemma weightedOrderOfVanishingOnSubgroupOrbit_mk
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (p : ℍ) :
+    weightedOrderOfVanishingOnSubgroupOrbit f (Quotient.mk'' p) =
+      2 * (orderOfVanishingAt ⇑f p : ℚ) /
+        (Nat.card (stabilizer (Γ : Subgroup (GL (Fin 2) ℝ)) p) : ℚ) := by
+  rw [weightedOrderOfVanishingOnSubgroupOrbit_def, orderOfVanishingOnSubgroupOrbit_mk,
+    cardStabilizerOnOrbit_mk]
+
+/-- Multiplying the weighted order by the stabiliser order recovers twice the plain vanishing
+order. -/
+lemma cardStabilizerOnOrbit_mul_weightedOrderOfVanishingOnSubgroupOrbit
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F)
+    (o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
+    (cardStabilizerOnOrbit o : ℚ) * weightedOrderOfVanishingOnSubgroupOrbit f o =
+      2 * (orderOfVanishingOnSubgroupOrbit f o : ℚ) := by
+  rw [weightedOrderOfVanishingOnSubgroupOrbit_def]
+  exact mul_div_cancel₀ _ (by exact_mod_cast cardStabilizerOnOrbit_ne_zero o)
+
 /-- **The level-one weight is the same weight.** `ord_P f / e_P` is `2 · ord_P f` divided by the
 order of the matrix stabiliser, because `-I` lies in `SL(2, ℤ)` and fixes every point. This is
 what makes `weightedOrderOfVanishingOnSubgroupOrbit` the general-level form of
@@ -341,6 +364,11 @@ theorem finsum_weightedOrderOfVanishingOnSubgroupOrbit_eq_finsum_norm [Γ.Finite
     hasFiniteSupport_weightedOrderOfVanishingOnSubgroupOrbit f
   set I := slOrbitOfSubgroupOrbit (Γ := Γ) ''
     Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) with hIdef
+  have hmem_I {o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ}
+      (ho : o ∈ Function.support
+        (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f)) :
+      slOrbitOfSubgroupOrbit (Γ := Γ) o ∈ I :=
+    ⟨o, ho, rfl⟩
   have hdisj : I.PairwiseDisjoint (fun P ↦ slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P}) := by
     intro a _ b _ hab
     simp only [Function.onFun, Set.disjoint_left, Set.mem_preimage, Set.mem_singleton_iff]
@@ -349,12 +377,13 @@ theorem finsum_weightedOrderOfVanishingOnSubgroupOrbit_eq_finsum_norm [Γ.Finite
   -- `SL(2, ℤ)`-orbits they lie in
   have hsub : Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) ⊆
       ⋃ P ∈ I, slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P} := fun o ho ↦
-    Set.mem_biUnion (show slOrbitOfSubgroupOrbit (Γ := Γ) o ∈ I from ⟨o, ho, rfl⟩) rfl
-  rw [show (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
+    Set.mem_biUnion (hmem_I ho) rfl
+  have hrestrict : (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
         weightedOrderOfVanishingOnSubgroupOrbit f o) =
       ∑ᶠ o ∈ ⋃ P ∈ I, slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P},
-        weightedOrderOfVanishingOnSubgroupOrbit f o from by
-      rw [finsum_mem_def, Set.indicator_eq_self.mpr hsub],
+        weightedOrderOfVanishingOnSubgroupOrbit f o := by
+    rw [finsum_mem_def, Set.indicator_eq_self.mpr hsub]
+  rw [hrestrict,
     finsum_mem_biUnion hdisj (hsupp.image _)
       fun P _ ↦ finite_preimage_slOrbitOfSubgroupOrbit P,
     finsum_mem_congr rfl fun P _ ↦
@@ -381,7 +410,7 @@ is the **full** coset index, as it must be for odd weight with `-I ∉ Γ`.
 The cusp term is still read at level one, on the norm. Distributing it over the cusps of `Γ`,
 each weighted by its width, is the remaining step of the general-level formula; the norm's
 `q`-expansion order at `∞` is decomposed in `TauCeti.ModularForm.qExpansion_one_norm_order_eq`. -/
-theorem valence_formula_finiteIndex [Γ.FiniteIndex]
+theorem valence_formula_finiteIndex_norm [Γ.FiniteIndex]
     [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (hf : (⇑f : ℍ → ℂ) ≠ 0) :
     (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
           weightedOrderOfVanishingOnSubgroupOrbit f o) +
@@ -401,7 +430,8 @@ valence formula is nonnegative, so `24 · ord_P f ≤ k · [SL(2, ℤ) : Γ] · 
 form — the general-level counterpart of
 `TauCeti.ModularForm.twelve_mul_orderOfVanishingOnOrbit_le_weight_mul_ellipticOrder`, with the
 `24` in place of `12` because the weight is read on the matrix stabiliser. -/
-theorem twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le [Γ.FiniteIndex]
+theorem twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le_weight_mul_index_mul_cardStabilizer
+    [Γ.FiniteIndex]
     [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (hf : (⇑f : ℍ → ℂ) ≠ 0)
     (o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
     24 * orderOfVanishingOnSubgroupOrbit f o ≤
@@ -413,7 +443,7 @@ theorem twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le [Γ.FiniteIndex]
     (weightedOrderOfVanishingOnSubgroupOrbit_nonneg f)
   have hcusp : (0 : ℚ) ≤ (qExpansionOrderAtCusp 1 ⇑(_root_.ModularForm.norm 𝒮ℒ f) : ℚ) := by
     exact_mod_cast qExpansionOrderAtCusp_nonneg 1 ⇑(_root_.ModularForm.norm 𝒮ℒ f)
-  have htotal := valence_formula_finiteIndex f hf
+  have htotal := valence_formula_finiteIndex_norm f hf
   have hle : weightedOrderOfVanishingOnSubgroupOrbit f o ≤
       (k : ℚ) * Nat.card (𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) / 12 := by linarith
   rw [weightedOrderOfVanishingOnSubgroupOrbit_def, div_le_iff₀ hc] at hle
@@ -425,7 +455,9 @@ theorem twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le [Γ.FiniteIndex]
 /-- **A small enough weighted degree forces vanishing order zero at an orbit.** If `f` is nonzero
 this says that `f` does not vanish there; the statement also covers the zero form, whose vanishing
 order is zero by convention. -/
-theorem orderOfVanishingOnSubgroupOrbit_eq_zero_of_lt_twentyFour [Γ.FiniteIndex]
+theorem
+    orderOfVanishingOnSubgroupOrbit_eq_zero_of_weight_mul_index_mul_cardStabilizer_lt_twentyFour
+    [Γ.FiniteIndex]
     [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F)
     {o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ}
     (hk : k * Nat.card (𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) *
@@ -434,7 +466,9 @@ theorem orderOfVanishingOnSubgroupOrbit_eq_zero_of_lt_twentyFour [Γ.FiniteIndex
   rcases eq_or_ne (⇑f : ℍ → ℂ) 0 with hf | hf
   · induction o using Quotient.inductionOn' with
     | _ p => simp [hf]
-  · have hbound := twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le f hf o
+  · have hbound :=
+      twentyFour_mul_orderOfVanishingOnSubgroupOrbit_le_weight_mul_index_mul_cardStabilizer
+        f hf o
     have := orderOfVanishingOnSubgroupOrbit_nonneg f o
     omega
 
