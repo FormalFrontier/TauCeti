@@ -45,25 +45,17 @@ open Matrix Module
 
 namespace TauCeti
 
-universe u v
+universe u
 
 namespace IntegralLattice
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
-/-- A carrier basis of an integral lattice generates the carrier as an additive subgroup of the
-ambient rational vector space. -/
-theorem carrier_toAddSubgroup_eq_closure_range (L : IntegralLattice V) {ι : Type v}
-    (b : Basis ι ℤ L) :
-    L.carrier.toAddSubgroup = AddSubgroup.closure (Set.range (b.extendOfIsLattice ℚ)) := by
-  apply AddSubgroup.toIntSubmodule.injective
-  rw [AddSubgroup.toIntSubmodule_closure, TauCeti.Basis.span_range_extendOfIsLattice,
-    Submodule.toIntSubmodule_toAddSubgroup, Submodule.restrictScalars_self]
-
 open Classical in
 /-- **The signed determinant of a full sublattice scales by the square of the index.** If two
 integral lattices share their ambient rational form and one carrier lies inside the other, the
-smaller determinant is the larger one times the square of the index. -/
+determinant of the smaller carrier `L.carrier` is the determinant of the larger carrier
+`M.carrier` times the square of the index `[M : L]`. -/
 theorem determinant_eq_mul_relIndex_sq (L M : IntegralLattice V) (hform : L.form = M.form)
     (hle : L.carrier ≤ M.carrier) :
     L.determinant =
@@ -77,8 +69,9 @@ theorem determinant_eq_mul_relIndex_sq (L M : IntegralLattice V) (hform : L.form
   let eL := bL.extendOfIsLattice ℚ
   have hidx : ((L.carrier.toAddSubgroup.relIndex M.carrier.toAddSubgroup : ℕ) : ℚ)
       = |eM.det eL| :=
-    AddSubgroup.relIndex_eq_abs_det _ _ hle eL eM
-      (L.carrier_toAddSubgroup_eq_closure_range bL) (M.carrier_toAddSubgroup_eq_closure_range bM)
+    AddSubgroup.relIndex_eq_abs_det _ _ ((Submodule.toAddSubgroup_le _ _).mpr hle) eL eM
+      (Submodule.IsLattice.toAddSubgroup_eq_closure_range_extendOfIsLattice bL)
+      (Submodule.IsLattice.toAddSubgroup_eq_closure_range_extendOfIsLattice bM)
   have hmat : (eM.toMatrix eL)ᵀ * LinearMap.BilinForm.toMatrix eM L.form * eM.toMatrix eL
       = LinearMap.BilinForm.toMatrix eL L.form :=
     LinearMap.BilinForm.toMatrix_mul_basis_toMatrix (b := eM) eL L.form
@@ -90,7 +83,6 @@ theorem determinant_eq_mul_relIndex_sq (L M : IntegralLattice V) (hform : L.form
   push_cast
   rw [hdetL, ← hmat, Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose, ← hdetM,
     ← Basis.det_apply, hidx]
-  ring_nf
   rw [sq_abs]
   ring
 
