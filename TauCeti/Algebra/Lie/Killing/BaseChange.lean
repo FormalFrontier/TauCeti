@@ -29,8 +29,8 @@ it, and there injectivity is genuinely needed.
 
 The mathematical content is entirely in the Gram matrix. Mathlib's `LieModule.traceForm_baseChange`
 already says that the Killing form of `A ⊗[R] L` is the base change of the Killing form of `L`, and
-`TauCeti.nondegenerate_of_nondegenerate_baseChange` and
-`TauCeti.nondegenerate_baseChange_iff` say how a base change of integral domains reflects
+`TauCeti.BilinForm.nondegenerate_of_nondegenerate_baseChange` and
+`TauCeti.BilinForm.nondegenerate_baseChange_iff` say how a base change of integral domains reflects
 and preserves nondegeneracy of a bilinear form on a finite free module. What remains is to read
 `IsKilling` as nondegeneracy of the Killing form in both directions;
 `TauCeti.isKilling_of_killingForm_nondegenerate` is the direction Mathlib does not already provide.
@@ -89,15 +89,10 @@ Killing as soon as some base change of it into an integral domain is; the struct
 unrestricted, so this covers reduction of an integral form as well as extension of scalars. -/
 theorem isKilling_of_isKilling_baseChange [IsDomain R] [IsKilling A (A ⊗[R] L)] :
     IsKilling R L := by
-  -- `killingForm` is Mathlib's abbreviation for the trace form of the adjoint representation, so
-  -- `LieModule.traceForm_baseChange` says that the Killing form of `A ⊗[R] L` is the base change
-  -- of the Killing form of `L`.
-  have hform : killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A :=
-    traceForm_baseChange R L L A
-  refine isKilling_of_killingForm_nondegenerate R L
-    (nondegenerate_of_nondegenerate_baseChange A _ (Module.Free.chooseBasis R L) ?_)
-  rw [← hform]
-  exact IsKilling.killingForm_nondegenerate A (A ⊗[R] L)
+  rw [isKilling_iff_killingForm_nondegenerate]
+  apply BilinForm.nondegenerate_of_nondegenerate_baseChange A _ (Module.Free.chooseBasis R L)
+  rw [← traceForm_baseChange R L L A, ← isKilling_iff_killingForm_nondegenerate]
+  infer_instance
 
 /-- **The Killing property under an injective base change.** For a finite free Lie algebra over an
 integral domain, and an injective structure map into a second integral domain, the base change is
@@ -107,13 +102,10 @@ theorem isKilling_baseChange_iff [FaithfulSMul R A] :
     IsKilling A (A ⊗[R] L) ↔ IsKilling R L := by
   have : IsDomain R :=
     Function.Injective.isDomain (algebraMap R A) (FaithfulSMul.algebraMap_injective R A)
-  have hform : killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A :=
-    traceForm_baseChange R L L A
-  refine ⟨fun _ ↦ isKilling_of_isKilling_baseChange R A L, fun _ ↦ ?_⟩
-  refine isKilling_of_killingForm_nondegenerate A (A ⊗[R] L) ?_
-  rw [hform]
-  exact (nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)).mpr
-    (IsKilling.killingForm_nondegenerate R L)
+  rw [isKilling_iff_killingForm_nondegenerate, isKilling_iff_killingForm_nondegenerate,
+    show killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A from
+      traceForm_baseChange R L L A]
+  exact BilinForm.nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)
 
 /-! The intended application is a field extension, where every hypothesis above is automatic. -/
 

@@ -19,6 +19,8 @@ with the form itself, as under base change.
 
 ## Main declarations
 
+* `TauCeti.isKilling_of_ker_killingForm_eq_bot`: a Lie algebra whose Killing form has trivial
+  kernel is Killing.
 * `TauCeti.isKilling_of_killingForm_nondegenerate`: a Lie algebra whose Killing form is
   nondegenerate is Killing.
 * `TauCeti.isKilling_iff_killingForm_nondegenerate`: `LieAlgebra.IsKilling` is exactly
@@ -43,14 +45,18 @@ open LieAlgebra LieModule
 
 variable (R L : Type*) [CommRing R] [LieRing L] [LieAlgebra R L]
 
+/-- A Lie algebra whose Killing form has trivial kernel is Killing. -/
+theorem isKilling_of_ker_killingForm_eq_bot (h : LinearMap.ker (killingForm R L) = ⊥) :
+    IsKilling R L :=
+  ⟨(LieSubmodule.toSubmodule_eq_bot _).mp <| (LieIdeal.coe_killingCompl_top R L).trans h⟩
+
 /-- A Lie algebra whose Killing form is nondegenerate is Killing.
 
 This is the converse of `LieAlgebra.IsKilling.killingForm_nondegenerate`, and the two together say
 that `LieAlgebra.IsKilling` is exactly nondegeneracy of the Killing form. -/
 theorem isKilling_of_killingForm_nondegenerate (h : (killingForm R L).Nondegenerate) :
     IsKilling R L :=
-  ⟨(LieSubmodule.toSubmodule_eq_bot _).mp <|
-    (LieIdeal.coe_killingCompl_top R L).trans h.ker_eq_bot⟩
+  isKilling_of_ker_killingForm_eq_bot R L h.ker_eq_bot
 
 /-- A Lie algebra is Killing exactly when its Killing form is nondegenerate. -/
 theorem isKilling_iff_killingForm_nondegenerate :
