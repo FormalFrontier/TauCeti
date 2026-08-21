@@ -5,11 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Contour.Winding.Number.Basic
-import Mathlib.Analysis.Complex.RealDeriv
-import Mathlib.Analysis.Convex.Topology
+public import TauCeti.Analysis.Contour.Winding.Number.Affine
+import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 
 /-!
 # The winding number of a straight segment and its one-sided limits
@@ -18,7 +16,8 @@ The winding number of the straight segment `t ↦ v · t + z₀` about a point b
 logarithmic increment `(2πi)⁻¹ (log (b - q) - log (a - q))`. Its one-sided limits at an interior
 point differ by exactly `1`.
 
-This is a prerequisite of the planar-separation step of the `ConformalMapping` roadmap (L5).
+This extends the segment winding API (`SegmentSum.lean`) with the explicit formula for a single
+straight piece and the one-sided limit behaviour.
 
 ## Main results
 
@@ -45,61 +44,40 @@ namespace TauCeti.Contour
 
 variable {v z₀ q : ℂ} {a b s : ℝ}
 
-/-- The straight segment `t ↦ v · t + z₀` has derivative `v` everywhere. -/
-theorem hasDerivAt_segment (v z₀ : ℂ) (t : ℝ) :
-    HasDerivAt (fun t : ℝ => v * (t : ℂ) + z₀) v t := by
-  simpa using ((hasDerivAt_id t).ofReal_comp.const_mul v).add_const z₀
-
-/-- The straight segment `t ↦ v · t + z₀` avoids `v · q + z₀` when `q` is not real. -/
-theorem segment_ne_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (t : ℝ) :
-    v * (t : ℂ) + z₀ ≠ v * q + z₀ := by
-  intro h
-  have h' : v * ((t : ℂ) - q) = 0 := by linear_combination h
-  rcases mul_eq_zero.mp h' with h'' | h''
-  · exact hv h''
-  · apply hq
-    have := congrArg Complex.im h''
-    simpa using this.symm
-
 /-- **The winding number of a straight segment about a point beside it** is the increment of the
 principal logarithm. -/
 theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (a b : ℝ) :
     windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
       = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) := by
-  have hne : ∀ t : ℝ, (t : ℂ) - q ≠ 0 := by
-    intro t h
-    apply hq
-    have := congrArg Complex.im h
-    simpa using this.symm
+  rw [windingNumber_affine (γ := fun t : ℝ => (t : ℂ)) (c := v) (d := z₀) (z₀ := q) hv]
   have hslit : ∀ t : ℝ, (t : ℂ) - q ∈ slitPlane := fun t =>
     mem_slitPlane_iff.mpr (Or.inr (by simpa using hq))
-  have h_cont : ContinuousOn (fun t : ℝ => v * (t : ℂ) + z₀) (uIcc a b) :=
-    (by fun_prop : Continuous fun t : ℝ => v * (t : ℂ) + z₀).continuousOn
-  have h_avoid : ∀ t ∈ uIcc a b, v * (t : ℂ) + z₀ ≠ v * q + z₀ := fun t _ =>
-    segment_ne_of_im_ne_zero hv hq t
+  have hne : ∀ t : ℝ, (t : ℂ) - q ≠ 0 := fun t => slitPlane_ne_zero (hslit t)
+  have h_cont : ContinuousOn (fun t : ℝ => (t : ℂ)) (uIcc a b) :=
+    (by fun_prop : Continuous fun t : ℝ => (t : ℂ)).continuousOn
+  have h_avoid : ∀ t ∈ uIcc a b, (t : ℂ) ≠ q := fun t _ => by
+    intro h; exact hne t (by rw [h, sub_self])
   have h_integrand : ∀ t : ℝ,
-      (v * (t : ℂ) + z₀ - (v * q + z₀))⁻¹ * deriv (fun t : ℝ => v * (t : ℂ) + z₀) t
-        = ((t : ℂ) - q)⁻¹ := by
+      ((t : ℂ) - q)⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t = ((t : ℂ) - q)⁻¹ := by
     intro t
-    rw [(hasDerivAt_segment v z₀ t).deriv]
-    have : v * (t : ℂ) + z₀ - (v * q + z₀) = v * ((t : ℂ) - q) := by ring
-    rw [this]; field_simp
-  have h_log : ∀ t : ℝ, HasDerivAt (fun t : ℝ => log ((t : ℂ) - q)) (((t : ℂ) - q)⁻¹) t := by
-    intro t
-    have h1 : HasDerivAt (fun t : ℝ => (t : ℂ) - q) 1 t := by
-      simpa using (hasDerivAt_id t).ofReal_comp.sub_const q
-    simpa using h1.clog_real (hslit t)
+    have : deriv (fun t : ℝ => (t : ℂ)) t = 1 := ofRealCLM.hasDerivAt.deriv
+    rw [this, mul_one]
   have h_intble : IntervalIntegrable (fun t : ℝ => ((t : ℂ) - q)⁻¹) volume a b := by
     refine ContinuousOn.intervalIntegrable ?_
     exact ContinuousOn.inv₀ (by fun_prop) fun t _ => hne t
   have h_int : IntervalIntegrable
-      (fun t : ℝ => (v * (t : ℂ) + z₀ - (v * q + z₀))⁻¹ * deriv (fun t : ℝ => v * (t : ℂ) + z₀) t)
-      volume a b := by
-    exact h_intble.congr fun t _ => (h_integrand t).symm
+      (fun t : ℝ => ((t : ℂ) - q)⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t)
+      volume a b :=
+    h_intble.congr fun t _ => (h_integrand t).symm
   rw [windingNumber_eq_integral_of_avoidance h_cont h_avoid h_int]
   congr 1
   rw [intervalIntegral.integral_congr (fun t _ => h_integrand t)]
-  exact intervalIntegral.integral_eq_sub_of_hasDerivAt (fun t _ => h_log t) h_intble
+  have h_div : (fun t : ℝ => ((t : ℂ) - q)⁻¹) = fun t : ℝ => 1 / ((t : ℂ) - q) := by
+    ext t; rw [one_div]
+  rw [h_div]
+  exact integral_deriv_div_eq_log_sub_log countable_empty
+    (by fun_prop) (fun t _ => (ofRealCLM.hasDerivAt.sub_const q))
+    (fun t ht => hslit t) (h_intble.congr fun t _ => by rw [one_div])
 
 /-- The difference `(r : ℂ) - (s + σ h I)` tends to `(r : ℂ) - s` as `h → 0⁺`. -/
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
