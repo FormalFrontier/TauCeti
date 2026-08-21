@@ -82,8 +82,8 @@ definitional conditions.
 
 `H1` and `H2` take the continuity hypotheses under which `B1_le_Z1` and `B2_le_Z2` hold, so that
 the subgroup divided out really is the whole of `B¹`, respectively `B²`, and not just the part of
-it lying in the cocycles. Their bodies do not mention those hypotheses, so the binders carry
-`_`-prefixed names, which the `unusedArguments` linter exempts for exactly this purpose.
+it lying in the cocycles. Their denominators are the ranges of the corresponding subgroup
+inclusions, so those hypotheses are part of the constructions.
 
 This implements the "the complex" milestone of Layer 2 of the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes every convention above and whose
@@ -297,9 +297,9 @@ end Differentials
 
 section Cocycles
 
-variable (G : Type u) [Group G] [TopologicalSpace G]
+variable (G : Type u) [Mul G] [TopologicalSpace G]
   (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DistribMulAction G M]
+  [DistribSMul G M]
 
 /-- The continuous `1`-cocycles `Z¹ = C¹ ⊓ ker d¹`; the closure of the cocycle condition under
 the group operations is the one `AddMonoidHom.ker` already carries.
@@ -352,16 +352,18 @@ theorem Z1_le_C1 : Z1 G M ≤ C1 G M := inf_le_left
 /-- Continuous `2`-cocycles are continuous `2`-cochains. -/
 theorem Z2_le_C2 : Z2 G M ≤ C2 G M := inf_le_left
 
-variable {G M}
+end Cocycles
+
+section Normalizations
+
+variable {G : Type u} [Monoid G] [TopologicalSpace G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M]
 
 /-- A continuous `1`-cocycle vanishes at `1`. This is a lemma and not part of the definition of
 `Z¹`: cochains here are not normalised. -/
 theorem map_one_of_mem_Z1 {f : G → M} (hf : f ∈ Z1 G M) : f 1 = 0 :=
   groupCohomology.map_one_of_isCocycle₁ (mem_Z1_iff.1 hf).2
-
-/-- The inverse formula for a continuous `1`-cocycle. -/
-theorem map_inv_of_mem_Z1 {f : G → M} (hf : f ∈ Z1 G M) (g : G) : g • f g⁻¹ = -f g :=
-  groupCohomology.map_inv_of_isCocycle₁ (mem_Z1_iff.1 hf).2 g
 
 /-- The first degree-`2` normalisation. -/
 theorem map_one_fst_of_mem_Z2 {f : G × G → M} (hf : f ∈ Z2 G M) (g : G) : f (1, g) = f (1, 1) :=
@@ -372,72 +374,23 @@ theorem map_one_snd_of_mem_Z2 {f : G × G → M} (hf : f ∈ Z2 G M) (g : G) :
     f (g, 1) = g • f (1, 1) :=
   groupCohomology.map_one_snd_of_isCocycle₂ (mem_Z2_iff.1 hf).2 g
 
-variable (G M)
+end Normalizations
 
-/-- The first continuous cohomology group `H¹(G, M) = Z¹/B¹`.
+section Inverse
 
-`ContinuousSMul` is what makes `B¹` a subgroup of `Z¹` (`TauCeti.ContCohomology.B1_le_Z1`), so
-that the subgroup divided out here is the whole of `B¹` and not merely the part of it lying in
-`Z¹`; the body does not mention the instance, whence the `_`-prefixed binder name.
+variable {G : Type u} [Group G] [TopologicalSpace G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M]
 
-`H¹` is used as a bare additive group. It does inherit a quotient topology from the *pointwise*
-topology on `G → M`, and that topology is not the intended one — for an infinite profinite `G` it
-is not discrete — so the comparison of Layer 3 is stated against a discrete carrier, which is
-deferred to the functoriality half of Layer 2. -/
-abbrev H1 [_hsmul : ContinuousSMul G M] := (Z1 G M) ⧸ ((B1 G M).addSubgroupOf (Z1 G M))
+/-- The inverse formula for a continuous `1`-cocycle. -/
+theorem map_inv_of_mem_Z1 {f : G → M} (hf : f ∈ Z1 G M) (g : G) : g • f g⁻¹ = -f g :=
+  groupCohomology.map_inv_of_isCocycle₁ (mem_Z1_iff.1 hf).2 g
 
-/-- The second continuous cohomology group `H²(G, M) = Z²/B²`.
-
-The two continuity hypotheses are those of `TauCeti.ContCohomology.B2_le_Z2`, so that the subgroup
-divided out is the whole of `B²`; as for `H¹` the inherited quotient topology is not the intended
-one, and `H²` is used as a bare additive group. -/
-abbrev H2 [_hmul : ContinuousMul G] [_hsmul : ContinuousSMul G M] :=
-  (Z2 G M) ⧸ ((B2 G M).addSubgroupOf (Z2 G M))
-
-/-- The class map in degree `1`. -/
-abbrev H1pi [ContinuousSMul G M] : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
-
-/-- The class map in degree `2`. -/
-abbrev H2pi [ContinuousMul G] [ContinuousSMul G M] : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
-
-/-- Every class in `H¹` is represented by a continuous `1`-cocycle. -/
-theorem H1pi_surjective [ContinuousSMul G M] : Function.Surjective (H1pi G M) :=
-  QuotientAddGroup.mk'_surjective _
-
-/-- Every class in `H²` is represented by a continuous `2`-cocycle. -/
-theorem H2pi_surjective [ContinuousMul G] [ContinuousSMul G M] :
-    Function.Surjective (H2pi G M) :=
-  QuotientAddGroup.mk'_surjective _
-
-variable {G M}
-
-/-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H1pi_eq_zero_iff [ContinuousSMul G M] {f : Z1 G M} :
-    H1pi G M f = 0 ↔ (f : G → M) ∈ B1 G M := by
-  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
-
-/-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H2pi_eq_zero_iff [ContinuousMul G] [ContinuousSMul G M] {f : Z2 G M} :
-    H2pi G M f = 0 ↔ (f : G × G → M) ∈ B2 G M := by
-  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
-
-/-- Two continuous `1`-cocycles have the same class exactly when they differ by a coboundary. -/
-theorem H1pi_eq_iff [ContinuousSMul G M] {f f' : Z1 G M} :
-    H1pi G M f = H1pi G M f' ↔ (f : G → M) - f' ∈ B1 G M := by
-  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
-    AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
-
-/-- Two continuous `2`-cocycles have the same class exactly when they differ by a coboundary. -/
-theorem H2pi_eq_iff [ContinuousMul G] [ContinuousSMul G M] {f f' : Z2 G M} :
-    H2pi G M f = H2pi G M f' ↔ (f : G × G → M) - f' ∈ B2 G M := by
-  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
-    AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
-
-end Cocycles
+end Inverse
 
 section Continuity
 
-variable {G : Type u} [Group G] [TopologicalSpace G]
+variable {G : Type u} [Monoid G] [TopologicalSpace G]
   {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
 
@@ -463,7 +416,7 @@ end Continuity
 
 section ContinuityMul
 
-variable {G : Type u} [Group G] [TopologicalSpace G] [ContinuousMul G]
+variable {G : Type u} [Monoid G] [TopologicalSpace G] [ContinuousMul G]
   {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
 
@@ -485,9 +438,79 @@ theorem B2_le_C2 : B2 G M ≤ C2 G M := (B2_le_Z2 G M).trans (Z2_le_C2 G M)
 
 end ContinuityMul
 
+section Cohomology
+
+variable (G : Type u) [Group G] [TopologicalSpace G]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M]
+
+/-- The first continuous cohomology group `H¹(G, M) = Z¹/B¹`.
+
+`ContinuousSMul` is what makes `B¹` a subgroup of `Z¹` (`TauCeti.ContCohomology.B1_le_Z1`). The
+denominator is the range of that inclusion, so the construction uses the continuity hypothesis
+and divides out by the whole of `B¹`.
+
+`H¹` is used as a bare additive group. It does inherit a quotient topology from the *pointwise*
+topology on `G → M`, and that topology is not the intended one — for an infinite profinite `G` it
+is not discrete — so the comparison of Layer 3 is stated against a discrete carrier, which is
+deferred to the functoriality half of Layer 2. -/
+abbrev H1 [ContinuousSMul G M] :=
+  (Z1 G M) ⧸ (AddSubgroup.inclusion (B1_le_Z1 G M)).range
+
+/-- The second continuous cohomology group `H²(G, M) = Z²/B²`.
+
+The two continuity hypotheses are those of `TauCeti.ContCohomology.B2_le_Z2`; the denominator is
+the range of this inclusion and hence is the whole of `B²`. As for `H¹` the inherited quotient
+topology is not the intended one, and `H²` is used as a bare additive group. -/
+abbrev H2 [ContinuousMul G] [ContinuousSMul G M] :=
+  (Z2 G M) ⧸ (AddSubgroup.inclusion (B2_le_Z2 G M)).range
+
+/-- The class map in degree `1`. -/
+abbrev H1pi [ContinuousSMul G M] : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
+
+/-- The class map in degree `2`. -/
+abbrev H2pi [ContinuousMul G] [ContinuousSMul G M] : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
+
+/-- Every class in `H¹` is represented by a continuous `1`-cocycle. -/
+theorem H1pi_surjective [ContinuousSMul G M] : Function.Surjective (H1pi G M) :=
+  QuotientAddGroup.mk'_surjective _
+
+/-- Every class in `H²` is represented by a continuous `2`-cocycle. -/
+theorem H2pi_surjective [ContinuousMul G] [ContinuousSMul G M] :
+    Function.Surjective (H2pi G M) :=
+  QuotientAddGroup.mk'_surjective _
+
+variable {G M}
+
+/-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
+theorem H1pi_eq_zero_iff [ContinuousSMul G M] {f : Z1 G M} :
+    H1pi G M f = 0 ↔ (f : G → M) ∈ B1 G M := by
+  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff,
+    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf]
+
+/-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
+theorem H2pi_eq_zero_iff [ContinuousMul G] [ContinuousSMul G M] {f : Z2 G M} :
+    H2pi G M f = 0 ↔ (f : G × G → M) ∈ B2 G M := by
+  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff,
+    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf]
+
+/-- Two continuous `1`-cocycles have the same class exactly when they differ by a coboundary. -/
+theorem H1pi_eq_iff [ContinuousSMul G M] {f f' : Z1 G M} :
+    H1pi G M f = H1pi G M f' ↔ (f : G → M) - f' ∈ B1 G M := by
+  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
+    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
+
+/-- Two continuous `2`-cocycles have the same class exactly when they differ by a coboundary. -/
+theorem H2pi_eq_iff [ContinuousMul G] [ContinuousSMul G M] {f f' : Z2 G M} :
+    H2pi G M f = H2pi G M f' ↔ (f : G × G → M) - f' ∈ B2 G M := by
+  rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
+    AddSubgroup.inclusion_range, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
+
+end Cohomology
+
 section TrivialAction
 
-variable {G : Type u} [Group G] [TopologicalSpace G]
+variable {G : Type u} [Monoid G] [TopologicalSpace G]
   {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] (htriv : ∀ (g : G) (m : M), g • m = m)
 
@@ -528,6 +551,16 @@ theorem Z1EquivOfSmulEqSelf_symm_apply
     (((Z1EquivOfSmulEqSelf htriv).symm φ : Z1 G M) : G → M) g =
       Multiplicative.toAdd ((Additive.toMul φ) g) := (rfl)
 
+end TrivialAction
+
+section TrivialCohomology
+
+variable {G : Type u} [Group G] [TopologicalSpace G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M] (htriv : ∀ (g : G) (m : M), g • m = m)
+
+include htriv
+
 variable [ContinuousSMul G M]
 
 /-- For a trivial action `H¹(G, M)` is the group of continuous homomorphisms
@@ -539,8 +572,8 @@ group of abstract homomorphisms, which for a profinite group is enormous. -/
 noncomputable def H1EquivOfSmulEqSelf :
     H1 G M ≃+ Additive (ContinuousMonoidHom G (Multiplicative M)) :=
   (QuotientAddGroup.quotientAddEquivOfEq
-      (M := (B1 G M).addSubgroupOf (Z1 G M)) (N := ⊥) (by
-        rw [B1_eq_bot_of_smul_eq_self htriv]
+      (M := (AddSubgroup.inclusion (B1_le_Z1 G M)).range) (N := ⊥) (by
+        rw [AddSubgroup.inclusion_range, B1_eq_bot_of_smul_eq_self htriv]
         exact AddSubgroup.bot_addSubgroupOf _)).trans
     (QuotientAddGroup.quotientBot.trans (Z1EquivOfSmulEqSelf htriv))
 
@@ -564,6 +597,6 @@ theorem H1EquivOfSmulEqSelf_symm_apply
     (((Z1EquivOfSmulEqSelf htriv).apply_symm_apply φ).symm.trans
       (H1EquivOfSmulEqSelf_mk htriv _).symm)
 
-end TrivialAction
+end TrivialCohomology
 
 end TauCeti.ContCohomology
