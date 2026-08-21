@@ -126,19 +126,17 @@ theorem quotientToPermHom_mk [Finite X] (g : G) (x : X) :
     quotientToPermHom G X (QuotientGroup.mk g) x = g • x :=
   (rfl)
 
-/-- `TauCeti.quotientToPermHom` is the standard quotient lift of the original permutation
-representation. This isolates the definitional unfolding needed to apply the quotient API. -/
-theorem quotientToPermHom_eq_lift [Finite X] :
-    quotientToPermHom G X =
-      QuotientGroup.lift (actionKernel G X).toSubgroup (toPermHom G X)
-        (le_of_eq (actionKernel_toSubgroup G X)) :=
-  (rfl)
-
-/-- The descended permutation representation is faithful. -/
+/-- The descended permutation representation is faithful: a class acting trivially is represented
+by an element of `TauCeti.actionKernel`, hence is the identity of the quotient. -/
 theorem quotientToPermHom_injective [Finite X] :
     Function.Injective (quotientToPermHom G X) := by
-  rw [quotientToPermHom_eq_lift]
-  exact (QuotientGroup.injective_lift_iff _ _ _).2 (actionKernel_toSubgroup G X)
+  rw [injective_iff_map_eq_one]
+  intro q
+  induction q using QuotientGroup.induction_on with
+  | H g =>
+    intro hg
+    refine (QuotientGroup.eq_one_iff g).2 ((mem_actionKernel G X).2 fun x ↦ ?_)
+    rw [← quotientToPermHom_mk G X g x, hg, Equiv.Perm.coe_one, id_eq]
 
 variable [IsTopologicalGroup G] [CompactSpace G] [TotallyDisconnectedSpace G]
 
@@ -321,6 +319,14 @@ theorem invariantsMap_smul (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m)
     (H : Subgroup G) [H.Normal] (g : G) (m : FixedPoints.addSubgroup H M) :
     invariantsMap f hf H (g • m) = g • invariantsMap f hf H m :=
   Subtype.ext (hf g (m : M))
+
+/-- Restriction to the invariants is equivariant for the finite-level `G ⧸ H`-actions. -/
+@[simp]
+theorem invariantsMap_quotient_smul (f : M →+ N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m)
+    (H : Subgroup G) [H.Normal] (q : G ⧸ H) (m : FixedPoints.addSubgroup H M) :
+    invariantsMap f hf H (q • m) = q • invariantsMap f hf H m := by
+  induction q using QuotientGroup.induction_on with
+  | H g => simp
 
 /-- Restriction to the invariants commutes with the transition inclusions. -/
 theorem invariantsMap_comp_invariantsInclusion (f : M →+ N)
