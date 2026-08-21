@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.BigOperators.Group.List.Basic
 public import Mathlib.Data.List.GetD
 public import Mathlib.Data.List.Perm.Basic
+public import Mathlib.Data.Set.Function
 public import TauCeti.Combinatorics.Enumerative.TransitionCount
 
 /-!
@@ -39,9 +40,9 @@ iterating the split writes the pairs of `loopPath a₀ bs` as a `List.flatMap` o
 permutation of `bs` rearranges.
 
 Words are lists here, while `TauCeti.transitionCount` counts transitions of a
-`Fin (n + 1)`-indexed word; the bridge is `TauCeti.transitionCount_getD`, in
-`TauCeti/Combinatorics/Enumerative/TransitionCount.lean`, which reads a list of length `n + 1` as
-such a word through `List.getD`.
+`Fin (n + 1)`-indexed word; the bridge is `TauCeti.transitionCount_getD`, which reads a list of
+length `n + 1` as such a word through `List.getD`. Both of those list lemmas live in
+`TauCeti/Combinatorics/Enumerative/TransitionCount.lean`.
 
 ## Main definitions
 
@@ -56,7 +57,7 @@ such a word through `List.getD`.
 * `TauCeti.transitionCount_loopPathAt_eq_of_perm`: reordering the excursions leaves them unchanged.
 * `TauCeti.exists_loopPath`: every word that starts and ends at `a₀` is a loop path, with
   excursions that avoid `a₀`.
-* `TauCeti.eq_of_loopPath_eq`: those excursions are unique.
+* `TauCeti.loopPath_injOn`: those excursions are unique.
 
 ## References
 
@@ -70,57 +71,36 @@ namespace TauCeti
 
 variable {α : Type*}
 
-/-! ## Consecutive pairs of a word
-
-Mathlib supplies `List.consecutivePairs`; the lemma below is the API this file needs, on top of
-`TauCeti.consecutivePairs_cons_cons`.
--/
-
-/-- Splitting a word at a letter `y` splits its consecutive pairs: those of the part up to and
-including `y`, followed by those of the part from `y` on. -/
-theorem consecutivePairs_append_cons (l : List α) (y : α) (m : List α) :
-    (l ++ y :: m).consecutivePairs = (l ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := by
-  induction l with
-  | nil => simp
-  | cons x l ih =>
-    cases l with
-    | nil => rfl
-    | cons z l =>
-      have key : ((z :: l) ++ y :: m).consecutivePairs =
-          ((z :: l) ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := ih
-      simp only [List.cons_append, consecutivePairs_cons_cons] at key ⊢
-      rw [key]
-
 /-! ## Loops and their excursions -/
 
 /-- The word spelled out by a base letter `a₀` and a list of excursions: `a₀`, the first
 excursion, `a₀` again, the second excursion, and so on, ending with a final `a₀`. -/
-@[expose] def loopPath (a₀ : α) : List (List α) → List α
+def loopPath (a₀ : α) : List (List α) → List α
   | [] => [a₀]
   | e :: bs => a₀ :: (e ++ loopPath a₀ bs)
 
 @[simp]
-theorem loopPath_nil (a₀ : α) : loopPath a₀ [] = [a₀] :=
-  rfl
+theorem loopPath_nil (a₀ : α) : loopPath a₀ [] = [a₀] := by
+  simp only [loopPath]
 
 @[simp]
 theorem loopPath_cons (a₀ : α) (e : List α) (bs : List (List α)) :
-    loopPath a₀ (e :: bs) = a₀ :: (e ++ loopPath a₀ bs) :=
-  rfl
+    loopPath a₀ (e :: bs) = a₀ :: (e ++ loopPath a₀ bs) := by
+  simp only [loopPath]
 
 /-- The number of transitions of a loop with the given excursions: each excursion contributes its
 own length, plus the one step that returns to the base letter. -/
-@[expose] def loopSteps (bs : List (List α)) : ℕ :=
+def loopSteps (bs : List (List α)) : ℕ :=
   (bs.map fun e => e.length + 1).sum
 
 @[simp]
-theorem loopSteps_nil : loopSteps ([] : List (List α)) = 0 :=
-  rfl
+theorem loopSteps_nil : loopSteps ([] : List (List α)) = 0 := by
+  simp [loopSteps]
 
 @[simp]
 theorem loopSteps_cons (e : List α) (bs : List (List α)) :
-    loopSteps (e :: bs) = e.length + 1 + loopSteps bs :=
-  rfl
+    loopSteps (e :: bs) = e.length + 1 + loopSteps bs := by
+  simp [loopSteps]
 
 @[simp]
 theorem length_loopPath (a₀ : α) (bs : List (List α)) :
@@ -137,22 +117,22 @@ theorem loopSteps_eq_of_perm {bs bs' : List (List α)} (h : bs.Perm bs') :
   (h.map _).sum_eq
 
 /-- A loop, read as a function on `ℕ`: past its last letter it is padded with the base letter. -/
-@[expose] def loopPathAt (a₀ : α) (bs : List (List α)) (i : ℕ) : α :=
+def loopPathAt (a₀ : α) (bs : List (List α)) (i : ℕ) : α :=
   (loopPath a₀ bs).getD i a₀
 
 theorem loopPathAt_def (a₀ : α) (bs : List (List α)) (i : ℕ) :
-    loopPathAt a₀ bs i = (loopPath a₀ bs).getD i a₀ :=
-  rfl
+    loopPathAt a₀ bs i = (loopPath a₀ bs).getD i a₀ := by
+  simp only [loopPathAt]
 
 @[simp]
 theorem loopPathAt_zero (a₀ : α) (bs : List (List α)) : loopPathAt a₀ bs 0 = a₀ := by
-  cases bs <;> rfl
+  cases bs <;> simp [loopPathAt_def]
 
 @[simp]
 theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
     loopPathAt a₀ bs (loopSteps bs) = a₀ := by
   induction bs with
-  | nil => rfl
+  | nil => simp
   | cons e bs ih =>
     have hstep : e.length + 1 + loopSteps bs = e.length + loopSteps bs + 1 := by omega
     rw [loopPathAt_def, loopPath_cons, loopSteps_cons, hstep, List.getD_cons_succ,
@@ -162,9 +142,9 @@ theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
 /-- A loop always starts at its base letter. -/
 theorem loopPath_eq_cons_tail (a₀ : α) (bs : List (List α)) :
     loopPath a₀ bs = a₀ :: (loopPath a₀ bs).tail := by
-  cases bs <;> rfl
+  cases bs <;> simp
 
-/-- Implementation helper for `TauCeti.eq_of_loopPath_eq`: in a word split at the base letter,
+/-- Implementation helper for `TauCeti.loopPath_injOn`: in a word split at the base letter,
 the first block cannot be shorter than a competing one that avoids the base letter, since the
 letter after the shorter block is the base letter on one side and not on the other. -/
 private theorem not_length_lt_of_loopPath_eq (a₀ : α) {e e' : List α} {bs bs' : List (List α)}
@@ -173,7 +153,7 @@ private theorem not_length_lt_of_loopPath_eq (a₀ : α) {e e' : List α} {bs bs
   intro hlt
   have h1 : (e ++ loopPath a₀ bs).getD e.length a₀ = a₀ := by
     rw [List.getD_append_right _ _ _ _ le_rfl, Nat.sub_self, loopPath_eq_cons_tail]
-    rfl
+    simp
   rw [heq, List.getD_append _ _ _ _ hlt, List.getD_eq_getElem _ _ hlt] at h1
   exact havoid' (h1 ▸ List.getElem_mem hlt)
 
@@ -181,13 +161,12 @@ private theorem not_length_lt_of_loopPath_eq (a₀ : α) {e e' : List α} {bs bs
 the base letter and spell out the same word are equal, so together with
 `TauCeti.exists_loopPath` this makes `TauCeti.loopPath` a bijection between such lists and the
 words that start and end at the base letter. -/
-theorem eq_of_loopPath_eq (a₀ : α) :
-    ∀ bs bs' : List (List α), (∀ e ∈ bs, a₀ ∉ e) → (∀ e ∈ bs', a₀ ∉ e) →
-      loopPath a₀ bs = loopPath a₀ bs' → bs = bs' := by
+theorem loopPath_injOn (a₀ : α) :
+    Set.InjOn (loopPath a₀) {bs : List (List α) | ∀ e ∈ bs, a₀ ∉ e} := by
   intro bs
   induction bs with
   | nil =>
-    intro bs' _ _ heq
+    intro _ bs' _ heq
     cases bs' with
     | nil => rfl
     | cons e' bs' =>
@@ -195,7 +174,7 @@ theorem eq_of_loopPath_eq (a₀ : α) :
       rw [length_loopPath, length_loopPath, loopSteps_nil, loopSteps_cons] at hlen
       omega
   | cons e bs ih =>
-    intro bs' havoid havoid' heq
+    intro havoid bs' havoid' heq
     cases bs' with
     | nil =>
       have hlen := congrArg List.length heq
@@ -210,7 +189,7 @@ theorem eq_of_loopPath_eq (a₀ : α) :
           (Nat.not_lt.1 (not_length_lt_of_loopPath_eq a₀ (havoid' e' (by simp)) heq))
       obtain ⟨rfl, htail⟩ := List.append_inj heq hlen
       exact congrArg (e :: ·)
-        (ih bs' (fun f hf => havoid f (by simp [hf])) (fun f hf => havoid' f (by simp [hf])) htail)
+        (ih (fun f hf => havoid f (by simp [hf])) (fun f hf => havoid' f (by simp [hf])) htail)
 
 /-- The consecutive pairs of a loop, gathered excursion by excursion. -/
 theorem consecutivePairs_loopPath (a₀ : α) (bs : List (List α)) :
@@ -262,7 +241,7 @@ theorem exists_loopPath (a₀ : α) :
   | _ n ih =>
     intro x h0 hn
     rcases Nat.eq_zero_or_pos n with rfl | hnpos
-    · refine ⟨[], rfl, by simp, fun i hi => ?_⟩
+    · refine ⟨[], loopSteps_nil, by simp, fun i hi => ?_⟩
       obtain rfl : i = 0 := Nat.le_zero.1 hi
       simp [h0]
     classical

@@ -46,6 +46,8 @@ transition counts of a path are the sufficient statistic: see
   force equal occurrence counts.
 * `TauCeti.exists_perm_comp_of_transitionCount_eq`: two such words are rearrangements of each
   other.
+* `TauCeti.consecutivePairs_append_cons`: splitting a word at a letter splits its consecutive
+  pairs.
 * `TauCeti.transitionCount_getD`: the transition counts of a list, read as a `Fin`-indexed word,
   count its consecutive pairs.
 * `TauCeti.prod_transitionCount`: a product of transition weights along a word depends on the word
@@ -137,6 +139,21 @@ occurrences among the list `List.consecutivePairs` of consecutive pairs supplied
 theorem consecutivePairs_cons_cons (a b : α) (l : List α) :
     (a :: b :: l).consecutivePairs = (a, b) :: (b :: l).consecutivePairs :=
   rfl
+
+/-- Splitting a word at a letter `y` splits its consecutive pairs: those of the part up to and
+including `y`, followed by those of the part from `y` on. -/
+theorem consecutivePairs_append_cons (l : List α) (y : α) (m : List α) :
+    (l ++ y :: m).consecutivePairs = (l ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := by
+  induction l with
+  | nil => simp
+  | cons x l ih =>
+    cases l with
+    | nil => rfl
+    | cons z l =>
+      have key : ((z :: l) ++ y :: m).consecutivePairs =
+          ((z :: l) ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := ih
+      simp only [List.cons_append, consecutivePairs_cons_cons] at key ⊢
+      rw [key]
 
 /-- **Transition counts count consecutive pairs.** Reading a list of length `n + 1` as a word
 indexed by `Fin (n + 1)`, its transition count from `a` to `b` is the number of occurrences of
