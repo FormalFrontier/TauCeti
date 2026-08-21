@@ -15,6 +15,13 @@ name: Toolchain tags
 # says nothing, and a message in the topic means something happened.
 #
 # It never creates a tag. `--create` is a manual step, because a tag is permanent.
+#
+# One gap, deliberately left: nothing re-fires when a failed ci.yml is later re-run and
+# passes. The topic keeps showing that release as blocked until the next toolchain bump.
+# Triggering on ci.yml completion instead would close it, at the cost of running on every
+# push to main, roughly 110 times a day. Until that trade looks worth making, the way out
+# is to dispatch this workflow by hand; the blocked message sitting in the topic is the
+# prompt to do so.
 
 on:
   push:
@@ -40,7 +47,11 @@ concurrency:
 
 jobs:
   report:
-    if: github.repository == 'TauCetiProject/TauCeti'
+    # The ref guard is not decoration: workflow_dispatch lets any ref be selected, and the
+    # job would otherwise check that branch out and report its history as main's.
+    if: >-
+      github.repository == 'TauCetiProject/TauCeti'
+      && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # The wait below is bounded at 180 minutes; this bounds the job around it.
     timeout-minutes: 200
@@ -50,7 +61,10 @@ jobs:
       # to run in a shallow clone rather than answer from partial history.
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
+          # The tool re-fetches origin/main before auditing, because the wait below can run
+          # for over an hour and this checkout is a snapshot from before it.
 
       - name: Wait for CI, then report to Zulip if anything changed
         env:

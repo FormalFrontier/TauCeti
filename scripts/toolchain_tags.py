@@ -133,6 +133,16 @@ def main_ref():
     return "main"
 
 
+def fetch_main():
+    """Bring origin/main up to date before auditing.
+
+    The wait can run for over an hour, during which main moves by roughly a hundred
+    commits, and a push-triggered checkout is pinned to the pushed commit in any case. The
+    report says "here is the state", so it has to read the state now rather than the state
+    when the job started."""
+    git("fetch", "--quiet", "origin", "main")
+
+
 def eras(ref=None):
     """Every toolchain `main` has run on, oldest first: {release, toolchain, commit}.
 
@@ -387,7 +397,8 @@ def state_digest(rows):
     a change. `pending` releases are left out entirely: a release whose CI has not finished
     is not news, and including it would post a message on every bump saying "wait", then
     another when the waiting ended. `out-of-scope` is left out because it never changes."""
-    interesting = sorted((r["release"], r["status"]) for r in rows
+    interesting = sorted((r["release"], r["status"], r.get("commit"), r.get("ci"))
+                         for r in rows
                          if r["status"] not in ("pending", "out-of-scope"))
     return hashlib.sha256(repr(interesting).encode()).hexdigest()[:16]
 
@@ -533,7 +544,9 @@ def last_posted_digest(z, bot_id):
 def post_content(rows, digest):
     """The command someone would run, and what it printed."""
     body = render(rows, include_policy=False, collapse_old=True).rstrip()
-    return (f"```\npython3 scripts/toolchain_tags.py\n```\n"
+    # The command shown must be the one that produced what is shown. --brief is exactly
+    # this transformation, so someone can paste it and get the same thing back.
+    return (f"```\npython3 scripts/toolchain_tags.py --brief\n```\n"
             f"```text\n{body}\n```\n"
             f"<!--toolchain-tags:v1 {digest}-->")
 
@@ -571,6 +584,8 @@ def main(argv=None):
                         help="create the tag for this release (with --all, every ready one)")
     parser.add_argument("--all", action="store_true", help="with --create, every ready release")
     parser.add_argument("--json", action="store_true", help="machine-readable report")
+    parser.add_argument("--brief", action="store_true",
+                        help="the report without the policy header, old releases collapsed")
     parser.add_argument("--post", action="store_true",
                         help="post the report to Zulip if the state has changed")
     parser.add_argument("--wait-for-ci", metavar="SHA",
@@ -586,14 +601,18 @@ def main(argv=None):
             parser.error("--wait-for-ci needs a 40-hex commit sha")
         conclusion = wait_for_ci(args.wait_for_ci, timeout_minutes=args.wait_minutes)
         if conclusion is None:
-            # Not an error. The audit below will show the release as `pending`, which the
-            # digest ignores, so nothing is posted and the next bump tries again.
-            log(f"gave up waiting for CI on {args.wait_for_ci[:8]} after "
-                f"{args.wait_minutes} minutes; reporting what is true now")
-        else:
-            log(f"CI on {args.wait_for_ci[:8]} concluded {conclusion}")
+            # Exit red rather than quietly reporting nothing. The release stays `pending`,
+            # which the digest ignores, so Zulip would say nothing and the run would be
+            # green: a release that never got reported would look exactly like a quiet
+            # night. Zulip is for "the state changed"; a red run is for "I could not do my
+            # job". Re-dispatch once CI has finished.
+            print(f"toolchain_tags: CI on {args.wait_for_ci[:8]} had not concluded after "
+                  f"{args.wait_minutes} minutes; nothing reported", file=sys.stderr)
+            return 1
+        log(f"CI on {args.wait_for_ci[:8]} concluded {conclusion}")
 
     try:
+        fetch_main()
         rows = audit()
     except RuntimeError as exc:
         print(f"toolchain_tags: {exc}", file=sys.stderr)
@@ -610,7 +629,10 @@ def main(argv=None):
         return 0
 
     if args.create is None:
-        print(json.dumps(rows, indent=2, sort_keys=True) if args.json else render(rows), end="")
+        if args.json:
+            print(json.dumps(rows, indent=2, sort_keys=True))
+        else:
+            print(render(rows, include_policy=not args.brief, collapse_old=args.brief), end="")
         return 0
 
     if args.all:

@@ -302,6 +302,22 @@ class Digest(unittest.TestCase):
         self.assertEqual(tt.state_digest(self.ROWS), tt.state_digest(worded))
 
 
+class DigestCause(unittest.TestCase):
+    """A blocked release whose CAUSE changes must repost, or the visible reason stays wrong."""
+
+    def test_a_different_ci_conclusion_is_a_change(self):
+        failed = [{"release": "v4.34.0", "status": "blocked", "commit": "a" * 40,
+                   "ci": "failure"}]
+        cancelled = [dict(failed[0], ci="cancelled")]
+        self.assertNotEqual(tt.state_digest(failed), tt.state_digest(cancelled))
+
+    def test_ci_passing_but_no_cache_differs_from_ci_failing(self):
+        no_cache = [{"release": "v4.34.0", "status": "blocked", "commit": "a" * 40,
+                     "ci": "success"}]
+        ci_failed = [dict(no_cache[0], ci="failure")]
+        self.assertNotEqual(tt.state_digest(no_cache), tt.state_digest(ci_failed))
+
+
 class PostContent(unittest.TestCase):
     ROWS = [{"release": "v4.32.0", "status": "out-of-scope", "commit": "1" * 40,
              "mathlib_rev": "a" * 40, "reason": "predates the cache"},
@@ -325,6 +341,17 @@ class PostContent(unittest.TestCase):
 
     def test_it_omits_the_policy_header(self):
         self.assertNotIn("Tau Ceti toolchain tags", tt.post_content(self.ROWS, "0" * 16))
+
+    def test_the_advertised_command_reproduces_the_output(self):
+        # The message shows a command and its output. An earlier version showed the plain
+        # command while displaying output with the policy stripped and rows collapsed,
+        # which no run of that command would produce.
+        content = tt.post_content(self.ROWS, "0" * 16)
+        command = content.split("```")[1].strip()
+        self.assertEqual(command, "python3 scripts/toolchain_tags.py --brief")
+        shown = content.split("```text")[1].split("```")[0].strip()
+        produced = tt.render(self.ROWS, include_policy=False, collapse_old=True).strip()
+        self.assertEqual(shown, produced)
 
 
 class FakeZulip:
@@ -422,11 +449,20 @@ class WaitForCI(unittest.TestCase):
         self.assertEqual(tt.wait_for_ci("a" * 40, sleep=slept.append), "failure")
         self.assertEqual(len(slept), 2)
 
-    def test_a_timeout_is_not_an_error(self):
-        # The report will show the release as `pending`, which the digest ignores, so a
-        # timeout means no message rather than a wrong one.
+    def test_a_timeout_returns_none(self):
         self._ci([])
         self.assertIsNone(tt.wait_for_ci("a" * 40, timeout_minutes=0, sleep=lambda s: None))
+
+    def test_a_timeout_makes_the_run_red(self):
+        # A timeout posts nothing, because the release stays `pending` and the digest
+        # ignores it. Exiting 0 as well would make a release that never got reported look
+        # exactly like a quiet night.
+        self._ci([])
+        self.addCleanup(setattr, tt, "fetch_main", tt.fetch_main)
+        tt.fetch_main = lambda: None
+        with redirect_stdout(io.StringIO()):
+            code = tt.main(["--post", "--wait-for-ci", "a" * 40, "--wait-minutes", "0"])
+        self.assertEqual(code, 1)
 
 
 class CommandLine(unittest.TestCase):
