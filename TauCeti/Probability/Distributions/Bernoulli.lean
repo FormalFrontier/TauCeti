@@ -44,12 +44,14 @@ namespace TauCeti
 namespace Probability
 
 /-- The mean of the real-valued Bernoulli law with success probability `p` is `p`. -/
+@[simp]
 theorem integral_id_bernoulliMeasure (p : I) :
     ∫ x, x ∂Ber((1 : ℝ), 0, p) = (p : ℝ) := by
   rw [integral_bernoulliMeasure]
   simp
 
 /-- The variance of the real-valued Bernoulli law with success probability `p` is `p(1-p)`. -/
+@[simp]
 theorem variance_id_bernoulliMeasure (p : I) :
     Var[id; Ber((1 : ℝ), 0, p)] = (p : ℝ) * (1 - p) := by
   rw [variance_eq_integral (by fun_prop), integral_bernoulliMeasure]
@@ -57,17 +59,20 @@ theorem variance_id_bernoulliMeasure (p : I) :
   ring_nf
 
 /-- A real-valued Bernoulli random variable with success probability `p` has mean `p`. -/
+@[simp]
 theorem integral_of_hasLaw_bernoulliMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {p : I} (hX : HasLaw X Ber((1 : ℝ), 0, p) P) : P[X] = (p : ℝ) := by
   rw [hX.integral_eq, integral_id_bernoulliMeasure]
 
 /-- A real-valued Bernoulli random variable with success probability `p` has variance `p(1-p)`. -/
+@[simp]
 theorem variance_of_hasLaw_bernoulliMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {p : I} (hX : HasLaw X Ber((1 : ℝ), 0, p) P) :
     Var[X; P] = (p : ℝ) * (1 - p) := by
   rw [hX.variance_eq, variance_id_bernoulliMeasure]
 
 /-- The moment-generating function of the real-valued Bernoulli law. -/
+@[simp]
 theorem mgf_id_bernoulliMeasure (p : I) (t : ℝ) :
     mgf id Ber((1 : ℝ), 0, p) t = 1 - (p : ℝ) + (p : ℝ) * Real.exp t := by
   rw [mgf, integral_bernoulliMeasure]
@@ -80,12 +85,14 @@ theorem mgf_id_bernoulliMeasure_pos (p : I) (t : ℝ) :
   exact mgf_pos (integrable_bernoulliMeasure (1 : ℝ) 0 p fun x => Real.exp (t * id x))
 
 /-- The cumulant-generating function of the real-valued Bernoulli law. -/
+@[simp]
 theorem cgf_id_bernoulliMeasure (p : I) (t : ℝ) :
     cgf id Ber((1 : ℝ), 0, p) t =
       Real.log (1 - (p : ℝ) + (p : ℝ) * Real.exp t) := by
   rw [cgf, mgf_id_bernoulliMeasure]
 
 /-- The characteristic function of the real-valued Bernoulli law. -/
+@[simp]
 theorem charFun_bernoulliMeasure (p : I) (t : ℝ) :
     charFun Ber((1 : ℝ), 0, p) t =
       1 - (p : ℂ) + (p : ℂ) * Complex.exp (Complex.I * t) := by
