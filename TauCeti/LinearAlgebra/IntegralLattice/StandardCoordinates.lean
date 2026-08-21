@@ -82,7 +82,13 @@ theorem form_ofGramMatrix_basisFun_right (x : ι → ℚ) (i : ι) :
   exact mul_comm _ _
 
 /-- The Gram matrix of a Gram-matrix lattice in its standard coordinate basis is the given
-matrix. -/
+matrix.
+
+Like the carrier lemma below, this is deliberately not a `simp` lemma: `ofGramMatrix_form` is itself
+`@[simp]`, so `simp` rewrites the left-hand side through `Matrix.toBilin` into a double sum over
+`Finsupp.single` and the `simpNF` linter rejects the tagged form.  Lattices presented by a concrete
+Cartan matrix state the specialized version, which is in simp-normal form; see
+`form_typeE₆SimpleRoot_typeE₆SimpleRoot` in `RootLattice/TypeE.lean`. -/
 theorem form_ofGramMatrix_basisFun_basisFun (i j : ι) :
     (ofGramMatrix (Pi.basisFun ℚ ι) G hG).form
         (Pi.basisFun ℚ ι i) (Pi.basisFun ℚ ι j) = ((G i j : ℤ) : ℚ) := by
@@ -96,9 +102,10 @@ theorem form_ofGramMatrix_basisFun_basisFun (i j : ι) :
 /-- A vector belongs to a Gram-matrix lattice exactly when all of its standard coordinates are
 integers.
 
-This is deliberately not a `simp` lemma, unlike the dual-carrier lemma below: `ofGramMatrix_carrier`
-is itself `@[simp]` and rewrites the left-hand side to a bare `Submodule.span` membership, so the
-`simpNF` linter rejects the tagged form. -/
+This too is deliberately not a `simp` lemma, unlike the dual-carrier lemma below:
+`ofGramMatrix_carrier` is itself `@[simp]` and rewrites the left-hand side to a bare
+`Submodule.span` membership, so the `simpNF` linter rejects the tagged form.  The specialized
+`mem_typeE₆RootLattice_carrier_iff` and its siblings do carry the tag. -/
 theorem mem_ofGramMatrix_basisFun_carrier_iff (x : ι → ℚ) :
     x ∈ (ofGramMatrix (Pi.basisFun ℚ ι) G hG).carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   classical
