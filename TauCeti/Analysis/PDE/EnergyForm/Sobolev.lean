@@ -41,9 +41,13 @@ of the ellipticity floor, and integrating it gives
 
 for every `u ∈ H¹(Ω)`, with `λ` the lower ellipticity constant, `β` a bound for the drift and
 `c ≥ 0` (`TauCeti.PDE.UniformlyEllipticOn.garding_energyFormH1_self`). This is *not yet*
-coercivity: the negative `L²` term is genuinely there, and on `H¹(Ω)` it cannot be removed —
-on a domain of finite measure a nonzero constant lies in `H¹(Ω)` and has zero gradient, so no
-lower bound by a positive multiple of `‖u‖²_{H¹}` can hold there.
+coercivity, and under the hypotheses assumed here the negative `L²` term cannot be dropped:
+`c ≥ 0` allows `c = 0`, and then on a domain of finite measure a nonzero constant lies in
+`H¹(Ω)` with zero gradient, so no lower bound by a positive multiple of `‖u‖²_{H¹}` holds. It
+is the weakness of `c ≥ 0` that is responsible, not `H¹(Ω)` itself: a mass coefficient bounded
+below by a constant `μ > β²/2λ` controls constants too, and the mass-floor bound
+`TauCeti.PDE.UniformlyEllipticOn.garding_energyFormIntegral_self_of_mass_lower_bound_on` then
+has no negative term left to remove.
 
 A **Poincaré inequality** `‖u‖_{L²} ≤ P‖∇u‖_{L²}` closes the gap, and
 `TauCeti.W1p.norm_value_le_mul_norm_gradient_of_subset_slab` supplies one on `H¹₀(Ω)` for a
@@ -52,16 +56,20 @@ domain trapped in a slab. The resulting bound
 `a(u, u) ≥ (λ² - β²P²)/(2λ(P² + 1)) · ‖u‖²_{H¹}`
 
 holds outright (`TauCeti.PDE.UniformlyEllipticOn.energyFormH1_self_lower_bound_of_poincare`), and
-it *is* coercivity exactly when its constant is positive, which by
-`TauCeti.PDE.coercivity_constant_pos` is the smallness condition `βP < λ` relating the drift to
-the ellipticity and the domain; with no drift there is no smallness condition at all. The
+it *is* coercivity once its constant is positive, for which `TauCeti.PDE.coercivity_constant_pos`
+supplies the sufficient smallness condition `βP < λ` relating the drift to the ellipticity and
+the domain; with no drift there is no smallness condition at all. The
 condition is what this estimate needs, not a proof that coercivity fails without it; when
 coercivity is genuinely unavailable, the Fredholm alternative (Lane D, item 18) takes the place
 of Lax--Milgram.
 
 Boundedness is the other half of the pair the energy method needs, and it comes from the
 pointwise operator-norm bound `Λ + β + γ` on the energy integrand together with Cauchy--Schwarz
-(`TauCeti.PDE.UniformlyEllipticOn.norm_energyFormH1_le`).
+(`TauCeti.PDE.UniformlyEllipticOn.norm_energyFormH1_le`). Bilinearity and that bound package the
+form as a bundled continuous bilinear map on `H¹(Ω)`
+(`TauCeti.PDE.UniformlyEllipticOn.energyFormH1L`), and restricting it along the inclusion of the
+closed subspace gives `TauCeti.PDE.UniformlyEllipticOn.energyFormH1L0` on `H¹₀(Ω)`, which is the
+`V →L[ℝ] V →L[ℝ] ℝ` that `TauCeti.IsCoercive.solutionOfInner` takes as input.
 
 Everything is stated with explicit constants `λ, Λ, β, γ, P`, as the roadmap's standing
 hypotheses require, and coefficient bounds are inline hypotheses `∀ x ∈ Ω, ‖b x‖ ≤ β` rather
@@ -80,8 +88,14 @@ hypothesis is carried explicitly, and the interior estimates do not see the boun
 * `TauCeti.PDE.UniformlyEllipticOn.energyFormH1_self_lower_bound_of_poincare`: the lower bound by
   `‖u‖²_{H¹}` obtained from a Poincaré inequality, and `TauCeti.PDE.coercivity_constant_pos`,
   the smallness condition `βP < λ` under which it is coercivity.
-* `TauCeti.PDE.UniformlyEllipticOn.coercive_energyFormH1_self_of_zero_drift`: coercivity with
-  no smallness condition when the drift vanishes.
+* `TauCeti.PDE.UniformlyEllipticOn.mul_norm_gradient_sq_le_energyFormH1_self_of_zero_drift`: the
+  lower bound `λ‖∇u‖²_{L²} ≤ a(u, u)` when the drift vanishes, and
+  `TauCeti.PDE.UniformlyEllipticOn.coercive_energyFormH1_self_of_zero_drift`: the coercivity it
+  gives, with no smallness condition, on `H¹₀(Ω)`.
+* `TauCeti.PDE.UniformlyEllipticOn.energyFormH1L` and
+  `TauCeti.PDE.UniformlyEllipticOn.energyFormH1L0`: the energy form bundled as a continuous
+  bilinear map on `H¹(Ω)` and on `H¹₀(Ω)`, with
+  `TauCeti.PDE.UniformlyEllipticOn.norm_energyFormH1L_le` bounding its operator norm.
 * `TauCeti.PDE.UniformlyEllipticOn.energyFormH1_self_lower_bound_of_subset_slab` and
   `TauCeti.PDE.UniformlyEllipticOn.energyFormH1_self_lower_bound_of_subset_ball`: lower bounds on
   `H¹₀(Ω)` for a domain trapped in a slab, or in a ball.
@@ -314,9 +328,9 @@ theorem energyFormH1_smul_right (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
     _ = r * energyFormH1 a b c u v := energyFormIntegral_smul_right _ _ _ _ _ _ r
 
 /-- The coefficient in
-`TauCeti.PDE.UniformlyEllipticOn.energyFormH1_self_lower_bound_of_poincare` is positive exactly
-under the smallness condition `βP < λ` relating the drift bound, the Poincaré constant and the
-ellipticity, so that estimate is coercivity precisely there. -/
+`TauCeti.PDE.UniformlyEllipticOn.energyFormH1_self_lower_bound_of_poincare` is positive under the
+smallness condition `βP < λ` relating the drift bound, the Poincaré constant and the ellipticity;
+that is the sufficient condition under which the estimate is coercivity. -/
 theorem coercivity_constant_pos (hlam : 0 < lam) (hbeta : 0 ≤ beta) (hP : 0 ≤ P)
     (hsmall : beta * P < lam) :
     0 < (lam ^ 2 - beta ^ 2 * P ^ 2) / (2 * lam * (P ^ 2 + 1)) := by
@@ -467,11 +481,11 @@ theorem garding_energyFormH1_self
 `(λ² - β²P²)/(2λ(P² + 1)) · ‖u‖²_{H¹} ≤ a(u, u)`.
 
 The estimate holds for every `P` for which the Poincaré bound is available; it *is* coercivity
-exactly when its constant is positive, which by
-`TauCeti.PDE.coercivity_constant_pos` is the smallness condition `βP < λ`
-relating the drift to the ellipticity and the domain. The Poincaré hypothesis is carried on the
-single vector `u`, so a caller may supply it from membership in `W^{1,2}_0(Ω)`, as the slab and
-ball corollaries below do, or from any other source. -/
+once its constant is positive, for which `TauCeti.PDE.coercivity_constant_pos` supplies the
+sufficient smallness condition `βP < λ` relating the drift to the ellipticity and the domain.
+The Poincaré hypothesis is carried on the single vector `u`, so a caller may supply it from
+membership in `W^{1,2}_0(Ω)`, as the slab and ball corollaries below do, or from any other
+source. -/
 theorem energyFormH1_self_lower_bound_of_poincare
     (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
     (ha : AEStronglyMeasurable a (mu.restrict Omega))
@@ -500,12 +514,47 @@ theorem energyFormH1_self_lower_bound_of_poincare
   nlinarith [mul_nonneg (_root_.add_nonneg (sq_nonneg lam) (sq_nonneg beta))
     (sub_nonneg.2 hsq)]
 
+/-- **The drift-free energy dominates the Dirichlet energy.** When the drift vanishes on `Ω`
+and the mass coefficient is nonnegative, uniform ellipticity integrates to
+
+`λ‖∇u‖²_{L²} ≤ a(u, u)`
+
+for every `u ∈ H¹(Ω)`. With no drift there is nothing for Young's inequality to absorb, so this
+keeps the full ellipticity constant where `garding_energyFormH1_self` is left with `λ/2`. -/
+theorem mul_norm_gradient_sq_le_energyFormH1_self_of_zero_drift
+    (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
+    (ha : AEStronglyMeasurable a (mu.restrict Omega))
+    (hb : AEStronglyMeasurable b (mu.restrict Omega))
+    (hc : AEStronglyMeasurable c (mu.restrict Omega))
+    (hb_zero : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), b x = 0)
+    (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma)
+    (hc_nonneg : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), 0 ≤ c x) (u : W1p mu Omega 2) :
+    lam * ‖W1p.gradient u‖ ^ 2 ≤ energyFormH1 a b c u u := by
+  have hmem : ∀ᵐ x ∂mu.restrict (Omega : Set (EuclideanSpace ℝ ι)),
+      x ∈ (Omega : Set (EuclideanSpace ℝ ι)) := ae_restrict_mem Omega.isOpen.measurableSet
+  have hgrad : Integrable (fun x => ‖(jetField u x).2‖ ^ 2) (mu.restrict Omega) :=
+    (memLp_two_iff_integrable_sq_norm ((memLp_jetField u).aestronglyMeasurable.snd)).1
+      (memLp_jetField u).snd
+  have henergy := integrable_energyIntegrand_jetField (beta := 0) h ha hb hc
+    (fun x hx => by simp [hb_zero x hx]) hc_bound u u
+  rw [energyFormH1_def, ← integral_norm_jetField_snd_sq u, ← integral_const_mul]
+  refine integral_mono_ae (hgrad.const_mul lam) henergy ?_
+  filter_upwards [hmem] with x hx
+  have hlow := h.lower_bound hx (jetField u x).2
+  rw [toQuadraticForm'_eq_dotProduct] at hlow
+  have hmass : 0 ≤ c x * (jetField u x).1 ^ 2 := mul_nonneg (hc_nonneg x hx) (sq_nonneg _)
+  rw [energyIntegrand_self, hb_zero x hx]
+  simp only [inner_zero_left, zero_mul, toQuadraticForm'_eq_dotProduct]
+  linarith
+
 /-- **Coercivity with no drift.** When the drift vanishes on `Ω` there is no smallness
 condition: a Poincaré inequality alone gives
 
-`λ/(2(P² + 1)) · ‖u‖²_{H¹} ≤ a(u, u)`.
+`λ/(P² + 1) · ‖u‖²_{H¹} ≤ a(u, u)`.
 
-This is the case of a divergence-form operator `-∂ⱼ(aⁱʲ ∂ᵢu) + c u`. -/
+This is the case of a divergence-form operator `-∂ⱼ(aⁱʲ ∂ᵢu) + c u`. The constant is the one
+the ellipticity floor gives directly, without the factor `2` that Young's inequality costs when
+a drift has to be absorbed. -/
 theorem coercive_energyFormH1_self_of_zero_drift
     (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
     (ha : AEStronglyMeasurable a (mu.restrict Omega))
@@ -514,18 +563,125 @@ theorem coercive_energyFormH1_self_of_zero_drift
     (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma)
     (hc_nonneg : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), 0 ≤ c x) {u : W1p mu Omega 2}
     (hu : ‖W1p.value u‖ ≤ P * ‖W1p.gradient u‖) :
-    lam / (2 * (P ^ 2 + 1)) * ‖u‖ ^ 2 ≤ energyFormH1 a b c u u := by
+    lam / (P ^ 2 + 1) * ‖u‖ ^ 2 ≤ energyFormH1 a b c u u := by
   have hlam : 0 < lam := h.pos
+  have hP : (0 : ℝ) < P ^ 2 + 1 := by positivity
   have hmem : ∀ᵐ x ∂mu.restrict (Omega : Set (EuclideanSpace ℝ ι)),
       x ∈ (Omega : Set (EuclideanSpace ℝ ι)) := ae_restrict_mem Omega.isOpen.measurableSet
   have hb : AEStronglyMeasurable b (mu.restrict Omega) :=
     AEStronglyMeasurable.congr aestronglyMeasurable_const
       (hmem.mono fun x hx => (hb_zero x hx).symm)
-  have key := energyFormH1_self_lower_bound_of_poincare (beta := 0) (P := P) h ha hb hc
-    (fun x hx => by simp [hb_zero x hx]) hc_bound hc_nonneg hu
-  convert key using 1
-  field_simp
-  ring
+  have hnorm : ‖u‖ ^ 2 = ‖W1p.value u‖ ^ 2 + ‖W1p.gradient u‖ ^ 2 :=
+    W1p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq u
+  have hsq : ‖W1p.value u‖ ^ 2 ≤ P ^ 2 * ‖W1p.gradient u‖ ^ 2 := by
+    have := mul_self_le_mul_self (norm_nonneg (W1p.value u)) hu
+    nlinarith [this]
+  have key := mul_norm_gradient_sq_le_energyFormH1_self_of_zero_drift h ha hb hc hb_zero
+    hc_bound hc_nonneg u
+  rw [div_mul_eq_mul_div, div_le_iff₀ hP]
+  nlinarith [key, hsq, hnorm]
+
+/-! ### The energy form as a bundled continuous bilinear form -/
+
+/-- Shortcut instance for the norm of `W^{1,2}(Ω)`: instance search reaches it through the two
+nested submodules and the `Lᵖ` jet space, which costs more than the default budget allows once
+the iterated arrow `H¹(Ω) →L[ℝ] H¹(Ω) →L[ℝ] ℝ` has to be normed. -/
+noncomputable local instance seminormedAddCommGroupW1pTwo :
+    SeminormedAddCommGroup (W1p mu Omega 2) := inferInstance
+
+/-- Shortcut instance for the real vector space structure of `W^{1,2}(Ω)`; see
+`seminormedAddCommGroupW1pTwo`. -/
+noncomputable local instance normedSpaceW1pTwo : NormedSpace ℝ (W1p mu Omega 2) := inferInstance
+
+/-- Shortcut instance for the norm of `W^{1,2}_0(Ω)`; see `seminormedAddCommGroupW1pTwo`. -/
+noncomputable local instance seminormedAddCommGroupW1p0Two :
+    SeminormedAddCommGroup (W1p0 mu Omega 2) := inferInstance
+
+/-- Shortcut instance for the real vector space structure of `W^{1,2}_0(Ω)`; see
+`seminormedAddCommGroupW1pTwo`. -/
+noncomputable local instance normedSpaceW1p0Two : NormedSpace ℝ (W1p0 mu Omega 2) := inferInstance
+
+/-- **The energy form on `H¹(Ω)` as a bundled continuous bilinear form.** Under the coefficient
+hypotheses that make the energy density integrable the form is bilinear, and
+`norm_energyFormH1_le` makes it continuous, so it bundles as
+
+`H¹(Ω) →L[ℝ] H¹(Ω) →L[ℝ] ℝ`.
+
+This is the shape Mathlib's bounded-bilinear-form API expects; `energyFormH1L0` restricts it to
+`H¹₀(Ω)`, where `TauCeti.IsCoercive.solutionOfInner` consumes it. -/
+def energyFormH1L (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
+    (ha : AEStronglyMeasurable a (mu.restrict Omega))
+    (hb : AEStronglyMeasurable b (mu.restrict Omega))
+    (hc : AEStronglyMeasurable c (mu.restrict Omega))
+    (hbeta : 0 ≤ beta) (hgamma : 0 ≤ gamma)
+    (hb_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖b x‖ ≤ beta)
+    (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma) :
+    W1p mu Omega 2 →L[ℝ] W1p mu Omega 2 →L[ℝ] ℝ :=
+  LinearMap.mkContinuous₂
+    (LinearMap.mk₂ ℝ (energyFormH1 a b c)
+      (fun u w v => energyFormH1_add_left h ha hb hc hb_bound hc_bound u v w)
+      (fun r u v => energyFormH1_smul_left a b c r u v)
+      (fun u v w => energyFormH1_add_right h ha hb hc hb_bound hc_bound u v w)
+      (fun r u v => energyFormH1_smul_right a b c r u v))
+    (Lam + beta + gamma)
+    (fun u v => by
+      rw [mul_assoc]
+      exact norm_energyFormH1_le h hbeta hgamma hb_bound hc_bound u v)
+
+@[simp]
+theorem energyFormH1L_apply (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
+    (ha : AEStronglyMeasurable a (mu.restrict Omega))
+    (hb : AEStronglyMeasurable b (mu.restrict Omega))
+    (hc : AEStronglyMeasurable c (mu.restrict Omega))
+    (hbeta : 0 ≤ beta) (hgamma : 0 ≤ gamma)
+    (hb_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖b x‖ ≤ beta)
+    (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma)
+    (u v : W1p mu Omega 2) :
+    energyFormH1L h ha hb hc hbeta hgamma hb_bound hc_bound u v = energyFormH1 a b c u v :=
+  (rfl)
+
+/-- The bundled energy form has operator norm at most `Λ + β + γ`, the constant of
+`norm_energyFormH1_le`. -/
+theorem norm_energyFormH1L_le
+    (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
+    (ha : AEStronglyMeasurable a (mu.restrict Omega))
+    (hb : AEStronglyMeasurable b (mu.restrict Omega))
+    (hc : AEStronglyMeasurable c (mu.restrict Omega))
+    (hbeta : 0 ≤ beta) (hgamma : 0 ≤ gamma)
+    (hb_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖b x‖ ≤ beta)
+    (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma) :
+    ‖energyFormH1L h ha hb hc hbeta hgamma hb_bound hc_bound‖ ≤ Lam + beta + gamma :=
+  LinearMap.mkContinuous₂_norm_le _ (by linarith [h.upper_nonneg]) _
+
+/-- **The energy form on `H¹₀(Ω)` as a bundled continuous bilinear form**, the restriction of
+`energyFormH1L` along the inclusion of the closed subspace `W^{1,2}_0(Ω) ⊆ W^{1,2}(Ω)`. This is
+the input Lax--Milgram takes for the Dirichlet problem, the lower bounds above supplying its
+coercivity. -/
+def energyFormH1L0 (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
+    (ha : AEStronglyMeasurable a (mu.restrict Omega))
+    (hb : AEStronglyMeasurable b (mu.restrict Omega))
+    (hc : AEStronglyMeasurable c (mu.restrict Omega))
+    (hbeta : 0 ≤ beta) (hgamma : 0 ≤ gamma)
+    (hb_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖b x‖ ≤ beta)
+    (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma) :
+    W1p0 mu Omega 2 →L[ℝ] W1p0 mu Omega 2 →L[ℝ] ℝ :=
+  (energyFormH1L h ha hb hc hbeta hgamma hb_bound hc_bound).bilinearComp
+    (w1p0Submodule mu Omega 2).toSubmodule.subtypeL
+    (w1p0Submodule mu Omega 2).toSubmodule.subtypeL
+
+@[simp]
+theorem energyFormH1L0_apply
+    (h : UniformlyEllipticOn (Omega : Set (EuclideanSpace ℝ ι)) a lam Lam)
+    (ha : AEStronglyMeasurable a (mu.restrict Omega))
+    (hb : AEStronglyMeasurable b (mu.restrict Omega))
+    (hc : AEStronglyMeasurable c (mu.restrict Omega))
+    (hbeta : 0 ≤ beta) (hgamma : 0 ≤ gamma)
+    (hb_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖b x‖ ≤ beta)
+    (hc_bound : ∀ x ∈ (Omega : Set (EuclideanSpace ℝ ι)), ‖c x‖ ≤ gamma)
+    (u v : W1p0 mu Omega 2) :
+    energyFormH1L0 h ha hb hc hbeta hgamma hb_bound hc_bound u v =
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) :=
+  (rfl)
 
 end UniformlyEllipticOn
 
