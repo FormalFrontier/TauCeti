@@ -54,9 +54,8 @@ lattice.
   of an intermediate carrier is the order of the subgroup it cuts out in `A_L`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.index_intermediateCarrierOfDiscriminantSubgroup`:
   `[L_H : L] = |H|`.
-* `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_mul_relIndex` and
-  `TauCeti.IntegralLattice.natCard_mul_relIndex_discriminantSubgroup`: multiplicativity of the
-  index along a chain of intermediate carriers, and along the corresponding chain of subgroups.
+* `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_mul_relIndex`: multiplicativity of the
+  index along a chain of intermediate carriers.
 * `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_eq_relIndex_discriminantSubgroup`: relative
   index is preserved by the intermediate-carrier/discriminant-subgroup correspondence.
 * `TauCeti.IntegralLattice.IntermediateCarrier.relIndex_intermediateCarrierOfDiscriminantSubgroup`:
@@ -84,13 +83,6 @@ universe u
 namespace IntegralLattice
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
-
-/-- Multiplicativity of the index along a chain of subgroups of a discriminant group. -/
-theorem natCard_mul_relIndex_discriminantSubgroup {L : IntegralLattice V}
-    {H K : AddSubgroup L.DiscriminantGroup} (h : H ≤ K) :
-    Nat.card H * H.relIndex K = Nat.card K := by
-  rw [← AddSubgroup.relIndex_bot_left H, ← AddSubgroup.relIndex_bot_left K]
-  exact AddSubgroup.relIndex_mul_relIndex ⊥ H K bot_le h
 
 namespace IntermediateCarrier
 
