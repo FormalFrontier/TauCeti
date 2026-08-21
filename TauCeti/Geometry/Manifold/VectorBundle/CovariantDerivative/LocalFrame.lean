@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.VectorBundle.CovariantDerivative.Basic
-public import Mathlib.Geometry.Manifold.VectorBundle.LocalFrame
+public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.Basic
+public import TauCeti.Geometry.Manifold.VectorBundle.LocalFrame
 
 /-!
 # Covariant derivatives read in a local frame
@@ -38,8 +38,6 @@ derivative, and they give the classical coordinate formula for `∇ σ` along a 
 * `TauCeti.Manifold.covariantDerivative_eq_of_localFrame_eq`: two covariant derivatives which
   agree on the frame sections at a point agree at that point on every section differentiable
   there.
-* `TauCeti.Manifold.localFrameCoeff_localFrame`: a local frame is dual to its coefficient
-  functionals.
 * `TauCeti.Manifold.christoffelForm`: the Christoffel form of a covariant derivative in a local
   frame, with `TauCeti.Manifold.christoffelForm_apply` computing it and
   `TauCeti.Manifold.covariantDerivative_eq_add_christoffelForm` expressing the covariant
@@ -86,24 +84,6 @@ variable
   [FiberBundle F V] [VectorBundle 𝕜 F V]
   {x : M} {σ : Π x : M, V x}
   {cov : (Π x : M, V x) → (Π x : M, TangentSpace I x →L[𝕜] V x)}
-
-/-! ### Finite sums of sections -/
-
-/-- A covariant derivative over `u` commutes with finite sums of sections differentiable at a
-point of `u`. -/
-theorem covariantDerivative_sum {κ : Type*} {u : Set M} {s : Finset κ} {τ : κ → Π x : M, V x}
-    (hcov : IsCovariantDerivativeOn F cov u) (hx : x ∈ u)
-    (hτ : ∀ i ∈ s, MDiffAt (T% (τ i)) x) :
-    cov (∑ i ∈ s, τ i) x = ∑ i ∈ s, cov (τ i) x := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simpa using hcov.zero hx
-  | insert i s hi ih =>
-    simp only [Finset.mem_insert, forall_eq_or_imp] at hτ
-    have hsum : MDiffAt (T% (∑ j ∈ s, τ j)) x := by
-      simpa [Finset.sum_apply] using
-        MDifferentiableAt.sum_section (t := fun j (y : M) ↦ τ j y) (s := s) hτ.2
-    rw [Finset.sum_insert hi, hcov.add hτ.1 hsum hx, ih hτ.2, Finset.sum_insert hi]
 
 variable [ContMDiffVectorBundle 1 F V I]
   {ι : Type*} [Fintype ι] (b : Basis ι 𝕜 F)
@@ -226,24 +206,6 @@ theorem covariantDerivative_eq_of_localFrame_eq [Finite ι]
   congr 1
   exact Finset.sum_congr rfl fun i _ ↦ by rw [hframe i]
 
-omit [Fintype ι] [CompleteSpace 𝕜] [FiniteDimensional 𝕜 F]
-  [∀ x, IsTopologicalAddGroup (V x)] [∀ x, ContinuousSMul 𝕜 (V x)] in
-/-- A local frame is dual to its own coefficient functionals on the basis sections at `x`. -/
-@[simp]
-theorem localFrameCoeff_basisAt [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
-    e.localFrameCoeff I b i x (e.basisAt b hx j) = if i = j then 1 else 0 := by
-  rw [← e.localFrame_apply_of_mem_baseSet b hx,
-    e.localFrameCoeff_apply_of_mem_baseSet b hx (e.localFrame b j) i,
-    e.localFrame_apply_of_mem_baseSet b hx, Basis.repr_self, Finsupp.single_apply]
-  simp [eq_comm]
-
-omit [Fintype ι] [CompleteSpace 𝕜] [FiniteDimensional 𝕜 F]
-  [∀ x, IsTopologicalAddGroup (V x)] [∀ x, ContinuousSMul 𝕜 (V x)] in
-/-- A local frame is dual to its own coefficient functionals. -/
-theorem localFrameCoeff_localFrame [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
-    e.localFrameCoeff I b i x (e.localFrame b j x) = if i = j then 1 else 0 := by
-  rw [e.localFrame_apply_of_mem_baseSet b hx, localFrameCoeff_basisAt b hx]
-
 /-! ### The Christoffel form -/
 
 /-- The Christoffel form of a covariant derivative in a local frame: the endomorphism-valued
@@ -282,7 +244,8 @@ variable
   {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [FiniteDimensional 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 2 M]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
+  [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I]
   {ι : Type*} (b : Basis ι 𝕜 E)
   {e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)} [MemTrivializationAtlas e]
   {x : M}
@@ -301,6 +264,7 @@ def christoffelSymbol (b : Basis ι 𝕜 E)
 
 omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E] in
 /-- The defining formula for the Christoffel symbols. -/
+@[simp]
 theorem christoffelSymbol_apply (i j k : ι) :
     christoffelSymbol I b e cov i j k x =
       e.localFrameCoeff I b k x (cov (e.localFrame b j) x (e.localFrame b i x)) :=
@@ -435,8 +399,8 @@ theorem contMDiffOn_christoffelMap [Fintype ι] {n : ℕ∞ω}
     [ContMDiffVectorBundle (n + 1) E (TangentSpace I : M → Type _) I]
     [ContMDiffCovariantDerivativeOn E n cov e.baseSet] :
     CMDiff[e.baseSet] n (christoffelMap b hcov) := by
-  apply (show CMDiff[e.baseSet] n (christoffelMapOfSymbols I b e cov) by
-    classical
+  classical
+  have hsymbols : CMDiff[e.baseSet] n (christoffelMapOfSymbols I b e cov) := by
     unfold christoffelMapOfSymbols
     apply contMDiffOn_finsetSum
     intro j _
@@ -444,9 +408,8 @@ theorem contMDiffOn_christoffelMap [Fintype ι] {n : ℕ∞ω}
     intro i _
     apply contMDiffOn_finsetSum
     intro k _
-    exact (contMDiffOn_christoffelSymbol b i j k).smul contMDiffOn_const).congr
-  intro y hy
-  exact christoffelMap_eq_of_mem b hcov hy
+    exact (contMDiffOn_christoffelSymbol b i j k).smul contMDiffOn_const
+  exact hsymbols.congr fun y hy ↦ christoffelMap_eq_of_mem b hcov hy
 
 /-- The classical coordinate formula for a covariant derivative on the tangent bundle: along the
 frame direction `eᵢ`, the `k`-th component of `∇ σ` is the derivative of the `k`-th coefficient of
