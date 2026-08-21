@@ -23,16 +23,18 @@ introduced here, and its distributive `G`- and `G ⧸ H`-actions are the generic
 inclusions and coefficient-map functoriality. This file adds the two finite-level facts the tower
 needs: directedness over the open normal subgroups and continuity of the quotient action.
 
-The declarations below work for an additive group with a distributive `G`-action; specializing to
-an abelian group gives the usual discrete-module theory. The unbundled classes `[AddGroup M]
-[DistribMulAction G M]`, with `[TopologicalSpace M] [DiscreteTopology M]` added only where the
-topology is used, are the hypotheses throughout, rather than a new bundling structure, so that
-instance search composes them freely.
+The fixed-point functoriality and finite-level facts are first stated for an additive monoid with a
+distributive `G`-action, then specialized to `FixedPoints.addSubgroup` for additive groups; an
+abelian group gives the usual discrete-module theory. The topology classes are added only where
+continuity is used, and no new bundling structure is introduced, so instance search composes the
+unbundled classes freely.
 
 ## Main results
 
-* `TauCeti.directed_fixedPoints_addSubgroup` and `TauCeti.continuousSMulQuotientFixedPoints`:
-  the invariants over the open normal subgroups form a directed family, and each carries a
+* `TauCeti.directed_fixedPoints_addSubmonoid` and
+  `TauCeti.continuousSMulQuotientFixedPointsAddSubmonoid`, with their additive-subgroup forms
+  `TauCeti.directed_fixedPoints_addSubgroup` and `TauCeti.continuousSMulQuotientFixedPoints`:
+  the fixed points over the open normal subgroups form a directed family, and each carries a
   continuous action of the discrete quotient group.
 
 ## Roadmap
@@ -61,6 +63,27 @@ namespace TauCeti
 section FiniteLevel
 
 variable (G : Type*) [Group G] [TopologicalSpace G]
+variable (M : Type*) [AddMonoid M] [DistribMulAction G M]
+
+/-- The finite-level fixed-point additive submonoids form a directed family: the open normal
+subgroups are closed under intersection, and the fixed points grow as the subgroup shrinks. -/
+theorem directed_fixedPoints_addSubmonoid :
+    Directed (· ≤ ·) fun U : OpenNormalSubgroup G ↦ FixedPoints.addSubmonoid U.toSubgroup M :=
+  Antitone.directed_le fun _ _ h ↦ fixedPoints_subgroup_antitone G M h
+
+variable [TopologicalSpace M] [DiscreteTopology M] [SeparatelyContinuousMul G]
+
+/-- For an open normal subgroup `U`, the action of the discrete quotient on the fixed-point
+additive submonoid is continuous. -/
+instance continuousSMulQuotientFixedPointsAddSubmonoid (U : OpenNormalSubgroup G) :
+    ContinuousSMul (G ⧸ U.toSubgroup) (FixedPoints.addSubmonoid U.toSubgroup M) :=
+  ⟨continuous_of_discreteTopology⟩
+
+end FiniteLevel
+
+section FiniteLevelAddGroup
+
+variable (G : Type*) [Group G] [TopologicalSpace G]
 variable (M : Type*) [AddGroup M] [DistribMulAction G M]
 
 /-- The finite-level invariants form a directed family: the open normal subgroups are closed under
@@ -76,8 +99,9 @@ variable [SeparatelyContinuousMul G] [TopologicalSpace M] [DiscreteTopology M]
 invariant coefficients `M ^ U` is continuous. -/
 instance continuousSMulQuotientFixedPoints (U : OpenNormalSubgroup G) :
     ContinuousSMul (G ⧸ U.toSubgroup) (FixedPoints.addSubgroup U.toSubgroup M) :=
-  ⟨continuous_of_discreteTopology⟩
+  inferInstanceAs <| ContinuousSMul (G ⧸ U.toSubgroup)
+    (FixedPoints.addSubmonoid U.toSubgroup M)
 
-end FiniteLevel
+end FiniteLevelAddGroup
 
 end TauCeti
