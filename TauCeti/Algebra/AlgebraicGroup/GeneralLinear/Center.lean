@@ -84,11 +84,14 @@ theorem mapValue_scalarTorusPoints {A B : Type u} [CommRing A] [CommRing B]
     AlgHom.mapValue (H := coordinateHopfAlgebra R n) φ (scalarTorusPoints n f) =
       scalarTorusPoints n (AlgHom.mapValue (H := R[T;T⁻¹]) φ f) := by
   apply (pointsMulEquiv (R := R) (A := B) n).injective
-  rw [pointsMulEquiv_mapValue, pointsMulEquiv_apply,
-    pointToGeneralLinear_scalarTorusPoints, pointsMulEquiv_apply,
-    pointToGeneralLinear_scalarTorusPoints, MultiplicativeGroup.pointsMulEquiv_mapValue,
-    Matrix.GeneralLinearGroup.map_scalar]
-  rfl
+  calc
+    pointsMulEquiv n (AlgHom.mapValue φ (scalarTorusPoints n f)) =
+        Matrix.GeneralLinearGroup.map φ.toRingHom (pointsMulEquiv n (scalarTorusPoints n f)) :=
+      pointsMulEquiv_mapValue n φ _
+    _ = pointsMulEquiv n (scalarTorusPoints n (AlgHom.mapValue φ f)) := by
+      simp only [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints,
+        MultiplicativeGroup.pointsMulEquiv_mapValue, Matrix.GeneralLinearGroup.map_scalar]
+      rfl
 
 /-- Scalar multiplication is injective in positive rank, stated on the represented point
 groups. -/
@@ -97,10 +100,13 @@ theorem scalarTorusPoints_injective (hn : 0 < n) {A : Type u} [CommRing A] [Alge
   intro f g hfg
   apply (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).injective
   let : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
-  have hmat := congrArg (pointsMulEquiv (R := R) (A := A) n) hfg
-  rw [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints,
-    pointsMulEquiv_apply,
-    pointToGeneralLinear_scalarTorusPoints] at hmat
+  have hmat :
+      Matrix.GeneralLinearGroup.scalar (Fin n)
+          (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A) f) =
+        Matrix.GeneralLinearGroup.scalar (Fin n)
+          (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A) g) := by
+    simpa only [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints] using
+      congrArg (pointsMulEquiv (R := R) (A := A) n) hfg
   apply Units.ext
   apply (Matrix.scalar_inj (n := Fin n)).mp
   simpa only [Matrix.GeneralLinearGroup.coe_scalar] using congrArg Units.val hmat
@@ -118,9 +124,11 @@ theorem scalarTorusPoints_mem_centerPointsSubgroup {A : Type u} [CommRing A] [Al
     HopfAlgebra.isCentralPoint_def]
   intro B _ _ φ g
   apply (pointsMulEquiv (R := k) (A := B) n).injective
-  rw [map_mul, map_mul, pointsMulEquiv_mapValue, pointsMulEquiv_apply,
-    pointToGeneralLinear_scalarTorusPoints, Matrix.GeneralLinearGroup.map_scalar]
-  exact Matrix.GeneralLinearGroup.scalar_commute _ _
+  simpa only [map_mul, mapValue_scalarTorusPoints, pointsMulEquiv_apply,
+    pointToGeneralLinear_scalarTorusPoints]
+    using Matrix.GeneralLinearGroup.scalar_commute
+      (MultiplicativeGroup.pointsMulEquiv (R := k) (A := B) (AlgHom.mapValue φ f))
+      (pointsMulEquiv (R := k) (A := B) n g)
 
 /-- The scalar-matrix map with codomain restricted to the represented center. -/
 noncomputable def scalarTorusCenterHom (A : CommAlgCat.{u} k) :
