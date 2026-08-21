@@ -311,6 +311,12 @@ instance : IsScalarTower k P.integers F :=
 evaluation map `f ↦ f(P)` is `IsLocalRing.residue P.integers`. -/
 noncomputable abbrev ResidueField : Type v := IsLocalRing.ResidueField P.integers
 
+/-- Equal places have canonically equivalent residue fields as algebras over the constant
+field. -/
+noncomputable def residueFieldEquivOfEq {P Q : Place k F} (h : P = Q) :
+    P.ResidueField ≃ₐ[k] Q.ResidueField :=
+  AlgEquiv.cast h
+
 /-- Evaluation at a place vanishes exactly on elements of positive valuation. -/
 theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
     IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by

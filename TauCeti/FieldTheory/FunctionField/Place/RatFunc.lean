@@ -232,7 +232,7 @@ theorem exists_monic_irreducible_degree_adic_eq_natDegree (p : HeightOneSpectrum
 /-- The finite place of `k(x)` attached to an irreducible polynomial `q ∈ k[X]`: the place of the
 height-one prime `(q)` (Stichtenoth, Proposition 1.2.1(a)). Every finite place is of this form,
 for a `q` that is unique once it is required to be monic. -/
-@[expose] def adicOfIrreducible {q : k[X]} (hq : Irreducible q) : Place k (RatFunc k) :=
+def adicOfIrreducible {q : k[X]} (hq : Irreducible q) : Place k (RatFunc k) :=
   adic k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq)
 
 /-- The defining equation of `TauCeti.Place.adicOfIrreducible`: it is the place of the height-one
@@ -267,15 +267,19 @@ theorem degree_adicOfIrreducible {q : k[X]} (hq : Irreducible q) :
 def adicOfIrreducibleResidueFieldEquiv {q : k[X]} (hq : Irreducible q) :
     (k[X] ⧸ Ideal.span {q}) ≃ₐ[k] (adicOfIrreducible hq).ResidueField :=
   (Ideal.quotientEquivAlgOfEq k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm).trans
-    (adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq))
+    ((adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq)).trans
+      (residueFieldEquivOfEq (adicOfIrreducible_eq hq).symm))
 
 @[simp]
 theorem adicOfIrreducibleResidueFieldEquiv_mk {q : k[X]} (hq : Irreducible q) (r : k[X]) :
     adicOfIrreducibleResidueFieldEquiv hq (Ideal.Quotient.mk (Ideal.span {q}) r) =
-      adicResidueHom k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) r :=
-  (congrArg (fun x => adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) x)
+      residueFieldEquivOfEq (adicOfIrreducible_eq hq).symm
+        (adicResidueHom k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) r) :=
+  congrArg (residueFieldEquivOfEq (adicOfIrreducible_eq hq).symm)
+    ((congrArg
+      (fun x => adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) x)
       (Ideal.quotientEquivAlgOfEq_mk k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm r)).trans
-    (adicResidueFieldEquiv_mk k (RatFunc k) _ r)
+      (adicResidueFieldEquiv_mk k (RatFunc k) _ r))
 
 /-! ### The classification -/
 
