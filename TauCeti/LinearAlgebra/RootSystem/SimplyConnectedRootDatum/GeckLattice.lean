@@ -31,7 +31,7 @@ preserves this finite lattice.
 
 * `TauCeti.DynkinType.geckCoordinateLattice`: the coordinate `ℤ`-lattice in the Geck module.
 * `TauCeti.DynkinType.geckCoordinateBasis`: its standard coordinate basis.
-* `TauCeti.DynkinType.geckCoordinateFinBasis`: the same basis indexed by a finite ordinal, as
+* `TauCeti.DynkinType.geckCoordinateBasisFin`: the same basis indexed by a finite ordinal, as
   required by the general-linear group-scheme construction.
 * `TauCeti.DynkinType.geckRepresentation_lieBasis_e_mem_geckCoordinateLattice` and its lowering
   analogue: stability under the numbered root generators.
@@ -93,17 +93,17 @@ theorem coe_geckCoordinateBasis (i : t.GeckIndex ht) :
 
 /-- The coordinate basis reindexed by a finite ordinal. This is the basis shape consumed by the
 Kostant generated-group-scheme construction. -/
-def geckCoordinateFinBasis :
+def geckCoordinateBasisFin :
     Module.Basis (Fin (Fintype.card (t.GeckIndex ht))) ℤ (t.geckCoordinateLattice ht) :=
   (t.geckCoordinateBasis ht).reindex (Fintype.equivFin (t.GeckIndex ht))
 
 /-- A finite-ordinal coordinate basis element is the standard vector at the corresponding Geck
 coordinate. -/
 @[simp]
-theorem coe_geckCoordinateFinBasis (i : Fin (Fintype.card (t.GeckIndex ht))) :
-    ((t.geckCoordinateFinBasis ht i : t.geckCoordinateLattice ht) : t.GeckIndex ht → ℚ) =
+theorem coe_geckCoordinateBasisFin (i : Fin (Fintype.card (t.GeckIndex ht))) :
+    ((t.geckCoordinateBasisFin ht i : t.geckCoordinateLattice ht) : t.GeckIndex ht → ℚ) =
       Pi.single ((Fintype.equivFin (t.GeckIndex ht)).symm i) 1 := by
-  rw [geckCoordinateFinBasis, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
+  rw [geckCoordinateBasisFin, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
 
 /-- The coordinate lattice is contained in the integral orbit of the pinned Kostant form, since
 the latter contains every standard coordinate vector. -/
@@ -114,6 +114,8 @@ theorem geckCoordinateLattice_le_geckOrbit :
   rw [Pi.basisFun_apply]
   exact t.single_mem_geckOrbit ht i
 
+/-- The coordinate lattice is finitely generated over `ℤ` and spans the ambient rational Geck
+module. -/
 instance instIsLatticeGeckCoordinateLattice :
     Submodule.IsLattice ℚ (t.geckCoordinateLattice ht) where
   fg := by
@@ -138,65 +140,69 @@ private theorem matrix_mulVec_mem_geckCoordinateLattice
   refine ⟨∑ j, a j * w j, ?_⟩
   simp only [Int.cast_sum, Int.cast_mul, ha, hw, Matrix.mulVec, dotProduct]
 
+private theorem fromBlocks_has_integer_entries {m n : Type*}
+    (A : Matrix m m ℚ) (B : Matrix m n ℚ) (C : Matrix n m ℚ) (D : Matrix n n ℚ)
+    (hA : ∀ i j, ∃ z : ℤ, (z : ℚ) = A i j)
+    (hB : ∀ i j, ∃ z : ℤ, (z : ℚ) = B i j)
+    (hC : ∀ i j, ∃ z : ℤ, (z : ℚ) = C i j)
+    (hD : ∀ i j, ∃ z : ℤ, (z : ℚ) = D i j)
+    (i j : m ⊕ n) :
+    ∃ z : ℤ, (z : ℚ) = Matrix.fromBlocks A B C D i j := by
+  cases i with
+  | inl i => cases j with
+    | inl j => simpa using hA i j
+    | inr j => simpa using hB i j
+  | inr i => cases j with
+    | inl j => simpa using hC i j
+    | inr j => simpa using hD i j
+
 private theorem geck_e_has_integer_entries (i : Fin t.rank) (j k : t.GeckIndex ht) :
     ∃ z : ℤ, (z : ℚ) =
       RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i) j k := by
   classical
-  cases j with
-  | inl j =>
-      cases k with
-      | inl k => exact ⟨0, by simp [RootPairing.GeckConstruction.e]⟩
-      | inr k =>
-          simp only [RootPairing.GeckConstruction.e, Matrix.fromBlocks_apply₁₂,
-            Matrix.of_apply]
-          split_ifs
-          · exact ⟨1, rfl⟩
-          · exact ⟨0, rfl⟩
-  | inr j =>
-      cases k with
-      | inl k =>
-          simp only [RootPairing.GeckConstruction.e, Matrix.fromBlocks_apply₂₁,
-            Matrix.of_apply]
-          split_ifs
-          · exact ⟨_, rfl⟩
-          · exact ⟨0, rfl⟩
-      | inr k =>
-          simp only [RootPairing.GeckConstruction.e, Matrix.fromBlocks_apply₂₂,
-            Matrix.of_apply]
-          split_ifs
-          · exact ⟨Int.ofNat ((t.rationalRootSystem ht).chainBotCoeff
-                (t.simpleIndex ht i) k + 1), by simp⟩
-          · exact ⟨0, rfl⟩
+  apply fromBlocks_has_integer_entries
+  · intro _ _
+    exact ⟨0, rfl⟩
+  · intro _ _
+    simp only [Matrix.of_apply]
+    split_ifs
+    · exact ⟨1, rfl⟩
+    · exact ⟨0, rfl⟩
+  · intro _ _
+    simp only [Matrix.of_apply]
+    split_ifs
+    · exact ⟨_, rfl⟩
+    · exact ⟨0, rfl⟩
+  · intro _ k
+    simp only [Matrix.of_apply]
+    split_ifs
+    · exact ⟨Int.ofNat ((t.rationalRootSystem ht).chainBotCoeff
+          (t.simpleIndex ht i) k + 1), by simp⟩
+    · exact ⟨0, rfl⟩
 
 private theorem geck_f_has_integer_entries (i : Fin t.rank) (j k : t.GeckIndex ht) :
     ∃ z : ℤ, (z : ℚ) =
       RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i) j k := by
   classical
-  cases j with
-  | inl j =>
-      cases k with
-      | inl k => exact ⟨0, by simp [RootPairing.GeckConstruction.f]⟩
-      | inr k =>
-          simp only [RootPairing.GeckConstruction.f, Matrix.fromBlocks_apply₁₂,
-            Matrix.of_apply]
-          split_ifs
-          · exact ⟨1, rfl⟩
-          · exact ⟨0, rfl⟩
-  | inr j =>
-      cases k with
-      | inl k =>
-          simp only [RootPairing.GeckConstruction.f, Matrix.fromBlocks_apply₂₁,
-            Matrix.of_apply]
-          split_ifs
-          · exact ⟨_, rfl⟩
-          · exact ⟨0, rfl⟩
-      | inr k =>
-          simp only [RootPairing.GeckConstruction.f, Matrix.fromBlocks_apply₂₂,
-            Matrix.of_apply]
-          split_ifs
-          · exact ⟨Int.ofNat ((t.rationalRootSystem ht).chainTopCoeff
-                (t.simpleIndex ht i) k + 1), by simp⟩
-          · exact ⟨0, rfl⟩
+  apply fromBlocks_has_integer_entries
+  · intro _ _
+    exact ⟨0, rfl⟩
+  · intro _ _
+    simp only [Matrix.of_apply]
+    split_ifs
+    · exact ⟨1, rfl⟩
+    · exact ⟨0, rfl⟩
+  · intro _ _
+    simp only [Matrix.of_apply]
+    split_ifs
+    · exact ⟨_, rfl⟩
+    · exact ⟨0, rfl⟩
+  · intro _ k
+    simp only [Matrix.of_apply]
+    split_ifs
+    · exact ⟨Int.ofNat ((t.rationalRootSystem ht).chainTopCoeff
+          (t.simpleIndex ht i) k + 1), by simp⟩
+    · exact ⟨0, rfl⟩
 
 /-! ## The numbered Chevalley generators -/
 
