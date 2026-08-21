@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.QuotientGroup.Defs
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 
 /-!

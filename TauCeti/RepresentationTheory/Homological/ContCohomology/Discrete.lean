@@ -1,0 +1,190 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Codex
+-/
+module
+
+public import Mathlib.Algebra.Ring.Action.Submonoid
+public import Mathlib.GroupTheory.GroupAction.OfQuotient
+public import Mathlib.GroupTheory.QuotientGroup.Basic
+public import Mathlib.Topology.Algebra.ClopenNhdofOne
+public import Mathlib.Topology.Algebra.MulAction
+
+/-!
+# Discrete modules over profinite groups
+
+This file develops the openness properties of a continuous action on a discrete additive group.
+For a finite coefficient group, the kernel of the action is open and the action is therefore an
+action of a finite quotient. For an arbitrary discrete coefficient group, the corresponding
+statement holds one element at a time: every element is fixed by an open normal subgroup.
+
+This implements the Layer 0 “Openness” milestone of the human-authored roadmap at
+`TauCetiRoadmap/ProfiniteCohomology/README.md`.
+
+The latter statement is recorded both as an elementwise factorization of the orbit map and as the
+fact that the fixed-point subgroups over all open normal subgroups exhaust the coefficient group.
+These are the forms used by the finite-quotient system for continuous cohomology.
+
+Mathlib already supplies the two principal ingredients: point stabilizers are open for continuous
+actions on discrete spaces, and every neighbourhood of the identity in a profinite group contains
+an open normal subgroup. It also supplies `MulAction.fixedPoints` and the quotient action on the
+fixed points of a normal subgroup; this file uses those definitions rather than introducing a
+parallel invariants object.
+-/
+
+public section
+
+namespace TauCeti
+
+universe u v
+
+section Elementwise
+
+variable {G : Type u} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  [CompactSpace G] [TotallyDisconnectedSpace G]
+  {M : Type v} [TopologicalSpace M] [DiscreteTopology M] [MulAction G M] [ContinuousSMul G M]
+
+/-- A finite set in a discrete continuous module over a profinite group is fixed pointwise by a
+single open normal subgroup. -/
+theorem _root_.Set.Finite.exists_openNormalSubgroup_smul_eq_self {s : Set M} (hs : s.Finite) :
+    ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, ∀ m ∈ s, u • m = m := by
+  let V : Set G := ⋂ m ∈ s, (MulAction.stabilizer G m : Set G)
+  have hOpen : IsOpen V :=
+    hs.isOpen_biInter fun m _ ↦ stabilizer_isOpen G m
+  have hOne : (1 : G) ∈ V := by
+    simp only [V, Set.mem_iInter, SetLike.mem_coe, MulAction.mem_stabilizer_iff, one_smul,
+      implies_true]
+  obtain ⟨U, hU⟩ :=
+    ProfiniteGrp.exist_openNormalSubgroup_sub_open_nhds_of_one hOpen hOne
+  refine ⟨U, fun u hu m hm ↦ ?_⟩
+  exact MulAction.mem_stabilizer_iff.mp (Set.mem_iInter₂.mp (hU hu) m hm)
+
+/-- Every element of a discrete continuous module over a profinite group is fixed by an open
+normal subgroup. -/
+theorem exists_openNormalSubgroup_smul_eq_self (m : M) :
+    ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, u • m = m := by
+  obtain ⟨U, hU⟩ :=
+    (Set.finite_singleton m).exists_openNormalSubgroup_smul_eq_self (G := G)
+  exact ⟨U, fun u hu ↦ hU u hu m (Set.mem_singleton m)⟩
+
+/-- A finite family in a discrete continuous module over a profinite group has a common open
+normal stabilizer. This is the form used for the finite image of a locally constant cochain. -/
+theorem exists_openNormalSubgroup_smul_eq_self_range {ι : Type*} [Finite ι] (f : ι → M) :
+    ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, ∀ i, u • f i = f i := by
+  have hrange : (Set.range f).Finite := Set.finite_range f
+  obtain ⟨U, hU⟩ :=
+    Set.Finite.exists_openNormalSubgroup_smul_eq_self (G := G) hrange
+  exact ⟨U, fun u hu i ↦ hU u hu (f i) ⟨i, rfl⟩⟩
+
+/-- The orbit map of an element of a discrete profinite module factors through a finite quotient.
+The factor is obtained from Mathlib's quotient action on the fixed points of a normal subgroup. -/
+theorem exists_orbitMap_quotient (m : M) :
+    ∃ (U : OpenNormalSubgroup G) (f : G ⧸ U.toSubgroup → M),
+      ∀ g : G, f (QuotientGroup.mk g) = g • m := by
+  obtain ⟨U, hm⟩ := exists_openNormalSubgroup_smul_eq_self (G := G) m
+  let mU : MulAction.fixedPoints U.toSubgroup M := ⟨m, fun u ↦ hm u u.2⟩
+  refine ⟨U, fun q ↦ (q • mU : MulAction.fixedPoints U.toSubgroup M), fun g ↦ ?_⟩
+  exact congrArg Subtype.val (MulAction.coe_quotient_smul_fixedPoints g mU)
+
+end Elementwise
+
+section Kernel
+
+variable (G : Type u) [Group G] (M : Type v) [MulAction G M]
+
+/-- The action kernel is the intersection of all point stabilizers. -/
+theorem toPermHom_ker_eq_iInf_stabilizer :
+    (MulAction.toPermHom G M).ker = ⨅ m : M, MulAction.stabilizer G m := by
+  ext g
+  simp only [MonoidHom.mem_ker, Equiv.ext_iff, MulAction.toPermHom_apply,
+    MulAction.toPerm_apply, Equiv.Perm.one_apply, Subgroup.mem_iInf,
+    MulAction.mem_stabilizer_iff]
+
+/-- The action kernel is the whole group exactly when the action is trivial. -/
+@[simp]
+theorem toPermHom_ker_eq_top_iff :
+    (MulAction.toPermHom G M).ker = ⊤ ↔ ∀ (g : G) (m : M), g • m = m := by
+  constructor
+  · intro h g m
+    have hg : g ∈ (MulAction.toPermHom G M).ker := by rw [h]; exact Subgroup.mem_top g
+    exact Equiv.congr_fun (MonoidHom.mem_ker.mp hg) m
+  · intro h
+    rw [eq_top_iff]
+    intro g _
+    rw [MonoidHom.mem_ker, Equiv.ext_iff]
+    exact h g
+
+/-- An action on a finite space factors through a finite quotient. -/
+theorem finite_quotient_toPermHom_ker [Finite M] :
+    Finite (G ⧸ (MulAction.toPermHom G M).ker) := by
+  exact Finite.of_equiv (MulAction.toPermHom G M).range
+    (QuotientGroup.quotientKerEquivRange (MulAction.toPermHom G M)).symm.toEquiv
+
+variable [TopologicalSpace G] [TopologicalSpace M] [DiscreteTopology M] [ContinuousSMul G M]
+
+/-- The kernel of a continuous action on a finite discrete space is open. -/
+theorem isOpen_toPermHom_ker [Finite M] :
+    IsOpen ((MulAction.toPermHom G M).ker : Set G) := by
+  rw [toPermHom_ker_eq_iInf_stabilizer, Subgroup.coe_iInf]
+  exact isOpen_iInter_of_finite fun m ↦ stabilizer_isOpen G m
+
+/-- The open normal subgroup given by the kernel of a finite discrete action. -/
+def openActionKernel [Finite M] : OpenNormalSubgroup G where
+  toOpenSubgroup :=
+    { toSubgroup := (MulAction.toPermHom G M).ker
+      isOpen' := isOpen_toPermHom_ker G M }
+  isNormal' := (MulAction.toPermHom G M).normal_ker
+
+@[simp]
+theorem openActionKernel_toSubgroup [Finite M] :
+    (openActionKernel G M).toSubgroup = (MulAction.toPermHom G M).ker := by
+  ext
+  simp only [openActionKernel]
+
+/-- A finite discrete module is fixed pointwise by an open normal subgroup. The subgroup can be
+taken to be the kernel of the action. -/
+@[simp]
+theorem openActionKernel_smul_eq_self [Finite M] (g : openActionKernel G M) (m : M) :
+    (g : G) • m = m := by
+  have hg := MonoidHom.mem_ker.mp g.2
+  exact Equiv.congr_fun hg m
+
+end Kernel
+
+section FiniteCoefficients
+
+variable (G : Type u) [Group G] [TopologicalSpace G]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [DiscreteTopology M]
+  [DistribMulAction G M] [ContinuousSMul G M] [Finite M]
+
+/-- The fixed points of the action kernel on a finite discrete module are the whole module. This
+is the levelwise stabilization of the invariant coefficient system. -/
+@[simp]
+theorem fixedPoints_openActionKernel_eq_top :
+    FixedPoints.addSubgroup (openActionKernel G M).toSubgroup M = ⊤ := by
+  rw [eq_top_iff]
+  intro m _ g
+  exact openActionKernel_smul_eq_self G M g m
+
+end FiniteCoefficients
+
+section Exhaustion
+
+variable {G : Type u} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  [CompactSpace G] [TotallyDisconnectedSpace G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [DiscreteTopology M]
+  [DistribMulAction G M] [ContinuousSMul G M]
+
+/-- The fixed-point subgroups over the open normal subgroups exhaust a discrete module. -/
+theorem iSup_fixedPoints_openNormal_eq_top :
+    (⨆ U : OpenNormalSubgroup G, FixedPoints.addSubgroup U.toSubgroup M) = ⊤ := by
+  rw [eq_top_iff]
+  intro m _
+  obtain ⟨U, hm⟩ := exists_openNormalSubgroup_smul_eq_self (G := G) m
+  apply (le_iSup (fun V : OpenNormalSubgroup G ↦ FixedPoints.addSubgroup V.toSubgroup M) U)
+  exact fun u ↦ hm u u.2
+
+end Exhaustion
+
+end TauCeti
