@@ -5,12 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Topology.Category.LightProfinite.Injective
 public import Mathlib.Topology.ContinuousMap.Basic
-public import Mathlib.Topology.Defs.Induced
-public import Mathlib.Topology.Separation.Profinite
 
 import Mathlib.Topology.Homeomorph.Lemmas
-import Mathlib.Topology.LocallyConstant.Basic
 
 /-!
 # Continuous extension from a closed subspace of a profinite space
@@ -24,9 +22,9 @@ equivalently, that restriction `C(X, Y) → C(s, Y)` is surjective for every clo
 This is the zero-dimensional analogue of the Tietze extension theorem. Nothing can be averaged
 here, since `Y` is a bare discrete space; instead the map has only finitely many fibres, because a
 compact subset of a discrete space is finite, and those fibres are separated by a clopen
-partition of `X`. Mathlib's `exists_clopen_partition_of_clopen_cover` supplies that partition —
-this is where total disconnectedness is used — and the work below is the passage from the
-partition to a function.
+partition of `X`. Mathlib's `Profinite.exists_lift_of_finite_of_injective_of_surjective` packages
+that separation as a lifting property — this is where total disconnectedness is used — and the
+work below is the passage from a lifting square to an extension.
 
 ## Main results
 
@@ -80,40 +78,24 @@ other set the original values lie in. -/
 theorem exists_continuous_eqOn_range_subset_image {f : X → Y} (hs : IsClosed s)
     (hsne : s.Nonempty) (hf : ContinuousOn f s) :
     ∃ g : X → Y, Continuous g ∧ EqOn g f s ∧ range g ⊆ f '' s := by
-  classical
   -- The image of `s` is finite: `s` is compact and `Y` is discrete.
-  have hTfin : (f '' s).Finite := (hs.isCompact.image_of_continuousOn hf).finite_of_discrete
-  have : Finite (f '' s) := hTfin.to_subtype
+  have : Finite (f '' s) :=
+    ((hs.isCompact.image_of_continuousOn hf).finite_of_discrete).to_subtype
   have : Nonempty (f '' s) := (hsne.image f).to_subtype
-  -- The fibres of `f` over `s`, indexed by the image of `s`, are pairwise disjoint.
-  have Z_disj : (univ : Set (f '' s)).PairwiseDisjoint fun i => s ∩ f ⁻¹' {(i : Y)} := by
-    intro i _ j _ hij
-    refine Set.disjoint_left.2 fun x hxi hxj => hij (Subtype.ext ?_)
-    simp only [mem_inter_iff, mem_preimage, mem_singleton_iff] at hxi hxj
-    rw [← hxi.2, hxj.2]
-  -- Separate them by a clopen partition of `X`.
-  obtain ⟨C, C_clopen, Z_sub_C, -, C_cover, C_disj⟩ :=
-    exists_clopen_partition_of_clopen_cover (X := X) (I := (f '' s))
-      (Z := fun i => s ∩ f ⁻¹' {(i : Y)}) (D := fun _ => univ)
-      (fun _ => hf.preimage_isClosed_of_isClosed hs isClosed_singleton)
-      (fun _ => isClopen_univ) (fun _ => subset_univ _) Z_disj
-  have hmem (x : X) : ∃ i, x ∈ C i :=
-    mem_iUnion.1 (C_cover (mem_iUnion.2 ⟨Classical.arbitrary _, mem_univ x⟩))
-  choose i₀ hi₀ using hmem
-  -- Each point lies in exactly one part, so `i₀` is determined by membership.
-  have huniq {x : X} {i : f '' s} (hx : x ∈ C i) : i = i₀ x := by
-    by_contra hne
-    exact Set.disjoint_left.1 (C_disj (mem_univ i) (mem_univ (i₀ x)) hne) hx (hi₀ x)
-  -- The extension sends `x` to the index of the part containing it.
-  refine ⟨fun x => (i₀ x : Y), ?_, fun x hx => ?_, ?_⟩
-  · rw [← IsLocallyConstant.iff_continuous, IsLocallyConstant.iff_exists_open]
-    exact fun x => ⟨C (i₀ x), (C_clopen _).isOpen, hi₀ x,
-      fun _ hx' => congrArg Subtype.val (huniq hx').symm⟩
-  · have hxZ : x ∈ s ∩ f ⁻¹' {((⟨f x, mem_image_of_mem f hx⟩ : f '' s) : Y)} :=
-      ⟨hx, rfl⟩
-    exact congrArg Subtype.val (huniq (Z_sub_C _ hxZ)).symm
-  · rintro _ ⟨x, rfl⟩
-    exact (i₀ x).2
+  have : CompactSpace s := isCompact_iff_compactSpace.1 hs.isCompact
+  -- Fill in the square whose top edge is the inclusion `s → X`, whose left edge is `f`
+  -- corestricted to its image and whose bottom edge is the surjection `f '' s → PUnit`; the
+  -- diagonal is the extension, and it lands in `f '' s` by construction.
+  obtain ⟨g, hg, -, hgf⟩ :=
+    Profinite.exists_lift_of_finite_of_injective_of_surjective (S := f '' s) (T := PUnit.{1})
+      Subtype.val continuous_subtype_val Subtype.val_injective
+      (fun _ => PUnit.unit) (fun _ => ⟨Classical.arbitrary _, rfl⟩)
+      (fun x : s => ⟨f x, mem_image_of_mem f x.2⟩)
+      ((continuousOn_iff_continuous_domRestrict.1 hf).subtype_mk _)
+      (fun _ => PUnit.unit) continuous_const rfl
+  exact ⟨fun x => (g x : Y), continuous_subtype_val.comp hg,
+    fun x hx => congrArg Subtype.val (congrFun hgf ⟨x, hx⟩),
+    by rintro _ ⟨x, rfl⟩; exact (g x).2⟩
 
 /-- **Continuous extension from a closed subspace of a profinite space**, for an arbitrary closed
 subset and a nonempty discrete target. -/
@@ -176,10 +158,16 @@ The statement and the deduction of this form from the closed-subset form follow 
 theorem exists_extension_of_discrete [Nonempty Y] {Z : Type*} [TopologicalSpace Z] {e : Z → X}
     (he : IsClosedEmbedding e) (f : C(Z, Y)) :
     ∃ g : C(X, Y), g.comp ⟨e, he.continuous⟩ = f := by
-  -- `e'` identifies `Z` with the closed subspace `range e`.
-  let e' : Z ≃ₜ range e := he.isEmbedding.toHomeomorph
-  obtain ⟨g, hg⟩ :=
-    exists_restrict_eq_of_discrete he.isClosed_range (f.comp ⟨e'.symm, e'.symm.continuous⟩)
-  exact ⟨g, by ext x; simpa [e'] using congr($(hg) ⟨e x, x, rfl⟩)⟩
+  -- `he.isEmbedding.toHomeomorph : Z ≃ₜ range e` identifies `Z` with the closed subspace
+  -- `range e`, so `f` transports to a continuous map on `range e`.
+  obtain ⟨g, hg⟩ := exists_restrict_eq_of_discrete he.isClosed_range
+    (f.comp ⟨he.isEmbedding.toHomeomorph.symm, he.isEmbedding.toHomeomorph.symm.continuous⟩)
+  refine ⟨g, ?_⟩
+  ext x
+  have hx := congr($(hg) ⟨e x, x, rfl⟩)
+  simp only [restrict_apply, comp_apply, coe_mk,
+    he.isEmbedding.toHomeomorph_symm_apply] at hx
+  rw [comp_apply, coe_mk]
+  exact hx
 
 end ContinuousMap

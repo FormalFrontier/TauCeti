@@ -59,7 +59,7 @@ takes the same value at `0` and at `1`; continuity on a discrete-valued map is l
 example {Y : Type*} [TopologicalSpace Y] [DiscreteTopology Y] {a b : Y} (hab : a ≠ b) :
     ¬ ∃ g : ℝ → Y, ContinuousOn g (Set.Icc 0 1) ∧ g 0 = a ∧ g 1 = b := by
   rintro ⟨g, hg, rfl, rfl⟩
-  have h : ∀ t ∈ Set.Icc (0 : ℝ) 1, ∀ᶠ u in 𝓝[Set.Icc (0 : ℝ) 1] t, g u = g t :=
-    fun t ht => by
-      simpa [ContinuousWithinAt, nhds_discrete, Filter.tendsto_pure] using hg t ht
+  -- The singleton `{g t}` is open, so its preimage is a neighbourhood of `t` within `[0, 1]`.
+  have h : ∀ t ∈ Set.Icc (0 : ℝ) 1, ∀ᶠ u in 𝓝[Set.Icc (0 : ℝ) 1] t, g u = g t := fun t ht =>
+    (hg t ht).preimage_mem_nhdsWithin ((isOpen_discrete {g t}).mem_nhds rfl)
   exact hab (isPreconnected_Icc.apply_eq_of_eventually_eq h (by norm_num) (by norm_num))
