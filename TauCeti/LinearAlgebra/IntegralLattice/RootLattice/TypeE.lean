@@ -114,6 +114,7 @@ theorem form_typeE₆SimpleRoot_typeE₆SimpleRoot (i j : Fin 6) :
 
 /-- A vector belongs to the type `E₆` root lattice exactly when all of its simple-root coordinates
 are integers. -/
+@[simp]
 theorem mem_typeE₆RootLattice_carrier_iff (x : Fin 6 → ℚ) :
     x ∈ typeE₆RootLattice.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   rw [typeE₆RootLattice]
@@ -347,6 +348,7 @@ theorem form_typeE₇SimpleRoot_typeE₇SimpleRoot (i j : Fin 7) :
 
 /-- A vector belongs to the type `E₇` root lattice exactly when all of its simple-root coordinates
 are integers. -/
+@[simp]
 theorem mem_typeE₇RootLattice_carrier_iff (x : Fin 7 → ℚ) :
     x ∈ typeE₇RootLattice.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   rw [typeE₇RootLattice]
@@ -580,6 +582,7 @@ theorem form_typeE₈SimpleRoot_typeE₈SimpleRoot (i j : Fin 8) :
 
 /-- A vector belongs to the type `E₈` root lattice exactly when all of its simple-root coordinates
 are integers. -/
+@[simp]
 theorem mem_typeE₈RootLattice_carrier_iff (x : Fin 8 → ℚ) :
     x ∈ typeE₈RootLattice.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   rw [typeE₈RootLattice]
@@ -620,6 +623,7 @@ theorem isUnimodular_typeE₈RootLattice : typeE₈RootLattice.IsUnimodular := b
   exact isUnit_one
 
 /-- **The type `E₈` root lattice is self-dual.** -/
+@[simp]
 theorem dualCarrier_typeE₈RootLattice :
     typeE₈RootLattice.dualCarrier = typeE₈RootLattice.carrier :=
   (typeE₈RootLattice.isUnimodular_def.mp isUnimodular_typeE₈RootLattice).symm

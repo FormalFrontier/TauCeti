@@ -94,7 +94,11 @@ theorem form_ofGramMatrix_basisFun_basisFun (i j : ι) :
     simp [Pi.basisFun_apply, hb]
 
 /-- A vector belongs to a Gram-matrix lattice exactly when all of its standard coordinates are
-integers. -/
+integers.
+
+This is deliberately not a `simp` lemma, unlike the dual-carrier lemma below: `ofGramMatrix_carrier`
+is itself `@[simp]` and rewrites the left-hand side to a bare `Submodule.span` membership, so the
+`simpNF` linter rejects the tagged form. -/
 theorem mem_ofGramMatrix_basisFun_carrier_iff (x : ι → ℚ) :
     x ∈ (ofGramMatrix (Pi.basisFun ℚ ι) G hG).carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   classical
