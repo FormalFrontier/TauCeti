@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.GroupTheory.GroupAction.Burnside
+public import TauCeti.GroupTheory.GroupAction.Stabilizer
 public import Mathlib.GroupTheory.Coset.Card
 public import Mathlib.GroupTheory.DoubleCoset
 
@@ -30,11 +31,27 @@ numbers, which is the group-theoretic half of the statement that the permutation
 
 * `TauCeti.doubleCosetEquivOrbitQuotient`: the bijection
   `H \ G / K ≃ ((G ⧸ H) × (G ⧸ K)) / G`.
+* `TauCeti.orbitOfCosetTranslate`: the `𝒢`-orbit a class in `ℋ ⧸ 𝒢.subgroupOf ℋ` translates a
+  point into — the index map along which a coset sum is regrouped into an orbit sum.
 
 ## Main statements
 
 * `TauCeti.mem_doubleCoset_iff_mk_mem_orbit`: an element lies in `KsH` exactly when its coset
   lies in the `K`-orbit of `sH`.
+* `TauCeti.orbitRel_smul_iff_mem_doubleCoset_stabilizer`: the same for an arbitrary action —
+  two translates of a point share a `K`-orbit exactly when the translating elements share a
+  `K`-`stabilizer` double coset.
+* `TauCeti.orbitOfCosetTranslate_eq_iff`: the fibres of that index map are the orbits of
+  `stabilizer ℋ p` on `ℋ ⧸ 𝒢.subgroupOf ℋ`, so a fibre count is an orbit-stabiliser count.
+* `TauCeti.card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_coset`: that count, carried out —
+  the fibre size times the order of the stabiliser of the class inside `stabilizer ℋ p` is the
+  order of `stabilizer ℋ p`.
+* `TauCeti.card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit`: the multiplicity identity
+  behind regrouping a sum over `ℋ ⧸ 𝒢.subgroupOf ℋ` into a sum over `𝒢`-orbits — the fibre size
+  times the stabiliser order on the orbit is `|stabilizer ℋ p|`, with
+  `TauCeti.card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_inv_smul` its form at a chosen
+  representative. Stated multiplicatively, so it holds also when the stabilisers are infinite
+  (`Nat.card = 0`).
 * `TauCeti.preimage_orbit_eq_doubleCoset`: the double coset `KsH` is the preimage of the
   `K`-orbit of `sH`.
 * `TauCeti.card_doubleCosetQuotient_eq_card_orbitQuotient`: the two sides of that bijection have
@@ -55,6 +72,10 @@ because the pair `(aH, bK)` determines `H a⁻¹ b K`.
 This supplies the "`⟨Ind_H^G 1, Ind_H^G 1⟩_G = #(H \ G / H)`" item of Layer 2 in
 `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md` with its group-theoretic
 input.
+
+`orbitOfCosetTranslate` and its fibre count instead serve Layer 1 of
+`TauCetiRoadmap/ModularForms/README.md`, "General level — by the coset norm", whose
+orbit/stabiliser bookkeeping regroups a sum over a coset space into a sum over orbits.
 
 * J.-P. Serre, *Linear Representations of Finite Groups*, Chapter 7.3.
 -/
@@ -163,6 +184,179 @@ theorem card_doubleCosetQuotient_eq_card_orbitQuotient :
     Nat.card (DoubleCoset.Quotient (H : Set G) K) =
       Nat.card (orbitRel.Quotient G ((G ⧸ H) × (G ⧸ K))) :=
   Nat.card_congr (doubleCosetEquivOrbitQuotient H K)
+
+
+section GeneralAction
+
+variable {α : Type*} [MulAction G α]
+
+/-- **Two translates of a point lie in one `K`-orbit exactly when the translating elements lie
+in one double coset.** For `K ≤ G` acting on `α` and a point `p`, the `K`-orbits inside the
+`G`-orbit of `p` are indexed by the `K`-`stabilizer G p` double cosets.
+
+This is the companion of `mem_doubleCoset_iff_mk_mem_orbit` for an arbitrary action rather than
+the action on `G ⧸ H`: taking `H = stabilizer G p` there and transporting along
+`MulAction.orbitEquivQuotientStabilizer` gives the same statement. -/
+theorem orbitRel_smul_iff_mem_doubleCoset_stabilizer (K : Subgroup G) (p : α) (x y : G) :
+    orbitRel K α (x • p) (y • p) ↔
+      x ∈ DoubleCoset.doubleCoset y (K : Set G) (stabilizer G p : Set G) := by
+  rw [orbitRel_apply, mem_orbit_iff, DoubleCoset.mem_doubleCoset]
+  constructor
+  · rintro ⟨k, hk⟩
+    refine ⟨(k : G), k.2, y⁻¹ * ((k : G)⁻¹ * x), ?_, by simp [mul_assoc]⟩
+    rw [SetLike.mem_coe, mem_stabilizer_iff, mul_smul, mul_smul, ← hk, Subgroup.smul_def,
+      inv_smul_smul, inv_smul_smul]
+  · rintro ⟨a, ha, b, hb, rfl⟩
+    refine ⟨⟨a, ha⟩, ?_⟩
+    rw [Subgroup.smul_def, mul_smul, mul_smul, mem_stabilizer_iff.mp (SetLike.mem_coe.mp hb)]
+
+/-- **The `𝒢`-orbit that a coset translates a point into.** For `𝒢 ≤ ℋ ≤ G` acting on `α` and a
+point `p`, a class in `ℋ ⧸ 𝒢.subgroupOf ℋ` determines the `𝒢`-orbit of `h⁻¹ • p`, independently
+of the representative `h`.
+
+Well-definedness is the content: another representative is `h * g` with `g ∈ 𝒢`, and
+`(h * g)⁻¹ • p = g⁻¹ • (h⁻¹ • p)` lies in the same `𝒢`-orbit. This is the index map along which
+a sum over the coset space `ℋ ⧸ 𝒢.subgroupOf ℋ` is regrouped into a sum over `𝒢`-orbits, with
+`orbitRel_smul_iff_mem_doubleCoset_stabilizer` identifying its fibres as double cosets. -/
+noncomputable def orbitOfCosetTranslate {𝒢 ℋ : Subgroup G} (p : α) (q : ℋ ⧸ 𝒢.subgroupOf ℋ) :
+    orbitRel.Quotient 𝒢 α :=
+  Quotient.liftOn' q (fun h ↦ Quotient.mk'' ((h : G)⁻¹ • p))
+    fun a b hab ↦ by
+      refine Quotient.sound' ?_
+      rw [orbitRel_apply, mem_orbit_iff]
+      exact ⟨⟨(a : G)⁻¹ * (b : G),
+        (Subgroup.mem_subgroupOf.mp (QuotientGroup.leftRel_apply.mp hab))⟩, by
+        simp [Subgroup.smul_def, mul_smul]⟩
+
+/-- Evaluating `orbitOfCosetTranslate` on the class of `h` gives the orbit of `h⁻¹ • p`. -/
+-- The two sides are the same term after `Quotient.liftOn'` reduces on a representative. The
+-- definition is deliberately not `@[expose]`d, so the parentheses in `(rfl)` keep the
+-- definitional step inside this module and leave this lemma as the whole interface for importers.
+@[simp]
+theorem orbitOfCosetTranslate_mk {𝒢 ℋ : Subgroup G} (p : α) (h : ℋ) :
+    orbitOfCosetTranslate (𝒢 := 𝒢) p (⟦h⟧ : ℋ ⧸ 𝒢.subgroupOf ℋ) = Quotient.mk'' ((h : G)⁻¹ • p) :=
+  (rfl)
+
+/-- **The fibres of `orbitOfCosetTranslate` are the `stabilizer ℋ p`-orbits.** Two classes have
+the same image exactly when they lie in one orbit of the stabilizer of `p`, acting on the coset
+space by left translation.
+
+This is the fibre description the definition exists for: it turns a fibre of that index map into
+an orbit, so that a fibre count becomes an orbit-stabiliser count via
+`MulAction.index_stabilizer`.
+
+`hle : 𝒢 ≤ ℋ` is what puts the translating element back inside `ℋ`: the witness
+`orbitRel_smul_iff_mem_doubleCoset_stabilizer` produces lies in `𝒢`, and the stabilising factor
+is an element of `ℋ` only once `𝒢` is. -/
+theorem orbitOfCosetTranslate_eq_iff {𝒢 ℋ : Subgroup G} (hle : 𝒢 ≤ ℋ) (p : α)
+    (q r : ℋ ⧸ 𝒢.subgroupOf ℋ) :
+    orbitOfCosetTranslate p q = orbitOfCosetTranslate (𝒢 := 𝒢) p r ↔
+      q ∈ MulAction.orbit (stabilizer ℋ p) r := by
+  induction q using QuotientGroup.induction_on with
+  | H a =>
+    induction r using QuotientGroup.induction_on with
+    | H b =>
+      rw [orbitOfCosetTranslate_mk, orbitOfCosetTranslate_mk, Quotient.eq'',
+        orbitRel_smul_iff_mem_doubleCoset_stabilizer, DoubleCoset.mem_doubleCoset, mem_orbit_iff]
+      constructor
+      · rintro ⟨x, hx, y, hy, hr⟩
+        -- `y` lies in `ℋ`: solving `hr` gives `y = b * x⁻¹ * a⁻¹`, and `𝒢 ≤ ℋ` puts `x` there
+        have hyH : y ∈ ℋ := by
+          have hy2 : y = (b : G) * x⁻¹ * (a : G)⁻¹ := by rw [hr]; simp [mul_assoc]
+          exact hy2 ▸ mul_mem (mul_mem b.2 (inv_mem (hle (SetLike.mem_coe.1 hx)))) (inv_mem a.2)
+        have ha : (a : G) = y⁻¹ * (b : G) * x⁻¹ := by
+          rw [← inv_inv (a : G), hr]; simp [mul_assoc]
+        refine ⟨⟨(⟨y, hyH⟩ : ℋ)⁻¹, inv_mem ((Subgroup.mem_subgroupOf (H := stabilizer G p)).2
+          (SetLike.mem_coe.1 hy))⟩, ?_⟩
+        -- the action is left translation (the idiom at `mem_doubleCoset_iff_mk_mem_orbit`), so
+        -- the goal is a coset equality, with witness `x⁻¹`
+        rw [compHom_smul_def (Subgroup.subtype (stabilizer ℋ p)), Subgroup.coe_subtype,
+          Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq, Subgroup.mem_subgroupOf]
+        have hval : ((((⟨y, hyH⟩ : ℋ)⁻¹ * b)⁻¹ * a : ℋ) : G) = x⁻¹ := by
+          rw [Subgroup.coe_mul, Subgroup.coe_inv, Subgroup.coe_mul, Subgroup.coe_inv, ha]
+          simp [mul_assoc]
+        exact hval ▸ SetLike.mem_coe.1 (inv_mem hx)
+      · rintro ⟨s, hs⟩
+        rw [compHom_smul_def (Subgroup.subtype (stabilizer ℋ p)), Subgroup.coe_subtype,
+          Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq, Subgroup.mem_subgroupOf] at hs
+        refine ⟨(((((s : ℋ) * b)⁻¹ * a : ℋ)⁻¹ : ℋ) : G), SetLike.mem_coe.2 (inv_mem hs),
+          ((s : ℋ) : G)⁻¹,
+          SetLike.mem_coe.2 (inv_mem ((Subgroup.mem_subgroupOf (H := stabilizer G p)).1 s.2)), ?_⟩
+        rw [Subgroup.coe_inv, Subgroup.coe_mul, Subgroup.coe_inv, Subgroup.coe_mul]
+        simp [mul_assoc]
+
+/-- **Orbit-stabiliser for the fibres of `orbitOfCosetTranslate`.** The number of coset classes
+that translate `p` into the same orbit as `q` does, times the order of the stabiliser of `q`
+inside `stabilizer ℋ p`, is the order of `stabilizer ℋ p`.
+
+`q` ranges over arbitrary classes rather than classes of a chosen representative, so a consumer
+already holding a class can apply this directly, with no `QuotientGroup.induction_on` step and no
+representative to discharge afterwards. Use `..._inv_smul` below when a representative is what is
+in hand instead.
+
+Carries no finiteness hypothesis, and holds verbatim in the infinite case under `Nat.card`'s
+convention that an infinite type has cardinality `0` — so it may be used without first
+establishing that any of the three groups is finite. -/
+theorem card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_coset {𝒢 ℋ : Subgroup G}
+    (hle : 𝒢 ≤ ℋ) (p : α) (q : ℋ ⧸ 𝒢.subgroupOf ℋ) :
+    Nat.card {r : ℋ ⧸ 𝒢.subgroupOf ℋ // orbitOfCosetTranslate p r =
+        orbitOfCosetTranslate (𝒢 := 𝒢) p q} *
+      Nat.card (stabilizer (↥(stabilizer ℋ p)) q) = Nat.card (stabilizer ℋ p) := by
+  -- the fibre is the orbit of `q` under `stabilizer ℋ p`
+  have hset : {r : ℋ ⧸ 𝒢.subgroupOf ℋ | orbitOfCosetTranslate p r =
+      orbitOfCosetTranslate (𝒢 := 𝒢) p q} = orbit (stabilizer ℋ p) q :=
+    Set.ext fun r => orbitOfCosetTranslate_eq_iff hle p r _
+  -- `Set.coe_ofPred` is the subtype/`Set.Elem` step; spelling it out keeps the proof off the
+  -- unstated defeq, which has already been renamed once upstream (`Set.coe_setOf`)
+  have hcard : Nat.card {r : ℋ ⧸ 𝒢.subgroupOf ℋ // orbitOfCosetTranslate p r =
+      orbitOfCosetTranslate (𝒢 := 𝒢) p q} = (orbit (stabilizer ℋ p) q).ncard := by
+    rw [← hset, ← Nat.card_coe_set_eq, Set.coe_ofPred]
+  rw [hcard, ← MulAction.index_stabilizer, Subgroup.index_mul_card]
+
+/-- **The multiplicity identity at a chosen representative.** For `h : ℋ`, the number of coset
+classes translating `p` into the same orbit as the class of `h` does, times the order of the
+stabiliser of the translate `h⁻¹ • p` **inside `𝒢`**, is the order of the stabiliser of `p`
+**inside `ℋ`**.
+
+The orbit-indexed form, which is what a consumer summing over orbits wants, is
+`card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit` below.
+
+This is the form to reach for when a representative `h : ℋ` is what is in hand rather than a
+class, and when the stabiliser weight is wanted in `𝒢` itself rather than in `𝒢.subgroupOf ℋ` —
+the shape a coset-indexed sum over `𝒢`-stabilisers needs. For an arbitrary class, and for the
+weight in `𝒢.subgroupOf ℋ`, use
+`card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_coset` above. -/
+theorem card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_inv_smul {𝒢 ℋ : Subgroup G}
+    (hle : 𝒢 ≤ ℋ) (p : α) (h : ℋ) :
+    Nat.card {r : ℋ ⧸ 𝒢.subgroupOf ℋ // orbitOfCosetTranslate p r =
+        orbitOfCosetTranslate (𝒢 := 𝒢) p ((h : ℋ ⧸ 𝒢.subgroupOf ℋ))} *
+      Nat.card (stabilizer 𝒢 ((h : ℋ)⁻¹ • p)) = Nat.card (stabilizer ℋ p) := by
+  rw [← card_stabilizer_subgroupOf hle, ← card_stabilizer_coset_eq_card_stabilizer_inv_smul,
+    card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_coset hle]
+
+/-- **The orbit-indexed form**, which is the one a consumer wants: the weight is
+`TauCeti.cardStabilizerOnOrbit`, a function of the orbit rather than of a representative.
+
+A sum over `MulAction.orbitRel.Quotient 𝒢 α` weights each orbit once, and the roadmap sum
+`Σ_P (1/e_P)` reads `e_P` off the orbit, so a use site holding a class `q` can apply this directly
+instead of doing `QuotientGroup.induction_on` and rewriting the order into orbit form by hand. -/
+theorem card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit {𝒢 ℋ : Subgroup G}
+    (hle : 𝒢 ≤ ℋ) (p : α) (q : ℋ ⧸ 𝒢.subgroupOf ℋ) :
+    Nat.card {r : ℋ ⧸ 𝒢.subgroupOf ℋ // orbitOfCosetTranslate p r =
+        orbitOfCosetTranslate (𝒢 := 𝒢) p q} *
+      cardStabilizerOnOrbit (orbitOfCosetTranslate (𝒢 := 𝒢) p q) = Nat.card (stabilizer ℋ p) := by
+  induction q using QuotientGroup.induction_on with
+  | H h =>
+    -- the weight at the class of `h` is the order in `𝒢` at `h⁻¹ • p`; `simp` rather than `rw`
+    -- because `QuotientGroup.induction_on` supplies the class as `↑h`, which does not
+    -- syntactically match the `⟦h⟧` of `orbitOfCosetTranslate_mk`
+    have hw : cardStabilizerOnOrbit (orbitOfCosetTranslate (𝒢 := 𝒢) p
+        ((h : ℋ ⧸ 𝒢.subgroupOf ℋ))) = Nat.card (stabilizer 𝒢 ((h : ℋ)⁻¹ • p)) := by
+      simp [Subgroup.smul_def]
+    rw [hw]
+    exact card_fiber_orbitOfCosetTranslate_mul_card_stabilizer_inv_smul hle p h
+
+end GeneralAction
 
 end Orbits
 

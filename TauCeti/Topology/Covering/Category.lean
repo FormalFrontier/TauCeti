@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -82,7 +83,7 @@ end Over
 
 /-- The category of covering spaces over `X`. Its objects are covering maps to `X`, and its
 morphisms are continuous maps commuting with the projections to `X`. -/
-abbrev CoveringSpace (X : TopCat.{u}) :=
+abbrev CoveringSpace (X : TopCat.{u}) : Type _ :=
   (Over.isCoveringMap X).FullSubcategory
 
 namespace CoveringSpace
@@ -205,7 +206,7 @@ theorem isIso_iff_isHomeomorph_hom_left {p q : CoveringSpace X} (f : p ⟶ q) :
 end CoveringSpace
 
 /-- The category of connected covering spaces over `X`. -/
-abbrev ConnectedCoveringSpace (X : TopCat.{u}) :=
+abbrev ConnectedCoveringSpace (X : TopCat.{u}) : Type _ :=
   (Over.isCoveringMap X ⊓ fun p ↦ ConnectedSpace p.left).FullSubcategory
 
 namespace ConnectedCoveringSpace

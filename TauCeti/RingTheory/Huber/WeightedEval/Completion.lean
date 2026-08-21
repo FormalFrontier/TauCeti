@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.RingTheory.Huber.WeightedEval.UniversalProperty
-public import Mathlib.Topology.Algebra.UniformRing
+public import TauCeti.Topology.Algebra.UniformRing
 
 /-!
 # The universal property of the completed algebra of `A⟨X⟩_T`
@@ -22,8 +23,9 @@ Existence is `UniformSpace.Completion.extensionHom` applied to the evaluation ho
 is available exactly because the target is already assumed complete and Hausdorff — the same
 hypotheses 5.50 carries, so the completed statement asks for nothing extra. Uniqueness is
 `completion_weightedRestrictedSubring_ringHom_ext_of_continuous`, itself
-`UniformSpace.Completion.ext` — two continuous maps out of a completion that agree on the image of
-the coercion are equal — applied to 5.50's own uniqueness clause for the restrictions along
+`UniformSpace.Completion.ringHom_ext_of_continuous` — two continuous ring homomorphisms out of a
+completion that agree after composing with the coercion are equal — applied to 5.50's own
+uniqueness clause for the restrictions along
 `UniformSpace.Completion.coeRingHom`.
 
 At the trivial weight family `Tᵢ = {1}` the domain is the completed restricted power-series
@@ -76,9 +78,10 @@ the generators.** Two of them agreeing on every constant series *and* every vari
 
 This is `weightedRestrictedSubring_ringHom_ext_of_continuous` carried across the completion: that
 lemma identifies the two restrictions along `UniformSpace.Completion.coeRingHom`, and
-`UniformSpace.Completion.ext` propagates the agreement to the completion by density of the image
-of the coercion. The completeness and `T3Space` hypotheses that the universal property below
-carries are what the evaluation homomorphism needs in order to exist; uniqueness needs neither. -/
+`UniformSpace.Completion.ringHom_ext_of_continuous` propagates the agreement to the completion
+by density of the image of the coercion. The completeness and `T3Space` hypotheses that the
+universal property below carries are what the evaluation homomorphism needs in order to exist;
+uniqueness needs neither. -/
 theorem completion_weightedRestrictedSubring_ringHom_ext_of_continuous (hT : IsWeightFamily T)
     {f g : Completion (weightedRestrictedSubring T hT) →+* B} (hf : Continuous f)
     (hg : Continuous g) (hC : ∀ a, f (weightedC T hT a) = g (weightedC T hT a))
@@ -89,14 +92,12 @@ theorem completion_weightedRestrictedSubring_ringHom_ext_of_continuous (hT : IsW
   have hcomp : ∀ (h : Completion (weightedRestrictedSubring T hT) →+* B)
       (x : weightedRestrictedSubring T hT), (h.comp Completion.coeRingHom) x = h x :=
     fun _ _ ↦ rfl
-  have key : f.comp Completion.coeRingHom = g.comp Completion.coeRingHom :=
-    weightedRestrictedSubring_ringHom_ext_of_continuous hT
+  exact Completion.ringHom_ext_of_continuous hf hg
+    (weightedRestrictedSubring_ringHom_ext_of_continuous hT
       (by simpa only [RingHom.coe_comp] using hf.comp Completion.continuous_coeRingHom)
       (by simpa only [RingHom.coe_comp] using hg.comp Completion.continuous_coeRingHom)
       (fun a ↦ (hcomp f _).trans ((hC a).trans (hcomp g _).symm))
-      fun i ↦ (hcomp f _).trans ((hX i).trans (hcomp g _).symm)
-  exact DFunLike.coe_injective (Completion.ext hf hg fun x ↦
-    (hcomp f x).symm.trans ((DFunLike.congr_fun key x).trans (hcomp g x)))
+      fun i ↦ (hcomp f _).trans ((hX i).trans (hcomp g _).symm))
 
 end Uniqueness
 

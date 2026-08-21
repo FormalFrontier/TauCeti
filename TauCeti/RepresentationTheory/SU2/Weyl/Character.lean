@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -59,6 +60,8 @@ the given element is conjugate to, where the closed forms below apply.
   `TauCeti.SU2.character_symPower_torusExp_of_sin_eq_zero`: the same three statements in the angle
   parametrisation, `sin θ · χ_d = sin ((d+1)θ)`, `χ_d = sin ((d+1)θ) / sin θ` and, at the multiples
   of `π`, `χ_d = (d + 1) cosᵈ θ`.
+* `TauCeti.SU2.conj_character_symPower_torusExp`: the character is **real** on the torus, both
+  closed forms exhibiting it as the coercion of a real number.
 * `TauCeti.SU2.character_symPower_torusExp_eq_div`: the alternating-sum form
   `χ_d = (e^{i(d+1)θ} - e^{-i(d+1)θ}) / (e^{iθ} - e^{-iθ})`.
 
@@ -209,6 +212,18 @@ theorem character_symPower_torusExp_of_sin_eq_zero {θ : ℝ} (hθ : Real.sin θ
   have hsq : ((Circle.exp θ : Circle) : ℂ) ^ 2 = 1 := by
     rw [hz, ← Complex.ofReal_pow, hcos, Complex.ofReal_one]
   rw [torusExp_def, character_symPower_torusHom_of_sq_eq_one d hsq, hz]
+
+/-- **The character of `Symᵈ(ℂ²)` is real on the maximal torus**: it is a sum of a weight string
+`z^{-d} + ⋯ + z^{d}` closed under inversion, and both closed forms above exhibit it as the
+coercion of a real number, so complex conjugation leaves it fixed. -/
+@[simp]
+theorem conj_character_symPower_torusExp (θ : ℝ) :
+    (starRingEnd ℂ) ((symPower d).character (torusExp θ))
+      = (symPower d).character (torusExp θ) := by
+  rcases eq_or_ne (Real.sin θ) 0 with hθ | hθ
+  · rw [character_symPower_torusExp_of_sin_eq_zero d hθ]
+    simp only [map_mul, map_pow, map_add, map_one, map_natCast, Complex.conj_ofReal]
+  · rw [character_symPower_torusExp_eq_sin_div_sin d hθ, Complex.conj_ofReal]
 
 /-- **The alternating-sum form of the Weyl character formula.**  Off the multiples of `π` the
 character of `Symᵈ(ℂ²)` on the torus is the quotient of the alternating sums

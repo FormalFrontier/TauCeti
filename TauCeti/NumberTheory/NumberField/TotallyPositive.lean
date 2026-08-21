@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -32,19 +33,19 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.IsTotallyPositive`: strict positivity at every real place, with
+* `NumberField.IsTotallyPositive`: strict positivity at every real place, with
   `isTotallyPositive_iff` its introduction/elimination form.
-* `TauCeti.NumberField.isTotallyPositive_one`, `IsTotallyPositive.mul`, `IsTotallyPositive.inv`,
+* `NumberField.isTotallyPositive_one`, `IsTotallyPositive.mul`, `IsTotallyPositive.inv`,
   `isTotallyPositive_sq`: the multiplicative structure, including that nonzero squares are totally
   positive.
-* `TauCeti.NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
+* `NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
   kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`. For a totally complex field
   it is everything (`totallyPositiveUnits_eq_top`), since total positivity is then vacuous
   (`not_isReal_of_isTotallyComplex` makes `IsTotallyPositive` `simp` to `True`).
-* `TauCeti.NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
+* `NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
   units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
   `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
-* `TauCeti.NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index
+* `NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index
   (via `Units.instFiniteIndexPosSubgroup` and the general `Subgroup.instFiniteIndexComap`).
 -/
 
@@ -52,7 +53,7 @@ public section
 
 open NumberField InfinitePlace
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K]
 
@@ -162,4 +163,4 @@ instance finiteIndex_totallyPositiveUnits : (totallyPositiveUnits (K := K)).Fini
   rw [totallyPositiveUnits, iInf_subtype']
   exact Subgroup.finiteIndex_iInf fun _ => inferInstance
 
-end TauCeti.NumberField
+end NumberField

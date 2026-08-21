@@ -50,6 +50,11 @@ cross, rather than in any module about particular matrices.
   positive-determinant rational matrix, with no `σ` twist.
 * `ModularForm.map_ratCast_mem_SL`, `ModularForm.exists_mem_SLnZ_of_mem_SL`: the two directions
   of the `SLnZ 2` / `𝒮ℒ` correspondence.
+* `ModularForm.rat_slash_mapGL`: the rational slash at `mapGL ℚ σ` is the real slash at
+  `mapGL ℝ σ`, and `ModularForm.slash_eq_of_mem_map_mapGL`,
+  `ModularForm.slash_eq_of_mem_map_mapGL_real`: the two directions of slash-invariance under
+  the images of a subgroup `G ≤ SL₂(ℤ)` in `GL(2, ℚ)` and in `GL(2, ℝ)`, together with
+  `ModularForm.map_mapGL_le_glpos`.
 * `ModularForm.slash_eq_of_mem_SLnZ`: real slash-invariance under `𝒮ℒ` gives rational
   slash-invariance under `SLnZ 2`.
 * `UpperHalfPlane.IsBoundedAtImInfty.rat_slash`, `UpperHalfPlane.IsZeroAtImInfty.rat_slash`: the
@@ -173,6 +178,45 @@ lemma slash_eq_of_mem_SLnZ (k : ℤ) {f : ℍ → ℂ} (hf : ∀ γ ∈ 𝒮ℒ,
     (hδ : δ ∈ SLnZ 2) : f ∣[k] δ = f := by
   rw [rat_slash]
   exact hf _ (map_ratCast_mem_SL hδ)
+
+/-- **The `ℚ`/`ℝ` bridge for the slash by an integral matrix**: the rational action at
+`mapGL ℚ σ` is the real action at `mapGL ℝ σ`. Both are ranges of `mapGL` out of the same
+`SL(2, ℤ)`, and mathlib's `Matrix.SpecialLinearGroup.map_mapGL` relates them along `ℤ → ℚ → ℝ`.
+
+This is the one lemma needed to state a hypothesis rationally and consume it at a level
+`G.map (mapGL ℝ)`, or the other way about. -/
+lemma rat_slash_mapGL (k : ℤ) (f : ℍ → ℂ) (σ : SL(2, ℤ)) :
+    f ∣[k] (mapGL ℚ σ : GL (Fin 2) ℚ) = f ∣[k] (mapGL ℝ σ : GL (Fin 2) ℝ) := by
+  rw [rat_slash, map_mapGL]
+
+/-- Real slash-invariance under the image of `G ≤ SL₂(ℤ)` in `GL(2, ℝ)` — the way a level is
+spelled for `SlashInvariantForm` — gives rational slash-invariance under its image in
+`GL(2, ℚ)`, which is the way the Hecke triples of `HeckeRing/GL2/` are spelled.
+`slash_eq_of_mem_SLnZ` is the case `G = ⊤`, written with the ranges `SLnZ 2` and `𝒮ℒ` that the
+level-one development uses. -/
+lemma slash_eq_of_mem_map_mapGL {k : ℤ} {G : Subgroup SL(2, ℤ)} {f : ℍ → ℂ}
+    (hf : ∀ γ ∈ G.map (mapGL ℝ), f ∣[k] γ = f) {δ : GL (Fin 2) ℚ}
+    (hδ : δ ∈ G.map (mapGL ℚ)) : f ∣[k] δ = f := by
+  obtain ⟨σ, hσ, rfl⟩ := Subgroup.mem_map.mp hδ
+  rw [rat_slash_mapGL]
+  exact hf _ (Subgroup.mem_map_of_mem _ hσ)
+
+/-- The converse of `slash_eq_of_mem_map_mapGL`: rational slash-invariance under the image of
+`G ≤ SL₂(ℤ)` in `GL(2, ℚ)` gives real slash-invariance under its image in `GL(2, ℝ)`. This is
+the direction that discharges the `slash_action_eq'` field of a `SlashInvariantForm`. -/
+lemma slash_eq_of_mem_map_mapGL_real {k : ℤ} {G : Subgroup SL(2, ℤ)} {f : ℍ → ℂ}
+    (hf : ∀ δ ∈ G.map (mapGL ℚ), f ∣[k] δ = f) {γ : GL (Fin 2) ℝ}
+    (hγ : γ ∈ G.map (mapGL ℝ)) : f ∣[k] γ = f := by
+  obtain ⟨σ, hσ, rfl⟩ := Subgroup.mem_map.mp hγ
+  rw [← rat_slash_mapGL]
+  exact hf _ (Subgroup.mem_map_of_mem _ hσ)
+
+/-- The image of `G ≤ SL₂(ℤ)` in `GL(2, ℚ)` consists of matrices of determinant `1`, so it lies
+in `GLPos`. This is the hypothesis `det_rightCosetRep_pos` asks of the flanking group. -/
+lemma map_mapGL_le_glpos (G : Subgroup SL(2, ℤ)) :
+    G.map (mapGL ℚ) ≤ Matrix.GLPos (Fin 2) ℚ := by
+  rintro _ ⟨σ, -, rfl⟩
+  exact SLnZ_le_glpos 2 ((mem_SLnZ_iff 2).mpr ⟨σ, rfl⟩)
 
 end ModularForm
 

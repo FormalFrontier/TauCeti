@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti Project. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Tau Ceti Project
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,6 +11,9 @@ public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
 
 import Mathlib.LinearAlgebra.Matrix.Unique
+-- Private: `CliffordAlgebra.prod_map_ι_mul_ι_of_even_length` is used only inside the proof of
+-- `CliffordAlgebra.hyperbolicVolume_anticomm_rightGenerator`.
+import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
 
 /-!
 # Hyperbolic Bott periodicity for real Clifford algebras
@@ -18,11 +21,11 @@ import Mathlib.LinearAlgebra.Matrix.Unique
 This file proves the `(1, 1)` periodicity step for Clifford algebras: adding one positive and one
 negative generator is equivalent to tensoring with two-by-two real matrices. It also derives the
 signature-switch recurrence `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)` from
-`TauCeti.CliffordAlgebra.signSwitchEquiv`.
+`CliffordAlgebra.signSwitchEquiv`.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
+* `CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
   real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
 * `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms;
 * `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
@@ -44,7 +47,7 @@ public section
 open Module QuadraticMap
 open scoped Matrix TensorProduct
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {M : Type*} [AddCommGroup M] [Module ℝ M]
 variable (Q : QuadraticForm ℝ M)
@@ -206,28 +209,37 @@ private theorem hyperbolicBaseInclusion_ι (m : M) :
   rw [hyperbolicBaseInclusion, _root_.CliffordAlgebra.lift_ι_apply]
   simp [hyperbolicBaseGenerator]
 
+/-- The hyperbolic volume element anticommutes with every generator coming from the hyperbolic
+factor. -/
 private theorem hyperbolicVolume_anticomm_rightGenerator (v : Fin (1 + 1) → ℝ) :
     hyperbolicVolume Q * _root_.CliffordAlgebra.ι _ (0, v) =
       -(_root_.CliffordAlgebra.ι _ (0, v) * hyperbolicVolume Q) := by
-  let h0 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 0 1)
-  let h1 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 1 1)
-  have hh : h0 * h1 * _root_.CliffordAlgebra.ι _ v =
-      -(_root_.CliffordAlgebra.ι _ v * (h0 * h1)) := by
-    -- Rewrite the volume factor as the preimage of `σₓ` before calculating with matrices.
-    rw [show h0 * h1 = TauCeti.realCliffordOneOneEquivMatrix.symm !![(0 : ℝ), 1; 1, 0] by
-      apply TauCeti.realCliffordOneOneEquivMatrix.injective
-      dsimp [h0, h1]
-      rw [realCliffordOneOneEquivMatrix_e₀_mul_e₁, AlgEquiv.apply_symm_apply]]
-    apply TauCeti.realCliffordOneOneEquivMatrix.injective
-    simp only [map_mul, map_neg, AlgEquiv.apply_symm_apply,
-      TauCeti.realCliffordOneOneEquivMatrix_ι]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [Matrix.mul_apply, Fin.sum_univ_two]
-  have hm := congrArg (hyperbolicRightInclusion Q) hh
-  dsimp [h0, h1] at hm
-  simpa [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁,
-    hyperbolicRightInclusion, map_mul] using hm
+  -- The hyperbolic volume element is the ordered product of the two orthogonal vectors `(0, e₀)`
+  -- and `(0, e₁)`, so the even half of the volume-element dichotomy applies to it.
+  have hpair : ([((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))] :
+      List (M × (Fin (1 + 1) → ℝ))).Pairwise
+        (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho := by
+    simp [QuadraticMap.isOrtho_def]
+  have hmem : ((0 : M), v) ∈ Submodule.span ℝ
+      {x : M × (Fin (1 + 1) → ℝ) |
+        x ∈ ([((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))] :
+          List (M × (Fin (1 + 1) → ℝ)))} := by
+    have hv : v 0 • ((0 : M), Pi.single 0 (1 : ℝ)) + v 1 • ((0 : M), Pi.single 1 (1 : ℝ))
+        = ((0 : M), v) := by
+      refine Prod.ext (by simp) ?_
+      funext i
+      fin_cases i <;> simp
+    -- The membership set of a two-element list is the pair itself.
+    have hset : {x : M × (Fin (1 + 1) → ℝ) |
+        x ∈ ([((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))] :
+          List (M × (Fin (1 + 1) → ℝ)))}
+        = {((0 : M), Pi.single 0 (1 : ℝ)), ((0 : M), Pi.single 1 (1 : ℝ))} := by
+      ext x
+      simp
+    rw [hset]
+    exact Submodule.mem_span_pair.mpr ⟨v 0, v 1, hv⟩
+  have h := _root_.CliffordAlgebra.prod_map_ι_mul_ι_of_even_length hpair ⟨1, rfl⟩ hmem
+  simpa [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁] using h
 
 private theorem hyperbolicBaseInclusion_comm_rightInclusion
     (x : _root_.CliffordAlgebra Q)
@@ -422,7 +434,7 @@ theorem hyperbolicEquivTensor_symm_apply_ι_hyperbolic
   rw [AlgEquiv.apply_symm_apply, hyperbolicEquivTensor_ι]
   simp
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra
 
 namespace TauCeti
 

@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.IntegralLattice.Basic
+public import TauCeti.LinearAlgebra.IntegralLattice.Norm
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.QuadraticForm.Signature
 
@@ -18,7 +19,9 @@ and `sigNeg`; the null index is the dimension of the kernel of the bilinear form
 Positive- and negative-semidefiniteness are expressed using Mathlib's bilinear-form predicates.
 The characteristic theorems relate every predicate both to the signature and to the usual
 elementwise inequalities. In particular, an indefinite lattice has vectors of both signs, and a
-degenerate lattice has a nonzero vector in its radical.
+degenerate lattice has a nonzero vector in its radical. The final section proves that an
+integral-lattice isometry transports the radical and preserves all three inertia indices and every
+definiteness predicate.
 
 ## References
 
@@ -30,6 +33,8 @@ degenerate lattice has a nonzero vector in its radical.
 * `TauCeti.IntegralLattice.radical`: the kernel of the rational bilinear form.
 * `TauCeti.IntegralLattice.signature`: the positive, null, and negative indices.
 * `TauCeti.IntegralLattice.IsPosSemidef` and related definiteness predicates.
+* `TauCeti.IntegralLattice.Isometry.map_radical` and the `Isometry.sigPos_eq`, `sigNull_eq`, and
+  `sigNeg_eq` theorems: isometry invariance of the signature.
 -/
 
 public section
@@ -38,11 +43,12 @@ namespace TauCeti
 
 open QuadraticMap
 
-universe u
+universe u v
 
 namespace IntegralLattice
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V] (L : IntegralLattice V)
+variable {W : Type v} [AddCommGroup W] [Module ℚ W]
 
 /-- The radical of an integral lattice is the kernel of its rational bilinear form. -/
 def radical : Submodule ℚ V := L.form.ker
@@ -220,6 +226,96 @@ theorem isIndefinite_iff_exists_pos_and_exists_neg :
     L.isNegSemidef_iff]
   simp only [not_forall, not_le]
   exact and_comm
+
+namespace Isometry
+
+variable {L : IntegralLattice V} {M : IntegralLattice W}
+
+/-- An integral-lattice isometry maps the source radical onto the target radical. -/
+@[simp]
+theorem map_radical (e : Isometry L M) :
+    L.radical.map (e : V ≃ₗ[ℚ] W).toLinearMap = M.radical := by
+  rw [← L.radical_toQuadraticMap, ← M.radical_toQuadraticMap,
+    ← L.norm_def, ← M.norm_def]
+  simpa only [e.normIsometryEquiv_toLinearEquiv] using e.normIsometryEquiv.map_radical
+
+/-- Isometric integral lattices have the same positive index. -/
+theorem sigPos_eq (e : Isometry L M) : L.sigPos = M.sigPos := by
+  have := L.finiteDimensional
+  have := M.finiteDimensional
+  rw [sigPos, sigPos, ← L.norm_def, ← M.norm_def]
+  exact QuadraticMap.Equivalent.sigPos_eq ⟨e.normIsometryEquiv⟩
+
+/-- Isometric integral lattices have the same null index. -/
+theorem sigNull_eq (e : Isometry L M) : L.sigNull = M.sigNull := by
+  have := L.finiteDimensional
+  have := M.finiteDimensional
+  rw [sigNull, sigNull, ← e.map_radical]
+  exact (LinearEquiv.finrank_map_eq (e : V ≃ₗ[ℚ] W) L.radical).symm
+
+/-- Isometric integral lattices have the same negative index. -/
+theorem sigNeg_eq (e : Isometry L M) : L.sigNeg = M.sigNeg := by
+  have := L.finiteDimensional
+  have := M.finiteDimensional
+  rw [sigNeg, sigNeg, ← L.norm_def, ← M.norm_def]
+  exact QuadraticMap.Equivalent.sigNeg_eq ⟨e.normIsometryEquiv⟩
+
+/-- Isometric integral lattices have the same signature. -/
+theorem signature_eq (e : Isometry L M) : L.signature = M.signature := by
+  rw [signature, signature, e.sigPos_eq, e.sigNull_eq, e.sigNeg_eq]
+
+/-- Nondegeneracy of the ambient form is invariant under integral-lattice isometry. -/
+theorem form_nondegenerate_iff (e : Isometry L M) :
+    L.form.Nondegenerate ↔ M.form.Nondegenerate := by
+  have := L.finiteDimensional
+  have := M.finiteDimensional
+  have hL : L.form.ker = L.radical :=
+    (LinearMap.BilinForm.radical_toQuadraticMap L.form L.isSymm).symm.trans
+      L.radical_toQuadraticMap
+  have hM : M.form.ker = M.radical :=
+    (LinearMap.BilinForm.radical_toQuadraticMap M.form M.isSymm).symm.trans
+      M.radical_toQuadraticMap
+  rw [LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot,
+    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot, hL, hM, ← e.map_radical]
+  exact Submodule.map_eq_bot_iff.symm
+
+/-- The nondegeneracy mixin is invariant under integral-lattice isometry. -/
+theorem isNondegenerate_iff (e : Isometry L M) : L.IsNondegenerate ↔ M.IsNondegenerate := by
+  constructor <;> rintro ⟨h⟩
+  · exact ⟨e.form_nondegenerate_iff.mp h⟩
+  · exact ⟨e.form_nondegenerate_iff.mpr h⟩
+
+/-- Transport the nondegeneracy mixin along an integral-lattice isometry. -/
+theorem isNondegenerate (e : Isometry L M) [L.IsNondegenerate] : M.IsNondegenerate :=
+  e.isNondegenerate_iff.mp (by infer_instance)
+
+/-- Positive-definiteness is invariant under integral-lattice isometry. -/
+theorem isPosDef_iff (e : Isometry L M) : L.IsPosDef ↔ M.IsPosDef := by
+  rw [M.isPosDef_iff_sigNull_eq_zero_and_sigNeg_eq_zero,
+    L.isPosDef_iff_sigNull_eq_zero_and_sigNeg_eq_zero, ← e.sigNull_eq, ← e.sigNeg_eq]
+
+/-- Positive-semidefiniteness is invariant under integral-lattice isometry. -/
+theorem isPosSemidef_iff (e : Isometry L M) : L.IsPosSemidef ↔ M.IsPosSemidef := by
+  rw [M.isPosSemidef_iff_sigNeg_eq_zero, L.isPosSemidef_iff_sigNeg_eq_zero, ← e.sigNeg_eq]
+
+/-- Negative-definiteness is invariant under integral-lattice isometry. -/
+theorem isNegDef_iff (e : Isometry L M) : L.IsNegDef ↔ M.IsNegDef := by
+  rw [M.isNegDef_iff_sigPos_eq_zero_and_sigNull_eq_zero,
+    L.isNegDef_iff_sigPos_eq_zero_and_sigNull_eq_zero, ← e.sigPos_eq, ← e.sigNull_eq]
+
+/-- Negative-semidefiniteness is invariant under integral-lattice isometry. -/
+theorem isNegSemidef_iff (e : Isometry L M) : L.IsNegSemidef ↔ M.IsNegSemidef := by
+  rw [M.isNegSemidef_iff_sigPos_eq_zero, L.isNegSemidef_iff_sigPos_eq_zero, ← e.sigPos_eq]
+
+/-- Degeneracy is invariant under integral-lattice isometry. -/
+theorem isDegenerate_iff (e : Isometry L M) : L.IsDegenerate ↔ M.IsDegenerate := by
+  rw [M.isDegenerate_iff_sigNull_pos, L.isDegenerate_iff_sigNull_pos, ← e.sigNull_eq]
+
+/-- Indefiniteness is invariant under integral-lattice isometry. -/
+theorem isIndefinite_iff (e : Isometry L M) : L.IsIndefinite ↔ M.IsIndefinite := by
+  rw [IsIndefinite, IsIndefinite, ← e.sigPos_eq, ← e.sigNeg_eq]
+
+end Isometry
 
 end IntegralLattice
 

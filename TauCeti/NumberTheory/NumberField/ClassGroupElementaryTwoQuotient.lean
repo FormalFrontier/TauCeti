@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,9 +25,9 @@ cardinality divides the class number.
 
 ## Main results
 
-* `TauCeti.NumberField.card_classGroupElementaryTwoQuotient_dvd_classNumber`: the elementary-2
+* `NumberField.card_classGroupElementaryTwoQuotient_dvd_classNumber`: the elementary-2
   quotient cardinality divides the class number.
-* `TauCeti.NumberField.two_pow_classGroupTwoRank_dvd_classNumber`: the same divisibility in
+* `NumberField.two_pow_classGroupTwoRank_dvd_classNumber`: the same divisibility in
   rank form.
 -/
 
@@ -34,7 +35,7 @@ public section
 
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable (K : Type*) [Field K]
 
@@ -69,4 +70,4 @@ theorem two_pow_classGroupTwoRank_le_classNumber [NumberField K] :
   rw [← Nat.card_eq_fintype_card]
   exact TauCeti.ClassGroup.two_pow_twoRank_le_card (𝓞 K)
 
-end TauCeti.NumberField
+end NumberField

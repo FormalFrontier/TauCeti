@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -17,7 +18,7 @@ fixing subgroup is open and fixes the tensor. The same is therefore true for eac
 element.
 
 For tori, this makes the finite free character lattice constructed in
-`TauCeti.Algebra.AlgebraicGroup.Torus.CharacterLattice` a continuous discrete Galois module.
+`TauCeti.Algebra.AlgebraicGroup.Torus.CharacterLattice.Basic` a continuous discrete Galois module.
 
 ## Main declarations
 

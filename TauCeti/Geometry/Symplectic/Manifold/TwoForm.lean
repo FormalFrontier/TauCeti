@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -121,6 +122,11 @@ lemma Tames.isNondegenerate (h : form.Tames J) : form.IsNondegenerate := by
 structure in both tangent arguments leaves the form unchanged. -/
 def Invariant (form : SmoothTwoForm I M) (J : SmoothAlmostComplexStructure I M) : Prop :=
   ∀ (x : M) (v w : TangentSpace I x), form x (J x v) (J x w) = form x v w
+
+/-- Apply invariance at a point and two tangent vectors. -/
+lemma Invariant.apply (h : form.Invariant J) (x : M) (v w : TangentSpace I x) :
+    form x (J x v) (J x w) = form x v w :=
+  h x v w
 
 /-- Manifold-level invariance is the pointwise linear invariance condition once nondegeneracy has
 identified each tangent-space form as a `SymplecticForm`. -/

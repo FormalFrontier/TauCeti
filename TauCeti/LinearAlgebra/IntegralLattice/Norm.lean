@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.QuadraticForm.Basic
-public import TauCeti.LinearAlgebra.IntegralLattice.Basic
+public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
+public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
 
 /-!
 # Norms of integral lattices
@@ -14,7 +15,9 @@ The norm of a vector in an integral lattice is its self-pairing under the lattic
 On lattice vectors this rational value has a canonical integral lift, the integral norm.
 
 This file develops the rational and integral norm quadratic forms, their basic properties and
-polarization identities, and the set of lattice vectors having a prescribed norm.
+polarization identities, and the set of lattice vectors having a prescribed norm. An
+integral-lattice isometry induces an isometry equivalence of the rational norm forms and preserves
+the integral norm on the carrier.
 
 ## Main definitions
 
@@ -28,6 +31,8 @@ polarization identities, and the set of lattice vectors having a prescribed norm
 * `TauCeti.IntegralLattice.integralNorm_apply`: evaluating the integral norm yields
   integral self-pairing.
 * `TauCeti.IntegralLattice.integralNorm_cast`: the integral norm recovers the rational norm in `ℚ`.
+* `TauCeti.IntegralLattice.Isometry.normIsometryEquiv`: the norm-form isometry induced by a lattice
+  isometry.
 * `TauCeti.IntegralLattice.norm_add`: polarization identity for the rational norm.
 * `TauCeti.IntegralLattice.norm_sub`: subtractive polarization identity for the rational norm.
 * `TauCeti.IntegralLattice.integralNorm_add`: polarization identity for the integral norm.
@@ -47,9 +52,10 @@ public section
 
 namespace TauCeti
 
-universe u
+universe u v
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
+variable {W : Type v} [AddCommGroup W] [Module ℚ W]
 
 namespace IntegralLattice
 
@@ -57,6 +63,11 @@ namespace IntegralLattice
 
 /-- The rational quadratic form on ambient vectors given by self-pairing. -/
 def norm (L : IntegralLattice V) : QuadraticForm ℚ V := L.form.toQuadraticMap
+
+/-- The rational norm form is the quadratic form associated to the ambient bilinear form. -/
+theorem norm_def (L : IntegralLattice V) :
+    L.norm = L.form.toQuadraticMap :=
+  (rfl)
 
 -- The evaluation and negation identities below remain explicit rewrite lemmas. Registering them
 -- with `simp` makes the specialized cast, zero, and scaling rules fail the `simpNF` linter.
@@ -73,6 +84,35 @@ noncomputable def integralNorm (L : IntegralLattice V) : QuadraticForm ℤ L :=
 theorem integralNorm_apply (L : IntegralLattice V) (x : L) :
     L.integralNorm x = L.integralForm x x :=
   LinearMap.BilinMap.toQuadraticMap_apply L.integralForm x
+
+namespace Isometry
+
+variable {L : IntegralLattice V} {M : IntegralLattice W}
+
+/-- An integral-lattice isometry, regarded as an isometry equivalence of the associated rational
+norm forms. -/
+def normIsometryEquiv (e : Isometry L M) : L.norm.IsometryEquiv M.norm where
+  toLinearEquiv := e
+  map_app' x := e.toIsometryEquiv.map_app x x
+
+/-- The linear equivalence underlying the norm isometry is the original ambient equivalence. -/
+@[simp]
+theorem normIsometryEquiv_toLinearEquiv (e : Isometry L M) :
+    e.normIsometryEquiv.toLinearEquiv = (e : V ≃ₗ[ℚ] W) :=
+  (rfl)
+
+/-- An integral-lattice isometry preserves the rational norm. -/
+@[simp]
+theorem norm_apply (e : Isometry L M) (x : V) : M.norm (e x) = L.norm x :=
+  e.normIsometryEquiv.map_app x
+
+/-- The carrier equivalence of an integral-lattice isometry preserves the integral norm. -/
+@[simp]
+theorem integralNorm_carrierEquiv (e : Isometry L M) (x : L) :
+    M.integralNorm (e.carrierEquiv x) = L.integralNorm x := by
+  rw [M.integralNorm_apply, L.integralNorm_apply, e.carrierEquiv_map_integralForm]
+
+end Isometry
 
 /-- The integral norm recovers the rational norm after coercion to `ℚ`. -/
 @[simp]
@@ -163,6 +203,17 @@ theorem zero_mem_vectorsOfNorm (L : IntegralLattice V) : (0 : L) ∈ L.vectorsOf
 theorem neg_mem_vectorsOfNorm_iff {L : IntegralLattice V} {n : ℚ} (x : L) :
     -x ∈ L.vectorsOfNorm n ↔ x ∈ L.vectorsOfNorm n := by
   simp [mem_vectorsOfNorm]
+
+-- This membership transport is not registered with `simp`: `mem_vectorsOfNorm`,
+-- `coe_carrierEquiv_apply`, and `Isometry.norm_apply` already prove it, so tagging it fails the
+-- `simpNF` linter.
+
+/-- A carrier vector belongs to a prescribed norm set if and only if its image under an isometry
+does. -/
+theorem Isometry.carrierEquiv_mem_vectorsOfNorm_iff {L : IntegralLattice V}
+    {M : IntegralLattice W} (e : Isometry L M) (x : L) (n : ℚ) :
+    e.carrierEquiv x ∈ M.vectorsOfNorm n ↔ x ∈ L.vectorsOfNorm n := by
+  simp only [mem_vectorsOfNorm, e.coe_carrierEquiv_apply, e.norm_apply]
 
 /-- If a rational number is not an integer, no lattice vector has that norm. -/
 theorem vectorsOfNorm_eq_empty_of_forall_ne_intCast (L : IntegralLattice V) {n : ℚ}

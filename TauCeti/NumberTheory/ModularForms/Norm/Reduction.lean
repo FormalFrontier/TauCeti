@@ -7,6 +7,7 @@ module
 
 public import Mathlib.NumberTheory.ModularForms.NormTrace
 import TauCeti.NumberTheory.ModularForms.Norm.Trace
+import TauCeti.NumberTheory.ModularForms.QExpansion.BigO
 
 /-!
 # The coset data of the norm map to level one
@@ -28,6 +29,8 @@ of `Γ` as a strict period at level one.
   translates, characterized by `restProd_apply` and bounded at `Im z → ∞`.
 * `TauCeti.ModularForm.NormReduction.strictWidthInfty_mem_strictPeriods_levelOne`: the
   strict cusp width of `G Γ` is a strict period of the full level-one group.
+* `TauCeti.ModularForm.NormReduction.valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero`:
+  vanishing at the cusp `∞` transfers from a form to its level-one norm.
 
 ## References
 
@@ -36,10 +39,13 @@ Reduced from AINTLIB's `LeanModularForms` project
 Apache 2.0, the file
 `projects/LeanModularForms/LeanModularForms/Modularforms/DimGenCongLevels/NormReduction.lean`),
 atop Mathlib's `ModularForm.norm` coset API and this repository's `Norm/Trace` helpers.
+
+`valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero` comes from a second file of that project,
+`DimGenCongLevels/NormTransfer.lean`, where it is the declaration of the same name.
 -/
 
 open scoped MatrixGroups
-open UpperHalfPlane
+open Filter UpperHalfPlane
 
 namespace TauCeti.ModularForm.NormReduction
 
@@ -113,6 +119,27 @@ public lemma isBoundedAtImInfty_restProd (f : ModularForm (G Γ) k) :
       (s := Finset.univ.erase (⟦(1 : 𝒮ℒ)⟧ : Q Γ)) fun q _ ↦ by
       simpa [IsBoundedAtImInfty] using
         TauCeti.SlashInvariantForm.isBoundedAtImInfty_quotientFunc f q
+
+/-- **The norm inherits vanishing at the cusp `∞`**: if `f` tends to `0` at `i∞`, so does its
+level-one norm. The cusp-side counterpart of the interior domination in `Norm/Order.lean`. -/
+public lemma valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero (f : ModularForm (G Γ) k)
+    (hval0 : valueAtInfty (f : ℍ → ℂ) = 0) :
+    valueAtInfty (⇑(_root_.ModularForm.norm 𝒮ℒ f)) = 0 := by
+  have hSL : Fact (IsCusp OnePoint.infty (𝒮ℒ : Subgroup (GL (Fin 2) ℝ))) :=
+    ⟨Subgroup.isCusp_of_mem_strictPeriods one_pos (by simp)⟩
+  -- `∞` is a cusp of `G Γ` because it is one of `𝒮ℒ`, and the index is finite.
+  have : Fact (IsCusp OnePoint.infty (G Γ)) := ⟨IsCusp.of_isFiniteRelIndex hSL.out⟩
+  have hh : 0 < (G Γ).strictWidthInfty := (G Γ).strictWidthInfty_pos_iff.mpr Fact.out
+  have ht_f : ZeroAtFilter atImInfty (f : ℍ → ℂ) := by
+    simpa [ZeroAtFilter, hval0] using TauCeti.ModularFormClass.tendsto_valueAtInfty
+      (Γ := G Γ) (k := k) f hh (Subgroup.strictWidthInfty_mem_strictPeriods (𝒢 := G Γ))
+  have hsplit : (⇑(_root_.ModularForm.norm 𝒮ℒ f)) = (f : ℍ → ℂ) * restProd f :=
+    funext (norm_apply_eq_mul_restProd f)
+  have ht_norm : ZeroAtFilter atImInfty (⇑(_root_.ModularForm.norm 𝒮ℒ f)) :=
+    hsplit ▸ ht_f.mul_boundedAtFilter (isBoundedAtImInfty_restProd (Γ := Γ) (k := k) f)
+  exact (tendsto_nhds_unique ht_norm <|
+    TauCeti.ModularFormClass.tendsto_valueAtInfty (Γ := (𝒮ℒ : Subgroup (GL (Fin 2) ℝ)))
+      (_root_.ModularForm.norm 𝒮ℒ f) hh (strictWidthInfty_mem_strictPeriods_levelOne Γ)).symm
 
 end RestProd
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,12 +20,12 @@ spin representations roadmap. It does not construct that orthogonal Lie equivale
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.bivectorExteriorEquivQuadraticLieSubalgebra`: the exterior
+* `CliffordAlgebra.bivectorExteriorEquivQuadraticLieSubalgebra`: the exterior
   square is linearly equivalent to the quadratic Lie subalgebra.
-* `TauCeti.CliffordAlgebra.bivectorLieRing` and
-  `TauCeti.CliffordAlgebra.bivectorLieAlgebra`: the Lie structures transported to the
+* `CliffordAlgebra.bivectorLieRing` and
+  `CliffordAlgebra.bivectorLieAlgebra`: the Lie structures transported to the
   exterior square.
-* `TauCeti.CliffordAlgebra.bivectorLieEquiv`: the transported Lie equivalence with the
+* `CliffordAlgebra.bivectorLieEquiv`: the transported Lie equivalence with the
   quadratic Lie subalgebra.
 
 ## References
@@ -35,11 +36,8 @@ spin representations roadmap. It does not construct that orthogonal Lie equivale
 
 public section
 
-open CliffordAlgebra
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -124,5 +122,3 @@ theorem bivectorLieEquiv_symm_apply (x : quadraticLieSubalgebra Q) :
   exact LinearEquiv.lieEquiv_symm_apply _ x
 
 end CliffordAlgebra
-
-end TauCeti

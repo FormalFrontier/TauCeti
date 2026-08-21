@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -40,6 +40,8 @@ definition is made here.
   antidiagonal sum.
 * `TauCeti.Associative.dividedPower_sub`: the corresponding signed expansion for a difference.
 * `TauCeti.Associative.map_dividedPower`: divided powers are natural under algebra homomorphisms.
+* `TauCeti.Associative.dividedPower_units_conj`: divided powers are equivariant for conjugation by
+  a unit.
 
 ## References
 
@@ -108,6 +110,15 @@ theorem dividedPower_smul (q : ℚ) (n : ℕ) (x : A) :
     dividedPower n (q • x) = q ^ n • dividedPower n x := by
   simpa only [Algebra.smul_def, map_pow] using
     dividedPower_mul_left (Algebra.commutes q x) n
+
+/-- Divided powers are equivariant for conjugation by a unit.
+
+Conjugation is an algebra automorphism, so it commutes with the rational scalar as well as with
+the power. This is what lets a Chevalley group element move past a root subgroup. -/
+@[simp]
+theorem dividedPower_units_conj (u : Aˣ) (n : ℕ) (x : A) :
+    dividedPower n ((u : A) * x * ↑u⁻¹) = (u : A) * dividedPower n x * ↑u⁻¹ := by
+  rw [dividedPower_def, dividedPower_def, Units.conj_pow, mul_smul_comm, smul_mul_assoc]
 
 /-- Divided powers preserve commutation of their underlying elements. -/
 theorem commute_dividedPower_dividedPower {x y : A} (hxy : Commute x y) (m n : ℕ) :
@@ -220,6 +231,18 @@ theorem mul_dividedPower_eq_dividedPower_mul_add_intCast
       dividedPower n y * (x + (c : A) * (n : A)) := by
   rw [mul_dividedPower_eq_dividedPower_mul_add_zsmul hxy, zsmul_eq_mul', mul_add,
     Int.cast_mul, Int.cast_natCast, (Nat.cast_commute n (c : A)).eq]
+
+/-- Scaling an element by an integer scales its `n`-th divided power by the `n`-th power of that
+integer. This is the integral companion of `dividedPower_smul`, and is what lets a Chevalley
+structure constant be moved from a root vector to the parameter of its exponential.
+
+This is deliberately not a `simp` lemma: `zsmul_eq_mul` rewrites the argument `d • x` of the
+left-hand side to `↑d * x`, so the statement is not in simp-normal form. -/
+theorem dividedPower_zsmul (d : ℤ) (n : ℕ) (x : A) :
+    dividedPower n (d • x) = d ^ n • dividedPower n x := by
+  rw [← Int.cast_smul_eq_zsmul ℚ d x, dividedPower_smul,
+    ← Int.cast_smul_eq_zsmul ℚ (d ^ n) (dividedPower n x)]
+  norm_cast
 
 /-- Divided powers of a negated element acquire the expected sign. -/
 @[simp]

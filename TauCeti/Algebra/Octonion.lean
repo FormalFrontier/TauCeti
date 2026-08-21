@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -61,8 +62,10 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 * `TauCeti.Octonion.mul_self`: every octonion satisfies its rank-two equation
   `x * x = trace x • x - norm x • 1`.
 * `TauCeti.Octonion.finrank_imaginary`: the imaginary octonions, the trace-zero subspace, are
-  `7`-dimensional. Identifying them with the fundamental representation of `G₂ = Der 𝕆` waits on
-  the derivation algebra, which is not built here.
+  `7`-dimensional. The derivation algebra `Der 𝕆` is `TauCeti.derivationLieAlgebra R (Octonion R)`
+  (`TauCeti/Algebra/Lie/Derivation.lean`); identifying the imaginary octonions with the fundamental
+  representation of `G₂ = Der 𝕆` still waits on the count `finrank (Der 𝕆) = 14` and the
+  isomorphism with `LieAlgebra.g₂`, neither of which is proved here.
 
 ## Implementation notes
 
@@ -85,7 +88,8 @@ through.
 
 The norm is left as a bare map `Octonion R → R`, as the roadmap pins it. Packaging it as a
 `QuadraticForm R (Octonion R)` — its polarization is the trace form `x, y ↦ trace (x * conj y)` —
-is deferred, together with the derivation algebra `Der 𝕆`.
+is deferred.  The derivation algebra `Der 𝕆` is not deferred: it is
+`TauCeti.derivationLieAlgebra R (Octonion R)`, built in `TauCeti/Algebra/Lie/Derivation.lean`.
 
 ## References
 
@@ -522,7 +526,9 @@ example :
 
 /-- **The imaginary octonions**, the trace-zero subspace of `𝕆`. It is `7`-dimensional
 (`TauCeti.Octonion.finrank_imaginary`); identifying it with the fundamental representation of
-`G₂ = Der 𝕆` waits on the derivation algebra, which is not built here. -/
+`G₂ = Der 𝕆` -- where `Der 𝕆` is `TauCeti.derivationLieAlgebra R (Octonion R)` -- waits on the
+count `finrank (Der 𝕆) = 14` and the isomorphism with `LieAlgebra.g₂`, neither of which is proved
+here. -/
 def imaginary (R : Type*) [CommRing R] : Submodule R (Octonion R) := LinearMap.ker trace
 
 @[simp] theorem mem_imaginary {x : Octonion R} : x ∈ imaginary R ↔ trace x = 0 :=

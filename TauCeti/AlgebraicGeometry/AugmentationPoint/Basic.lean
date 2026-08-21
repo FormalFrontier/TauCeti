@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -15,6 +16,8 @@ of the algebra's prime spectrum. This file records that point and its underlying
 ## Main declarations
 
 * `TauCeti.AlgHom.kernelPoint`: the point cut out by the kernel of an augmentation.
+* `TauCeti.AlgHom.comap_kernelPoint`: contraction of a kernel point is the kernel point of the
+  composite algebra homomorphism.
 -/
 
 public section
@@ -23,7 +26,7 @@ open AlgebraicGeometry IsLocalRing
 
 namespace TauCeti.AlgHom
 
-universe u v
+universe u v w
 
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Algebra k H]
@@ -42,5 +45,12 @@ theorem kernelPoint_asIdeal :
   dsimp only [closedPoint]
   rw [IsLocalRing.maximalIdeal_eq_bot]
   rfl
+
+/-- Contracting a kernel point along an algebra homomorphism gives the kernel point of the
+composite algebra homomorphism. -/
+@[simp]
+theorem comap_kernelPoint {A : Type w} [CommRing A] [Algebra k A] (g : A →ₐ[k] H) :
+    PrimeSpectrum.comap (g : A →+* H) (kernelPoint f) = kernelPoint (f.comp g) :=
+  PrimeSpectrum.comap_comp_apply (g : A →+* H) (f : H →+* k) (closedPoint k)
 
 end TauCeti.AlgHom

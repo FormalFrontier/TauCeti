@@ -13,7 +13,7 @@ public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
 On a Huber ring the neighbourhood filter of `0` has a concrete basis — the images of the powers
 `Iⁿ` of an ideal of definition (`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`). Continuity
-of a valuation, which is openness of the sets `{a ; v a < v b}`, can therefore be tested against
+of a valuation, which is openness of the sets `{a | v a < v b}`, can therefore be tested against
 that basis instead of against the topology: **`v` is continuous exactly when each of those sets
 swallows some `Iⁿ`.**
 
@@ -54,10 +54,10 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
   {Γ₀ : Type*} [LinearOrderedCommMonoidWithZero Γ₀]
 
 /-- **Continuity, tested against the ideal-of-definition basis.** A valuation on a Huber ring is
-continuous exactly when every set `{a ; v a < v b}` contains the image of some power `Iⁿ` of an
+continuous exactly when every set `{a | v a < v b}` contains the image of some power `Iⁿ` of an
 ideal of definition.
 
-The `b` with `v b = 0` are excluded because `{a ; v a < 0}` is empty, hence not a subgroup;
+The `b` with `v b = 0` are excluded because `{a | v a < 0}` is empty, hence not a subgroup;
 `Valuation.isContinuous_iff_forall_ne_zero` shows they cost nothing. -/
 theorem isContinuous_iff_forall_exists_idealImage_subset (P : PairOfDefinition A)
     (v : Valuation A Γ₀) :

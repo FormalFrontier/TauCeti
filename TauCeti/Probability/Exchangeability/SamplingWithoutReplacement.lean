@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,6 +30,7 @@ same law by `ExchangeableAt.blockLaw_eq_prefixLaw_of_injective`, so the average 
 
 * `sampleWithoutReplacement` — sample a random finite population at uniformly chosen distinct
   indices;
+* `measurable_reindexPopulation` — measurability of the joint selection/population evaluation;
 * `sampleWithoutReplacement_apply` — its evaluation as the average of the selected laws;
 * `ExchangeableAt.sampleWithoutReplacement_eq_prefixLaw` — the finite exchangeable
   without-replacement representation.
@@ -55,12 +57,11 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- Reindex a finite population by a simultaneously supplied selection of its indices.
+/-- Reindexing a population by a simultaneously supplied selection of its indices is measurable.
 
-This lemma is private because the function is only the implementation map in
-`sampleWithoutReplacement`. The measurable-space hypothesis on the finite population index is
-discrete: it lets the variable index be split into countably many measurable fibres. -/
-private theorem measurable_samplePopulation {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
+The measurable-space hypothesis on the population index is discrete: it lets the variable index
+be split into countably many measurable fibres. -/
+theorem measurable_reindexPopulation {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] :
     Measurable (fun p : (ι → κ) × (κ → α) => fun i : ι => p.2 (p.1 i)) := by
   refine measurable_pi_lambda _ fun i => ?_
@@ -87,13 +88,13 @@ Mathlib's `uniformOn` convention makes this the zero measure.
 The assumptions on the population index are part of the definition, not just of its API. The
 population index is finite because uniform counting only distributes mass over finitely many
 injective selections, and its singletons are measurable because that is what
-`measurable_samplePopulation` uses to establish measurability of the pushforward map for an
+`measurable_reindexPopulation` uses to establish measurability of the pushforward map for an
 arbitrary `α`. -/
 def sampleWithoutReplacement {ι κ : Type*} [Finite κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] (ρ : Measure (κ → α)) : Measure (ι → α) :=
   let ν := (uniformOn {k : ι → κ | Function.Injective k}).prod ρ
   let f := fun p i => p.2 (p.1 i)
-  let hf : AEMeasurable f ν := measurable_samplePopulation.aemeasurable
+  let hf : AEMeasurable f ν := measurable_reindexPopulation.aemeasurable
   Measure.mapₗ (hf.mk f) ν
 
 /-- The defining pushforward form of `sampleWithoutReplacement`. -/
@@ -103,7 +104,7 @@ theorem sampleWithoutReplacement_def {ι κ : Type*} [Finite κ] [MeasurableSpac
     sampleWithoutReplacement ρ =
       ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
         fun p i => p.2 (p.1 i) :=
-  Measure.mapₗ_mk_apply_of_aemeasurable measurable_samplePopulation.aemeasurable
+  Measure.mapₗ_mk_apply_of_aemeasurable measurable_reindexPopulation.aemeasurable
 
 /-- Sampling without replacement preserves probability mass whenever an injective selection
 exists. -/
@@ -117,7 +118,7 @@ theorem isProbabilityMeasure_sampleWithoutReplacement {ι κ : Type*} [Finite κ
   let _ : IsProbabilityMeasure (uniformOn E) :=
     isProbabilityMeasure_uniformOn (Set.toFinite E) ⟨e, e.injective⟩
   rw [sampleWithoutReplacement_def]
-  exact Measure.isProbabilityMeasure_map measurable_samplePopulation.aemeasurable
+  exact Measure.isProbabilityMeasure_map measurable_reindexPopulation.aemeasurable
 
 /-- Evaluating the without-replacement law averages the selected population laws over uniform
 injective selections. -/
@@ -127,8 +128,8 @@ theorem sampleWithoutReplacement_apply {ι κ : Type*} [Finite κ]
     sampleWithoutReplacement ρ A =
       ∫⁻ k, ρ ((fun x : κ → α => fun i : ι => x (k i)) ⁻¹' A)
         ∂uniformOn {k : ι → κ | Function.Injective k} := by
-  rw [sampleWithoutReplacement_def, Measure.map_apply measurable_samplePopulation hA,
-    Measure.prod_apply (measurable_samplePopulation hA)]
+  rw [sampleWithoutReplacement_def, Measure.map_apply measurable_reindexPopulation hA,
+    Measure.prod_apply (measurable_reindexPopulation hA)]
   rfl
 
 /-- **Finite exchangeability is sampling without replacement.** If the first `n` coordinates are

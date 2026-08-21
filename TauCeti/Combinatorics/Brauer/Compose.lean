@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -36,7 +36,8 @@ into the multiplication of the Brauer algebra on the diagram basis. That is the 
 symmetric group sits inside the Brauer algebra: once the loop-weighted multiplication of the
 Brauer algebra is available, this is what will make it restrict to the group algebra `ℂ[Sₖ]` along
 `permToBrauer`, since no loop can close up in the middle when one of the two diagrams has only
-through strands. The middle-loop count itself is not built here.
+through strands. The middle-loop count itself is built in
+`TauCeti/Combinatorics/Brauer/LoopCount.lean`.
 
 ## Main definitions
 

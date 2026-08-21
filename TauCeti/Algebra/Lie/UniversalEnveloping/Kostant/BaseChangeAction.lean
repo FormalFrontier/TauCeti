@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -46,8 +46,11 @@ namespace UniversalEnvelopingAlgebra
 
 universe u v w
 
+-- Match tensor products to the explicit `ℤ`-algebra instance supplied by a value-ring object.
+attribute [local instance high] Algebra.toModule
+
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
-variable {R : Type v} [CommRing R]
+variable {R : Type v} [CommRing R] [Algebra ℤ R]
 variable {L : Type*} [LieRing L] [LieAlgebra ℚ L]
 variable {ι : Type w} {κ : Type*}
 

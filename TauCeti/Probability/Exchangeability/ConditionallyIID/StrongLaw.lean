@@ -1,13 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegration
 public import TauCeti.Probability.Process.EmpiricalMeasure
--- Public: the de Finetti corollary is stated for an exchangeable process.
-public import TauCeti.Probability.DeFinetti.Theorem
 -- Non-public: the fibrewise strong law, the measurability of an observable's integral, and the
 -- measurability of a convergence set are used only inside proofs.
 import TauCeti.Probability.StrongLaw
@@ -23,7 +22,7 @@ integral against the *directing measure*, not against a deterministic law. Takin
 be an indicator: for each *fixed* measurable set, the empirical frequency of that set converges
 almost surely to the mass the directing measure gives it.
 
-`ConditionallyIID/EmpiricalMeasure.lean` already gives the mean-square form of this, with the exact
+`ConditionallyIID/EmpiricalMeasure.lean` already gives the `L²` form of this, with the exact
 finite-sample error. What is new here is almost-sure convergence, and the strengthening from a
 single measurable set to a countable family of sets under one null set.
 
@@ -43,9 +42,11 @@ and `tendsto_empiricalMeasure_apply_ae_forall` takes all of it.
 * `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae` and
   `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall` — the empirical frequencies, for
   one fixed measurable set and for a countable family of them under a single null set;
-* `deFinetti_tendsto_empiricalMeasure_apply` — for an exchangeable process on a standard Borel
-  state space, a directing measure whose mass on each fixed measurable set is recovered as the
-  almost-sure limit of the empirical frequencies.
+
+The de Finetti endpoint of these — the same statement for an *exchangeable* process, where the
+directing measure has to be produced first — is `deFinetti_tendsto_empiricalMeasure_apply` in
+`DeFinetti/EmpiricalMeasure.lean`. It is kept out of this module so that the conditional strong law
+does not drag the de Finetti summit into every importer's closure.
 
 ## Implementation
 
@@ -70,13 +71,13 @@ against *every* probability measure at once, and it is all the empirical-measure
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 6 (directing measures), the
-  empirical-measure form of the directing-measure theorem. The roadmap's target there is weak
-  convergence in `ProbabilityMeasure α` against bounded continuous test functions; that form needs
-  a compatible Polish topology on `α`, which `[StandardBorelSpace α]` does not select, so it is not
-  attempted here. The fixed-set almost-sure convergence below is its analytic core, and
-  `tendsto_empiricalMeasure_apply_ae_forall` is the "one null set for a countable determining
-  class" step such an upgrade consumes.
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 6's empirical form of the
+  directing-measure theorem. This module supplies the topology-free fixed-set core; weak
+  empirical-measure convergence is the separate downstream theorem
+  `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` in `ConditionallyIID/WeakConvergence.lean`,
+  which needs only a second-countable topology on `α` whose open sets are measurable. It tests
+  against a countable determining class, and `tendsto_empiricalMeasure_apply_ae_forall` is the
+  "one null set for a countable determining class" step it consumes.
 * O. Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), §1.1.
 
 No material is adapted from `cameronfreer/exchangeability`, which does not treat empirical
@@ -206,7 +207,7 @@ converges almost surely to the mass the directing measure gives it.
 The null set depends on `B`, and outside a countable family of sets it must:
 `tendsto_empiricalMeasure_apply_ae_forall` is as far as the quantifiers can be interchanged.
 
-The mean-square form of the same convergence is
+The `L²` form of the same convergence is
 `ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq`, and
 `ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq` computes its exact finite-sample
 error. -/
@@ -235,24 +236,6 @@ theorem ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall [IsFiniteM
       (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) (B j)).toReal) atTop
       (𝓝 (((ν ω : Measure α) (B j)).toReal)) :=
   ae_all_iff.2 fun j => h.tendsto_empiricalMeasure_apply_ae hX (hB j)
-
-/-- **De Finetti's theorem in empirical-frequency form.** An exchangeable process valued in a
-nonempty standard Borel space has a directing measure whose mass on each fixed measurable set is
-recovered, almost surely, as the limit of the empirical frequencies of the process.
-
-The directing measure is thus not merely asserted to exist: each of its values is the pathwise
-limit of an explicit statistic of the process. The null set depends on the set tested, as it must.
-The weak-topology form of the same statement, testing against bounded continuous functions, needs a
-compatible Polish topology on `α` and is not proved here. -/
-theorem deFinetti_tendsto_empiricalMeasure_apply [StandardBorelSpace α] [Nonempty α]
-    [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
-    ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν ∧
-      ∀ B : Set α, MeasurableSet B → ∀ᵐ ω ∂μ, Tendsto
-        (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) B).toReal) atTop
-        (𝓝 (((ν ω : Measure α) B).toReal)) := by
-  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
-  exact ⟨ν, hν, fun B hB =>
-    hν.tendsto_empiricalMeasure_apply_ae (fun i => (hX_meas i).aemeasurable) hB⟩
 
 end Probability
 

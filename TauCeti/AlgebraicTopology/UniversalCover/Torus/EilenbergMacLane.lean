@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,14 +21,12 @@ This realizes `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13,
 
 ## Main declarations
 
-* `TauCeti.AddCircle.isAspherical_pi`: an indexed product of real circles is aspherical.
-* `TauCeti.AddCircle.isEilenbergMacLaneSpaceOne_pi`: an indexed product of nondegenerate
-  real circles is a `K(Π i, ℤ, 1)`.
+* `AddCircle.isAspherical_pi`: an indexed product of real circles is aspherical.
+* `AddCircle.isEilenbergMacLaneSpaceOne_pi`: an indexed product of nondegenerate real circles is a
+  `K(Π i, ℤ, 1)`.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Topology Topology.Homotopy
 
@@ -53,5 +52,3 @@ theorem isEilenbergMacLaneSpaceOne_pi (p : ι → ℝ) (hp : ∀ i, p i ≠ 0) (
 end AddCircle
 
 end
-
-end TauCeti

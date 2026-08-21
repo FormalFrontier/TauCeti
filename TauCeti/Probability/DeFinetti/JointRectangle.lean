@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -145,7 +145,6 @@ private theorem measure_inter_blockCylinder_eq_setLIntegral_of_injective
         ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
       = ∫⁻ ω in directingProbabilityMeasure μ (fun j (x : ℕ → α) => x j) ⁻¹' S,
           ∏ i, directingMeasure μ (fun j (x : ℕ → α) => x j) ω (B i) ∂μ := by
-  classical
   have hY_meas : ∀ j, Measurable (fun x : ℕ → α => x j) := fun j => measurable_pi_apply j
   obtain ⟨π, hπfin, hπval⟩ := Equiv.Perm.exists_finite_compl_fixedBy_apply_eq
     (⟨Fin.val, Fin.val_injective⟩ : Fin m ↪ ℕ) ⟨k, hk⟩

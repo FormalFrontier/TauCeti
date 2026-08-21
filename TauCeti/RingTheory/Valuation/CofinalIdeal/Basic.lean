@@ -30,25 +30,25 @@ something derivable from cofinality.
 
 ## Main definitions
 
-* `TauCeti.Valuation.CofinalValueFor v H a` : The powers of `v a` fall below every member
+* `Valuation.CofinalValueFor v H a` : The powers of `v a` fall below every member
   of the subgroup `H` of the value group.
-* `TauCeti.Valuation.cofinalIdeal v hH` : Those elements, as an ideal.
+* `Valuation.cofinalIdeal v hH` : Those elements, as an ideal.
 
 ## Main results
-* `TauCeti.Valuation.cofinalValueFor_closure_singleton_of_le` : A value bounded by
+* `Valuation.cofinalValueFor_closure_singleton_of_le` : A value bounded by
   `h < 1` is cofinal for the convex subgroup `h` generates — below `1`, a larger value
   generates a smaller subgroup.
 
-* `TauCeti.Valuation.cofinalValueFor_iff_isCofinalElement` : For a non-vanishing value, the
+* `Valuation.cofinalValueFor_iff_isCofinalElement` : For a non-vanishing value, the
   valuation-side predicate agrees with the group-side `IsCofinalElement` on the value group.
   This is what lets Wedhorn Proposition 1.20 apply.
-* `TauCeti.Valuation.isRadical_cofinalIdeal` : The ideal is radical — the `rad(c) = c` half
+* `Valuation.isRadical_cofinalIdeal` : The ideal is radical — the `rad(c) = c` half
   of Lemma 7.1 — with `cofinalValueFor_pow_iff` the elementwise form behind it.
-* `TauCeti.Valuation.cofinalIdeal_ne_top` : It is proper, a corollary of the ring-level
-  `TauCeti.Valuation.not_cofinalValueFor_one`.
-* `TauCeti.Valuation.cofinalValueFor_top_iff` : At the whole value group the predicate is the
+* `Valuation.cofinalIdeal_ne_top` : It is proper, a corollary of the ring-level
+  `Valuation.not_cofinalValueFor_one`.
+* `Valuation.cofinalValueFor_top_iff` : At the whole value group the predicate is the
   ambient `CofinalValue`.
-* `TauCeti.Valuation.cofinalValueFor_neg_iff` : cofinality is invariant under negation, with
+* `Valuation.cofinalValueFor_neg_iff` : cofinality is invariant under negation, with
   `CofinalValueFor.sub` the resulting difference closure.
 
 ## Implementation notes
@@ -67,7 +67,7 @@ there.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
 open MonoidWithZeroHom
 
@@ -308,4 +308,4 @@ theorem isRadical_cofinalIdeal {v : Valuation A Γ₀}
 
 end CommRing
 
-end TauCeti.Valuation
+end Valuation

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -300,6 +301,13 @@ noncomputable def f4SimplyConnectedRootDatum :
     f4SimplyConnectedRootDatum.pairing i j = f4Root i ⬝ᵥ f4Coroot j := by
   rw [← RootPairing.root_coroot_eq_pairing]
   simp
+
+/-- Every Cartan integer between roots of the pinned type `F₄` datum has absolute value at most
+two. -/
+theorem abs_pairing_f4SimplyConnectedRootDatum_le_two (i j : Fin 48) :
+    |f4SimplyConnectedRootDatum.pairing i j| ≤ 2 := by
+  simp only [f4SimplyConnectedRootDatum_pairing]
+  decide +revert
 
 /-- Reflection in the root of index `i` permutes the root indices of the pinned `F4` datum by the
 explicit table `f4ReflectionIndex i`. -/

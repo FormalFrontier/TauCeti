@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,7 +12,7 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.Algebra.Group.Pi.Units
 -- `Matrix.IsDiag` occurs in the statements below.
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
--- `Subgroup.centralizer` occurs in the statements below.
+-- `Subgroup.centralizer` and `Subgroup.center` occur in the statements below.
 public import Mathlib.GroupTheory.Subgroup.Centralizer
 -- `Nat.card` occurs in the statement of `TauCeti.natCard_diagonalTorus`.
 public import Mathlib.SetTheory.Cardinal.Finite
@@ -22,8 +23,8 @@ import Mathlib.Algebra.GroupWithZero.Units.Fintype
 /-!
 # Diagonal elements of the general linear group, and the diagonal torus
 
-A family of units `t : Fin n → kˣ` is the diagonal of an invertible diagonal matrix, and this
-assignment is a group homomorphism `TauCeti.diagGL : (Fin n → kˣ) →* GL (Fin n) k`. Its entries,
+A family of units indexed by a finite type `ι` is the diagonal of an invertible diagonal matrix,
+and this assignment is a group homomorphism `TauCeti.diagGL : (ι → kˣ) →* GL ι k`. Its entries,
 its determinant and its injectivity are recorded here, together with two facts about diagonal
 matrices proper: invertibility of a diagonal matrix upgrades its diagonal entries to units, and a
 matrix commuting with a diagonal matrix has no entries away from the diagonal wherever that
@@ -67,6 +68,15 @@ genuinely fails, exactly when `GL n k` is itself nontrivial — over `𝔽₂` t
 `n ≥ 2`, while for `n ≤ 1` the whole group is trivial and the conclusion survives for want of
 anything to contradict it.
 
+The smallest diagonal matrices, the scalar ones, are treated here as well: a scalar matrix is
+central in `GL ι k` (`TauCeti.scalar_mem_center`), so its centralizer is the whole group
+(`TauCeti.centralizer_scalar`). Nothing there is special to `Fin n` or to a field, so both are
+stated for an arbitrary finite index type over a commutative semiring. The size of the resulting
+conjugacy class — the easy end of the class table of `GL₂(𝔽_q)` — is
+`TauCeti.ncard_carrier_mk_scalar`, in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer` alongside the other class sizes, so
+that conjugacy theory stays out of this module's imports.
+
 The action of the torus on the coordinate lines of the standard representation is in
 `TauCeti.RepresentationTheory.ClassicalGroups.Torus`.
 
@@ -88,6 +98,8 @@ The action of the torus on the coordinate lines of the standard representation i
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
 * `TauCeti.centralizer_diagonalTorus_eq_top`: over a ring with a single unit the centralizer is
   instead the whole group.
+* `TauCeti.scalar_mem_center` and `TauCeti.centralizer_scalar`: a scalar matrix is central, so its
+  centralizer is the whole group.
 
 ## References
 
@@ -110,30 +122,32 @@ section Semiring
 
 variable [Semiring k]
 
-/-- Coordinatewise units embed in `GL n k` as diagonal matrices. -/
-def diagGL : (Fin n → kˣ) →* GL (Fin n) k :=
-  (Units.map (Matrix.diagonalRingHom (Fin n) k).toMonoidHom).comp
+/-- Coordinatewise units embed in a general linear group as diagonal matrices. -/
+def diagGL {ι : Type*} [Fintype ι] [DecidableEq ι] : (ι → kˣ) →* GL ι k :=
+  (Units.map (Matrix.diagonalRingHom ι k).toMonoidHom).comp
     (MulEquiv.piUnits).symm.toMonoidHom
 
 /-- The matrix underlying `diagGL t` is the diagonal matrix with entries `t i`. -/
 @[simp]
-theorem diagGL_coe (t : Fin n → kˣ) : (diagGL t : Matrix (Fin n) (Fin n) k) =
+theorem diagGL_coe {ι : Type*} [Fintype ι] [DecidableEq ι] (t : ι → kˣ) :
+    (diagGL t : Matrix ι ι k) =
       Matrix.diagonal fun i => (t i : k) := by
   rfl
 
 /-- The entries of `diagGL t` vanish off the diagonal and equal `t i` on it. -/
 @[simp]
-theorem diagGL_apply (t : Fin n → kˣ) (i j : Fin n) :
+theorem diagGL_apply {ι : Type*} [Fintype ι] [DecidableEq ι] (t : ι → kˣ) (i j : ι) :
     diagGL t i j = if i = j then (t i : k) else 0 := by
   rw [diagGL_coe]
   exact Matrix.diagonal_apply ..
 
 /-- The diagonal embedding is injective. -/
-theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
+theorem diagGL_injective {ι : Type*} [Fintype ι] [DecidableEq ι] :
+    Function.Injective (diagGL (k := k) (ι := ι)) := by
   intro t s h
   funext i
   apply Units.ext
-  have := congrArg (fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k) i i) h
+  have := congrArg (fun g : GL ι k ↦ (g : Matrix ι ι k) i i) h
   simpa using this
 
 /-- The diagonal entries of an invertible diagonal matrix are units: the inverse matrix supplies
@@ -157,7 +171,7 @@ theorem isUnit_apply_of_isDiag {ι : Type*} [Fintype ι] [DecidableEq ι] {g : G
 
 /-- The **diagonal torus** of `GL n k`: the image of the coordinatewise units under `diagGL`. -/
 def diagonalTorus (k : Type u) [Semiring k] (n : ℕ) : Subgroup (GL (Fin n) k) :=
-  MonoidHom.range (diagGL (k := k) (n := n))
+  MonoidHom.range (diagGL (k := k) (ι := Fin n))
 
 /-- Membership in the diagonal torus, read off its definition as a range: an element lies in it
 exactly when it is `diagGL t` for a family of units `t`. -/
@@ -252,6 +266,29 @@ instance instIsMulCommutativeDiagonalTorus : IsMulCommutative (diagonalTorus k n
     rintro ⟨-, t, rfl⟩ ⟨-, s, rfl⟩
     refine Subtype.ext ?_
     rw [Subgroup.coe_mul, Subgroup.coe_mul, ← map_mul, ← map_mul, mul_comm]⟩⟩
+
+section Scalar
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- **A scalar matrix is central in `GL ι k`**: it commutes with every matrix, invertible or not.
+Mathlib's `Matrix.GeneralLinearGroup.scalar_commute` asks for a commutative ring; a commutative
+semiring is enough, since `Matrix.scalar_commute` needs only that the scalar commute with every
+element. -/
+theorem scalar_mem_center (u : kˣ) :
+    Matrix.GeneralLinearGroup.scalar ι u ∈ Subgroup.center (GL ι k) :=
+  Subgroup.mem_center_iff.mpr fun g => Units.ext
+    ((Matrix.scalar_commute (u : k) (fun _ => Commute.all _ _) (g : Matrix ι ι k)).symm.eq)
+
+/-- **The centralizer of a scalar matrix is everything**, scalar matrices being central. The size of
+its conjugacy class is `TauCeti.ncard_carrier_mk_scalar`, in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer`. -/
+@[simp]
+theorem centralizer_scalar (u : kˣ) :
+    Subgroup.centralizer {Matrix.GeneralLinearGroup.scalar ι u} = ⊤ :=
+  Subgroup.centralizer_eq_top_iff_subset.mpr (Set.singleton_subset_iff.mpr (scalar_mem_center u))
+
+end Scalar
 
 section IsCancelMulZero
 

@@ -39,24 +39,24 @@ formalised here.
 
 ## Main definitions
 
-* `TauCeti.Valuation.CofinalValue v a` : Powers of `v a` fall below every positive element
+* `Valuation.CofinalValue v a` : Powers of `v a` fall below every positive element
   of the value group of `v`.
-* `TauCeti.Valuation.characteristicGenerators v` and
-  `TauCeti.Valuation.characteristicSubgroup v` : The attained values `≥ 1` and the convex
+* `Valuation.characteristicGenerators v` and
+  `Valuation.characteristicSubgroup v` : The attained values `≥ 1` and the convex
   subgroup `cΓ_v` they generate.
-* `TauCeti.Valuation.HasFullCharacteristicGroup v` : Every positive element of the value
+* `Valuation.HasFullCharacteristicGroup v` : Every positive element of the value
   group of `v` is bounded by attained values.
 
 ## Main results
 
-* `TauCeti.Valuation.exists_pow_lt_of_forall_cofinalValue` : one exponent serves finitely many
+* `Valuation.exists_pow_lt_of_forall_cofinalValue` : one exponent serves finitely many
   cofinal values.
-* `TauCeti.Valuation.mem_characteristicSubgroup_iff` : Membership in `cΓ_v` is bounding by a
+* `Valuation.mem_characteristicSubgroup_iff` : Membership in `cΓ_v` is bounding by a
   single attained value `≥ 1`.
-* `TauCeti.Valuation.hasFullCharacteristicGroup_iff_characteristicSubgroup_eq_top` : The
+* `Valuation.hasFullCharacteristicGroup_iff_characteristicSubgroup_eq_top` : The
   elementwise fullness condition is exactly `cΓ_v = Γ_v`.
-* `TauCeti.Valuation.characteristicSubgroup_eq_comap_of_isEquiv` and
-  `TauCeti.Valuation.valueGroupOrderIso_mem_characteristicSubgroup_iff` : `cΓ_v` is invariant
+* `Valuation.characteristicSubgroup_eq_comap_of_isEquiv` and
+  `Valuation.valueGroupOrderIso_mem_characteristicSubgroup_iff` : `cΓ_v` is invariant
   under valuation equivalence, so it descends to points of the valuation spectrum.
 
 ## References
@@ -71,7 +71,7 @@ cluster), reformulated on the value group.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
 open MonoidWithZeroHom
 
@@ -121,7 +121,7 @@ theorem CofinalValue.of_isEquiv {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
   simpa using this
 
 /-- Cofinality is invariant under valuation equivalence. -/
-theorem _root_.Valuation.IsEquiv.cofinalValue_iff {v : Valuation A Γ₀}
+theorem IsEquiv.cofinalValue_iff {v : Valuation A Γ₀}
     {w : Valuation A Γ₀'} (h : v.IsEquiv w) {a : A} :
     CofinalValue v a ↔ CofinalValue w a :=
   ⟨fun hv ↦ hv.of_isEquiv h, fun hw ↦ hw.of_isEquiv h.symm⟩
@@ -181,7 +181,7 @@ theorem HasFullCharacteristicGroup.of_isEquiv {v : Valuation A Γ₀} {w : Valua
     simpa using this
 
 /-- The full-characteristic-group condition is invariant under valuation equivalence. -/
-theorem _root_.Valuation.IsEquiv.hasFullCharacteristicGroup_iff {v : Valuation A Γ₀}
+theorem IsEquiv.hasFullCharacteristicGroup_iff {v : Valuation A Γ₀}
     {w : Valuation A Γ₀'} (h : v.IsEquiv w) :
     HasFullCharacteristicGroup v ↔ HasFullCharacteristicGroup w :=
   ⟨fun hv ↦ hv.of_isEquiv h, fun hw ↦ hw.of_isEquiv h.symm⟩
@@ -396,4 +396,4 @@ theorem characteristicSubgroup_eq_comap_of_isEquiv {v : Valuation A Γ₀}
     ((valueGroupOrderIso_mem_characteristicSubgroup_iff h).symm.trans
       TauCeti.ConvexSubgroup.mem_comap.symm)
 
-end TauCeti.Valuation
+end Valuation

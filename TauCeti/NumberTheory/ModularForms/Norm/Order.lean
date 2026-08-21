@@ -40,10 +40,9 @@ order of the norm is the sum of the orders of the factors.
 * The two-step route used here — order domination under the norm carries the support into the
   finite support of the level-one norm, and finite index makes the fibres of the orbit comparison
   finite — was arrived at independently of, and concurrently with,
-  [PR #3330](https://github.com/TauCetiProject/TauCeti/pull/3330), which proposes the same
-  argument for a subgroup of `SL(2, ℤ)` of finite index. That pull request is unmerged at the time
-  of writing, so nothing here depends on it and it is cited as prior art rather than as a
-  reference into this library.
+  [PR #3330](https://github.com/TauCetiProject/TauCeti/pull/3330), which gives the same argument
+  for a subgroup of `SL(2, ℤ)` of finite index. That work has since landed; nothing here depends
+  on it, and the two remain independent derivations rather than one building on the other.
 
   The statements differ in the group: this one takes `𝒢 ≤ GL (Fin 2) ℝ` of finite *relative* index
   in `𝒮ℒ`, which **need not lie inside `𝒮ℒ`**. That is also why the order is not descended to the

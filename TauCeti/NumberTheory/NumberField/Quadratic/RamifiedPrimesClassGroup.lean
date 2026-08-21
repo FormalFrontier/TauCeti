@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.NumberTheory.NumberField.PrimeIdeal
 public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-public import Mathlib.RingTheory.ClassGroup.Basic
 
 /-!
 # The class of a ramified prime is 2-torsion
@@ -26,16 +27,16 @@ classical genus theory this result underlies.
 
 ## Main results
 
-* `TauCeti.NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
+* `NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
   is 2-torsion.
 -/
 
 public section
 
 open NumberField Ideal Module
-open scoped NumberField
+open scoped NumberField nonZeroDivisors
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -46,21 +47,14 @@ above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension
 theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     [𝔭.LiesOver (span {(p : ℤ)})] :
-    ClassGroup.mk0 ⟨𝔭, by
-      refine mem_nonZeroDivisors_of_ne_zero ?_
-      rw [Ideal.zero_eq_bot]
-      exact Ideal.ne_bot_of_liesOver_of_ne_bot (p := span {(p : ℤ)})
-        (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
-            exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭⟩ ^ 2 = 1 := by
-  have hnzd : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
-    refine mem_nonZeroDivisors_of_ne_zero ?_
-    rw [Ideal.zero_eq_bot]
-    exact Ideal.ne_bot_of_liesOver_of_ne_bot (p := span {(p : ℤ)})
-      (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
-          exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭
+    ClassGroup.mk0 ⟨𝔭,
+      mem_nonZeroDivisors_of_prime_of_liesOver (prime_of_mem_ramifiedPrimes hmem) 𝔭⟩ ^ 2 =
+      1 := by
+  have hnzd := mem_nonZeroDivisors_of_prime_of_liesOver
+    (prime_of_mem_ramifiedPrimes hmem) 𝔭
   -- `[𝔭]² = [𝔭²] = [p 𝓞 K] = 1`, as `𝔭² = p 𝓞 K` is the extension of the principal ideal `(p)`.
   rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2, ClassGroup.mk0_eq_one_iff,
     ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
   exact ⟨_, rfl⟩
 
-end TauCeti.NumberField
+end NumberField

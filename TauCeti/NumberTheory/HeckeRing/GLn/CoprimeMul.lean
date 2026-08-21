@@ -278,7 +278,7 @@ private lemma diagConj_scaling (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     rw [hC_def, ← mul_assoc, ← mul_assoc, mul_inv_cancel, one_mul]
   have h_entry := congr_arg (fun g : GL (Fin n) ℚ ↦ (↑g : Matrix (Fin n) (Fin n) ℚ) i j) h_mul
   simp only [mapGL_coe_matrix, algebraMap_int_eq, map_apply_coe,
-      RingHom.mapMatrix_apply, Int.coe_castRingHom, Units.val_mul, natDiagGL_coe n a ha, 
+      RingHom.mapMatrix_apply, Int.coe_castRingHom, Units.val_mul, natDiagGL_coe n a ha,
     Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.map_apply] at h_entry
   have hai_ne : (a i : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (ha i).ne'
   have h_dvd : (a i : ℤ) ∣ ∏ k, (a k : ℤ) := Finset.dvd_prod_of_mem _ (Finset.mem_univ i)
@@ -325,7 +325,7 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
       have h_entry := congr_arg
         (fun g : GL (Fin n) ℚ ↦ (↑g : Matrix (Fin n) (Fin n) ℚ) p q) h_Db
       simp only [mapGL_coe_matrix, algebraMap_int_eq, map_apply_coe,
-      RingHom.mapMatrix_apply, Int.coe_castRingHom, Units.val_mul, natDiagGL_coe n b hb, 
+      RingHom.mapMatrix_apply, Int.coe_castRingHom, Units.val_mul, natDiagGL_coe n b hb,
         Matrix.mul_diagonal, Matrix.diagonal_mul, Matrix.map_apply] at h_entry
       have hbq_ne : (b q : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (hb q).ne'
       field_simp at h_entry ⊢

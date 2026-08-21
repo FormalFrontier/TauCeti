@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -314,6 +315,18 @@ theorem swapColumns_swapColumns (a b : Fin n) (x : GridState n) :
     (x.swapColumns a b).swapColumns a b = x := by
   ext c
   simp [swapColumns]
+
+/-- Conjugating the first transposition by the second reorders two column swaps.
+
+When the pairs are disjoint this is commutation. When they share a column, the conjugated pair is
+the third pair among the three involved columns. -/
+theorem swapColumns_swapColumns_conj (x : GridState n) (a b c d : Fin n) :
+    (x.swapColumns a b).swapColumns c d =
+      (x.swapColumns c d).swapColumns (Equiv.swap c d a) (Equiv.swap c d b) := by
+  refine GridState.ext fun k => ?_
+  simp only [swapColumns_apply]
+  simpa using
+    ((Equiv.swap c d).injective.swap_apply (Equiv.swap c d a) (Equiv.swap c d b) k)
 
 /-- The grid states obtained from `x` by transposing a pair of distinct columns.
 

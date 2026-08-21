@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,6 +32,7 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
 * `TauCeti.RealProjectiveSpace.instNonemptySphere` and
   `TauCeti.RealProjectiveSpace.connectedSpace_sphere`: the covering sphere `Sⁿ` is nonempty, and
   connected once `1 ≤ n`.
+* `TauCeti.RealProjectiveSpace.instCompactSpace`: real projective space is compact.
 * `TauCeti.RealProjectiveSpace.inductionOn`, `TauCeti.RealProjectiveSpace.lift`, and
   `TauCeti.RealProjectiveSpace.lift_unique`: elimination principles for the antipodal quotient.
 * `TauCeti.RealProjectiveSpace.mk_eq_mk_iff`: two unit vectors define the same projective point
@@ -54,7 +56,7 @@ noncomputable section
 
 /-- Real projective `n`-space, modelled as the orbit quotient of the unit sphere `Sⁿ` under the
 antipodal action of the two-element group `ℤˣ = {1, -1}`. -/
-def RealProjectiveSpace (n : ℕ) :=
+def RealProjectiveSpace (n : ℕ) : Type _ :=
   Quotient (MulAction.orbitRel ℤˣ
     (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
 
@@ -79,6 +81,11 @@ theorem connectedSpace_sphere (hn : 1 ≤ n) :
 /-- The quotient topology on real projective space. -/
 instance instTopologicalSpace : TopologicalSpace (RealProjectiveSpace n) :=
   inferInstanceAs (TopologicalSpace (Quotient (MulAction.orbitRel ℤˣ
+    (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))))
+
+/-- Real projective space is compact as the quotient of the compact unit sphere. -/
+instance instCompactSpace : CompactSpace (RealProjectiveSpace n) :=
+  inferInstanceAs (CompactSpace (Quotient (MulAction.orbitRel ℤˣ
     (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))))
 
 /-- The quotient map from the unit sphere to real projective space. -/

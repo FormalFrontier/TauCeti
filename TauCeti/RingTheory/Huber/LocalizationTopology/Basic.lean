@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -37,7 +38,18 @@ universal property in `LocalizationTopology.UniversalProperty`, the completion `
 * `hasBasis_nhds_zero_locTopology`, `isTopologicalRing_locTopology` and
   `nonarchimedeanRing_locTopology`: the contract of `locTopology`, to be used in place of
   unfolding the construction.
+* `hasDenominatorPower_of_idealOfDefinition_le_span`: numerators containing a subset of `A₀`
+  whose span contains `I` supply the standing denominator-power hypothesis for every denominator.
 * `isHuberRing_locTopology`: `Aₛ` under `locTopology` is a Huber ring.
+* `locIdeal_eq_span_singleton`: when the ideal of definition is principal on `π`, so is `J`, on
+  the image of `π` — `J` is by construction the image ideal.
+* `mem_locIdealImage_add_iff`: consequently the neighbourhood filtration is `π`-adic — level
+  `n + k` is exactly the `πᵏ`-multiples of level `n`. This sharpens `locIdealImage_antitone`
+  from "decreasing" to a uniform rate.
+
+* `awayLift_mem_locSubring` and `awayLift_mem_locIdealImage`: passing to a multiple `w = u * r`
+  of the denominator carries `D` and its neighbourhood filtration forward, the latter at the same
+  index — which is what makes the comparison map of two nested presentations continuous.
 * `isBounded_image_algebraMap_of_isBounded` and `isPowerBounded_algebraMap_of_isPowerBounded`:
   bounded sets have bounded image, so power-orbits transfer and each power-bounded *element*
   stays power-bounded. The `locSubring` route reaches only a ring of definition, whose
@@ -49,7 +61,14 @@ universal property in `LocalizationTopology.UniversalProperty`, the completion `
 This is a port of AINTLIB's `LocalizationTopology.lean`, at commit `d9f2fbbb`.
 `locIdealImage_mul_algebraMap_subset`, `isBounded_image_algebraMap_of_isBounded` and
 `isPowerBounded_algebraMap_of_isPowerBounded` are later additions, following the skeleton at
-`LocalizationTopology.lean:690-753` of commit `37bbdaeb9`. The main changes
+`LocalizationTopology.lean:690-753` of commit `37bbdaeb9`. `awayLift_mem_locSubring`,
+`awayLift_mem_locIdealImage`, `divBy_mul_mem_locSubring`, `hasDenominatorPower_mul`,
+`locIdeal_eq_span_singleton` and `mem_locIdealImage_add_iff` are **also later additions, and have
+no AINTLIB analogue at all** — commit `37bbdaeb9` carries no transfer of `D`-membership or of its
+neighbourhood filtration along a comparison map, no combination of the denominator hypothesis for
+a product denominator, and no π-adic characterisation of the filtration: its `locNhd` API states
+no principal-ideal-of-definition hypothesis at all. They are new work for the
+nested-presentation comparison of Wedhorn §8.2. The main changes
 are: adapted `PairOfDefinition` field names to TauCeti conventions (`A₀`→`ringOfDefinition`,
 `I`→`ideal`, etc.); uses characteristic lemmas instead of destructuring definitions; removed
 unused hypotheses to satisfy `#lint` checks; stated over an arbitrary localisation `S` away from
@@ -231,6 +250,110 @@ theorem hasDenominatorPower_of_pow_le_span (P : PairOfDefinition A) (T : Finset 
   rw [hb', divBy_mul_cancel_left]
   exact algebraMap_mem_locSubring P T s S c.property
 
+/-- **Introduction from a generating set of `I`**: if the numerators `T` contain a set `G ⊆ A₀`
+whose span is all of `I`, the standing hypothesis holds for every denominator, with `N = 1`.
+Every element of `I` is an `A₀`-linear combination of the elements of `G`, and division by the
+fixed denominator is linear in the numerator, so `b/s` is an `A₀`-combination of the fractions
+`g/s`, all of which lie in `D`. -/
+theorem hasDenominatorPower_of_idealOfDefinition_le_span (P : PairOfDefinition A)
+    (T : Finset A) {G : Set P.ringOfDefinition} (hGT : ∀ g ∈ G, (g : A) ∈ T)
+    (hG : P.idealOfDefinition ≤ Ideal.span G)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
+    HasDenominatorPower P T s S := by
+  rw [hasDenominatorPower_iff]
+  refine ⟨1, fun b hb ↦ ?_⟩
+  replace hb : b ∈ Ideal.span G := hG (by simpa using hb)
+  induction hb using Submodule.span_induction with
+  | mem x hx =>
+    exact divBy_mem_locSubring P T s S (hGT x hx)
+  | zero => simp
+  | add x y _ _ hx hy =>
+    simpa using (locSubring P T s S).add_mem hx hy
+  | smul r x _ hx =>
+    have hmul := (locSubring P T s S).mul_mem
+      (algebraMap_mem_locSubring P T s S r.property) hx
+    rw [← divBy_mul] at hmul
+    rw [smul_eq_mul, MulMemClass.coe_mul]
+    exact hmul
+/-! ### Passing to a denominator that is a multiple
+
+A localisation away from `u` maps to one away from a multiple `w = u * r`, and under that map `D`
+lands inside the finer `D` as soon as each `t * r`, for `t ∈ U`, is one of the finer numerators.
+
+What transfers is exactly that: **membership of the rescaled fraction**, not the hypothesis
+`HasDenominatorPower` itself. `HasDenominatorPower P U u V` bounds a single power of the ideal of
+definition against `u`, and nothing here carries such a bound from `u` to `w`. For a *product*
+denominator the two factors' hypotheses do combine — that is `hasDenominatorPower_mul`, and it needs
+both, precisely because neither alone transfers. That combination is what makes the intersection of
+two rational subsets a legitimate presentation, which is how nested presentations get compared
+(Wedhorn §8.2). -/
+
+/-- **`D` maps into the finer `D`.** With `w = u * r`, the comparison map `Aᵤ → A_w` carries
+`locSubring P U u V` into `locSubring P Tw w W`, provided each `t * r` for `t ∈ U` is a numerator of
+the target. Both generating families land where they must: `A₀` by `algebraMap_mem_locSubring`, and
+`t/u`, which `awayLift_divBy` identifies with the distinguished fraction `(t * r)/w`. -/
+theorem awayLift_mem_locSubring (P : PairOfDefinition A) (U : Finset A) (u : A)
+    (V : Type*) [CommRing V] [Algebra A V] [IsLocalization.Away u V]
+    (Tw : Finset A) (w : A) (W : Type*) [CommRing W] [Algebra A W] [IsLocalization.Away w W]
+    (r : A) (hw : w = u * r) (hgen : ∀ t ∈ U, t * r ∈ Tw)
+    {x : V} (hx : x ∈ locSubring P U u V) :
+    IsLocalization.Away.lift u (IsLocalization.Away.isUnit_of_dvd w ⟨r, hw⟩) x
+      ∈ locSubring P Tw w W := by
+  have hle : locSubring P U u V ≤
+      (locSubring P Tw w W).comap
+        (IsLocalization.Away.lift u (IsLocalization.Away.isUnit_of_dvd w ⟨r, hw⟩)) := by
+    refine (locSubring_le_iff P U u V).mpr ⟨fun a ha ↦ ?_, fun t ht ↦ ?_⟩
+    · rw [Subring.mem_comap, IsLocalization.Away.lift_eq]
+      exact algebraMap_mem_locSubring P Tw w W ha
+    · rw [Subring.mem_comap, awayLift_divBy u r w hw _ t]
+      exact divBy_mem_locSubring P Tw w W (hgen t ht)
+  exact hle hx
+
+/-- **The rescaled fraction lands in the finer `D`.** With `w = u * r`, if `a / u` lies in
+`locSubring P U u V` then `(a * r) / w` lies in `locSubring P Tw w W`. This is the fraction-level
+form of `awayLift_mem_locSubring`, and it is the one consumers want: it spares them rewriting the
+comparison map away at every use. -/
+theorem divBy_mul_mem_locSubring (P : PairOfDefinition A) (U : Finset A) (u : A)
+    (V : Type*) [CommRing V] [Algebra A V] [IsLocalization.Away u V]
+    (Tw : Finset A) (w : A) (W : Type*) [CommRing W] [Algebra A W] [IsLocalization.Away w W]
+    (r : A) (hw : w = u * r) (hgen : ∀ t ∈ U, t * r ∈ Tw)
+    {a : A} (ha : (divBy a u : V) ∈ locSubring P U u V) :
+    (divBy (a * r) w : W) ∈ locSubring P Tw w W := by
+  have h := awayLift_mem_locSubring P U u V Tw w W r hw hgen ha
+  rwa [awayLift_divBy u r w hw _ a] at h
+
+/-- **The standing hypothesis for a product denominator.** If `(T, s)` and `(T', s')` both satisfy
+`HasDenominatorPower`, and the numerator set `T''` contains every `t * s'` for `t ∈ T` and every
+`t' * s` for `t' ∈ T'`, then `(T'', s * s')` satisfies it too.
+
+The exponent adds: for `b ∈ I ^ (N + N')` write `b` as a sum of products `x * y` with `x ∈ I ^ N`
+and `y ∈ I ^ N'`, and split `(x * y)/(s * s')` as `(x * s')/(s * s') · (y * s)/(s * s')`
+(`divBy_mul_divBy_of_eq_mul`). Each factor is the image of a fraction that the corresponding
+hypothesis already places in the coarser `D`, so `awayLift_mem_locSubring` puts it in the finer one,
+which is a subring and therefore closed under the products and sums involved.
+
+`insert s T * insert s' T'` — the numerator set `rationalSubset_inter` produces for an intersection
+of rational subsets — satisfies both membership conditions, which is the intended instance. -/
+theorem hasDenominatorPower_mul (P : PairOfDefinition A) (T T' T'' : Finset A) (s s' : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s' S']
+    (S'' : Type*) [CommRing S''] [Algebra A S''] [IsLocalization.Away (s * s') S'']
+    (hT : ∀ t ∈ T, t * s' ∈ T'') (hT' : ∀ t ∈ T', t * s ∈ T'')
+    (hden : HasDenominatorPower P T s S) (hden' : HasDenominatorPower P T' s' S') :
+    HasDenominatorPower P T'' (s * s') S'' := by
+  obtain ⟨N, hN⟩ := hden
+  obtain ⟨N', hN'⟩ := hden'
+  refine ⟨N + N', fun b hb ↦ ?_⟩
+  rw [pow_add] at hb
+  refine Submodule.mul_induction_on hb (fun x hx y hy ↦ ?_) (fun p q hp hq ↦ ?_)
+  · have hx' := divBy_mul_mem_locSubring P T s S T'' (s * s') S'' s' rfl hT (hN x hx)
+    have hy' :=
+      divBy_mul_mem_locSubring P T' s' S' T'' (s * s') S'' s (mul_comm s s') hT' (hN' y hy)
+    rw [Subring.coe_mul, divBy_mul_divBy_of_eq_mul (s * s') rfl (x : A) (y : A)]
+    exact Subring.mul_mem _ hx' hy'
+  · rw [Subring.coe_add, divBy_add]
+    exact Subring.add_mem _ hp hq
+
 /-! ### The candidate ideal of definition `J` -/
 
 /-- The ring homomorphism `A₀ →+* D` induced by `algebraMap`. -/
@@ -260,6 +383,17 @@ noncomputable def locIdeal (P : PairOfDefinition A) (T : Finset A)
 theorem locIdeal_def (P : PairOfDefinition A) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
     locIdeal P T s S = Ideal.map (toLocSubring P T s S) P.idealOfDefinition := (rfl)
+
+/-- **The localised ideal is principal too.** When `I = (π)`, the ideal `J = I · D` is principal on
+the image of `π`, because `J` is by construction the ideal of `D` generated by the image of `I`.
+
+This is what makes the neighbourhood filtration `π`-adic: every statement about `Jⁿ` below reduces
+to a divisibility in a principal ideal, with no induction over generators. -/
+theorem locIdeal_eq_span_singleton (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    {π : P.ringOfDefinition} (hπ : P.idealOfDefinition = Ideal.span {π}) :
+    locIdeal P T s S = Ideal.span {toLocSubring P T s S π} := by
+  rw [locIdeal_def, hπ, Ideal.map_span, Set.image_singleton]
 
 /-- `Jⁿ` is the image of `Iⁿ`. The body of `locIdeal` is not exported, so this is how a consumer
 reaches the powers that index the neighbourhood basis. -/
@@ -388,6 +522,67 @@ theorem locIdealImage_mul_locSubring_subset (P : PairOfDefinition A) (T : Finset
     rw [locIdealImage_zero, Subring.coe_toAddSubgroup]
   rw [h]
   exact locIdealImage_mul_subset_add P T s S n 0
+
+/-- **The neighbourhood filtration is `π`-adic** when the ideal of definition is principal on `π`:
+level `n + k` consists of exactly the `πᵏ`-multiples of level `n`.
+
+`locIdealImage_antitone` records only that the filtration decreases. This says by how much: the
+`k` levels between `n + k` and `n` are spent on `πᵏ` and nothing else, so a member of `n + k`
+divides by `πᵏ` back into `n`, and every such multiple is already that deep. The depth is
+therefore *uniform in the element*, which an inclusion alone does not give.
+
+Both directions are needed in practice: the forward one to divide, the reverse to certify that
+the quotient's depth is recovered when it is multiplied back. -/
+theorem mem_locIdealImage_add_iff (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    {π : P.ringOfDefinition} (hπ : P.idealOfDefinition = Ideal.span {π}) (n k : ℕ) {x : S} :
+    x ∈ locIdealImage P T s S (n + k) ↔
+      ∃ y ∈ locIdealImage P T s S n, x = algebraMap A S ((π : A) ^ k) * y := by
+  have hJ : locIdeal P T s S ^ (n + k)
+      = Ideal.span {toLocSubring P T s S π ^ k} * locIdeal P T s S ^ n := by
+    rw [locIdeal_eq_span_singleton P T s S hπ, ← Ideal.span_singleton_pow, ← pow_add,
+      Nat.add_comm k n]
+  simp only [mem_locIdealImage_iff, hJ, Ideal.mem_span_singleton_mul]
+  constructor
+  · rintro ⟨d, ⟨c, hc, rfl⟩, rfl⟩
+    exact ⟨(c : S), ⟨c, hc, rfl⟩, by
+      rw [Subring.coe_mul, SubmonoidClass.coe_pow, toLocSubring_apply, map_pow]⟩
+  · rintro ⟨y, ⟨c, hc, rfl⟩, rfl⟩
+    exact ⟨toLocSubring P T s S π ^ k * c, ⟨c, hc, rfl⟩, by
+      rw [Subring.coe_mul, SubmonoidClass.coe_pow, toLocSubring_apply, map_pow]⟩
+
+/-- **The neighbourhood filtration transfers to a finer denominator.** With `w = u * r`, the
+comparison map `Aᵤ → A_w` carries `locIdealImage P U u V n` into `locIdealImage P Tw w W n`, at
+the same index `n` — passing to a multiple of the denominator costs no depth.
+
+This is the filtration companion of `awayLift_mem_locSubring`, which carries `D` itself. The two
+together are what a comparison of nested presentations needs. Since both topologies have these
+filtrations as a neighbourhood basis of zero, the same-index inclusion **implies** continuity of
+the comparison map; it is strictly stronger than continuity, which would allow the index to
+grow. -/
+theorem awayLift_mem_locIdealImage (P : PairOfDefinition A) (U : Finset A) (u : A)
+    (V : Type*) [CommRing V] [Algebra A V] [IsLocalization.Away u V]
+    (Tw : Finset A) (w : A) (W : Type*) [CommRing W] [Algebra A W] [IsLocalization.Away w W]
+    (r : A) (hw : w = u * r) (hgen : ∀ t ∈ U, t * r ∈ Tw) (n : ℕ)
+    {x : V} (hx : x ∈ locIdealImage P U u V n) :
+    IsLocalization.Away.lift u (IsLocalization.Away.isUnit_of_dvd w ⟨r, hw⟩) x
+      ∈ locIdealImage P Tw w W n := by
+  obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P U u V n).mp hx
+  clear hx
+  rw [locIdeal_pow_eq_span] at hd
+  induction hd using Submodule.span_induction with
+  | mem z hz =>
+      obtain ⟨b, hb, rfl⟩ := hz
+      rw [toLocSubring_apply, IsLocalization.Away.lift_eq]
+      exact (mem_locIdealImage_iff P Tw w W n).mpr
+        ⟨toLocSubring P Tw w W b, toLocSubring_mem_locIdeal_pow P Tw w W hb,
+          toLocSubring_apply P Tw w W b⟩
+  | zero => simp
+  | add p q _ _ hp hq => simpa [map_add] using (locIdealImage P Tw w W n).add_mem hp hq
+  | smul e p _ hp =>
+      have he := awayLift_mem_locSubring P U u V Tw w W r hw hgen e.2
+      simpa [map_mul, mul_comm] using locIdealImage_mul_locSubring_subset P Tw w W n
+        (Set.mul_mem_mul hp he)
 
 /-- Multiplying `1/s` by an element of `Jᴺ` lands back in `D`, once `N` is large enough that
 `b/s ∈ D` for every `b ∈ Iᴺ`. -/

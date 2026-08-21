@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Calculus.ContDiff.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Analysis.Calculus.ContDiff.Deriv
+import Mathlib.Analysis.Calculus.ContDiff.Operations
 
 /-!
 # Piecewise `C¹` curves on an interval
@@ -41,6 +42,9 @@ prerequisite for the homology Cauchy theorem and the generalized residue theorem
   introduce the predicate from, and eliminate it to, a finite breakpoint witness.
 * `Contour.IsPiecewiseC1On.mono` — restrict the regularity to a subinterval `[[c, d]] ⊆ [[a, b]]`.
 * `Contour.isPiecewiseC1On_comm`, `Contour.IsPiecewiseC1On.symm` — endpoint-swap invariance.
+* `Contour.IsPiecewiseC1On.add`, `Contour.IsPiecewiseC1On.sub`,
+  `Contour.IsPiecewiseC1On.const_smul` — the predicate is stable under the vector-space operations
+  on curves, the two breakpoint sets being merged by union.
 * `Contour.IsPiecewiseC1On.exists_finset_differentiableAt`,
   `Contour.IsPiecewiseC1On.exists_countable_differentiableAt` — differentiability off a finite
   (hence countable) set, in the exact shapes the raw contour-integral lemmas consume.
@@ -149,6 +153,38 @@ theorem isPiecewiseC1On_comm : IsPiecewiseC1On γ a b ↔ IsPiecewiseC1On γ b a
 /-- Piecewise-`C¹` regularity is invariant under swapping the endpoints of the interval. -/
 theorem IsPiecewiseC1On.symm (h : IsPiecewiseC1On γ a b) : IsPiecewiseC1On γ b a :=
   isPiecewiseC1On_comm.mp h
+
+/-- **A sum of piecewise-`C¹` curves is piecewise `C¹`**, with the union of the two breakpoint sets
+as breakpoints: a closed subinterval whose interior avoids the union avoids each set separately, so
+both summands are `C¹` there. -/
+theorem IsPiecewiseC1On.add {γ₁ γ₂ : ℝ → ℂ} (h₁ : IsPiecewiseC1On γ₁ a b)
+    (h₂ : IsPiecewiseC1On γ₂ a b) : IsPiecewiseC1On (fun t => γ₁ t + γ₂ t) a b := by
+  obtain ⟨p₁, hp₁, hC₁⟩ := h₁.exists_breakpoints
+  obtain ⟨p₂, hp₂, hC₂⟩ := h₂.exists_breakpoints
+  refine ⟨h₁.continuousOn.add h₂.continuousOn, p₁ ∪ p₂, ?_, fun c d hcd hdisj => ?_⟩
+  · rw [Finset.coe_union]
+    exact Set.union_subset hp₁ hp₂
+  · rw [Finset.coe_union, Set.disjoint_union_left] at hdisj
+    exact (hC₁ c d hcd hdisj.1).add (hC₂ c d hcd hdisj.2)
+
+/-- **A difference of piecewise-`C¹` curves is piecewise `C¹`.** -/
+theorem IsPiecewiseC1On.sub {γ₁ γ₂ : ℝ → ℂ} (h₁ : IsPiecewiseC1On γ₁ a b)
+    (h₂ : IsPiecewiseC1On γ₂ a b) : IsPiecewiseC1On (fun t => γ₁ t - γ₂ t) a b := by
+  obtain ⟨p₁, hp₁, hC₁⟩ := h₁.exists_breakpoints
+  obtain ⟨p₂, hp₂, hC₂⟩ := h₂.exists_breakpoints
+  refine ⟨h₁.continuousOn.sub h₂.continuousOn, p₁ ∪ p₂, ?_, fun c d hcd hdisj => ?_⟩
+  · rw [Finset.coe_union]
+    exact Set.union_subset hp₁ hp₂
+  · rw [Finset.coe_union, Set.disjoint_union_left] at hdisj
+    exact (hC₁ c d hcd hdisj.1).sub (hC₂ c d hcd hdisj.2)
+
+/-- **A real scalar multiple of a piecewise-`C¹` curve is piecewise `C¹`**, with the same
+breakpoints. -/
+theorem IsPiecewiseC1On.const_smul (c : ℝ) (h : IsPiecewiseC1On γ a b) :
+    IsPiecewiseC1On (fun t => c • γ t) a b := by
+  obtain ⟨p, hp, hC1⟩ := h.exists_breakpoints
+  exact ⟨h.continuousOn.const_smul c, p, hp,
+    fun u v huv hdisj => (hC1 u v huv hdisj).const_smul c⟩
 
 /-- Around any interior parameter outside a closed set `s` there is a closed subinterval of
 `[[a, b]]` whose interior contains `t` and is disjoint from `s`. -/

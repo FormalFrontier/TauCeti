@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -134,8 +135,7 @@ private lemma orderOfVanishingAt_S_smul [SlashInvariantFormClass F Γ k] (f : F)
   rw [MulAction.compHom_smul_def]
   exact orderOfVanishingAt_smul f (γ := Matrix.SpecialLinearGroup.mapGL ℝ ModularGroup.S)
     (Subgroup.mem_map_of_mem _ hSmem)
-    (by rw [← Matrix.GeneralLinearGroup.val_det_apply, Matrix.SpecialLinearGroup.det_mapGL]
-        exact one_pos) p
+    (det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨ModularGroup.S, rfl⟩)) p
 
 /-- Over a divisor set complete for `𝒟`, a nonzero-order point of the unit arc is carried by the
 inversion back into the set, again on the unit arc, with the real part flipped. -/

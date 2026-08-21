@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.Basic
-public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant
+public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant.Basic
 
 /-!
 # The invariant polynomial of a Weierstrass curve
@@ -53,17 +54,15 @@ identities listed below.
 
 ## What is deliberately not here
 
-`WeierstrassCurve.ω` itself and its API — `ω_spec`, `two_mul_ω`, `ψc`, `ψc_spec`, `ω_zero`,
-`ω_one`, `ψc_neg`, `map_ω`, `ω_neg` — are **not** in this file. `ω` is defined through
-`redInvarDenom` and `complEDS₂Aux`, and `ω_spec` additionally consumes `redInvar_normEDS`, which
-routes through `normEDS` being an elliptic sequence — that is `isEllipticSequence_normEDS` in
-`NormEDS.lean`, which the pinned Mathlib still records as an open TODO. What is missing for `ω`
-is `redInvarDenom` itself together with the upper part of the chain
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, which is written in the
-source's names. The lower two links have landed: `net_normEDS` is `isEllipticNet_normEDS` and
-`invar_normEDS` is `invarNum_mul_invarDenom`. What remains is `invar₂_normEDS` and
-`redInvar_normEDS`. Nothing in this file depends on any of it, so the identities land now and `ω`
-follows when that gap closes.
+`WeierstrassCurve.ω` itself and its API — `ω_spec`, `ω_def`, `two_mul_ω`, `ψc`, `ψc_def`,
+`ψ_mul_ψc`, `ω_zero`, `ω_one`, `ψc_neg`, `map_ψc`, `map_ω`, `ω_neg` — are **not** in this file;
+they live in `DivisionPolynomial/Omega.lean`. `ω` is defined through `reducedInvarDenom` and
+`complEDS₂Aux`, so it belongs above the reduced-invariant layer rather than beside these
+identities. Every input `ω_spec` consumes exists by name — the source's chain
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS` has landed in full as
+`reducedInvarNum_eq_reducedInvarDenom_mul` (`EllipticDivisibilitySequence/ReducedInvariant.lean`)
+← `IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul` ← `invarNum_mul_invarDenom` ←
+`isEllipticNet_normEDS`. Nothing in this file depends on any of it.
 
 ## Provenance
 
@@ -78,8 +77,9 @@ material the upstream authorship is credited here rather than in the copyright h
 Two adaptations, neither of them a choice:
 
 * the source proves `φ_mul_ψ` by `rw [φ, invarDenom]`, unfolding both definitions. The
-  `invarDenom` half does not port: `EllipticDivisibilitySequence/Invariant.lean` exports that body
-  unexposed, so from this module `rw [invarDenom]` has nothing to rewrite with. It goes through the
+  `invarDenom` half does not port: `EllipticDivisibilitySequence/Invariant/Basic.lean` exports
+  that body unexposed, so from this module `rw [invarDenom]` has nothing to rewrite with. It goes
+  through the
   equation lemma `IsEllipticNet.invarDenom_def` instead. `φ` unfolds as before, being Mathlib's.
 * the source's local `C_simp` macro is written out at its three use sites rather than carried
   across, a macro being more surface than the one `simp only` call it abbreviates.

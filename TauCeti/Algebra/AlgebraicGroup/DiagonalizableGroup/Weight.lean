@@ -1,18 +1,19 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
-public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra
+public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
 
 /-!
 # Weight spaces by corestriction to a monoid algebra
 
 Given a right `C`-comodule `V` and a coalgebra morphism `π : C → R[X]`, corestriction along `π`
 makes `V` an `R[X]`-comodule. The resulting comodule decomposes into the weight submodules of
-`TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra`. This file names that decomposition:
+`TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic`. This file names that decomposition:
 
 `TauCeti.DiagonalizableGroup.weightSpace V π x` is the `x`-weight submodule of the corestricted
 comodule, and `V` is the internal direct sum of these submodules.

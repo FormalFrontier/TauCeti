@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -25,6 +26,11 @@ The final section packages an oriented rectangle from one grid state to another:
 where the states exchange rows, and agreement everywhere else. This is the shape counted by
 the grid differential; the `IsEmptyFor` and `AvoidsMarkings` predicates record the two
 finite-set disjointness conditions used for empty rectangles and marking-avoiding rectangles.
+
+`AvoidsMarkings` currently uses the same open grid-line interior as `IsEmptyFor`. Thus it treats
+marking indices as lattice points, not as the southwest corners of square-centred markings. The
+Lane G.2 grading correction does not silently change this Lane G.3 differential convention;
+changing it requires a separate update of the blocked-rectangle and small-grid differential API.
 
 ## Main definitions
 
@@ -217,8 +223,10 @@ theorem isEmptyFor_of_le_two (hn : n ≤ 2) (R : GridRectangle n) (x : GridState
   rw [IsEmptyFor, R.interior_eq_empty_of_le_two hn]
   simp
 
-/-- A rectangle avoids the markings of a grid diagram when its interior contains no `O` or
-`X` marking. -/
+/-- A rectangle avoids the markings of a grid diagram when its open grid-line interior contains
+no `O` or `X` marking index. This is the existing differential convention; unlike the grading
+pairing, it does not yet interpret the index as the southwest corner of a square-centred
+marking. -/
 def AvoidsMarkings (G : GridDiagram n) : Prop :=
   Disjoint R.interior (G.OSet ∪ G.XSet)
 
@@ -361,6 +369,21 @@ structure GridRectangleBetween {n : ℕ} (x y : GridState n) where
 namespace GridRectangleBetween
 
 variable {n : ℕ} {x y : GridState n}
+
+/-- The unordered finite set of side columns of an oriented grid rectangle. -/
+def sideColumns (R : GridRectangleBetween x y) : Finset (Fin n) :=
+  {R.left, R.right}
+
+/-- Membership in the side-column set of an oriented grid rectangle. -/
+@[simp]
+theorem mem_sideColumns (R : GridRectangleBetween x y) (c : Fin n) :
+    c ∈ R.sideColumns ↔ c = R.left ∨ c = R.right := by
+  simp [sideColumns]
+
+/-- An oriented grid rectangle has exactly two side columns. -/
+@[simp]
+theorem card_sideColumns (R : GridRectangleBetween x y) : R.sideColumns.card = 2 := by
+  simp [sideColumns, R.left_ne_right]
 
 /-- A rectangle between two grid states is determined by its two side columns. -/
 theorem sidePair_injective :

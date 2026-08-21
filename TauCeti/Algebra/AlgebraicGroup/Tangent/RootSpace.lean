@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -30,22 +31,22 @@ one, or that `G` is reductive. When `π` does exhibit a split maximal torus `T` 
 
 ## Main definitions
 
-* `TauCeti.Derivation.adjointWeightSpace`: the `α`-weight submodule `𝔤_α` of the Lie algebra of
+* `Derivation.adjointWeightSpace`: the `α`-weight submodule `𝔤_α` of the Lie algebra of
   `G` under a homomorphism from a diagonalizable group.
-* `TauCeti.Derivation.nontrivialAdjointWeights`: the nontrivial characters whose adjoint weight
+* `Derivation.nontrivialAdjointWeights`: the nontrivial characters whose adjoint weight
   submodule is nonzero.
 
 ## Main results
 
-* `TauCeti.Derivation.isInternal_adjointWeightSpace`: **the Lie algebra of `G` is the internal
+* `Derivation.isInternal_adjointWeightSpace`: **the Lie algebra of `G` is the internal
   direct sum of its weight submodules.**
-* `TauCeti.Derivation.sup_iSup_adjointWeightSpace_eq_top`: the trivial weight submodule together
+* `Derivation.sup_iSup_adjointWeightSpace_eq_top`: the trivial weight submodule together
   with the submodules indexed by `nontrivialAdjointWeights π` exhaust the Lie algebra.
-* `TauCeti.Derivation.finite_nontrivialAdjointWeights`: **the set of nontrivial adjoint weights is
+* `Derivation.finite_nontrivialAdjointWeights`: **the set of nontrivial adjoint weights is
   finite.**
-* `TauCeti.Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of `D(M)` acts on the
+* `Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of `D(M)` acts on the
   `α`-weight submodule by the value of `α` at that point.
-* `TauCeti.Derivation.lie_mem_adjointWeightSpace_mul`: the adjoint weight decomposition is a Lie
+* `Derivation.lie_mem_adjointWeightSpace_mul`: the adjoint weight decomposition is a Lie
   grading: `[𝔤_α, 𝔤_β] ⊆ 𝔤_{αβ}`.
 
 ## Roadmap
@@ -71,9 +72,9 @@ public section
 
 open scoped DirectSum TensorProduct
 
-namespace TauCeti
-
 namespace Derivation
+
+open TauCeti
 
 attribute [local instance] Classical.decEq
 attribute [local instance] adjointComodule
@@ -275,5 +276,3 @@ theorem lie_mem_adjointWeightSpace_mul {π : H →ₐc[R] MonoidAlgebra R M} {α
   exact hmapped
 
 end Derivation
-
-end TauCeti

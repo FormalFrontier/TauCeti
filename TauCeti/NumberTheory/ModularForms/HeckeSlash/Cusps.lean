@@ -44,11 +44,12 @@ public section
 
 namespace HeckeRing.GL2
 
-open UpperHalfPlane DoubleCoset HeckeRing.GLn
+open Matrix UpperHalfPlane DoubleCoset HeckeRing.GLn
 
 open scoped MatrixGroups ModularForm
 
-variable (k : ℤ) (D : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+variable (k : ℤ) {Δ : Submonoid (GL (Fin 2) ℚ)} {Γ₁ Γ₂ : Subgroup (GL (Fin 2) ℚ)}
+  (D : HeckeCoset Δ Γ₁ Γ₂) [Finite (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹)]
 
 /-- **The slash sum vanishes at every cusp** when the function does. -/
 lemma isZeroAt_heckeSlashSum {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -86,7 +87,7 @@ end FundamentalGroupoidAction
 
 /-- Fundamental-groupoid actions that are pretransitive on every fibre. Morphisms are arbitrary
 natural transformations between the underlying functors. -/
-abbrev PretransitiveFundamentalGroupoidAction (X : TopCat.{u}) :=
+abbrev PretransitiveFundamentalGroupoidAction (X : TopCat.{u}) : Type _ :=
   (FundamentalGroupoidAction.isFiberwisePretransitive X).FullSubcategory
 
 namespace PretransitiveFundamentalGroupoidAction

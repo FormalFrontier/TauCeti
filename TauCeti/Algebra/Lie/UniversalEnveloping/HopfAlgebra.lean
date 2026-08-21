@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -128,18 +128,11 @@ private theorem eq_counit_smul_one_of_ι (f : U →ₗ[R] U)
     (hι : ∀ x : L, f (_root_.UniversalEnvelopingAlgebra.ι R x) =
       (Coalgebra.counit (R := R) (_root_.UniversalEnvelopingAlgebra.ι R x)) • (1 : U))
     (a : U) : f a = (Coalgebra.counit (R := R) a) • (1 : U) := by
-  have ha : a ∈ Algebra.adjoin R
-      (Set.range (_root_.UniversalEnvelopingAlgebra.ι R : L → U)) := by
-    rw [adjoin_range_ι R L]
-    exact Set.mem_univ a
-  refine Algebra.adjoin_induction (p := fun x _ ↦
-    f x = (Coalgebra.counit (R := R) x) • (1 : U)) ?_ halg ?_ ?_ ha
-  · rintro _ ⟨x, rfl⟩
-    exact hι x
-  · intro x y _ _ hx hy
-    simp only [map_add, hx, hy, add_smul]
-  · intro x y _ _ hx hy
-    exact hmul x y hx hy
+  induction a using induction_ι with
+  | ι x => exact hι x
+  | algebraMap r => exact halg r
+  | add x y hx hy => simp only [map_add, hx, hy, add_smul]
+  | mul x y hx hy => exact hmul x y hx hy
 
 private theorem antipodeConv_mul_idConv_apply (a : U) :
     (convAntipode * convId) a =

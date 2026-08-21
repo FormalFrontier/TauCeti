@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -99,8 +100,7 @@ private lemma fdBoundary_sub_of_mem_Icc_three_four (hre : w.re = -(1 / 2))
   · rw [Complex.sub_im, Complex.mul_I_im, Complex.ofReal_re]
     rcases eq_or_lt_of_le hs.1 with h3 | h3
     · rw [← h3, fdBoundary_apply_three]
-      have hρ : ((UpperHalfPlane.ρ : ℂ)).im = Real.sqrt 3 / 2 := by simp [UpperHalfPlane.ρ]
-      rw [hρ]
+      rw [rho_im]
       ring
     · rw [im_fdBoundary_of_le_four h3 hs.2]
 

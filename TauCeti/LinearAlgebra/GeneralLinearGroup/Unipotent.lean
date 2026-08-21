@@ -1,13 +1,16 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.Dimension.Finite
+public import Mathlib.LinearAlgebra.Charpoly.Basic
 public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
+import Mathlib.LinearAlgebra.Eigenspace.Zero
 import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
 import Mathlib.Tactic.NoncommRing
 
@@ -27,25 +30,29 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
+* `LinearMap.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
   difference from the identity is nilpotent.
-* `TauCeti.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
-* `TauCeti.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
+* `LinearMap.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
+* `LinearMap.GeneralLinearGroup.isUnipotent_of_charpoly_eq`: the characteristic-polynomial
+  sufficient condition over a commutative ring.
+* `LinearMap.GeneralLinearGroup.isUnipotent_iff_charpoly`: the characteristic-polynomial
+  criterion over an integral domain.
+* `LinearMap.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
+* `LinearMap.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
   unipotent.
-* `TauCeti.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
+* `LinearMap.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
   linear equivalence to a general-linear-group element.
-* `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
+* `LinearMap.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
   transport by a linear equivalence.
-* `TauCeti.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
+* `LinearMap.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
   its inverse is.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.mul_of_commute`: commuting unipotent automorphisms have
+* `LinearMap.GeneralLinearGroup.IsUnipotent.mul_of_commute`: commuting unipotent automorphisms have
   unipotent product.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.pow` and `.zpow`: every natural or integer power of a
+* `LinearMap.GeneralLinearGroup.IsUnipotent.pow` and `.zpow`: every natural or integer power of a
   unipotent automorphism is unipotent.
-* `TauCeti.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
+* `LinearMap.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
   conjugation.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.eq_one_of_finrank_eq_one`: a unipotent automorphism
+* `LinearMap.GeneralLinearGroup.IsUnipotent.eq_one_of_finrank_eq_one`: a unipotent automorphism
   of a free rank-one module over a reduced commutative ring is the identity.
 
 ## References
@@ -55,11 +62,7 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 public section
 
-namespace TauCeti
-
-open LinearMap
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open _root_.Module
 
@@ -76,6 +79,39 @@ identity is nilpotent. -/
 theorem isUnipotent_def (g : GeneralLinearGroup K V) :
     IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
   Iff.rfl
+
+/-- An automorphism of a finite free module over a commutative ring is unipotent if its
+characteristic polynomial is a power of `X - 1`. -/
+theorem isUnipotent_of_charpoly_eq
+    {F : Type u} {W : Type v} [CommRing F] [AddCommGroup W] [Module F W]
+    [Module.Free F W] [Module.Finite F W] (g : GeneralLinearGroup F W) {n : ℕ}
+    (h : (g : End F W).charpoly = (Polynomial.X - 1) ^ n) :
+    IsUnipotent g := by
+  rw [isUnipotent_def]
+  have hchar := LinearMap.charpoly_sub_smul (g : End F W) (1 : F)
+  rw [h] at hchar
+  have hnilCharpoly :
+      ((g : End F W) - 1).charpoly = Polynomial.X ^ n := by
+    simpa using hchar
+  refine ⟨n, ?_⟩
+  rw [← @Polynomial.aeval_X_pow F, ← hnilCharpoly,
+    LinearMap.aeval_self_charpoly]
+
+/-- Over an integral domain, an automorphism of a finite free module is unipotent exactly when its
+characteristic polynomial is a power of `X - 1`. -/
+theorem isUnipotent_iff_charpoly
+    {F : Type u} {W : Type v} [CommRing F] [IsDomain F] [AddCommGroup W] [Module F W]
+    [Module.Free F W] [Module.Finite F W] (g : GeneralLinearGroup F W) :
+    IsUnipotent g ↔
+      (g : End F W).charpoly = (Polynomial.X - 1) ^ Module.finrank F W := by
+  constructor
+  · intro h
+    rw [isUnipotent_def, LinearMap.isNilpotent_iff_charpoly] at h
+    have hchar := LinearMap.charpoly_sub_smul
+      ((g : End F W) - 1) (-1 : F)
+    rw [h] at hchar
+    simpa [sub_eq_add_neg] using hchar
+  · exact isUnipotent_of_charpoly_eq g
 
 /-- The identity automorphism is unipotent. -/
 @[simp]
@@ -232,6 +268,4 @@ theorem IsUnipotent.eq_one_of_finrank_eq_one
   ext w
   simp
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup
