@@ -5,10 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.GroupTheory.SpecificGroups.Cyclic
 public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Cyclic
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Cyclic
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Prime
 
 /-!
 # The rational Dixon computation for the cyclic group of order two
@@ -16,6 +17,10 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Cyclic
 This file runs the rational stage of the Dixon--Schneider character-table algorithm for
 `Multiplicative (ZMod 2)`.  The two conjugacy classes are the identity singleton and the singleton
 containing the nontrivial element, in that order, as numbered by `TauCeti.cyclicClassData 2`.
+
+The certified Dixon prime is `3`: it does not divide the group order, the exponent `2` divides
+`3 - 1`, and the discrete size bound is `2 * Nat.sqrt 2 = 2 < 3`.  The element `-1` is the
+required primitive square root of unity modulo `3`.
 
 The simultaneous eigenvector search over the certified Dixon prime `3` returns exactly the
 reductions of the two displayed central-character rows.  Signed least representatives lift those
@@ -29,6 +34,7 @@ two outputs.
 
 ## Main definitions
 
+* `TauCeti.cyclicGroupTwoDixonPrimeData`: the prime `3` and its primitive square root `-1`.
 * `TauCeti.cyclicGroupTwoCentralCharacterTable`: the two integral central-character rows.
 * `TauCeti.cyclicGroupTwoModularCentralRows`: their reductions modulo `3`.
 * `TauCeti.cyclicGroupTwoCharacterTable`: the resulting ordinary integral character table.
@@ -64,13 +70,40 @@ open Matrix
 
 local instance cyclicGroupTwoFactPrime : Fact (Nat.Prime 3) := ⟨by decide⟩
 
+/-- **`3` is a good Dixon prime for the cyclic group of order two**: `3 ∤ 2`, the exponent `2`
+divides `2 = 3 - 1`, and `2⌊√2⌋ = 2 < 3`. -/
+theorem isGoodDixonPrime_cyclicGroup_two_three :
+    IsGoodDixonPrime (Multiplicative (ZMod 2)) 3 := by
+  refine ⟨by decide, ?_, ?_, ?_⟩
+  · simp
+  · simp
+  · norm_num
+
+/-- Dixon prime data for the cyclic group of order two: the prime `3`, with `-1` as its primitive
+square root of unity. -/
+@[expose] def cyclicGroupTwoDixonPrimeData :
+    DixonPrimeData (Multiplicative (ZMod 2)) where
+  p := 3
+  root := -1
+  isGoodDixonPrime := isGoodDixonPrime_cyclicGroup_two_three
+  isPrimitiveRoot_root := by
+    simpa using (IsPrimitiveRoot.neg_one (R := ZMod 3) 3 (by decide))
+
+/-- The prime carried by `TauCeti.cyclicGroupTwoDixonPrimeData` is `3`. -/
+@[simp]
+theorem cyclicGroupTwoDixonPrimeData_p : cyclicGroupTwoDixonPrimeData.p = 3 := rfl
+
+/-- The primitive square root carried by `TauCeti.cyclicGroupTwoDixonPrimeData` is `-1`. -/
+@[simp]
+theorem cyclicGroupTwoDixonPrimeData_root : cyclicGroupTwoDixonPrimeData.root = -1 := rfl
+
 /-- The numbered conjugacy classes of the cyclic group of order two. -/
 abbrev CyclicGroupTwoClassIndex := Fin (cyclicClassData 2).numClasses
 
 private theorem sum_cyclicGroupTwoClassIndex {M : Type*} [AddCommMonoid M]
     (f : CyclicGroupTwoClassIndex → M) :
     ∑ i, f i = f ⟨0, by decide⟩ + f ⟨1, by decide⟩ := by
-  let e : CyclicGroupTwoClassIndex ≃ Fin 2 := finCongr numClasses_cyclicClassData_two
+  let e : CyclicGroupTwoClassIndex ≃ Fin 2 := finCongr (numClasses_cyclicClassData 2)
   calc
     ∑ i, f i = ∑ j : Fin 2, f (e.symm j) :=
       Fintype.sum_equiv e _ _ fun _ => rfl
@@ -106,13 +139,33 @@ theorem mem_cyclicGroupTwoModularCentralRows_iff
       ∃ i, (fun j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3)) = a := by
   simp [cyclicGroupTwoModularCentralRows]
 
-/-- Every displayed integral row satisfies the numbered class-algebra eigenrow equations. -/
-theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int
+private theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int_aux
     (i : CyclicGroupTwoClassIndex) :
     (cyclicClassData 2).IsModularEigenrow
       (fun j => cyclicGroupTwoCentralCharacterTable i j) := by
   rw [(cyclicClassData 2).isModularEigenrow_iff]
   fin_cases i <;> decide
+
+/-- Every displayed row satisfies the numbered class-algebra eigenrow equations over any
+commutative coefficient ring. -/
+theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable
+    (R : Type*) [CommRing R]
+    (i : CyclicGroupTwoClassIndex) :
+    (cyclicClassData 2).IsModularEigenrow
+      (fun j => (cyclicGroupTwoCentralCharacterTable i j : R)) := by
+  rw [(cyclicClassData 2).isModularEigenrow_iff]
+  intro j k
+  have h := ((cyclicClassData 2).isModularEigenrow_iff _).mp
+    (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int_aux i) j k
+  have hcast := congrArg (Int.castRingHom R) h
+  simpa using hcast
+
+/-- Every displayed integral row satisfies the numbered class-algebra eigenrow equations. -/
+theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int
+    (i : CyclicGroupTwoClassIndex) :
+    (cyclicClassData 2).IsModularEigenrow
+      (fun j => cyclicGroupTwoCentralCharacterTable i j) := by
+  simpa using isModularEigenrow_cyclicGroupTwoCentralCharacterTable ℤ i
 
 /-- Reindexing a displayed integral row by the actual conjugacy classes gives a class-algebra
 eigenrow. -/
@@ -129,8 +182,7 @@ theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_zmod
     (i : CyclicGroupTwoClassIndex) :
     (cyclicClassData 2).IsModularEigenrow
       (fun j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3)) := by
-  rw [(cyclicClassData 2).isModularEigenrow_iff]
-  fin_cases i <;> decide
+  simpa using isModularEigenrow_cyclicGroupTwoCentralCharacterTable (ZMod 3) i
 
 /-- The explicit set of modular rows has two elements. -/
 @[simp]
@@ -152,7 +204,7 @@ theorem cyclicGroupTwo_centralCharacterSearch :
       isModularEigenrow_cyclicGroupTwoCentralCharacterTable_zmod i⟩
   · rw [(cyclicClassData 2).card_centralCharacterSearch_of_isGoodDixonPrime
       isGoodDixonPrime_cyclicGroup_two_three,
-      card_cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData_two]
+      card_cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData]
 
 /-- **Signed least representatives modulo `3` recover every entry of the integral
 central-character table.** -/
@@ -215,22 +267,6 @@ theorem cyclicGroupTwoCharacterTable_apply (i j : CyclicGroupTwoClassIndex) :
          1, -1] i j := by
   exact cyclicGroupTwoCentralCharacterTable_apply i j
 
-private theorem cyclicGroupTwoCharacterTable_zero_zero :
-    cyclicGroupTwoCharacterTable ⟨0, by decide⟩ ⟨0, by decide⟩ = 1 := by
-  decide
-
-private theorem cyclicGroupTwoCharacterTable_zero_one :
-    cyclicGroupTwoCharacterTable ⟨0, by decide⟩ ⟨1, by decide⟩ = 1 := by
-  decide
-
-private theorem cyclicGroupTwoCharacterTable_one_zero :
-    cyclicGroupTwoCharacterTable ⟨1, by decide⟩ ⟨0, by decide⟩ = 1 := by
-  decide
-
-private theorem cyclicGroupTwoCharacterTable_one_one :
-    cyclicGroupTwoCharacterTable ⟨1, by decide⟩ ⟨1, by decide⟩ = -1 := by
-  decide
-
 /-- **Division-free conversion from central characters to ordinary characters.** For every row
 `i` and class `j`, `degree i * omega i j = |K_j| * chi i j`. -/
 theorem cyclicGroupTwo_degree_mul_centralCharacterTable
@@ -265,9 +301,6 @@ theorem cyclicGroupTwo_characterTable_orthogonal (i j : CyclicGroupTwoClassIndex
   have hcard : Nat.card (Multiplicative (ZMod 2)) = 2 := by simp
   rw [hcard]
   fin_cases i <;> fin_cases j <;> rw [sum_cyclicGroupTwoClassIndex] <;>
-    norm_num only [card_classFinset_cyclicClassData_two_apply, Nat.cast_one,
-      cyclicGroupTwoCharacterTable_zero_zero, cyclicGroupTwoCharacterTable_zero_one,
-      cyclicGroupTwoCharacterTable_one_zero, cyclicGroupTwoCharacterTable_one_one,
-      one_mul, mul_one, neg_mul, mul_neg, neg_neg, Fin.mk.injEq] <;> simp
+    norm_num [cyclicGroupTwoCharacterTable_apply] <;> decide
 
 end TauCeti
