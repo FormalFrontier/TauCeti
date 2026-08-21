@@ -51,6 +51,14 @@ The hypotheses take arbitrary algebra structures whose structure maps are the pu
 `Isogeny.degree_eq_finrank` and the siblings in this directory: registering such a structure
 globally would be a diamond, since different isogenies induce different ones.
 
+## Provenance
+
+The statement is not among the components `TauCetiRoadmap/EllipticCurves/README.md:1085–1096` lists
+for D. Angdinata's shared isogeny development, and no AINTLIB declaration corresponds to it: the
+one fact about this object that both carry is module-finiteness, which is the sibling
+`IntermediateRing/Finite.lean`. The proof is Mathlib's two localization comparisons of dimension
+against `Isogeny.degree_eq_finrank`.
+
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2.

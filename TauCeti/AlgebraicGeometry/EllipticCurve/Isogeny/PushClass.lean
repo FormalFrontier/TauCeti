@@ -81,6 +81,28 @@ pulled-back `W₃.CoordinateRing` by `ψ.mapsInfinity` — but the composition l
 `Ideal.relNorm` along that tower, which the pinned Mathlib does not carry. The identity law below
 needs no such input.
 
+## Provenance
+
+⚠ *mathlib-track*. `TauCetiRoadmap/EllipticCurves/README.md:1092` lists "`pushClass` by ideal
+extension and relative norm (`ClassGroup.extendedRelNormHom`)" among the components of
+D. Angdinata's shared isogeny development, on the way to `toPointHom`; the sibling `Isogeny` and
+`IntermediateRing` files carry the same flag for the objects it is assembled from. It is built here
+only until those PRs land, and deduplicated when they do.
+
+Nothing is ported. The composite itself is `ClassGroup.extendedRelNormHom`, already in
+`TauCeti/RingTheory/ClassGroup/ExtendedRelNorm.lean` with its own provenance, and the two
+corestrictions are `IntermediateRing/Basic.lean`'s; what is new here is only that they are joined,
+with the algebra structures pinned. The nearest relative in the AINTLIB project
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `dev/hasse-weil @ 513e83879e2f`, by Chris Birkbeck) is
+`HasseWeil/Pic0/IsogenyClassGroup.lean`, whose `classNorm ∘ classMap` is the **endomorphism** case
+— both sides one class group — as `ExtendedRelNorm.lean` records; no declaration below corresponds
+to one of its declarations.
+
+The roadmap's hypothesis inventory at that same passage predicts `[IsIntegrallyClosed
+W₂.CoordinateRing]` and `[DecidableEq F]` for the class-group half. What is carried here instead is
+`[IsDedekindDomain W₂.CoordinateRing]` — `ClassGroup.relNorm` is stated over Dedekind domains, not
+merely normal ones — and no decidability at all.
+
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2, III.4.

@@ -65,6 +65,15 @@ mathematics, and that removing it means building Krull–Akizuki or Nagata norma
 first. Nothing here changes that; when the siblings lose the hypothesis, so does this file. The
 rank statement `Isogeny.finrank_intermediateRing` already needs no separability.
 
+## Provenance
+
+⚠ *mathlib-track*, inherited. Every conclusion here is a sibling's conclusion repackaged, and both
+siblings are flagged against `TauCetiRoadmap/EllipticCurves/README.md:1092`, which lists the
+`IntermediateRing` with `intermediateRingFinite` among the components of D. Angdinata's shared
+isogeny development; this file is deduplicated with them when that lands. Nothing is ported from
+AINTLIB: the source states its structural facts for a fixed extension with the algebra structures
+supplied as instance arguments, which is the shape this file exists to remove.
+
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2.
