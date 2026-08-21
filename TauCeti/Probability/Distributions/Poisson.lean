@@ -30,6 +30,7 @@ namespace TauCeti
 
 /-- The moment-generating function of a real-valued Poisson law of rate `r` is
 `t ↦ exp (r * (exp t - 1))`. -/
+@[simp]
 theorem mgf_id_map_cast_poissonMeasure (r : ℝ≥0) :
     mgf (fun x : ℝ ↦ x) Po(ℝ, r) = fun t ↦ exp ((r : ℝ) * (exp t - 1)) := by
   ext t
@@ -63,6 +64,7 @@ theorem integrableExpSet_id_map_cast_poissonMeasure (r : ℝ≥0) :
 
 /-- The cumulant-generating function of a real-valued Poisson law of rate `r` is
 `t ↦ r * (exp t - 1)`. -/
+@[simp]
 theorem cgf_id_map_cast_poissonMeasure (r : ℝ≥0) :
     cgf (fun x : ℝ ↦ x) Po(ℝ, r) = fun t ↦ (r : ℝ) * (exp t - 1) := by
   ext t
