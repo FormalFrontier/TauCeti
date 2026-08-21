@@ -9,8 +9,6 @@ public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Moments.Variance
 import TauCeti.Probability.Distributions.PDFInstances
 import TauCeti.MeasureTheory.Integral.ExpDecay
-import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
-import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 
 /-!
 # Moments of the exponential law
@@ -21,7 +19,7 @@ The mean and variance of `ProbabilityTheory.expMeasure r`:
 ∫ x, x ∂(expMeasure r) = r⁻¹        Var[id; expMeasure r] = (r ^ 2)⁻¹
 ```
 
-**Both come from one moment formula.** `integral_pow_id_expMeasure` computes every moment,
+**Both come from one moment formula.** `integral_pow_expMeasure` computes every moment,
 `∫ x ^ n = n ! / r ^ n`, and the mean and the second moment are its `n = 1` and `n = 2` cases.
 Proving those two separately would repeat the same density transport and Gamma-integral argument
 twice, so the general statement is the one proved and the two specializations are `simpa` from it.
@@ -39,9 +37,9 @@ zero case is discharged from the probability-measure instance instead.
 
 ## Main results
 
-* `integrable_pow_id_expMeasure` — every moment is integrable;
-* `integral_pow_id_expMeasure` — the `n`-th moment, `n ! / r ^ n`;
-* `integral_id_expMeasure`, `integral_sq_id_expMeasure` — the mean and the second moment;
+* `integrable_pow_expMeasure` — every moment is integrable;
+* `integral_pow_expMeasure` — the `n`-th moment, `n ! / r ^ n`;
+* `integral_id_expMeasure`, `integral_sq_expMeasure` — the mean and the second moment;
 * `variance_id_expMeasure` — the variance.
 
 ## References
@@ -116,7 +114,7 @@ private theorem integrand_eq_indicator (hn : n ≠ 0) :
 formula below: Lean's integral is defined for non-integrable functions too, so an integral equality
 alone says nothing about finiteness. -/
 @[simp]
-theorem integrable_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
+theorem integrable_pow_expMeasure (hr : 0 < r) (n : ℕ) :
     Integrable (fun x => x ^ n) (expMeasure r) := by
   have hprob : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   rcases eq_or_ne n 0 with rfl | hn
@@ -140,7 +138,7 @@ avoids running the same density transport and Gamma-integral argument twice.
 At `n = 0` both sides are `1`, from the probability-measure instance; the Gamma-integral route is
 used for positive `n`. -/
 @[simp]
-theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
+theorem integral_pow_expMeasure (hr : 0 < r) (n : ℕ) :
     ∫ x, x ^ n ∂(expMeasure r) = (Nat.factorial n : ℝ) / r ^ n := by
   rcases eq_or_ne n 0 with rfl | hn
   · have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
@@ -154,23 +152,23 @@ theorem integral_pow_id_expMeasure (hr : 0 < r) (n : ℕ) :
 /-- **The mean of the exponential law** with rate `r` is `r⁻¹`. -/
 @[simp]
 theorem integral_id_expMeasure (hr : 0 < r) : ∫ x, x ∂(expMeasure r) = r⁻¹ := by
-  simpa using integral_pow_id_expMeasure hr 1
+  simpa using integral_pow_expMeasure hr 1
 
 /-- The second moment of the exponential law with rate `r` is `2 / r ^ 2`. -/
-theorem integral_sq_id_expMeasure (hr : 0 < r) : ∫ x, x ^ 2 ∂(expMeasure r) = 2 / r ^ 2 := by
-  simpa using integral_pow_id_expMeasure hr 2
+theorem integral_sq_expMeasure (hr : 0 < r) : ∫ x, x ^ 2 ∂(expMeasure r) = 2 / r ^ 2 := by
+  simpa using integral_pow_expMeasure hr 2
 
 /-- **The variance of the exponential law** with rate `r` is `(r ^ 2)⁻¹`. -/
 @[simp]
 theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = (r ^ 2)⁻¹ := by
   have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   have h₂ : Integrable (fun x => id x ^ 2) (expMeasure r) :=
-    integrable_pow_id_expMeasure hr 2
+    integrable_pow_expMeasure hr 2
   have hLp : MemLp id 2 (expMeasure r) :=
     (memLp_two_iff_integrable_sq measurable_id.aestronglyMeasurable).2 h₂
   rw [variance_eq_sub hLp]
   simp only [Pi.pow_apply, id_eq]
-  rw [integral_sq_id_expMeasure hr, integral_id_expMeasure hr]
+  rw [integral_sq_expMeasure hr, integral_id_expMeasure hr]
   field_simp
   ring
 
