@@ -450,7 +450,7 @@ end ContinuityMul
 
 section Cohomology
 
-variable (G : Type u) [Group G] [TopologicalSpace G]
+variable (G : Type u) [Monoid G] [TopologicalSpace G]
   (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M]
 
@@ -565,7 +565,7 @@ end TrivialAction
 
 section TrivialCohomology
 
-variable {G : Type u} [Group G] [TopologicalSpace G]
+variable {G : Type u} [Monoid G] [TopologicalSpace G]
   {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] (htriv : ∀ (g : G) (m : M), g • m = m)
 
