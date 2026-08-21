@@ -93,9 +93,8 @@ restriction of a cochain to `U` inside a corestriction sum. -/
 theorem lWord_mk_one_of_mem (h1 : t (QuotientGroup.mk 1) = 1) {γ : G} (hγ : γ ∈ U) :
     lWord U t (QuotientGroup.mk 1) γ = γ := by
   have h : (γ⁻¹ • (QuotientGroup.mk 1 : G ⧸ U)) = QuotientGroup.mk 1 := by
-    rw [MulAction.Quotient.smul_mk, smul_eq_mul, mul_one, QuotientGroup.eq, inv_inv, mul_one]
-    exact hγ
-  rw [lWord_def, h, h1, inv_one, one_mul, mul_one]
+    simpa [QuotientGroup.eq] using hγ
+  simp [lWord_def, h, h1]
 
 section IsTransversal
 
@@ -125,6 +124,8 @@ theorem transversalDiff_self (u : G ⧸ U) : transversalDiff U t t u = 1 := by
 theorem transversal_mul_transversalDiff (u : G ⧸ U) : t u * transversalDiff U t t' u = t' u := by
   rw [transversalDiff_def, ← mul_assoc, mul_inv_cancel, one_mul]
 
+/-- The difference of two genuine transversals lies in `U`: if both `t` and `t'` pick
+representatives of every coset, then `(t u)⁻¹ * t' u` is a member of `U` for every `u`. -/
 theorem transversalDiff_mem (ht : ∀ u : G ⧸ U, (QuotientGroup.mk (t u) : G ⧸ U) = u)
     (ht' : ∀ u : G ⧸ U, (QuotientGroup.mk (t' u) : G ⧸ U) = u) (u : G ⧸ U) :
     transversalDiff U t t' u ∈ U := by

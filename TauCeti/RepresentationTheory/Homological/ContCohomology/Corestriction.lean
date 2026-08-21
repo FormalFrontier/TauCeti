@@ -31,7 +31,12 @@ The main declarations are:
 * `TauCeti.ContCohomology.explicitCor0`, its specialization at `t = Quotient.out`;
 * `TauCeti.ContCohomology.explicitRes0`, restriction in degree `0`, and
   `TauCeti.ContCohomology.explicitCor_comp_res0`, the normalization
-  `cor⁰ ∘ res⁰ = (G : U) • id`.
+  `cor⁰ ∘ res⁰ = (G : U) • id`;
+* `TauCeti.ContCohomology.mapFixedPoints`, the map of invariants induced by an equivariant map of
+  coefficients, with the naturality squares
+  `TauCeti.ContCohomology.mapFixedPoints_explicitRes0`,
+  `TauCeti.ContCohomology.mapFixedPoints_explicitCor0Transversal` and
+  `TauCeti.ContCohomology.mapFixedPoints_explicitCor0`.
 
 The factor `t u •` in the formula is not decoration: without it the sum is not `G`-invariant, and
 the proof of `TauCeti.ContCohomology.sum_transversal_smul_mem_fixedPoints` is exactly the
@@ -82,8 +87,41 @@ def explicitRes0 : FixedPoints.addSubgroup G M →+ FixedPoints.addSubgroup U M 
   AddSubgroup.inclusion (fixedPoints_addSubgroup_le G M U)
 
 @[simp]
-theorem explicitRes0_coe (m : FixedPoints.addSubgroup G M) :
+theorem coe_explicitRes0 (m : FixedPoints.addSubgroup G M) :
     (explicitRes0 G M U m : M) = (m : M) := (rfl)
+
+section Coefficients
+
+variable {H A B : Type*} [Monoid H] [AddCommGroup A] [AddCommGroup B] [DistribMulAction H A]
+  [DistribMulAction H B]
+
+/-- **The map of invariants induced by an equivariant map of coefficients.** An additive map
+`f : A →+ B` commuting with the action of `H` carries `A^H` into `B^H`. This is the vertical
+arrow of the naturality squares for restriction and corestriction below. -/
+def mapFixedPoints (f : A →+ B) (hf : ∀ (h : H) (a : A), f (h • a) = h • f a) :
+    FixedPoints.addSubgroup H A →+ FixedPoints.addSubgroup H B where
+  toFun a := ⟨f a, (FixedPoints.mem_addSubgroup _ _ _).mpr fun h => by
+    rw [← hf, (FixedPoints.mem_addSubgroup _ _ _).mp a.2 h]⟩
+  map_zero' := by ext; simp
+  map_add' a b := by ext; simp
+
+@[simp]
+theorem coe_mapFixedPoints (f : A →+ B) (hf : ∀ (h : H) (a : A), f (h • a) = h • f a)
+    (a : FixedPoints.addSubgroup H A) : (mapFixedPoints f hf a : B) = f (a : A) := (rfl)
+
+end Coefficients
+
+/-- **Naturality of the degree-`0` restriction in the coefficients.** The map of invariants
+induced by a `G`-equivariant additive map `f : M →+ N` of coefficients commutes with `res⁰`; on
+the source of `res⁰` the induced map is taken for the action of `G`, on its target for the action
+of `U`. -/
+theorem mapFixedPoints_explicitRes0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+ N) (hf : ∀ (g : G) (x : M), f (g • x) = g • f x)
+    (m : FixedPoints.addSubgroup G M) :
+    mapFixedPoints f (fun u : U => hf u) (explicitRes0 G M U m) =
+      explicitRes0 G N U (mapFixedPoints f hf m) := by
+  ext
+  simp
 
 section Transversal
 
@@ -117,30 +155,31 @@ def explicitCor0Transversal :
   map_add' a b := by ext; simp [smul_add, Finset.sum_add_distrib]
 
 @[simp]
-theorem explicitCor0Transversal_coe (m : FixedPoints.addSubgroup U M) :
+theorem coe_explicitCor0Transversal (m : FixedPoints.addSubgroup U M) :
     (explicitCor0Transversal G M U t ht m : M) = ∑ u : G ⧸ U, t u • (m : M) := (rfl)
 
-/-- **Naturality of the degree-`0` corestriction in the coefficients.** A `G`-equivariant additive
-map of coefficients commutes with the norm; the right-hand side is the norm of `f m`, which lies
-in `N^U` because `f` is equivariant. -/
-theorem map_explicitCor0Transversal {N : Type*} [AddCommGroup N] [DistribMulAction G N]
-    (f : M →+ N) (hf : ∀ (g : G) (x : M), f (g • x) = g • f x)
+/-- **Naturality of the degree-`0` corestriction in the coefficients.** The map of invariants
+induced by a `G`-equivariant additive map `f : M →+ N` of coefficients commutes with the norm:
+`cor⁰_t (f m) = f (cor⁰_t m)`. On the source the induced map is taken for the action of `U`,
+on the target for the action of `G`. -/
+theorem mapFixedPoints_explicitCor0Transversal {N : Type*} [AddCommGroup N]
+    [DistribMulAction G N] (f : M →+ N) (hf : ∀ (g : G) (x : M), f (g • x) = g • f x)
     (m : FixedPoints.addSubgroup U M) :
-    f (explicitCor0Transversal G M U t ht m : M) = ∑ u : G ⧸ U, t u • f (m : M) := by
-  rw [explicitCor0Transversal_coe, map_sum]
-  exact Finset.sum_congr rfl fun u _ => hf _ _
+    mapFixedPoints f hf (explicitCor0Transversal G M U t ht m) =
+      explicitCor0Transversal G N U t ht (mapFixedPoints f (fun u : U => hf u) m) := by
+  ext
+  simp [map_sum, hf]
 
 /-- **`cor⁰ ∘ res⁰ = (G : U) • id`**, for a variable transversal: on an element fixed by all of
 `G` every summand of the norm is the element itself. Unlike its counterparts in degrees `1` and
 `2`, this identity already holds on cochains, because a degree-`0` cochain is an invariant
 element. -/
-theorem explicitCor0Transversal_explicitRes0 (m : FixedPoints.addSubgroup G M) :
+theorem explicitCor0Transversal_comp_res0 (m : FixedPoints.addSubgroup G M) :
     explicitCor0Transversal G M U t ht (explicitRes0 G M U m) = U.index • m := by
+  have hm : ∀ u : G ⧸ U, t u • (m : M) = (m : M) := fun u =>
+    (FixedPoints.mem_addSubgroup _ _ _).mp m.2 (t u)
   ext
-  rw [explicitCor0Transversal_coe, explicitRes0_coe,
-    Finset.sum_congr rfl fun u _ => (FixedPoints.mem_addSubgroup _ _ _).mp m.2 (t u),
-    Finset.sum_const, Finset.card_univ, AddSubgroup.coe_nsmul, U.index_eq_card,
-    Nat.card_eq_fintype_card]
+  simp [hm, U.index_eq_card, Nat.card_eq_fintype_card]
 
 end Transversal
 
@@ -165,18 +204,30 @@ noncomputable def explicitCor0 :
   explicitCor0Transversal G M U Quotient.out fun u => Quotient.out_eq u
 
 @[simp]
-theorem explicitCor0_coe (m : FixedPoints.addSubgroup U M) :
+theorem coe_explicitCor0 (m : FixedPoints.addSubgroup U M) :
     (explicitCor0 G M U m : M) = ∑ u : G ⧸ U, Quotient.out u • (m : M) := (rfl)
 
+/-- The canonical degree-`0` corestriction is computed by *any* transversal `t`: the norm built
+from `t` agrees with the one built from `Quotient.out`. -/
 theorem explicitCor0_eq_transversal (t : G ⧸ U → G)
     (ht : ∀ u : G ⧸ U, (QuotientGroup.mk (t u) : G ⧸ U) = u) :
     explicitCor0 G M U = explicitCor0Transversal G M U t ht :=
   explicitCor0_changeTransversal G M U _ t _ ht
 
+/-- **Naturality of the canonical degree-`0` corestriction in the coefficients.** The map of
+invariants induced by a `G`-equivariant additive map `f : M →+ N` of coefficients commutes with
+`cor⁰`. -/
+theorem mapFixedPoints_explicitCor0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+ N) (hf : ∀ (g : G) (x : M), f (g • x) = g • f x)
+    (m : FixedPoints.addSubgroup U M) :
+    mapFixedPoints f hf (explicitCor0 G M U m) =
+      explicitCor0 G N U (mapFixedPoints f (fun u : U => hf u) m) :=
+  mapFixedPoints_explicitCor0Transversal G M U _ _ f hf m
+
 /-- **`cor⁰ ∘ res⁰ = (G : U) • id`.** -/
 theorem explicitCor_comp_res0 (m : FixedPoints.addSubgroup G M) :
     explicitCor0 G M U (explicitRes0 G M U m) = U.index • m := by
   rw [explicitCor0_eq_transversal G M U Quotient.out fun u => Quotient.out_eq u]
-  exact explicitCor0Transversal_explicitRes0 G M U _ _ m
+  exact explicitCor0Transversal_comp_res0 G M U _ _ m
 
 end TauCeti.ContCohomology
