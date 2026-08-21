@@ -43,10 +43,20 @@ carrying the quotient topology. -/
 noncomputable def homologyIsoCoker : S.homology ≅ TopModuleCat.coker S.toCycles :=
   IsColimit.coconePointUniqueUpToIso S.homologyIsCokernel (TopModuleCat.isColimitCoker S.toCycles)
 
+/-- `homologyIsoCoker` identifies the projection `S.homologyπ` onto homology with the projection
+`TopModuleCat.cokerπ` onto the concrete cokernel. -/
 @[reassoc (attr := simp)]
 theorem homologyπ_comp_homologyIsoCoker_hom :
     S.homologyπ ≫ (homologyIsoCoker S).hom = TopModuleCat.cokerπ S.toCycles :=
   IsColimit.comp_coconePointUniqueUpToIso_hom S.homologyIsCokernel
+    (TopModuleCat.isColimitCoker S.toCycles) WalkingParallelPair.one
+
+/-- The form of `homologyπ_comp_homologyIsoCoker_hom` facing the inverse isomorphism: the
+projection onto the concrete cokernel, followed back into homology, is `S.homologyπ`. -/
+@[reassoc (attr := simp)]
+theorem cokerπ_comp_homologyIsoCoker_inv :
+    TopModuleCat.cokerπ S.toCycles ≫ (homologyIsoCoker S).inv = S.homologyπ :=
+  IsColimit.comp_coconePointUniqueUpToIso_inv S.homologyIsCokernel
     (TopModuleCat.isColimitCoker S.toCycles) WalkingParallelPair.one
 
 /-- The cycles of a short complex of topological modules with discrete middle term are discrete. -/
