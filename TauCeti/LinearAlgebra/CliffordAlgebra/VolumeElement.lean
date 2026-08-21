@@ -31,10 +31,11 @@ one of the `n` transpositions is a vector past itself, which is free, so the cos
 `(-1) ^ (n - 1)`. That sign does not depend on `m`, and the condition is linear in `m`, so it
 propagates from the factors to their span (`CliffordAlgebra.prod_map_ι_mul_ι_of_mem_span`).
 
-This is the even/odd dichotomy of the Clifford algebra as seen from the volume element. If the
-factors span `M` and there are **oddly** many of them, the volume element commutes with every
-generator, hence is **central** (`CliffordAlgebra.prod_map_ι_mem_center_of_odd_length`); if there
-are evenly many, it **anticommutes** with every generator
+This is the even/odd dichotomy of the Clifford algebra as seen from the volume element. If there
+are **oddly** many factors, the volume element commutes with every generator coming from their span
+(`CliffordAlgebra.prod_map_ι_mul_ι_of_odd_length`), so once the factors span `M` it is **central**
+(`CliffordAlgebra.prod_map_ι_mem_center_of_odd_length`); if there are evenly many, it
+**anticommutes** with those generators instead
 (`CliffordAlgebra.prod_map_ι_mul_ι_of_even_length`). Centrality is all the odd case claims: under
 these hypotheses the volume element may well be a scalar already, and is `0` as soon as one of its
 factors is. That it is a *further* central element, and that the centre is then exactly a rank-two
@@ -64,6 +65,8 @@ the values `Q vᵢ` is a unit.
   moves across the product at the cost of `(-1) ^ n`.
 * `CliffordAlgebra.prod_map_ι_mul_ι_of_mem_span`: a vector in the span of a pairwise orthogonal
   list moves across the product at the cost of `(-1) ^ (n - 1)`.
+* `CliffordAlgebra.prod_map_ι_mul_ι_of_odd_length`: the volume element of a pairwise orthogonal
+  list of odd length commutes with every generator in the span of the list.
 * `CliffordAlgebra.prod_map_ι_mem_center_of_odd_length`: the volume element of a pairwise
   orthogonal spanning list of odd length is central.
 * `CliffordAlgebra.prod_map_ι_mul_ι_of_even_length`: of even length, it anticommutes with every
@@ -192,6 +195,19 @@ theorem prod_map_ι_mul_ι_of_mem_span {l : List M} (hl : l.Pairwise Q.IsOrtho) 
 
 /-! ### The even/odd dichotomy -/
 
+/-- **The volume element of an odd number of pairwise orthogonal vectors commutes with every
+generator coming from their span**, the crossing sign `(-1) ^ (n - 1)` now being `1`.
+
+This is the odd half of the dichotomy, in the same span-relative form as its even counterpart
+`prod_map_ι_mul_ι_of_even_length`; `prod_map_ι_mem_center_of_odd_length` is the case of a
+spanning list, where commuting with the generators upgrades to centrality. -/
+theorem prod_map_ι_mul_ι_of_odd_length {l : List M} (hl : l.Pairwise Q.IsOrtho)
+    (hlen : Odd l.length) {m : M} (hm : m ∈ Submodule.span R {x : M | x ∈ l}) :
+    (l.map (ι Q)).prod * ι Q m = ι Q m * (l.map (ι Q)).prod := by
+  have hpar : Even (l.length - 1) := Nat.Odd.sub_odd hlen odd_one
+  have h := prod_map_ι_mul_ι_of_mem_span hl hm
+  rwa [hpar.neg_one_pow, one_smul] at h
+
 /-- **The volume element of an odd number of pairwise orthogonal vectors spanning `M` is central.**
 
 Crossing a generator costs `(-1) ^ (n - 1)`, and `n - 1` is even, so the volume element commutes
@@ -204,11 +220,8 @@ hypotheses made nowhere in this file. -/
 theorem prod_map_ι_mem_center_of_odd_length {l : List M} (hl : l.Pairwise Q.IsOrtho)
     (hlen : Odd l.length) (hspan : Submodule.span R {x : M | x ∈ l} = ⊤) :
     (l.map (ι Q)).prod ∈ Subalgebra.center R (CliffordAlgebra Q) := by
-  have hpar : Even (l.length - 1) := Nat.Odd.sub_odd hlen odd_one
-  have key : ∀ m : M, (l.map (ι Q)).prod * ι Q m = ι Q m * (l.map (ι Q)).prod := by
-    intro m
-    have h := prod_map_ι_mul_ι_of_mem_span hl (m := m) (hspan.ge Submodule.mem_top)
-    rwa [hpar.neg_one_pow, one_smul] at h
+  have key : ∀ m : M, (l.map (ι Q)).prod * ι Q m = ι Q m * (l.map (ι Q)).prod := fun m =>
+    prod_map_ι_mul_ι_of_odd_length hl hlen (hspan.ge Submodule.mem_top)
   rw [Subalgebra.mem_center_iff]
   intro y
   exact (Algebra.commute_of_mem_adjoin_of_forall_mem_commute (s := Set.range (ι Q))
