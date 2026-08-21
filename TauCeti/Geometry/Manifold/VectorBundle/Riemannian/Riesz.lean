@@ -30,12 +30,16 @@ frame smoothness API replace those constructions.
 
 ## Main results
 
-* `Riemannian.Tensor.rieszDual` is the fibrewise Riesz dual supplied by the canonical metric.
+* `Riemannian.Tensor.rieszDual` is the fibrewise Riesz equivalence supplied by the canonical
+  metric.
 * `Riemannian.Tensor.rieszDual_eq_sum_chartLocalFrame` gives the inverse-Gram-matrix coordinate
   formula for the Riesz dual.
 * `Riemannian.Tensor.contMDiffOn_rieszDual` proves smoothness on a chart domain from smoothness
   of the covector's evaluations on the chart-local frame.
 * `Riemannian.Tensor.contMDiffAt_rieszDual` is the corresponding pointwise criterion.
+
+Since `rieszDual` is the fibrewise equivalence itself, its linearity in the functional is
+Mathlib's `LinearIsometryEquiv` API (`map_add`, `map_smul`, `LinearIsometryEquiv.map_zero`).
 
 ## References
 
@@ -61,18 +65,21 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
   [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
 
-/-- The Riesz dual of a continuous linear functional on a tangent fibre, with respect to the
-inner product supplied by the canonical Riemannian bundle instance. -/
-def rieszDual {x : M} (φ : TangentSpace I x →L[ℝ] ℝ) : TangentSpace I x := by
+/-- The fibrewise Fréchet–Riesz equivalence of a tangent fibre: it sends a continuous linear
+functional to the vector representing it for the inner product supplied by the canonical
+Riemannian bundle instance. This packages `InnerProductSpace.toDual` together with the
+finite-dimensionality and completeness of the fibre, neither of which is available to instance
+search on `TangentSpace I x`. -/
+def rieszDual (x : M) : (TangentSpace I x →L[ℝ] ℝ) ≃ₗᵢ[ℝ] TangentSpace I x := by
   let _ : FiniteDimensional ℝ (TangentSpace I x) :=
     VectorBundle.finiteDimensional ℝ E (TangentSpace I) x
   let _ := FiniteDimensional.complete ℝ (TangentSpace I x)
-  exact (InnerProductSpace.toDual ℝ (TangentSpace I x)).symm φ
+  exact (InnerProductSpace.toDual ℝ (TangentSpace I x)).symm
 
 /-- The Riesz dual represents its functional by the fibre inner product. -/
 @[simp]
 theorem inner_rieszDual {x : M} (φ : TangentSpace I x →L[ℝ] ℝ)
-    (v : TangentSpace I x) : inner ℝ (rieszDual (I := I) φ) v = φ v := by
+    (v : TangentSpace I x) : inner ℝ (rieszDual (I := I) x φ) v = φ v := by
   let _ : FiniteDimensional ℝ (TangentSpace I x) :=
     VectorBundle.finiteDimensional ℝ E (TangentSpace I) x
   let _ := FiniteDimensional.complete ℝ (TangentSpace I x)
@@ -82,37 +89,15 @@ theorem inner_rieszDual {x : M} (φ : TangentSpace I x →L[ℝ] ℝ)
 vector is the value of `φ` there. -/
 theorem eq_rieszDual_iff_inner_eq {x : M} {v : TangentSpace I x}
     {φ : TangentSpace I x →L[ℝ] ℝ} :
-    v = rieszDual (I := I) φ ↔ ∀ w, inner ℝ v w = φ w := by
-  refine ⟨fun h w ↦ h ▸ inner_rieszDual (I := I) φ w, fun h ↦ ?_⟩
-  exact ext_inner_right ℝ fun w ↦ (h w).trans (inner_rieszDual (I := I) φ w).symm
-
-/-- The Riesz dual of the zero functional is zero. -/
-@[simp]
-theorem rieszDual_zero {x : M} :
-    rieszDual (I := I) (0 : TangentSpace I x →L[ℝ] ℝ) = 0 := by
-  symm
-  rw [eq_rieszDual_iff_inner_eq]
-  simp
-
-/-- The Riesz dual is additive in the functional. -/
-@[simp]
-theorem rieszDual_add {x : M} (φ ψ : TangentSpace I x →L[ℝ] ℝ) :
-    rieszDual (I := I) (φ + ψ) = rieszDual (I := I) φ + rieszDual (I := I) ψ := by
-  rw [eq_comm, eq_rieszDual_iff_inner_eq]
-  simp [inner_add_left]
-
-/-- The Riesz dual commutes with real scalar multiplication. -/
-@[simp]
-theorem rieszDual_smul {x : M} (c : ℝ) (φ : TangentSpace I x →L[ℝ] ℝ) :
-    rieszDual (I := I) (c • φ) = c • rieszDual (I := I) φ := by
-  rw [eq_comm, eq_rieszDual_iff_inner_eq]
-  simp [real_inner_smul_left]
+    v = rieszDual (I := I) x φ ↔ ∀ w, inner ℝ v w = φ w := by
+  refine ⟨fun h w ↦ h ▸ inner_rieszDual φ w, fun h ↦ ?_⟩
+  exact ext_inner_right ℝ fun w ↦ (h w).trans (inner_rieszDual φ w).symm
 
 /-- The coordinate formula for the fibrewise Riesz dual in a chart-local frame. Its coefficient
 vector is the inverse Gram matrix applied to the evaluations of the covector on the frame. -/
 theorem rieszDual_eq_sum_chartLocalFrame (a : M) {x : M}
     (hx : x ∈ (chartAt H a).source) (φ : TangentSpace I x →L[ℝ] ℝ) :
-    rieszDual (I := I) φ =
+    rieszDual (I := I) x φ =
       ∑ i, ((chartInvGramMatrix (I := I) a x *ᵥ
         fun j ↦ φ (chartLocalFrame (I := I) a j x)) i) •
           chartLocalFrame (I := I) a i x := by
@@ -164,7 +149,7 @@ theorem contMDiffOn_rieszDual (a : M)
         (chartAt H a).source) :
     ContMDiffOn I (I.prod 𝓘(ℝ, E)) n
       (fun y : M ↦ TotalSpace.mk' E y
-        (rieszDual (I := I) (Φ y)))
+        (rieszDual (I := I) y (Φ y)))
       (chartAt H a).source := by
   let c : Fin (Module.finrank ℝ E) → M → ℝ := fun i y ↦
     ∑ j, chartInvGramMatrix (I := I) a y i j *
@@ -200,7 +185,7 @@ theorem contMDiffAt_rieszDual (a : M) {x : M} (hx : x ∈ (chartAt H a).source)
       ContMDiffAt I 𝓘(ℝ) n (fun y ↦ Φ y (chartLocalFrame (I := I) a j y)) x) :
     ContMDiffAt I (I.prod 𝓘(ℝ, E)) n
       (fun y : M ↦ TotalSpace.mk' E y
-        (rieszDual (I := I) (Φ y))) x := by
+        (rieszDual (I := I) y (Φ y))) x := by
   have hopen : IsOpen (chartAt H a).source := (chartAt H a).open_source
   let c : Fin (Module.finrank ℝ E) → M → ℝ := fun i y ↦
     ∑ j, chartInvGramMatrix (I := I) a y i j *
