@@ -19,7 +19,7 @@ lattices `Fin 8 → ℤ`, out of the enumeration of the two hundred and forty ro
 `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic`. The character lattice is
 written in the fundamental-weight basis and the cocharacter lattice in the simple-coroot basis, so
 that the `i`-th simple root is the `i`-th row of the Bourbaki-numbered Cartan matrix
-`CartanMatrix.E₈` and the `i`-th simple coroot is the `i`-th standard basis vector.
+`CartanMatrix.E 8` and the `i`-th simple coroot is the `i`-th standard basis vector.
 
 ## Reflection stability
 
@@ -74,20 +74,20 @@ namespace DynkinType
 
 /-- **The pairing of the pinned tables is symmetric.** This is the simply-laced feature of `E₈`:
 both sides are the value at the simple-coroot coordinates of the symmetric form carried by
-`CartanMatrix.E₈`. -/
+`CartanMatrix.E 8`. -/
 theorem e8Root_dotProduct_e8Coroot_comm (i j : Fin 240) :
     e8Root i ⬝ᵥ e8Coroot j = e8Root j ⬝ᵥ e8Coroot i := by
-  rw [e8Root_apply, e8Root_apply, vecMul_dotProduct_comm CartanMatrix.E₈_isSymm]
+  rw [e8Root_apply, e8Root_apply, vecMul_dotProduct_comm (CartanMatrix.E_isSymm 8)]
 
 private lemma exists_e8Coroot_reflection (i j : Fin 240) :
     ∃ k, e8Coroot k =
       e8Coroot j - (e8Root i ⬝ᵥ e8Coroot j) • e8Coroot i := by
-  have hnorm (k : Fin 240) : (e8Coroot k ᵥ* CartanMatrix.E₈) ⬝ᵥ e8Coroot k = 2 := by
+  have hnorm (k : Fin 240) : (e8Coroot k ᵥ* CartanMatrix.E 8) ⬝ᵥ e8Coroot k = 2 := by
     rw [← e8Root_apply]
     exact e8Root_dotProduct_coroot k
   refine exists_e8Coroot_eq ?_
-  rw [e8Root_apply, vecMul_dotProduct_comm CartanMatrix.E₈_isSymm (e8Coroot i) (e8Coroot j)]
-  exact (reflect_vecMul_dotProduct_self CartanMatrix.E₈_isSymm (hnorm i) (e8Coroot j)).trans
+  rw [e8Root_apply, vecMul_dotProduct_comm (CartanMatrix.E_isSymm 8) (e8Coroot i) (e8Coroot j)]
+  exact (reflect_vecMul_dotProduct_self (CartanMatrix.E_isSymm 8) (hnorm i) (e8Coroot j)).trans
     (hnorm j)
 
 /-! ## The pinned datum -/
@@ -107,7 +107,7 @@ noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → �
       have hroot : e8Root k =
           e8Root j - (e8Root i ⬝ᵥ e8Coroot j) • e8Root i := by
         simpa only [sub_vecMul, smul_vecMul, ← e8Root_apply] using
-          congrArg (fun x : Fin 8 → ℤ ↦ x ᵥ* CartanMatrix.E₈) hk
+          congrArg (fun x : Fin 8 → ℤ ↦ x ᵥ* CartanMatrix.E 8) hk
       rw [e8Root_dotProduct_e8Coroot_comm] at hroot
       simpa [Module.preReflection_apply, dotProductEquiv_apply_apply] using hroot)
     (by
@@ -167,14 +167,14 @@ private lemma sum_smul_coroot_e8SimpleIndex (j : Fin 240) :
 coordinates, the two tables differing by the Cartan-matrix map. -/
 private lemma sum_smul_root_e8SimpleIndex (j : Fin 240) :
     ∑ k : Fin 8, e8Coroot j k • e8Root (e8SimpleIndex k) = e8Root j := by
-  have h := congrArg CartanMatrix.E₈.mulVecLin (sum_smul_coroot_e8SimpleIndex j)
+  have h := congrArg (CartanMatrix.E 8).mulVecLin (sum_smul_coroot_e8SimpleIndex j)
   rw [map_sum] at h
   simpa only [map_zsmul, mulVecLin_apply, ← e8Root_eq_mulVec] using h
 
 private lemma linearIndependent_root_e8SimpleIndex :
     LinearIndependent ℤ fun i : Fin 8 ↦ e8Root (e8SimpleIndex i) := by
   simpa only [root_e8SimpleIndex] using
-    linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.E₈)
+    linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.E 8)
       (by rw [CartanMatrix.E₈_det]; norm_num)
 
 private lemma linearIndependent_coroot_e8SimpleIndex :
@@ -215,12 +215,12 @@ matrix.** This pins the node order independently of the existential relabelling 
 `TauCeti.HasCartanType`. -/
 theorem pairing_e8SimpleIndex (i j : Fin 8) :
     e8SimplyConnectedRootDatum.pairing (e8SimpleIndex i) (e8SimpleIndex j) =
-      CartanMatrix.E₈ i j := by
+      CartanMatrix.E 8 i j := by
   rw [e8SimplyConnectedRootDatum_pairing, root_e8SimpleIndex, coroot_e8SimpleIndex,
     dotProduct_single, mul_one]
 
 /-- **The pinned datum of type `E₈` has Cartan type `E8`.** Its Bourbaki-numbered base realizes the
-standard Cartan matrix `CartanMatrix.E₈`, with the node numbering of `TauCeti.DynkinType`. -/
+standard Cartan matrix `CartanMatrix.E 8`, with the node numbering of `TauCeti.DynkinType`. -/
 theorem hasCartanType_e8SimplyConnectedRootDatum :
     HasCartanType e8SimplyConnectedRootDatum e8SimplyConnectedBase E8 :=
   hasCartanType_of_pairing_eq e8SimpleIndex_injective rfl fun i j ↦
