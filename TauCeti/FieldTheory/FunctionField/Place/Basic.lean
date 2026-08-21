@@ -317,6 +317,12 @@ noncomputable def residueFieldEquivOfEq {P Q : Place k F} (h : P = Q) :
     P.ResidueField ≃ₐ[k] Q.ResidueField :=
   AlgEquiv.cast h
 
+/-- Transporting a residue field along reflexivity is the identity equivalence. -/
+@[simp]
+theorem residueFieldEquivOfEq_rfl :
+    residueFieldEquivOfEq (P := P) rfl = AlgEquiv.refl :=
+  (rfl)
+
 /-- Evaluation at a place vanishes exactly on elements of positive valuation. -/
 theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
     IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by

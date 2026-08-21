@@ -166,12 +166,26 @@ def integersAdicEquiv :
   AlgEquiv.ofRingEquiv (f := RingEquiv.subringCongr
     (congrArg ValuationSubring.toSubring (integers_adic k F p).symm)) fun _ => rfl
 
+/-- The equivalence from the localization at `p` to the integers of the adic place preserves
+the underlying element of `F`. -/
+@[simp]
+theorem integersAdicEquiv_apply (x : HeightOneSpectrum.valuationSubringAtPrime F p) :
+    ((integersAdicEquiv k F p x : (adic k F p).integers) : F) = x :=
+  (rfl)
+
 instance : IsLocalization.AtPrime ((adic k F p).integers) p.asIdeal :=
   IsLocalization.isLocalization_of_algEquiv p.asIdeal.primeCompl (integersAdicEquiv k F p)
 
 /-- Reduction at the place `adic k F p`, as a ring homomorphism from `R` to its residue field. -/
 def adicResidueHom : R →+* (adic k F p).ResidueField :=
   (IsLocalRing.residue _).comp (algebraMap R (adic k F p).integers)
+
+/-- Reduction at an adic place is the residue of the image in its valuation ring. -/
+@[simp]
+theorem adicResidueHom_apply (r : R) :
+    adicResidueHom k F p r =
+      IsLocalRing.residue (adic k F p).integers (algebraMap R (adic k F p).integers r) :=
+  (rfl)
 
 variable {k F p}
 
