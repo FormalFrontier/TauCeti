@@ -46,6 +46,7 @@ image of a subgroup of `SL(2, ℤ)` has determinant `1` throughout.
 
 * `TauCeti.ModularForm.orderOfVanishingOnSubgroupOrbit`: the order descended to the
   `Γ`-orbit space.
+* `TauCeti.ModularForm.orderOfVanishingOnSubgroupOrbit_nonneg`: that order is nonnegative.
 * `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnSubgroupOrbit`: finite support of
   the interior order divisor of a general-level modular form.
 * `TauCeti.ModularForm.orderOfVanishingAt_quotientFunc_eq_orderOfVanishingOnSubgroupOrbit`: a
@@ -95,6 +96,15 @@ public lemma orderOfVanishingOnSubgroupOrbit_mk
     orderOfVanishingOnSubgroupOrbit f (Quotient.mk'' p) = orderOfVanishingAt f p := by
   unfold orderOfVanishingOnSubgroupOrbit
   rfl
+
+/-- The vanishing order on an orbit is nonnegative: a modular form is holomorphic, so it has no
+poles. -/
+public lemma orderOfVanishingOnSubgroupOrbit_nonneg
+    [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F)
+    (q : MulAction.orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
+    0 ≤ orderOfVanishingOnSubgroupOrbit f q := by
+  induction q using Quotient.inductionOn' with
+  | _ p => simpa using orderOfVanishingAt_nonneg (ModularFormClass.holo f) p
 
 /-- **The coset factors of the norm see exactly the orbits of the translates of the point.**
 The factor indexed by `q` vanishes at `p` to the order `f` itself has on the orbit into which
