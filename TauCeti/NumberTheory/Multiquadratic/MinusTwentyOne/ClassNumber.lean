@@ -102,28 +102,6 @@ private theorem minkowski_bound_lt_six
       rw [div_lt_iff₀ Real.pi_pos]
       nlinarith [Real.pi_gt_d2]
 
-/-- In a quadratic number field, an ideal whose norm is the square of a ramified rational prime
-`p` is principal: it is the square of the unique prime `𝔭` above `p`, and `𝔭 ^ 2 = p 𝓞 K`. -/
-private theorem isPrincipal_of_absNorm_eq_sq_of_mem_ramifiedPrimes {p : ℕ}
-    (hfin : finrank ℚ K = 2) (hram : p ∈ ramifiedPrimes K) (I : Ideal (𝓞 K))
-    (hI : I.absNorm = p ^ 2) : Submodule.IsPrincipal I := by
-  have hp : p.Prime := prime_of_mem_ramifiedPrimes hram
-  have hpdvd : p ∣ I.absNorm := by rw [hI]; exact dvd_pow_self p two_ne_zero
-  obtain ⟨P, hPmax, hPunder, hPdvd⟩ := Ideal.exists_isMaximal_dvd_of_dvd_absNorm' hp I hpdvd
-  let _ : P.IsPrime := hPmax.isPrime
-  let _ : P.LiesOver (span {(p : ℤ)}) := ⟨hPunder.symm⟩
-  obtain ⟨J, hIJ⟩ := hPdvd
-  have hPnorm : P.absNorm = p := absNorm_eq_of_mem_ramifiedPrimes hfin hram P
-  have hJnorm : J.absNorm = p := by
-    have hnorm := congrArg Ideal.absNorm hIJ
-    rw [map_mul, hI, hPnorm, sq] at hnorm
-    exact (Nat.eq_of_mul_eq_mul_left hp.pos hnorm).symm
-  have hJP : J = P :=
-    eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P J hJnorm
-  rw [hIJ, hJP, ← pow_two, ← map_span_eq_sq_of_mem_ramifiedPrimes hfin hram P,
-    Ideal.map_span, Set.image_singleton]
-  exact ⟨algebraMap ℤ (𝓞 K) p, rfl⟩
-
 /-- **The Minkowski upper bound for `ℚ(√-21)`.** Every ideal class contains an integral ideal of
 norm at most `5`, and such an ideal is the unit ideal, the unique prime above the ramified prime
 `2` (also in the norm `4` case, where it is principal), the unique prime above the ramified prime
