@@ -124,6 +124,9 @@ to the source carrier. -/
 @[simp]
 theorem apply_mem_carrier_iff (e : Isometry L M) (x : V) :
     e x ∈ M.carrier ↔ x ∈ L.carrier := by
+  -- `map_carrier` is stated using the restricted ambient linear equivalence, while this goal is
+  -- displayed through the `Isometry` coercion. Expose that equivalence definitionally so the
+  -- standard membership theorem for mapped submodules can rewrite the goal.
   change e.ambientEquiv x ∈ M.carrier ↔ x ∈ L.carrier
   rw [← e.map_carrier, Submodule.mem_map_equiv]
   change e.ambientEquiv.symm (e.ambientEquiv x) ∈ L.carrier ↔ x ∈ L.carrier
