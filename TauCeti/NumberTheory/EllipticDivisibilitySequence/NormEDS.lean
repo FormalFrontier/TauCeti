@@ -60,6 +60,9 @@ distinction where the identity is proved.
   in normal form and `simpNF` fails the build.
 * `universalNormEDS_ne_zero`: the universal sequence vanishes only at `0`, which is what the
   previous item buys.
+* `complEDS₂_two_three_two`: the 2-complement of the identity sequence is the constant `2` —
+  `complEDS₂ (2 : R) 3 2 n = 2` over any commutative ring, transported from the `ℤ` case along
+  `Int.castRingHom` exactly as `normEDS_two_three_two_eq_intCast`.
 
 The first consumer this unlocks is `IsEllipticNet.invarNum_mul_invarDenom`, which callers can
 apply to `isEllipticNet_normEDS` directly; it is deliberately not restated here as a
@@ -119,6 +122,13 @@ is `Descent.lean`'s `IsEllipticNet.of_rel`, fed the two recurrences in relator f
 is six lines rather than a file. The universal transport is the source's argument, with
 `normEDS_eq_aeval` in place of its inline rewriting.
 
+`complEDS₂_two_three_two` adapts that same file's `compl₂EDS_two_three_two` (`:1243`, at the
+`main` revision named above), restated over an arbitrary commutative ring — the source states
+only the `ℤ` case — and rerouted: the `ℤ` proof reads the value off Mathlib's `complEDS₂_mul_b`
+at the identity sequence, with no case split, where the source cancels `n` off
+`normEDS_mul_complEDS₂` behind an `n = 0` split; the general form transports along
+`Int.castRingHom`, exactly as `normEDS_two_three_two_eq_intCast` above.
+
 `universalNormEDS_ne_zero` adapts the same file's `universalNormEDS_ne_zero` (`:1251`) at the
 roadmap's NagellLutz pin `dev/modular-curves @ 9fec8eba7652`. One departure: the source proves it
 by `simp only [universalNormEDS, …]`, unfolding the definition. That does not port —
@@ -177,6 +187,26 @@ theorem normEDS_two_three_two_eq_id : normEDS (2 : ℤ) 3 2 = id := by
   · simp
   · simp
   · simp
+
+/-- The 2-complement of the identity sequence on `ℤ` is the constant `2`. -/
+private theorem complEDS₂_two_three_two_int (n : ℤ) : complEDS₂ (2 : ℤ) 3 2 n = 2 := by
+  -- Read off `complEDS₂_mul_b`, whose right side is `4` once `normEDS 2 3 2 = id`.
+  have h := complEDS₂_mul_b (b := (2 : ℤ)) (c := 3) (d := 2) n
+  rw [normEDS_two_three_two_eq_id] at h
+  simp only [id_eq] at h
+  -- `omega` is linear, so the cubic right side must first collapse to the constant it equals.
+  have h4 : (n - 1) ^ 2 * (n + 2) - (n - 2) * (n + 1) ^ 2 = 4 := by ring
+  rw [h4] at h
+  omega
+
+/-- **The 2-complement of `normEDS 2 3 2` is the constant `2`, over any commutative ring**:
+the complement of `n` in `2n` for the integer-cast sequence. -/
+@[simp]
+theorem complEDS₂_two_three_two (R : Type*) [CommRing R] (n : ℤ) :
+    complEDS₂ (2 : R) 3 2 n = 2 := by
+  have h := map_complEDS₂ (f := Int.castRingHom R) (b := (2 : ℤ)) (c := 3) (d := 2) n
+  rw [complEDS₂_two_three_two_int] at h
+  simpa using h.symm
 
 /-- **`normEDS 2 3 2` is the integer cast, over any commutative ring.** The identity on `ℤ`
 transported along the unique ring map out of it. -/
