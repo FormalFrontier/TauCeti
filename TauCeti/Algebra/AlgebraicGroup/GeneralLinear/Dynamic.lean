@@ -30,12 +30,12 @@ commutative base ring and every commutative value algebra, including rings with 
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.dynamicCocharacter`: the coordinate bialgebra morphism of
+* `TauCeti.GeneralLinear.Dynamic.dynamicCocharacter`: the coordinate bialgebra morphism of
   `t ↦ diag(t, 1)`.
-* `TauCeti.GeneralLinear.mem_dynamicParabolic_iff`: its dynamic parabolic consists exactly of
-  upper-triangular invertible matrices.
-* `TauCeti.GeneralLinear.pointsMulEquiv_limit_dynamicCocharacter`: its dynamic limit is the
-  diagonal part of an upper-triangular matrix.
+* `TauCeti.GeneralLinear.Dynamic.mem_dynamicParabolic_iff`: its dynamic parabolic consists
+  exactly of upper-triangular invertible matrices.
+* `TauCeti.GeneralLinear.Dynamic.pointsMulEquiv_limit_dynamicCocharacter`: its dynamic limit is
+  the diagonal part of an upper-triangular matrix.
 
 ## References
 
@@ -50,18 +50,12 @@ public section
 
 open CategoryTheory WithConv
 
-namespace TauCeti.GeneralLinear
+namespace TauCeti.GeneralLinear.Dynamic
 
 universe u v w
 
-variable {R : Type u} [CommRing R]
-
-section Points
-
-variable {A : Type v} [CommRing A] [Algebra R A]
-
 /-- The diagonal unit family `(t, 1)` used by the standard dynamic cocharacter of `GL₂`. -/
-def dynamicDiagonalUnits : Aˣ →* (Fin 2 → Aˣ) where
+def dynamicDiagonalUnits {A : Type v} [Monoid A] : Aˣ →* (Fin 2 → Aˣ) where
   toFun t i := if i = 0 then t else 1
   map_one' := by
     funext i
@@ -69,6 +63,12 @@ def dynamicDiagonalUnits : Aˣ →* (Fin 2 → Aˣ) where
   map_mul' t s := by
     funext i
     by_cases hi : i = 0 <;> simp [hi]
+
+variable {R : Type u} [CommRing R]
+
+section Points
+
+variable {A : Type v} [CommRing A] [Algebra R A]
 
 /-- The standard dynamic cocharacter `t ↦ diag(t, 1)` on algebra-valued points. -/
 noncomputable def dynamicCocharacterPoints :
@@ -104,14 +104,14 @@ private noncomputable def rankOneCharacterBialgEquiv :
     (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
 
 /-- The coordinate Hopf-algebra morphism of the cocharacter `t ↦ diag(t, 1)`. -/
-noncomputable def dynamicCocharacterCoordinateMap :
+private noncomputable def dynamicCocharacterCoordinateMap :
     coordinateHopfAlgebra R 2 ⟶ _root_.CommHopfAlgCat.of R (LaurentPolynomial R) :=
   weightTorusCoordinateMap (R := R) dynamicWeights ≫
     _root_.CommHopfAlgCat.ofHom (rankOneCharacterBialgEquiv (R := R)).toBialgHom
 
 /-- On every value algebra, the coordinate cocharacter induces `t ↦ diag(t, 1)` on points. -/
 @[simp]
-theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
+private theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
     (A : CommAlgCat.{v} R) (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
     (CommHopfAlgCat.mapPointsFunctor
       (dynamicCocharacterCoordinateMap (R := R))).app A f =
@@ -123,6 +123,7 @@ theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
         (rankOneCharacterBialgEquiv (R := R)).toBialgHom)).app A f
   rw [dynamicCocharacterCoordinateMap,
     CommHopfAlgCat.mapPointsFunctor_comp_app_apply]
+  -- No rewrite lemma names the let-bound intermediate point left by the composition lemma.
   change (CommHopfAlgCat.mapPointsFunctor
     (weightTorusCoordinateMap (R := R) dynamicWeights)).app A q = _
   rw [mapPointsFunctor_weightTorusCoordinateMap_app]
@@ -137,6 +138,7 @@ theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
     congr 1
     rw [rankOneCharacterBialgEquiv]
     simp only [CommHopfAlgCat.hom_ofHom]
+    -- No application lemma exposes this composite bialgebra equivalence under `ofHom`.
     change (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
         ((MonoidAlgebra.domCongrBialgEquiv R R
           (AddEquiv.toMultiplicative
@@ -146,6 +148,7 @@ theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
       LaurentPolynomial.T 1
     apply (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm_apply_eq.mpr
     apply MonoidAlgebra.coeffEquiv.injective
+    -- `coeffEquiv.injective` leaves its coercions reducible but has no wrapper rewrite lemma.
     change ((MonoidAlgebra.domCongrBialgEquiv R R
         (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ()))))
           (MonoidAlgebra.single
@@ -158,6 +161,7 @@ theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
       AddMonoidAlgebra.coeff_single, Finsupp.mapDomain_single]
     apply congrArg (fun x => Finsupp.single x (1 : R))
     apply congrArg (fun z : ℤ => Multiplicative.ofAdd z)
+    -- No rewrite lemma removes the remaining coercion of the unique-coordinate equivalence.
     change (Finsupp.uniqueAddEquiv (ULift.up ()))
       (Finsupp.single (ULift.up ()) 1) = 1
     rw [Finsupp.uniqueAddEquiv_apply, Finsupp.single_eq_same]
@@ -187,6 +191,7 @@ theorem pointsHom_dynamicCocharacter (t : Aˣ) :
       dynamicCocharacterPoints
         ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) := by
   rw [Cocharacter.pointsHom_apply]
+  -- The private coordinate map has no public rewrite lemma, so unfold the cocharacter locally.
   change (CommHopfAlgCat.mapPointsFunctor
       (dynamicCocharacterCoordinateMap (R := R))).app (CommAlgCat.of R A)
         ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) = _
@@ -462,4 +467,4 @@ theorem dynamicParabolic_eq_borelComap :
 
 end Dynamic
 
-end TauCeti.GeneralLinear
+end TauCeti.GeneralLinear.Dynamic
