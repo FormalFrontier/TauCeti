@@ -78,6 +78,7 @@ private theorem not_integrableOn_exp_mul_Ioi {a c : ℝ} (ha : 0 ≤ a) :
 
 /-- **The exact integrability rate.**  `fun x => exp (a * x)` is integrable on `(c, ∞)` precisely
 when the rate is negative.  Mathlib's `integrableOn_exp_mul_Ioi` is the `←` direction. -/
+@[simp]
 theorem integrableOn_exp_mul_Ioi_iff {a c : ℝ} :
     IntegrableOn (fun x : ℝ => Real.exp (a * x)) (Set.Ioi c) ↔ a < 0 := by
   refine ⟨fun h => ?_, fun ha => integrableOn_exp_mul_Ioi ha c⟩
