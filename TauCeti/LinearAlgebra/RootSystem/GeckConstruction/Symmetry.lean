@@ -14,7 +14,7 @@ public import TauCeti.LinearAlgebra.RootSystem.EquivInvariance
 # Symmetries of Geck's construction
 
 Geck's construction attaches to a root pairing `P` with base `b` an explicit Lie subalgebra of the
-matrices indexed by `b.support ⊕ ι`, spanned by the brackets of the numbered matrices
+matrices indexed by `b.support ⊕ ι`, generated as a Lie subalgebra by the numbered matrices
 `RootPairing.GeckConstruction.h i`, `RootPairing.GeckConstruction.e i` and
 `RootPairing.GeckConstruction.f i`. Every entry of those matrices is a Cartan integer, a root-string
 coefficient, or the truth value of an additive relation between roots: *no sign is chosen*, unlike
@@ -30,11 +30,10 @@ other, moving the number along:
 h i ↦ h (τ i),   e i ↦ e (τ i),   f i ↦ f (τ i).
 ```
 
-So reindexing restricts to an equivalence of the two Geck Lie algebras, and for an automorphism it
-gives `TauCeti.geckLieAut`. On the defining modules it is a permutation of coordinates,
-`TauCeti.geckModuleEquiv`. Such a coordinate permutation preserves the standard coordinate lattice
-and is intended as input to a later Chevalley--Demazure descent; unlike an automorphism moving root
-vectors by signs, it needs no further renormalisation first.
+So reindexing restricts to an equivalence of the two Geck Lie algebras. On the defining modules it
+is a permutation of coordinates, `TauCeti.geckModuleEquiv`, intended as input to a later
+Chevalley--Demazure descent; unlike an automorphism moving root vectors by signs, it needs no
+further renormalisation first.
 
 Nothing here uses `RootPairing.Base.equivOfCartanMatrixEq` or any other rigidity statement. The
 equivalence `g` is data supplied by the caller, and the hypothesis `hτ` says only that its index
@@ -45,11 +44,10 @@ then `TauCeti.equivOfCartanMatrixEq_indexEquiv_apply` read in the other directio
 
 ## Main definitions
 
-* `TauCeti.geckIndexEquiv`: the equivalence of matrix index types induced by a base-preserving
-  equivalence of root pairings.
+* `TauCeti.geckIndexEquiv`: the sum of an equivalence of base supports and the index equivalence of
+  root pairings.
 * `TauCeti.geckModuleEquiv`: the resulting coordinate permutation of the defining module.
 * `TauCeti.geckLieEquiv`: the resulting equivalence of Geck's Lie algebras.
-* `TauCeti.geckLieAut`: its specialization to an automorphism of one Geck Lie algebra.
 
 ## Main results
 
@@ -65,13 +63,12 @@ then `TauCeti.equivOfCartanMatrixEq_indexEquiv_apply` read in the other directio
 
 This advances Layer 9, "pinned Chevalley--Demazure group schemes over `ℤ`", of
 `TauCetiRoadmap/ReductiveGroups/README.md`, whose "Pinnings" bullet asks for the graph automorphism
-attached to a pinning as named data. Its consumer is milestone L1, "ordinary and graph-twisted
-Steinberg maps", of `TauCetiRoadmap/CFSGStatement/README.md`, through
-`TauCeti.GraphTwistedIndex.graphAut`: the pair of a permutation of the numbered raising generators
-and a linear automorphism of the representation intertwining them is exactly the input of
-`TauCeti.UniversalEnvelopingAlgebra.kostantElementaryNumberedSymmetryAut`, and
-`TauCeti.geckModuleEquiv` together with `TauCeti.geckModuleEquiv_mulVec_e` supplies it for Geck's
-representation.
+attached to a pinning as named data. The planned consumer is milestone L1, "ordinary and
+graph-twisted Steinberg maps", of `TauCetiRoadmap/CFSGStatement/README.md`, through the planned
+`TauCeti.GraphTwistedIndex.graphAut`. This file supplies the coordinate permutation and its matrix
+intertwining relation; a caller must still transport that relation to Geck's representation and
+prove preservation of its integral lattice before applying
+`TauCeti.UniversalEnvelopingAlgebra.kostantElementaryNumberedSymmetryAut`.
 
 ## References
 
@@ -98,11 +95,12 @@ variable {ι ι₂ R M N M₂ N₂ : Type*} [Finite ι] [Finite ι₂]
   [P.IsCrystallographic] [P₂.IsCrystallographic] {b : P.Base} {b₂ : P₂.Base}
   (g : P.Equiv P₂) (τ : b.support ≃ b₂.support)
 
-/-- The equivalence of the index types of Geck's matrices attached to an equivalence `g` of root
-pairings whose index bijection restricts to `τ` on the bases.
+/-- The equivalence of the index types of Geck's matrices formed from an equivalence `τ` of base
+supports and the index equivalence of a root-pairing equivalence `g`.
 
 The `b.support` summand indexes the Cartan coordinates and the `ι` summand indexes the root
-coordinates, so the permutation is `τ` on the first and `g.indexEquiv` on the second. -/
+coordinates, so the permutation is `τ` on the first and `g.indexEquiv` on the second. The numbered
+matrix lemmas separately assume that these agree on the base. -/
 def geckIndexEquiv : (b.support ⊕ ι) ≃ (b₂.support ⊕ ι₂) :=
   Equiv.sumCongr τ g.indexEquiv
 
@@ -120,10 +118,24 @@ theorem geckIndexEquiv_inr (i : ι) :
     geckIndexEquiv g τ (Sum.inr i) = Sum.inr (g.indexEquiv i) := by
   simp [geckIndexEquiv]
 
+omit [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R] [P.IsCrystallographic]
+  [P₂.IsCrystallographic] in
+@[simp]
+theorem geckIndexEquiv_symm_inl (i : b₂.support) :
+    (geckIndexEquiv g τ).symm (Sum.inl i) = Sum.inl (τ.symm i) := by
+  simp [geckIndexEquiv]
+
+omit [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R] [P.IsCrystallographic]
+  [P₂.IsCrystallographic] in
+@[simp]
+theorem geckIndexEquiv_symm_inr (i : ι₂) :
+    (geckIndexEquiv g τ).symm (Sum.inr i) = Sum.inr (g.indexEquiv.symm i) := by
+  simp [geckIndexEquiv]
+
 /-! ## The coordinate permutation of the defining module -/
 
-/-- The coordinate equivalence of the defining modules of Geck's construction induced by a
-base-preserving equivalence of root pairings. -/
+/-- The coordinate equivalence of the defining modules induced by `geckIndexEquiv`. The numbered
+matrix lemmas separately assume that the two component equivalences agree on the base. -/
 def geckModuleEquiv : ((b.support ⊕ ι) → R) ≃ₗ[R] ((b₂.support ⊕ ι₂) → R) :=
   LinearEquiv.funCongrLeft R R (geckIndexEquiv g τ).symm
 
@@ -132,7 +144,15 @@ omit [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R] [P.IsCrystallographic]
 @[simp]
 theorem geckModuleEquiv_apply (v : (b.support ⊕ ι) → R) (x : b₂.support ⊕ ι₂) :
     geckModuleEquiv g τ v x = v ((geckIndexEquiv g τ).symm x) := by
-  simp [geckModuleEquiv, LinearEquiv.funCongrLeft, LinearMap.funLeft]
+  simp [geckModuleEquiv, LinearEquiv.funCongrLeft_apply, LinearMap.funLeft_apply]
+
+omit [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R] [P.IsCrystallographic]
+  [P₂.IsCrystallographic] in
+@[simp]
+theorem geckModuleEquiv_symm_apply (v : (b₂.support ⊕ ι₂) → R) (x : b.support ⊕ ι) :
+    (geckModuleEquiv g τ).symm v x = v (geckIndexEquiv g τ x) := by
+  simp [geckModuleEquiv, LinearEquiv.funCongrLeft_symm, LinearEquiv.funCongrLeft_apply,
+    LinearMap.funLeft_apply]
 
 section
 
@@ -147,13 +167,26 @@ theorem geckModuleEquiv_mulVec (A : Matrix (b.support ⊕ ι) (b.support ⊕ ι)
     (v : (b.support ⊕ ι) → R) :
     geckModuleEquiv g τ (A *ᵥ v) =
       reindexAlgEquiv R R (geckIndexEquiv g τ) A *ᵥ geckModuleEquiv g τ v := by
-  rw [coe_reindexAlgEquiv, reindex_apply,
-    submatrix_mulVec_equiv A (geckModuleEquiv g τ v) (geckIndexEquiv g τ).symm
-      (geckIndexEquiv g τ).symm]
-  ext x
-  simp [Function.comp_def]
+  let e := geckIndexEquiv g τ
+  change LinearEquiv.funCongrLeft R R e.symm (A *ᵥ v) =
+    reindex e e A *ᵥ LinearEquiv.funCongrLeft R R e.symm v
+  have hinv : LinearEquiv.funCongrLeft R R e
+      (LinearEquiv.funCongrLeft R R e.symm v) = v := by
+    rw [← LinearEquiv.funCongrLeft_symm]
+    exact (LinearEquiv.funCongrLeft R R e.symm).symm_apply_apply v
+  simpa only [LinearMap.comp_apply, Matrix.mulVecLin_apply, LinearEquiv.coe_coe, hinv] using
+    (LinearMap.congr_fun
+      (Matrix.mulVecLin_reindex e e A) (LinearEquiv.funCongrLeft R R e.symm v)).symm
 
 end
+
+omit [CharZero R] [IsDomain R] in
+private theorem reindexAlgEquiv_eq_of_submatrix
+    {κ κ₂ : Type*} [DecidableEq κ] [Fintype κ] [DecidableEq κ₂] [Fintype κ₂]
+    (e : κ ≃ κ₂) {A : Matrix κ κ R} {B : Matrix κ₂ κ₂ R}
+    (h : B.submatrix e e = A) : reindexAlgEquiv R R e A = B := by
+  rw [coe_reindexAlgEquiv, ← h, reindex_apply, submatrix_submatrix]
+  simp
 
 section Numbered
 
@@ -189,7 +222,8 @@ theorem submatrix_geckIndexEquiv_e (i : b.support) :
   rcases x with x | x <;> rcases y with y | y <;>
     simp only [submatrix_apply, geckIndexEquiv_inl, geckIndexEquiv_inr, GeckConstruction.e,
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
-      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g, indexNeg_neg, Equiv.apply_eq_iff_eq,
+      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g.toHom, indexNeg_neg,
+      Equiv.apply_eq_iff_eq,
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_add_iff,
       chainBotCoeff_indexEquiv]
 
@@ -205,7 +239,8 @@ theorem submatrix_geckIndexEquiv_f (i : b.support) :
   rcases x with x | x <;> rcases y with y | y <;>
     simp only [submatrix_apply, geckIndexEquiv_inl, geckIndexEquiv_inr, GeckConstruction.f,
       fromBlocks_apply₁₁, fromBlocks_apply₁₂, fromBlocks_apply₂₁, fromBlocks_apply₂₂,
-      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g, indexNeg_neg, Equiv.apply_eq_iff_eq,
+      Matrix.zero_apply, of_apply, hτ, ← indexEquiv_neg g.toHom, indexNeg_neg,
+      Equiv.apply_eq_iff_eq,
       Base.cartanMatrixIn_def, pairingIn_indexEquiv, root_indexEquiv_sub_iff,
       chainTopCoeff_indexEquiv]
 
@@ -214,35 +249,29 @@ section
 variable [DecidableEq ι] [Fintype ι] [DecidableEq ι₂] [Fintype ι₂]
 
 omit [Finite ι] [Finite ι₂] [IsDomain R] in
-/-- Conjugation by the index permutation carries the Cartan matrix numbered by `i` to the one
+/-- Conjugation by the index permutation carries the Cartan generator `h i` to the one
 numbered by `τ i`. -/
 @[simp]
 theorem reindex_geckIndexEquiv_h (i : b.support) :
     reindexAlgEquiv R R (geckIndexEquiv g τ) (GeckConstruction.h (b := b) (R := R) i) =
-      GeckConstruction.h (b := b₂) (τ i) := by
-  rw [coe_reindexAlgEquiv, ← submatrix_geckIndexEquiv_h g τ hτ i, reindex_apply,
-    submatrix_submatrix]
-  simp
+      GeckConstruction.h (b := b₂) (τ i) :=
+  reindexAlgEquiv_eq_of_submatrix (geckIndexEquiv g τ) (submatrix_geckIndexEquiv_h g τ hτ i)
 
 /-- Conjugation by the index permutation carries the raising matrix numbered by `i` to the one
 numbered by `τ i`. -/
 @[simp]
 theorem reindex_geckIndexEquiv_e (i : b.support) :
     reindexAlgEquiv R R (geckIndexEquiv g τ) (GeckConstruction.e (b := b) (R := R) i) =
-      GeckConstruction.e (b := b₂) (τ i) := by
-  rw [coe_reindexAlgEquiv, ← submatrix_geckIndexEquiv_e g τ hτ i, reindex_apply,
-    submatrix_submatrix]
-  simp
+      GeckConstruction.e (b := b₂) (τ i) :=
+  reindexAlgEquiv_eq_of_submatrix (geckIndexEquiv g τ) (submatrix_geckIndexEquiv_e g τ hτ i)
 
 /-- Conjugation by the index permutation carries the lowering matrix numbered by `i` to the one
 numbered by `τ i`. -/
 @[simp]
 theorem reindex_geckIndexEquiv_f (i : b.support) :
     reindexAlgEquiv R R (geckIndexEquiv g τ) (GeckConstruction.f (b := b) (R := R) i) =
-      GeckConstruction.f (b := b₂) (τ i) := by
-  rw [coe_reindexAlgEquiv, ← submatrix_geckIndexEquiv_f g τ hτ i, reindex_apply,
-    submatrix_submatrix]
-  simp
+      GeckConstruction.f (b := b₂) (τ i) :=
+  reindexAlgEquiv_eq_of_submatrix (geckIndexEquiv g τ) (submatrix_geckIndexEquiv_f g τ hτ i)
 
 /-! ## The equivalence of Geck's Lie algebras -/
 
@@ -286,7 +315,7 @@ section
 variable [Fintype ι] [Fintype ι₂]
 
 omit [Finite ι] [Finite ι₂] [IsDomain R] in
-/-- The coordinate permutation carries the action of the Cartan matrix numbered by `i` to the
+/-- The coordinate permutation carries the action of the Cartan generator `h i` to the
 action of the one numbered by `τ i`. -/
 @[simp]
 theorem geckModuleEquiv_mulVec_h (i : b.support) (v : (b.support ⊕ ι) → R) :
@@ -317,26 +346,5 @@ theorem geckModuleEquiv_mulVec_f (i : b.support) (v : (b.support ⊕ ι) → R) 
 end
 
 end Numbered
-
-section Automorphism
-
-variable {P : RootPairing ι R M N} [P.IsCrystallographic] {b : P.Base}
-  (g : P.Equiv P) (τ : b.support ≃ b.support)
-  (hτ : ∀ i : b.support, (τ i : ι) = g.indexEquiv i)
-  [DecidableEq ι] [Fintype ι]
-
-/-- The automorphism of Geck's Lie algebra induced by a base-preserving automorphism of the root
-pairing. -/
-noncomputable def geckLieAut :
-    GeckConstruction.lieAlgebra b ≃ₗ⁅R⁆ GeckConstruction.lieAlgebra b :=
-  geckLieEquiv g τ hτ
-
-@[simp]
-theorem geckLieAut_apply (x : GeckConstruction.lieAlgebra b) :
-    (geckLieAut g τ hτ x : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) =
-      reindexAlgEquiv R R (geckIndexEquiv g τ) x :=
-  geckLieEquiv_apply g τ hτ x
-
-end Automorphism
 
 end TauCeti

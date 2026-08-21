@@ -68,23 +68,24 @@ theorem mem_range_root_weightMap_iff {m : M} :
   · rw [Hom.root_weightMap_apply, Equiv.apply_symm_apply, hl]
   · rw [← hi, Hom.root_weightMap_apply]
 
-/-- The index bijection of an equivalence of root pairings preserves the integral Cartan
+/-- The index bijection of a homomorphism of root pairings preserves the integral Cartan
 pairing. -/
 @[simp]
 theorem pairingIn_indexEquiv [FaithfulSMul ℤ R] [P.IsCrystallographic] [P₂.IsCrystallographic]
-    (i j : ι) : P₂.pairingIn ℤ (g.indexEquiv i) (g.indexEquiv j) = P.pairingIn ℤ i j := by
+    (f : P.Hom P₂) (i j : ι) :
+    P₂.pairingIn ℤ (f.indexEquiv i) (f.indexEquiv j) = P.pairingIn ℤ i j := by
   refine FaithfulSMul.algebraMap_injective ℤ R ?_
-  rw [algebraMap_pairingIn, algebraMap_pairingIn, g.toHom.pairing]
+  rw [algebraMap_pairingIn, algebraMap_pairingIn, f.pairing]
 
-/-- The index bijection of an equivalence of root pairings commutes with the negation of indices,
+/-- The index bijection of a homomorphism of root pairings commutes with the negation of indices,
 because its weight map is linear. -/
 @[simp]
-theorem indexEquiv_neg (i : ι) :
+theorem indexEquiv_neg (f : P.Hom P₂) (i : ι) :
     letI := P.indexNeg
     letI := P₂.indexNeg
-    g.indexEquiv ((P.reflectionPerm i) i) = -g.indexEquiv i := by
+    f.indexEquiv ((P.reflectionPerm i) i) = -f.indexEquiv i := by
   refine P₂.root.injective ?_
-  rw [indexNeg_neg, ← Hom.root_weightMap_apply P P₂ _ g.toHom,
+  rw [indexNeg_neg, ← Hom.root_weightMap_apply P P₂ _ f,
     root_reflectionPerm, root_reflectionPerm, reflection_apply_self, reflection_apply_self,
     map_neg, Hom.root_weightMap_apply]
 
@@ -101,7 +102,7 @@ theorem root_indexEquiv_add_iff (k i j : ι) :
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β - γ` between roots. -/
 @[simp]
-theorem root_indexEquiv_sub_iff (k i j : ι) :
+theorem root_indexEquiv_sub_iff (k j i : ι) :
     P₂.root (g.indexEquiv k) = P₂.root (g.indexEquiv j) - P₂.root (g.indexEquiv i) ↔
       P.root k = P.root j - P.root i := by
   rw [← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply,
@@ -119,8 +120,8 @@ theorem linearIndependent_root_indexEquiv_iff (i j : ι) :
     ext k
     fin_cases k <;> simp [Hom.root_weightMap_apply]
   rw [key]
-  exact ⟨fun h => h.of_comp _, fun h => h.map' _
-    (LinearMap.ker_eq_bot_of_injective g.bijective_weightMap.injective)⟩
+  exact g.toHom.weightMap.linearIndependent_iff
+    (LinearMap.ker_eq_bot_of_injective g.bijective_weightMap.injective)
 
 section Chain
 
@@ -151,19 +152,10 @@ subtract `α` from `β` and stay among the roots. -/
 @[simp]
 theorem chainBotCoeff_indexEquiv (i j : ι) :
     P₂.chainBotCoeff (g.indexEquiv i) (g.indexEquiv j) = P.chainBotCoeff i j := by
-  by_cases h : LinearIndependent R ![P.root i, P.root j]
-  · have h' := (linearIndependent_root_indexEquiv_iff g i j).mpr h
-    have key : ∀ n : ℕ, P₂.root (g.indexEquiv j) - n • P₂.root (g.indexEquiv i) ∈ range P₂.root ↔
-        P.root j - n • P.root i ∈ range P.root := fun n => by
-      rw [← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply, ← map_nsmul, ← map_sub]
-      exact mem_range_root_weightMap_iff g
-    refine le_antisymm ?_ ?_
-    · rw [← P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h, ← key]
-      exact (P₂.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h').mpr le_rfl
-    · rw [← P₂.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h', key]
-      exact (P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h).mpr le_rfl
-  · rw [chainBotCoeff_of_not_linearIndependent h, chainBotCoeff_of_not_linearIndependent
-      fun hc => h ((linearIndependent_root_indexEquiv_iff g i j).mp hc)]
+  let := P.indexNeg
+  let := P₂.indexNeg
+  rw [← P₂.chainTopCoeff_reflectionPerm_left, ← P.chainTopCoeff_reflectionPerm_left,
+    ← indexNeg_neg, ← indexEquiv_neg g.toHom, chainTopCoeff_indexEquiv]
 
 end Chain
 
