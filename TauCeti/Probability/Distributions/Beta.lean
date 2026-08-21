@@ -85,6 +85,7 @@ theorem ae_mem_Icc_betaMeasure (α β : ℝ) :
     exact hx (betaPDF_eq_zero_of_one_le (le_of_not_ge h))
 
 /-- The `n`th raw moment of a beta distribution with positive shape parameters. -/
+@[simp]
 theorem integral_pow_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (n : ℕ) :
     ∫ x, x ^ n ∂betaMeasure α β =
       Real.Gamma (α + n) * Real.Gamma (α + β) /
@@ -128,17 +129,28 @@ theorem integral_pow_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (n 
     · exact (hx h).elim
     · simp
 
+/-- `Real.Gamma` two steps up: `Γ (x + 2) = (x + 1) * x * Γ x`. The second raw moment of a beta
+law evaluates `Real.Gamma` at `α + 2` and at `α + β + 2`, and this is the shape in which those two
+values are compared with `Real.Gamma α` and `Real.Gamma (α + β)`. -/
+private lemma Gamma_add_two {x : ℝ} (hx : 0 < x) :
+    Real.Gamma (x + 2) = (x + 1) * x * Real.Gamma x := by
+  have hx2 : x + 2 = x + 1 + 1 := by ring
+  rw [hx2, Real.Gamma_add_one (by linarith : (0 : ℝ) < x + 1).ne',
+    Real.Gamma_add_one hx.ne']
+  ring
+
 /-- The mean of a beta distribution with positive shape parameters. -/
+@[simp]
 theorem integral_id_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) :
     ∫ x, x ∂betaMeasure α β = α / (α + β) := by
-  rw [show (fun x : ℝ ↦ x) = fun x ↦ x ^ (1 : ℕ) by funext x; simp,
-    integral_pow_betaMeasure hα hβ]
-  norm_num only [Nat.cast_one]
-  rw [Real.Gamma_add_one hα.ne', Real.Gamma_add_one (add_pos hα hβ).ne']
+  have hmoment := integral_pow_betaMeasure hα hβ 1
+  simp only [pow_one, Nat.cast_one] at hmoment
+  rw [hmoment, Real.Gamma_add_one hα.ne', Real.Gamma_add_one (add_pos hα hβ).ne']
   field_simp [ne_of_gt (Real.Gamma_pos_of_pos hα),
     ne_of_gt (Real.Gamma_pos_of_pos (add_pos hα hβ)), ne_of_gt (add_pos hα hβ)]
 
 /-- The variance of a beta distribution with positive shape parameters. -/
+@[simp]
 theorem variance_id_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) :
     variance id (betaMeasure α β) =
       α * β / ((α + β) ^ 2 * (α + β + 1)) := by
@@ -149,12 +161,7 @@ theorem variance_id_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) :
   simp only [Pi.pow_apply, id_eq, integral_pow_betaMeasure hα hβ 2,
     integral_id_betaMeasure hα hβ]
   norm_num only [Nat.cast_ofNat]
-  rw [show α + (2 : ℝ) = (α + 1) + 1 by ring_nf,
-    Real.Gamma_add_one (add_pos hα zero_lt_one).ne',
-    Real.Gamma_add_one hα.ne',
-    show α + β + (2 : ℝ) = (α + β + 1) + 1 by ring_nf,
-    Real.Gamma_add_one (add_pos (add_pos hα hβ) zero_lt_one).ne',
-    Real.Gamma_add_one (add_pos hα hβ).ne']
+  rw [Gamma_add_two hα, Gamma_add_two (add_pos hα hβ)]
   field_simp [ne_of_gt (Real.Gamma_pos_of_pos hα),
     ne_of_gt (Real.Gamma_pos_of_pos (add_pos hα hβ)),
     ne_of_gt (add_pos hα hβ)]
@@ -169,19 +176,5 @@ theorem integrableExpSet_id_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < 
   simp only [Set.mem_univ, iff_true, integrableExpSet, Set.mem_ofPred_eq, id_eq]
   exact integrable_exp_mul_of_mem_Icc measurable_id.aemeasurable
     (ae_mem_Icc_betaMeasure α β)
-
-/-- The expectation of a random variable with a beta law. -/
-theorem integral_of_hasLaw_betaMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
-    {X : Ω → ℝ} {α β : ℝ} (hX : HasLaw X (betaMeasure α β) P)
-    (hα : 0 < α) (hβ : 0 < β) :
-    ∫ ω, X ω ∂P = α / (α + β) := by
-  rw [hX.integral_eq, integral_id_betaMeasure hα hβ]
-
-/-- The variance of a random variable with a beta law. -/
-theorem variance_of_hasLaw_betaMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
-    {X : Ω → ℝ} {α β : ℝ} (hX : HasLaw X (betaMeasure α β) P)
-    (hα : 0 < α) (hβ : 0 < β) :
-    variance X P = α * β / ((α + β) ^ 2 * (α + β + 1)) := by
-  rw [hX.variance_eq, variance_id_betaMeasure hα hβ]
 
 end TauCeti
