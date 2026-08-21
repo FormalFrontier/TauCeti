@@ -271,8 +271,7 @@ theorem finiteLevelTransition_naturality (f : A ⟶ B) (hVU : V ≤ U) (n : ℕ)
   -- The two compatible pairs have the same group half, and the same coefficient half by the
   -- square above.
   exact groupCohomology.map_congr
-    (show (finiteQuotientMap hVU).comp (MonoidHom.id (G ⧸ V)) =
-      (MonoidHom.id (G ⧸ U)).comp (finiteQuotientMap hVU) by simp)
+    (((finiteQuotientMap hVU).comp_id).trans ((finiteQuotientMap hVU).id_comp).symm)
     (transitionPair_naturality f hVU) n
 
 end Coefficients
