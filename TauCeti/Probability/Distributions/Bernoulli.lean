@@ -8,7 +8,6 @@ module
 public import Mathlib.Probability.Distributions.Bernoulli
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Moments.Basic
-public import Mathlib.Probability.Moments.Variance
 public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 
 /-!
@@ -78,12 +77,7 @@ theorem mgf_id_bernoulliMeasure (p : I) (t : ℝ) :
 /-- The moment-generating function of a real-valued Bernoulli law is strictly positive. -/
 theorem mgf_id_bernoulliMeasure_pos (p : I) (t : ℝ) :
     0 < mgf id Ber((1 : ℝ), 0, p) t := by
-  rw [mgf_id_bernoulliMeasure]
-  by_cases hp : (p : ℝ) = 1
-  · simpa [hp] using Real.exp_pos t
-  · have hp' : (p : ℝ) < 1 := lt_of_le_of_ne p.2.2 hp
-    exact add_pos_of_pos_of_nonneg (sub_pos.mpr hp')
-      (mul_nonneg p.2.1 (Real.exp_pos t).le)
+  exact mgf_pos (integrable_bernoulliMeasure (1 : ℝ) 0 p fun x => Real.exp (t * id x))
 
 /-- The cumulant-generating function of the real-valued Bernoulli law. -/
 theorem cgf_id_bernoulliMeasure (p : I) (t : ℝ) :
