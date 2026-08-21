@@ -15,6 +15,11 @@ residue `j : ZMod n` satisfies `n ∣ a - j.val * b` over `ℤ`. The solution is
 is returned as a residue class together with its canonical representative `j.val`, which is the
 form a coset representative indexed by `Fin n` needs.
 
+Extracted from `TauCeti/NumberTheory/ModularForms/CongruenceSubgroups.lean`, where it was private;
+that index calculation was ported from the AINTLIB `LeanModularForms` project
+(`LeanModularForms/HeckeRIngs/GL2/CongruenceIndex.lean`, Chris Birkbeck, Apache-2.0). The lemma is
+consumed there and in `HeckeRing/GL2/Gamma1/CoprimeCosets.lean`.
+
 ## Main results
 
 * `ZMod.exists_dvd_sub_val_mul`: the congruence `j b ≡ a (mod n)` has a solution `j : ZMod n`

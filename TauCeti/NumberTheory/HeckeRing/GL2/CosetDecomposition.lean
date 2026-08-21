@@ -83,9 +83,7 @@ public section
 
 namespace HeckeRing.GL2
 
-open HeckeRing.GLn Matrix.SpecialLinearGroup
-
-open scoped MatrixGroups
+open HeckeRing.GLn
 
 variable (p : ℕ)
 

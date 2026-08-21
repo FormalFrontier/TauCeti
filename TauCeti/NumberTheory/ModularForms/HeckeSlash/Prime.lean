@@ -29,18 +29,15 @@ ModularForms roadmap asks for: `Tₚ` is one operator, defined for every `p`, wi
 recovered as the `p ∣ N` case and not introduced separately.
 
 ⚠ The twist is essential. Over `Γ₁(N)` the untwisted `f ∣[k] !![p, 0; 0, 1]` is *not* a term
-of the coset sum; only after applying `⟨p⟩` does the
-matrix `σ · diag(p, 1)` represent the missing right coset. On a form of nebentypus `χ` the
-diamond acts by the scalar `χ(p)`, which is where the classical factor `χ(p)` in
+of the coset sum. The matrix `σ · diag(p, 1)` is the missing right-coset representative, and
+`f ∣[k] (σ · diag(p, 1)) = (⟨p⟩ f) ∣[k] diag(p, 1)`. On a form of nebentypus `χ` the diamond
+acts by the scalar `χ(p)`, which is where the classical factor `χ(p)` in
 `aₘ(Tₚ f) = a_{m p}(f) + χ(p) p^{k−1} a_{m/p}(f)` comes from
 (`coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_mem_modFormCharSpace`); the two spellings
 agree exactly when `χ(p) = 1`.
 
 ## Main results
 
-* `HeckeRing.GL2.slash_mapGL_eq_diamondOpNat` and its cusp-form counterpart: slashing by any
-  suitable `Γ₀(N)` representative is the corresponding diamond operator; the
-  `slash_mapGL_gamma0Twist_eq_*` lemmas specialize them to the Bézout twist.
 * `HeckeRing.GL2.heckeSlashSum_diagCosetGamma1_of_coprime`: the slash sum of the double coset at
   a prime `p ∤ N`, over the `p + 1` representatives.
 * `HeckeRing.GL2.coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime`,
@@ -76,38 +73,6 @@ open scoped MatrixGroups ModularForm
 namespace HeckeRing.GL2
 
 variable {N p : ℕ} (k : ℤ)
-
-/-- Slashing by a `Γ₀(N)` representative with lower-right unit `n` is the zero-extended
-diamond operator `⟨n⟩` on modular forms. -/
-theorem slash_mapGL_eq_diamondOpNat {n : ℕ} (h : Nat.Coprime n N) (g : ↥(Gamma0 N))
-    (hg : (Gamma0Map N).toHomUnits g = ZMod.unitOfCoprime n h)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k n f) := by
-  rw [ModularForm.rat_slash_mapGL, diamondOpNat_of_coprime k h, coe_diamondOp k _ g hg f]
-
-/-- The cusp-form counterpart of `slash_mapGL_eq_diamondOpNat`. -/
-theorem slash_mapGL_eq_diamondOpCuspNat {n : ℕ} (h : Nat.Coprime n N) (g : ↥(Gamma0 N))
-    (hg : (Gamma0Map N).toHomUnits g = ZMod.unitOfCoprime n h)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k n f) := by
-  rw [ModularForm.rat_slash_mapGL, diamondOpCuspNat_of_coprime k h,
-    coe_diamondOpCusp k _ g hg f]
-
-/-- **Slashing by the Bézout twist is the diamond operator `⟨p⟩`.** The twist is the `Γ₀(N)`
-element of lower-right entry `p`, so this is `coe_diamondOp` at that representative, transported
-across the `ℚ`/`ℝ` bridge. -/
-theorem slash_mapGL_gamma0Twist_eq_diamondOpNat (h : Nat.Coprime p N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k p f) :=
-  slash_mapGL_eq_diamondOpNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
-    (Gamma0Map_toHomUnits_gamma0Twist h) f
-
-/-- **Slashing by the Bézout twist is the diamond operator `⟨p⟩`**, on cusp forms. -/
-theorem slash_mapGL_gamma0Twist_eq_diamondOpCuspNat (h : Nat.Coprime p N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k p f) :=
-  slash_mapGL_eq_diamondOpCuspNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
-    (Gamma0Map_toHomUnits_gamma0Twist h) f
 
 variable [NeZero N]
 

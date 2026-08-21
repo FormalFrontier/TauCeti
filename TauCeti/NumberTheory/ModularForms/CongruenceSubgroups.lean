@@ -136,7 +136,8 @@ identity `ad - bc = 1` with the `bc` term killed by `M ∣ c`. It refines
 theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M : ℕ}
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 M) :
     ((γ 0 0 : ℤ) : ZMod M) * ((γ 1 1 : ℤ) : ZMod M) = 1 := by
-  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
+  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 :=
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ
   have h := congrArg (Int.cast : ℤ → ZMod M) hdet
   push_cast at h
   rw [Gamma0_mem.mp hγ] at h
@@ -148,7 +149,7 @@ theorem isUnit_intCast_apply_zero_zero_of_mem_Gamma0 {N : ℕ} {σ : SL(2, ℤ)}
     IsUnit ((σ.1 0 0 : ℤ) : ZMod N) := by
   have h10 : ((σ.1 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hσ
   have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
-    Matrix.det_fin_two σ.1 ▸ σ.2
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one σ
   have hcast := congrArg (fun z : ℤ ↦ (z : ZMod N)) hdet
   push_cast at hcast
   rw [h10, mul_zero, sub_zero] at hcast
