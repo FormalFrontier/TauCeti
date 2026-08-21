@@ -456,6 +456,30 @@ theorem negativePlaneEquivQuaternion_ι (x : M × (Fin (0 + 2) → ℝ)) :
     map_add, Algebra.TensorProduct.congr_apply, Algebra.TensorProduct.map_tmul,
     AlgEquiv.refl_toAlgHom, AlgHom.coe_id, id_eq, AlgEquiv.coe_toAlgHom, map_one]
 
+/-- The inverse of `negativePlaneEquivQuaternion` on the tensor representing an old generator:
+the quaternion factor is the unit `k`, the image of the plane's volume element. -/
+@[simp]
+theorem negativePlaneEquivQuaternion_symm_apply_ι_base (m : M) :
+    (negativePlaneEquivQuaternion Q).symm
+        (_root_.CliffordAlgebra.ι (-Q) m ⊗ₜ[ℝ] (⟨0, 0, 0, 1⟩ : ℍ[ℝ])) =
+      _root_.CliffordAlgebra.ι _ (m, 0) := by
+  rw [AlgEquiv.symm_apply_eq, negativePlaneEquivQuaternion_ι]
+  simp
+
+/-- The inverse of `negativePlaneEquivQuaternion` on the tensor representing a new generator:
+the quaternion factor is the imaginary quaternion `v 0 * i + v 1 * j`. -/
+@[simp]
+theorem negativePlaneEquivQuaternion_symm_apply_ι_plane (v : Fin (0 + 2) → ℝ) :
+    (negativePlaneEquivQuaternion Q).symm
+        ((1 : _root_.CliffordAlgebra (-Q)) ⊗ₜ[ℝ] (⟨0, v 0, v 1, 0⟩ : ℍ[ℝ])) =
+      _root_.CliffordAlgebra.ι _ (0, v) := by
+  rw [AlgEquiv.symm_apply_eq, negativePlaneEquivQuaternion_ι]
+  simp only [Fin.isValue, map_zero, Nat.reduceAdd,
+    TauCeti.realCliffordZeroTwoEquivQuaternion_volume,
+    TauCeti.realCliffordZeroTwoEquivQuaternion_ι, right_eq_add]
+  -- What is left is the vanishing base component; `simp` does not close it on its own.
+  exact TensorProduct.zero_tmul _ _
+
 end NegativePlane
 
 end CliffordAlgebra
