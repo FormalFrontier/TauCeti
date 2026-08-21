@@ -28,9 +28,10 @@ Norms `2` and `3` give the unique primes above the ramified rational primes `2` 
 of norm `4` is the square of the prime above `2`, hence principal; and the primes above `5`
 contribute at most two further classes. Thus the class number is at most `5`.
 
-For the lower bound, the independent classes of the three ramified primes `2`, `3`, and `7`
-give `2`-rank at least `2`, so the class number is divisible by `4`. The only multiple of `4`
-between `4` and `5` is `4`.
+For the lower bound, the three ramified primes `2`, `3`, and `7` give `2`-rank at least
+`3 - 1 = 2` through the ramified-prime lower bound
+`TauCeti.Multiquadratic.ncard_ramifiedPrimes_sub_one_le_twoRank`, so the class number is
+divisible by `4`. The only multiple of `4` between `4` and `5` is `4`.
 
 The main theorem is stated for any number field with an integral generator of minimal polynomial
 `X² + 21`; the final theorem applies it to Mathlib's `AdjoinRoot` model.
@@ -62,7 +63,6 @@ variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K}
 /-- The radicand `-21` is squarefree. -/
 private theorem squarefree_neg_twenty_one : Squarefree (-21 : ℤ) := by
   rw [← Int.squarefree_natAbs]
-  change Squarefree (21 : ℕ)
   simpa using (Nat.squarefree_mul (by decide : Nat.Coprime 3 7)).mpr
     ⟨(by decide : Nat.Prime 3).squarefree, (by decide : Nat.Prime 7).squarefree⟩
 
@@ -102,32 +102,35 @@ private theorem minkowski_bound_lt_six
       rw [div_lt_iff₀ Real.pi_pos]
       nlinarith [Real.pi_gt_d2]
 
-/-- In a quadratic number field where `2` ramifies, every ideal of norm `4` is principal. -/
-private theorem isPrincipal_of_absNorm_eq_four (hfin : finrank ℚ K = 2)
-    (hram : 2 ∈ ramifiedPrimes K) (I : Ideal (𝓞 K)) (hI : I.absNorm = 4) :
-    Submodule.IsPrincipal I := by
-  have htwo : 2 ∣ I.absNorm := by rw [hI]; norm_num
-  obtain ⟨P, hPmax, hPunder, hPdvd⟩ :=
-    Ideal.exists_isMaximal_dvd_of_dvd_absNorm' Nat.prime_two I htwo
+/-- In a quadratic number field, an ideal whose norm is the square of a ramified rational prime
+`p` is principal: it is the square of the unique prime `𝔭` above `p`, and `𝔭 ^ 2 = p 𝓞 K`. -/
+private theorem isPrincipal_of_absNorm_eq_sq_of_mem_ramifiedPrimes {p : ℕ}
+    (hfin : finrank ℚ K = 2) (hram : p ∈ ramifiedPrimes K) (I : Ideal (𝓞 K))
+    (hI : I.absNorm = p ^ 2) : Submodule.IsPrincipal I := by
+  have hp : p.Prime := prime_of_mem_ramifiedPrimes hram
+  have hpdvd : p ∣ I.absNorm := by rw [hI]; exact dvd_pow_self p two_ne_zero
+  obtain ⟨P, hPmax, hPunder, hPdvd⟩ := Ideal.exists_isMaximal_dvd_of_dvd_absNorm' hp I hpdvd
   let _ : P.IsPrime := hPmax.isPrime
-  let _ : P.LiesOver (span {(2 : ℤ)}) := ⟨hPunder.symm⟩
+  let _ : P.LiesOver (span {(p : ℤ)}) := ⟨hPunder.symm⟩
   obtain ⟨J, hIJ⟩ := hPdvd
-  have hPnorm : P.absNorm = 2 := absNorm_eq_of_mem_ramifiedPrimes hfin hram P
-  have hJnorm : J.absNorm = 2 := by
+  have hPnorm : P.absNorm = p := absNorm_eq_of_mem_ramifiedPrimes hfin hram P
+  have hJnorm : J.absNorm = p := by
     have hnorm := congrArg Ideal.absNorm hIJ
-    rw [map_mul, hI, hPnorm] at hnorm
-    omega
+    rw [map_mul, hI, hPnorm, sq] at hnorm
+    exact (Nat.eq_of_mul_eq_mul_left hp.pos hnorm).symm
   have hJP : J = P :=
     eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P J hJnorm
   rw [hIJ, hJP, ← pow_two, ← map_span_eq_sq_of_mem_ramifiedPrimes hfin hram P,
     Ideal.map_span, Set.image_singleton]
-  exact ⟨algebraMap ℤ (𝓞 K) 2, rfl⟩
+  exact ⟨algebraMap ℤ (𝓞 K) p, rfl⟩
 
-/-- **The class number of `ℚ(√-21)` is four.** This presentation-independent statement assumes
-an integral generator with minimal polynomial `X² + 21` which generates the field over `ℚ`. -/
-theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
+/-- **The Minkowski upper bound for `ℚ(√-21)`.** Every ideal class contains an integral ideal of
+norm at most `5`, and such an ideal is the unit ideal, the unique prime above the ramified prime
+`2` (also in the norm `4` case, where it is principal), the unique prime above the ramified prime
+`3`, or one of the at most two primes above `5`. Hence the class number is at most `5`. -/
+private theorem classNumber_le_five_of_minpoly_eq_X_sq_add_twenty_one
     (hmin : minpoly ℤ θ = X ^ 2 - C (-21 : ℤ))
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : NumberField.classNumber K = 4 := by
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : NumberField.classNumber K ≤ 5 := by
   classical
   have hfin : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
   have hdisc := discr_eq_neg_eighty_four hmin hgen
@@ -137,6 +140,8 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
   have hram_three : 3 ∈ ramifiedPrimes K := by
     rw [mem_ramifiedPrimes_iff_dvd_discr (K := K) (by decide), hdisc]
     norm_num
+  -- Name the rational primes `2`, `3`, `5` below the possible representative norms, and choose
+  -- primes `P2`, `P3` of `𝓞 K` above `2` and `3`.
   let p2 : Ideal ℤ := span {(2 : ℤ)}
   let p3 : Ideal ℤ := span {(3 : ℤ)}
   let p5 : Ideal ℤ := span {(5 : ℤ)}
@@ -169,6 +174,8 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
     ⟨P3, mem_nonZeroDivisors_of_ne_zero hP3ne⟩
   have hp5ne : p5 ≠ ⊥ := by simp [p5]
   let _ : p5.IsMaximal := Ideal.IsPrime.isMaximal inferInstance hp5ne
+  -- Unlike `2` and `3`, the prime `5` is unramified, so collect the classes of all primes above
+  -- it; the candidate classes are then `1`, `[P2]`, `[P3]` and those.
   let primesFive : Finset (Ideal (𝓞 K)) :=
     IsDedekindDomain.primesOverFinset p5 (𝓞 K)
   let classFive : {P // P ∈ primesFive} → ClassGroup (𝓞 K) := fun P =>
@@ -180,6 +187,8 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
   let fiveClasses : Finset (ClassGroup (𝓞 K)) := primesFive.attach.image classFive
   let candidates : Finset (ClassGroup (𝓞 K)) :=
     insert 1 (insert (ClassGroup.mk0 P20) (insert (ClassGroup.mk0 P30) fiveClasses))
+  -- Minkowski's bound gives each class an integral representative of norm at most `5`; the five
+  -- possible norms are treated in turn.
   have hclasses : ∀ C : ClassGroup (𝓞 K), C ∈ candidates := by
     intro C
     obtain ⟨I, hIC, hIle⟩ := NumberField.exists_ideal_in_class_of_norm_le C
@@ -188,12 +197,14 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
       exact_mod_cast (Nat.lt_succ_iff.mp (by exact_mod_cast hIlt))
     have hIpos : 0 < I.1.absNorm := absNorm_pos_of_nonZeroDivisors I
     interval_cases hnorm : I.1.absNorm <;> simp_all only [Nat.reduceLeDiff]
+    -- Norm `1`: the representative is the unit ideal, so the class is trivial.
     · simp only [candidates, Finset.mem_insert]
       left
       rw [← hIC]
       exact (ClassGroup.mk0_eq_one_iff I.2).mpr <| by
         rw [Ideal.absNorm_eq_one_iff.mp hnorm]
         exact top_isPrincipal
+    -- Norm `2`: the ramified prime `2` has a unique prime above it, so the representative is `P2`.
     · simp only [candidates, Finset.mem_insert]
       right; left
       rw [← hIC]
@@ -201,6 +212,7 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
         eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram_two P2 I.1 hnorm
       apply congrArg ClassGroup.mk0
       exact Subtype.ext hIP
+    -- Norm `3`: likewise the ramified prime `3` forces the representative to be `P3`.
     · simp only [candidates, Finset.mem_insert]
       right; right; left
       rw [← hIC]
@@ -208,11 +220,15 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
         eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram_three P3 I.1 hnorm
       apply congrArg ClassGroup.mk0
       exact Subtype.ext hIP
+    -- Norm `4 = 2 ^ 2`: the representative is the square of the prime above `2`, hence the ideal
+    -- generated by `2`, so its class is trivial.
     · simp only [candidates, Finset.mem_insert]
       left
       rw [← hIC]
       exact (ClassGroup.mk0_eq_one_iff I.2).mpr
-        (isPrincipal_of_absNorm_eq_four hfin hram_two I.1 hnorm)
+        (isPrincipal_of_absNorm_eq_sq_of_mem_ramifiedPrimes hfin hram_two I.1
+          (by rw [hnorm]; norm_num))
+    -- Norm `5`: the representative is prime and lies over `5`, so its class is among `fiveClasses`.
     · simp only [candidates, Finset.mem_insert]
       right; right; right
       have hprimeNorm : I.1.absNorm.Prime := by rw [hnorm]; decide
@@ -227,56 +243,76 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
       refine Finset.mem_image.mpr ⟨⟨I.1, hmem⟩, Finset.mem_attach _ _, ?_⟩
       apply congrArg ClassGroup.mk0
       rfl
-  have hupper : NumberField.classNumber K ≤ 5 := by
-    rw [NumberField.classNumber]
-    calc
-      Fintype.card (ClassGroup (𝓞 K)) = Finset.univ.card := by simp
-      _ ≤ candidates.card := Finset.card_le_card fun C _ => hclasses C
-      _ ≤ 3 + fiveClasses.card := by
-        dsimp only [candidates]
-        calc
-          (insert 1 (insert (ClassGroup.mk0 P20)
-              (insert (ClassGroup.mk0 P30) fiveClasses))).card
-              ≤ (insert (ClassGroup.mk0 P20)
-                  (insert (ClassGroup.mk0 P30) fiveClasses)).card + 1 :=
-                Finset.card_insert_le _ _
-          _ ≤ ((insert (ClassGroup.mk0 P30) fiveClasses).card + 1) + 1 :=
-            Nat.add_le_add_right (Finset.card_insert_le _ _) 1
-          _ ≤ ((fiveClasses.card + 1) + 1) + 1 :=
-            Nat.add_le_add_right (Nat.add_le_add_right (Finset.card_insert_le _ _) 1) 1
-          _ = 3 + fiveClasses.card := by omega
-      _ ≤ 3 + primesFive.card := by
-        apply Nat.add_le_add_left
-        dsimp only [fiveClasses]
-        simpa only [Finset.card_attach] using
-          (Finset.card_image_le : (primesFive.attach.image classFive).card ≤
-            primesFive.attach.card)
-      _ ≤ 5 := by
-        have hcard : primesFive.card ≤ finrank ℚ K :=
-          card_primesOverFinset_le_finrank (K := K) hp5ne
-        omega
+  -- The classes therefore number at most `3 + #{primes above 5}`, and at most
+  -- `[K : ℚ] = 2` primes lie above `5`.
+  rw [NumberField.classNumber]
+  calc
+    Fintype.card (ClassGroup (𝓞 K)) = Finset.univ.card := by simp
+    _ ≤ candidates.card := Finset.card_le_card fun C _ => hclasses C
+    _ ≤ 3 + fiveClasses.card := by
+      dsimp only [candidates]
+      calc
+        (insert 1 (insert (ClassGroup.mk0 P20)
+            (insert (ClassGroup.mk0 P30) fiveClasses))).card
+            ≤ (insert (ClassGroup.mk0 P20)
+                (insert (ClassGroup.mk0 P30) fiveClasses)).card + 1 :=
+              Finset.card_insert_le _ _
+        _ ≤ ((insert (ClassGroup.mk0 P30) fiveClasses).card + 1) + 1 :=
+          Nat.add_le_add_right (Finset.card_insert_le _ _) 1
+        _ ≤ ((fiveClasses.card + 1) + 1) + 1 :=
+          Nat.add_le_add_right (Nat.add_le_add_right (Finset.card_insert_le _ _) 1) 1
+        _ = 3 + fiveClasses.card := by omega
+    _ ≤ 3 + primesFive.card := by
+      apply Nat.add_le_add_left
+      dsimp only [fiveClasses]
+      simpa only [Finset.card_attach] using
+        (Finset.card_image_le : (primesFive.attach.image classFive).card ≤
+          primesFive.attach.card)
+    _ ≤ 5 := by
+      have hcard : primesFive.card ≤ finrank ℚ K :=
+        card_primesOverFinset_le_finrank (K := K) hp5ne
+      omega
+
+/-- **The genus-theoretic lower bound for `ℚ(√-21)`.** The rational primes `2`, `3` and `7` all
+divide the discriminant `-84`, so three primes ramify and the ramified-prime lower bound gives
+`2`-rank at least `3 - 1 = 2`. -/
+private theorem two_le_twoRank_of_minpoly_eq_X_sq_add_twenty_one
+    (hmin : minpoly ℤ θ = X ^ 2 - C (-21 : ℤ))
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : 2 ≤ TauCeti.ClassGroup.twoRank (𝓞 K) := by
+  have hdisc := discr_eq_neg_eighty_four hmin hgen
   have hram_card : 3 ≤ (ramifiedPrimes K).ncard := by
     have hsubset : ({2, 3, 7} : Set ℕ) ⊆ ramifiedPrimes K := by
       intro p hp
       simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hp
-      rcases hp with rfl | rfl | rfl
-      · exact hram_two
-      · exact hram_three
-      · rw [mem_ramifiedPrimes_iff_dvd_discr (K := K) (by decide), hdisc]
-        norm_num
+      rcases hp with rfl | rfl | rfl <;>
+        · rw [mem_ramifiedPrimes_iff_dvd_discr (K := K) (by decide), hdisc]
+          norm_num
     calc
       3 = ({2, 3, 7} : Set ℕ).ncard := by norm_num
       _ ≤ (ramifiedPrimes K).ncard :=
         Set.ncard_le_ncard hsubset (NumberField.finite_ramifiedPrimes (K := K))
+  exact le_trans (by omega : 2 ≤ (ramifiedPrimes K).ncard - 1)
+    (TauCeti.Multiquadratic.ncard_ramifiedPrimes_sub_one_le_twoRank
+      hmin hgen squarefree_neg_twenty_one (by norm_num))
+
+/-- **The class number of `ℚ(√-21)` is four.** This presentation-independent statement assumes
+an integral generator with minimal polynomial `X² + 21` which generates the field over `ℚ`. -/
+theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
+    (hmin : minpoly ℤ θ = X ^ 2 - C (-21 : ℤ))
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : NumberField.classNumber K = 4 := by
+  -- Minkowski's bound classifies the ideal classes, bounding the class number by `5`.
+  have hupper : NumberField.classNumber K ≤ 5 :=
+    classNumber_le_five_of_minpoly_eq_X_sq_add_twenty_one hmin hgen
+  -- The three ramified primes give `2`-rank at least `2`, so `4` divides the class number and,
+  -- in particular, bounds it from below.
   have hrank : 2 ≤ TauCeti.ClassGroup.twoRank (𝓞 K) :=
-    le_trans (by omega : 2 ≤ (ramifiedPrimes K).ncard - 1)
-      (TauCeti.Multiquadratic.ncard_ramifiedPrimes_sub_one_le_twoRank
-        hmin hgen squarefree_neg_twenty_one (by norm_num))
+    two_le_twoRank_of_minpoly_eq_X_sq_add_twenty_one hmin hgen
   have hfourdvd : 4 ∣ NumberField.classNumber K := by
-    apply dvd_trans (b := 2 ^ TauCeti.ClassGroup.twoRank (𝓞 K))
-    · change 2 ^ 2 ∣ 2 ^ TauCeti.ClassGroup.twoRank (𝓞 K)
-      exact pow_dvd_pow 2 hrank
-    · exact NumberField.two_pow_classGroupTwoRank_dvd_classNumber K
+    calc
+      (4 : ℕ) = 2 ^ 2 := by norm_num
+      _ ∣ 2 ^ TauCeti.ClassGroup.twoRank (𝓞 K) := pow_dvd_pow 2 hrank
+      _ ∣ NumberField.classNumber K :=
+        NumberField.two_pow_classGroupTwoRank_dvd_classNumber K
   have hlower : 4 ≤ NumberField.classNumber K := by
     calc
       4 = 2 ^ 2 := by norm_num
@@ -284,6 +320,7 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
         pow_le_pow_right' (by norm_num) hrank
       _ ≤ NumberField.classNumber K :=
         NumberField.two_pow_classGroupTwoRank_le_classNumber K
+  -- The only multiple of `4` between `4` and `5` is `4`.
   obtain ⟨n, hn⟩ := hfourdvd
   omega
 
