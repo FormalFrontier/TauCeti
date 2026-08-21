@@ -23,7 +23,8 @@ every compact set.
 The proof needs a *uniform* time of existence: the same `ε > 0` must work for every initial point
 in a neighbourhood of the accumulation point `y`, so that a time `t₁ < b` with `b - t₁ < ε` and
 `γ t₁` near `y` produces a solution defined past `b`. Uniqueness on the overlap then glues it to
-`γ`. The uniform time comes from `ODE.exists_forall_mem_ball_exists_forall_mem_Ioo_hasDerivAt`,
+`γ`. The uniform time comes from
+`ODE.exists_forall_mem_ball_exists_eq_forall_mem_Ioo_hasDerivAt_and_mem`,
 read through the extended chart at `y`.
 
 ## Main results
@@ -75,7 +76,7 @@ theorem exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo [CompleteSpace E] [
   have hnhds : interior (extChartAt I x₀).target ∈ 𝓝 (extChartAt I x₀ x₀) :=
     isOpen_interior.mem_nhds (I.isInteriorPoint_iff.mp BoundarylessManifold.isInteriorPoint)
   obtain ⟨r, hr, ε, hε, hsol⟩ :=
-    ODE.exists_forall_mem_ball_exists_forall_mem_Ioo_hasDerivAt hgc hnhds t₀
+    ODE.exists_forall_mem_ball_exists_eq_forall_mem_Ioo_hasDerivAt_and_mem hgc hnhds t₀
   refine ⟨extChartAt I x₀ ⁻¹' Metric.ball (extChartAt I x₀ x₀) r ∩ (extChartAt I x₀).source,
     Filter.inter_mem ((continuousAt_extChartAt x₀).preimage_mem_nhds
       (Metric.ball_mem_nhds _ hr)) (extChartAt_source_mem_nhds x₀), ε, hε, fun x hx ↦ ?_⟩
@@ -87,6 +88,17 @@ theorem exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo [CompleteSpace E] [
     · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).1
 
 namespace IsMIntegralCurveOn
+
+/-- Translate an integral curve on an interval centred at zero to an interval centred at `t₁`. -/
+theorem comp_sub_Ioo {c : ℝ → M} {t₁ ε : ℝ}
+    (hc : IsMIntegralCurveOn c v (Ioo (0 - ε) (0 + ε))) :
+    IsMIntegralCurveOn (c ∘ (· - t₁)) v (Ioo (t₁ - ε) (t₁ + ε)) := by
+  have hset : {t : ℝ | t - t₁ ∈ Ioo (0 - ε) (0 + ε)} = Ioo (t₁ - ε) (t₁ + ε) := by
+    ext t
+    simp only [mem_ofPred_eq, mem_Ioo, zero_sub, zero_add]
+    constructor <;> rintro ⟨h1, h2⟩ <;> constructor <;> linarith
+  rw [← hset]
+  exact isMIntegralCurveOn_comp_sub.2 hc
 
 variable [CompleteSpace E] [IsManifold I 1 M] [BoundarylessManifold I M] [T2Space M]
 
@@ -115,12 +127,7 @@ theorem exists_gt_isMIntegralCurveOn_Ioo
   -- translate the local solution so that it starts at time `t₁`
   set β : ℝ → M := α ∘ (· - t₁) with hβdef
   have hβ : IsMIntegralCurveOn β v (Ioo (t₁ - ε) (t₁ + ε)) := by
-    have hset : {t : ℝ | t - t₁ ∈ Ioo (0 - ε) (0 + ε)} = Ioo (t₁ - ε) (t₁ + ε) := by
-      ext t
-      simp only [mem_ofPred_eq, mem_Ioo, zero_sub, zero_add]
-      constructor <;> rintro ⟨h1, h2⟩ <;> constructor <;> linarith
-    rw [hβdef, ← hset]
-    exact isMIntegralCurveOn_comp_sub.2 hα
+    simpa [hβdef] using hα.comp_sub_Ioo (t₁ := t₁)
   have hβ0 : β t₁ = γ t₁ := by simpa [hβdef] using hα0
   have hbc : b < t₁ + ε := by linarith
   -- glue the two curves at time `t₁`
@@ -129,17 +136,16 @@ theorem exists_gt_isMIntegralCurveOn_Ioo
     ⟨⟨ht₁a, ht₁b⟩, ⟨by linarith, by linarith⟩⟩ hβ0.symm).mono
       (Ioo_subset_Ioo_union_Ioo le_rfl (by linarith) le_rfl)
 
-/-- **The finite-endpoint extension criterion**, sequential form. If `u n → b` from inside
-`Ioo a b` and `γ (u n) → y`, then `γ` extends past `b`. -/
+/-- **The finite-endpoint extension criterion**, sequential form. If `u n → b`, the sequence
+is eventually below `b`, and `γ (u n) → y`, then `γ` extends past `b`. -/
 theorem exists_gt_isMIntegralCurveOn_Ioo_of_tendsto
     (hγ : IsMIntegralCurveOn γ v (Ioo a b)) (hab : a < b)
     (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    {u : ℕ → ℝ} (hu : ∀ n, u n ∈ Ioo a b) (hub : Tendsto u atTop (𝓝 b))
+    {u : ℕ → ℝ} (hu : ∀ᶠ n in atTop, u n < b) (hub : Tendsto u atTop (𝓝 b))
     (hy : Tendsto (γ ∘ u) atTop (𝓝 y)) :
     ∃ c > b, ∃ δ : ℝ → M, IsMIntegralCurveOn δ v (Ioo a c) ∧ EqOn δ γ (Ioo a b) := by
   refine hγ.exists_gt_isMIntegralCurveOn_Ioo hab hv (ClusterPt.mono hy.mapClusterPt ?_)
-  exact map_mono (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within u hub
-    (Eventually.of_forall fun n ↦ (hu n).2))
+  exact map_mono (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within u hub hu)
 
 /-- **The escape lemma.** An integral curve on `Ioo a b` that admits no extension past its finite
 right endpoint eventually leaves every compact set as `t → b⁻`. -/
@@ -176,12 +182,7 @@ theorem exists_lt_isMIntegralCurveOn_Ioo
   obtain ⟨α, hα0, hα⟩ := hloc (γ t₁) ht₁w
   set β : ℝ → M := α ∘ (· - t₁) with hβdef
   have hβ : IsMIntegralCurveOn β v (Ioo (t₁ - ε) (t₁ + ε)) := by
-    have hset : {t : ℝ | t - t₁ ∈ Ioo (0 - ε) (0 + ε)} = Ioo (t₁ - ε) (t₁ + ε) := by
-      ext t
-      simp only [mem_ofPred_eq, mem_Ioo, zero_sub, zero_add]
-      constructor <;> rintro ⟨h1, h2⟩ <;> constructor <;> linarith
-    rw [hβdef, ← hset]
-    exact isMIntegralCurveOn_comp_sub.2 hα
+    simpa [hβdef] using hα.comp_sub_Ioo (t₁ := t₁)
   have hβ0 : β t₁ = γ t₁ := by simpa [hβdef] using hα0
   have hca : t₁ - ε < a := by linarith
   refine ⟨t₁ - ε, hca, piecewise (Ioo a b) γ β, ?_, piecewise_eqOn _ _ _⟩
@@ -189,16 +190,16 @@ theorem exists_lt_isMIntegralCurveOn_Ioo
     ⟨⟨ht₁a, ht₁b⟩, ⟨by linarith, by linarith⟩⟩ hβ0.symm).mono
       (union_comm _ _ ▸ Ioo_subset_Ioo_union_Ioo le_rfl (by linarith) le_rfl)
 
-/-- **The finite-endpoint extension criterion at the left endpoint**, sequential form. -/
+/-- **The finite-endpoint extension criterion at the left endpoint**, sequential form. If
+`u n → a`, the sequence is eventually above `a`, and `γ (u n) → y`, then `γ` extends before `a`. -/
 theorem exists_lt_isMIntegralCurveOn_Ioo_of_tendsto
     (hγ : IsMIntegralCurveOn γ v (Ioo a b)) (hab : a < b)
     (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    {u : ℕ → ℝ} (hu : ∀ n, u n ∈ Ioo a b) (hub : Tendsto u atTop (𝓝 a))
+    {u : ℕ → ℝ} (hu : ∀ᶠ n in atTop, a < u n) (hub : Tendsto u atTop (𝓝 a))
     (hy : Tendsto (γ ∘ u) atTop (𝓝 y)) :
     ∃ c < a, ∃ δ : ℝ → M, IsMIntegralCurveOn δ v (Ioo c b) ∧ EqOn δ γ (Ioo a b) := by
   refine hγ.exists_lt_isMIntegralCurveOn_Ioo hab hv (ClusterPt.mono hy.mapClusterPt ?_)
-  exact map_mono (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within u hub
-    (Eventually.of_forall fun n ↦ (hu n).1))
+  exact map_mono (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within u hub hu)
 
 /-- **The escape lemma at the left endpoint.** An integral curve on `Ioo a b` that admits no
 extension before its finite left endpoint eventually leaves every compact set as `t → a⁺`. -/
