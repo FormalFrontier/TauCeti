@@ -150,15 +150,10 @@ theorem scalarTorusCenterHom_bijective (hn : 0 < n) (A : CommAlgCat.{u} k) :
     have hgcentral :
         pointsMulEquiv (R := k) (A := A) n g.1 ∈
           Subgroup.center (Matrix.GeneralLinearGroup (Fin n) A) := by
-      rw [Subgroup.mem_center_iff]
-      intro h
-      let q := (pointsMulEquiv (R := k) (A := A) n).symm h
-      have hcomm :=
-        (CommHopfAlgCat.mem_centerPointsSubgroup_iff
-          (coordinateHopfAlgebra k n) A g.1).mp g.2
-      have hcommq := hcomm.commute q
-      simpa [q] using ((hcommq.map
-        (pointsMulEquiv (R := k) (A := A) n).toMonoidHom).symm.eq)
+      apply MulEquivClass.apply_mem_center
+      apply HopfAlgebra.center_le_center
+      rw [← CommHopfAlgCat.centerPointsSubgroup_eq_center]
+      exact g.2
     rw [Matrix.GeneralLinearGroup.center_eq_range_scalar] at hgcentral
     obtain ⟨a, ha⟩ := hgcentral
     refine ⟨(MultiplicativeGroup.pointsMulEquiv (R := k) (A := A)).symm a, ?_⟩
