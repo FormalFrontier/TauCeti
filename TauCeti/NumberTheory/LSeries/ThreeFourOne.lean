@@ -112,7 +112,7 @@ theorem isNonnegativeTrigonometricCombination_threeFourOne :
       threeFourOneFrequency := by
   intro z hz
   rw [trigonometricCombination_threeFourOne]
-  exact threeFourOneCombination_nonneg hz
+  exact threeFourOneCombination_nonneg hz.le
 
 /-! ### Euler-factor form -/
 
