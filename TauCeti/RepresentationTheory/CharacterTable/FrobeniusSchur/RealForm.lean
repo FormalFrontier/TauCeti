@@ -22,12 +22,14 @@ form to the indicator: **an irreducible representation with a real form is ortho
 `Representation.IsRealizableOverReal` -- is in `TauCeti.RepresentationTheory.RealForm` and needs
 none of the Frobenius-Schur layer.
 
-The route is the one the trichotomy already asks for, an invariant symmetric form.  A real
-representation of a finite group carries a nonzero invariant symmetric form, obtained by summing
-the coordinate dot product of a basis over the conjugates
-(`Representation.exists_isInvariantForm_isSymm_ne_zero`, in
-`TauCeti.RepresentationTheory.InvariantForm.SumOfConjugates`); a real form transports it to a
-nonzero invariant symmetric form on `V`
+The route is the one the trichotomy already asks for, an invariant symmetric form.  A
+representation of a finite group on a nontrivial finite-dimensional real space carries a nonzero
+invariant symmetric form, obtained by summing the coordinate dot product of a basis over the
+conjugates (`Representation.exists_isInvariantForm_isSymm_ne_zero`, in
+`TauCeti.RepresentationTheory.InvariantForm.SumOfConjugates`); both hypotheses are free here,
+because irreducibility over a finite group makes `V` nontrivial and finite-dimensional and the
+real form passes each of them to `W`.  A real form then transports the form to a nonzero
+invariant symmetric form on `V`
 (`Representation.IsRealForm.exists_isInvariantForm_isSymm_ne_zero`), and
 `TauCeti.Representation.frobeniusSchurIndicator_eq_one_of_isSymm` reads off the indicator.
 Finiteness of `G` is used twice over: the indicator itself and the trichotomy consumed here are
