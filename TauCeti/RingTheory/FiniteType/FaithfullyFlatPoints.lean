@@ -24,9 +24,9 @@ prescribed point, which is a nontrivial finite-type `K`-algebra and therefore ha
 
 ## Main declarations
 
-* `TauCeti.AlgHom.surjective_comp_right_of_comap_surjective`: a map surjective on prime spectra is
+* `AlgHom.surjective_comp_right_of_comap_surjective`: a map surjective on prime spectra is
   surjective on algebraically closed points when its codomain algebra is of finite type.
-* `TauCeti.AlgHom.surjective_comp_right_of_faithfullyFlat`: precomposition along a faithfully flat
+* `AlgHom.surjective_comp_right_of_faithfullyFlat`: precomposition along a faithfully flat
   map is surjective on algebraically closed points when its codomain algebra `B` is of finite type.
 
 ## References
@@ -43,7 +43,7 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti.AlgHom
+namespace AlgHom
 
 universe u v w x
 
@@ -114,4 +114,4 @@ theorem surjective_comp_right_of_faithfullyFlat (f : A →ₐ[k] B)
   surjective_comp_right_of_comap_surjective f
     (RingHom.FaithfullyFlat.iff_flat_and_comap_surjective.mp hf).2
 
-end TauCeti.AlgHom
+end AlgHom
