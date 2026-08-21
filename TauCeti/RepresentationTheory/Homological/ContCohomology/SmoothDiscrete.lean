@@ -66,10 +66,9 @@ variable {R : Type*} [Ring R] [TopologicalSpace R] {G : Type*} [Monoid G]
 /-- The `G`-action on the underlying module of an object of `TopRep R G`, read off from its
 operators. This is the object half of the translation back to Mathlib's unbundled classes. It is
 not a global instance: `X.V` is a projection, so instance search would attempt it on every action
-goal. Files that need it declare it a `local instance`, as this one does below. The body is
-`@[expose]`d because `g • x` is *by construction* the term `X.ρ g x`, and a consumer that rebuilds
-an object from its action — `TauCeti.ofDiscreteModule_eq_self` below — needs to see that. -/
-@[expose, instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
+goal. Files that need it declare it a `local instance`, as this one does below. Its whole public
+behaviour is `TopRep.distribMulAction_smul`, so consumers never need the body. -/
+@[instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
   smul g x := X.ρ g x
   one_smul x := congr($(map_one X.ρ) x)
   mul_smul g h x := congr($(map_mul X.ρ g h) x)
@@ -114,7 +113,7 @@ anything about the elements of that module. -/
       map_one' := by ext m; exact one_smul G m
       map_mul' g h := by ext m; exact mul_smul g h m })
 
-lemma ofDiscreteModule_V : (ofDiscreteModule R G M).V = M := (rfl)
+@[simp] lemma ofDiscreteModule_V : (ofDiscreteModule R G M).V = M := (rfl)
 
 variable {R G M}
 
@@ -150,12 +149,14 @@ the stabilizers plays no part, and a smooth discrete object supplies the discret
 `TauCeti.IsSmoothDiscrete.discreteTopology`. With `TauCeti.ofDiscreteModule_isSmoothDiscrete` this
 is the object half of the equivalence between the discrete `G`-modules and the smooth discrete
 objects of `TopRep R G`. -/
-lemma ofDiscreteModule_eq_self (X : TopRep R G) [DiscreteTopology X.V] :
-    ofDiscreteModule R G X.V = X :=
-  -- `rfl`: the two objects have the same underlying module by construction, and their operators
-  -- agree because `TopRep.distribMulAction` is defined to be `X.ρ`, so the equality is structure
-  -- eta for `TopRep` together with function eta for the operators.
-  rfl
+@[simp] lemma ofDiscreteModule_eq_self (X : TopRep R G) [DiscreteTopology X.V] :
+    ofDiscreteModule R G X.V = X := by
+  have h : (ofDiscreteModule R G X.V).ρ = X.ρ :=
+    DFunLike.ext _ _ fun g ↦ ContinuousLinearMap.ext fun (x : X.V) ↦
+      (ofDiscreteModule_ρ_apply g x).trans (TopRep.distribMulAction_smul X g x)
+  -- The two objects have the same underlying module by construction, and `X` is `TopRep.of X.ρ`
+  -- by structure eta, so they agree as soon as their operators do.
+  exact congrArg (TopRep.of (X := X.V)) h
 
 variable (R G)
 
@@ -229,7 +230,12 @@ def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • 
 
 @[simp] lemma ofDiscreteModuleMap_id :
     ofDiscreteModuleMap (LinearMap.id (R := R) (M := M)) (fun _ _ ↦ rfl) =
-      𝟙 (ofDiscreteModule R G M) := (rfl)
+      𝟙 (ofDiscreteModule R G M) := by
+  -- Both sides fix `m`: `ofDiscreteModuleMap_hom_apply` on the left, `TopRep.id_apply` on the
+  -- right.
+  refine TopRep.hom_ext (DFunLike.ext _ _ fun (m : M) ↦ ?_)
+  exact (ofDiscreteModuleMap_hom_apply _ _ m).trans
+    (TopRep.id_apply (ofDiscreteModule R G M) m).symm
 
 @[simp] lemma ofDiscreteModuleMap_comp {P : Type w} [AddCommGroup P] [Module R P]
     [TopologicalSpace P] [DiscreteTopology P] [DistribMulAction G P] [SMulCommClass G R P]
@@ -237,7 +243,14 @@ def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • 
     (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m)
     (f' : N →ₗ[R] P) (hf' : ∀ (g : G) (n : N), f' (g • n) = g • f' n) :
     ofDiscreteModuleMap (f'.comp f) (fun g m ↦ by simp only [LinearMap.comp_apply, hf, hf']) =
-      ofDiscreteModuleMap f hf ≫ ofDiscreteModuleMap f' hf' := (rfl)
+      ofDiscreteModuleMap f hf ≫ ofDiscreteModuleMap f' hf' := by
+  -- Both sides send `m` to `f' (f m)`: `ofDiscreteModuleMap_hom_apply` on each factor, and
+  -- `TopRep.comp_apply` for the composite on the right.
+  refine TopRep.hom_ext (DFunLike.ext _ _ fun (m : M) ↦ ?_)
+  exact (ofDiscreteModuleMap_hom_apply _ _ m).trans <|
+    (congrArg (⇑f') (ofDiscreteModuleMap_hom_apply f hf m).symm).trans <|
+      (ofDiscreteModuleMap_hom_apply f' hf' _).symm.trans
+        (TopRep.comp_apply (ofDiscreteModuleMap f hf) (ofDiscreteModuleMap f' hf') m).symm
 
 variable (R G M N)
 
@@ -259,7 +272,10 @@ def ofDiscreteModuleHomEquiv :
     ext (m : M)
     exact ofDiscreteModuleMap_hom_apply (G := G) f.toLinearMap
       (fun g m ↦ f.isIntertwining _ _ g m) m
-  map_add' _ _ := rfl
+  -- Addition of morphisms of `TopRep` is addition of the underlying intertwining maps
+  -- (`TopRep.hom_add`), so the translation is additive pointwise.
+  map_add' φ ψ := by
+    ext (m : M); exact congr($(TopRep.hom_add _ _ φ ψ) m)
 
 variable {R G M N}
 
