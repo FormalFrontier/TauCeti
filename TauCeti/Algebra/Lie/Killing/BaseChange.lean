@@ -29,8 +29,8 @@ it, and there injectivity is genuinely needed.
 
 The mathematical content is entirely in the Gram matrix. Mathlib's `LieModule.traceForm_baseChange`
 already says that the Killing form of `A ⊗[R] L` is the base change of the Killing form of `L`, and
-`TauCeti.BilinForm.nondegenerate_of_nondegenerate_baseChange` and
-`TauCeti.BilinForm.nondegenerate_baseChange_iff` say how a base change of integral domains reflects
+`TauCeti.nondegenerate_of_nondegenerate_baseChange` and
+`TauCeti.nondegenerate_baseChange_iff` say how a base change of integral domains reflects
 and preserves nondegeneracy of a bilinear form on a finite free module. What remains is to read
 `IsKilling` as nondegeneracy of the Killing form in both directions;
 `TauCeti.isKilling_of_killingForm_nondegenerate` is the direction Mathlib does not already provide.
@@ -90,7 +90,7 @@ unrestricted, so this covers reduction of an integral form as well as extension 
 theorem isKilling_of_isKilling_baseChange [IsDomain R] [IsKilling A (A ⊗[R] L)] :
     IsKilling R L := by
   rw [isKilling_iff_killingForm_nondegenerate]
-  apply BilinForm.nondegenerate_of_nondegenerate_baseChange A _ (Module.Free.chooseBasis R L)
+  apply nondegenerate_of_nondegenerate_baseChange A _ (Module.Free.chooseBasis R L)
   rw [← traceForm_baseChange R L L A, ← isKilling_iff_killingForm_nondegenerate]
   infer_instance
 
@@ -105,7 +105,7 @@ theorem isKilling_baseChange_iff [FaithfulSMul R A] :
   rw [isKilling_iff_killingForm_nondegenerate, isKilling_iff_killingForm_nondegenerate,
     show killingForm A (A ⊗[R] L) = (killingForm R L).baseChange A from
       traceForm_baseChange R L L A]
-  exact BilinForm.nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)
+  exact nondegenerate_baseChange_iff _ (Module.Free.chooseBasis R L)
 
 /-! The intended application is a field extension, where every hypothesis above is automatic. -/
 

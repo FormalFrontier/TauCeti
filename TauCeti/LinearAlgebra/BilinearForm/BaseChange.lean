@@ -20,9 +20,9 @@ change.
 Nondegeneracy is not preserved by an arbitrary base change: a form can acquire a kernel when its
 discriminant becomes a zero divisor. On a finite free module it is exactly the nonvanishing of
 that discriminant, so any structure map between integral domains reflects it, and an injective one
-also preserves it. Those are `TauCeti.BilinForm.nondegenerate_of_nondegenerate_baseChange` and
-`TauCeti.BilinForm.nondegenerate_baseChange_iff`, and the computations behind them,
-`TauCeti.BilinForm.toMatrix_baseChange` and `TauCeti.BilinForm.det_toMatrix_baseChange`, say that
+also preserves it. Those are `TauCeti.nondegenerate_of_nondegenerate_baseChange` and
+`TauCeti.nondegenerate_baseChange_iff`, and the computations behind them,
+`TauCeti.toMatrix_baseChange` and `TauCeti.det_toMatrix_baseChange`, say that
 base change acts entrywise on the Gram matrix of a basis and maps its determinant accordingly.
 
 ## Main declarations
@@ -30,14 +30,14 @@ base change acts entrywise on the Gram matrix of a basis and maps its determinan
 * `TauCeti.IsBaseChange.bilinForm_baseChange`: if a bilinear form restricts along a map to a
   second form, evaluating it through the associated base-change equivalence agrees with the
   canonical base change of the second form.
-* `TauCeti.BilinForm.toMatrix_baseChange`: the Gram matrix of a base-changed form, in the
+* `TauCeti.toMatrix_baseChange`: the Gram matrix of a base-changed form, in the
   base-changed basis, is the entrywise image of the original Gram matrix.
-* `TauCeti.BilinForm.det_toMatrix_baseChange`: the determinant of that Gram matrix is the image of
+* `TauCeti.det_toMatrix_baseChange`: the determinant of that Gram matrix is the image of
   the original determinant.
-* `TauCeti.BilinForm.nondegenerate_of_nondegenerate_baseChange`: a bilinear form on a finite free
+* `TauCeti.nondegenerate_of_nondegenerate_baseChange`: a bilinear form on a finite free
   module over an integral domain is nondegenerate as soon as its base change into a second integral
   domain is, with no hypothesis on the structure map.
-* `TauCeti.BilinForm.nondegenerate_baseChange_iff`: along an injective structure map between
+* `TauCeti.nondegenerate_baseChange_iff`: along an injective structure map between
   integral domains the implication is an equivalence.
 -/
 
@@ -76,8 +76,6 @@ theorem bilinForm_baseChange (B' : LinearMap.BilinForm R M) (B : LinearMap.Bilin
       ring
 
 end IsBaseChange
-
-namespace BilinForm
 
 section Semiring
 
@@ -145,7 +143,5 @@ theorem nondegenerate_baseChange_iff [Finite ι] [IsDomain A] [FaithfulSMul R A]
     ((LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b).mp h)
 
 end Nondegenerate
-
-end BilinForm
 
 end TauCeti
