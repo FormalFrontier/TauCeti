@@ -66,8 +66,14 @@ open scoped ENNReal NNReal Topology
 
 namespace TauCeti
 
-variable {X Y : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
-  [SecondCountableTopology X] [MetricSpace Y] [MeasurableSpace Y] [BorelSpace Y]
+/-! The two factors are second countable Borel metrizable spaces, the hypotheses under which the
+coupling set is weakly compact. Metrizability is asked of the topology, not of a chosen distance,
+so a space known only to be Polish qualifies; the pseudometric that the direct method runs on is
+installed inside the proofs. -/
+
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace.MetrizableSpace X]
+  [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X] [TopologicalSpace Y]
+  [TopologicalSpace.MetrizableSpace Y] [MeasurableSpace Y] [BorelSpace Y]
   [SecondCountableTopology Y] {c : X × Y → ℝ≥0∞}
 
 /-- **Primal attainment for a lower semicontinuous cost.** If both marginals are tight, the
@@ -78,6 +84,10 @@ theorem exists_isOptimalCoupling_of_isTightMeasureSet {μ : Measure X} [IsProbab
     {ν : Measure Y} [IsProbabilityMeasure ν] (hμ : IsTightMeasureSet {μ})
     (hν : IsTightMeasureSet {ν}) (hc : LowerSemicontinuous c) :
     ∃ π, IsOptimalCoupling c π μ ν := by
+  -- The direct method is run by `TauCeti.exists_isMinOn_lintegral`, which asks the underlying
+  -- space for a pseudometric; metrizability of the two factors supplies one on the product.
+  let : PseudoMetricSpace (X × Y) :=
+    TopologicalSpace.pseudoMetrizableSpacePseudoMetric (X × Y)
   have hKne : {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ ν}.Nonempty :=
     ⟨(Coupling.prod ⟨μ, ‹_›⟩ ⟨ν, ‹_›⟩).1, (Coupling.prod ⟨μ, ‹_›⟩ ⟨ν, ‹_›⟩).2⟩
   obtain ⟨π, hπK, hπmin⟩ := exists_isMinOn_lintegral hKne
@@ -85,28 +95,6 @@ theorem exists_isOptimalCoupling_of_isTightMeasureSet {μ : Measure X} [IsProbab
   refine ⟨π.toMeasure, isOptimalCoupling_iff.mpr ⟨hπK, fun σ hσ ↦ ?_⟩⟩
   have hσprob : IsProbabilityMeasure σ := hσ.isProbabilityMeasure
   exact isMinOn_iff.mp hπmin ⟨σ, hσprob⟩ hσ
-
-/-- **Primal attainment on Polish spaces.** Every finite Borel measure on a complete, second
-countable metric space is tight, so a lower semicontinuous cost always admits an optimal transport
-plan between two probability measures there. -/
-theorem exists_isOptimalCoupling [CompleteSpace X] [CompleteSpace Y] (μ : Measure X)
-    [IsProbabilityMeasure μ] (ν : Measure Y) [IsProbabilityMeasure ν]
-    (hc : LowerSemicontinuous c) :
-    ∃ π, IsOptimalCoupling c π μ ν :=
-  exists_isOptimalCoupling_of_isTightMeasureSet isTightMeasureSet_singleton
-    isTightMeasureSet_singleton hc
-
-/-- Primal attainment with the optimal plan delivered inside the bundled coupling type, which is
-the domain the probability transport problem is optimised over. -/
-theorem exists_coupling_isOptimalCoupling [CompleteSpace X] [CompleteSpace Y]
-    (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) (hc : LowerSemicontinuous c) :
-    ∃ π : Coupling μ ν,
-      IsOptimalCoupling c (π : ProbabilityMeasure (X × Y)).toMeasure μ.toMeasure ν.toMeasure := by
-  have hμ : IsProbabilityMeasure μ.toMeasure := μ.2
-  have hν : IsProbabilityMeasure ν.toMeasure := ν.2
-  obtain ⟨π, hπ⟩ := exists_isOptimalCoupling μ.toMeasure ν.toMeasure hc
-  have hπprob : IsProbabilityMeasure π := hπ.toIsCoupling.isProbabilityMeasure
-  exact ⟨⟨⟨π, hπprob⟩, hπ.toIsCoupling⟩, hπ⟩
 
 /-- **The optimal plans form a compact set.** An optimal plan is a coupling whose cost is at most
 the transport cost, the reverse inequality being automatic; so the optimal set is the intersection
@@ -124,8 +112,42 @@ theorem isCompact_setOfPred_isOptimalCoupling {μ : Measure X} [IsProbabilityMea
     exact ⟨fun h ↦ ⟨h.toIsCoupling, h.lintegral_eq.le⟩,
       fun h ↦ ⟨h.1, le_antisymm h.2 (transportCost_le_lintegral h.1 c)⟩⟩
   rw [hset]
+  -- The sublevel set is closed by `TauCeti.isClosed_setOfPred_lintegral_le_probabilityMeasure`,
+  -- which asks the underlying space for a pseudometric; metrizability of the two factors supplies
+  -- one on the product.
+  let : PseudoMetricSpace (X × Y) :=
+    TopologicalSpace.pseudoMetrizableSpacePseudoMetric (X × Y)
   exact (isCompact_setOfPred_isCoupling (μ := ⟨μ, ‹_›⟩) (ν := ⟨ν, ‹_›⟩) hμ hν).inter_right
     (isClosed_setOfPred_lintegral_le_probabilityMeasure hc _)
+
+section Polish
+
+/-! The Polish specialisation is stated for Mathlib's `PolishSpace`, the topological notion: second
+countable and completely metrizable, with no distance chosen. -/
+
+variable {X Y : Type*} [TopologicalSpace X] [PolishSpace X] [MeasurableSpace X] [BorelSpace X]
+  [TopologicalSpace Y] [PolishSpace Y] [MeasurableSpace Y] [BorelSpace Y] {c : X × Y → ℝ≥0∞}
+
+/-- **Primal attainment on Polish spaces.** Every finite Borel measure on a Polish space is tight,
+so a lower semicontinuous cost always admits an optimal transport plan between two probability
+measures there. -/
+theorem exists_isOptimalCoupling (μ : Measure X) [IsProbabilityMeasure μ] (ν : Measure Y)
+    [IsProbabilityMeasure ν] (hc : LowerSemicontinuous c) :
+    ∃ π, IsOptimalCoupling c π μ ν :=
+  exists_isOptimalCoupling_of_isTightMeasureSet isTightMeasureSet_singleton
+    isTightMeasureSet_singleton hc
+
+/-- Primal attainment with the optimal plan delivered inside the bundled coupling type, which is
+the domain the probability transport problem is optimised over. -/
+theorem exists_coupling_isOptimalCoupling (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y)
+    (hc : LowerSemicontinuous c) :
+    ∃ π : Coupling μ ν,
+      IsOptimalCoupling c (π : ProbabilityMeasure (X × Y)).toMeasure μ.toMeasure ν.toMeasure := by
+  have hμ : IsProbabilityMeasure μ.toMeasure := μ.2
+  have hν : IsProbabilityMeasure ν.toMeasure := ν.2
+  obtain ⟨π, hπ⟩ := exists_isOptimalCoupling μ.toMeasure ν.toMeasure hc
+  have hπprob : IsProbabilityMeasure π := hπ.toIsCoupling.isProbabilityMeasure
+  exact ⟨⟨⟨π, hπprob⟩, hπ.toIsCoupling⟩, hπ⟩
 
 /-- The acceptance instance: on a Polish space the Kantorovich–Rubinstein cost `edist`, which is
 continuous and hence lower semicontinuous, admits an optimal transport plan between any two
@@ -145,5 +167,7 @@ theorem exists_isOptimalCoupling_edist_rpow {X : Type*} [MetricSpace X] [Measura
     ∃ π, IsOptimalCoupling (fun z : X × X ↦ edist z.1 z.2 ^ p) π μ ν :=
   exists_isOptimalCoupling μ ν
     ((ENNReal.continuous_rpow_const.comp continuous_edist).lowerSemicontinuous)
+
+end Polish
 
 end TauCeti

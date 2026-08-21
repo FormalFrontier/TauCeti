@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.Tight
+public import Mathlib.Topology.MetricSpace.Polish
 public import TauCeti.MeasureTheory.OptimalTransport.Coupling
 -- Proof-only: Prokhorov's theorem, which upgrades tightness to relative compactness, and the
 -- continuity of the pushforward of probability measures along a continuous map.
@@ -41,7 +42,7 @@ only when Prokhorov's theorem is applied.
 * `TauCeti.isTightMeasureSet_setOfPred_isCoupling` — the couplings of two tight measures form a
   tight family, with no topological hypothesis beyond the two topologies themselves;
 * `TauCeti.isCompact_setOfPred_isCoupling` — the couplings of `μ` and `ν` are a weakly compact set
-  once both marginals are tight, and `TauCeti.isCompact_setOfPred_isCoupling_of_completeSpace` its
+  once both marginals are tight, and `TauCeti.isCompact_setOfPred_isCoupling_of_polishSpace` its
   Polish specialisation, where tightness is automatic;
 * `TauCeti.Coupling.instCompactSpace` — the bundled coupling type is a compact space.
 
@@ -133,10 +134,14 @@ section Compact
 
 /-! Prokhorov's theorem asks the underlying space to be Hausdorff and Borel, and the direct method
 downstream asks it to be pseudometrizable, so the two factors are taken to be second countable
-Borel metric spaces: their product is then again one, which is what the theorems below need. -/
+Borel metrizable spaces: their product is then again one, which is what the theorems below need.
+Metrizability is asked of the topology, not of a chosen distance, so these statements apply to a
+space that is only known to be metrizable — in particular to a Mathlib `PolishSpace`, which carries
+no `MetricSpace` instance. -/
 
-variable {X Y : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
-  [SecondCountableTopology X] [MetricSpace Y] [MeasurableSpace Y] [BorelSpace Y]
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace.MetrizableSpace X]
+  [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X] [TopologicalSpace Y]
+  [TopologicalSpace.MetrizableSpace Y] [MeasurableSpace Y] [BorelSpace Y]
   [SecondCountableTopology Y]
 
 /-- **The couplings of two tight probability measures are weakly compact.** The set is tight by
@@ -155,22 +160,33 @@ theorem isCompact_setOfPred_isCoupling {μ : ProbabilityMeasure X} {ν : Probabi
     exact hπ
   simpa only [hclosed.closure_eq] using isCompact_closure_of_isTightMeasureSet htight
 
-/-- **The couplings of two probability measures on Polish spaces are weakly compact.** On a
-complete, second countable metric space every finite Borel measure is tight, so the tightness
-hypotheses of `TauCeti.isCompact_setOfPred_isCoupling` are automatic. This is the compactness that
-the direct method of the calculus of variations consumes. -/
-theorem isCompact_setOfPred_isCoupling_of_completeSpace [CompleteSpace X] [CompleteSpace Y]
-    (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) :
+end Compact
+
+section Polish
+
+/-! The Polish specialisation is stated for Mathlib's `PolishSpace`, the topological notion: second
+countable and completely metrizable, with no distance chosen. That is what makes the two factors
+tight and hence the coupling set compact. -/
+
+variable {X Y : Type*} [TopologicalSpace X] [PolishSpace X] [MeasurableSpace X] [BorelSpace X]
+  [TopologicalSpace Y] [PolishSpace Y] [MeasurableSpace Y] [BorelSpace Y]
+
+/-- **The couplings of two probability measures on Polish spaces are weakly compact.** On a Polish
+space every finite Borel measure is tight, so the tightness hypotheses of
+`TauCeti.isCompact_setOfPred_isCoupling` are automatic. This is the compactness that the direct
+method of the calculus of variations consumes. -/
+theorem isCompact_setOfPred_isCoupling_of_polishSpace (μ : ProbabilityMeasure X)
+    (ν : ProbabilityMeasure Y) :
     IsCompact
       {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ.toMeasure ν.toMeasure} :=
   isCompact_setOfPred_isCoupling isTightMeasureSet_singleton isTightMeasureSet_singleton
 
 /-- The bundled type of couplings of two probability measures on Polish spaces is a compact space,
 for the weak topology it inherits from the probability measures on the product. -/
-instance Coupling.instCompactSpace [CompleteSpace X] [CompleteSpace Y]
-    {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y} : CompactSpace (Coupling μ ν) :=
-  isCompact_iff_compactSpace.mp (isCompact_setOfPred_isCoupling_of_completeSpace μ ν)
+instance Coupling.instCompactSpace {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y} :
+    CompactSpace (Coupling μ ν) :=
+  isCompact_iff_compactSpace.mp (isCompact_setOfPred_isCoupling_of_polishSpace μ ν)
 
-end Compact
+end Polish
 
 end TauCeti
