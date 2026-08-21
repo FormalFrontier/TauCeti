@@ -87,7 +87,7 @@ theorem coe_rootsOfUnityScalarSL {A : Type v} [CommRing A] (ζ : rootsOfUnity n 
   rfl
 
 /-- Send a roots-of-unity point to the corresponding scalar special-linear point. -/
-@[expose] noncomputable def rootsOfUnityScalarPoints
+noncomputable def rootsOfUnityScalarPoints
     {R : Type u} [CommRing R] {A : Type v} [CommRing A] [Algebra R A] :
     WithConv (MonoidAlgebra R (Multiplicative (ZMod n)) →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R n →ₐ[R] A) :=
@@ -175,7 +175,7 @@ theorem isCentralPoint_rootsOfUnityScalarPoints
     (SpecialLinear.pointsMulEquiv (R := S) (A := B) n g).1).eq
 
 /-- The scalar roots-of-unity map with codomain restricted to the universal center. -/
-@[expose] noncomputable def rootsOfUnityScalarCenterHom
+noncomputable def rootsOfUnityScalarCenterHom
     (A : Type u) [CommRing A] [Algebra S A] :
     WithConv (MonoidAlgebra S (Multiplicative (ZMod n)) →ₐ[S] A) →*
       HopfAlgebra.center S (coordinateHopfAlgebra S n) A :=
@@ -224,7 +224,7 @@ theorem rootsOfUnityScalarCenterHom_bijective (hn : 0 < n)
 
 /-- For `0 < n`, scalar roots of unity identify `μₙ` with the universal center of `SLₙ`
 pointwise over any commutative base ring. -/
-@[expose] noncomputable def rootsOfUnityScalarCenterMulEquiv (hn : 0 < n)
+noncomputable def rootsOfUnityScalarCenterMulEquiv (hn : 0 < n)
     (A : Type u) [CommRing A] [Algebra S A] :
     WithConv (MonoidAlgebra S (Multiplicative (ZMod n)) →ₐ[S] A) ≃*
       HopfAlgebra.center S (coordinateHopfAlgebra S n) A :=
@@ -240,7 +240,7 @@ theorem rootsOfUnityScalarCenterMulEquiv_apply (hn : 0 < n)
   rfl
 
 /-- Read the root of unity from the upper-left entry of a universally central `SLₙ`-point. -/
-@[expose] noncomputable def rootsOfUnityOfCenterPoint (hn : 0 < n)
+noncomputable def rootsOfUnityOfCenterPoint (hn : 0 < n)
     {A : Type u} [CommRing A] [Algebra S A]
     (g : HopfAlgebra.center S (coordinateHopfAlgebra S n) A) : rootsOfUnity n A :=
   Matrix.SpecialLinearGroup.centerMulEquivRootsOfUnityFin n hn A
@@ -316,13 +316,16 @@ theorem rootsOfUnityScalarCenterIso_inv_apply (hn : 0 < n) (A : CommAlgCat.{u} k
           (⟨g.1, by
             rw [← CommHopfAlgCat.centerPointsSubgroup_eq_center]
             exact g.2⟩ : HopfAlgebra.center k (coordinateHopfAlgebra k n) A)) := by
+  -- This theorem establishes the public inverse-application rule. The isomorphism is assembled
+  -- from `MulEquiv.trans` and `MulEquiv.toGrpIso`, for which there is no application rewrite
+  -- lemma connecting the categorical inverse to the underlying multiplicative equivalence.
   change (rootsOfUnityScalarCenterMulEquiv (S := k) n hn A).symm _ = _
   rw [rootsOfUnityScalarCenterMulEquiv_symm_apply]
   congr 2
 
 /-- Scalar roots of unity identify the `μₙ` point functor with the represented center
 subfunctor of `SLₙ`. -/
-@[expose] noncomputable def rootsOfUnityScalarCenterNatIso (hn : 0 < n) :
+noncomputable def rootsOfUnityScalarCenterNatIso (hn : 0 < n) :
     HopfAlgebra.pointsFunctor (R := k)
         (H := MonoidAlgebra k (Multiplicative (ZMod n))) ≅
       CommHopfAlgCat.quotientPointsSubgroupFunctor
@@ -332,6 +335,9 @@ subfunctor of `SLₙ`. -/
     intro A B φ
     ext f
     apply Subtype.ext
+    -- Naturality is presented as an equality of composed `GrpCat` morphisms. There is no
+    -- rewrite lemma that lowers those compositions and their concrete coercions to applications;
+    -- `change` exposes that layer, after which the public component and value-map lemmas apply.
     change ((rootsOfUnityScalarCenterIso n hn B).hom
         (AlgHom.mapValue φ.hom f)).1 =
       AlgHom.mapValue φ.hom ((rootsOfUnityScalarCenterIso n hn A).hom f).1
@@ -379,7 +385,7 @@ theorem rootsOfUnityScalarCenterNatIso_inv_app_apply
 
 /-- The point functor of `μₙ` is naturally isomorphic to the point functor represented by the
 center coordinate Hopf algebra of `SLₙ`. -/
-@[expose] noncomputable def rootsOfUnityScalarCenterCoordinatePointsNatIso (hn : 0 < n) :
+noncomputable def rootsOfUnityScalarCenterCoordinatePointsNatIso (hn : 0 < n) :
     (CommHopfAlgCat.pointsFunctor (R := k)).obj
         (Opposite.op (CommHopfAlgCat.of k
           (MonoidAlgebra k (Multiplicative (ZMod n))))) ≅
@@ -390,26 +396,6 @@ center coordinate Hopf algebra of `SLₙ`. -/
     (CommHopfAlgCat.quotientPointsSubgroupNatIso
       (coordinateHopfAlgebra k n)
       (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))).symm
-
-/-- The forward coordinate-center natural transformation first sends a root of unity to the
-represented center and then lifts that center point through the quotient coordinate algebra. -/
-theorem rootsOfUnityScalarCenterCoordinatePointsNatIso_hom (hn : 0 < n) :
-    (rootsOfUnityScalarCenterCoordinatePointsNatIso n hn).hom =
-      (rootsOfUnityScalarCenterNatIso n hn).hom ≫
-        (CommHopfAlgCat.quotientPointsSubgroupNatIso
-          (coordinateHopfAlgebra k n)
-          (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))).inv :=
-  Iso.trans_hom _ _
-
-/-- The inverse coordinate-center natural transformation includes a quotient point into `SLₙ`
-and then reads off its root of unity. -/
-theorem rootsOfUnityScalarCenterCoordinatePointsNatIso_inv (hn : 0 < n) :
-    (rootsOfUnityScalarCenterCoordinatePointsNatIso n hn).inv =
-      (CommHopfAlgCat.quotientPointsSubgroupNatIso
-        (coordinateHopfAlgebra k n)
-        (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))).hom ≫
-          (rootsOfUnityScalarCenterNatIso n hn).inv :=
-  Iso.trans_inv _ _
 
 /-- For `0 < n`, the coordinate Hopf algebra of the center of `SLₙ` is the group algebra of
 `Multiplicative (ZMod n)`, the coordinate Hopf algebra of `μₙ`. -/
