@@ -23,8 +23,10 @@ and its companion `TauCeti.halfOneAdd R (-ω) = ½ (1 - ω)` always add up to `1
 (`TauCeti.halfOneAdd_add_halfOneAdd_neg`) and always differ by `ω`
 (`TauCeti.halfOneAdd_sub_halfOneAdd_neg`). As soon as `ω * ω = 1` they are moreover orthogonal
 (`TauCeti.halfOneAdd_mul_halfOneAdd_neg`) and therefore idempotent
-(`TauCeti.isIdempotentElem_halfOneAdd`), so a square root of one splits `A` as a product of the two
-two-sided ideals it cuts out. If `ω` also commutes with a given element then so do both idempotents
+(`TauCeti.isIdempotentElem_halfOneAdd`): a square root of one always cuts out a **complementary
+orthogonal pair** of idempotents. The left ideals `e₊ A` and `e₋ A` are two-sided, and the
+resulting decomposition is one of rings, only when the idempotents are central, which is more than
+this file assumes. If `ω` commutes with a given element then so do both idempotents
 (`TauCeti.commute_halfOneAdd`), and elements written in the form `e₊ a + e₋ b` then multiply
 componentwise (`TauCeti.halfOneAdd_mul_add_mul`).
 
@@ -59,7 +61,7 @@ variable (R : Type*) {A : Type*} [CommRing R] [Ring A] [Algebra R A] [Invertible
 
 /-- The element `½ (1 + ω)` of an `R`-algebra, for `2` invertible in `R`.
 
-It is idempotent exactly when `ω * ω = 1` (`TauCeti.isIdempotentElem_halfOneAdd`), and then
+It is idempotent when `ω * ω = 1` (`TauCeti.isIdempotentElem_halfOneAdd`), and then
 `halfOneAdd R (-ω) = ½ (1 - ω)` is the complementary idempotent. No property of `ω` is built into
 the definition, so that the two idempotents are literally the same construction applied to `ω` and
 to `-ω`. -/

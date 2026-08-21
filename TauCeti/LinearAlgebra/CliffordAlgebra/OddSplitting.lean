@@ -9,7 +9,6 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 public import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
 public import TauCeti.RingTheory.Idempotents.SquareRootOne
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
-public import Mathlib.LinearAlgebra.CliffordAlgebra.Grading
 public import Mathlib.FieldTheory.IsSepClosed
 
 -- Private: the grade involution is used only inside proofs.
@@ -23,16 +22,20 @@ algebra in two. The elements
 
 `e₊ = ½ (1 + ω)`,  `e₋ = ½ (1 - ω)`
 
-are complementary orthogonal central idempotents — that much is general algebra, recorded for an
-arbitrary `R`-algebra in `TauCeti/RingTheory/Idempotents/SquareRootOne.lean` — and the resulting
-decomposition `Cliff(Q) = e₊ Cliff(Q) ⊕ e₋ Cliff(Q)` has both summands isomorphic to the **even
-subalgebra**: the map
+are complementary orthogonal idempotents — central as soon as `ω` is, and that much is general
+algebra, recorded for an arbitrary `R`-algebra in
+`TauCeti/RingTheory/Idempotents/SquareRootOne.lean` — and the resulting decomposition
+`Cliff(Q) = e₊ Cliff(Q) ⊕ e₋ Cliff(Q)` has both summands isomorphic to the **even subalgebra**: the
+map
 
 `CliffordAlgebra.ofEvenProd : even Q × even Q →ₐ[R] CliffordAlgebra Q`,
 `(x, y) ↦ e₊ x + e₋ y`
 
 is an isomorphism of `R`-algebras. That is the content of this file, and it needs nothing beyond
-`2` being invertible — no field, no finiteness, no nondegeneracy.
+`2` being invertible — no field, no finiteness, no nondegeneracy. Centrality is more than the
+proofs use: multiplication only ever moves `ω` past even elements, so the declarations below ask
+only that `ω` commute with `even Q`, and it is the volume element application that supplies a
+genuinely central `ω`.
 
 Both halves of the proof are short once the grade involution `CliffordAlgebra.involute` is brought
 in. *Injectivity* is the statement that an even `x` with `e₊ x = 0` vanishes: from `x + ω x = 0`,
@@ -84,6 +87,9 @@ Clifford algebra of an even-dimensional one is a separate step and is not carrie
   is zero — the grade involution argument that makes the splitting injective.
 * `CliffordAlgebra.ofEvenProd_injective` and `CliffordAlgebra.ofEvenProd_surjective`: the two halves
   of `CliffordAlgebra.equivEvenProd`.
+* `CliffordAlgebra.coe_equivEvenProd_apply_fst` and `CliffordAlgebra.coe_equivEvenProd_apply_snd`:
+  the forward direction of the splitting, `x ↦ (e₊ x + e₋ x̂, e₋ x + e₊ x̂)` with `x̂` the grade
+  involution of `x`.
 * `CliffordAlgebra.nonempty_algEquiv_even_prod_of_isSepClosed`: over a separably closed field of
   characteristic not two, an orthogonal spanning list of odd length with no isotropic member always
   normalizes, so the Clifford algebra is a product of two copies of its even subalgebra. The
@@ -95,8 +101,10 @@ Clifford algebra of an even-dimensional one is a separate step and is not carrie
 `CliffordAlgebra.equivEvenProd` is oriented `CliffordAlgebra Q ≃ₐ[R] even Q × even Q`, matching
 `CliffordAlgebra.equivEven` and the direction in which the structure theorem is usually quoted; its
 underlying algebra map `CliffordAlgebra.ofEvenProd` runs the other way, which is the direction in
-which the formula `(x, y) ↦ e₊ x + e₋ y` is the readable one, so the evaluation lemmas are stated
-for `.symm`.
+which the formula `(x, y) ↦ e₊ x + e₋ y` is the readable one, so that formula is stated for
+`.symm`. The forward direction is read off the same two idempotents together with the grade
+involution, one lemma per component, stated at the level of the underlying Clifford element so that
+no membership proof has to appear in the statement.
 
 ## References
 
@@ -152,11 +160,15 @@ theorem eq_zero_of_mem_even_of_halfOneAdd_mul_eq_zero (hodd : ω ∈ evenOdd Q 1
 
 variable (Q ω) in
 /-- **The splitting map**: `(x, y) ↦ ½ (1 + ω) x + ½ (1 - ω) y` from two copies of the even
-subalgebra to the whole Clifford algebra, for a central `ω` squaring to `1`.
+subalgebra to the whole Clifford algebra, for an `ω` squaring to `1` which commutes with the even
+subalgebra. Multiplication only ever moves `ω` past the two even components, so commutation with
+`even Q` is all that is asked; a central `ω` — the case the volume element supplies — is a
+special case.
 
 The proofs are `Prop` arguments, so two instances built from different proofs of the same
 hypotheses are equal by proof irrelevance. -/
-noncomputable def ofEvenProd (hcomm : ∀ x, Commute ω x) (hsq : ω * ω = 1) :
+noncomputable def ofEvenProd (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hsq : ω * ω = 1) :
     (↥(even Q) × ↥(even Q)) →ₐ[R] CliffordAlgebra Q where
   toFun p := halfOneAdd R ω * (p.1 : CliffordAlgebra Q)
     + halfOneAdd R (-ω) * (p.2 : CliffordAlgebra Q)
@@ -174,16 +186,17 @@ noncomputable def ofEvenProd (hcomm : ∀ x, Commute ω x) (hsq : ω * ω = 1) :
 
 variable (Q ω) in
 @[simp]
-theorem ofEvenProd_apply (hcomm : ∀ x, Commute ω x) (hsq : ω * ω = 1)
-    (p : ↥(even Q) × ↥(even Q)) :
+theorem ofEvenProd_apply (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hsq : ω * ω = 1) (p : ↥(even Q) × ↥(even Q)) :
     ofEvenProd Q ω hcomm hsq p
       = halfOneAdd R ω * (p.1 : CliffordAlgebra Q)
         + halfOneAdd R (-ω) * (p.2 : CliffordAlgebra Q) := (rfl)
 
 /-- The splitting map is injective: multiplying by one idempotent isolates one component, and
 `CliffordAlgebra.eq_zero_of_mem_even_of_halfOneAdd_mul_eq_zero` kills it. -/
-theorem ofEvenProd_injective (hcomm : ∀ x, Commute ω x) (hodd : ω ∈ evenOdd Q 1)
-    (hsq : ω * ω = 1) : Function.Injective (ofEvenProd Q ω hcomm hsq) := by
+theorem ofEvenProd_injective (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hodd : ω ∈ evenOdd Q 1) (hsq : ω * ω = 1) :
+    Function.Injective (ofEvenProd Q ω hcomm hsq) := by
   have hodd' : -ω ∈ evenOdd Q 1 := Submodule.neg_mem _ hodd
   have hee := (TauCeti.isIdempotentElem_halfOneAdd R hsq).eq
   have hff := (TauCeti.isIdempotentElem_halfOneAdd_neg R hsq).eq
@@ -212,14 +225,17 @@ theorem ofEvenProd_injective (hcomm : ∀ x, Commute ω x) (hodd : ω ∈ evenOd
 
 /-- The splitting map is surjective: its range is a subalgebra containing every generator
 `ι Q v`, because `ω · ι Q v` is even and `(e₊ - e₋) ω = ω² = 1`. -/
-theorem ofEvenProd_surjective (hcomm : ∀ x, Commute ω x) (hodd : ω ∈ evenOdd Q 1)
-    (hsq : ω * ω = 1) : Function.Surjective (ofEvenProd Q ω hcomm hsq) := by
+theorem ofEvenProd_surjective (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hodd : ω ∈ evenOdd Q 1) (hsq : ω * ω = 1) :
+    Function.Surjective (ofEvenProd Q ω hcomm hsq) := by
   rw [← AlgHom.range_eq_top, eq_top_iff, ← adjoin_range_ι (Q := Q)]
   refine Algebra.adjoin_le ?_
   rintro _ ⟨v, rfl⟩
   have hev : ω * ι Q v ∈ even Q := by
+    -- odd times odd is even: the two degrees add up to `0` in `ZMod 2`.
+    have hdeg : (1 : ZMod 2) + 1 = 0 := by decide
     have h := SetLike.mul_mem_graded hodd (ι_mem_evenOdd_one Q v)
-    rw [show (1 : ZMod 2) + 1 = 0 by decide, ← even_toSubmodule Q] at h
+    rw [hdeg, ← even_toSubmodule Q] at h
     exact h
   refine (ofEvenProd Q ω hcomm hsq).mem_range.mpr
     ⟨(⟨ω * ι Q v, hev⟩, ⟨-(ω * ι Q v), neg_mem hev⟩), ?_⟩
@@ -230,21 +246,86 @@ theorem ofEvenProd_surjective (hcomm : ∀ x, Commute ω x) (hodd : ω ∈ evenO
     _ = ι Q v := by
         rw [TauCeti.halfOneAdd_sub_halfOneAdd_neg, ← mul_assoc, hsq, one_mul]
 
+/-- The two halves together: the splitting map is bijective. -/
+theorem ofEvenProd_bijective (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hodd : ω ∈ evenOdd Q 1) (hsq : ω * ω = 1) :
+    Function.Bijective (ofEvenProd Q ω hcomm hsq) :=
+  ⟨ofEvenProd_injective hcomm hodd hsq, ofEvenProd_surjective hcomm hodd hsq⟩
+
 variable (Q ω) in
-/-- **The splitting**: a central odd `ω` with `ω * ω = 1` presents the Clifford algebra as two
-copies of its even subalgebra, glued along the complementary central idempotents `½ (1 ± ω)`. -/
-noncomputable def equivEvenProd (hcomm : ∀ x, Commute ω x) (hodd : ω ∈ evenOdd Q 1)
-    (hsq : ω * ω = 1) : CliffordAlgebra Q ≃ₐ[R] (↥(even Q) × ↥(even Q)) :=
-  (AlgEquiv.ofBijective (ofEvenProd Q ω hcomm hsq)
-    ⟨ofEvenProd_injective hcomm hodd hsq, ofEvenProd_surjective hcomm hodd hsq⟩).symm
+/-- **The splitting**: an odd `ω` with `ω * ω = 1` commuting with the even subalgebra presents the
+Clifford algebra as two copies of that subalgebra, glued along the complementary idempotents
+`½ (1 ± ω)`. -/
+noncomputable def equivEvenProd (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hodd : ω ∈ evenOdd Q 1) (hsq : ω * ω = 1) :
+    CliffordAlgebra Q ≃ₐ[R] (↥(even Q) × ↥(even Q)) :=
+  (AlgEquiv.ofBijective (ofEvenProd Q ω hcomm hsq) (ofEvenProd_bijective hcomm hodd hsq)).symm
 
 variable (Q ω) in
 @[simp]
-theorem equivEvenProd_symm_apply (hcomm : ∀ x, Commute ω x) (hodd : ω ∈ evenOdd Q 1)
-    (hsq : ω * ω = 1) (p : ↥(even Q) × ↥(even Q)) :
+theorem equivEvenProd_symm_apply (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q))
+    (hodd : ω ∈ evenOdd Q 1) (hsq : ω * ω = 1) (p : ↥(even Q) × ↥(even Q)) :
     (equivEvenProd Q ω hcomm hodd hsq).symm p
       = halfOneAdd R ω * (p.1 : CliffordAlgebra Q)
-        + halfOneAdd R (-ω) * (p.2 : CliffordAlgebra Q) := (rfl)
+        + halfOneAdd R (-ω) * (p.2 : CliffordAlgebra Q) := by
+  rw [equivEvenProd, AlgEquiv.symm_symm, AlgEquiv.ofBijective_apply, ofEvenProd_apply]
+
+/-- The grade involution swaps the two idempotents, for `ω` odd. -/
+theorem involute_halfOneAdd (hodd : ω ∈ evenOdd Q 1) :
+    involute (halfOneAdd R ω) = halfOneAdd R (-ω) := by
+  rw [TauCeti.halfOneAdd_def, TauCeti.halfOneAdd_def, map_smul, map_add, map_one,
+    involute_eq_of_mem_odd hodd]
+
+/-- The grade involution swaps the two idempotents, read in the other direction. -/
+theorem involute_halfOneAdd_neg (hodd : ω ∈ evenOdd Q 1) :
+    involute (halfOneAdd R (-ω)) = halfOneAdd R ω := by
+  rw [involute_halfOneAdd (Submodule.neg_mem _ hodd), neg_neg]
+
+variable (Q ω) in
+/-- **The first component of the splitting**: `x ↦ ½ (1 + ω) x + ½ (1 - ω) x̂`, where `x̂` is the
+grade involution of `x`. Together with `CliffordAlgebra.coe_equivEvenProd_apply_snd` this reads the
+forward direction off the same idempotents the inverse is built from. -/
+@[simp]
+theorem coe_equivEvenProd_apply_fst
+    (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q)) (hodd : ω ∈ evenOdd Q 1)
+    (hsq : ω * ω = 1) (x : CliffordAlgebra Q) :
+    ((equivEvenProd Q ω hcomm hodd hsq x).1 : CliffordAlgebra Q)
+      = halfOneAdd R ω * x + halfOneAdd R (-ω) * involute x := by
+  obtain ⟨p, rfl⟩ := (equivEvenProd Q ω hcomm hodd hsq).symm.surjective x
+  obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := p
+  rw [AlgEquiv.apply_symm_apply, equivEvenProd_symm_apply]
+  have ha' : involute a = a := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact ha)
+  have hb' : involute b = b := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact hb)
+  have hee := (TauCeti.isIdempotentElem_halfOneAdd R hsq).eq
+  have hff := (TauCeti.isIdempotentElem_halfOneAdd_neg R hsq).eq
+  have hef := TauCeti.halfOneAdd_mul_halfOneAdd_neg R hsq
+  have hfe := TauCeti.halfOneAdd_neg_mul_halfOneAdd R hsq
+  simp only [map_add, map_mul, ha', hb', involute_halfOneAdd hodd,
+    involute_halfOneAdd_neg hodd, mul_add, ← mul_assoc, hee, hff, hef, hfe, zero_mul, add_zero]
+  rw [← add_mul, TauCeti.halfOneAdd_add_halfOneAdd_neg, one_mul]
+
+variable (Q ω) in
+/-- **The second component of the splitting**: `x ↦ ½ (1 - ω) x + ½ (1 + ω) x̂`, the first component
+read at `-ω`. -/
+@[simp]
+theorem coe_equivEvenProd_apply_snd
+    (hcomm : ∀ x : ↥(even Q), Commute ω (x : CliffordAlgebra Q)) (hodd : ω ∈ evenOdd Q 1)
+    (hsq : ω * ω = 1) (x : CliffordAlgebra Q) :
+    ((equivEvenProd Q ω hcomm hodd hsq x).2 : CliffordAlgebra Q)
+      = halfOneAdd R (-ω) * x + halfOneAdd R ω * involute x := by
+  obtain ⟨p, rfl⟩ := (equivEvenProd Q ω hcomm hodd hsq).symm.surjective x
+  obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := p
+  rw [AlgEquiv.apply_symm_apply, equivEvenProd_symm_apply]
+  have ha' : involute a = a := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact ha)
+  have hb' : involute b = b := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact hb)
+  have hee := (TauCeti.isIdempotentElem_halfOneAdd R hsq).eq
+  have hff := (TauCeti.isIdempotentElem_halfOneAdd_neg R hsq).eq
+  have hef := TauCeti.halfOneAdd_mul_halfOneAdd_neg R hsq
+  have hfe := TauCeti.halfOneAdd_neg_mul_halfOneAdd R hsq
+  simp only [map_add, map_mul, ha', hb', involute_halfOneAdd hodd,
+    involute_halfOneAdd_neg hodd, mul_add, ← mul_assoc, hee, hff, hef, hfe, zero_mul, zero_add]
+  rw [← add_mul, add_comm (halfOneAdd R (-ω)) (halfOneAdd R ω),
+    TauCeti.halfOneAdd_add_halfOneAdd_neg, one_mul]
 
 end Splitting
 
@@ -265,11 +346,14 @@ noncomputable def equivEvenProdOfOddLength {l : List M} (hl : l.Pairwise Q.IsOrt
     CliffordAlgebra Q ≃ₐ[R] (↥(even Q) × ↥(even Q)) :=
   equivEvenProd Q (s • (l.map (ι Q)).prod)
     (fun x => (Subalgebra.mem_center_iff.mp
-      (Subalgebra.smul_mem _ (prod_map_ι_mem_center_of_odd_length hl hlen hspan) s) x).symm)
+      (Subalgebra.smul_mem _ (prod_map_ι_mem_center_of_odd_length hl hlen hspan) s)
+        (x : CliffordAlgebra Q)).symm)
     (Submodule.smul_mem _ s (prod_map_ι_mem_evenOdd_one_of_odd_length hlen))
     (by rw [smul_mul_assoc, mul_smul_comm, prod_map_ι_sq_scalar hl, smul_smul, Algebra.smul_def,
       ← map_mul, hs, map_one])
 
+/-- The inverse of `CliffordAlgebra.equivEvenProdOfOddLength`, read off
+`CliffordAlgebra.equivEvenProd_symm_apply` at the rescaled volume element. -/
 @[simp]
 theorem equivEvenProdOfOddLength_symm_apply {l : List M} (hl : l.Pairwise Q.IsOrtho)
     (hlen : Odd l.length) (hspan : Submodule.span R {x : M | x ∈ l} = ⊤) {s : R}
@@ -277,7 +361,30 @@ theorem equivEvenProdOfOddLength_symm_apply {l : List M} (hl : l.Pairwise Q.IsOr
     (p : ↥(even Q) × ↥(even Q)) :
     (equivEvenProdOfOddLength hl hlen hspan hs).symm p
       = halfOneAdd R (s • (l.map (ι Q)).prod) * (p.1 : CliffordAlgebra Q)
-        + halfOneAdd R (-(s • (l.map (ι Q)).prod)) * (p.2 : CliffordAlgebra Q) := (rfl)
+        + halfOneAdd R (-(s • (l.map (ι Q)).prod)) * (p.2 : CliffordAlgebra Q) :=
+  equivEvenProd_symm_apply Q (s • (l.map (ι Q)).prod) _ _ _ p
+
+/-- The first component of `CliffordAlgebra.equivEvenProdOfOddLength`, read off
+`CliffordAlgebra.coe_equivEvenProd_apply_fst` at the rescaled volume element. -/
+@[simp]
+theorem coe_equivEvenProdOfOddLength_apply_fst {l : List M} (hl : l.Pairwise Q.IsOrtho)
+    (hlen : Odd l.length) (hspan : Submodule.span R {x : M | x ∈ l} = ⊤) {s : R}
+    (hs : s * s * ((-1 : R) ^ l.length.choose 2 * (l.map Q).prod) = 1) (x : CliffordAlgebra Q) :
+    ((equivEvenProdOfOddLength hl hlen hspan hs x).1 : CliffordAlgebra Q)
+      = halfOneAdd R (s • (l.map (ι Q)).prod) * x
+        + halfOneAdd R (-(s • (l.map (ι Q)).prod)) * involute x :=
+  coe_equivEvenProd_apply_fst Q (s • (l.map (ι Q)).prod) _ _ _ x
+
+/-- The second component of `CliffordAlgebra.equivEvenProdOfOddLength`, read off
+`CliffordAlgebra.coe_equivEvenProd_apply_snd` at the rescaled volume element. -/
+@[simp]
+theorem coe_equivEvenProdOfOddLength_apply_snd {l : List M} (hl : l.Pairwise Q.IsOrtho)
+    (hlen : Odd l.length) (hspan : Submodule.span R {x : M | x ∈ l} = ⊤) {s : R}
+    (hs : s * s * ((-1 : R) ^ l.length.choose 2 * (l.map Q).prod) = 1) (x : CliffordAlgebra Q) :
+    ((equivEvenProdOfOddLength hl hlen hspan hs x).2 : CliffordAlgebra Q)
+      = halfOneAdd R (-(s • (l.map (ι Q)).prod)) * x
+        + halfOneAdd R (s • (l.map (ι Q)).prod) * involute x :=
+  coe_equivEvenProd_apply_snd Q (s • (l.map (ι Q)).prod) _ _ _ x
 
 /-- **Over a separably closed field of characteristic not two the normalization is automatic.**
 
@@ -288,11 +395,11 @@ root is only known to exist, so the conclusion is a `Nonempty`; fixing a root an
 `CliffordAlgebra.equivEvenProdOfOddLength` names the isomorphism. This is the odd-dimensional half
 of the structure theorem, up to the identification of the even subalgebra with a matrix algebra. -/
 theorem nonempty_algEquiv_even_prod_of_isSepClosed {K V : Type*} [Field K] [IsSepClosed K]
-    [AddCommGroup V] [Module K V] [Invertible (2 : K)] {Q : QuadraticForm K V} {l : List V}
+    [AddCommGroup V] [Module K V] [NeZero (2 : K)] {Q : QuadraticForm K V} {l : List V}
     (hl : l.Pairwise Q.IsOrtho) (hlen : Odd l.length)
     (hspan : Submodule.span K {x : V | x ∈ l} = ⊤) (hQ : ∀ v ∈ l, Q v ≠ 0) :
     Nonempty (CliffordAlgebra Q ≃ₐ[K] (↥(even Q) × ↥(even Q))) := by
-  have h2 : NeZero (2 : K) := ⟨Invertible.ne_zero 2⟩
+  have _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
   set c : K := (-1 : K) ^ l.length.choose 2 * (l.map Q).prod
   have hprod : (l.map Q).prod ≠ 0 := by
     refine List.prod_ne_zero ?_
