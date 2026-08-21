@@ -64,7 +64,16 @@ highest weight modules `L(λ)` and of the invariant form on weights, neither of 
 
 ## References
 
-* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §6.2.
+* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 1--3*, Chapter I, §3, no. 7 ("Casimir
+  element"), Proposition 11: given an invariant bilinear form whose restriction to an ideal `a` is
+  nondegenerate, the element `c = Σᵢ eᵢ eᵢ'` built from a basis of `a` and the dual basis of `a`
+  is independent of that basis and commutes with the whole Lie algebra.  Taking `a` to be all of
+  `L` and the form to be the Killing form gives the two statements proved here; Bourbaki is
+  strictly more general, since the form may be degenerate on `L` and the sum then runs over a basis
+  of the proper ideal `a`, which is beyond the generality noted above.
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §6.2, which builds
+  the Casimir element of the trace form of a faithful representation of a semisimple Lie algebra;
+  the Killing form is the case of the adjoint representation.
 * [Highest weight roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md),
   Layer 5, "The Casimir element".
 -/
