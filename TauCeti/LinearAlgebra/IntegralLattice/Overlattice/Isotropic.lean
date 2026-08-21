@@ -156,8 +156,8 @@ theorem IsIntegral.toIntegralLattice_form (hM : IsIntegral M) :
 
 /-- Regarding the lattice itself as an intermediate carrier returns the lattice. -/
 @[simp]
-theorem IsIntegral.toIntegralLattice_bot [(⊥ : L.IntermediateCarrier).1.IsLattice ℚ]
-    (hM : IsIntegral (⊥ : L.IntermediateCarrier)) : hM.toIntegralLattice = L :=
+theorem IsIntegral.toIntegralLattice_bot (hM : IsIntegral (⊥ : L.IntermediateCarrier)) :
+    hM.toIntegralLattice = L :=
   IntegralLattice.ext
     (by rw [hM.toIntegralLattice_carrier, Set.Icc.coe_bot]) hM.toIntegralLattice_form
 
