@@ -52,7 +52,6 @@ theorem germSection_apply (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x 
     germSection F U s x = ⟨x, F.germ U x x.2 s⟩ :=
   (rfl)
 
-@[simp]
 theorem base_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x : U) :
     (germSection F U s x).base = x :=
   (rfl)
