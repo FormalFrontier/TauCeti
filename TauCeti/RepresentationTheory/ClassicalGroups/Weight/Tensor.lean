@@ -195,6 +195,7 @@ one-dimensional representation on which the torus acts by the character of the c
 `m`. Nothing beyond this translation of weight spaces is claimed: it is the computation underlying
 the classification of the irreducible rational representations of `GL n` as `det`-twists of the
 polynomial ones, which is not proved here. -/
+@[simp]
 theorem weightSpace_tprod_detPowerRep (ρ : Representation k (GL (Fin n) k) W) (m : ℤ)
     (l : Fin n → ℤ) :
     weightSpace (ρ.tprod (detPowerRep k n m)) l
@@ -238,12 +239,11 @@ theorem weightSpace_tprod (hchar : Function.Injective (weightChar k (κ := Fin n
 /-- **A tensor product of weight-decomposed representations is weight-decomposed.** Only the
 spanning half of the hypothesis on each factor is needed: once weights are separated, the
 independence of the weight spaces of the tensor product is automatic
-(`TauCeti.iSupIndep_weightSpace`). -/
+(`TauCeti.isInternal_weightSpace_of_iSup_eq_top`). -/
 theorem isInternal_weightSpace_tprod (hchar : Function.Injective (weightChar k (κ := Fin n)))
     (hρ : ⨆ a : Fin n → ℤ, weightSpace ρ a = ⊤) (hσ : ⨆ b : Fin n → ℤ, weightSpace σ b = ⊤) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (ρ.tprod σ) l :=
-  (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-    ⟨iSupIndep_weightSpace hchar _, iSup_weightSpace_tprod_eq_top hρ hσ⟩
+  isInternal_weightSpace_of_iSup_eq_top hchar (iSup_weightSpace_tprod_eq_top hρ hσ)
 
 end Field
 
