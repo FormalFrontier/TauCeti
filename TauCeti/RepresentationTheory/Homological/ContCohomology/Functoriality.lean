@@ -23,6 +23,9 @@ the continuous-cohomology theory uses, each with its composition law:
 * **inflation** along a quotient map `G → G ⧸ N` for a normal subgroup `N`, with the invariants
   `Xᴺ` of `TopRep.quotientToInvariants` as coefficients.
 
+Each of the three carries its defining equation — `coeffMap_def`, `res_def` and `infl_def` — which
+identifies it with the compatible pair it specialises `ContinuousCohomology.map` at.
+
 Restriction and inflation are natural in the coefficients, and this is recorded by the two natural
 transformations `resNatTrans` and `inflNatTrans`, matching the shape of Mathlib's discrete
 `groupCohomology.resNatTrans` and `groupCohomology.infNatTrans`.
@@ -81,6 +84,12 @@ noncomputable def coeffMap {X Y : TopRep R G} (f : X ⟶ Y) (n : ℕ) :
     continuousCohomology n X ⟶ continuousCohomology n Y :=
   _root_.ContinuousCohomology.map (X := X) (ContinuousMonoidHom.id G) f n
 
+-- Not `@[simp]`: `coeffMap` is the intended normal form, and this lemma unfolds it.
+/-- The defining equation of `coeffMap`: it is `ContinuousCohomology.map` at `φ = id`. -/
+theorem coeffMap_def {X Y : TopRep R G} (f : X ⟶ Y) (n : ℕ) :
+    coeffMap f n = _root_.ContinuousCohomology.map (X := X) (ContinuousMonoidHom.id G) f n :=
+  (rfl)
+
 @[simp]
 theorem coeffMap_id (X : TopRep R G) (n : ℕ) : coeffMap (𝟙 X) n = 𝟙 _ :=
   _root_.ContinuousCohomology.map_id X n
@@ -98,7 +107,7 @@ variable (G)
 
 -- Exposed: the generated `@[simps]` field lemmas are `rfl`-proofs about this body.
 /-- The `n`-th continuous cohomology of a topological group `G` as a functor in the coefficients.
-Its action on morphisms is `coeffMap`. -/
+Its action on morphisms is `coeffMap`; the continuous counterpart of `groupCohomology.functor`. -/
 @[expose, simps]
 noncomputable def continuousCohomologyFunctor (n : ℕ) : TopRep R G ⥤ TopModuleCat R where
   obj X := continuousCohomology n X
@@ -119,6 +128,14 @@ noncomputable def res (X : TopRep R G) (n : ℕ) :
     continuousCohomology n X ⟶
       continuousCohomology n (TopRep.res (S.subtype : S →* G) X) :=
   _root_.ContinuousCohomology.map (ContinuousMonoidHom.subgroupSubtype S) (𝟙 _) n
+
+-- Not `@[simp]`: `res` is the intended normal form, and this lemma unfolds it.
+/-- The defining equation of `res`: it is `ContinuousCohomology.map` for the compatible pair
+consisting of the inclusion `S ↪ G` and the identity of the coefficients. -/
+theorem res_def (X : TopRep R G) (n : ℕ) :
+    res S X n = _root_.ContinuousCohomology.map (X := X)
+      (ContinuousMonoidHom.subgroupSubtype S) (𝟙 (TopRep.res (S.subtype : S →* G) X)) n :=
+  (rfl)
 
 /-- Restriction is natural in the coefficients. -/
 @[reassoc]
@@ -171,6 +188,14 @@ noncomputable def infl (X : TopRep R G) (n : ℕ) :
     continuousCohomology n (TopRep.quotientToInvariants X N) ⟶ continuousCohomology n X :=
   _root_.ContinuousCohomology.map (ContinuousMonoidHom.quotientMk N)
     (TopRep.quotientToInvariantsι X N) n
+
+-- Not `@[simp]`: `infl` is the intended normal form, and this lemma unfolds it.
+/-- The defining equation of `infl`: it is `ContinuousCohomology.map` for the compatible pair
+consisting of the quotient homomorphism `G → G ⧸ N` and the inclusion `Xᴺ ↪ X`. -/
+theorem infl_def (X : TopRep R G) (n : ℕ) :
+    infl N X n = _root_.ContinuousCohomology.map (ContinuousMonoidHom.quotientMk N)
+      (TopRep.quotientToInvariantsι X N) n :=
+  (rfl)
 
 /-- Inflation is natural in the coefficients. -/
 @[reassoc]
