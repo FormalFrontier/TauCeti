@@ -65,8 +65,9 @@ reindexing `normEDS_mul_complEDS_div` (`:1350`) is ported here too, under its so
 That reverses an earlier decision recorded in this file, and the reason is worth keeping: the
 reindexing was left out because what consumers took from it was the divisibility, stated directly
 here as `normEDS_dvd_normEDS_mul` and `isDvdSequence_normEDS`, so it had no call site. It has
-eight now: the reduced-invariant cancellation in `ReducedInvariant.lean` reindexes one or two
-complements through it in each of its six residue branches. The source file's
+nine now: the reduced-invariant cancellation in `ReducedInvariant.lean` reindexes one or two
+complements through it in each of its six residue branches — once each for the residues `0`, `1`
+and `5`, twice each for `2`, `3` and `4`. The source file's
 header reads `Authors: David Kurniadi Angdinata`; following this repository's convention for
 adapted material the upstream authorship is credited here rather than in the copyright header.
 
@@ -171,12 +172,11 @@ theorem isDvdSequence_normEDS (b c d : R) : IsDvdSequence (normEDS b c d) := by
 
 /-- **The complement at a divisor.** When `k ∣ n`, the `k`-complement at index `n / k` multiplies
 `normEDS b c d k` back up to `normEDS b c d n`. This is the divisor-indexed form of
-`normEDS_mul_complEDS` (`Complement.lean`), which is stated at `n * k`; `Int.ediv_mul_cancel` is
+`normEDS_mul_complEDS`, which is stated at `n * k`; `Int.ediv_mul_cancel` is
 what converts between the two. Unconditional, like the identity it rests on.
 
-Its consumers are the six residue branches of
-`IsEllipticNet.invarDenom_normEDS_one_eq_reducedInvarDenom_mul`, each of which reindexes one
-complement this way. -/
+Its one consumer is `IsEllipticNet.invarDenom_normEDS_one_eq_reducedInvarDenom_mul`; the module
+docstring records how often each of its residue branches goes through this. -/
 theorem normEDS_mul_complEDS_div (k n : ℤ) (hn : k ∣ n) :
     normEDS b c d k * complEDS b c d k (n / k) = normEDS b c d n := by
   rw [normEDS_mul_complEDS, Int.ediv_mul_cancel hn]
