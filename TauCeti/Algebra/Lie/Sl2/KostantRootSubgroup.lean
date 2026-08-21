@@ -19,7 +19,6 @@ coordinate lattice, so both resulting root-subgroup morphisms are closed immersi
 
 * `TauCeti.Sl2Std.integralLatticeAddSubgroupBasis`: the coordinate basis of the standard integral
   lattice, viewed as an additive subgroup.
-* `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent.
 * `TauCeti.Sl2Std.exists_unit_rootStep_repEnveloping_one`: both root operators have a unit root
   step on the two-dimensional integral lattice.
 * `TauCeti.Sl2Std.isClosedImmersion_kostantRootSubgroup_one`: both associated root subgroups are
@@ -60,19 +59,6 @@ theorem coe_integralLatticeAddSubgroupBasis_apply (n : ℕ) (i : Fin (n + 1)) :
   · simp [Pi.basisFun_apply, basis_apply, hji]
 
 local notation "b" => integralLatticeAddSubgroupBasis 1
-
-/-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent. -/
-theorem isNilpotent_repEnveloping_root (i : Fin 2) :
-    IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) := by
-  fin_cases i
-  · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.zero_eta,
-      Matrix.cons_val_zero]
-    rw [repEnveloping_ι_slFinTwoBasis]
-    exact ⟨2, raise_pow_eq_zero⟩
-  · simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, Fin.mk_one,
-      Matrix.cons_val_one, Matrix.cons_val_fin_one]
-    rw [repEnveloping_ι_slFinTwoBasis]
-    exact ⟨2, lower_pow_eq_zero⟩
 
 /-- Every root operator in the standard two-dimensional `sl₂` representation has a unit root
 step on the integral coordinate basis. For the raising operator the step is `v₁ ↦ v₀`; for
@@ -122,10 +108,10 @@ theorem isClosedImmersion_kostantRootSubgroup_one (i : Fin 2) :
     IsClosedImmersion
       (kostantRootSubgroup e h ρ (integralLattice 1).toAddSubgroup
         (kostantForm_apply_mem_integralLattice 1) i
-        (isNilpotent_repEnveloping_root i) b).hom.hom.left := by
+        (isNilpotent_repEnveloping_root ℚ 1 i) b).hom.hom.left := by
   obtain ⟨r, s, c, hc, hstep, hsq⟩ := exists_unit_rootStep_repEnveloping_one i
   exact isClosedImmersion_kostantRootSubgroup e h ρ (integralLattice 1).toAddSubgroup
-    (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root i) b
+    (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root ℚ 1 i) b
     hc hstep hsq
 
 end TauCeti.Sl2Std
