@@ -277,7 +277,8 @@ theorem doubleCoset_natDiagGL_eq_iUnion_rightCosets (hp : 0 < p) (hpN : p ∣ N)
       ⋃ j : Fin p, MulOpposite.op (upperTriRep p j) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
   apply doubleCoset_eq_iUnion_rightCosets_of_forall_exists
-      ((Gamma1 N).map (mapGL ℚ)) (natDiagGL 2 ![1, p]) (upperTriRep p)
+      ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (natDiagGL 2 ![1, p]) (upperTriRep p)
   · intro g hg
     obtain ⟨γ, hγ, rfl⟩ := Subgroup.mem_map.mp hg
     obtain ⟨j, δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul hp hpN hγ

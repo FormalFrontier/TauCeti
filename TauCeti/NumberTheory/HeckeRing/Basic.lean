@@ -239,17 +239,18 @@ lemma doubleCoset_eq_iUnion_rightCosets (Γ₁ Γ₂ : Subgroup G) (g : G) :
     simpa [mul_assoc] using h
   · exact Set.subset_iUnion_of_subset ((v.out)⁻¹) (le_of_eq (by simp))
 
-/-- **A right-coset decomposition criterion.** Suppose every product `a * g` with `g ∈ Γ`
-factors as `d * rep i` with `d ∈ Γ`, and conversely every `rep i` equals `a * g` for some
-`g ∈ Γ`. Then the double coset `Γ a Γ` is the union of the right cosets `Γ · rep i`.
+/-- **A right-coset decomposition criterion.** Suppose every product `a * g` with `g ∈ Γ₂`
+factors as `d * rep i` with `d ∈ Γ₁`, and conversely every `rep i` equals `a * g` for some
+`g ∈ Γ₂`. Then the double coset `Γ₁ a Γ₂` is the union of the right cosets
+`Γ₁ · rep i`.
 
 This criterion proves coverage only; injectivity of the representative family is a separate
 property. -/
-lemma doubleCoset_eq_iUnion_rightCosets_of_forall_exists {ι : Type*} (Γ : Subgroup G) (a : G)
-    (rep : ι → G)
-    (hforward : ∀ g : G, g ∈ Γ → ∃ (i : ι) (d : G), d ∈ Γ ∧ a * g = d * rep i)
-    (hreverse : ∀ i : ι, ∃ g : G, g ∈ Γ ∧ a * g = rep i) :
-    doubleCoset a Γ Γ = ⋃ i : ι, MulOpposite.op (rep i) • (Γ : Set G) := by
+lemma doubleCoset_eq_iUnion_rightCosets_of_forall_exists {ι : Type*} (Γ₁ Γ₂ : Subgroup G)
+    (a : G) (rep : ι → G)
+    (hforward : ∀ g : G, g ∈ Γ₂ → ∃ (i : ι) (d : G), d ∈ Γ₁ ∧ a * g = d * rep i)
+    (hreverse : ∀ i : ι, ∃ g : G, g ∈ Γ₂ ∧ a * g = rep i) :
+    doubleCoset a Γ₁ Γ₂ = ⋃ i : ι, MulOpposite.op (rep i) • (Γ₁ : Set G) := by
   refine Set.Subset.antisymm (fun x hx ↦ ?_) (Set.iUnion_subset fun i x hx ↦ ?_)
   · obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := mem_doubleCoset.mp hx
     obtain ⟨i, d, hd, heq⟩ := hforward g₂ hg₂
@@ -257,7 +258,7 @@ lemma doubleCoset_eq_iUnion_rightCosets_of_forall_exists {ι : Type*} (Γ : Subg
     have hx' : g₁ * a * g₂ * (rep i)⁻¹ = g₁ * d := by
       rw [mul_assoc g₁, heq, mul_assoc, mul_inv_cancel_right]
     rw [hx']
-    exact Γ.mul_mem hg₁ hd
+    exact Γ₁.mul_mem hg₁ hd
   · obtain ⟨g, hg, hgeq⟩ := hreverse i
     refine mem_doubleCoset.mpr ⟨x * (rep i)⁻¹, (mem_rightCoset_iff _).mp hx,
       g, hg, ?_⟩

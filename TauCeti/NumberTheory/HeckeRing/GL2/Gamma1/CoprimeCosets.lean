@@ -342,7 +342,8 @@ theorem doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime (hp : p.Prime)
       ⋃ i : Option (Fin p), MulOpposite.op (primeRep σ p i) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
   apply doubleCoset_eq_iUnion_rightCosets_of_forall_exists
-      ((Gamma1 N).map (mapGL ℚ)) (natDiagGL 2 ![1, p]) (primeRep σ p)
+      ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (natDiagGL 2 ![1, p]) (primeRep σ p)
   · intro g hg
     obtain ⟨γ, hγ, rfl⟩ := Subgroup.mem_map.mp hg
     obtain ⟨i, δ, hδ, heq⟩ :=
