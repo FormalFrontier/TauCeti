@@ -122,7 +122,7 @@ theorem normCoeff_smul (c : ℂ) (f : IdealArithmeticFunction K) :
 /-- Regrouping commutes with coefficientwise complex conjugation. -/
 @[simp]
 theorem normCoeff_conj_apply (f : IdealArithmeticFunction K) (n : ℕ) :
-    normCoeff K (fun I ↦ star (f I)) n = star (normCoeff K f n) := by
+    normCoeff K (fun I ↦ (starRingEnd ℂ) (f I)) n = star (normCoeff K f n) := by
   simp only [normCoeff_apply]
   exact ((starAddEquiv : ℂ ≃+ ℂ).map_finsum_mem f (finite_normFiber K n)).symm
 
