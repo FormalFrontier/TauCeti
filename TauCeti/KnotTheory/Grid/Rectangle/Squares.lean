@@ -16,12 +16,13 @@ inside it are `GridRectangle.interior`, the product of the two open cyclic inter
 domain against which a grid state is tested for emptiness. The `O`- and `X`-markings, however,
 sit at the centres of squares, so a marked square lies inside the rectangle exactly when its
 index lies in the **half-open** cyclic interval in each direction. That domain is
-`GridRectangle.squares`, the product of the two half-open arcs
+`GridRectangle.coveredSquares`, the product of the two half-open arcs
 `Grid.cIco left right` and `Grid.cIco bottom top`.
 
-The two domains are genuinely different: `squares` has one more column and one more row than
-`interior`, namely the initial ones. `GridRectangle.interior_subset_squares` records the
-inclusion.
+When the vertical sides differ, `coveredSquares` includes the initial column in addition to the
+open column interval; when they coincide, both column sets are empty. The analogous statement
+holds for rows. `GridRectangle.interior_subset_coveredSquares` records the resulting inclusion
+without a nondegeneracy hypothesis.
 
 The convention that markings sit at the centres of their squares is the one the Maslov and
 Alexander gradings already use (`JFunction/Center.lean`); this file supplies the matching
@@ -33,16 +34,16 @@ everything it feeds.
 
 ## Main definitions
 
-* `TauCeti.GridRectangle.columnSpan`, `TauCeti.GridRectangle.rowSpan`: the columns and the rows
-  of squares a toroidal rectangle covers.
-* `TauCeti.GridRectangle.squares`: the squares a toroidal rectangle covers.
+* `TauCeti.GridRectangle.coveredColumns`, `TauCeti.GridRectangle.coveredRows`: the columns and
+  rows of squares a toroidal rectangle covers.
+* `TauCeti.GridRectangle.coveredSquares`: the squares a toroidal rectangle covers.
 
 ## Main results
 
-* `TauCeti.GridRectangle.interior_subset_squares`: every grid point strictly inside a rectangle
-  names a square the rectangle covers.
-* `TauCeti.GridRectangle.card_squares`: the number of covered squares is the product of the two
-  arc lengths.
+* `TauCeti.GridRectangle.interior_subset_coveredSquares`: every grid point strictly inside a
+  rectangle names a square the rectangle covers.
+* `TauCeti.GridRectangle.card_coveredSquares`: the number of covered squares is the product of the
+  two arc lengths.
 
 ## References
 
@@ -63,60 +64,82 @@ variable {n : ℕ} (R : GridRectangle n)
 
 /-- The columns of squares covered by a toroidal grid rectangle: the clockwise half-open arc
 from the initial vertical side to the terminal one. -/
-noncomputable def columnSpan : Finset (Fin n) :=
+noncomputable def coveredColumns : Finset (Fin n) :=
   Grid.cIco R.left R.right
 
 /-- The rows of squares covered by a toroidal grid rectangle: the clockwise half-open arc from
 the initial horizontal side to the terminal one. -/
-noncomputable def rowSpan : Finset (Fin n) :=
+noncomputable def coveredRows : Finset (Fin n) :=
   Grid.cIco R.bottom R.top
 
 /-- Membership in the covered columns is membership in the corresponding half-open circular
 interval. -/
 @[simp]
-theorem mem_columnSpan (c : Fin n) : c ∈ R.columnSpan ↔ c ∈ Grid.cIco R.left R.right :=
+theorem mem_coveredColumns (c : Fin n) : c ∈ R.coveredColumns ↔ c ∈ Grid.cIco R.left R.right :=
   Iff.rfl
 
 /-- Membership in the covered rows is membership in the corresponding half-open circular
 interval. -/
 @[simp]
-theorem mem_rowSpan (r : Fin n) : r ∈ R.rowSpan ↔ r ∈ Grid.cIco R.bottom R.top :=
+theorem mem_coveredRows (r : Fin n) : r ∈ R.coveredRows ↔ r ∈ Grid.cIco R.bottom R.top :=
   Iff.rfl
 
-/-- The interior columns are covered columns: only the initial vertical side is added. -/
-theorem columnInterior_subset_columnSpan : R.columnInterior ⊆ R.columnSpan :=
+/-- Every interior column is a covered column. For distinct vertical sides the covered columns
+also contain the initial column; for coincident sides both sets are empty. -/
+theorem columnInterior_subset_coveredColumns : R.columnInterior ⊆ R.coveredColumns :=
   Grid.cIoo_subset_cIco R.left R.right
 
-/-- The interior rows are covered rows: only the initial horizontal side is added. -/
-theorem rowInterior_subset_rowSpan : R.rowInterior ⊆ R.rowSpan :=
+/-- Every interior row is a covered row. For distinct horizontal sides the covered rows also
+contain the initial row; for coincident sides both sets are empty. -/
+theorem rowInterior_subset_coveredRows : R.rowInterior ⊆ R.coveredRows :=
   Grid.cIoo_subset_cIco R.bottom R.top
+
+/-- The number of covered columns, expressed in the standard representatives of the sides. -/
+@[simp]
+theorem card_coveredColumns :
+    R.coveredColumns.card =
+      if R.left = R.right then 0
+      else if R.left.val < R.right.val then R.right.val - R.left.val
+      else n - R.left.val + R.right.val := by
+  rw [coveredColumns, Grid.card_cIco]
+
+/-- The number of covered rows, expressed in the standard representatives of the sides. -/
+@[simp]
+theorem card_coveredRows :
+    R.coveredRows.card =
+      if R.bottom = R.top then 0
+      else if R.bottom.val < R.top.val then R.top.val - R.bottom.val
+      else n - R.bottom.val + R.top.val := by
+  rw [coveredRows, Grid.card_cIco]
 
 /-- The finite set of squares a toroidal grid rectangle covers.
 
 A marking sits at the centre of its square, so it lies inside the rectangle exactly when its
 column and row indices lie in the two half-open arcs. -/
-noncomputable def squares : Finset (Fin n × Fin n) :=
-  R.columnSpan ×ˢ R.rowSpan
+noncomputable def coveredSquares : Finset (Fin n × Fin n) :=
+  R.coveredColumns ×ˢ R.coveredRows
 
 /-- The covered squares are the product of the covered columns and rows. -/
-theorem squares_def : R.squares = R.columnSpan ×ˢ R.rowSpan :=
+theorem coveredSquares_def : R.coveredSquares = R.coveredColumns ×ˢ R.coveredRows :=
   (rfl)
 
 /-- Membership in the covered squares is membership in both one-dimensional half-open arcs. -/
 @[simp]
-theorem mem_squares (p : Fin n × Fin n) :
-    p ∈ R.squares ↔ p.1 ∈ R.columnSpan ∧ p.2 ∈ R.rowSpan := by
-  simp [squares]
+theorem mem_coveredSquares (p : Fin n × Fin n) :
+    p ∈ R.coveredSquares ↔ p.1 ∈ R.coveredColumns ∧ p.2 ∈ R.coveredRows := by
+  simp [coveredSquares]
 
 /-- Every grid point strictly inside a rectangle names a square that the rectangle covers. -/
-theorem interior_subset_squares : R.interior ⊆ R.squares :=
-  Finset.product_subset_product R.columnInterior_subset_columnSpan R.rowInterior_subset_rowSpan
+theorem interior_subset_coveredSquares : R.interior ⊆ R.coveredSquares :=
+  Finset.product_subset_product R.columnInterior_subset_coveredColumns
+    R.rowInterior_subset_coveredRows
 
 /-- The number of covered squares is the product of the numbers of covered columns and covered
 rows. -/
 @[simp]
-theorem card_squares : R.squares.card = R.columnSpan.card * R.rowSpan.card := by
-  simp [squares, Finset.card_product]
+theorem card_coveredSquares :
+    R.coveredSquares.card = R.coveredColumns.card * R.coveredRows.card := by
+  simp [coveredSquares, Finset.card_product]
 
 end GridRectangle
 
