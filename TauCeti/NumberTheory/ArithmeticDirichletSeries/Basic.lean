@@ -205,22 +205,15 @@ theorem zeroExtend_mul (f g : IdealArithmeticFunction K) :
   funext I
   by_cases hI : I = ⊥ <;> simp [hI]
 
-/-- The everywhere-one function on all ideals is not the zero extension of an ideal arithmetic
-function, since its value at `⊥` is one rather than zero. This is the roadmap's zero-ideal
-rejection test. -/
+/-- **Rejection test.** The everywhere-one function on *all* integral ideals is not the zero
+extension of any ideal arithmetic function, since its value at `⊥` is one rather than zero. This
+is the roadmap's zero-ideal rejection test. Compare
+`TauCeti.IdealArithmeticFunction.zeroExtend_one_apply`, which computes the zero extension of the
+constant function `1` on the *nonzero* ideals. -/
 theorem not_exists_zeroExtend_eq_one :
     ¬ ∃ f : IdealArithmeticFunction K, f.zeroExtend = (1 : Ideal (𝓞 K) → ℂ) := by
   rw [exists_zeroExtend_eq_iff]
   exact one_ne_zero
-
-/-- **Rejection test.** The everywhere-one function on *all* integral ideals is not the zero
-extension of any ideal arithmetic function: a zero extension vanishes at `⊥`. Compare
-`TauCeti.IdealArithmeticFunction.zeroExtend_one_apply`, which computes the zero extension of
-the constant function `1` on the *nonzero* ideals. -/
-theorem zeroExtend_ne_const_one (f : IdealArithmeticFunction K) :
-    f.zeroExtend ≠ Function.const _ 1 := by
-  intro h
-  simpa using congrFun h ⊥
 
 /-- The constant-one function on nonzero ideals extends to the indicator of ideals unequal to
 `⊥`. -/
@@ -255,9 +248,10 @@ private theorem comap_mapRingEquiv_refl (I : Ideal (𝓞 K)) :
 private theorem comap_mapRingEquiv_trans (e : K ≃+* L) (e' : L ≃+* M) (I : Ideal (𝓞 M)) :
     Ideal.comap (RingOfIntegers.mapRingEquiv e)
         (Ideal.comap (RingOfIntegers.mapRingEquiv e') I) =
-      Ideal.comap (RingOfIntegers.mapRingEquiv (e.trans e')) I := by
-  ext x
-  rw [Ideal.mem_comap, Ideal.mem_comap, Ideal.mem_comap, mapRingEquiv_trans_apply]
+      Ideal.comap (RingOfIntegers.mapRingEquiv (e.trans e')) I :=
+  (Ideal.comap_comap (RingOfIntegers.mapRingEquiv e : 𝓞 K →+* 𝓞 L)
+    (RingOfIntegers.mapRingEquiv e' : 𝓞 L →+* 𝓞 M)).trans
+    (congrArg (Ideal.comap · I) (RingHom.ext (mapRingEquiv_trans_apply e e')))
 
 private theorem comap_mapRingEquiv_eq_bot_iff (e : K ≃+* L) {I : Ideal (𝓞 L)} :
     Ideal.comap (RingOfIntegers.mapRingEquiv e) I = ⊥ ↔ I = ⊥ := by

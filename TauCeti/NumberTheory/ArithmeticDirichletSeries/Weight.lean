@@ -54,6 +54,7 @@ good primes; this is the engine behind both
   carrier, inverted by `TauCeti.IdealArithmeticFunction.zeroExtend`;
 * `TauCeti.UnitaryIdealWeight`: the unitary subtype, with
   `TauCeti.UnitaryIdealWeight.norm_eq_one` on all good ideals,
+  `TauCeti.UnitaryIdealWeight.norm_normTwist` for the modulus of an arbitrary norm twist,
   `TauCeti.UnitaryIdealWeight.ofPowEqOne` for finite-order weights, and the operations
   `TauCeti.UnitaryIdealWeight.conj`, `TauCeti.UnitaryIdealWeight.restrict` and
   `TauCeti.UnitaryIdealWeight.normTwist` (the last for the imaginary norm twists only), and
@@ -80,6 +81,9 @@ twists live only in the general carrier.
 ## References
 
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
+* `TauCetiRoadmap/ArithmeticDirichletSeries/README.md` and its `Suggested.lean` target
+  signatures: this file implements the Layer 0 export contract stated there, and follows its
+  naming and organization for the two weight carriers.
 -/
 
 public section
@@ -548,14 +552,8 @@ theorem map_ofBadPrimes (e : K ≃+* L) (hS : S.Finite) :
     map e (ofBadPrimes S hS) = ofBadPrimes
       (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' S)
       (hS.image _) := by
-  have hprimeTo (I : Ideal (𝓞 L)) :
-      Ideal.IsPrimeTo (Ideal.comap (RingOfIntegers.mapRingEquiv e) I) S ↔
-        Ideal.IsPrimeTo I
-          (HeightOneSpectrum.equivOfRingEquiv (RingOfIntegers.mapRingEquiv e) '' S) := by
-    simpa [map_apply, ofBadPrimes_apply, IsGood, badPrimes_map] using
-      (map e (ofBadPrimes S hS)).apply_ne_zero_iff_isGood I
   ext I
-  rw [map_apply, ofBadPrimes_apply, ofBadPrimes_apply, hprimeTo]
+  rw [map_apply, ofBadPrimes_apply, ofBadPrimes_apply, Ideal.isPrimeTo_comap_iff]
 
 /-- Transport commutes with restriction after carrying the excluded prime set forward. -/
 @[simp]
@@ -665,6 +663,15 @@ noncomputable def normTwist (z : ℂ) (hz : z.re = 0) (χ : UnitaryIdealWeight K
 theorem val_normTwist (z : ℂ) (hz : z.re = 0) (χ : UnitaryIdealWeight K) :
     (normTwist z hz χ).1 = MultiplicativeIdealWeight.normTwist z χ.1 := (rfl)
 
+/-- **The modulus of an arbitrary norm twist.** At a good ideal, twisting a unitary weight by
+`z` gives modulus `N(I) ^ (-Re z)`; only the purely imaginary twists therefore stay unitary. -/
+theorem norm_normTwist (χ : UnitaryIdealWeight K) (z : ℂ) {I : Ideal (𝓞 K)}
+    (hI : χ.1.IsGood I) :
+    ‖MultiplicativeIdealWeight.normTwist z χ.1 I‖ = (Ideal.absNorm I : ℝ) ^ (-z.re) := by
+  have hN : 0 < Ideal.absNorm I := Nat.pos_of_ne_zero (absNorm_ne_zero_of_ne_bot hI.ne_bot)
+  rw [MultiplicativeIdealWeight.normTwist_apply, norm_mul, norm_eq_one χ hI, one_mul,
+    Complex.norm_natCast_cpow_of_pos hN, Complex.neg_re]
+
 /-- **Rejection test.** A norm twist with `Re z ≠ 0` leaves the unitary carrier: at every good
 ideal of absolute norm greater than one its modulus differs from `1`. Such twists therefore
 live only in `TauCeti.MultiplicativeIdealWeight`. -/
@@ -672,8 +679,7 @@ theorem norm_normTwist_apply_ne_one (χ : UnitaryIdealWeight K) {z : ℂ} (hz : 
     {I : Ideal (𝓞 K)} (hI : χ.1.IsGood I) (hN : 1 < Ideal.absNorm I) :
     ‖MultiplicativeIdealWeight.normTwist z χ.1 I‖ ≠ 1 := by
   have hN' : (1 : ℝ) < (Ideal.absNorm I : ℝ) := by exact_mod_cast hN
-  rw [MultiplicativeIdealWeight.normTwist_apply, norm_mul, norm_eq_one χ hI, one_mul,
-    Complex.norm_natCast_cpow_of_pos (lt_trans Nat.one_pos hN), Complex.neg_re]
+  rw [norm_normTwist χ z hI]
   rcases lt_trichotomy z.re 0 with h | h | h
   · exact ne_of_gt ((Real.one_lt_rpow_iff_of_pos (by linarith)).mpr (Or.inl ⟨hN', by linarith⟩))
   · exact absurd h hz
