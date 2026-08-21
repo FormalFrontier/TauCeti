@@ -54,18 +54,20 @@ open scoped ContDiff Manifold Topology
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
-  {v : (x : M) → TangentSpace I x} {γ : ℝ → M} {a b t₀ : ℝ} {y : M}
+  {v : (x : M) → TangentSpace I x} {γ : ℝ → M} {a b : ℝ} {y : M}
 
 /-- **A uniform time of existence** for the integral curves of a `C^1` vector field: there is a
-neighbourhood `w` of `x₀` and a single `ε > 0` such that every point of `w` is the value at `t₀` of
-an integral curve defined on all of `Ioo (t₀ - ε) (t₀ + ε)`.
+neighbourhood `w` of `x₀` and a single `ε > 0` such that, at any prescribed initial time `t₀`,
+every point of `w` is the value at `t₀` of an integral curve defined on all of
+`Ioo (t₀ - ε) (t₀ + ε)`.
 
 Mathlib's `exists_isMIntegralCurveAt_of_contMDiffAt_boundaryless` gives an interval of existence
-that depends on the initial point; the content here is that it can be chosen uniformly. -/
+that depends on the initial point; the content here is that it can be chosen uniformly. The field
+is autonomous, so the initial time is immaterial and `ε` is uniform in it too. -/
 theorem exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo [CompleteSpace E] [IsManifold I 1 M]
     [BoundarylessManifold I M] {x₀ : M}
-    (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀) (t₀ : ℝ) :
-    ∃ w ∈ 𝓝 x₀, ∃ ε > (0 : ℝ), ∀ x ∈ w, ∃ γ : ℝ → M,
+    (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀) :
+    ∃ w ∈ 𝓝 x₀, ∃ ε > (0 : ℝ), ∀ t₀ : ℝ, ∀ x ∈ w, ∃ γ : ℝ → M,
       γ t₀ = x ∧ IsMIntegralCurveOn γ v (Ioo (t₀ - ε) (t₀ + ε)) := by
   -- the vector field read in the extended chart at `x₀`
   set g : E → E := fun z ↦ tangentCoordChange I ((extChartAt I x₀).symm z) x₀
@@ -76,29 +78,25 @@ theorem exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo [CompleteSpace E] [
   have hnhds : interior (extChartAt I x₀).target ∈ 𝓝 (extChartAt I x₀ x₀) :=
     isOpen_interior.mem_nhds (I.isInteriorPoint_iff.mp BoundarylessManifold.isInteriorPoint)
   obtain ⟨r, hr, ε, hε, hsol⟩ :=
-    ODE.exists_forall_mem_ball_exists_eq_forall_mem_Ioo_hasDerivAt_and_mem hgc hnhds t₀
+    ODE.exists_forall_mem_ball_exists_eq_forall_mem_Ioo_hasDerivAt_and_mem hgc hnhds 0
   refine ⟨extChartAt I x₀ ⁻¹' Metric.ball (extChartAt I x₀ x₀) r ∩ (extChartAt I x₀).source,
     Filter.inter_mem ((continuousAt_extChartAt x₀).preimage_mem_nhds
-      (Metric.ball_mem_nhds _ hr)) (extChartAt_source_mem_nhds x₀), ε, hε, fun x hx ↦ ?_⟩
+      (Metric.ball_mem_nhds _ hr)) (extChartAt_source_mem_nhds x₀), ε, hε, fun t₀ x hx ↦ ?_⟩
   obtain ⟨f, hf0, hf⟩ := hsol (extChartAt I x₀ x) hx.1
-  refine ⟨(extChartAt I x₀).symm ∘ f, ?_, IsMIntegralCurveAt.isMIntegralCurveOn fun t ht ↦ ?_⟩
-  · rw [comp_apply, hf0, (extChartAt I x₀).left_inv hx.2]
-  · refine IsMIntegralCurveAt.of_extChartAt_symm ?_ ?_
-    · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).2
-    · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).1
+  -- the coordinate solution starts at time `0`; translate it to start at time `t₀`
+  have hf' : IsMIntegralCurveOn ((extChartAt I x₀).symm ∘ f) v (Ioo (0 - ε) (0 + ε)) :=
+    IsMIntegralCurveAt.isMIntegralCurveOn fun t ht ↦ by
+      refine IsMIntegralCurveAt.of_extChartAt_symm ?_ ?_
+      · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).2
+      · filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs using (hf s hs).1
+  refine ⟨((extChartAt I x₀).symm ∘ f) ∘ (· - t₀), ?_,
+    (isMIntegralCurveOn_comp_sub.2 hf').mono fun t ht ↦ ?_⟩
+  · simp only [comp_apply, sub_self]
+    rw [hf0, (extChartAt I x₀).left_inv hx.2]
+  · simp only [mem_ofPred_eq, mem_Ioo, zero_sub, zero_add] at ht ⊢
+    constructor <;> linarith [ht.1, ht.2]
 
 namespace IsMIntegralCurveOn
-
-/-- Translate an integral curve on an interval centred at zero to an interval centred at `t₁`. -/
-theorem comp_sub_Ioo {c : ℝ → M} {t₁ ε : ℝ}
-    (hc : IsMIntegralCurveOn c v (Ioo (0 - ε) (0 + ε))) :
-    IsMIntegralCurveOn (c ∘ (· - t₁)) v (Ioo (t₁ - ε) (t₁ + ε)) := by
-  have hset : {t : ℝ | t - t₁ ∈ Ioo (0 - ε) (0 + ε)} = Ioo (t₁ - ε) (t₁ + ε) := by
-    ext t
-    simp only [mem_ofPred_eq, mem_Ioo, zero_sub, zero_add]
-    constructor <;> rintro ⟨h1, h2⟩ <;> constructor <;> linarith
-  rw [← hset]
-  exact isMIntegralCurveOn_comp_sub.2 hc
 
 variable [CompleteSpace E] [IsManifold I 1 M] [BoundarylessManifold I M] [T2Space M]
 
@@ -114,7 +112,7 @@ theorem exists_gt_isMIntegralCurveOn_Ioo
     (hy : MapClusterPt y (𝓝[<] b) γ) :
     ∃ c > b, ∃ δ : ℝ → M, IsMIntegralCurveOn δ v (Ioo a c) ∧ EqOn δ γ (Ioo a b) := by
   obtain ⟨w, hw, ε, hε, hloc⟩ :=
-    exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo (x₀ := y) hv.contMDiffAt 0
+    exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo (x₀ := y) hv.contMDiffAt
   -- a time `t₁` close enough to `b`, at which the curve is already close to `y`
   have hmem : Ioo (max a (b - ε / 2)) b ∈ 𝓝[<] b :=
     Ioo_mem_nhdsLT (max_lt hab (by linarith))
@@ -123,12 +121,8 @@ theorem exists_gt_isMIntegralCurveOn_Ioo
   have ht₁a : a < t₁ := lt_of_le_of_lt (le_max_left _ _) ht₁.1
   have ht₁ε : b - ε / 2 < t₁ := lt_of_le_of_lt (le_max_right _ _) ht₁.1
   have ht₁b : t₁ < b := ht₁.2
-  obtain ⟨α, hα0, hα⟩ := hloc (γ t₁) ht₁w
-  -- translate the local solution so that it starts at time `t₁`
-  set β : ℝ → M := α ∘ (· - t₁) with hβdef
-  have hβ : IsMIntegralCurveOn β v (Ioo (t₁ - ε) (t₁ + ε)) := by
-    simpa [hβdef] using hα.comp_sub_Ioo (t₁ := t₁)
-  have hβ0 : β t₁ = γ t₁ := by simpa [hβdef] using hα0
+  -- the local solution through `γ t₁` starting at time `t₁`
+  obtain ⟨β, hβ0, hβ⟩ := hloc t₁ (γ t₁) ht₁w
   have hbc : b < t₁ + ε := by linarith
   -- glue the two curves at time `t₁`
   refine ⟨t₁ + ε, hbc, piecewise (Ioo a b) γ β, ?_, piecewise_eqOn _ _ _⟩
@@ -171,7 +165,7 @@ theorem exists_lt_isMIntegralCurveOn_Ioo
     (hy : MapClusterPt y (𝓝[>] a) γ) :
     ∃ c < a, ∃ δ : ℝ → M, IsMIntegralCurveOn δ v (Ioo c b) ∧ EqOn δ γ (Ioo a b) := by
   obtain ⟨w, hw, ε, hε, hloc⟩ :=
-    exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo (x₀ := y) hv.contMDiffAt 0
+    exists_mem_nhds_forall_exists_isMIntegralCurveOn_Ioo (x₀ := y) hv.contMDiffAt
   have hmem : Ioo a (min b (a + ε / 2)) ∈ 𝓝[>] a :=
     Ioo_mem_nhdsGT (lt_min hab (by linarith))
   obtain ⟨t₁, ht₁w, ht₁⟩ :=
@@ -179,11 +173,7 @@ theorem exists_lt_isMIntegralCurveOn_Ioo
   have ht₁a : a < t₁ := ht₁.1
   have ht₁b : t₁ < b := lt_of_lt_of_le ht₁.2 (min_le_left _ _)
   have ht₁ε : t₁ < a + ε / 2 := lt_of_lt_of_le ht₁.2 (min_le_right _ _)
-  obtain ⟨α, hα0, hα⟩ := hloc (γ t₁) ht₁w
-  set β : ℝ → M := α ∘ (· - t₁) with hβdef
-  have hβ : IsMIntegralCurveOn β v (Ioo (t₁ - ε) (t₁ + ε)) := by
-    simpa [hβdef] using hα.comp_sub_Ioo (t₁ := t₁)
-  have hβ0 : β t₁ = γ t₁ := by simpa [hβdef] using hα0
+  obtain ⟨β, hβ0, hβ⟩ := hloc t₁ (γ t₁) ht₁w
   have hca : t₁ - ε < a := by linarith
   refine ⟨t₁ - ε, hca, piecewise (Ioo a b) γ β, ?_, piecewise_eqOn _ _ _⟩
   exact (isMIntegralCurveOn_piecewise hv hγ hβ
