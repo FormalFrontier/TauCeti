@@ -36,15 +36,17 @@ partition to a function.
   continuous on `s` extends to a continuous map on `X` whose range is still contained in the
   image of `s`.
 * `TauCeti.exists_continuous_eqOn`: the same for an arbitrary closed `s` and a nonempty target.
-* `TauCeti.ContinuousMap.exists_restrict_eq` and `TauCeti.ContinuousMap.restrict_surjective`: the
-  bundled form, for a closed set.
-* `TauCeti.ContinuousMap.exists_extension`: the bundled form, for a closed embedding.
+* `ContinuousMap.exists_restrict_eq_of_discrete` and
+  `ContinuousMap.restrict_surjective_of_discrete`: the bundled form, for a closed set.
+* `ContinuousMap.exists_extension_of_discrete`: the bundled form, for a closed embedding.
 
 ## Implementation notes
 
 The statements come both for a bare function together with `ContinuousOn` and for bundled
 `ContinuousMap`s. The unbundled form is the one continuous cochains are written in, and the bundled
-form mirrors Mathlib's Tietze API.
+form mirrors Mathlib's Tietze API; it lives in the root `ContinuousMap` namespace, so that dot
+notation on a `C(s, Y)` reaches it, and carries an `_of_discrete` suffix to distinguish it from
+Mathlib's `TietzeExtension` form of the same statement.
 
 The nonemptiness hypotheses are not decoration. If `s` is empty and `Y` is empty while `X` is not,
 there is a continuous map on `s` and none on `X`, so one of `s` and `Y` has to be assumed nonempty.
@@ -123,52 +125,6 @@ theorem exists_continuous_eqOn [Nonempty Y] {f : X → Y} (hs : IsClosed s)
   · obtain ⟨g, hg, hgf, -⟩ := exists_continuous_eqOn_range_subset_image hs hsne hf
     exact ⟨g, hg, hgf⟩
 
-namespace ContinuousMap
-
-/-- **Continuous extension from a closed subspace of a profinite space**, bundled: a continuous map
-on a closed subspace of a profinite space, with values in a nonempty discrete space, is the
-restriction of a continuous map on the whole space.
-
-This is the zero-dimensional counterpart of Mathlib's `ContinuousMap.exists_restrict_eq`, whose
-`TietzeExtension` hypothesis on the target no discrete space with more than one point
-satisfies. -/
-theorem exists_restrict_eq [Nonempty Y] (hs : IsClosed s) (f : C(s, Y)) :
-    ∃ g : C(X, Y), g.restrict s = f := by
-  classical
-  -- Spread `f` out to a map on `X` by an arbitrary value off `s`; only its continuity on `s`
-  -- matters.
-  have hF (x : s) :
-      Function.extend Subtype.val f (fun _ => Classical.arbitrary Y) (x : X) = f x :=
-    Subtype.val_injective.extend_apply _ _ x
-  obtain ⟨g, hg, hgf⟩ :=
-    exists_continuous_eqOn (f := Function.extend Subtype.val f fun _ => Classical.arbitrary Y)
-      hs (continuousOn_iff_continuous_domRestrict.2 (f.continuous.congr fun x => (hF x).symm))
-  refine ⟨⟨g, hg⟩, ?_⟩
-  ext x
-  simp only [ContinuousMap.restrict_apply, ContinuousMap.coe_mk]
-  exact (hgf x.2).trans (hF x)
-
-/-- Restriction of continuous maps to a closed subspace of a profinite space is surjective, when
-the target is discrete and nonempty. -/
-theorem restrict_surjective [Nonempty Y] (hs : IsClosed s) :
-    Function.Surjective fun g : C(X, Y) => g.restrict s :=
-  fun f => exists_restrict_eq hs f
-
-/-- **Continuous extension along a closed embedding into a profinite space.**
-
-The statement and the deduction of this form from the closed-subset form follow Mathlib's
-`ContinuousMap.exists_extension` in `Mathlib/Topology/TietzeExtension.lean`. -/
-theorem exists_extension [Nonempty Y] {Z : Type*} [TopologicalSpace Z] {e : Z → X}
-    (he : IsClosedEmbedding e) (f : C(Z, Y)) :
-    ∃ g : C(X, Y), g.comp ⟨e, he.continuous⟩ = f := by
-  -- `e'` identifies `Z` with the closed subspace `range e`.
-  let e' : Z ≃ₜ range e := he.isEmbedding.toHomeomorph
-  obtain ⟨g, hg⟩ :=
-    exists_restrict_eq he.isClosed_range (f.comp ⟨e'.symm, e'.symm.continuous⟩)
-  exact ⟨g, by ext x; simpa [e'] using congr($(hg) ⟨e x, x, rfl⟩)⟩
-
-end ContinuousMap
-
 end Profinite
 
 /-- **Total disconnectedness cannot be dropped** from `TauCeti.exists_continuous_eqOn`.
@@ -186,3 +142,59 @@ theorem not_exists_continuousOn_Icc_of_ne [DiscreteTopology Y] {a b : Y} (hab : 
   exact hab (isPreconnected_Icc.apply_eq_of_eventually_eq h (by norm_num) (by norm_num))
 
 end TauCeti
+
+/-! ### The bundled form
+
+These live in the root `ContinuousMap` namespace, next to Mathlib's Tietze extension theorems and
+within reach of dot notation on a `C(s, Y)`. -/
+
+namespace ContinuousMap
+
+variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+variable [CompactSpace X] [T2Space X] [TotallyDisconnectedSpace X] [DiscreteTopology Y]
+variable {s : Set X}
+
+/-- **Continuous extension from a closed subspace of a profinite space**, bundled: a continuous map
+on a closed subspace of a profinite space, with values in a nonempty discrete space, is the
+restriction of a continuous map on the whole space.
+
+This is the zero-dimensional counterpart of Mathlib's `ContinuousMap.exists_restrict_eq`, whose
+`TietzeExtension` hypothesis on the target no discrete space with more than one point
+satisfies. -/
+theorem exists_restrict_eq_of_discrete [Nonempty Y] (hs : IsClosed s) (f : C(s, Y)) :
+    ∃ g : C(X, Y), g.restrict s = f := by
+  classical
+  -- Spread `f` out to a map on `X` by an arbitrary value off `s`; only its continuity on `s`
+  -- matters.
+  have hF (x : s) :
+      Function.extend Subtype.val f (fun _ => Classical.arbitrary Y) (x : X) = f x :=
+    Subtype.val_injective.extend_apply _ _ x
+  obtain ⟨g, hg, hgf⟩ :=
+    TauCeti.exists_continuous_eqOn
+      (f := Function.extend Subtype.val f fun _ => Classical.arbitrary Y)
+      hs (continuousOn_iff_continuous_domRestrict.2 (f.continuous.congr fun x => (hF x).symm))
+  refine ⟨⟨g, hg⟩, ?_⟩
+  ext x
+  simp only [ContinuousMap.restrict_apply, ContinuousMap.coe_mk]
+  exact (hgf x.2).trans (hF x)
+
+/-- Restriction of continuous maps to a closed subspace of a profinite space is surjective, when
+the target is discrete and nonempty. -/
+theorem restrict_surjective_of_discrete [Nonempty Y] (hs : IsClosed s) :
+    Function.Surjective fun g : C(X, Y) => g.restrict s :=
+  fun f => exists_restrict_eq_of_discrete hs f
+
+/-- **Continuous extension along a closed embedding into a profinite space.**
+
+The statement and the deduction of this form from the closed-subset form follow Mathlib's
+`ContinuousMap.exists_extension` in `Mathlib/Topology/TietzeExtension.lean`. -/
+theorem exists_extension_of_discrete [Nonempty Y] {Z : Type*} [TopologicalSpace Z] {e : Z → X}
+    (he : IsClosedEmbedding e) (f : C(Z, Y)) :
+    ∃ g : C(X, Y), g.comp ⟨e, he.continuous⟩ = f := by
+  -- `e'` identifies `Z` with the closed subspace `range e`.
+  let e' : Z ≃ₜ range e := he.isEmbedding.toHomeomorph
+  obtain ⟨g, hg⟩ :=
+    exists_restrict_eq_of_discrete he.isClosed_range (f.comp ⟨e'.symm, e'.symm.continuous⟩)
+  exact ⟨g, by ext x; simpa [e'] using congr($(hg) ⟨e x, x, rfl⟩)⟩
+
+end ContinuousMap
