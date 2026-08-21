@@ -53,7 +53,7 @@ public section
 
 open Matrix Module
 
-namespace TauCeti.Representation
+namespace TauCeti
 
 universe u v w
 
@@ -297,4 +297,4 @@ theorem _root_.Representation.isNilpotent_sub_one_of_mem_sup_of_normal_isUnipote
 
 end
 
-end TauCeti.Representation
+end TauCeti
