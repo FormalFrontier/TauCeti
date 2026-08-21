@@ -240,7 +240,7 @@ prime `(q)`. This is deliberately not a `simp` lemma, since `adicOfIrreducible` 
 normal form here: `TauCeti.Place.valuation_adicOfIrreducible`,
 `TauCeti.Place.degree_adicOfIrreducible` and the classification lemmas all rewrite it
 directly. -/
-theorem adicOfIrreducible_eq {q : k[X]} (hq : Irreducible q) :
+theorem adicOfIrreducible_def {q : k[X]} (hq : Irreducible q) :
     adicOfIrreducible hq = adic k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) :=
   (rfl)
 
@@ -268,14 +268,14 @@ def adicOfIrreducibleResidueFieldEquiv {q : k[X]} (hq : Irreducible q) :
     (k[X] ⧸ Ideal.span {q}) ≃ₐ[k] (adicOfIrreducible hq).ResidueField :=
   (Ideal.quotientEquivAlgOfEq k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm).trans
     ((adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq)).trans
-      (residueFieldEquivOfEq (adicOfIrreducible_eq hq).symm))
+      (residueFieldEquivOfEq (adicOfIrreducible_def hq).symm))
 
 @[simp]
 theorem adicOfIrreducibleResidueFieldEquiv_mk {q : k[X]} (hq : Irreducible q) (r : k[X]) :
     adicOfIrreducibleResidueFieldEquiv hq (Ideal.Quotient.mk (Ideal.span {q}) r) =
-      residueFieldEquivOfEq (adicOfIrreducible_eq hq).symm
+      residueFieldEquivOfEq (adicOfIrreducible_def hq).symm
         (adicResidueHom k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) r) :=
-  congrArg (residueFieldEquivOfEq (adicOfIrreducible_eq hq).symm)
+  congrArg (residueFieldEquivOfEq (adicOfIrreducible_def hq).symm)
     ((congrArg
       (fun x => adicResidueFieldEquiv k (RatFunc k) (HeightOneSpectrum.ofIrreducible hq) x)
       (Ideal.quotientEquivAlgOfEq_mk k (HeightOneSpectrum.ofIrreducible_asIdeal hq).symm r)).trans
