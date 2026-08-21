@@ -30,7 +30,9 @@ different embeddings `f` induce different structures, so none can be registered 
 * `TauCeti.AlgHom.finrank_fieldRange`: `[L : f.fieldRange] = [L : K]`.
 * `TauCeti.AlgHom.finiteDimensional_of_fieldRange`: finiteness over the range transfers to the
   source — the same identification read for the property rather than the number.
-* `TauCeti.AlgHom.isSeparable_of_fieldRange`: separability over the range transfers to the source.
+* `TauCeti.isSeparable_of_fieldRange`: separability over the range transfers to the source. It sits
+  directly in `TauCeti` rather than beside its siblings: `scripts/lint-dot-notation.py` rejects a
+  new `TauCeti.AlgHom` declaration, since that name would not give dot notation on `AlgHom`.
 * `TauCeti.AlgHom.finSepDegree_fieldRange` and `TauCeti.AlgHom.finInsepDegree_fieldRange`: the
   same for the separable and inseparable degrees. These are the `f.fieldRange` cases of the
   general transports in `TauCeti.FieldTheory.SeparableDegree`, which is where a caller holding
@@ -72,20 +74,6 @@ theorem finiteDimensional_of_fieldRange (f : K →ₐ[F] L) [Algebra K L]
     ext z
     simpa [h] using (_root_.AlgHom.equivFieldRange_apply_coe f (f.equivFieldRange.symm z)).symm
 
-/-- **Separability above the range of a field embedding transfers to its source.** The range
-restriction `f.equivFieldRange` identifies `K` with `f.fieldRange`, so `L` is separable over the
-one exactly when it is over the other.
-
-The counterpart of `finiteDimensional_of_fieldRange` for separability, and needed for the same
-reason: separability of a map of fields is naturally recorded over its *range*, an intermediate
-field of `L`, while every Mathlib result about a separable extension asks for it over a base
-type. -/
-theorem isSeparable_of_fieldRange (f : K →ₐ[F] L) [Algebra K L] (h : ∀ z, algebraMap K L z = f z)
-    [Algebra.IsSeparable f.fieldRange L] : Algebra.IsSeparable K L :=
-  Algebra.IsSeparable.of_equiv_equiv f.equivFieldRange.toRingEquiv.symm (RingEquiv.refl L) <| by
-    ext z
-    simpa [h] using (_root_.AlgHom.equivFieldRange_apply_coe f (f.equivFieldRange.symm z)).symm
-
 /-- **The separable degree above the range of a field embedding equals the one above its
 source.** The `f.fieldRange` case of `Field.finSepDegree_eq_of_surjective`. -/
 theorem finSepDegree_fieldRange (f : K →ₐ[F] L) [Algebra K L] (h : ∀ z, algebraMap K L z = f z) :
@@ -113,3 +101,27 @@ theorem finInsepDegree_fieldRange (f : K →ₐ[F] L) [Algebra K L] (h : ∀ z, 
       rw [RingHom.algebraMap_toAlgebra]; exact f.equivFieldRange.apply_symm_apply r⟩
 
 end TauCeti.AlgHom
+
+namespace TauCeti
+
+variable {F K L : Type*} [Field F] [Field K] [Field L] [Algebra F K] [Algebra F L]
+
+/-- **Separability above the range of a field embedding transfers to its source.** The range
+restriction `f.equivFieldRange` identifies `K` with `f.fieldRange`, so `L` is separable over the
+one exactly when it is over the other.
+
+The counterpart of `AlgHom.finiteDimensional_of_fieldRange` for separability, and needed for the
+same reason: separability of a map of fields is naturally recorded over its *range*, an intermediate
+field of `L`, while every Mathlib result about a separable extension asks for it over a base type.
+
+Unlike its siblings above this is not in an `AlgHom` namespace, so it is applied as
+`isSeparable_of_fieldRange f` rather than by dot notation: a `TauCeti.AlgHom` name would not
+resolve as dot notation on an `AlgHom` anyway, and `scripts/lint-dot-notation.py` rejects new
+ones. -/
+theorem isSeparable_of_fieldRange (f : K →ₐ[F] L) [Algebra K L] (h : ∀ z, algebraMap K L z = f z)
+    [Algebra.IsSeparable f.fieldRange L] : Algebra.IsSeparable K L :=
+  Algebra.IsSeparable.of_equiv_equiv f.equivFieldRange.toRingEquiv.symm (RingEquiv.refl L) <| by
+    ext z
+    simpa [h] using (_root_.AlgHom.equivFieldRange_apply_coe f (f.equivFieldRange.symm z)).symm
+
+end TauCeti

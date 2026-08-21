@@ -31,7 +31,7 @@ spelling** — `Algebra.IsSeparable φ.fieldPullback.fieldRange W₁.FunctionFie
 `φ.fieldPullback.fieldRange` is an intermediate field of `W₁.FunctionField` — and builds every
 structure the sibling wants out of `φ` alone.
 
-The bridge between the two spellings of separability is `AlgHom.isSeparable_of_fieldRange`: the
+The bridge between the two spellings of separability is `TauCeti.isSeparable_of_fieldRange`: the
 range restriction `φ.fieldPullback.equivFieldRange` identifies `W₂.FunctionField` with
 `φ.fieldPullback.fieldRange`, so a separable extension of the one is a separable extension of the
 other.
@@ -101,7 +101,7 @@ theorem isSeparable_functionField (φ : Isogeny W₁ W₂)
     [Algebra.IsSeparable φ.fieldPullback.fieldRange W₁.FunctionField]
     (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x) :
     Algebra.IsSeparable W₂.FunctionField W₁.FunctionField :=
-  AlgHom.isSeparable_of_fieldRange φ.fieldPullback
+  isSeparable_of_fieldRange φ.fieldPullback
     (φ.algebraMap_functionField_eq_fieldPullback h)
 
 /-- The canonical tower `W₂.CoordinateRing → W₂.FunctionField → W₁.FunctionField` of an isogeny,

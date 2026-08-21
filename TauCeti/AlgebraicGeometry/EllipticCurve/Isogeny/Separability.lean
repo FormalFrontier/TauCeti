@@ -170,15 +170,17 @@ theorem separableDegree_ne_zero (φ : Isogeny W₁ W₂) : φ.separableDegree �
 theorem inseparableDegree_ne_zero (φ : Isogeny W₁ W₂) : φ.inseparableDegree ≠ 0 :=
   φ.inseparableDegree_pos.ne'
 
-/-- **The identity isogeny has separable degree one.** -/
-@[simp]
+/-- **The identity isogeny has separable degree one.** Not `@[simp]`: `isSeparable_id` below makes
+`separableDegree_eq_degree_of_isSeparable` and `degree_id` normalise `(id W).separableDegree` to
+`1` already, so a `simp` lemma here would only duplicate them. -/
 theorem separableDegree_id (W : WeierstrassCurve.Affine F) : (id W).separableDegree = 1 := by
   have h : (id W).separableDegree * (id W).inseparableDegree = 1 :=
     ((id W).separableDegree_mul_inseparableDegree.trans (degree_id W))
   exact Nat.eq_one_of_mul_eq_one_right h
 
-/-- **The identity isogeny has inseparable degree one.** -/
-@[simp]
+/-- **The identity isogeny has inseparable degree one.** Not `@[simp]`, for the reason given on
+`separableDegree_id`; it is instead the input to `isSeparable_id`, so it must be proved here from
+the degree factorisation rather than from separability. -/
 theorem inseparableDegree_id (W : WeierstrassCurve.Affine F) : (id W).inseparableDegree = 1 := by
   have h : (id W).separableDegree * (id W).inseparableDegree = 1 :=
     ((id W).separableDegree_mul_inseparableDegree.trans (degree_id W))
