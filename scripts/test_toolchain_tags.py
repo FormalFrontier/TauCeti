@@ -196,6 +196,17 @@ class UnreachableReleases(unittest.TestCase):
         self.assertEqual(row["status"], "out-of-scope")
         self.assertIn(tt.EARLIEST_RELEASE, row["reason"])
 
+    def test_a_hand_made_tag_on_an_unreachable_release_is_reported_as_tagged(self):
+        # A release main never ran on can still be tagged by hand off a main commit. The
+        # report saying "no tag is possible" over the top of an existing tag would be the
+        # tool contradicting the repository.
+        row = tt._unreachable_row("v4.33.0", {"v4.33.0": "e" * 40})
+        self.assertEqual(row["status"], "tagged")
+        self.assertEqual(row["commit"], "e" * 40)
+        self.assertIn("constructed by hand", row["reason"])
+        self.assertIn("no published Lake cache", row["reason"])
+        self.assertNotIn("No tag is possible", tt.render([row]))
+
     def test_the_report_explains_why_no_tag_is_possible(self):
         rows = [tt._unreachable_row("v4.33.0", {})]
         text = tt.render(rows)

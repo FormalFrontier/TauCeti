@@ -326,6 +326,15 @@ def _unreachable_row(release, tags):
            "index": None, "mathlib_rev": None, "tagged_at": tags.get(release),
            "status": "unreachable",
            "reason": "main never ran on this toolchain, so there is no commit to tag"}
+    if row["tagged_at"]:
+        # Someone made one by hand anyway, off a main commit, which is the only way a
+        # release main never ran on can have a tag at all. Saying "no tag is possible" over
+        # the top of an existing tag is the report contradicting the repository.
+        row["status"] = "tagged"
+        row["commit"] = row["tagged_at"]
+        row["reason"] = ("constructed by hand: main never ran on this toolchain, so this "
+                         "is not a main commit and carries no published Lake cache")
+        return row
     if release_key(release) < release_key(EARLIEST_RELEASE):
         row["status"] = "out-of-scope"
         row["reason"] = f"predates {EARLIEST_RELEASE}, before the Lake cache existed"

@@ -44,6 +44,13 @@ Knowing which of those two it is matters. A stepped-over release is a near miss 
 could avoid another day; a `stable`-branch release is permanently out of reach and no
 amount of automation here will change that.
 
+Such a release can still be tagged by hand, off a `main` commit, and `v4.33.0` was: one
+commit off `afb1aacb`, the last `main` commit before the bump jumped, changing only the two
+pin files so that no source differs from that commit. It was built from source against
+mathlib v4.33.0 and passes the audits, but nothing publishes a Lake cache for a commit off
+`main`, so a checkout recompiles the library. The report calls such a tag `tagged` and says
+it was constructed; `--create` will never make one.
+
 Releases older than `v4.33.0-rc1` are out of scope, because the Lake cache does not reach
 back that far and a tag could not promise a usable one. That bound is `EARLIEST_RELEASE` in
 the script; raise it if the cache is ever pruned, never lower it.
