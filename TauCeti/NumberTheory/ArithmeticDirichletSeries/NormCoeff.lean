@@ -67,7 +67,7 @@ theorem normCoeff_apply (f : IdealArithmeticFunction K) (n : ℕ) :
   (rfl)
 
 /-- The summand defining a norm coefficient has finite support. -/
-theorem normCoeff_summand_hasFiniteSupport (f : IdealArithmeticFunction K) (n : ℕ) :
+theorem hasFiniteSupport_normCoeff_summand (f : IdealArithmeticFunction K) (n : ℕ) :
     (Set.indicator
       {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n} f).HasFiniteSupport :=
   (finite_normFiber K n).subset Set.support_indicator_subset
@@ -85,7 +85,7 @@ theorem normCoeff_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 :=
 
 /-- Regrouping the zero ideal arithmetic function gives the zero arithmetic function. -/
 @[simp]
-theorem normCoeff_zero_fun : normCoeff K (0 : IdealArithmeticFunction K) = 0 := by
+theorem normCoeff_zero : normCoeff K (0 : IdealArithmeticFunction K) = 0 := by
   ext n
   simp [normCoeff_apply]
 
@@ -120,6 +120,7 @@ theorem normCoeff_smul (c : ℂ) (f : IdealArithmeticFunction K) :
   exact (DistribSMul.toAddMonoidHom ℂ c).map_finsum_mem f (finite_normFiber K n) |>.symm
 
 /-- Regrouping commutes with coefficientwise complex conjugation. -/
+@[simp]
 theorem normCoeff_conj_apply (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K (fun I ↦ star (f I)) n = star (normCoeff K f n) := by
   simp only [normCoeff_apply]
