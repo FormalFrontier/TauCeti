@@ -164,9 +164,8 @@ lemma exists_mem_Gamma1_natDiagGL_mul_of_dvd (hp : 0 < p) {γ : SL(2, ℤ)} (hγ
   -- the new left factor
   have hdet : (!![γ 0 0, m; (p : ℤ) * γ 1 0, γ 1 1 - γ 1 0 * j] :
       Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-    have hγdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := by
-      have := γ.2
-      rwa [Matrix.det_fin_two] at this
+    have hγdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 :=
+      Matrix.SpecialLinearGroup.det_fin_two γ
     rw [Matrix.det_fin_two_of]
     linear_combination hγdet + γ 1 0 * hm
   obtain ⟨δ, hδmat⟩ : ∃ δ : SL(2, ℤ), (δ : Matrix (Fin 2) (Fin 2) ℤ) =
@@ -261,6 +260,35 @@ theorem op_upperTriRep_smul_injective {G : Subgroup SL(2, ℤ)} :
   have := Int.eq_zero_of_abs_lt_dvd hdvd habs
   exact Fin.ext (by omega)
 
+/-- A reusable right-coset decomposition criterion for the double coset of `diag(1, p)`.
+It packages the common set-theoretic argument from forward factorizations and reverse witnesses,
+independently of the chosen representative family. -/
+theorem doubleCoset_natDiagGL_eq_iUnion_rightCosets_of {ι : Type*}
+    (rep : ι → GL (Fin 2) ℚ)
+    (hforward : ∀ γ : SL(2, ℤ), γ ∈ Gamma1 N →
+      ∃ (i : ι) (δ : SL(2, ℤ)), δ ∈ Gamma1 N ∧
+        natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * rep i)
+    (hreverse : ∀ i : ι, ∃ γ : SL(2, ℤ), γ ∈ Gamma1 N ∧
+      natDiagGL 2 ![1, p] * mapGL ℚ γ = rep i) :
+    doubleCoset (natDiagGL 2 ![1, p]) ((Gamma1 N).map (mapGL ℚ))
+        ((Gamma1 N).map (mapGL ℚ)) =
+      ⋃ i : ι, MulOpposite.op (rep i) •
+        ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
+  refine Set.Subset.antisymm (fun x hx ↦ ?_) (Set.iUnion_subset fun i x hx ↦ ?_)
+  · obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := mem_doubleCoset.mp hx
+    obtain ⟨γ₂, hγ₂, rfl⟩ := Subgroup.mem_map.mp hg₂
+    obtain ⟨i, δ, hδ, heq⟩ := hforward γ₂ hγ₂
+    refine Set.mem_iUnion.mpr ⟨i, (mem_rightCoset_iff _).mpr ?_⟩
+    have hx' : g₁ * natDiagGL 2 ![1, p] * mapGL ℚ γ₂ * (rep i)⁻¹ =
+        g₁ * mapGL ℚ δ := by
+      rw [mul_assoc g₁, heq, mul_assoc, mul_inv_cancel_right]
+    rw [hx']
+    exact mul_mem hg₁ (Subgroup.mem_map_of_mem _ hδ)
+  · obtain ⟨γ, hγ, hγeq⟩ := hreverse i
+    refine mem_doubleCoset.mpr ⟨x * (rep i)⁻¹, (mem_rightCoset_iff _).mp hx,
+      mapGL ℚ γ, Subgroup.mem_map_of_mem _ hγ, ?_⟩
+    rw [mul_assoc, hγeq, inv_mul_cancel_right]
+
 /-- **The `Tₚ` double coset at `p ∣ N` is the union of the `p` upper-triangular right cosets.**
 `Γ₁(N) · diag(1, p) · Γ₁(N) = ⋃_{j < p} Γ₁(N) · !![1, j; 0, p]`, Diamond–Shurman's
 Proposition 5.2.1 in the case `p ∣ N`.
@@ -272,19 +300,22 @@ theorem doubleCoset_natDiagGL_eq_iUnion_rightCosets (hp : 0 < p) (hpN : p ∣ N)
     doubleCoset (natDiagGL 2 ![1, p]) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
       ⋃ j : Fin p, MulOpposite.op (upperTriRep p j) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
-  refine Set.Subset.antisymm (fun x hx ↦ ?_) (Set.iUnion_subset fun j x hx ↦ ?_)
-  · obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := mem_doubleCoset.mp hx
-    obtain ⟨γ₂, hγ₂, rfl⟩ := Subgroup.mem_map.mp hg₂
-    obtain ⟨j, δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul hp hpN hγ₂
-    refine Set.mem_iUnion.mpr ⟨j, (mem_rightCoset_iff _).mpr ?_⟩
-    have hx' : g₁ * natDiagGL 2 ![1, p] * mapGL ℚ γ₂ * (upperTriRep p j)⁻¹ = g₁ * mapGL ℚ δ := by
-      rw [mul_assoc g₁, heq, mul_assoc, mul_inv_cancel_right]
-    rw [hx']
-    exact mul_mem hg₁ (Subgroup.mem_map_of_mem _ hδ)
-  · refine mem_doubleCoset.mpr ⟨x * (upperTriRep p j)⁻¹, (mem_rightCoset_iff _).mp hx,
-      mapGL ℚ (ModularGroup.T ^ (j : ℤ)),
-      Subgroup.mem_map_of_mem _ (T_zpow_mem_Gamma1 N _), ?_⟩
-    rw [mul_assoc, natDiagGL_mul_mapGL_T_zpow hp j, inv_mul_cancel_right]
+  apply doubleCoset_natDiagGL_eq_iUnion_rightCosets_of (rep := upperTriRep p)
+  · exact fun γ hγ ↦ exists_mem_Gamma1_natDiagGL_mul hp hpN hγ
+  · intro j
+    exact ⟨ModularGroup.T ^ (j : ℤ), T_zpow_mem_Gamma1 N _,
+      natDiagGL_mul_mapGL_T_zpow hp j⟩
+
+/-- The chosen representative of `diagCosetGamma1 N p` has the same double coset as the
+canonical matrix `diag(1, p)`. -/
+theorem doubleCoset_out_diagCosetGamma1_eq_natDiagGL :
+    doubleCoset ((diagCosetGamma1 N p).out : GL (Fin 2) ℚ)
+        ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
+      doubleCoset (natDiagGL 2 ![1, p]) ((Gamma1 N).map (mapGL ℚ))
+        ((Gamma1 N).map (mapGL ℚ)) := by
+  have hout : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (diagCosetGamma1 N p).out = diagCosetGamma1 N p := Quotient.out_eq _
+  rw [HeckeCoset.eq_iff.mp (hout.trans (diagCosetGamma1_def N p))]
 
 /-- The decomposition of `doubleCoset_natDiagGL_eq_iUnion_rightCosets`, read at the chosen
 representative `D.out` of `diagCosetGamma1 N p` — the shape the slash-sum machinery of
@@ -294,9 +325,7 @@ theorem doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets (hp : 0 < p) (hpN 
         ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
       ⋃ j : Fin p, MulOpposite.op (upperTriRep p j) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
-  have hout : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-      (diagCosetGamma1 N p).out = diagCosetGamma1 N p := Quotient.out_eq _
-  rw [HeckeCoset.eq_iff.mp (hout.trans (diagCosetGamma1_def N p)),
+  rw [doubleCoset_out_diagCosetGamma1_eq_natDiagGL,
     doubleCoset_natDiagGL_eq_iUnion_rightCosets hp hpN]
 
 end HeckeRing.GL2

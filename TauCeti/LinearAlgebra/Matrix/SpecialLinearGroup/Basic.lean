@@ -16,7 +16,8 @@ import TauCeti.Data.ZMod.Units
 
 The natural reduction map `SL₂(ℤ) → SL₂(ℤ/dℤ)` is surjective (strong approximation for
 `SL₂`; Shimura §1.6, Serre Ch. VII), and the base-change map `SL(n, R) → GL(n, S)` sends
-`-I` to `-I`.
+`-I` to `-I`. Basic coordinate descriptions for `SL₂` and its image under `mapGL` are also
+recorded here for downstream matrix computations.
 
 The third result pins down `±I` itself, which is what the base-change statement moves around:
 over a commutative ring without zero divisors the centre of `SL₂` is exactly `{±I}`, the
@@ -31,6 +32,8 @@ diamond operators of the ModularForms roadmap (Layer 0), where it realizes every
 
 * `Matrix.SpecialLinearGroup.map_intCast_zmod_surjective`: strong approximation for `SL₂`.
 * `Matrix.SpecialLinearGroup.mapGL_neg_one`: `mapGL S (-1) = -1`.
+* `Matrix.SpecialLinearGroup.det_fin_two`: the determinant-one identity in coordinates.
+* `Matrix.SpecialLinearGroup.coe_mapGL_fin_two`: the entrywise matrix of `mapGL ℚ` on `SL₂(ℤ)`.
 * `Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one`: the centre of `SL₂` is
   `{±I}` when `R` has no zero divisors.
 
@@ -44,9 +47,24 @@ public section
 
 open Matrix
 
+open scoped MatrixGroups
+
 variable {d : ℕ}
 
 namespace Matrix.SpecialLinearGroup
+
+/-- The determinant-one identity for an element of `SL₂(R)`, written in coordinates. -/
+lemma det_fin_two {R : Type*} [CommRing R] (g : SL(2, R)) :
+    g 0 0 * g 1 1 - g 0 1 * g 1 0 = 1 := by
+  simpa only [Matrix.det_fin_two] using g.det_coe
+
+/-- The rational matrix of `mapGL ℚ σ`, written entrywise for `σ ∈ SL₂(ℤ)`. -/
+lemma coe_mapGL_fin_two (σ : SL(2, ℤ)) :
+    (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      !![((σ 0 0 : ℤ) : ℚ), ((σ 0 1 : ℤ) : ℚ); ((σ 1 0 : ℤ) : ℚ), ((σ 1 1 : ℤ) : ℚ)] := by
+  rw [mapGL_coe_matrix]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
 
 /-- `-I` maps to `-I` under `SL(n, R) → GL(n, S)`. -/
 @[simp]
@@ -127,7 +145,7 @@ private lemma inv_mul_zero_zero_eq_one
     (h0 : M 0 0 = g 0 0) (h1 : M 1 0 = g 1 0) : (M⁻¹ * g) 0 0 = 1 := by
   have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
     have h := M.det_coe
-    rwa [det_fin_two] at h
+    rwa [Matrix.det_fin_two] at h
   rw [mul_apply_zero_zero, inv_apply_zero_zero, inv_apply_zero_one, ← h0, ← h1]
   linear_combination hdet
 
@@ -140,7 +158,7 @@ private lemma exists_map_eq_of_col_eq (h : SpecialLinearGroup (Fin 2) (ZMod d))
   obtain ⟨t₀, ht₀⟩ := ZMod.intCast_surjective (h 0 1)
   have h11 : h 1 1 = 1 := by
     have hdet := h.det_coe
-    rw [det_fin_two] at hdet
+    rw [Matrix.det_fin_two] at hdet
     rw [h00, h10] at hdet
     linear_combination hdet
   refine ⟨transvection (by decide : (0 : Fin 2) ≠ 1) t₀, ?_⟩

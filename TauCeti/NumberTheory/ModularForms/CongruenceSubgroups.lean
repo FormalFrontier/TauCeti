@@ -58,6 +58,8 @@ infrastructure independent of the diamond operators.
   under conjugation by `Γ₀(N)` elements in `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`: every unit of `ZMod N` is the
   lower-right entry of a matrix in `Γ₀(N)` (via strong approximation for `SL₂`).
+* `CongruenceSubgroup.gamma0Twist`: an explicit `Γ₀(N)` element whose lower-right entry is any
+  natural number coprime to `N`.
 * `CongruenceSubgroup.neg_one_mem_Gamma0` and
   `CongruenceSubgroup.Gamma0Map_toHomUnits_negOne`: `-I ∈ Γ₀(N)`, with lower-right entry the
   unit `-1`; `CongruenceSubgroup.neg_one_mem_Gamma1_iff`: `-I ∈ Γ₁(N) ↔ N ∣ 2`.
@@ -226,6 +228,55 @@ theorem Gamma0Map_toHomUnits_surjective :
   have h11 : ((g 1 1 : ℤ) : ZMod N) = u := by rw [hentry]; simp
   exact ⟨⟨g, Gamma0_mem.mpr h10⟩, Units.ext (by simpa [Gamma0Map] using h11)⟩
 
+/-- The bottom row of an `SL₂(ℤ)` matrix is a Bézout relation: if it is `(N, p)`, then its
+top row `(m, n)` satisfies `m p - n N = 1`. -/
+lemma bezout_of_lowerRow {p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := by
+  simpa only [hσ10, hσ11] using Matrix.SpecialLinearGroup.det_fin_two σ
+
+/-- A bottom row `(N, p)` of an `SL₂(ℤ)` matrix forces `p` and `N` to be coprime. -/
+lemma coprime_of_lowerRow {p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) : Nat.Coprime p N :=
+  Nat.isCoprime_iff_coprime.mp (by
+    rw [← hσ10, ← hσ11]
+    exact (isCoprime_row σ 1).symm)
+
+/-- If the bottom row of `σ ∈ SL₂(ℤ)` is `(N, p)`, then its upper-left entry satisfies
+`m p = 1` in `ZMod N`. -/
+lemma intCast_mul_of_lowerRow {p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
+  have h := congrArg (Int.cast : ℤ → ZMod N) (bezout_of_lowerRow hσ10 hσ11)
+  push_cast at h ⊢
+  rw [ZMod.natCast_self] at h
+  linear_combination h
+
+/-- A Bézout matrix with bottom row `(N, p)`, for `p` coprime to `N`. -/
+noncomputable def gamma0Twist (N p : ℕ) (h : Nat.Coprime p N) : SL(2, ℤ) :=
+  ((Nat.isCoprime_iff_coprime.mpr h.symm : IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose
+
+/-- The lower-left entry of the Bézout twist is `N`. -/
+@[simp] lemma gamma0Twist_apply_one_zero {p : ℕ} (h : Nat.Coprime p N) :
+    gamma0Twist N p h 1 0 = (N : ℤ) := by
+  exact ((Nat.isCoprime_iff_coprime.mpr h.symm :
+    IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose_spec.1
+
+/-- The lower-right entry of the Bézout twist is `p`. -/
+@[simp] lemma gamma0Twist_apply_one_one {p : ℕ} (h : Nat.Coprime p N) :
+    gamma0Twist N p h 1 1 = (p : ℤ) := by
+  exact ((Nat.isCoprime_iff_coprime.mpr h.symm :
+    IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose_spec.2
+
+/-- The Bézout twist lies in `Γ₀(N)`. -/
+lemma gamma0Twist_mem_Gamma0 {p : ℕ} (h : Nat.Coprime p N) : gamma0Twist N p h ∈ Gamma0 N := by
+  rw [Gamma0_mem, gamma0Twist_apply_one_zero h]
+  simp
+
+/-- The unit-valued lower-right entry of the Bézout twist is the residue class of `p`. -/
+lemma Gamma0Map_toHomUnits_gamma0Twist {p : ℕ} (h : Nat.Coprime p N) :
+    (Gamma0Map N).toHomUnits ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩ =
+      ZMod.unitOfCoprime p h :=
+  Units.ext (by simp [Gamma0Map, gamma0Twist_apply_one_one h])
+
 /-- `-I` lies in `Γ₀(N)`: its lower-left entry is `0`. -/
 theorem neg_one_mem_Gamma0 : (-1 : SL(2, ℤ)) ∈ Gamma0 N := by
   simp
@@ -270,7 +321,7 @@ is `p` via lower-unitriangular representatives, and the tower multiplies to
 `[SL₂(ℤ) : Γ₀(pᵏ)] = p^(k-1)(p + 1)` for prime `p` and `k ≥ 1` — the degree count of
 Shimura, Theorem 3.24. -/
 
-private lemma exists_dvd_sub_val_mul (p : ℕ) [NeZero p] (a b : ℤ)
+lemma exists_dvd_sub_val_mul (p : ℕ) [NeZero p] (a b : ℤ)
     (hb : IsUnit ((b : ℤ) : ZMod p)) : ∃ j : ZMod p, (p : ℤ) ∣ a - (j.val : ℤ) * b := by
   obtain ⟨u, hu⟩ := hb
   refine ⟨(a : ZMod p) * ↑u⁻¹, ?_⟩

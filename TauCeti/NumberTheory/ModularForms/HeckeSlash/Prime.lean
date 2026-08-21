@@ -21,14 +21,15 @@ completes the identification at every prime:
 
 **One formula, both cases.** The extra term is not conditional. At `p ∤ N` it is the slash by the
 twisted representative `σ · diag(p, 1)`, and slashing by `σ ∈ Γ₀(N)` — an element with lower-right
-entry `p` — is by definition the diamond operator `⟨p⟩` (`slash_mapGL_gamma0Twist`). At `p ∣ N`
+entry `p` — is by definition the diamond operator `⟨p⟩`
+(`slash_mapGL_gamma0Twist_eq_diamondOpNat`). At `p ∣ N`
 the zero-extended `⟨p⟩` of `DiamondOperators.lean` *vanishes*, so the term disappears and the
 formula degenerates to the `p ∣ N` statement already proved. That is exactly the uniformity the
 ModularForms roadmap asks for: `Tₚ` is one operator, defined for every `p`, with the modern `Uₚ`
 recovered as the `p ∣ N` case and not introduced separately.
 
-⚠ The twist is essential and is not `heckeSlashUpperTriAddScale`. Over `Γ₁(N)` the untwisted
-`f ∣[k] !![p, 0; 0, 1]` is *not* a term of the coset sum; only after applying `⟨p⟩` does the
+⚠ The twist is essential. Over `Γ₁(N)` the untwisted `f ∣[k] !![p, 0; 0, 1]` is *not* a term
+of the coset sum; only after applying `⟨p⟩` does the
 matrix `σ · diag(p, 1)` represent the missing right coset. On a form of nebentypus `χ` the
 diamond acts by the scalar `χ(p)`, which is where the classical factor `χ(p)` in
 `aₘ(Tₚ f) = a_{m p}(f) + χ(p) p^{k−1} a_{m/p}(f)` comes from
@@ -37,12 +38,13 @@ agree exactly when `χ(p) = 1`.
 
 ## Main results
 
-* `HeckeRing.GL2.slash_mapGL_gamma0Twist`, `HeckeRing.GL2.slash_mapGL_gamma0Twist_cusp`: slashing
-  by the Bézout twist is the diamond operator `⟨p⟩`.
+* `HeckeRing.GL2.slash_mapGL_eq_diamondOpNat` and its cusp-form counterpart: slashing by any
+  suitable `Γ₀(N)` representative is the corresponding diamond operator; the
+  `slash_mapGL_gamma0Twist_eq_*` lemmas specialize them to the Bézout twist.
 * `HeckeRing.GL2.heckeSlashSum_diagCosetGamma1_of_coprime`: the slash sum of the double coset at
   a prime `p ∤ N`, over the `p + 1` representatives.
-* `HeckeRing.GL2.coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_prime`,
-  `HeckeRing.GL2.coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_prime`: **the classical `Tₚ`,
+* `HeckeRing.GL2.coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime`,
+  `HeckeRing.GL2.coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime`: **the classical `Tₚ`,
   at every prime**, on `M_k(Γ₁(N))` and on `S_k(Γ₁(N))`.
 * `HeckeRing.GL2.coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_mem_modFormCharSpace` and
   its cusp-form counterpart: the same formula on a nebentypus space, with the diamond replaced by
@@ -75,23 +77,37 @@ namespace HeckeRing.GL2
 
 variable {N p : ℕ} (k : ℤ)
 
+/-- Slashing by a `Γ₀(N)` representative with lower-right unit `n` is the zero-extended
+diamond operator `⟨n⟩` on modular forms. -/
+theorem slash_mapGL_eq_diamondOpNat {n : ℕ} (h : Nat.Coprime n N) (g : ↥(Gamma0 N))
+    (hg : (Gamma0Map N).toHomUnits g = ZMod.unitOfCoprime n h)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k n f) := by
+  rw [ModularForm.rat_slash_mapGL, diamondOpNat_of_coprime k h, coe_diamondOp k _ g hg f]
+
+/-- The cusp-form counterpart of `slash_mapGL_eq_diamondOpNat`. -/
+theorem slash_mapGL_eq_diamondOpCuspNat {n : ℕ} (h : Nat.Coprime n N) (g : ↥(Gamma0 N))
+    (hg : (Gamma0Map N).toHomUnits g = ZMod.unitOfCoprime n h)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k n f) := by
+  rw [ModularForm.rat_slash_mapGL, diamondOpCuspNat_of_coprime k h,
+    coe_diamondOpCusp k _ g hg f]
+
 /-- **Slashing by the Bézout twist is the diamond operator `⟨p⟩`.** The twist is the `Γ₀(N)`
 element of lower-right entry `p`, so this is `coe_diamondOp` at that representative, transported
 across the `ℚ`/`ℝ` bridge. -/
-theorem slash_mapGL_gamma0Twist (h : Nat.Coprime p N)
+theorem slash_mapGL_gamma0Twist_eq_diamondOpNat (h : Nat.Coprime p N)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k p f) := by
-  rw [ModularForm.rat_slash_mapGL, diamondOpNat_of_coprime k h,
-    coe_diamondOp k _ ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
-      (gamma0Twist_toHomUnits_Gamma0Map h) f]
+    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k p f) :=
+  slash_mapGL_eq_diamondOpNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
+    (Gamma0Map_toHomUnits_gamma0Twist h) f
 
 /-- **Slashing by the Bézout twist is the diamond operator `⟨p⟩`**, on cusp forms. -/
-theorem slash_mapGL_gamma0Twist_cusp (h : Nat.Coprime p N)
+theorem slash_mapGL_gamma0Twist_eq_diamondOpCuspNat (h : Nat.Coprime p N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k p f) := by
-  rw [ModularForm.rat_slash_mapGL, diamondOpCuspNat_of_coprime k h,
-    coe_diamondOpCusp k _ ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
-      (gamma0Twist_toHomUnits_Gamma0Map h) f]
+    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k p f) :=
+  slash_mapGL_eq_diamondOpCuspNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
+    (Gamma0Map_toHomUnits_gamma0Twist h) f
 
 variable [NeZero N]
 
@@ -107,7 +123,7 @@ theorem heckeSlashSum_diagCosetGamma1_of_coprime (hp : p.Prime) (h : Nat.Coprime
       (primeRep (gamma0Twist N p h) p)
       (doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets_of_prime hp
         (gamma0Twist_apply_one_zero h) (gamma0Twist_apply_one_one h))
-      (op_primeRep_smul_injective hp (gamma0Twist_apply_one_zero h)
+      (op_primeRep_smul_injective (G := Gamma1 N) hp.one_lt (gamma0Twist_apply_one_zero h)
         (gamma0Twist_apply_one_one h)) f,
     Fintype.sum_option, heckeSlashUpperTri_def]
   simp only [primeRep_some, primeRep_none]
@@ -121,33 +137,29 @@ coset `Γ₁(N) · diag(1, p) · Γ₁(N)` is
 with **no** case split on whether `p` divides the level: at `p ∣ N` the zero-extended diamond
 `⟨p⟩` vanishes and the formula reduces to the upper-triangular sum, the operator modern papers
 write `Uₚ`. -/
-theorem coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_prime (hp : p.Prime)
+theorem coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime (hp : p.Prime)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpNat k p f) ∣[k] scaleRep p := by
   rw [coe_heckeSlashGamma1ModularFormEnd]
   by_cases h : Nat.Coprime p N
   · rw [heckeSlashSum_diagCosetGamma1_of_coprime k hp h f, SlashAction.slash_mul,
-      slash_mapGL_gamma0Twist k h f]
-  · have hpN : p ∣ N := by
-      by_contra hnd
-      exact h ((Nat.Prime.coprime_iff_not_dvd hp).mpr hnd)
+      slash_mapGL_gamma0Twist_eq_diamondOpNat k h f]
+  · have hpN : p ∣ N := hp.dvd_iff_not_coprime.mpr h
     rw [heckeSlashSum_diagCosetGamma1 k hpN f, diamondOpNat_of_not_coprime k h]
     simp
 
 /-- **The classical `Tₚ` on `S_k(Γ₁(N))`, at every prime** — the same formula, with the
 cusp-form diamond operator. -/
-theorem coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_prime (hp : p.Prime)
+theorem coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime (hp : p.Prime)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpCuspNat k p f) ∣[k] scaleRep p := by
   rw [coe_heckeSlashGamma1CuspFormEnd]
   by_cases h : Nat.Coprime p N
   · rw [heckeSlashSum_diagCosetGamma1_of_coprime k hp h f, SlashAction.slash_mul,
-      slash_mapGL_gamma0Twist_cusp k h f]
-  · have hpN : p ∣ N := by
-      by_contra hnd
-      exact h ((Nat.Prime.coprime_iff_not_dvd hp).mpr hnd)
+      slash_mapGL_gamma0Twist_eq_diamondOpCuspNat k h f]
+  · have hpN : p ∣ N := hp.dvd_iff_not_coprime.mpr h
     rw [heckeSlashSum_diagCosetGamma1 k hpN f, diamondOpCuspNat_of_not_coprime k h]
     simp
 
@@ -163,7 +175,7 @@ theorem coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_mem_modFormCharSpa
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
     ⇑(heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f) =
       heckeSlashUpperTri k p ⇑f + (χ (ZMod.unitOfCoprime p h) : ℂ) • (⇑f ∣[k] scaleRep p) := by
-  rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_prime k hp f,
+  rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp f,
     diamondOpNat_of_coprime k h, diamondOp_apply_of_mem_modFormCharSpace k χ _ hf]
   congr 1
   exact ModularForm.rat_smul_slash_of_det_pos k (det_scaleRep_pos p) ⇑f _
@@ -174,7 +186,7 @@ theorem coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_mem_cuspFormCharSpace
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormCharSpace k χ) :
     ⇑(heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f) =
       heckeSlashUpperTri k p ⇑f + (χ (ZMod.unitOfCoprime p h) : ℂ) • (⇑f ∣[k] scaleRep p) := by
-  rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_prime k hp f,
+  rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f,
     diamondOpCuspNat_of_coprime k h, diamondOpCusp_apply_of_mem_cuspFormCharSpace k χ _ hf]
   congr 1
   exact ModularForm.rat_smul_slash_of_det_pos k (det_scaleRep_pos p) ⇑f _
