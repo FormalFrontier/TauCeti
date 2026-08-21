@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -106,7 +107,7 @@ end Measure
 index type carries no finiteness assumption: it is `MultiCoupling.pi` and
 `MultiCoupling.instNonempty`, not the bundle itself, that need `ι` to be finite. -/
 abbrev MultiCoupling {ι : Type u} {X : ι → Type v}
-    [∀ i, MeasurableSpace (X i)] (μ : ∀ i, ProbabilityMeasure (X i)) :=
+    [∀ i, MeasurableSpace (X i)] (μ : ∀ i, ProbabilityMeasure (X i)) : Type _ :=
   {π : ProbabilityMeasure (∀ i, X i) //
     Measure.IsMultiCoupling π.toMeasure (fun i ↦ (μ i).toMeasure)}
 

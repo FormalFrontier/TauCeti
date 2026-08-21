@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,19 +27,19 @@ is totally positive (there are no real places), `Cl⁺(K)` and `Cl(K)` coincide.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.narrowPrincipalSubgroup`: the subgroup of principal fractional ideals with a
+* `NumberField.narrowPrincipalSubgroup`: the subgroup of principal fractional ideals with a
   totally positive generator, with `mem_narrowPrincipalSubgroup`.
-* `TauCeti.NumberField.NarrowClassGroup`: the quotient `Cl⁺(K)`, a `CommGroup`.
-* `TauCeti.NumberField.NarrowClassGroup.mk`: the class of an invertible fractional ideal, with
+* `NumberField.NarrowClassGroup`: the quotient `Cl⁺(K)`, a `CommGroup`.
+* `NumberField.NarrowClassGroup.mk`: the class of an invertible fractional ideal, with
   `mk_surjective`, `mk_eq_one_iff`, `mk_eq_mk_iff`, and the eliminator `induction`.
-* `TauCeti.NumberField.NarrowClassGroup.lift`: the universal property — a homomorphism trivial on
+* `NumberField.NarrowClassGroup.lift`: the universal property — a homomorphism trivial on
   `narrowPrincipalSubgroup` descends to `Cl⁺(K)`, with `lift_mk` and `lift_unique`.
-* `TauCeti.NumberField.NarrowClassGroup.toClassGroup`: the surjection `Cl⁺(K) → Cl(K)` forgetting
+* `NumberField.NarrowClassGroup.toClassGroup`: the surjection `Cl⁺(K) → Cl(K)` forgetting
   positivity, with `toClassGroup_surjective`.
-* `TauCeti.NumberField.NarrowClassGroup.mkPrincipal` and `toClassGroup_ker`: the principal-class map
+* `NumberField.NarrowClassGroup.mkPrincipal` and `toClassGroup_ker`: the principal-class map
   `Kˣ → Cl⁺(K)` and exactness at `Cl⁺(K)` of `Kˣ → Cl⁺(K) → Cl(K) → 1`
   (`ker toClassGroup = mkPrincipal.range`).
-* `TauCeti.NumberField.NarrowClassGroup.mkPrincipal_sq` and `sq_eq_one_of_mem_ker_toClassGroup`:
+* `NumberField.NarrowClassGroup.mkPrincipal_sq` and `sq_eq_one_of_mem_ker_toClassGroup`:
   `mkPrincipal` is `2`-torsion, so `ker(Cl⁺ → Cl)` is an elementary abelian `2`-group.
 -/
 
@@ -47,7 +48,7 @@ public section
 open NumberField FractionalIdeal
 open scoped nonZeroDivisors
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable (K : Type*) [Field K] [NumberField K]
 
@@ -205,4 +206,4 @@ of `mkPrincipal`, which is `2`-torsion. So the narrow-vs-ordinary defect is an e
 
 end NarrowClassGroup
 
-end TauCeti.NumberField
+end NumberField

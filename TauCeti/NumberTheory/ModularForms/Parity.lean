@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 TauCeti contributors. All rights reserved.
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -59,7 +59,7 @@ open scoped MatrixGroups ModularForm
 
 namespace TauCeti
 
-variable {N : ℕ} [NeZero N] {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
+variable {N : ℕ} {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
 /-! ### The diamond operator at `-1` -/
 
@@ -164,7 +164,6 @@ theorem cuspFormCharSpace_one_eq_bot_of_odd (hk : Odd k) :
 
 /-! ### The degenerate levels `N ∣ 2` -/
 
-omit [NeZero N] in
 /-- At the levels `N ∣ 2`, exactly those with `-I ∈ Γ₁(N)`, every odd-weight modular form for
 `Γ₁(N)` vanishes. -/
 theorem ModularForm.eq_zero_of_odd_of_dvd_two (hN : N ∣ 2) (hk : Odd k)

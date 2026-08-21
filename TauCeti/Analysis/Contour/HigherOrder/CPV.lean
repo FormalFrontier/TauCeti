@@ -28,7 +28,7 @@ polar decomposition contributes to the generalized residue theorem. The crossing
 many (`Contour.IsPwC1ImmersionOn.finite_crossings`), a common window radius separates them
 (`Contour.exists_common_window_radius`), each window integral converges to the boundary
 difference (`Contour.perWindow_higherOrder_truncated_integral_tendsto`), and the pieces
-telescope (`Contour.hasCauchyPVAt_of_perWindow_boundary_tendsto`).
+telescope (`Contour.hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint`).
 
 The flatness and sector hypotheses are the raw per-crossing forms of the Hungerbühler–Wasem
 conditions (A′) and (B) at `s` (`Contour.FlatOfOrder`; the tangent-direction power equation,
@@ -154,32 +154,27 @@ theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {
       h_imm.isPiecewiseC1On.intervalIntegrable_deriv hε
   have h_plain := fun l u =>
     plain_piece_integral_eq (s := s) h_imm hab hk c (l := l) (u := u)
-  rcases T.eq_empty_or_nonempty with hT_empty | -
-  · refine hasCauchyPVAt_of_perWindow_boundary_tendsto
-      (Φ := fun z => c * (-(↑(k - 1) : ℂ)⁻¹ * ((z - s) ^ (k - 1))⁻¹))
-      one_pos hab.le T ?_ ?_ ?_ h_int_tr h_plain ?_
-      (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
-        fun t _ => one_pos)
-    all_goals simp [hT_empty]
-  · -- The same uniform radius as in `InvSubCPVExistence`; the constant bound `1` is inert here,
-    -- and the strict margins it returns are what removes the halving this used to need.
-    obtain ⟨ρ, hρ_pos, h_endpts, h_pair, -⟩ :=
-      exists_common_window_radius_le h_Ioo (fun _ => 1) fun _ _ => one_pos
-    refine hasCauchyPVAt_of_perWindow_boundary_tendsto
-      (Φ := fun z => c * (-(↑(k - 1) : ℂ)⁻¹ * ((z - s) ^ (k - 1))⁻¹))
-      hρ_pos hab.le T
-      (fun t ht => by linarith [(h_endpts t ht).1])
-      (fun t ht => by linarith [(h_endpts t ht).2])
-      h_pair
-      h_int_tr h_plain
-      (fun t₀ ht₀ => perWindow_boundary_tendsto_of_interior h_imm hab (h_Ioo t₀ ht₀)
-        (hT_mem.mp ht₀).2 hk hkn (h_flat t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
-        (h_B t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2) c p.countable_toSet hp hρ_pos
-        (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
-        fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
-          (h_pair t₀ ht₀) h_complete ht h_eq)
-      (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
-        fun t _ => hρ_pos)
+  -- The same uniform radius as in `InvSubCPVExistence`; the constant bound `1` is inert here,
+  -- and the strict margins it returns are what removes the halving this used to need.
+  -- No case split on `T` is needed: `exists_common_window_radius_le` supplies a radius when
+  -- there are no crossings, and every window hypothesis below is a `∀` over `T`.
+  obtain ⟨ρ, hρ_pos, h_endpts, h_pair, -⟩ :=
+    exists_common_window_radius_le h_Ioo (fun _ => 1) fun _ _ => one_pos
+  exact hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint
+    (Φ := fun z => c * (-(↑(k - 1) : ℂ)⁻¹ * ((z - s) ^ (k - 1))⁻¹))
+    hab.le T (fun _ => hρ_pos.le)
+    (fun t ht => by linarith [(h_endpts t ht).1])
+    (fun t ht => by linarith [(h_endpts t ht).2])
+    (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le)
+    h_int_tr h_plain
+    (fun t₀ ht₀ => perWindow_boundary_tendsto_of_interior h_imm hab (h_Ioo t₀ ht₀)
+      (hT_mem.mp ht₀).2 hk hkn (h_flat t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
+      (h_B t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2) c p.countable_toSet hp hρ_pos
+      (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
+      fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
+        (h_pair t₀ ht₀) h_complete ht h_eq)
+    (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
+      fun t _ => hρ_pos)
 
 end TauCeti.Contour
 

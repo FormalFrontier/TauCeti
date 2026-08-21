@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Topology.UnitInterval
+public import TauCeti.Topology.LocallyConstant.Preconnected
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.LocallyConstant.Basic
 
@@ -171,23 +172,6 @@ theorem eventually_eventuallyEq_iff_of_analyticAt [CompleteSpace E] {F G : ℂ �
   filter_upwards [ball_mem_nhds z hr] with w hw
   exact ⟨fun h => eventuallyEq_nhds_of_analyticOnNhd_ball hFr hGr hw hz h,
     fun h => eventuallyEq_nhds_of_analyticOnNhd_ball hFr hGr hz hw h⟩
-
-/-- A property that is locally constant along a preconnected set is constant along it.
-
-This is `IsLocallyConstant.apply_eq_of_preconnectedSpace` transported to the subspace `s`; it is
-kept private because the general-topology statement belongs upstream rather than in a
-complex-analysis file. -/
-private theorem eq_of_isPreconnected_of_eventually_iff (hs : IsPreconnected s) {P : X → Prop}
-    (hP : ∀ t ∈ s, ∀ᶠ u in 𝓝[s] t, (P u ↔ P t)) {a b : X} (ha : a ∈ s) (hb : b ∈ s) (hPa : P a) :
-    P b := by
-  have hlc : IsLocallyConstant fun x : s => P x.1 := by
-    rw [IsLocallyConstant.iff_eventually_eq]
-    rintro ⟨t, ht⟩
-    rw [nhds_subtype_eq_comap_nhdsWithin]
-    exact Filter.Eventually.comap ((hP t ht).mono fun _ hu => propext hu) _
-  have : PreconnectedSpace s := isPreconnected_iff_preconnectedSpace.mp hs
-  rw [hlc.apply_eq_of_preconnectedSpace ⟨b, hb⟩ ⟨a, ha⟩]
-  exact hPa
 
 /-! ### Analytic continuation along a path -/
 
@@ -379,9 +363,9 @@ theorem eventuallyEq [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : X} (ha : a ∈ s)
     (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] g a) :
     f b =ᶠ[𝓝 (γ b)] g b :=
-  eq_of_isPreconnected_of_eventually_iff hs
-    (P := fun t => f t =ᶠ[𝓝 (γ t)] g t) (fun _ ht => hf.eventually_eventuallyEq_iff hg ht) ha hb
-    hab
+  -- the germ-agreement predicate is locally constant along `s`, hence constant on it
+  (hs.apply_eq_of_eventually_eq (f := fun t => f t =ᶠ[𝓝 (γ t)] g t)
+    (fun _ ht => ((hf.eventually_eventuallyEq_iff hg ht).mono fun _ h => propext h)) ha hb) ▸ hab
 
 /-- Two continuations along the same path that carry the same germ at one parameter time take the
 same value at every parameter time. -/

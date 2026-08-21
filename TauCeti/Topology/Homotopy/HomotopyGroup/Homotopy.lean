@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,8 +21,6 @@ item 9 of the Tau Ceti universal-covers roadmap.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped unitInterval Topology Topology.Homotopy
 open Topology.Homotopy
@@ -72,5 +71,3 @@ theorem mapHom_eq_of_homotopicRel [DecidableEq N] [Nonempty N] {f g : C(X, Y)}
   MonoidHom.ext fun a ↦ congrFun (map_eq_of_homotopicRel hf hx H) a
 
 end HomotopyGroup
-
-end TauCeti

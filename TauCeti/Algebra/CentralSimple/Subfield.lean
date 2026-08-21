@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -97,7 +98,9 @@ identity linear equivalence and dimensions over `K` transfer by `rfl`-like trans
 Nothing here needs `A` to be a division algebra: the classical statement is about a maximal
 subfield of a central *division* algebra, but the argument only uses simplicity of `L ⊗[K] A`, so
 it is stated for every finite-dimensional central simple `A`. What a division algebra adds is the
-*existence* of a subfield attaining the bound, which is a separate question and is not settled here.
+*existence* of a subfield attaining the bound, which is a separate question, settled by
+`TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg` in
+`TauCeti/Algebra/CentralSimple/MaximalSubfield.lean`.
 
 ## References
 
@@ -256,7 +259,7 @@ theorem toEndL_apply (r : L ⊗[K] A) (x : BaseChangeModule f) : toEndL f r x = 
   simp [toEndL]
 
 /-- The action of the scalar extension on `BaseChangeModule f` is faithful. -/
-theorem toEndL_injective [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A] :
+theorem toEndL_injective [Algebra.IsCentral K A] [IsSimpleRing A] :
     Function.Injective (toEndL f) := by
   have : FaithfulSMul (L ⊗[K] A) (BaseChangeModule f) := faithfulSMul_of_isSimpleRing
   exact fun r r' h ↦ eq_of_smul_eq_smul (α := BaseChangeModule f) fun m ↦ by

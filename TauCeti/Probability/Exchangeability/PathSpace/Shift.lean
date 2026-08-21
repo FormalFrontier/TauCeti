@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -154,6 +155,31 @@ theorem preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add {m C : ℕ} {
     rw [← hkey x, ← Set.mem_preimage,
       Function.IsFixedPt.preimage_iterate hshift m] at h1
     exact h1
+
+omit [MeasurableSpace α] in
+/-- **A shift-invariant function is unchanged by such a reindexing**, pointwise.
+
+Each level set `w ⁻¹' {c}` is shift-invariant, so
+`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` sends the reindexed point into the
+same level set as the original. Taking `c = w x` gives the claim.
+
+No measure and no measurable structure appears: this is the raw form. Its invariants-measurable
+counterpart, `comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add`, is in
+`PathSpace/Invariant/Tail.lean`, mirroring how the set-level raw and invariants-measurable forms
+are split between the two files. -/
+theorem comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
+    {β : Type*} {w : (ℕ → α) → β} (hw : w ∘ shift α = w)
+    (hφ : ∀ n, m ≤ n → φ n = n + C) (x : ℕ → α) :
+    w (fun k => x (φ k)) = w x := by
+  have hshift : ∀ y : ℕ → α, w (shift α y) = w y := fun y => by
+    simpa only [Function.comp_apply] using congrFun hw y
+  have hinv : (shift α) ⁻¹' (w ⁻¹' {w x}) = w ⁻¹' {w x} := by
+    ext y
+    simp only [Set.mem_preimage, Set.mem_singleton_iff, hshift]
+  have hx : x ∈ (fun y : ℕ → α => fun k => y (φ k)) ⁻¹' (w ⁻¹' {w x}) := by
+    rw [preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add hinv hφ]
+    rfl
+  simpa using hx
 
 
 end Probability

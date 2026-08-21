@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Collapse.FaceCount
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Cone
+public import TauCeti.AlgebraicTopology.SimplicialComplex.Subdivision.Stellar
 import Mathlib.Order.Preorder.Finite
 
 /-!
@@ -17,9 +19,9 @@ A simplicial complex is a *cone with apex `v`* when `v` is one of its vertices a
 cone collapses to its apex; in particular every finite cone is collapsible.
 
 This file proves that theorem for the collapse relation of
-`TauCeti.PreAbstractSimplicialComplex.CollapsesTo`, and reads it off for the standard cones:
+`PreAbstractSimplicialComplex.CollapsesTo`, and reads it off for the standard cones:
 an abstract simplex, the closed star of a face, and the cone construction
-`TauCeti.PreAbstractSimplicialComplex.cone`.  Before this, `Collapsible` was known only for the
+`PreAbstractSimplicialComplex.cone`.  Before this, `Collapsible` was known only for the
 one-vertex complexes of `Collapsible.point`; these theorems supply collapsible complexes of
 arbitrarily many faces, and the simplex case is the base of the recursion on combinatorial balls
 in layer 11 of the geometric-topology roadmap
@@ -27,7 +29,8 @@ in layer 11 of the geometric-topology roadmap
 
 The cone predicate `IsCone` lives in `TauCeti.AlgebraicTopology.SimplicialComplex.IsCone`, and
 each standard cone is recognised in the file of its own construction (`isCone_simplex`,
-`isCone_closedStar`, `isCone_cone`); this file adds only what depends on collapse theory.
+`isCone_closedStar`, `isCone_cone`, `isCone_stellarSubdivision_of_closedStar_eq_self`); this file
+adds only what depends on collapse theory.
 
 The proof is the usual one: pick a face `σ` maximal among the faces missing the apex.
 Maximality makes `σ` a free face with unique proper coface `insert v σ`, deleting it leaves a
@@ -44,11 +47,11 @@ termination measure.
   collapses to any vertex of that face.
 * `PreAbstractSimplicialComplex.collapsesTo_point_cone`: the cone on a finite complex collapses
   to its apex.
+* `PreAbstractSimplicialComplex.collapsible_stellarSubdivision_of_closedStar_eq_self`: a finite
+  stellar subdivision that is a cone is collapsible.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace PreAbstractSimplicialComplex
 
@@ -94,9 +97,7 @@ theorem IsCone.exists_notMem_of_ne_point (h : IsCone K v) (hne : K ≠ point v) 
     not_not.mp fun hv => hcon ⟨τ, hτ, hv⟩
   refine hne (le_antisymm (fun σ hσ => ?_) (point_le_iff.mpr h.apex_mem))
   refine mem_point.mpr (Finset.eq_singleton_iff_unique_mem.mpr ⟨hall hσ, fun w hw => ?_⟩)
-  have hwK : ({w} : Finset ι) ∈ K :=
-    (K.isRelLowerSet_faces hσ).2 (Finset.singleton_subset_iff.mpr hw)
-      (Finset.singleton_nonempty w)
+  have hwK : ({w} : Finset ι) ∈ K := singleton_mem_of_mem hσ hw
   exact (Finset.mem_singleton.mp (hall hwK)).symm
 
 /-- The collapse of a finite cone to its apex, by induction on a bound for the face count: each
@@ -135,6 +136,25 @@ theorem IsCone.collapsesTo_point (h : IsCone K v) (hfin : K.faces.Finite) :
 /-- A finite cone is collapsible. -/
 theorem IsCone.collapsible (h : IsCone K v) (hfin : K.faces.Finite) : Collapsible K :=
   collapsible_iff.mpr ⟨v, h.collapsesTo_point hfin⟩
+
+section StellarSubdivision
+
+/-- A finite stellar subdivision is collapsible when the original complex is its own closed star
+at the starred face. -/
+theorem collapsible_stellarSubdivision_of_closedStar_eq_self (hfin : K.faces.Finite)
+    (hσ : σ ∈ K) (hstar : closedStar K σ = K) : Collapsible (stellarSubdivision K σ v) :=
+  (isCone_stellarSubdivision_of_closedStar_eq_self hσ hstar).collapsible
+    (finite_faces_stellarSubdivision hfin)
+
+variable {V : Finset ι}
+
+/-- A simplex starred at its whole vertex set is collapsible. -/
+theorem collapsible_stellarSubdivision_simplex_self (hV : V.Nonempty) :
+    Collapsible (stellarSubdivision (simplex V) V v) :=
+  collapsible_stellarSubdivision_of_closedStar_eq_self (finite_faces_simplex V)
+    (self_mem_simplex.mpr hV) (closedStar_simplex Finset.Subset.rfl)
+
+end StellarSubdivision
 
 section Simplex
 
@@ -190,5 +210,3 @@ theorem collapsible_cone (hfin : L.faces.Finite) : Collapsible (cone L) :=
 end Cone
 
 end PreAbstractSimplicialComplex
-
-end TauCeti

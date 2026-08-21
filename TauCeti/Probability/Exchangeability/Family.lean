@@ -1,11 +1,16 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+-- Public: `blockLaw_congr`, which is index-generic, gives the family predicate its congruence.
+public import TauCeti.Probability.Exchangeability.Congr
 import TauCeti.Probability.Exchangeability.Contractability
+-- Non-public: `map_eq_of_injective` uses finite-dimensional-law uniqueness only inside its proof.
+import Mathlib.Probability.Process.FiniteDimensionalLaws
 
 /-!
 # Exchangeable families
@@ -27,6 +32,8 @@ this file relates them to exchangeable families.
   again from the joint disintegration.
 * `ExchangeableFamily.comp_injective` reindexes a family along an injection; the corresponding
   conditional i.i.d. lemmas are in `ConditionallyIID.Basic`.
+* `ExchangeableFamily.congr` transports the predicate across a coordinatewise a.e. change of
+  family, matching the sequence-level congruences in `Exchangeability/Congr.lean`.
 
 This is the family exchangeability API needed for the Layer 8 target “de Finetti for other
 countable index types” in `TauCetiRoadmap/Exchangeability/README.md`. The countable-index theorem
@@ -74,6 +81,13 @@ theorem ExchangeableFamily.blockLaw_eq {μ : Measure Ω} {X : ι → Ω → α}
     blockLaw μ X k = blockLaw μ X l :=
   h m k l hk hl
 
+/-- Exchangeability of a family transports along a coordinatewise a.e. change of family: the
+predicate constrains only block laws, and those are unchanged (`blockLaw_congr`). -/
+theorem ExchangeableFamily.congr {μ : Measure Ω} {X Y : ι → Ω → α} (hX : ExchangeableFamily μ X)
+    (h : ∀ i, X i =ᵐ[μ] Y i) : ExchangeableFamily μ Y := fun m k l hk hl => by
+  rw [← blockLaw_congr h, ← blockLaw_congr h]
+  exact hX m k l hk hl
+
 /-- **A mixed i.i.d. family is exchangeable.** Along any two injective selections the block law is
 the same `ν`-mixture of product measures, so the two block laws agree. -/
 theorem MixedIIDWith.exchangeableFamily
@@ -109,6 +123,38 @@ theorem ExchangeableFamily.comp_injective {μ : Measure Ω} {X : ι → Ω → �
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
   simpa only [blockLaw_def, Function.comp_apply] using
     h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)
+
+/-- **An exchangeable family has one and the same law along any two injective reindexings.** The
+finite-block equalities that define `ExchangeableFamily` are exactly the finite-dimensional laws of
+the reindexed families, so finite-dimensional-law uniqueness
+(`ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq`) upgrades them to equality of the
+whole laws on `κ → α`. This is the family-level counterpart of
+`Exchangeable.fullyExchangeable`, which is the case `κ = ι = ℕ` with `e` a permutation and
+`f = id`. -/
+theorem ExchangeableFamily.map_eq_of_injective {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ι → Ω → α} (h : ExchangeableFamily μ X) (hX : ∀ i, AEMeasurable (X i) μ)
+    [Countable κ] {e f : κ → ι} (he : Function.Injective e) (hf : Function.Injective f) :
+    μ.map (fun ω i => X (e i) ω) = μ.map (fun ω i => X (f i) ω) := by
+  -- Every finite restriction is a block law read through the enumeration `I.equivFin`.
+  have key : ∀ (d : κ → ι) (I : Finset κ),
+      μ.map (fun ω => I.restrict fun i => X (d i) ω)
+        = (blockLaw μ X fun j : Fin I.card => d (I.equivFin.symm j)).map
+            fun y (i : I) => y (I.equivFin i) := by
+    intro d I
+    have hg : Measurable fun (y : Fin I.card → α) (i : I) => y (I.equivFin i) :=
+      measurable_pi_lambda _ fun _ => measurable_pi_apply _
+    have hd : AEMeasurable (fun ω (j : Fin I.card) => X (d (I.equivFin.symm j)) ω) μ :=
+      aemeasurable_pi_lambda _ fun _ => hX _
+    rw [blockLaw_def, AEMeasurable.map_map_of_aemeasurable hg.aemeasurable hd]
+    exact congrArg μ.map (funext fun ω => funext fun i => by
+      simp [Finset.restrict, Function.comp_apply])
+  refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
+    (aemeasurable_pi_lambda _ fun i => hX (e i))
+    (aemeasurable_pi_lambda _ fun i => hX (f i))).2 fun I => ?_
+  rw [key e I, key f I]
+  have hI : Function.Injective fun j : Fin I.card => (I.equivFin.symm j : κ) :=
+    Subtype.val_injective.comp I.equivFin.symm.injective
+  exact congrArg _ (h.blockLaw_eq _ _ (he.comp hI) (hf.comp hI))
 
 /-! ## Comparison with the sequence predicates -/
 

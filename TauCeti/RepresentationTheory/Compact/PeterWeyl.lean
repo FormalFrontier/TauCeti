@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.InnerProductSpace.l2Space
+public import TauCeti.Analysis.InnerProductSpace.Parseval
 public import TauCeti.RepresentationTheory.Compact.Orthonormal
 public import TauCeti.RepresentationTheory.Compact.RepresentativeDensity
 public import TauCeti.RepresentationTheory.Continuous.Conjugate
@@ -14,12 +15,14 @@ public import TauCeti.RepresentationTheory.Continuous.Unitary.Equivalence
 /-!
 # The Peter-Weyl theorem: the matrix coefficients are a Hilbert basis of `L²(G)`
 
-Let `G` be a compact Hausdorff group. Schur orthogonality
+Let `G` be a compact group. Schur orthogonality
 (`TauCeti/RepresentationTheory/Compact/Orthonormal.lean`) says that the normalized matrix
 coefficients `√(dim V_i) · (π i)_{ab}` of a family of pairwise inequivalent finite-dimensional
 irreducible unitary continuous representations form an *orthonormal system* in `L²(G)`. This file
 proves that when the family is moreover **exhaustive** the system is *complete*, so it is a
-**Hilbert basis** of `L²(G)`: the Peter-Weyl theorem.
+**Hilbert basis** of `L²(G)`: the Peter-Weyl theorem. Hausdorffness is nowhere needed, here or
+in the unconditional standard basis at the end: what the density argument runs on are the
+mollifiers of `Compact/ApproximateIdentity.lean`, which are built without it.
 
 ## "One representative per equivalence class" is data
 
@@ -45,7 +48,7 @@ Because a model's carrier is a standard space `EuclideanSpace 𝕜 (Fin n)`, uni
 an equivalence relation on the *type* `TauCeti.IrrepModel 𝕜 G`, and choosing a representative in
 each class gives `TauCeti.IrrepClass.model`, a skeleton by
 `TauCeti.isIrrepSkeleton_model`. Feeding it to `TauCeti.peterWeylBasis` gives
-`TauCeti.stdPeterWeylBasis`, a Hilbert basis of `L²(G)` for every compact Hausdorff `G` with no
+`TauCeti.stdPeterWeylBasis`, a Hilbert basis of `L²(G)` for every compact `G` with no
 hypothesis left over. Pairwise inequivalence of the representatives is the point where the
 rescaling above is used.
 
@@ -81,6 +84,7 @@ the span `TauCeti.modelSubmodule` of the matrix coefficients of the models insid
 * `TauCeti.peterWeylFamily`: the normalized matrix coefficients, indexed by
   `Σ i, Fin (models i).dim × Fin (models i).dim`.
 * `TauCeti.peterWeylBasis`: **the Peter-Weyl Hilbert basis of `L²(G)`.**
+* `TauCeti.peterWeylCoeff`: the Fourier coefficient against a normalized matrix coefficient.
 * `TauCeti.IrrepClass`, `TauCeti.IrrepClass.model`: the models up to unitary equivalence, and the
   representative chosen in each class.
 * `TauCeti.stdPeterWeylBasis`: the Peter-Weyl basis of `L²(G)` on the chosen representatives, with
@@ -96,6 +100,16 @@ the span `TauCeti.modelSubmodule` of the matrix coefficients of the models insid
   orthonormal system.
 * `TauCeti.coe_peterWeylBasis`, `TauCeti.coe_stdPeterWeylBasis`: the basis is the normalized
   matrix coefficients.
+* `TauCeti.peterWeylFamily_eq_toLp`: each family element is the `L²` class of its normalized
+  continuous matrix coefficient.
+* `TauCeti.coeFn_peterWeylFamily`: the almost-everywhere representative of a normalized matrix
+  coefficient.
+* `TauCeti.peterWeylBasis_repr_apply`, `TauCeti.stdPeterWeylBasis_repr_apply`: the abstract basis
+  coordinates are the explicit Haar-integral Fourier coefficients.
+* `TauCeti.hasSum_peterWeyl_expansion`: reconstruction of an `L²` function from its Peter-Weyl
+  coefficients.
+* `TauCeti.tsum_conj_peterWeylCoeff_mul_peterWeylCoeff`,
+  `TauCeti.tsum_norm_sq_peterWeylCoeff`: polarized and norm-square Parseval identities.
 * `TauCeti.isIrrepSkeleton_model`: the chosen representatives are a skeleton, so the hypothesis of
   `TauCeti.peterWeylBasis` is satisfiable and the theorem is not conditional.
 
@@ -150,7 +164,7 @@ end IrrepModel
 section Skeleton
 
 variable {𝕜 G ι : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
+  [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
 /-- The set of all matrix coefficients of the members of a family of models. -/
 def modelCoeffs (models : ι → IrrepModel 𝕜 G) : Set C(G, 𝕜) :=
@@ -161,7 +175,7 @@ the statement that for a skeleton of the unitary dual this is dense. -/
 noncomputable def modelSubmodule (models : ι → IrrepModel 𝕜 G) : Submodule 𝕜 C(G, 𝕜) :=
   Submodule.span 𝕜 (modelCoeffs models)
 
-omit [IsTopologicalGroup G] [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] in
+omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
 /-- A matrix coefficient of a model lies in the span of the models' matrix coefficients. -/
 theorem matrixCoeff_mem_modelSubmodule (models : ι → IrrepModel 𝕜 G) (i : ι)
     (v w : EuclideanSpace 𝕜 (Fin (models i).dim)) :
@@ -193,7 +207,7 @@ namespace IsIrrepSkeleton
 
 variable {models : ι → IrrepModel 𝕜 G}
 
-omit [IsTopologicalGroup G] [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] in
+omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
 /-- **The matrix coefficients of an irreducible representation are accounted for.** A
 finite-dimensional irreducible unitary continuous representation is carried to a standard model by
 `stdOrthonormalBasis`, and from there onto a member of the skeleton; matrix coefficients survive
@@ -214,7 +228,39 @@ theorem matrixCoeff_mem_of_isIrreducible (h : IsIrrepSkeleton models) {V : Type*
   rw [ContRepresentation.matrixCoeff_apply, ContRepresentation.matrixCoeff_apply, hg]
   simp
 
-omit [IsTopologicalGroup G] [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] in
+omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+/-- **A matrix coefficient of a vector in an irreducible invariant subspace is accounted for.**
+If `W` is a finite-dimensional subspace invariant under `π`, on which `π` restricts to a unitary
+irreducible representation, then for `x ∈ W` and any `w` the matrix coefficient of `π` at `x`, `w`
+lies in the span of the skeleton's coefficients. -/
+theorem matrixCoeff_mem_of_mem_of_isIrreducible (h : IsIrrepSkeleton models) {V : Type*}
+    [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
+    {π : ContRepresentation 𝕜 G V} (hπ : Continuous π)
+    {W : Submodule 𝕜 V} [FiniteDimensional 𝕜 W] (hU : ∀ g, ∀ y ∈ W, π g y ∈ W)
+    (hu : ContRepresentation.IsUnitary (ContRepresentation.subrepresentation π W hU))
+    {x : V} (hx : x ∈ W)
+    (hirr : (ContRepresentation.subrepresentation π W hU).toRepresentation.IsIrreducible)
+    (w : V) :
+    ContRepresentation.matrixCoeff π hπ x w ∈ modelSubmodule models := by
+  -- Only the component of `w` in the subspace is seen.
+  have hproj : ContRepresentation.matrixCoeff π hπ x w
+      = ContRepresentation.matrixCoeff π hπ x (W.starProjection w) := by
+    ext g
+    rw [ContRepresentation.matrixCoeff_apply, ContRepresentation.matrixCoeff_apply]
+    calc ⟪π g x, w⟫_𝕜 = ⟪W.starProjection (π g x), w⟫_𝕜 := by
+          rw [Submodule.starProjection_eq_self_iff.2 (hU g x hx)]
+      _ = ⟪π g x, W.starProjection w⟫_𝕜 :=
+          Submodule.inner_starProjection_left_eq_right _ _ _
+  have hblock := h.matrixCoeff_mem_of_isIrreducible
+    (π := ContRepresentation.subrepresentation π W hU)
+    (ContRepresentation.continuous_subrepresentation hπ) hu hirr
+    ⟨x, hx⟩ ⟨W.starProjection w, W.starProjection_apply_mem w⟩
+  have heq := ContRepresentation.matrixCoeff_subrepresentation (π := π) (hπ := hπ) hU
+    (⟨x, hx⟩ : W) ⟨W.starProjection w, W.starProjection_apply_mem w⟩
+  rw [hproj, ← heq]
+  exact hblock
+
+omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
 /-- **The matrix coefficients of a unitary representation are accounted for.** Complete
 reducibility splits the representation into irreducible blocks orthogonally, and the inner product
 against a fixed vector only sees that vector's component in the block, so every matrix coefficient
@@ -240,35 +286,16 @@ theorem matrixCoeff_mem (h : IsIrrepSkeleton models) {V : Type*} [NormedAddCommG
     intro i x hx w
     have hU : ∀ g, ∀ y ∈ (U i).toSubmodule, π g y ∈ (U i).toSubmodule :=
       fun g y hy ↦ (U i).apply_mem_toSubmodule g hy
-    -- Only the component of `w` in the block is seen.
-    have hproj : ContRepresentation.matrixCoeff π hπ x w
-        = ContRepresentation.matrixCoeff π hπ x ((U i).toSubmodule.starProjection w) := by
-      ext g
-      rw [ContRepresentation.matrixCoeff_apply, ContRepresentation.matrixCoeff_apply]
-      calc ⟪π g x, w⟫_𝕜 = ⟪(U i).toSubmodule.starProjection (π g x), w⟫_𝕜 := by
-            rw [Submodule.starProjection_eq_self_iff.2 (hU g x hx)]
-        _ = ⟪π g x, (U i).toSubmodule.starProjection w⟫_𝕜 :=
-            Submodule.inner_starProjection_left_eq_right _ _ _
     have hirr' : (ContRepresentation.subrepresentation π (U i).toSubmodule
         hU).toRepresentation.IsIrreducible := by
       rw [ContRepresentation.toRepresentation_subrepresentation]
       exact hirr i
-    have hblock := h.matrixCoeff_mem_of_isIrreducible
-      (π := ContRepresentation.subrepresentation π (U i).toSubmodule hU)
-      (ContRepresentation.continuous_subrepresentation hπ) (hu.subrepresentation hU) hirr'
-      ⟨x, hx⟩ ⟨(U i).toSubmodule.starProjection w,
-        (U i).toSubmodule.starProjection_apply_mem w⟩
-    have heq := ContRepresentation.matrixCoeff_subrepresentation (π := π) (hπ := hπ) hU
-      (⟨x, hx⟩ : (U i).toSubmodule)
-      ⟨(U i).toSubmodule.starProjection w, (U i).toSubmodule.starProjection_apply_mem w⟩
-    rw [hproj, ← heq]
-    exact hblock
+    exact h.matrixCoeff_mem_of_mem_of_isIrreducible hπ hU (hu.subrepresentation hU) hx hirr' w
   have htop : (⊤ : Submodule 𝕜 V) ≤ S := hint.submodule_iSup_eq_top ▸ iSup_le hle
   exact htop Submodule.mem_top w
 
 /-! ### Density -/
 
-omit [T2Space G] in
 /-- Convolving a finite sum of eigenvectors of a convolution operator lands in the span of the
 models' matrix coefficients: each nonzero eigenspace carries a *unitary* finite-dimensional
 continuous representation, so `TauCeti.IsIrrepSkeleton.matrixCoeff_mem` applies to it. -/
@@ -299,7 +326,6 @@ theorem convolutionCLM_mem_modelSubmodule (h : IsIrrepSkeleton models) (k : C(G,
   · rw [map_add]
     exact add_mem hx hy
 
-omit [T2Space G] in
 /-- Every convolution by a symmetric kernel lies in the uniform closure of the span of the models'
 matrix coefficients. -/
 theorem convolutionCLM_mem_closure_modelSubmodule (h : IsIrrepSkeleton models) (k : C(G, 𝕜))
@@ -352,7 +378,41 @@ noncomputable def peterWeylFamily (models : ι → IrrepModel 𝕜 G)
     ContRepresentation.matrixCoeffLp (models x.1).rep (models x.1).continuous_rep
       ((models x.1).basis x.2.1) ((models x.1).basis x.2.2)
 
-omit [T2Space G] in
+/-- The elements of the Peter-Weyl family, on the nose. -/
+@[simp]
+theorem peterWeylFamily_apply (models : ι → IrrepModel 𝕜 G)
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    peterWeylFamily models x =
+      (Real.sqrt (models x.1).dim : 𝕜) •
+        ContRepresentation.matrixCoeffLp (models x.1).rep (models x.1).continuous_rep
+          ((models x.1).basis x.2.1) ((models x.1).basis x.2.2) :=
+  (rfl)
+
+/-- A Peter-Weyl family element is the `L²` class of its normalized continuous matrix
+coefficient. -/
+theorem peterWeylFamily_eq_toLp (models : ι → IrrepModel 𝕜 G)
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    peterWeylFamily models x =
+      ContinuousMap.toLp 2 (haarProb G) 𝕜
+        ((Real.sqrt (models x.1).dim : 𝕜) •
+          ContRepresentation.matrixCoeff (models x.1).rep (models x.1).continuous_rep
+            ((models x.1).basis x.2.1) ((models x.1).basis x.2.2)) := by
+  rw [peterWeylFamily_apply, ContRepresentation.matrixCoeffLp_def, map_smul]
+
+/-- A normalized Peter-Weyl matrix coefficient in `L²` is represented almost everywhere by its
+defining continuous function. -/
+theorem coeFn_peterWeylFamily (models : ι → IrrepModel 𝕜 G)
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    peterWeylFamily models x =ᵐ[haarProb G] fun g ↦
+      (Real.sqrt (models x.1).dim : 𝕜) *
+        ⟪(models x.1).rep g ((models x.1).basis x.2.1), (models x.1).basis x.2.2⟫_𝕜 := by
+  filter_upwards [Lp.coeFn_smul (Real.sqrt (models x.1).dim : 𝕜)
+    (ContRepresentation.matrixCoeffLp (models x.1).rep (models x.1).continuous_rep
+      ((models x.1).basis x.2.1) ((models x.1).basis x.2.2)),
+    ContRepresentation.coeFn_matrixCoeffLp (models x.1).rep (models x.1).continuous_rep
+      ((models x.1).basis x.2.1) ((models x.1).basis x.2.2)] with g hsmul hcoeff
+  rw [peterWeylFamily_apply, hsmul, Pi.smul_apply, hcoeff, smul_eq_mul]
+
 /-- Every `L²` matrix coefficient of a model lies in the span of the normalized ones: expand both
 defining vectors in the canonical orthonormal basis and use sesquilinearity. -/
 theorem matrixCoeffLp_mem_span_peterWeylFamily (models : ι → IrrepModel 𝕜 G) (i : ι)
@@ -375,41 +435,25 @@ theorem matrixCoeffLp_mem_span_peterWeylFamily (models : ι → IrrepModel 𝕜 
   have hspan : Submodule.span 𝕜 (Set.range ⇑(models i).basis) = ⊤ := by
     rw [← OrthonormalBasis.coe_toBasis]
     exact (models i).basis.toBasis.span_eq
-  -- the second vector may be spread over the basis
+  -- Each slot of the bundled sesquilinear coefficient map is (semi)linear, so membership in `P`
+  -- spreads from the basis over the whole span; `hspan` says that span is everything.
   have hright : ∀ (a : Fin (models i).dim) (u : EuclideanSpace 𝕜 (Fin (models i).dim)),
       ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep
-        ((models i).basis a) u ∈ P := by
-    intro a u
-    have key : ∀ u ∈ Submodule.span 𝕜 (Set.range ⇑(models i).basis),
-        ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep
-          ((models i).basis a) u ∈ P := by
-      intro u hu
-      induction hu using Submodule.span_induction with
-      | mem x hx =>
-          obtain ⟨b, rfl⟩ := hx
-          exact hbase a b
-      | zero => simp
-      | add x y _ _ hx hy => simpa using add_mem hx hy
-      | smul c x _ hx => simpa using Submodule.smul_mem P c hx
-    exact key u (hspan ▸ Submodule.mem_top)
-  -- and then so may the first
-  have key : ∀ u ∈ Submodule.span 𝕜 (Set.range ⇑(models i).basis),
-      ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep u w ∈ P := by
-    intro u hu
-    induction hu using Submodule.span_induction with
-    | mem x hx =>
-        obtain ⟨a, rfl⟩ := hx
-        exact hright a w
-    | zero => simp
-    | add x y _ _ hx hy => simpa using add_mem hx hy
-    | smul c x _ hx => simpa using Submodule.smul_mem P _ hx
-  exact key v (hspan ▸ Submodule.mem_top)
+        ((models i).basis a) u ∈ P := fun a u => by
+    have himg := (Submodule.image_span_subset
+      (ContRepresentation.matrixCoeffLpₛₗ (models i).rep (models i).continuous_rep
+        ((models i).basis a)) (Set.range ⇑(models i).basis) P).2
+      (by rintro _ ⟨b, rfl⟩; simpa using hbase a b)
+    simpa using himg ⟨u, hspan ▸ Submodule.mem_top, rfl⟩
+  have himg := (Submodule.image_span_subset
+    ((ContRepresentation.matrixCoeffLpₛₗ (models i).rep (models i).continuous_rep).flip w)
+    (Set.range ⇑(models i).basis) P).2 (by rintro _ ⟨a, rfl⟩; simpa using hright a w)
+  simpa using himg ⟨v, hspan ▸ Submodule.mem_top, rfl⟩
 
 namespace IsIrrepSkeleton
 
 variable {models : ι → IrrepModel 𝕜 G}
 
-omit [T2Space G] in
 /-- **The normalized matrix coefficients of a skeleton are orthonormal.** This is Schur
 orthogonality; only pairwise inequivalence of the family is used. -/
 theorem orthonormal_peterWeylFamily [IsAlgClosed 𝕜] (h : IsIrrepSkeleton models) :
@@ -441,7 +485,7 @@ theorem orthogonal_span_peterWeylFamily_eq_bot (h : IsIrrepSkeleton models) :
 
 end IsIrrepSkeleton
 
-/-- **The Peter-Weyl theorem.** For a skeleton of the unitary dual of a compact Hausdorff group,
+/-- **The Peter-Weyl theorem.** For a skeleton of the unitary dual of a compact group,
 the normalized matrix coefficients `√(dim V_i) · (models i)_{ab}` are a Hilbert basis of `L²(G)`,
 indexed by `Σ i, Fin (models i).dim × Fin (models i).dim`.
 
@@ -452,13 +496,118 @@ noncomputable def peterWeylBasis [IsAlgClosed 𝕜] {models : ι → IrrepModel 
   HilbertBasis.mkOfOrthogonalEqBot h.orthonormal_peterWeylFamily
     h.orthogonal_span_peterWeylFamily_eq_bot
 
-/-- **The Peter-Weyl basis is the normalized matrix coefficients.** The basis is not merely
-asserted to exist: its elements are on the nose the functions
+/-- **The Peter-Weyl basis is the normalized matrix coefficients.** Its elements are the `L²`
+classes represented by the continuous functions
 `g ↦ √(dim V_i) · ⟪(models i).rep g e_a, e_b⟫`. -/
 @[simp]
 theorem coe_peterWeylBasis [IsAlgClosed 𝕜] {models : ι → IrrepModel 𝕜 G}
     (h : IsIrrepSkeleton models) : ⇑(peterWeylBasis h) = peterWeylFamily models :=
   HilbertBasis.coe_mkOfOrthogonalEqBot _ _
+
+/-- The Peter-Weyl Fourier coefficient of `f` at the normalized matrix coefficient indexed by
+`x`, written as a Haar integral. -/
+noncomputable def peterWeylCoeff (models : ι → IrrepModel 𝕜 G)
+    (f : Lp 𝕜 2 (haarProb G))
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) : 𝕜 :=
+  ∫ g : G, (starRingEnd 𝕜)
+      ((Real.sqrt (models x.1).dim : 𝕜) *
+        ContRepresentation.matrixCoeff (models x.1).rep (models x.1).continuous_rep
+          ((models x.1).basis x.2.1) ((models x.1).basis x.2.2) g) * f g ∂haarProb G
+
+/-- The Peter-Weyl coefficient is the Haar integral against the conjugate of the normalized
+continuous matrix coefficient. -/
+theorem peterWeylCoeff_def (models : ι → IrrepModel 𝕜 G) (f : Lp 𝕜 2 (haarProb G))
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    peterWeylCoeff models f x =
+      ∫ g : G, (starRingEnd 𝕜)
+        ((Real.sqrt (models x.1).dim : 𝕜) *
+          ContRepresentation.matrixCoeff (models x.1).rep (models x.1).continuous_rep
+            ((models x.1).basis x.2.1) ((models x.1).basis x.2.2) g) * f g ∂haarProb G := by
+  rw [peterWeylCoeff]
+
+/-- A Peter-Weyl coefficient is the `L²` inner product against the corresponding normalized
+matrix coefficient. This characterization does not require the models to form a skeleton. -/
+theorem peterWeylCoeff_eq_inner (models : ι → IrrepModel 𝕜 G) (f : Lp 𝕜 2 (haarProb G))
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    peterWeylCoeff models f x = inner 𝕜 (peterWeylFamily models x) f := by
+  rw [peterWeylCoeff_def, MeasureTheory.L2.inner_def]
+  refine integral_congr_ae ?_
+  filter_upwards [coeFn_peterWeylFamily models x] with g hg
+  rw [hg, ContRepresentation.matrixCoeff_apply, RCLike.inner_apply]
+  exact mul_comm _ _
+
+/-- The abstract coordinate in the Peter-Weyl Hilbert basis is the explicit Haar-integral
+Fourier coefficient. -/
+@[simp]
+theorem peterWeylBasis_repr_apply [IsAlgClosed 𝕜] {models : ι → IrrepModel 𝕜 G}
+    (h : IsIrrepSkeleton models) (f : Lp 𝕜 2 (haarProb G))
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    (peterWeylBasis h).repr f x = peterWeylCoeff models f x := by
+  rw [(peterWeylBasis h).repr_apply_apply, coe_peterWeylBasis,
+    ← peterWeylCoeff_eq_inner]
+
+/-- **The Peter-Weyl expansion.** Every `L²` function is the sum of its Fourier coefficients
+times the corresponding normalized matrix coefficients. -/
+theorem hasSum_peterWeyl_expansion [IsAlgClosed 𝕜] {models : ι → IrrepModel 𝕜 G}
+    (h : IsIrrepSkeleton models) (f : Lp 𝕜 2 (haarProb G)) :
+    HasSum (fun x ↦ peterWeylCoeff models f x • peterWeylFamily models x) f := by
+  simpa only [peterWeylBasis_repr_apply, coe_peterWeylBasis, Function.comp_apply] using
+    (peterWeylBasis h).hasSum_repr f
+
+/-- **Polarized Parseval for the Peter-Weyl basis.** The coordinate pairing of two `L²`
+functions sums to their inner product. -/
+theorem hasSum_conj_peterWeylCoeff_mul_peterWeylCoeff [IsAlgClosed 𝕜]
+    {models : ι → IrrepModel 𝕜 G} (h : IsIrrepSkeleton models)
+    (f g : Lp 𝕜 2 (haarProb G)) :
+    HasSum (fun x ↦ (starRingEnd 𝕜) (peterWeylCoeff models f x) *
+      peterWeylCoeff models g x) (inner 𝕜 f g) := by
+  have hfirst (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+      inner 𝕜 f (peterWeylBasis h x) =
+        (starRingEnd 𝕜) (peterWeylCoeff models f x) := by
+    rw [← inner_conj_symm, ← (peterWeylBasis h).repr_apply_apply,
+      peterWeylBasis_repr_apply, starRingEnd_apply]
+  simpa only [hfirst, ← (peterWeylBasis h).repr_apply_apply,
+    peterWeylBasis_repr_apply] using (peterWeylBasis h).hasSum_inner_mul_inner f g
+
+/-- **Polarized Parseval for the Peter-Weyl basis** (`tsum` form). -/
+theorem tsum_conj_peterWeylCoeff_mul_peterWeylCoeff [IsAlgClosed 𝕜]
+    {models : ι → IrrepModel 𝕜 G} (h : IsIrrepSkeleton models)
+    (f g : Lp 𝕜 2 (haarProb G)) :
+    ∑' x, (starRingEnd 𝕜) (peterWeylCoeff models f x) * peterWeylCoeff models g x =
+      inner 𝕜 f g :=
+  (hasSum_conj_peterWeylCoeff_mul_peterWeylCoeff h f g).tsum_eq
+
+/-- The products of the conjugated Peter-Weyl coefficients of `f` with those of `g` are
+summable. -/
+theorem summable_conj_peterWeylCoeff_mul_peterWeylCoeff [IsAlgClosed 𝕜]
+    {models : ι → IrrepModel 𝕜 G} (h : IsIrrepSkeleton models)
+    (f g : Lp 𝕜 2 (haarProb G)) :
+    Summable fun x ↦ (starRingEnd 𝕜) (peterWeylCoeff models f x) *
+      peterWeylCoeff models g x :=
+  (hasSum_conj_peterWeylCoeff_mul_peterWeylCoeff h f g).summable
+
+/-- **Norm-square Parseval for the Peter-Weyl basis.** The squared norms of the Fourier
+coefficients of `f` sum to `‖f‖²`, as a convergent series. -/
+theorem hasSum_norm_sq_peterWeylCoeff [IsAlgClosed 𝕜]
+    {models : ι → IrrepModel 𝕜 G} (h : IsIrrepSkeleton models)
+    (f : Lp 𝕜 2 (haarProb G)) :
+    HasSum (fun x ↦ ‖peterWeylCoeff models f x‖ ^ 2) (‖f‖ ^ 2) := by
+  simpa only [← (peterWeylBasis h).repr_apply_apply, peterWeylBasis_repr_apply] using
+    (peterWeylBasis h).hasSum_norm_sq_inner f
+
+/-- **Norm-square Parseval for the Peter-Weyl basis** (`tsum` form). -/
+theorem tsum_norm_sq_peterWeylCoeff [IsAlgClosed 𝕜]
+    {models : ι → IrrepModel 𝕜 G} (h : IsIrrepSkeleton models)
+    (f : Lp 𝕜 2 (haarProb G)) :
+    ∑' x, ‖peterWeylCoeff models f x‖ ^ 2 = ‖f‖ ^ 2 :=
+  (hasSum_norm_sq_peterWeylCoeff h f).tsum_eq
+
+/-- The squared Peter-Weyl Fourier coefficients of an `L²` function are summable. -/
+theorem summable_norm_sq_peterWeylCoeff [IsAlgClosed 𝕜]
+    {models : ι → IrrepModel 𝕜 G} (h : IsIrrepSkeleton models)
+    (f : Lp 𝕜 2 (haarProb G)) :
+    Summable fun x ↦ ‖peterWeylCoeff models f x‖ ^ 2 :=
+  (hasSum_norm_sq_peterWeylCoeff h f).summable
 
 end Skeleton
 
@@ -531,12 +680,12 @@ end Existence
 section StandardBasis
 
 variable (𝕜 G : Type*) [RCLike 𝕜] [IsAlgClosed 𝕜] [Group G] [TopologicalSpace G]
-  [IsTopologicalGroup G] [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
+  [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
 /-- **The Peter-Weyl theorem, unconditionally.** The normalized matrix coefficients of the models
 chosen in the unitary equivalence classes are a Hilbert basis of `L²(G)`, indexed by
-`Σ i, Fin (models i).dim × Fin (models i).dim`. No skeleton is assumed: `isIrrepSkeleton_model`
-supplies one.
+`Σ i, Fin (IrrepClass.model i).dim × Fin (IrrepClass.model i).dim`. No skeleton is assumed:
+`isIrrepSkeleton_model` supplies one.
 
 `TauCeti.coe_stdPeterWeylBasis` identifies the elements of this basis with
 `TauCeti.peterWeylFamily IrrepClass.model`. -/
@@ -546,12 +695,23 @@ noncomputable def stdPeterWeylBasis :
   peterWeylBasis (isIrrepSkeleton_model 𝕜 G)
 
 /-- **The unconditional Peter-Weyl basis is the normalized matrix coefficients of the chosen
-representatives.** As for `TauCeti.coe_peterWeylBasis`, the elements are on the nose the functions
+representatives.** As for `TauCeti.coe_peterWeylBasis`, its elements are the `L²` classes
+represented by the functions
 `g ↦ √(dim V_i) · ⟪(IrrepClass.model i).rep g e_a, e_b⟫`. -/
 @[simp]
 theorem coe_stdPeterWeylBasis :
     ⇑(stdPeterWeylBasis 𝕜 G) = peterWeylFamily (IrrepClass.model (𝕜 := 𝕜) (G := G)) :=
   coe_peterWeylBasis _
+
+/-- A coordinate in the unconditional Peter-Weyl basis is its explicit Fourier coefficient. -/
+@[simp]
+theorem stdPeterWeylBasis_repr_apply (f : Lp 𝕜 2 (haarProb G))
+    (x : Σ i : IrrepClass 𝕜 G,
+      Fin (IrrepClass.model i).dim × Fin (IrrepClass.model i).dim) :
+    (stdPeterWeylBasis 𝕜 G).repr f x =
+      peterWeylCoeff (IrrepClass.model (𝕜 := 𝕜) (G := G)) f x := by
+  simpa only [stdPeterWeylBasis] using
+    peterWeylBasis_repr_apply (isIrrepSkeleton_model 𝕜 G) f x
 
 end StandardBasis
 

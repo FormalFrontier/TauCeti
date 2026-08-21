@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,9 +19,9 @@ import TauCeti.Probability.Moments.LaplaceDeterminacy
 /-!
 # Laplace representations for completely monotone functions
 
-This file contains the Laplace-transform side of the finite-measure
-Hausdorff--Bernstein--Widder theorem on `ℝ≥0`: helper lemmas for finite-measure Laplace
-transforms and the predicate that a finite measure represents a function by its Laplace transform.
+This file contains Laplace-representation infrastructure for completely monotone functions:
+helper lemmas for Laplace transforms, the predicate that a finite measure represents a function
+on `[0, ∞)`, and its possibly infinite-measure counterpart on `(0, ∞)`.
 
 ## Main declarations
 
@@ -28,7 +29,9 @@ transforms and the predicate that a finite measure represents a function by its 
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
   Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
-* `TauCeti.isCompletelyMonotoneOnIci_laplaceTransform`,
+* `TauCeti.RepresentsLaplaceOnIoi`: the corresponding predicate for a possibly infinite measure
+  on `(0, ∞)`, with its basic API and the easy direction of the representation theorem.
+* `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`,
   `TauCeti.isCompletelyMonotone_laplaceTransform_of_moments`: the easy direction of the
   representation theorem, in the closed-half-line and all-moments forms.
 * `TauCeti.Measure.ext_of_forall_laplaceTransform_natCast_eq`: finite measures are determined
@@ -414,10 +417,10 @@ theorem isCompletelyMonotoneOnIoi_laplaceTransform
 
 /-- The Laplace transform of a finite measure is completely monotone in the closed-half-line
 roadmap sense. -/
-theorem isCompletelyMonotoneOnIci_laplaceTransform
+theorem isContinuousCompletelyMonotoneOnIoi_laplaceTransform
     (μ : Measure ℝ≥0) [hμ : IsFiniteMeasure μ] :
-    IsCompletelyMonotoneOnIci (laplaceTransform μ) :=
-  isCompletelyMonotoneOnIci_iff.mpr
+    IsContinuousCompletelyMonotoneOnIoi (laplaceTransform μ) :=
+  isContinuousCompletelyMonotoneOnIoi_iff.mpr
     ⟨continuousOn_Ici_laplaceTransform μ,
       isCompletelyMonotoneOnIoi_laplaceTransform μ fun _ ht => integrable_exp_neg_mul μ ht.le⟩
 
@@ -468,9 +471,10 @@ lemma apply_zero (h : RepresentsLaplace μ f) : f 0 = μ.real univ := by
 
 /-- A represented function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`:
 the easy direction of the Hausdorff--Bernstein--Widder theorem, through the representation. -/
-lemma isCompletelyMonotoneOnIci (h : RepresentsLaplace μ f) : IsCompletelyMonotoneOnIci f := by
+lemma isContinuousCompletelyMonotoneOnIoi (h : RepresentsLaplace μ f) :
+    IsContinuousCompletelyMonotoneOnIoi f := by
   have := h.isFiniteMeasure
-  exact (isCompletelyMonotoneOnIci_laplaceTransform μ).congr fun t ht =>
+  exact (isContinuousCompletelyMonotoneOnIoi_laplaceTransform μ).congr fun t ht =>
     h.eq_laplaceTransform ht
 
 /-- A representation transports along agreement on the nonnegative half-line: the predicate
@@ -502,6 +506,82 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
   rw [laplaceTransform_smul_measure, ENNReal.coe_toReal, ← hf.eq_laplaceTransform ht]
 
 end RepresentsLaplace
+
+/-! ## Open-half-line representation predicate -/
+
+variable {f : ℝ → ℝ} {μ : Measure ℝ≥0}
+
+/-- A positive measure on `ℝ≥0` **represents `f` by its Laplace transform on `(0, ∞)`** if the
+exponential kernel `p ↦ e^{-tp}` is integrable against it for every `t > 0` and the resulting
+transform agrees with `f` there.
+
+The measure is *not* required to be finite: that is the whole point of the open-half-line
+statement, and the integrability clause is what takes over the role finiteness plays in
+`TauCeti.RepresentsLaplace`. -/
+def RepresentsLaplaceOnIoi (μ : Measure ℝ≥0) (f : ℝ → ℝ) : Prop :=
+  (∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) ∧
+    ∀ t : ℝ, 0 < t → f t = laplaceTransform μ t
+
+/-- `RepresentsLaplaceOnIoi μ f` unfolds to integrability of the exponential kernel at every
+positive parameter together with equality with the Laplace transform there. -/
+lemma representsLaplaceOnIoi_iff :
+    RepresentsLaplaceOnIoi μ f ↔
+      (∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) ∧
+        ∀ t : ℝ, 0 < t → f t = laplaceTransform μ t :=
+  Iff.rfl
+
+namespace RepresentsLaplaceOnIoi
+
+/-- The exponential kernel is integrable against a representing measure at positive
+parameters. -/
+lemma integrable (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
+    Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ := h.1 t ht
+
+/-- A representing measure has the advertised Laplace-transform values on `(0, ∞)`. -/
+lemma eq_laplaceTransform (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
+    f t = laplaceTransform μ t := h.2 t ht
+
+/-- A representation transports along agreement on the positive half-line: the predicate
+constrains `f` only there. -/
+protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplaceOnIoi μ f) (h : EqOn g f (Ioi 0)) :
+    RepresentsLaplaceOnIoi μ g :=
+  ⟨hf.1, fun _ ht => (h (mem_Ioi.mpr ht)).trans (hf.eq_laplaceTransform ht)⟩
+
+/-- The sum of two representing measures represents the sum of the functions on the positive
+half-line. -/
+protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}
+    (hf : RepresentsLaplaceOnIoi μ f) (hg : RepresentsLaplaceOnIoi ν g) :
+    RepresentsLaplaceOnIoi (μ + ν) (f + g) := by
+  refine ⟨fun t ht => (hf.integrable ht).add_measure (hg.integrable ht), fun t ht => ?_⟩
+  rw [Pi.add_apply, hf.eq_laplaceTransform ht, hg.eq_laplaceTransform ht,
+    laplaceTransform_add_measure μ ν (hf.integrable ht) (hg.integrable ht)]
+
+/-- Scaling a representing measure by `c : ℝ≥0` represents the scaled function on the
+positive half-line. -/
+protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
+    (hf : RepresentsLaplaceOnIoi μ f) :
+    RepresentsLaplaceOnIoi ((c : ℝ≥0∞) • μ) (fun t => (c : ℝ) * f t) := by
+  refine ⟨fun _ ht => (hf.integrable ht).smul_measure (by simp), fun t ht => ?_⟩
+  rw [laplaceTransform_smul_measure, ENNReal.coe_toReal, ← hf.eq_laplaceTransform ht]
+
+/-- **Easy direction**: a represented function is completely monotone on `(0, ∞)`. -/
+lemma isCompletelyMonotoneOnIoi (h : RepresentsLaplaceOnIoi μ f) :
+    IsCompletelyMonotoneOnIoi f :=
+  (isCompletelyMonotoneOnIoi_laplaceTransform μ h.1).congr fun _ ht => h.eq_laplaceTransform ht
+
+end RepresentsLaplaceOnIoi
+
+/-- The zero measure represents the zero function on the positive half-line. -/
+lemma representsLaplaceOnIoi_zero :
+    RepresentsLaplaceOnIoi (0 : Measure ℝ≥0) 0 :=
+  ⟨fun _ _ => by simp, fun _ _ => by simp⟩
+
+/-- A finite representing measure represents on the open half-line as well: the finiteness
+clause supplies the integrability clause, and `(0, ∞) ⊆ [0, ∞)`. -/
+lemma RepresentsLaplace.representsLaplaceOnIoi (h : RepresentsLaplace μ f) :
+    RepresentsLaplaceOnIoi μ f := by
+  have := h.isFiniteMeasure
+  exact ⟨fun _ ht => integrable_exp_neg_mul μ ht.le, fun _ ht => h.eq_laplaceTransform ht.le⟩
 
 /-- The zero measure represents the zero function. -/
 lemma representsLaplace_zero : RepresentsLaplace (0 : Measure ℝ≥0) 0 :=

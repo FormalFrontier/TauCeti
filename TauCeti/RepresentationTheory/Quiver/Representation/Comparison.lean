@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.CategoryTheory.Abelian.FunctorCategory
 public import Mathlib.CategoryTheory.Preadditive.Schur
-public import TauCeti.RepresentationTheory.Quiver.Representation.Injective
+public import TauCeti.RepresentationTheory.Quiver.Representation.Injective.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.Simple
 
 /-!
@@ -51,11 +52,13 @@ recorded instead is `TauCeti.indecProjRepToSimpleRep_app_basis_eq_zero_of_length
 the morphism kills the basis vector of every path of positive length, hence, by linearity, their
 whole span. That span is what the arrow ideal of the path algebra cuts out of `Pᵢ`, but no ideal
 of the path algebra is defined here and none is claimed: the statement quantifies over path basis
-vectors and nothing else. Naming that subrepresentation, comparing it with the Jacobson radical —
-the two agree when the arrow ideal is nilpotent, for instance for a finite acyclic quiver, and not
-in general, since for the one-loop quiver the radical of `k[X]` is zero — and with them the
-technical statements above, is left to the Layer 3 theory of covers and envelopes, which is not yet
-available.
+vectors and nothing else. The technical vocabulary itself is available: `TauCeti.IsSuperfluous`
+defines a superfluous kernel and `TauCeti.IsProjectiveCover` a projective cover, and the
+counterexample above is exactly a failure of `TauCeti.IsSuperfluous` for `(X) ≤ k[X]`. What is
+still missing is the arrow ideal of a path algebra, the comparison of the subrepresentation above
+with the Jacobson radical — the two agree when the arrow ideal is nilpotent, for instance for a
+finite acyclic quiver, and not in general, since for the one-loop quiver the radical of `k[X]` is
+zero — existence of projective covers over a finite-dimensional algebra, and injective envelopes.
 
 The field lives in the universe `max v w` of the vertices and the arrows here, where the three
 files building `Sᵢ`, `Pᵢ` and `Iᵢ` let its universe be independent. The reason is that the vertex

@@ -1,7 +1,7 @@
-checkType TauCeti.SymplecticForm.stdComplexLineEnergyDensity_def
 simpNF Polynomial.derivative_hermite_succ
 simpNF TauCeti.AlmostComplexStructure.product_apply_stdComplexLineImag
 simpNF TauCeti.AlmostComplexStructure.product_apply_stdComplexLineReal
+simpNF TauCeti.CommHopfAlgCat.counitCoefficientEquiv_apply✝
 simpNF TauCeti.CommHopfAlgCat.liftQuotientPoint_mk
 simpNF TauCeti.Comodule.Hom.comp_id
 simpNF TauCeti.Comodule.Hom.id_apply
@@ -34,6 +34,10 @@ simpNF TauCeti.FGComoduleCat.corestrict_obj_coact_apply
 simpNF TauCeti.FGComoduleCat.incl_cofree
 simpNF TauCeti.FGComoduleCat.ofHom_comp
 simpNF TauCeti.FGComoduleCat.ofHom_id
+simpNF TauCeti.HopfAlgebra.PointRepresentation.ofComodule_action_tmul
+simpNF TauCeti.HopfAlgebra.PointRepresentation.ofComodule_action_universal_one_tmul
+simpNF TauCeti.HopfIdeal.coefficientLinearEquiv_apply✝
+simpNF TauCeti.HopfIdeal.descendDerivation_mk✝
 simpNF TauCeti.HopfIdeal.kerLiftBialgEquiv_apply
 simpNF TauCeti.HopfIdeal.kerLiftBialgHom_comp_mkBialgHom
 simpNF TauCeti.HopfIdeal.kerLiftBialgHom_mk
@@ -51,4 +55,16 @@ simpNF TauCeti.Subgroup.normalizerEquivMap_trans_apply_coe
 simpNF TauCeti.Subgroup.normalizerQuotientEquivMap_symm_mk'
 simpNF TauCeti.integral_normalizedChebyshevT_mul_normalizedChebyshevT_measureT_eq_ite
 simpNF TauCeti.isComplexLinear_arrowCongr_iff
-structureInType TauCeti.BCRPoint✝
+simpNF TauCeti.reflectRepMapApp_of_ne✝
+unusedArguments CongruenceSubgroup.map_apply_of_dvd_lcm✝
+unusedArguments TauCeti.IsFiniteType
+unusedArguments TauCeti.IsHighestWeightVector
+unusedArguments TauCeti.ModularForm.orderOfVanishingAt_corner_eq_zero✝
+unusedArguments TauCeti.Multiquadratic.finrank_adjoin_prod_root
+unusedArguments TauCeti.NumberField.ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot
+unusedArguments TauCeti.Probability.Exchangeable.exchangeableFamily
+unusedArguments TauCeti.Probability.cond_eq_of_extreme_iidMixture✝
+unusedArguments TauCeti.Semigroups.IsMildSolution
+unusedArguments TauCeti.exists_isCompl_of_equivariant_projection✝
+unusedArguments TauCeti.mapDomain_transport✝
+unusedArguments TauCeti.memLp_mul_prod

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -163,7 +164,6 @@ noncomputable local instance peterssonInnerProductSpace :
 
 /-- The inner product induced locally from the Petersson core evaluates to the Petersson
 pairing. -/
-@[simp]
 private theorem peterssonInner_apply (f g : CuspForm (Γ.map (mapGL ℝ)) k) :
     inner ℂ f g = peterssonInnerCosets f g :=
   peterssonInnerCosetsCore_inner f g

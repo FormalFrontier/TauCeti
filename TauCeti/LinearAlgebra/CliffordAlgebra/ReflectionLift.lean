@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.FieldTheory.IsSepClosed
-public import TauCeti.LinearAlgebra.CliffordAlgebra.PinAction
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Pin.Action
 
 /-!
 # Lifting reflections to the Pin and Spin groups
@@ -19,9 +20,9 @@ automatically.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.reflection_mem_range_pinToOrthogonal_of_isSquare`: a reflection lifts
+* `CliffordAlgebra.reflection_mem_range_pinToOrthogonal_of_isSquare`: a reflection lifts
   through the Pin action when its normalization scalar is a square.
-* `TauCeti.CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
+* `CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
   product of two reflections lifts through the Spin action when the product of its normalization
   scalars is a square. The version without the suffix is a separably closed-field corollary.
 
@@ -34,13 +35,13 @@ See H. B. Lawson and M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
-
-namespace TauCeti
+open QuadraticMap
 
 universe u v
 
 namespace CliffordAlgebra
+
+open TauCeti
 
 section Square
 
@@ -76,7 +77,7 @@ private theorem isUnit_sqrtOfIsSquare (v w : V) [Invertible (Q v)] [Invertible (
   rw [← isUnit_mul_self_iff, sqrtOfIsSquare_mul_self h]
   exact (isUnit_of_invertible (⅟(Q v))).mul (isUnit_of_invertible (⅟(Q w)))
 
-private theorem reflection_smul_eq (a : K) [Invertible a] (v : V) [Invertible (Q v)]
+private theorem reflection_smul_eq (a : K) (v : V) [Invertible (Q v)]
     [Invertible (Q (a • v))] :
     QuadraticMap.reflection Q (a • v) = QuadraticMap.reflection Q v := by
   have hcoeff : ⅟(Q (a • v)) * a * a = ⅟(Q v) := by
@@ -159,15 +160,6 @@ theorem reflection_mem_range_pinToOrthogonal_of_isSquare (v : V) [Invertible (Q 
   rw [MonoidHom.mem_range]
   exact ⟨pinReflectionLift Q v hv, pinToOrthogonal_pinReflectionLift Q v hv⟩
 
-private theorem lipschitzToOrthogonal_unitι_eq (v : V) [Invertible (Q v)] :
-    lipschitzToOrthogonal Q ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ =
-      QuadraticMap.reflectionOrthogonal Q v := by
-  apply Subtype.ext
-  rw [QuadraticMap.coe_reflectionOrthogonal]
-  apply LinearEquiv.ext
-  intro m
-  rw [coe_lipschitzToOrthogonal_apply, lipschitzVectorAction_unitι]
-
 /-- If the product of the required normalization scalars is a square, the product of the
 reflections in `v` and `w` lifts through the Spin action. -/
 theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
@@ -200,8 +192,7 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
             ⟨unitι Q w, unitι_mem_lipschitzGroup _⟩ := by
       apply Subtype.ext
       simp only [Subgroup.coe_mul]
-    rw [hmul,
-      map_mul, lipschitzToOrthogonal_unitι_eq, lipschitzToOrthogonal_unitι_eq]
+    rw [hmul, map_mul, lipschitzToOrthogonal_unitι, lipschitzToOrthogonal_unitι]
     apply Subtype.ext
     simp only [Subgroup.coe_mul, QuadraticMap.coe_reflectionOrthogonal]
     exact congrArg (fun x : V ≃ₗ[K] V => x * QuadraticMap.reflection Q w)
@@ -239,4 +230,3 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal
 end IsSepClosed
 
 end CliffordAlgebra
-end TauCeti

@@ -215,13 +215,13 @@ private lemma prod_range_div_complex (a : ℕ → ℂ) (k : ℕ) (ha : ∀ j ≤
     hu 0 (Nat.zero_le k)]
 
 /-- Telescoping product: for `t ∈ [s_k, s_{k+1}]` along a monotone partition
-`s : ℕ → ℝ` with `γ(s_j) ≠ w` for `0 ≤ j ≤ N`, the product
+`s : ℕ → ℝ` with `γ(s_j) ≠ w` for `j < N`, the product
 `∏_{j < N} segRatio γ w (s j) (s (j+1)) t` collapses to `(γ t - w) / (γ (s 0) - w)`.
 
 This is the key identity making `Im(log)` of each `segRatio` add up to a
 continuous argument lift of `t ↦ γ t - w`. -/
 private theorem prod_segRatio_telescope {γ : ℝ → ℂ} {w : ℂ} {N : ℕ} {s : ℕ → ℝ}
-    (hs_mono : Monotone s) (h_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0)
+    (hs_mono : Monotone s) (h_avoid : ∀ j < N, γ (s j) - w ≠ 0)
     {t : ℝ} {k : ℕ} (hk : k < N) (hk_lo : s k ≤ t) (hk_hi : t ≤ s (k + 1)) :
     ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = (γ t - w) / (γ (s 0) - w) := by
   -- Split range N = range (k+1) ∪ Ico (k+1) N
@@ -232,7 +232,7 @@ private theorem prod_segRatio_telescope {γ : ℝ → ℂ} {w : ℂ} {N : ℕ} {
       segRatio γ w (s j) (s (j + 1)) t = 1 := by
     intro j hj
     rw [Finset.mem_Ico] at hj
-    refine segRatio_eq_one_of_le ?_ (h_avoid j hj.2.le)
+    refine segRatio_eq_one_of_le ?_ (h_avoid j hj.2)
     exact hk_hi.trans (hs_mono hj.1)
   rw [Finset.prod_congr rfl h_ico_eq_one, Finset.prod_const_one, mul_one]
   -- Peel off middle term j = k from range (k+1)
@@ -249,10 +249,10 @@ private theorem prod_segRatio_telescope {γ : ℝ → ℂ} {w : ℂ} {N : ℕ} {
   rw [segRatio_eq_div_of_mem_Icc ⟨hk_lo, hk_hi⟩]
   -- Apply telescoping lemma to range k product
   rw [prod_range_div_complex (fun j ↦ γ (s j) - w) k
-        (fun j hj ↦ h_avoid j (hj.trans hk.le))]
+        (fun j hj ↦ h_avoid j (lt_of_le_of_lt hj hk))]
   -- Cancel γ s_k - w
   rw [div_mul_div_comm, mul_comm (γ (s k) - w) (γ t - w),
-      mul_div_mul_right _ _ (h_avoid k hk.le)]
+      mul_div_mul_right _ _ (h_avoid k hk)]
 
 /-! ### Continuous arg-lift summand (continued) -/
 
@@ -367,6 +367,41 @@ private theorem exists_monotone_partition_mesh_lt {a b δ : ℝ} (hab : a ≤ b)
     rw [abs_of_nonneg (by linarith)] at hbd
     linarith
 
+/-- **The polar form at a point, from the partition data alone.** For a monotone `s` sending no
+node `s j` with `j < N` to `w`, any `t` between `s 0` and `s N` satisfies
+`γ t - w = ‖γ t - w‖ · exp (I · θ t)`, where
+`θ t = arg (γ (s 0) - w) + ∑_{j < N} (log (segRatio γ w (s j) (s (j+1)) t)).im`.
+
+For `N = 0` the avoidance hypothesis is vacuous and monotonicity goes unused; the coverage
+bounds still do the work, pinning `t = s 0`, where the conclusion is the ordinary polar
+identity. -/
+private theorem polar_form_of_partition {γ : ℝ → ℂ} {w : ℂ} {N : ℕ} {s : ℕ → ℝ}
+    (hs_mono : Monotone s) (hs_avoid : ∀ j < N, γ (s j) - w ≠ 0) {t : ℝ}
+    (h_cov_lo : s 0 ≤ t) (h_cov_hi : t ≤ s N) :
+    γ t - w = (‖γ t - w‖ : ℂ) * Complex.exp (Complex.I *
+      ((Complex.arg (γ (s 0) - w) +
+        ∑ j ∈ Finset.range N,
+          (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℝ) : ℂ)) := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN_pos
+  · -- no segments: `t` is pinned to `s 0` and the sum is empty
+    rw [le_antisymm h_cov_hi h_cov_lo]
+    simpa [mul_comm] using (Complex.norm_mul_exp_arg_mul_I (γ (s 0) - w)).symm
+  have h_avoid_a : γ (s 0) - w ≠ 0 := hs_avoid 0 hN_pos
+  obtain ⟨k, hk_lt, hk_lo, hk_hi⟩ := exists_covering_segment hN_pos hs_mono h_cov_lo h_cov_hi
+  have h_telescope := prod_segRatio_telescope hs_mono hs_avoid hk_lt hk_lo hk_hi
+  have h_prod_eq : (γ (s 0) - w) *
+      ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = γ t - w := by
+    rw [h_telescope, mul_div_cancel₀ _ h_avoid_a]
+  rcases eq_or_ne (γ t - w) 0 with h0 | h0
+  · simp [h0]
+  -- the product is the nonzero `γ t - w` up to the nonzero factor `γ (s 0) - w`, so no factor
+  -- vanishes
+  have hprod_ne : (γ (s 0) - w) *
+      ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t ≠ 0 := by
+    rw [h_prod_eq]; exact h0
+  exact polar_form_of_prod (zs := fun j ↦ segRatio γ w (s j) (s (j + 1)) t)
+    h_avoid_a (Finset.prod_ne_zero_iff.mp (right_ne_zero_of_mul hprod_ne)) h_prod_eq
+
 /-! ### Main theorem: argument lift on `[a, b]` -/
 
 /-- **Argument lift on `[a, b]`, with a partition.** For `γ` continuous on `[a, b]` (`a ≤ b`) and
@@ -412,26 +447,9 @@ theorem exists_continuousOn_arg_lift_with_partition {γ : ℝ → ℂ} {w : ℂ}
       (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj))
       (hs_le j) (hs_mesh j)
   -- Lift property
-  · intro t ht
-    have h_avoid_a : γ a - w ≠ 0 :=
-      sub_ne_zero.mpr (h_avoid a ⟨le_rfl, hab⟩)
-    have h_cov_lo : s 0 ≤ t := by rw [hs_zero]; exact ht.1
-    have h_cov_hi : t ≤ s N := by rw [hs_N]; exact ht.2
-    obtain ⟨k, hk_lt, hk_lo, hk_hi⟩ := exists_covering_segment hN_pos hs_mono h_cov_lo h_cov_hi
-    have h_telescope := prod_segRatio_telescope hs_mono hs_avoid hk_lt hk_lo hk_hi
-    rw [hs_zero] at h_telescope
-    have h_ratio_ne : ∀ j ∈ Finset.range N,
-        segRatio γ w (s j) (s (j + 1)) t ≠ 0 := fun j hj ↦
-      Complex.slitPlane_ne_zero
-        (segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
-          (hs_in j (Finset.mem_range.mp hj).le)
-          (hs_in (j + 1) (Finset.mem_range.mp hj))
-          (hs_le j) (hs_mesh j) t)
-    have h_prod_eq : (γ a - w) *
-        ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = γ t - w := by
-      rw [h_telescope, mul_div_cancel₀ _ h_avoid_a]
-    exact polar_form_of_prod (zs := fun j ↦ segRatio γ w (s j) (s (j + 1)) t)
-      h_avoid_a h_ratio_ne h_prod_eq
+  · exact fun t ht => by
+      simpa [hs_zero] using polar_form_of_partition hs_mono (fun j hj ↦ hs_avoid j hj.le)
+        (by rw [hs_zero]; exact ht.1) (by rw [hs_N]; exact ht.2)
 
 end TauCeti.Contour
 

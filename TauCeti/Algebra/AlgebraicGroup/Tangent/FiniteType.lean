@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RingTheory.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
-public import TauCeti.RingTheory.Ideal.Cotangent
+public import TauCeti.RingTheory.Ideal.Cotangent.Basic
 
 /-!
 # Finiteness of the tangent space of a finite-type affine monoid

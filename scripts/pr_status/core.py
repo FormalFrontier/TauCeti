@@ -8,7 +8,7 @@ is in flight right now (from the engine's `<!--tauceti-review-in-progress-->`
 marker). Every status *sink* imports it and renders that one truth its own way:
 
   * zulip.py   -> two independent groups of emoji reactions on the PR's message
-  * labels.py  -> exactly one of the five status labels on the PR itself
+  * labels.py  -> exactly one of the six status labels on the PR itself
 
 Keeping the derivation here means the two sinks can never disagree about what a
 PR's state is: they read the same `derive()` and only differ in how they show it.

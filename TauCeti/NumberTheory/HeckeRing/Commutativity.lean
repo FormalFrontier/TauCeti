@@ -187,16 +187,6 @@ private lemma exists_bar_eq [IsHeckeTriple Δ H H]
   rw [doubleCoset_eq_of_mem (ι.bar_mem_doubleCoset_self h_fix g)] at hbar
   exact mem_doubleCoset.mp hbar
 
-/-- Equality of classes in `DecompQuotient H H g` yields the conjugation relation of their
-representatives. -/
-private lemma conj_mem_of_mk_eq (g : G) {u₁ u₂ : H}
-    (h : (QuotientGroup.mk u₁ : DecompQuotient H H g) = QuotientGroup.mk u₂) :
-    g⁻¹ * ((u₁ : G)⁻¹ * u₂) * g ∈ H := by
-  have hk := QuotientGroup.eq.mp h
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-    ← ConjAct.toConjAct_inv, ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv] at hk
-  simpa [mul_assoc] using hk
-
 /-- Membership in the one-sided count set is invariant under replacing a representative of
 a class in `DecompQuotient H H g₂` by the canonical `out`. -/
 private lemma out_mul_inv_mul_mem {g₁ g₂ d : G} {u : G} (hu : u ∈ H)

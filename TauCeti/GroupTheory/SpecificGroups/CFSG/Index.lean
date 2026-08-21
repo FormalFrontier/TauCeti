@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -79,8 +80,8 @@ theorem ext (q r : PrimePower) (hp : q.p = r.p) (he : q.exponent = r.exponent) :
 /-- The cardinality represented by a prime-power parameter. -/
 def card (q : PrimePower) : ℕ := q.p ^ q.exponent
 
-@[simp] lemma card_mk (p exponent : ℕ) (hp : p.Prime) (he : 0 < exponent) :
-    card ⟨p, exponent, hp, he⟩ = p ^ exponent := (rfl)
+/-- The stored cardinality is the stored base raised to the stored exponent. -/
+@[simp] lemma card_def (q : PrimePower) : q.card = q.p ^ q.exponent := (rfl)
 
 /-- The cardinality stored by a prime-power parameter is a prime power in Mathlib's sense. -/
 lemma isPrimePow_card (q : PrimePower) : IsPrimePow q.card :=
@@ -403,20 +404,97 @@ def fieldOrder : LieTypeIndex → ℕ
 
 @[simp] theorem fieldOrder_tits : tits.fieldOrder = 2 := by simp only [fieldOrder]
 
+/-- The exponent writing the Frobenius parameter `q` as a power of the characteristic. It is the
+stored exponent of the prime power on the ordinary and graph-twisted branches, the odd number
+`2 * m + 1` on the Suzuki--Ree branches, whose field order is `p ^ (2 * m + 1)`, and `1` on the
+Tits branch, whose field order is the characteristic `2` itself.
+
+This is not a second numeric parameter: `fieldOrder_eq_characteristic_pow` recovers `fieldOrder`
+from it, and it exists because the `q`-power Frobenius of a field of characteristic `p` is the
+`fieldExponent`-fold iterate of the `p`-power Frobenius. -/
+def fieldExponent : LieTypeIndex → ℕ
+  | .A _ q | .twistedA _ q | .B _ q | .C _ q | .D _ q | .twistedD _ q
+  | .E6 q | .E7 q | .E8 q | .F4 q | .G2 q | .twistedE6 q | .trialityD4 q => q.exponent
+  | .suzuki m | .reeF4 m | .reeG2 m => 2 * m + 1
+  | .tits => 1
+
+@[simp] theorem fieldExponent_A (n : ℕ) (q : PrimePower) : (A n q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_twistedA (n : ℕ) (q : PrimePower) :
+    (twistedA n q).fieldExponent = q.exponent := by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_B (n : ℕ) (q : PrimePower) : (B n q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_C (n : ℕ) (q : PrimePower) : (C n q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_D (n : ℕ) (q : PrimePower) : (D n q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_twistedD (n : ℕ) (q : PrimePower) :
+    (twistedD n q).fieldExponent = q.exponent := by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_E6 (q : PrimePower) : (E6 q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_E7 (q : PrimePower) : (E7 q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_E8 (q : PrimePower) : (E8 q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_F4 (q : PrimePower) : (F4 q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_G2 (q : PrimePower) : (G2 q).fieldExponent = q.exponent :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_twistedE6 (q : PrimePower) :
+    (twistedE6 q).fieldExponent = q.exponent := by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_trialityD4 (q : PrimePower) :
+    (trialityD4 q).fieldExponent = q.exponent := by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_suzuki (m : ℕ) : (suzuki m).fieldExponent = 2 * m + 1 :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_reeF4 (m : ℕ) : (reeF4 m).fieldExponent = 2 * m + 1 :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_reeG2 (m : ℕ) : (reeG2 m).fieldExponent = 2 * m + 1 :=
+  by simp only [fieldExponent]
+
+@[simp] theorem fieldExponent_tits : tits.fieldExponent = 1 := by simp only [fieldExponent]
+
+/-- The Frobenius parameter is the recorded power of the characteristic. -/
+theorem fieldOrder_eq_characteristic_pow (d : LieTypeIndex) :
+    d.fieldOrder = d.characteristic ^ d.fieldExponent := by
+  cases d <;>
+    simp only [fieldOrder, characteristic, fieldExponent, PrimePower.card_def, pow_one]
+
+/-- The exponent writing the Frobenius parameter as a power of the characteristic is positive, so
+the Frobenius parameter is never `1`. -/
+theorem fieldExponent_pos (d : LieTypeIndex) : 0 < d.fieldExponent := by
+  cases d <;>
+    simp only [fieldExponent] <;>
+    first | exact PrimePower.exponent_pos _ | positivity
+
 end LieTypeIndex
 
 /-- A Lie-type index satisfying its rank, field, and preferred-representative conditions. Later
 carrier-valued constructions take this subtype, so they need no branch for an invalid Dynkin rank
 or an excluded small group. -/
-abbrev ValidLieTypeIndex := {d : LieTypeIndex // d.Valid}
+abbrev ValidLieTypeIndex : Type _ := {d : LieTypeIndex // d.Valid}
 
 /-- A valid index whose Steinberg map is an odd power of a half-Frobenius: the three Suzuki--Ree
 families together with the Tits group. -/
-abbrev SuzukiReeIndex := {d : ValidLieTypeIndex // d.1.UsesHalfFrobenius}
+abbrev SuzukiReeIndex : Type _ := {d : ValidLieTypeIndex // d.1.UsesHalfFrobenius}
 
 /-- A valid index whose Steinberg map uses ordinary Frobenius, possibly composed with a diagram
 automorphism. The Suzuki--Ree and Tits branches are excluded. -/
-abbrev GraphTwistedIndex := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
+abbrev GraphTwistedIndex : Type _ := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
 
 namespace ValidLieTypeIndex
 
@@ -449,6 +527,18 @@ instance (d : ValidLieTypeIndex) : Fact d.characteristic.Prime := ⟨d.character
 
 /-- The total Frobenius-parameter map, restricted along the valid-index coercion. -/
 abbrev fieldOrder (d : ValidLieTypeIndex) : ℕ := d.1.fieldOrder
+
+/-- The total field-exponent map, restricted along the valid-index coercion. -/
+abbrev fieldExponent (d : ValidLieTypeIndex) : ℕ := d.1.fieldExponent
+
+/-- The Frobenius parameter of a valid index is the recorded power of its characteristic. -/
+theorem fieldOrder_eq_characteristic_pow (d : ValidLieTypeIndex) :
+    d.fieldOrder = d.characteristic ^ d.fieldExponent :=
+  d.1.fieldOrder_eq_characteristic_pow
+
+/-- The field exponent of a valid index is positive. -/
+theorem fieldExponent_pos (d : ValidLieTypeIndex) : 0 < d.fieldExponent :=
+  d.1.fieldExponent_pos
 
 end ValidLieTypeIndex
 

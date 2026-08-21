@@ -90,66 +90,53 @@ theorem exists_isJordanCurve_superset_closure_image_ball_inter_sphere_diam_le
         closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ J ∧
         J ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r) ∧
         J ⊆ closure (f '' ball c r) ∧ diam J ≤ ε := by
-  have hhalf : 0 < ε / 2 := by positivity
   obtain ⟨δ, hδ, hpath⟩ :=
-    hfrontier.exists_pos_forall_exists_path_injective_diam_le hhalf
-  let κ := min (ε / 2) (δ / 2)
-  have hκ : 0 < κ := lt_min hhalf (by positivity)
-  obtain ⟨ρ, hρ, hlen⟩ :=
-    exists_circleImageLength_lt_of_lintegral_ne_top f measurableSet_ball ζ hdir
-      (ENNReal.ofReal_pos.mpr hκ).ne' (R := min R (2 * r)) (lt_min hR (by linarith))
-  have hρR : ρ < R := hρ.2.trans_le (min_le_left _ _)
-  have hρr : ρ < 2 * r := hρ.2.trans_le (min_le_right _ _)
-  have hlenFin : circleImageLength f (ball c r) ζ ρ ≠ ⊤ :=
-    (hlen.trans ENNReal.ofReal_lt_top).ne
-  have hcross : diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ κ :=
-    diam_image_ball_inter_sphere_le hf hκ.le hlen.le
-  have hcrossBounded : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) :=
-    isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hf hlenFin
+    hfrontier.exists_pos_forall_exists_path_injective_diam_le (by positivity : (0 : ℝ) < ε / 2)
+  -- one scale `κ` serves both roles below: it caps the crosscut diameter at half the tolerance
+  -- and keeps its two ends within the distance `δ` the path-joining theorem needs
+  obtain ⟨κ, hκ, hκε, hκδ⟩ : ∃ κ : ℝ, 0 < κ ∧ κ ≤ ε / 2 ∧ κ < δ :=
+    ⟨min (ε / 2) (δ / 2), lt_min (by positivity) (by positivity), min_le_left _ _,
+      (min_le_right _ _).trans_lt (by linarith)⟩
+  obtain ⟨ρ, hρmem, hlenFin, hcross, hcrossBounded⟩ :=
+    exists_diam_image_ball_inter_sphere_le_and_circleImageLength_ne_top (ζ := ζ) hf hdir hκ
+      (lt_min hR (by linarith : (0 : ℝ) < 2 * r))
+  have hρ : ρ ∈ Ioo 0 R := ⟨hρmem.1, hρmem.2.trans_le (min_le_left _ _)⟩
+  have hρr : ρ < 2 * r := hρmem.2.trans_le (min_le_right _ _)
   have hcrossSub : closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ closure (f '' ball c r) :=
     closure_mono (image_mono inter_subset_left)
   by_cases hends :
       (frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))).Subsingleton
-  · refine ⟨ρ, ⟨hρ.1, hρR⟩, hρr, closure (f '' (ball c r ∩ sphere ζ ρ)), ?_,
+  · refine ⟨ρ, hρ, hρr, closure (f '' (ball c r ∩ sphere ζ ρ)), ?_,
       subset_rfl, subset_union_left, hcrossSub, ?_⟩
     · exact isJordanCurve_closure_image_ball_inter_sphere_of_subsingleton hζ hρ.1 hρr
         hf hinj hlenFin hends
     · rw [diam_closure]
-      exact hcross.trans (by dsimp [κ]; linarith [min_le_left (ε / 2) (δ / 2)])
+      linarith
   · obtain ⟨u, v, huv, hpair, hclose⟩ :=
       exists_forall_isJordanCurve_closure_image_ball_inter_sphere_union_range_of_not_subsingleton
         hζ hρ.1 hρr hf hinj hlenFin hends
-    have hu : u ∈ frontier (f '' ball c r) ∩
-        closure (f '' (ball c r ∩ sphere ζ ρ)) := by
-      rw [hpair]
-      exact mem_insert u {v}
-    have hv : v ∈ frontier (f '' ball c r) ∩
-        closure (f '' (ball c r ∩ sphere ζ ρ)) := by
-      rw [hpair]
-      exact mem_insert_of_mem u (mem_singleton v)
-    have hκδ : κ < δ := by
-      dsimp [κ]
-      linarith [min_le_right (ε / 2) (δ / 2)]
+    have hu : u ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) :=
+      hpair ▸ mem_insert u {v}
+    have hv : v ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) :=
+      hpair ▸ mem_insert_of_mem u (mem_singleton v)
     have huvδ : dist u v < δ := by
       refine (dist_le_diam_of_mem hcrossBounded.closure hu.2 hv.2).trans_lt ?_
       rw [diam_closure]
       exact hcross.trans_lt hκδ
     obtain ⟨γ, hγinj, hγsub, hγdiam⟩ := hpath hu.1 hv.1 huv huvδ
-    refine ⟨ρ, ⟨hρ.1, hρR⟩, hρr,
-      closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ range γ,
-      hclose γ hγinj hγsub, subset_union_left, union_subset_union subset_rfl hγsub, ?_, ?_⟩
-    · exact union_subset hcrossSub (hγsub.trans frontier_subset_closure)
-    · have hinter :
-          (closure (f '' (ball c r ∩ sphere ζ ρ)) ∩ range γ).Nonempty :=
-        ⟨u, hu.2, ⟨0, γ.source⟩⟩
-      calc
-        diam (closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ range γ)
-            ≤ diam (closure (f '' (ball c r ∩ sphere ζ ρ))) + diam (range γ) :=
-          diam_union' hinter
-        _ = diam (f '' (ball c r ∩ sphere ζ ρ)) + diam (range γ) := by
-          rw [diam_closure]
-        _ ≤ κ + ε / 2 := add_le_add hcross hγdiam
-        _ ≤ ε := by dsimp [κ]; linarith [min_le_left (ε / 2) (δ / 2)]
+    refine ⟨ρ, hρ, hρr, closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ range γ,
+      hclose γ hγinj hγsub, subset_union_left, union_subset_union subset_rfl hγsub,
+      union_subset hcrossSub (hγsub.trans frontier_subset_closure), ?_⟩
+    have hinter : (closure (f '' (ball c r ∩ sphere ζ ρ)) ∩ range γ).Nonempty :=
+      ⟨u, hu.2, ⟨0, γ.source⟩⟩
+    calc
+      diam (closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ range γ)
+          ≤ diam (closure (f '' (ball c r ∩ sphere ζ ρ))) + diam (range γ) :=
+        diam_union' hinter
+      _ = diam (f '' (ball c r ∩ sphere ζ ρ)) + diam (range γ) := by
+        rw [diam_closure]
+      _ ≤ κ + ε / 2 := add_le_add hcross hγdiam
+      _ ≤ ε := by linarith
 
 /-- **The bounded-image form of the small-Jordan-curve theorem.** A holomorphic injection of a
 disc onto a bounded domain has finite Dirichlet integral by the conformal area formula, so for

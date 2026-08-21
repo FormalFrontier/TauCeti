@@ -133,13 +133,8 @@ theorem multiplicity_mul_left {γ : G} (hγ : γ ∈ Γ₁) (g h d : G)
   have h1 : QuotientGroup.mk (γ'⁻¹ * i.out) = γ'⁻¹ • i := by
     rw [← smul_eq_mul]
     exact MulAction.Quotient.mk_smul_out _ γ'⁻¹ i
-  have hk : (γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out ∈
-      (ConjAct.toConjAct g • Γ₂).subgroupOf Γ₁ :=
-    QuotientGroup.eq.mp (h1.trans (QuotientGroup.out_eq' _).symm)
-  have hβ : g⁻¹ * ((((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G)) * g ∈ Γ₂ := by
-    have hmem := Subgroup.mem_subgroupOf.mp hk
-    rwa [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← ConjAct.toConjAct_inv,
-      ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv] at hmem
+  have hβ : g⁻¹ * ((((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G)) * g ∈ Γ₂ :=
+    conj_mem_of_mk_eq g (h1.trans (QuotientGroup.out_eq' _).symm)
   have hy : ((γ'⁻¹ • i).out : G) =
       γ⁻¹ * (i.out : G) * (((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G) := by
     -- `γ' = ⟨γ, hγ⟩` by the `set` above, so the two sides of the `show` are definitionally

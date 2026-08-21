@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,6 +25,9 @@ answered at the level of the polynomial, not yet of the class.
 
 * `WeierstrassCurve.nodePolynomial` is `c₄ T² + a₁ c₄ T - (54 b₆ - 3 b₂ b₄ + a₂ c₄)`, defined over
   any commutative ring;
+* `WeierstrassCurve.nodePolynomial_coeff_zero` reads off the constant coefficient, which is *minus*
+  `54 b₆ - 3 b₂ b₄ + a₂ c₄` since the definition subtracts that combination. It is the projection
+  through which `QuadraticTwist.lean` states how twisting moves this coefficient;
 * `WeierstrassCurve.discrim_nodePolynomial` computes its discriminant as `-c₄ c₆`. This is the
   number the twist lane needs: twisting by `(t, n)` scales `-c₄ c₆` by `(t² - 4n)⁵`, i.e. by the
   twisting parameter times a square, so twisting by the right square class moves the discriminant
@@ -89,6 +93,17 @@ lemma nodePolynomial_def (W : WeierstrassCurve A) :
       - .C (54 * W.b₆ - 3 * W.b₂ * W.b₄ + W.a₂ * W.c₄) := by
   simp only [nodePolynomial]
 
+/-- The constant coefficient of the node polynomial. Note the sign: `nodePolynomial` *subtracts*
+`54 b₆ - 3 b₂ b₄ + a₂ c₄`, so `coeff 0` is minus that combination, not it.
+
+Deliberately not `@[simp]`: the normal form wanted downstream rewrites a twisted curve's
+coefficient back to the base curve's (`nodePolynomial_coeff_zero_quadraticTwistOf`), and that
+lemma's left-hand side is exactly this one's, so tagging both would make the twist lemma
+non-normal-form. -/
+lemma nodePolynomial_coeff_zero (W : WeierstrassCurve A) :
+    W.nodePolynomial.coeff 0 = -(54 * W.b₆ - 3 * W.b₂ * W.b₄ + W.a₂ * W.c₄) := by
+  simp [nodePolynomial_def]
+
 /-- The discriminant of the node polynomial is `-c₄ c₆`. Hence — away from residue characteristic
 two, and provided `c₄` survives the reduction — the tangent directions at the node are rational
 over the residue field exactly when the image of `-c₄ c₆` is a square there
@@ -129,6 +144,15 @@ lemma discrim_map_nodePolynomial (φ : A →+* B) (W : WeierstrassCurve A) :
   simp only [discrim, map_add, map_sub, map_mul, map_neg, map_pow, map_ofNat] at h ⊢
   linear_combination h
 
+/-- A power of the constant polynomial `u⁻¹` absorbs any smaller power of the constant
+polynomial `u`. -/
+private lemma C_inv_pow_mul_C_pow (u : Aˣ) (m n : ℕ) :
+    Polynomial.C (↑u⁻¹ : A) ^ (m + n) * Polynomial.C (↑u : A) ^ n
+      = Polynomial.C (↑u⁻¹ : A) ^ m := by
+  have hCu : Polynomial.C (↑u⁻¹ : A) * Polynomial.C (↑u : A) = 1 := by
+    rw [← Polynomial.C_mul, u.inv_mul, Polynomial.C_1]
+  rw [pow_add, mul_assoc, pow_mul_pow_eq_one n hCu, mul_one]
+
 /-- Under a change of variables `C = (u, r, s, t)`, the node polynomial transforms by the affine
 substitution `T ↦ u T + s` and the unit scalar `u⁻⁶` — reflecting that the tangent slopes `λ`
 transform as `λ ↦ (λ - s)/u`. Over a field this makes splitting invariant; see
@@ -136,33 +160,23 @@ transform as `λ ↦ (λ - s)/u`. Over a field this makes splitting invariant; s
 lemma variableChange_nodePolynomial (W : WeierstrassCurve A) (C : VariableChange A) :
     (C • W).nodePolynomial = .C ((↑C.u⁻¹ : A) ^ 6)
       * W.nodePolynomial.comp (.C (↑C.u : A) * .X + .C C.s) := by
-  -- `ring` cannot see that `u⁻¹` inverts `u`, so the two cancellations it needs are supplied as
-  -- hypotheses and fed to `linear_combination`: `e2` corrects the `X²` coefficient, where the
-  -- scalar `u⁻⁶` meets the `u²` from `(uX + s)²`, and `e1` the `X` coefficient, where it meets a
-  -- single `u`.
-  have hu : (↑C.u⁻¹ : A) * (↑C.u : A) = 1 := C.u.inv_mul
-  have e2 : (↑C.u⁻¹ : A) ^ 6 * (↑C.u : A) ^ 2 = (↑C.u⁻¹ : A) ^ 4 := by
-    linear_combination ((↑C.u⁻¹ : A) ^ 4 * ((↑C.u⁻¹ : A) * (↑C.u : A) + 1)) * hu
-  have e1 : (↑C.u⁻¹ : A) ^ 6 * (↑C.u : A) = (↑C.u⁻¹ : A) ^ 5 := by
-    linear_combination ((↑C.u⁻¹ : A) ^ 5) * hu
+  -- `ring` treats `↑u` and `↑u⁻¹` as unrelated constants, so the two cancellations it needs are
+  -- supplied to `linear_combination`: `e2` corrects the `X²` coefficient, where the scalar `u⁻⁶`
+  -- meets the `u²` from `(uX + s)²`, and `e1` the `X` coefficient, where it meets a single `u`.
+  have e2 := C_inv_pow_mul_C_pow C.u 4 2
+  have e1 := C_inv_pow_mul_C_pow C.u 5 1
   have hc₄ : Polynomial.C W.c₄ = Polynomial.C W.b₂ ^ 2 - 24 * Polynomial.C W.b₄ := by
     rw [c₄]
     simp only [Polynomial.C_sub, Polynomial.C_mul, Polynomial.C_pow, map_ofNat]
-  have e2p : (Polynomial.C (↑C.u⁻¹ : A)) ^ 6 * (Polynomial.C (↑C.u : A)) ^ 2
-      = (Polynomial.C (↑C.u⁻¹ : A)) ^ 4 := by
-    rw [← Polynomial.C_pow, ← Polynomial.C_pow, ← Polynomial.C_mul, e2, Polynomial.C_pow]
-  have e1p : (Polynomial.C (↑C.u⁻¹ : A)) ^ 6 * Polynomial.C (↑C.u : A)
-      = (Polynomial.C (↑C.u⁻¹ : A)) ^ 5 := by
-    rw [← Polynomial.C_pow, ← Polynomial.C_mul, e1, Polynomial.C_pow]
   simp only [nodePolynomial, variableChange_a₁, variableChange_a₂, variableChange_c₄,
     variableChange_b₂, variableChange_b₄, variableChange_b₆, Polynomial.mul_comp,
     Polynomial.add_comp, Polynomial.sub_comp, Polynomial.C_comp, Polynomial.X_comp, pow_two,
     mul_add, add_mul, mul_sub, sub_mul, Polynomial.C_mul, Polynomial.C_add, Polynomial.C_sub,
     Polynomial.C_pow, map_ofNat, Polynomial.ofNat_comp]
   -- the `r`-shift contributes `c₄` through `variableChange_a₂`, in expanded form
-  linear_combination (-Polynomial.C W.c₄ * Polynomial.X ^ 2) * e2p
+  linear_combination (-Polynomial.C W.c₄ * Polynomial.X ^ 2) * e2
     + (-(2 * Polynomial.C W.c₄ * Polynomial.C C.s + Polynomial.C W.a₁ * Polynomial.C W.c₄)
-        * Polynomial.X) * e1p
+        * Polynomial.X) * e1
     + (-3 * Polynomial.C (↑C.u⁻¹ : A) ^ 6 * Polynomial.C C.r) * hc₄
 
 /-- **Invariance of the node polynomial's splitting under change of variables.** Since a change of

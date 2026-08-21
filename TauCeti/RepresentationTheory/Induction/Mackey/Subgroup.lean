@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -58,6 +59,8 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
   with both sides read as subgroups of `K`.
 * `TauCeti.mackeySubgroupSelfEquiv`: the identification of the Mackey subgroup of a representative
   lying in `H` with `H` itself.
+* `TauCeti.mackeySubgroupNormalEquiv`: for normal `H`, the same identification at every
+  representative.
 
 ## Main statements
 
@@ -70,6 +73,8 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
 * `TauCeti.relIndex_mackeySubgroup_conj`: that index depends only on the double coset.
 * `TauCeti.card_doubleCoset_mul_card_mackeySubgroup`: the double-coset size formula
   `|KsH| · |K ⊓ sHs⁻¹| = |K| · |H|`.
+* `TauCeti.stabilizer_smul_eq_mackeySubgroup_subgroupOf`: the same stabilizer description for an
+  arbitrary `G`-set, at a translate `s • p`.
 
 ## References
 
@@ -180,6 +185,27 @@ intersection. -/
 @[simp]
 theorem mackeySubgroup_of_normal [H.Normal] : mackeySubgroup s H K = K ⊓ H := by
   rw [mackeySubgroup_def, Subgroup.Normal.conj_smul_eq_self]
+
+/-- For a normal subgroup, the Mackey subgroup at every representative is the whole subgroup.
+This is the group equivalence used to read a Mackey intertwining space over `H` itself. -/
+noncomputable def mackeySubgroupNormalEquiv (s : G) [H.Normal] :
+    ((mackeySubgroup s H H).subgroupOf H) ≃* H :=
+  (MulEquiv.subgroupCongr (by
+    rw [mackeySubgroup_of_normal, inf_idem, Subgroup.subgroupOf_self])).trans Subgroup.topEquiv
+
+@[simp]
+theorem coe_mackeySubgroupNormalEquiv_apply (s : G) [H.Normal]
+    (y : (mackeySubgroup s H H).subgroupOf H) :
+    (mackeySubgroupNormalEquiv s y : H) = (y : H) := by
+  simp [mackeySubgroupNormalEquiv]
+
+/-- The homomorphism underlying `mackeySubgroupNormalEquiv` is the canonical inclusion into `H`. -/
+@[simp]
+theorem coe_mackeySubgroupNormalEquiv (s : G) [H.Normal] :
+    (mackeySubgroupNormalEquiv (H := H) s : ((mackeySubgroup s H H).subgroupOf H) →* H) =
+      ((mackeySubgroup s H H).subgroupOf H).subtype := by
+  ext y
+  exact congrArg Subtype.val (coe_mackeySubgroupNormalEquiv_apply s y)
 
 /-- Inducing from the whole group leaves nothing to intersect: the Mackey subgroup is `K`. -/
 -- Not `@[simp]`: `simp` reaches `K` here through `mackeySubgroup_of_mem` and `Subgroup.mem_top`.
@@ -318,6 +344,28 @@ theorem relIndex_mackeySubgroup_conj {s k h : G} {H K : Subgroup G} (hk : k ∈ 
       = (MulAut.conj k • mackeySubgroup s H K).relIndex (MulAut.conj k • K) := by
         rw [mackeySubgroup_conj hk hh, Subgroup.conj_smul_eq_self_of_mem hk]
     _ = (mackeySubgroup s H K).relIndex K := Subgroup.relIndex_pointwise_smul _ _ _
+
+section Translate
+
+variable {α : Type*} [MulAction G α]
+
+/-- **The Mackey subgroup is a stabilizer, for an arbitrary action.** For a point `p` of any
+`G`-set and `s : G`, the stabilizer of the translate `s • p` in a subgroup `Γ` is the Mackey
+subgroup of `Γ` and `stabilizer G p` at `s`, read inside `Γ`.
+
+`stabilizer_eq_mackeySubgroup_subgroupOf` above is the same statement for the translation action
+of `Γ` on `G ⧸ H`. Neither implies the other: that one is stated for Mathlib's
+`mulLeftCosetsCompSubtypeVal` action on cosets, this one for the restriction of scalars
+`Subgroup.instMulAction`, and `MulAction ↥Γ (G ⧸ H)` has both. The general form is the one a sum
+over the points of an arbitrary `G`-set needs. -/
+theorem stabilizer_smul_eq_mackeySubgroup_subgroupOf (s : G) (Γ : Subgroup G) (p : α) :
+    stabilizer (↥Γ) (s • p) = (mackeySubgroup s (stabilizer G p) Γ).subgroupOf Γ := by
+  ext g
+  rw [Subgroup.mem_subgroupOf, mem_mackeySubgroup_iff, mem_stabilizer_iff, Subgroup.smul_def,
+    mem_stabilizer_iff, mul_smul, mul_smul]
+  exact ⟨fun hg => ⟨g.2, inv_smul_eq_iff.mpr hg⟩, fun hg => inv_smul_eq_iff.mp hg.2⟩
+
+end Translate
 
 end Orbit
 

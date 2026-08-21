@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -319,7 +320,7 @@ end Invariant
 
 section Hom
 
-variable {K : Type*} [Field K]
+variable {K : Type*} [CommRing K]
 variable {L : Type*} [LieRing L] [LieAlgebra K L]
 variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
@@ -366,6 +367,19 @@ private theorem mem_homScalarOn {N : LieSubmodule K L M} {φ : M →ₗ[K] M} :
 private theorem mem_homVanishOn {N : LieSubmodule K L M} {φ : M →ₗ[K] M} :
     φ ∈ homVanishOn N ↔ (∀ m, φ m ∈ N) ∧ ∀ n ∈ N, φ n = 0 := Iff.rfl
 
+/-- **Endomorphisms vanishing on `N` are a Lie submodule of those acting on `N` by a scalar.** The
+bracket of an element of `L` with an endomorphism landing in `N` and acting there by a scalar again
+lands in `N` and vanishes there. -/
+private lemma lie_mem_comap_homVanishOn (N : LieSubmodule K L M) (x : L)
+    (ψ : homScalarOn (L := L) N) :
+    ⁅x, ψ⁆ ∈ (homVanishOn N).comap (homScalarOn N).incl := by
+  obtain ⟨hψ, c, hc⟩ := mem_homScalarOn.1 ψ.2
+  simp only [LieSubmodule.mem_comap, LieSubmodule.incl_apply, LieSubmodule.coe_bracket]
+  refine mem_homVanishOn.2 ⟨fun m ↦ ?_, fun n hn ↦ ?_⟩
+  · rw [LieHom.lie_apply]
+    exact N.sub_mem (N.lie_mem (hψ m)) (hψ _)
+  · rw [LieHom.lie_apply, hc n hn, hc _ (N.lie_mem hn), lie_smul, sub_self]
+
 end Hom
 
 section Compl
@@ -403,13 +417,7 @@ private theorem exists_equivariant_projection (htop : t.toLieSubalgebra K = ⊤)
     exact hn₀0 ((hπid n₀ hn₀).symm.trans ((mem_homVanishOn.1 (hcon hπscal)).2 n₀ hn₀))
   obtain ⟨φ, hφmem, hφinv⟩ :=
     exists_invariant_notMem (t := t) htop ((homVanishOn N).comap (homScalarOn N).incl) hproper
-      (fun x ψ ↦ by
-        obtain ⟨hψ, c, hc⟩ := mem_homScalarOn.1 ψ.2
-        simp only [LieSubmodule.mem_comap, LieSubmodule.incl_apply, LieSubmodule.coe_bracket]
-        refine mem_homVanishOn.2 ⟨fun m ↦ ?_, fun n hn ↦ ?_⟩
-        · rw [LieHom.lie_apply]
-          exact N.sub_mem (N.lie_mem (hψ m)) (hψ _)
-        · rw [LieHom.lie_apply, hc n hn, hc _ (N.lie_mem hn), lie_smul, sub_self])
+      (lie_mem_comap_homVanishOn N)
   rw [LieSubmodule.mem_comap, LieSubmodule.incl_apply] at hφmem
   obtain ⟨hφN, c, hc⟩ := mem_homScalarOn.1 φ.2
   have hc0 : c ≠ 0 := by
@@ -429,7 +437,7 @@ private theorem exists_equivariant_projection (htop : t.toLieSubalgebra K = ⊤)
 then `N` has a complement, namely the kernel of that endomorphism. -/
 private theorem exists_isCompl_of_equivariant_projection {R : Type*} {L' M' : Type*} [CommRing R]
     [LieRing L'] [LieAlgebra R L'] [AddCommGroup M'] [Module R M'] [LieRingModule L' M']
-    [LieModule R L' M'] {N : LieSubmodule R L' M'} {ψ : M' →ₗ[R] M'}
+     {N : LieSubmodule R L' M'} {ψ : M' →ₗ[R] M'}
     (hψmem : ∀ m, ψ m ∈ N) (hψid : ∀ n ∈ N, ψ n = n)
     (hψlie : ∀ (x : L') (m : M'), ψ ⁅x, m⁆ = ⁅x, ψ m⁆) :
     ∃ N' : LieSubmodule R L' M', IsCompl N N' := by

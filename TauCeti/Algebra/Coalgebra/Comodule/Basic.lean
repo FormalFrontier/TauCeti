@@ -1,9 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import Mathlib.RingTheory.Coalgebra.Basic
 
 /-!
@@ -24,6 +26,8 @@ right comodule of a coalgebra over itself, and the basic morphism API.
 * `TauCeti.Comodule`: a right comodule over a coalgebra.
 * `TauCeti.Comodule.Hom`: morphisms of comodules.
 * `TauCeti.Comodule.instSelf`: the regular right comodule of a coalgebra over itself.
+* `TauCeti.Comodule.coactComponent`: the component of a coaction selected by a linear
+  functional on the coalgebra.
 
 ## References
 
@@ -99,6 +103,110 @@ theorem coassoc_apply (m : M) :
 theorem lTensor_counit_coact (m : M) :
     Coalgebra.counit.lTensor M (coact (R := R) (C := C) (M := M) m) = m ⊗ₜ[R] 1 :=
   LinearMap.congr_fun (Comodule.lTensor_counit_comp_coact (R := R) (C := C) (M := M)) m
+
+/-! ## Components selected by linear functionals -/
+
+/-- Apply a linear functional to the coalgebra factor of a tensor. -/
+noncomputable def tensorComponent (phi : C →ₗ[R] R) : M ⊗[R] C →ₗ[R] M :=
+  (TensorProduct.rid R M).toLinearMap ∘ₗ phi.lTensor M
+
+omit [Coalgebra R C] [Comodule R C M] in
+@[simp]
+theorem tensorComponent_tmul (phi : C →ₗ[R] R) (m : M) (c : C) :
+    tensorComponent (R := R) (M := M) phi (m ⊗ₜ[R] c) = phi c • m := by
+  simp [tensorComponent]
+
+omit [Coalgebra R C] [Comodule R C M] in
+/-- The coordinates of a tensor in a basis of its right factor are its tensor components. -/
+theorem equivFinsuppOfBasisRight_apply {ι : Type*} [DecidableEq ι]
+    (b : Module.Basis ι R C) (t : M ⊗[R] C) (i : ι) :
+    TensorProduct.equivFinsuppOfBasisRight b t i =
+      tensorComponent (R := R) (M := M) (b.coord i) t := by
+  rw [TensorProduct.equivFinsuppOfBasisRight_apply]
+  rfl
+
+omit [Coalgebra R C] [Comodule R C M] in
+@[simp]
+theorem tensorComponent_zero :
+    tensorComponent (R := R) (M := M) (0 : C →ₗ[R] R) = 0 := by
+  refine TensorProduct.ext' fun m c => ?_
+  simp
+
+/-- Pair two linear functionals on the factors of a tensor square. -/
+noncomputable def pairCoeff (phi psi : C →ₗ[R] R) : C ⊗[R] C →ₗ[R] R :=
+  (TensorProduct.rid R R).toLinearMap ∘ₗ TensorProduct.map phi psi
+
+omit [Coalgebra R C] in
+@[simp]
+theorem pairCoeff_tmul (phi psi : C →ₗ[R] R) (c d : C) :
+    pairCoeff (R := R) phi psi (c ⊗ₜ[R] d) = phi c * psi d := by
+  simp [pairCoeff, smul_eq_mul, mul_comm]
+
+/-- Apply a pair of linear functionals to the two coalgebra factors of a threefold tensor. -/
+noncomputable def tensorPairComponent (phi psi : C →ₗ[R] R) :
+    M ⊗[R] (C ⊗[R] C) →ₗ[R] M :=
+  (TensorProduct.rid R M).toLinearMap ∘ₗ (pairCoeff (R := R) phi psi).lTensor M
+
+omit [Coalgebra R C] [Comodule R C M] in
+@[simp]
+theorem tensorPairComponent_tmul (phi psi : C →ₗ[R] R) (m : M) (t : C ⊗[R] C) :
+    tensorPairComponent (R := R) (M := M) phi psi (m ⊗ₜ[R] t) =
+      pairCoeff (R := R) phi psi t • m := by
+  simp [tensorPairComponent]
+
+omit [Coalgebra R C] [Comodule R C M] in
+/-- Applying two tensor components successively is applying their pair after reassociation. -/
+theorem tensorComponent_comp_tensorComponent (phi psi : C →ₗ[R] R) :
+    tensorComponent (R := R) (M := M) phi ∘ₗ
+        tensorComponent (R := R) (M := M ⊗[R] C) psi =
+      tensorPairComponent (R := R) (M := M) phi psi ∘ₗ
+        (TensorProduct.assoc R M C C).toLinearMap := by
+  refine TensorProduct.ext_threefold fun m c d => ?_
+  simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
+    TensorProduct.assoc_tmul, tensorPairComponent_tmul, pairCoeff_tmul, tensorComponent_tmul,
+    map_smul, smul_smul]
+  rw [mul_comm]
+
+/-- Taking a tensor component commutes with a coaction on the other factor. -/
+theorem coact_comp_tensorComponent (phi : C →ₗ[R] R) :
+    coact (R := R) (C := C) (M := M) ∘ₗ tensorComponent (R := R) (M := M) phi =
+      tensorComponent (R := R) (M := M ⊗[R] C) phi ∘ₗ
+        (coact (R := R) (C := C) (M := M)).rTensor C := by
+  refine TensorProduct.ext' fun m c => ?_
+  simp
+
+/-- The component of a coaction selected by a linear functional on the coalgebra. -/
+noncomputable def coactComponent (phi : C →ₗ[R] R) : M →ₗ[R] M :=
+  tensorComponent (R := R) (M := M) phi ∘ₗ coact (R := R) (C := C) (M := M)
+
+theorem coactComponent_apply (phi : C →ₗ[R] R) (m : M) :
+    coactComponent (R := R) (C := C) (M := M) phi m =
+      tensorComponent (R := R) (M := M) phi (coact m) :=
+  by rw [coactComponent, LinearMap.coe_comp, Function.comp_apply]
+
+/-- Coassociativity read off by two linear functionals on the coalgebra. -/
+theorem coactComponent_coactComponent (phi psi : C →ₗ[R] R) (m : M) :
+    coactComponent (R := R) (C := C) (M := M) phi
+        (coactComponent (R := R) (C := C) (M := M) psi m) =
+      tensorPairComponent (R := R) (M := M) phi psi
+        (Coalgebra.comul.lTensor M (coact m)) := by
+  have hcoact := congr($(coact_comp_tensorComponent (R := R) (C := C) (M := M) psi)
+    (coact (R := R) (C := C) (M := M) m))
+  simp only [LinearMap.coe_comp, Function.comp_apply] at hcoact
+  have hpair := congr($(tensorComponent_comp_tensorComponent
+    (R := R) (C := C) (M := M) phi psi)
+      ((coact (R := R) (C := C) (M := M)).rTensor C (coact m)))
+  simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe] at hpair
+  rw [coactComponent_apply, coactComponent_apply, hcoact, hpair, coassoc_apply]
+
+omit [Comodule R C M] in
+/-- Contracting a pair component after comultiplication uses the corresponding contraction of
+the two coefficient functionals. -/
+theorem tensorPairComponent_comp_lTensor_comul {phi psi theta : C →ₗ[R] R}
+    (h : pairCoeff (R := R) phi psi ∘ₗ Coalgebra.comul = theta) :
+    tensorPairComponent (R := R) (M := M) phi psi ∘ₗ Coalgebra.comul.lTensor M =
+      tensorComponent (R := R) (M := M) theta := by
+  rw [tensorPairComponent, tensorComponent, LinearMap.comp_assoc, ← LinearMap.lTensor_comp, h]
 
 variable (R C) in
 /-- The regular right comodule of a coalgebra over itself, with coaction given by the

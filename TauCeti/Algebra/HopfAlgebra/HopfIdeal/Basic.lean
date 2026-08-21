@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -231,6 +232,19 @@ theorem ker_tensorProduct_map_id_quotient (I : Ideal H) :
   -- `lTensor_ker` uses the algebra-hom coercion for `includeRight`, while
   -- `rightTensorIdeal` uses its `toRingHom`; after unfolding they are definitionally equal.
   rw [rightTensorIdeal_def]
+  rfl
+
+/-- The kernel of tensoring the quotient map on the left is the left tensor ideal. -/
+theorem ker_tensorProduct_map_quotient_id (I : Ideal H) :
+    RingHom.ker (Algebra.TensorProduct.map (Ideal.Quotient.mkₐ R I) (AlgHom.id R H)) =
+      leftTensorIdeal (R := R) (H := H) I := by
+  rw [Algebra.TensorProduct.rTensor_ker (C := H) (Ideal.Quotient.mkₐ R I)
+    (Ideal.Quotient.mkₐ_surjective R I)]
+  rw [← RingHom.ker_coe_toRingHom (Ideal.Quotient.mkₐ R I),
+    Ideal.Quotient.mkₐ_ker R I]
+  -- `rTensor_ker` uses the algebra-hom coercion for `includeLeft`, while
+  -- `leftTensorIdeal` uses its `toRingHom`; after unfolding they are definitionally equal.
+  rw [leftTensorIdeal_def]
   rfl
 
 end HopfIdeal

@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -13,7 +13,7 @@ public import TauCeti.Combinatorics.Young.StandardTableau.Basic
 
 Numbering the cells of a Young diagram `μ` in *reading order* -- left to right along the first
 row, then left to right along the second, and so on -- labels the cell `(i, j)` by
-`TauCeti.YoungDiagram.readingIndex μ (i, j) = μ.rowLen 0 + ⋯ + μ.rowLen (i - 1) + j`.  Reading
+`YoungDiagram.readingIndex μ (i, j) = μ.rowLen 0 + ⋯ + μ.rowLen (i - 1) + j`.  Reading
 order increases along rows and down columns, so this labelling is a standard Young tableau, the
 **row-superstandard tableau** `TauCeti.StandardYoungTableau.rowSuperstandard μ`; in particular
 `TauCeti.standardCount μ`, the number `f^μ` of standard Young tableaux, is never zero.
@@ -26,12 +26,12 @@ a cell outside its first column, while a diagram with at most one row, or with a
 exactly for the diagrams with at most one row and those with at most one column.
 
 Those are also exactly the shapes whose hook lengths are already known to multiply to `μ.card !`,
-by `TauCeti.YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one` and its transpose, so the
+by `YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one` and its transpose, so the
 multiplicative hook-length formula `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.card !` follows for them.
 
 ## Main definitions
 
-* `TauCeti.YoungDiagram.readingIndex`: the position of a cell in reading order.
+* `YoungDiagram.readingIndex`: the position of a cell in reading order.
 * `TauCeti.StandardYoungTableau.rowSuperstandard`: the tableau numbering the cells row by row.
 * `TauCeti.StandardYoungTableau.colSuperstandard`: the tableau numbering the cells column by
   column.
@@ -57,8 +57,6 @@ multiplicative hook-length formula `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.
 public section
 
 open scoped Nat
-
-namespace TauCeti
 
 namespace YoungDiagram
 
@@ -132,6 +130,8 @@ theorem eq_of_readingIndex_eq {c d : ℕ × ℕ} (hc : c ∈ μ) (hd : d ∈ μ)
 
 end YoungDiagram
 
+namespace TauCeti
+
 namespace StandardYoungTableau
 
 variable {μ : YoungDiagram}
@@ -141,7 +141,7 @@ variable {μ : YoungDiagram}
 so on.  This is the tableau at which the classical-groups roadmap fixes the Young symmetrizer
 `c_λ`. -/
 noncomputable def rowSuperstandard (μ : YoungDiagram) : StandardYoungTableau μ where
-  toEquiv :=
+  toTableau :=
     Equiv.ofBijective
       (fun c => ⟨YoungDiagram.readingIndex μ c.1, YoungDiagram.readingIndex_lt_card c.2⟩)
       ((Fintype.bijective_iff_injective_and_card _).mpr

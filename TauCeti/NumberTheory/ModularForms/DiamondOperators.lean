@@ -39,6 +39,8 @@ re-founded slash action with built-in character) and their names. The Hecke pair
   by `coe_diamondOp`/`coe_diamondOpCusp` as slashing by any representative.
 * `diamondOpHom`/`diamondOpCuspHom`: the diamond operators as monoid homomorphisms into the
   endomorphism algebras.
+* `diamondOpNat`: the same operator indexed by a natural number, `⟨n⟩` of
+  Diamond–Shurman §5.3, extended by zero when `n` is not coprime to `N`.
 * `modFormCharSpace`/`cuspFormCharSpace`: the nebentypus character spaces `M_k(Γ₁(N), χ)` and
   `S_k(Γ₁(N), χ)`, cut out as simultaneous diamond eigenspaces.
 
@@ -51,7 +53,7 @@ re-founded slash action with built-in character) and their names. The Hecke pair
 ## References
 
 * Miyake, *Modular forms*, §4.5
-* Diamond–Shurman, *A first course in modular forms*, §5.1
+* Diamond–Shurman, *A first course in modular forms*, §5.1 and §5.3
 -/
 
 public section
@@ -120,19 +122,19 @@ private theorem diamondOpAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma
 
 /-- The diamond operator `⟨d⟩` on modular forms for `Gamma1 N`, indexed by
 `d : (ZMod N)ˣ`. -/
-noncomputable def diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) :
+noncomputable def diamondOp (k : ℤ) (d : (ZMod N)ˣ) :
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ] ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
   diamondOpAux k (Gamma0Map_toHomUnits_surjective d).choose
 
 -- `diamondOp` equals `diamondOpAux` on any representative with the right image.
-private theorem diamondOp_eq_diamondOpAux [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
+private theorem diamondOp_eq_diamondOpAux (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
     (hg : (Gamma0Map N).toHomUnits g = d) : diamondOp k d = diamondOpAux k g :=
   diamondOpAux_eq_of_Gamma0Map_eq k _ g
     (congrArg Units.val ((Gamma0Map_toHomUnits_surjective d).choose_spec.trans hg.symm))
 
 /-- Evaluation of the diamond operator: at any representative `g ∈ Γ₀(N)` with lower-right
 entry `d`, the diamond operator `⟨d⟩` is slashing by `g`. -/
-theorem coe_diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
+theorem coe_diamondOp (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
     (hg : (Gamma0Map N).toHomUnits g = d) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(diamondOp k d f) = ⇑f ∣[k] mapGL ℝ (g : SL(2, ℤ)) := by
   rw [diamondOp_eq_diamondOpAux k d g hg]
@@ -140,7 +142,7 @@ theorem coe_diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
 
 /-- The diamond operator at `1` is the identity. -/
 @[simp]
-theorem diamondOp_one [NeZero N] (k : ℤ) : diamondOp (N := N) k 1 = LinearMap.id := by
+theorem diamondOp_one (k : ℤ) : diamondOp (N := N) k 1 = LinearMap.id := by
   rw [diamondOp_eq_diamondOpAux k 1 1 (map_one _)]
   ext f z
   -- state the unfolded slash of the coercion so `slash_one` applies
@@ -148,7 +150,7 @@ theorem diamondOp_one [NeZero N] (k : ℤ) : diamondOp (N := N) k 1 = LinearMap.
   simp only [map_one, SlashAction.slash_one]
 
 /-- Diamond operators compose: `⟨d₁ * d₂⟩ = ⟨d₁⟩ ∘ ⟨d₂⟩`. -/
-theorem diamondOp_mul [NeZero N] (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
+theorem diamondOp_mul (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
     diamondOp k (d₁ * d₂) = (diamondOp k d₁).comp (diamondOp k d₂) := by
   obtain ⟨g₁, hg₁⟩ := Gamma0Map_toHomUnits_surjective (N := N) d₁
   obtain ⟨g₂, hg₂⟩ := Gamma0Map_toHomUnits_surjective (N := N) d₂
@@ -161,14 +163,14 @@ theorem diamondOp_mul [NeZero N] (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
   rw [map_mul, SlashAction.slash_mul]
 
 /-- The diamond operator as a monoid homomorphism `(ZMod N)ˣ →* Module.End ℂ (...)`. -/
-noncomputable def diamondOpHom [NeZero N] (k : ℤ) :
+noncomputable def diamondOpHom (k : ℤ) :
     (ZMod N)ˣ →* Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun := diamondOp k
   map_one' := diamondOp_one k
   map_mul' := diamondOp_mul k
 
 @[simp]
-lemma diamondOpHom_apply [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) :
+lemma diamondOpHom_apply (k : ℤ) (d : (ZMod N)ˣ) :
     diamondOpHom k d = diamondOp k d := (rfl)
 
 -- Auxiliary form of the cusp-form diamond operator: translation by a fixed
@@ -196,20 +198,20 @@ private theorem diamondOpCuspAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(G
     (fun _ hγ ↦ SlashInvariantFormClass.slash_action_eq f _ hγ) g₁ g₂ heq) z
 
 /-- The cusp-form diamond operator indexed by `d : (ZMod N)ˣ`. -/
-noncomputable def diamondOpCusp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) :
+noncomputable def diamondOpCusp (k : ℤ) (d : (ZMod N)ˣ) :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ] CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
   diamondOpCuspAux k (Gamma0Map_toHomUnits_surjective d).choose
 
 -- `diamondOpCusp` equals `diamondOpCuspAux` on any representative.
 private theorem diamondOpCusp_eq_diamondOpCuspAux (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
-    (hg : (Gamma0Map N).toHomUnits g = d) [NeZero N] :
+    (hg : (Gamma0Map N).toHomUnits g = d) :
     diamondOpCusp k d = diamondOpCuspAux k g :=
   diamondOpCuspAux_eq_of_Gamma0Map_eq k _ g
     (congrArg Units.val ((Gamma0Map_toHomUnits_surjective d).choose_spec.trans hg.symm))
 
 /-- Evaluation of the cusp-form diamond operator: at any representative `g ∈ Γ₀(N)` with
 lower-right entry `d`, the diamond operator `⟨d⟩` is slashing by `g`. -/
-theorem coe_diamondOpCusp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
+theorem coe_diamondOpCusp (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 N))
     (hg : (Gamma0Map N).toHomUnits g = d) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(diamondOpCusp k d f) = ⇑f ∣[k] mapGL ℝ (g : SL(2, ℤ)) := by
   rw [diamondOpCusp_eq_diamondOpCuspAux k d g hg]
@@ -217,7 +219,7 @@ theorem coe_diamondOpCusp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (g : ↥(Gamma0 
 
 /-- The cusp diamond operator at `1` is the identity. -/
 @[simp]
-theorem diamondOpCusp_one [NeZero N] (k : ℤ) : diamondOpCusp (N := N) k 1 = LinearMap.id := by
+theorem diamondOpCusp_one (k : ℤ) : diamondOpCusp (N := N) k 1 = LinearMap.id := by
   rw [diamondOpCusp_eq_diamondOpCuspAux k 1 1 (map_one _)]
   ext f z
   -- state the unfolded slash of the coercion so `slash_one` applies
@@ -225,7 +227,7 @@ theorem diamondOpCusp_one [NeZero N] (k : ℤ) : diamondOpCusp (N := N) k 1 = Li
   simp only [map_one, SlashAction.slash_one]
 
 /-- Cusp diamond operators compose multiplicatively. -/
-theorem diamondOpCusp_mul [NeZero N] (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
+theorem diamondOpCusp_mul (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
     diamondOpCusp k (d₁ * d₂) = (diamondOpCusp k d₁).comp (diamondOpCusp k d₂) := by
   obtain ⟨g₁, hg₁⟩ := Gamma0Map_toHomUnits_surjective (N := N) d₁
   obtain ⟨g₂, hg₂⟩ := Gamma0Map_toHomUnits_surjective (N := N) d₂
@@ -239,66 +241,66 @@ theorem diamondOpCusp_mul [NeZero N] (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
   rw [map_mul, SlashAction.slash_mul]
 
 /-- The cusp-form diamond operator as a monoid homomorphism. -/
-noncomputable def diamondOpCuspHom [NeZero N] (k : ℤ) :
+noncomputable def diamondOpCuspHom (k : ℤ) :
     (ZMod N)ˣ →* Module.End ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun := diamondOpCusp k
   map_one' := diamondOpCusp_one k
   map_mul' := diamondOpCusp_mul k
 
 @[simp]
-lemma diamondOpCuspHom_apply [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) :
+lemma diamondOpCuspHom_apply (k : ℤ) (d : (ZMod N)ˣ) :
     diamondOpCuspHom k d = diamondOpCusp k d := (rfl)
 
 /-- The nebentypus character space `S_k(Γ₁(N), χ)`: cusp forms on which every
 diamond operator `⟨d⟩` acts by the scalar `χ(d)`. -/
-noncomputable def cuspFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def cuspFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpCuspHom k d) (↑(χ d))
 
 /-- Defining equation for the sealed `cuspFormCharSpace`: it is the joint eigenspace of the
 diamond operators. -/
-lemma cuspFormCharSpace_def [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+lemma cuspFormCharSpace_def (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     cuspFormCharSpace k χ =
       ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpCuspHom k d) (↑(χ d)) := (rfl)
 
 /-- Membership in `S_k(Γ₁(N), χ)`: `f` is in the `χ`-eigenspace iff
 `⟨d⟩ f = χ(d) • f` for every `d ∈ (ZMod N)ˣ`. -/
 @[simp]
-theorem mem_cuspFormCharSpace_iff [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem mem_cuspFormCharSpace_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : f ∈ cuspFormCharSpace k χ ↔
     ∀ d : (ZMod N)ˣ, diamondOpCuspHom k d f = (↑(χ d) : ℂ) • f := by
   simp only [cuspFormCharSpace, Submodule.mem_iInf, Module.End.mem_eigenspace_iff]
 
 /-- Diamond operators act by `χ(d)` on elements of `S_k(Γ₁(N), χ)`. Not `@[simp]`: `χ`
 occurs only in the hypothesis and the right-hand side, so `simp` cannot infer it. -/
-theorem diamondOpCusp_apply_of_mem_cuspFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem diamondOpCusp_apply_of_mem_cuspFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (d : (ZMod N)ˣ) {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ cuspFormCharSpace k χ) :
     diamondOpCusp k d f = (↑(χ d) : ℂ) • f :=
   (mem_cuspFormCharSpace_iff k χ f).mp hf d
 
 /-- The modular-form nebentypus character space `M_k(Γ₁(N), χ)`. -/
-noncomputable def modFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def modFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpHom k d) (↑(χ d))
 
 /-- Defining equation for the sealed `modFormCharSpace`: it is the joint eigenspace of the
 diamond operators. -/
-lemma modFormCharSpace_def [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+lemma modFormCharSpace_def (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     modFormCharSpace k χ =
       ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpHom k d) (↑(χ d)) := (rfl)
 
 /-- Membership in `M_k(Γ₁(N), χ)`: `f` is in the `χ`-eigenspace iff `⟨d⟩ f = χ(d) • f`
 for every `d ∈ (ZMod N)ˣ`. -/
 @[simp]
-theorem mem_modFormCharSpace_iff [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem mem_modFormCharSpace_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : f ∈ modFormCharSpace k χ ↔
     ∀ d : (ZMod N)ˣ, diamondOpHom k d f = (↑(χ d) : ℂ) • f := by
   simp only [modFormCharSpace, Submodule.mem_iInf, Module.End.mem_eigenspace_iff]
 
 /-- Diamond operators act by `χ(d)` on elements of `M_k(Γ₁(N), χ)`. Not `@[simp]`: `χ`
 occurs only in the hypothesis and the right-hand side, so `simp` cannot infer it. -/
-theorem diamondOp_apply_of_mem_modFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem diamondOp_apply_of_mem_modFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (d : (ZMod N)ˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) :
     diamondOp k d f = (↑(χ d) : ℂ) • f :=
@@ -307,7 +309,7 @@ theorem diamondOp_apply_of_mem_modFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod
 /-- **Bridge**: for a `Gamma1`-invariant modular form `f`, membership in the
 diamond-eigenspace `modFormCharSpace k χ₀` is equivalent to the classical nebentypus
 relation `f ∣[k] g = χ₀(d_g) • f` for all `g ∈ Γ₀(N)`. -/
-theorem mem_modFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod N)ˣ →* ℂˣ)
+theorem mem_modFormCharSpace_iff_nebentypus (k : ℤ) (χ₀ : (ZMod N)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : f ∈ modFormCharSpace k χ₀ ↔
     ∀ g : ↥(Gamma0 N),
       (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ₀ ((Gamma0Map N).toHomUnits g)) : ℂ) • ⇑f := by
@@ -323,7 +325,7 @@ theorem mem_modFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod 
 /-- **Bridge (cusp forms)**: for a `Gamma1`-invariant cusp form `f`, membership in the
 diamond-eigenspace `cuspFormCharSpace k χ₀` is equivalent to the classical nebentypus
 relation `f ∣[k] g = χ₀(d_g) • f` for all `g ∈ Γ₀(N)`. -/
-theorem mem_cuspFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod N)ˣ →* ℂˣ)
+theorem mem_cuspFormCharSpace_iff_nebentypus (k : ℤ) (χ₀ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : f ∈ cuspFormCharSpace k χ₀ ↔
     ∀ g : ↥(Gamma0 N),
       (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ₀ ((Gamma0Map N).toHomUnits g)) : ℂ) • ⇑f := by
@@ -335,3 +337,34 @@ theorem mem_cuspFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod
   · obtain ⟨g, hg⟩ := Gamma0Map_toHomUnits_surjective (N := N) d
     rw [diamondOpCuspHom_apply, diamondOpCusp_eq_diamondOpCuspAux k d g hg, ← hg]
     exact CuspForm.ext (congr_fun (h g))
+
+/-- The diamond operator indexed by a natural number: `⟨n⟩` is `diamondOp` at the unit `n mod N`
+when `n` is coprime to `N`, and `0` otherwise.
+
+This is `⟨n⟩` as Diamond–Shurman §5.3 writes it. Extending the index from `(ZMod N)ˣ` to `ℕ` by
+zero is what lets the Hecke recurrence at a prime power be stated uniformly: the `⟨p⟩` term
+simply vanishes when `p ∣ N`, instead of the recurrence needing a separate case.
+
+Follows `diamondOp_n` of the AINTLIB `LeanModularForms` project
+(`HeckeRIngs/GL2/HeckeT_n.lean`, <https://github.com/CBirkbeck/AINTLIB>, commit
+`ce76186b5f61c846d770d2f87eb76ba5b9c9117a`, Apache-2.0). -/
+-- The statement is that project's; the proofs below are re-derived against the current Mathlib
+-- pin, where `dif_pos`/`dif_neg` are deprecated and the coprime lemma cannot carry `@[simp]`.
+noncomputable def diamondOpNat (k : ℤ) (n : ℕ) :
+    ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ] ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
+  if h : Nat.Coprime n N then diamondOp k (ZMod.unitOfCoprime n h) else 0
+
+/-- When `n` is coprime to `N`, `⟨n⟩` is the diamond operator at the unit `n mod N`. -/
+-- Not a `simp` lemma: the right-hand side mentions the coprimality proof `h`, which `simp`
+-- cannot recover from the left-hand side, so it could never apply. Its negative counterpart is
+-- `simp`-able because that right-hand side is just `0`.
+lemma diamondOpNat_of_coprime (k : ℤ) {n : ℕ} (h : Nat.Coprime n N) :
+    diamondOpNat k n = diamondOp k (ZMod.unitOfCoprime n h) :=
+  dite_eq_left_of_eq_true (by simpa using h)
+
+/-- When `n` is not coprime to `N`, `⟨n⟩` vanishes. This is the case that lets the prime-power
+Hecke recurrence be stated without splitting on whether `p` divides the level. -/
+@[simp]
+lemma diamondOpNat_of_not_coprime (k : ℤ) {n : ℕ} (h : ¬ Nat.Coprime n N) :
+    diamondOpNat (N := N) k n = 0 :=
+  dite_eq_right_of_eq_false (by simpa using h)

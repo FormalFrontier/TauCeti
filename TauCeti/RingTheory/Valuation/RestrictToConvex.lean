@@ -33,10 +33,20 @@ hypothesis that `H` absorbs every attained value `≥ 1` is what rules that out:
 * `Valuation.restrictToConvex_apply_of_mem`, `Valuation.restrictToConvex_apply_of_notMem` and
   `Valuation.restrictToConvex_apply_of_eq_zero` : the three branches, which are the intended
   interface — the definition itself is a `dite` chain and is not meant to be unfolded.
-* `Valuation.restrictToConvex_eq_zero_iff_or` : where the restriction vanishes, totally.
-* `Valuation.restrictToConvex_le_iff` : on values kept by the restriction, the order is both
-  preserved and reflected.
-* `Valuation.one_le_restrictToConvex` : a value at least `1` stays at least `1`.
+* `Valuation.restrictToConvex_eq_zero_iff` : where the restriction vanishes, totally.
+* `Valuation.restrictToConvex_le_iff` : how restricted values compare, totally.
+* `Valuation.restrictToConvex_lt_coe_iff` and `Valuation.coe_le_restrictToConvex_iff` : a
+  restricted value compared against an abstract member of `H`.
+* `Valuation.one_le_restrictToConvex` : a value at least `1` stays at least `1`. The converse
+  bounds are the general `restrictToConvex_le_iff` and `restrictToConvex_lt_coe_iff` at `1`.
+* `Valuation.restrictToConvex_mul_inv_le_one` and `Valuation.one_lt_restrictToConvex_mul_inv` :
+  the two directions of the quotient bound, and they are not the same comparison. Dividing by a
+  kept value that dominates the numerator (`v a ≤ v b`) lands at or below `1`; the quotient is
+  strictly *above* `1` in the opposite case, when the numerator strictly dominates the kept
+  divisor (`v b < v a`). Wedhorn's Lemma 7.44 extension indexes its divisor by a power, and
+  instantiates these at `b = t ^ n` — `pow_mem` supplies the membership, `map_pow` and `inv_pow`
+  the rewriting.
+* `Valuation.supp_le_restrictToConvex_supp` : the support can only grow.
 * `Valuation.mk0_mem_of_inv_le_of_le` : `H` keeps every value bracketed by an attained value
   `≥ 1` and its inverse — so the characteristic values of `v` all survive the restriction.
 (A convex subgroup of a *value group* has to be carried onto the units of the value monoid
@@ -46,9 +56,20 @@ before it can be restricted to; that transport ships with the retraction that ne
 
 * T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, §7.1.2
 
-Ported from the AINTLIB adic-spaces development (`aintlib-adic-spaces`,
-`projects/AdicSpaces/Adic spaces/ValuationContinuity.lean`, `convexRestrictFun` and
-`restrictToConvexBounded`). That development carries
+## Provenance
+
+Ported from AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0), branch `dev/adic-spaces` at commit
+`37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`, project `projects/AdicSpaces/`,
+file `Adic spaces/ValuationContinuity.lean`, declarations `convexRestrictFun` and
+`restrictToConvexBounded`, together with the bound and support lemmas ported here:
+`supp_le_restrictToConvex_supp` (:724). The source's `restrictToConvex_mul_inv_pow_le_one` (:814)
+and `one_lt_restrictToConvex_mul_inv_pow` (:839) are **generalised rather than ported**: their
+content is here as `restrictToConvex_mul_inv_le_one` and
+`one_lt_restrictToConvex_mul_inv`, stated for an arbitrary kept divisor, of which the
+source's power forms are the case `b = t ^ n`. That file's `restrictToConvex_le_one` (:733) and
+`restrictToConvex_lt_one_of_val_lt_one` (:786) are deliberately **not** ported: here they are
+one-line specializations of `restrictToConvex_le_iff` and `restrictToConvex_lt_coe_iff` at `1`,
+so a caller applies those directly. That development carries
 `set_option backward.isDefEq.respectTransparency false` on the definition and several proofs;
 TauCeti's CI forbids `set_option`, and it turns out not to be needed — stating the `dite` chain
 as `restrictToConvexFun_unfold` and rewriting through it, rather than unfolding the definition in
@@ -265,9 +286,11 @@ theorem restrictToConvex_apply_of_eq_zero (v : Valuation R Γ₀) (H : ConvexSub
 
 /-- On values whose units lie in `H`, the restriction both preserves and reflects the order.
 This is what lets an order fact about `v` be moved to the restricted valuation without
-unfolding either. -/
-@[simp]
-theorem restrictToConvex_le_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+unfolding either.
+
+Not `@[simp]`: `restrictToConvex_le_iff` is the simp-normal form for a comparison of restricted
+values, and it rewrites this lemma's left-hand side, which `simpNF` rejects. -/
+theorem restrictToConvex_le_iff_of_mem (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
     (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H)
     {r s : R} (hr : v r ≠ 0) (hs : v s ≠ 0)
     (hmr : Units.mk0 (v r) hr ∈ H) (hms : Units.mk0 (v s) hs ∈ H) :
@@ -275,6 +298,30 @@ theorem restrictToConvex_le_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ�
   rw [restrictToConvex_apply_of_mem v H hH hr hmr, restrictToConvex_apply_of_mem v H hH hs hms,
     WithZero.coe_le_coe]
   simp [← Units.val_le_val]
+
+/-- **Comparison after restriction, totally.** A discarded value sits at the bottom, so it is
+below everything; a kept value is below only kept values; and two kept values compare exactly
+as they did under `v`. `restrictToConvex_le_iff_of_mem` is the both-kept branch, in the form
+consumers holding membership hypotheses want.
+
+The side conditions are stated as vanishing of the restriction rather than as membership in `H`,
+so that `restrictToConvex_eq_zero_iff` discharges them without the caller naming `H`. -/
+@[simp]
+theorem restrictToConvex_le_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+    (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H) (r s : R) :
+    v.restrictToConvex H hH r ≤ v.restrictToConvex H hH s ↔
+      v.restrictToConvex H hH r = 0 ∨ v.restrictToConvex H hH s ≠ 0 ∧ v r ≤ v s := by
+  by_cases hx : v.restrictToConvex H hH r = 0
+  · simp [hx]
+  by_cases hy : v.restrictToConvex H hH s = 0
+  · simp [hx, hy]
+  have hr : v r ≠ 0 := fun h0 ↦ hx (restrictToConvex_apply_of_eq_zero v H hH h0)
+  have hs : v s ≠ 0 := fun h0 ↦ hy (restrictToConvex_apply_of_eq_zero v H hH h0)
+  have hmr : Units.mk0 (v r) hr ∈ H := by
+    by_contra hm; exact hx (restrictToConvex_apply_of_notMem v H hH hr hm)
+  have hms : Units.mk0 (v s) hs ∈ H := by
+    by_contra hm; exact hy (restrictToConvex_apply_of_notMem v H hH hs hm)
+  simp [hx, hy, restrictToConvex_le_iff_of_mem v H hH hr hs hmr hms]
 
 /-- A value at least `1` stays at least `1` under the restriction. Such a value is always kept,
 since `H` absorbs the attained values `≥ 1` by hypothesis. -/
@@ -286,7 +333,7 @@ theorem one_le_restrictToConvex (v : Valuation R Γ₀) (H : ConvexSubgroup Γ�
   have hmone : Units.mk0 (v (1 : R)) hone ∈ H := by
     have h : Units.mk0 (v (1 : R)) hone = 1 := by ext; simp
     rw [h]; exact one_mem H
-  have := (restrictToConvex_le_iff v H hH hone hc hmone (hH c hc h1)).mpr (by simpa using h1)
+  have := (restrictToConvex_le_iff_of_mem v H hH hone hc hmone (hH c hc h1)).mpr (by simpa using h1)
   simpa using this
 
 /-- `H` keeps every value sandwiched between an attained value `≥ 1` and its inverse. Since
@@ -302,26 +349,107 @@ theorem mk0_mem_of_inv_le_of_le (v : Valuation R Γ₀) {H : ConvexSubgroup Γ�
   · simpa [← Units.val_le_val] using hlo
   · simpa [← Units.val_le_val] using hhi
 
-/-- The restriction vanishes at a nonzero value exactly when its unit avoids `H`. -/
-@[simp]
-theorem restrictToConvex_eq_zero_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+/-- The restriction vanishes at a nonzero value exactly when its unit avoids `H`.
+
+Not `@[simp]`: `restrictToConvex_eq_zero_iff` is the simp-normal form for a vanishing
+restriction, and tagging this branch too would make normalisation depend on whether a
+nonvanishing proof happens to be available. -/
+theorem restrictToConvex_eq_zero_iff_of_ne (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
     (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H)
     {r : R} (hr : v r ≠ 0) :
     v.restrictToConvex H hH r = 0 ↔ Units.mk0 (v r) hr ∉ H :=
   restrictToConvexFun_eq_zero_iff v H hr
 
+/-- Comparing a restricted value against an arbitrary element of `H`, back in `Γ₀`.
+
+Unlike `restrictToConvex_le_iff`, which relates two restricted values, this compares a
+restricted value with an abstract member of `H` — the form a cofinality argument needs, where
+the bound comes from the value group rather than from a ring element.
+
+The discarded branch is the interesting one: a unit outside `H` lies below `1`, and convexity
+then puts it strictly below *every* member of `H`, since otherwise `H` would have to contain
+it. -/
+theorem restrictToConvex_lt_coe_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+    (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H)
+    (r : R) (u : H.toSubgroup) :
+    v.restrictToConvex H hH r < (u : WithZero H.toSubgroup) ↔ v r < ((u : Γ₀ˣ) : Γ₀) := by
+  by_cases hr : v r = 0
+  · rw [restrictToConvex_apply_of_eq_zero v H hH hr, hr]
+    simp [Units.ne_zero, pos_iff_ne_zero]
+  · by_cases hmem : Units.mk0 (v r) hr ∈ H
+    · rw [restrictToConvex_apply_of_mem v H hH hr hmem, WithZero.coe_lt_coe,
+        ← Subtype.coe_lt_coe, ← Units.val_lt_val]
+      simp
+    · rw [restrictToConvex_apply_of_notMem v H hH hr hmem]
+      have hlt1 : v r < 1 := lt_one_of_unit_notMem hr (fun h => hH r hr h) hmem
+      have hu1 : Units.mk0 (v r) hr ≤ 1 := by simpa [← Units.val_le_val] using hlt1.le
+      have hlt : Units.mk0 (v r) hr < (u : Γ₀ˣ) :=
+        not_le.mp fun h => hmem (ConvexSubgroup.mem_of_le_le_one u.2 h hu1)
+      simp only [pos_iff_ne_zero, ne_eq, WithZero.coe_ne_zero, not_false_eq_true, true_iff]
+      simpa [← Units.val_lt_val] using hlt
+
+/-- The companion of `restrictToConvex_lt_coe_iff` with the member of `H` on the left.
+
+Both discarded branches work the same way: a value the restriction throws away sits strictly
+below every member of `H`, so no member of `H` is below it. -/
+theorem coe_le_restrictToConvex_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+    (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H)
+    (r : R) (u : H.toSubgroup) :
+    (u : WithZero H.toSubgroup) ≤ v.restrictToConvex H hH r ↔ ((u : Γ₀ˣ) : Γ₀) ≤ v r := by
+  rw [← not_lt, ← not_lt, not_iff_not]
+  exact restrictToConvex_lt_coe_iff v H hH r u
+
 /-- **Where the restriction vanishes, totally**: at the zeros of `v`, and where `v` is nonzero
-but its unit avoids `H`. `restrictToConvex_eq_zero_iff` is the nonzero branch, in the form
+but its unit avoids `H`. `restrictToConvex_eq_zero_iff_of_ne` is the nonzero branch, in the form
 consumers holding a nonvanishing hypothesis want. -/
 @[simp]
-theorem restrictToConvex_eq_zero_iff_or (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+theorem restrictToConvex_eq_zero_iff (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
     (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H) (r : R) :
     v.restrictToConvex H hH r = 0 ↔ v r = 0 ∨ ∃ hr : v r ≠ 0, Units.mk0 (v r) hr ∉ H := by
   by_cases hr : v r = 0
   · simp [restrictToConvex_apply_of_eq_zero v H hH hr, hr]
-  · rw [restrictToConvex_eq_zero_iff v H hH hr]
+  · rw [restrictToConvex_eq_zero_iff_of_ne v H hH hr]
     simp only [hr, false_or]
     exact ⟨fun h ↦ ⟨hr, h⟩, fun ⟨_, h⟩ ↦ h⟩
+
+/-- **Dividing a restricted value by a kept value that dominates it lands at or below `1`.**
+Only the order comparison and membership of the divisor are used; nothing here is special to a
+power. -/
+theorem restrictToConvex_mul_inv_le_one (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+    (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H) {a b : R}
+    (hb : v b ≠ 0) (hmem : Units.mk0 (v b) hb ∈ H) (hab : v a ≤ v b) :
+    v.restrictToConvex H hH a * (v.restrictToConvex H hH b)⁻¹ ≤ 1 := by
+  have hbr : v.restrictToConvex H hH b ≠ 0 := by simp [restrictToConvex_apply_of_mem v H hH hb hmem]
+  have hle : v.restrictToConvex H hH a ≤ v.restrictToConvex H hH b := by
+    rw [restrictToConvex_le_iff]
+    exact Or.inr ⟨hbr, hab⟩
+  simpa using mul_inv_le_one_of_le₀ hle zero_le
+
+/-- **A restricted value strictly dominating a kept value stays strictly above `1` after
+dividing by it.** As with the `≤` form, only the comparison and the divisor's membership matter. -/
+theorem one_lt_restrictToConvex_mul_inv (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ)
+    (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H) {a b : R}
+    (hb : v b ≠ 0) (hmem : Units.mk0 (v b) hb ∈ H) (hlt : v b < v a) :
+    1 < v.restrictToConvex H hH a * (v.restrictToConvex H hH b)⁻¹ := by
+  have ha : v a ≠ 0 := (zero_le.trans_lt hlt).ne'
+  have hmema : Units.mk0 (v a) ha ∈ H :=
+    mem_of_mem_of_le hH ha hmem (by simpa [← Units.val_le_val] using hlt.le)
+  have hbr : v.restrictToConvex H hH b ≠ 0 := by simp [restrictToConvex_apply_of_mem v H hH hb hmem]
+  have hlt' : v.restrictToConvex H hH b < v.restrictToConvex H hH a := by
+    rw [restrictToConvex_apply_of_mem v H hH hb hmem, restrictToConvex_apply_of_mem v H hH ha hmema]
+    simpa [← Units.val_lt_val] using hlt
+  rwa [← div_eq_mul_inv, one_lt_div₀ (zero_lt_iff.mpr hbr)]
+
+/-- The support can only grow under the restriction: every zero of `v` is a zero of the
+restricted valuation, alongside the discarded values. Stated over a commutative ring because
+`Valuation.supp` is. -/
+theorem supp_le_restrictToConvex_supp {S : Type*} [CommRing S] (v : Valuation S Γ₀)
+    (H : ConvexSubgroup Γ₀ˣ)
+    (hH : ∀ a : S, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H) :
+    v.supp ≤ (v.restrictToConvex H hH).supp := by
+  intro x hx
+  rw [Valuation.mem_supp_iff] at hx ⊢
+  exact restrictToConvex_apply_of_eq_zero v H hH hx
 
 end Valuation
 

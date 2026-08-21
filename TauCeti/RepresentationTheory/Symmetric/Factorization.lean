@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -163,9 +164,12 @@ theorem exists_eq_smul_youngSymmetrizer_mul_mul (t : YoungTableau μ)
   rw [← hκ]
   simp only [youngSymmetrizer_def, mul_assoc]
 
-/-- The square of a Young symmetrizer is a multiple of it.  The scalar is `μ.card ! / f^μ`, with
-`f^μ` the number of standard tableaux of shape `μ`; identifying it needs the dimension of the
-Specht module and is not proved here. -/
+/-- The square of a Young symmetrizer is a multiple of it.  Identifying the scalar needs the
+dimension of the left ideal `ℚ[Sₙ] c_t`, so it is done downstream, in
+`TauCeti.YoungTableau.youngSymmetrizer_sq`, which proves the scalar is
+`μ.card ! / finrank ℚ (ℚ[Sₙ] c_t)`.  The roadmap writes it as `μ.card ! / f^μ`, with `f^μ` the
+number of standard tableaux of shape `μ`; that form needs the standard basis theorem
+`dim S^μ = f^μ`, which is not available yet. -/
 theorem exists_eq_smul_youngSymmetrizer_sq (t : YoungTableau μ) :
     ∃ κ : ℚ, youngSymmetrizer t * youngSymmetrizer t = κ • youngSymmetrizer t := by
   obtain ⟨κ, hκ⟩ := exists_eq_smul_youngSymmetrizer_mul_mul t 1

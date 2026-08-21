@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -27,7 +28,7 @@ input to the effective class-number estimate.
 
 ## Main result
 
-* `TauCeti.NumberField.card_ideal_absNorm_le`: at most `X²·2^[F:ℚ]` nonzero ideals of norm
+* `NumberField.card_ideal_absNorm_le`: at most `X²·2^[F:ℚ]` nonzero ideals of norm
   `≤ X`.
 
 The `Consumer` section at the end restates this bound in the natural-number and degree-monotone
@@ -47,7 +48,7 @@ public section
 
 attribute [local instance] Classical.propDecidable
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 /-- The set of `n`-tuples of positive naturals with real product at most `X`. -/
 private def prodLeTuples (n : ℕ) (X : ℝ) : Set (Fin n → ℕ) :=
@@ -485,7 +486,7 @@ theorem ncard_ideal_absNorm_le_nat (F : Type*) [Field F] [NumberField F] (N : �
 
 /-- If `1 ≤ X` and `[F : ℚ] ≤ n`, then the number of nonzero integral ideals of norm at most
 `X` is at most `X² * 2^n`. This is the degree-monotone form of
-`TauCeti.NumberField.card_ideal_absNorm_le`. -/
+`NumberField.card_ideal_absNorm_le`. -/
 theorem ncard_ideal_absNorm_le_of_finrank_le (F : Type*) [Field F] [NumberField F]
     {X : ℝ} {n : ℕ} (hX : 1 ≤ X) (hn : finrank ℚ F ≤ n) :
     (({I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard : ℝ)) ≤
@@ -522,4 +523,4 @@ theorem ncard_ideal_absNorm_le_nat_of_finrank_le (F : Type*) [Field F] [NumberFi
 
 end Consumer
 
-end TauCeti.NumberField
+end NumberField

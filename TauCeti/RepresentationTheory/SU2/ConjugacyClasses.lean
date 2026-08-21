@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -47,9 +48,11 @@ is drawn in `TauCeti/RepresentationTheory/SU2/Character.lean`.
   `TauCeti.SU2.eq_of_mem_Icc_of_isConj_torusExp`: every element of `SU(2)` is conjugate to
   `diag (e^{iθ}, e^{-iθ})` for exactly one `θ ∈ [0, π]`, so the Weyl chamber `[0, π]` is a set of
   representatives for the conjugacy classes.
-* `TauCeti.SU2.eq_of_conjInvariant_of_trace_eq` and
+* `TauCeti.SU2.eq_of_conjInvariant_of_trace_eq`,
+  `TauCeti.SU2.exists_mem_Icc_eq_torusExp_of_conjInvariant` and
   `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torusExp_Icc`: a class function on `SU(2)` is a
-  function of the trace, and is determined by its values on the Weyl chamber.
+  function of the trace, is computed at every element by its value at an angle of the Weyl
+  chamber, and is determined by its values there.
 
 ## References
 
@@ -160,6 +163,17 @@ theorem eq_of_conjInvariant_of_trace_eq {α : Type*} {f : SU2 → α}
       = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ)) : f g = f h := by
   obtain ⟨u, hu⟩ := isConj_iff.mp (isConj_iff_trace_eq.mpr htr)
   rw [← hu, hf]
+
+/-- **A class function on `SU(2)` is computed on the Weyl chamber:** a conjugation-invariant
+function takes at any element the value it takes at `diag (e^{iθ}, e^{-iθ})` for some angle
+`θ ∈ [0, π]`, that element being conjugate to it
+(`TauCeti.SU2.exists_isConj_torusExp_mem_Icc`). -/
+theorem exists_mem_Icc_eq_torusExp_of_conjInvariant {α : Type*} {f : SU2 → α}
+    (hf : ∀ u g : SU2, f (u * g * u⁻¹) = f g) (g : SU2) :
+    ∃ θ ∈ Set.Icc (0 : ℝ) Real.pi, f g = f (torusExp θ) := by
+  obtain ⟨θ, hθ, hconj⟩ := exists_isConj_torusExp_mem_Icc g
+  obtain ⟨u, hu⟩ := isConj_iff.mp hconj
+  exact ⟨θ, hθ, by rw [← hu, hf]⟩
 
 /-- **A class function on `SU(2)` is determined by its values on the Weyl chamber:** two
 conjugation-invariant functions that agree at `diag (e^{iθ}, e^{-iθ})` for every `θ ∈ [0, π]` are

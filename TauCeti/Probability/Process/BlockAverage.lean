@@ -1,13 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Order.Filter.AtTopBot.Basic
-public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
+public import Mathlib.Algebra.Order.BigOperators.Expect
+public import Mathlib.Dynamics.BirkhoffSum.Average
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Block averages of a real-valued process
@@ -17,6 +19,10 @@ algebra. Nothing here involves a measure: `blockAverage X k` is a function of `�
 lemmas below are the pointwise formula, the scaled-sum normal form, and the value on a constant
 block. `average_sub_sq_eq_sum_sum` records the one further piece of average algebra used
 downstream: the square of a deviation from an average, expanded as a double sum.
+`birkhoffAverage_eq_prefixAverage` identifies a Birkhoff average of an arbitrary self-map with a
+prefix average of the iterated observable, which is how Mathlib's mean-ergodic theory reaches this
+API; it is stated for an arbitrary self-map because no dynamical content enters — both sides are
+the same normalised sum.
 
 It also carries the standard selections, all measure-free. `prefixAverage X n` averages the first
 `n` coordinates and `followingAverage X n` the `n` after them, with their pointwise formulas.
@@ -148,6 +154,41 @@ theorem average_sub_sq_eq_sum_sum {ι R : Type*} [Field R] [CharZero R] {s : Fin
   have h1 : (s.card : R)⁻¹ * (∑ i ∈ s, a i) - b = (s.card : R)⁻¹ * ∑ i ∈ s, (a i - b) := by
     rw [hexp, hexp, Finset.expect_sub_distrib, Finset.expect_const hs]
   rw [h1, mul_pow, sq (∑ i ∈ s, (a i - b)), Finset.sum_mul_sum]
+
+/-- **A Birkhoff average is a prefix average of the iterated observable.** For any self-map `T` and
+any real observable `F`, `birkhoffAverage ℝ T F n` is the prefix average of `i ↦ F ∘ T^[i]`.
+
+Nothing about any particular dynamical system enters: both sides are the same normalised sum. This
+is the bridge from Mathlib's mean-ergodic theory, which speaks of Birkhoff averages, to the
+block-average API, which speaks of averages of a process over a selection of coordinates. -/
+theorem birkhoffAverage_eq_prefixAverage {β : Type*} (T : β → β) (F : β → ℝ) (n : ℕ) :
+    birkhoffAverage ℝ T F n = prefixAverage (fun i (x : β) => F (T^[i] x)) n := by
+  funext x
+  rw [birkhoffAverage, birkhoffSum, prefixAverage_apply, smul_eq_mul]
+  congr 1
+  exact Finset.sum_range fun i => F (T^[i] x)
+
+/-! ### The unit interval
+
+A block average of `[0,1]`-valued coordinates stays in `[0,1]`. This is the bound the product
+convergence lemmas need, and it is pure order algebra — no measure and no norm is involved, so the
+`‖·‖ ≤ 1` form is left to the consumer that has a normed structure in scope. -/
+
+/-- A block average of nonnegative coordinates is nonnegative. Only the sampled coordinates at the
+one point `ω` are constrained. -/
+theorem blockAverage_nonneg {Y : ℕ → Ω → ℝ} {n : ℕ} {k : Fin n → ℕ} {ω : Ω}
+    (hY : ∀ i, 0 ≤ Y (k i) ω) : 0 ≤ blockAverage Y k ω := by
+  rw [blockAverage, Finset.expect_apply]
+  exact Finset.expect_nonneg fun i _ => hY i
+
+/-- A block average of coordinates bounded by `1` is bounded by `1`. Only the sampled coordinates
+at the one point `ω` are constrained. -/
+theorem blockAverage_le_one {Y : ℕ → Ω → ℝ} {n : ℕ} {k : Fin n → ℕ} {ω : Ω}
+    (hY : ∀ i, Y (k i) ω ≤ 1) : blockAverage Y k ω ≤ 1 := by
+  rw [blockAverage, Finset.expect_apply]
+  rcases Finset.univ.eq_empty_or_nonempty (α := Fin n) with h | h
+  · simp [h]
+  · exact Finset.expect_le h fun i _ => hY i
 
 end Probability
 

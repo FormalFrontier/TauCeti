@@ -1,11 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Analysis.PositiveDefinite.Basic
-import TauCeti.Analysis.PositiveDefinite.Kernel.Closure
 
 /-!
 # Weighted closure for positive-definite functions
@@ -85,7 +85,7 @@ theorem sum_real_const_mul {ι : Type*} {s : Finset ι} {w : ι → ℝ} {F : ι
 /-- Schur powers of a positive-definite function are positive definite. -/
 theorem pow {F : M → ℂ} (hF : IsPositiveDefinite F) (n : ℕ) :
     IsPositiveDefinite (fun x => F x ^ n) :=
-  of_isPositiveDefiniteKernel (isPositiveDefiniteKernel_pow hF.isPositiveDefiniteKernel n)
+  of_posSemidef (posSemidef_schur_pow hF.posSemidef n)
 
 section Values
 

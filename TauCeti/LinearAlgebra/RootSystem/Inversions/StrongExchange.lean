@@ -1,0 +1,197 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.Exchange
+public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
+
+public section
+
+/-!
+# The strong exchange condition and the identity criterion for inversion sets
+
+If a word in the simple reflections spells a Weyl-group element sending a positive root to a
+negative root, then appending the reflection in that root to the word is spelled by the word with
+one of its letters deleted. This is the strong exchange condition, and it is the missing half of
+the identification of the inversion set as the obstruction to being the identity: an element with
+an empty inversion set is spelled by the empty word, so it is the identity.
+
+Two features of the statement are what make it usable and are not shared by the weaker "some
+shorter word exists" form. The reflecting root ranges over *all* positive roots, not just the
+simple ones, so the condition applies to an arbitrary reflection of the Weyl group; and the
+shorter word is `l.eraseIdx j` for a named position `j`, a deletion that can be replayed verbatim
+on the corresponding word over any other family of generators indexed by `b.support`, in particular
+over the generators of the presented Coxeter group. The weaker form asserts only that some shorter
+word exists inside the Weyl group; it names no word over those generators to carry the assertion
+back through the presentation map, which is why the word property behind Tits' theorem consumes the
+deletion form.
+
+The proof is an induction on the word. Peeling off the leading simple reflection `sⱼ`, either the
+shorter word already sends the root to a negative root, and the inductive hypothesis deletes a
+letter from it, or the shorter word sends it to a positive root that `sⱼ` makes negative. In the
+second case that positive root must be the simple root `αⱼ` itself, because a simple reflection
+permutes the remaining positive roots, and then conjugation identifies `sⱼ` with the appended
+reflection, so the leading letter is the one deleted.
+
+## Main results
+
+* `TauCeti.exists_wordProd_eraseIdx_eq_mul_ofIdx` is the strong exchange condition.
+* `TauCeti.eq_one_of_inversions_eq_empty` and `TauCeti.inversions_eq_empty_iff_eq_one` say that the
+  inversion set of a Weyl-group element is empty exactly when the element is the identity.
+* `TauCeti.eq_one_of_mapsTo_posRoots` restates this as: a Weyl-group element keeping every positive
+  root positive is the identity.
+* `TauCeti.inversions_nonempty_of_ne_one` and `TauCeti.ncard_inversions_pos_of_ne_one` are the
+  contrapositive forms used to detect nontrivial Weyl-group elements.
+* `TauCeti.exists_mem_support_mem_inversions_of_ne_one` sharpens the first of those to a *simple*
+  inversion, which is what makes induction along right multiplication by simple reflections
+  available.
+
+## References
+
+This file supplies the root-level exchange condition of Layer 1 in
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, the step through which the Coxeter
+presentation of Layer 2 proves that the braid relations are complete. The argument is the one in
+J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.3.
+-/
+
+namespace TauCeti
+
+open Set
+
+universe u v w x
+
+variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
+  [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+  (P : RootPairing ι R M N) [Finite ι] [CharZero R] [IsDomain R]
+  [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
+
+/-- **The strong exchange condition.** If the word `l` spells a Weyl-group element sending the
+positive root `αₖ` to a negative root, then the word `l` with the reflection `sₖ` appended is
+spelled by `l` with one of its letters deleted. The root `αₖ` is an arbitrary positive root, not
+necessarily a simple one, and the shorter word is a subword of `l`. -/
+theorem exists_wordProd_eraseIdx_eq_mul_ofIdx {k : ι} (hk : b.IsPos k)
+    (l : List b.support) (h : ¬ b.IsPos (P.weylGroupToPerm (wordProd P b l) k)) :
+    ∃ j < l.length,
+      wordProd P b (l.eraseIdx j) = wordProd P b l * RootPairing.weylGroup.ofIdx P k := by
+  induction l with
+  | nil =>
+    exact absurd (by simpa using hk) h
+  | cons j l ih =>
+    rw [wordProd_cons, RootPairing.weylGroupToPerm_ofIdx_mul_apply] at h
+    by_cases hpos : b.IsPos (P.weylGroupToPerm (wordProd P b l) k)
+    · -- The shorter word keeps `αₖ` positive, so the image is the simple root `αⱼ` itself.
+      refine ⟨0, by simp, ?_⟩
+      have hkey : P.weylGroupToPerm (wordProd P b l) k = (j : ι) := by
+        by_contra hne
+        have hmem : P.weylGroupToPerm (wordProd P b l) k ∈ posRoots P b \ {(j : ι)} :=
+          ⟨(mem_posRoots P b _).mpr hpos, by simpa using hne⟩
+        exact h ((mem_posRoots P b _).mp
+          ((reflectionPerm_mem_posRoots_diff_singleton_iff P b j.2 _).mpr hmem).1)
+      rw [List.eraseIdx_cons_zero, wordProd_cons, ← hkey,
+        RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj,
+        inv_mul_cancel_right, mul_assoc, RootPairing.weylGroup.ofIdx_mul_self, mul_one]
+    · -- The shorter word already makes `αₖ` negative, so a letter is deleted from it.
+      obtain ⟨j', hj', hl'⟩ := ih hpos
+      refine ⟨j' + 1, by simpa using hj', ?_⟩
+      rw [List.eraseIdx_cons_succ, wordProd_cons, hl', wordProd_cons, mul_assoc]
+
+variable {P b}
+
+/-- **A Weyl-group element with an empty inversion set is the identity.** A shortest word spelling
+it must be empty: otherwise its final simple reflection is an inversion of the word it follows, and
+the strong exchange condition produces a shorter word. -/
+theorem eq_one_of_inversions_eq_empty {w : P.weylGroup} (h : inversions P b w = ∅) : w = 1 := by
+  classical
+  have hex : ∃ n : ℕ, ∃ l : List b.support, l.length = n ∧ wordProd P b l = w := by
+    obtain ⟨l, hl⟩ := exists_wordProd_eq P b w
+    exact ⟨l.length, l, rfl, hl⟩
+  obtain ⟨l, hlen, hl⟩ := Nat.find_spec hex
+  rcases List.eq_nil_or_concat l with rfl | ⟨l₁, k, rfl⟩
+  · simpa using hl.symm
+  · exfalso
+    -- Split off the final letter: `w = v * sₖ`, where `v` is spelled by the word `l₁`.
+    rw [List.concat_eq_append, wordProd_append, wordProd_cons, wordProd_nil, mul_one] at hl
+    -- The final simple root is not an inversion of `w`, so it is an inversion of `v`.
+    have hkw : k.1 ∉ inversions P b w := by simp [h]
+    have hkv : k.1 ∈ inversions P b (wordProd P b l₁) := by
+      by_contra hc
+      exact hkw (hl ▸ (mem_inversions_mul_ofIdx_iff_not_mem P _ b
+        (b.isPos_of_mem_support k.2)).mpr hc)
+    obtain ⟨j, hj, hl'w⟩ :=
+      exists_wordProd_eraseIdx_eq_mul_ofIdx P b (b.isPos_of_mem_support k.2) l₁
+        ((mem_inversions P b _ _).mp hkv).2
+    -- The resulting word spells `w` and is two letters shorter, contradicting minimality.
+    refine Nat.find_min hex (m := (l₁.eraseIdx j).length) ?_ ⟨l₁.eraseIdx j, rfl, hl'w.trans hl⟩
+    have hlen' := List.length_eraseIdx_add_one hj
+    rw [← hlen, List.concat_eq_append, List.length_append]
+    omega
+
+/-- The inversion set of a Weyl-group element is empty exactly when the element is the identity. -/
+@[simp]
+theorem inversions_eq_empty_iff_eq_one {w : P.weylGroup} : inversions P b w = ∅ ↔ w = 1 :=
+  ⟨eq_one_of_inversions_eq_empty, fun h ↦ by rw [h, inversions_one]⟩
+
+/-- **A Weyl-group element keeping every positive root positive is the identity.** -/
+theorem eq_one_of_mapsTo_posRoots {w : P.weylGroup}
+    (h : MapsTo (P.weylGroupToPerm w) (posRoots P b) (posRoots P b)) : w = 1 :=
+  eq_one_of_inversions_eq_empty ((inversions_eq_empty_iff P b w).mpr h)
+
+/-- A Weyl-group element other than the identity sends some positive root to a negative root. -/
+theorem inversions_nonempty_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
+    (inversions P b w).Nonempty :=
+  Set.nonempty_iff_ne_empty.mpr fun h ↦ hw (eq_one_of_inversions_eq_empty h)
+
+/-- A Weyl-group element other than the identity has at least one inversion. -/
+theorem ncard_inversions_pos_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
+    0 < (inversions P b w).ncard :=
+  (Set.ncard_pos (Set.toFinite _)).mpr (inversions_nonempty_of_ne_one hw)
+
+variable (P b)
+
+omit [P.IsReduced] in
+/-- **A Weyl-group element sending every simple root to a positive root sends every positive root
+to a positive root.** A positive root is built up from simple roots by addition, and the height of
+a sum of two roots is the sum of their heights, so the image again has nonnegative height. This is
+the mirror image of `TauCeti.mapsTo_posRoots_negRoots_of_forall_mem_support`. -/
+theorem mapsTo_posRoots_of_forall_mem_support {w : P.weylGroup}
+    (h : ∀ i ∈ b.support, P.weylGroupToPerm w i ∈ posRoots P b) :
+    MapsTo (P.weylGroupToPerm w) (posRoots P b) (posRoots P b) := by
+  -- Positivity of the image is nonnegativity of its height, which is what the induction adds up.
+  have hpos : ∀ j : ι, P.weylGroupToPerm w j ∈ posRoots P b ↔
+      0 ≤ b.height (P.weylGroupToPerm w j) := fun j ↦ by
+    rw [mem_posRoots, RootPairing.Base.isPos_iff']
+  intro i hi
+  refine (hpos i).mpr ?_
+  refine RootPairing.Base.IsPos.induction_on_add ((mem_posRoots P b i).mp hi)
+    (p := fun j ↦ 0 ≤ b.height (P.weylGroupToPerm w j)) (fun j hj ↦ (hpos j).mp (h j hj))
+    fun j k l hl hj hk ↦ ?_
+  -- The Weyl-group element carries the decomposition `root l = root j + root k` to the images.
+  have himage : P.root (P.weylGroupToPerm w l) =
+      P.root (P.weylGroupToPerm w j) + P.root (P.weylGroupToPerm w k) := by
+    rw [← P.weylGroup_apply_root w l, ← P.weylGroup_apply_root w j, ← P.weylGroup_apply_root w k,
+      hl, smul_add]
+  have hk' := (hpos k).mp (h k hk)
+  rw [b.height_add himage]
+  omega
+
+/-- A Weyl-group element keeping every simple root positive is the identity. -/
+theorem eq_one_of_forall_mem_support_mem_posRoots {w : P.weylGroup}
+    (h : ∀ i ∈ b.support, P.weylGroupToPerm w i ∈ posRoots P b) : w = 1 :=
+  eq_one_of_mapsTo_posRoots (b := b) (mapsTo_posRoots_of_forall_mem_support P b h)
+
+/-- **A Weyl-group element other than the identity inverts some simple root.** Sharpening
+`TauCeti.inversions_nonempty_of_ne_one` to a simple inversion is what makes induction along right
+multiplication by simple reflections available, since only a simple inversion is removed by
+`TauCeti.ncard_inversions_mul_ofIdx_of_mem`. -/
+theorem exists_mem_support_mem_inversions_of_ne_one {w : P.weylGroup} (hw : w ≠ 1) :
+    ∃ i ∈ b.support, i ∈ inversions P b w := by
+  by_contra hcon
+  refine hw (eq_one_of_forall_mem_support_mem_posRoots P b fun i hi ↦ ?_)
+  by_contra hneg
+  exact hcon ⟨i, hi, (mem_inversions P b w i).mpr
+    ⟨b.isPos_of_mem_support hi, fun hp ↦ hneg ((mem_posRoots P b _).mpr hp)⟩⟩
+
+end TauCeti

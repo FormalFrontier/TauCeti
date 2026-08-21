@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -38,6 +39,10 @@ converge because `Â` is complete, and their sums exhibit the element as a combi
 
 ## Main results
 
+* `TauCeti.Huber.isBounded_image_completion_coe_of_isBounded` and
+  `TauCeti.Huber.isPowerBounded_completion_coe_of_isPowerBounded`: boundedness and
+  power-boundedness transfer from `A` to its completion along the canonical map. Both are stated
+  for a Huber ring, with no pair of definition in the signature.
 * `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero_completion`: the closures of the images of
   the powers `Iⁿ` are a neighbourhood basis of zero in `Â`.
 * `TauCeti.Huber.PairOfDefinition.completionIdeal_pow`: `Îⁿ` is the closure of the image of `Iⁿ`.
@@ -61,33 +66,6 @@ public section
 open Filter Topology UniformSpace
 
 namespace TauCeti.Huber
-
-section SpanMul
-
-variable {R : Type*} [CommRing R]
-
-/-- An element of `(G) * K` is a `K`-linear combination of the finite family `G`.
-
-This is where finite generation of the ideal of definition enters the proof of Wedhorn Remark
-6.8: it bounds, uniformly in `k`, the number of terms needed to write an element of
-`Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`. -/
-private theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
-    (hb : b ∈ Ideal.span (G : Set R) * K) :
-    ∃ c : R → R, (∀ z, c z ∈ K) ∧ ∑ z ∈ G, z * c z = b := by
-  classical
-  -- Present `(G) * K` as `K • span (id '' G)`, so that the coefficients are handed to us.
-  rw [mul_comm, ← Ideal.smul_eq_mul, ← Set.image_id (G : Set R)] at hb
-  obtain ⟨a, ha, rfl⟩ := (Submodule.mem_ideal_smul_span_iff_exists_sum' _ _ _ _).mp hb
-  -- Extend the coefficients from `G` to all of `R` by zero.
-  refine ⟨fun z ↦ if h : z ∈ G then a ⟨z, h⟩ else 0, fun z ↦ ?_, ?_⟩
-  · dsimp only
-    split_ifs
-    exacts [ha _, K.zero_mem]
-  · rw [Finsupp.sum_fintype _ _ (by simp),
-      ← Finset.sum_finset_coe (fun z ↦ z * if h : z ∈ G then a ⟨z, h⟩ else 0) G]
-    exact Finset.sum_congr rfl fun i _ ↦ by simp [Finset.mem_coe.mp i.2, mul_comm]
-
-end SpanMul
 
 variable {A : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A] [IsTopologicalRing A]
 
@@ -440,6 +418,52 @@ theorem mem_completion_idealOfDefinition (P : PairOfDefinition A)
         P.completionRingOfDefinition) ∈ P.completionIdeal := (Iff.rfl)
 
 end PairOfDefinition
+
+/-- **The image of a bounded subset of `A` is bounded in `Â`.**
+
+Stated for a Huber ring rather than for a chosen pair of definition: the conclusion does not
+mention one, so the choice is internal to the proof.
+
+The closure argument follows AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, branch
+`dev/adic-spaces` at `37bbdaeb9`), `projects/AdicSpaces/Adic spaces/LocalizationTopology.lean:545`,
+where it is stated for the rational-localisation completion. No proof was copied. -/
+theorem isBounded_image_completion_coe_of_isBounded [IsHuberRing A] {X : Set A}
+    (hX : IsBounded X) : IsBounded (((↑) : A → Completion A) '' X) := by
+  refine (IsHuberRing.nonempty_pairOfDefinition (A := A)).elim fun P ↦ ?_
+  rw [isBounded_iff]
+  intro U hU
+  obtain ⟨n, -, hnU⟩ := (P.hasBasis_nhds_zero_completion).mem_iff.mp hU
+  obtain ⟨W, hW, hXW⟩ := isBounded_iff.mp hX (P.idealImage n)
+    ((P.isOpen_idealImage n).mem_nhds (P.idealImage n).zero_mem)
+  obtain ⟨m, -, hmW⟩ := P.hasBasis_nhds_zero.mem_iff.mp hW
+  refine ⟨_, (P.hasBasis_nhds_zero_completion).mem_of_mem (i := m) trivial,
+    Set.Subset.trans ?_ hnU⟩
+  rintro _ ⟨y, hy, _, ⟨x, hxX, rfl⟩, rfl⟩
+  -- `· * ↑x` is continuous and carries the image of `Iᵐ` into the image of `Iⁿ`, so it carries
+  -- the closure of the first into the closure of the second.
+  have hcont : Continuous (fun u : Completion A ↦ u * (x : Completion A)) :=
+    continuous_id.mul continuous_const
+  have hmaps : ((↑) : A → Completion A) '' (P.idealImage m : Set A)
+      ⊆ (fun u : Completion A ↦ u * (x : Completion A)) ⁻¹'
+        closure (((↑) : A → Completion A) '' (P.idealImage n : Set A)) := by
+    rintro _ ⟨a, ha, rfl⟩
+    rw [Set.mem_preimage, ← Completion.coe_mul]
+    exact subset_closure ⟨a * x, hXW (Set.mul_mem_mul (hmW ha) hxX), rfl⟩
+  exact closure_minimal (Set.image_subset_iff.mpr hmaps) isClosed_closure
+    (image_closure_subset_closure_image hcont ⟨y, hy, rfl⟩)
+
+/-- **A power-bounded element of `A` stays power-bounded in `Â`.** -/
+theorem isPowerBounded_completion_coe_of_isPowerBounded [IsHuberRing A] {a : A}
+    (ha : IsPowerBounded a) : IsPowerBounded ((a : Completion A)) := by
+  -- the coercion is `⇑Completion.coeRingHom`, so it commutes with powers; stated once here
+  have hcoe : ∀ k : ℕ, ((a : Completion A)) ^ k = ((a ^ k : A) : Completion A) :=
+    fun k ↦ (map_pow Completion.coeRingHom a k).symm
+  have h : Set.range (((a : Completion A)) ^ · : ℕ → Completion A)
+      = ((↑) : A → Completion A) '' Set.range (a ^ · : ℕ → A) := by
+    simpa only [hcoe] using Set.range_comp' (((↑) : A → Completion A)) (a ^ · : ℕ → A)
+  rw [isPowerBounded_iff, h]
+  exact isBounded_image_completion_coe_of_isBounded (isPowerBounded_iff.mp ha)
+
 
 /-- Wedhorn Remark 6.8: the completion of a Huber ring is a Huber ring. -/
 instance IsHuberRing.completion [IsHuberRing A] : IsHuberRing (Completion A) :=

@@ -12,11 +12,15 @@ import Mathlib.Tactic.LinearCombination
 import TauCeti.Data.ZMod.Units
 
 /-!
-# Special linear groups: surjectivity of reduction, and the image of `-I`
+# Special linear groups: surjectivity of reduction, the centre, and the image of `-I`
 
 The natural reduction map `SL₂(ℤ) → SL₂(ℤ/dℤ)` is surjective (strong approximation for
 `SL₂`; Shimura §1.6, Serre Ch. VII), and the base-change map `SL(n, R) → GL(n, S)` sends
 `-I` to `-I`.
+
+The third result pins down `±I` itself, which is what the base-change statement moves around:
+over a commutative ring without zero divisors the centre of `SL₂` is exactly `{±I}`, the
+scalar form Mathlib gives having no other square roots of `1` to offer.
 
 The surjectivity is ported from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/HeckeRIngs/GLn/SL2Surjection.lean`, Chris Birkbeck). Prerequisite for the
@@ -27,6 +31,8 @@ diamond operators of the ModularForms roadmap (Layer 0), where it realizes every
 
 * `Matrix.SpecialLinearGroup.map_intCast_zmod_surjective`: strong approximation for `SL₂`.
 * `Matrix.SpecialLinearGroup.mapGL_neg_one`: `mapGL S (-1) = -1`.
+* `Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one`: the centre of `SL₂` is
+  `{±I}` when `R` has no zero divisors.
 
 ## References
 
@@ -51,6 +57,28 @@ lemma mapGL_neg_one {n R S : Type*} [Fintype n] [DecidableEq n] [CommRing R] [Co
   rcases eq_or_ne i j with h | h <;> simp [mapGL, h]
 
 variable {R : Type*} [CommRing R]
+
+/-- **The centre of `SL₂` is `{±I}`** over any commutative ring without zero divisors.
+
+`Matrix.SpecialLinearGroup.mem_center_iff` puts a central element in scalar form `r • I` with
+`r ^ 2 = 1`; without zero divisors the only such scalars are `±1`, which turns that existential
+into an alternative. The hypothesis is needed, not incidental — over `ZMod 8` the scalar `3`
+also squares to `1`, so the centre is strictly larger than `{±I}` there.
+
+`@[simp]` because the rewrite terminates: it takes a structured membership to a disjunction of
+equalities, and nothing rewrites `γ ∈ Subgroup.center _` first — Mathlib's general
+`Subgroup.mem_center_iff` is `@[to_additive]` but carries no `simp` attribute. -/
+@[simp]
+theorem mem_center_iff_eq_one_or_eq_neg_one [NoZeroDivisors R] {γ : SpecialLinearGroup (Fin 2) R} :
+    γ ∈ Subgroup.center (SpecialLinearGroup (Fin 2) R) ↔ γ = 1 ∨ γ = -1 := by
+  refine ⟨fun hγ ↦ ?_, ?_⟩
+  · obtain ⟨r, hr, hscal⟩ := mem_center_iff.mp hγ
+    -- `r ^ 2 = 1` has only the two roots because `R` has no zero divisors.
+    rcases mul_self_eq_one_iff.mp (by simpa [pow_two] using hr) with rfl | rfl <;> [left; right] <;>
+      exact Subtype.ext (by simpa [map_neg, map_one] using hscal.symm)
+  · rintro (rfl | rfl)
+    · exact Subgroup.one_mem _
+    · exact Subgroup.mem_center_iff.mpr fun g ↦ by rw [neg_one_mul, mul_neg_one]
 
 /-- The `(1,0)` coordinate of the inverse of an `SL₂` element, from `SL2_inv_expl`. -/
 @[simp]

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,7 +9,7 @@ public import Mathlib.RingTheory.Ideal.Maximal
 public import Mathlib.RingTheory.Jacobson.Radical
 public import Mathlib.RingTheory.Nilpotent.Basic
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
+public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
 /-!
 # The arrow ideal of a path algebra, and its radical

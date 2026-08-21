@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -90,15 +91,19 @@ theorem window_lt_window {N : ℕ} {i i' j j' : ℕ} (hj : j < N) (hi : i < i') 
   simp only [window_def]
   omega
 
+/-- **A tuple reads the windows in order.** Reading factor `i` at position `js i` of *its own*
+window gives a strictly monotone selection: the windows are ordered, so the factor index alone
+decides the order, whatever position each factor reads. -/
+theorem window_selection_strictMono {m N : ℕ} (js : Fin m → Fin N) :
+    StrictMono fun i : Fin m => window N (i : ℕ) (js i : ℕ) := fun _ _ hab =>
+  window_lt_window (js _).isLt (by exact_mod_cast hab)
+
 /-- **Distinct coordinates of a tuple land in distinct windows.** Since the windows are pairwise
-disjoint, the selection `i ↦ window N i (js i)` is injective for every tuple `js`. -/
+disjoint, the selection `i ↦ window N i (js i)` is injective for every tuple `js` — immediate from
+`window_selection_strictMono`. -/
 theorem window_selection_injective {m N : ℕ} (js : Fin m → Fin N) :
-    Function.Injective fun i : Fin m => window N (i : ℕ) (js i : ℕ) := by
-  intro a b hab
-  by_contra hne
-  rcases lt_or_gt_of_ne (fun h : (a : ℕ) = (b : ℕ) => hne (Fin.ext h)) with h | h
-  · exact absurd hab (window_lt_window (js a).isLt h).ne
-  · exact absurd hab.symm (window_lt_window (js b).isLt h).ne
+    Function.Injective fun i : Fin m => window N (i : ℕ) (js i : ℕ) :=
+  (window_selection_strictMono js).injective
 
 /-- **The disjoint-window instance.** This specialises `prod_blockAverage_eq_expect`, imported from
 `Process/BlockAverage.lean`, to the windows `window N i`, where every tuple is an injective

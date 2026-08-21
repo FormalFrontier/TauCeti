@@ -1,17 +1,20 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Algebra.DirectSum.LinearMap
 public import Mathlib.Analysis.Complex.Polynomial.Basic
+public import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 public import Mathlib.FieldTheory.IsAlgClosed.Spectrum
 public import Mathlib.FieldTheory.Separable
 public import Mathlib.LinearAlgebra.Eigenspace.Charpoly
 public import Mathlib.LinearAlgebra.Eigenspace.Minpoly
 public import Mathlib.LinearAlgebra.Eigenspace.Semisimple
+public import Mathlib.LinearAlgebra.Trace
+public import Mathlib.RingTheory.IntegralClosure.IsIntegralClosure.Basic
 
 /-!
 # Endomorphisms of finite order
@@ -20,6 +23,13 @@ An endomorphism `f` of a vector space with `f ^ n = 1` is annihilated by `X ^ n 
 consequences are recorded here: every root of its characteristic polynomial is an `n`-th root of
 unity, and if `n` is invertible in the coefficient field then `f` is semisimple, because `X ^ n - 1`
 is then squarefree.
+
+The roots of unity are algebraic integers, so as soon as the characteristic polynomial splits the
+trace, being the sum of those roots, is one too. Splitting is not a real hypothesis: base change to
+an algebraic closure leaves the trace alone beyond transporting it along the field embedding
+(`LinearMap.trace_baseChange`), and an element of the base field whose image is integral over `ℤ`
+was already integral over `ℤ`. So the trace of an endomorphism of finite order is an algebraic
+integer over **any** field.
 
 Over an algebraically closed field semisimplicity is diagonalizability, so the eigenspaces of such
 an `f` decompose the space. Every power of `f` acts on the `μ`-eigenspace as the scalar `μ ^ m`,
@@ -40,6 +50,8 @@ All the results are stated of `Module.End`, so they sit in the `End` namespace u
   an endomorphism of finite order `n` are `n`-th roots of unity.
 * `TauCeti.End.isSemisimple_of_pow_eq_one`: an endomorphism of finite order `n`, with `n`
   invertible in the field, is semisimple.
+* `TauCeti.End.isIntegral_trace_of_pow_eq_one`: over any field, the trace of an endomorphism of
+  finite order is integral over `ℤ`.
 * `TauCeti.End.trace_pow_eq_sum_eigenvalue_pow`: over an algebraically closed field, the trace of
   `f ^ m` is the sum of the `m`-th powers of the eigenvalues of `f`, weighted by the dimensions of
   the eigenspaces.
@@ -72,6 +84,31 @@ theorem pow_eq_one_of_isRoot_charpoly {f : End k V} {n : ℕ} (hf : f ^ n = 1) {
   · have hpow := spectrum.pow_mem_pow f n hspec
     rw [hf, spectrum.one_eq] at hpow
     simpa using hpow
+
+/-- The trace of an endomorphism of finite order is an algebraic integer once its characteristic
+polynomial splits: the trace is then the sum of the roots, and each of those is an `n`-th root of
+unity. This is the splitting case of `TauCeti.End.isIntegral_trace_of_pow_eq_one`, which subsumes
+it, so it stays private. -/
+private theorem isIntegral_trace_of_pow_eq_one_of_splits {f : End k V} {n : ℕ} (hn : n ≠ 0)
+    (hf : f ^ n = 1) (hsplits : f.charpoly.Splits) : IsIntegral ℤ (LinearMap.trace k V f) := by
+  rw [Module.End.trace_eq_sum_roots_charpoly_of_splits hsplits]
+  refine IsIntegral.multiset_sum fun μ hμ => IsIntegral.of_pow (Nat.pos_of_ne_zero hn) ?_
+  rw [pow_eq_one_of_isRoot_charpoly hf (isRoot_of_mem_roots hμ)]
+  exact isIntegral_one
+
+/-- **The trace of an endomorphism of finite order is an algebraic integer**, over an arbitrary
+field. When the characteristic polynomial splits the trace is a sum of roots of unity; that
+splitting hypothesis is removed by base change to an algebraic closure, which preserves both the
+order of `f` and, up to the field embedding, its trace, and an element of `k` whose image in the
+closure is integral over `ℤ` is itself integral over `ℤ`. -/
+theorem isIntegral_trace_of_pow_eq_one {f : End k V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1) :
+    IsIntegral ℤ (LinearMap.trace k V f) := by
+  have hbase : f.baseChange (AlgebraicClosure k) ^ n = 1 := by
+    rw [← LinearMap.baseChange_pow, hf, LinearMap.baseChange_one]
+  have hint := isIntegral_trace_of_pow_eq_one_of_splits (k := AlgebraicClosure k) hn hbase
+    (IsAlgClosed.splits _)
+  rw [LinearMap.trace_baseChange] at hint
+  exact hint.tower_bot (algebraMap k (AlgebraicClosure k)).injective
 
 omit [FiniteDimensional k V] in
 /-- An endomorphism `f` with `f ^ n = 1` for some `n` invertible in `k` is semisimple, because it

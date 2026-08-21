@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -332,6 +333,16 @@ private lemma pairing_typeDSimplyConnectedRootDatum (hn : 4 ≤ n)
         (typeDSimplyConnectedRootDatum n hn).coroot l :=
   rfl
 
+/-- The root--coroot pairing of the pinned type `D` datum is symmetric. -/
+theorem pairing_typeDSimplyConnectedRootDatum_comm (hn : 4 ≤ n)
+    (k l : Fin (2 * n * (n - 1))) :
+    (typeDSimplyConnectedRootDatum n hn).pairing k l =
+      (typeDSimplyConnectedRootDatum n hn).pairing l k := by
+  rw [pairing_typeDSimplyConnectedRootDatum, pairing_typeDSimplyConnectedRootDatum,
+    root_eq_typeDWeight, root_eq_typeDWeight, coroot_eq_typeDSimpleRootCoordinates,
+    coroot_eq_typeDSimpleRootCoordinates, typeDWeight_dotProduct_coordinates,
+    typeDWeight_dotProduct_coordinates, dotProduct_comm]
+
 /-- **The simple roots are the rows of the Cartan matrix.** In the fundamental-weight basis the
 `i`-th simple root of the pinned type `Dₙ` datum is the `i`-th row of `CartanMatrix.D n`, which is
 what pins the character lattice as the weight lattice. -/
@@ -364,12 +375,8 @@ private abbrev typeDSimpleSupport (n : ℕ) (hn : 4 ≤ n) : Finset (Fin (2 * n 
   simpleSupport (typeDSimpleIndex_injective hn)
 
 private lemma mem_typeDSimpleSupport (hn : 4 ≤ n) {k : Fin (2 * n * (n - 1))} :
-    k ∈ typeDSimpleSupport n hn ↔ (k : ℕ) < n := by
-  rw [typeDSimpleSupport, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    simpa only [typeDSimpleIndex_val] using i.isLt
-  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext (by simp)⟩
+    k ∈ typeDSimpleSupport n hn ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeDSimpleIndex_injective hn) (typeDSimpleIndex_val hn)
 
 /-- In the character lattice a root is the combination of the simple roots recorded by its
 classical coefficients; the coroot counterpart below uses the same coefficients. -/

@@ -783,17 +783,8 @@ theorem smith_normal_form_unique {c d : Fin n → ℤ} (hc_pos : ∀ i, 0 ≤ c 
       (R : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal d) : c = d := by
   have h' : (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
       (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal c := by
-    calc (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
-        (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ)
-        = (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) *
-            ((L : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal c *
-              (R : Matrix (Fin n) (Fin n) ℤ)) *
-            (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) := by rw [h]
-      _ = ((↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * ↑L) * Matrix.diagonal c *
-            (↑R * (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ)) := by
-          simp only [Matrix.mul_assoc]
-      _ = Matrix.diagonal c := by
-          rw [Units.inv_mul, Units.mul_inv, Matrix.one_mul, Matrix.mul_one]
+    rw [← h]
+    simp [Matrix.mul_assoc]
   have key : ∀ k (hk : k ≤ n),
       ∏ j : Fin k, c ⟨j.val, by omega⟩ = ∏ j : Fin k, d ⟨j.val, by omega⟩ := fun k hk ↦
     Int.dvd_antisymm

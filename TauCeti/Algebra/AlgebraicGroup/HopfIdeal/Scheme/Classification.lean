@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -116,6 +117,8 @@ theorem quotientClosedSubgroup_le_iff (H : _root_.CommHopfAlgCat.{u} R)
     exact Subobject.mk_le_mk_of_comm (quotientSpecMapOfLe H hJI)
       (quotientSpecMapOfLe_comp_quotientSpecι H hJI)
 
+/-- The private order embedding underlying the classification of Hopf ideals by closed subgroup
+schemes. -/
 private noncomputable def hopfIdealClosedSubgroupOrderEmbedding
     (H : _root_.CommHopfAlgCat.{u} R) :
     (HopfIdeal R H)ᵒᵈ ↪o
@@ -134,8 +137,8 @@ private theorem quotientSubobject_ker_eq_mk
     (e : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K) ≅ X)
     (i : X ⟶ (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H)) [Mono i]
     (hmap_f : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op = e.hom ≫ i) :
-    Subobject.mk (quotientSpecι H (HopfIdeal.ker f.hom hf)) = Subobject.mk i := by
-  let I : HopfIdeal R H := HopfIdeal.ker f.hom hf
+    Subobject.mk (quotientSpecι H (HopfIdeal.kerOfSurjective f.hom hf)) = Subobject.mk i := by
+  let I : HopfIdeal R H := HopfIdeal.kerOfSurjective f.hom hf
   let F := AlgebraicGeometry.hopfSpec (CommRingCat.of R)
   let qIso : quotient H I ≅ K :=
     _root_.CommHopfAlgCat.isoMk (HopfIdeal.kerLiftBialgEquiv f.hom hf) ≪≫
@@ -169,6 +172,8 @@ private theorem isAffine_closedSubgroup
   exact (@IsClosedImmersion.isAffine_surjective_of_isAffine _ _ hTarget
     i.hom.hom.left hi).1
 
+/-- The Hopf-algebra morphism corresponding to a chosen affine presentation of a closed subgroup
+scheme. -/
 private noncomputable def closedSubgroupCoordinateMorphism
     (H K : _root_.CommHopfAlgCat.{u} R)
     (P : ClosedSubgroupScheme
@@ -229,7 +234,7 @@ private theorem hopfIdealClosedSubgroupOrderEmbedding_surjective
     Function.Surjective (hopfIdealClosedSubgroupOrderEmbedding H) := by
   intro P
   obtain ⟨K, e, f, hf, hmap_f⟩ := exists_surjective_hopf_presentation H P
-  let I : HopfIdeal R H := HopfIdeal.ker f.hom hf
+  let I : HopfIdeal R H := HopfIdeal.kerOfSurjective f.hom hf
   refine ⟨OrderDual.toDual I, Subtype.ext ?_⟩
   -- The private order embedding forgets only the reversed order. Its value at `toDual I` is the
   -- public quotient construction, whose projection equation exposes the represented subobject.
@@ -304,8 +309,8 @@ theorem hopfIdealOrderIsoClosedSubgroup_symm_apply_eq_ker
     (hmap_f : (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op =
       e.hom ≫ P.1.arrow) :
     (hopfIdealOrderIsoClosedSubgroup H).symm P =
-      OrderDual.toDual (HopfIdeal.ker f.hom hf) := by
-  let I : HopfIdeal R H := HopfIdeal.ker f.hom hf
+      OrderDual.toDual (HopfIdeal.kerOfSurjective f.hom hf) := by
+  let I : HopfIdeal R H := HopfIdeal.kerOfSurjective f.hom hf
   have hP : quotientClosedSubgroup H I = P := by
     apply Subtype.ext
     rw [quotientClosedSubgroup_coe]

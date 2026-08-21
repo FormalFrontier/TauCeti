@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -28,7 +29,9 @@ is invertible, `FractionalIdeal R⁰ K` being a semifield) to the free Weil-divi
 homomorphism is an **isomorphism**: a fractional ideal is recovered from its multiplicities by the
 factorization `I = ∏_v v^(count K v I)` (injectivity), and every finite integer combination of
 primes is the divisor of the corresponding product of prime ideals (surjectivity). This is the
-scheme-free, affine-chart form of the roadmap's **`Weil ≃ Cartier` dictionary**.
+scheme-free, affine-chart form of the roadmap's **`Weil ≃ Cartier` dictionary**. Injectivity is
+also recorded coefficientwise as `units_eq_of_forall_count_eq`, the form in which it is used: to
+prove two invertible fractional ideals equal, compare `count` at each prime.
 
 We also connect it to the order system already built: the divisor of the principal fractional ideal
 `(x)` is exactly the principal divisor of the rational function `x`, so the isomorphism carries the
@@ -112,6 +115,19 @@ lemma fractionalIdealDivisor_injective :
           (Units.ne_zero (Additive.toMul J))]
     exact finprod_congr fun v => by rw [hcount v]
   exact Additive.toMul.injective (Units.ext key)
+
+/-- An invertible fractional ideal is determined by its multiplicities. This is
+`fractionalIdealDivisor_injective` read coefficientwise, which is the form a consumer uses: to
+prove two invertible fractional ideals equal, compare `FractionalIdeal.count` at each height-one
+prime. -/
+lemma units_eq_of_forall_count_eq {I J : (FractionalIdeal R⁰ K)ˣ}
+    (h : ∀ v : HeightOneSpectrum R, FractionalIdeal.count K v (I : FractionalIdeal R⁰ K) =
+      FractionalIdeal.count K v (J : FractionalIdeal R⁰ K)) :
+    I = J :=
+  Additive.ofMul.injective <| fractionalIdealDivisor_injective R K <| by
+    ext v
+    rw [coeff_fractionalIdealDivisor, coeff_fractionalIdealDivisor]
+    exact h v
 
 /-- The product `∏_v v^(D v)` of prime fractional ideals `v.asIdeal` raised to the multiplicities
 `D v` of a Weil divisor `D` is nonzero, hence an invertible fractional ideal. This is the value of

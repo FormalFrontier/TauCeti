@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -93,11 +94,8 @@ theorem exists_int_windingNumber_of_not_mem_trace (C : Cycle) {z : ℂ} (hz : z 
   have hgen : ∀ γ ∈ FreeAbelianGroup.support C,
       ∃ n : ℤ, TauCeti.Contour.windingNumber γ γ.a γ.b z = n := by
     intro γ hγ
-    obtain ⟨P, hP, hdiff⟩ := γ.isPiecewiseC1On.exists_countable_differentiableAt
-    have hoff := avoids_of_mem_support hz hγ
-    exact TauCeti.Contour.exists_int_windingNumber_of_closed γ.source_eq_target hP γ.continuousOn
-      hdiff hoff (intervalIntegrable_inv_sub_mul_deriv γ.continuousOn hoff
-        γ.intervalIntegrable_deriv)
+    exact γ.isPiecewiseC1On.exists_int_windingNumber γ.source_eq_target
+      (avoids_of_mem_support hz hγ)
   let n : PiecewiseC1ClosedCurve → ℤ := fun γ ↦
     if hγ : γ ∈ FreeAbelianGroup.support C then Classical.choose (hgen γ hγ) else 0
   have hn : ∀ γ ∈ FreeAbelianGroup.support C,
