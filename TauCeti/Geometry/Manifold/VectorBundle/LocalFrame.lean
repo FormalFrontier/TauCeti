@@ -55,6 +55,7 @@ theorem localFrameCoeff_basisAt [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : �
   simp [eq_comm]
 
 /-- A local frame is dual to its own coefficient functionals. -/
+@[simp]
 theorem localFrameCoeff_localFrame [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
     e.localFrameCoeff I b i x (e.localFrame b j x) = if i = j then 1 else 0 := by
   rw [e.localFrame_apply_of_mem_baseSet b hx, localFrameCoeff_basisAt b hx]
