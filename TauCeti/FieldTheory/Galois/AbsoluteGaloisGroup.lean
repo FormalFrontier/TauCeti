@@ -67,14 +67,6 @@ section Auxiliary
 
 variable {F E}
 
-/-- Raising to the `q ^ n`-th power, for `q` the exponential characteristic of `F`, is injective
-on a field extension of `F`. -/
-private theorem eq_of_pow_ringExpChar_pow_eq {a b : E} {n : ℕ}
-    (h : a ^ ringExpChar F ^ n = b ^ ringExpChar F ^ n) : a = b :=
-  have : ExpChar E (ringExpChar F) :=
-    expChar_of_injective_algebraMap (algebraMap F E).injective _
-  iterateFrobenius_inj E (ringExpChar F) n h
-
 /-- The preimage of a finite intermediate field `M` of `E/F` under an `F`-algebra map `g` into `E`
 is finite over `F`: it is `F`-isomorphic to its image under `g`, which is contained in `M`. -/
 private theorem finiteDimensional_comap {L : Type*} [Field L] [Algebra F L] (g : L →ₐ[F] E)
@@ -107,14 +99,6 @@ theorem restrictNormalHom_separableClosure_injective :
   have h' : Subsingleton (separableClosure F E).fixingSubgroup :=
     (IntermediateField.fixingSubgroupEquiv _).toEquiv.subsingleton
   exact Subgroup.eq_bot_of_subsingleton _
-
-/-- Restriction to the separable closure is bijective on the automorphism group of a normal
-extension. -/
-theorem restrictNormalHom_separableClosure_bijective :
-    Function.Bijective
-      (AlgEquiv.restrictNormalHom (F := F) (K₁ := E) (separableClosure F E)) :=
-  ⟨restrictNormalHom_separableClosure_injective F E,
-    AlgEquiv.restrictNormalHom_surjective E⟩
 
 end AlgEquiv
 
@@ -156,7 +140,9 @@ private theorem continuous_of_algebraMap_comm (s : Gal(separableClosure F E/F) �
   have hτy : τ y = y := (IntermediateField.mem_fixingSubgroup_iff _ _).mp hτ y hyM
   have hpow : (s τ x) ^ ringExpChar F ^ n = x ^ ringExpChar F ^ n := by
     rw [← hy, ← map_pow, ← hy, hs τ y, hτy]
-  exact eq_of_pow_ringExpChar_pow_eq (F := F) hpow
+  have hE : ExpChar E (ringExpChar F) :=
+    expChar_of_injective_algebraMap (algebraMap F E).injective _
+  exact iterateFrobenius_inj E (ringExpChar F) n hpow
 
 variable (F E)
 
@@ -164,26 +150,34 @@ variable (F E)
 `Gal(E/F) ≃ₜ* Gal(separableClosure F E / F)`, for a normal extension `E/F`. -/
 def separableClosureRestrictEquiv : Gal(E/F) ≃ₜ* Gal(separableClosure F E/F) where
   __ := MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
-    (AlgEquiv.restrictNormalHom_separableClosure_bijective F E)
+    ⟨AlgEquiv.restrictNormalHom_separableClosure_injective F E,
+      AlgEquiv.restrictNormalHom_surjective E⟩
   continuous_toFun := InfiniteGalois.restrictNormalHom_continuous _
   continuous_invFun := by
     set e := MulEquiv.ofBijective (AlgEquiv.restrictNormalHom (separableClosure F E))
-      (AlgEquiv.restrictNormalHom_separableClosure_bijective F E)
+      ⟨AlgEquiv.restrictNormalHom_separableClosure_injective F E,
+        AlgEquiv.restrictNormalHom_surjective E⟩
     refine continuous_of_algebraMap_comm e.symm (map_mul e.symm) fun τ y ↦ ?_
     conv_rhs => rw [← e.apply_symm_apply τ]
     exact (AlgEquiv.restrictNormal_commutes _ _ y).symm
 
 variable {F E}
 
+/-- The isomorphism `separableClosureRestrictEquiv` is the restriction map
+`AlgEquiv.restrictNormalHom`, which is what identifies it with the map Mathlib's API is about. -/
 theorem separableClosureRestrictEquiv_apply (σ : Gal(E/F)) :
     separableClosureRestrictEquiv F E σ = AlgEquiv.restrictNormalHom (separableClosure F E) σ :=
   (rfl)
 
+/-- Restricting `σ : Gal(E/F)` to the separable closure does not move elements: the image of
+`x ∈ separableClosure F E` under `separableClosureRestrictEquiv F E σ` is `σ x`, computed in `E`. -/
 @[simp]
 theorem coe_separableClosureRestrictEquiv_apply (σ : Gal(E/F)) (x : separableClosure F E) :
     (separableClosureRestrictEquiv F E σ x : E) = σ x :=
   AlgEquiv.restrictNormal_commutes _ _ x
 
+/-- The automorphism of `E` extending `τ : Gal(separableClosure F E/F)` agrees with `τ` on the
+separable closure. -/
 @[simp]
 theorem separableClosureRestrictEquiv_symm_apply_coe (τ : Gal(separableClosure F E/F))
     (x : separableClosure F E) :
@@ -256,6 +250,8 @@ theorem absoluteGaloisGroupRestrictEquiv_symm_apply (τ : AbsoluteGaloisGroup K)
       (separableClosureRestrictEquiv K (AlgebraicClosure K)).symm τ :=
   (rfl)
 
+/-- An automorphism of an algebraic closure of `K` and its image in `AbsoluteGaloisGroup K` take
+the same value on an element of `SeparableClosure K`, computed in the algebraic closure. -/
 @[simp]
 theorem coe_absoluteGaloisGroupRestrictEquiv_apply (σ : Gal(AlgebraicClosure K/K))
     (x : SeparableClosure K) :
