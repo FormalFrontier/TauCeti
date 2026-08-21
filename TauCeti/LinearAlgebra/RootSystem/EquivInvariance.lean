@@ -27,8 +27,9 @@ combinatorial expression in which no weight-space vector occurs.
 * `TauCeti.mem_range_root_weightMap_iff`: the weight map carries roots to roots and nothing else to
   a root.
 * `TauCeti.pairingIn_indexEquiv`: the index bijection preserves the integral pairing.
-* `TauCeti.indexEquiv_neg`: it commutes with the negation `RootPairing.indexNeg` of indices.
-* `TauCeti.root_indexEquiv_add_iff` and `TauCeti.root_indexEquiv_sub_iff`: it preserves and
+* `TauCeti.indexEquiv_reflectionPerm_self`: it commutes with `RootPairing.reflectionPerm i i`, that
+  is, with the negation `RootPairing.indexNeg` of indices.
+* `TauCeti.root_indexEquiv_eq_add_iff` and `TauCeti.root_indexEquiv_eq_sub_iff`: it preserves and
   reflects the relations `α = β + γ` and `α = β - γ` between roots.
 * `TauCeti.linearIndependent_root_indexEquiv_iff`: it preserves and reflects linear independence of
   a pair of roots.
@@ -59,10 +60,12 @@ variable {ι ι₂ R M N M₂ N₂ : Type*} [CommRing R]
   [AddCommGroup M₂] [Module R M₂] [AddCommGroup N₂] [Module R N₂]
   {P : RootPairing ι R M N} {P₂ : RootPairing ι₂ R M₂ N₂} (g : P.Equiv P₂)
 
-/-- An equivalence of root pairings carries roots to roots, and carries nothing else to a root. -/
-@[simp]
+/-- An equivalence of root pairings carries roots to roots, and carries nothing else to a root.
+
+This is not a `simp` lemma: `Set.mem_range` is itself `@[simp]`, so both sides are already reducible
+to their existential forms and the `simpNF` linter rejects the annotation. -/
 theorem mem_range_root_weightMap_iff {m : M} :
-    (∃ i, P₂.root i = g.toHom.weightMap m) ↔ m ∈ range P.root := by
+    g.toHom.weightMap m ∈ range P₂.root ↔ m ∈ range P.root := by
   refine ⟨fun ⟨l, hl⟩ => ⟨g.indexEquiv.symm l, g.bijective_weightMap.injective ?_⟩,
     fun ⟨i, hi⟩ => ⟨g.indexEquiv i, ?_⟩⟩
   · rw [Hom.root_weightMap_apply, Equiv.apply_symm_apply, hl]
@@ -78,21 +81,22 @@ theorem pairingIn_indexEquiv [FaithfulSMul ℤ R] [P.IsCrystallographic] [P₂.I
   rw [algebraMap_pairingIn, algebraMap_pairingIn, f.pairing]
 
 /-- The index bijection of a homomorphism of root pairings commutes with the negation of indices,
-because its weight map is linear. -/
+because its weight map is linear. The negation `RootPairing.indexNeg` is spelled out as
+`RootPairing.reflectionPerm i i` on both sides, so that this rewrites in the same direction as
+`RootPairing.indexNeg_neg` rather than against it. -/
 @[simp]
-theorem indexEquiv_neg (f : P.Hom P₂) (i : ι) :
-    letI := P.indexNeg
-    letI := P₂.indexNeg
-    f.indexEquiv ((P.reflectionPerm i) i) = -f.indexEquiv i := by
+theorem indexEquiv_reflectionPerm_self (f : P.Hom P₂) (i : ι) :
+    f.indexEquiv (P.reflectionPerm i i) =
+      P₂.reflectionPerm (f.indexEquiv i) (f.indexEquiv i) := by
   refine P₂.root.injective ?_
-  rw [indexNeg_neg, ← Hom.root_weightMap_apply P P₂ _ f,
+  rw [← Hom.root_weightMap_apply P P₂ _ f,
     root_reflectionPerm, root_reflectionPerm, reflection_apply_self, reflection_apply_self,
     map_neg, Hom.root_weightMap_apply]
 
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β + γ` between roots. -/
 @[simp]
-theorem root_indexEquiv_add_iff (k i j : ι) :
+theorem root_indexEquiv_eq_add_iff (k i j : ι) :
     P₂.root (g.indexEquiv k) = P₂.root (g.indexEquiv i) + P₂.root (g.indexEquiv j) ↔
       P.root k = P.root i + P.root j := by
   rw [← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply,
@@ -102,7 +106,7 @@ theorem root_indexEquiv_add_iff (k i j : ι) :
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β - γ` between roots. -/
 @[simp]
-theorem root_indexEquiv_sub_iff (k j i : ι) :
+theorem root_indexEquiv_eq_sub_iff (k j i : ι) :
     P₂.root (g.indexEquiv k) = P₂.root (g.indexEquiv j) - P₂.root (g.indexEquiv i) ↔
       P.root k = P.root j - P.root i := by
   rw [← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply,
@@ -152,10 +156,8 @@ subtract `α` from `β` and stay among the roots. -/
 @[simp]
 theorem chainBotCoeff_indexEquiv (i j : ι) :
     P₂.chainBotCoeff (g.indexEquiv i) (g.indexEquiv j) = P.chainBotCoeff i j := by
-  let := P.indexNeg
-  let := P₂.indexNeg
   rw [← P₂.chainTopCoeff_reflectionPerm_left, ← P.chainTopCoeff_reflectionPerm_left,
-    ← indexNeg_neg, ← indexEquiv_neg g.toHom, chainTopCoeff_indexEquiv]
+    ← indexEquiv_reflectionPerm_self g.toHom, chainTopCoeff_indexEquiv]
 
 end Chain
 

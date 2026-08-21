@@ -160,8 +160,8 @@ lemma weylGroupToPerm_ofIdx_mul_apply (w : P.weylGroup) (i j : ι) :
 /-- The Weyl-group action on root indices commutes with root negation. -/
 lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
     letI := P.indexNeg
-    P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) := by
-  exact indexEquiv_neg (w : P.Aut).toHom j
+    P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) :=
+  indexEquiv_reflectionPerm_self (w : P.Aut).toHom j
 
 namespace weylGroup
 
