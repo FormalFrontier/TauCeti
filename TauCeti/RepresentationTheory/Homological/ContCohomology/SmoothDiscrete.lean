@@ -39,8 +39,8 @@ mutually inverse there, both on objects and on morphisms.
 * `TauCeti.isSmoothDiscrete_iff_continuousSMul`: for a topological group, smoothness of a discrete
   object is continuity of the action map `G × X.V → X.V`.
 * `TauCeti.ofDiscreteModule_isSmoothDiscrete`: the dictionary lands in the subcategory.
-* `TauCeti.ofDiscreteModule_eq_self`: conversely, a smooth discrete object *is* the image of its
-  own underlying module.
+* `TauCeti.ofDiscreteModule_eq_self`: conversely, a discrete object *is* the image of its own
+  underlying module.
 * `TauCeti.ofDiscreteModuleHomEquiv`: morphisms between objects in the image are exactly the
   `G`-equivariant `R`-linear maps.
 * `TauCeti.IsSmoothDiscrete.res`: smoothness is inherited by restriction along a continuous
@@ -66,8 +66,10 @@ variable {R : Type*} [Ring R] [TopologicalSpace R] {G : Type*} [Monoid G]
 /-- The `G`-action on the underlying module of an object of `TopRep R G`, read off from its
 operators. This is the object half of the translation back to Mathlib's unbundled classes. It is
 not a global instance: `X.V` is a projection, so instance search would attempt it on every action
-goal. Files that need it declare it a `local instance`, as this one does below. -/
-@[instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
+goal. Files that need it declare it a `local instance`, as this one does below. The body is
+`@[expose]`d because `g • x` is *by construction* the term `X.ρ g x`, and a consumer that rebuilds
+an object from its action — `TauCeti.ofDiscreteModule_eq_self` below — needs to see that. -/
+@[expose, instance_reducible] def distribMulAction (X : TopRep R G) : DistribMulAction G X.V where
   smul g x := X.ρ g x
   one_smul x := congr($(map_one X.ρ) x)
   mul_smul g h x := congr($(map_mul X.ρ g h) x)
@@ -128,11 +130,11 @@ attribute [local instance] TopRep.distribMulAction TopRep.smulCommClass
 section IsSmoothDiscrete
 
 variable (R : Type u) [Ring R] [TopologicalSpace R]
-  {G : Type v} [Group G] [TopologicalSpace G]
+  {G : Type v} [Monoid G] [TopologicalSpace G]
 
 /-- An object of `TopRep R G` is **smooth discrete** when its underlying module is discrete and
-every point stabilizer `{g | X.ρ g x = x}` is open. For a discrete module the second condition is
-exactly continuity of the action in the group variable
+every point stabilizer `{g | X.ρ g x = x}` is open. For a discrete module over a topological group
+the second condition is exactly continuity of the action in the group variable
 (`TauCeti.isSmoothDiscrete_iff_continuousSMul`), which the data of `TopRep` does not supply. -/
 structure IsSmoothDiscrete (X : TopRep R G) : Prop where
   /-- the underlying module is discrete -/
@@ -142,24 +144,44 @@ structure IsSmoothDiscrete (X : TopRep R G) : Prop where
 
 variable {R}
 
-/-- Smoothness is inherited by restriction along a continuous homomorphism: the stabilizers of
-`TopRep.res φ X` are the preimages under `φ` of the stabilizers of `X`. -/
-lemma IsSmoothDiscrete.res {H : Type*} [Group H] [TopologicalSpace H] {φ : H →* G}
-    (hφ : Continuous φ) {X : TopRep R G} (hX : IsSmoothDiscrete R X) :
-    IsSmoothDiscrete R (TopRep.res φ X) :=
-  ⟨hX.discreteTopology, fun x ↦ (hX.stabilizer_isOpen x).preimage hφ⟩
-
-/-- Every smooth discrete object is the image of its own underlying module under the dictionary.
-With `TauCeti.ofDiscreteModule_isSmoothDiscrete` this is the object half of the equivalence
-between the discrete `G`-modules and the smooth discrete objects of `TopRep R G`. -/
-lemma ofDiscreteModule_eq_self (X : TopRep R G) (hX : IsSmoothDiscrete R X) :
-    haveI := hX.discreteTopology
+omit [TopologicalSpace G] in
+/-- A discrete object is the image of its own underlying module under the dictionary; openness of
+the stabilizers plays no part, and a smooth discrete object supplies the discreteness through
+`TauCeti.IsSmoothDiscrete.discreteTopology`. With `TauCeti.ofDiscreteModule_isSmoothDiscrete` this
+is the object half of the equivalence between the discrete `G`-modules and the smooth discrete
+objects of `TopRep R G`. -/
+lemma ofDiscreteModule_eq_self (X : TopRep R G) [DiscreteTopology X.V] :
     ofDiscreteModule R G X.V = X :=
   -- `rfl`: the two objects have the same underlying module by construction, and their operators
   -- agree because `TopRep.distribMulAction` is defined to be `X.ρ`, so the equality is structure
   -- eta for `TopRep` together with function eta for the operators.
-  haveI := hX.discreteTopology
   rfl
+
+variable (R G)
+
+/-- The dictionary lands in the smooth discrete subcategory: the point stabilizer of `m` is the
+preimage of the open set `{m}` under the continuous map `g ↦ g • m`. -/
+lemma ofDiscreteModule_isSmoothDiscrete (M : Type w) [AddCommGroup M] [Module R M]
+    [TopologicalSpace M] [DiscreteTopology M] [DistribMulAction G M] [SMulCommClass G R M]
+    [ContinuousSMul R M] [ContinuousSMul G M] :
+    IsSmoothDiscrete R (ofDiscreteModule R G M) :=
+  ⟨‹DiscreteTopology M›, fun (m : M) ↦
+    IsOpen.preimage (f := fun g : G ↦ g • m) (by fun_prop) (isOpen_discrete {m})⟩
+
+end IsSmoothDiscrete
+
+section SmoothOverGroup
+
+variable {R : Type u} [Ring R] [TopologicalSpace R]
+  {G : Type v} [Group G] [TopologicalSpace G]
+
+/-- Smoothness is inherited by restriction along a continuous homomorphism: the stabilizers of
+`TopRep.res φ X` are the preimages under `φ` of the stabilizers of `X`. Only `TopRep.res`, which
+Mathlib states for a group, forces `G` to be one here; `H` may be any monoid. -/
+lemma IsSmoothDiscrete.res {H : Type*} [Monoid H] [TopologicalSpace H] {φ : H →* G}
+    (hφ : Continuous φ) {X : TopRep R G} (hX : IsSmoothDiscrete R X) :
+    IsSmoothDiscrete R (TopRep.res φ X) :=
+  ⟨hX.discreteTopology, fun x ↦ (hX.stabilizer_isOpen x).preimage hφ⟩
 
 variable [IsTopologicalGroup G]
 
@@ -178,18 +200,7 @@ lemma IsSmoothDiscrete.continuousSMul {X : TopRep R G} (hX : IsSmoothDiscrete R 
   haveI := hX.discreteTopology
   (isSmoothDiscrete_iff_continuousSMul X).1 hX
 
-variable (R G)
-
-omit [IsTopologicalGroup G] in
-/-- The dictionary lands in the smooth discrete subcategory: the point stabilizers of a discrete
-`G`-module are open. -/
-lemma ofDiscreteModule_isSmoothDiscrete (M : Type w) [AddCommGroup M] [Module R M]
-    [TopologicalSpace M] [DiscreteTopology M] [DistribMulAction G M] [SMulCommClass G R M]
-    [ContinuousSMul R M] [ContinuousSMul G M] :
-    IsSmoothDiscrete R (ofDiscreteModule R G M) :=
-  ⟨‹DiscreteTopology M›, fun m ↦ _root_.stabilizer_isOpen (X := M) G m⟩
-
-end IsSmoothDiscrete
+end SmoothOverGroup
 
 /-! ### The dictionary on objects and morphisms -/
 
@@ -220,8 +231,9 @@ def ofDiscreteModuleMap (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • 
     ofDiscreteModuleMap (LinearMap.id (R := R) (M := M)) (fun _ _ ↦ rfl) =
       𝟙 (ofDiscreteModule R G M) := (rfl)
 
-lemma ofDiscreteModuleMap_comp {P : Type w} [AddCommGroup P] [Module R P] [TopologicalSpace P]
-    [DiscreteTopology P] [DistribMulAction G P] [SMulCommClass G R P] [ContinuousSMul R P]
+@[simp] lemma ofDiscreteModuleMap_comp {P : Type w} [AddCommGroup P] [Module R P]
+    [TopologicalSpace P] [DiscreteTopology P] [DistribMulAction G P] [SMulCommClass G R P]
+    [ContinuousSMul R P]
     (f : M →ₗ[R] N) (hf : ∀ (g : G) (m : M), f (g • m) = g • f m)
     (f' : N →ₗ[R] P) (hf' : ∀ (g : G) (n : N), f' (g • n) = g • f' n) :
     ofDiscreteModuleMap (f'.comp f) (fun g m ↦ by simp only [LinearMap.comp_apply, hf, hf']) =
@@ -239,8 +251,14 @@ def ofDiscreteModuleHomEquiv :
   toFun φ := (φ.hom.toContinuousLinearMap.toLinearMap).intertwiningMap_of_isIntertwiningMap _ _
     fun g m ↦ φ.hom.isIntertwining g m
   invFun f := ofDiscreteModuleMap f.toLinearMap fun g m ↦ f.isIntertwining _ _ g m
-  left_inv _ := rfl
-  right_inv _ := rfl
+  -- Both round trips rewrap the *same* underlying function, so it is enough to compare the two
+  -- sides at a point, where `TauCeti.ofDiscreteModuleMap_hom_apply` identifies them.
+  left_inv φ := by
+    ext (m : M); exact ofDiscreteModuleMap_hom_apply (G := G) _ _ m
+  right_inv f := by
+    ext (m : M)
+    exact ofDiscreteModuleMap_hom_apply (G := G) f.toLinearMap
+      (fun g m ↦ f.isIntertwining _ _ g m) m
   map_add' _ _ := rfl
 
 variable {R G M N}
