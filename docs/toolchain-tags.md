@@ -1,91 +1,69 @@
 # Toolchain tags
 
-Tau Ceti carries a plain `vX.Y.Z` tag for each Lean release, the way Mathlib does, so a
-downstream project on Lean `v4.33.0` can check out `v4.33.0` here and get a tree that
-builds against Mathlib's own `v4.33.0`.
+Tau Ceti tags eligible Lean releases as `vX`, the way Mathlib does, so a project on Lean
+v4.34.0 can check out `v4.34.0` here and get a tree that builds.
 
-`scripts/toolchain_tags.py --audit` is the authority on what exists, what does not, and
-how to repair the difference. It prints the policy with its report, so nothing below is
-needed to act on a gap. This file records the reasoning that the report has no room for.
+## The rule
 
-## What a tag means
+**`vX` is the first commit on `main` whose `lean-toolchain` is `leanprover/lean4:X`.**
 
-For every Lean release `X` this repository's history can reach, the tag `vX` points at
-the **first** `main`-reachable commit whose `lean-toolchain` is exactly
-`leanprover/lean4:X` and whose Mathlib pin is at or after Mathlib's own `vX` tag commit
-`M`. The pin is, in order of preference:
+Mathlib puts its `vX` tag on the commit that bumps its own `lean-toolchain` to X, and
+`scripts/check-bump.sh` requires this repository's toolchain to match Mathlib's at whatever
+it pins. The first `main` commit on toolchain X therefore pins Mathlib at or after Mathlib's
+`vX` tag. The tag message gives the pin.
 
-1. **exact**, `M` itself. The commit is either already on `main`, or is a single commit on
-   a `releases/vX` branch whose parent is a `main` commit and which changes only
-   `lake-manifest.json` and `lean-toolchain`.
-2. **inexact**, when no exact commit exists or the exact one will not compile: the first
-   `main` commit on toolchain `X`. The annotated tag message records how many Mathlib
-   commits past `M` the pin is.
+Exact Mathlib pins were tried and dropped: they need release commits constructed on their
+own branches, built from source, and their caches published.
 
-A tag is created only after a from-source build of that commit, with the Lake artifact
-cache off, passes the audits and lints that commit defines, and its oleans have been
-published to the Lake cache and read back. **Tags are never moved.** A tag that disagrees
-with the policy is a question for a human, and no tool here will delete or force one.
+## What a tag promises
 
-### Why "first" rather than the richest commit
+The commit is on that Lean toolchain, its post-merge CI passed, and its oleans are in the
+Lake artifact cache, so a checkout builds without recompiling the library. The tool checks
+the recorded CI result and the published cache; neither needs a rebuild.
 
-For the exact rung it is forced. A run of commits sharing a pin at the tip of `main` is
-open-ended: `main` keeps appending to it until the next bump. Under "last" the tag would
-want to move every day and would never be idempotent. "First" is fixed the moment the run
-begins. The inexact rung follows the same rule so that `vX` means one thing, at the cost
-of some mathematics: `v4.31.0-rc1` lands on the repository's initial commit, because that
-is where `main`'s `v4.31.0-rc1` era starts.
+## What it does not cover
 
-## What the cache guarantee covers, and what it cannot
+The tool tags only commits on `main`, and reports a release `main` never ran on as
+`unreachable`. Two things cause that, and they differ in what can be done about them: the
+daily bump stepped over the release's window on Mathlib master, which a later bump could
+avoid, or Mathlib cut the release on its `stable` branch, which `check-bump.sh` will not let
+this repository pin at all.
 
-Tau Ceti publishes **its own** oleans. Mathlib's come from Mathlib's cache, fetched by
-`lake exe cache get`. So a tag guarantees that Tau Ceti's own library is cached for that
-commit, and inherits whatever Mathlib published for the pin.
+Such a release can still be tagged by hand off a `main` commit. `v4.33.0` is one: a commit
+off `afb1aacb` changing only the two pin files, built from source, with its cache uploaded
+manually. The report marks it `tagged`, notes that it was constructed, and says whether it
+found a cache. `--create` does not construct these; the procedure is in the module docstring
+of `scripts/toolchain_tags.py`.
 
-That matters for the releases Mathlib cut on its `stable` branch, `v4.29.1`, `v4.32.1` and
-`v4.32.2`. Mathlib gates cache publication on a push to `master`, and a toolchain bump
-invalidates every module hash, so `v4.32.0`'s cache does not carry over. **A consumer of
-those tags must compile Mathlib themselves, whatever we publish**, and the release
-workflow refuses to start such a build unless it is dispatched with
-`allow_mathlib_rebuild`. That is upstream's gap and it cannot be closed from here.
+Releases older than `v4.33.0-rc1` are out of scope, because the Lake cache has no older
+entries. That bound is `EARLIEST_RELEASE` in the script; raise it if the cache is pruned,
+never lower it.
 
-## How the pieces fit
+## Reporting
 
-| Piece | What it does |
-|---|---|
-| `scripts/toolchain_tags.py` | The policy. Audits, names the target commit for each release, materialises a release commit's two pin files, and reports gaps to Zulip. Never builds, pushes or tags. |
-| `.github/workflows/toolchain-tags.yml` | Runs the audit daily and reconciles the outstanding releases against Zulip. |
-| `scripts/check-release-commit.sh`, `scripts/release_commit.py` | The trust anchor. Decides whether a commit may be built unsandboxed and published. Deliberately independent of the constructor above, so a bug there cannot certify itself. |
-| `.github/workflows/release-tag.yml` | Builds one commit from source, publishes it, reads the publish back, and tags. Dispatched per release. |
-| `.github/workflows/release-backfill.yml` | Runs the above over the audit's worklist, one release at a time. |
+`.github/workflows/toolchain-tags.yml` posts to Zulip (Tau Ceti > "Toolchain tags") when a
+release becomes taggable or turns out not to be taggable. It runs on a push to `main` that
+changes `lean-toolchain`, waits for `ci.yml` to conclude on that commit, and then posts only
+if the state has changed since its last message. It reads that state from a marker in the
+message, so it stores nothing, and it never creates a tag.
 
-## Two things about the cache that are easy to get wrong
+The wait matters: the push lands 40 to 70 minutes before the release is taggable, because
+`ci.yml` coalesces bursts of `main` pushes and then takes 20 to 30 minutes, publishing the
+Lake cache at the end. Reporting at push time would always say "not yet".
 
-**The scope carries a platform for older releases.** Lake leaves the platform out of a
-package's cache scope only when the lakefile declares `platformIndependent = true`. Tau
-Ceti declared it on 2026-07-27; every release older than that is scoped
-`<repo>/pt/x86_64-unknown-linux-gnu/tc/<toolchain>/<rev>` instead of
-`<repo>/tc/<toolchain>/<rev>`. The publish job passes `--platform` exactly when the target
-needs it, which is why the staging step in `release-tag.yml` reports platform dependence
-where `ci.yml`'s copy fails on it: `ci.yml` only ever builds `main`, where its absence
-would mean somebody had removed it.
+A release waiting on CI shows as `pending` and is left out of the change comparison. It is
+not news, and including it would post one message saying "wait" and another when the
+waiting ended.
 
-**The uploading Lake is not the target's Lake.** `lake cache put-staged` gained `--rev`
-and `--service` only in v4.34.0-rc1, so an older release's own Lake cannot be told which
-revision to publish under. The publish job installs a modern toolchain as the uploader and
-passes the target's toolchain as data through `--toolchain`.
+## Using it
 
-## Keeping `main` from stepping over a release
+```
+python3 scripts/toolchain_tags.py                      # the report
+python3 scripts/toolchain_tags.py --create v4.34.0     # one tag
+python3 scripts/toolchain_tags.py --create --all       # every ready release
+```
 
-Mathlib's `vX` tag sits on the commit that bumps its own `lean-toolchain` to `X`, so the
-window in which `main` could pin it is exactly one Mathlib toolchain era, and for a stable
-release that can be as little as fifteen hours. The daily bump takes the latest
-last-known-good commit and has already stepped clean over one release that way
-(`v4.33.0`). `update.yml` therefore pins a release tag as its own stepping stone before
-continuing, so the exact commit exists on `main` rather than having to be constructed
-afterwards.
+Run `--create` after a bump lands on a new toolchain. It needs a `gh` login with write
+access; the report needs only read.
 
-That mechanism cannot reach the `stable`-branch patch releases, and structurally so:
-`scripts/check-bump.sh` requires the Mathlib rev to be on the branch the lakefile
-nominates, so a bump pinning one could never merge. They are backfill-only by
-construction.
+If a tag does not match the rule, the tool reports it and changes nothing.

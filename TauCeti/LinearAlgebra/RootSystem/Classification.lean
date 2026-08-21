@@ -380,15 +380,18 @@ private lemma hasBranchWithTwoLeaves_D {n : ℕ} (hn : 4 ≤ n) :
           Finset.card_singleton]
     _ ≤ _ := Finset.card_le_card hsub
 
-private lemma hasRowSumNegOne_E6 : HasRowSumNegOne CartanMatrix.E₆ := by decide
-private lemma hasRowSumNegOne_E7 : HasRowSumNegOne CartanMatrix.E₇ := by decide
-private lemma hasRowSumNegOne_E8 : HasRowSumNegOne CartanMatrix.E₈ := by decide
+private lemma hasRowSumNegOne_E6 : HasRowSumNegOne (CartanMatrix.E 6) := by decide
+private lemma hasRowSumNegOne_E7 : HasRowSumNegOne (CartanMatrix.E 7) := by decide
+private lemma hasRowSumNegOne_E8 : HasRowSumNegOne (CartanMatrix.E 8) := by decide
 private lemma hasRowSumNegOne_F4 : HasRowSumNegOne CartanMatrix.F₄ := by decide
 private lemma hasRowSumNegOne_G2 : HasRowSumNegOne CartanMatrix.G₂.transpose := by decide
 
-private lemma not_hasBranchWithTwoLeaves_E6 : ¬ HasBranchWithTwoLeaves CartanMatrix.E₆ := by decide
-private lemma not_hasBranchWithTwoLeaves_E7 : ¬ HasBranchWithTwoLeaves CartanMatrix.E₇ := by decide
-private lemma not_hasBranchWithTwoLeaves_E8 : ¬ HasBranchWithTwoLeaves CartanMatrix.E₈ := by decide
+private lemma not_hasBranchWithTwoLeaves_E6 :
+    ¬ HasBranchWithTwoLeaves (CartanMatrix.E 6) := by decide
+private lemma not_hasBranchWithTwoLeaves_E7 :
+    ¬ HasBranchWithTwoLeaves (CartanMatrix.E 7) := by decide
+private lemma not_hasBranchWithTwoLeaves_E8 :
+    ¬ HasBranchWithTwoLeaves (CartanMatrix.E 8) := by decide
 
 private lemma not_hasLeafDoubleEdge_F4 : ¬ HasLeafDoubleEdge CartanMatrix.F₄ := by decide
 private lemma not_hasLeafDoubleEdge_G2 :

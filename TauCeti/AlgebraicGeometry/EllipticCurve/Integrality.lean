@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.Polynomial.IsIntegral
-import Mathlib.Tactic.ComputeDegree
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Denominator
+public import TauCeti.RingTheory.Polynomial.IsIntegral
 
 /-!
 # Integrality of points on a Weierstrass curve over a unique factorization domain
@@ -64,28 +63,6 @@ namespace WeierstrassCurve
 
 variable {R : Type*} [CommRing R] (W : _root_.WeierstrassCurve R)
 
--- An element satisfying a monic quadratic relation with integral coefficients is integral: this
--- is `IsIntegral.of_aeval_monic_of_isIntegral_coeff` for `X ^ 2 + C b * X + C c`, with the degree
--- computation and the per-coefficient obligations discharged. Kept here rather than exported,
--- since `isIntegral_y_of_equation_of_isIntegral_x` is its only consumer.
-private theorem isIntegral_of_sq_add_mul_add_eq_zero {A : Type*} [CommRing A] [Algebra R A]
-    {b c y : A} (hb : IsIntegral R b) (hc : IsIntegral R c) (h : y ^ 2 + b * y + c = 0) :
-    IsIntegral R y := by
-  nontriviality A
-  have hdeg : (X ^ 2 + (C b * X + C c) : A[X]).natDegree = 2 := by compute_degree!
-  refine IsIntegral.of_aeval_monic_of_isIntegral_coeff (p := X ^ 2 + (C b * X + C c))
-    (monic_X_pow_add (by compute_degree!)) (by omega) ?_ ?_
-  · have : Polynomial.eval y (X ^ 2 + (C b * X + C c) : A[X]) = 0 := by
-      simpa only [eval_add, eval_pow, eval_X, eval_mul, eval_C, add_assoc] using h
-    rw [this]
-    exact isIntegral_zero
-  · intro i
-    match i with
-    | 0 => simpa using hc
-    | 1 => simpa using hb
-    | 2 => simpa using (isIntegral_one : IsIntegral R (1 : A))
-    | (n + 3) => simpa using (isIntegral_zero : IsIntegral R (0 : A))
-
 /-- **An integral `x`-coordinate forces an integral `y`-coordinate**, over any `R`-algebra.
 
 On the curve, `y` is a root of the monic quadratic `Y² + (a₁x + a₃)Y − (x³ + a₂x² + a₄x + a₆)`,
@@ -97,7 +74,7 @@ theorem isIntegral_y_of_equation_of_isIntegral_x {A : Type*} [CommRing A] [Algeb
   simp only [_root_.WeierstrassCurve.baseChange, _root_.WeierstrassCurve.map_a₁,
     _root_.WeierstrassCurve.map_a₂, _root_.WeierstrassCurve.map_a₃,
     _root_.WeierstrassCurve.map_a₄, _root_.WeierstrassCurve.map_a₆] at h
-  refine isIntegral_of_sq_add_mul_add_eq_zero
+  refine IsIntegral.of_sq_add_mul_add_eq_zero
     (b := algebraMap R A W.a₁ * x + algebraMap R A W.a₃)
     (c := -(x ^ 3 + algebraMap R A W.a₂ * x ^ 2 + algebraMap R A W.a₄ * x + algebraMap R A W.a₆))
     ((isIntegral_algebraMap.mul hx).add isIntegral_algebraMap)
