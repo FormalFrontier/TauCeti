@@ -94,6 +94,7 @@ theorem realCliffordZeroTwoVolume_def :
         CliffordAlgebra.ι (realCliffordForm 0 2) (Pi.single 1 1) := (rfl)
 
 /-- Under `Cliff(0,2) ≅ ℍ` the volume element is the quaternion unit `k = ij`. -/
+@[simp]
 theorem realCliffordZeroTwoEquivQuaternion_volume :
     realCliffordZeroTwoEquivQuaternion realCliffordZeroTwoVolume = ⟨0, 0, 0, 1⟩ := by
   have h : (⟨0, 1, 0, 0⟩ : ℍ[ℝ]) * ⟨0, 0, 1, 0⟩ = ⟨0, 0, 0, 1⟩ := by ext <;> simp
