@@ -208,9 +208,8 @@ theorem coeffMap_comp_infl {X Y : TopRep R G} (f : X ⟶ Y) (n : ℕ) :
     (_root_.ContinuousCohomology.map_comp (X := TopRep.quotientToInvariants X N) (Y := X) (Z := Y)
       (ContinuousMonoidHom.quotientMk N) (ContinuousMonoidHom.id G)
       (TopRep.quotientToInvariantsι X N) f n)))
-  refine map_congr rfl (heq_of_eq ?_) n
-  ext v
-  rfl
+  exact map_congr rfl
+    (heq_of_eq (TopRep.quotientToInvariantsMap_comp_quotientToInvariantsι N f)) n
 
 variable (R) in
 /-- Inflation, as a natural transformation of functors on `TopRep R G`; the continuous counterpart

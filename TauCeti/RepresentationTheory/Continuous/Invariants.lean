@@ -39,6 +39,8 @@ homomorphism `G → G ⧸ S` together with the inclusion `Xˢ ↪ X`.
   `G`-stable submodule when `S` is normal.
 * `ContRepresentation.invariants_restrict_bot`,
   `ContRepresentation.invariants_restrict_top`: the two degenerate subgroups.
+* `TopRep.quotientToInvariantsMap_comp_quotientToInvariantsι`: naturality of the inclusion of the
+  invariants.
 
 These declarations live in the root `ContRepresentation` and `TopRep` namespaces, rather than
 under `TauCeti`, so that dot notation on the Mathlib types they extend elaborates.
@@ -182,6 +184,16 @@ theorem quotientToInvariantsMap_id : quotientToInvariantsMap (𝟙 X) S = 𝟙 _
 theorem quotientToInvariantsMap_comp {X Y Z : TopRep R G} (f : X ⟶ Y) (g : Y ⟶ Z) :
     quotientToInvariantsMap (f ≫ g) S =
       quotientToInvariantsMap f S ≫ quotientToInvariantsMap g S := by
+  ext v
+  rfl
+
+/-- The inclusion of the invariants is natural: restricting `f : X ⟶ Y` to the `S`-invariants and
+then including into `Y` is including into `X` and then applying `f`. This is the square that makes
+the compatible pair defining inflation natural in the coefficients. -/
+@[reassoc, simp]
+theorem quotientToInvariantsMap_comp_quotientToInvariantsι {X Y : TopRep R G} (f : X ⟶ Y) :
+    (resFunctor (QuotientGroup.mk' S : G →* G ⧸ S)).map (quotientToInvariantsMap f S) ≫
+        quotientToInvariantsι Y S = quotientToInvariantsι X S ≫ f := by
   ext v
   rfl
 
