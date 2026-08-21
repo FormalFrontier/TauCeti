@@ -158,18 +158,6 @@ private def pointSemidirectProduct : Cᵒᵖ ⥤ GrpCat.{v} where
     intro x
     apply SemidirectProduct.ext <;> simp [Category.assoc]
 
-@[simp]
-private theorem pointSemidirectProduct_map_left {X Y : Cᵒᵖ} (f : X ⟶ Y)
-    (x : (unop X ⟶ N) ⋊[A.toMulAutHom (unop X)] (unop X ⟶ G)) :
-    (A.pointSemidirectProduct.map f x).left = f.unop ≫ x.left :=
-  rfl
-
-@[simp]
-private theorem pointSemidirectProduct_map_right {X Y : Cᵒᵖ} (f : X ⟶ Y)
-    (x : (unop X ⟶ N) ⋊[A.toMulAutHom (unop X)] (unop X ⟶ G)) :
-    (A.pointSemidirectProduct.map f x).right = f.unop ≫ x.right :=
-  rfl
-
 /-- The pointwise semidirect-product presheaf is represented by the product object `N ⊗ G`. -/
 private def pointSemidirectProductRepresentableBy :
     (A.pointSemidirectProduct ⋙ forget GrpCat).RepresentableBy (N ⊗ G) where
