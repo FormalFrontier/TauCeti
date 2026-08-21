@@ -6,22 +6,20 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.ContinuousMap.Basic
-public import Mathlib.Topology.Instances.Real.Lemmas
 public import Mathlib.Topology.Defs.Induced
 public import Mathlib.Topology.Separation.Profinite
 
 import Mathlib.Topology.Homeomorph.Lemmas
 import Mathlib.Topology.LocallyConstant.Basic
-import Mathlib.Topology.Order.IntermediateValue
-import TauCeti.Topology.LocallyConstant.Preconnected
 
 /-!
 # Continuous extension from a closed subspace of a profinite space
 
 Let `X` be a profinite space — compact, Hausdorff and totally disconnected — and let `Y` be a
-discrete space. This file proves that a continuous map into `Y` defined on a *closed* subspace of
-`X` extends to a continuous map on all of `X`; equivalently, that restriction
-`C(X, Y) → C(s, Y)` is surjective for every closed `s ⊆ X`.
+discrete space. This file proves that a continuous map into `Y` defined on a *closed* subspace
+`s ⊆ X` extends to a continuous map on all of `X`, as soon as one of `s` and `Y` is nonempty;
+equivalently, that restriction `C(X, Y) → C(s, Y)` is surjective for every closed `s ⊆ X` when
+`Y` is nonempty.
 
 This is the zero-dimensional analogue of the Tietze extension theorem. Nothing can be averaged
 here, since `Y` is a bare discrete space; instead the map has only finitely many fibres, because a
@@ -51,11 +49,12 @@ Mathlib's `TietzeExtension` form of the same statement.
 The nonemptiness hypotheses are not decoration. If `s` is empty and `Y` is empty while `X` is not,
 there is a continuous map on `s` and none on `X`, so one of `s` and `Y` has to be assumed nonempty.
 
-Total disconnectedness of `X` is not decoration either:
-`TauCeti.not_exists_continuousOn_Icc_of_ne` records that on the compact Hausdorff space
+Total disconnectedness of `X` is not decoration either. On the compact Hausdorff space
 `[0, 1] ⊆ ℝ` no map into a discrete space separates the two points of the closed subspace
-`{0, 1}`, so a map taking two distinct values there has no continuous extension. Discreteness of
-`Y` is what makes the fibres clopen, and it is likewise essential.
+`{0, 1}`, so a map taking two distinct values there has no continuous extension; this is spelled
+out as an example in `TauCeti/Topology/LocallyConstant/Preconnected.lean`, where the
+preconnectedness that drives it lives. Discreteness of `Y` is what makes the fibres clopen, and it
+is likewise essential.
 -/
 
 public section
@@ -126,20 +125,6 @@ theorem exists_continuous_eqOn [Nonempty Y] {f : X → Y} (hs : IsClosed s)
     exact ⟨g, hg, hgf⟩
 
 end Profinite
-
-/-- **Total disconnectedness cannot be dropped** from `TauCeti.exists_continuous_eqOn`.
-
-The subspace `[0, 1] ⊆ ℝ` is compact and Hausdorff, and `{0, 1}` is a closed subset of it on
-which every map into a discrete space is continuous. Nevertheless a map into a discrete space
-that is continuous on `[0, 1]` takes the same value at `0` and at `1`, so the map sending `0` to
-`a` and `1` to a different `b` admits no continuous extension. -/
-theorem not_exists_continuousOn_Icc_of_ne [DiscreteTopology Y] {a b : Y} (hab : a ≠ b) :
-    ¬ ∃ g : ℝ → Y, ContinuousOn g (Icc 0 1) ∧ g 0 = a ∧ g 1 = b := by
-  rintro ⟨g, hg, rfl, rfl⟩
-  have h : ∀ t ∈ Icc (0 : ℝ) 1, ∀ᶠ u in nhdsWithin t (Icc (0 : ℝ) 1), g u = g t :=
-    fun t ht => by
-      simpa [ContinuousWithinAt, nhds_discrete, Filter.tendsto_pure] using hg t ht
-  exact hab (isPreconnected_Icc.apply_eq_of_eventually_eq h (by norm_num) (by norm_num))
 
 end TauCeti
 
