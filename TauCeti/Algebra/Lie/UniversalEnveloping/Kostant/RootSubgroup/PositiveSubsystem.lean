@@ -58,11 +58,11 @@ open CategoryTheory TensorProduct
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u v w
+universe u v w x
 
 variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
 variable {ι : Type w} {κ : Type*}
-variable {V : Type} [AddCommGroup V] [Module ℚ V]
+variable {V : Type x} [AddCommGroup V] [Module ℚ V]
 
 variable (e : ι → L) (h : κ → L)
 variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
