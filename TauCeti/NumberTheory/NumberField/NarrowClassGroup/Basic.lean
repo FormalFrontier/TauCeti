@@ -42,8 +42,8 @@ is totally positive (there are no real places), `Cl⁺(K)` and `Cl(K)` coincide.
 * `NumberField.NarrowClassGroup.mkPrincipal_sq` and `sq_eq_one_of_mem_ker_toClassGroup`:
   `mkPrincipal` is `2`-torsion, so `ker(Cl⁺ → Cl)` is an elementary abelian `2`-group.
 * `NumberField.NarrowClassGroup.mk0`: the narrow class of a nonzero integral ideal, with
-  `toClassGroup_mk0`, `mk0_surjective`, the triviality criterion
-  `mk0_eq_one_of_isTotallyPositive`, the `2`-torsion of principal classes
+  `toClassGroup_mk0`, `mk0_surjective`, the triviality criterion `mk0_eq_one_iff`,
+  the `2`-torsion of principal classes
   `mk0_sq_eq_one_of_eq_span_singleton`, `mkPrincipal_coe_eq_mk0`, and the comparison
   `mk0_eq_mk0_iff`.
 -/
@@ -223,14 +223,46 @@ noncomputable def mk0 : (Ideal (𝓞 K))⁰ →* NarrowClassGroup K :=
     toClassGroup (mk0 I) = ClassGroup.mk0 I := by
   rw [← mk_mk0, toClassGroup_mk, ClassGroup.mk_mk0]
 
+/-- An integral ideal has trivial narrow class exactly when it has a nonzero totally positive
+generator. -/
+@[simp] theorem mk0_eq_one_iff {I : (Ideal (RingOfIntegers K))⁰} :
+    mk0 I = 1 ↔ ∃ a : RingOfIntegers K, a ≠ 0 ∧ IsTotallyPositive (a : K) ∧
+      (I : Ideal (RingOfIntegers K)) = Ideal.span {a} := by
+  constructor
+  · intro h
+    rw [← mk_mk0, mk_eq_one_iff, mem_narrowPrincipalSubgroup] at h
+    obtain ⟨x, hxpos, hx⟩ := h
+    have hxmem : (x : K) ∈
+        ((I : Ideal (RingOfIntegers K)) : FractionalIdeal (RingOfIntegers K)⁰ K) := by
+      rw [← FractionalIdeal.coe_mk0, ← hx, coe_toPrincipalIdeal]
+      exact mem_spanSingleton_self (RingOfIntegers K)⁰ (x : K)
+    obtain ⟨a, _haI, ha⟩ :=
+      (FractionalIdeal.mem_coeIdeal (RingOfIntegers K)⁰).mp hxmem
+    have ha' : (a : K) = (x : K) := ha
+    have ha0 : a ≠ 0 := fun ha0 ↦ x.ne_zero (by rw [← ha, ha0, map_zero])
+    refine ⟨a, ha0, ?_, ?_⟩
+    · rw [ha']
+      exact hxpos
+    · have hcoe :
+          ((I : Ideal (RingOfIntegers K)) : FractionalIdeal (RingOfIntegers K)⁰ K) =
+            ((Ideal.span {a} : Ideal (RingOfIntegers K)) :
+              FractionalIdeal (RingOfIntegers K)⁰ K) := by
+        rw [FractionalIdeal.coeIdeal_span_singleton, ha]
+        have hxval := congrArg Units.val hx
+        simpa only [coe_toPrincipalIdeal, FractionalIdeal.coe_mk0] using hxval.symm
+      exact FractionalIdeal.coeIdeal_injective hcoe
+  · rintro ⟨a, ha, hpos, hI⟩
+    rw [← mk_mk0, mk_eq_one_iff, mem_narrowPrincipalSubgroup]
+    refine ⟨Units.mk0 (a : K) (RingOfIntegers.coe_ne_zero_iff.mpr ha), hpos, Units.ext ?_⟩
+    rw [coe_toPrincipalIdeal, FractionalIdeal.coe_mk0, hI,
+      FractionalIdeal.coeIdeal_span_singleton]
+    rfl
+
 /-- **A principal ideal with a totally positive generator has trivial narrow class.** -/
 theorem mk0_eq_one_of_isTotallyPositive {a : 𝓞 K} (ha : a ≠ 0)
     (hpos : IsTotallyPositive (a : K)) {I : (Ideal (𝓞 K))⁰}
     (hI : (I : Ideal (𝓞 K)) = Ideal.span {a}) : mk0 I = 1 := by
-  rw [← mk_mk0, mk_eq_one_iff, mem_narrowPrincipalSubgroup]
-  refine ⟨Units.mk0 (a : K) (RingOfIntegers.coe_ne_zero_iff.mpr ha), hpos, Units.ext ?_⟩
-  rw [coe_toPrincipalIdeal, FractionalIdeal.coe_mk0, hI, coeIdeal_span_singleton]
-  rfl
+  exact mk0_eq_one_iff.mpr ⟨a, ha, hpos, hI⟩
 
 /-- **The narrow class of a principal ideal is `2`-torsion**, since the square of any generator is
 totally positive. -/
