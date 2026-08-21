@@ -55,6 +55,9 @@ then `TauCeti.equivOfCartanMatrixEq_indexEquiv_apply` read in the other directio
   `TauCeti.reindex_geckIndexEquiv_f`: conjugation carries the numbered matrix at `i` to the one at
   `τ i`.
 * `TauCeti.map_lieAlgebra_geckIndexEquiv`: reindexing carries one Geck Lie algebra onto the other.
+* `TauCeti.geckLieEquivOfEquiv_h`, `TauCeti.geckLieEquivOfEquiv_e` and
+  `TauCeti.geckLieEquivOfEquiv_f`: the Lie equivalence carries each numbered generator to its
+  counterpart.
 * `TauCeti.geckModuleEquiv_mulVec_h`, `TauCeti.geckModuleEquiv_mulVec_e` and
   `TauCeti.geckModuleEquiv_mulVec_f`: the coordinate permutation intertwines the action of the
   numbered matrix at `i` with the action of the one at `τ i`.
@@ -167,16 +170,11 @@ theorem geckModuleEquiv_mulVec (A : Matrix (b.support ⊕ ι) (b.support ⊕ ι)
     (v : (b.support ⊕ ι) → R) :
     geckModuleEquiv g τ (A *ᵥ v) =
       reindexAlgEquiv R R (geckIndexEquiv g τ) A *ᵥ geckModuleEquiv g τ v := by
-  let e := geckIndexEquiv g τ
-  change LinearEquiv.funCongrLeft R R e.symm (A *ᵥ v) =
-    reindex e e A *ᵥ LinearEquiv.funCongrLeft R R e.symm v
-  have hinv : LinearEquiv.funCongrLeft R R e
-      (LinearEquiv.funCongrLeft R R e.symm v) = v := by
-    rw [← LinearEquiv.funCongrLeft_symm]
-    exact (LinearEquiv.funCongrLeft R R e.symm).symm_apply_apply v
-  simpa only [LinearMap.comp_apply, Matrix.mulVecLin_apply, LinearEquiv.coe_coe, hinv] using
-    (LinearMap.congr_fun
-      (Matrix.mulVecLin_reindex e e A) (LinearEquiv.funCongrLeft R R e.symm v)).symm
+  ext x
+  have hcomp : geckModuleEquiv g τ v ∘ geckIndexEquiv g τ = v := by
+    ext y
+    simp
+  simp [coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv, hcomp]
 
 end
 
@@ -316,6 +314,36 @@ theorem geckLieEquivOfEquiv_symm_apply (x : GeckConstruction.lieAlgebra b₂) :
     ((geckLieEquivOfEquiv g τ hτ).symm x : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) =
       (reindexAlgEquiv R R (geckIndexEquiv g τ)).symm x :=
   LieEquiv.ofSubalgebras_symm_apply _ _ _ _ x
+
+/-- The Geck Lie equivalence carries the Cartan generator numbered by `i` to the one numbered by
+`τ i`. -/
+@[simp]
+theorem geckLieEquivOfEquiv_h (i : b.support) :
+    geckLieEquivOfEquiv g τ hτ
+        ⟨GeckConstruction.h (b := b) (R := R) i, GeckConstruction.h_mem_lieAlgebra i⟩ =
+      ⟨GeckConstruction.h (b := b₂) (R := R) (τ i), GeckConstruction.h_mem_lieAlgebra (τ i)⟩ := by
+  apply Subtype.ext
+  simpa using reindex_geckIndexEquiv_h g τ hτ i
+
+/-- The Geck Lie equivalence carries the raising generator numbered by `i` to the one numbered by
+`τ i`. -/
+@[simp]
+theorem geckLieEquivOfEquiv_e (i : b.support) :
+    geckLieEquivOfEquiv g τ hτ
+        ⟨GeckConstruction.e (b := b) (R := R) i, GeckConstruction.e_mem_lieAlgebra i⟩ =
+      ⟨GeckConstruction.e (b := b₂) (R := R) (τ i), GeckConstruction.e_mem_lieAlgebra (τ i)⟩ := by
+  apply Subtype.ext
+  simpa using reindex_geckIndexEquiv_e g τ hτ i
+
+/-- The Geck Lie equivalence carries the lowering generator numbered by `i` to the one numbered by
+`τ i`. -/
+@[simp]
+theorem geckLieEquivOfEquiv_f (i : b.support) :
+    geckLieEquivOfEquiv g τ hτ
+        ⟨GeckConstruction.f (b := b) (R := R) i, GeckConstruction.f_mem_lieAlgebra i⟩ =
+      ⟨GeckConstruction.f (b := b₂) (R := R) (τ i), GeckConstruction.f_mem_lieAlgebra (τ i)⟩ := by
+  apply Subtype.ext
+  simpa using reindex_geckIndexEquiv_f g τ hτ i
 
 end
 

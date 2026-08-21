@@ -161,7 +161,7 @@ lemma weylGroupToPerm_ofIdx_mul_apply (w : P.weylGroup) (i j : ι) :
 lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
     letI := P.indexNeg
     P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) :=
-  indexEquiv_reflectionPerm_self (w : P.Aut).toHom j
+  by simp [RootPairing.indexNeg_neg]
 
 namespace weylGroup
 

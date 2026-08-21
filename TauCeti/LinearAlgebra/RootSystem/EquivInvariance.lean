@@ -24,11 +24,11 @@ combinatorial expression in which no weight-space vector occurs.
 
 ## Main results
 
-* `TauCeti.mem_range_root_weightMap_iff`: the weight map carries roots to roots and nothing else to
+* `TauCeti.weightMap_mem_range_root_iff`: the weight map carries roots to roots and nothing else to
   a root.
-* `TauCeti.pairingIn_indexEquiv`: the index bijection preserves the integral pairing.
-* `TauCeti.indexEquiv_reflectionPerm_self`: it commutes with `RootPairing.reflectionPerm i i`, that
-  is, with the negation `RootPairing.indexNeg` of indices.
+* `TauCeti.pairingIn_indexEquiv`: the index bijection preserves pairings valued in a coefficient
+  subring.
+* `TauCeti.indexEquiv_reflectionPerm`: it commutes with `RootPairing.reflectionPerm`.
 * `TauCeti.root_indexEquiv_eq_add_iff` and `TauCeti.root_indexEquiv_eq_sub_iff`: it preserves and
   reflects the relations `α = β + γ` and `α = β - γ` between roots.
 * `TauCeti.linearIndependent_root_indexEquiv_iff`: it preserves and reflects linear independence of
@@ -64,34 +64,39 @@ variable {ι ι₂ R M N M₂ N₂ : Type*} [CommRing R]
 
 This is not a `simp` lemma: `Set.mem_range` is itself `@[simp]`, so both sides are already reducible
 to their existential forms and the `simpNF` linter rejects the annotation. -/
-theorem mem_range_root_weightMap_iff {m : M} :
+theorem weightMap_mem_range_root_iff {m : M} :
     g.toHom.weightMap m ∈ range P₂.root ↔ m ∈ range P.root := by
   refine ⟨fun ⟨l, hl⟩ => ⟨g.indexEquiv.symm l, g.bijective_weightMap.injective ?_⟩,
     fun ⟨i, hi⟩ => ⟨g.indexEquiv i, ?_⟩⟩
   · rw [Hom.root_weightMap_apply, Equiv.apply_symm_apply, hl]
   · rw [← hi, Hom.root_weightMap_apply]
 
-/-- The index bijection of a homomorphism of root pairings preserves the integral Cartan
-pairing. -/
+/-- The index bijection of a homomorphism of root pairings preserves the pairing valued in a
+coefficient subring. -/
 @[simp]
-theorem pairingIn_indexEquiv [FaithfulSMul ℤ R] [P.IsCrystallographic] [P₂.IsCrystallographic]
-    (f : P.Hom P₂) (i j : ι) :
-    P₂.pairingIn ℤ (f.indexEquiv i) (f.indexEquiv j) = P.pairingIn ℤ i j := by
-  refine FaithfulSMul.algebraMap_injective ℤ R ?_
+theorem pairingIn_indexEquiv (S : Type*) [CommRing S] [Algebra S R] [FaithfulSMul S R]
+    [P.IsValuedIn S] [P₂.IsValuedIn S] (f : P.Hom P₂) (i j : ι) :
+    P₂.pairingIn S (f.indexEquiv i) (f.indexEquiv j) = P.pairingIn S i j := by
+  refine FaithfulSMul.algebraMap_injective S R ?_
   rw [algebraMap_pairingIn, algebraMap_pairingIn, f.pairing]
 
-/-- The index bijection of a homomorphism of root pairings commutes with the negation of indices,
-because its weight map is linear. The negation `RootPairing.indexNeg` is spelled out as
-`RootPairing.reflectionPerm i i` on both sides, so that this rewrites in the same direction as
-`RootPairing.indexNeg_neg` rather than against it. -/
+/-- The index bijection of a homomorphism of root pairings commutes with root reflections. -/
+@[simp]
+theorem indexEquiv_reflectionPerm (f : P.Hom P₂) (i j : ι) :
+    f.indexEquiv (P.reflectionPerm i j) =
+      P₂.reflectionPerm (f.indexEquiv i) (f.indexEquiv j) := by
+  refine P₂.root.injective ?_
+  rw [← Hom.root_weightMap_apply P P₂ _ f, root_reflectionPerm, root_reflectionPerm,
+    reflection_apply_root, reflection_apply_root, map_sub, map_smul, f.pairing,
+    Hom.root_weightMap_apply, Hom.root_weightMap_apply]
+
+/-- The diagonal case of `TauCeti.indexEquiv_reflectionPerm`, stated separately for rewriting root
+negation through `RootPairing.indexNeg`. -/
 @[simp]
 theorem indexEquiv_reflectionPerm_self (f : P.Hom P₂) (i : ι) :
     f.indexEquiv (P.reflectionPerm i i) =
-      P₂.reflectionPerm (f.indexEquiv i) (f.indexEquiv i) := by
-  refine P₂.root.injective ?_
-  rw [← Hom.root_weightMap_apply P P₂ _ f,
-    root_reflectionPerm, root_reflectionPerm, reflection_apply_self, reflection_apply_self,
-    map_neg, Hom.root_weightMap_apply]
+      P₂.reflectionPerm (f.indexEquiv i) (f.indexEquiv i) :=
+  indexEquiv_reflectionPerm f i i
 
 /-- The index bijection of an equivalence of root pairings preserves and reflects the relation
 `α = β + γ` between roots. -/
@@ -142,7 +147,7 @@ theorem chainTopCoeff_indexEquiv (i j : ι) :
     have key : ∀ n : ℕ, P₂.root (g.indexEquiv j) + n • P₂.root (g.indexEquiv i) ∈ range P₂.root ↔
         P.root j + n • P.root i ∈ range P.root := fun n => by
       rw [← Hom.root_weightMap_apply, ← Hom.root_weightMap_apply, ← map_nsmul, ← map_add]
-      exact mem_range_root_weightMap_iff g
+      exact weightMap_mem_range_root_iff g
     refine le_antisymm ?_ ?_
     · rw [← P.root_add_nsmul_mem_range_iff_le_chainTopCoeff h, ← key]
       exact (P₂.root_add_nsmul_mem_range_iff_le_chainTopCoeff h').mpr le_rfl
