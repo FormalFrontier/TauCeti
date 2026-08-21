@@ -17,7 +17,8 @@ public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 
 Let `H` be the coordinate Hopf algebra of a finite-type affine group over a field. A candidate
 for its unipotent radical is a connected normal smooth unipotent closed subgroup. In Hopf
-coordinates this is a Hopf ideal `I` whose quotient `H/I` has those properties.
+coordinates this is a normal Hopf ideal `I` whose quotient `H/I` is geometrically connected,
+smooth, and geometrically unipotent.
 
 This file proves the boundedness step in the standard maximal-dimension construction. The
 trivial subgroup, cut out by the augmentation ideal, is a candidate. The Lie dimension of every
@@ -34,9 +35,9 @@ a maximal-dimension candidate contains every other one and is the unipotent radi
   subgroup in coordinate-Hopf-algebra form.
 * `TauCeti.HopfIdeal.isUnipotentRadicalCandidate_augmentation`: the identity subgroup is a
   candidate.
-* `TauCeti.HopfIdeal.lieFinrank_quotient_le`: the Lie dimension of a closed subgroup is bounded
+* `TauCeti.HopfIdeal.finrank_quotientLie_le`: the Lie dimension of a closed subgroup is bounded
   by that of the ambient affine group.
-* `TauCeti.HopfIdeal.exists_isUnipotentRadicalCandidate_maximal_lieFinrank`: existence of a
+* `TauCeti.HopfIdeal.exists_isUnipotentRadicalCandidate_maximal_finrank_quotientLie`: existence of a
   candidate of maximal Lie dimension.
 
 ## References
@@ -150,24 +151,12 @@ theorem isUnipotentRadicalCandidate_augmentation
   · exact (smoothUnipotentCommHopfAlgProperty k).prop_of_iso
       (quotientAugmentationIso H).symm smoothUnipotent_trivial
 
-/-- The Lie dimension of a closed subgroup is at most the Lie dimension of the ambient
-finite-type affine group. -/
-theorem lieFinrank_quotient_le (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (I : HopfIdeal k H) :
-    Module.finrank k
-        (Derivation k (H ⧸ I.toIdeal)
-          (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) ≤
-      Module.finrank k
-        (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
-  have h := finrank_quotientLie_add_finrank_conormal I
-  omega
-
 /-- There exists a connected normal smooth unipotent closed subgroup of maximal Lie dimension.
 
 The theorem asserts maximality only among unipotent-radical candidates. Turning this candidate
 into the greatest such subgroup requires the separate binary-product theorem: the product with
 any other candidate is again a candidate and cannot have larger dimension. -/
-theorem exists_isUnipotentRadicalCandidate_maximal_lieFinrank
+theorem exists_isUnipotentRadicalCandidate_maximal_finrank_quotientLie
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     ∃ I : HopfIdeal k H,
       IsUnipotentRadicalCandidate H I ∧
@@ -187,7 +176,7 @@ theorem exists_isUnipotentRadicalCandidate_maximal_lieFinrank
     apply (Set.finite_Iic
       (Module.finrank k (Derivation k H (Bialgebra.CounitAlgebra k H k)))).subset
     rintro n ⟨I, _, rfl⟩
-    exact lieFinrank_quotient_le H I
+    exact finrank_quotientLie_le I
   have hdimensions_nonempty : dimensions.Nonempty := by
     exact ⟨_, augmentation k H, isUnipotentRadicalCandidate_augmentation H, rfl⟩
   obtain ⟨n, hn, hnmax⟩ :=
