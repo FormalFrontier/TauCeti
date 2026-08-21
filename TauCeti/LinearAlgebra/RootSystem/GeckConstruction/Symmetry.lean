@@ -155,6 +155,17 @@ theorem geckModuleEquiv_symm_apply (v : (b₂.support ⊕ ι₂) → R) (x : b.s
   simp [geckModuleEquiv, LinearEquiv.funCongrLeft_symm, LinearEquiv.funCongrLeft_apply,
     LinearMap.funLeft_apply]
 
+omit [Finite ι] [Finite ι₂] [CharZero R] [IsDomain R] [P.IsCrystallographic]
+  [P₂.IsCrystallographic] in
+/-- The coordinate permutation carries the coordinate vector at `x` to the one at
+`geckIndexEquiv g τ x`. Taking `r = 1` this says that it carries Geck's `u i` and `v i` to `u (τ i)`
+and `v (g.indexEquiv i)`. -/
+@[simp]
+theorem geckModuleEquiv_single [DecidableEq ι] [DecidableEq ι₂] (x : b.support ⊕ ι) (r : R) :
+    geckModuleEquiv g τ (Pi.single x r) = Pi.single (geckIndexEquiv g τ x) r := by
+  ext y
+  simp [Pi.single_apply, Equiv.symm_apply_eq]
+
 section
 
 variable [DecidableEq ι] [Fintype ι] [DecidableEq ι₂] [Fintype ι₂]
