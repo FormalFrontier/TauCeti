@@ -28,7 +28,8 @@ symmetrized form; only the null-vector half of that statement is proved here.
 `TauCeti.DynkinType` has no affine constructors, and Mathlib's `CartanMatrix` family names no
 affine type either, with one exception: the generalized `CartanMatrix.E n` continues the `E`
 diagram past the finite range, and `CartanMatrix.E 9` is the affine `E₈` matrix under a different
-numbering (`TauCeti.AffineDynkinType.cartanMatrix_E8_eq_submatrix_cartanMatrix_E`). Tau Ceti also
+numbering, and it is what the affine `E₈` matrix below is defined to be
+(`TauCeti.AffineDynkinType.cartanMatrix_E8_eq_submatrix_cartanMatrix_E`). Tau Ceti also
 already carries affine matrices as *obstructions* inside the finite-type classification:
 `TauCeti.doubleForkCartanMatrix n` is the affine `Dₘ` matrix for `m = n + 5`, and
 `TauCeti.starCartanMatrix` at `![2, 2, 2]`, `![1, 3, 3]` and `![1, 2, 5]` is the affine `E₆`, `E₇`
@@ -47,11 +48,11 @@ Except for `A₁`, an affine simply-laced diagram is a simple graph, and its gen
 matrix is `2I - A` for the adjacency matrix `A`. The exception is genuine: `A₁` has the
 multiplicity-two matrix `!![2, -2; -2, 2]`, which is not `2I - A` for any simple graph
 (`TauCeti.AffineDynkinType.cartanMatrix_A_one_ne_two_smul_one_sub_adjMatrix`). It is carved out by
-`TauCeti.AffineDynkinType.IsGraphical`, which every statement reading an entry of the Cartan matrix
-off the graph assumes; the underlying graph of `A₁` is still defined, as the single edge obtained
-by forgetting the multiplicity, but it does not determine the matrix. The statements that survive
-at `A₁` -- the diagonal, the symmetry, the diagram of the matrix and the null vector -- carry no
-such hypothesis.
+`TauCeti.AffineDynkinType.IsGraphical`, the predicate `t ≠ A 1`, which every statement reading an
+entry of the Cartan matrix off the graph assumes; the underlying graph of `A₁` is still defined,
+as the single edge obtained by forgetting the multiplicity, but it does not determine the matrix.
+The statements that survive at `A₁` -- the diagonal, the symmetry, the diagram of the matrix and
+the null vector -- carry no such hypothesis.
 
 The node numberings are chosen so that every node other than `0` has a neighbour with a smaller
 number, which reduces connectedness to a single induction. Explicitly:
@@ -66,7 +67,10 @@ number, which reduces connectedness to a single induction. Explicitly:
 ## Main definitions
 
 * `TauCeti.AffineDynkinType`: the enumeration `Aₙ`, `Dₙ`, `E₆`, `E₇`, `E₈`.
-* `TauCeti.AffineDynkinType.nodes`, `.Valid`, `.IsGraphical`: node count and the two rank ranges.
+* `TauCeti.AffineDynkinType.nodes`, `.Valid`: node count, and the range on which the names of the
+  classification are pairwise distinct.
+* `TauCeti.AffineDynkinType.IsGraphical`: the diagrams other than `A₁`, those whose generalized
+  Cartan matrix is read off a simple graph.
 * `TauCeti.AffineDynkinType.finiteType`: the finite Dynkin type an affine diagram extends.
 * `TauCeti.AffineDynkinType.graph`: the underlying simple graph.
 * `TauCeti.AffineDynkinType.cartanMatrix`: the generalized Cartan matrix.
@@ -82,7 +86,7 @@ number, which reduces connectedness to a single induction. Explicitly:
 * `TauCeti.AffineDynkinType.graph_eq_diagramGraph_cartanMatrix`: the graph is the diagram of the
   Cartan matrix in the sense of `TauCeti.diagramGraph`, at `A₁` too.
 * `TauCeti.AffineDynkinType.cartanMatrix_E8_eq_submatrix_cartanMatrix_E`: affine `E₈` is Mathlib's
-  `CartanMatrix.E 9`, relabelled.
+  `CartanMatrix.E 9`, relabelled, which is how it is defined.
 * `TauCeti.AffineDynkinType.sum_marks_neighborFinset_eq_two_mul`: twice the mark of a node is the
   sum of the marks of its neighbours.
 * `TauCeti.AffineDynkinType.cartanMatrix_mulVec_marks_eq_zero`: the marks are a null vector,
@@ -196,52 +200,21 @@ lemma Valid.finiteType {t : AffineDynkinType} (ht : t.Valid) : t.finiteType.Vali
   | D n => simpa using ht
   | E6 | E7 | E8 => simp
 
-/-- The valid affine simply-laced diagrams other than `A₁`, namely those whose generalized Cartan
-matrix is `2I - A` for the adjacency matrix `A` of a simple graph. The one excluded diagram has the
-multiplicity-two matrix `!![2, -2; -2, 2]`; see
-`TauCeti.AffineDynkinType.cartanMatrix_A_one_ne_two_smul_one_sub_adjMatrix`. -/
-def IsGraphical : AffineDynkinType → Prop
-  | .A n => 2 ≤ n
-  | .D n => 4 ≤ n
-  | .E6 | .E7 | .E8 => True
+/-- The affine simply-laced diagrams whose generalized Cartan matrix is `2I - A` for the adjacency
+matrix `A` of the underlying simple graph, namely every diagram but `A₁`, whose two nodes carry a
+double edge and whose matrix is the multiplicity-two `!![2, -2; -2, 2]`; see
+`TauCeti.AffineDynkinType.cartanMatrix_A_one_ne_two_smul_one_sub_adjMatrix`. This is independent of
+`TauCeti.AffineDynkinType.Valid`: the formula holds at the degenerate diagrams too, and a statement
+that also needs those excluded assumes `Valid` separately. -/
+def IsGraphical (t : AffineDynkinType) : Prop := t ≠ A 1
 
-instance : DecidablePred IsGraphical := fun t ↦
-  match t with
-  | .A n => inferInstanceAs (Decidable (2 ≤ n))
-  | .D n => inferInstanceAs (Decidable (4 ≤ n))
-  | .E6 | .E7 | .E8 => inferInstanceAs (Decidable True)
+instance : DecidablePred IsGraphical := fun t ↦ inferInstanceAs (Decidable (t ≠ A 1))
 
-@[simp] lemma isGraphical_A {n : ℕ} : (A n).IsGraphical ↔ 2 ≤ n := Iff.rfl
-@[simp] lemma isGraphical_D {n : ℕ} : (D n).IsGraphical ↔ 4 ≤ n := Iff.rfl
-@[simp] lemma isGraphical_E6 : E6.IsGraphical := trivial
-@[simp] lemma isGraphical_E7 : E7.IsGraphical := trivial
-@[simp] lemma isGraphical_E8 : E8.IsGraphical := trivial
-
-/-- A graphical affine simply-laced diagram is valid. -/
-lemma IsGraphical.valid {t : AffineDynkinType} (ht : t.IsGraphical) : t.Valid := by
-  cases t with
-  | A n => simp only [isGraphical_A] at ht; simp only [valid_A]; omega
-  | D n => exact ht
-  | E6 | E7 | E8 => trivial
-
-/-- A graphical affine simply-laced diagram is not `A₁`. -/
-lemma IsGraphical.ne_A_one {t : AffineDynkinType} (ht : t.IsGraphical) : t ≠ A 1 := by
-  rintro rfl
-  simp only [isGraphical_A] at ht
-  omega
-
-/-- Every valid affine simply-laced diagram other than `A₁` is graphical. -/
-lemma IsGraphical.of_valid_of_ne_A_one {t : AffineDynkinType} (ht : t.Valid) (h : t ≠ A 1) :
-    t.IsGraphical := by
-  cases t with
-  | A n =>
-      simp only [valid_A] at ht
-      simp only [isGraphical_A]
-      rcases Nat.lt_or_ge n 2 with h' | h'
-      · exact absurd (congrArg A (by omega : n = 1)) h
-      · exact h'
-  | D n => exact ht
-  | E6 | E7 | E8 => trivial
+@[simp] lemma isGraphical_A {n : ℕ} : (A n).IsGraphical ↔ n ≠ 1 := by simp [IsGraphical]
+@[simp] lemma isGraphical_D (n : ℕ) : (D n).IsGraphical := by simp [IsGraphical]
+@[simp] lemma isGraphical_E6 : E6.IsGraphical := by simp [IsGraphical]
+@[simp] lemma isGraphical_E7 : E7.IsGraphical := by simp [IsGraphical]
+@[simp] lemma isGraphical_E8 : E8.IsGraphical := by simp [IsGraphical]
 
 /-! ## The underlying graphs -/
 
@@ -250,26 +223,26 @@ attached at node `1`, and a leaf `n` attached at node `n - 3`. For `n = 4` the t
 coincide, and the three clauses describe the four-leaf star. This is the *oriented* edge relation;
 `TauCeti.AffineDynkinType.graph` symmetrizes it, and
 `TauCeti.AffineDynkinType.graph_D_adj` reads the resulting adjacency back off. -/
-def dRel (n : ℕ) (i j : Fin (n + 1)) : Prop :=
+private def dRel (n : ℕ) (i j : Fin (n + 1)) : Prop :=
   ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) ≤ n - 2) ∨
     ((i : ℕ) = 1 ∧ (j : ℕ) = n - 1) ∨ ((i : ℕ) = n - 3 ∧ (j : ℕ) = n)
 
-instance (n : ℕ) : DecidableRel (dRel n) := fun i j ↦
+private instance (n : ℕ) : DecidableRel (dRel n) := fun i j ↦
   inferInstanceAs (Decidable (((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) ≤ n - 2) ∨
     ((i : ℕ) = 1 ∧ (j : ℕ) = n - 1) ∨ ((i : ℕ) = n - 3 ∧ (j : ℕ) = n)))
 
 /-- The edges of `E₆ = T₃,₃,₃`: the trivalent node is `0`, and the three arms are `1, 2`, `3, 4`
 and `5, 6`, numbered outwards. -/
-def e6Edges : List (Fin 7 × Fin 7) := [(0, 1), (1, 2), (0, 3), (3, 4), (0, 5), (5, 6)]
+private def e6Edges : List (Fin 7 × Fin 7) := [(0, 1), (1, 2), (0, 3), (3, 4), (0, 5), (5, 6)]
 
 /-- The edges of `E₇ = T₂,₄,₄`: the trivalent node is `0`, and the three arms are `1`, `2, 3, 4`
 and `5, 6, 7`, numbered outwards. -/
-def e7Edges : List (Fin 8 × Fin 8) :=
+private def e7Edges : List (Fin 8 × Fin 8) :=
   [(0, 1), (0, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7)]
 
 /-- The edges of `E₈ = T₂,₃,₆`: the trivalent node is `0`, and the three arms are `1`, `2, 3` and
 `4, 5, 6, 7, 8`, numbered outwards. -/
-def e8Edges : List (Fin 9 × Fin 9) :=
+private def e8Edges : List (Fin 9 × Fin 9) :=
   [(0, 1), (0, 2), (2, 3), (0, 4), (4, 5), (5, 6), (6, 7), (7, 8)]
 
 /-- The underlying simple graph of an affine simply-laced diagram, on the node set `Fin t.nodes`.
@@ -287,19 +260,25 @@ def graph : (t : AffineDynkinType) → SimpleGraph (Fin t.nodes)
 
 @[simp] lemma graph_A (n : ℕ) : (A n).graph = SimpleGraph.cycleGraph (n + 1) := (rfl)
 
--- The edge data of the remaining diagrams is implementation detail: it is left unexposed, only
--- this private unfolding of `Dₙ` reads it back, and `graph_D_adj`, `graph_E6_adj`, `graph_E7_adj`
--- and `graph_E8_adj` are the adjacency handles a consumer needs. `dRel` and the edge lists
--- themselves stay public only because the exposed `DecidableRel` instances below mention them,
--- and an exposed declaration may not mention a private one.
+-- The edge data of the remaining diagrams is implementation detail, and private: only this
+-- unfolding of `Dₙ` reads it back, and `graph_D_adj`, `graph_E6_adj`, `graph_E7_adj` and
+-- `graph_E8_adj` are the adjacency handles a consumer needs. The decidability instance below
+-- repeats the edge data rather than naming it, because an instance is exposed and an exposed
+-- declaration may not mention a private one.
 private lemma graph_D (n : ℕ) : (D n).graph = SimpleGraph.fromRel (dRel n) := (rfl)
 
 instance : (t : AffineDynkinType) → DecidableRel t.graph.Adj
   | .A n => inferInstanceAs (DecidableRel (SimpleGraph.cycleGraph (n + 1)).Adj)
-  | .D n => inferInstanceAs (DecidableRel (SimpleGraph.fromRel (dRel n)).Adj)
-  | .E6 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j ↦ (i, j) ∈ e6Edges).Adj)
-  | .E7 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j ↦ (i, j) ∈ e7Edges).Adj)
-  | .E8 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j ↦ (i, j) ∈ e8Edges).Adj)
+  | .D n => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j : Fin (n + 1) ↦
+      ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) ≤ n - 2) ∨
+        ((i : ℕ) = 1 ∧ (j : ℕ) = n - 1) ∨ ((i : ℕ) = n - 3 ∧ (j : ℕ) = n)).Adj)
+  | .E6 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j : Fin 7 ↦
+      (i, j) ∈ [((0 : Fin 7), (1 : Fin 7)), (1, 2), (0, 3), (3, 4), (0, 5), (5, 6)]).Adj)
+  | .E7 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j : Fin 8 ↦
+      (i, j) ∈ [((0 : Fin 8), (1 : Fin 8)), (0, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7)]).Adj)
+  | .E8 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j : Fin 9 ↦
+      (i, j) ∈ [((0 : Fin 9), (1 : Fin 9)), (0, 2), (2, 3), (0, 4), (4, 5), (5, 6), (6, 7),
+        (7, 8)]).Adj)
 
 /-- **Adjacency in `Dₙ`**, as a condition on node numbers: consecutive numbers along the path
 `0 - 1 - ⋯ - (n-2)`, the leaf `n - 1` at node `1`, and the leaf `n` at node `n - 3`, each in both
@@ -376,35 +355,33 @@ theorem graph_connected {t : AffineDynkinType} (ht : t.Valid) : t.graph.Connecte
 
 /-- The generalized Cartan matrix of an affine simply-laced diagram: `2I - A` for the adjacency
 matrix `A` of the underlying graph, except at `A₁`, whose two nodes carry a double edge and whose
-matrix is `!![2, -2; -2, 2]`. -/
+matrix is `!![2, -2; -2, 2]`. `E₈` is not spelled out either but taken from Mathlib, as the
+relabelling of the generalized `CartanMatrix.E 9` that exchanges the two trivalent nodes; this is
+the same matrix, and `TauCeti.AffineDynkinType.cartanMatrix_eq_two_smul_one_sub_adjMatrix` covers
+it like every other diagram. -/
 def cartanMatrix (t : AffineDynkinType) : Matrix (Fin t.nodes) (Fin t.nodes) ℤ :=
   match t with
   | .A 1 => !![2, -2; -2, 2]
+  | .E8 => (CartanMatrix.E 9).submatrix (Equiv.swap 0 3) (Equiv.swap 0 3)
   | x => (2 : ℤ) • (1 : Matrix (Fin x.nodes) (Fin x.nodes) ℤ) - x.graph.adjMatrix ℤ
 
 @[simp] lemma cartanMatrix_A_one : (A 1).cartanMatrix = !![2, -2; -2, 2] := (rfl)
 
-/-- `A₁` is the only diagram whose matrix is not `2I - A`, so the formula holds at every other
-diagram, the degenerate ones outside `TauCeti.AffineDynkinType.Valid` included. The public form
-just below restricts it to a graphical diagram, which is the hypothesis a consumer carries; this
-one is what the statements that survive at `A₁` are proved from. -/
-private lemma cartanMatrix_eq_two_smul_one_sub_adjMatrix_of_ne_A_one {t : AffineDynkinType}
-    (h : t ≠ A 1) : t.cartanMatrix = (2 : ℤ) • 1 - t.graph.adjMatrix ℤ := by
+/-- **Away from `A₁`, the generalized Cartan matrix is `2I - A`**, the degenerate diagrams outside
+`TauCeti.AffineDynkinType.Valid` included. At `E₈` this is where Mathlib's numbering of
+`CartanMatrix.E 9` is matched up with the numbering of this file. -/
+lemma cartanMatrix_eq_two_smul_one_sub_adjMatrix {t : AffineDynkinType} (ht : t.IsGraphical) :
+    t.cartanMatrix = (2 : ℤ) • 1 - t.graph.adjMatrix ℤ := by
   cases t with
   | A n =>
       match n with
       | 0 => rfl
-      | 1 => exact absurd rfl h
+      | 1 => exact absurd rfl ht
       | (m + 2) => rfl
   | D n => rfl
   | E6 => rfl
   | E7 => rfl
-  | E8 => rfl
-
-/-- Away from `A₁`, the generalized Cartan matrix is `2I - A`. -/
-lemma cartanMatrix_eq_two_smul_one_sub_adjMatrix {t : AffineDynkinType} (ht : t.IsGraphical) :
-    t.cartanMatrix = (2 : ℤ) • 1 - t.graph.adjMatrix ℤ :=
-  cartanMatrix_eq_two_smul_one_sub_adjMatrix_of_ne_A_one ht.ne_A_one
+  | E8 => ext i j; fin_cases i <;> fin_cases j <;> decide
 
 /-- The entries of the generalized Cartan matrix away from `A₁`: `2` on the diagonal, `-1` at an
 edge and `0` otherwise. -/
@@ -419,13 +396,13 @@ lemma cartanMatrix_apply {t : AffineDynkinType} (ht : t.IsGraphical) (i j : Fin 
     split_ifs <;> norm_num
 
 /-- The diagonal entries of the generalized Cartan matrix are `2`, `A₁` included. -/
-lemma cartanMatrix_apply_same (t : AffineDynkinType) (i : Fin t.nodes) :
+@[simp] lemma cartanMatrix_apply_same (t : AffineDynkinType) (i : Fin t.nodes) :
     t.cartanMatrix i i = 2 := by
   by_cases h : t = A 1
   · subst h
     revert i
     decide
-  · rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix_of_ne_A_one h, Matrix.sub_apply,
+  · rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix h, Matrix.sub_apply,
       Matrix.smul_apply, Matrix.one_apply_eq, SimpleGraph.adjMatrix_apply]
     simp
 
@@ -447,27 +424,26 @@ lemma cartanMatrix_isSymm (t : AffineDynkinType) : t.cartanMatrix.IsSymm := by
   · subst h
     refine Matrix.IsSymm.ext fun i j ↦ ?_
     fin_cases i <;> fin_cases j <;> decide
-  · rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix_of_ne_A_one h]
+  · rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix h]
     exact (Matrix.isSymm_one.smul (2 : ℤ)).sub (SimpleGraph.isSymm_adjMatrix _)
 
 /-- **The graph of an affine simply-laced diagram is the diagram of its generalized Cartan
 matrix**, `A₁` included: the double edge there still shows up as a pair of nonzero entries. This is
 what carries the general results about `TauCeti.diagramGraph` over to `graph`. -/
-theorem graph_eq_diagramGraph_cartanMatrix {t : AffineDynkinType} (ht : t.Valid) :
+theorem graph_eq_diagramGraph_cartanMatrix (t : AffineDynkinType) :
     t.graph = diagramGraph t.cartanMatrix := by
   by_cases h : t = A 1
   · subst h
     ext i j
     revert i j
     decide
-  · have hg : t.IsGraphical := IsGraphical.of_valid_of_ne_A_one ht h
-    ext i j
+  · ext i j
     rw [diagramGraph_adj]
     refine ⟨fun hadj ↦ ⟨hadj.ne, ?_, ?_⟩, fun ⟨hne, h1, _⟩ ↦ ?_⟩
-    · rw [cartanMatrix_apply_of_adj hg hadj]; norm_num
-    · rw [cartanMatrix_apply_of_adj hg hadj.symm]; norm_num
+    · rw [cartanMatrix_apply_of_adj h hadj]; norm_num
+    · rw [cartanMatrix_apply_of_adj h hadj.symm]; norm_num
     · by_contra hadj
-      rw [cartanMatrix_apply_of_not_adj hg hne hadj] at h1
+      rw [cartanMatrix_apply_of_not_adj h hne hadj] at h1
       exact h1 rfl
 
 /-- **`A₁` is not the diagram of a simple graph.** Its off-diagonal entry is `-2`, while `2I - A`
@@ -485,8 +461,9 @@ theorem cartanMatrix_A_one_ne_two_smul_one_sub_adjMatrix (G : SimpleGraph (Fin (
   split_ifs at h01 <;> omega
 
 /-- **Affine `E₈` is Mathlib's `CartanMatrix.E 9`**, whose generalized `E`-family continues the
-`E` diagram past the finite range. The relabelling is the transposition exchanging the trivalent
-node, numbered `0` here and `3` there; the arms of `1`, `2` and `5` nodes then match up. -/
+`E` diagram past the finite range: this is how `TauCeti.AffineDynkinType.cartanMatrix` defines it.
+The relabelling is the transposition exchanging the trivalent node, numbered `0` here and `3`
+there; the arms of `1`, `2` and `5` nodes then match up. -/
 theorem cartanMatrix_E8_eq_submatrix_cartanMatrix_E :
     E8.cartanMatrix = (CartanMatrix.E 9).submatrix (Equiv.swap 0 3) (Equiv.swap 0 3) := by
   ext i j
@@ -643,13 +620,19 @@ private lemma sum_one_neighborFinset_cycleGraph {m : ℕ} (i : Fin (m + 3)) :
     SimpleGraph.cycleGraph_degree_three_le]
   norm_num
 
-/-- **The marks satisfy the local balance condition**: away from `A₁`, twice the mark of a node is
-the sum of the marks of its neighbours. -/
-theorem sum_marks_neighborFinset_eq_two_mul {t : AffineDynkinType} (ht : t.IsGraphical)
-    (i : Fin t.nodes) : ∑ j ∈ t.graph.neighborFinset i, t.marks j = 2 * t.marks i := by
+/-- **The marks satisfy the local balance condition**: at every valid diagram other than `A₁`,
+twice the mark of a node is the sum of the marks of its neighbours. Validity is needed as well as
+graphicality here: at the degenerate `A₀` the single node has no neighbour at all, while its mark
+is `1`. -/
+theorem sum_marks_neighborFinset_eq_two_mul {t : AffineDynkinType} (ht : t.Valid)
+    (hg : t.IsGraphical) (i : Fin t.nodes) :
+    ∑ j ∈ t.graph.neighborFinset i, t.marks j = 2 * t.marks i := by
   cases t with
   | A n =>
-      obtain ⟨m, rfl⟩ : ∃ m, n = m + 2 := ⟨n - 2, by simp only [isGraphical_A] at ht; omega⟩
+      obtain ⟨m, rfl⟩ : ∃ m, n = m + 2 := by
+        simp only [valid_A] at ht
+        simp only [isGraphical_A] at hg
+        exact ⟨n - 2, by omega⟩
       exact sum_one_neighborFinset_cycleGraph i
   | D n => exact sum_dMarks_neighborFinset ht i
   | E6 => revert i; decide
@@ -663,10 +646,9 @@ theorem cartanMatrix_mulVec_marks_eq_zero {t : AffineDynkinType} (ht : t.Valid) 
     t.cartanMatrix *ᵥ t.marks = 0 := by
   by_cases h : t = A 1
   · subst h; decide
-  · have hg : t.IsGraphical := IsGraphical.of_valid_of_ne_A_one ht h
-    funext i
-    have hbal := sum_marks_neighborFinset_eq_two_mul hg i
-    simp only [cartanMatrix_eq_two_smul_one_sub_adjMatrix hg, Matrix.sub_mulVec, Pi.sub_apply,
+  · funext i
+    have hbal := sum_marks_neighborFinset_eq_two_mul ht h i
+    simp only [cartanMatrix_eq_two_smul_one_sub_adjMatrix h, Matrix.sub_mulVec, Pi.sub_apply,
       Matrix.smul_mulVec, Pi.smul_apply, Matrix.one_mulVec, smul_eq_mul,
       SimpleGraph.adjMatrix_mulVec_apply, Pi.zero_apply]
     omega
