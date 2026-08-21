@@ -285,26 +285,18 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
 
 /-! ## Divided powers of the numbered root generators -/
 
-/-- An ordinary power of a Lie generator acts through the ordinary power of its underlying
-matrix. -/
-private theorem geckRepresentation_pow_ι_apply (x : t.lieAlgebra ht) (n : ℕ)
-    (v : t.GeckIndex ht → ℚ) :
-    (t.geckRepresentation ht (_root_.UniversalEnvelopingAlgebra.ι ℚ x) ^ n) v =
-      (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) ^ n *ᵥ v := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-      rw [pow_succ', pow_succ', Module.End.mul_apply,
-        t.geckRepresentation_ι_apply ht, ih, ← Matrix.mulVec_mulVec]
-
-/-- A divided power of a Lie generator acts through the divided power of its underlying matrix. -/
+/-- A divided power of a Lie generator acts through the divided power of its underlying matrix.
+Both transport steps are functoriality of `ℚ`-algebra homomorphisms
+(`TauCeti.Associative.map_dividedPower`). -/
 private theorem geckRepresentation_dividedPower_ι_apply (x : t.lieAlgebra ht) (n : ℕ)
     (v : t.GeckIndex ht → ℚ) :
     t.geckRepresentation ht
         (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) v =
       Associative.dividedPower n (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) *ᵥ v := by
-  rw [Associative.dividedPower_def, map_smul, map_pow, LinearMap.smul_apply,
-    geckRepresentation_pow_ι_apply, Associative.dividedPower_def, Matrix.smul_mulVec]
+  have h := Associative.map_dividedPower (Matrix.toLinAlgEquiv' (R := ℚ) (n := t.GeckIndex ht))
+    n (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ)
+  rw [Associative.map_dividedPower, t.geckRepresentation_ι ht, ← h,
+    Matrix.toLinAlgEquiv'_apply]
 
 /-- Every entry of a divided power of a numbered raising matrix is an integer. This transports
 the root-string computation of
