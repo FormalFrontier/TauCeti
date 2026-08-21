@@ -12,15 +12,17 @@ public import Mathlib.Algebra.Lie.Killing
 
 `LieAlgebra.IsKilling R L` is stated as the vanishing of the Killing orthogonal complement of the
 whole algebra. Mathlib turns that into nondegeneracy of the Killing form in
-`LieAlgebra.IsKilling.killingForm_nondegenerate`; this file supplies the converse, so that the two
-together say that `LieAlgebra.IsKilling` is exactly nondegeneracy of the Killing form. That is the
-form in which the property is recognised when it is produced by a computation with the form itself,
-as under base change.
+`LieAlgebra.IsKilling.killingForm_nondegenerate`; this file supplies the converse and packages the
+two as an equivalence, saying that `LieAlgebra.IsKilling` is exactly nondegeneracy of the Killing
+form. That is the form in which the property is recognised when it is produced by a computation
+with the form itself, as under base change.
 
 ## Main declarations
 
 * `TauCeti.isKilling_of_killingForm_nondegenerate`: a Lie algebra whose Killing form is
   nondegenerate is Killing.
+* `TauCeti.isKilling_iff_killingForm_nondegenerate`: `LieAlgebra.IsKilling` is exactly
+  nondegeneracy of the Killing form.
 
 ## Roadmap
 
@@ -49,5 +51,10 @@ theorem isKilling_of_killingForm_nondegenerate (h : (killingForm R L).Nondegener
     IsKilling R L :=
   ⟨(LieSubmodule.toSubmodule_eq_bot _).mp <|
     (LieIdeal.coe_killingCompl_top R L).trans h.ker_eq_bot⟩
+
+/-- A Lie algebra is Killing exactly when its Killing form is nondegenerate. -/
+theorem isKilling_iff_killingForm_nondegenerate :
+    IsKilling R L ↔ (killingForm R L).Nondegenerate :=
+  ⟨fun _ ↦ IsKilling.killingForm_nondegenerate R L, isKilling_of_killingForm_nondegenerate R L⟩
 
 end TauCeti

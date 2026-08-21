@@ -20,7 +20,7 @@ into a second integral domain, and that an injective base change loses nothing e
 IsKilling A (A ⊗[R] L) → IsKilling R L,  and  IsKilling A (A ⊗[R] L) ↔ IsKilling R L.
 ```
 
-Both halves are useful. The descent direction transports a semisimplicity statement *down* from a
+Both halves are useful. The descent direction transports the Killing property *down* from a
 large coefficient ring to a small one, which is what a construction over `ℚ` needs when the
 available theorem is stated over an algebraically closed field; it asks nothing of the structure
 map, so it also covers reduction `ℤ → 𝔽ₚ`. The ascent direction transports the property *up*,
