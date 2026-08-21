@@ -46,12 +46,14 @@ discrete case below is proved through it.
   `TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion`, is topological and not merely a
   ring isomorphism: at `k = 0` the coefficient index `Fin 0 →₀ ℕ` is a singleton, so a basic
   neighbourhood is cut out by the single coefficient and the two neighbourhood bases correspond.
+* `TauCeti.Huber.isNoetherianRing_of_isStronglyNoetherian`: the other half of the same
+  zero-variable statement — `A` itself is noetherian when it is already complete and Hausdorff,
+  since then the separated completion does nothing. Completeness is an explicit hypothesis
+  rather than an instance because it must be stated against the group uniformity introduced
+  below, not against whichever `UniformSpace A` a consumer has in scope.
 
-The second half of that roadmap sentence — that `A` itself is noetherian when it is already
-complete and Hausdorff — needs completeness stated against the group uniformity introduced
-below rather than an ambient instance, and is not proved here. Neither is the iteration
-`A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` nor the stability of noetherianness under quotients; those belong to the
-later roadmap milestones of Layer 0.5.
+Neither the iteration `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` nor the stability of noetherianness under quotients is
+proved here; those belong to the later roadmap milestones of Layer 0.5.
 
 ## Provenance
 
@@ -120,6 +122,27 @@ theorem isNoetherianRing_completion_of_isStronglyNoetherian [IsStronglyNoetheria
   let _ := IsTopologicalAddGroup.rightUniformSpace A
   let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
   isNoetherianRing_of_ringEquiv _ restrictedMvPowerSeriesCompletionFinZeroEquiv
+
+/-- **A complete Hausdorff strongly noetherian ring is noetherian.** `A⟨⟩` is the separated
+completion of `A`, so when `A` is already complete and Hausdorff the completion does nothing and
+the noetherianness of `A⟨⟩` is noetherianness of `A`.
+
+Completeness is a hypothesis rather than an instance because it has to be *about the right
+uniformity*. `A` carries only a topology here; the uniformity is the right group uniformity
+`IsTopologicalAddGroup.rightUniformSpace A`, which is what
+`TauCeti.Huber.isNoetherianRing_completion_of_isStronglyNoetherian` completes against, and an
+ambient `[CompleteSpace A]` would be about whichever `UniformSpace A` instance a consumer
+happened to have in scope. Hausdorffness needs no such care: `T0Space` is a property of the
+topology, and for a uniform additive group it is the separation the completion asks for. -/
+theorem isNoetherianRing_of_isStronglyNoetherian [IsStronglyNoetherian A] [T0Space A]
+    (hcomplete : letI := IsTopologicalAddGroup.rightUniformSpace A; CompleteSpace A) :
+    IsNoetherianRing A :=
+  let _ := IsTopologicalAddGroup.rightUniformSpace A
+  let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  let _ : CompleteSpace A := hcomplete
+  let _ : IsNoetherianRing (UniformSpace.Completion A) :=
+    isNoetherianRing_completion_of_isStronglyNoetherian
+  isNoetherianRing_of_ringEquiv _ (UniformSpace.Completion.completeRingEquivSelf A)
 
 end ZeroVariables
 
