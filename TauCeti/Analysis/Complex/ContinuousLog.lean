@@ -8,13 +8,14 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
-import Mathlib.Topology.Order.IntermediateValue
+import Mathlib.Topology.Connected.TotallyDisconnected
+import Mathlib.Topology.DiscreteSubset
 
 /-!
 # Continuous logarithms on a set, and the Borsuk map of two points
 
-A complex-valued function `g` **has a continuous logarithm on** a set `S` when some continuous
-`h` satisfies `exp (h x) = g x` throughout `S`; this file introduces that predicate,
+A complex-valued function `g` **has a continuous logarithm on** a set `S` when some `h`,
+continuous on `S`, satisfies `exp (h x) = g x` throughout `S`; this file introduces that predicate,
 `TauCeti.HasContinuousLogOn`, and proves the two elementary facts about it that planar separation
 arguments run on.
 
@@ -24,23 +25,23 @@ implies `g` is continuous and zero-free on `S` but is strictly stronger, and unl
 open* set — it makes sense, and is genuinely restrictive, on a set with no interior at all: a
 compact `K ⊆ ℂ` such as a curve. That is exactly the case the separation theory needs, so the
 existence statement has to become a predicate carrying its own algebra rather than a one-off
-lemma. The algebra is that of a group homomorphism out of the zero-free continuous functions:
-logarithms add under multiplication (`TauCeti.HasContinuousLogOn.mul`), negate under inversion
-(`TauCeti.HasContinuousLogOn.inv`), restrict along inclusions, and exist outright when `g` avoids
-the slit `Complex.slitPlane`ᶜ, where the principal branch works
-(`TauCeti.hasContinuousLogOn_of_mapsTo_slitPlane`).
+lemma. That algebra is the one the zero-free continuous functions carry: the property is closed
+under multiplication and under inversion, the witnesses adding
+(`TauCeti.HasContinuousLogOn.mul`) and negating (`TauCeti.HasContinuousLogOn.inv`) accordingly; it
+restricts along inclusions, and it holds outright when `g` avoids the slit `Complex.slitPlane`ᶜ,
+where the principal branch works (`TauCeti.hasContinuousLogOn_of_mapsTo_slitPlane`).
 
 ## Gluing along a connected overlap
 
 The first substantial fact is that continuous logarithms glue: if `S` and `T` are closed, their
 overlap `S ∩ T` is preconnected, and `g` has a continuous logarithm on each, then it has one on
 `S ∪ T` (`TauCeti.HasContinuousLogOn.union`). Two logarithms of the same function differ by a
-value of `Complex.exp ⁻¹' {1}`, that is by an integer multiple of `2 * π * I`, and on a
-preconnected overlap that difference cannot move between two such multiples: the imaginary parts
-of a preconnected set of them would have to fill the interval between, which contains the
-half-step `2 * π * n + π`. So one logarithm can be shifted by a single constant to agree with the
-other on the overlap, and the two then define one continuous function on the closed union. The
-constancy step is isolated as `TauCeti.eq_of_isPreconnected_of_forall_exp_eq_one`.
+value of `Complex.exp ⁻¹' {1}`, that is by an integer multiple of `2 * π * I`; distinct such
+multiples are `2 * π` apart, so that fibre is a discrete subset of `ℂ` and the difference, being
+continuous on a preconnected overlap, is constant there. So one logarithm can be shifted by a
+single constant to agree with the other on the overlap, and the two then define one continuous
+function on the closed union. The constancy step is isolated as
+`TauCeti.eq_of_isPreconnected_of_forall_exp_eq_one`.
 
 ## The Borsuk map
 
@@ -147,7 +148,8 @@ variable {X : Type*} [TopologicalSpace X] {g g' : X → ℂ} {S T : Set X}
 /-! ## The predicate and its algebra -/
 
 /-- `HasContinuousLogOn g S` asserts that the complex-valued function `g` admits a **continuous
-logarithm** on the set `S`: some continuous `h` satisfies `exp (h x) = g x` for every `x ∈ S`.
+logarithm** on the set `S`: some `h`, continuous on `S`, satisfies `exp (h x) = g x` for every
+`x ∈ S`.
 
 On a simply connected open set this holds for every zero-free continuous `g`, by Mathlib's
 `Complex.exists_continuousOn_eqOn_exp_comp`; on a general set — a compact subset of `ℂ`, say — it
@@ -218,47 +220,40 @@ theorem hasContinuousLogOn_of_mapsTo_slitPlane (hg : ContinuousOn g S)
 /-! ## Gluing along a connected overlap -/
 
 /-- **A preconnected set of logarithms of `1` is a single point.** Every such logarithm is an
-integer multiple of `2 * π * I`, so the set has all its real parts `0`, and its imaginary parts
-form a preconnected subset of `ℝ` inside `2 * π * ℤ`. Two distinct multiples there would force the
-half-step `2 * π * n + π` between them into the set as well, and that is no multiple of `2 * π`. -/
+integer multiple of `2 * π * I`, and two distinct multiples are at distance at least `2 * π`, so
+`Complex.exp ⁻¹' {1}` is a discrete subset of `ℂ`; a preconnected set inside it is therefore a
+single point, by `IsPreconnected.constant_of_mapsTo` applied to the identity. -/
 theorem eq_of_isPreconnected_of_forall_exp_eq_one {P : Set ℂ} (hP : IsPreconnected P)
     (h : ∀ w ∈ P, Complex.exp w = 1) {w₁ w₂ : ℂ} (h₁ : w₁ ∈ P) (h₂ : w₂ ∈ P) : w₁ = w₂ := by
-  have hform : ∀ w ∈ P, w.re = 0 ∧ ∃ n : ℤ, w.im = 2 * π * n := by
-    intro w hw
-    obtain ⟨n, rfl⟩ := Complex.exp_eq_one_iff.mp (h w hw)
-    exact ⟨by simp, n, by simp; ring⟩
-  have him : IsPreconnected (Complex.im '' P) :=
-    hP.image _ Complex.continuous_im.continuousOn
-  -- the imaginary part cannot jump from one multiple of `2 * π` to another
-  have key : ∀ v₁ ∈ P, ∀ v₂ ∈ P, v₁.im ≤ v₂.im → v₁.im = v₂.im := by
-    intro v₁ hv₁ v₂ hv₂ hle
-    by_contra hne
-    obtain ⟨-, n₁, hn₁⟩ := hform v₁ hv₁
-    obtain ⟨-, n₂, hn₂⟩ := hform v₂ hv₂
-    have hlt : v₁.im < v₂.im := lt_of_le_of_ne hle hne
-    have hn : (n₁ : ℝ) < n₂ := by
-      rw [hn₁, hn₂] at hlt
-      nlinarith [Real.pi_pos]
-    have hn' : (n₁ : ℝ) + 1 ≤ n₂ := by
-      exact_mod_cast Int.add_one_le_iff.mpr (by exact_mod_cast hn)
-    have hmem : v₁.im + π ∈ Icc v₁.im v₂.im := by
-      refine ⟨by linarith [Real.pi_pos], ?_⟩
-      rw [hn₁, hn₂]
-      rw [hn₁] at hle
-      nlinarith [Real.pi_pos]
-    obtain ⟨w, hwP, hw⟩ :=
-      him.Icc_subset (mem_image_of_mem _ hv₁) (mem_image_of_mem _ hv₂) hmem
-    obtain ⟨-, n, hn₀⟩ := hform w hwP
-    rw [hn₀, hn₁] at hw
-    have hcancel : π * (2 * (n : ℝ)) = π * (2 * (n₁ : ℝ) + 1) := by linarith
-    have h2 : (2 * (n : ℝ)) = 2 * (n₁ : ℝ) + 1 := mul_left_cancel₀ Real.pi_ne_zero hcancel
-    have : (2 * n : ℤ) = 2 * n₁ + 1 := by exact_mod_cast h2
-    omega
-  refine Complex.ext ?_ ?_
-  · rw [(hform w₁ h₁).1, (hform w₂ h₂).1]
-  · rcases le_total w₁.im w₂.im with hle | hle
-    · exact key _ h₁ _ h₂ hle
-    · exact (key _ h₂ _ h₁ hle).symm
+  -- the fibre of `1` is discrete: two of its points differ by an integer multiple of `2 * π * I`,
+  -- so the ball of radius `π` about one of them meets it only there
+  have hdisc : IsDiscrete (Complex.exp ⁻¹' {1}) := by
+    refine isDiscrete_iff_forall_mem_exists_isOpen.mpr fun y hy => ⟨ball y π, isOpen_ball, ?_⟩
+    have hy1 : Complex.exp y = 1 := Set.mem_singleton_iff.mp hy
+    refine subset_antisymm (fun z hz => ?_) ?_
+    · have hz1 : Complex.exp z = 1 := hz.2
+      have hsub : Complex.exp (z - y) = 1 := by rw [Complex.exp_sub, hz1, hy1, div_one]
+      obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp hsub
+      have hlt : ‖z - y‖ < π := by
+        rw [← dist_eq_norm]
+        exact mem_ball.mp hz.1
+      have him : |(z - y).im| ≤ ‖z - y‖ := Complex.abs_im_le_norm _
+      have hval : (z - y).im = 2 * π * n := by
+        rw [hn]
+        simp [mul_comm]
+      have hn0 : n = 0 := by
+        by_contra hne
+        have h1 : (1 : ℝ) ≤ |(n : ℝ)| := by
+          exact_mod_cast Int.one_le_abs (by exact_mod_cast hne)
+        rw [hval, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * π)] at him
+        nlinarith [Real.pi_pos]
+      have hzy : z - y = 0 := by rw [hn, hn0]; simp
+      simpa [sub_eq_zero] using hzy
+    · rintro z hz
+      rw [Set.mem_singleton_iff] at hz
+      subst hz
+      exact ⟨mem_ball_self Real.pi_pos, hy⟩
+  exact hP.constant_of_mapsTo hdisc continuousOn_id (fun w hw => h w hw) h₁ h₂
 
 /-- **Continuous logarithms glue along a preconnected overlap.** Two logarithms of `g` differ, on
 the overlap, by a logarithm of `1`; that difference is constant there by
