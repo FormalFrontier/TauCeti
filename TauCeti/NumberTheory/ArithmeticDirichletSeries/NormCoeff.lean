@@ -19,10 +19,10 @@ This file defines `TauCeti.normCoeff`, the ordinary arithmetic function obtained
 function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` carrier; that value
 is available from `ArithmeticFunction.map_zero`.
 
-The basic API records the value at one and compatibility with the additive operations,
-complex scalar multiplication, and complex conjugation.  For the constant-one ideal arithmetic
-function, the positive coefficients are the numbers of integral ideals of the corresponding norm;
-hence its `LSeries` is Mathlib's `NumberField.dedekindZeta`.
+The construction is bundled as a complex-linear map.  The basic API records the value at one and
+compatibility with complex conjugation.  For the constant-one ideal arithmetic function, the
+positive coefficients are the numbers of integral ideals of the corresponding norm; hence its
+`LSeries` is Mathlib's `NumberField.dedekindZeta`.
 
 ## Roadmap role
 
@@ -48,16 +48,26 @@ private theorem finite_normFiber (n : ℕ) :
     {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}.Finite := by
   exact (Ideal.finite_setOfPred_absNorm_eq n).preimage Subtype.val_injective.injOn
 
-/-- Regroup an ideal arithmetic function by absolute norm.
+/-- Regroup ideal arithmetic functions by absolute norm as a complex-linear map.
 
 The coefficient at `n` is the finite sum of `f I` over the nonzero integral ideals `I` whose
 absolute norm is `n`.  Use `normCoeff_apply` for this formula. -/
-noncomputable def normCoeff (f : IdealArithmeticFunction K) : ArithmeticFunction ℂ where
-  toFun n := ∑ᶠ I ∈ {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}, f I
-  map_zero' := by
-    apply finsum_mem_eq_zero_of_forall_eq_zero
-    intro I hI
-    exact (mem_nonZeroDivisors_iff_ne_zero.mp I.property (Ideal.absNorm_eq_zero_iff.mp hI)).elim
+noncomputable def normCoeff : IdealArithmeticFunction K →ₗ[ℂ] ArithmeticFunction ℂ where
+  toFun f :=
+    { toFun n := ∑ᶠ I ∈ {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}, f I
+      map_zero' := by
+        apply finsum_mem_eq_zero_of_forall_eq_zero
+        intro I hI
+        exact
+          (mem_nonZeroDivisors_iff_ne_zero.mp I.property (Ideal.absNorm_eq_zero_iff.mp hI)).elim }
+  map_add' f g := by
+    ext n
+    simp only [Pi.add_apply]
+    exact finsum_mem_add_distrib (finite_normFiber K n)
+  map_smul' c f := by
+    ext n
+    simp only [Pi.smul_apply]
+    exact (DistribSMul.toAddMonoidHom ℂ c).map_finsum_mem f (finite_normFiber K n) |>.symm
 
 /-- The value of `normCoeff f` is the finite sum of `f` over the corresponding absolute-norm
 fibre. -/
@@ -83,45 +93,9 @@ theorem normCoeff_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 :=
   rw [hfiber]
   simp
 
-/-- Regrouping the zero ideal arithmetic function gives the zero arithmetic function. -/
-@[simp]
-theorem normCoeff_zero : normCoeff K (0 : IdealArithmeticFunction K) = 0 := by
-  ext n
-  simp [normCoeff_apply]
-
-/-- Regrouping commutes with pointwise addition. -/
-@[simp]
-theorem normCoeff_add (f g : IdealArithmeticFunction K) :
-    normCoeff K (f + g) = normCoeff K f + normCoeff K g := by
-  ext n
-  simp only [normCoeff_apply, Pi.add_apply, ArithmeticFunction.add_apply]
-  exact finsum_mem_add_distrib (finite_normFiber K n)
-
-/-- Regrouping commutes with pointwise negation. -/
-@[simp]
-theorem normCoeff_neg (f : IdealArithmeticFunction K) :
-    normCoeff K (-f) = -normCoeff K f := by
-  ext n
-  simp only [normCoeff_apply, Pi.neg_apply, ArithmeticFunction.neg_apply]
-  exact finsum_mem_neg_distrib f (finite_normFiber K n)
-
-/-- Regrouping commutes with pointwise subtraction. -/
-@[simp]
-theorem normCoeff_sub (f g : IdealArithmeticFunction K) :
-    normCoeff K (f - g) = normCoeff K f - normCoeff K g := by
-  rw [sub_eq_add_neg, normCoeff_add, normCoeff_neg, sub_eq_add_neg]
-
-/-- Regrouping commutes with complex scalar multiplication. -/
-@[simp]
-theorem normCoeff_smul (c : ℂ) (f : IdealArithmeticFunction K) :
-    normCoeff K (c • f) = c • normCoeff K f := by
-  ext n
-  simp only [normCoeff_apply, Pi.smul_apply, ArithmeticFunction.smul_map]
-  exact (DistribSMul.toAddMonoidHom ℂ c).map_finsum_mem f (finite_normFiber K n) |>.symm
-
 /-- Regrouping commutes with coefficientwise complex conjugation. -/
 @[simp]
-theorem normCoeff_conj_apply (f : IdealArithmeticFunction K) (n : ℕ) :
+theorem normCoeff_star_apply (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K (fun I ↦ (starRingEnd ℂ) (f I)) n = star (normCoeff K f n) := by
   simp only [normCoeff_apply]
   exact ((starAddEquiv : ℂ ≃+ ℂ).map_finsum_mem f (finite_normFiber K n)).symm
