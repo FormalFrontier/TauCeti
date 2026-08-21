@@ -105,9 +105,7 @@ theorem exchangeableLaw_map_prod_coding {T β : Type*} [MeasurableSpace T] [Meas
       = (fun p : T × (ℕ → β) => fun i => f p.1 (p.2 i)) ∘
         Prod.map (id : T → T) (permReindex (α := β) τ) := by
     funext p i
-    change permReindex (α := α) τ (fun j => f p.1 (p.2 j)) i =
-      f p.1 (permReindex (α := β) τ p.2 i)
-    rw [permReindex_apply, permReindex_apply]
+    simp only [Function.comp_apply, Prod.map_fst, Prod.map_snd, id_eq, permReindex_apply]
   have hpermα : Measurable (permReindex (α := α) τ) := measurable_reindex τ
   have hpermβ : Measurable (permReindex (α := β) τ) := measurable_reindex τ
   rw [Measure.map_map hpermα hG, hcomp, ← Measure.map_map hG (measurable_id.prodMap hpermβ),
