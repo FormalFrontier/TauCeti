@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.Weights.Automorphism
 public import TauCeti.Algebra.Lie.Weights.Chevalley.Involution
-public import TauCeti.Algebra.Lie.Weights.StructureConstant.FourTerm
 
 /-!
 # Rescaling a normalised system against an automorphism inverting the Cartan subalgebra
@@ -47,7 +46,7 @@ roots.
 *Square roots of them rescale the family.* Rescaling `x α` to `s α • x α` preserves the
 normalisation exactly when `s α * s (-α) = 1`, and it multiplies `c α` by `s α ^ 2`. So `c α` can be
 moved to `-1` precisely when `-c α` is a square, and choosing one root out of each opposite pair
-with `TauCeti.exists_forall_mem_iff_neg_notMem` makes the square roots at `α` and `-α` inverse to
+with `TauCeti.exists_rootPairRepresentatives` makes the square roots at `α` and `-α` inverse to
 each other. This is `TauCeti.IsSl2System.exists_isChevalleySystem_of_forall_exists_sq`.
 
 Together these reduce the existence of a Chevalley system for a given `ω` to the statement that
@@ -157,6 +156,10 @@ theorem mul_structureConstant_eq_of_map_eq_smul_neg (α β γ : Weight K H L) (h
         (Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
           (c := (-α : Weight K H L)) (d := (-β : Weight K H L))
           (by simp [add_assoc]) hαβ) := by
+  have hneg : ((-γ : Weight K H L) : H → K) =
+      ((-α : Weight K H L) : H → K) + ((-β : Weight K H L) : H → K) :=
+    Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
+      (c := (-α : Weight K H L)) (d := (-β : Weight K H L)) (by simp [add_assoc]) hαβ
   refine smul_left_injective K (hx.ne_zero (-γ) hγ.neg) ?_
   calc (c * hx.structureConstant α β γ hγ hαβ) • x (-γ)
       = hx.structureConstant α β γ hγ hαβ • (c • x (-γ)) := by
@@ -167,16 +170,9 @@ theorem mul_structureConstant_eq_of_map_eq_smul_neg (α β γ : Weight K H L) (h
     _ = ⁅ω (x α), ω (x β)⁆ := ω.map_lie (x α) (x β)
     _ = ⁅a • x (-α), b • x (-β)⁆ := by rw [ha, hb]
     _ = (a * b) • ⁅x (-α), x (-β)⁆ := by rw [smul_lie, lie_smul, smul_smul]
-    _ = (a * b) •
-          (hx.structureConstant (-α) (-β) (-γ) hγ.neg
-            (Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
-              (c := (-α : Weight K H L)) (d := (-β : Weight K H L))
-              (by simp [add_assoc]) hαβ) • x (-γ)) := by
+    _ = (a * b) • (hx.structureConstant (-α) (-β) (-γ) hγ.neg hneg • x (-γ)) := by
         rw [hx.lie_eq_structureConstant_smul (-α) (-β) (-γ) hγ.neg]
-    _ = (a * b * hx.structureConstant (-α) (-β) (-γ) hγ.neg
-          (Weight.coe_neg_eq_add_of_coe_eq_add (a := (α : H → K)) (b := β)
-            (c := (-α : Weight K H L)) (d := (-β : Weight K H L))
-            (by simp [add_assoc]) hαβ)) • x (-γ) := by rw [smul_smul]
+    _ = (a * b * hx.structureConstant (-α) (-β) (-γ) hγ.neg hneg) • x (-γ) := by rw [smul_smul]
 
 /-- **The multiplicativity relation with the opposite structure constant eliminated.** Multiplying
 `TauCeti.IsSl2System.mul_structureConstant_eq_of_map_eq_smul_neg` by `N(α, β)` and using
@@ -249,14 +245,14 @@ given automorphism.
 
 The rescaling is by a square root `t α` of `-c α` at one root of each opposite pair and by its
 inverse at the other, which is what keeps the normalisation `⁅y α, y (-α)⁆ = α^∨` intact. The pair
-is chosen by `TauCeti.exists_forall_mem_iff_neg_notMem`, and the constraint `c α * c (-α) = 1` of
+is chosen by `TauCeti.exists_rootPairRepresentatives`, and the constraint `c α * c (-α) = 1` of
 `TauCeti.IsSl2System.mul_eq_one_of_map_eq_smul_neg` is what makes the two square roots inverse to
 each other, so that one rescaling serves both roots of the pair. -/
 theorem exists_isChevalleySystem_of_forall_exists_sq
     (hsq : ∀ α : Weight K H L, α.IsNonZero → ∃ t : K, ω (x α) = -(t ^ 2) • x (-α)) :
     ∃ y : Weight K H L → L, IsChevalleySystem ω y := by
   classical
-  obtain ⟨s, hs⟩ := exists_forall_mem_iff_neg_notMem K H (L := L)
+  obtain ⟨s, hs⟩ := exists_rootPairRepresentatives K H (L := L)
   have key : ∀ α : Weight K H L, ∃ t : K, α.IsNonZero → ω (x α) = -(t ^ 2) • x (-α) := by
     intro α
     by_cases hα : α.IsNonZero

@@ -29,7 +29,7 @@ the partner of the vector chosen for `α` are two elements of the same line, and
 The construction below therefore chooses one root out of each pair `{α, -α}` and reads off the
 vector at the other root from the triple already chosen, which is possible because `α ↦ -α` is a
 fixed-point-free involution on the roots. That selection is
-`TauCeti.exists_forall_mem_iff_neg_notMem`, stated separately because every later rescaling of a
+`TauCeti.exists_rootPairRepresentatives`, stated separately because every later rescaling of a
 normalised family has to make the same choice. The resulting family satisfies the normalisation
 on the nose, in both directions, because an `sl₂` triple stays one when `e` and `f` are exchanged
 and `h` is negated, and `(-α)^∨ = -α^∨`.
@@ -58,8 +58,10 @@ defined once the root vectors are.
 
 ## Main results
 
+* `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`: reading a vanishing sum of four weights as an
+  equation between opposite pair sums.
 * `TauCeti.ne_neg_of_isNonZero`: negation fixes no root.
-* `TauCeti.exists_forall_mem_iff_neg_notMem`: a set of weights containing exactly one of
+* `TauCeti.exists_rootPairRepresentatives`: a set of weights containing exactly one of
   `α` and `-α` for every root `α`.
 * `TauCeti.exists_isSl2System`: such a family exists.
 * `TauCeti.IsSl2System.isSl2Triple`: `(α^∨, x α, x (-α))` is an `sl₂` triple.
@@ -239,6 +241,22 @@ theorem mul_eq_one_of_eq_smul (hα : α.IsNonZero) {c d : K} (hc : y α = c • 
 
 end IsSl2System
 
+omit [CharZero K] in
+/-- If four weights sum to zero and a weight `μ` names the sum of the first two, then `-μ` names
+the sum of the last two.
+
+This turns a relation among four weights into the hypothesis that a structure constant at the
+opposite pair asks for: it derives the equations pairing `δ` with one of `α`, `β` and `γ` inside
+`TauCeti.IsSl2System.structureConstant_four_term`, and the negated root sum inside
+`TauCeti.IsSl2System.mul_structureConstant_eq_of_map_eq_smul_neg`. -/
+theorem Weight.coe_neg_eq_add_of_coe_eq_add {μ : Weight K H L} {a b c d : H → K}
+    (hsum : a + b + c + d = 0) (hμ : (μ : H → K) = a + b) :
+    ((-μ : Weight K H L) : H → K) = c + d := by
+  funext y
+  have hy := congrFun hsum y
+  simp only [Weight.coe_neg, hμ, Pi.add_apply, Pi.neg_apply, Pi.zero_apply] at hy ⊢
+  linear_combination -hy
+
 /-- **A root is not its own negative.** Evaluating at the coroot separates the two: a root takes
 the value `2` there, and its negative the value `-2`. -/
 theorem ne_neg_of_isNonZero {α : Weight K H L} (hα : α.IsNonZero) : α ≠ -α := by
@@ -257,7 +275,7 @@ Negation is a fixed-point-free involution on the roots by `TauCeti.ne_neg_of_isN
 of representatives for the equivalence relation it generates is such a set. The choice is what a
 construction has to make whenever it treats `α` and `-α` asymmetrically, as the normalisation
 `⁅x α, x (-α)⁆ = α^∨` and the rescalings preserving it both force it to. -/
-theorem exists_forall_mem_iff_neg_notMem :
+theorem exists_rootPairRepresentatives :
     ∃ s : Set (Weight K H L), ∀ α : Weight K H L, α.IsNonZero → (α ∈ s ↔ -α ∉ s) := by
   classical
   set r : Weight K H L → Weight K H L → Prop := fun α β ↦ β = α ∨ β = -α
@@ -294,7 +312,7 @@ to it, assigns `e` to the chosen root and `f` to its negative, and `0` to a zero
 theorem exists_isSl2System : ∃ x : Weight K H L → L, IsSl2System x := by
   classical
   -- A set `s` of roots containing exactly one of `α` and `-α`.
-  obtain ⟨s, hs⟩ := exists_forall_mem_iff_neg_notMem K H (L := L)
+  obtain ⟨s, hs⟩ := exists_rootPairRepresentatives K H (L := L)
   have hone : ∀ α : Weight K H L, α.IsNonZero → α ∈ s ∨ (-α) ∈ s := fun α hα ↦
     or_iff_not_imp_left.2 fun h ↦ not_not.1 fun h' ↦ h ((hs α hα).2 h')
   have hnot : ∀ α : Weight K H L, α.IsNonZero → ¬(α ∈ s ∧ (-α) ∈ s) := fun α hα h ↦
