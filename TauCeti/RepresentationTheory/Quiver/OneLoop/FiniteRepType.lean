@@ -45,6 +45,8 @@ algebraically closed -- rather than anything finite.
 * `TauCeti.indecomposable_oneLoopRep`: the scalar representations are indecomposable.
 * `TauCeti.nonempty_oneLoopRep_iso_iff`: two of them are isomorphic exactly when the scalars agree.
 * `TauCeti.indecomposable_oneLoopNilpotentRep`: the nilpotent Jordan blocks are indecomposable.
+* `TauCeti.nonempty_oneLoopNilpotentRep_iso_iff`: two of them are isomorphic exactly when their
+  sizes agree.
 * `TauCeti.not_isFiniteRepType_oneLoop`: over any field the loop quiver has infinite representation
   type.
 
@@ -453,6 +455,12 @@ theorem eq_of_nonempty_oneLoopNilpotentRep_iso {m n : ℕ}
   have hd := congrFun (dimVector_eq_of_iso e) Quiver.OneLoop.vertex
   rw [dimVector_oneLoopNilpotentRep, dimVector_oneLoopNilpotentRep] at hd
   omega
+
+/-- Two nilpotent Jordan blocks are isomorphic exactly when their sizes agree. -/
+@[simp]
+theorem nonempty_oneLoopNilpotentRep_iso_iff {m n : ℕ} :
+    Nonempty (oneLoopNilpotentRep.{u, w} k m ≅ oneLoopNilpotentRep.{u, w} k n) ↔ m = n :=
+  ⟨eq_of_nonempty_oneLoopNilpotentRep_iso, by rintro rfl; exact ⟨Iso.refl _⟩⟩
 
 end Nilpotent
 
