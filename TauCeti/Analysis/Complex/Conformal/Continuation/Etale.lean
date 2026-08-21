@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Homotopy.Lifting
 public import TauCeti.Analysis.Complex.Conformal.Continuation.Basic
 public import TauCeti.Analysis.Complex.HolomorphicSheaf
 
@@ -20,10 +19,10 @@ its docstring records, without proof, that
 > precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`.
 
 `TauCeti/Analysis/Complex/HolomorphicSheaf.lean` builds that space. This file proves the sentence
-(`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint`) and spends it: the étalé
-projection is a separated local homeomorphism there, which is exactly what Mathlib's abstract
-monodromy theorem `IsLocalHomeomorph.monodromy_theorem` asks of a map, so that theorem applies
-verbatim to holomorphic germs (`TauCeti.monodromy_theorem_etaleSpace`).
+(`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint`). The étalé projection is a
+separated local homeomorphism, which is exactly what Mathlib's abstract monodromy theorem
+`IsLocalHomeomorph.monodromy_theorem` asks of a map, so that theorem applies verbatim to
+holomorphic germs.
 
 ## The dictionary
 
@@ -52,10 +51,9 @@ merely comparable.
 ## Monodromy, and what this does not replace
 
 `Conformal/Monodromy.lean` proves the monodromy theorem for germ families directly, by a metric
-stability argument, and its docstring names building the étalé space and rederiving the theorem
-from Mathlib's abstract one as follow-up work. That rederivation is
-`TauCeti.monodromy_theorem_etaleSpace`, and it is stated where the abstract theorem states it:
-about continuous lifts of the rows of a homotopy rel endpoints, not about germ families. It does
+stability argument. Mathlib's abstract theorem now applies directly to the separated local
+homeomorphism built here: it is stated about continuous lifts of the rows of a homotopy rel
+endpoints, not about germ families. It does
 not replace `TauCeti.monodromy_theorem_of_free_homotopy`, whose homotopy is allowed to move the
 endpoints and whose conclusion is a continuation along the path the far endpoint sweeps out;
 Mathlib's abstract theorem is rel endpoints and gives an equality of points, so the free-homotopy
@@ -70,9 +68,6 @@ lifting, in the vocabulary the deck-group and uniformization consumers of layer 
   is exactly a continuous lift of that path to the étalé space of holomorphic germs**.
 * `TauCeti.isAnalyticContinuationAlong_repFun` — the converse reading: a continuous map into the
   étalé space continues the germs it carries along its own base path.
-* `TauCeti.monodromy_theorem_etaleSpace` — **the monodromy theorem in étalé-space form**, from
-  Mathlib's abstract monodromy theorem and the separatedness proved in
-  `TauCeti/Analysis/Complex/HolomorphicSheaf.lean`.
 
 ## Generality
 
@@ -80,11 +75,9 @@ The germs are germs of maps `ℂ → E` into a complex Banach space `E`, the gen
 `TauCeti.IsAnalyticContinuationAlong` and the sheaf built in
 `TauCeti/Analysis/Complex/HolomorphicSheaf.lean`. The two restrictions on `E` are the ones that
 file records: `Type` rather than `Type*`, for a universe reason of Mathlib's étalé space, and
-completeness, which `AnalyticAt.exists_ball_analyticOnNhd` asks for. Neither is needed by
-`TauCeti.monodromy_theorem_etaleSpace`, which touches no germ, so it is stated without
-completeness. The parameter space `X` and the parameter set `s` are arbitrary, as in
-`Conformal/Continuation/Basic.lean`: nothing below needs the parameter set to be an interval, and
-the monodromy statement is the only place the unit interval appears.
+completeness, which `AnalyticAt.exists_ball_analyticOnNhd` asks for. The parameter space `X` and
+the parameter set `s` are arbitrary, as in
+`Conformal/Continuation/Basic.lean`: nothing below needs the parameter set to be an interval.
 
 ## References
 
@@ -96,7 +89,7 @@ public section
 
 namespace TauCeti
 
-open CategoryTheory Metric Opposite Set TopologicalSpace Topology unitInterval
+open CategoryTheory Metric Opposite Set TopologicalSpace Topology
 
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
   {X : Type*} [TopologicalSpace X] {f : X → ℂ → E} {γ : X → ℂ} {s : Set X}
@@ -177,25 +170,5 @@ theorem isAnalyticContinuationAlong_repFun {Γ : X → (holomorphicPresheaf E).E
   refine (isAnalyticContinuationAlong_iff_continuousOn_germPoint
     (fun t _ => HolomorphicPresheaf.analyticAt_repFun (Γ t))).mpr ?_
   simpa only [HolomorphicPresheaf.germPoint_repFun] using hΓ
-
-/-! ### Monodromy -/
-
-omit [CompleteSpace E] in
-/-- **The monodromy theorem, in étalé-space form.** If the rows `h (t, ·)` of a homotopy rel
-endpoints of paths in `ℂ` all lift continuously to the étalé space of holomorphic germs, from one
-and the same starting germ, then all the lifts finish at the same germ.
-
-This is Mathlib's `IsLocalHomeomorph.monodromy_theorem` applied to the étalé projection, whose two
-hypotheses — that it is a local homeomorphism and that it is separated — are
-`TauCeti.HolomorphicPresheaf.isLocalHomeomorph_base` and
-`TauCeti.HolomorphicPresheaf.isSeparatedMap_base`. Combined with
-`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint`, which turns a continuation into
-such a lift, it is the covering-space reading of `TauCeti.monodromy_theorem`. -/
-theorem monodromy_theorem_etaleSpace {c₀ c₁ : C(I, ℂ)} (h : c₀.HomotopyRel c₁ {0, 1})
-    (Γ : I → C(I, (holomorphicPresheaf E).EtaleSpace))
-    (hlift : ∀ t x, (Γ t x).base = h (t, x)) (hstart : ∀ t, Γ t 0 = Γ 0 0) (t : I) :
-    Γ t 1 = Γ 0 1 :=
-  HolomorphicPresheaf.isLocalHomeomorph_base.monodromy_theorem
-    HolomorphicPresheaf.isSeparatedMap_base h Γ hlift hstart t
 
 end TauCeti

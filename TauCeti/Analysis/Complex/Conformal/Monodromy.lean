@@ -116,8 +116,8 @@ stability engine, which is the concrete content that the abstract theorem's sepa
 hypothesis packages. The other route is now available too:
 `TauCeti/Analysis/Complex/HolomorphicSheaf.lean` builds the étale space of holomorphic germs and
 proves its projection to be a separated local homeomorphism, and
-`TauCeti.monodromy_theorem_etaleSpace` of `Conformal/Continuation/Etale.lean` is Mathlib's
-abstract theorem read there. That route does not subsume this file:
+Mathlib's abstract theorem applies directly to that projection. That route does not subsume this
+file:
 `TauCeti.monodromy_theorem_of_free_homotopy` moves the endpoints and concludes with a
 continuation along the path they sweep out, whereas the abstract theorem is rel endpoints and
 concludes with an equality of two lifted points.

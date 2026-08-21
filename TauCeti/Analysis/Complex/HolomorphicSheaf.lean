@@ -58,9 +58,9 @@ transport.
 
 ## The two theorems
 
-`TauCeti.HolomorphicPresheaf.isLocalHomeomorph_base` is the chart statement of
-`TauCeti/Topology/Sheaves/EtaleSpace.lean`, instantiated: over an open set on which a section is
-defined, the germs of that section form an open set carried homeomorphically onto the base.
+`TauCeti.TopCat.Presheaf.EtaleSpace.isLocalHomeomorph_base` is the chart statement of
+`TauCeti/Topology/Sheaves/EtaleSpace.lean`: over an open set on which a section is defined, the
+germs of that section form an open set carried homeomorphically onto the base.
 
 `TauCeti.HolomorphicPresheaf.isSeparatedMap_base` is the analytic content, and it is the
 **identity theorem** in disguise. Two distinct germs at one point `x` are represented by sections
@@ -78,8 +78,6 @@ the intended application; `Conformal/Continuation/Etale.lean` supplies that appl
 * `TauCeti.HolomorphicPresheaf.germ_eq_iff` — germs agree exactly when the functions agree nearby.
 * `TauCeti.HolomorphicPresheaf.continuousOn_germPoint` — the germ map of a holomorphic function is
   a continuous section of the étalé projection.
-* `TauCeti.HolomorphicPresheaf.isLocalHomeomorph_base` — **the étalé projection is a local
-  homeomorphism**.
 * `TauCeti.HolomorphicPresheaf.isSeparatedMap_base` — **the étalé projection is separated**.
 
 ## Generality
@@ -388,12 +386,6 @@ theorem germPoint_repFun (p : (holomorphicPresheaf E).EtaleSpace) :
   rw [germPoint, germAt_repFun]
 
 /-! ### The projection is a separated local homeomorphism -/
-
-omit [CompleteSpace E] in
-/-- **The étalé projection of the sheaf of holomorphic functions is a local homeomorphism.** -/
-theorem isLocalHomeomorph_base :
-    IsLocalHomeomorph (_root_.TopCat.Presheaf.EtaleSpace.base (F := holomorphicPresheaf E)) :=
-  TopCat.Presheaf.EtaleSpace.isLocalHomeomorph_base (holomorphicPresheaf E)
 
 omit [CompleteSpace E] in
 /-- **The étalé projection of the sheaf of holomorphic functions is a separated map**: two
