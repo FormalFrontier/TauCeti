@@ -76,13 +76,20 @@ variable {ρ : Representation ℂ G V} {σ : Representation ℝ G W}
 /-- **An irreducible representation with a real form is orthogonal.**  Summing the dot product of a
 basis over the conjugates produces a nonzero invariant symmetric form on the real side, and
 transporting it along the real form makes the complex representation carry one too, which is
-exactly the orthogonal case of the Frobenius-Schur trichotomy. -/
-theorem IsRealForm.frobeniusSchurIndicator_eq_one [FiniteDimensional ℝ W] [ρ.IsIrreducible]
-    (h : IsRealForm ρ σ) : frobeniusSchurIndicator ρ = 1 := by
-  have : FiniteDimensional ℂ V := h.finiteDimensional
+exactly the orthogonal case of the Frobenius-Schur trichotomy.
+
+No finiteness is assumed of the real form: irreducibility over a finite group already makes `V`
+finite-dimensional (`Representation.IsIrreducible.finiteDimensional`), and a real form has
+the same dimension as the representation it is a form of
+(`Representation.IsRealForm.finrank_eq`), so `W` inherits both finiteness and nontriviality. -/
+theorem IsRealForm.frobeniusSchurIndicator_eq_one [ρ.IsIrreducible] (h : IsRealForm ρ σ) :
+    frobeniusSchurIndicator ρ = 1 := by
+  have : FiniteDimensional ℂ V := IsIrreducible.finiteDimensional ‹ρ.IsIrreducible›
   have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
+  have hrank : finrank ℝ W = finrank ℂ V := h.finrank_eq
+  have : FiniteDimensional ℝ W := Module.finite_of_finrank_pos (hrank ▸ Module.finrank_pos)
   have : Nontrivial W :=
-    Module.nontrivial_of_finrank_pos (R := ℝ) (h.finrank_eq ▸ Module.finrank_pos)
+    Module.nontrivial_of_finrank_pos (R := ℝ) (hrank ▸ Module.finrank_pos)
   obtain ⟨B, hB, hsymm, hB0⟩ := σ.exists_isInvariantForm_isSymm_ne_zero
   obtain ⟨C, hC, hCsymm, hC0⟩ := h.exists_isInvariantForm_isSymm_ne_zero hB hsymm hB0
   exact frobeniusSchurIndicator_eq_one_of_isSymm ρ hC hC0 hCsymm
