@@ -17,7 +17,8 @@ import TauCeti.Data.ZMod.Units
 The natural reduction map `SL₂(ℤ) → SL₂(ℤ/dℤ)` is surjective (strong approximation for
 `SL₂`; Shimura §1.6, Serre Ch. VII), and the base-change map `SL(n, R) → GL(n, S)` sends
 `-I` to `-I`. Basic coordinate descriptions for `SL₂` and its image under `mapGL` are also
-recorded here for downstream matrix computations.
+recorded here for downstream matrix computations, together with what the determinant says about
+a matrix with a prescribed bottom row `(N, p)`: it is the Bézout relation `m p - n N = 1`.
 
 The third result pins down `±I` itself, which is what the base-change statement moves around:
 over a commutative ring without zero divisors the centre of `SL₂` is exactly `{±I}`, the
@@ -34,6 +35,11 @@ diamond operators of the ModularForms roadmap (Layer 0), where it realizes every
 * `Matrix.SpecialLinearGroup.mapGL_neg_one`: `mapGL S (-1) = -1`.
 * `Matrix.SpecialLinearGroup.det_fin_two`: the determinant-one identity in coordinates.
 * `Matrix.SpecialLinearGroup.coe_mapGL_fin_two`: the entrywise matrix of `mapGL ℚ` on `SL₂(ℤ)`.
+* `Matrix.SpecialLinearGroup.bezout_of_lowerRow`, together with
+  `Matrix.SpecialLinearGroup.coprime_of_lowerRow` and
+  `Matrix.SpecialLinearGroup.intCast_mul_of_lowerRow`: a bottom row `(N, p)` is a Bézout
+  relation, so it forces `p` and `N` to be coprime, and the diagonal entries to be mutually
+  inverse modulo `N`.
 * `Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one`: the centre of `SL₂` is
   `{±I}` when `R` has no zero divisors.
 
@@ -65,6 +71,28 @@ lemma coe_mapGL_fin_two (σ : SL(2, ℤ)) :
   rw [mapGL_coe_matrix]
   ext i j
   fin_cases i <;> fin_cases j <;> simp
+
+/-- **The bottom row of an `SL₂(ℤ)` matrix is a Bézout relation.** If it is `(N, p)`, then the
+top row `(m, n)` satisfies `m p - n N = 1`. -/
+lemma bezout_of_lowerRow {N p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := by
+  simpa only [hσ10, hσ11] using det_fin_two σ
+
+/-- A bottom row `(N, p)` of an `SL₂(ℤ)` matrix forces `p` and `N` to be coprime. -/
+lemma coprime_of_lowerRow {N p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) : Nat.Coprime p N :=
+  Nat.isCoprime_iff_coprime.mp (by
+    rw [← hσ10, ← hσ11]
+    exact (isCoprime_row σ 1).symm)
+
+/-- If the bottom row of `σ ∈ SL₂(ℤ)` is `(N, p)`, then its upper-left entry `m` satisfies
+`m p = 1` in `ZMod N`. -/
+lemma intCast_mul_of_lowerRow {N p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
+    (hσ11 : σ 1 1 = (p : ℤ)) : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
+  have h := congrArg (Int.cast : ℤ → ZMod N) (bezout_of_lowerRow hσ10 hσ11)
+  push_cast at h ⊢
+  rw [ZMod.natCast_self] at h
+  linear_combination h
 
 /-- `-I` maps to `-I` under `SL(n, R) → GL(n, S)`. -/
 @[simp]

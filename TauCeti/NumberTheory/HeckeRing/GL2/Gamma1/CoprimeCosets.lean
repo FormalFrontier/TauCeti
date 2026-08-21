@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.UpperTriCosets
 
 import Mathlib.Algebra.CharP.Invertible
+import TauCeti.Data.ZMod.Divisibility
 
 /-!
 # The double coset `Γ₁(N) · diag(1, p) · Γ₁(N)` at a prime `p ∤ N`
@@ -92,10 +93,13 @@ namespace HeckeRing.GL2
 
 variable {N p : ℕ} {σ : SL(2, ℤ)}
 
-/-- **The `p + 1` right-coset representatives of the good-prime `Tₚ`.** The `p` upper-triangular
-matrices `!![1, b; 0, p]`, indexed by `some b`, together with the twisted diagonal
-`σ · diag(p, 1)`, indexed by `none`. The index type `Option (Fin p)` is what the slash-sum
-machinery of `HeckeSlash/Independence.lean` sums over. -/
+/-- **The family of `p + 1` matrices out of which the good-prime `Tₚ` is built.** The `p`
+upper-triangular matrices `!![1, b; 0, p]`, indexed by `some b`, together with the twisted
+diagonal `σ · diag(p, 1)`, indexed by `none`; the definition makes no assumption on `p` or `σ`.
+They are the right-coset representatives of `Γ₁(N) · diag(1, p) · Γ₁(N)` exactly under the
+hypotheses of `doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime`, namely for `p` prime and
+`σ` with bottom row `(N, p)`. The index type `Option (Fin p)` is what the slash-sum machinery of
+`HeckeSlash/Independence.lean` sums over. -/
 noncomputable def primeRep (σ : SL(2, ℤ)) (p : ℕ) : Option (Fin p) → GL (Fin 2) ℚ
   | some b => upperTriRep p b
   | none => mapGL ℚ σ * scaleRep p
@@ -108,7 +112,9 @@ noncomputable def primeRep (σ : SL(2, ℤ)) (p : ℕ) : Option (Fin p) → GL (
 @[simp] lemma primeRep_none (σ : SL(2, ℤ)) (p : ℕ) :
     primeRep σ p none = mapGL ℚ σ * scaleRep p := (rfl)
 
-/-- The matrix of the twisted representative: `σ · diag(p, 1) = !![m p, n; N p, p]`. -/
+/-- The matrix of the twisted representative: multiplying by `diag(p, 1)` on the right scales the
+first column of `σ` by `p`, so `!![a, b; c, d] · diag(p, 1) = !![a p, b; c p, d]`. At the bottom
+row `(N, p)` the decomposition uses, this reads `σ · diag(p, 1) = !![m p, n; N p, p]`. -/
 lemma coe_primeRep_none (hp : 0 < p) :
     (↑(primeRep σ p none) : Matrix (Fin 2) (Fin 2) ℚ) =
       !![((σ 0 0 : ℤ) : ℚ) * (p : ℚ), ((σ 0 1 : ℤ) : ℚ);
@@ -228,7 +234,7 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep (hp : p.Prime) (hσ10 : σ 1 0 = 
   · have hunit : IsUnit ((γ 0 0 : ℤ) : ZMod p) :=
       (CharP.isUnit_intCast_iff (R := ZMod p) hp).mpr hpa
     have : NeZero p := ⟨hp.pos.ne'⟩
-    obtain ⟨j, hdvd⟩ := exists_dvd_sub_val_mul p (γ 0 1) (γ 0 0) hunit
+    obtain ⟨j, hdvd⟩ := ZMod.exists_dvd_sub_val_mul p (γ 0 1) (γ 0 0) hunit
     have hjlt : j.val < p := ZMod.val_lt j
     obtain ⟨δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul_of_dvd hp.pos hγ hjlt
       (by simpa [mul_comm] using hdvd)

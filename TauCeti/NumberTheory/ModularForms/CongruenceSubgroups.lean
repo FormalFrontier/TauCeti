@@ -10,6 +10,7 @@ public import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 
 import Mathlib.Algebra.Field.ZMod
+import TauCeti.Data.ZMod.Divisibility
 
 /-!
 # Congruence subgroups: the pair `Γ₁(N) ⊴ Γ₀(N)`, the index of `Γ₀(pᵏ)`, and the level
@@ -228,28 +229,6 @@ theorem Gamma0Map_toHomUnits_surjective :
   have h11 : ((g 1 1 : ℤ) : ZMod N) = u := by rw [hentry]; simp
   exact ⟨⟨g, Gamma0_mem.mpr h10⟩, Units.ext (by simpa [Gamma0Map] using h11)⟩
 
-/-- The bottom row of an `SL₂(ℤ)` matrix is a Bézout relation: if it is `(N, p)`, then its
-top row `(m, n)` satisfies `m p - n N = 1`. -/
-lemma bezout_of_lowerRow {p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
-    (hσ11 : σ 1 1 = (p : ℤ)) : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 := by
-  simpa only [hσ10, hσ11] using Matrix.SpecialLinearGroup.det_fin_two σ
-
-/-- A bottom row `(N, p)` of an `SL₂(ℤ)` matrix forces `p` and `N` to be coprime. -/
-lemma coprime_of_lowerRow {p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
-    (hσ11 : σ 1 1 = (p : ℤ)) : Nat.Coprime p N :=
-  Nat.isCoprime_iff_coprime.mp (by
-    rw [← hσ10, ← hσ11]
-    exact (isCoprime_row σ 1).symm)
-
-/-- If the bottom row of `σ ∈ SL₂(ℤ)` is `(N, p)`, then its upper-left entry satisfies
-`m p = 1` in `ZMod N`. -/
-lemma intCast_mul_of_lowerRow {p : ℕ} {σ : SL(2, ℤ)} (hσ10 : σ 1 0 = (N : ℤ))
-    (hσ11 : σ 1 1 = (p : ℤ)) : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
-  have h := congrArg (Int.cast : ℤ → ZMod N) (bezout_of_lowerRow hσ10 hσ11)
-  push_cast at h ⊢
-  rw [ZMod.natCast_self] at h
-  linear_combination h
-
 /-- A Bézout matrix with bottom row `(N, p)`, for `p` coprime to `N`. -/
 noncomputable def gamma0Twist (N p : ℕ) (h : Nat.Coprime p N) : SL(2, ℤ) :=
   ((Nat.isCoprime_iff_coprime.mpr h.symm : IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose
@@ -321,17 +300,6 @@ is `p` via lower-unitriangular representatives, and the tower multiplies to
 `[SL₂(ℤ) : Γ₀(pᵏ)] = p^(k-1)(p + 1)` for prime `p` and `k ≥ 1` — the degree count of
 Shimura, Theorem 3.24. -/
 
-lemma exists_dvd_sub_val_mul (p : ℕ) [NeZero p] (a b : ℤ)
-    (hb : IsUnit ((b : ℤ) : ZMod p)) : ∃ j : ZMod p, (p : ℤ) ∣ a - (j.val : ℤ) * b := by
-  obtain ⟨u, hu⟩ := hb
-  refine ⟨(a : ZMod p) * ↑u⁻¹, ?_⟩
-  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-  push_cast
-  rw [ZMod.natCast_zmod_val, mul_assoc]
-  -- the coerced product collapses: `↑b = ↑u` by `hu`, and `u⁻¹ * u = 1` in the units
-  have hunit : (↑u⁻¹ * ((b : ℤ) : ZMod p) : ZMod p) = 1 := by rw [← hu, Units.inv_mul]
-  rw [hunit, mul_one, sub_self]
-
 section BaseCase
 
 open ModularGroup
@@ -398,7 +366,7 @@ private lemma Gamma0_prime_index_surj :
       obtain ⟨j, hj⟩ : ∃ j : ZMod p, j * ((σ.1 1 0 : ℤ) : ZMod p) = 1 :=
         Finite.surjective_of_injective (mul_left_injective₀ h) 1
       exact IsUnit.of_mul_eq_one _ (by rwa [mul_comm] at hj)
-    obtain ⟨j₀, hj₀⟩ := exists_dvd_sub_val_mul p (σ.1 0 0) (σ.1 1 0) hunit
+    obtain ⟨j₀, hj₀⟩ := ZMod.exists_dvd_sub_val_mul p (σ.1 0 0) (σ.1 1 0) hunit
     refine ⟨⟨j₀.val, Nat.lt_succ_of_lt (ZMod.val_lt j₀)⟩, ?_⟩
     rw [QuotientGroup.eq, Gamma0_mem]
     simp only [Gamma0Rep, ZMod.val_lt j₀, ite_true]
@@ -471,7 +439,7 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
     isUnit_intCast_apply_zero_zero_of_mem_Gamma0 (Gamma0_mem.mpr (by
       rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
       exact hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ hk.ne') q))
-  obtain ⟨c₀, hc₀⟩ := exists_dvd_sub_val_mul p q (σ.1 0 0) h00_unit
+  obtain ⟨c₀, hc₀⟩ := ZMod.exists_dvd_sub_val_mul p q (σ.1 0 0) h00_unit
   refine ⟨⟨c₀.val, ZMod.val_lt c₀⟩, ?_⟩
   rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]
   simp only [relindexRep, InvMemClass.coe_inv, MulMemClass.coe_mul]
