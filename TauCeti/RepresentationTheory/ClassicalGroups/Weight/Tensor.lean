@@ -199,7 +199,9 @@ theorem weightSpace_tprod_detPowerRep (ρ : Representation k (GL (Fin n) k) W) (
     (l : Fin n → ℤ) :
     weightSpace (ρ.tprod (detPowerRep k n m)) l
       = Submodule.comap (TensorProduct.rid k W).toLinearMap (weightSpace ρ (l - fun _ ↦ m)) :=
-  SetLike.ext fun x ↦ mem_weightSpace_tprod_detPowerRep_iff ρ m l x
+  Submodule.ext fun x ↦ by
+    rw [Submodule.mem_comap, LinearEquiv.coe_coe]
+    exact mem_weightSpace_tprod_detPowerRep_iff ρ m l x
 
 end CommRing
 
