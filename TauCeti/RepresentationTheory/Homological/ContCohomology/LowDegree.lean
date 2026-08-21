@@ -35,7 +35,8 @@ H⁰(G, M) = M^G,   H¹(G, M) = Z¹/B¹,   H²(G, M) = Z²/B².
 * `TauCeti.ContCohomology.Z1`, `Z2`: the continuous cocycles, `Cⁱ ⊓ ker dⁱ`.
 * `TauCeti.ContCohomology.B1`, `B2`: the coboundaries, `range d⁰` and the image `d¹(C¹)` of the
   *continuous* `1`-cochains.
-* `TauCeti.ContCohomology.H0`, `H1`, `H2` and the class maps `H1pi`, `H2pi`.
+* `TauCeti.ContCohomology.H0`, `H1`, `H2`, their class maps `H1pi`, `H2pi`, and the discrete
+  carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology.
 
 ## Main statements
 
@@ -463,8 +464,7 @@ and divides out by the whole of `B¹`.
 
 `H¹` is used as a bare additive group. It does inherit a quotient topology from the *pointwise*
 topology on `G → M`, and that topology is not the intended one — for an infinite profinite `G` it
-is not discrete — so the comparison of Layer 3 is stated against a discrete carrier, which is
-deferred to the functoriality half of Layer 2. -/
+is not discrete — so the comparison of Layer 3 is stated against `DiscreteH1`. -/
 abbrev H1 [ContinuousSMul G M] :=
   (Z1 G M) ⧸ (AddSubgroup.inclusion (B1_le_Z1 G M)).range
 
@@ -481,6 +481,28 @@ abbrev H1pi [ContinuousSMul G M] : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' 
 
 /-- The class map in degree `2`. -/
 abbrev H2pi [ContinuousMul G] [ContinuousSMul G M] : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
+
+/-- `H¹(G, M)` equipped with the discrete topology used by the comparison with canonical
+continuous cohomology. -/
+def DiscreteH1 [ContinuousSMul G M] : Type _ := H1 G M
+
+noncomputable instance [ContinuousSMul G M] : AddCommGroup (DiscreteH1 G M) :=
+  inferInstanceAs (AddCommGroup (H1 G M))
+
+instance [ContinuousSMul G M] : TopologicalSpace (DiscreteH1 G M) := ⊥
+
+instance [ContinuousSMul G M] : DiscreteTopology (DiscreteH1 G M) := ⟨rfl⟩
+
+/-- `H²(G, M)` equipped with the discrete topology used by the comparison with canonical
+continuous cohomology. -/
+def DiscreteH2 [ContinuousMul G] [ContinuousSMul G M] : Type _ := H2 G M
+
+noncomputable instance [ContinuousMul G] [ContinuousSMul G M] : AddCommGroup (DiscreteH2 G M) :=
+  inferInstanceAs (AddCommGroup (H2 G M))
+
+instance [ContinuousMul G] [ContinuousSMul G M] : TopologicalSpace (DiscreteH2 G M) := ⊥
+
+instance [ContinuousMul G] [ContinuousSMul G M] : DiscreteTopology (DiscreteH2 G M) := ⟨rfl⟩
 
 /-- Every class in `H¹` is represented by a continuous `1`-cocycle. -/
 theorem H1pi_surjective [ContinuousSMul G M] : Function.Surjective (H1pi G M) :=
