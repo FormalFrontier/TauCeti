@@ -39,6 +39,22 @@ Releases older than `v4.33.0-rc1` are out of scope, because the Lake cache has n
 entries. That bound is `EARLIEST_RELEASE` in the script; raise it if the cache is pruned,
 never lower it.
 
+## Reporting
+
+`.github/workflows/toolchain-tags.yml` posts to Zulip (Tau Ceti > "Toolchain tags") when a
+release becomes taggable or turns out not to be taggable. It runs on a push to `main` that
+changes `lean-toolchain`, waits for `ci.yml` to conclude on that commit, and then posts only
+if the state has changed since its last message. It reads that state from a marker in the
+message, so it stores nothing, and it never creates a tag.
+
+The wait matters: the push lands 40 to 70 minutes before the release is taggable, because
+`ci.yml` coalesces bursts of `main` pushes and then takes 20 to 30 minutes, publishing the
+Lake cache at the end. Reporting at push time would always say "not yet".
+
+A release waiting on CI shows as `pending` and is left out of the change comparison. It is
+not news, and including it would post one message saying "wait" and another when the
+waiting ended.
+
 ## Using it
 
 ```
