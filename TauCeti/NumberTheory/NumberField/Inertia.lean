@@ -48,7 +48,7 @@ fields is Kummer theory over `ℚ` and is not formalised here.
   field of `H`, then the inertia subgroup at `P` meets `H` trivially.
 * `NumberField.pow_index_eq_one_of_isUnramifiedIn`: if `G` is abelian and `K` is unramified over
   the fixed field `F` of `H` at every prime of `𝓞 F`, then the exponent of `G` divides `H.index`,
-  which is `Module.finrank ℚ F` by `NumberField.index_eq_finrank`.
+  which is `Module.finrank ℚ F` by `IsGaloisGroup.index_eq_finrank`.
 
 ## References
 
@@ -77,6 +77,22 @@ theorem card_inertia_eq_ramificationIdx (R : Type*) {S : Type*} [CommRing R] [Co
 
 end Ideal
 
+namespace IsGaloisGroup
+
+/-- **The index of a subgroup is the degree of its fixed field.** If `K` is Galois over `E` with
+Galois group `G` and `H` is a subgroup of `G` whose fixed field is `F`, then `H.index = [F : E]`.
+This is `IsGaloisGroup.card_eq_finrank` at the two ends of the tower `E ⊆ F ⊆ K`, combined with
+the tower law for degrees. -/
+theorem index_eq_finrank {G : Type*} [Group G] (H : Subgroup G) (E F K : Type*) [Field E]
+    [Field F] [Field K] [Algebra E F] [Algebra F K] [Algebra E K] [IsScalarTower E F K]
+    [FiniteDimensional F K] [MulSemiringAction G K] [IsGaloisGroup G E K] [IsGaloisGroup H F K] :
+    H.index = Module.finrank E F := by
+  have h : H.index * Nat.card H = Nat.card G := Subgroup.index_mul_card H
+  rw [card_eq_finrank H F K, card_eq_finrank G E K, ← Module.finrank_mul_finrank E F K] at h
+  exact Nat.eq_of_mul_eq_mul_right Module.finrank_pos h
+
+end IsGaloisGroup
+
 namespace NumberField
 
 /-- **A number field unramified at every finite prime is `ℚ`.** If every nonzero prime of `𝓞 F`
@@ -91,17 +107,6 @@ theorem finrank_eq_one_of_forall_ramificationIdx_eq_one {F : Type*} [Field F] [N
   have : q.LiesOver (Ideal.span {(p : ℤ)}) := hqp
   refine h q inferInstance (Ideal.ne_bot_of_liesOver_of_ne_bot (p := Ideal.span {(p : ℤ)}) ?_ q)
   simpa using hp.ne_zero
-
-/-- **The index of a subgroup is the degree of its fixed field.** If `K` is Galois over `ℚ` with
-Galois group `G` and `H` is a subgroup with fixed field `F`, then `H.index = [F : ℚ]`. -/
-theorem index_eq_finrank {G : Type*} [Group G] (H : Subgroup G) (F K : Type*) [Field F] [Field K]
-    [NumberField K] [MulSemiringAction G K] [IsGaloisGroup G ℚ K] [NumberField F] [Algebra ℚ F]
-    [Algebra F K] [IsScalarTower ℚ F K] [IsGaloisGroup H F K] :
-    H.index = Module.finrank ℚ F := by
-  have h : H.index * Nat.card H = Nat.card G := Subgroup.index_mul_card H
-  rw [IsGaloisGroup.card_eq_finrank H F K, IsGaloisGroup.card_eq_finrank G ℚ K,
-    ← Module.finrank_mul_finrank ℚ F K] at h
-  exact Nat.eq_of_mul_eq_mul_right Module.finrank_pos h
 
 section Generation
 
@@ -146,8 +151,8 @@ theorem eq_top_of_forall_inertia_le {H : Subgroup G}
     exact Nat.eq_of_mul_eq_mul_right (Ideal.ramificationIdx_pos (R := ℤ) (q := P))
       (by rw [one_mul, ← htower])
   -- Hence `F` is unramified over `ℚ`, so `F = ℚ` by Minkowski's theorem, and `H` has index `1`.
-  exact Subgroup.index_eq_one.mp
-    ((index_eq_finrank H F K).trans (finrank_eq_one_of_forall_ramificationIdx_eq_one hq))
+  exact Subgroup.index_eq_one.mp ((IsGaloisGroup.index_eq_finrank H ℚ F K).trans
+    (finrank_eq_one_of_forall_ramificationIdx_eq_one hq))
 
 /-- **The inertia subgroups generate the Galois group.** For a number field `K` Galois over `ℚ`
 with Galois group `G`, the supremum of the inertia subgroups of the maximal ideals of `𝓞 K`
@@ -195,7 +200,7 @@ open scoped IsMulCommutative in
 /-- **An abelian extension of `ℚ` unramified over a subfield has exponent dividing its degree.**
 Let `K` be a number field, Galois over `ℚ` with abelian Galois group `G`, and let `H` be a
 subgroup whose fixed field `F` has every prime unramified in `𝓞 K`. Then `g ^ H.index = 1` for
-every `g : G`, and `H.index` is `Module.finrank ℚ F` by `NumberField.index_eq_finrank`.
+every `g : G`, and `H.index` is `Module.finrank ℚ F` by `IsGaloisGroup.index_eq_finrank`.
 
 Indeed each inertia subgroup is killed by `H.index`
 (`NumberField.pow_index_eq_one_of_ramificationIdx_eq_one`), and in an abelian group the elements
