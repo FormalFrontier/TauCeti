@@ -70,9 +70,9 @@ The additive and module structures are transported along
 and its octonion entries; `TauCeti.AlbertAlgebra.linearEquivProd` upgrades it to an `R`-linear
 isomorphism, which is what both dimension counts run through.
 
-No definition here is exposed; consumers work through the projection `simp` lemmas
-`TauCeti.AlbertAlgebra.mul_diag` and `TauCeti.AlbertAlgebra.mul_offDiag`, which read the two
-components of a product, rather than through any definition body.
+The multiplication is deliberately left unexposed: its body does not unfold outside this file, and
+a product is read through the projection `simp` lemmas `TauCeti.AlbertAlgebra.mul_diag` and
+`TauCeti.AlbertAlgebra.mul_offDiag`, which give its two components.
 
 ## References
 
@@ -320,9 +320,9 @@ theorem trace_one : trace (1 : AlbertAlgebra R) = 3 := by
 theorem trace_surjective : Function.Surjective (trace : AlbertAlgebra R →ₗ[R] R) :=
   fun r => ⟨⟨![r, 0, 0], 0⟩, by simp [Fin.sum_univ_three]⟩
 
-/-- **The trace-zero subspace** `J₀ ⊆ H₃(𝕆)`, the kernel of the trace. Over any base ring it is
-`26`-dimensional (`TauCeti.AlbertAlgebra.finrank_traceZero`). Reading it as the fundamental
-representation of `F₄ = Der H₃(𝕆)` -- where `Der H₃(𝕆)` is
+/-- **The trace-zero subspace** `J₀ ⊆ H₃(𝕆)`, the kernel of the trace. Over a base ring satisfying
+`StrongRankCondition` it is `26`-dimensional (`TauCeti.AlbertAlgebra.finrank_traceZero`). Reading it
+as the fundamental representation of `F₄ = Der H₃(𝕆)` -- where `Der H₃(𝕆)` is
 `TauCeti.derivationLieAlgebra R (AlbertAlgebra R)` -- is a further step that is not taken here, and
 it is not available over an arbitrary `R`: it needs `3` invertible, since otherwise `trace 1 = 3`
 vanishes, `J₀` contains the identity and so is not a complement of the scalars. Even over such an
