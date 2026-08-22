@@ -167,28 +167,6 @@ private theorem minkowski_bound_lt_three
       rw [div_lt_iff₀ Real.pi_pos]
       nlinarith [Real.pi_gt_three]
 
-/-- An ideal of norm `2` is the unique prime above `2` in `ℚ(√-5)`. -/
-private theorem eq_primeAboveTwo_of_absNorm_eq_two
-    (hmin : minpoly ℤ θ = X ^ 2 - C (-5 : ℤ))
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (P I : Ideal (𝓞 K)) [P.IsPrime] [P.LiesOver (span {(2 : ℤ)})]
-    (hI : I.absNorm = 2) : I = P := by
-  have hfin : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
-  have hdisc := discr_eq_neg_twenty hmin hgen
-  have hram : 2 ∈ ramifiedPrimes K := by
-    rw [mem_ramifiedPrimes_iff_dvd_discr (K := K) Nat.prime_two, hdisc]
-    norm_num
-  have hirr : Irreducible I.absNorm := by rw [hI]; exact Nat.prime_two
-  let _ : I.IsPrime := Ideal.isPrime_of_irreducible_absNorm hirr
-  have hprimeNorm : Nat.Prime I.absNorm := by rw [hI]; decide
-  let _ : I.LiesOver (span {(2 : ℤ)}) := ⟨by
-    simpa [hI, Ideal.under_def] using Ideal.span_singleton_absNorm (I := I) hprimeNorm⟩
-  have hmem : I ∈ (span {(2 : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, inferInstance⟩
-  have hset : (span {(2 : ℤ)} : Ideal ℤ).primesOver (𝓞 K) = {P} :=
-    primesOver_eq_singleton_of_mem_ramifiedPrimes hfin hram P
-  have : I ∈ ({P} : Set (Ideal (𝓞 K))) := hset ▸ hmem
-  simpa using this
-
 /-- The unique prime above `2` in `ℚ(√-5)` is not principal. -/
 private theorem not_isPrincipal_primeAboveTwo
     (hmin : minpoly ℤ θ = X ^ 2 - C (-5 : ℤ))
@@ -269,7 +247,8 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
         exact top_isPrincipal
     · right
       rw [← hIC]
-      have hIP : I.1 = P := eq_primeAboveTwo_of_absNorm_eq_two hmin hgen P I.1 hnorm
+      have hIP : I.1 = P :=
+        eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P I.1 hnorm
       apply congrArg ClassGroup.mk0
       exact Subtype.ext hIP
   have hupper : NumberField.classNumber K ≤ 2 := by
