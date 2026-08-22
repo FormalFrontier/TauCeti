@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Bochner.BochnerTheorem
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Difference
-public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice
+public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Basic
 
 /-!
 # The spatial Bochner measures of a Berg--Christensen--Ressel positive-definite function
