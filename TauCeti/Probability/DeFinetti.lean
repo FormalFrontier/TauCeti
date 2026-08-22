@@ -18,6 +18,7 @@ public import TauCeti.Probability.DeFinetti.Correspondence
 public import TauCeti.Probability.DeFinetti.CanonicalMixture
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.WeakConvergence
 public import TauCeti.Probability.DeFinetti.EmpiricalMeasure
+public import TauCeti.Probability.DeFinetti.Coding
 
 /-!
 # De Finetti's theorem
@@ -66,7 +67,11 @@ This module declares nothing of its own; it is a curated re-export, and it build
   frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it;
 * `deFinetti_empiricalMeasure` — on a Polish state space, the directing measure is the almost-sure
   weak limit of the empirical measures themselves, with
-  `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` its conditional form.
+  `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` its conditional form;
+* `deFinetti_coding` — the functional form of the representation: the joint law of the directing
+  measure and an exchangeable process is the law of their coded pair, formed from an independent
+  i.i.d. uniform sequence under the fixed measurable map `unitIntervalCoding`, with
+  `exchangeableLaw_iff_exists_coding` the resulting path-law equivalence.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a

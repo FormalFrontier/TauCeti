@@ -162,9 +162,9 @@ theorem cyclicGroupTwo_centralCharacterSearch :
     rw [(cyclicClassData 2).mem_centralCharacterSearch]
     exact ⟨by fin_cases i <;> decide,
       by
-        simpa using ClassData.IsModularEigenrow.map (d := cyclicClassData 2)
-          (Int.castRingHom (ZMod 3))
-          (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i)⟩
+        simpa using
+          (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i).map
+            (Int.castRingHom (ZMod 3))⟩
   · rw [(cyclicClassData 2).card_centralCharacterSearch_of_isGoodDixonPrime
       isGoodDixonPrime_cyclicGroup_two_three,
       card_cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData]

@@ -109,17 +109,18 @@ principle, both of which Mathlib states for maps into an arbitrary Banach space.
 
 Mathlib's `IsLocalHomeomorph.monodromy_theorem` (`Mathlib/Topology/Homotopy/Lifting.lean`) is an
 abstract monodromy statement about lifts through a separated local homeomorphism, and its
-docstring names analytic continuation as the intended application. Consuming it here would first
-require building the étale space of holomorphic germs over `ℂ` as a topological space and proving
-the germ projection to be a separated local homeomorphism; Mathlib has no such space, and that
-construction is a larger, independent piece of work. The route taken instead reuses what this
-area already has — germ-level uniqueness of continuation along a fixed path
-(`IsAnalyticContinuationAlong.eventuallyEq`) — and adds only the metric stability engine, which
-is the concrete content that the abstract theorem's separatedness hypothesis packages. Building
-the étale space and rederiving `monodromy_theorem` from Mathlib's abstract theorem remains
-worthwhile follow-up work; `TauCeti.monodromy_theorem_of_free_homotopy` is stated in the shape
-that comparison will want, a lift of one edge of the square being produced from a lift of the
-other rather than an equality of two germs over a fixed point.
+docstring names analytic continuation as the intended application. The route taken here is
+independent of it: it reuses what this area already has — germ-level uniqueness of continuation
+along a fixed path (`IsAnalyticContinuationAlong.eventuallyEq`) — and adds only the metric
+stability engine, which is the concrete content that the abstract theorem's separatedness
+hypothesis packages. The other route is now available too:
+`TauCeti/Analysis/Complex/HolomorphicSheaf.lean` builds the étale space of holomorphic germs and
+proves its projection to be a separated local homeomorphism, and
+Mathlib's abstract theorem applies directly to that projection. That route does not subsume this
+file:
+`TauCeti.monodromy_theorem_of_free_homotopy` moves the endpoints and concludes with a
+continuation along the path they sweep out, whereas the abstract theorem is rel endpoints and
+concludes with an equality of two lifted points.
 
 This advances the conformal-mapping roadmap's L4 target "the monodromy theorem (continuations
 along homotopic paths agree)" (see `ConformalMapping/README.md`). L4 is not covered by the

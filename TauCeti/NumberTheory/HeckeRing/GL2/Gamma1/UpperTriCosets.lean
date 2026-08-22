@@ -39,7 +39,8 @@ makes both `p c ≡ 0` and `d - c j ≡ d ≡ 1` modulo `N`.
 
 ⚠ For `p ∤ N` the statement is false: when `p` is prime the double coset then has `p + 1` right
 cosets, the extra one represented by `!![m, n; N, p] · diag(p, 1)` for any `m p − n N = 1`
-(Diamond–Shurman, Proposition 5.2.1). Nothing here is stated in that case.
+(Diamond–Shurman, Proposition 5.2.1). That case is proved in `Gamma1/CoprimeCosets.lean` by
+`doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime`.
 
 The reverse inclusion needs no divisibility: `!![1, b; 0, p] = diag(1, p) · Tᵇ` and every power
 of `T = !![1, 1; 0, 1]` lies in `Γ₁(N)`.
@@ -55,11 +56,17 @@ of `T = !![1, 1; 0, 1]` lies in `Γ₁(N)`.
   in `Δ₀(N)` at every level, and its matrix.
 * `HeckeRing.GL2.natDiagGL_mul_mapGL_T_zpow`: `diag(1, p) · Tᵇ = !![1, b; 0, p]`, the
   reverse inclusion in one line.
-* `HeckeRing.GL2.exists_mem_Gamma1_natDiagGL_mul`: the factorisation
-  `diag(1, p) · γ = δ · !![1, j; 0, p]` with `δ ∈ Γ₁(N)`, the forward inclusion.
+* `HeckeRing.GL2.exists_mem_Gamma1_natDiagGL_mul_of_dvd`: the factorisation
+  `diag(1, p) · γ = δ · !![1, j; 0, p]` with `δ ∈ Γ₁(N)`, at any offset `j` with `p ∣ b − a j`;
+  `HeckeRing.GL2.exists_mem_Gamma1_natDiagGL_mul` chooses such an offset from `p ∣ N`, and is
+  the forward inclusion.
 * `HeckeRing.GL2.op_upperTriRep_smul_injective`: the `p` right cosets are pairwise distinct,
   so the union is disjoint. Stated for an arbitrary subgroup of `SL₂(ℤ)`, since only
   integrality is used.
+* `DoubleCoset.doubleCoset_eq_iUnion_rightCosets_of_forall_exists`: the general criterion
+  turning forward factorizations and reverse witnesses into a right-coset decomposition.
+* `HeckeRing.GL2.doubleCoset_out_diagCosetGamma1_eq_doubleCoset_natDiagGL`: the chosen
+  representative of `diagCosetGamma1 N p` has the canonical double coset.
 * `HeckeRing.GL2.doubleCoset_natDiagGL_eq_iUnion_rightCosets`: the decomposition itself, and
   `HeckeRing.GL2.doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets` the same statement read
   at the chosen representative of `diagCosetGamma1 N p`, which is the shape the slash sum of
@@ -92,14 +99,6 @@ open scoped MatrixGroups Pointwise
 namespace HeckeRing.GL2
 
 variable {N p : ℕ}
-
-/-- The rational matrix of `mapGL ℚ σ` in `!![…]` form. -/
-private lemma coe_mapGL_fin_two (σ : SL(2, ℤ)) :
-    (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      !![((σ 0 0 : ℤ) : ℚ), ((σ 0 1 : ℤ) : ℚ); ((σ 1 0 : ℤ) : ℚ), ((σ 1 1 : ℤ) : ℚ)] := by
-  rw [mapGL_coe_matrix]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp
 
 /-- `diag(1, p) ∈ Δ₀(N)`, for every level `N`: the upper-left entry is `1`, a unit modulo
 anything. This is `natDiagGL_mem_Delta0_of_coprime` with its hypothesis discharged. -/
@@ -149,17 +148,66 @@ lemma natDiagGL_mul_mapGL_T_zpow (hp : 0 < p) (b : Fin p) :
     Matrix.mul_fin_two]
   norm_num
 
-/-- **The forward factorisation.** For `p ∣ N` and `γ ∈ Γ₁(N)`, the product `diag(1, p) · γ`
-lies in one of the `p` right cosets `Γ₁(N) · !![1, j; 0, p]`.
+/-- **The forward factorisation, at a prescribed offset.** If `γ ∈ Γ₁(N)` and the offset
+`j < p` satisfies `p ∣ b − a j` for `γ = !![a, b; c, d]`, then `diag(1, p) · γ` lies in the
+right coset `Γ₁(N) · !![1, j; 0, p]`: explicitly
+
+`diag(1, p) · γ = !![a, m; p c, d − c j] · !![1, j; 0, p]`,  `b − a j = p m`,
+
+whose left factor has determinant `a d − b c = 1` and stays in `Γ₁(N)` because `N ∣ c`.
+
+The divisibility on the offset is the only arithmetic input, and it is where the two branches
+of Diamond–Shurman's Proposition 5.2.1 differ: at `p ∣ N` every `γ ∈ Γ₁(N)` admits such a `j`
+(below), while at a prime `p ∤ N` only those with `p ∤ a` do, the rest needing the further coset
+of `Gamma1/CoprimeCosets.lean`. -/
+lemma exists_mem_Gamma1_natDiagGL_mul_of_dvd (hp : 0 < p) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N)
+    {j : ℕ} (hjlt : j < p) (hj : (p : ℤ) ∣ γ 0 1 - γ 0 0 * j) :
+    ∃ δ : SL(2, ℤ), δ ∈ Gamma1 N ∧
+      natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * upperTriRep p ⟨j, hjlt⟩ := by
+  obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
+  obtain ⟨m, hm⟩ := hj
+  -- the new left factor
+  have hdet : (!![γ 0 0, m; (p : ℤ) * γ 1 0, γ 1 1 - γ 1 0 * j] :
+      Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+    have hγdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 :=
+      Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ
+    rw [Matrix.det_fin_two_of]
+    linear_combination hγdet + γ 1 0 * hm
+  obtain ⟨δ, hδmat⟩ : ∃ δ : SL(2, ℤ), (δ : Matrix (Fin 2) (Fin 2) ℤ) =
+      !![γ 0 0, m; (p : ℤ) * γ 1 0, γ 1 1 - γ 1 0 * j] := ⟨⟨_, hdet⟩, rfl⟩
+  refine ⟨δ, ?_, ?_⟩
+  · refine (Gamma1_mem N δ).mpr ⟨?_, ?_, ?_⟩
+    · simpa [hδmat] using ha
+    · have h : ((γ 1 1 - γ 1 0 * j : ℤ) : ZMod N) = 1 := by push_cast; rw [hd, hc]; ring
+      simpa [hδmat] using h
+    · have h : (((p : ℤ) * γ 1 0 : ℤ) : ZMod N) = 0 := by push_cast; rw [hc]; ring
+      simpa [hδmat] using h
+  · refine Units.ext ?_
+    have hmZ : (γ 0 1 : ℤ) = γ 0 0 * j + m * p := by linarith
+    have e00 : (δ 0 0 : ℤ) = γ 0 0 := by rw [hδmat]; simp
+    have e01 : (δ 0 1 : ℤ) = m := by rw [hδmat]; simp
+    have e10 : (δ 1 0 : ℤ) = (p : ℤ) * γ 1 0 := by rw [hδmat]; simp
+    have e11 : (δ 1 1 : ℤ) = γ 1 1 - γ 1 0 * j := by rw [hδmat]; simp
+    rw [Units.val_mul, Units.val_mul, coe_natDiagGL_one hp, coe_upperTriRep,
+      coe_mapGL_int_rat_fin_two γ, coe_mapGL_int_rat_fin_two δ, e00, e01, e10, e11,
+      Matrix.mul_fin_two, Matrix.mul_fin_two]
+    congrm !![?_, ?_; ?_, ?_]
+    · ring1
+    · rw [hmZ]; push_cast; ring1
+    · push_cast; ring1
+    · push_cast; ring1
+
+/-- **The forward factorisation at `p ∣ N`.** For `p ∣ N` and `γ ∈ Γ₁(N)`, the product
+`diag(1, p) · γ` lies in one of the `p` right cosets `Γ₁(N) · !![1, j; 0, p]`.
 
 The offset is `j ≡ b (mod p)` for `γ = !![a, b; c, d]`, which works because `p ∣ N` makes
-`a ≡ 1 (mod p)`; the new left factor `!![a, m; p c, d − c j]` — where `b − a j = p m` — has
-determinant `a d − b c = 1` and stays in `Γ₁(N)` because `N ∣ c`. -/
+`a ≡ 1 (mod p)`; the factorisation itself is
+`exists_mem_Gamma1_natDiagGL_mul_of_dvd`. -/
 lemma exists_mem_Gamma1_natDiagGL_mul (hp : 0 < p) (hpN : p ∣ N) {γ : SL(2, ℤ)}
     (hγ : γ ∈ Gamma1 N) :
     ∃ (j : Fin p) (δ : SL(2, ℤ)), δ ∈ Gamma1 N ∧
       natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * upperTriRep p j := by
-  obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
+  obtain ⟨ha, -, -⟩ := (Gamma1_mem N γ).mp hγ
   have hp' : (0 : ℤ) < p := by exact_mod_cast hp
   -- the level divisibility, read in `ℤ`
   have haN : (N : ℤ) ∣ γ 0 0 - 1 := by
@@ -175,41 +223,12 @@ lemma exists_mem_Gamma1_natDiagGL_mul (hp : 0 < p) (hpN : p ∣ N) {γ : SL(2, �
     · rw [Int.toNat_of_nonneg hj0, Int.emod_def]
       exact ⟨γ 0 1 / p, by ring⟩
   have hpa : (p : ℤ) ∣ γ 0 0 - 1 := dvd_trans (Int.natCast_dvd_natCast.mpr hpN) haN
-  obtain ⟨m, hm⟩ : (p : ℤ) ∣ γ 0 1 - γ 0 0 * j := by
-    have : γ 0 1 - γ 0 0 * j = (γ 0 1 - j) - (γ 0 0 - 1) * j := by ring
-    rw [this]
+  have hj : (p : ℤ) ∣ γ 0 1 - γ 0 0 * j := by
+    have h : γ 0 1 - γ 0 0 * j = (γ 0 1 - j) - (γ 0 0 - 1) * j := by ring
+    rw [h]
     exact dvd_sub hpj (Dvd.dvd.mul_right hpa _)
-  -- the new left factor
-  have hdet : (!![γ 0 0, m; (p : ℤ) * γ 1 0, γ 1 1 - γ 1 0 * j] :
-      Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-    have hγdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := by
-      have := γ.2
-      rwa [Matrix.det_fin_two] at this
-    rw [Matrix.det_fin_two_of]
-    linear_combination hγdet + γ 1 0 * hm
-  obtain ⟨δ, hδmat⟩ : ∃ δ : SL(2, ℤ), (δ : Matrix (Fin 2) (Fin 2) ℤ) =
-      !![γ 0 0, m; (p : ℤ) * γ 1 0, γ 1 1 - γ 1 0 * j] := ⟨⟨_, hdet⟩, rfl⟩
-  refine ⟨⟨j, hjlt⟩, δ, ?_, ?_⟩
-  · refine (Gamma1_mem N δ).mpr ⟨?_, ?_, ?_⟩
-    · simpa [hδmat] using ha
-    · have h : ((γ 1 1 - γ 1 0 * j : ℤ) : ZMod N) = 1 := by push_cast; rw [hd, hc]; ring
-      simpa [hδmat] using h
-    · have h : (((p : ℤ) * γ 1 0 : ℤ) : ZMod N) = 0 := by push_cast; rw [hc]; ring
-      simpa [hδmat] using h
-  · refine Units.ext ?_
-    have hmZ : (γ 0 1 : ℤ) = γ 0 0 * j + m * p := by linarith
-    have e00 : (δ 0 0 : ℤ) = γ 0 0 := by rw [hδmat]; simp
-    have e01 : (δ 0 1 : ℤ) = m := by rw [hδmat]; simp
-    have e10 : (δ 1 0 : ℤ) = (p : ℤ) * γ 1 0 := by rw [hδmat]; simp
-    have e11 : (δ 1 1 : ℤ) = γ 1 1 - γ 1 0 * j := by rw [hδmat]; simp
-    rw [Units.val_mul, Units.val_mul, coe_natDiagGL_one hp, coe_upperTriRep,
-      coe_mapGL_fin_two γ, coe_mapGL_fin_two δ, e00, e01, e10, e11,
-      Matrix.mul_fin_two, Matrix.mul_fin_two]
-    congrm !![?_, ?_; ?_, ?_]
-    · ring1
-    · rw [hmZ]; push_cast; ring1
-    · push_cast; ring1
-    · push_cast; ring1
+  obtain ⟨δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul_of_dvd hp hγ hjlt hj
+  exact ⟨⟨j, hjlt⟩, δ, hδ, heq⟩
 
 /-- **The `p` right cosets are pairwise distinct.** If `Γ · !![1, j₁; 0, p] = Γ · !![1, j₂; 0, p]`
 for a subgroup `Γ` of `SL₂(ℤ)`, then `j₁ = j₂`: the comparison matrix has upper-left entry `1`
@@ -227,7 +246,7 @@ theorem op_upperTriRep_smul_injective {G : Subgroup SL(2, ℤ)} :
   have hmat : (↑(mapGL ℚ σ) : Matrix (Fin 2) (Fin 2) ℚ) * !![1, (j₁ : ℚ); 0, (p : ℚ)] =
       !![1, (j₂ : ℚ); 0, (p : ℚ)] := by
     rw [← coe_upperTriRep, ← coe_upperTriRep, ← Units.val_mul, hmul]
-  rw [coe_mapGL_fin_two, Matrix.mul_fin_two] at hmat
+  rw [coe_mapGL_int_rat_fin_two, Matrix.mul_fin_two] at hmat
   have h00 : (σ 0 0 : ℤ) = 1 := by simpa using congrFun (congrFun hmat 0) 0
   have h01 : ((σ 0 0 : ℤ) : ℚ) * (j₁ : ℚ) + ((σ 0 1 : ℤ) : ℚ) * (p : ℚ) = (j₂ : ℚ) := by
     simpa using congrFun (congrFun hmat 0) 1
@@ -257,19 +276,28 @@ theorem doubleCoset_natDiagGL_eq_iUnion_rightCosets (hp : 0 < p) (hpN : p ∣ N)
     doubleCoset (natDiagGL 2 ![1, p]) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
       ⋃ j : Fin p, MulOpposite.op (upperTriRep p j) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
-  refine Set.Subset.antisymm (fun x hx ↦ ?_) (Set.iUnion_subset fun j x hx ↦ ?_)
-  · obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := mem_doubleCoset.mp hx
-    obtain ⟨γ₂, hγ₂, rfl⟩ := Subgroup.mem_map.mp hg₂
-    obtain ⟨j, δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul hp hpN hγ₂
-    refine Set.mem_iUnion.mpr ⟨j, (mem_rightCoset_iff _).mpr ?_⟩
-    have hx' : g₁ * natDiagGL 2 ![1, p] * mapGL ℚ γ₂ * (upperTriRep p j)⁻¹ = g₁ * mapGL ℚ δ := by
-      rw [mul_assoc g₁, heq, mul_assoc, mul_inv_cancel_right]
-    rw [hx']
-    exact mul_mem hg₁ (Subgroup.mem_map_of_mem _ hδ)
-  · refine mem_doubleCoset.mpr ⟨x * (upperTriRep p j)⁻¹, (mem_rightCoset_iff _).mp hx,
-      mapGL ℚ (ModularGroup.T ^ (j : ℤ)),
-      Subgroup.mem_map_of_mem _ (T_zpow_mem_Gamma1 N _), ?_⟩
-    rw [mul_assoc, natDiagGL_mul_mapGL_T_zpow hp j, inv_mul_cancel_right]
+  apply doubleCoset_eq_iUnion_rightCosets_of_forall_exists
+      ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (natDiagGL 2 ![1, p]) (upperTriRep p)
+  · intro g hg
+    obtain ⟨γ, hγ, rfl⟩ := Subgroup.mem_map.mp hg
+    obtain ⟨j, δ, hδ, heq⟩ := exists_mem_Gamma1_natDiagGL_mul hp hpN hγ
+    exact ⟨j, mapGL ℚ δ, Subgroup.mem_map_of_mem _ hδ, heq⟩
+  · intro j
+    exact ⟨mapGL ℚ (ModularGroup.T ^ (j : ℤ)),
+      Subgroup.mem_map_of_mem _ (T_zpow_mem_Gamma1 N _),
+      natDiagGL_mul_mapGL_T_zpow hp j⟩
+
+/-- The chosen representative of `diagCosetGamma1 N p` has the same double coset as the
+canonical matrix `diag(1, p)`. -/
+theorem doubleCoset_out_diagCosetGamma1_eq_doubleCoset_natDiagGL :
+    doubleCoset ((diagCosetGamma1 N p).out : GL (Fin 2) ℚ)
+        ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
+      doubleCoset (natDiagGL 2 ![1, p]) ((Gamma1 N).map (mapGL ℚ))
+        ((Gamma1 N).map (mapGL ℚ)) := by
+  have hout : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (diagCosetGamma1 N p).out = diagCosetGamma1 N p := Quotient.out_eq _
+  rw [HeckeCoset.eq_iff.mp (hout.trans (diagCosetGamma1_def N p))]
 
 /-- The decomposition of `doubleCoset_natDiagGL_eq_iUnion_rightCosets`, read at the chosen
 representative `D.out` of `diagCosetGamma1 N p` — the shape the slash-sum machinery of
@@ -279,9 +307,7 @@ theorem doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets (hp : 0 < p) (hpN 
         ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
       ⋃ j : Fin p, MulOpposite.op (upperTriRep p j) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
-  have hout : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-      (diagCosetGamma1 N p).out = diagCosetGamma1 N p := Quotient.out_eq _
-  rw [HeckeCoset.eq_iff.mp (hout.trans (diagCosetGamma1_def N p)),
+  rw [doubleCoset_out_diagCosetGamma1_eq_doubleCoset_natDiagGL,
     doubleCoset_natDiagGL_eq_iUnion_rightCosets hp hpN]
 
 end HeckeRing.GL2
