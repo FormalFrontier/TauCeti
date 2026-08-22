@@ -21,6 +21,7 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 * `TauCeti.visitCount`: the number of visits to a value before a given index.
 * `TauCeti.visitTime`: the index of a given visit to a value.
 * `TauCeti.successorArray`: the values following successive visits to each value.
+* `TauCeti.visitCell`: the cell of the successor array a sequence uses at a given time.
 * `TauCeti.pathOfSuccessors`: reconstruction from an initial value and successor array.
 
 ## Main results
@@ -29,6 +30,12 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 * `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
 * `TauCeti.pathOfSuccessors_successorArray`: reconstruction inverts the successor decomposition.
+* `TauCeti.visitCell_injective`: distinct times use distinct cells.
+* `TauCeti.eqOn_iff_successorArray_visitCell`: a finite initial segment of a sequence is pinned
+  down by its initial value together with the successor-array entries at the cells that segment
+  designates. This is the finite-horizon form of `TauCeti.eq_pathOfSuccessors`, and the form a
+  finite-path event needs: the cells are read off a *reference* sequence, so they do not move with
+  the sequence being described.
 
 ## References
 
@@ -250,6 +257,93 @@ theorem pathOfSuccessors_successorArray (x : ℕ → α) :
   exact eq_pathOfSuccessors rfl fun n => (successorArray_visitCount x n).symm
 
 end Reconstruction
+
+section Cells
+
+variable {α : Type*} {w x : ℕ → α} {i n : ℕ}
+
+/-- The cell of the successor array that `x` uses at time `n`: the value it takes there, paired
+with the number of earlier visits to that value. -/
+def visitCell (x : ℕ → α) (n : ℕ) : α × ℕ :=
+  (x n, visitCount x (x n) n)
+
+-- The parentheses in `(rfl)` opt out of the exported-theorem exposure check, so that this, the
+-- complete computational API of `visitCell`, can be stated without exposing its body.
+@[simp]
+theorem visitCell_def (x : ℕ → α) (n : ℕ) : visitCell x n = (x n, visitCount x (x n) n) :=
+  (rfl)
+
+/-- **Distinct times use distinct cells.** Two times carrying the same value are separated by that
+value's visit counts, which strictly increase across the earlier of the two. -/
+theorem visitCell_injective (x : ℕ → α) : Function.Injective (visitCell x) := by
+  classical
+  have key : ∀ i j : ℕ, i < j → visitCell x i ≠ visitCell x j := by
+    intro i j hij hcell
+    rw [visitCell_def, visitCell_def, Prod.mk.injEq] at hcell
+    obtain ⟨hval, hcount⟩ := hcell
+    have hstep : visitCount x (x i) (i + 1) = visitCount x (x i) i + 1 :=
+      visitCount_succ_of_eq rfl
+    have hmono : visitCount x (x i) (i + 1) ≤ visitCount x (x i) j := by
+      simpa only [visitCount_eq_count] using
+        Nat.count_monotone (fun k => x k = x i) (Nat.succ_le_of_lt hij)
+    rw [← hval] at hcount
+    omega
+  intro i j hcell
+  rcases Nat.lt_trichotomy i j with h | h | h
+  · exact absurd hcell (key i j h)
+  · exact h
+  · exact absurd hcell.symm (key j i h)
+
+/-- Along a sequence agreeing with `w` up to `n`, the successor-array entries at the cells `w`
+designates are the successors `w` prescribes. -/
+theorem successorArray_visitCell_eq_of_eqOn (h : ∀ i ≤ n, x i = w i) (hi : i < n) :
+    successorArray x (visitCell w i).1 (visitCell w i).2 = w (i + 1) := by
+  have hxi : x i = w i := h i hi.le
+  have hcount : visitCount w (w i) i = visitCount x (x i) i := by
+    rw [hxi]
+    exact (visitCount_congr fun l hl => h l (hl.le.trans hi.le)).symm
+  rw [visitCell_def, hcount, ← hxi]
+  rw [successorArray_visitCount x i]
+  exact h (i + 1) hi
+
+/-- Conversely, a sequence with the same initial value as `w` whose successor-array entries at the
+cells `w` designates are the ones `w` prescribes agrees with `w` up to `n`. -/
+theorem eqOn_of_successorArray_visitCell_eq (h₀ : x 0 = w 0)
+    (h : ∀ i < n, successorArray x (visitCell w i).1 (visitCell w i).2 = w (i + 1)) :
+    ∀ i ≤ n, x i = w i := by
+  have key : ∀ i ≤ n, ∀ l ≤ i, x l = w l := by
+    intro i
+    induction i with
+    | zero => intro _ l hl; rw [Nat.le_zero.1 hl]; exact h₀
+    | succ j ih =>
+      intro hj l hl
+      have hjn : j < n := hj
+      have hprev : ∀ l ≤ j, x l = w l := ih hjn.le
+      rcases Nat.lt_or_ge l (j + 1) with hlj | hlj
+      · exact hprev l (Nat.lt_succ_iff.1 hlj)
+      · have hlval : l = j + 1 := Nat.le_antisymm hl hlj
+        have hxj : x j = w j := hprev j (le_refl j)
+        have hcount : visitCount w (w j) j = visitCount x (x j) j := by
+          rw [hxj]
+          exact (visitCount_congr fun m hm => hprev m hm.le).symm
+        have hstep := h j hjn
+        rw [visitCell_def, hcount, ← hxj, successorArray_visitCount x j] at hstep
+        rw [hlval]
+        exact hstep
+  intro i hi
+  exact key n (le_refl n) i hi
+
+/-- **A finite initial segment is pinned down by its initial value and the successor-array entries
+at the cells it designates.** Both the cells and the prescribed successors are read off the
+reference sequence `w`, so the right-hand side is a condition on `x` through finitely many entries
+of its successor array at cells that do not depend on `x`. -/
+theorem eqOn_iff_successorArray_visitCell (w x : ℕ → α) (n : ℕ) :
+    (∀ i ≤ n, x i = w i) ↔
+      x 0 = w 0 ∧ ∀ i < n, successorArray x (visitCell w i).1 (visitCell w i).2 = w (i + 1) :=
+  ⟨fun h => ⟨h 0 (Nat.zero_le n), fun _ hi => successorArray_visitCell_eq_of_eqOn h hi⟩,
+    fun h => eqOn_of_successorArray_visitCell_eq h.1 h.2⟩
+
+end Cells
 
 end TauCeti
 
