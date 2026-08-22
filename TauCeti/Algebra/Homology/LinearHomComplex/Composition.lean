@@ -9,8 +9,8 @@ public import Mathlib.Algebra.Category.ModuleCat.Colimits
 public import Mathlib.Algebra.Category.ModuleCat.Monoidal.Closed
 public import Mathlib.Algebra.Category.ModuleCat.Monoidal.Symmetric
 public import Mathlib.Algebra.Homology.Monoidal
+public import Mathlib.CategoryTheory.Monoidal.Closed.Braided
 public import TauCeti.Algebra.Homology.LinearHomComplex.Basic
-public import TauCeti.CategoryTheory.Monoidal.Closed.Colimits
 
 /-!
 # Composition of cochains as a morphism of `R`-linear Hom complexes
@@ -38,9 +38,11 @@ Mathlib's `CategoryTheory.EnrichedCategory` instead asks for
 is not yet available, so the enrichment itself is left to a later file.
 
 The monoidal structure used here is Mathlib's `HomologicalComplex.monoidalCategory` at
-`ComplexShape.up ℤ`; nothing is re-totalized.  Its hypotheses are discharged by the
-colimit-preservation instances of `TauCeti/CategoryTheory/Monoidal/Closed/Colimits.lean`.  Note
-that `ModuleCat.{v} R` is monoidal only for `R : Type v`, so this file, unlike
+`ComplexShape.up ℤ`; nothing is re-totalized.  Its colimit-preservation hypotheses are discharged
+by Mathlib's instances for a braided monoidal closed category, so
+`Mathlib.CategoryTheory.Monoidal.Closed.Braided` has to be imported for the tensor product of
+cochain complexes to exist at all.  Note that `ModuleCat.{v} R` is monoidal only for
+`R : Type v`, so this file, unlike
 `TauCeti/Algebra/Homology/LinearHomComplex/Basic.lean`, ties the ring to the morphism universe
 of `C`.
 
