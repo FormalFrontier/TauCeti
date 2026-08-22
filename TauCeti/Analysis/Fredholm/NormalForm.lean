@@ -249,8 +249,10 @@ the base point. -/
 theorem normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : E}
     (hf : HasStrictFDerivAt f T a) :
     (pkg.normalFormOpenPartialHomeomorph hf).symm
-      (pkg.decCodom.proj (f a), 0) = a := by
-  rw [← pkg.normalFormMap_self f a,
+      (pkg.decCodom.X₁.projectionOnto pkg.decCodom.X₀ pkg.decCodom.isTopCompl.isCompl (f a), 0) =
+        a := by
+  rw [← Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+    ← pkg.normalFormMap_self f a,
     ← pkg.normalFormOpenPartialHomeomorph_apply hf]
   exact (pkg.normalFormOpenPartialHomeomorph hf).left_inv
     (pkg.mem_normalFormOpenPartialHomeomorph_source hf)
@@ -299,7 +301,8 @@ of `f a`. Not a `simp` lemma: `obstructionMap_apply` and
 theorem obstructionMap_self {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
     pkg.obstructionMap hf (pkg.decCodom.proj (f a), 0) =
       pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm (f a) := by
-  rw [pkg.obstructionMap_apply hf, pkg.normalFormOpenPartialHomeomorph_symm_self hf]
+  rw [pkg.obstructionMap_apply hf, Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+    pkg.normalFormOpenPartialHomeomorph_symm_self hf]
 
 /-- At the base coordinate the obstruction slice is the complementary-codomain component of
 `f a`. -/
@@ -386,7 +389,8 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
   have hinv := pkg.hasStrictFDerivAt_normalFormOpenPartialHomeomorph_symm_self hf
   have hf' : HasStrictFDerivAt f T
       ((pkg.normalFormOpenPartialHomeomorph hf).symm (pkg.decCodom.proj (f a), 0)) := by
-    simpa only [pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
+    simpa only [Submodule.coe_projectionOntoL,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
   have hcomp : HasStrictFDerivAt
       (fun y ↦ P (f ((pkg.normalFormOpenPartialHomeomorph hf).symm y)))
       (P.comp (T.comp (pkg.normalFormEquivL.symm :
@@ -438,11 +442,13 @@ theorem contDiffAt_normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : 
     (pkg.normalFormOpenPartialHomeomorph_self_mem_target hfd)
   · have hfun : ⇑(pkg.normalFormOpenPartialHomeomorph hfd) = pkg.normalFormMap f a :=
       funext (pkg.normalFormOpenPartialHomeomorph_apply hfd)
-    rw [hfun, pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
+    rw [hfun, Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
     exact (pkg.hasStrictFDerivAt_normalFormMap hfd).hasFDerivAt
   · have hfun : ⇑(pkg.normalFormOpenPartialHomeomorph hfd) = pkg.normalFormMap f a :=
       funext (pkg.normalFormOpenPartialHomeomorph_apply hfd)
-    rw [hfun, pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
+    rw [hfun, Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
     exact pkg.contDiffAt_normalFormMap hf
 
 /-- If `f` is `C^k` at a point with Fredholm derivative, then its finite-dimensional obstruction
@@ -454,7 +460,8 @@ theorem contDiffAt_obstructionMap_self {f : E → F} {a : E} {n : ℕ∞ω}
   have hinv := pkg.contDiffAt_normalFormOpenPartialHomeomorph_symm_self hfd hf
   have hf' : ContDiffAt 𝕜 n f
       ((pkg.normalFormOpenPartialHomeomorph hfd).symm (pkg.decCodom.proj (f a), 0)) := by
-    rw [pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
+    rw [Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
     exact hf
   have hcomp := P.contDiff.contDiffAt.comp _ (hf'.comp _ hinv)
   change ContDiffAt 𝕜 n
