@@ -98,7 +98,7 @@ theorem mem_d8PlusCarrier_iff (x : Fin 8 → ℚ) :
       exact ((checkerboardLattice 8).discriminantGroup_mk_eq_zero_iff
         ⟨x, hxdual⟩).mp hx
     · right
-      rw [checkerboardSpinorClass_eq_mk] at hx
+      rw [checkerboardSpinorClass_def] at hx
       exact ((checkerboardLattice 8).discriminantGroup_mk_eq_iff
         ⟨x, hxdual⟩ ⟨checkerboardSpinor 8, checkerboardSpinor_mem_dualCarrier⟩).mp hx
   · rintro (hx | hx)
@@ -116,7 +116,7 @@ theorem mem_d8PlusCarrier_iff (x : Fin 8 → ℚ) :
       refine ⟨hxdual, ?_⟩
       rw [mem_d8SpinorSubgroup_iff]
       right
-      rw [checkerboardSpinorClass_eq_mk]
+      rw [checkerboardSpinorClass_def]
       exact ((checkerboardLattice 8).discriminantGroup_mk_eq_iff
         ⟨x, hxdual⟩ ⟨checkerboardSpinor 8, checkerboardSpinor_mem_dualCarrier⟩).mpr hx
 

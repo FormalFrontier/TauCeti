@@ -468,7 +468,7 @@ noncomputable def checkerboardSpinorClass : (checkerboardLattice n).Discriminant
   Submodule.Quotient.mk ⟨checkerboardSpinor n, checkerboardSpinor_mem_dualCarrier⟩
 
 /-- The spinor class is represented by the Conway--Sloane spinor vector. -/
-theorem checkerboardSpinorClass_eq_mk :
+theorem checkerboardSpinorClass_def :
     checkerboardSpinorClass n =
       Submodule.Quotient.mk ⟨checkerboardSpinor n, checkerboardSpinor_mem_dualCarrier⟩ :=
   (rfl)
