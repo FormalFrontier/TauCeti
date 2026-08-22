@@ -18,6 +18,8 @@ of a number field `K` sums over the factorizations `B * C = A` of a nonzero idea
 constructs that index set, defines the convolution, and proves that it makes
 `TauCeti.IdealArithmeticFunction K` a commutative monoid with identity
 `TauCeti.IdealArithmeticFunction.delta`, bilinear over the pointwise additive structure.
+It also transports this operation through `TauCeti.normCoeff` to Mathlib's Dirichlet convolution
+on `ArithmeticFunction ℂ`.
 
 ## Main definitions
 
@@ -27,7 +29,6 @@ constructs that index set, defines the convolution, and proves that it makes
   `B * C = A`; it is the ideal analogue of Mathlib's `Nat.divisorsAntidiagonal`.
 * `TauCeti.IdealArithmeticFunction.convolution f g` is the ideal Dirichlet convolution.
 * `TauCeti.IdealArithmeticFunction.convolutionPow f n` is the `n`-fold convolution power of `f`.
-* `TauCeti.normCoeff_convolution` transports ideal convolution to Mathlib's Dirichlet convolution.
 
 ## Main results
 
@@ -39,6 +40,9 @@ constructs that index set, defines the convolution, and proves that it makes
   `TauCeti.IdealArithmeticFunction.add_convolution`: bilinearity over pointwise addition.
 * `TauCeti.IdealArithmeticFunction.convolution_one_one_ne_mul`: ideal convolution is not the
   pointwise product.
+* `TauCeti.normCoeff_delta`, `TauCeti.normCoeff_convolution`, and
+  `TauCeti.normCoeff_convolutionPow`: regrouping by absolute norm transports the convolution
+  identity, convolution, and convolution powers to Mathlib arithmetic functions.
 
 ## Implementation notes
 
@@ -380,19 +384,6 @@ end IdealArithmeticFunction
 
 variable (K : Type*) [Field K] [NumberField K]
 
-private noncomputable def normFiber (n : ℕ) : Finset ((Ideal (𝓞 K))⁰) :=
-  (finite_normFiber K n).toFinset
-
-@[simp]
-private theorem mem_normFiber {I : (Ideal (𝓞 K))⁰} {n : ℕ} :
-    I ∈ normFiber K n ↔ Ideal.absNorm (I : Ideal (𝓞 K)) = n := by
-  simp [normFiber]
-
-private theorem normCoeff_eq_sum_normFiber (f : IdealArithmeticFunction K) (n : ℕ) :
-    normCoeff K f n = ∑ I ∈ normFiber K n, f I := by
-  rw [normCoeff_apply, finsum_mem_eq_finite_toFinset_sum _ (finite_normFiber K n)]
-  simp only [normFiber]
-
 /-- Regrouping sends the identity for ideal convolution to the identity for Mathlib's Dirichlet
 convolution. -/
 @[simp]
@@ -422,6 +413,8 @@ theorem normCoeff_convolution (f g : IdealArithmeticFunction K) :
   · simp
   simp only [normCoeff_eq_sum_normFiber, IdealArithmeticFunction.convolution_apply,
     ArithmeticFunction.mul_apply, Finset.sum_mul_sum, Finset.sum_sigma']
+  -- Reindex `(A, (B, C))` by `((N B, N C), (B, C))`, with inverse
+  -- `(d, (B, C)) ↦ (B * C, (B, C))`; `map_mul` makes both maps preserve the norm fibre.
   refine Finset.sum_nbij'
     (fun ⟨A, p⟩ ↦
       ⟨(Ideal.absNorm (p.1 : Ideal (𝓞 K)), Ideal.absNorm (p.2 : Ideal (𝓞 K))),
@@ -429,11 +422,10 @@ theorem normCoeff_convolution (f g : IdealArithmeticFunction K) :
     (fun ⟨_d, ⟨B, C⟩⟩ ↦ ⟨B * C, (B, C)⟩) ?_ ?_ ?_ ?_ ?_ <;>
     simp only [Finset.mem_sigma, mem_normFiber, Ideal.mem_divisorsAntidiagonal,
       Nat.mem_divisorsAntidiagonal] <;>
-    aesop
+    aesop (add simp [map_mul])
 
 /-- Regrouping transports iterated ideal convolution to powers under Mathlib's Dirichlet
 convolution. -/
-@[simp]
 theorem normCoeff_convolutionPow (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K (f.convolutionPow n) = normCoeff K f ^ n := by
   induction n with

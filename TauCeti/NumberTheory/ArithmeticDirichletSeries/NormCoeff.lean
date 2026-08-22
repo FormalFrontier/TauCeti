@@ -18,8 +18,9 @@ This file defines `TauCeti.normCoeff`, the ordinary arithmetic function obtained
 function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` carrier; that value
 is available from `ArithmeticFunction.map_zero`.
 
-The construction is bundled as a complex-linear map.  The basic API records the value at one and
-compatibility with complex conjugation.
+The construction is bundled as a complex-linear map.  The basic API exposes the finite norm fibre
+`TauCeti.normFiber` and its finiteness, records the value at one, and proves compatibility with
+complex conjugation.
 
 ## Roadmap role
 
@@ -45,6 +46,16 @@ variable (K : Type*) [Field K] [NumberField K]
 theorem finite_normFiber (n : ℕ) :
     {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}.Finite := by
   exact (Ideal.finite_setOfPred_absNorm_eq n).preimage Subtype.val_injective.injOn
+
+/-- The finite set of nonzero integral ideals with a fixed absolute norm. -/
+noncomputable def normFiber (n : ℕ) : Finset ((Ideal (𝓞 K))⁰) :=
+  (finite_normFiber K n).toFinset
+
+/-- Membership in an absolute-norm fibre. -/
+@[simp]
+theorem mem_normFiber {I : (Ideal (𝓞 K))⁰} {n : ℕ} :
+    I ∈ normFiber K n ↔ Ideal.absNorm (I : Ideal (𝓞 K)) = n := by
+  simp [normFiber]
 
 /-- Regroup ideal arithmetic functions by absolute norm as a complex-linear map.
 
@@ -73,6 +84,12 @@ theorem normCoeff_apply (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K f n =
       ∑ᶠ I ∈ {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}, f I :=
   (rfl)
+
+/-- The value of `normCoeff f` as a sum over the finite absolute-norm fibre. -/
+theorem normCoeff_eq_sum_normFiber (f : IdealArithmeticFunction K) (n : ℕ) :
+    normCoeff K f n = ∑ I ∈ normFiber K n, f I := by
+  rw [normCoeff_apply, finsum_mem_eq_finite_toFinset_sum _ (finite_normFiber K n)]
+  simp only [normFiber]
 
 /-- The summand defining a norm coefficient has finite support. -/
 theorem hasFiniteSupport_normCoeff_summand (f : IdealArithmeticFunction K) (n : ℕ) :
