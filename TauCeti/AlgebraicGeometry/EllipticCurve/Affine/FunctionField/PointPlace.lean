@@ -106,8 +106,8 @@ private theorem exists_sub_C_eq_zero_or_intDegree_neg (A : RatFunc F)
   -- subtract the quotient of leading coefficients to cancel the leading term.
   rcases hdegree.lt_or_eq with hdegree | hdegree
   · refine ⟨0, Or.inr ?_⟩
-    simpa [hA0, RatFunc.intDegree] using
-      (show (A.num.natDegree : ℤ) - A.denom.natDegree < 0 by omega)
+    have hdegreeInt : (A.num.natDegree : ℤ) - A.denom.natDegree < 0 := by omega
+    simpa [hA0, RatFunc.intDegree] using hdegreeInt
   · let c := A.num.leadingCoeff / A.denom.leadingCoeff
     refine ⟨c, ?_⟩
     by_cases hsub : A - RatFunc.C c = 0
