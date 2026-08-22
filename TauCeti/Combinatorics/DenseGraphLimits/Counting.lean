@@ -38,9 +38,7 @@ no loss of constant. The outer integral is over a probability measure, so the bo
 ## Main results
 
 * `TauCeti.DenseGraphLimits.counting_lemma` — the forward counting lemma
-  `|t(F, U) - t(F, W)| ≤ e(F) · ‖U - W‖□`;
-* `TauCeti.DenseGraphLimits.homDensity_eq_of_cutNorm_sub_eq_zero` — its vanishing case, the
-  same-carrier core of the forward separation direction.
+  `|t(F, U) - t(F, W)| ≤ e(F) · ‖U - W‖□`.
 
 ## References
 
@@ -255,17 +253,6 @@ theorem counting_lemma (F : SimpleGraph V) [DecidableRel F.Adj] (U W : Graphon �
   rw [hrw] at h
   rw [homDensity_def, homDensity_def]
   exact h
-
-omit [DecidableEq V] in
-/-- Two graphons whose difference has vanishing cut norm have the same homomorphism densities: the
-counting lemma with a vanishing right-hand side.  This is the same-carrier core of the forward
-separation direction, which the cross-carrier coupling form upgrades. -/
-theorem homDensity_eq_of_cutNorm_sub_eq_zero (F : SimpleGraph V) [DecidableRel F.Adj]
-    (U W : Graphon Ω μ) (h : cutNorm μ (U.toSymmKernel - W.toSymmKernel) = 0) :
-    homDensity F U = homDensity F W := by
-  have hle := counting_lemma F U W
-  rw [h, mul_zero] at hle
-  exact sub_eq_zero.1 (abs_eq_zero.1 (le_antisymm hle (abs_nonneg _)))
 
 end DenseGraphLimits
 
