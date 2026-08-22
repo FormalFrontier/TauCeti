@@ -5,9 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.ForwardDiff
 public import TauCeti.Analysis.PositiveDefinite.Function.Difference
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Shift
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Axis
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice
 
@@ -41,7 +39,8 @@ wrapper carrying the BCR involution is private to
 zero-spatial axis, on the other hand, are exactly the generic `TauCeti.IsPositiveDefinite` theory of
 `TauCeti/Analysis/PositiveDefinite/Function/Difference.lean`, applied to the bounded
 positive-definite function `t ↦ F (t, 0)` on `ℝ≥0` with its trivial involution, and are obtained
-from it here.
+from it here. Accordingly they assume only that the *time axis* is bounded, `‖F (t, 0)‖ ≤ C`,
+rather than that `F` is bounded on all of `ℝ≥0 × V`.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, Milestone 2
 ("BCR semigroup--Bochner"). Nothing below assumes a topology on `V` or any continuity of `F`, and
@@ -63,12 +62,14 @@ existence half must integrate.
   `TauCeti.IsSemigroupGroupPD.alternating_sum`: the alternating iterated differences in the time
   variable are semigroup-group positive definite, in forward-difference and in binomial form.
 * `TauCeti.IsSemigroupGroupPD.timeAxis_neg_one_pow_mul_fwdDiff_iter_nonneg`: those alternating
-  differences are nonnegative at each point of the zero-spatial axis.
+  differences are nonnegative at each point of the zero-spatial axis, assuming only that the axis
+  is bounded.
 * `TauCeti.IsSemigroupGroupPD.timeAxis_alternating_sum_nonneg` and
-  `TauCeti.IsSemigroupGroupPD.timeAxis_alternating_sum_re_nonneg`: the time axis `t ↦ F (t, 0)` is
-  completely monotone in the finite-difference sense, in the order of `ℂ` and for real parts.
+  `TauCeti.IsSemigroupGroupPD.timeAxis_alternating_sum_re_nonneg`: a bounded time axis
+  `t ↦ F (t, 0)` is completely monotone in the finite-difference sense, in the order of `ℂ` and
+  for real parts.
 * `TauCeti.IsSemigroupGroupPD.timeAxis_sub_nonneg` and
-  `TauCeti.IsSemigroupGroupPD.timeAxis_re_antitone`: the time axis is nonincreasing.
+  `TauCeti.IsSemigroupGroupPD.timeAxis_re_antitone`: a bounded time axis is nonincreasing.
 
 ## References
 
@@ -100,6 +101,13 @@ along `(h, 0)`; in particular it is *not* the backward difference `F (t) - F (t 
 theorem sub_timeShift_eq_neg_fwdDiff {F : ℝ≥0 × V → ℂ} (h : ℝ≥0) :
     (fun x : ℝ≥0 × V => F x - F (x.1 + h, x.2)) = -Δ_[((h, 0) : ℝ≥0 × V)] F := by
   simpa only [add_timeShift] using sub_shift_eq_neg_fwdDiff F ((h, 0) : ℝ≥0 × V)
+
+/-- Along the zero-spatial axis, differencing `F` in the direction `(h, 0)` is differencing the
+time axis `t ↦ F (t, 0)` in the direction `h`. This is what lets the one-variable results be
+transported to the product-space forward difference. -/
+private theorem fwdDiff_iter_timeShift_zero (n : ℕ) (F : ℝ≥0 × V → ℂ) (h t : ℝ≥0) :
+    Δ_[((h, 0) : ℝ≥0 × V)]^[n] F (t, 0) = Δ_[h]^[n] (fun u : ℝ≥0 => F (u, 0)) t := by
+  simp only [fwdDiff_iter_eq_sum_shift, add_nsmul_timeShift]
 
 namespace IsSemigroupGroupPD
 
@@ -146,12 +154,18 @@ theorem neg_one_pow_mul_fwdDiff_iter (n : ℕ) {F : ℝ≥0 × V → ℂ} {C : �
       have hG := ih (hF.sub_timeShift hbdd h) (norm_sub_timeShift_le hbdd h)
       rwa [sub_timeShift_eq_neg_fwdDiff, neg_one_pow_mul_fwdDiff_iter_succ] at hG
 
-/-- The alternating iterated time difference of a bounded semigroup-group positive-definite
-function is nonnegative along the zero-spatial axis. -/
+/-- The alternating iterated time difference of a semigroup-group positive-definite function whose
+time axis is bounded is nonnegative along the zero-spatial axis. Only the time axis has to be
+bounded: the statement is the one-variable
+`TauCeti.IsPositiveDefinite.neg_one_pow_mul_fwdDiff_iter_add_star_self_nonneg` for `t ↦ F (t, 0)`,
+at `t / 2`. -/
 theorem timeAxis_neg_one_pow_mul_fwdDiff_iter_nonneg (n : ℕ) {F : ℝ≥0 × V → ℂ} {C : ℝ}
-    (hF : IsSemigroupGroupPD F) (hbdd : ∀ x, ‖F x‖ ≤ C) (h t : ℝ≥0) :
-    0 ≤ (-1 : ℂ) ^ n * Δ_[((h, 0) : ℝ≥0 × V)]^[n] F (t, 0) :=
-  (neg_one_pow_mul_fwdDiff_iter n hF hbdd h).timeSlice_diagonal_nonneg t
+    (hF : IsSemigroupGroupPD F) (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
+    0 ≤ (-1 : ℂ) ^ n * Δ_[((h, 0) : ℝ≥0 × V)]^[n] F (t, 0) := by
+  rw [fwdDiff_iter_timeShift_zero]
+  have haxis := hF.timeAxis_isPositiveDefinite.neg_one_pow_mul_fwdDiff_iter_add_star_self_nonneg n
+    (C := C) hbdd (star_trivial h) (t / 2)
+  simpa only [star_trivial, add_halves] using haxis
 
 /-- **The alternating iterated time differences, expanded as binomial sums, are semigroup-group
 positive definite.** This is `IsSemigroupGroupPD.neg_one_pow_mul_fwdDiff_iter` with the
@@ -171,24 +185,24 @@ theorem alternating_sum (n : ℕ) {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsS
     exact Finset.sum_congr rfl fun k _ => by rw [add_nsmul_timeShift]
   rwa [heq] at hpd
 
-/-- **The time axis of a bounded semigroup-group positive-definite function is completely monotone
-in the finite-difference sense:** all alternating binomial sums of its values along an arithmetic
-progression of times are nonnegative. This is the form in which the Laplace half of the
-Berg--Christensen--Ressel representation consumes positive definiteness. The time axis is a bounded
-positive-definite function on `ℝ≥0` with the trivial involution, so this is
+/-- **A semigroup-group positive-definite function with bounded time axis is completely monotone
+along that axis, in the finite-difference sense:** all alternating binomial sums of its values
+along an arithmetic progression of times are nonnegative. This is the form in which the Laplace
+half of the Berg--Christensen--Ressel representation consumes positive definiteness. The time axis
+is then a bounded positive-definite function on `ℝ≥0` with the trivial involution, so this is
 `TauCeti.IsPositiveDefinite.alternating_sum_add_star_self_nonneg` at `t / 2`. -/
 theorem timeAxis_alternating_sum_nonneg (n : ℕ) {F : ℝ≥0 × V → ℂ} {C : ℝ}
-    (hF : IsSemigroupGroupPD F) (hbdd : ∀ x, ‖F x‖ ≤ C) (h t : ℝ≥0) :
+    (hF : IsSemigroupGroupPD F) (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
     0 ≤ ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (t + k • h, 0) := by
   have haxis := hF.timeAxis_isPositiveDefinite.alternating_sum_add_star_self_nonneg n (C := C)
-    (fun u => hbdd (u, 0)) (star_trivial h) (t / 2)
+    hbdd (star_trivial h) (t / 2)
   simpa only [star_trivial, add_halves] using haxis
 
 /-- The real-part form of `IsSemigroupGroupPD.timeAxis_alternating_sum_nonneg`: the alternating
 binomial sums of `t ↦ (F (t, 0)).re` are nonnegative. This is the shape consumed by the
 real-valued complete-monotonicity API. -/
 theorem timeAxis_alternating_sum_re_nonneg (n : ℕ) {F : ℝ≥0 × V → ℂ} {C : ℝ}
-    (hF : IsSemigroupGroupPD F) (hbdd : ∀ x, ‖F x‖ ≤ C) (h t : ℝ≥0) :
+    (hF : IsSemigroupGroupPD F) (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
     0 ≤ ∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * n.choose k * (F (t + k • h, (0 : V))).re := by
   have hre := (Complex.nonneg_iff.mp (hF.timeAxis_alternating_sum_nonneg n hbdd h t)).1
   rw [Complex.re_sum] at hre
@@ -198,19 +212,19 @@ theorem timeAxis_alternating_sum_re_nonneg (n : ℕ) {F : ℝ≥0 × V → ℂ} 
     ring
   rw [hcast, Complex.re_ofReal_mul]
 
-/-- Along the zero-spatial axis, a later value of a bounded semigroup-group positive-definite
-function is dominated by an earlier one, in the order of `ℂ`. This is
+/-- Along the zero-spatial axis, a later value of a semigroup-group positive-definite function with
+bounded time axis is dominated by an earlier one, in the order of `ℂ`. This is
 `TauCeti.IsPositiveDefinite.sub_shift_add_star_self_nonneg` for the time axis, at `t / 2`. -/
 theorem timeAxis_sub_nonneg {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsSemigroupGroupPD F)
-    (hbdd : ∀ x, ‖F x‖ ≤ C) (h t : ℝ≥0) : 0 ≤ F (t, (0 : V)) - F (t + h, 0) := by
+    (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) : 0 ≤ F (t, (0 : V)) - F (t + h, 0) := by
   have haxis := hF.timeAxis_isPositiveDefinite.sub_shift_add_star_self_nonneg (C := C)
-    (fun u => hbdd (u, 0)) (star_trivial h) (t / 2)
+    hbdd (star_trivial h) (t / 2)
   simpa only [star_trivial, add_halves] using haxis
 
-/-- The time axis of a bounded semigroup-group positive-definite function is nonincreasing: its
+/-- The bounded time axis of a semigroup-group positive-definite function is nonincreasing: its
 real part is an antitone function of time. -/
 theorem timeAxis_re_antitone {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsSemigroupGroupPD F)
-    (hbdd : ∀ x, ‖F x‖ ≤ C) : Antitone fun t : ℝ≥0 => (F (t, (0 : V))).re := by
+    (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) : Antitone fun t : ℝ≥0 => (F (t, (0 : V))).re := by
   intro t u hle
   obtain ⟨h, rfl⟩ : ∃ h : ℝ≥0, u = t + h := ⟨u - t, (add_tsub_cancel_of_le hle).symm⟩
   have hre := (Complex.nonneg_iff.mp (hF.timeAxis_sub_nonneg hbdd h t)).1
