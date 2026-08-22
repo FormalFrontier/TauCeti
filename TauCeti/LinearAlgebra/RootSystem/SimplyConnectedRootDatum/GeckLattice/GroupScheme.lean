@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice
 
 /-!
@@ -78,6 +80,7 @@ consumer is the pinned ambient group of milestone L0 of
 public section
 
 open AlgebraicGeometry CategoryTheory TensorProduct WithConv
+open scoped CategoryTheory.MonObj
 
 namespace TauCeti.DynkinType
 
@@ -95,6 +98,18 @@ attribute [local instance high] Algebra.toModule
 
 variable (t : DynkinType) (ht : t.Valid)
 
+/-- The Geck coordinate lattice is preserved by the Kostant form presented through the pinned
+Lie basis, in the argument shape consumed by the toral-closure construction. -/
+theorem geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice
+    (u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht))
+    (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h)
+    (v : t.GeckIndex ht → ℚ) (hv : v ∈ t.geckCoordinateLattice ht) :
+    t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht :=
+  t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
+    (u := u) (v := v)
+    (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv
+
 /-! ## The group scheme -/
 
 /-- **The defining Hopf ideal of the Chevalley carrier of a valid Dynkin type**: the largest Hopf
@@ -105,9 +120,7 @@ def geckDefiningIdeal :
   TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
 
@@ -118,9 +131,7 @@ theorem geckDefiningIdeal_def :
       TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
-        (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-          (u := u) (v := v)
-          (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+        (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
         (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
 
@@ -134,9 +145,7 @@ abbrev geckGroupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
 
@@ -146,9 +155,7 @@ def geckGroupSchemeι :
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
 
@@ -158,9 +165,7 @@ theorem geckGroupSchemeι_def :
       TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
-        (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-          (u := u) (v := v)
-          (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+        (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
         (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
 
@@ -176,9 +181,7 @@ def geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i
 
@@ -188,9 +191,7 @@ theorem geckRootSubgroup_def (i : Fin t.rank ⊕ Fin t.rank) :
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
-        (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-          (u := u) (v := v)
-          (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+        (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
         (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i := (rfl)
 
@@ -202,9 +203,7 @@ theorem geckRootSubgroup_comp_ι (i : Fin t.rank ⊕ Fin t.rank) :
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroup
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
-        (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-          (u := u) (v := v)
-          (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv) i
+        (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht) i
         (t.isNilpotent_geckRepresentation_rootGenerator ht i) (t.geckCoordinateBasisFin ht) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_comp_ι _ _ _ _ _ _ _ _ i
 
@@ -215,9 +214,7 @@ def geckTorus :
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
 
@@ -227,9 +224,7 @@ theorem geckTorus_def :
       TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
-        (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-          (u := u) (v := v)
-          (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+        (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
         (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
 
@@ -240,6 +235,55 @@ theorem geckTorus_comp_ι :
     t.geckTorus ht ≫ t.geckGroupSchemeι ht =
       GeneralLinear.weightTorus (R := ℤ) (t.geckWeightFin ht) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι _ _ _ _ _ _ _ _
+
+/-- **The intrinsic pinning equation for the Geck carrier.** On points over a commutative ring,
+conjugation by a weight-torus point rescales the parameter of a numbered root subgroup by the
+corresponding root character. -/
+@[simp]
+theorem geckTorus_conj_geckRootSubgroupParam (i : Fin t.rank ⊕ Fin t.rank)
+    (A : Type) [CommRing A]
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin t.rank)).X)
+    (u : A) :
+    (s ≫ (t.geckTorus ht).hom.hom) *
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+              (Multiplicative.ofAdd u)) ≫
+          (t.geckRootSubgroup ht i).hom.hom) *
+        (s ≫ (t.geckTorus ht).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((torusCharacter
+                (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
+                (t.rootGeneratorWeight ht i) : A) * u)) ≫
+        (t.geckRootSubgroup ht i).hom.hom := by
+  simpa only [geckTorus_def, geckRootSubgroup_def] using
+    UniversalEnvelopingAlgebra.kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
+        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+        (t.geckCoordinateLattice ht).toAddSubgroup
+        (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
+        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
+        (t.isCartanWeightVector_geckCoordinateBasisFin ht)
+        (t.isNilpotent_geckRepresentation_rootGenerator ht) A
+        (fun j => t.lie_lieBasis_h_rootGenerator ht i j) s u
+
+/-- **Rigidity of the Geck carrier.** Two homomorphisms out of the carrier are equal if they
+agree on every numbered root subgroup and on the represented weight torus. -/
+theorem geckGroupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
+    (φ ψ : t.geckGroupScheme ht ⟶
+      (hopfSpec (CommRingCat.of ℤ)).obj (Opposite.op Y))
+    (hroot : ∀ i, t.geckRootSubgroup ht i ≫ φ = t.geckRootSubgroup ht i ≫ ψ)
+    (htorus : t.geckTorus ht ≫ φ = t.geckTorus ht ≫ ψ) :
+    φ = ψ := by
+  apply TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme_hom_ext
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) φ ψ
+  · intro i
+    simpa only [geckRootSubgroup_def] using hroot i
+  · simpa only [geckTorus_def] using htorus
 
 /-! ## Pinned pointwise subgroups -/
 
@@ -258,9 +302,7 @@ abbrev geckRootSubgroupParam (i : Fin t.rank ⊕ Fin t.rank) (A : CommAlgCat.{v}
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupParam
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv) i
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht) i
     (t.isNilpotent_geckRepresentation_rootGenerator ht i) A
 
 /-- The elementary subgroup generated by all numbered Geck root subgroups. -/
@@ -270,9 +312,7 @@ abbrev geckElementarySubgroup (A : CommAlgCat.{v} ℤ) :
   TauCeti.UniversalEnvelopingAlgebra.kostantElementarySubgroup
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht) A
 
 /-- The subgroup generated by the represented Geck weight torus and a chosen set of numbered root
@@ -284,9 +324,7 @@ abbrev geckTorusSubsystemSubgroup (S : Set (Fin t.rank ⊕ Fin t.rank))
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusSubsystemSubgroup
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) S A
 
@@ -331,9 +369,7 @@ abbrev geckRootSubgroupMatrix {A : Type v} [CommRing A]
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv) i
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht) i
     (t.isNilpotent_geckRepresentation_rootGenerator ht i) (t.geckCoordinateBasisFin ht)
 
 /-- The represented Geck weight torus written in the finite coordinate basis. -/
@@ -350,9 +386,7 @@ def geckPoints (A : Type v) [CommRing A] :
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
-    (fun u hu v hv => t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht
-      (u := u) (v := v)
-      (by simpa only [t.kostantForm_def ht, LieAlgebra.Basis.kostantForm_def] using hu) hv)
+    (geckRepresentation_lieBasisKostantForm_mem_geckCoordinateLattice t ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
 
