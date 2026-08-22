@@ -7,16 +7,20 @@ module
 
 public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Moments.Variance
+public import Mathlib.Probability.Moments.IntegrableExpMul
+public import Mathlib.Probability.Moments.Basic
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 import TauCeti.Probability.Distributions.PDFInstances
 import TauCeti.MeasureTheory.Integral.ExpDecay
 
 /-!
-# Moments of the exponential law
+# Moments and transforms of the exponential law
 
-The mean and variance of `ProbabilityTheory.expMeasure r`, for a positive rate `0 < r`:
+The moments and transforms of `ProbabilityTheory.expMeasure r`, for a positive rate `0 < r`:
 
 ```text
 ∫ x, x ∂(expMeasure r) = r⁻¹        Var[id; expMeasure r] = (r ^ 2)⁻¹
+mgf id (expMeasure r) t = r / (r - t)      charFun (expMeasure r) t = r / (r - t * I)
 ```
 
 Every result below carries that hypothesis, but the two regimes it excludes differ.  At `r < 0` the
@@ -45,12 +49,16 @@ zero case is discharged from the probability-measure instance instead.
 * `integrable_pow_expMeasure` — every moment is integrable, for `0 < r`;
 * `integral_pow_expMeasure` — the `n`-th moment, `n ! / r ^ n`, for `0 < r`;
 * `integral_id_expMeasure`, `integral_sq_expMeasure` — the mean and the second moment;
-* `variance_id_expMeasure` — the variance.
+* `variance_id_expMeasure` — the variance;
+* `integrableExpSet_id_expMeasure` — the moment-generating domain is exactly `Iio r`;
+* `mgf_id_expMeasure`, `mgf_id_expMeasure_pos`, `cgf_id_expMeasure` — the mgf on that domain, its
+  strict positivity, and the cgf as the logarithm of a positive number;
+* `charFun_expMeasure` — the characteristic function, at every real `t`.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, exponential — the mean and
-  variance.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, exponential — the moments,
+  the moment-generating domain, the mgf and cgf, and the characteristic function.
 * [mathlib4#35504](https://github.com/leanprover-community/mathlib4/pull/35504), the upstream
   exponential mgf, moments and memorylessness work that the roadmap names as the source for this
   material.  It has not landed at Tau Ceti's current Mathlib pin, so the declarations here follow
@@ -86,12 +94,13 @@ private theorem toReal_gammaPDF_one (hr : 0 < r) (x : ℝ) :
   rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
 
 /-- An integral against `expMeasure` is a density integral against `volume`. -/
-private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
-    ∫ x, g x ∂(expMeasure r) = ∫ x, exponentialPDFReal r x * g x := by
+private theorem integral_expMeasure {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (hr : 0 < r) (g : ℝ → E) :
+    ∫ x, g x ∂(expMeasure r) = ∫ x, exponentialPDFReal r x • g x := by
   have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
-  have key : ∀ x : ℝ, (gammaPDF 1 r x).toReal • g x = exponentialPDFReal r x * g x := by
+  have key : ∀ x : ℝ, (gammaPDF 1 r x).toReal • g x = exponentialPDFReal r x • g x := by
     intro x
-    rw [smul_eq_mul, toReal_gammaPDF_one hr]
+    rw [toReal_gammaPDF_one hr]
   unfold expMeasure gammaMeasure
   rw [integral_withDensity_eq_integral_toReal_smul hmeas
       (ae_of_all _ fun x => ENNReal.ofReal_lt_top)]
@@ -152,7 +161,9 @@ theorem integral_pow_expMeasure (hr : 0 < r) (n : ℕ) :
   rcases eq_or_ne n 0 with rfl | hn
   · have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
     simp
-  rw [integral_expMeasure hr, integrand_eq_indicator hn,
+  rw [integral_expMeasure hr]
+  simp only [smul_eq_mul]
+  rw [integrand_eq_indicator hn,
     integral_indicator measurableSet_Ioi, integral_const_mul,
     integral_pow_mul_exp_neg_mul_Ioi n hr]
   field_simp
@@ -180,6 +191,112 @@ theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = (r ^ 2)⁻
   rw [integral_sq_expMeasure hr, integral_id_expMeasure hr]
   field_simp
   ring
+
+/-! ### The moment-generating domain
+
+The exponential moment `∫ exp (t * x)` exists exactly for `t < r`.  Both directions come from
+`TauCeti.integrableOn_exp_mul_Ioi_iff`: after the density transport the integrand is a constant
+multiple of `exp ((t - r) * x)` on `[0, ∞)`, whose integrability is equivalent to `t - r < 0`.
+-/
+
+/-- The exponential-moment integrand in closed form: off the negative half-line it is a constant
+multiple of a single exponential at rate `t - r`. -/
+private theorem expIntegrand_eq_indicator (t : ℝ) :
+    (fun x => exponentialPDFReal r x * exp (t * x))
+      = (Ici (0:ℝ)).indicator (fun x => r * exp ((t - r) * x)) := by
+  funext x
+  unfold exponentialPDFReal gammaPDFReal
+  by_cases hx : (0:ℝ) ≤ x
+  · rw [Set.indicator_of_mem (mem_Ici.mpr hx)]
+    split_ifs
+    rw [Real.rpow_one, Real.Gamma_one, sub_self, Real.rpow_zero,
+      show (t - r) * x = t * x + -(r * x) by ring, Real.exp_add]
+    ring
+  · rw [Set.indicator_of_notMem (by simpa using hx)]
+    split_ifs
+    ring
+
+/-- **The moment-generating domain of the exponential law** is exactly `Iio r`. -/
+theorem integrableExpSet_id_expMeasure (hr : 0 < r) :
+    integrableExpSet id (expMeasure r) = Set.Iio r := by
+  ext t
+  simp only [integrableExpSet, Set.mem_ofPred_eq, id_eq, Set.mem_Iio]
+  rw [integrable_expMeasure_iff hr, expIntegrand_eq_indicator t,
+    integrable_indicator_iff measurableSet_Ici,
+    integrableOn_Ici_iff_integrableOn_Ioi]
+  unfold IntegrableOn
+  rw [integrable_const_mul_iff (isUnit_iff_ne_zero.2 hr.ne') (fun x => exp ((t - r) * x))]
+  exact integrableOn_exp_mul_Ioi_iff.trans sub_neg
+
+/-! ### The moment generating function and its logarithm -/
+
+/-- **The moment generating function of the exponential law**, on its domain `t < r`. -/
+theorem mgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
+    mgf id (expMeasure r) t = r / (r - t) := by
+  have hrt : 0 < r - t := sub_pos.2 ht
+  have hcongr : ∀ x ∈ Ioi (0:ℝ),
+      r * exp ((t - r) * x) = r * (x ^ 0 * exp (-((r - t) * x))) := by
+    intro x _
+    rw [pow_zero, one_mul, show (t - r) * x = -((r - t) * x) by ring]
+  unfold mgf
+  simp only [id_eq]
+  rw [integral_expMeasure hr]
+  simp only [smul_eq_mul]
+  rw [expIntegrand_eq_indicator t,
+    integral_indicator measurableSet_Ici, integral_Ici_eq_integral_Ioi,
+    setIntegral_congr_fun measurableSet_Ioi hcongr, integral_const_mul,
+    integral_pow_mul_exp_neg_mul_Ioi 0 hrt]
+  simp [div_eq_mul_inv]
+
+/-- The moment generating function is strictly positive on its domain.  This is what makes the
+cgf below the logarithm of a positive number rather than a junk value. -/
+theorem mgf_id_expMeasure_pos (hr : 0 < r) (ht : t < r) : 0 < mgf id (expMeasure r) t := by
+  rw [mgf_id_expMeasure hr ht]
+  exact div_pos hr (sub_pos.2 ht)
+
+/-- **The cumulant generating function of the exponential law**, on its domain `t < r`. -/
+theorem cgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
+    cgf id (expMeasure r) t = Real.log (r / (r - t)) := by
+  unfold cgf
+  rw [mgf_id_expMeasure hr ht]
+
+/-! ### The characteristic function -/
+
+/-- The characteristic-function integrand in closed form on the positive half-line. -/
+private theorem charIntegrand_eq (t : ℝ) {x : ℝ} (hx : 0 < x) :
+    exponentialPDFReal r x • Complex.exp ((t : ℂ) * x * Complex.I)
+      = (r : ℂ) * Complex.exp (((t : ℂ) * Complex.I - r) * x) := by
+  unfold exponentialPDFReal gammaPDFReal
+  split_ifs with h
+  · rw [Real.rpow_one, Real.Gamma_one, sub_self, Real.rpow_zero, Complex.real_smul]
+    push_cast [Complex.ofReal_exp]
+    rw [mul_assoc, ← Complex.exp_add]
+    ring_nf
+  · exact absurd hx.le h
+
+/-- **The characteristic function of the exponential law.**
+
+Unlike the mgf this needs no hypothesis on `t`: the integrand has modulus `exp (-(r * x))`
+whatever `t` is, so the integral converges at every real `t`. -/
+theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
+    charFun (expMeasure r) t = (r : ℂ) / (r - t * Complex.I) := by
+  have ha : ((t : ℂ) * Complex.I - r).re < 0 := by simp [hr]
+  have hzero : ∀ x ∉ Ici (0:ℝ),
+      exponentialPDFReal r x • Complex.exp ((t : ℂ) * x * Complex.I) = 0 := by
+    intro x hx
+    have hpdf : exponentialPDFReal r x = 0 := by
+      unfold exponentialPDFReal gammaPDFReal
+      split_ifs with h
+      · exact absurd h (by simpa using hx)
+      · rfl
+    rw [hpdf, zero_smul]
+  rw [charFun_apply_real, integral_expMeasure hr,
+    ← setIntegral_eq_integral_of_forall_compl_eq_zero hzero, integral_Ici_eq_integral_Ioi,
+    setIntegral_congr_fun measurableSet_Ioi (fun x hx => charIntegrand_eq t (mem_Ioi.mp hx)),
+    integral_const_mul, integral_exp_mul_complex_Ioi ha 0]
+  simp only [Complex.ofReal_zero, mul_zero, Complex.exp_zero]
+  rw [show ((t : ℂ) * Complex.I - r) = -((r : ℂ) - t * Complex.I) by ring, div_neg, neg_div,
+    neg_neg, mul_one_div]
 
 end Probability
 
