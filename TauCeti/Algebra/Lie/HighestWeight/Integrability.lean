@@ -22,7 +22,7 @@ file proves the **integrability relation**: the vector
 
 `w = fᵢ^{n + 1} · v`
 
-obtained by lowering `v` one step past the end of its `αᵢ`-string is again a highest weight vector,
+obtained by lowering `v` to degree `n + 1` in its `αᵢ`-string is again a highest weight vector,
 of weight `lam - (n + 1) αᵢ`, as soon as it is nonzero.  Consequently it *is* zero whenever `M` is
 irreducible: an irreducible module has highest weight vectors of only one weight.
 

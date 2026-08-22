@@ -14,14 +14,15 @@ public section
 
 Let `H` be a subalgebra of a Lie algebra `L` acting on a module `M`. A vector `v` on which every
 element of `H` acts by a scalar is a **simultaneous eigenvector**, its eigenvalue being the
-function `chi : H → R` that records those scalars. This file collects the two facts about such a
-vector that need nothing beyond the module structure: it lies in the generalized weight space of
-its eigenvalue, and applying to it an adjoint eigenvector of weight `psi` shifts its eigenvalue by
-`psi`, once per application.
+function `chi : H → R` that records those scalars. This file collects two facts about such a vector.
+When `H` is nilpotent, it lies in the generalized weight space of its eigenvalue. Without a
+nilpotence assumption, applying to it an adjoint eigenvector of weight `psi` shifts its eigenvalue
+by `psi`, once per application.
 
-Both are stated for an arbitrary subalgebra of a Lie algebra over a commutative ring; the Cartan
-subalgebra of a Lie algebra with non-degenerate Killing form, where `psi` is a root, is the case
-the weight theory uses, and `TauCeti.lie_pow_toEnd_eq_smul_of_mem_rootSpace` records it.
+Both are stated over a commutative ring; the weight-space result assumes the subalgebra is
+nilpotent, while the weight-shift result applies to an arbitrary subalgebra. The Cartan subalgebra
+of a Lie algebra with non-degenerate Killing form, where `psi` is a root, is the case the weight
+theory uses, and `TauCeti.lie_pow_toEnd_eq_smul_of_mem_rootSpace` records it.
 
 ## Main results
 
