@@ -152,6 +152,15 @@ theorem bigradedChainEquiv_apply_apply (R : Type*) [Semiring R] (hG : G.IsKnot)
       ((finsuppLEquivDirectSum R R (GridState n)) c)) g x = c x
   rw [DirectSum.sigmaFiberAddEquiv_apply_apply, finsuppLEquivDirectSum_apply]
 
+/-- Reading a chain back off its homogeneous components: the coefficient at a state is the
+component of the state's own bidegree, at that state. -/
+@[simp]
+theorem bigradedChainEquiv_symm_apply_apply (R : Type*) [Semiring R] (hG : G.IsKnot)
+    (d : ⨁ g : ℤ × ℤ, G.BigradedChainPiece R hG g) (x : GridState n) :
+    (G.bigradedChainEquiv R hG).symm d x = d (G.bidegree hG x) ⟨x, rfl⟩ := by
+  conv_rhs => rw [← (G.bigradedChainEquiv R hG).apply_symm_apply d]
+  exact (G.bigradedChainEquiv_apply_apply R hG _ (G.bidegree hG x) ⟨x, rfl⟩).symm
+
 /-- A grid-state generator maps to the copy of the coefficient ring indexed by that state inside
 its own bidegree. -/
 @[simp]
