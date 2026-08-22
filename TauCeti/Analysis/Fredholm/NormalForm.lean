@@ -237,13 +237,6 @@ theorem normalFormOpenPartialHomeomorph_apply {f : E → F} {a : E}
     pkg.normalFormOpenPartialHomeomorph hf x = pkg.normalFormMap f a x :=
   (pkg.normalFormImplicitFunctionData hf).toOpenPartialHomeomorph_apply x
 
-/-- The Fredholm normal-form homeomorphism, read as a function, is the normal-form coordinate
-map. -/
-theorem coe_normalFormOpenPartialHomeomorph {f : E → F} {a : E}
-    (hf : HasStrictFDerivAt f T a) :
-    ⇑(pkg.normalFormOpenPartialHomeomorph hf) = pkg.normalFormMap f a :=
-  funext (pkg.normalFormOpenPartialHomeomorph_apply hf)
-
 /-- The base point belongs to the source of the Fredholm normal-form homeomorphism. -/
 theorem mem_normalFormOpenPartialHomeomorph_source {f : E → F} {a : E}
     (hf : HasStrictFDerivAt f T a) :
@@ -259,17 +252,6 @@ theorem normalFormOpenPartialHomeomorph_self_mem_target {f : E → F} {a : E}
   exact (pkg.normalFormImplicitFunctionData hf).map_pt_mem_toOpenPartialHomeomorph_target
 
 /-- Applying the inverse normal-form coordinate map to the coordinate of the base point returns
-the base point, in the package's own `pkg.decCodom.proj` spelling. The `@[simp]` form
-`normalFormOpenPartialHomeomorph_symm_self` below is the same statement after `simp` has unfolded
-that projection; this variant is the one the other proofs in this file rewrite with. -/
-private theorem normalFormOpenPartialHomeomorph_symm_proj_self {f : E → F} {a : E}
-    (hf : HasStrictFDerivAt f T a) :
-    (pkg.normalFormOpenPartialHomeomorph hf).symm (pkg.decCodom.proj (f a), 0) = a := by
-  rw [← pkg.normalFormMap_self f a, ← pkg.normalFormOpenPartialHomeomorph_apply hf]
-  exact (pkg.normalFormOpenPartialHomeomorph hf).left_inv
-    (pkg.mem_normalFormOpenPartialHomeomorph_source hf)
-
-/-- Applying the inverse normal-form coordinate map to the coordinate of the base point returns
 the base point. -/
 @[simp]
 theorem normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : E}
@@ -277,8 +259,10 @@ theorem normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : E}
     (pkg.normalFormOpenPartialHomeomorph hf).symm
       (pkg.decCodom.X₁.projectionOnto pkg.decCodom.X₀ pkg.decCodom.isTopCompl.isCompl (f a), 0) =
         a := by
-  rw [← Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl]
-  exact pkg.normalFormOpenPartialHomeomorph_symm_proj_self hf
+  rw [← Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+    ← pkg.normalFormMap_self f a, ← pkg.normalFormOpenPartialHomeomorph_apply hf]
+  exact (pkg.normalFormOpenPartialHomeomorph hf).left_inv
+    (pkg.mem_normalFormOpenPartialHomeomorph_source hf)
 
 /-! ### The finite-dimensional obstruction map -/
 
@@ -325,7 +309,8 @@ of `f a`. Not a `simp` lemma: `obstructionMap_apply` and
 theorem obstructionMap_self {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
     pkg.obstructionMap hf (pkg.decCodom.proj (f a), 0) =
       pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm (f a) := by
-  rw [pkg.obstructionMap_apply hf, pkg.normalFormOpenPartialHomeomorph_symm_proj_self hf]
+  rw [pkg.obstructionMap_apply hf, Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+    pkg.normalFormOpenPartialHomeomorph_symm_self hf]
 
 /-- In normal-form coordinates, the essential component of `f` is the first coordinate. -/
 theorem proj_apply_normalFormOpenPartialHomeomorph_symm {f : E → F} {a : E}
@@ -405,7 +390,8 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
   have hinv := pkg.hasStrictFDerivAt_normalFormOpenPartialHomeomorph_symm_self hf
   have hf' : HasStrictFDerivAt f T
       ((pkg.normalFormOpenPartialHomeomorph hf).symm (pkg.decCodom.proj (f a), 0)) := by
-    rwa [pkg.normalFormOpenPartialHomeomorph_symm_proj_self hf]
+    simpa only [Submodule.coe_projectionOntoL,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
   have hcomp : HasStrictFDerivAt
       (fun y ↦ P (f ((pkg.normalFormOpenPartialHomeomorph hf).symm y)))
       (P.comp (T.comp (pkg.normalFormEquivL.symm :
@@ -443,7 +429,7 @@ the latter is `C^k`. -/
 theorem contDiffAt_normalFormOpenPartialHomeomorph {f : E → F} {a x : E} {n : ℕ∞ω}
     (hfd : HasStrictFDerivAt f T a) (hf : ContDiffAt 𝕜 n f x) :
     ContDiffAt 𝕜 n (pkg.normalFormOpenPartialHomeomorph hfd) x := by
-  rw [pkg.coe_normalFormOpenPartialHomeomorph hfd]
+  rw [funext (pkg.normalFormOpenPartialHomeomorph_apply hfd)]
   exact pkg.contDiffAt_normalFormMap hf
 
 /-- If `f` is `C^k` at the base point, then the inverse normal-form coordinates are `C^k` at the
@@ -452,11 +438,14 @@ theorem contDiffAt_normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : 
     (hfd : HasStrictFDerivAt f T a) (hf : ContDiffAt 𝕜 n f a) :
     ContDiffAt 𝕜 n (pkg.normalFormOpenPartialHomeomorph hfd).symm
       (pkg.decCodom.proj (f a), 0) := by
-  have hpt := pkg.normalFormOpenPartialHomeomorph_symm_proj_self hfd
+  have hpt : (pkg.normalFormOpenPartialHomeomorph hfd).symm
+      (pkg.decCodom.proj (f a), 0) = a := by
+    simpa only [Submodule.coe_projectionOntoL] using
+      pkg.normalFormOpenPartialHomeomorph_symm_self hfd
   apply (pkg.normalFormOpenPartialHomeomorph hfd).contDiffAt_symm
     (f₀' := pkg.normalFormEquivL)
     (pkg.normalFormOpenPartialHomeomorph_self_mem_target hfd)
-  · rw [hpt, pkg.coe_normalFormOpenPartialHomeomorph hfd]
+  · rw [hpt, funext (pkg.normalFormOpenPartialHomeomorph_apply hfd)]
     exact (pkg.hasStrictFDerivAt_normalFormMap hfd).hasFDerivAt
   · rw [hpt]
     exact pkg.contDiffAt_normalFormOpenPartialHomeomorph hfd hf
@@ -470,7 +459,8 @@ theorem contDiffAt_obstructionMap_self {f : E → F} {a : E} {n : ℕ∞ω}
   have hinv := pkg.contDiffAt_normalFormOpenPartialHomeomorph_symm_self hfd hf
   have hf' : ContDiffAt 𝕜 n f
       ((pkg.normalFormOpenPartialHomeomorph hfd).symm (pkg.decCodom.proj (f a), 0)) := by
-    rwa [pkg.normalFormOpenPartialHomeomorph_symm_proj_self hfd]
+    simpa only [Submodule.coe_projectionOntoL,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hfd] using hf
   have hcomp := P.contDiff.contDiffAt.comp _ (hf'.comp _ hinv)
   apply hcomp.congr_of_eventuallyEq
   filter_upwards [] with y
