@@ -27,8 +27,6 @@ of that length.
 
 * `TauCeti.PathAlgebra.grade`: the degree-`n` piece, the span of the paths of length `n`.
 * `TauCeti.PathAlgebra.gradeBasis`: the paths of length `n` as a `k`-basis of that piece.
-* `TauCeti.PathAlgebra.gradeDecompose`: the decomposition of `kQ` into its graded pieces, as an
-  algebra map to the direct sum. It is the `DirectSum.decompose` of the grading below.
 
 ## Main results
 
@@ -39,13 +37,16 @@ of that length.
   path coordinates are supported on the paths of length `n`.
 * `TauCeti.PathAlgebra.grade_zero` and `TauCeti.PathAlgebra.grade_one`: the vertex idempotents
   span degree `0` and the arrows span degree `1`.
+* `TauCeti.PathAlgebra.decompose_ofPath`: `DirectSum.decompose` sends a basis path to the summand
+  indexed by its length.
 
 ## Implementation notes
 
-The decomposition map is built from the universal property `TauCeti.PathAlgebra.liftAlgHom` in the
-same way as `AddMonoidAlgebra.gradeBy.gradedAlgebra` is built from the universal property of an
-additive monoid algebra: an assignment of a homogeneous summand to each basis path is an algebra
-map to the direct sum as soon as it respects the three defining products of `kQ`.
+The private map used to construct the grading is built from the universal property
+`TauCeti.PathAlgebra.liftAlgHom` in the same way as `AddMonoidAlgebra.gradeBy.gradedAlgebra` is
+built from the universal property of an additive monoid algebra: an assignment of a homogeneous
+summand to each basis path is an algebra map to the direct sum as soon as it respects the three
+defining products of `kQ`.
 
 The unit of `kQ` is the sum of the vertex idempotents, which exists only for a finite vertex type,
 so the graded *pieces* are defined for every quiver while the grading itself asks for `[Finite Q]`.
@@ -283,31 +284,29 @@ private theorem sum_gradeSummand_nil :
   rw [AddSubmonoidClass.coe_finsetSum]
   exact (one_def (k := k) (Q := Q)).symm
 
-/-- **The decomposition of the path algebra into its graded pieces**, as an algebra map to the
-direct sum: a basis path goes to itself, placed in the degree its length names. It is the
-`DirectSum.decompose` of the grading below, by
-`TauCeti.PathAlgebra.gradeDecompose_eq_decompose`. -/
-noncomputable def gradeDecompose : pathAlgebra k Q →ₐ[k] ⨁ n, grade k Q n :=
+set_option backward.privateInPublic true in
+/-- The private algebra map used to construct the path-length grading. -/
+private noncomputable def decomposeAlgHom : pathAlgebra k Q →ₐ[k] ⨁ n, grade k Q n :=
   liftAlgHom k (gradeSummand k Q) (gradeSummand_mul_gradeSummand k Q)
     (gradeSummand_mul_gradeSummand_of_not_composable k Q) (sum_gradeSummand_nil k Q)
 
-/-- The decomposition sends a basis path to itself, in the degree its length names. -/
-@[simp]
-theorem gradeDecompose_ofPath (x : Quiver.TotalPath Q) :
-    gradeDecompose k Q (ofPath x)
+set_option backward.privateInPublic true in
+private theorem decomposeAlgHom_ofPath (x : Quiver.TotalPath Q) :
+    decomposeAlgHom k Q (ofPath x)
       = DirectSum.of (fun n => grade k Q n) x.2.2.length ⟨ofPath x, ofPath_mem_grade x⟩ := by
-  rw [gradeDecompose, liftAlgHom_ofPath, gradeSummand]
+  rw [decomposeAlgHom, liftAlgHom_ofPath, gradeSummand]
 
-private theorem gradeDecompose_apply_aux {n : ℕ} {f : pathAlgebra k Q}
+set_option backward.privateInPublic true in
+private theorem decomposeAlgHom_apply_aux {n : ℕ} {f : pathAlgebra k Q}
     (hf : f ∈ Submodule.span k (Set.range fun x : {x : Quiver.TotalPath Q // x.2.2.length = n} =>
       (ofPath x.1 : pathAlgebra k Q))) :
     ∀ h : f ∈ grade k Q n,
-      gradeDecompose k Q f = DirectSum.of (fun m => grade k Q m) n ⟨f, h⟩ := by
+      decomposeAlgHom k Q f = DirectSum.of (fun m => grade k Q m) n ⟨f, h⟩ := by
   induction hf using Submodule.span_induction with
   | mem g hg =>
     obtain ⟨⟨x, hx⟩, rfl⟩ := hg
     subst hx
-    exact fun _ => gradeDecompose_ofPath k Q x
+    exact fun _ => decomposeAlgHom_ofPath k Q x
   | zero => exact fun _ => (map_zero _).trans (map_zero _).symm
   | add g g' hg hg' ihg ihg' =>
     refine fun _ => ?_
@@ -319,24 +318,23 @@ private theorem gradeDecompose_apply_aux {n : ℕ} {f : pathAlgebra k Q}
     rw [map_smul, ih ((grade_eq_span_range k Q n).ge hg), ← DirectSum.of_smul]
     rfl
 
-/-- The decomposition sends a homogeneous element to the single summand of its degree. -/
-theorem gradeDecompose_of_mem {n : ℕ} {f : pathAlgebra k Q} (hf : f ∈ grade k Q n) :
-    gradeDecompose k Q f = DirectSum.of (fun m => grade k Q m) n ⟨f, hf⟩ :=
-  gradeDecompose_apply_aux k Q ((grade_eq_span_range k Q n).le hf) hf
+set_option backward.privateInPublic true in
+private theorem decomposeAlgHom_of_mem {n : ℕ} {f : pathAlgebra k Q}
+    (hf : f ∈ grade k Q n) :
+    decomposeAlgHom k Q f = DirectSum.of (fun m => grade k Q m) n ⟨f, hf⟩ :=
+  decomposeAlgHom_apply_aux k Q ((grade_eq_span_range k Q n).le hf) hf
 
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
 /-- **The path-length grading**: the path algebra of a finite quiver is `ℕ`-graded by path length,
 with the span of the paths of length `n` in degree `n`. -/
 noncomputable instance gradedAlgebra : GradedAlgebra (grade k Q) :=
-  .ofAlgHom _ (gradeDecompose k Q)
+  .ofAlgHom _ (decomposeAlgHom k Q)
     (AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
       simp only [AlgHom.comp_toLinearMap, LinearMap.coe_comp, Function.comp_apply,
-        AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, gradeDecompose_ofPath,
+        AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, decomposeAlgHom_ofPath,
         DirectSum.coeAlgHom_of, AlgHom.coe_id, id_eq])
-    fun _ f => gradeDecompose_of_mem k Q f.2
-
-/-- The decomposition map is the `DirectSum.decompose` of the path-length grading. -/
-theorem gradeDecompose_eq_decompose :
-    ⇑(gradeDecompose k Q) = DirectSum.decompose (grade k Q) := rfl
+    fun _ f => decomposeAlgHom_of_mem k Q f.2
 
 /-- The decomposition sends a basis path to the summand its length names. -/
 @[simp]

@@ -22,8 +22,8 @@ formed.
 
 ## Main results
 
-* `TauCeti.isHomogeneous_asIdeal_span`: **a two-sided ideal spanned by homogeneous elements is
-  homogeneous.**
+* `TauCeti.TwoSidedIdeal.homogeneous_span`: **a two-sided ideal spanned by homogeneous elements
+  is homogeneous.**
 * `TauCeti.proj_mul_mem_left` and `TauCeti.proj_mul_mem_right`: the absorption lemmas.
 
 ## Implementation notes
@@ -110,14 +110,17 @@ theorem proj_mem_span_of_mem_span {s : Set A} (hs : ∀ x ∈ s, SetLike.IsHomog
   | left_absorb a y _ ihy => exact proj_mul_mem_left 𝒜 (fun j => ihy j) a i
   | right_absorb b y _ ihy => exact proj_mul_mem_right 𝒜 (fun j => ihy j) b i
 
-/-- **A two-sided ideal spanned by homogeneous elements is homogeneous.** This is what makes a
-relation quotient of a graded ring graded: relators homogeneous for the grading generate a
-homogeneous ideal. -/
-theorem isHomogeneous_asIdeal_span {s : Set A} (hs : ∀ x ∈ s, SetLike.IsHomogeneousElem 𝒜 x) :
+namespace TwoSidedIdeal
+
+/-- **A two-sided ideal spanned by homogeneous elements is homogeneous.** This supplies the
+homogeneity condition needed to descend a grading to a relation quotient. -/
+theorem homogeneous_span {s : Set A} (hs : ∀ x ∈ s, SetLike.IsHomogeneousElem 𝒜 x) :
     (TwoSidedIdeal.span s).asIdeal.IsHomogeneous 𝒜 := by
   intro i x hx
   rw [TwoSidedIdeal.mem_asIdeal] at hx ⊢
   rw [← GradedRing.proj_apply]
   exact proj_mem_span_of_mem_span 𝒜 hs hx i
+
+end TwoSidedIdeal
 
 end TauCeti

@@ -38,7 +38,7 @@ the two-vertex graph `A₂`, whose zigzag algebra is genuinely radical-cube-zero
 * `TauCeti.IsQuadraticZigzagRelator`: the two quadratic relation families.
 * `TauCeti.IsZigzagRelator`: the uniform relation family, adding the long paths.
 * `TauCeti.zigzagIdeal` and `TauCeti.quadraticZigzagIdeal`: the two-sided ideals they span, with
-  `TauCeti.zigzagIdeal_eq_span` and `TauCeti.quadraticZigzagIdeal_eq_span` recording the spans.
+  named unfolding lemmas for callers that reason about the spans.
 * `TauCeti.nonisolatedZigzagQuotient`: the relation quotient, with quotient map
   `TauCeti.zigzagMk` and universal property `TauCeti.zigzagLift`.
 
@@ -105,13 +105,11 @@ noncomputable def quadraticZigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQu
 noncomputable def zigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQuiver G)) :=
   TwoSidedIdeal.span {x | IsZigzagRelator k G x}
 
-/-- The defining span of the quadratic relation ideal. The body of a definition is not visible
-outside its own module, so this records it for the callers that reason about the span itself. -/
+/-- A named unfolding lemma for the defining span of the quadratic relation ideal. -/
 theorem quadraticZigzagIdeal_eq_span :
     quadraticZigzagIdeal k G = TwoSidedIdeal.span {x | IsQuadraticZigzagRelator k G x} := (rfl)
 
-/-- The defining span of the uniform relation ideal. The body of a definition is not visible
-outside its own module, so this records it for the callers that reason about the span itself. -/
+/-- A named unfolding lemma for the defining span of the uniform relation ideal. -/
 theorem zigzagIdeal_eq_span :
     zigzagIdeal k G = TwoSidedIdeal.span {x | IsZigzagRelator k G x} := (rfl)
 

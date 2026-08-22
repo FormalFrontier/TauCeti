@@ -73,14 +73,14 @@ variable [Finite V]
 theorem isHomogeneous_quadraticZigzagIdeal :
     (quadraticZigzagIdeal k G).asIdeal.IsHomogeneous (grade k (DoubledQuiver G)) := by
   rw [quadraticZigzagIdeal_eq_span]
-  exact isHomogeneous_asIdeal_span _ fun _ hx =>
+  exact TwoSidedIdeal.homogeneous_span _ fun _ hx =>
     IsQuadraticZigzagRelator.isHomogeneousElem k G hx
 
-/-- **The uniform relation ideal is homogeneous** for the path-length grading. This is what makes
-the zigzag quotient a graded algebra. -/
+/-- **The uniform relation ideal is homogeneous** for the path-length grading. This is the
+condition needed to descend the grading to the zigzag quotient. -/
 theorem isHomogeneous_zigzagIdeal :
     (zigzagIdeal k G).asIdeal.IsHomogeneous (grade k (DoubledQuiver G)) := by
   rw [zigzagIdeal_eq_span]
-  exact isHomogeneous_asIdeal_span _ fun _ hx => IsZigzagRelator.isHomogeneousElem k G hx
+  exact TwoSidedIdeal.homogeneous_span _ fun _ hx => IsZigzagRelator.isHomogeneousElem k G hx
 
 end TauCeti
