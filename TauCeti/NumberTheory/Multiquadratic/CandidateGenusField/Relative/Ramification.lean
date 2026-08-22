@@ -69,10 +69,10 @@ theorem isUnramifiedIn_candidateGenusField (hd : Squarefree d) (hnsq : ¬ IsSqua
     (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val) (candidateGenusFieldGen hd)
     (fun P => hs P.val P.property) (fun P Q hPQ => Subtype.ext hPQ)
     (fun P Q hP hQ => heven P.val P.property Q.val Q.property hP hQ)
-    (candidateGenusFieldGen_sq hd) (adjoin_range_candidateGenusFieldGen_eq_top hd) _ ?_ 𝔭
+    (candidateGenusFieldGen_sq hd) (adjoin_range_candidateGenusFieldGen_eq_top hd) _ 𝔭 ?_
   -- Each prime belonging to a prime-discriminant factor divides `fundamentalDiscriminant d`, so
   -- the quadratic base is totally ramified there.
-  intro P 𝔮 _ hlies
+  intro P hlies
   have := hlies
   have hp : (primeDiscriminantPrime P.val).Prime := prime_primeDiscriminantPrime (hs P.val P.2)
   have hdvd : ((primeDiscriminantPrime P.val : ℕ) : ℤ) ∣ fundamentalDiscriminant d :=
