@@ -303,7 +303,6 @@ theorem geometricMeasure_cond_Ici (p : unitInterval) (n m : ℕ)
     field_simp
 
 /-- At success probability zero, Mathlib's totalized geometric law is Dirac at zero. -/
-@[simp]
 theorem geometricMeasure_zero : geometricMeasure (0 : unitInterval) = Measure.dirac 0 := by
   simp [geometricMeasure]
 
