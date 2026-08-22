@@ -48,7 +48,9 @@ roadmap's smooth formulation.
 ## References
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
-* T. A. Springer, *Linear Algebraic Groups*, §2.4.
+* T. A. Springer, *Linear Algebraic Groups*, Proposition 2.4.12: a subgroup of `GLₙ` consisting
+  of unipotent matrices is conjugate into `Uₙ`. A. Borel, *Linear Algebraic Groups*, §4.8 has the
+  same statement, with its Corollary the closed-subgroup form proved here.
 
 This closes the Kolchin and faithful-embedding step of Layer 5, "Unipotent groups", of the
 ReductiveGroups roadmap for reduced groups over an algebraically closed field.
