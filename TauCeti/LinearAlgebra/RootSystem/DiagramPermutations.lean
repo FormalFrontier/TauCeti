@@ -34,6 +34,7 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 
 ## Main results
 
+* `TauCeti.graphPermA_apply`: the type `Aₙ` graph permutation acts by reversing a `Fin` index.
 * `TauCeti.orderOf_graphPermA`, `TauCeti.orderOf_graphPermD`, `TauCeti.orderOf_graphPermE6` and
   `TauCeti.orderOf_trialityPermD4`: the graph permutations have order exactly two (for
   `graphPermA`, on at least two nodes), except for triality, which has order three.
@@ -56,6 +57,10 @@ namespace TauCeti
 /-- The `Aₙ` diagram automorphism, reversing its chain of Bourbaki-numbered nodes. -/
 def graphPermA (n : ℕ) : Equiv.Perm (Fin n) :=
   Fin.revPerm
+
+/-- The `Aₙ` diagram automorphism sends each node to its reversal in the chain. -/
+@[simp] theorem graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
+  rw [graphPermA, Fin.revPerm_apply]
 
 /-- The permutation exchanging the final two indices of `Fin n`. For `4 ≤ n`, this is the `Dₙ`
 diagram automorphism exchanging its two fork nodes and fixing the chain. -/

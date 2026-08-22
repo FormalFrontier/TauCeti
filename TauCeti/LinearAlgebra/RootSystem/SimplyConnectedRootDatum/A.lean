@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Data.Fin.Basic
+public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
@@ -769,7 +770,9 @@ private lemma coweightMap_typeAGraphAut :
 /-- **The graph automorphism reverses the Bourbaki-numbered chain.** On the first `n` root indices,
 the simple roots in Bourbaki order, the induced permutation is `TauCeti.graphPermA n`. -/
 @[simp] theorem indexEquiv_typeAGraphAut_typeASimpleIndex (i : Fin n) :
-    (typeAGraphAut n).indexEquiv (typeASimpleIndex n i) = typeASimpleIndex n i.rev := by
+    (typeAGraphAut n).indexEquiv (typeASimpleIndex n i) =
+      typeASimpleIndex n (graphPermA n i) := by
+  rw [graphPermA_apply]
   refine (typeAIndexEquiv n).symm.injective ?_
   have hi : (i : ℕ) < n := i.isLt
   rw [indexEquiv_typeAGraphAut,
@@ -801,7 +804,8 @@ theorem typeAGraphAut_ne_one {n : ℕ} (hn : 2 ≤ n) : typeAGraphAut n ≠ 1 :=
   have hz : (0 : ℕ) < n := by omega
   have h0 := congrArg (fun g : RootPairing.Aut (typeASimplyConnectedRootDatum n) =>
     g.indexEquiv (typeASimpleIndex n ⟨0, hz⟩)) h
-  simp only [indexEquiv_typeAGraphAut_typeASimpleIndex, RootPairing.Equiv.toHom_one,
+  simp only [indexEquiv_typeAGraphAut_typeASimpleIndex, graphPermA_apply,
+    RootPairing.Equiv.toHom_one,
     RootPairing.Hom.indexEquiv_one, Equiv.refl_apply] at h0
   have h1 : ((⟨0, hz⟩ : Fin n).rev : Fin n) = ⟨0, hz⟩ := typeASimpleIndex_injective h0
   have h2 : ((⟨0, hz⟩ : Fin n).rev : Fin n).val = 0 := congrArg Fin.val h1
@@ -827,7 +831,7 @@ not merely of the root system. -/
       (((typeAGraphAut n).indexEquiv k : Fin (n * (n + 1))) : ℕ) < n := by
     intro k hk
     have hk' : k = typeASimpleIndex n ⟨k, hk⟩ := Fin.ext (by simp)
-    rw [hk', indexEquiv_typeAGraphAut_typeASimpleIndex, typeASimpleIndex_val]
+    rw [hk', indexEquiv_typeAGraphAut_typeASimpleIndex, graphPermA_apply, typeASimpleIndex_val]
     exact (⟨(k : ℕ), hk⟩ : Fin n).rev.isLt
   apply typeABase_eq_of_support_eq
   rw [RootPairing.Base.support_map_eq]
