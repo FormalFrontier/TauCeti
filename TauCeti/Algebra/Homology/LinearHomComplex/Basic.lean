@@ -45,6 +45,17 @@ the enrichment, and compare its underlying additive-group complex with Mathlib's
 `CochainComplex.HomComplex`".  No formalization is vendored: the cochain modules, the differential
 `δ`, its `R`-linearity and the Leibniz rule for composition are all Mathlib's.
 
+## Implementation notes
+
+`linearHomComplex` and `linearHomComplexFunctor` carry `@[expose]`, while every operation built
+from them is sealed and used only through its characteristic lemmas.  The two exposures are
+forced by the statements of the API, not by its proofs: `(linearHomComplex R F G).X n` is the
+type at which every application lemma below is stated, and
+`((linearHomComplexFunctor R).obj F).obj G` is the pair of types between which the object and
+map equations of the bifunctor are stated.  Sealing either makes those statements ill-typed
+(`Type mismatch ... not unfolded because their definition is not exposed`), so no proof syntax
+recovers them.
+
 ## References
 
 * B. Keller, *Deriving DG categories*, Section 1.
