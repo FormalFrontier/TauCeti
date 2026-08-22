@@ -142,10 +142,10 @@ theorem latticeConj_tateLatticeMap (z : ℂ) :
   exact congrArg (fun f ↦ f z) huniq.symm
 
 /-- The complexification of integer multiplication is complex multiplication. -/
-theorem integralFormToComplex_tateLatticeMap_mul :
-    integralFormToComplex isBaseChange_tateLatticeMap (LinearMap.mul ℤ ℤ) =
+theorem integralFormBaseChange_tateLatticeMap_mul :
+    integralFormBaseChange isBaseChange_tateLatticeMap (LinearMap.mul ℤ ℤ) =
       LinearMap.mul ℂ ℂ :=
-  (integralFormToComplex_unique isBaseChange_tateLatticeMap _ _ fun x y ↦ by simp).symm
+  (integralFormBaseChange_unique isBaseChange_tateLatticeMap _ _ fun x y ↦ by simp).symm
 
 /-- Multiplication of integers satisfies the Hodge–Riemann relations for `ℤ(m)`. -/
 theorem isPolarization_tate (m : ℤ) :
@@ -169,7 +169,7 @@ theorem isPolarization_tate (m : ℤ) :
     by_cases hp : p = -m
     · subst hp
       have hexp : 2 * -m - -2 * m = 0 := by ring
-      rw [hexp, zpow_zero, one_mul, integralFormToComplex_tateLatticeMap_mul,
+      rw [hexp, zpow_zero, one_mul, integralFormBaseChange_tateLatticeMap_mul,
         latticeConj_tateLatticeMap]
       simpa [Complex.mul_conj] using Complex.normSq_pos.mpr hx0
     · have hbot : (tate m).piece p = (⊥ : Submodule ℂ ℂ) := by simp [hp]

@@ -48,7 +48,7 @@ Complex Algebraic Geometry I*, §7.1.2, and Peters–Steenbrink, *Mixed Hodge St
 * `TauCeti.Hodge.RationalHodgeSubstructure.isCompl_orthogonal` and
   `TauCeti.Hodge.RationalHodgeSubstructure.isCompl_WC_orthogonal_WC`: it is a complement, both
   rationally and after complexification.
-* `TauCeti.Hodge.RationalHodgeSubstructure.integralFormToRational_orthogonal_top`: the
+* `TauCeti.Hodge.RationalHodgeSubstructure.integralFormBaseChange_orthogonal_top`: the
   rationalified polarizing form is nondegenerate.
 * `TauCeti.Hodge.exists_isCompl_of_isPolarizable`: every rational Hodge substructure of a
   polarizable pure Hodge structure is a direct summand.
@@ -77,15 +77,15 @@ to it: the polarizing form pairs a Hodge component only against the complementar
 orthogonality conditions decouple along the Hodge decomposition. -/
 theorem proj_mem_orthogonal (hQ : IsPolarization hℂ hs Qint) {A : Submodule ℂ Vℂ}
     (hA : A ≤ ⨆ q, A ⊓ hs.piece q) {x : Vℂ}
-    (hx : x ∈ LinearMap.BilinForm.orthogonal (integralFormToComplex hℂ Qint) A) (p : ℤ) :
-    hs.proj p x ∈ LinearMap.BilinForm.orthogonal (integralFormToComplex hℂ Qint) A := by
+    (hx : x ∈ LinearMap.BilinForm.orthogonal (integralFormBaseChange hℂ Qint) A) (p : ℤ) :
+    hs.proj p x ∈ LinearMap.BilinForm.orthogonal (integralFormBaseChange hℂ Qint) A := by
   have hker : A ≤
-      LinearMap.ker (LinearMap.flip (integralFormToComplex hℂ Qint) (hs.proj p x)) := by
+      LinearMap.ker (LinearMap.flip (integralFormBaseChange hℂ Qint) (hs.proj p x)) := by
     refine hA.trans (iSup_le fun q w hw ↦ ?_)
     simp only [LinearMap.mem_ker, LinearMap.flip_apply]
     rcases eq_or_ne (q + p) n with hqp | hqp
-    · have hcomp : (integralFormToComplex hℂ Qint w) ∘ₗ hs.proj p =
-          integralFormToComplex hℂ Qint w := by
+    · have hcomp : (integralFormBaseChange hℂ Qint w) ∘ₗ hs.proj p =
+          integralFormBaseChange hℂ Qint w := by
         refine hs.linearMap_ext_of_piece fun p' y hy ↦ ?_
         rcases eq_or_ne p' p with rfl | hp'
         · simp [hs.proj_apply_of_mem hy]
@@ -104,8 +104,8 @@ complement of a subspace spanned by its intersections with the Hodge components 
 its intersections with the Hodge components. -/
 theorem orthogonal_le_iSup_inf_piece (hQ : IsPolarization hℂ hs Qint) {A : Submodule ℂ Vℂ}
     (hA : A ≤ ⨆ q, A ⊓ hs.piece q) :
-    LinearMap.BilinForm.orthogonal (integralFormToComplex hℂ Qint) A ≤
-      ⨆ p, LinearMap.BilinForm.orthogonal (integralFormToComplex hℂ Qint) A ⊓ hs.piece p :=
+    LinearMap.BilinForm.orthogonal (integralFormBaseChange hℂ Qint) A ≤
+      ⨆ p, LinearMap.BilinForm.orthogonal (integralFormBaseChange hℂ Qint) A ⊓ hs.piece p :=
   fun x hx ↦ hs.mem_iSup_of_proj_mem fun p ↦ ⟨hQ.proj_mem_orthogonal hA hx p, hs.proj_mem p x⟩
 
 /-- **A polarization is nondegenerate on a sub-Hodge structure.** A conjugation-stable subspace
@@ -114,13 +114,13 @@ a nonzero vector of a Hodge component pairs nontrivially with its conjugate, whi
 stability keeps inside the subspace. -/
 theorem disjoint_orthogonal (hQ : IsPolarization hℂ hs Qint) {A : Submodule ℂ Vℂ}
     (hA : A ≤ ⨆ q, A ⊓ hs.piece q) (hAconj : ∀ x ∈ A, latticeConj hℂ x ∈ A) :
-    Disjoint A (LinearMap.BilinForm.orthogonal (integralFormToComplex hℂ Qint) A) := by
+    Disjoint A (LinearMap.BilinForm.orthogonal (integralFormBaseChange hℂ Qint) A) := by
   rw [Submodule.disjoint_def]
   intro x hxA hxO
   refine hs.eq_zero_of_proj_eq_zero fun p ↦ ?_
   by_contra hne
   have hvA : hs.proj p x ∈ A := hs.proj_mem_of_le_iSup_inf hA hxA p
-  have hconj : integralFormToComplex hℂ Qint (latticeConj hℂ (hs.proj p x)) (hs.proj p x) = 0 :=
+  have hconj : integralFormBaseChange hℂ Qint (latticeConj hℂ (hs.proj p x)) (hs.proj p x) = 0 :=
     hQ.proj_mem_orthogonal hA hxO p _ (hAconj _ hvA)
   have hsymm := hQ.complex_symm_weight (hs.proj p x) (latticeConj hℂ (hs.proj p x))
   rw [hconj] at hsymm
@@ -144,24 +144,24 @@ theorem disjoint_WC_orthogonal :
 
 /-- The rationalified polarizing form is reflexive: it is symmetric or antisymmetric according to
 the parity of the weight. -/
-theorem isRefl_integralFormToRational : (integralFormToRational hℚ P.Qint).IsRefl := by
+theorem isRefl_integralFormBaseChange : (integralFormBaseChange hℚ P.Qint).IsRefl := by
   intro x y hxy
-  have hzero : integralFormToComplex hℂ P.Qint
+  have hzero : integralFormBaseChange hℂ P.Qint
       (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x))
       (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y)) = 0 := by
-    rw [integralFormToComplex_rationalToComplexLinearEquiv_one_tmul, hxy]
+    rw [integralFormBaseChange_rationalToComplexLinearEquiv_one_tmul, hxy]
     simp
   have hflip := P.isPolarization.complex_symm_weight
     (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x))
     (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y))
-  rw [hzero, mul_zero, integralFormToComplex_rationalToComplexLinearEquiv_one_tmul] at hflip
+  rw [hzero, mul_zero, integralFormBaseChange_rationalToComplexLinearEquiv_one_tmul] at hflip
   exact_mod_cast hflip
 
 /-- The complexification of the rational orthogonal complement is contained in the complex
 orthogonal complement. -/
 theorem rationalToComplexSubmodule_orthogonal_le :
     rationalToComplexSubmodule hℚ hℂ
-        (LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ) ≤
+        (LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ) ≤
       LinearMap.BilinForm.orthogonal P.Q W.WC := by
   rw [rationalToComplexSubmodule_eq_span]
   refine Submodule.span_le.2 ?_
@@ -172,7 +172,7 @@ theorem rationalToComplexSubmodule_orthogonal_le :
     refine Submodule.span_le.2 ?_
     rintro _ ⟨v, hv, rfl⟩
     simp only [SetLike.mem_coe, LinearMap.mem_ker, LinearMap.flip_apply, Polarization.Q_def,
-      integralFormToComplex_rationalToComplexLinearEquiv_one_tmul]
+      integralFormBaseChange_rationalToComplexLinearEquiv_one_tmul]
     rw [hu v hv]
     simp
   intro w hw
@@ -180,41 +180,51 @@ theorem rationalToComplexSubmodule_orthogonal_le :
 
 variable [Module.Finite ℚ Vℚ]
 
-/-- **A polarization splits a rational Hodge substructure off over `ℚ`.** -/
-theorem isCompl_orthogonal_WQ :
-    IsCompl W.WQ (LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ) := by
+/-- **A polarization splits a rational Hodge substructure off over `ℚ`.** Stated for the
+orthogonal complement as a plain subspace; `isCompl_orthogonal` is the same statement for the
+rational Hodge substructure `orthogonal P W`, which is only available once the complement has been
+shown to be one. -/
+private theorem isCompl_orthogonal_WQ :
+    IsCompl W.WQ (LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ) := by
   refine (LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint
-    (isRefl_integralFormToRational P)).2 ?_
+    (isRefl_integralFormBaseChange P)).2 ?_
   rw [disjoint_iff]
   have hbot : rationalToComplexSubmodule hℚ hℂ (W.WQ ⊓
-      LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ) = ⊥ := by
+      LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ) = ⊥ := by
     refine le_bot_iff.1 ((le_inf ?_ ?_).trans (disjoint_WC_orthogonal P W).le_bot)
     · rw [WC_def]
       exact rationalToComplexSubmodule_mono hℚ hℂ inf_le_left
     · exact (rationalToComplexSubmodule_mono hℚ hℂ inf_le_right).trans
         (rationalToComplexSubmodule_orthogonal_le P W)
-  refine Submodule.finrank_eq_zero.1 ?_
-  rw [← finrank_rationalToComplexSubmodule hℚ hℂ, hbot, finrank_bot]
+  exact (rationalToComplexSubmodule_eq_bot_iff hℚ hℂ _).1 hbot
 
-/-- **The orthogonal complement of a rational Hodge substructure is defined over `ℚ`:** the
-complexification of the rational orthogonal complement is the complex orthogonal complement. -/
-theorem rationalToComplexSubmodule_orthogonal :
-    rationalToComplexSubmodule hℚ hℂ
-        (LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ) =
-      LinearMap.BilinForm.orthogonal P.Q W.WC := by
-  refine TauCeti.Submodule.eq_of_isCompl_of_le_of_disjoint ?_
-    (rationalToComplexSubmodule_orthogonal_le P W) (disjoint_WC_orthogonal P W)
+/-- The complexification of the rational orthogonal complement is a complement of the
+complexified substructure. -/
+private theorem isCompl_WC_rationalToComplexSubmodule_orthogonal :
+    IsCompl W.WC (rationalToComplexSubmodule hℚ hℂ
+      (LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ)) := by
   refine ⟨(disjoint_WC_orthogonal P W).mono_right
     (rationalToComplexSubmodule_orthogonal_le P W), ?_⟩
   rw [codisjoint_iff, WC_def, ← rationalToComplexSubmodule_sup,
     (isCompl_orthogonal_WQ P W).sup_eq_top, rationalToComplexSubmodule_top]
+
+/-- **The orthogonal complement of a rational Hodge substructure is defined over `ℚ`:** the
+complexification of the rational orthogonal complement is the complex orthogonal complement. Both
+subspaces complement the complexified substructure and one contains the other, so they agree. -/
+theorem rationalToComplexSubmodule_orthogonal :
+    rationalToComplexSubmodule hℚ hℂ
+        (LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ) =
+      LinearMap.BilinForm.orthogonal P.Q W.WC :=
+  (le_iff_eq_of_codisjoint_of_disjoint
+    (isCompl_WC_rationalToComplexSubmodule_orthogonal P W).symm.codisjoint
+    (disjoint_WC_orthogonal P W)).1 (rationalToComplexSubmodule_orthogonal_le P W)
 
 /-- **The orthogonal complement of a rational Hodge substructure** for a chosen polarization: the
 orthogonal complement of its rational subspace. It is again a rational Hodge substructure, because
 its complexification is the complex orthogonal complement, and that is spanned by its intersections
 with the Hodge components. -/
 noncomputable def orthogonal : RationalHodgeSubstructure hℚ hs where
-  WQ := LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ
+  WQ := LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ
   hodge_spanning := by
     rw [rationalToComplexSubmodule_orthogonal P W, Polarization.Q_def]
     exact le_antisymm
@@ -223,20 +233,13 @@ noncomputable def orthogonal : RationalHodgeSubstructure hℚ hs where
 
 @[simp]
 theorem orthogonal_WQ : (orthogonal P W).WQ =
-    LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ :=
+    LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint) W.WQ :=
   (rfl)
 
 @[simp]
 theorem orthogonal_WC : (orthogonal P W).WC = LinearMap.BilinForm.orthogonal P.Q W.WC := by
   rw [WC_def, orthogonal_WQ]
   exact rationalToComplexSubmodule_orthogonal P W
-
-/-- The substructure and its orthogonal complement pair to zero under the complexified polarizing
-form. -/
-theorem pairing_orthogonal_eq_zero {x y : Vℂ} (hx : x ∈ W.WC) (hy : y ∈ (orthogonal P W).WC) :
-    P.Q x y = 0 := by
-  rw [orthogonal_WC] at hy
-  exact hy x hx
 
 /-- **A polarization splits a rational Hodge substructure off**, over `ℚ`. -/
 theorem isCompl_orthogonal : IsCompl W.WQ (orthogonal P W).WQ :=
@@ -245,15 +248,12 @@ theorem isCompl_orthogonal : IsCompl W.WQ (orthogonal P W).WQ :=
 /-- **A polarization splits a rational Hodge substructure off**, after complexification. -/
 theorem isCompl_WC_orthogonal_WC : IsCompl W.WC (orthogonal P W).WC := by
   rw [orthogonal_WC, ← rationalToComplexSubmodule_orthogonal P W]
-  refine ⟨(disjoint_WC_orthogonal P W).mono_right
-    (rationalToComplexSubmodule_orthogonal_le P W), ?_⟩
-  rw [codisjoint_iff, WC_def, ← rationalToComplexSubmodule_sup,
-    (isCompl_orthogonal_WQ P W).sup_eq_top, rationalToComplexSubmodule_top]
+  exact isCompl_WC_rationalToComplexSubmodule_orthogonal P W
 
 /-- The rationalified polarizing form is nondegenerate: only zero is orthogonal to the whole
 rational space. -/
-theorem integralFormToRational_orthogonal_top :
-    LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint)
+theorem integralFormBaseChange_orthogonal_top :
+    LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint)
       (⊤ : Submodule ℚ Vℚ) = ⊥ := by
   have h := (isCompl_orthogonal_WQ P (top : RationalHodgeSubstructure hℚ hs)).disjoint
   rw [top_WQ] at h

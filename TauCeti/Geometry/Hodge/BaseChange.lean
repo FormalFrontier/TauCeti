@@ -8,9 +8,9 @@ module
 public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
-public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 public import Mathlib.RingTheory.Flat.Basic
+import Mathlib.RingTheory.Flat.FaithfullyFlat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
 public import TauCeti.Geometry.Hodge.Conjugation
 
@@ -47,9 +47,8 @@ imposed later as structure data.
   stable under lattice-induced conjugation.
 * `TauCeti.Hodge.rationalToComplexSubmodule_sup`: complexification preserves joins of rational
   subspaces.
-* `TauCeti.Hodge.finrank_rationalToComplexSubmodule`: complexification preserves dimension.
-* `TauCeti.Hodge.finite_rationalification`: the rationalification of a finitely generated lattice
-  is finite-dimensional.
+* `TauCeti.Hodge.rationalToComplexSubmodule_eq_bot_iff`: only the zero subspace has trivial
+  complexification.
 
 The design follows the base-change interface specified in the Hodge structures roadmap. Its only
 nontrivial comparison map is Mathlib's
@@ -139,17 +138,22 @@ theorem rationalToComplexSubmodule_bot (hℚ : IsBaseChange ℚ ιℚ)
     rationalToComplexSubmodule hℚ hℂ (⊥ : Submodule ℚ Vℚ) = ⊥ := by
   simp [rationalToComplexSubmodule]
 
+/-- A rational subspace is trivial as soon as its complexification is: `ℂ` is faithfully flat
+over `ℚ`. -/
+@[simp]
+theorem rationalToComplexSubmodule_eq_bot_iff (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
+    rationalToComplexSubmodule hℚ hℂ W = ⊥ ↔ W = ⊥ := by
+  rw [rationalToComplexSubmodule, Submodule.map_eq_bot_iff]
+  refine ⟨fun h ↦ Submodule.baseChange_injective (A := ℂ) (by simp [h]), ?_⟩
+  rintro rfl
+  simp
+
 @[simp]
 theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) :
     rationalToComplexSubmodule hℚ hℂ (⊤ : Submodule ℚ Vℚ) = ⊤ := by
   simp [rationalToComplexSubmodule]
-
-/-- An abstract rationalification of a finitely generated lattice is a finite-dimensional
-rational vector space. -/
-theorem finite_rationalification [Module.Finite ℤ Vℤ] (hℚ : IsBaseChange ℚ ιℚ) :
-    Module.Finite ℚ Vℚ :=
-  Module.Finite.equiv hℚ.equiv
 
 /-- Complexification of rational subspaces preserves joins. -/
 theorem rationalToComplexSubmodule_sup (hℚ : IsBaseChange ℚ ιℚ)
@@ -186,12 +190,6 @@ theorem coe_rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
   rw [rationalToComplexSubmoduleEquiv, LinearEquiv.trans_apply,
     LinearEquiv.ofSubmodules_apply, Submodule.toBaseChange.toLinearEquiv_apply]
   rfl
-
-/-- Complexifying a rational subspace preserves its dimension. -/
-theorem finrank_rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
-    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
-    Module.finrank ℂ (rationalToComplexSubmodule hℚ hℂ W) = Module.finrank ℚ W :=
-  ((rationalToComplexSubmoduleEquiv hℚ hℂ W).finrank_eq).symm.trans Module.finrank_baseChange
 
 /-- Lattice conjugation fixes the image in `Vℂ` of a purely rational vector `1 ⊗ₜ x`. -/
 theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange ℚ ιℚ)
