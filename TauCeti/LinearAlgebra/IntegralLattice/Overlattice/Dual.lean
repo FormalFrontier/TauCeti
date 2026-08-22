@@ -282,7 +282,7 @@ end Isometry
 
 /-- **Duality of intermediate carriers is componentwise on an orthogonal direct sum.** -/
 @[simp]
-theorem orthogonalSumIntermediateCarrier_dual (L : IntegralLattice V) (M : IntegralLattice W)
+theorem dual_orthogonalSumIntermediateCarrier (L : IntegralLattice V) (M : IntegralLattice W)
     (P : L.IntermediateCarrier) (Q : M.IntermediateCarrier) :
     dual (orthogonalSumIntermediateCarrier L M P Q) =
       orthogonalSumIntermediateCarrier L M (dual P) (dual Q) := by
