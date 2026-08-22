@@ -478,7 +478,11 @@ theorem trace_mul_conj (x y : Octonion R) :
 /-- **The polar form of the norm is visible inside the algebra**: `x * conj y + y * conj x` is the
 scalar `QuadraticMap.polar (normQuadraticForm R) x y · 1`. Together with
 `TauCeti.Octonion.self_mul_conj`, which is the case `y = x` up to a factor of `2`, this is what
-makes the symmetric form of a composition algebra an algebraic, not merely a quadratic, datum. -/
+makes the symmetric form of a composition algebra an algebraic, not merely a quadratic, datum.
+
+The mirror form `conj x * y + conj y * x` is this identity at `(conj x, conj y)`, read through
+`TauCeti.Octonion.conj_conj` and `TauCeti.Octonion.polar_normQuadraticForm_conj`:
+`simpa [polar_normQuadraticForm_conj] using mul_conj_add_mul_conj (conj x) (conj y)`. -/
 theorem mul_conj_add_mul_conj (x y : Octonion R) :
     x * conj y + y * conj x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
   -- `y * conj x` is the conjugate of `x * conj y`, so this is `TauCeti.Octonion.add_conj` at
