@@ -93,13 +93,6 @@ theorem exists_forall_ord_sub_eq (hP : Function.Injective P) (f : ι → F) (r :
     (P i).valuation.ne_zero_iff.mp (by rw [hg i]; exact WithZero.exp_ne_zero)
   exact ((P i).ord_eq_iff_valuation_eq_exp_neg hne).mpr (hg i)
 
-/-- The inequality form of weak approximation: the error may be made to vanish to at least a
-prescribed order at each of finitely many distinct places. -/
-theorem exists_forall_le_ord_sub (hP : Function.Injective P) (f : ι → F) (r : ι → ℤ) :
-    ∃ g : F, ∀ i, r i ≤ (P i).ord (g - f i) :=
-  let ⟨g, hg⟩ := exists_forall_ord_sub_eq hP f r
-  ⟨g, fun i ↦ (hg i).ge⟩
-
 /-- **Prescribed orders**: the orders of a function at finitely many distinct places may be
 prescribed arbitrarily and independently. This is weak approximation with all targets `0`, and
 it is the statement that finitely many places of `F` are independent. -/
