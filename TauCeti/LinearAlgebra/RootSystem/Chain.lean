@@ -40,6 +40,7 @@ type-`B` counterparts.
 * `TauCeti.sum_range_chainEntry_mul`: the row of a chain at a position, evaluated at a weight `g`.
   Away from the two ends it is the second difference `2 g (m + 1) - g m - g (m + 2)`, so a weight
   that is linear in the position is annihilated there.
+* `TauCeti.sum_range_chainEntry_mul_affine`: the resulting formula for an affine weight.
 * `TauCeti.sum_range_chainBEntry_mul`: the corresponding row sum with a double last edge.
 ## References
 
@@ -213,5 +214,34 @@ theorem sum_range_chainEntry_mul {R : Type*} [Ring R] {n m : ℕ} (hm : m < n) (
   · have h1 : 1 ≤ m := Nat.one_le_iff_ne_zero.mpr h0
     simpa [chainEntry, h0, Nat.sub_add_cancel h1, Nat.add_assoc] using
       (sum_range_chainBEntry_mul (L := 0) hm (fun s ↦ g (s + 1)))
+
+/-- **A row of a chain evaluated at an affine weight.** Interior rows vanish; the first row leaves
+`b - a`, the last row leaves `a * n + b`, and the unique row of a one-vertex chain leaves `2 * b`.
+-/
+theorem sum_range_chainEntry_mul_affine {R : Type*} [Ring R] {n m : ℕ} (hm : m < n)
+    (a b : R) :
+    ∑ s ∈ Finset.range n, (chainEntry m s : R) * (a * (s : R) + b) =
+      if m = 0 then (if m + 1 = n then 2 * b else b - a)
+      else if m + 1 = n then a * (n : R) + b else 0 := by
+  have hrow := sum_range_chainEntry_mul hm
+    (fun u : ℕ ↦ a * ((u - 1 : ℕ) : R) + b)
+  simp only [Nat.add_sub_cancel] at hrow
+  rw [hrow]
+  by_cases hzero : m = 0
+  · subst m
+    by_cases hend : 1 = n
+    · subst n
+      simp
+    · simp only [Nat.cast_zero, mul_zero, zero_add, hend, ite_false, ite_true]
+      push_cast
+      noncomm_ring
+  · have hpos : 1 ≤ m := Nat.one_le_iff_ne_zero.mpr hzero
+    by_cases hend : m + 1 = n
+    · subst n
+      simp only [hzero, ite_false, Nat.cast_sub hpos, Nat.cast_add, Nat.cast_one, ite_true]
+      noncomm_ring
+    · simp only [hzero, hend, ite_false, Nat.cast_sub hpos, Nat.cast_one]
+      push_cast
+      noncomm_ring
 
 end TauCeti
