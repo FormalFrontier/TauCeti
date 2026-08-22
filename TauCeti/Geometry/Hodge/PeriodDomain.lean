@@ -11,11 +11,11 @@ public import TauCeti.Geometry.Hodge.Tate
 /-!
 # Points of a period domain
 
-Fix a lattice `V`, an integral bilinear form `Qint` on it, and a prescribed family of Hodge
-numbers. A **point of the period domain** is a Hodge filtration on the complexification of `V`
-that has those Hodge numbers and is polarized by that *same* form: only the filtration varies from
-point to point, which is what makes the collection a classifying space for polarized Hodge
-structures of a fixed numerical type.
+Fix a lattice `V` — a finitely generated free `ℤ`-module — an integral bilinear form `Qint` on it,
+and a prescribed family of Hodge numbers. A **point of the period domain** is a Hodge filtration
+on the complexification of `V` that has those Hodge numbers and is polarized by that *same* form:
+only the filtration varies from point to point, which is what makes the collection a classifying
+space for polarized Hodge structures of a fixed numerical type.
 
 The prescribed numerical data is packaged as `TauCeti.Hodge.HodgeType`: a weight, Hodge numbers of
 finite support, and Hodge symmetry `h p = h (weight - p)`. Every Hodge structure has one
@@ -77,7 +77,11 @@ namespace HodgeStructureOn
 variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ω : Conjugation W} {n : ℤ}
 
-/-- The Hodge type of a Hodge structure: its weight together with its own Hodge numbers. -/
+/-- The Hodge type of a Hodge structure: its weight together with its own Hodge numbers.
+
+The Hodge numbers are those of `hodgeNumber`, so on an infinite-dimensional structure this is the
+zero family; a `PeriodDomain.Point`, where the type is read as a dimension count, fixes a finitely
+generated free lattice. -/
 noncomputable def hodgeType (hs : HodgeStructureOn W ω n) : HodgeType where
   weight := n
   h := hs.hodgeNumber
@@ -95,16 +99,20 @@ theorem hodgeType_h (hs : HodgeStructureOn W ω n) : hs.hodgeType.h = hs.hodgeNu
 end HodgeStructureOn
 
 variable {V : Type u} {Vℂ : Type v}
-variable [AddCommGroup V] [AddCommGroup Vℂ] [Module ℂ Vℂ]
+variable [AddCommGroup V] [Module.Free ℤ V] [Module.Finite ℤ V]
+variable [AddCommGroup Vℂ] [Module ℂ Vℂ]
 variable {ιℂ : V →ₗ[ℤ] Vℂ}
 
 /-- A **point of the period domain** of the lattice `V` with the integral form `Qint`, at the Hodge
 type `htype`: a weight-`n` Hodge structure of that type which the *fixed* form `Qint` polarizes.
 
+The lattice is a finitely generated free `ℤ`-module, so the complexification is finite-dimensional
+and the prescribed Hodge numbers really are the dimensions of the Hodge components.
+
 The form does not vary with the point; it enters through the `Prop`-valued `IsPolarization` and so
 is not carried twice. -/
-structure PeriodDomain.Point (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) (Qint : LinearMap.BilinForm ℤ V)
-    (htype : HodgeType) where
+structure PeriodDomain.Point [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : IsBaseChange ℂ ιℂ)
+    (n : ℤ) (Qint : LinearMap.BilinForm ℤ V) (htype : HodgeType) where
   /-- The varying datum: a Hodge filtration on the complexification. -/
   hs : HodgeStructure hℂ n
   /-- The Hodge type's weight is the weight of the structure. -/
@@ -133,15 +141,14 @@ theorem isPolarizable (D : PeriodDomain.Point hℂ n Qint htype) : IsPolarizable
 prescribed Hodge numbers sum to the dimension of the complexification.
 
 This is the numerical shadow of the Hodge decomposition `V_ℂ = ⨁_p H^{p,n-p}`. -/
-theorem finsum_h [Module.Finite ℤ V] (D : PeriodDomain.Point hℂ n Qint htype) :
+theorem finsum_h (D : PeriodDomain.Point hℂ n Qint htype) :
     ∑ᶠ p, htype.h p = Module.finrank ℂ Vℂ := by
   have := finiteDimensional_complexification (V := V) hℂ
   rw [← HodgeStructureOn.finsum_hodgeNumber D.hs]
   exact finsum_congr fun p ↦ (D.hodge_numbers p).symm
 
 /-- The prescribed Hodge numbers of a point of the period domain sum to the rank of the lattice. -/
-theorem finsum_h_eq_finrank_lattice [Module.Free ℤ V] [Module.Finite ℤ V]
-    (D : PeriodDomain.Point hℂ n Qint htype) :
+theorem finsum_h_eq_finrank_lattice (D : PeriodDomain.Point hℂ n Qint htype) :
     ∑ᶠ p, htype.h p = Module.finrank ℤ V := by
   rw [D.finsum_h, finrank_complexification hℂ]
 

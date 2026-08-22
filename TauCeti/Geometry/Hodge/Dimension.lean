@@ -59,7 +59,11 @@ variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ω : Conjugation W} {n : ℤ}
 
 /-- The `p`-th **Hodge number** `h^{p,n-p}` of a weight-`n` Hodge structure: the complex dimension
-of its `p`-th Hodge component. -/
+of its `p`-th Hodge component.
+
+This follows the convention of `Module.finrank`, so an infinite-dimensional component has Hodge
+number `0`; the statements that read the Hodge numbers as a dimension count, such as
+`finsum_hodgeNumber`, therefore assume the ambient space is finite-dimensional. -/
 noncomputable def hodgeNumber (hs : HodgeStructureOn W ω n) (p : ℤ) : ℕ :=
   Module.finrank ℂ (hs.piece p)
 
