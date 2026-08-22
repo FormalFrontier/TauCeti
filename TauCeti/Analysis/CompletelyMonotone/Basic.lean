@@ -351,6 +351,10 @@ variable {f g : ℝ → ℝ}
 @[grind →]
 lemma contDiffOn (hf : IsCompletelyMonotoneOnIoi f) : ContDiffOn ℝ ∞ f (Ioi 0) := hf.1
 
+/-- A completely monotone function on `(0, ∞)` is differentiable there. -/
+lemma differentiableOn (hf : IsCompletelyMonotoneOnIoi f) : DifferentiableOn ℝ f (Ioi 0) :=
+  hf.contDiffOn.differentiableOn (by simp)
+
 /-- The sign-alternation property on `(0, ∞)`. -/
 @[grind =>]
 lemma neg_one_pow_mul_iteratedDeriv_nonneg (hf : IsCompletelyMonotoneOnIoi f) (n : ℕ) {t : ℝ}
@@ -487,7 +491,7 @@ lemma antitoneOn (hf : IsContinuousCompletelyMonotoneOnIoi f) : AntitoneOn f (Ic
   refine antitoneOn_of_deriv_nonpos (convex_Ici 0) hf.continuousOn
     (by
       simpa [interior_Ici] using
-        hf.isCompletelyMonotoneOnIoi.contDiffOn.differentiableOn (by simp))
+        hf.isCompletelyMonotoneOnIoi.differentiableOn)
     fun x hx => ?_
   rw [interior_Ici] at hx
   exact hf.isCompletelyMonotoneOnIoi.deriv_nonpos hx

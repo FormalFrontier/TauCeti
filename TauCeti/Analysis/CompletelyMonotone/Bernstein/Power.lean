@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.CompletelyMonotone.Composition
+public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Composition
 public import TauCeti.Analysis.CompletelyMonotone.Power
 -- Proof-only: the derivative and the continuity of a real power with a constant exponent.
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv

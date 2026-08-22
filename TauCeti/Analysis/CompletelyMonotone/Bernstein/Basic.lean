@@ -37,9 +37,10 @@ nonnegative scalar multiples, and the basic catalogue — constants, the identit
 * `TauCeti.IsBernsteinFunction`: the predicate that `f` is continuous and nonnegative on
   `[0, ∞)`, smooth on `(0, ∞)`, and has completely monotone ordinary derivative on `(0, ∞)`.
 * `TauCeti.IsBernsteinFunction.nonneg`, `TauCeti.IsBernsteinFunction.deriv_nonneg`,
-  `TauCeti.IsBernsteinFunction.monotoneOn`, `TauCeti.IsBernsteinFunction.concaveOn`: a Bernstein
-  function is nonnegative, has nonnegative derivative, is nondecreasing, and is concave on
-  `[0, ∞)`.
+  `TauCeti.IsBernsteinFunction.monotoneOn`, `TauCeti.IsBernsteinFunction.concaveOn`,
+  `TauCeti.IsBernsteinFunction.eq_zero_of_eq_zero`: a Bernstein function is nonnegative, has
+  nonnegative derivative, is nondecreasing and concave on `[0, ∞)`, and either is positive on
+  `(0, ∞)` or vanishes on `[0, ∞)`.
 * `TauCeti.IsBernsteinFunction.congr`: the property depends only on the values on `[0, ∞)`.
 * `TauCeti.IsBernsteinFunction.add`, `TauCeti.IsBernsteinFunction.smul`,
   `TauCeti.IsBernsteinFunction.const_add`, `TauCeti.IsBernsteinFunction.sum`: closure under sums,
@@ -119,12 +120,33 @@ lemma monotoneOn (hf : IsBernsteinFunction f) : MonotoneOn f (Ici 0) := by
 lemma concaveOn (hf : IsBernsteinFunction f) : ConcaveOn ℝ (Ici 0) f := by
   refine concaveOn_of_deriv2_nonpos (convex_Ici 0) hf.continuousOn
     (hf.differentiableOn.mono (by rw [interior_Ici]))
-    ((hf.deriv_isCompletelyMonotoneOnIoi.contDiffOn.differentiableOn (by simp)).mono
-      (by rw [interior_Ici]))
+    (hf.deriv_isCompletelyMonotoneOnIoi.differentiableOn.mono (by rw [interior_Ici]))
     fun x hx => ?_
   rw [interior_Ici] at hx
   simpa [Function.iterate_succ, Function.iterate_zero, Function.comp_def] using
     hf.deriv_isCompletelyMonotoneOnIoi.deriv_nonpos hx
+
+/-- A Bernstein function that vanishes at one positive point vanishes on the whole closed
+half-line. -/
+theorem eq_zero_of_eq_zero (hf : IsBernsteinFunction f) {t₀ : ℝ}
+    (ht₀ : 0 < t₀) (h₀ : f t₀ = 0) {t : ℝ} (ht : 0 ≤ t) : f t = 0 := by
+  have hzero : f 0 = 0 :=
+    le_antisymm (h₀ ▸ hf.monotoneOn (mem_Ici.2 le_rfl) (mem_Ici.2 ht₀.le) ht₀.le)
+      (hf.nonneg le_rfl)
+  rcases le_or_gt t t₀ with hle | hlt
+  · exact le_antisymm (h₀ ▸ hf.monotoneOn (mem_Ici.2 ht) (mem_Ici.2 ht₀.le) hle) (hf.nonneg ht)
+  · exact le_antisymm
+      (h₀ ▸ hf.concaveOn.right_le_of_le_left'' (mem_Ici.2 le_rfl) (mem_Ici.2 ht) ht₀
+        hlt.le (by rw [h₀, hzero]))
+      (hf.nonneg ht)
+
+/-- If a Bernstein function is nonzero at one positive point, it is positive throughout the open
+half-line. -/
+theorem pos_of_ne_zero (hf : IsBernsteinFunction f) {t₀ : ℝ} (ht₀ : 0 < t₀)
+    (h₀ : f t₀ ≠ 0) {t : ℝ} (ht : 0 < t) : 0 < f t := by
+  rcases (hf.nonneg ht.le).lt_or_eq with hlt | heq
+  · exact hlt
+  · exact absurd (hf.eq_zero_of_eq_zero ht heq.symm ht₀.le) h₀
 
 /-- Being a Bernstein function depends only on the values on `[0, ∞)`. -/
 theorem congr (hf : IsBernsteinFunction f) (h : Set.EqOn g f (Ici 0)) :
