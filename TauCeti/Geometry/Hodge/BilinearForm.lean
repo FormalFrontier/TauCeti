@@ -249,7 +249,7 @@ private theorem integralFormToComplex_rationalToComplexLinearEquiv_ι (hℚ : Is
   | zero => simp
   | tmul w => simp
   | smul q y hy =>
-      simp [TensorProduct.tmul_smul, rationalToComplexLinearEquiv_rat_smul, hy]
+      simp [TensorProduct.tmul_smul, ← algebraMap_smul ℂ q, map_smul, hy]
   | add y₁ y₂ h₁ h₂ =>
       simp [TensorProduct.tmul_add, h₁, h₂]
 
@@ -264,7 +264,7 @@ theorem integralFormToComplex_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBa
   | zero => simp
   | tmul v => simpa using integralFormToComplex_rationalToComplexLinearEquiv_ι hℚ hℂ Q v y
   | smul q x hx =>
-      simp [TensorProduct.tmul_smul, rationalToComplexLinearEquiv_rat_smul, hx]
+      simp [TensorProduct.tmul_smul, ← algebraMap_smul ℂ q, map_smul, hx]
   | add x₁ x₂ h₁ h₂ =>
       simp [TensorProduct.tmul_add, h₁, h₂]
 

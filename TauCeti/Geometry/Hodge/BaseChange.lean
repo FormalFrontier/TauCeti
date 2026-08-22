@@ -96,15 +96,6 @@ theorem rationalToComplexLinearEquiv_one_tmul_ι (hℚ : IsBaseChange ℚ ιℚ)
     rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] ιℚ x) = ιℂ x := by
   simp [rationalToComplexLinearEquiv]
 
-/-- The tower equivalence carries a rational scalar multiple to the corresponding complex scalar
-multiple. -/
-theorem rationalToComplexLinearEquiv_rat_smul (hℚ : IsBaseChange ℚ ιℚ)
-    (hℂ : IsBaseChange ℂ ιℂ) (q : ℚ) (t : ℂ ⊗[ℚ] Vℚ) :
-    rationalToComplexLinearEquiv hℚ hℂ (q • t) =
-      (q : ℂ) • rationalToComplexLinearEquiv hℚ hℂ t := by
-  rw [← algebraMap_smul ℂ q t, map_smul]
-  simp
-
 /-- The complexification of a rational subspace, realized inside the chosen ambient
 complexification. -/
 noncomputable def rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
@@ -211,7 +202,7 @@ theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange �
   | zero => simp
   | tmul x => simp
   | smul q x hx =>
-      rw [TensorProduct.tmul_smul, rationalToComplexLinearEquiv_rat_smul, map_smulₛₗ, hx]
+      rw [TensorProduct.tmul_smul, ← algebraMap_smul ℂ q, map_smul, map_smulₛₗ, hx]
       simp
   | add x y hx hy =>
       simpa only [TensorProduct.tmul_add, map_add] using congrArg₂ (fun a b ↦ a + b) hx hy

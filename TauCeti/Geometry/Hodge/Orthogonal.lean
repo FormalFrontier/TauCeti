@@ -89,7 +89,7 @@ theorem proj_mem_orthogonal (hQ : IsPolarization hℂ hs Qint) {A : Submodule �
         refine hs.linearMap_ext_of_piece fun p' y hy ↦ ?_
         rcases eq_or_ne p' p with rfl | hp'
         · simp [hs.proj_apply_of_mem hy]
-        · rw [LinearMap.comp_apply, hs.proj_apply_of_mem_of_ne hy hp', map_zero]
+        · rw [LinearMap.comp_apply, hs.proj_apply_eq_zero_of_mem_of_ne hy hp', map_zero]
           exact (hQ.orthogonal_piece (by omega) hw.2 hy).symm
       have heval := congrArg (fun f : Vℂ →ₗ[ℂ] ℂ ↦ f x) hcomp
       simp only [LinearMap.comp_apply] at heval
@@ -144,7 +144,7 @@ theorem disjoint_WC_orthogonal :
 
 /-- The rationalified polarizing form is reflexive: it is symmetric or antisymmetric according to
 the parity of the weight. -/
-theorem integralFormToRational_isRefl : (integralFormToRational hℚ P.Qint).IsRefl := by
+theorem isRefl_integralFormToRational : (integralFormToRational hℚ P.Qint).IsRefl := by
   intro x y hxy
   have hzero : integralFormToComplex hℂ P.Qint
       (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x))
@@ -178,14 +178,13 @@ theorem rationalToComplexSubmodule_orthogonal_le :
   intro w hw
   simpa using hker hw
 
-variable [Module.Finite ℤ Vℤ]
+variable [Module.Finite ℚ Vℚ]
 
 /-- **A polarization splits a rational Hodge substructure off over `ℚ`.** -/
 theorem isCompl_orthogonal_WQ :
     IsCompl W.WQ (LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ) := by
-  have := finite_rationalification hℚ
   refine (LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint
-    (integralFormToRational_isRefl P)).2 ?_
+    (isRefl_integralFormToRational P)).2 ?_
   rw [disjoint_iff]
   have hbot : rationalToComplexSubmodule hℚ hℂ (W.WQ ⊓
       LinearMap.BilinForm.orthogonal (integralFormToRational hℚ P.Qint) W.WQ) = ⊥ := by
@@ -265,7 +264,7 @@ end RationalHodgeSubstructure
 /-- **Semisimplicity of polarizable rational Hodge structures.** Every rational Hodge substructure
 of a polarizable pure Hodge structure is a direct summand: it has a rational Hodge substructure as
 a complement, both over `ℚ` and after complexification. -/
-theorem exists_isCompl_of_isPolarizable [Module.Finite ℤ Vℤ] (h : IsPolarizable hℂ hs)
+theorem exists_isCompl_of_isPolarizable [Module.Finite ℚ Vℚ] (h : IsPolarizable hℂ hs)
     (W : RationalHodgeSubstructure hℚ hs) :
     ∃ W' : RationalHodgeSubstructure hℚ hs, IsCompl W.WQ W'.WQ ∧ IsCompl W.WC W'.WC := by
   obtain ⟨P⟩ := isPolarizable_iff_nonempty.1 h
