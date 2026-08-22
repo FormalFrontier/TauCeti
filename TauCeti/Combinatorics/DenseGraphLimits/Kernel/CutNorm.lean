@@ -481,9 +481,8 @@ the cut norm of `K` over `μ` is at most the cut norm of its pullback over `ν`.
 
 Every measurable rectangle downstairs pulls back to a measurable rectangle upstairs with the same
 integral (`rectIntegral_comap_preimage`), so the upstairs supremum ranges over at least as much.
-Equality needs `f` to be invertible up to null sets; the applications that need it — the swap of a
-coupling and the diagonal of a common carrier — get it by applying this bound in both directions,
-or by computing the pullback outright. -/
+The swap application obtains equality by applying this bound in both directions. The common-carrier
+application only needs the stated inequality and identifies the pulled-back kernel outright. -/
 theorem cutNorm_le_cutNorm_comap {α : Type*} [MeasurableSpace α] {ν : Measure α} [IsFiniteMeasure ν]
     {f : α → Ω} (hf : MeasurePreserving f ν μ) (K : SymmKernel Ω μ) :
     cutNorm μ K ≤ cutNorm ν (K.comap f hf.measurable ν) :=

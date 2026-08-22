@@ -127,11 +127,6 @@ The two graphons may live on different probability spaces, and no standard Borel
 hypothesis is imposed on either. -/
 def cutDist (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : ℝ := sInf (couplingCutNorms U W)
 
-/-- The cut distance is the infimum of the overlaid cut norms. The definition's body is not
-exposed, so this is the lemma downstream modules should rewrite with. -/
-theorem cutDist_def (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
-    cutDist U W = sInf (couplingCutNorms U W) := (rfl)
-
 /-- The cut distance is at most the overlaid cut norm along any coupling: the introduction rule
 for the infimum. -/
 theorem cutDist_le (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {π : Measure (Ω₁ × Ω₂)}
@@ -155,7 +150,7 @@ theorem exists_isCoupling_cutNorm_lt (U : Graphon Ω₁ μ₁) (W : Graphon Ω�
     (h : cutDist U W < c) :
     ∃ (π : Measure (Ω₁ × Ω₂)) (hπ : IsCoupling μ₁ μ₂ π),
       @cutNorm _ _ π hπ.isFiniteMeasure (overlayDiff U W π) < c := by
-  rw [cutDist_def] at h
+  rw [cutDist] at h
   obtain ⟨r, ⟨π, hπ, rfl⟩, hlt⟩ := exists_lt_of_csInf_lt (couplingCutNorms_nonempty U W) h
   exact ⟨π, hπ, hlt⟩
 
