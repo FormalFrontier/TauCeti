@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Data.Finite.Perm
 public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.EquivInvariance
 
 /-!
 # Permutation actions of Weyl groups
@@ -159,19 +160,8 @@ lemma weylGroupToPerm_ofIdx_mul_apply (w : P.weylGroup) (i j : ι) :
 /-- The Weyl-group action on root indices commutes with root negation. -/
 lemma weylGroupToPerm_neg (w : P.weylGroup) (j : ι) :
     letI := P.indexNeg
-    P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) := by
-  let := P.indexNeg
-  apply P.root.injective
-  calc
-    P.root (P.weylGroupToPerm w (-j)) = w • P.root (-j) :=
-      (P.weylGroup_apply_root w (-j)).symm
-    _ = w • (-P.root j) := by
-      rw [_root_.RootPairing.indexNeg_neg, P.root_reflectionPerm, P.reflection_apply_self]
-    _ = -(w • P.root j) := smul_neg _ _
-    _ = -P.root (P.weylGroupToPerm w j) :=
-      congrArg Neg.neg (P.weylGroup_apply_root w j)
-    _ = P.root (-(P.weylGroupToPerm w j)) := by
-      rw [_root_.RootPairing.indexNeg_neg, P.root_reflectionPerm, P.reflection_apply_self]
+    P.weylGroupToPerm w (-j) = -(P.weylGroupToPerm w j) :=
+  by simp [RootPairing.indexNeg_neg]
 
 namespace weylGroup
 

@@ -42,9 +42,9 @@ function on `ℝ≥0 × V` is such a function, for the trivial involution on `�
 `TauCeti/Analysis/PositiveDefinite/SemigroupGroup/Time/Difference.lean` reads its complete
 monotonicity off the results below. The two-variable statements on `ℝ≥0 × V` itself are *not*
 instances of them — the involutive-monoid wrapper carrying the Berg--Christensen--Ressel involution
-is private to `TauCeti/Analysis/PositiveDefinite/SemigroupGroup/Basic.lean` — and are derived there
-directly from `TauCeti.posSemidef_sub_comp_shift`; only the forward-difference bookkeeping below is
-shared.
+is private to `TauCeti/Analysis/PositiveDefinite/SemigroupGroup/Basic.lean` — and are proved there
+from the Kolmogorov decomposition of the Berg--Christensen--Ressel kernel; only the
+forward-difference bookkeeping below is shared.
 
 ## Main declarations
 

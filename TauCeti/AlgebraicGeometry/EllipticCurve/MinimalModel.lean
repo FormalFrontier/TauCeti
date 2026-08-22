@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Reduction
+import TauCeti.AlgebraicGeometry.EllipticCurve.IntegralModel
+import TauCeti.AlgebraicGeometry.EllipticCurve.NodePolynomial
 
 /-!
-# Minimal models: a criterion, and the comparison of two of them
+# Minimal models: a criterion, their comparison, and what transfers between them
 
 Mathlib defines `WeierstrassCurve.IsMinimal` by a maximality property — the valuation of the
 discriminant is maximal among all integral models isomorphic to the given one — and derives
@@ -29,11 +31,15 @@ scaling factor of valuation `1`.
   variables have equal `v (Δ)`.
 * `WeierstrassCurve.valuation_u_eq_one_of_isMinimal_smul`: for an elliptic curve, the scaling
   factor of such a change of variables satisfies `v (u) = 1`.
+* `WeierstrassCurve.HasSplitMultiplicativeReduction.of_isMinimal_smul`: split multiplicative
+  reduction transfers along such a change of variables.
 
-The last is the shape a consumer needs. `v (u) = 1` over a discrete valuation ring says `u` is a
-unit of `R`, which is the hypothesis that lets a change of variables between two integral models be
-descended to `R` — and thence lets properties of the reduction, such as split multiplicative
-reduction, transfer between minimal models.
+The third is what the last one runs on, though it is only half of what the descent needs.
+`v (u) = 1` over a discrete valuation ring says `u` is a unit of `R`; turning that into a change of
+variables actually *defined* over `R` is the job of
+`WeierstrassCurve.VariableChange.exists_baseChange_eq_of_smul_eq`, which also consumes integrality
+of both models. A change of variables defined over `R` is one the reduction can see, and that is
+what carries split multiplicativity across.
 
 ## Why this is the useful form
 
@@ -62,19 +68,47 @@ definitions involved, and belongs upstream once its consumers are in place.
 Ported from FLT, https://github.com/ImperialCollegeLondon/FLT
 @ `bc2fe8ff7396469a16c2a6d51d6117f5825d93a0` (Apache-2.0), file
 `FLT/Mathlib/AlgebraicGeometry/EllipticCurve/Reduction.lean`, by Kevin Buzzard — the source commit
-is FLT PR #1088, "Quadratic twist to split multiplicative reduction". Four declarations are taken
+is FLT PR #1088, "Quadratic twist to split multiplicative reduction". Five declarations are taken
 from it:
 
 * `isMinimal_of_valuation_c₄_eq_one`;
 * `valuation_Δ_aux_smul_le`;
 * `valuation_Δ_eq_of_isMinimal_smul`;
-* `valuation_u_eq_one_of_isMinimal_smul`.
+* `valuation_u_eq_one_of_isMinimal_smul`;
+* `HasSplitMultiplicativeReduction.of_isMinimal_smul`.
 
-Statements and proofs are taken unchanged, with three deliberate divergences: the section's
-variable block is restated here; the `open`s are narrowed to those of Mathlib's own `Minimal`
-section; and `valuation_Δ_aux_smul_le` is **private** here where the source exports it, because it
-is phrased through the internal `valuation_Δ_aux` rather than the ordinary valuation and exists only
-to serve the comparison below.
+The source declaration `HasSplitMultiplicativeReduction.of_isMinimal_smul` no longer exists at
+FLT's current head (`9deae05a`), which drops that development entirely; the pinned revision above
+is the record of it. It is absent from Mathlib too, whose `IsMinimal` API stops at the pairwise
+exclusion of the reduction types and never compares two minimal models.
+
+Statements are taken unchanged except for `of_isMinimal_smul`, which drops the source's
+`[IsMinimal R W₁]`: that instance is already implied by its `h₁`, since
+`HasSplitMultiplicativeReduction` extends `HasMultiplicativeReduction` extends `IsMinimal`. The
+proofs diverge in six places:
+
+* the section's variable block is restated here, and the `open`s are narrowed to those of Mathlib's
+  own `Minimal` section (`IsLocalRing` is left closed, since opening it makes `maximalIdeal`
+  ambiguous — `ResidueField` is written qualified instead);
+* `valuation_Δ_aux_smul_le` is **private** here where the source exports it, because it is phrased
+  through the internal `valuation_Δ_aux` rather than the ordinary valuation and exists only to
+  serve the comparison below;
+* the source's `exists_algebraMap_unit_eq_of_valuation_eq_one` — a separate shim of its own, in
+  `FLT/Mathlib/RingTheory/Valuation/Discrete/IsDiscreteValuationRing.lean` — is **not ported**.
+  Mathlib has since acquired that file, and with it `associated_of_valuation_eq`, which the three
+  lines below call directly. The source obtains the unit in the orientation `u • x = 1` and then
+  inverts it; taking `associated_of_valuation_eq 1 ↑D.u` instead lands on `algebraMap R K u = D.u`
+  with no inversion at all;
+* the source's `exists_variableChange_baseChange_eq_of_smul_eq` is this repository's
+  `WeierstrassCurve.VariableChange.exists_baseChange_eq_of_smul_eq`, which is stated over
+  `IsIntegrallyClosedIn R K` rather than a discrete valuation ring; instance search discharges it
+  here;
+* the source's `nodePoly_map_splits_smul_iff` is this repository's existing
+  `splits_variableChange_nodePolynomial_map_iff`, and the node polynomial reaches Mathlib's class
+  field through `nodePolynomial_def`, since the definition's body is not exposed across the module
+  boundary;
+* the `⁄K` notation is written `baseChange`, and the source's `show … from rfl` scaffolding for it
+  is replaced by a single `congrArg`.
 -/
 
 public section
@@ -161,6 +195,49 @@ theorem valuation_u_eq_one_of_isMinimal_smul {W₁ W₂ : WeierstrassCurve K} [I
     rw [inv_pow] at h1
     exact inv_eq_one.mp h1
   exact (pow_eq_one_iff_of_nonneg zero_le (by norm_num)).mp h12
+
+/-- **Split multiplicative reduction is an isomorphism invariant of minimal models.** If two
+minimal Weierstrass models of an elliptic curve over `K` are related by a change of variables
+(`D • W₁ = W₂`), and `W₁` has split multiplicative reduction, then so does `W₂`.
+
+This is what makes split multiplicative reduction a property of the curve at the place rather than
+of the equation presenting it. Mathlib's class is stated through a *chosen* integral model, so the
+transfer is not definitional: it needs `D` to be defined over `R`. Two results combine to give
+that — `valuation_u_eq_one_of_isMinimal_smul` supplies the unit scaling factor, and
+`VariableChange.exists_baseChange_eq_of_smul_eq` turns that unit, with integrality of both models,
+into the descent. A form of Silverman, *The Arithmetic of Elliptic Curves*, Remark VII.1.3(b), on
+the uniqueness of minimal models over a discrete valuation ring. -/
+theorem HasSplitMultiplicativeReduction.of_isMinimal_smul {W₁ W₂ : WeierstrassCurve K}
+    [IsMinimal R W₂] [W₁.IsElliptic] (D : VariableChange K) (hD : D • W₁ = W₂)
+    (h₁ : W₁.HasSplitMultiplicativeReduction R) : W₂.HasSplitMultiplicativeReduction R := by
+  -- `W₁` is minimal because it has multiplicative reduction, so that is not a hypothesis.
+  have hm₁ := h₁.toHasMultiplicativeReduction
+  have : IsMinimal R W₁ := hm₁.toIsMinimal
+  -- `v (D.u) = 1`, so `D.u` is the image of a unit of `R` and `D` descends to some `C₀` over `R`.
+  have hvu := valuation_u_eq_one_of_isMinimal_smul R D hD
+  obtain ⟨u₀, hau⟩ :=
+    associated_of_valuation_eq (A := R) 1 (↑D.u : K) (by rw [map_one]; exact hvu.symm)
+  rw [Units.smul_def, Algebra.smul_def, mul_one] at hau
+  obtain ⟨C₀, hDC₀⟩ := VariableChange.exists_baseChange_eq_of_smul_eq R D hD u₀ hau
+  have hW₂eq : (C₀ • W₁.integralModel R).baseChange K = W₂ := by
+    rw [WeierstrassCurve.baseChange, ← map_variableChange, ← hD, ← hDC₀]
+    exact congrArg _ (baseChange_integralModel_eq R W₁)
+  -- `W₂` is again multiplicative, since `v (u) = 1` fixes the valuations of both `Δ` and `c₄`.
+  have hc₄eq : valuation K (maximalIdeal R) W₂.c₄ = valuation K (maximalIdeal R) W₁.c₄ := by
+    rw [← hD, variableChange_c₄, map_mul]
+    simp [hvu]
+  have hmult₂ : W₂.HasMultiplicativeReduction R :=
+    { badReduction := by rw [valuation_Δ_eq_of_isMinimal_smul R D hD]; exact hm₁.badReduction
+      multiplicativeReduction := by rw [hc₄eq]; exact hm₁.multiplicativeReduction }
+  -- and its integral model is `C₀ •` that of `W₁`, so their node polynomials split together.
+  refine { hmult₂ with splitMultiplicativeReduction := ?_ }
+  have hint₂ : W₂.integralModel R = C₀ • W₁.integralModel R :=
+    map_injective (IsFractionRing.injective R K)
+      ((baseChange_integralModel_eq R W₂).trans hW₂eq.symm)
+  rw [hint₂, ← nodePolynomial_def]
+  exact (splits_variableChange_nodePolynomial_map_iff
+    (algebraMap R (IsLocalRing.ResidueField R)) (W₁.integralModel R) C₀).mpr
+      (by rw [nodePolynomial_def]; exact h₁.splitMultiplicativeReduction)
 
 end WeierstrassCurve
 
