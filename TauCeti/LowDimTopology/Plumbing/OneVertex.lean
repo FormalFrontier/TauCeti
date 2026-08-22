@@ -82,13 +82,9 @@ namespace PlumbingChain
 
 variable {V : Type u}
 
-/-- Negation is trivial on plumbing chains, whose coefficients have characteristic two. -/
-private theorem neg_eq_self (c : PlumbingChain V) : -c = c := by
-  rw [← neg_one_smul PlumbingCoefficient c, CharTwo.neg_eq, one_smul]
-
 /-- Subtraction of plumbing chains is addition, the coefficients having characteristic two. -/
 private theorem sub_eq_add (c d : PlumbingChain V) : c - d = c + d := by
-  rw [sub_eq_add_neg, neg_eq_self]
+  rw [sub_eq_add_neg, ← neg_one_smul PlumbingCoefficient d, CharTwo.neg_eq, one_smul]
 
 /-- Telescoping one step: comparing `a` with a multiple of `c` splits into the comparison of `a`
 with a multiple of an intermediate chain `b` and that comparison for `b` and `c`. -/
