@@ -20,15 +20,16 @@ the reductions of the five rows displayed in `TauCeti.quaternionGroupTwoCentralC
 
 Each displayed row is checked against the computed structure constants, while the good-prime
 count theorem supplies completeness of the modular search.  Signed least representatives modulo
-`5` then recover the integral central-character rows.  Degree recovery converts these to the
-ordinary table, which is the same matrix as the table of `DihedralGroup 4`, the classical example
-of nonisomorphic groups with equal character tables.
+`5` then recover the integral central-character rows.  The displayed candidate degrees and ordinary
+table are verified by the division-free conversion identity, the degree-square sum, and weighted
+row orthogonality.  The ordinary table is the same matrix as the table of `DihedralGroup 4`, the
+classical example of nonisomorphic groups with equal character tables.
 
 ## Main definitions
 
 * `TauCeti.quaternionGroupTwoCentralCharacterTable`: the five integral central-character rows.
 * `TauCeti.quaternionGroupTwoModularCentralRows`: their reductions modulo `5`.
-* `TauCeti.quaternionGroupTwoCharacterTable`: the resulting ordinary integral character table.
+* `TauCeti.quaternionGroupTwoCharacterTable`: the displayed ordinary integral character table.
 
 ## Main results
 
@@ -195,8 +196,9 @@ theorem quaternionGroupTwoCharacterDegrees_apply (i : QuaternionGroupTwoClassInd
     quaternionGroupTwoCharacterDegrees i = ![1, 1, 1, 1, 2] i := by
   rfl
 
-/-- **The integral character table produced by the rational Dixon computation for the quaternion
-group of order eight.** -/
+/-- **The displayed candidate integral character table for the quaternion group of order eight.**
+The results below verify its conversion from the displayed central-character table, degree-square
+sum, and weighted row orthogonality. -/
 def quaternionGroupTwoCharacterTable :
     Matrix QuaternionGroupTwoClassIndex QuaternionGroupTwoClassIndex ℤ :=
   !![1,  1,  1,  1,  1;
