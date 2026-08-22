@@ -50,9 +50,10 @@ standard coordinate vectors under the whole Kostant form. It is stable under the
 construction and spans the Geck module over `ℚ`, so it discharges the stability hypothesis that
 every Kostant root-subgroup consumer has so far carried.
 
-What is deliberately *not* proved is that `geckOrbit` is finitely generated over `ℤ`. That is the
-missing ingredient needed to promote this integral orbit to an admissible lattice in the sense of
-Humphreys §27, and it requires the integral Poincaré--Birkhoff--Witt theorem. Nor is the pinned Lie
+The orbit is in fact finitely generated over `ℤ`: it coincides with the coordinate lattice of
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/GeckLattice.lean`, because that
+lattice is preserved by the whole form, so it is a full lattice in the sense of Humphreys §27.
+Nor is the pinned Lie
 algebra asserted to be semisimple, which
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/LieAlgebra.lean` already records as not
 claimed. This file is the numbered input those later steps consume.
@@ -77,6 +78,9 @@ claimed. This file is the numbered input those later steps consume.
 * `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit` and
   `TauCeti.DynkinType.span_geckOrbit_eq_top`: the integral orbit is stable under the Kostant form
   and spans the Geck module over `ℚ`.
+* In `…/GeckLattice.lean`, `TauCeti.DynkinType.geckOrbit_eq_geckCoordinateLattice` and
+  `TauCeti.DynkinType.instIsLatticeGeckOrbit`: the orbit equals the coordinate lattice and is a
+  full, finitely generated lattice.
 
 ## References
 
@@ -264,7 +268,9 @@ images of the standard coordinate vectors under the simple-generator Kostant for
 Every downstream consumer of a Kostant root subgroup takes a `ℤ`-submodule preserved by the whole
 integral form as a hypothesis. This one is preserved by construction, by
 `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit`, and it is full by
-`TauCeti.DynkinType.span_geckOrbit_eq_top`. No finite-generation or lattice property is asserted. -/
+`TauCeti.DynkinType.span_geckOrbit_eq_top`. Its finite generation over `ℤ` is proved in
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/GeckLattice.lean`, where the orbit is
+identified with the coordinate lattice. -/
 def geckOrbit : Submodule ℤ (t.GeckIndex ht → ℚ) :=
   UniversalEnvelopingAlgebra.orbitOfRep (t.kostantForm ht) (t.geckRepresentation ht)
     (range fun x => Pi.single x 1)

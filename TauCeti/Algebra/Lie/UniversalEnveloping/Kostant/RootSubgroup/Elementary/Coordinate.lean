@@ -47,8 +47,7 @@ variable (e : ι → L) (h : κ → L)
 variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
 variable (M : AddSubgroup V)
 variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
-variable (i : ι)
-variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable {η : Type*} [Fintype η] [DecidableEq η] (b : Module.Basis η ℤ M)
 
 -- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
@@ -57,10 +56,11 @@ attribute [local instance high] Algebra.toModule
 /-- In basis coordinates, a parametrized Kostant root-subgroup element is its represented
 root-subgroup matrix. -/
 @[simp]
-theorem basisMatrix_kostantRootSubgroupParam (A : Type v) [CommRing A] (t : Multiplicative A) :
+theorem basisMatrix_kostantRootSubgroupParam
+    (A : Type v) [CommRing A] (i : ι) (t : Multiplicative A) :
     Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
-        (kostantRootSubgroupParam e h ρ M hM i hnil (CommAlgCat.of ℤ A) t) =
-      kostantRootSubgroupMatrix e h ρ M hM i hnil b
+        (kostantRootSubgroupParam e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A) t) =
+      kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t) := by
   rw [kostantRootSubgroupMatrix_def, MonoidHom.comp_apply,
     kostantRootSubgroupParam_apply, MulEquiv.toMonoidHom_eq_coe]

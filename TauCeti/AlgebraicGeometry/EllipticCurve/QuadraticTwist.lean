@@ -408,7 +408,7 @@ theorem exists_smul_quadraticTwistOf_trace_norm_eq {θ θ' : L}
     ∃ C : VariableChange K,
       C • E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)
         = E.quadraticTwistOf (Algebra.trace K L θ') (Algebra.norm K θ') := by
-  obtain ⟨a, b, ha, rfl⟩ := exists_eq_algebraMap_add_algebraMap_mul K L hθ hθ'
+  obtain ⟨a, b, ha, rfl⟩ := exists_ne_zero_eq_algebraMap_add_algebraMap_mul K L hθ hθ'
   simp only [trace_algebraMap_add_algebraMap_mul K L a b θ,
     norm_algebraMap_add_algebraMap_mul K L a b θ]
   exact E.exists_smul_quadraticTwistOf_eq _ _ b (isUnit_iff_ne_zero.mpr ha)

@@ -91,7 +91,9 @@ Layer 9 ("the representation theory of `GL₂(𝔽_q)`") of
 `simple_GL2PrincipalSeries_iff`, the irreducibility of `Ind_B^{GL₂}(α ⊗ β)` for `α ≠ β`, is read
 off the Mackey criterion, whose double-coset sum this decomposition evaluates. It is the rank-one
 case of the Bruhat decomposition named in Layer 8 of
-`TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`. See also W. Fulton and J. Harris,
+`TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`; the general statement is J. E.
+Humphreys, *Linear Algebraic Groups*, GTM 21, §28.3, whose Theorem is
+`G = ⨆_{σ ∈ W} B σ B` with `B σ B = B τ B` only for `σ = τ`. See also W. Fulton and J. Harris,
 *Representation Theory: A First Course*, GTM 129, §5.2, and J.-P. Serre, *Linear Representations
 of Finite Groups*, GTM 42, §7.3.
 -/

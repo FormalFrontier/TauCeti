@@ -25,7 +25,9 @@ A continuation is recorded as a family `f : X → ℂ → E` of functions indexe
 subject to the requirement that `f t` be analytic at `γ t` and that the germ of `f u` at `γ u`
 agree with the germ of `f t` at `γ u` for all `u` near `t`. Equivalently — and this is the way to
 read the definition — the assignment `t ↦ (germ of f t at γ t)` is a *continuous lift* of `γ` to
-the étale space of holomorphic germs. The classical "chain of overlapping discs" definition is the
+the étale space of holomorphic germs — literally so, by
+`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint` of
+`Conformal/Continuation/Etale.lean`. The classical "chain of overlapping discs" definition is the
 same condition written with explicit discs; the germ formulation avoids carrying the discs around.
 
 The parameter space `X` is an arbitrary topological space, and the parameter set `s : Set X` is
@@ -97,8 +99,9 @@ uniqueness of the continuation along a *fixed* path. The monodromy theorem itsel
 continuations along *homotopic* paths, and in the étale-space picture is an instance of Mathlib's
 abstract `IsLocalHomeomorph.monodromy_theorem` (`Mathlib/Topology/Homotopy/Lifting.lean`), whose
 docstring describes exactly this application; the uniqueness proved here is the concrete form of
-the separatedness hypothesis that abstract theorem consumes. Building the étale space of
-holomorphic germs and deducing monodromy from it is left to a follow-up.
+the separatedness hypothesis that abstract theorem consumes. That étale space is built in
+`TauCeti/Analysis/Complex/HolomorphicSheaf.lean`, and `Conformal/Continuation/Etale.lean` supplies
+the continuation/lift correspondence needed to apply the abstract theorem to it.
 
 ## Main definitions and results
 
@@ -182,7 +185,8 @@ sense that `f u` and `f t` have the same germ at `γ u` for every `u ∈ s` clos
 
 Only the germ of `f t` at `γ t` matters; the values of `f t` away from `γ t` are unconstrained.
 Reading the germs as points of the étale space of holomorphic germs over `ℂ`, the condition says
-precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`. -/
+precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`; that is
+`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint`. -/
 structure IsAnalyticContinuationAlong (f : X → ℂ → E) (γ : X → ℂ) (s : Set X) : Prop where
   /-- The path is continuous on the parameter set. -/
   continuousOn : ContinuousOn γ s

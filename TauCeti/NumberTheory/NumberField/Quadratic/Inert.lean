@@ -34,8 +34,8 @@ automorphism `σ` of `𝓞 K` restricting it; that is the shape in which
 `NumberField.ringOfIntegersQuadraticConj` and `NumberField.coe_ringOfIntegersQuadraticConj` present
 quadratic conjugation.
 
-See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, Chapter 6, for
-the classical genus theory in which this dichotomy is used.
+See D. A. Cox, *Primes of the Form x² + ny²*, §6.A, and F. Lemmermeyer, *Reciprocity Laws: From
+Euler to Eisenstein*, §2.2, for the classical genus theory in which this dichotomy is used.
 
 ## Main results
 
