@@ -51,6 +51,7 @@ submodule by centrality and it contains the generator.
 ## Main results
 
 * `TauCeti.casimirScalar`: the Casimir eigenvalue attached to a highest weight.
+* `TauCeti.casimirScalar_def`: its defining formula `⟨λ + ρ, λ + ρ⟩ - ⟨ρ, ρ⟩`.
 * `TauCeti.casimir_smul_of_isHighestWeightVector`: the Casimir element sends a highest weight
   vector of weight `λ` to `casimirScalar base λ • v`.
 * `TauCeti.casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top`: on a highest weight module
@@ -380,11 +381,22 @@ noncomputable def casimirScalar (base : (IsKilling.rootSystem H).Base)
     invForm (weylVector (IsKilling.rootSystem H) base)
       (weylVector (IsKilling.rootSystem H) base)
 
+/-- **The defining formula of the Casimir scalar**: the difference of the squared lengths of
+`lam + ρ` and of `ρ`. The definition is sealed, so this is the equation through which the scalar
+is unfolded, here and downstream. -/
+theorem casimirScalar_def :
+    casimirScalar base lam =
+      invForm (lam + weylVector (IsKilling.rootSystem H) base)
+          (lam + weylVector (IsKilling.rootSystem H) base) -
+        invForm (weylVector (IsKilling.rootSystem H) base)
+          (weylVector (IsKilling.rootSystem H) base) :=
+  (rfl)
+
 /-- **The Casimir scalar of the zero weight vanishes**: it is `⟨ρ, ρ⟩ - ⟨ρ, ρ⟩`. This is the
 scalar by which the Casimir element acts on the trivial module. -/
 @[simp]
 theorem casimirScalar_zero : casimirScalar base (0 : Module.Dual K H) = 0 := by
-  simp [casimirScalar]
+  simp [casimirScalar_def]
 
 /-- **The Casimir scalar, expanded.** The scalar is `⟨lam, lam⟩` plus the sum of the pairings of
 `lam` with the positive roots, the cross terms of the square contributing
@@ -393,7 +405,7 @@ theorem casimirScalar_eq_add_sum :
     casimirScalar base lam =
       invForm lam lam + ∑ i ∈ posRootsFinset (IsKilling.rootSystem H) base,
         invForm lam ((IsKilling.rootSystem H).root i) := by
-  rw [casimirScalar]
+  rw [casimirScalar_def]
   have hsymm : invForm (weylVector (IsKilling.rootSystem H) base) lam =
       invForm lam (weylVector (IsKilling.rootSystem H) base) := (invForm_isSymm (H := H)).eq _ _
   have hsum : ∑ i ∈ posRootsFinset (IsKilling.rootSystem H) base,
