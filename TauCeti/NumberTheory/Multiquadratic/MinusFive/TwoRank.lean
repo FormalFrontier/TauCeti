@@ -69,8 +69,9 @@ local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
     (fun q _ => by nlinarith [sq_nonneg q])⟩
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`, has
-class-group `2`-rank `1`. Reuses the shared integral-generator construction. -/
-@[simp]
+class-group `2`-rank `1`. Reuses the shared integral-generator construction. Not `@[simp]`: the
+`@[simp]` lemma `twoRank_def` unfolds the left-hand side `twoRank _`, so this closed form is not in
+simp-normal form (`simpNF` rejects it), unlike the non-unfolded `classNumber` companion. -/
 theorem twoRank_adjoinRoot_sqrt_neg_five_eq_one :
     TauCeti.ClassGroup.twoRank (𝓞 (AdjoinRoot (X ^ 2 - C (-5 : ℚ)))) = 1 := by
   obtain ⟨θ, hmin, hgen⟩ := NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_five
