@@ -65,7 +65,7 @@ namespace PathAlgebra
 
 section Weight
 
-variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q]
+variable {k : Type w} {Q : Type u} [Monoid k] [Quiver.{v} Q]
 
 variable (c d : ∀ ⦃a b : Q⦄, (a ⟶ b) → k)
 
@@ -74,17 +74,6 @@ theorem weight_toPath {a b : Q} (e : a ⟶ b) :
     _root_.Quiver.Path.weight (fun {_ _} f => c f) e.toPath = c e := by
   rw [_root_.Quiver.Hom.toPath, _root_.Quiver.Path.weight_cons,
     _root_.Quiver.Path.weight_nil, one_mul]
-
-/-- The weight under a pointwise product of labellings is the product of the weights. -/
-theorem weight_mul {a b : Q} (p : _root_.Quiver.Path a b) :
-    _root_.Quiver.Path.weight (fun {_ _} e => c e * d e) p
-      = _root_.Quiver.Path.weight (fun {_ _} e => c e) p *
-        _root_.Quiver.Path.weight (fun {_ _} e => d e) p := by
-  induction p with
-  | nil => simp
-  | cons p f ih =>
-    rw [_root_.Quiver.Path.weight_cons, _root_.Quiver.Path.weight_cons,
-      _root_.Quiver.Path.weight_cons, ih, mul_mul_mul_comm]
 
 /-- Pointwise equal labellings give equal weights. -/
 theorem weight_congr (h : ∀ ⦃a b : Q⦄ (e : a ⟶ b), c e = d e) {a b : Q}
@@ -105,6 +94,24 @@ theorem weight_one {a b : Q} (p : _root_.Quiver.Path a b) :
   | cons p f ih => rw [_root_.Quiver.Path.weight_cons, ih, one_mul]
 
 end Weight
+
+section WeightMul
+
+variable {k : Type w} {Q : Type u} [CommMonoid k] [Quiver.{v} Q]
+variable (c d : ∀ ⦃a b : Q⦄, (a ⟶ b) → k)
+
+/-- The weight under a pointwise product of labellings is the product of the weights. -/
+theorem weight_mul {a b : Q} (p : _root_.Quiver.Path a b) :
+    _root_.Quiver.Path.weight (fun {_ _} e => c e * d e) p
+      = _root_.Quiver.Path.weight (fun {_ _} e => c e) p *
+        _root_.Quiver.Path.weight (fun {_ _} e => d e) p := by
+  induction p with
+  | nil => simp
+  | cons p f ih =>
+    rw [_root_.Quiver.Path.weight_cons, _root_.Quiver.Path.weight_cons,
+      _root_.Quiver.Path.weight_cons, ih, mul_mul_mul_comm]
+
+end WeightMul
 
 /-! ### The rescaling endomorphism -/
 
@@ -146,6 +153,7 @@ noncomputable def rescale : pathAlgebra k Q →ₐ[k] pathAlgebra k Q :=
     (fun x => _root_.Quiver.Path.weight (fun {_ _} f => c f) x.2.2 • ofPath x)
       (rescale_hcomp c) (rescale_hzero c) (rescale_hone c)
 
+/-- Rescaling a basis path multiplies it by the path's weight. -/
 @[simp]
 theorem rescale_ofPath (x : Quiver.TotalPath Q) :
     rescale c (ofPath x) =
@@ -156,6 +164,7 @@ theorem rescale_ofPath (x : Quiver.TotalPath Q) :
       _root_.Quiver.Path.weight (fun {_ _} f => c f) y.2.2 • ofPath y)
       (rescale_hcomp c) (rescale_hzero c) (rescale_hone c) x
 
+/-- Every vertex idempotent is fixed by arrow rescaling. -/
 @[simp]
 theorem rescale_vertexIdempotent (v : Q) :
     rescale c (vertexIdempotent k v) = vertexIdempotent k v := by

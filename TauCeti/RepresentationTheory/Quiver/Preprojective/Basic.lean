@@ -272,16 +272,22 @@ variable (k : Type w) {Q : Type u} [Ring k] [Quiver.{v + 1} Q] [Fintype Q]
 
 /-- The **gauged preprojective relator** `ρ_ε = ∑_a ε_a (a a* - a* a)` attached to a labelling `ε`
 of the arrows of `Q` by scalars. The constant labelling `1` gives the preprojective relator. -/
-@[expose]
 noncomputable def gaugedPreprojectiveRelator (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) :
     pathAlgebra k (Symmetrify Q) :=
   ∑ i : Q, ∑ j : Q, ∑ a : (i ⟶ j), ε a • (headBacktrackElem k a - tailBacktrackElem k a)
+
+/-- The gauged relator, unfolded as the weighted sum of the two backtracks over every arrow. -/
+theorem gaugedPreprojectiveRelator_def (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) :
+    gaugedPreprojectiveRelator k ε
+      = ∑ i : Q, ∑ j : Q, ∑ a : (i ⟶ j),
+          ε a • (headBacktrackElem k a - tailBacktrackElem k a) := by
+  rw [gaugedPreprojectiveRelator]
 
 /-- Pointwise equal labellings give the same gauged relator. -/
 theorem gaugedPreprojectiveRelator_congr {ε ε' : ∀ ⦃i j : Q⦄, (i ⟶ j) → k}
     (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ε' a) :
     gaugedPreprojectiveRelator k ε = gaugedPreprojectiveRelator k ε' := by
-  simp only [gaugedPreprojectiveRelator]
+  simp only [gaugedPreprojectiveRelator_def]
   exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ =>
     Finset.sum_congr rfl fun a _ => by rw [h a]
 
@@ -302,7 +308,7 @@ backtracks. This is the defining equation, exposed for use outside this module. 
 theorem preprojectiveRelator_def :
     preprojectiveRelator k Q
       = ∑ i : Q, ∑ j : Q, ∑ a : (i ⟶ j), (headBacktrackElem k a - tailBacktrackElem k a) := by
-  simp only [preprojectiveRelator, gaugedPreprojectiveRelator, one_smul]
+  simp only [preprojectiveRelator, gaugedPreprojectiveRelator_def, one_smul]
 
 variable {Q}
 
@@ -321,7 +327,7 @@ noncomputable def localPreprojectiveRelator (v : Q) : pathAlgebra k (Symmetrify 
 to the relator at its head, and its tail backtrack to the relator at its tail. -/
 theorem sum_localPreprojectiveRelator :
     ∑ v : Q, localPreprojectiveRelator k v = preprojectiveRelator k Q := by
-  simp only [localPreprojectiveRelator, preprojectiveRelator, gaugedPreprojectiveRelator,
+  simp only [localPreprojectiveRelator, preprojectiveRelator, gaugedPreprojectiveRelator_def,
     one_smul, Finset.sum_sub_distrib]
   -- The head-backtrack sums differ only by the order of the two vertex summations, and the
   -- tail-backtrack sums agree termwise.
@@ -386,10 +392,16 @@ noncomputable def gaugedPreprojectiveIdeal (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) �
     TwoSidedIdeal (pathAlgebra k (Symmetrify Q)) :=
   TwoSidedIdeal.span {gaugedPreprojectiveRelator k ε}
 
+/-- The gauged relation ideal is the two-sided span of its gauged relator. -/
+theorem gaugedPreprojectiveIdeal_eq_span (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) :
+    gaugedPreprojectiveIdeal k ε = TwoSidedIdeal.span {gaugedPreprojectiveRelator k ε} := by
+  rw [gaugedPreprojectiveIdeal]
+
 theorem gaugedPreprojectiveRelator_mem_gaugedPreprojectiveIdeal
     (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) :
-    gaugedPreprojectiveRelator k ε ∈ gaugedPreprojectiveIdeal k ε :=
-  TwoSidedIdeal.subset_span rfl
+    gaugedPreprojectiveRelator k ε ∈ gaugedPreprojectiveIdeal k ε := by
+  rw [gaugedPreprojectiveIdeal_eq_span]
+  exact TwoSidedIdeal.subset_span rfl
 
 variable (Q)
 
@@ -401,7 +413,7 @@ noncomputable abbrev preprojectiveIdeal : TwoSidedIdeal (pathAlgebra k (Symmetri
 equation, exposed for use outside this module. -/
 theorem preprojectiveIdeal_eq_span :
     preprojectiveIdeal k Q = TwoSidedIdeal.span {preprojectiveRelator k Q} := by
-  rw [preprojectiveIdeal, gaugedPreprojectiveIdeal, gaugedPreprojectiveRelator_one]
+  rw [preprojectiveIdeal, gaugedPreprojectiveIdeal_eq_span, gaugedPreprojectiveRelator_one]
 
 theorem preprojectiveRelator_mem_preprojectiveIdeal :
     preprojectiveRelator k Q ∈ preprojectiveIdeal k Q := by
@@ -538,8 +550,9 @@ noncomputable def gaugedPreprojectiveLift (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) →
     gaugedPreprojectiveAlgebra k ε →ₐ[k] B :=
   Ideal.Quotient.liftₐ _ f fun _ ha =>
     (TwoSidedIdeal.mem_ker f).1
-      (TwoSidedIdeal.span_le.2 (Set.singleton_subset_iff.2 ((TwoSidedIdeal.mem_ker f).2 hf))
-        (TwoSidedIdeal.mem_asIdeal.1 ha))
+      (TwoSidedIdeal.span_le.2 (Set.singleton_subset_iff.2 ((TwoSidedIdeal.mem_ker f).2 hf)) <| by
+        rw [← gaugedPreprojectiveIdeal_eq_span]
+        exact TwoSidedIdeal.mem_asIdeal.1 ha)
 
 theorem gaugedPreprojectiveLift_comp_gaugedPreprojectiveMk
     (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) (f : pathAlgebra k (Symmetrify Q) →ₐ[k] B)
@@ -553,6 +566,17 @@ theorem gaugedPreprojectiveLift_gaugedPreprojectiveMk
     (hf : f (gaugedPreprojectiveRelator k ε) = 0) (x : pathAlgebra k (Symmetrify Q)) :
     gaugedPreprojectiveLift k ε f hf (gaugedPreprojectiveMk k ε x) = f x :=
   AlgHom.congr_fun (gaugedPreprojectiveLift_comp_gaugedPreprojectiveMk k ε f hf) x
+
+/-- The gauged lift is the unique algebra map whose composite with the quotient map is `f`. -/
+theorem gaugedPreprojectiveLift_unique
+    (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) (f : pathAlgebra k (Symmetrify Q) →ₐ[k] B)
+    (hf : f (gaugedPreprojectiveRelator k ε) = 0)
+    (g : gaugedPreprojectiveAlgebra k ε →ₐ[k] B)
+    (hg : g.comp (gaugedPreprojectiveMk k ε) = f) :
+    g = gaugedPreprojectiveLift k ε f hf := by
+  refine AlgHom.ext fun y => ?_
+  obtain ⟨x, rfl⟩ := gaugedPreprojectiveMk_surjective k ε y
+  rw [gaugedPreprojectiveLift_gaugedPreprojectiveMk, ← hg, AlgHom.comp_apply]
 
 end GaugedLift
 
