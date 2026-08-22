@@ -46,8 +46,8 @@ genus-field milestone of `TauCetiRoadmap/Multiquadratic/README.md`.
 
 ## References
 
-* D. A. Cox, *Primes of the Form x² + ny²*, Chapter 3.
-* F. Lemmermeyer, *Reciprocity Laws*, Chapter 6.
+* D. A. Cox, *Primes of the Form x² + ny²*, §6.A.
+* F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
 -/
 
 public section

@@ -36,6 +36,8 @@ it to the matrix coefficients of `TauCeti/RepresentationTheory/Continuous/Matrix
   inverse is the conjugate of its value.
 * `TauCeti.ContRepresentation.norm_character_apply_le`: a unitary character is bounded by the
   dimension.
+* `ContRepresentation.continuous_character_mul_self`: the character read along the squaring map
+  `g ↦ g * g` is continuous.
 
 ## Implementation notes
 
@@ -214,3 +216,25 @@ end GroupInner
 end ContRepresentation
 
 end TauCeti
+
+open TauCeti.ContRepresentation
+
+namespace ContRepresentation
+
+/-! ### The character along the squaring map
+
+The lemma below is declared in the **root** `ContRepresentation` namespace, unlike the rest of this
+file, so that `π.continuous_character_mul_self hπ` elaborates: `ContRepresentation` is Mathlib's
+type, and `scripts/lint-dot-notation.py` asks that new declarations about it not recreate its
+namespace inside `TauCeti`. -/
+
+variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Monoid G]
+  [TopologicalSpace G] [ContinuousMul G] [NormedAddCommGroup V] [NormedSpace 𝕜 V]
+  [FiniteDimensional 𝕜 V]
+
+/-- The character read along the squaring map `g ↦ g * g` is continuous. -/
+theorem continuous_character_mul_self (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) :
+    Continuous fun g : G ↦ character π hπ (g * g) :=
+  (character π hπ).continuous.comp (continuous_id.mul continuous_id)
+
+end ContRepresentation

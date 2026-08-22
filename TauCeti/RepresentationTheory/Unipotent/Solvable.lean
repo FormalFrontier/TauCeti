@@ -7,7 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Kolchin
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Nilpotent
-import Mathlib.LinearAlgebra.Dimension.Constructions
+import TauCeti.LinearAlgebra.ExtensionBasis
 import Mathlib.RingTheory.Nilpotent.Lemmas
 
 /-!
@@ -50,40 +50,6 @@ variable [Field K] [AddCommGroup V] [Module K V]
 section Monoid
 
 variable [Monoid G]
-
-/-- Extend bases of a submodule and its quotient to a basis of the ambient module. -/
-private def extensionBasis {m n : ℕ} (p : Submodule K V)
-    (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) :
-    Basis (Fin (m + n)) K V :=
-  (bp.sumQuot bq).reindex finSumFinEquiv
-
-@[simp]
-private theorem extensionBasis_castAdd {m n : ℕ} (p : Submodule K V)
-    (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) (i : Fin m) :
-    extensionBasis p bp bq (Fin.castAdd n i) = bp i := by
-  rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_castAdd,
-    Basis.sumQuot_inl]
-
-@[simp]
-private theorem extensionBasis_natAdd_mkQ {m n : ℕ} (p : Submodule K V)
-    (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) (j : Fin n) :
-    Submodule.Quotient.mk (extensionBasis p bp bq (Fin.natAdd m j)) = bq j := by
-  rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Basis.sumQuot_inr]
-
-@[simp]
-private theorem extensionBasis_repr_castAdd {m n : ℕ} (p : Submodule K V)
-    (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) (x : p) (i : Fin m) :
-    (extensionBasis p bp bq).repr x (Fin.castAdd n i) = bp.repr x i := by
-  rw [extensionBasis, Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_castAdd,
-    Basis.sumQuot_repr_inl]
-
-@[simp]
-private theorem extensionBasis_repr_natAdd {m n : ℕ} (p : Submodule K V)
-    (bp : Basis (Fin m) K p) (bq : Basis (Fin n) K (V ⧸ p)) (x : V) (j : Fin n) :
-    (extensionBasis p bp bq).repr x (Fin.natAdd m j) = bq.repr (p.mkQ x) j := by
-  rw [extensionBasis, Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Basis.sumQuot_repr_inr]
 
 /-- A finite-dimensional monoid representation by unipotent operators has a basis in which all
 representing matrices are upper unitriangular. -/
