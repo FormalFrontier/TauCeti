@@ -168,6 +168,29 @@ theorem span_kostantForm_eq_top :
         Set (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht))) = ⊤ :=
   (t.lieBasis ht).span_kostantForm_eq_top
 
+/-! ## The roots of the numbered generators -/
+
+/-- **The root of a numbered raising or lowering generator**, as an integral character of the
+pinned Cartan generators: the corresponding Bourbaki Cartan-matrix row for a raising generator,
+and its negative for a lowering generator. -/
+def rootGeneratorWeight : Fin t.rank ⊕ Fin t.rank → Fin t.rank → ℤ :=
+  (t.lieBasis ht).rootGeneratorWeight
+
+@[simp] theorem rootGeneratorWeight_inl (i j : Fin t.rank) :
+    t.rootGeneratorWeight ht (.inl i) j = t.cartanMatrix i j := by
+  rw [rootGeneratorWeight, LieAlgebra.Basis.rootGeneratorWeight_inl, lieBasis_A_eq]
+
+@[simp] theorem rootGeneratorWeight_inr (i j : Fin t.rank) :
+    t.rootGeneratorWeight ht (.inr i) j = -t.cartanMatrix i j := by
+  rw [rootGeneratorWeight, LieAlgebra.Basis.rootGeneratorWeight_inr, lieBasis_A_eq]
+
+/-- **The pinned Cartan generators act on a numbered root generator through its root.** -/
+theorem lie_lieBasis_h_rootGenerator (i : Fin t.rank ⊕ Fin t.rank) (j : Fin t.rank) :
+    ⁅(t.lieBasis ht).h j, (t.lieBasis ht).rootGenerator i⁆ =
+      ((t.rootGeneratorWeight ht i j : ℤ) : ℚ) • (t.lieBasis ht).rootGenerator i := by
+  rw [rootGeneratorWeight]
+  exact (t.lieBasis ht).lie_h_rootGenerator i j
+
 /-! ## The defining representation -/
 
 /-- **The defining representation of the pinned split Lie algebra**, extended to its universal

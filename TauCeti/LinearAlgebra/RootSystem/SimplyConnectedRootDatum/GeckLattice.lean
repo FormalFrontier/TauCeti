@@ -106,16 +106,36 @@ theorem coe_geckCoordinateBasis (i : t.GeckIndex ht) :
 /-- The coordinate basis reindexed by a finite ordinal. This is the basis shape consumed by the
 Kostant generated-group-scheme construction. -/
 def geckCoordinateBasisFin :
-    Module.Basis (Fin (Fintype.card (t.GeckIndex ht))) ℤ (t.geckCoordinateLattice ht) :=
+    Module.Basis (Fin (t.geckDim ht)) ℤ (t.geckCoordinateLattice ht).toAddSubgroup :=
   (t.geckCoordinateBasis ht).reindex (Fintype.equivFin (t.GeckIndex ht))
 
 /-- A finite-ordinal coordinate basis element is the standard vector at the corresponding Geck
 coordinate. -/
 @[simp]
-theorem coe_geckCoordinateBasisFin (i : Fin (Fintype.card (t.GeckIndex ht))) :
-    ((t.geckCoordinateBasisFin ht i : t.geckCoordinateLattice ht) : t.GeckIndex ht → ℚ) =
+theorem coe_geckCoordinateBasisFin (i : Fin (t.geckDim ht)) :
+    ((t.geckCoordinateBasisFin ht i : (t.geckCoordinateLattice ht).toAddSubgroup) :
+      t.GeckIndex ht → ℚ) =
       Pi.single ((Fintype.equivFin (t.GeckIndex ht)).symm i) 1 := by
   rw [geckCoordinateBasisFin, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
+
+/-- The integral weight of a finite-ordinal Geck coordinate basis vector, in the Bourbaki
+numbering. -/
+def geckWeightFin : Fin (t.geckDim ht) → Fin t.rank → ℤ :=
+  fun i => t.geckWeight ht ((Fintype.equivFin (t.GeckIndex ht)).symm i)
+
+/-- The weight of a reindexed Geck coordinate is the weight of the corresponding coordinate. -/
+theorem geckWeightFin_apply (i : Fin (t.geckDim ht)) :
+    t.geckWeightFin ht i = t.geckWeight ht ((Fintype.equivFin (t.GeckIndex ht)).symm i) :=
+  (rfl)
+
+/-- Every finite-ordinal coordinate basis vector is a Cartan weight vector. -/
+theorem isCartanWeightVector_geckCoordinateBasisFin (i : Fin (t.geckDim ht)) :
+    TauCeti.UniversalEnvelopingAlgebra.IsCartanWeightVector (t.lieBasis ht).h
+      (t.geckRepresentation ht) (t.geckWeightFin ht i)
+      ((t.geckCoordinateBasisFin ht i : (t.geckCoordinateLattice ht).toAddSubgroup) :
+        t.GeckIndex ht → ℚ) := by
+  rw [coe_geckCoordinateBasisFin]
+  exact t.isCartanWeightVector_geckRepresentation_single ht _
 
 /-- The coordinate lattice is contained in the integral orbit of the pinned Kostant form, since
 the latter contains every standard coordinate vector. -/
@@ -344,6 +364,16 @@ theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice
     (hu := by
       rw [← LieAlgebra.Basis.kostantForm_def]
       exact t.kostantForm_def ht ▸ hu) hv
+
+/-- The Kostant form preserves the underlying additive subgroup of the Geck coordinate lattice. -/
+theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice_toAddSubgroup :
+    ∀ u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm
+        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h,
+      ∀ v ∈ (t.geckCoordinateLattice ht).toAddSubgroup,
+        t.geckRepresentation ht u v ∈ (t.geckCoordinateLattice ht).toAddSubgroup := by
+  intro u hu v hv
+  rw [← LieAlgebra.Basis.kostantForm_def, ← t.kostantForm_def ht] at hu
+  exact t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht hu hv
 
 /-- The integral orbit of the standard coordinate vectors is contained in the coordinate
 lattice, because the Kostant form preserves the lattice and each coordinate vector lies in it. -/
