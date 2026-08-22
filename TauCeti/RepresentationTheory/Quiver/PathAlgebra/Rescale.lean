@@ -59,8 +59,6 @@ open _root_.Quiver
 
 universe u v w
 
-namespace Quiver.Path
-
 /-! ### Properties of path weights -/
 
 section Weight
@@ -70,13 +68,13 @@ variable {k : Type w} {Q : Type u} [Monoid k] [Quiver.{v} Q]
 variable (c d : ∀ ⦃a b : Q⦄, (a ⟶ b) → k)
 
 @[simp]
-theorem weight_toPath {a b : Q} (e : a ⟶ b) :
+theorem _root_.Quiver.Path.weight_toPath {a b : Q} (e : a ⟶ b) :
     _root_.Quiver.Path.weight (fun {_ _} f => c f) e.toPath = c e := by
   rw [_root_.Quiver.Hom.toPath, _root_.Quiver.Path.weight_cons,
     _root_.Quiver.Path.weight_nil, one_mul]
 
 /-- Pointwise equal labellings give equal weights. -/
-theorem weight_congr (h : ∀ ⦃a b : Q⦄ (e : a ⟶ b), c e = d e) {a b : Q}
+theorem _root_.Quiver.Path.weight_congr (h : ∀ ⦃a b : Q⦄ (e : a ⟶ b), c e = d e) {a b : Q}
     (p : _root_.Quiver.Path a b) :
     _root_.Quiver.Path.weight (fun {_ _} e => c e) p =
       _root_.Quiver.Path.weight (fun {_ _} e => d e) p := by
@@ -87,7 +85,7 @@ theorem weight_congr (h : ∀ ⦃a b : Q⦄ (e : a ⟶ b), c e = d e) {a b : Q}
 
 /-- Every path has weight one under the constant labelling by one. -/
 @[simp]
-theorem weight_one {a b : Q} (p : _root_.Quiver.Path a b) :
+theorem _root_.Quiver.Path.weight_one {a b : Q} (p : _root_.Quiver.Path a b) :
     _root_.Quiver.Path.weight (fun {_ _} _ => (1 : k)) p = 1 := by
   induction p with
   | nil => simp
@@ -101,7 +99,7 @@ variable {k : Type w} {Q : Type u} [CommMonoid k] [Quiver.{v} Q]
 variable (c d : ∀ ⦃a b : Q⦄, (a ⟶ b) → k)
 
 /-- The weight under a pointwise product of labellings is the product of the weights. -/
-theorem weight_mul {a b : Q} (p : _root_.Quiver.Path a b) :
+theorem _root_.Quiver.Path.weight_mul {a b : Q} (p : _root_.Quiver.Path a b) :
     _root_.Quiver.Path.weight (fun {_ _} e => c e * d e) p
       = _root_.Quiver.Path.weight (fun {_ _} e => c e) p *
         _root_.Quiver.Path.weight (fun {_ _} e => d e) p := by
@@ -112,8 +110,6 @@ theorem weight_mul {a b : Q} (p : _root_.Quiver.Path a b) :
       _root_.Quiver.Path.weight_cons, ih, mul_mul_mul_comm]
 
 end WeightMul
-
-end Quiver.Path
 
 namespace PathAlgebra
 
@@ -176,27 +172,27 @@ theorem rescale_vertexIdempotent (v : Q) :
 
 /-- Rescaling an arrow multiplies it by its label. -/
 theorem rescale_ofArrow {a b : Q} (e : a ⟶ b) : rescale c (ofArrow e) = c e • ofArrow e := by
-  rw [ofArrow_eq_ofPath, rescale_ofPath, TauCeti.Quiver.Path.weight_toPath]
+  rw [ofArrow_eq_ofPath, rescale_ofPath, _root_.Quiver.Path.weight_toPath]
 
 /-- Rescaling by the constant labelling one is the identity. -/
 theorem rescale_one : rescale (fun _ _ _ => (1 : k)) = AlgHom.id k (pathAlgebra k Q) :=
   AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
     simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, rescale_ofPath,
-      TauCeti.Quiver.Path.weight_one, one_smul, AlgHom.id_apply]
+      _root_.Quiver.Path.weight_one, one_smul, AlgHom.id_apply]
 
 /-- **Rescalings compose by multiplying labellings.** -/
 theorem rescale_comp_rescale :
     (rescale c).comp (rescale d) = rescale (fun _ _ e => c e * d e) :=
   AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
     simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, AlgHom.comp_apply, rescale_ofPath,
-      map_smul, TauCeti.Quiver.Path.weight_mul, mul_smul,
+      map_smul, _root_.Quiver.Path.weight_mul, mul_smul,
       smul_comm (_root_.Quiver.Path.weight (fun {_ _} f => c f) x.2.2)]
 
 /-- Pointwise equal labellings give equal rescalings. -/
 theorem rescale_congr (h : ∀ ⦃a b : Q⦄ (e : a ⟶ b), c e = d e) : rescale c = rescale d :=
   AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
     simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, rescale_ofPath,
-      TauCeti.Quiver.Path.weight_congr c d h]
+      _root_.Quiver.Path.weight_congr c d h]
 
 end Rescale
 
