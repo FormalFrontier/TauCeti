@@ -123,8 +123,9 @@ private lemma integral_expMeasure_Ioi {E : Type*} [NormedAddCommGroup E] [Normed
       rw [toReal_gammaPDF_one hr, exponentialPDFReal_apply, ite_eq_left (mem_Ici.mp hx)]
   rw [hIci, hdens, integral_Ici_eq_integral_Ioi]
 
-/-- The moment integrand is the Gamma integrand supported on `Ioi 0`. This needs `n ≠ 0`: at
-`n = 0` the left side is the density itself, which does not vanish at the origin. -/
+/-- The moment integrand is the Gamma integrand supported on `Ioi 0`. This is used to prove
+integrability; `integral_expMeasure_Ioi` only identifies integral values. This needs `n ≠ 0`:
+at `n = 0` the left side is the density itself, which does not vanish at the origin. -/
 private theorem integrand_eq_indicator (hn : n ≠ 0) :
     (fun x => exponentialPDFReal r x * x ^ n)
       = (Ioi (0:ℝ)).indicator (fun x => r * (x ^ n * exp (-(r * x)))) := by
