@@ -40,7 +40,7 @@ imposed later as structure data.
   complexification `ℂ ⊗[ℚ] W` of a rational subspace with that complexified subspace.
 * `TauCeti.Hodge.rationalMapToComplex`: scalar extension of a rational linear map between two
   abstract base-change models.
-* `TauCeti.Hodge.rationalMapToComplex_latticeConj`: that scalar extension commutes with lattice
+* `TauCeti.Hodge.rationalMapToComplex_commutes_conj`: that scalar extension commutes with lattice
   conjugation, for arbitrary complex models.
 * `TauCeti.Hodge.latticeConj_rationalToComplexLinearEquiv_one_tmul`: lattice conjugation fixes
   every purely rational vector of the ambient complexification.
@@ -113,14 +113,6 @@ theorem rationalToComplexLinearEquiv_one_tmul_ι (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (x : Vℤ) :
     rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] ιℚ x) = ιℂ x := by
   simp [rationalToComplexLinearEquiv]
-
-/-- A pure tensor in the concrete rational-to-complex tower is the corresponding scalar multiple
-of a purely rational vector. -/
-theorem rationalToComplexLinearEquiv_tmul (hℚ : IsBaseChange ℚ ιℚ)
-    (hℂ : IsBaseChange ℂ ιℂ) (z : ℂ) (x : Vℚ) :
-    rationalToComplexLinearEquiv hℚ hℂ (z ⊗ₜ[ℚ] x) =
-      z • rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) := by
-  rw [← map_smul, TensorProduct.smul_tmul', smul_eq_mul, mul_one]
 
 /-- The complexification of a rational subspace, realized inside the chosen ambient
 complexification. -/
@@ -256,8 +248,8 @@ noncomputable def rationalMapToComplex (hℚ : IsBaseChange ℚ ιℚ)
   (rationalToComplexLinearEquiv h'ℚ h'ℂ).toLinearMap ∘ₗ
     f.baseChange ℂ ∘ₗ (rationalToComplexLinearEquiv hℚ hℂ).symm.toLinearMap
 
-/-- Complexification of a rational map sends the image of a rational vector to the image of its
-rational value. -/
+/-- Complexification of a rational map sends the image of the pure tensor `z ⊗ₜ x` to the image
+of `z ⊗ₜ f x`. -/
 @[simp]
 theorem rationalMapToComplex_rationalToComplexLinearEquiv_tmul
     (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ)
@@ -342,11 +334,30 @@ theorem rationalMapToComplex_zsmul (hℚ : IsBaseChange ℚ ιℚ)
     rationalMapToComplex hℚ hℂ h'ℚ h'ℂ (k • f) = k • rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f :=
   map_zsmul (rationalMapToComplexAddHom hℚ hℂ h'ℚ h'ℂ) k f
 
+/-- Complexification preserves rational multiples of rational linear maps, the rational scalar
+acting on the complexification through `ℚ → ℂ`. -/
+@[simp]
+theorem rationalMapToComplex_smul (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (h'ℚ : IsBaseChange ℚ ι'ℚ)
+    (h'ℂ : IsBaseChange ℂ ι'ℂ) (q : ℚ) (f : Vℚ →ₗ[ℚ] V'ℚ) :
+    rationalMapToComplex hℚ hℂ h'ℚ h'ℂ (q • f) =
+      (q : ℂ) • rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f := by
+  refine LinearMap.ext fun x ↦ ?_
+  obtain ⟨t, rfl⟩ := (rationalToComplexLinearEquiv hℚ hℂ).surjective x
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | tmul z y =>
+      rw [rationalMapToComplex_rationalToComplexLinearEquiv_tmul, LinearMap.smul_apply,
+        LinearMap.smul_apply, rationalMapToComplex_rationalToComplexLinearEquiv_tmul,
+        ← TensorProduct.smul_tmul, Rat.smul_def, ← map_smul,
+        TensorProduct.smul_tmul', smul_eq_mul]
+  | add x y hx hy => simp only [map_add, hx, hy]
+
 /-- **The complexification of a rational map commutes with lattice conjugation.** The abstract
 base-change interface makes this a statement about arbitrary complex models, not only about the
-concrete tensor product: both composites are conjugate-linear and agree on the integral vectors,
-which generate the complexification. -/
-theorem rationalMapToComplex_latticeConj (hℚ : IsBaseChange ℚ ιℚ)
+concrete tensor product. -/
+@[simp]
+theorem rationalMapToComplex_commutes_conj (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (h'ℚ : IsBaseChange ℚ ι'ℚ)
     (h'ℂ : IsBaseChange ℂ ι'ℂ) (f : Vℚ →ₗ[ℚ] V'ℚ) (x : Vℂ) :
     rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f (latticeConj hℂ x) =
@@ -367,7 +378,7 @@ theorem rationalMapToComplex_comp_latticeConj (hℚ : IsBaseChange ℚ ιℚ)
     (h'ℂ : IsBaseChange ℂ ι'ℂ) (f : Vℚ →ₗ[ℚ] V'ℚ) :
     (rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f).comp (latticeConj hℂ) =
       (latticeConj h'ℂ).comp (rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f) :=
-  LinearMap.ext (rationalMapToComplex_latticeConj hℚ hℂ h'ℚ h'ℂ f)
+  LinearMap.ext (rationalMapToComplex_commutes_conj hℚ hℂ h'ℚ h'ℂ f)
 
 section Comp
 

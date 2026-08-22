@@ -18,7 +18,7 @@ datum: the complex action is the canonical scalar extension
 and with lattice conjugation are theorems rather than axioms.
 
 The conjugation-equivariance of the complex action is proved for an *arbitrary* complex
-base-change model in `TauCeti.Hodge.rationalMapToComplex_latticeConj`; it is what lets a
+base-change model in `TauCeti.Hodge.rationalMapToComplex_commutes_conj`; it is what lets a
 geometric instance, whose complex space is not literally a tensor product, use this morphism
 calculus.
 
@@ -98,6 +98,12 @@ its rational map. -/
 noncomputable instance : CoeFun (Hom source target) fun _ ↦ Vℂ → V'ℂ :=
   ⟨fun f ↦ f.toLinearMap⟩
 
+/-- The complex action of a morphism is the complexification of its rational map. This is the
+bridge to the whole `TauCeti.Hodge.rationalMapToComplex` API. -/
+theorem toLinearMap_def (f : Hom source target) :
+    f.toLinearMap = rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f.toRatLinearMap :=
+  (rfl)
+
 /-- Two morphisms of mixed Hodge structures are equal when their rational maps agree. -/
 @[ext]
 theorem ext {f g : Hom source target} (h : ∀ x, f.toRatLinearMap x = g.toRatLinearMap x) :
@@ -112,7 +118,7 @@ theorem ext {f g : Hom source target} (h : ∀ x, f.toRatLinearMap x = g.toRatLi
 
 /-- A morphism acts on the image of a pure tensor through its rational map. -/
 @[simp]
-theorem apply_rational (f : Hom source target) (z : ℂ) (x : Vℚ) :
+theorem apply_rationalToComplexLinearEquiv_tmul (f : Hom source target) (z : ℂ) (x : Vℚ) :
     f (rationalToComplexLinearEquiv hℚ hℂ (z ⊗ₜ[ℚ] x)) =
       rationalToComplexLinearEquiv h'ℚ h'ℂ (z ⊗ₜ[ℚ] f.toRatLinearMap x) :=
   rationalMapToComplex_rationalToComplexLinearEquiv_tmul hℚ hℂ h'ℚ h'ℂ f.toRatLinearMap z x
@@ -122,7 +128,7 @@ conjugation. -/
 @[simp]
 theorem commutes_conj (f : Hom source target) (x : Vℂ) :
     f (latticeConj hℂ x) = latticeConj h'ℂ (f x) :=
-  rationalMapToComplex_latticeConj hℚ hℂ h'ℚ h'ℂ f.toRatLinearMap x
+  rationalMapToComplex_commutes_conj hℚ hℂ h'ℚ h'ℂ f.toRatLinearMap x
 
 /-- Preservation of a weight step in submodule-map form. -/
 theorem map_WQ_le (f : Hom source target) (k : ℤ) :
@@ -139,22 +145,13 @@ theorem map_F_le (f : Hom source target) (p : ℤ) :
 /-- A morphism of mixed Hodge structures preserves the complexified weight filtration. -/
 theorem map_WC_le (f : Hom source target) (k : ℤ) :
     (source.WC k).map f.toLinearMap ≤ target.WC k := by
-  simp only [WC_def, toLinearMap]
+  simp only [WC_def, toLinearMap_def]
   exact map_rationalToComplexSubmodule_le hℚ hℂ h'ℚ h'ℂ f.toRatLinearMap (f.map_WQ_le k)
 
 /-- Elementwise form of preservation of the complexified weight filtration. -/
 theorem map_mem_WC (f : Hom source target) (k : ℤ) {x : Vℂ} (hx : x ∈ source.WC k) :
     f x ∈ target.WC k :=
   f.map_WC_le k ⟨x, hx, rfl⟩
-
-/-- Preservation of the complexified weight filtration, with
-`TauCeti.Hodge.MixedHodgeStructure.WC` spelled out. This is the form the weight-graded quotients
-of `TauCeti.Hodge.gradedComplexEquiv` are stated in. -/
-theorem map_mem_rationalToComplexSubmodule (f : Hom source target) (k : ℤ) {x : Vℂ}
-    (hx : x ∈ rationalToComplexSubmodule hℚ hℂ (source.WQ k)) :
-    f x ∈ rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ k) := by
-  rw [← WC_def]
-  exact f.map_mem_WC k (by rw [WC_def]; exact hx)
 
 /-- The identity morphism of a mixed Hodge structure. -/
 noncomputable def id (source : MixedHodgeStructure hℚ hℂ) : Hom source source where
@@ -171,7 +168,7 @@ theorem id_toRatLinearMap : (id source).toRatLinearMap = LinearMap.id := by rw [
 /-- The identity morphism acts as the identity on complex vectors. -/
 @[simp]
 theorem id_apply (x : Vℂ) : id source x = x := by
-  simp [toLinearMap]
+  simp [toLinearMap_def]
 
 /-- Composition of morphisms of mixed Hodge structures. -/
 noncomputable def comp (g : Hom target third) (f : Hom source target) : Hom source third where
@@ -191,7 +188,7 @@ theorem comp_toRatLinearMap (g : Hom target third) (f : Hom source target) :
 @[simp]
 theorem comp_apply (g : Hom target third) (f : Hom source target) (x : Vℂ) :
     g.comp f x = g (f x) := by
-  simp only [toLinearMap, comp_toRatLinearMap]
+  simp only [toLinearMap_def, comp_toRatLinearMap]
   rw [rationalMapToComplex_comp hℚ hℂ h'ℚ h'ℂ h''ℚ h''ℂ]
   rfl
 
@@ -277,12 +274,32 @@ noncomputable instance instSMulInt : SMul ℤ (Hom source target) where
         rw [rationalMapToComplex_zsmul, LinearMap.smul_apply]
         exact zsmul_mem (f.map_mem_F p x hx) k }
 
+/-- Rational multiples of a morphism of mixed Hodge structures. -/
+noncomputable instance instSMulRat : SMul ℚ (Hom source target) where
+  smul q f :=
+    { toRatLinearMap := q • f.toRatLinearMap
+      map_mem_WQ := fun j x hx ↦ Submodule.smul_mem _ q (f.map_mem_WQ j x hx)
+      map_mem_F := by
+        intro p x hx
+        rw [rationalMapToComplex_smul, LinearMap.smul_apply]
+        exact Submodule.smul_mem _ (q : ℂ) (f.map_mem_F p x hx) }
+
 /-- Morphisms of mixed Hodge structures form an additive commutative group, transported along the
 injection sending a morphism to its underlying rational linear map. -/
 noncomputable instance : AddCommGroup (Hom source target) :=
   Function.Injective.addCommGroup (fun f : Hom source target ↦ f.toRatLinearMap)
     (fun _ _ h ↦ ext (LinearMap.congr_fun h)) rfl (fun _ _ ↦ rfl) (fun _ ↦ rfl) (fun _ _ ↦ rfl)
     (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)
+
+/-- Morphisms of mixed Hodge structures form a `ℚ`-vector space, transported along the same
+injection: the datum of a morphism is a `ℚ`-linear map, and both filtrations are stable under
+rational scalars. -/
+noncomputable instance : Module ℚ (Hom source target) :=
+  Function.Injective.module ℚ
+    { toFun := fun f : Hom source target ↦ f.toRatLinearMap
+      map_zero' := rfl
+      map_add' := fun _ _ ↦ rfl }
+    (fun _ _ h ↦ ext (LinearMap.congr_fun h)) (fun _ _ ↦ rfl)
 
 /-- The zero morphism has the zero rational linear map underneath. -/
 @[simp]
@@ -310,35 +327,109 @@ theorem sub_toRatLinearMap (f g : Hom source target) :
 /-- The zero morphism acts by zero on complex vectors. -/
 @[simp]
 theorem zero_apply (x : Vℂ) : (0 : Hom source target) x = 0 := by
-  simp [toLinearMap]
+  simp [toLinearMap_def]
 
 /-- Addition of morphisms is pointwise addition on complex vectors. -/
 @[simp]
 theorem add_apply (f g : Hom source target) (x : Vℂ) : (f + g) x = f x + g x := by
-  simp [toLinearMap]
+  simp [toLinearMap_def]
+
+/-- Natural-number multiples of morphisms pass to their underlying rational linear maps. -/
+@[simp]
+theorem nsmul_toRatLinearMap (k : ℕ) (f : Hom source target) :
+    (k • f).toRatLinearMap = k • f.toRatLinearMap :=
+  rfl
+
+/-- Integer multiples of morphisms pass to their underlying rational linear maps. -/
+@[simp]
+theorem zsmul_toRatLinearMap (k : ℤ) (f : Hom source target) :
+    (k • f).toRatLinearMap = k • f.toRatLinearMap :=
+  rfl
+
+/-- Rational multiples of morphisms pass to their underlying rational linear maps. -/
+@[simp]
+theorem smul_toRatLinearMap (q : ℚ) (f : Hom source target) :
+    (q • f).toRatLinearMap = q • f.toRatLinearMap :=
+  rfl
+
+/-- Negation of morphisms is pointwise negation on complex vectors. -/
+@[simp]
+theorem neg_apply (f : Hom source target) (x : Vℂ) : (-f) x = -f x := by
+  simp [toLinearMap_def]
+
+/-- Subtraction of morphisms is pointwise subtraction on complex vectors. -/
+@[simp]
+theorem sub_apply (f g : Hom source target) (x : Vℂ) : (f - g) x = f x - g x := by
+  simp [toLinearMap_def]
+
+/-- Natural-number multiples of morphisms are evaluated pointwise on complex vectors. -/
+@[simp]
+theorem nsmul_apply (k : ℕ) (f : Hom source target) (x : Vℂ) : (k • f) x = k • f x := by
+  simp [toLinearMap_def]
+
+/-- Integer multiples of morphisms are evaluated pointwise on complex vectors. -/
+@[simp]
+theorem zsmul_apply (k : ℤ) (f : Hom source target) (x : Vℂ) : (k • f) x = k • f x := by
+  simp [toLinearMap_def]
+
+/-- Rational multiples of morphisms are evaluated pointwise on complex vectors, the scalar acting
+through `ℚ → ℂ`. -/
+@[simp]
+theorem smul_apply (q : ℚ) (f : Hom source target) (x : Vℂ) : (q • f) x = (q : ℂ) • f x := by
+  simp [toLinearMap_def]
+
+/-- Composition is additive in the morphism applied second. -/
+@[simp]
+theorem add_comp (g h : Hom target third) (f : Hom source target) :
+    (g + h).comp f = g.comp f + h.comp f := by
+  ext x
+  rfl
+
+/-- Composition is additive in the morphism applied first. -/
+@[simp]
+theorem comp_add (g : Hom target third) (f h : Hom source target) :
+    g.comp (f + h) = g.comp f + g.comp h := by
+  ext x
+  exact g.toRatLinearMap.map_add (f.toRatLinearMap x) (h.toRatLinearMap x)
+
+/-- Composing with a zero morphism on the left gives zero. -/
+@[simp]
+theorem zero_comp (f : Hom source target) : (0 : Hom target third).comp f = 0 := by
+  ext x
+  rfl
+
+/-- Composing with a zero morphism on the right gives zero. -/
+@[simp]
+theorem comp_zero (g : Hom target third) : g.comp (0 : Hom source target) = 0 := by
+  ext x
+  exact g.toRatLinearMap.map_zero
 
 section Graded
-
-/-- The restriction of the underlying rational map to a step of the weight filtration. -/
-noncomputable def restrictWQ (f : Hom source target) (k : ℤ) :
-    source.WQ k →ₗ[ℚ] target.WQ k :=
-  f.toRatLinearMap.restrict fun x hx ↦ f.map_mem_WQ k x hx
-
-/-- The restriction to a weight step acts by the underlying rational map. -/
-@[simp]
-theorem coe_restrictWQ (f : Hom source target) (k : ℤ) (x : source.WQ k) :
-    (f.restrictWQ k x : V'ℚ) = f.toRatLinearMap x :=
-  (rfl)
 
 /-- The map induced on the `k`-th rational graded piece `grᵂ_k` of the weight filtration. -/
 noncomputable def gradedMap (f : Hom source target) (k : ℤ) :
     weightGradedRat source.WQ k →ₗ[ℚ] weightGradedRat target.WQ k :=
-  Submodule.mapQ _ _ (f.restrictWQ k) fun x hx ↦ f.map_mem_WQ (k - 1) x hx
+  weightGradedRatMap source.WQ target.WQ f.toRatLinearMap f.map_mem_WQ k
 
 /-- The graded map sends the class of a vector to the class of its image. -/
 @[simp]
 theorem gradedMap_mk (f : Hom source target) (k : ℤ) (x : source.WQ k) :
-    f.gradedMap k (Submodule.Quotient.mk x) = Submodule.Quotient.mk (f.restrictWQ k x) :=
+    f.gradedMap k (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk ⟨f.toRatLinearMap x, f.map_mem_WQ k x x.2⟩ :=
+  weightGradedRatMap_mk source.WQ target.WQ f.toRatLinearMap f.map_mem_WQ k x
+
+/-- The restriction of the complex action to a step of the complexified weight filtration. -/
+noncomputable def restrictWC (f : Hom source target) (k : ℤ) :
+    rationalToComplexSubmodule hℚ hℂ (source.WQ k) →ₗ[ℂ]
+      rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ k) :=
+  f.toLinearMap.restrict fun x hx ↦
+    map_rationalToComplexSubmodule_le hℚ hℂ h'ℚ h'ℂ f.toRatLinearMap (f.map_WQ_le k) ⟨x, hx, rfl⟩
+
+/-- The restriction to a step of the complexified weight filtration acts by the complex action. -/
+@[simp]
+theorem coe_restrictWC_apply (f : Hom source target) (k : ℤ)
+    (x : rationalToComplexSubmodule hℚ hℂ (source.WQ k)) :
+    (f.restrictWC k x : V'ℂ) = f x :=
   (rfl)
 
 /-- The map induced on the `k`-th graded piece of the complexified weight filtration
@@ -347,44 +438,26 @@ theorem gradedMap_mk (f : Hom source target) (k : ℤ) (x : source.WQ k) :
 noncomputable def complexGradedMap (f : Hom source target) (k : ℤ) :
     weightGradedComplex (fun j ↦ rationalToComplexSubmodule hℚ hℂ (source.WQ j)) k →ₗ[ℂ]
       weightGradedComplex (fun j ↦ rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ j)) k :=
-  Submodule.mapQ _ _
-    (f.toLinearMap.restrict (p := rationalToComplexSubmodule hℚ hℂ (source.WQ k))
-      (q := rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ k))
-      fun _ hx ↦ f.map_mem_rationalToComplexSubmodule k hx)
-    fun _ hx ↦ f.map_mem_rationalToComplexSubmodule (k - 1) hx
+  weightGradedComplexMap _ _ f.toLinearMap (fun j x hx ↦ (f.restrictWC j ⟨x, hx⟩).2) k
 
 /-- The complex graded map sends the class of a vector to the class of its image. -/
 @[simp]
 theorem complexGradedMap_mk (f : Hom source target) (k : ℤ)
     (x : rationalToComplexSubmodule hℚ hℂ (source.WQ k)) :
     f.complexGradedMap k (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk (f.toLinearMap.restrict
-        (p := rationalToComplexSubmodule hℚ hℂ (source.WQ k))
-        (q := rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ k))
-        (fun _ hx ↦ f.map_mem_rationalToComplexSubmodule k hx) x) :=
-  (rfl)
+      Submodule.Quotient.mk (f.restrictWC k x) :=
+  weightGradedComplexMap_mk _ _ f.toLinearMap (fun j x hx ↦ (f.restrictWC j ⟨x, hx⟩).2) k x
 
-/-- **Complexification commutes with passage to the weight-graded pieces**: the square formed by
-the two induced maps and the comparison `TauCeti.Hodge.gradedComplexEquiv` commutes. -/
+/-- **The comparison `TauCeti.Hodge.gradedComplexEquiv` is natural in the morphism**: the square
+formed by the two induced maps and that comparison commutes. -/
 theorem gradedComplexEquiv_baseChange_gradedMap (f : Hom source target) (k : ℤ)
     (t : ℂ ⊗[ℚ] weightGradedRat source.WQ k) :
     gradedComplexEquiv h'ℚ h'ℂ target.WQ target.WQ_monotone k
         ((f.gradedMap k).baseChange ℂ t) =
       f.complexGradedMap k
-        (gradedComplexEquiv hℚ hℂ source.WQ source.WQ_monotone k t) := by
-  induction t using TensorProduct.induction_on with
-  | zero => simp
-  | tmul z x =>
-      induction x using Submodule.Quotient.induction_on with
-      | _ x =>
-        rw [LinearMap.baseChange_tmul, gradedMap_mk, gradedComplexEquiv_tmul_mk,
-          gradedComplexEquiv_tmul_mk, complexGradedMap_mk]
-        refine congrArg Submodule.Quotient.mk (Subtype.ext ?_)
-        rw [LinearMap.coe_restrict_apply, coe_rationalToComplexSubmoduleEquiv,
-          coe_rationalToComplexSubmoduleEquiv, LinearMap.baseChange_tmul,
-          LinearMap.baseChange_tmul, Submodule.subtype_apply, Submodule.subtype_apply,
-          coe_restrictWQ, apply_rational]
-  | add x y hx hy => simp only [map_add, hx, hy]
+        (gradedComplexEquiv hℚ hℂ source.WQ source.WQ_monotone k t) :=
+  gradedComplexEquiv_baseChange_weightGradedRatMap hℚ hℂ h'ℚ h'ℂ source.WQ source.WQ_monotone
+    target.WQ target.WQ_monotone f.toRatLinearMap f.map_mem_WQ _ k t
 
 /-- **A morphism of mixed Hodge structures induces a morphism of the pure Hodge structures carried
 by the weight-graded pieces.** -/
@@ -396,9 +469,7 @@ noncomputable def gradedHom (f : Hom source target) (k : ℤ) :
     rw [gradedHodgeStructure_F, mem_gradedF_iff] at hx
     obtain ⟨y, hy, hmk⟩ := hx
     rw [integralMapToComplex_ratTensorMap, gradedHodgeStructure_F, mem_gradedF_iff]
-    refine ⟨f.toLinearMap.restrict (p := rationalToComplexSubmodule hℚ hℂ (source.WQ k))
-      (q := rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ k))
-      (fun _ hz ↦ f.map_mem_rationalToComplexSubmodule k hz) y, f.map_mem_F p _ hy, ?_⟩
+    refine ⟨f.restrictWC k y, f.map_mem_F p _ hy, ?_⟩
     rw [gradedComplexEquiv_baseChange_gradedMap, ← hmk, complexGradedMap_mk]
 
 /-- The integral map underlying the induced morphism of pure Hodge structures is the graded
@@ -410,18 +481,15 @@ theorem gradedHom_toIntLinearMap (f : Hom source target) (k : ℤ) :
 /-- The graded map of an identity morphism is the identity. -/
 @[simp]
 theorem gradedMap_id (source : MixedHodgeStructure hℚ hℂ) (k : ℤ) :
-    (id source).gradedMap k = LinearMap.id := by
-  refine LinearMap.ext fun x ↦ ?_
-  induction x using Submodule.Quotient.induction_on with
-  | _ x => rfl
+    (id source).gradedMap k = LinearMap.id :=
+  weightGradedRatMap_id source.WQ k
 
 /-- The graded map of a composite is the composite of the graded maps. -/
 @[simp]
 theorem gradedMap_comp (g : Hom target third) (f : Hom source target) (k : ℤ) :
-    (g.comp f).gradedMap k = (g.gradedMap k) ∘ₗ (f.gradedMap k) := by
-  refine LinearMap.ext fun x ↦ ?_
-  induction x using Submodule.Quotient.induction_on with
-  | _ x => rfl
+    (g.comp f).gradedMap k = (g.gradedMap k) ∘ₗ (f.gradedMap k) :=
+  weightGradedRatMap_comp source.WQ target.WQ third.WQ f.toRatLinearMap f.map_mem_WQ
+    g.toRatLinearMap g.map_mem_WQ k
 
 /-- Passage to the weight-graded pieces sends identities to identities. -/
 @[simp]
