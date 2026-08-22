@@ -51,7 +51,7 @@ theorem Contractable.recurrent (hX : Contractable μ X) (hX_meas : ∀ i, AEMeas
 exchangeable process on a countable state space. -/
 theorem Exchangeable.recurrent (hX : Exchangeable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) :
     Recurrent μ X :=
-  recurrent_of_measurePreserving_shift hX_meas (hX.measurePreserving_shift hX_meas)
+  (hX.contractable hX_meas).recurrent hX_meas
 
 end Probability
 
