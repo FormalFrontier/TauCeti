@@ -49,13 +49,15 @@ transported lift locally constant again.
 ## Implementation notes
 
 Mathlib's `ContRepresentation.coindV` is the same construction in the bundled continuous-
-representation language: a `Submodule R C(H, V)` attached to a `ContRepresentation R G V` and a
-continuous homomorphism. It is not used here because the `ContRepresentation` carrier imposes no
-continuity of the action in the group variable, which is precisely the hypothesis every theorem
-below rests on, and because the roadmap fixes the unbundled classes `[DistribMulAction U A]`,
-`[DiscreteTopology A]`, `[ContinuousSMul U A]` for this layer, with local constancy as a predicate
-on plain functions rather than a bundled `C(G, A)`. Transporting `coind` into the bundled language
-is a separate step, and belongs with the smooth-discrete dictionary that owns that translation.
+representation language: in this file's notation, a `Submodule R C(G, V)` attached to a
+`ContRepresentation R U V` and the inclusion `U → G`. It is not used here because the
+`ContRepresentation` carrier imposes no continuity of the action in the group variable, which is
+needed by the topology-dependent results `TauCeti.coindMap_surjective` and
+`TauCeti.coindEvalTopEquiv`, and because the roadmap fixes the unbundled classes
+`[DistribMulAction U A]`, `[DiscreteTopology A]`, `[ContinuousSMul U A]` for this layer, with local
+constancy as a predicate on plain functions rather than a bundled `C(G, A)`. Transporting `coind`
+into the bundled language is a separate step, and belongs with the smooth-discrete dictionary that
+owns that translation.
 
 This is the "coinduced module" milestone of Layer 7 of the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`.
