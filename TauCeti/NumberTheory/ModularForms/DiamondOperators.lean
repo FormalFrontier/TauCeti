@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.NumberTheory.ModularForms.SlashActionRat
 
 /-!
 # Diamond operators and modular forms with character
@@ -39,7 +40,7 @@ re-founded slash action with built-in character) and their names. The Hecke pair
   by `coe_diamondOp`/`coe_diamondOpCusp` as slashing by any representative.
 * `diamondOpHom`/`diamondOpCuspHom`: the diamond operators as monoid homomorphisms into the
   endomorphism algebras.
-* `diamondOpNat`: the same operator indexed by a natural number, `⟨n⟩` of
+* `diamondOpNat`/`diamondOpCuspNat`: the same operator indexed by a natural number, `⟨n⟩` of
   Diamond–Shurman §5.3, extended by zero when `n` is not coprime to `N`.
 * `modFormCharSpace`/`cuspFormCharSpace`: the nebentypus character spaces `M_k(Γ₁(N), χ)` and
   `S_k(Γ₁(N), χ)`, cut out as simultaneous diamond eigenspaces.
@@ -49,6 +50,10 @@ re-founded slash action with built-in character) and their names. The Hecke pair
 * `mem_modFormCharSpace_iff_nebentypus`/`mem_cuspFormCharSpace_iff_nebentypus`: membership in the
   character space is the classical nebentypus relation `f ∣[k] g = χ(d_g) • f` for all
   `g ∈ Γ₀(N)`.
+* `slash_mapGL_eq_diamondOpNat`/`slash_mapGL_eq_diamondOpCuspNat`: rational slashing by a
+  suitable `Γ₀(N)` representative is the corresponding natural-indexed diamond operator;
+  `slash_mapGL_gamma0Twist_eq_diamondOpNat` and its cusp counterpart specialize to the explicit
+  Bézout representative.
 
 ## References
 
@@ -368,3 +373,55 @@ Hecke recurrence be stated without splitting on whether `p` divides the level. -
 lemma diamondOpNat_of_not_coprime (k : ℤ) {n : ℕ} (h : ¬ Nat.Coprime n N) :
     diamondOpNat (N := N) k n = 0 :=
   dite_eq_right_of_eq_false (by simpa using h)
+
+/-- The cusp-form diamond operator indexed by a natural number: `⟨n⟩` is `diamondOpCusp` at the
+unit `n mod N` when `n` is coprime to `N`, and `0` otherwise — the cusp-form counterpart of
+`diamondOpNat`, and the reason the prime Hecke operator on `S_k(Γ₁(N))` has one formula at every
+prime rather than one per divisibility case. -/
+noncomputable def diamondOpCuspNat (k : ℤ) (n : ℕ) :
+    CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ] CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
+  if h : Nat.Coprime n N then diamondOpCusp k (ZMod.unitOfCoprime n h) else 0
+
+/-- When `n` is coprime to `N`, `⟨n⟩` is the cusp diamond operator at the unit `n mod N`. -/
+-- Not a `simp` lemma, for the reason given at `diamondOpNat_of_coprime`.
+lemma diamondOpCuspNat_of_coprime (k : ℤ) {n : ℕ} (h : Nat.Coprime n N) :
+    diamondOpCuspNat k n = diamondOpCusp k (ZMod.unitOfCoprime n h) :=
+  dite_eq_left_of_eq_true (by simpa using h)
+
+/-- When `n` is not coprime to `N`, `⟨n⟩` vanishes on cusp forms. -/
+@[simp]
+lemma diamondOpCuspNat_of_not_coprime (k : ℤ) {n : ℕ} (h : ¬ Nat.Coprime n N) :
+    diamondOpCuspNat (N := N) k n = 0 :=
+  dite_eq_right_of_eq_false (by simpa using h)
+
+/-- Slashing by a `Γ₀(N)` representative with lower-right unit `n` is the zero-extended
+diamond operator `⟨n⟩` on modular forms. -/
+theorem slash_mapGL_eq_diamondOpNat {n : ℕ} (k : ℤ) (h : Nat.Coprime n N)
+    (g : ↥(Gamma0 N)) (hg : (Gamma0Map N).toHomUnits g = ZMod.unitOfCoprime n h)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k n f) := by
+  rw [ModularForm.rat_slash_mapGL, diamondOpNat_of_coprime k h, coe_diamondOp k _ g hg f]
+
+/-- The cusp-form counterpart of `slash_mapGL_eq_diamondOpNat`. -/
+theorem slash_mapGL_eq_diamondOpCuspNat {n : ℕ} (k : ℤ) (h : Nat.Coprime n N)
+    (g : ↥(Gamma0 N)) (hg : (Gamma0Map N).toHomUnits g = ZMod.unitOfCoprime n h)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k n f) := by
+  rw [ModularForm.rat_slash_mapGL, diamondOpCuspNat_of_coprime k h,
+    coe_diamondOpCusp k _ g hg f]
+
+/-- **Slashing by the Bézout twist is the diamond operator `⟨p⟩`.** The twist is the `Γ₀(N)`
+element of lower-right entry `p`, so this is `coe_diamondOp` at that representative, transported
+across the `ℚ`/`ℝ` bridge. -/
+theorem slash_mapGL_gamma0Twist_eq_diamondOpNat {p : ℕ} (k : ℤ) (h : Nat.Coprime p N)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpNat k p f) :=
+  slash_mapGL_eq_diamondOpNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
+    (Gamma0Map_toHomUnits_gamma0Twist h) f
+
+/-- **Slashing by the Bézout twist is the diamond operator `⟨p⟩`**, on cusp forms. -/
+theorem slash_mapGL_gamma0Twist_eq_diamondOpCuspNat {p : ℕ} (k : ℤ) (h : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k p f) :=
+  slash_mapGL_eq_diamondOpCuspNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
+    (Gamma0Map_toHomUnits_gamma0Twist h) f
