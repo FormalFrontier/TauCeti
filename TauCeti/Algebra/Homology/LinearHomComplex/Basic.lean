@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Category.ModuleCat.Basic
-public import Mathlib.Algebra.Homology.Additive
 public import Mathlib.Algebra.Homology.HomotopyCategory.HomComplex
 
 /-!
@@ -89,6 +88,8 @@ lemma forget₂LinearHomComplexIso_hom_f_apply (F G : CochainComplex C ℤ) (n :
     (z : Cochain F G n) :
     ((forget₂LinearHomComplexIso R F G).hom.f n) z = z :=
   by
+    -- The two complex terms are definitionally the same additive group in each degree;
+    -- this exposes the `Iso.refl` component hidden by `mapHomologicalComplex`.
     change (𝟙 (AddCommGrpCat.of (Cochain F G n))) z = z
     exact CategoryTheory.ConcreteCategory.id_apply
       (C := AddCommGrpCat) (X := AddCommGrpCat.of (Cochain F G n)) z
@@ -99,6 +100,7 @@ lemma forget₂LinearHomComplexIso_inv_f_apply (F G : CochainComplex C ℤ) (n :
     (z : Cochain F G n) :
     ((forget₂LinearHomComplexIso R F G).inv.f n) z = z :=
   by
+    -- As above, the inverse component is the same `Iso.refl` after removing the wrapper.
     change (𝟙 (AddCommGrpCat.of (Cochain F G n))) z = z
     exact CategoryTheory.ConcreteCategory.id_apply
       (C := AddCommGrpCat) (X := AddCommGrpCat.of (Cochain F G n)) z
@@ -157,6 +159,7 @@ lemma linearHomComplexPrecomp_f_apply (φ : F₁ ⟶ F₂) (G : CochainComplex C
     (z : Cochain F₂ G n) :
     ((linearHomComplexPrecomp R φ G).f n) z = (Cochain.ofHom φ).comp z (zero_add n) :=
   by
+    -- Remove the `ModuleCat.ofHom` wrapper, then use the linear-map application API.
     change cochainPrecomp R φ G n z = _
     exact cochainPrecomp_apply φ G n z
 
@@ -165,6 +168,7 @@ lemma linearHomComplexPostcomp_f_apply (F : CochainComplex C ℤ) (ψ : G₁ ⟶
     (z : Cochain F G₁ n) :
     ((linearHomComplexPostcomp R F ψ).f n) z = z.comp (Cochain.ofHom ψ) (add_zero n) :=
   by
+    -- Remove the `ModuleCat.ofHom` wrapper, then use the linear-map application API.
     change cochainPostcomp R F ψ n z = _
     exact cochainPostcomp_apply F ψ n z
 
