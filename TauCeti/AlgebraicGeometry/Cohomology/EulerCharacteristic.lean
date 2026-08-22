@@ -12,16 +12,16 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 /-!
 # The Euler characteristic of a sheaf of modules on a scheme
 
-For a scheme `X` over a field `k`, the finite-dimensional cohomology `Hⁱ(X, M)` of a sheaf of
-modules is a `k`-vector space, so the alternating sum of its dimensions can be formed. This file
-introduces that alternating sum, truncated at a degree `n`, and proves that it is additive on short
-exact sequences as soon as the truncation degree is one past the last nonvanishing degree.
+For a scheme `X` over a field `k`, the cohomology `Hⁱ(X, M)` of a sheaf of modules is a
+`k`-vector space, so the alternating sum of its dimensions can be formed. This file introduces
+that alternating sum, truncated at a degree `n`, and proves that it is additive on short exact
+sequences as soon as the truncation degree is one past the last nonvanishing degree.
 
 ## Main declarations
 
 * `Scheme.Modules.eulerCharBelow k X M n`, the alternating sum
-  `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)` for a sheaf with finite-dimensional cohomology. If its
-  cohomology also vanishes in degrees `≥ n`, this is the Euler characteristic `χ(X, M)`;
+  `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)`. For a sheaf whose cohomology vanishes in degrees `≥ n` this
+  is the Euler characteristic `χ(X, M)`;
 * `Scheme.Modules.eulerCharBelow_sub_sub`, the exact defect of additivity: the failure of
   `eulerCharBelow` to be additive on a short exact sequence `0 ⟶ M₁ ⟶ M₂ ⟶ M₃ ⟶ 0` is, up to
   sign, the dimension of the image of the last connecting map that the truncation cuts off;
@@ -65,32 +65,27 @@ namespace Scheme.Modules
 
 variable (k : Type u) [Field k] (X : Scheme.{u}) [X.Over (Spec (.of k))]
 
-/-- The alternating sum `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)` of the dimensions of the
-finite-dimensional cohomology of a sheaf of modules on a scheme over a field, truncated at
-degree `n`.
+/-- The alternating sum `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)` of the dimensions of the cohomology of
+a sheaf of modules on a scheme over a field, truncated at degree `n`.
 
 For a sheaf whose cohomology vanishes in degrees `≥ n` this is the Euler characteristic
 `χ(X, M)`; on a curve, the relevant truncation is `n = 2`. -/
-def _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow (M : X.Modules)
-    [∀ i, FiniteDimensional k (Cohomology M i)] (n : ℕ) : ℤ :=
+def _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow (M : X.Modules) (n : ℕ) : ℤ :=
   ∑ i ∈ Finset.range n, (-1) ^ i * (finrank k (Cohomology M i) : ℤ)
 
 variable {X}
 
 @[simp]
-lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_zero (M : X.Modules)
-    [∀ i, FiniteDimensional k (Cohomology M i)] :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_zero (M : X.Modules) :
     eulerCharBelow k X M 0 = 0 :=
   Finset.sum_range_zero _
 
-lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_succ (M : X.Modules)
-    [∀ i, FiniteDimensional k (Cohomology M i)] (n : ℕ) :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_succ (M : X.Modules) (n : ℕ) :
     eulerCharBelow k X M (n + 1) =
       eulerCharBelow k X M n + (-1) ^ n * (finrank k (Cohomology M n) : ℤ) :=
   Finset.sum_range_succ _ _
 
-lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_two (M : X.Modules)
-    [∀ i, FiniteDimensional k (Cohomology M i)] :
+lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_two (M : X.Modules) :
     eulerCharBelow k X M 2 =
       (finrank k (Cohomology M 0) : ℤ) - (finrank k (Cohomology M 1) : ℤ) := by
   rw [eulerCharBelow_succ, eulerCharBelow_succ, eulerCharBelow_zero]
@@ -115,8 +110,7 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.finrank_cohomology_congr {M N : X.
 is what makes an invariant such as the degree `χ(L) - χ(𝒪_X)` of a line bundle well defined on
 the Picard group. -/
 lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_congr {M N : X.Modules}
-    [∀ i, FiniteDimensional k (Cohomology M i)]
-    [∀ i, FiniteDimensional k (Cohomology N i)] (e : M ≅ N) (n : ℕ) :
+    (e : M ≅ N) (n : ℕ) :
     eulerCharBelow k X M n = eulerCharBelow k X N n :=
   Finset.sum_congr rfl fun i _ ↦ by rw [finrank_cohomology_congr k e i]
 
