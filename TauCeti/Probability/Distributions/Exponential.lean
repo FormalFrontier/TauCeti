@@ -6,13 +6,10 @@ Authors: Claude, Codex, The Tau Ceti contributors
 module
 
 public import Mathlib.Probability.Distributions.Exponential
-public import Mathlib.Probability.Moments.Variance
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.Probability.ConditionalProbability
-public import Mathlib.Probability.HasLaw
-public import Mathlib.Probability.Independence.Basic
 import TauCeti.Probability.Distributions.PDFInstances
 import TauCeti.MeasureTheory.Integral.ExpDecay
 
@@ -101,7 +98,8 @@ private lemma expMeasure_eq_withDensity (r : ℝ) :
 both the moment-generating function and the exact integrability domain below. -/
 private lemma density_mul_exp (r t x : ℝ) :
     r * exp (-(r * x)) * exp (t * x) = r * exp ((t - r) * x) := by
-  rw [mul_assoc, ← exp_add, show -(r * x) + t * x = (t - r) * x from by ring]
+  have hexponent : -(r * x) + t * x = (t - r) * x := by ring
+  rw [mul_assoc, ← exp_add, hexponent]
 
 /-- Every integral against `expMeasure r` is the half-line integral of the integrand weighted by
 the exponential density. This is the single reduction used by the moment and transform
@@ -262,23 +260,27 @@ theorem mgf_fun_id_expMeasure (hr : 0 < r) (ht : t < r) :
       rw [smul_eq_mul, density_mul_exp]
     rw [integral_expMeasure_Ioi hr]
     simp only [hint]
+    have hsub : t - r = -(r - t) := by ring
     rw [integral_const_mul, integral_exp_mul_Ioi (sub_neg.mpr ht) 0, mul_zero, exp_zero,
-      show t - r = -(r - t) from by ring, neg_div_neg_eq, mul_one_div]
+      hsub, neg_div_neg_eq, mul_one_div]
   simpa [mgf] using h
 
 /-- **The moment-generating function of an exponential law** with positive rate, on its finiteness
 domain `t < r`. This is the `id` spelling of `mgf_fun_id_expMeasure`, and is the form the `cgf`
 below and a `HasLaw` consumer meet. -/
+@[simp]
 theorem mgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
     mgf id (expMeasure r) t = r / (r - t) :=
   mgf_fun_id_expMeasure hr ht
 
 /-- The cumulant-generating function of an exponential law with positive rate. -/
+@[simp]
 theorem cgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
     cgf id (expMeasure r) t = log (r / (r - t)) := by
   rw [cgf, mgf_id_expMeasure hr ht]
 
 /-- The characteristic function of an exponential law with positive rate. -/
+@[simp]
 theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
     charFun (expMeasure r) t = (r : ℂ) / (r - Complex.I * t) := by
   have hint : ∀ x : ℝ, (r * exp (-(r * x))) • Complex.exp (t * x * Complex.I) =
@@ -293,13 +295,14 @@ theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
     ring
   rw [charFun_apply_real, integral_expMeasure_Ioi hr]
   simp only [hint]
+  have hsub : (-(r : ℂ) + (t : ℂ) * Complex.I) =
+      -((r : ℂ) - Complex.I * (t : ℂ)) := by ring
   rw [integral_const_mul,
     integral_exp_mul_complex_Ioi (by simpa using neg_lt_zero.mpr hr) 0,
-    Complex.ofReal_zero, mul_zero, Complex.exp_zero,
-    show (-(r : ℂ) + (t : ℂ) * Complex.I) = -((r : ℂ) - Complex.I * (t : ℂ)) from by ring,
-    neg_div_neg_eq, mul_one_div]
+    Complex.ofReal_zero, mul_zero, Complex.exp_zero, hsub, neg_div_neg_eq, mul_one_div]
 
 /-- The real-valued tail probability of a positive-rate exponential law. -/
+@[simp]
 lemma measureReal_Ioi_expMeasure (hr : 0 < r) (x : ℝ) :
     (expMeasure r).real (Ioi x) = if 0 ≤ x then exp (-(r * x)) else 1 := by
   have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
@@ -312,6 +315,7 @@ lemma measureReal_Ioi_expMeasure (hr : 0 < r) (x : ℝ) :
     ring
 
 /-- The tail probability of a positive-rate exponential law. -/
+@[simp]
 lemma measure_Ioi_expMeasure (hr : 0 < r) (x : ℝ) :
     (expMeasure r) (Ioi x) = ENNReal.ofReal (if 0 ≤ x then exp (-(r * x)) else 1) := by
   have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
@@ -330,9 +334,9 @@ theorem memoryless_expMeasure (hr : 0 < r) (hs : 0 ≤ s) (ht : 0 ≤ t) :
   rw [cond_apply measurableSet_Ioi, hst, measure_Ioi_expMeasure hr s,
     measure_Ioi_expMeasure hr (s + t), measure_Ioi_expMeasure hr t,
     ite_eq_left hs, ite_eq_left (add_nonneg hs ht), ite_eq_left ht]
+  have hexponent : -(-(r * s)) + -(r * (s + t)) = -(r * t) := by ring
   rw [← ENNReal.ofReal_inv_of_pos (exp_pos _), ← ENNReal.ofReal_mul (by positivity),
-    ← Real.exp_neg, ← Real.exp_add,
-    show -(-(r * s)) + -(r * (s + t)) = -(r * t) from by ring]
+    ← Real.exp_neg, ← Real.exp_add, hexponent]
 
 /-- The minimum of two independent random variables with exponential laws has an exponential law
 whose rate is the sum of their rates. -/
