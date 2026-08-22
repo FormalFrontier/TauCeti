@@ -7,15 +7,15 @@ module
 
 public import Mathlib.Algebra.Lie.BaseChange
 public import Mathlib.Algebra.Lie.OfAssociative
-public import Mathlib.RingTheory.MatrixAlgebra
+public import TauCeti.Algebra.Matrix.BaseChange
 
 /-!
 # Scalar extension of matrix Lie algebras
 
-For a commutative ring map `R → A`, extending scalars in the matrix Lie algebra over `R`
-gives the matrix Lie algebra over `A`. The equivalence in this file is the `A`-linear form of
-Mathlib's algebra equivalence `matrixEquivTensor`; on a pure tensor it sends
-`a ⊗ M` to the entrywise scalar multiple `a • M.map (algebraMap R A)`.
+The associative matrix-algebra base-change equivalence also identifies Mathlib's scalar extension
+of the matrix Lie algebra with the matrix Lie algebra over the target ring. The explicit Lie
+equivalence is needed because the scalar-extension bracket and the associative commutator bracket
+are propositionally equal but come from different, non-definitionally-equal `LieRing` instances.
 
 ## Main definitions
 
@@ -34,20 +34,17 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 variable (n R A : Type*) [Fintype n] [DecidableEq n]
   [CommRing R] [CommRing A] [Algebra R A]
 
-/-- **Scalar extension commutes with forming a matrix Lie algebra.** This is the canonical
-`A`-linear Lie equivalence from the scalar extension of `R`-matrices to `A`-matrices. -/
+/-- Scalar extension commutes with forming a matrix Lie algebra. The underlying linear
+equivalence is `TauCeti.Algebra.matrixBaseChangeAlgEquiv`; the Lie proof bridges Mathlib's
+scalar-extension bracket with the associative commutator bracket on matrices. -/
 noncomputable def scalarExtensionMatrixLieEquiv :
-    A ⊗[R] _root_.Matrix n n R ≃ₗ⁅A⁆ _root_.Matrix n n A where
-  toFun := (matrixEquivTensor n R A).symm
-  invFun := matrixEquivTensor n R A
-  left_inv := (matrixEquivTensor n R A).apply_symm_apply
-  right_inv := (matrixEquivTensor n R A).symm_apply_apply
-  map_add' := map_add (matrixEquivTensor n R A).symm
-  map_smul' a x := by
-    induction x with
-    | zero => simp
-    | tmul b M => simp [TensorProduct.smul_tmul', mul_smul]
-    | add x y hx hy => simp [hx, hy]
+    A ⊗[R] Matrix n n R ≃ₗ⁅A⁆ Matrix n n A where
+  toFun := Algebra.matrixBaseChangeAlgEquiv R A n
+  invFun := (Algebra.matrixBaseChangeAlgEquiv R A n).symm
+  left_inv := (Algebra.matrixBaseChangeAlgEquiv R A n).left_inv
+  right_inv := (Algebra.matrixBaseChangeAlgEquiv R A n).right_inv
+  map_add' := map_add (Algebra.matrixBaseChangeAlgEquiv R A n)
+  map_smul' := map_smul (Algebra.matrixBaseChangeAlgEquiv R A n)
   map_lie' {x y} := by
     induction x with
     | zero => simp
@@ -55,19 +52,18 @@ noncomputable def scalarExtensionMatrixLieEquiv :
       induction y with
       | zero => simp
       | tmul b N =>
-        simp only [LieAlgebra.ExtendScalars.bracket_tmul, matrixEquivTensor_apply_symm,
-          LieRing.of_associative_ring_bracket]
-        rw [_root_.Matrix.map_sub _ (map_sub (algebraMap R A)), _root_.Matrix.map_mul,
-          _root_.Matrix.map_mul, smul_sub]
-        simp only [_root_.Matrix.smul_mul, _root_.Matrix.mul_smul, smul_smul, mul_comm]
+        simp only [LieAlgebra.ExtendScalars.bracket_tmul,
+          Algebra.matrixBaseChangeAlgEquiv_tmul, LieRing.of_associative_ring_bracket]
+        rw [Matrix.map_sub _ (map_sub (algebraMap R A)), Matrix.map_mul, Matrix.map_mul,
+          smul_sub]
+        simp only [Matrix.smul_mul, Matrix.mul_smul, smul_smul, mul_comm]
       | add y z hy hz => simp [hy, hz]
     | add x z hx hz => simp [hx, hz]
 
-/-- On a pure tensor, the scalar-extension equivalence applies the structure map entrywise and
-then scales the resulting matrix. -/
+/-- The scalar-extension equivalence sends a pure tensor to the entrywise scalar extension. -/
 @[simp]
 theorem scalarExtensionMatrixLieEquiv_tmul (a : A) (M : Matrix n n R) :
     scalarExtensionMatrixLieEquiv n R A (a ⊗ₜ[R] M) = a • M.map (algebraMap R A) :=
-  matrixEquivTensor_apply_symm n R A a M
+  Algebra.matrixBaseChangeAlgEquiv_tmul R A n a M
 
 end TauCeti

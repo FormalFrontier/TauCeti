@@ -14,8 +14,8 @@ public import Mathlib.RingTheory.Flat.Basic
 
 The pinned Lie algebra `TauCeti.DynkinType.lieAlgebra` is Geck's explicit matrix construction over
 `ℚ`. This file extends the underlying pinned root system to an arbitrary characteristic-zero
-field `K` and identifies the resulting Geck Lie algebra with
-`K ⊗[ℚ] TauCeti.DynkinType.lieAlgebra t ht`.
+domain `K` equipped with a rational algebra structure and identifies the resulting Geck Lie
+algebra with `K ⊗[ℚ] TauCeti.DynkinType.lieAlgebra t ht`.
 
 The comparison is explicit. Mathlib's matrix scalar-extension equivalence sends every numbered
 matrix `hᵢ`, `eᵢ`, and `fᵢ` over `ℚ` to the matrix constructed from the scalar-extended root
@@ -63,9 +63,23 @@ noncomputable section
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
-variable (t : DynkinType) (ht : t.Valid) (K : Type*) [Field K] [CharZero K]
+variable (t : DynkinType) (ht : t.Valid) (K : Type*)
+  [CommRing K] [IsDomain K] [Algebra ℚ K]
 
-/-- The pinned rational root system of a Dynkin type, extended to a characteristic-zero field. -/
+local instance : CharZero K := Algebra.charZero_of_charZero ℚ K
+
+omit [IsDomain K] in
+private theorem algebraMap_rat_intCast (z : ℤ) :
+    algebraMap ℚ K (z : ℚ) = (z : K) :=
+  map_intCast (algebraMap ℚ K) z
+
+omit [IsDomain K] in
+private theorem algebraMap_rat_abs_intCast (z : ℤ) :
+    algebraMap ℚ K |(z : ℚ)| = (↑(|z| : ℤ) : K) := by
+  rw [← Int.cast_abs]
+  exact algebraMap_rat_intCast K |z|
+
+/-- The pinned rational root system of a Dynkin type, extended to a characteristic-zero domain. -/
 abbrev rootSystemBaseChange :
     RootPairing (Fin t.numRoots) K (Fin t.rank → K) (Fin t.rank → K) :=
   rootPairingBaseChange K (t.rationalRootSystem ht) (t.toLinearMap_rationalRootSystem ht)
@@ -122,10 +136,6 @@ theorem hasCartanType_baseChange :
     ⟨(supportEquivRootPairingBaseChangeBase K _ _ _).trans e, fun i j ↦ ?_⟩
   exact (cartanMatrix_rootPairingBaseChangeBase K _ _ _ i j).trans (he _ _)
 
-instance instIsIrreducibleRootSystemBaseChange :
-    (t.rootSystemBaseChange ht K).IsIrreducible :=
-  (t.hasCartanType_baseChange ht K).isIrreducible ht
-
 /-- The index equivalence identifying the matrix coordinates before and after scalar extension.
 The root indices are unchanged, and the two base supports have the same underlying indices. -/
 def geckIndexBaseChangeEquiv :
@@ -144,46 +154,6 @@ def lieAlgebraBaseChange :
 
 /-! ## The Geck generators under base change -/
 
-private theorem reindex_sumCongr_fromBlocks_apply₁₁
-    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
-    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
-    (eα : α ≃ α') (eβ : β ≃ β')
-    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
-    (i j : α') :
-    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
-        (Sum.inl i) (Sum.inl j) = A (eα.symm i) (eα.symm j) := by
-  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
-
-private theorem reindex_sumCongr_fromBlocks_apply₁₂
-    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
-    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
-    (eα : α ≃ α') (eβ : β ≃ β')
-    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
-    (i : α') (j : β') :
-    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
-        (Sum.inl i) (Sum.inr j) = B (eα.symm i) (eβ.symm j) := by
-  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
-
-private theorem reindex_sumCongr_fromBlocks_apply₂₁
-    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
-    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
-    (eα : α ≃ α') (eβ : β ≃ β')
-    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
-    (i : β') (j : α') :
-    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
-        (Sum.inr i) (Sum.inl j) = C (eβ.symm i) (eα.symm j) := by
-  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
-
-private theorem reindex_sumCongr_fromBlocks_apply₂₂
-    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
-    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
-    (eα : α ≃ α') (eβ : β ≃ β')
-    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
-    (i j : β') :
-    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
-        (Sum.inr i) (Sum.inr j) = D (eβ.symm i) (eβ.symm j) := by
-  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
-
 /-- The Cartan generators of Geck's construction commute with scalar extension. -/
 @[simp]
 theorem h_baseChangeBase (i : (t.rationalBase ht).support) :
@@ -194,15 +164,9 @@ theorem h_baseChangeBase (i : (t.rationalBase ht).support) :
         (algebraMap ℚ K) := by
   classical
   ext (j | j) (k | k) <;>
-    simp only [h, geckIndexBaseChangeEquiv]
-  all_goals first | rw [reindex_sumCongr_fromBlocks_apply₁₁] |
-    rw [reindex_sumCongr_fromBlocks_apply₁₂] | rw [reindex_sumCongr_fromBlocks_apply₂₁] |
-    rw [reindex_sumCongr_fromBlocks_apply₂₂]
-  all_goals try simp only [Matrix.diagonal_apply]
-  all_goals try rw [coe_supportBaseChangeEquiv_symm t ht K i]
-  all_goals simp [Matrix.diagonal_apply,
-      rootSystemBaseChange]
-  all_goals norm_cast
+    simp [h, geckIndexBaseChangeEquiv, Matrix.coe_reindexAlgEquiv,
+      Matrix.reindex_apply, Matrix.diagonal_apply, rootSystemBaseChange,
+      apply_ite (algebraMap ℚ K)]
 
 /-- The raising generators of Geck's construction commute with scalar extension. -/
 @[simp]
@@ -220,17 +184,13 @@ theorem e_baseChangeBase (i : (t.rationalBase ht).support) :
         (t.supportBaseChangeEquiv ht K).symm i ↔ j = i :=
     (t.supportBaseChangeEquiv ht K).symm.injective.eq_iff
   ext (j | j) (k | k) <;>
-    simp only [e, geckIndexBaseChangeEquiv]
-  all_goals first | rw [reindex_sumCongr_fromBlocks_apply₁₁] |
-    rw [reindex_sumCongr_fromBlocks_apply₁₂] | rw [reindex_sumCongr_fromBlocks_apply₂₁] |
-    rw [reindex_sumCongr_fromBlocks_apply₂₂]
-  all_goals try simp only [Matrix.of_apply]
-  all_goals try rw [coe_supportBaseChangeEquiv_symm t ht K i]
-  all_goals try simp only [hs]
-  all_goals simp [baseChangeBase, rootSystemBaseChange,
+    simp [e, geckIndexBaseChangeEquiv, Matrix.coe_reindexAlgEquiv,
+      Matrix.reindex_apply, Matrix.of_apply, coe_supportBaseChangeEquiv_symm,
+      hs, baseChangeBase, rootSystemBaseChange,
       chainBotCoeff_rootPairingBaseChange,
-      ← map_add, hpi.eq_iff, eq_ratCast, apply_ite Rat.cast,
-      -Int.cast_abs, Rat.cast_intCast, Rat.cast_natCast]
+      ← map_add, hpi.eq_iff, apply_ite (algebraMap ℚ K),
+      algebraMap_rat_abs_intCast]
+  all_goals split_ifs <;> simp
 
 /-- The lowering generators of Geck's construction commute with scalar extension. -/
 @[simp]
@@ -248,18 +208,12 @@ theorem f_baseChangeBase (i : (t.rationalBase ht).support) :
         (t.supportBaseChangeEquiv ht K).symm i ↔ j = i :=
     (t.supportBaseChangeEquiv ht K).symm.injective.eq_iff
   ext (j | j) (k | k) <;>
-    simp only [f, geckIndexBaseChangeEquiv]
-  all_goals first | rw [reindex_sumCongr_fromBlocks_apply₁₁] |
-    rw [reindex_sumCongr_fromBlocks_apply₁₂] | rw [reindex_sumCongr_fromBlocks_apply₂₁] |
-    rw [reindex_sumCongr_fromBlocks_apply₂₂]
-  all_goals try simp only [Matrix.of_apply]
-  all_goals try rw [coe_supportBaseChangeEquiv_symm t ht K i]
-  all_goals try simp only [hs]
-  all_goals simp [baseChangeBase, rootSystemBaseChange,
+    simp [f, geckIndexBaseChangeEquiv, Matrix.coe_reindexAlgEquiv,
+      Matrix.reindex_apply, Matrix.of_apply, coe_supportBaseChangeEquiv_symm,
+      hs, baseChangeBase, rootSystemBaseChange,
       chainTopCoeff_rootPairingBaseChange,
-      ← map_sub, hpi.eq_iff, eq_ratCast, apply_ite Rat.cast,
-      -Int.cast_abs, Rat.cast_intCast, Rat.cast_natCast] <;>
-    split_ifs <;> aesop
+      ← map_sub, hpi.eq_iff, apply_ite (algebraMap ℚ K),
+      algebraMap_rat_abs_intCast]
 
 /-! ## Restriction to the generated Lie algebras -/
 
@@ -480,8 +434,9 @@ private theorem lieAlgebraBaseChangeLieHom_bijective :
     exact ⟨x, Subtype.ext hx⟩
 
 /-- **The pinned Dynkin-type Lie algebra commutes with extension of scalars.** For every
-characteristic-zero field `K`, scalar extension of the rational pinned carrier is canonically Lie
-equivalent to Geck's matrix construction on the scalar-extended pinned root system. -/
+characteristic-zero rational algebra domain `K`, scalar extension of the rational pinned carrier
+is canonically Lie equivalent to Geck's matrix construction on the scalar-extended pinned root
+system. -/
 noncomputable def lieAlgebraBaseChangeEquiv :
     LieEquiv K (K ⊗[ℚ] t.lieAlgebra ht) (t.lieAlgebraBaseChange ht K) :=
   LieEquiv.ofBijective (t.lieAlgebraBaseChangeLieHom ht K)
@@ -547,6 +502,22 @@ theorem lieAlgebraBaseChangeEquiv_tmul_f (a : K) (i : (t.rationalBase ht).suppor
         exact f_mem_lieAlgebra _⟩ : t.lieAlgebraBaseChange ht K) := by
   apply Subtype.ext
   simp [reindex_symm_map_f]
+
+end
+
+end TauCeti.DynkinType
+
+namespace TauCeti.DynkinType
+
+noncomputable section
+
+variable (t : DynkinType) (ht : t.Valid) (K : Type*) [Field K] [Algebra ℚ K]
+
+local instance : CharZero K := Algebra.charZero_of_charZero ℚ K
+
+instance instIsIrreducibleRootSystemBaseChange :
+    (t.rootSystemBaseChange ht K).IsIrreducible :=
+  (t.hasCartanType_baseChange ht K).isIrreducible ht
 
 end
 
