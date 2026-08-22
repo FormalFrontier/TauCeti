@@ -74,7 +74,7 @@ The construction therefore is not the zero quotient, and `L(0)` exists outright.
   `lam` and the left ideal of `U(L)` they generate.
 * `TauCeti.VermaModule b lam`: the Verma module `M(lam)`, with its `K`-module, `U(L)`-module and
   `L`-module structures.
-* `TauCeti.vermaMk b lam`: the canonical projection `U(L) → M(lam)`.
+* `TauCeti.vermaMk b lam`: the canonical projection `U(L) → M(lam)`, as a `U(L)`-linear map.
 * `TauCeti.vermaGenerator b lam`: the canonical generator `v_lam`, the class of `1`.
 
 ## Main results
@@ -133,8 +133,10 @@ variable (b : (IsKilling.rootSystem H).Base) (lam : Dual K H)
 
 /-- The **Verma relations** of weight `lam`: the elements `ι x - lam x` of `U(L)` for `x` in the
 Cartan subalgebra, together with the elements `ι x` for `x` in the positive nilradical. Their
-image in `M(lam)` is what forces the class of `1` to be a highest weight vector of weight
-`lam`. -/
+image in `M(lam)` is what forces the Cartan subalgebra to act on the class of `1` through `lam`
+and the positive nilradical to annihilate it. Those are two of the three conditions defining a
+highest weight vector, so that class is a highest weight vector of weight `lam` exactly when it
+is nonzero; see `TauCeti.isHighestWeightVector_vermaGenerator_iff`. -/
 def vermaRelations : Set U :=
   Set.range (fun x : H => (ι K (x : L) : U) - algebraMap K U (lam x)) ∪
     (fun x : L => (ι K x : U)) '' (positiveNilradical H b : Set L)
@@ -200,12 +202,14 @@ This is the compatibility hypothesis the enveloping-algebra dictionary consumes.
 theorem vermaModule_ι_smul (x : L) (m : VermaModule b lam) : (ι K x : U) • m = ⁅x, m⁆ :=
   (UniversalEnvelopingAlgebra.asLieRingModule_bracket K L (VermaModule b lam) x m).symm
 
-/-- **The canonical projection** `U(L) → M(lam)`. -/
-def vermaMk (u : U) : VermaModule b lam :=
-  Submodule.Quotient.mk u
+/-- **The canonical projection** `U(L) → M(lam)`, bundled as a `U(L)`-linear map so that its
+algebraic behaviour — `map_zero`, `map_add`, `map_smul` — is available from the `LinearMap` API
+without unfolding the quotient. -/
+def vermaMk : U →ₗ[U] VermaModule b lam :=
+  Submodule.mkQ (vermaIdeal b lam)
 
 theorem vermaMk_surjective : Function.Surjective (vermaMk b lam) :=
-  Submodule.Quotient.mk_surjective _
+  Submodule.mkQ_surjective _
 
 theorem vermaMk_eq_iff {u w : U} :
     vermaMk b lam u = vermaMk b lam w ↔ u - w ∈ vermaIdeal b lam :=
