@@ -231,7 +231,7 @@ theorem hodgeForm_nonnegative (P : Polarization hℂ hs) (x : Vℂ) :
 /-- The diagonal of the Hodge form vanishes exactly on the zero vector. -/
 @[simp]
 theorem hodgeForm_self_eq_zero (P : Polarization hℂ hs) {x : Vℂ} :
-    P.hodgeForm x x = 0 ↔ x = 0 := by
+    P.Q (hs.weilOperator x) (latticeConj hℂ x) = 0 ↔ x = 0 := by
   constructor
   · intro hx
     by_contra hx0
