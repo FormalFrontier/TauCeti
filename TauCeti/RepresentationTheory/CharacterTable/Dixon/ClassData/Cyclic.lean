@@ -11,8 +11,8 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Basic
 /-!
 # Class data for finite cyclic groups
 
-This file gives the cyclic group `Multiplicative (ZMod n)` the executable conjugacy-class
-numbering used by the Dixon--Schneider algorithm.  The enumeration is the standard list
+For `n ≠ 0`, this file gives the cyclic group `Multiplicative (ZMod n)` the executable
+conjugacy-class numbering used by the Dixon--Schneider algorithm.  It uses the standard enumeration
 `0, 1, ..., n - 1`, transported from the additive group `ZMod n`; since the group is commutative,
 each conjugacy class is a singleton.
 
@@ -46,8 +46,8 @@ public section
 
 namespace TauCeti
 
-/-- The standard computable enumeration of the finite cyclic group
-`Multiplicative (ZMod n)`. -/
+/-- For `n ≠ 0`, the standard computable enumeration of the finite cyclic group
+`Multiplicative (ZMod n)`. For `n = 0`, this list is empty. -/
 @[expose] def cyclicElements (n : ℕ) : List (Multiplicative (ZMod n)) :=
   List.map (fun i : ℕ => Multiplicative.ofAdd (i : ZMod n)) (List.range n)
 
@@ -71,7 +71,7 @@ private theorem cyclicElements_pairwise_not_isConj (n : ℕ) :
   have hval := congrArg ZMod.val (congrArg Multiplicative.toAdd hconj)
   rw [List.getElem_range hi, List.getElem_range hj] at hval
   simp only [List.length_range] at hi hj
-  change (i : ZMod n).val = (j : ZMod n).val at hval
+  simp only [toAdd_ofAdd] at hval
   rw [ZMod.val_natCast_of_lt hi, ZMod.val_natCast_of_lt hj] at hval
   exact (Nat.ne_of_lt hij) hval
 
