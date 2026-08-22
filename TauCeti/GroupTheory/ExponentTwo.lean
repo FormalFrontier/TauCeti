@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.GroupTheory.Exponent
 public import Mathlib.GroupTheory.Index
 import Mathlib.Algebra.Group.Subgroup.Pointwise
-import Mathlib.GroupTheory.Exponent
 import Mathlib.Order.Zorn
 
 /-!
@@ -29,8 +29,8 @@ Commutativity is not an extra hypothesis: a group of exponent two is automatical
 
 ## Main results
 
-* `TauCeti.exists_index_eq_two_notMem`: in a group of exponent two, every `σ ≠ 1` lies outside
-  some subgroup of index `2`.
+* `TauCeti.exists_index_eq_two_notMem_of_exponent_two`: in a group of exponent two, every `σ ≠ 1`
+  lies outside some subgroup of index `2`.
 -/
 
 public section
@@ -40,7 +40,8 @@ namespace TauCeti
 variable {G : Type*} [Group G]
 
 /-- An integer power of an element of order dividing two is either `1` or that element. -/
-theorem zpow_eq_one_or_eq_self {b : G} (hb : b ^ 2 = 1) (n : ℤ) : b ^ n = 1 ∨ b ^ n = b := by
+private theorem zpow_eq_one_or_eq_self_of_sq_eq_one {b : G} (hb : b ^ 2 = 1) (n : ℤ) :
+    b ^ n = 1 ∨ b ^ n = b := by
   have hb2 : b ^ (2 : ℤ) = 1 := by simpa using hb
   have hred : b ^ n = b ^ (n % 2) := by
     conv_lhs => rw [← Int.mul_ediv_add_emod n 2]
@@ -54,11 +55,14 @@ elements square to `1`, every `σ ≠ 1` lies outside some subgroup of index `2`
 
 Equivalently: the intersection of the index-two subgroups — the Frattini subgroup of an elementary
 abelian `2`-group — is trivial. -/
-theorem exists_index_eq_two_notMem (hexp : ∀ g : G, g ^ 2 = 1) {σ : G} (hσ : σ ≠ 1) :
+theorem exists_index_eq_two_notMem_of_exponent_two (hexp : Monoid.exponent G ∣ 2)
+    {σ : G} (hσ : σ ≠ 1) :
     ∃ H : Subgroup G, H.index = 2 ∧ σ ∉ H := by
   classical
+  have hsquare : ∀ g : G, g ^ 2 = 1 :=
+    Monoid.exponent_dvd_iff_forall_pow_eq_one.mp hexp
   have hcomm : ∀ a b : G, a * b = b * a :=
-    Commute.of_orderOf_dvd_two (fun g => orderOf_dvd_of_pow_eq_one (hexp g))
+    Commute.of_orderOf_dvd_two (fun g => orderOf_dvd_of_pow_eq_one (hsquare g))
   -- Choose a subgroup maximal among those avoiding `σ`; the trivial subgroup is one such.
   obtain ⟨H, hHσ, hmax⟩ :=
     zorn_le₀ {H : Subgroup G | σ ∉ H} fun c hcσ hchain => by
@@ -92,12 +96,12 @@ theorem exists_index_eq_two_notMem (hexp : ∀ g : G, g ^ 2 = 1) {σ : G} (hσ :
     rw [← SetLike.mem_coe, Subgroup.mul_normal H N, Set.mem_mul] at hσmem
     obtain ⟨h, hh, m, hm, hσeq⟩ := hσmem
     obtain ⟨n, rfl⟩ := Subgroup.mem_closure_singleton.mp hm
-    rcases zpow_eq_one_or_eq_self (hexp b) n with hbn | hbn
+    rcases zpow_eq_one_or_eq_self_of_sq_eq_one (hsquare b) n with hbn | hbn
     · have hσH : σ ∈ H := by
         rw [← hσeq, hbn, mul_one]
         exact hh
       exact absurd hσH hHσ
-    · rw [← hσeq, hbn, ← mul_assoc, hcomm b h, mul_assoc, ← sq, hexp b, mul_one]
+    · rw [← hσeq, hbn, ← mul_assoc, hcomm b h, mul_assoc, ← sq, hsquare b, mul_one]
       exact hh
 
 end TauCeti
