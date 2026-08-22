@@ -35,20 +35,24 @@ exterior squares, so nothing is lost.
 With the squares realized that way the proof is short. The tensor square of `π` is
 `TauCeti.ContRepresentation.tprod π π`, the flip commutes with it, so each eigenspace is a
 subrepresentation, and their characters differ by `χ_π(g²)`: this is
-`TauCeti.trace_restrict_symmetricTensors_sub`, whose linear-algebra content is that composing
-`f ⊗ f` with the flip has trace `tr (f ∘ f)`. Integrating that pointwise identity and reading each
-character integral as a dimension of invariants
+`TauCeti.trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict`, whose
+linear-algebra content is that composing `f ⊗ f` with the flip has trace `tr (f ∘ f)`. Integrating
+that pointwise identity and reading each character integral as a dimension of invariants
 (`ContRepresentation.integral_character_eq_finrank_invariants`) is the theorem.
+
+The two squares themselves need none of the analysis: they are defined, and shown continuous, for a
+continuous representation of a monoid on an inner product space over `RCLike 𝕜`. Only the character
+and indicator statements ask for a compact group, finite dimension, and `𝕜 = ℂ`.
 
 ## Main definitions
 
 * `ContRepresentation.symmetricSquare`: the symmetric square of a continuous representation, its
-  restriction to the symmetric tensors of `V ⊗[ℂ] V`.
-* `ContRepresentation.antisymmetricSquare`: its restriction to the antisymmetric tensors.
+  restriction to the symmetric tensors of `V ⊗[𝕜] V`.
+* `ContRepresentation.exteriorSquare`: its restriction to the antisymmetric tensors.
 
 ## Main statements
 
-* `ContRepresentation.character_symmetricSquare_sub_character_antisymmetricSquare`: the two square
+* `ContRepresentation.character_symmetricSquare_sub_character_exteriorSquare`: the two square
   characters differ by the character at the square, `χ_{Sym²}(g) - χ_{Λ²}(g) = χ_π(g²)`.
 * `ContRepresentation.frobeniusSchurIndicator_eq_sub_finrank_invariants`: **the Frobenius-Schur
   indicator is the signed count of invariant tensors**,
@@ -86,94 +90,95 @@ open scoped TensorProduct
 
 namespace ContRepresentation
 
+section Square
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
+
+variable (π : ContRepresentation 𝕜 G V)
+
+omit [TopologicalSpace G] in
+/-- The tensor square of a continuous representation acts on the tensor square by `f ⊗ f`, so the
+symmetric tensors are one of its invariant submodules. -/
+theorem tprod_self_mem_symmetricTensors (g : G) {x : V ⊗[𝕜] V}
+    (hx : x ∈ symmetricTensors 𝕜 V) : tprod π π g x ∈ symmetricTensors 𝕜 V := by
+  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
+  exact map_self_mem_symmetricTensors _ hx
+
+omit [TopologicalSpace G] in
+/-- The antisymmetric tensors are the other invariant submodule of the tensor square. -/
+theorem tprod_self_mem_antisymmetricTensors (g : G) {x : V ⊗[𝕜] V}
+    (hx : x ∈ antisymmetricTensors 𝕜 V) : tprod π π g x ∈ antisymmetricTensors 𝕜 V := by
+  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
+  exact map_self_mem_antisymmetricTensors _ hx
+
+/-- **The symmetric square** of a continuous representation: its tensor square restricted to the
+symmetric tensors. -/
+noncomputable def symmetricSquare : ContRepresentation 𝕜 G (symmetricTensors 𝕜 V) :=
+  subrepresentation (tprod π π) (symmetricTensors 𝕜 V)
+    fun g _ hx ↦ tprod_self_mem_symmetricTensors π g hx
+
+/-- **The exterior square** of a continuous representation: its tensor square restricted to the
+antisymmetric tensors. Over `RCLike 𝕜`, which has characteristic zero, those are the exterior
+square `⋀[𝕜]^2 V` realized inside `V ⊗[𝕜] V`, which is what the name records; the identification
+itself is not formalized here. -/
+noncomputable def exteriorSquare : ContRepresentation 𝕜 G (antisymmetricTensors 𝕜 V) :=
+  subrepresentation (tprod π π) (antisymmetricTensors 𝕜 V)
+    fun g _ hx ↦ tprod_self_mem_antisymmetricTensors π g hx
+
+/-- The symmetric square of a continuous representation is continuous. -/
+theorem continuous_symmetricSquare (hπ : Continuous π) : Continuous (symmetricSquare π) :=
+  continuous_subrepresentation (continuous_tprod π π hπ hπ)
+
+/-- The exterior square of a continuous representation is continuous. -/
+theorem continuous_exteriorSquare (hπ : Continuous π) : Continuous (exteriorSquare π) :=
+  continuous_subrepresentation (continuous_tprod π π hπ hπ)
+
+omit [TopologicalSpace G] in
+/-- The symmetric square acts by the restriction of `π g ⊗ π g`. -/
+theorem coe_symmetricSquare_apply (g : G) :
+    ((symmetricSquare π g : symmetricTensors 𝕜 V →L[𝕜] symmetricTensors 𝕜 V) :
+        symmetricTensors 𝕜 V →ₗ[𝕜] symmetricTensors 𝕜 V)
+      = symmetricTensorsRestrict (π g : V →ₗ[𝕜] V) := by
+  refine LinearMap.ext fun x ↦ Subtype.ext ?_
+  simp [symmetricSquare, ContRepresentation.tprod_apply]
+
+omit [TopologicalSpace G] in
+/-- The exterior square acts by the restriction of `π g ⊗ π g`. -/
+theorem coe_exteriorSquare_apply (g : G) :
+    ((exteriorSquare π g : antisymmetricTensors 𝕜 V →L[𝕜] antisymmetricTensors 𝕜 V) :
+        antisymmetricTensors 𝕜 V →ₗ[𝕜] antisymmetricTensors 𝕜 V)
+      = antisymmetricTensorsRestrict (π g : V →ₗ[𝕜] V) := by
+  refine LinearMap.ext fun x ↦ Subtype.ext ?_
+  simp [exteriorSquare, ContRepresentation.tprod_apply]
+
+end Square
+
 section CompactGroup
 
 variable {G V : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
   [NormedAddCommGroup V] [InnerProductSpace ℂ V] [FiniteDimensional ℂ V]
 
-variable (π : ContRepresentation ℂ G V)
-
-omit [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
-  [BorelSpace G] [FiniteDimensional ℂ V] in
-/-- The tensor square of a continuous representation acts on the tensor square by `f ⊗ f`, so the
-symmetric tensors are one of its invariant submodules. -/
-theorem tprod_self_mem_symmetricTensors (g : G) {x : V ⊗[ℂ] V}
-    (hx : x ∈ symmetricTensors ℂ V) : tprod π π g x ∈ symmetricTensors ℂ V := by
-  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
-  exact map_self_mem_symmetricTensors _ hx
-
-omit [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
-  [BorelSpace G] [FiniteDimensional ℂ V] in
-/-- The antisymmetric tensors are the other invariant submodule of the tensor square. -/
-theorem tprod_self_mem_antisymmetricTensors (g : G) {x : V ⊗[ℂ] V}
-    (hx : x ∈ antisymmetricTensors ℂ V) : tprod π π g x ∈ antisymmetricTensors ℂ V := by
-  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
-  exact map_self_mem_antisymmetricTensors _ hx
-
-/-- **The symmetric square** of a continuous representation: its tensor square restricted to the
-symmetric tensors. -/
-@[expose] noncomputable def symmetricSquare : ContRepresentation ℂ G (symmetricTensors ℂ V) :=
-  subrepresentation (tprod π π) (symmetricTensors ℂ V)
-    fun g _ hx ↦ tprod_self_mem_symmetricTensors π g hx
-
-/-- **The antisymmetric square** of a continuous representation: its tensor square restricted to
-the antisymmetric tensors. In characteristic zero this is the exterior square. -/
-@[expose] noncomputable def antisymmetricSquare :
-    ContRepresentation ℂ G (antisymmetricTensors ℂ V) :=
-  subrepresentation (tprod π π) (antisymmetricTensors ℂ V)
-    fun g _ hx ↦ tprod_self_mem_antisymmetricTensors π g hx
-
-variable (hπ : Continuous π)
+variable (π : ContRepresentation ℂ G V) (hπ : Continuous π)
 
 include hπ
-
-omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
-  [FiniteDimensional ℂ V] in
-/-- The symmetric square of a continuous representation is continuous. -/
-theorem continuous_symmetricSquare : Continuous (symmetricSquare π) :=
-  continuous_subrepresentation (continuous_tprod π π hπ hπ)
-
-omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
-  [FiniteDimensional ℂ V] in
-/-- The antisymmetric square of a continuous representation is continuous. -/
-theorem continuous_antisymmetricSquare : Continuous (antisymmetricSquare π) :=
-  continuous_subrepresentation (continuous_tprod π π hπ hπ)
-
-omit hπ [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
-  [BorelSpace G] [FiniteDimensional ℂ V] in
-/-- The symmetric square acts by the restriction of `π g ⊗ π g`. -/
-theorem coe_symmetricSquare_apply (g : G) :
-    ((symmetricSquare π g : symmetricTensors ℂ V →L[ℂ] symmetricTensors ℂ V) :
-        symmetricTensors ℂ V →ₗ[ℂ] symmetricTensors ℂ V)
-      = symmetricTensorsRestrict (π g : V →ₗ[ℂ] V) := by
-  refine LinearMap.ext fun x ↦ Subtype.ext ?_
-  simp [symmetricSquare, ContRepresentation.tprod_apply]
-
-omit hπ [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
-  [BorelSpace G] [FiniteDimensional ℂ V] in
-/-- The antisymmetric square acts by the restriction of `π g ⊗ π g`. -/
-theorem coe_antisymmetricSquare_apply (g : G) :
-    ((antisymmetricSquare π g : antisymmetricTensors ℂ V →L[ℂ] antisymmetricTensors ℂ V) :
-        antisymmetricTensors ℂ V →ₗ[ℂ] antisymmetricTensors ℂ V)
-      = antisymmetricTensorsRestrict (π g : V →ₗ[ℂ] V) := by
-  refine LinearMap.ext fun x ↦ Subtype.ext ?_
-  simp [antisymmetricSquare, ContRepresentation.tprod_apply]
 
 omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
 /-- **The two square characters differ by the character at the square**,
 `χ_{Sym²π}(g) - χ_{Λ²π}(g) = χ_π(g²)`.
 
-This is `TauCeti.trace_restrict_symmetricTensors_sub` applied to the operator `π g`, whose square
-is `π (g * g)`. -/
-theorem character_symmetricSquare_sub_character_antisymmetricSquare (g : G) :
+This is `TauCeti.trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict` applied to
+the operator `π g`, whose square is `π (g * g)`. -/
+theorem character_symmetricSquare_sub_character_exteriorSquare (g : G) :
     character (𝕜 := ℂ) (V := symmetricTensors ℂ V) (symmetricSquare π)
           (continuous_symmetricSquare π hπ) g
-        - character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V) (antisymmetricSquare π)
-          (continuous_antisymmetricSquare π hπ) g
+        - character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V) (exteriorSquare π)
+          (continuous_exteriorSquare π hπ) g
       = character π hπ (g * g) := by
   rw [character_apply, character_apply, character_apply, coe_symmetricSquare_apply π g,
-    coe_antisymmetricSquare_apply π g, trace_restrict_symmetricTensors_sub (π g : V →ₗ[ℂ] V)]
+    coe_exteriorSquare_apply π g,
+    trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict (π g : V →ₗ[ℂ] V)]
   congr 1
   rw [map_mul]
   rfl
@@ -181,7 +186,7 @@ theorem character_symmetricSquare_sub_character_antisymmetricSquare (g : G) :
 /-- **The Frobenius-Schur indicator is the signed count of invariant tensors**,
 `ν₂(π) = dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
 
-Integrate `ContRepresentation.character_symmetricSquare_sub_character_antisymmetricSquare` and read
+Integrate `ContRepresentation.character_symmetricSquare_sub_character_exteriorSquare` and read
 each of the two character integrals as the dimension of the invariants of its representation
 (`ContRepresentation.integral_character_eq_finrank_invariants`). This is the compact-group form of
 the finite-group `TauCeti.Representation.frobeniusSchurIndicator_eq_sub_finrank_invariants`, with
@@ -189,29 +194,29 @@ the Haar integral in place of the average over the group. -/
 theorem frobeniusSchurIndicator_eq_sub_finrank_invariants :
     frobeniusSchurIndicator π hπ
       = (Module.finrank ℂ (symmetricSquare π).invariants : ℂ)
-        - (Module.finrank ℂ (antisymmetricSquare π).invariants : ℂ) := by
+        - (Module.finrank ℂ (exteriorSquare π).invariants : ℂ) := by
   have hs := integral_character_eq_finrank_invariants (𝕜 := ℂ) (V := symmetricTensors ℂ V)
     (symmetricSquare π) (continuous_symmetricSquare π hπ)
   have ha := integral_character_eq_finrank_invariants (𝕜 := ℂ) (V := antisymmetricTensors ℂ V)
-    (antisymmetricSquare π) (continuous_antisymmetricSquare π hπ)
+    (exteriorSquare π) (continuous_exteriorSquare π hπ)
   have hIs : Integrable (fun g : G ↦ character (𝕜 := ℂ) (V := symmetricTensors ℂ V)
       (symmetricSquare π) (continuous_symmetricSquare π hπ) g) (haarProb G) := by
     exact integrable_continuousMap G (character (𝕜 := ℂ) (V := symmetricTensors ℂ V)
       (symmetricSquare π) (continuous_symmetricSquare π hπ))
   have hIa : Integrable (fun g : G ↦ character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V)
-      (antisymmetricSquare π) (continuous_antisymmetricSquare π hπ) g) (haarProb G) := by
+      (exteriorSquare π) (continuous_exteriorSquare π hπ) g) (haarProb G) := by
     exact integrable_continuousMap G (character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V)
-      (antisymmetricSquare π) (continuous_antisymmetricSquare π hπ))
+      (exteriorSquare π) (continuous_exteriorSquare π hπ))
   calc frobeniusSchurIndicator π hπ
       = ∫ g, (character (𝕜 := ℂ) (V := symmetricTensors ℂ V) (symmetricSquare π)
             (continuous_symmetricSquare π hπ) g
-          - character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V) (antisymmetricSquare π)
-            (continuous_antisymmetricSquare π hπ) g) ∂(haarProb G) := by
+          - character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V) (exteriorSquare π)
+            (continuous_exteriorSquare π hπ) g) ∂(haarProb G) := by
         rw [frobeniusSchurIndicator_def]
         exact integral_congr_ae (Filter.Eventually.of_forall fun g ↦
-          (character_symmetricSquare_sub_character_antisymmetricSquare π hπ g).symm)
+          (character_symmetricSquare_sub_character_exteriorSquare π hπ g).symm)
     _ = (Module.finrank ℂ (symmetricSquare π).invariants : ℂ)
-          - (Module.finrank ℂ (antisymmetricSquare π).invariants : ℂ) := by
+          - (Module.finrank ℂ (exteriorSquare π).invariants : ℂ) := by
         rw [integral_sub hIs hIa, hs, ha]
 
 /-- **The Frobenius-Schur indicator of a compact group is an integer**, being the difference of two
@@ -222,7 +227,7 @@ compact-group form of the finite-group
 theorem frobeniusSchurIndicator_eq_intCast :
     frobeniusSchurIndicator π hπ
       = ((Module.finrank ℂ (symmetricSquare π).invariants
-          - Module.finrank ℂ (antisymmetricSquare π).invariants : ℤ) : ℂ) := by
+          - Module.finrank ℂ (exteriorSquare π).invariants : ℤ) : ℂ) := by
   rw [frobeniusSchurIndicator_eq_sub_finrank_invariants π hπ]
   push_cast
   ring
