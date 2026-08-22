@@ -11,7 +11,7 @@ public import Mathlib.Probability.Distributions.Geometric
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Moments.MGFAnalytic
 
-import Mathlib.Data.Nat.Choose.Cast
+import TauCeti.Probability.GeneratingFunction
 
 /-!
 # Elementary theory of the geometric distribution
@@ -61,58 +61,18 @@ private lemma abs_one_sub_coe_lt_one (hp : p ≠ 0) : |1 - (p : ℝ)| < 1 := by
 
 private lemma coe_ne_zero (hp : p ≠ 0) : (p : ℝ) ≠ 0 := by grind
 
-private lemma hasSum_sq_mul_geometric {q : ℝ} (hq : |q| < 1) :
-    HasSum (fun n : ℕ ↦ (n : ℝ) ^ 2 * q ^ n) (q * (1 + q) / (1 - q) ^ 3) := by
-  have hchoose := (hasSum_choose_mul_geometric_of_norm_lt_one (𝕜 := ℝ) 2 hq).mul_left
-    (2 * q ^ 2)
-  have hchoose' : HasSum (fun n : ℕ ↦ 2 * q ^ 2 * (((n + 2).choose 2 : ℕ) * q ^ n))
-      (2 * q ^ 2 / (1 - q) ^ 3) := by
-    simpa [div_eq_mul_inv] using hchoose
-  have hfallShift :
-      HasSum (fun n : ℕ ↦ ((n + 2 : ℕ) : ℝ) * (((n + 2 : ℕ) : ℝ) - 1) * q ^ (n + 2))
-        (2 * q ^ 2 / (1 - q) ^ 3) := by
-    refine hchoose'.congr_fun fun n ↦ ?_
-    rw [Nat.cast_choose_two, pow_add]
-    field_simp
-  have hfall : HasSum (fun n : ℕ ↦ (n : ℝ) * ((n : ℝ) - 1) * q ^ n)
-      (2 * q ^ 2 / (1 - q) ^ 3) := by
-    have h := (hasSum_nat_add_iff
-      (f := fun n : ℕ ↦ (n : ℝ) * ((n : ℝ) - 1) * q ^ n) 2).mp hfallShift
-    have hsum : ∑ i ∈ Finset.range 2, (i : ℝ) * ((i : ℝ) - 1) * q ^ i = 0 := by
-      norm_num [Finset.sum_range_succ]
-    simpa only [hsum, add_zero] using h
-  have hlinear := hasSum_coe_mul_geometric_of_norm_lt_one (𝕜 := ℝ) hq
-  have hadd := hfall.add hlinear
-  have hq1 : 1 - q ≠ 0 := by
-    have : q < 1 := (le_abs_self q).trans_lt hq
-    linarith
-  have hvalue :
-      2 * q ^ 2 / (1 - q) ^ 3 + q / (1 - q) ^ 2 =
-        q * (1 + q) / (1 - q) ^ 3 := by
-    field_simp [hq1]
-    ring
-  rw [← hvalue]
-  refine hadd.congr_fun fun n ↦ ?_
-  ring
-
 /-- The exponential integrand for the cast geometric law is integrable exactly below the pole of
 its geometric series. -/
 theorem integrable_exp_mul_id_map_cast_geometricMeasure_iff (hp : p ≠ 0) (t : ℝ) :
     Integrable (fun x : ℝ ↦ exp (t * x))
         ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) ↔
       (1 - (p : ℝ)) * exp t < 1 := by
-  rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff,
-    integrable_geometricMeasure_iff hp]
-  have hexp (n : ℕ) : exp (t * (n : ℝ)) = (exp t) ^ n := by
-    rw [mul_comm, Real.exp_nat_mul]
-  simp_rw [Function.comp_apply, Real.norm_eq_abs, abs_exp, hexp]
-  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ((exp t) ^ n)) =
-      fun n ↦ (p : ℝ) * (((1 - (p : ℝ)) * exp t) ^ n) := by
+  have hcomp : ((fun x : ℝ ↦ exp (t * x)) ∘ (Nat.cast : ℕ → ℝ)) = fun n : ℕ ↦ exp t ^ n := by
     funext n
-    rw [mul_pow]
-    ring
-  rw [hfun, summable_mul_left_iff (coe_ne_zero hp), summable_geometric_iff_norm_lt_one,
-    Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (one_sub_coe_nonneg p) (exp_nonneg t))]
+    rw [Function.comp_apply, mul_comm, Real.exp_nat_mul]
+  rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff, hcomp,
+    integrable_pow_geometricMeasure_iff hp,
+    abs_of_nonneg (mul_nonneg (one_sub_coe_nonneg p) (exp_nonneg t))]
 
 /-- The exact moment-generating domain of the real cast of a nonzero-parameter geometric law. -/
 theorem integrableExpSet_id_map_cast_geometricMeasure (hp : p ≠ 0) :
@@ -126,21 +86,13 @@ theorem mgf_id_map_cast_geometricMeasure (hp : p ≠ 0)
     (ht : (1 - (p : ℝ)) * exp t < 1) :
     mgf id ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) t =
       (p : ℝ) / (1 - (1 - (p : ℝ)) * exp t) := by
+  have habs : |(1 - (p : ℝ)) * exp t| < 1 := by
+    rwa [abs_of_nonneg (mul_nonneg (one_sub_coe_nonneg p) (exp_nonneg t))]
+  have hpgf := pgf_exp (id : ℕ → ℕ) (geometricMeasure p) t
+  rw [pgf_geometricMeasure hp habs] at hpgf
   rw [mgf_id_map (Measurable.of_discrete.aemeasurable :
-    AEMeasurable (Nat.cast : ℕ → ℝ) (geometricMeasure p)), mgf,
-    integral_geometricMeasure hp]
-  have hexp (n : ℕ) : exp (t * (n : ℝ)) = (exp t) ^ n := by
-    rw [mul_comm, Real.exp_nat_mul]
-  simp_rw [smul_eq_mul, hexp]
-  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * ((exp t) ^ n)) =
-      fun n ↦ (p : ℝ) * (((1 - (p : ℝ)) * exp t) ^ n) := by
-    funext n
-    rw [mul_pow]
-    ring
-  rw [hfun, tsum_mul_left, tsum_geometric_of_norm_lt_one]
-  · simp [div_eq_mul_inv]
-  · simpa [Real.norm_eq_abs,
-      abs_of_nonneg (one_sub_coe_nonneg p)] using ht
+    AEMeasurable (Nat.cast : ℕ → ℝ) (geometricMeasure p))]
+  exact hpgf.symm
 
 /-- The cumulant-generating function of the real cast of a nonzero-parameter geometric law. -/
 theorem cgf_id_map_cast_geometricMeasure (hp : p ≠ 0)
@@ -175,7 +127,7 @@ private theorem integral_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     funext n
     ring
   rw [hfun, tsum_mul_left,
-    (hasSum_sq_mul_geometric (abs_one_sub_coe_lt_one hp)).tsum_eq]
+    tsum_sq_mul_geometric_of_norm_lt_one (abs_one_sub_coe_lt_one hp)]
   field_simp [coe_ne_zero hp]
   ring
 
