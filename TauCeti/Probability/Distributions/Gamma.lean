@@ -10,6 +10,7 @@ public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
 public import TauCeti.MeasureTheory.Integral.ExpDecay
+import TauCeti.Probability.Distributions.PDFInstances
 
 /-!
 # Elementary theory of the gamma distribution
@@ -65,16 +66,6 @@ private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
     gammaPDFReal a r x = r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) := by
   rw [gammaPDFReal, ite_eq_left hx.le]
 
-private lemma measurable_ofReal_gammaPDFReal (a r : ℝ) :
-    Measurable fun x ↦ ENNReal.ofReal (gammaPDFReal a r x) :=
-  ENNReal.measurable_ofReal.comp (measurable_gammaPDFReal a r)
-
-private lemma gammaPDF_eq_ofReal (a r : ℝ) :
-    gammaPDF a r = fun x ↦ ENNReal.ofReal (gammaPDFReal a r x) := rfl
-
-private lemma measurable_gammaPDF (a r : ℝ) : Measurable (gammaPDF a r) :=
-  measurable_ofReal_gammaPDFReal a r
-
 /-- An integral against the gamma law is the set integral of the weighted integrand over
 `(0, ∞)`. -/
 private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
@@ -83,9 +74,9 @@ private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → �
   have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x * f x = 0 := by
     intro x hx
     rw [gammaPDFReal, ite_eq_right (by simpa using hx), zero_mul]
-  rw [gammaMeasure, gammaPDF_eq_ofReal, integral_withDensity_eq_integral_toReal_smul
-    (measurable_ofReal_gammaPDFReal a r) (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top) f]
-  simp_rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _), smul_eq_mul]
+  rw [gammaMeasure, integral_withDensity_eq_integral_toReal_smul
+    (Probability.measurable_gammaPDF a r) (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top) f]
+  simp_rw [gammaPDF, ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _), smul_eq_mul]
   rw [← setIntegral_eq_integral_of_forall_compl_eq_zero hcompl, integral_Ici_eq_integral_Ioi]
   exact setIntegral_congr_fun measurableSet_Ioi fun x hx ↦ by rw [gammaPDFReal_of_pos hx]
 
@@ -101,9 +92,9 @@ private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ →
   have hneg : IntegrableOn (fun x ↦ f x * gammaPDFReal a r x) (Iio 0) := by
     refine integrableOn_zero.congr_fun (fun x hx ↦ ?_) measurableSet_Iio
     rw [gammaPDFReal, ite_eq_right (not_le.mpr hx), mul_zero]
-  rw [gammaMeasure, gammaPDF_eq_ofReal, integrable_withDensity_iff
-    (measurable_ofReal_gammaPDFReal a r) (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-  simp_rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _)]
+  rw [gammaMeasure, integrable_withDensity_iff
+    (Probability.measurable_gammaPDF a r) (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
+  simp_rw [gammaPDF, ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _)]
   rw [← integrableOn_univ, ← Iio_union_Ici (a := (0 : ℝ)), integrableOn_union,
     integrableOn_Ici_iff_integrableOn_Ioi]
   exact ⟨fun h ↦ h.2.congr_fun hpos measurableSet_Ioi,
@@ -146,6 +137,7 @@ theorem integral_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
   field_simp [(Real.Gamma_pos_of_pos ha).ne']
 
 /-- The second raw moment of a gamma law with positive shape and rate is `a * (a + 1) / r ^ 2`. -/
+@[simp]
 theorem integral_sq_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     ∫ x, x ^ 2 ∂gammaMeasure a r = a * (a + 1) / r ^ 2 := by
   have hGa := (Real.Gamma_pos_of_pos ha).ne'
@@ -288,9 +280,9 @@ theorem map_gammaMeasure_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} (hc : 0 <
       = ∫⁻ x in (c * ·) ⁻¹' s, ENNReal.ofReal c * gammaPDF a (r / c) (c * x) := by
         simp_rw [ofReal_mul_gammaPDF_const_mul ha hr hc]
     _ = ENNReal.ofReal c * ∫⁻ x in (c * ·) ⁻¹' s, gammaPDF a (r / c) (c * x) :=
-        lintegral_const_mul _ ((measurable_gammaPDF a (r / c)).comp hT)
+        lintegral_const_mul _ ((Probability.measurable_gammaPDF a (r / c)).comp hT)
     _ = ENNReal.ofReal c * ∫⁻ y in s, gammaPDF a (r / c) y ∂(volume.map (c * ·)) := by
-        rw [setLIntegral_map hs (measurable_gammaPDF a (r / c)) hT]
+        rw [setLIntegral_map hs (Probability.measurable_gammaPDF a (r / c)) hT]
     _ = ∫⁻ y in s, gammaPDF a (r / c) y := by
         rw [Real.map_volume_mul_left hc.ne', setLIntegral_smul_measure, smul_eq_mul, ← mul_assoc,
           ← ENNReal.ofReal_mul hc.le, abs_of_pos (inv_pos.mpr hc), mul_inv_cancel₀ hc.ne',
