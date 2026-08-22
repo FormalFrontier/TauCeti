@@ -141,7 +141,7 @@ theorem subsingleton_X₁ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
 omit hS in
 /-- The connecting map is postcomposition with the extension class of the short exact
 sequence. -/
-lemma δ_apply {T : ShortComplex (Sheaf J AddCommGrpCat.{v})} (hT : T.ShortExact)
+private lemma δ_apply {T : ShortComplex (Sheaf J AddCommGrpCat.{v})} (hT : T.ShortExact)
     (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) (x : _root_.CategoryTheory.Sheaf.H T.X₃ n₀) :
     δ hT n₀ n₁ h x = x.comp hT.extClass h :=
   (rfl)
