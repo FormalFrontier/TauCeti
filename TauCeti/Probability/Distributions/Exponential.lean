@@ -1,55 +1,90 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The Tau Ceti contributors
+Authors: Claude, Codex, The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Probability.Distributions.Exponential
+public import Mathlib.Probability.Moments.Variance
 public import Mathlib.Probability.Moments.MGFAnalytic
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Independence.Basic
+import TauCeti.Probability.Distributions.PDFInstances
 public import TauCeti.MeasureTheory.Integral.ExpDecay
 
 /-!
 # Elementary theory of the exponential distribution
 
-This file completes the elementary moment and transform API for Mathlib's exponential measure,
-parametrized by its rate.  For a positive rate `r`, it identifies the exact exponential-moment
-domain, computes the moment- and cumulant-generating functions and the characteristic function,
-and deduces the mean and variance.  It also states the memoryless property using conditional
-probability.
+This file completes the elementary moment, transform, and tail API for Mathlib's exponential
+measure, parametrized by its rate. For a positive rate `r`, it evaluates all moments, identifies
+the exact exponential-moment domain, computes the moment- and cumulant-generating functions and the
+characteristic function, and deduces the mean and variance. It also establishes the memoryless
+property and computes the law of the minimum of independent exponentials.
 
-The real integral calculations are adapted from
-[mathlib4#35504](https://github.com/leanprover-community/mathlib4/pull/35504) by Joakim Björnander
-(Apache 2.0).  The exact converse for the moment domain uses
-`TauCeti.integrableOn_exp_mul_Ioi_iff`.
+**Moments come from one formula.** `integral_pow_expMeasure` computes every moment,
+`∫ x ^ n ∂(expMeasure r) = n ! / r ^ n`, and the mean and second moment are its `n = 1` and `n = 2`
+specializations.
+
+**The engine is `TauCeti.MeasureTheory.Integral.ExpDecay`.** `integral_pow_mul_exp_neg_mul_Ioi`
+evaluates `∫ t in Ioi 0, t ^ n * exp (-(a * t))` as `n ! / a ^ (n + 1)`,
+`integrableOn_pow_mul_exp_neg_mul_Ioi` supplies the matching integrability, and
+`integrableOn_exp_mul_Ioi_iff` identifies the exact exponential-integrability domain.
 
 ## Main results
 
-* `ProbabilityTheory.integrableExpSet_id_expMeasure`: the exact domain `(-∞, r)`.
-* `ProbabilityTheory.mgf_id_expMeasure` and `ProbabilityTheory.cgf_id_expMeasure`: the real
-  transforms on that domain.
-* `ProbabilityTheory.charFun_expMeasure`: the characteristic function.
-* `ProbabilityTheory.integral_id_expMeasure` and `ProbabilityTheory.variance_id_expMeasure`: the
-  mean and variance.
-* `ProbabilityTheory.measure_Ioi_expMeasure`: the tail probability.
-* `ProbabilityTheory.memoryless_expMeasure`: the conditional tail is unchanged by elapsed time.
-* `ProbabilityTheory.hasLaw_min_expMeasure_of_indepFun`: the minimum of independent exponentials.
+* `integrable_pow_expMeasure` — every moment is integrable, for `0 < r`;
+* `integral_pow_expMeasure` — the `n`-th moment, `n ! / r ^ n`, for `0 < r`;
+* `integral_id_expMeasure`, `integral_sq_expMeasure` — the mean and the second moment;
+* `variance_id_expMeasure` — the variance `(r ^ 2)⁻¹`;
+* `integrable_exp_mul_expMeasure_iff` — exact exponential integrability threshold `t < r`;
+* `integrableExpSet_id_expMeasure`, `integrableExpSet_fun_id_expMeasure` — exact domain `(-∞, r)`;
+* `mgf_id_expMeasure`, `mgf_fun_id_expMeasure` — moment-generating function `r / (r - t)`;
+* `cgf_id_expMeasure` — cumulant-generating function `log (r / (r - t))`;
+* `charFun_expMeasure` — characteristic function `(r : ℂ) / (r - I * t)`;
+* `memLp_id_expMeasure` — membership in every finite `Lᵖ` space;
+* `measureReal_Ioi_expMeasure`, `measure_Ioi_expMeasure` — tail probabilities;
+* `memoryless_expMeasure` — the conditional tail is unchanged by elapsed time;
+* `hasLaw_min_expMeasure_of_indepFun` — minimum of independent exponentials.
+
+## References
+
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, exponential.
+* [mathlib4#35504](https://github.com/leanprover-community/mathlib4/pull/35504), the upstream
+  exponential mgf, moments and memorylessness work that the roadmap names as the source for this
+  material. It has not landed at Tau Ceti's current Mathlib pin, so the declarations here follow
+  its names and theorem shapes and should be dropped once the pin provides them.
 -/
 
 public section
 
 noncomputable section
 
+open MeasureTheory ProbabilityTheory Set Real
 open scoped ENNReal NNReal Topology
 
-open Filter MeasureTheory Real Set
+namespace TauCeti
 
-namespace ProbabilityTheory
+namespace Probability
 
-variable {r t : ℝ}
+variable {a r s t : ℝ} {n : ℕ}
+
+/-- The exponential density in closed form. Kept private: it only unfolds Mathlib's definition
+through `gammaPDFReal 1`, so it is a proof convenience rather than API. -/
+private theorem exponentialPDFReal_apply (x : ℝ) :
+    exponentialPDFReal r x = if 0 ≤ x then r * exp (-(r * x)) else 0 := by
+  rw [exponentialPDFReal, gammaPDFReal]
+  split_ifs with hx
+  · rw [Real.rpow_one, Real.Gamma_one, sub_self, Real.rpow_zero]
+    ring
+  · rfl
+
+/-- The `ℝ≥0∞` density at rate `r`, read as a real number, is `exponentialPDFReal`. -/
+private theorem toReal_gammaPDF_one (hr : 0 < r) (x : ℝ) :
+    (gammaPDF 1 r x).toReal = exponentialPDFReal r x := by
+  unfold gammaPDF exponentialPDFReal
+  rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
 
 /-- `expMeasure r` is the Lebesgue measure weighted by the exponential density. -/
 private lemma expMeasure_eq_withDensity (r : ℝ) :
@@ -59,10 +94,21 @@ private lemma measurable_exponentialPDF (r : ℝ) : Measurable (exponentialPDF r
   unfold exponentialPDF
   exact (measurable_exponentialPDFReal r).ennreal_ofReal
 
+/-- An integral against `expMeasure` is a density integral against `volume`. -/
+private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
+    ∫ x, g x ∂(expMeasure r) = ∫ x, exponentialPDFReal r x * g x := by
+  have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
+  have key : ∀ x : ℝ, (gammaPDF 1 r x).toReal • g x = exponentialPDFReal r x * g x := by
+    intro x
+    rw [smul_eq_mul, toReal_gammaPDF_one hr]
+  unfold expMeasure gammaMeasure
+  rw [integral_withDensity_eq_integral_toReal_smul hmeas
+      (ae_of_all _ fun x => ENNReal.ofReal_lt_top)]
+  exact integral_congr_ae (ae_of_all _ fun x => key x)
+
 /-- Every integral against `expMeasure r` is the half-line integral of the integrand weighted by
-the exponential density.  This is the single reduction used by all the moment and transform
-computations below. -/
-private lemma integral_expMeasure {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+the exponential density. This is the single reduction used by the transform computations below. -/
+private lemma integral_expMeasure_Ioi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (hr : 0 ≤ r) (f : ℝ → E) :
     ∫ x, f x ∂(expMeasure r) = ∫ x in Ioi 0, (r * exp (-(r * x))) • f x := by
   rw [expMeasure_eq_withDensity,
@@ -80,6 +126,96 @@ private lemma integral_expMeasure {E : Type*} [NormedAddCommGroup E] [NormedSpac
       rw [exponentialPDF_of_nonneg hx,
         ENNReal.toReal_ofReal (mul_nonneg hr (exp_pos _).le)]
   rw [hIci, hdens, integral_Ici_eq_integral_Ioi]
+
+/-- The moment integrand is the Gamma integrand supported on `Ioi 0`. This needs `n ≠ 0`: at
+`n = 0` the left side is the density itself, which does not vanish at the origin. -/
+private theorem integrand_eq_indicator (hn : n ≠ 0) :
+    (fun x => exponentialPDFReal r x * x ^ n)
+      = (Ioi (0:ℝ)).indicator (fun x => r * (x ^ n * exp (-(r * x)))) := by
+  funext x
+  by_cases hx : (0:ℝ) < x
+  · rw [Set.indicator_of_mem (mem_Ioi.mpr hx), exponentialPDFReal_apply]
+    split_ifs with h
+    · ring
+    · exact absurd hx.le h
+  · rw [Set.indicator_of_notMem (by simpa using hx), exponentialPDFReal_apply]
+    have hx' : x ≤ 0 := not_lt.mp hx
+    split_ifs with h
+    · have hx0 : x = 0 := le_antisymm hx' h
+      rw [hx0, zero_pow hn, mul_zero]
+    · ring
+
+/-- The integrability companion of `integral_expMeasure`: integrability against `expMeasure` is
+integrability of the density product against `volume`. -/
+private theorem integrable_expMeasure_iff (hr : 0 < r) (g : ℝ → ℝ) :
+    Integrable g (expMeasure r)
+      ↔ Integrable (fun x => exponentialPDFReal r x * g x) volume := by
+  have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
+  have htoReal : ∀ x : ℝ, g x * (gammaPDF 1 r x).toReal = exponentialPDFReal r x * g x := by
+    intro x
+    rw [toReal_gammaPDF_one hr]
+    ring
+  unfold expMeasure gammaMeasure
+  rw [integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
+    funext htoReal]
+
+/-- **Every moment of the exponential law is integrable.** This is not implied by the moment
+formula below: Lean's integral is defined for non-integrable functions too, so an integral equality
+alone says nothing about finiteness. -/
+@[simp]
+theorem integrable_pow_expMeasure (hr : 0 < r) (n : ℕ) :
+    Integrable (fun x => x ^ n) (expMeasure r) := by
+  have hprob : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+  rcases eq_or_ne n 0 with rfl | hn
+  · simp
+  rw [integrable_expMeasure_iff hr, integrand_eq_indicator hn,
+    integrable_indicator_iff measurableSet_Ioi]
+  exact (integrableOn_pow_mul_exp_neg_mul_Ioi n hr).const_mul r
+
+/-- **The moments of the exponential law.** `∫ x ^ n ∂(expMeasure r) = n ! / r ^ n`, for every `n`.
+
+No nondegeneracy hypothesis on `n` is needed: at `n = 0` both sides are `1`. The mean and the
+second moment below are the `n = 1` and `n = 2` cases. -/
+@[simp]
+theorem integral_pow_expMeasure (hr : 0 < r) (n : ℕ) :
+    ∫ x, x ^ n ∂(expMeasure r) = (Nat.factorial n : ℝ) / r ^ n := by
+  rcases eq_or_ne n 0 with rfl | hn
+  · have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+    simp
+  rw [integral_expMeasure hr, integrand_eq_indicator hn,
+    integral_indicator measurableSet_Ioi, integral_const_mul,
+    integral_pow_mul_exp_neg_mul_Ioi n hr]
+  field_simp
+  ring
+
+/-- **The mean of the exponential law** with rate `r` is `r⁻¹`. -/
+@[simp]
+theorem integral_id_expMeasure (hr : 0 < r) : ∫ x, x ∂(expMeasure r) = r⁻¹ := by
+  simpa using integral_pow_expMeasure hr 1
+
+/-- The second moment of the exponential law with rate `r` is `2 / r ^ 2`. -/
+theorem integral_sq_expMeasure (hr : 0 < r) : ∫ x, x ^ 2 ∂(expMeasure r) = 2 / r ^ 2 := by
+  simpa using integral_pow_expMeasure hr 2
+
+/-- **The variance of the exponential law** with rate `r` is `(r ^ 2)⁻¹`. -/
+@[simp]
+theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = (r ^ 2)⁻¹ := by
+  have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+  have h₂ : Integrable (fun x => id x ^ 2) (expMeasure r) :=
+    integrable_pow_expMeasure hr 2
+  have hLp : MemLp id 2 (expMeasure r) :=
+    (memLp_two_iff_integrable_sq measurable_id.aestronglyMeasurable).2 h₂
+  rw [variance_eq_sub hLp]
+  simp only [Pi.pow_apply, id_eq]
+  rw [integral_sq_expMeasure hr, integral_id_expMeasure hr]
+  field_simp
+  ring
+
+/-- The variance of an exponential law with positive rate `r` is `(r ^ 2)⁻¹`. -/
+@[simp]
+theorem variance_fun_id_expMeasure (hr : 0 < r) :
+    Var[fun x : ℝ => x; expMeasure r] = (r ^ 2)⁻¹ :=
+  variance_id_expMeasure hr
 
 /-- The exponential integrand is integrable exactly below the rate. -/
 lemma integrable_exp_mul_expMeasure_iff (hr : 0 < r) :
@@ -123,7 +259,7 @@ theorem integrableExpSet_id_expMeasure (hr : 0 < r) :
 theorem mgf_fun_id_expMeasure (hr : 0 < r) (ht : t < r) :
     mgf (fun x : ℝ => x) (expMeasure r) t = r / (r - t) := by
   have h : ∫ x : ℝ, exp (t * x) ∂(expMeasure r) = r / (r - t) := by
-    rw [integral_expMeasure hr.le]
+    rw [integral_expMeasure_Ioi hr.le]
     have hint : ∀ x : ℝ, (r * exp (-(r * x))) • exp (t * x) = r * exp ((t - r) * x) := by
       intro x
       rw [smul_eq_mul, mul_assoc, ← exp_add]
@@ -147,7 +283,7 @@ theorem cgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
 /-- The characteristic function of an exponential law with positive rate. -/
 theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
     charFun (expMeasure r) t = (r : ℂ) / (r - Complex.I * t) := by
-  rw [charFun_apply_real, integral_expMeasure hr.le]
+  rw [charFun_apply_real, integral_expMeasure_Ioi hr.le]
   have hint : ∀ x : ℝ, (r * exp (-(r * x))) • Complex.exp (t * x * Complex.I) =
       (r : ℂ) * Complex.exp ((-(r : ℂ) + (t : ℂ) * Complex.I) * (x : ℂ)) := by
     intro x
@@ -168,7 +304,7 @@ theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
   ring
 
 /-- The identity belongs to every finite `Lᵖ` space under a positive-rate exponential law.
-Stated for `fun x => x` so that it can be fed to the `variance` API below; `memLp_id_expMeasure`
+Stated for `fun x => x` so that it can be fed to the `variance` API; `memLp_id_expMeasure`
 is the public form. -/
 private lemma memLp_fun_id_expMeasure (hr : 0 < r) (p : ℝ≥0) :
     MemLp (fun x : ℝ => x) p (expMeasure r) := by
@@ -179,74 +315,6 @@ private lemma memLp_fun_id_expMeasure (hr : 0 < r) (p : ℝ≥0) :
 /-- The identity belongs to every finite `Lᵖ` space under a positive-rate exponential law. -/
 lemma memLp_id_expMeasure (hr : 0 < r) (p : ℝ≥0) : MemLp id p (expMeasure r) :=
   memLp_fun_id_expMeasure hr p
-
-section Moments
-
-/-- Zero lies in the interior of the exponential-integrability domain, so the
-moment-generating function is differentiable there. -/
-private lemma zero_mem_interior_integrableExpSet_expMeasure (hr : 0 < r) :
-    (0 : ℝ) ∈ interior (integrableExpSet (fun x : ℝ => x) (expMeasure r)) := by
-  rw [integrableExpSet_fun_id_expMeasure hr, interior_Iio]
-  exact hr
-
-/-- Near the origin the moment-generating function is the rational function `t ↦ r / (r - t)`. -/
-private lemma mgf_eventuallyEq_expMeasure (hr : 0 < r) :
-    mgf (fun x : ℝ => x) (expMeasure r) =ᶠ[𝓝 0] fun t => r / (r - t) := by
-  filter_upwards [Iio_mem_nhds hr] with t ht using mgf_fun_id_expMeasure hr ht
-
-/-- The derivative of `t ↦ r / (r - t)` below the rate. -/
-private lemma hasDerivAt_div_sub (u : ℝ) (hu : u < r) :
-    HasDerivAt (fun v : ℝ => r / (r - v)) (r / (r - u) ^ 2) u := by
-  have hne : r - u ≠ 0 := sub_ne_zero.mpr (ne_of_gt hu)
-  have hden : HasDerivAt (fun v : ℝ => r - v) (-1) u :=
-    (hasDerivAt_id' (x := u)).const_sub r
-  have hval : (0 * (r - u) - r * (-1)) / (r - u) ^ 2 = r / (r - u) ^ 2 := by ring
-  exact hval ▸ (hasDerivAt_const u r).fun_div hden hne
-
-/-- The mean of an exponential law with positive rate `r` is `r⁻¹`. -/
-@[simp]
-theorem integral_id_expMeasure (hr : 0 < r) : ∫ x, x ∂(expMeasure r) = r⁻¹ := by
-  have h := deriv_mgf_zero (X := fun x : ℝ => x) (μ := expMeasure r)
-    (zero_mem_interior_integrableExpSet_expMeasure hr)
-  rw [(mgf_eventuallyEq_expMeasure hr).deriv_eq,
-    (hasDerivAt_div_sub 0 hr).deriv] at h
-  rw [← h, sub_zero, pow_two, ← div_div, div_self hr.ne', one_div]
-
-/-- The variance of an exponential law with positive rate `r` is `r⁻²`. -/
-@[simp]
-theorem variance_fun_id_expMeasure (hr : 0 < r) :
-    Var[fun x : ℝ => x; expMeasure r] = r⁻¹ ^ 2 := by
-  have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
-  have hne : r ≠ 0 := hr.ne'
-  have hsq : ∫ x : ℝ, x ^ 2 ∂(expMeasure r) = 2 * r⁻¹ ^ 2 := by
-    have h := iteratedDeriv_mgf_zero (X := fun x : ℝ => x) (μ := expMeasure r)
-      (zero_mem_interior_integrableExpSet_expMeasure hr) 2
-    have hderiv : deriv (fun v : ℝ => r / (r - v)) =ᶠ[𝓝 0] fun u : ℝ => r / (r - u) ^ 2 := by
-      filter_upwards [Iio_mem_nhds hr] with u hu using (hasDerivAt_div_sub u hu).deriv
-    have hsecond : HasDerivAt (fun u : ℝ => r / (r - u) ^ 2)
-        ((0 * (r - 0) ^ 2 - r * (2 * (r - 0) ^ 1 * (-1))) / ((r - 0) ^ 2) ^ 2) 0 := by
-      have hden_ne : (r - 0) ^ 2 ≠ 0 := pow_ne_zero _ (by simpa using hr.ne')
-      have hden : HasDerivAt (fun v : ℝ => r - v) (-1) 0 :=
-        (hasDerivAt_id' (x := (0 : ℝ))).const_sub r
-      exact (hasDerivAt_const (0 : ℝ) r).fun_div (hden.pow 2) hden_ne
-    rw [(mgf_eventuallyEq_expMeasure hr).iteratedDeriv_eq 2, iteratedDeriv_succ,
-      iteratedDeriv_one, hderiv.deriv_eq, hsecond.deriv] at h
-    simp only [Pi.pow_apply] at h
-    rw [← h, sub_zero]
-    field_simp
-    ring
-  rw [variance_eq_sub (memLp_fun_id_expMeasure hr 2)]
-  have hid : ∫ x : ℝ, x ∂(expMeasure r) = r⁻¹ := integral_id_expMeasure hr
-  simp only [Pi.pow_apply]
-  rw [hsq, hid]
-  ring
-
-/-- The variance of an exponential law with positive rate `r` is `r⁻²`. -/
-@[simp]
-theorem variance_id_expMeasure (hr : 0 < r) : Var[id; expMeasure r] = r⁻¹ ^ 2 :=
-  variance_fun_id_expMeasure hr
-
-end Moments
 
 /-- The real-valued tail probability of a positive-rate exponential law. -/
 lemma measureReal_Ioi_expMeasure (hr : 0 < r) (x : ℝ) :
@@ -270,7 +338,7 @@ lemma measure_Ioi_expMeasure (hr : 0 < r) (x : ℝ) :
 /-- The memoryless property of a positive-rate exponential law, stated with conditional
 probability: after surviving for time `s`, the chance of surviving a further time `t` is the
 original tail probability at `t`. -/
-theorem memoryless_expMeasure (hr : 0 < r) {s t : ℝ} (hs : 0 ≤ s) (ht : 0 ≤ t) :
+theorem memoryless_expMeasure (hr : 0 < r) (hs : 0 ≤ s) (ht : 0 ≤ t) :
     cond (expMeasure r) (Ioi s) (Ioi (s + t)) = (expMeasure r) (Ioi t) := by
   have hst : Ioi s ∩ Ioi (s + t) = Ioi (s + t) := by
     rw [Set.inter_eq_right]
@@ -288,7 +356,7 @@ theorem memoryless_expMeasure (hr : 0 < r) {s t : ℝ} (hs : 0 ≤ s) (ht : 0 �
 /-- The minimum of two independent random variables with exponential laws has an exponential law
 whose rate is the sum of their rates. -/
 theorem hasLaw_min_expMeasure_of_indepFun {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω}
-    {X Y : Ω → ℝ} {r s : ℝ} (hr : 0 < r) (hs : 0 < s)
+    {X Y : Ω → ℝ} (hr : 0 < r) (hs : 0 < s)
     (hXY : IndepFun X Y P) (hX : HasLaw X (expMeasure r) P)
     (hY : HasLaw Y (expMeasure s) P) :
     HasLaw (fun ω => min (X ω) (Y ω)) (expMeasure (r + s)) P := by
@@ -329,4 +397,6 @@ theorem hasLaw_min_expMeasure_of_indepFun {Ω : Type*} {mΩ : MeasurableSpace Ω
   · rw [ite_eq_right hx, ite_eq_right hx, ite_eq_right hx]
     norm_num
 
-end ProbabilityTheory
+end Probability
+
+end TauCeti
