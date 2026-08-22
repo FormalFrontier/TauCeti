@@ -44,7 +44,8 @@ so the mass of the associated spatial Bochner measure is a function of time all 
 differences alternate, with no smoothness available a priori. Combining the characterization here
 with the mollification of
 `TauCeti.Analysis.CompletelyMonotone.FiniteDifference.Mollify` converts that hypothesis into the
-input of the Hausdorff--Bernstein--Widder theorem.
+input of the Hausdorff--Bernstein--Widder theorem, up to an arbitrarily small shift of the
+argument.
 
 ## Main declarations
 
@@ -123,25 +124,14 @@ theorem fwdDiffList_replicate (n : ℕ) (h : ℝ) (f : ℝ → ℝ) :
   | zero => rfl
   | succ n ih => rw [List.replicate_succ, fwdDiffList_cons, ih, Function.iterate_succ_apply']
 
-/-- Mixed differences are additive-group homomorphisms: they commute with negation. -/
-theorem fwdDiffList_neg (l : List ℝ) (f : ℝ → ℝ) :
-    fwdDiffList l (fun t => -f t) = fun t => -fwdDiffList l f t := by
-  induction l with
-  | nil => rfl
-  | cons h l ih =>
-      ext t
-      simp only [fwdDiffList_cons, ih, fwdDiff]
-      ring
-
 /-- Mixed differences commute with addition. -/
 theorem fwdDiffList_add (l : List ℝ) (f g : ℝ → ℝ) :
     fwdDiffList l (fun t => f t + g t) = fun t => fwdDiffList l f t + fwdDiffList l g t := by
   induction l with
   | nil => rfl
   | cons h l ih =>
-      ext t
-      simp only [fwdDiffList_cons, ih, fwdDiff]
-      ring
+      simp only [fwdDiffList_cons, ih]
+      exact fwdDiff_add h (fwdDiffList l f) (fwdDiffList l g)
 
 /-- Mixed differences commute with multiplication by a constant. -/
 theorem fwdDiffList_const_mul (c : ℝ) (l : List ℝ) (f : ℝ → ℝ) :
@@ -149,9 +139,13 @@ theorem fwdDiffList_const_mul (c : ℝ) (l : List ℝ) (f : ℝ → ℝ) :
   induction l with
   | nil => rfl
   | cons h l ih =>
-      ext t
-      simp only [fwdDiffList_cons, ih, fwdDiff]
-      ring
+      simp only [fwdDiffList_cons, ih]
+      exact fwdDiff_const_smul h c (fwdDiffList l f)
+
+/-- Mixed differences are additive-group homomorphisms: they commute with negation. -/
+theorem fwdDiffList_neg (l : List ℝ) (f : ℝ → ℝ) :
+    fwdDiffList l (fun t => -f t) = fun t => -fwdDiffList l f t := by
+  simpa only [neg_one_mul] using fwdDiffList_const_mul (-1) l f
 
 /-- Only the values of `f` on `[0, ∞)` matter for a mixed difference evaluated there, as long as
 all the steps are nonnegative. -/
