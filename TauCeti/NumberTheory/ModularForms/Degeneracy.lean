@@ -308,8 +308,8 @@ entries are rearranged as `(a, b; d c, e) ↦ (a, d b; c, e)`, which is again in
 determinant one. -/
 def conjScale (d : ℕ) (γ : SL(2, ℤ)) (c : ℤ) (hc : γ 1 0 = d * c) : SL(2, ℤ) :=
   ⟨!![γ 0 0, (d : ℤ) * γ 0 1; c, γ 1 1], by
-    have hdet : (γ 0 0) * (γ 1 1) - (γ 0 1) * (γ 1 0) = 1 := by
-      have := γ.2; rwa [Matrix.det_fin_two] at this
+    have hdet : (γ 0 0) * (γ 1 1) - (γ 0 1) * (γ 1 0) = 1 :=
+      Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ
     rw [hc] at hdet
     rw [Matrix.det_fin_two_of]
     linarith [hdet]⟩

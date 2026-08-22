@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.LinearAlgebra.Matrix.Submatrix
 public import TauCeti.LinearAlgebra.RootSystem.RootLength
 public import Mathlib.GroupTheory.OrderOfElement
 
@@ -31,6 +32,8 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 * `TauCeti.trialityPermD4`: the order-three triality symmetry of `D₄`.
 * `TauCeti.lengthPermRankTwo`: the length-exchanging permutation for `B₂` and `G₂`.
 * `TauCeti.lengthPermF4`: the length-exchanging permutation for `F₄`.
+* `TauCeti.DynkinType.diagramSymmetry`: the group of node permutations preserving the Cartan matrix
+  of a Dynkin type, of which the graph permutations above are members.
 
 ## Main results
 
@@ -331,5 +334,31 @@ theorem cartanMatrix_F4_submatrix_lengthPermF4_ne :
   have := congrFun (congrFun h 1) 2
   simp [Matrix.submatrix_apply, DynkinType.cartanMatrix_F4, CartanMatrix.F₄, lengthPermF4,
     graphPermA] at this
+
+/-! ## Symmetries of the Bourbaki-numbered Cartan matrix -/
+
+namespace DynkinType
+
+/-- **The symmetry group of a Bourbaki-numbered Dynkin diagram**: the permutations of the nodes
+which preserve the Cartan matrix. This is `TauCeti.matrixSymmetryGroup` at that matrix. -/
+def diagramSymmetry (t : DynkinType) : Subgroup (Equiv.Perm (Fin t.rank)) :=
+  matrixSymmetryGroup t.cartanMatrix
+
+variable {t : DynkinType} {σ : Equiv.Perm (Fin t.rank)}
+
+/-- The matrix form of membership in `TauCeti.DynkinType.diagramSymmetry`. This is the shape in
+which `TauCeti.serreDiagramAut` takes a Cartan-matrix symmetry. -/
+theorem mem_diagramSymmetry_iff_submatrix :
+    σ ∈ t.diagramSymmetry ↔ t.cartanMatrix.submatrix σ σ = t.cartanMatrix :=
+  mem_matrixSymmetryGroup_iff
+
+/-- The entrywise form of membership in `TauCeti.DynkinType.diagramSymmetry`. This is the shape in
+which the graph permutations above are shown to be diagram symmetries. -/
+theorem mem_diagramSymmetry_iff :
+    σ ∈ t.diagramSymmetry ↔ ∀ i j, t.cartanMatrix (σ i) (σ j) = t.cartanMatrix i j :=
+  mem_diagramSymmetry_iff_submatrix.trans
+    ⟨fun h i j => congrFun₂ h i j, fun h => by ext i j; exact h i j⟩
+
+end DynkinType
 
 end TauCeti
