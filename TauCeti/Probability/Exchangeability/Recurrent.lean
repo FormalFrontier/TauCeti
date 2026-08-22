@@ -303,7 +303,8 @@ section AbsorbedWalk
 
 /-- The deterministic path `false, true, true, …`, on the one-point sample space. It is the
 Markov chain that leaves `false` at time `1` and is then absorbed at `true`. -/
-abbrev absorbedWalk : ℕ → Unit → Bool := fun n _ => decide (n ≠ 0)
+@[expose]
+def absorbedWalk : ℕ → Unit → Bool := fun n _ => decide (n ≠ 0)
 
 @[simp]
 theorem absorbedWalk_apply (n : ℕ) (u : Unit) : absorbedWalk n u = decide (n ≠ 0) :=
