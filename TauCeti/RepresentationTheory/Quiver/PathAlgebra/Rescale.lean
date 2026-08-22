@@ -167,7 +167,7 @@ theorem rescale_vertexIdempotent (v : Q) :
     rescale c (vertexIdempotent k v) = vertexIdempotent k v := by
   rw [vertexIdempotent_eq_ofPath, rescale_ofPath, pathWeight_nil, one_smul]
 
-@[simp]
+/-- Rescaling an arrow multiplies it by its label. -/
 theorem rescale_ofArrow {a b : Q} (e : a ⟶ b) : rescale c (ofArrow e) = c e • ofArrow e := by
   rw [ofArrow_eq_ofPath, rescale_ofPath, pathWeight_toPath]
 

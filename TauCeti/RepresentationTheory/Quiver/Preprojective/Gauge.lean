@@ -96,7 +96,6 @@ noncomputable def doubledBacktrackElem {x y : Symmetrify Q} (b : x ⟶ y) :
 
 omit [Finite Q] in
 /-- Over an arrow of `Q` itself, the doubled backtrack is the head backtrack `a a*`. -/
-@[simp]
 theorem doubledBacktrackElem_of {i j : Q} (a : i ⟶ j) :
     doubledBacktrackElem k (Symmetrify.of.map a) = headBacktrackElem k a := by
   rw [doubledBacktrackElem, ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem]
@@ -104,7 +103,6 @@ theorem doubledBacktrackElem_of {i j : Q} (a : i ⟶ j) :
 omit [Finite Q] in
 /-- Over the formal reverse of an arrow of `Q`, the doubled backtrack is the tail backtrack
 `a* a`. -/
-@[simp]
 theorem doubledBacktrackElem_reverse_of {i j : Q} (a : i ⟶ j) :
     doubledBacktrackElem k (Quiver.reverse (Symmetrify.of.map a)) = tailBacktrackElem k a := by
   rw [doubledBacktrackElem, Quiver.reverse_reverse,
@@ -244,11 +242,11 @@ def doubledLabelling (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) : ∀ ⦃x y : Sym
 
 variable {k}
 
-@[simp]
+/-- The gauge labelling on an arrow of `Q` is the given label. -/
 theorem doubledLabelling_of (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) {i j : Q} (a : i ⟶ j) :
     doubledLabelling k u (Symmetrify.of.map a) = u a := rfl
 
-@[simp]
+/-- The gauge labelling on the formal reverse of an arrow of `Q` is one. -/
 theorem doubledLabelling_reverse_of (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) {i j : Q} (a : i ⟶ j) :
     doubledLabelling k u (Quiver.reverse (Symmetrify.of.map a)) = 1 := rfl
 
