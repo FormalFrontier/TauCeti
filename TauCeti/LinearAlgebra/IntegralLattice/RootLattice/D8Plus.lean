@@ -135,7 +135,7 @@ theorem d8SpinorClass_quadratic_eq_zero :
   norm_num
 
 /-- The spinor glue subgroup is quadratic-isotropic. -/
-theorem d8SpinorSubgroup_isIsotropic :
+theorem isIsotropic_d8SpinorSubgroup :
     ((checkerboardLattice 8).discriminantQuadraticModule
       (isEven_checkerboardLattice 8)).IsIsotropic d8SpinorSubgroup := by
   apply ((checkerboardLattice 8).isEven_intermediateCarrierOfDiscriminantSubgroup_iff
@@ -154,7 +154,7 @@ theorem d8SpinorSubgroup_isIsotropic :
 theorem isEven_d8PlusCarrier : IntermediateCarrier.IsEven d8PlusCarrier := by
   rw [d8PlusCarrier,
     (checkerboardLattice 8).isEven_intermediateCarrierOfDiscriminantSubgroup_iff]
-  exact d8SpinorSubgroup_isIsotropic
+  exact isIsotropic_d8SpinorSubgroup
 
 /-- The `D₈⁺` integral lattice, obtained from the even spinor glue carrier with the same standard
 dot product as the checkerboard lattice. -/
