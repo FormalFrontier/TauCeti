@@ -45,7 +45,7 @@ shifted rate is still positive.
 * `TauCeti.mgf_id_gammaMeasure` — the moment-generating function is `(1 - t / r) ^ (-a)` there;
 * `TauCeti.cgf_id_gammaMeasure` — the cumulant-generating function is `-a * log (1 - t / r)`
   there, the real logarithm of the previous formula;
-* `TauCeti.map_gammaMeasure_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
+* `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
 
 ## References
 
@@ -292,7 +292,7 @@ private lemma ofReal_mul_gammaPDF_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} 
 
 /-- Scaling a gamma variable by `c > 0` divides its rate by `c`. -/
 @[simp]
-theorem map_gammaMeasure_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} (hc : 0 < c) :
+theorem gammaMeasure_map_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} (hc : 0 < c) :
     (gammaMeasure a r).map (c * ·) = gammaMeasure a (r / c) := by
   have hT : Measurable fun x : ℝ ↦ c * x := measurable_const_mul c
   ext s hs
