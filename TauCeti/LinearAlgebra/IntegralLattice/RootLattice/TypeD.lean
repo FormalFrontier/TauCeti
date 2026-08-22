@@ -467,6 +467,13 @@ noncomputable def checkerboardVectorClass : (checkerboardLattice n).Discriminant
 noncomputable def checkerboardSpinorClass : (checkerboardLattice n).DiscriminantGroup :=
   Submodule.Quotient.mk ⟨checkerboardSpinor n, checkerboardSpinor_mem_dualCarrier⟩
 
+/-- The spinor class is represented by the Conway--Sloane spinor vector. -/
+@[simp]
+theorem checkerboardSpinorClass_eq_mk :
+    checkerboardSpinorClass n =
+      Submodule.Quotient.mk ⟨checkerboardSpinor n, checkerboardSpinor_mem_dualCarrier⟩ :=
+  (rfl)
+
 /-- The class of the cospinor representative `c` in the checkerboard discriminant group. -/
 noncomputable def checkerboardCospinorClass : (checkerboardLattice n).DiscriminantGroup :=
   Submodule.Quotient.mk ⟨checkerboardCospinor n, checkerboardCospinor_mem_dualCarrier⟩
