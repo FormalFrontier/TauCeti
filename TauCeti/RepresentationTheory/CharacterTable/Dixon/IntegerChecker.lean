@@ -142,7 +142,6 @@ theorem complexTableOfInteger_apply
   (rfl)
 
 /-- The cast-and-reindexed integer table evaluated at a numbered row and numbered class. -/
-@[simp]
 theorem complexTableOfInteger_apply_classOf
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) (i j : Fin d.numClasses) :
     d.complexTableOfInteger table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
