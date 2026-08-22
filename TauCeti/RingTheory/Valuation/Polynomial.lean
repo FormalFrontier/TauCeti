@@ -1,0 +1,53 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.Algebra.Polynomial.AlgebraMap
+public import Mathlib.RingTheory.Valuation.Basic
+
+/-!
+# Polynomial expressions in the integers of a valuation
+
+A valuation takes value at most `1` on every polynomial expression in an element of value at most
+`1`, provided the images of the coefficients also have value at most `1`. Concretely, the ring of
+integers `v.integer` is a subring containing the images of the coefficients, so it contains every
+`aeval t p` with `t` in it; the proof below is the ultrametric bound on the coefficient sum, which
+is what `Valuation` supplies directly.
+
+## Main results
+
+* `Valuation.aeval_le_one`: `v (Polynomial.aeval t p) ≤ 1` whenever `v t ≤ 1` and the images of
+  the coefficients have value at most `1`.
+
+## Roadmap
+
+`TauCetiRoadmap/EllipticCurves/README.md`, Layer 0–1 infrastructure: the place-at-infinity
+argument for isogenies in
+`AlgebraicGeometry/EllipticCurve/Isogeny/InfinityPlace.lean` needs exactly this to see that a
+pulled-back affine function of a Weierstrass curve — a polynomial in the pulled-back coordinates —
+stays in the valuation ring at infinity. The statement is about a valuation and a polynomial and
+nothing else, so it is stated here rather than there.
+-/
+
+public section
+
+namespace Valuation
+
+variable {R L Γ₀ : Type*} [CommSemiring R] [Ring L] [Algebra R L]
+  [LinearOrderedCommMonoidWithZero Γ₀]
+
+/-- **A valuation integral on the coefficients is at most `1` on polynomial expressions in an
+element of the integers.** -/
+theorem aeval_le_one (v : Valuation L Γ₀) (hR : ∀ r : R, v (algebraMap R L r) ≤ 1)
+    {t : L} (ht : v t ≤ 1) (p : Polynomial R) : v (Polynomial.aeval t p) ≤ 1 := by
+  rw [Polynomial.aeval_eq_sum_range]
+  refine v.map_sum_le fun i _ ↦ ?_
+  rw [Algebra.smul_def, v.map_mul, v.map_pow]
+  exact mul_le_one' (hR _) (pow_le_one' ht i)
+
+end Valuation
+
+end

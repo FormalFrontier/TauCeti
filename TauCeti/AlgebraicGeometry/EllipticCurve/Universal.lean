@@ -34,6 +34,8 @@ polynomial) with distinguished point `(X,Y)`.
 
 ## Main results
 
+* `WeierstrassCurve.Universal.polyToField_polynomial`: the Weierstrass polynomial vanishes in the
+  universal field — the relation `Universal.Ring` is the quotient by.
 * `WeierstrassCurve.Universal.equation_point`: `(X,Y)` satisfies the affine Weierstrass equation
   of `pointedCurve` — the universal curve really is pointed.
 * `WeierstrassCurve.map_specialize`: every Weierstrass curve is a specialization of the universal
@@ -110,6 +112,16 @@ would do. The section is a plain `public section` for the reason spelled out in
 would publish every proof body to make a handful of `rfl`s go through. And `equation_point` opens
 with `change` where the source has `show`, that step rewriting the goal rather than only naming it
 (`linter.style.show`).
+
+`polyToField_polynomial` is the source's declaration of that name (its `:120`), and the last of
+this file's declarations to arrive; `equation_point`, which the source also routes through it,
+does so here too. One difference: upstream it is `@[simp]`, and here it must not be. `simp` can
+already prove the statement, because this file's `polyToField_apply` is `@[simp]` where the
+source's is not, and the tag therefore fails `scripts/lint-env.sh` with a fresh
+`simpNF` violation (*"simp can prove this: by simp only [\*, polyToField_apply, AdjoinRoot.mk_self,
+map_zero]"*). Untagged, that run reports no new violations. Being redundant for `simp` does not
+make the name redundant: three proofs cite it by name, `equation_point` here and the two doubling
+formulas in `DivisionPolynomial/ZSMul.lean`.
 -/
 
 public section
@@ -192,6 +204,14 @@ the fraction field. -/
 lemma polyToField_apply (p : Poly) :
     polyToField p = algebraMap Universal.Ring _ (AdjoinRoot.mk _ p) := (rfl)
 
+/-- **The Weierstrass polynomial vanishes in the universal field.** It is exactly the element
+`Universal.Ring` quotients out, so `polyToField` kills it — which is how an identity over
+`pointedCurve` discards the multiples of `curve.polynomial` that clearing denominators throws up. -/
+-- Not `@[simp]`, unlike upstream: `polyToField_apply` is `@[simp]` here, so `simp` already reaches
+-- `0` on its own and a full-library `lint-env` run rejects the tag as a simpNF duplicate.
+lemma polyToField_polynomial : polyToField curve.polynomial = 0 := by
+  rw [polyToField_apply, AdjoinRoot.mk_self, map_zero]
+
 /-- The structure map of `Universal.Field` over the coefficient ring factors through `Poly`: the
 coefficients `A₁,⋯,A₆` reach the universal field by the same route as `X` and `Y` do. Rewriting
 with this turns a statement about `algebraMap` into one about `polyToField`. -/
@@ -252,9 +272,8 @@ lemma equation_point : pointedCurve.toAffine.Equation (polyToField (C X)) (polyT
   have : ∀ p, evalEval (polyToField (C X)) (polyToField Y)
       (p.map (mapRingHom (algebraMap _ Universal.Field))) = polyToField p :=
     fun p ↦ congr($h p)
-  -- The Weierstrass polynomial vanishes at `(X, Y)`: it is exactly what was quotiented out, so
-  -- `AdjoinRoot.mk_self` closes the goal through `polyToField_apply`.
-  rw [Affine.map_polynomial, this, polyToField_apply, AdjoinRoot.mk_self, map_zero]
+  -- The Weierstrass polynomial vanishes at `(X, Y)`: it is exactly what was quotiented out.
+  rw [Affine.map_polynomial, this, polyToField_polynomial]
 
 open Polynomial Affine in
 /-- The distinguished point on the universal pointed Weierstrass curve. -/

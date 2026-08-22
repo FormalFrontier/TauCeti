@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
 public import TauCeti.GroupTheory.DoubleCoset.Orbits
+public import TauCeti.NumberTheory.Modular.Stabilizer
 public import TauCeti.NumberTheory.ModularForms.Norm.Order
 
 import Mathlib.Algebra.FiniteSupport.Basic
@@ -44,8 +45,12 @@ image of a subgroup of `SL(2, ℤ)` has determinant `1` throughout.
 
 ## Main declarations
 
+* `TauCeti.ModularForm.slOrbitOfSubgroupOrbit`: the `SL(2, ℤ)`-orbit containing a `Γ`-orbit, with
+  `TauCeti.ModularForm.finite_preimage_slOrbitOfSubgroupOrbit` — an `SL(2, ℤ)`-orbit contains only
+  finitely many `Γ`-orbits.
 * `TauCeti.ModularForm.orderOfVanishingOnSubgroupOrbit`: the order descended to the
   `Γ`-orbit space.
+* `TauCeti.ModularForm.orderOfVanishingOnSubgroupOrbit_nonneg`: that order is nonnegative.
 * `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnSubgroupOrbit`: finite support of
   the interior order divisor of a general-level modular form.
 * `TauCeti.ModularForm.orderOfVanishingAt_quotientFunc_eq_orderOfVanishingOnSubgroupOrbit`: a
@@ -68,15 +73,141 @@ image of a subgroup of `SL(2, ℤ)` has determinant `1` throughout.
 
 public noncomputable section
 
-open UpperHalfPlane
+open UpperHalfPlane MulAction
 
-open scoped MatrixGroups ModularForm
+open scoped MatrixGroups ModularForm Modular
 
 namespace TauCeti
 
 namespace ModularForm
 
-variable {Γ : Subgroup SL(2, ℤ)} {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
+variable {Γ : Subgroup SL(2, ℤ)}
+
+/-- The `SL(2, ℤ)`-orbit containing a `Γ`-orbit. -/
+noncomputable def slOrbitOfSubgroupOrbit
+    (o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
+    orbitRel.Quotient SL(2, ℤ) ℍ :=
+  Quotient.liftOn' o (fun p ↦ Quotient.mk'' p) fun a b ⟨g, hg⟩ ↦ by
+    obtain ⟨γ, -, hγ⟩ := g.2
+    refine Quotient.sound' ⟨γ, ?_⟩
+    have hb : (g : GL (Fin 2) ℝ) • b = a := hg
+    simpa only [MulAction.compHom_smul_def, hγ] using hb
+
+@[simp]
+lemma slOrbitOfSubgroupOrbit_mk (p : ℍ) :
+    slOrbitOfSubgroupOrbit (Quotient.mk'' p : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) =
+      Quotient.mk'' p :=
+  (rfl)
+
+/-- Every coset translate of `p` stays in the `SL(2, ℤ)`-orbit of `p`. -/
+@[simp]
+lemma slOrbitOfSubgroupOrbit_orbitOfCosetTranslate (p : ℍ)
+    (q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) :
+    slOrbitOfSubgroupOrbit (orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) p q) =
+      Quotient.mk'' p := by
+  induction q using QuotientGroup.induction_on with
+  | H h =>
+    obtain ⟨γ, hγ⟩ := h.2
+    have hq : orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) p
+        (h : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) =
+        Quotient.mk'' ((h : GL (Fin 2) ℝ)⁻¹ • p) := by
+      simp
+    rw [hq, slOrbitOfSubgroupOrbit_mk]
+    refine Quotient.sound' ⟨γ⁻¹, ?_⟩
+    simp [MulAction.compHom_smul_def, ← hγ]
+
+/-- Conversely, every `Γ`-orbit inside the `SL(2, ℤ)`-orbit of `p` is a coset translate of `p`. -/
+lemma exists_orbitOfCosetTranslate_eq
+    {o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ} {p : ℍ}
+    (ho : slOrbitOfSubgroupOrbit o = Quotient.mk'' p) :
+    ∃ q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ,
+      orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) p q = o := by
+  induction o using Quotient.inductionOn' with
+  | h z =>
+    rw [slOrbitOfSubgroupOrbit_mk, Quotient.eq''] at ho
+    obtain ⟨γ, hγ⟩ := ho
+    have hγ' : γ • p = z := hγ
+    -- the translating coset is the class of `γ⁻¹`, read inside `𝒮ℒ`
+    set σ : 𝒮ℒ := ⟨Matrix.SpecialLinearGroup.mapGL ℝ γ⁻¹, ⟨γ⁻¹, rfl⟩⟩ with hσ
+    refine ⟨(σ : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ), ?_⟩
+    -- `QuotientGroup`'s `↑σ` is `⟦σ⟧`, which `orbitOfCosetTranslate_mk` needs `simp` to see
+    have hval : orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) p
+        (σ : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) =
+        Quotient.mk'' ((σ : GL (Fin 2) ℝ)⁻¹ • p) := by
+      simp
+    rw [hval]
+    congr 1
+    rw [← hγ', MulAction.compHom_smul_def, hσ]
+    simp
+
+/-- The stabiliser of a point in `𝒮ℒ` has the order the level-one elliptic bookkeeping records:
+twice the elliptic order of its orbit, the extra factor being `±I`. -/
+lemma card_stabilizer_slGL_eq_two_mul_ellipticOrder (p : ℍ) :
+    Nat.card (stabilizer 𝒮ℒ p) =
+      2 * ModularGroup.ellipticOrder (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) := by
+  have hcompat : ∀ γ : SL(2, ℤ),
+      ((Matrix.SpecialLinearGroup.mapGL ℝ).rangeRestrict γ) • p = γ • p := by
+    intro γ
+    rw [Subgroup.smul_def, MulAction.compHom_smul_def]
+    rfl
+  have hker := card_stabilizer_eq_card_ker_mul_card_stabilizer
+    (Matrix.SpecialLinearGroup.mapGL ℝ).rangeRestrict
+    (Matrix.SpecialLinearGroup.mapGL ℝ).rangeRestrict_surjective p hcompat
+  rw [MonoidHom.ker_rangeRestrict,
+    (MonoidHom.ker_eq_bot_iff _).mpr Matrix.SpecialLinearGroup.mapGL_injective] at hker
+  simpa [← ModularGroup.cardStabilizerOnOrbit_eq_two_mul_ellipticOrder] using hker.symm
+
+/-- A `Γ`-orbit outside the `SL(2, ℤ)`-orbit of `p` is no coset translate of `p`. -/
+lemma card_fiber_orbitOfCosetTranslate_eq_zero (p : ℍ)
+    {o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ}
+    (ho : slOrbitOfSubgroupOrbit o ≠ Quotient.mk'' p) :
+    Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
+      orbitOfCosetTranslate p q = o} = 0 := by
+  have : IsEmpty {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
+      orbitOfCosetTranslate p q = o} :=
+    ⟨fun q ↦ ho (by rw [← q.2, slOrbitOfSubgroupOrbit_orbitOfCosetTranslate])⟩
+  simp
+
+/-- **The multiplicity of a `Γ`-orbit among the coset translates of `p`.** For a `Γ`-orbit inside
+the `SL(2, ℤ)`-orbit of `p`, the number of cosets translating `p` into it, times the order of its
+stabiliser in `Γ`, is the order of the stabiliser of `p` in `SL(2, ℤ)` — twice the elliptic order
+of the level-one orbit. -/
+lemma card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit_eq (p : ℍ)
+    {o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ}
+    (ho : slOrbitOfSubgroupOrbit o = Quotient.mk'' p) :
+    Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
+        orbitOfCosetTranslate p q = o} * cardStabilizerOnOrbit o =
+      2 * ModularGroup.ellipticOrder (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) := by
+  obtain ⟨q, rfl⟩ := exists_orbitOfCosetTranslate_eq ho
+  rw [card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit
+      (Subgroup.map_le_range _ _) p q, card_stabilizer_slGL_eq_two_mul_ellipticOrder]
+
+/-- **The stabiliser weight is positive.** A point of `ℍ` has a finite, nonempty stabiliser in any
+subgroup of `SL(2, ℤ)` — it sits inside the finite `SL(2, ℤ)`-stabiliser, whose order the
+orbit-stabiliser identity divides — so its cardinality never vanishes. -/
+lemma cardStabilizerOnOrbit_ne_zero (o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
+    cardStabilizerOnOrbit o ≠ 0 := by
+  induction o using Quotient.inductionOn' with
+  | h z =>
+    intro h0
+    have hprod := card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit_eq (Γ := Γ) z
+      (o := Quotient.mk'' z) (slOrbitOfSubgroupOrbit_mk z)
+    rw [h0, Nat.mul_zero] at hprod
+    have := ModularGroup.ellipticOrder_pos (Quotient.mk'' z : orbitRel.Quotient SL(2, ℤ) ℍ)
+    omega
+
+/-- A single `SL(2, ℤ)`-orbit contains only finitely many `Γ`-orbits: each is a coset translate
+of any of its points, and the coset space is finite. -/
+lemma finite_preimage_slOrbitOfSubgroupOrbit
+    [(Γ : Subgroup (GL (Fin 2) ℝ)).IsFiniteRelIndex 𝒮ℒ] (P : orbitRel.Quotient SL(2, ℤ) ℍ) :
+    (slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P}).Finite := by
+  induction P using Quotient.inductionOn' with
+  | h p =>
+    refine (Set.finite_range
+      (orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) (ℋ := 𝒮ℒ) p)).subset fun o ho ↦ ?_
+    exact exists_orbitOfCosetTranslate_eq (by simpa using ho)
+
+variable {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
 
 /-- The vanishing order of a form for `Γ ≤ SL(2, ℤ)`, descended to the `Γ`-orbit space of
 the upper half-plane. -/
@@ -95,6 +226,15 @@ public lemma orderOfVanishingOnSubgroupOrbit_mk
     orderOfVanishingOnSubgroupOrbit f (Quotient.mk'' p) = orderOfVanishingAt f p := by
   unfold orderOfVanishingOnSubgroupOrbit
   rfl
+
+/-- The vanishing order on an orbit is nonnegative: a modular form is holomorphic, so it has no
+poles. -/
+public lemma orderOfVanishingOnSubgroupOrbit_nonneg
+    [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F)
+    (q : MulAction.orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
+    0 ≤ orderOfVanishingOnSubgroupOrbit f q := by
+  induction q using Quotient.inductionOn' with
+  | _ p => simpa using orderOfVanishingAt_nonneg (ModularFormClass.holo f) p
 
 /-- **The coset factors of the norm see exactly the orbits of the translates of the point.**
 The factor indexed by `q` vanishes at `p` to the order `f` itself has on the orbit into which
