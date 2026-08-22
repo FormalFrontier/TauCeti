@@ -59,7 +59,7 @@ def graphPermA (n : ℕ) : Equiv.Perm (Fin n) :=
   Fin.revPerm
 
 /-- The `Aₙ` diagram automorphism sends each node to its reversal in the chain. -/
-@[simp] theorem graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
+theorem graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
   rw [graphPermA, Fin.revPerm_apply]
 
 /-- The permutation exchanging the final two indices of `Fin n`. For `4 ≤ n`, this is the `Dₙ`
