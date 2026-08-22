@@ -34,7 +34,8 @@ Nothing here needs a topology, a metric or a normalisation, and the two factors 
 measurable spaces. The determinism statements do ask that the diagonal of `Y × Y` be
 measurable, `MeasurableEq Y`, because "`π` is carried by the graph of `T`" is otherwise not a
 statement about a measurable set. That hypothesis holds for every standard Borel space, every
-second-countable Hausdorff space and every countable discrete space.
+second-countable Hausdorff space with measurable open sets and every countable measurable space
+with measurable singletons.
 
 ## Main definitions
 
@@ -162,26 +163,15 @@ theorem isCoupling_graphPlan_iff (hT : AEMeasurable T μ) :
     IsCoupling (graphPlan T μ) μ ν ↔ HasLaw T ν μ :=
   ⟨fun h ↦ ⟨hT, by rw [← snd_graphPlan T μ, h.snd_eq]⟩, isCoupling_graphPlan⟩
 
-/-- A measure-preserving map is a transport map, so its graph plan is a coupling. -/
-theorem isCoupling_graphPlan_of_measurePreserving (hT : MeasurePreserving T μ ν) :
-    IsCoupling (graphPlan T μ) μ ν :=
-  isCoupling_graphPlan hT.hasLaw
-
 /-- The identity is a transport map from `μ` to itself, so its graph plan — the diagonal plan,
 carried by the diagonal of `X × X` — couples `μ` with itself. -/
 theorem isCoupling_graphPlan_id (μ : Measure X) : IsCoupling (graphPlan id μ) μ μ :=
-  isCoupling_graphPlan_of_measurePreserving (MeasurePreserving.id μ)
+  isCoupling_graphPlan (MeasurePreserving.id μ).hasLaw
 
 /-- A measurable equivalence is a transport map from `μ` to `μ.map e`. -/
 theorem isCoupling_graphPlan_measurableEquiv (e : X ≃ᵐ Y) (μ : Measure X) :
     IsCoupling (graphPlan e μ) μ (μ.map e) :=
   isCoupling_graphPlan_map e.measurable.aemeasurable
-
-/-- The graph plan of an a.e. measurable map at a probability measure is a probability measure.
--/
-theorem isProbabilityMeasure_graphPlan [IsProbabilityMeasure μ] (hT : AEMeasurable T μ) :
-    IsProbabilityMeasure (graphPlan T μ) :=
-  (isCoupling_graphPlan_map hT).isProbabilityMeasure
 
 /-- A function of the first coordinate is a.e. measurable for a graph plan as soon as it is
 a.e. measurable for the source measure. -/
