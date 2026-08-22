@@ -250,9 +250,8 @@ the mass of `{0}`.  This is the `n = 0` case of `iteratedDeriv_pgf_zero`, which 
 away from `iteratedDeriv`. -/
 @[simp]
 theorem pgf_zero (ν : Measure ℕ) [IsFiniteMeasure ν] : pgf id ν 0 = ν.real {0} := by
-  refine (hasSum_pgf ν (by norm_num)).unique ?_
-  simpa using hasSum_single (f := fun n : ℕ => ν.real {n} * (0 : ℝ) ^ n) 0
-    fun n hn => by simp [zero_pow hn]
+  have h := iteratedDeriv_pgf_zero ν 0
+  rwa [iteratedDeriv_zero, Nat.factorial_zero, Nat.cast_one, one_mul] at h
 
 /-- The derivative at the origin of the probability-generating function of a finite measure on `ℕ`
 is the mass of `{1}`.  This is the `n = 1` case of `iteratedDeriv_pgf_zero`, which `simp`
