@@ -384,7 +384,8 @@ private theorem oneLoopNilpotentRepApp_root_mul {n : ℕ}
 
 /-- **`TauCeti.oneLoopNilpotentRep k n` is indecomposable.** An endomorphism commutes with
 multiplication by the root, hence is multiplication by its value at `1`
-(`TauCeti.eq_mulRight_of_root_mul`); if it is idempotent so is that value, and `k[X]/(Xⁿ⁺¹)` is a
+(`TauCeti.AdjoinRoot.eq_mulRight_of_root_mul`); if it is idempotent so is that value, and
+`k[X]/(Xⁿ⁺¹)` is a
 local ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), so its only idempotents are `0` and `1`. -/
 theorem indecomposable_oneLoopNilpotentRep (n : ℕ) :
     Indecomposable (oneLoopNilpotentRep.{u, w} k n) := by

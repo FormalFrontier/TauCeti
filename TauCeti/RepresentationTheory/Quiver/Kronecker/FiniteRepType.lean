@@ -7,23 +7,23 @@ module
 
 public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
-public import TauCeti.RepresentationTheory.Quiver.Kronecker.Basic
+public import TauCeti.RepresentationTheory.Quiver.Kronecker.Representation
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import TauCeti.RingTheory.AdjoinRoot
 public import TauCeti.RingTheory.LocalRing.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
-public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
 /-!
 # The Kronecker quiver has infinite representation type
 
-A representation of the generalized Kronecker quiver is a pair of vector spaces together with one
-linear map between them for each arrow. This file builds them as `TauCeti.kroneckerRep`, and
-exhibits, over *every* field, an infinite family of pairwise non-isomorphic finite-dimensional
-indecomposable ones as soon as there are two distinct arrows: `TauCeti.kroneckerJordanRep` puts the
-truncated polynomial algebra `k[X]/(Xⁿ⁺¹)` at both vertices, lets one distinguished arrow act by
-multiplication by the class of `X` and every other arrow by the identity, and is indecomposable
-because its endomorphism algebra is the local ring `k[X]/(Xⁿ⁺¹)`.
+This file exhibits, over *every* field, an infinite family of pairwise non-isomorphic
+finite-dimensional indecomposable representations of the generalized Kronecker quiver as soon as
+there are two distinct arrows: `TauCeti.kroneckerJordanRep` puts the truncated polynomial algebra
+`k[X]/(Xⁿ⁺¹)` at both vertices, lets one distinguished arrow act by multiplication by the class of
+`X` and every other arrow by the identity, and is indecomposable because its endomorphism algebra
+is the local ring `k[X]/(Xⁿ⁺¹)`. The underlying construction of a representation from a pair of
+vector spaces and a linear map along each arrow is `TauCeti.kroneckerRep`, in
+`TauCeti.RepresentationTheory.Quiver.Kronecker.Representation`.
 
 The Kronecker quiver `• ⇉ •` is the case of a two-element arrow type, and it is the boundary case
 of Gabriel's theorem: connected and acyclic, but not of Dynkin type, its Tits form being the
@@ -39,17 +39,11 @@ indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`.
 
 ## Main definitions
 
-* `TauCeti.kroneckerRep`: the representation of the generalized Kronecker quiver with prescribed
-  vertex spaces and a prescribed linear map along each arrow.
-* `TauCeti.kroneckerRepHom`: the morphism between two of them attached to a linear map at each
-  vertex making every arrow square commute.
 * `TauCeti.kroneckerJordanRep`: the nilpotent Jordan block of size `n + 1`, spread over the two
   vertices.
 
 ## Main results
 
-* `TauCeti.kronecker_hom_ext`: a morphism of representations of the generalized Kronecker quiver is
-  determined by its two components.
 * `TauCeti.indecomposable_kroneckerJordanRep`: the Jordan blocks are indecomposable, as soon as
   some arrow other than the distinguished one exists.
 * `TauCeti.nonempty_kroneckerJordanRep_iso_iff`: two of them are isomorphic exactly when their
@@ -59,15 +53,12 @@ indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`.
 
 ## Implementation notes
 
-`TauCeti.kroneckerRep` and `TauCeti.kroneckerJordanRep` carry `@[expose]`, for the reason the
-loop-quiver file `TauCeti.RepresentationTheory.Quiver.OneLoop.FiniteRepType` records: a functor
-built by `CategoryTheory.Paths.lift` reveals its value on objects only through its definition. The
-obstruction is at the level of *statements*, not of proofs, so no characteristic lemma can remove
-it: without `@[expose]` on `kroneckerRep`, already `kroneckerRep_map_arrowPath` fails to elaborate,
-`f a : M ⟶ N` not being accepted where `(kroneckerRep k M N f).obj Quiver.Kronecker.src ⟶
-(kroneckerRep k M N f).obj Quiver.Kronecker.tgt` is expected, and likewise for the two components
-of `kroneckerRepHom` and for every statement below reading an endomorphism of a Jordan block as a
-linear map on `k[X]/(Xⁿ⁺¹)`.
+`TauCeti.kroneckerJordanRep` carries `@[expose]`, for the reason the loop-quiver file
+`TauCeti.RepresentationTheory.Quiver.OneLoop.FiniteRepType` records, and
+`TauCeti.kroneckerRep` does too: a functor built by `CategoryTheory.Paths.lift` reveals its value
+on objects only through its definition. The obstruction is at the level of *statements*, not of
+proofs, so no characteristic lemma can remove it: without `@[expose]`, every statement below
+reading an endomorphism of a Jordan block as a linear map on `k[X]/(Xⁿ⁺¹)` fails to elaborate.
 
 Indecomposability runs through `TauCeti.indecomposable_of_idempotent_eq_zero_or_id` rather than the
 brick criterion: the endomorphism algebra of a Jordan block is `k[X]/(Xⁿ⁺¹)`, which is not a field.
@@ -100,104 +91,9 @@ namespace TauCeti
 
 open CategoryTheory CategoryTheory.Limits Polynomial
 
-universe u v t
+universe u v
 
 variable {k : Type u} [Field k] {A : Type v}
-
-/-! ### Representations of the generalized Kronecker quiver -/
-
-section Rep
-
-variable (k) in
-/-- **A representation of the generalized Kronecker quiver**: a vector space `M` at the source, a
-vector space `N` at the target, and a linear map `f a : M ⟶ N` along the arrow indexed by `a`. No
-two arrows compose, so the only paths are the identities and the arrows themselves, and this is the
-whole datum. -/
-@[expose]
-def kroneckerRep (M N : ModuleCat.{t} k) (f : A → (M ⟶ N)) :
-    QuiverRep k (Quiver.Kronecker A) :=
-  Paths.lift
-    { obj := fun a ↦ match a with
-        | .src => M
-        | .tgt => N
-      map := fun {a b} e ↦ match a, b, e with
-        | .src, .tgt, e => f e
-        | .src, .src, e => isEmptyElim e
-        | .tgt, .src, e => isEmptyElim e
-        | .tgt, .tgt, e => isEmptyElim e }
-
-variable (M N : ModuleCat.{t} k) (f : A → (M ⟶ N))
-
-@[simp]
-theorem kroneckerRep_obj_src :
-    (kroneckerRep k M N f).obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) = M :=
-  rfl
-
-@[simp]
-theorem kroneckerRep_obj_tgt :
-    (kroneckerRep k M N f).obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) = N :=
-  rfl
-
-/-- The arrow indexed by `a` acts on `TauCeti.kroneckerRep` by `f a`. -/
-@[simp]
-theorem kroneckerRep_map_arrowPath (a : A) :
-    (kroneckerRep k M N f).map (Quiver.Kronecker.arrowPath a) = f a := by
-  rw [← Quiver.Kronecker.toPath_arrow]
-  exact (Paths.lift_toPath _ (Quiver.Kronecker.arrow a)).trans
-    (congrArg f (Quiver.Kronecker.arrow_def a))
-
-end Rep
-
-section Hom
-
-variable {M N M' N' : ModuleCat.{t} k} {f : A → (M ⟶ N)} {f' : A → (M' ⟶ N')}
-
-/-- **The morphism of representations of the generalized Kronecker quiver attached to a commuting
-square along every arrow**: a linear map at each of the two vertices, intertwining the two actions
-of each arrow. Together with `TauCeti.kronecker_hom_ext` this identifies the morphisms
-`kroneckerRep k M N f ⟶ kroneckerRep k M' N' f'` with such pairs. -/
-def kroneckerRepHom (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
-    kroneckerRep k M N f ⟶ kroneckerRep k M' N' f' :=
-  Paths.liftNatTrans
-    (fun v ↦ match v with
-      | Quiver.Kronecker.src => g
-      | Quiver.Kronecker.tgt => h)
-    fun {a b} e ↦ match a, b, e with
-      | .src, .tgt, e => by
-          have hl : (kroneckerRep k M N f).map (Quiver.Hom.toPath e) = f e :=
-            Paths.lift_toPath _ e
-          have hr : (kroneckerRep k M' N' f').map (Quiver.Hom.toPath e) = f' e :=
-            Paths.lift_toPath _ e
-          rw [hl, hr]
-          exact w e
-      | .src, .src, e => isEmptyElim e
-      | .tgt, .src, e => isEmptyElim e
-      | .tgt, .tgt, e => isEmptyElim e
-
-@[simp]
-theorem kroneckerRepHom_app_src (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
-    (kroneckerRepHom g h w).app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) = g :=
-  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
-  -- would force `kroneckerRepHom` to be `@[expose]`.
-  (rfl)
-
-@[simp]
-theorem kroneckerRepHom_app_tgt (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
-    (kroneckerRepHom g h w).app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) = h := (rfl)
-
-end Hom
-
-/-- **A morphism of representations of the generalized Kronecker quiver is determined by its two
-components.** The quiver has two vertices, so a natural transformation is a pair of linear maps. -/
-theorem kronecker_hom_ext {ρ σ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)} {e e' : ρ ⟶ σ}
-    (hsrc : e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) =
-      e'.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
-    (htgt : e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) =
-      e'.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))) : e = e' := by
-  refine NatTrans.ext (funext fun w ↦ ?_)
-  cases w
-  · exact hsrc
-  · exact htgt
 
 /-! ### The Jordan blocks -/
 
@@ -313,7 +209,8 @@ private theorem jordanApp_root_mul (h : a₀ ≠ a₁)
   exact hnat.trans (kroneckerJordanRep_map_arrowPath_self_apply _)
 
 /-- **An endomorphism of a Jordan block is multiplication by its value at `1`**, by
-`TauCeti.eq_mulRight_of_root_mul`: it commutes with multiplication by the class of `X`. -/
+`TauCeti.AdjoinRoot.eq_mulRight_of_root_mul`: it commutes with multiplication by the class of
+`X`. -/
 private theorem jordanApp_eq_mulRight (h : a₀ ≠ a₁)
     (e : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) :
     jordanApp e = LinearMap.mulRight k (jordanApp e 1) :=
