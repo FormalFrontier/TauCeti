@@ -339,7 +339,7 @@ noncomputable def pad {X : C} (r : FiniteResolution E P X) :
       · simpa using hn.trans (Nat.le_add_right r.length m)
 
 /-- After the original resolution ends, every syzygy of a positive padding is the zero object. -/
-@[simp] theorem syzygy_pad_succ_of_length_lt {X : C} (r : FiniteResolution E P X) (m : ℕ)
+theorem syzygy_pad_succ_of_length_lt {X : C} (r : FiniteResolution E P X) (m : ℕ)
     {n : ℕ} (hn : r.length < n) : (r.pad (m + 1)).syzygy n = (0 : C) := by
   induction m with
   | zero => simpa using syzygy_zeroPad_of_length_lt r hn
