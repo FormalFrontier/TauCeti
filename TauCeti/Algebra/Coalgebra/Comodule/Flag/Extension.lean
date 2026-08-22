@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Dimension.Constructions
+public import TauCeti.LinearAlgebra.ExtensionBasis
 public import TauCeti.Algebra.Coalgebra.Comodule.Flag.Basic
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
@@ -86,15 +86,14 @@ basis of the quotient. The construction is Mathlib's `Module.Basis.sumQuot`, rei
 standard equivalence `Fin m ⊕ Fin n ≃ Fin (m + n)`. -/
 def extensionBasis (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) : Basis (Fin (m + n)) k M :=
-  ((toSubmoduleBasis N bN).sumQuot bQ).reindex finSumFinEquiv
+  TauCeti.extensionBasis N.toSubmodule (toSubmoduleBasis N bN) bQ
 
 /-- On the first block, `extensionBasis` is the given basis of the subcomodule. -/
 @[simp]
 theorem extensionBasis_castAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (i : Fin m) :
     extensionBasis N bN bQ (Fin.castAdd n i) = bN i := by
-  rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_castAdd,
-    Basis.sumQuot_inl]
+  rw [extensionBasis, TauCeti.extensionBasis_castAdd]
   exact toSubmoduleBasis_apply N bN i
 
 /-- On the second block, the quotient classes of `extensionBasis` are the given quotient basis. -/
@@ -102,8 +101,7 @@ theorem extensionBasis_castAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
 theorem extensionBasis_natAdd_mkQ (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (j : Fin n) :
     Submodule.Quotient.mk (extensionBasis N bN bQ (Fin.natAdd m j)) = bQ j := by
-  rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Basis.sumQuot_inr]
+  rw [extensionBasis, TauCeti.extensionBasis_natAdd_mkQ]
 
 /-- The first-block coordinates of an element of the subcomodule in `extensionBasis` are its
 coordinates in the given subcomodule basis. -/
@@ -111,12 +109,11 @@ coordinates in the given subcomodule basis. -/
 theorem extensionBasis_repr_castAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (x : N) (i : Fin m) :
     (extensionBasis N bN bQ).repr x (Fin.castAdd n i) = bN.repr x i := by
-  rw [extensionBasis, Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_castAdd]
   -- `N` and the subtype of `N.toSubmodule` have different wrappers, so expose the tautological
-  -- equivalence before applying Mathlib's quotient-basis coordinate theorem.
-  change (((toSubmoduleBasis N bN).sumQuot bQ).repr
-    ((toSubmoduleEquiv N x : N.toSubmodule) : M)) (Sum.inl i) = bN.repr x i
-  rw [Basis.sumQuot_repr_inl]
+  -- equivalence before applying the module-level coordinate theorem.
+  change ((extensionBasis N bN bQ).repr
+    ((toSubmoduleEquiv N x : N.toSubmodule) : M)) (Fin.castAdd n i) = bN.repr x i
+  rw [extensionBasis, TauCeti.extensionBasis_repr_castAdd]
   rfl
 
 /-- The second-block coordinates in `extensionBasis` are the coordinates of the quotient class. -/
@@ -125,8 +122,7 @@ theorem extensionBasis_repr_natAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (x : M) (j : Fin n) :
     (extensionBasis N bN bQ).repr x (Fin.natAdd m j) =
       bQ.repr (N.toSubmodule.mkQ x) j := by
-  rw [extensionBasis, Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Basis.sumQuot_repr_inr]
+  rw [extensionBasis, TauCeti.extensionBasis_repr_natAdd]
 
 /-- The subcomodule diagonal block of the combined coefficient matrix is the coefficient matrix
 in the given subcomodule basis. -/

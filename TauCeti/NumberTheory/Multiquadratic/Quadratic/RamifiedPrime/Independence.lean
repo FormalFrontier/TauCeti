@@ -51,9 +51,9 @@ has `t = 2` and class number `1` — which is why genus theory states the `t - 1
 narrow class group there; only the imaginary case, where narrow and ordinary agree, is treated
 here.
 
-The classical source is D. A. Cox, *Primes of the Form x² + ny²*, Chapter 3, and F. Lemmermeyer,
-*Reciprocity Laws*, Chapter 6, where this is the lower-bound half of the ambiguous class number
-formula.
+The classical source is D. A. Cox, *Primes of the Form x² + ny²*, §6.A, and F. Lemmermeyer,
+*Reciprocity Laws: From Euler to Eisenstein*, §2.2, where this is the lower-bound half of the
+ambiguous class number formula.
 
 ## Main results
 

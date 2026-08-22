@@ -46,7 +46,7 @@ recurrences — is a separate milestone and is not proved here.
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
-  §3.4–3.5.
+  §3.4, Proposition 3.37, instantiated at `Γ₁ = Γ₂ = Γ₁(N)`.
 * [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005], §5.2.
 -/
 
