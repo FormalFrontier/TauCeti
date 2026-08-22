@@ -76,20 +76,13 @@ noncomputable def normalConjugation (i : N ⟶ G) [IsMonHom.Normal i]
     simp_rw [← Category.assoc, lift_comp_mapLeft]
     exact TauCeti.normalConjugation_mul_right i (h ≫ j) n₁ n₂
 
-/-- The morphism underlying conjugation along `j`. -/
-theorem normalConjugation_hom (i : N ⟶ G) [IsMonHom.Normal i]
-    (j : H ⟶ G) [IsMonHom j] :
-    (normalConjugation i j).hom =
-      lift (fst H N ≫ j) (snd H N) ≫ TauCeti.normalConjugation i :=
-  (rfl)
-
 /-- The action by conjugation along `j` evaluates as ambient conjugation through `j`. -/
 @[simp]
 theorem normalConjugation_act (i : N ⟶ G) [IsMonHom.Normal i]
     (j : H ⟶ G) [IsMonHom j] (h : X ⟶ H) (n : X ⟶ N) :
     (normalConjugation i j).act h n =
       lift (h ≫ j) n ≫ TauCeti.normalConjugation i := by
-  rw [Action.act_def, normalConjugation_hom, ← Category.assoc, lift_comp_mapLeft]
+  rw [Action.act_def, normalConjugation, ← Category.assoc, lift_comp_mapLeft]
 
 /-- The generalized-point homomorphism from the normal semidirect product to the ambient group. -/
 private noncomputable def normalSemidirectMulPointHom
