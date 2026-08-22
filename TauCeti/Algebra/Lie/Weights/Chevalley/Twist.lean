@@ -24,7 +24,7 @@ is scaled by `ω`:
 
 A **Chevalley system** is the special case `c ≡ -1`, which is what
 `TauCeti.IsSl2System.isChevalleyNormalized_iff_exists_isChevalleySystem` shows to be the same thing
-as having the Chevalley integers `±(p + 1)` as structure constants. The family in hand will not
+as having the Chevalley integers `±(p + 1)` as structure constants. The family in hand need not
 satisfy `c ≡ -1`, and this file is about what has to be true for a rescaling of it to.
 
 Two facts govern the scalars, and both are proved here.
