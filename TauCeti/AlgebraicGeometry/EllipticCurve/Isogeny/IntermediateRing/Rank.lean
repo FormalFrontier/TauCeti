@@ -7,7 +7,6 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Degree
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.IntermediateRing.Basic
-public import Mathlib.RingTheory.DedekindDomain.Basic
 public import Mathlib.RingTheory.RamificationInertia.Basic
 -- Proof-only: the fraction field of the intermediate ring and the comparison of the two ranks.
 import Mathlib.LinearAlgebra.Dimension.Localization
@@ -19,8 +18,8 @@ import Mathlib.RingTheory.Localization.Integral
 The intermediate ring of an isogeny `φ : W₁ → W₂` — the integral closure of `W₂.CoordinateRing`
 inside `W₁.FunctionField` — is a `W₂.CoordinateRing`-module of rank exactly `φ.degree`. This is the
 arithmetic content of the roadmap's *place-free* count: the degree, defined as a dimension of
-function fields, is also a rank over the coordinate ring, so it can be read off the fibre of an
-affine place instead of off a field extension.
+function fields, is also a rank over the coordinate ring, so for a maximal prime it can be read off
+the fibre of an affine place instead of off a field extension.
 
 The bridge is a localization comparison. `W₂.FunctionField` is the fraction field of
 `W₂.CoordinateRing` by definition, and `W₁.FunctionField` is the fraction field of the intermediate
@@ -29,12 +28,13 @@ below, and such a closure always has the ambient field as its fraction field. `M
 insensitive to passing to fraction rings on both sides (`IsFractionRing.finrank_eq`), so the rank
 downstairs equals the degree upstairs.
 
-Once the extension is module-finite the rank turns into a fibre count. Over a Dedekind coordinate
-ring a torsion-free finite module is flat, so Mathlib's fundamental identity
+Once the extension is finite and flat the rank turns into a fibre count. Over a Dedekind coordinate
+ring its torsion-freeness supplies flatness, so Mathlib's fundamental identity
 `Ideal.sum_ramification_inertia_eq_finrank` applies verbatim: for a prime `p` of
 `W₂.CoordinateRing`, the primes of the intermediate ring lying over `p`, weighted by ramification
-index times inertia degree, total `φ.degree`. Dropping the weights bounds the number of points in
-a fibre by the degree.
+index times inertia degree, total `φ.degree`. When `p` is maximal (equivalently, nonzero in the
+Dedekind case), this is the fibre over the affine point named by `p`; dropping the weights bounds
+the number of its primes by the degree.
 
 ## Main results
 
@@ -46,7 +46,7 @@ a fibre by the degree.
   `W₂.CoordinateRing` once it is module-finite.
 * `TauCeti.Isogeny.sum_ramificationIdx_mul_inertiaDeg_eq_degree`: the **fundamental identity** for
   an isogeny — `∑_{q ∣ p} e_q · f_q = deg φ` over every prime `p` of `W₂.CoordinateRing`.
-* `TauCeti.Isogeny.card_primesOver_le_degree`: hence a fibre carries at most `deg φ` primes.
+* `TauCeti.Isogeny.ncard_primesOver_le_degree`: hence there are at most `deg φ` primes above `p`.
 
 ## Design
 
@@ -75,16 +75,15 @@ about; it is what the only currently available route to finiteness happens to ne
 these statements apply unchanged the day a trace-free route lands, and a caller in the separable
 case supplies it in one line from the sibling.
 
-**Flatness is not an argument either.** Over a Dedekind domain a torsion-free module is flat, and
-torsion-freeness of the intermediate ring is injectivity of `algebraMap W₂.CoordinateRing
+**Flatness follows automatically in the Dedekind application.** The fundamental identity is
+stated under its natural finite-flat hypotheses. Over a Dedekind domain a torsion-free module is
+flat, and torsion-freeness of the intermediate ring is injectivity of `algebraMap W₂.CoordinateRing
 φ.intermediateRing`, which follows from the hypotheses already present: the composite into
 `W₁.FunctionField` is the pullback, and the pullback of an isogeny is injective. So
-`IsDedekindDomain W₂.CoordinateRing` — which for an elliptic curve is
-`WeierstrassCurve.Affine.isDedekindDomain_coordinateRing` — is all the fibre count adds. That
-argument is made once, in `projective_intermediateRing`, and the fibre count takes its flatness
-from there rather than repeating it: `IntermediateRing/Basic.lean` records that a standalone
-torsion-freeness lemma about this ring was removed in review as a one-step wrapper, and nothing
-here reinstates one.
+`projective_intermediateRing` supplies the flatness needed in the roadmap's Dedekind setting. The
+argument is made once there rather than repeated: `IntermediateRing/Basic.lean` records that a
+standalone torsion-freeness lemma about this ring was removed in review as a one-step wrapper, and
+nothing here reinstates one.
 
 **Why `isFractionRing_intermediateRing` is an instance while its neighbours are theorems.** Its
 statement mentions only the canonical structures: the intermediate ring, its coercion into
@@ -207,48 +206,50 @@ theorem projective_intermediateRing (φ : Isogeny W₁ W₂)
     Module.finitePresentation_of_finite _ _
   exact Module.Flat.projective_of_finitePresentation
 
-/-- **The fundamental identity for an isogeny** (Stichtenoth III.1.11, read on the affine places of
-the target): over a prime `p` of `W₂.CoordinateRing`, the primes of the intermediate ring lying
-over `p`, each weighted by its ramification index times its inertia degree, total `φ.degree`.
+/-- **The fundamental identity for an isogeny** (Stichtenoth III.1.11): over a prime `p` of
+`W₂.CoordinateRing`, the primes of the intermediate ring lying over `p`, each weighted by its
+ramification index times its inertia degree, total `φ.degree`.
 
-Geometrically this is the fibre of `φ` over an affine place of `W₂`, counted with multiplicity:
-the intermediate ring is the ring of functions regular away from `φ⁻¹(O₂)`, so its primes over `p`
-are the points of `W₁` above the point of `W₂` that `p` names.
+When `p` is maximal (equivalently, nonzero when the coordinate ring is Dedekind), this is the fibre
+of `φ` over the affine place of `W₂` named by `p`, counted with multiplicity: the intermediate ring
+is the ring of functions regular away from `φ⁻¹(O₂)`, so its primes over `p` are the points of
+`W₁` above that point of `W₂`.
 
 Module-finiteness is taken directly rather than through separability of the function-field
 extension; the module docstring says why. In the separable case
 `Isogeny.moduleFinite_intermediateRing` supplies it. -/
 theorem sum_ramificationIdx_mul_inertiaDeg_eq_degree (φ : Isogeny W₁ W₂)
-    [IsDedekindDomain W₂.CoordinateRing]
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
     [IsScalarTower W₂.CoordinateRing W₂.FunctionField W₁.FunctionField]
     [Algebra W₂.CoordinateRing φ.intermediateRing]
     [IsScalarTower W₂.CoordinateRing φ.intermediateRing W₁.FunctionField]
     [Module.Finite W₂.CoordinateRing φ.intermediateRing]
+    [Module.Flat W₂.CoordinateRing φ.intermediateRing]
     (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x)
-    (p : Ideal W₂.CoordinateRing) [p.IsPrime] [Fintype (p.primesOver φ.intermediateRing)] :
+    (p : Ideal W₂.CoordinateRing) [p.IsPrime]
+    [Fintype (p.primesOver φ.intermediateRing)] :
     ∑ q : p.primesOver φ.intermediateRing,
         q.1.ramificationIdx W₂.CoordinateRing * q.1.inertiaDeg W₂.CoordinateRing = φ.degree := by
-  have := φ.projective_intermediateRing h
   rw [Ideal.sum_ramification_inertia_eq_finrank, φ.finrank_intermediateRing_eq_degree h]
 
-/-- **A fibre of an isogeny carries at most `deg φ` primes.** Dropping the weights from the
-fundamental identity: every ramification index and every inertia degree is at least one, so the
-primes over `p` number at most the degree.
+/-- **There are at most `deg φ` primes above `p`.** Dropping the weights from the fundamental
+identity: every ramification index and every inertia degree is at least one, so the primes over
+`p` number at most the degree. When `p` is maximal, these are the primes in the fibre over the
+affine place that `p` names.
 
 Equality holds exactly when every ramification index and every inertia degree over `p` is one.
 Turning the weighted identity above into an honest count of geometric points is therefore Layer 1's
 separable-⟹-unramified milestone (`e_q = 1`) together with a separably closed base (`f_q = 1`);
 neither is assumed here. -/
-theorem card_primesOver_le_degree (φ : Isogeny W₁ W₂)
-    [IsDedekindDomain W₂.CoordinateRing]
+theorem ncard_primesOver_le_degree (φ : Isogeny W₁ W₂)
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
     [IsScalarTower W₂.CoordinateRing W₂.FunctionField W₁.FunctionField]
     [Algebra W₂.CoordinateRing φ.intermediateRing]
     [IsScalarTower W₂.CoordinateRing φ.intermediateRing W₁.FunctionField]
     [Module.Finite W₂.CoordinateRing φ.intermediateRing]
+    [Module.Flat W₂.CoordinateRing φ.intermediateRing]
     (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x)
     (p : Ideal W₂.CoordinateRing) [p.IsPrime] :
     Nat.card (p.primesOver φ.intermediateRing) ≤ φ.degree := by
