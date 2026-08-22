@@ -40,6 +40,8 @@ canonically isomorphic to its whole chain module.
 * `TauCeti.PlumbingGraph.latticeHomology`: its canonical `𝔽₂[U]`-module homology.
 * `TauCeti.PlumbingGraph.latticeHomologyCycleMap`: the map taking a coefficient to the homology
   class of its multiple of a fixed cycle.
+* `TauCeti.PlumbingGraph.latticeHomologyCycleMap_surjective`: that map is surjective as soon as
+  every cycle differs from a multiple of the fixed cycle by a boundary.
 * `TauCeti.PlumbingGraph.latticeHomologyIsoChainOfIsEmpty`: the homology of a zero-vertex
   plumbing is its full chain module.
 * `TauCeti.PlumbingGraph.latticeHomologyIsoCoefficientOfIsEmpty`: that chain module has one
@@ -138,6 +140,10 @@ private theorem latticeShortComplex_g_hom_apply (P : PlumbingGraph V)
     (k : P.characteristicVectors) (c : PlumbingChain V) :
     (P.latticeShortComplex k).g.hom c = P.latticeDifferential k c := rfl
 
+private theorem latticeShortComplex_f_hom_apply (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (c : PlumbingChain V) :
+    (P.latticeShortComplex k).f.hom c = P.latticeDifferential k c := rfl
+
 /-- The linear map sending `a : 𝔽₂[U]` to the homology class of `a • c`, for a lattice
 cycle `c`. -/
 noncomputable def latticeHomologyCycleMap (P : PlumbingGraph V) (k : P.characteristicVectors)
@@ -189,6 +195,45 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
       rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
       exact hz
     exact (congrArg (fun x => S.moduleCatHomologyIso.inv x) hq).trans (map_zero _)
+
+/-- A cycle whose class generates lattice homology: if every cycle differs from a multiple of `c`
+by a boundary, then `latticeHomologyCycleMap` is surjective.
+
+Like `latticeHomologyCycleMap_apply_eq_zero_iff`, this has to be stated here: the body of
+`latticeShortComplex` is not exposed, so a downstream file cannot see that it is the lattice
+differential in both positions, and hence cannot use Mathlib's explicit
+cycles-modulo-boundaries description of the homology of a short complex of modules. -/
+theorem latticeHomologyCycleMap_surjective (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (c : PlumbingChain V)
+    (hc : P.latticeDifferential k c = 0)
+    (hgen : ∀ z : PlumbingChain V, P.latticeDifferential k z = 0 →
+      ∃ a : PlumbingCoefficient, z - a • c ∈ LinearMap.range (P.latticeDifferential k)) :
+    Function.Surjective (P.latticeHomologyCycleMap k c hc) := by
+  intro y
+  let S := P.latticeShortComplex k
+  let z : LinearMap.ker S.g.hom := ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩
+  let q : S.moduleCatLeftHomologyData.H :=
+    (LinearMap.range S.moduleCatToCycles).mkQ z
+  -- Every homology class is the class of an honest cycle.
+  obtain ⟨w, hw⟩ := Submodule.mkQ_surjective (LinearMap.range S.moduleCatToCycles)
+    (S.moduleCatHomologyIso.hom y)
+  have hcycle : P.latticeDifferential k w.val = 0 :=
+    (P.latticeShortComplex_g_hom_apply k w.val).symm.trans (LinearMap.mem_ker.mp w.property)
+  obtain ⟨a, b, hb⟩ := hgen w.val hcycle
+  -- The cycles `w` and `a • z` differ by the boundary of `b`, so they agree in homology.
+  have hmem : w - a • z ∈ LinearMap.range S.moduleCatToCycles :=
+    ⟨b, Subtype.ext ((P.latticeShortComplex_f_hom_apply k b).trans hb)⟩
+  refine ⟨a, ?_⟩
+  -- `moduleCatHomologyIso` is Mathlib's interface from abstract homology to the explicit
+  -- kernel/range quotient; unfolding the local cycle map is what makes it usable here.
+  change S.moduleCatHomologyIso.inv (a • q) = y
+  have hq : a • q = S.moduleCatHomologyIso.hom y := by
+    refine Eq.trans ?_ hw
+    change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = _
+    rw [Submodule.mkQ_apply, Submodule.mkQ_apply, Submodule.Quotient.eq]
+    exact neg_sub w (a • z) ▸ Submodule.neg_mem _ hmem
+  rw [hq]
+  exact S.moduleCatHomologyIso.hom_inv_id_apply y
 
 /-- The characteristic-two lattice homology of a zero-vertex plumbing is canonically isomorphic
 to its whole plumbing-chain module. -/
