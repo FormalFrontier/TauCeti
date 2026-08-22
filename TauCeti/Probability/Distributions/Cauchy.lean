@@ -101,26 +101,22 @@ theorem cdf_cauchyMeasure_eq (x₀ : ℝ) {γ : ℝ≥0} (hγ : γ ≠ 0) (x : �
 
 /-- **The cumulative distribution function at zero scale.** Mathlib totalizes the Cauchy family
 by setting `cauchyMeasure x₀ 0 = Measure.dirac x₀`. -/
-@[simp]
 theorem cdf_cauchyMeasure_zero_scale (x₀ x : ℝ) :
     cdf (cauchyMeasure x₀ 0) x = if x₀ ≤ x then 1 else 0 := by
   rw [cauchyMeasure_zero_scale, cdf_eq_real, Measure.real]
   by_cases h : x₀ ≤ x <;> simp [Measure.dirac_apply' _ measurableSet_Iic, h]
 
 /-- The mean of the zero-scale Cauchy law is its location. -/
-@[simp]
 theorem integral_id_cauchyMeasure_zero_scale (x₀ : ℝ) :
     ∫ x, x ∂cauchyMeasure x₀ 0 = x₀ := by
   rw [cauchyMeasure_zero_scale, integral_dirac]
 
 /-- The zero-scale Cauchy law has zero variance. -/
-@[simp]
 theorem variance_id_cauchyMeasure_zero_scale (x₀ : ℝ) :
     variance id (cauchyMeasure x₀ 0) = 0 := by
   rw [cauchyMeasure_zero_scale, variance_dirac]
 
 /-- Every exponential moment of the zero-scale Cauchy law exists. -/
-@[simp]
 theorem integrableExpSet_id_cauchyMeasure_zero_scale (x₀ : ℝ) :
     integrableExpSet id (cauchyMeasure x₀ 0) = Set.univ := by
   ext t
@@ -129,13 +125,11 @@ theorem integrableExpSet_id_cauchyMeasure_zero_scale (x₀ : ℝ) :
   exact integrable_dirac (by simp)
 
 /-- The moment-generating function of the zero-scale Cauchy law. -/
-@[simp]
 theorem mgf_id_cauchyMeasure_zero_scale (x₀ t : ℝ) :
     mgf id (cauchyMeasure x₀ 0) t = Real.exp (t * x₀) := by
   simpa using (mgf_dirac' (X := id) (ω := x₀) (t := t))
 
 /-- The cumulant-generating function of the zero-scale Cauchy law. -/
-@[simp]
 theorem cgf_id_cauchyMeasure_zero_scale (x₀ t : ℝ) :
     cgf id (cauchyMeasure x₀ 0) t = t * x₀ := by
   rw [cgf, mgf_id_cauchyMeasure_zero_scale, Real.log_exp]
