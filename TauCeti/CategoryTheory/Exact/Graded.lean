@@ -17,8 +17,8 @@ is data, not a property, exactly as a pinning is: it is what gives the Grothendi
 category its `ℤ`-action `[M] ↦ [M{1}]`.
 
 Requiring the inverse to be conflation-exact is not automatic from requiring it of the functor.
-An autoequivalence can enlarge the class of conflations strictly, and then no relation between
-`[M]` and `[M{1}]` is invertible.  The theorem
+An autoequivalence can enlarge the class of conflations strictly, in which case its inverse does
+not induce the canonical inverse map on `K₀`.  The theorem
 `TauCeti.ExactStructure.isConflationExact_inverse_iff_reflectsConflations`, proved alongside the
 transport of exact structures, identifies the extra hypothesis with reflection of conflations,
 which is the form in which it is usually checked.
@@ -62,8 +62,8 @@ universe v₁ v₂ v₃ u₁ u₂ u₃
 a chosen autoequivalence `{1}`, the *grading shift*, whose functor and whose inverse both preserve
 the distinguished conflations.
 
-The shift is data.  Only the conflation-exactness of both directions makes the induced map on
-Grothendieck groups invertible, which is what an internal grading is used for; see
+The shift is data.  Conflation-exactness of both directions supplies mutually inverse maps on
+Grothendieck groups induced by the shift and its inverse; see
 `TauCeti.ExactStructure.isConflationExact_inverse_iff_reflectsConflations` for the reformulation
 of the second hypothesis as reflection of conflations. -/
 structure GradedExactStructure (C : Type u₁) [Category.{v₁} C] [Preadditive C] [HasZeroObject C]
@@ -230,8 +230,8 @@ underlying additive categories whose functor and whose inverse are both conflati
 together with a chosen isomorphism commuting the functor with the two grading shifts.
 
 Conflation-exactness of the inverse is again an extra hypothesis, for the reason recorded on
-`TauCeti.GradedExactStructure`: it is what makes the induced map on Grothendieck groups
-invertible. -/
+`TauCeti.GradedExactStructure`: it supplies the inverse map on Grothendieck groups induced by the
+inverse functor. -/
 structure GradedExactEquiv {C : Type u₁} {D : Type u₂}
     [Category.{v₁} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
     [Category.{v₂} D] [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D]

@@ -79,6 +79,7 @@ lemma shiftZPow_apply (e : C ≌ C) [e.functor.Additive] (n : ℤ) :
   (rfl)
 
 /-- The generator of the split `K₀` action sends an object class to the class of its shift. -/
+@[simp]
 lemma shiftZPow_one_apply_of (e : C ≌ C) [e.functor.Additive] (X : C) :
     shiftZPow e 1 (of X) = of (e.functor.obj X) := by
   simp
@@ -143,6 +144,17 @@ noncomputable def liftEquiv (e : C ≌ C) [e.functor.Additive] (σ : AddAut G) :
     Subtype.ext
       (SplitK0.lift_unique _ f.1 fun X => (SplitK0.liftEquiv_symm_apply_obj f.1 X).symm).symm
 
+@[simp]
+lemma liftEquiv_apply (a : ShiftInvariant C e σ) :
+    (liftEquiv e σ a).1 = a.lift :=
+  (rfl)
+
+@[simp]
+lemma liftEquiv_symm_apply_obj
+    (f : {f : SplitK0 C →+ G // ∀ x, f (mapEquiv e x) = σ (f x)}) (X : C) :
+    ((liftEquiv e σ).symm f).obj X = f.1 (of X) :=
+  SplitK0.liftEquiv_symm_apply_obj f.1 X
+
 end ShiftInvariant
 
 end UniversalProperty
@@ -166,6 +178,7 @@ lemma shiftZPow_apply (e : A ≌ A) [e.functor.Additive] (n : ℤ) :
   (rfl)
 
 /-- The generator of the abelian `K₀` action sends an object class to the class of its shift. -/
+@[simp]
 lemma shiftZPow_one_apply_of (e : A ≌ A) [e.functor.Additive] (X : A) :
     shiftZPow e 1 (of X) = of (e.functor.obj X) := by
   simp
@@ -231,6 +244,17 @@ noncomputable def liftEquiv (e : A ≌ A) [e.functor.Additive] (σ : AddAut G) :
       (AbelianK0.lift_unique _ f.1 fun X =>
         (AbelianK0.liftEquiv_symm_apply_obj f.1 X).symm).symm
 
+@[simp]
+lemma liftEquiv_apply (a : ShiftInvariant A e σ) :
+    (liftEquiv e σ a).1 = a.lift :=
+  (rfl)
+
+@[simp]
+lemma liftEquiv_symm_apply_obj
+    (f : {f : AbelianK0 A →+ G // ∀ x, f (mapEquiv e x) = σ (f x)}) (X : A) :
+    ((liftEquiv e σ).symm f).obj X = f.1 (of X) :=
+  AbelianK0.liftEquiv_symm_apply_obj f.1 X
+
 end ShiftInvariant
 
 end UniversalProperty
@@ -245,8 +269,8 @@ variable {C : Type u} [Category.{v} C] [Preadditive C] [HasZeroObject C] [HasBin
   [EssentiallySmall.{w} C] (E : GradedExactStructure C)
 
 /-- **The grading shift on exact `K₀`**: the automorphism `[M] ↦ [M{1}]` induced by the grading
-shift of a graded exact category.  It is invertible precisely because both the shift and its
-inverse are conflation-exact. -/
+shift of a graded exact category.  Conflation-exactness of the shift and its inverse constructs
+this equivalence with the map induced by the inverse shift as its inverse. -/
 noncomputable def shiftEquiv : ExactK0 E.toExactStructure ≃+ ExactK0 E.toExactStructure :=
   ExactK0.mapEquiv E.shift E.shift_exact E.shift_inverse_exact
 
@@ -283,6 +307,7 @@ lemma shiftZPow_apply (n : ℤ) : E.shiftZPow n = n • E.shiftEquiv :=
   (rfl)
 
 /-- The generator of the `ℤ`-action is the shift itself: `[M{1}]` is the class of `M{1}`. -/
+@[simp]
 lemma shiftZPow_one_apply_of (X : C) :
     E.shiftZPow 1 (ExactK0.of X) =
       (ExactK0.of (E.shift.functor.obj X) : ExactK0 E.toExactStructure) := by
@@ -293,6 +318,7 @@ lemma shiftZPow_neg_one_apply (x : ExactK0 E.toExactStructure) :
     E.shiftZPow (-1) x = E.shiftEquiv.symm x := by
   simp [shiftZPow]
 
+@[simp]
 lemma shiftZPow_neg_one_apply_of (X : C) :
     E.shiftZPow (-1) (ExactK0.of X) =
       (ExactK0.of (E.shift.inverse.obj X) : ExactK0 E.toExactStructure) := by
@@ -359,6 +385,18 @@ noncomputable def liftEquiv (σ : AddAut G) :
   right_inv f :=
     Subtype.ext
       (ExactK0.lift_unique _ f.1 fun X => (ExactK0.liftEquiv_symm_apply_obj f.1 X).symm).symm
+
+@[simp]
+lemma liftEquiv_apply (a : ShiftInvariant E σ) :
+    (liftEquiv σ a).1 = a.lift :=
+  (rfl)
+
+@[simp]
+lemma liftEquiv_symm_apply_obj
+    (f : {f : ExactK0 E.toExactStructure →+ G //
+      ∀ x, f (E.shiftEquiv x) = σ (f x)}) (X : C) :
+    ((liftEquiv σ).symm f).obj X = f.1 (ExactK0.of X) :=
+  ExactK0.liftEquiv_symm_apply_obj f.1 X
 
 end ShiftInvariant
 
