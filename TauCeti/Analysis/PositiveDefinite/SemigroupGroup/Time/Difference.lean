@@ -48,7 +48,7 @@ representing measure.
   differenced again.
 * `TauCeti.continuous_listTimeDifference` and `TauCeti.continuous_iteratedTimeDifference`: those
   differences stay continuous, so Bochner's theorem applies to each of their time slices.
-* `TauCeti.IsSemigroupGroupPD.antitone_timeAxis_re` and
+* `TauCeti.IsSemigroupGroupPD.timeAxis_re_antitone` and
   `TauCeti.IsSemigroupGroupPD.neg_one_pow_mul_fwdDiff_timeAxis_re_nonneg`: on the time axis the
   differences say that `t ↦ (F (t, 0)).re` is antitone with alternating forward differences.
 
@@ -371,7 +371,7 @@ function `t ↦ (F (t, 0)).re` alone, the case with no spatial variable. -/
 /-- **The time-axis function of a bounded BCR-positive-definite function decreases.** Its drop
 over a step `h` is the time-axis value of the first time difference, which is again positive
 definite and therefore has a nonnegative real part there. -/
-theorem antitone_timeAxis_re (hF : IsSemigroupGroupPD F)
+theorem timeAxis_re_antitone (hF : IsSemigroupGroupPD F)
     (hbounded : Bornology.IsBounded (range F)) :
     Antitone fun t : ℝ≥0 => (F (t, 0)).re := by
   intro t s hts

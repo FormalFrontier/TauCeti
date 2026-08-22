@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.ForwardDiff
 public import TauCeti.Analysis.Bochner.BochnerTheorem
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Difference
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice
@@ -46,11 +45,12 @@ available for a function that *is* represented
 
 * `TauCeti.bochnerMeasure_timeSlice_eq_add`: the Bochner measure of a time slice splits as the
   Bochner measure of a time difference plus the Bochner measure of the translated slice.
-* `TauCeti.antitone_bochnerMeasure_timeSlice` and
-  `TauCeti.antitone_bochnerMeasure_timeSlice_real`: the family of Bochner measures, and each of
+* `TauCeti.bochnerMeasure_timeSlice_antitone` and
+  `TauCeti.bochnerMeasure_timeSlice_real_antitone`: the family of Bochner measures, and each of
   its slab masses, decrease in time.
-* `TauCeti.bochnerMeasure_timeSlice_real_univ` and `TauCeti.bochnerMeasure_timeSlice_real_le`:
-  the total mass is `(F (t, 0)).re`, and every slab mass is bounded by `(F (0, 0)).re`.
+* `TauCeti.bochnerMeasure_timeSlice_real_univ`, `TauCeti.bochnerMeasure_timeSlice_real_le` and
+  `TauCeti.isBounded_range_bochnerMeasure_timeSlice_real`: the total mass is `(F (t, 0)).re`, and
+  every slab mass is bounded by `(F (0, 0)).re`, hence has bounded range.
 * `TauCeti.sub_bochnerMeasure_timeSlice_real_le_sub_timeAxis_re` and
   `TauCeti.continuous_bochnerMeasure_timeSlice_real`: a slab mass drops by at most the drop of
   the total mass, so it is a continuous function of the time.
@@ -104,7 +104,7 @@ theorem bochnerMeasure_timeSlice_eq_add (hFpd : IsSemigroupGroupPD F) (hFcont : 
 
 /-- **The Bochner measures of the time slices decrease in time.** Each step forward in time
 removes the Bochner measure of the corresponding time difference, which is a measure. -/
-theorem antitone_bochnerMeasure_timeSlice (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F)
+theorem bochnerMeasure_timeSlice_antitone (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F)
     (hFbdd : Bornology.IsBounded (range F)) :
     Antitone fun t : ℝ≥0 => bochnerMeasure fun a => F (t, a) := by
   intro t s hts
@@ -114,13 +114,13 @@ theorem antitone_bochnerMeasure_timeSlice (hFpd : IsSemigroupGroupPD F) (hFcont 
 
 /-- The mass a fixed measurable set receives from the Bochner measures of the time slices
 decreases in time. -/
-theorem antitone_bochnerMeasure_timeSlice_real (hFpd : IsSemigroupGroupPD F)
+theorem bochnerMeasure_timeSlice_real_antitone (hFpd : IsSemigroupGroupPD F)
     (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (B : Set V) :
     Antitone fun t : ℝ≥0 => (bochnerMeasure fun a => F (t, a)).real B := by
   intro t s hts
   simp only [measureReal_def]
   exact ENNReal.toReal_mono (measure_ne_top _ _)
-    (antitone_bochnerMeasure_timeSlice hFpd hFcont hFbdd hts B)
+    (bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd hts B)
 
 /-- The total mass of the Bochner measure of the time slice at `t` is `(F (t, 0)).re`. -/
 theorem bochnerMeasure_timeSlice_real_univ (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F)
@@ -133,11 +133,20 @@ theorem bochnerMeasure_timeSlice_real_le (hFpd : IsSemigroupGroupPD F) (hFcont :
     (bochnerMeasure fun a => F (t, a)).real B ≤ (F (0, 0)).re := by
   have hmass : (bochnerMeasure fun a => F (t, a)).real univ
       ≤ (bochnerMeasure fun a => F ((0 : ℝ≥0), a)).real univ :=
-    antitone_bochnerMeasure_timeSlice_real hFpd hFcont hFbdd univ (zero_le : (0 : ℝ≥0) ≤ t)
+    bochnerMeasure_timeSlice_real_antitone hFpd hFcont hFbdd univ (zero_le : (0 : ℝ≥0) ≤ t)
   calc (bochnerMeasure fun a => F (t, a)).real B
       ≤ (bochnerMeasure fun a => F (t, a)).real univ := measureReal_mono (subset_univ B)
     _ ≤ (bochnerMeasure fun a => F ((0 : ℝ≥0), a)).real univ := hmass
     _ = (F (0, 0)).re := bochnerMeasure_timeSlice_real_univ hFpd hFcont 0
+
+/-- **The slab masses form a bounded family.** Every value of the slab mass lies in the interval
+`[0, (F (0, 0)).re]`, so its range is bounded; this is the boundedness hypothesis of the
+Hausdorff--Bernstein--Widder theorem. -/
+theorem isBounded_range_bochnerMeasure_timeSlice_real (hFpd : IsSemigroupGroupPD F)
+    (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (B : Set V) :
+    Bornology.IsBounded (range fun t : ℝ≥0 => (bochnerMeasure fun a => F (t, a)).real B) :=
+  (Metric.isBounded_Icc 0 (F (0, 0)).re).subset <| range_subset_iff.2 fun t =>
+    ⟨measureReal_nonneg, bochnerMeasure_timeSlice_real_le hFpd hFcont hFbdd B t⟩
 
 /-- **The slab masses lose no more than the total mass.** Between two times the mass of a
 measurable set `B` drops by at most the drop of the total mass, because the mass of `Bᶜ` also
@@ -154,7 +163,7 @@ theorem sub_bochnerMeasure_timeSlice_real_le_sub_timeAxis_re
   rw [bochnerMeasure_timeSlice_real_univ hFpd hFcont s] at hs
   have hc : (bochnerMeasure fun a => F (s, a)).real Bᶜ
       ≤ (bochnerMeasure fun a => F (t, a)).real Bᶜ :=
-    antitone_bochnerMeasure_timeSlice_real hFpd hFcont hFbdd Bᶜ hts
+    bochnerMeasure_timeSlice_real_antitone hFpd hFcont hFbdd Bᶜ hts
   linarith
 
 /-- **The slab masses are continuous in time.** The variation of the mass of `B` is dominated by
@@ -171,7 +180,7 @@ theorem continuous_bochnerMeasure_timeSlice_real (hFpd : IsSemigroupGroupPD F)
     intro t s hts
     have hmono : (bochnerMeasure fun a => F (s, a)).real B
         ≤ (bochnerMeasure fun a => F (t, a)).real B :=
-      antitone_bochnerMeasure_timeSlice_real hFpd hFcont hFbdd B hts
+      bochnerMeasure_timeSlice_real_antitone hFpd hFcont hFbdd B hts
     have h1 : 0 ≤ (bochnerMeasure fun a => F (t, a)).real B
         - (bochnerMeasure fun a => F (s, a)).real B := sub_nonneg.2 hmono
     have h2 := sub_bochnerMeasure_timeSlice_real_le_sub_timeAxis_re hFpd hFcont hFbdd hB hts
