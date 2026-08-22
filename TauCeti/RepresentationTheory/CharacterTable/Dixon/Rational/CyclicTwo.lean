@@ -223,6 +223,7 @@ def cyclicGroupTwoCharacterTable :
   cyclicGroupTwoCentralCharacterTable
 
 /-- The entries of the ordinary integral character table. -/
+@[simp]
 theorem cyclicGroupTwoCharacterTable_apply (i j : CyclicGroupTwoClassIndex) :
     cyclicGroupTwoCharacterTable i j =
       !![1,  1;

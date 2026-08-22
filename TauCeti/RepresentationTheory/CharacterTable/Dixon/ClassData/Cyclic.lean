@@ -98,6 +98,7 @@ theorem card_classFinset_cyclicClassData (n : ℕ) [NeZero n]
   rw [classFinset_cyclicClassData, Finset.card_singleton]
 
 /-- The ordered list of class sizes of a finite cyclic group consists entirely of ones. -/
+@[simp]
 theorem card_classes_cyclicClassData (n : ℕ) [NeZero n] :
     (cyclicClassData n).classes.map Finset.card = List.replicate n 1 := by
   rw [ClassData.classes, List.map_map]
