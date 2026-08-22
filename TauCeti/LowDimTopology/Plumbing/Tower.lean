@@ -47,8 +47,6 @@ future work.
   satisfies the chain-level nonboundary criterion for the `U`-tower.
 * `TauCeti.PlumbingGraph.exists_injective_latticeHomologyCycleMap`: the resulting map from
   `𝔽₂[U]` into lattice homology is injective.
-* `TauCeti.PlumbingGraph.latticeDifferential_eq_zero_of_forall_directions_eq_empty`: a chain
-  supported on lattice points is a cycle.
 * `TauCeti.PlumbingGraph.not_isZero_latticeHomology`: the lattice homology of a negative-definite
   plumbing is nonzero.
 
@@ -123,24 +121,6 @@ theorem latticeAugmentation_eq_zero_of_mem_degreePart (P : PlumbingGraph V)
     rw [PlumbingCube.dimension, hempty, Finset.card_empty] at hdim
     exact hq hdim.symm
   simp [P.latticeAugmentationCoefficient_of_directions_ne_empty k hne]
-
-/-- A zero-dimensional cube has no directions to differentiate along, so it is a cycle. -/
-@[simp]
-theorem latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty (P : PlumbingGraph V)
-    (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions = ∅) :
-    P.latticeDifferentialOnGenerator k C = 0 := by
-  rw [latticeDifferentialOnGenerator_def]
-  refine Finset.sum_eq_zero fun v _ => ?_
-  have : (v : V) ∈ (∅ : Finset V) := by rw [← hC]; exact v.property
-  exact absurd this (Finset.notMem_empty _)
-
-/-- A chain supported in cubical degree zero is a cycle: a lattice point has no faces. -/
-theorem latticeDifferential_eq_zero_of_forall_directions_eq_empty (P : PlumbingGraph V)
-    (k : P.characteristicVectors) {c : PlumbingChain V}
-    (hc : ∀ C ∈ c.support, C.directions = ∅) : P.latticeDifferential k c = 0 := by
-  rw [latticeDifferential_apply, Finsupp.sum]
-  refine Finset.sum_eq_zero fun C hC => ?_
-  rw [P.latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty k (hc C hC), smul_zero]
 
 /-- The augmentation kills the differential of a single cube.
 

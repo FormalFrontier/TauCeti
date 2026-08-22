@@ -40,6 +40,8 @@ oriented cubical differential.
 * `TauCeti.PlumbingGraph.latticeDifferential_single`: the differential on a basis cube.
 * `TauCeti.PlumbingGraph.latticeDifferential_single_mk_singleton`: the differential on a
   one-dimensional basis cube.
+* `TauCeti.PlumbingGraph.latticeDifferential_eq_zero_of_forall_directions_eq_empty`: a chain
+  supported on lattice points is a cycle.
 * `TauCeti.PlumbingGraph.single_add_sub_smul_single_mem_range` and
   `TauCeti.PlumbingGraph.single_sub_smul_single_add_mem_range`: the boundary relations between
   adjacent lattice points.
@@ -123,6 +125,24 @@ theorem latticeDifferential_apply
       c.sum fun C a => a • @latticeDifferentialOnGenerator V decV finV P k C := by
   rw [latticeDifferential, Finsupp.lsum_apply]
   simp [Finsupp.sum, LinearMap.smulRight_apply]
+
+/-- A zero-dimensional cube has no directions to differentiate along, so it is a cycle. -/
+@[simp]
+theorem latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions = ∅) :
+    P.latticeDifferentialOnGenerator k C = 0 := by
+  rw [latticeDifferentialOnGenerator_def]
+  refine Finset.sum_eq_zero fun v _ => ?_
+  have : (v : V) ∈ (∅ : Finset V) := by rw [← hC]; exact v.property
+  exact absurd this (Finset.notMem_empty _)
+
+/-- A chain supported in cubical degree zero is a cycle: a lattice point has no faces. -/
+theorem latticeDifferential_eq_zero_of_forall_directions_eq_empty (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {c : PlumbingChain V}
+    (hc : ∀ C ∈ c.support, C.directions = ∅) : P.latticeDifferential k c = 0 := by
+  rw [latticeDifferential_apply, Finsupp.sum]
+  refine Finset.sum_eq_zero fun C hC => ?_
+  rw [P.latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty k (hc C hC), smul_zero]
 
 /-! ### One-dimensional cubes and adjacent lattice points -/
 
