@@ -168,6 +168,7 @@ matching `Isogeny.degree_eq_finrank` and `Isogeny.moduleFinite_intermediateRing`
 a structure globally would be a diamond, since different isogenies induce different ones.
 
 Nothing here is spent on separability or on the coordinate rings being Dedekind. -/
+@[simp]
 theorem finrank_intermediateRing_eq_degree (φ : Isogeny W₁ W₂)
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
@@ -217,7 +218,11 @@ is the ring of functions regular away from `φ⁻¹(O₂)`, so its primes over `
 
 Module-finiteness is taken directly rather than through separability of the function-field
 extension; the module docstring says why. In the separable case
-`Isogeny.moduleFinite_intermediateRing` supplies it. -/
+`Isogeny.moduleFinite_intermediateRing` supplies it. The `Fintype` binder is what the sum ranges
+over, so it belongs to the statement rather than to the proof: finiteness of the module gives
+only `Finite` (`Algebra.QuasiFinite.finite_primesOver`), which no `∑ q : _` elaborates against.
+Mathlib's `Ideal.sum_ramification_inertia_eq_finrank` takes the binder the same way, under the
+same `Module.Finite`. -/
 theorem sum_ramificationIdx_mul_inertiaDeg_eq_degree (φ : Isogeny W₁ W₂)
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
@@ -235,8 +240,9 @@ theorem sum_ramificationIdx_mul_inertiaDeg_eq_degree (φ : Isogeny W₁ W₂)
 
 /-- **There are at most `deg φ` primes above `p`.** Dropping the weights from the fundamental
 identity: every ramification index and every inertia degree is at least one, so the primes over
-`p` number at most the degree. When `p` is maximal, these are the primes in the fibre over the
-affine place that `p` names.
+`p` number at most the degree. The count is `Set.ncard`, the spelling Mathlib's own cardinality
+API for this set uses (`Ideal.ncard_primesOver_lt_of_not_le`). When `p` is maximal, these are the
+primes in the fibre over the affine place that `p` names.
 
 Equality holds exactly when every ramification index and every inertia degree over `p` is one.
 Turning the weighted identity above into an honest count of geometric points is therefore Layer 1's
@@ -252,11 +258,11 @@ theorem ncard_primesOver_le_degree (φ : Isogeny W₁ W₂)
     [Module.Flat W₂.CoordinateRing φ.intermediateRing]
     (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x)
     (p : Ideal W₂.CoordinateRing) [p.IsPrime] :
-    Nat.card (p.primesOver φ.intermediateRing) ≤ φ.degree := by
+    (p.primesOver φ.intermediateRing).ncard ≤ φ.degree := by
   have : Fintype (p.primesOver φ.intermediateRing) :=
     (Algebra.QuasiFinite.finite_primesOver p).fintype
-  rw [← φ.sum_ramificationIdx_mul_inertiaDeg_eq_degree h p, Nat.card_eq_fintype_card,
-    ← Finset.card_univ, Finset.card_eq_sum_ones]
+  rw [← φ.sum_ramificationIdx_mul_inertiaDeg_eq_degree h p, ← Nat.card_coe_set_eq,
+    Nat.card_eq_fintype_card, ← Finset.card_univ, Finset.card_eq_sum_ones]
   refine Finset.sum_le_sum fun q _ ↦ ?_
   have : q.1.IsPrime := q.2.1
   exact Nat.one_le_iff_ne_zero.mpr
