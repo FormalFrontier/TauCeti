@@ -137,7 +137,6 @@ theorem integral_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
   field_simp [(Real.Gamma_pos_of_pos ha).ne']
 
 /-- The second raw moment of a gamma law with positive shape and rate is `a * (a + 1) / r ^ 2`. -/
-@[simp]
 theorem integral_sq_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     ∫ x, x ^ 2 ∂gammaMeasure a r = a * (a + 1) / r ^ 2 := by
   have hGa := (Real.Gamma_pos_of_pos ha).ne'
