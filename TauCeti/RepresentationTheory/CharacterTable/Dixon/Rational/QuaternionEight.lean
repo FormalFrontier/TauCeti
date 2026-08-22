@@ -49,6 +49,9 @@ in Layer 6 of the
   446--450.
 * G. Schneider, *Dixon's character table algorithm revisited*, J. Symbolic Comput. 9 (1990),
   601--606.
+* The formal template is
+  `TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.DihedralFour`; this file and its
+  quaternion class-data and good-prime prerequisites adapt the corresponding dihedral development.
 -/
 
 public section
@@ -73,8 +76,7 @@ def quaternionGroupTwoCentralCharacterTable :
      1,  1, -2, -2,  2;
      1, -1,  0,  0,  0]
 
-/-- The quaternion and dihedral groups of order eight have the same central-character matrix in
-their respective class numberings. -/
+/-- The entries of the integral central-character table. -/
 @[simp]
 theorem quaternionGroupTwoCentralCharacterTable_apply
     (i j : QuaternionGroupTwoClassIndex) :
@@ -187,7 +189,7 @@ theorem mem_quaternionGroupTwoLiftedCentralRows_iff
 def quaternionGroupTwoCharacterDegrees : QuaternionGroupTwoClassIndex → ℕ :=
   ![1, 1, 1, 1, 2]
 
-/-- The quaternion and dihedral groups of order eight have the same degree vector. -/
+/-- The degrees attached to the central-character rows, entrywise. -/
 @[simp]
 theorem quaternionGroupTwoCharacterDegrees_apply (i : QuaternionGroupTwoClassIndex) :
     quaternionGroupTwoCharacterDegrees i = ![1, 1, 1, 1, 2] i := by
@@ -203,8 +205,7 @@ def quaternionGroupTwoCharacterTable :
      1,  1, -1, -1,  1;
      2, -2,  0,  0,  0]
 
-/-- **The quaternion and dihedral groups of order eight have the same ordinary character matrix**
-in their respective class numberings. -/
+/-- The entries of the ordinary integral character table. -/
 @[simp]
 theorem quaternionGroupTwoCharacterTable_apply (i j : QuaternionGroupTwoClassIndex) :
     quaternionGroupTwoCharacterTable i j =
