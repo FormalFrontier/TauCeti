@@ -57,6 +57,22 @@ theorem mem_normFiber {I : (Ideal (𝓞 K))⁰} {n : ℕ} :
     I ∈ normFiber K n ↔ Ideal.absNorm (I : Ideal (𝓞 K)) = n := by
   simp [normFiber]
 
+/-- No nonzero integral ideal has absolute norm zero. -/
+@[simp]
+theorem normFiber_zero : normFiber K 0 = ∅ := by
+  ext I
+  rw [mem_normFiber]
+  constructor
+  · intro hI
+    exact mem_nonZeroDivisors_iff_ne_zero.mp I.property (Ideal.absNorm_eq_zero_iff.mp hI) |>.elim
+  · simp
+
+/-- The unit ideal is the unique nonzero integral ideal of absolute norm one. -/
+@[simp]
+theorem normFiber_one : normFiber K 1 = {1} := by
+  ext I
+  simp [Ideal.absNorm_eq_one_iff, Subtype.ext_iff]
+
 /-- Regroup ideal arithmetic functions by absolute norm as a complex-linear map.
 
 The coefficient at `n` is the finite sum of `f I` over the nonzero integral ideals `I` whose
@@ -100,12 +116,7 @@ theorem hasFiniteSupport_normCoeff_summand (f : IdealArithmeticFunction K) (n : 
 /-- There is a unique nonzero integral ideal of absolute norm one, namely the unit ideal. -/
 @[simp]
 theorem normCoeff_apply_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 := by
-  rw [normCoeff_apply]
-  have hfiber :
-      {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = 1} = {1} := by
-    ext I
-    simp [Ideal.absNorm_eq_one_iff, Subtype.ext_iff]
-  rw [hfiber]
+  rw [normCoeff_eq_sum_normFiber, normFiber_one]
   simp
 
 /-- Regrouping commutes with coefficientwise complex conjugation. -/
