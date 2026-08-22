@@ -129,7 +129,6 @@ def doubledLabelling (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) : ∀ ⦃x y : Sym
 variable {k}
 
 /-- The gauge labelling on an arrow of `Q` is the given label. -/
-@[simp]
 theorem doubledLabelling_of (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) {i j : Q} (a : i ⟶ j) :
     doubledLabelling k u (Symmetrify.of.map a) = u a := by
   rw [doubledLabelling]
