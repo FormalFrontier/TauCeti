@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.CompletelyMonotone.Composition
 public import TauCeti.Analysis.CompletelyMonotone.Power
 -- Proof-only: the derivative and the continuity of a real power with a constant exponent.
-import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 
 /-!
@@ -19,18 +18,16 @@ on `[0, ∞)`, smooth on `(0, ∞)`, and its derivative `t ↦ s · t^{s-1}` is 
 negative power of `TauCeti.isCompletelyMonotoneOnIoi_rpow_neg`, since `s - 1 = -(1 - s)` with
 `1 - s ≥ 0`.
 
-Feeding this into `TauCeti.IsCompletelyMonotone.comp_isBernsteinFunction` produces the stretched
-exponentials `t ↦ e^{-x t^s}`, the completely monotone functions whose representing measures are
-the one-sided `s`-stable laws; they are the acceptance example the `OneParameterSemigroups`
-roadmap asks the composition closure to deliver. The endpoint `s = 1` recovers the exponential
-`t ↦ e^{-x t}` and `s = 0` the constant `t ↦ e^{-x}`.
+Feeding this into `TauCeti.IsContinuousCompletelyMonotoneOnIoi.comp_isBernsteinFunction` produces
+the stretched exponentials `t ↦ e^{-x t^s}`. These are the acceptance example the
+`OneParameterSemigroups` roadmap asks the composition closure to deliver. The endpoint `s = 1`
+recovers the exponential `t ↦ e^{-x t}` and `s = 0` the constant `t ↦ e^{-x}`.
 
 ## Main declarations
 
 * `TauCeti.isBernsteinFunction_rpow`: `t ↦ t^s` is a Bernstein function for `0 ≤ s ≤ 1`.
 * `TauCeti.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul_rpow`: the stretched exponential
   `t ↦ e^{-x t^s}` is completely monotone.
-* `TauCeti.exists_representsLaplace_exp_neg_mul_rpow`: its representing measure.
 
 ## References
 
@@ -40,8 +37,8 @@ roadmap asks the composition closure to deliver. The endpoint `s = 1` recovers t
 
 public section
 
-open MeasureTheory Set
-open scoped ContDiff NNReal
+open Set
+open scoped ContDiff
 
 namespace TauCeti
 
@@ -66,13 +63,5 @@ theorem isContinuousCompletelyMonotoneOnIoi_exp_neg_mul_rpow {x s : ℝ} (hx : 0
     (hs₁ : s ≤ 1) :
     IsContinuousCompletelyMonotoneOnIoi fun t : ℝ => Real.exp (-x * t ^ s) :=
   (isBernsteinFunction_rpow hs hs₁).isContinuousCompletelyMonotoneOnIoi_exp_neg_mul hx
-
-/-- The stretched exponential `t ↦ e^{-x t^s}` is the Laplace transform of a finite positive
-measure on `ℝ≥0`, namely the law of the one-sided `s`-stable variable scaled by `x`. -/
-theorem exists_representsLaplace_exp_neg_mul_rpow {x s : ℝ} (hx : 0 ≤ x) (hs : 0 ≤ s)
-    (hs₁ : s ≤ 1) :
-    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ fun t : ℝ => Real.exp (-x * t ^ s) :=
-  (hausdorff_bernstein_widder _).mp
-    (isContinuousCompletelyMonotoneOnIoi_exp_neg_mul_rpow hx hs hs₁)
 
 end TauCeti

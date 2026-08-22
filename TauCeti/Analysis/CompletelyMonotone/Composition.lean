@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Basic
 public import TauCeti.Analysis.CompletelyMonotone.OpenClosure
-public import TauCeti.Analysis.CompletelyMonotone.Bernstein.HausdorffBernsteinWidder
 
 /-!
 # Composing completely monotone and Bernstein functions
@@ -48,13 +47,11 @@ In that degenerate case the composition is the constant `g 0`, and the theorems 
   `t ↦ g (f t) · h t` that the induction proves.
 * `TauCeti.IsCompletelyMonotoneOnIoi.comp_isBernsteinFunction`: the open-half-line composition
   theorem, under the positivity hypothesis on the inner function.
-* `TauCeti.IsCompletelyMonotone.comp_isBernsteinFunction`: **a completely monotone function
-  composed with a Bernstein function is completely monotone** on the closed half-line.
+* `TauCeti.IsContinuousCompletelyMonotoneOnIoi.comp_isBernsteinFunction`: **a completely monotone
+  function composed with a Bernstein function is completely monotone** on the closed half-line.
 * `TauCeti.IsBernsteinFunction.comp`: Bernstein functions are closed under composition.
 * `TauCeti.IsBernsteinFunction.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul`: the prototype
   `t ↦ e^{-x f(t)}` is completely monotone.
-* `TauCeti.IsCompletelyMonotone.exists_representsLaplace_comp_isBernsteinFunction`: subordination,
-  the representing measure of `g ∘ f` supplied by Hausdorff--Bernstein--Widder.
 
 ## References
 
@@ -64,8 +61,8 @@ In that degenerate case the composition is the constant `g 0`, and the theorems 
 
 public section
 
-open MeasureTheory Set Filter
-open scoped ContDiff NNReal Topology
+open Set Filter
+open scoped ContDiff Topology
 
 namespace TauCeti
 
@@ -193,7 +190,7 @@ theorem IsCompletelyMonotoneOnIoi.comp_isBernsteinFunction_mul (hg : IsCompletel
 /-- **Composition on the open half-line.** If `g` is completely monotone on `(0, ∞)` and `f` is a
 Bernstein function that is positive on `(0, ∞)`, then `g ∘ f` is completely monotone on `(0, ∞)`.
 The positivity hypothesis is what keeps `f t` inside the open half-line, where `g` is smooth; it
-is removed in `TauCeti.IsCompletelyMonotone.comp_isBernsteinFunction`. -/
+is removed in `TauCeti.IsContinuousCompletelyMonotoneOnIoi.comp_isBernsteinFunction`. -/
 theorem IsCompletelyMonotoneOnIoi.comp_isBernsteinFunction (hg : IsCompletelyMonotoneOnIoi g)
     (hf : IsBernsteinFunction f) (hpos : ∀ t : ℝ, 0 < t → 0 < f t) :
     IsCompletelyMonotoneOnIoi (g ∘ f) := by
@@ -203,16 +200,16 @@ theorem IsCompletelyMonotoneOnIoi.comp_isBernsteinFunction (hg : IsCompletelyMon
   simp [Function.comp_apply]
 
 /-- **A completely monotone function composed with a Bernstein function is completely
-monotone.** This is the closure property the `OneParameterSemigroups` roadmap asks for in Part B;
-together with `TauCeti.hausdorff_bernstein_widder` it is the analytic form of subordination.
+monotone.** This is the closure property the `OneParameterSemigroups` roadmap asks for in Part B.
 
 The conclusion is the closed-half-line predicate `IsContinuousCompletelyMonotoneOnIoi`, not the
 stronger `IsCompletelyMonotone`: a Bernstein function such as `t ↦ √t` has no finite right
-derivative at the origin, so neither does the composition. -/
-theorem IsCompletelyMonotone.comp_isBernsteinFunction (hg : IsCompletelyMonotone g)
+derivative at the origin, so the composition need not have one. -/
+theorem IsContinuousCompletelyMonotoneOnIoi.comp_isBernsteinFunction
+    (hg : IsContinuousCompletelyMonotoneOnIoi g)
     (hf : IsBernsteinFunction f) : IsContinuousCompletelyMonotoneOnIoi (g ∘ f) := by
   refine isContinuousCompletelyMonotoneOnIoi_iff.mpr
-    ⟨hg.contDiffOn.continuousOn.comp hf.continuousOn fun u hu => mem_Ici.2 (hf.nonneg hu), ?_⟩
+    ⟨hg.continuousOn.comp hf.continuousOn fun u hu => mem_Ici.2 (hf.nonneg hu), ?_⟩
   by_cases hvanish : ∃ t₀ : ℝ, 0 < t₀ ∧ f t₀ = 0
   · obtain ⟨t₀, ht₀, h₀⟩ := hvanish
     refine (isCompletelyMonotone_const (hg.nonneg le_rfl)).isCompletelyMonotoneOnIoi.congr ?_
@@ -253,20 +250,7 @@ Laplace transforms of the one-parameter convolution semigroup subordinate to `f`
 theorem IsBernsteinFunction.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul
     (hf : IsBernsteinFunction f) {x : ℝ} (hx : 0 ≤ x) :
     IsContinuousCompletelyMonotoneOnIoi fun t => Real.exp (-x * f t) :=
-  (isCompletelyMonotone_exp_neg_mul hx).comp_isBernsteinFunction hf
-
-/-- **Subordination.** The composition of a completely monotone function with a Bernstein
-function is again the Laplace transform of a finite positive measure on `ℝ≥0`; the measure is
-supplied by the Hausdorff--Bernstein--Widder representation. -/
-theorem IsCompletelyMonotone.exists_representsLaplace_comp_isBernsteinFunction
-    (hg : IsCompletelyMonotone g) (hf : IsBernsteinFunction f) :
-    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ (g ∘ f) :=
-  (hausdorff_bernstein_widder _).mp (hg.comp_isBernsteinFunction hf)
-
-/-- The representing measure of the subordinate transform `t ↦ e^{-x f(t)}`. -/
-theorem IsBernsteinFunction.exists_representsLaplace_exp_neg_mul (hf : IsBernsteinFunction f)
-    {x : ℝ} (hx : 0 ≤ x) :
-    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ fun t => Real.exp (-x * f t) :=
-  (hausdorff_bernstein_widder _).mp (hf.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul hx)
+  (IsContinuousCompletelyMonotoneOnIoi.of_isCompletelyMonotone
+    (isCompletelyMonotone_exp_neg_mul hx)).comp_isBernsteinFunction hf
 
 end TauCeti
