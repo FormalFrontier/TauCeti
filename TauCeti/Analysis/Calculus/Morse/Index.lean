@@ -106,10 +106,14 @@ infinite dimensions; the Morse-theoretic results below assume finite dimension. 
 noncomputable def morseIndex (f : E → ℝ) (x : E) : ℕ :=
   sigNeg (hessianQuadraticForm f x)
 
+/-- The Morse index is the negative index of inertia of the Hessian quadratic form. -/
+theorem morseIndex_def : morseIndex f x = sigNeg (hessianQuadraticForm f x) := by
+  simp [morseIndex]
+
 /-- The Morse index depends only on the germ of the function at the point. -/
 theorem morseIndex_congr_of_eventuallyEq (hfg : f =ᶠ[𝓝 x] g) :
     morseIndex f x = morseIndex g x := by
-  rw [morseIndex, morseIndex, hessianQuadraticForm_congr_of_eventuallyEq hfg]
+  rw [morseIndex_def, morseIndex_def, hessianQuadraticForm_congr_of_eventuallyEq hfg]
 
 /-- The Morse index is invariant under a `C²` change of coordinates with invertible derivative.
 Criticality is needed because it removes the first-order term from the second-order chain rule. -/
@@ -118,7 +122,7 @@ theorem morseIndex_comp {φ : F → E} {b : F} (hf : ContDiffAt ℝ 2 f (φ b))
     (hcrit : fderiv ℝ f (φ b) = 0) (hinv : (fderiv ℝ φ b).IsInvertible) :
     morseIndex (f ∘ φ) b = morseIndex f (φ b) := by
   obtain ⟨e, he⟩ := hinv
-  rw [morseIndex, morseIndex, hessianQuadraticForm_comp hf hφ hcrit, ← he]
+  rw [morseIndex_def, morseIndex_def, hessianQuadraticForm_comp hf hφ hcrit, ← he]
   exact (QuadraticMap.Equivalent.sigNeg_eq
     ⟨QuadraticMap.isometryEquivOfCompLinearEquiv
       (hessianQuadraticForm f (φ b)) e.toLinearEquiv⟩).symm
@@ -138,7 +142,7 @@ theorem IsNondegenerateCriticalPoint.hessianQuadraticForm_nondegenerate
 theorem morseIndex_le_finrank [FiniteDimensional ℝ E] :
     morseIndex f x ≤ Module.finrank ℝ E := by
   have h := QuadraticForm.sigPos_add_sigNeg_add_radical (Q := hessianQuadraticForm f x)
-  rw [morseIndex]
+  rw [morseIndex_def]
   omega
 
 /-- At a nondegenerate critical point, the positive index of the Hessian and the Morse index add
@@ -149,7 +153,7 @@ theorem IsNondegenerateCriticalPoint.sigPos_hessianQuadraticForm_add_morseIndex_
   have hsig := QuadraticForm.sigPos_add_sigNeg_add_radical
     (Q := hessianQuadraticForm f x)
   rw [h.hessianQuadraticForm_nondegenerate.radical_eq_bot, finrank_bot, add_zero] at hsig
-  simpa only [morseIndex] using hsig
+  simpa only [morseIndex_def] using hsig
 
 /-- At a nondegenerate critical point, the Hessian is positive-definite exactly when the Morse
 index is zero. -/
@@ -157,7 +161,7 @@ theorem IsNondegenerateCriticalPoint.hessianQuadraticForm_posDef_iff_morseIndex_
     [FiniteDimensional ℝ E] (h : IsNondegenerateCriticalPoint f x) :
     (hessianQuadraticForm f x).PosDef ↔ morseIndex f x = 0 := by
   rw [TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
-    h.hessianQuadraticForm_nondegenerate.radical_eq_bot, morseIndex]
+    h.hessianQuadraticForm_nondegenerate.radical_eq_bot, morseIndex_def]
   simp only [eq_self, and_true]
 
 /-- At a nondegenerate critical point, the Hessian is negative-definite exactly when the Morse
@@ -192,6 +196,6 @@ theorem IsNondegenerateCriticalPoint.exists_hessianQuadraticForm_equivalent_weig
     QuadraticForm.equivalent_one_neg_one_weighted_sum_squared
       (hessianQuadraticForm f x) hassoc
   refine ⟨w, hw, hequiv, ?_⟩
-  simpa only [morseIndex] using QuadraticForm.sigNeg_of_equiv_weightedSumSquares hequiv
+  simpa only [morseIndex_def] using QuadraticForm.sigNeg_of_equiv_weightedSumSquares hequiv
 
 end TauCeti
