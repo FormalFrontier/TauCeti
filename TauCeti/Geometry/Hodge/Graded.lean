@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.TensorProduct.Quotient
 public import TauCeti.Geometry.Hodge.BaseChange
-public import TauCeti.Geometry.Hodge.Structure
-public import TauCeti.RingTheory.IsTensorProduct
 
 /-!
 # Graded pieces of a rational weight filtration
@@ -91,7 +89,8 @@ theorem map_range_lTensor_submoduleOf (hℚ : IsBaseChange ℚ ιℚ) (hℂ : Is
       exact ⟨y, hy, rfl⟩
     · rintro ⟨y, hy, rfl⟩
       exact ⟨1 ⊗ₜ[ℚ] y, ⟨y, hy, rfl⟩, rfl⟩
-  have hrange : LinearMap.range (A.subtype.baseChange ℂ) = Submodule.baseChange ℂ A := rfl
+  have hrange : LinearMap.range (A.subtype.baseChange ℂ) = Submodule.baseChange ℂ A := by
+    rw [Submodule.baseChange]
   apply Submodule.map_injective_of_injective (Submodule.injective_subtype _)
   have step1 : Submodule.map (rationalToComplexSubmodule hℚ hℂ B).subtype
       (Submodule.map (rationalToComplexSubmoduleEquiv hℚ hℂ B).toLinearMap
@@ -133,24 +132,11 @@ theorem gradedComplexEquiv_tmul_mk (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBas
     (WQ : ℤ → Submodule ℚ Vℚ) (hWQ : Monotone WQ) (k : ℤ) (z : ℂ) (x : WQ k) :
     gradedComplexEquiv hℚ hℂ WQ hWQ k (z ⊗ₜ[ℚ] Submodule.Quotient.mk x) =
       Submodule.Quotient.mk (rationalToComplexSubmoduleEquiv hℚ hℂ (WQ k) (z ⊗ₜ[ℚ] x)) :=
-  (rfl)
-
-section RationalConjugation
-
-variable (U : Type*) [AddCommGroup U] [Module ℚ U]
-
-/-- Lattice conjugation on the complexification `ℂ ⊗[ℚ] U` of a rational vector space conjugates
-the scalar factor of a pure tensor. It is the unique conjugate-linear map fixing `1 ⊗ₜ u`. -/
-@[simp]
-theorem latticeConj_ratTensorMap_tmul (z : ℂ) (u : U) :
-    latticeConj (isBaseChange_ratTensorMap ℂ U) (z ⊗ₜ[ℚ] u) =
-      (starRingEnd ℂ) z ⊗ₜ[ℚ] u := by
-  have hz : z ⊗ₜ[ℚ] u = z • ratTensorMap ℂ U u := by
-    rw [ratTensorMap_apply, TensorProduct.smul_tmul', smul_eq_mul, mul_one]
-  rw [hz, map_smulₛₗ, latticeConj_ι, ratTensorMap_apply, TensorProduct.smul_tmul', smul_eq_mul,
-    mul_one]
-
-end RationalConjugation
+  by
+    rw [gradedComplexEquiv, LinearEquiv.trans_apply,
+      TensorProduct.AlgebraTensorModule.tensorQuotientEquiv_apply_tmul,
+      Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+    congr 1
 
 /-- The Hodge filtration induced on the `k`-th complex graded piece: the image of `F^p ∩ W_k`
 under the quotient map `W_k → W_k / W_{k-1}`. -/
@@ -165,6 +151,31 @@ noncomputable def gradedF (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange �
     Submodule ℂ (ℂ ⊗[ℚ] weightGradedRat WQ k) :=
   (complexGradedF (fun k ↦ rationalToComplexSubmodule hℚ hℂ (WQ k)) F k p).comap
     (gradedComplexEquiv hℚ hℂ WQ hWQ k).toLinearMap
+
+/-- Membership in the induced filtration on a complex graded piece is witnessed by a
+representative in the corresponding ambient Hodge-filtration step. -/
+@[simp]
+theorem mem_complexGradedF_iff (WC F : ℤ → Submodule ℂ Vℂ) (k p : ℤ)
+    (x : weightGradedComplex WC k) :
+    x ∈ complexGradedF WC F k p ↔
+      ∃ y : WC k, (y : Vℂ) ∈ F p ∧ Submodule.Quotient.mk y = x := by
+  rw [complexGradedF]
+  constructor
+  · rintro ⟨y, hy, rfl⟩
+    exact ⟨y, hy.1, rfl⟩
+  · rintro ⟨y, hy, rfl⟩
+    exact ⟨y, ⟨hy, y.property⟩, rfl⟩
+
+/-- Membership in the filtration on a complexified rational graded piece is detected after
+transport to the complex graded piece and represented there by an element of `F p`. -/
+@[simp]
+theorem mem_gradedF_iff (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ)
+    (WQ : ℤ → Submodule ℚ Vℚ) (hWQ : Monotone WQ) (F : ℤ → Submodule ℂ Vℂ) (k p : ℤ)
+    (x : ℂ ⊗[ℚ] weightGradedRat WQ k) :
+    x ∈ gradedF hℚ hℂ WQ hWQ F k p ↔
+      ∃ y : rationalToComplexSubmodule hℚ hℂ (WQ k), (y : Vℂ) ∈ F p ∧
+        Submodule.Quotient.mk y = gradedComplexEquiv hℚ hℂ WQ hWQ k x := by
+  simp [gradedF]
 
 /-- The induced filtration on a complex graded piece is decreasing. -/
 theorem complexGradedF_antitone (WC F : ℤ → Submodule ℂ Vℂ) (hF : Antitone F) (k : ℤ) :

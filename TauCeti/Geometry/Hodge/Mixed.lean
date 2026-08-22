@@ -98,6 +98,12 @@ variable {hℚ : IsBaseChange ℚ ιℚ} {hℂ : IsBaseChange ℂ ιℂ} (mhs : 
 noncomputable def WC (k : ℤ) : Submodule ℂ Vℂ :=
   rationalToComplexSubmodule hℚ hℂ (mhs.WQ k)
 
+/-- The complex weight filtration is obtained by complexifying the rational weight filtration. -/
+@[simp]
+theorem WC_def (k : ℤ) :
+    mhs.WC k = rationalToComplexSubmodule hℚ hℂ (mhs.WQ k) :=
+  by rw [WC]
+
 /-- The complexified weight filtration is increasing. -/
 theorem WC_monotone : Monotone mhs.WC := fun _ _ h ↦
   rationalToComplexSubmodule_mono hℚ hℂ (mhs.WQ_monotone h)
