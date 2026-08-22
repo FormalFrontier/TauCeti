@@ -30,7 +30,7 @@ open CategoryTheory WithConv
 
 namespace TauCeti
 
-universe u v w
+universe u v w w'
 
 namespace CommHopfAlgCat
 
@@ -45,15 +45,28 @@ lemma mapPoints_quotientPointsHom (H : _root_.CommHopfAlgCat.{v} R)
       quotientPointsHom H I B (HopfAlgebra.mapPoints (H := quotient H I) χ f) := by
   exact mapPointsFunctor_naturality_apply (R := R) (mkQuotient H I) χ f
 
+/-- Post-composition by an algebra homomorphism preserves the ambient-point subgroup cut out by a
+Hopf ideal, including when the source and target value algebras lie in different universes. -/
+lemma mapValue_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) {A : Type w} {B : Type w'}
+    [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
+    (χ : A →ₐ[R] B)
+    {g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R A)}
+    (hg : g ∈ quotientPointsSubgroup H I (CommAlgCat.of R A)) :
+    AlgHom.mapValue χ g ∈ quotientPointsSubgroup H I (CommAlgCat.of R B) := by
+  rw [mem_quotientPointsSubgroup_iff] at hg ⊢
+  intro h hh
+  rw [AlgHom.mapValue_apply]
+  rw [WithConv.ofConv_toConv, AlgHom.comp_apply]
+  rw [hg h hh, map_zero]
+
 /-- Post-composition preserves the ambient-point subgroup cut out by a Hopf ideal. -/
 lemma mapPoints_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) {A B : CommAlgCat.{w} R}
     (χ : A ⟶ B) {g : HopfAlgebra.points (R := R) (H := H) A}
     (hg : g ∈ quotientPointsSubgroup H I A) :
     HopfAlgebra.mapPoints (H := H) χ g ∈ quotientPointsSubgroup H I B := by
-  rw [mem_quotientPointsSubgroup_iff] at hg
-  rw [← quotientPointsHom_liftQuotientPoint H I A g hg, mapPoints_quotientPointsHom]
-  exact quotientPointsHom_mem_quotientPointsSubgroup H I B _
+  exact mapValue_mem_quotientPointsSubgroup H I χ.hom hg
 
 /-- The functor-of-points map restricted to the subgroups cut out by a Hopf ideal. -/
 @[expose] noncomputable def mapQuotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
@@ -157,6 +170,8 @@ lemma mapQuotientPointsSubgroup_comp (H : _root_.CommHopfAlgCat.{v} R)
         (mapQuotientPointsSubgroup H I χ) := by
   exact congrArg GrpCat.Hom.hom ((quotientPointsSubgroupFunctor (R := R) H I).map_comp χ ψ)
 
+/-- The inverse to the injective quotient-points homomorphism, with codomain restricted to its
+cut-out subgroup. -/
 private noncomputable def liftQuotientPointHom (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (A : CommAlgCat.{w} R) :
     quotientPointsSubgroup H I A →* HopfAlgebra.points (R := R) (H := quotient H I) A :=

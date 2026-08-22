@@ -49,7 +49,7 @@ by the second bracket to zero.
 Together with the binomial coefficients of the Cartan generators, which act diagonally on root
 vectors, this is exactly the invariance needed to make `L` a module over the Kostant `ℤ`-form of
 `U(L)` preserving a finite free lattice; that consequence is drawn in
-`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint`. This advances Layer 9 of
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint.Basic`. This advances Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of `CFSGStatement`.
 
 ## Main results
@@ -247,9 +247,9 @@ lattice.** A coroot is annihilated after two brackets, and the single surviving 
 Cartan integer. -/
 theorem inv_factorial_smul_ad_pow_coroot_mem (α β : Weight K H L) (n : ℕ) :
     (n.factorial : K)⁻¹ • ((ad K L (x α)) ^ n) ((coroot β : L)) ∈ hx.chevalleyLieLattice := by
-  set m : ℤ := chainBotCoeff (β : H → K) α - chainTopCoeff (β : H → K) α with hm
+  set m : ℤ := rootCartanWeight α β with hm
   have h1 : (ad K L (x α)) ((coroot β : L)) = ((-m : ℤ) : K) • x α := by
-    rw [ad_apply, ← lie_skew, hx.toIsSl2System.lie_coroot α β, apply_coroot_eq_cast β α, hm]
+    rw [ad_apply, ← lie_skew, hx.toIsSl2System.lie_coroot_rootVector β α, hm]
     push_cast
     module
   have h2 : (ad K L (x α)) (((-m : ℤ) : K) • x α) = 0 := by

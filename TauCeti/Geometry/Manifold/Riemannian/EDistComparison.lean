@@ -1,7 +1,8 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The Tau Ceti contributors
+Authors: The Tau Ceti contributors, Archon Horizon (claude+codex), Axel Delaval,
+  Chunlei Liu, Jinxuan Chen, Wanxu Yang, Zekun Sheng, Yuxuan Liao, Jie Xu
 -/
 module
 
@@ -22,6 +23,9 @@ concatenated with `TauCeti.exists_contMDiff_pathELength_eq_add` while staying gl
 Iterating over the partition replaces a broken path by a `C¹` path with the same endpoints and
 exactly the same length, so neither infimum can be smaller than the other.
 
+The explicit-partition induction used for the subinterval comparison is adapted from the
+Apache-2.0 do Carmo formalization at revision `24f32e4d600878bfaac6bc2f2f9324175571c321`.
+
 ## Main results
 
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.exists_contMDiff_pathELength_eq`: **corner smoothing**,
@@ -29,6 +33,8 @@ exactly the same length, so neither infimum can be smaller than the other.
   same length.
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength`: a piecewise `C¹` path
   bounds the Riemannian extended distance between its endpoints.
+* `TauCeti.Manifold.IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength_of_subset`: the same
+  bound between any two ordered parameters in the path's interval.
 * `TauCeti.Manifold.riemannianEDist_eq_iInf_pathELength_piecewise` and
   `TauCeti.Manifold.riemannianEDist_eq_iInf_pathELength_piecewise_zero_one`: the piecewise `C¹`
   infimum, over arbitrary parameter intervals and over `[0, 1]`, is `Manifold.riemannianEDist`.
@@ -61,6 +67,46 @@ variable
   [∀ x : M, ENorm (TangentSpace I x)]
   [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
   {γ : ℝ → M} {a b : ℝ}
+
+/-- The Riemannian extended distance is bounded by path length on every ordered subinterval of a
+path which is `C¹` along an explicit finite partition. -/
+private theorem riemannianEDist_le_pathELength_of_partition :
+    ∀ {k : ℕ} (τ : Fin (k + 2) → ℝ),
+      (∀ i : Fin (k + 1),
+        ContMDiffOn 𝓘(ℝ, ℝ) I 1 γ (Icc (τ i.castSucc) (τ i.succ))) →
+      ∀ {s t : ℝ}, τ 0 ≤ s → s ≤ t → t ≤ τ (Fin.last (k + 1)) →
+        Manifold.riemannianEDist I (γ s) (γ t) ≤ Manifold.pathELength I γ s t := by
+  intro k
+  induction k with
+  | zero =>
+      intro τ hγ s t hs hst ht
+      exact Manifold.riemannianEDist_le_pathELength
+        ((hγ 0).mono (Icc_subset_Icc (by simpa using hs) (by simpa using ht))) rfl rfl hst
+  | succ k ih =>
+      intro τ hγ s t hs hst ht
+      rcases le_total t (τ (Fin.last (k + 1)).castSucc) with htm | hmt
+      · exact ih (fun i ↦ τ i.castSucc)
+          (fun i ↦ by simpa only [Fin.succ_castSucc] using hγ i.castSucc) hs hst htm
+      rcases le_total (τ (Fin.last (k + 1)).castSucc) s with hms | hsm
+      · exact Manifold.riemannianEDist_le_pathELength
+          ((hγ (Fin.last (k + 1))).mono
+            (Icc_subset_Icc hms (by simpa only [Fin.succ_last] using ht))) rfl rfl hst
+      · calc
+          Manifold.riemannianEDist I (γ s) (γ t) ≤
+              Manifold.riemannianEDist I (γ s) (γ (τ (Fin.last (k + 1)).castSucc)) +
+                Manifold.riemannianEDist I (γ (τ (Fin.last (k + 1)).castSucc)) (γ t) :=
+            Manifold.riemannianEDist_triangle
+          _ ≤ Manifold.pathELength I γ s (τ (Fin.last (k + 1)).castSucc) +
+              Manifold.pathELength I γ (τ (Fin.last (k + 1)).castSucc) t := by
+            gcongr
+            · exact ih (fun i ↦ τ i.castSucc)
+                (fun i ↦ by simpa only [Fin.succ_castSucc] using hγ i.castSucc)
+                hs hsm le_rfl
+            · exact Manifold.riemannianEDist_le_pathELength
+                ((hγ (Fin.last (k + 1))).mono
+                  (Icc_subset_Icc le_rfl (by simpa only [Fin.succ_last] using ht)))
+                rfl rfl hmt
+          _ = Manifold.pathELength I γ s t := Manifold.pathELength_add hsm hmt
 
 /-- **Corner smoothing along an explicit partition.** A path which is `C¹` on every piece of a
 finite ordered partition is replaced by a globally `C¹` path on `[0, 1]` with the same endpoints
@@ -127,6 +173,16 @@ theorem IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength
       ≤ Manifold.pathELength I η 0 1 :=
         Manifold.riemannianEDist_le_pathELength hη.contMDiffOn hη₀ hη₁ zero_le_one
     _ = Manifold.pathELength I γ a b := hlen
+
+/-- The Riemannian extended distance between two ordered points in the parameter interval of a
+piecewise `C¹` path is at most the path length between those points. -/
+theorem IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength_of_subset
+    (h : IsPiecewiseContMDiffOn I 1 γ a b) {s t : ℝ}
+    (has : a ≤ s) (hst : s ≤ t) (htb : t ≤ b) :
+    Manifold.riemannianEDist I (γ s) (γ t) ≤ Manifold.pathELength I γ s t := by
+  obtain ⟨k, τ, hτa, hτb, -, hγ⟩ := h.exists_partition
+  exact riemannianEDist_le_pathELength_of_partition τ hγ
+    (by simpa only [hτa] using has) hst (by simpa only [hτb] using htb)
 
 variable (I) in
 /-- **do Carmo's distance is Mathlib's distance.** The Riemannian extended distance, defined by

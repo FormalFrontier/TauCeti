@@ -9,6 +9,7 @@ public import Mathlib.RingTheory.Finiteness.Ideal
 public import Mathlib.Topology.Algebra.Nonarchimedean.AdicTopology
 public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.RingTheory.Huber.PowerBounded
+public import TauCeti.Topology.Algebra.Group.FirstCountable
 
 /-!
 # Huber rings and Tate rings
@@ -46,6 +47,8 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
 * `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`: its neighbourhoods of zero are
   countably generated. With the previous bullet these are exactly the two hypotheses Henkel's open
   mapping theorem asks of the underlying group, so both are instances.
+* `TauCeti.Huber.PairOfDefinition.exists_pow_mul_mem`: a power of a topologically nilpotent `s`
+  carries any `c : A` into the ring of definition.
 * `TauCeti.Huber.IsHuberRing.quotient`: a quotient of a Huber ring is a Huber ring.
 * `TauCeti.Huber.PairOfDefinition.isBounded_ringOfDefinition`: a ring of definition is bounded,
   hence `A₀ ≤ A°` (`TauCeti.Huber.PairOfDefinition.le_powerBoundedSubring`). This is the
@@ -354,6 +357,18 @@ theorem isTopologicallyNilpotent_of_mem_idealOfDefinition (P : PairOfDefinition 
   refine (P.mem_idealImage n).mpr ⟨a ^ m, ?_, by push_cast; ring⟩
   exact Ideal.pow_le_pow_right hm (Ideal.pow_mem_pow ha m)
 
+/-- **An element of the image of `Iⁿ` is topologically nilpotent**, for `n ≠ 0`. Unpacking the
+membership gives an element of `Iⁿ ⊆ I`, so `isTopologicallyNilpotent_of_mem_idealOfDefinition`
+applies. This is the form consumers meet, `idealImage` being what
+`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero` is stated with.
+
+`n ≠ 0` is needed, not incidental: `I ^ 0 = ⊤`, so `idealImage 0` is the image of the whole ring
+of definition and its elements are not topologically nilpotent in general. -/
+theorem isTopologicallyNilpotent_of_mem_idealImage (P : PairOfDefinition A) {n : ℕ} (hn : n ≠ 0)
+    {a : A} (ha : a ∈ P.idealImage n) : IsTopologicallyNilpotent a := by
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp ha
+  exact P.isTopologicallyNilpotent_of_mem_idealOfDefinition (Ideal.pow_le_self hn hy)
+
 /-- A ring admitting a pair of definition is nonarchimedean. -/
 theorem toNonarchimedeanRing [IsTopologicalRing A] (P : PairOfDefinition A) :
     NonarchimedeanRing A where
@@ -423,6 +438,17 @@ private def quotient [IsTopologicalRing A] (P : PairOfDefinition A) (J : Ideal A
     rintro y hy
     obtain ⟨x, hx, rfl⟩ := Ideal.mem_map_iff_of_surjective q₀ hq₀_surj |>.mp hy
     exact hn hx
+
+/-- **Some power of a topologically nilpotent `s` carries any `c : A` into the ring of
+definition.** The ring of definition is open and `sⁿ c → 0`, so `sⁿ c` is eventually inside it.
+
+This is the arbitrary-`c` generalisation of
+`TauCeti.Huber.IsPseudoUniformizer.eventually_pow_mem_ringOfDefinition`, which is the case
+`c = 1`; it also asks only for topological nilpotence rather than for a pseudouniformiser. -/
+theorem exists_pow_mul_mem [IsTopologicalRing A] (P : PairOfDefinition A) {s : A}
+    (hs : IsTopologicallyNilpotent s) (c : A) : ∃ i : ℕ, s ^ i * c ∈ P.ringOfDefinition :=
+  ((hs.mul_const c).eventually
+    (P.isOpen_ringOfDefinition.mem_nhds (by simp))).exists
 
 end PairOfDefinition
 

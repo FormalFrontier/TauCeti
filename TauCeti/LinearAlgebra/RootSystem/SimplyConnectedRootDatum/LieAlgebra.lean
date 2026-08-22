@@ -8,6 +8,8 @@ module
 public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Basis
 public import TauCeti.Algebra.Lie.Basis.Cartan
 public import TauCeti.Algebra.Lie.Basis.Reindex
+import TauCeti.Algebra.Lie.Weights.Automorphism
+public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.ChevalleyInvolution
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Rational
 
 /-!
@@ -47,6 +49,9 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
 * `TauCeti.DynkinType.lieAlgebra`: the split Lie algebra of a valid Dynkin type.
 * `TauCeti.DynkinType.cartanSubalgebra`: its distinguished Cartan subalgebra.
 * `TauCeti.DynkinType.lieBasis`: its Chevalley generators, numbered by Bourbaki node.
+* `TauCeti.DynkinType.geckLieEquiv`: the identification of the named carrier with Geck's, as an
+  equivalence of Lie algebras.
+* `TauCeti.DynkinType.chevalleyInvolution`: its signed Chevalley involution.
 
 ## Main results
 
@@ -62,6 +67,15 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
   `TauCeti.DynkinType.isNilpotent_coe_lieBasis_f`: the raising and lowering generators are
   nilpotent matrices.
 * `TauCeti.DynkinType.finrank_cartanSubalgebra`: the Cartan subalgebra has dimension `t.rank`.
+* `TauCeti.DynkinType.geckLieEquiv_chevalleyInvolution`: the involution is Geck's, read through
+  that identification.
+* `TauCeti.DynkinType.chevalleyInvolution_lieBasis_h`,
+  `TauCeti.DynkinType.chevalleyInvolution_lieBasis_e` and
+  `TauCeti.DynkinType.chevalleyInvolution_lieBasis_f`: the involution on the numbered generators.
+* `TauCeti.DynkinType.chevalleyInvolution_cartan`: the involution acts by negation on the entire
+  distinguished Cartan subalgebra.
+* `TauCeti.DynkinType.map_rootSpace_chevalleyInvolution`: it exchanges the root spaces indexed by
+  opposite Cartan functionals.
 
 ## References
 
@@ -214,6 +228,174 @@ def cartanBasis : Module.Basis (Fin t.rank) ℚ (t.cartanSubalgebra ht) :=
 /-- **The Cartan subalgebra has dimension the rank of the Dynkin diagram.** -/
 theorem finrank_cartanSubalgebra : Module.finrank ℚ (t.cartanSubalgebra ht) = t.rank := by
   simpa using (t.lieBasis ht).finrank_cartan
+
+/-! ## The Chevalley involution -/
+
+/-- The pinned Lie algebra and Geck's construction on the pinned rational base are the same
+subalgebra of matrices, `TauCeti.DynkinType.lieAlgebra_def`; this is that identification as an
+equivalence of Lie algebras. It carries Geck's automorphisms over to the named carrier without
+unfolding it. -/
+def geckLieEquiv :
+    t.lieAlgebra ht ≃ₗ⁅ℚ⁆ RootPairing.GeckConstruction.lieAlgebra (t.rationalBase ht) :=
+  LieEquiv.ofEq _ _ (by rw [lieAlgebra_def])
+
+/-- **The Chevalley involution of the pinned split Lie algebra**: the automorphism
+`hᵢ ↦ -hᵢ`, `eᵢ ↦ -fᵢ`, `fᵢ ↦ -eᵢ` of `TauCeti.DynkinType.lieAlgebra`. It is
+`TauCeti.geckChevalleyInvolution` of the pinned rational base, read against the Bourbaki
+numbering. -/
+def chevalleyInvolution : t.lieAlgebra ht ≃ₗ⁅ℚ⁆ t.lieAlgebra ht :=
+  ((t.geckLieEquiv ht).trans (geckChevalleyInvolution (t.rationalBase ht))).trans
+    (t.geckLieEquiv ht).symm
+
+/-- The pinned Chevalley involution is Geck's involution, read through the identification of the
+two carriers. -/
+@[simp]
+theorem geckLieEquiv_chevalleyInvolution (x : t.lieAlgebra ht) :
+    t.geckLieEquiv ht (t.chevalleyInvolution ht x) =
+      geckChevalleyInvolution (t.rationalBase ht) (t.geckLieEquiv ht x) :=
+  (t.geckLieEquiv ht).apply_symm_apply _
+
+-- The generator formulas for `TauCeti.geckChevalleyInvolution` are stated for the bundled
+-- subtype elements, so each Bourbaki-numbered generator is first written in that shape.
+private theorem geckLieEquiv_lieBasis_h (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).h i) =
+    ⟨RootPairing.GeckConstruction.h (t.simpleSupportEquiv ht i), h_mem_lieAlgebra _⟩ :=
+  Subtype.ext (t.coe_lieBasis_h ht i)
+
+private theorem geckLieEquiv_lieBasis_e (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).e i) =
+    ⟨RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i), e_mem_lieAlgebra _⟩ :=
+  Subtype.ext (t.coe_lieBasis_e ht i)
+
+private theorem geckLieEquiv_lieBasis_f (i : Fin t.rank) : t.geckLieEquiv ht ((t.lieBasis ht).f i) =
+    ⟨RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i), f_mem_lieAlgebra _⟩ :=
+  Subtype.ext (t.coe_lieBasis_f ht i)
+
+/-- **The Chevalley involution negates each Cartan generator**, `hᵢ ↦ -hᵢ`. -/
+@[simp] theorem chevalleyInvolution_lieBasis_h (i : Fin t.rank) :
+    t.chevalleyInvolution ht ((t.lieBasis ht).h i) = -(t.lieBasis ht).h i := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
+    map_neg, geckLieEquiv_lieBasis_h]
+  exact geckChevalleyInvolution_h (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- **The Chevalley involution sends each raising generator to minus the lowering generator with
+the same Bourbaki number**, `eᵢ ↦ -fᵢ`. -/
+@[simp] theorem chevalleyInvolution_lieBasis_e (i : Fin t.rank) :
+    t.chevalleyInvolution ht ((t.lieBasis ht).e i) = -(t.lieBasis ht).f i := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
+    map_neg, geckLieEquiv_lieBasis_e, geckLieEquiv_lieBasis_f]
+  exact geckChevalleyInvolution_e (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- **The Chevalley involution sends each lowering generator to minus the raising generator with
+the same Bourbaki number**, `fᵢ ↦ -eᵢ`. -/
+@[simp] theorem chevalleyInvolution_lieBasis_f (i : Fin t.rank) :
+    t.chevalleyInvolution ht ((t.lieBasis ht).f i) = -(t.lieBasis ht).e i := by
+  rw [← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht), geckLieEquiv_chevalleyInvolution,
+    map_neg, geckLieEquiv_lieBasis_e, geckLieEquiv_lieBasis_f]
+  exact geckChevalleyInvolution_f (t.rationalBase ht) (t.simpleSupportEquiv ht i)
+
+/-- The Chevalley involution of the pinned split Lie algebra is its own inverse. -/
+@[simp] theorem chevalleyInvolution_symm :
+    (t.chevalleyInvolution ht).symm = t.chevalleyInvolution ht := by
+  refine LieEquiv.ext fun x => ?_
+  rw [LieEquiv.symm_apply_eq, ← EmbeddingLike.apply_eq_iff_eq (t.geckLieEquiv ht),
+    geckLieEquiv_chevalleyInvolution, geckLieEquiv_chevalleyInvolution]
+  exact (geckChevalleyInvolution_geckChevalleyInvolution (t.rationalBase ht) _).symm
+
+/-! ## Action on the Cartan subalgebra and weights -/
+
+/-- **The pinned Chevalley involution acts by negation on the entire distinguished Cartan
+subalgebra.** The numbered Cartan generators are a module basis, so their defining formula
+determines the restriction of the involution. -/
+@[simp]
+theorem chevalleyInvolution_cartan (x : t.cartanSubalgebra ht) :
+    t.chevalleyInvolution ht (x : t.lieAlgebra ht) = -(x : t.lieAlgebra ht) := by
+  let f : t.cartanSubalgebra ht →ₗ[ℚ] t.lieAlgebra ht :=
+    (t.chevalleyInvolution ht).toLieHom.toLinearMap.comp
+      (t.cartanSubalgebra ht).incl.toLinearMap
+  let g : t.cartanSubalgebra ht →ₗ[ℚ] t.lieAlgebra ht :=
+    -(t.cartanSubalgebra ht).incl.toLinearMap
+  have hfg : f = g := (t.cartanBasis ht).ext fun i ↦ by
+    -- Expose the two linear maps on a Cartan basis vector.
+    change t.chevalleyInvolution ht ((t.cartanBasis ht i : t.cartanSubalgebra ht) :
+      t.lieAlgebra ht) = -((t.cartanBasis ht i : t.cartanSubalgebra ht) : t.lieAlgebra ht)
+    rw [t.coe_cartanBasis ht, t.chevalleyInvolution_lieBasis_h ht]
+  exact LinearMap.congr_fun hfg x
+
+/-- The pinned Chevalley involution normalizes the distinguished Cartan subalgebra. This is the
+hypothesis used to restrict it to the Cartan and to form its induced permutation of weights. -/
+@[simp]
+theorem map_chevalleyInvolution_cartanSubalgebra :
+    ((RootPairing.GeckConstruction.cartanSubalgebra (t.rationalBase ht)).comap
+        (t.lieAlgebra ht).incl).map (t.chevalleyInvolution ht).toLieHom =
+      t.cartanSubalgebra ht := by
+  ext y
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    -- Expose the Lie-homomorphism coercion in the mapped-subalgebra membership goal.
+    change t.chevalleyInvolution ht x ∈ t.cartanSubalgebra ht
+    rw [t.chevalleyInvolution_cartan ht ⟨x, hx⟩]
+    exact neg_mem hx
+  · intro hy
+    refine ⟨-y, neg_mem hy, ?_⟩
+    -- Expose the Lie-homomorphism coercion in the witness equation.
+    change t.chevalleyInvolution ht (-y) = y
+    rw [t.chevalleyInvolution_cartan ht ⟨-y, neg_mem hy⟩]
+    simp
+
+/-- Restricting the pinned Chevalley involution to the distinguished Cartan subalgebra gives
+pointwise negation. -/
+@[simp]
+theorem chevalleyInvolution_ofSubalgebras_apply (x : t.cartanSubalgebra ht) :
+    (t.chevalleyInvolution ht).ofSubalgebras (t.cartanSubalgebra ht)
+        (t.cartanSubalgebra ht) (by
+          simpa only [cartanSubalgebra_def] using
+            t.map_chevalleyInvolution_cartanSubalgebra ht) x = -x := by
+  apply Subtype.ext
+  rw [LieEquiv.ofSubalgebras_apply, t.chevalleyInvolution_cartan ht]
+  rfl
+
+/-- The inverse of the restriction of the pinned Chevalley involution to the distinguished Cartan
+subalgebra is also pointwise negation. -/
+@[simp]
+theorem chevalleyInvolution_ofSubalgebras_symm_apply (x : t.cartanSubalgebra ht) :
+    ((t.chevalleyInvolution ht).ofSubalgebras (t.cartanSubalgebra ht)
+        (t.cartanSubalgebra ht) (by
+          simpa only [cartanSubalgebra_def] using
+            t.map_chevalleyInvolution_cartanSubalgebra ht)).symm x = -x := by
+  apply Subtype.ext
+  rw [LieEquiv.ofSubalgebras_symm_apply, t.chevalleyInvolution_symm ht,
+    t.chevalleyInvolution_cartan ht]
+  rfl
+
+/-- Precomposing a Cartan functional with the inverse restriction of the pinned Chevalley
+involution negates that functional. -/
+@[simp]
+theorem comp_chevalleyInvolution_ofSubalgebras_symm
+    (χ : Module.Dual ℚ (t.cartanSubalgebra ht)) :
+    (χ : t.cartanSubalgebra ht → ℚ) ∘
+        ((t.chevalleyInvolution ht).ofSubalgebras (t.cartanSubalgebra ht)
+          (t.cartanSubalgebra ht)
+          (by
+            simpa only [cartanSubalgebra_def] using
+              t.map_chevalleyInvolution_cartanSubalgebra ht)).symm = -(χ : _ → ℚ) := by
+  funext x
+  rw [Function.comp_apply, t.chevalleyInvolution_ofSubalgebras_symm_apply ht]
+  simp
+
+/-- **The pinned Chevalley involution exchanges opposite root spaces.** For every Cartan
+functional `χ`, it carries the `χ`-root space onto the root space indexed by `-χ`. -/
+@[simp]
+theorem map_rootSpace_chevalleyInvolution
+    (χ : Module.Dual ℚ (t.cartanSubalgebra ht)) :
+    (LieAlgebra.rootSpace (t.cartanSubalgebra ht) χ).toSubmodule.map
+        ((t.chevalleyInvolution ht).toLinearEquiv :
+          t.lieAlgebra ht →ₗ[ℚ] t.lieAlgebra ht) =
+      (LieAlgebra.rootSpace (t.cartanSubalgebra ht) (-χ)).toSubmodule := by
+  rw [map_rootSpace_eq (t.chevalleyInvolution ht)
+    (by
+      simpa only [cartanSubalgebra_def] using
+        t.map_chevalleyInvolution_cartanSubalgebra ht)]
+  congr 2
+  exact t.comp_chevalleyInvolution_ofSubalgebras_symm ht χ
 
 end
 
