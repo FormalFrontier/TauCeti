@@ -163,7 +163,7 @@ theorem integrable_one_sub_exp_neg_mul_of_integrable_min_one {μ : Measure ℝ�
   let C : ℝ := max 1 t
   refine (hμ.const_mul C).mono' (by fun_prop) ?_
   filter_upwards with x
-  rw [Real.norm_eq_abs, abs_of_nonneg (one_sub_exp_neg_mul_nonneg ht x)]
+  rw [Real.norm_eq_abs, abs_of_nonneg (sub_nonneg.mpr (exp_neg_mul_le_one ht x))]
   exact one_sub_exp_neg_mul_le_const_mul_min (le_max_left _ _) (le_max_right _ _) x
 
 /-- The derivative kernel of the Levy jump exponent is integrable at every positive
@@ -181,7 +181,7 @@ theorem integrable_mul_exp_neg_mul_of_integrable_min_one {μ : Measure ℝ≥0}
 theorem bernsteinLevyJumpExponent_nonneg (μ : Measure ℝ≥0) {t : ℝ} (ht : 0 ≤ t) :
     0 ≤ bernsteinLevyJumpExponent μ t := by
   rw [bernsteinLevyJumpExponent_apply]
-  exact integral_nonneg fun x => one_sub_exp_neg_mul_nonneg ht x
+  exact integral_nonneg fun x => sub_nonneg.mpr (exp_neg_mul_le_one ht x)
 
 /-- Every Levy jump exponent vanishes at zero. -/
 @[simp]
@@ -234,7 +234,7 @@ private theorem continuousOn_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
       (fun x : ℝ≥0 => 1 - Real.exp (-(u * (x : ℝ)))) μ)
   · filter_upwards [self_mem_nhdsWithin, hlt] with u hu hu_lt
     filter_upwards with x
-    rw [Real.norm_eq_abs, abs_of_nonneg (one_sub_exp_neg_mul_nonneg hu x)]
+    rw [Real.norm_eq_abs, abs_of_nonneg (sub_nonneg.mpr (exp_neg_mul_le_one hu x))]
     exact one_sub_exp_neg_mul_le_const_mul_min (le_max_left _ _)
       (hu_lt.le.trans (le_max_right _ _)) x
   · filter_upwards with x
@@ -277,8 +277,7 @@ theorem hasDerivAt_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
       have hinner := ((hasDerivAt_id u).mul_const (x : ℝ)).neg
       simpa only [id_eq, one_mul, mul_one, Pi.neg_apply, neg_mul, neg_neg, mul_comm] using
         hinner.exp.const_sub 1)
-  change HasDerivAt (fun u => ∫ x : ℝ≥0,
-    (1 - Real.exp (-(u * (x : ℝ)))) ∂μ) _ t
+  rw [funext (bernsteinLevyJumpExponent_apply μ)]
   exact h.2
 
 /-- At a positive parameter, the derivative of a Levy jump exponent is the exponentially
@@ -351,9 +350,9 @@ theorem deriv_bernsteinLevyKhintchineExponent {μ : Measure ℝ≥0}
     (a b : ℝ) {t : ℝ} (ht : 0 < t) :
     deriv (bernsteinLevyKhintchineExponent a b μ) t =
       b + ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ))) ∂μ := by
-  change deriv (fun u => a + b * u + bernsteinLevyJumpExponent μ u) t = _
   have haffine : HasDerivAt (fun u => a + b * u) b t := by
     simpa only [id_eq, mul_one] using ((hasDerivAt_id t).const_mul b).const_add a
+  rw [funext (bernsteinLevyKhintchineExponent_apply a b μ)]
   exact (haffine.add (hasDerivAt_bernsteinLevyJumpExponent hμ ht)).deriv
 
 /-- A one-atom Levy measure gives the prototype jump exponent `1 - exp (-t x)`. -/

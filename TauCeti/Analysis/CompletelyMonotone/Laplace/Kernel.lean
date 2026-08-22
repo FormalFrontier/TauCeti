@@ -19,7 +19,6 @@ depend on each other.
 ## Main declarations
 
 * `TauCeti.laplaceKernelBoundedContinuous`: the kernel as a bounded continuous function.
-* `TauCeti.one_sub_exp_neg_mul_nonneg`: nonnegativity of one minus the Laplace kernel.
 * `TauCeti.integrable_exp_neg_mul`: the kernel is integrable against any finite measure.
 -/
 
@@ -40,11 +39,6 @@ lemma exp_neg_mul_le_one {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
     Real.exp (-(x * (p : ℝ))) ≤ 1 := by
   rw [Real.exp_le_one_iff]
   exact neg_nonpos.mpr (mul_nonneg hx p.coe_nonneg)
-
-/-- One minus the Laplace kernel is nonnegative at nonnegative parameters. -/
-lemma one_sub_exp_neg_mul_nonneg {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
-    0 ≤ 1 - Real.exp (-(x * (p : ℝ))) :=
-  sub_nonneg.mpr (exp_neg_mul_le_one hx p)
 
 /-- The Laplace kernel as a bundled bounded continuous test function of the nonnegative
 variable `p`, for fixed nonnegative `x`. -/

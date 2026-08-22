@@ -106,7 +106,7 @@ private lemma lintegral_ofReal_one_sub_exp_eq_of_representsLaplace
     integrable_exp_neg_mul μ hx.le
   have h_nonneg : 0 ≤ᵐ[μ] fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ))) := by
     refine Filter.Eventually.of_forall fun p => ?_
-    exact one_sub_exp_neg_mul_nonneg hx.le p
+    exact sub_nonneg.mpr (exp_neg_mul_le_one hx.le p)
   have hint : Integrable (fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ)))) μ :=
     h_one.sub h_exp
   have h_int :
