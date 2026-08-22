@@ -777,6 +777,14 @@ theorem liftAlgHom_unique (G : pathAlgebra k Q →ₐ[k] B) (hG : ∀ x, G (ofPa
   AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
     simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, hG, liftAlgHom_ofPath]
 
+/-- **Algebra homomorphisms out of a path algebra are determined by their values on the paths**,
+the basis paths spanning `kQ`. This is `TauCeti.PathAlgebra.liftAlgHom_unique` in the form which
+compares two given homomorphisms, with no assignment `F` to name. -/
+theorem algHom_ext {f g : pathAlgebra k Q →ₐ[k] B} (h : ∀ x, f (ofPath x) = g (ofPath x)) :
+    f = g :=
+  AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
+    simpa only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis] using h x
+
 end Lift
 
 end PathAlgebra
