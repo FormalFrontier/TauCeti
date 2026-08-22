@@ -96,15 +96,14 @@ theorem IsCoupling.isProbabilityMeasure [IsProbabilityMeasure μ₁] (hπ : IsCo
     IsProbabilityMeasure π :=
   ⟨by rw [← Measure.fst_univ, hπ.fst_eq, measure_univ]⟩
 
-/-- A coupling of probability measures is a finite measure.
+/-- A coupling whose first marginal is finite is a finite measure.
 
 This weakening is what an existentially quantified coupling has to supply by hand: a consumer such
 as the cut norm asks for `IsFiniteMeasure`, and a witness bound by an existential cannot provide an
 instance by unification, so it passes this term explicitly. -/
-theorem IsCoupling.isFiniteMeasure [IsProbabilityMeasure μ₁] (hπ : IsCoupling μ₁ μ₂ π) :
+theorem IsCoupling.isFiniteMeasure [IsFiniteMeasure μ₁] (hπ : IsCoupling μ₁ μ₂ π) :
     IsFiniteMeasure π :=
-  have := hπ.isProbabilityMeasure
-  inferInstance
+  ⟨by rw [← Measure.fst_univ, hπ.fst_eq]; exact measure_lt_top μ₁ Set.univ⟩
 
 /-- The **independent coupling**: the product measure couples its two factors. -/
 theorem isCoupling_prod (μ₁ : Measure Ω₁) (μ₂ : Measure Ω₂) [IsProbabilityMeasure μ₁]

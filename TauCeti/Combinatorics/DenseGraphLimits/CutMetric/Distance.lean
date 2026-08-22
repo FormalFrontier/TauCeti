@@ -135,19 +135,18 @@ theorem cutDist_def (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
 /-- The cut distance is at most the overlaid cut norm along any coupling: the introduction rule
 for the infimum. -/
 theorem cutDist_le (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {π : Measure (Ω₁ × Ω₂)}
-    [IsProbabilityMeasure π] (hπ : IsCoupling μ₁ μ₂ π) :
-    cutDist U W ≤ cutNorm π (overlayDiff U W π) :=
-  csInf_le (bddBelow_couplingCutNorms U W) (mem_couplingCutNorms U W hπ)
+    (hπ : IsCoupling μ₁ μ₂ π) :
+    cutDist U W ≤ @cutNorm _ _ π hπ.isFiniteMeasure (overlayDiff U W π) :=
+  csInf_le (bddBelow_couplingCutNorms U W) ⟨π, hπ, rfl⟩
 
 /-- To bound the cut distance from below it suffices to bound every overlaid cut norm from below:
 the elimination rule for the infimum. -/
 theorem le_cutDist {c : ℝ} (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
-    (h : ∀ (π : Measure (Ω₁ × Ω₂)) [IsProbabilityMeasure π], IsCoupling μ₁ μ₂ π →
-      c ≤ cutNorm π (overlayDiff U W π)) :
+    (h : ∀ (π : Measure (Ω₁ × Ω₂)) (hπ : IsCoupling μ₁ μ₂ π),
+      c ≤ @cutNorm _ _ π hπ.isFiniteMeasure (overlayDiff U W π)) :
     c ≤ cutDist U W :=
   le_csInf (couplingCutNorms_nonempty U W) (by
     rintro r ⟨π, hπ, rfl⟩
-    have := hπ.isProbabilityMeasure
     exact h π hπ)
 
 /-- Any strict upper bound on the cut distance is beaten by some coupling. This is the form in
@@ -162,7 +161,7 @@ theorem exists_isCoupling_cutNorm_lt (U : Graphon Ω₁ μ₁) (W : Graphon Ω�
 
 /-- The cut distance is nonnegative. -/
 theorem cutDist_nonneg (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : 0 ≤ cutDist U W :=
-  le_cutDist U W fun π _ _ => cutNorm_nonneg π _
+  le_cutDist U W fun π hπ => @cutNorm_nonneg _ _ π hπ.isFiniteMeasure _
 
 /-- The cut distance of two graphons is at most `1`: the independent coupling already realises a
 value at most `1`, since the overlaid difference is `[-1, 1]`-valued and the carrier is a
@@ -185,7 +184,8 @@ and `overlayDiff_swap` identifies the overlaid difference along it, up to sign a
 the one along `ρ`. -/
 private theorem cutDist_le_cutDist_swap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
     cutDist U W ≤ cutDist W U := by
-  refine le_cutDist W U fun ρ _ hρ => ?_
+  refine le_cutDist W U fun ρ hρ => ?_
+  have := hρ.isFiniteMeasure
   have := hρ.swap.isProbabilityMeasure
   refine (cutDist_le U W hρ.swap).trans ?_
   have hmp : MeasurePreserving (Prod.swap : Ω₂ × Ω₁ → Ω₁ × Ω₂) ρ (ρ.map Prod.swap) :=
