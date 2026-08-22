@@ -49,19 +49,23 @@ of `C`.
 
 * `TauCeti.linearHomComplexComp`: composition, as a morphism of `R`-linear Hom complexes out of
   the tensor product.
+* `TauCeti.linearHomComplexOfHom`: a morphism of cochain complexes, as a degree-zero cocycle in
+  the corresponding `R`-linear Hom complex.
 * `TauCeti.linearHomComplexUnit`: the identity cochain, as a morphism from the tensor unit.
 
 ## Main results
 
-* `TauCeti.ι_linearHomComplexComp`: composition sends the pure tensor `z₂ ⊗ₜ z₁` in bidegree
-  `(p, q)` to `z₁.comp z₂`.
-* `TauCeti.whiskerLeft_linearHomComplexComp` and `TauCeti.whiskerRight_linearHomComplexComp`:
-  composition is natural in the source and in the target cochain complex.
+* `TauCeti.ι_linearHomComplexComp`: the degree-`j` component restricted to a bidegree summand is
+  `TauCeti.cochainCompTensor`; `TauCeti.cochainCompTensor_tmul` gives its pure-tensor formula.
+* `TauCeti.linearHomComplexComp_naturality_source` and
+  `TauCeti.linearHomComplexComp_naturality_target`: composition is natural in the source and in
+  the target cochain complex.
 * `TauCeti.linearHomComplexComp_naturality_middle`: composition is natural in the middle
   cochain complex.
 * `TauCeti.linearHomComplexComp_assoc`, `TauCeti.linearHomComplexUnit_comp`, and
   `TauCeti.linearHomComplexComp_unit`: composition is associative and unital.
-* `TauCeti.linearHomComplexUnit_f_zero`: the unit is the identity cochain in degree zero.
+* `TauCeti.linearHomComplexOfHom_f_zero`: a morphism of complexes gives its associated cochain in
+  degree zero.
 
 This advances `TauCetiRoadmap/DGAInfinity/README.md`, Layer 0, item "signed graded multilinear and
 tensor-coalgebra infrastructure", specifically "construct the `k`-linear Hom complex, its signed
@@ -72,6 +76,11 @@ Leibniz rule `δ_comp` and the totalized monoidal structure are Mathlib's.
 
 * B. Keller, *Introduction to A-infinity algebras and modules*, Section 3.1.
 * B. Keller, *Deriving DG categories*, Section 1.
+* Joël Riou's Mathlib cochain/`δ` API in
+  `Mathlib/Algebra/Homology/HomotopyCategory/HomComplex.lean` and totalized
+  `HomologicalComplex.monoidalCategory` in `Mathlib/Algebra/Homology/Monoidal.lean`.  This file
+  assembles Riou's `δ_comp` and totalization API into the `ModuleCat R`-valued composition map,
+  inheriting their sign convention.
 -/
 
 public section
@@ -103,11 +112,60 @@ noncomputable def cochainCompTensor (p q j : ℤ)
 lemma cochainCompTensor_tmul (p q j : ℤ)
     (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j)
     (z₂ : Cochain G K p) (z₁ : Cochain F G q) :
-    ModuleCat.Hom.hom (cochainCompTensor R F G K p q j h) (z₂ ⊗ₜ z₁) =
+    cochainCompTensor R F G K p q j h (z₂ ⊗ₜ z₁) =
       z₁.comp z₂ (by dsimp at h; omega) :=
   by
     unfold cochainCompTensor
     exact ModuleCat.MonoidalCategory.tensorLift_tmul _ _ _ _ _ _ _
+
+/- Mathlib's element-level lemmas use the concrete-category coercion, whereas simplification of
+composites in `ModuleCat` leaves the equivalent `ModuleCat.Hom.hom` projection.  Normalize that
+projection once so the public application lemmas rewrite with ordinary `rw`. -/
+private lemma moduleCat_hom_eq_concrete {X Y : ModuleCat.{v} R} (f : X ⟶ Y) :
+    ModuleCat.Hom.hom f = ConcreteCategory.hom f :=
+  rfl
+
+/- These bridges isolate the definitional identification between the exposed terms of
+`linearHomComplex` and Mathlib's `Cochain` types.  Goals produced by the totalization API quantify
+over the former, while the characteristic lemmas are intentionally stated using the latter. -/
+private lemma cochainCompTensor_tmul_X (p q j : ℤ)
+    (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j)
+    (z₂ : (linearHomComplex R G K).X p) (z₁ : (linearHomComplex R F G).X q) :
+    cochainCompTensor R F G K p q j h (z₂ ⊗ₜ z₁) = z₁.comp z₂ (by dsimp at h; omega) := by
+  change cochainCompTensor R F G K p q j h (z₂ ⊗ₜ z₁) =
+    (z₁ : Cochain F G q).comp (z₂ : Cochain G K p) (by dsimp at h; omega)
+  exact cochainCompTensor_tmul R F G K p q j h z₂ z₁
+
+private lemma cochainCompTensor_tmul_left_X (p q j : ℤ)
+    (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j)
+    (z₂ : (linearHomComplex R G K).X p) (z₁ : Cochain F G q) :
+    cochainCompTensor R F G K p q j h (z₂ ⊗ₜ z₁) = z₁.comp z₂ (by dsimp at h; omega) := by
+  exact cochainCompTensor_tmul R F G K p q j h z₂ z₁
+
+private lemma cochainCompTensor_tmul_right_X (p q j : ℤ)
+    (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j)
+    (z₂ : Cochain G K p) (z₁ : (linearHomComplex R F G).X q) :
+    cochainCompTensor R F G K p q j h (z₂ ⊗ₜ z₁) = z₁.comp z₂ (by dsimp at h; omega) := by
+  exact cochainCompTensor_tmul R F G K p q j h z₂ z₁
+
+private lemma linearHomComplex_d_apply_X (F G : CochainComplex C ℤ) (n m : ℤ)
+    (z : (linearHomComplex R F G).X n) :
+    (linearHomComplex R F G).d n m z = δ n m (z : Cochain F G n) := by
+  exact linearHomComplex_d_apply R F G n m z
+
+private lemma linearHomComplexPrecomp_f_apply_X {F₁ F₂ : CochainComplex C ℤ}
+    (φ : F₁ ⟶ F₂) (G : CochainComplex C ℤ) (n : ℤ)
+    (z : (linearHomComplex R F₂ G).X n) :
+    (linearHomComplexPrecomp R φ G).f n z =
+      (Cochain.ofHom φ).comp (z : Cochain F₂ G n) (zero_add n) := by
+  exact linearHomComplexPrecomp_f_apply φ G n z
+
+private lemma linearHomComplexPostcomp_f_apply_X {G₁ G₂ : CochainComplex C ℤ}
+    (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) (n : ℤ)
+    (z : (linearHomComplex R F G₁).X n) :
+    (linearHomComplexPostcomp R F ψ).f n z =
+      (z : Cochain F G₁ n).comp (Cochain.ofHom ψ) (add_zero n) := by
+  exact linearHomComplexPostcomp_f_apply F ψ n z
 
 /- The expansion through `D₁` and `D₂` below is the unavoidable alignment between Mathlib's
 totalized tensor differential and its bidegree inclusions.  Keeping it in this summand formula
@@ -143,8 +201,9 @@ private lemma cochainCompTensor_d (p q j : ℤ)
     ComplexShape.ε_up_ℤ, curriedTensor_obj_map, ModuleCat.hom_add, ModuleCat.hom_smul,
     LinearMap.add_apply, ModuleCat.MonoidalCategory.whiskerRight_apply, LinearMap.smul_apply,
     ModuleCat.MonoidalCategory.whiskerLeft_apply]
-  erw [cochainCompTensor_tmul, cochainCompTensor_tmul, cochainCompTensor_tmul,
-    linearHomComplex_d_apply, linearHomComplex_d_apply, linearHomComplex_d_apply]
+  simp only [moduleCat_hom_eq_concrete]
+  rw [cochainCompTensor_tmul_X, cochainCompTensor_tmul_X, cochainCompTensor_tmul_X,
+    linearHomComplex_d_apply_X, linearHomComplex_d_apply_X, linearHomComplex_d_apply]
   exact (δ_comp z₁ z₂ (by omega) (q + 1) (p + 1) (j + 1) rfl rfl rfl).symm
 
 /-- **Composition of cochains is a closed degree-zero map.**  It assembles into a morphism of
@@ -168,8 +227,8 @@ lemma linearHomComplexComp_f (j : ℤ) :
       HomologicalComplex.mapBifunctorDesc (cochainCompTensor R F G K · · j ·) :=
   by simp [linearHomComplexComp]
 
-/-- On the bidegree-`(p, q)` summand, composition sends a pure tensor `z₂ ⊗ₜ z₁` to the
-cochain composite `z₁.comp z₂`. -/
+/-- The degree-`j` component of composition restricted to the bidegree-`(p, q)` summand is
+`cochainCompTensor`; see `cochainCompTensor_tmul` for its value on pure tensors. -/
 @[reassoc (attr := simp)]
 lemma ι_linearHomComplexComp (p q j : ℤ)
     (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j) :
@@ -179,31 +238,51 @@ lemma ι_linearHomComplexComp (p q j : ℤ)
   rw [linearHomComplexComp_f]
   apply HomologicalComplex.ι_mapBifunctorDesc
 
-/-- The identity cochain of `F`, as a morphism from the tensor unit to the `R`-linear Hom complex
-of `F` with itself.  It is a chain map because `Cochain.ofHom (𝟙 F)` is a cocycle. -/
-noncomputable def linearHomComplexUnit :
-    𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ) ⟶ linearHomComplex R F F :=
+/-- A morphism of cochain complexes, regarded as a degree-zero cocycle in the corresponding
+`R`-linear Hom complex. -/
+noncomputable def linearHomComplexOfHom {F G : CochainComplex C ℤ} (φ : F ⟶ G) :
+    𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ) ⟶ linearHomComplex R F G :=
   HomologicalComplex.mkHomFromSingle
-    (ModuleCat.ofHom (LinearMap.toSpanSingleton R (Cochain F F 0) (Cochain.ofHom (𝟙 F))))
+    (ModuleCat.ofHom (LinearMap.toSpanSingleton R (Cochain F G 0) (Cochain.ofHom φ)))
     (fun i _ => ModuleCat.hom_ext (LinearMap.ext fun r => by
-      have h : δ 0 i (r • Cochain.ofHom (𝟙 F)) = 0 := by rw [δ_smul, δ_ofHom, smul_zero]
-      exact h))
+      -- Evaluate the `ModuleCat` composite supplied by `mkHomFromSingle`; from here the
+      -- characteristic `δ` lemmas apply directly.
+      change δ 0 i (r • Cochain.ofHom φ) = 0
+      rw [δ_smul, δ_ofHom, smul_zero]))
 
-/-- The degree-zero component of the unit map is the linear map sending a scalar to that scalar
-multiple of the identity cochain. -/
-lemma linearHomComplexUnit_f_zero :
-    (linearHomComplexUnit R F).f 0 =
+/-- The degree-zero component of `linearHomComplexOfHom` sends a scalar to that scalar multiple
+of the associated cochain. -/
+lemma linearHomComplexOfHom_f_zero {F G : CochainComplex C ℤ} (φ : F ⟶ G) :
+    (linearHomComplexOfHom R φ).f 0 =
       (HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0 (𝟙_ (ModuleCat.{v} R))).hom ≫
-        ModuleCat.ofHom (LinearMap.toSpanSingleton R (Cochain F F 0) (Cochain.ofHom (𝟙 F))) :=
+        ModuleCat.ofHom (LinearMap.toSpanSingleton R (Cochain F G 0) (Cochain.ofHom φ)) :=
   HomologicalComplex.mkHomFromSingle_f _ _
 
 @[simp]
-lemma linearHomComplexUnit_f_zero_apply (r : R) :
-    ModuleCat.Hom.hom ((linearHomComplexUnit R F).f 0) r =
-      r • Cochain.ofHom (𝟙 F) := by
-  rw [linearHomComplexUnit_f_zero]
+lemma linearHomComplexOfHom_f_zero_apply {F G : CochainComplex C ℤ} (φ : F ⟶ G) (r : R) :
+    (linearHomComplexOfHom R φ).f 0
+        ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
+          (𝟙_ (ModuleCat.{v} R))).inv r) = r • Cochain.ofHom φ := by
+  rw [linearHomComplexOfHom_f_zero]
   rfl
 
+/-- The identity cochain of `F`, as a morphism from the tensor unit to the `R`-linear Hom complex
+of `F` with itself. -/
+noncomputable def linearHomComplexUnit :
+    𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ) ⟶ linearHomComplex R F F :=
+  linearHomComplexOfHom R (𝟙 F)
+
+private lemma whiskerLeft_eq (X : CochainComplex (ModuleCat.{v} R) ℤ)
+    {Y Z : CochainComplex (ModuleCat.{v} R) ℤ} (g : Y ⟶ Z) :
+    X ◁ g = HomologicalComplex.mapBifunctorMap (𝟙 X) g
+      (curriedTensor (ModuleCat.{v} R)) (ComplexShape.up ℤ) :=
+  rfl
+
+private lemma whiskerRight_eq {X Y : CochainComplex (ModuleCat.{v} R) ℤ} (f : X ⟶ Y)
+    (Z : CochainComplex (ModuleCat.{v} R) ℤ) :
+    f ▷ Z = HomologicalComplex.mapBifunctorMap f (𝟙 Z)
+      (curriedTensor (ModuleCat.{v} R)) (ComplexShape.up ℤ) :=
+  rfl
 
 section Naturality
 
@@ -213,20 +292,16 @@ variable {F₁ F₂ G₁ G₂ K₁ K₂ : CochainComplex C ℤ}
 /-- Composition is natural in the source: composing after precomposition by `φ` is the same as
 precomposing the composite by `φ`.  This is associativity of `Cochain.comp` with a degree-zero
 cochain in the outermost slot. -/
-lemma whiskerLeft_linearHomComplexComp (φ : F₁ ⟶ F₂) (G K : CochainComplex C ℤ) :
+@[reassoc]
+lemma linearHomComplexComp_naturality_source (φ : F₁ ⟶ F₂) (G K : CochainComplex C ℤ) :
     linearHomComplex R G K ◁ linearHomComplexPrecomp R φ G ≫ linearHomComplexComp R F₁ G K =
       linearHomComplexComp R F₂ G K ≫ linearHomComplexPrecomp R φ K := by
   ext j : 1
   apply HomologicalComplex.mapBifunctor.hom_ext
   intro p q h
-  -- Whiskering is `mapBifunctorMap` by definition of the monoidal structure on
-  -- `HomologicalComplex`, for which Mathlib provides no component lemma; this bridge lets the
-  -- inclusion formula `ι_mapBifunctorMap` be used below.
-  have hw : (linearHomComplex R G K ◁ linearHomComplexPrecomp R φ G).f j =
-      (HomologicalComplex.mapBifunctorMap (𝟙 (linearHomComplex R G K))
-        (linearHomComplexPrecomp R φ G) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
-  rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f, ← Category.assoc, hw,
+  have h' : p + q = j := h
+  rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f, ← Category.assoc,
+    whiskerLeft_eq,
     HomologicalComplex.ι_mapBifunctorMap, Category.assoc, Category.assoc,
     ι_linearHomComplexComp, ι_linearHomComplexComp_assoc]
   apply ModuleCat.MonoidalCategory.tensor_ext
@@ -234,9 +309,9 @@ lemma whiskerLeft_linearHomComplexComp (φ : F₁ ⟶ F₂) (G K : CochainComple
   simp only [curriedTensor_obj_obj, HomologicalComplex.id_f, CategoryTheory.Functor.map_id,
     NatTrans.id_app, curriedTensor_obj_map, Category.id_comp, ModuleCat.hom_comp,
     LinearMap.coe_comp, Function.comp_apply, ModuleCat.MonoidalCategory.whiskerLeft_apply]
-  erw [linearHomComplexPrecomp_f_apply, cochainCompTensor_tmul,
-    cochainCompTensor_tmul, linearHomComplexPrecomp_f_apply]
-  have h' : p + q = j := h
+  simp only [moduleCat_hom_eq_concrete]
+  rw [linearHomComplexPrecomp_f_apply_X, cochainCompTensor_tmul_left_X,
+    cochainCompTensor_tmul_X, linearHomComplexPrecomp_f_apply]
   have hassoc : ((Cochain.ofHom φ).comp z₁ (zero_add q)).comp z₂ (by omega) =
       (Cochain.ofHom φ).comp (z₁.comp z₂ (by omega)) (zero_add j) :=
     Cochain.comp_assoc _ _ _ (zero_add q) (by omega) (by omega)
@@ -245,18 +320,16 @@ lemma whiskerLeft_linearHomComplexComp (φ : F₁ ⟶ F₂) (G K : CochainComple
 /-- Composition is natural in the target: composing after postcomposition by `ψ` is the same as
 postcomposing the composite by `ψ`.  This is associativity of `Cochain.comp` with a degree-zero
 cochain in the innermost slot. -/
-lemma whiskerRight_linearHomComplexComp (ψ : K₁ ⟶ K₂) (F G : CochainComplex C ℤ) :
+@[reassoc]
+lemma linearHomComplexComp_naturality_target (ψ : K₁ ⟶ K₂) (F G : CochainComplex C ℤ) :
     linearHomComplexPostcomp R G ψ ▷ linearHomComplex R F G ≫ linearHomComplexComp R F G K₂ =
       linearHomComplexComp R F G K₁ ≫ linearHomComplexPostcomp R F ψ := by
   ext j : 1
   apply HomologicalComplex.mapBifunctor.hom_ext
   intro p q h
-  -- Whiskering as `mapBifunctorMap`, as in `whiskerLeft_linearHomComplexComp` above.
-  have hw : (linearHomComplexPostcomp R G ψ ▷ linearHomComplex R F G).f j =
-      (HomologicalComplex.mapBifunctorMap (linearHomComplexPostcomp R G ψ)
-        (𝟙 (linearHomComplex R F G)) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
-  rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f, ← Category.assoc, hw,
+  have h' : p + q = j := h
+  rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f, ← Category.assoc,
+    whiskerRight_eq,
     HomologicalComplex.ι_mapBifunctorMap, Category.assoc, Category.assoc,
     ι_linearHomComplexComp, ι_linearHomComplexComp_assoc]
   apply ModuleCat.MonoidalCategory.tensor_ext
@@ -264,9 +337,9 @@ lemma whiskerRight_linearHomComplexComp (ψ : K₁ ⟶ K₂) (F G : CochainCompl
   simp only [curriedTensor_obj_obj, HomologicalComplex.id_f, CategoryTheory.Functor.map_id,
     curriedTensor_map_app, ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
     ModuleCat.MonoidalCategory.whiskerRight_apply, ConcreteCategory.id_apply]
-  erw [linearHomComplexPostcomp_f_apply, cochainCompTensor_tmul,
-    cochainCompTensor_tmul, linearHomComplexPostcomp_f_apply]
-  have h' : p + q = j := h
+  simp only [moduleCat_hom_eq_concrete]
+  rw [linearHomComplexPostcomp_f_apply_X, cochainCompTensor_tmul_right_X,
+    cochainCompTensor_tmul_X, linearHomComplexPostcomp_f_apply]
   have hassoc : (z₁.comp z₂ (by omega)).comp (Cochain.ofHom ψ) (add_zero j) =
       z₁.comp (z₂.comp (Cochain.ofHom ψ) (add_zero p)) (by omega) :=
     Cochain.comp_assoc _ _ _ (by omega) (add_zero p) (by omega)
@@ -274,6 +347,7 @@ lemma whiskerRight_linearHomComplexComp (ψ : K₁ ⟶ K₂) (F G : CochainCompl
 
 /-- Composition is natural in the middle object: precomposition in the first Hom complex agrees
 with postcomposition in the second Hom complex. -/
+@[reassoc]
 lemma linearHomComplexComp_naturality_middle (ψ : G₁ ⟶ G₂) (F K : CochainComplex C ℤ) :
     linearHomComplexPrecomp R ψ K ▷ linearHomComplex R F G₁ ≫
         linearHomComplexComp R F G₁ K =
@@ -282,17 +356,10 @@ lemma linearHomComplexComp_naturality_middle (ψ : G₁ ⟶ G₂) (F K : Cochain
   ext j : 1
   apply HomologicalComplex.mapBifunctor.hom_ext
   intro p q h
-  -- Whiskering as `mapBifunctorMap`, as in `whiskerLeft_linearHomComplexComp` above.
-  have hw₁ : (linearHomComplexPrecomp R ψ K ▷ linearHomComplex R F G₁).f j =
-      (HomologicalComplex.mapBifunctorMap (linearHomComplexPrecomp R ψ K)
-        (𝟙 (linearHomComplex R F G₁)) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
-  have hw₂ : (linearHomComplex R G₂ K ◁ linearHomComplexPostcomp R F ψ).f j =
-      (HomologicalComplex.mapBifunctorMap (𝟙 (linearHomComplex R G₂ K))
-        (linearHomComplexPostcomp R F ψ) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
-  rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f, ← Category.assoc, hw₁,
-    HomologicalComplex.ι_mapBifunctorMap, Category.assoc, hw₂,
+  have h' : p + q = j := h
+  rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f, ← Category.assoc,
+    whiskerRight_eq,
+    HomologicalComplex.ι_mapBifunctorMap, Category.assoc, whiskerLeft_eq,
     HomologicalComplex.ι_mapBifunctorMap_assoc,
     ι_linearHomComplexComp, Category.assoc, ι_linearHomComplexComp]
   apply ModuleCat.MonoidalCategory.tensor_ext
@@ -301,9 +368,9 @@ lemma linearHomComplexComp_naturality_middle (ψ : G₁ ⟶ G₂) (F K : Cochain
     ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
     ModuleCat.MonoidalCategory.whiskerRight_apply,
     ModuleCat.MonoidalCategory.whiskerLeft_apply]
-  erw [linearHomComplexPrecomp_f_apply, cochainCompTensor_tmul,
-    linearHomComplexPostcomp_f_apply, cochainCompTensor_tmul]
-  have h' : p + q = j := h
+  simp only [moduleCat_hom_eq_concrete]
+  rw [linearHomComplexPrecomp_f_apply_X, cochainCompTensor_tmul_right_X,
+    linearHomComplexPostcomp_f_apply_X, cochainCompTensor_tmul_left_X]
   exact (Cochain.comp_assoc z₁ (Cochain.ofHom ψ) z₂ (add_zero q) (zero_add p) (by omega)).symm
 
 end Naturality
@@ -315,6 +382,7 @@ variable (L : CochainComplex C ℤ)
 
 /-- Composition of cochains is associative, with the tensor products identified by the monoidal
 associator. -/
+@[reassoc]
 lemma linearHomComplexComp_assoc :
     (linearHomComplexComp R G K L ▷ linearHomComplex R F G) ≫
         linearHomComplexComp R F G L =
@@ -326,15 +394,6 @@ lemma linearHomComplexComp_assoc :
   apply HomologicalComplex.mapBifunctor₁₂.hom_ext
   intro p q r h
   have h' : p + q + r = j := h
-  -- Whiskering as `mapBifunctorMap`, as in `whiskerLeft_linearHomComplexComp` above.
-  have hw₁ : (linearHomComplexComp R G K L ▷ linearHomComplex R F G).f j =
-      (HomologicalComplex.mapBifunctorMap (linearHomComplexComp R G K L)
-        (𝟙 (linearHomComplex R F G)) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
-  have hw₂ : (linearHomComplex R K L ◁ linearHomComplexComp R F G K).f j =
-      (HomologicalComplex.mapBifunctorMap (𝟙 (linearHomComplex R K L))
-        (linearHomComplexComp R F G K) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
   -- Likewise the associator's degree-`j` component is `mapBifunctorAssociatorX` by definition.
   have ha : (α_ (linearHomComplex R K L) (linearHomComplex R G K)
       (linearHomComplex R F G)).hom.f j =
@@ -351,7 +410,7 @@ lemma linearHomComplexComp_assoc :
           linearHomComplexComp R F G L).f j =
       (cochainCompTensor R G K L p q (p + q) rfl ▷ (linearHomComplex R F G).X r) ≫
         cochainCompTensor R F G L (p + q) r j (by omega) := by
-    rw [HomologicalComplex.comp_f, ← Category.assoc, hw₁,
+    rw [HomologicalComplex.comp_f, ← Category.assoc, whiskerRight_eq,
       HomologicalComplex.mapBifunctor₁₂.ι_eq (curriedTensor (ModuleCat.{v} R))
         (curriedTensor (ModuleCat.{v} R)) (linearHomComplex R K L)
         (linearHomComplex R G K) (linearHomComplex R F G) (ComplexShape.up ℤ)
@@ -378,7 +437,7 @@ lemma linearHomComplexComp_assoc :
     rw [HomologicalComplex.comp_f, HomologicalComplex.comp_f]
     rw [ha, HomologicalComplex.ι_mapBifunctorAssociatorX_hom_assoc]
     dsimp only [bifunctorComp₁₂, bifunctorComp₂₃, bifunctorComp₁₂Obj, bifunctorComp₂₃Obj]
-    rw [MonoidalCategory.curriedAssociatorNatIso_hom_app_app_app, hw₂,
+    rw [MonoidalCategory.curriedAssociatorNatIso_hom_app_app_app, whiskerLeft_eq,
       HomologicalComplex.mapBifunctor₂₃.ι_eq (curriedTensor (ModuleCat.{v} R))
         (curriedTensor (ModuleCat.{v} R)) (linearHomComplex R K L)
         (linearHomComplex R G K) (linearHomComplex R F G) (ComplexShape.up ℤ)
@@ -399,13 +458,15 @@ lemma linearHomComplexComp_assoc :
   | tmul z₃ z₂ =>
     simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
       ModuleCat.MonoidalCategory.whiskerRight_apply]
-    erw [cochainCompTensor_tmul, cochainCompTensor_tmul]
-    erw [ModuleCat.MonoidalCategory.associator_hom_apply z₃ z₂ z₁]
-    erw [ModuleCat.MonoidalCategory.whiskerLeft_apply
+    simp only [moduleCat_hom_eq_concrete]
+    rw [cochainCompTensor_tmul_X R G K L p q (p + q) rfl z₃ z₂,
+      cochainCompTensor_tmul_right_X]
+    rw [ModuleCat.MonoidalCategory.associator_hom_apply z₃ z₂ z₁]
+    rw [ModuleCat.MonoidalCategory.whiskerLeft_apply
         ((linearHomComplex R K L).X p) (cochainCompTensor R F G K q r (q + r) rfl)
         z₃ (z₂ ⊗ₜ z₁),
-      cochainCompTensor_tmul R F G K q r (q + r) rfl z₂ z₁,
-      cochainCompTensor_tmul R F K L p (q + r) j (by dsimp; omega)
+      cochainCompTensor_tmul_X R F G K q r (q + r) rfl z₂ z₁,
+      cochainCompTensor_tmul_left_X R F K L p (q + r) j (by dsimp; omega)
         z₃ (z₁.comp z₂ (by omega))]
     -- The preceding application lemmas leave only the proof arguments certifying the degree
     -- equalities; this alignment states the resulting cochain equation without wrapper casts.
@@ -436,107 +497,77 @@ private lemma rightUnitor_inv_f (X : CochainComplex (ModuleCat.{v} R) ℤ) (j : 
   rfl
 
 /-- The identity cochain is a left unit for composition. -/
+@[reassoc]
 lemma linearHomComplexUnit_comp :
     linearHomComplexUnit R G ▷ linearHomComplex R F G ≫
         linearHomComplexComp R F G G =
       (λ_ (linearHomComplex R F G)).hom := by
   apply (cancel_epi (λ_ (linearHomComplex R F G)).inv).1
   rw [Iso.inv_hom_id]
-  ext j z
-  simp only [HomologicalComplex.comp_f, HomologicalComplex.id_f, ModuleCat.hom_comp,
-    LinearMap.coe_comp, Function.comp_apply, ConcreteCategory.id_apply]
+  ext j : 1
+  simp only [HomologicalComplex.comp_f, HomologicalComplex.id_f]
   rw [leftUnitor_inv_f, HomologicalComplex.leftUnitor'_inv]
-  -- Whiskering as `mapBifunctorMap`, as in `whiskerLeft_linearHomComplexComp` above.
-  have hw : (linearHomComplexUnit R G ▷ linearHomComplex R F G).f j =
-      (HomologicalComplex.mapBifunctorMap (linearHomComplexUnit R G)
-        (𝟙 (linearHomComplex R F G)) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
   have hι :
-      HomologicalComplex.ιMapBifunctor (𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ))
-          (linearHomComplex R F G) (curriedTensor (ModuleCat.{v} R))
-          (ComplexShape.up ℤ) 0 j j (zero_add j) ≫
+      HomologicalComplex.ιTensorObj
+          (HomologicalComplex.tensorUnit (ModuleCat.{v} R) (ComplexShape.up ℤ))
+          (linearHomComplex R F G) 0 j j (zero_add j) ≫
         (linearHomComplexUnit R G ▷ linearHomComplex R F G).f j ≫
           (linearHomComplexComp R F G G).f j =
         (linearHomComplexUnit R G).f 0 ▷ (linearHomComplex R F G).X j ≫
           cochainCompTensor R F G G 0 j j (zero_add j) := by
-    rw [hw, HomologicalComplex.ι_mapBifunctorMap_assoc, ι_linearHomComplexComp]
+    rw [whiskerRight_eq, HomologicalComplex.ι_mapBifunctorMap_assoc,
+      ι_linearHomComplexComp]
     simp only [HomologicalComplex.id_f, curriedTensor_obj_obj, curriedTensor_map_app,
       curriedTensor_obj_map, MonoidalCategory.whiskerLeft_id, Category.id_comp]
-  -- After `leftUnitor'_inv` the goal is an element of the totalized tensor product presented as
-  -- a composite of three maps applied to `1`; `hι` below is stated about that composite, so the
-  -- goal is restated with the composition made explicit.  Mathlib's `ιTensorObj` and
-  -- `ιMapBifunctor` are the same inclusion, which is why no rewrite is available here.
-  change ModuleCat.Hom.hom
-    (HomologicalComplex.ιMapBifunctor (𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ))
-        (linearHomComplex R F G) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ) 0 j j (zero_add j) ≫
-      (linearHomComplexUnit R G ▷ linearHomComplex R F G).f j ≫
-        (linearHomComplexComp R F G G).f j)
-      (((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
-        (𝟙_ (ModuleCat.{v} R))).inv : _) 1 ⊗ₜ z) = z
-  rw [hι]
+  rw [Category.assoc, Category.assoc, hι]
+  ext z
   have hunit : ((linearHomComplexUnit R G).f 0)
       (((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
-        (𝟙_ (ModuleCat.{v} R))).inv : _) 1) = Cochain.ofHom (𝟙 G) :=
-    one_smul R (Cochain.ofHom (𝟙 G))
-  simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply]
-  erw [ModuleCat.MonoidalCategory.whiskerRight_apply ((linearHomComplexUnit R G).f 0)
-    ((linearHomComplex R F G).X j)
-    ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
-      (𝟙_ (ModuleCat.{v} R))).inv 1) z]
+        (𝟙_ (ModuleCat.{v} R))).inv : _) 1) = Cochain.ofHom (𝟙 G) := by
+    simpa only [linearHomComplexUnit, one_smul] using
+      linearHomComplexOfHom_f_zero_apply R (𝟙 G) 1
+  simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
+    moduleCat_hom_eq_concrete, ModuleCat.MonoidalCategory.leftUnitor_inv_apply,
+    ModuleCat.MonoidalCategory.whiskerRight_apply, ConcreteCategory.id_apply]
   rw [hunit]
-  erw [cochainCompTensor_tmul]
+  rw [cochainCompTensor_tmul_right_X]
   exact Cochain.comp_id z
 
 /-- The identity cochain is a right unit for composition. -/
+@[reassoc]
 lemma linearHomComplexComp_unit :
     linearHomComplex R F G ◁ linearHomComplexUnit R F ≫
         linearHomComplexComp R F F G =
       (ρ_ (linearHomComplex R F G)).hom := by
   apply (cancel_epi (ρ_ (linearHomComplex R F G)).inv).1
   rw [Iso.inv_hom_id]
-  ext j z
-  simp only [HomologicalComplex.comp_f, HomologicalComplex.id_f, ModuleCat.hom_comp,
-    LinearMap.coe_comp, Function.comp_apply, ConcreteCategory.id_apply]
+  ext j : 1
+  simp only [HomologicalComplex.comp_f, HomologicalComplex.id_f]
   rw [rightUnitor_inv_f, HomologicalComplex.rightUnitor'_inv]
-  -- Whiskering as `mapBifunctorMap`, as in `whiskerLeft_linearHomComplexComp` above.
-  have hw : (linearHomComplex R F G ◁ linearHomComplexUnit R F).f j =
-      (HomologicalComplex.mapBifunctorMap (𝟙 (linearHomComplex R F G))
-        (linearHomComplexUnit R F) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ)).f j := rfl
   have hι :
-      HomologicalComplex.ιMapBifunctor (linearHomComplex R F G)
-          (𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ)) (curriedTensor (ModuleCat.{v} R))
-          (ComplexShape.up ℤ) j 0 j (add_zero j) ≫
+      HomologicalComplex.ιTensorObj (linearHomComplex R F G)
+          (HomologicalComplex.tensorUnit (ModuleCat.{v} R) (ComplexShape.up ℤ))
+          j 0 j (add_zero j) ≫
         (linearHomComplex R F G ◁ linearHomComplexUnit R F).f j ≫
           (linearHomComplexComp R F F G).f j =
         (linearHomComplex R F G).X j ◁ (linearHomComplexUnit R F).f 0 ≫
           cochainCompTensor R F F G j 0 j (add_zero j) := by
-    rw [hw, HomologicalComplex.ι_mapBifunctorMap_assoc, ι_linearHomComplexComp]
+    rw [whiskerLeft_eq, HomologicalComplex.ι_mapBifunctorMap_assoc,
+      ι_linearHomComplexComp]
     simp only [HomologicalComplex.id_f, curriedTensor_obj_obj, curriedTensor_map_app,
       curriedTensor_obj_map, MonoidalCategory.id_whiskerRight, Category.id_comp]
-  -- As in the left unit law: the goal is restated with the composition made explicit so that
-  -- `hι` applies, `ιTensorObj` and `ιMapBifunctor` being the same inclusion.
-  change ModuleCat.Hom.hom
-    (HomologicalComplex.ιMapBifunctor (linearHomComplex R F G)
-        (𝟙_ (CochainComplex (ModuleCat.{v} R) ℤ)) (curriedTensor (ModuleCat.{v} R))
-        (ComplexShape.up ℤ) j 0 j (add_zero j) ≫
-      (linearHomComplex R F G ◁ linearHomComplexUnit R F).f j ≫
-        (linearHomComplexComp R F F G).f j)
-      (z ⊗ₜ ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
-        (𝟙_ (ModuleCat.{v} R))).inv : _) 1) = z
-  rw [hι]
+  rw [Category.assoc, Category.assoc, hι]
+  ext z
   have hunit : ((linearHomComplexUnit R F).f 0)
       (((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
-        (𝟙_ (ModuleCat.{v} R))).inv : _) 1) = Cochain.ofHom (𝟙 F) :=
-    one_smul R (Cochain.ofHom (𝟙 F))
-  simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply]
-  erw [ModuleCat.MonoidalCategory.whiskerLeft_apply ((linearHomComplex R F G).X j)
-    ((linearHomComplexUnit R F).f 0) z
-    ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
-      (𝟙_ (ModuleCat.{v} R))).inv 1)]
+        (𝟙_ (ModuleCat.{v} R))).inv : _) 1) = Cochain.ofHom (𝟙 F) := by
+    simpa only [linearHomComplexUnit, one_smul] using
+      linearHomComplexOfHom_f_zero_apply R (𝟙 F) 1
+  simp only [ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
+    moduleCat_hom_eq_concrete, ModuleCat.MonoidalCategory.rightUnitor_inv_apply,
+    ModuleCat.MonoidalCategory.whiskerLeft_apply, ConcreteCategory.id_apply]
   rw [hunit]
-  erw [cochainCompTensor_tmul]
+  rw [cochainCompTensor_tmul_left_X]
   exact Cochain.id_comp z
 
 end CategoryLaws
