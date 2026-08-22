@@ -87,8 +87,9 @@ def linearHomComplex (F G : CochainComplex C ℤ) : CochainComplex (ModuleCat.{v
 
 @[simp]
 lemma linearHomComplex_d_apply (F G : CochainComplex C ℤ) (n m : ℤ)
-    (z : Cochain F G n) :
-    (linearHomComplex R F G).d n m z = δ n m z :=
+    (z : (linearHomComplex R F G).X n) :
+    (linearHomComplex R F G).d n m z =
+      (δ n m (z : Cochain F G n) : (linearHomComplex R F G).X m) :=
   rfl
 
 /-- Forgetting the `R`-module structure of the `R`-linear Hom complex recovers Mathlib's
@@ -111,24 +112,6 @@ lemma forget₂LinearHomComplexIso_inv_f (F G : CochainComplex C ℤ) (n : ℤ) 
     (forget₂LinearHomComplexIso R F G).inv.f n = 𝟙 _ := by
   ext z
   rfl
-
-/-- The forward map of the comparison isomorphism with Mathlib's `HomComplex` is the identity on
-cochains in each degree. -/
-lemma forget₂LinearHomComplexIso_hom_f_apply (F G : CochainComplex C ℤ) (n : ℤ)
-    (z : Cochain F G n) :
-    ((forget₂LinearHomComplexIso R F G).hom.f n) z = z :=
-  by
-    rw [forget₂LinearHomComplexIso_hom_f]
-    rfl
-
-/-- The inverse map of the comparison isomorphism with Mathlib's `HomComplex` is the identity on
-cochains in each degree. -/
-lemma forget₂LinearHomComplexIso_inv_f_apply (F G : CochainComplex C ℤ) (n : ℤ)
-    (z : Cochain F G n) :
-    ((forget₂LinearHomComplexIso R F G).inv.f n) z = z :=
-  by
-    rw [forget₂LinearHomComplexIso_inv_f]
-    rfl
 
 section Functoriality
 
@@ -164,48 +147,34 @@ def linearHomComplexPostcomp (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) :
 variable {R}
 
 @[simp]
-private lemma cochainPrecomp_apply (φ : F₁ ⟶ F₂) (G : CochainComplex C ℤ) (n : ℤ)
-    (z : Cochain F₂ G n) :
-    cochainPrecomp R φ G n z = (Cochain.ofHom φ).comp z (zero_add n) :=
-  by simp [cochainPrecomp]
-
-@[simp]
-private lemma cochainPostcomp_apply (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) (n : ℤ)
-    (z : Cochain F G₁ n) :
-    cochainPostcomp R F ψ n z = z.comp (Cochain.ofHom ψ) (add_zero n) :=
-  by simp [cochainPostcomp]
-
-@[simp]
 lemma linearHomComplexPrecomp_f_apply (φ : F₁ ⟶ F₂) (G : CochainComplex C ℤ) (n : ℤ)
-    (z : Cochain F₂ G n) :
-    (linearHomComplexPrecomp R φ G).f n z = (Cochain.ofHom φ).comp z (zero_add n) :=
-  by
-    -- Remove the `ModuleCat.ofHom` wrapper, then use the linear-map application API.
-    change cochainPrecomp R φ G n z = _
-    exact cochainPrecomp_apply φ G n z
+    (z : (linearHomComplex R F₂ G).X n) :
+    (linearHomComplexPrecomp R φ G).f n z =
+      ((Cochain.ofHom φ).comp (z : Cochain F₂ G n) (zero_add n) :
+        (linearHomComplex R F₁ G).X n) :=
+  (rfl)
 
 @[simp]
 lemma linearHomComplexPostcomp_f_apply (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) (n : ℤ)
-    (z : Cochain F G₁ n) :
-    (linearHomComplexPostcomp R F ψ).f n z = z.comp (Cochain.ofHom ψ) (add_zero n) :=
-  by
-    -- Remove the `ModuleCat.ofHom` wrapper, then use the linear-map application API.
-    change cochainPostcomp R F ψ n z = _
-    exact cochainPostcomp_apply F ψ n z
+    (z : (linearHomComplex R F G₁).X n) :
+    (linearHomComplexPostcomp R F ψ).f n z =
+      ((z : Cochain F G₁ n).comp (Cochain.ofHom ψ) (add_zero n) :
+        (linearHomComplex R F G₂).X n) :=
+  (rfl)
 
 variable (R)
 
 @[simp]
 lemma linearHomComplexPrecomp_id (F G : CochainComplex C ℤ) :
     linearHomComplexPrecomp R (𝟙 F) G = 𝟙 _ := by
-  ext n (z : Cochain F G n)
+  ext n (z : (linearHomComplex R F G).X n)
   exact Cochain.id_comp z
 
 @[simp]
 lemma linearHomComplexPrecomp_comp (φ : F₁ ⟶ F₂) (φ' : F₂ ⟶ F₃) (G : CochainComplex C ℤ) :
     linearHomComplexPrecomp R (φ ≫ φ') G =
       linearHomComplexPrecomp R φ' G ≫ linearHomComplexPrecomp R φ G := by
-  ext n (z : Cochain F₃ G n)
+  ext n (z : (linearHomComplex R F₃ G).X n)
   simp only [linearHomComplexPrecomp_f_apply, HomologicalComplex.comp_f, ModuleCat.hom_comp,
     LinearMap.coe_comp]
   rw [Cochain.ofHom_comp]
@@ -214,14 +183,14 @@ lemma linearHomComplexPrecomp_comp (φ : F₁ ⟶ F₂) (φ' : F₂ ⟶ F₃) (G
 @[simp]
 lemma linearHomComplexPostcomp_id (F G : CochainComplex C ℤ) :
     linearHomComplexPostcomp R F (𝟙 G) = 𝟙 _ := by
-  ext n (z : Cochain F G n)
+  ext n (z : (linearHomComplex R F G).X n)
   exact Cochain.comp_id z
 
 @[simp]
 lemma linearHomComplexPostcomp_comp (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) (ψ' : G₂ ⟶ G₃) :
     linearHomComplexPostcomp R F (ψ ≫ ψ') =
       linearHomComplexPostcomp R F ψ ≫ linearHomComplexPostcomp R F ψ' := by
-  ext n (z : Cochain F G₁ n)
+  ext n (z : (linearHomComplex R F G₁).X n)
   simp only [linearHomComplexPostcomp_f_apply, HomologicalComplex.comp_f, ModuleCat.hom_comp,
     LinearMap.coe_comp]
   rw [Cochain.ofHom_comp]
@@ -231,7 +200,7 @@ lemma linearHomComplexPostcomp_comp (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G�
 lemma linearHomComplexPrecomp_postcomp_comm (φ : F₁ ⟶ F₂) (ψ : G₁ ⟶ G₂) :
     linearHomComplexPrecomp R φ G₁ ≫ linearHomComplexPostcomp R F₁ ψ =
       linearHomComplexPostcomp R F₂ ψ ≫ linearHomComplexPrecomp R φ G₂ := by
-  ext n (z : Cochain F₂ G₁ n)
+  ext n (z : (linearHomComplex R F₂ G₁).X n)
   simp only [HomologicalComplex.comp_f, ModuleCat.hom_comp, LinearMap.coe_comp]
   exact Cochain.comp_assoc _ _ _ (zero_add n) (add_zero n) (by omega)
 
