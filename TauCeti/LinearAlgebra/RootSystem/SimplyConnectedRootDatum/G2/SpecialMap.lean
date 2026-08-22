@@ -139,15 +139,20 @@ of the diagram.** -/
 /-! ## Action on the pinned root datum -/
 
 /-- **The special matrix carries every tabulated root to its indexed image with the
-prescribed exponent.** -/
-theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
+prescribed exponent.** This is the simp-normal form of
+`TauCeti.DynkinType.g2SpecialIsogenyMatrix_mulVec_root`, since
+`TauCeti.DynkinType.g2SimplyConnectedRootDatum_root` rewrites the datum's roots to the table. -/
+@[simp] theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
     g2SpecialIsogenyMatrix *ᵥ g2Root i = g2Length i • g2Root (g2SpecialIsogenyIndex i) := by
   rw [g2Root_apply, g2Root_apply, g2Length_apply]
   decide +revert
 
 /-- **The transposed special matrix satisfies the contragredient equation on every tabulated
-coroot.** -/
-theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
+coroot.** This is the simp-normal form of
+`TauCeti.DynkinType.g2SpecialIsogenyMatrix_transpose_mulVec_coroot`, since
+`TauCeti.DynkinType.g2SimplyConnectedRootDatum_coroot` rewrites the datum's coroots to the
+table. -/
+@[simp] theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
     g2SpecialIsogenyMatrixᵀ *ᵥ g2Coroot (g2SpecialIsogenyIndex i) = g2Length i • g2Coroot i := by
   rw [g2Coroot_apply, g2Coroot_apply, g2Length_apply]
   decide +revert
