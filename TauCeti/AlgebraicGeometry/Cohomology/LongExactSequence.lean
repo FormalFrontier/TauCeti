@@ -186,7 +186,7 @@ omit hS in
 /-- Multiplication by a global function on cohomology is the map induced by multiplication by
 that function on the coefficient sheaf. -/
 @[simp]
-lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMap_globalSectionsSmul (M : X.Modules)
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMap_globalSectionsSmul_apply (M : X.Modules)
     (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
     cohomologyMap (globalSectionsSmul M r) i x = r • x := by
   rw [cohomology_smul, cohomologyFunctor_map]
@@ -213,7 +213,7 @@ def cohomologyδLinear (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
     -- `Module.compHom` exposes its action definitionally, so the goal is the naturality of the
     -- connecting map for multiplication by `r` on all three terms.
     change cohomologyδ hS n₀ n₁ h (r • x) = r • cohomologyδ hS n₀ n₁ h x
-    rw [← cohomologyMap_globalSectionsSmul, ← cohomologyMap_globalSectionsSmul]
+    rw [← cohomologyMap_globalSectionsSmul_apply, ← cohomologyMap_globalSectionsSmul_apply]
     -- Multiplication by `r` on all three terms is an endomorphism of the short complex.
     exact (cohomologyδ_naturality hS hS
       { τ₁ := globalSectionsSmul S.X₁ r
