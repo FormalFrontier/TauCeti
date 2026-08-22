@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Calculus.Sard.VanishingDerivative
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 import Mathlib.Analysis.Normed.Module.HahnBanach
-import Mathlib.Analysis.Normed.Operator.Bilinear
 import Mathlib.MeasureTheory.Measure.Prod
 import TauCeti.Analysis.Normed.Operator.Surjective
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
@@ -36,10 +35,10 @@ diffeomorphism onto `ℝ × ker (D u a)` for the projection `π` along `v₀`, a
 parametrizes all the nearby level sets of `u` at once. Splitting the target as `ℝ × ker φ` too,
 `f` becomes the map `(t, z) ↦ (t, G t z)` with `G t z := ρ (f (Θ (t, z)))`, where `ρ` projects the
 target along `Df(a) v₀`: it preserves the level `t`, so it carries each hyperplane into a
-hyperplane. A point of a hyperplane is critical for `f` exactly when it is critical for the
-restricted map `G t`, whose source has one dimension less, so the induction hypothesis makes every
-slice of the image of the critical set null, and Fubini finishes. Compactness enters only to make
-the slicing legitimate: an image with null slices need not be null unless it is measurable, so the
+hyperplane. Whenever a point is critical for `f`, it is critical for the restricted map `G t`,
+whose source has one dimension less, so the induction hypothesis makes every slice of the image of
+the critical set null, and Fubini finishes. Compactness enters only to make the slicing legitimate:
+an image with null slices need not be null unless it is measurable, so the
 argument runs over the pieces `crit f ∩ closedBall a r`. These are compact because
 `TauCeti.isOpen_setOf_surjective` makes the surjective operators an open set, so the critical
 locus, its preimage under the continuous derivative, is closed on the ball, and a closed subset of
@@ -99,10 +98,9 @@ private theorem surjective_of_ker_subset_range {A : E →L[ℝ] F} {φ : F →L[
   intro w
   set v₁ : E := (φ (A v₀))⁻¹ • v₀ with hv₁def
   have hv₁ : φ (A v₁) = 1 := by
-    rw [hv₁def, map_smul, map_smul, smul_eq_mul, inv_mul_cancel₀ hv₀]
-  obtain ⟨v, hv⟩ := h (w - φ w • A v₁) (by
-    rw [map_sub, map_smul, hv₁, smul_eq_mul, mul_one, sub_self])
-  exact ⟨v + φ w • v₁, by rw [map_add, map_smul, hv, sub_add_cancel]⟩
+    simp [hv₁def, hv₀]
+  obtain ⟨v, hv⟩ := h (w - φ w • A v₁) (by simp [hv₁])
+  exact ⟨v + φ w • v₁, by simp [hv]⟩
 
 end Surjective
 

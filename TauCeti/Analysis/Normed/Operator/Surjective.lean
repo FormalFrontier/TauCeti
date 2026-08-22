@@ -12,11 +12,11 @@ public import Mathlib.Analysis.Normed.Module.FiniteDimension
 
 Surjectivity onto a finite-dimensional space is stable under small perturbations in the operator
 norm: the surjective maps form an open subset of the space of continuous linear maps. The source
-is an arbitrary real normed space.
+is an arbitrary normed space over a complete nontrivially normed field.
 
 Mathlib records the companion fact that a surjective continuous linear map between Banach spaces
 is an open map, in `ContinuousLinearMap.isOpenMap`; the openness proved here is openness of the
-locus of such maps inside `E →L[ℝ] F`, not of any one of them.
+locus of such maps inside `E →L[𝕜] F`, not of any one of them.
 
 ## Main results
 
@@ -30,20 +30,21 @@ open Function
 
 namespace TauCeti
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [FiniteDimensional 𝕜 F]
 
 /-- Surjectivity onto a finite-dimensional space is an open condition on continuous linear maps.
 
 A surjection `A` onto a finite-dimensional space admits a continuous linear right inverse `R`, and
 then `B ∘ R` is within distance `‖B - A‖ * ‖R‖` of the identity, hence injective and so, the
 target being finite-dimensional, surjective as soon as `B` is close enough to `A`. -/
-theorem isOpen_setOf_surjective : IsOpen {A : E →L[ℝ] F | Surjective A} := by
+theorem isOpen_setOf_surjective : IsOpen {A : E →L[𝕜] F | Surjective A} := by
   rw [Metric.isOpen_iff]
   rintro A (hA : Surjective A)
   obtain ⟨R, hAR⟩ := A.exists_rightInverse_of_surjective (A.range_eq_top_of_surjective hA)
   have hAR : ∀ y, A (R y) = y := fun y ↦ by
-    have := congrArg (fun g : F →L[ℝ] F ↦ g y) hAR
+    have := congrArg (fun g : F →L[𝕜] F ↦ g y) hAR
     simpa using this
   refine ⟨(‖R‖ + 1)⁻¹, by positivity, fun B hB ↦ ?_⟩
   have hBA : ‖B - A‖ < (‖R‖ + 1)⁻¹ := by
@@ -62,7 +63,7 @@ theorem isOpen_setOf_surjective : IsOpen {A : E →L[ℝ] F | Surjective A} := b
     calc ‖(B - A) (R y)‖ ≤ ‖B - A‖ * ‖R y‖ := (B - A).le_opNorm _
       _ ≤ ‖B - A‖ * (‖R‖ * ‖y‖) := by gcongr; exact R.le_opNorm y
       _ = ‖B - A‖ * ‖R‖ * ‖y‖ := by ring
-  have hinj : Injective ((B.comp R : F →L[ℝ] F) : F →ₗ[ℝ] F) := by
+  have hinj : Injective ((B.comp R : F →L[𝕜] F) : F →ₗ[𝕜] F) := by
     rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
     intro y hy
     by_contra hy0
