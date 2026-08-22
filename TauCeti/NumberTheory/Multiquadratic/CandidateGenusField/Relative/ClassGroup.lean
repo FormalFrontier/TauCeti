@@ -60,7 +60,8 @@ theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
   have : NumberField (candidateGenusFieldBase hd) :=
     NumberField.of_intermediateField (candidateGenusFieldBase hd)
   have : Fintype (ClassGroup (𝓞 (candidateGenusFieldBase hd))) :=
-    NumberField.RingOfIntegers.instFintypeClassGroup
+    ClassGroup.fintypeOfAdmissibleOfFinite ℚ (candidateGenusFieldBase hd)
+      AbsoluteValue.absIsAdmissible
   rw [card_aut_candidateGenusField_over_base hd hnsq,
     TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
     twoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
