@@ -165,7 +165,7 @@ theorem integral_id_map_cast_geometricMeasure (hp : p ≠ 0) :
   ring
 
 /-- The second raw moment of the real cast of a nonzero-parameter geometric law. -/
-theorem integral_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
+private theorem integral_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
     ∫ x, x ^ 2 ∂((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       (1 - (p : ℝ)) * (2 - (p : ℝ)) / (p : ℝ) ^ 2 := by
   rw [integral_map (by fun_prop) (by fun_prop), integral_geometricMeasure hp]
