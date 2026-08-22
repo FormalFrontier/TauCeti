@@ -60,7 +60,7 @@ universe u v w
 variable (n : ℕ)
 
 /-- The scalar-matrix homomorphism from `n`th roots of unity to `SL(Fin n, A)`. -/
-@[expose] noncomputable def rootsOfUnityScalarSL {A : Type v} [CommRing A] :
+noncomputable def rootsOfUnityScalarSL {A : Type v} [CommRing A] :
     rootsOfUnity n A →* Matrix.SpecialLinearGroup (Fin n) A where
   toFun ζ := (⟨Matrix.scalar (Fin n) ((ζ : Aˣ) : A), by
     rw [Matrix.scalar_apply, Matrix.det_diagonal]
@@ -84,7 +84,7 @@ variable (n : ℕ)
 theorem coe_rootsOfUnityScalarSL {A : Type v} [CommRing A] (ζ : rootsOfUnity n A) :
     ((rootsOfUnityScalarSL n ζ : Matrix.SpecialLinearGroup (Fin n) A) :
       Matrix (Fin n) (Fin n) A) = Matrix.scalar (Fin n) ((ζ : Aˣ) : A) :=
-  rfl
+  (rfl)
 
 /-- Send a roots-of-unity point to the corresponding scalar special-linear point. -/
 noncomputable def rootsOfUnityScalarPoints
