@@ -87,14 +87,6 @@ def dual (M : L.IntermediateCarrier) : L.IntermediateCarrier :=
 theorem coe_dual (M : L.IntermediateCarrier) : (dual M).1 = L.form.dualSubmodule M.1 :=
   (rfl)
 
-/-- Membership in the dual carrier is integrality of the form against every vector of the
-carrier. -/
--- This is deliberately not a simp lemma: `coe_dual` already rewrites the left-hand side, so the
--- simp-normal-form linter rejects this statement as a simp rule.
-theorem mem_dual_iff (M : L.IntermediateCarrier) (x : V) :
-    x ∈ (dual M).1 ↔ ∀ y ∈ M.1, L.form x y ∈ (1 : Submodule ℤ ℚ) :=
-  Iff.rfl
-
 /-- The dual of the smallest intermediate carrier, the carrier of `L` itself, is the largest one,
 the dual carrier. -/
 @[simp]
@@ -135,7 +127,8 @@ theorem mem_discriminantSubgroup_dual_iff (M : L.IntermediateCarrier)
       ∀ b ∈ L.discriminantSubgroup M, L.discriminantPairing a b = 0 := by
   induction a using Submodule.Quotient.induction_on with
   | _ x =>
-    rw [L.mk_mem_discriminantSubgroup_iff, mem_dual_iff]
+    rw [L.mk_mem_discriminantSubgroup_iff, coe_dual,
+      LinearMap.BilinForm.mem_dualSubmodule]
     constructor
     · intro hx b hb
       induction b using Submodule.Quotient.induction_on with
@@ -268,7 +261,8 @@ variable {M : IntegralLattice W}
 theorem intermediateCarrierEquiv_dual (e : Isometry L M) (P : L.IntermediateCarrier) :
     e.intermediateCarrierEquiv (dual P) = dual (e.intermediateCarrierEquiv P) := by
   refine Subtype.ext (Submodule.ext fun y ↦ ?_)
-  rw [mem_intermediateCarrierEquiv_iff, mem_dual_iff, mem_dual_iff]
+  rw [mem_intermediateCarrierEquiv_iff, coe_dual, LinearMap.BilinForm.mem_dualSubmodule,
+    coe_dual, LinearMap.BilinForm.mem_dualSubmodule]
   constructor
   · intro hy w hw
     rw [mem_intermediateCarrierEquiv_iff] at hw
@@ -293,7 +287,8 @@ theorem orthogonalSumIntermediateCarrier_dual (L : IntegralLattice V) (M : Integ
     dual (orthogonalSumIntermediateCarrier L M P Q) =
       orthogonalSumIntermediateCarrier L M (dual P) (dual Q) := by
   refine Subtype.ext (Submodule.ext fun p ↦ ?_)
-  simp only [mem_dual_iff, mem_orthogonalSumIntermediateCarrier_iff]
+  simp only [coe_dual, LinearMap.BilinForm.mem_dualSubmodule,
+    mem_orthogonalSumIntermediateCarrier_iff]
   constructor
   · refine fun hp ↦ ⟨fun x hx ↦ ?_, fun y hy ↦ ?_⟩
     · have h := hp (x, 0) ⟨hx, zero_mem _⟩
