@@ -24,7 +24,7 @@ and its companion `TauCeti.halfOneAdd R (-ω) = ½ (1 - ω)` always add up to `1
 (`TauCeti.halfOneAdd_sub_halfOneAdd_neg`). As soon as `ω * ω = 1` they are moreover orthogonal
 (`TauCeti.halfOneAdd_mul_halfOneAdd_neg`) and therefore idempotent
 (`TauCeti.isIdempotentElem_halfOneAdd`): a square root of one always cuts out a **complementary
-orthogonal pair** of idempotents. The left ideals `e₊ A` and `e₋ A` are two-sided, and the
+orthogonal pair** of idempotents. The right ideals `e₊ A` and `e₋ A` are two-sided, and the
 resulting decomposition is one of rings, only when the idempotents are central, which is more than
 this file assumes. If `ω` commutes with a given element then so do both idempotents
 (`TauCeti.commute_halfOneAdd`), and elements written in the form `e₊ a + e₋ b` then multiply

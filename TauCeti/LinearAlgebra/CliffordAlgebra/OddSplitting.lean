@@ -281,6 +281,24 @@ theorem involute_halfOneAdd_neg (hodd : ω ∈ evenOdd Q 1) :
     involute (halfOneAdd R (-ω)) = halfOneAdd R ω := by
   rw [involute_halfOneAdd (Submodule.neg_mem _ hodd), neg_neg]
 
+/-- **The component calculation both formulas below rest on.** For involution-fixed `a` and `b`,
+multiplying `e₊ a + e₋ b` by `e₊` and its grade involution by `e₋` recovers `a`: the involution
+swaps the two idempotents, so each of the two terms contributes `a` against its own idempotent and
+`0` against the other, and the pair sums to `1`.
+
+The second component is this same statement at `-ω`, which is why it is stated for a bare `ω`. -/
+private theorem halfOneAdd_mul_add_halfOneAdd_neg_mul_involute (hodd : ω ∈ evenOdd Q 1)
+    (hsq : ω * ω = 1) {a b : CliffordAlgebra Q} (ha : involute a = a) (hb : involute b = b) :
+    halfOneAdd R ω * (halfOneAdd R ω * a + halfOneAdd R (-ω) * b)
+        + halfOneAdd R (-ω) * involute (halfOneAdd R ω * a + halfOneAdd R (-ω) * b) = a := by
+  have hee := (TauCeti.isIdempotentElem_halfOneAdd R hsq).eq
+  have hff := (TauCeti.isIdempotentElem_halfOneAdd_neg R hsq).eq
+  have hef := TauCeti.halfOneAdd_mul_halfOneAdd_neg R hsq
+  have hfe := TauCeti.halfOneAdd_neg_mul_halfOneAdd R hsq
+  simp only [map_add, map_mul, ha, hb, involute_halfOneAdd hodd, involute_halfOneAdd_neg hodd,
+    mul_add, ← mul_assoc, hee, hff, hef, hfe, zero_mul, add_zero]
+  rw [← add_mul, TauCeti.halfOneAdd_add_halfOneAdd_neg, one_mul]
+
 variable (Q ω) in
 /-- **The first component of the splitting**: `x ↦ ½ (1 + ω) x + ½ (1 - ω) x̂`, where `x̂` is the
 grade involution of `x`. Together with `CliffordAlgebra.coe_equivEvenProd_apply_snd` this reads the
@@ -294,15 +312,9 @@ theorem coe_equivEvenProd_apply_fst
   obtain ⟨p, rfl⟩ := (equivEvenProd Q ω hcomm hodd hsq).symm.surjective x
   obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := p
   rw [AlgEquiv.apply_symm_apply, equivEvenProd_symm_apply]
-  have ha' : involute a = a := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact ha)
-  have hb' : involute b = b := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact hb)
-  have hee := (TauCeti.isIdempotentElem_halfOneAdd R hsq).eq
-  have hff := (TauCeti.isIdempotentElem_halfOneAdd_neg R hsq).eq
-  have hef := TauCeti.halfOneAdd_mul_halfOneAdd_neg R hsq
-  have hfe := TauCeti.halfOneAdd_neg_mul_halfOneAdd R hsq
-  simp only [map_add, map_mul, ha', hb', involute_halfOneAdd hodd,
-    involute_halfOneAdd_neg hodd, mul_add, ← mul_assoc, hee, hff, hef, hfe, zero_mul, add_zero]
-  rw [← add_mul, TauCeti.halfOneAdd_add_halfOneAdd_neg, one_mul]
+  exact (halfOneAdd_mul_add_halfOneAdd_neg_mul_involute hodd hsq
+    (involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact ha))
+    (involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact hb))).symm
 
 variable (Q ω) in
 /-- **The second component of the splitting**: `x ↦ ½ (1 - ω) x + ½ (1 + ω) x̂`, the first component
@@ -316,16 +328,12 @@ theorem coe_equivEvenProd_apply_snd
   obtain ⟨p, rfl⟩ := (equivEvenProd Q ω hcomm hodd hsq).symm.surjective x
   obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := p
   rw [AlgEquiv.apply_symm_apply, equivEvenProd_symm_apply]
-  have ha' : involute a = a := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact ha)
-  have hb' : involute b = b := involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact hb)
-  have hee := (TauCeti.isIdempotentElem_halfOneAdd R hsq).eq
-  have hff := (TauCeti.isIdempotentElem_halfOneAdd_neg R hsq).eq
-  have hef := TauCeti.halfOneAdd_mul_halfOneAdd_neg R hsq
-  have hfe := TauCeti.halfOneAdd_neg_mul_halfOneAdd R hsq
-  simp only [map_add, map_mul, ha', hb', involute_halfOneAdd hodd,
-    involute_halfOneAdd_neg hodd, mul_add, ← mul_assoc, hee, hff, hef, hfe, zero_mul, zero_add]
-  rw [← add_mul, add_comm (halfOneAdd R (-ω)) (halfOneAdd R ω),
-    TauCeti.halfOneAdd_add_halfOneAdd_neg, one_mul]
+  have h := halfOneAdd_mul_add_halfOneAdd_neg_mul_involute (R := R)
+    (Submodule.neg_mem _ hodd) (by rw [neg_mul_neg]; exact hsq)
+    (involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact hb))
+    (involute_eq_of_mem_even (by rw [← even_toSubmodule Q]; exact ha))
+  rw [neg_neg, add_comm (halfOneAdd R (-ω) * b) (halfOneAdd R ω * a)] at h
+  exact h.symm
 
 end Splitting
 
