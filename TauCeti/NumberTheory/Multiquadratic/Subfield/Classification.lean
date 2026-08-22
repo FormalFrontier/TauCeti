@@ -175,7 +175,9 @@ theorem exists_finset_of_finrank_two_of_adjoin_eq_top [Finite ι] [NeZero (2 : K
   refine ⟨S, hS, ?_⟩
   have hmap := congrArg (IntermediateField.map e.toAlgHom) hF'S
   rw [hmapF', IntermediateField.adjoin_map, Set.image_singleton] at hmap
-  simpa [e, prodRootMem] using hmap
+  -- `e` is the inclusion `K(rootᵢ : i) → L` in disguise, so it fixes each root and their products.
+  have he : ∀ x : adjoin K (Set.range root), e.toAlgHom x = (x : L) := fun _ => rfl
+  rwa [he, prodRootMem_coe] at hmap
 
 include hroot hindep in
 /-- **The quadratic subfields of `M` are indexed by the nonempty subsets.** The bijection
