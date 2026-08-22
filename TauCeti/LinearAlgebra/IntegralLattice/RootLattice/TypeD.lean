@@ -463,6 +463,12 @@ variable (n)
 noncomputable def checkerboardVectorClass : (checkerboardLattice n).DiscriminantGroup :=
   Submodule.Quotient.mk ⟨checkerboardVector n, checkerboardVector_mem_dualCarrier⟩
 
+/-- The vector class is represented by the Conway--Sloane vector representative. -/
+theorem checkerboardVectorClass_eq_mk :
+    checkerboardVectorClass n =
+      Submodule.Quotient.mk ⟨checkerboardVector n, checkerboardVector_mem_dualCarrier⟩ :=
+  (rfl)
+
 /-- The class of the spinor representative `s` in the checkerboard discriminant group. -/
 noncomputable def checkerboardSpinorClass : (checkerboardLattice n).DiscriminantGroup :=
   Submodule.Quotient.mk ⟨checkerboardSpinor n, checkerboardSpinor_mem_dualCarrier⟩
@@ -476,6 +482,12 @@ theorem checkerboardSpinorClass_eq_mk :
 /-- The class of the cospinor representative `c` in the checkerboard discriminant group. -/
 noncomputable def checkerboardCospinorClass : (checkerboardLattice n).DiscriminantGroup :=
   Submodule.Quotient.mk ⟨checkerboardCospinor n, checkerboardCospinor_mem_dualCarrier⟩
+
+/-- The cospinor class is represented by the Conway--Sloane cospinor representative. -/
+theorem checkerboardCospinorClass_eq_mk :
+    checkerboardCospinorClass n =
+      Submodule.Quotient.mk ⟨checkerboardCospinor n, checkerboardCospinor_mem_dualCarrier⟩ :=
+  (rfl)
 
 variable {n}
 
@@ -752,6 +764,36 @@ theorem two_zsmul_checkerboardSpinorClass_of_even (hn : Even n) :
   · simp only [Submodule.coe_smul, Pi.smul_apply, checkerboardSpinor_apply, zsmul_eq_mul]
     norm_num
   · simp [hk]
+
+/-- **For even `n` the spinor class has additive order two.** -/
+theorem addOrderOf_checkerboardSpinorClass_of_even (hn : Even n) :
+    addOrderOf (checkerboardSpinorClass n) = 2 := by
+  exact addOrderOf_eq_prime
+    (by
+      rw [two_nsmul, ← two_zsmul]
+      exact two_zsmul_checkerboardSpinorClass_of_even n hn)
+    (checkerboardSpinorClass_ne_zero n)
+
+/-- For even `n`, the multiples of the spinor class are exactly zero and the spinor class. -/
+theorem mem_zmultiples_checkerboardSpinorClass_iff (hn : Even n)
+    (x : (checkerboardLattice n).DiscriminantGroup) :
+    x ∈ AddSubgroup.zmultiples (checkerboardSpinorClass n) ↔
+      x = 0 ∨ x = checkerboardSpinorClass n := by
+  constructor
+  · intro hx
+    obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
+    have hmul (m : ℤ) : (2 * m : ℤ) • checkerboardSpinorClass n = 0 := by
+      rw [mul_comm, mul_zsmul, two_zsmul_checkerboardSpinorClass_of_even n hn, zsmul_zero]
+    obtain hk | hk := Int.even_or_odd k
+    · obtain ⟨m, rfl⟩ := hk
+      left
+      simpa only [two_mul] using hmul m
+    · obtain ⟨m, rfl⟩ := hk
+      right
+      rw [add_zsmul, hmul m, one_zsmul, zero_add]
+  · rintro (rfl | rfl)
+    · exact (AddSubgroup.zmultiples (checkerboardSpinorClass n)).zero_mem
+    · exact AddSubgroup.mem_zmultiples_iff.mpr ⟨1, by rw [one_zsmul]⟩
 
 omit [NeZero n] in
 /-- **For odd `n` the vector class is twice the spinor class**, so the discriminant group is

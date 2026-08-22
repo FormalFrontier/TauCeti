@@ -62,40 +62,19 @@ noncomputable def d8SpinorSubgroup :
     AddSubgroup (checkerboardLattice 8).DiscriminantGroup :=
   AddSubgroup.zmultiples (checkerboardSpinorClass 8)
 
-/-- The spinor class used to glue `D₈` has additive order two. -/
-private theorem addOrderOf_checkerboardSpinorClass_eight :
-    addOrderOf (checkerboardSpinorClass 8) = 2 := by
-  exact addOrderOf_eq_prime
-    (by
-      rw [two_nsmul, ← two_zsmul]
-      exact two_zsmul_checkerboardSpinorClass_of_even 8 even_eight)
-    (checkerboardSpinorClass_ne_zero 8)
-
 /-- A discriminant class belongs to the spinor glue subgroup exactly when it is zero or the
 spinor class. -/
+@[simp]
 theorem mem_d8SpinorSubgroup_iff
     (x : (checkerboardLattice 8).DiscriminantGroup) :
     x ∈ d8SpinorSubgroup ↔ x = 0 ∨ x = checkerboardSpinorClass 8 := by
-  constructor
-  · intro hx
-    obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
-    have hmul (m : ℤ) : (2 * m : ℤ) • checkerboardSpinorClass 8 = 0 := by
-      rw [mul_comm, mul_zsmul, two_zsmul_checkerboardSpinorClass_of_even 8 even_eight,
-        zsmul_zero]
-    obtain hk | hk := Int.even_or_odd k
-    · obtain ⟨m, rfl⟩ := hk
-      left
-      simpa only [two_mul] using hmul m
-    · obtain ⟨m, rfl⟩ := hk
-      right
-      rw [add_zsmul, hmul m, one_zsmul, zero_add]
-  · rintro (rfl | rfl)
-    · exact (d8SpinorSubgroup).zero_mem
-    · exact AddSubgroup.mem_zmultiples_iff.mpr ⟨1, by rw [one_zsmul]⟩
+  simpa only [d8SpinorSubgroup] using
+    mem_zmultiples_checkerboardSpinorClass_iff 8 even_eight x
 
 /-- The spinor glue subgroup has order two. -/
 theorem natCard_d8SpinorSubgroup : Nat.card d8SpinorSubgroup = 2 := by
-  rw [d8SpinorSubgroup, Nat.card_zmultiples, addOrderOf_checkerboardSpinorClass_eight]
+  rw [d8SpinorSubgroup, Nat.card_zmultiples,
+    addOrderOf_checkerboardSpinorClass_of_even 8 even_eight]
 
 /-- The intermediate carrier obtained by gluing `D₈` along its spinor class. -/
 noncomputable def d8PlusCarrier : (checkerboardLattice 8).IntermediateCarrier :=
@@ -104,6 +83,7 @@ noncomputable def d8PlusCarrier : (checkerboardLattice 8).IntermediateCarrier :=
 /-- A vector belongs to `D₈⁺` exactly when it belongs to `D₈`, or differs from the spinor vector
 by an element of `D₈`.  This is the literal coordinate formula
 `D₈⁺ = D₈ ∪ (s + D₈)`. -/
+@[simp]
 theorem mem_d8PlusCarrier_iff (x : Fin 8 → ℚ) :
     x ∈ d8PlusCarrier.1 ↔
       x ∈ (checkerboardLattice 8).carrier ∨
