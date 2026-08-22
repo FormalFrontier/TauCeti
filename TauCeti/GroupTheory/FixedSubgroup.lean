@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Group.Subgroup.Map
 public import Mathlib.Algebra.Group.End
 public import Mathlib.Algebra.Group.Equiv.Basic
 public import Mathlib.Algebra.Group.Subgroup.Ker
+public import Mathlib.Dynamics.PeriodicPts.Defs
 
 /-!
 # The fixed points of an endomorphism
@@ -113,20 +114,21 @@ theorem fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp (F F' : G →* G) 
 
 This is the fixed-subgroup consequence of `Function.Commute.comp_iterate`. -/
 theorem fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one
-    (F : Monoid.End G) (F' : MulAut G) (hcomm : Function.Commute F' F)
-    {d : ℕ} (hpow : F' ^ d = 1) :
-    fixedSubgroup (F'.toMonoidHom.comp F : G →* G) ≤
+    (F F' : Monoid.End G) (hcomm : Function.Commute F' F) {d : ℕ} (hpow : F' ^ d = 1) :
+    fixedSubgroup (F'.comp F : G →* G) ≤
       fixedSubgroup ((F ^ d : Monoid.End G) : G →* G) := by
   intro x hx
   rw [mem_fixedSubgroup] at hx
   rw [mem_fixedSubgroup_end_pow_iff]
-  have hfixed := Function.iterate_fixed hx d
-  have hcomp : (⇑(F'.toMonoidHom.comp F : Monoid.End G)) = (⇑F') ∘ (⇑F) := rfl
-  rw [hcomp, hcomm.comp_iterate] at hfixed
-  have hpow' (y : G) : F'^[d] y = y := by
-    rw [← congrFun (hom_coe_pow (fun f : MulAut G => (f : G → G))
-      (MulAut.coe_one _) (MulAut.coe_mul _) F' d) y, hpow, MulAut.one_apply]
-  simpa only [hpow', Function.comp_apply] using hfixed
+  have hcomp : Function.IsFixedPt ((⇑F) ∘ (⇑F')) x := by
+    change F (F' x) = x
+    rw [← hcomm x]
+    exact hx
+  have hF' : Function.IsPeriodicPt (⇑F') d x := by
+    change (F' ^ d) x = x
+    rw [hpow]
+    rfl
+  exact Function.IsPeriodicPt.left_of_comp hcomm.symm (hcomp.isPeriodicPt d) hF'
 
 variable {G' : Type*} [Group G']
 

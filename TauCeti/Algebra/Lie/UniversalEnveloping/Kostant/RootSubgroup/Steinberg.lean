@@ -33,8 +33,8 @@ steinberg (xᵢ(t)) = x_{σ i}(t ^ q).
 ```
 
 The two factors commute, so iterating the composite separates them: the `k`-th iterate is
-`γ ^ k ∘ Frob_{q ^ k}`. When the symmetry has order `d`, in the sense that `γ ^ d = 1`, the `d`-th
-iterate is therefore the plain Frobenius `Frob_{q ^ d}`, and a
+`γ ^ k ∘ Frob_{q ^ k}`. When `γ ^ d = 1`, the `d`-th iterate is therefore the plain Frobenius
+`Frob_{q ^ d}`, and a
 `steinberg`-fixed point is fixed by it. Once the data is pinned and the fixed subgroups are
 identified, that containment becomes the standard statement that a graph-twisted group of Lie type
 sits inside the untwisted group over the degree-`d` extension of the field of definition, with
@@ -61,13 +61,13 @@ is made that `σ` comes from a symmetry of a Dynkin diagram.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_kostantRootSubgroupParam`: the
   defining equation `steinberg (xᵢ(t)) = x_{σ i}(t ^ q)`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_iterate`: the iterates separate as
-  `γ ^ k ∘ Frob_{q ^ k}`; the corresponding `_of_symmetryAut_pow_eq_one` theorem
-  handles a symmetry of order `k`.
+  `γ ^ k ∘ Frob_{q ^ k}`; the corresponding `_of_numberedSymmetryAut_pow_eq_one` theorem
+  handles a symmetry automorphism whose `k`-th power is the identity.
 * `kostantElementarySteinberg_eq_kostantElementaryFrobenius_of_numberedSymmetryAut_eq_one`: a
   trivial symmetry automorphism gives back the Frobenius endomorphism.
 * `fixedSubgroup_kostantElementarySteinberg_le_fixedSubgroup_kostantElementaryFrobenius`: the
-  fixed subgroup of a Steinberg endomorphism whose symmetry has order `d` lies in the fixed
-  subgroup of `Frob_{q ^ d}`.
+  fixed subgroup of a Steinberg endomorphism whose symmetry automorphism has `d`-th power equal to
+  the identity lies in the fixed subgroup of `Frob_{q ^ d}`.
 * `fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_kostantElementarySteinberg`:
   a point fixed by both `Frob_q` and `γ` is fixed by the composite.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementarySteinberg_injective`: injectivity over a
@@ -86,7 +86,7 @@ owned by `L0`.
 
 This file does not complete `L1`: its displayed equation concerns Kostant root subgroups indexed by
 an arbitrary type `I`, not the numbered simple root subgroups of `ValidLieTypeIndex.AmbientGroup`,
-and the required finite-order relation on `γ` is a hypothesis here. Once `L0` supplies the pinned
+and the required power relation on `γ` is a hypothesis here. Once `L0` supplies the pinned
 Chevalley--Demazure data, the `GraphTwistedIndex` branches of `ValidLieTypeIndex.steinberg` can
 instantiate this construction and discharge those hypotheses using their numbered diagram maps.
 The Suzuki--Ree branches of `L2` are a separate construction, an odd power of an exceptional
@@ -198,44 +198,50 @@ Frobenius: the `k`-th iterate of `γ ∘ Frob_q` is `γ ^ k ∘ Frob_{q ^ k}`.
 
 The separation is exactly the commutation of the two factors; without it an iterate would only be
 an alternating word in them. -/
-theorem kostantElementarySteinberg_iterate (k : ℕ)
-    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (⇑(kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A))^[k] g =
-      (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A ^ k)
-        (kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A g) := by
+theorem kostantElementarySteinberg_iterate (k : ℕ) :
+    (show Monoid.End _ from
+      kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A) ^ k =
+      (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A ^ k).toMonoidHom.comp
+        (kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A) := by
+  apply MonoidHom.ext
+  intro g
+  change (⇑(kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A))^[k] g = _
   have hcomm : Function.Commute
       (⇑(kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A))
       (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A)) := fun x =>
     (kostantElementaryFrobenius_kostantElementaryNumberedSymmetryAut
       e h ρ M hM hnil σ θ hθM hθe hσ p n A x).symm
-  rw [kostantElementarySteinberg, show
-    (⇑((kostantElementaryNumberedSymmetryAut
-      e h ρ M hM hnil σ θ hθM hθe hσ A).toMonoidHom.comp
-        (kostantElementaryFrobenius e h ρ M hM hnil p n A))) =
-      (⇑(kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A)) ∘
-        (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A)) from rfl,
-    hcomm.comp_iterate, Function.comp_apply, kostantElementaryFrobenius_mul]
+  have hFrob (x : kostantElementarySubgroup e h ρ M hM hnil A) :
+      (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A))^[k] x =
+        kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A x := by
+    exact kostantElementaryFrobenius_iterate_apply e h ρ M hM hnil p n A k x
+  rw [kostantElementarySteinberg, MonoidHom.coe_comp, MulEquiv.coe_toMonoidHom,
+    hcomm.comp_iterate, Function.comp_apply, hFrob, MonoidHom.comp_apply]
+  change _ =
+    (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A ^ k)
+      (kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A g)
   rw [← congrFun (hom_coe_pow
     (fun f : MulAut (kostantElementarySubgroup e h ρ M hM hnil A) =>
       (f : kostantElementarySubgroup e h ρ M hM hnil A → _))
     (MulAut.coe_one _) (MulAut.coe_mul _)
     (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A) k) _]
 
-/-- A symmetry automorphism of order `k` makes the `k`-th iterate of its Steinberg endomorphism the
-plain Frobenius `Frob_{q ^ k}`.
+/-- If the `k`-th power of a symmetry automorphism is the identity, then the `k`-th power of its
+Steinberg endomorphism is the plain Frobenius `Frob_{q ^ k}`.
 
 For the graph-twisted families this is `k = 2` on `²A`, `²D` and `²E₆` and `k = 3` on `³D₄`. The
-order relation is taken on `γ` rather than on `θ`, since that is all the proof uses; a caller
+power relation is taken on `γ` rather than on `θ`, since that is all the proof uses; a caller
 holding `θ ^ k = 1` on the nose gets it from
 `kostantElementaryNumberedSymmetryAut_pow_eq_one`. -/
 theorem
-    kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius_of_symmetryAut_pow_eq_one
+kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius_of_numberedSymmetryAut_pow_eq_one
     {k : ℕ}
     (hk : kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A ^ k = 1)
-    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (⇑(kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A))^[k] g =
-      kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A g := by
-  rw [kostantElementarySteinberg_iterate, hk, MulAut.one_apply]
+    : (show Monoid.End _ from
+        kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A) ^ k =
+      kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A := by
+  rw [kostantElementarySteinberg_iterate, hk]
+  rfl
 
 /-- A trivial symmetry automorphism produces the plain Frobenius endomorphism.
 
@@ -245,10 +251,18 @@ theorem kostantElementarySteinberg_eq_kostantElementaryFrobenius_of_numberedSymm
     (hγ : kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A = 1) :
     kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A =
       kostantElementaryFrobenius e h ρ M hM hnil p n A :=
-  MonoidHom.ext fun g => by
-    simpa using
-      kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius_of_symmetryAut_pow_eq_one
-      e h ρ M hM hnil σ θ hθM hθe hσ p n A (k := 1) (by simpa using hγ) g
+  by
+    let S : Monoid.End (kostantElementarySubgroup e h ρ M hM hnil A) :=
+      kostantElementarySteinberg e h ρ M hM hnil σ θ hθM hθe hσ p n A
+    let F : Monoid.End (kostantElementarySubgroup e h ρ M hM hnil A) :=
+      kostantElementaryFrobenius e h ρ M hM hnil p n A
+    change S = F
+    have hSF := (
+kostantElementarySteinberg_iterate_eq_kostantElementaryFrobenius_of_numberedSymmetryAut_pow_eq_one
+      e h ρ M hM hnil σ θ hθM hθe hσ p n A (k := 1) (by simpa using hγ))
+    simp only [Nat.mul_one] at hSF
+    change S ^ 1 = F at hSF
+    rwa [pow_one] at hSF
 
 end Iterate
 
@@ -256,8 +270,8 @@ section FixedPoints
 
 variable (p n : ℕ) (A : CommAlgCat.{w} ℤ) [ExpChar A p]
 
-/-- A point fixed by a Steinberg endomorphism whose symmetry has order `d` is fixed by the
-Frobenius `Frob_{q ^ d}`.
+/-- A point fixed by a Steinberg endomorphism whose symmetry automorphism has `d`-th power equal to
+the identity is fixed by the Frobenius `Frob_{q ^ d}`.
 
 Once the data is pinned and the fixed subgroups are identified, this specializes to the containment
 of a graph-twisted group of Lie type in the untwisted group over the degree-`d` extension of its
@@ -274,15 +288,31 @@ theorem fixedSubgroup_kostantElementarySteinberg_le_fixedSubgroup_kostantElement
     (kostantElementaryFrobenius_kostantElementaryNumberedSymmetryAut
       e h ρ M hM hnil σ θ hθM hθe hσ p n A x).symm
   intro g hg
-  let γ := kostantElementaryNumberedSymmetryAut
-    e h ρ M hM hnil σ θ hθM hθe hσ A
+  let γ : Monoid.End (kostantElementarySubgroup e h ρ M hM hnil A) :=
+    (kostantElementaryNumberedSymmetryAut
+      e h ρ M hM hnil σ θ hθM hθe hσ A).toMonoidHom
   let F : Monoid.End (kostantElementarySubgroup e h ρ M hM hnil A) :=
     kostantElementaryFrobenius e h ρ M hM hnil p n A
+  have hcomm' : Function.Commute γ F := fun x => hcomm x
+  have hcoeγ : (γ : kostantElementarySubgroup e h ρ M hM hnil A → _) =
+      (kostantElementaryNumberedSymmetryAut
+        e h ρ M hM hnil σ θ hθM hθe hσ A :
+          kostantElementarySubgroup e h ρ M hM hnil A → _) := by
+    exact MulEquiv.coe_toMonoidHom _
+  have hγd : γ ^ d = 1 := by
+    apply MonoidHom.ext
+    intro x
+    change (⇑γ)^[d] x = x
+    rw [hcoeγ, ← congrFun (hom_coe_pow
+      (fun f : MulAut (kostantElementarySubgroup e h ρ M hM hnil A) =>
+        (f : kostantElementarySubgroup e h ρ M hM hnil A → _))
+      (MulAut.coe_one _) (MulAut.coe_mul _)
+      (kostantElementaryNumberedSymmetryAut e h ρ M hM hnil σ θ hθM hθe hσ A) d) x,
+      hd, MulAut.one_apply]
   have hpow := fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one
-    F γ hcomm hd hg
+    F γ hcomm' hγd hg
   have hFd : F ^ d =
       (kostantElementaryFrobenius e h ρ M hM hnil p (n * d) A : Monoid.End _) := by
-    apply MonoidHom.ext
     exact kostantElementaryFrobenius_mul e h ρ M hM hnil p n A d
   rwa [hFd] at hpow
 
