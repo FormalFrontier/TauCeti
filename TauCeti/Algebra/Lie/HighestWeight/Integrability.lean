@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Maximal
-public import TauCeti.Algebra.Lie.Submodule.Atom
+import TauCeti.Algebra.Lie.Submodule.Atom
 public import TauCeti.Algebra.Lie.Weights.Eigenvector
 
 public section
