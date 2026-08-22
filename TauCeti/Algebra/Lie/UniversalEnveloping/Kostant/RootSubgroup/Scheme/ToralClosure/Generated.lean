@@ -27,11 +27,11 @@ subgroups in the Chevalley--Demazure construction.
 
 ## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedToToral`: the closed immersion from
-  the root-generated group scheme to the `Set.univ` toral-subsystem carrier.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedToToral_comp_ι`: compatibility with
-  the two inclusions into `GLₙ`.
-* `kostantRootSubgroupToGenerated_comp_kostantGeneratedToToral`: compatibility of the
+* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedToToralSubsystemUniv`: the closed immersion
+  from the root-generated group scheme to the `Set.univ` toral-subsystem carrier.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedToToralSubsystemUniv_comp_ι`:
+  compatibility with the two inclusions into `GLₙ`.
+* `kostantRootSubgroupToGenerated_comp_kostantGeneratedToToralSubsystemUniv`: compatibility of the
   two root-subgroup factorizations.
 
 ## References
@@ -74,7 +74,7 @@ theorem kostantToralSubsystemDefiningIdeal_univ_le_kostantGeneratedDefiningIdeal
 
 /-- The root-generated Kostant group scheme as a closed subgroup scheme of the full toral
 closure. -/
-noncomputable def kostantGeneratedToToral :
+noncomputable def kostantGeneratedToToralSubsystemUniv :
     kostantGeneratedGroupScheme e h ρ M hM hnil b ⟶
       kostantToralSubsystemGroupScheme e h ρ M hM b wt Set.univ (fun i _ ↦ hnil i) :=
   CommHopfAlgCat.quotientSpecMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ n)
@@ -82,34 +82,34 @@ noncomputable def kostantGeneratedToToral :
       e h ρ M hM hnil b wt)
 
 /-- The root-generated carrier includes into the full toral closure as a closed immersion. -/
-instance isClosedImmersion_kostantGeneratedToToral :
+instance isClosedImmersion_kostantGeneratedToToralSubsystemUniv :
     IsClosedImmersion
-      (kostantGeneratedToToral e h ρ M hM hnil b wt).hom.hom.left := by
-  unfold kostantGeneratedToToral
+      (kostantGeneratedToToralSubsystemUniv e h ρ M hM hnil b wt).hom.hom.left := by
+  unfold kostantGeneratedToToralSubsystemUniv
   infer_instance
 
 /-- The inclusion of the root-generated carrier into the full toral closure, followed by the
 toral inclusion into `GLₙ`, is the original root-generated inclusion. -/
 @[simp]
-theorem kostantGeneratedToToral_comp_ι :
-    kostantGeneratedToToral e h ρ M hM hnil b wt ≫
+theorem kostantGeneratedToToralSubsystemUniv_comp_ι :
+    kostantGeneratedToToralSubsystemUniv e h ρ M hM hnil b wt ≫
         kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ (fun i _ ↦ hnil i) =
       kostantGeneratedGroupSchemeι e h ρ M hM hnil b := by
-  rw [kostantGeneratedToToral, kostantToralSubsystemGroupSchemeι_def,
+  rw [kostantGeneratedToToralSubsystemUniv, kostantToralSubsystemGroupSchemeι_def,
     kostantGeneratedGroupSchemeι_def, ← Category.assoc,
     CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι]
 
 /-- Factoring a root subgroup first through the root-generated carrier and then through its
 closed immersion into the full toral closure agrees with the direct toral factorization. -/
 @[simp]
-theorem kostantRootSubgroupToGenerated_comp_kostantGeneratedToToral (i : I) :
+theorem kostantRootSubgroupToGenerated_comp_kostantGeneratedToToralSubsystemUniv (i : I) :
     kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫
-        kostantGeneratedToToral e h ρ M hM hnil b wt =
+        kostantGeneratedToToralSubsystemUniv e h ρ M hM hnil b wt =
       kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
         (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩ := by
   apply (cancel_mono
     (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ (fun j _ ↦ hnil j))).1
-  rw [Category.assoc, kostantGeneratedToToral_comp_ι,
+  rw [Category.assoc, kostantGeneratedToToralSubsystemUniv_comp_ι,
     kostantRootSubgroupToGenerated_comp_ι, kostantRootSubgroupToToralSubsystem_comp_ι]
 
 end TauCeti.UniversalEnvelopingAlgebra

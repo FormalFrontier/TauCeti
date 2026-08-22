@@ -9,18 +9,18 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Torus
 
 /-!
-# The weight torus inside the Kostant toral closure
+# The weight torus inside a Kostant toral-subsystem carrier
 
-The Kostant toral closure is generated scheme-theoretically by represented root subgroups and a
-represented split torus. This file proves that, when the weights span the character lattice, the
-factored torus morphism into that closure is itself a closed immersion. It therefore packages the
-split torus as a closed subgroup scheme of the assembled carrier, rather than only as a morphism
-to it.
+A toral-subsystem carrier indexed by `S` is generated scheme-theoretically by the represented root
+subgroups selected by `S` and a represented split torus. This file proves that, when the weights
+span the character lattice, the factored torus morphism into any such carrier is itself a closed
+immersion. It therefore packages the split torus as a closed subgroup scheme of the assembled
+carrier, rather than only as a morphism to it.
 
 The proof compares the two existing constructions of the diagonal weight representation: the
-coordinate-map construction used by the toral closure and the comodule construction whose
-closed-immersion criterion is already available. Since the inclusion of the toral closure in
-`GL_n` is a closed immersion, closedness descends from their composite to the factored torus.
+coordinate-map construction used by the carrier and the comodule construction whose
+closed-immersion criterion is already available. Since the inclusion of the carrier in `GL_n` is
+a closed immersion, closedness descends from their composite to the factored torus.
 
 For Chevalley weight data this supplies the closed embedding needed toward constructing the torus
 component of a pinning on the assembled carrier. Identifying it as a maximal torus and constructing
@@ -29,10 +29,10 @@ ambient groups required by milestone L0 of the CFSGStatement roadmap.
 
 ## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantWeightTorusToToral`: spanning
-  weights make the factored weight torus a closed immersion.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusInToral`: the corresponding closed
-  subgroup scheme of the Kostant toral closure.
+* `TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantWeightTorusToToralSubsystem`:
+  spanning weights make the factored weight torus a closed immersion.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusInToralSubsystem`: the corresponding
+  closed subgroup scheme of a Kostant toral-subsystem carrier.
 
 ## References
 
@@ -60,9 +60,10 @@ variable (e : I → L) (h : κ → L)
 variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
 variable (M : AddSubgroup V)
 variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
-variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
+variable (S : Set I)
+variable (hnil : ∀ i ∈ S, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 
 omit [Module ℚ V] in
 private theorem weightTorusCoordinateMap_eq_diagonalCoordinateMap [Fintype κ] :
@@ -132,50 +133,45 @@ private theorem weightTorusRepresentation_eq_weightTorus [Fintype κ] :
     GeneralLinear.weightTorus_def,
     weightTorusCoordinateMap_eq_diagonalCoordinateMap (M := M) b wt]
 
-/-- **Spanning weights embed the represented split torus as a closed subgroup of the Kostant
-toral closure.** -/
-theorem isClosedImmersion_kostantWeightTorusToToral
+/-- **Spanning weights embed the represented split torus as a closed subgroup of a
+toral-subsystem carrier indexed by `S`.** -/
+theorem isClosedImmersion_kostantWeightTorusToToralSubsystem
     (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
     IsClosedImmersion
-      (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-        (fun i _ ↦ hnil i)).hom.hom.left := by
+      (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom.left := by
   classical
   let _ := Fintype.ofFinite κ
   have hcomp : IsClosedImmersion
-      ((kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun i _ ↦ hnil i) ≫
-        kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
-          (fun i _ ↦ hnil i)).hom.hom.left) := by
+      ((kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil ≫
+        kostantToralSubsystemGroupSchemeι e h ρ M hM b wt S hnil).hom.hom.left) := by
     rw [kostantWeightTorusToToralSubsystem_comp_ι,
       ← weightTorusRepresentation_eq_weightTorus (M := M) b wt]
     exact isClosedImmersion_weightTorusRepresentation b wt hwt
   exact @IsClosedImmersion.of_comp _ _ _
-    (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-      (fun i _ ↦ hnil i)).hom.hom.left
-    (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
-      (fun i _ ↦ hnil i)).hom.hom.left hcomp inferInstance
+    (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom.left
+    (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt S hnil).hom.hom.left hcomp inferInstance
 
-/-- The split weight torus, with spanning weights, as a closed subgroup scheme of the Kostant
-toral closure. -/
-noncomputable def kostantWeightTorusInToral
+/-- The split weight torus, with spanning weights, as a closed subgroup scheme of a
+toral-subsystem carrier indexed by `S`. -/
+noncomputable def kostantWeightTorusInToralSubsystem
     (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
-    ClosedSubgroupScheme (kostantToralSubsystemGroupScheme e h ρ M hM b wt Set.univ
-      (fun i _ ↦ hnil i)) :=
-  have _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
-  ClosedSubgroupScheme.mk (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-    (fun i _ ↦ hnil i))
+    ClosedSubgroupScheme (kostantToralSubsystemGroupScheme e h ρ M hM b wt S hnil) :=
+  have _ := isClosedImmersion_kostantWeightTorusToToralSubsystem
+    e h ρ M hM b wt S hnil hwt
+  ClosedSubgroupScheme.mk (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil)
 
-/-- The underlying subobject of the closed weight torus in the toral closure is represented by
-the factored weight-torus morphism. -/
+/-- The underlying subobject of the closed weight torus in the toral-subsystem carrier is
+represented by the factored weight-torus morphism. -/
 @[simp]
-theorem coe_kostantWeightTorusInToral
+theorem coe_kostantWeightTorusInToralSubsystem
     (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
-    let _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
-    (kostantWeightTorusInToral e h ρ M hM hnil b wt hwt).1 =
-      Subobject.mk (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-        (fun i _ ↦ hnil i)) := by
-  have _ := isClosedImmersion_kostantWeightTorusToToral e h ρ M hM hnil b wt hwt
-  rw [kostantWeightTorusInToral]
+    let _ := isClosedImmersion_kostantWeightTorusToToralSubsystem
+      e h ρ M hM b wt S hnil hwt
+    (kostantWeightTorusInToralSubsystem e h ρ M hM b wt S hnil hwt).1 =
+      Subobject.mk (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil) := by
+  have _ := isClosedImmersion_kostantWeightTorusToToralSubsystem
+    e h ρ M hM b wt S hnil hwt
+  rw [kostantWeightTorusInToralSubsystem]
   exact ClosedSubgroupScheme.coe_mk _
 
 end TauCeti.UniversalEnvelopingAlgebra

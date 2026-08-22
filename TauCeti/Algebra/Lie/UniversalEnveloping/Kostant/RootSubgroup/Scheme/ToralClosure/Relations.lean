@@ -9,12 +9,12 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Torus
 
 /-!
-# The pinning equation in the toral Kostant group scheme
+# The pinning equation in a toral-subsystem group scheme
 
-The toral Kostant group scheme is the closed subgroup scheme of `GLₙ` generated jointly by a
-represented split torus and a family of represented root subgroups. Both kinds of generators
-factor through that carrier, but the equation relating them was previously available only after
-mapping back into `GL_n`:
+A toral-subsystem group scheme indexed by `S` is the closed subgroup scheme of `GLₙ` generated
+jointly by a represented split torus and the represented root subgroups selected by `S`. Both
+kinds of generators factor through that carrier, but the equation relating them was previously
+available only after mapping back into `GL_n`:
 
 ```text
 t(s) x_i(u) t(s)⁻¹ = x_i(α(s) u).
@@ -28,14 +28,14 @@ assumption on the constructed group scheme.
 ## Main results
 
 * `TauCeti.UniversalEnvelopingAlgebra.
-  kostantWeightTorusToToral_mul_kostantRootSubgroupToToral`: the intertwining form
+  kostantWeightTorusToToralSubsystem_mul_kostantRootSubgroupToToralSubsystem`: the intertwining form
   `t(s) x_i(u) = x_i(α(s) u) t(s)`.
 * `TauCeti.UniversalEnvelopingAlgebra.
-  kostantWeightTorusToToral_conj_kostantRootSubgroupToToral`: the conjugation form of the pinning
-  equation.
+  kostantWeightTorusToToralSubsystem_conj_kostantRootSubgroupToToralSubsystem`: the conjugation
+  form of the pinning equation.
 * `TauCeti.UniversalEnvelopingAlgebra.
-  kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam`: the same equation with its
-  root-subgroup parameter read directly in the value ring.
+  kostantWeightTorusToToralSubsystem_conj_kostantRootSubgroupToToralSubsystemParam`: the same
+  equation with its root-subgroup parameter read directly in the value ring.
 
 ## References
 
@@ -65,8 +65,9 @@ variable (M : AddSubgroup V)
 variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
+variable (S : Set I)
+variable (hnil : ∀ i ∈ S, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
-variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable (A : Type) [CommRing A]
 
 -- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
@@ -74,14 +75,14 @@ attribute [local instance high] Algebra.toModule
 
 include hwt
 
-/-- **The pinning equation in the toral Kostant group scheme, in intertwining form.** If `e_i`
-has Cartan weight `α`, then a torus point `s` and root-subgroup parameters `u`, `v` satisfying
-`v = α(s) u` obey `t(s) x_i(u) = x_i(v) t(s)` inside the toral carrier.
+/-- **The pinning equation in a toral-subsystem carrier indexed by `S`, in intertwining form.** If
+`e_i` has Cartan weight `α`, then a torus point `s` and root-subgroup parameters `u`, `v`
+satisfying `v = α(s) u` obey `t(s) x_i(u) = x_i(v) t(s)` inside that carrier.
 
 The statement is on points over an arbitrary commutative ring. The parameter equation is stated
 through the canonical scheme-point coordinates of the split torus and additive group. -/
-theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
-    {i : I} {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
+theorem kostantWeightTorusToToralSubsystem_mul_kostantRootSubgroupToToralSubsystem
+    (i : S) {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i.1⁆ = (α j : ℚ) • e i.1)
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ κ).X)
     (u v : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
@@ -89,25 +90,18 @@ theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
     (hv : Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A v) =
       (torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) *
         Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A u)) :
-    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j)).hom.hom) *
-        (u ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) =
-      (v ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
-        (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) *
-        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j)).hom.hom) := by
-  let _ : Mono (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j)).hom.hom :=
+    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom) *
+        (u ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i).hom.hom) =
+      (v ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i).hom.hom) *
+        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom) := by
+  let _ : Mono (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt S hnil).hom.hom :=
     Over.mono_of_mono_left _
   let f := IsMonHom.monoidHom
-    (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j)).hom.hom
+    (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt S hnil).hom.hom
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)))
   have hf : Function.Injective f := by
     intro p q hpq
-    exact (cancel_mono (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j)).hom.hom).1 hpq
+    exact (cancel_mono (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt S hnil).hom.hom).1 hpq
   apply hf
   dsimp only [f]
   simp only [map_mul, IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
@@ -125,7 +119,7 @@ theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
           Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) q) := by
     simpa only [q, r, AdditiveGroup.schemePointsMulEquiv_apply] using hv
   have hpin := kostantTorusPoints_mul_kostantRootSubgroupPoints
-    e h ρ M hM b wt hwt hα (hnil i)
+    e h ρ M hM b wt hwt hα (hnil i.1 i.2)
     (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) q r hv'
   have hmatrix := congrArg
     (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom) hpin
@@ -133,62 +127,55 @@ theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
     MonoidHom.comp_apply, MonoidHom.comp_apply]
   simpa only [map_mul, q, r, MulEquiv.toMonoidHom_eq_coe] using hmatrix
 
-/-- **The pinning equation in the toral Kostant group scheme.** Conjugation by the torus point
-`t(s)` sends the `i`th root-subgroup point with parameter `u` to the same root subgroup with
-parameter `α(s) u`, where `α` is the Cartan weight of `e_i`.
+/-- **The pinning equation in a toral-subsystem carrier indexed by `S`.** Conjugation by the torus
+point `t(s)` sends the `i`th selected root-subgroup point with parameter `u` to the same root
+subgroup with parameter `α(s) u`, where `α` is the Cartan weight of `e_i`.
 
 This is the intrinsic equation later diagram automorphisms and Steinberg maps are normalized
 against; it no longer mentions the embedding of the constructed carrier into `GL_n`. -/
 @[simp]
-theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
-    {i : I} {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
+theorem kostantWeightTorusToToralSubsystem_conj_kostantRootSubgroupToToralSubsystem
+    (i : S) {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i.1⁆ = (α j : ℚ) • e i.1)
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ κ).X)
     (u : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (AdditiveGroup.groupScheme ℤ).X) :
-    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j)).hom.hom) *
-        (u ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) *
-        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j)).hom.hom)⁻¹ =
+    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom) *
+        (u ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i).hom.hom) *
+        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom)⁻¹ =
       (AdditiveGroup.schemePointsMulEquiv A).symm
           (Multiplicative.ofAdd
             ((torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) *
               Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A u))) ≫
-        (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom := by
+        (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i).hom.hom := by
   rw [mul_inv_eq_iff_eq_mul]
-  apply kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
-    e h ρ M hM b wt hwt hnil A hα s u
+  apply kostantWeightTorusToToralSubsystem_mul_kostantRootSubgroupToToralSubsystem
+    e h ρ M hM b wt S hnil hwt A i hα s u
   exact congrArg Multiplicative.toAdd
     ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _)
 
 /-- **The pinning equation with the root-subgroup parameter read in the value ring.**
-Conjugation by `t(s)` sends `x_i(u)` to `x_i(α(s) u)` inside the toral carrier. -/
+Conjugation by `t(s)` sends `x_i(u)` to `x_i(α(s) u)` inside the toral-subsystem carrier indexed
+by `S`. -/
 @[simp]
-theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
-    {i : I} {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
+theorem kostantWeightTorusToToralSubsystem_conj_kostantRootSubgroupToToralSubsystemParam
+    (i : S) {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i.1⁆ = (α j : ℚ) • e i.1)
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ κ).X)
     (u : A) :
-    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-      (fun j _ ↦ hnil j)).hom.hom) *
+    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom) *
         ((AdditiveGroup.groupSchemePointMulEquiv A)
             ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm (Multiplicative.ofAdd u)) ≫
-          (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
-            (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) *
-        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j)).hom.hom)⁻¹ =
+          (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i).hom.hom) *
+        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt S hnil).hom.hom)⁻¹ =
       (AdditiveGroup.schemePointsMulEquiv A).symm
           (Multiplicative.ofAdd
             ((torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) * u)) ≫
-        (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
-          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom := by
+        (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt S hnil i).hom.hom := by
   rw [← AdditiveGroup.schemePointsMulEquiv_symm_apply]
   simpa only [MulEquiv.apply_symm_apply, toAdd_ofAdd] using
-    kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
-    e h ρ M hM b wt hwt hnil A hα s
+    kostantWeightTorusToToralSubsystem_conj_kostantRootSubgroupToToralSubsystem
+    e h ρ M hM b wt S hnil hwt A i hα s
       ((AdditiveGroup.schemePointsMulEquiv A).symm (Multiplicative.ofAdd u))
 
 end TauCeti.UniversalEnvelopingAlgebra
