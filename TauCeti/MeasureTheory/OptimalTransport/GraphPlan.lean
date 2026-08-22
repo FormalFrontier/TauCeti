@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 public import Mathlib.Probability.HasLaw
-public import TauCeti.MeasureTheory.OptimalTransport.Cost
+public import TauCeti.MeasureTheory.OptimalTransport.Coupling
 
 /-!
 # Graph plans: the transport plan induced by a transport map
@@ -21,11 +22,11 @@ plan that moves all the mass sitting at `x` to the single point `T x`.
 Two facts organise the file. First, `TauCeti.isCoupling_graphPlan_iff`: for an
 almost-everywhere measurable `T`, the graph plan couples `μ` and `ν` exactly when `T` is a
 transport map from `μ` to `ν`. This is the passage from the Monge problem to the Kantorovich
-problem, and `TauCeti.transportCost_le_lintegral_of_hasLaw` is the resulting inequality of
-values — with no measurability hypothesis on the cost at all, since only one half of the change
-of variables is needed. Second, `TauCeti.eq_graphPlan_iff`: a plan is a graph plan exactly when
-it is *deterministic*, that is, concentrated on the graph of `T`. With
-`TauCeti.graphPlan_eq_graphPlan_iff`, which says that the map is determined `μ`-almost
+problem, whose effect on values is the change of variables `TauCeti.lintegral_graphPlan`; the
+resulting inequality of transport costs belongs to the cost theory and is stated in
+`TauCeti/MeasureTheory/OptimalTransport/Cost.lean`. Second, `TauCeti.eq_graphPlan_iff`: a plan
+is a graph plan exactly when it is *deterministic*, that is, concentrated on the graph of `T`.
+With `TauCeti.graphPlan_eq_graphPlan_iff`, which says that the map is determined `μ`-almost
 everywhere by its graph plan, this makes the graph construction a bijection between transport
 maps modulo `μ`-a.e. equality and deterministic plans.
 
@@ -49,9 +50,9 @@ second-countable Hausdorff space and every countable discrete space.
 * `TauCeti.isCoupling_graphPlan_iff` — the graph plan of an a.e. measurable `T` couples `μ` and
   `ν` exactly when `ProbabilityTheory.HasLaw T ν μ`;
 * `TauCeti.lintegral_graphPlan` — the change of variables
-  `∫⁻ z, c z ∂graphPlan T μ = ∫⁻ x, c (x, T x) ∂μ`, feeding
-  `TauCeti.transportCost_le_lintegral_of_hasLaw`, the Monge-to-Kantorovich inequality, and
-  `TauCeti.isOptimalCoupling_graphPlan_iff`, its equality case;
+  `∫⁻ z, c z ∂graphPlan T μ = ∫⁻ x, c (x, T x) ∂μ`, which feeds the Monge-to-Kantorovich
+  inequality `TauCeti.transportCost_le_lintegral_of_hasLaw` in
+  `TauCeti/MeasureTheory/OptimalTransport/Cost.lean`;
 * `TauCeti.eq_graphPlan_iff` — a plan is the graph plan of `T` exactly when it is concentrated
   on the graph of `T`, with `TauCeti.graphPlan_eq_graphPlan_iff` the uniqueness of the map that
   induces a given deterministic plan;
@@ -71,10 +72,11 @@ marginal formulas are asymmetric in this respect: `TauCeti.snd_graphPlan` holds 
 whatsoever, since a `T` that is not a.e. measurable makes both sides the zero measure, while
 `TauCeti.fst_graphPlan` genuinely needs `T` to be a.e. measurable.
 
-This is Layer 0, item 2 of the optimal-transport roadmap, together with the Monge-to-Kantorovich
-relaxation inequality of Layer 4, item 1. It subsumes `TauCeti.transportCost_map_le_lintegral`,
-the special case `ν = μ.map T` for a measurable map and a measurable cost that previously lived
-in `TauCeti/MeasureTheory/OptimalTransport/Cost.lean`.
+This module needs nothing from the transport cost, so it sits below it: the Monge-to-Kantorovich
+relaxation inequality of Layer 4, item 1, which the change of variables here supplies, is stated
+with the cost itself in `TauCeti/MeasureTheory/OptimalTransport/Cost.lean`.
+
+This is Layer 0, item 2 of the optimal-transport roadmap.
 
 ## References
 
@@ -202,13 +204,17 @@ theorem map_swap_graphPlan (hT : AEMeasurable T μ) :
     (aemeasurable_prodMk_self hT)]
   rfl
 
-/-- Postcomposing a transport map with a measurable map pushes its graph plan forward in the
-second coordinate. Together with `ProbabilityTheory.HasLaw.comp` this is how transport maps
-compose. -/
-theorem map_prodMap_id_graphPlan {R : Y → Z} (hR : Measurable R) (hT : AEMeasurable T μ) :
+/-- Postcomposing a transport map with a map that is a.e. measurable for the transported measure
+pushes its graph plan forward in the second coordinate. Together with
+`ProbabilityTheory.HasLaw.comp` this is how transport maps compose. -/
+theorem map_prodMap_id_graphPlan {R : Y → Z} (hR : AEMeasurable R (μ.map T))
+    (hT : AEMeasurable T μ) :
     (graphPlan T μ).map (Prod.map id R) = graphPlan (R ∘ T) μ := by
-  rw [graphPlan_def, AEMeasurable.map_map_of_aemeasurable
-    (measurable_id.prodMap hR).aemeasurable (aemeasurable_prodMk_self hT)]
+  have hsnd : (graphPlan T μ).map Prod.snd = μ.map T := snd_graphPlan T μ
+  have hR' : AEMeasurable (Prod.map id R) (graphPlan T μ) :=
+    measurable_fst.aemeasurable.prodMk
+      (AEMeasurable.comp_aemeasurable' (by rw [hsnd]; exact hR) measurable_snd.aemeasurable)
+  rw [graphPlan_def, AEMeasurable.map_map_of_aemeasurable hR' (aemeasurable_prodMk_self hT)]
   rfl
 
 end Functoriality
@@ -220,22 +226,6 @@ is integrating the cost of moving `x` to `T x`. -/
 theorem lintegral_graphPlan (hT : AEMeasurable T μ) (hc : AEMeasurable c (graphPlan T μ)) :
     ∫⁻ z, c z ∂graphPlan T μ = ∫⁻ x, c (x, T x) ∂μ :=
   lintegral_map' hc (aemeasurable_prodMk_self hT)
-
-/-- **The Monge problem dominates the Kantorovich problem**: the transport cost of `μ` and `ν`
-is at most the cost of any transport map from `μ` to `ν`. Only one half of the change of
-variables is needed, `MeasureTheory.lintegral_map_le`, so the cost needs no measurability. -/
-theorem transportCost_le_lintegral_of_hasLaw (hT : HasLaw T ν μ) (c : X × Y → ℝ≥0∞) :
-    transportCost c μ ν ≤ ∫⁻ x, c (x, T x) ∂μ :=
-  (transportCost_le_lintegral (isCoupling_graphPlan hT) c).trans (lintegral_map_le _ _)
-
-/-- The graph plan of a transport map is an optimal plan exactly when the transport cost equals
-the cost of the map: the equality case of `TauCeti.transportCost_le_lintegral_of_hasLaw`. -/
-theorem isOptimalCoupling_graphPlan_iff (hT : HasLaw T ν μ)
-    (hc : AEMeasurable c (graphPlan T μ)) :
-    IsOptimalCoupling c (graphPlan T μ) μ ν ↔ transportCost c μ ν = ∫⁻ x, c (x, T x) ∂μ := by
-  refine ⟨fun h ↦ ?_, fun h ↦ ⟨isCoupling_graphPlan hT, ?_⟩⟩
-  · rw [← h.lintegral_eq, lintegral_graphPlan hT.aemeasurable hc]
-  · rw [lintegral_graphPlan hT.aemeasurable hc, h]
 
 end ChangeOfVariables
 
