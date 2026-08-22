@@ -57,6 +57,8 @@ theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
     have h1 : (0 : ℚ) ≤ ((d : ℤ) : ℚ) := hr ▸ mul_self_nonneg r
     have h2 : ((d : ℤ) : ℚ) < 0 := by exact_mod_cast hneg
     linarith
+  have : NumberField (candidateGenusFieldBase hd) :=
+    NumberField.of_intermediateField (candidateGenusFieldBase hd)
   have : Finite (ClassGroup (𝓞 (candidateGenusFieldBase hd))) := inferInstance
   rw [card_aut_candidateGenusField_over_base hd hnsq,
     TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
