@@ -85,6 +85,11 @@ variable (A : Action G N)
 def act {X : C} (g : X ⟶ G) (n : X ⟶ N) : X ⟶ N :=
   lift g n ≫ A.hom
 
+/-- The action on generalized points is induced by the action morphism. -/
+theorem act_def {X : C} (g : X ⟶ G) (n : X ⟶ N) :
+    A.act g n = lift g n ≫ A.hom :=
+  (rfl)
+
 @[simp]
 theorem one_act_apply {X : C} (n : X ⟶ N) : A.act (1 : X ⟶ G) n = n :=
   A.one_act X n
