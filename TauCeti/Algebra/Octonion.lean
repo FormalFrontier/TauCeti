@@ -481,20 +481,10 @@ scalar `QuadraticMap.polar (normQuadraticForm R) x y · 1`. Together with
 makes the symmetric form of a composition algebra an algebraic, not merely a quadratic, datum. -/
 theorem mul_conj_add_mul_conj (x y : Octonion R) :
     x * conj y + y * conj x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
-  -- The two vector entries cancel in pairs by `Matrix.cross_anticomm`, which is used at the
-  -- entries it is needed at rather than in its `simp` orientation.
-  refine Octonion.ext ?_ ?_ ?_ ?_ <;>
-    simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
-      polar_normQuadraticForm]
-  · ring
-  · ring
-  · module
-
-/-- The mirror of `TauCeti.Octonion.mul_conj_add_mul_conj`, with the conjugates on the left: it is
-that identity at `(conj x, conj y)`, since the polar form is conjugation-invariant. -/
-theorem conj_mul_add_conj_mul (x y : Octonion R) :
-    conj x * y + conj y * x = QuadraticMap.polar (normQuadraticForm R) x y • 1 := by
-  simpa [polar_normQuadraticForm_conj] using mul_conj_add_mul_conj (conj x) (conj y)
+  -- `y * conj x` is the conjugate of `x * conj y`, so this is `TauCeti.Octonion.add_conj` at
+  -- `x * conj y`, read through the trace form.
+  have h : conj (x * conj y) = y * conj x := by rw [conj_mul, conj_conj]
+  rw [← h, add_conj, trace_mul_conj]
 
 /-! ### Alternativity -/
 

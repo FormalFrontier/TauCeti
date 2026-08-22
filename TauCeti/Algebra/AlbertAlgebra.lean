@@ -320,11 +320,14 @@ theorem trace_one : trace (1 : AlbertAlgebra R) = 3 := by
 theorem trace_surjective : Function.Surjective (trace : AlbertAlgebra R →ₗ[R] R) :=
   fun r => ⟨⟨![r, 0, 0], 0⟩, by simp [Fin.sum_univ_three]⟩
 
-/-- **The trace-zero subspace** `J₀ ⊆ H₃(𝕆)`. It is `26`-dimensional
-(`TauCeti.AlbertAlgebra.finrank_traceZero`); identifying it with the fundamental representation of
-`F₄ = Der H₃(𝕆)` -- where `Der H₃(𝕆)` is `TauCeti.derivationLieAlgebra R (AlbertAlgebra R)` --
-waits on the count `finrank (Der H₃(𝕆)) = 52` and the isomorphism with `LieAlgebra.f₄`, neither of
-which is proved here. -/
+/-- **The trace-zero subspace** `J₀ ⊆ H₃(𝕆)`, the kernel of the trace. Over any base ring it is
+`26`-dimensional (`TauCeti.AlbertAlgebra.finrank_traceZero`). Reading it as the fundamental
+representation of `F₄ = Der H₃(𝕆)` -- where `Der H₃(𝕆)` is
+`TauCeti.derivationLieAlgebra R (AlbertAlgebra R)` -- is a further step that is not taken here, and
+it is not available over an arbitrary `R`: it needs `3` invertible, since otherwise `trace 1 = 3`
+vanishes, `J₀` contains the identity and so is not a complement of the scalars. Even over such an
+`R` it waits on the count `finrank (Der H₃(𝕆)) = 52` and the isomorphism with `LieAlgebra.f₄`,
+neither of which is proved here. -/
 def traceZero (R : Type*) [CommRing R] : Submodule R (AlbertAlgebra R) := LinearMap.ker trace
 
 @[simp] theorem mem_traceZero {A : AlbertAlgebra R} : A ∈ traceZero R ↔ trace A = 0 :=
