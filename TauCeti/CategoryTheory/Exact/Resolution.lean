@@ -436,7 +436,7 @@ variable (P : ObjectProperty C)
 presentation of `TauCeti.ExactStructure.FiniteResolution`. -/
 def admitsFiniteResolution : ObjectProperty C := fun X => Nonempty (FiniteResolution E P X)
 
-theorem admitsFiniteResolution_iff {X : C} :
+@[simp] theorem admitsFiniteResolution_iff {X : C} :
     E.admitsFiniteResolution P X ↔ Nonempty (FiniteResolution E P X) := Iff.rfl
 
 /-- An object satisfying `P` admits a finite `P`-resolution, namely the empty chain. -/
@@ -475,6 +475,15 @@ theorem admitsFiniteResolution_biprod [P.IsClosedUnderIsomorphisms]
     [P.IsClosedUnderBinaryProducts] {X Y : C} (hX : E.admitsFiniteResolution P X)
     (hY : E.admitsFiniteResolution P Y) : E.admitsFiniteResolution P (X ⊞ Y) :=
   ⟨hX.some.biprod hY.some⟩
+
+instance [P.IsClosedUnderIsomorphisms] [P.IsClosedUnderBinaryProducts] :
+    (E.admitsFiniteResolution P).IsClosedUnderBinaryProducts where
+  limitsOfShape_le := by
+    rintro X ⟨p⟩
+    refine (E.admitsFiniteResolution P).prop_of_iso
+      (IsLimit.conePointUniqueUpToIso (BinaryBiproduct.isLimit _ _)
+        ((IsLimit.postcomposeHomEquiv (diagramIsoPair p.diag) _).2 p.isLimit))
+      (E.admitsFiniteResolution_biprod P (p.prop_diag_obj ⟨.left⟩) (p.prop_diag_obj ⟨.right⟩))
 
 end ExactStructure
 
