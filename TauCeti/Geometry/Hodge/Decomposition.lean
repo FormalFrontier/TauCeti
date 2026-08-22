@@ -210,7 +210,6 @@ theorem proj_apply_of_mem (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W} (hx :
   simp
 
 /-- The Hodge projection of degree `p` annihilates every other Hodge component. -/
-@[simp]
 theorem proj_apply_eq_zero_of_mem_of_ne (hs : HodgeStructureOn W ω n) {p q : ℤ} {x : W}
     (hx : x ∈ hs.piece q) (hqp : q ≠ p) : hs.proj p x = 0 := by
   rw [proj_apply, hs.decomposition_apply_of_mem hx, DirectSum.lof_eq_of,
