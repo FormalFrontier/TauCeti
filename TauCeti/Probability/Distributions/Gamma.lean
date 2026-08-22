@@ -37,7 +37,8 @@ shifted rate is still positive.
 * `TauCeti.integral_pow_gammaMeasure` — the natural raw moments, `Γ (a + n) / (Γ a * r ^ n)`, with
   `TauCeti.integral_id_gammaMeasure` and `TauCeti.integral_sq_gammaMeasure` as the first two cases;
 * `TauCeti.variance_id_gammaMeasure` — the variance is `a / r ^ 2`;
-* `TauCeti.integrable_exp_mul_gammaMeasure` and `TauCeti.not_integrable_exp_mul_gammaMeasure` —
+* `TauCeti.integrable_exp_mul_id_gammaMeasure` and
+  `TauCeti.not_integrable_exp_mul_id_gammaMeasure` —
   the exponential moment of rate `t` exists exactly when `t < r`, recorded as an equality of sets
   in `TauCeti.integrableExpSet_id_gammaMeasure`;
 * `TauCeti.mgf_id_gammaMeasure` — the moment-generating function is `(1 - t / r) ^ (-a)` there;
@@ -166,7 +167,7 @@ private lemma gammaWeight_mul_exp (a r t x : ℝ) :
   ring
 
 /-- Below the rate of a gamma law, its exponential moments exist. -/
-theorem integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
+theorem integrable_exp_mul_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
     Integrable (fun x ↦ exp (t * x)) (gammaMeasure a r) := by
   rw [integrable_gammaMeasure_iff ha hr]
   refine IntegrableOn.congr_fun ?_ (fun x _ ↦ (gammaWeight_mul_exp a r t x).symm)
@@ -181,8 +182,8 @@ theorem integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht 
 theorem integrable_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
     Integrable (fun x ↦ x ^ n) (gammaMeasure a r) :=
   integrable_pow_of_integrable_exp_mul (by positivity : (r / 2 : ℝ) ≠ 0)
-    (integrable_exp_mul_gammaMeasure ha hr (by linarith : r / 2 < r))
-    (integrable_exp_mul_gammaMeasure ha hr (by linarith : -(r / 2) < r)) n
+    (integrable_exp_mul_id_gammaMeasure ha hr (by linarith : r / 2 < r))
+    (integrable_exp_mul_id_gammaMeasure ha hr (by linarith : -(r / 2) < r)) n
 
 /-- The identity function belongs to `L²` of a gamma law with positive shape and rate. -/
 theorem memLp_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
@@ -191,7 +192,7 @@ theorem memLp_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     (by simpa using integrable_pow_gammaMeasure ha hr 2)
 
 /-- At or above the rate of a gamma law, its exponential moments do not exist. -/
-theorem not_integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : r ≤ t) :
+theorem not_integrable_exp_mul_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : r ≤ t) :
     ¬ Integrable (fun x ↦ exp (t * x)) (gammaMeasure a r) := by
   have hGa := Real.Gamma_pos_of_pos ha
   have hC : (0 : ℝ) < r ^ a / Real.Gamma a := by positivity
@@ -227,9 +228,9 @@ theorem integrableExpSet_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     integrableExpSet id (gammaMeasure a r) = Iio r := by
   ext t
   simp only [integrableExpSet, Set.mem_ofPred_eq, id_eq, mem_Iio]
-  refine ⟨fun h ↦ ?_, integrable_exp_mul_gammaMeasure ha hr⟩
+  refine ⟨fun h ↦ ?_, integrable_exp_mul_id_gammaMeasure ha hr⟩
   by_contra hc
-  exact not_integrable_exp_mul_gammaMeasure ha hr (not_lt.mp hc) h
+  exact not_integrable_exp_mul_id_gammaMeasure ha hr (not_lt.mp hc) h
 
 /-- The moment-generating function of a gamma law on the half-line where its exponential moment
 is integrable, namely `t < r`. -/
