@@ -7,8 +7,8 @@ module
 
 public import TauCeti.CategoryTheory.Exact.Biproduct
 public import TauCeti.CategoryTheory.Exact.Split
-public import TauCeti.CategoryTheory.ObjectProperty
 public import Mathlib.CategoryTheory.ObjectProperty.ContainsZero
+public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
 
 /-!
 # Finite resolutions in an exact category
@@ -49,6 +49,9 @@ property, before any projectivity hypothesis is available.
 
 ## Main results
 
+* `TauCeti.ExactStructure.FiniteResolution.syzygy_truncate` and
+  `TauCeti.ExactStructure.FiniteResolution.syzygy_eq_syzygy_length_of_length_le`: truncating
+  shifts the syzygies, and they stabilise at the last one past the length.
 * `TauCeti.ExactStructure.FiniteResolution.prop_syzygy_length`: the last syzygy of a resolution
   satisfies `P`; more generally `TauCeti.ExactStructure.FiniteResolution.prop_syzygy` covers
   every index beyond the length.
@@ -77,7 +80,8 @@ only typecheck when its body is exposed.
 The closure hypotheses on `P` are Mathlib's object-property type classes, and are assumed only
 where they are used: repleteness for `ofIso`, `CategoryTheory.ObjectProperty.ContainsZero` for
 padding, and closure under binary products for direct sums, the last of these reaching
-biproducts through `TauCeti.prop_biprod_of_binaryProducts`. The resolving-subcategory package,
+biproducts through `CategoryTheory.ObjectProperty.prop_of_isLimit_binaryFan` applied to
+`CategoryTheory.Limits.BinaryBiproduct.isLimit`. The resolving-subcategory package,
 which bundles these with extension closure and closure under kernels of deflations, is
 downstream.
 
@@ -176,6 +180,19 @@ def truncate : ∀ {X : C} (r : FiniteResolution E P X) (n : ℕ),
     (r : FiniteResolution E P K) (n : ℕ) :
     (step hQ i p zero hp r).truncate (n + 1) = r.truncate n := (rfl)
 
+/-- The syzygies of a truncation are the syzygies of the original chain, shifted. -/
+@[simp] theorem syzygy_truncate {X : C} (r : FiniteResolution E P X) (n m : ℕ) :
+    (r.truncate n).syzygy m = r.syzygy (n + m) := by
+  induction r generalizing n with
+  | base hX => simp
+  | step hQ i p zero hp r ih =>
+      cases n with
+      | zero =>
+          simp only [truncate_step_zero, Nat.zero_add]
+          -- the two sides now differ only in the type index `(step … r).syzygy 0`, which is `X`
+          rfl
+      | succ n => simpa [Nat.succ_add] using ih n
+
 @[simp] theorem length_truncate {X : C} (r : FiniteResolution E P X) (n : ℕ) :
     (r.truncate n).length = r.length - n := by
   induction r generalizing n with
@@ -184,6 +201,16 @@ def truncate : ∀ {X : C} (r : FiniteResolution E P X) (n : ℕ),
       cases n with
       | zero => rfl
       | succ n => simpa using ih n
+
+/-- Once the index reaches the length, the syzygies stabilise at the last one. -/
+theorem syzygy_eq_syzygy_length_of_length_le {X : C} (r : FiniteResolution E P X) {n : ℕ}
+    (hn : r.length ≤ n) : r.syzygy n = r.syzygy r.length := by
+  induction r generalizing n with
+  | base hX => simp
+  | step hQ i p zero hp r ih =>
+      cases n with
+      | zero => simp at hn
+      | succ n => simpa using ih (by simpa using hn)
 
 /-- Every syzygy of index at least the length satisfies `P`: the chain has run out. -/
 theorem prop_syzygy {X : C} (r : FiniteResolution E P X) {n : ℕ} (hn : r.length ≤ n) :
@@ -287,33 +314,38 @@ is padded against the other by the trivial conflation on its last syzygy. -/
 noncomputable def biprod :
     ∀ {X Y : C}, FiniteResolution E P X → FiniteResolution E P Y →
       FiniteResolution E P (X ⊞ Y)
-  | _, _, .base hX, .base hY => .base (prop_biprod_of_binaryProducts P hX hY)
+  | _, _, .base hX, .base hY =>
+      .base (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hY)
   | X, _, .base hX, .step hQ i p zero hp s =>
-      .step (prop_biprod_of_binaryProducts P hX hQ) (Limits.biprod.map (0 : (0 : C) ⟶ X) i)
-        (Limits.biprod.map (𝟙 X) p) (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
+      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hQ)
+        (Limits.biprod.map (0 : (0 : C) ⟶ X) i) (Limits.biprod.map (𝟙 X) p)
+        (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod (E.conflation_zero_id X) hp)
         (s.ofIso (isoZeroBiprod (isZero_zero C)))
   | _, Y, .step hQ i p zero hp r, .base hY =>
-      .step (prop_biprod_of_binaryProducts P hQ hY) (Limits.biprod.map i (0 : (0 : C) ⟶ Y))
-        (Limits.biprod.map p (𝟙 Y)) (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
+      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hY)
+        (Limits.biprod.map i (0 : (0 : C) ⟶ Y)) (Limits.biprod.map p (𝟙 Y))
+        (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod hp (E.conflation_zero_id Y))
         (r.ofIso (isoBiprodZero (isZero_zero C)))
   | _, _, .step hQ i p zero hp r, .step hQ' i' p' zero' hp' s =>
-      .step (prop_biprod_of_binaryProducts P hQ hQ') (Limits.biprod.map i i')
-        (Limits.biprod.map p p')
+      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hQ')
+        (Limits.biprod.map i i') (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s)
 
 @[simp] theorem biprod_base_base {X Y : C} (hX : P X) (hY : P Y) :
-    (base (E := E) hX).biprod (base hY) = base (prop_biprod_of_binaryProducts P hX hY) := by
+    (base (E := E) hX).biprod (base hY) =
+      base (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hY) := by
   simp [biprod]
 
 @[simp] theorem biprod_base_step {X K Q Y : C} (hX : P X) (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ Y)
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (s : FiniteResolution E P K) :
     (base (E := E) hX).biprod (step hQ i p zero hp s) =
-      step (prop_biprod_of_binaryProducts P hX hQ) (Limits.biprod.map (0 : (0 : C) ⟶ X) i)
-        (Limits.biprod.map (𝟙 X) p) (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
+      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hQ)
+        (Limits.biprod.map (0 : (0 : C) ⟶ X) i) (Limits.biprod.map (𝟙 X) p)
+        (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod (E.conflation_zero_id X) hp)
         (s.ofIso (isoZeroBiprod (isZero_zero C))) := by
   simp [biprod]
@@ -322,8 +354,9 @@ noncomputable def biprod :
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (r : FiniteResolution E P K) (hY : P Y) :
     (step hQ i p zero hp r).biprod (base hY) =
-      step (prop_biprod_of_binaryProducts P hQ hY) (Limits.biprod.map i (0 : (0 : C) ⟶ Y))
-        (Limits.biprod.map p (𝟙 Y)) (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
+      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hY)
+        (Limits.biprod.map i (0 : (0 : C) ⟶ Y)) (Limits.biprod.map p (𝟙 Y))
+        (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod hp (E.conflation_zero_id Y))
         (r.ofIso (isoBiprodZero (isZero_zero C))) := by
   simp [biprod]
@@ -334,8 +367,8 @@ noncomputable def biprod :
     (zero' : i' ≫ p' = 0) (hp' : E.Conflation (ShortComplex.mk i' p' zero'))
     (s : FiniteResolution E P K') :
     (step hQ i p zero hp r).biprod (step hQ' i' p' zero' hp' s) =
-      step (prop_biprod_of_binaryProducts P hQ hQ') (Limits.biprod.map i i')
-        (Limits.biprod.map p p')
+      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hQ')
+        (Limits.biprod.map i i') (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s) := by
   simp [biprod]
