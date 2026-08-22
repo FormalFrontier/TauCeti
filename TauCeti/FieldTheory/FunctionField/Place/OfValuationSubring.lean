@@ -127,19 +127,21 @@ theorem transcendental_of_valuation_lt_one (hk : ∀ c : k, algebraMap k F c ∈
 /-! ### Stichtenoth's chain estimate -/
 
 /-- **Stichtenoth, Lemma 1.1.7.** Let `x` be a nonzero nonunit of a valuation subring `A` of `F`
-containing the constants. A family of nonzero nonunits of `A` whose valuations increase strictly
-along a linear order, and are all at least `A.valuation x`, is linearly independent over `k(x)`.
+containing the constants. A family of nonunits of `A` whose valuations increase strictly
+along a linear order, and are all at least `A.valuation x` — hence nonzero — is linearly
+independent over `k(x)`.
 
 In Stichtenoth's additive notation the hypothesis reads
 `ord x ≥ ord (y i₀) > ord (y i₁) > ⋯ > 0`, and the conclusion bounds the length of such a chain by
 `[F : k(x)]`. -/
 theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
     (hx0 : x ≠ 0) (hx : A.valuation x < 1) {ι : Type*} [LinearOrder ι] {y : ι → F}
-    (hy0 : ∀ i, y i ≠ 0) (hy : ∀ i, A.valuation (y i) < 1)
+    (hy : ∀ i, A.valuation (y i) < 1)
     (hmono : StrictMono fun i ↦ A.valuation (y i)) (hxy : ∀ i, A.valuation x ≤ A.valuation (y i)) :
     LinearIndependent k⟮x⟯ y := by
   classical
   have hxpos : 0 < A.valuation x := zero_lt_iff.2 ((Valuation.ne_zero_iff _).2 hx0)
+  have hy0 : ∀ i, y i ≠ 0 := fun i ↦ (Valuation.ne_zero_iff _).1 (hxpos.trans_le (hxy i)).ne'
   have hxtr : Transcendental k x := transcendental_of_valuation_lt_one hk hx0 hx
   have hinj : Function.Injective (aeval x : k[X] →ₐ[k] F) := transcendental_iff_injective.mp hxtr
   rw [← LinearIndependent.iff_fractionRing (Algebra.adjoin k {x}) k⟮x⟯, linearIndependent_iff']
@@ -208,18 +210,19 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
 /-! ### Discreteness -/
 
 /-- The chain bound of Stichtenoth's Lemma 1.1.7, in the form used twice below: an algebraic
-function field admits no infinite sequence of nonzero nonunits of a valuation subring whose
-valuations increase strictly and stay at or above the valuation of a fixed nonzero nonunit. -/
+function field admits no infinite sequence of nonunits of a valuation subring whose valuations
+increase strictly and stay at or above the valuation of a fixed nonzero element. -/
 theorem not_exists_seq_valuation_strictMono (hF : IsFunctionField k F)
-    (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F} (hx0 : x ≠ 0) (hx : A.valuation x < 1)
-    {y : ℕ → F} (hy0 : ∀ n, y n ≠ 0) (hy : ∀ n, A.valuation (y n) < 1)
+    (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F} (hx0 : x ≠ 0)
+    {y : ℕ → F} (hy : ∀ n, A.valuation (y n) < 1)
     (hstep : ∀ n, A.valuation (y n) < A.valuation (y (n + 1)))
     (hxy : A.valuation x ≤ A.valuation (y 0)) : False := by
+  have hx : A.valuation x < 1 := hxy.trans_lt (hy 0)
   have hmono : StrictMono fun n : ℕ ↦ A.valuation (y n) := strictMono_nat_of_lt_succ hstep
   have : FiniteDimensional k⟮x⟯ F :=
     hF.finiteDimensional_adjoin (transcendental_of_valuation_lt_one hk hx0 hx)
   have hli : LinearIndependent k⟮x⟯ fun i : Fin (Module.finrank k⟮x⟯ F + 1) ↦ y i :=
-    linearIndependent_of_strictMono_valuation hk hx0 hx (fun i ↦ hy0 i) (fun i ↦ hy i)
+    linearIndependent_of_strictMono_valuation hk hx0 hx (fun i ↦ hy i)
       (fun _ _ hij ↦ hmono hij) fun i ↦ hxy.trans (hmono.monotone (Nat.zero_le _))
   simpa using hli.fintype_card_le_finrank
 
@@ -247,8 +250,8 @@ theorem exists_max_valuation_lt_one (hF : IsFunctionField k F)
       (hcon t.1 t.2.1 t.2.2).choose_spec.2.1⟩
   have hg : ∀ t, A.valuation t.1 < A.valuation (g t).1 :=
     fun t ↦ (hcon t.1 t.2.1 t.2.2).choose_spec.2.2
-  refine not_exists_seq_valuation_strictMono hF hk hui0 hui
-    (y := fun n ↦ (g^[n] ⟨u⁻¹, hui0, hui⟩).1) (fun n ↦ (g^[n] _).2.1) (fun n ↦ (g^[n] _).2.2)
+  refine not_exists_seq_valuation_strictMono hF hk hui0
+    (y := fun n ↦ (g^[n] ⟨u⁻¹, hui0, hui⟩).1) (fun n ↦ (g^[n] _).2.2)
     (fun n ↦ ?_) le_rfl
   rw [Function.iterate_succ_apply']
   exact hg _
@@ -294,8 +297,8 @@ theorem isDiscreteValuationRing_of_isFunctionField (hF : IsFunctionField k F)
           refine lt_of_le_of_ne ?_ (hcon (n + 1))
           rw [hval, pow_succ, ← div_div, ← hval, div_le_one₀ htpos]
           exact htmax _ (hne n) ih
-      refine not_exists_seq_valuation_strictMono hF hk hz0 (by simpa using hall 0)
-        (y := fun n ↦ (z : F) / t ^ n) hne hall (fun n ↦ ?_) (by simp)
+      refine not_exists_seq_valuation_strictMono hF hk hz0
+        (y := fun n ↦ (z : F) / t ^ n) hall (fun n ↦ ?_) (by simp)
       rw [hval, hval]
       exact (div_lt_div_iff_of_pos_left (zero_lt_iff.2 ((Valuation.ne_zero_iff _).2 hz0))
         (pow_pos htpos _) (pow_pos htpos _)).2
