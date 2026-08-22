@@ -52,8 +52,8 @@ Mathlib's `ContRepresentation.coindV` is the same construction in the bundled co
 representation language: in this file's notation, a `Submodule R C(G, V)` attached to a
 `ContRepresentation R U V` and the inclusion `U → G`. It is not used here because the
 `ContRepresentation` carrier imposes no continuity of the action in the group variable, which is
-needed by the topology-dependent results `TauCeti.coindMap_surjective` and
-`TauCeti.coindEvalTopEquiv`, and because the roadmap fixes the unbundled classes
+needed by `TauCeti.coindMap_surjective`; `TauCeti.coindEvalTopEquiv` similarly requires continuity
+of each orbit map. It is also not used because the roadmap fixes the unbundled classes
 `[DistribMulAction U A]`, `[DiscreteTopology A]`, `[ContinuousSMul U A]` for this layer, with local
 constancy as a predicate on plain functions rather than a bundled `C(G, A)`. Transporting `coind`
 into the bundled language is a separate step, and belongs with the smooth-discrete dictionary that
@@ -312,26 +312,27 @@ theorem mem_coind_bot_iff {A : Type*} [AddCommGroup A] [DistribMulAction (⊥ : 
     rw [hu, OneMemClass.coe_one, one_mul, one_smul]⟩⟩
 
 variable {A : Type*} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A]
-  [DistribMulAction (⊤ : Subgroup G) A] [ContinuousSMul (⊤ : Subgroup G) A]
+  [DistribMulAction (⊤ : Subgroup G) A]
 
 /-- For `U = ⊤` the orbit map `g ↦ g • a` is a member of the coinduced module: it is locally
-constant because the action is continuous and `A` is discrete. -/
-theorem smul_mem_coind_top {a : A} :
+constant because that orbit map is continuous and `A` is discrete. -/
+theorem smul_mem_coind_top {a : A}
+    (hcont : Continuous fun g : G => (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a) :
     (fun g : G => (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a) ∈ coind G ⊤ A := by
-  refine ⟨(IsLocallyConstant.iff_continuous _).2 (continuous_smul.comp
-    ((Continuous.subtype_mk continuous_id fun g : G => Subgroup.mem_top g).prodMk
-      continuous_const)), fun u g => ?_⟩
+  refine ⟨(IsLocallyConstant.iff_continuous _).2 hcont, fun u g => ?_⟩
   have h : (⟨(u : G) * g, Subgroup.mem_top _⟩ : (⊤ : Subgroup G)) =
       u * ⟨g, Subgroup.mem_top g⟩ := Subtype.ext rfl
   simp only [h, mul_smul]
 
 variable (G A) in
 /-- **`Coind_G^G A` is `A`**: evaluation at `1` is an isomorphism, with inverse `a ↦ (g ↦ g • a)`.
-The inverse is where continuity of the action is used; without it `g ↦ g • a` need not be locally
+The inverse uses continuity of each orbit map; without it `g ↦ g • a` need not be locally
 constant. -/
-def coindEvalTopEquiv : coind G ⊤ A ≃+ A where
+def coindEvalTopEquiv
+    (hcont : ∀ a : A, Continuous fun g : G =>
+      (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a) : coind G ⊤ A ≃+ A where
   toFun f := (f : G → A) 1
-  invFun a := ⟨_, smul_mem_coind_top (a := a)⟩
+  invFun a := ⟨_, smul_mem_coind_top (hcont a)⟩
   left_inv f := Subtype.ext (funext fun g => by
     simpa using (apply_mul_of_mem_coind f.2 ⟨g, Subgroup.mem_top g⟩ 1).symm)
   right_inv a := by
@@ -340,12 +341,16 @@ def coindEvalTopEquiv : coind G ⊤ A ≃+ A where
   map_add' _ _ := (rfl)
 
 @[simp]
-theorem coindEvalTopEquiv_apply (f : coind G ⊤ A) : coindEvalTopEquiv G A f = (f : G → A) 1 :=
-  (rfl)
+theorem coindEvalTopEquiv_apply
+    (hcont : ∀ a : A, Continuous fun g : G =>
+      (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a) (f : coind G ⊤ A) :
+    coindEvalTopEquiv G A hcont f = (f : G → A) 1 := (rfl)
 
 @[simp]
-theorem coindEvalTopEquiv_symm_apply (a : A) (g : G) :
-    (((coindEvalTopEquiv G A).symm a : coind G ⊤ A) : G → A) g =
+theorem coindEvalTopEquiv_symm_apply
+    (hcont : ∀ a : A, Continuous fun g : G =>
+      (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a) (a : A) (g : G) :
+    (((coindEvalTopEquiv G A hcont).symm a : coind G ⊤ A) : G → A) g =
       (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a := (rfl)
 
 end Degenerate
