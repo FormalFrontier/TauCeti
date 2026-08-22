@@ -19,10 +19,10 @@ the constructors below.
 
 This file introduces the diagrams as an enumeration `TauCeti.AffineDynkinType`, attaches to each
 its node count, its underlying `SimpleGraph` on `Fin t.nodes`, and its generalized Cartan matrix,
-and proves the two facts every consumer needs: each diagram is connected, and its vector of *marks*
-is a null vector of the Cartan matrix, positive at every node and normalized to `1` at a
-distinguished one. The marks span the radical of the
-symmetrized form; only the null-vector half of that statement is proved here.
+and proves the two facts every consumer needs about a *valid* diagram, one whose parameter is in
+the range of the classification: it is connected, and its vector of *marks* is a null vector of the
+Cartan matrix, positive at every node and normalized to `1` at a distinguished one. The marks span
+the radical of the symmetrized form; only the null-vector half of that statement is proved here.
 
 `TauCeti.DynkinType` has no affine constructors, and Mathlib's `CartanMatrix` family names no
 affine type either, with one exception: the generalized `CartanMatrix.E n` continues the `E`
@@ -76,7 +76,8 @@ number, which reduces connectedness to a single induction. Explicitly:
 
 ## Main results
 
-* `TauCeti.AffineDynkinType.graph_connected`: every affine simply-laced diagram is connected.
+* `TauCeti.AffineDynkinType.graph_connected`: every valid affine simply-laced diagram is
+  connected.
 * `TauCeti.AffineDynkinType.graph_D_adj`, `.graph_E6_adj`, `.graph_E7_adj`, `.graph_E8_adj`:
   adjacency in each diagram, as a condition on node numbers.
 * `TauCeti.AffineDynkinType.cartanMatrix_eq_two_smul_one_sub_adjMatrix`: outside `A₁` the Cartan
@@ -308,7 +309,8 @@ private theorem graph_D_connected {n : ℕ} (hn : 4 ≤ n) : (D n).graph.Connect
     · exact ⟨⟨1, hlt⟩, by omega, (graph_D_adj hn).2 (by omega)⟩
     · exact ⟨⟨n - 3, hlt3⟩, by omega, (graph_D_adj hn).2 (by omega)⟩
 
-/-- **Every affine simply-laced diagram is connected.** -/
+/-- **Every valid affine simply-laced diagram is connected.** Validity is needed: the degenerate
+constructors outside `TauCeti.AffineDynkinType.Valid`, such as `D 2`, are disconnected. -/
 theorem graph_connected {t : AffineDynkinType} (ht : t.Valid) : t.graph.Connected := by
   cases t with
   | A n => exact (graph_A n) ▸ SimpleGraph.cycleGraph_connected
