@@ -7,6 +7,8 @@ module
 
 public import Mathlib.NumberTheory.NumberField.ExistsRamified
 public import Mathlib.RingTheory.Spectrum.Maximal.Defs
+public import TauCeti.FieldTheory.Galois.IsGaloisGroup
+public import TauCeti.NumberTheory.RamificationInertia.Galois
 
 /-!
 # The inertia subgroups generate the Galois group of a number field
@@ -14,7 +16,8 @@ public import Mathlib.RingTheory.Spectrum.Maximal.Defs
 Let `K` be a number field that is Galois over `ℚ`, with Galois group `G` acting on the ring of
 integers `𝓞 K`. Each maximal ideal `P` of `𝓞 K` carries an inertia subgroup `P.inertia G`, the
 elements of `G` acting trivially on `𝓞 K ⧸ P`, and its cardinality is the ramification index of
-`P` over `ℤ` (`Ideal.card_inertia_eq_ramificationIdx`). This file proves that these subgroups
+`P` over `ℤ` (`Ideal.card_inertia_eq_ramificationIdx`, in
+`TauCeti/NumberTheory/RamificationInertia/Galois.lean`). This file proves that these subgroups
 generate all of `G`:
 
 `⨆ P : MaximalSpectrum (𝓞 K), P.asIdeal.inertia G = ⊤`.
@@ -48,7 +51,8 @@ fields is Kummer theory over `ℚ` and is not formalised here.
   field of `H`, then the inertia subgroup at `P` meets `H` trivially.
 * `NumberField.pow_index_eq_one_of_isUnramifiedIn`: if `G` is abelian and `K` is unramified over
   the fixed field `F` of `H` at every prime of `𝓞 F`, then the exponent of `G` divides `H.index`,
-  which is `Module.finrank ℚ F` by `IsGaloisGroup.index_eq_finrank`.
+  which is `Module.finrank ℚ F` by `IsGaloisGroup.index_eq_finrank` (in
+  `TauCeti/FieldTheory/Galois/IsGaloisGroup.lean`).
 
 ## References
 
@@ -61,37 +65,6 @@ F. Lemmermeyer, *Reciprocity Laws: from Euler to Eisenstein*, §2.2.
 public section
 
 open scoped NumberField
-
-namespace Ideal
-
-/-- The cardinality of the inertia subgroup of `P` is the ramification index of `P` over `R`.
-This is `Ideal.card_inertia_eq_ramificationIdxIn` stated with the ramification index of `P`
-itself rather than with `Ideal.ramificationIdxIn` of the ideal below it. -/
-theorem card_inertia_eq_ramificationIdx (R : Type*) {S : Type*} [CommRing R] [CommRing S]
-    [Algebra R S] [IsDomain R] [IsDomain S] [Module.Finite R S] [Module.Flat R S] (G : Type*)
-    [Group G] [Finite G] [MulSemiringAction G S] [IsGaloisGroup G R S] (P : Ideal S) [P.IsPrime]
-    [PerfectField (P.under R).ResidueField] :
-    Nat.card (P.inertia G) = P.ramificationIdx R :=
-  (card_inertia_eq_ramificationIdxIn (G := G) (P.under R) P).trans
-    (ramificationIdxIn_eq_ramificationIdx (P.under R) P G)
-
-end Ideal
-
-namespace IsGaloisGroup
-
-/-- **The index of a subgroup is the degree of its fixed field.** If `K` is Galois over `E` with
-Galois group `G` and `H` is a subgroup of `G` whose fixed field is `F`, then `H.index = [F : E]`.
-This is `IsGaloisGroup.card_eq_finrank` at the two ends of the tower `E ⊆ F ⊆ K`, combined with
-the tower law for degrees. -/
-theorem index_eq_finrank {G : Type*} [Group G] (H : Subgroup G) (E F K : Type*) [Field E]
-    [Field F] [Field K] [Algebra E F] [Algebra F K] [Algebra E K] [IsScalarTower E F K]
-    [FiniteDimensional F K] [MulSemiringAction G K] [IsGaloisGroup G E K] [IsGaloisGroup H F K] :
-    H.index = Module.finrank E F := by
-  have h : H.index * Nat.card H = Nat.card G := Subgroup.index_mul_card H
-  rw [card_eq_finrank H F K, card_eq_finrank G E K, ← Module.finrank_mul_finrank E F K] at h
-  exact Nat.eq_of_mul_eq_mul_right Module.finrank_pos h
-
-end IsGaloisGroup
 
 namespace NumberField
 
