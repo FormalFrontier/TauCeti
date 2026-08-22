@@ -140,14 +140,14 @@ of the diagram.** -/
 
 /-- **The special matrix carries every tabulated root to its indexed image with the
 prescribed exponent.** -/
-@[simp] theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
+theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
     g2SpecialIsogenyMatrix *ᵥ g2Root i = g2Length i • g2Root (g2SpecialIsogenyIndex i) := by
   rw [g2Root_apply, g2Root_apply, g2Length_apply]
   decide +revert
 
 /-- **The transposed special matrix satisfies the contragredient equation on every tabulated
 coroot.** -/
-@[simp] theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
+theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
     g2SpecialIsogenyMatrixᵀ *ᵥ g2Coroot (g2SpecialIsogenyIndex i) = g2Length i • g2Coroot i := by
   rw [g2Coroot_apply, g2Coroot_apply, g2Length_apply]
   decide +revert
