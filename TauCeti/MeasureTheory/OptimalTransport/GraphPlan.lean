@@ -304,20 +304,35 @@ end Determinism
 
 section Dirac
 
+/-- An a.e. measurable map sends a Dirac measure to the Dirac measure at the image point. -/
+private theorem map_dirac_of_aemeasurable {f : X → Y} {x : X}
+    (hf : AEMeasurable f (Measure.dirac x)) :
+    (Measure.dirac x).map f = Measure.dirac (f x) := by
+  have hx : f x = hf.mk f x := by
+    by_contra hne
+    have hzero : Measure.dirac x {a | f a ≠ hf.mk f a} = 0 := ae_iff.mp hf.ae_eq_mk
+    rw [Measure.dirac_apply_of_mem hne] at hzero
+    exact one_ne_zero hzero
+  calc
+    (Measure.dirac x).map f = (Measure.dirac x).map (hf.mk f) :=
+      Measure.map_congr hf.ae_eq_mk
+    _ = Measure.dirac (hf.mk f x) := Measure.map_dirac' hf.measurable_mk x
+    _ = Measure.dirac (f x) := by rw [hx]
+
 /-- A transport map out of a Dirac measure forces the target to be the Dirac measure at its
 value. So the unique coupling of `Measure.dirac x` with a non-Dirac probability measure `ν`,
 namely the pushforward of `ν` along `y ↦ (x, y)`, is not a graph plan: the Monge problem out of
 an atom is infeasible unless the target is an atom too. -/
-theorem eq_dirac_of_hasLaw_dirac {x : X} (hT : Measurable T) (h : HasLaw T ν (Measure.dirac x)) :
+theorem eq_dirac_of_hasLaw_dirac {x : X} (h : HasLaw T ν (Measure.dirac x)) :
     ν = Measure.dirac (T x) := by
-  rw [← h.map_eq, Measure.map_dirac' hT]
+  rw [← h.map_eq, map_dirac_of_aemeasurable h.aemeasurable]
 
-/-- The graph plan of a measurable map at a Dirac measure is the Dirac measure at the graph
-point. -/
+/-- The graph plan of an a.e. measurable map at a Dirac measure is the Dirac measure at the
+graph point. -/
 @[simp]
-theorem graphPlan_dirac (hT : Measurable T) (x : X) :
+theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     graphPlan T (Measure.dirac x) = Measure.dirac (x, T x) :=
-  Measure.map_dirac' (measurable_id.prodMk hT) x
+  map_dirac_of_aemeasurable (aemeasurable_prodMk_self hT)
 
 end Dirac
 
