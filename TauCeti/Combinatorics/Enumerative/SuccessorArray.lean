@@ -27,6 +27,8 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 
 * `TauCeti.successorArray_visitCount`: the defining step relation of the successor array.
 * `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
+* `TauCeti.visitTime_apply_of_infinite` and `TauCeti.visitTime_strictMono_of_infinite`: visit
+  times are genuine and strictly increasing when the value occurs infinitely often.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
 * `TauCeti.pathOfSuccessors_successorArray`: reconstruction inverts the successor decomposition.
 
@@ -170,6 +172,25 @@ theorem visitTime_eq_iff :
   classical
   simpa only [visitTime_def, visitCount_eq_count] using
     Nat.nth_eq_iff (p := fun i => x i = a) (k := k) (m := m)
+
+/-- If `x` visits `a` infinitely often, every visit time is a genuine visit. -/
+theorem visitTime_apply_of_infinite (h : {n | x n = a}.Infinite) (k : ℕ) :
+    x (visitTime x a k) = a := by
+  simpa only [visitTime_def] using Nat.nth_mem_of_infinite h k
+
+/-- The visit times of an infinitely often visited value are strictly increasing. -/
+theorem visitTime_strictMono_of_infinite (h : {n | x n = a}.Infinite) :
+    StrictMono (visitTime x a) := by
+  have heq : visitTime x a = Nat.nth fun n => x n = a := by
+    funext k
+    exact visitTime_def x a k
+  rw [heq]
+  exact Nat.nth_strictMono h
+
+/-- If a sequence starts at `a`, its zeroth visit to `a` occurs at time zero. -/
+@[simp]
+theorem visitTime_zero_of_eq (h : x 0 = a) : visitTime x a 0 = 0 := by
+  rw [visitTime_def, Nat.nth_zero_of_zero h]
 
 end Counting
 
