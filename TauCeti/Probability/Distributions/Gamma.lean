@@ -233,6 +233,7 @@ theorem integrableExpSet_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
 
 /-- The moment-generating function of a gamma law on the half-line where its exponential moment
 is integrable, namely `t < r`. -/
+@[simp]
 theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
     mgf id (gammaMeasure a r) t = (1 - t / r) ^ (-a) := by
   have hrt : 0 < r - t := sub_pos.mpr ht
@@ -250,6 +251,7 @@ theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
 
 /-- The cumulant-generating function of a gamma law on the half-line where its exponential moment
 is integrable, namely `t < r`. It is the real logarithm of `TauCeti.mgf_id_gammaMeasure`. -/
+@[simp]
 theorem cgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
     cgf id (gammaMeasure a r) t = -a * Real.log (1 - t / r) := by
   have h : (0 : ℝ) < 1 - t / r := by
@@ -287,6 +289,7 @@ private lemma ofReal_mul_gammaPDF_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} 
   · rw [gammaPDF_of_neg hx, gammaPDF_of_neg (mul_neg_of_pos_of_neg hc hx), mul_zero]
 
 /-- Scaling a gamma variable by `c > 0` divides its rate by `c`. -/
+@[simp]
 theorem map_gammaMeasure_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} (hc : 0 < c) :
     (gammaMeasure a r).map (c * ·) = gammaMeasure a (r / c) := by
   have hT : Measurable fun x : ℝ ↦ c * x := measurable_const_mul c
