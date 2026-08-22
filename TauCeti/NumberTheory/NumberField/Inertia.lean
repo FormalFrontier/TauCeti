@@ -5,10 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.FieldTheory.Galois.IsGaloisGroup
-public import Mathlib.GroupTheory.IndexNormal
 public import Mathlib.NumberTheory.NumberField.ExistsRamified
-public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Spectrum.Maximal.Defs
 
 /-!
@@ -48,7 +45,7 @@ over a quadratic subfield is multiquadratic.
 * `NumberField.iSup_inertia_eq_top`, `NumberField.closure_iUnion_inertia_eq_top`: the packaged
   generation statements.
 * `NumberField.disjoint_inertia_of_isUnramifiedIn`: if `K` is unramified over the fixed field of
-  `H` at all finite places, then every inertia subgroup meets `H` trivially.
+  `H` at the prime below `P`, then the inertia subgroup at `P` meets `H` trivially.
 * `NumberField.sq_eq_one_of_index_eq_two`, `NumberField.sq_eq_one_of_finrank_eq_two`: an abelian
   extension of `ℚ` unramified at all finite places over a quadratic subfield has Galois group of
   exponent dividing `2`.
@@ -105,7 +102,8 @@ theorem eq_top_of_forall_inertia_le {H : Subgroup G}
       rw [Ideal.card_inertia_eq_ramificationIdxIn (G := H) (P.under (𝓞 F)) P,
         Ideal.ramificationIdxIn_eq_ramificationIdx (P.under (𝓞 F)) P H]
     have hcard : Nat.card (P.inertia H) = Nat.card (P.inertia G) := by
-      have hsub : P.inertia H = (P.inertia G).subgroupOf H := rfl
+      have hsub : P.inertia H = (P.inertia G).subgroupOf H :=
+        (AddSubgroup.subgroupOf_inertia (I := P.toAddSubgroup) H).symm
       rw [hsub]
       exact Nat.card_congr (Subgroup.subgroupOfEquivOfLe (h P hPmax)).toEquiv
     have hEq : P.ramificationIdx (𝓞 F) = P.ramificationIdx ℤ := by rw [← hH, hcard, hG]
@@ -149,33 +147,32 @@ variable {K : Type*} [Field K] [NumberField K] {G : Type*} [Group G] [Finite G]
 
 omit [IsGaloisGroup G ℚ K] [Algebra ℚ F] [IsScalarTower ℚ F K] in
 /-- **An unramified subextension meets every inertia subgroup trivially.** Let `H` be a subgroup
-of `G` whose fixed field is `F`. If every prime of `𝓞 F` is unramified in `𝓞 K`, then the inertia
-subgroup of a prime `P` of `𝓞 K` is disjoint from `H`, since its intersection with `H` is the
-inertia subgroup of `P` over `𝓞 F`, of order `e(P / 𝓞 F) = 1`. -/
+of `G` whose fixed field is `F`. If the prime below `P` is unramified in `𝓞 K`, then the inertia
+subgroup of `P` is disjoint from `H`, since its intersection with `H` is the inertia subgroup of
+`P` over `𝓞 F`, of order `e(P / 𝓞 F) = 1`. -/
 theorem disjoint_inertia_of_isUnramifiedIn (H : Subgroup G) [IsGaloisGroup H F K]
-    (hunr : ∀ q : Ideal (𝓞 F), q.IsPrime → Algebra.IsUnramifiedIn (𝓞 K) q)
-    (P : Ideal (𝓞 K)) (hP : P.IsPrime) : Disjoint (P.inertia G) H := by
+    (P : Ideal (𝓞 K)) (hP : P.IsPrime)
+    (hunr : Algebra.IsUnramifiedIn (𝓞 K) (P.under (𝓞 F))) : Disjoint (P.inertia G) H := by
   have : P.IsPrime := hP
   have : IsGaloisGroup H (𝓞 F) (𝓞 K) := IsGaloisGroup.of_isFractionRing H (𝓞 F) (𝓞 K) F K
   rw [← Subgroup.subgroupOf_eq_bot]
   refine Subgroup.eq_bot_of_card_eq _ ?_
-  have hsub : (P.inertia G).subgroupOf H = P.inertia H := rfl
-  rw [hsub, Ideal.card_inertia_eq_ramificationIdxIn (G := H) (P.under (𝓞 F)) P,
+  rw [AddSubgroup.subgroupOf_inertia,
+    Ideal.card_inertia_eq_ramificationIdxIn (G := H) (P.under (𝓞 F)) P,
     Ideal.ramificationIdxIn_eq_ramificationIdx (P.under (𝓞 F)) P H]
-  exact (hunr (P.under (𝓞 F)) inferInstance).ramificationIdx_eq_one inferInstance
+  exact hunr.ramificationIdx_eq_one inferInstance
 
 omit [IsGaloisGroup G ℚ K] [Algebra ℚ F] [IsScalarTower ℚ F K] in
-/-- **Inertia over a quadratic subfield is killed by squaring.** If the fixed field `F` of an
-index-`2` subgroup `H` of `G` has every prime unramified in `𝓞 K`, then any element of an inertia
-subgroup of `G` squares to `1`: its square lies in `H` because `H` has index `2`, and it lies in
-the inertia subgroup, which meets `H` trivially. -/
+/-- **Inertia over a quadratic subfield is killed by squaring.** If the prime below `P` in the
+fixed field `F` of an index-`2` subgroup `H` of `G` is unramified in `𝓞 K`, then any element of
+the inertia subgroup at `P` squares to `1`: its square lies in `H` because `H` has index `2`, and
+it lies in the inertia subgroup, which meets `H` trivially. -/
 theorem sq_eq_one_of_mem_inertia {H : Subgroup G} [IsGaloisGroup H F K] (hindex : H.index = 2)
-    (hunr : ∀ q : Ideal (𝓞 F), q.IsPrime → Algebra.IsUnramifiedIn (𝓞 K) q)
-    {P : Ideal (𝓞 K)} (hP : P.IsPrime) {g : G} (hg : g ∈ P.inertia G) : g ^ 2 = 1 := by
-  have hmem : g ^ 2 ∈ H := by
-    rw [sq]
-    exact (Subgroup.mul_mem_iff_of_index_two hindex).mpr Iff.rfl
-  exact Subgroup.disjoint_def.mp (disjoint_inertia_of_isUnramifiedIn H hunr P hP)
+    {P : Ideal (𝓞 K)} (hP : P.IsPrime)
+    (hunr : Algebra.IsUnramifiedIn (𝓞 K) (P.under (𝓞 F)))
+    {g : G} (hg : g ∈ P.inertia G) : g ^ 2 = 1 := by
+  have hmem : g ^ 2 ∈ H := Subgroup.sq_mem_of_index_two hindex g
+  exact Subgroup.disjoint_def.mp (disjoint_inertia_of_isUnramifiedIn H P hP hunr)
     (pow_mem hg 2) hmem
 
 omit [Algebra ℚ F] [IsScalarTower ℚ F K] in
@@ -195,7 +192,9 @@ theorem sq_eq_one_of_index_eq_two [IsMulCommutative G] (H : Subgroup G) [IsGaloi
     g ^ 2 = 1 := by
   have h : (powMonoidHom 2 : G →* G).ker = ⊤ :=
     eq_top_of_forall_inertia_le fun P hP x hx => by
-      simpa [MonoidHom.mem_ker] using sq_eq_one_of_mem_inertia hindex hunr hP.isPrime hx
+      simpa [MonoidHom.mem_ker] using
+        sq_eq_one_of_mem_inertia (F := F) hindex hP.isPrime
+          (hunr (P.under (𝓞 F)) inferInstance) hx
   simpa [MonoidHom.mem_ker] using (h ▸ Subgroup.mem_top g : g ∈ (powMonoidHom 2 : G →* G).ker)
 
 open scoped IsMulCommutative in
