@@ -15,8 +15,8 @@ Stichtenoth's existence theorem (Theorem 1.1.19) produces a place out of nothing
 a proper nonzero ideal: if `k ⊆ R ⊆ F` and `I` is a proper nonzero ideal of `R`, then some place
 `P` of `F / k` has `R ⊆ 𝒪_P` and `I ⊆ 𝔪_P`. Its consequence (Corollary 1.1.20) is the statement
 that gives the divisor theory its substance: every element of `F` transcendental over `k` has both
-a zero and a pole, so `ℙ_F` is nonempty and the constants `k̃ = algebraicClosure k F` are exactly
-the functions regular at every place.
+a zero and a pole, so `ℙ_F` is nonempty and the constants `algebraicClosure k F` are exactly the
+functions regular at every place.
 
 The Zorn's lemma half of Theorem 1.1.19 is Mathlib's
 `Ideal.image_subset_nonunits_valuationSubring`, which dominates a proper ideal of a subring of a
@@ -31,8 +31,8 @@ subring is discrete, and that is
   the constants has a zero and a pole (Stichtenoth, Corollary 1.1.20).
 * `TauCeti.Place.nonempty`: an algebraic function field has at least one place.
 * `TauCeti.Place.mem_algebraicClosure_iff_forall_mem_integers` and
-  `TauCeti.Place.coe_algebraicClosure_eq_iInter_integers`: `k̃ = ⋂_P 𝒪_P`, the constants are the
-  everywhere-regular functions.
+  `TauCeti.Place.coe_algebraicClosure_eq_iInter_integers`: `algebraicClosure k F = ⋂_P 𝒪_P`, the
+  constants are the everywhere-regular functions.
 
 ## References
 
@@ -128,8 +128,8 @@ theorem nonempty (hF : IsFunctionField k F) : Nonempty (Place k F) := by
 
 /-! ### The constants are the everywhere-regular functions -/
 
-/-- `k̃ = ⋂_P 𝒪_P` (Stichtenoth, Corollary 1.1.20): an element of an algebraic function field is
-algebraic over the constants exactly when it has no pole. -/
+/-- `algebraicClosure k F = ⋂_P 𝒪_P` (Stichtenoth, Corollary 1.1.20): an element of an algebraic
+function field is algebraic over the constants exactly when it has no pole. -/
 theorem mem_algebraicClosure_iff_forall_mem_integers (hF : IsFunctionField k F) {f : F} :
     f ∈ algebraicClosure k F ↔ ∀ P : Place k F, f ∈ P.integers := by
   refine ⟨fun h P ↦ P.mem_integers_of_mem_algebraicClosure h, fun h ↦ ?_⟩
@@ -137,7 +137,8 @@ theorem mem_algebraicClosure_iff_forall_mem_integers (hF : IsFunctionField k F) 
   obtain ⟨P, hP⟩ := exists_ord_neg hF (mem_algebraicClosure_iff.not.1 hf)
   exact absurd (P.mem_integers_iff_ord_nonneg.1 (h P)) (not_le.2 hP)
 
-/-- `k̃ = ⋂_P 𝒪_P`, as an equality of subsets of `F` (Stichtenoth, Corollary 1.1.20). -/
+/-- `algebraicClosure k F = ⋂_P 𝒪_P`, as an equality of subsets of `F` (Stichtenoth,
+Corollary 1.1.20). -/
 theorem coe_algebraicClosure_eq_iInter_integers (hF : IsFunctionField k F) :
     (algebraicClosure k F : Set F) = ⋂ P : Place k F, (P.integers : Set F) := by
   ext f
