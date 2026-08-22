@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.MeasureTheory.Measure.Dirac
 public import TauCeti.Probability.Exchangeability.MarkovExchangeable
 public import TauCeti.Probability.Recurrent
 
@@ -40,6 +41,8 @@ section AbsorbedWalk
 Markov chain that leaves `false` at time `1` and is then absorbed at `true`. -/
 def absorbedWalk : ℕ → Unit → Bool := fun n _ => decide (n ≠ 0)
 
+-- `absorbedWalk` is not `@[expose]`, so an exported `rfl` proof of its defining equation is
+-- rejected; a private lemma may unfold it, and the public one is then a term application.
 private theorem absorbedWalk_apply_private (n : ℕ) (u : Unit) :
     absorbedWalk n u = decide (n ≠ 0) :=
   rfl
@@ -101,7 +104,7 @@ theorem absorbedWalk_markovExchangeable :
 Markov exchangeable process, in contrast with `Exchangeable.recurrent`. -/
 theorem not_recurrent_absorbedWalk : ¬ Recurrent (Measure.dirac ()) absorbedWalk := by
   intro h
-  rw [Recurrent, MeasureTheory.ae_dirac_eq, Filter.eventually_pure] at h
+  rw [recurrent_def, MeasureTheory.ae_dirac_eq, Filter.eventually_pure] at h
   have h0 := h 0
   rw [Nat.frequently_atTop_iff_infinite] at h0
   refine h0 (Set.Finite.subset (Set.finite_singleton 0) ?_)

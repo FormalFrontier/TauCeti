@@ -11,12 +11,13 @@ public import TauCeti.Probability.Recurrent
 /-!
 # Recurrence and successor arrays
 
-For a recurrent path, every row indexed by a visited state is an infinite list of genuine
-transitions. Rows indexed by unvisited states remain unconstrained and may contain
-`Nat.nth`'s junk values.
+For a recurrent path, the visit times of a visited state are genuine, strictly increasing visits,
+and the visit counts along them run through every natural number; so the successor-array row of
+such a state is an infinite list of genuine transitions, read off at those times. Rows indexed by
+unvisited states remain unconstrained and may contain `Nat.nth`'s junk values.
 
-The results identify visit times and visit counts for visited states and show that every cell of
-a visited successor-array row is realized by an actual transition.
+Combined with `successorArray_def`, which reads a row entry off the visit time, these are the
+facts that make the successor-array change of variables lossless on a recurrent path.
 
 ## References
 
@@ -42,13 +43,13 @@ variable {Ω α : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : ℕ → Ω 
 /-- **The visit times of a visited state are genuine visits.** Off a recurrent path the later
 entries of `visitTime` are `Nat.nth`'s junk value; on one they are the times at which the process
 really is at that state. -/
-theorem Recurrent.ae_visitTime_apply (h : Recurrent μ X) :
+theorem Recurrent.ae_apply_visitTime (h : Recurrent μ X) :
     ∀ᵐ ω ∂μ, ∀ k j : ℕ, X (visitTime (fun n => X n ω) (X k ω) j) ω = X k ω := by
   filter_upwards [h.ae_infinite_setOf_eq] with ω hω k j
   simpa only [visitTime_def] using Nat.nth_mem_of_infinite (hω k) j
 
 /-- The visit times of a visited state of a recurrent process are strictly increasing, so the
-corresponding row of the successor array lists distinct times in order. -/
+successor-array row of that state is read off at distinct times, in order. -/
 theorem Recurrent.ae_strictMono_visitTime (h : Recurrent μ X) :
     ∀ᵐ ω ∂μ, ∀ k : ℕ, StrictMono (visitTime (fun n => X n ω) (X k ω)) := by
   filter_upwards [h.ae_infinite_setOf_eq] with ω hω k
@@ -77,21 +78,6 @@ theorem Recurrent.ae_tendsto_visitCount_atTop (h : Recurrent μ X) :
   calc b = visitCount (fun n => X n ω) (X k ω) (visitTime (fun n => X n ω) (X k ω) b) :=
         (hω k b).symm
     _ ≤ visitCount (fun n => X n ω) (X k ω) n := visitCount_monotone _ _ hn
-
-/-- **Every cell of a visited row is realized by a time.** For a recurrent process the index `j`
-of a row of the successor array is the number of earlier visits at an actual time. -/
-theorem Recurrent.ae_exists_visitCount_eq (h : Recurrent μ X) :
-    ∀ᵐ ω ∂μ, ∀ k j : ℕ, ∃ n, X n ω = X k ω ∧ visitCount (fun n => X n ω) (X k ω) n = j := by
-  filter_upwards [h.ae_visitTime_apply, h.ae_visitCount_visitTime] with ω h₁ h₂ k j
-  exact ⟨_, h₁ k j, h₂ k j⟩
-
-/-- **No junk in a visited row of the successor array.** Every entry of the row of a visited state
-is the value the process takes right after an actual visit to that state. -/
-theorem Recurrent.ae_exists_successorArray_eq (h : Recurrent μ X) :
-    ∀ᵐ ω ∂μ, ∀ k j : ℕ,
-      ∃ n, X n ω = X k ω ∧ successorArray (fun n => X n ω) (X k ω) j = X (n + 1) ω := by
-  filter_upwards [h.ae_visitTime_apply] with ω h₁ k j
-  exact ⟨_, h₁ k j, successorArray_def _ _ _⟩
 
 end SuccessorArray
 

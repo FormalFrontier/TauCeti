@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.Stationary
+public import Mathlib.Dynamics.Ergodic.MeasurePreserving
+public import TauCeti.Probability.Exchangeability.PathSpace.Shift
 -- Non-public: Poincaré recurrence for a conservative map is used only inside proofs.
 import Mathlib.Dynamics.Ergodic.Conservative
 
@@ -21,18 +22,17 @@ visits infinitely often:
 
 The main theorem is that recurrence is automatic for a stationary process on a countable state
 space (`recurrent_of_measurePreserving_shift`): it is Poincaré recurrence for the one-sided
-shift, applied to the countably many coordinate events `{x | x 0 = a}` at once. Contractable —
-hence exchangeable — processes are stationary, so they are recurrent
-(`Contractable.recurrent`, `Exchangeable.recurrent`).
+shift, applied to the countably many coordinate events `{x | x 0 = a}` at once. The
+exchangeability-specific corollaries of that theorem live in
+`TauCeti.Probability.Exchangeability.Recurrence.Basic`.
 
 ## Main results
 
+* `TauCeti.Probability.recurrent_def` — the defining equation of `Recurrent`, which is not
+  `@[expose]`, so this is the unfolding interface downstream.
 * `TauCeti.Probability.recurrent_iff_ae_forall_state` — the state-indexed reading of recurrence.
 * `TauCeti.Probability.recurrent_of_measurePreserving_shift` — a process with a shift-invariant
   path law on a countable state space is recurrent.
-* `TauCeti.Probability.Contractable.recurrent` and
-  `TauCeti.Probability.Exchangeable.recurrent` — contractable and exchangeable processes on a
-  countable state space are recurrent.
 * `TauCeti.Probability.recurrent_pathLaw_iff` — the process-level and path-law readings agree.
 
 ## References
@@ -64,12 +64,19 @@ section Defs
 variable {Ω α : Type*} [MeasurableSpace Ω]
 
 /-- A process is **recurrent** when, almost surely, every state it visits it visits infinitely
-often. This is Diaconis and Freedman's standing hypothesis on a Markov exchangeable process. -/
-@[expose]
+often. This is Diaconis and Freedman's standing hypothesis on a Markov exchangeable process.
+
+The body is not exposed; `recurrent_def` is the unfolding interface. -/
 def Recurrent (μ : Measure Ω) (X : ℕ → Ω → α) : Prop :=
   ∀ᵐ ω ∂μ, ∀ k : ℕ, ∃ᶠ n in atTop, X n ω = X k ω
 
 variable {μ : Measure Ω} {X Y : ℕ → Ω → α}
+
+/-- **The defining equation of recurrence.** `Recurrent` is not `@[expose]`, so this is how
+downstream modules unfold it. -/
+theorem recurrent_def :
+    Recurrent μ X ↔ ∀ᵐ ω ∂μ, ∀ k : ℕ, ∃ᶠ n in atTop, X n ω = X k ω :=
+  Iff.rfl
 
 /-- **The state-indexed reading of recurrence.** Almost surely, every state the process attains
 it attains infinitely often. -/
@@ -141,8 +148,10 @@ theorem ae_forall_frequently_apply_eq_of_measurePreserving_shift
       hpre ▸ (measurable_pi_apply 0) (measurableSet_singleton a)
     filter_upwards [hcons.ae_forall_image_mem_imp_frequently_image_mem hs.nullMeasurableSet]
       with x hx k hk
-    have hxk := hx k (by simpa using hk)
-    simpa using hxk
+    -- The orbit of `x` meets `{y | y 0 = a}` at time `n` exactly when `x n = a`.
+    have hmem : ∀ n : ℕ, (shift α)^[n] x ∈ {y : ℕ → α | y 0 = a} ↔ x n = a := fun n => by
+      simp only [Set.mem_ofPred_eq, shift_iterate_apply, zero_add]
+    exact (hx k ((hmem k).2 hk)).mono fun n hn => (hmem n).1 hn
   filter_upwards [ae_all_iff.2 key] with x hx k
   exact hx (x k) k rfl
 
@@ -157,32 +166,15 @@ theorem recurrent_of_measurePreserving_shift [Countable α] [MeasurableSingleton
   rw [pathLaw_def] at hpath
   exact ae_of_ae_map hmap hpath
 
-/-- **A contractable process on a countable state space is recurrent.** -/
-theorem Contractable.recurrent [Countable α] [MeasurableSingletonClass α] {μ : Measure Ω}
-    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
-    (hX_meas : ∀ i, AEMeasurable (X i) μ) :
-    Recurrent μ X :=
-  recurrent_of_measurePreserving_shift hX_meas (hX.measurePreserving_shift hX_meas)
-
-/-- **An exchangeable process on a countable state space is recurrent.** Together with
-`Exchangeable.markovExchangeable` this says that the Diaconis–Freedman hypotheses hold for every
-exchangeable process on a countable state space. -/
-theorem Exchangeable.recurrent [Countable α] [MeasurableSingletonClass α] {μ : Measure Ω}
-    [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Exchangeable μ X)
-    (hX_meas : ∀ i, AEMeasurable (X i) μ) :
-    Recurrent μ X :=
-  recurrent_of_measurePreserving_shift hX_meas (hX.measurePreserving_shift hX_meas)
-
 end Stationary
 
 section PathLaw
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- The recurrent paths of a countable state space form a measurable set: they are cut out by
-countably many coordinate coincidences, each measurable by Mathlib's `measurableSet_eq_fun`. -/
-theorem measurableSet_setOf_forall_frequently_apply_eq [Countable α]
-    [MeasurableSingletonClass α] :
+/-- The recurrent paths form a measurable set: they are cut out by countably many coordinate
+coincidences, each measurable by Mathlib's `measurableSet_eq_fun`. -/
+theorem measurableSet_setOf_forall_frequently_apply_eq [MeasurableEq α] :
     MeasurableSet {x : ℕ → α | ∀ k : ℕ, ∃ᶠ n in atTop, x n = x k} := by
   have hcover : {x : ℕ → α | ∀ k : ℕ, ∃ᶠ n in atTop, x n = x k} =
       ⋂ k : ℕ, ⋂ N : ℕ, ⋃ n : ℕ, ⋃ _ : N ≤ n, {x : ℕ → α | x n = x k} := by
@@ -194,11 +186,11 @@ theorem measurableSet_setOf_forall_frequently_apply_eq [Countable α]
       measurableSet_eq_fun (measurable_pi_apply n) (measurable_pi_apply k)
 
 /-- **The process-level and path-law formulations of recurrence agree.** -/
-theorem recurrent_pathLaw_iff [Countable α] [MeasurableSingletonClass α] {μ : Measure Ω}
+theorem recurrent_pathLaw_iff [MeasurableEq α] {μ : Measure Ω}
     {X : ℕ → Ω → α} (hX : ∀ i, AEMeasurable (X i) μ) :
     Recurrent (pathLaw μ X) (fun n (x : ℕ → α) => x n) ↔ Recurrent μ X := by
   have hmap : AEMeasurable (fun ω i => X i ω) μ := aemeasurable_pi_lambda _ hX
-  rw [Recurrent, Recurrent, pathLaw_def,
+  rw [recurrent_def, recurrent_def, pathLaw_def,
     ae_map_iff hmap measurableSet_setOf_forall_frequently_apply_eq]
 
 end PathLaw
