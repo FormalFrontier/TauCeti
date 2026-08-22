@@ -81,11 +81,6 @@ theorem mem_antisymmetricTensors {x : M ⊗[R] M} :
   rw [antisymmetricTensors, Module.End.mem_eigenspace_iff, neg_one_smul]
   exact Iff.rfl
 
-/-- The flip is an involution of the tensor square. -/
-theorem comm_comm_apply (x : M ⊗[R] M) :
-    TensorProduct.comm R M M (TensorProduct.comm R M M x) = x :=
-  (TensorProduct.comm R M M).symm_apply_apply x
-
 /-- `f ⊗ f` preserves the symmetric tensors, because it commutes with the flip. -/
 theorem map_self_mem_symmetricTensors (f : M →ₗ[R] M) {x : M ⊗[R] M}
     (hx : x ∈ symmetricTensors R M) : TensorProduct.map f f x ∈ symmetricTensors R M := by
@@ -126,9 +121,9 @@ theorem isCompl_symmetricTensors_antisymmetricTensors [Invertible (2 : R)] :
       rw [this, smul_smul, invOf_mul_self, one_smul]
     rw [hsum]
     refine Submodule.add_mem_sup (Submodule.smul_mem _ _ ?_) (Submodule.smul_mem _ _ ?_)
-    · rw [mem_symmetricTensors, map_add, comm_comm_apply]
+    · rw [mem_symmetricTensors, map_add, TensorProduct.comm_comm]
       exact add_comm _ _
-    · rw [mem_antisymmetricTensors, map_sub, comm_comm_apply, neg_sub]
+    · rw [mem_antisymmetricTensors, map_sub, TensorProduct.comm_comm, neg_sub]
 
 variable (R M) in
 /-- The symmetric and antisymmetric tensors decompose the tensor square as an internal direct
