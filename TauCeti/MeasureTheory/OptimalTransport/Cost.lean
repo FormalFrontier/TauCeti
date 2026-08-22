@@ -48,9 +48,6 @@ large on every plan; the two are separated by
 * `TauCeti.transportCost_dirac_left`, `TauCeti.transportCost_dirac_right` and
   `TauCeti.transportCost_dirac_dirac` — the exact value when either marginal is a Dirac
   measure, where the plan is unique;
-* `TauCeti.transportCost_map_le_lintegral` — the Monge-to-Kantorovich inequality: the transport
-  cost of `μ` and a pushforward `μ.map T` is at most the cost `∫⁻ x, c (x, T x) ∂μ` of the map
-  `T` itself;
 * `TauCeti.isOptimalCoupling_iff` — optimality is minimality among feasible plans, so it does
   not depend on the value `transportCost c μ ν` being finite, with the left and right Dirac
   lemmas giving the first families of optimal plans.
@@ -69,8 +66,8 @@ so a `μ.prod ν`-null set can carry all the mass of some competitor. This is wh
 
 Measurability of the cost is assumed only where it is used, namely in the theorems that move an
 integral along a pushforward (`TauCeti.transportCost_comp_swap`,
-`TauCeti.transportCost_comp_prodMap`, the Dirac formulas and
-`TauCeti.transportCost_map_le_lintegral`). The order-theoretic API needs none.
+`TauCeti.transportCost_comp_prodMap` and the Dirac formulas). The order-theoretic API needs
+none.
 
 This supplies the nonnegative-cost interface from Layer 1, item 1 of the optimal-transport
 roadmap. The parallel signed `EReal` interface for costs bounded below by an integrable split
@@ -282,17 +279,6 @@ theorem transportCost_dirac_dirac (hc : Measurable c) (x : X) (y : Y) :
   rw [transportCost_dirac_left hc x, lintegral_dirac' _ hcx]
 
 end Dirac
-
-/-- **The Monge problem dominates the Kantorovich problem**: the graph plan of a measurable map
-`T` is a coupling of `μ` and `μ.map T`, so the transport cost of that pair is at most the cost
-of `T` itself. -/
-theorem transportCost_map_le_lintegral {T : X → Y} (hT : Measurable T) (hc : Measurable c)
-    (μ : Measure X) : transportCost c μ (μ.map T) ≤ ∫⁻ x, c (x, T x) ∂μ := by
-  have hgraph : IsCoupling (μ.map fun x ↦ (x, T x)) μ (μ.map T) :=
-    ⟨by rw [Measure.fst_map_prodMk hT, Measure.map_id'], Measure.snd_map_prodMk measurable_id⟩
-  calc transportCost c μ (μ.map T) ≤ ∫⁻ z, c z ∂μ.map fun x ↦ (x, T x) :=
-      transportCost_le_lintegral hgraph _
-    _ = ∫⁻ x, c (x, T x) ∂μ := lintegral_map hc (measurable_id.prodMk hT)
 
 /-- `IsOptimalCoupling c π μ ν` says that the plan `π` solves the primal transport problem: it
 couples `μ` and `ν`, and its cost is the transport cost of the pair. The optimal plans are the
