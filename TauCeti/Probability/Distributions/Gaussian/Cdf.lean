@@ -31,7 +31,7 @@ over `Set.Iic x` is then the limit of those interval integrals, using
 * `TauCeti.integral_Iic_gaussianPDFReal` — the same over a left half-line.
 * `TauCeti.cdf_gaussianReal_eq` — the closed-form cdf for a nonzero variance.
 * `TauCeti.cdf_gaussianReal_zero_one` — the standard Gaussian cdf.
-* `TauCeti.cdf_gaussianReal_zero` — the cdf at the singular boundary `v = 0`.
+* `TauCeti.cdf_gaussianReal_zero_var` — the cdf at the singular boundary `v = 0`.
 * `TauCeti.measureReal_Ioi_gaussianReal` — the upper tail, in terms of `TauCeti.Real.erfc`.
 * `TauCeti.measureReal_le_of_hasLaw_gaussianReal` — the random-variable corollary.
 -/
@@ -102,9 +102,8 @@ theorem integral_Iic_gaussianPDFReal (m : ℝ) {v : ℝ≥0} (hv : v ≠ 0) (x :
       (𝓝 ((1 + Real.erf ((x - m) / √(2 * (v : ℝ)))) / 2)) := by
     have h := ((tendsto_const_nhds (x := Real.erf ((x - m) / √(2 * (v : ℝ)))) (f := atBot)).sub
       (Real.tendsto_erf_atBot.comp hy)).div_const 2
-    rw [show (Real.erf ((x - m) / √(2 * (v : ℝ))) - -1) / 2 =
-      (1 + Real.erf ((x - m) / √(2 * (v : ℝ)))) / 2 by ring] at h
-    exact h.congr fun y => (intervalIntegral_gaussianPDFReal m hv y x).symm
+    convert h.congr fun y => (intervalIntegral_gaussianPDFReal m hv y x).symm using 2
+    ring
   exact tendsto_nhds_unique hlim hlim'
 
 /-- The cumulative distribution function of a Gaussian law with nonzero variance. -/
@@ -121,7 +120,7 @@ theorem cdf_gaussianReal_zero_one (x : ℝ) :
 
 /-- At the singular boundary `v = 0` the Gaussian law is a Dirac mass, and its cumulative
 distribution function is the corresponding step function. -/
-theorem cdf_gaussianReal_zero (m x : ℝ) :
+theorem cdf_gaussianReal_zero_var (m x : ℝ) :
     cdf (gaussianReal m 0) x = if m ≤ x then 1 else 0 := by
   rw [gaussianReal_zero_var, cdf_eq_real, measureReal_def, Measure.dirac_apply]
   by_cases h : m ≤ x <;> simp [h]

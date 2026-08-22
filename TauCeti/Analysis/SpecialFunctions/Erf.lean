@@ -19,8 +19,8 @@ These are the error-function targets of `TauCetiRoadmap/StandardDistributions/RE
 Layer 2.  The names and statement shapes follow those proposed for Mathlib in
 [mathlib4#34053](https://github.com/leanprover-community/mathlib4/pull/34053), so that the
 declarations here can be replaced by Mathlib's once it provides them.  The identification
-`erf x = regularizedGamma (1 / 2) (x ^ 2)` needs the incomplete gamma function and is not proved
-here.
+`erf x = regularizedGamma (1 / 2) (x ^ 2)`, which holds for `0 ≤ x` — the right-hand side is even
+in `x` while `erf` is odd — needs the incomplete gamma function and is not proved here.
 
 The limits at infinity come from Mathlib's Gaussian integral `integral_gaussian_Ioi` together
 with the improper-integral comparison `MeasureTheory.intervalIntegral_tendsto_integral_Ioi`; the
@@ -79,6 +79,7 @@ theorem erf_zero : erf 0 = 0 := by simp [erf_def]
 theorem erfc_zero : erfc 0 = 1 := by simp [erfc_def]
 
 /-- The error function is odd. -/
+@[simp]
 theorem erf_neg (x : ℝ) : erf (-x) = -erf x := by
   have h : (∫ t in (0 : ℝ)..x, rexp (-t ^ 2)) = ∫ t in (-x)..(0 : ℝ), rexp (-t ^ 2) := by
     have hcomp := intervalIntegral.integral_comp_neg (a := (0 : ℝ)) (b := x)
@@ -89,6 +90,7 @@ theorem erf_neg (x : ℝ) : erf (-x) = -erf x := by
   ring
 
 /-- The complementary error function reflects around the value `1`. -/
+@[simp]
 theorem erfc_neg (x : ℝ) : erfc (-x) = 2 - erfc x := by
   rw [erfc_def, erfc_def, erf_neg]; ring
 
@@ -112,9 +114,20 @@ theorem differentiable_erf : Differentiable ℝ erf := fun x => (hasDerivAt_erf 
 @[fun_prop]
 theorem continuous_erf : Continuous erf := differentiable_erf.continuous
 
+/-- The complementary error function is strictly differentiable, with derivative
+`-(2 / √π * exp (-x ^ 2))`. -/
+theorem hasStrictDerivAt_erfc (x : ℝ) :
+    HasStrictDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x := by
+  simpa only [erfc_eq_one_sub_erf] using (hasStrictDerivAt_erf x).const_sub 1
+
 /-- The derivative of the complementary error function. -/
-theorem hasDerivAt_erfc (x : ℝ) : HasDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x := by
-  simpa only [erfc_eq_one_sub_erf] using (hasDerivAt_erf x).const_sub 1
+theorem hasDerivAt_erfc (x : ℝ) : HasDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x :=
+  (hasStrictDerivAt_erfc x).hasDerivAt
+
+/-- The derivative of the complementary error function, in `deriv` form. -/
+@[simp]
+theorem deriv_erfc : deriv erfc = fun x => -(2 / √π * rexp (-x ^ 2)) :=
+  funext fun x => (hasDerivAt_erfc x).deriv
 
 /-- The complementary error function is differentiable. -/
 theorem differentiable_erfc : Differentiable ℝ erfc := fun x =>
@@ -151,8 +164,8 @@ theorem tendsto_intervalIntegral_exp_neg_sq_atTop :
 theorem tendsto_erf_atTop : Tendsto erf atTop (𝓝 1) := by
   have hπ : √π ≠ 0 := by positivity
   have h := tendsto_intervalIntegral_exp_neg_sq_atTop.const_mul (2 / √π)
-  rw [show 2 / √π * (√π / 2) = 1 by field_simp] at h
-  exact h.congr fun x => (erf_def x).symm
+  convert h.congr fun x => (erf_def x).symm using 2
+  field_simp
 
 /-- The error function tends to `-1` at `-∞`. -/
 theorem tendsto_erf_atBot : Tendsto erf atBot (𝓝 (-1)) := by
@@ -170,7 +183,7 @@ theorem tendsto_erfc_atTop : Tendsto erfc atTop (𝓝 0) := by
 theorem tendsto_erfc_atBot : Tendsto erfc atBot (𝓝 2) := by
   have h : Tendsto (fun x => 1 - erf x) atBot (𝓝 (1 - -1)) :=
     tendsto_const_nhds.sub tendsto_erf_atBot
-  rw [show (1 : ℝ) - -1 = 2 by norm_num] at h
+  norm_num at h
   exact h.congr fun x => (erfc_def x).symm
 
 /-- The error function is bounded above by `1`. -/
