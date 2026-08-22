@@ -132,7 +132,7 @@ theorem casimirScalar_eq_zero_iff (hlam : IsDominantIntegral base lam) :
     casimirScalar base lam = 0 ↔ lam = 0 := by
   refine ⟨fun h ↦ by_contra fun h0 ↦ casimirScalar_ne_zero hlam h0 h, ?_⟩
   rintro rfl
-  rw [casimirScalar_def, zero_add, sub_self]
+  exact casimirScalar_zero
 
 /-! ### Separation on modules -/
 

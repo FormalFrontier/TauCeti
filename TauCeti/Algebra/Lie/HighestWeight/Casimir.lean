@@ -57,6 +57,7 @@ submodule by centrality and it contains the generator.
   the Casimir element acts by that scalar on every vector.
 * `TauCeti.casimirScalar_eq_add_sum`: the scalar expanded as
   `⟨λ, λ⟩ + ∑_{α > 0} ⟨λ, α⟩`, the shape in which its sign is read off.
+* `TauCeti.casimirScalar_zero`: the scalar of the zero weight is `0`.
 
 ## Implementation notes
 
@@ -379,14 +380,11 @@ noncomputable def casimirScalar (base : (IsKilling.rootSystem H).Base)
     invForm (weylVector (IsKilling.rootSystem H) base)
       (weylVector (IsKilling.rootSystem H) base)
 
-/-- The Casimir scalar is the difference of the squared lengths of `lam + ρ` and `ρ`. -/
-theorem casimirScalar_def :
-    casimirScalar base lam =
-      invForm (lam + weylVector (IsKilling.rootSystem H) base)
-          (lam + weylVector (IsKilling.rootSystem H) base) -
-        invForm (weylVector (IsKilling.rootSystem H) base)
-          (weylVector (IsKilling.rootSystem H) base) :=
-  (rfl)
+/-- **The Casimir scalar of the zero weight vanishes**: it is `⟨ρ, ρ⟩ - ⟨ρ, ρ⟩`. This is the
+scalar by which the Casimir element acts on the trivial module. -/
+@[simp]
+theorem casimirScalar_zero : casimirScalar base (0 : Module.Dual K H) = 0 := by
+  simp [casimirScalar]
 
 /-- **The Casimir scalar, expanded.** The scalar is `⟨lam, lam⟩` plus the sum of the pairings of
 `lam` with the positive roots, the cross terms of the square contributing
@@ -395,7 +393,7 @@ theorem casimirScalar_eq_add_sum :
     casimirScalar base lam =
       invForm lam lam + ∑ i ∈ posRootsFinset (IsKilling.rootSystem H) base,
         invForm lam ((IsKilling.rootSystem H).root i) := by
-  rw [casimirScalar_def]
+  rw [casimirScalar]
   have hsymm : invForm (weylVector (IsKilling.rootSystem H) base) lam =
       invForm lam (weylVector (IsKilling.rootSystem H) base) := (invForm_isSymm (H := H)).eq _ _
   have hsum : ∑ i ∈ posRootsFinset (IsKilling.rootSystem H) base,
