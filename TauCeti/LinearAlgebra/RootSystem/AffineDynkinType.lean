@@ -249,7 +249,7 @@ instance : (t : AffineDynkinType) → DecidableRel t.graph.Adj
 /-- **Adjacency in `Dₙ`**, as a condition on node numbers: consecutive numbers along the path
 `0 - 1 - ⋯ - (n-2)`, the leaf `n - 1` at node `1`, and the leaf `n` at node `n - 3`, each in both
 orientations. -/
-lemma graph_D_adj {n : ℕ} (hn : 4 ≤ n) {i j : Fin (n + 1)} :
+@[simp] lemma graph_D_adj {n : ℕ} (hn : 4 ≤ n) {i j : Fin (n + 1)} :
     (D n).graph.Adj i j ↔
       ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) ≤ n - 2) ∨ ((j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) ≤ n - 2) ∨
         ((i : ℕ) = 1 ∧ (j : ℕ) = n - 1) ∨ ((j : ℕ) = 1 ∧ (i : ℕ) = n - 1) ∨
@@ -264,7 +264,7 @@ lemma graph_D_adj {n : ℕ} (hn : 4 ≤ n) {i j : Fin (n + 1)} :
 
 /-- **Adjacency in `E₆ = T₃,₃,₃`**: the six edges, listed as the pairs of node numbers they join,
 smaller number first. -/
-lemma graph_E6_adj (i j : Fin E6.nodes) : E6.graph.Adj i j ↔
+@[simp] lemma graph_E6_adj (i j : Fin E6.nodes) : E6.graph.Adj i j ↔
     (min (i : ℕ) (j : ℕ), max (i : ℕ) (j : ℕ)) ∈
       [((0 : ℕ), (1 : ℕ)), (1, 2), (0, 3), (3, 4), (0, 5), (5, 6)] := by
   revert i j
@@ -272,7 +272,7 @@ lemma graph_E6_adj (i j : Fin E6.nodes) : E6.graph.Adj i j ↔
 
 /-- **Adjacency in `E₇ = T₂,₄,₄`**: the seven edges, listed as the pairs of node numbers they join,
 smaller number first. -/
-lemma graph_E7_adj (i j : Fin E7.nodes) : E7.graph.Adj i j ↔
+@[simp] lemma graph_E7_adj (i j : Fin E7.nodes) : E7.graph.Adj i j ↔
     (min (i : ℕ) (j : ℕ), max (i : ℕ) (j : ℕ)) ∈
       [((0 : ℕ), (1 : ℕ)), (0, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7)] := by
   revert i j
@@ -280,7 +280,7 @@ lemma graph_E7_adj (i j : Fin E7.nodes) : E7.graph.Adj i j ↔
 
 /-- **Adjacency in `E₈ = T₂,₃,₆`**: the eight edges, listed as the pairs of node numbers they join,
 smaller number first. -/
-lemma graph_E8_adj (i j : Fin E8.nodes) : E8.graph.Adj i j ↔
+@[simp] lemma graph_E8_adj (i j : Fin E8.nodes) : E8.graph.Adj i j ↔
     (min (i : ℕ) (j : ℕ), max (i : ℕ) (j : ℕ)) ∈
       [((0 : ℕ), (1 : ℕ)), (0, 2), (2, 3), (0, 4), (4, 5), (5, 6), (6, 7), (7, 8)] := by
   revert i j
