@@ -438,6 +438,12 @@ theorem vertexIdempotent_eq_single (v : Q) :
     vertexIdempotent k v
       = single (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) (1 : k) := (rfl)
 
+variable (k) in
+/-- The vertex idempotent is the basis element of the trivial path at its vertex. -/
+theorem vertexIdempotent_eq_ofPath (v : Q) :
+    vertexIdempotent k v = ofPath (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) := by
+  rw [vertexIdempotent_eq_single, ofPath_eq_single]
+
 /-- The vertex idempotent at the target of a path is a left unit for it. -/
 @[simp]
 theorem vertexIdempotent_mul_single (x : Quiver.TotalPath Q) (r : k) :
