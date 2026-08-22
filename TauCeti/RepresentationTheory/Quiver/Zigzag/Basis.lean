@@ -121,6 +121,7 @@ theorem zigzagMk_backtrackElem_eq_zigzagVolume {i j : V} (h : G.Adj i j) :
   (zigzagVolume_eq_zigzagMk_backtrackElem k G h).symm
 
 /-- The volume class of an isolated vertex is the junk value `0`: it carries no backtrack. -/
+@[simp]
 theorem zigzagVolume_eq_zero_of_isIsolated {i : V} (h : G.IsIsolated i) :
     zigzagVolume k G i = 0 := by
   rw [zigzagVolume, dite_eq_right fun hi => SimpleGraph.exists_adj_iff_not_isIsolated.mp hi h]
@@ -244,6 +245,19 @@ private theorem shortProj_sandwich_of_pos {a b c e : DoubledQuiver G}
   rw [_root_.Quiver.Path.length_comp, _root_.Quiver.Path.length_comp]
   omega
 
+/-- Sandwiching a path between composable paths of length zero reduces to the middle path. -/
+private theorem shortProj_sandwich_of_length_zero {a b c e : DoubledQuiver G}
+    (p : _root_.Quiver.Path a b) (r : _root_.Quiver.Path c a) (q : _root_.Quiver.Path e c)
+    (hp : p.length = 0) (hq : q.length = 0) :
+    shortProj k G (ofPath ⟨a, b, p⟩ * ofPath ⟨c, a, r⟩ * ofPath ⟨e, c, q⟩) =
+      shortProj k G (ofPath ⟨c, a, r⟩) := by
+  obtain rfl := p.eq_of_length_zero hp
+  obtain rfl := p.eq_nil_of_length_zero hp
+  obtain rfl := q.eq_of_length_zero hq
+  obtain rfl := q.eq_nil_of_length_zero hq
+  rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
+    _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp]
+
 /-- Sandwiching between two paths a path of length at least two that the coordinate map already
 kills is again killed by the coordinate map. -/
 private theorem shortProj_sandwich_ofPath {a b c d e f : DoubledQuiver G}
@@ -257,12 +271,7 @@ private theorem shortProj_sandwich_ofPath {a b c d e f : DoubledQuiver G}
       rcases Nat.eq_zero_or_pos (p.length + q.length) with hlen | hlen
       · have hp : p.length = 0 := by omega
         have hq : q.length = 0 := by omega
-        obtain rfl := p.eq_of_length_zero hp
-        obtain rfl := p.eq_nil_of_length_zero hp
-        obtain rfl := q.eq_of_length_zero hq
-        obtain rfl := q.eq_nil_of_length_zero hq
-        rwa [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
-          _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp]
+        rw [shortProj_sandwich_of_length_zero k G p r q hp hq, hzero]
       · exact shortProj_sandwich_of_pos k G p r q hr hlen
     · rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_not_composable hfc, map_zero]
   · rw [ofPath_mul_ofPath_of_not_composable hda, zero_mul, map_zero]
@@ -282,13 +291,8 @@ private theorem shortProj_sandwich_sub {a b c e f : DoubledQuiver G}
       rcases Nat.eq_zero_or_pos (p.length + q.length) with hlen | hlen
       · have hp : p.length = 0 := by omega
         have hq : q.length = 0 := by omega
-        obtain rfl := p.eq_of_length_zero hp
-        obtain rfl := p.eq_nil_of_length_zero hp
-        obtain rfl := q.eq_of_length_zero hq
-        obtain rfl := q.eq_nil_of_length_zero hq
-        rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
-          ofPath_mul_ofPath_of_comp, _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp,
-          _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp,
+        rw [shortProj_sandwich_of_length_zero k G p r₁ q hp hq,
+          shortProj_sandwich_of_length_zero k G p r₂ q hp hq,
           shortProj_ofPath_of_loop k G r₁ h₁, shortProj_ofPath_of_loop k G r₂ h₂, sub_self]
       · rw [shortProj_sandwich_of_pos k G p r₁ q h₁.ge hlen,
           shortProj_sandwich_of_pos k G p r₂ q h₂.ge hlen, sub_zero]

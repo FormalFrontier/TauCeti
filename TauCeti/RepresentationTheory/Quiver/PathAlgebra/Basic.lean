@@ -709,11 +709,13 @@ noncomputable def liftLinear : pathAlgebra k Q →ₗ[k] B :=
   (pathAlgebraBasis k Q).constr k F
 
 /-- The linear extension of an assignment agrees with it on the basis paths. -/
+@[simp]
 theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofPath x) = F x := by
   have h := (pathAlgebraBasis k Q).constr_basis k F x
   rwa [coe_pathAlgebraBasis] at h
 
 /-- The linear extension of an assignment on a basis path with a coefficient. -/
+@[simp]
 theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
     liftLinear k F (single x c) = c • F x := by
   rw [single_eq_smul_ofPath, map_smul, liftLinear_ofPath]
