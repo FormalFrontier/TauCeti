@@ -108,6 +108,7 @@ noncomputable def cochainCompTensor (p q j : ℤ)
     (fun _ _ _ => Cochain.add_comp _ _ _ _)
     (fun _ _ _ => Cochain.smul_comp _ _ _ _)
 
+/-- On a pure tensor, `cochainCompTensor` sends `z₂ ⊗ₜ z₁` to the composite `z₁.comp z₂`. -/
 @[simp]
 lemma cochainCompTensor_tmul (p q j : ℤ)
     (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j)
