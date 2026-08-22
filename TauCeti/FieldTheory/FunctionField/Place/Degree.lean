@@ -32,6 +32,10 @@ a genuine positive natural number.
 * `TauCeti.Place.linearIndependent_over_adjoin_of_linearIndependent_residue`: the heart of the
   matter. If `x` has nonzero order at `P`, then elements of `𝒪_P` whose residues are linearly
   independent over `k` are themselves linearly independent over `k(x)`.
+* `TauCeti.Place.exists_common_X_pow_factor`: the elementary clearing step, dividing a finite
+  family of polynomials, not all zero, by the largest power of `X` that divides every member.
+  It is shared with `TauCeti.FieldTheory.FunctionField.Place.OfValuationSubring`, which runs the
+  same linear-independence argument for Stichtenoth's Lemma 1.1.7.
 * `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
   function field is a finite extension of the constants.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
@@ -92,7 +96,7 @@ private theorem residue_aeval_of_residue_eq_zero {t : P.integers}
 /-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
 divides every member leaves at least one quotient with nonzero constant term. The exponent is
 the least `Polynomial.rootMultiplicity 0` over the nonzero members. -/
-private theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X])
+theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X])
     (hne : ∃ i ∈ s, p i ≠ 0) :
     ∃ m, ∃ q : ι → k[X], (∀ i ∈ s, p i = X ^ m * q i) ∧
       ∃ j ∈ s, (q j).coeff 0 ≠ 0 := by
