@@ -17,7 +17,10 @@ such a state is an infinite list of genuine transitions, read off at those times
 unvisited states remain unconstrained and may contain `Nat.nth`'s junk values.
 
 Combined with `successorArray_def`, which reads a row entry off the visit time, these are the
-facts that make the successor-array change of variables lossless on a recurrent path.
+facts that make every entry of a visited-state row a genuine transition of the path. Recovering
+the path from its successor array needs none of this — `pathOfSuccessors_successorArray` inverts
+the decomposition of an arbitrary sequence — but the later probabilistic argument, which permutes
+the entries within a row, does need them to be real transitions rather than junk.
 
 ## References
 
