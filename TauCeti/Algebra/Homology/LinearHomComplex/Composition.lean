@@ -225,7 +225,7 @@ noncomputable def linearHomComplexUnit :
   linearHomComplexOfHom R (𝟙 F)
 
 /-- The unit is the degree-zero cocycle associated to the identity morphism. -/
-lemma linearHomComplexUnit_eq :
+lemma linearHomComplexUnit_def :
     linearHomComplexUnit R F = linearHomComplexOfHom R (𝟙 F) :=
   (rfl)
 
@@ -237,7 +237,7 @@ lemma linearHomComplexUnit_f_zero_apply (r : R) :
         ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
           (𝟙_ (ModuleCat.{v} R))).inv r) =
       (r • Cochain.ofHom (𝟙 F) : (linearHomComplex R F F).X 0) := by
-  rw [linearHomComplexUnit_eq]
+  rw [linearHomComplexUnit_def]
   rw [linearHomComplexOfHom_f_zero]
   rfl
 
