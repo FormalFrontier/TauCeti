@@ -92,13 +92,7 @@ def normalOpens (_h : IsProductCollarChart k φ V ε) :
 height. -/
 @[simp]
 theorem mem_normalOpens (h : IsProductCollarChart k φ V ε) {t : EuclideanHalfSpace 1} :
-    t ∈ (h.normalOpens : Set (EuclideanHalfSpace 1)) ↔ t.1 0 < ε := by
-  have hopen : (h.normalOpens : Set (EuclideanHalfSpace 1)) =
-      EuclideanHalfSpace.normalIio ε := by
-    rw [normalOpens.eq_def]
-    rfl
-  rw [hopen]
-  exact EuclideanHalfSpace.mem_normalIio
+    t ∈ h.normalOpens ↔ t.1 0 < ε := EuclideanHalfSpace.mem_normalIio
 
 private def prodEquiv (h : IsProductCollarChart k φ V ε) :
     h.sourceOpens ≃ h.boundaryOpens × h.normalOpens where
@@ -335,7 +329,6 @@ theorem coe_diffeomorphProd_symm (h : IsProductCollarChart k φ V ε) (hk : k �
 
 /-- In collar coordinates, the boundary retraction keeps the tangential coordinate and sets the
 normal coordinate to zero. -/
-@[simp]
 theorem map_diffeomorphProd_fst (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0)
     (y : h.sourceOpens) :
     φ (((h.diffeomorphProd hk y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
