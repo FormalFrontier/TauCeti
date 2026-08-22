@@ -286,7 +286,7 @@ section Algebra
 
 variable {K : Type*} [CommSemiring K] [Algebra K R] [DecidableEq ι] [Algebra K D]
 
-private noncomputable def LinearEquiv.conjAlgEquivOfAlgEquiv
+private noncomputable def conjAlgEquivOfAlgEquiv
     {S M N : Type*} [Semiring S] [Algebra K S]
     [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module S N]
     [Module K M] [Module K N] [IsScalarTower K R M] [IsScalarTower K S N]
@@ -329,7 +329,7 @@ theorem nonempty_end_algEquiv_of_algEquiv_matrix [Nonempty ι]
   obtain ⟨g⟩ := IsIsotypicOfType.of_isSimpleRing (Matrix ι ι D) (ι → D) (Matrix ι ι D)
     (Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv I)
   let e := f.toRingEquiv.toSemilinearEquiv.submoduleMap I
-  exact ⟨((LinearEquiv.conjAlgEquivOfAlgEquiv f e).trans (g.conjAlgEquiv K)).trans
+  exact ⟨((conjAlgEquivOfAlgEquiv f e).trans (g.conjAlgEquiv K)).trans
     (Matrix.mulOppositeAlgEquivEnd ι D K).symm⟩
 
 end Algebra
