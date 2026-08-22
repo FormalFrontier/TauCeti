@@ -313,8 +313,9 @@ theorem diagonalTorusCoordinateMap_baseChange
   apply _root_.CommHopfAlgCat.hom_ext
   apply coordinateHopfAlgebra_bialgHom_ext K N
   intro i j
-  rw [coordinateHopfAlgebraBaseChangeMap_X,
-    DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply,
+  rw [coordinateHopfAlgebraBaseChangeMap_X]
+  change (DiagonalizableGroup.baseChangeCoordinateRingIso R K _).hom.hom _ = _
+  rw [DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply,
     diagonalTorusCoordinateMap_X, diagonalTorusCoordinateMap_X]
   split_ifs <;> simp
 

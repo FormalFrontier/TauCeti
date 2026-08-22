@@ -110,7 +110,7 @@ scalar-tensor bialgebra equivalence. -/
 theorem baseChangeCoordinateHopfAlgebraIso_hom_apply
     (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
     (G : FGCommGrpCat.{u}) (x : K ⊗[k] MonoidAlgebra k G) :
-    (baseChangeCoordinateHopfAlgebraIso k K G).hom.hom x =
+    (baseChangeCoordinateRingIso k K G).hom.hom x =
       TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K x :=
   rfl
 
