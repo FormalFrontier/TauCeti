@@ -103,9 +103,10 @@ private theorem minkowski_bound_lt_six
       nlinarith [Real.pi_gt_d2]
 
 /-- **The Minkowski upper bound for `ℚ(√-21)`.** Every ideal class contains an integral ideal of
-norm at most `5`, and such an ideal is the unit ideal, the unique prime above the ramified prime
-`2` (also in the norm `4` case, where it is principal), the unique prime above the ramified prime
-`3`, or one of the at most two primes above `5`. Hence the class number is at most `5`. -/
+norm at most `5`: norm `2` gives the unique prime above the ramified prime `2`, norm `3` gives the
+unique prime above the ramified prime `3`, norm `4` gives the square of the prime above `2` and
+hence the trivial class, while norm `5` gives one of the at most two primes above `5`. Hence the
+class number is at most `5`. -/
 private theorem classNumber_le_five_of_minpoly_eq_X_sq_add_twenty_one
     (hmin : minpoly ℤ θ = X ^ 2 - C (-21 : ℤ))
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : NumberField.classNumber K ≤ 5 := by
