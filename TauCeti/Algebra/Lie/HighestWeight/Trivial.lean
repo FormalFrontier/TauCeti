@@ -118,7 +118,7 @@ private theorem IsHighestWeightVector.lie_eq_zero_of_mem_rootSpace_of_mem_negRoo
     simp
   rw [hadd] at hmem
   rw [genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero hv hgen halpha] at hmem
-  exact hmem
+  simpa using hmem
 
 /-- Every element of `L` annihilates a generating highest weight vector of weight zero in a
 finite-dimensional module. -/
