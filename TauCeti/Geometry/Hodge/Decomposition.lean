@@ -199,8 +199,9 @@ theorem proj_apply (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) :
   (rfl)
 
 /-- A Hodge projection lands in the corresponding Hodge component. -/
-theorem proj_mem (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) : hs.proj p x ∈ hs.piece p :=
-  (hs.decomposition x p).2
+theorem proj_mem (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) : hs.proj p x ∈ hs.piece p := by
+  rw [proj_apply]
+  exact (hs.decomposition x p).2
 
 /-- The Hodge projection of degree `p` fixes the Hodge component of degree `p`. -/
 @[simp]
@@ -231,7 +232,8 @@ theorem mem_iSup_of_proj_mem (hs : HodgeStructureOn W ω n) {S : ℤ → Submodu
   have hx : x = ∑ p ∈ (hs.decomposition x).support, hs.proj p x := by
     conv_lhs => rw [← hs.decomposition.symm_apply_apply x]
     rw [decomposition_symm_apply, DirectSum.coeLinearMap_eq_dfinsuppSum]
-    rfl
+    rw [DFinsupp.sum]
+    simp only [proj_apply]
   rw [hx]
   exact Submodule.sum_mem _ fun p _ ↦ Submodule.mem_iSup_of_mem p (h p)
 
