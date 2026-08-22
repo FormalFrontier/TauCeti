@@ -13,10 +13,10 @@ public import TauCeti.Algebra.HopfAlgebra.Kernel
 
 Let `f : H ⟶ K` be a morphism of commutative Hopf algebras over a field, representing a
 homomorphism from `Spec K` to `Spec H`. Its scheme-theoretic image has coordinate algebra
-`H / ker f`. This file proves that the image is normal when the ambient conjugation action on
-`Spec H` lifts to an action on `Spec K` making the homomorphism equivariant.
+`H / ker f`. This file proves that the image is normal when ambient conjugation admits an
+algebra-homomorphic lift along the coordinate map.
 
-In coordinate algebras, a lifted action is an algebra homomorphism
+In coordinate algebras, such a lift is an algebra homomorphism
 
 ```text
 α♯ : K ⟶ H ⊗ K
@@ -87,17 +87,18 @@ private theorem ker_tensorProduct_map_id (f : H →ₐ[k] K) :
     rw [map_zero]
     exact (AlgHom.congr_fun hcomp x).trans hx
   · intro hx
-    change Algebra.TensorProduct.map (AlgHom.id k H) q x = 0 at hx
+    have hx' : Algebra.TensorProduct.map (AlgHom.id k H) q x = 0 := by
+      simpa only [AlgHom.coe_toRingHom] using hx
     rw [← AlgHom.congr_fun hcomp x]
-    simp only [AlgHom.comp_apply, hx, map_zero]
+    simp only [AlgHom.comp_apply, hx', map_zero]
 
 /-- **An equivariant affine-group homomorphism has normal scheme-theoretic image.**
 
 The morphism `f : H →ₐc[k] K` is contravariant: it represents a homomorphism from the
 affine group with coordinate algebra `K` into the ambient group with coordinate algebra `H`.
-The algebra homomorphism `action` represents an action of the ambient group on the source. The
-displayed equality says that `f` intertwines this action with ambient conjugation. Consequently
-the kernel Hopf ideal, and hence the scheme-theoretic image `Spec (H / ker f)`, is normal. -/
+The algebra homomorphism `action` lifts ambient conjugation along `f`; no action-law hypotheses
+are required. Consequently the kernel Hopf ideal, and hence the scheme-theoretic image
+`Spec (H / ker f)`, is normal. -/
 theorem isNormal_ker_of_conjugation_equivariant (f : H →ₐc[k] K)
     (action : K →ₐ[k] H ⊗[k] K)
     (equivariant :
