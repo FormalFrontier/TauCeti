@@ -12,11 +12,12 @@ public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 /-!
 # Unipotence of faithfully flat affine group images
 
-Let `f : H ⟶ K` be a morphism of commutative Hopf algebras over a field. Contravariantly,
-`f` represents a homomorphism from `Spec K` to `Spec H`, and its scheme-theoretic image has
-coordinate algebra `CommHopfAlgCat.image f = H / ker f`. When the canonical inclusion
-`CommHopfAlgCat.image f ⟶ K` is faithfully flat and `K` is of finite type over the ground
-field, every algebraically closed point of the image lifts to a point of `Spec K`.
+Let `f : H ⟶ K` be a finite-type faithfully flat morphism of commutative Hopf algebras over a
+field. Contravariantly, every algebraically closed point of `Spec H` lifts to a point of
+`Spec K`, so geometric unipotence descends from `K` to `H`. In particular, for an arbitrary
+morphism, its scheme-theoretic image has coordinate algebra
+`CommHopfAlgCat.image f = H / ker f`; finite type of `K` makes the canonical inclusion
+`CommHopfAlgCat.image f ⟶ K` finite type, giving the image result.
 
 Unipotence is preserved when a point is precomposed with a Hopf-algebra morphism. It therefore
 descends from `Spec K` to the scheme-theoretic image. This supplies the geometric-point step in
@@ -26,6 +27,8 @@ unipotent.
 
 ## Main declaration
 
+* `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.of_faithfullyFlat`: geometric
+  unipotence descends along a finite-type faithfully flat coordinate morphism.
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.image_of_faithfullyFlat`: a
   faithfully flat finite-type affine group image has only unipotent geometric points when its
   source does.
@@ -56,6 +59,24 @@ namespace geometricallyUnipotentPointsCommHopfAlgProperty
 variable {k : Type u} [Field k]
 variable {H K : _root_.CommHopfAlgCat.{v} k}
 
+/-- Geometric unipotence descends along a finite-type faithfully flat coordinate morphism. -/
+theorem of_faithfullyFlat (f : H ⟶ K) (hfinite : f.hom.toAlgHom.FiniteType)
+    (hflat : f.hom.toAlgHom.toRingHom.FaithfullyFlat)
+    (hK : geometricallyUnipotentPointsCommHopfAlgProperty k K) :
+    geometricallyUnipotentPointsCommHopfAlgProperty k H := by
+  rw [geometricallyUnipotentPointsCommHopfAlgProperty_iff] at hK ⊢
+  intro g
+  obtain ⟨(q : WithConv (K →ₐ[k] AlgebraicClosure k)), hq⟩ :=
+    CommHopfAlgCat.mapPointsFunctor_app_surjective_of_faithfullyFlat
+      (AlgebraicClosure k) f hfinite hflat g
+  have hqunipotent := (hK q).mapDomain f.hom
+  have hmap : AlgHom.mapDomain f.hom q = g := by
+    rw [AlgHom.mapDomain_apply]
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hq
+    exact hq
+  rw [hmap] at hqunipotent
+  exact hqunipotent
+
 /-- The scheme-theoretic image of a finite-type geometrically unipotent affine group is
 geometrically unipotent when the source-to-image morphism is faithfully flat.
 
@@ -66,19 +87,12 @@ theorem image_of_faithfullyFlat (f : H ⟶ K) [Algebra.FiniteType k K]
     (hK : geometricallyUnipotentPointsCommHopfAlgProperty k K)
     (hflat : (CommHopfAlgCat.imageι f).hom.toAlgHom.toRingHom.FaithfullyFlat) :
     geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.image f) := by
-  rw [geometricallyUnipotentPointsCommHopfAlgProperty_iff] at hK ⊢
-  intro g
   have hfinite : (CommHopfAlgCat.imageι f).hom.toAlgHom.FiniteType := by
     apply AlgHom.FiniteType.of_comp_finiteType
       (f := Algebra.ofId k (CommHopfAlgCat.image f))
     rw [Algebra.comp_ofId]
     exact RingHom.finiteType_algebraMap.mpr inferInstance
-  obtain ⟨q, hq⟩ := CommHopfAlgCat.mapPointsFunctor_app_surjective_of_faithfullyFlat
-    (AlgebraicClosure k) (CommHopfAlgCat.imageι f) hfinite hflat g
-  have hqunipotent := (hK q).mapDomain (CommHopfAlgCat.imageι f).hom
-  have hmap : AlgHom.mapDomain (CommHopfAlgCat.imageι f).hom q = g := hq
-  rw [hmap] at hqunipotent
-  exact hqunipotent
+  exact of_faithfullyFlat (CommHopfAlgCat.imageι f) hfinite hflat hK
 
 end geometricallyUnipotentPointsCommHopfAlgProperty
 
