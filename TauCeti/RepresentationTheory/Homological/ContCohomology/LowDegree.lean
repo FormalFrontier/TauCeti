@@ -381,6 +381,7 @@ variable {G : Type u} [Group G] [TopologicalSpace G]
   [DistribMulAction G M]
 
 /-- The inverse formula for a continuous `1`-cocycle. -/
+@[simp]
 theorem map_inv_of_mem_Z1 {f : G → M} (hf : f ∈ Z1 G M) (g : G) : g • f g⁻¹ = -f g :=
   groupCohomology.map_inv_of_isCocycle₁ (mem_Z1_iff.1 hf).2 g
 
@@ -519,22 +520,26 @@ noncomputable def discreteH2Equiv : DiscreteH2 G M ≃+ H2 G M :=
 variable {G M}
 
 /-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
+@[simp]
 theorem H1pi_eq_zero_iff {f : Z1 G M} :
     H1pi G M f = 0 ↔ (f : G → M) ∈ B1 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
 /-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
+@[simp]
 theorem H2pi_eq_zero_iff {f : Z2 G M} :
     H2pi G M f = 0 ↔ (f : G × G → M) ∈ B2 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
 /-- Two continuous `1`-cocycles have the same class exactly when they differ by a coboundary. -/
+@[simp]
 theorem H1pi_eq_iff {f f' : Z1 G M} :
     H1pi G M f = H1pi G M f' ↔ (f : G → M) - f' ∈ B1 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
     AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
 
 /-- Two continuous `2`-cocycles have the same class exactly when they differ by a coboundary. -/
+@[simp]
 theorem H2pi_eq_iff {f f' : Z2 G M} :
     H2pi G M f = H2pi G M f' ↔ (f : G × G → M) - f' ∈ B2 G M := by
   rw [QuotientAddGroup.mk'_apply, QuotientAddGroup.mk'_apply, QuotientAddGroup.eq_iff_sub_mem,
