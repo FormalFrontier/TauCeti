@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.Weights.RootSystem
+public import TauCeti.Algebra.Lie.Weights.Basic
 
 /-!
 # Root vectors normalised against the coroots
@@ -58,8 +58,6 @@ defined once the root vectors are.
 
 ## Main results
 
-* `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`: reading a vanishing sum of four weights as an
-  equation between opposite pair sums.
 * `TauCeti.Weight.ne_neg_of_isNonZero`: negation fixes no root.
 * `TauCeti.exists_rootPairRepresentatives`: a set of weights containing exactly one of
   `α` and `-α` for every root `α`.
@@ -252,22 +250,6 @@ theorem smul (u : Weight K H L → K) (hu : ∀ α, α.IsNonZero → u α * u (-
   eq_zero_of_isZero α hα := by rw [hx.eq_zero_of_isZero α hα, smul_zero]
 
 end IsSl2System
-
-omit [CharZero K] in
-/-- If four weights sum to zero and a weight `μ` names the sum of the first two, then `-μ` names
-the sum of the last two.
-
-This turns a relation among four weights into the hypothesis that a structure constant at the
-opposite pair asks for: it derives the equations pairing `δ` with one of `α`, `β` and `γ` inside
-`TauCeti.IsSl2System.structureConstant_four_term`, and the negated root sum inside
-`TauCeti.IsSl2System.mul_structureConstant_eq_of_map_eq_smul_neg`. -/
-theorem Weight.coe_neg_eq_add_of_coe_eq_add {μ : Weight K H L} {a b c d : H → K}
-    (hsum : a + b + c + d = 0) (hμ : (μ : H → K) = a + b) :
-    ((-μ : Weight K H L) : H → K) = c + d := by
-  funext y
-  have hy := congrFun hsum y
-  simp only [Weight.coe_neg, hμ, Pi.add_apply, Pi.neg_apply, Pi.zero_apply] at hy ⊢
-  linear_combination -hy
 
 /-- **A root is not its own negative.** Evaluating at the coroot separates the two: a root takes
 the value `2` there, and its negative the value `-2`. -/
