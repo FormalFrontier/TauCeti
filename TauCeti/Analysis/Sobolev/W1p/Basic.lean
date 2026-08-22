@@ -370,6 +370,32 @@ omit [FiniteDimensional ℝ E] in
 @[simp]
 theorem W1p.gradientL_apply (u : W1p mu Omega p) : W1p.gradientL u = W1p.gradient u := (rfl)
 
+omit [FiniteDimensional ℝ E] in
+/-- The Sobolev value component agrees almost everywhere with the first component of its
+ambient value-gradient jet. -/
+theorem W1p.value_apply_ae (u : W1p mu Omega p) :
+    ∀ᵐ x ∂mu.restrict Omega,
+      W1p.value u x = WithLp.fst ((u : Sobolev1JetLp mu Omega p) x) := by
+  -- `W1p.valueL` is the ambient jet projection precomposed with the inclusion, so the two
+  -- value components are the same `Lᵖ` class; name that equation instead of relying on it
+  -- silently.
+  have hvalue : W1p.value u = Sobolev1JetLp.value (u : Sobolev1JetLp mu Omega p) := (rfl)
+  rw [hvalue]
+  exact Sobolev1JetLp.value_apply_ae (u : Sobolev1JetLp mu Omega p)
+
+omit [FiniteDimensional ℝ E] in
+/-- The Sobolev gradient component agrees almost everywhere with the second component of its
+ambient value-gradient jet. -/
+theorem W1p.gradient_apply_ae (u : W1p mu Omega p) :
+    ∀ᵐ x ∂mu.restrict Omega,
+      W1p.gradient u x = WithLp.snd ((u : Sobolev1JetLp mu Omega p) x) := by
+  -- As for `W1p.value_apply_ae`: the Sobolev gradient is the ambient jet gradient of the
+  -- underlying jet, so record that equation before appealing to the ambient lemma.
+  have hgradient : W1p.gradient u = Sobolev1JetLp.gradient (u : Sobolev1JetLp mu Omega p) :=
+    (rfl)
+  rw [hgradient]
+  exact Sobolev1JetLp.gradient_apply_ae (u : Sobolev1JetLp mu Omega p)
+
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
     [Fact (1 <= p)] in
 private theorem memLp_assembleSobolev1Jet (u : Lp ℝ p (mu.restrict Omega))
@@ -477,6 +503,45 @@ omit [FiniteDimensional ℝ E] in
 theorem W1p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq (u : W1p mu Omega 2) :
     ‖u‖ ^ 2 = ‖W1p.value u‖ ^ 2 + ‖W1p.gradient u‖ ^ 2 :=
   norm_sq_eq_norm_value_sq_add_norm_gradient_sq_ambient u.1
+
+/-- The integral of the squared pointwise norm of an `L²` function is its squared `L²` norm.
+
+Kept `private`: the natural home for this generic `Lp` fact is the root `MeasureTheory.Lp`
+namespace, which is unreachable from inside `namespace TauCeti`, and its only uses are the two
+Sobolev specializations below. -/
+private theorem integral_norm_sq_eq_norm_sq {alpha F : Type*} [MeasurableSpace alpha]
+    {m : Measure alpha} [NormedAddCommGroup F] [InnerProductSpace ℝ F] (f : Lp F 2 m) :
+    ∫ x, ‖f x‖ ^ 2 ∂m = ‖f‖ ^ 2 := by
+  refine Eq.symm ?_
+  rw [← real_inner_self_eq_norm_sq f, L2.inner_def]
+  exact integral_congr_ae (Filter.Eventually.of_forall fun x => real_inner_self_eq_norm_sq (f x))
+
+omit [FiniteDimensional ℝ E] in
+/-- The squared pointwise norm of a Sobolev gradient is integrable. -/
+theorem W1p.integrable_norm_gradient_sq (u : W1p mu Omega 2) :
+    Integrable (fun x => ‖W1p.gradient u x‖ ^ 2) (mu.restrict Omega) :=
+  (memLp_two_iff_integrable_sq_norm (Lp.memLp (W1p.gradient u)).aestronglyMeasurable).1
+    (Lp.memLp (W1p.gradient u))
+
+omit [FiniteDimensional ℝ E] in
+/-- The squared pointwise value of a real Sobolev function is integrable. -/
+theorem W1p.integrable_value_sq (u : W1p mu Omega 2) :
+    Integrable (fun x => (W1p.value u x) ^ 2) (mu.restrict Omega) :=
+  (Lp.memLp (W1p.value u)).integrable_sq
+
+omit [FiniteDimensional ℝ E] in
+/-- The integral of the squared Sobolev gradient is its squared `L²` norm. -/
+theorem W1p.integral_norm_gradient_sq_eq_norm_gradient_sq (u : W1p mu Omega 2) :
+    ∫ x in Omega, ‖W1p.gradient u x‖ ^ 2 ∂mu = ‖W1p.gradient u‖ ^ 2 :=
+  integral_norm_sq_eq_norm_sq (W1p.gradient u)
+
+omit [FiniteDimensional ℝ E] in
+/-- The integral of the squared Sobolev value is its squared `L²` norm. -/
+theorem W1p.integral_value_sq_eq_norm_value_sq (u : W1p mu Omega 2) :
+    ∫ x in Omega, (W1p.value u x) ^ 2 ∂mu = ‖W1p.value u‖ ^ 2 := by
+  rw [← integral_norm_sq_eq_norm_sq (W1p.value u)]
+  exact integral_congr_ae (Filter.Eventually.of_forall fun x => by
+    simp [Real.norm_eq_abs, sq_abs])
 
 /-- `W^{1,p}(Ω)` is complete in its value-gradient graph norm. -/
 instance : CompleteSpace (W1p mu Omega p) :=

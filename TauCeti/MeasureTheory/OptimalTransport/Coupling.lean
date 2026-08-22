@@ -39,6 +39,8 @@ measures, and the probability case is packaged separately as a subtype of
 * `TauCeti.isCoupling_map_swap_iff` and `TauCeti.isCoupling_map_prodMap_iff` —
   invariance of the relation under the coordinate swap and under measurable equivalences of the
   two factors;
+* `TauCeti.isCoupling_toMeasure_iff` — the coupling condition on bundled probability measures,
+  as the pair of equations for the two marginal pushforwards;
 * `TauCeti.IsCoupling.eq_map_prodMk` — a coupling out of a Dirac measure is the
   pushforward of its target along `y ↦ (x, y)`, so it is unique; `IsCoupling.eq_dirac`
   specialises this to a pair of Dirac measures.
@@ -275,6 +277,19 @@ theorem IsCoupling.eq_dirac (hπ : IsCoupling π (Measure.dirac x) (Measure.dira
   rw [hπ.eq_map_prodMk, Measure.map_dirac' measurable_prodMk_left]
 
 end Dirac
+
+/-- Being a coupling, read on bundled probability measures: the two marginal pushforwards are the
+prescribed marginals. This is the form in which the coupling condition is a pair of preimages of
+points under the marginal maps. -/
+@[simp]
+theorem isCoupling_toMeasure_iff {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
+    {π : ProbabilityMeasure (X × Y)} :
+    IsCoupling π.toMeasure μ.toMeasure ν.toMeasure ↔
+      π.map measurable_fst.aemeasurable = μ ∧ π.map measurable_snd.aemeasurable = ν := by
+  rw [← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_fst.aemeasurable),
+    ← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_snd.aemeasurable),
+    ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_map]
+  exact ⟨fun h ↦ ⟨h.fst_eq, h.snd_eq⟩, fun h ↦ ⟨h.1, h.2⟩⟩
 
 /-- Couplings of two probability measures, bundled as a subtype of the probability measures on
 the product. The unbundled relation `TauCeti.IsCoupling` is the one to use for raw
