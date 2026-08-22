@@ -18,11 +18,10 @@ only the filtration varies from point to point, which is what makes the collecti
 space for polarized Hodge structures of a fixed numerical type.
 
 The prescribed numerical data is packaged as `TauCeti.Hodge.HodgeType`: a weight, Hodge numbers of
-finite support, and Hodge symmetry `h p = h (weight - p)`. Every finite-dimensional Hodge structure
-has one (`TauCeti.Hodge.HodgeStructureOn.hodgeType`), so the symmetry axiom excludes exactly the
-unrealizable numerical types, and a point of the period domain is precisely a polarized Hodge
-structure whose own Hodge type is the prescribed one
-(`TauCeti.Hodge.PeriodDomain.Point.hodgeType_eq`).
+finite support, and Hodge symmetry `h p = h (weight - p)`. Every Hodge structure has one
+(`TauCeti.Hodge.HodgeStructureOn.hodgeType`), so the symmetry axiom excludes no type that a Hodge
+structure realizes, and the Hodge structure underlying a point of the period domain has the
+prescribed Hodge type (`TauCeti.Hodge.PeriodDomain.Point.hodgeType_eq`).
 
 The main theorem is the numerical shadow of the Hodge decomposition: the prescribed Hodge numbers
 sum to the dimension of the complexification, equivalently to the rank of the lattice. It is a
@@ -39,7 +38,8 @@ of period-domain points is out of scope; it needs flag-variety topology.
 * `TauCeti.Hodge.HodgeType`: a weight and a symmetric, finitely supported family of Hodge numbers.
 * `TauCeti.Hodge.HodgeStructureOn.hodgeType`: the Hodge type of a Hodge structure.
 * `TauCeti.Hodge.PeriodDomain.Point`: a point of the period domain of `(V, Qint)` at a fixed type.
-* `TauCeti.Hodge.PeriodDomain.Point.finsum_h`: **the Hodge numbers partition the dimension.**
+* `TauCeti.Hodge.PeriodDomain.Point.finsum_h_eq_finrank`: **the Hodge numbers partition the
+  dimension.**
 * `TauCeti.Hodge.tateHodgeType`: the Hodge type of the Tate structure `ℤ(m)`.
 * `TauCeti.Hodge.tatePoint`: the Tate structure `ℤ(m)` as a point of its period domain.
 
@@ -77,26 +77,25 @@ namespace HodgeStructureOn
 variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ω : Conjugation W} {n : ℤ}
 
-/-- The Hodge type of a finite-dimensional Hodge structure: its weight together with its own Hodge
-numbers. -/
-noncomputable def hodgeType (hs : HodgeStructureOn W ω n) [hW : FiniteDimensional ℂ W] :
-    HodgeType where
+/-- The Hodge type of a Hodge structure: its weight together with its own Hodge numbers.
+
+Both axioms of `HodgeType` hold for any Hodge structure: the support is finite because the Hodge
+filtration is bounded, and the symmetry is Hodge symmetry. Following the convention of
+`Module.finrank`, an infinite-dimensional Hodge component contributes the Hodge number `0`; the
+statements reading these numbers as a dimension count, such as
+`HodgeStructureOn.finsum_hodgeNumber_eq_finrank`, assume finite-dimensionality separately. -/
+noncomputable def hodgeType (hs : HodgeStructureOn W ω n) : HodgeType where
   weight := n
   h := hs.hodgeNumber
-  finite_support := by
-    refine hs.finite_setOf_piece_ne_bot.subset fun p hp hbot ↦ hp ?_
-    rw [hodgeNumber_def]
-    exact Submodule.finrank_eq_zero.mpr hbot
+  finite_support := hs.finite_setOf_hodgeNumber_ne_zero
   symm := hs.hodgeNumber_symm
 
 @[simp]
-theorem hodgeType_weight (hs : HodgeStructureOn W ω n) [FiniteDimensional ℂ W] :
-    hs.hodgeType.weight = n :=
+theorem hodgeType_weight (hs : HodgeStructureOn W ω n) : hs.hodgeType.weight = n :=
   (rfl)
 
 @[simp]
-theorem hodgeType_h (hs : HodgeStructureOn W ω n) [FiniteDimensional ℂ W] :
-    hs.hodgeType.h = hs.hodgeNumber :=
+theorem hodgeType_h (hs : HodgeStructureOn W ω n) : hs.hodgeType.h = hs.hodgeNumber :=
   (rfl)
 
 end HodgeStructureOn
@@ -113,7 +112,11 @@ The lattice is a finitely generated free `ℤ`-module, so the complexification i
 and the prescribed Hodge numbers really are the dimensions of the Hodge components.
 
 The form does not vary with the point; it enters through the `Prop`-valued `IsPolarization` and so
-is not carried twice. -/
+is not carried twice.
+
+The `Module.Free` and `Module.Finite` binders are spelled out on the header rather than left to the
+surrounding `variable` block: automatic instance inclusion applies to theorems, not to a
+`structure`, so omitting them would drop them from the signature entirely. -/
 structure PeriodDomain.Point [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : IsBaseChange ℂ ιℂ)
     (n : ℤ) (Qint : LinearMap.BilinForm ℤ V) (htype : HodgeType) where
   /-- The varying datum: a Hodge filtration on the complexification. -/
@@ -129,10 +132,17 @@ namespace PeriodDomain.Point
 
 variable {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ} {Qint : LinearMap.BilinForm ℤ V} {htype : HodgeType}
 
-/-- A point of the period domain is exactly a `Qint`-polarized Hodge structure whose own Hodge
-type is the prescribed one. -/
-theorem hodgeType_eq (D : PeriodDomain.Point hℂ n Qint htype) :
-    D.hs.hodgeType (hW := finiteDimensional_complexification (V := V) hℂ) = htype := by
+/-- Two points of the period domain agree as soon as their Hodge filtrations do: the remaining
+fields are propositions. -/
+@[ext]
+theorem ext {D D' : PeriodDomain.Point hℂ n Qint htype} (h : D.hs = D'.hs) : D = D' := by
+  cases D
+  cases D'
+  subst h
+  rfl
+
+/-- The Hodge structure underlying a point of the period domain has the prescribed Hodge type. -/
+theorem hodgeType_eq (D : PeriodDomain.Point hℂ n Qint htype) : D.hs.hodgeType = htype := by
   ext p
   · exact D.htype_weight.symm
   · exact D.hodge_numbers p
@@ -145,16 +155,16 @@ theorem isPolarizable (D : PeriodDomain.Point hℂ n Qint htype) : IsPolarizable
 prescribed Hodge numbers sum to the dimension of the complexification.
 
 This is the numerical shadow of the Hodge decomposition `V_ℂ = ⨁_p H^{p,n-p}`. -/
-theorem finsum_h (D : PeriodDomain.Point hℂ n Qint htype) :
+theorem finsum_h_eq_finrank (D : PeriodDomain.Point hℂ n Qint htype) :
     ∑ᶠ p, htype.h p = Module.finrank ℂ Vℂ := by
-  have := finiteDimensional_complexification (V := V) hℂ
-  rw [← HodgeStructureOn.finsum_hodgeNumber D.hs]
+  have := finite_of_isBaseChange hℂ
+  rw [← HodgeStructureOn.finsum_hodgeNumber_eq_finrank D.hs]
   exact finsum_congr fun p ↦ (D.hodge_numbers p).symm
 
 /-- The prescribed Hodge numbers of a point of the period domain sum to the rank of the lattice. -/
 theorem finsum_h_eq_finrank_lattice (D : PeriodDomain.Point hℂ n Qint htype) :
     ∑ᶠ p, htype.h p = Module.finrank ℤ V := by
-  rw [D.finsum_h, finrank_complexification hℂ]
+  rw [D.finsum_h_eq_finrank, finrank_of_isBaseChange hℂ]
 
 end PeriodDomain.Point
 
@@ -165,9 +175,7 @@ other Hodge number zero. -/
 def tateHodgeType (m : ℤ) : HodgeType where
   weight := -2 * m
   h p := if p = -m then 1 else 0
-  finite_support := (Set.finite_singleton (-m)).subset fun p hp ↦ by
-    by_contra hne
-    exact hp (ite_eq_right (by simpa using hne))
+  finite_support := (Set.finite_singleton (-m)).subset fun p hp ↦ by simpa using hp
   symm p := by
     have hiff : (-2 * m - p = -m) ↔ (p = -m) := by omega
     simp only [hiff]
@@ -180,6 +188,11 @@ theorem tateHodgeType_weight (m : ℤ) : (tateHodgeType m).weight = -2 * m :=
 theorem tateHodgeType_h (m p : ℤ) : (tateHodgeType m).h p = if p = -m then 1 else 0 :=
   (rfl)
 
+/-- The Hodge numbers of the Tate structure `ℤ(m)`: one in bidegree `(-m,-m)`, zero elsewhere. -/
+@[simp]
+theorem tate_hodgeNumber (m p : ℤ) : (tate m).hodgeNumber p = if p = -m then 1 else 0 := by
+  rw [HodgeStructureOn.hodgeNumber_def, finrank_tate_piece]
+
 /-- The Tate structure `ℤ(m)`, polarized by multiplication of integers, as a point of the period
 domain of the rank-one lattice at its own Hodge type. -/
 noncomputable def tatePoint (m : ℤ) :
@@ -189,14 +202,14 @@ noncomputable def tatePoint (m : ℤ) :
   htype_weight := (rfl)
   pol := isPolarization_tate m
   hodge_numbers p := by
-    rw [HodgeStructureOn.hodgeNumber_def, finrank_tate_piece, tateHodgeType_h]
+    rw [tate_hodgeNumber, tateHodgeType_h]
 
 /-- The Hodge type of the Tate structure `ℤ(m)` is the prescribed one. -/
 theorem tate_hodgeType (m : ℤ) : (tate m).hodgeType = tateHodgeType m :=
   (tatePoint m).hodgeType_eq
 
 /-- The single Hodge number of `ℤ(m)` accounts for the whole rank-one lattice. -/
-theorem finsum_tateHodgeType_h (m : ℤ) : ∑ᶠ p, (tateHodgeType m).h p = 1 := by
+theorem finsum_tateHodgeType_h_eq_one (m : ℤ) : ∑ᶠ p, (tateHodgeType m).h p = 1 := by
   rw [(tatePoint m).finsum_h_eq_finrank_lattice, Module.finrank_self]
 
 end TauCeti.Hodge

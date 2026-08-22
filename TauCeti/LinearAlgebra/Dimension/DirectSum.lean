@@ -61,11 +61,8 @@ theorem finsum_finrank_eq_finrank_of_isInternal {K M ι : Type*} [DivisionRing K
     by_cases hi : i ∈ hV.toFinset
     · exact le_iSup (fun j : (hV.toFinset : Finset ι) ↦ V j) ⟨i, hi⟩
     · simp [hbot i hi]
-  have hsupport : (Function.support fun i ↦ Module.finrank K (V i)) ⊆ hV.toFinset := by
-    intro i hi
-    refine hV.mem_toFinset.2 fun hb ↦ hi ?_
-    change Module.finrank K (V i) = 0
-    rw [hb, finrank_bot]
+  have hsupport : (Function.support fun i ↦ Module.finrank K (V i)) ⊆ hV.toFinset :=
+    fun i hi ↦ hV.mem_toFinset.2 fun hb ↦ hi (by simp [hb])
   rw [finsum_eq_sum_of_support_subset _ hsupport, finrank_eq_sum_finrank_of_isInternal hsub]
   exact (Finset.sum_coe_sort _ _).symm
 
