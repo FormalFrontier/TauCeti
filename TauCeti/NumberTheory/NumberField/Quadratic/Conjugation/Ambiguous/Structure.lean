@@ -17,12 +17,13 @@ import Mathlib.RingTheory.Ideal.Int
 # The structure of an ambiguous ideal of a quadratic field
 
 Let `K` be a quadratic number field with quadratic conjugation `σ`. An ideal `I` of `𝓞 K` is
-*ambiguous* when `σI = I`. This file describes the ambiguous ideals completely: they are exactly the
-products
+*ambiguous* when `σI = I`. This file describes the *nonzero* ambiguous ideals completely: they are
+exactly the products
 
 `I = n 𝓞 K · ∏_{p ∈ s} 𝔭_p`
 
 of a positive rational integer with a product of **distinct** primes above ramified rational primes.
+The zero ideal is ambiguous as well, but it is not of this form, every such product being nonzero.
 
 The proof is an induction on the absolute norm, peeling off at each step a conjugation-stable
 divisor of one of two shapes. Let `𝔭` be a maximal ideal containing `I` and `p` the rational prime
@@ -54,14 +55,15 @@ the Form x² + ny²*, §6.A, for the classical ambiguous class number formula th
 
 ## Main results
 
-* `NumberField.exists_eq_span_singleton_mul_prod_of_map_eq_self`: an ambiguous ideal is a positive
-  rational integer times a product of distinct primes above ramified rational primes.
+* `NumberField.exists_eq_span_singleton_mul_prod_of_map_eq_self`: a nonzero ambiguous ideal is a
+  positive rational integer times a product of distinct primes above ramified rational primes.
 * `NumberField.map_eq_self_of_eq_span_singleton_mul_prod`: the converse, that every such product is
   ambiguous.
 * `NumberField.map_eq_self_iff_exists_eq_span_singleton_mul_prod`: the resulting characterisation of
-  the ambiguous ideals.
+  the nonzero ambiguous ideals.
 * `NumberField.exists_isTotallyPositive_and_eq_span_singleton_mul_prod_of_map_eq_self`: the form the
-  narrow class group consumes, with the rational factor replaced by a totally positive generator.
+  narrow class group consumes for a nonzero ambiguous ideal, with the rational factor replaced by a
+  totally positive generator.
 -/
 
 public section
