@@ -120,19 +120,12 @@ convolution. -/
 theorem normCoeff_delta : normCoeff K IdealArithmeticFunction.delta = 1 := by
   classical
   ext n
-  simp only [normCoeff_eq_sum_normFiber, ArithmeticFunction.one_apply]
-  split_ifs with hn
+  by_cases hn : n = 1
   · subst n
-    have hfiber : normFiber K 1 = {1} := by
-      ext I
-      simp only [mem_normFiber, Finset.mem_singleton, Ideal.absNorm_eq_one_iff]
-      constructor
-      · exact fun h ↦ Subtype.ext (by simpa [Ideal.one_eq_top] using h)
-      · rintro rfl
-        simp [Ideal.one_eq_top]
-    rw [hfiber]
+    rw [normCoeff_apply_one, IdealArithmeticFunction.delta_one]
     simp
-  · apply Finset.sum_eq_zero
+  · simp only [normCoeff_eq_sum_normFiber, ArithmeticFunction.one_apply, hn]
+    apply Finset.sum_eq_zero
     intro I hI
     apply IdealArithmeticFunction.delta_of_ne_one
     intro hI_one
