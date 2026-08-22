@@ -6,8 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
+public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Adic
-public import TauCeti.FieldTheory.FunctionField.Place.Degree
+public import TauCeti.FieldTheory.FunctionField.Place.Polynomial
 
 /-!
 # Valuation rings of an algebraic function field are the rings of places
@@ -35,9 +36,9 @@ unit. That is exactly Mathlib's `HasUnitMulPowIrreducibleFactorization`.
 * `TauCeti.isDiscreteValuationRing_of_isFunctionField`: a proper valuation subring of an algebraic
   function field containing the constants is a discrete valuation ring (Stichtenoth,
   Theorem 1.1.6).
-* `TauCeti.Place.ofValuationSubring` and `TauCeti.Place.integers_ofValuationSubring`: the place
-  attached to such a valuation subring, and the fact that its valuation ring is the subring one
-  started from.
+* `TauCeti.Place.ofValuationSubring`, with `TauCeti.Place.valuation_ofValuationSubring` and
+  `TauCeti.Place.integers_ofValuationSubring`: the place attached to such a valuation subring,
+  its valuation, and the fact that its valuation ring is the subring one started from.
 * `TauCeti.Place.existsUnique_integers_eq`: the place is the unique one with that valuation ring
   (Stichtenoth, Theorem 1.1.13).
 
@@ -349,6 +350,18 @@ def ofValuationSubring (hF : IsFunctionField k F) (hk : ∀ c : k, algebraMap k 
           _ = (IsDiscreteValuationRing.maximalIdeal A).valuation F (algebraMap k F c) := mul_one _
           _ < 1 := hlt⟩ }
 
+/-- The valuation of `TauCeti.Place.ofValuationSubring` is the adic valuation of the maximal
+ideal of the subring. The discrete valuation ring instance is a `Prop`, so the one this lemma
+takes as a hypothesis and the one `TauCeti.isDiscreteValuationRing_of_isFunctionField` supplies
+inside the definition agree. -/
+theorem valuation_ofValuationSubring [IsDiscreteValuationRing A] (hF : IsFunctionField k F)
+    (hk : ∀ c : k, algebraMap k F c ∈ A) (hA : A ≠ ⊤) :
+    (ofValuationSubring hF hk hA).valuation =
+      (IsDiscreteValuationRing.maximalIdeal A).valuation F := by
+  -- Tactic `rfl`, not the term: the body of `ofValuationSubring` is not `@[expose]`d, so the
+  -- projection is only reducible here, inside the module that defines it.
+  rfl
+
 /-- The valuation ring of `TauCeti.Place.ofValuationSubring` is the subring one started from. -/
 @[simp]
 theorem integers_ofValuationSubring (hF : IsFunctionField k F)
@@ -356,9 +369,8 @@ theorem integers_ofValuationSubring (hF : IsFunctionField k F)
     (ofValuationSubring hF hk hA).integers = A := by
   have := isDiscreteValuationRing_of_isFunctionField hF hk hA
   refine ValuationSubring.ext _ _ fun z ↦ ?_
-  rw [mem_integers_iff]
-  change (IsDiscreteValuationRing.maximalIdeal A).valuation F z ≤ 1 ↔ z ∈ A
-  rw [← Valuation.mem_valuationSubring_iff, valuationSubring_valuation_maximalIdeal A]
+  rw [mem_integers_iff, valuation_ofValuationSubring, ← Valuation.mem_valuationSubring_iff,
+    valuationSubring_valuation_maximalIdeal A]
 
 /-- **Stichtenoth, Theorem 1.1.13.** A proper valuation subring of an algebraic function field
 containing the constants is the valuation ring of exactly one place. -/

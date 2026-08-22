@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Localization.Module
 public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
+public import TauCeti.FieldTheory.FunctionField.Place.Polynomial
 public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
 
 /-!
@@ -32,10 +33,6 @@ a genuine positive natural number.
 * `TauCeti.Place.linearIndependent_over_adjoin_of_linearIndependent_residue`: the heart of the
   matter. If `x` has nonzero order at `P`, then elements of `𝒪_P` whose residues are linearly
   independent over `k` are themselves linearly independent over `k(x)`.
-* `TauCeti.Place.exists_common_X_pow_factor`: the elementary clearing step, dividing a finite
-  family of polynomials, not all zero, by the largest power of `X` that divides every member.
-  It is shared with `TauCeti.FieldTheory.FunctionField.Place.OfValuationSubring`, which runs the
-  same linear-independence argument for Stichtenoth's Lemma 1.1.7.
 * `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
   function field is a finite extension of the constants.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
@@ -55,7 +52,8 @@ than over `k(x)`: the family is shown to be linearly independent over the `k`-su
 `k[x] = Algebra.adjoin k {x}`, and `LinearIndependent.iff_fractionRing` then upgrades this to
 `k(x) = k⟮x⟯`, which is the fraction field of `k[x]` by Mathlib's
 `IntermediateField.algebraAdjoinAdjoin` instances. Clearing the common power of `x` from a
-relation is done with `Polynomial.rootMultiplicity 0`, so no denominators ever appear.
+relation is `TauCeti.Place.exists_common_X_pow_factor`, which runs on
+`Polynomial.rootMultiplicity 0`, so no denominators ever appear.
 
 ## References
 
@@ -92,36 +90,6 @@ private theorem residue_aeval_of_residue_eq_zero {t : P.integers}
   rw [aeval_def, Polynomial.hom_eval₂, ht, eval₂_at_zero]
   rw [RingHom.comp_apply, IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
     IsLocalRing.ResidueField.algebraMap_eq]
-
-/-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
-divides every member leaves at least one quotient with nonzero constant term. The exponent is
-the least `Polynomial.rootMultiplicity 0` over the nonzero members. -/
-theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X])
-    (hne : ∃ i ∈ s, p i ≠ 0) :
-    ∃ m, ∃ q : ι → k[X], (∀ i ∈ s, p i = X ^ m * q i) ∧
-      ∃ j ∈ s, (q j).coeff 0 ≠ 0 := by
-  classical
-  have hfilter : (s.filter fun i ↦ p i ≠ 0).Nonempty := by
-    obtain ⟨i, hi, hpi⟩ := hne
-    exact ⟨i, Finset.mem_filter.mpr ⟨hi, hpi⟩⟩
-  obtain ⟨j, hj, hjmin⟩ :=
-    (s.filter fun i ↦ p i ≠ 0).exists_min_image (fun i ↦ rootMultiplicity 0 (p i)) hfilter
-  obtain ⟨hjs, hjne⟩ := Finset.mem_filter.mp hj
-  let m := rootMultiplicity (0 : k) (p j)
-  let q : ι → k[X] := fun i ↦ p i /ₘ (X : k[X]) ^ m
-  have hdvd : ∀ i ∈ s, (X : k[X]) ^ m ∣ p i := by
-    intro i hi
-    rcases eq_or_ne (p i) 0 with h | h
-    · simp [h]
-    · refine dvd_trans (pow_dvd_pow _ (hjmin i (Finset.mem_filter.mpr ⟨hi, h⟩))) ?_
-      simpa [m] using pow_rootMultiplicity_dvd (p i) 0
-  have hfactor : ∀ i ∈ s, p i = (X : k[X]) ^ m * q i := by
-    intro i hi
-    conv_lhs => rw [← modByMonic_add_div (p i) ((X : k[X]) ^ m)]
-    rw [(modByMonic_eq_zero_iff_dvd (monic_X.pow m)).mpr (hdvd i hi), zero_add]
-  refine ⟨m, q, hfactor, j, hjs, ?_⟩
-  simpa [q, m, coeff_zero_eq_eval_zero] using
-    (eval_divByMonic_pow_rootMultiplicity_ne_zero (p := p j) 0 hjne)
 
 /-! ### Linear independence over `k(x)` of a lift of a `k`-independent family of residues -/
 
