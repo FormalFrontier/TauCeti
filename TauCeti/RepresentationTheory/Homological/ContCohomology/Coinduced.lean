@@ -132,7 +132,7 @@ end Action
 
 section Smooth
 
-variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
+variable {G : Type*} [Group G] [TopologicalSpace G] [ContinuousMul G] [CompactSpace G]
   {U : Subgroup G} {A : Type*} [AddCommGroup A] [DistribMulAction U A]
 
 /-- **The coinduced module of a compact group is a discrete `G`-module**: every stabilizer of the
@@ -190,6 +190,7 @@ theorem coindMap_id : coindMap G U (AddMonoidHom.id A) (fun _ _ => rfl) = AddMon
   ext f g; simp
 
 /-- Coinduction of a composite is the composite of the coinductions. -/
+@[simp]
 theorem coindMap_comp (φ : A →+ B) (hφ : ∀ (u : U) (a : A), φ (u • a) = u • φ a)
     (ψ : B →+ C) (hψ : ∀ (u : U) (b : B), ψ (u • b) = u • ψ b) :
     coindMap G U (ψ.comp φ) (fun u a => by rw [AddMonoidHom.comp_apply, hφ, hψ]; rfl) =
