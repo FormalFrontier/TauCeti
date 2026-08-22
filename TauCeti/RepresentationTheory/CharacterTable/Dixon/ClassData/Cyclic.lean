@@ -63,7 +63,7 @@ theorem mem_cyclicElements (n : ℕ) [NeZero n] (g : Multiplicative (ZMod n)) :
     (f := fun i : ℕ => Multiplicative.ofAdd (i : ZMod n))
     (List.mem_range.mpr (ZMod.val_lt g.toAdd))
 
-private theorem cyclicElements_pairwise_not_isConj (n : ℕ) [NeZero n] :
+private theorem cyclicElements_pairwise_not_isConj (n : ℕ) :
     (cyclicElements n).Pairwise fun x y => ¬ IsConj x y := by
   rw [cyclicElements, List.pairwise_map, List.pairwise_iff_getElem]
   intro i j hi hj hij hconj
@@ -111,13 +111,6 @@ theorem classFinset_cyclicClassData (n : ℕ) [NeZero n]
   ext g
   rw [ClassData.mem_classFinset_iff_isConj, Finset.mem_singleton, isConj_iff_eq]
   exact eq_comm
-
-/-- Every conjugacy class of a cyclic group has cardinality one. -/
-@[simp]
-theorem card_classFinset_cyclicClassData (n : ℕ) [NeZero n]
-    (i : Fin (cyclicClassData n).numClasses) :
-    ((cyclicClassData n).classFinset i).card = 1 := by
-  rw [classFinset_cyclicClassData, Finset.card_singleton]
 
 /-- **Both conjugacy classes of the cyclic group of order two are singletons.** The numbered
 representatives are the identity followed by the nontrivial element. -/
