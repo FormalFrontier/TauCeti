@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.Lattice
 public import TauCeti.LinearAlgebra.Eigenspace.Binomial
+public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.DividedPower
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.KostantForm
 public import TauCeti.RingTheory.Binomial
 
@@ -18,14 +19,17 @@ module `TauCeti.DynkinType.GeckIndex → ℚ`. This file equips that module with
 `ℤ`-lattice, spanned by the standard coordinate vectors. It is finite free, has the expected
 coordinate basis, and spans the rational module.
 
-The numbered Cartan, raising, and lowering generators preserve this lattice. For the Cartan
-generators the stronger integral-form statement is proved: every generalized binomial coefficient
-in a Cartan generator preserves the lattice, because the coordinate vectors have the integral
-weights `TauCeti.DynkinType.geckWeight`.
+The numbered Cartan, raising, and lowering generators preserve this lattice, and so do all of
+their generalized binomial coefficients and divided powers: the Cartan binomials because the
+coordinate vectors have the integral weights `TauCeti.DynkinType.geckWeight`, the root divided
+powers because every entry of `TauCeti.Associative.dividedPower n` of a raising or lowering
+matrix is an integer.
 
-Integrality of the higher divided powers of the raising and lowering generators remains separate.
-It is the missing root-operator half needed to show that the entire simple-generator Kostant form
-preserves this finite lattice.
+Consequently the entire simple-generator Kostant form preserves the lattice, and the integral
+orbit `TauCeti.DynkinType.geckOrbit` of the standard coordinate vectors coincides with it. In
+particular the orbit is finitely generated over `ℤ`, so it is a full lattice in the sense of
+Humphreys §27; no integral Poincaré--Birkhoff--Witt theorem is needed, since containment in the
+coordinate lattice reduces finite generation to Noetherianity of `ℤ`.
 
 ## Main declarations
 
@@ -37,6 +41,14 @@ preserves this finite lattice.
   analogue: stability under the numbered root generators.
 * `TauCeti.DynkinType.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice`:
   stability under every Cartan binomial operator.
+* `TauCeti.DynkinType.geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice`:
+  stability under every divided power of a numbered root generator.
+* `TauCeti.DynkinType.geckRepresentation_kostantForm_mem_geckCoordinateLattice`: stability under
+  the whole simple-generator Kostant form.
+* `TauCeti.DynkinType.geckOrbit_eq_geckCoordinateLattice`: the integral orbit of the standard
+  coordinate vectors is exactly the coordinate lattice.
+* `TauCeti.DynkinType.instIsLatticeGeckOrbit`: the integral orbit is therefore a full lattice,
+  finitely generated over `ℤ`.
 
 ## References
 
@@ -54,7 +66,7 @@ public section
 
 namespace TauCeti.DynkinType
 
-open RootPairing.GeckConstruction Set
+open _root_.RootPairing.GeckConstruction Set
 open scoped _root_.Matrix
 
 noncomputable section
@@ -270,6 +282,99 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
   | zero => rw [map_zero]; exact zero_mem _
   | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
   | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
+
+/-! ## Divided powers of the numbered root generators -/
+
+/-- A divided power of a Lie generator acts through the divided power of its underlying matrix.
+Both transport steps are functoriality of `ℚ`-algebra homomorphisms
+(`TauCeti.Associative.map_dividedPower`). -/
+private theorem geckRepresentation_dividedPower_ι_apply (x : t.lieAlgebra ht) (n : ℕ)
+    (v : t.GeckIndex ht → ℚ) :
+    t.geckRepresentation ht
+        (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) v =
+      Associative.dividedPower n (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ) *ᵥ v := by
+  have h := Associative.map_dividedPower (Matrix.toLinAlgEquiv' (R := ℚ) (n := t.GeckIndex ht))
+    n (x : Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ)
+  rw [Associative.map_dividedPower, t.geckRepresentation_ι ht, ← h,
+    Matrix.toLinAlgEquiv'_apply]
+
+/-- **Every divided power of a numbered root generator preserves the Geck coordinate lattice.**
+This is the root-operator half of the statement that the whole Kostant form preserves the
+lattice; the Cartan half is
+`TauCeti.DynkinType.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice`. -/
+theorem geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice
+    (i : Fin t.rank ⊕ Fin t.rank) (n : ℕ) {v : t.GeckIndex ht → ℚ}
+    (hv : v ∈ t.geckCoordinateLattice ht) :
+    t.geckRepresentation ht
+        (Associative.dividedPower n
+          (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i))) v ∈
+      t.geckCoordinateLattice ht := by
+  rw [geckRepresentation_dividedPower_ι_apply]
+  cases i with
+  | inl i =>
+      rw [LieAlgebra.Basis.rootGenerator_inl, t.coe_lieBasis_e ht]
+      exact t.matrix_mulVec_mem_geckCoordinateLattice ht _
+        (fun j k => RootPairing.GeckConstruction.exists_intCast_dividedPower_e_apply
+          (t.simpleSupportEquiv ht i) n j k) hv
+  | inr i =>
+      rw [LieAlgebra.Basis.rootGenerator_inr, t.coe_lieBasis_f ht]
+      exact t.matrix_mulVec_mem_geckCoordinateLattice ht _
+        (fun j k => RootPairing.GeckConstruction.exists_intCast_dividedPower_f_apply
+          (t.simpleSupportEquiv ht i) n j k) hv
+
+/-! ## The Kostant form preserves the coordinate lattice -/
+
+/-- **The pinned simple-generator Kostant form preserves the Geck coordinate lattice.** Every
+integral-form translate of a lattice vector stays in the lattice. Together with
+`TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` this identifies the integral orbit of the
+standard coordinate vectors with the lattice itself. -/
+theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice
+    {u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)}
+    (hu : u ∈ t.kostantForm ht) {v : t.GeckIndex ht → ℚ}
+    (hv : v ∈ t.geckCoordinateLattice ht) :
+    t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht :=
+  UniversalEnvelopingAlgebra.kostantForm_apply_mem
+    (e := (t.lieBasis ht).rootGenerator) (h := (t.lieBasis ht).h)
+    (ρ := t.geckRepresentation ht) (N := t.geckCoordinateLattice ht)
+    (fun i n _ hv =>
+      t.geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice ht i n hv)
+    (fun i n _ hv =>
+      t.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice ht i n hv)
+    (u := u)
+    (hu := by
+      rw [← LieAlgebra.Basis.kostantForm_def]
+      exact t.kostantForm_def ht ▸ hu) hv
+
+/-- The integral orbit of the standard coordinate vectors is contained in the coordinate
+lattice, because the Kostant form preserves the lattice and each coordinate vector lies in it. -/
+theorem geckOrbit_le_geckCoordinateLattice :
+    t.geckOrbit ht ≤ t.geckCoordinateLattice ht := by
+  rw [t.geckOrbit_le_iff ht]
+  intro u hu x
+  refine t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht hu ?_
+  rw [← Pi.basisFun_apply (R := ℚ)]
+  exact Submodule.subset_span (mem_range_self x)
+
+/-- **The integral orbit of the standard coordinate vectors is the coordinate lattice.** The
+containment `TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` holds because the identity of
+the enveloping algebra lies in the Kostant form; the reverse containment is the stability of the
+lattice under the form. -/
+@[simp]
+theorem geckOrbit_eq_geckCoordinateLattice :
+    t.geckOrbit ht = t.geckCoordinateLattice ht :=
+  le_antisymm (t.geckOrbit_le_geckCoordinateLattice ht)
+    (t.geckCoordinateLattice_le_geckOrbit ht)
+
+/-- **The integral orbit of the standard coordinate vectors is a full lattice**: finitely
+generated over `ℤ` and spanning the rational Geck module. This is the admissibility statement,
+in the sense of Humphreys §27, that the Chevalley--Demazure construction consumes; its finite
+generation needs no integral Poincaré--Birkhoff--Witt theorem, only containment in the finitely
+generated coordinate lattice. -/
+instance instIsLatticeGeckOrbit : Submodule.IsLattice ℚ (t.geckOrbit ht) where
+  fg := by
+    rw [geckOrbit_eq_geckCoordinateLattice]
+    exact (instIsLatticeGeckCoordinateLattice t ht).fg
+  span_eq_top := t.span_geckOrbit_eq_top ht
 
 end
 
