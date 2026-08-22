@@ -19,7 +19,7 @@ are propositionally equal but come from different, non-definitionally-equal `Lie
 
 ## Main definitions
 
-* `TauCeti.scalarExtensionMatrixLieEquiv`: the Lie equivalence
+* `TauCeti.matrixBaseChangeLieEquiv`: the Lie equivalence
   `A ⊗[R] Matrix n n R ≃ Matrix n n A`.
 -/
 
@@ -37,7 +37,7 @@ variable (n R A : Type*) [Fintype n] [DecidableEq n]
 /-- Scalar extension commutes with forming a matrix Lie algebra. The underlying linear
 equivalence is `TauCeti.Algebra.matrixBaseChangeAlgEquiv`; the Lie proof bridges Mathlib's
 scalar-extension bracket with the associative commutator bracket on matrices. -/
-noncomputable def scalarExtensionMatrixLieEquiv :
+noncomputable def matrixBaseChangeLieEquiv :
     A ⊗[R] Matrix n n R ≃ₗ⁅A⁆ Matrix n n A where
   toFun := Algebra.matrixBaseChangeAlgEquiv R A n
   invFun := (Algebra.matrixBaseChangeAlgEquiv R A n).symm
@@ -62,8 +62,8 @@ noncomputable def scalarExtensionMatrixLieEquiv :
 
 /-- The scalar-extension equivalence sends a pure tensor to the entrywise scalar extension. -/
 @[simp]
-theorem scalarExtensionMatrixLieEquiv_tmul (a : A) (M : Matrix n n R) :
-    scalarExtensionMatrixLieEquiv n R A (a ⊗ₜ[R] M) = a • M.map (algebraMap R A) :=
+theorem matrixBaseChangeLieEquiv_tmul (a : A) (M : Matrix n n R) :
+    matrixBaseChangeLieEquiv n R A (a ⊗ₜ[R] M) = a • M.map (algebraMap R A) :=
   Algebra.matrixBaseChangeAlgEquiv_tmul R A n a M
 
 end TauCeti

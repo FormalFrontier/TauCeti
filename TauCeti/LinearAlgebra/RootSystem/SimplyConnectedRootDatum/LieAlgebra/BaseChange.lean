@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Matrix.BaseChange
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra.Basic
 public import Mathlib.RingTheory.Flat.Basic
 
 /-!
@@ -24,9 +24,9 @@ required Lie equivalence. This makes Mathlib's algebraically-closed-field result
 construction available to descent arguments for the pinned rational carrier.
 
 That descent is the gap the pinned carrier still has. Mathlib proves Geck's Lie algebra
-semisimple only over an algebraically closed field, and
-`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/LieAlgebra.lean` records that `ℚ` is
-not one, so it leaves semisimplicity of `TauCeti.DynkinType.lieAlgebra` unclaimed;
+semisimple only over an algebraically closed field, while the
+`SimplyConnectedRootDatum/LieAlgebra/Basic.lean` module records that `ℚ` is not one. It therefore
+leaves semisimplicity of `TauCeti.DynkinType.lieAlgebra` unclaimed;
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/KostantForm.lean` inherits the same
 gap. Taking `K` to be an algebraic closure of `ℚ` turns those results into statements about
 `K ⊗[ℚ] TauCeti.DynkinType.lieAlgebra t ht`, from which `LieModule.traceForm_baseChange` carries
@@ -223,7 +223,7 @@ noncomputable def ambientLieAlgebraBaseChangeEquiv :
     LieEquiv K (K ⊗[ℚ] Matrix (t.GeckIndex ht) (t.GeckIndex ht) ℚ)
       (Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
         ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) :=
-  (TauCeti.scalarExtensionMatrixLieEquiv (t.GeckIndex ht) ℚ K).trans
+  (TauCeti.matrixBaseChangeLieEquiv (t.GeckIndex ht) ℚ K).trans
     (Matrix.reindexAlgEquiv K K (t.geckIndexBaseChangeEquiv ht K).symm).toLieEquiv
 
 @[simp] theorem ambientLieAlgebraBaseChangeEquiv_tmul (a : K)

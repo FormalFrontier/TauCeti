@@ -335,9 +335,9 @@ private theorem root_sub_nsmul_mem_range_baseChange_iff (i j : ι) (n : ℕ) :
     simpa only [root_rootPairingBaseChange, map_sub, map_nsmul] using
       congrArg (Pi.algebraMap κ R S) hk
 
-variable [Finite ι] [IsDomain R] [IsDomain S] [CharZero R] [P.IsCrystallographic]
+variable [Finite ι] [IsDomain S] [CharZero R] [P.IsCrystallographic]
 
-private theorem chainTopCoeff_rootPairingBaseChange_aux [hS : CharZero S] (i j : ι) :
+private theorem chainTopCoeff_rootPairingBaseChange_aux [IsDomain R] [hS : CharZero S] (i j : ι) :
     (rootPairingBaseChange S P hP).chainTopCoeff i j = P.chainTopCoeff i j := by
   let P' := rootPairingBaseChange S P hP
   have hv : (fun k ↦ algebraMap R S ∘ ![P.root i, P.root j] k) =
@@ -363,12 +363,14 @@ private theorem chainTopCoeff_rootPairingBaseChange_aux [hS : CharZero S] (i j :
 /-- Extending scalars along an injective map preserves the upper root-string coefficient. -/
 @[simp]
 theorem chainTopCoeff_rootPairingBaseChange (i j : ι) :
+    let _ : IsDomain R := IsDomain.of_faithfulSMul R S
     letI : CharZero S := Algebra.charZero_of_charZero R S
     (rootPairingBaseChange S P hP).chainTopCoeff i j = P.chainTopCoeff i j := by
+  let _ : IsDomain R := IsDomain.of_faithfulSMul R S
   exact chainTopCoeff_rootPairingBaseChange_aux S P hP
     (hS := Algebra.charZero_of_charZero R S) i j
 
-private theorem chainBotCoeff_rootPairingBaseChange_aux [hS : CharZero S] (i j : ι) :
+private theorem chainBotCoeff_rootPairingBaseChange_aux [IsDomain R] [hS : CharZero S] (i j : ι) :
     (rootPairingBaseChange S P hP).chainBotCoeff i j = P.chainBotCoeff i j := by
   let P' := rootPairingBaseChange S P hP
   have hv : (fun k ↦ algebraMap R S ∘ ![P.root i, P.root j] k) =
@@ -394,8 +396,10 @@ private theorem chainBotCoeff_rootPairingBaseChange_aux [hS : CharZero S] (i j :
 /-- Extending scalars along an injective map preserves the lower root-string coefficient. -/
 @[simp]
 theorem chainBotCoeff_rootPairingBaseChange (i j : ι) :
+    let _ : IsDomain R := IsDomain.of_faithfulSMul R S
     letI : CharZero S := Algebra.charZero_of_charZero R S
     (rootPairingBaseChange S P hP).chainBotCoeff i j = P.chainBotCoeff i j := by
+  let _ : IsDomain R := IsDomain.of_faithfulSMul R S
   exact chainBotCoeff_rootPairingBaseChange_aux S P hP
     (hS := Algebra.charZero_of_charZero R S) i j
 

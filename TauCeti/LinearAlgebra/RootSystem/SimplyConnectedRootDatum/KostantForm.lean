@@ -9,7 +9,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Basis
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Orbit
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra.Basic
 
 /-!
 # A simple-generator Kostant form of the pinned split Lie algebra of a Dynkin type
@@ -54,8 +54,8 @@ What is deliberately *not* proved is that `geckOrbit` is finitely generated over
 missing ingredient needed to promote this integral orbit to an admissible lattice in the sense of
 Humphreys §27, and it requires the integral Poincaré--Birkhoff--Witt theorem. Nor is the pinned Lie
 algebra asserted to be semisimple, which
-`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/LieAlgebra.lean` already records as not
-claimed. This file is the numbered input those later steps consume.
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/LieAlgebra/Basic.lean` already records as
+not claimed. This file is the numbered input those later steps consume.
 
 ## Main definitions
 
@@ -107,8 +107,8 @@ open scoped _root_.Matrix
 noncomputable section
 
 -- Matrices form a Lie ring through their commutator, which is how Geck's construction reads
--- them; `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/LieAlgebra.lean` activates the
--- same instance locally.
+-- them; the `SimplyConnectedRootDatum/LieAlgebra/Basic.lean` module activates the same instance
+-- locally.
 attribute [local instance 100] LieRing.ofAssociativeRing
 
 attribute [local instance] TauCeti.moduleNNRat
