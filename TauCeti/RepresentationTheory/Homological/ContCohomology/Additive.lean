@@ -186,15 +186,29 @@ section Additive
 variable (R : Type u) [Ring R] [TopologicalSpace R]
   (G : Type v) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 
+omit [IsTopologicalGroup G] in
+private theorem res_id_eq (X : TopRep R G) :
+    TopRep.res (ContinuousMonoidHom.id G : G →* G) X = X := by
+  rfl
+
+private def resIdHom (X : TopRep R G) :
+    TopRep.res (ContinuousMonoidHom.id G : G →* G) X ⟶ X :=
+  eqToHom (res_id_eq R G X)
+
+private theorem coeffMap_eq_map_id {X Y : TopRep R G} (f : X ⟶ Y) (n : ℕ) :
+    coeffMap f n = map (ContinuousMonoidHom.id G) (resIdHom R G X ≫ f) n := by
+  rw [coeffMap_def]
+  exact map_congr rfl (eqToHom_comp_heq f (res_id_eq R G X)).symm n
+
+private theorem coeffMap_add {X Y : TopRep R G} (f g : X ⟶ Y) (n : ℕ) :
+    coeffMap (f + g) n = coeffMap f n + coeffMap g n := by
+  rw [coeffMap_eq_map_id, coeffMap_eq_map_id, coeffMap_eq_map_id,
+    Preadditive.comp_add, map_add]
+
 /-- Continuous cohomology in a fixed degree is additive in the coefficient representation. -/
 noncomputable instance continuousCohomologyFunctor_additive (n : ℕ) :
     (continuousCohomologyFunctor R G n).Additive where
-  map_add {X Y} {f g} := by
-    change coeffMap (f + g) n = coeffMap f n + coeffMap g n
-    rw [coeffMap_def, coeffMap_def, coeffMap_def]
-    convert map_add (ContinuousMonoidHom.id G) f g n using 1
-    apply eq_of_heq
-    rfl
+  map_add {_X _Y} {f g} := coeffMap_add R G f g n
 
 end Additive
 
@@ -203,15 +217,14 @@ section Linear
 variable (R : Type u) [CommRing R] [TopologicalSpace R]
   (G : Type v) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 
+private theorem coeffMap_smul {X Y : TopRep R G} (r : R) (f : X ⟶ Y) (n : ℕ) :
+    coeffMap (r • f) n = r • coeffMap f n := by
+  rw [coeffMap_eq_map_id, coeffMap_eq_map_id, Linear.comp_smul, map_smul]
+
 /-- Continuous cohomology in a fixed degree is linear in the coefficient representation. -/
 noncomputable instance continuousCohomologyFunctor_linear (n : ℕ) :
     (continuousCohomologyFunctor R G n).Linear R where
-  map_smul {X Y} f r := by
-    change coeffMap (r • f) n = r • coeffMap f n
-    rw [coeffMap_def, coeffMap_def]
-    convert map_smul (ContinuousMonoidHom.id G) r f n using 1
-    apply eq_of_heq
-    rfl
+  map_smul f r := coeffMap_smul R G r f n
 
 end Linear
 
