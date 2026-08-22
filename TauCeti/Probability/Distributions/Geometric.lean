@@ -259,7 +259,7 @@ theorem geometricMeasure_zero : geometricMeasure (0 : unitInterval) = Measure.di
   simp [geometricMeasure]
 
 /-- The real cast of the zero-parameter geometric law has every exponential moment. -/
-theorem integrableExpSet_id_map_cast_geometricMeasure_zero :
+@[simp] theorem integrableExpSet_id_map_cast_geometricMeasure_zero :
     integrableExpSet id
       ((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) = Set.univ := by
   rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
@@ -269,7 +269,7 @@ theorem integrableExpSet_id_map_cast_geometricMeasure_zero :
   exact integrable_dirac (by simp)
 
 /-- The moment-generating function at the zero parameter is identically one. -/
-theorem mgf_id_map_cast_geometricMeasure_zero (t : ℝ) :
+@[simp] theorem mgf_id_map_cast_geometricMeasure_zero (t : ℝ) :
     mgf id ((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) t = 1 := by
   rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
   norm_num
@@ -277,31 +277,31 @@ theorem mgf_id_map_cast_geometricMeasure_zero (t : ℝ) :
   simp
 
 /-- The cumulant-generating function at the zero parameter is identically zero. -/
-theorem cgf_id_map_cast_geometricMeasure_zero (t : ℝ) :
+@[simp] theorem cgf_id_map_cast_geometricMeasure_zero (t : ℝ) :
     cgf id ((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) t = 0 := by
   rw [cgf, mgf_id_map_cast_geometricMeasure_zero]
   simp
 
 /-- The zero-parameter geometric law has mean zero after casting to the reals. -/
-theorem integral_id_map_cast_geometricMeasure_zero :
+@[simp] theorem integral_id_map_cast_geometricMeasure_zero :
     ∫ x, x ∂((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) = 0 := by
   rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
   norm_num
 
 /-- The zero-parameter geometric law has variance zero after casting to the reals. -/
-theorem variance_id_map_cast_geometricMeasure_zero :
+@[simp] theorem variance_id_map_cast_geometricMeasure_zero :
     variance id ((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) = 0 := by
   rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
   norm_num
 
 /-- The characteristic function at the zero parameter is identically one. -/
-theorem charFun_map_cast_geometricMeasure_zero (t : ℝ) :
+@[simp] theorem charFun_map_cast_geometricMeasure_zero (t : ℝ) :
     charFun ((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) t = 1 := by
   rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
   norm_num
 
 /-- The cumulative mass of the zero-parameter geometric law is one at every natural cutoff. -/
-theorem geometricMeasure_real_Iic_zero (n : ℕ) :
+@[simp] theorem geometricMeasure_real_Iic_zero (n : ℕ) :
     (geometricMeasure (0 : unitInterval)).real {k | k ≤ n} = 1 := by
   rw [geometricMeasure_zero]
   rw [measureReal_def, Measure.dirac_apply_of_mem (by simp)]
