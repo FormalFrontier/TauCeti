@@ -106,7 +106,6 @@ theorem WC_def (k : ℤ) :
   by rw [WC]
 
 /-- The complexified weight filtration is stable under lattice-induced conjugation. -/
-@[simp]
 theorem WC_conj (k : ℤ) :
     (mhs.WC k).map (latticeConj hℂ) = mhs.WC k := by
   simp [WC]
