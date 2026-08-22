@@ -192,6 +192,7 @@ theorem card_discriminantSubgroup_mul_card_discriminantSubgroup_dual
 /-- **An intermediate carrier is unimodular exactly when its subgroup is Lagrangian.** Here
 unimodularity is the equality `Mᵛ = M` of an intermediate carrier with its own dual submodule,
 matching `TauCeti.IntegralLattice.IsUnimodular` for the lattice which `M` carries. -/
+@[simp]
 theorem dual_eq_self_iff_isLagrangian (M : L.IntermediateCarrier) :
     dual M = M ↔ L.discriminantBilinearModule.IsLagrangian (L.discriminantSubgroup M) := by
   constructor
