@@ -193,8 +193,8 @@ omit [CharZero K] hx in
 /-- A square-class witness for the negated scalar can be rewritten as the square-root form used by
 the rescaling construction. -/
 theorem exists_sq_map_eq_smul_neg_of_isSquare {α : Weight K H L} {c : K}
-    (hc : ω (x α) = c • x (-α)) (hsq : IsSquare (-c)) :
-    ∃ t : K, ω (x α) = -(t ^ 2) • x (-α) := by
+    (e : L → L) (hc : e (x α) = c • x (-α)) (hsq : IsSquare (-c)) :
+    ∃ t : K, e (x α) = -(t ^ 2) • x (-α) := by
   obtain ⟨t, ht⟩ := hsq.exists_sq
   refine ⟨t, hc.trans (congrArg (· • x (-α)) ?_)⟩
   simpa using congrArg Neg.neg ht
