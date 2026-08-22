@@ -153,12 +153,14 @@ variable {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
 
 /-- The underlying measure of a bundled probability coupling is reconstructed from its source
 law and regular conditional kernel. -/
+@[simp]
 theorem compProd_condKernel (π : Coupling μ ν) :
     μ.toMeasure ⊗ₘ π.1.toMeasure.condKernel = π.1.toMeasure :=
   π.2.compProd_condKernel
 
 /-- The regular conditional kernel of a bundled probability coupling averages to its prescribed
 target law. -/
+@[simp]
 theorem condKernel_comp (π : Coupling μ ν) :
     π.1.toMeasure.condKernel ∘ₘ μ.toMeasure = ν.toMeasure :=
   π.2.condKernel_comp
@@ -172,12 +174,14 @@ theorem ae_eq_condKernel_iff_compProd_eq (π : Coupling μ ν) (κ : Kernel X Y)
 
 /-- The coordinate conditional distribution of a bundled probability coupling reconstructs its
 underlying joint law. -/
+@[simp]
 theorem compProd_condDistrib (π : Coupling μ ν) :
     μ.toMeasure ⊗ₘ condDistrib Prod.snd Prod.fst π.1.toMeasure = π.1.toMeasure :=
   π.2.compProd_condDistrib
 
 /-- The coordinate conditional distribution of a bundled probability coupling averages to its
 target law. -/
+@[simp]
 theorem condDistrib_comp (π : Coupling μ ν) :
     condDistrib Prod.snd Prod.fst π.1.toMeasure ∘ₘ μ.toMeasure = ν.toMeasure :=
   π.2.condDistrib_comp
