@@ -330,13 +330,14 @@ theorem sub_augmentation_smul_single_mem_range_of_unique (h : P.IsNegativeDefini
     fun C hC => P.directions_eq_empty_of_latticeDifferential_eq_zero_of_unique k hc hC
 
 /-- **The lattice homology of a one-vertex negative-definite plumbing is a single `U`-tower.**
-Any cycle of augmentation one has bijective cycle map: injectivity is the tower of
-`latticeHomologyCycleMap_injective`, and surjectivity holds because every cycle is a chain of
-lattice points and every lattice point is a `U`-multiple of a minimal-weight one. -/
+The cycle map of any augmentation-one cycle is a bijection. -/
 theorem latticeHomologyCycleMap_bijective_of_unique (h : P.IsNegativeDefinite)
     (c : PlumbingChain V)
     (hc : P.latticeDifferential k c = 0) (hone : P.latticeAugmentation k c = 1) :
     Function.Bijective (P.latticeHomologyCycleMap k c hc) := by
+  -- Injectivity is the `U`-tower of `latticeHomologyCycleMap_injective`; surjectivity holds
+  -- because every cycle is a chain of lattice points and every lattice point is a `U`-multiple
+  -- of a minimal-weight one.
   obtain ⟨x₀, hx₀⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h k
   refine ⟨P.latticeHomologyCycleMap_injective h k c hc hone,
     P.latticeHomologyCycleMap_surjective k c hc fun z hz => ⟨P.latticeAugmentation k z, ?_⟩⟩
@@ -399,6 +400,7 @@ theorem oneVertexPlumbing_toSimpleGraph (w : ℤ) :
   simp [oneVertexPlumbing]
 
 /-- The intersection matrix of a one-vertex plumbing is its framing. -/
+@[simp]
 theorem oneVertexPlumbing_intersectionMatrix (w : ℤ) :
     (oneVertexPlumbing w).intersectionMatrix = !![w] := by
   ext i j
@@ -407,7 +409,7 @@ theorem oneVertexPlumbing_intersectionMatrix (w : ℤ) :
   simp [oneVertexPlumbing]
 
 /-- A one-vertex plumbing with negative framing is negative definite. -/
-theorem oneVertexPlumbing_isNegativeDefinite {w : ℤ} (hw : w < 0) :
+theorem isNegativeDefinite_oneVertexPlumbing {w : ℤ} (hw : w < 0) :
     (oneVertexPlumbing w).IsNegativeDefinite := by
   refine PlumbingGraph.isNegativeDefinite_of_degree_lt_neg_weight _ fun i => ?_
   have hdeg : (oneVertexPlumbing w).toSimpleGraph.degree i = 0 := by
@@ -423,7 +425,7 @@ the lens-space computation of Ozsváth–Szabó,
 noncomputable def coefficientEquivOneVertexPlumbingLatticeHomology {w : ℤ} (hw : w < 0)
     (k : (oneVertexPlumbing w).characteristicVectors) :
     PlumbingCoefficient ≃ₗ[PlumbingCoefficient] (oneVertexPlumbing w).latticeHomology k :=
-  let h := oneVertexPlumbing_isNegativeDefinite hw
+  let h := isNegativeDefinite_oneVertexPlumbing hw
   let e := (oneVertexPlumbing w).exists_cycle_latticeAugmentation_eq_one h k
   PlumbingGraph.coefficientEquivLatticeHomologyOfUnique _ k h e.choose e.choose_spec.1
     e.choose_spec.2
