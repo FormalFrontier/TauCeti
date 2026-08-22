@@ -68,11 +68,6 @@ on every state of a diagram with an even number of link components. -/
 def alexanderℤ (_hG : G.IsKnot) (x : GridState n) : ℤ :=
   G.alexanderTwoℤ x / 2
 
-/-- The integer Alexander grading restated as half of its integer numerator. -/
-theorem alexanderℤ_def (hG : G.IsKnot) (x : GridState n) :
-    G.alexanderℤ hG x = G.alexanderTwoℤ x / 2 :=
-  (rfl)
-
 /-- The integer Alexander grading is half of its integer numerator. -/
 theorem two_mul_alexanderℤ (hG : G.IsKnot) (x : GridState n) :
     2 * G.alexanderℤ hG x = G.alexanderTwoℤ x := by
@@ -93,22 +88,17 @@ theorem alexander_eq_intCast (hG : G.IsKnot) (x : GridState n) :
 def bidegree (hG : G.IsKnot) (x : GridState n) : ℤ × ℤ :=
   (G.maslovOℤ x, G.alexanderℤ hG x)
 
-/-- The grid bidegree restated as its `(Maslov, Alexander)` pair. -/
-theorem bidegree_def (hG : G.IsKnot) (x : GridState n) :
-    G.bidegree hG x = (G.maslovOℤ x, G.alexanderℤ hG x) :=
-  (rfl)
-
 /-- The first component of the grid bidegree is the integer `O`-Maslov grading. -/
 @[simp]
 theorem bidegree_fst (hG : G.IsKnot) (x : GridState n) :
     (G.bidegree hG x).1 = G.maslovOℤ x :=
-  by rw [bidegree_def]
+  (rfl)
 
 /-- The second component of the grid bidegree is the integer Alexander grading. -/
 @[simp]
 theorem bidegree_snd (hG : G.IsKnot) (x : GridState n) :
     (G.bidegree hG x).2 = G.alexanderℤ hG x :=
-  by rw [bidegree_def]
+  (rfl)
 
 /-- The finite set of bidegrees occupied by grid states. -/
 noncomputable def bidegreeSupport (hG : G.IsKnot) : Finset (ℤ × ℤ) :=
@@ -176,8 +166,8 @@ theorem bigradedChainEquiv_single (R : Type*) [Semiring R] (hG : G.IsKnot)
   exact DirectSum.sigmaFiberAddEquiv_of (β := fun _ : GridState n => R)
     (G.bidegree hG) x r
 
-/-- Over a field, the rank of a homogeneous grid-chain piece is the number of states in its
-bidegree. -/
+/-- Over a division ring, the rank of a homogeneous grid-chain piece is the number of states in
+its bidegree. -/
 theorem finrank_bigradedChainPiece (R : Type*) [DivisionRing R] (hG : G.IsKnot) (g : ℤ × ℤ) :
     Module.finrank R (G.BigradedChainPiece R hG g) =
       (Finset.univ.filter fun x : GridState n => G.bidegree hG x = g).card := by
