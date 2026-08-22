@@ -7,15 +7,16 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Independence
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Ambiguous.Ideal
+import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 import Mathlib.NumberTheory.NumberField.ClassNumber
 
 /-!
-# The genus-theoretic bound on the `2`-rank of an imaginary quadratic class group
+# The `2`-rank of an imaginary quadratic class group
 
 For a squarefree integer `d < 0` let `K = ℚ(√d)` and let `t` be the number of rational primes that
 ramify in `K`. Genus theory computes the `2`-rank of `Cl(K)`, the dimension over `𝔽₂` of the maximal
-elementary-`2` quotient `Cl(K)/Cl(K)²`, to be exactly `t - 1`. This file proves the upper half of
-that formula,
+elementary-`2` quotient `Cl(K)/Cl(K)²`, to be exactly `t - 1`. This file proves that formula,
+including the upper bound
 
 `2-rank Cl(K) ≤ t - 1`,
 
@@ -31,9 +32,11 @@ elements (`natCard_closure_image_classGroupMk0_le`, where the `- 1` comes from t
 `(θ) = ∏_{p ∣ d} 𝔭_p`). Since the maximal elementary-`2` quotient and the `2`-torsion subgroup have
 the same cardinality, `2 ^ (2-rank) ≤ 2 ^ (t - 1)`.
 
-The matching lower bound needs the Artin map identifying `Gal(K_gen/K)` with `Cl(K)/Cl(K)²`, and is
-not proved here. For a real quadratic field the statement itself changes: the `t - 1` formula is
-about the narrow class group, and the ordinary `2`-rank can be smaller.
+The matching lower bound comes from the independence of the ramified-prime classes proved in
+`TauCeti.Multiquadratic.ncard_ramifiedPrimes_sub_one_le_twoRank`. Combining the two bounds gives
+the imaginary quadratic `2`-rank formula. For a real quadratic field the statement itself
+changes: the `t - 1` formula is about the narrow class group, and the ordinary `2`-rank can be
+smaller.
 
 See F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2, which runs the same
 route: its Proposition 2.9 is the Hilbert-90 descent realising an ambiguous class by an ambiguous
@@ -43,8 +46,9 @@ form-theoretic genus theory it descends from.
 
 ## Main result
 
-* `TauCeti.Multiquadratic.twoRank_le_ncard_ramifiedPrimes_sub_one`: the `2`-rank of the class group
-  of an imaginary quadratic field is at most `t - 1`.
+* `TauCeti.Multiquadratic.twoRank_le_ncard_ramifiedPrimes_sub_one`: the upper bound on the `2`-rank.
+* `TauCeti.Multiquadratic.twoRank_eq_ncard_ramifiedPrimes_sub_one`: the `2`-rank of an imaginary
+  quadratic class group is exactly `t - 1`.
 -/
 
 public section
@@ -104,5 +108,49 @@ theorem twoRank_le_ncard_ramifiedPrimes_sub_one [IsTotallyComplex K]
     exact hbound
   rw [← hcard]
   exact (Nat.pow_le_pow_iff_right (le_refl 2)).mp hpow
+
+/-- **The `2`-rank formula for an imaginary quadratic field.** For `K = ℚ(√d)` with `d < 0`
+squarefree, the `2`-rank of `Cl(𝓞 K)` is exactly `t - 1`, where `t` is the number of rational
+primes ramifying in `K`. -/
+theorem twoRank_eq_ncard_ramifiedPrimes_sub_one
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hd : d < 0) :
+    TauCeti.ClassGroup.twoRank (𝓞 K) = (ramifiedPrimes K).ncard - 1 := by
+  let _ : IsTotallyComplex K :=
+    NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin hd
+  by_cases hgauss : d = -1
+  · subst d
+    have hfin : Module.finrank ℚ K = 2 := NumberField.finrank_rat_eq_two hmin hgen
+    have hreal : InfinitePlace.nrRealPlaces K = 0 :=
+      NumberField.IsTotallyComplex.nrRealPlaces_eq_zero K
+    have hcomplex : InfinitePlace.nrComplexPlaces K = 1 := by
+      have hsignature := InfinitePlace.card_add_two_mul_card_eq_rank K
+      rw [hreal, hfin] at hsignature
+      omega
+    have hdisc : NumberField.discr K = -4 := by
+      simpa using NumberField.discr_eq_four_mul_of_mod_four_ne_one hmin hgen hsf (by norm_num)
+    have hpid : IsPrincipalIdealRing (𝓞 K) := by
+      apply RingOfIntegers.isPrincipalIdealRing_of_abs_discr_lt
+      rw [hdisc, hcomplex, hfin]
+      norm_num [abs_of_nonneg]
+      nlinarith [Real.pi_gt_three]
+    have hrank : TauCeti.ClassGroup.twoRank (𝓞 K) = 0 := by
+      have hclass : NumberField.classNumber K = 1 :=
+        NumberField.classNumber_eq_one_iff.mpr hpid
+      rw [TauCeti.ClassGroup.twoRank_def, ← TauCeti.twoRank_def]
+      apply TauCeti.twoRank_of_odd_card
+      rw [Nat.card_eq_fintype_card, ← NumberField.classNumber, hclass]
+      exact odd_one
+    have hram : ramifiedPrimes K = {2} := by
+      rw [← primeDiscriminantPrime_of_isEvenPrimeDiscriminant isEvenPrimeDiscriminant_neg_four]
+      apply ramifiedPrimes_eq_singleton (D := -4) isPrimeDiscriminant_neg_four
+      · rwa [primeDiscriminantRadicand_neg_four]
+      · exact hgen
+    rw [hrank, hram, Set.ncard_singleton]
+  · apply le_antisymm
+    · exact twoRank_le_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by
+        have hdabs : (1 : ℤ) < |d| := by rw [abs_of_neg hd]; omega
+        rwa [Int.abs_eq_natAbs, Nat.one_lt_cast] at hdabs)
+    · exact ncard_ramifiedPrimes_sub_one_le_twoRank hmin hgen hsf (by omega)
 
 end TauCeti.Multiquadratic

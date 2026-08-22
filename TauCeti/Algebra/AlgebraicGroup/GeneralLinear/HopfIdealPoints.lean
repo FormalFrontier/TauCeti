@@ -25,6 +25,8 @@ vanishing on the Hopf ideal and is functorial in the value algebra.
   point subgroups.
 * `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup`: functoriality of that subgroup in the
   value algebra.
+* `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup_injective`: an injective homomorphism of
+  value algebras induces an injective map of point subgroups.
 -/
 
 public section
@@ -164,6 +166,18 @@ theorem mapHopfIdealPointsSubgroup_comp
   rw [coe_mapHopfIdealPointsSubgroup, MonoidHom.comp_apply,
     coe_mapHopfIdealPointsSubgroup, coe_mapHopfIdealPointsSubgroup,
     h_comp, Matrix.GeneralLinearGroup.map_comp, MonoidHom.comp_apply]
+
+/-- An injective homomorphism of value algebras induces an injective map of general-linear
+Hopf-ideal point subgroups: reading a matrix point over a subalgebra as a point over the ambient
+algebra loses no information. -/
+theorem mapHopfIdealPointsSubgroup_injective
+    (I : HopfIdeal R (coordinateHopfAlgebra R n)) {φ : A →ₐ[R] B} (hφ : Function.Injective φ) :
+    Function.Injective (mapHopfIdealPointsSubgroup n I φ) := by
+  have hmap : Function.Injective (Matrix.GeneralLinearGroup.map (n := Fin n) φ.toRingHom) :=
+    Units.map_injective (Matrix.map_injective hφ)
+  intro g g' h
+  refine Subtype.ext (hmap ?_)
+  rw [← coe_mapHopfIdealPointsSubgroup, ← coe_mapHopfIdealPointsSubgroup, h]
 
 /-- Larger Hopf ideals cut out smaller general-linear point subgroups. -/
 theorem hopfIdealPointsSubgroup_le_of_le
