@@ -34,8 +34,10 @@ fixed tensor by applying a base-field linear functional to its scalar coefficien
 
 ## References
 
-* A. Borel, *Linear Algebraic Groups*, Proposition 4.8.
-* T. A. Springer, *Linear Algebraic Groups*, Section 2.4.
+* A. Borel, *Linear Algebraic Groups*, §4.8, Theorem. Its proof is the one used here: pass to an
+  irreducible submodule, span `End V` by Burnside, and kill `g - 1` with the trace pairing.
+* T. A. Springer, *Linear Algebraic Groups*, Proposition 2.4.12, the same statement in the
+  conjugate-into-`Uₙ` form, by the same argument.
 -/
 
 public section
