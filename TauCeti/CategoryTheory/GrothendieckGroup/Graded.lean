@@ -79,7 +79,6 @@ lemma shiftZPow_apply (e : C ≌ C) [e.functor.Additive] (n : ℤ) :
   (rfl)
 
 /-- The generator of the split `K₀` action sends an object class to the class of its shift. -/
-@[simp]
 lemma shiftZPow_one_apply_of (e : C ≌ C) [e.functor.Additive] (X : C) :
     shiftZPow e 1 (of X) = of (e.functor.obj X) := by
   simp
@@ -178,7 +177,6 @@ lemma shiftZPow_apply (e : A ≌ A) [e.functor.Additive] (n : ℤ) :
   (rfl)
 
 /-- The generator of the abelian `K₀` action sends an object class to the class of its shift. -/
-@[simp]
 lemma shiftZPow_one_apply_of (e : A ≌ A) [e.functor.Additive] (X : A) :
     shiftZPow e 1 (of X) = of (e.functor.obj X) := by
   simp
@@ -307,7 +305,6 @@ lemma shiftZPow_apply (n : ℤ) : E.shiftZPow n = n • E.shiftEquiv :=
   (rfl)
 
 /-- The generator of the `ℤ`-action is the shift itself: `[M{1}]` is the class of `M{1}`. -/
-@[simp]
 lemma shiftZPow_one_apply_of (X : C) :
     E.shiftZPow 1 (ExactK0.of X) =
       (ExactK0.of (E.shift.functor.obj X) : ExactK0 E.toExactStructure) := by
@@ -318,7 +315,6 @@ lemma shiftZPow_neg_one_apply (x : ExactK0 E.toExactStructure) :
     E.shiftZPow (-1) x = E.shiftEquiv.symm x := by
   simp [shiftZPow]
 
-@[simp]
 lemma shiftZPow_neg_one_apply_of (X : C) :
     E.shiftZPow (-1) (ExactK0.of X) =
       (ExactK0.of (E.shift.inverse.obj X) : ExactK0 E.toExactStructure) := by
