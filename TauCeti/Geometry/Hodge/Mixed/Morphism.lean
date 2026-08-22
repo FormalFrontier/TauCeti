@@ -457,7 +457,7 @@ theorem gradedComplexEquiv_baseChange_gradedMap (f : Hom source target) (k : ℤ
       f.complexGradedMap k
         (gradedComplexEquiv hℚ hℂ source.WQ source.WQ_monotone k t) :=
   gradedComplexEquiv_baseChange_weightGradedRatMap hℚ hℂ h'ℚ h'ℂ source.WQ source.WQ_monotone
-    target.WQ target.WQ_monotone f.toRatLinearMap f.map_mem_WQ _ k t
+    target.WQ target.WQ_monotone f.toRatLinearMap f.map_mem_WQ k t
 
 /-- **A morphism of mixed Hodge structures induces a morphism of the pure Hodge structures carried
 by the weight-graded pieces.** -/

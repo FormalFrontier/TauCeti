@@ -230,18 +230,20 @@ theorem weightGradedRatMap_comp {V''ℚ : Type*} [AddCommGroup V''ℚ] [Module �
 
 /-- **The comparison `TauCeti.Hodge.gradedComplexEquiv` is natural in the filtered map**: the
 square formed by the map induced on the rational graded pieces, its base change, and the map
-induced by the complexification on the graded pieces of the complexified filtrations, commutes. -/
+induced by the complexification on the graded pieces of the complexified filtrations, commutes.
+Preservation of the complexified filtration is not a separate hypothesis: it follows from the
+rational one by `TauCeti.Hodge.map_rationalToComplexSubmodule_le`. -/
 theorem gradedComplexEquiv_baseChange_weightGradedRatMap (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (h'ℚ : IsBaseChange ℚ ι'ℚ) (h'ℂ : IsBaseChange ℂ ι'ℂ)
     (WQ : ℤ → Submodule ℚ Vℚ) (hWQ : Monotone WQ) (W'Q : ℤ → Submodule ℚ V'ℚ)
     (hW'Q : Monotone W'Q) (f : Vℚ →ₗ[ℚ] V'ℚ) (hf : ∀ k x, x ∈ WQ k → f x ∈ W'Q k)
-    (hfC : ∀ k x, x ∈ rationalToComplexSubmodule hℚ hℂ (WQ k) →
-      rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f x ∈ rationalToComplexSubmodule h'ℚ h'ℂ (W'Q k))
     (k : ℤ) (t : ℂ ⊗[ℚ] weightGradedRat WQ k) :
     gradedComplexEquiv h'ℚ h'ℂ W'Q hW'Q k ((weightGradedRatMap WQ W'Q f hf k).baseChange ℂ t) =
       weightGradedComplexMap (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j))
           (fun j ↦ rationalToComplexSubmodule h'ℚ h'ℂ (W'Q j))
-          (rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f) hfC k
+          (rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f)
+          (fun j _ hx ↦ map_rationalToComplexSubmodule_le hℚ hℂ h'ℚ h'ℂ f
+            (Submodule.map_le_iff_le_comap.2 fun y hy ↦ hf j y hy) ⟨_, hx, rfl⟩) k
         (gradedComplexEquiv hℚ hℂ WQ hWQ k t) := by
   induction t using TensorProduct.induction_on with
   | zero => simp
