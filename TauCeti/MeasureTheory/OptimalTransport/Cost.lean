@@ -75,6 +75,14 @@ integral along a pushforward (`TauCeti.transportCost_comp_swap`,
 This supplies the nonnegative-cost interface from Layer 1, item 1 of the optimal-transport
 roadmap. The parallel signed `EReal` interface for costs bounded below by an integrable split
 function is a separate definition family and is not part of this module.
+
+## References
+
+* C. Villani, *Topics in Optimal Transportation*, Graduate Studies in Mathematics 58, 2003,
+  §1.1.1, where "Kantorovich's mass transportation problem consists in minimizing the linear
+  functional `π ↦ ∫ c dπ`" over the transference plans. Villani takes `μ` and `ν` to be
+  probability measures and `c` nonnegative measurable; `TauCeti.transportCost` drops the
+  normalisation and reads `c` into `ℝ≥0∞`, so an infeasible pair simply gets the value `∞`.
 -/
 
 public section

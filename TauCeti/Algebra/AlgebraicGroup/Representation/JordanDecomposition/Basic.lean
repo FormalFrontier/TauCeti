@@ -203,12 +203,10 @@ theorem isUnipotent_pointsAction_unipotentPart (g : WithConv (H →ₐ[k] K))
 /-- The semisimple and unipotent parts of an algebraic-group point commute. -/
 theorem commute_semisimplePart_unipotentPart (g : WithConv (H →ₐ[k] K)) :
     Commute (semisimplePart k H K g) (unipotentPart k H K g) := by
-  rw [commute_iff_eq]
-  apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-  simp only [map_mul, Tannaka.fgPointTensorIsoEquiv_apply,
-    fgPointTensorIso_semisimplePart, fgPointTensorIso_unipotentPart]
-  exact (Tannaka.commute_fgPointSemisimplePartTensorIso_fgPointUnipotentPartTensorIso
-    k H K g).eq
+  refine Commute.of_map (Tannaka.fgPointTensorIsoEquiv k H K).injective ?_
+  simp only [Tannaka.fgPointTensorIsoEquiv_apply, fgPointTensorIso_semisimplePart,
+    fgPointTensorIso_unipotentPart]
+  exact Tannaka.commute_fgPointSemisimplePartTensorIso_fgPointUnipotentPartTensorIso k H K g
 
 /-- Multiplying the semisimple and unipotent parts recovers the original algebraic-group
 point. -/

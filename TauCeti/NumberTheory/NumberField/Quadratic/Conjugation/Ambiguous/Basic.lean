@@ -43,8 +43,9 @@ then produces `ε ≠ 0` with `x ε = y σε`, and `I = (ε) J` is an ambiguous 
 
 The integral Hilbert 90 result used below is proved in `Quadratic.Conjugation.Hilbert90`.
 
-See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, Chapter 6, for
-the classical ambiguous class number formula.
+See F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2, whose Proposition 2.9 is
+the statement proved here, and D. A. Cox, *Primes of the Form x² + ny²*, §6.A, for the classical
+ambiguous class number formula.
 
 ## Main results
 
