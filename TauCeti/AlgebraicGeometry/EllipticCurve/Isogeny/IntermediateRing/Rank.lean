@@ -18,7 +18,7 @@ The intermediate ring of an isogeny `φ : W₁ → W₂` — the integral closur
 inside `W₁.FunctionField` — is a `W₂.CoordinateRing`-module of rank exactly `φ.degree`. This is the
 arithmetic content of the roadmap's *place-free* count: the degree, defined as a dimension of
 function fields, is also a rank over the coordinate ring, so for a maximal prime it can be read off
-the fibre of an affine place instead of off a field extension.
+the primes of the intermediate ring lying over that prime instead of off a field extension.
 
 The bridge is a localization comparison. `W₂.FunctionField` is the fraction field of
 `W₂.CoordinateRing` by definition, and `W₁.FunctionField` is the fraction field of the intermediate
@@ -32,8 +32,13 @@ ring its torsion-freeness supplies flatness, so Mathlib's fundamental identity
 `Ideal.sum_ramification_inertia_eq_finrank` applies verbatim: for a prime `p` of
 `W₂.CoordinateRing`, the primes of the intermediate ring lying over `p`, weighted by ramification
 index times inertia degree, total `φ.degree`. When `p` is maximal (equivalently, nonzero in the
-Dedekind case), this is the fibre over the affine point named by `p`; dropping the weights bounds
-the number of its primes by the degree.
+Dedekind case), this is the fibre of the intermediate ring over the affine point named by `p`;
+dropping the weights bounds the number of its primes by the degree.
+
+Everything here counts *primes*, not points. The primes of the intermediate ring over `p` are the
+points of `W₁` above the affine point that `p` names only when `W₁` is nonsingular, so that the
+integral closure is the ring of functions on `W₁` itself rather than on its normalization. No
+statement below assumes that, and none of them is stated in terms of points.
 
 ## Main results
 
@@ -99,8 +104,10 @@ hypothesis pinning it, as `Isogeny.moduleFinite_intermediateRing` does.
 `TauCetiRoadmap/EllipticCurves/README.md`, **Layer 1**, the "points come along" milestone, whose
 place-free alternate route reads: "the intermediate ring is locally free of rank `deg φ` over the
 Dedekind coordinate ring, so every fibre over an affine point has `deg φ` points with
-multiplicity, and translation moves the kernel fibre onto one". This file is that rank and that
-fibre count. It is also the form in which **Layer 0**'s fundamental identity
+multiplicity, and translation moves the kernel fibre onto one". This file is that rank and the
+prime-level fibre count under it; reading those primes as the points the milestone speaks of needs
+`W₁` nonsingular, which this file does not assume. It is also the form in which **Layer 0**'s
+fundamental identity
 `Σ_{w ∣ v} e_w · f_w = [F₁ : F₂]` reaches the affine places of `W₂`, the maximal ideals of its
 coordinate ring.
 
@@ -211,10 +218,12 @@ theorem projective_intermediateRing (φ : Isogeny W₁ W₂)
 `W₂.CoordinateRing`, the primes of the intermediate ring lying over `p`, each weighted by its
 ramification index times its inertia degree, total `φ.degree`.
 
-When `p` is maximal (equivalently, nonzero when the coordinate ring is Dedekind), this is the fibre
-of `φ` over the affine place of `W₂` named by `p`, counted with multiplicity: the intermediate ring
-is the ring of functions regular away from `φ⁻¹(O₂)`, so its primes over `p` are the points of
-`W₁` above that point of `W₂`.
+The sum is over primes and the statement stays there. For a nonsingular `W₁` and a maximal `p`
+(equivalently, `p` nonzero when the coordinate ring is Dedekind) the intermediate ring is the ring
+of functions on `W₁` regular away from `φ⁻¹(O₂)`, so its primes over `p` are the points of `W₁`
+above the affine point of `W₂` that `p` names and the identity counts that fibre with multiplicity;
+for a singular `W₁` the integral closure is a normalization instead, whose primes need not be points
+of `W₁`. Neither hypothesis is taken here.
 
 Module-finiteness is taken directly rather than through separability of the function-field
 extension; the module docstring says why. In the separable case
@@ -241,13 +250,15 @@ theorem sum_ramificationIdx_mul_inertiaDeg_eq_degree (φ : Isogeny W₁ W₂)
 /-- **There are at most `deg φ` primes above `p`.** Dropping the weights from the fundamental
 identity: every ramification index and every inertia degree is at least one, so the primes over
 `p` number at most the degree. The count is `Set.ncard`, the spelling Mathlib's own cardinality
-API for this set uses (`Ideal.ncard_primesOver_lt_of_not_le`). When `p` is maximal, these are the
-primes in the fibre over the affine place that `p` names.
+API for this set uses (`Ideal.ncard_primesOver_lt_of_not_le`). What is counted are primes of the
+intermediate ring; reading them as the fibre over the affine place that `p` names needs `p` maximal
+and `W₁` nonsingular, neither of which is assumed.
 
 Equality holds exactly when every ramification index and every inertia degree over `p` is one.
 Turning the weighted identity above into an honest count of geometric points is therefore Layer 1's
-separable-⟹-unramified milestone (`e_q = 1`) together with a separably closed base (`f_q = 1`);
-neither is assumed here. -/
+separable-⟹-unramified milestone (`e_q = 1`) together with a separably closed base (`f_q = 1`) and
+a nonsingular `W₁`, which makes the primes counted here points of `W₁`; none of the three is
+assumed. -/
 theorem ncard_primesOver_le_degree (φ : Isogeny W₁ W₂)
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
