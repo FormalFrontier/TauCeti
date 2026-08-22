@@ -187,7 +187,6 @@ theorem tangentMatrix_adDerivation_apply_of_diagGL (hg : counitPointsMulEquiv n 
 
 /-- Conjugation by the diagonal point with coordinates `t`, with no hypothesis to discharge:
 every invertible matrix, in particular every diagonal one, is the matrix of a unique point. -/
-@[simp]
 theorem tangentMatrix_adDerivation_apply_symm_diagGL (i j : Fin n) :
     tangentMatrix n
         (Derivation.adDerivation B
@@ -221,7 +220,6 @@ theorem tangentMatrix_adDerivation_diagonal (hg : counitPointsMulEquiv n g = dia
 /-- The adjoint action of a point of the diagonal torus of `GLₙ`: it multiplies the `(i, j)`
 entry of a tangent matrix by the character `tᵢ tⱼ⁻¹` read off the split-torus coordinates of
 the point. -/
-@[simp]
 theorem tangentMatrix_adDerivation_apply_diagonalTorusPoints
     (s : WithConv (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) →ₐ[R] B))
     (i j : Fin n) :
