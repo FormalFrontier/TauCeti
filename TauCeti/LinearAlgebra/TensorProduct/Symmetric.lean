@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.DirectSum.LinearMap
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Basis
+public import TauCeti.LinearAlgebra.Trace.Square
 
 /-!
 # Symmetric and antisymmetric tensors in a tensor square
@@ -22,7 +23,10 @@ living outside it.
 
 The point of the file is the trace identity `TauCeti.trace_map_self_comp_comm`: composing
 `f ⊗ f` with the flip has trace `tr (f ∘ f)`, because on a basis the diagonal entry of the
-composite at `eᵢ ⊗ eⱼ` is `aᵢⱼ aⱼᵢ`. Splitting that trace along the eigenspaces of the flip, where
+composite at `eᵢ ⊗ eⱼ` is `aᵢⱼ aⱼᵢ`, and summing those is
+`TauCeti.trace_eq_trace_comp_self_of_toMatrix_diag`, the step shared with the `Fin 2`-indexed
+tensor square of `TauCeti/RepresentationTheory/Tensor/Square.lean`. Splitting that trace along the
+eigenspaces of the flip, where
 the flip is `+1` and `-1`, gives
 `TauCeti.trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict`: the traces of
 `f ⊗ f` on the symmetric and on the antisymmetric tensors differ by `tr (f ∘ f)`. That is the
@@ -47,7 +51,10 @@ the tensor square rather than on the symmetric and exterior powers.
 
 The two submodules are `Module.End.eigenspace` of the flip, not fresh kernels, so that Mathlib's
 eigenspace API applies to them unchanged; the membership lemmas below are the only interface the
-rest of the development uses.
+rest of the development uses. That choice fixes the scalars: `Module.End.eigenspace` subtracts a
+scalar from an endomorphism, so it is stated over `[CommRing R] [AddCommGroup M]`, and neither
+submodule — the symmetric one included — can be formed over a commutative semiring. The trace
+identity uses no eigenspace and is stated over `[CommSemiring K] [AddCommMonoid M]`.
 -/
 
 public section
@@ -143,31 +150,27 @@ end Defs
 
 section Trace
 
-variable {K M : Type*} [CommRing K] [AddCommGroup M] [Module K M]
+variable {K M : Type*} [CommSemiring K] [AddCommMonoid M] [Module K M]
 
 /-- **The trace of `f ⊗ f` composed with the flip is the trace of `f ∘ f`.** In a basis the
 diagonal entry of the composite at `eᵢ ⊗ eⱼ` is `aᵢⱼ aⱼᵢ`, and summing those over all pairs is the
-trace of the square of the matrix of `f`. -/
+trace of the square of the matrix of `f`, which is
+`TauCeti.trace_eq_trace_comp_self_of_toMatrix_diag`. -/
 theorem trace_map_self_comp_comm [Module.Free K M] [Module.Finite K M] (f : M →ₗ[K] M) :
     LinearMap.trace K (M ⊗[K] M)
         (TensorProduct.map f f ∘ₗ (TensorProduct.comm K M M).toLinearMap)
       = LinearMap.trace K M (f ∘ₗ f) := by
   set b := Module.Free.chooseBasis K M
-  set B := b.tensorProduct b with hB
-  set A := LinearMap.toMatrix b b f with hA
-  have hdiag : ∀ p : Module.Free.ChooseBasisIndex K M × Module.Free.ChooseBasisIndex K M,
-      LinearMap.toMatrix B B
-          (TensorProduct.map f f ∘ₗ (TensorProduct.comm K M M).toLinearMap) p p
-        = A p.1 p.2 * A p.2 p.1 := by
-    rintro ⟨i, j⟩
-    rw [LinearMap.toMatrix_apply, hB, Module.Basis.tensorProduct_apply, LinearMap.comp_apply,
-      LinearEquiv.coe_coe, TensorProduct.comm_tmul, TensorProduct.map_tmul,
-      Module.Basis.tensorProduct_repr_tmul_apply, hA, LinearMap.toMatrix_apply,
-      LinearMap.toMatrix_apply, smul_eq_mul, mul_comm]
-  rw [LinearMap.trace_eq_matrix_trace K B, LinearMap.trace_eq_matrix_trace K b,
-    LinearMap.toMatrix_comp b b b f f, Matrix.trace, Matrix.trace]
-  simp only [Matrix.diag_apply, hdiag, Matrix.mul_apply, ← hA]
-  exact Fintype.sum_prod_type _
+  refine trace_eq_trace_comp_self_of_toMatrix_diag b (b.tensorProduct b) (Equiv.refl _) f _ ?_
+  rintro ⟨i, j⟩
+  simp [LinearMap.toMatrix_apply, Module.Basis.tensorProduct_apply,
+    Module.Basis.tensorProduct_repr_tmul_apply, mul_comm]
+
+end Trace
+
+section Restrict
+
+variable {K M : Type*} [CommRing K] [AddCommGroup M] [Module K M]
 
 /-- The restriction of `f ⊗ f` to the symmetric tensors, as an endomorphism. -/
 noncomputable def symmetricTensorsRestrict (f : M →ₗ[K] M) :
@@ -189,7 +192,7 @@ theorem coe_antisymmetricTensorsRestrict_apply (f : M →ₗ[K] M) (x : antisymm
     (antisymmetricTensorsRestrict f x : M ⊗[K] M) = TensorProduct.map f f x :=
   (rfl)
 
-end Trace
+end Restrict
 
 section TraceSplit
 

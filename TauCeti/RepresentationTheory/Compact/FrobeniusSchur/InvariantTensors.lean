@@ -8,8 +8,7 @@ module
 public import TauCeti.LinearAlgebra.TensorProduct.Symmetric
 public import TauCeti.RepresentationTheory.Compact.FrobeniusSchur.Basic
 public import TauCeti.RepresentationTheory.Compact.Invariants
-public import TauCeti.RepresentationTheory.Continuous.Subrepresentation
-public import TauCeti.RepresentationTheory.Continuous.TensorProduct
+public import TauCeti.RepresentationTheory.Continuous.Square
 
 /-!
 # The Frobenius-Schur indicator counts invariant tensors
@@ -40,15 +39,10 @@ linear-algebra content is that composing `f ⊗ f` with the flip has trace `tr (
 that pointwise identity and reading each character integral as a dimension of invariants
 (`ContRepresentation.integral_character_eq_finrank_invariants`) is the theorem.
 
-The two squares themselves need none of the analysis: they are defined, and shown continuous, for a
-continuous representation of a monoid on an inner product space over `RCLike 𝕜`. Only the character
-and indicator statements ask for a compact group, finite dimension, and `𝕜 = ℂ`.
-
-## Main definitions
-
-* `ContRepresentation.symmetricSquare`: the symmetric square of a continuous representation, its
-  restriction to the symmetric tensors of `V ⊗[𝕜] V`.
-* `ContRepresentation.exteriorSquare`: its restriction to the antisymmetric tensors.
+The two squares themselves need none of the analysis, so they are not built here: they are defined,
+and shown continuous, for a continuous representation of a monoid on an inner product space over
+`RCLike 𝕜` in `TauCeti/RepresentationTheory/Continuous/Square.lean`. Only the character and
+indicator statements below ask for a compact group, finite dimension, and `𝕜 = ℂ`.
 
 ## Main statements
 
@@ -86,73 +80,7 @@ open MeasureTheory
 
 open TauCeti TauCeti.ContRepresentation
 
-open scoped TensorProduct
-
 namespace ContRepresentation
-
-section Square
-
-variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
-  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
-
-variable (π : ContRepresentation 𝕜 G V)
-
-omit [TopologicalSpace G] in
-/-- The tensor square of a continuous representation acts on the tensor square by `f ⊗ f`, so the
-symmetric tensors are one of its invariant submodules. -/
-theorem tprod_self_mem_symmetricTensors (g : G) {x : V ⊗[𝕜] V}
-    (hx : x ∈ symmetricTensors 𝕜 V) : tprod π π g x ∈ symmetricTensors 𝕜 V := by
-  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
-  exact map_self_mem_symmetricTensors _ hx
-
-omit [TopologicalSpace G] in
-/-- The antisymmetric tensors are the other invariant submodule of the tensor square. -/
-theorem tprod_self_mem_antisymmetricTensors (g : G) {x : V ⊗[𝕜] V}
-    (hx : x ∈ antisymmetricTensors 𝕜 V) : tprod π π g x ∈ antisymmetricTensors 𝕜 V := by
-  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
-  exact map_self_mem_antisymmetricTensors _ hx
-
-/-- **The symmetric square** of a continuous representation: its tensor square restricted to the
-symmetric tensors. -/
-noncomputable def symmetricSquare : ContRepresentation 𝕜 G (symmetricTensors 𝕜 V) :=
-  subrepresentation (tprod π π) (symmetricTensors 𝕜 V)
-    fun g _ hx ↦ tprod_self_mem_symmetricTensors π g hx
-
-/-- **The exterior square** of a continuous representation: its tensor square restricted to the
-antisymmetric tensors. Over `RCLike 𝕜`, which has characteristic zero, those are the exterior
-square `⋀[𝕜]^2 V` realized inside `V ⊗[𝕜] V`, which is what the name records; the identification
-itself is not formalized here. -/
-noncomputable def exteriorSquare : ContRepresentation 𝕜 G (antisymmetricTensors 𝕜 V) :=
-  subrepresentation (tprod π π) (antisymmetricTensors 𝕜 V)
-    fun g _ hx ↦ tprod_self_mem_antisymmetricTensors π g hx
-
-/-- The symmetric square of a continuous representation is continuous. -/
-theorem continuous_symmetricSquare (hπ : Continuous π) : Continuous (symmetricSquare π) :=
-  continuous_subrepresentation (continuous_tprod π π hπ hπ)
-
-/-- The exterior square of a continuous representation is continuous. -/
-theorem continuous_exteriorSquare (hπ : Continuous π) : Continuous (exteriorSquare π) :=
-  continuous_subrepresentation (continuous_tprod π π hπ hπ)
-
-omit [TopologicalSpace G] in
-/-- The symmetric square acts by the restriction of `π g ⊗ π g`. -/
-theorem coe_symmetricSquare_apply (g : G) :
-    ((symmetricSquare π g : symmetricTensors 𝕜 V →L[𝕜] symmetricTensors 𝕜 V) :
-        symmetricTensors 𝕜 V →ₗ[𝕜] symmetricTensors 𝕜 V)
-      = symmetricTensorsRestrict (π g : V →ₗ[𝕜] V) := by
-  refine LinearMap.ext fun x ↦ Subtype.ext ?_
-  simp [symmetricSquare, ContRepresentation.tprod_apply]
-
-omit [TopologicalSpace G] in
-/-- The exterior square acts by the restriction of `π g ⊗ π g`. -/
-theorem coe_exteriorSquare_apply (g : G) :
-    ((exteriorSquare π g : antisymmetricTensors 𝕜 V →L[𝕜] antisymmetricTensors 𝕜 V) :
-        antisymmetricTensors 𝕜 V →ₗ[𝕜] antisymmetricTensors 𝕜 V)
-      = antisymmetricTensorsRestrict (π g : V →ₗ[𝕜] V) := by
-  refine LinearMap.ext fun x ↦ Subtype.ext ?_
-  simp [exteriorSquare, ContRepresentation.tprod_apply]
-
-end Square
 
 section CompactGroup
 
@@ -176,12 +104,11 @@ theorem character_symmetricSquare_sub_character_exteriorSquare (g : G) :
         - character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V) (exteriorSquare π)
           (continuous_exteriorSquare π hπ) g
       = character π hπ (g * g) := by
-  rw [character_apply, character_apply, character_apply, coe_symmetricSquare_apply π g,
-    coe_exteriorSquare_apply π g,
+  rw [character_apply, character_apply, character_apply, symmetricSquare_apply π g,
+    exteriorSquare_apply π g,
     trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict (π g : V →ₗ[ℂ] V)]
   congr 1
-  rw [map_mul]
-  rfl
+  rw [map_mul, ContinuousLinearMap.toLinearMap_mul, Module.End.mul_eq_comp]
 
 /-- **The Frobenius-Schur indicator is the signed count of invariant tensors**,
 `ν₂(π) = dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
