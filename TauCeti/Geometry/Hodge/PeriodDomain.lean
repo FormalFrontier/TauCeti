@@ -35,18 +35,16 @@ of period-domain points is out of scope; it needs flag-variety topology.
 
 ## Main declarations
 
-* `TauCeti.Hodge.HodgeType`: a weight and a symmetric, finitely supported family of Hodge numbers.
-* `TauCeti.Hodge.HodgeStructureOn.hodgeType`: the Hodge type of a Hodge structure.
 * `TauCeti.Hodge.PeriodDomain.Point`: a point of the period domain of `(V, Qint)` at a fixed type.
 * `TauCeti.Hodge.PeriodDomain.Point.finsum_h_eq_finrank`: **the Hodge numbers partition the
   dimension.**
 * `TauCeti.Hodge.tateHodgeType`: the Hodge type of the Tate structure `ℤ(m)`.
 * `TauCeti.Hodge.tatePoint`: the Tate structure `ℤ(m)` as a point of its period domain.
 
-The signatures of `HodgeType` and `PeriodDomain.Point` are adapted from the roadmap's formal
-companion `HodgeStructures/Suggested.lean`. The mathematics follows Griffiths, *Periods of
-integrals on algebraic manifolds II*, §1, and Carlson–Müller-Stach–Peters, *Period Mappings and
-Period Domains*, §4. This is Layer L3 of `TauCetiRoadmap/HodgeStructures/README.md`.
+The signature of `PeriodDomain.Point` is adapted from the roadmap's formal companion
+`HodgeStructures/Suggested.lean`. The mathematics follows Griffiths, *Periods of integrals on
+algebraic manifolds II*, §1, and Carlson–Müller-Stach–Peters, *Period Mappings and Period Domains*,
+§4. This is Layer L3 of `TauCetiRoadmap/HodgeStructures/README.md`.
 -/
 
 public section
@@ -54,51 +52,6 @@ public section
 namespace TauCeti.Hodge
 
 universe u v
-
-/-- The numerical type of a pure Hodge structure: a weight, Hodge numbers `h` of finite support,
-and the **Hodge symmetry** `h p = h (weight - p)`.
-
-The symmetry is not an extra restriction on the types that occur, since conjugation exchanges the
-Hodge components `H^{p,q}` and `H^{q,p}` of any Hodge structure; it excludes the asymmetric
-families of numbers that no Hodge structure realizes. -/
-@[ext]
-structure HodgeType where
-  /-- The weight of the Hodge structures of this type. -/
-  weight : ℤ
-  /-- The prescribed Hodge numbers. -/
-  h : ℤ → ℕ
-  /-- All but finitely many Hodge numbers vanish. -/
-  finite_support : {p | h p ≠ 0}.Finite
-  /-- Hodge symmetry: `h^{p,q} = h^{q,p}`. -/
-  symm : ∀ p, h p = h (weight - p)
-
-namespace HodgeStructureOn
-
-variable {W : Type u} [AddCommGroup W] [Module ℂ W]
-variable {ω : Conjugation W} {n : ℤ}
-
-/-- The Hodge type of a Hodge structure: its weight together with its own Hodge numbers.
-
-Both axioms of `HodgeType` hold for any Hodge structure: the support is finite because the Hodge
-filtration is bounded, and the symmetry is Hodge symmetry. Following the convention of
-`Module.finrank`, an infinite-dimensional Hodge component contributes the Hodge number `0`; the
-statements reading these numbers as a dimension count, such as
-`HodgeStructureOn.finsum_hodgeNumber_eq_finrank`, assume finite-dimensionality separately. -/
-noncomputable def hodgeType (hs : HodgeStructureOn W ω n) : HodgeType where
-  weight := n
-  h := hs.hodgeNumber
-  finite_support := hs.finite_setOf_hodgeNumber_ne_zero
-  symm := hs.hodgeNumber_symm
-
-@[simp]
-theorem hodgeType_weight (hs : HodgeStructureOn W ω n) : hs.hodgeType.weight = n :=
-  (rfl)
-
-@[simp]
-theorem hodgeType_h (hs : HodgeStructureOn W ω n) : hs.hodgeType.h = hs.hodgeNumber :=
-  (rfl)
-
-end HodgeStructureOn
 
 variable {V : Type u} {Vℂ : Type v}
 variable [AddCommGroup V] [Module.Free ℤ V] [Module.Finite ℤ V]
@@ -128,6 +81,8 @@ structure PeriodDomain.Point [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : I
   /-- The structure realizes the prescribed Hodge numbers. -/
   hodge_numbers : ∀ p : ℤ, hs.hodgeNumber p = htype.h p
 
+attribute [simp] PeriodDomain.Point.htype_weight PeriodDomain.Point.hodge_numbers
+
 namespace PeriodDomain.Point
 
 variable {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ} {Qint : LinearMap.BilinForm ℤ V} {htype : HodgeType}
@@ -142,10 +97,13 @@ theorem ext {D D' : PeriodDomain.Point hℂ n Qint htype} (h : D.hs = D'.hs) : D
   rfl
 
 /-- The Hodge structure underlying a point of the period domain has the prescribed Hodge type. -/
+@[simp]
 theorem hodgeType_eq (D : PeriodDomain.Point hℂ n Qint htype) : D.hs.hodgeType = htype := by
   ext p
-  · exact D.htype_weight.symm
-  · exact D.hodge_numbers p
+  · rw [HodgeStructureOn.hodgeType_weight]
+    exact D.htype_weight.symm
+  · rw [HodgeStructureOn.hodgeType_h]
+    exact D.hodge_numbers p
 
 /-- The structure underlying a point of the period domain is polarizable. -/
 theorem isPolarizable (D : PeriodDomain.Point hℂ n Qint htype) : IsPolarizable hℂ D.hs :=

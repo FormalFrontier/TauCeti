@@ -39,10 +39,13 @@ For a Hodge structure carried on a lattice, `dim_ℂ V_ℂ` is in turn the rank 
   dimension.
 * `TauCeti.Hodge.finsum_hodgeNumber_eq_finrank_lattice`: the Hodge numbers of a Hodge structure
   carried on a lattice sum to the rank of that lattice.
+* `TauCeti.Hodge.HodgeType`: a weight and a symmetric, finitely supported family of Hodge numbers.
+* `TauCeti.Hodge.HodgeStructureOn.hodgeType`: the Hodge type of a Hodge structure.
 
 Voisin, *Hodge Theory and Complex Algebraic Geometry I*, §6, and Peters–Steenbrink, *Mixed Hodge
 Structures*, §2. This is the numerical layer of Layer L3 of
-`TauCetiRoadmap/HodgeStructures/README.md`.
+`TauCetiRoadmap/HodgeStructures/README.md`. The signature of `HodgeType` is adapted from the
+roadmap's formal companion `HodgeStructures/Suggested.lean`.
 -/
 
 public section
@@ -66,6 +69,7 @@ noncomputable def hodgeNumber (hs : HodgeStructureOn W ω n) (p : ℤ) : ℕ :=
   Module.finrank ℂ (hs.piece p)
 
 /-- The Hodge number is the dimension of the Hodge component. -/
+@[simp]
 theorem hodgeNumber_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.hodgeNumber p = Module.finrank ℂ (hs.piece p) :=
   (rfl)
@@ -89,6 +93,51 @@ structure on a finite-dimensional complex vector space sum to its dimension. -/
 theorem finsum_hodgeNumber_eq_finrank (hs : HodgeStructureOn W ω n) [FiniteDimensional ℂ W] :
     ∑ᶠ p, hs.hodgeNumber p = Module.finrank ℂ W :=
   finsum_finrank_eq_finrank_of_isInternal hs.isInternal_piece hs.finite_setOf_piece_ne_bot
+
+end HodgeStructureOn
+
+/-- The numerical type of a pure Hodge structure: a weight, Hodge numbers `h` of finite support,
+and the **Hodge symmetry** `h p = h (weight - p)`.
+
+The symmetry is not an extra restriction on the types that occur, since conjugation exchanges the
+Hodge components `H^{p,q}` and `H^{q,p}` of any Hodge structure; it excludes the asymmetric
+families of numbers that no Hodge structure realizes. -/
+@[ext]
+structure HodgeType where
+  /-- The weight of the Hodge structures of this type. -/
+  weight : ℤ
+  /-- The prescribed Hodge numbers. -/
+  h : ℤ → ℕ
+  /-- All but finitely many Hodge numbers vanish. -/
+  finite_support : {p | h p ≠ 0}.Finite
+  /-- Hodge symmetry: `h^{p,q} = h^{q,p}`. -/
+  symm : ∀ p, h p = h (weight - p)
+
+namespace HodgeStructureOn
+
+variable {W : Type u} [AddCommGroup W] [Module ℂ W]
+variable {ω : Conjugation W} {n : ℤ}
+
+/-- The Hodge type of a Hodge structure: its weight together with its own Hodge numbers.
+
+Both axioms of `HodgeType` hold for any Hodge structure: the support is finite because the Hodge
+filtration is bounded, and the symmetry is Hodge symmetry. Following the convention of
+`Module.finrank`, an infinite-dimensional Hodge component contributes the Hodge number `0`; the
+statements reading these numbers as a dimension count, such as
+`HodgeStructureOn.finsum_hodgeNumber_eq_finrank`, assume finite-dimensionality separately. -/
+noncomputable def hodgeType (hs : HodgeStructureOn W ω n) : HodgeType where
+  weight := n
+  h := hs.hodgeNumber
+  finite_support := hs.finite_setOf_hodgeNumber_ne_zero
+  symm := hs.hodgeNumber_symm
+
+@[simp]
+theorem hodgeType_weight (hs : HodgeStructureOn W ω n) : hs.hodgeType.weight = n :=
+  (rfl)
+
+@[simp]
+theorem hodgeType_h (hs : HodgeStructureOn W ω n) : hs.hodgeType.h = hs.hodgeNumber :=
+  (rfl)
 
 end HodgeStructureOn
 
