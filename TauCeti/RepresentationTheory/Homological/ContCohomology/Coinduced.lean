@@ -97,6 +97,12 @@ theorem isLocallyConstant_of_mem_coind {f : G → A} (hf : f ∈ coind G U A) :
 theorem apply_mul_of_mem_coind {f : G → A} (hf : f ∈ coind G U A) (u : U) (g : G) :
     f ((u : G) * g) = u • f g := hf.2 u g
 
+/-- The equivariance of a bundled element of the coinduced module, in the form `simp` can use
+without a separate membership hypothesis. -/
+@[simp]
+theorem coind_apply_mul (f : coind G U A) (u : U) (g : G) :
+    (f : G → A) ((u : G) * g) = u • (f : G → A) g := apply_mul_of_mem_coind f.2 u g
+
 end Defs
 
 section Action
@@ -176,8 +182,7 @@ induces `Coind_U^G A →+ Coind_U^G B` by postcomposition. -/
 def coindMap (φ : A →+ B) (hφ : ∀ (u : U) (a : A), φ (u • a) = u • φ a) :
     coind G U A →+ coind G U B where
   toFun f := ⟨fun g => φ ((f : G → A) g),
-    ⟨(isLocallyConstant_of_mem_coind f.2).comp φ, fun u g => by
-      simpa [hφ] using congrArg φ (apply_mul_of_mem_coind f.2 u g)⟩⟩
+    ⟨(isLocallyConstant_of_mem_coind f.2).comp φ, fun u g => by simp [hφ]⟩⟩
   map_zero' := by ext g; simp
   map_add' _ _ := by ext g; simp
 
@@ -299,6 +304,7 @@ variable {G : Type*} [Group G] [TopologicalSpace G]
 /-- **`Coind_1^G A` is the group of all locally constant maps `G → A`**: for the trivial subgroup
 the equivariance condition is vacuous. This is the module the dimension-shifting argument
 embeds a discrete module into. -/
+@[simp]
 theorem mem_coind_bot_iff {A : Type*} [AddCommGroup A] [DistribMulAction (⊥ : Subgroup G) A]
     {f : G → A} : f ∈ coind G ⊥ A ↔ IsLocallyConstant f :=
   ⟨fun hf => hf.1, fun hf => ⟨hf, fun u g => by
