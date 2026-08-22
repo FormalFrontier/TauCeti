@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Weights.Borel
-public import TauCeti.Algebra.Lie.Weights.Eigenvector
+import TauCeti.Algebra.Lie.Weights.Eigenvector
 public import TauCeti.Algebra.Lie.Weights.Integrality
 
 public section

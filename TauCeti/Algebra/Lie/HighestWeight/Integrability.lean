@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Maximal
 import TauCeti.Algebra.Lie.Submodule.Atom
-public import TauCeti.Algebra.Lie.Weights.Eigenvector
+import TauCeti.Algebra.Lie.Weights.Eigenvector
 
 public section
 
