@@ -48,10 +48,10 @@ Complex Algebraic Geometry I*, §7.1.2, and Peters–Steenbrink, *Mixed Hodge St
 * `TauCeti.Hodge.RationalHodgeSubstructure.isCompl_orthogonal` and
   `TauCeti.Hodge.RationalHodgeSubstructure.isCompl_WC_orthogonal_WC`: it is a complement, both
   rationally and after complexification.
-* `TauCeti.Hodge.RationalHodgeSubstructure.integralFormBaseChange_orthogonal_top`: the
+* `TauCeti.Hodge.RationalHodgeSubstructure.integralFormBaseChange_orthogonal_top_eq_bot`: the
   rationalified polarizing form is nondegenerate.
 * `TauCeti.Hodge.exists_isCompl_of_isPolarizable`: every rational Hodge substructure of a
-  polarizable pure Hodge structure is a direct summand.
+  polarizable pure Hodge structure has an orthogonal direct-sum complement.
 -/
 
 public section
@@ -252,7 +252,7 @@ theorem isCompl_WC_orthogonal_WC : IsCompl W.WC (orthogonal P W).WC := by
 
 /-- The rationalified polarizing form is nondegenerate: only zero is orthogonal to the whole
 rational space. -/
-theorem integralFormBaseChange_orthogonal_top :
+theorem integralFormBaseChange_orthogonal_top_eq_bot :
     LinearMap.BilinForm.orthogonal (integralFormBaseChange hℚ P.Qint)
       (⊤ : Submodule ℚ Vℚ) = ⊥ := by
   have h := (isCompl_orthogonal_WQ P (top : RationalHodgeSubstructure hℚ hs)).disjoint
@@ -262,14 +262,19 @@ theorem integralFormBaseChange_orthogonal_top :
 end RationalHodgeSubstructure
 
 /-- **Semisimplicity of polarizable rational Hodge structures.** Every rational Hodge substructure
-of a polarizable pure Hodge structure is a direct summand: it has a rational Hodge substructure as
-a complement, both over `ℚ` and after complexification. -/
+of a polarizable pure Hodge structure has a complement, both over `ℚ` and after complexification,
+orthogonal to it for some polarization. -/
 theorem exists_isCompl_of_isPolarizable [Module.Finite ℚ Vℚ] (h : IsPolarizable hℂ hs)
     (W : RationalHodgeSubstructure hℚ hs) :
-    ∃ W' : RationalHodgeSubstructure hℚ hs, IsCompl W.WQ W'.WQ ∧ IsCompl W.WC W'.WC := by
+    ∃ P : Polarization hℂ hs, ∃ W' : RationalHodgeSubstructure hℚ hs,
+      IsCompl W.WQ W'.WQ ∧ IsCompl W.WC W'.WC ∧
+        ∀ v ∈ W.WC, ∀ w ∈ W'.WC, P.Q v w = 0 := by
   obtain ⟨P⟩ := isPolarizable_iff_nonempty.1 h
-  exact ⟨RationalHodgeSubstructure.orthogonal P W,
+  refine ⟨P, RationalHodgeSubstructure.orthogonal P W,
     RationalHodgeSubstructure.isCompl_orthogonal P W,
-    RationalHodgeSubstructure.isCompl_WC_orthogonal_WC P W⟩
+    RationalHodgeSubstructure.isCompl_WC_orthogonal_WC P W, ?_⟩
+  intro v hv w hw
+  rw [RationalHodgeSubstructure.orthogonal_WC] at hw
+  exact hw v hv
 
 end TauCeti.Hodge

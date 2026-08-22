@@ -156,6 +156,7 @@ theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)
   simp [rationalToComplexSubmodule]
 
 /-- Complexification of rational subspaces preserves joins. -/
+@[simp]
 theorem rationalToComplexSubmodule_sup (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W₁ W₂ : Submodule ℚ Vℚ) :
     rationalToComplexSubmodule hℚ hℂ (W₁ ⊔ W₂) =
