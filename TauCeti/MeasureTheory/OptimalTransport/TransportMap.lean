@@ -20,11 +20,13 @@ into a transport plan and so embeds the Monge problem into the Kantorovich probl
 The embedding is not surjective, and the failure is already visible on a one-point source: a
 transport map out of a Dirac measure cannot split mass, so its target is again a Dirac measure
 (`TauCeti.eq_dirac_of_hasLaw_dirac`), while `δ_x` has a coupling with *every* probability measure
-`ν`. Conversely a plan concentrated on the graph of a measurable map is that map's graph plan
-(`TauCeti.IsCoupling.eq_graphPlan_of_ae`), so the graph plans are exactly the deterministic plans.
+`ν`. Conversely a plan concentrated on the graph of an almost everywhere measurable map is that
+map's graph plan (`TauCeti.IsCoupling.eq_graphPlan_of_ae`), so the graph plans are exactly the
+deterministic plans.
 
-Everything is stated for arbitrary measures on arbitrary measurable spaces; no topology, metric,
-density or normalisation is involved, and the source and target spaces may differ.
+The raw-measure API is stated for arbitrary measures on arbitrary measurable spaces; no topology,
+metric, density or normalisation is involved, and the source and target spaces may differ. Only
+the final bundled coupling construction requires probability measures.
 
 ## Main definitions
 
@@ -41,26 +43,21 @@ density or normalisation is involved, and the source and target spaces may diffe
 * `TauCeti.transportCost_le_lintegral_of_hasLaw` — **the Monge problem dominates the Kantorovich
   problem**: the transport cost of `μ` and `ν` is at most the cost `∫⁻ x, c (x, T x) ∂μ` of any
   transport map `T` from `μ` to `ν`;
-* `TauCeti.IsCoupling.eq_graphPlan_of_ae` — a plan carried by the graph of a measurable map is
-  that map's graph plan, the converse of `TauCeti.isCoupling_graphPlan`;
+* `TauCeti.IsCoupling.eq_graphPlan_of_ae` — a plan carried by the graph of an almost everywhere
+  measurable map is that map's graph plan, the converse of `TauCeti.isCoupling_graphPlan`;
 * `TauCeti.graphPlan_dirac` and `TauCeti.eq_dirac_of_hasLaw_dirac` — a Dirac source admits only
   Dirac targets, so the Monge problem out of an atom is infeasible whenever the Kantorovich
   problem is not;
-* `TauCeti.isCoupling_graphPlan_comp` and `TauCeti.map_prodMap_id_graphPlan` — transport maps
-  compose, and the composite's graph plan is the second-coordinate pushforward of the first one's;
-* `TauCeti.isCoupling_graphPlan_id`, `TauCeti.isCoupling_graphPlan_of_measurePreserving` and
-  `TauCeti.isCoupling_graphPlan_measurableEquiv` — the three standard sources of a transport map,
-  recorded as the named entry points a consumer reaches for.
+* `TauCeti.map_prodMap_id_graphPlan` — the composite of two maps has the graph plan obtained by
+  pushing the first map's graph plan forward in its second coordinate.
 
 ## Implementation notes
 
 Feasibility of a transport map is `ProbabilityTheory.HasLaw T ν μ` throughout; this file adds no
 predicate of its own, so the Mathlib API for laws — `ProbabilityTheory.HasLaw.comp`,
 `ProbabilityTheory.HasLaw.congr`, `ProbabilityTheory.HasLaw.id` and
-`MeasureTheory.MeasurePreserving.hasLaw` — applies to transport maps verbatim, and is what the
-composition, congruence, identity and measure-preserving results below are proved from. Those four
-results are one-step specialisations on purpose: they are the shapes in which a transport map
-usually arrives, and naming them keeps the Mathlib-side reasoning out of every consumer.
+`MeasureTheory.MeasurePreserving.hasLaw` — applies to transport maps verbatim. In particular,
+these feed directly into `TauCeti.isCoupling_graphPlan_of_hasLaw` without intermediate wrappers.
 
 `ProbabilityTheory.HasLaw` asks only for almost-everywhere measurability, so that is the running
 hypothesis here too. It is genuinely needed for the *first* marginal: `MeasureTheory.Measure.map`
@@ -68,9 +65,7 @@ is `0` on a non-almost-everywhere-measurable map, so `TauCeti.fst_graphPlan` fai
 second marginal (`TauCeti.snd_graphPlan`) needs no hypothesis, because in that degenerate case both
 sides are `0`.
 
-`TauCeti.graphPlan` is `@[expose]`d: it is a one-line pushforward, downstream layers rewrite it
-back into that form when they need a change-of-variables formula that this file does not
-anticipate, and hiding the body would only force a `rfl` lemma restating it.
+`TauCeti.graphPlan_def` is the stable rewriting interface to the pushforward implementation.
 
 This is Layer 0, item 2 of the optimal-transport roadmap.
 
@@ -106,11 +101,13 @@ variable {X : Type u} {Y : Type v} {Z : Type w}
 `X`: the pushforward of `μ` along `x ↦ (x, T x)`. It is a coupling of `μ` and `μ.map T` as soon as
 `T` is almost everywhere measurable (`TauCeti.isCoupling_graphPlan`), and this is how a solution of
 the Monge problem is read as a solution of the Kantorovich problem. -/
--- `@[expose]`: the body is a one-line pushforward that downstream change-of-variables arguments
--- rewrite against; see the implementation notes.
-@[expose]
 def graphPlan (μ : Measure X) (T : X → Y) : Measure (X × Y) :=
   μ.map fun x ↦ (x, T x)
+
+/-- The graph plan is the pushforward of the source measure along the graph map. -/
+theorem graphPlan_def (μ : Measure X) (T : X → Y) :
+    graphPlan μ T = μ.map fun x ↦ (x, T x) :=
+  (rfl)
 
 /-- The mass a graph plan gives a measurable set is the source mass of its preimage under the
 graph map. -/
@@ -151,19 +148,12 @@ theorem isProbabilityMeasure_graphPlan [IsProbabilityMeasure μ] (hT : AEMeasura
     IsProbabilityMeasure (graphPlan μ T) :=
   (isCoupling_graphPlan hT).isProbabilityMeasure
 
-/-- The identity map is a transport map from `μ` to itself, and its graph plan is the diagonal
-coupling. -/
-theorem isCoupling_graphPlan_id (μ : Measure X) :
-    IsCoupling (graphPlan μ (id : X → X)) μ μ :=
+/-- The generic graph-plan interface specializes directly to the identity map. -/
+example (μ : Measure X) : IsCoupling (graphPlan μ (id : X → X)) μ μ :=
   isCoupling_graphPlan_of_hasLaw HasLaw.id
 
-/-- A measure-preserving map is a transport map, so it too induces a coupling. -/
-theorem isCoupling_graphPlan_of_measurePreserving (hT : MeasurePreserving T μ ν) :
-    IsCoupling (graphPlan μ T) μ ν :=
-  isCoupling_graphPlan_of_hasLaw hT.hasLaw
-
-/-- A measurable equivalence is a transport map from `μ` to its pushforward. -/
-theorem isCoupling_graphPlan_measurableEquiv (μ : Measure X) (e : X ≃ᵐ Y) :
+/-- The generic graph-plan interface also specializes directly to a measurable equivalence. -/
+example (μ : Measure X) (e : X ≃ᵐ Y) :
     IsCoupling (graphPlan μ e) μ (μ.map e) :=
   isCoupling_graphPlan e.measurable.aemeasurable
 
@@ -180,20 +170,31 @@ theorem map_swap_graphPlan_symm (μ : Measure X) (e : X ≃ᵐ Y) :
 
 /-! ### Graph plans over a Dirac source -/
 
-/-- The graph plan of a measurable map out of a Dirac measure is the Dirac measure at the
-corresponding point of the graph. -/
-@[simp]
-theorem graphPlan_dirac (hT : Measurable T) (x : X) :
-    graphPlan (Measure.dirac x) T = Measure.dirac (x, T x) :=
-  Measure.map_dirac' (measurable_id'.prodMk hT) x
+private theorem map_dirac_of_aemeasurable (hT : AEMeasurable T (Measure.dirac x)) :
+    (Measure.dirac x).map T = Measure.dirac (T x) := by
+  have hx : T x = hT.mk T x := by
+    by_contra hx
+    have hmem : x ∈ {y | T y = hT.mk T y}ᶜ := by simpa
+    have hzero : Measure.dirac x {y | T y = hT.mk T y}ᶜ = 0 :=
+      mem_ae_iff.1 hT.ae_eq_mk
+    rw [Measure.dirac_apply_of_mem hmem] at hzero
+    exact one_ne_zero hzero
+  rw [Measure.map_congr hT.ae_eq_mk, Measure.map_dirac' hT.measurable_mk, ← hx]
 
-/-- **A transport map cannot split an atom**: a measurable map with a law under `δ_x` has the
-Dirac law at `T x`. Since `δ_x` is coupled to *every* probability measure by
+/-- The graph plan of an almost everywhere measurable map out of a Dirac measure is the Dirac
+measure at the corresponding point of the graph. -/
+@[simp]
+theorem graphPlan_dirac (hT : AEMeasurable T (Measure.dirac x)) :
+    graphPlan (Measure.dirac x) T = Measure.dirac (x, T x) :=
+  map_dirac_of_aemeasurable (measurable_id'.aemeasurable.prodMk hT)
+
+/-- **A transport map cannot split an atom**: a map with a law under `δ_x` has the Dirac law at
+`T x`. Since `δ_x` is coupled to *every* probability measure by
 `TauCeti.isCoupling_map_prodMk`, this is the basic obstruction to solving the Monge problem where
 the Kantorovich problem is solvable. -/
-theorem eq_dirac_of_hasLaw_dirac (hT : Measurable T) (h : HasLaw T ν (Measure.dirac x)) :
+theorem eq_dirac_of_hasLaw_dirac (h : HasLaw T ν (Measure.dirac x)) :
     ν = Measure.dirac (T x) :=
-  h.map_eq.symm.trans (Measure.map_dirac' hT x)
+  h.map_eq.symm.trans (map_dirac_of_aemeasurable h.aemeasurable)
 
 /-! ### Deterministic plans -/
 
@@ -203,10 +204,10 @@ theorem ae_graphPlan_iff (hT : AEMeasurable T μ) {p : X × Y → Prop}
     (∀ᵐ z ∂graphPlan μ T, p z) ↔ ∀ᵐ x ∂μ, p (x, T x) :=
   ae_map_iff (measurable_id'.aemeasurable.prodMk hT) hp
 
-/-- **A deterministic plan is a graph plan**: a measure on `X × Y` carried by the graph of a
-measurable map `T` is the graph plan of `T` under its own first marginal. This is the converse of
-`TauCeti.isCoupling_graphPlan`. -/
-theorem eq_graphPlan_fst_of_ae (hT : Measurable T) (h : ∀ᵐ z ∂π, z.2 = T z.1) :
+/-- **A deterministic plan is a graph plan**: a measure on `X × Y` carried by the graph of an
+almost everywhere measurable map `T` is the graph plan of `T` under its own first marginal. This
+is the converse of `TauCeti.isCoupling_graphPlan`. -/
+theorem eq_graphPlan_fst_of_ae (hT : AEMeasurable T π.fst) (h : ∀ᵐ z ∂π, z.2 = T z.1) :
     π = graphPlan π.fst T := by
   have hgraph : (fun z : X × Y ↦ z) =ᵐ[π] fun z ↦ (z.1, T z.1) := by
     filter_upwards [h] with z hz
@@ -214,19 +215,20 @@ theorem eq_graphPlan_fst_of_ae (hT : Measurable T) (h : ∀ᵐ z ∂π, z.2 = T 
   calc π = π.map (fun z ↦ z) := Measure.map_id'.symm
     _ = π.map (fun z ↦ (z.1, T z.1)) := Measure.map_congr hgraph
     _ = graphPlan π.fst T :=
-        (Measure.map_map (measurable_id'.prodMk hT) measurable_fst).symm
+        (AEMeasurable.map_map_of_aemeasurable
+          (measurable_id'.aemeasurable.prodMk hT) measurable_fst.aemeasurable).symm
 
-/-- A coupling carried by the graph of a measurable map is that map's graph plan; in particular
-the map is a transport map from the coupling's source to its target. -/
-theorem IsCoupling.eq_graphPlan_of_ae (hπ : IsCoupling π μ ν) (hT : Measurable T)
+/-- A coupling carried by the graph of an almost everywhere measurable map is that map's graph
+plan; in particular the map is a transport map from the coupling's source to its target. -/
+theorem IsCoupling.eq_graphPlan_of_ae (hπ : IsCoupling π μ ν) (hT : AEMeasurable T μ)
     (h : ∀ᵐ z ∂π, z.2 = T z.1) : π = graphPlan μ T := by
-  rw [eq_graphPlan_fst_of_ae hT h, hπ.fst_eq]
+  rw [eq_graphPlan_fst_of_ae (hπ.fst_eq.symm ▸ hT) h, hπ.fst_eq]
 
-/-- A coupling carried by the graph of a measurable map exhibits that map as a transport map
-between the coupling's two marginals. -/
-theorem IsCoupling.hasLaw_of_ae (hπ : IsCoupling π μ ν) (hT : Measurable T)
+/-- A coupling carried by the graph of an almost everywhere measurable map exhibits that map as a
+transport map between the coupling's two marginals. -/
+theorem IsCoupling.hasLaw_of_ae (hπ : IsCoupling π μ ν) (hT : AEMeasurable T μ)
     (h : ∀ᵐ z ∂π, z.2 = T z.1) : HasLaw T ν μ where
-  aemeasurable := hT.aemeasurable
+  aemeasurable := hT
   map_eq := by rw [← snd_graphPlan μ T, ← hπ.eq_graphPlan_of_ae hT h, hπ.snd_eq]
 
 /-! ### Composing transport maps -/
@@ -236,13 +238,6 @@ theorem map_prodMap_id_graphPlan (hT : AEMeasurable T μ) (hS : Measurable S) :
     (graphPlan μ T).map (Prod.map id S) = graphPlan μ (S ∘ T) :=
   AEMeasurable.map_map_of_aemeasurable (measurable_id'.prodMap hS).aemeasurable
     (measurable_id'.aemeasurable.prodMk hT)
-
-/-- **Transport maps compose**: if `T` transports `μ` to `ν` and `S` transports `ν` to `σ`, then
-`S ∘ T` transports `μ` to `σ`, so its graph plan couples `μ` and `σ`. The feasibility half is
-`ProbabilityTheory.HasLaw.comp`. -/
-theorem isCoupling_graphPlan_comp (hT : HasLaw T ν μ) (hS : HasLaw S σ ν) :
-    IsCoupling (graphPlan μ (S ∘ T)) μ σ :=
-  isCoupling_graphPlan_of_hasLaw (hS.comp hT)
 
 /-! ### The cost of a transport map -/
 
@@ -254,17 +249,18 @@ theorem lintegral_graphPlan (hT : AEMeasurable T μ) (hc : AEMeasurable c (graph
 /-- **The Monge problem dominates the Kantorovich problem**: the transport cost of `μ` and `ν` is
 at most the cost of any transport map from `μ` to `ν`, because that map's graph plan is a feasible
 coupling. -/
-theorem transportCost_le_lintegral_of_hasLaw (hT : HasLaw T ν μ) (hc : Measurable c) :
+theorem transportCost_le_lintegral_of_hasLaw (hT : HasLaw T ν μ)
+    (hc : AEMeasurable c (graphPlan μ T)) :
     transportCost c μ ν ≤ ∫⁻ x, c (x, T x) ∂μ :=
   (transportCost_le_lintegral (isCoupling_graphPlan_of_hasLaw hT) c).trans_eq
-    (lintegral_graphPlan hT.aemeasurable hc.aemeasurable)
+    (lintegral_graphPlan hT.aemeasurable hc)
 
 /-- A transport map whose graph plan is optimal solves both the Monge and the Kantorovich problem,
 and then the two values agree. -/
 theorem lintegral_eq_transportCost_of_isOptimalCoupling (hT : AEMeasurable T μ)
-    (hc : Measurable c) (h : IsOptimalCoupling c (graphPlan μ T) μ ν) :
+    (hc : AEMeasurable c (graphPlan μ T)) (h : IsOptimalCoupling c (graphPlan μ T) μ ν) :
     ∫⁻ x, c (x, T x) ∂μ = transportCost c μ ν :=
-  (lintegral_graphPlan hT hc.aemeasurable).symm.trans h.lintegral_eq
+  (lintegral_graphPlan hT hc).symm.trans h.lintegral_eq
 
 /-! ### The bundled graph coupling -/
 
@@ -273,8 +269,6 @@ namespace Coupling
 variable {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
 
 /-- The graph plan of a transport map between two probability measures, as a bundled coupling. -/
--- `@[expose]`: `TauCeti.Coupling.coe_graphPlan` below unfolds the body.
-@[expose]
 def graphPlan (T : X → Y) (hT : HasLaw T ν.toMeasure μ.toMeasure) : Coupling μ ν :=
   ⟨⟨TauCeti.graphPlan μ.toMeasure T, isProbabilityMeasure_graphPlan hT.aemeasurable⟩,
     isCoupling_graphPlan_of_hasLaw hT⟩
@@ -283,7 +277,7 @@ def graphPlan (T : X → Y) (hT : HasLaw T ν.toMeasure μ.toMeasure) : Coupling
 theorem coe_graphPlan (T : X → Y) (hT : HasLaw T ν.toMeasure μ.toMeasure) :
     ((graphPlan T hT : Coupling μ ν) : ProbabilityMeasure (X × Y)).toMeasure =
       TauCeti.graphPlan μ.toMeasure T :=
-  rfl
+  (rfl)
 
 end Coupling
 
