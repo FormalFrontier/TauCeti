@@ -232,12 +232,6 @@ which it multiplies. -/
   rw [f4SpecialIsogenyIndex_involutive i] at h
   exact h
 
-private theorem f4Length_mul_dotProduct_specialIsogenyIndex (i j : Fin 48) :
-    f4Length i * (f4Root (f4SpecialIsogenyIndex i) ⬝ᵥ f4Coroot (f4SpecialIsogenyIndex j)) =
-      f4Length j * (f4Root i ⬝ᵥ f4Coroot j) := by
-  rw [f4Length_def]
-  decide +revert
-
 /-- **The Cartan integers transform by the rule a special isogeny forces.** Writing `α'` for the
 image of a root `α` under the special permutation, pairing the root equation against the coroot
 equation gives `ℓ(α) ⟨α', β'∨⟩ = ℓ(β) ⟨α, β∨⟩`. No diagram automorphism satisfies this, since the
@@ -247,7 +241,27 @@ theorem f4Length_mul_pairing_f4SpecialIsogenyIndex (i j : Fin 48) :
         f4SimplyConnectedRootDatum.pairing
           (f4SpecialIsogenyIndexEquiv i) (f4SpecialIsogenyIndexEquiv j) =
       f4Length j * f4SimplyConnectedRootDatum.pairing i j := by
-  simp only [f4SimplyConnectedRootDatum_pairing, f4SpecialIsogenyIndexEquiv_apply]
-  exact f4Length_mul_dotProduct_specialIsogenyIndex i j
+  calc
+    _ = (f4Length i • f4SimplyConnectedRootDatum.root (f4SpecialIsogenyIndexEquiv i)) ⬝ᵥ
+          f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j) := by
+      rw [f4SimplyConnectedRootDatum_pairing, f4SimplyConnectedRootDatum_root,
+        f4SimplyConnectedRootDatum_coroot, smul_dotProduct, smul_eq_mul]
+    _ = (f4SpecialIsogenyMatrix *ᵥ f4SimplyConnectedRootDatum.root i) ⬝ᵥ
+          f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j) := by
+      rw [f4SpecialIsogenyMatrix_mulVec_root]
+    _ = f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j) ⬝ᵥ
+          (f4SpecialIsogenyMatrix *ᵥ f4SimplyConnectedRootDatum.root i) := dotProduct_comm _ _
+    _ = f4SimplyConnectedRootDatum.root i ⬝ᵥ
+          (f4SpecialIsogenyMatrixᵀ *ᵥ
+            f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j)) :=
+      (Matrix.dotProduct_transpose_mulVec f4SpecialIsogenyMatrix
+        (f4SimplyConnectedRootDatum.root i)
+        (f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j))).symm
+    _ = f4SimplyConnectedRootDatum.root i ⬝ᵥ
+          (f4Length j • f4SimplyConnectedRootDatum.coroot j) := by
+      rw [f4SpecialIsogenyMatrix_transpose_mulVec_coroot]
+    _ = _ := by
+      rw [dotProduct_smul, smul_eq_mul, f4SimplyConnectedRootDatum_pairing,
+        f4SimplyConnectedRootDatum_root, f4SimplyConnectedRootDatum_coroot]
 
 end TauCeti.DynkinType
