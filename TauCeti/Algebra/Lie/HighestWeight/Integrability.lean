@@ -54,14 +54,13 @@ Three facts have to be checked about `w`, and they use different parts of the th
 
 ## Main results
 
-* `TauCeti.isHighestWeightVector_pow_toEnd_of_ne_zero`: **the integrability relation**, that
-  `fᵢ^{n + 1} v` is a highest weight vector of weight `lam - (n + 1) αᵢ` when it is nonzero.
-* `TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector`: it lies in the maximal
-  submodule of a highest weight module, so it dies in the irreducible quotient.
+* `TauCeti.isHighestWeightVector_pow_toEnd_of_lieSpan_eq_top_of_ne_zero`: **the integrability
+  relation**, that `fᵢ^{n + 1} v` is a highest weight vector of weight `lam - (n + 1) αᵢ` when it
+  is nonzero.
+* `TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top`: it lies in
+  the maximal submodule of a highest weight module, so it dies in the irreducible quotient.
 * `TauCeti.pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible`: in an irreducible highest
-  weight module it is therefore zero, and
-  `TauCeti.exists_pow_toEnd_eq_zero_of_isHighestWeightVector_of_isDominantIntegral` states the
-  result for a dominant integral highest weight, at every simple root at once.
+  weight module it is therefore zero.
 
 ## References
 
@@ -88,22 +87,20 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 
 variable {b : (IsKilling.rootSystem H).Base} {lam : Dual K H} {v : M}
 
-/-- The rank-one half of the integrability relation: the root space of `αᵢ` annihilates
-`fᵢ^{n + 1} v`.
+/-- The rank-one half of the integrability relation: for a positive root `αᵢ` along which the
+highest weight is integral, the root space of `αᵢ` annihilates `fᵢ^{n + 1} v`.
 
 The `sl₂` triple of `αᵢ` makes `v` a primitive vector of eigenvalue `n`, and Mathlib's
 `IsSl2Triple.HasPrimitiveVectorWith.lie_e_pow_succ_toEnd_f` evaluates the raising operator on the
 lowered vectors; the coefficient `(n + 1)(n - n)` vanishes. Since both root spaces are lines, one
 normalized triple computes the bracket for every choice of raising and lowering vector. -/
 theorem lie_pow_toEnd_eq_zero_of_isHighestWeightVector (hv : IsHighestWeightVector b lam v)
-    {i : H.root} (hi : i ∈ b.support) {n : ℕ}
+    {i : H.root} (hi : i ∈ posRoots (IsKilling.rootSystem H) b) {n : ℕ}
     (hn : lam ((IsKilling.rootSystem H).coroot i) = (n : K))
     {e f : L} (he : e ∈ rootSpace H ((i : Weight K H L) : H → K))
     (hf : f ∈ rootSpace H ((-(i : Weight K H L) : Weight K H L) : H → K)) :
     ⁅e, ((toEnd K L M f) ^ (n + 1)) v⁆ = 0 := by
   have hα : (i : Weight K H L).IsNonZero := H.isNonZero_coe_root i
-  have hipos : i ∈ posRoots (IsKilling.rootSystem H) b :=
-    support_subset_posRoots (IsKilling.rootSystem H) b hi
   obtain ⟨h₀, e₀, f₀, ht, he₀, hf₀⟩ := IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
   -- the generating vector is a primitive vector of eigenvalue `n` for the triple of `αᵢ`
   have hP : ht.HasPrimitiveVectorWith v (n : K) :=
@@ -111,7 +108,7 @@ theorem lie_pow_toEnd_eq_zero_of_isHighestWeightVector (hv : IsHighestWeightVect
       lie_h := by
         rw [ht.h_eq_coroot hα he₀ hf₀, ← hn, IsKilling.rootSystem_coroot_apply]
         exact hv.lie_eq_smul _
-      lie_e := hv.lie_eq_zero_of_mem_rootSpace hipos he₀ }
+      lie_e := hv.lie_eq_zero_of_mem_rootSpace hi he₀ }
   -- the two root spaces are the lines spanned by the members of the triple
   obtain ⟨c, rfl⟩ : ∃ c : K, c • e₀ = e := by
     have := IsKilling.toSubmodule_rootSpace_eq_span (i : Weight K H L) hα e₀ ht.e_ne_zero he₀
@@ -134,7 +131,8 @@ Its `H`-eigenvalue is read off `TauCeti.lie_pow_toEnd_eq_smul_of_mem_rootSpace`.
 root spaces, that of `αᵢ` annihilates it by the rank-one theory, and every other one does so
 because it would otherwise produce a weight above the cone `lam - Q⁺` that bounds a highest weight
 module. -/
-theorem isHighestWeightVector_pow_toEnd_of_ne_zero (hv : IsHighestWeightVector b lam v)
+theorem isHighestWeightVector_pow_toEnd_of_lieSpan_eq_top_of_ne_zero
+    (hv : IsHighestWeightVector b lam v)
     (hgen : LieSubmodule.lieSpan K L {v} = ⊤) {i : H.root} (hi : i ∈ b.support) {n : ℕ}
     (hn : lam ((IsKilling.rootSystem H).coroot i) = (n : K))
     {f : L} (hf : f ∈ rootSpace H ((-(i : Weight K H L) : Weight K H L) : H → K))
@@ -157,13 +155,19 @@ theorem isHighestWeightVector_pow_toEnd_of_ne_zero (hv : IsHighestWeightVector b
   have : IsAddTorsionFree H := IsAddTorsionFree.of_isTorsionFree K _
   refine isHighestWeightVector_of_forall_rootSpace hw hcartan fun j hj x hx => ?_
   rcases eq_or_ne j i with rfl | hji
-  · exact lie_pow_toEnd_eq_zero_of_isHighestWeightVector hv hi hn hx hf
+  · exact lie_pow_toEnd_eq_zero_of_isHighestWeightVector hv
+      (support_subset_posRoots (IsKilling.rootSystem H) b hi) hn hx hf
   -- a positive root other than `αᵢ` would raise `w` out of the cone below `lam`
   · by_contra hne
+    -- the weight of `⁅x, w⁆`, a sum in `Dual K H`, as the sum of the two weight functions
+    have hcoe : (((IsKilling.rootSystem H).root j + mu : Dual K H) : H → K)
+        = ((j : Weight K H L) : H → K) + ((mu : Dual K H) : H → K) := by
+      rw [LinearMap.coe_add, IsKilling.rootSystem_root_apply, Weight.coe_coe]
     have hmem : ⁅x, w⁆ ∈ genWeightSpace M
         (((IsKilling.rootSystem H).root j + mu : Dual K H) : H → K) := by
       have hmaps := mapsTo_toEnd_genWeightSpace_add_of_mem_rootSpace (R := K) (L := L) (H := H)
         (M := M) ((j : Weight K H L) : H → K) ((mu : Dual K H) : H → K) hx
+      rw [hcoe]
       exact hmaps (mem_genWeightSpace_of_forall_lie_eq_smul hcartan)
     have hbot : genWeightSpace M
         ((((IsKilling.rootSystem H).root j + mu : Dual K H)) : H → K) ≠ ⊥ := fun hb => by
@@ -195,7 +199,7 @@ If it is nonzero it is a highest weight vector of weight `lam - (n + 1) αᵢ`, 
 generates cannot be everything: a module is a highest weight module for at most one weight. The
 maximal submodule of a highest weight module is its greatest proper submodule, so that submodule
 lies inside it. -/
-theorem pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector
+theorem pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤)
     {i : H.root} (hi : i ∈ b.support) {n : ℕ}
     (hn : lam ((IsKilling.rootSystem H).coroot i) = (n : K))
@@ -204,7 +208,7 @@ theorem pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector
   rcases eq_or_ne (((toEnd K L M f) ^ (n + 1)) v) 0 with hzero | hw
   · rw [hzero]
     exact zero_mem _
-  have hhw := isHighestWeightVector_pow_toEnd_of_ne_zero hv hgen hi hn hf hw
+  have hhw := isHighestWeightVector_pow_toEnd_of_lieSpan_eq_top_of_ne_zero hv hgen hi hn hf hw
   have hproper : LieSubmodule.lieSpan K L {((toEnd K L M f) ^ (n + 1)) v} ≠ ⊤ := fun htop =>
     ne_sub_nsmul_root lam i n (eq_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen hhw htop)
   exact (le_maximalSubmodule_iff_ne_top_of_isHighestWeightVector_of_lieSpan_eq_top hv
@@ -214,35 +218,18 @@ theorem pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector
 with highest weight vector `v` of weight `lam`, and `lam (αᵢ^∨) = n` is a natural number, then
 `fᵢ^{n + 1} v = 0`.
 
-This is the integrability relation on the highest-weight generator. The maximal submodule of an
-irreducible highest weight module is trivial, and
-`TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector` puts the lowered vector into
-it. -/
+This is the integrability relation on the highest-weight generator. Were the lowered vector
+nonzero it would be a highest weight vector of weight `lam - (n + 1) αᵢ`, and an irreducible module
+carries highest weight vectors of only one weight
+(`TauCeti.IsHighestWeightVector.unique_of_isIrreducible`). -/
 theorem pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v) {i : H.root}
     (hi : i ∈ b.support) {n : ℕ} (hn : lam ((IsKilling.rootSystem H).coroot i) = (n : K))
     {f : L} (hf : f ∈ rootSpace H ((-(i : Weight K H L) : Weight K H L) : H → K)) :
     ((toEnd K L M f) ^ (n + 1)) v = 0 := by
   by_contra hw
-  have hgen : LieSubmodule.lieSpan K L {v} = ⊤ := lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero
-  have hle : LieSubmodule.lieSpan K L {((toEnd K L M f) ^ (n + 1)) v} ≤
-      maximalSubmodule H M lam :=
-    LieSubmodule.lieSpan_le.mpr (Set.singleton_subset_iff.mpr
-      (pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector hv hgen hi hn hf))
-  rw [lieSpan_singleton_eq_top_of_ne_zero hw] at hle
-  exact (isGreatest_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen).1
-    (top_le_iff.mp hle)
-
-/-- **The integrability relation at every simple root at once.** For an irreducible highest weight
-module whose highest weight `lam` is dominant integral, the lowering operator of each simple root
-kills the generator after `lam (αᵢ^∨) + 1` steps. -/
-theorem exists_pow_toEnd_eq_zero_of_isHighestWeightVector_of_isDominantIntegral
-    [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v)
-    (hlam : IsDominantIntegral b lam) {i : H.root} (hi : i ∈ b.support)
-    {f : L} (hf : f ∈ rootSpace H ((-(i : Weight K H L) : Weight K H L) : H → K)) :
-    ∃ n : ℕ, lam ((IsKilling.rootSystem H).coroot i) = (n : K) ∧
-      ((toEnd K L M f) ^ (n + 1)) v = 0 := by
-  obtain ⟨n, hn⟩ := isDominantIntegral_iff.mp hlam i hi
-  exact ⟨n, hn, pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible hv hi hn hf⟩
+  exact ne_sub_nsmul_root lam i n (hv.unique_of_isIrreducible
+    (isHighestWeightVector_pow_toEnd_of_lieSpan_eq_top_of_ne_zero hv
+      (lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero) hi hn hf hw))
 
 end TauCeti
