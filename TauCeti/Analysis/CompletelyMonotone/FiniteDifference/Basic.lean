@@ -52,7 +52,7 @@ argument.
   values of the function there.
 * `TauCeti.IsDifferenceCompletelyMonotone`: complete monotonicity in the finite-difference sense.
 * `TauCeti.isDifferenceCompletelyMonotone_of_tendsto`: the predicate is closed under pointwise
-  limits, unlike its derivative form.
+  limits on `[0, ∞)`, unlike its derivative form.
 * `TauCeti.IsDifferenceCompletelyMonotone.neg_derivWithin`: the negated derivative within the
   half-line of a differentiable finite-difference completely monotone function is again one.
 * `TauCeti.IsDifferenceCompletelyMonotone.isCompletelyMonotone`: a `C^∞` function that is
@@ -239,24 +239,30 @@ theorem neg_fwdDiff (hf : IsDifferenceCompletelyMonotone f) {h : ℝ} (hh : 0 �
 
 end IsDifferenceCompletelyMonotone
 
-/-- Mixed differences pass to a pointwise limit. -/
-theorem tendsto_fwdDiffList {ι : Type*} {L : Filter ι} {F : ι → ℝ → ℝ} (l : List ℝ)
-    (hF : ∀ u : ℝ, Tendsto (fun i => F i u) L (𝓝 (f u))) (t : ℝ) :
+/-- Mixed differences pass to a pointwise limit. As in `TauCeti.fwdDiffList_congr`, a mixed
+difference with nonnegative steps evaluated on `[0, ∞)` only reads the function there, so
+convergence on `[0, ∞)` is all that is needed. -/
+theorem tendsto_fwdDiffList {ι : Type*} {L : Filter ι} {F : ι → ℝ → ℝ} {l : List ℝ}
+    (hl : ∀ h ∈ l, 0 ≤ h) (hF : ∀ u : ℝ, 0 ≤ u → Tendsto (fun i => F i u) L (𝓝 (f u)))
+    {t : ℝ} (ht : 0 ≤ t) :
     Tendsto (fun i => fwdDiffList l (F i) t) L (𝓝 (fwdDiffList l f t)) := by
   induction l generalizing t with
-  | nil => exact hF t
+  | nil => simpa using hF t ht
   | cons k l ih =>
+      have hk : 0 ≤ k := hl k (by simp)
+      have hrest : ∀ j ∈ l, 0 ≤ j := fun j hj => hl j (List.mem_cons_of_mem k hj)
       simp only [fwdDiffList_cons, fwdDiff]
-      exact (ih (t + k)).sub (ih t)
+      exact (ih hrest (by linarith : (0 : ℝ) ≤ t + k)).sub (ih hrest ht)
 
-/-- Complete monotonicity in the finite-difference sense is closed under pointwise limits. This
-is a genuine advantage of the finite-difference formulation: the derivative form is not visibly
-stable under pointwise convergence. -/
+/-- Complete monotonicity in the finite-difference sense is closed under pointwise limits on
+`[0, ∞)`, the half-line the predicate lives on. This is a genuine advantage of the
+finite-difference formulation: the derivative form is not visibly stable under pointwise
+convergence. -/
 theorem isDifferenceCompletelyMonotone_of_tendsto {ι : Type*} {L : Filter ι} [L.NeBot]
     {F : ι → ℝ → ℝ} (hF : ∀ i, IsDifferenceCompletelyMonotone (F i))
-    (hlim : ∀ u : ℝ, Tendsto (fun i => F i u) L (𝓝 (f u))) :
+    (hlim : ∀ u : ℝ, 0 ≤ u → Tendsto (fun i => F i u) L (𝓝 (f u))) :
     IsDifferenceCompletelyMonotone f := fun l hl t ht =>
-  ge_of_tendsto (tendsto_const_nhds.mul (tendsto_fwdDiffList l hlim t))
+  ge_of_tendsto (tendsto_const_nhds.mul (tendsto_fwdDiffList hl hlim ht))
     (Eventually.of_forall fun i => hF i l hl t ht)
 
 namespace IsDifferenceCompletelyMonotone
