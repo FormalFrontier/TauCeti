@@ -59,8 +59,10 @@ cause.
 * `TauCeti.BraidGroup.permHom_surjective`: every permutation of the strands underlies a braid.
 * `TauCeti.BraidGroup.not_commute_sigma` and `TauCeti.BraidGroup.exists_not_commute`: generators
   sharing a strand do not commute, so `BraidGroup n` is nonabelian for `n ≥ 3`.
-* `TauCeti.BraidGroup.sigma_pow_mem_pureSubgroup_iff`: precisely the even powers of a generator
-  are pure braids; in particular, the generator is not pure and its square is pure.
+* `TauCeti.BraidGroup.sigma_zpow_mem_pureSubgroup_iff` and
+  `TauCeti.BraidGroup.sigma_pow_mem_pureSubgroup_iff`: precisely the even integer and natural
+  powers of a generator are pure braids; in particular, the generator is not pure and its square
+  is pure.
 
 ## References
 
@@ -313,14 +315,20 @@ theorem mem_pureSubgroup {b : BraidGroup n} : b ∈ pureSubgroup n ↔ permHom n
 
 instance : (pureSubgroup n).Normal := (permHom n).normal_ker
 
-/-- A power of an elementary braid is pure exactly when its exponent is even. -/
-theorem sigma_pow_mem_pureSubgroup_iff (i : Fin (n - 1)) (k : ℕ) :
+/-- An integer power of an elementary braid is pure exactly when its exponent is even. -/
+theorem sigma_zpow_mem_pureSubgroup_iff (i : Fin (n - 1)) (k : ℤ) :
     sigma i ^ k ∈ pureSubgroup n ↔ Even k := by
   have horder : orderOf (transposition i) = 2 := by
     rw [transposition_eq_swap]
     exact (Equiv.Perm.swap_isSwap_iff.mpr (strand_ne_strandSucc i)).orderOf
-  rw [mem_pureSubgroup, map_pow, permHom_sigma, ← orderOf_dvd_iff_pow_eq_one, horder,
-    ← even_iff_two_dvd]
+  rw [mem_pureSubgroup, map_zpow, permHom_sigma, ← orderOf_dvd_iff_zpow_eq_one, horder]
+  exact even_iff_two_dvd.symm
+
+/-- A natural-number power of an elementary braid is pure exactly when its exponent is even. -/
+theorem sigma_pow_mem_pureSubgroup_iff (i : Fin (n - 1)) (k : ℕ) :
+    sigma i ^ k ∈ pureSubgroup n ↔ Even k := by
+  simpa only [zpow_natCast, Int.even_coe_nat] using
+    sigma_zpow_mem_pureSubgroup_iff i (k : ℤ)
 
 /-- The square of an elementary braid is a pure braid: the two strands cross twice and end where
 they started. -/
