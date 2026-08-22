@@ -9,6 +9,8 @@ module
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+-- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
+import TauCeti.LinearAlgebra.Matrix.Diagonal
 
 /-!
 # The commutator relations between transvections
@@ -76,25 +78,6 @@ variable {n : Type*} [DecidableEq n] {A : Type u} {i j k l : n}
 section Products
 
 variable [Fintype n]
-
-section
-
-variable [Semiring A]
-
-/-- Multiplying a matrix unit on the left and right by diagonal matrices rescales its nonzero
-entry by the corresponding diagonal entries. -/
-@[simp]
-theorem diagonal_mul_single_mul_diagonal {v w : n → A} (c : A) :
-    diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
-  ext a b
-  rw [Matrix.mul_assoc]
-  simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
-  by_cases h : i = a ∧ j = b
-  · obtain ⟨rfl, rfl⟩ := h
-    simp [mul_assoc]
-  · simp [h]
-
-end
 
 variable [CommRing A]
 

@@ -99,6 +99,7 @@ section Naturality
 variable {C : Type*} [CommSemiring C] [Algebra R C]
 
 /-- The counit-points equivalence is natural in the coefficient algebra. -/
+@[simp]
 theorem pointsMulEquiv_mapValue (phi : B →ₐ[R] C)
     (g : WithConv (H →ₐ[R] CounitAlgebra R H B)) :
     pointsMulEquiv R H C
@@ -114,6 +115,7 @@ theorem pointsMulEquiv_mapValue (phi : B →ₐ[R] C)
     _ = _ := congrArg phi (algEquivSelf_apply (R := R) (A := H) (B := B) _).symm
 
 /-- Naturality of the inverse counit-points equivalence in the coefficient algebra. -/
+@[simp]
 theorem mapValue_pointsMulEquiv_symm_apply (phi : B →ₐ[R] C)
     (f : WithConv (H →ₐ[R] B)) :
     AlgHom.mapValue (H := H)
