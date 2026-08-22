@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.Compact.Intertwiner
+public import TauCeti.RepresentationTheory.Compact.Intertwiner.Basic
 public import TauCeti.RepresentationTheory.Continuous.Schur
 public import Mathlib.Analysis.InnerProductSpace.Trace
 
@@ -22,7 +22,7 @@ order of the Kronecker deltas and the placement of complex conjugation in Mathli
 the inner product is conjugate-linear in its first argument.
 
 The second relation, for a pair of representations, is proved in
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean` from the vanishing of the intertwiners
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean` from the vanishing of the intertwiners
 between them; the last section here packages it with the hypothesis Schur's lemma actually
 discharges, namely that the two irreducibles are inequivalent.
 

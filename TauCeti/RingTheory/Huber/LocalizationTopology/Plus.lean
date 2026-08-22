@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Completion
+public import TauCeti.RingTheory.Huber.Pair
 
 /-!
 # The plus ring `A_U⁺` of a rational localisation
@@ -30,7 +31,8 @@ Neither an intermediate integral closure inside `Aₛ` nor a topological closure
 interposed. Either would enlarge the generating subring before the integral closure is taken, and
 the result would agree with the roadmap's object only after an identification theorem this file
 does not prove. What is defined here is the roadmap's sentence read literally: **one** integral
-closure, in `A_U`, of the image of `A⁺[T/s]`.
+closure, in `A_U`, of the image of `A⁺[T/s]`. The integral closure inside `Aₛ` is still studied
+below, as an object of `Aₛ` in its own right rather than as a layer of `A_U⁺`.
 
 ## Main definitions
 
@@ -42,6 +44,8 @@ closure, in `A_U`, of the image of `A⁺[T/s]`.
 * `TauCeti.Huber.PairOfDefinition.toCompletionLoc_mem_completedPlusSubring` and
   `TauCeti.Huber.PairOfDefinition.divBy_mem_completedPlusSubring`: the image of `A⁺` and each
   fraction `t/s` lie in `A_U⁺`, which is what the roadmap's description of its generators asks.
+* `TauCeti.Huber.PairOfDefinition.isPowerBounded_of_mem_adjoin_plus`: when every element of `A⁺`
+  is power-bounded in `A`, so is every element of `A⁺[T/s]` in `Aₛ`.
 * `TauCeti.Huber.PairOfDefinition.completedPlusSubring_le_powerBoundedSubring`: `A_U⁺ ⊆ (A_U)°`.
 * `TauCeti.Huber.PairOfDefinition.locSubring_mul_idealOfDefinition_mem_adjoin_plus`: the
   absorption itself — inside `Aₛ`, an element of `D = A₀[T/s]` times an element of the ideal
@@ -49,18 +53,24 @@ closure, in `A_U`, of the image of `A⁺[T/s]`.
 * `TauCeti.Huber.PairOfDefinition.locIdealImage_one_le_adjoin_plus`: inside `Aₛ`, and before any
   completion, `A⁺[T/s]` absorbs the first basic neighbourhood of zero — the first step toward the
   openness of `A_U⁺` discussed below.
+* `TauCeti.Huber.PairOfDefinition.isRingOfIntegralElements_integralClosure_adjoin_plus`: when
+  `A⁺` consists of power-bounded elements and contains the image of the ideal of definition, the
+  integral closure of `A⁺[T/s]` **in `Aₛ`** is a ring of integral elements of `Aₛ`.
 
 Of the three conditions making `(A_U, A_U⁺)` a Huber pair, two are here: integral closedness by
 construction (`isIntegrallyClosedIn_completedPlusSubring`) and power-boundedness
-(`completedPlusSubring_le_powerBoundedSubring`). **Openness is still not proved here**, but its
-pre-completion half is: `locIdealImage_one_le_adjoin_plus` shows that `A⁺[T/s]` absorbs the first
-basic neighbourhood of zero in `Aₛ`, so `A_U⁺` contains the image of that neighbourhood.
+(`completedPlusSubring_le_powerBoundedSubring`). **Openness is still not proved here.** Before the
+completion all three do hold, which is
+`isRingOfIntegralElements_integralClosure_adjoin_plus`: openness there comes from
+`locIdealImage_one_le_adjoin_plus`, which shows that `A⁺[T/s]` absorbs the first basic
+neighbourhood of zero in `Aₛ`.
 
 What remains is a statement about the completion rather than about `Aₛ`. The neighbourhoods of
 zero in `A⟨T/s⟩` are the *closures* of the images of the `locIdealImage`, so absorbing an image
 does not by itself make `A_U⁺` a neighbourhood of zero; that step needs `A_U⁺` to be closed. As
 `A_U⁺` is an integral closure taken in the completion, its closedness is exactly the
-identification recorded below as Huber's Lemma 2.4.3, which is not available here.
+identification of Wedhorn's Lemma 7.47(4) — rings of integral elements of `A` and of its
+completion correspond — whose proof is Huber's Lemma 2.4.3. Neither is available here.
 
 ## Provenance
 
@@ -84,7 +94,12 @@ The absorption results are adapted from the same AINTLIB file:
 `RationalLocData.locNhd_one_subset_locPlusSubring` and the neighbourhood step of
 `RationalLocData.completedPlusSubringBase_isOpen`. Their openness
 proof itself is **not** adapted: it closes by `Subring.isClosed_topologicalClosure`, which their
-extra closure layer supplies and this file's definition does not. No proof text was copied.
+extra closure layer supplies and this file's definition does not.
+`isPowerBounded_of_mem_adjoin_plus` and the power-boundedness half of
+`isRingOfIntegralElements_integralClosure_adjoin_plus` follow
+`RationalLocData.locPlusSubring_le_powerBounded` and
+`RationalLocData.integralClosure_locPlusSubring_le_powerBounded`; AINTLIB does not bundle the
+three conditions at `Aₛ`. No proof text was copied.
 
 ## References
 
@@ -121,7 +136,7 @@ noncomputable def completedPlusSubringBase (P : PairOfDefinition A) (Aplus : Sub
 
 Taking the integral closure *in the completion* is what makes integral closedness hold by
 construction; defining `A_U⁺` instead as the closure of the image of `A⁺[T/s]^int` would leave that
-owing Huber's Lemma 2.4.3, which identifies the two. -/
+owing Wedhorn's Lemma 7.47(4), proved as Huber's Lemma 2.4.3, which identifies the two. -/
 noncomputable def completedPlusSubring (P : PairOfDefinition A) (Aplus : Subring A)
     (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S) :
@@ -264,15 +279,38 @@ theorem completedPlusSubring_le_iff (P : PairOfDefinition A) (Aplus : Subring A)
   rw [completedPlusSubring]
   exact Subring.integralClosure_subring_le_iff
 
+/-- **When every element of `A⁺` is power-bounded, so is every element of `A⁺[T/s]`**, inside `Aₛ`
+and before any completion. This is the pre-completion half of
+`TauCeti.Huber.PairOfDefinition.completedPlusSubring_le_powerBoundedSubring`, whose proof it
+supplies. -/
+theorem isPowerBounded_of_mem_adjoin_plus (P : PairOfDefinition A) (Aplus : Subring A)
+    (hAplus : ∀ ⦃a⦄, a ∈ Aplus → IsPowerBounded a)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) {x : S}
+    (hx : x ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))) :
+    letI := locTopology P T s S hden
+    IsPowerBounded x := by
+  let _ := locTopology P T s S hden
+  have _ := nonarchimedeanRing_locTopology P T s S hden
+  -- `(Aₛ)°` is a subring, so it is enough that the two families generating `A⁺[T/s]` are
+  -- power-bounded: the image of `A⁺` because power-boundedness transfers along `A → Aₛ`, and
+  -- each `t/s` because it lies in the bounded ring of definition `D`.
+  have hle : (Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))).toSubring
+      ≤ powerBoundedSubring S := by
+    rw [Algebra.adjoin_eq_ring_closure, Subring.closure_le]
+    rintro w (⟨⟨a, ha⟩, rfl⟩ | ⟨⟨t, ht⟩, rfl⟩)
+    · exact mem_powerBoundedSubring.mpr
+        (isPowerBounded_algebraMap_of_isPowerBounded P T s S hden (hAplus ha))
+    · exact mem_powerBoundedSubring.mpr (isPowerBounded_divBy P T s S hden ht)
+  exact mem_powerBoundedSubring.mp (hle hx)
+
 /-- **`A_U⁺` is power-bounded**: it lies inside `(A_U)°`, which is the second of the three
 conditions making `(A_U, A_U⁺)` a Huber pair.
 
 Containment in `(A_U)°` is decided by the base alone, because `A°` is integrally closed
 (`isIntegrallyClosedIn_powerBoundedSubring`) — that is `completedPlusSubring_le_iff`. The base is
-generated by the image of `A⁺` and the fractions `t/s`, and both families are power-bounded: the
-first because power-boundedness of each element of `A⁺` transfers along `A → Aₛ → A⟨T/s⟩`, the
-second because every element of `D` is power-bounded in `Aₛ`. `(A_U)°` is a subring, so the
-generated subring stays inside it. -/
+the image of `A⁺[T/s]`, whose elements are power-bounded in `Aₛ` by
+`isPowerBounded_of_mem_adjoin_plus`, and power-boundedness survives the completion map. -/
 theorem completedPlusSubring_le_powerBoundedSubring (P : PairOfDefinition A) (Aplus : Subring A)
     (hAplus : ∀ ⦃a⦄, a ∈ Aplus → IsPowerBounded a)
     (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
@@ -294,17 +332,11 @@ theorem completedPlusSubring_le_powerBoundedSubring (P : PairOfDefinition A) (Ap
   intro x hx
   obtain ⟨y, hy, rfl⟩ := (mem_completedPlusSubringBase_iff P Aplus T s S hden).mp hx
   -- `y` is a polynomial in the `t/s` with coefficients in `A⁺`, so it is power-bounded in `Aₛ`;
-  -- power-boundedness then transfers across the completion.
-  have hyS : IsPowerBounded y := by
-    have hle : (Algebra.adjoin ↥Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))).toSubring
-        ≤ powerBoundedSubring S := by
-      rw [Algebra.adjoin_eq_ring_closure, Subring.closure_le]
-      rintro w (⟨⟨a, ha⟩, rfl⟩ | ⟨⟨t, ht⟩, rfl⟩)
-      · exact mem_powerBoundedSubring.mpr
-          (isPowerBounded_algebraMap_of_isPowerBounded_locUniformSpace P T s S hden
-            (hAplus ha))
-      · exact mem_powerBoundedSubring.mpr (isPowerBounded_divBy_locUniformSpace P T s S hden ht)
-    exact mem_powerBoundedSubring.mp (hle hy)
+  -- power-boundedness then transfers across the completion. Power-boundedness in `Aₛ` is stated
+  -- at `locTopology`, so it is moved to the uniformity along the characteristic property.
+  have hyS : @IsPowerBounded S _ (locTopology P T s S hden) y :=
+    isPowerBounded_of_mem_adjoin_plus P Aplus hAplus T s S hden hy
+  rw [← locUniformSpace_toTopologicalSpace P T s S hden] at hyS
   exact mem_powerBoundedSubring.mpr (isPowerBounded_completion_coe_of_isPowerBounded hyS)
 
 omit [IsTopologicalRing A] in
@@ -421,6 +453,38 @@ theorem locIdealImage_one_le_adjoin_plus (P : PairOfDefinition A) (Aplus : Subri
   intro x hx
   obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P T s S 1).mp hx
   exact Subring.mem_toAddSubgroup.mpr (Subalgebra.mem_toSubring.mpr (one_mul d ▸ hJ d hd 1))
+
+/-- **When `A⁺` consists of power-bounded elements and contains the image of the ideal of
+definition, the integral closure of `A⁺[T/s]` in `Aₛ` is a ring of integral elements** of the
+localised topology: it is open, integrally closed in `Aₛ`, and contained in `(Aₛ)°`. Those are the
+three conditions a Huber pair asks of its plus ring.
+
+The integral closure is taken here in `Aₛ`, not in `A⟨T/s⟩`, so this is a statement about the
+localisation and leaves the openness of `A_U⁺` itself where the discussion above records it. -/
+theorem isRingOfIntegralElements_integralClosure_adjoin_plus (P : PairOfDefinition A)
+    (Aplus : Subring A)
+    (hIplus : ∀ j : P.ringOfDefinition, j ∈ P.idealOfDefinition → (j : A) ∈ Aplus)
+    (hAplus : ∀ ⦃a⦄, a ∈ Aplus → IsPowerBounded a)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locTopology P T s S hden
+    letI := nonarchimedeanRing_locTopology P T s S hden
+    IsRingOfIntegralElements
+      (integralClosure ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)))
+        S).toSubring := by
+  let _ := locTopology P T s S hden
+  have _ := isTopologicalRing_locTopology P T s S hden
+  have _ := nonarchimedeanRing_locTopology P T s S hden
+  set E := Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))
+  -- `A⁺[T/s]` absorbs the first basic neighbourhood of zero, so it is itself open.
+  have hopen : IsOpen (E.toSubring : Set S) := by
+    rw [← Subring.coe_toAddSubgroup]
+    exact AddSubgroup.isOpen_mono (locIdealImage_one_le_adjoin_plus P Aplus hIplus T s S)
+      (isOpen_locIdealImage P T s S hden 1)
+  -- Power-boundedness is decided by `A⁺[T/s]` alone.
+  have hpb : E.toSubring ≤ powerBoundedSubring S := fun _ hx ↦
+    mem_powerBoundedSubring.mpr (isPowerBounded_of_mem_adjoin_plus P Aplus hAplus T s S hden hx)
+  exact Pair.isRingOfIntegralElements_integralClosure hopen hpb
 
 end Topological
 

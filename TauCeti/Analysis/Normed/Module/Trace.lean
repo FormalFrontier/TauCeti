@@ -20,7 +20,7 @@ field `𝕜`, and every linear map out of such a space is continuous.
 
 This bundled form is what lets the trace pass through the continuity of a representation
 (`TauCeti/RepresentationTheory/Continuous/Character.lean`) and commute with a Bochner integral
-(`TauCeti/RepresentationTheory/Compact/Intertwiner.lean`); both need the trace as a continuous
+(`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean`); both need the trace as a continuous
 linear map rather than as a bare linear map.
 -/
 

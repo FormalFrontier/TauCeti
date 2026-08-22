@@ -37,6 +37,7 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.Sl2Std.repEnveloping_ι`, `TauCeti.Sl2Std.repEnveloping_ι'`, and
   `TauCeti.Sl2Std.repEnveloping_ι_slFinTwoBasis`: evaluation on
   Lie algebra generators.
+* `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent.
 * `TauCeti.Sl2Std.integralLattice`: the coordinate `ℤ`-lattice in `V(n)`.
 * `TauCeti.Sl2Std.mem_integralLattice_iff`: integrality of coordinates.
 * `TauCeti.Sl2Std.integerCoordinatesLinearEquiv`: its identification with `Fin (n + 1) → ℤ`.
@@ -205,6 +206,19 @@ theorem repEnveloping_ι_slFinTwoBasis (i : Fin 3) :
     repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
       ![raise K n, lower K n, diag K n] i := by
   rw [repEnveloping_ι, rep_apply_basis]
+
+/-- **Both root operators of the enveloping-algebra representation on `V(n)` are nilpotent.**
+They are the raising and lowering operators, whose `(n + 1)`-st powers vanish. -/
+theorem isNilpotent_repEnveloping_root (K : Type*) [CommRing K] (n : ℕ) (i : Fin 2) :
+    IsNilpotent (repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K
+      (![slFinTwoBasis K 0, slFinTwoBasis K 1] i))) := by
+  fin_cases i
+  · simp only [Fin.isValue, Fin.zero_eta, Matrix.cons_val_zero]
+    rw [repEnveloping_ι_slFinTwoBasis]
+    exact ⟨n + 1, raise_pow_eq_zero⟩
+  · simp only [Fin.isValue, Fin.mk_one, Matrix.cons_val_one, Matrix.cons_val_fin_one]
+    rw [repEnveloping_ι_slFinTwoBasis]
+    exact ⟨n + 1, lower_pow_eq_zero⟩
 
 end GeneralCoefficients
 
