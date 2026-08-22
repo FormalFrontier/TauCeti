@@ -29,8 +29,8 @@ Commutativity is not an extra hypothesis: a group of exponent two is automatical
 
 ## Main results
 
-* `TauCeti.exists_index_eq_two_notMem_of_exponent_two`: in a group of exponent two, every `σ ≠ 1`
-  lies outside some subgroup of index `2`.
+* `TauCeti.exists_index_eq_two_notMem_of_exponent_dvd_two`: in a group of exponent dividing two,
+  every `σ ≠ 1` lies outside some subgroup of index `2`.
 -/
 
 public section
@@ -43,9 +43,8 @@ variable {G : Type*} [Group G]
 private theorem zpow_eq_one_or_eq_self_of_sq_eq_one {b : G} (hb : b ^ 2 = 1) (n : ℤ) :
     b ^ n = 1 ∨ b ^ n = b := by
   have hb2 : b ^ (2 : ℤ) = 1 := by simpa using hb
-  have hred : b ^ n = b ^ (n % 2) := by
-    conv_lhs => rw [← Int.mul_ediv_add_emod n 2]
-    rw [zpow_add, zpow_mul, hb2, one_zpow, one_mul]
+  have hred : b ^ n = b ^ (n % (2 : ℤ)) := by
+    simpa using zpow_eq_zpow_emod' (x := b) n hb
   rcases Int.emod_two_eq_zero_or_one n with h | h <;> rw [hred, h]
   · exact Or.inl (zpow_zero b)
   · exact Or.inr (zpow_one b)
@@ -55,7 +54,7 @@ elements square to `1`, every `σ ≠ 1` lies outside some subgroup of index `2`
 
 Equivalently: the intersection of the index-two subgroups — the Frattini subgroup of an elementary
 abelian `2`-group — is trivial. -/
-theorem exists_index_eq_two_notMem_of_exponent_two (hexp : Monoid.exponent G ∣ 2)
+theorem exists_index_eq_two_notMem_of_exponent_dvd_two (hexp : Monoid.exponent G ∣ 2)
     {σ : G} (hσ : σ ≠ 1) :
     ∃ H : Subgroup G, H.index = 2 ∧ σ ∉ H := by
   classical
