@@ -20,8 +20,8 @@ sequences as soon as the truncation degree is one past the last nonvanishing deg
 ## Main declarations
 
 * `Scheme.Modules.eulerCharBelow k X M n`, the alternating sum
-  `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)`. For a sheaf whose cohomology vanishes in degrees `≥ n` this
-  is the Euler characteristic `χ(X, M)`;
+  `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)`. For a sheaf whose cohomology is finite-dimensional in
+  degrees `< n` and vanishes in degrees `≥ n` this is the Euler characteristic `χ(X, M)`;
 * `Scheme.Modules.eulerCharBelow_sub_sub`, the exact defect of additivity: the failure of
   `eulerCharBelow` to be additive on a short exact sequence `0 ⟶ M₁ ⟶ M₂ ⟶ M₃ ⟶ 0` is, up to
   sign, the dimension of the image of the last connecting map that the truncation cuts off;
@@ -31,6 +31,18 @@ sequences as soon as the truncation degree is one past the last nonvanishing deg
 * `Scheme.Modules.eulerCharBelow_congr`, the invariance of the truncated Euler characteristic
   under isomorphism, and `Scheme.Modules.finrank_cohomology_zero`, the identification of
   `dim H⁰(X, M)` with the dimension of the space of global sections.
+
+## Junk values
+
+No finiteness assumption is built into `eulerCharBelow`, exactly as none is built into
+Mathlib's `HomologicalComplex.eulerChar`: `Module.finrank` is `0` on an infinite-dimensional
+space, so a degree `i < n` in which `Hⁱ(X, M)` is infinite-dimensional contributes `0` to the
+sum instead of making it meaningless. The alternating sum is therefore the Euler characteristic
+only for a sheaf whose cohomology is finite-dimensional in degrees `< n`: accordingly the
+statements that read it as an Euler characteristic, `eulerCharBelow_sub_sub`,
+`eulerCharBelow_X₂` and `eulerChar_X₂`, all assume that finite-dimensionality, while
+`eulerCharBelow_zero`, `eulerCharBelow_succ`, `eulerCharBelow_two` and `eulerCharBelow_congr`
+are identities of the alternating sum as it stands and need no such hypothesis.
 
 The proof is the usual dimension count in the long exact cohomology sequence: the rank-nullity
 theorem turns each of the three cohomology dimensions in degree `i` into a sum of two ranks of
@@ -68,8 +80,11 @@ variable (k : Type u) [Field k] (X : Scheme.{u}) [X.Over (Spec (.of k))]
 /-- The alternating sum `∑_{i < n} (-1)ⁱ dim_k Hⁱ(X, M)` of the dimensions of the cohomology of
 a sheaf of modules on a scheme over a field, truncated at degree `n`.
 
-For a sheaf whose cohomology vanishes in degrees `≥ n` this is the Euler characteristic
-`χ(X, M)`; on a curve, the relevant truncation is `n = 2`. -/
+No finiteness assumption is imposed, just as none is imposed on Mathlib's
+`HomologicalComplex.eulerChar`: a degree `i < n` in which `Hⁱ(X, M)` is infinite-dimensional
+contributes the junk value `finrank k Hⁱ(X, M) = 0`. This sum is thus the Euler characteristic
+`χ(X, M)` precisely for a sheaf whose cohomology is finite-dimensional in degrees `< n` and
+vanishes in degrees `≥ n`; on a curve, the relevant truncation is `n = 2`. -/
 def _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow (M : X.Modules) (n : ℕ) : ℤ :=
   ∑ i ∈ Finset.range n, (-1) ^ i * (finrank k (Cohomology M i) : ℤ)
 
