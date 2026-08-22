@@ -26,11 +26,8 @@ The measure `volume.toSphere` is Mathlib's polar-coordinate surface measure. Its
 
 * `TauCeti.fderiv_newtonianKernel_sub_apply_sphere_normal`: the outward normal derivative on a
   sphere.
-* `TauCeti.fderiv_newtonianKernel_apply_sphere_normal`: the centered version of the normal
-  derivative.
 * `TauCeti.integral_fderiv_newtonianKernel_sub_sphere_normal`: the total sphere flux is
   `-1`.
-* `TauCeti.integral_fderiv_newtonianKernel_sphere_normal`: the centered version of the flux.
 -/
 
 public section
@@ -65,20 +62,10 @@ theorem fderiv_newtonianKernel_sub_apply_sphere_normal (n : ℕ) (hn2 : n ≠ 2)
     rw [← Real.rpow_add_one hr.ne', neg_add_eq_sub]
   rw [mul_assoc, hpow]
 
-/-- On a sphere centered at the origin, the outward normal derivative of the Newtonian kernel is
-constant and equals `-(n ωₙ)⁻¹ r^(1-n)`. -/
-@[simp]
-theorem fderiv_newtonianKernel_apply_sphere_normal (n : ℕ) (hn2 : n ≠ 2)
-    {r : ℝ} (hr : 0 < r) (u : sphere (0 : EuclideanSpace ℝ (Fin n)) 1) :
-    fderiv ℝ (newtonianKernel n) (r • (u : EuclideanSpace ℝ (Fin n))) u =
-      -(((n : ℝ) * volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
-        r ^ (1 - (n : ℝ))) := by
-  simpa only [sub_zero, zero_add] using
-    fderiv_newtonianKernel_sub_apply_sphere_normal n hn2 (a := 0) hr u
-
 /-- The outward flux of the Newtonian kernel through any sphere centered at its pole is `-1`.
 The factor `r ^ ((n : ℝ) - 1)` is the surface Jacobian for radial scaling from the unit
 sphere. -/
+@[simp]
 theorem integral_fderiv_newtonianKernel_sub_sphere_normal
     (n : ℕ) (hn0 : n ≠ 0) (hn2 : n ≠ 2)
     {a : EuclideanSpace ℝ (Fin n)} {r : ℝ} (hr : 0 < r) :
@@ -101,17 +88,6 @@ theorem integral_fderiv_newtonianKernel_sub_sphere_normal
     _ = -1 := by
       rw [← Real.rpow_add hr]
       norm_num
-
-/-- The outward flux of the Newtonian kernel through any sphere centered at the origin is `-1`.
-The factor `r ^ ((n : ℝ) - 1)` is the surface Jacobian for radial scaling from the unit
-sphere. -/
-theorem integral_fderiv_newtonianKernel_sphere_normal
-    (n : ℕ) (hn0 : n ≠ 0) (hn2 : n ≠ 2) {r : ℝ} (hr : 0 < r) :
-    r ^ ((n : ℝ) - 1) * ∫ u : sphere (0 : EuclideanSpace ℝ (Fin n)) 1,
-        fderiv ℝ (newtonianKernel n) (r • (u : EuclideanSpace ℝ (Fin n))) u
-          ∂volume.toSphere = -1 := by
-  simpa only [sub_zero, zero_add] using
-    integral_fderiv_newtonianKernel_sub_sphere_normal n hn0 hn2 (a := 0) hr
 
 end TauCeti
 
