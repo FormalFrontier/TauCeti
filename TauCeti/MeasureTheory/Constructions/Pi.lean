@@ -30,11 +30,10 @@ construction.
 
 ## Implementation
 
-The measure-preserving statement is checked on measurable boxes through `Measure.pi_eq`. The
-preimage of a box `univ.pi s` is again a box: the two fresh coordinates are constrained by `s a`
-and `s b`, and the ambient assignment by `s` with those two entries relaxed to `Set.univ` — which
-is `Function.update (Function.update s a univ) b univ`, so the same three evaluation rules for a
-doubly updated function drive both the set computation and the product computation.
+The proof splits the product into the coordinates `{a, b}` and their complement using Mathlib's
+measure-preserving product equivalences. The fresh pair replaces the selected coordinates, while
+the complementary coordinates are projected from the original assignment; recombining the two
+parts is pointwise the double update.
 -/
 
 public section
@@ -55,80 +54,90 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
     MeasurePreserving
       (fun w : (∀ i, α i) × α a × α b => update (update w.1 a w.2.1) b w.2.2)
       ((Measure.pi μ).prod ((μ a).prod (μ b))) (Measure.pi μ) := by
-  have hmeas : Measurable
-      fun w : (∀ i, α i) × α a × α b => update (update w.1 a w.2.1) b w.2.2 := by fun_prop
-  refine ⟨hmeas, ?_⟩
-  refine (Measure.pi_eq fun s hs => ?_).symm
-  -- The three evaluation rules for a doubly updated assignment.
-  have hzb : ∀ (z : ∀ i, α i) (u : α a) (t : α b), update (update z a u) b t b = t :=
-    fun z u t => update_self b t (update z a u)
-  have hza : ∀ (z : ∀ i, α i) (u : α a) (t : α b), update (update z a u) b t a = u := by
-    intro z u t
-    rw [update_of_ne hab t (update z a u), update_self a u z]
-  have hzo : ∀ (z : ∀ i, α i) (u : α a) (t : α b) (i : ι), i ≠ a → i ≠ b →
-      update (update z a u) b t i = z i := by
-    intro z u t i hia hib
-    rw [update_of_ne hib t (update z a u), update_of_ne hia u z]
-  -- The assignment box: `s` with the two overwritten entries relaxed to `Set.univ`.
-  set s' : ∀ i, Set (α i) := update (update s a univ) b univ with hs'
-  have hs'b : s' b = univ := by rw [hs']; exact update_self b univ (update s a univ)
-  have hs'a : s' a = univ := by
-    rw [hs', update_of_ne hab univ (update s a univ), update_self a univ s]
-  have hs'o : ∀ i, i ≠ a → i ≠ b → s' i = s i := by
-    intro i hia hib
-    rw [hs', update_of_ne hib univ (update s a univ), update_of_ne hia univ s]
-  have hpre :
-      (fun w : (∀ i, α i) × α a × α b => update (update w.1 a w.2.1) b w.2.2) ⁻¹'
-          univ.pi s =
-      (univ.pi s') ×ˢ (s a ×ˢ s b) := by
-    ext ⟨z, u, t⟩
-    simp only [mem_preimage, Set.mem_univ_pi, Set.mem_prod]
-    constructor
-    · intro h
-      refine ⟨fun i => ?_, ?_, ?_⟩
-      · by_cases hib : i = b
-        · rw [hib, hs'b]; exact mem_univ t
-        · by_cases hia : i = a
-          · rw [hia, hs'a]; exact mem_univ u
-          · rw [hs'o i hia hib]
-            have := h i
-            rwa [hzo z u t i hia hib] at this
-      · have := h a; rwa [hza] at this
-      · have := h b; rwa [hzb] at this
-    · rintro ⟨hz, hu, ht⟩ i
-      by_cases hib : i = b
-      · subst hib
-        rw [hzb]
-        exact ht
-      · by_cases hia : i = a
-        · subst hia
-          rw [hza]
-          exact hu
-        · rw [hzo z u t i hia hib]
-          have := hz i
-          rwa [hs'o i hia hib] at this
-  rw [Measure.map_apply hmeas (MeasurableSet.univ_pi hs), hpre, Measure.prod_prod,
-    Measure.prod_prod, Measure.pi_pi]
-  have hb' : b ∈ Finset.univ.erase a := Finset.mem_erase.2 ⟨hab.symm, Finset.mem_univ b⟩
-  have hrest : ∏ i ∈ (Finset.univ.erase a).erase b, μ i (s' i)
-      = ∏ i ∈ (Finset.univ.erase a).erase b, μ i (s i) := by
-    refine Finset.prod_congr rfl fun i hi => ?_
-    rw [hs'o i (Finset.ne_of_mem_erase (Finset.mem_of_mem_erase hi))
-      (Finset.ne_of_mem_erase hi)]
-  have h1 : (∏ i ∈ (Finset.univ.erase a).erase b, μ i (s i)) * μ b (s b) * μ a (s a)
-      = ∏ i, μ i (s i) := by
-    rw [Finset.prod_erase_mul (Finset.univ.erase a) (fun i => μ i (s i)) hb',
-      Finset.prod_erase_mul Finset.univ (fun i => μ i (s i)) (Finset.mem_univ a)]
-  have h2 : (∏ i ∈ (Finset.univ.erase a).erase b, μ i (s' i)) * μ b (s' b) * μ a (s' a)
-      = ∏ i, μ i (s' i) := by
-    rw [Finset.prod_erase_mul (Finset.univ.erase a) (fun i => μ i (s' i)) hb',
-      Finset.prod_erase_mul Finset.univ (fun i => μ i (s' i)) (Finset.mem_univ a)]
-  calc (∏ i, μ i (s' i)) * (μ a (s a) * μ b (s b))
-      = ((∏ i ∈ (Finset.univ.erase a).erase b, μ i (s' i)) * μ b (s' b) * μ a (s' a))
-          * (μ a (s a) * μ b (s b)) := by rw [h2]
-    _ = (∏ i ∈ (Finset.univ.erase a).erase b, μ i (s i)) * μ b (s b) * μ a (s a) := by
-        rw [hrest, hs'a, hs'b, measure_univ (μ := μ a), measure_univ (μ := μ b)]
-        ring
-    _ = ∏ i, μ i (s i) := h1
+  let s : Finset ι := {a}
+  let t : Finset ι := {b}
+  have hdis : Disjoint s t := by simp [s, t, hab]
+  let p : ι → Prop := fun i => i ∈ s ∪ t
+  let splitEquiv := MeasurableEquiv.piEquivPiSubtypeProd α p
+  let unionEquiv := MeasurableEquiv.piFinsetUnion α hdis
+  let singleA := (MeasurableEquiv.piUnique fun i : s => α i).symm
+  let singleB := (MeasurableEquiv.piUnique fun i : t => α i).symm
+  have unionEquiv_a (u : α a) (v : α b) (ha : a ∈ s ∪ t) :
+      unionEquiv (singleA u, singleB v) ⟨a, ha⟩ = u := by
+    change (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨a, ha⟩ = u
+    rw [Equiv.piFinsetUnion_left α hdis (by simp [s]) ha]
+    change uniqueElim (α := fun i : s => α i) u (⟨a, by simp [s]⟩ : s) = u
+    unfold uniqueElim
+    rfl
+  have unionEquiv_b (u : α a) (v : α b) (hb : b ∈ s ∪ t) :
+      unionEquiv (singleA u, singleB v) ⟨b, hb⟩ = v := by
+    change (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨b, hb⟩ = v
+    rw [Equiv.piFinsetUnion_right α hdis (by simp [t]) hb]
+    change uniqueElim (α := fun i : t => α i) v (⟨b, by simp [t]⟩ : t) = v
+    unfold uniqueElim
+    rfl
+  have hsplit := measurePreserving_piEquivPiSubtypeProd μ p
+  have hsingleA : MeasurePreserving singleA (μ a) (Measure.pi fun i : s => μ i) := by
+    simpa [singleA, s] using MeasurePreserving.symm
+      (MeasurableEquiv.piUnique fun i : s => α i)
+      (measurePreserving_piUnique fun i : s => μ i)
+  have hsingleB : MeasurePreserving singleB (μ b) (Measure.pi fun i : t => μ i) := by
+    simpa [singleB, t] using MeasurePreserving.symm
+      (MeasurableEquiv.piUnique fun i : t => α i)
+      (measurePreserving_piUnique fun i : t => μ i)
+  have hselected := (measurePreserving_piFinsetUnion hdis μ).comp (hsingleA.prod hsingleB)
+  have hrest := measurePreserving_snd.comp hsplit
+  have hcombine := (hselected.prod hrest).comp
+    (Measure.measurePreserving_swap (μ := Measure.pi μ) (ν := (μ a).prod (μ b)))
+  have hcombine' : MeasurePreserving
+      (Prod.map ((MeasurableEquiv.piFinsetUnion α hdis) ∘ Prod.map singleA singleB)
+        (Prod.snd ∘ MeasurableEquiv.piEquivPiSubtypeProd α p) ∘ Prod.swap)
+      ((Measure.pi μ).prod ((μ a).prod (μ b)))
+      ((@Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
+          (fun i => inferInstance) fun i => μ i).prod
+        (Measure.pi fun i : {i // ¬p i} => μ i)) := by
+    have hpi : (@Measure.pi (Subtype p) (fun i => α i)
+        (Finset.Subtype.fintype (s ∪ t)) (fun i => inferInstance) fun i => μ i) =
+        @Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
+          (fun i => inferInstance) fun i => μ i := by
+      congr 1
+      exact Subsingleton.elim _ _
+    refine ⟨hcombine.measurable, ?_⟩
+    exact hcombine.map_eq.trans
+      (congrArg (fun m => m.prod (Measure.pi fun i : {i // ¬p i} => μ i)) hpi)
+  have hrefresh := (MeasurePreserving.symm splitEquiv hsplit).comp hcombine'
+  refine hrefresh.congr (by fun_prop) (ae_of_all _ fun w => ?_)
+  funext i
+  change splitEquiv.symm
+      (unionEquiv (singleA w.2.1, singleB w.2.2), (splitEquiv w.1).2) i =
+    update (update w.1 a w.2.1) b w.2.2 i
+  by_cases hia : i = a
+  · subst i
+    change (Equiv.piEquivPiSubtypeProd p α).symm
+      (unionEquiv (singleA w.2.1, singleB w.2.2),
+        ((Equiv.piEquivPiSubtypeProd p α) w.1).2) a =
+      update (update w.1 a w.2.1) b w.2.2 a
+    rw [Equiv.piEquivPiSubtypeProd_symm_apply]
+    simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, true_or, dite_true]
+    rw [unionEquiv_a]
+    simp [hab]
+  · by_cases hib : i = b
+    · subst i
+      rw [update_self]
+      change (Equiv.piEquivPiSubtypeProd p α).symm
+        (unionEquiv (singleA w.2.1, singleB w.2.2),
+          ((Equiv.piEquivPiSubtypeProd p α) w.1).2) b = w.2.2
+      rw [Equiv.piEquivPiSubtypeProd_symm_apply]
+      simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, or_true, dite_true]
+      rw [unionEquiv_b]
+    · change (Equiv.piEquivPiSubtypeProd p α).symm
+        (unionEquiv (singleA w.2.1, singleB w.2.2),
+          ((Equiv.piEquivPiSubtypeProd p α) w.1).2) i =
+        update (update w.1 a w.2.1) b w.2.2 i
+      rw [Equiv.piEquivPiSubtypeProd_symm_apply]
+      simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, hia, hib, false_or,
+        dite_false]
+      change w.1 i = update (update w.1 a w.2.1) b w.2.2 i
+      rw [update_of_ne hib, update_of_ne hia]
 
 end TauCeti
