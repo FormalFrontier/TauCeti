@@ -72,8 +72,8 @@ theorem intervalIntegral_gaussianPDFReal (m : ℝ) {v : ℝ≥0} (hv : v ≠ 0) 
       (∫ s in (0 : ℝ)..((b - m) / c), rexp (-s ^ 2)) -
         ∫ s in (0 : ℝ)..((a - m) / c), rexp (-s ^ 2) :=
     (intervalIntegral.integral_interval_sub_left
-      (Real.continuous_exp_neg_sq.intervalIntegrable _ _)
-      (Real.continuous_exp_neg_sq.intervalIntegrable _ _)).symm
+      ((by fun_prop : Continuous fun s : ℝ => rexp (-s ^ 2)).intervalIntegrable _ _)
+      ((by fun_prop : Continuous fun s : ℝ => rexp (-s ^ 2)).intervalIntegrable _ _)).symm
   have herf : ∀ z : ℝ, (∫ s in (0 : ℝ)..z, rexp (-s ^ 2)) = √π / 2 * Real.erf z := fun z => by
     rw [Real.erf_def]; field_simp
   -- The remaining constant is `1 / 2`.

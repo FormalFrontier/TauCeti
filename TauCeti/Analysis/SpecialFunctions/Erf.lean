@@ -59,10 +59,6 @@ theorem erf_def (x : ℝ) : erf x = 2 / √π * ∫ t in (0 : ℝ)..x, rexp (-t 
 /-- The defining formula for the complementary error function. -/
 theorem erfc_def (x : ℝ) : erfc x = 1 - erf x := (rfl)
 
-/-- The Gaussian kernel `t ↦ exp (-t ^ 2)` is continuous. -/
-@[fun_prop]
-theorem continuous_exp_neg_sq : Continuous fun t : ℝ => rexp (-t ^ 2) := by fun_prop
-
 /-- The error function vanishes at the origin. -/
 @[simp]
 theorem erf_zero : erf 0 = 0 := by simp [erf_def]
@@ -89,7 +85,8 @@ theorem erfc_neg (x : ℝ) : erfc (-x) = 2 - erfc x := by
 
 /-- The error function is strictly differentiable, with derivative `2 / √π * exp (-x ^ 2)`. -/
 theorem hasStrictDerivAt_erf (x : ℝ) : HasStrictDerivAt erf (2 / √π * rexp (-x ^ 2)) x :=
-  (continuous_exp_neg_sq.integral_hasStrictDerivAt 0 x).const_mul (2 / √π)
+  ((by fun_prop : Continuous fun t : ℝ => rexp (-t ^ 2)).integral_hasStrictDerivAt 0 x).const_mul
+    (2 / √π)
 
 /-- The derivative of the error function. -/
 theorem hasDerivAt_erf (x : ℝ) : HasDerivAt erf (2 / √π * rexp (-x ^ 2)) x :=
@@ -111,7 +108,7 @@ theorem continuous_erf : Continuous erf := differentiable_erf.continuous
 `-(2 / √π * exp (-x ^ 2))`. -/
 theorem hasStrictDerivAt_erfc (x : ℝ) :
     HasStrictDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x := by
-  change HasStrictDerivAt (fun y => 1 - erf y) (-(2 / √π * rexp (-x ^ 2))) x
+  rw [show erfc = fun y => 1 - erf y from rfl]
   exact (hasStrictDerivAt_erf x).const_sub 1
 
 /-- The derivative of the complementary error function. -/
