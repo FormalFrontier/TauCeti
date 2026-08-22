@@ -70,14 +70,6 @@ theorem windingNumber_eq_zero_exciseCrossing_modelSector {z₀ : ℂ} {r ε φ �
     rw [uIoo_of_le (by linarith : -ε ≤ ε)] at ht
     rw [uIoo_of_le (by linarith : -r ≤ r)]
     exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
-  -- the two window endpoints lie on the circle of radius `ε`
-  have hθ : modelSector z₀ r φ α (-ε) = circleMap z₀ ε (φ + α) := by
-    rw [modelSector_of_le (by linarith : -ε ≤ r), twoRayCorner_of_neg (by linarith : -ε < 0),
-      circleMap]
-    push_cast
-    ring
-  have hθ' : modelSector z₀ r φ α ε = circleMap z₀ ε φ := by
-    rw [modelSector_of_le (by linarith : ε ≤ r), twoRayCorner_of_nonneg hε.le, circleMap]
   -- off the window the sector misses its corner
   have havoid : ∀ t ∈ Icc (-r) (r + α), t ∉ Ioo (-ε) ε → modelSector z₀ r φ α t ≠ z₀ := by
     intro t _ ht
@@ -101,9 +93,9 @@ theorem windingNumber_eq_zero_exciseCrossing_modelSector {z₀ : ℂ} {r ε φ �
   have hzero : windingNumber (modelSector z₀ r φ α) (-ε) ε z₀ = 0 := by
     rw [← windingNumber_congr_curve hcorner]
     exact windingNumber_eq_zero_twoRayCorner hUV ε
-  have hmain := windingNumber_eq_exciseCrossing_add
+  have hmain := windingNumber_eq_exciseCrossing_add (θ := φ + α) (θ' := φ)
     (isPiecewiseC1On_modelSector hr.le φ α) (by linarith : -r < -ε) (by linarith : -ε < ε)
-    (by linarith : ε < r + α) hε.ne' hθ hθ' havoid hpv
+    (by linarith : ε < r + α) hε.ne' havoid hpv
   rw [windingNumber_closedModelSector hr φ hα, hzero] at hmain
   have hcast : ((φ - (φ + α) : ℝ) : ℂ) = -(α : ℂ) := by push_cast; ring
   rw [hcast] at hmain

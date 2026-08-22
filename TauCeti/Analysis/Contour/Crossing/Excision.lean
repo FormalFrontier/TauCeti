@@ -324,8 +324,8 @@ theorem IsPiecewiseC1On.exciseCrossing (hγ : IsPiecewiseC1On γ a b) (hal : a <
 /-! ### The winding number across an excised crossing -/
 
 /-- **Excising a crossing decomposes the winding number.** Let `γ` be piecewise `C¹` on `[a, b]`,
-let `[l, u]` be a window strictly inside it whose endpoints sit on the circle of radius `r ≠ 0`
-about `s`, at angles `θ` and `θ'`, and suppose `γ` meets `s` only strictly inside that window. Then
+let `[l, u]` be a window strictly inside it, choose a circle of radius `r ≠ 0` about `s` with
+angles `θ` and `θ'`, and suppose `γ` meets `s` only strictly inside that window. Then
 
 `n_s(γ) = n_s(\tilde{γ}) + (n_s(γ|[l,u]) - (θ' - θ) / 2π)`,
 
@@ -333,18 +333,20 @@ where `\tilde{γ}` is the excised curve. The bracket is the winding number of th
 runs along `γ` across the window and returns along the cap reversed — the `Γ_ℓ` of
 Hungerbühler–Wasem Proposition 2.2 — and the identity is exact, no smallness of the window is used.
 
+No endpoint conditions relating `γ` to the cap are needed here because winding numbers are
+insensitive to endpoint values. Such conditions are required by `IsPiecewiseC1On.exciseCrossing`
+when the replacement must be a continuous surgery.
+
 Only the index principal value on the window is assumed; off the window the curve avoids `s`, so
 there the principal values are ordinary integrals. -/
 theorem windingNumber_eq_exciseCrossing_add (hγ : IsPiecewiseC1On γ a b) (hal : a < l)
-    (hlu : l < u) (hub : u < b) (hr : r ≠ 0) (hθ : γ l = circleMap s r θ)
-    (hθ' : γ u = circleMap s r θ') (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s)
+    (hlu : l < u) (hub : u < b) (hr : r ≠ 0)
+    (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s)
     (hpv : CauchyPVExistsAt γ l u (fun z => (z - s)⁻¹) s) :
     windingNumber γ a b s
       = windingNumber (exciseCrossing γ s r l u θ θ') a b s
         + (windingNumber γ l u s - ((θ' - θ : ℝ) : ℂ) / (2 * (Real.pi : ℂ))) := by
   have hab : a ≤ b := by linarith
-  have hleft := exciseCrossing_eqOn_Iic hlu.le hθ θ'
-  have hright := exciseCrossing_eqOn_Ici hlu θ hθ'
   have hmid := exciseCrossing_eqOn_Icc γ s r l u θ θ'
   -- the principal values on the two point-avoiding flanks are ordinary integrals
   have hflank : ∀ c d : ℝ, uIcc c d ⊆ uIcc a b → (∀ t ∈ uIcc c d, γ t ≠ s) →
@@ -372,11 +374,11 @@ theorem windingNumber_eq_exciseCrossing_add (hγ : IsPiecewiseC1On γ a b) (hal 
   have heq_al : EqOn γ (exciseCrossing γ s r l u θ θ') (uIoo a l) := by
     intro t ht
     rw [uIoo_of_le (by linarith : a ≤ l)] at ht
-    exact (hleft (mem_Iic.mpr ht.2.le)).symm
+    exact (exciseCrossing_of_notMem fun h => absurd h.1 (not_le.mpr ht.2)).symm
   have heq_ub : EqOn γ (exciseCrossing γ s r l u θ θ') (uIoo u b) := by
     intro t ht
     rw [uIoo_of_le (by linarith : u ≤ b)] at ht
-    exact (hright (mem_Ici.mpr ht.1.le)).symm
+    exact (exciseCrossing_of_notMem fun h => absurd h.2 (not_le.mpr ht.1)).symm
   have heq_lu : EqOn (circleCap s r l u θ θ') (exciseCrossing γ s r l u θ θ') (uIoo l u) := by
     intro t ht
     rw [uIoo_of_le hlu.le] at ht
@@ -385,17 +387,9 @@ theorem windingNumber_eq_exciseCrossing_add (hγ : IsPiecewiseC1On γ a b) (hal 
   have hpvE_ub := hpv_ub.congr_curve heq_ub
   have hpvE_lu := (cauchyPVExistsAt_circleCap s r l u θ θ' l u).congr_curve heq_lu
   -- additivity over the three pieces, for both curves
-  have hsplit : ∀ (c : ℝ → ℂ), CauchyPVExistsAt c a l (fun z => (z - s)⁻¹) s →
-      CauchyPVExistsAt c l u (fun z => (z - s)⁻¹) s →
-      CauchyPVExistsAt c u b (fun z => (z - s)⁻¹) s →
-      windingNumber c a b s
-        = windingNumber c a l s + windingNumber c l u s + windingNumber c u b s := by
-    intro c h₁ h₂ h₃
-    rw [windingNumber_eq_add_of_hasCauchyPVAt h₁.hasCauchyPVAt_cauchyPVAt
-        (h₂.hasCauchyPVAt_cauchyPVAt.concat h₃.hasCauchyPVAt_cauchyPVAt),
-      windingNumber_eq_add_of_hasCauchyPVAt h₂.hasCauchyPVAt_cauchyPVAt
-        h₃.hasCauchyPVAt_cauchyPVAt, add_assoc]
-  rw [hsplit γ hpv_al hpv hpv_ub, hsplit _ hpvE_al hpvE_lu hpvE_ub,
+  rw [windingNumber_concat hpv_al (hpv.concat hpv_ub), windingNumber_concat hpv hpv_ub,
+    windingNumber_concat hpvE_al (hpvE_lu.concat hpvE_ub),
+    windingNumber_concat hpvE_lu hpvE_ub,
     ← windingNumber_congr_curve heq_al, ← windingNumber_congr_curve heq_ub,
     ← windingNumber_congr_curve heq_lu, windingNumber_circleCap hr hlu.ne θ θ']
   ring
@@ -424,7 +418,7 @@ theorem exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi
   have hE := hγ.exciseCrossing hal hlu hub hθ hθ'
   obtain ⟨k, hk⟩ := hE.exists_int_windingNumber (exciseCrossing_closed hal hub hclosed θ θ')
     (fun t ht => exciseCrossing_ne hr θ θ' havoid t ((uIcc_of_le hab) ▸ ht))
-  exact ⟨k, by rw [windingNumber_eq_exciseCrossing_add hγ hal hlu hub hr hθ hθ' havoid hpv, hk]⟩
+  exact ⟨k, by rw [windingNumber_eq_exciseCrossing_add hγ hal hlu hub hr havoid hpv, hk]⟩
 
 end TauCeti.Contour
 
