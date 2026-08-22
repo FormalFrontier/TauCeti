@@ -51,8 +51,9 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   `TauCeti.PathAlgebra.completeOrthogonalIdempotents_vertexIdempotent`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
   rank the number of paths of `Q`, with `TauCeti.pathAlgebraBasis_repr_single` reading off the
-  coordinates of a basis path. The specialization to a finite acyclic quiver, whose paths are
-  finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
+  coordinates of a basis path and `TauCeti.linearIndependent_ofPath` recording that any
+  subfamily of the path basis stays linearly independent. The specialization to a finite acyclic
+  quiver, whose paths are finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
   `TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra`.
 * `TauCeti.vertexIdempotent_mul_mul_vertexIdempotent`: when the trivial path is the only path from
   `v` to itself, `eᵥ f eᵥ` is the coefficient of `f` on that path, times `eᵥ`, so the corner
@@ -144,6 +145,21 @@ theorem mul?_eq_none_iff {x y : TotalPath Q} : mul? x y = none ↔ y.2.1 ≠ x.1
   refine ⟨fun h hne => ?_, mul?_eq_none⟩
   rw [mul?, dite_eq_left hne] at h
   exact Option.some_ne_none _ h
+
+/-- **Concatenation adds lengths**: a path produced by `mul?` is as long as its two factors
+together. -/
+theorem length_of_mul?_eq_some {x y z : TotalPath Q} (h : mul? x y = some z) :
+    z.2.2.length = x.2.2.length + y.2.2.length := by
+  obtain ⟨a, b, p⟩ := x
+  obtain ⟨c, d, q⟩ := y
+  by_cases hda : d = a
+  · subst hda
+    rw [mul?_mk] at h
+    obtain rfl := Option.some.inj h
+    rw [_root_.Quiver.Path.length_comp]
+    exact Nat.add_comm _ _
+  · rw [mul?_eq_none hda] at h
+    exact absurd h.symm (Option.some_ne_none z)
 
 /-- The trivial path at the target of `x` is a left unit for `x`. -/
 @[simp]
@@ -411,6 +427,12 @@ noncomputable def ofPath (x : Quiver.TotalPath Q) : pathAlgebra k Q :=
 theorem ofPath_eq_single (x : Quiver.TotalPath Q) :
     (ofPath x : pathAlgebra k Q) = single x 1 := (rfl)
 
+/-- **The defining product of two basis paths**: their concatenation when they are composable, and
+`0` otherwise. This is `TauCeti.PathAlgebra.single_mul_single` read on the path basis. -/
+theorem ofPath_mul_ofPath (x y : Quiver.TotalPath Q) :
+    (ofPath x * ofPath y : pathAlgebra k Q) = (x.mul? y).elim 0 fun z => ofPath z := by
+  simp only [ofPath_eq_single, single_mul_single, mul_one]
+
 /-- Two composable paths multiply to their concatenation, later factor first. -/
 @[simp]
 theorem ofPath_mul_ofPath_of_comp {a b c : Q} (p : _root_.Quiver.Path a b)
@@ -634,6 +656,15 @@ theorem coe_pathAlgebraBasis :
 theorem module_finite_pathAlgebra [Finite (Quiver.TotalPath Q)] :
     Module.Finite k (pathAlgebra k Q) :=
   Module.Finite.of_basis (pathAlgebraBasis k Q)
+
+/-- **Any subfamily of the path basis is linearly independent**: the paths satisfying a predicate
+`p`, indexed by the subtype they cut out, are `k`-linearly independent in the path algebra. -/
+theorem linearIndependent_ofPath (p : Quiver.TotalPath Q → Prop) :
+    LinearIndependent k fun x : {x : Quiver.TotalPath Q // p x} =>
+      (PathAlgebra.ofPath x.1 : pathAlgebra k Q) := by
+  have h := (pathAlgebraBasis k Q).linearIndependent.comp
+    (Subtype.val : {x : Quiver.TotalPath Q // p x} → Quiver.TotalPath Q) Subtype.val_injective
+  simpa only [coe_pathAlgebraBasis, Function.comp_def] using h
 
 variable {k Q}
 
