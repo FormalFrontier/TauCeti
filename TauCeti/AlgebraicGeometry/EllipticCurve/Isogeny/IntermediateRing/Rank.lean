@@ -10,6 +10,8 @@ public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.IntermediateRing.B
 public import Mathlib.RingTheory.RamificationInertia.Basic
 -- Proof-only: the fraction field of the intermediate ring.
 import Mathlib.RingTheory.Localization.Integral
+-- Proof-only: the general finite-flat prime-count bound.
+import TauCeti.NumberTheory.RamificationInertia.Tower
 
 /-!
 # The intermediate ring of an isogeny has rank the degree, and its fibres count it
@@ -46,8 +48,8 @@ statement below assumes that, and none of them is stated in terms of points.
   the intermediate ring.
 * `TauCeti.Isogeny.finrank_intermediateRing_eq_degree`: the intermediate ring has rank `φ.degree`
   over `W₂.CoordinateRing`.
-* `TauCeti.Isogeny.projective_intermediateRing`: it is projective, hence locally free, over
-  `W₂.CoordinateRing` once it is module-finite.
+* `TauCeti.Isogeny.moduleProjective_intermediateRing`: it is projective, hence locally free, over a
+  Dedekind `W₂.CoordinateRing` once it is module-finite.
 * `TauCeti.Isogeny.sum_ramificationIdx_mul_inertiaDeg_eq_degree`: the **fundamental identity** for
   an isogeny — `∑_{q ∣ p} e_q · f_q = deg φ` over every prime `p` of `W₂.CoordinateRing`.
 * `TauCeti.Isogeny.ncard_primesOver_le_degree`: hence there are at most `deg φ` primes above `p`.
@@ -71,22 +73,23 @@ the coordinate ring's class group with the point group is context for this limit
 obstruction established here. `IsFractionRing.finrank_eq` compares the ranks with no hypothesis on
 the base at all, so it is the route taken here.
 
-**Module-finiteness is an instance argument of the fibre count, not a derived fact.** The two
-statements below that do need it take `[Module.Finite W₂.CoordinateRing φ.intermediateRing]`
-rather than `[Algebra.IsSeparable W₂.FunctionField W₁.FunctionField]` and a call to
-`Isogeny.moduleFinite_intermediateRing`. Separability is not what the fundamental identity is
-about; it is what the only currently available route to finiteness happens to need, and
-`IntermediateRing/Finite.lean` says so in its own header. Taking the finiteness directly means
-these statements apply unchanged the day a trace-free route lands, and a caller in the separable
-case supplies it in one line from the sibling.
+**Module-finiteness is an instance argument of projectivity and the fibre statements, not a derived
+fact.** The three statements below that do need it take
+`[Module.Finite W₂.CoordinateRing φ.intermediateRing]` rather than
+`[Algebra.IsSeparable W₂.FunctionField W₁.FunctionField]` and a call to
+`Isogeny.moduleFinite_intermediateRing`. Separability is not what these conclusions are about; it is
+what the only currently available route to finiteness happens to need, and
+`IntermediateRing/Finite.lean` says so in its own header. Taking the finiteness directly means the
+statements apply unchanged the day a trace-free route lands, and a caller in the separable case
+supplies it in one line from the sibling.
 
 **Flatness follows automatically in the Dedekind application.** The fundamental identity is
 stated under its natural finite-flat hypotheses. Over a Dedekind domain a torsion-free module is
 flat, and torsion-freeness of the intermediate ring is injectivity of `algebraMap W₂.CoordinateRing
 φ.intermediateRing`, which follows from the hypotheses already present: the composite into
 `W₁.FunctionField` is the pullback, and the pullback of an isogeny is injective. So
-`projective_intermediateRing` supplies the flatness needed in the roadmap's Dedekind setting. The
-argument is made once there rather than repeated: `IntermediateRing/Basic.lean` records that a
+`moduleProjective_intermediateRing` supplies the flatness needed in the roadmap's Dedekind setting.
+The argument is made once there rather than repeated: `IntermediateRing/Basic.lean` records that a
 standalone torsion-freeness lemma about this ring was removed in review as a one-step wrapper, and
 nothing here reinstates one.
 
@@ -116,11 +119,12 @@ coordinate ring.
 The fraction-field statement is the content of `instFractionRingB` in the AINTLIB project
 (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `dev/hasse-weil @ 513e83879e2f`, by Chris Birkbeck),
 proved in `HasseWeil/Curves/RamificationFinite.lean` alongside the finiteness that
-`IntermediateRing/Finite.lean` ports; `IntermediateRing/Basic.lean` records it as unported, which
-this file changes. The proof route — `IsIntegralClosure.isFractionRing_of_finite_extension` — is
-the source's. The source states it for a fixed extension with the algebra structures supplied as
-instance arguments; here the structures are the pullback-induced ones, installed inside the proof,
-so the statement is hypothesis-free. The rank identity and the fibre count are not in that source.
+`IntermediateRing/Finite.lean` ports; `IntermediateRing/Basic.lean` records its port here. The proof
+route — `IsIntegralClosure.isFractionRing_of_finite_extension` — is the source's. The source states
+it for a fixed extension with the algebra structures supplied as instance arguments; here the
+structures are the pullback-induced ones, installed inside the proof, so the statement is
+hypothesis-free. The rank identity, projectivity, fundamental identity, and prime-count bound are
+not in that source.
 
 ⚠ *mathlib-track*, with the sibling `Isogeny` files: `TauCetiRoadmap/EllipticCurves/README.md`
 pins D. Angdinata's shared isogeny development as carrying the intermediate ring and its
@@ -175,7 +179,6 @@ matching `Isogeny.degree_eq_finrank` and `Isogeny.moduleFinite_intermediateRing`
 a structure globally would be a diamond, since different isogenies induce different ones.
 
 Nothing here is spent on separability or on the coordinate rings being Dedekind. -/
-@[simp]
 theorem finrank_intermediateRing_eq_degree (φ : Isogeny W₁ W₂)
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
@@ -188,15 +191,16 @@ theorem finrank_intermediateRing_eq_degree (φ : Isogeny W₁ W₂)
   exact (IsFractionRing.finrank_eq W₂.CoordinateRing W₂.FunctionField φ.intermediateRing
     W₁.FunctionField).symm
 
-/-- **The intermediate ring is projective over the target coordinate ring**, hence locally free of
-rank `φ.degree` by `finrank_intermediateRing_eq_degree`. This is the form in which the roadmap's
-place-free fibre count is stated.
+/-- **The intermediate ring is projective, hence locally free, over the Dedekind target coordinate
+ring.** Once the function-field algebra structures and scalar towers required by
+`finrank_intermediateRing_eq_degree` are also present, its rank is `φ.degree`. This is the form in
+which the roadmap's place-free fibre count is stated.
 
 The structure map is injective, because it factors the pullback of the isogeny and that is
 injective, so the intermediate ring is torsion-free and hence flat over the Dedekind coordinate
 ring; a finite module over a Noetherian ring is finitely presented, and a finitely presented flat
 module is projective. -/
-theorem projective_intermediateRing (φ : Isogeny W₁ W₂)
+theorem moduleProjective_intermediateRing (φ : Isogeny W₁ W₂)
     [IsDedekindDomain W₂.CoordinateRing]
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.CoordinateRing φ.intermediateRing]
@@ -270,15 +274,8 @@ theorem ncard_primesOver_le_degree (φ : Isogeny W₁ W₂)
     (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x)
     (p : Ideal W₂.CoordinateRing) [p.IsPrime] :
     (p.primesOver φ.intermediateRing).ncard ≤ φ.degree := by
-  have : Fintype (p.primesOver φ.intermediateRing) :=
-    (Algebra.QuasiFinite.finite_primesOver p).fintype
-  rw [← φ.sum_ramificationIdx_mul_inertiaDeg_eq_degree h p, ← Nat.card_coe_set_eq,
-    Nat.card_eq_fintype_card, ← Finset.card_univ, Finset.card_eq_sum_ones]
-  refine Finset.sum_le_sum fun q _ ↦ ?_
-  have : q.1.IsPrime := q.2.1
-  exact Nat.one_le_iff_ne_zero.mpr
-    (Nat.mul_ne_zero (q.1.ramificationIdx_pos W₂.CoordinateRing).ne'
-      (q.1.inertiaDeg_pos W₂.CoordinateRing).ne')
+  exact (RamificationInertia.ncard_primesOver_le_finrank p).trans_eq
+    (φ.finrank_intermediateRing_eq_degree h)
 
 end Isogeny
 
