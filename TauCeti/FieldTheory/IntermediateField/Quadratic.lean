@@ -281,8 +281,10 @@ theorem exists_sq_mem_bot_adjoin_eq_of_finrank_eq_two [NeZero (2 : K)]
     have hhalf : algebraMap K L (b / 2) = algebraMap K L b / 2 := by
       simp [map_div₀, map_ofNat]
     have h2L : (2 : L) ≠ 0 := NeZero.ne (2 : L)
+    -- `field_simp` also needs `4 ≠ 0`; expose `4` as a product of the nonzero element `2`.
+    have four_eq_two_mul_two : (4 : L) = 2 * 2 := by norm_num
     have h4L : (4 : L) ≠ 0 := by
-      rw [show (4 : L) = 2 * 2 by norm_num]
+      rw [four_eq_two_mul_two]
       exact mul_ne_zero h2L h2L
     rw [hx, hmap, hhalf]
     field_simp
