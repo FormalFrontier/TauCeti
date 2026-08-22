@@ -5,11 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
--- `TauCeti.Algebra.BrauerGroup.Splitting` is imported publicly: the statements use the Brauer
--- class map, `CSA.of`, and the finite-dimensional central division-algebra vocabulary that it
--- re-exports. It also makes the result immediately available beside the identity-class criterion
--- for a central division algebra.
-public import TauCeti.Algebra.BrauerGroup.Splitting
+-- `TauCeti.Algebra.BrauerGroup.Group` is imported publicly: the statements use the Brauer class
+-- map, `CSA.of`, and the finite-dimensional central division-algebra vocabulary that it re-exports.
+public import TauCeti.Algebra.BrauerGroup.Group
 -- Non-public: the existence half is Wedderburn--Artin for a central simple algebra, while the
 -- uniqueness half uses the algebra-linear invariance of the division algebra in a matrix
 -- presentation. Neither implementation theorem occurs in the public statements.
@@ -36,7 +34,7 @@ fixes the chosen copy of `K`.
 
 ## Main results
 
-* `TauCeti.BrauerGroup.exists_eq_mk_divisionAlgebra`: every Brauer class is represented by a
+* `TauCeti.BrauerGroup.exists_eq_mk_centralDivisionRing`: every Brauer class is represented by a
   finite-dimensional central division algebra.
 * `TauCeti.BrauerGroup.nonempty_algEquiv_of_mk_eq_mk`: two central division algebras representing
   the same class are isomorphic over the base field.
@@ -68,7 +66,7 @@ Brauer class is `x`.
 The representative is not chosen as data: the theorem records its existence, while
 `TauCeti.BrauerGroup.mk_eq_mk_iff_nonempty_algEquiv` says that any two choices are
 isomorphic over `K`. -/
-theorem exists_eq_mk_divisionAlgebra (x : BrauerGroup.{u, v} K) :
+theorem exists_eq_mk_centralDivisionRing (x : BrauerGroup.{u, v} K) :
     ∃ (D : Type v) (_ : DivisionRing D) (_ : Algebra K D) (_ : Algebra.IsCentral K D)
       (_ : FiniteDimensional K D), x = mk (CSA.of K D) := by
   induction x using BrauerGroup.inductionOn with
@@ -99,10 +97,8 @@ theorem nonempty_algEquiv_of_mk_eq_mk
   obtain ⟨n, m, hn, hm, ⟨e⟩⟩ := mk_eq_mk_iff.mp h
   let _ : NeZero n := ⟨hn⟩
   let _ : NeZero m := ⟨hm⟩
-  have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero hn)
-  have : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero hm)
-  exact nonempty_algEquiv_of_algEquiv_matrix (AlgEquiv.refl :
-    Matrix (Fin n) (Fin n) D ≃ₐ[K] Matrix (Fin n) (Fin n) D) e
+  exact (wedderburn_data_unique_of_algEquiv (K := K) (AlgEquiv.refl :
+    Matrix (Fin n) (Fin n) D ≃ₐ[K] Matrix (Fin n) (Fin n) D) e).2
 
 /-- **Two central division algebras have the same Brauer class exactly when they are isomorphic
 as algebras over the base field.**

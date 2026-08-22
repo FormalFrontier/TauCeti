@@ -36,7 +36,9 @@ ring isomorphism.  The **column module** `ι → D`, on which `A` acts by `Matri
 regular module, and the *division ring* is the opposite endomorphism ring of a minimal left ideal.
 Both are manifestly invariant, and a ring isomorphism `f : R ≃+* Matᵢ(D)`, read through
 `RingEquiv.toSemilinearEquiv` as an `f`-semilinear isomorphism of regular modules, carries them
-back to `R`.
+back to `R`.  For a `K`-algebra presentation, the same transport is upgraded to an algebra
+equivalence of endomorphism rings, so the resulting comparison keeps the chosen base algebra
+fixed.
 
 ## Main results
 
@@ -46,13 +48,15 @@ back to `R`.
   and the regular module is `Fintype.card ι` copies of it.
 * `TauCeti.length_eq_card_of_ringEquiv_matrix`: a ring presented as `Matᵢ(D)` has regular module of
   length `Fintype.card ι`.
-* `TauCeti.nonempty_end_ringEquiv_of_ringEquiv_matrix`: for a ring presented as `Matᵢ(D)`, the
-  endomorphism ring of any simple left ideal is `Dᵐᵒᵖ`.
+* `TauCeti.nonempty_end_ringEquiv_of_ringEquiv_matrix` and
+  `TauCeti.nonempty_end_algEquiv_of_algEquiv_matrix`: for a ring presented as `Matᵢ(D)`, the
+  endomorphism ring of any simple left ideal is `Dᵐᵒᵖ`, with an algebra-linear form over a shared
+  base.
 * `TauCeti.card_eq_of_ringEquiv_matrix`, `TauCeti.nonempty_ringEquiv_of_ringEquiv_matrix` and the
   packaged `TauCeti.wedderburn_data_unique`: **two matrix presentations of the same ring have the
   same size and isomorphic division rings.** Their algebra-linear counterparts are
   `TauCeti.nonempty_algEquiv_of_algEquiv_matrix` and
-  `TauCeti.wedderburn_data_alg_unique`.
+  `TauCeti.wedderburn_data_unique_of_algEquiv`.
 * `TauCeti.nonempty_ringEquiv_matrix_iff`: the resulting classification, that `Matᵢ(D) ≃+* Mat_κ(E)`
   holds exactly when `ι` and `κ` have the same cardinality and `D ≃+* E`, with
   `TauCeti.nonempty_algEquiv_matrix_iff` its algebra-linear counterpart.
@@ -72,9 +76,11 @@ so the simple module is the column module -- on which a matrix acts by `Matrix.m
 endomorphism ring, acting on the other side, comes out as `Dᵐᵒᵖ` rather than `D`.  This is also
 Mathlib's convention in `IsSimpleRing.exists_ringEquiv_matrix_end_mulOpposite`.
 
-Note that `DecidableEq ι` is needed to make `Matᵢ(D)` a ring, but not to state the transport
-results, whose types mention only the multiplication and addition of `Matᵢ(D)`; those are therefore
-stated without it and use `classical` internally.
+Note that `DecidableEq ι` is needed to make `Matᵢ(D)` a ring, but not to state the ring-equivalence
+transport results, whose types mention only the multiplication and addition of `Matᵢ(D)`; those are
+therefore stated without it and use `classical` internally.  The algebra-equivalence counterparts
+do assume `DecidableEq ι`, because the `Algebra K (Matrix ι ι D)` instance uses the full matrix-ring
+structure.
 
 The matching of the blocks of two product presentations is proved downstream in
 `TauCeti/RingTheory/Semisimple/Wedderburn/Uniqueness.lean`: the coordinate central idempotents
@@ -227,6 +233,7 @@ theorem Matrix.mulOppositeRingEquivEnd_apply [Nonempty ι] (d : Dᵐᵒᵖ) :
 
 variable (K : Type*) [CommSemiring K] [Algebra K D]
 
+variable (ι D) in
 /-- **The endomorphism algebra of the column module of `Matᵢ(D)` is `Dᵐᵒᵖ`.**
 
 This is the algebra-linear refinement of `TauCeti.Matrix.mulOppositeRingEquivEnd`. The scalar from
@@ -242,8 +249,8 @@ noncomputable def Matrix.mulOppositeAlgEquivEnd [Nonempty ι] :
 multiplication by `d.unop`. -/
 @[simp]
 theorem Matrix.mulOppositeAlgEquivEnd_apply [Nonempty ι] (d : Dᵐᵒᵖ) :
-    Matrix.mulOppositeAlgEquivEnd (ι := ι) (D := D) K d = Matrix.rightMul d.unop :=
-  (rfl)
+    Matrix.mulOppositeAlgEquivEnd ι D K d = Matrix.rightMul d.unop := by
+  simp [Matrix.mulOppositeAlgEquivEnd]
 
 variable (ι D) in
 /-- **The regular module of `Matᵢ(D)` has length `Fintype.card ι`**: it is the direct sum of its
@@ -275,6 +282,58 @@ theorem length_eq_card_of_ringEquiv_matrix (f : R ≃+* Matrix ι ι D) :
   rw [Module.coe_length, Module.coe_length]
   exact Order.krullDim_eq_of_orderIso (Submodule.orderIsoMapComap f.toSemilinearEquiv)
 
+section Algebra
+
+variable {K : Type*} [CommSemiring K] [Algebra K R] [DecidableEq ι] [Algebra K D]
+
+private noncomputable def LinearEquiv.conjAlgEquivOfAlgEquiv
+    {S M N : Type*} [Semiring S] [Algebra K S]
+    [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module S N]
+    [Module K M] [Module K N] [IsScalarTower K R M] [IsScalarTower K S N]
+    (f : R ≃ₐ[K] S)
+    [RingHomInvPair (f.toRingEquiv : R →+* S) f.toRingEquiv.symm]
+    [RingHomInvPair (f.toRingEquiv.symm : S →+* R) f.toRingEquiv]
+    (e : M ≃ₛₗ[(f.toRingEquiv : R →+* S)] N) :
+    Module.End R M ≃ₐ[K] Module.End S N :=
+  AlgEquiv.ofRingEquiv (R := K) (f := e.conjRingEquiv) fun k => by
+    apply LinearMap.ext
+    intro x
+    rw [LinearEquiv.conjRingEquiv_apply_apply]
+    rw [Module.algebraMap_end_apply, Module.algebraMap_end_apply]
+    rw [← IsScalarTower.algebraMap_smul R k (e.symm x),
+      ← IsScalarTower.algebraMap_smul S k x]
+    rw [e.map_smulₛₗ]
+    rw [e.apply_symm_apply]
+    rw [show (f.toRingEquiv : R →+* S) (algebraMap K R k) = f (algebraMap K R k) by
+      exact congrFun ((RingEquiv.coe_toRingHom f.toRingEquiv).trans
+        (AlgEquiv.coe_ringEquiv f)) _]
+    rw [f.commutes]
+
+/-- **The endomorphism algebra of a simple left ideal determines the division algebra in an
+algebra presentation.**
+
+This is the algebra-linear refinement of
+`TauCeti.nonempty_end_ringEquiv_of_ringEquiv_matrix`. Conjugation along the semilinear transport
+of the ideal preserves `K` because the presentation is a `K`-algebra equivalence; conjugation
+between the two simple modules is already linear over the matrix algebra. -/
+theorem nonempty_end_algEquiv_of_algEquiv_matrix [Nonempty ι]
+    (f : R ≃ₐ[K] Matrix ι ι D) (I : Submodule R R) [IsSimpleModule R I] :
+    Nonempty (Module.End R I ≃ₐ[K] Dᵐᵒᵖ) := by
+  have hpair := RingHomInvPair.of_ringEquiv f.toRingEquiv
+  have := hpair.symm
+  have key : IsSimpleModule (Matrix ι ι D)
+      (Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv I) :=
+    isSimpleModule_iff_isAtom.mpr
+      (((Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv).isAtom_iff I).mpr
+        (isSimpleModule_iff_isAtom.mp ‹_›))
+  obtain ⟨g⟩ := IsIsotypicOfType.of_isSimpleRing (Matrix ι ι D) (ι → D) (Matrix ι ι D)
+    (Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv I)
+  let e := f.toRingEquiv.toSemilinearEquiv.submoduleMap I
+  exact ⟨((LinearEquiv.conjAlgEquivOfAlgEquiv f e).trans (g.conjAlgEquiv K)).trans
+    (Matrix.mulOppositeAlgEquivEnd ι D K).symm⟩
+
+end Algebra
+
 /-- **The division ring of a matrix presentation is the opposite endomorphism ring of any simple
 left ideal**, hence an invariant of the ring.
 
@@ -285,17 +344,8 @@ theorem nonempty_end_ringEquiv_of_ringEquiv_matrix [Nonempty ι] (f : R ≃+* Ma
     (I : Submodule R R) [IsSimpleModule R I] :
     Nonempty (Module.End R I ≃+* Dᵐᵒᵖ) := by
   classical
-  have hpair := RingHomInvPair.of_ringEquiv f
-  have := hpair.symm
-  have key : IsSimpleModule (Matrix ι ι D)
-      (Submodule.orderIsoMapComap f.toSemilinearEquiv I) :=
-    isSimpleModule_iff_isAtom.mpr
-      (((Submodule.orderIsoMapComap f.toSemilinearEquiv).isAtom_iff I).mpr
-        (isSimpleModule_iff_isAtom.mp ‹_›))
-  obtain ⟨g⟩ := IsIsotypicOfType.of_isSimpleRing (Matrix ι ι D) (ι → D) (Matrix ι ι D)
-    (Submodule.orderIsoMapComap f.toSemilinearEquiv I)
-  exact ⟨((f.toSemilinearEquiv.submoduleMap I).conjRingEquiv.trans g.conjRingEquiv).trans
-    (Matrix.mulOppositeRingEquivEnd ι D).symm⟩
+  obtain ⟨e⟩ := nonempty_end_algEquiv_of_algEquiv_matrix f.toIntAlgEquiv I
+  exact ⟨e.toRingEquiv⟩
 
 end Transport
 
@@ -313,100 +363,10 @@ theorem card_eq_of_ringEquiv_matrix (f : R ≃+* Matrix ι ι D) (g : R ≃+* Ma
     (length_eq_card_of_ringEquiv_matrix g)
   exact_mod_cast h
 
-/-- **The division ring of a matrix presentation is unique up to isomorphism**: two presentations of
-one ring as a matrix ring over a division ring have isomorphic division rings.
+section Algebra
 
-Both division rings are computed from a single minimal left ideal of the ring, so no comparison of
-choices is needed: they are the two readings of one and the same endomorphism ring. -/
-theorem nonempty_ringEquiv_of_ringEquiv_matrix [Nonempty ι] [Nonempty κ]
-    (f : R ≃+* Matrix ι ι D) (g : R ≃+* Matrix κ κ E) : Nonempty (D ≃+* E) := by
-  classical
-  have : IsSimpleRing R := IsSimpleRing.of_ringEquiv f.symm inferInstance
-  have : IsSemisimpleRing R := f.symm.isSemisimpleRing
-  -- `R` is nontrivial, so it has a minimal left ideal; simplicity of `R` is only used for that.
-  obtain ⟨I, hI⟩ := IsAtomic.exists_atom (Submodule R R)
-  rw [← isSimpleModule_iff_isAtom] at hI
-  obtain ⟨eD⟩ := nonempty_end_ringEquiv_of_ringEquiv_matrix f I
-  obtain ⟨eE⟩ := nonempty_end_ringEquiv_of_ringEquiv_matrix g I
-  exact ⟨RingEquiv.unop (eD.symm.trans eE)⟩
-
-/-- **Matrix rings over division rings are classified by their size and their division ring.**  Two
-of them are isomorphic exactly when they have equally many rows and isomorphic division rings.
-
-The forward direction is the uniqueness above, applied to the two presentations of `Matᵢ(D)` given
-by the identity and by the isomorphism; the converse reindexes along an equivalence of the two
-index types (`Matrix.reindexRingEquiv`) and then transports the entries
-(`RingEquiv.mapMatrix`). -/
-theorem nonempty_ringEquiv_matrix_iff [Nonempty ι] [Nonempty κ] :
-    Nonempty (Matrix ι ι D ≃+* Matrix κ κ E) ↔
-      Fintype.card ι = Fintype.card κ ∧ Nonempty (D ≃+* E) := by
-  classical
-  refine ⟨fun ⟨φ⟩ ↦ ⟨card_eq_of_ringEquiv_matrix (.refl _) φ,
-    nonempty_ringEquiv_of_ringEquiv_matrix (.refl _) φ⟩, fun ⟨hcard, ⟨d⟩⟩ ↦ ?_⟩
-  exact ⟨(Matrix.reindexRingEquiv D (Fintype.equivOfCardEq hcard)).trans d.mapMatrix⟩
-
-/-- **Uniqueness of the Wedderburn data of a simple Artinian ring.**  Two presentations of a ring as
-a matrix ring over a division ring have the same degree and isomorphic division rings.
-
-This is the `Fin n` shape produced by `IsSimpleRing.exists_ringEquiv_matrix_divisionRing`; the
-positivity hypotheses `NeZero n` are the ones that theorem supplies, and they are essential, since
-`Mat₀(D)` is the trivial ring for every `D`. -/
-theorem wedderburn_data_unique {n m : ℕ} [NeZero n] [NeZero m]
-    (f : R ≃+* Matrix (Fin n) (Fin n) D) (g : R ≃+* Matrix (Fin m) (Fin m) E) :
-    n = m ∧ Nonempty (D ≃+* E) := by
-  have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne n))
-  have : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne m))
-  refine ⟨?_, nonempty_ringEquiv_of_ringEquiv_matrix f g⟩
-  simpa using card_eq_of_ringEquiv_matrix f g
-
-end Uniqueness
-
-section AlgebraUniqueness
-
-variable {K : Type*} [CommSemiring K]
-variable {R : Type*} [Ring R] [Algebra K R]
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-variable {D : Type*} [DivisionRing D] [Algebra K D]
-
-/-- **The endomorphism algebra of a simple left ideal determines the division algebra in an
-algebra presentation.**
-
-This is the algebra-linear refinement of
-`TauCeti.nonempty_end_ringEquiv_of_ringEquiv_matrix`. Conjugation along the semilinear transport
-of the ideal preserves `K` because the presentation is a `K`-algebra equivalence; conjugation
-between the two simple modules is already linear over the matrix algebra. -/
-theorem nonempty_end_algEquiv_of_algEquiv_matrix [Nonempty ι]
-    (f : R ≃ₐ[K] Matrix ι ι D) (I : Submodule R R) [IsSimpleModule R I] :
-    Nonempty (Module.End R I ≃ₐ[K] Dᵐᵒᵖ) := by
-  classical
-  have hpair := RingHomInvPair.of_ringEquiv f.toRingEquiv
-  have := hpair.symm
-  have key : IsSimpleModule (Matrix ι ι D)
-      (Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv I) :=
-    isSimpleModule_iff_isAtom.mpr
-      (((Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv).isAtom_iff I).mpr
-        (isSimpleModule_iff_isAtom.mp ‹_›))
-  obtain ⟨g⟩ := IsIsotypicOfType.of_isSimpleRing (Matrix ι ι D) (ι → D) (Matrix ι ι D)
-    (Submodule.orderIsoMapComap f.toRingEquiv.toSemilinearEquiv I)
-  let e := f.toRingEquiv.toSemilinearEquiv.submoduleMap I
-  let eAlg := AlgEquiv.ofRingEquiv (R := K) (f := e.conjRingEquiv) fun k => by
-    apply LinearMap.ext
-    intro x
-    rw [LinearEquiv.conjRingEquiv_apply_apply]
-    rw [Module.algebraMap_end_apply, Module.algebraMap_end_apply]
-    rw [← IsScalarTower.algebraMap_smul R k (e.symm x),
-      ← IsScalarTower.algebraMap_smul (Matrix ι ι D) k x]
-    rw [e.map_smulₛₗ]
-    -- The semilinear map stores `f` through its underlying ring equivalence; expose the
-    -- algebra-equivalence coercion so that `f.commutes` applies.
-    change f (algebraMap K R k) • e (e.symm x) =
-      (algebraMap K (Matrix ι ι D) k) • x
-    rw [f.commutes, e.apply_symm_apply]
-  exact ⟨(eAlg.trans (g.conjAlgEquiv K)).trans
-    (Matrix.mulOppositeAlgEquivEnd (ι := ι) (D := D) K).symm⟩
-
-variable {κ : Type*} [Fintype κ] [DecidableEq κ]
-variable {E : Type*} [DivisionRing E] [Algebra K E]
+variable {K : Type*} [CommSemiring K] [Algebra K R]
+variable [DecidableEq ι] [Algebra K D] [DecidableEq κ] [Algebra K E]
 
 /-- **The division algebra in a matrix presentation of a `K`-algebra is unique up to
 `K`-algebra isomorphism.**
@@ -416,7 +376,6 @@ ideal of `R`. The common ideal makes the resulting isomorphism preserve the spec
 `K`, which need not follow from ring-level Wedderburn uniqueness alone. -/
 theorem nonempty_algEquiv_of_algEquiv_matrix [Nonempty ι] [Nonempty κ]
     (f : R ≃ₐ[K] Matrix ι ι D) (g : R ≃ₐ[K] Matrix κ κ E) : Nonempty (D ≃ₐ[K] E) := by
-  classical
   have : IsSimpleRing R := IsSimpleRing.of_ringEquiv f.symm.toRingEquiv inferInstance
   have : IsSemisimpleRing R := f.symm.toRingEquiv.isSemisimpleRing
   obtain ⟨I, hI⟩ := IsAtomic.exists_atom (Submodule R R)
@@ -431,7 +390,6 @@ coefficient division algebras are isomorphic as `K`-algebras. -/
 theorem nonempty_algEquiv_matrix_iff [Nonempty ι] [Nonempty κ] :
     Nonempty (Matrix ι ι D ≃ₐ[K] Matrix κ κ E) ↔
       Fintype.card ι = Fintype.card κ ∧ Nonempty (D ≃ₐ[K] E) := by
-  classical
   constructor
   · rintro ⟨f⟩
     let r : Matrix ι ι D ≃ₐ[K] Matrix ι ι D := AlgEquiv.refl
@@ -440,17 +398,63 @@ theorem nonempty_algEquiv_matrix_iff [Nonempty ι] [Nonempty κ] :
   · rintro ⟨hcard, ⟨d⟩⟩
     exact ⟨(Matrix.reindexAlgEquiv K D (Fintype.equivOfCardEq hcard)).trans d.mapMatrix⟩
 
-/-- **Uniqueness of the algebraic Wedderburn data of a simple Artinian algebra.** Two
-`K`-algebra presentations as matrix algebras over division algebras have the same matrix size and
+/-- **Uniqueness of the Wedderburn data of a simple Artinian algebra.** Two `K`-algebra
+presentations as matrix algebras over division algebras have the same matrix size and
 `K`-isomorphic division algebras. -/
-theorem wedderburn_data_alg_unique {n m : ℕ} [NeZero n] [NeZero m]
+theorem wedderburn_data_unique_of_algEquiv {n m : ℕ} [NeZero n] [NeZero m]
     (f : R ≃ₐ[K] Matrix (Fin n) (Fin n) D)
     (g : R ≃ₐ[K] Matrix (Fin m) (Fin m) E) : n = m ∧ Nonempty (D ≃ₐ[K] E) := by
   have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne n))
   have : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne m))
-  exact ⟨(wedderburn_data_unique f.toRingEquiv g.toRingEquiv).1,
+  exact ⟨by simpa using card_eq_of_ringEquiv_matrix f.toRingEquiv g.toRingEquiv,
     nonempty_algEquiv_of_algEquiv_matrix f g⟩
 
-end AlgebraUniqueness
+end Algebra
+
+/-- **The division ring of a matrix presentation is unique up to isomorphism**: two presentations of
+one ring as a matrix ring over a division ring have isomorphic division rings.
+
+Both division rings are computed from a single minimal left ideal of the ring, so no comparison of
+choices is needed: they are the two readings of one and the same endomorphism ring. -/
+theorem nonempty_ringEquiv_of_ringEquiv_matrix [Nonempty ι] [Nonempty κ]
+    (f : R ≃+* Matrix ι ι D) (g : R ≃+* Matrix κ κ E) : Nonempty (D ≃+* E) := by
+  classical
+  obtain ⟨e⟩ := nonempty_algEquiv_of_algEquiv_matrix f.toIntAlgEquiv g.toIntAlgEquiv
+  exact ⟨e.toRingEquiv⟩
+
+/-- **Matrix rings over division rings are classified by their size and their division ring.**  Two
+of them are isomorphic exactly when they have equally many rows and isomorphic division rings.
+
+The forward direction is the uniqueness above, applied to the two presentations of `Matᵢ(D)` given
+by the identity and by the isomorphism; the converse reindexes along an equivalence of the two
+index types (`Matrix.reindexRingEquiv`) and then transports the entries
+(`RingEquiv.mapMatrix`). -/
+theorem nonempty_ringEquiv_matrix_iff [Nonempty ι] [Nonempty κ] :
+    Nonempty (Matrix ι ι D ≃+* Matrix κ κ E) ↔
+      Fintype.card ι = Fintype.card κ ∧ Nonempty (D ≃+* E) := by
+  classical
+  constructor
+  · rintro ⟨f⟩
+    obtain ⟨hcard, ⟨d⟩⟩ := (nonempty_algEquiv_matrix_iff (K := ℤ)).mp ⟨f.toIntAlgEquiv⟩
+    exact ⟨hcard, ⟨d.toRingEquiv⟩⟩
+  · rintro ⟨hcard, ⟨d⟩⟩
+    obtain ⟨f⟩ := (nonempty_algEquiv_matrix_iff (K := ℤ)).mpr
+      ⟨hcard, ⟨d.toIntAlgEquiv⟩⟩
+    exact ⟨f.toRingEquiv⟩
+
+/-- **Uniqueness of the Wedderburn data of a simple Artinian ring.**  Two presentations of a ring as
+a matrix ring over a division ring have the same degree and isomorphic division rings.
+
+This is the `Fin n` shape produced by `IsSimpleRing.exists_ringEquiv_matrix_divisionRing`; the
+positivity hypotheses `NeZero n` are the ones that theorem supplies, and they are essential, since
+`Mat₀(D)` is the trivial ring for every `D`. -/
+theorem wedderburn_data_unique {n m : ℕ} [NeZero n] [NeZero m]
+    (f : R ≃+* Matrix (Fin n) (Fin n) D) (g : R ≃+* Matrix (Fin m) (Fin m) E) :
+    n = m ∧ Nonempty (D ≃+* E) := by
+  classical
+  obtain ⟨hnm, ⟨e⟩⟩ := wedderburn_data_unique_of_algEquiv f.toIntAlgEquiv g.toIntAlgEquiv
+  exact ⟨hnm, ⟨e.toRingEquiv⟩⟩
+
+end Uniqueness
 
 end TauCeti

@@ -20,9 +20,8 @@ public import Mathlib.LinearAlgebra.Dimension.Constructions
 -- Non-public: `TauCeti.IsSimpleRing.exists_algEquiv_matrix_centralDivisionRing`, the Wedderburn
 -- presentation the argument runs on, is used only in the proofs; no statement here mentions it.
 import TauCeti.Algebra.CentralSimple.Wedderburn
--- Non-public: `TauCeti.card_eq_of_ringEquiv_matrix` and
--- `TauCeti.length_eq_card_of_ringEquiv_matrix`, the invariance of the size of a matrix
--- presentation, are the engine of the proofs and are mentioned by no exported statement.
+-- Non-public: `TauCeti.wedderburn_data_unique_of_algEquiv`, the algebra-linear uniqueness of a
+-- matrix presentation, is the engine of the proofs and is mentioned by no exported statement.
 import TauCeti.RingTheory.Semisimple.MatrixDivisionRing
 
 /-!
@@ -34,20 +33,21 @@ converse open: nothing there rules out an algebra that becomes a matrix algebra 
 to matrices over it. This file closes that gap, and so identifies the identity class of
 `BrauerGroup K` exactly.
 
-The missing ingredient is the **uniqueness of the size of a matrix presentation**, proved in
+The missing ingredient is the **uniqueness of matrix presentations**, proved in
 `TauCeti/RingTheory/Semisimple/MatrixDivisionRing.lean`. Given
 `Mₚ(A) ≃ₐ[K] M_q(K)`, write `A ≃ₐ[K] M_r(D)` for a central division algebra `D`
 (`TauCeti.IsSimpleRing.exists_algEquiv_matrix_centralDivisionRing`). Then `Mₚ(A)` is presented as a
 matrix ring over a division ring in two ways, of sizes `p * r` over `D` and `q` over `K`, so
-`TauCeti.card_eq_of_ringEquiv_matrix` forces `p * r = q`. Comparing dimensions,
-`p² · dim_K A = q² = p² r²`, so `dim_K A = r²`, and the Wedderburn dimension count
-`dim_K A = r² · dim_K D` collapses `D` to `K`. Hence `A ≃ₐ[K] M_r(K)` already.
+`TauCeti.wedderburn_data_unique_of_algEquiv` identifies `D` with `K` as a `K`-algebra. Hence
+`A ≃ₐ[K] M_r(K)` already.
 
 A consequence follows for division algebras: a **central division algebra** has the identity Brauer
-class only if it *is* the base field, since a division ring is a matrix ring only in size one (its
-regular module has length one). This is the base case of the statement that each Brauer class has a
-unique division-algebra representative, and it is the standard source of *nonidentity* classes,
-hence of the hypothesis that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sharpen
+class only if it *is* the base field, because algebra-level uniqueness identifies the coefficient
+division algebras in a stabilized matrix equivalence. This is the base case of the statement that
+each Brauer class has a unique division-algebra representative, and it is the standard source of
+*nonidentity* classes,
+hence of the equivalence `TauCeti.BrauerGroup.mk_eq_mk_iff_nonempty_algEquiv` and of the hypothesis
+that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sharpen
 `TauCeti.BrauerGroup.orderOf_mk_dvd_two`; the real quaternions are the worked example, in
 `TauCeti/Algebra/BrauerGroup/Quaternion.lean`.
 
@@ -64,11 +64,10 @@ hence of the hypothesis that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sh
 
 ## Implementation notes
 
-Only the size half of the Wedderburn uniqueness is used, in the form
-`TauCeti.card_eq_of_ringEquiv_matrix`: the division ring is pinned here by a dimension count
-instead, which keeps the argument inside `Module.finrank` and avoids having to promote the ring
-isomorphism `D ≃+* K` that `TauCeti.wedderburn_data_unique` also supplies to an isomorphism of
-`K`-algebras.
+The algebra-level Wedderburn uniqueness theorem
+`TauCeti.wedderburn_data_unique_of_algEquiv` is used directly: it keeps the base field fixed and
+removes the earlier need to recover the coefficient division algebra from a separate dimension
+count.  The remaining `Module.finrank` criterion is obtained from the resulting linear equivalence.
 
 The two `IsBrauerTrivial` equivalences are the `simp` normal form of `TauCeti.IsBrauerTrivial`, the
 division-algebra one at default priority and the general one at `low`, because a division algebra is
@@ -112,34 +111,19 @@ This is the converse of `TauCeti.isBrauerTrivial_of_isSplittingField`, and it is
 needs the uniqueness of the Wedderburn data. -/
 theorem Algebra.isSplittingField_self_of_isBrauerTrivial (h : IsBrauerTrivial (CSA.of K A)) :
     Algebra.IsSplittingField K A K := by
-  obtain ⟨p, q, hp, -, ⟨e⟩⟩ := h
+  obtain ⟨p, q, hp, hq, ⟨e⟩⟩ := h
   have e' : Matrix (Fin p) (Fin p) A ≃ₐ[K] Matrix (Fin q) (Fin q) K := e
-  obtain ⟨r, hr, D, _, _, _, _, hrank, ⟨f⟩⟩ :=
+  obtain ⟨r, hr, D, _, _, _, _, -, ⟨f⟩⟩ :=
     IsSimpleRing.exists_algEquiv_matrix_centralDivisionRing K A
   -- The second presentation of `Mₚ(A)`, of size `p * r` and over `D`.
   have g : Matrix (Fin p) (Fin p) A ≃ₐ[K] Matrix (Fin (p * r)) (Fin (p * r)) D :=
     (f.mapMatrix (m := Fin p)).trans <| (Matrix.compAlgEquiv (Fin p) (Fin r) D K).trans <|
       Matrix.reindexAlgEquiv K D finProdFinEquiv
-  have hsize : p * r = q := by
-    simpa using card_eq_of_ringEquiv_matrix g.toRingEquiv e'.toRingEquiv
-  -- `dim_K A = r ^ 2`, by comparing the dimensions of the two sides of `e'`.
-  have hA : Module.finrank K A = r ^ 2 := by
-    have h1 : Module.finrank K (Matrix (Fin p) (Fin p) A) = p * p * Module.finrank K A := by
-      rw [Module.finrank_matrix, Fintype.card_fin]
-    have h2 : Module.finrank K (Matrix (Fin q) (Fin q) K) = q * q := by
-      rw [Module.finrank_matrix, Fintype.card_fin, Module.finrank_self, mul_one]
-    have h3 := e'.toLinearEquiv.finrank_eq
-    rw [h1, h2, ← hsize] at h3
-    refine Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero (Nat.mul_ne_zero hp hp)) ?_
-    rw [h3]; ring
-  -- So the Wedderburn division algebra is one-dimensional, hence is `K`.
-  have hD : Module.finrank K D = 1 := by
-    refine Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero (pow_ne_zero 2 (NeZero.ne r))) ?_
-    rw [mul_one, ← hrank]
-    exact hA
-  exact (Algebra.isSplittingField_self_iff K A).2 ⟨r, ⟨f.trans (AlgEquiv.mapMatrix
-    (AlgEquiv.ofBijective (_root_.Algebra.ofId K D)
-      (_root_.Algebra.finrank_eq_one_iff_bijective_algebraMap.1 hD)).symm)⟩⟩
+  let _ : NeZero p := ⟨hp⟩
+  let _ : NeZero q := ⟨hq⟩
+  let _ : NeZero (p * r) := inferInstance
+  obtain ⟨-, ⟨d⟩⟩ := wedderburn_data_unique_of_algEquiv g e'
+  exact (Algebra.isSplittingField_self_iff K A).2 ⟨r, ⟨f.trans d.mapMatrix⟩⟩
 
 /-- **Brauer triviality is exactly splitting by the base field.**
 
@@ -179,14 +163,12 @@ theorem isBrauerTrivial_iff_finrank_eq_one :
     IsBrauerTrivial (CSA.of K D) ↔ Module.finrank K D = 1 := by
   constructor
   · intro h
-    obtain ⟨n, ⟨e⟩⟩ := (Algebra.isSplittingField_self_iff K D).1
-      (Algebra.isSplittingField_self_of_isBrauerTrivial K D h)
-    have hlen : Module.length D D = (Fintype.card (Fin n) : ℕ∞) :=
-      length_eq_card_of_ringEquiv_matrix e.toRingEquiv
-    rw [Module.length_eq_one, Fintype.card_fin] at hlen
-    have hn : n = 1 := by exact_mod_cast hlen.symm
-    subst hn
-    rw [e.toLinearEquiv.finrank_eq, Module.finrank_matrix, Fintype.card_fin, Module.finrank_self]
+    obtain ⟨p, q, hp, hq, ⟨e⟩⟩ := h
+    let _ : NeZero p := ⟨hp⟩
+    let _ : NeZero q := ⟨hq⟩
+    obtain ⟨d⟩ := (wedderburn_data_unique_of_algEquiv (K := K) (AlgEquiv.refl :
+      Matrix (Fin p) (Fin p) D ≃ₐ[K] Matrix (Fin p) (Fin p) D) e).2
+    simpa using d.toLinearEquiv.finrank_eq
   · intro h
     exact IsBrauerEquivalent.of_algEquiv K (A := CSA.of K D) (B := CSA.base K)
       (AlgEquiv.ofBijective (_root_.Algebra.ofId K D)
