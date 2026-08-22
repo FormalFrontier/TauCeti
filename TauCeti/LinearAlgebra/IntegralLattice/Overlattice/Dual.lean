@@ -14,8 +14,9 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality
 Let `L` be an integral lattice and let `L ≤ M ≤ Lᵛ` be an intermediate carrier. Its dual
 submodule `Mᵛ = L.form.dualSubmodule M` is again intermediate: it is contained in `Lᵛ` because
 `L ≤ M`, and it contains `L` because `M ≤ Lᵛ` and the form is symmetric. Passing to the dual is
-therefore an order-reversing involution of the interval of intermediate carriers, and this file
-identifies it under the correspondence with subgroups of the discriminant group `A_L = Lᵛ / L`:
+therefore order-reversing on the interval of intermediate carriers, and is an involution when the
+form is nondegenerate. This file identifies it under the correspondence with subgroups of the
+discriminant group `A_L = Lᵛ / L`:
 
 ```text
 Mᵛ / L = (M / L)⊥,   equivalently   (L_H)ᵛ = L_{H⊥}.
@@ -40,16 +41,13 @@ computed componentwise on an orthogonal direct sum.
 * `TauCeti.IntegralLattice.IntermediateCarrier.dual`: the dual of an intermediate carrier.
 * `TauCeti.IntegralLattice.IntermediateCarrier.discriminantSubgroup_dual`: the subgroup attached
   to `Mᵛ` is the orthogonal complement of the subgroup attached to `M`.
-* `TauCeti.IntegralLattice.intermediateCarrierOfDiscriminantSubgroup_orthogonalComplement`: the
+* `TauCeti.IntegralLattice.dual_intermediateCarrierOfDiscriminantSubgroup`: the
   same statement read as `(L_H)ᵛ = L_{H⊥}`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.dual_dual`: double duality.
-* `TauCeti.IntegralLattice.IntermediateCarrier.dualSubmodule_eq_iff_isLagrangian`: an
+* `TauCeti.IntegralLattice.IntermediateCarrier.dual_eq_self_iff_isLagrangian`: an
   intermediate carrier is unimodular exactly when its subgroup is Lagrangian.
 * `TauCeti.IntegralLattice.dual_intermediateCarrierOfDiscriminantSubgroup_eq_self_iff`: the
   overlattice `L_H` is unimodular exactly when `H = H⊥`.
-* `TauCeti.IntegralLattice.isEven_and_dual_eq_self_intermediateCarrierOfDiscriminantSubgroup`:
-  gluing an even lattice along a Lagrangian quadratic-isotropic subgroup produces an even
-  unimodular overlattice.
 
 ## References
 
@@ -121,8 +119,8 @@ theorem le_dual_comm {M N : L.IntermediateCarrier} : M ≤ dual N ↔ N ≤ dual
   rw [← Subtype.coe_le_coe, ← Subtype.coe_le_coe, coe_dual, coe_dual, ← L.form_flip,
     LinearMap.BilinForm.le_flip_dualSubmodule, L.form_flip]
 
-/-- **Integrality is self-duality.** An intermediate carrier is integral exactly when it is
-contained in its own dual carrier. -/
+/-- **Integrality is containment in the dual.** An intermediate carrier is integral exactly when
+it is contained in its own dual carrier. -/
 theorem isIntegral_iff_le_dual (M : L.IntermediateCarrier) : IsIntegral M ↔ M ≤ dual M := by
   rw [isIntegral_def, ← Subtype.coe_le_coe, coe_dual]
   exact ⟨fun h _ hx y hy ↦ h _ hx y hy, fun h x hx y hy ↦ h hx y hy⟩
@@ -155,6 +153,7 @@ variable [L.IsNondegenerate]
 the correspondence between intermediate carriers and subgroups of the discriminant group, taking
 the dual submodule corresponds to taking the orthogonal complement in the discriminant bilinear
 module. -/
+@[simp]
 theorem discriminantSubgroup_dual (M : L.IntermediateCarrier) :
     L.discriminantSubgroup (dual M) =
       L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M) := by
@@ -167,13 +166,10 @@ theorem discriminantSubgroup_dual (M : L.IntermediateCarrier) :
 /-- **Double duality for intermediate carriers.** -/
 @[simp]
 theorem dual_dual (M : L.IntermediateCarrier) : dual (dual M) = M := by
-  apply L.intermediateCarrierOrderIsoDiscriminantSubgroup.injective
-  rw [L.intermediateCarrierOrderIsoDiscriminantSubgroup_apply,
-    L.intermediateCarrierOrderIsoDiscriminantSubgroup_apply]
-  refine Eq.trans ((discriminantSubgroup_dual (dual M)).trans
-    (congrArg _ (discriminantSubgroup_dual M))) ?_
-  exact FiniteBilinearModule.IsNondegenerate.orthogonalComplement_orthogonalComplement
-    L.discriminantBilinearModule L.isNondegenerate_discriminantBilinearModule _
+  refine Subtype.ext ?_
+  change L.form.dualSubmodule (L.form.dualSubmodule M.1) = M.1
+  simpa only [L.form_flip] using
+    LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip L.form L.form_nondegenerate M.1
 
 /-- Passing to the dual carrier is injective. -/
 theorem dual_injective : Function.Injective (dual (L := L)) := by
@@ -216,14 +212,6 @@ theorem dual_eq_self_iff_isLagrangian (M : L.IntermediateCarrier) :
     exact (discriminantSubgroup_dual M).trans
       ((L.discriminantBilinearModule.isLagrangian_def _).mp h).symm
 
-/-- **An intermediate carrier is unimodular exactly when its subgroup is Lagrangian**, stated as
-an equality of submodules of the ambient rational space. -/
-theorem dualSubmodule_eq_iff_isLagrangian (M : L.IntermediateCarrier) :
-    L.form.dualSubmodule M.1 = M.1 ↔
-      L.discriminantBilinearModule.IsLagrangian (L.discriminantSubgroup M) := by
-  refine Iff.trans ?_ (dual_eq_self_iff_isLagrangian M)
-  exact ⟨fun h ↦ Subtype.ext h, fun h ↦ congrArg Subtype.val h⟩
-
 end IntermediateCarrier
 
 open IntermediateCarrier
@@ -236,22 +224,23 @@ variable (L) [L.IsNondegenerate]
 
 /-- **The dual of a glued overlattice is the overlattice glued along the orthogonal
 complement**: `(L_H)ᵛ = L_{H⊥}`. -/
-theorem intermediateCarrierOfDiscriminantSubgroup_orthogonalComplement
+@[simp]
+theorem dual_intermediateCarrierOfDiscriminantSubgroup
     (H : AddSubgroup L.DiscriminantGroup) :
-    L.intermediateCarrierOfDiscriminantSubgroup
-        (L.discriminantBilinearModule.orthogonalComplement H) =
-      dual (L.intermediateCarrierOfDiscriminantSubgroup H) := by
+    dual (L.intermediateCarrierOfDiscriminantSubgroup H) =
+      L.intermediateCarrierOfDiscriminantSubgroup
+        (L.discriminantBilinearModule.orthogonalComplement H) := by
   apply L.intermediateCarrierOrderIsoDiscriminantSubgroup.injective
   rw [L.intermediateCarrierOrderIsoDiscriminantSubgroup_apply,
     L.intermediateCarrierOrderIsoDiscriminantSubgroup_apply]
-  have h1 : L.discriminantSubgroup (L.intermediateCarrierOfDiscriminantSubgroup
-      (L.discriminantBilinearModule.orthogonalComplement H)) =
-      L.discriminantBilinearModule.orthogonalComplement H :=
-    L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup _
-  have h2 : L.discriminantSubgroup (dual (L.intermediateCarrierOfDiscriminantSubgroup H)) =
+  have h1 : L.discriminantSubgroup (dual (L.intermediateCarrierOfDiscriminantSubgroup H)) =
       L.discriminantBilinearModule.orthogonalComplement H :=
     (discriminantSubgroup_dual _).trans
       (congrArg _ (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H))
+  have h2 : L.discriminantSubgroup (L.intermediateCarrierOfDiscriminantSubgroup
+      (L.discriminantBilinearModule.orthogonalComplement H)) =
+      L.discriminantBilinearModule.orthogonalComplement H :=
+    L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup _
   exact h1.trans h2.symm
 
 /-- **The overlattice glued along `H` is unimodular exactly when `H` is Lagrangian.** For an even
@@ -265,40 +254,6 @@ theorem dual_intermediateCarrierOfDiscriminantSubgroup_eq_self_iff
       L.discriminantBilinearModule.IsLagrangian H :=
   (dual_eq_self_iff_isLagrangian _).trans
     (Iff.of_eq (congrArg _ (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)))
-
-/-- **The overlattice glued along `H` is unimodular exactly when `H` is Lagrangian**, stated as an
-equality of submodules of the ambient rational space. -/
-theorem dualSubmodule_intermediateCarrierOfDiscriminantSubgroup_eq_iff
-    (H : AddSubgroup L.DiscriminantGroup) :
-    L.form.dualSubmodule (L.intermediateCarrierOfDiscriminantSubgroup H).1 =
-        (L.intermediateCarrierOfDiscriminantSubgroup H).1 ↔
-      L.discriminantBilinearModule.IsLagrangian H := by
-  refine Iff.trans ?_ (L.dual_intermediateCarrierOfDiscriminantSubgroup_eq_self_iff H)
-  exact ⟨fun h ↦ Subtype.ext h, fun h ↦ congrArg Subtype.val h⟩
-
-/-- **Gluing an even lattice along a Lagrangian quadratic-isotropic subgroup produces an even
-unimodular overlattice.** This is the conclusion of Nikulin's gluing recipe: quadratic isotropy
-of `H` makes `L_H` even, and `H = H⊥` makes it equal to its own dual submodule. -/
-theorem isEven_and_dual_eq_self_intermediateCarrierOfDiscriminantSubgroup (hL : L.IsEven)
-    (H : AddSubgroup L.DiscriminantGroup)
-    (hisotropic : (L.discriminantQuadraticModule hL).IsIsotropic H)
-    (hlagrangian : L.discriminantBilinearModule.IsLagrangian H) :
-    IntermediateCarrier.IsEven (L.intermediateCarrierOfDiscriminantSubgroup H) ∧
-      dual (L.intermediateCarrierOfDiscriminantSubgroup H) =
-        L.intermediateCarrierOfDiscriminantSubgroup H :=
-  ⟨(L.isEven_intermediateCarrierOfDiscriminantSubgroup_iff hL H).mpr hisotropic,
-    (L.dual_intermediateCarrierOfDiscriminantSubgroup_eq_self_iff H).mpr hlagrangian⟩
-
-/-- The order of a subgroup and the order of the subgroup attached to the dual of the glued
-overlattice multiply to the order of the discriminant group. -/
-theorem card_mul_card_discriminantSubgroup_dual_intermediateCarrier
-    (H : AddSubgroup L.DiscriminantGroup) :
-    Nat.card H *
-        Nat.card (L.discriminantSubgroup (dual (L.intermediateCarrierOfDiscriminantSubgroup H))) =
-      Nat.card L.DiscriminantGroup := by
-  have h := card_discriminantSubgroup_mul_card_discriminantSubgroup_dual
-    (L.intermediateCarrierOfDiscriminantSubgroup H)
-  rwa [L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup] at h
 
 end Subgroups
 
