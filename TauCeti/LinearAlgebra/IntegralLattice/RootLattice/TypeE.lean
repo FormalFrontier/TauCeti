@@ -161,7 +161,7 @@ private theorem cyclicQuadraticMap_one (n : ℕ) (a : AddCircle (1 : ℚ))
   rw [he, QuadraticMap.lift_mk]
   simp [intQuadratic, intBilin]
 
-private noncomputable def quadraticMapIsometryOfGenerator (n : ℕ) [NeZero n]
+private noncomputable def quadraticMapIsometryOfGenerator (n : ℕ)
     {A : Type*} [AddCommGroup A]
     (q : QuadraticMap ℤ (ZMod n) (AddCircle (1 : ℚ)))
     (r : QuadraticMap ℤ A (AddCircle (1 : ℚ))) (e : ZMod n ≃+ A)
