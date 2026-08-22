@@ -69,7 +69,6 @@ noncomputable def hodgeNumber (hs : HodgeStructureOn W ω n) (p : ℤ) : ℕ :=
   Module.finrank ℂ (hs.piece p)
 
 /-- The Hodge number is the dimension of the Hodge component. -/
-@[simp]
 theorem hodgeNumber_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.hodgeNumber p = Module.finrank ℂ (hs.piece p) :=
   (rfl)

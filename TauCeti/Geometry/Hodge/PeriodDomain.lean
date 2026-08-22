@@ -81,8 +81,6 @@ structure PeriodDomain.Point [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : I
   /-- The structure realizes the prescribed Hodge numbers. -/
   hodge_numbers : ∀ p : ℤ, hs.hodgeNumber p = htype.h p
 
-attribute [simp] PeriodDomain.Point.htype_weight PeriodDomain.Point.hodge_numbers
-
 namespace PeriodDomain.Point
 
 variable {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ} {Qint : LinearMap.BilinForm ℤ V} {htype : HodgeType}
