@@ -87,7 +87,7 @@ theorem exists_forall_ord_sub_eq (hP : Function.Injective P) (f : ι → F) (r :
   obtain ⟨g, hg⟩ :=
     Valuation.exists_forall_sub_eq_exp (fun i ↦ (P i).valuation)
       (fun i ↦ (P i).valuation_surjective)
-      (fun _ _ hij ↦ not_isEquiv_of_ne (hP.ne hij)) f r
+      (fun _ _ hij ↦ by simpa only [valuation_isEquiv_iff] using hP.ne hij) f r
   refine ⟨g, fun i ↦ ?_⟩
   have hne : g - f i ≠ 0 :=
     (P i).valuation.ne_zero_iff.mp (by rw [hg i]; exact WithZero.exp_ne_zero)
