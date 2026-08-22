@@ -46,14 +46,12 @@ namespace TauCeti
 
 private theorem cyclicElements_pairwise_not_isConj (n : ℕ) :
     (cyclicElements n).Pairwise fun x y => ¬ IsConj x y := by
-  rw [cyclicElements, List.pairwise_map, List.pairwise_iff_getElem]
-  intro i j hi hj hij hconj
+  rw [cyclicElements, List.pairwise_ofFn]
+  intro i j hij hconj
   rw [isConj_iff_eq] at hconj
   have hval := congrArg ZMod.val (congrArg Multiplicative.toAdd hconj)
-  rw [List.getElem_range hi, List.getElem_range hj] at hval
-  simp only [List.length_range] at hi hj
   simp only [toAdd_ofAdd] at hval
-  rw [ZMod.val_natCast_of_lt hi, ZMod.val_natCast_of_lt hj] at hval
+  rw [ZMod.val_natCast_of_lt i.isLt, ZMod.val_natCast_of_lt j.isLt] at hval
   exact (Nat.ne_of_lt hij) hval
 
 /-- Executable conjugacy-class data for the finite cyclic group

@@ -33,18 +33,14 @@ namespace TauCeti
 /-- For `n ≠ 0`, the standard computable enumeration of the finite cyclic group
 `Multiplicative (ZMod n)`. For `n = 0`, this list is empty. -/
 @[expose] def cyclicElements (n : ℕ) : List (Multiplicative (ZMod n)) :=
-  List.map (fun i : ℕ => Multiplicative.ofAdd (i : ZMod n)) (List.range n)
+  List.ofFn fun i : Fin n => Multiplicative.ofAdd (i : ZMod n)
 
 /-- Every element of `Multiplicative (ZMod n)` occurs in `TauCeti.cyclicElements n` when `n` is
 nonzero. -/
 theorem mem_cyclicElements (n : ℕ) [NeZero n] (g : Multiplicative (ZMod n)) :
     g ∈ cyclicElements n := by
-  rw [cyclicElements]
-  have hg : Multiplicative.ofAdd (g.toAdd.val : ZMod n) = g :=
-    congrArg Multiplicative.ofAdd (ZMod.natCast_zmod_val g.toAdd)
-  rw [← hg]
-  exact List.mem_map_of_mem
-    (f := fun i : ℕ => Multiplicative.ofAdd (i : ZMod n))
-    (List.mem_range.mpr (ZMod.val_lt g.toAdd))
+  rw [cyclicElements, List.mem_ofFn']
+  exact ⟨⟨g.toAdd.val, ZMod.val_lt g.toAdd⟩,
+    congrArg Multiplicative.ofAdd (ZMod.natCast_zmod_val g.toAdd)⟩
 
 end TauCeti
