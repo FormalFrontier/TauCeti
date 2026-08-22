@@ -10,6 +10,7 @@ public import TauCeti.NumberTheory.Multiquadratic.MinusFive.ClassNumber
 import TauCeti.NumberTheory.Multiquadratic.Quadratic.Ramification
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminants
 import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.OfSquarefree
+import TauCeti.NumberTheory.NumberField.IntegralSqrt
 
 /-!
 # The `2`-rank of the class group of `ℚ(√-5)`
@@ -52,8 +53,8 @@ theorem twoRank_eq_one_of_minpoly_eq_X_sq_add_five
         using isPrimeDiscriminant_oddPrimeDiscriminant (p := 5) (by decide) (by decide)
   have heven : ∀ P ∈ ({-4, 5} : Finset ℤ), ∀ Q ∈ ({-4, 5} : Finset ℤ),
       IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant Q → P = Q := by
-    intro P hP Q hQ hPe hQe
-    fin_cases hP <;> fin_cases hQ <;> revert hPe hQe <;> decide
+    intro P hP Q hQ
+    fin_cases hP <;> fin_cases hQ <;> simp only [IsEvenPrimeDiscriminant] <;> decide
   have hprod : ∏ P ∈ ({-4, 5} : Finset ℤ), P = fundamentalDiscriminant (-5 : ℤ) := by
     rw [Finset.prod_insert (by decide : (-4 : ℤ) ∉ ({5} : Finset ℤ)), Finset.prod_singleton,
       fundamentalDiscriminant_of_mod_four_ne_one (by decide : (-5 : ℤ) % 4 ≠ 1)]
@@ -62,6 +63,10 @@ theorem twoRank_eq_one_of_minpoly_eq_X_sq_add_five
     rw [ncard_ramifiedPrimes_eq_card hmin hgen hsf hs heven hprod,
       Finset.card_pair (show (-4 : ℤ) ≠ 5 by decide)]
   rw [twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by norm_num), hncard]
+
+local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
+  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
+    (fun q _ => by nlinarith [sq_nonneg q])⟩
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`, has
 class-group `2`-rank `1`. -/
