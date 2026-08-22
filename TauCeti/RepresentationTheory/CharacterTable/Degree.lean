@@ -66,7 +66,7 @@ private theorem dvd_of_isIntegral_of_natCast_mul_eq {k : Type*} [Field k] [CharZ
     rw [map_div₀, map_natCast, map_natCast, eq_comm, eq_div_iff hnk, mul_comm]
     exact h
   have hq : IsIntegral ℤ ((m : ℚ) / (n : ℚ)) :=
-    (isIntegral_algebraMap_iff (algebraMap ℚ k).injective).mp (hz' ▸ hz)
+    isIntegral_algebraMap_iff.mp (hz' ▸ hz)
   obtain ⟨y, hy⟩ := IsIntegrallyClosed.algebraMap_eq_of_integral hq
   have hyq : (y : ℚ) * (n : ℚ) = (m : ℚ) := by
     rw [← eq_intCast (algebraMap ℤ ℚ) y, hy, div_mul_cancel₀]
