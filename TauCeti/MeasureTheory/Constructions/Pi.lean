@@ -71,17 +71,19 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
     simp only [singleB, MeasurableEquiv.piUnique_symm_apply]
     unfold uniqueElim
     rfl
+  -- `MeasurableEquiv.piFinsetUnion` is by definition `Equiv.piFinsetUnion` carrying the
+  -- measurability proofs, and Mathlib states the componentwise lemmas
+  -- `Equiv.piFinsetUnion_left`/`_right` only for the bare equivalence. Bridge the two once here,
+  -- so that neither case below unfolds the measurable-equivalence wrapper again.
+  have unionEquiv_coe (w : ((i : s) → α i) × ((i : t) → α i)) :
+      unionEquiv w = Equiv.piFinsetUnion α hdis w := rfl
   have unionEquiv_a (u : α a) (v : α b) (ha : a ∈ s ∪ t) :
       unionEquiv (singleA u, singleB v) ⟨a, ha⟩ = u := by
-    rw [show unionEquiv (singleA u, singleB v) ⟨a, ha⟩ =
-      (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨a, ha⟩ from rfl]
-    rw [Equiv.piFinsetUnion_left α hdis (by simp [s]) ha]
+    rw [unionEquiv_coe, Equiv.piFinsetUnion_left α hdis (by simp [s]) ha]
     exact singleA_apply u
   have unionEquiv_b (u : α a) (v : α b) (hb : b ∈ s ∪ t) :
       unionEquiv (singleA u, singleB v) ⟨b, hb⟩ = v := by
-    rw [show unionEquiv (singleA u, singleB v) ⟨b, hb⟩ =
-      (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨b, hb⟩ from rfl]
-    rw [Equiv.piFinsetUnion_right α hdis (by simp [t]) hb]
+    rw [unionEquiv_coe, Equiv.piFinsetUnion_right α hdis (by simp [t]) hb]
     exact singleB_apply v
   have splitEquiv_symm_apply (x : ∀ i : Subtype p, α i)
       (y : ∀ i : {i // ¬p i}, α i) (i : ι) :
