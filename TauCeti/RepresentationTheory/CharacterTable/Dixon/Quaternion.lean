@@ -41,7 +41,7 @@ theorem isGoodDixonPrime_quaternionGroup_two_five : IsGoodDixonPrime (Quaternion
 
 /-- Dixon prime data for `QuaternionGroup 2`: the prime `5`, with `2` as the primitive fourth
 root of unity modulo `5`. -/
-@[expose] def quaternionGroupTwoDixonPrimeData : DixonPrimeData (QuaternionGroup 2) where
+def quaternionGroupTwoDixonPrimeData : DixonPrimeData (QuaternionGroup 2) where
   p := 5
   root := 2
   isGoodDixonPrime := isGoodDixonPrime_quaternionGroup_two_five
@@ -51,10 +51,10 @@ root of unity modulo `5`. -/
 
 /-- The prime carried by `TauCeti.quaternionGroupTwoDixonPrimeData` is `5`. -/
 @[simp]
-theorem quaternionGroupTwoDixonPrimeData_p : quaternionGroupTwoDixonPrimeData.p = 5 := rfl
+theorem quaternionGroupTwoDixonPrimeData_p : quaternionGroupTwoDixonPrimeData.p = 5 := (rfl)
 
 /-- The primitive fourth root carried by `TauCeti.quaternionGroupTwoDixonPrimeData` is `2`. -/
 @[simp]
-theorem quaternionGroupTwoDixonPrimeData_root : quaternionGroupTwoDixonPrimeData.root = 2 := rfl
+theorem quaternionGroupTwoDixonPrimeData_root : quaternionGroupTwoDixonPrimeData.root = 2 := (rfl)
 
 end TauCeti
