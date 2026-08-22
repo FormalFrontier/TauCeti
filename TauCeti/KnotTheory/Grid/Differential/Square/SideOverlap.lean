@@ -37,8 +37,8 @@ disjoint rectangles or rectangles sharing exactly one side column.
   common exactly for a diagonal two-step path.
 * `TauCeti.GridRectangleDecomposition.hasDisjointSides_or_hasOneCommonSide_or_eq`: every
   decomposition belongs to one of the three cases.
-* `TauCeti.GridRectangleDecomposition.hasDisjointSides_or_hasOneCommonSide_of_ne`: only the
-  first two cases occur for a nondiagonal coefficient.
+* `TauCeti.GridRectangleDecomposition.target_ne_source_iff`: a decomposition is nondiagonal
+  exactly when its sides are disjoint or have exactly one column in common.
 
 ## References
 
@@ -67,20 +67,10 @@ theorem mem_commonSideColumns (D : GridRectangleDecomposition x z) (c : Fin n) :
       c ∈ D.first.sideColumns ∧ c ∈ D.second.sideColumns := by
   simp [commonSideColumns]
 
-/-- The common side columns form a subset of the first rectangle's side columns. -/
-theorem commonSideColumns_subset_first (D : GridRectangleDecomposition x z) :
-    D.commonSideColumns ⊆ D.first.sideColumns :=
-  Finset.inter_subset_left
-
-/-- The common side columns form a subset of the second rectangle's side columns. -/
-theorem commonSideColumns_subset_second (D : GridRectangleDecomposition x z) :
-    D.commonSideColumns ⊆ D.second.sideColumns :=
-  Finset.inter_subset_right
-
 /-- At most two columns are sides of both rectangles in a decomposition. -/
 theorem card_commonSideColumns_le_two (D : GridRectangleDecomposition x z) :
     D.commonSideColumns.card ≤ 2 :=
-  (Finset.card_le_card D.commonSideColumns_subset_first).trans_eq D.first.card_sideColumns
+  (Finset.card_le_card Finset.inter_subset_left).trans_eq D.first.card_sideColumns
 
 /-- Two rectangles in a decomposition share exactly one side column. -/
 def HasOneCommonSide (D : GridRectangleDecomposition x z) : Prop :=
@@ -95,6 +85,7 @@ theorem hasOneCommonSide_iff_existsUnique (D : GridRectangleDecomposition x z) :
   simp only [mem_commonSideColumns]
 
 /-- The two side pairs are disjoint exactly when their common-side set is empty. -/
+@[simp]
 theorem commonSideColumns_eq_empty_iff (D : GridRectangleDecomposition x z) :
     D.commonSideColumns = ∅ ↔ D.HasDisjointSides := by
   rw [D.hasDisjointSides_iff]
@@ -103,7 +94,10 @@ theorem commonSideColumns_eq_empty_iff (D : GridRectangleDecomposition x z) :
     iff_false, not_and, not_or]
   aesop
 
-/-- The common-side set has cardinality zero exactly when the side pairs are disjoint. -/
+/-- The common-side set has cardinality zero exactly when the side pairs are disjoint.
+
+This is not a separate simp lemma: `Finset.card_eq_zero` followed by
+`commonSideColumns_eq_empty_iff` already gives the same normal form. -/
 theorem card_commonSideColumns_eq_zero_iff (D : GridRectangleDecomposition x z) :
     D.commonSideColumns.card = 0 ↔ D.HasDisjointSides := by
   rw [Finset.card_eq_zero, D.commonSideColumns_eq_empty_iff]
@@ -142,15 +136,16 @@ theorem target_eq_source_iff_sideColumns_eq (D : GridRectangleDecomposition x z)
           D.first.left_ne_right D.second.left_ne_right).mpr hpairs
 
 /-- Both side columns are common exactly when the two-step rectangle path returns to its source. -/
+@[simp]
 theorem card_commonSideColumns_eq_two_iff (D : GridRectangleDecomposition x z) :
     D.commonSideColumns.card = 2 ↔ z = x := by
   rw [D.target_eq_source_iff_sideColumns_eq]
   constructor
   · intro hcard
     have hfirst : D.commonSideColumns = D.first.sideColumns :=
-      Finset.eq_of_subset_of_card_le D.commonSideColumns_subset_first (by simp [hcard])
+      Finset.eq_of_subset_of_card_le Finset.inter_subset_left (by simp [hcard])
     have hsecond : D.commonSideColumns = D.second.sideColumns :=
-      Finset.eq_of_subset_of_card_le D.commonSideColumns_subset_second (by simp [hcard])
+      Finset.eq_of_subset_of_card_le Finset.inter_subset_right (by simp [hcard])
     exact hfirst.symm.trans hsecond
   · intro hsides
     rw [commonSideColumns, hsides, Finset.inter_self, D.second.card_sideColumns]
@@ -177,21 +172,29 @@ theorem hasDisjointSides_or_hasOneCommonSide_of_ne
   · exact Or.inr h
   · exact (hzx h).elim
 
+/-- A two-step rectangle decomposition is nondiagonal exactly when its side pairs are disjoint or
+share exactly one column. -/
+theorem target_ne_source_iff (D : GridRectangleDecomposition x z) :
+    z ≠ x ↔ D.HasDisjointSides ∨ D.HasOneCommonSide := by
+  constructor
+  · exact D.hasDisjointSides_or_hasOneCommonSide_of_ne
+  · intro h hzx
+    have htwo := D.card_commonSideColumns_eq_two_iff.mpr hzx
+    rcases h with h | h
+    · have hzero := D.card_commonSideColumns_eq_zero_iff.mpr h
+      omega
+    · rw [HasOneCommonSide] at h
+      omega
+
 /-- A decomposition with disjoint side pairs is necessarily nondiagonal. -/
 theorem target_ne_source_of_hasDisjointSides (D : GridRectangleDecomposition x z)
-    (h : D.HasDisjointSides) : z ≠ x := by
-  intro hzx
-  have hzero := D.card_commonSideColumns_eq_zero_iff.mpr h
-  have htwo := D.card_commonSideColumns_eq_two_iff.mpr hzx
-  omega
+    (h : D.HasDisjointSides) : z ≠ x :=
+  D.target_ne_source_iff.mpr (Or.inl h)
 
 /-- A decomposition with one common side is necessarily nondiagonal. -/
 theorem target_ne_source_of_hasOneCommonSide (D : GridRectangleDecomposition x z)
-    (h : D.HasOneCommonSide) : z ≠ x := by
-  intro hzx
-  have htwo := D.card_commonSideColumns_eq_two_iff.mpr hzx
-  rw [HasOneCommonSide] at h
-  omega
+    (h : D.HasOneCommonSide) : z ≠ x :=
+  D.target_ne_source_iff.mpr (Or.inr h)
 
 /-- The disjoint-side and one-common-side cases are mutually exclusive. -/
 theorem not_hasDisjointSides_of_hasOneCommonSide (D : GridRectangleDecomposition x z)
