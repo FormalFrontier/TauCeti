@@ -43,6 +43,9 @@ pointwise algebra happens before integration; a later layer proves invariance un
   supremum.
 * `cutNorm_zero`, `cutNorm_neg`, `cutNorm_add_le`, and `cutNorm_smul` are the seminorm laws.
 * `cutNorm_le_integral_abs` bounds the cut norm by the `L¹` norm.
+* `abs_testIntegral_le_cutNorm` bounds every `[0,1]`-test integral by the cut norm itself, with no
+  loss of constant — the form the counting lemma consumes, where the weights read off the other
+  edges of a graph are `[0,1]`-valued.
 * `abs_testIntegral_le_cutNormSigned` and `cutNormSigned_le` are the corresponding introduction and
   elimination rules for the signed cut norm.
 * `cutNorm_le_cutNormSigned` and `cutNormSigned_le_four_mul_cutNorm` are the two sides of the
@@ -453,6 +456,105 @@ theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
   rw [cutNorm_eq_cutNormSet, cutNormSet_def, cutNorm_eq_cutNormSet, cutNormSet_def]
   simp only [SymmKernel.rectIntegral_smul, abs_mul,
     Real.mul_iSup_of_nonneg (abs_nonneg c)]
+
+/-- The extremal step for `[0,1]`-valued test functions.  The pairing is affine in the left test
+function, so it lies between the pairings against the indicator of the set where the partial
+pairing is nonnegative and the indicator of the complement; one of those two indicators therefore
+does at least as well in absolute value. -/
+private theorem exists_indicator_left_of_mem_Icc (K : SymmKernel Ω μ)
+    {u v : Ω → ℝ} (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (0 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    ∃ S : Set Ω, MeasurableSet S ∧
+      |K.testIntegral μ u v| ≤ |K.testIntegral μ (S.indicator 1) v| := by
+  classical
+  have hu1' : ∀ x, u x ∈ Icc (-1 : ℝ) 1 := fun x => ⟨by linarith [(hu1 x).1], (hu1 x).2⟩
+  set g := K.partialIntegral μ v with hgdef
+  have hgm : Measurable g := K.measurable_partialIntegral μ hv
+  have hgint : Integrable g μ := K.integrable_partialIntegral μ hv hv1
+  set S : Set Ω := {x | 0 ≤ g x} with hSdef
+  have hS : MeasurableSet S := measurableSet_le measurable_const hgm
+  have hind : ∀ A : Set Ω, MeasurableSet A → Measurable (A.indicator (1 : Ω → ℝ)) :=
+    fun _ hA => measurable_one.indicator hA
+  have hmem : ∀ (A : Set Ω) (x : Ω), A.indicator (1 : Ω → ℝ) x ∈ Icc (-1 : ℝ) 1 := by
+    intro A x
+    by_cases hx : x ∈ A <;> simp [hx]
+  have hprod : ∀ w : Ω → ℝ, Measurable w → (∀ x, w x ∈ Icc (-1 : ℝ) 1) →
+      Integrable (fun x => w x * g x) μ := by
+    intro w hw hw1
+    refine Integrable.mono' hgint.abs (hw.mul hgm).aestronglyMeasurable (ae_of_all _ fun x => ?_)
+    rw [Real.norm_eq_abs, abs_mul]
+    calc |w x| * |g x| ≤ 1 * |g x| := by gcongr; exact abs_le.2 (hw1 x)
+      _ = |g x| := one_mul _
+  have hrepr : ∀ w : Ω → ℝ, Measurable w → (∀ x, w x ∈ Icc (-1 : ℝ) 1) →
+      K.testIntegral μ w v = ∫ x, w x * g x ∂μ := fun w hw hw1 =>
+    K.testIntegral_eq_integral_partialIntegral μ (K.integrable_testIntegrand μ hw hv hw1 hv1)
+  have hlow : ∀ x, Sᶜ.indicator (1 : Ω → ℝ) x * g x ≤ u x * g x := by
+    intro x
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_notMem (by simpa using hx), zero_mul]
+      exact mul_nonneg (hu1 x).1 hx
+    · have hgx : g x ≤ 0 := le_of_lt (lt_of_not_ge (by simpa [hSdef] using hx))
+      rw [Set.indicator_of_mem (by simpa using hx), Pi.one_apply]
+      exact mul_le_mul_of_nonpos_right (hu1 x).2 hgx
+  have hhigh : ∀ x, u x * g x ≤ S.indicator (1 : Ω → ℝ) x * g x := by
+    intro x
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_mem hx, Pi.one_apply]
+      exact mul_le_mul_of_nonneg_right (hu1 x).2 hx
+    · have hgx : g x ≤ 0 := le_of_lt (lt_of_not_ge (by simpa [hSdef] using hx))
+      rw [Set.indicator_of_notMem hx, zero_mul]
+      nlinarith [(hu1 x).1, hgx]
+  set IA := ∫ x, S.indicator (1 : Ω → ℝ) x * g x ∂μ with hIA
+  set IB := ∫ x, Sᶜ.indicator (1 : Ω → ℝ) x * g x ∂μ with hIB
+  set IC := ∫ x, u x * g x ∂μ with hIC
+  have hBC : IB ≤ IC :=
+    integral_mono (hprod _ (hind _ hS.compl) (hmem _)) (hprod _ hu hu1') hlow
+  have hCA : IC ≤ IA :=
+    integral_mono (hprod _ hu hu1') (hprod _ (hind _ hS) (hmem _)) hhigh
+  have hA0 : 0 ≤ IA := by
+    refine integral_nonneg fun x => ?_
+    simp only [Pi.zero_apply]
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_mem hx, Pi.one_apply, one_mul]; exact hx
+    · rw [Set.indicator_of_notMem hx, zero_mul]
+  have hB0 : IB ≤ 0 := by
+    refine integral_nonpos fun x => ?_
+    simp only [Pi.zero_apply]
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_notMem (by simpa using hx), zero_mul]
+    · have hgx : g x ≤ 0 := le_of_lt (lt_of_not_ge (by simpa [hSdef] using hx))
+      rw [Set.indicator_of_mem (by simpa using hx), Pi.one_apply, one_mul]
+      exact hgx
+  rcases le_total (-IB) IA with h | h
+  · refine ⟨S, hS, ?_⟩
+    rw [hrepr u hu hu1', hrepr _ (hind _ hS) (hmem _), ← hIC, ← hIA, abs_of_nonneg hA0]
+    exact abs_le.2 ⟨by linarith, hCA⟩
+  · refine ⟨Sᶜ, hS.compl, ?_⟩
+    rw [hrepr u hu hu1', hrepr _ (hind _ hS.compl) (hmem _), ← hIC, ← hIB, abs_of_nonpos hB0]
+    exact abs_le.2 ⟨by linarith, by linarith⟩
+
+/-- **Every `[0,1]`-test integral is bounded by the cut norm.**  The pairing is affine in each test
+function, so replacing a `[0,1]`-valued test function by a suitable indicator only increases the
+absolute pairing; doing so on both sides lands on a measurable rectangle.  Unlike the
+`[-1,1]`-valued case (`cutNormSigned_le_four_mul_cutNorm`) there is no factor of `4`, which is what
+makes this the form the counting lemma consumes. -/
+theorem abs_testIntegral_le_cutNorm (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (0 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (0 : ℝ) 1) :
+    |K.testIntegral μ u v| ≤ cutNorm μ K := by
+  have hv1' : ∀ y, v y ∈ Icc (-1 : ℝ) 1 := fun y => ⟨by linarith [(hv1 y).1], (hv1 y).2⟩
+  obtain ⟨S, hS, hSle⟩ := exists_indicator_left_of_mem_Icc μ K hu hv hu1 hv1'
+  have hmemS : ∀ x, S.indicator (1 : Ω → ℝ) x ∈ Icc (-1 : ℝ) 1 := by
+    intro x
+    by_cases hx : x ∈ S <;> simp [hx]
+  rw [K.testIntegral_comm μ (S.indicator 1) v] at hSle
+  obtain ⟨T, hT, hTle⟩ :=
+    exists_indicator_left_of_mem_Icc μ K hv (measurable_one.indicator hS) hv1 hmemS
+  calc |K.testIntegral μ u v|
+      ≤ |K.testIntegral μ v (S.indicator 1)| := hSle
+    _ ≤ |K.testIntegral μ (T.indicator 1) (S.indicator 1)| := hTle
+    _ = |K.rectIntegral μ T S| := by rw [K.testIntegral_indicator_one μ hT hS]
+    _ ≤ cutNorm μ K := abs_rectIntegral_le_cutNorm μ K hT hS
 
 /-- The signed cut norm is the iterated supremum over measurable `[-1,1]`-valued test functions. -/
 theorem cutNormSigned_def (K : SymmKernel Ω μ) :
