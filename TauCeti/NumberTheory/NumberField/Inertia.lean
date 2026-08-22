@@ -14,7 +14,7 @@ public import Mathlib.RingTheory.Spectrum.Maximal.Defs
 Let `K` be a number field that is Galois over `ℚ`, with Galois group `G` acting on the ring of
 integers `𝓞 K`. Each maximal ideal `P` of `𝓞 K` carries an inertia subgroup `P.inertia G`, the
 elements of `G` acting trivially on `𝓞 K ⧸ P`, and its cardinality is the ramification index of
-`P` over `ℤ` (`Ideal.card_inertia_eq_ramificationIdxIn`). This file proves that these subgroups
+`P` over `ℤ` (`Ideal.card_inertia_eq_ramificationIdx`). This file proves that these subgroups
 generate all of `G`:
 
 `⨆ P : MaximalSpectrum (𝓞 K), P.asIdeal.inertia G = ⊤`.
@@ -32,23 +32,23 @@ This is the missing input flagged as a TODO of `Mathlib/RingTheory/Polynomial/Mo
 subgroups as a hypothesis.
 
 The second half of the file draws the consequence that genus theory needs. If `M` is abelian over
-`ℚ` and unramified at all finite places over a quadratic subfield `F`, then the inertia subgroup
-of a prime of `𝓞 M` meets `Gal(M/F)` trivially, so it injects into the two-element quotient
-`Gal(M/ℚ) ⧸ Gal(M/F)` and every element of it squares to `1`. Generation by inertia then makes
-the whole of `Gal(M/ℚ)` an elementary abelian `2`-group: an abelian extension of `ℚ` unramified
-over a quadratic subfield is multiquadratic.
+`ℚ` and unramified at all finite places over the fixed field `F` of a subgroup `H`, then the
+inertia subgroup of a prime of `𝓞 M` meets `Gal(M/F)` trivially, so every element of it is killed
+by the index of `H`. Generation by inertia promotes this to all of `Gal(M/ℚ)`, whose exponent
+therefore divides `H.index = [F : ℚ]`. Taking `F` quadratic is the classical first step towards
+the genus field being multiquadratic; the passage from exponent `2` to a compositum of quadratic
+fields is Kummer theory over `ℚ` and is not formalised here.
 
 ## Main results
 
 * `NumberField.eq_top_of_forall_inertia_le`: a subgroup of `G` containing every inertia subgroup
   is `⊤`.
-* `NumberField.iSup_inertia_eq_top`, `NumberField.closure_iUnion_inertia_eq_top`: the packaged
-  generation statements.
-* `NumberField.disjoint_inertia_of_isUnramifiedIn`: if `K` is unramified over the fixed field of
-  `H` at the prime below `P`, then the inertia subgroup at `P` meets `H` trivially.
-* `NumberField.sq_eq_one_of_index_eq_two`, `NumberField.sq_eq_one_of_finrank_eq_two`: an abelian
-  extension of `ℚ` unramified at all finite places over a quadratic subfield has Galois group of
-  exponent dividing `2`.
+* `NumberField.iSup_inertia_eq_top`: the packaged generation statement.
+* `NumberField.disjoint_inertia_of_ramificationIdx_eq_one`: if `P` is unramified over the fixed
+  field of `H`, then the inertia subgroup at `P` meets `H` trivially.
+* `NumberField.pow_index_eq_one_of_isUnramifiedIn`: if `G` is abelian and `K` is unramified over
+  the fixed field `F` of `H` at every prime of `𝓞 F`, then the exponent of `G` divides `H.index`,
+  which is `Module.finrank ℚ F` by `NumberField.index_eq_finrank`.
 
 ## References
 
@@ -62,7 +62,46 @@ public section
 
 open scoped NumberField
 
+namespace Ideal
+
+/-- The cardinality of the inertia subgroup of `P` is the ramification index of `P` over `R`.
+This is `Ideal.card_inertia_eq_ramificationIdxIn` stated with the ramification index of `P`
+itself rather than with `Ideal.ramificationIdxIn` of the ideal below it. -/
+theorem card_inertia_eq_ramificationIdx (R : Type*) {S : Type*} [CommRing R] [CommRing S]
+    [Algebra R S] [IsDomain R] [IsDomain S] [Module.Finite R S] [Module.Flat R S] (G : Type*)
+    [Group G] [Finite G] [MulSemiringAction G S] [IsGaloisGroup G R S] (P : Ideal S) [P.IsPrime]
+    [PerfectField (P.under R).ResidueField] :
+    Nat.card (P.inertia G) = P.ramificationIdx R :=
+  (card_inertia_eq_ramificationIdxIn (G := G) (P.under R) P).trans
+    (ramificationIdxIn_eq_ramificationIdx (P.under R) P G)
+
+end Ideal
+
 namespace NumberField
+
+/-- **A number field unramified at every finite prime is `ℚ`.** If every nonzero prime of `𝓞 F`
+is unramified over `ℤ`, then `Module.finrank ℚ F = 1`. This is Minkowski's bound on the
+discriminant, in the form `NumberField.exists_not_isUnramifiedIn`. -/
+theorem finrank_eq_one_of_forall_ramificationIdx_eq_one {F : Type*} [Field F] [NumberField F]
+    (h : ∀ q : Ideal (𝓞 F), q.IsPrime → q ≠ ⊥ → q.ramificationIdx ℤ = 1) :
+    Module.finrank ℚ F = 1 := by
+  by_contra hne
+  obtain ⟨p, hp, hnu⟩ := NumberField.exists_not_isUnramifiedIn (K := F) (𝒪 := 𝓞 F) hne
+  refine hnu (Algebra.isUnramifiedIn_iff_forall_ramificationIdx_eq_one.mpr fun q _ hqp => ?_)
+  have : q.LiesOver (Ideal.span {(p : ℤ)}) := hqp
+  refine h q inferInstance (Ideal.ne_bot_of_liesOver_of_ne_bot (p := Ideal.span {(p : ℤ)}) ?_ q)
+  simpa using hp.ne_zero
+
+/-- **The index of a subgroup is the degree of its fixed field.** If `K` is Galois over `ℚ` with
+Galois group `G` and `H` is a subgroup with fixed field `F`, then `H.index = [F : ℚ]`. -/
+theorem index_eq_finrank {G : Type*} [Group G] (H : Subgroup G) (F K : Type*) [Field F] [Field K]
+    [NumberField K] [MulSemiringAction G K] [IsGaloisGroup G ℚ K] [NumberField F] [Algebra ℚ F]
+    [Algebra F K] [IsScalarTower ℚ F K] [IsGaloisGroup H F K] :
+    H.index = Module.finrank ℚ F := by
+  have h : H.index * Nat.card H = Nat.card G := Subgroup.index_mul_card H
+  rw [IsGaloisGroup.card_eq_finrank H F K, IsGaloisGroup.card_eq_finrank G ℚ K,
+    ← Module.finrank_mul_finrank ℚ F K] at h
+  exact Nat.eq_of_mul_eq_mul_right Module.finrank_pos h
 
 section Generation
 
@@ -81,7 +120,7 @@ field unramified over `ℚ` is `ℚ`, so `F = ℚ`. -/
 theorem eq_top_of_forall_inertia_le {H : Subgroup G}
     (h : ∀ P : Ideal (𝓞 K), P.IsMaximal → P.inertia G ≤ H) : H = ⊤ := by
   classical
-  set F : IntermediateField ℚ K := FixedPoints.intermediateField H with hF
+  set F : IntermediateField ℚ K := FixedPoints.intermediateField H
   have : IsGaloisGroup H (𝓞 F) (𝓞 K) :=
     IsGaloisGroup.of_isFractionRing H (𝓞 F) (𝓞 K) F K
   -- Every nonzero prime of `𝓞 F` is unramified over `ℤ`.
@@ -95,33 +134,20 @@ theorem eq_top_of_forall_inertia_le {H : Subgroup G}
     have htower : P.ramificationIdx ℤ = q.ramificationIdx ℤ * P.ramificationIdx (𝓞 F) :=
       Ideal.ramificationIdx_tower (R := ℤ) q P
     -- The two inertia subgroups of `P`, over `ℚ` and over `F`, have the same cardinality.
-    have hG : Nat.card (P.inertia G) = P.ramificationIdx ℤ := by
-      rw [Ideal.card_inertia_eq_ramificationIdxIn (G := G) (P.under ℤ) P,
-        Ideal.ramificationIdxIn_eq_ramificationIdx (P.under ℤ) P G]
-    have hH : Nat.card (P.inertia H) = P.ramificationIdx (𝓞 F) := by
-      rw [Ideal.card_inertia_eq_ramificationIdxIn (G := H) (P.under (𝓞 F)) P,
-        Ideal.ramificationIdxIn_eq_ramificationIdx (P.under (𝓞 F)) P H]
     have hcard : Nat.card (P.inertia H) = Nat.card (P.inertia G) := by
       have hsub : P.inertia H = (P.inertia G).subgroupOf H :=
         (AddSubgroup.subgroupOf_inertia (I := P.toAddSubgroup) H).symm
       rw [hsub]
       exact Nat.card_congr (Subgroup.subgroupOfEquivOfLe (h P hPmax)).toEquiv
-    have hEq : P.ramificationIdx (𝓞 F) = P.ramificationIdx ℤ := by rw [← hH, hcard, hG]
+    have hEq : P.ramificationIdx (𝓞 F) = P.ramificationIdx ℤ := by
+      rw [← Ideal.card_inertia_eq_ramificationIdx (𝓞 F) H P, hcard,
+        Ideal.card_inertia_eq_ramificationIdx ℤ G P]
     rw [hEq] at htower
     exact Nat.eq_of_mul_eq_mul_right (Ideal.ramificationIdx_pos (R := ℤ) (q := P))
       (by rw [one_mul, ← htower])
-  -- Hence `F` is unramified over `ℚ`, so `F = ℚ` by Minkowski's theorem.
-  have hrank : Module.finrank ℚ F = 1 := by
-    by_contra hne
-    obtain ⟨p, hp, hnu⟩ := NumberField.exists_not_isUnramifiedIn (K := F) (𝒪 := 𝓞 F) hne
-    refine hnu (Algebra.isUnramifiedIn_iff_forall_ramificationIdx_eq_one.mpr fun q _ hqp => ?_)
-    have : q.LiesOver (Ideal.span {(p : ℤ)}) := hqp
-    refine hq q inferInstance
-      (Ideal.ne_bot_of_liesOver_of_ne_bot (p := Ideal.span {(p : ℤ)}) ?_ q)
-    simpa using hp.ne_zero
-  refine Subgroup.eq_top_of_card_eq H ?_
-  rw [IsGaloisGroup.card_eq_finrank H F K, IsGaloisGroup.card_eq_finrank G ℚ K,
-    ← Module.finrank_mul_finrank ℚ F K, hrank, one_mul]
+  -- Hence `F` is unramified over `ℚ`, so `F = ℚ` by Minkowski's theorem, and `H` has index `1`.
+  exact Subgroup.index_eq_one.mp
+    ((index_eq_finrank H F K).trans (finrank_eq_one_of_forall_ramificationIdx_eq_one hq))
 
 /-- **The inertia subgroups generate the Galois group.** For a number field `K` Galois over `ℚ`
 with Galois group `G`, the supremum of the inertia subgroups of the maximal ideals of `𝓞 K`
@@ -129,13 +155,6 @@ is `⊤`. -/
 theorem iSup_inertia_eq_top : ⨆ P : MaximalSpectrum (𝓞 K), P.asIdeal.inertia G = ⊤ :=
   eq_top_of_forall_inertia_le fun P hP =>
     le_iSup (fun Q : MaximalSpectrum (𝓞 K) => Q.asIdeal.inertia G) ⟨P, hP⟩
-
-/-- The union of the inertia subgroups of the maximal ideals of `𝓞 K` generates `G`. This is the
-`Subgroup.closure` form of `NumberField.iSup_inertia_eq_top`. -/
-theorem closure_iUnion_inertia_eq_top :
-    Subgroup.closure (⋃ P : MaximalSpectrum (𝓞 K), (P.asIdeal.inertia G : Set G)) = ⊤ := by
-  rw [Subgroup.closure_iUnion]
-  simpa using iSup_inertia_eq_top G
 
 end Generation
 
@@ -146,71 +165,58 @@ variable {K : Type*} [Field K] [NumberField K] {G : Type*} [Group G] [Finite G]
   {F : Type*} [Field F] [NumberField F] [Algebra ℚ F] [Algebra F K] [IsScalarTower ℚ F K]
 
 omit [IsGaloisGroup G ℚ K] [Algebra ℚ F] [IsScalarTower ℚ F K] in
-/-- **An unramified subextension meets every inertia subgroup trivially.** Let `H` be a subgroup
-of `G` whose fixed field is `F`. If the prime below `P` is unramified in `𝓞 K`, then the inertia
-subgroup of `P` is disjoint from `H`, since its intersection with `H` is the inertia subgroup of
-`P` over `𝓞 F`, of order `e(P / 𝓞 F) = 1`. -/
-theorem disjoint_inertia_of_isUnramifiedIn (H : Subgroup G) [IsGaloisGroup H F K]
-    (P : Ideal (𝓞 K)) (hP : P.IsPrime)
-    (hunr : Algebra.IsUnramifiedIn (𝓞 K) (P.under (𝓞 F))) : Disjoint (P.inertia G) H := by
+/-- **The inertia subgroup at an unramified prime meets `H` trivially.** Let `H` be a subgroup of
+`G` whose fixed field is `F`. If `P` is unramified over `𝓞 F`, then the inertia subgroup of `P`
+is disjoint from `H`, since its intersection with `H` is the inertia subgroup of `P` over `𝓞 F`,
+of order `e(P / 𝓞 F) = 1`. -/
+theorem disjoint_inertia_of_ramificationIdx_eq_one (H : Subgroup G) [IsGaloisGroup H F K]
+    (P : Ideal (𝓞 K)) (hP : P.IsPrime) (hunr : P.ramificationIdx (𝓞 F) = 1) :
+    Disjoint (P.inertia G) H := by
   have : P.IsPrime := hP
   have : IsGaloisGroup H (𝓞 F) (𝓞 K) := IsGaloisGroup.of_isFractionRing H (𝓞 F) (𝓞 K) F K
   rw [← Subgroup.subgroupOf_eq_bot]
   refine Subgroup.eq_bot_of_card_eq _ ?_
-  rw [AddSubgroup.subgroupOf_inertia,
-    Ideal.card_inertia_eq_ramificationIdxIn (G := H) (P.under (𝓞 F)) P,
-    Ideal.ramificationIdxIn_eq_ramificationIdx (P.under (𝓞 F)) P H]
-  exact hunr.ramificationIdx_eq_one inferInstance
+  rw [AddSubgroup.subgroupOf_inertia, Ideal.card_inertia_eq_ramificationIdx (𝓞 F) H P]
+  exact hunr
 
 omit [IsGaloisGroup G ℚ K] [Algebra ℚ F] [IsScalarTower ℚ F K] in
-/-- **Inertia over a quadratic subfield is killed by squaring.** If the prime below `P` in the
-fixed field `F` of an index-`2` subgroup `H` of `G` is unramified in `𝓞 K`, then any element of
-the inertia subgroup at `P` squares to `1`: its square lies in `H` because `H` has index `2`, and
-it lies in the inertia subgroup, which meets `H` trivially. -/
-theorem sq_eq_one_of_mem_inertia {H : Subgroup G} [IsGaloisGroup H F K] (hindex : H.index = 2)
-    {P : Ideal (𝓞 K)} (hP : P.IsPrime)
-    (hunr : Algebra.IsUnramifiedIn (𝓞 K) (P.under (𝓞 F)))
-    {g : G} (hg : g ∈ P.inertia G) : g ^ 2 = 1 := by
-  have hmem : g ^ 2 ∈ H := Subgroup.sq_mem_of_index_two hindex g
-  exact Subgroup.disjoint_def.mp (disjoint_inertia_of_isUnramifiedIn H P hP hunr)
-    (pow_mem hg 2) hmem
+/-- **The index of `H` kills inertia at a prime unramified over the fixed field.** If `H` is a
+normal subgroup of `G` with fixed field `F` and `P` is unramified over `𝓞 F`, then every element
+of the inertia subgroup at `P` is killed by `H.index`: its `H.index`-th power lies in `H`, and it
+lies in the inertia subgroup, which meets `H` trivially. -/
+theorem pow_index_eq_one_of_ramificationIdx_eq_one {H : Subgroup G} [H.Normal]
+    [IsGaloisGroup H F K] {P : Ideal (𝓞 K)} (hP : P.IsPrime)
+    (hunr : P.ramificationIdx (𝓞 F) = 1) {g : G} (hg : g ∈ P.inertia G) : g ^ H.index = 1 :=
+  Subgroup.disjoint_def.mp (disjoint_inertia_of_ramificationIdx_eq_one H P hP hunr)
+    (pow_mem hg _) (H.pow_index_mem g)
 
 omit [Algebra ℚ F] [IsScalarTower ℚ F K] in
 open scoped IsMulCommutative in
-/-- **An abelian extension of `ℚ` unramified over a quadratic subfield is multiquadratic.** Let
-`K` be a number field, Galois over `ℚ` with abelian Galois group `G`, and let `H` be a subgroup of
-index `2` whose fixed field `F` has every prime unramified in `𝓞 K`. Then every element of `G`
-squares to `1`.
+/-- **An abelian extension of `ℚ` unramified over a subfield has exponent dividing its degree.**
+Let `K` be a number field, Galois over `ℚ` with abelian Galois group `G`, and let `H` be a
+subgroup whose fixed field `F` has every prime unramified in `𝓞 K`. Then `g ^ H.index = 1` for
+every `g : G`, and `H.index` is `Module.finrank ℚ F` by `NumberField.index_eq_finrank`.
 
-Indeed each inertia subgroup consists of elements squaring to `1`
-(`NumberField.sq_eq_one_of_mem_inertia`), and in an abelian group those elements form a subgroup;
-since the inertia subgroups generate `G` (`NumberField.eq_top_of_forall_inertia_le`), that
-subgroup is all of `G`. -/
-theorem sq_eq_one_of_index_eq_two [IsMulCommutative G] (H : Subgroup G) [IsGaloisGroup H F K]
-    (hindex : H.index = 2)
+Indeed each inertia subgroup is killed by `H.index`
+(`NumberField.pow_index_eq_one_of_ramificationIdx_eq_one`), and in an abelian group the elements
+killed by a fixed exponent form a subgroup; since the inertia subgroups generate `G`
+(`NumberField.eq_top_of_forall_inertia_le`), that subgroup is all of `G`.
+
+For `F` quadratic this says that an abelian extension of `ℚ` unramified over a quadratic subfield
+has exponent dividing `2`; by Kummer theory over `ℚ` — not formalised here — such an extension is
+a compositum of quadratic fields. -/
+theorem pow_index_eq_one_of_isUnramifiedIn [IsMulCommutative G] (H : Subgroup G)
+    [IsGaloisGroup H F K]
     (hunr : ∀ q : Ideal (𝓞 F), q.IsPrime → Algebra.IsUnramifiedIn (𝓞 K) q) (g : G) :
-    g ^ 2 = 1 := by
-  have h : (powMonoidHom 2 : G →* G).ker = ⊤ :=
+    g ^ H.index = 1 := by
+  have h : (powMonoidHom H.index : G →* G).ker = ⊤ :=
     eq_top_of_forall_inertia_le fun P hP x hx => by
+      have : P.IsPrime := hP.isPrime
       simpa [MonoidHom.mem_ker] using
-        sq_eq_one_of_mem_inertia (F := F) hindex hP.isPrime
-          (hunr (P.under (𝓞 F)) inferInstance) hx
-  simpa [MonoidHom.mem_ker] using (h ▸ Subgroup.mem_top g : g ∈ (powMonoidHom 2 : G →* G).ker)
-
-open scoped IsMulCommutative in
-/-- **The degree form of `NumberField.sq_eq_one_of_index_eq_two`.** If `K` is Galois over `ℚ` with
-abelian Galois group `G`, if `F` is the fixed field of `H` and is quadratic over `ℚ`, and if every
-prime of `𝓞 F` is unramified in `𝓞 K`, then every element of `G` squares to `1`. The index of `H`
-is the degree of its fixed field, here `2`. -/
-theorem sq_eq_one_of_finrank_eq_two [IsMulCommutative G] (H : Subgroup G) [IsGaloisGroup H F K]
-    (hF : Module.finrank ℚ F = 2)
-    (hunr : ∀ q : Ideal (𝓞 F), q.IsPrime → Algebra.IsUnramifiedIn (𝓞 K) q) (g : G) :
-    g ^ 2 = 1 := by
-  refine sq_eq_one_of_index_eq_two H ?_ hunr g
-  have h : H.index * Nat.card H = Nat.card G := Subgroup.index_mul_card H
-  rw [IsGaloisGroup.card_eq_finrank H F K, IsGaloisGroup.card_eq_finrank G ℚ K,
-    ← Module.finrank_mul_finrank ℚ F K, hF] at h
-  exact Nat.eq_of_mul_eq_mul_right Module.finrank_pos h
+        pow_index_eq_one_of_ramificationIdx_eq_one (F := F) (H := H) hP.isPrime
+          ((hunr (P.under (𝓞 F)) inferInstance).ramificationIdx_eq_one inferInstance) hx
+  simpa [MonoidHom.mem_ker] using
+    (h ▸ Subgroup.mem_top g : g ∈ (powMonoidHom H.index : G →* G).ker)
 
 end Unramified
 
