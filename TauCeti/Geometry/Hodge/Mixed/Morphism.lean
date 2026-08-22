@@ -491,6 +491,27 @@ theorem gradedMap_comp (g : Hom target third) (f : Hom source target) (k : ℤ) 
   weightGradedRatMap_comp source.WQ target.WQ third.WQ f.toRatLinearMap f.map_mem_WQ
     g.toRatLinearMap g.map_mem_WQ k
 
+/-- The complex graded map of an identity morphism is the identity. -/
+@[simp]
+theorem complexGradedMap_id (source : MixedHodgeStructure hℚ hℂ) (k : ℤ) :
+    (id source).complexGradedMap k = LinearMap.id := by
+  simpa only [complexGradedMap, toLinearMap_def, id_toRatLinearMap,
+    rationalMapToComplex_id] using weightGradedComplexMap_id
+      (fun j ↦ rationalToComplexSubmodule hℚ hℂ (source.WQ j)) k
+
+/-- The complex graded map of a composite is the composite of the complex graded maps. -/
+@[simp]
+theorem complexGradedMap_comp (g : Hom target third) (f : Hom source target) (k : ℤ) :
+    (g.comp f).complexGradedMap k = (g.complexGradedMap k) ∘ₗ (f.complexGradedMap k) := by
+  simpa only [complexGradedMap, toLinearMap_def, comp_toRatLinearMap,
+    rationalMapToComplex_comp hℚ hℂ h'ℚ h'ℂ h''ℚ h''ℂ] using
+      weightGradedComplexMap_comp
+        (fun j ↦ rationalToComplexSubmodule hℚ hℂ (source.WQ j))
+        (fun j ↦ rationalToComplexSubmodule h'ℚ h'ℂ (target.WQ j))
+        (fun j ↦ rationalToComplexSubmodule h''ℚ h''ℂ (third.WQ j))
+        f.toLinearMap (fun j x hx ↦ (f.restrictWC j ⟨x, hx⟩).2)
+        g.toLinearMap (fun j x hx ↦ (g.restrictWC j ⟨x, hx⟩).2) k
+
 /-- Passage to the weight-graded pieces sends identities to identities. -/
 @[simp]
 theorem gradedHom_id (source : MixedHodgeStructure hℚ hℂ) (k : ℤ) :

@@ -182,6 +182,29 @@ theorem weightGradedComplexMap_mk (WC : ℤ → Submodule ℂ Vℂ) (W'C : ℤ �
       Submodule.Quotient.mk ⟨g x, hg k x x.2⟩ :=
   (rfl)
 
+/-- Passage to the complex graded pieces sends the identity map to the identity. -/
+@[simp]
+theorem weightGradedComplexMap_id (WC : ℤ → Submodule ℂ Vℂ) (k : ℤ) :
+    weightGradedComplexMap WC WC LinearMap.id (fun _ _ hx ↦ hx) k = LinearMap.id := by
+  have hrestrict : (LinearMap.id : Vℂ →ₗ[ℂ] Vℂ).restrict (fun x (hx : x ∈ WC k) ↦ hx) =
+      LinearMap.id := LinearMap.ext fun _ ↦ Subtype.ext rfl
+  simp only [weightGradedComplexMap, hrestrict, Submodule.mapQ_id]
+
+/-- Passage to the complex graded pieces is compatible with composition. -/
+@[simp]
+theorem weightGradedComplexMap_comp {V''ℂ : Type*} [AddCommGroup V''ℂ] [Module ℂ V''ℂ]
+    (WC : ℤ → Submodule ℂ Vℂ) (W'C : ℤ → Submodule ℂ V'ℂ) (W''C : ℤ → Submodule ℂ V''ℂ)
+    (f : Vℂ →ₗ[ℂ] V'ℂ) (hf : ∀ k x, x ∈ WC k → f x ∈ W'C k)
+    (g : V'ℂ →ₗ[ℂ] V''ℂ) (hg : ∀ k x, x ∈ W'C k → g x ∈ W''C k) (k : ℤ) :
+    weightGradedComplexMap WC W''C (g ∘ₗ f) (fun j x hx ↦ hg j _ (hf j x hx)) k =
+      weightGradedComplexMap W'C W''C g hg k ∘ₗ weightGradedComplexMap WC W'C f hf k := by
+  have hrestrict : (g ∘ₗ f).restrict (fun x (hx : x ∈ WC k) ↦ hg k _ (hf k x hx)) =
+      (g.restrict fun x (hx : x ∈ W'C k) ↦ hg k x hx) ∘ₗ
+        f.restrict fun x (hx : x ∈ WC k) ↦ hf k x hx :=
+    LinearMap.ext fun _ ↦ Subtype.ext rfl
+  simp only [weightGradedComplexMap, hrestrict]
+  exact Submodule.mapQ_comp _ _ _ _ _ _ _
+
 /-- Passage to the rational graded pieces sends the identity map to the identity. -/
 @[simp]
 theorem weightGradedRatMap_id (WQ : ℤ → Submodule ℚ Vℚ) (k : ℤ) :
