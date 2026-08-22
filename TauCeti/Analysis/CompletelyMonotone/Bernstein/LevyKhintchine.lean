@@ -306,7 +306,8 @@ private theorem isCompletelyMonotoneOnIoi_deriv_bernsteinLevyJumpExponent
 /-- Integrability of `min 1 x` suffices for the Levy jump exponent to be a Bernstein function.
 No condition at the origin is needed, because an atom at zero contributes the identically zero
 jump kernel. -/
-theorem isBernsteinFunction_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
+theorem isBernsteinFunction_bernsteinLevyJumpExponent_of_integrable_min_one
+    {μ : Measure ℝ≥0}
     (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ) :
     IsBernsteinFunction (bernsteinLevyJumpExponent μ) := by
   have hderiv := isCompletelyMonotoneOnIoi_deriv_bernsteinLevyJumpExponent hμ
@@ -319,16 +320,31 @@ theorem isBernsteinFunction_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
   exact ⟨continuousOn_bernsteinLevyJumpExponent hμ, hcontDiff,
     fun t ht => bernsteinLevyJumpExponent_nonneg μ ht, hderiv⟩
 
+/-- A Bernstein Levy measure gives a Bernstein function through its jump exponent. -/
+theorem isBernsteinFunction_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
+    (hμ : IsBernsteinLevyMeasure μ) :
+    IsBernsteinFunction (bernsteinLevyJumpExponent μ) :=
+  isBernsteinFunction_bernsteinLevyJumpExponent_of_integrable_min_one hμ.integrable_min_one
+
 /-- Nonnegative killing and drift coefficients together with an integrable Levy jump measure give
 a Bernstein function by the Levy--Khintchine formula. -/
-theorem isBernsteinFunction_bernsteinLevyKhintchineExponent {μ : Measure ℝ≥0}
+theorem isBernsteinFunction_bernsteinLevyKhintchineExponent_of_integrable_min_one
+    {μ : Measure ℝ≥0}
     (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ)
     {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
     IsBernsteinFunction (bernsteinLevyKhintchineExponent a b μ) := by
   apply (isBernsteinFunction_affine ha hb).add
-    (isBernsteinFunction_bernsteinLevyJumpExponent hμ) |>.congr
+    (isBernsteinFunction_bernsteinLevyJumpExponent_of_integrable_min_one hμ) |>.congr
   intro t _ht
   simp only [Pi.add_apply, bernsteinLevyKhintchineExponent_apply]
+
+/-- Nonnegative killing and drift coefficients together with a Bernstein Levy measure give a
+Bernstein function by the Levy--Khintchine formula. -/
+theorem isBernsteinFunction_bernsteinLevyKhintchineExponent {μ : Measure ℝ≥0}
+    (hμ : IsBernsteinLevyMeasure μ) {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
+    IsBernsteinFunction (bernsteinLevyKhintchineExponent a b μ) :=
+  isBernsteinFunction_bernsteinLevyKhintchineExponent_of_integrable_min_one
+    hμ.integrable_min_one ha hb
 
 /-- At a nonnegative parameter, the Levy jump exponent of a sum of measures with integrable
 truncated coordinates is the sum of their jump exponents. -/
