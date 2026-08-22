@@ -88,18 +88,16 @@ private theorem mixingLaw_map_eq_of_blockLaw_map_eq
   exact mixedIID_mixingLaw_unique hY hmap' hν
 
 /-- **The row mixing law inherits column symmetry.** For any mixing representative `ν` of the
-row process, column invariance of the array law implies that pushing `ν` forward by any
-permutation of path coordinates does not change its law under `μ`.
+row process, invariance of the array law under the column permutation `τ` implies that pushing
+`ν` forward by `τ` does not change its law under `μ`.
 
 This is a statement about the law `μ.map ν`, not an almost-sure assertion that each measure
 `ν ω` is exchangeable. The latter is false in general. -/
 theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (hcol : ∀ τ : Equiv.Perm ℕ,
-      (μ.map fun ω p ↦ X (p.1, τ p.2) ω) = μ.map fun ω p ↦ X p ω)
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α} {τ : Equiv.Perm ℕ}
+    (hcol : (μ.map fun ω p ↦ X (p.1, τ p.2) ω) = μ.map fun ω p ↦ X p ω)
     (hX : ∀ p, AEMeasurable (X p) μ)
-    {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν)
-    (τ : Equiv.Perm ℕ) :
+    {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex τ)
     (aemeasurable_arrayRow hX)
@@ -120,7 +118,7 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
   have hF : Measurable F := measurable_pi_lambda _ fun i ↦ measurable_pi_lambda _ fun j ↦
     measurable_pi_apply (k i, j)
   rw [← map_map_array (X := fun p ↦ X (p.1, τ p.2)) (fun p ↦ hX _) hF,
-    ← map_map_array hX hF, hcol τ]
+    ← map_map_array hX hF, hcol]
 
 /-- **The row mixing law of a separately exchangeable array inherits the column symmetry.** -/
 theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayRow_eq
@@ -130,17 +128,15 @@ theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayRow_eq
     (τ : Equiv.Perm ℕ) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν :=
   mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
-    (fun τ ↦ separatelyExchangeable_iff.mp h 1 τ) hX hν τ
+    (separatelyExchangeable_iff.mp h 1 τ) hX hν
 
 /-- **The column mixing law inherits row symmetry.** This is the transpose of
 `mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant`. -/
 theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (hrow : ∀ σ : Equiv.Perm ℕ,
-      (μ.map fun ω p ↦ X (σ p.1, p.2) ω) = μ.map fun ω p ↦ X p ω)
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α} {σ : Equiv.Perm ℕ}
+    (hrow : (μ.map fun ω p ↦ X (σ p.1, p.2) ω) = μ.map fun ω p ↦ X p ω)
     (hX : ∀ p, AEMeasurable (X p) μ)
-    {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν)
-    (σ : Equiv.Perm ℕ) :
+    {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν := by
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex σ)
     (aemeasurable_arrayCol hX)
@@ -161,7 +157,7 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
   have hF : Measurable F := measurable_pi_lambda _ fun j ↦ measurable_pi_lambda _ fun i ↦
     measurable_pi_apply (i, k j)
   rw [← map_map_array (X := fun p ↦ X (σ p.1, p.2)) (fun p ↦ hX _) hF,
-    ← map_map_array hX hF, hrow σ]
+    ← map_map_array hX hF, hrow]
 
 /-- **The column mixing law of a separately exchangeable array inherits the row symmetry.** -/
 theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayCol_eq
@@ -171,7 +167,7 @@ theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayCol_eq
     (σ : Equiv.Perm ℕ) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν :=
   mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
-    (fun σ ↦ separatelyExchangeable_iff.mp h σ 1) hX hν σ
+    (separatelyExchangeable_iff.mp h σ 1) hX hν
 
 /-- **De Finetti for the rows, with the inherited mixing-law symmetry.** A separately
 exchangeable array has a directing measure for its row process whose law is invariant under every
