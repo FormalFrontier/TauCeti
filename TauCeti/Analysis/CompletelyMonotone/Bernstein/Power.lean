@@ -27,7 +27,7 @@ recovers the exponential `t ↦ e^{-x t}` and `s = 0` the constant `t ↦ e^{-x}
 
 * `TauCeti.isBernsteinFunction_rpow`: `t ↦ t^s` is a Bernstein function for `0 ≤ s ≤ 1`.
 * `TauCeti.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul_rpow`: the stretched exponential
-  `t ↦ e^{-x t^s}` is completely monotone.
+  `t ↦ e^{-x t^s}` is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`.
 
 ## References
 
@@ -56,9 +56,11 @@ theorem isBernsteinFunction_rpow {s : ℝ} (hs : 0 ≤ s) (hs₁ : s ≤ 1) :
       fun t ht => Real.rpow_nonneg ht s,
       ((isCompletelyMonotoneOnIoi_rpow_neg (by linarith : (0 : ℝ) ≤ 1 - s)).smul hs).congr hderiv⟩
 
-/-- The **stretched exponential** `t ↦ e^{-x t^s}` is completely monotone on `[0, ∞)` for
-`x ≥ 0` and `0 ≤ s ≤ 1`: it is the composition of the completely monotone `t ↦ e^{-x t}` with the
-Bernstein function `t ↦ t^s`. -/
+/-- The **stretched exponential** `t ↦ e^{-x t^s}` is continuous on `[0, ∞)` and completely
+monotone on `(0, ∞)` for `x ≥ 0` and `0 ≤ s ≤ 1`: it is the composition of the completely
+monotone `t ↦ e^{-x t}` with the Bernstein function `t ↦ t^s`. For `x > 0` and `0 < s < 1`, its
+derivative is singular at the origin, so the stronger closed-half-line `IsCompletelyMonotone`
+predicate fails. -/
 theorem isContinuousCompletelyMonotoneOnIoi_exp_neg_mul_rpow {x s : ℝ} (hx : 0 ≤ x) (hs : 0 ≤ s)
     (hs₁ : s ≤ 1) :
     IsContinuousCompletelyMonotoneOnIoi fun t : ℝ => Real.exp (-x * t ^ s) :=

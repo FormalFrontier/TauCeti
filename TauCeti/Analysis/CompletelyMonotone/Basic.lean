@@ -66,6 +66,8 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
   scalar multiples.
 * `TauCeti.IsCompletelyMonotoneOnIoi`: the open-half-line analogue, using ordinary iterated
   derivatives on `(0, ∞)`.
+* `TauCeti.IsCompletelyMonotoneOnIoi.differentiableOn`: a completely monotone function on
+  `(0, ∞)` is differentiable there.
 * `TauCeti.IsContinuousCompletelyMonotoneOnIoi`: the closed-half-line predicate used by the
   finite-measure Hausdorff--Bernstein--Widder theorem: continuity on `[0, ∞)` plus complete
   monotonicity on `(0, ∞)`.

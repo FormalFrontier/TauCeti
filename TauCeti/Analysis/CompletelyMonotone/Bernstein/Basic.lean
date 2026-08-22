@@ -37,10 +37,13 @@ nonnegative scalar multiples, and the basic catalogue — constants, the identit
 * `TauCeti.IsBernsteinFunction`: the predicate that `f` is continuous and nonnegative on
   `[0, ∞)`, smooth on `(0, ∞)`, and has completely monotone ordinary derivative on `(0, ∞)`.
 * `TauCeti.IsBernsteinFunction.nonneg`, `TauCeti.IsBernsteinFunction.deriv_nonneg`,
-  `TauCeti.IsBernsteinFunction.monotoneOn`, `TauCeti.IsBernsteinFunction.concaveOn`,
-  `TauCeti.IsBernsteinFunction.eq_zero_of_eq_zero`: a Bernstein function is nonnegative, has
-  nonnegative derivative, is nondecreasing and concave on `[0, ∞)`, and either is positive on
-  `(0, ∞)` or vanishes on `[0, ∞)`.
+  `TauCeti.IsBernsteinFunction.monotoneOn`, `TauCeti.IsBernsteinFunction.concaveOn`: a Bernstein
+  function is nonnegative, has nonnegative derivative, and is nondecreasing and concave on
+  `[0, ∞)`.
+* `TauCeti.IsBernsteinFunction.eq_zero_of_eq_zero`,
+  `TauCeti.IsBernsteinFunction.forall_eq_zero_or_forall_pos`: a zero at one positive point
+  propagates across `[0, ∞)`, and every Bernstein function either vanishes there or is positive on
+  `(0, ∞)`.
 * `TauCeti.IsBernsteinFunction.congr`: the property depends only on the values on `[0, ∞)`.
 * `TauCeti.IsBernsteinFunction.add`, `TauCeti.IsBernsteinFunction.smul`,
   `TauCeti.IsBernsteinFunction.const_add`, `TauCeti.IsBernsteinFunction.sum`: closure under sums,
@@ -140,13 +143,17 @@ theorem eq_zero_of_eq_zero (hf : IsBernsteinFunction f) {t₀ : ℝ}
         hlt.le (by rw [h₀, hzero]))
       (hf.nonneg ht)
 
-/-- If a Bernstein function is nonzero at one positive point, it is positive throughout the open
-half-line. -/
-theorem pos_of_ne_zero (hf : IsBernsteinFunction f) {t₀ : ℝ} (ht₀ : 0 < t₀)
-    (h₀ : f t₀ ≠ 0) {t : ℝ} (ht : 0 < t) : 0 < f t := by
-  rcases (hf.nonneg ht.le).lt_or_eq with hlt | heq
-  · exact hlt
-  · exact absurd (hf.eq_zero_of_eq_zero ht heq.symm ht₀.le) h₀
+/-- A Bernstein function either vanishes on the whole closed half-line or is positive throughout
+the open half-line. -/
+theorem forall_eq_zero_or_forall_pos (hf : IsBernsteinFunction f) :
+    (∀ t : ℝ, 0 ≤ t → f t = 0) ∨ (∀ t : ℝ, 0 < t → 0 < f t) := by
+  by_cases hvanish : ∃ t₀ : ℝ, 0 < t₀ ∧ f t₀ = 0
+  · obtain ⟨t₀, ht₀, h₀⟩ := hvanish
+    exact Or.inl fun _ ht => hf.eq_zero_of_eq_zero ht₀ h₀ ht
+  · refine Or.inr fun t ht => ?_
+    rcases (hf.nonneg ht.le).lt_or_eq with hpos | hzero
+    · exact hpos
+    · exact (hvanish ⟨t, ht, hzero.symm⟩).elim
 
 /-- Being a Bernstein function depends only on the values on `[0, ∞)`. -/
 theorem congr (hf : IsBernsteinFunction f) (h : Set.EqOn g f (Ici 0)) :

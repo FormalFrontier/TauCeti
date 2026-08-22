@@ -43,10 +43,11 @@ In that degenerate case the composition is the constant `g 0`, and the theorems 
 * `TauCeti.IsCompletelyMonotoneOnIoi.comp_isBernsteinFunction`: the open-half-line composition
   theorem, under the positivity hypothesis on the inner function.
 * `TauCeti.IsContinuousCompletelyMonotoneOnIoi.comp_isBernsteinFunction`: **a completely monotone
-  function composed with a Bernstein function is completely monotone** on the closed half-line.
+  function composed with a Bernstein function is continuous on `[0, ∞)` and completely monotone
+  on `(0, ∞)`**.
 * `TauCeti.IsBernsteinFunction.comp`: Bernstein functions are closed under composition.
 * `TauCeti.IsBernsteinFunction.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul`: the prototype
-  `t ↦ e^{-x f(t)}` is completely monotone.
+  `t ↦ e^{-x f(t)}` is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`.
 
 ## References
 
@@ -169,26 +170,21 @@ theorem IsContinuousCompletelyMonotoneOnIoi.comp_isBernsteinFunction
     (hf : IsBernsteinFunction f) : IsContinuousCompletelyMonotoneOnIoi (g ∘ f) := by
   refine isContinuousCompletelyMonotoneOnIoi_iff.mpr
     ⟨hg.continuousOn.comp hf.continuousOn fun u hu => mem_Ici.2 (hf.nonneg hu), ?_⟩
-  by_cases hvanish : ∃ t₀ : ℝ, 0 < t₀ ∧ f t₀ = 0
-  · obtain ⟨t₀, ht₀, h₀⟩ := hvanish
-    refine (isCompletelyMonotone_const (hg.nonneg le_rfl)).isCompletelyMonotoneOnIoi.congr ?_
+  rcases hf.forall_eq_zero_or_forall_pos with hzero | hpos
+  · refine (isCompletelyMonotone_const (hg.nonneg le_rfl)).isCompletelyMonotoneOnIoi.congr ?_
     intro t ht
-    simp [Function.comp_apply, hf.eq_zero_of_eq_zero ht₀ h₀ (le_of_lt ht)]
-  · exact hg.isCompletelyMonotoneOnIoi.comp_isBernsteinFunction hf
-      fun t ht => hf.pos_of_ne_zero ht (fun h => hvanish ⟨t, ht, h⟩) ht
+    simp [Function.comp_apply, hzero t ht.le]
+  · exact hg.isCompletelyMonotoneOnIoi.comp_isBernsteinFunction hf hpos
 
 /-- **Bernstein functions are closed under composition.** The derivative of `g ∘ f` is
 `(g' ∘ f) · f'`, a product of the composition theorem's output with a completely monotone
 factor. -/
 theorem IsBernsteinFunction.comp (hg : IsBernsteinFunction g) (hf : IsBernsteinFunction f) :
     IsBernsteinFunction (g ∘ f) := by
-  by_cases hvanish : ∃ t₀ : ℝ, 0 < t₀ ∧ f t₀ = 0
-  · obtain ⟨t₀, ht₀, h₀⟩ := hvanish
-    refine (isBernsteinFunction_const (hg.nonneg le_rfl)).congr fun t ht => ?_
-    simp [Function.comp_apply, hf.eq_zero_of_eq_zero ht₀ h₀ (mem_Ici.1 ht)]
-  · have hpos : ∀ t : ℝ, 0 < t → 0 < f t :=
-      fun t ht => hf.pos_of_ne_zero ht (fun h => hvanish ⟨t, ht, h⟩) ht
-    have hmaps : MapsTo f (Ioi 0) (Ioi 0) := fun u hu => mem_Ioi.2 (hpos u hu)
+  rcases hf.forall_eq_zero_or_forall_pos with hzero | hpos
+  · refine (isBernsteinFunction_const (hg.nonneg le_rfl)).congr fun t ht => ?_
+    simp [Function.comp_apply, hzero t (mem_Ici.1 ht)]
+  · have hmaps : MapsTo f (Ioi 0) (Ioi 0) := fun u hu => mem_Ioi.2 (hpos u hu)
     refine isBernsteinFunction_iff.mpr
       ⟨hg.continuousOn.comp hf.continuousOn fun u hu => mem_Ici.2 (hf.nonneg hu),
         hg.contDiffOn.comp hf.contDiffOn hmaps,
@@ -200,8 +196,8 @@ theorem IsBernsteinFunction.comp (hg : IsBernsteinFunction g) (hf : IsBernsteinF
     exact (hasDerivAt_comp_of_mapsTo hf.differentiableOn hg.differentiableOn hmaps hu).deriv
 
 /-- The prototype completely monotone functions attached to a Bernstein function: for `x ≥ 0`,
-the composition `t ↦ e^{-x f(t)}` is completely monotone on the closed half-line. These are the
-Laplace transforms of the one-parameter convolution semigroup subordinate to `f`. -/
+the composition `t ↦ e^{-x f(t)}` is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`.
+These are the Laplace transforms of the one-parameter convolution semigroup subordinate to `f`. -/
 theorem IsBernsteinFunction.isContinuousCompletelyMonotoneOnIoi_exp_neg_mul
     (hf : IsBernsteinFunction f) {x : ℝ} (hx : 0 ≤ x) :
     IsContinuousCompletelyMonotoneOnIoi fun t => Real.exp (-x * f t) :=
