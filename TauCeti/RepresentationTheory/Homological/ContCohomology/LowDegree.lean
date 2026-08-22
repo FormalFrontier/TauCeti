@@ -83,9 +83,14 @@ lemmas `map_one_of_mem_Z1`, `map_one_fst_of_mem_Z2` and `map_one_snd_of_mem_Z2`,
 definitional conditions.
 
 `H1` and `H2` divide `Z¹` and `Z²` by the coboundaries *viewed inside the cocycles*, in the
-`AddSubgroup.addSubgroupOf` spelling the roadmap fixes; no continuity hypothesis enters the types.
-That the subgroup divided out is then the whole of `B¹`, respectively `B²`, is exactly
-`TauCeti.ContCohomology.B1_le_Z1` and `B2_le_Z2`, which stay available as theorems.
+`AddSubgroup.addSubgroupOf` spelling the roadmap fixes, so that no proof term enters either type.
+Each of the two is introduced only under the hypotheses of `TauCeti.ContCohomology.B1_le_Z1`,
+respectively `B2_le_Z2`, so the subgroup divided out is always the whole of `B¹`, respectively
+`B²`, and never the intersection `B ⊓ Z` that `addSubgroupOf` would cut out at a weaker
+generality; `AddSubgroup.map_addSubgroupOf_eq_of_le` turns those inclusions into that identity
+whenever a consumer needs it spelled out. The two carriers therefore sit in separate sections:
+`H¹` needs `G` to be a monoid acting continuously, and `H²` needs a continuous multiplication on
+`G` besides, because `d¹` has to preserve continuity for `B² = d¹(C¹)` to consist of cocycles.
 
 This implements the "the complex" milestone of Layer 2 of the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes every convention above and whose
@@ -459,17 +464,22 @@ theorem B2_le_Z2 : B2 G M ≤ Z2 G M := by
 
 end ContinuityMulAction
 
-section Cohomology
+section CohomologyDegree1
 
-variable (G : Type u) [Mul G] [TopologicalSpace G]
+/-! Degree `1` of the cohomology is formed exactly where `TauCeti.ContCohomology.B1_le_Z1` holds:
+under a weaker action `B¹` need not consist of cocycles and the quotient below would silently be
+by `B¹ ⊓ Z¹`. -/
+
+variable (G : Type u) [Monoid G] [TopologicalSpace G]
   (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DistribSMul G M]
+  [DistribMulAction G M] [ContinuousSMul G M]
 
 /-- The first continuous cohomology group `H¹(G, M) = Z¹/B¹`.
 
-The denominator is `B¹` viewed inside `Z¹`, in Mathlib's `AddSubgroup.addSubgroupOf` spelling, so
-that no continuity hypothesis enters the type. That the subgroup divided out is then the whole of
-`B¹` is `TauCeti.ContCohomology.B1_le_Z1`, under its hypotheses.
+The denominator is `B¹` viewed inside `Z¹`, in Mathlib's `AddSubgroup.addSubgroupOf` spelling the
+roadmap fixes, so that no proof term enters the type. The hypotheses in force are those of
+`TauCeti.ContCohomology.B1_le_Z1`, so the subgroup divided out really is the whole of `B¹`:
+`AddSubgroup.map_addSubgroupOf_eq_of_le (B1_le_Z1 G M)` says its image in `G → M` is `B¹` itself.
 
 `H¹` is used as a bare additive group. It does inherit a quotient topology from the *pointwise*
 topology on `G → M`, and that topology is not the intended one: it need not be discrete, the
@@ -478,18 +488,8 @@ roadmap's witness being trivial `ZMod 2` coefficients on a product of infinitely
 therefore stated against `DiscreteH1`. -/
 abbrev H1 := (Z1 G M) ⧸ ((B1 G M).addSubgroupOf (Z1 G M))
 
-/-- The second continuous cohomology group `H²(G, M) = Z²/B²`.
-
-As for `H¹` the denominator is `B²` viewed inside `Z²`, and the subgroup divided out is the whole
-of `B²` under the hypotheses of `TauCeti.ContCohomology.B2_le_Z2`. The inherited quotient topology
-is again not the intended one, and `H²` is used as a bare additive group. -/
-abbrev H2 := (Z2 G M) ⧸ ((B2 G M).addSubgroupOf (Z2 G M))
-
 /-- The class map in degree `1`. -/
 abbrev H1pi : (Z1 G M) →+ H1 G M := QuotientAddGroup.mk' _
-
-/-- The class map in degree `2`. -/
-abbrev H2pi : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
 
 /-- `H¹(G, M)` equipped with the discrete topology used by the comparison with canonical
 continuous cohomology. -/
@@ -502,6 +502,49 @@ instance : TopologicalSpace (DiscreteH1 G M) := ⊥
 
 instance : DiscreteTopology (DiscreteH1 G M) := ⟨rfl⟩
 
+/-- The identity as an additive equivalence, so that the quotient-class computations on
+representatives stay available after passing to the discrete object. -/
+noncomputable def discreteH1Equiv : DiscreteH1 G M ≃+ H1 G M :=
+  AddEquiv.refl _
+
+variable {G M}
+
+omit [ContinuousSMul G M] in
+/-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
+theorem H1pi_eq_zero_iff {f : Z1 G M} :
+    (f : H1 G M) = 0 ↔ (f : G → M) ∈ B1 G M := by
+  rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
+
+omit [ContinuousSMul G M] in
+/-- Two continuous `1`-cocycles have the same class exactly when they differ by a coboundary. -/
+@[simp]
+theorem H1pi_eq_iff {f f' : Z1 G M} :
+    (f : H1 G M) = (f' : H1 G M) ↔ (f : G → M) - f' ∈ B1 G M := by
+  rw [QuotientAddGroup.eq_iff_sub_mem, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
+
+end CohomologyDegree1
+
+section CohomologyDegree2
+
+/-! Degree `2` needs a continuous multiplication on `G` besides, this being what makes `d¹`
+preserve continuity and hence what
+`TauCeti.ContCohomology.B2_le_Z2` — the inclusion the quotient below divides by — asks for. -/
+
+variable (G : Type u) [Monoid G] [TopologicalSpace G] [ContinuousMul G]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M] [ContinuousSMul G M]
+
+/-- The second continuous cohomology group `H²(G, M) = Z²/B²`.
+
+As for `H¹` the denominator is `B²` viewed inside `Z²`, and the hypotheses in force are those of
+`TauCeti.ContCohomology.B2_le_Z2`, so the subgroup divided out really is the whole of `B²`. The
+inherited quotient topology is again not the intended one, and `H²` is used as a bare additive
+group. -/
+abbrev H2 := (Z2 G M) ⧸ ((B2 G M).addSubgroupOf (Z2 G M))
+
+/-- The class map in degree `2`. -/
+abbrev H2pi : (Z2 G M) →+ H2 G M := QuotientAddGroup.mk' _
+
 /-- `H²(G, M)` equipped with the discrete topology used by the comparison with canonical
 continuous cohomology. -/
 def DiscreteH2 : Type _ := H2 G M
@@ -513,40 +556,26 @@ instance : TopologicalSpace (DiscreteH2 G M) := ⊥
 
 instance : DiscreteTopology (DiscreteH2 G M) := ⟨rfl⟩
 
-/-- The identity as an additive equivalence, so that the quotient-class computations on
-representatives stay available after passing to the discrete object. -/
-noncomputable def discreteH1Equiv : DiscreteH1 G M ≃+ H1 G M :=
-  AddEquiv.refl _
-
 /-- The degree-`2` counterpart of `TauCeti.ContCohomology.discreteH1Equiv`. -/
 noncomputable def discreteH2Equiv : DiscreteH2 G M ≃+ H2 G M :=
   AddEquiv.refl _
 
 variable {G M}
 
-/-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
-theorem H1pi_eq_zero_iff {f : Z1 G M} :
-    (f : H1 G M) = 0 ↔ (f : G → M) ∈ B1 G M := by
-  rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
-
+omit [ContinuousMul G] [ContinuousSMul G M] in
 /-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
 theorem H2pi_eq_zero_iff {f : Z2 G M} :
     (f : H2 G M) = 0 ↔ (f : G × G → M) ∈ B2 G M := by
   rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
 
-/-- Two continuous `1`-cocycles have the same class exactly when they differ by a coboundary. -/
-@[simp]
-theorem H1pi_eq_iff {f f' : Z1 G M} :
-    (f : H1 G M) = (f' : H1 G M) ↔ (f : G → M) - f' ∈ B1 G M := by
-  rw [QuotientAddGroup.eq_iff_sub_mem, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
-
+omit [ContinuousMul G] [ContinuousSMul G M] in
 /-- Two continuous `2`-cocycles have the same class exactly when they differ by a coboundary. -/
 @[simp]
 theorem H2pi_eq_iff {f f' : Z2 G M} :
     (f : H2 G M) = (f' : H2 G M) ↔ (f : G × G → M) - f' ∈ B2 G M := by
   rw [QuotientAddGroup.eq_iff_sub_mem, AddSubgroup.mem_addSubgroupOf, AddSubgroup.coe_sub]
 
-end Cohomology
+end CohomologyDegree2
 
 section TrivialAction
 
