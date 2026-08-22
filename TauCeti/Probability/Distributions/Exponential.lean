@@ -19,8 +19,10 @@ The mean and variance of `ProbabilityTheory.expMeasure r`, for a positive rate `
 ∫ x, x ∂(expMeasure r) = r⁻¹        Var[id; expMeasure r] = (r ^ 2)⁻¹
 ```
 
-Every result below carries that hypothesis: at `r ≤ 0` the law is not a probability measure
-and the identities fail.
+Every result below carries that hypothesis, but the two regimes it excludes differ.  At `r < 0` the
+identities fail outright.  At `r = 0` the density is identically zero, so `expMeasure 0` is the zero
+measure and the two displays above hold only as junk-value coincidences (`0 = 0⁻¹`); what genuinely
+fails there is the `n = 0` moment, `0 ≠ 0 ! / 0 ^ 0 = 1`.
 
 **Both come from one moment formula.** `integral_pow_expMeasure` computes every moment,
 `∫ x ^ n = n ! / r ^ n`, and the mean and the second moment are its `n = 1` and `n = 2` cases.
@@ -49,6 +51,10 @@ zero case is discharged from the probability-measure instance instead.
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, exponential — the mean and
   variance.
+* [mathlib4#35504](https://github.com/leanprover-community/mathlib4/pull/35504), the upstream
+  exponential mgf, moments and memorylessness work that the roadmap names as the source for this
+  material.  It has not landed at Tau Ceti's current Mathlib pin, so the declarations here follow
+  its names and theorem shapes and should be dropped once the pin provides them.
 -/
 
 public section
@@ -73,15 +79,19 @@ private theorem exponentialPDFReal_apply (x : ℝ) :
     ring
   · rfl
 
+/-- The `ℝ≥0∞` density at rate `r`, read as a real number, is `exponentialPDFReal`. -/
+private theorem toReal_gammaPDF_one (hr : 0 < r) (x : ℝ) :
+    (gammaPDF 1 r x).toReal = exponentialPDFReal r x := by
+  unfold gammaPDF exponentialPDFReal
+  rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
+
 /-- An integral against `expMeasure` is a density integral against `volume`. -/
 private theorem integral_expMeasure (hr : 0 < r) (g : ℝ → ℝ) :
     ∫ x, g x ∂(expMeasure r) = ∫ x, exponentialPDFReal r x * g x := by
   have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
   have key : ∀ x : ℝ, (gammaPDF 1 r x).toReal • g x = exponentialPDFReal r x * g x := by
     intro x
-    rw [smul_eq_mul]
-    unfold gammaPDF exponentialPDFReal
-    rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
+    rw [smul_eq_mul, toReal_gammaPDF_one hr]
   unfold expMeasure gammaMeasure
   rw [integral_withDensity_eq_integral_toReal_smul hmeas
       (ae_of_all _ fun x => ENNReal.ofReal_lt_top)]
@@ -105,6 +115,20 @@ private theorem integrand_eq_indicator (hn : n ≠ 0) :
       rw [hx0, zero_pow hn, mul_zero]
     · ring
 
+/-- The integrability companion of `integral_expMeasure`: integrability against `expMeasure` is
+integrability of the density product against `volume`. -/
+private theorem integrable_expMeasure_iff (hr : 0 < r) (g : ℝ → ℝ) :
+    Integrable g (expMeasure r)
+      ↔ Integrable (fun x => exponentialPDFReal r x * g x) volume := by
+  have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
+  have htoReal : ∀ x : ℝ, g x * (gammaPDF 1 r x).toReal = exponentialPDFReal r x * g x := by
+    intro x
+    rw [toReal_gammaPDF_one hr]
+    ring
+  unfold expMeasure gammaMeasure
+  rw [integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
+    funext htoReal]
+
 /-- **Every moment of the exponential law is integrable.**  This is not implied by the moment
 formula below: Lean's integral is defined for non-integrable functions too, so an integral equality
 alone says nothing about finiteness. -/
@@ -114,25 +138,14 @@ theorem integrable_pow_expMeasure (hr : 0 < r) (n : ℕ) :
   have hprob : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   rcases eq_or_ne n 0 with rfl | hn
   · simp
-  have hmeas : Measurable (gammaPDF 1 r) := measurable_gammaPDF 1 r
-  have htoReal : ∀ x : ℝ,
-      x ^ n * (gammaPDF 1 r x).toReal = exponentialPDFReal r x * x ^ n := by
-    intro x
-    unfold gammaPDF exponentialPDFReal
-    rw [ENNReal.toReal_ofReal (gammaPDFReal_nonneg one_pos hr x)]
-    ring
-  unfold expMeasure gammaMeasure
-  rw [integrable_withDensity_iff hmeas (ae_of_all _ fun x => ENNReal.ofReal_lt_top),
-    funext htoReal, integrand_eq_indicator hn, integrable_indicator_iff measurableSet_Ioi]
+  rw [integrable_expMeasure_iff hr, integrand_eq_indicator hn,
+    integrable_indicator_iff measurableSet_Ioi]
   exact (integrableOn_pow_mul_exp_neg_mul_Ioi n hr).const_mul r
 
 /-- **The moments of the exponential law.** `∫ x ^ n ∂(expMeasure r) = n ! / r ^ n`, for every `n`.
 
-The mean and the second moment below are the `n = 1` and `n = 2` cases; stating the general formula
-avoids running the same density transport and Gamma-integral argument twice.
-
-At `n = 0` both sides are `1`, from the probability-measure instance; the Gamma-integral route is
-used for positive `n`. -/
+No nondegeneracy hypothesis on `n` is needed: at `n = 0` both sides are `1`.  The mean and the
+second moment below are the `n = 1` and `n = 2` cases. -/
 @[simp]
 theorem integral_pow_expMeasure (hr : 0 < r) (n : ℕ) :
     ∫ x, x ^ n ∂(expMeasure r) = (Nat.factorial n : ℝ) / r ^ n := by
