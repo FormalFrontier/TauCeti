@@ -172,9 +172,10 @@ theorem exists_finset_sq_mem_range_adjoin_eq_top [FiniteDimensional K L] [IsGalo
   rw [eq_top_iff, ← hα]
   exact IntermediateField.adjoin_simple_le_iff.mpr hαs
 
-/-- **A finite family of square roots has an independent generating subfamily.** If every member
-of a finite set `s` squares into `K`, then the field it generates has a presentation by a
-square-class independent family of square roots. Its degree is therefore a power of two. -/
+/-- **A finite family of square roots can be replaced by an independent generating family.** If
+every member of a finite set `s` squares into `K`, then the field it generates has a presentation
+by a square-class independent family of square roots. Its degree is therefore a power of two. The
+new family generates the same field but need not be drawn from `s`. -/
 theorem exists_sqrt_family_adjoin_eq_adjoin [NeZero (2 : K)] (s : Finset L)
     (hssq : ∀ x ∈ s, ∃ a : K, x ^ 2 = algebraMap K L a) :
     ∃ (n : ℕ) (d : Fin n → K) (root : Fin n → L),
