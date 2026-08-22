@@ -224,8 +224,7 @@ as `weightSpace_isInternal`; it is named for its conclusion here, matching the s
 representation case `TauCeti.isInternal_weightSpace_stdRep`. -/
 theorem IsRationalRep.isInternal_weightSpace (h : IsRationalRep ρ) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace ρ l :=
-  (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-    ⟨iSupIndep_weightSpace weightChar_injective ρ, h.iSup_weightSpace_eq_top⟩
+  isInternal_weightSpace_of_iSup_eq_top weightChar_injective h.iSup_weightSpace_eq_top
 
 end Decomposition
 
