@@ -161,6 +161,7 @@ noncomputable def tatePoint (m : ℤ) :
     rw [tate_hodgeNumber, tateHodgeType_h]
 
 /-- The Hodge type of the Tate structure `ℤ(m)` is the prescribed one. -/
+@[simp]
 theorem tate_hodgeType (m : ℤ) : (tate m).hodgeType = tateHodgeType m :=
   (tatePoint m).hodgeType_eq
 

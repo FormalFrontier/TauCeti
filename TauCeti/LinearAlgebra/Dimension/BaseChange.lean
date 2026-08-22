@@ -12,11 +12,11 @@ public import Mathlib.RingTheory.TensorProduct.Finite
 /-!
 # The dimension of a base change
 
-A module specified as a base change of a finite module is finite, and if the module being
-extended is free then the two have the same rank. Both statements are about Mathlib's
-`IsBaseChange` predicate rather than about the concrete tensor product `S ⊗[R] M`, so they apply
-to a model of the base change that is not literally a tensor product — the situation the
-`IsBaseChange` interface exists to serve.
+A module specified as a base change of a finite module is finite. If the module being extended is
+free and both rings satisfy the strong rank condition, then the two modules have the same rank.
+Both statements are about Mathlib's `IsBaseChange` predicate rather than about the concrete tensor
+product `S ⊗[R] M`, so they apply to a model of the base change that is not literally a tensor
+product — the situation the `IsBaseChange` interface exists to serve.
 
 Mathlib proves the corresponding facts for the concrete tensor product (`Module.finrank_baseChange`
 and the `Module.Finite` instance on `S ⊗[R] M`); transporting them along
@@ -37,7 +37,8 @@ variable [IsScalarTower R S N] {f : M →ₗ[R] N}
 theorem finite_of_isBaseChange (hf : IsBaseChange S f) [Module.Finite R M] : Module.Finite S N :=
   Module.Finite.equiv hf.equiv
 
-/-- A base change of a free module has the same rank as the module it extends. -/
+/-- A base change of a free module has the same rank as the module it extends when the source and
+target rings satisfy the strong rank condition. -/
 theorem finrank_of_isBaseChange (hf : IsBaseChange S f) [StrongRankCondition R]
     [StrongRankCondition S] [Module.Free R M] :
     Module.finrank S N = Module.finrank R M := by
