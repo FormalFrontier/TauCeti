@@ -298,16 +298,11 @@ private noncomputable def conjAlgEquivOfAlgEquiv
   AlgEquiv.ofRingEquiv (R := K) (f := e.conjRingEquiv) fun k => by
     apply LinearMap.ext
     intro x
-    rw [LinearEquiv.conjRingEquiv_apply_apply]
-    rw [Module.algebraMap_end_apply, Module.algebraMap_end_apply]
+    simp only [LinearEquiv.conjRingEquiv_apply_apply, Module.algebraMap_end_apply]
     rw [← IsScalarTower.algebraMap_smul R k (e.symm x),
       ← IsScalarTower.algebraMap_smul S k x]
-    rw [e.map_smulₛₗ]
-    rw [e.apply_symm_apply]
-    rw [show (f.toRingEquiv : R →+* S) (algebraMap K R k) = f (algebraMap K R k) by
-      exact congrFun ((RingEquiv.coe_toRingHom f.toRingEquiv).trans
-        (AlgEquiv.coe_ringEquiv f)) _]
-    rw [f.commutes]
+    simp only [e.map_smulₛₗ, e.apply_symm_apply, RingEquiv.coe_toRingHom,
+      AlgEquiv.coe_ringEquiv, f.commutes]
 
 /-- **The endomorphism algebra of a simple left ideal determines the division algebra in an
 algebra presentation.**

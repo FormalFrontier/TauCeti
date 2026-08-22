@@ -105,6 +105,7 @@ as algebras over the base field.**
 
 The reverse implication is the general fact that algebra isomorphisms preserve Brauer classes;
 the forward implication is the uniqueness of division-algebra representatives. -/
+@[simp]
 theorem mk_eq_mk_iff_nonempty_algEquiv
     {D E : Type v} [DivisionRing D] [Algebra K D] [Algebra.IsCentral K D]
     [FiniteDimensional K D] [DivisionRing E] [Algebra K E] [Algebra.IsCentral K E]
