@@ -30,11 +30,11 @@ commutative base ring and every commutative value algebra, including rings with 
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.Dynamic.dynamicCocharacter`: the coordinate bialgebra morphism of
+* `TauCeti.GeneralLinear.Dynamic.GL2.dynamicCocharacter`: the coordinate bialgebra morphism of
   `t ↦ diag(t, 1)`.
-* `TauCeti.GeneralLinear.Dynamic.mem_dynamicParabolic_iff`: its dynamic parabolic consists
+* `TauCeti.GeneralLinear.Dynamic.GL2.mem_dynamicParabolic_iff`: its dynamic parabolic consists
   exactly of upper-triangular invertible matrices.
-* `TauCeti.GeneralLinear.Dynamic.pointsMulEquiv_limit_dynamicCocharacter`: its dynamic limit is
+* `TauCeti.GeneralLinear.Dynamic.GL2.pointsMulEquiv_limit_dynamicCocharacter`: its dynamic limit is
   the diagonal part of an upper-triangular matrix.
 
 ## References
@@ -54,6 +54,10 @@ namespace TauCeti.GeneralLinear.Dynamic
 
 universe u v w
 
+variable {R : Type u} [CommRing R]
+
+namespace GL2
+
 /-- The diagonal unit family `(t, 1)` used by the standard dynamic cocharacter of `GL₂`. -/
 def dynamicDiagonalUnits {A : Type v} [Monoid A] : Aˣ →* (Fin 2 → Aˣ) where
   toFun t i := if i = 0 then t else 1
@@ -63,8 +67,6 @@ def dynamicDiagonalUnits {A : Type v} [Monoid A] : Aˣ →* (Fin 2 → Aˣ) wher
   map_mul' t s := by
     funext i
     by_cases hi : i = 0 <;> simp [hi]
-
-variable {R : Type u} [CommRing R]
 
 section Points
 
@@ -295,6 +297,14 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_one
   rw [coe_dynamicDiagonalUnits_genericUnit_inv]
   simp [Matrix.mul_apply, Fin.sum_univ_two, dynamicDiagonalUnits]
 
+end Dynamic
+
+end GL2
+
+section PointMaps
+
+variable {A : Type v} [CommRing A] [Algebra R A]
+
 /-- Applying the inclusion `A[X] → A[T;T⁻¹]` to a general-linear point applies that
 inclusion entrywise to its matrix. -/
 theorem pointsMulEquiv_ofPolyPoint
@@ -311,6 +321,14 @@ theorem pointsMulEquiv_evalZeroPoint
       Matrix.GeneralLinearGroup.map
         ((Polynomial.aeval (0 : A)).restrictScalars R).toRingHom (pointsMulEquiv n F) := by
   rw [Cocharacter.evalZeroPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
+
+end PointMaps
+
+namespace GL2
+
+section Dynamic
+
+variable {A : Type v} [CommRing A] [Algebra R A]
 
 /-- The polynomial matrix `!![a, bX; 0, d]`, regarded as a polynomial-valued `GL₂` point. -/
 private noncomputable def dynamicPolynomialExtension (a d : Aˣ) (b : A) :
@@ -466,5 +484,7 @@ theorem dynamicParabolic_eq_borelComap :
   exact mem_dynamicParabolic_iff g
 
 end Dynamic
+
+end GL2
 
 end TauCeti.GeneralLinear.Dynamic
