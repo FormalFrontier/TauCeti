@@ -377,6 +377,8 @@ theorem vermaGenerator_eq_zero_iff : vermaGenerator b lam = 0 ↔ vermaIdeal b l
 spanning it. -/
 theorem subsingleton_vermaModule_iff :
     Subsingleton (VermaModule b lam) ↔ vermaGenerator b lam = 0 := by
+  -- The quotient criterion is stated for a literal quotient, so unfold the named carrier before
+  -- rewriting with it.
   change Subsingleton (U ⧸ vermaIdeal b lam) ↔ vermaGenerator b lam = 0
   rw [Submodule.Quotient.subsingleton_iff, ← vermaGenerator_eq_zero_iff]
 
