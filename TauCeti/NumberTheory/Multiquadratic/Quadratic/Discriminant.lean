@@ -53,9 +53,9 @@ theorem discr_eq_fundamentalDiscriminant (hmin : minpoly ℤ θ = X ^ 2 - C d)
 integer `d` which is not a rational square, then the intermediate field `ℚ(x)` has discriminant
 `fundamentalDiscriminant d`.
 
-The ambient field need only have characteristic zero. Integrality of `x`, the number-field
-instance on `ℚ(x)`, and the integral generator used by `discr_eq_fundamentalDiscriminant` are all
-obtained from the equation `x ^ 2 = d`. -/
+The ambient field need only have characteristic zero: `x` is automatically integral, so the
+statement supplies the resulting `NumberField` instance on `ℚ(x)` and the caller need not assume
+one on `L`. -/
 theorem discr_adjoin_singleton_eq_fundamentalDiscriminant {L : Type*} [Field L] [CharZero L]
     {d : ℤ} (hsf : Squarefree d) {x : L} (hx : x ^ 2 = algebraMap ℤ L d)
     (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) :
