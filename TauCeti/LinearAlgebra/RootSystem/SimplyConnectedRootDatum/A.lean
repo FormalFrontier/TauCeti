@@ -117,7 +117,7 @@ section of that README; it agrees with the count in Bourbaki, Plate I.
 The graph automorphism is the root-datum input to the isomorphism theorem for pinned groups in
 Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, whose consumer is the graph-twisted
 Steinberg map of milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md`. The description of the
-type-`A` diagram automorphism as `X ↦ -Jᵀ X J` on `sl_{n+1}`, of which the map below is the
+type-`A` diagram automorphism as `X ↦ -J Xᵀ J` on `sl_{n+1}`, of which the map below is the
 root-datum shadow, is in R. W. Carter, *Simple Groups of Lie Type*, §12.2.
 -/
 
@@ -747,11 +747,15 @@ private lemma indexEquiv_typeAGraphAut :
 
 /-- The graph automorphism reverses the fundamental-weight coordinates of a character. -/
 @[simp] theorem weightMap_typeAGraphAut_apply (x : Fin n → ℤ) (k : Fin n) :
-    (typeAGraphAut n).toHom.weightMap x k = x k.rev := (rfl)
+    (typeAGraphAut n).toHom.weightMap x k = x k.rev := by
+  unfold typeAGraphAut
+  exact congrFun (typeARevEquiv_eq x) k
 
 /-- The graph automorphism reverses the simple-coroot coordinates of a cocharacter. -/
 @[simp] theorem coweightMap_typeAGraphAut_apply (x : Fin n → ℤ) (k : Fin n) :
-    (typeAGraphAut n).toHom.coweightMap x k = x k.rev := (rfl)
+    (typeAGraphAut n).toHom.coweightMap x k = x k.rev := by
+  unfold typeAGraphAut
+  exact congrFun (typeARevEquiv_eq x) k
 
 /-- **The graph automorphism reverses the Bourbaki-numbered chain.** On the first `n` root indices,
 the simple roots in Bourbaki order, the induced permutation is `Fin.revPerm`, which is
