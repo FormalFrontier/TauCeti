@@ -41,7 +41,7 @@ shifted rate is still positive.
 * `TauCeti.mgf_id_gammaMeasure` — the moment-generating function is `(1 - t / r) ^ (-a)` there;
 * `TauCeti.cgf_id_gammaMeasure` — the cumulant-generating function is `-a * log (1 - t / r)`
   there, the real logarithm of the previous formula;
-* `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
+* `TauCeti.map_gammaMeasure_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
 
 ## References
 
@@ -150,8 +150,9 @@ theorem integral_sq_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     ∫ x, x ^ 2 ∂gammaMeasure a r = a * (a + 1) / r ^ 2 := by
   have hGa := (Real.Gamma_pos_of_pos ha).ne'
   have h := integral_pow_gammaMeasure ha hr 2
+  have hGamma_arg : a + 2 = a + 1 + 1 := by ring
   norm_num only [Nat.cast_ofNat] at h
-  rw [h, show a + 2 = a + 1 + 1 by ring, Real.Gamma_add_one (by positivity : a + 1 ≠ 0),
+  rw [h, hGamma_arg, Real.Gamma_add_one (by positivity : a + 1 ≠ 0),
     Real.Gamma_add_one ha.ne']
   field_simp
 
@@ -161,7 +162,8 @@ theorem integral_sq_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
 private lemma gammaWeight_mul_exp (a r t x : ℝ) :
     r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * exp (t * x) =
       r ^ a / Real.Gamma a * (x ^ (a - 1) * exp (-((r - t) * x))) := by
-  rw [mul_assoc, ← Real.exp_add, show -(r * x) + t * x = -((r - t) * x) by ring]
+  have hexponent : -(r * x) + t * x = -((r - t) * x) := by ring
+  rw [mul_assoc, ← Real.exp_add, hexponent]
   ring
 
 /-- Below the rate of a gamma law, its exponential moments exist. -/
@@ -221,12 +223,13 @@ theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
   have hGa := (Real.Gamma_pos_of_pos ha).ne'
   have hra := (Real.rpow_pos_of_pos hr a).ne'
   have hrta := (Real.rpow_pos_of_pos hrt a).ne'
+  have hone_sub : (1 : ℝ) - t / r = (r - t) / r := by field_simp
   rw [mgf]
   simp only [id_eq]
   rw [integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x _ ↦ gammaWeight_mul_exp a r t x),
     integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi ha hrt, one_div,
-    Real.inv_rpow hrt.le, show (1 : ℝ) - t / r = (r - t) / r by field_simp,
+    Real.inv_rpow hrt.le, hone_sub,
     Real.rpow_neg (by positivity), Real.div_rpow hrt.le hr.le]
   field_simp
 
@@ -268,13 +271,14 @@ private lemma ofReal_mul_gammaPDF_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} 
     congr 1
     have hca := (Real.rpow_pos_of_pos hc a).ne'
     have hGa := (Real.Gamma_pos_of_pos ha).ne'
+    have hrate : r / c * (c * x) = r * x := by field_simp
     rw [Real.mul_rpow hc.le hx, Real.div_rpow hr.le hc.le,
-      show r / c * (c * x) = r * x by field_simp, Real.rpow_sub hc a 1, Real.rpow_one]
+      hrate, Real.rpow_sub hc a 1, Real.rpow_one]
     field_simp
   · rw [gammaPDF_of_neg hx, gammaPDF_of_neg (mul_neg_of_pos_of_neg hc hx), mul_zero]
 
 /-- Scaling a gamma variable by `c > 0` divides its rate by `c`. -/
-theorem gammaMeasure_map_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} (hc : 0 < c) :
+theorem map_gammaMeasure_const_mul (ha : 0 < a) (hr : 0 < r) {c : ℝ} (hc : 0 < c) :
     (gammaMeasure a r).map (c * ·) = gammaMeasure a (r / c) := by
   have hT : Measurable fun x : ℝ ↦ c * x := measurable_const_mul c
   ext s hs
