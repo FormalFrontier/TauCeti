@@ -21,13 +21,15 @@ the two. This file records the whole family of *gauged* relators
 ```
 
 one for each labelling `ε` of the arrows of `Q` by scalars, and proves that whenever two labellings
-differ by a labelling by units the resulting quotients are isomorphic `k`-algebras. Since a
-labelling `ε` with values in `{1, -1}` is exactly a choice of orientation of each edge of the
-doubled quiver, this is the orientation independence of the preprojective algebra, in the gauged
-form: no orientation is preferred, and the isomorphism is the explicit arrow rescaling
-`TauCeti.PathAlgebra.rescale`, which fixes every vertex idempotent and multiplies each arrow of `Q`
-by the unit relating the two labellings. Nothing is proved by declaring the defining sum to be
-orientation-free.
+differ by a labelling by units the resulting quotients are isomorphic `k`-algebras. A labelling `ε`
+with values in `{1, -1}` records the sign with which each edge of the doubled quiver enters the
+relator, so what is proved here is independence of the presented algebra under a change of those
+signs, for one fixed quiver `Q` and hence one fixed doubled quiver. The isomorphism is the explicit
+arrow rescaling `TauCeti.PathAlgebra.rescale`, which fixes every vertex idempotent and multiplies
+each arrow of `Q` by the unit relating the two labellings; nothing is proved by declaring the
+defining sum to be orientation-free. Comparing `TauCeti.preprojectiveAlgebra k Q` with the
+preprojective algebra of a *reoriented* quiver `Q'` is a different statement, which this file does
+not state and does not prove; see the implementation notes.
 
 The relator is genuinely a sum over the *oriented edges* of the doubled quiver against an
 antisymmetric labelling: `TauCeti.gaugedPreprojectiveRelator_eq_sum_doubledBacktrackElem` rewrites
@@ -63,14 +65,18 @@ Reversing the orientation of an arrow of `Q` is here a change of the labelling `
 the quiver: the doubled quiver, and therefore the ambient path algebra, is the same for `Q` and for
 any reorientation of its arrows, and only the sign attached to each oriented edge moves.
 Comparing the algebras of two *different* quivers with a common underlying graph additionally needs
-the path-algebra isomorphism induced by an isomorphism of doubled quivers, which is not built here.
+the path-algebra isomorphism induced by an isomorphism of doubled quivers, which does not exist in
+this repository and is not built here. So the cross-quiver form of orientation independence, which
+quantifies over two quivers with a common underlying graph, is deliberately left unstated by this
+file; every statement below is about the labellings of one fixed quiver.
 
 ## References
 
 This is the gauge clause of Layer 4 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, which asks
 to reverse a chosen arrow by an algebra isomorphism rescaling one of the exchanged arrows by `-1`,
 and then to generalize from signs to an antisymmetric sign function on oriented edges and prove
-independence under the explicit gauge change. See Crawley-Boevey, *Quiver algebras, weighted
+independence under the explicit gauge change. This file proves that gauge clause; the cross-quiver
+clause preceding it is not proved here. See Crawley-Boevey, *Quiver algebras, weighted
 projective lines, and the Deligne--Simpson problem*, Section 1.
 -/
 
@@ -320,8 +326,9 @@ differ by a labelling `u` by units present isomorphic algebras: the isomorphism 
 rescaling by `u`, which fixes every vertex idempotent and multiplies each arrow of `Q` by `u`,
 leaving its formal reverse alone. Taking `u` to be `-1` on one arrow and `1` on the others flips
 the sign with which that arrow enters the relator, which is what reversing its orientation
-produces once the two doubled quivers are identified; see the implementation notes. So no
-orientation of the underlying graph is preferred. -/
+produces once the two doubled quivers are identified; that identification is not carried out here,
+so this is a statement about two labellings of the one quiver `Q`, not about two quivers. See the
+implementation notes. -/
 noncomputable def gaugedPreprojectiveAlgebraEquiv (ε ε' : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
     (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ)
     (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε' a = ((u a : kˣ) : k) * ε a) :
@@ -378,9 +385,8 @@ theorem preprojectiveAlgebraEquivGaugedOne_preprojectiveMk (x : pathAlgebra k (S
   rw [preprojectiveAlgebraEquivGaugedOne, preprojectiveMk_apply, Ideal.quotientEquivAlgOfEq_mk,
     gaugedPreprojectiveMk_apply]
 
-/-- **Every unit-valued gauge presents the preprojective algebra.** In particular a labelling by
-signs, that is a choice of orientation of each edge of the doubled quiver, presents `Π_k(Q)` for
-every choice. -/
+/-- **Every unit-valued gauge presents the preprojective algebra.** In particular a labelling of
+the arrows of `Q` by signs presents `Π_k(Q)` for every choice of signs. -/
 noncomputable def preprojectiveAlgebraEquivGauged (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
     (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ) (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ((u a : kˣ) : k)) :
     preprojectiveAlgebra k Q ≃ₐ[k] gaugedPreprojectiveAlgebra k ε :=
