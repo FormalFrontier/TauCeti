@@ -63,18 +63,15 @@ theorem squarefree_prod_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscrimi
     (heven : ∀ i ∈ S, ∀ j ∈ S, IsEvenPrimeDiscriminant (D i) →
       IsEvenPrimeDiscriminant (D j) → D i = D j) :
     Squarefree (∏ i ∈ S, primeDiscriminantRadicand (D i)) := by
-  apply Finset.squarefree_prod_of_pairwise_isCoprime
-  · intro i hi j hj hij
-    apply (isCoprime_primeDiscriminantRadicand (hD i hi) (hD j hj)
-      (fun h => hij (hinj hi hj h)) _).isRelPrime
-    rintro (⟨hi8, hj8⟩ | ⟨hi8, hj8⟩)
-    · exact hij (hinj hi hj (heven i hi j hj
-        (hi8.symm ▸ isEvenPrimeDiscriminant_eight)
-        (hj8.symm ▸ isEvenPrimeDiscriminant_neg_eight)))
-    · exact hij (hinj hi hj (heven i hi j hj
-        (hi8.symm ▸ isEvenPrimeDiscriminant_neg_eight)
-        (hj8.symm ▸ isEvenPrimeDiscriminant_eight)))
-  · exact fun i hi => squarefree_primeDiscriminantRadicand (hD i hi)
+  refine squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime hD fun i hi j hj hij => ?_
+  refine isCoprime_primeDiscriminantRadicand (hD i hi) (hD j hj) (fun h => hij (hinj hi hj h)) ?_
+  rintro (⟨hi8, hj8⟩ | ⟨hi8, hj8⟩)
+  · exact hij (hinj hi hj (heven i hi j hj
+      (hi8.symm ▸ isEvenPrimeDiscriminant_eight)
+      (hj8.symm ▸ isEvenPrimeDiscriminant_neg_eight)))
+  · exact hij (hinj hi hj (heven i hi j hj
+      (hi8.symm ▸ isEvenPrimeDiscriminant_neg_eight)
+      (hj8.symm ▸ isEvenPrimeDiscriminant_eight)))
 
 /-- **Fundamental discriminant of a subset product of prime-discriminant radicands.** For a
 distinct family of prime discriminants with at most one even member,
