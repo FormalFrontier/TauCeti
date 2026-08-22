@@ -22,7 +22,8 @@ the exact set of rates at which an exponential moment exists, and the moment- an
 cumulant-generating functions on that set. It also identifies the law of a positive rescaling: only
 the rate moves, and it moves by the scaling factor.
 
-Every computation goes through the same two reductions. The measure `gammaMeasure a r` is
+The moment and transform computations go through the same two reductions. The measure
+`gammaMeasure a r` is
 `volume.withDensity` of a density carried by `[0, ∞)`, so an integral against it is a set integral
 of the weighted integrand over `(0, ∞)`, and integrability against it is integrability of that same
 weighted integrand over `(0, ∞)`. Raw moments and exponential moments then both reduce to Euler's
