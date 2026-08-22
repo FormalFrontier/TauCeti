@@ -33,7 +33,7 @@ representation: the closed formulas are used as they stand, so only the continui
 
 Nothing here needs a group, a measure, or compactness, so the statements are made over a
 topological monoid; the consumer is
-`TauCeti/RepresentationTheory/Compact/FrobeniusSchur.lean`, where continuity supplies the
+`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/Basic.lean`, where continuity supplies the
 integrability of the two square characters against Haar measure.
 
 The scalars are a complete nontrivially normed field `𝕜` with `2 ≠ 0` — exactly what the trace
