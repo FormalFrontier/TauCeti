@@ -214,9 +214,10 @@ theorem isCharacterTableSpec :
   exists_degree i := by
     let i' := (finCongr d.numClasses_eq_card_conjClasses).symm i
     refine ⟨degree i', h.degree_pos i', ?_, ?_⟩
-    · rw [← d.classOf_index (1 : G), ← d.equivConjClasses_apply (d.index 1)]
-      simpa [complexTableOfInteger, i'] using
-        congrArg ((fun z : ℤ => (z : ℂ))) (h.table_index_one i')
+    · rw [← d.classOf_index (1 : G)]
+      rw [← (finCongr d.numClasses_eq_card_conjClasses).apply_symm_apply i,
+        d.complexTableOfInteger_apply_classOf]
+      exact_mod_cast h.table_index_one i'
     · simpa only [Nat.card_eq_fintype_card] using h.degree_dvd i'
   sum_degree_sq := by
     rw [@Nat.card_eq_fintype_card G]
