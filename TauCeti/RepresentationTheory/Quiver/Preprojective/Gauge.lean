@@ -62,13 +62,12 @@ negates under reversal. The `-` sign in `ρ_ε` is exactly the antisymmetry of t
 ## Implementation notes
 
 Reversing the orientation of an arrow of `Q` is here a change of the labelling `ε`, not a change of
-the quiver: the doubled quiver, and therefore the ambient path algebra, is the same for `Q` and for
-any reorientation of its arrows, and only the sign attached to each oriented edge moves.
-Comparing the algebras of two *different* quivers with a common underlying graph additionally needs
-the path-algebra isomorphism induced by an isomorphism of doubled quivers, which does not exist in
-this repository and is not built here. So the cross-quiver form of orientation independence, which
-quantifies over two quivers with a common underlying graph, is deliberately left unstated by this
-file; every statement below is about the labellings of one fixed quiver.
+the quiver: the results below establish gauge independence for the labellings of one fixed quiver
+and hence in one fixed doubled path algebra. The doubled quivers attached to two reorientations of
+a common underlying graph are canonically isomorphic, but comparing their algebras additionally
+needs the induced path-algebra isomorphism, which does not exist in this repository and is not
+built here. So the cross-quiver form of orientation independence, which quantifies over two quivers
+with a common underlying graph, is deliberately left unstated by this file.
 
 ## References
 
@@ -101,7 +100,8 @@ variable (k : Type w) {Q : Type u} [Ring k] [Quiver.{v + 1} Q] [Fintype Q]
 The subtraction in `ρ_ε` is the antisymmetry of `ε`. -/
 theorem gaugedPreprojectiveRelator_eq_sum_backtracks
     (ε : ∀ ⦃x y : Symmetrify Q⦄, (x ⟶ y) → k)
-    (hε : ∀ ⦃x y : Symmetrify Q⦄ (b : x ⟶ y), ε (Quiver.reverse b) = -ε b) :
+    (hε : ∀ ⦃i j : Q⦄ (a : i ⟶ j),
+      ε (Quiver.reverse (Symmetrify.of.map a)) = -ε (Symmetrify.of.map a)) :
     gaugedPreprojectiveRelator k (fun _ _ a => ε (Symmetrify.of.map a))
       = ∑ i : Q, ∑ j : Q, ∑ a : (i ⟶ j),
           (ε (Symmetrify.of.map a) • headBacktrackElem k a
@@ -157,23 +157,29 @@ section RescaleBacktracks
 
 variable [CommSemiring k] [Finite Q]
 
+private theorem rescale_doubledLabelling_ofArrow_mul_ofArrow
+    (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) {x y z : Symmetrify Q} (a : y ⟶ z) (b : x ⟶ y) :
+    rescale (doubledLabelling k u) (ofArrow a * ofArrow b)
+      = (doubledLabelling k u a * doubledLabelling k u b) • (ofArrow a * ofArrow b) := by
+  rw [map_mul, rescale_ofArrow, rescale_ofArrow, smul_mul_smul]
+
 /-- Rescaling by a gauge labelling multiplies the head backtrack of `a` by the label of `a`. -/
 @[simp]
 theorem rescale_doubledLabelling_headBacktrackElem (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) {i j : Q}
     (a : i ⟶ j) :
     rescale (doubledLabelling k u) (headBacktrackElem k a) = u a • headBacktrackElem k a := by
-  rw [← ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem, map_mul, rescale_ofArrow, rescale_ofArrow,
-    doubledLabelling_of, doubledLabelling_reverse_of, one_smul, smul_mul_assoc,
-    ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem]
+  rw [← ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem,
+    rescale_doubledLabelling_ofArrow_mul_ofArrow, doubledLabelling_of,
+    doubledLabelling_reverse_of, mul_one, ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem]
 
 /-- Rescaling by a gauge labelling multiplies the tail backtrack of `a` by the label of `a`. -/
 @[simp]
 theorem rescale_doubledLabelling_tailBacktrackElem (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) {i j : Q}
     (a : i ⟶ j) :
     rescale (doubledLabelling k u) (tailBacktrackElem k a) = u a • tailBacktrackElem k a := by
-  rw [← ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem, map_mul, rescale_ofArrow, rescale_ofArrow,
-    doubledLabelling_of, doubledLabelling_reverse_of, one_smul, mul_smul_comm,
-    ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem]
+  rw [← ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem,
+    rescale_doubledLabelling_ofArrow_mul_ofArrow, doubledLabelling_of,
+    doubledLabelling_reverse_of, one_mul, ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem]
 
 end RescaleBacktracks
 
@@ -280,12 +286,45 @@ theorem gaugedPreprojectiveAlgebraEquiv_gaugedPreprojectiveMk (ε ε' : ∀ ⦃i
   rw [gaugedPreprojectiveAlgebraEquiv, ← AlgEquiv.coe_toAlgHom, AlgEquiv.toAlgHom_ofAlgHom,
     gaugedPreprojectiveLift_gaugedPreprojectiveMk, AlgHom.comp_apply]
 
+/-- The inverse gauge isomorphism is rescaling by the pointwise inverse units. -/
+@[simp]
+theorem gaugedPreprojectiveAlgebraEquiv_symm_gaugedPreprojectiveMk
+    (ε ε' : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
+    (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ)
+    (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε' a = ((u a : kˣ) : k) * ε a)
+    (x : pathAlgebra k (Symmetrify Q)) :
+    (gaugedPreprojectiveAlgebraEquiv k ε ε' u h).symm (gaugedPreprojectiveMk k ε' x)
+      = gaugedPreprojectiveMk k ε
+          (rescale (doubledLabelling k fun _ _ a => (((u a)⁻¹ : kˣ) : k)) x) := by
+  apply (gaugedPreprojectiveAlgebraEquiv k ε ε' u h).injective
+  rw [AlgEquiv.apply_symm_apply, gaugedPreprojectiveAlgebraEquiv_gaugedPreprojectiveMk,
+    rescale_doubledLabelling_rescale_doubledLabelling k _ _
+      (fun _ _ a => Units.mul_inv (u a))]
+
+/-- The canonical identification of the original presentation with the constant gauge `1`. -/
+noncomputable def preprojectiveAlgebraEquivGaugedOne :
+    preprojectiveAlgebra k Q ≃ₐ[k]
+      gaugedPreprojectiveAlgebra (Q := Q) k (fun _ _ _ => 1) :=
+  Ideal.quotientEquivAlgOfEq k <| congrArg TwoSidedIdeal.asIdeal <| by
+    rw [preprojectiveIdeal_eq_span, gaugedPreprojectiveIdeal_eq_span,
+      gaugedPreprojectiveRelator_one]
+
+/-- The constant-gauge identification preserves the quotient generators. -/
+@[simp]
+theorem preprojectiveAlgebraEquivGaugedOne_preprojectiveMk
+    (x : pathAlgebra k (Symmetrify Q)) :
+    preprojectiveAlgebraEquivGaugedOne (Q := Q) k (preprojectiveMk k Q x)
+      = gaugedPreprojectiveMk k (fun _ _ _ => 1) x := by
+  rw [preprojectiveAlgebraEquivGaugedOne, preprojectiveMk_apply,
+    gaugedPreprojectiveMk_apply, Ideal.quotientEquivAlgOfEq_mk]
+
 /-- **Every unit-valued gauge presents the preprojective algebra.** In particular a labelling of
 the arrows of `Q` by signs presents `Π_k(Q)` for every choice of signs. -/
 noncomputable def preprojectiveAlgebraEquivGauged (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
     (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ) (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ((u a : kˣ) : k)) :
     preprojectiveAlgebra k Q ≃ₐ[k] gaugedPreprojectiveAlgebra k ε :=
-  gaugedPreprojectiveAlgebraEquiv k (fun _ _ _ => 1) ε u fun _ _ a => by rw [h a, mul_one]
+  (preprojectiveAlgebraEquivGaugedOne (Q := Q) k).trans <|
+    gaugedPreprojectiveAlgebraEquiv k (fun _ _ _ => 1) ε u fun _ _ a => by rw [h a, mul_one]
 
 /-- The isomorphism onto a unit-valued gauge, computed on the class of a basis path. -/
 @[simp]
@@ -295,9 +334,24 @@ theorem preprojectiveAlgebraEquivGauged_preprojectiveMk (ε : ∀ ⦃i j : Q⦄,
     preprojectiveAlgebraEquivGauged k ε u h (preprojectiveMk k Q x)
       = gaugedPreprojectiveMk k ε
           (rescale (doubledLabelling k fun _ _ a => ((u a : kˣ) : k)) x) := by
-  rw [preprojectiveAlgebraEquivGauged, preprojectiveMk_apply,
-    ← gaugedPreprojectiveMk_apply,
+  rw [preprojectiveAlgebraEquivGauged, AlgEquiv.trans_apply,
+    preprojectiveAlgebraEquivGaugedOne_preprojectiveMk,
     gaugedPreprojectiveAlgebraEquiv_gaugedPreprojectiveMk]
+
+/-- The inverse isomorphism from a unit-valued gauge, computed on quotient generators. -/
+@[simp]
+theorem preprojectiveAlgebraEquivGauged_symm_gaugedPreprojectiveMk
+    (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
+    (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ)
+    (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ((u a : kˣ) : k))
+    (x : pathAlgebra k (Symmetrify Q)) :
+    (preprojectiveAlgebraEquivGauged k ε u h).symm (gaugedPreprojectiveMk k ε x)
+      = preprojectiveMk k Q
+          (rescale (doubledLabelling k fun _ _ a => (((u a)⁻¹ : kˣ) : k)) x) := by
+  apply (preprojectiveAlgebraEquivGauged k ε u h).injective
+  rw [AlgEquiv.apply_symm_apply, preprojectiveAlgebraEquivGauged_preprojectiveMk,
+    rescale_doubledLabelling_rescale_doubledLabelling k _ _
+      (fun _ _ a => Units.mul_inv (u a))]
 
 end Independence
 
