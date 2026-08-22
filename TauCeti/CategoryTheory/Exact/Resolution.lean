@@ -7,8 +7,8 @@ module
 
 public import TauCeti.CategoryTheory.Exact.Biproduct
 public import TauCeti.CategoryTheory.Exact.Split
+public import TauCeti.CategoryTheory.ObjectProperty
 public import Mathlib.CategoryTheory.ObjectProperty.ContainsZero
-public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
 
 /-!
 # Finite resolutions in an exact category
@@ -69,6 +69,11 @@ conflations are stored by their two maps rather than as a `CategoryTheory.ShortC
 the resolved object is a genuine index of the family and `FiniteResolution E P X` never needs an
 equality of objects to be matched on.
 
+Every operation is sealed behind its `@[simp]` equations, with one exception:
+`TauCeti.ExactStructure.FiniteResolution.syzygy` is the type index of
+`TauCeti.ExactStructure.FiniteResolution.truncate`, so the statements of the `truncate` equations
+only typecheck when its body is exposed.
+
 The closure hypotheses on `P` are Mathlib's object-property type classes, and are assumed only
 where they are used: repleteness for `ofIso`, `CategoryTheory.ObjectProperty.ContainsZero` for
 padding, and closure under binary products for direct sums, the last of these reaching
@@ -92,31 +97,11 @@ open CategoryTheory CategoryTheory.Limits ZeroObject
 
 universe v u
 
-/-- An object property closed under binary products in a preadditive category is closed under
-binary biproducts. -/
-theorem prop_biprod_of_binaryProducts {C : Type u} [Category.{v} C] [Preadditive C]
-    (P : ObjectProperty C) [P.IsClosedUnderBinaryProducts] {X Y : C} [HasBinaryBiproduct X Y]
-    (hX : P X) (hY : P Y) : P (X ⊞ Y) :=
-  P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit X Y) hX hY
-
 variable {C : Type u} [Category.{v} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
 
 namespace ExactStructure
 
 variable (E : ExactStructure C)
-
-/-- The trivial conflation `0 ↪ X ↠ X`, split by the identity. -/
-theorem conflation_zero_id (X : C) :
-    E.Conflation (ShortComplex.mk (0 : (0 : C) ⟶ X) (𝟙 X) (by simp)) :=
-  E.conflation_of_splitting { r := 0, s := 𝟙 X, f_r := (isZero_zero C).eq_of_src _ _ }
-
-/-- Composing the deflation of a conflation with an isomorphism gives a conflation. -/
-theorem conflation_comp_iso {K Q X Y : C} {i : K ⟶ Q} {p : Q ⟶ X} {zero : i ≫ p = 0}
-    (hp : E.Conflation (ShortComplex.mk i p zero)) (e : X ≅ Y)
-    {zero' : i ≫ (p ≫ e.hom) = 0} :
-    E.Conflation (ShortComplex.mk i (p ≫ e.hom) zero') :=
-  E.conflation_of_iso (S := ShortComplex.mk i p zero)
-    (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simp)) hp
 
 /-- A finite `P`-resolution of an object `X` of an exact category: a finite chain of conflations
 
@@ -140,15 +125,15 @@ namespace FiniteResolution
 variable {E} {P : ObjectProperty C}
 
 /-- The length of a resolution: the number of conflations in its chain. -/
-@[expose] def length : ∀ {X : C}, FiniteResolution E P X → ℕ
+def length : ∀ {X : C}, FiniteResolution E P X → ℕ
   | _, .base _ => 0
   | _, .step _ _ _ _ _ r => r.length + 1
 
-@[simp] theorem length_base {X : C} (hX : P X) : (base (E := E) hX).length = 0 := rfl
+@[simp] theorem length_base {X : C} (hX : P X) : (base (E := E) hX).length = 0 := (rfl)
 
 @[simp] theorem length_step {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X) (zero : i ≫ p = 0)
     (hp : E.Conflation (ShortComplex.mk i p zero)) (r : FiniteResolution E P K) :
-    (step hQ i p zero hp r).length = r.length + 1 := rfl
+    (step hQ i p zero hp r).length = r.length + 1 := (rfl)
 
 /-- The `n`-th syzygy of a resolution of `X`: the object resolved by what is left after
 discarding the first `n` conflations. It is `X` itself for `n = 0`, and it stabilises at the
@@ -171,7 +156,7 @@ last syzygy once `n` reaches the length. -/
 
 /-- The truncation of a resolution below degree `n`: the chain that remains after discarding the
 first `n` conflations, a resolution of the `n`-th syzygy. -/
-@[expose] def truncate : ∀ {X : C} (r : FiniteResolution E P X) (n : ℕ),
+def truncate : ∀ {X : C} (r : FiniteResolution E P X) (n : ℕ),
     FiniteResolution E P (r.syzygy n)
   | _, .base hX, _ => .base hX
   | _, .step hQ i p zero hp r, 0 => .step hQ i p zero hp r
@@ -184,12 +169,12 @@ first `n` conflations, a resolution of the `n`-th syzygy. -/
 @[simp] theorem truncate_step_zero {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (r : FiniteResolution E P K) :
-    (step hQ i p zero hp r).truncate 0 = step hQ i p zero hp r := rfl
+    (step hQ i p zero hp r).truncate 0 = step hQ i p zero hp r := (rfl)
 
 @[simp] theorem truncate_step_succ {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (r : FiniteResolution E P K) (n : ℕ) :
-    (step hQ i p zero hp r).truncate (n + 1) = r.truncate n := rfl
+    (step hQ i p zero hp r).truncate (n + 1) = r.truncate n := (rfl)
 
 @[simp] theorem length_truncate {X : C} (r : FiniteResolution E P X) (n : ℕ) :
     (r.truncate n).length = r.length - n := by
@@ -219,7 +204,7 @@ section Iso
 variable [P.IsClosedUnderIsomorphisms]
 
 /-- Transport a resolution along an isomorphism of the resolved object. -/
-@[expose] def ofIso : ∀ {X Y : C}, (X ≅ Y) → FiniteResolution E P X → FiniteResolution E P Y
+def ofIso : ∀ {X Y : C}, (X ≅ Y) → FiniteResolution E P X → FiniteResolution E P Y
   | _, _, e, .base hX => .base (P.prop_of_iso e hX)
   | _, _, e, .step hQ i p zero hp r =>
       .step hQ i (p ≫ e.hom) (by rw [← Category.assoc, zero, zero_comp])
@@ -227,6 +212,14 @@ variable [P.IsClosedUnderIsomorphisms]
 
 @[simp] theorem ofIso_base {X Y : C} (e : X ≅ Y) (hX : P X) :
     ofIso (E := E) e (base hX) = base (P.prop_of_iso e hX) := by
+  simp [ofIso]
+
+@[simp] theorem ofIso_step {K Q X Y : C} (e : X ≅ Y) (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
+    (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
+    (r : FiniteResolution E P K) :
+    ofIso e (step hQ i p zero hp r) =
+      step hQ i (p ≫ e.hom) (by rw [← Category.assoc, zero, zero_comp])
+        (E.conflation_comp_iso hp e) r := by
   simp [ofIso]
 
 @[simp] theorem length_ofIso {X Y : C} (e : X ≅ Y) (r : FiniteResolution E P X) :
@@ -241,11 +234,22 @@ variable [P.IsClosedUnderIsomorphisms] [P.ContainsZero]
 
 /-- Lengthen a resolution by one, adjoining the trivial conflation `0 ↪ Kₙ ↠ Kₙ` at its last
 syzygy. -/
-@[expose] noncomputable def zeroPad :
+noncomputable def zeroPad :
     ∀ {X : C}, FiniteResolution E P X → FiniteResolution E P X
   | X, .base hX =>
       .step hX (0 : (0 : C) ⟶ X) (𝟙 X) (by simp) (E.conflation_zero_id X) (.base P.prop_zero)
   | _, .step hQ i p zero hp r => .step hQ i p zero hp r.zeroPad
+
+@[simp] theorem zeroPad_base {X : C} (hX : P X) :
+    (base (E := E) hX).zeroPad =
+      step hX (0 : (0 : C) ⟶ X) (𝟙 X) (by simp) (E.conflation_zero_id X)
+        (base P.prop_zero) := by
+  simp [zeroPad]
+
+@[simp] theorem zeroPad_step {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X) (zero : i ≫ p = 0)
+    (hp : E.Conflation (ShortComplex.mk i p zero)) (r : FiniteResolution E P K) :
+    (step hQ i p zero hp r).zeroPad = step hQ i p zero hp r.zeroPad := by
+  simp [zeroPad]
 
 @[simp] theorem length_zeroPad {X : C} (r : FiniteResolution E P X) :
     r.zeroPad.length = r.length + 1 := by
@@ -254,12 +258,16 @@ syzygy. -/
   | step hQ i p zero hp r ih => simpa [zeroPad] using ih
 
 /-- Lengthen a resolution by `n`, adjoining `n` trivial conflations at its last syzygy. -/
-@[expose] noncomputable def pad {X : C} (r : FiniteResolution E P X) :
+noncomputable def pad {X : C} (r : FiniteResolution E P X) :
     ℕ → FiniteResolution E P X
   | 0 => r
   | n + 1 => (r.pad n).zeroPad
 
 @[simp] theorem pad_zero {X : C} (r : FiniteResolution E P X) : r.pad 0 = r := by
+  simp [pad]
+
+@[simp] theorem pad_succ {X : C} (r : FiniteResolution E P X) (n : ℕ) :
+    r.pad (n + 1) = (r.pad n).zeroPad := by
   simp [pad]
 
 @[simp] theorem length_pad {X : C} (r : FiniteResolution E P X) (n : ℕ) :
@@ -276,7 +284,7 @@ variable [P.IsClosedUnderIsomorphisms] [P.IsClosedUnderBinaryProducts]
 
 /-- The componentwise direct sum of two finite `P`-resolutions. Where one chain has run out, it
 is padded against the other by the trivial conflation on its last syzygy. -/
-@[expose] noncomputable def biprod :
+noncomputable def biprod :
     ∀ {X Y : C}, FiniteResolution E P X → FiniteResolution E P Y →
       FiniteResolution E P (X ⊞ Y)
   | _, _, .base hX, .base hY => .base (prop_biprod_of_binaryProducts P hX hY)
@@ -295,6 +303,42 @@ is padded against the other by the trivial conflation on its last syzygy. -/
         (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s)
+
+@[simp] theorem biprod_base_base {X Y : C} (hX : P X) (hY : P Y) :
+    (base (E := E) hX).biprod (base hY) = base (prop_biprod_of_binaryProducts P hX hY) := by
+  simp [biprod]
+
+@[simp] theorem biprod_base_step {X K Q Y : C} (hX : P X) (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ Y)
+    (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
+    (s : FiniteResolution E P K) :
+    (base (E := E) hX).biprod (step hQ i p zero hp s) =
+      step (prop_biprod_of_binaryProducts P hX hQ) (Limits.biprod.map (0 : (0 : C) ⟶ X) i)
+        (Limits.biprod.map (𝟙 X) p) (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
+        (E.conflation_biprod (E.conflation_zero_id X) hp)
+        (s.ofIso (isoZeroBiprod (isZero_zero C))) := by
+  simp [biprod]
+
+@[simp] theorem biprod_step_base {K Q X Y : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
+    (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
+    (r : FiniteResolution E P K) (hY : P Y) :
+    (step hQ i p zero hp r).biprod (base hY) =
+      step (prop_biprod_of_binaryProducts P hQ hY) (Limits.biprod.map i (0 : (0 : C) ⟶ Y))
+        (Limits.biprod.map p (𝟙 Y)) (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
+        (E.conflation_biprod hp (E.conflation_zero_id Y))
+        (r.ofIso (isoBiprodZero (isZero_zero C))) := by
+  simp [biprod]
+
+@[simp] theorem biprod_step_step {K Q X K' Q' Y : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
+    (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
+    (r : FiniteResolution E P K) (hQ' : P Q') (i' : K' ⟶ Q') (p' : Q' ⟶ Y)
+    (zero' : i' ≫ p' = 0) (hp' : E.Conflation (ShortComplex.mk i' p' zero'))
+    (s : FiniteResolution E P K') :
+    (step hQ i p zero hp r).biprod (step hQ' i' p' zero' hp' s) =
+      step (prop_biprod_of_binaryProducts P hQ hQ') (Limits.biprod.map i i')
+        (Limits.biprod.map p p')
+        (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
+        (E.conflation_biprod hp hp') (r.biprod s) := by
+  simp [biprod]
 
 @[simp] theorem length_biprod {X Y : C} (r : FiniteResolution E P X)
     (s : FiniteResolution E P Y) : (r.biprod s).length = max r.length s.length := by

@@ -7,16 +7,21 @@ module
 
 public import Mathlib.CategoryTheory.Equivalence
 public import Mathlib.CategoryTheory.ObjectProperty.ClosedUnderIsomorphisms
+public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
+public import Mathlib.CategoryTheory.Preadditive.Biproducts
 
 /-!
-# Object properties and equivalences
+# General lemmas on object properties
 
-This file contains general lemmas about transporting object properties along equivalences.
+This file contains general lemmas about object properties: transporting them along equivalences,
+and the closure properties they inherit in a preadditive category.
 
 ## Main declarations
 
 * `CategoryTheory.ObjectProperty.inverseImage_functor_inverseImage_inverse`: pulling an
   isomorphism-invariant property backward along both functors of an equivalence recovers it.
+* `TauCeti.prop_biprod_of_binaryProducts`: in a preadditive category, closure under binary
+  products is closure under binary biproducts.
 -/
 
 public section
@@ -39,3 +44,16 @@ theorem inverseImage_functor_inverseImage_inverse
 end ObjectProperty
 
 end CategoryTheory
+
+namespace TauCeti
+
+open CategoryTheory CategoryTheory.Limits
+
+/-- An object property closed under binary products in a preadditive category is closed under
+binary biproducts. -/
+theorem prop_biprod_of_binaryProducts {C : Type u₁} [Category.{v₁} C] [Preadditive C]
+    (P : ObjectProperty C) [P.IsClosedUnderBinaryProducts] {X Y : C} [HasBinaryBiproduct X Y]
+    (hX : P X) (hY : P Y) : P (X ⊞ Y) :=
+  P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit X Y) hX hY
+
+end TauCeti

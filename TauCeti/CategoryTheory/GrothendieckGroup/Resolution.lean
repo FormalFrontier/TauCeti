@@ -39,8 +39,10 @@ and is not proved here.
 * `TauCeti.ExactStructure.FiniteResolution.eulerClass_eq_of`: the Euler class of a resolution of
   `X` is the class of `X`; `TauCeti.ExactStructure.FiniteResolution.eulerClass_eq_eulerClass` is
   the resulting independence of the resolution.
-* `TauCeti.ExactK0.closure_prop_eq_top`: if every object admits a finite `P`-resolution, the
-  classes of the objects satisfying `P` generate exact `K₀`.
+* `TauCeti.ExactK0.mem_propClasses_iff`: membership in the generator set `propClasses E P` is
+  being the class of an object satisfying `P`.
+* `TauCeti.ExactK0.closure_propClasses_eq_top`: if every object admits a finite `P`-resolution,
+  the classes of the objects satisfying `P` generate exact `K₀`.
 
 ## References
 
@@ -64,18 +66,18 @@ namespace ExactStructure.FiniteResolution
 
 /-- The Euler class of a finite `P`-resolution: the alternating sum of the classes of its
 resolving terms, ending with the class of its last syzygy. -/
-@[expose] noncomputable def eulerClass :
+noncomputable def eulerClass :
     ∀ {X : C}, E.FiniteResolution P X → ExactK0 E
   | X, .base _ => ExactK0.of X
   | _, .step (Q := Q) _ _ _ _ _ r => ExactK0.of Q - r.eulerClass
 
 @[simp] theorem eulerClass_base {X : C} (hX : P X) :
-    (base (E := E) hX).eulerClass = ExactK0.of X := rfl
+    (base (E := E) hX).eulerClass = ExactK0.of X := (rfl)
 
 @[simp] theorem eulerClass_step {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (r : E.FiniteResolution P K) :
-    (step hQ i p zero hp r).eulerClass = ExactK0.of Q - r.eulerClass := rfl
+    (step hQ i p zero hp r).eulerClass = ExactK0.of Q - r.eulerClass := (rfl)
 
 /-- **The Euler class of a resolution of `X` is the class of `X`.** The conflation relation
 telescopes the alternating sum. -/
@@ -117,6 +119,12 @@ namespace ExactK0
 variable (E P) in
 /-- The classes of the objects satisfying `P`, as a subset of exact `K₀`. -/
 def propClasses : Set (ExactK0 E) := (ExactK0.of (E := E)) '' {X : C | P X}
+
+/-- Membership in the generator set `propClasses E P`: an element of exact `K₀` lies in it
+exactly when it is the class of an object satisfying `P`. -/
+@[simp] theorem mem_propClasses_iff {x : ExactK0 E} :
+    x ∈ propClasses E P ↔ ∃ Q : C, P Q ∧ (ExactK0.of Q : ExactK0 E) = x := by
+  simp [propClasses]
 
 /-- The class of an object satisfying `P` is one of the generators `propClasses E P`. -/
 theorem of_mem_propClasses {Q : C} (hQ : P Q) : (ExactK0.of Q : ExactK0 E) ∈ propClasses E P :=
