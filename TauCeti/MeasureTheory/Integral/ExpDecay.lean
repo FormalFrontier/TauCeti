@@ -12,7 +12,7 @@ public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 # Exponential integrals on a half-line
 
 This file records integrability and evaluation of exponential integrands on a right half-line:
-powers multiplied by an exponentially decaying factor, and the exact rate at which a bare
+natural powers multiplied by an exponentially decaying factor, and the exact rate at which a bare
 exponential is integrable.
 
 Mathlib supplies the *sufficient* direction of that last one, `integrableOn_exp_mul_Ioi`, for a
@@ -21,8 +21,7 @@ describe an exponential-moment domain as an exact set rather than an inclusion.
 
 ## Main results
 
-* `TauCeti.integrableOn_rpow_mul_exp_neg_mul_Ioi`: integrability on `(0, ∞)`, for a real power.
-* `TauCeti.integrableOn_pow_mul_exp_neg_mul_Ioi`: the same, for a natural power.
+* `TauCeti.integrableOn_pow_mul_exp_neg_mul_Ioi`: integrability on `(0, ∞)`.
 * `TauCeti.integral_pow_mul_exp_neg_mul_Ioi`: evaluation in terms of a factorial.
 * `TauCeti.integrableOn_exp_mul_Ioi_iff`: `exp (a * ·)` is integrable on `(c, ∞)` exactly when
   `a < 0`.
@@ -36,18 +35,13 @@ open MeasureTheory
 
 namespace TauCeti
 
-/-- Real powers above `-1` times an exponentially decaying factor are integrable on `(0, ∞)`. -/
-theorem integrableOn_rpow_mul_exp_neg_mul_Ioi {s b : ℝ} (hs : -1 < s) (hb : 0 < b) :
-    IntegrableOn (fun t : ℝ => t ^ s * Real.exp (-(b * t))) (Set.Ioi 0) := by
-  have h := integrableOn_rpow_mul_exp_neg_mul_rpow (p := (1 : ℝ)) (s := s) (b := b) hs one_pos hb
-  simpa only [Real.rpow_one, neg_mul] using h
-
 /-- Natural powers times an exponentially decaying factor are integrable on `(0, ∞)`. -/
 theorem integrableOn_pow_mul_exp_neg_mul_Ioi (n : ℕ) {b : ℝ} (hb : 0 < b) :
     IntegrableOn (fun t : ℝ => t ^ n * Real.exp (-(b * t))) (Set.Ioi 0) := by
-  have h := integrableOn_rpow_mul_exp_neg_mul_Ioi
-    (lt_of_lt_of_le (by norm_num) (Nat.cast_nonneg n) : (-1 : ℝ) < (n : ℝ)) hb
-  simpa only [Real.rpow_natCast] using h
+  have h := integrableOn_rpow_mul_exp_neg_mul_rpow
+    (p := (1 : ℝ)) (s := (n : ℝ)) (b := b)
+    (lt_of_lt_of_le (by norm_num) (Nat.cast_nonneg n)) one_pos hb
+  simpa only [Real.rpow_one, Real.rpow_natCast, neg_mul] using h
 
 /-- The integral of a natural power times an exponentially decaying factor on `(0, ∞)`. -/
 theorem integral_pow_mul_exp_neg_mul_Ioi (n : ℕ) {a : ℝ} (ha : 0 < a) :

@@ -163,8 +163,11 @@ theorem integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht 
   rw [integrable_gammaMeasure_iff ha hr]
   refine IntegrableOn.congr_fun ?_ (fun x _ ↦ (gammaWeight_mul_exp a r t x).symm)
     measurableSet_Ioi
-  exact (integrableOn_rpow_mul_exp_neg_mul_Ioi (by linarith : (-1 : ℝ) < a - 1)
-    (sub_pos.mpr ht)).const_mul _
+  have h : IntegrableOn (fun x : ℝ ↦ x ^ (a - 1) * exp (-((r - t) * x))) (Ioi 0) := by
+    simpa only [Real.rpow_one, neg_mul] using integrableOn_rpow_mul_exp_neg_mul_rpow
+      (p := (1 : ℝ)) (s := a - 1) (b := r - t)
+      (by linarith : (-1 : ℝ) < a - 1) one_pos (sub_pos.mpr ht)
+  exact h.const_mul _
 
 /-- At or above the rate of a gamma law, its exponential moments do not exist. -/
 theorem not_integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : r ≤ t) :
