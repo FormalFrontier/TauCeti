@@ -380,10 +380,6 @@ end IdealArithmeticFunction
 
 variable (K : Type*) [Field K] [NumberField K]
 
-private theorem finite_normFiber (n : ℕ) :
-    {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}.Finite :=
-  (Ideal.finite_setOfPred_absNorm_le₀ n).subset fun _ hI ↦ hI.le
-
 private noncomputable def normFiber (n : ℕ) : Finset ((Ideal (𝓞 K))⁰) :=
   (finite_normFiber K n).toFinset
 

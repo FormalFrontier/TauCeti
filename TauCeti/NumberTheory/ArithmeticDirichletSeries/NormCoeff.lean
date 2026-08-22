@@ -41,7 +41,8 @@ open scoped nonZeroDivisors NumberField
 
 variable (K : Type*) [Field K] [NumberField K]
 
-private theorem finite_normFiber (n : ℕ) :
+/-- The fibre of nonzero integral ideals with a fixed absolute norm is finite. -/
+theorem finite_normFiber (n : ℕ) :
     {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}.Finite := by
   exact (Ideal.finite_setOfPred_absNorm_eq n).preimage Subtype.val_injective.injOn
 
