@@ -25,7 +25,7 @@ integer is produced abstractly because the surgered curve `\tilde{\Lambda}` is n
 file builds it.
 
 The surgery is the obvious one. A parameter window `[l, u]` containing the crossing is chosen so
-that the curve sits on the circle `|z - s| = r` at both ends, `γ l = circleMap s r θ` and
+that the curve sits on the circle `|z - s| = |r|` at both ends, `γ l = circleMap s r θ` and
 `γ u = circleMap s r θ'`. The window is then deleted and replaced by the arc of that circle running
 from angle `θ` to angle `θ'` (`TauCeti.Contour.circleCap`), giving `exciseCrossing γ s r l u θ θ'`,
 a curve that agrees with `γ` outside the window. Each further property it has comes with its own
@@ -36,8 +36,8 @@ hypotheses:
   cap to `γ`;
 * it is again closed (`exciseCrossing_closed`) provided `γ a = γ b` and the window misses the two
   endpoints, `a < l` and `u < b`;
-* and — this is the point — it **avoids `s`** (`exciseCrossing_ne_center`) provided the radius is
-  nonzero, `r ≠ 0`, and `γ` itself meets `s` only strictly inside the window.
+* and — this is the point — it **avoids `s`** (`exciseCrossing_ne_center`) provided the signed
+  radial scale is nonzero, `r ≠ 0`, and `γ` itself meets `s` only strictly inside the window.
 
 Under all of these together its winding number about `s` is an integer.
 
@@ -46,13 +46,14 @@ What the surgery buys is an exact accounting of the crossing
 
 `n_s(γ) = n_s(\tilde{γ}) + (n_s(γ|[l,u]) - (θ' - θ) / 2π)`,
 
-the bracket being the winding number of the local loop `Γ` that runs along `γ` across the window and
-returns along the cap reversed. Since `n_s(\tilde{γ}) ∈ ℤ`, this says the generalized winding
-number of `γ` is an integer plus the crossing's own local contribution — HW Proposition 2.2 with the
-integer exhibited concretely, as the winding number of a curve that is actually built, rather than
-produced abstractly. `exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` is the
-purely existential reading of that identity; it asserts only that some integer works, the
-identification staying with the displayed decomposition above.
+under the endpoint conditions, the bracket is the winding number of the local loop `Γ` that runs
+along `γ` across the window and returns along the cap reversed. Since `n_s(\tilde{γ}) ∈ ℤ`, this
+says the generalized winding number of `γ` is an integer plus the crossing's own local contribution
+— HW Proposition 2.2 with the integer exhibited concretely, as the winding number of a curve that is
+actually built, rather than produced abstractly.
+`exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` is the purely existential
+reading of that identity; it asserts only that some integer works, the identification staying with
+the displayed decomposition above.
 
 What remains of HW Proposition 2.2 is the identification of the local contribution with the crossing
 angle `α_ℓ / 2π` for a general immersion. It is congruent to `α_ℓ / 2π` modulo `1` — that is exactly
@@ -62,7 +63,7 @@ once.
 
 ## Main definitions
 
-* `TauCeti.Contour.circleCap` — for a nondegenerate window `l ≠ u`, the arc of the circle of radius
+* `TauCeti.Contour.circleCap` — for a nondegenerate window `l ≠ u`, the arc with signed radial scale
   `r` about `s` sweeping from angle `θ` to angle `θ'`, parametrised affinely over `[l, u]`; when
   `l = u` the affine change of parameter degenerates and the arc is constantly `circleMap s r θ`.
 * `TauCeti.Contour.exciseCrossing` — the curve `γ` with the window `[l, u]` replaced by that cap.
@@ -112,9 +113,10 @@ variable {γ : ℝ → ℂ} {s : ℂ} {a b l u r θ θ' t : ℝ}
 
 /-! ### The circular cap -/
 
-/-- **The circular cap** of radius `r` about `s`: the arc of the circle `|z - s| = r` parametrised
-affinely over the window `[l, u]`, running from angle `θ` at `l` (`circleCap_left`) to angle `θ'`
-at `u` (`circleCap_right`) whenever the window is nondegenerate, `l ≠ u`. For `l = u` the affine
+/-- **The circular cap** with signed radial scale `r` about `s`: the arc of the circle
+`|z - s| = |r|` parametrised affinely over the window `[l, u]`, running from angle `θ` at `l`
+(`circleCap_left`) to angle `θ'` at `u` (`circleCap_right`) whenever the window is nondegenerate,
+`l ≠ u`. For `l = u` the affine
 change of parameter divides by zero, so the cap is constantly `circleMap s r θ` and does not reach
 angle `θ'`; every result below that needs the far endpoint assumes `l < u` or `l ≠ u`.
 
@@ -156,7 +158,7 @@ theorem circleCap_right (s : ℂ) (r : ℝ) (hlu : l ≠ u) (θ θ' : ℝ) :
 theorem contDiff_circleCap (s : ℂ) (r l u θ θ' : ℝ) : ContDiff ℝ 1 (circleCap s r l u θ θ') :=
   (contDiff_circleMap s r).comp ((contDiff_const.mul contDiff_id).add contDiff_const)
 
-/-- The cap misses the centre, its radius being nonzero. -/
+/-- The cap misses the centre when its signed radial scale is nonzero. -/
 theorem circleCap_ne_center (hr : r ≠ 0) : circleCap s r l u θ θ' t ≠ s :=
   circleMap_ne_center hr
 
@@ -189,16 +191,17 @@ theorem windingNumber_circleCap (hr : r ≠ 0) (hlu : l ≠ u) (θ θ' : ℝ) :
 /-! ### The excised curve -/
 
 /-- **The excised curve**: `γ` with the parameter window `[l, u]` deleted and replaced by the
-circular cap of radius `r` about `s` running from angle `θ` to angle `θ'`. This is the curve HW
-Proposition 2.2 calls `\tilde{\Lambda}`.
+circular cap with signed radial scale `r` about `s` running from angle `θ` to angle `θ'`. This is
+the curve HW Proposition 2.2 calls `\tilde{\Lambda}`.
 
 The definition itself assumes nothing; the properties that make it a surgery each need hypotheses.
 If `γ` is continuous (indeed piecewise `C¹`) on `[a, b]`, the window is nondegenerate and strictly
 inside, `a < l < u < b`, and the two endpoint conditions `γ l = circleMap s r θ` and
 `γ u = circleMap s r θ'` hold, then the replacement glues continuously and the result is again
 piecewise `C¹` (`IsPiecewiseC1On.exciseCrossing`). If moreover `γ a = γ b` it is again closed
-(`exciseCrossing_closed`). And if the radius is nonzero, `r ≠ 0`, and `γ` meets `s` only inside the
-open window, then the excised curve misses `s` altogether (`exciseCrossing_ne_center`). -/
+(`exciseCrossing_closed`). And if the signed radial scale is nonzero, `r ≠ 0`, and `γ` meets `s`
+only inside the open window, then the excised curve misses `s` altogether
+(`exciseCrossing_ne_center`). -/
 def exciseCrossing (γ : ℝ → ℂ) (s : ℂ) (r l u θ θ' : ℝ) : ℝ → ℂ :=
   fun t => if l ≤ t ∧ t ≤ u then circleCap s r l u θ θ' t else γ t
 
@@ -245,9 +248,9 @@ theorem exciseCrossing_closed (hal : a < l) (hub : u < b) (hclosed : γ a = γ b
   rw [exciseCrossing_of_notMem fun h => absurd h.1 (not_le.mpr hal),
     exciseCrossing_of_notMem fun h => absurd h.2 (not_le.mpr hub), hclosed]
 
-/-- **The excised curve avoids `s`.** Inside the window it runs along a circle of nonzero radius
-about `s`, and outside it agrees with `γ`, which by hypothesis meets `s` only strictly inside the
-window. -/
+/-- **The excised curve avoids `s`.** Inside the window it runs along a circle with nonzero signed
+radial scale about `s`, and outside it agrees with `γ`, which by hypothesis meets `s` only strictly
+inside the window. -/
 theorem exciseCrossing_ne_center (hr : r ≠ 0) (θ θ' : ℝ)
     (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s) :
     ∀ t ∈ Icc a b, exciseCrossing γ s r l u θ θ' t ≠ s := by
@@ -324,14 +327,16 @@ theorem IsPiecewiseC1On.exciseCrossing (hγ : IsPiecewiseC1On γ a b) (hal : a <
 /-! ### The winding number across an excised crossing -/
 
 /-- **Excising a crossing decomposes the winding number.** Let `γ` be piecewise `C¹` on `[a, b]`,
-let `[l, u]` be a window strictly inside it, choose a circle of radius `r ≠ 0` about `s` with
-angles `θ` and `θ'`, and suppose `γ` meets `s` only strictly inside that window. Then
+let `[l, u]` be a window strictly inside it, choose a circle with signed radial scale `r ≠ 0` about
+`s` with angles `θ` and `θ'`, and suppose `γ` meets `s` only strictly inside that window. Then
 
 `n_s(γ) = n_s(\tilde{γ}) + (n_s(γ|[l,u]) - (θ' - θ) / 2π)`,
 
-where `\tilde{γ}` is the excised curve. The bracket is the winding number of the local loop that
-runs along `γ` across the window and returns along the cap reversed — the `Γ_ℓ` of
-Hungerbühler–Wasem Proposition 2.2 — and the identity is exact, no smallness of the window is used.
+where `\tilde{γ}` is the excised curve. The bracket is the difference of the two window winding
+numbers. Under the endpoint conditions `γ l = circleMap s r θ` and
+`γ u = circleMap s r θ'`, it is the winding number of the local loop that runs along `γ` across the
+window and returns along the cap reversed — the `Γ_ℓ` of Hungerbühler–Wasem Proposition 2.2. The
+identity itself is exact, and no smallness of the window is used.
 
 No endpoint conditions relating `γ` to the cap are needed here because winding numbers are
 insensitive to endpoint values. Such conditions are required by `IsPiecewiseC1On.exciseCrossing`
