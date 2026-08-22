@@ -127,17 +127,34 @@ theorem discriminantSubgroup_d8PlusCarrier :
   rw [d8PlusCarrier,
     (checkerboardLattice 8).discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup]
 
-/-- The spinor glue carrier is even: its only nonzero glue class has quadratic value
-`8 / 8 = 0` in `ℚ/ℤ`. -/
-theorem isEven_d8PlusCarrier : IntermediateCarrier.IsEven d8PlusCarrier := by
+/-- The rank-eight spinor class has quadratic value zero. -/
+theorem d8SpinorClass_quadratic_eq_zero :
+    (checkerboardLattice 8).discriminantQuadraticMap (isEven_checkerboardLattice 8)
+      (checkerboardSpinorClass 8) = 0 := by
+  rw [discriminantQuadraticMap_checkerboardSpinorClass]
+  norm_num
+
+/-- The spinor glue subgroup is quadratic-isotropic. -/
+theorem d8SpinorSubgroup_isIsotropic :
+    ((checkerboardLattice 8).discriminantQuadraticModule
+      (isEven_checkerboardLattice 8)).IsIsotropic d8SpinorSubgroup := by
+  apply ((checkerboardLattice 8).isEven_intermediateCarrierOfDiscriminantSubgroup_iff
+    (isEven_checkerboardLattice 8) d8SpinorSubgroup).mp
   rw [(IntermediateCarrier.isEven_iff_forall_discriminantQuadraticMap_eq_zero
-    (isEven_checkerboardLattice 8)), discriminantSubgroup_d8PlusCarrier]
+    (isEven_checkerboardLattice 8)),
+    (checkerboardLattice 8).discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup]
   intro x hx
   rw [mem_d8SpinorSubgroup_iff] at hx
   rcases hx with rfl | rfl
   · exact map_zero _
-  · rw [discriminantQuadraticMap_checkerboardSpinorClass]
-    norm_num
+  · exact d8SpinorClass_quadratic_eq_zero
+
+/-- The spinor glue carrier is even: its only nonzero glue class has quadratic value
+`8 / 8 = 0` in `ℚ/ℤ`. -/
+theorem isEven_d8PlusCarrier : IntermediateCarrier.IsEven d8PlusCarrier := by
+  rw [d8PlusCarrier,
+    (checkerboardLattice 8).isEven_intermediateCarrierOfDiscriminantSubgroup_iff]
+  exact d8SpinorSubgroup_isIsotropic
 
 /-- The `D₈⁺` integral lattice, obtained from the even spinor glue carrier with the same standard
 dot product as the checkerboard lattice. -/
