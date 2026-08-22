@@ -426,6 +426,7 @@ theorem normCoeff_convolution (f g : IdealArithmeticFunction K) :
 
 /-- Regrouping transports iterated ideal convolution to powers under Mathlib's Dirichlet
 convolution. -/
+@[simp]
 theorem normCoeff_convolutionPow (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K (f.convolutionPow n) = normCoeff K f ^ n := by
   induction n with
