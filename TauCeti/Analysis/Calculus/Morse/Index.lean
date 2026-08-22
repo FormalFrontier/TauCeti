@@ -50,7 +50,7 @@ by the Morse complex in Lane M of the analytic Heegaard Floer roadmap.
 * `TauCeti.IsNondegenerateCriticalPoint.hessianQuadraticForm_posDef_iff_morseIndex_eq_zero`:
   index zero characterizes a positive-definite Hessian at a nondegenerate critical point.
 * `TauCeti.IsNondegenerateCriticalPoint.exists_hessianQuadraticForm_equivalent_weightedSumSquares`:
-  the Hessian has a diagonal `±1` normal form whose negative weights count the index.
+  the Hessian has a diagonal `±1` normal form.
 
 ## References
 
@@ -82,6 +82,16 @@ theorem hessianQuadraticForm_apply (f : E → ℝ) (x v : E) :
     hessianQuadraticForm f x v = fderiv ℝ (fderiv ℝ f) x v v := by
   simp only [hessianQuadraticForm, LinearMap.BilinMap.toQuadraticMap_apply,
     ContinuousLinearMap.toBilinForm_apply]
+
+/-- For a twice continuously differentiable function, the bilinear form associated to its
+Hessian quadratic form is its second derivative. -/
+theorem associated_hessianQuadraticForm (hf : ContDiffAt ℝ 2 f x) :
+    QuadraticMap.associated (R := ℝ) (hessianQuadraticForm f x) =
+      (fderiv ℝ (fderiv ℝ f) x).toBilinForm := by
+  let B := (fderiv ℝ (fderiv ℝ f) x).toBilinForm
+  have hsymm : B.IsSymm := ⟨hf.isSymmSndFDerivAt (by norm_num)⟩
+  simpa only [hessianQuadraticForm, B] using
+    QuadraticMap.associated_left_inverse (S := ℝ) hsymm.eq
 
 /-- The Hessian quadratic form depends only on the germ of the function at the point. -/
 theorem hessianQuadraticForm_congr_of_eventuallyEq (hfg : f =ᶠ[𝓝 x] g) :
@@ -130,12 +140,8 @@ theorem morseIndex_comp {φ : F → E} {b : F} (hf : ContDiffAt ℝ 2 f (φ b))
 /-- At a nondegenerate critical point, the Hessian quadratic form is nondegenerate. -/
 theorem IsNondegenerateCriticalPoint.hessianQuadraticForm_nondegenerate
     (h : IsNondegenerateCriticalPoint f x) : (hessianQuadraticForm f x).Nondegenerate := by
-  rw [QuadraticMap.nondegenerate_iff_radical_eq_bot]
-  let B := (fderiv ℝ (fderiv ℝ f) x).toBilinForm
-  have hsymm : B.IsSymm := by
-    refine ⟨?_⟩
-    exact h.contDiffAt.isSymmSndFDerivAt (by norm_num)
-  rw [hessianQuadraticForm, LinearMap.BilinForm.radical_toQuadraticMap B hsymm]
+  rw [QuadraticMap.nondegenerate_iff_radical_eq_bot,
+    QuadraticMap.radical_eq_ker_associated, associated_hessianQuadraticForm h.contDiffAt]
   exact LinearMap.separatingLeft_iff_ker_eq_bot.mp h.separatingLeft
 
 /-- The Morse index is at most the dimension of the ambient space. -/
@@ -176,26 +182,17 @@ theorem IsNondegenerateCriticalPoint.neg_hessianQuadraticForm_posDef_iff_morseIn
   omega
 
 /-- At a nondegenerate critical point, the Hessian quadratic form has a diagonal normal form with
-every weight equal to `-1` or `1`, and the negative weights are counted by the Morse index.  This
-is Sylvester's law of inertia applied to the Hessian. -/
+every weight equal to `-1` or `1`.  This is Sylvester's law of inertia applied to the Hessian. -/
 theorem IsNondegenerateCriticalPoint.exists_hessianQuadraticForm_equivalent_weightedSumSquares
     [FiniteDimensional ℝ E] (h : IsNondegenerateCriticalPoint f x) :
     ∃ w : Fin (Module.finrank ℝ E) → ℝ,
       (∀ i, w i = -1 ∨ w i = 1) ∧
         QuadraticMap.Equivalent (hessianQuadraticForm f x)
-          (QuadraticMap.weightedSumSquares ℝ w) ∧
-        morseIndex f x = {i | w i < 0}.ncard := by
-  let B := (fderiv ℝ (fderiv ℝ f) x).toBilinForm
-  have hsymm : B.IsSymm := by
-    refine ⟨?_⟩
-    exact h.contDiffAt.isSymmSndFDerivAt (by norm_num)
+          (QuadraticMap.weightedSumSquares ℝ w) := by
   have hassoc : (QuadraticMap.associated (R := ℝ) (hessianQuadraticForm f x)).SeparatingLeft := by
-    rw [hessianQuadraticForm, QuadraticMap.associated_left_inverse (S := ℝ) hsymm.eq]
+    rw [associated_hessianQuadraticForm h.contDiffAt]
     exact h.separatingLeft
-  obtain ⟨w, hw, hequiv⟩ :=
-    QuadraticForm.equivalent_one_neg_one_weighted_sum_squared
-      (hessianQuadraticForm f x) hassoc
-  refine ⟨w, hw, hequiv, ?_⟩
-  simpa only [morseIndex_def] using QuadraticForm.sigNeg_of_equiv_weightedSumSquares hequiv
+  exact QuadraticForm.equivalent_one_neg_one_weighted_sum_squared
+    (hessianQuadraticForm f x) hassoc
 
 end TauCeti
