@@ -65,14 +65,18 @@ open Function
 `TauCeti.DynkinType.rootLength` normalises the simple ones: `1` on the six short roots
 `± α₁, ± (α₁ + α₂), ± (2 α₁ + α₂)` and `3` on the six long ones
 `± α₂, ± (3 α₁ + α₂), ± (3 α₁ + 2 α₂)`. -/
-@[expose] def g2Length : Fin 12 → ℤ := ![1, 3, 1, 1, 3, 3, 1, 3, 1, 1, 3, 3]
+def g2Length : Fin 12 → ℤ := ![1, 3, 1, 1, 3, 3, 1, 3, 1, 1, 3, 3]
+
+/-- The explicit entries of the squared-length table. -/
+theorem g2Length_apply (i : Fin 12) :
+    g2Length i = ![1, 3, 1, 1, 3, 3, 1, 3, 1, 1, 3, 3] i := (rfl)
 
 /-- **The length table is the one forced by the simple lengths.** Writing `β = Σ cᵢ αᵢ` and
 `β∨ = Σ dᵢ αᵢ∨`, the identity `β∨ = 2 β / (β, β)` reads `ℓ(β) dᵢ = cᵢ ℓ(αᵢ)` once both sides are
 expanded on the simple coroots. -/
 theorem g2Length_mul_g2Coroot (k : Fin 12) (i : Fin 2) :
     g2Length k * g2Coroot k i = g2Coeff k i * G2.rootLength i := by
-  rw [rootLength_G2, g2Coroot_apply]
+  rw [rootLength_G2, g2Coroot_apply, g2Coeff_apply]
   decide +revert
 
 private lemma g2_exists_g2Coroot_ne_zero (k : Fin 12) : ∃ i, g2Coroot k i ≠ 0 := by

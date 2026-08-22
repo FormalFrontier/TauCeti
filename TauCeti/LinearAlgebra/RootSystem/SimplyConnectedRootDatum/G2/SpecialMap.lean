@@ -137,14 +137,14 @@ of the diagram.** -/
 prescribed exponent.** -/
 theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
     g2SpecialIsogenyMatrix *ᵥ g2Root i = g2Length i • g2Root (g2SpecialIsogenyIndex i) := by
-  rw [g2Root_apply, g2Root_apply]
+  rw [g2Root_apply, g2Root_apply, g2Length_apply]
   decide +revert
 
 /-- **The transposed special matrix satisfies the contragredient equation on every tabulated
 coroot.** -/
 theorem g2SpecialIsogenyMatrix_transpose_mulVec_g2Coroot (i : Fin 12) :
     g2SpecialIsogenyMatrixᵀ *ᵥ g2Coroot (g2SpecialIsogenyIndex i) = g2Length i • g2Coroot i := by
-  rw [g2Coroot_apply, g2Coroot_apply]
+  rw [g2Coroot_apply, g2Coroot_apply, g2Length_apply]
   decide +revert
 
 /-- **The special matrix carries every root of the pinned datum to its indexed image with the
@@ -183,11 +183,13 @@ determinant is `-3`, of absolute value the characteristic. -/
 /-- The exponents at a root index and its image multiply to the characteristic `3`. -/
 @[simp] theorem g2Length_mul_g2Length_g2SpecialIsogenyIndex (i : Fin 12) :
     g2Length i * g2Length (g2SpecialIsogenyIndex i) = 3 := by
+  rw [g2Length_apply, g2Length_apply]
   decide +revert
 
 /-- **The special permutation exchanges long roots with short ones.** -/
 @[simp] theorem g2Length_g2SpecialIsogenyIndex_eq_one_iff (i : Fin 12) :
     g2Length (g2SpecialIsogenyIndex i) = 1 ↔ g2Length i = 3 := by
+  rw [g2Length_apply, g2Length_apply]
   decide +revert
 
 /-- **The Cartan integers transform by the rule a special isogeny forces.** Writing `α'` for the

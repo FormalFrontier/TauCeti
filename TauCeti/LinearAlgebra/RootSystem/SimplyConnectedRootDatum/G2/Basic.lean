@@ -46,7 +46,7 @@ also make the reflection-stability axioms of `RootPairing` decidable finite calc
 * `TauCeti.DynkinType.g2Coeff` is the simple-root coordinate table of the twelve roots;
   `TauCeti.DynkinType.g2Root_eq_smul_add_smul` expands each root along it, and
   `TauCeti.DynkinType.eq_g2Coeff_of_root_eq` records the uniqueness of that expansion.
-* `TauCeti.DynkinType.g2Root_linearIndepOn_zero_one` records that the two simple roots are
+* `TauCeti.DynkinType.linearIndepOn_g2Root_zero_one` records that the two simple roots are
   linearly independent, which is what makes that expansion unique.
 * `TauCeti.DynkinType.g2SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2` pins that numbering
@@ -112,9 +112,14 @@ the cocharacter lattice. -/
 /-- The simple-root coordinates of the twelve roots of the pinned `G2` datum, in the index order
 of `g2Root`: the positive roots are `alpha1, alpha2, alpha1 + alpha2, 2 alpha1 + alpha2,
 3 alpha1 + alpha2, 3 alpha1 + 2 alpha2`, and index `k + 6` is the negative of index `k`. -/
-@[expose] def g2Coeff : Fin 12 → (Fin 2 → ℤ) :=
+def g2Coeff : Fin 12 → (Fin 2 → ℤ) :=
   ![![1, 0], ![0, 1], ![1, 1], ![2, 1], ![3, 1], ![3, 2],
     ![-1, 0], ![0, -1], ![-1, -1], ![-2, -1], ![-3, -1], ![-3, -2]]
+
+/-- The explicit entries of the simple-root coefficient table. -/
+theorem g2Coeff_apply (i : Fin 12) :
+    g2Coeff i = ![![1, 0], ![0, 1], ![1, 1], ![2, 1], ![3, 1], ![3, 2],
+      ![-1, 0], ![0, -1], ![-1, -1], ![-2, -1], ![-3, -1], ![-3, -2]] i := (rfl)
 
 /-- Each tabulated root is the tabulated combination of the two simple roots. -/
 theorem g2Root_eq_smul_add_smul (k : Fin 12) :
@@ -122,7 +127,7 @@ theorem g2Root_eq_smul_add_smul (k : Fin 12) :
   decide +revert
 
 /-- The two simple roots of `G2` are linearly independent. -/
-theorem g2Root_linearIndepOn_zero_one : LinearIndepOn ℤ g2Root ({0, 1} : Set (Fin 12)) := by
+theorem linearIndepOn_g2Root_zero_one : LinearIndepOn ℤ g2Root ({0, 1} : Set (Fin 12)) := by
   refine (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).2 ?_
   intro c d h
   have h0 : c * 2 + -(d * 3) = 0 := by simpa [g2Root] using congrFun h 0
@@ -134,7 +139,7 @@ private lemma g2_smul_add_smul_inj {a b a' b' : ℤ}
   have hz : (a - a') • g2Root 0 + (b - b') • g2Root 1 = 0 := by
     rw [sub_smul, sub_smul, sub_add_sub_comm, h, sub_self]
   obtain ⟨h0, h1⟩ := (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).1
-    g2Root_linearIndepOn_zero_one _ _ hz
+    linearIndepOn_g2Root_zero_one _ _ hz
   exact ⟨sub_eq_zero.1 h0, sub_eq_zero.1 h1⟩
 
 /-- The two simple roots are linearly independent, so the expansion
@@ -321,7 +326,7 @@ def g2SimplyConnectedBase : g2SimplyConnectedRootDatum.Base where
     have hli : LinearIndepOn ℤ g2Root
         (↑({0, 1} : Finset (Fin 12)) : Set (Fin 12)) := by
       rw [Finset.coe_insert, Finset.coe_singleton]
-      exact g2Root_linearIndepOn_zero_one
+      exact linearIndepOn_g2Root_zero_one
     simpa only [g2SimplyConnectedRootDatum_root] using hli
   linearIndepOn_coroot := by
     have hli : LinearIndepOn ℤ g2Coroot

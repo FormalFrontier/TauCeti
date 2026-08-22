@@ -45,8 +45,7 @@ later lift, together with its action on root subgroups, before the Suzuki--Ree l
   `TauCeti.DynkinType.b2SpecialIsogenyMatrix_transpose_mulVec_coroot`: the equations on the pinned
   datum.
 * `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mul_self`: the square of the lattice map is
-  multiplication by `2`. Its consequences for the transposed matrix, for vectors and for the
-  induced linear map are the generic lemmas of `TauCeti/LinearAlgebra/Matrix/SpecialMap.lean`.
+  multiplication by `2`.
 * `TauCeti.DynkinType.b2SpecialIsogenyExponent_mul_exponent`: the two rescaling exponents on an
   orbit multiply to the defining characteristic.
 
