@@ -388,7 +388,8 @@ lemma cartanMatrix_apply_of_not_adj {t : AffineDynkinType} {i j : Fin t.nodes} (
   · simp [cartanMatrix_apply ht, hij, h]
 
 /-- The generalized Cartan matrix of an affine simply-laced diagram is symmetric, `A₁` included:
-the diagram is simply laced, so no entry records a length ratio. -/
+away from `A₁` the matrix is `2 • 1 - adjMatrix` and an adjacency matrix is symmetric, while at
+`A₁` the explicit multiplicity-two matrix `!![2, -2; -2, 2]` is symmetric outright. -/
 lemma isSymm_cartanMatrix (t : AffineDynkinType) : t.cartanMatrix.IsSymm := by
   by_cases h : t = A 1
   · subst h
