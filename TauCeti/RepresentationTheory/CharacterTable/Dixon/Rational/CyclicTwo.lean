@@ -231,7 +231,6 @@ theorem cyclicGroupTwoCharacterTable_apply (i j : CyclicGroupTwoClassIndex) :
   exact cyclicGroupTwoCentralCharacterTable_apply i j
 
 /-- The displayed ordinary and central-character tables agree entrywise for `C₂`. -/
-@[simp]
 theorem cyclicGroupTwoCharacterTable_eq_centralCharacterTable :
     cyclicGroupTwoCharacterTable = cyclicGroupTwoCentralCharacterTable := by
   rfl
