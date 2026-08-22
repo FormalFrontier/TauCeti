@@ -335,11 +335,9 @@ private theorem root_sub_nsmul_mem_range_baseChange_iff (i j : ι) (n : ℕ) :
     simpa only [root_rootPairingBaseChange, map_sub, map_nsmul] using
       congrArg (Pi.algebraMap κ R S) hk
 
-variable [Finite ι] [IsDomain R] [IsDomain S] [CharZero R] [CharZero S]
-  [P.IsCrystallographic]
+variable [Finite ι] [IsDomain R] [IsDomain S] [CharZero R] [P.IsCrystallographic]
 
-/-- Extending scalars along an injective map preserves the upper root-string coefficient. -/
-theorem chainTopCoeff_rootPairingBaseChange (i j : ι) :
+private theorem chainTopCoeff_rootPairingBaseChange_aux [hS : CharZero S] (i j : ι) :
     (rootPairingBaseChange S P hP).chainTopCoeff i j = P.chainTopCoeff i j := by
   let P' := rootPairingBaseChange S P hP
   have hv : (fun k ↦ algebraMap R S ∘ ![P.root i, P.root j] k) =
@@ -362,8 +360,15 @@ theorem chainTopCoeff_rootPairingBaseChange (i j : ι) :
     rw [P.chainTopCoeff_of_not_linearIndependent h,
       P'.chainTopCoeff_of_not_linearIndependent h']
 
-/-- Extending scalars along an injective map preserves the lower root-string coefficient. -/
-theorem chainBotCoeff_rootPairingBaseChange (i j : ι) :
+/-- Extending scalars along an injective map preserves the upper root-string coefficient. -/
+@[simp]
+theorem chainTopCoeff_rootPairingBaseChange (i j : ι) :
+    letI : CharZero S := Algebra.charZero_of_charZero R S
+    (rootPairingBaseChange S P hP).chainTopCoeff i j = P.chainTopCoeff i j := by
+  exact chainTopCoeff_rootPairingBaseChange_aux S P hP
+    (hS := Algebra.charZero_of_charZero R S) i j
+
+private theorem chainBotCoeff_rootPairingBaseChange_aux [hS : CharZero S] (i j : ι) :
     (rootPairingBaseChange S P hP).chainBotCoeff i j = P.chainBotCoeff i j := by
   let P' := rootPairingBaseChange S P hP
   have hv : (fun k ↦ algebraMap R S ∘ ![P.root i, P.root j] k) =
@@ -385,6 +390,14 @@ theorem chainBotCoeff_rootPairingBaseChange (i j : ι) :
       rwa [← hv, linearIndependent_algebraMap_comp_iff]
     rw [P.chainBotCoeff_of_not_linearIndependent h,
       P'.chainBotCoeff_of_not_linearIndependent h']
+
+/-- Extending scalars along an injective map preserves the lower root-string coefficient. -/
+@[simp]
+theorem chainBotCoeff_rootPairingBaseChange (i j : ι) :
+    letI : CharZero S := Algebra.charZero_of_charZero R S
+    (rootPairingBaseChange S P hP).chainBotCoeff i j = P.chainBotCoeff i j := by
+  exact chainBotCoeff_rootPairingBaseChange_aux S P hP
+    (hS := Algebra.charZero_of_charZero R S) i j
 
 end Chain
 

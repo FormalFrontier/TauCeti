@@ -30,10 +30,11 @@ not one, so it leaves semisimplicity of `TauCeti.DynkinType.lieAlgebra` unclaime
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/KostantForm.lean` inherits the same
 gap. Taking `K` to be an algebraic closure of `ℚ` turns those results into statements about
 `K ⊗[ℚ] TauCeti.DynkinType.lieAlgebra t ht`, from which `LieModule.traceForm_baseChange` carries
-the nondegenerate Killing form back to `ℚ`. Both a Chevalley basis and the Kostant `ℤ`-form live
-inside the characteristic-zero Lie algebra, so this is a prerequisite of that construction rather
-than a parallel to it: positive characteristic enters only afterwards, when the `ℤ`-form is base
-changed along `ℤ → k`.
+the nondegenerate Killing form back to `ℚ`. The Chevalley `ℤ`-form is a lattice in that Lie
+algebra, while the Kostant `ℤ`-form is an integral form in its universal enveloping algebra.
+Thus this comparison is a prerequisite of the construction rather than a parallel to it: positive
+characteristic enters only afterwards, when the resulting integral data is base changed along
+`ℤ → k`.
 
 ## Main definitions
 
@@ -143,6 +144,46 @@ def lieAlgebraBaseChange :
 
 /-! ## The Geck generators under base change -/
 
+private theorem reindex_sumCongr_fromBlocks_apply₁₁
+    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
+    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
+    (eα : α ≃ α') (eβ : β ≃ β')
+    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
+    (i j : α') :
+    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
+        (Sum.inl i) (Sum.inl j) = A (eα.symm i) (eα.symm j) := by
+  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
+
+private theorem reindex_sumCongr_fromBlocks_apply₁₂
+    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
+    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
+    (eα : α ≃ α') (eβ : β ≃ β')
+    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
+    (i : α') (j : β') :
+    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
+        (Sum.inl i) (Sum.inr j) = B (eα.symm i) (eβ.symm j) := by
+  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
+
+private theorem reindex_sumCongr_fromBlocks_apply₂₁
+    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
+    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
+    (eα : α ≃ α') (eβ : β ≃ β')
+    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
+    (i : β') (j : α') :
+    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
+        (Sum.inr i) (Sum.inl j) = C (eβ.symm i) (eα.symm j) := by
+  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
+
+private theorem reindex_sumCongr_fromBlocks_apply₂₂
+    {R α α' β β' : Type*} [CommSemiring R] [Fintype α] [Fintype α'] [Fintype β]
+    [Fintype β'] [DecidableEq α] [DecidableEq α'] [DecidableEq β] [DecidableEq β']
+    (eα : α ≃ α') (eβ : β ≃ β')
+    (A : Matrix α α R) (B : Matrix α β R) (C : Matrix β α R) (D : Matrix β β R)
+    (i j : β') :
+    Matrix.reindexAlgEquiv R R (Equiv.sumCongr eα eβ) (Matrix.fromBlocks A B C D)
+        (Sum.inr i) (Sum.inr j) = D (eβ.symm i) (eβ.symm j) := by
+  simp [Matrix.coe_reindexAlgEquiv, Matrix.reindex_apply]
+
 /-- The Cartan generators of Geck's construction commute with scalar extension. -/
 @[simp]
 theorem h_baseChangeBase (i : (t.rationalBase ht).support) :
@@ -152,16 +193,11 @@ theorem h_baseChangeBase (i : (t.rationalBase ht).support) :
       (h (P := t.rationalRootSystem ht) (b := t.rationalBase ht) i).map
         (algebraMap ℚ K) := by
   classical
-  rw [Matrix.coe_reindexAlgEquiv]
-  simp only [geckIndexBaseChangeEquiv]
   ext (j | j) (k | k) <;>
-    rw [Matrix.reindex_apply, Matrix.submatrix_apply, Equiv.sumCongr_symm,
-      Equiv.sumCongr_apply,
-      Equiv.sumCongr_apply]
-  all_goals simp only [h]
-  all_goals simp only [Sum.map_inl, Sum.map_inr]
-  all_goals first | rw [Matrix.fromBlocks_apply₁₁] | rw [Matrix.fromBlocks_apply₁₂] |
-    rw [Matrix.fromBlocks_apply₂₁] | rw [Matrix.fromBlocks_apply₂₂]
+    simp only [h, geckIndexBaseChangeEquiv]
+  all_goals first | rw [reindex_sumCongr_fromBlocks_apply₁₁] |
+    rw [reindex_sumCongr_fromBlocks_apply₁₂] | rw [reindex_sumCongr_fromBlocks_apply₂₁] |
+    rw [reindex_sumCongr_fromBlocks_apply₂₂]
   all_goals try simp only [Matrix.diagonal_apply]
   all_goals try rw [coe_supportBaseChangeEquiv_symm t ht K i]
   all_goals simp [Matrix.diagonal_apply,
@@ -183,16 +219,11 @@ theorem e_baseChangeBase (i : (t.rationalBase ht).support) :
       (t.supportBaseChangeEquiv ht K).symm j =
         (t.supportBaseChangeEquiv ht K).symm i ↔ j = i :=
     (t.supportBaseChangeEquiv ht K).symm.injective.eq_iff
-  rw [Matrix.coe_reindexAlgEquiv]
-  simp only [geckIndexBaseChangeEquiv]
   ext (j | j) (k | k) <;>
-    rw [Matrix.reindex_apply, Matrix.submatrix_apply, Equiv.sumCongr_symm,
-      Equiv.sumCongr_apply,
-      Equiv.sumCongr_apply]
-  all_goals simp only [e]
-  all_goals simp only [Sum.map_inl, Sum.map_inr]
-  all_goals first | rw [Matrix.fromBlocks_apply₁₁] | rw [Matrix.fromBlocks_apply₁₂] |
-    rw [Matrix.fromBlocks_apply₂₁] | rw [Matrix.fromBlocks_apply₂₂]
+    simp only [e, geckIndexBaseChangeEquiv]
+  all_goals first | rw [reindex_sumCongr_fromBlocks_apply₁₁] |
+    rw [reindex_sumCongr_fromBlocks_apply₁₂] | rw [reindex_sumCongr_fromBlocks_apply₂₁] |
+    rw [reindex_sumCongr_fromBlocks_apply₂₂]
   all_goals try simp only [Matrix.of_apply]
   all_goals try rw [coe_supportBaseChangeEquiv_symm t ht K i]
   all_goals try simp only [hs]
@@ -216,16 +247,11 @@ theorem f_baseChangeBase (i : (t.rationalBase ht).support) :
       (t.supportBaseChangeEquiv ht K).symm j =
         (t.supportBaseChangeEquiv ht K).symm i ↔ j = i :=
     (t.supportBaseChangeEquiv ht K).symm.injective.eq_iff
-  rw [Matrix.coe_reindexAlgEquiv]
-  simp only [geckIndexBaseChangeEquiv]
   ext (j | j) (k | k) <;>
-    rw [Matrix.reindex_apply, Matrix.submatrix_apply, Equiv.sumCongr_symm,
-      Equiv.sumCongr_apply,
-      Equiv.sumCongr_apply]
-  all_goals simp only [f]
-  all_goals simp only [Sum.map_inl, Sum.map_inr]
-  all_goals first | rw [Matrix.fromBlocks_apply₁₁] | rw [Matrix.fromBlocks_apply₁₂] |
-    rw [Matrix.fromBlocks_apply₂₁] | rw [Matrix.fromBlocks_apply₂₂]
+    simp only [f, geckIndexBaseChangeEquiv]
+  all_goals first | rw [reindex_sumCongr_fromBlocks_apply₁₁] |
+    rw [reindex_sumCongr_fromBlocks_apply₁₂] | rw [reindex_sumCongr_fromBlocks_apply₂₁] |
+    rw [reindex_sumCongr_fromBlocks_apply₂₂]
   all_goals try simp only [Matrix.of_apply]
   all_goals try rw [coe_supportBaseChangeEquiv_symm t ht K i]
   all_goals try simp only [hs]
@@ -458,7 +484,58 @@ noncomputable def lieAlgebraBaseChangeEquiv :
       Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
         ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) =
       t.ambientLieAlgebraBaseChangeEquiv ht K
-        (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) := (rfl)
+        (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) := by
+  change t.lieAlgebraBaseChangeHom ht K x = _
+  change t.ambientLieAlgebraBaseChangeEquiv ht K
+    (t.lieAlgebraBaseChangeIncl ht K x) = _
+  change t.ambientLieAlgebraBaseChangeEquiv ht K
+    (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) = _
+  rfl
+
+/-- The base-change equivalence sends a pure tensor of a Cartan generator to the corresponding
+generator for the scalar-extended root system. -/
+@[simp]
+theorem lieAlgebraBaseChangeEquiv_tmul_h (a : K) (i : (t.rationalBase ht).support) :
+    t.lieAlgebraBaseChangeEquiv ht K
+        (a ⊗ₜ[ℚ] (⟨h (P := t.rationalRootSystem ht) (b := t.rationalBase ht) i, by
+          rw [lieAlgebra_def]
+          exact h_mem_lieAlgebra i⟩ : t.lieAlgebra ht)) =
+      a • (⟨h (P := t.rootSystemBaseChange ht K) (b := t.baseChangeBase ht K)
+          ((t.supportBaseChangeEquiv ht K).symm i), by
+        rw [lieAlgebraBaseChange_def]
+        exact h_mem_lieAlgebra _⟩ : t.lieAlgebraBaseChange ht K) := by
+  apply Subtype.ext
+  simp [reindex_symm_map_h]
+
+/-- The base-change equivalence sends a pure tensor of a raising generator to the corresponding
+generator for the scalar-extended root system. -/
+@[simp]
+theorem lieAlgebraBaseChangeEquiv_tmul_e (a : K) (i : (t.rationalBase ht).support) :
+    t.lieAlgebraBaseChangeEquiv ht K
+        (a ⊗ₜ[ℚ] (⟨e (P := t.rationalRootSystem ht) (b := t.rationalBase ht) i, by
+          rw [lieAlgebra_def]
+          exact e_mem_lieAlgebra i⟩ : t.lieAlgebra ht)) =
+      a • (⟨e (P := t.rootSystemBaseChange ht K) (b := t.baseChangeBase ht K)
+          ((t.supportBaseChangeEquiv ht K).symm i), by
+        rw [lieAlgebraBaseChange_def]
+        exact e_mem_lieAlgebra _⟩ : t.lieAlgebraBaseChange ht K) := by
+  apply Subtype.ext
+  simp [reindex_symm_map_e]
+
+/-- The base-change equivalence sends a pure tensor of a lowering generator to the corresponding
+generator for the scalar-extended root system. -/
+@[simp]
+theorem lieAlgebraBaseChangeEquiv_tmul_f (a : K) (i : (t.rationalBase ht).support) :
+    t.lieAlgebraBaseChangeEquiv ht K
+        (a ⊗ₜ[ℚ] (⟨f (P := t.rationalRootSystem ht) (b := t.rationalBase ht) i, by
+          rw [lieAlgebra_def]
+          exact f_mem_lieAlgebra i⟩ : t.lieAlgebra ht)) =
+      a • (⟨f (P := t.rootSystemBaseChange ht K) (b := t.baseChangeBase ht K)
+          ((t.supportBaseChangeEquiv ht K).symm i), by
+        rw [lieAlgebraBaseChange_def]
+        exact f_mem_lieAlgebra _⟩ : t.lieAlgebraBaseChange ht K) := by
+  apply Subtype.ext
+  simp [reindex_symm_map_f]
 
 end
 
