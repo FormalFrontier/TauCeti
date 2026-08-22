@@ -25,9 +25,13 @@ sequences as soon as the truncation degree is one past the last nonvanishing deg
 * `Scheme.Modules.eulerCharBelow_sub_sub`, the exact defect of additivity: the failure of
   `eulerCharBelow` to be additive on a short exact sequence `0 ⟶ M₁ ⟶ M₂ ⟶ M₃ ⟶ 0` is, up to
   sign, the dimension of the image of the last connecting map that the truncation cuts off;
-* `Scheme.Modules.eulerCharBelow_X₂`, the additivity itself, under the vanishing of
-  `Hⁿ(X, M₁)`, and `Scheme.Modules.eulerChar_X₂`, its shape on a curve, where cohomology
-  vanishes above degree one so that `χ(X, M) = dim H⁰(X, M) - dim H¹(X, M)`;
+* `Scheme.Modules.eulerCharBelow_eq_add_of_cohomologyδ_eq_zero`, the additivity itself,
+  under the vanishing of the connecting map the truncation cuts off, and
+  `Scheme.Modules.eulerCharBelow_eq_add`, the form in which that vanishing comes from the
+  vanishing of `Hⁿ(X, M₁)`;
+* `Scheme.Modules.finrank_cohomology_zero_sub_one_eq_add`, the shape of the additivity on a
+  curve, where cohomology vanishes above degree one so that
+  `χ(X, M) = dim H⁰(X, M) - dim H¹(X, M)`;
 * `Scheme.Modules.eulerCharBelow_congr`, the invariance of the truncated Euler characteristic
   under isomorphism, and `Scheme.Modules.finrank_cohomology_zero`, the identification of
   `dim H⁰(X, M)` with the dimension of the space of global sections.
@@ -37,12 +41,15 @@ sequences as soon as the truncation degree is one past the last nonvanishing deg
 No finiteness assumption is built into `eulerCharBelow`, exactly as none is built into
 Mathlib's `HomologicalComplex.eulerChar`: `Module.finrank` is `0` on an infinite-dimensional
 space, so a degree `i < n` in which `Hⁱ(X, M)` is infinite-dimensional contributes `0` to the
-sum instead of making it meaningless. The alternating sum is therefore the Euler characteristic
-only for a sheaf whose cohomology is finite-dimensional in degrees `< n`: accordingly the
-statements that read it as an Euler characteristic, `eulerCharBelow_sub_sub`,
-`eulerCharBelow_X₂` and `eulerChar_X₂`, assume that finite-dimensionality — and only in the
-degrees below the truncation that they actually sum over, so that the curve statement
-`eulerChar_X₂` needs it in degrees `0` and `1` alone — while
+sum instead of making it meaningless. The alternating sum is therefore read as an Euler
+characteristic when the cohomology is finite-dimensional in the degrees `< n` it sums over:
+accordingly the statements that read it that way, `eulerCharBelow_sub_sub`,
+`eulerCharBelow_eq_add_of_cohomologyδ_eq_zero`, `eulerCharBelow_eq_add` and
+`finrank_cohomology_zero_sub_one_eq_add`, assume that finite-dimensionality — and only in the
+degrees below the truncation that they actually sum over, and only in the degrees where the
+dimension count needs it, so that the curve statement
+`finrank_cohomology_zero_sub_one_eq_add` needs it in degrees `0` and `1` alone, and for the
+first term of the sequence in degree `1` alone — while
 `eulerCharBelow_zero`, `eulerCharBelow_succ`, `eulerCharBelow_two` and `eulerCharBelow_congr`
 are identities of the alternating sum as it stands and need no such hypothesis.
 
@@ -84,9 +91,11 @@ a sheaf of modules on a scheme over a field, truncated at degree `n`.
 
 No finiteness assumption is imposed, just as none is imposed on Mathlib's
 `HomologicalComplex.eulerChar`: a degree `i < n` in which `Hⁱ(X, M)` is infinite-dimensional
-contributes the junk value `finrank k Hⁱ(X, M) = 0`. This sum is thus the Euler characteristic
-`χ(X, M)` precisely for a sheaf whose cohomology is finite-dimensional in degrees `< n` and
-vanishes in degrees `≥ n`; on a curve, the relevant truncation is `n = 2`. -/
+contributes the junk value `finrank k Hⁱ(X, M) = 0`. For this sum to be the Euler
+characteristic `χ(X, M)` it is enough that the cohomology be finite-dimensional in degrees
+`< n` and vanish in degrees `≥ n`; that is a sufficient condition and not a necessary one,
+since a truncation that cuts off finite-dimensional cohomology whose own alternating sum
+vanishes computes `χ(X, M)` just as well. On a curve, the relevant truncation is `n = 2`. -/
 def _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow (M : X.Modules) (n : ℕ) : ℤ :=
   ∑ i ∈ Finset.range n, (-1) ^ i * (finrank k (Cohomology M i) : ℤ)
 
@@ -97,6 +106,7 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_zero (M : X.Modules
     eulerCharBelow k X M 0 = 0 :=
   Finset.sum_range_zero _
 
+@[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_succ (M : X.Modules) (n : ℕ) :
     eulerCharBelow k X M (n + 1) =
       eulerCharBelow k X M n + (-1) ^ n * (finrank k (Cohomology M n) : ℤ) :=
@@ -203,9 +213,11 @@ private lemma finrank_X₃ (i : ℕ) [FiniteDimensional k (Cohomology S.X₃ i)]
 `Hⁿ(X, M₃) → Hⁿ⁺¹(X, M₁)` that the truncation cuts off.
 
 Finite-dimensionality is only assumed in the degrees the truncation reads, that is in the
-degrees `< n + 1` summed over. -/
+degrees `< n + 1` summed over — and for the first term of the sequence only in the positive
+ones, since the degree-zero contribution of `M₁` is computed by the injectivity of
+`H⁰(X, M₁) → H⁰(X, M₂)` rather than by rank-nullity. -/
 theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_sub_sub (n : ℕ)
-    (h₁ : ∀ i < n + 1, FiniteDimensional k (Cohomology S.X₁ i))
+    (h₁ : ∀ i < n + 1, 0 < i → FiniteDimensional k (Cohomology S.X₁ i))
     (h₂ : ∀ i < n + 1, FiniteDimensional k (Cohomology S.X₂ i))
     (h₃ : ∀ i < n + 1, FiniteDimensional k (Cohomology S.X₃ i)) :
     eulerCharBelow k X S.X₂ (n + 1) - eulerCharBelow k X S.X₁ (n + 1) -
@@ -222,7 +234,7 @@ theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_sub_sub (n : ℕ)
     push_cast
     ring
   | succ n ih =>
-    have hfd₁ := h₁ (n + 1) (by omega)
+    have hfd₁ := h₁ (n + 1) (by omega) (by omega)
     have hfd₂ := h₂ (n + 1) (by omega)
     have hfd₃ := h₃ (n + 1) (by omega)
     have ih := ih (fun i hi ↦ h₁ i (by omega)) (fun i hi ↦ h₂ i (by omega))
@@ -234,11 +246,31 @@ theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_sub_sub (n : ℕ)
     linear_combination ih
 
 /-- **Additivity of the Euler characteristic.** If `0 ⟶ M₁ ⟶ M₂ ⟶ M₃ ⟶ 0` is a short exact
-sequence of sheaves of modules whose cohomology is finite-dimensional in the degrees `< n` that
-the truncation reads, and `Hⁿ(X, M₁)` vanishes, then the Euler characteristics truncated at `n`
-add up. -/
-theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_X₂ (n : ℕ)
-    (h₁ : ∀ i < n, FiniteDimensional k (Cohomology S.X₁ i))
+sequence of sheaves of modules whose cohomology is finite-dimensional in the degrees
+`< n + 1` that the truncation reads, and the connecting map `Hⁿ(X, M₃) → Hⁿ⁺¹(X, M₁)` that the
+truncation cuts off vanishes, then the Euler characteristics truncated at `n + 1` add up.
+
+This is the exact hypothesis the defect formula `eulerCharBelow_sub_sub` asks for; the usual
+sufficient condition, the vanishing of the whole target `Hⁿ⁺¹(X, M₁)`, is
+`eulerCharBelow_eq_add`. -/
+theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_eq_add_of_cohomologyδ_eq_zero
+    (n : ℕ)
+    (h₁ : ∀ i < n + 1, 0 < i → FiniteDimensional k (Cohomology S.X₁ i))
+    (h₂ : ∀ i < n + 1, FiniteDimensional k (Cohomology S.X₂ i))
+    (h₃ : ∀ i < n + 1, FiniteDimensional k (Cohomology S.X₃ i))
+    (hδ : cohomologyδBaseLinear k X hS n (n + 1) rfl = 0) :
+    eulerCharBelow k X S.X₂ (n + 1) =
+      eulerCharBelow k X S.X₁ (n + 1) + eulerCharBelow k X S.X₃ (n + 1) := by
+  have h := eulerCharBelow_sub_sub k hS n h₁ h₂ h₃
+  rw [hδ, LinearMap.range_zero, finrank_bot, Nat.cast_zero, mul_zero] at h
+  linarith
+
+/-- **Additivity of the Euler characteristic under a vanishing target.** If
+`0 ⟶ M₁ ⟶ M₂ ⟶ M₃ ⟶ 0` is a short exact sequence of sheaves of modules whose cohomology is
+finite-dimensional in the degrees `< n` that the truncation reads, and `Hⁿ(X, M₁)` vanishes,
+then the Euler characteristics truncated at `n` add up. -/
+theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_eq_add (n : ℕ)
+    (h₁ : ∀ i < n, 0 < i → FiniteDimensional k (Cohomology S.X₁ i))
     (h₂ : ∀ i < n, FiniteDimensional k (Cohomology S.X₂ i))
     (h₃ : ∀ i < n, FiniteDimensional k (Cohomology S.X₃ i))
     (hvan : Subsingleton (Cohomology S.X₁ n)) :
@@ -246,26 +278,22 @@ theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerCharBelow_X₂ (n : ℕ)
   cases n with
   | zero => simp
   | succ n =>
-    have hrange : LinearMap.range (cohomologyδBaseLinear k X hS n (n + 1) rfl) = ⊥ := by
-      rw [LinearMap.range_eq_bot]
-      exact LinearMap.ext fun _ ↦ Subsingleton.elim _ _
-    have h := eulerCharBelow_sub_sub k hS n h₁ h₂ h₃
-    rw [hrange, finrank_bot, Nat.cast_zero, mul_zero] at h
-    linarith
+    exact eulerCharBelow_eq_add_of_cohomologyδ_eq_zero k hS n h₁ h₂ h₃
+      (LinearMap.ext fun _ ↦ Subsingleton.elim _ _)
 
 /-- **Additivity of the Euler characteristic on a curve.** For a short exact sequence of sheaves
 of modules whose cohomology is finite-dimensional in degrees `0` and `1` and with `H²(X, M₁)`
 vanishing, as it does on a curve, the Euler characteristics
 `χ(X, M) = dim H⁰(X, M) - dim H¹(X, M)` add up. -/
-theorem _root_.AlgebraicGeometry.Scheme.Modules.eulerChar_X₂
-    (h₁ : ∀ i < 2, FiniteDimensional k (Cohomology S.X₁ i))
+theorem _root_.AlgebraicGeometry.Scheme.Modules.finrank_cohomology_zero_sub_one_eq_add
+    (h₁ : ∀ i < 2, 0 < i → FiniteDimensional k (Cohomology S.X₁ i))
     (h₂ : ∀ i < 2, FiniteDimensional k (Cohomology S.X₂ i))
     (h₃ : ∀ i < 2, FiniteDimensional k (Cohomology S.X₃ i))
     (hvan : Subsingleton (Cohomology S.X₁ 2)) :
     (finrank k (Cohomology S.X₂ 0) : ℤ) - (finrank k (Cohomology S.X₂ 1) : ℤ) =
       ((finrank k (Cohomology S.X₁ 0) : ℤ) - (finrank k (Cohomology S.X₁ 1) : ℤ)) +
         ((finrank k (Cohomology S.X₃ 0) : ℤ) - (finrank k (Cohomology S.X₃ 1) : ℤ)) := by
-  simpa only [eulerCharBelow_two] using eulerCharBelow_X₂ k hS 2 h₁ h₂ h₃ hvan
+  simpa only [eulerCharBelow_two] using eulerCharBelow_eq_add k hS 2 h₁ h₂ h₃ hvan
 
 end ShortExact
 

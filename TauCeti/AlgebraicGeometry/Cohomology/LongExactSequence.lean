@@ -185,36 +185,12 @@ theorem sections_surjective (h₁ : Subsingleton (Cohomology S.X₁ 1)) :
 omit hS in
 /-- Multiplication by a global function on cohomology is the map induced by multiplication by
 that function on the coefficient sheaf. -/
+@[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMap_globalSectionsSmul (M : X.Modules)
     (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
     cohomologyMap (globalSectionsSmul M r) i x = r • x := by
   rw [cohomology_smul, cohomologyFunctor_map]
   rfl
-
-omit hS in
-/-- Multiplication by a global function, as an endomorphism of a short complex of sheaves of
-modules. -/
-def globalSectionsSmulShortComplex (S : ShortComplex X.Modules) (r : Γ(X, ⊤)) : S ⟶ S where
-  τ₁ := globalSectionsSmul S.X₁ r
-  τ₂ := globalSectionsSmul S.X₂ r
-  τ₃ := globalSectionsSmul S.X₃ r
-  comm₁₂ := globalSectionsSmul_naturality S.f r
-  comm₂₃ := globalSectionsSmul_naturality S.g r
-
-omit hS in
-@[simp]
-lemma globalSectionsSmulShortComplex_τ₁ (S : ShortComplex X.Modules) (r : Γ(X, ⊤)) :
-    (globalSectionsSmulShortComplex S r).τ₁ = globalSectionsSmul S.X₁ r := (rfl)
-
-omit hS in
-@[simp]
-lemma globalSectionsSmulShortComplex_τ₂ (S : ShortComplex X.Modules) (r : Γ(X, ⊤)) :
-    (globalSectionsSmulShortComplex S r).τ₂ = globalSectionsSmul S.X₂ r := (rfl)
-
-omit hS in
-@[simp]
-lemma globalSectionsSmulShortComplex_τ₃ (S : ShortComplex X.Modules) (r : Γ(X, ⊤)) :
-    (globalSectionsSmulShortComplex S r).τ₃ = globalSectionsSmul S.X₃ r := (rfl)
 
 omit hS in
 /-- The connecting map is natural in the short exact sequence: a morphism `φ : S₁ ⟶ S₂` of short
@@ -238,7 +214,13 @@ def cohomologyδLinear (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
     -- connecting map for multiplication by `r` on all three terms.
     change cohomologyδ hS n₀ n₁ h (r • x) = r • cohomologyδ hS n₀ n₁ h x
     rw [← cohomologyMap_globalSectionsSmul, ← cohomologyMap_globalSectionsSmul]
-    exact (cohomologyδ_naturality hS hS (globalSectionsSmulShortComplex S r) n₀ n₁ h x).symm
+    -- Multiplication by `r` on all three terms is an endomorphism of the short complex.
+    exact (cohomologyδ_naturality hS hS
+      { τ₁ := globalSectionsSmul S.X₁ r
+        τ₂ := globalSectionsSmul S.X₂ r
+        τ₃ := globalSectionsSmul S.X₃ r
+        comm₁₂ := globalSectionsSmul_naturality S.f r
+        comm₂₃ := globalSectionsSmul_naturality S.g r } n₀ n₁ h x).symm
 
 @[simp]
 lemma cohomologyδLinear_apply (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) (x : Cohomology S.X₃ n₀) :
