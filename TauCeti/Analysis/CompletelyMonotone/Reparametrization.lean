@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.CompletelyMonotone.Basic
-public import Mathlib.Analysis.Calculus.IteratedDeriv.Lemmas
+public import TauCeti.Analysis.CompletelyMonotone.Closure
+public import Mathlib.Analysis.Calculus.Deriv.Shift
 
 /-!
 # Complete monotonicity is closed under nonnegative affine reparametrization
@@ -42,6 +42,8 @@ These closure lemmas manufacture new completely monotone functions from old: for
   `t ↦ f (c · t)` is completely monotone.
 * `TauCeti.IsCompletelyMonotone.comp_add_const`: if `f` is completely monotone and `0 ≤ a`, then
   `t ↦ f (t + a)` is completely monotone.
+* `TauCeti.IsCompletelyMonotone.sub_comp_add_const`: if `f` is completely monotone and `0 ≤ a`,
+  then `t ↦ f t - f (t + a)` is completely monotone.
 * `TauCeti.IsCompletelyMonotone.comp_affine`: if `f` is completely monotone and `0 ≤ c`, `0 ≤ a`,
   then `t ↦ f (c · t + a)` is completely monotone.
 
@@ -111,6 +113,49 @@ theorem comp_add_const (hf : IsCompletelyMonotone f) {a : ℝ} (ha : 0 ≤ a) :
         (by exact_mod_cast le_top)
     rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici a) hcat (mem_Ici.mpr hta)]
     exact hf.neg_one_pow_mul_iteratedDeriv_nonneg n h0
+
+/-- Iterated derivatives within `[0, ∞)` are compatible with a nonnegative shift of the
+argument. -/
+theorem iteratedDerivWithin_Ici_comp_add_const (hs : ContDiffOn ℝ ∞ f (Ici 0)) (n : ℕ) {a t : ℝ}
+    (ha : 0 ≤ a) (ht : 0 ≤ t) :
+    iteratedDerivWithin n (fun s => f (s + a)) (Ici 0) t
+      = iteratedDerivWithin n f (Ici 0) (t + a) := by
+  rcases eq_or_lt_of_le ha with rfl | ha'
+  · simp
+  · have hset : a +ᵥ Ici (0 : ℝ) = Ici a := by
+      ext x
+      simp only [Set.mem_vadd_set, mem_Ici, vadd_eq_add]
+      exact ⟨by rintro ⟨y, hy, rfl⟩; linarith, fun hx => ⟨x - a, by linarith, by ring⟩⟩
+    have hval := congrFun
+      (iteratedDerivWithin_comp_add_const (f := f) (n := n) (s := Ici (0 : ℝ)) a) t
+    simp only [hset] at hval
+    rw [hval]
+    have h0 : 0 < t + a := by linarith
+    have hcat : ContDiffAt ℝ (n : WithTop ℕ∞) f (t + a) :=
+      (hs.contDiffAt (Filter.mem_of_superset (isOpen_Ioi.mem_nhds h0) Ioi_subset_Ici_self)).of_le
+        (by exact_mod_cast le_top)
+    rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici a) hcat
+        (mem_Ici.mpr (by linarith)),
+      iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici 0) hcat (mem_Ici.mpr h0.le)]
+
+/-- The forward difference of a completely monotone function, with the sign reversed, is again
+completely monotone: every alternating derivative `(-1)ⁿ f⁽ⁿ⁾` is itself completely monotone,
+hence nonincreasing, which is exactly the sign condition for `t ↦ f t - f (t + a)`. -/
+theorem sub_comp_add_const (hf : IsCompletelyMonotone f) {a : ℝ} (ha : 0 ≤ a) :
+    IsCompletelyMonotone (fun t => f t - f (t + a)) := by
+  have hshift : IsCompletelyMonotone (fun t => f (t + a)) := hf.comp_add_const ha
+  refine ⟨hf.contDiffOn.sub hshift.contDiffOn, fun n t ht => ?_⟩
+  have hsub : iteratedDerivWithin n (fun t => f t - f (t + a)) (Ici 0) t
+      = iteratedDerivWithin n f (Ici 0) t
+        - iteratedDerivWithin n (fun t => f (t + a)) (Ici 0) t := by
+    have := iteratedDerivWithin_sub (n := n) (f := f) (g := fun t => f (t + a))
+      (s := Ici (0 : ℝ)) (x := t) (mem_Ici.mpr ht) (uniqueDiffOn_Ici 0)
+      ((hf.contDiffOn t (mem_Ici.mpr ht)).of_le (by exact_mod_cast le_top))
+      ((hshift.contDiffOn t (mem_Ici.mpr ht)).of_le (by exact_mod_cast le_top))
+    simpa [Pi.sub_def] using this
+  rw [hsub, iteratedDerivWithin_Ici_comp_add_const hf.contDiffOn n ha ht, mul_sub, sub_nonneg]
+  have hcm := hf.neg_one_pow_mul_iteratedDerivWithin n
+  exact hcm.antitoneOn (mem_Ici.mpr ht) (mem_Ici.mpr (by linarith)) (by linarith)
 
 /-- Completely monotone functions are closed under nonnegative affine reparametrization of the
 argument: if `f` is completely monotone and `0 ≤ c`, `0 ≤ a`, then `t ↦ f (c · t + a)` is

@@ -54,8 +54,8 @@ input of the Hausdorff--Bernstein--Widder theorem.
 * `TauCeti.IsDifferenceCompletelyMonotone`: complete monotonicity in the finite-difference sense.
 * `TauCeti.isDifferenceCompletelyMonotone_of_tendsto`: the predicate is closed under pointwise
   limits, unlike its derivative form.
-* `TauCeti.IsDifferenceCompletelyMonotone.neg_deriv`: the negated derivative of a
-  differentiable finite-difference completely monotone function is again one.
+* `TauCeti.IsDifferenceCompletelyMonotone.neg_derivWithin`: the negated derivative within the
+  half-line of a differentiable finite-difference completely monotone function is again one.
 * `TauCeti.IsDifferenceCompletelyMonotone.isCompletelyMonotone`: a `C^∞` function that is
   completely monotone in the finite-difference sense is completely monotone.
 * `TauCeti.IsCompletelyMonotone.sub_comp_add_const`: if `f` is completely monotone and `0 ≤ a`
@@ -102,6 +102,17 @@ theorem fwdDiffList_append (l l' : List ℝ) (f : ℝ → ℝ) :
   induction l with
   | nil => rfl
   | cons h l ih => rw [List.cons_append, fwdDiffList_cons, ih, fwdDiffList_cons]
+
+/-- Permuting the step sizes does not change a mixed forward difference. -/
+theorem fwdDiffList_eq_of_perm {l l' : List ℝ} (h : l.Perm l') (f : ℝ → ℝ) :
+    fwdDiffList l f = fwdDiffList l' f := by
+  let _ : LeftCommutative (fun h : ℝ => fun g : ℝ → ℝ => fwdDiff h g) :=
+    ⟨fun a b g => by
+      ext t
+      simp only [fwdDiff]
+      rw [show t + b + a = t + a + b by ring]
+      ring⟩
+  exact h.foldr_eq f
 
 /-- Along a constant list the mixed difference is the iterated single-step difference. -/
 theorem fwdDiffList_replicate (n : ℕ) (h : ℝ) (f : ℝ → ℝ) :
@@ -280,6 +291,66 @@ theorem differentiable_fwdDiffList (l : List ℝ) (hf : Differentiable ℝ f) :
       simp only [fwdDiffList_cons]
       exact ((ih (t + h)).comp t (by fun_prop)).sub (ih t)
 
+/-- A mixed difference with nonnegative steps preserves differentiability on `[0, ∞)`. -/
+private theorem differentiableOn_fwdDiffList (l : List ℝ) (hl : ∀ h ∈ l, 0 ≤ h)
+    (hf : DifferentiableOn ℝ f (Ici 0)) : DifferentiableOn ℝ (fwdDiffList l f) (Ici 0) := by
+  induction l with
+  | nil => simpa using hf
+  | cons h l ih =>
+      have hh : 0 ≤ h := hl h (by simp)
+      have hrest : ∀ k ∈ l, 0 ≤ k := fun k hk => hl k (List.mem_cons_of_mem h hk)
+      intro t ht
+      simp only [fwdDiffList_cons]
+      have hshift : DifferentiableWithinAt ℝ (fun y => fwdDiffList l f (y + h)) (Ici 0) t := by
+        have hcomp : DifferentiableWithinAt ℝ
+            (fwdDiffList l f ∘ fun y : ℝ => y + h) (Ici 0) t :=
+          DifferentiableWithinAt.comp (t := Ici 0) t
+            ((ih hrest) (t + h) (mem_Ici.mpr (by linarith [mem_Ici.mp ht]))) (by fun_prop)
+            (fun y hy => mem_Ici.mpr (by linarith [mem_Ici.mp hy]))
+        simpa only [Function.comp_def] using hcomp
+      exact hshift.sub ((ih hrest) t ht)
+
+/-- Differentiating within `[0, ∞)` commutes with a mixed difference whose steps are
+nonnegative. -/
+private theorem derivWithin_fwdDiffList (l : List ℝ) (hl : ∀ h ∈ l, 0 ≤ h)
+    (hf : DifferentiableOn ℝ f (Ici 0)) {t : ℝ} (ht : 0 ≤ t) :
+    derivWithin (fwdDiffList l f) (Ici 0) t =
+      fwdDiffList l (derivWithin f (Ici 0)) t := by
+  induction l generalizing t with
+  | nil => rfl
+  | cons h l ih =>
+      have hh : 0 ≤ h := hl h (by simp)
+      have hrest : ∀ k ∈ l, 0 ≤ k := fun k hk => hl k (List.mem_cons_of_mem h hk)
+      have hdiff := differentiableOn_fwdDiffList l hrest hf
+      have hshift : DifferentiableWithinAt ℝ (fun y => fwdDiffList l f (y + h)) (Ici 0) t :=
+        by
+          have hcomp : DifferentiableWithinAt ℝ
+              (fwdDiffList l f ∘ fun y : ℝ => y + h) (Ici 0) t :=
+            DifferentiableWithinAt.comp (t := Ici 0) t
+              (hdiff (t + h) (mem_Ici.mpr (by linarith))) (by fun_prop)
+              (fun y hy => mem_Ici.mpr (by linarith [mem_Ici.mp hy]))
+          simpa only [Function.comp_def] using hcomp
+      rw [fwdDiffList_cons]
+      change derivWithin (fun y => fwdDiffList l f (y + h) - fwdDiffList l f y) (Ici 0) t = _
+      rw [derivWithin_fun_sub hshift (hdiff t (mem_Ici.mpr ht)), ih hrest ht,
+        fwdDiffList_cons, fwdDiff]
+      congr 1
+      calc
+        derivWithin (fun y => fwdDiffList l f (y + h)) (Ici 0) t =
+            derivWithin (fwdDiffList l f) (Ici 0) (t + h) := by
+          rw [derivWithin_comp_add_const]
+          have hset : h +ᵥ Ici (0 : ℝ) = Ici h := by
+            ext x
+            simp only [Set.mem_vadd_set, mem_Ici, vadd_eq_add]
+            exact ⟨by rintro ⟨y, hy, rfl⟩; linarith,
+              fun hx => ⟨x - h, by linarith, by ring⟩⟩
+          rw [hset]
+          exact derivWithin_subset
+            (by intro x hx; exact mem_Ici.mpr (le_trans hh (mem_Ici.mp hx)))
+            ((uniqueDiffOn_Ici h) (t + h) (mem_Ici.mpr (by linarith)))
+            (hdiff (t + h) (mem_Ici.mpr (by linarith)))
+        _ = fwdDiffList l (derivWithin f (Ici 0)) (t + h) := ih hrest (by linarith)
+
 /-- Forward differences commute with differentiation. -/
 theorem deriv_fwdDiffList (l : List ℝ) (hf : Differentiable ℝ f) :
     deriv (fwdDiffList l f) = fwdDiffList l (deriv f) := by
@@ -302,15 +373,16 @@ theorem deriv_fwdDiffList (l : List ℝ) (hf : Differentiable ℝ f) :
 
 namespace IsDifferenceCompletelyMonotone
 
-/-- Passing to the negated derivative preserves complete monotonicity in the finite-difference
-sense. The sign of `(Δ_l f)'` is read off from the sign of the extra difference `Δ_k (Δ_l f)` by
-letting the step `k` tend to `0` from the right. -/
-theorem neg_deriv (hf : IsDifferenceCompletelyMonotone f) (hd : Differentiable ℝ f) :
-    IsDifferenceCompletelyMonotone (fun t => -deriv f t) := by
+/-- Passing to the negated derivative within `[0, ∞)` preserves complete monotonicity in the
+finite-difference sense. The sign of `(Δ_l f)'` is read off from the sign of the extra difference
+`Δ_k (Δ_l f)` by letting the step `k` tend to `0` from the right. -/
+theorem neg_derivWithin (hf : IsDifferenceCompletelyMonotone f)
+    (hd : DifferentiableOn ℝ f (Ici 0)) :
+    IsDifferenceCompletelyMonotone (fun t => -derivWithin f (Ici 0) t) := by
   intro l hl t ht
   set n := l.length with hn
   set u := fwdDiffList l f with hu
-  have hud : Differentiable ℝ u := differentiable_fwdDiffList l hd
+  have hud : DifferentiableOn ℝ u (Ici 0) := differentiableOn_fwdDiffList l hl hd
   -- The slope of `u` to the right of `t` has the sign `(-1)^(n+1)`.
   have hslope : ∀ y ∈ Ioi t, 0 ≤ (-1 : ℝ) ^ (n + 1) * slope u t y := by
     intro y hy
@@ -329,90 +401,49 @@ theorem neg_deriv (hf : IsDifferenceCompletelyMonotone f) (hd : Differentiable �
     rw [add_comm t (y - t), sub_add_cancel] at hsign
     exact hsign
   -- Letting the step tend to `0` gives the sign of the derivative.
-  have hlim : Tendsto (slope u t) (𝓝[>] t) (𝓝 (deriv u t)) :=
-    (hasDerivAt_iff_tendsto_slope.mp (hud t).hasDerivAt).mono_left
-      (nhdsWithin_mono t fun _ hx => ne_of_gt (mem_Ioi.mp hx))
-  have hderiv : 0 ≤ (-1 : ℝ) ^ (n + 1) * deriv u t := by
+  have hlim : Tendsto (slope u t) (𝓝[>] t) (𝓝 (derivWithin u (Ici 0) t)) :=
+    (hasDerivWithinAt_iff_tendsto_slope.mp (hud t (mem_Ici.mpr ht)).hasDerivWithinAt).mono_left
+      (nhdsWithin_mono t fun y hy =>
+        ⟨mem_Ici.mpr (by linarith [mem_Ioi.mp hy]), ne_of_gt (mem_Ioi.mp hy)⟩)
+  have hderiv : 0 ≤ (-1 : ℝ) ^ (n + 1) * derivWithin u (Ici 0) t := by
     refine ge_of_tendsto (tendsto_const_nhds.mul hlim) ?_
     filter_upwards [self_mem_nhdsWithin] with y hy using hslope y hy
-  have hrw : fwdDiffList l (fun t => -deriv f t) t = -deriv u t := by
-    rw [hu, deriv_fwdDiffList l hd, fwdDiffList_neg]
-  have hpow : (-1 : ℝ) ^ n * -deriv u t = (-1 : ℝ) ^ (n + 1) * deriv u t := by ring
+  have hrw : fwdDiffList l (fun t => -derivWithin f (Ici 0) t) t =
+      -derivWithin u (Ici 0) t := by
+    rw [fwdDiffList_neg]
+    change -fwdDiffList l (derivWithin f (Ici 0)) t = -derivWithin u (Ici 0) t
+    rw [← derivWithin_fwdDiffList l hl hd ht, hu]
+  have hpow : (-1 : ℝ) ^ n * -derivWithin u (Ici 0) t =
+      (-1 : ℝ) ^ (n + 1) * derivWithin u (Ici 0) t := by ring
   rw [hrw, hpow]
   exact hderiv
 
-/-- A `C^∞` function that is completely monotone in the finite-difference sense has alternating
-iterated derivatives on `[0, ∞)`. -/
-theorem neg_one_pow_mul_iteratedDeriv_nonneg (hf : IsDifferenceCompletelyMonotone f)
-    (hs : ContDiff ℝ ∞ f) (n : ℕ) {t : ℝ} (ht : 0 ≤ t) :
-    0 ≤ (-1) ^ n * iteratedDeriv n f t := by
+/-- A function that is `C^∞` on `[0, ∞)` and completely monotone in the finite-difference sense
+has alternating iterated derivatives within that half-line. -/
+theorem neg_one_pow_mul_iteratedDerivWithin_nonneg (hf : IsDifferenceCompletelyMonotone f)
+    (hs : ContDiffOn ℝ ∞ f (Ici 0)) (n : ℕ) {t : ℝ} (ht : 0 ≤ t) :
+    0 ≤ (-1) ^ n * iteratedDerivWithin n f (Ici 0) t := by
   induction n generalizing f with
   | zero => simpa using hf.nonneg ht
   | succ n ih =>
-      obtain ⟨hdiff, hderiv⟩ := contDiff_infty_iff_deriv.mp hs
-      have hnegs : ContDiff ℝ ∞ (fun t => -deriv f t) := hderiv.neg
-      have := ih (hf.neg_deriv hdiff) hnegs
-      rw [iteratedDeriv_fun_neg] at this
-      rw [pow_succ, mul_comm ((-1 : ℝ) ^ n), mul_assoc, iteratedDeriv_succ']
+      obtain ⟨hdiff, hderiv⟩ := contDiffOn_infty_iff_derivWithin (uniqueDiffOn_Ici 0) |>.mp hs
+      have hnegs : ContDiffOn ℝ ∞ (fun t => -derivWithin f (Ici 0) t) (Ici 0) := hderiv.neg
+      have := ih (hf.neg_derivWithin hdiff) hnegs
+      rw [iteratedDerivWithin_fun_neg] at this
+      rw [pow_succ, mul_comm ((-1 : ℝ) ^ n), mul_assoc, iteratedDerivWithin_succ']
       simpa using this
 
 /-- **Finite differences detect complete monotonicity.** A `C^∞` function all of whose mixed
 forward differences alternate in sign on `[0, ∞)` is completely monotone. -/
-theorem isCompletelyMonotone (hf : IsDifferenceCompletelyMonotone f) (hs : ContDiff ℝ ∞ f) :
-    IsCompletelyMonotone f :=
-  isCompletelyMonotone_iff_completelyMonotoneOn.mpr
-    (CompletelyMonotoneOn.of_contDiff hs fun n _x hx =>
-      hf.neg_one_pow_mul_iteratedDeriv_nonneg hs n (mem_Ici.mp hx))
+theorem isCompletelyMonotone (hf : IsDifferenceCompletelyMonotone f)
+    (hs : ContDiffOn ℝ ∞ f (Ici 0)) : IsCompletelyMonotone f :=
+  ⟨hs, fun n _t ht => hf.neg_one_pow_mul_iteratedDerivWithin_nonneg hs n ht⟩
 
 end IsDifferenceCompletelyMonotone
 
 /-! ## From derivatives to differences -/
 
-/-- Iterated derivatives within `[0, ∞)` are compatible with a nonnegative shift of the
-argument. -/
-theorem iteratedDerivWithin_Ici_comp_add_const (hs : ContDiffOn ℝ ∞ f (Ici 0)) (n : ℕ) {a t : ℝ}
-    (ha : 0 ≤ a) (ht : 0 ≤ t) :
-    iteratedDerivWithin n (fun s => f (s + a)) (Ici 0) t
-      = iteratedDerivWithin n f (Ici 0) (t + a) := by
-  rcases eq_or_lt_of_le ha with rfl | ha'
-  · simp
-  · have hset : a +ᵥ Ici (0 : ℝ) = Ici a := by
-      ext x
-      simp only [Set.mem_vadd_set, mem_Ici, vadd_eq_add]
-      exact ⟨by rintro ⟨y, hy, rfl⟩; linarith, fun hx => ⟨x - a, by linarith, by ring⟩⟩
-    have hval := congrFun
-      (iteratedDerivWithin_comp_add_const (f := f) (n := n) (s := Ici (0 : ℝ)) a) t
-    simp only [hset] at hval
-    rw [hval]
-    have h0 : 0 < t + a := by linarith
-    have hcat : ContDiffAt ℝ (n : WithTop ℕ∞) f (t + a) :=
-      (hs.contDiffAt (Filter.mem_of_superset (isOpen_Ioi.mem_nhds h0) Ioi_subset_Ici_self)).of_le
-        (by exact_mod_cast le_top)
-    rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici a) hcat
-        (mem_Ici.mpr (by linarith)),
-      iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici 0) hcat (mem_Ici.mpr h0.le)]
-
 namespace IsCompletelyMonotone
-
-/-- The forward difference of a completely monotone function, with the sign reversed, is again
-completely monotone: every alternating derivative `(-1)ⁿ f⁽ⁿ⁾` is itself completely monotone,
-hence nonincreasing, which is exactly the sign condition for `t ↦ f t - f (t + a)`. -/
-theorem sub_comp_add_const (hf : IsCompletelyMonotone f) {a : ℝ} (ha : 0 ≤ a) :
-    IsCompletelyMonotone (fun t => f t - f (t + a)) := by
-  have hshift : IsCompletelyMonotone (fun t => f (t + a)) := hf.comp_add_const ha
-  refine ⟨hf.contDiffOn.sub hshift.contDiffOn, fun n t ht => ?_⟩
-  have hsub : iteratedDerivWithin n (fun t => f t - f (t + a)) (Ici 0) t
-      = iteratedDerivWithin n f (Ici 0) t
-        - iteratedDerivWithin n (fun t => f (t + a)) (Ici 0) t := by
-    have := iteratedDerivWithin_sub (n := n) (f := f) (g := fun t => f (t + a))
-      (s := Ici (0 : ℝ)) (x := t) (mem_Ici.mpr ht) (uniqueDiffOn_Ici 0)
-      ((hf.contDiffOn t (mem_Ici.mpr ht)).of_le (by exact_mod_cast le_top))
-      ((hshift.contDiffOn t (mem_Ici.mpr ht)).of_le (by exact_mod_cast le_top))
-    simpa [Pi.sub_def] using this
-  rw [hsub, iteratedDerivWithin_Ici_comp_add_const hf.contDiffOn n ha ht, mul_sub, sub_nonneg]
-  -- The `n`-th alternating derivative of `f` is completely monotone, hence nonincreasing.
-  have hcm := hf.neg_one_pow_mul_iteratedDerivWithin n
-  exact hcm.antitoneOn (mem_Ici.mpr ht) (mem_Ici.mpr (by linarith)) (by linarith)
 
 /-- A completely monotone function is completely monotone in the finite-difference sense. -/
 theorem isDifferenceCompletelyMonotone (hf : IsCompletelyMonotone f) :
@@ -443,7 +474,8 @@ end IsCompletelyMonotone
 /-- **The finite-difference characterization of complete monotonicity.** For a `C^∞` function,
 alternating mixed forward differences on `[0, ∞)` are equivalent to alternating iterated
 derivatives there. -/
-theorem isCompletelyMonotone_iff_isDifferenceCompletelyMonotone (hs : ContDiff ℝ ∞ f) :
+theorem isCompletelyMonotone_iff_isDifferenceCompletelyMonotone
+    (hs : ContDiffOn ℝ ∞ f (Ici 0)) :
     IsCompletelyMonotone f ↔ IsDifferenceCompletelyMonotone f :=
   ⟨IsCompletelyMonotone.isDifferenceCompletelyMonotone,
     fun hf => hf.isCompletelyMonotone hs⟩

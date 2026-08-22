@@ -14,9 +14,9 @@ public import TauCeti.Analysis.CompletelyMonotone.FiniteDifference.Basic
 # Smoothing a finite-difference completely monotone function
 
 `TauCeti.IsDifferenceCompletelyMonotone.isCompletelyMonotone` upgrades the finite-difference sign
-condition to genuine complete monotonicity, but only for a function that is already `C^∞`. The
-functions the condition is met by in practice are merely continuous, so this file supplies the
-missing smoothing step.
+condition to genuine complete monotonicity, but only for a function that is already `C^∞`. This
+file supplies the missing smoothing step without imposing any regularity beyond the difference
+condition itself.
 
 Averaging `f` against a smooth probability density supported in `(-ε, 0)`,
 `g t = ∫ ψ s · f (t - s) ds`,
@@ -27,15 +27,13 @@ corresponding difference of `f`, so the sign condition passes to `g` verbatim. S
 nonincreasing, `g` is squeezed between `f (· + ε)` and `f`.
 
 The outcome, `TauCeti.IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_forall_le`, is a
-completely monotone `g` with `f (t + ε) ≤ g t ≤ f t` on `[0, ∞)`: a continuous function whose
-mixed differences alternate is uniformly approximated, from below and with an explicit modulus, by
-completely monotone functions.
+completely monotone `g` with `f (t + ε) ≤ g t ≤ f t` on `[0, ∞)`.
 
 ## Main declarations
 
-* `TauCeti.IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_forall_le`: a continuous
-  function that is completely monotone in the finite-difference sense is squeezed between the
-  shift `f (· + ε)` and `f` by a completely monotone function, for every `ε > 0`.
+* `TauCeti.IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_forall_le`: a function that
+  is completely monotone in the finite-difference sense is squeezed between the shift
+  `f (· + ε)` and `f` by a completely monotone function, for every `ε > 0`.
 
 ## References
 
@@ -51,21 +49,41 @@ namespace TauCeti
 
 variable {f : ℝ → ℝ}
 
+/-- Mixed forward differences of a locally integrable function remain locally integrable. -/
+private theorem locallyIntegrable_fwdDiffList {F : ℝ → ℝ} (hF : LocallyIntegrable F volume)
+    (l : List ℝ) : LocallyIntegrable (fwdDiffList l F) volume := by
+  induction l with
+  | nil => simpa using hF
+  | cons h l ih =>
+      have hshift : LocallyIntegrable (fun t => fwdDiffList l F (t + h)) volume := by
+        have hmap : LocallyIntegrable (fwdDiffList l F)
+            (Measure.map (Homeomorph.addRight h) volume) := by
+          change LocallyIntegrable (fwdDiffList l F)
+            (Measure.map (fun x : ℝ => x + h) volume)
+          rw [map_add_right_eq_self]
+          exact ih
+        have := (locallyIntegrable_map_homeomorph (Homeomorph.addRight h)).mp hmap
+        change LocallyIntegrable (fun t => fwdDiffList l F (t + h)) volume at this
+        exact this
+      change LocallyIntegrable (fun t => fwdDiffList l F (t + h) - fwdDiffList l F t) volume
+      exact hshift.sub ih
+
 /-- A mixed forward difference of a kernel average is the kernel average of the mixed forward
 difference. -/
 private theorem fwdDiffList_integral_kernel {ψ : ℝ → ℝ} (hψ : Continuous ψ)
-    (hψc : HasCompactSupport ψ) {F : ℝ → ℝ} (hF : Continuous F) (l : List ℝ) (t : ℝ) :
+    (hψc : HasCompactSupport ψ) {F : ℝ → ℝ} (hF : LocallyIntegrable F volume)
+    (l : List ℝ) (t : ℝ) :
     fwdDiffList l (fun u => ∫ s, ψ s * F (u - s)) t = ∫ s, ψ s * fwdDiffList l F (t - s) := by
-  have hint : ∀ G : ℝ → ℝ, Continuous G → ∀ u : ℝ,
-      Integrable (fun s => ψ s * G (u - s)) volume := by
-    intro G hG u
-    exact Continuous.integrable_of_hasCompactSupport (by fun_prop) hψc.mul_right
+  have hint : ∀ l : List ℝ, ∀ u : ℝ,
+      Integrable (fun s => ψ s * fwdDiffList l F (u - s)) volume := by
+    intro l u
+    exact hψc.convolutionExists_left (ContinuousLinearMap.mul ℝ ℝ) hψ
+      (locallyIntegrable_fwdDiffList hF l) u
   induction l generalizing t with
   | nil => rfl
   | cons h l ih =>
-      have hcont : Continuous (fwdDiffList l F) := continuous_fwdDiffList l hF
       simp only [fwdDiffList_cons, fwdDiff]
-      rw [ih (t + h), ih t, ← integral_sub (hint _ hcont (t + h)) (hint _ hcont t)]
+      rw [ih (t + h), ih t, ← integral_sub (hint l (t + h)) (hint l t)]
       refine integral_congr_ae (Filter.Eventually.of_forall fun s => ?_)
       have hts : t + h - s = t - s + h := by ring
       simp only [hts]
@@ -75,7 +93,8 @@ private theorem fwdDiffList_integral_kernel {ψ : ℝ → ℝ} (hψ : Continuous
 monotonicity in the finite-difference sense. -/
 private theorem isDifferenceCompletelyMonotone_integral_kernel {ψ : ℝ → ℝ} (hψ : Continuous ψ)
     (hψc : HasCompactSupport ψ) (hψ0 : ∀ s, 0 ≤ ψ s) (hsupp : ∀ s : ℝ, ψ s ≠ 0 → s < 0)
-    {F : ℝ → ℝ} (hF : Continuous F) (hFcm : IsDifferenceCompletelyMonotone F) :
+    {F : ℝ → ℝ} (hF : LocallyIntegrable F volume)
+    (hFcm : IsDifferenceCompletelyMonotone F) :
     IsDifferenceCompletelyMonotone (fun u => ∫ s, ψ s * F (u - s)) := by
   intro l hl t ht
   rw [fwdDiffList_integral_kernel hψ hψc hF l t, ← integral_const_mul]
@@ -88,23 +107,26 @@ private theorem isDifferenceCompletelyMonotone_integral_kernel {ψ : ℝ → ℝ
     rw [key]
     exact mul_nonneg (hψ0 s) hsign
 
-/-- **Smoothing a finite-difference completely monotone function.** If `f` is continuous on
-`[0, ∞)` and all its mixed forward differences with nonnegative steps alternate in sign there,
-then for every `ε > 0` there is a genuinely completely monotone `g` with
+/-- **Smoothing a finite-difference completely monotone function.** If all mixed forward
+differences of `f` with nonnegative steps alternate in sign on `[0, ∞)`, then for every `ε > 0`
+there is a genuinely completely monotone `g` with
 `f (t + ε) ≤ g t ≤ f t` for `t ≥ 0`.
 
 The function `g` is the average of `f` against a smooth probability density supported in
 `(-ε, 0)`; smoothness comes from the convolution, the sign condition is inherited pointwise, and
 the two-sided bound is monotonicity of `f`. -/
 theorem IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_forall_le
-    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousOn f (Ici 0)) {ε : ℝ} (hε : 0 < ε) :
+    (hf : IsDifferenceCompletelyMonotone f) {ε : ℝ} (hε : 0 < ε) :
     ∃ g : ℝ → ℝ, IsCompletelyMonotone g ∧ ∀ t : ℝ, 0 ≤ t → f (t + ε) ≤ g t ∧ g t ≤ f t := by
   -- Extend `f` to the whole line by the constant value `f 0` on the left.
-  have hFcont : Continuous fun t : ℝ => f (max t 0) :=
-    hcont.comp_continuous (by fun_prop) fun x => by simp
   set F : ℝ → ℝ := fun t => f (max t 0) with hFdef
   have hFeq : ∀ t : ℝ, 0 ≤ t → F t = f t := fun t ht => by simp only [hFdef, max_eq_left ht]
   have hFcm : IsDifferenceCompletelyMonotone F := hf.congr hFeq
+  have hFanti : Antitone F := by
+    intro a b hab
+    exact hf.antitoneOn (mem_Ici.mpr (le_max_right a 0)) (mem_Ici.mpr (le_max_right b 0))
+      (max_le_max hab le_rfl)
+  have hFloc : LocallyIntegrable F volume := hFanti.locallyIntegrable
   -- A smooth probability density supported in `(-ε, 0)`.
   set φ : ContDiffBump (-(ε / 2) : ℝ) := ⟨ε / 4, ε / 2, by positivity, by linarith⟩ with hφdef
   set ψ : ℝ → ℝ := φ.normed volume with hψdef
@@ -125,12 +147,12 @@ theorem IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_forall_le
         = ψ ⋆[ContinuousLinearMap.mul ℝ ℝ, volume] F := rfl
     have hsmooth : ContDiff ℝ ∞ fun u => ∫ s, ψ s * F (u - s) := by
       rw [hconv]
-      exact hψc.contDiff_convolution_left _ φ.contDiff_normed hFcont.locallyIntegrable
+      exact hψc.contDiff_convolution_left _ φ.contDiff_normed hFloc
     exact (isDifferenceCompletelyMonotone_integral_kernel hψcont hψc hψ0
-      (fun s hs => (hsupp s hs).2) hFcont hFcm).isCompletelyMonotone hsmooth
+      (fun s hs => (hsupp s hs).2) hFloc hFcm).isCompletelyMonotone hsmooth.contDiffOn
   · -- The two-sided bound, from monotonicity of `F` and the normalization of `ψ`.
     have hintF : Integrable (fun s => ψ s * F (t - s)) volume :=
-      Continuous.integrable_of_hasCompactSupport (by fun_prop) hψc.mul_right
+      hψc.convolutionExists_left (ContinuousLinearMap.mul ℝ ℝ) hψcont hFloc t
     have hmass : ∀ c : ℝ, ∫ s, ψ s * c = c := by
       intro c
       rw [integral_mul_const, hψint, one_mul]
