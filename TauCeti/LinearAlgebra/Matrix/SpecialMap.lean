@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.ToLin
+public import Mathlib.Data.Matrix.Mul
 
 public section
 
