@@ -30,8 +30,8 @@ Euler to Eisenstein*, §2.2.
 
 ## Main result
 
-* `TauCeti.Multiquadratic.card_aut_candidateGenusField_over_base_eq_two_pow_twoRank`: for imaginary
-  `K`, `|Gal(K_gen/K)| = 2 ^ (2-rank Cl(K)) = |Cl(K)/Cl(K)²|`.
+* `TauCeti.Multiquadratic.card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient`: for
+  imaginary `K`, `|Gal(K_gen/K)| = |Cl(K)/Cl(K)²|`.
 -/
 
 public section
@@ -43,16 +43,15 @@ namespace TauCeti.Multiquadratic
 
 variable {d : ℤ}
 
-/-- **The relative candidate-genus-field Galois group has order `2 ^ (2-rank Cl(K))`.** For an
-imaginary quadratic field `K = ℚ(√d)` (`d < 0` squarefree), `|Gal(K_gen/K)|` equals
-`2 ^ (2-rank Cl(K))`, which is the cardinality `|Cl(K)/Cl(K)²|`; both are `2 ^ (t - 1)`, where `t`
-is the number of rational primes ramifying in `K`. This is the
-numerical content of the summit isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` — the two sides have equal
-order — established without class field theory. -/
-theorem card_aut_candidateGenusField_over_base_eq_two_pow_twoRank
+/-- **The relative candidate-genus-field Galois group and `Cl(K)/Cl(K)²` have equal order.** For an
+imaginary quadratic field `K = ℚ(√d)` (`d < 0` squarefree), `|Gal(K_gen/K)|` equals `|Cl(K)/Cl(K)²|`
+— both are `2 ^ (t - 1)`, where `t` is the number of rational primes ramifying in `K`. This is the
+cardinality shadow of the summit isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²`, established without
+class field theory. -/
+theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
     (hd : Squarefree d) (hneg : d < 0) :
     Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) =
-      2 ^ TauCeti.ClassGroup.twoRank (𝓞 (candidateGenusFieldBase hd)) := by
+      Nat.card (TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 (candidateGenusFieldBase hd))) := by
   have hnsq : ¬ IsSquare ((d : ℤ) : ℚ) := by
     rintro ⟨r, hr⟩
     have h1 : (0 : ℚ) ≤ ((d : ℤ) : ℚ) := hr ▸ mul_self_nonneg r
@@ -60,7 +59,10 @@ theorem card_aut_candidateGenusField_over_base_eq_two_pow_twoRank
     linarith
   have : NumberField (candidateGenusFieldBase hd) :=
     NumberField.of_intermediateField (candidateGenusFieldBase hd)
+  have : Fintype (ClassGroup (𝓞 (candidateGenusFieldBase hd))) :=
+    NumberField.RingOfIntegers.instFintypeClassGroup
   rw [card_aut_candidateGenusField_over_base hd hnsq,
+    TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
     twoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
       (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hneg,
     card_genusPrimeDiscriminants_eq_ncard_ramifiedPrimes
