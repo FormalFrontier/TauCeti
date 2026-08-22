@@ -84,17 +84,19 @@ variable {f g : ℝ → ℝ}
 `Δ_{h₁} (⋯ (Δ_{hₙ} f))`, built from Mathlib's `fwdDiff`. The order of the steps is irrelevant,
 but keeping them in a list is what makes *mixed* step sizes available, which is strictly more
 information than the iterates `(Δ_h)^[n]` of a single step. -/
-@[expose] def fwdDiffList (l : List ℝ) (f : ℝ → ℝ) : ℝ → ℝ :=
+def fwdDiffList (l : List ℝ) (f : ℝ → ℝ) : ℝ → ℝ :=
   l.foldr fwdDiff f
 
 /-- The empty list of steps takes no difference at all. -/
 @[simp]
-theorem fwdDiffList_nil (f : ℝ → ℝ) : fwdDiffList [] f = f := rfl
+theorem fwdDiffList_nil (f : ℝ → ℝ) : fwdDiffList [] f = f := by
+  simp only [fwdDiffList, List.foldr]
 
 /-- Consing a step applies one more forward difference on the outside. -/
 @[simp]
 theorem fwdDiffList_cons (h : ℝ) (l : List ℝ) (f : ℝ → ℝ) :
-    fwdDiffList (h :: l) f = fwdDiff h (fwdDiffList l f) := rfl
+    fwdDiffList (h :: l) f = fwdDiff h (fwdDiffList l f) := by
+  simp only [fwdDiffList, List.foldr]
 
 /-- Concatenating step lists composes the corresponding difference operators. -/
 theorem fwdDiffList_append (l l' : List ℝ) (f : ℝ → ℝ) :
@@ -110,7 +112,7 @@ theorem fwdDiffList_eq_of_perm {l l' : List ℝ} (h : l.Perm l') (f : ℝ → �
     ⟨fun a b g => by
       ext t
       simp only [fwdDiff]
-      rw [show t + b + a = t + a + b by ring]
+      rw [add_right_comm t b a]
       ring⟩
   exact h.foldr_eq f
 
@@ -181,7 +183,7 @@ Unlike `TauCeti.IsCompletelyMonotone` this mentions no derivative, so it makes s
 arbitrary function; on `C^∞` functions the two agree
 (`TauCeti.isCompletelyMonotone_iff_isDifferenceCompletelyMonotone`). Mixed steps, rather than the
 iterates of a single step, are what makes the notion stable under differentiation. -/
-@[expose] def IsDifferenceCompletelyMonotone (f : ℝ → ℝ) : Prop :=
+def IsDifferenceCompletelyMonotone (f : ℝ → ℝ) : Prop :=
   ∀ l : List ℝ, (∀ h ∈ l, 0 ≤ h) → ∀ t : ℝ, 0 ≤ t → 0 ≤ (-1) ^ l.length * fwdDiffList l f t
 
 /-- `IsDifferenceCompletelyMonotone f` unfolds to the alternating sign condition on every mixed
@@ -331,8 +333,11 @@ private theorem derivWithin_fwdDiffList (l : List ℝ) (hl : ∀ h ∈ l, 0 ≤ 
               (fun y hy => mem_Ici.mpr (by linarith [mem_Ici.mp hy]))
           simpa only [Function.comp_def] using hcomp
       rw [fwdDiffList_cons]
-      change derivWithin (fun y => fwdDiffList l f (y + h) - fwdDiffList l f y) (Ici 0) t = _
-      rw [derivWithin_fun_sub hshift (hdiff t (mem_Ici.mpr ht)), ih hrest ht,
+      have hfwd : fwdDiff h (fwdDiffList l f) =
+          fun y => fwdDiffList l f (y + h) - fwdDiffList l f y := by
+        ext y
+        simp only [fwdDiff]
+      rw [hfwd, derivWithin_fun_sub hshift (hdiff t (mem_Ici.mpr ht)), ih hrest ht,
         fwdDiffList_cons, fwdDiff]
       congr 1
       calc
@@ -411,7 +416,7 @@ theorem neg_derivWithin (hf : IsDifferenceCompletelyMonotone f)
   have hrw : fwdDiffList l (fun t => -derivWithin f (Ici 0) t) t =
       -derivWithin u (Ici 0) t := by
     rw [fwdDiffList_neg]
-    change -fwdDiffList l (derivWithin f (Ici 0)) t = -derivWithin u (Ici 0) t
+    simp only
     rw [← derivWithin_fwdDiffList l hl hd ht, hu]
   have hpow : (-1 : ℝ) ^ n * -derivWithin u (Ici 0) t =
       (-1 : ℝ) ^ (n + 1) * derivWithin u (Ici 0) t := by ring

@@ -19,7 +19,7 @@ finite-difference one of
 `TauCeti.IsDifferenceCompletelyMonotone`, which carries no smoothness.
 
 Feeding the smoothing of
-`TauCeti.IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_forall_le` into Bernstein's
+`TauCeti.IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_between_shift` into Bernstein's
 theorem bridges the two up to an arbitrarily small shift of the argument: a function on `[0, ∞)`
 all of whose mixed forward differences alternate is squeezed, for every `ε > 0`, between
 the shift `f (· + ε)` and `f` by the Laplace transform of a finite measure.
@@ -30,7 +30,8 @@ compactness step that Bernstein's own existence proof performs for the Chafaï m
 
 ## Main declarations
 
-* `TauCeti.IsDifferenceCompletelyMonotone.exists_isFiniteMeasure_forall_le`: the approximate
+* `TauCeti.IsDifferenceCompletelyMonotone.exists_isFiniteMeasure_laplaceTransform_between_shift`:
+  the approximate
   Laplace representation of a finite-difference completely monotone function.
 
 ## References
@@ -53,11 +54,11 @@ finite-difference sense is squeezed, for every `ε > 0`, between
 
 Full Bernstein representation of `f` itself would follow from a weak cluster point of these
 measures as `ε → 0`. -/
-theorem IsDifferenceCompletelyMonotone.exists_isFiniteMeasure_forall_le
+theorem IsDifferenceCompletelyMonotone.exists_isFiniteMeasure_laplaceTransform_between_shift
     (hf : IsDifferenceCompletelyMonotone f) {ε : ℝ} (hε : 0 < ε) :
     ∃ μ : Measure ℝ≥0, IsFiniteMeasure μ ∧ ∀ t : ℝ, 0 ≤ t →
       f (t + ε) ≤ laplaceTransform μ t ∧ laplaceTransform μ t ≤ f t := by
-  obtain ⟨g, hg, hgle⟩ := hf.exists_isCompletelyMonotone_forall_le hε
+  obtain ⟨g, hg, hgle⟩ := hf.exists_isCompletelyMonotone_between_shift hε
   obtain ⟨μ, hμ⟩ := exists_representsLaplace_of_isCompletelyMonotone hg
   refine ⟨μ, hμ.isFiniteMeasure, fun t ht => ?_⟩
   rw [← hμ.eq_laplaceTransform ht]

@@ -116,7 +116,7 @@ theorem comp_add_const (hf : IsCompletelyMonotone f) {a : ℝ} (ha : 0 ≤ a) :
 
 /-- Iterated derivatives within `[0, ∞)` are compatible with a nonnegative shift of the
 argument. -/
-theorem iteratedDerivWithin_Ici_comp_add_const (hs : ContDiffOn ℝ ∞ f (Ici 0)) (n : ℕ) {a t : ℝ}
+theorem iteratedDerivWithin_Ici_comp_add_const (n : ℕ) (hs : ContDiffOn ℝ n f (Ici 0)) {a t : ℝ}
     (ha : 0 ≤ a) (ht : 0 ≤ t) :
     iteratedDerivWithin n (fun s => f (s + a)) (Ici 0) t
       = iteratedDerivWithin n f (Ici 0) (t + a) := by
@@ -131,9 +131,8 @@ theorem iteratedDerivWithin_Ici_comp_add_const (hs : ContDiffOn ℝ ∞ f (Ici 0
     simp only [hset] at hval
     rw [hval]
     have h0 : 0 < t + a := by linarith
-    have hcat : ContDiffAt ℝ (n : WithTop ℕ∞) f (t + a) :=
-      (hs.contDiffAt (Filter.mem_of_superset (isOpen_Ioi.mem_nhds h0) Ioi_subset_Ici_self)).of_le
-        (by exact_mod_cast le_top)
+    have hcat : ContDiffAt ℝ n f (t + a) :=
+      hs.contDiffAt (Filter.mem_of_superset (isOpen_Ioi.mem_nhds h0) Ioi_subset_Ici_self)
     rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici a) hcat
         (mem_Ici.mpr (by linarith)),
       iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici 0) hcat (mem_Ici.mpr h0.le)]
@@ -153,7 +152,8 @@ theorem sub_comp_add_const (hf : IsCompletelyMonotone f) {a : ℝ} (ha : 0 ≤ a
       ((hf.contDiffOn t (mem_Ici.mpr ht)).of_le (by exact_mod_cast le_top))
       ((hshift.contDiffOn t (mem_Ici.mpr ht)).of_le (by exact_mod_cast le_top))
     simpa [Pi.sub_def] using this
-  rw [hsub, iteratedDerivWithin_Ici_comp_add_const hf.contDiffOn n ha ht, mul_sub, sub_nonneg]
+  rw [hsub, iteratedDerivWithin_Ici_comp_add_const n
+    (hf.contDiffOn.of_le (by exact_mod_cast le_top)) ha ht, mul_sub, sub_nonneg]
   have hcm := hf.neg_one_pow_mul_iteratedDerivWithin n
   exact hcm.antitoneOn (mem_Ici.mpr ht) (mem_Ici.mpr (by linarith)) (by linarith)
 
