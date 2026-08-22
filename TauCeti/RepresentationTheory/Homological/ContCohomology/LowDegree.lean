@@ -535,7 +535,6 @@ variable {G M}
 
 omit hcont in
 /-- A continuous `1`-cocycle has trivial class exactly when it is a coboundary. -/
-@[simp]
 theorem H1pi_eq_zero_iff {f : Z1 G M} :
     (f : H1 G M) = 0 ↔ (f : G → M) ∈ B1 G M := by
   rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
@@ -591,7 +590,6 @@ variable {G M}
 
 omit hcontMul hcontSmul in
 /-- A continuous `2`-cocycle has trivial class exactly when it is a coboundary. -/
-@[simp]
 theorem H2pi_eq_zero_iff {f : Z2 G M} :
     (f : H2 G M) = 0 ↔ (f : G × G → M) ∈ B2 G M := by
   rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
