@@ -11,6 +11,7 @@ public import TauCeti.RepresentationTheory.Quiver.Kronecker.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import TauCeti.RingTheory.LocalRing.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
+public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
 /-!
 # The Kronecker quiver has infinite representation type
@@ -31,12 +32,16 @@ genuinely fails there.
 
 The `A₂` quiver `• → •` -- a one-element arrow type -- is of Dynkin type and *does* have finite
 representation type, so the hypothesis that two distinct arrows exist is not an artefact: with a
-single arrow the construction below degenerates, every arrow acting by the identity.
+single arrow there is no arrow beside the distinguished one, so nothing forces the two components
+of an endomorphism to agree and the Jordan block below is not indecomposable -- the `A₂`
+indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`.
 
 ## Main definitions
 
 * `TauCeti.kroneckerRep`: the representation of the generalized Kronecker quiver with prescribed
   vertex spaces and a prescribed linear map along each arrow.
+* `TauCeti.kroneckerRepHom`: the morphism between two of them attached to a linear map at each
+  vertex making every arrow square commute.
 * `TauCeti.kroneckerJordanRep`: the nilpotent Jordan block of size `n + 1`, spread over the two
   vertices.
 
@@ -66,11 +71,12 @@ It is a *local* ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), and that is exact
 
 The two components of an endomorphism are forced to agree by naturality along an arrow acting as
 the identity, which is why a second arrow is needed; the distinguished arrow then contributes the
-one genuine relation, that the common component commutes with multiplication by the class of `X`.
-Taking the vertex spaces to be a truncated polynomial algebra rather than a line is what makes the
-result uniform in the base field: the one-dimensional representations `k ⇉ k`, with the two arrows
-acting by `1` and by a scalar, are indecomposable and pairwise non-isomorphic, but over a finite
-field there are only finitely many of them.
+one genuine relation, that the common component commutes with multiplication by the class of `X`,
+and `TauCeti.eq_mulRight_of_root_mul` turns that relation into the description of the endomorphism
+algebra. Taking the vertex spaces to be a truncated polynomial algebra rather than a line is what
+makes the result uniform in the base field: the one-dimensional representations `k ⇉ k`, with the
+two arrows acting by `1` and by a scalar, are indecomposable and pairwise non-isomorphic, but over
+a finite field there are only finitely many of them.
 
 ## References
 
@@ -136,6 +142,45 @@ theorem kroneckerRep_map_arrowPath (a : A) :
 
 end Rep
 
+section Hom
+
+variable {M N M' N' : ModuleCat.{t} k} {f : A → (M ⟶ N)} {f' : A → (M' ⟶ N')}
+
+/-- **The morphism of representations of the generalized Kronecker quiver attached to a commuting
+square along every arrow**: a linear map at each of the two vertices, intertwining the two actions
+of each arrow. Together with `TauCeti.kronecker_hom_ext` this identifies the morphisms
+`kroneckerRep k M N f ⟶ kroneckerRep k M' N' f'` with such pairs. -/
+def kroneckerRepHom (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
+    kroneckerRep k M N f ⟶ kroneckerRep k M' N' f' :=
+  Paths.liftNatTrans
+    (fun v ↦ match v with
+      | Quiver.Kronecker.src => g
+      | Quiver.Kronecker.tgt => h)
+    fun {a b} e ↦ match a, b, e with
+      | .src, .tgt, e => by
+          have hl : (kroneckerRep k M N f).map (Quiver.Hom.toPath e) = f e :=
+            Paths.lift_toPath _ e
+          have hr : (kroneckerRep k M' N' f').map (Quiver.Hom.toPath e) = f' e :=
+            Paths.lift_toPath _ e
+          rw [hl, hr]
+          exact w e
+      | .src, .src, e => isEmptyElim e
+      | .tgt, .src, e => isEmptyElim e
+      | .tgt, .tgt, e => isEmptyElim e
+
+@[simp]
+theorem kroneckerRepHom_app_src (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
+    (kroneckerRepHom g h w).app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) = g :=
+  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
+  -- would force `kroneckerRepHom` to be `@[expose]`.
+  (rfl)
+
+@[simp]
+theorem kroneckerRepHom_app_tgt (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
+    (kroneckerRepHom g h w).app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) = h := (rfl)
+
+end Hom
+
 /-- **A morphism of representations of the generalized Kronecker quiver is determined by its two
 components.** The quiver has two vertices, so a natural transformation is a pair of linear maps. -/
 theorem kronecker_hom_ext {ρ σ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)} {e e' : ρ ⟶ σ}
@@ -165,13 +210,14 @@ noncomputable def kroneckerJordanRep [DecidableEq A] (a₁ : A) (n : ℕ) :
 
 variable [DecidableEq A] {a₀ a₁ : A} {n : ℕ}
 
-@[simp]
+-- Not `@[simp]`: these two rewrite the vertex spaces inside the implicit arguments of
+-- `ModuleCat.Hom.hom`, which would take the left-hand sides of the two `_apply` lemmas below out
+-- of simp-normal form (`simpNF`). Those are the forms `simp` needs, so these stay plain rewrites.
 theorem kroneckerJordanRep_obj_src :
     (kroneckerJordanRep k a₁ n).obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) =
       ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
   rfl
 
-@[simp]
 theorem kroneckerJordanRep_obj_tgt :
     (kroneckerJordanRep k a₁ n).obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) =
       ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
@@ -189,11 +235,11 @@ theorem kroneckerJordanRep_map_arrowPath (a : A) :
 /-- The distinguished arrow acts on a Jordan block by multiplication by the class of `X`. -/
 theorem kroneckerJordanRep_map_arrowPath_self :
     (kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₁) =
-      ModuleCat.ofHom (LinearMap.mulLeft k (AdjoinRoot.root ((X : k[X]) ^ (n + 1)))) := by
-  rw [kroneckerJordanRep_map_arrowPath]
-  simp
+      ModuleCat.ofHom (LinearMap.mulLeft k (AdjoinRoot.root ((X : k[X]) ^ (n + 1)))) :=
+  (kroneckerJordanRep_map_arrowPath a₁).trans (ite_eq_left rfl)
 
 /-- The action of the distinguished arrow, read on an element. -/
+@[simp]
 theorem kroneckerJordanRep_map_arrowPath_self_apply (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) :
     ((kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₁)).hom x =
       AdjoinRoot.root ((X : k[X]) ^ (n + 1)) * x := by
@@ -203,16 +249,16 @@ theorem kroneckerJordanRep_map_arrowPath_self_apply (x : AdjoinRoot ((X : k[X]) 
 /-- Every other arrow acts on a Jordan block by the identity. -/
 theorem kroneckerJordanRep_map_arrowPath_of_ne (h : a₀ ≠ a₁) :
     (kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₀) =
-      𝟙 (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1)))) := by
-  rw [kroneckerJordanRep_map_arrowPath]
-  simp [h]
+      𝟙 (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1)))) :=
+  (kroneckerJordanRep_map_arrowPath a₀).trans (ite_eq_right h)
 
 /-- The action of any other arrow, read on an element. -/
+@[simp]
 theorem kroneckerJordanRep_map_arrowPath_of_ne_apply (h : a₀ ≠ a₁)
     (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) :
     ((kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₀)).hom x = x := by
   rw [kroneckerJordanRep_map_arrowPath_of_ne h]
-  rfl
+  exact ModuleCat.id_apply (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1)))) x
 
 /-- The linear map underlying an endomorphism of a Jordan block at the source vertex. -/
 private noncomputable def jordanApp (e : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) :
@@ -221,6 +267,15 @@ private noncomputable def jordanApp (e : kroneckerJordanRep k a₁ n ⟶ kroneck
 
 private theorem jordanApp_eq (e : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) :
     jordanApp e = (e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))).hom := (rfl)
+
+private theorem jordanApp_zero :
+    jordanApp (0 : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) = 0 := (rfl)
+
+private theorem jordanApp_id :
+    jordanApp (𝟙 (kroneckerJordanRep k a₁ n)) = LinearMap.id := (rfl)
+
+private theorem jordanApp_comp (e e' : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) :
+    jordanApp (e ≫ e') = (jordanApp e').comp (jordanApp e) := (rfl)
 
 /-- **The two components of an endomorphism of a Jordan block agree**, by naturality along an arrow
 that acts as the identity. -/
@@ -255,23 +310,22 @@ private theorem jordanApp_root_mul (h : a₀ ≠ a₁)
   rw [jordanApp_eq]
   exact hnat.trans (kroneckerJordanRep_map_arrowPath_self_apply _)
 
-/-- **An endomorphism of a Jordan block is multiplication by its value at `1`.** It commutes with
-multiplication by the class of `X`, hence with multiplication by every power of it, and those
-powers are a basis. -/
+/-- **An endomorphism of a Jordan block is multiplication by its value at `1`**, by
+`TauCeti.eq_mulRight_of_root_mul`: it commutes with multiplication by the class of `X`. -/
 private theorem jordanApp_eq_mulRight (h : a₀ ≠ a₁)
     (e : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) :
-    jordanApp e = LinearMap.mulRight k (jordanApp e 1) := by
-  have hpow : ∀ i : ℕ, jordanApp e (AdjoinRoot.root ((X : k[X]) ^ (n + 1)) ^ i) =
-      AdjoinRoot.root ((X : k[X]) ^ (n + 1)) ^ i * jordanApp e 1 := by
-    intro i
-    induction i with
-    | zero => simp
-    | succ i ih =>
-      rw [pow_succ' (AdjoinRoot.root ((X : k[X]) ^ (n + 1))) i, jordanApp_root_mul h, ih,
-        ← mul_assoc, ← pow_succ' (AdjoinRoot.root ((X : k[X]) ^ (n + 1))) i]
-  refine (AdjoinRoot.powerBasis' (monic_X_pow (R := k) (n + 1))).basis.ext fun i ↦ ?_
-  rw [PowerBasis.coe_basis]
-  simpa using hpow i
+    jordanApp e = LinearMap.mulRight k (jordanApp e 1) :=
+  eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1)) (jordanApp_root_mul h e)
+
+/-- **An endomorphism of a Jordan block is determined by its component at the source vertex**: the
+component at the target agrees with it, by `app_tgt_eq_app_src`. -/
+private theorem jordanApp_ext (h : a₀ ≠ a₁)
+    {e e' : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n}
+    (heq : jordanApp e = jordanApp e') : e = e' := by
+  have hsrc : e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) =
+      e'.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) := ModuleCat.hom_ext heq
+  exact kronecker_hom_ext hsrc
+    (by rw [app_tgt_eq_app_src h e, app_tgt_eq_app_src h e', hsrc])
 
 /-- A Jordan block is finite-dimensional: both of its vertex spaces are `k[X]/(Xⁿ⁺¹)`. -/
 theorem isFinDim_kroneckerJordanRep :
@@ -294,50 +348,26 @@ theorem not_isZero_kroneckerJordanRep :
       (hz.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
   exact false_of_nontrivial_of_subsingleton (AdjoinRoot ((X : k[X]) ^ (n + 1)))
 
-/-- **A Kronecker Jordan block is indecomposable.** An idempotent endomorphism is multiplication by
-an idempotent of `k[X]/(Xⁿ⁺¹)`, and that ring is local, so that idempotent is `0` or `1`. -/
+/-- **A Kronecker Jordan block is indecomposable, as soon as some arrow other than the distinguished
+one exists.** An idempotent endomorphism is multiplication by an idempotent of `k[X]/(Xⁿ⁺¹)`, and
+that ring is local, so that idempotent is `0` or `1`. -/
 theorem indecomposable_kroneckerJordanRep (h : a₀ ≠ a₁) :
     Indecomposable (kroneckerJordanRep k a₁ n) := by
   refine indecomposable_of_idempotent_eq_zero_or_id not_isZero_kroneckerJordanRep fun e he ↦ ?_
-  have hmul : ∀ x, jordanApp e x = x * jordanApp e 1 := fun x ↦ by
-    rw [jordanApp_eq_mulRight h e]; simp
-  have hcomp : jordanApp e (jordanApp e 1) = jordanApp e 1 := by
-    have hidem : (e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))).hom
-          ((e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))).hom
-            (1 : AdjoinRoot ((X : k[X]) ^ (n + 1)))) =
-        (e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))).hom
-          (1 : AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
-      congrArg (fun g : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n ↦
-        (ModuleCat.Hom.hom (g.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))))
-          (1 : AdjoinRoot ((X : k[X]) ^ (n + 1)))) he
-    rw [jordanApp_eq]
-    exact hidem
-  have hsq : IsIdempotentElem (jordanApp e 1) := by
-    have h1 : jordanApp e 1 * jordanApp e 1 = jordanApp e 1 := by
-      rw [← hmul (jordanApp e 1)]
-      exact hcomp
-    exact h1
-  rcases IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hsq with h0 | h1
-  · refine Or.inl (kronecker_hom_ext ?_ ?_)
-    · refine ModuleCat.hom_ext
-        (LinearMap.ext fun (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) ↦ ?_)
-      have hx : jordanApp e x = 0 := by rw [hmul x, h0, mul_zero]
-      exact hx
-    · rw [app_tgt_eq_app_src h e]
-      refine ModuleCat.hom_ext
-        (LinearMap.ext fun (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) ↦ ?_)
-      have hx : jordanApp e x = 0 := by rw [hmul x, h0, mul_zero]
-      exact hx
-  · refine Or.inr (kronecker_hom_ext ?_ ?_)
-    · refine ModuleCat.hom_ext
-        (LinearMap.ext fun (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) ↦ ?_)
-      have hx : jordanApp e x = x := by rw [hmul x, h1, mul_one]
-      exact hx
-    · rw [app_tgt_eq_app_src h e]
-      refine ModuleCat.hom_ext
-        (LinearMap.ext fun (x : AdjoinRoot ((X : k[X]) ^ (n + 1))) ↦ ?_)
-      have hx : jordanApp e x = x := by rw [hmul x, h1, mul_one]
-      exact hx
+  have hmul := jordanApp_eq_mulRight h e
+  have hmul_apply : ∀ x, jordanApp e x = x * jordanApp e 1 := fun x ↦ by rw [hmul]; simp
+  have hidem : IsIdempotentElem (jordanApp e 1) := by
+    have h' := congrArg (fun t ↦ jordanApp t 1) he
+    simp only [jordanApp_comp, LinearMap.comp_apply] at h'
+    rw [hmul_apply (jordanApp e 1)] at h'
+    exact h'
+  rcases IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hidem with h0 | h1
+  · refine Or.inl (jordanApp_ext h ?_)
+    rw [hmul, h0, jordanApp_zero]
+    exact LinearMap.ext fun x ↦ by simp
+  · refine Or.inr (jordanApp_ext h ?_)
+    rw [hmul, h1, jordanApp_id]
+    exact LinearMap.ext fun x ↦ by simp
 
 /-- **Jordan blocks of different sizes are non-isomorphic**: their dimension vectors differ. -/
 theorem eq_of_nonempty_kroneckerJordanRep_iso {m n : ℕ}

@@ -65,9 +65,8 @@ constructions inverse to each other.
 Indecomposability is proved throughout from `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`
 rather than from the brick criterion: for the Jordan blocks the endomorphism algebra is
 `k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick criterion does not apply, and an endomorphism is
-pinned down instead by its value at `1` -- it commutes with multiplication by the root, hence with
-multiplication by every power of it, and those powers are a basis. That the value is then `0` or
-`1` is locality of the truncated polynomial algebra, from
+pinned down instead by its value at `1` (`TauCeti.eq_mulRight_of_root_mul`). That the value is then
+`0` or `1` is locality of the truncated polynomial algebra; both facts come from
 `TauCeti.RingTheory.Polynomial.Truncated`.
 
 The quiver `•↺` itself -- `TauCeti.Quiver.OneLoop`, with its `Quiver` instance and its loop
@@ -384,24 +383,14 @@ private theorem oneLoopNilpotentRepApp_root_mul {n : ℕ}
     ((f.app (Quiver.OneLoop.vertex : Paths Quiver.OneLoop)).hom x))
 
 /-- **`TauCeti.oneLoopNilpotentRep k n` is indecomposable.** An endomorphism commutes with
-multiplication by the root, hence is multiplication by its value at `1`; if it is idempotent so is
-that value, and `k[X]/(Xⁿ⁺¹)` is a local ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), so its only
-idempotents are `0` and `1`. -/
+multiplication by the root, hence is multiplication by its value at `1`
+(`TauCeti.eq_mulRight_of_root_mul`); if it is idempotent so is that value, and `k[X]/(Xⁿ⁺¹)` is a
+local ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), so its only idempotents are `0` and `1`. -/
 theorem indecomposable_oneLoopNilpotentRep (n : ℕ) :
     Indecomposable (oneLoopNilpotentRep.{u, w} k n) := by
   refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_oneLoopNilpotentRep n) fun e he ↦ ?_
-  have hpow : ∀ i : ℕ, oneLoopNilpotentRepApp e (AdjoinRoot.root ((X : k[X]) ^ (n + 1)) ^ i) =
-      AdjoinRoot.root ((X : k[X]) ^ (n + 1)) ^ i * oneLoopNilpotentRepApp e 1 := by
-    intro i
-    induction i with
-    | zero => simp
-    | succ i ih =>
-      rw [pow_succ' (AdjoinRoot.root ((X : k[X]) ^ (n + 1))) i, oneLoopNilpotentRepApp_root_mul,
-        ih, ← mul_assoc, ← pow_succ' (AdjoinRoot.root ((X : k[X]) ^ (n + 1))) i]
-  have hmul : oneLoopNilpotentRepApp e = LinearMap.mulRight k (oneLoopNilpotentRepApp e 1) := by
-    refine (AdjoinRoot.powerBasis' (monic_X_pow (R := k) (n + 1))).basis.ext fun i ↦ ?_
-    rw [PowerBasis.coe_basis]
-    simpa using hpow i
+  have hmul : oneLoopNilpotentRepApp e = LinearMap.mulRight k (oneLoopNilpotentRepApp e 1) :=
+    eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1)) (oneLoopNilpotentRepApp_root_mul e)
   have hmul_apply : ∀ x, oneLoopNilpotentRepApp e x = x * oneLoopNilpotentRepApp e 1 := by
     intro x
     rw [hmul]
