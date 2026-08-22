@@ -98,15 +98,6 @@ theorem isModularEigenrow_dihedralGroupThreeCentralCharacterTable_int
   rw [(dihedralClassData 3).isModularEigenrow_iff]
   fin_cases i <;> decide
 
-/-- Reindexing a displayed integral row by the actual conjugacy classes gives a class-algebra
-eigenrow. -/
-theorem isClassEigenrow_dihedralGroupThreeCentralCharacterTable
-    (i : DihedralGroupThreeClassIndex) :
-    IsClassEigenrow ((dihedralClassData 3).reindexModularRow
-      fun j => dihedralGroupThreeCentralCharacterTable i j) :=
-  ((dihedralClassData 3).isModularEigenrow_iff_isClassEigenrow _).mp
-    (isModularEigenrow_dihedralGroupThreeCentralCharacterTable_int i)
-
 /-- Every displayed reduction is a simultaneous eigenrow of the reduced class-multiplication
 matrices. -/
 theorem isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod

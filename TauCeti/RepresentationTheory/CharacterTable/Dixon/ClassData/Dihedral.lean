@@ -36,7 +36,8 @@ of merely printing them.
 
 ## References
 
-These are the `#eval`-tests on `DihedralGroup 3` and `DihedralGroup 4` asked for by Layer 6 of the
+These kernel-evaluated, `decide`-checked acceptance tests on `DihedralGroup 3` and
+`DihedralGroup 4` supply the computations requested by Layer 6 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md).
 -/
 
