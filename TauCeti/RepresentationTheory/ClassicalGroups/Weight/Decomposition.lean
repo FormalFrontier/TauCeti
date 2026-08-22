@@ -130,63 +130,69 @@ variable {K : Type v} [Field K] [Infinite K]
 variable {W : Type u} [AddCommGroup W] [Module K W]
 variable {ρ : Representation K (GL (Fin n) K) W}
 
-/-- **The coefficients of a Laurent expansion take their values in the weight spaces.** If the
-torus acts through a finite sum `∑ l ∈ S, (∏ i, tᵢ ^ lᵢ) • A l`, then every value of `A l` is a
-weight vector of weight `l`. Nothing is claimed here about `A l` being idempotent, or acting as
-the identity on the weight space of `l`; only its image is located.
-
-Nothing in this statement refers to rationality, so the base field is an arbitrary infinite field:
-the argument only needs distinct characters of the torus to stay linearly independent.
-
-The proof compares the expansion of `ρ (diagGL (s * t))` with the composite
-`ρ (diagGL s) ∘ ρ (diagGL t)`: both are combinations of the characters with `End`-valued
-coefficients, and distinct characters are linearly independent
-(`TauCeti.linearIndependent_weightCharHom`), so the coefficients agree term by term. -/
-theorem apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul {S : Finset (Fin n → ℤ)}
+/-- **The coefficient operators are torus-equivariant against every functional.** If a
+representation expands over a finite set of characters with `End`-valued coefficients, then each
+coefficient `A l` scales by its own character `l` under the diagonal torus, as tested by any
+linear functional. -/
+private theorem apply_diagGL_coeff_eq_weightCharHom_mul {S : Finset (Fin n → ℤ)}
     {A : (Fin n → ℤ) → Module.End K W}
     (hA : ∀ t : Fin n → Kˣ, ρ (diagGL t) = ∑ l ∈ S, weightCharHom K l t • A l)
-    {l : Fin n → ℤ} (hl : l ∈ S) (w : W) : A l w ∈ weightSpace ρ l := by
+    {l : Fin n → ℤ} (hl : l ∈ S) (ψ : W →ₗ[K] K) (s : Fin n → Kˣ) (w : W) :
+    ψ (ρ (diagGL s) (A l w)) = weightCharHom K l s * ψ (A l w) := by
+  -- compare the expansion of `ρ (diagGL (s * t))` with the composite `ρ (diagGL s) ∘ ρ (diagGL t)`:
+  -- both are combinations of the characters with `End`-valued coefficients, and distinct characters
+  -- are linearly independent, so the coefficients agree term by term
   have hψ : ∀ (ψ : W →ₗ[K] K) (t : Fin n → Kˣ) (v : W),
       ψ (ρ (diagGL t) v) = ∑ l' ∈ S, weightCharHom K l' t * ψ (A l' v) := by
     intro ψ t v
     rw [hA t, LinearMap.sum_apply, map_sum]
     exact Finset.sum_congr rfl fun l' _ ↦ by
       rw [LinearMap.smul_apply, map_smul, smul_eq_mul]
-  have hcoeff : ∀ (ψ : W →ₗ[K] K) (s : Fin n → Kˣ),
-      ψ (ρ (diagGL s) (A l w)) = weightCharHom K l s * ψ (A l w) := by
-    intro ψ s
-    have hli := linearIndependent_weightCharHom (K := K) (κ := Fin n)
-    rw [linearIndependent_iff'] at hli
-    have hsum : ∑ l' ∈ S,
-        (ψ (ρ (diagGL s) (A l' w)) - weightCharHom K l' s * ψ (A l' w)) •
-          ⇑(weightCharHom K l') = 0 := by
-      funext t
-      have e1 := hψ (ψ ∘ₗ ρ (diagGL s)) t w
-      have e2 := hψ ψ (s * t) w
-      have e3 : ρ (diagGL (s * t)) w = ρ (diagGL s) (ρ (diagGL t) w) := by
-        rw [map_mul, map_mul, Module.End.mul_apply]
-      rw [e3] at e2
-      simp only [LinearMap.coe_comp, Function.comp_apply] at e1
-      have e4 : ∑ l' ∈ S, weightCharHom K l' t * ψ (ρ (diagGL s) (A l' w))
-          = ∑ l' ∈ S, weightCharHom K l' s * weightCharHom K l' t * ψ (A l' w) := by
-        rw [← e1, e2]
-        exact Finset.sum_congr rfl fun l' _ ↦ by rw [map_mul, mul_assoc]
-      rw [Finset.sum_apply, Pi.zero_apply]
-      have e5 : ∀ l' : Fin n → ℤ,
-          ((ψ (ρ (diagGL s) (A l' w)) - weightCharHom K l' s * ψ (A l' w)) •
-            ⇑(weightCharHom K l')) t
-            = weightCharHom K l' t * ψ (ρ (diagGL s) (A l' w))
-              - weightCharHom K l' s * weightCharHom K l' t * ψ (A l' w) := by
-        intro l'
-        rw [Pi.smul_apply, smul_eq_mul, sub_mul]
-        ring
-      rw [Finset.sum_congr rfl fun l' _ ↦ e5 l', Finset.sum_sub_distrib, e4, sub_self]
-    exact sub_eq_zero.mp (hli S _ hsum l hl)
-  set b := Module.Basis.ofVectorSpace K W
-  refine (mem_weightSpace_iff ρ l (A l w)).mpr fun s ↦ b.ext_elem fun i ↦ ?_
-  rw [← Module.Basis.coord_apply, ← Module.Basis.coord_apply, map_smul, smul_eq_mul,
-    ← weightCharHom_apply K l s]
-  exact hcoeff (b.coord i) s
+  have hli := linearIndependent_weightCharHom (K := K) (κ := Fin n)
+  rw [linearIndependent_iff'] at hli
+  have hsum : ∑ l' ∈ S,
+      (ψ (ρ (diagGL s) (A l' w)) - weightCharHom K l' s * ψ (A l' w)) •
+        ⇑(weightCharHom K l') = 0 := by
+    funext t
+    have e1 := hψ (ψ ∘ₗ ρ (diagGL s)) t w
+    have e2 := hψ ψ (s * t) w
+    have e3 : ρ (diagGL (s * t)) w = ρ (diagGL s) (ρ (diagGL t) w) := by
+      rw [map_mul, map_mul, Module.End.mul_apply]
+    rw [e3] at e2
+    simp only [LinearMap.coe_comp, Function.comp_apply] at e1
+    have e4 : ∑ l' ∈ S, weightCharHom K l' t * ψ (ρ (diagGL s) (A l' w))
+        = ∑ l' ∈ S, weightCharHom K l' s * weightCharHom K l' t * ψ (A l' w) := by
+      rw [← e1, e2]
+      exact Finset.sum_congr rfl fun l' _ ↦ by rw [map_mul, mul_assoc]
+    rw [Finset.sum_apply, Pi.zero_apply]
+    have e5 : ∀ l' : Fin n → ℤ,
+        ((ψ (ρ (diagGL s) (A l' w)) - weightCharHom K l' s * ψ (A l' w)) •
+          ⇑(weightCharHom K l')) t
+          = weightCharHom K l' t * ψ (ρ (diagGL s) (A l' w))
+            - weightCharHom K l' s * weightCharHom K l' t * ψ (A l' w) := by
+      intro l'
+      rw [Pi.smul_apply, smul_eq_mul, sub_mul]
+      ring
+    rw [Finset.sum_congr rfl fun l' _ ↦ e5 l', Finset.sum_sub_distrib, e4, sub_self]
+  exact sub_eq_zero.mp (hli S _ hsum l hl)
+
+/-- **The coefficients of a Laurent expansion take their values in the weight spaces.** If the
+torus acts through a finite sum `∑ l ∈ S, (∏ i, tᵢ ^ lᵢ) • A l`, then every value of `A l` is a
+weight vector of weight `l`. Nothing is claimed here about `A l` being idempotent, or acting as
+the identity on the weight space of `l`; only its image is located.
+
+Nothing in this statement refers to rationality, so the base field is an arbitrary infinite field:
+the argument only needs distinct characters of the torus to stay linearly independent. -/
+theorem apply_mem_weightSpace_of_forall_diagGL_eq_sum_smul {S : Finset (Fin n → ℤ)}
+    {A : (Fin n → ℤ) → Module.End K W}
+    (hA : ∀ t : Fin n → Kˣ, ρ (diagGL t) = ∑ l ∈ S, weightCharHom K l t • A l)
+    {l : Fin n → ℤ} (hl : l ∈ S) (w : W) : A l w ∈ weightSpace ρ l := by
+  -- vectors are separated by the dual, so the all-functionals statement gives the equality
+  refine (mem_weightSpace_iff ρ l (A l w)).mpr fun s ↦ ?_
+  rw [← sub_eq_zero, ← Module.forall_dual_apply_eq_zero_iff K]
+  intro ψ
+  rw [map_sub, map_smul, smul_eq_mul, ← weightCharHom_apply K l s, sub_eq_zero]
+  exact apply_diagGL_coeff_eq_weightCharHom_mul hA hl ψ s w
 
 end Coefficients
 
