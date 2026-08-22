@@ -38,7 +38,8 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
 * `NumberField.isTotallyPositive_one`, `IsTotallyPositive.mul`, `IsTotallyPositive.inv`,
   `isTotallyPositive_sq`: the multiplicative structure, including that nonzero squares are totally
   positive.
-* `NumberField.isTotallyPositive_intCast`: a positive rational integer is totally positive.
+* `NumberField.isTotallyPositive_ratCast`: a positive rational number is totally positive, with
+  `NumberField.isTotallyPositive_intCast` its integer special case.
 * `NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
   kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`. For a totally complex field
   it is everything (`totallyPositiveUnits_eq_top`), since total positivity is then vacuous
@@ -93,13 +94,20 @@ theorem isTotallyPositive_sq {x : K} (hx : x ≠ 0) : IsTotallyPositive (x ^ 2) 
   isTotallyPositive_iff.mpr fun w hw => by
     rw [map_pow]; exact sq_pos_iff.mpr ((map_ne_zero _).mpr hx)
 
-/-- A positive rational integer is totally positive in any number field: every real embedding fixes
-it. -/
-theorem isTotallyPositive_intCast {n : ℤ} (hn : 0 < n) :
-    IsTotallyPositive ((n : ℤ) : K) :=
+/-- A positive rational number is totally positive in any field: every real embedding fixes it.
+The cast is `Rat.cast`, which agrees with `algebraMap ℚ K` whenever the latter is available. -/
+theorem isTotallyPositive_ratCast {q : ℚ} (hq : 0 < q) :
+    IsTotallyPositive ((q : ℚ) : K) :=
   isTotallyPositive_iff.mpr fun w hw => by
-    rw [map_intCast]
-    exact_mod_cast hn
+    rw [map_ratCast]
+    exact_mod_cast hq
+
+/-- A positive rational integer is totally positive: the integer special case of
+`isTotallyPositive_ratCast`. -/
+theorem isTotallyPositive_intCast {n : ℤ} (hn : 0 < n) :
+    IsTotallyPositive ((n : ℤ) : K) := by
+  rw [← Rat.cast_intCast (α := K) n]
+  exact isTotallyPositive_ratCast (by exact_mod_cast hn)
 
 /-- The subgroup of **totally positive units** of `Kˣ`: the intersection, over the real infinite
 places `w`, of the preimages of the positive units of `ℝ` under the real embedding `w`. It is the
