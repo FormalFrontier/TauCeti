@@ -14,14 +14,15 @@ public import TauCeti.RepresentationTheory.Quiver.Preprojective.Basic
 The additive preprojective relator of a finite quiver `Q` is `ρ = ∑_a (a a* - a* a)`, one signed
 commutator for each arrow `a` of `Q`. The choice of sign is a choice of orientation: an arrow and
 its formal reverse enter `ρ` with opposite signs, and reversing the orientation of `a` exchanges
-the two. This file records the whole family of *gauged* relators
+the two. The basic preprojective module records the whole family of *gauged* relators
 
 ```text
 ρ_ε = ∑_a ε_a (a a* - a* a),
 ```
 
-one for each labelling `ε` of the arrows of `Q` by scalars, and proves that whenever two labellings
-differ by a labelling by units the resulting quotients are isomorphic `k`-algebras. A labelling `ε`
+one for each labelling `ε` of the arrows of `Q` by scalars; this file proves that whenever two
+labellings differ by a labelling by units the resulting quotients are isomorphic `k`-algebras. A
+labelling `ε`
 with values in `{1, -1}` records the sign with which each edge of the doubled quiver enters the
 relator, so what is proved here is independence of the presented algebra under a change of those
 signs, for one fixed quiver `Q` and hence one fixed doubled quiver. The isomorphism is the explicit
@@ -32,13 +33,12 @@ preprojective algebra of a *reoriented* quiver `Q'` is a different statement, wh
 not state and does not prove; see the implementation notes.
 
 The relator is genuinely a sum over the *oriented edges* of the doubled quiver against an
-antisymmetric labelling: `TauCeti.gaugedPreprojectiveRelator_eq_sum_doubledBacktrackElem` rewrites
-`ρ_ε` as `∑_b ε_b (b b*)`, over all arrows `b` of the doubled quiver, whenever `ε` negates under
-reversal. The `-` sign in `ρ_ε` is exactly the antisymmetry of the labelling.
+antisymmetric labelling: `TauCeti.gaugedPreprojectiveRelator_eq_sum_backtracks` rewrites
+`ρ_ε` as the paired contributions of `a` and `a*` for each original arrow `a`, whenever `ε`
+negates under reversal. The `-` sign in `ρ_ε` is exactly the antisymmetry of the labelling.
 
 ## Main definitions
 
-* `TauCeti.doubledBacktrackElem`: the backtrack `b b*` of an arrow `b` of the doubled quiver.
 * `TauCeti.gaugedPreprojectiveRelator`: the gauged relator `ρ_ε`.
 * `TauCeti.gaugedPreprojectiveIdeal`, `TauCeti.gaugedPreprojectiveAlgebra`,
   `TauCeti.gaugedPreprojectiveMk` and `TauCeti.gaugedPreprojectiveLift`: the quotient it presents,
@@ -56,8 +56,8 @@ reversal. The `-` sign in `ρ_ε` is exactly the antisymmetry of the labelling.
   units present isomorphic algebras.
 * `TauCeti.preprojectiveAlgebraEquivGauged`: every unit-valued gauge presents the preprojective
   algebra itself.
-* `TauCeti.gaugedPreprojectiveRelator_eq_sum_doubledBacktrackElem`: the gauged relator is the sum
-  of `ε_b (b b*)` over the oriented edges `b` of the doubled quiver, for antisymmetric `ε`.
+* `TauCeti.gaugedPreprojectiveRelator_eq_sum_backtracks`: the gauged relator pairs the two
+  oriented-edge backtracks over each original arrow, for antisymmetric `ε`.
 
 ## Implementation notes
 
@@ -88,150 +88,27 @@ open _root_.Quiver PathAlgebra
 
 universe u v w
 
-/-! ### Backtracks of the doubled quiver -/
-
-section DoubledBacktrack
-
-variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q] [Finite Q]
-
-/-- The **backtrack** `b b*` of an arrow `b` of the doubled quiver: the length-two loop at the head
-of `b` which traverses the formal reverse of `b` and then `b`. -/
-noncomputable def doubledBacktrackElem {x y : Symmetrify Q} (b : x ⟶ y) :
-    pathAlgebra k (Symmetrify Q) :=
-  ofArrow b * ofArrow (Quiver.reverse b)
-
-omit [Finite Q] in
-/-- Over an arrow of `Q` itself, the doubled backtrack is the head backtrack `a a*`. -/
-theorem doubledBacktrackElem_of {i j : Q} (a : i ⟶ j) :
-    doubledBacktrackElem k (Symmetrify.of.map a) = headBacktrackElem k a := by
-  rw [doubledBacktrackElem, ofArrow_mul_ofArrow_reverse_eq_headBacktrackElem]
-
-omit [Finite Q] in
-/-- Over the formal reverse of an arrow of `Q`, the doubled backtrack is the tail backtrack
-`a* a`. -/
-theorem doubledBacktrackElem_reverse_of {i j : Q} (a : i ⟶ j) :
-    doubledBacktrackElem k (Quiver.reverse (Symmetrify.of.map a)) = tailBacktrackElem k a := by
-  rw [doubledBacktrackElem, Quiver.reverse_reverse,
-    ofArrow_reverse_mul_ofArrow_eq_tailBacktrackElem]
-
-end DoubledBacktrack
-
-/-! ### The gauged relator -/
+/-! ### The gauged relator as an oriented-edge sum -/
 
 section Relator
 
 variable (k : Type w) {Q : Type u} [CommRing k] [Quiver.{v + 1} Q] [Fintype Q]
   [∀ i j : Q, Fintype (i ⟶ j)]
 
-/-- The **gauged preprojective relator** `ρ_ε = ∑_a ε_a (a a* - a* a)` attached to a labelling `ε`
-of the arrows of `Q` by scalars. The constant labelling `1` gives the preprojective relator. -/
-noncomputable def gaugedPreprojectiveRelator (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) :
-    pathAlgebra k (Symmetrify Q) :=
-  ∑ i : Q, ∑ j : Q, ∑ a : (i ⟶ j), ε a • (headBacktrackElem k a - tailBacktrackElem k a)
-
-/-- Pointwise equal labellings give the same gauged relator. -/
-theorem gaugedPreprojectiveRelator_congr {ε ε' : ∀ ⦃i j : Q⦄, (i ⟶ j) → k}
-    (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ε' a) :
-    gaugedPreprojectiveRelator k ε = gaugedPreprojectiveRelator k ε' := by
-  simp only [gaugedPreprojectiveRelator]
-  exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ =>
-    Finset.sum_congr rfl fun a _ => by rw [h a]
-
-/-- **The constant gauge `1` is the preprojective relator.** -/
-@[simp]
-theorem gaugedPreprojectiveRelator_one :
-    gaugedPreprojectiveRelator k (fun _ _ _ => (1 : k)) = preprojectiveRelator k Q := by
-  rw [gaugedPreprojectiveRelator, preprojectiveRelator_def]
-  simp only [one_smul]
-
 /-- **The gauged relator is a sum over the oriented edges of the doubled quiver.** For a labelling
-`ε` of the doubled quiver which negates under reversal, `ρ_ε` is `∑_b ε_b (b b*)`, summed over all
-arrows `b` of the doubled quiver: the arrow `a` of `Q` and its formal reverse `a*` contribute
-`ε_a (a a*)` and `-ε_a (a* a)`. The subtraction in `ρ_ε` is the antisymmetry of `ε`. -/
-theorem gaugedPreprojectiveRelator_eq_sum_doubledBacktrackElem
+`ε` which negates under reversal, the right-hand side pairs the two doubled arrows over each arrow
+`a` of `Q`: `a` and its formal reverse `a*` contribute `ε_a (a a*)` and `-ε_a (a* a)`.
+The subtraction in `ρ_ε` is the antisymmetry of `ε`. -/
+theorem gaugedPreprojectiveRelator_eq_sum_backtracks
     (ε : ∀ ⦃x y : Symmetrify Q⦄, (x ⟶ y) → k)
     (hε : ∀ ⦃x y : Symmetrify Q⦄ (b : x ⟶ y), ε (Quiver.reverse b) = -ε b) :
     gaugedPreprojectiveRelator k (fun _ _ a => ε (Symmetrify.of.map a))
       = ∑ i : Q, ∑ j : Q, ∑ a : (i ⟶ j),
-          (ε (Symmetrify.of.map a) • doubledBacktrackElem k (Symmetrify.of.map a)
-            + ε (Quiver.reverse (Symmetrify.of.map a)) •
-              doubledBacktrackElem k (Quiver.reverse (Symmetrify.of.map a))) := by
-  simp only [gaugedPreprojectiveRelator, doubledBacktrackElem_of, doubledBacktrackElem_reverse_of,
-    hε, neg_smul, ← sub_eq_add_neg, smul_sub]
+          (ε (Symmetrify.of.map a) • headBacktrackElem k a
+            + ε (Quiver.reverse (Symmetrify.of.map a)) • tailBacktrackElem k a) := by
+  simp only [gaugedPreprojectiveRelator, hε, neg_smul, ← sub_eq_add_neg, smul_sub]
 
 end Relator
-
-/-! ### The gauged relation ideal and its quotient -/
-
-section Algebra
-
-variable (k : Type w) {Q : Type u} [CommRing k] [Quiver.{v + 1} Q] [Fintype Q]
-  [∀ i j : Q, Fintype (i ⟶ j)] (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
-
-/-- The two-sided ideal generated by the gauged preprojective relator. -/
-noncomputable def gaugedPreprojectiveIdeal : TwoSidedIdeal (pathAlgebra k (Symmetrify Q)) :=
-  TwoSidedIdeal.span {gaugedPreprojectiveRelator k ε}
-
-theorem gaugedPreprojectiveRelator_mem_gaugedPreprojectiveIdeal :
-    gaugedPreprojectiveRelator k ε ∈ gaugedPreprojectiveIdeal k ε :=
-  TwoSidedIdeal.subset_span rfl
-
-/-- At the constant gauge `1` the gauged ideal is the preprojective ideal. -/
-theorem gaugedPreprojectiveIdeal_one :
-    gaugedPreprojectiveIdeal k (fun _ _ _ => (1 : k)) = preprojectiveIdeal k Q := by
-  rw [gaugedPreprojectiveIdeal, preprojectiveIdeal_eq_span, gaugedPreprojectiveRelator_one]
-
-/-- The **gauged preprojective algebra** `Π_k(Q, ε)`: the path algebra of the doubled quiver modulo
-the gauged relator. -/
-noncomputable abbrev gaugedPreprojectiveAlgebra : Type _ :=
-  pathAlgebra k (Symmetrify Q) ⧸ (gaugedPreprojectiveIdeal k ε).asIdeal
-
-/-- The quotient map onto the gauged preprojective algebra. -/
-noncomputable def gaugedPreprojectiveMk :
-    pathAlgebra k (Symmetrify Q) →ₐ[k] gaugedPreprojectiveAlgebra k ε :=
-  Ideal.Quotient.mkₐ k _
-
-theorem gaugedPreprojectiveMk_apply (f : pathAlgebra k (Symmetrify Q)) :
-    gaugedPreprojectiveMk k ε f = Ideal.Quotient.mk (gaugedPreprojectiveIdeal k ε).asIdeal f := by
-  rw [gaugedPreprojectiveMk, Ideal.Quotient.mkₐ_eq_mk]
-
-theorem gaugedPreprojectiveMk_surjective : Function.Surjective (gaugedPreprojectiveMk k ε) :=
-  Ideal.Quotient.mk_surjective
-
-@[simp]
-theorem gaugedPreprojectiveMk_eq_zero_iff {f : pathAlgebra k (Symmetrify Q)} :
-    gaugedPreprojectiveMk k ε f = 0 ↔ f ∈ gaugedPreprojectiveIdeal k ε := by
-  rw [gaugedPreprojectiveMk_apply, Ideal.Quotient.eq_zero_iff_mem, TwoSidedIdeal.mem_asIdeal]
-
-@[simp]
-theorem gaugedPreprojectiveMk_gaugedPreprojectiveRelator :
-    gaugedPreprojectiveMk k ε (gaugedPreprojectiveRelator k ε) = 0 :=
-  (gaugedPreprojectiveMk_eq_zero_iff k ε).2
-    (gaugedPreprojectiveRelator_mem_gaugedPreprojectiveIdeal k ε)
-
-variable {B : Type*} [Ring B] [Algebra k B] (f : pathAlgebra k (Symmetrify Q) →ₐ[k] B)
-
-/-- **The universal property of the gauged preprojective algebra**: an algebra map out of the
-doubled path algebra which kills the gauged relator descends to the quotient. -/
-noncomputable def gaugedPreprojectiveLift (hf : f (gaugedPreprojectiveRelator k ε) = 0) :
-    gaugedPreprojectiveAlgebra k ε →ₐ[k] B :=
-  Ideal.Quotient.liftₐ _ f fun _ ha =>
-    (TwoSidedIdeal.mem_ker f).1
-      (TwoSidedIdeal.span_le.2 (Set.singleton_subset_iff.2 ((TwoSidedIdeal.mem_ker f).2 hf))
-        (TwoSidedIdeal.mem_asIdeal.1 ha))
-
-theorem gaugedPreprojectiveLift_comp_gaugedPreprojectiveMk
-    (hf : f (gaugedPreprojectiveRelator k ε) = 0) :
-    (gaugedPreprojectiveLift k ε f hf).comp (gaugedPreprojectiveMk k ε) = f := by
-  rw [gaugedPreprojectiveLift, gaugedPreprojectiveMk, Ideal.Quotient.liftₐ_comp]
-
-@[simp]
-theorem gaugedPreprojectiveLift_gaugedPreprojectiveMk
-    (hf : f (gaugedPreprojectiveRelator k ε) = 0) (x : pathAlgebra k (Symmetrify Q)) :
-    gaugedPreprojectiveLift k ε f hf (gaugedPreprojectiveMk k ε x) = f x :=
-  AlgHom.congr_fun (gaugedPreprojectiveLift_comp_gaugedPreprojectiveMk k ε f hf) x
-
-end Algebra
 
 /-! ### The gauge transformation -/
 
@@ -372,26 +249,12 @@ theorem gaugedPreprojectiveAlgebraEquiv_gaugedPreprojectiveMk (ε ε' : ∀ ⦃i
   rw [gaugedPreprojectiveAlgebraEquiv, ← AlgEquiv.coe_toAlgHom, AlgEquiv.toAlgHom_ofAlgHom,
     gaugedPreprojectiveLift_gaugedPreprojectiveMk, AlgHom.comp_apply]
 
-/-- At the constant gauge `1` the gauged preprojective algebra is the preprojective algebra. -/
-noncomputable def preprojectiveAlgebraEquivGaugedOne :
-    preprojectiveAlgebra k Q ≃ₐ[k] gaugedPreprojectiveAlgebra (Q := Q) k (fun _ _ _ => (1 : k)) :=
-  Ideal.quotientEquivAlgOfEq k
-    (congrArg TwoSidedIdeal.asIdeal (gaugedPreprojectiveIdeal_one (Q := Q) k).symm)
-
-@[simp]
-theorem preprojectiveAlgebraEquivGaugedOne_preprojectiveMk (x : pathAlgebra k (Symmetrify Q)) :
-    preprojectiveAlgebraEquivGaugedOne k (preprojectiveMk k Q x)
-      = gaugedPreprojectiveMk (Q := Q) k (fun _ _ _ => (1 : k)) x := by
-  rw [preprojectiveAlgebraEquivGaugedOne, preprojectiveMk_apply, Ideal.quotientEquivAlgOfEq_mk,
-    gaugedPreprojectiveMk_apply]
-
 /-- **Every unit-valued gauge presents the preprojective algebra.** In particular a labelling of
 the arrows of `Q` by signs presents `Π_k(Q)` for every choice of signs. -/
 noncomputable def preprojectiveAlgebraEquivGauged (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
     (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ) (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ((u a : kˣ) : k)) :
     preprojectiveAlgebra k Q ≃ₐ[k] gaugedPreprojectiveAlgebra k ε :=
-  (preprojectiveAlgebraEquivGaugedOne k).trans
-    (gaugedPreprojectiveAlgebraEquiv k _ ε u fun _ _ a => by rw [h a, mul_one])
+  gaugedPreprojectiveAlgebraEquiv k (fun _ _ _ => 1) ε u fun _ _ a => by rw [h a, mul_one]
 
 /-- The isomorphism onto a unit-valued gauge, computed on the class of a basis path. -/
 @[simp]
@@ -401,8 +264,8 @@ theorem preprojectiveAlgebraEquivGauged_preprojectiveMk (ε : ∀ ⦃i j : Q⦄,
     preprojectiveAlgebraEquivGauged k ε u h (preprojectiveMk k Q x)
       = gaugedPreprojectiveMk k ε
           (rescale (doubledLabelling k fun _ _ a => ((u a : kˣ) : k)) x) := by
-  rw [preprojectiveAlgebraEquivGauged, AlgEquiv.trans_apply,
-    preprojectiveAlgebraEquivGaugedOne_preprojectiveMk,
+  rw [preprojectiveAlgebraEquivGauged, preprojectiveMk_apply,
+    ← gaugedPreprojectiveMk_apply,
     gaugedPreprojectiveAlgebraEquiv_gaugedPreprojectiveMk]
 
 end Independence
