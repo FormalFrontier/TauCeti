@@ -27,9 +27,19 @@ file builds it.
 The surgery is the obvious one. A parameter window `[l, u]` containing the crossing is chosen so
 that the curve sits on the circle `|z - s| = r` at both ends, `γ l = circleMap s r θ` and
 `γ u = circleMap s r θ'`. The window is then deleted and replaced by the arc of that circle running
-from angle `θ` to angle `θ'` (`TauCeti.Contour.circleCap`), giving `exciseCrossing γ s r l u θ θ'`:
-a curve that agrees with `γ` outside the window, is again closed and piecewise `C¹`, and — this is
-the point — **avoids `s`**, so its winding number is an integer.
+from angle `θ` to angle `θ'` (`TauCeti.Contour.circleCap`), giving `exciseCrossing γ s r l u θ θ'`,
+a curve that agrees with `γ` outside the window. Each further property it has comes with its own
+hypotheses:
+
+* it is again piecewise `C¹` on `[a, b]` (`IsPiecewiseC1On.exciseCrossing`) provided `γ` is and the
+  window sits strictly inside with `a < l < u < b`, the two endpoint conditions being what glues the
+  cap to `γ`;
+* it is again closed (`exciseCrossing_closed`) provided `γ a = γ b` and the window misses the two
+  endpoints, `a < l` and `u < b`;
+* and — this is the point — it **avoids `s`** (`exciseCrossing_ne`) provided the radius is nonzero,
+  `r ≠ 0`, and `γ` itself meets `s` only strictly inside the window.
+
+Under all of these together its winding number about `s` is an integer.
 
 What the surgery buys is an exact accounting of the crossing
 (`windingNumber_eq_exciseCrossing_add`):
@@ -60,7 +70,8 @@ once.
 ## Main results
 
 * `TauCeti.Contour.windingNumber_circleCap` — the cap has winding number `(θ' - θ) / 2π` about `s`.
-* `TauCeti.Contour.IsPiecewiseC1On.exciseCrossing` — the excised curve is piecewise `C¹`, and
+* `TauCeti.Contour.IsPiecewiseC1On.exciseCrossing` — the excised curve is piecewise `C¹`,
+  `TauCeti.Contour.exciseCrossing_closed` — it is closed if `γ` is, and
   `TauCeti.Contour.exciseCrossing_ne` — it avoids `s`.
 * `TauCeti.Contour.windingNumber_eq_exciseCrossing_add` — the winding number of `γ` is that of the
   excised curve plus the local contribution of the window.
@@ -178,11 +189,16 @@ theorem windingNumber_circleCap (hr : r ≠ 0) (hlu : l ≠ u) (θ θ' : ℝ) :
 /-! ### The excised curve -/
 
 /-- **The excised curve**: `γ` with the parameter window `[l, u]` deleted and replaced by the
-circular cap of radius `r` about `s` running from angle `θ` to angle `θ'`.
+circular cap of radius `r` about `s` running from angle `θ` to angle `θ'`. This is the curve HW
+Proposition 2.2 calls `\tilde{\Lambda}`.
 
-When the two endpoint conditions `γ l = circleMap s r θ` and `γ u = circleMap s r θ'` hold the
-replacement is continuous, and if `γ` meets `s` only inside the open window then the excised curve
-misses `s` altogether. This is the curve HW Proposition 2.2 calls `\tilde{\Lambda}`. -/
+The definition itself assumes nothing; the properties that make it a surgery each need hypotheses.
+If `γ` is continuous (indeed piecewise `C¹`) on `[a, b]`, the window is nondegenerate and strictly
+inside, `a < l < u < b`, and the two endpoint conditions `γ l = circleMap s r θ` and
+`γ u = circleMap s r θ'` hold, then the replacement glues continuously and the result is again
+piecewise `C¹` (`IsPiecewiseC1On.exciseCrossing`). If moreover `γ a = γ b` it is again closed
+(`exciseCrossing_closed`). And if the radius is nonzero, `r ≠ 0`, and `γ` meets `s` only inside the
+open window, then the excised curve misses `s` altogether (`exciseCrossing_ne`). -/
 def exciseCrossing (γ : ℝ → ℂ) (s : ℂ) (r l u θ θ' : ℝ) : ℝ → ℂ :=
   fun t => if l ≤ t ∧ t ≤ u then circleCap s r l u θ θ' t else γ t
 
@@ -220,6 +236,14 @@ theorem exciseCrossing_eqOn_Ici (hlu : l < u) (θ : ℝ) (hθ' : γ u = circleMa
 theorem exciseCrossing_eqOn_Icc (γ : ℝ → ℂ) (s : ℂ) (r l u θ θ' : ℝ) :
     EqOn (exciseCrossing γ s r l u θ θ') (circleCap s r l u θ θ') (Icc l u) :=
   fun _ ht => exciseCrossing_of_mem ht
+
+/-- **The excised curve is closed** whenever `γ` is: the window `[l, u]` lies strictly inside
+`[a, b]`, so both endpoints of `[a, b]` fall outside it and the excised curve takes the values of
+`γ` there. -/
+theorem exciseCrossing_closed (hal : a < l) (hub : u < b) (hclosed : γ a = γ b) (θ θ' : ℝ) :
+    exciseCrossing γ s r l u θ θ' a = exciseCrossing γ s r l u θ θ' b := by
+  rw [exciseCrossing_of_notMem fun h => absurd h.1 (not_le.mpr hal),
+    exciseCrossing_of_notMem fun h => absurd h.2 (not_le.mpr hub), hclosed]
 
 /-- **The excised curve avoids `s`.** Inside the window it runs along a circle of nonzero radius
 about `s`, and outside it agrees with `γ`, which by hypothesis meets `s` only strictly inside the
@@ -398,10 +422,7 @@ theorem exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi
       = k + (windingNumber γ l u s - ((θ' - θ : ℝ) : ℂ) / (2 * (Real.pi : ℂ))) := by
   have hab : a ≤ b := by linarith
   have hE := hγ.exciseCrossing hal hlu hub hθ hθ'
-  have hEclosed : exciseCrossing γ s r l u θ θ' a = exciseCrossing γ s r l u θ θ' b := by
-    rw [exciseCrossing_of_notMem fun h => absurd h.1 (not_le.mpr hal),
-      exciseCrossing_of_notMem fun h => absurd h.2 (not_le.mpr hub), hclosed]
-  obtain ⟨k, hk⟩ := hE.exists_int_windingNumber hEclosed
+  obtain ⟨k, hk⟩ := hE.exists_int_windingNumber (exciseCrossing_closed hal hub hclosed θ θ')
     (fun t ht => exciseCrossing_ne hr θ θ' havoid t ((uIcc_of_le hab) ▸ ht))
   exact ⟨k, by rw [windingNumber_eq_exciseCrossing_add hγ hal hlu hub hr hθ hθ' havoid hpv, hk]⟩
 
