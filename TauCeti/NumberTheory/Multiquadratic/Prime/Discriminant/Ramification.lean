@@ -10,15 +10,19 @@ public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 public import TauCeti.NumberTheory.RamificationInertia.Tower
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
 import TauCeti.NumberTheory.Multiquadratic.RelativeDegree
+import TauCeti.NumberTheory.NumberField.IntegralSqrt
+import TauCeti.RingTheory.Ideal.LiesOver
 import Mathlib.LinearAlgebra.Dimension.Localization
+import Mathlib.NumberTheory.RamificationInertia.Galois
 import Mathlib.RingTheory.Ideal.NatInt
 
 /-!
 # Ramification in a compositum of prime-discriminant quadratic fields
 
-Let `D i` be distinct prime discriminants, at most one of which is even, and let `root i` be
-chosen square roots of their radicands inside a number field. This file describes the ramification
-of the rational primes in their compositum `M = ℚ(root i : i)`.
+Let `D i` be prime discriminants and let `root i` be chosen square roots of their radicands inside
+a number field. This file describes the ramification of the rational primes in their compositum
+`M = ℚ(root i : i)`. The support result allows repeated factors and multiple even factors; the
+ramification-index results additionally assume distinct factors with at most one even factor.
 
 Two facts are proved. Together they are the ramified-prime half of the multiquadratic splitting
 law, complementary to the quadratic-residue description in
@@ -26,9 +30,9 @@ law, complementary to the quadratic-residue description in
 primes dividing none of the `D i`.
 
 * A rational prime ramifies in `M` if and only if it is the prime `primeDiscriminantPrime (D i)`
-  belonging to one of the factors. This is read off the discriminant
-  `|disc M| = ∏ i, |D i| ^ 2 ^ (n - 1)` computed in `Prime/Discriminant/Compositum.lean`, since a
-  prime divides a prime discriminant exactly when it is the prime belonging to it.
+  belonging to one of the factors. One direction follows from the corresponding quadratic
+  subfield. For the other, inertia outside this finite set fixes every generating square root and
+  is therefore trivial.
 * At such a prime the ramification index is exactly `2`, however large the compositum is: the
   inertia at a ramified prime of a prime-discriminant compositum is as small as it can be. The
   upper bound is a transverse cancellation — the compositum of all the *other* roots is
@@ -62,7 +66,7 @@ Form x² + ny²*, §6.A, and F. Lemmermeyer, *Reciprocity Laws: from Euler to Ei
 
 public section
 
-open IntermediateField NumberField
+open Polynomial IntermediateField NumberField
 open scoped NumberField
 
 namespace TauCeti.Multiquadratic
@@ -73,41 +77,167 @@ variable {ι : Type u} [Finite ι] {L : Type v} [Field L] [NumberField L]
 
 section RamifiedPrimes
 
-/-- **The ramified primes of a prime-discriminant compositum.** Let `D : ι → ℤ` be an injective
-family of prime discriminants with at most one even member and let `root i` square to the radicand
-of `D i`. A rational prime ramifies in the compositum `ℚ(root i : i)` exactly when it is the prime
-`primeDiscriminantPrime (D i)` belonging to one of the factors.
+/-- If `d ≡ 1 (mod 4)` and `x² = d`, then `(1 + x) / 2` is an algebraic integer. -/
+private theorem isIntegral_one_add_sqrt_div_two {x : L} {d : ℤ}
+    (hx : x ^ 2 = algebraMap ℤ L d) (hd4 : d % 4 = 1) :
+    IsIntegral ℤ ((1 + x) / 2) := by
+  obtain ⟨e, he⟩ : ∃ e : ℤ, d = 4 * e + 1 := ⟨d / 4, by omega⟩
+  have hde : algebraMap ℤ L d = 4 * algebraMap ℤ L e + 1 := by
+    rw [he]
+    simp only [map_add, map_mul, map_ofNat, map_one]
+  refine ⟨X ^ 2 - X - C e, ?_, ?_⟩
+  · monicity!
+  · simp only [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C]
+    field_simp
+    linear_combination hx + hde
 
-The discriminant of the compositum is `∏ i, |D i| ^ 2 ^ (n - 1)`, so the primes dividing it are
-the primes dividing some `D i`, and a prime divides a prime discriminant only if it is *the* prime
-belonging to it. -/
+/-- **The ramified primes of a prime-discriminant compositum.** Let `D : ι → ℤ` be any finite
+family of prime discriminants and let `root i` square to the radicand of `D i`. A rational prime
+ramifies in the compositum `ℚ(root i : i)` exactly when it is the prime
+`primeDiscriminantPrime (D i)` belonging to one of the factors. Repeated factors and multiple even
+prime discriminants are allowed: neither changes the support of ramification. -/
 theorem mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff
-    (D : ι → ℤ) (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
-    (heven : ∀ i j, IsEvenPrimeDiscriminant (D i) → IsEvenPrimeDiscriminant (D j) → D i = D j)
-    (root : ι → L)
+    (D : ι → ℤ) (hD : ∀ i, IsPrimeDiscriminant (D i)) (root : ι → L)
     (hroot : ∀ i, root i ^ 2 = algebraMap ℚ L (((primeDiscriminantRadicand (D i) : ℤ) : ℚ)))
     {p : ℕ} (hp : p.Prime) :
     p ∈ ramifiedPrimes (adjoin ℚ (Set.range root)) ↔ ∃ i, p = primeDiscriminantPrime (D i) := by
   classical
-  have := Fintype.ofFinite ι
-  rw [NumberField.mem_ramifiedPrimes_iff_dvd_discr hp, Int.natCast_dvd,
-    natAbs_discr_adjoin_range_primeDiscriminantRadicands D hD hinj heven root hroot,
-    hp.prime.dvd_finsetProd_iff]
+  let M : IntermediateField ℚ L := adjoin ℚ (Set.range root)
+  let rootM : ι → M := gen (K := ℚ) root
+  have hrootM (i : ι) : rootM i ^ 2 =
+      algebraMap ℚ M (((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) := gen_sq hroot i
+  have hrootM_int (i : ι) : rootM i ^ 2 =
+      algebraMap ℤ M (primeDiscriminantRadicand (D i)) := by
+    rw [hrootM, IsScalarTower.algebraMap_apply ℤ ℚ M]
+    norm_num
   constructor
-  · rintro ⟨i, -, hdvd⟩
-    exact ⟨i, (natCast_dvd_primeDiscriminant_iff (hD i) hp).mp
-      (Int.natCast_dvd.mpr (hp.dvd_of_dvd_pow hdvd))⟩
+  · intro hram
+    by_contra hnot
+    simp only [not_exists] at hnot
+    have htopM : adjoin ℚ (Set.range rootM) = ⊤ := by
+      change adjoin ℚ (Set.range (gen (K := ℚ) root)) = ⊤
+      exact adjoin_gen_eq_top
+    have hG' := isGalois (K := ℚ) (L := M)
+      (d := fun i => ((primeDiscriminantRadicand (D i) : ℤ) : ℚ))
+      (root := rootM) hrootM
+    have hG : IsGalois ℚ M := by
+      rw [htopM] at hG'
+      exact isGalois_iff_isGalois_top.mp hG'
+    let _ : Fact p.Prime := ⟨hp⟩
+    have : IsGalois ℚ M := hG
+    have : Finite (M →ₐ[ℚ] M) := Fintype.finite (minpoly.AlgHom.fintype ℚ M M)
+    have : Finite Gal(M/ℚ) := Finite.algEquiv
+    have : IsGaloisGroup Gal(M/ℚ) ℤ (𝓞 M) :=
+      IsGaloisGroup.of_isFractionRing Gal(M/ℚ) ℤ (𝓞 M) ℚ M
+    have hunr : Algebra.IsUnramifiedIn (𝓞 M) (Ideal.span {(p : ℤ)}) := by
+      rw [Algebra.isUnramifiedIn_iff_forall_ramificationIdx_eq_one]
+      intro P hP hPover
+      have : P.IsPrime := hP
+      have : P.LiesOver (Ideal.span {(p : ℤ)}) := hPover
+      have : (Ideal.span {(p : ℤ)} : Ideal ℤ).IsPrime :=
+        (Ideal.span_singleton_prime (by exact_mod_cast hp.ne_zero)).mpr
+          (Nat.prime_iff_prime_int.mp hp)
+      have hinertia : P.inertia Gal(M/ℚ) = ⊥ := by
+        rw [eq_bot_iff]
+        intro σ hσ
+        rw [Subgroup.mem_bot]
+        apply AlgEquiv.ext
+        intro x
+        rw [AlgEquiv.one_apply]
+        have hx : x ∈ adjoin ℚ (Set.range rootM) := by
+          rw [htopM]
+          exact IntermediateField.mem_top
+        induction hx using IntermediateField.adjoin_induction with
+        | mem x hx =>
+            obtain ⟨i, rfl⟩ := hx
+            have hsquare : σ (rootM i) ^ 2 = rootM i ^ 2 := by
+              rw [← map_pow, hrootM, AlgEquiv.commutes, ← hrootM]
+            rcases sq_eq_sq_iff_eq_or_eq_neg.mp hsquare with hi | hi
+            · exact hi
+            · exfalso
+              have hbridge (z : 𝓞 M) : algebraMap (𝓞 M) M (σ • z) =
+                  σ (algebraMap (𝓞 M) M z) := by
+                have hcoe : algebraMap (𝓞 M) M (σ • z) =
+                    σ • algebraMap (𝓞 M) M z := by
+                  rw [← NumberField.RingOfIntegers.coe_eq_algebraMap,
+                    ← NumberField.RingOfIntegers.coe_eq_algebraMap]
+                  exact integralClosure.coe_smul σ z
+                rw [hcoe, AlgEquiv.smul_def]
+              by_cases hp2 : p = 2
+              · subst p
+                have hoddD : ¬ IsEvenPrimeDiscriminant (D i) := fun heven =>
+                  hnot i (primeDiscriminantPrime_of_isEvenPrimeDiscriminant heven).symm
+                have hd4 : primeDiscriminantRadicand (D i) % 4 = 1 :=
+                  (isEvenPrimeDiscriminant_or_primeDiscriminantRadicand_mod_four_eq_one
+                    (hD i)).resolve_left hoddD
+                let W : 𝓞 M := ⟨(1 + rootM i) / 2,
+                  isIntegral_one_add_sqrt_div_two (hrootM_int i) hd4⟩
+                have hW : σ • W - W ∈ P := hσ W
+                have hWcoe : algebraMap (𝓞 M) M (σ • W - W) = -rootM i := by
+                  rw [map_sub, hbridge]
+                  change σ ((1 + rootM i) / 2) - (1 + rootM i) / 2 = -rootM i
+                  rw [map_div₀, map_add, map_one, hi, map_ofNat]
+                  ring
+                have hWsq : (σ • W - W) ^ 2 =
+                    algebraMap ℤ (𝓞 M) (primeDiscriminantRadicand (D i)) := by
+                  apply FaithfulSMul.algebraMap_injective (𝓞 M) M
+                  rw [map_pow, hWcoe, neg_sq, ← IsScalarTower.algebraMap_apply ℤ (𝓞 M) M]
+                  exact hrootM_int i
+                have hdvd : (2 : ℤ) ∣ primeDiscriminantRadicand (D i) :=
+                  (TauCeti.algebraMap_int_mem_iff_dvd_of_liesOver P _).mp
+                    (hWsq ▸ P.pow_mem_of_mem hW 2 (by norm_num))
+                omega
+              · let R : 𝓞 M := NumberField.integralSqrt (hrootM_int i)
+                have hR : σ • R = -R := by
+                  apply FaithfulSMul.algebraMap_injective (𝓞 M) M
+                  rw [hbridge, map_neg]
+                  simpa only [R, NumberField.algebraMap_integralSqrt] using hi
+                have htwoR : (2 : 𝓞 M) * R ∈ P := by
+                  have := hσ R
+                  rw [hR] at this
+                  have heq : -((2 : 𝓞 M) * R) = -R - R := by ring
+                  have hneg : -((2 : 𝓞 M) * R) ∈ P := heq.symm ▸ this
+                  exact neg_mem_iff.mp hneg
+                have hsq : ((2 : 𝓞 M) * R) ^ 2 = algebraMap ℤ (𝓞 M)
+                    (4 * primeDiscriminantRadicand (D i)) := by
+                  rw [mul_pow, NumberField.integralSqrt_sq, map_mul]
+                  norm_num
+                have hdvd : (p : ℤ) ∣ 4 * primeDiscriminantRadicand (D i) :=
+                  (TauCeti.algebraMap_int_mem_iff_dvd_of_liesOver P _).mp
+                    (hsq ▸ P.pow_mem_of_mem htwoR 2 (by norm_num))
+                have hpnot4 : ¬ (p : ℤ) ∣ 4 := by
+                  intro hp4
+                  have hp4nat : p ∣ 2 ^ 2 := by norm_num at hp4 ⊢; exact_mod_cast hp4
+                  exact hp2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp
+                    (hp.dvd_of_dvd_pow hp4nat))
+                have hpdr : (p : ℤ) ∣ primeDiscriminantRadicand (D i) :=
+                  (Nat.prime_iff_prime_int.mp hp).dvd_mul.mp hdvd |>.resolve_left hpnot4
+                have hpD : (p : ℤ) ∣ D i :=
+                  (dvd_primeDiscriminant_iff_dvd_radicand (q := p) (D i) hp2).mpr hpdr
+                exact hnot i ((natCast_dvd_primeDiscriminant_iff (hD i) hp).mp hpD)
+        | algebraMap q => exact AlgEquiv.commutes σ q
+        | add a b _ _ ha hb => rw [map_add, ha, hb]
+        | inv a _ ha => rw [map_inv₀, ha]
+        | mul a b _ _ ha hb => rw [map_mul, ha, hb]
+      have hcard := Ideal.card_inertia_eq_ramificationIdxIn (G := Gal(M/ℚ))
+        (Ideal.span {(p : ℤ)}) P
+      rw [hinertia] at hcard
+      rw [← Ideal.ramificationIdxIn_eq_ramificationIdx (Ideal.span {(p : ℤ)}) P Gal(M/ℚ)]
+      simpa using hcard.symm
+    exact (NumberField.mem_ramifiedPrimes_iff.mp hram).2 hunr
   · rintro ⟨i, rfl⟩
-    refine ⟨i, Finset.mem_univ i, dvd_pow ?_ (Nat.two_pow_pos _).ne'⟩
-    exact Int.natCast_dvd.mp ((natCast_dvd_primeDiscriminant_iff (hD i) hp).mpr rfl)
+    rw [NumberField.mem_ramifiedPrimes_iff_dvd_discr
+      (prime_primeDiscriminantPrime (hD i))]
+    let F : IntermediateField ℚ M := adjoin ℚ {rootM i}
+    apply dvd_trans _ (NumberField.discr_dvd_discr F M)
+    rw [discr_adjoin_singleton_eq_primeDiscriminant (hD i) (hrootM_int i)]
+    exact primeDiscriminantPrime_dvd (hD i)
 
 /-- **The ramified primes of a field generated by prime-discriminant roots.** The `⊤` form of
 `mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff`, for a number field `L` that the
 chosen roots generate. -/
 theorem mem_ramifiedPrimes_iff_exists_eq_primeDiscriminantPrime
-    (D : ι → ℤ) (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
-    (heven : ∀ i j, IsEvenPrimeDiscriminant (D i) → IsEvenPrimeDiscriminant (D j) → D i = D j)
-    (root : ι → L)
+    (D : ι → ℤ) (hD : ∀ i, IsPrimeDiscriminant (D i)) (root : ι → L)
     (hroot : ∀ i, root i ^ 2 = algebraMap ℚ L (((primeDiscriminantRadicand (D i) : ℤ) : ℚ)))
     (htop : adjoin ℚ (Set.range root) = ⊤) {p : ℕ} (hp : p.Prime) :
     p ∈ ramifiedPrimes L ↔ ∃ i, p = primeDiscriminantPrime (D i) := by
@@ -115,7 +245,7 @@ theorem mem_ramifiedPrimes_iff_exists_eq_primeDiscriminantPrime
     (IntermediateField.equivOfEq htop).trans IntermediateField.topEquiv
   have hdisc : NumberField.discr (adjoin ℚ (Set.range root)) = NumberField.discr L :=
     NumberField.discr_eq_discr_of_algEquiv _ f
-  rw [← mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff D hD hinj heven root hroot
+  rw [← mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff D hD root hroot
     hp, NumberField.mem_ramifiedPrimes_iff_dvd_discr hp,
     NumberField.mem_ramifiedPrimes_iff_dvd_discr hp, hdisc]
 
@@ -128,14 +258,13 @@ variable (D : ι → ℤ) (root : ι → L)
 /-- **A prime outside the family is unramified.** If a rational prime is not the prime belonging to
 any of the prime-discriminant factors, it is unramified in the field they generate. -/
 theorem isUnramifiedIn_of_forall_ne_primeDiscriminantPrime
-    (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
-    (heven : ∀ i j, IsEvenPrimeDiscriminant (D i) → IsEvenPrimeDiscriminant (D j) → D i = D j)
+    (hD : ∀ i, IsPrimeDiscriminant (D i))
     (hroot : ∀ i, root i ^ 2 = algebraMap ℚ L (((primeDiscriminantRadicand (D i) : ℤ) : ℚ)))
     (htop : adjoin ℚ (Set.range root) = ⊤) {p : ℕ} (hp : p.Prime)
     (hne : ∀ i, p ≠ primeDiscriminantPrime (D i)) :
     Algebra.IsUnramifiedIn (𝓞 L) (Ideal.span {(p : ℤ)}) := by
   by_contra hcon
-  obtain ⟨i, hi⟩ := (mem_ramifiedPrimes_iff_exists_eq_primeDiscriminantPrime D hD hinj heven root
+  obtain ⟨i, hi⟩ := (mem_ramifiedPrimes_iff_exists_eq_primeDiscriminantPrime D hD root
     hroot htop hp).mp (NumberField.mem_ramifiedPrimes_iff.mpr ⟨hp, hcon⟩)
   exact hne i hi
 
@@ -154,7 +283,6 @@ theorem isUnramifiedIn_adjoin_range_ne_primeDiscriminantPrime
   have hp : (primeDiscriminantPrime (D i)).Prime := prime_primeDiscriminantPrime (hD i)
   obtain ⟨j, hj⟩ := (mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff
     (fun j : {j // j ≠ i} => D j.val) (fun j => hD j.val)
-    (fun a b hab => Subtype.ext (hinj hab)) (fun a b ha hb => heven _ _ ha hb)
     (fun j : {j // j ≠ i} => root j.val) (fun j => hroot j.val) hp).mp
     (NumberField.mem_ramifiedPrimes_iff.mpr ⟨hp, hcon⟩)
   exact j.property (hinj (eq_of_primeDiscriminantPrime_eq (hD i) (hD j.val)
@@ -191,8 +319,8 @@ private theorem ramificationIdx_adjoin_singleton_eq_two
     rwa [hrange, Nat.card_eq_fintype_card, Fintype.card_fin, pow_one] at h
   have hmem : primeDiscriminantPrime (D i) ∈ ramifiedPrimes (adjoin ℚ ({root i} : Set L)) := by
     have h := (mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff
-      (fun _ : Fin 1 => D i) (fun _ => hD i) (fun a b _ => Subsingleton.elim a b)
-      (fun _ _ _ _ => rfl) (fun _ : Fin 1 => root i) (fun _ => hroot i) hp).mpr ⟨0, rfl⟩
+      (fun _ : Fin 1 => D i) (fun _ => hD i)
+      (fun _ : Fin 1 => root i) (fun _ => hroot i) hp).mpr ⟨0, rfl⟩
     rwa [hrange] at h
   exact NumberField.ramificationIdx_eq_two_of_mem_ramifiedPrimes hfin hmem 𝔮
 
@@ -293,7 +421,7 @@ theorem isUnramifiedIn_of_forall_ramificationIdx_eq_two
           i).ramificationIdx_eq_one hur
     · -- The prime is unramified in `L` already over `ℚ`, so nothing ramifies above `𝔮`.
       simp only [not_exists] at hex
-      have hunr := isUnramifiedIn_of_forall_ne_primeDiscriminantPrime D root hD hinj heven hroot
+      have hunr := isUnramifiedIn_of_forall_ne_primeDiscriminantPrime D root hD hroot
         htop hp hex
       refine RamificationInertia.isUnramifiedIn_of_forall_ramificationIdx_le (R := ℤ) 𝔮 ?_
       intro r _ hr
