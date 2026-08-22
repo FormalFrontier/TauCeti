@@ -167,7 +167,7 @@ theorem discriminantSubgroup_dual (M : L.IntermediateCarrier) :
 @[simp]
 theorem dual_dual (M : L.IntermediateCarrier) : dual (dual M) = M := by
   refine Subtype.ext ?_
-  change L.form.dualSubmodule (L.form.dualSubmodule M.1) = M.1
+  rw [coe_dual, coe_dual]
   simpa only [L.form_flip] using
     LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip L.form L.form_nondegenerate M.1
 
