@@ -138,6 +138,9 @@ of the diagram.** -/
 
 /-! ## Action on the pinned root datum -/
 
+-- These two equations cannot be simp lemmas: the whole-library simp set contains
+-- `Matrix.mulVec_fin_two`, so the `simpNF` linter reduces their left-hand sides first.
+
 /-- **The special matrix carries every tabulated root to its indexed image with the
 prescribed exponent.** -/
 theorem g2SpecialIsogenyMatrix_mulVec_g2Root (i : Fin 12) :
