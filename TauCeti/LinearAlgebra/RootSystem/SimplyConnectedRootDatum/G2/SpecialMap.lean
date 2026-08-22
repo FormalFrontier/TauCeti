@@ -102,6 +102,11 @@ theorem g2SpecialIsogenyIndex_involutive : Involutive g2SpecialIsogenyIndex := b
   intro i
   fin_cases i <;> decide
 
+/-- Applying the special root permutation twice fixes every root index. -/
+@[simp] theorem g2SpecialIsogenyIndex_g2SpecialIsogenyIndex (i : Fin 12) :
+    g2SpecialIsogenyIndex (g2SpecialIsogenyIndex i) = i :=
+  g2SpecialIsogenyIndex_involutive i
+
 /-- The special permutation of the root indices of the pinned type `G₂` datum. -/
 def g2SpecialIsogenyIndexEquiv : Equiv.Perm (Fin 12) :=
   g2SpecialIsogenyIndex_involutive.toPerm _

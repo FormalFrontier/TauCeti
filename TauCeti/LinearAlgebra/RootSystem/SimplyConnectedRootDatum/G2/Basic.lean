@@ -136,11 +136,8 @@ theorem linearIndepOn_g2Root_zero_one : LinearIndepOn ℤ g2Root ({0, 1} : Set (
 
 private lemma g2_smul_add_smul_inj {a b a' b' : ℤ}
     (h : a • g2Root 0 + b • g2Root 1 = a' • g2Root 0 + b' • g2Root 1) : a = a' ∧ b = b' := by
-  have hz : (a - a') • g2Root 0 + (b - b') • g2Root 1 = 0 := by
-    rw [sub_smul, sub_smul, sub_add_sub_comm, h, sub_self]
-  obtain ⟨h0, h1⟩ := (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).1
-    linearIndepOn_g2Root_zero_one _ _ hz
-  exact ⟨sub_eq_zero.1 h0, sub_eq_zero.1 h1⟩
+  exact (LinearIndependent.pair_iff.2 ((LinearIndepOn.pair_iff g2Root
+    (by decide : (0 : Fin 12) ≠ 1)).1 linearIndepOn_g2Root_zero_one)).eq_of_pair h
 
 /-- The two simple roots are linearly independent, so the expansion
 `TauCeti.DynkinType.g2Root_eq_smul_add_smul` determines the coefficients. -/
@@ -313,9 +310,8 @@ private lemma g2Coroot_mem_or_neg_mem (i : Fin 12) :
       -g2Coroot i ∈
         AddSubmonoid.closure (g2Coroot '' (↑({0, 1} : Finset (Fin 12)) : Set (Fin 12))) :=
   mem_or_neg_mem_of_table _
-    ![(true, 1, 0), (true, 0, 1), (true, 1, 3), (true, 2, 3), (true, 1, 1), (true, 1, 2),
-      (false, 1, 0), (false, 0, 1), (false, 1, 3), (false, 2, 3), (false, 1, 1), (false, 1, 2)]
-    (fun j => by fin_cases j <;> ext k <;> fin_cases k <;> norm_num [g2Coroot]) i
+    (fun k => (decide ((k : ℕ) < 6), (g2Coroot k 0).natAbs, (g2Coroot k 1).natAbs))
+    (fun j => by decide +revert) i
 
 /-- The Bourbaki-numbered base of the pinned simply connected `G2` root datum. Its support is the
 first two root indices, short root first and long root second; see
