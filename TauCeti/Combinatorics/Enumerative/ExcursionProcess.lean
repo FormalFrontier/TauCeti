@@ -69,33 +69,28 @@ variable {α : Type*} {x : ℕ → α} {a : α} {k m : ℕ}
 the `k`-th and `(k + 1)`-st visits to `a`.
 
 If either visit does not exist, `visitTime` uses its documented junk value and this interval may
-be empty. -/
-def excursion (x : ℕ → α) (a : α) (k : ℕ) : List α :=
-  (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x
+be empty.
 
-private theorem excursion_def_private (x : ℕ → α) (a : α) (k : ℕ) :
-    excursion x a k =
-      (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x :=
-  rfl
+Exposed so that `TauCeti.excursion_def` is a `rfl` proof of an exported equation. -/
+@[expose] def excursion (x : ℕ → α) (a : α) (k : ℕ) : List α :=
+  (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x
 
 /-- The defining equation of an excursion. -/
 theorem excursion_def (x : ℕ → α) (a : α) (k : ℕ) :
     excursion x a k =
       (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x :=
-  excursion_def_private x a k
-
-/-- The list of the first `m` excursions of `x` from `a`. -/
-def excursionPrefix (x : ℕ → α) (a : α) (m : ℕ) : List (List α) :=
-  (List.range m).map (excursion x a)
-
-private theorem excursionPrefix_def_private (x : ℕ → α) (a : α) (m : ℕ) :
-    excursionPrefix x a m = (List.range m).map (excursion x a) :=
   rfl
+
+/-- The list of the first `m` excursions of `x` from `a`.
+
+Exposed so that `TauCeti.excursionPrefix_def` is a `rfl` proof of an exported equation. -/
+@[expose] def excursionPrefix (x : ℕ → α) (a : α) (m : ℕ) : List (List α) :=
+  (List.range m).map (excursion x a)
 
 /-- The defining equation of a finite excursion prefix. -/
 theorem excursionPrefix_def (x : ℕ → α) (a : α) (m : ℕ) :
     excursionPrefix x a m = (List.range m).map (excursion x a) :=
-  excursionPrefix_def_private x a m
+  rfl
 
 @[simp]
 theorem excursionPrefix_zero (x : ℕ → α) (a : α) : excursionPrefix x a 0 = [] := by
@@ -113,7 +108,11 @@ theorem length_excursionPrefix (x : ℕ → α) (a : α) (m : ℕ) :
     (excursionPrefix x a m).length = m := by
   simp [excursionPrefix_def]
 
-/-- Membership in an excursion is membership in the corresponding open interval of times. -/
+/-- Membership in an excursion is membership in the corresponding open interval of times.
+
+Deliberately not `@[simp]`: it would rewrite the left-hand side of the `@[simp]` lemma
+`TauCeti.not_mem_excursion` into an existential that `simp` cannot close, so `simp` would stop
+proving that an excursion avoids its base state. -/
 theorem mem_excursion_iff {b : α} :
     b ∈ excursion x a k ↔
       ∃ n, visitTime x a k < n ∧ n < visitTime x a (k + 1) ∧ x n = b := by
@@ -156,57 +155,6 @@ theorem not_mem_excursion (x : ℕ → α) (a : α) (k : ℕ) : a ∉ excursion 
 
 /-! ## Reconstruction -/
 
-/-- If the `m`-th visit exists, all visit times through `m` are genuine and consecutive visit
-times through `m` are strictly increasing. -/
-private theorem visitTime_data_of_exists_visitCount
-    (h : ∃ n, x n = a ∧ visitCount x a n = m) :
-    (∀ k ≤ m, x (visitTime x a k) = a ∧ visitCount x a (visitTime x a k) = k) ∧
-      ∀ i j, i < j → j ≤ m → visitTime x a i < visitTime x a j := by
-  classical
-  obtain ⟨n, hn, hcount⟩ := h
-  have hcard : ∀ hf : {n | x n = a}.Finite, m < hf.toFinset.card := by
-    intro hf
-    rw [← hcount, visitCount_eq_count]
-    exact Nat.count_lt_card hf hn
-  constructor
-  · intro k hk
-    have hkcard : ∀ hf : {n | x n = a}.Finite, k < hf.toFinset.card :=
-      fun hf => hk.trans_lt (hcard hf)
-    constructor
-    · simpa only [visitTime_def] using Nat.nth_mem k hkcard
-    · rw [visitCount_eq_count, visitTime_def]
-      exact Nat.count_nth hkcard
-  · intro i j hij hj
-    have hjcard : ∀ hf : {n | x n = a}.Finite, j < hf.toFinset.card :=
-      fun hf => hj.trans_lt (hcard hf)
-    simpa only [visitTime_def] using Nat.nth_lt_nth' hij hjcard
-
-/-- Infinite visits supply a finite witness for every visit count. -/
-private theorem exists_visitCount_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
-    ∃ n, x n = a ∧ visitCount x a n = m := by
-  refine ⟨visitTime x a m, visitTime_apply_of_infinite h m, ?_⟩
-  apply (visitTime_strictMono_of_infinite h).injective
-  rw [visitTime_visitCount (visitTime_apply_of_infinite h m)]
-
-/-- Appending excursion lists splices their loop paths at the shared base state. -/
-private theorem loopPath_append (a : α) (bs cs : List (List α)) :
-    loopPath a (bs ++ cs) = (loopPath a bs).dropLast ++ loopPath a cs := by
-  induction bs with
-  | nil => simp
-  | cons e bs ih =>
-      have hne : loopPath a bs ≠ [] := by cases bs <;> simp
-      have hdrop : (loopPath a (e :: bs)).dropLast =
-          a :: (e ++ (loopPath a bs).dropLast) := by
-        rw [loopPath_cons]
-        calc
-          (a :: (e ++ loopPath a bs)).dropLast = ((a :: e) ++ loopPath a bs).dropLast := by
-            simp
-          _ = (a :: e) ++ (loopPath a bs).dropLast :=
-            List.dropLast_append_of_ne_nil hne
-          _ = a :: (e ++ (loopPath a bs).dropLast) := by simp
-      rw [List.cons_append, loopPath_cons, ih, hdrop]
-      rw [List.cons_append, List.append_assoc]
-
 /-- A single excursion whose next endpoint exists spells out exactly the segment between its two
 endpoint visits. -/
 theorem loopPath_singleton_excursion
@@ -214,10 +162,10 @@ theorem loopPath_singleton_excursion
     loopPath a [excursion x a k] =
       (List.Ico (visitTime x a k) (visitTime x a (k + 1) + 1)).map x := by
   rw [loopPath_cons, loopPath_nil, excursion_def]
-  obtain ⟨happly, hmono⟩ := visitTime_data_of_exists_visitCount h
-  have hk := (happly k (by omega)).1
-  have hk1 := (happly (k + 1) le_rfl).1
-  have hlt := hmono k (k + 1) (by omega) le_rfl
+  have hk := apply_visitTime_of_le h (Nat.le_succ k)
+  have hk1 := apply_visitTime_of_le h le_rfl
+  have hlt : visitTime x a k < visitTime x a (k + 1) :=
+    visitTime_lt_visitTime_of_le h (by omega) le_rfl
   have hsucc : visitTime x a k + 1 ≤ visitTime x a (k + 1) := by omega
   have hIco :
       List.Ico (visitTime x a k) (visitTime x a (k + 1) + 1) =
@@ -245,26 +193,24 @@ theorem loopPath_excursionPrefix (h : ∃ n, x n = a ∧ visitCount x a n = m) :
   induction m with
   | zero =>
       simp only [excursionPrefix_zero, loopPath_nil]
-      rw [List.Ico.succ_singleton, List.map_singleton,
-        (visitTime_data_of_exists_visitCount h).1 0 le_rfl |>.1]
+      rw [List.Ico.succ_singleton, List.map_singleton, apply_visitTime_of_le h le_rfl]
   | succ m ih =>
-      obtain ⟨happly, hstrict⟩ := visitTime_data_of_exists_visitCount h
-      have hm : ∃ n, x n = a ∧ visitCount x a n = m :=
-        ⟨visitTime x a m, (happly m (by omega)).1, (happly m (by omega)).2⟩
-      have hm1 : ∃ n, x n = a ∧ visitCount x a n = m + 1 := h
-      rw [excursionPrefix_succ, loopPath_append, ih hm, loopPath_singleton_excursion hm1]
+      have hm : ∃ n, x n = a ∧ visitCount x a n = m := exists_visitCount_of_le h (Nat.le_succ m)
+      rw [excursionPrefix_succ, loopPath_append, ih hm, loopPath_singleton_excursion h]
+      have hstep : visitTime x a m < visitTime x a (m + 1) :=
+        visitTime_lt_visitTime_of_le h (by omega) le_rfl
       have hmono : visitTime x a 0 ≤ visitTime x a m := by
-        by_cases hm0 : m = 0
-        · simp [hm0]
-        · exact (hstrict 0 m (Nat.pos_of_ne_zero hm0) (by omega)).le
+        rcases Nat.eq_zero_or_pos m with rfl | hm0
+        · exact le_rfl
+        · exact (visitTime_lt_visitTime_of_le (j := m) h hm0 (Nat.le_succ m)).le
       have hdrop :
           ((List.Ico (visitTime x a 0) (visitTime x a m + 1)).map x).dropLast =
             (List.Ico (visitTime x a 0) (visitTime x a m)).map x := by
         rw [List.Ico.succ_top hmono, List.map_append, List.map_singleton,
           List.dropLast_append_cons]
         simp
-      rw [hdrop, ← List.map_append, List.Ico.append_consecutive hmono
-        ((hstrict m (m + 1) m.lt_succ_self le_rfl).le.trans (Nat.le_succ _))]
+      rw [hdrop, ← List.map_append,
+        List.Ico.append_consecutive hmono (hstep.le.trans (Nat.le_succ _))]
 
 /-- The infinite-visit form of `loopPath_excursionPrefix`. -/
 theorem loopPath_excursionPrefix_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :

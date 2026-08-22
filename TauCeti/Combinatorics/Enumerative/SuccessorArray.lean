@@ -27,8 +27,10 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 
 * `TauCeti.successorArray_visitCount`: the defining step relation of the successor array.
 * `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
-* `TauCeti.visitTime_apply_of_infinite` and `TauCeti.visitTime_strictMono_of_infinite`: visit
+* `TauCeti.apply_visitTime_of_infinite` and `TauCeti.visitTime_strictMono_of_infinite`: visit
   times are genuine and strictly increasing when the value occurs infinitely often.
+* `TauCeti.apply_visitTime_of_le` and `TauCeti.visitTime_lt_visitTime_of_le`: the same two facts
+  below a visit that is known to exist.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
 * `TauCeti.pathOfSuccessors_successorArray`: reconstruction inverts the successor decomposition.
 
@@ -110,7 +112,7 @@ section Counting
 
 attribute [local instance] Classical.decEq
 
-variable {α : Type*} {x y : ℕ → α} {a : α} {k m n : ℕ}
+variable {α : Type*} {x y : ℕ → α} {a : α} {j k m n : ℕ}
 
 /-- Visit counts are `Nat.count` of the visiting predicate. -/
 theorem visitCount_eq_count [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ) :
@@ -174,7 +176,7 @@ theorem visitTime_eq_iff :
     Nat.nth_eq_iff (p := fun i => x i = a) (k := k) (m := m)
 
 /-- If `x` visits `a` infinitely often, every visit time is a genuine visit. -/
-theorem visitTime_apply_of_infinite (h : {n | x n = a}.Infinite) (k : ℕ) :
+theorem apply_visitTime_of_infinite (h : {n | x n = a}.Infinite) (k : ℕ) :
     x (visitTime x a k) = a := by
   simpa only [visitTime_def] using Nat.nth_mem_of_infinite h k
 
@@ -191,6 +193,49 @@ theorem visitTime_strictMono_of_infinite (h : {n | x n = a}.Infinite) :
 @[simp]
 theorem visitTime_zero_of_eq (h : x 0 = a) : visitTime x a 0 = 0 := by
   rw [visitTime_def, Nat.nth_zero_of_zero h]
+
+/-- If `x` visits `a` only finitely often, the number of visits before a genuine visit is smaller
+than the total number of visits. -/
+theorem visitCount_lt_card (hf : {n | x n = a}.Finite) (hn : x n = a) :
+    visitCount x a n < hf.toFinset.card := by
+  rw [visitCount_eq_count]
+  exact Nat.count_lt_card hf hn
+
+/-- If some time is the `m`-th visit of `x` to `a`, then every earlier visit is realised too: for
+`k ≤ m` some time is the `k`-th visit. -/
+theorem exists_visitCount_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hk : k ≤ m) :
+    ∃ n, x n = a ∧ visitCount x a n = k := by
+  obtain ⟨n, hn, hcount⟩ := h
+  have hcard : ∀ hf : {n | x n = a}.Finite, k < hf.toFinset.card := fun hf =>
+    hk.trans_lt (hcount ▸ visitCount_lt_card hf hn)
+  refine ⟨visitTime x a k, ?_, ?_⟩
+  · simpa only [visitTime_def] using Nat.nth_mem k hcard
+  · rw [visitCount_eq_count, visitTime_def]
+    exact Nat.count_nth hcard
+
+/-- If some time is the `m`-th visit of `x` to `a`, then the `k`-th visit time is a genuine visit
+for every `k ≤ m`. -/
+theorem apply_visitTime_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hk : k ≤ m) :
+    x (visitTime x a k) = a := by
+  obtain ⟨n, hn, hcount⟩ := exists_visitCount_of_le h hk
+  rw [← hcount, visitTime_visitCount hn]
+  exact hn
+
+/-- If some time is the `m`-th visit of `x` to `a`, the visit times up to `m` are strictly
+increasing. -/
+theorem visitTime_lt_visitTime_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hkj : k < j)
+    (hj : j ≤ m) : visitTime x a k < visitTime x a j := by
+  obtain ⟨n, hn, hcount⟩ := h
+  have hcard : ∀ hf : {n | x n = a}.Finite, j < hf.toFinset.card := fun hf =>
+    hj.trans_lt (hcount ▸ visitCount_lt_card hf hn)
+  simpa only [visitTime_def] using Nat.nth_lt_nth' hkj hcard
+
+/-- If `x` visits `a` infinitely often, every visit count is realised. -/
+theorem exists_visitCount_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
+    ∃ n, x n = a ∧ visitCount x a n = m := by
+  refine ⟨visitTime x a m, apply_visitTime_of_infinite h m, ?_⟩
+  apply (visitTime_strictMono_of_infinite h).injective
+  rw [visitTime_visitCount (apply_visitTime_of_infinite h m)]
 
 end Counting
 
