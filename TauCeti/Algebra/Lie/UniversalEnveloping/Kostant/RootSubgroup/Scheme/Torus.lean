@@ -171,8 +171,7 @@ private theorem groupSchemePoint_comp_weightTorusRepresentation
     (R := ℤ) (A := A) (SplitTorus.characterGroup κ) p
   let f := CommHopfAlgCat.ofHom (DiagonalizableGroup.diagonalCoordinateMap bL
     (fun x => SplitTorus.weightCharacter (wt x)))
-  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of ℤ A) f q
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of ℤ A) f.hom q
   apply Over.OverMorphism.ext
   rw [GeneralLinear.groupSchemePointMulEquiv_apply_left, Over.comp_left,
     weightTorusRepresentation_def, DiagonalizableGroup.diagonalGroupSchemeHom_def]

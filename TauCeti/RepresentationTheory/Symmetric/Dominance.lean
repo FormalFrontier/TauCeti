@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Combinatorics.Young.Dominance
+public import TauCeti.RepresentationTheory.AsAlgebraHom
 public import TauCeti.RepresentationTheory.Symmetric.PermutationModule.Basic
 public import TauCeti.RepresentationTheory.Symmetric.Symmetrizer
 
@@ -122,19 +123,10 @@ theorem asAlgebraHom_columnAntisymmetrizer_single_eq_zero {lam : YoungDiagram}
       -columnAntisymmetrizer t := by
     rw [mul_columnAntisymmetrizer_right t ⟨p, hp⟩, hsign]
     simp
-  have key : (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t)
-        (MonoidAlgebra.single q 1) =
-      -((permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t)
-        (MonoidAlgebra.single q 1)) := by
-    conv_lhs => rw [← hfix']
-    rw [← Representation.asAlgebraHom_single_one (permutationModule μ).ρ,
-      ← Module.End.mul_apply, ← map_mul, hneg, map_neg, LinearMap.neg_apply]
-  have h2 : (2 : ℚ) • (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t)
-      (MonoidAlgebra.single q 1) = 0 := by
-    rw [two_smul]
-    nth_rewrite 2 [key]
-    exact add_neg_cancel _
-  exact (smul_eq_zero.mp h2).resolve_left two_ne_zero
+  -- the permutation module is a `ℚ`-vector space, so doubling is injective on it
+  have : IsAddTorsionFree (permutationModule μ) := .of_module_rat _
+  exact Representation.asAlgebraHom_eq_zero_of_mul_single_eq_neg
+    (nsmul_right_injective two_ne_zero) _ hfix' hneg
 
 /-- **James's dominance lemma.**  If the column antisymmetrizer of a `lam`-tableau `t` does not
 annihilate the `μ`-tabloid `q`, then the shape of `t` dominates `μ`.

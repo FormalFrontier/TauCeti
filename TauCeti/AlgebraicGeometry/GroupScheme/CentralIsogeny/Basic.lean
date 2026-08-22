@@ -29,10 +29,17 @@ central kernel and that every isogeny out of a commutative group scheme is centr
 
 ## Main declarations
 
+* `TauCeti.GroupScheme.pointMap`: the homomorphism induced on points over a test scheme.
+* `TauCeti.GroupScheme.pointMap_injective_of_mono`: a morphism monic in `Over X` induces an
+  injective map on points over every test scheme.
 * `TauCeti.GroupScheme.HasCentralKernel`: every functor-of-points kernel is central.
+* `TauCeti.GroupScheme.hasCentralKernel`: the corresponding morphism property.
 * `TauCeti.GroupScheme.isogenies`: the finite, flat, surjective morphism property on group schemes.
 * `TauCeti.GroupScheme.IsIsogeny`: the corresponding predicate on a group-scheme morphism.
+* `TauCeti.GroupScheme.centralIsogenies`: the central-isogeny morphism property.
 * `TauCeti.GroupScheme.IsCentralIsogeny`: an isogeny with central kernel.
+* `TauCeti.GroupScheme.isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel`: the predicate-level
+  bridge to the two constituent properties.
 
 ## References
 
@@ -83,20 +90,32 @@ theorem pointMap_comp (f : G ⟶ H) (g : H ⟶ K) (T : Over X) :
   ext h
   simp
 
-/-- A group-scheme morphism has central kernel when, over every test scheme, each point in its
+/-- A group-scheme morphism monic in `Over X` induces an injective map on points over every test
+scheme. -/
+theorem pointMap_injective_of_mono (e : G ⟶ H) [Mono e.hom.hom] (T : Over X) :
+    Function.Injective (pointMap e T) := by
+  intro g h hgh
+  apply (cancel_mono e.hom.hom).1
+  simpa only [pointMap_apply] using hgh
+
+/-- The morphism property of having central kernel: over every test scheme, each point in the
 kernel commutes with every point of the source.
 
 This all-test-schemes condition is the functor-of-points formulation of the scheme-theoretic
 kernel being contained in the centre. -/
-def HasCentralKernel (f : G ⟶ H) : Prop :=
-  ∀ (T : Over X) (g : T ⟶ G.X), g ≫ f.hom.hom = 1 → ∀ h : T ⟶ G.X, Commute g h
+def hasCentralKernel (X : Scheme) : MorphismProperty (Grp (Over X)) :=
+  fun G _ f ↦
+    ∀ (T : Over X) (g : T ⟶ G.X), g ≫ f.hom.hom = 1 → ∀ h : T ⟶ G.X, Commute g h
+
+/-- A group-scheme morphism has central kernel when it belongs to `hasCentralKernel X`. -/
+abbrev HasCentralKernel (f : G ⟶ H) : Prop :=
+  hasCentralKernel X f
 
 /-- A group-scheme morphism has central kernel exactly when the kernel of its map on points over
 every test scheme is contained in the ordinary group centre. -/
 theorem hasCentralKernel_iff_pointMap_ker_le_center (f : G ⟶ H) :
     HasCentralKernel f ↔
       ∀ T : Over X, (pointMap f T).ker ≤ Subgroup.center (T ⟶ G.X) := by
-  rw [HasCentralKernel]
   constructor
   · intro hf T g hg
     rw [Subgroup.mem_center_iff]
@@ -112,8 +131,7 @@ theorem hasCentralKernel_of_mono (f : G ⟶ H) [Mono f.hom.hom] : HasCentralKern
   intro T g hg h
   have hg_one : g = 1 := by
     apply (cancel_mono f.hom.hom).1
-    rw [hg]
-    simp
+    simpa using hg
   rw [hg_one]
   exact Commute.one_left h
 
@@ -205,10 +223,26 @@ theorem comp {f : G ⟶ H} {g : H ⟶ K} (hf : IsIsogeny f) (hg : IsIsogeny g) :
 
 end IsIsogeny
 
+/-- The morphism property of being a central isogeny of group schemes over a field. -/
+def centralIsogenies (k : Type u) [Field k] :
+    MorphismProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
+  isogenies k ⊓ hasCentralKernel (Spec (CommRingCat.of k))
+
 /-- A central isogeny is an isogeny whose scheme-theoretic kernel is central, expressed on the
 functor of points over every test scheme. -/
-def IsCentralIsogeny (f : G ⟶ H) : Prop :=
-  IsIsogeny f ∧ HasCentralKernel f
+abbrev IsCentralIsogeny (f : G ⟶ H) : Prop :=
+  centralIsogenies k f
+
+/-- A central isogeny is precisely an isogeny with central kernel. -/
+theorem isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel (f : G ⟶ H) :
+    IsCentralIsogeny f ↔ IsIsogeny f ∧ HasCentralKernel f :=
+  Iff.rfl
+
+/-- Central isogenies are the intersection of isogenies and morphisms with central kernel. -/
+theorem centralIsogenies_eq :
+    centralIsogenies k = isogenies k ⊓ hasCentralKernel (Spec (CommRingCat.of k)) := by
+  ext _ _ f
+  exact isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f
 
 /-- A morphism is a central isogeny exactly when its underlying scheme morphism is finite, flat,
 and surjective and its kernel is central on all scheme-valued points. -/
@@ -216,7 +250,7 @@ theorem isCentralIsogeny_iff (f : G ⟶ H) :
     IsCentralIsogeny f ↔
       IsFinite f.hom.hom.left ∧ Flat f.hom.hom.left ∧ Surjective f.hom.hom.left ∧
         HasCentralKernel f := by
-  rw [IsCentralIsogeny, isIsogeny_iff]
+  rw [isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel, isIsogeny_iff]
   simp only [and_assoc]
 
 /-- A group-scheme morphism is a central isogeny exactly when it is finite, flat, and surjective
@@ -230,7 +264,7 @@ theorem isCentralIsogeny_iff_pointMap_ker_le_center (f : G ⟶ H) :
 
 /-- The isogeny underlying a central isogeny. -/
 theorem IsCentralIsogeny.isIsogeny {f : G ⟶ H} (hf : IsCentralIsogeny f) : IsIsogeny f :=
-  hf.1
+  (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mp hf |>.1
 
 /-- The underlying scheme morphism of a central isogeny is finite. -/
 theorem IsCentralIsogeny.isFinite {f : G ⟶ H} (hf : IsCentralIsogeny f) :
@@ -250,22 +284,25 @@ theorem IsCentralIsogeny.surjective {f : G ⟶ H} (hf : IsCentralIsogeny f) :
 /-- The central-kernel property underlying a central isogeny. -/
 theorem IsCentralIsogeny.hasCentralKernel {f : G ⟶ H} (hf : IsCentralIsogeny f) :
     HasCentralKernel f :=
-  hf.2
+  (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mp hf |>.2
 
 /-- Every isogeny from a commutative group scheme is central. -/
 theorem IsIsogeny.isCentral_of_isCommMonObj {f : G ⟶ H} (hf : IsIsogeny f)
     [IsCommMonObj G.X] : IsCentralIsogeny f :=
-  ⟨hf, hasCentralKernel_of_isCommMonObj f⟩
+  (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mpr
+    ⟨hf, hasCentralKernel_of_isCommMonObj f⟩
 
 /-- The identity of a group scheme is a central isogeny. -/
 @[simp]
 theorem isCentralIsogeny_id (G : Grp (Over (Spec (CommRingCat.of k)))) :
     IsCentralIsogeny (𝟙 G) :=
-  ⟨isIsogeny_id G, hasCentralKernel_of_mono (𝟙 G)⟩
+  (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel _).mpr
+    ⟨isIsogeny_id G, hasCentralKernel_of_mono (𝟙 G)⟩
 
 /-- Every isomorphism of group schemes is a central isogeny. -/
 theorem isCentralIsogeny_of_isIso (f : G ⟶ H) [IsIso f] : IsCentralIsogeny f :=
-  ⟨isIsogeny_of_isIso f, hasCentralKernel_of_mono f⟩
+  (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mpr
+    ⟨isIsogeny_of_isIso f, hasCentralKernel_of_mono f⟩
 
 end Isogeny
 
