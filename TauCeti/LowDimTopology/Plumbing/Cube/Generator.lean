@@ -320,6 +320,7 @@ theorem characteristicWeight_mk_singleton (P : PlumbingGraph V)
 
 /-- The lower-face exponent of a one-dimensional cube is the drop from its weight to the weight
 of its base point. -/
+@[simp]
 theorem characteristicLowerFaceExponent_mk_singleton (P : PlumbingGraph V)
     (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
     characteristicLowerFaceExponent P k ⟨x, {v}⟩ v =
@@ -333,6 +334,7 @@ theorem characteristicLowerFaceExponent_mk_singleton (P : PlumbingGraph V)
 
 /-- The upper-face exponent of a one-dimensional cube is the drop from its weight to the weight
 of its far endpoint. -/
+@[simp]
 theorem characteristicUpperFaceExponent_mk_singleton (P : PlumbingGraph V)
     (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
     characteristicUpperFaceExponent P k

@@ -176,15 +176,20 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
       a • c ∈ LinearMap.range (P.latticeDifferential k) := by
   let S := P.latticeShortComplex k
   let z : LinearMap.ker S.g.hom := ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩
-  rw [latticeHomologyCycleMap_apply]
-  change S.moduleCatHomologyIso.inv
-      ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) = 0 ↔ _
+  have hmap : P.latticeHomologyCycleMap k c hc a =
+      S.moduleCatHomologyIso.inv
+        ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) := by
+    simpa only [S, z] using P.latticeHomologyCycleMap_apply k c hc a
+  rw [hmap]
   constructor
   · intro ha
+    have ha' : S.moduleCatHomologyIso.inv
+        ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) = (0 : S.homology) := by
+      exact ha
     have hq : (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0 := by
       have hz := S.moduleCatHomologyIso.inv_hom_id_apply
         ((LinearMap.range S.moduleCatToCycles).mkQ (a • z))
-      rw [ha, map_zero] at hz
+      rw [ha', map_zero] at hz
       exact hz.symm
     rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero] at hq
     obtain ⟨b, hb⟩ := hq
@@ -225,9 +230,11 @@ theorem latticeHomologyCycleMap_surjective (P : PlumbingGraph V)
   have hmem : w - a • z ∈ LinearMap.range S.moduleCatToCycles :=
     ⟨b, Subtype.ext ((P.latticeShortComplex_f_hom_apply k b).trans hb)⟩
   refine ⟨a, ?_⟩
-  rw [latticeHomologyCycleMap_apply]
-  change S.moduleCatHomologyIso.inv
-      ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) = y
+  have hmap : P.latticeHomologyCycleMap k c hc a =
+      S.moduleCatHomologyIso.inv
+        ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) := by
+    simpa only [S, z] using P.latticeHomologyCycleMap_apply k c hc a
+  rw [hmap]
   have hq : (LinearMap.range S.moduleCatToCycles).mkQ (a • z) =
       S.moduleCatHomologyIso.hom y := by
     refine Eq.trans ?_ hw
