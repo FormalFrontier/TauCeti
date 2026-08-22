@@ -34,6 +34,8 @@ Buzzard, and Joël Riou.
 * `TauCeti.Hodge.HodgeStructureOn.piece`: the Hodge component `H^{p,n-p}`.
 * `TauCeti.Hodge.HodgeStructureOn.conj_piece`: conjugation exchanges `H^{p,n-p}` and
   `H^{n-p,p}`, with `TauCeti.Hodge.HodgeStructureOn.conj_mem_piece` its elementwise form.
+* `TauCeti.Hodge.HodgeStructureOn.comap`: transport of a Hodge structure along a linear
+  equivalence intertwining the conjugations.
 * `TauCeti.Hodge.HodgeStructureOn.IsEffective`: the filtration is supported in bidegrees with
   both indices nonnegative.
 -/
@@ -179,6 +181,50 @@ theorem conj_piece (hs : HodgeStructureOn W ω n) (p : ℤ) :
 theorem conj_mem_piece (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W} (hx : x ∈ hs.piece p) :
     ω.toEquiv x ∈ hs.piece (n - p) :=
   hs.conj_piece p ▸ Submodule.mem_map_of_mem hx
+
+section Comap
+
+variable {W' : Type*} [AddCommGroup W'] [Module ℂ W'] {ω' : Conjugation W'}
+
+/-- Pulling a Hodge structure back along a linear equivalence that intertwines the two
+conjugations. This is how a Hodge structure is transported between two models of the same complex
+vector space, for instance from a complexification to a graded piece identified with it. -/
+noncomputable def comap (e : W ≃ₗ[ℂ] W')
+    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (hs : HodgeStructureOn W' ω' n) :
+    HodgeStructureOn W ω n where
+  F p := (hs.F p).comap e.toLinearMap
+  F_antitone _ _ h := Submodule.comap_mono (hs.F_antitone h)
+  F_top := by
+    obtain ⟨p, hp⟩ := hs.F_top
+    exact ⟨p, by rw [hp, Submodule.comap_top]⟩
+  opposed p := by
+    have hmap : ((hs.F (n + 1 - p)).comap e.toLinearMap).map ω.toEquiv.toLinearMap =
+        ((hs.F (n + 1 - p)).map ω'.toEquiv.toLinearMap).comap e.toLinearMap := by
+      ext y
+      simp only [Submodule.mem_map, Submodule.mem_comap, LinearEquiv.coe_coe]
+      constructor
+      · rintro ⟨x, hx, rfl⟩
+        exact ⟨e x, hx, (he x).symm⟩
+      · rintro ⟨z, hz, hzy⟩
+        refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
+        rw [he y, ← hzy, ω'.apply_apply]
+        exact hz
+    rw [hmap]
+    refine ⟨?_, ?_⟩
+    · rw [disjoint_iff, ← Submodule.comap_inf, (hs.opposed p).disjoint.eq_bot,
+        Submodule.comap_bot, LinearMap.ker_eq_bot]
+      exact e.injective
+    · rw [codisjoint_iff, Submodule.comap_equiv_eq_map_symm, Submodule.comap_equiv_eq_map_symm,
+        ← Submodule.map_sup, (hs.opposed p).codisjoint.eq_top, Submodule.map_top,
+        LinearMap.range_eq_top]
+      exact e.symm.surjective
+
+@[simp]
+theorem comap_F (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
+    (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
+    (hs.comap e he).F p = (hs.F p).comap e.toLinearMap := (rfl)
+
+end Comap
 
 /-- A weight-`n` Hodge structure is effective when its Hodge filtration begins at `F 0 = ⊤`.
 Equivalently, it ends at `F (n + 1) = ⊥`, and its Hodge components can occur only when both
