@@ -89,9 +89,7 @@ theorem hasCentralKernel_hopfSpec_map_of_isCentral_kernelHopfIdeal
     K (CommHopfAlgCat.kernelHopfIdeal f) hf _ hmem
   rw [Subgroup.mem_center_iff]
   intro h
-  apply eK.injective
-  rw [map_mul, map_mul]
-  exact (hp.commute (eK h)).eq.symm
+  exact (Commute.of_map eK.injective (hp.commute (eK h)).symm).eq
 
 /-- If the induced affine group-scheme morphism has central kernel on all scheme-valued points,
 then its represented kernel Hopf ideal is central. -/
@@ -137,9 +135,7 @@ theorem isCentral_kernelHopfIdeal_of_hasCentralKernel_hopfSpec_map
   have hcenter := (hasCentralKernel_iff_pointMap_ker_le_center
     ((hopfSpec (CommRingCat.of R)).map f.op)).mp hf _ hker
   have hs := (Subgroup.mem_center_iff.mp hcenter) (eK h)
-  rw [commute_iff_eq]
-  apply eK.injective
-  simpa only [map_mul] using hs.symm
+  exact Commute.of_map eK.injective (commute_iff_eq _ _ |>.mpr hs.symm)
 
 /-- **Coordinate criterion for a central kernel.** The affine group-scheme morphism induced by
 `f : H ⟶ K` has central kernel exactly when its represented kernel Hopf ideal is central. -/

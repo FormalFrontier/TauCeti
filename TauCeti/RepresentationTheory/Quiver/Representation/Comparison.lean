@@ -47,8 +47,12 @@ Only the two comparison morphisms and their formal properties are proved here. T
 *projective cover* in the technical sense (a superfluous kernel) and `Sᵢ ↪ Iᵢ` an *injective
 envelope* (an essential extension) is neither proved nor true in this generality: for the quiver
 with one vertex and one loop the path algebra is `k[X]`, the kernel of `Pᵢ ↠ Sᵢ` is the ideal
-`(X)`, and `(X) + (X - 1) = k[X]` with `(X - 1)` proper, so that kernel is not superfluous. What is
-recorded instead is `TauCeti.indecProjRepToSimpleRep_app_basis_eq_zero_of_length_ne_zero`:
+`(X)`, and `(X) + (X - 1) = k[X]` with `(X - 1)` proper, so that kernel is not superfluous. Ruling
+that loop out does repair the projective half:
+`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Cover`, downstream of this file,
+proves `TauCeti.epi_of_epi_comp_indecProjRepToSimpleRep`, that `Pᵢ ↠ Sᵢ` is an essential
+epimorphism, under the local hypothesis `∀ p : Quiver.Path i i, p = Quiver.Path.nil`. What is
+recorded here instead is `TauCeti.indecProjRepToSimpleRep_app_basis_eq_zero_of_length_ne_zero`:
 the morphism kills the basis vector of every path of positive length, hence, by linearity, their
 whole span. That span is what the arrow ideal of the path algebra cuts out of `Pᵢ`, but no ideal
 of the path algebra is defined here and none is claimed: the statement quantifies over path basis

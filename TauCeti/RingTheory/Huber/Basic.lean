@@ -9,6 +9,7 @@ public import Mathlib.RingTheory.Finiteness.Ideal
 public import Mathlib.Topology.Algebra.Nonarchimedean.AdicTopology
 public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.RingTheory.Huber.PowerBounded
+public import TauCeti.Topology.Algebra.Group.FirstCountable
 
 /-!
 # Huber rings and Tate rings
