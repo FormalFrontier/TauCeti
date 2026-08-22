@@ -108,6 +108,16 @@ private theorem typeDRootEquiv_typeDGraphIndexEquiv (hn : 4 ≤ n)
       typeDClassicalGraphEquiv n (typeDRootEquiv n hn i) := by
   simp [typeDGraphIndexEquiv]
 
+/-- On every classical type-`D` root, the root-index permutation changes exactly the sign of the
+final coordinate. -/
+theorem typeDRootEquiv_typeDGraphIndexEquiv_apply (hn : 4 ≤ n)
+    (i : Fin (2 * n * (n - 1))) (j : Fin n) :
+    (typeDRootEquiv n hn (typeDGraphIndexEquiv n hn i)).1 j =
+      if (j : ℕ) = n - 1 then -(typeDRootEquiv n hn i).1 j
+      else (typeDRootEquiv n hn i).1 j := by
+  rw [typeDRootEquiv_typeDGraphIndexEquiv, typeDClassicalGraphEquiv_val]
+  exact typeDLastSign_apply _ _
+
 /-- The type-`D` root permutation is an involution. -/
 @[simp] theorem typeDGraphIndexEquiv_apply_apply (hn : 4 ≤ n)
     (i : Fin (2 * n * (n - 1))) :
@@ -292,6 +302,13 @@ noncomputable def typeDGraphAut (n : ℕ) (hn : 4 ≤ n) :
   bijective_weightMap := (typeDGraphLatticeEquiv n hn).bijective
   bijective_coweightMap := (typeDGraphLatticeEquiv n hn).bijective
 
+/-- The root-index action bundled in the type-`D` graph automorphism is the explicit permutation
+induced by changing the sign of the final classical coordinate. -/
+@[simp] theorem indexEquiv_typeDGraphAut (hn : 4 ≤ n)
+    (i : Fin (2 * n * (n - 1))) :
+    (typeDGraphAut n hn).indexEquiv i = typeDGraphIndexEquiv n hn i :=
+  by rw [typeDGraphAut]
+
 /-- The character-lattice action of the type-`D` graph automorphism exchanges the final two
 node coordinates. -/
 @[simp] theorem weightMap_typeDGraphAut_apply (hn : 4 ≤ n) (x : Fin n → ℤ) (i : Fin n) :
@@ -306,7 +323,7 @@ node coordinates. -/
 
 /-- The root-index action of the type-`D` graph automorphism restricts to the fork swap on the
 pinned simple roots. -/
-@[simp] theorem indexEquiv_typeDGraphAut_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
+theorem indexEquiv_typeDGraphAut_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
     (typeDGraphAut n hn).indexEquiv (typeDSimpleIndex n hn i) =
       typeDSimpleIndex n hn (graphPermD n (by omega) i) :=
   typeDGraphIndexEquiv_typeDSimpleIndex hn i
