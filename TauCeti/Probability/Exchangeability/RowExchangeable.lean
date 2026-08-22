@@ -51,7 +51,10 @@ representation of Markov exchangeable processes consumes.
   process is almost surely multiplicative across disjoint sets of rows;
 * `TauCeti.Probability.RowExchangeable.ae_apply_pi_eq_prod` and
   `TauCeti.Probability.RowExchangeable.exists_directing_pi_eq_prod`: the resulting product formula
-  over a finite set of rows, at a given witness and at the witness de Finetti supplies.
+  over a finite set of rows, at a given witness and at the witness de Finetti supplies;
+* `TauCeti.Probability.RowExchangeable.measure_setOf_forall_mem_eq_lintegral_prod`: the mass of an
+  event reading finitely many pairwise distinct cells is the mixture of the product of the row
+  marginals' masses — the form in which a consumer reads a finite block of array entries.
 
 ## Implementation
 
@@ -578,6 +581,107 @@ theorem RowExchangeable.ae_apply_pi_eq_prod [IsFiniteMeasure μ] (h : RowExchang
           simpa only [Finset.mem_singleton, Finset.mem_insert] using hb)),
         ih (fun b hb => hB b (Finset.mem_insert_of_mem hb))] with ω h1 h2
       rw [hcoe, h1, h2, Finset.prod_insert ha, Finset.coe_singleton, Set.singleton_pi']
+
+/-- **Distinct cells of a row exchangeable array are conditionally independent given the mixing
+representative of its columns.** The joint mass of finitely many *pairwise distinct* cells landing
+in prescribed measurable sets is the mixture, over the mixing representative, of the product of the
+masses that its individual row marginals give those sets.
+
+This is the form the array law is consumed in downstream: an event that reads finitely many entries
+of the array, no two of them the same cell, has the mass of an independent product, once the mixing
+representative is integrated out. Distinctness is essential — a repeated cell is read twice and is
+of course not independent of itself.
+
+The cells are grouped by their column index, where the mixture identity of the columns applies,
+and the row factorization `TauCeti.Probability.RowExchangeable.ae_apply_pi_eq_prod` splits each
+column's contribution into one factor per row it constrains. Injectivity enters twice: it makes the
+cells in a single column pairwise distinct as rows, and it makes the two nested products a single
+product over cells. -/
+theorem RowExchangeable.measure_setOf_forall_mem_eq_lintegral_prod [IsFiniteMeasure μ]
+    (h : RowExchangeable μ Y) (hY : ∀ p, AEMeasurable (Y p) μ)
+    (hlam : MixedIIDWith μ (arrayColumn Y) lam)
+    {r : ℕ} {c : Fin r → ι × ℕ} (hc : Function.Injective c)
+    {B : Fin r → Set α} (hB : ∀ t, MeasurableSet (B t)) :
+    μ {ω | ∀ t, Y (c t) ω ∈ B t} =
+      ∫⁻ ω, ∏ t : Fin r, (lam ω : Measure (ι → α)) {v : ι → α | v (c t).1 ∈ B t} ∂μ := by
+  classical
+  -- A horizon past every column the cells occupy, and the cells' columns inside it.
+  have hcm : ∀ t : Fin r, (c t).2 < (Finset.univ.sup fun t : Fin r => (c t).2) + 1 := fun t =>
+    Nat.lt_succ_of_le (Finset.le_sup (f := fun t : Fin r => (c t).2) (Finset.mem_univ t))
+  set m : ℕ := (Finset.univ.sup fun t : Fin r => (c t).2) + 1 with hm_def
+  set g : Fin r → Fin m := fun t => ⟨(c t).2, hcm t⟩ with hg_def
+  have hcell : ∀ t : Fin r, ((c t).1, ((g t : ℕ))) = c t := fun t => Prod.mk.eta
+  have hd : Function.Injective fun t : Fin r => ((c t).1, g t) := by
+    intro s t hst
+    simp only [Prod.mk.injEq] at hst
+    exact hc (Prod.ext hst.1 (congrArg Fin.val hst.2))
+  -- The target set a row is constrained to inside a given column, and the box it cuts out.
+  set target : ι → Fin m → Set α := fun a j =>
+    ⋂ t ∈ Finset.univ.filter fun t : Fin r => ((c t).1, g t) = (a, j), B t with htarget_def
+  set F : Fin m → Finset ι :=
+    fun j => (Finset.univ.filter fun t : Fin r => g t = j).image fun t => (c t).1 with hF_def
+  have htarget_eq : ∀ t : Fin r, target ((c t).1) (g t) = B t := by
+    intro t
+    have hfilter : (Finset.univ.filter fun s : Fin r => ((c s).1, g s) = ((c t).1, g t)) = {t} := by
+      ext s
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
+      exact hd.eq_iff
+    rw [htarget_def]
+    simp only [hfilter, Finset.mem_singleton, Set.iInter_iInter_eq_left]
+  have htarget_meas : ∀ (a : ι) (j : Fin m), MeasurableSet (target a j) := fun a j =>
+    Finset.measurableSet_biInter _ fun t _ => hB t
+  have hD_meas : ∀ j : Fin m, MeasurableSet (Set.pi (↑(F j)) fun a => target a j) := fun j =>
+    MeasurableSet.pi (F j).countable_toSet fun a _ => htarget_meas a j
+  -- The cell event is the event that every column lands in its box.
+  have hset : {ω | ∀ t, Y (c t) ω ∈ B t} =
+      {ω | ∀ j : Fin m, arrayColumn Y (j : ℕ) ω ∈ Set.pi (↑(F j)) fun a => target a j} := by
+    ext ω
+    simp only [Set.mem_ofPred_eq, Set.mem_pi]
+    constructor
+    · intro hω j a _
+      simp only [htarget_def, Set.mem_iInter, Finset.mem_filter, Finset.mem_univ, true_and]
+      intro t ht
+      have h1 : (c t).1 = a := congrArg Prod.fst ht
+      have h2 : g t = j := congrArg Prod.snd ht
+      have hval : arrayColumn Y (j : ℕ) ω a = Y (c t) ω := by
+        rw [arrayColumn_apply, ← hcell t, h1, h2]
+      rw [hval]
+      exact hω t
+    · intro hω t
+      have hmem : (c t).1 ∈ F (g t) :=
+        Finset.mem_image_of_mem _ (by simp)
+      have := hω (g t) ((c t).1) (Finset.mem_coe.2 hmem)
+      rw [htarget_eq t] at this
+      rwa [arrayColumn_apply, hcell t] at this
+  rw [hset, ← blockLaw_apply_rectangle μ (arrayColumn Y) (fun j : Fin m => (j : ℕ))
+      (fun j => aemeasurable_arrayColumn hY (j : ℕ)) _ hD_meas,
+    hlam.blockLaw_univ_pi (fun j : Fin m => (j : ℕ)) Fin.val_injective _ hD_meas]
+  -- Split each column's mass into one factor per constrained row, then merge the two products.
+  refine lintegral_congr_ae ?_
+  have hfac : ∀ᵐ ω ∂μ, ∀ j : Fin m,
+      (lam ω : Measure (ι → α)) (Set.pi (↑(F j)) fun a => target a j) =
+        ∏ a ∈ F j, (lam ω : Measure (ι → α)) {v : ι → α | v a ∈ target a j} := by
+    rw [ae_all_iff]
+    exact fun j => h.ae_apply_pi_eq_prod hY hlam (B := fun a => target a j) (F j)
+      fun a _ => htarget_meas a j
+  filter_upwards [hfac] with ω hω
+  calc ∏ j : Fin m, (lam ω : Measure (ι → α)) (Set.pi (↑(F j)) fun a => target a j)
+      = ∏ j : Fin m, ∏ a ∈ F j, (lam ω : Measure (ι → α)) {v : ι → α | v a ∈ target a j} :=
+        Finset.prod_congr rfl fun j _ => hω j
+    _ = ∏ j : Fin m, ∏ t ∈ Finset.univ.filter fun t : Fin r => g t = j,
+          (lam ω : Measure (ι → α)) {v : ι → α | v (c t).1 ∈ B t} := by
+        refine Finset.prod_congr rfl fun j _ => ?_
+        rw [hF_def, Finset.prod_image ?_]
+        · refine Finset.prod_congr rfl fun t ht => ?_
+          have hgt : g t = j := (Finset.mem_filter.1 ht).2
+          rw [← hgt, htarget_eq t]
+        · intro s hs t ht hst
+          -- Both cells sit in the fibre over `j`, so their column indices agree.
+          have hgs : g s = j := (Finset.mem_filter.1 (Finset.mem_coe.1 hs)).2
+          have hgt : g t = j := (Finset.mem_filter.1 (Finset.mem_coe.1 ht)).2
+          exact hd (Prod.ext hst (hgs.trans hgt.symm))
+    _ = ∏ t : Fin r, (lam ω : Measure (ι → α)) {v : ι → α | v (c t).1 ∈ B t} :=
+        Finset.prod_fiberwise Finset.univ g _
 
 /-- **De Finetti for a row exchangeable array.** Over a countable row index and a nonempty standard
 Borel state space, the columns of a row exchangeable array are conditionally i.i.d., and their

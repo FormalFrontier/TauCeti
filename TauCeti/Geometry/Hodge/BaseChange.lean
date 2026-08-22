@@ -10,8 +10,8 @@ public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 public import Mathlib.RingTheory.Flat.Basic
-public import Mathlib.RingTheory.IsTensorProduct
 public import TauCeti.Geometry.Hodge.Conjugation
+public import TauCeti.RingTheory.IsTensorProduct
 
 /-!
 # Rational subspaces in an abstract complexification
@@ -74,6 +74,18 @@ variable [AddCommGroup Vℤ]
 variable [AddCommGroup Vℚ] [Module ℚ Vℚ]
 variable [AddCommGroup Vℂ] [Module ℂ Vℂ]
 variable {ιℚ : Vℤ →ₗ[ℤ] Vℚ} {ιℂ : Vℤ →ₗ[ℤ] Vℂ}
+
+/-- Lattice conjugation on the complexification `ℂ ⊗[ℚ] U` of a rational vector space conjugates
+the scalar factor of a pure tensor. It is the unique conjugate-linear map fixing `1 ⊗ₜ u`. -/
+@[simp]
+theorem latticeConj_ratTensorMap_tmul (U : Type*) [AddCommGroup U] [Module ℚ U]
+    (z : ℂ) (u : U) :
+    latticeConj (isBaseChange_ratTensorMap ℂ U) (z ⊗ₜ[ℚ] u) =
+      (starRingEnd ℂ) z ⊗ₜ[ℚ] u := by
+  have hz : z ⊗ₜ[ℚ] u = z • ratTensorMap ℂ U u := by
+    rw [ratTensorMap_apply, TensorProduct.smul_tmul', smul_eq_mul, mul_one]
+  rw [hz, map_smulₛₗ, latticeConj_ι, ratTensorMap_apply, TensorProduct.smul_tmul', smul_eq_mul,
+    mul_one]
 
 /-- The canonical tower equivalence from an abstract rational base change to an abstract complex
 base change of the same integral module. -/
