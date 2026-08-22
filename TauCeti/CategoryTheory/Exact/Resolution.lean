@@ -235,7 +235,8 @@ def ofIso : ∀ {X Y : C}, (X ≅ Y) → FiniteResolution E P X → FiniteResolu
   | _, _, e, .base hX => .base (P.prop_of_iso e hX)
   | _, _, e, .step hQ i p zero hp r =>
       .step hQ i (p ≫ e.hom) (by rw [← Category.assoc, zero, zero_comp])
-        (E.conflation_comp_iso hp e) r
+        (E.conflation_of_iso (S := ShortComplex.mk i p zero)
+          (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simp)) hp) r
 
 @[simp] theorem ofIso_base {X Y : C} (e : X ≅ Y) (hX : P X) :
     ofIso (E := E) e (base hX) = base (P.prop_of_iso e hX) := by
@@ -246,7 +247,8 @@ def ofIso : ∀ {X Y : C}, (X ≅ Y) → FiniteResolution E P X → FiniteResolu
     (r : FiniteResolution E P K) :
     ofIso e (step hQ i p zero hp r) =
       step hQ i (p ≫ e.hom) (by rw [← Category.assoc, zero, zero_comp])
-        (E.conflation_comp_iso hp e) r := by
+        (E.conflation_of_iso (S := ShortComplex.mk i p zero)
+          (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simp)) hp) r := by
   simp [ofIso]
 
 @[simp] theorem length_ofIso {X Y : C} (e : X ≅ Y) (r : FiniteResolution E P X) :
@@ -284,6 +286,29 @@ noncomputable def zeroPad :
   | base hX => simp [zeroPad]
   | step hQ i p zero hp r ih => simpa [zeroPad] using ih
 
+/-- Zero padding does not change the syzygies in the original resolution. -/
+@[simp] theorem syzygy_zeroPad_of_le_length {X : C} (r : FiniteResolution E P X) {n : ℕ}
+    (hn : n ≤ r.length) : r.zeroPad.syzygy n = r.syzygy n := by
+  induction r generalizing n with
+  | base hX => simp_all
+  | step hQ i p zero hp r ih =>
+      cases n with
+      | zero => simp
+      | succ n => simpa using ih (by simpa using hn)
+
+/-- After the original resolution ends, every syzygy of its zero padding is the zero object. -/
+@[simp] theorem syzygy_zeroPad_of_length_lt {X : C} (r : FiniteResolution E P X) {n : ℕ}
+    (hn : r.length < n) : r.zeroPad.syzygy n = (0 : C) := by
+  induction r generalizing n with
+  | base hX =>
+      cases n with
+      | zero => simp at hn
+      | succ n => simp
+  | step hQ i p zero hp r ih =>
+      cases n with
+      | zero => simp at hn
+      | succ n => simpa using ih (by simpa using hn)
+
 /-- Lengthen a resolution by `n`, adjoining `n` trivial conflations at its last syzygy. -/
 noncomputable def pad {X : C} (r : FiniteResolution E P X) :
     ℕ → FiniteResolution E P X
@@ -302,6 +327,28 @@ noncomputable def pad {X : C} (r : FiniteResolution E P X) :
   induction n with
   | zero => simp
   | succ n ih => simp [pad, ih, Nat.add_assoc]
+
+/-- Iterated padding does not change the syzygies in the original resolution. -/
+@[simp] theorem syzygy_pad_of_le_length {X : C} (r : FiniteResolution E P X) (m : ℕ) {n : ℕ}
+    (hn : n ≤ r.length) : (r.pad m).syzygy n = r.syzygy n := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [pad_succ, syzygy_zeroPad_of_le_length]
+      · exact ih
+      · simpa using hn.trans (Nat.le_add_right r.length m)
+
+/-- After the original resolution ends, every syzygy of a positive padding is the zero object. -/
+@[simp] theorem syzygy_pad_succ_of_length_lt {X : C} (r : FiniteResolution E P X) (m : ℕ)
+    {n : ℕ} (hn : r.length < n) : (r.pad (m + 1)).syzygy n = (0 : C) := by
+  induction m with
+  | zero => simpa using syzygy_zeroPad_of_length_lt r hn
+  | succ m ih =>
+      rw [pad_succ]
+      by_cases h : n ≤ (r.pad (m + 1)).length
+      · rw [syzygy_zeroPad_of_le_length _ h]
+        exact ih
+      · exact syzygy_zeroPad_of_length_lt _ (Nat.lt_of_not_ge h)
 
 end Pad
 

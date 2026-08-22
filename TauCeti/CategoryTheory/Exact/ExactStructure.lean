@@ -150,14 +150,6 @@ theorem conflation_iff_of_iso (E : ConflationClass C) {S T : ShortComplex C} (e 
     E.Conflation S ↔ E.Conflation T :=
   E.Conflation.prop_iff_of_iso e
 
-/-- Composing the deflation of a conflation with an isomorphism gives a conflation. -/
-theorem conflation_comp_iso (E : ConflationClass C) {K Q X Y : C} {i : K ⟶ Q} {p : Q ⟶ X}
-    {zero : i ≫ p = 0} (hp : E.Conflation (ShortComplex.mk i p zero)) (e : X ≅ Y)
-    {zero' : i ≫ (p ≫ e.hom) = 0} :
-    E.Conflation (ShortComplex.mk i (p ≫ e.hom) zero') :=
-  E.conflation_of_iso (S := ShortComplex.mk i p zero)
-    (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simp)) hp
-
 /-- A short complex whose first map is an inflation and whose second map is a cokernel of the
 first is a conflation: the conflation witnessing the inflation has the same cokernel, so the two
 short complexes are isomorphic.
