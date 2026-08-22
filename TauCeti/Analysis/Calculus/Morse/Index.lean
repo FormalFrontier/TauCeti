@@ -85,6 +85,7 @@ theorem hessianQuadraticForm_apply (f : E → ℝ) (x v : E) :
 
 /-- For a twice continuously differentiable function, the bilinear form associated to its
 Hessian quadratic form is its second derivative. -/
+@[simp]
 theorem associated_hessianQuadraticForm (hf : ContDiffAt ℝ 2 f x) :
     QuadraticMap.associated (R := ℝ) (hessianQuadraticForm f x) =
       (fderiv ℝ (fderiv ℝ f) x).toBilinForm := by
