@@ -84,6 +84,15 @@ This supplies an abstract prerequisite for milestone `L1` of
 available over a general Kostant datum, so they can be composed without the pinned ambient group
 owned by `L0`.
 
+The route to that ambient point group is already explicit in the repository. The same represented
+root subgroups define `kostantGeneratedGroupScheme`, whose point group is an input to `L0`, and
+`map_kostantElementarySubgroup_le_generatedPoints` embeds the elementary subgroup into those
+points. On the scheme side, `kostantGeneratedNumberedSymmetryIso` is the graph automorphism required
+by `L1`, while Frobenius on the corresponding Hopf-ideal points is
+`GeneralLinear.iterateFrobeniusHopfIdealPoints`. Thus the missing generation theorem is needed to
+identify the elementary subgroup with all ambient points, but not to connect the construction here
+to the already-established point-group route.
+
 This file does not complete `L1`: its displayed equation concerns Kostant root subgroups indexed by
 an arbitrary type `I`, not the numbered simple root subgroups of `ValidLieTypeIndex.AmbientGroup`,
 and the required power relation on `γ` is a hypothesis here. Once `L0` supplies the pinned
