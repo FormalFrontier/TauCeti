@@ -68,7 +68,8 @@ instance of `ModularFormClass` (`Mathlib/NumberTheory/ModularForms/Basic.lean`).
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
-  §3.4.
+  §3.4, Proposition 3.37: `[Γ₁ α Γ₂]ₖ` sends `A_k(Γ₁), G_k(Γ₁), S_k(Γ₁)` into
+  `A_k(Γ₂), G_k(Γ₂), S_k(Γ₂)`, instantiated here at `Γ₁ = Γ₂ = G`.
 -/
 
 public section
