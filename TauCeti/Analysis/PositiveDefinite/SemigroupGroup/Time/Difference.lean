@@ -5,10 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.Algebra.Group.ForwardDiff
+public import Mathlib.Algebra.Group.ForwardDiff
 import Mathlib.Analysis.Normed.Group.Pointwise
 import TauCeti.Analysis.PositiveDefinite.Kernel.Kolmogorov
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
+import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice
 
 /-!
 # Time differences of bounded semigroup-group positive-definite functions
@@ -45,6 +46,11 @@ representing measure.
 * `TauCeti.isBounded_range_listTimeDifference` and
   `TauCeti.isBounded_range_iteratedTimeDifference`: those differences stay bounded, so they can be
   differenced again.
+* `TauCeti.continuous_listTimeDifference` and `TauCeti.continuous_iteratedTimeDifference`: those
+  differences stay continuous, so Bochner's theorem applies to each of their time slices.
+* `TauCeti.IsSemigroupGroupPD.antitone_timeAxis_re` and
+  `TauCeti.IsSemigroupGroupPD.neg_one_pow_mul_fwdDiff_timeAxis_re_nonneg`: on the time axis the
+  differences say that `t ↦ (F (t, 0)).re` is antitone with alternating forward differences.
 
 ## References
 
@@ -194,6 +200,31 @@ theorem isBounded_range_iteratedTimeDifference (hbounded : Bornology.IsBounded (
   rw [iteratedTimeDifference_eq_listTimeDifference]
   exact isBounded_range_listTimeDifference hbounded _
 
+section Continuity
+
+variable [TopologicalSpace V]
+
+/-- Continuity is preserved by taking a first time difference. -/
+theorem continuous_timeDifference (hF : Continuous F) (h : ℝ≥0) :
+    Continuous (timeDifference h F) := by
+  rw [funext (timeDifference_apply h F)]
+  exact hF.sub (hF.comp ((continuous_fst.add continuous_const).prodMk continuous_snd))
+
+/-- Continuity is preserved by differencing along any finite list of steps. -/
+theorem continuous_listTimeDifference (hF : Continuous F) (l : List ℝ≥0) :
+    Continuous (listTimeDifference l F) := by
+  induction l with
+  | nil => simpa using hF
+  | cons h l ih => simpa using continuous_timeDifference ih h
+
+/-- Continuity is preserved by every iterated time difference. -/
+theorem continuous_iteratedTimeDifference (hF : Continuous F) (n : ℕ) (h : ℝ≥0) :
+    Continuous (iteratedTimeDifference n h F) := by
+  rw [iteratedTimeDifference_eq_listTimeDifference]
+  exact continuous_listTimeDifference hF _
+
+end Continuity
+
 end
 
 variable {V : Type u} [AddCommGroup V] {F : ℝ≥0 × V → ℂ}
@@ -331,6 +362,46 @@ theorem iteratedTimeDifference (hF : IsSemigroupGroupPD F)
     IsSemigroupGroupPD (TauCeti.iteratedTimeDifference n h F) := by
   rw [TauCeti.iteratedTimeDifference_eq_listTimeDifference]
   exact hF.listTimeDifference hbounded _
+
+/-! ### The time-axis function
+
+Reading the alternating differences on the time axis `v = 0` leaves a statement about the real
+function `t ↦ (F (t, 0)).re` alone, the case with no spatial variable. -/
+
+/-- **The time-axis function of a bounded BCR-positive-definite function decreases.** Its drop
+over a step `h` is the time-axis value of the first time difference, which is again positive
+definite and therefore has a nonnegative real part there. -/
+theorem antitone_timeAxis_re (hF : IsSemigroupGroupPD F)
+    (hbounded : Bornology.IsBounded (range F)) :
+    Antitone fun t : ℝ≥0 => (F (t, 0)).re := by
+  intro t s hts
+  have hdrop := (hF.timeDifference hbounded (s - t)).timeSlice_diagonal_re_nonneg t
+  simp only [timeDifference_apply, Complex.sub_re] at hdrop
+  rw [add_tsub_cancel_of_le hts] at hdrop
+  linarith
+
+/-- The `n`-th iterated forward difference of the time-axis function `t ↦ (F (t, 0)).re`, with
+the sign `(-1)ⁿ`, is the time-axis value of the `n`-th iterated time difference of `F`. -/
+theorem iteratedTimeDifference_timeAxis_re (n : ℕ) (h t : ℝ≥0) :
+    (TauCeti.iteratedTimeDifference n h F (t, 0)).re
+      = (-1) ^ n * (fwdDiff h)^[n] (fun s : ℝ≥0 => (F (s, 0)).re) t := by
+  induction n generalizing t with
+  | zero => simp
+  | succ n ih =>
+      rw [TauCeti.iteratedTimeDifference_succ, timeDifference_apply,
+        Function.iterate_succ_apply']
+      simp only [Complex.sub_re, fwdDiff]
+      rw [ih t, ih (t + h)]
+      ring
+
+/-- **The time-axis function of a bounded BCR-positive-definite function has alternating forward
+differences.** Its `n`-th forward difference with any step has the sign `(-1)ⁿ`, which is complete
+monotonicity in the finite-difference sense. -/
+theorem neg_one_pow_mul_fwdDiff_timeAxis_re_nonneg (hF : IsSemigroupGroupPD F)
+    (hbounded : Bornology.IsBounded (range F)) (n : ℕ) (h t : ℝ≥0) :
+    0 ≤ (-1) ^ n * (fwdDiff h)^[n] (fun s : ℝ≥0 => (F (s, 0)).re) t := by
+  rw [← iteratedTimeDifference_timeAxis_re n h t]
+  exact (hF.iteratedTimeDifference hbounded n h).timeSlice_diagonal_re_nonneg t
 
 end IsSemigroupGroupPD
 
