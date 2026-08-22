@@ -31,10 +31,9 @@ commutes (`TauCeti.ContinuousCohomology.map_comp_zeroIso_hom`), and the three na
 Two consequences are recorded because later layers use them rather than the square itself. First,
 `H⁰_cont(G, -)` and the invariants functor are naturally isomorphic
 (`TauCeti.ContinuousCohomology.zeroIsoNatIso`). Second, inflation is an isomorphism in degree zero
-(`TauCeti.ContinuousCohomology.isIso_infl_zero`): `(X^N)^{G/N} = X^G` on the nose, so the
-degree-zero edge of the inflation-restriction sequence is an equality of subobjects of `X`, and
-restriction is a monomorphism in degree zero (`TauCeti.ContinuousCohomology.mono_res_zero`) because
-`X^G ⊆ X^S`.
+(`TauCeti.ContinuousCohomology.isIso_infl_zero`): `(X^N)^{G/N}` and `X^G` are canonically
+isomorphic by explicit mutually inverse maps that preserve the underlying vector. Restriction is a
+monomorphism in degree zero (`TauCeti.ContinuousCohomology.mono_res_zero`) because `X^G ⊆ X^S`.
 
 The route to the square is the explicit evaluation formula
 `TauCeti.ContinuousCohomology.coe_zeroIso_hom_π`: a `0`-cocycle of the homogeneous complex is an
@@ -83,21 +82,21 @@ section Evaluation
 
 /-- The comparison of the categorical cocycles with the concrete kernel is the inclusion of the
 cocycles into the cochains. -/
-theorem cocycles₀Iso_hom_comp_kerι (X : TopRep R G) :
+private theorem cocycles₀Iso_hom_comp_kerι (X : TopRep R G) :
     (cocycles₀Iso X).hom ≫ TopModuleCat.kerι _ = (homogeneousCochains X).iCycles 0 := by
   rw [cocycles₀Iso, Limits.KernelFork.mapIsoOfIsLimit_hom]
   exact (Limits.KernelFork.mapOfIsLimit_ι _ (TopModuleCat.isLimitKer _) _).trans
     (Category.comp_id _)
 
 /-- `cocycles₀Iso` read on elements: it does nothing to the underlying cochain. -/
-theorem coe_cocycles₀Iso_hom (X : TopRep R G) (σ : cocycles X 0) :
+private theorem coe_cocycles₀Iso_hom (X : TopRep R G) (σ : cocycles X 0) :
     ((cocycles₀Iso X).hom σ : (homogeneousCochains X).X 0) =
       (homogeneousCochains X).iCycles 0 σ :=
   congr($(cocycles₀Iso_hom_comp_kerι X) σ)
 
 /-- In degree zero the cocycles already are the cohomology, so `zeroIso` may be read off on
 cocycles. -/
-theorem π_comp_zeroIso_hom (X : TopRep R G) :
+private theorem π_comp_zeroIso_hom (X : TopRep R G) :
     π X 0 ≫ (zeroIso X).hom = (cocycles₀Iso X).hom ≫ (TopModuleCat.ofIso (d₀kerIso X)).hom := by
   simp [zeroIso]
 
@@ -131,12 +130,15 @@ theorem map_comp_zeroIso_hom (φ : H →ₜ* G) {X : TopRep R G} {Y : TopRep R H
       = (cochainsMap φ f).f 0 ((homogeneousCochains X).iCycles 0 σ) :=
     congr($(HomologicalComplex.cyclesMap_i (cochainsMap φ f) 0) σ)
   rw [coe_zeroIso_hom_π Y, hcyc]
-  change _ = f.hom (((zeroIso X).hom (π X 0 σ) : X.V))
+  simp only [TopRep.invariantsResMap, TopModuleCat.hom_ofHom,
+    ContIntertwiningMap.mapInvariantsOfRes_apply]
   rw [coe_zeroIso_hom_π X, cochainsMap_f, resolutionMap_succ]
   set v := ((homogeneousCochains X).iCycles 0 σ : (homogeneousCochains X).X 0)
-  -- the cochain pullback precomposes with `φ`, and `φ 1 = 1`
-  change (Hom.hom f) (v.1 (φ 1)) = (Hom.hom f) (v.1 1)
-  rw [map_one]
+  -- `coind₁ResMap_apply` exposes that the cochain pullback precomposes with `φ`.
+  simp only [TopRep.invariantsResMap, TopModuleCat.hom_ofHom, TopRep.hom_ofHom,
+    resolutionMap_zero]
+  rw [ContIntertwiningMap.mapInvariantsOfRes_apply,
+    ContRepresentation.coind₁ResMap_apply, map_one φ]
 
 /-- Coefficient maps in degree zero are the maps induced on invariants. -/
 @[reassoc]
@@ -157,6 +159,13 @@ noncomputable def zeroIsoNatIso :
 @[simp]
 theorem zeroIsoNatIso_hom_app (X : TopRep R G) :
     (zeroIsoNatIso R G).hom.app X = (zeroIso X).hom :=
+  (rfl)
+
+/-- The inverse components of `zeroIsoNatIso` are the inverses of Mathlib's
+`ContinuousCohomology.zeroIso`. -/
+@[simp]
+theorem zeroIsoNatIso_inv_app (X : TopRep R G) :
+    (zeroIsoNatIso R G).inv.app X = (zeroIso X).inv :=
   (rfl)
 
 /-- Restriction in degree zero is the inclusion `X^G ⊆ X^S` of invariants. -/
@@ -265,15 +274,46 @@ noncomputable def invariantsToQuotientToInvariants :
           rw [ContRepresentation.coe_quotientToInvariants_mk_apply]
           exact v.2 g)
 
+-- The two nested `codRestrict`s in `invariantsToQuotientToInvariants` change only the proofs of
+-- membership in the nested invariant submodules, not the underlying vector.
 omit [TopologicalSpace G] [IsTopologicalGroup G] in
-/-- **`(X^N)^{G/N} = X^G`.** The coefficient half of inflation is an isomorphism on invariants. -/
+private theorem coe_invariantsToQuotientToInvariants_apply (v : X.ρ.invariants) :
+    (((invariantsToQuotientToInvariants N X) v :
+      (X.ρ.restrict N.subtype).invariants) : X.V) = (v : X.V) := by
+  rfl
+
+-- Likewise, `invariantsResMap` applied to the inclusion of `N`-invariants retains the vector and
+-- only repackages its invariance proof.
+omit [TopologicalSpace G] [IsTopologicalGroup G] in
+private theorem coe_invariantsResMap_quotientToInvariantsι_apply
+    (v : (ContRepresentation.quotientToInvariants X.ρ N).invariants) :
+    ((TopRep.invariantsResMap (QuotientGroup.mk' N : G →* G ⧸ N)
+        (TopRep.quotientToInvariantsι X N) v : X.ρ.invariants) : X.V) =
+      ((v : (X.ρ.restrict N.subtype).invariants) : X.V) := by
+  rfl
+
+omit [TopologicalSpace G] [IsTopologicalGroup G] in
+/-- **`(X^N)^{G/N}` is canonically isomorphic to `X^G`.** The explicit mutually inverse maps
+preserve the underlying vector. -/
 theorem isIso_invariantsResMap_quotientToInvariantsι :
     IsIso (TopRep.invariantsResMap (QuotientGroup.mk' N : G →* G ⧸ N)
       (TopRep.quotientToInvariantsι X N)) :=
-  ⟨invariantsToQuotientToInvariants N X, by ext v; rfl, by ext v; rfl⟩
+  ⟨invariantsToQuotientToInvariants N X,
+    by
+      ext v
+      exact (coe_invariantsResMap_quotientToInvariantsι_apply N X v).trans
+        (coe_invariantsToQuotientToInvariants_apply N X
+          (TopRep.invariantsResMap (QuotientGroup.mk' N : G →* G ⧸ N)
+            (TopRep.quotientToInvariantsι X N) v)),
+    by
+      ext v
+      exact (coe_invariantsToQuotientToInvariants_apply N X v).trans
+        (coe_invariantsResMap_quotientToInvariantsι_apply N X
+          ((invariantsToQuotientToInvariants N X) v))⟩
 
-/-- **Inflation is an isomorphism in degree zero**: `H⁰(G ⧸ N, X^N) = (X^N)^{G/N} = X^G`. This is
-the degree-zero edge of the inflation-restriction sequence. -/
+/-- **Inflation is an isomorphism in degree zero**: `H⁰(G ⧸ N, X^N)`, `(X^N)^{G/N}`, and
+`X^G` are canonically isomorphic, with the coefficient comparison preserving the underlying
+vector. This is the degree-zero edge of the inflation-restriction sequence. -/
 theorem isIso_infl_zero : IsIso (TauCeti.ContinuousCohomology.infl N X 0) := by
   have := isIso_invariantsResMap_quotientToInvariantsι N X
   exact IsIso.of_isIso_fac_right (infl_comp_zeroIso_hom N X)
