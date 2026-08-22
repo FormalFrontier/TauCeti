@@ -39,13 +39,14 @@ the two marking permutations, hence the sign of the component permutation `𝕏�
 * `TauCeti.GridState.even_JNumCenter_pointSet_add`: the marking-pairing numerator of two grid
   states has the parity of the grid size.
 * `TauCeti.GridDiagram.negOnePow_maslovOℤ`, `TauCeti.GridDiagram.negOnePow_maslovXℤ`: the parity
-  of a Maslov grading is the sign of the state times the sign of the marking permutation.
+  of a Maslov grading is the sign of the state times the sign of the marking permutation,
+  corrected by the grid-size factor `((n : ℤ) + 1).negOnePow`.
 * `TauCeti.GridDiagram.negOnePow_alexanderTwoℤ`: twice the Alexander grading has the parity of
   the number of link components minus one.
 * `TauCeti.GridDiagram.even_alexanderTwoℤ_iff`: the Alexander grading is an integer exactly when
   the number of link components is odd.
-* `TauCeti.GridDiagram.exists_int_alexander_iff`: the direct integrality characterization.
-* `TauCeti.GridDiagram.exists_int_alexander_of_isKnot`: the Alexander grading of a knot grid is
+* `TauCeti.GridDiagram.alexander_exists_int_iff`: the direct integrality characterization.
+* `TauCeti.GridDiagram.alexander_exists_int_of_isKnot`: the Alexander grading of a knot grid is
   an integer.
 
 ## References
@@ -67,20 +68,6 @@ open Finset
 namespace GridState
 
 variable {n : ℕ}
-
-/-- A count of column pairs, fibred over the first column. -/
-private theorem card_filter_prod_left (P : Fin n → Fin n → Prop) [DecidableRel P] :
-    (Finset.univ.filter fun p : Fin n × Fin n => P p.1 p.2).card =
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => P c d).card := by
-  simp only [Finset.card_filter]
-  exact Fintype.sum_prod_type fun p : Fin n × Fin n => if P p.1 p.2 then 1 else 0
-
-/-- A count of column pairs, fibred over the second column. -/
-private theorem card_filter_prod_right (P : Fin n → Fin n → Prop) [DecidableRel P] :
-    (Finset.univ.filter fun p : Fin n × Fin n => P p.1 p.2).card =
-      ∑ d : Fin n, (Finset.univ.filter fun c : Fin n => P c d).card := by
-  simp only [Finset.card_filter]
-  exact Fintype.sum_prod_type_right fun p : Fin n × Fin n => if P p.1 p.2 then 1 else 0
 
 /-- The columns whose marking row is at least `k` split into those at or after `c` and those
 before `c`. -/
@@ -147,11 +134,55 @@ private theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
   have hA : GridPoint.ICenter x.pointSet y.pointSet =
       ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card := by
     rw [ICenter_pointSet_eq_card]
-    exact card_filter_prod_left fun c d => c ≤ d ∧ x c ≤ y d
+    symm
+    calc
+      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card =
+          ∑ c ∈ Finset.univ, ((Finset.univ.filter fun p : Fin n × Fin n =>
+            p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p = c).card := by
+        apply Finset.sum_congr rfl
+        intro c _
+        have hfiber :
+            ((Finset.univ.filter fun p : Fin n × Fin n =>
+              p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p = c) =
+              {c} ×ˢ (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d) := by
+          ext p
+          rcases p with ⟨a, b⟩
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_product,
+            Finset.mem_singleton]
+          aesop
+        rw [hfiber, Finset.card_product]
+        simp
+      _ = ((Finset.univ.filter fun p : Fin n × Fin n =>
+          p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p ∈ Finset.univ).card :=
+        Finset.sum_card_fiberwise_eq_card_filter _ _ Prod.fst
+      _ = (Finset.univ.filter fun p : Fin n × Fin n =>
+          p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).card := by simp
   have hB : GridPoint.I y.pointSet x.pointSet =
       ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card := by
     rw [I_pointSet_eq_card]
-    exact card_filter_prod_right fun d c => d < c ∧ y d < x c
+    symm
+    calc
+      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card =
+          ∑ c ∈ Finset.univ, ((Finset.univ.filter fun p : Fin n × Fin n =>
+            p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p = c).card := by
+        apply Finset.sum_congr rfl
+        intro c _
+        have hfiber :
+            ((Finset.univ.filter fun p : Fin n × Fin n =>
+              p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p = c) =
+              (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c) ×ˢ {c} := by
+          ext p
+          rcases p with ⟨a, b⟩
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_product,
+            Finset.mem_singleton]
+          aesop
+        rw [hfiber, Finset.card_product]
+        simp
+      _ = ((Finset.univ.filter fun p : Fin n × Fin n =>
+          p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p ∈ Finset.univ).card :=
+        Finset.sum_card_fiberwise_eq_card_filter _ _ Prod.snd
+      _ = (Finset.univ.filter fun p : Fin n × Fin n =>
+          p.1 < p.2 ∧ y p.1 < x p.2).card := by simp
   have key : ∀ c : Fin n,
       (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card
           + (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card
@@ -286,7 +317,7 @@ theorem even_alexanderTwoℤ_iff (x : GridState n) :
 /-- The Alexander grading of a state is an integer exactly when the diagram has an odd number of
 link components. For an even number of components, every Alexander grading is a strict
 half-integer. -/
-theorem exists_int_alexander_iff (x : GridState n) :
+theorem alexander_exists_int_iff (x : GridState n) :
     (∃ a : ℤ, G.alexander x = (a : ℚ)) ↔ Odd G.componentCount := by
   rw [← G.even_alexanderTwoℤ_iff x]
   constructor
@@ -317,9 +348,9 @@ theorem even_alexanderTwoℤ_of_isKnot (hG : G.IsKnot) (x : GridState n) :
   exact odd_one
 
 /-- **The Alexander grading of a knot grid diagram is an integer.** -/
-theorem exists_int_alexander_of_isKnot (hG : G.IsKnot) (x : GridState n) :
+theorem alexander_exists_int_of_isKnot (hG : G.IsKnot) (x : GridState n) :
     ∃ a : ℤ, G.alexander x = (a : ℚ) := by
-  rw [G.exists_int_alexander_iff]
+  rw [G.alexander_exists_int_iff]
   rw [G.isKnot_def.mp hG]
   exact odd_one
 
