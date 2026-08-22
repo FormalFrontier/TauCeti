@@ -18,8 +18,8 @@ only the filtration varies from point to point, which is what makes the collecti
 space for polarized Hodge structures of a fixed numerical type.
 
 The prescribed numerical data is packaged as `TauCeti.Hodge.HodgeType`: a weight, Hodge numbers of
-finite support, and Hodge symmetry `h p = h (weight - p)`. Every Hodge structure has one
-(`TauCeti.Hodge.HodgeStructureOn.hodgeType`), so the symmetry axiom excludes exactly the
+finite support, and Hodge symmetry `h p = h (weight - p)`. Every finite-dimensional Hodge structure
+has one (`TauCeti.Hodge.HodgeStructureOn.hodgeType`), so the symmetry axiom excludes exactly the
 unrealizable numerical types, and a point of the period domain is precisely a polarized Hodge
 structure whose own Hodge type is the prescribed one
 (`TauCeti.Hodge.PeriodDomain.Point.hodgeType_eq`).
@@ -77,23 +77,26 @@ namespace HodgeStructureOn
 variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ω : Conjugation W} {n : ℤ}
 
-/-- The Hodge type of a Hodge structure: its weight together with its own Hodge numbers.
-
-The Hodge numbers are those of `hodgeNumber`, so on an infinite-dimensional structure this is the
-zero family; a `PeriodDomain.Point`, where the type is read as a dimension count, fixes a finitely
-generated free lattice. -/
-noncomputable def hodgeType (hs : HodgeStructureOn W ω n) : HodgeType where
+/-- The Hodge type of a finite-dimensional Hodge structure: its weight together with its own Hodge
+numbers. -/
+noncomputable def hodgeType (hs : HodgeStructureOn W ω n) [hW : FiniteDimensional ℂ W] :
+    HodgeType where
   weight := n
   h := hs.hodgeNumber
-  finite_support := hs.finite_setOf_hodgeNumber_ne_zero
+  finite_support := by
+    refine hs.finite_setOf_piece_ne_bot.subset fun p hp hbot ↦ hp ?_
+    rw [hodgeNumber_def]
+    exact Submodule.finrank_eq_zero.mpr hbot
   symm := hs.hodgeNumber_symm
 
 @[simp]
-theorem hodgeType_weight (hs : HodgeStructureOn W ω n) : hs.hodgeType.weight = n :=
+theorem hodgeType_weight (hs : HodgeStructureOn W ω n) [FiniteDimensional ℂ W] :
+    hs.hodgeType.weight = n :=
   (rfl)
 
 @[simp]
-theorem hodgeType_h (hs : HodgeStructureOn W ω n) : hs.hodgeType.h = hs.hodgeNumber :=
+theorem hodgeType_h (hs : HodgeStructureOn W ω n) [FiniteDimensional ℂ W] :
+    hs.hodgeType.h = hs.hodgeNumber :=
   (rfl)
 
 end HodgeStructureOn
@@ -128,7 +131,8 @@ variable {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ} {Qint : LinearMap.BilinForm �
 
 /-- A point of the period domain is exactly a `Qint`-polarized Hodge structure whose own Hodge
 type is the prescribed one. -/
-theorem hodgeType_eq (D : PeriodDomain.Point hℂ n Qint htype) : D.hs.hodgeType = htype := by
+theorem hodgeType_eq (D : PeriodDomain.Point hℂ n Qint htype) :
+    D.hs.hodgeType (hW := finiteDimensional_complexification (V := V) hℂ) = htype := by
   ext p
   · exact D.htype_weight.symm
   · exact D.hodge_numbers p
