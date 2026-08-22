@@ -143,7 +143,7 @@ theorem erf_pos {x : ℝ} (hx : 0 < x) : 0 < erf x := by simpa using strictMono_
 theorem erf_nonneg {x : ℝ} (hx : 0 ≤ x) : 0 ≤ erf x := by simpa using strictMono_erf.monotone hx
 
 /-- The Gaussian integral over the half-line, in the interval-integral form used by `erf`. -/
-theorem tendsto_intervalIntegral_exp_neg_sq_atTop :
+private theorem tendsto_intervalIntegral_exp_neg_sq_atTop :
     Tendsto (fun x : ℝ => ∫ t in (0 : ℝ)..x, rexp (-t ^ 2)) atTop (𝓝 (√π / 2)) := by
   have h := intervalIntegral_tendsto_integral_Ioi (μ := volume)
     (f := fun t : ℝ => rexp (-t ^ 2)) 0

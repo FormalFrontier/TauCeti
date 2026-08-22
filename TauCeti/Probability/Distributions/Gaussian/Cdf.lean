@@ -46,11 +46,14 @@ open scoped Topology NNReal
 namespace TauCeti
 
 /-- On an interval, the Gaussian density integrates to the difference of two error-function
-values: the affine change of variables `t ↦ (t - m) / √(2 * v)` turns it into the integral
-defining `TauCeti.Real.erf`. -/
-theorem intervalIntegral_gaussianPDFReal (m : ℝ) {v : ℝ≥0} (hv : v ≠ 0) (a b : ℝ) :
+values. Both sides vanish at zero variance; otherwise the affine change of variables
+`t ↦ (t - m) / √(2 * v)` turns the integral into the one defining `TauCeti.Real.erf`. -/
+theorem intervalIntegral_gaussianPDFReal (m : ℝ) {v : ℝ≥0} (a b : ℝ) :
     (∫ t in a..b, gaussianPDFReal m v t) =
       (Real.erf ((b - m) / √(2 * (v : ℝ))) - Real.erf ((a - m) / √(2 * (v : ℝ)))) / 2 := by
+  by_cases hv : v = 0
+  · subst v
+    simp
   have hv0 : (0 : ℝ) < v := NNReal.coe_pos.2 (pos_iff_ne_zero.2 hv)
   set c : ℝ := √(2 * (v : ℝ)) with hcdef
   have hc : 0 < c := Real.sqrt_pos.2 (by positivity)
@@ -102,7 +105,7 @@ theorem integral_Iic_gaussianPDFReal (m : ℝ) {v : ℝ≥0} (hv : v ≠ 0) (x :
       (𝓝 ((1 + Real.erf ((x - m) / √(2 * (v : ℝ)))) / 2)) := by
     have h := ((tendsto_const_nhds (x := Real.erf ((x - m) / √(2 * (v : ℝ)))) (f := atBot)).sub
       (Real.tendsto_erf_atBot.comp hy)).div_const 2
-    convert h.congr fun y => (intervalIntegral_gaussianPDFReal m hv y x).symm using 2
+    convert h.congr fun y => (intervalIntegral_gaussianPDFReal m (v := v) y x).symm using 2
     ring
   exact tendsto_nhds_unique hlim hlim'
 
