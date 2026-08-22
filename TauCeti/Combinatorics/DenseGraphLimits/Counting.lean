@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Basic
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
-public import TauCeti.MeasureTheory.Constructions.Pi
+public import TauCeti.MeasureTheory.Integral.Pi
 
 /-!
 # The counting lemma
@@ -30,7 +30,7 @@ edge being peeled off, which is exactly the weight the single-edge bound consume
 
 **One swap is a rectangle test.** `F` is a *simple* graph, so no edge other than `e₀` joins `a` to
 `b`: every other edge misses `a`, or misses `b`, or both. Refreshing the two coordinates `a` and `b`
-(`TauCeti.MeasureTheory.integral_pi_eq_integral_integral_update`) therefore leaves an inner double
+(`TauCeti.integral_pi_eq_integral_integral_update`) therefore leaves an inner double
 integral whose weights *factor* — one `[0, 1]`-valued function of the new `a`-coordinate, one of the
 new `b`-coordinate — and `abs_testIntegral_le_cutNorm` bounds such a pairing by the cut norm, with
 no loss of constant. The outer integral is over a probability measure, so the bound survives it.
@@ -76,7 +76,7 @@ private theorem abs_integral_le_cutNorm_of_factors (K : SymmKernel Ω μ) {a b :
     (hp1 : ∀ z u, p z u ∈ Icc (0 : ℝ) 1) (hq1 : ∀ z t, q z t ∈ Icc (0 : ℝ) 1)
     (hfac : ∀ z u t, f (update (update z a u) b t) = p z u * q z t * K u t) :
     |∫ x, f x ∂(Measure.pi fun _ : V => μ)| ≤ cutNorm μ K := by
-  rw [← TauCeti.MeasureTheory.integral_pi_eq_integral_integral_update μ hab hf]
+  rw [TauCeti.integral_pi_eq_integral_integral_update (fun _ : V => μ) hab hf]
   have hbound : ∀ z : V → Ω,
       ‖∫ w : Ω × Ω, f (update (update z a w.1) b w.2) ∂μ.prod μ‖ ≤ cutNorm μ K := by
     intro z
@@ -102,8 +102,6 @@ private theorem abs_integral_prod_mul_sub_le_aux (E : Finset (Sym2 V)) (G : Sym2
     |∫ x, (∏ e ∈ E.erase s(a, b), edgeFactor (G e) x e)
         * (U (x a) (x b) - W (x a) (x b)) ∂(Measure.pi fun _ : V => μ)|
       ≤ cutNorm μ (U.toSymmKernel - W.toSymmKernel) := by
-  have hpair : Measurable fun x : V → Ω => (x a, x b) :=
-    (measurable_pi_apply a).prodMk (measurable_pi_apply b)
   -- the edges other than `s(a, b)`, split by whether they contain `b`
   have hmem_b : ∀ e ∈ (E.erase s(a, b)).filter (fun e => b ∉ e), b ∉ e := by
     intro e he
@@ -123,23 +121,18 @@ private theorem abs_integral_prod_mul_sub_le_aux (E : Finset (Sym2 V)) (G : Sym2
     (fun z => (measurable_prod_edgeFactor _ G).comp (measurable_update z))
     (fun z u => ⟨prod_edgeFactor_nonneg _ G _, prod_edgeFactor_le_one _ G _⟩)
     (fun z t => ⟨prod_edgeFactor_nonneg _ G _, prod_edgeFactor_le_one _ G _⟩) ?_
-  · -- integrability: the integrand is measurable and bounded by `1`
-    have hm : Measurable fun x : V → Ω => U (x a) (x b) - W (x a) (x b) :=
-      (U.measurable.comp hpair).sub (W.measurable.comp hpair)
-    refine Integrable.mono' (integrable_const 1)
-      ((measurable_prod_edgeFactor _ G).mul hm).aestronglyMeasurable
-      (Filter.Eventually.of_forall fun x => ?_)
-    rw [Real.norm_eq_abs, abs_mul]
-    have h1 : |∏ e ∈ E.erase s(a, b), edgeFactor (G e) x e| ≤ 1 := by
-      rw [abs_of_nonneg (prod_edgeFactor_nonneg _ G x)]
-      exact prod_edgeFactor_le_one _ G x
+  · -- integrability: reuse the integrable edge-factor product and bound the difference by `1`
+    have hm : Measurable fun x : V → Ω => U (x a) (x b) - W (x a) (x b) := by
+      convert (measurable_edgeFactor U s(a, b)).sub (measurable_edgeFactor W s(a, b)) using 1
+      funext x
+      rw [Pi.sub_apply, edgeFactor_mk, edgeFactor_mk]
+    refine (integrable_prod_edgeFactor (E.erase s(a, b)) G).mul_bdd (c := 1)
+      hm.aestronglyMeasurable (ae_of_all _ fun x => ?_)
     have h2 : |U (x a) (x b) - W (x a) (x b)| ≤ 1 := by
       rw [abs_le]
       exact ⟨by linarith [U.nonneg (x a) (x b), W.le_one (x a) (x b)],
         by linarith [U.le_one (x a) (x b), W.nonneg (x a) (x b)]⟩
-    calc |∏ e ∈ E.erase s(a, b), edgeFactor (G e) x e| * |U (x a) (x b) - W (x a) (x b)|
-        ≤ 1 * 1 := mul_le_mul h1 h2 (abs_nonneg _) zero_le_one
-      _ = 1 := one_mul 1
+    simpa only [edgeFactor_mk, Real.norm_eq_abs] using h2
   · -- the factorisation after refreshing the two coordinates
     intro z u t
     have hva : update (update z a u) b t a = u := by
@@ -180,7 +173,7 @@ private theorem abs_integral_prod_mul_sub_le (E : Finset (Sym2 V)) (G : Sym2 V �
   | _ a b =>
     intro he₀
     have hab : a ≠ b := fun h => he₀ (Sym2.mk_isDiag_iff.2 h)
-    simpa using abs_integral_prod_mul_sub_le_aux E G U W hab
+    simpa only [edgeFactor_mk] using abs_integral_prod_mul_sub_le_aux E G U W hab
 
 /-- **The telescope.** Swapping the edges in a subset `D` of `E` from `W` to `U`, one edge at a
 time, costs at most `‖U - W‖□` per swap. -/

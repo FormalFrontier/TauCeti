@@ -160,11 +160,6 @@ theorem homDensity_def :
     homDensity F W =
       ∫ x, ∏ e ∈ F.edgeFinset, edgeFactor W x e ∂(Measure.pi fun _ : V => μ) := (rfl)
 
-/-- The integrand of `homDensity` is measurable. -/
-theorem measurable_homDensity_integrand :
-    Measurable fun x : V → Ω => ∏ e ∈ F.edgeFinset, edgeFactor W x e :=
-  measurable_prod_edgeFactor F.edgeFinset fun _ => W
-
 /-- The integrand of `homDensity` is nonnegative. -/
 theorem homDensity_integrand_nonneg (x : V → Ω) :
     0 ≤ ∏ e ∈ F.edgeFinset, edgeFactor W x e :=
