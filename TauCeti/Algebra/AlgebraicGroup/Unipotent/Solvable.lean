@@ -25,8 +25,10 @@ solvable.
 
 ## References
 
-* A. Borel, *Linear Algebraic Groups*, Proposition 4.8.
-* T. A. Springer, *Linear Algebraic Groups*, Section 2.4.
+* A. Borel, *Linear Algebraic Groups*, §4.8, Theorem, whose "in particular, `G` is a nilpotent
+  group" is the classical form of what is proved here.
+* T. A. Springer, *Linear Algebraic Groups*, Corollary 2.4.13: a unipotent linear algebraic group
+  is nilpotent, hence solvable.
 
 This completes the point-group solvability implication needed in Layer 5 of the ReductiveGroups
 roadmap.

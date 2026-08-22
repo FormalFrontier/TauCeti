@@ -34,6 +34,8 @@ of the ambient space, rather than only on homogeneous vectors where `i^{p-q}` ma
 * `TauCeti.Hodge.HodgeStructureOn.weilOperator_comp_weilOperator`: `C ∘ C = (-1)^n`.
 * `TauCeti.Hodge.HodgeStructureOn.weilOperatorEquiv`: `C` bundled as a linear automorphism.
 * `TauCeti.Hodge.HodgeStructureOn.conj_weilOperator`: `C` commutes with the conjugation.
+* `TauCeti.Hodge.IsPolarization.isOrthogonal_weilOperator`: `C` is an isometry of a complexified
+  polarizing form.
 * `TauCeti.Hodge.HodgeStructure.Hom.commutes_weilOperator`: morphisms commute with `C`.
 * `TauCeti.Hodge.tate_weilOperator`: the Weil operator of `ℤ(m)` is the identity.
 
@@ -47,7 +49,7 @@ public section
 
 namespace TauCeti.Hodge
 
-universe u
+universe u v
 
 namespace HodgeStructureOn
 
@@ -221,6 +223,53 @@ theorem conj_weilOperator (hs : HodgeStructureOn W ω n) (x : W) :
   rw [map_zpow₀, Complex.conj_I, h_exp, zpow_neg, ← inv_zpow, Complex.inv_I]
 
 end HodgeStructureOn
+
+/-! ### Compatibility with polarizing forms -/
+
+section PolarizingForm
+
+variable {V : Type u} {Vℂ : Type v}
+variable [AddCommGroup V] [AddCommGroup Vℂ] [Module ℂ Vℂ]
+variable {ιℂ : V →ₗ[ℤ] Vℂ} {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ}
+variable {hs : HodgeStructure hℂ n}
+
+namespace IsPolarization
+
+variable {Q : LinearMap.BilinForm ℤ V}
+
+/-- **The Weil operator is an isometry of the polarizing form.** Two Hodge components pair to
+zero unless their degrees add up to the weight, and on a pair of components that do, the two
+scalars `i^(2p-n)` and `i^(2p'-n)` by which the Weil operator acts are inverse to each other. -/
+theorem isOrthogonal_weilOperator (h : IsPolarization hℂ hs Q) :
+    (integralFormToComplex hℂ Q).IsOrthogonal hs.weilOperator := by
+  have key : ((integralFormToComplex hℂ Q) ∘ₗ hs.weilOperator).compl₂ hs.weilOperator =
+      integralFormToComplex hℂ Q := by
+    refine hs.linearMap_ext_of_piece fun p x hx ↦ hs.linearMap_ext_of_piece fun p' y hy ↦ ?_
+    simp only [LinearMap.compl₂_apply, LinearMap.comp_apply]
+    by_cases hpp : p + p' = n
+    · rw [hs.weilOperator_apply_of_mem hx, hs.weilOperator_apply_of_mem hy]
+      simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
+      have hexp : 2 * p' - n + (2 * p - n) = 0 := by omega
+      rw [← mul_assoc, ← zpow_add₀ Complex.I_ne_zero, hexp, zpow_zero, one_mul]
+    · rw [h.orthogonal_piece hpp (hs.weilOperator_mem_piece hx) (hs.weilOperator_mem_piece hy),
+        h.orthogonal_piece hpp hx hy]
+  intro x y
+  simpa using DFunLike.congr_fun (DFunLike.congr_fun key x) y
+
+end IsPolarization
+
+namespace Polarization
+
+/-- The Weil operator is an isometry of the complex form of a polarization. -/
+@[simp]
+theorem Q_weilOperator (P : Polarization hℂ hs) (x y : Vℂ) :
+    P.Q (hs.weilOperator x) (hs.weilOperator y) = P.Q x y := by
+  rw [P.Q_def]
+  exact P.isPolarization.isOrthogonal_weilOperator x y
+
+end Polarization
+
+end PolarizingForm
 
 namespace HodgeStructure.Hom
 

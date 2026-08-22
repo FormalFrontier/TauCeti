@@ -38,6 +38,8 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
 * `NumberField.isTotallyPositive_one`, `IsTotallyPositive.mul`, `IsTotallyPositive.inv`,
   `isTotallyPositive_sq`: the multiplicative structure, including that nonzero squares are totally
   positive.
+* `NumberField.isTotallyPositive_ratCast`: a positive rational number is totally positive, with
+  `NumberField.isTotallyPositive_intCast` its integer special case.
 * `NumberField.totallyPositiveUnits`: the subgroup of totally positive units of `Kˣ` (the
   kernel of the unit signature map), with `sq_mem_totallyPositiveUnits`. For a totally complex field
   it is everything (`totallyPositiveUnits_eq_top`), since total positivity is then vacuous
@@ -45,6 +47,8 @@ the narrow class group finite (see `NarrowClassGroup.Finite`).
 * `NumberField.totallyPositiveIntegerUnits`: the corresponding subgroup of the arithmetic
   units `(𝓞 K)ˣ`, the preimage of `totallyPositiveUnits` under `(𝓞 K)ˣ → Kˣ`, with
   `mem_totallyPositiveIntegerUnits` and `sq_mem_totallyPositiveIntegerUnits`.
+* `NumberField.norm_pos_of_isTotallyPositive`: the field norm of a nonzero totally positive
+  element is strictly positive.
 * `NumberField.finiteIndex_totallyPositiveUnits`: `totallyPositiveUnits` has finite index
   (via `Units.instFiniteIndexPosSubgroup` and the general `Subgroup.instFiniteIndexComap`).
 -/
@@ -89,6 +93,21 @@ nonzero real. -/
 theorem isTotallyPositive_sq {x : K} (hx : x ≠ 0) : IsTotallyPositive (x ^ 2) :=
   isTotallyPositive_iff.mpr fun w hw => by
     rw [map_pow]; exact sq_pos_iff.mpr ((map_ne_zero _).mpr hx)
+
+/-- A positive rational number is totally positive in any field: every real embedding fixes it.
+The cast is `Rat.cast`, which agrees with `algebraMap ℚ K` whenever the latter is available. -/
+theorem isTotallyPositive_ratCast {q : ℚ} (hq : 0 < q) :
+    IsTotallyPositive ((q : ℚ) : K) :=
+  isTotallyPositive_iff.mpr fun w hw => by
+    rw [map_ratCast]
+    exact_mod_cast hq
+
+/-- A positive rational integer is totally positive: the integer special case of
+`isTotallyPositive_ratCast`. -/
+theorem isTotallyPositive_intCast {n : ℤ} (hn : 0 < n) :
+    IsTotallyPositive ((n : ℤ) : K) := by
+  rw [← Rat.cast_intCast (α := K) n]
+  exact isTotallyPositive_ratCast (by exact_mod_cast hn)
 
 /-- The subgroup of **totally positive units** of `Kˣ`: the intersection, over the real infinite
 places `w`, of the preimages of the positive units of `ℝ` under the real embedding `w`. It is the
@@ -155,6 +174,65 @@ omit [NumberField K] in
 @[simp] theorem totallyPositiveIntegerUnits_eq_top [IsTotallyComplex K] :
     totallyPositiveIntegerUnits (K := K) = ⊤ := by
   ext u; simp
+
+/-- **The norm of a totally positive element is positive.** Group the complex embeddings of `K` by
+the infinite place they define. A real place contributes the single factor
+`embedding_of_isReal hw x`, which total positivity makes equal to `w x`; a complex place contributes
+a conjugate pair `φ x · conj (φ x) = (w x) ^ 2`. So `Algebra.norm ℚ x` equals the product
+`∏ w, w x ^ mult w`, which is `|Algebra.norm ℚ x|` by `InfinitePlace.prod_eq_abs_norm`; being
+nonzero, it is positive.
+
+Over a totally complex field the hypothesis `IsTotallyPositive x` is vacuous
+(`not_isReal_of_isTotallyComplex`), so this covers imaginary quadratic fields as a special case. -/
+theorem norm_pos_of_isTotallyPositive {x : K} (hx : x ≠ 0) (hpos : IsTotallyPositive x) :
+    0 < Algebra.norm ℚ x := by
+  classical
+  -- Each infinite place contributes `w x ^ mult w`, with no sign lost at the real places.
+  have key : ((Algebra.norm ℚ x : ℚ) : ℂ) =
+      ((∏ w : InfinitePlace K, w x ^ mult w : ℝ) : ℂ) := by
+    rw [← eq_ratCast (algebraMap ℚ ℂ) (Algebra.norm ℚ x), Algebra.norm_eq_prod_embeddings ℚ ℂ x,
+      ← Fintype.prod_equiv (RingHom.equivRatAlgHom K ℂ) (fun φ : K →+* ℂ => φ x)
+        (fun σ : K →ₐ[ℚ] ℂ => σ x) (fun φ => by simp [RingHom.equivRatAlgHom]),
+      ← Finset.prod_fiberwise Finset.univ InfinitePlace.mk (fun φ : K →+* ℂ => φ x),
+      Complex.ofReal_prod]
+    refine Finset.prod_congr rfl fun w _ => ?_
+    by_cases hw : IsReal w
+    · -- A real place has a single embedding above it, namely `embedding w`.
+      have hcard : (Finset.univ.filter fun φ : K →+* ℂ => InfinitePlace.mk φ = w).card = 1 := by
+        rw [InfinitePlace.card_filter_mk_eq, hw.mult_eq_one]
+      have hmem : embedding w ∈ Finset.univ.filter fun φ : K →+* ℂ => InfinitePlace.mk φ = w := by
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and, mk_embedding]
+      rw [Finset.eq_singleton_iff_unique_mem.mpr
+          ⟨hmem, fun y hy => Finset.card_le_one.mp hcard.le y hy _ hmem⟩,
+        Finset.prod_singleton, hw.mult_eq_one, pow_one, ← embedding_of_isReal_apply hw]
+      -- Total positivity identifies the real embedding with the place.
+      have hval : w x = embedding_of_isReal hw x := by
+        rw [← norm_embedding_of_isReal hw, Real.norm_eq_abs, abs_of_pos (hpos w hw)]
+      rw [hval]
+    · -- A complex place has the conjugate pair `embedding w`, `conj (embedding w)` above it.
+      have hne : embedding w ≠ ComplexEmbedding.conjugate (embedding w) := fun h =>
+        hw (isReal_iff.mpr (ComplexEmbedding.isReal_iff.mpr h.symm))
+      have hsub : ({embedding w, ComplexEmbedding.conjugate (embedding w)} : Finset (K →+* ℂ)) ⊆
+          Finset.univ.filter fun φ : K →+* ℂ => InfinitePlace.mk φ = w := by
+        intro φ hφ
+        simp only [Finset.mem_insert, Finset.mem_singleton] at hφ
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+        rcases hφ with rfl | rfl
+        · exact mk_embedding w
+        · rw [mk_conjugate_eq]; exact mk_embedding w
+      have hcard : (Finset.univ.filter fun φ : K →+* ℂ => InfinitePlace.mk φ = w).card = 2 := by
+        rw [InfinitePlace.card_filter_mk_eq, (not_isReal_iff_isComplex.mp hw).mult_eq_two]
+      rw [(Finset.eq_of_subset_of_card_le hsub (by rw [hcard, Finset.card_pair hne])).symm,
+        Finset.prod_pair hne, ComplexEmbedding.conjugate_coe_eq, Complex.mul_conj,
+        Complex.normSq_eq_norm_sq, norm_embedding_eq,
+        (not_isReal_iff_isComplex.mp hw).mult_eq_two]
+  have hreal : ((Algebra.norm ℚ x : ℚ) : ℝ) = ∏ w : InfinitePlace K, w x ^ mult w := by
+    exact_mod_cast key
+  rw [InfinitePlace.prod_eq_abs_norm] at hreal
+  have habs : |Algebra.norm ℚ x| = Algebra.norm ℚ x := by exact_mod_cast hreal.symm
+  have hne : Algebra.norm ℚ x ≠ 0 :=
+    (Algebra.norm_ne_zero_iff_of_basis (Module.finBasis ℚ K)).mpr hx
+  exact lt_of_le_of_ne (abs_eq_self.mp habs) (Ne.symm hne)
 
 /-- `totallyPositiveUnits` has **finite index** in `Kˣ`: it is a finite intersection, over the real
 infinite places, of the finite-index preimages of the positive units of `ℝ` (via the general
