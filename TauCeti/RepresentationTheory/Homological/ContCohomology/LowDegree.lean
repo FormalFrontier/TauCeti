@@ -513,9 +513,29 @@ representatives stay available after passing to the discrete object. -/
 noncomputable def discreteH1Equiv : DiscreteH1 G M ≃+ H1 G M :=
   AddEquiv.refl _
 
+/-- `discreteH1Equiv` is the identity on elements. -/
+@[simp]
+theorem discreteH1Equiv_apply (x : DiscreteH1 G M) :
+    discreteH1Equiv G M x = cast (by rfl) x := (rfl)
+
+/-- The inverse of `discreteH1Equiv` is the identity on elements. -/
+@[simp]
+theorem discreteH1Equiv_symm_apply (x : H1 G M) :
+    (discreteH1Equiv G M).symm x = cast (by rfl) x := (rfl)
+
 /-- The degree-`2` counterpart of `TauCeti.ContCohomology.discreteH1Equiv`. -/
 noncomputable def discreteH2Equiv : DiscreteH2 G M ≃+ H2 G M :=
   AddEquiv.refl _
+
+/-- `discreteH2Equiv` is the identity on elements. -/
+@[simp]
+theorem discreteH2Equiv_apply (x : DiscreteH2 G M) :
+    discreteH2Equiv G M x = cast (by rfl) x := (rfl)
+
+/-- The inverse of `discreteH2Equiv` is the identity on elements. -/
+@[simp]
+theorem discreteH2Equiv_symm_apply (x : H2 G M) :
+    (discreteH2Equiv G M).symm x = cast (by rfl) x := (rfl)
 
 variable {G M}
 
