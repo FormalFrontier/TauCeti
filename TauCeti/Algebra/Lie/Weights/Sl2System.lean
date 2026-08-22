@@ -60,7 +60,7 @@ defined once the root vectors are.
 
 * `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`: reading a vanishing sum of four weights as an
   equation between opposite pair sums.
-* `TauCeti.ne_neg_of_isNonZero`: negation fixes no root.
+* `TauCeti.Weight.ne_neg_of_isNonZero`: negation fixes no root.
 * `TauCeti.exists_rootPairRepresentatives`: a set of weights containing exactly one of
   `α` and `-α` for every root `α`.
 * `TauCeti.exists_isSl2System`: such a family exists.
@@ -78,6 +78,8 @@ defined once the root vectors are.
 * `TauCeti.IsSl2System.eq_of_forall_isNonZero`: a system is determined by its root vectors.
 * `TauCeti.IsSl2System.mul_eq_one_of_eq_smul`: two systems differ by scalars `c` with
   `c α * c (-α) = 1`.
+* `TauCeti.IsSl2System.smul`: rescaling by scalars inverse on opposite roots preserves a normalised
+  system.
 
 ## References
 
@@ -239,6 +241,16 @@ theorem mul_eq_one_of_eq_smul (hα : α.IsNonZero) {c d : K} (hc : y α = c • 
   refine smul_left_injective K hcoroot ?_
   simpa only [one_smul] using key.symm
 
+omit [CharZero K] hy in
+/-- Rescaling a normalised family by scalars inverse on opposite roots preserves its
+normalisation. -/
+theorem smul (u : Weight K H L → K) (hu : ∀ α, α.IsNonZero → u α * u (-α) = 1) :
+    IsSl2System fun α ↦ u α • x α where
+  mem_rootSpace α := Submodule.smul_mem _ _ (hx.mem_rootSpace α)
+  lie_neg α hα := by
+    rw [smul_lie, lie_smul, smul_smul, hx.lie_neg α hα, hu α hα, one_smul]
+  eq_zero_of_isZero α hα := by rw [hx.eq_zero_of_isZero α hα, smul_zero]
+
 end IsSl2System
 
 omit [CharZero K] in
@@ -259,7 +271,7 @@ theorem Weight.coe_neg_eq_add_of_coe_eq_add {μ : Weight K H L} {a b c d : H →
 
 /-- **A root is not its own negative.** Evaluating at the coroot separates the two: a root takes
 the value `2` there, and its negative the value `-2`. -/
-theorem ne_neg_of_isNonZero {α : Weight K H L} (hα : α.IsNonZero) : α ≠ -α := by
+theorem Weight.ne_neg_of_isNonZero {α : Weight K H L} (hα : α.IsNonZero) : α ≠ -α := by
   intro h
   have e1 : α (coroot α) = 2 := root_apply_coroot hα
   have e2 : ((-α : Weight K H L) : H → K) (coroot α) = -2 := by
@@ -271,8 +283,9 @@ variable (K H) in
 /-- **One root out of each opposite pair.** There is a set of weights containing, for every root
 `α`, exactly one of `α` and `-α`.
 
-Negation is a fixed-point-free involution on the roots by `TauCeti.ne_neg_of_isNonZero`, so a set
-of representatives for the equivalence relation it generates is such a set. The choice is what a
+Negation is a fixed-point-free involution on the roots by
+`TauCeti.Weight.ne_neg_of_isNonZero`, so a set of representatives for the equivalence relation it
+generates is such a set. The choice is what a
 construction has to make whenever it treats `α` and `-α` asymmetrically, as the normalisation
 `⁅x α, x (-α)⁆ = α^∨` and the rescalings preserving it both force it to. -/
 theorem exists_rootPairRepresentatives :
@@ -298,7 +311,7 @@ theorem exists_rootPairRepresentatives :
   refine ⟨Set.range fun q : Quotient S ↦ q.out, fun α hα ↦ ?_⟩
   have hmk : Quotient.mk S (-α) = Quotient.mk S α := Quotient.sound (Or.inr (neg_neg α).symm)
   simp only [hmem, hmk]
-  refine ⟨fun h₁ h₂ ↦ ne_neg_of_isNonZero hα (h₁.symm.trans h₂), fun h ↦ ?_⟩
+  refine ⟨fun h₁ h₂ ↦ Weight.ne_neg_of_isNonZero hα (h₁.symm.trans h₂), fun h ↦ ?_⟩
   rcases Quotient.mk_out (s := S) α with h' | h'
   · exact h'.symm
   · exact absurd (neg_eq_iff_eq_neg.mpr h').symm h
