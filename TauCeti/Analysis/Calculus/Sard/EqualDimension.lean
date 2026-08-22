@@ -9,7 +9,6 @@ public import Mathlib.Analysis.Calculus.FDeriv.Defs
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Function.Jacobian
-import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.Analysis.Calculus.FDeriv.Equiv
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 

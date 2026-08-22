@@ -41,12 +41,10 @@ target being finite-dimensional, surjective as soon as `B` is close enough to `A
 theorem isOpen_setOf_surjective : IsOpen {A : E →L[ℝ] F | Surjective A} := by
   rw [Metric.isOpen_iff]
   rintro A (hA : Surjective A)
-  obtain ⟨R₀, hR₀⟩ := (A : E →ₗ[ℝ] F).exists_rightInverse_of_surjective
-    (LinearMap.range_eq_top.2 hA)
-  set R : F →L[ℝ] E := R₀.toContinuousLinearMap with hRdef
+  obtain ⟨R, hAR⟩ := A.exists_rightInverse_of_surjective (A.range_eq_top_of_surjective hA)
   have hAR : ∀ y, A (R y) = y := fun y ↦ by
-    have := congrArg (fun g : F →ₗ[ℝ] F ↦ g y) hR₀
-    simpa [hRdef] using this
+    have := congrArg (fun g : F →L[ℝ] F ↦ g y) hAR
+    simpa using this
   refine ⟨(‖R‖ + 1)⁻¹, by positivity, fun B hB ↦ ?_⟩
   have hBA : ‖B - A‖ < (‖R‖ + 1)⁻¹ := by
     rwa [Metric.mem_ball, dist_eq_norm] at hB

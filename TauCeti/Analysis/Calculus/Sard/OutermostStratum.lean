@@ -10,7 +10,6 @@ import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 import Mathlib.Analysis.Normed.Module.HahnBanach
 import Mathlib.Analysis.Normed.Operator.Bilinear
 import Mathlib.MeasureTheory.Measure.Prod
-import TauCeti.Analysis.Calculus.Sard.EqualDimension
 import TauCeti.Analysis.Normed.Operator.Surjective
 import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 import TauCeti.MeasureTheory.Measure.LocallyNull
@@ -24,12 +23,11 @@ critical when the Fréchet derivative there fails to be surjective.
 
 The strata of the critical set are handled in the neighbouring files, and this one supplies the
 outermost stratum, where the derivative is nonzero but not surjective, together with the assembly
-of all the strata into the theorem itself. The three earlier slices,
+of all the strata into the theorem itself. The two earlier slices,
 `TauCeti.Differentiable.addHaar_image_criticalPoints_eq_zero` (equal dimensions),
 `TauCeti.Differentiable.addHaar_image_not_surjective_fderiv_eq_zero_of_finrank_lt_finrank`
-(smaller source) and
-`TauCeti.ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one` (line target), are all
-subsumed by the statement proved here, which needs no relation between the two dimensions.
+(smaller source), are both subsumed by the statement proved here, which needs no relation between
+the two dimensions.
 
 The argument for the outermost stratum is Milnor's. Near a point `a` where the derivative does not
 vanish, pick `v₀` with `Df(a) v₀ ≠ 0` and a functional `φ` on the target with `φ (Df(a) v₀) = 1`.
