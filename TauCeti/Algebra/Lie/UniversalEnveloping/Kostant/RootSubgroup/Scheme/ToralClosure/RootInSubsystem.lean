@@ -53,15 +53,20 @@ theorem kostantRootSubgroupToralSubsystemCoordinateMap_surjective_of_surjective
       (kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnil i.1 i.2) b).hom) :
     Function.Surjective
       (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt S hnil i).hom := by
-  intro y
-  obtain ⟨x, hx⟩ := hi y
-  refine ⟨(CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-    (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)).hom x, ?_⟩
-  change ((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-      (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil) ≫
-    kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt S hnil i).hom x) = y
-  rw [mkQuotient_comp_kostantRootSubgroupToralSubsystemCoordinateMap]
-  exact hx
+  apply Function.Surjective.of_comp (g :=
+    (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+      (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)).hom)
+  have hcomp :
+      (kostantRootSubgroupToralSubsystemCoordinateMap
+          e h ρ M hM b wt S hnil i).hom ∘
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt S hnil)).hom =
+        (kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnil i.1 i.2) b).hom := by
+    funext x
+    rw [Function.comp_apply, ← _root_.CommHopfAlgCat.comp_apply,
+      mkQuotient_comp_kostantRootSubgroupToralSubsystemCoordinateMap]
+  rw [hcomp]
+  exact hi
 
 /-- If a selected root coordinate map is surjective, its factorization through the
 toral-subsystem carrier is a closed immersion. -/
