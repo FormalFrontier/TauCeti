@@ -67,6 +67,7 @@ Hodge filtration `F` is decreasing and bounded on the complex model. Purity is i
 rational graded pieces: for every `k`, the filtration `TauCeti.Hodge.gradedF` induced by `F` on
 the complexification of `grᵂ_k = W_k / W_{k-1}` is the Hodge filtration of a pure Hodge structure
 of weight `k`. -/
+@[ext]
 structure MixedHodgeStructure (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ) where
   /-- The increasing rational weight filtration. -/
   WQ : ℤ → Submodule ℚ Vℚ
@@ -103,6 +104,12 @@ noncomputable def WC (k : ℤ) : Submodule ℂ Vℂ :=
 theorem WC_def (k : ℤ) :
     mhs.WC k = rationalToComplexSubmodule hℚ hℂ (mhs.WQ k) :=
   by rw [WC]
+
+/-- The complexified weight filtration is stable under lattice-induced conjugation. -/
+@[simp]
+theorem WC_conj (k : ℤ) :
+    (mhs.WC k).map (latticeConj hℂ) = mhs.WC k := by
+  simp [WC]
 
 /-- The complexified weight filtration is increasing. -/
 theorem WC_monotone : Monotone mhs.WC := fun _ _ h ↦
@@ -204,7 +211,8 @@ noncomputable def MixedHodgeStructure.ofPure (hs : HodgeStructure hℂ n) :
       rw [HodgeStructureOn.comap_F]
       exact (gradedF_eq_comap hℚ hℂ _ _ _ _ hs.F p).symm
     · have : Subsingleton (weightGradedRat (concentratedWeightFiltration Vℚ n) k) :=
-        subsingleton_weightGradedRat (concentratedWeightFiltration_le_pred hk)
+        Submodule.Quotient.subsingleton_iff.mpr
+          (Submodule.submoduleOf_eq_top.2 (concentratedWeightFiltration_le_pred hk))
       exact ⟨{ F := gradedF hℚ hℂ _ concentratedWeightFiltration_monotone hs.F k
                F_antitone := gradedF_antitone hℚ hℂ _ _ hs.F hs.F_antitone k
                F_top := ⟨0, Subsingleton.elim _ _⟩

@@ -222,12 +222,6 @@ section Concentrated
 
 variable (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ)
 
-/-- A graded piece across which the weight filtration does not jump is zero. -/
-theorem subsingleton_weightGradedRat {WQ : ℤ → Submodule ℚ Vℚ} {k : ℤ} (h : WQ k ≤ WQ (k - 1)) :
-    Subsingleton (weightGradedRat WQ k) := by
-  obtain ⟨u⟩ := Submodule.unique_quotient_iff_eq_top.2 (Submodule.submoduleOf_eq_top.2 h)
-  exact u.instSubsingleton
-
 variable (WQ : ℤ → Submodule ℚ Vℚ) (hWQ : Monotone WQ) {k : ℤ}
   (hbot : WQ (k - 1) = ⊥) (htop : WQ k = ⊤)
 
