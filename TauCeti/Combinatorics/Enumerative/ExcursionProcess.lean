@@ -17,8 +17,8 @@ list of values strictly between the `k`-th and `(k + 1)`-st visits to `a`.  This
 list as `TauCeti.excursion x a k` and packages the first `m` excursions as
 `TauCeti.excursionPrefix x a m`.
 
-When `x` visits `a` infinitely often, the visit times are genuine and strictly increasing.  The
-main reconstruction theorem then says that spelling out the first `m` excursions with
+When the `m`-th visit exists, the visit times through `m` are genuine and strictly increasing.
+The main reconstruction theorem then says that spelling out the first `m` excursions with
 `TauCeti.loopPath` recovers exactly the segment of `x` between its zeroth and `m`-th visits:
 
 ```text
@@ -26,8 +26,9 @@ loopPath a (excursionPrefix x a m)
   = (List.Ico (visitTime x a 0) (visitTime x a m + 1)).map x.
 ```
 
-In particular, if `x 0 = a`, this is the initial path segment through its `m`-th return to `a`.
-This is the combinatorial bridge from the finite excursion-reordering theorem in
+In particular this applies whenever `x` visits `a` infinitely often, and if `x 0 = a`, the result
+is the initial path segment through its `m`-th return to `a`.  This is the combinatorial bridge
+from the finite excursion-reordering theorem in
 `TauCeti.Probability.Exchangeability.Excursion` to the exchangeability of the excursion process
 of a recurrent Markov exchangeable path.
 
@@ -68,7 +69,7 @@ variable {α : Type*} {x : ℕ → α} {a : α} {k m : ℕ}
 the `k`-th and `(k + 1)`-st visits to `a`.
 
 If either visit does not exist, `visitTime` uses its documented junk value and this interval may
-be empty.  The reconstruction API below assumes that `x` visits `a` infinitely often. -/
+be empty. -/
 def excursion (x : ℕ → α) (a : α) (k : ℕ) : List α :=
   (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x
 
@@ -112,9 +113,29 @@ theorem length_excursionPrefix (x : ℕ → α) (a : α) (m : ℕ) :
     (excursionPrefix x a m).length = m := by
   simp [excursionPrefix_def]
 
+/-- Membership in an excursion is membership in the corresponding open interval of times. -/
+theorem mem_excursion_iff {b : α} :
+    b ∈ excursion x a k ↔
+      ∃ n, visitTime x a k < n ∧ n < visitTime x a (k + 1) ∧ x n = b := by
+  rw [excursion_def]
+  constructor
+  · intro hb
+    obtain ⟨n, hn, hxn⟩ := List.mem_map.1 hb
+    obtain ⟨hnk, hnk1⟩ := List.Ico.mem.1 hn
+    exact ⟨n, by omega, hnk1, hxn⟩
+  · rintro ⟨n, hnk, hnk1, hxn⟩
+    exact List.mem_map.2 ⟨n, List.Ico.mem.2 ⟨by omega, hnk1⟩, hxn⟩
+
+/-- The `k`-th entry of a finite excursion prefix is the `k`-th excursion. -/
+@[simp]
+theorem getElem_excursionPrefix (hk : k < m) :
+    (excursionPrefix x a m)[k]'(by simpa using hk) = excursion x a k := by
+  simp [excursionPrefix_def]
+
 /-! ## Elementary properties -/
 
 /-- The length of an excursion is the gap between its endpoint visit times, less one. -/
+@[simp]
 theorem length_excursion (x : ℕ → α) (a : α) (k : ℕ) :
     (excursion x a k).length = visitTime x a (k + 1) - visitTime x a k - 1 := by
   rw [excursion_def, List.length_map, List.Ico.length]
@@ -122,6 +143,7 @@ theorem length_excursion (x : ℕ → α) (a : α) (k : ℕ) :
 
 /-- An excursion never contains its base state.  This remains true in the finite-visit case,
 where `visitTime` may make the interval empty. -/
+@[simp]
 theorem not_mem_excursion (x : ℕ → α) (a : α) (k : ℕ) : a ∉ excursion x a k := by
   rw [excursion_def]
   intro ha
@@ -133,6 +155,38 @@ theorem not_mem_excursion (x : ℕ → α) (a : α) (k : ℕ) : a ∉ excursion 
   omega
 
 /-! ## Reconstruction -/
+
+/-- If the `m`-th visit exists, all visit times through `m` are genuine and consecutive visit
+times through `m` are strictly increasing. -/
+private theorem visitTime_data_of_exists_visitCount
+    (h : ∃ n, x n = a ∧ visitCount x a n = m) :
+    (∀ k ≤ m, x (visitTime x a k) = a ∧ visitCount x a (visitTime x a k) = k) ∧
+      ∀ i j, i < j → j ≤ m → visitTime x a i < visitTime x a j := by
+  classical
+  obtain ⟨n, hn, hcount⟩ := h
+  have hcard : ∀ hf : {n | x n = a}.Finite, m < hf.toFinset.card := by
+    intro hf
+    rw [← hcount, visitCount_eq_count]
+    exact Nat.count_lt_card hf hn
+  constructor
+  · intro k hk
+    have hkcard : ∀ hf : {n | x n = a}.Finite, k < hf.toFinset.card :=
+      fun hf => hk.trans_lt (hcard hf)
+    constructor
+    · simpa only [visitTime_def] using Nat.nth_mem k hkcard
+    · rw [visitCount_eq_count, visitTime_def]
+      exact Nat.count_nth hkcard
+  · intro i j hij hj
+    have hjcard : ∀ hf : {n | x n = a}.Finite, j < hf.toFinset.card :=
+      fun hf => hj.trans_lt (hcard hf)
+    simpa only [visitTime_def] using Nat.nth_lt_nth' hij hjcard
+
+/-- Infinite visits supply a finite witness for every visit count. -/
+private theorem exists_visitCount_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
+    ∃ n, x n = a ∧ visitCount x a n = m := by
+  refine ⟨visitTime x a m, visitTime_apply_of_infinite h m, ?_⟩
+  apply (visitTime_strictMono_of_infinite h).injective
+  rw [visitTime_visitCount (visitTime_apply_of_infinite h m)]
 
 /-- Appending excursion lists splices their loop paths at the shared base state. -/
 private theorem loopPath_append (a : α) (bs cs : List (List α)) :
@@ -153,15 +207,17 @@ private theorem loopPath_append (a : α) (bs cs : List (List α)) :
       rw [List.cons_append, loopPath_cons, ih, hdrop]
       rw [List.cons_append, List.append_assoc]
 
-/-- A single genuine excursion spells out exactly the segment between its two endpoint visits. -/
-theorem loopPath_singleton_excursion (h : {n | x n = a}.Infinite) (k : ℕ) :
+/-- A single excursion whose next endpoint exists spells out exactly the segment between its two
+endpoint visits. -/
+theorem loopPath_singleton_excursion
+    (h : ∃ n, x n = a ∧ visitCount x a n = k + 1) :
     loopPath a [excursion x a k] =
       (List.Ico (visitTime x a k) (visitTime x a (k + 1) + 1)).map x := by
   rw [loopPath_cons, loopPath_nil, excursion_def]
-  have hk := visitTime_apply_of_infinite h k
-  have hk1 := visitTime_apply_of_infinite h (k + 1)
-  have hlt : visitTime x a k < visitTime x a (k + 1) :=
-    visitTime_strictMono_of_infinite h (by omega)
+  obtain ⟨happly, hmono⟩ := visitTime_data_of_exists_visitCount h
+  have hk := (happly k (by omega)).1
+  have hk1 := (happly (k + 1) le_rfl).1
+  have hlt := hmono k (k + 1) (by omega) le_rfl
   have hsucc : visitTime x a k + 1 ≤ visitTime x a (k + 1) := by omega
   have hIco :
       List.Ico (visitTime x a k) (visitTime x a (k + 1) + 1) =
@@ -175,18 +231,32 @@ theorem loopPath_singleton_excursion (h : {n | x n = a}.Infinite) (k : ℕ) :
   rw [hIco, List.map_append, List.map_append, List.map_singleton, List.map_singleton, hk, hk1]
   rfl
 
-/-- The loop path of the first `m` genuine excursions is the original sequence segment from the
-zeroth through the `m`-th visit to the base state. -/
-theorem loopPath_excursionPrefix (h : {n | x n = a}.Infinite) (m : ℕ) :
+/-- The infinite-visit form of `loopPath_singleton_excursion`. -/
+theorem loopPath_singleton_excursion_of_infinite (h : {n | x n = a}.Infinite) (k : ℕ) :
+    loopPath a [excursion x a k] =
+      (List.Ico (visitTime x a k) (visitTime x a (k + 1) + 1)).map x :=
+  loopPath_singleton_excursion (exists_visitCount_of_infinite h (k + 1))
+
+/-- If the `m`-th visit exists, the loop path of the first `m` excursions is the original sequence
+segment from the zeroth through the `m`-th visit to the base state. -/
+theorem loopPath_excursionPrefix (h : ∃ n, x n = a ∧ visitCount x a n = m) :
     loopPath a (excursionPrefix x a m) =
       (List.Ico (visitTime x a 0) (visitTime x a m + 1)).map x := by
   induction m with
   | zero =>
       simp only [excursionPrefix_zero, loopPath_nil]
-      rw [List.Ico.succ_singleton, List.map_singleton, visitTime_apply_of_infinite h]
+      rw [List.Ico.succ_singleton, List.map_singleton,
+        (visitTime_data_of_exists_visitCount h).1 0 le_rfl |>.1]
   | succ m ih =>
-      rw [excursionPrefix_succ, loopPath_append, ih, loopPath_singleton_excursion h]
-      have hmono := (visitTime_strictMono_of_infinite h).monotone (Nat.zero_le m)
+      obtain ⟨happly, hstrict⟩ := visitTime_data_of_exists_visitCount h
+      have hm : ∃ n, x n = a ∧ visitCount x a n = m :=
+        ⟨visitTime x a m, (happly m (by omega)).1, (happly m (by omega)).2⟩
+      have hm1 : ∃ n, x n = a ∧ visitCount x a n = m + 1 := h
+      rw [excursionPrefix_succ, loopPath_append, ih hm, loopPath_singleton_excursion hm1]
+      have hmono : visitTime x a 0 ≤ visitTime x a m := by
+        by_cases hm0 : m = 0
+        · simp [hm0]
+        · exact (hstrict 0 m (Nat.pos_of_ne_zero hm0) (by omega)).le
       have hdrop :
           ((List.Ico (visitTime x a 0) (visitTime x a m + 1)).map x).dropLast =
             (List.Ico (visitTime x a 0) (visitTime x a m)).map x := by
@@ -194,28 +264,54 @@ theorem loopPath_excursionPrefix (h : {n | x n = a}.Infinite) (m : ℕ) :
           List.dropLast_append_cons]
         simp
       rw [hdrop, ← List.map_append, List.Ico.append_consecutive hmono
-        ((visitTime_strictMono_of_infinite h m.lt_succ_self).le.trans (Nat.le_succ _))]
+        ((hstrict m (m + 1) m.lt_succ_self le_rfl).le.trans (Nat.le_succ _))]
 
-/-- The first `m` genuine excursions contain exactly the transitions between the zeroth and
-`m`-th visits to the base state. -/
-theorem loopSteps_excursionPrefix (h : {n | x n = a}.Infinite) (m : ℕ) :
+/-- The infinite-visit form of `loopPath_excursionPrefix`. -/
+theorem loopPath_excursionPrefix_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
+    loopPath a (excursionPrefix x a m) =
+      (List.Ico (visitTime x a 0) (visitTime x a m + 1)).map x :=
+  loopPath_excursionPrefix (exists_visitCount_of_infinite h m)
+
+/-- If the `m`-th visit exists, the first `m` excursions contain exactly the transitions between
+the zeroth and `m`-th visits to the base state. -/
+theorem loopSteps_excursionPrefix (h : ∃ n, x n = a ∧ visitCount x a n = m) :
     loopSteps (excursionPrefix x a m) = visitTime x a m - visitTime x a 0 := by
-  have hlen := congrArg List.length (loopPath_excursionPrefix h m)
+  have hlen := congrArg List.length (loopPath_excursionPrefix h)
   rw [length_loopPath, List.length_map, List.Ico.length] at hlen
   omega
 
-/-- For a sequence starting at `a`, the first `m` excursions reconstruct its initial segment
-through the `m`-th return. -/
-theorem loopPath_excursionPrefix_of_zero (h : {n | x n = a}.Infinite) (h0 : x 0 = a) (m : ℕ) :
+/-- The infinite-visit form of `loopSteps_excursionPrefix`. -/
+theorem loopSteps_excursionPrefix_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
+    loopSteps (excursionPrefix x a m) = visitTime x a m - visitTime x a 0 :=
+  loopSteps_excursionPrefix (exists_visitCount_of_infinite h m)
+
+/-- If the `m`-th visit exists for a sequence starting at `a`, its first `m` excursions reconstruct
+the initial segment through the `m`-th return. -/
+theorem loopPath_excursionPrefix_of_zero
+    (h : ∃ n, x n = a ∧ visitCount x a n = m) (h0 : x 0 = a) :
     loopPath a (excursionPrefix x a m) =
       (List.range (visitTime x a m + 1)).map x := by
   rw [loopPath_excursionPrefix h, visitTime_zero_of_eq h0, List.Ico.zero_bot]
 
-/-- For a sequence starting at `a`, the first `m` excursions have total duration equal to its
-`m`-th return time. -/
-theorem loopSteps_excursionPrefix_of_zero (h : {n | x n = a}.Infinite) (h0 : x 0 = a) (m : ℕ) :
+/-- The infinite-visit form of `loopPath_excursionPrefix_of_zero`. -/
+theorem loopPath_excursionPrefix_of_infinite_of_zero
+    (h : {n | x n = a}.Infinite) (h0 : x 0 = a) (m : ℕ) :
+    loopPath a (excursionPrefix x a m) =
+      (List.range (visitTime x a m + 1)).map x :=
+  loopPath_excursionPrefix_of_zero (exists_visitCount_of_infinite h m) h0
+
+/-- If the `m`-th visit exists for a sequence starting at `a`, its first `m` excursions have total
+duration equal to the `m`-th return time. -/
+theorem loopSteps_excursionPrefix_of_zero
+    (h : ∃ n, x n = a ∧ visitCount x a n = m) (h0 : x 0 = a) :
     loopSteps (excursionPrefix x a m) = visitTime x a m := by
   rw [loopSteps_excursionPrefix h, visitTime_zero_of_eq h0, Nat.sub_zero]
+
+/-- The infinite-visit form of `loopSteps_excursionPrefix_of_zero`. -/
+theorem loopSteps_excursionPrefix_of_infinite_of_zero
+    (h : {n | x n = a}.Infinite) (h0 : x 0 = a) (m : ℕ) :
+    loopSteps (excursionPrefix x a m) = visitTime x a m :=
+  loopSteps_excursionPrefix_of_zero (exists_visitCount_of_infinite h m) h0
 
 end TauCeti
 
