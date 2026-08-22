@@ -53,9 +53,11 @@ corresponding measure-integral formulas directly.
   analyticity on the open unit ball.
 * `TauCeti.Probability.iteratedDeriv_pgf_zero` — the Taylor coefficients at the origin are the
   singleton masses.
-* `TauCeti.Probability.measure_eq_of_pgf_eqOn` and
-  `TauCeti.Probability.identDistrib_of_pgf_eqOn` — uniqueness of the law from the generating
-  function on `(-1, 1)`.
+* `TauCeti.Probability.measure_eq_of_pgf_eventuallyEq` and
+  `TauCeti.Probability.identDistrib_of_pgf_eventuallyEq` — uniqueness of the law from the germ of
+  the generating function at `0`, with the corollaries
+  `TauCeti.Probability.measure_eq_of_pgf_eqOn` and `TauCeti.Probability.identDistrib_of_pgf_eqOn`
+  reading the hypothesis off `(-1, 1)`.
 * `TauCeti.Probability.pgf_bernoulliMeasure`, `pgf_binomial`, `pgf_poissonMeasure`, and
   `pgf_geometricMeasure` — the standard discrete-family formulas.
 -/
@@ -230,6 +232,7 @@ theorem analyticOnNhd_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] :
 
 /-- The Taylor coefficients at the origin of the probability-generating function of a finite
 measure on `ℕ` are its singleton masses. -/
+@[simp]
 theorem iteratedDeriv_pgf_zero (ν : Measure ℕ) [IsFiniteMeasure ν] (n : ℕ) :
     iteratedDeriv n (pgf id ν) 0 = (n.factorial : ℝ) * ν.real {n} := by
   have h₁ : HasFPowerSeriesAt (pgf id ν) (ofScalars ℝ fun k => ν.real {k}) 0 :=
@@ -240,31 +243,46 @@ theorem iteratedDeriv_pgf_zero (ν : Measure ℕ) [IsFiniteMeasure ν] (n : ℕ)
   rw [eq_comm, div_eq_iff (Nat.cast_ne_zero.mpr n.factorial_ne_zero)] at hcoeff
   rw [hcoeff, mul_comm]
 
-/-- A finite measure on `ℕ`, in particular a probability measure, is determined by its
-probability-generating function on the open unit interval. -/
-theorem measure_eq_of_pgf_eqOn {ν ν' : Measure ℕ} [IsFiniteMeasure ν] [IsFiniteMeasure ν']
-    (h : Set.EqOn (pgf id ν) (pgf id ν') (Set.Ioo (-1) 1)) : ν = ν' := by
+/-- A finite measure on `ℕ`, in particular a probability measure, is determined by the germ at the
+origin of its probability-generating function. -/
+theorem measure_eq_of_pgf_eventuallyEq {ν ν' : Measure ℕ} [IsFiniteMeasure ν] [IsFiniteMeasure ν']
+    (h : pgf id ν =ᶠ[nhds 0] pgf id ν') : ν = ν' := by
   refine Measure.ext_of_singleton fun n => ?_
-  have hev : pgf id ν =ᶠ[nhds 0] pgf id ν' :=
-    Filter.eventuallyEq_of_mem (Ioo_mem_nhds (by norm_num) (by norm_num)) h
-  have hderiv := hev.iteratedDeriv_eq n
+  have hderiv := h.iteratedDeriv_eq n
   rw [iteratedDeriv_pgf_zero, iteratedDeriv_pgf_zero] at hderiv
   have hmass : ν.real {n} = ν'.real {n} :=
     mul_left_cancel₀ (Nat.cast_ne_zero.mpr n.factorial_ne_zero) hderiv
   rwa [measureReal_def, measureReal_def,
     ENNReal.toReal_eq_toReal_iff' (measure_ne_top _ _) (measure_ne_top _ _)] at hmass
 
+/-- A finite measure on `ℕ`, in particular a probability measure, is determined by its
+probability-generating function on the open unit interval. -/
+theorem measure_eq_of_pgf_eqOn {ν ν' : Measure ℕ} [IsFiniteMeasure ν] [IsFiniteMeasure ν']
+    (h : Set.EqOn (pgf id ν) (pgf id ν') (Set.Ioo (-1) 1)) : ν = ν' :=
+  measure_eq_of_pgf_eventuallyEq
+    (Filter.eventuallyEq_of_mem (Ioo_mem_nhds (by norm_num) (by norm_num)) h)
+
+/-- Two natural-number-valued random variables whose probability-generating functions agree near
+the origin are identically distributed. -/
+theorem identDistrib_of_pgf_eventuallyEq {Ω' : Type*} [MeasurableSpace Ω'] {P : Measure Ω}
+    {Q : Measure Ω'} [IsFiniteMeasure P] [IsFiniteMeasure Q] {X : Ω → ℕ} {Y : Ω' → ℕ}
+    (hX : AEMeasurable X P) (hY : AEMeasurable Y Q) (h : pgf X P =ᶠ[nhds 0] pgf Y Q) :
+    IdentDistrib X Y P Q := by
+  have := P.isFiniteMeasure_map X
+  have := Q.isFiniteMeasure_map Y
+  refine ⟨hX, hY, measure_eq_of_pgf_eventuallyEq ?_⟩
+  filter_upwards [h] with t ht
+  rw [pgf_map hX, pgf_map hY]
+  exact ht
+
 /-- Two natural-number-valued random variables whose probability-generating functions agree on the
 open unit interval are identically distributed. -/
 theorem identDistrib_of_pgf_eqOn {Ω' : Type*} [MeasurableSpace Ω'] {P : Measure Ω} {Q : Measure Ω'}
     [IsFiniteMeasure P] [IsFiniteMeasure Q] {X : Ω → ℕ} {Y : Ω' → ℕ}
     (hX : AEMeasurable X P) (hY : AEMeasurable Y Q)
-    (h : Set.EqOn (pgf X P) (pgf Y Q) (Set.Ioo (-1) 1)) : IdentDistrib X Y P Q := by
-  have := P.isFiniteMeasure_map X
-  have := Q.isFiniteMeasure_map Y
-  refine ⟨hX, hY, measure_eq_of_pgf_eqOn fun t ht => ?_⟩
-  rw [pgf_map hX, pgf_map hY]
-  exact h ht
+    (h : Set.EqOn (pgf X P) (pgf Y Q) (Set.Ioo (-1) 1)) : IdentDistrib X Y P Q :=
+  identDistrib_of_pgf_eventuallyEq hX hY
+    (Filter.eventuallyEq_of_mem (Ioo_mem_nhds (by norm_num) (by norm_num)) h)
 
 end Coefficients
 
