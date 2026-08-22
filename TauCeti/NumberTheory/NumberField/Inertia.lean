@@ -130,7 +130,7 @@ theorem eq_top_of_forall_inertia_le {H : Subgroup G}
 /-- **The inertia subgroups generate the Galois group.** For a number field `K` Galois over `ℚ`
 with Galois group `G`, the supremum of the inertia subgroups of the maximal ideals of `𝓞 K`
 is `⊤`. -/
-theorem iSup_inertia_eq_top : ⨆ P : MaximalSpectrum (𝓞 K), P.asIdeal.inertia G = ⊤ :=
+@[simp] theorem iSup_inertia_eq_top : ⨆ P : MaximalSpectrum (𝓞 K), P.asIdeal.inertia G = ⊤ :=
   eq_top_of_forall_inertia_le fun P hP =>
     le_iSup (fun Q : MaximalSpectrum (𝓞 K) => Q.asIdeal.inertia G) ⟨P, hP⟩
 
