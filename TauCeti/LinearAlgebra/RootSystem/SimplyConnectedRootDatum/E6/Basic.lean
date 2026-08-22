@@ -369,6 +369,8 @@ private lemma e6ReflectionIndex_coroot_pos_thirty (i : Fin 6) (j : Fin 72) :
 private lemma e6ReflectionIndex_coroot_pos (i : Fin 36) (j : Fin 72) :
     e6Coroot j - (e6Root (e6PositiveIndex i) ⬝ᵥ e6Coroot j) • e6Coroot (e6PositiveIndex i) =
       e6Coroot (e6ReflectionIndex (e6PositiveIndex i) j) := by
+  -- Fold the displayed equality into the proposition abbreviation used by the six kernel-checked
+  -- block lemmas; ordinary rewriting cannot select those lemmas while the goal is unfolded.
   change e6ReflectionIndexCorootProp i j
   rcases lt_or_ge (i : ℕ) 6 with hi | hi
   · let a : Fin 6 := ⟨i, hi⟩

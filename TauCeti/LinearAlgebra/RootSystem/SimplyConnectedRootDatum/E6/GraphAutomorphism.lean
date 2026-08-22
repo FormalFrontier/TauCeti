@@ -208,11 +208,6 @@ private lemma e6GraphLatticeEquiv_root (i : Fin 72) :
   rw [← e6GraphLatticeEquiv_root, ← e6GraphLatticeEquiv_root,
     e6GraphLatticeEquiv_involutive]
 
-private lemma e6GraphIndexEquiv_symm : e6GraphIndexEquiv.symm = e6GraphIndexEquiv := by
-  apply Equiv.ext
-  intro i
-  rw [Equiv.symm_apply_eq, e6GraphIndexEquiv_apply_apply]
-
 private lemma e6GraphLatticeEquiv_coroot (i : Fin 72) :
     e6GraphLatticeEquiv (e6SimplyConnectedRootDatum.coroot i) =
       e6SimplyConnectedRootDatum.coroot (e6GraphIndexEquiv i) := by
@@ -232,6 +227,8 @@ noncomputable def e6GraphAut : _root_.RootPairing.Aut e6SimplyConnectedRootDatum
   indexEquiv := e6GraphIndexEquiv
   weight_coweight_transpose := by
     ext y x
+    -- The structure field equates compositions of linear maps. After extensionality, unfold
+    -- those wrappers to expose the concrete perfect pairing and the two lattice arguments.
     change e6SimplyConnectedRootDatum.toLinearMap
         (e6GraphLatticeEquiv (Pi.single x 1)) (Pi.single y 1) =
       e6SimplyConnectedRootDatum.toLinearMap (Pi.single x 1)
@@ -243,27 +240,45 @@ noncomputable def e6GraphAut : _root_.RootPairing.Aut e6SimplyConnectedRootDatum
     exact e6GraphLatticeEquiv_root i
   coroot_coweightMap := by
     funext i
-    rw [e6GraphIndexEquiv_symm]
+    rw [e6GraphIndexEquiv, Function.Involutive.toPerm_symm e6GraphIndex_involutive]
     exact e6GraphLatticeEquiv_coroot i
   bijective_weightMap := e6GraphLatticeEquiv.bijective
   bijective_coweightMap := e6GraphLatticeEquiv.bijective
 
+/-- The graph automorphism carries every root to the root selected by its public root-index
+permutation. -/
+@[simp] theorem e6GraphAut_weightMap_root (i : Fin 72) :
+    e6GraphAut.weightMap (e6Root i) = e6Root (e6GraphIndexEquiv i) := by
+  -- Expose the linear equivalence packaged as the automorphism's weight linear map.
+  change e6GraphLatticeEquiv (e6Root i) = e6Root (e6GraphIndexEquiv i)
+  simpa only [e6SimplyConnectedRootDatum_root] using e6GraphLatticeEquiv_root i
+
+/-- The graph automorphism carries every coroot to the coroot selected by its public root-index
+permutation. -/
+@[simp] theorem e6GraphAut_coweightMap_coroot (i : Fin 72) :
+    e6GraphAut.coweightMap (e6Coroot i) = e6Coroot (e6GraphIndexEquiv i) := by
+  -- Expose the linear equivalence packaged as the automorphism's coweight linear map.
+  change e6GraphLatticeEquiv (e6Coroot i) = e6Coroot (e6GraphIndexEquiv i)
+  simpa only [e6SimplyConnectedRootDatum_coroot] using e6GraphLatticeEquiv_coroot i
+
 /-- The character-lattice action of the type-`E₆` graph automorphism permutes the node
 coordinates. -/
-@[simp] theorem weightMap_e6GraphAut_apply (x : Fin 6 → ℤ) (i : Fin 6) :
+@[simp] theorem e6GraphAut_weightMap_apply (x : Fin 6 → ℤ) (i : Fin 6) :
     e6GraphAut.weightMap x i = x (graphPermE6 i) :=
   e6GraphLatticeEquiv_apply x i
 
 /-- The cocharacter-lattice action of the type-`E₆` graph automorphism permutes the node
 coordinates. -/
-@[simp] theorem coweightMap_e6GraphAut_apply (x : Fin 6 → ℤ) (i : Fin 6) :
+@[simp] theorem e6GraphAut_coweightMap_apply (x : Fin 6 → ℤ) (i : Fin 6) :
     e6GraphAut.coweightMap x i = x (graphPermE6 i) :=
   e6GraphLatticeEquiv_apply x i
 
 /-- The root-index action of the type-`E₆` graph automorphism restricts to the numbered diagram
 involution on the pinned simple roots. -/
-@[simp] theorem indexEquiv_e6GraphAut_e6SimpleIndex (i : Fin 6) :
+@[simp] theorem e6GraphAut_indexEquiv_e6SimpleIndex (i : Fin 6) :
     e6GraphAut.indexEquiv (e6SimpleIndex i) = e6SimpleIndex (graphPermE6 i) := by
+  -- Unfold the automorphism field to the separately named induced root permutation before using
+  -- the characteristic equation proved from injectivity of the root embedding.
   change e6GraphIndexEquiv (e6SimpleIndex i) = e6SimpleIndex (graphPermE6 i)
   apply e6SimplyConnectedRootDatum.root.injective
   rw [← e6GraphLatticeEquiv_root, e6GraphLatticeEquiv_simpleRoot]
@@ -282,10 +297,14 @@ involution on the pinned simple roots. -/
 roots. -/
 theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
   intro h
-  have hindex := congrArg (fun e => e.indexEquiv (e6SimpleIndex 0)) h
-  simp only [indexEquiv_e6GraphAut_e6SimpleIndex, graphPermE6_apply_zero] at hindex
-  change e6SimpleIndex 5 = e6SimpleIndex 0 at hindex
-  have := congrArg Fin.val hindex
+  have hsimple : e6SimpleIndex 5 = e6SimpleIndex 0 := by
+    calc
+      e6SimpleIndex 5 = e6GraphAut.indexEquiv (e6SimpleIndex 0) := by
+        rw [e6GraphAut_indexEquiv_e6SimpleIndex, graphPermE6_apply_zero]
+      _ = (1 : _root_.RootPairing.Aut e6SimplyConnectedRootDatum).indexEquiv
+          (e6SimpleIndex 0) := congrArg (fun e => e.indexEquiv (e6SimpleIndex 0)) h
+      _ = e6SimpleIndex 0 := rfl
+  have := congrArg Fin.val hsimple
   simp only [e6SimpleIndex_val] at this
   omega
 
@@ -303,7 +322,7 @@ theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
     have hja : j = e6SimpleIndex a := by
       apply Fin.ext
       rw [e6SimpleIndex_val]
-    rw [hja, indexEquiv_e6GraphAut_e6SimpleIndex, e6SimpleIndex_val]
+    rw [hja, e6GraphAut_indexEquiv_e6SimpleIndex, e6SimpleIndex_val]
     exact (graphPermE6 a).isLt
   · intro hi
     rw [mem_e6SimplyConnectedBase_support] at hi
@@ -311,7 +330,7 @@ theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
     refine ⟨e6SimpleIndex (graphPermE6 a), ?_, ?_⟩
     · rw [mem_e6SimplyConnectedBase_support, e6SimpleIndex_val]
       exact (graphPermE6 a).isLt
-    · rw [indexEquiv_e6GraphAut_e6SimpleIndex]
+    · rw [e6GraphAut_indexEquiv_e6SimpleIndex]
       rw [graphPermE6_apply_apply]
       apply Fin.ext
       rw [e6SimpleIndex_val]
