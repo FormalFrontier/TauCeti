@@ -37,9 +37,8 @@ overlaid difference, and the cut norm is even and drops along a pushforward
 
 ## Main definitions
 
-* `TauCeti.DenseGraphLimits.couplingCutNorms` — the set of cut norms of the overlaid difference,
-  one for each coupling of the two carriers;
-* `TauCeti.DenseGraphLimits.cutDist` — its infimum, the cut distance.
+* `TauCeti.DenseGraphLimits.cutDist` — the infimum of the overlaid cut norms over couplings of the
+  two carriers.
 
 ## Main results
 
@@ -53,14 +52,14 @@ overlaid difference, and the cut norm is even and drops along a pushforward
 
 ## Implementation
 
-`couplingCutNorms` is named rather than inlined because both `csInf` rules need it: `cutDist_le`
-needs the set to be bounded below and `le_cutDist` needs it to be nonempty, and those two facts
-are stated about it once instead of being unfolded at each use. The definition carries the
-`IsProbabilityMeasure` instance a coupling of probability measures enjoys explicitly, in the `@`
-form, since `cutNorm` is only defined for finite measures and an existentially quantified witness
-cannot supply an instance by unification. `IsFiniteMeasure` is a `Prop` class, so that instance is
-interchangeable with any other by proof irrelevance, and callers holding `[IsProbabilityMeasure π]`
-may use the lemmas below with the ordinary `cutNorm π` on the nose.
+The private implementation set `couplingCutNorms` is named rather than inlined because both `csInf`
+rules need it: `cutDist_le` needs the set to be bounded below and `le_cutDist` needs it to be
+nonempty, and those two facts are stated about it once instead of being unfolded at each use. The
+definition carries the `IsFiniteMeasure` evidence supplied by a coupling explicitly, in the `@`
+form, because an existentially quantified witness cannot supply an instance by unification. Since
+`IsFiniteMeasure` is a `Prop` class, that instance is interchangeable with any other by proof
+irrelevance, and callers holding `[IsProbabilityMeasure π]` may use the lemmas below with the
+ordinary `cutNorm π` on the nose.
 
 ## References
 
@@ -93,30 +92,31 @@ two carriers. The cut distance is its infimum.
 
 Nonempty by `couplingCutNorms_nonempty` and bounded below by `0` through
 `nonneg_of_mem_couplingCutNorms`, which is what makes that infimum meaningful in `ℝ`. -/
-def couplingCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : Set ℝ :=
+private def couplingCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : Set ℝ :=
   {r | ∃ (π : Measure (Ω₁ × Ω₂)) (hπ : IsCoupling μ₁ μ₂ π),
     @cutNorm _ _ π hπ.isFiniteMeasure (overlayDiff U W π) = r}
 
 /-- Every coupling contributes its overlaid cut norm to `couplingCutNorms`. -/
-theorem mem_couplingCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {π : Measure (Ω₁ × Ω₂)}
+private theorem mem_couplingCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
+    {π : Measure (Ω₁ × Ω₂)}
     [IsProbabilityMeasure π] (hπ : IsCoupling μ₁ μ₂ π) :
     cutNorm π (overlayDiff U W π) ∈ couplingCutNorms U W :=
   ⟨π, hπ, rfl⟩
 
 /-- The independent coupling shows that two graphons always admit at least one comparison. -/
-theorem couplingCutNorms_nonempty (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+private theorem couplingCutNorms_nonempty (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
     (couplingCutNorms U W).Nonempty :=
   ⟨_, mem_couplingCutNorms U W (isCoupling_prod μ₁ μ₂)⟩
 
 /-- Every overlaid cut norm is nonnegative, being a cut norm. -/
-theorem nonneg_of_mem_couplingCutNorms {U : Graphon Ω₁ μ₁} {W : Graphon Ω₂ μ₂} {r : ℝ}
+private theorem nonneg_of_mem_couplingCutNorms {U : Graphon Ω₁ μ₁} {W : Graphon Ω₂ μ₂} {r : ℝ}
     (hr : r ∈ couplingCutNorms U W) : 0 ≤ r := by
   obtain ⟨π, hπ, rfl⟩ := hr
   have := hπ.isProbabilityMeasure
   exact cutNorm_nonneg π _
 
 /-- The set of overlaid cut norms is bounded below by `0`. -/
-theorem bddBelow_couplingCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+private theorem bddBelow_couplingCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
     BddBelow (couplingCutNorms U W) :=
   ⟨0, fun _ hr => nonneg_of_mem_couplingCutNorms hr⟩
 
@@ -197,10 +197,10 @@ theorem cutDist_comm (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDi
 
 section CommonCarrier
 
-variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 
 /-- **A common carrier bounds the cut distance.** If `f` and `g` are measure preserving from a
-common probability space onto the two carriers, then the cut distance is at most the ordinary cut
+common finite-measure space onto the two carriers, then the cut distance is at most the ordinary cut
 norm of the difference of the two pullbacks.
 
 This is the inequality that makes the measure-preserving-map picture an upper bound for the
@@ -208,7 +208,8 @@ coupling-primary one: the graph of `(f, g)` pushes `μ` forward to a coupling
 (`isCoupling_map_prodMk`), and the overlaid difference along it pulls back to the plain difference
 of the pullback kernels. That the infimum over such pairs is *equal* to the cut distance is a
 separate, later target, and needs standard Borel carriers. -/
-theorem cutDist_le_cutNorm_sub_of_measurePreserving (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
+theorem cutDist_le_cutNorm_sub_of_measurePreserving [IsFiniteMeasure μ]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
     {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : MeasurePreserving f μ μ₁) (hg : MeasurePreserving g μ μ₂) :
     cutDist U W ≤
       cutNorm μ
@@ -221,6 +222,8 @@ theorem cutDist_le_cutNorm_sub_of_measurePreserving (U : Graphon Ω₁ μ₁) (W
   congr 1
   ext x y
   simp [hdef]
+
+variable [IsProbabilityMeasure μ]
 
 /-- **The cut distance of two graphons on one carrier is at most the cut norm of their
 difference.** It is the identity case of `cutDist_le_cutNorm_sub_of_measurePreserving`, realised by
