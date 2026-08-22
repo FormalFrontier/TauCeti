@@ -156,6 +156,16 @@ noncomputable def latticeHomologyCycleMap (P : PlumbingGraph V) (k : P.character
   S.moduleCatHomologyIso.inv.hom.comp
     (LinearMap.toSpanSingleton PlumbingCoefficient S.moduleCatLeftHomologyData.H q)
 
+/-- The cycle map sends a coefficient to the corresponding scalar multiple of the chosen cycle in
+the explicit cycles-modulo-boundaries model of short-complex homology. -/
+private theorem latticeHomologyCycleMap_apply (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (c : PlumbingChain V)
+    (hc : P.latticeDifferential k c = 0) (a : PlumbingCoefficient) :
+    P.latticeHomologyCycleMap k c hc a =
+      (P.latticeShortComplex k).moduleCatHomologyIso.inv
+        ((LinearMap.range (P.latticeShortComplex k).moduleCatToCycles).mkQ
+          (a • ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩)) := rfl
+
 /-- A coefficient maps to zero under `latticeHomologyCycleMap` exactly when its multiple of the
 cycle is a boundary. -/
 @[simp]
@@ -166,21 +176,16 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
       a • c ∈ LinearMap.range (P.latticeDifferential k) := by
   let S := P.latticeShortComplex k
   let z : LinearMap.ker S.g.hom := ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩
-  let q : S.moduleCatLeftHomologyData.H :=
-    (LinearMap.range S.moduleCatToCycles).mkQ z
-  -- `moduleCatHomologyIso` is Mathlib's interface from abstract homology to the explicit
-  -- kernel/range quotient. Unfolding the local cycle map here is necessary to use that interface;
-  -- rewriting across it instead fails because `latticeHomology` remains opaque to the rewriter.
-  change S.moduleCatHomologyIso.inv (a • q) = 0 ↔ _
+  rw [latticeHomologyCycleMap_apply]
+  change S.moduleCatHomologyIso.inv
+      ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) = 0 ↔ _
   constructor
   · intro ha
-    have hq : a • q = 0 := by
-      have hz := S.moduleCatHomologyIso.inv_hom_id_apply (a • q)
+    have hq : (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0 := by
+      have hz := S.moduleCatHomologyIso.inv_hom_id_apply
+        ((LinearMap.range S.moduleCatToCycles).mkQ (a • z))
       rw [ha, map_zero] at hz
       exact hz.symm
-    -- The local `q` is definitionally the quotient projection of `z`; expose that single
-    -- application so `Submodule.Quotient.mk_eq_zero` can characterize its kernel.
-    change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0 at hq
     rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero] at hq
     obtain ⟨b, hb⟩ := hq
     exact ⟨b, congrArg Subtype.val hb⟩
@@ -189,9 +194,7 @@ theorem latticeHomologyCycleMap_apply_eq_zero_iff (P : PlumbingGraph V)
       refine ⟨b, ?_⟩
       apply Subtype.ext
       exact hb
-    have hq : a • q = 0 := by
-      -- As above, this is the concrete application rule for the quotient projection defining `q`.
-      change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0
+    have hq : (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = 0 := by
       rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
       exact hz
     exact (congrArg (fun x => S.moduleCatHomologyIso.inv x) hq).trans (map_zero _)
@@ -212,8 +215,6 @@ theorem latticeHomologyCycleMap_surjective (P : PlumbingGraph V)
   intro y
   let S := P.latticeShortComplex k
   let z : LinearMap.ker S.g.hom := ⟨c, (P.latticeShortComplex_g_hom_apply k c).trans hc⟩
-  let q : S.moduleCatLeftHomologyData.H :=
-    (LinearMap.range S.moduleCatToCycles).mkQ z
   -- Every homology class is the class of an honest cycle.
   obtain ⟨w, hw⟩ := Submodule.mkQ_surjective (LinearMap.range S.moduleCatToCycles)
     (S.moduleCatHomologyIso.hom y)
@@ -224,12 +225,12 @@ theorem latticeHomologyCycleMap_surjective (P : PlumbingGraph V)
   have hmem : w - a • z ∈ LinearMap.range S.moduleCatToCycles :=
     ⟨b, Subtype.ext ((P.latticeShortComplex_f_hom_apply k b).trans hb)⟩
   refine ⟨a, ?_⟩
-  -- `moduleCatHomologyIso` is Mathlib's interface from abstract homology to the explicit
-  -- kernel/range quotient; unfolding the local cycle map is what makes it usable here.
-  change S.moduleCatHomologyIso.inv (a • q) = y
-  have hq : a • q = S.moduleCatHomologyIso.hom y := by
+  rw [latticeHomologyCycleMap_apply]
+  change S.moduleCatHomologyIso.inv
+      ((LinearMap.range S.moduleCatToCycles).mkQ (a • z)) = y
+  have hq : (LinearMap.range S.moduleCatToCycles).mkQ (a • z) =
+      S.moduleCatHomologyIso.hom y := by
     refine Eq.trans ?_ hw
-    change (LinearMap.range S.moduleCatToCycles).mkQ (a • z) = _
     rw [Submodule.mkQ_apply, Submodule.mkQ_apply, Submodule.Quotient.eq]
     exact neg_sub w (a • z) ▸ Submodule.neg_mem _ hmem
   rw [hq]

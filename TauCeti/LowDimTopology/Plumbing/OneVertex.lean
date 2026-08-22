@@ -17,16 +17,18 @@ import TauCeti.LowDimTopology.Plumbing.Weight.Polarization
 Némethi's lattice homology of a plumbing graph `P` with a characteristic covector `k` is the
 homology of the free `𝔽₂[U]`-module on the cubes of the lattice `V → ℤ`, each codimension-one
 face in the differential weighted by the drop in the characteristic cube weight. This file
-computes the total, ungraded homology of that complex when `P` has a single vertex, the smallest
-plumbing whose differential is not forced to vanish: the answer is a single `U`-tower,
+computes the total, ungraded homology of that complex when `P` has a single vertex of negative
+framing, the smallest plumbing whose differential is not forced to vanish: the answer is a single
+`U`-tower,
 
 `ℍ(P, k) ≅ 𝔽₂[U]`,
 
 for every characteristic covector, hence for every spin^c structure. A one-vertex plumbing with
 framing `w < 0` is the disc bundle over the sphere with Euler number `w`, whose boundary is the
-lens space `L(-w, 1)`, and one tower per spin^c structure is the value the literature records for
-`HF⁻` of a lens space. Up to now the only computed lattice homology was that of the zero-vertex
-plumbing, where the differential vanishes for lack of directions.
+lens space `L(-w, 1)`, and one tower per spin^c structure agrees with the lens-space computation
+of Ozsváth–Szabó, [arXiv:math/0203265](https://arxiv.org/abs/math/0203265). Up to now the only
+computed lattice homology was that of the zero-vertex plumbing, where the differential vanishes
+for lack of directions.
 
 Two facts drive the computation. First, the lattice is `ℤ`, so the only cubes are lattice points
 and edges; the lattice differential is injective on chains of edges, so every cycle is a chain of
@@ -41,35 +43,32 @@ So the class of `x₀` generates lattice homology, and the augmentation already 
 
 ## Main definitions
 
-* `TauCeti.PlumbingGraph.latticeHomologyEquivCoefficient`: the lattice homology of a one-vertex
-  negative-definite plumbing, identified with `𝔽₂[U]`.
+* `TauCeti.PlumbingGraph.coefficientEquivLatticeHomologyOfUnique`: the lattice homology of a
+  one-vertex negative-definite plumbing, identified with `𝔽₂[U]` using a specified
+  augmentation-one cycle.
 * `TauCeti.oneVertexPlumbing`: the plumbing graph with a single vertex of a given framing.
 
 ## Main results
 
-* `TauCeti.PlumbingCube.characteristicWeight_edge`,
-  `TauCeti.PlumbingCube.characteristicLowerFaceExponent_edge`,
-  `TauCeti.PlumbingCube.characteristicUpperFaceExponent_edge`: the weight of a one-dimensional
-  cube and the two `U`-exponents its faces carry.
-* `TauCeti.PlumbingGraph.latticeDifferential_single_edge`: the lattice differential of an edge.
-* `TauCeti.PlumbingGraph.single_add_sub_smul_single_mem_range` and
-  `TauCeti.PlumbingGraph.single_sub_smul_single_add_mem_range`: crossing an edge multiplies the
-  class of its lighter endpoint by the intervening power of `U`.
-* `TauCeti.PlumbingGraph.directions_eq_empty_of_latticeDifferential_eq_zero`: on a rank-one
-  lattice every cycle is a chain of lattice points.
-* `TauCeti.PlumbingGraph.single_sub_smul_single_mem_range`: every lattice point of a rank-one
-  negative-definite plumbing lattice is a `U`-multiple of a minimal-weight one, modulo boundaries.
-* `TauCeti.PlumbingGraph.latticeHomologyCycleMap_bijective`: the cycle map of any augmentation-one
-  cycle is an isomorphism `𝔽₂[U] ≅ ℍ(P, k)`.
-* `TauCeti.oneVertexPlumbingLatticeHomologyEquiv`: that isomorphism for the explicit one-vertex
-  plumbing of negative framing.
+* `TauCeti.PlumbingGraph.directions_eq_empty_of_latticeDifferential_eq_zero_of_unique`: on a
+  rank-one lattice every cycle is a chain of lattice points.
+* `TauCeti.PlumbingGraph.single_sub_smul_single_mem_range_of_unique`: every lattice point of a
+  rank-one negative-definite plumbing lattice is a `U`-multiple of a minimal-weight one, modulo
+  boundaries.
+* `TauCeti.PlumbingGraph.latticeHomologyCycleMap_bijective_of_unique`: for a rank-one
+  negative-definite plumbing, the cycle map of any augmentation-one cycle is an isomorphism
+  `𝔽₂[U] ≅ ℍ(P, k)`.
+* `TauCeti.coefficientEquivOneVertexPlumbingLatticeHomology`: that isomorphism for the explicit
+  one-vertex plumbing of negative framing.
 
 ## References
 
 This advances `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane L ("lattice homology"),
 whose acceptance criterion asks for the lattice homology of a concrete negative-definite plumbing,
 matched against the literature. The complex and its weights follow A. Némethi,
-[arXiv:0709.0841](https://arxiv.org/abs/0709.0841), Section 3.
+[arXiv:0709.0841](https://arxiv.org/abs/0709.0841), Section 3. The comparison computation for
+`HF⁻` of lens spaces is due to P. Ozsváth and Z. Szabó,
+[arXiv:math/0203265](https://arxiv.org/abs/math/0203265).
 -/
 
 public section
@@ -82,10 +81,6 @@ namespace PlumbingChain
 
 variable {V : Type u}
 
-/-- Subtraction of plumbing chains is addition, the coefficients having characteristic two. -/
-private theorem sub_eq_add (c d : PlumbingChain V) : c - d = c + d := by
-  rw [sub_eq_add_neg, ← neg_one_smul PlumbingCoefficient d, CharTwo.neg_eq, one_smul]
-
 /-- Telescoping one step: comparing `a` with a multiple of `c` splits into the comparison of `a`
 with a multiple of an intermediate chain `b` and that comparison for `b` and `c`. -/
 private theorem sub_mul_smul (r s : PlumbingCoefficient) (a b c : PlumbingChain V) :
@@ -95,127 +90,9 @@ private theorem sub_mul_smul (r s : PlumbingCoefficient) (a b c : PlumbingChain 
 
 end PlumbingChain
 
-/-! ### The weights of an edge -/
-
-namespace PlumbingCube
-
-variable {V : Type u} [DecidableEq V] [Fintype V] (P : PlumbingGraph V)
-  (k : P.characteristicVectors) (x : V → ℤ) (v : V)
-
-/-- The characteristic cube weight of an edge is the larger of its two endpoint weights. -/
-theorem characteristicWeight_edge :
-    characteristicWeight P k ⟨x, {v}⟩ =
-      max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) := by
-  rw [characteristicWeight_mk,
-    P.characteristicCubeWeight_eq_max_erase k x (Finset.mem_singleton_self v),
-    Finset.erase_singleton, PlumbingGraph.characteristicCubeWeight_empty,
-    PlumbingGraph.characteristicCubeWeight_empty]
-
-/-- The lower-face exponent of an edge: the drop from the edge weight to the weight of its base
-point. -/
-theorem characteristicLowerFaceExponent_edge :
-    characteristicLowerFaceExponent P k ⟨x, {v}⟩ v =
-      (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
-        P.characteristicWeight k x).toNat := by
-  have h := characteristicLowerFaceExponent_natCast P k ⟨x, {v}⟩ v
-  rw [characteristicWeight_edge] at h
-  simp only [eraseDirection_mk, Finset.erase_singleton, characteristicWeight_mk,
-    PlumbingGraph.characteristicCubeWeight_empty] at h
-  omega
-
-/-- The upper-face exponent of an edge: the drop from the edge weight to the weight of its far
-endpoint. -/
-theorem characteristicUpperFaceExponent_edge :
-    characteristicUpperFaceExponent P k
-        (⟨x, {v}⟩ : PlumbingCube V) (Finset.mem_singleton_self v) =
-      (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
-        P.characteristicWeight k (x + Pi.single v 1)).toNat := by
-  have h := characteristicUpperFaceExponent_natCast P k
-    (⟨x, {v}⟩ : PlumbingCube V) (Finset.mem_singleton_self v)
-  rw [characteristicWeight_edge] at h
-  simp only [upperFace_mk, Finset.erase_singleton, characteristicWeight_mk,
-    PlumbingGraph.characteristicCubeWeight_empty] at h
-  omega
-
-end PlumbingCube
-
 namespace PlumbingGraph
 
 variable {V : Type u} [DecidableEq V] [Fintype V]
-
-/-! ### The differential of an edge -/
-
-section Edge
-
-variable (P : PlumbingGraph V) (k : P.characteristicVectors) (x : V → ℤ) (v : V)
-
-/-- The lattice differential of an edge generator: each endpoint appears, weighted by the drop
-from the edge weight to that endpoint's weight. One of the two exponents is always zero. -/
-theorem latticeDifferential_single_edge :
-    P.latticeDifferential k (Finsupp.single ⟨x, {v}⟩ 1) =
-      Finsupp.single (⟨x, ∅⟩ : PlumbingCube V)
-          (Polynomial.X ^
-            (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
-              P.characteristicWeight k x).toNat) +
-        Finsupp.single (⟨x + Pi.single v 1, ∅⟩ : PlumbingCube V)
-          (Polynomial.X ^
-            (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
-              P.characteristicWeight k (x + Pi.single v 1)).toNat) := by
-  classical
-  rw [latticeDifferential_single, one_smul, latticeDifferentialOnGenerator_def,
-    Finset.sum_eq_single_of_mem (⟨v, Finset.mem_singleton_self v⟩ :
-      {w // w ∈ ({v} : Finset V)}) (Finset.mem_attach _ _)
-      (fun w _ hw => absurd (Subtype.ext (Finset.mem_singleton.mp w.property)) hw)]
-  rw [PlumbingCube.lowerFace_mk, PlumbingCube.upperFace_mk, Finset.erase_singleton,
-    PlumbingCube.characteristicLowerFaceExponent_edge,
-    PlumbingCube.characteristicUpperFaceExponent_edge]
-
-end Edge
-
-/-! ### Moving between adjacent lattice points -/
-
-section Step
-
-variable (P : PlumbingGraph V) (k : P.characteristicVectors) (x : V → ℤ) (v : V)
-
-/-- Crossing an edge towards a lattice point of no smaller weight: the far endpoint is, modulo
-boundaries, `U ^ d` times the near one, where `d` is the gap between their weights. -/
-theorem single_add_sub_smul_single_mem_range
-    (h : P.characteristicWeight k x ≤ P.characteristicWeight k (x + Pi.single v 1)) :
-    Finsupp.single (⟨x + Pi.single v 1, ∅⟩ : PlumbingCube V) 1 -
-        (Polynomial.X : PlumbingCoefficient) ^ (P.characteristicWeight k (x + Pi.single v 1) -
-            P.characteristicWeight k x).toNat •
-          Finsupp.single (⟨x, ∅⟩ : PlumbingCube V) 1 ∈
-      LinearMap.range (P.latticeDifferential k) := by
-  refine ⟨Finsupp.single ⟨x, {v}⟩ 1, ?_⟩
-  rw [latticeDifferential_single_edge, max_eq_right h, sub_self, Int.toNat_zero, pow_zero,
-    PlumbingChain.sub_eq_add, Finsupp.smul_single, smul_eq_mul, mul_one]
-  exact add_comm _ _
-
-/-- Crossing an edge away from a lattice point of no larger weight: the near endpoint is, modulo
-boundaries, `U ^ d` times the far one, where `d` is the gap between their weights. -/
-theorem single_sub_smul_single_add_mem_range
-    (h : P.characteristicWeight k (x + Pi.single v 1) ≤ P.characteristicWeight k x) :
-    Finsupp.single (⟨x, ∅⟩ : PlumbingCube V) 1 -
-        (Polynomial.X : PlumbingCoefficient) ^ (P.characteristicWeight k x -
-            P.characteristicWeight k (x + Pi.single v 1)).toNat •
-          Finsupp.single (⟨x + Pi.single v 1, ∅⟩ : PlumbingCube V) 1 ∈
-      LinearMap.range (P.latticeDifferential k) := by
-  refine ⟨Finsupp.single ⟨x, {v}⟩ 1, ?_⟩
-  rw [latticeDifferential_single_edge, max_eq_left h, sub_self, Int.toNat_zero, pow_zero,
-    PlumbingChain.sub_eq_add, Finsupp.smul_single, smul_eq_mul, mul_one]
-
-end Step
-
-/-! ### Chains of lattice points -/
-
-/-- A chain supported in cubical degree zero is a cycle: a lattice point has no faces. -/
-theorem latticeDifferential_eq_zero_of_forall_directions_eq_empty (P : PlumbingGraph V)
-    (k : P.characteristicVectors) {c : PlumbingChain V}
-    (hc : ∀ C ∈ c.support, C.directions = ∅) : P.latticeDifferential k c = 0 := by
-  rw [latticeDifferential_apply, Finsupp.sum]
-  refine Finset.sum_eq_zero fun C hC => ?_
-  rw [P.latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty k (hc C hC), smul_zero]
 
 /-! ### The rank-one lattice -/
 
@@ -224,7 +101,8 @@ section Unique
 variable [Unique V] (P : PlumbingGraph V) (k : P.characteristicVectors)
 
 /-- On a rank-one lattice the first difference of the characteristic weight along the unique basis
-direction is an affine function of the lattice coordinate, with slope the framing. -/
+direction is an affine function of the lattice coordinate, with slope the negative of the
+framing. -/
 private theorem characteristicWeight_add_single_sub (x : V → ℤ) :
     P.characteristicWeight k (x + Pi.single default 1) - P.characteristicWeight k x =
       -((k.val default + P.weight default) / 2) - x default * P.weight default := by
@@ -272,6 +150,23 @@ private theorem characteristicWeight_add_single_le (hw : P.weight default < 0) {
     (by omega)
   linarith
 
+omit [Unique V] in
+/-- Compose two congruences modulo lattice boundaries. -/
+private theorem sub_smul_mem_range_trans {r s : PlumbingCoefficient} {a b c : PlumbingChain V}
+    (h₁ : a - r • b ∈ LinearMap.range (P.latticeDifferential k))
+    (h₂ : b - s • c ∈ LinearMap.range (P.latticeDifferential k)) :
+    a - (r * s) • c ∈ LinearMap.range (P.latticeDifferential k) := by
+  rw [PlumbingChain.sub_mul_smul]
+  exact Submodule.add_mem _ h₁ (Submodule.smul_mem _ r h₂)
+
+/-- Powers of `U` telescope when the three exponents come from an ordered triple of weights. -/
+private theorem X_pow_sub_mul_X_pow_sub {a b c : ℤ} (hcb : c ≤ b) (hba : b ≤ a) :
+    (Polynomial.X : PlumbingCoefficient) ^ (a - b).toNat *
+        Polynomial.X ^ (b - c).toNat = Polynomial.X ^ (a - c).toNat := by
+  rw [← pow_add]
+  congr 1
+  omega
+
 include hmin in
 /-- The lattice-point generation statement, as an induction on the lattice coordinate: from a
 minimizer the characteristic weight increases monotonically in both directions, so each step
@@ -305,20 +200,11 @@ private theorem single_sub_smul_single_mem_range_aux (hw : P.weight default < 0)
           P.characteristicWeight k (y - Pi.single default (1 : ℤ) + Pi.single default 1) :=
         characteristicWeight_le_add_single P k hmin hw (by rw [hzd]; exact hn)
       have hminz := hmin (y - Pi.single default (1 : ℤ))
-      have hsum := Submodule.add_mem _
-        (single_add_sub_smul_single_mem_range P k (y - Pi.single default (1 : ℤ)) default hle')
-        (Submodule.smul_mem (LinearMap.range (P.latticeDifferential k))
-          ((Polynomial.X : PlumbingCoefficient) ^
-            (P.characteristicWeight k (y - Pi.single default (1 : ℤ) + Pi.single default 1) -
-              P.characteristicWeight k (y - Pi.single default (1 : ℤ))).toNat)
-          (ih (y - Pi.single default (1 : ℤ)) hzd))
-      rw [← PlumbingChain.sub_mul_smul, ← pow_add,
-        show (P.characteristicWeight k (y - Pi.single default (1 : ℤ) + Pi.single default 1) -
-              P.characteristicWeight k (y - Pi.single default (1 : ℤ))).toNat +
-            (P.characteristicWeight k (y - Pi.single default (1 : ℤ)) -
-              P.characteristicWeight k x₀).toNat =
-          (P.characteristicWeight k (y - Pi.single default (1 : ℤ) + Pi.single default 1) -
-            P.characteristicWeight k x₀).toNat from by omega] at hsum
+      have hstep :=
+        single_add_sub_smul_single_mem_range P k (y - Pi.single default (1 : ℤ)) default hle'
+      have hind := ih (y - Pi.single default (1 : ℤ)) hzd
+      have hsum := sub_smul_mem_range_trans P k hstep hind
+      rw [X_pow_sub_mul_X_pow_sub hminz hle'] at hsum
       rwa [hzy] at hsum
   · induction n, hle using Int.leInductionDown with
     | base => exact hbase
@@ -329,19 +215,10 @@ private theorem single_sub_smul_single_mem_range_aux (hw : P.weight default < 0)
           P.characteristicWeight k y :=
         characteristicWeight_add_single_le P k hmin hw (by omega)
       have hminz := hmin (y + Pi.single default (1 : ℤ))
-      have hsum := Submodule.add_mem _
-        (single_sub_smul_single_add_mem_range P k y default hle')
-        (Submodule.smul_mem (LinearMap.range (P.latticeDifferential k))
-          ((Polynomial.X : PlumbingCoefficient) ^
-            (P.characteristicWeight k y -
-              P.characteristicWeight k (y + Pi.single default 1)).toNat)
-          (ih (y + Pi.single default (1 : ℤ)) hyd))
-      rwa [← PlumbingChain.sub_mul_smul, ← pow_add,
-        show (P.characteristicWeight k y -
-              P.characteristicWeight k (y + Pi.single default 1)).toNat +
-            (P.characteristicWeight k (y + Pi.single default 1) -
-              P.characteristicWeight k x₀).toNat =
-          (P.characteristicWeight k y - P.characteristicWeight k x₀).toNat from by omega] at hsum
+      have hstep := single_sub_smul_single_add_mem_range P k y default hle'
+      have hind := ih (y + Pi.single default (1 : ℤ)) hyd
+      have hsum := sub_smul_mem_range_trans P k hstep hind
+      rwa [X_pow_sub_mul_X_pow_sub hminz hle'] at hsum
 
 include hmin in
 /-- Modulo boundaries, a chain of lattice points is its augmentation times a fixed minimal-weight
@@ -379,7 +256,8 @@ end Unique
 
 /-- On a rank-one plumbing lattice every cycle is a chain of lattice points: the only cubes of
 positive dimension are the edges, and the lattice differential is injective on chains of edges. -/
-theorem directions_eq_empty_of_latticeDifferential_eq_zero [Unique V] (P : PlumbingGraph V)
+theorem directions_eq_empty_of_latticeDifferential_eq_zero_of_unique [Unique V]
+    (P : PlumbingGraph V)
     (k : P.characteristicVectors) {c : PlumbingChain V} (hc : P.latticeDifferential k c = 0)
     {C : PlumbingCube V} (hC : C ∈ c.support) : C.directions = ∅ := by
   classical
@@ -415,18 +293,24 @@ section Homology
 
 variable [Unique V] (P : PlumbingGraph V) (k : P.characteristicVectors)
 
+omit [Unique V] in
+/-- A lattice point realizing the infimum of the characteristic weight is a minimizer. -/
+private theorem characteristicWeight_le_of_eq_sInf (h : P.IsNegativeDefinite) {x₀ : V → ℤ}
+    (hx₀ : P.characteristicWeight k x₀ = P.sInfCharacteristicWeight k) (y : V → ℤ) :
+    P.characteristicWeight k x₀ ≤ P.characteristicWeight k y := by
+  rw [hx₀]
+  exact P.sInfCharacteristicWeight_le h k y
+
 /-- Every lattice point of a rank-one negative-definite plumbing lattice is, modulo boundaries,
 `U ^ (χ_k(x) - min χ_k)` times a fixed lattice point of minimal weight. -/
-theorem single_sub_smul_single_mem_range (h : P.IsNegativeDefinite) {x₀ : V → ℤ}
+theorem single_sub_smul_single_mem_range_of_unique (h : P.IsNegativeDefinite) {x₀ : V → ℤ}
     (hx₀ : P.characteristicWeight k x₀ = P.sInfCharacteristicWeight k) (x : V → ℤ) :
     Finsupp.single (⟨x, ∅⟩ : PlumbingCube V) 1 -
         (Polynomial.X : PlumbingCoefficient) ^
             (P.characteristicWeight k x - P.sInfCharacteristicWeight k).toNat •
           Finsupp.single (⟨x₀, ∅⟩ : PlumbingCube V) 1 ∈
       LinearMap.range (P.latticeDifferential k) := by
-  have hmin : ∀ y : V → ℤ, P.characteristicWeight k x₀ ≤ P.characteristicWeight k y := fun y => by
-    rw [hx₀]
-    exact P.sInfCharacteristicWeight_le h k y
+  have hmin := characteristicWeight_le_of_eq_sInf P k h hx₀
   have hbase := single_sub_smul_single_mem_range_aux P k hmin
     (IsNegativeDefinite.weight_neg P h default) (x default) x rfl
   rwa [hx₀] at hbase
@@ -434,30 +318,30 @@ theorem single_sub_smul_single_mem_range (h : P.IsNegativeDefinite) {x₀ : V �
 /-- On a rank-one negative-definite plumbing every cycle differs from a multiple of a fixed
 minimal-weight lattice point by a boundary: cycles are chains of lattice points, and each lattice
 point is a `U`-multiple of the minimal one. -/
-theorem sub_augmentation_smul_single_mem_range (h : P.IsNegativeDefinite) {x₀ : V → ℤ}
+theorem sub_augmentation_smul_single_mem_range_of_unique (h : P.IsNegativeDefinite)
+    {x₀ : V → ℤ}
     (hx₀ : P.characteristicWeight k x₀ = P.sInfCharacteristicWeight k) {c : PlumbingChain V}
     (hc : P.latticeDifferential k c = 0) :
     c - P.latticeAugmentation k c • Finsupp.single (⟨x₀, ∅⟩ : PlumbingCube V) 1 ∈
       LinearMap.range (P.latticeDifferential k) := by
-  have hmin : ∀ y : V → ℤ, P.characteristicWeight k x₀ ≤ P.characteristicWeight k y := fun y => by
-    rw [hx₀]
-    exact P.sInfCharacteristicWeight_le h k y
+  have hmin := characteristicWeight_le_of_eq_sInf P k h hx₀
   exact sub_augmentation_smul_single_mem_range_aux P k hmin
     (IsNegativeDefinite.weight_neg P h default) hx₀
-    fun C hC => P.directions_eq_empty_of_latticeDifferential_eq_zero k hc hC
+    fun C hC => P.directions_eq_empty_of_latticeDifferential_eq_zero_of_unique k hc hC
 
 /-- **The lattice homology of a one-vertex negative-definite plumbing is a single `U`-tower.**
 Any cycle of augmentation one has bijective cycle map: injectivity is the tower of
 `latticeHomologyCycleMap_injective`, and surjectivity holds because every cycle is a chain of
 lattice points and every lattice point is a `U`-multiple of a minimal-weight one. -/
-theorem latticeHomologyCycleMap_bijective (h : P.IsNegativeDefinite) (c : PlumbingChain V)
+theorem latticeHomologyCycleMap_bijective_of_unique (h : P.IsNegativeDefinite)
+    (c : PlumbingChain V)
     (hc : P.latticeDifferential k c = 0) (hone : P.latticeAugmentation k c = 1) :
     Function.Bijective (P.latticeHomologyCycleMap k c hc) := by
   obtain ⟨x₀, hx₀⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h k
   refine ⟨P.latticeHomologyCycleMap_injective h k c hc hone,
     P.latticeHomologyCycleMap_surjective k c hc fun z hz => ⟨P.latticeAugmentation k z, ?_⟩⟩
-  have hz₀ := sub_augmentation_smul_single_mem_range P k h hx₀ hz
-  have hc₀ := sub_augmentation_smul_single_mem_range P k h hx₀ hc
+  have hz₀ := sub_augmentation_smul_single_mem_range_of_unique P k h hx₀ hz
+  have hc₀ := sub_augmentation_smul_single_mem_range_of_unique P k h hx₀ hc
   rw [hone, one_smul] at hc₀
   have hsplit : z - P.latticeAugmentation k z • c =
       (z - P.latticeAugmentation k z • Finsupp.single (⟨x₀, ∅⟩ : PlumbingCube V) 1) -
@@ -468,15 +352,26 @@ theorem latticeHomologyCycleMap_bijective (h : P.IsNegativeDefinite) (c : Plumbi
   rw [hsplit]
   exact Submodule.sub_mem _ hz₀ (Submodule.smul_mem _ _ hc₀)
 
-/-- The lattice homology of a one-vertex negative-definite plumbing is free of rank one over
-`𝔽₂[U]`, generated by the class of a lattice point of minimal characteristic weight. -/
-noncomputable def latticeHomologyEquivCoefficient (h : P.IsNegativeDefinite) :
+/-- The class of a specified augmentation-one cycle identifies `𝔽₂[U]` with the lattice
+homology of a rank-one negative-definite plumbing. -/
+noncomputable def coefficientEquivLatticeHomologyOfUnique (h : P.IsNegativeDefinite)
+    (c : PlumbingChain V) (hc : P.latticeDifferential k c = 0)
+    (hone : P.latticeAugmentation k c = 1) :
     PlumbingCoefficient ≃ₗ[PlumbingCoefficient] P.latticeHomology k :=
   LinearEquiv.ofBijective
-    (P.latticeHomologyCycleMap k (P.exists_cycle_latticeAugmentation_eq_one h k).choose
-      (P.exists_cycle_latticeAugmentation_eq_one h k).choose_spec.1)
-    (latticeHomologyCycleMap_bijective P k h _ _
-      (P.exists_cycle_latticeAugmentation_eq_one h k).choose_spec.2)
+    (P.latticeHomologyCycleMap k c hc)
+    (latticeHomologyCycleMap_bijective_of_unique P k h c hc hone)
+
+/-- The equivalence specified by an augmentation-one cycle sends a coefficient to the homology
+class of its multiple of that cycle. -/
+@[simp]
+theorem coefficientEquivLatticeHomologyOfUnique_apply (h : P.IsNegativeDefinite)
+    (c : PlumbingChain V) (hc : P.latticeDifferential k c = 0)
+    (hone : P.latticeAugmentation k c = 1) (a : PlumbingCoefficient) :
+    coefficientEquivLatticeHomologyOfUnique P k h c hc hone a =
+      P.latticeHomologyCycleMap k c hc a := by
+  rw [coefficientEquivLatticeHomologyOfUnique]
+  rfl
 
 end Homology
 
@@ -491,8 +386,19 @@ def oneVertexPlumbing (w : ℤ) : PlumbingGraph (Fin 1) where
   decidableAdj := inferInstance
   weight := fun _ => w
 
-/-- The intersection matrix of a one-vertex plumbing is its framing. -/
+/-- Every vertex of the one-vertex plumbing has the specified framing. -/
 @[simp]
+theorem oneVertexPlumbing_weight (w : ℤ) (i : Fin 1) :
+    (oneVertexPlumbing w).weight i = w := by
+  simp [oneVertexPlumbing]
+
+/-- The one-vertex plumbing has no graph edges. -/
+@[simp]
+theorem oneVertexPlumbing_toSimpleGraph (w : ℤ) :
+    (oneVertexPlumbing w).toSimpleGraph = ⊥ := by
+  simp [oneVertexPlumbing]
+
+/-- The intersection matrix of a one-vertex plumbing is its framing. -/
 theorem oneVertexPlumbing_intersectionMatrix (w : ℤ) :
     (oneVertexPlumbing w).intersectionMatrix = !![w] := by
   ext i j
@@ -504,22 +410,22 @@ theorem oneVertexPlumbing_intersectionMatrix (w : ℤ) :
 theorem oneVertexPlumbing_isNegativeDefinite {w : ℤ} (hw : w < 0) :
     (oneVertexPlumbing w).IsNegativeDefinite := by
   refine PlumbingGraph.isNegativeDefinite_of_degree_lt_neg_weight _ fun i => ?_
-  have hnb : (oneVertexPlumbing w).toSimpleGraph.neighborFinset i = ∅ := by
-    rw [Finset.eq_empty_iff_forall_notMem]
-    intro j hj
-    rw [SimpleGraph.mem_neighborFinset] at hj
-    simp [oneVertexPlumbing] at hj
   have hdeg : (oneVertexPlumbing w).toSimpleGraph.degree i = 0 := by
-    rw [SimpleGraph.degree, hnb, Finset.card_empty]
-  rw [hdeg]
-  simpa [oneVertexPlumbing] using hw
+    unfold oneVertexPlumbing
+    exact SimpleGraph.bot_degree i
+  rw [hdeg, oneVertexPlumbing_weight]
+  omega
 
 /-- The lattice homology of the one-vertex plumbing with negative framing `w` is, in every
-spin^c structure, a free `𝔽₂[U]`-module of rank one: exactly one `U`-tower, which is the value
-the literature records for the lens space `L(-w, 1)`. -/
-noncomputable def oneVertexPlumbingLatticeHomologyEquiv {w : ℤ} (hw : w < 0)
+spin^c structure, a free `𝔽₂[U]`-module of rank one: exactly one `U`-tower, agreeing with
+the lens-space computation of Ozsváth–Szabó,
+[arXiv:math/0203265](https://arxiv.org/abs/math/0203265). -/
+noncomputable def coefficientEquivOneVertexPlumbingLatticeHomology {w : ℤ} (hw : w < 0)
     (k : (oneVertexPlumbing w).characteristicVectors) :
     PlumbingCoefficient ≃ₗ[PlumbingCoefficient] (oneVertexPlumbing w).latticeHomology k :=
-  PlumbingGraph.latticeHomologyEquivCoefficient _ k (oneVertexPlumbing_isNegativeDefinite hw)
+  let h := oneVertexPlumbing_isNegativeDefinite hw
+  let e := (oneVertexPlumbing w).exists_cycle_latticeAugmentation_eq_one h k
+  PlumbingGraph.coefficientEquivLatticeHomologyOfUnique _ k h e.choose e.choose_spec.1
+    e.choose_spec.2
 
 end TauCeti
