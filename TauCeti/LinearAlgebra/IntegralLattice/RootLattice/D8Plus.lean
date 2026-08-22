@@ -40,9 +40,13 @@ does not need a change of coordinates.
 
 ## References
 
-* J. H. Conway and N. J. A. Sloane, *Sphere Packings, Lattices and Groups*, Chapter 4.
-* W. Ebeling, *Lattices and Codes*, Chapter 1.
+* J. H. Conway and N. J. A. Sloane, *Sphere Packings, Lattices and Groups*, §4.8.1.
+* V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.4,
+  Proposition 1.4.1.
+* W. Ebeling, *Lattices and Codes*, Chapter 3.
 * `TauCetiRoadmap/IntegralLattices/README.md`, Layer 5, the `D₈ ⊂ E₈` glue calculation.
+* `TauCetiRoadmap/IntegralLattices/Suggested.lean` (`d8SpinorSubgroup`,
+  `natCard_d8SpinorSubgroup`, `d8Plus`, `d8Plus_isUnimodular`).
 -/
 
 public section
@@ -62,7 +66,9 @@ noncomputable def d8SpinorSubgroup :
 private theorem addOrderOf_checkerboardSpinorClass_eight :
     addOrderOf (checkerboardSpinorClass 8) = 2 := by
   exact addOrderOf_eq_prime
-    (two_zsmul_checkerboardSpinorClass_of_even 8 even_eight)
+    (by
+      rw [two_nsmul, ← two_zsmul]
+      exact two_zsmul_checkerboardSpinorClass_of_even 8 even_eight)
     (checkerboardSpinorClass_ne_zero 8)
 
 /-- A discriminant class belongs to the spinor glue subgroup exactly when it is zero or the
@@ -73,19 +79,16 @@ theorem mem_d8SpinorSubgroup_iff
   constructor
   · intro hx
     obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
+    have hmul (m : ℤ) : (2 * m : ℤ) • checkerboardSpinorClass 8 = 0 := by
+      rw [mul_comm, mul_zsmul, two_zsmul_checkerboardSpinorClass_of_even 8 even_eight,
+        zsmul_zero]
     obtain hk | hk := Int.even_or_odd k
     · obtain ⟨m, rfl⟩ := hk
       left
-      have hmul : (2 * m : ℤ) • checkerboardSpinorClass 8 = 0 := by
-        rw [mul_comm, mul_zsmul, two_zsmul_checkerboardSpinorClass_of_even 8 even_eight,
-          zsmul_zero]
-      simpa only [two_mul] using hmul
+      simpa only [two_mul] using hmul m
     · obtain ⟨m, rfl⟩ := hk
       right
-      have hmul : (2 * m : ℤ) • checkerboardSpinorClass 8 = 0 := by
-        rw [mul_comm, mul_zsmul, two_zsmul_checkerboardSpinorClass_of_even 8 even_eight,
-          zsmul_zero]
-      rw [add_zsmul, hmul, one_zsmul, zero_add]
+      rw [add_zsmul, hmul m, one_zsmul, zero_add]
   · rintro (rfl | rfl)
     · exact (d8SpinorSubgroup).zero_mem
     · exact AddSubgroup.mem_zmultiples_iff.mpr ⟨1, by rw [one_zsmul]⟩
@@ -188,10 +191,10 @@ theorem index_d8PlusCarrier : IntermediateCarrier.index d8PlusCarrier = 2 := by
 
 /-- The `D₈⁺` lattice has discriminant one. -/
 theorem discriminant_d8PlusLattice : d8PlusLattice.discriminant = 1 := by
-  have h := isEven_d8PlusCarrier.isIntegral.discriminant_mul_index_sq
-  rw [← d8PlusLattice, index_d8PlusCarrier, discriminant_checkerboardLattice] at h
-  norm_num at h ⊢
-  exact h
+  rw [d8PlusLattice,
+    IntermediateCarrier.IsIntegral.discriminant_eq_discriminant_div_index_sq,
+    index_d8PlusCarrier, discriminant_checkerboardLattice]
+  norm_num
 
 /-- **The spinor glue enlargement `D₈⁺` is unimodular.** -/
 theorem isUnimodular_d8PlusLattice : d8PlusLattice.IsUnimodular := by
