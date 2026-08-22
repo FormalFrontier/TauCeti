@@ -311,46 +311,12 @@ theorem diagonalTorusCoordinateMap_baseChange
           (SplitTorus.characterGroup (ULift.{u} (Fin N)))).hom =
       diagonalTorusCoordinateMap (R := K) (N := N) := by
   apply _root_.CommHopfAlgCat.hom_ext
-  apply BialgHom.ext
-  intro x
-  have hAlg :
-      (((coordinateHopfAlgebraBaseChangeIso R K N).inv ≫
-          CommHopfAlgCat.baseChangeMap (diagonalTorusCoordinateMap (R := R) (N := N)) ≫
-          (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
-            (SplitTorus.characterGroup (ULift.{u} (Fin N)))).hom).hom).toAlgHom =
-        (diagonalTorusCoordinateMap (R := K) (N := N)).hom.toAlgHom := by
-    apply coordinateHopfAlgebra_algHom_ext K N
-    intro i j
-    change (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
-        (SplitTorus.characterGroup (ULift.{u} (Fin N)))).hom
-          ((CommHopfAlgCat.baseChangeMap
-            (diagonalTorusCoordinateMap (R := R) (N := N))).hom
-              ((coordinateHopfAlgebraBaseChangeIso R K N).inv
-                (coordinateHopfAlgebraAlgEquiv K N
-                  (coordinateRingMap K N (MvPolynomial.X (i, j)))))) =
-      (diagonalTorusCoordinateMap (R := K) (N := N)).hom
-        (coordinateHopfAlgebraAlgEquiv K N
-          (coordinateRingMap K N (MvPolynomial.X (i, j))))
-    rw [show (coordinateHopfAlgebraBaseChangeIso R K N).inv
-          (coordinateHopfAlgebraAlgEquiv K N
-            (coordinateRingMap K N (MvPolynomial.X (i, j)))) =
-        1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R N
-          (coordinateRingMap R N (MvPolynomial.X (i, j))) by
-      have h := coordinateHopfAlgebraBaseChangeIso_inv_apply R K N
-        (1 : K) (MvPolynomial.X (i, j))
-      have hmap : MvPolynomial.map (algebraMap R K) (MvPolynomial.X (i, j)) =
-          MvPolynomial.X (i, j) := by simp
-      rw [hmap] at h
-      simpa only [one_smul] using h]
-    rw [CommHopfAlgCat.baseChangeMap_apply_tmul, diagonalTorusCoordinateMap_X]
-    change TauCeti.MonoidAlgebra.scalarTensorBialgEquiv R K
-        (1 ⊗ₜ[R] (if i = j then
-          MonoidAlgebra.single
-            (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1)) 1
-        else 0)) = _
-    rw [diagonalTorusCoordinateMap_X]
-    split_ifs <;> simp
-  exact AlgHom.congr_fun hAlg x
+  apply coordinateHopfAlgebra_bialgHom_ext K N
+  intro i j
+  rw [coordinateHopfAlgebraBaseChangeMap_X,
+    DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply,
+    diagonalTorusCoordinateMap_X, diagonalTorusCoordinateMap_X]
+  split_ifs <;> simp
 
 /-- The diagonal torus of `GLₙ`, as a morphism from the rank-`N` split torus group scheme. -/
 noncomputable def diagonalTorus :

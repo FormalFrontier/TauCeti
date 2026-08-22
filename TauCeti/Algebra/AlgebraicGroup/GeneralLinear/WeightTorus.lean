@@ -147,6 +147,16 @@ noncomputable def weightTorusCoordinateMap (wt : Fin N → κ → ℤ) :
     (DiagonalizableGroup.coordinateMap R
       (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom
 
+/-- Applying the weight-torus coordinate map first restricts to the diagonal torus and then
+maps each diagonal character along `weightCharacterMap`. -/
+theorem weightTorusCoordinateMap_apply (wt : Fin N → κ → ℤ)
+    (x : coordinateHopfAlgebra R N) :
+    (weightTorusCoordinateMap (R := R) wt).hom x =
+      MonoidAlgebra.mapDomainBialgHom R (weightCharacterMap wt)
+        ((diagonalTorusCoordinateMap (R := R) (N := N)).hom x) := by
+  rw [weightTorusCoordinateMap]
+  rfl
+
 /-- A generic matrix entry restricts along the weight torus to the prescribed character on the
 diagonal, and to zero off the diagonal. -/
 @[simp]
@@ -158,11 +168,7 @@ theorem weightTorusCoordinateMap_X (wt : Fin N → κ → ℤ) (i j : Fin N) :
         MonoidAlgebra.single
           (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i))) 1
       else 0 := by
-  rw [weightTorusCoordinateMap]
-  change (MonoidAlgebra.mapDomainBialgHom R (weightCharacterMap wt))
-      ((diagonalTorusCoordinateMap (R := R) (N := N)).hom
-        (coordinateHopfAlgebraAlgEquiv R N
-          (coordinateRingMap R N (MvPolynomial.X (i, j))))) = _
+  rw [weightTorusCoordinateMap_apply]
   rw [diagonalTorusCoordinateMap_X]
   split_ifs <;> simp
 
@@ -171,21 +177,9 @@ bialgebra morphism when the base ring and torus index live in the same universe.
 theorem hom_weightTorusCoordinateMap (wt : Fin N → κ → ℤ) :
     (weightTorusCoordinateMap (R := R) wt).hom =
       weightTorusCoordinateBialgHom (S := R) wt := by
-  apply BialgHom.ext
-  intro x
-  have hAlg :
-      (weightTorusCoordinateMap (R := R) wt).hom.toAlgHom =
-        (weightTorusCoordinateBialgHom (S := R) wt).toAlgHom := by
-    apply coordinateHopfAlgebra_algHom_ext R N
-    intro i j
-    change (weightTorusCoordinateMap (R := R) wt).hom
-        (coordinateHopfAlgebraAlgEquiv R N
-          (coordinateRingMap R N (MvPolynomial.X (i, j)))) =
-      weightTorusCoordinateBialgHom (S := R) wt
-        (coordinateHopfAlgebraAlgEquiv R N
-          (coordinateRingMap R N (MvPolynomial.X (i, j))))
-    rw [weightTorusCoordinateMap_X, weightTorusCoordinateBialgHom_X]
-  exact AlgHom.congr_fun hAlg x
+  apply coordinateHopfAlgebra_bialgHom_ext R N
+  intro i j
+  rw [weightTorusCoordinateMap_X, weightTorusCoordinateBialgHom_X]
 
 /-- The group-scheme morphism from a split torus to `GL_N` prescribed by a family of weights.
 It factors through the diagonal torus: the `i`-th diagonal entry is the character `wt i`. -/
@@ -259,46 +253,12 @@ theorem hom_weightTorusBaseChangeCoordinateMap
     (weightTorusBaseChangeCoordinateMap R K wt).hom =
       weightTorusCoordinateBialgHom (S := K) wt := by
   rw [weightTorusBaseChangeCoordinateMap_def]
-  apply BialgHom.ext
-  intro x
-  have hAlg :
-      (((coordinateHopfAlgebraBaseChangeIso R K N).inv ≫
-          CommHopfAlgCat.baseChangeMap (weightTorusCoordinateMap (R := R) wt) ≫
-          (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
-            (SplitTorus.characterGroup κ)).hom).hom).toAlgHom =
-        (weightTorusCoordinateBialgHom (S := K) wt).toAlgHom := by
-    apply coordinateHopfAlgebra_algHom_ext K N
-    intro i j
-    change (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
-        (SplitTorus.characterGroup κ)).hom
-          ((CommHopfAlgCat.baseChangeMap
-            (weightTorusCoordinateMap (R := R) wt)).hom
-              ((coordinateHopfAlgebraBaseChangeIso R K N).inv
-                (coordinateHopfAlgebraAlgEquiv K N
-                  (coordinateRingMap K N (MvPolynomial.X (i, j)))))) =
-      weightTorusCoordinateBialgHom (S := K) wt
-        (coordinateHopfAlgebraAlgEquiv K N
-          (coordinateRingMap K N (MvPolynomial.X (i, j))))
-    rw [show (coordinateHopfAlgebraBaseChangeIso R K N).inv
-          (coordinateHopfAlgebraAlgEquiv K N
-            (coordinateRingMap K N (MvPolynomial.X (i, j)))) =
-        1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R N
-          (coordinateRingMap R N (MvPolynomial.X (i, j))) by
-      have h := coordinateHopfAlgebraBaseChangeIso_inv_apply R K N
-        (1 : K) (MvPolynomial.X (i, j))
-      have hmap : MvPolynomial.map (algebraMap R K) (MvPolynomial.X (i, j)) =
-          MvPolynomial.X (i, j) := by simp
-      rw [hmap] at h
-      simpa only [one_smul] using h]
-    rw [CommHopfAlgCat.baseChangeMap_apply_tmul, weightTorusCoordinateMap_X]
-    change TauCeti.MonoidAlgebra.scalarTensorBialgEquiv R K
-        (1 ⊗ₜ[R] (if i = j then
-          MonoidAlgebra.single
-            (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i))) 1
-        else 0)) = _
-    rw [weightTorusCoordinateBialgHom_X]
-    split_ifs <;> simp
-  exact AlgHom.congr_fun hAlg x
+  apply coordinateHopfAlgebra_bialgHom_ext K N
+  intro i j
+  rw [coordinateHopfAlgebraBaseChangeMap_X,
+    DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply,
+    weightTorusCoordinateMap_X, weightTorusCoordinateBialgHom_X]
+  split_ifs <;> simp
 
 /-- In one universe, base change of the categorical weight-torus coordinate map agrees with the
 categorical map constructed directly over the extension ring. -/

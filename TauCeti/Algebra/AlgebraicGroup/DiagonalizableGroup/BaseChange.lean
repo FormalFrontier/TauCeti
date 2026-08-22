@@ -40,6 +40,8 @@ algebra over `K`") and Layer 4 ("Diagonalizable groups and groups of multiplicat
   base.
 * `TauCeti.DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso`: the same isomorphism read in
   `CommHopfAlgCat`.
+* `TauCeti.DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply`: its forward map is
+  the scalar-tensor bialgebra equivalence.
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_apply_coe`: the equivalence reads a
   point by evaluating it on `1 ⊗ single g 1`.
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_mapDomain_scalarTensorBialgEquiv`:
@@ -101,6 +103,16 @@ noncomputable abbrev baseChangeCoordinateHopfAlgebraIso
     CommHopfAlgCat.baseChange (K := K) (coordinateRing k G).obj ≅
       (coordinateRing K G).obj :=
   (ObjectProperty.ι _).mapIso (baseChangeCoordinateRingIso k K G)
+
+/-- The forward map of the categorical coordinate-ring base-change isomorphism is the
+scalar-tensor bialgebra equivalence. -/
+@[simp]
+theorem baseChangeCoordinateHopfAlgebraIso_hom_apply
+    (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
+    (G : FGCommGrpCat.{u}) (x : K ⊗[k] MonoidAlgebra k G) :
+    (baseChangeCoordinateHopfAlgebraIso k K G).hom.hom x =
+      TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K x :=
+  rfl
 
 /-- The `A`-points of the base change `K ⊗[k] k[G]` of the diagonalizable group `D(G)` are
 the character group `G →* Aˣ`.
