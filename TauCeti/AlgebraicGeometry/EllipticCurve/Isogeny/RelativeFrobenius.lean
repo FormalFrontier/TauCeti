@@ -80,7 +80,14 @@ AEC II.2.12, and Verschiebung remain.
 
 ## References
 
-* [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2.
+* [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], II.2.11, whose N.B. is the
+  reason this file exists: over an imperfect `F`, parts (b) and (c) (pure inseparability and
+  degree `p`) survive unchanged, but part (a), the identification `φ* F(W⁽ᵖ⁾) = F(W)ᵖ`, does not.
+  Accordingly only the containment `F(W)ᵖ ⊆ φ* F(W⁽ᵖ⁾)` is proved here, as
+  `TauCeti.Isogeny.pow_mem_fieldRange_relativeFrobeniusIsogeny`, which is all pure
+  inseparability needs. Over a finite, hence perfect, base there is no gap, and
+  `Isogeny/Frobenius.lean` identifies the pullback with the `q`-power map outright
+  (`fieldPullback_frobeniusIsogeny`).
 
 ## Provenance
 
