@@ -102,7 +102,8 @@ private theorem π_comp_zeroIso_hom (X : TopRep R G) :
 
 /-- **The evaluation formula for `zeroIso`.** A homogeneous `0`-cochain of `X` is a `G`-invariant
 element of `C(G, X)`; `zeroIso` sends the class of a `0`-cocycle to its value at `1`. Every
-statement below is this formula together with `φ 1 = 1`. -/
+compatible-pair square below, including its coefficient, restriction, and inflation
+specializations, follows from this formula together with `φ 1 = 1`. -/
 theorem coe_zeroIso_hom_π (X : TopRep R G) (σ : cocycles X 0) :
     (((zeroIso X).hom (π X 0 σ)) : X.V) = ((homogeneousCochains X).iCycles 0 σ).1 1 := by
   have h := congr($(π_comp_zeroIso_hom X) σ)
@@ -237,85 +238,28 @@ end Class
 
 section Edge
 
-omit [TopologicalSpace G] [IsTopologicalGroup G] in
-/-- Restriction is injective on invariants: an element fixed by all of `G` is determined by the
-element of `X^S` it becomes. -/
-theorem injective_invariantsResMap_subtype (S : Subgroup G) (X : TopRep R G) :
-    Function.Injective (TopRep.invariantsResMap (S.subtype : S →* G)
-      (𝟙 (TopRep.res (S.subtype : S →* G) X))) := by
-  intro a b hab
-  ext
-  exact congrArg
-    (fun w : (TopRep.res (S.subtype : S →* G) X).ρ.invariants ↦ (w : X.V)) hab
-
 /-- **Restriction is a monomorphism in degree zero.** This is the degree-zero left edge of the
 inflation-restriction sequence: `X^G ⊆ X^S`. -/
 theorem mono_res_zero (S : Subgroup G) (X : TopRep R G) :
     Mono (TauCeti.ContinuousCohomology.res S X 0) := by
+  have hinjective : Function.Injective (TopRep.invariantsResMap (S.subtype : S →* G)
+      (𝟙 (TopRep.res (S.subtype : S →* G) X))) := by
+    intro a b hab
+    ext
+    exact congrArg
+      (fun w : (TopRep.res (S.subtype : S →* G) X).ρ.invariants ↦ (w : X.V)) hab
   have : Mono (TopRep.invariantsResMap (S.subtype : S →* G)
       (𝟙 (TopRep.res (S.subtype : S →* G) X))) :=
-    ConcreteCategory.mono_of_injective _ (injective_invariantsResMap_subtype S X)
+    ConcreteCategory.mono_of_injective _ hinjective
   exact mono_of_mono_fac (res_comp_zeroIso_hom S X)
 
 variable (N : Subgroup G) [N.Normal] (X : TopRep R G)
-
-/-- A `G`-invariant vector is `N`-invariant, and the element of `X^N` it becomes is invariant under
-the induced `G ⧸ N`-action. This is the inverse of the degree-zero inflation, read on
-invariants. -/
-noncomputable def invariantsToQuotientToInvariants :
-    TopRep.invariants X ⟶ TopRep.invariants (TopRep.quotientToInvariants X N) :=
-  TopModuleCat.ofHom
-    ((X.ρ.invariants.subtypeL.codRestrict (X.ρ.restrict N.subtype).invariants
-        fun v ↦ ContRepresentation.invariants_le_invariants_restrict X.ρ N.subtype v.2).codRestrict
-      (ContRepresentation.quotientToInvariants X.ρ N).invariants fun v g ↦ by
-        induction g using QuotientGroup.induction_on with
-        | H g =>
-          refine Subtype.ext ?_
-          rw [ContRepresentation.coe_quotientToInvariants_mk_apply]
-          exact v.2 g)
-
--- The two nested `codRestrict`s in `invariantsToQuotientToInvariants` change only the proofs of
--- membership in the nested invariant submodules, not the underlying vector.
-omit [TopologicalSpace G] [IsTopologicalGroup G] in
-private theorem coe_invariantsToQuotientToInvariants_apply (v : X.ρ.invariants) :
-    (((invariantsToQuotientToInvariants N X) v :
-      (X.ρ.restrict N.subtype).invariants) : X.V) = (v : X.V) := by
-  rfl
-
--- Likewise, `invariantsResMap` applied to the inclusion of `N`-invariants retains the vector and
--- only repackages its invariance proof.
-omit [TopologicalSpace G] [IsTopologicalGroup G] in
-private theorem coe_invariantsResMap_quotientToInvariantsι_apply
-    (v : (ContRepresentation.quotientToInvariants X.ρ N).invariants) :
-    ((TopRep.invariantsResMap (QuotientGroup.mk' N : G →* G ⧸ N)
-        (TopRep.quotientToInvariantsι X N) v : X.ρ.invariants) : X.V) =
-      ((v : (X.ρ.restrict N.subtype).invariants) : X.V) := by
-  rfl
-
-omit [TopologicalSpace G] [IsTopologicalGroup G] in
-/-- **`(X^N)^{G/N}` is canonically isomorphic to `X^G`.** The explicit mutually inverse maps
-preserve the underlying vector. -/
-theorem isIso_invariantsResMap_quotientToInvariantsι :
-    IsIso (TopRep.invariantsResMap (QuotientGroup.mk' N : G →* G ⧸ N)
-      (TopRep.quotientToInvariantsι X N)) :=
-  ⟨invariantsToQuotientToInvariants N X,
-    by
-      ext v
-      exact (coe_invariantsResMap_quotientToInvariantsι_apply N X v).trans
-        (coe_invariantsToQuotientToInvariants_apply N X
-          (TopRep.invariantsResMap (QuotientGroup.mk' N : G →* G ⧸ N)
-            (TopRep.quotientToInvariantsι X N) v)),
-    by
-      ext v
-      exact (coe_invariantsToQuotientToInvariants_apply N X v).trans
-        (coe_invariantsResMap_quotientToInvariantsι_apply N X
-          ((invariantsToQuotientToInvariants N X) v))⟩
 
 /-- **Inflation is an isomorphism in degree zero**: `H⁰(G ⧸ N, X^N)`, `(X^N)^{G/N}`, and
 `X^G` are canonically isomorphic, with the coefficient comparison preserving the underlying
 vector. This is the degree-zero edge of the inflation-restriction sequence. -/
 theorem isIso_infl_zero : IsIso (TauCeti.ContinuousCohomology.infl N X 0) := by
-  have := isIso_invariantsResMap_quotientToInvariantsι N X
+  have := TopRep.isIso_invariantsResMap_quotientToInvariantsι X N
   exact IsIso.of_isIso_fac_right (infl_comp_zeroIso_hom N X)
 
 end Edge

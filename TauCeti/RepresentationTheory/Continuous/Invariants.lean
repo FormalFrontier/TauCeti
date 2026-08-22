@@ -41,6 +41,8 @@ homomorphism `G → G ⧸ S` together with the inclusion `Xˢ ↪ X`.
   `ContRepresentation.invariants_restrict_top`: the two degenerate subgroups.
 * `TopRep.quotientToInvariantsMap_comp_quotientToInvariantsι`: naturality of the inclusion of the
   invariants.
+* `TopRep.isIso_invariantsResMap_quotientToInvariantsι`: taking quotient invariants and then
+  invariants under the quotient recovers the original invariants.
 
 These declarations live in the root `ContRepresentation` and `TopRep` namespaces, rather than
 under `TauCeti`, so that dot notation on the Mathlib types they extend elaborates.
@@ -196,6 +198,54 @@ theorem quotientToInvariantsMap_comp_quotientToInvariantsι {X Y : TopRep R G} (
         quotientToInvariantsι Y S = quotientToInvariantsι X S ≫ f := by
   ext v
   rfl
+
+/-- A `G`-invariant vector is `S`-invariant, and the element of `X^S` it becomes is invariant under
+the induced `G ⧸ S`-action. -/
+private noncomputable def invariantsToQuotientToInvariants :
+    invariants X ⟶ invariants (quotientToInvariants X S) :=
+  TopModuleCat.ofHom
+    ((X.ρ.invariants.subtypeL.codRestrict (X.ρ.restrict S.subtype).invariants
+        fun v ↦ invariants_le_invariants_restrict X.ρ S.subtype v.2).codRestrict
+      (ContRepresentation.quotientToInvariants X.ρ S).invariants fun v g ↦ by
+        induction g using QuotientGroup.induction_on with
+        | H g =>
+          refine Subtype.ext ?_
+          rw [coe_quotientToInvariants_mk_apply]
+          exact v.2 g)
+
+-- The two nested `codRestrict`s above change only the proofs of membership in the nested invariant
+-- submodules, not the underlying vector.
+private theorem coe_invariantsToQuotientToInvariants_apply (v : X.ρ.invariants) :
+    (((invariantsToQuotientToInvariants X S) v :
+      (X.ρ.restrict S.subtype).invariants) : X.V) = (v : X.V) := by
+  rfl
+
+-- Likewise, `invariantsResMap` applied to the inclusion of `S`-invariants retains the vector and
+-- only repackages its invariance proof.
+private theorem coe_invariantsResMap_quotientToInvariantsι_apply
+    (v : (ContRepresentation.quotientToInvariants X.ρ S).invariants) :
+    ((invariantsResMap (QuotientGroup.mk' S : G →* G ⧸ S)
+        (quotientToInvariantsι X S) v : X.ρ.invariants) : X.V) =
+      ((v : (X.ρ.restrict S.subtype).invariants) : X.V) := by
+  rfl
+
+/-- **`(X^S)^{G/S}` is canonically isomorphic to `X^G`.** The map induced on invariants by the
+inclusion `X^S ⟶ X` is an isomorphism, with inverse preserving the underlying vector. -/
+theorem isIso_invariantsResMap_quotientToInvariantsι :
+    IsIso (invariantsResMap (QuotientGroup.mk' S : G →* G ⧸ S)
+      (quotientToInvariantsι X S)) :=
+  ⟨invariantsToQuotientToInvariants X S,
+    by
+      ext v
+      exact (coe_invariantsResMap_quotientToInvariantsι_apply X S v).trans
+        (coe_invariantsToQuotientToInvariants_apply X S
+          (invariantsResMap (QuotientGroup.mk' S : G →* G ⧸ S)
+            (quotientToInvariantsι X S) v)),
+    by
+      ext v
+      exact (coe_invariantsToQuotientToInvariants_apply X S v).trans
+        (coe_invariantsResMap_quotientToInvariantsι_apply X S
+          ((invariantsToQuotientToInvariants X S) v))⟩
 
 -- Exposed: the generated `@[simps]` field lemmas are `rfl`-proofs about this body.
 variable (R G) in
