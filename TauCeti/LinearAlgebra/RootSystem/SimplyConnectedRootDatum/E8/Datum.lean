@@ -61,7 +61,7 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 4--6*, Plate VII, and Humphreys, *Introduction to Lie Algebras and Representation Theory*, section
 12.1. This is the `E₈` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. Its assembly follows
-`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6`.
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Basic`.
 -/
 
 namespace TauCeti

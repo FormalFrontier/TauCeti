@@ -337,10 +337,68 @@ modulo `36` is used, a positive root and its negative reflecting alike. -/
 private def e6ReflectionIndex (i j : Fin 72) : Fin 72 :=
   e6ReflectionTable ⟨(i : ℕ) % 36, Nat.mod_lt _ (by omega)⟩ j
 
+/-- The coroot reflection identity for a positive-root index and an arbitrary root index. -/
+private abbrev e6ReflectionIndexCorootProp (i : Fin 36) (j : Fin 72) : Prop :=
+  e6Coroot j - (e6Root (e6PositiveIndex i) ⬝ᵥ e6Coroot j) • e6Coroot (e6PositiveIndex i) =
+    e6Coroot (e6ReflectionIndex (e6PositiveIndex i) j)
+
+private lemma e6ReflectionIndex_coroot_pos_zero (i : Fin 6) (j : Fin 72) :
+    e6ReflectionIndexCorootProp ⟨i, by omega⟩ j := by
+  fin_cases i <;> decide +kernel +revert
+
+private lemma e6ReflectionIndex_coroot_pos_six (i : Fin 6) (j : Fin 72) :
+    e6ReflectionIndexCorootProp ⟨i + 6, by omega⟩ j := by
+  fin_cases i <;> decide +kernel +revert
+
+private lemma e6ReflectionIndex_coroot_pos_twelve (i : Fin 6) (j : Fin 72) :
+    e6ReflectionIndexCorootProp ⟨i + 12, by omega⟩ j := by
+  fin_cases i <;> decide +kernel +revert
+
+private lemma e6ReflectionIndex_coroot_pos_eighteen (i : Fin 6) (j : Fin 72) :
+    e6ReflectionIndexCorootProp ⟨i + 18, by omega⟩ j := by
+  fin_cases i <;> decide +kernel +revert
+
+private lemma e6ReflectionIndex_coroot_pos_twenty_four (i : Fin 6) (j : Fin 72) :
+    e6ReflectionIndexCorootProp ⟨i + 24, by omega⟩ j := by
+  fin_cases i <;> decide +kernel +revert
+
+private lemma e6ReflectionIndex_coroot_pos_thirty (i : Fin 6) (j : Fin 72) :
+    e6ReflectionIndexCorootProp ⟨i + 30, by omega⟩ j := by
+  fin_cases i <;> decide +kernel +revert
+
 private lemma e6ReflectionIndex_coroot_pos (i : Fin 36) (j : Fin 72) :
     e6Coroot j - (e6Root (e6PositiveIndex i) ⬝ᵥ e6Coroot j) • e6Coroot (e6PositiveIndex i) =
       e6Coroot (e6ReflectionIndex (e6PositiveIndex i) j) := by
-  decide +kernel +revert
+  change e6ReflectionIndexCorootProp i j
+  rcases lt_or_ge (i : ℕ) 6 with hi | hi
+  · let a : Fin 6 := ⟨i, hi⟩
+    have hia : i = (⟨a, by omega⟩ : Fin 36) := Fin.ext rfl
+    rw [hia]
+    exact e6ReflectionIndex_coroot_pos_zero a j
+  rcases lt_or_ge (i : ℕ) 12 with hi' | hi'
+  · let a : Fin 6 := ⟨(i : ℕ) - 6, by omega⟩
+    have hia : i = (⟨a + 6, by omega⟩ : Fin 36) := Fin.ext (by simp [a]; omega)
+    rw [hia]
+    exact e6ReflectionIndex_coroot_pos_six a j
+  rcases lt_or_ge (i : ℕ) 18 with hi'' | hi''
+  · let a : Fin 6 := ⟨(i : ℕ) - 12, by omega⟩
+    have hia : i = (⟨a + 12, by omega⟩ : Fin 36) := Fin.ext (by simp [a]; omega)
+    rw [hia]
+    exact e6ReflectionIndex_coroot_pos_twelve a j
+  rcases lt_or_ge (i : ℕ) 24 with hi''' | hi'''
+  · let a : Fin 6 := ⟨(i : ℕ) - 18, by omega⟩
+    have hia : i = (⟨a + 18, by omega⟩ : Fin 36) := Fin.ext (by simp [a]; omega)
+    rw [hia]
+    exact e6ReflectionIndex_coroot_pos_eighteen a j
+  rcases lt_or_ge (i : ℕ) 30 with hi'''' | hi''''
+  · let a : Fin 6 := ⟨(i : ℕ) - 24, by omega⟩
+    have hia : i = (⟨a + 24, by omega⟩ : Fin 36) := Fin.ext (by simp [a]; omega)
+    rw [hia]
+    exact e6ReflectionIndex_coroot_pos_twenty_four a j
+  · let a : Fin 6 := ⟨(i : ℕ) - 30, by omega⟩
+    have hia : i = (⟨a + 30, by omega⟩ : Fin 36) := Fin.ext (by simp [a]; omega)
+    rw [hia]
+    exact e6ReflectionIndex_coroot_pos_thirty a j
 
 private lemma e6ReflectionIndex_e6NegativeIndex (i : Fin 36) (j : Fin 72) :
     e6ReflectionIndex (e6NegativeIndex i) j = e6ReflectionIndex (e6PositiveIndex i) j := by
@@ -521,6 +579,7 @@ theorem pairing_e6SimpleIndex (i j : Fin 6) :
   rw [e6SimplyConnectedRootDatum_pairing, root_e6SimpleIndex, coroot_e6SimpleIndex,
     dotProduct_single, mul_one]
 
+/-- Identify the support of the type-`E₆` base with its six Bourbaki-numbered nodes. -/
 private def e6BaseEquiv : e6SimplyConnectedBase.support ≃ Fin 6 where
   toFun x := ⟨(x : Fin 72), mem_e6SimpleSupport.mp x.2⟩
   invFun i := ⟨e6SimpleIndex i, mem_e6SimpleSupport.mpr (by simp)⟩
