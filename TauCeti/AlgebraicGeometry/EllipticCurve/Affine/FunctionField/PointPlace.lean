@@ -70,9 +70,7 @@ namespace Place
 variable {F : Type*} [Field F]
 variable (W : _root_.WeierstrassCurve.Affine F)
 
-/-- The normalized place at infinity of an affine Weierstrass curve.  The value
-`WithZero.exp (-1)` of `x / y` proves that the valuation is onto `ℤᵐ⁰`.
--/
+/-- The normalized place induced by `W.infinityPlace`, with value group `ℤᵐ⁰`. -/
 noncomputable def infinity : Place F W.FunctionField where
   valuation := W.infinityPlace
   valuation_surjective := by
@@ -343,10 +341,6 @@ noncomputable def pointEquivDegreeOnePlace :
 @[simp]
 theorem coe_pointEquivDegreeOnePlace_zero :
     (pointEquivDegreeOnePlace W .zero).1 = Place.infinity W := by
-  -- Expose the `WithZero` term produced by the two composed equivalences.
-  change (Place.degreeOneAffineOrInfinityEquiv W (0 : WithZero
-    { 𝔭 : HeightOneSpectrum W.CoordinateRing //
-      Module.finrank F (W.CoordinateRing ⧸ 𝔭.asIdeal) = 1 })).1 = Place.infinity W
   exact Place.coe_degreeOneAffineOrInfinityEquiv_none W
 
 /-- The point--place dictionary sends `(x, y)` to the normalized place of its maximal ideal. -/
@@ -354,13 +348,9 @@ theorem coe_pointEquivDegreeOnePlace_zero :
 theorem coe_pointEquivDegreeOnePlace_mk {x y : F} (h : W.Equation x y) :
     (pointEquivDegreeOnePlace W (.mk h)).1 =
       Place.ofPrime F W.FunctionField (CoordinateRing.pointPlace h) := by
-  -- Expose the degree-one prime produced by the two composed equivalences.
-  change (Place.degreeOneAffineOrInfinityEquiv W
-    ((CoordinateRing.equationEquivDegreeOnePlace W ⟨(x, y), h⟩ :
-      { 𝔭 : HeightOneSpectrum W.CoordinateRing //
-        Module.finrank F (W.CoordinateRing ⧸ 𝔭.asIdeal) = 1 }) : WithZero _)).1 = _
-  rw [Place.coe_degreeOneAffineOrInfinityEquiv_some,
-    CoordinateRing.equationEquivDegreeOnePlace_apply_coe]
+  rw [← CoordinateRing.equationEquivDegreeOnePlace_apply_coe ⟨(x, y), h⟩]
+  exact Place.coe_degreeOneAffineOrInfinityEquiv_some W
+    (CoordinateRing.equationEquivDegreeOnePlace W ⟨(x, y), h⟩)
 
 /-- Reading the place at infinity backwards through the dictionary recovers the point at
 infinity. -/
