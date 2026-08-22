@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Geometry.Hodge.Dimension
 public import TauCeti.Geometry.Hodge.Tate
 
 /-!
@@ -38,7 +37,6 @@ of period-domain points is out of scope; it needs flag-variety topology.
 * `TauCeti.Hodge.PeriodDomain.Point`: a point of the period domain of `(V, Qint)` at a fixed type.
 * `TauCeti.Hodge.PeriodDomain.Point.finsum_h_eq_finrank`: **the Hodge numbers partition the
   dimension.**
-* `TauCeti.Hodge.tateHodgeType`: the Hodge type of the Tate structure `ℤ(m)`.
 * `TauCeti.Hodge.tatePoint`: the Tate structure `ℤ(m)` as a point of its period domain.
 
 The signature of `PeriodDomain.Point` is adapted from the roadmap's formal companion
@@ -80,6 +78,8 @@ structure PeriodDomain.Point [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : I
   pol : IsPolarization hℂ hs Qint
   /-- The structure realizes the prescribed Hodge numbers. -/
   hodge_numbers : ∀ p : ℤ, hs.hodgeNumber p = htype.h p
+
+attribute [simp] PeriodDomain.Point.hodge_numbers
 
 namespace PeriodDomain.Point
 
@@ -126,47 +126,15 @@ end PeriodDomain.Point
 
 /-! ### The Tate structure as a period-domain point -/
 
-/-- The Hodge type of the Tate structure `ℤ(m)`: weight `-2m`, with `h^{-m,-m} = 1` and every
-other Hodge number zero. -/
-def tateHodgeType (m : ℤ) : HodgeType where
-  weight := -2 * m
-  h p := if p = -m then 1 else 0
-  finite_support := (Set.finite_singleton (-m)).subset fun p hp ↦ by simpa using hp
-  symm p := by
-    have hiff : (-2 * m - p = -m) ↔ (p = -m) := by omega
-    simp only [hiff]
-
-@[simp]
-theorem tateHodgeType_weight (m : ℤ) : (tateHodgeType m).weight = -2 * m :=
-  (rfl)
-
-@[simp]
-theorem tateHodgeType_h (m p : ℤ) : (tateHodgeType m).h p = if p = -m then 1 else 0 :=
-  (rfl)
-
-/-- The Hodge numbers of the Tate structure `ℤ(m)`: one in bidegree `(-m,-m)`, zero elsewhere. -/
-@[simp]
-theorem tate_hodgeNumber (m p : ℤ) : (tate m).hodgeNumber p = if p = -m then 1 else 0 := by
-  rw [HodgeStructureOn.hodgeNumber_def, finrank_tate_piece]
-
 /-- The Tate structure `ℤ(m)`, polarized by multiplication of integers, as a point of the period
 domain of the rank-one lattice at its own Hodge type. -/
 noncomputable def tatePoint (m : ℤ) :
     PeriodDomain.Point isBaseChange_tateLatticeMap (-2 * m) (LinearMap.mul ℤ ℤ)
       (tateHodgeType m) where
   hs := tate m
-  htype_weight := (rfl)
+  htype_weight := tateHodgeType_weight m
   pol := isPolarization_tate m
   hodge_numbers p := by
     rw [tate_hodgeNumber, tateHodgeType_h]
-
-/-- The Hodge type of the Tate structure `ℤ(m)` is the prescribed one. -/
-@[simp]
-theorem tate_hodgeType (m : ℤ) : (tate m).hodgeType = tateHodgeType m :=
-  (tatePoint m).hodgeType_eq
-
-/-- The single Hodge number of `ℤ(m)` accounts for the whole rank-one lattice. -/
-theorem finsum_tateHodgeType_h_eq_one (m : ℤ) : ∑ᶠ p, (tateHodgeType m).h p = 1 := by
-  rw [(tatePoint m).finsum_h_eq_finrank_lattice, Module.finrank_self]
 
 end TauCeti.Hodge
