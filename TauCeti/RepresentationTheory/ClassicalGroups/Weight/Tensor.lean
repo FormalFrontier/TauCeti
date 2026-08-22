@@ -182,8 +182,8 @@ private theorem mem_weightSpace_iff_of_detPow_smul {V : Type*} [AddCommGroup V] 
     x ∈ weightSpace τ l ↔ e x ∈ weightSpace ρ (l - fun _ ↦ m) := by
   rw [mem_weightSpace_iff, mem_weightSpace_iff]
   refine forall_congr' fun t ↦ ?_
-  rw [← e.injective.eq_iff, he, map_smul, det_diagGL, weightChar_eq_prod_zpow_mul m l t,
-    Units.val_mul, mul_smul]
+  rw [← e.injective.eq_iff]
+  simp only [he, map_smul, det_diagGL, weightChar_eq_prod_zpow_mul m l t, Units.val_mul, mul_smul]
   exact (Units.isUnit _).smul_left_cancel
 
 /-- The identification `W ⊗[k] k ≃ₗ[k] W` carries the action of `ρ ⊗ det ^ m` to the action of `ρ`
