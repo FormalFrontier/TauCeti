@@ -224,11 +224,12 @@ theorem successorProcess_apply (X : ℕ → Ω → α) (p : α × ℕ) (ω : Ω)
     successorProcess X p ω = successorArray (fun n => X n ω) p.1 p.2 :=
   (rfl)
 
-/-- Every entry of the successor array of a measurable process is measurable. -/
-theorem measurable_successorProcess {X : ℕ → Ω → α}
-    (hX : ∀ i, Measurable (X i)) (p : α × ℕ) : Measurable (successorProcess X p) :=
-  (measurable_successorArray_apply p.1 p.2 (measurableSet_singleton p.1)).comp
-    (measurable_pi_lambda _ hX)
+/-- Every entry of the successor array of an almost everywhere measurable process is almost
+everywhere measurable. -/
+theorem aemeasurable_successorProcess {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX : ∀ i, AEMeasurable (X i) μ) (p : α × ℕ) : AEMeasurable (successorProcess X p) μ :=
+  (measurable_successorArray_apply p.1 p.2 (measurableSet_singleton p.1)).comp_aemeasurable
+    (aemeasurable_pi_lambda _ hX)
 
 end SuccessorProcess
 

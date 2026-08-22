@@ -89,19 +89,18 @@ cells, where the conditional independence of distinct cells turns its mass into 
 product of one-step transition probabilities. -/
 theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
     [MeasurableSingletonClass α] [IsProbabilityMeasure μ]
-    (hX : ∀ i, Measurable (X i)) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀)
+    (hX : ∀ i, AEMeasurable (X i) μ) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀)
     (hrow : RowExchangeable μ (successorProcess X))
     (hlam : MixedIIDWith μ (arrayColumn (successorProcess X)) lam) :
     MixedMarkovChainWith μ X (fun _ => diracProba a₀) fun ω a =>
       (lam ω).map (measurable_pi_apply a).aemeasurable := by
   classical
-  have hSA : ∀ p, AEMeasurable (successorProcess X p) μ := fun p =>
-    (measurable_successorProcess hX p).aemeasurable
+  have hSA : ∀ p, AEMeasurable (successorProcess X p) μ := aemeasurable_successorProcess hX
   -- Taking the `a`-th row marginal is measurable in the Giry structure.
   have hmarg : ∀ a : α, Measurable fun P : ProbabilityMeasure (α → α) =>
       P.map (measurable_pi_apply a).aemeasurable := fun a =>
     ((Measure.measurable_map _ (measurable_pi_apply a)).comp measurable_subtype_coe).subtype_mk
-  refine MixedMarkovChainWith.intro (fun i => (hX i).aemeasurable) measurable_const
+  refine MixedMarkovChainWith.intro hX measurable_const
     (fun a => (hmarg a).comp hlam.measurable_mixingRepresentative) ?_
   intro n w
   -- Extend the finite path to a reference sequence, so the combinatorial lemmas apply.
@@ -118,7 +117,7 @@ theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
   -- The finite path event, read on the reference sequence.
   have hpref : prefixLaw μ X (n + 1) {w} = μ {ω | ∀ j ≤ n, X j ω = w' j} := by
     rw [prefixLaw_def, blockLaw_apply_of_measurable μ X (fun i : Fin (n + 1) => i.val)
-      (fun i => (hX i.val).aemeasurable) (measurableSet_singleton w)]
+      (fun i => hX i.val) (measurableSet_singleton w)]
     congr 1
     ext ω
     simp only [Set.mem_preimage, Set.mem_singleton_iff, Set.mem_ofPred_eq, funext_iff]
@@ -179,12 +178,11 @@ that starts almost surely at a fixed state and whose successor array is row exch
 mixture of Markov chains. -/
 theorem mixedMarkovChain_of_rowExchangeable_successorProcess [Countable α]
     [MeasurableSingletonClass α] [IsProbabilityMeasure μ]
-    (hX : ∀ i, Measurable (X i)) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀)
+    (hX : ∀ i, AEMeasurable (X i) μ) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀)
     (hrow : RowExchangeable μ (successorProcess X)) :
     MixedMarkovChain μ X := by
   have : Nonempty α := ⟨a₀⟩
-  have hSA : ∀ p, AEMeasurable (successorProcess X p) μ := fun p =>
-    (measurable_successorProcess hX p).aemeasurable
+  have hSA : ∀ p, AEMeasurable (successorProcess X p) μ := aemeasurable_successorProcess hX
   obtain ⟨lam, hlam, -⟩ := hrow.exists_directing_pi_eq_prod hSA
   exact MixedMarkovChain.of_witnesses
     (mixedMarkovChainWith_of_rowExchangeable_successorProcess hX h0 hrow

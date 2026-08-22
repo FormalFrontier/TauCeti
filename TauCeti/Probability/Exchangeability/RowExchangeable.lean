@@ -676,11 +676,10 @@ theorem RowExchangeable.measure_setOf_forall_mem_eq_lintegral_prod [IsFiniteMeas
           have hgt : g t = j := (Finset.mem_filter.1 ht).2
           rw [← hgt, htarget_eq t]
         · intro s hs t ht hst
-          refine hd (Prod.ext hst ?_)
-          -- Normalize the coerced `Fin m` values to the fibres containing `s` and `t`.
-          change g s = g t
-          rw [(Finset.mem_filter.1 (Finset.mem_coe.1 hs)).2,
-            (Finset.mem_filter.1 (Finset.mem_coe.1 ht)).2]
+          -- Both cells sit in the fibre over `j`, so their column indices agree.
+          have hgs : g s = j := (Finset.mem_filter.1 (Finset.mem_coe.1 hs)).2
+          have hgt : g t = j := (Finset.mem_filter.1 (Finset.mem_coe.1 ht)).2
+          exact hd (Prod.ext hst (hgs.trans hgt.symm))
     _ = ∏ t : Fin r, (lam ω : Measure (ι → α)) {v : ι → α | v (c t).1 ∈ B t} :=
         Finset.prod_fiberwise Finset.univ g _
 
