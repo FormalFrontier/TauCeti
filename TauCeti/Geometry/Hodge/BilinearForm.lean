@@ -10,15 +10,17 @@ public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import Mathlib.RingTheory.TensorProduct.Free
 import Mathlib.Algebra.Algebra.Rat
 import Mathlib.RingTheory.Localization.BaseChange
-public import TauCeti.Geometry.Hodge.Conjugation
+public import TauCeti.Geometry.Hodge.BaseChange
 
 /-!
-# Complexification of an integral bilinear form
+# Scalar extension of an integral bilinear form
 
 An integral bilinear form on a lattice extends uniquely to a complex bilinear form on any
 abstract complexification of that lattice. This file constructs that extension,
 `TauCeti.Hodge.integralFormToComplex`, from Mathlib's base change of a bilinear form along the
-canonical tensor model, and characterizes it by its values on integral vectors.
+canonical tensor model, and characterizes it by its values on integral vectors. The same
+construction along an abstract rationalification gives `TauCeti.Hodge.integralFormToRational`,
+and the two agree on the purely rational vectors of the complexification.
 
 Two properties make the extension usable in Hodge theory. It is *real*: conjugating both arguments
 conjugates the value, because lattice-induced conjugation fixes the integral vectors. And it is
@@ -33,6 +35,9 @@ nondegenerate as soon as the integral form is: nondegeneracy is preserved first 
 * `TauCeti.Hodge.integralFormToComplex_conj`: it commutes with lattice-induced conjugation.
 * `TauCeti.Hodge.integralFormToComplex_nondegenerate`: it inherits nondegeneracy from the integral
   form.
+* `TauCeti.Hodge.integralFormToRational`: the rational bilinear form extending an integral one.
+* `TauCeti.Hodge.integralFormToComplex_rationalToComplexLinearEquiv_one_tmul`: the complexified
+  form computes the rational one on purely rational vectors.
 -/
 
 public section
@@ -207,5 +212,62 @@ theorem integralFormToComplex_nondegenerate (hℂ : IsBaseChange ℂ ιℂ)
   rw [hform]
   exact LinearMap.BilinForm.Nondegenerate.congr hℂ.equiv
     (integralFormToCanonicalComplex_nondegenerate hQ)
+
+/-! ### Extension of scalars to the rationals -/
+
+section Rational
+
+variable {Vℚ : Type*} [AddCommGroup Vℚ] [Module ℚ Vℚ] {ιℚ : V →ₗ[ℤ] Vℚ}
+
+/-- The rationalification of an integral bilinear form, transported from Mathlib's base change
+along the canonical tensor model to an abstract rationalification. -/
+noncomputable def integralFormToRational (hℚ : IsBaseChange ℚ ιℚ)
+    (Q : LinearMap.BilinForm ℤ V) : LinearMap.BilinForm ℚ Vℚ :=
+  (Q.baseChange ℚ).compl₁₂ hℚ.equiv.symm.toLinearMap hℚ.equiv.symm.toLinearMap
+
+/-- On integral vectors the rationalified form is the integral form. -/
+@[simp]
+theorem integralFormToRational_ι (hℚ : IsBaseChange ℚ ιℚ) (Q : LinearMap.BilinForm ℤ V)
+    (x y : V) : integralFormToRational hℚ Q (ιℚ x) (ιℚ y) = (Q x y : ℚ) := by
+  simp [integralFormToRational, hℚ.equiv_symm_apply]
+
+/-- The rationalified form is the unique rational bilinear form restricting to the integral
+one. -/
+theorem integralFormToRational_unique (hℚ : IsBaseChange ℚ ιℚ) (Q : LinearMap.BilinForm ℤ V)
+    (B : LinearMap.BilinForm ℚ Vℚ) (hB : ∀ x y : V, B (ιℚ x) (ιℚ y) = (Q x y : ℚ)) :
+    B = integralFormToRational hℚ Q := by
+  refine hℚ.algHom_ext _ _ fun x ↦ hℚ.algHom_ext _ _ fun y ↦ ?_
+  simp [hB x y]
+
+/-- On an integral vector and a purely rational vector the complexified form takes the value of
+the rationalified form. -/
+private theorem integralFormToComplex_rationalToComplexLinearEquiv_ι (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V) (v : V) (y : Vℚ) :
+    integralFormToComplex hℂ Q (ιℂ v) (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y)) =
+      ((integralFormToRational hℚ Q (ιℚ v) y : ℚ) : ℂ) := by
+  induction y using hℚ.inductionOn with
+  | zero => simp
+  | tmul w => simp
+  | smul q y hy =>
+      simp [TensorProduct.tmul_smul, rationalToComplexLinearEquiv_rat_smul, hy]
+  | add y₁ y₂ h₁ h₂ =>
+      simp [TensorProduct.tmul_add, h₁, h₂]
+
+/-- The two scalar extensions of an integral form agree: on purely rational vectors of the
+complexification, the complexified form takes the values of the rationalified form. -/
+theorem integralFormToComplex_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V) (x y : Vℚ) :
+    integralFormToComplex hℂ Q (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x))
+        (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y)) =
+      ((integralFormToRational hℚ Q x y : ℚ) : ℂ) := by
+  induction x using hℚ.inductionOn generalizing y with
+  | zero => simp
+  | tmul v => simpa using integralFormToComplex_rationalToComplexLinearEquiv_ι hℚ hℂ Q v y
+  | smul q x hx =>
+      simp [TensorProduct.tmul_smul, rationalToComplexLinearEquiv_rat_smul, hx]
+  | add x₁ x₂ h₁ h₂ =>
+      simp [TensorProduct.tmul_add, h₁, h₂]
+
+end Rational
 
 end TauCeti.Hodge

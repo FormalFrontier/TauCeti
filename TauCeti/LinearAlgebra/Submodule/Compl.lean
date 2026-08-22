@@ -20,6 +20,8 @@ not a consequence of spanning the ambient module.
 
 * `TauCeti.Submodule.isCompl_comap_subtype`: a disjoint pair of submodules whose intersections with
   `U` span `U` restricts to a complementary pair of submodules of `U`.
+* `TauCeti.Submodule.eq_of_isCompl_of_le_of_disjoint`: a complement of `A` contained in a submodule
+  disjoint from `A` is equal to it.
 -/
 
 public section
@@ -45,6 +47,24 @@ theorem isCompl_comap_subtype {U A B : Submodule R M} (hAB : Disjoint A B)
     rw [Submodule.map_sup, Submodule.map_comap_subtype, Submodule.map_comap_subtype,
       Submodule.map_subtype_top]
     exact le_antisymm (sup_le inf_le_left inf_le_left) hU
+
+/-- A complement of `A` that is contained in a submodule disjoint from `A` exhausts it: two
+submodules disjoint from `A`, one of them a complement of `A` and contained in the other, are
+equal. -/
+theorem eq_of_isCompl_of_le_of_disjoint {R : Type u} {M : Type v} [Ring R] [AddCommGroup M]
+    [Module R M] {A B C : Submodule R M} (hB : IsCompl A B) (hBC : B ≤ C)
+    (hAC : Disjoint A C) : B = C := by
+  refine le_antisymm hBC fun c hc ↦ ?_
+  have hmem : c ∈ A ⊔ B := by
+    rw [hB.sup_eq_top]
+    exact Submodule.mem_top
+  obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hmem
+  have haC : a ∈ C := by
+    have hsub : a = a + b - b := by simp
+    rw [hsub]
+    exact Submodule.sub_mem _ hc (hBC hb)
+  rw [Submodule.disjoint_def.1 hAC a ha haC, zero_add]
+  exact hb
 
 end Submodule
 

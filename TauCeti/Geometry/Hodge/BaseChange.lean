@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
+public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
@@ -44,6 +45,11 @@ imposed later as structure data.
   every purely rational vector of the ambient complexification.
 * `TauCeti.Hodge.rationalToComplexSubmodule_conj`: the complexification of a rational subspace is
   stable under lattice-induced conjugation.
+* `TauCeti.Hodge.rationalToComplexSubmodule_sup`: complexification preserves joins of rational
+  subspaces.
+* `TauCeti.Hodge.finrank_rationalToComplexSubmodule`: complexification preserves dimension.
+* `TauCeti.Hodge.finite_rationalification`: the rationalification of a finitely generated lattice
+  is finite-dimensional.
 
 The design follows the base-change interface specified in the Hodge structures roadmap. Its only
 nontrivial comparison map is Mathlib's
@@ -89,6 +95,15 @@ theorem rationalToComplexLinearEquiv_one_tmul_ι (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (x : Vℤ) :
     rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] ιℚ x) = ιℂ x := by
   simp [rationalToComplexLinearEquiv]
+
+/-- The tower equivalence carries a rational scalar multiple to the corresponding complex scalar
+multiple. -/
+theorem rationalToComplexLinearEquiv_rat_smul (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (q : ℚ) (t : ℂ ⊗[ℚ] Vℚ) :
+    rationalToComplexLinearEquiv hℚ hℂ (q • t) =
+      (q : ℂ) • rationalToComplexLinearEquiv hℚ hℂ t := by
+  rw [← algebraMap_smul ℂ q t, map_smul]
+  simp
 
 /-- The complexification of a rational subspace, realized inside the chosen ambient
 complexification. -/
@@ -139,6 +154,28 @@ theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)
     rationalToComplexSubmodule hℚ hℂ (⊤ : Submodule ℚ Vℚ) = ⊤ := by
   simp [rationalToComplexSubmodule]
 
+/-- An abstract rationalification of a finitely generated lattice is a finite-dimensional
+rational vector space. -/
+theorem finite_rationalification [Module.Finite ℤ Vℤ] (hℚ : IsBaseChange ℚ ιℚ) :
+    Module.Finite ℚ Vℚ :=
+  Module.Finite.equiv hℚ.equiv
+
+/-- Complexification of rational subspaces preserves joins. -/
+theorem rationalToComplexSubmodule_sup (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W₁ W₂ : Submodule ℚ Vℚ) :
+    rationalToComplexSubmodule hℚ hℂ (W₁ ⊔ W₂) =
+      rationalToComplexSubmodule hℚ hℂ W₁ ⊔ rationalToComplexSubmodule hℚ hℂ W₂ := by
+  refine le_antisymm ?_ (sup_le (rationalToComplexSubmodule_mono hℚ hℂ le_sup_left)
+    (rationalToComplexSubmodule_mono hℚ hℂ le_sup_right))
+  rw [rationalToComplexSubmodule_eq_span]
+  refine Submodule.span_le.2 ?_
+  rintro _ ⟨x, hx, rfl⟩
+  obtain ⟨y, hy, z, hz, rfl⟩ := Submodule.mem_sup.1 hx
+  simp only [TensorProduct.tmul_add, map_add, SetLike.mem_coe]
+  exact Submodule.add_mem _
+    (Submodule.mem_sup_left (rationalToComplexLinearEquiv_one_tmul_mem hℚ hℂ hy))
+    (Submodule.mem_sup_right (rationalToComplexLinearEquiv_one_tmul_mem hℚ hℂ hz))
+
 /-- The canonical equivalence from the concrete complexification `ℂ ⊗[ℚ] W` of a rational
 subspace onto the complexification of `W` inside the ambient complexification. -/
 noncomputable def rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
@@ -159,6 +196,12 @@ theorem coe_rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
     LinearEquiv.ofSubmodules_apply, Submodule.toBaseChange.toLinearEquiv_apply]
   rfl
 
+/-- Complexifying a rational subspace preserves its dimension. -/
+theorem finrank_rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
+    Module.finrank ℂ (rationalToComplexSubmodule hℚ hℂ W) = Module.finrank ℚ W :=
+  ((rationalToComplexSubmoduleEquiv hℚ hℂ W).finrank_eq).symm.trans Module.finrank_baseChange
+
 /-- Lattice conjugation fixes the image in `Vℂ` of a purely rational vector `1 ⊗ₜ x`. -/
 theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (x : Vℚ) :
@@ -168,24 +211,8 @@ theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange �
   | zero => simp
   | tmul x => simp
   | smul q x hx =>
-      have h_tmul : (1 ⊗ₜ[ℚ] (q • x) : ℂ ⊗[ℚ] Vℚ) =
-          (q : ℂ) • (1 ⊗ₜ[ℚ] x) := by
-        rw [TensorProduct.tmul_smul, TensorProduct.smul_tmul']
-        congr 1
-        simp
-      calc
-        latticeConj hℂ (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] (q • x))) =
-            latticeConj hℂ ((q : ℂ) •
-              rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) := by
-          rw [h_tmul, map_smul]
-        _ = starRingEnd ℂ (q : ℂ) • latticeConj hℂ
-              (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) := by
-          rw [map_smulₛₗ]
-        _ = (q : ℂ) • rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) := by
-          rw [hx]
-          simp
-        _ = rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] (q • x)) := by
-          rw [h_tmul, map_smul]
+      rw [TensorProduct.tmul_smul, rationalToComplexLinearEquiv_rat_smul, map_smulₛₗ, hx]
+      simp
   | add x y hx hy =>
       simpa only [TensorProduct.tmul_add, map_add] using congrArg₂ (fun a b ↦ a + b) hx hy
 
