@@ -494,10 +494,14 @@ noncomputable def lieAlgebraBaseChangeEquiv :
         ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) =
       t.ambientLieAlgebraBaseChangeEquiv ht K
         (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) := by
-  change (t.lieAlgebraBaseChangeLieHom ht K x :
-    Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
-      ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) = _
-  exact coe_lieAlgebraBaseChangeLieHom_apply t ht K x
+  calc
+    _ = (t.lieAlgebraBaseChangeLieHom ht K x :
+        Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
+          ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) :=
+      congrArg Subtype.val <| LinearEquiv.ofBijective_apply
+        (t.lieAlgebraBaseChangeLieHom ht K).toLinearMap
+        (hf := t.lieAlgebraBaseChangeLieHom_bijective ht K) x
+    _ = _ := coe_lieAlgebraBaseChangeLieHom_apply t ht K x
 
 /-- The base-change equivalence sends a pure tensor of a Cartan generator to the corresponding
 generator for the scalar-extended root system. -/
