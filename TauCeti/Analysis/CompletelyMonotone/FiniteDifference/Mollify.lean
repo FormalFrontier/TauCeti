@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import Mathlib.Analysis.Calculus.BumpFunction.Normed
-public import Mathlib.Analysis.Calculus.ContDiff.Convolution
 public import TauCeti.Analysis.CompletelyMonotone.FiniteDifference.Basic
 
 /-!

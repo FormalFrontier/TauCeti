@@ -7,9 +7,7 @@ module
 
 public import Mathlib.Algebra.Group.ForwardDiff
 public import Mathlib.Analysis.Calculus.ContDiff.Deriv
-public import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.Analysis.Calculus.Deriv.Slope
-public import TauCeti.Analysis.CompletelyMonotone.Closure
 public import TauCeti.Analysis.CompletelyMonotone.Reparametrization
 
 /-!
@@ -77,55 +75,55 @@ open scoped ContDiff Pointwise Topology
 
 namespace TauCeti
 
-variable {f g : ℝ → ℝ}
-
 /-! ## Forward differences along a list of steps -/
+
+variable {M G : Type*} [AddCommMonoid M] [AddCommGroup G]
 
 /-- The iterated forward difference of `f` along a list of steps: `fwdDiffList [h₁, …, hₙ] f` is
 `Δ_{h₁} (⋯ (Δ_{hₙ} f))`, built from Mathlib's `fwdDiff`. The order of the steps is irrelevant,
 but keeping them in a list is what makes *mixed* step sizes available, which is strictly more
 information than the iterates `(Δ_h)^[n]` of a single step. -/
-def fwdDiffList (l : List ℝ) (f : ℝ → ℝ) : ℝ → ℝ :=
+def fwdDiffList (l : List M) (f : M → G) : M → G :=
   l.foldr fwdDiff f
 
 /-- The empty list of steps takes no difference at all. -/
 @[simp]
-theorem fwdDiffList_nil (f : ℝ → ℝ) : fwdDiffList [] f = f := by
+theorem fwdDiffList_nil (f : M → G) : fwdDiffList [] f = f := by
   simp only [fwdDiffList, List.foldr]
 
 /-- Consing a step applies one more forward difference on the outside. -/
 @[simp]
-theorem fwdDiffList_cons (h : ℝ) (l : List ℝ) (f : ℝ → ℝ) :
+theorem fwdDiffList_cons (h : M) (l : List M) (f : M → G) :
     fwdDiffList (h :: l) f = fwdDiff h (fwdDiffList l f) := by
   simp only [fwdDiffList, List.foldr]
 
 /-- Concatenating step lists composes the corresponding difference operators. -/
-theorem fwdDiffList_append (l l' : List ℝ) (f : ℝ → ℝ) :
+theorem fwdDiffList_append (l l' : List M) (f : M → G) :
     fwdDiffList (l ++ l') f = fwdDiffList l (fwdDiffList l' f) := by
   induction l with
   | nil => rfl
   | cons h l ih => rw [List.cons_append, fwdDiffList_cons, ih, fwdDiffList_cons]
 
 /-- Permuting the step sizes does not change a mixed forward difference. -/
-theorem fwdDiffList_eq_of_perm {l l' : List ℝ} (h : l.Perm l') (f : ℝ → ℝ) :
+theorem fwdDiffList_eq_of_perm {l l' : List M} (h : l.Perm l') (f : M → G) :
     fwdDiffList l f = fwdDiffList l' f := by
-  let _ : LeftCommutative (fun h : ℝ => fun g : ℝ → ℝ => fwdDiff h g) :=
+  let _ : LeftCommutative (fun h : M => fun g : M → G => fwdDiff h g) :=
     ⟨fun a b g => by
       ext t
       simp only [fwdDiff]
       rw [add_right_comm t b a]
-      ring⟩
+      abel⟩
   exact h.foldr_eq f
 
 /-- Along a constant list the mixed difference is the iterated single-step difference. -/
-theorem fwdDiffList_replicate (n : ℕ) (h : ℝ) (f : ℝ → ℝ) :
+theorem fwdDiffList_replicate (n : ℕ) (h : M) (f : M → G) :
     fwdDiffList (List.replicate n h) f = (fwdDiff h)^[n] f := by
   induction n with
   | zero => rfl
   | succ n ih => rw [List.replicate_succ, fwdDiffList_cons, ih, Function.iterate_succ_apply']
 
 /-- Mixed differences commute with addition. -/
-theorem fwdDiffList_add (l : List ℝ) (f g : ℝ → ℝ) :
+theorem fwdDiffList_add (l : List M) (f g : M → G) :
     fwdDiffList l (fun t => f t + g t) = fun t => fwdDiffList l f t + fwdDiffList l g t := by
   induction l with
   | nil => rfl
@@ -133,9 +131,10 @@ theorem fwdDiffList_add (l : List ℝ) (f g : ℝ → ℝ) :
       simp only [fwdDiffList_cons, ih]
       exact fwdDiff_add h (fwdDiffList l f) (fwdDiffList l g)
 
-/-- Mixed differences commute with multiplication by a constant. -/
-theorem fwdDiffList_const_mul (c : ℝ) (l : List ℝ) (f : ℝ → ℝ) :
-    fwdDiffList l (fun t => c * f t) = fun t => c * fwdDiffList l f t := by
+/-- Mixed differences commute with scalar multiplication by a constant. -/
+theorem fwdDiffList_const_smul {R : Type*} [Monoid R] [DistribMulAction R G]
+    (c : R) (l : List M) (f : M → G) :
+    fwdDiffList l (fun t => c • f t) = fun t => c • fwdDiffList l f t := by
   induction l with
   | nil => rfl
   | cons h l ih =>
@@ -143,9 +142,11 @@ theorem fwdDiffList_const_mul (c : ℝ) (l : List ℝ) (f : ℝ → ℝ) :
       exact fwdDiff_const_smul h c (fwdDiffList l f)
 
 /-- Mixed differences are additive-group homomorphisms: they commute with negation. -/
-theorem fwdDiffList_neg (l : List ℝ) (f : ℝ → ℝ) :
+theorem fwdDiffList_neg (l : List M) (f : M → G) :
     fwdDiffList l (fun t => -f t) = fun t => -fwdDiffList l f t := by
-  simpa only [neg_one_mul] using fwdDiffList_const_mul (-1) l f
+  simpa only [neg_one_zsmul] using fwdDiffList_const_smul (-1 : ℤ) l f
+
+variable {f g : ℝ → ℝ}
 
 /-- Only the values of `f` on `[0, ∞)` matter for a mixed difference evaluated there, as long as
 all the steps are nonnegative. -/
@@ -192,11 +193,13 @@ namespace IsDifferenceCompletelyMonotone
 
 /-- A function that is completely monotone in the finite-difference sense is nonnegative on
 `[0, ∞)`: this is the hypothesis for the empty list of steps. -/
+@[grind =>]
 theorem nonneg (hf : IsDifferenceCompletelyMonotone f) {t : ℝ} (ht : 0 ≤ t) : 0 ≤ f t := by
   simpa using hf [] (by simp) t ht
 
 /-- A function that is completely monotone in the finite-difference sense is nonincreasing on
 `[0, ∞)`: this is the hypothesis for a single step. -/
+@[grind =>]
 theorem apply_add_le (hf : IsDifferenceCompletelyMonotone f) {t h : ℝ} (ht : 0 ≤ t)
     (hh : 0 ≤ h) : f (t + h) ≤ f t := by
   have := hf [h] (by simpa using hh) t ht
@@ -270,7 +273,9 @@ nonnegative constant. -/
 theorem const_mul (hf : IsDifferenceCompletelyMonotone f) {c : ℝ} (hc : 0 ≤ c) :
     IsDifferenceCompletelyMonotone (fun t => c * f t) := by
   intro l hl t ht
-  rw [fwdDiffList_const_mul, ← mul_assoc, mul_comm ((-1 : ℝ) ^ l.length) c, mul_assoc]
+  have hfd : fwdDiffList l (fun t => c * f t) t = c * fwdDiffList l f t := by
+    simpa only [smul_eq_mul] using congrFun (fwdDiffList_const_smul c l f) t
+  rw [hfd, ← mul_assoc, mul_comm ((-1 : ℝ) ^ l.length) c, mul_assoc]
   exact mul_nonneg hc (hf l hl t ht)
 
 end IsDifferenceCompletelyMonotone
@@ -365,7 +370,8 @@ theorem deriv_fwdDiffList (l : List ℝ) (hf : Differentiable ℝ f) :
           (deriv (fwdDiffList l f) (t + h) - deriv (fwdDiffList l f) t) t :=
         h₁.sub (hd t).hasDerivAt
       have h₃ : fwdDiffList (h :: l) (deriv f) t
-          = fwdDiffList l (deriv f) (t + h) - fwdDiffList l (deriv f) t := rfl
+          = fwdDiffList l (deriv f) (t + h) - fwdDiffList l (deriv f) t := by
+        simp only [fwdDiffList_cons, fwdDiff]
       rw [h₂.deriv, ih, h₃]
 
 /-! ## From differences to derivatives -/
