@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Fredholm.Basic
 public import Mathlib.Analysis.Calculus.Implicit
+public import Mathlib.Analysis.Calculus.ContDiff.Operations
 
 /-!
 # Local normal form of a Fredholm map
@@ -15,10 +16,9 @@ This file gives the Lyapunov--Schmidt finite-dimensional reduction of a nonlinea
 where its derivative is Fredholm. A Fredholm package splits the domain and codomain into
 essential parts, on which the derivative is invertible, and finite-dimensional inessential
 parts. Projecting the nonlinear map to the essential codomain and retaining the inessential
-domain coordinate gives a local homeomorphism. This is the first-order, topological part of the
-finite-dimensional reduction; applying Sard additionally requires neighborhood `C^k` regularity
-of the chart and obstruction under corresponding hypotheses on the original map. In these
-coordinates the original map has the form
+domain coordinate gives a local homeomorphism. When the original map is `C^k`, the inverse
+coordinates and the finite-dimensional obstruction are `C^k` as germs at the base point. In
+these coordinates the original map has the form
 
 `(r, k) ↦ r + q(r, k)`,
 
@@ -42,10 +42,14 @@ Topology*, Appendix A. The local chart is Mathlib's
   defined by that map.
 * `ContinuousLinearMap.FredholmPackage.obstructionMap`: the remainder valued in the
   finite-dimensional complementary codomain direction.
+* `ContinuousLinearMap.FredholmPackage.obstructionSlice`: the finite-dimensional obstruction
+  obtained by fixing the essential coordinate.
 * `ContinuousLinearMap.FredholmPackage.apply_normalFormOpenPartialHomeomorph_symm`:
   reconstruction of the original map from its essential coordinate and obstruction map.
 * `ContinuousLinearMap.FredholmPackage.hasStrictFDerivAt_obstructionMap_self`: the obstruction has
   zero derivative at the base point.
+* `ContinuousLinearMap.FredholmPackage.contDiffAt_obstructionMap_self`: the obstruction has the
+  same `C^k` regularity as the original map near the base point.
 -/
 
 public section
@@ -53,6 +57,8 @@ public section
 noncomputable section
 
 open Set
+
+open scoped ContDiff
 
 namespace ContinuousLinearMap.FredholmPackage
 
@@ -152,6 +158,14 @@ theorem hasStrictFDerivAt_normalFormMap {f : E → F} {a : E}
   (pkg.hasStrictFDerivAt_normalFormMap_of_hasStrictFDerivAt hf).congr_fderiv
     pkg.prod_projection_eq_normalFormEquivL
 
+/-- The nonlinear normal-form coordinate map has the same `C^k` regularity at its base point as
+the original map. -/
+theorem contDiffAt_normalFormMap {f : E → F} {a : E} {n : ℕ∞ω}
+    (hf : ContDiffAt 𝕜 n f a) :
+    ContDiffAt 𝕜 n (pkg.normalFormMap f a) a := by
+  unfold normalFormMap
+  fun_prop
+
 /-- The essential component of the Fredholm operator factors through the package equivalence. -/
 private theorem proj_comp_eq :
     pkg.decCodom.proj.comp T =
@@ -235,10 +249,8 @@ the base point. -/
 theorem normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : E}
     (hf : HasStrictFDerivAt f T a) :
     (pkg.normalFormOpenPartialHomeomorph hf).symm
-      (pkg.decCodom.X₁.projectionOnto pkg.decCodom.X₀ pkg.decCodom.isTopCompl.isCompl (f a), 0) =
-        a := by
-  rw [← Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
-    ← pkg.normalFormMap_self f a,
+      (pkg.decCodom.proj (f a), 0) = a := by
+  rw [← pkg.normalFormMap_self f a,
     ← pkg.normalFormOpenPartialHomeomorph_apply hf]
   exact (pkg.normalFormOpenPartialHomeomorph hf).left_inv
     (pkg.mem_normalFormOpenPartialHomeomorph_source hf)
@@ -256,6 +268,13 @@ def obstructionMap {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a)
   pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm
     (f ((pkg.normalFormOpenPartialHomeomorph hf).symm y))
 
+/-- The finite-dimensional obstruction map obtained by fixing the essential codomain coordinate.
+Both its domain and codomain are finite dimensional. This is the map to which finite-dimensional
+Sard is applied in the Lyapunov--Schmidt proof of Sard--Smale. -/
+def obstructionSlice {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a)
+    (y : pkg.decCodom.X₁) (z : pkg.decDom.X₀) : pkg.decCodom.X₀ :=
+  pkg.obstructionMap hf (y, z)
+
 /-- The obstruction map is the complementary-codomain projection of `f` after applying the
 inverse normal-form coordinates. -/
 @[simp]
@@ -267,14 +286,27 @@ theorem obstructionMap_apply {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a
   unfold obstructionMap
   rfl
 
+/-- The obstruction slice is the obstruction map with its essential coordinate fixed. -/
+@[simp]
+theorem obstructionSlice_apply {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a)
+    (y : pkg.decCodom.X₁) (z : pkg.decDom.X₀) :
+    pkg.obstructionSlice hf y z = pkg.obstructionMap hf (y, z) := by
+  rfl
+
 /-- At the coordinate of the base point the obstruction is the inessential-codomain component
 of `f a`. Not a `simp` lemma: `obstructionMap_apply` and
 `normalFormOpenPartialHomeomorph_symm_self` already rewrite the left-hand side. -/
 theorem obstructionMap_self {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
     pkg.obstructionMap hf (pkg.decCodom.proj (f a), 0) =
       pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm (f a) := by
-  rw [pkg.obstructionMap_apply hf, Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
-    pkg.normalFormOpenPartialHomeomorph_symm_self hf]
+  rw [pkg.obstructionMap_apply hf, pkg.normalFormOpenPartialHomeomorph_symm_self hf]
+
+/-- At the base coordinate the obstruction slice is the complementary-codomain component of
+`f a`. -/
+theorem obstructionSlice_self {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
+    pkg.obstructionSlice hf (pkg.decCodom.proj (f a)) 0 =
+      pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm (f a) :=
+  pkg.obstructionMap_self hf
 
 /-- In normal-form coordinates, the essential component of `f` is the first coordinate. -/
 theorem proj_apply_normalFormOpenPartialHomeomorph_symm {f : E → F} {a : E}
@@ -354,8 +386,7 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
   have hinv := pkg.hasStrictFDerivAt_normalFormOpenPartialHomeomorph_symm_self hf
   have hf' : HasStrictFDerivAt f T
       ((pkg.normalFormOpenPartialHomeomorph hf).symm (pkg.decCodom.proj (f a), 0)) := by
-    simpa only [Submodule.coe_projectionOntoL,
-      pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
+    simpa only [pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
   have hcomp : HasStrictFDerivAt
       (fun y ↦ P (f ((pkg.normalFormOpenPartialHomeomorph hf).symm y)))
       (P.comp (T.comp (pkg.normalFormEquivL.symm :
@@ -374,6 +405,80 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
   exact (pkg.obstructionMap_apply hf y).symm
 
 end Chart
+
+end ContinuousLinearMap.FredholmPackage
+
+/-! ### Smoothness of the finite-dimensional reduction -/
+
+namespace ContinuousLinearMap.FredholmPackage
+
+section Regularity
+
+variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
+  [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
+  [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+  {T : E →L[𝕜] F} (pkg : ContinuousLinearMap.FredholmPackage T)
+
+local instance : CompleteSpace pkg.decDom.X₀ :=
+  pkg.decDom.isTopCompl.isClosed'.completeSpace_coe
+
+local instance : CompleteSpace pkg.decCodom.X₁ :=
+  haveI : CompleteSpace pkg.decDom.X₁ := pkg.decDom.isTopCompl.isClosed.completeSpace_coe
+  (pkg.equiv.isUniformEmbedding.completeSpace_congr pkg.equiv.surjective).mp inferInstance
+
+/-- If `f` is `C^k` at the base point, then the inverse normal-form coordinates are `C^k` at
+the corresponding point. This uses the existing local homeomorphism and the smooth inverse
+function theorem, so it also covers `k = 0`. -/
+theorem contDiffAt_normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : E} {n : ℕ∞ω}
+    (hfd : HasStrictFDerivAt f T a) (hf : ContDiffAt 𝕜 n f a) :
+    ContDiffAt 𝕜 n (pkg.normalFormOpenPartialHomeomorph hfd).symm
+      (pkg.decCodom.proj (f a), 0) := by
+  apply (pkg.normalFormOpenPartialHomeomorph hfd).contDiffAt_symm
+    (f₀' := pkg.normalFormEquivL)
+    (pkg.normalFormOpenPartialHomeomorph_self_mem_target hfd)
+  · have hfun : ⇑(pkg.normalFormOpenPartialHomeomorph hfd) = pkg.normalFormMap f a :=
+      funext (pkg.normalFormOpenPartialHomeomorph_apply hfd)
+    rw [hfun, pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
+    exact (pkg.hasStrictFDerivAt_normalFormMap hfd).hasFDerivAt
+  · have hfun : ⇑(pkg.normalFormOpenPartialHomeomorph hfd) = pkg.normalFormMap f a :=
+      funext (pkg.normalFormOpenPartialHomeomorph_apply hfd)
+    rw [hfun, pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
+    exact pkg.contDiffAt_normalFormMap hf
+
+/-- If `f` is `C^k` at a point with Fredholm derivative, then its finite-dimensional obstruction
+in Lyapunov--Schmidt coordinates is `C^k` at the corresponding normal-form coordinate. -/
+theorem contDiffAt_obstructionMap_self {f : E → F} {a : E} {n : ℕ∞ω}
+    (hfd : HasStrictFDerivAt f T a) (hf : ContDiffAt 𝕜 n f a) :
+    ContDiffAt 𝕜 n (pkg.obstructionMap hfd) (pkg.decCodom.proj (f a), 0) := by
+  let P := pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm
+  have hinv := pkg.contDiffAt_normalFormOpenPartialHomeomorph_symm_self hfd hf
+  have hf' : ContDiffAt 𝕜 n f
+      ((pkg.normalFormOpenPartialHomeomorph hfd).symm (pkg.decCodom.proj (f a), 0)) := by
+    rw [pkg.normalFormOpenPartialHomeomorph_symm_self hfd]
+    exact hf
+  have hcomp := P.contDiff.contDiffAt.comp _ (hf'.comp _ hinv)
+  change ContDiffAt 𝕜 n
+    (fun y ↦ P (f ((pkg.normalFormOpenPartialHomeomorph hfd).symm y)))
+      (pkg.decCodom.proj (f a), 0)
+  exact hcomp
+
+/-- Fixing the essential coordinate of a `C^k` obstruction map gives a `C^k` map on the
+finite-dimensional kernel coordinate. -/
+theorem contDiffAt_obstructionSlice {f : E → F} {a : E} {n : ℕ∞ω}
+    (hfd : HasStrictFDerivAt f T a) {y : pkg.decCodom.X₁} {z : pkg.decDom.X₀}
+    (h : ContDiffAt 𝕜 n (pkg.obstructionMap hfd) (y, z)) :
+    ContDiffAt 𝕜 n (pkg.obstructionSlice hfd y) z := by
+  change ContDiffAt 𝕜 n (fun z ↦ pkg.obstructionMap hfd (y, z)) z
+  exact h.comp z (contDiffAt_const.prodMk contDiffAt_id)
+
+/-- The finite-dimensional obstruction slice through the base point inherits the `C^k`
+regularity of the original map. -/
+theorem contDiffAt_obstructionSlice_self {f : E → F} {a : E} {n : ℕ∞ω}
+    (hfd : HasStrictFDerivAt f T a) (hf : ContDiffAt 𝕜 n f a) :
+    ContDiffAt 𝕜 n (pkg.obstructionSlice hfd (pkg.decCodom.proj (f a))) 0 :=
+  pkg.contDiffAt_obstructionSlice hfd (pkg.contDiffAt_obstructionMap_self hfd hf)
+
+end Regularity
 
 end ContinuousLinearMap.FredholmPackage
 
