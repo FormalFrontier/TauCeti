@@ -28,9 +28,11 @@ twice multiplies both lattices by `2`, and the two exponents along each orbit mu
 
 These equations are the explicit `F₄` input for the root-datum special-isogeny construction, the
 last of the three beside the type `B₂` case of
-`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/B/SpecialMap.lean`. They do not yet
-construct a group-scheme morphism; Layer 9 of the reductive-groups roadmap requires that later
-lift, together with its action on root subgroups, before the Suzuki--Ree lane can use it.
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/B/SpecialMap.lean` and the same-shape
+`G₂` implementation proposed in
+[Tau Ceti PR #4116](https://github.com/TauCetiProject/TauCeti/pull/4116).
+They do not yet construct a group-scheme morphism; Layer 9 of the reductive-groups roadmap requires
+that later lift, together with its action on root subgroups, before the Suzuki--Ree lane can use it.
 
 ## Main definitions
 
@@ -85,10 +87,6 @@ datum, in the fundamental-weight basis. -/
 def f4SpecialIsogenyMatrix : Matrix (Fin 4) (Fin 4) ℤ :=
   !![0, 0, 0, 1; 0, 0, 1, 0; 0, 2, 0, 0; 2, 0, 0, 0]
 
-/-- The explicit entries of the character-lattice special-isogeny matrix. -/
-theorem f4SpecialIsogenyMatrix_def :
-    f4SpecialIsogenyMatrix = !![0, 0, 0, 1; 0, 0, 1, 0; 0, 2, 0, 0; 2, 0, 0, 0] := (rfl)
-
 /-- The permutation of the forty-eight `F₄` roots induced by
 `TauCeti.DynkinType.f4SpecialIsogenyMatrix`. It exchanges long roots with short roots and commutes
 with root negation. -/
@@ -97,14 +95,6 @@ def f4SpecialIsogenyIndex : Fin 48 → Fin 48 :=
     15, 6, 18, 12, 8, 21, 14, 22, 23, 17, 19, 20,
     27, 26, 25, 24, 34, 31, 37, 29, 40, 35, 28, 33,
     39, 30, 42, 36, 32, 45, 38, 46, 47, 41, 43, 44]
-
-/-- The explicit values of the special permutation on the root indices. -/
-theorem f4SpecialIsogenyIndex_def :
-    f4SpecialIsogenyIndex =
-      ![3, 2, 1, 0, 10, 7, 13, 5, 16, 11, 4, 9,
-        15, 6, 18, 12, 8, 21, 14, 22, 23, 17, 19, 20,
-        27, 26, 25, 24, 34, 31, 37, 29, 40, 35, 28, 33,
-        39, 30, 42, 36, 32, 45, 38, 46, 47, 41, 43, 44] := (rfl)
 
 /-- The special root permutation is an involution. -/
 theorem f4SpecialIsogenyIndex_involutive : Involutive f4SpecialIsogenyIndex := by
@@ -175,7 +165,7 @@ theorem f4SpecialIsogenyMatrix_mul_self :
       (2 : ℤ) • (1 : Matrix (Fin 4) (Fin 4) ℤ) := by
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [f4SpecialIsogenyMatrix_def, Matrix.mul_apply, Fin.sum_univ_succ]
+    simp [f4SpecialIsogenyMatrix, Matrix.mul_apply, Fin.sum_univ_succ]
 
 /-- The square of the cocharacter-lattice special matrix is twice the identity matrix. -/
 theorem f4SpecialIsogenyMatrix_transpose_mul_self :
@@ -218,7 +208,7 @@ theorem f4SpecialIsogenyMatrix_transpose_mulVecLin_comp_self :
 determinant is `4`, the square of the characteristic, matching the two long simple directions in
 which it multiplies. -/
 @[simp] theorem det_f4SpecialIsogenyMatrix : f4SpecialIsogenyMatrix.det = 4 := by
-  rw [f4SpecialIsogenyMatrix_def]
+  unfold f4SpecialIsogenyMatrix
   simp [Matrix.det_succ_row_zero, Fin.sum_univ_succ, Fin.succAbove]
 
 /-! ## Length and exponent conventions -/
@@ -234,6 +224,13 @@ which it multiplies. -/
     f4Length (f4SpecialIsogenyIndex i) = 1 ↔ f4Length i = 2 := by
   rw [f4Length_def]
   decide +revert
+
+/-- **The special permutation sends a short root to a long root.** -/
+@[simp] theorem f4Length_specialIsogenyIndex_eq_two_iff (i : Fin 48) :
+    f4Length (f4SpecialIsogenyIndex i) = 2 ↔ f4Length i = 1 := by
+  have h := (f4Length_specialIsogenyIndex_eq_one_iff (f4SpecialIsogenyIndex i)).symm
+  rw [f4SpecialIsogenyIndex_involutive i] at h
+  exact h
 
 private theorem f4Length_mul_dotProduct_specialIsogenyIndex (i j : Fin 48) :
     f4Length i * (f4Root (f4SpecialIsogenyIndex i) ⬝ᵥ f4Coroot (f4SpecialIsogenyIndex j)) =

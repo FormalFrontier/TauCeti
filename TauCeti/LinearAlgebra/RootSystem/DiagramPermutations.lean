@@ -191,13 +191,9 @@ theorem lengthPermRankTwo_ne_one : lengthPermRankTwo ≠ 1 := by decide
 @[simp] theorem orderOf_lengthPermRankTwo : orderOf lengthPermRankTwo = 2 :=
   orderOf_eq_prime lengthPermRankTwo_sq lengthPermRankTwo_ne_one
 
-/-- Reversal of a chain sends node `i` to the node at the mirrored index. This is deliberately not
-a `simp` lemma: the statements below are in normal form with the permutation applied, not with its
-value unfolded. -/
-lemma graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := (rfl)
-
 /-- Reversal of the `F₄` diagram sends node `i` to the node at the mirrored index. -/
-lemma lengthPermF4_apply (i : Fin 4) : lengthPermF4 i = i.rev := graphPermA_apply 4 i
+lemma lengthPermF4_apply (i : Fin 4) : lengthPermF4 i = i.rev := by
+  simp only [lengthPermF4, graphPermA, Fin.revPerm_apply]
 
 /-- Reversal of a chain is an involution. -/
 @[simp] theorem graphPermA_graphPermA (n : ℕ) (i : Fin n) : graphPermA n (graphPermA n i) = i := by
