@@ -70,19 +70,9 @@ theorem fderiv_newtonianKernel_sub_sphere_normal (n : ℕ) (hn2 : n ≠ 2)
     _ = -(((n : ℝ) * volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
           r ^ (1 - (n : ℝ))) := by rw [hpow]
 
-/-- On the sphere of radius `r` centered at the origin, the outward normal derivative of the
-Newtonian kernel is constant and equals `-(n ωₙ)⁻¹ r^(1-n)`. -/
-@[simp]
-theorem fderiv_newtonianKernel_sphere_normal (n : ℕ) (hn2 : n ≠ 2) {r : ℝ} (hr : 0 < r)
-    (u : sphere (0 : EuclideanSpace ℝ (Fin n)) 1) :
-    fderiv ℝ (newtonianKernel n) (r • (u : EuclideanSpace ℝ (Fin n))) u =
-      -(((n : ℝ) * volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
-        r ^ (1 - (n : ℝ))) := by
-  simpa only [zero_add, sub_zero] using
-    fderiv_newtonianKernel_sub_sphere_normal n hn2 (a := 0) hr u
-
 /-- The outward flux of the Newtonian kernel through any sphere centered at its pole is `-1`.
 The factor `r ^ (n - 1)` is the surface Jacobian for radial scaling from the unit sphere. -/
+@[simp]
 theorem integral_fderiv_newtonianKernel_sub_sphere_normal (n : ℕ) (hn0 : n ≠ 0) (hn2 : n ≠ 2)
     {a : EuclideanSpace ℝ (Fin n)} {r : ℝ} (hr : 0 < r) :
     r ^ (n - 1) * ∫ u : sphere (0 : EuclideanSpace ℝ (Fin n)) 1,
@@ -97,8 +87,10 @@ theorem integral_fderiv_newtonianKernel_sub_sphere_normal (n : ℕ) (hn0 : n ≠
     exact ENNReal.toReal_pos
       (measure_ball_pos volume (0 : EuclideanSpace ℝ (Fin n)) zero_lt_one).ne'
       measure_ball_ne_top
-  rw [show r ^ (n - 1) = r ^ ((n : ℝ) - 1) by
-    rw [← Real.rpow_natCast, Nat.cast_sub (Nat.one_le_iff_ne_zero.mpr hn0), Nat.cast_one]]
+  -- Express the natural-power surface Jacobian as a real power before cancelling exponents.
+  have h_surface_rpow : r ^ (n - 1) = r ^ ((n : ℝ) - 1) := by
+    rw [← Real.rpow_natCast, Nat.cast_sub (Nat.one_le_iff_ne_zero.mpr hn0), Nat.cast_one]
+  rw [h_surface_rpow]
   calc
     r ^ ((n : ℝ) - 1) *
           ((n : ℝ) * volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1) *
@@ -109,16 +101,6 @@ theorem integral_fderiv_newtonianKernel_sub_sphere_normal (n : ℕ) (hn0 : n ≠
     _ = -1 := by
       rw [← Real.rpow_add hr]
       norm_num
-
-/-- The outward flux of the Newtonian kernel through any sphere centered at the origin is `-1`.
-The factor `r ^ (n - 1)` is the surface Jacobian for radial scaling from the unit sphere. -/
-theorem integral_fderiv_newtonianKernel_sphere_normal (n : ℕ) (hn0 : n ≠ 0) (hn2 : n ≠ 2)
-    {r : ℝ} (hr : 0 < r) :
-    r ^ (n - 1) * ∫ u : sphere (0 : EuclideanSpace ℝ (Fin n)) 1,
-        fderiv ℝ (newtonianKernel n) (r • (u : EuclideanSpace ℝ (Fin n))) u
-          ∂volume.toSphere = -1 := by
-  simpa only [zero_add, sub_zero] using
-    integral_fderiv_newtonianKernel_sub_sphere_normal n hn0 hn2 (a := 0) hr
 
 end TauCeti
 
