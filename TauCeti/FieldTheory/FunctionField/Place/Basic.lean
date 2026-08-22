@@ -290,6 +290,18 @@ theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : 
   ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
 
+/-- Distinct places have inequivalent valuations. This is the contrapositive of
+`TauCeti.Place.eq_of_isEquiv`, and it is the hypothesis under which the approximation engine
+separates a finite family of valuations. -/
+theorem not_isEquiv_of_ne {P Q : Place k F} (h : P ≠ Q) : ¬ P.valuation.IsEquiv Q.valuation :=
+  fun hPQ ↦ h (eq_of_isEquiv hPQ)
+
+@[simp]
+theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
+  refine ⟨eq_of_isEquiv, ?_⟩
+  rintro rfl
+  exact Valuation.IsEquiv.refl
+
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
   fun _ _ h => eq_of_isEquiv ((Valuation.isEquiv_iff_valuationSubring _ _).mpr h)

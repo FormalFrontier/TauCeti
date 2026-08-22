@@ -30,10 +30,10 @@ Taking all targets to be `0` prescribes the orders themselves
 (`TauCeti.Place.exists_forall_ord_eq`), which is the form in which independence of places is
 usually met: a function may be asked to have a simple zero at one place and a pole of any
 prescribed order at each of finitely many others. Taking all prescribed orders to be `1`
-instead makes `g` agree with each target to first order, so that `g` is integral at every `Pᵢ`
-and has a prescribed residue there: the residue maps of finitely many distinct places are
-simultaneously surjective (`TauCeti.Place.exists_forall_residue_eq`), a Chinese-remainder
-statement for the places of `F`.
+instead makes `g` agree with each target to first order. When the targets are integral, so is
+`g`; choosing integral lifts of prescribed residue classes therefore shows that the residue
+maps of finitely many distinct places are simultaneously surjective
+(`TauCeti.Place.exists_forall_residue_eq`), a Chinese-remainder statement for the places of `F`.
 
 ## Main results
 
@@ -70,22 +70,6 @@ namespace TauCeti.Place
 universe u v
 
 variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F]
-
-section Inequivalence
-
-/-- Distinct places have inequivalent valuations. This is the contrapositive of
-`TauCeti.Place.eq_of_isEquiv`, and it is the hypothesis under which the approximation engine
-separates a finite family of valuations. -/
-theorem not_isEquiv_of_ne {P Q : Place k F} (h : P ≠ Q) : ¬ P.valuation.IsEquiv Q.valuation :=
-  fun hPQ ↦ h (eq_of_isEquiv hPQ)
-
-@[simp]
-theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
-  refine ⟨eq_of_isEquiv, ?_⟩
-  rintro rfl
-  exact Valuation.IsEquiv.refl
-
-end Inequivalence
 
 section Approximation
 
