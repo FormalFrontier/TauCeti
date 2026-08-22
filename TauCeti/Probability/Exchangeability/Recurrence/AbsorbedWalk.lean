@@ -41,15 +41,9 @@ section AbsorbedWalk
 Markov chain that leaves `false` at time `1` and is then absorbed at `true`. -/
 def absorbedWalk : ℕ → Unit → Bool := fun n _ => decide (n ≠ 0)
 
--- `absorbedWalk` is not `@[expose]`, so an exported `rfl` proof of its defining equation is
--- rejected; a private lemma may unfold it, and the public one is then a term application.
-private theorem absorbedWalk_apply_private (n : ℕ) (u : Unit) :
-    absorbedWalk n u = decide (n ≠ 0) :=
-  rfl
-
 @[simp]
 theorem absorbedWalk_apply (n : ℕ) (u : Unit) : absorbedWalk n u = decide (n ≠ 0) :=
-  absorbedWalk_apply_private n u
+  (rfl)
 
 /-- **The absorbed walk has the finite-dimensional laws of a Markov chain.** A path of length
 `n + 1` is possible only if it starts at `false` and is `true` from time `1` on. -/
