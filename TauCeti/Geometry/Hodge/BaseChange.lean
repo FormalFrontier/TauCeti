@@ -11,6 +11,7 @@ public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
+public import TauCeti.Geometry.Hodge.Conjugation
 
 /-!
 # Rational subspaces in an abstract complexification
@@ -25,6 +26,10 @@ The constructions use Mathlib's `IsBaseChange` interface rather than requiring t
 to be definitionally equal to concrete tensor products. This is essential for geometric Hodge
 structures, whose rational and complex cohomology spaces arrive as abstract base-change models.
 
+Rationality of a subspace is what makes its complexification stable under the lattice-induced
+conjugation, so that stability is proved here, for an arbitrary rational subspace, rather than
+imposed later as structure data.
+
 ## Main declarations
 
 * `TauCeti.Hodge.rationalToComplexLinearEquiv`: the canonical tower equivalence from an abstract
@@ -35,6 +40,10 @@ structures, whose rational and complex cohomology spaces arrive as abstract base
   complexification `ℂ ⊗[ℚ] W` of a rational subspace with that complexified subspace.
 * `TauCeti.Hodge.rationalMapToComplex`: scalar extension of a rational linear map between two
   abstract base-change models.
+* `TauCeti.Hodge.latticeConj_rationalToComplexLinearEquiv_one_tmul`: lattice conjugation fixes
+  every purely rational vector of the ambient complexification.
+* `TauCeti.Hodge.rationalToComplexSubmodule_conj`: the complexification of a rational subspace is
+  stable under lattice-induced conjugation.
 
 The design follows the base-change interface specified in the Hodge structures roadmap. Its only
 nontrivial comparison map is Mathlib's
@@ -45,7 +54,11 @@ tower before the result is transported to the two abstract models.
 
 The signatures are adapted from the proposed definitions in
 [`HodgeStructures/Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/HodgeStructures/Suggested.lean),
-whose definitive mathematical specification is the accompanying Hodge structures roadmap.
+whose definitive mathematical specification is the accompanying Hodge structures roadmap. In
+particular the statements of `latticeConj_rationalToComplexLinearEquiv_one_tmul` and
+`rationalToComplexSubmodule_conj` are that file's `rationalToComplexLinearEquiv_one_tmul_fixed` and
+`rationalToComplexSubmodule_conj`; the proofs given here are different, being run against the
+abstract base-change interface rather than the concrete tensor model.
 -/
 
 public section
@@ -145,6 +158,55 @@ theorem coe_rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
   rw [rationalToComplexSubmoduleEquiv, LinearEquiv.trans_apply,
     LinearEquiv.ofSubmodules_apply, Submodule.toBaseChange.toLinearEquiv_apply]
   rfl
+
+/-- Lattice conjugation fixes the image in `Vℂ` of a purely rational vector `1 ⊗ₜ x`. -/
+theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (x : Vℚ) :
+    latticeConj hℂ (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) =
+      rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) := by
+  induction x using hℚ.inductionOn with
+  | zero => simp
+  | tmul x => simp
+  | smul q x hx =>
+      have h_tmul : (1 ⊗ₜ[ℚ] (q • x) : ℂ ⊗[ℚ] Vℚ) =
+          (q : ℂ) • (1 ⊗ₜ[ℚ] x) := by
+        rw [TensorProduct.tmul_smul, TensorProduct.smul_tmul']
+        congr 1
+        simp
+      calc
+        latticeConj hℂ (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] (q • x))) =
+            latticeConj hℂ ((q : ℂ) •
+              rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) := by
+          rw [h_tmul, map_smul]
+        _ = starRingEnd ℂ (q : ℂ) • latticeConj hℂ
+              (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) := by
+          rw [map_smulₛₗ]
+        _ = (q : ℂ) • rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) := by
+          rw [hx]
+          simp
+        _ = rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] (q • x)) := by
+          rw [h_tmul, map_smul]
+  | add x y hx hy =>
+      simpa only [TensorProduct.tmul_add, map_add] using congrArg₂ (fun a b ↦ a + b) hx hy
+
+/-- The complexification of a rational subspace is stable under lattice-induced conjugation. -/
+@[simp]
+theorem rationalToComplexSubmodule_conj (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
+    (rationalToComplexSubmodule hℚ hℂ W).map (latticeConj hℂ) =
+      rationalToComplexSubmodule hℚ hℂ W := by
+  have hle : (rationalToComplexSubmodule hℚ hℂ W).map (latticeConj hℂ) ≤
+      rationalToComplexSubmodule hℚ hℂ W := by
+    rw [rationalToComplexSubmodule_eq_span, Submodule.map_span]
+    refine Submodule.span_le.mpr ?_
+    rintro _ ⟨x, hx, rfl⟩
+    rcases hx with ⟨x, hx, rfl⟩
+    rw [latticeConj_rationalToComplexLinearEquiv_one_tmul]
+    exact Submodule.subset_span ⟨x, hx, rfl⟩
+  apply le_antisymm hle
+  intro x hx
+  refine ⟨latticeConj hℂ x, hle ⟨x, hx, rfl⟩, ?_⟩
+  simp
 
 section Map
 

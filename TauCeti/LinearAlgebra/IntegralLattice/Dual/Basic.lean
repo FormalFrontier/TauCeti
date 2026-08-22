@@ -46,6 +46,8 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
   chosen basis of `L.carrier`.
 * `TauCeti.IntegralLattice.dualSubmodule_flip_dualCarrier`: double duality with `form.flip`.
 * `TauCeti.IntegralLattice.dualSubmodule_dualCarrier`: dualizing twice recovers `L`.
+* `TauCeti.IntegralLattice.Isometry.map_dualCarrier_ambientEquiv`: an isometry maps the dual
+  carrier onto the dual carrier.
 * `TauCeti.IntegralLattice.Isometry.dualCarrierEquiv`: transport of dual carriers by an isometry.
 
 ## References
@@ -253,14 +255,18 @@ theorem apply_mem_dualCarrier_iff (e : Isometry L M) (x : V) :
     rw [← e.map_app x (e.symm y), e.apply_symm_apply] at hxy
     exact hxy
 
+/-- The ambient integral equivalence of an isometry maps the source dual carrier onto the target
+dual carrier. -/
+@[simp]
+theorem map_dualCarrier_ambientEquiv (e : Isometry L M) :
+    L.dualCarrier.map e.ambientEquiv.toLinearMap = M.dualCarrier := by
+  ext y
+  rw [Submodule.mem_map_equiv]
+  simpa using e.symm.apply_mem_dualCarrier_iff y
+
 /-- An isometry restricts to an integral linear equivalence of dual carriers. -/
 def dualCarrierEquiv (e : Isometry L M) : L.dualCarrier ≃ₗ[ℤ] M.dualCarrier :=
-  ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).ofSubmodules L.dualCarrier M.dualCarrier (by
-    apply le_antisymm
-    · rintro _ ⟨x, hx, rfl⟩
-      exact (e.apply_mem_dualCarrier_iff x).2 hx
-    · intro y hy
-      refine ⟨e.symm y, (e.symm.apply_mem_dualCarrier_iff y).2 hy, e.apply_symm_apply y⟩)
+  e.ambientEquiv.ofSubmodules L.dualCarrier M.dualCarrier e.map_dualCarrier_ambientEquiv
 
 /-- The dual-carrier equivalence acts by the underlying ambient isometry. -/
 @[simp]
@@ -281,8 +287,7 @@ theorem dualCarrierEquiv_symm (e : Isometry L M) :
     e.symm.dualCarrierEquiv = e.dualCarrierEquiv.symm := by
   ext x
   simp only [dualCarrierEquiv, LinearEquiv.ofSubmodules_symm_apply,
-    LinearEquiv.ofSubmodules_apply]
-  exact congrFun e.coe_symm (x : W)
+    LinearEquiv.ofSubmodules_apply, ambientEquiv_symm]
 
 /-- The dual-carrier restriction of a composed isometry is the composite equivalence. -/
 @[simp]

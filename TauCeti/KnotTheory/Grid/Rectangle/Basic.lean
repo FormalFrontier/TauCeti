@@ -429,12 +429,40 @@ def bottom : Fin n :=
 def top : Fin n :=
   x R.right
 
+/-- The initial horizontal side is the row occupied by the source state in the initial column. -/
+theorem bottom_def : R.bottom = x R.left :=
+  rfl
+
+/-- The terminal horizontal side is the row occupied by the source state in the terminal column. -/
+theorem top_def : R.top = x R.right :=
+  rfl
+
 /-- The associated toroidal rectangle. -/
 def toGridRectangle : GridRectangle n where
   left := R.left
   right := R.right
   bottom := R.bottom
   top := R.top
+
+/-- The associated toroidal rectangle has the same initial vertical side. -/
+@[simp]
+theorem toGridRectangle_left : R.toGridRectangle.left = R.left :=
+  rfl
+
+/-- The associated toroidal rectangle has the same terminal vertical side. -/
+@[simp]
+theorem toGridRectangle_right : R.toGridRectangle.right = R.right :=
+  rfl
+
+/-- The associated toroidal rectangle has the same initial horizontal side. -/
+@[simp]
+theorem toGridRectangle_bottom : R.toGridRectangle.bottom = R.bottom :=
+  rfl
+
+/-- The associated toroidal rectangle has the same terminal horizontal side. -/
+@[simp]
+theorem toGridRectangle_top : R.toGridRectangle.top = R.top :=
+  rfl
 
 /-- The opposite oriented rectangle, obtained by reversing the two side columns.
 
@@ -551,25 +579,25 @@ theorem right_bottom_mem_target : (R.right, R.bottom) ∈ y.pointSet := by
 rectangle. -/
 theorem symm_left_bottom_mem_source (R : GridRectangleBetween x y) :
     (R.symm.left, R.symm.bottom) ∈ y.pointSet := by
-  simpa using R.right_bottom_mem_target
+  simpa only [symm_left, symm_bottom] using R.right_bottom_mem_target
 
 /-- The upper-right corner of the opposite rectangle is a target-state point of the original
 rectangle. -/
 theorem symm_right_top_mem_source (R : GridRectangleBetween x y) :
     (R.symm.right, R.symm.top) ∈ y.pointSet := by
-  simpa using R.left_top_mem_target
+  simpa only [symm_right, symm_top] using R.left_top_mem_target
 
 /-- The upper-left corner of the opposite rectangle is a source-state point of the original
 rectangle. -/
 theorem symm_left_top_mem_target (R : GridRectangleBetween x y) :
     (R.symm.left, R.symm.top) ∈ x.pointSet := by
-  simpa using R.right_top_mem_source
+  simpa only [symm_left, symm_top] using R.right_top_mem_source
 
 /-- The lower-right corner of the opposite rectangle is a source-state point of the original
 rectangle. -/
 theorem symm_right_bottom_mem_target (R : GridRectangleBetween x y) :
     (R.symm.right, R.symm.bottom) ∈ x.pointSet := by
-  simpa using R.left_bottom_mem_source
+  simpa only [symm_right, symm_bottom] using R.left_bottom_mem_source
 
 /-- There are as many oriented rectangles from `x` to `y` as from `y` to `x`. -/
 theorem card_all_comm (x y : GridState n) : (all x y).card = (all y x).card := by
