@@ -222,7 +222,7 @@ noncomputable def linearHomComplexComp :
 
 /-- The degree-`j` component of cochain composition is induced by its maps on the bidegree
 summands of the totalized tensor product. -/
-lemma linearHomComplexComp_f (j : ℤ) :
+private lemma linearHomComplexComp_f (j : ℤ) :
     (linearHomComplexComp R F G K).f j =
       HomologicalComplex.mapBifunctorDesc (cochainCompTensor R F G K · · j ·) :=
   by simp [linearHomComplexComp]
