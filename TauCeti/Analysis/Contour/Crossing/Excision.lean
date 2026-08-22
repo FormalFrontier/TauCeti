@@ -36,8 +36,8 @@ hypotheses:
   cap to `γ`;
 * it is again closed (`exciseCrossing_closed`) provided `γ a = γ b` and the window misses the two
   endpoints, `a < l` and `u < b`;
-* and — this is the point — it **avoids `s`** (`exciseCrossing_ne`) provided the radius is nonzero,
-  `r ≠ 0`, and `γ` itself meets `s` only strictly inside the window.
+* and — this is the point — it **avoids `s`** (`exciseCrossing_ne_center`) provided the radius is
+  nonzero, `r ≠ 0`, and `γ` itself meets `s` only strictly inside the window.
 
 Under all of these together its winding number about `s` is an integer.
 
@@ -72,7 +72,7 @@ once.
 * `TauCeti.Contour.windingNumber_circleCap` — the cap has winding number `(θ' - θ) / 2π` about `s`.
 * `TauCeti.Contour.IsPiecewiseC1On.exciseCrossing` — the excised curve is piecewise `C¹`,
   `TauCeti.Contour.exciseCrossing_closed` — it is closed if `γ` is, and
-  `TauCeti.Contour.exciseCrossing_ne` — it avoids `s`.
+  `TauCeti.Contour.exciseCrossing_ne_center` — it avoids `s`.
 * `TauCeti.Contour.windingNumber_eq_exciseCrossing_add` — the winding number of `γ` is that of the
   excised curve plus the local contribution of the window.
 * `TauCeti.Contour.exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` — hence it is
@@ -157,7 +157,7 @@ theorem contDiff_circleCap (s : ℂ) (r l u θ θ' : ℝ) : ContDiff ℝ 1 (circ
   (contDiff_circleMap s r).comp ((contDiff_const.mul contDiff_id).add contDiff_const)
 
 /-- The cap misses the centre, its radius being nonzero. -/
-theorem circleCap_ne (hr : r ≠ 0) : circleCap s r l u θ θ' t ≠ s :=
+theorem circleCap_ne_center (hr : r ≠ 0) : circleCap s r l u θ θ' t ≠ s :=
   circleMap_ne_center hr
 
 /-- The index principal value along the cap exists, the cap being an affinely reparametrised
@@ -198,7 +198,7 @@ inside, `a < l < u < b`, and the two endpoint conditions `γ l = circleMap s r �
 `γ u = circleMap s r θ'` hold, then the replacement glues continuously and the result is again
 piecewise `C¹` (`IsPiecewiseC1On.exciseCrossing`). If moreover `γ a = γ b` it is again closed
 (`exciseCrossing_closed`). And if the radius is nonzero, `r ≠ 0`, and `γ` meets `s` only inside the
-open window, then the excised curve misses `s` altogether (`exciseCrossing_ne`). -/
+open window, then the excised curve misses `s` altogether (`exciseCrossing_ne_center`). -/
 def exciseCrossing (γ : ℝ → ℂ) (s : ℂ) (r l u θ θ' : ℝ) : ℝ → ℂ :=
   fun t => if l ≤ t ∧ t ≤ u then circleCap s r l u θ θ' t else γ t
 
@@ -248,13 +248,13 @@ theorem exciseCrossing_closed (hal : a < l) (hub : u < b) (hclosed : γ a = γ b
 /-- **The excised curve avoids `s`.** Inside the window it runs along a circle of nonzero radius
 about `s`, and outside it agrees with `γ`, which by hypothesis meets `s` only strictly inside the
 window. -/
-theorem exciseCrossing_ne (hr : r ≠ 0) (θ θ' : ℝ)
+theorem exciseCrossing_ne_center (hr : r ≠ 0) (θ θ' : ℝ)
     (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s) :
     ∀ t ∈ Icc a b, exciseCrossing γ s r l u θ θ' t ≠ s := by
   intro t ht
   by_cases hw : t ∈ Icc l u
   · rw [exciseCrossing_of_mem hw]
-    exact circleCap_ne hr
+    exact circleCap_ne_center hr
   · rw [exciseCrossing_of_notMem hw]
     exact havoid t ht fun h => hw (Ioo_subset_Icc_self h)
 
@@ -386,12 +386,25 @@ theorem windingNumber_eq_exciseCrossing_add (hγ : IsPiecewiseC1On γ a b) (hal 
   have hpvE_al := hpv_al.congr_curve heq_al
   have hpvE_ub := hpv_ub.congr_curve heq_ub
   have hpvE_lu := (cauchyPVExistsAt_circleCap s r l u θ θ' l u).congr_curve heq_lu
-  -- additivity over the three pieces, for both curves
-  rw [windingNumber_concat hpv_al (hpv.concat hpv_ub), windingNumber_concat hpv hpv_ub,
-    windingNumber_concat hpvE_al (hpvE_lu.concat hpvE_ub),
-    windingNumber_concat hpvE_lu hpvE_ub,
-    ← windingNumber_congr_curve heq_al, ← windingNumber_congr_curve heq_ub,
-    ← windingNumber_congr_curve heq_lu, windingNumber_circleCap hr hlu.ne θ θ']
+  -- `γ` is additive over the three pieces `[a, l]`, `[l, u]`, `[u, b]`
+  have hsplit : windingNumber γ a b s
+      = windingNumber γ a l s + windingNumber γ l u s + windingNumber γ u b s := by
+    rw [windingNumber_concat hpv_al (hpv.concat hpv_ub), windingNumber_concat hpv hpv_ub]
+    ring
+  -- the excised curve is additive over the same three pieces, and on each of them it agrees with
+  -- the curve computing that piece: `γ` on the two flanks, the cap on the window
+  have hsplitE : windingNumber (exciseCrossing γ s r l u θ θ') a b s
+      = windingNumber γ a l s + windingNumber (circleCap s r l u θ θ') l u s
+        + windingNumber γ u b s := by
+    rw [windingNumber_concat hpvE_al (hpvE_lu.concat hpvE_ub),
+      windingNumber_concat hpvE_lu hpvE_ub, ← windingNumber_congr_curve heq_al,
+      ← windingNumber_congr_curve heq_ub, ← windingNumber_congr_curve heq_lu]
+    ring
+  -- the cap contributes exactly its angular extent
+  have hcap : windingNumber (circleCap s r l u θ θ') l u s
+      = ((θ' - θ : ℝ) : ℂ) / (2 * (Real.pi : ℂ)) := windingNumber_circleCap hr hlu.ne θ θ'
+  -- the two flanks cancel, leaving the window's contribution minus the cap's
+  rw [hsplit, hsplitE, hcap]
   ring
 
 /-- **Hungerbühler–Wasem Proposition 2.2 for one crossing window, in existential form.**
@@ -417,7 +430,7 @@ theorem exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi
   have hab : a ≤ b := by linarith
   have hE := hγ.exciseCrossing hal hlu hub hθ hθ'
   obtain ⟨k, hk⟩ := hE.exists_int_windingNumber (exciseCrossing_closed hal hub hclosed θ θ')
-    (fun t ht => exciseCrossing_ne hr θ θ' havoid t ((uIcc_of_le hab) ▸ ht))
+    (fun t ht => exciseCrossing_ne_center hr θ θ' havoid t ((uIcc_of_le hab) ▸ ht))
   exact ⟨k, by rw [windingNumber_eq_exciseCrossing_add hγ hal hlu hub hr havoid hpv, hk]⟩
 
 end TauCeti.Contour
