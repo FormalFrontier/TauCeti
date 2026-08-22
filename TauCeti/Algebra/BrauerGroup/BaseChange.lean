@@ -191,7 +191,6 @@ extension field.**
 The forward implication is the substantive one: membership says that the scalar extension
 `L ⊗[K] A` is Brauer trivial, and Wedderburn uniqueness identifies Brauer triviality with being a
 matrix algebra over `L`. -/
-@[simp]
 theorem mk_mem_ker_baseChange_iff_isSplittingField :
     mk (CSA.of K A) ∈ (baseChange K L).ker ↔ Algebra.IsSplittingField K A L := by
   rw [mk_mem_ker_baseChange_iff, isBrauerTrivial_iff_isSplittingField,
