@@ -47,12 +47,13 @@ namespace TauCeti
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {α : ι → Type*}
   [∀ i, MeasurableSpace (α i)]
 
-/-- **Fubini after a two-coordinate refresh.** An integral against a finite product of probability
+/-- **Fubini after a two-coordinate refresh.** An integral against a finite product of sigma-finite
 measures is an outer integral over the assignment and an inner integral over a fresh independent
-pair placed at the two distinct coordinates `a` and `b`. -/
+pair placed at the two distinct probability coordinates `a` and `b`. -/
 theorem integral_pi_eq_integral_integral_update {E : Type*} [NormedAddCommGroup E]
-    [NormedSpace ℝ E] (μ : ∀ i, Measure (α i)) [∀ i, IsProbabilityMeasure (μ i)]
-    {a b : ι} (hab : a ≠ b) {f : (∀ i, α i) → E} (hf : Integrable f (Measure.pi μ)) :
+    [NormedSpace ℝ E] (μ : ∀ i, Measure (α i)) [∀ i, SigmaFinite (μ i)] {a b : ι}
+    [IsProbabilityMeasure (μ a)] [IsProbabilityMeasure (μ b)] (hab : a ≠ b)
+    {f : (∀ i, α i) → E} (hf : Integrable f (Measure.pi μ)) :
     ∫ x, f x ∂(Measure.pi μ) =
       ∫ z, (∫ p : α a × α b, f (update (update z a p.1) b p.2) ∂(μ a).prod (μ b))
         ∂(Measure.pi μ) := by

@@ -8,10 +8,10 @@ module
 public import Mathlib.MeasureTheory.Constructions.Pi
 
 /-!
-# Refreshing two coordinates of a finite product of probability measures
+# Refreshing two coordinates of a finite product measure
 
-Over a finite product `Measure.pi μ` of probability measures, overwriting two *distinct*
-coordinates by an independent pair samples the same law: the map
+Over a finite product `Measure.pi μ` of sigma-finite measures, overwriting two *distinct*
+probability coordinates by an independent pair samples the same law: the map
 
 `(z, s, t) ↦ Function.update (Function.update z a s) b t`
 
@@ -50,7 +50,8 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι] {α : ι → Type*}
 /-- Overwriting the two distinct coordinates `a` and `b` of a product-distributed assignment by an
 independent pair leaves the product law unchanged. -/
 theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
-    [∀ i, IsProbabilityMeasure (μ i)] {a b : ι} (hab : a ≠ b) :
+    [∀ i, SigmaFinite (μ i)] {a b : ι} [IsProbabilityMeasure (μ a)]
+    [IsProbabilityMeasure (μ b)] (hab : a ≠ b) :
     MeasurePreserving
       (fun w : (∀ i, α i) × α a × α b => update (update w.1 a w.2.1) b w.2.2)
       ((Measure.pi μ).prod ((μ a).prod (μ b))) (Measure.pi μ) := by
@@ -98,6 +99,16 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
       (MeasurableEquiv.piUnique fun i : t => α i)
       (measurePreserving_piUnique fun i : t => μ i)
   have hselected := (measurePreserving_piFinsetUnion hdis μ).comp (hsingleA.prod hsingleB)
+  have hpi : (@Measure.pi (Subtype p) (fun i => α i)
+      (Finset.Subtype.fintype (s ∪ t)) (fun i => inferInstance) fun i => μ i) =
+      @Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
+        (fun i => inferInstance) fun i => μ i := by
+    congr 1
+    exact Subsingleton.elim _ _
+  let _ : IsProbabilityMeasure (@Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
+      (fun i => inferInstance) fun i => μ i) := by
+    rw [← hpi, ← hselected.map_eq]
+    exact Measure.isProbabilityMeasure_map hselected.measurable.aemeasurable
   have hrest := measurePreserving_snd.comp hsplit
   have hcombine := (hselected.prod hrest).comp
     (Measure.measurePreserving_swap (μ := Measure.pi μ) (ν := (μ a).prod (μ b)))
@@ -108,12 +119,6 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
       ((@Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
           (fun i => inferInstance) fun i => μ i).prod
         (Measure.pi fun i : {i // ¬p i} => μ i)) := by
-    have hpi : (@Measure.pi (Subtype p) (fun i => α i)
-        (Finset.Subtype.fintype (s ∪ t)) (fun i => inferInstance) fun i => μ i) =
-        @Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
-          (fun i => inferInstance) fun i => μ i := by
-      congr 1
-      exact Subsingleton.elim _ _
     refine ⟨hcombine.measurable, ?_⟩
     exact hcombine.map_eq.trans
       (congrArg (fun m => m.prod (Measure.pi fun i : {i // ¬p i} => μ i)) hpi)
