@@ -9,7 +9,8 @@ public import Mathlib.Probability.Distributions.Gamma
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
-public import TauCeti.MeasureTheory.Integral.ExpDecay
+import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import TauCeti.Probability.Distributions.PDFInstances
 
 /-!
@@ -100,6 +101,13 @@ private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ →
   exact ⟨fun h ↦ h.2.congr_fun hpos measurableSet_Ioi,
     fun h ↦ ⟨hneg, h.congr_fun (fun x hx ↦ (hpos x hx).symm) measurableSet_Ioi⟩⟩
 
+/-- A constant multiple of Euler's Gamma integral, in quotient form. -/
+private lemma integral_const_mul_gammaKernel (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
+    ∫ x in Ioi 0, C * (x ^ (s - 1) * exp (-(b * x))) = C * Real.Gamma s / b ^ s := by
+  rw [integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi hs hb, one_div,
+    Real.inv_rpow hb.le, div_eq_mul_inv]
+  ring
+
 /-! ### Raw moments, mean and variance -/
 
 /-- The `n`th raw moment of a gamma law with positive shape and rate. -/
@@ -123,8 +131,7 @@ theorem integral_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
   have hra := (Real.rpow_pos_of_pos hr a).ne'
   have hrn := (pow_pos hr n).ne'
   rw [integral_gammaMeasure_eq ha hr, setIntegral_congr_fun measurableSet_Ioi hcongr,
-    integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi han hr, one_div,
-    Real.inv_rpow hr.le, Real.rpow_add hr, Real.rpow_natCast]
+    integral_const_mul_gammaKernel _ _ _ han hr, Real.rpow_add hr, Real.rpow_natCast]
   field_simp
 
 /-- The mean of a gamma law with positive shape and rate is `a / r`. -/
@@ -137,6 +144,7 @@ theorem integral_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
   field_simp [(Real.Gamma_pos_of_pos ha).ne']
 
 /-- The second raw moment of a gamma law with positive shape and rate is `a * (a + 1) / r ^ 2`. -/
+@[simp high]
 theorem integral_sq_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     ∫ x, x ^ 2 ∂gammaMeasure a r = a * (a + 1) / r ^ 2 := by
   have hGa := (Real.Gamma_pos_of_pos ha).ne'
@@ -168,6 +176,19 @@ theorem integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht 
       (p := (1 : ℝ)) (s := a - 1) (b := r - t)
       (by linarith : (-1 : ℝ) < a - 1) one_pos (sub_pos.mpr ht)
   exact h.const_mul _
+
+/-- Every natural power is integrable under a gamma law with positive shape and rate. -/
+theorem integrable_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
+    Integrable (fun x ↦ x ^ n) (gammaMeasure a r) :=
+  integrable_pow_of_integrable_exp_mul (by positivity : (r / 2 : ℝ) ≠ 0)
+    (integrable_exp_mul_gammaMeasure ha hr (by linarith : r / 2 < r))
+    (integrable_exp_mul_gammaMeasure ha hr (by linarith : -(r / 2) < r)) n
+
+/-- The identity function belongs to `L²` of a gamma law with positive shape and rate. -/
+theorem memLp_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
+    MemLp id 2 (gammaMeasure a r) :=
+  (memLp_two_iff_integrable_sq measurable_id'.aestronglyMeasurable).2
+    (by simpa using integrable_pow_gammaMeasure ha hr 2)
 
 /-- At or above the rate of a gamma law, its exponential moments do not exist. -/
 theorem not_integrable_exp_mul_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : r ≤ t) :
@@ -210,7 +231,8 @@ theorem integrableExpSet_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
   by_contra hc
   exact not_integrable_exp_mul_gammaMeasure ha hr (not_lt.mp hc) h
 
-/-- The moment-generating function of a gamma law, on the half-line where it is finite. -/
+/-- The moment-generating function of a gamma law on the half-line where its exponential moment
+is integrable, namely `t < r`. -/
 theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
     mgf id (gammaMeasure a r) t = (1 - t / r) ^ (-a) := by
   have hrt : 0 < r - t := sub_pos.mpr ht
@@ -222,13 +244,12 @@ theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
   simp only [id_eq]
   rw [integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x _ ↦ gammaWeight_mul_exp a r t x),
-    integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi ha hrt, one_div,
-    Real.inv_rpow hrt.le, hone_sub,
+    integral_const_mul_gammaKernel _ _ _ ha hrt, hone_sub,
     Real.rpow_neg (by positivity), Real.div_rpow hrt.le hr.le]
   field_simp
 
-/-- The cumulant-generating function of a gamma law, on the half-line where it is finite. It is
-the real logarithm of `TauCeti.mgf_id_gammaMeasure`. -/
+/-- The cumulant-generating function of a gamma law on the half-line where its exponential moment
+is integrable, namely `t < r`. It is the real logarithm of `TauCeti.mgf_id_gammaMeasure`. -/
 theorem cgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
     cgf id (gammaMeasure a r) t = -a * Real.log (1 - t / r) := by
   have h : (0 : ℝ) < 1 - t / r := by
@@ -241,13 +262,7 @@ theorem cgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
 theorem variance_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
     variance id (gammaMeasure a r) = a / r ^ 2 := by
   have _ : IsProbabilityMeasure (gammaMeasure a r) := isProbabilityMeasure_gammaMeasure ha hr
-  have hsq : Integrable (fun x : ℝ ↦ x ^ 2) (gammaMeasure a r) :=
-    integrable_pow_of_integrable_exp_mul (by positivity : (r / 2 : ℝ) ≠ 0)
-      (integrable_exp_mul_gammaMeasure ha hr (by linarith : r / 2 < r))
-      (integrable_exp_mul_gammaMeasure ha hr (by linarith : -(r / 2) < r)) 2
-  have hid : MemLp id 2 (gammaMeasure a r) :=
-    (memLp_two_iff_integrable_sq measurable_id'.aestronglyMeasurable).2 (by simpa using hsq)
-  rw [variance_eq_sub hid]
+  rw [variance_eq_sub (memLp_id_gammaMeasure ha hr)]
   simp only [Pi.pow_apply, id_eq]
   rw [integral_sq_gammaMeasure ha hr, integral_id_gammaMeasure ha hr]
   field_simp
