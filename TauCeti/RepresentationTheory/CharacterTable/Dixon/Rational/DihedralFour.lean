@@ -9,6 +9,7 @@ public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Dihedral
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Dihedral
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.IntegerChecker
 
 /-!
 # The rational Dixon computation for the dihedral group of order eight
@@ -41,6 +42,8 @@ character table of the dihedral group of order eight.
   every modular entry back to the displayed integer.
 * `TauCeti.dihedralGroupFour_degree_mul_centralCharacterTable`: the division-free conversion from
   the central-character table to the ordinary character table.
+* `TauCeti.isIntegerCharacterTableSpec_dihedralGroupFour`: the exact tables pass the executable
+  checker and hence satisfy the complex character-table specification.
 
 ## References
 
@@ -255,5 +258,42 @@ theorem dihedralGroupFour_characterTable_orthogonal (i j : DihedralGroupFourClas
       if i = j then Nat.card (DihedralGroup 4) else 0 := by
   rw [DihedralGroup.nat_card]
   fin_cases i <;> fin_cases j <;> decide
+
+/-- **The rational Dixon output for the dihedral group of order eight has an exact
+character-table certificate.** Every condition is a finite equality or inequality over `ℕ` or
+`ℤ`; in particular this theorem can be checked by kernel evaluation through
+`TauCeti.ClassData.integerCharacterTableChecker`. -/
+theorem isIntegerCharacterTableSpec_dihedralGroupFour :
+    (dihedralClassData 4).IsIntegerCharacterTableSpec
+      dihedralGroupFourCentralCharacterTable dihedralGroupFourCharacterTable
+      dihedralGroupFourCharacterDegrees where
+  central_one i := by fin_cases i <;> decide
+  central_eigen := isModularEigenrow_dihedralGroupFourCentralCharacterTable_int
+  degree_pos i := (dihedralGroupFour_characterDegrees_pos_and_dvd i).1
+  degree_dvd i := by
+    simpa only [Nat.card_eq_fintype_card] using
+      (dihedralGroupFour_characterDegrees_pos_and_dvd i).2
+  sum_degree_sq := by
+    simpa only [Nat.card_eq_fintype_card] using dihedralGroupFour_sum_characterDegrees_sq
+  degree_mul_central := dihedralGroupFour_degree_mul_centralCharacterTable
+  row_orthogonal i j := by
+    simpa only [Nat.card_eq_fintype_card, Nat.cast_ite, Nat.cast_zero] using
+      dihedralGroupFour_characterTable_orthogonal i j
+
+/-- The executable exact checker accepts the rational Dixon output for `DihedralGroup 4`. -/
+theorem integerCharacterTableChecker_dihedralGroupFour :
+    (dihedralClassData 4).integerCharacterTableChecker
+      dihedralGroupFourCentralCharacterTable dihedralGroupFourCharacterTable
+      dihedralGroupFourCharacterDegrees = true := by
+  rw [(dihedralClassData 4).integerCharacterTableChecker_eq_true_iff]
+  exact isIntegerCharacterTableSpec_dihedralGroupFour
+
+/-- **The exact rational Dixon output for `DihedralGroup 4`, cast to `ℂ`, satisfies the character
+table specification.** Consequently it is the ordinary complex character table up to a row
+permutation. -/
+theorem isCharacterTableSpec_dihedralGroupFour :
+    IsCharacterTableSpec (DihedralGroup 4)
+      ((dihedralClassData 4).complexTableOfInteger dihedralGroupFourCharacterTable) :=
+  isIntegerCharacterTableSpec_dihedralGroupFour.isCharacterTableSpec
 
 end TauCeti
