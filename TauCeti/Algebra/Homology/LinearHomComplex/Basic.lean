@@ -114,7 +114,6 @@ lemma forget₂LinearHomComplexIso_inv_f (F G : CochainComplex C ℤ) (n : ℤ) 
 
 /-- The forward map of the comparison isomorphism with Mathlib's `HomComplex` is the identity on
 cochains in each degree. -/
-@[simp]
 lemma forget₂LinearHomComplexIso_hom_f_apply (F G : CochainComplex C ℤ) (n : ℤ)
     (z : Cochain F G n) :
     ((forget₂LinearHomComplexIso R F G).hom.f n) z = z :=
@@ -124,7 +123,6 @@ lemma forget₂LinearHomComplexIso_hom_f_apply (F G : CochainComplex C ℤ) (n :
 
 /-- The inverse map of the comparison isomorphism with Mathlib's `HomComplex` is the identity on
 cochains in each degree. -/
-@[simp]
 lemma forget₂LinearHomComplexIso_inv_f_apply (F G : CochainComplex C ℤ) (n : ℤ)
     (z : Cochain F G n) :
     ((forget₂LinearHomComplexIso R F G).inv.f n) z = z :=
