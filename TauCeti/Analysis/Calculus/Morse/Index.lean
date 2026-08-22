@@ -182,7 +182,10 @@ theorem IsNondegenerateCriticalPoint.neg_hessianQuadraticForm_posDef_iff_morseIn
   omega
 
 /-- At a nondegenerate critical point, the Hessian quadratic form has a diagonal normal form with
-every weight equal to `-1` or `1`.  This is Sylvester's law of inertia applied to the Hessian. -/
+every weight equal to `-1` or `1`.  The returned equivalence can be passed to
+`QuadraticForm.sigNeg_of_equiv_weightedSumSquares` to count the negative weights by the Morse
+index, after rewriting with `morseIndex_def`.  This is Sylvester's law of inertia applied to the
+Hessian. -/
 theorem IsNondegenerateCriticalPoint.exists_hessianQuadraticForm_equivalent_weightedSumSquares
     [FiniteDimensional ℝ E] (h : IsNondegenerateCriticalPoint f x) :
     ∃ w : Fin (Module.finrank ℝ E) → ℝ,
