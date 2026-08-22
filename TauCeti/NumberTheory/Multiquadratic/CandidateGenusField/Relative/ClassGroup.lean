@@ -9,6 +9,7 @@ public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.G
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.RamifiedPrimes
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Quadratic
+import Mathlib.NumberTheory.NumberField.ClassNumber
 
 /-!
 # The relative candidate-genus-field Galois group has the same order as `Cl / Cl²`
@@ -59,9 +60,7 @@ theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
     linarith
   have : NumberField (candidateGenusFieldBase hd) :=
     NumberField.of_intermediateField (candidateGenusFieldBase hd)
-  have : Fintype (ClassGroup (𝓞 (candidateGenusFieldBase hd))) :=
-    ClassGroup.fintypeOfAdmissibleOfFinite ℚ (candidateGenusFieldBase hd)
-      AbsoluteValue.absIsAdmissible
+  have : Finite (ClassGroup (𝓞 (candidateGenusFieldBase hd))) := inferInstance
   rw [card_aut_candidateGenusField_over_base hd hnsq,
     TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
     twoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
