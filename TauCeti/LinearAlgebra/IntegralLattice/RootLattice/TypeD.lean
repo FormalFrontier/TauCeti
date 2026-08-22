@@ -762,16 +762,14 @@ theorem addOrderOf_checkerboardSpinorClass_of_even (hn : Even n) :
       exact two_zsmul_checkerboardSpinorClass_of_even n hn)
     (checkerboardSpinorClass_ne_zero n)
 
-/-- For even `n`, the multiples of the spinor class are exactly zero and the spinor class. -/
-theorem mem_zmultiples_checkerboardSpinorClass_iff (hn : Even n)
-    (x : (checkerboardLattice n).DiscriminantGroup) :
-    x ∈ AddSubgroup.zmultiples (checkerboardSpinorClass n) ↔
-      x = 0 ∨ x = checkerboardSpinorClass n := by
+private theorem mem_zmultiples_iff_eq_zero_or_eq_of_two_zsmul_eq_zero
+    {A : Type*} [AddGroup A] (a x : A) (ha : (2 : ℤ) • a = 0) :
+    x ∈ AddSubgroup.zmultiples a ↔ x = 0 ∨ x = a := by
   constructor
   · intro hx
     obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
-    have hmul (m : ℤ) : (2 * m : ℤ) • checkerboardSpinorClass n = 0 := by
-      rw [mul_comm, mul_zsmul, two_zsmul_checkerboardSpinorClass_of_even n hn, zsmul_zero]
+    have hmul (m : ℤ) : (2 * m : ℤ) • a = 0 := by
+      rw [mul_comm, mul_zsmul, ha, zsmul_zero]
     obtain hk | hk := Int.even_or_odd k
     · obtain ⟨m, rfl⟩ := hk
       left
@@ -780,8 +778,16 @@ theorem mem_zmultiples_checkerboardSpinorClass_iff (hn : Even n)
       right
       rw [add_zsmul, hmul m, one_zsmul, zero_add]
   · rintro (rfl | rfl)
-    · exact (AddSubgroup.zmultiples (checkerboardSpinorClass n)).zero_mem
+    · exact (AddSubgroup.zmultiples a).zero_mem
     · exact AddSubgroup.mem_zmultiples_iff.mpr ⟨1, by rw [one_zsmul]⟩
+
+/-- For even `n`, the multiples of the spinor class are exactly zero and the spinor class. -/
+theorem mem_zmultiples_checkerboardSpinorClass_iff (hn : Even n)
+    (x : (checkerboardLattice n).DiscriminantGroup) :
+    x ∈ AddSubgroup.zmultiples (checkerboardSpinorClass n) ↔
+      x = 0 ∨ x = checkerboardSpinorClass n := by
+  exact mem_zmultiples_iff_eq_zero_or_eq_of_two_zsmul_eq_zero
+    (checkerboardSpinorClass n) x (two_zsmul_checkerboardSpinorClass_of_even n hn)
 
 omit [NeZero n] in
 /-- **For odd `n` the vector class is twice the spinor class**, so the discriminant group is
