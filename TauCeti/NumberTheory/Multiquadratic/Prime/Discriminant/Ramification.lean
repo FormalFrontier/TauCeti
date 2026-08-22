@@ -101,7 +101,7 @@ Away from `2` the witness is `2x`, whose square `4d` lies in `P`; at `2` the odd
 discriminant congruent to `1` modulo `4` makes `(1 + x) / 2` an algebraic integer, and the
 corresponding witness squares to `d`. -/
 private theorem eq_primeDiscriminantPrime_of_apply_eq_neg {M : Type v} [Field M] [NumberField M]
-    {p : ℕ} (hp : p.Prime) (P : Ideal (𝓞 M)) [P.IsPrime] [P.LiesOver (Ideal.span {(p : ℤ)})]
+    {p : ℕ} (hp : p.Prime) (P : Ideal (𝓞 M)) [P.LiesOver (Ideal.span {(p : ℤ)})]
     {D : ℤ} (hD : IsPrimeDiscriminant D) {x : M}
     (hx : x ^ 2 = algebraMap ℤ M (primeDiscriminantRadicand D)) {σ : M ≃ₐ[ℚ] M}
     (hσ : ∀ z : 𝓞 M, σ • z - z ∈ P) (hneg : σ x = -x) :
