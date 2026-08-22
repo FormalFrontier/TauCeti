@@ -83,7 +83,8 @@ def forget₂LinearHomComplexIso (F G : CochainComplex C ℤ) :
         (linearHomComplex R F G) ≅ CochainComplex.HomComplex F G :=
   HomologicalComplex.Hom.isoOfComponents (fun _ => Iso.refl _) (fun _ _ _ => rfl)
 
-@[simp]
+/-- The forward map of the comparison isomorphism with Mathlib's `HomComplex` is the identity on
+cochains in each degree. -/
 lemma forget₂LinearHomComplexIso_hom_f_apply (F G : CochainComplex C ℤ) (n : ℤ)
     (z : Cochain F G n) :
     ((forget₂LinearHomComplexIso R F G).hom.f n) z = z :=
@@ -92,7 +93,8 @@ lemma forget₂LinearHomComplexIso_hom_f_apply (F G : CochainComplex C ℤ) (n :
     exact CategoryTheory.ConcreteCategory.id_apply
       (C := AddCommGrpCat) (X := AddCommGrpCat.of (Cochain F G n)) z
 
-@[simp]
+/-- The inverse map of the comparison isomorphism with Mathlib's `HomComplex` is the identity on
+cochains in each degree. -/
 lemma forget₂LinearHomComplexIso_inv_f_apply (F G : CochainComplex C ℤ) (n : ℤ)
     (z : Cochain F G n) :
     ((forget₂LinearHomComplexIso R F G).inv.f n) z = z :=
