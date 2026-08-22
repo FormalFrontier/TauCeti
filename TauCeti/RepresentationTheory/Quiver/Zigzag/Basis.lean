@@ -13,10 +13,10 @@ public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
 # The vertex, arrow and volume basis of a zigzag algebra
 
 The zigzag relation quotient `TauCeti.nonisolatedZigzagQuotient` of a finite simple graph `G` kills
-every path of length at least three and identifies all the backtracks based at one vertex. What
-survives is spanned by the vertex idempotents, the oriented edges, and one *volume* class per
-vertex. This file proves that these classes are a basis whenever `G` has no isolated vertex, and
-reads off the dimension `2|V| + 2|E|`.
+every length-two path whose endpoints differ, identifies all the backtracks based at one vertex,
+and kills every path of length at least three. What survives is spanned by the vertex idempotents,
+the oriented edges, and one *volume* class per vertex. This file proves that these classes are a
+basis whenever `G` has no isolated vertex, and reads off the dimension `2|V| + 2|E|`.
 
 Spanning is immediate from the relations. Independence is the substantive half, and is proved by
 exhibiting a coordinate map. The path algebra is free on the paths of the doubled quiver, so a
@@ -27,23 +27,24 @@ when both outer paths are trivial, the relator itself, so this map kills the rel
 therefore separates the candidate basis classes, which it sends to distinct basis paths.
 
 The hypothesis is that every vertex has a neighbour: an isolated vertex carries no backtrack, so
-its volume class does not exist. For a connected graph with at least two vertices the hypothesis is
-automatic, which is the form the roadmap's dimension count takes.
+its volume class does not exist. For a preconnected graph with at least two vertices the hypothesis
+is automatic, which is the form the roadmap's dimension count takes.
 
 ## Main definitions
 
 * `TauCeti.zigzagVolume`: the volume class of a vertex, the common image of its backtracks.
-* `TauCeti.ZigzagBasisIndex`: vertices in degree zero, darts in degree one, vertices in degree two.
+* `TauCeti.ZigzagBasisIndex`: one index per vertex, carrying its idempotent, one per dart, carrying
+  its arrow, and one more per vertex, carrying its volume class.
 * `TauCeti.zigzagBasisFun`: the vertex, arrow and volume family.
 * `TauCeti.zigzagBasis`: that family, as a basis of the zigzag relation quotient.
 
 ## Main results
 
-* `TauCeti.linearIndependent_zigzagBasisFun` and `TauCeti.span_range_zigzagBasisFun`: the family is
-  independent and spans.
+* `TauCeti.linearIndependent_zigzagBasisFun` and `TauCeti.span_range_zigzagBasisFun_eq_top`: the
+  family is independent and spans.
 * `TauCeti.finrank_nonisolatedZigzagQuotient`: the dimension is `2|V| + 2|E|`.
-* `TauCeti.finrank_nonisolatedZigzagQuotient_of_connected`: the same count for a connected graph
-  with at least two vertices.
+* `TauCeti.finrank_nonisolatedZigzagQuotient_of_preconnected`: the same count for a preconnected
+  graph with at least two vertices.
 
 ## References
 
@@ -83,6 +84,17 @@ private theorem length_volumeLoop {i j : V} (h : G.Adj i j) : (volumeLoop G i).l
   rw [volumeLoop, dite_eq_left (⟨j, h⟩ : ∃ j, G.Adj i j)]
   exact length_backtrackPath G _
 
+/-- A chosen dart out of each vertex of a graph with no isolated vertex. -/
+private noncomputable def volumeDart (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V) : G.Dart :=
+  ⟨(i, (hns i).choose), (hns i).choose_spec⟩
+
+/-- The chosen backtrack at a vertex is the backtrack along the chosen dart out of it. -/
+private theorem ofPath_volumePath_eq_backtrackElem (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V) :
+    (ofPath (volumePath G i) : pathAlgebra k (DoubledQuiver G))
+      = backtrackElem G k (volumeDart G hns i).adj := by
+  rw [volumePath, volumeLoop, dite_eq_left (hns i), backtrackElem_eq_ofPath]
+  rfl
+
 /-! ### Volume classes -/
 
 variable [Finite V]
@@ -101,6 +113,18 @@ theorem zigzagVolume_eq_zigzagMk_backtrackElem {i j : V} (h : G.Adj i j) :
   rw [zigzagVolume, dite_eq_left (⟨j, h⟩ : ∃ j, G.Adj i j)]
   exact zigzagMk_backtrackElem_eq k G _ h
 
+/-- The class of a backtrack is the volume class of its base vertex. This is the direction
+automation can use: both endpoints are determined by the adjacency on the left-hand side. -/
+@[simp]
+theorem zigzagMk_backtrackElem_eq_zigzagVolume {i j : V} (h : G.Adj i j) :
+    zigzagMk k G (backtrackElem G k h) = zigzagVolume k G i :=
+  (zigzagVolume_eq_zigzagMk_backtrackElem k G h).symm
+
+/-- The volume class of an isolated vertex is the junk value `0`: it carries no backtrack. -/
+theorem zigzagVolume_eq_zero_of_isIsolated {i : V} (h : G.IsIsolated i) :
+    zigzagVolume k G i = 0 := by
+  rw [zigzagVolume, dite_eq_right fun hi => SimpleGraph.exists_adj_iff_not_isIsolated.mp hi h]
+
 private theorem zigzagMk_ofPath_volumePath {i j : V} (h : G.Adj i j) :
     zigzagMk k G (ofPath (volumePath G i)) = zigzagVolume k G i := by
   have hex : ∃ j, G.Adj i j := ⟨j, h⟩
@@ -109,8 +133,9 @@ private theorem zigzagMk_ofPath_volumePath {i j : V} (h : G.Adj i j) :
 
 /-! ### The vertex, arrow and volume family -/
 
-/-- The homogeneous basis indices of a zigzag algebra: a vertex in path degree zero, an oriented
-edge in path degree one, and a volume class at a vertex in path degree two. -/
+/-- The basis indices of a zigzag algebra: a vertex, carrying its idempotent, an oriented edge,
+carrying its arrow, and a vertex again, carrying its volume class. The three blocks are
+represented by paths of length zero, one and two respectively. -/
 abbrev ZigzagBasisIndex : Type _ := V ⊕ G.Dart ⊕ V
 
 /-- The vertex, arrow and volume family of a zigzag algebra: the class of a vertex idempotent, the
@@ -165,23 +190,18 @@ private noncomputable def shortCoord (x : Quiver.TotalPath (DoubledQuiver G)) :
 /-- The coordinate map of the zigzag relations: the `k`-linear extension of `shortCoord`. -/
 private noncomputable def shortProj :
     pathAlgebra k (DoubledQuiver G) →ₗ[k] pathAlgebra k (DoubledQuiver G) :=
-  (pathAlgebraBasis k (DoubledQuiver G)).constr k (shortCoord k G)
-
-private theorem shortProj_ofPath (x : Quiver.TotalPath (DoubledQuiver G)) :
-    shortProj k G (ofPath x) = shortCoord k G x := by
-  have hx : (ofPath x : pathAlgebra k (DoubledQuiver G))
-      = pathAlgebraBasis k (DoubledQuiver G) x := by rw [coe_pathAlgebraBasis]
-  rw [shortProj, hx, Module.Basis.constr_basis]
+  liftLinear k (shortCoord k G)
 
 private theorem shortProj_ofPath_of_length_le_one {a b : DoubledQuiver G}
     (p : _root_.Quiver.Path a b) (hp : p.length ≤ 1) :
     shortProj k G (ofPath ⟨a, b, p⟩) = ofPath ⟨a, b, p⟩ := by
-  rw [shortProj_ofPath, shortCoord, ite_eq_left hp]
+  rw [shortProj, liftLinear_ofPath, shortCoord, ite_eq_left hp]
 
 private theorem shortProj_ofPath_eq_zero_of_three_le {a b : DoubledQuiver G}
     (p : _root_.Quiver.Path a b) (hp : 3 ≤ p.length) :
     shortProj k G (ofPath ⟨a, b, p⟩) = 0 := by
-  rw [shortProj_ofPath, shortCoord, ite_eq_right (Nat.not_le.mpr (by omega : 1 < p.length)),
+  rw [shortProj, liftLinear_ofPath, shortCoord,
+    ite_eq_right (Nat.not_le.mpr (by omega : 1 < p.length)),
     ite_eq_right fun h => by
       have h2 : p.length = 2 := h.1
       omega]
@@ -189,56 +209,66 @@ private theorem shortProj_ofPath_eq_zero_of_three_le {a b : DoubledQuiver G}
 private theorem shortProj_ofPath_eq_zero_of_ne {a b : DoubledQuiver G}
     (p : _root_.Quiver.Path a b) (hp : p.length = 2) (hne : b ≠ a) :
     shortProj k G (ofPath ⟨a, b, p⟩) = 0 := by
-  rw [shortProj_ofPath, shortCoord, ite_eq_right (Nat.not_le.mpr (by omega : 1 < p.length)),
-    ite_eq_right fun h => hne h.2]
+  rw [shortProj, liftLinear_ofPath, shortCoord,
+    ite_eq_right (Nat.not_le.mpr (by omega : 1 < p.length)), ite_eq_right fun h => hne h.2]
 
 private theorem shortProj_ofPath_of_loop {a : DoubledQuiver G} (p : _root_.Quiver.Path a a)
     (hp : p.length = 2) :
     shortProj k G (ofPath ⟨a, a, p⟩) = ofPath (volumePath G ((vertexEquiv G).symm a)) := by
-  rw [shortProj_ofPath, shortCoord, ite_eq_right (Nat.not_le.mpr (by omega : 1 < p.length)),
-    ite_eq_left ⟨hp, rfl⟩]
+  rw [shortProj, liftLinear_ofPath, shortCoord,
+    ite_eq_right (Nat.not_le.mpr (by omega : 1 < p.length)), ite_eq_left ⟨hp, rfl⟩]
 
-private theorem shortProj_ofPath_zigzagBasisPath (hns : ∀ i : V, ∃ j, G.Adj i j)
-    (b : ZigzagBasisIndex G) :
+private theorem shortProj_ofPath_zigzagBasisPath (b : ZigzagBasisIndex G) :
     shortProj k G (ofPath (zigzagBasisPath G b)) = ofPath (zigzagBasisPath G b) := by
   rcases b with i | d | i
   · exact shortProj_ofPath_of_length_le_one k G _ (by simp)
   · exact shortProj_ofPath_of_length_le_one k G _ (by simp)
-  · obtain ⟨j, h⟩ := hns i
-    simp only [zigzagBasisPath]
-    refine (shortProj_ofPath_of_loop k G (volumeLoop G i) (length_volumeLoop G h)).trans ?_
-    rw [vertexEquiv_symm_vertex]
+  · simp only [zigzagBasisPath]
+    by_cases h : ∃ j, G.Adj i j
+    · obtain ⟨j, hj⟩ := h
+      refine (shortProj_ofPath_of_loop k G (volumeLoop G i) (length_volumeLoop G hj)).trans ?_
+      rw [vertexEquiv_symm_vertex]
+    · rw [volumePath, volumeLoop, dite_eq_right h]
+      exact shortProj_ofPath_of_length_le_one k G _ (by simp)
 
 /-! ### The coordinate map kills the relation ideal -/
 
-/-- Sandwiching a path of length at least two between two basis paths: the product either vanishes,
-or is a path of length at least three unless both outer paths are trivial. -/
+/-- A path of length at least two, sandwiched between two composable paths of positive total
+length, is killed by the coordinate map: the composite has length at least three. -/
+private theorem shortProj_sandwich_of_pos {a b c e : DoubledQuiver G}
+    (p : _root_.Quiver.Path a b) (r : _root_.Quiver.Path c a) (q : _root_.Quiver.Path e c)
+    (hr : 2 ≤ r.length) (hpq : 0 < p.length + q.length) :
+    shortProj k G (ofPath ⟨a, b, p⟩ * ofPath ⟨c, a, r⟩ * ofPath ⟨e, c, q⟩) = 0 := by
+  rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp]
+  refine shortProj_ofPath_eq_zero_of_three_le k G _ ?_
+  rw [_root_.Quiver.Path.length_comp, _root_.Quiver.Path.length_comp]
+  omega
+
+/-- Sandwiching between two paths a path of length at least two that the coordinate map already
+kills is again killed by the coordinate map. -/
 private theorem shortProj_sandwich_ofPath {a b c d e f : DoubledQuiver G}
     (p : _root_.Quiver.Path a b) (r : _root_.Quiver.Path c d) (q : _root_.Quiver.Path e f)
     (hr : 2 ≤ r.length) (hzero : shortProj k G (ofPath ⟨c, d, r⟩) = 0) :
     shortProj k G (ofPath ⟨a, b, p⟩ * ofPath ⟨c, d, r⟩ * ofPath ⟨e, f, q⟩) = 0 := by
   by_cases hda : d = a
-  · by_cases hfc : f = c
-    · subst hda
-      subst hfc
-      rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp]
+  · subst hda
+    by_cases hfc : f = c
+    · subst hfc
       rcases Nat.eq_zero_or_pos (p.length + q.length) with hlen | hlen
       · have hp : p.length = 0 := by omega
         have hq : q.length = 0 := by omega
-        cases p with
-        | cons _ _ => simp at hp
-        | nil =>
-          cases q with
-          | cons _ _ => simp at hq
-          | nil => rwa [_root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp]
-      · refine shortProj_ofPath_eq_zero_of_three_le k G _ ?_
-        rw [_root_.Quiver.Path.length_comp, _root_.Quiver.Path.length_comp]
-        omega
-    · subst hda
-      rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_not_composable hfc, map_zero]
+        obtain rfl := p.eq_of_length_zero hp
+        obtain rfl := p.eq_nil_of_length_zero hp
+        obtain rfl := q.eq_of_length_zero hq
+        obtain rfl := q.eq_nil_of_length_zero hq
+        rwa [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
+          _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp]
+      · exact shortProj_sandwich_of_pos k G p r q hr hlen
+    · rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_not_composable hfc, map_zero]
   · rw [ofPath_mul_ofPath_of_not_composable hda, zero_mul, map_zero]
 
-/-- Sandwiching the difference of two length-two loops at one vertex between two basis paths. -/
+/-- Sandwiching between two paths the difference of two length-two loops at one vertex is killed
+by the coordinate map: the two loops have the same coordinate. -/
 private theorem shortProj_sandwich_sub {a b c e f : DoubledQuiver G}
     (p : _root_.Quiver.Path a b) (r₁ r₂ : _root_.Quiver.Path c c)
     (q : _root_.Quiver.Path e f) (h₁ : r₁.length = 2) (h₂ : r₂.length = 2) :
@@ -246,30 +276,23 @@ private theorem shortProj_sandwich_sub {a b c e f : DoubledQuiver G}
       (ofPath ⟨a, b, p⟩ * (ofPath ⟨c, c, r₁⟩ - ofPath ⟨c, c, r₂⟩) * ofPath ⟨e, f, q⟩) = 0 := by
   rw [mul_sub, sub_mul, map_sub]
   by_cases hca : c = a
-  · by_cases hfc : f = c
-    · subst hca
-      subst hfc
-      rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
-        ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp]
+  · subst hca
+    by_cases hfc : f = c
+    · subst hfc
       rcases Nat.eq_zero_or_pos (p.length + q.length) with hlen | hlen
       · have hp : p.length = 0 := by omega
         have hq : q.length = 0 := by omega
-        cases p with
-        | cons _ _ => simp at hp
-        | nil =>
-          cases q with
-          | cons _ _ => simp at hq
-          | nil =>
-            rw [_root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp,
-              _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp,
-              shortProj_ofPath_of_loop k G r₁ h₁, shortProj_ofPath_of_loop k G r₂ h₂, sub_self]
-      · rw [shortProj_ofPath_eq_zero_of_three_le k G (q.comp (r₁.comp p)) (by
-            rw [_root_.Quiver.Path.length_comp, _root_.Quiver.Path.length_comp]; omega),
-          shortProj_ofPath_eq_zero_of_three_le k G (q.comp (r₂.comp p)) (by
-            rw [_root_.Quiver.Path.length_comp, _root_.Quiver.Path.length_comp]; omega),
-          sub_zero]
-    · subst hca
-      rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
+        obtain rfl := p.eq_of_length_zero hp
+        obtain rfl := p.eq_nil_of_length_zero hp
+        obtain rfl := q.eq_of_length_zero hq
+        obtain rfl := q.eq_nil_of_length_zero hq
+        rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
+          ofPath_mul_ofPath_of_comp, _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp,
+          _root_.Quiver.Path.comp_nil, _root_.Quiver.Path.nil_comp,
+          shortProj_ofPath_of_loop k G r₁ h₁, shortProj_ofPath_of_loop k G r₂ h₂, sub_self]
+      · rw [shortProj_sandwich_of_pos k G p r₁ q h₁.ge hlen,
+          shortProj_sandwich_of_pos k G p r₂ q h₂.ge hlen, sub_zero]
+    · rw [ofPath_mul_ofPath_of_comp, ofPath_mul_ofPath_of_comp,
         ofPath_mul_ofPath_of_not_composable hfc, ofPath_mul_ofPath_of_not_composable hfc]
       simp
   · rw [ofPath_mul_ofPath_of_not_composable hca, ofPath_mul_ofPath_of_not_composable hca]
@@ -303,12 +326,9 @@ private theorem shortProj_mul_relator_mul {x : pathAlgebra k (DoubledQuiver G)}
     | zero => simp
     | add v₁ v₂ hv₁ hv₂ => rw [mul_add, map_add, hv₁, hv₂, add_zero]
     | single pv cv =>
-      have hu : (single pu cu : pathAlgebra k (DoubledQuiver G)) = cu • ofPath pu := by
-        rw [ofPath_eq_single, smul_single, mul_one]
-      have hv : (single pv cv : pathAlgebra k (DoubledQuiver G)) = cv • ofPath pv := by
-        rw [ofPath_eq_single, smul_single, mul_one]
-      rw [hu, hv, smul_mul_assoc, smul_mul_assoc, mul_smul_comm, map_smul, map_smul,
-        shortProj_ofPath_mul_relator_mul_ofPath k G hx, smul_zero, smul_zero]
+      rw [single_eq_smul_ofPath, single_eq_smul_ofPath, smul_mul_assoc, smul_mul_assoc,
+        mul_smul_comm, map_smul, map_smul, shortProj_ofPath_mul_relator_mul_ofPath k G hx,
+        smul_zero, smul_zero]
 
 private theorem shortProj_eq_zero_of_mem_zigzagIdeal {x : pathAlgebra k (DoubledQuiver G)}
     (hx : x ∈ zigzagIdeal k G) : shortProj k G x = 0 := by
@@ -325,54 +345,29 @@ private theorem shortProj_eq_zero_of_mem_zigzagIdeal {x : pathAlgebra k (Doubled
 /-! ### The basis -/
 
 omit [Finite V] in
-/-- The paths underlying the basis family are distinct, so their basis elements of the path algebra
-are independent. -/
+/-- The paths underlying the basis family are the trivial paths, the arrows of the darts, and the
+backtracks along the chosen darts, so their independence is the independence of the vertex
+idempotents, the oriented edges and the backtracks, reindexed along an injection. -/
 private theorem linearIndependent_ofPath_zigzagBasisPath (hns : ∀ i : V, ∃ j, G.Adj i j) :
     LinearIndependent k fun b : ZigzagBasisIndex G =>
       (ofPath (zigzagBasisPath G b) : pathAlgebra k (DoubledQuiver G)) := by
-  have hlen : ∀ b : ZigzagBasisIndex G, (zigzagBasisPath G b).2.2.length =
-      Sum.elim (fun _ : V => 0) (Sum.elim (fun _ : G.Dart => 1) fun _ : V => 2) b := by
-    rintro (i | d | i)
-    · simp [zigzagBasisPath]
-    · simp [zigzagBasisPath]
-    · obtain ⟨j, h⟩ := hns i
-      simp only [zigzagBasisPath, volumePath, Sum.elim_inr]
-      exact length_volumeLoop G h
-  have hinj : Function.Injective (zigzagBasisPath G) := by
-    rintro x y hxy
-    have hl : Sum.elim (fun _ : V => 0) (Sum.elim (fun _ : G.Dart => 1) fun _ : V => 2) x
-        = Sum.elim (fun _ : V => 0) (Sum.elim (fun _ : G.Dart => 1) fun _ : V => 2) y := by
-      rw [← hlen x, ← hlen y, hxy]
-    rcases x with i | ⟨⟨a, b⟩, hab⟩ | i <;> rcases y with i' | ⟨⟨a', b'⟩, ha'b'⟩ | i' <;>
-      simp only [Sum.elim_inl, Sum.elim_inr] at hl
-    · simp only [zigzagBasisPath] at hxy
-      have hv : vertex G i = vertex G i' := by exact congrArg Sigma.fst hxy
-      rw [(vertex_inj G).mp hv]
-    · simp at hl
-    · simp at hl
-    · simp at hl
-    · simp only [zigzagBasisPath] at hxy
-      have h1 : a = a' := (vertex_inj G).mp (by exact congrArg Sigma.fst hxy)
-      have h2 : b = b' := (vertex_inj G).mp
-        (by exact congrArg (fun z : Quiver.TotalPath (DoubledQuiver G) => z.2.1) hxy)
-      subst h1
-      subst h2
-      rfl
-    · simp at hl
-    · simp at hl
-    · simp at hl
-    · simp only [zigzagBasisPath] at hxy
-      have hv : vertex G i = vertex G i' := by
-        rw [← volumePath_fst G i, ← volumePath_fst G i']
-        exact congrArg Sigma.fst hxy
-      rw [(vertex_inj G).mp hv]
   have hfam : (fun b : ZigzagBasisIndex G =>
       (ofPath (zigzagBasisPath G b) : pathAlgebra k (DoubledQuiver G)))
-      = ⇑(pathAlgebraBasis k (DoubledQuiver G)) ∘ zigzagBasisPath G := by
+      = Sum.elim (fun v : V => (vertexIdempotent k (vertex G v) : pathAlgebra k (DoubledQuiver G)))
+          (Sum.elim (fun d : G.Dart => (ofArrow (arrow G d.adj) : pathAlgebra k (DoubledQuiver G)))
+            fun d : G.Dart => backtrackElem G k d.adj) ∘
+        Sum.map id (Sum.map id (volumeDart G hns)) := by
     funext b
-    rw [Function.comp_apply, coe_pathAlgebraBasis]
+    rcases b with i | d | i
+    · simp [zigzagBasisPath, vertexIdempotent_eq_single, ofPath_eq_single]
+    · simp [zigzagBasisPath, arrowPath_eq_toPath]
+    · exact ofPath_volumePath_eq_backtrackElem k G hns i
+  have hdart : Function.Injective (volumeDart G hns) :=
+    fun _ _ h => congrArg (fun d : G.Dart => d.toProd.1) h
   rw [hfam]
-  exact (pathAlgebraBasis k (DoubledQuiver G)).linearIndependent.comp _ hinj
+  exact (linearIndependent_vertexIdempotent_ofArrow_backtrackElem G k).comp _
+    (Sum.map_injective.2 ⟨Function.injective_id,
+      Sum.map_injective.2 ⟨Function.injective_id, hdart⟩⟩)
 
 /-- **The vertex, arrow and volume classes are independent.** -/
 theorem linearIndependent_zigzagBasisFun (hns : ∀ i : V, ∃ j, G.Adj i j) :
@@ -390,10 +385,10 @@ theorem linearIndependent_zigzagBasisFun (hns : ∀ i : V, ∃ j, G.Adj i j) :
   refine linearIndependent_iff.mp (linearIndependent_ofPath_zigzagBasisPath k G hns) l ?_
   rw [← hzero]
   exact congrArg (fun f => Finsupp.linearCombination k f l)
-    (funext fun b => (shortProj_ofPath_zigzagBasisPath k G hns b).symm)
+    (funext fun b => (shortProj_ofPath_zigzagBasisPath k G b).symm)
 
 /-- **The vertex, arrow and volume classes span.** -/
-theorem span_range_zigzagBasisFun :
+theorem span_range_zigzagBasisFun_eq_top :
     Submodule.span k (Set.range (zigzagBasisFun k G)) = ⊤ := by
   have key : ∀ x : Quiver.TotalPath (DoubledQuiver G),
       zigzagMk k G (ofPath x) ∈ Submodule.span k (Set.range (zigzagBasisFun k G)) := by
@@ -421,41 +416,46 @@ theorem span_range_zigzagBasisFun :
           exact Submodule.zero_mem _
     · rw [zigzagMk_ofPath_eq_zero_of_three_le k G ⟨_, _, p⟩ hge]
       exact Submodule.zero_mem _
-  rw [eq_top_iff]
-  rintro x -
-  obtain ⟨y, rfl⟩ := Ideal.Quotient.mk_surjective x
-  rw [← zigzagMk_apply]
-  induction y using PathAlgebra.induction_linear with
-  | zero =>
-    rw [map_zero]
-    exact Submodule.zero_mem _
-  | add y₁ y₂ hy₁ hy₂ =>
-    rw [map_add]
-    exact Submodule.add_mem _ hy₁ hy₂
-  | single z c =>
-    have hz : (single z c : pathAlgebra k (DoubledQuiver G)) = c • ofPath z := by
-      rw [ofPath_eq_single, smul_single, mul_one]
-    rw [hz, map_smul]
-    exact Submodule.smul_mem _ _ (key z)
+  -- the images of *all* the basis paths span the quotient, the quotient map being onto
+  have htop : Submodule.span k (Set.range fun x : Quiver.TotalPath (DoubledQuiver G) =>
+      (zigzagMk k G).toLinearMap (ofPath x)) = ⊤ := by
+    have hsurj : Function.Surjective ⇑(zigzagMk k G).toLinearMap := fun y => by
+      obtain ⟨f, rfl⟩ := Ideal.Quotient.mk_surjective y
+      exact ⟨f, zigzagMk_apply k G f⟩
+    have hmap : Submodule.map (zigzagMk k G).toLinearMap ⊤ = ⊤ := by
+      rw [Submodule.map_top, LinearMap.range_eq_top.2 hsurj]
+    rw [← hmap, ← (pathAlgebraBasis k (DoubledQuiver G)).span_eq, Submodule.map_span,
+      coe_pathAlgebraBasis, ← Set.range_comp]
+    rfl
+  rw [eq_top_iff, ← htop]
+  exact Submodule.span_le.2 (Set.range_subset_iff.2 fun x => SetLike.mem_coe.2 (key x))
 
 /-- **The basis of a zigzag algebra.** For a finite simple graph with no isolated vertex the vertex
 idempotents, the oriented edges, and the volume classes are a basis of the zigzag relation
-quotient, homogeneous of path degrees `0`, `1` and `2`. -/
+quotient. The three blocks are represented by paths of length `0`, `1` and `2`; the path grading
+itself is not formalised in this repository, so homogeneity is not stated here. -/
 noncomputable def zigzagBasis (hns : ∀ i : V, ∃ j, G.Adj i j) :
     Module.Basis (ZigzagBasisIndex G) k (nonisolatedZigzagQuotient k G) :=
   Module.Basis.mk (linearIndependent_zigzagBasisFun k G hns)
-    (span_range_zigzagBasisFun k G).ge
+    (span_range_zigzagBasisFun_eq_top k G).ge
 
 @[simp]
 theorem zigzagBasis_apply (hns : ∀ i : V, ∃ j, G.Adj i j) (b : ZigzagBasisIndex G) :
     zigzagBasis k G hns b = zigzagBasisFun k G b :=
   Module.Basis.mk_apply _ _ _
 
-/-- The volume class of a vertex of a graph with no isolated vertex is nonzero. -/
-theorem zigzagVolume_ne_zero [Nontrivial k] (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V) :
+/-- The volume class of a vertex with a neighbour is nonzero, whatever the rest of the graph does:
+its chosen backtrack survives the coordinate map. -/
+theorem zigzagVolume_ne_zero [Nontrivial k] {i j : V} (h : G.Adj i j) :
     zigzagVolume k G i ≠ 0 := by
-  have hne := (zigzagBasis k G hns).ne_zero (.inr (.inr i))
-  rwa [zigzagBasis_apply, zigzagBasisFun_inr_inr] at hne
+  have hne : (ofPath (volumePath G i) : pathAlgebra k (DoubledQuiver G)) ≠ 0 := by
+    simpa using (pathAlgebraBasis k (DoubledQuiver G)).ne_zero (volumePath G i)
+  intro hvol
+  rw [zigzagVolume_eq_zigzagMk_backtrackElem k G h, zigzagMk_eq_zero_iff] at hvol
+  have hproj := shortProj_eq_zero_of_mem_zigzagIdeal k G hvol
+  rw [backtrackElem_eq_ofPath, shortProj_ofPath_of_loop k G (backtrackPath G h)
+    (length_backtrackPath G h), vertexEquiv_symm_vertex] at hproj
+  exact hne hproj
 
 /-! ### The dimension -/
 
@@ -469,14 +469,13 @@ theorem finrank_nonisolatedZigzagQuotient [Nontrivial k] [Fintype V] [DecidableR
   simp only [ZigzagBasisIndex, Fintype.card_sum, G.dart_card_eq_twice_card_edges]
   ring
 
-/-- **The dimension of the zigzag algebra of a connected graph.** For a connected graph with at
-least two vertices, `dim Z(G) = 2|V| + 2|E|`: connectedness leaves no isolated vertex. -/
-theorem finrank_nonisolatedZigzagQuotient_of_connected [Nontrivial k] [Fintype V]
-    [DecidableRel G.Adj] (hconn : G.Connected) (hcard : 1 < Fintype.card V) :
+/-- **The dimension of the zigzag algebra of a preconnected graph.** For a preconnected graph with
+at least two vertices, `dim Z(G) = 2|V| + 2|E|`: preconnectedness leaves no isolated vertex. -/
+theorem finrank_nonisolatedZigzagQuotient_of_preconnected [Nontrivial k] [Fintype V] [Nontrivial V]
+    [DecidableRel G.Adj] (hconn : G.Preconnected) :
     Module.finrank k (nonisolatedZigzagQuotient k G)
       = 2 * Fintype.card V + 2 * G.edgeFinset.card :=
-  have : Nontrivial V := Fintype.one_lt_card_iff_nontrivial.mp hcard
   finrank_nonisolatedZigzagQuotient k G fun i =>
-    SimpleGraph.exists_adj_iff_not_isIsolated.mpr (hconn.preconnected.not_isIsolated i)
+    SimpleGraph.exists_adj_iff_not_isIsolated.mpr (hconn.not_isIsolated i)
 
 end TauCeti
