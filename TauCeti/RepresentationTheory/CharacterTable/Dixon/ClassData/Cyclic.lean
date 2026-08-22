@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.ZMod.Basic
+public import TauCeti.GroupTheory.SpecificGroups.Cyclic
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Basic
 
 /-!
@@ -18,18 +18,18 @@ each conjugacy class is a singleton.
 
 The order produced by `TauCeti.ClassData.ofList` is the order of the retained representatives in
 the input enumeration.  For `n = 2` the resulting representatives are `0, 1`, which in
-multiplicative notation are the identity and the nontrivial element.  The concrete class sizes and
-structure constants below are kernel-checked inputs to the rational Dixon computation for `C₂`.
+multiplicative notation are the identity and the nontrivial element.  The concrete `C₂` class sizes
+and structure constants below are kernel-checked acceptance tests of the general class data.
 
 ## Main definitions
 
-* `TauCeti.cyclicElements`: a computable enumeration of `Multiplicative (ZMod n)`.
 * `TauCeti.cyclicClassData`: executable class data obtained from that enumeration.
 
 ## Main results
 
 * `TauCeti.numClasses_cyclicClassData`: a cyclic group of order `n` has `n` numbered classes.
 * `TauCeti.classFinset_cyclicClassData`: every numbered cyclic class is a singleton.
+* `TauCeti.structureConstant_cyclicClassData`: the structure constants are cyclic convolution.
 * `TauCeti.card_classFinset_cyclicClassData_two`: both classes are singletons.
 * `TauCeti.structureConstantTable_cyclicClassData_two`: the complete multiplication table of the
   two class sums.
@@ -39,29 +39,14 @@ structure constants below are kernel-checked inputs to the rational Dixon comput
 This supplies the executable class data for the cyclic `C₂` example in Layer 6, “Rational tables
 (first executable milestone),” of the [character theory roadmap][roadmap].
 
+The definition follows the executable pattern of `TauCeti.dihedralClassData`.
+
 [roadmap]: https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md
 -/
 
 public section
 
 namespace TauCeti
-
-/-- For `n ≠ 0`, the standard computable enumeration of the finite cyclic group
-`Multiplicative (ZMod n)`. For `n = 0`, this list is empty. -/
-@[expose] def cyclicElements (n : ℕ) : List (Multiplicative (ZMod n)) :=
-  List.map (fun i : ℕ => Multiplicative.ofAdd (i : ZMod n)) (List.range n)
-
-/-- Every element of `Multiplicative (ZMod n)` occurs in `TauCeti.cyclicElements n` when `n` is
-nonzero. -/
-theorem mem_cyclicElements (n : ℕ) [NeZero n] (g : Multiplicative (ZMod n)) :
-    g ∈ cyclicElements n := by
-  rw [cyclicElements]
-  have hg : Multiplicative.ofAdd (g.toAdd.val : ZMod n) = g :=
-    congrArg Multiplicative.ofAdd (ZMod.natCast_zmod_val g.toAdd)
-  rw [← hg]
-  exact List.mem_map_of_mem
-    (f := fun i : ℕ => Multiplicative.ofAdd (i : ZMod n))
-    (List.mem_range.mpr (ZMod.val_lt g.toAdd))
 
 private theorem cyclicElements_pairwise_not_isConj (n : ℕ) :
     (cyclicElements n).Pairwise fun x y => ¬ IsConj x y := by
@@ -112,11 +97,62 @@ theorem classFinset_cyclicClassData (n : ℕ) [NeZero n]
   rw [ClassData.mem_classFinset_iff_isConj, Finset.mem_singleton, isConj_iff_eq]
   exact eq_comm
 
+/-- Every numbered conjugacy class of a finite cyclic group has cardinality one. -/
+theorem card_classFinset_cyclicClassData (n : ℕ) [NeZero n]
+    (i : Fin (cyclicClassData n).numClasses) :
+    ((cyclicClassData n).classFinset i).card = 1 := by
+  rw [classFinset_cyclicClassData, Finset.card_singleton]
+
+/-- The ordered list of class sizes of a finite cyclic group consists entirely of ones. -/
+theorem card_classes_cyclicClassData (n : ℕ) [NeZero n] :
+    (cyclicClassData n).classes.map Finset.card = List.replicate n 1 := by
+  rw [ClassData.classes, List.map_map]
+  change (List.finRange (cyclicClassData n).numClasses).map
+    (fun i => ((cyclicClassData n).classFinset i).card) = List.replicate n 1
+  simp only [card_classFinset_cyclicClassData]
+  change List.map (Function.const _ 1) (List.finRange (cyclicClassData n).numClasses) =
+    List.replicate n 1
+  rw [List.map_const, List.length_finRange, numClasses_cyclicClassData]
+
+/-- The cyclic class-sum structure constant is one exactly when the indices add to the output
+index, and zero otherwise. -/
+theorem structureConstant_cyclicClassData (n : ℕ) [NeZero n]
+    (i j k : Fin (cyclicClassData n).numClasses) :
+    (cyclicClassData n).structureConstant i j k =
+      if (i : ZMod n) + j = k then 1 else 0 := by
+  rw [ClassData.structureConstant, classFinset_cyclicClassData]
+  simp only [Finset.filter_singleton]
+  rw [rep_cyclicClassData, rep_cyclicClassData]
+  have hindex :
+      (cyclicClassData n).index
+          ((Multiplicative.ofAdd (i : ZMod n))⁻¹ *
+            Multiplicative.ofAdd (k : ZMod n)) = j ↔
+        (i : ZMod n) + j = k := by
+    rw [(cyclicClassData n).index_eq_iff, isConj_iff_eq, rep_cyclicClassData]
+    constructor
+    · intro h
+      have h' := congrArg Multiplicative.toAdd h
+      simp only [toAdd_ofAdd, toAdd_inv, toAdd_mul] at h'
+      calc
+        (i : ZMod n) + j = (i : ZMod n) + (-i + k) := congrArg _ h'
+        _ = k := add_neg_cancel_left _ _
+    · intro h
+      apply Multiplicative.toAdd.injective
+      simp only [toAdd_ofAdd, toAdd_inv, toAdd_mul]
+      calc
+        (j : ZMod n) = -i + (i + j) := by simp
+        _ = -i + k := congrArg _ h
+  by_cases h : (cyclicClassData n).index
+      ((Multiplicative.ofAdd (i : ZMod n))⁻¹ *
+        Multiplicative.ofAdd (k : ZMod n)) = j
+  · simp only [h, ↓reduceIte, Finset.card_singleton, hindex.mp h]
+  · simp only [h, ↓reduceIte, Finset.card_empty, mt hindex.mpr h]
+
 /-- **Both conjugacy classes of the cyclic group of order two are singletons.** The numbered
 representatives are the identity followed by the nontrivial element. -/
 theorem card_classFinset_cyclicClassData_two :
     (cyclicClassData 2).classes.map Finset.card = [1, 1] := by
-  decide
+  simpa using card_classes_cyclicClassData 2
 
 /-- **The class-sum structure constants of the cyclic group of order two.** In the numbering
 above, the identity class is first and the nontrivial class squares to it. -/
@@ -124,6 +160,8 @@ theorem structureConstantTable_cyclicClassData_two :
     (cyclicClassData 2).structureConstantTable =
       [[[1, 0], [0, 1]],
        [[0, 1], [1, 0]]] := by
+  rw [ClassData.structureConstantTable]
+  simp only [structureConstant_cyclicClassData]
   decide
 
 end TauCeti

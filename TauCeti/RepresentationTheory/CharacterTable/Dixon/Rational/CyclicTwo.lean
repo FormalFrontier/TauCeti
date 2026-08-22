@@ -24,9 +24,9 @@ required primitive square root of unity modulo `3`.
 
 The simultaneous eigenvector search over the certified Dixon prime `3` returns exactly the
 reductions of the two displayed central-character rows.  Signed least representatives lift those
-rows back to the integers.  Since every class is a singleton and both irreducible degrees are one,
-the central-character and ordinary character tables coincide: their two rows are the trivial and
-sign characters.
+rows back to the integers.  Since every class is a singleton and both displayed degrees are one,
+the ordinary table is set equal entrywise to the central-character table.  Identifying its rows
+with the group's irreducible characters is not formalized here.
 
 Completeness does not rely on evaluating the entire search.  Each displayed row is checked against
 the class-algebra equations, and the good-prime structure theorem proves that the search has exactly
@@ -54,6 +54,10 @@ This implements cyclic `C₂` in “Rational tables (first executable milestone)
 [character theory roadmap][roadmap].  Connecting this exact output to the general table checker
 remains part of the assembled solver target.
 
+The worked computation follows
+`TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.DihedralFour`; the prime certificate
+follows `TauCeti.RepresentationTheory.CharacterTable.Dixon.Dihedral`.
+
 [roadmap]: https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md
 
 * J. D. Dixon, *High speed computation of group characters*, Numerische Mathematik 10 (1967),
@@ -67,8 +71,6 @@ public section
 namespace TauCeti
 
 open Matrix
-
-local instance cyclicGroupTwoFactPrime : Fact (Nat.Prime 3) := ⟨by decide⟩
 
 /-- **`3` is a good Dixon prime for the cyclic group of order two**: `3 ∤ 2`, the exponent `2`
 divides `2 = 3 - 1`, and `2⌊√2⌋ = 2 < 3`. -/
@@ -100,17 +102,6 @@ theorem cyclicGroupTwoDixonPrimeData_root : cyclicGroupTwoDixonPrimeData.root = 
 /-- The numbered conjugacy classes of the cyclic group of order two. -/
 abbrev CyclicGroupTwoClassIndex := Fin (cyclicClassData 2).numClasses
 
-private theorem sum_cyclicGroupTwoClassIndex {M : Type*} [AddCommMonoid M]
-    (f : CyclicGroupTwoClassIndex → M) :
-    ∑ i, f i = f ⟨0, by decide⟩ + f ⟨1, by decide⟩ := by
-  let e : CyclicGroupTwoClassIndex ≃ Fin 2 := finCongr (numClasses_cyclicClassData 2)
-  calc
-    ∑ i, f i = ∑ j : Fin 2, f (e.symm j) :=
-      Fintype.sum_equiv e _ _ fun _ => rfl
-    _ = f ⟨0, by decide⟩ + f ⟨1, by decide⟩ := by
-      rw [Fin.sum_univ_two]
-      rfl
-
 /-- **The integral central-character table of the cyclic group of order two.** Columns are the
 identity class and the nontrivial class, in the order fixed by `TauCeti.cyclicClassData 2`. -/
 def cyclicGroupTwoCentralCharacterTable :
@@ -139,33 +130,13 @@ theorem mem_cyclicGroupTwoModularCentralRows_iff
       ∃ i, (fun j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3)) = a := by
   simp [cyclicGroupTwoModularCentralRows]
 
-private theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int_aux
-    (i : CyclicGroupTwoClassIndex) :
-    (cyclicClassData 2).IsModularEigenrow
-      (fun j => cyclicGroupTwoCentralCharacterTable i j) := by
-  rw [(cyclicClassData 2).isModularEigenrow_iff]
-  fin_cases i <;> decide
-
-/-- Every displayed row satisfies the numbered class-algebra eigenrow equations over any
-commutative coefficient ring. -/
-theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable
-    (R : Type*) [CommRing R]
-    (i : CyclicGroupTwoClassIndex) :
-    (cyclicClassData 2).IsModularEigenrow
-      (fun j => (cyclicGroupTwoCentralCharacterTable i j : R)) := by
-  rw [(cyclicClassData 2).isModularEigenrow_iff]
-  intro j k
-  have h := ((cyclicClassData 2).isModularEigenrow_iff _).mp
-    (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int_aux i) j k
-  have hcast := congrArg (Int.castRingHom R) h
-  simpa using hcast
-
 /-- Every displayed integral row satisfies the numbered class-algebra eigenrow equations. -/
 theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int
     (i : CyclicGroupTwoClassIndex) :
     (cyclicClassData 2).IsModularEigenrow
       (fun j => cyclicGroupTwoCentralCharacterTable i j) := by
-  simpa using isModularEigenrow_cyclicGroupTwoCentralCharacterTable ℤ i
+  rw [(cyclicClassData 2).isModularEigenrow_iff]
+  fin_cases i <;> decide
 
 /-- Reindexing a displayed integral row by the actual conjugacy classes gives a class-algebra
 eigenrow. -/
@@ -175,14 +146,6 @@ theorem isClassEigenrow_cyclicGroupTwoCentralCharacterTable
       fun j => cyclicGroupTwoCentralCharacterTable i j) :=
   ((cyclicClassData 2).isModularEigenrow_iff_isClassEigenrow _).mp
     (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i)
-
-/-- Every displayed reduction is a simultaneous eigenrow of the reduced class-multiplication
-matrices. -/
-theorem isModularEigenrow_cyclicGroupTwoCentralCharacterTable_zmod
-    (i : CyclicGroupTwoClassIndex) :
-    (cyclicClassData 2).IsModularEigenrow
-      (fun j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3)) := by
-  simpa using isModularEigenrow_cyclicGroupTwoCentralCharacterTable (ZMod 3) i
 
 /-- The explicit set of modular rows has two elements. -/
 @[simp]
@@ -201,7 +164,10 @@ theorem cyclicGroupTwo_centralCharacterSearch :
     intro i _
     rw [(cyclicClassData 2).mem_centralCharacterSearch]
     exact ⟨by fin_cases i <;> decide,
-      isModularEigenrow_cyclicGroupTwoCentralCharacterTable_zmod i⟩
+      by
+        simpa using ClassData.IsModularEigenrow.map (d := cyclicClassData 2)
+          (Int.castRingHom (ZMod 3))
+          (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i)⟩
   · rw [(cyclicClassData 2).card_centralCharacterSearch_of_isGoodDixonPrime
       isGoodDixonPrime_cyclicGroup_two_three,
       card_cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData]
@@ -247,7 +213,7 @@ theorem mem_cyclicGroupTwoLiftedCentralRows_iff
 def cyclicGroupTwoCharacterDegrees : CyclicGroupTwoClassIndex → ℕ :=
   fun _ => 1
 
-/-- Both irreducible character degrees of the cyclic group of order two are one. -/
+/-- Both displayed degrees are `1`. -/
 @[simp]
 theorem cyclicGroupTwoCharacterDegrees_eq_one (i : CyclicGroupTwoClassIndex) :
     cyclicGroupTwoCharacterDegrees i = 1 := by
@@ -257,15 +223,21 @@ theorem cyclicGroupTwoCharacterDegrees_eq_one (i : CyclicGroupTwoClassIndex) :
 group of order two.** -/
 def cyclicGroupTwoCharacterTable :
     Matrix CyclicGroupTwoClassIndex CyclicGroupTwoClassIndex ℤ :=
-  cyclicGroupTwoCentralCharacterTable
+  !![1,  1;
+     1, -1]
 
 /-- The entries of the ordinary integral character table. -/
-@[simp]
 theorem cyclicGroupTwoCharacterTable_apply (i j : CyclicGroupTwoClassIndex) :
     cyclicGroupTwoCharacterTable i j =
       !![1,  1;
          1, -1] i j := by
-  exact cyclicGroupTwoCentralCharacterTable_apply i j
+  rfl
+
+/-- The displayed ordinary and central-character tables agree entrywise for `C₂`. -/
+@[simp]
+theorem cyclicGroupTwoCharacterTable_eq_centralCharacterTable :
+    cyclicGroupTwoCharacterTable = cyclicGroupTwoCentralCharacterTable := by
+  rfl
 
 /-- **Division-free conversion from central characters to ordinary characters.** For every row
 `i` and class `j`, `degree i * omega i j = |K_j| * chi i j`. -/
@@ -280,17 +252,14 @@ theorem cyclicGroupTwo_degree_mul_centralCharacterTable
 theorem cyclicGroupTwo_characterDegrees_pos_and_dvd (i : CyclicGroupTwoClassIndex) :
     0 < cyclicGroupTwoCharacterDegrees i ∧
       cyclicGroupTwoCharacterDegrees i ∣ Nat.card (Multiplicative (ZMod 2)) := by
-  have hcard : Nat.card (Multiplicative (ZMod 2)) = 2 := by simp
-  rw [hcard]
+  rw [natCard_multiplicative_zmod]
   fin_cases i <;> decide
 
 /-- The squares of the displayed degrees sum to the group order. -/
 theorem cyclicGroupTwo_sum_characterDegrees_sq :
     ∑ i, cyclicGroupTwoCharacterDegrees i ^ 2 = Nat.card (Multiplicative (ZMod 2)) := by
-  have hcard : Nat.card (Multiplicative (ZMod 2)) = 2 := by simp
-  rw [sum_cyclicGroupTwoClassIndex, hcard]
-  simp only [cyclicGroupTwoCharacterDegrees_eq_one, one_pow]
-  norm_num
+  rw [natCard_multiplicative_zmod]
+  decide
 
 /-- The displayed ordinary character rows satisfy the class-size weighted orthogonality
 relations. -/
@@ -298,9 +267,7 @@ theorem cyclicGroupTwo_characterTable_orthogonal (i j : CyclicGroupTwoClassIndex
     ∑ k, ((cyclicClassData 2).classFinset k).card *
         cyclicGroupTwoCharacterTable i k * cyclicGroupTwoCharacterTable j k =
       if i = j then Nat.card (Multiplicative (ZMod 2)) else 0 := by
-  have hcard : Nat.card (Multiplicative (ZMod 2)) = 2 := by simp
-  rw [hcard]
-  fin_cases i <;> fin_cases j <;> rw [sum_cyclicGroupTwoClassIndex] <;>
-    norm_num [cyclicGroupTwoCharacterTable_apply] <;> decide
+  rw [natCard_multiplicative_zmod]
+  fin_cases i <;> fin_cases j <;> decide
 
 end TauCeti
