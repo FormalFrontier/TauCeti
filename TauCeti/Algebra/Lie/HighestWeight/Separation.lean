@@ -11,7 +11,7 @@ public import TauCeti.Algebra.Lie.Weights.Positivity
 public section
 
 /-!
-# The Casimir element separates the trivial module from the others
+# Casimir nonvanishing for nonzero dominant integral highest weights
 
 Let `L` be a finite-dimensional Lie algebra with non-degenerate Killing form over a field of
 characteristic zero, let `H` be a splitting Cartan subalgebra and let `base` be a base of its root
@@ -22,16 +22,16 @@ element `Ω` acts on a highest weight module of weight `lam`, namely
 
 This file proves that this scalar is **nonzero** as soon as `lam` is a nonzero dominant integral
 weight (`TauCeti.casimirScalar_ne_zero`), while `Ω` acts by zero on a module with trivial action
-(`TauCeti.representation_casimirElement_apply_eq_zero_of_isTrivial`). Together these statements make
-`Ω` separate the trivial module from the nontrivial finite-dimensional irreducibles,
-the mechanism behind Weyl's complete reducibility theorem: on an extension of the trivial module
-by a nontrivial irreducible, the Casimir element acts by two different scalars on the two pieces,
-so its kernel splits the extension.
+(`TauCeti.representation_casimirElement_apply_eq_zero_of_isTrivial`). Together these statements
+separate the trivial module from highest-weight modules whose dominant integral highest weight is
+known to be nonzero. Applying this to every nontrivial finite-dimensional irreducible additionally
+requires the theorem that an irreducible highest-weight module of highest weight zero is trivial;
+that theorem is not proved here.
 
 ## The argument
 
 Expanding the square, `c(lam) = ⟨lam, lam⟩ + ∑_{α > 0} ⟨lam, α⟩`
-(`TauCeti.invForm_add_weylVector_sub_invForm_weylVector`), and both summands are read off by the
+(`TauCeti.casimirScalar_eq_add_sum`), and both summands are read off by the
 positivity of `TauCeti/Algebra/Lie/Weights/Positivity.lean`. A dominant integral weight is integral
 (`TauCeti.IsDominantIntegral.isIntegralWeight`, the passage from the simple coroots to all of them
 going through `TauCeti.IsDominantIntegral.exists_nat_apply_coroot` and, for a negative root, the
@@ -96,15 +96,12 @@ theorem IsDominantIntegral.exists_nonneg_rat_invForm_root (hlam : IsDominantInte
 /-- **The Casimir scalar of a nonzero dominant integral weight is nonzero.** Expanded, the scalar
 is `⟨lam, lam⟩ + ∑_{α > 0} ⟨lam, α⟩`: a positive rational plus a sum of nonnegative rationals.
 
-This is the statement that makes the Casimir element separate the trivial module from the
-nontrivial ones, since the scalar of the zero weight is `0`. -/
+This distinguishes such a highest-weight module from a trivial module, whose Casimir scalar is
+`0`. -/
 theorem casimirScalar_ne_zero (hlam : IsDominantIntegral base lam) (h0 : lam ≠ 0) :
-    invForm (lam + weylVector (IsKilling.rootSystem H) base)
-          (lam + weylVector (IsKilling.rootSystem H) base) -
-        invForm (weylVector (IsKilling.rootSystem H) base)
-          (weylVector (IsKilling.rootSystem H) base) ≠ 0 := by
+    casimirScalar base lam ≠ 0 := by
   classical
-  rw [invForm_add_weylVector_sub_invForm_weylVector]
+  rw [casimirScalar_eq_add_sum]
   obtain ⟨q, hq0, hq⟩ := hlam.isIntegralWeight.exists_pos_rat_invForm_self h0
   choose g hg using fun i : H.root ↦
     hlam.isIntegralWeight.exists_rat_invForm_root (i : Weight K H L)
@@ -130,14 +127,12 @@ theorem casimirScalar_ne_zero (hlam : IsDominantIntegral base lam) (h0 : lam ≠
 
 /-- **The Casimir scalar of a dominant integral weight vanishes exactly at the zero weight.** The
 converse direction is the computation `⟨ρ, ρ⟩ - ⟨ρ, ρ⟩ = 0`. -/
+@[simp]
 theorem casimirScalar_eq_zero_iff (hlam : IsDominantIntegral base lam) :
-    invForm (lam + weylVector (IsKilling.rootSystem H) base)
-          (lam + weylVector (IsKilling.rootSystem H) base) -
-        invForm (weylVector (IsKilling.rootSystem H) base)
-          (weylVector (IsKilling.rootSystem H) base) = 0 ↔ lam = 0 := by
+    casimirScalar base lam = 0 ↔ lam = 0 := by
   refine ⟨fun h ↦ by_contra fun h0 ↦ casimirScalar_ne_zero hlam h0 h, ?_⟩
   rintro rfl
-  rw [zero_add, sub_self]
+  rw [casimirScalar_def, zero_add, sub_self]
 
 /-! ### Separation on modules -/
 
@@ -151,18 +146,5 @@ theorem casimir_apply_ne_zero_of_isHighestWeightVector_of_lieSpan_eq_top {v : M}
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m ≠ 0 := by
   rw [casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen m]
   exact smul_ne_zero (casimirScalar_ne_zero hlam h0) hm
-
-omit [CharZero K] in
-/-- **The Casimir element acts by zero on a module with trivial action.** Every summand
-`xᵢ yᵢ` of `Ω` acts by a double bracket, and brackets vanish. -/
-theorem representation_casimirElement_apply_eq_zero_of_isTrivial [LieModule.IsTrivial L M]
-    (m : M) :
-    UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m = 0 := by
-  classical
-  rw [casimirElement_eq_sum (Module.finBasis K L), map_sum, LinearMap.sum_apply]
-  refine Finset.sum_eq_zero fun i _ ↦ ?_
-  rw [map_mul, Module.End.mul_apply, UniversalEnvelopingAlgebra.representation_ι,
-    UniversalEnvelopingAlgebra.representation_ι]
-  simp [trivial_lie_zero]
 
 end TauCeti

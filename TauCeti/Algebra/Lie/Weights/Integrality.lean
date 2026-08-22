@@ -121,8 +121,22 @@ theorem genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast {α : Weight K H L}
 /-! ### Integrality of weights -/
 
 /-- A weight is **integral** when it takes integer values on every coroot. -/
-@[expose] def IsIntegralWeight (lam : Module.Dual K H) : Prop :=
+def IsIntegralWeight (lam : Module.Dual K H) : Prop :=
   ∀ α : Weight K H L, ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K)
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- A linear form is integral if it takes an integer value on every coroot. -/
+theorem isIntegralWeight_of_forall_exists_int_apply_coroot {lam : Module.Dual K H}
+    (h : ∀ α : Weight K H L, ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K)) :
+    IsIntegralWeight lam :=
+  h
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- An integral weight takes an integer value on each coroot. -/
+theorem IsIntegralWeight.exists_int_apply_coroot {lam : Module.Dual K H}
+    (hlam : IsIntegralWeight lam) (α : Weight K H L) :
+    ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K) :=
+  hlam α
 
 /-- **Integrality of the weights of a finite-dimensional module.** For every weight `χ` of a
 finite-dimensional module `M` over a Killing-semisimple Lie algebra and every root `α`, the value
@@ -141,7 +155,7 @@ theorem exists_int_apply_coroot (χ : Weight K H M) (α : Weight K H L) :
 /-- **The weights of a finite-dimensional module are integral.** -/
 theorem isIntegralWeight_of_weight (χ : Weight K H M) :
     IsIntegralWeight (χ : Module.Dual K H) :=
-  fun α ↦ exists_int_apply_coroot χ α
+  isIntegralWeight_of_forall_exists_int_apply_coroot fun α ↦ exists_int_apply_coroot χ α
 
 /-- **A weight is `ℤ`-valued on the coroot lattice.** The coroots of a Killing-semisimple Lie
 algebra span a `ℤ`-lattice in the Cartan subalgebra, and every weight of a finite-dimensional

@@ -143,11 +143,10 @@ both factors being so. -/
 theorem IsIntegralWeight.exists_rat_invForm_root {lam : Module.Dual K H}
     (hlam : IsIntegralWeight lam) (α : Weight K H L) :
     ∃ q : ℚ, invForm lam (α : Module.Dual K H) = (q : K) := by
-  unfold IsIntegralWeight at hlam
   rcases eq_or_ne (α : Module.Dual K H) 0 with h | h
   · exact ⟨0, by rw [h, map_zero, Rat.cast_zero]⟩
   have hα : α.IsNonZero := fun hz ↦ h (Weight.coe_toLinear_eq_zero_iff.mpr hz)
-  obtain ⟨n, hn⟩ := hlam α
+  obtain ⟨n, hn⟩ := hlam.exists_int_apply_coroot α
   obtain ⟨r, -, hr⟩ := exists_pos_rat_invForm_root_self hα
   have h2 := invForm_coroot_weight lam α
   rw [hn, hr] at h2

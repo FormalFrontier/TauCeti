@@ -322,7 +322,7 @@ natural values on the simple ones. A coroot is the coroot of a positive root or 
 one, and on a positive coroot dominance gives a natural value. -/
 theorem IsDominantIntegral.isIntegralWeight {lam : Dual K H}
     (hlam : IsDominantIntegral b lam) : IsIntegralWeight lam := by
-  unfold IsIntegralWeight
+  apply isIntegralWeight_of_forall_exists_int_apply_coroot
   intro α
   rcases eq_or_ne (α : Dual K H) 0 with h | h
   · refine ⟨0, ?_⟩
