@@ -83,6 +83,16 @@ theorem vertexEquiv_symm_vertex (v : V) : (vertexEquiv G).symm (vertex G v) = v 
   rw [← vertexEquiv_apply]
   exact (vertexEquiv G).symm_apply_apply v
 
+/-- The vertex inclusion of a doubled quiver is injective. -/
+theorem vertex_injective : Function.Injective (vertex G) := by
+  intro u v h
+  simpa using congrArg (vertexEquiv G).symm h
+
+/-- Two graph vertices have the same image in the doubled quiver exactly when they are equal. -/
+@[simp]
+theorem vertex_inj {u v : V} : vertex G u = vertex G v ↔ u = v :=
+  (vertex_injective G).eq_iff
+
 instance : _root_.Quiver (DoubledQuiver G) where
   Hom i j := PLift (G.Adj ((vertexEquiv G).symm i) ((vertexEquiv G).symm j))
 

@@ -257,6 +257,11 @@ theorem isIsotropicElem_prod (B : FiniteQuadraticModule) (x : A) (y : B) :
 /-- A subgroup is quadratically isotropic when the quadratic map vanishes on it. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, A.quadratic x = 0
 
+/-- Quadratic isotropy of a subgroup, unfolded to its defining property. -/
+theorem isIsotropic_def {H : AddSubgroup A} :
+    A.IsIsotropic H ↔ ∀ x ∈ H, A.quadratic x = 0 :=
+  Iff.rfl
+
 /-- A quadratic isometry transports quadratic isotropy of a subgroup. -/
 @[simp]
 theorem Isometry.isIsotropic_map_iff {B : FiniteQuadraticModule} (f : Isometry A B)

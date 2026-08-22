@@ -8,7 +8,7 @@ module
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 -- Non-public: the `measurable_probabilityMeasure_toMeasure_apply` lemmas evaluate a random measure
 -- at a fixed measurable set, in the `ℝ≥0∞` and `.toReal` forms.
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 import TauCeti.Probability.Process.BlockAverage
 
 /-!

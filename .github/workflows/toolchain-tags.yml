@@ -1,0 +1,88 @@
+name: Toolchain tags
+
+# Report to Zulip (Tau Ceti > "Toolchain tags") when a Lean release becomes taggable, or
+# when one cannot be tagged.
+#
+# The trigger is a push to main that changes lean-toolchain, which is the only thing that
+# starts a new release era. That push arrives 40 to 70 minutes before the release is
+# actually taggable: ci.yml coalesces bursts of main pushes, so the bump waits for a run of
+# its own, and that run then takes 20 to 30 minutes and publishes the Lake cache at the end
+# of it. Reporting at push time would always say "not yet", so this job waits for ci.yml to
+# conclude on the pushed commit and reports after.
+#
+# It posts only when the state has changed since its last message, which it reads from a
+# marker in that message rather than from any stored state. So a run that finds nothing new
+# says nothing, and a message in the topic means something happened.
+#
+# It never creates a tag. `--create` is a manual step, because a tag is permanent.
+#
+# One gap, deliberately left: nothing re-fires when a failed ci.yml is later re-run and
+# passes. The topic keeps showing that release as blocked until the next toolchain bump.
+# Triggering on ci.yml completion instead would close it, at the cost of running on every
+# push to main, roughly 110 times a day. Until that trade looks worth making, the way out
+# is to dispatch this workflow by hand; the blocked message sitting in the topic is the
+# prompt to do so.
+
+on:
+  push:
+    branches: [main]
+    paths: [lean-toolchain]
+  workflow_dispatch:
+    inputs:
+      wait:
+        description: "Wait for ci.yml on the current main commit before reporting"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read   # checkout
+  actions: read    # read ci.yml's conclusion on the pushed commit
+
+concurrency:
+  # One at a time, and never cancelled: a cancelled run mid-post could leave the topic
+  # half-written, and two bumps landing close together should report in order.
+  group: toolchain-tags
+  cancel-in-progress: false
+
+jobs:
+  report:
+    # The ref guard is not decoration: workflow_dispatch lets any ref be selected, and the
+    # job would otherwise check that branch out and report its history as main's.
+    if: >-
+      github.repository == 'TauCetiProject/TauCeti'
+      && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # The wait below is bounded at 180 minutes; this bounds the job around it.
+    timeout-minutes: 200
+    steps:
+      # Full history: the tool finds each release's commit by reading lean-toolchain at the
+      # commits that change it, so a truncated clone would report the wrong ones. It refuses
+      # to run in a shallow clone rather than answer from partial history.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          # The tool re-fetches origin/main before auditing, because the wait below can run
+          # for over an hour and this checkout is a snapshot from before it.
+
+      - name: Wait for CI, then report to Zulip if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          ZULIP_CHANNEL: Tau Ceti
+          # Its own topic. stuck_alerts.py reconciles "Stuck PRs" by marker and edits the
+          # messages it recognises there, so an unrelated post would sit inside its
+          # bookkeeping.
+          ZULIP_TOPIC: Toolchain tags
+          SHA: ${{ github.sha }}
+          WAIT: ${{ github.event_name == 'push' || inputs.wait }}
+        run: |
+          set -euo pipefail
+          if [ "$WAIT" = "true" ]; then
+            python3 scripts/toolchain_tags.py --post --wait-for-ci "$SHA"
+          else
+            python3 scripts/toolchain_tags.py --post
+          fi

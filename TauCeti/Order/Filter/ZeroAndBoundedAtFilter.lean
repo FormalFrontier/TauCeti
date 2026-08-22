@@ -8,7 +8,7 @@ module
 public import Mathlib.Order.Filter.ZeroAndBoundedAtFilter
 
 /-!
-# Finite sums of functions vanishing or bounded along a filter
+# Gaps in Mathlib's `ZeroAtFilter` / `BoundedAtFilter` API
 
 Mathlib's `Filter.ZeroAtFilter` and `Filter.BoundedAtFilter` are closed under binary sums
 (`Filter.ZeroAtFilter.add`, `Filter.BoundedAtFilter.add`), and the bounded functions are closed
@@ -19,10 +19,17 @@ The gap shows up wherever an operator is a finite sum of slashes: proving that s
 stays bounded, or stays vanishing, along `atImInfty` is an induction over the summands, and
 without these each call site reruns it.
 
+Mathlib also has no rule for pushing a vanishing function through a map. `ZeroAtFilter` is
+convergence to `0`, so only the behaviour of that map **at `0`** matters — global continuity is
+not needed, and asking for it would exclude the topological modules that carry `ContinuousAdd`
+rather than `IsTopologicalAddGroup`.
+
 ## Main results
 
 * `Filter.ZeroAtFilter.sum`: a finite sum of functions vanishing along `l` vanishes along `l`.
 * `Filter.BoundedAtFilter.sum`: a finite sum of functions bounded along `l` is bounded along `l`.
+* `Filter.ZeroAtFilter.comp`: a function vanishing along `l`, composed with a zero-preserving map
+  continuous at `0`, still vanishes along `l`.
 
 ## Provenance
 
@@ -56,6 +63,17 @@ theorem BoundedAtFilter.sum [SeminormedAddCommGroup β]
     (h : ∀ i ∈ s, BoundedAtFilter l (f i)) : BoundedAtFilter l (∑ i ∈ s, f i) :=
   Finset.sum_induction f (BoundedAtFilter l) (fun _ _ ↦ BoundedAtFilter.add)
     (const_boundedAtFilter l 0) h
+
+/-- **A vanishing function stays vanishing under a zero-preserving map continuous at `0`.**
+
+Only continuity **at `0`** is asked for. `ZeroAtFilter` is convergence to `0`, so nothing about
+`φ` away from `0` is involved; requiring `Continuous φ` would be strictly stronger, and for a
+linear map the two coincide only when the topology is translation-invariant. -/
+theorem ZeroAtFilter.comp {γ : Type*} [Zero β] [TopologicalSpace β] [Zero γ] [TopologicalSpace γ]
+    {g : α → β} {φ : β → γ} (hg : ZeroAtFilter l g) (hφ : ContinuousAt φ 0) (h0 : φ 0 = 0) :
+    ZeroAtFilter l (φ ∘ g) := by
+  have h := Filter.Tendsto.comp hφ hg
+  rwa [h0] at h
 
 end Filter
 

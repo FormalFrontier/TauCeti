@@ -29,6 +29,8 @@ induction in the Lie--Kolchin theorem.
   a joint eigenvector.
 * `TauCeti.exists_iInf_eigenspace_ne_bot_of_pairwise_commute`: the same result in the joint
   eigenspace API.
+* `TauCeti.exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector`: a common nonzero
+  fixed vector spans a pointwise-fixed line.
 * `TauCeti.exists_unitHom_jointEigenvector_of_pairwise_commute`: a group representation with
   commuting, triangularizable image has a joint eigenvector whose eigenvalues form a unit-valued
   character.
@@ -38,7 +40,11 @@ induction in the Lie--Kolchin theorem.
 ## References
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
-* T. A. Springer, *Linear Algebraic Groups*, Section 2.4.
+* T. A. Springer, *Linear Algebraic Groups*, Lemma 2.4.2(i): over an algebraically closed field,
+  a set of pairwise commuting matrices is simultaneously conjugate into the upper-triangular
+  matrices, by the induction on an eigenspace of a non-scalar member that is used here.  The
+  results below take triangularizability as a hypothesis instead, so that they also apply over a
+  field that is not algebraically closed.
 -/
 
 public section
@@ -52,6 +58,19 @@ universe u v w
 noncomputable section
 
 variable {K : Type u} {V : Type v} {ι : Type w}
+
+/-- A nonzero vector fixed by a family of endomorphisms spans a one-dimensional submodule fixed
+pointwise by that family. -/
+theorem exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector
+    [DivisionRing K] [AddCommGroup V] [Module K V]
+    (f : ι → Module.End K V) (h : ∃ v : V, v ≠ 0 ∧ ∀ i, f i v = v) :
+    ∃ p : Submodule K V, Module.finrank K p = 1 ∧ ∀ i, ∀ x ∈ p, f i x = x := by
+  obtain ⟨v, hv, hfixed⟩ := h
+  refine ⟨K ∙ v, finrank_span_singleton hv, fun i x hx ↦ ?_⟩
+  rw [Submodule.mem_span_singleton] at hx
+  obtain ⟨a, rfl⟩ := hx
+  simp [hfixed]
+
 variable [Field K] [AddCommGroup V] [Module K V]
 
 /-- A pairwise-commuting family of triangularizable endomorphisms of a nonzero finite-dimensional

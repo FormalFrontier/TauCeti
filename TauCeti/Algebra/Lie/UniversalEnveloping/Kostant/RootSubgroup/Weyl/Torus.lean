@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Weyl.Basic
 import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 import TauCeti.Algebra.Lie.Sl2.Basic
@@ -17,8 +17,8 @@ Let `U_ℤ = kostantForm e h` act on a rational vector space `V` through `ρ` an
 subgroup `M ≤ V`, presented in a weight basis, and let `eᵢ`, `eⱼ` be distinguished root vectors
 whose images span, together with the distinguished Cartan vector `h c`, an `sl₂` triple. The two
 halves of the pinning built so far are the split torus `t(s)` of
-`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Torus.lean`, which acts on a weight
-vector of weight `μ` by the character value `μ(s)`, and the Weyl element
+`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Torus/Basic.lean`, which acts on a
+weight vector of weight `μ` by the character value `μ(s)`, and the Weyl element
 `n = x_i(1) x_j(-1) x_i(1)` of
 `TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Weyl/Basic.lean`, which
 interchanges the root subgroups of `α` and `-α`. This file proves the remaining pinning relation

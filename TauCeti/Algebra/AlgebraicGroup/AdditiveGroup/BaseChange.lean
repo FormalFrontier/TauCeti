@@ -7,26 +7,37 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Basic
+public import TauCeti.Algebra.Bialgebra.SymmetricAlgebra.BaseChange
 
 /-!
-# Base change of additive-group points
+# Base change of additive groups
 
 The vector group attached to a `k`-module `M` is represented by the symmetric bialgebra
-`SymmetricAlgebra k M`. This file records the base-changed functor-of-points calculation:
-if `K` is a `k`-algebra and `A` is a commutative `K`-algebra, then the convolution monoid of
-`K`-algebra maps out of `K ⊗[k] SymmetricAlgebra k M` is the additive monoid of `k`-linear
+`SymmetricAlgebra k M`. This file specializes the generic symmetric-bialgebra base-change
+equivalence to the rank-one additive group `𝔾ₐ`, and records the corresponding
+functor-of-points calculation: if `A` is a commutative `K`-algebra, then the convolution monoid
+of `K`-algebra maps out of `K ⊗[k] SymmetricAlgebra k M` is the additive monoid of `k`-linear
 maps `M →ₗ[k] A`.
+
+The coordinate result imported from `TauCeti.Algebra.Bialgebra.SymmetricAlgebra.BaseChange`
+transports the counit and comultiplication, hence is bialgebra-level. No separate antipode or
+Hopf-equivalence packaging is asserted here.
 
 The equivalence first restricts a base-changed point along `m ↦ 1 ⊗ ι(m)` using
 `AlgHom.baseChangePointsMulEquiv`, then applies `AdditiveGroup.pointsMulEquiv`. The
 characteristic lemmas spell out the generator values, the inverse map on scalar multiples of
 generators, and the one-dimensional additive group `𝔾ₐ`.
 
-This is the additive-group worked example from the ReductiveGroups roadmap, combined with
-the Layer 0 base-change target for coordinate bialgebras and their functors of points.
+These specializations align the bialgebra and functor-of-points presentations used by the
+additive-group worked example in the ReductiveGroups roadmap.
 
 ## Main declarations
 
+* `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv`: the rank-one specialization for `𝔾ₐ`.
+* `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv_tmul_ι`: its forward coordinate formula.
+* `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv_tmul_one`: its formula on scalar copies.
+* `TauCeti.AdditiveGroup.gaScalarTensorBialgEquiv_symm_ι`: the inverse formula for the additive
+  coordinate.
 * `TauCeti.AdditiveGroup.baseChangePointsMulEquiv`: base-changed vector-group points are
   `k`-linear maps `M →ₗ[k] A`.
 * `TauCeti.AdditiveGroup.toAdd_baseChangePointsMulEquiv_apply`: the equivalence reads a
@@ -38,10 +49,13 @@ the Layer 0 base-change target for coordinate bialgebras and their functors of p
 
 ## References
 
-The generic base-change step is Tau Ceti's `AlgHom.baseChangePointsMulEquiv`; the vector-group
-points calculation is Tau Ceti's `AdditiveGroup.pointsMulEquiv`. This specialization follows
-the API pattern of `RootsOfUnityGroup.baseChangePointsMulEquiv`,
+The coordinate-bialgebra equivalence is
+`TauCeti.SymmetricAlgebra.scalarTensorBialgEquiv`.
+The generic points base-change step is Tau Ceti's `AlgHom.baseChangePointsMulEquiv`; the
+vector-group points calculation is Tau Ceti's `AdditiveGroup.pointsMulEquiv`. This specialization
+follows the API pattern of `RootsOfUnityGroup.baseChangePointsMulEquiv`,
 `SplitTorus.baseChangePointsMulEquiv`, and `DiagonalizableGroup.baseChangePointsMulEquiv`.
+The construction follows W. C. Waterhouse, *Introduction to Affine Group Schemes*, §1.
 -/
 
 public section
@@ -59,6 +73,165 @@ variable {k : Type u} {K : Type v} {A : Type w} {M : Type w'}
 variable [CommSemiring k] [CommSemiring K] [CommSemiring A]
 variable [Algebra k K] [Algebra K A] [Algebra k A] [IsScalarTower k K A]
 variable [AddCommMonoid M] [Module k M]
+
+section CoordinateBialgebra
+
+/-- The algebra equivalence on symmetric algebras induced by a linear equivalence. -/
+private noncomputable def symmetricAlgebraAlgEquiv {P N : Type*}
+    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
+    (e : P ≃ₗ[K] N) : SymmetricAlgebra K P ≃ₐ[K] SymmetricAlgebra K N :=
+  AlgEquiv.ofAlgHom
+    (SymmetricAlgebra.lift (SymmetricAlgebra.ι K N ∘ₗ e.toLinearMap))
+    (SymmetricAlgebra.lift (SymmetricAlgebra.ι K P ∘ₗ e.symm.toLinearMap))
+    (by
+      apply SymmetricAlgebra.algHom_ext
+      apply LinearMap.ext
+      intro n
+      simp [LinearMap.comp_apply])
+    (by
+      apply SymmetricAlgebra.algHom_ext
+      apply LinearMap.ext
+      intro m
+      simp [LinearMap.comp_apply])
+
+@[simp]
+private theorem symmetricAlgebraAlgEquiv_ι {P N : Type*}
+    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
+    (e : P ≃ₗ[K] N) (p : P) :
+    symmetricAlgebraAlgEquiv (K := K) e (SymmetricAlgebra.ι K P p) =
+      SymmetricAlgebra.ι K N (e p) := by
+  simp [symmetricAlgebraAlgEquiv, LinearMap.comp_apply]
+
+@[simp]
+private theorem symmetricAlgebraAlgEquiv_symm_ι {P N : Type*}
+    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
+    (e : P ≃ₗ[K] N) (n : N) :
+    (symmetricAlgebraAlgEquiv (K := K) e).symm (SymmetricAlgebra.ι K N n) =
+      SymmetricAlgebra.ι K P (e.symm n) := by
+  simp [symmetricAlgebraAlgEquiv, LinearMap.comp_apply]
+
+/-- The bialgebra equivalence on symmetric algebras induced by a linear equivalence. -/
+private noncomputable def symmetricAlgebraBialgEquiv {P N : Type*}
+    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N] (e : P ≃ₗ[K] N) :
+    SymmetricAlgebra K P ≃ₐc[K] SymmetricAlgebra K N :=
+  BialgEquiv.ofAlgEquiv (symmetricAlgebraAlgEquiv (K := K) e)
+    (by
+      apply SymmetricAlgebra.algHom_ext
+      apply LinearMap.ext
+      intro m
+      have h :
+          (Bialgebra.counitAlgHom K (SymmetricAlgebra K N))
+              (symmetricAlgebraAlgEquiv (K := K) e (SymmetricAlgebra.ι K P m)) =
+            (Bialgebra.counitAlgHom K (SymmetricAlgebra K P))
+              (SymmetricAlgebra.ι K P m) := by
+        rw [symmetricAlgebraAlgEquiv_ι]
+        exact (SymmetricAlgebra.algebraMapInv_ι _).trans
+          (SymmetricAlgebra.algebraMapInv_ι _).symm
+      exact h)
+    (by
+      apply SymmetricAlgebra.algHom_ext
+      apply LinearMap.ext
+      intro m
+      simp [symmetricAlgebraAlgEquiv, LinearMap.comp_apply, SymmetricAlgebra.comul_ι])
+
+@[simp]
+private theorem symmetricAlgebraBialgEquiv_ι {P N : Type*}
+    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
+    (e : P ≃ₗ[K] N) (p : P) :
+    symmetricAlgebraBialgEquiv (K := K) e (SymmetricAlgebra.ι K P p) =
+      SymmetricAlgebra.ι K N (e p) :=
+  symmetricAlgebraAlgEquiv_ι (K := K) e p
+
+@[simp]
+private theorem symmetricAlgebraBialgEquiv_symm_ι {P N : Type*}
+    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
+    (e : P ≃ₗ[K] N) (n : N) :
+    (symmetricAlgebraBialgEquiv (K := K) e).symm (SymmetricAlgebra.ι K N n) =
+      SymmetricAlgebra.ι K P (e.symm n) :=
+  symmetricAlgebraAlgEquiv_symm_ι (K := K) e n
+
+section GaCoordinateBialgebra
+
+/-- **Base change of the additive coordinate bialgebra is the additive coordinate bialgebra over
+the new base.**
+
+This is the rank-one specialization of `TauCeti.SymmetricAlgebra.scalarTensorBialgEquiv`,
+transported along `K ⊗[k] k ≃ K`. -/
+noncomputable def gaScalarTensorBialgEquiv :
+    K ⊗[k] SymmetricAlgebra k k ≃ₐc[K] SymmetricAlgebra K K :=
+  (TauCeti.SymmetricAlgebra.scalarTensorBialgEquiv
+      (k := k) (K := K) (M := k)).trans <|
+    symmetricAlgebraBialgEquiv (K := K)
+      (Algebra.TensorProduct.rid k K K).toLinearEquiv
+
+/-- The `𝔾ₐ` coordinate equivalence sends `s ⊗ ι(r)` to
+`s • ι(algebraMap k K r)`. -/
+@[simp]
+theorem gaScalarTensorBialgEquiv_tmul_ι (s : K) (r : k) :
+    gaScalarTensorBialgEquiv (k := k) (K := K)
+        (s ⊗ₜ[k] SymmetricAlgebra.ι k k r) =
+      s • SymmetricAlgebra.ι K K (algebraMap k K r) := by
+  calc
+    _ = symmetricAlgebraBialgEquiv (K := K)
+        (Algebra.TensorProduct.rid k K K).toLinearEquiv
+          (SymmetricAlgebra.ι K (K ⊗[k] k) (s ⊗ₜ[k] r)) := by
+      rw [gaScalarTensorBialgEquiv, BialgEquiv.trans_apply]
+      exact congrArg
+        (symmetricAlgebraBialgEquiv (K := K)
+          (Algebra.TensorProduct.rid k K K).toLinearEquiv)
+        (TauCeti.SymmetricAlgebra.scalarTensorBialgEquiv_tmul_ι
+          (k := k) (K := K) (M := k) s r)
+    _ = SymmetricAlgebra.ι K K
+        (Algebra.TensorProduct.rid k K K (s ⊗ₜ[k] r)) := by
+      exact symmetricAlgebraBialgEquiv_ι (K := K)
+        (Algebra.TensorProduct.rid k K K).toLinearEquiv (s ⊗ₜ[k] r)
+    _ = _ := by
+      rw [Algebra.TensorProduct.rid_tmul, Algebra.smul_def,
+        mul_comm (algebraMap k K r) s]
+      exact map_smul (SymmetricAlgebra.ι K K) s (algebraMap k K r)
+
+/-- The `𝔾ₐ` coordinate equivalence identifies the scalar copy of `K` on both sides. -/
+@[simp]
+theorem gaScalarTensorBialgEquiv_tmul_one (s : K) :
+    gaScalarTensorBialgEquiv (k := k) (K := K) (s ⊗ₜ[k] 1) =
+      algebraMap K (SymmetricAlgebra K K) s := by
+  calc
+    _ = symmetricAlgebraBialgEquiv (K := K)
+        (Algebra.TensorProduct.rid k K K).toLinearEquiv
+          (algebraMap K (SymmetricAlgebra K (K ⊗[k] k)) s) := by
+      rw [gaScalarTensorBialgEquiv, BialgEquiv.trans_apply]
+      exact congrArg
+        (symmetricAlgebraBialgEquiv (K := K)
+          (Algebra.TensorProduct.rid k K K).toLinearEquiv)
+        (TauCeti.SymmetricAlgebra.scalarTensorBialgEquiv_tmul_one
+          (k := k) (K := K) (M := k) s)
+    _ = _ := AlgEquiv.commutes
+      (symmetricAlgebraBialgEquiv (K := K)
+        (Algebra.TensorProduct.rid k K K).toLinearEquiv :
+          SymmetricAlgebra K (K ⊗[k] k) ≃ₐ[K] SymmetricAlgebra K K) s
+
+/-- The inverse `𝔾ₐ` coordinate equivalence sends `ι(s)` to the pure tensor
+`s ⊗ ι(1)`. -/
+@[simp]
+theorem gaScalarTensorBialgEquiv_symm_ι (s : K) :
+    (gaScalarTensorBialgEquiv (k := k) (K := K)).symm
+        (SymmetricAlgebra.ι K K s) =
+      s ⊗ₜ[k] SymmetricAlgebra.ι k k 1 := by
+  have h :
+      gaScalarTensorBialgEquiv (k := k) (K := K)
+          (s ⊗ₜ[k] SymmetricAlgebra.ι k k 1) =
+        SymmetricAlgebra.ι K K s := by
+    rw [gaScalarTensorBialgEquiv_tmul_ι, map_one, ← map_smul]
+    simp
+  calc
+    _ = (gaScalarTensorBialgEquiv (k := k) (K := K)).symm
+        (gaScalarTensorBialgEquiv (k := k) (K := K)
+          (s ⊗ₜ[k] SymmetricAlgebra.ι k k 1)) := congrArg _ h.symm
+    _ = _ := BialgEquiv.symm_apply_apply _ _
+
+end GaCoordinateBialgebra
+
+end CoordinateBialgebra
 
 /-- The `A`-points of the base change `K ⊗[k] SymmetricAlgebra k M` of the vector group on
 `M` are the additive monoid of `k`-linear maps `M →ₗ[k] A`.

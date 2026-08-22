@@ -41,7 +41,8 @@ category with homology the notion coincides with Mathlib's
   class of kernel–cokernel pairs is closed under isomorphism of short complexes, as an exact
   structure requires.
 * `TauCeti.IsKernelCokernelPair.map`: a functor preserving the two relevant (co)limits carries
-  kernel–cokernel pairs to kernel–cokernel pairs.
+  kernel–cokernel pairs to kernel–cokernel pairs, and
+  `TauCeti.IsKernelCokernelPair.of_map`: a fully faithful functor reflects them.
 * `TauCeti.IsKernelCokernelPair.op`, `TauCeti.isKernelCokernelPair_op_iff` and
   `TauCeti.isKernelCokernelPair_unop_iff`: the notion is self-dual, which is what makes the
   Bühler axioms transport to the opposite category.
@@ -181,6 +182,15 @@ theorem map {D : Type u'} [Category.{v'} D] [HasZeroMorphisms D] (h : IsKernelCo
     (F : C ⥤ D) [F.PreservesZeroMorphisms] [PreservesLimit (parallelPair S.g 0) F]
     [PreservesColimit (parallelPair S.f 0) F] : IsKernelCokernelPair (S.map F) :=
   ⟨⟨KernelFork.mapIsLimit _ h.fIsKernel F⟩, ⟨CokernelCofork.mapIsColimit _ h.gIsCokernel F⟩⟩
+
+/-- A fully faithful functor preserving zero morphisms *reflects* kernel–cokernel pairs. This
+is what makes a full subcategory inherit the kernel–cokernel pairs of its ambient category: the
+universal properties only have to be tested against objects of the subcategory. -/
+theorem of_map {D : Type u'} [Category.{v'} D] [HasZeroMorphisms D] (F : C ⥤ D)
+    [F.PreservesZeroMorphisms] [F.Full] [F.Faithful] (h : IsKernelCokernelPair (S.map F)) :
+    IsKernelCokernelPair S :=
+  ⟨⟨isLimitOfReflects F ((isLimitMapConeForkEquiv' F S.zero).symm h.fIsKernel)⟩,
+    ⟨isColimitOfReflects F ((isColimitMapCoconeCoforkEquiv' F S.zero).symm h.gIsCokernel)⟩⟩
 
 /-- A short complex whose first morphism is an isomorphism and whose last object is zero is a
 kernel–cokernel pair: an isomorphism is an inflation. -/

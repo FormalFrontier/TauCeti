@@ -9,7 +9,7 @@ public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.RingTheory.Finiteness.Subalgebra
-public import TauCeti.Algebra.WordFiltration
+public import TauCeti.Algebra.WordFiltration.AssociatedGraded
 
 /-!
 # The degree filtration of a Clifford algebra
@@ -28,11 +28,11 @@ increasing, multiplicative (`filtration Q i * filtration Q j = filtration Q (i +
 algebra, and is preserved by the grade involution, by reversal, and by the functoriality of the
 Clifford algebra in the quadratic form.
 
-The construction itself is not special to Clifford algebras: `filtration` and `filtrationPrevious`
-are `TauCeti.Algebra.wordFiltration` and `TauCeti.Algebra.wordFiltrationPrevious` of
-`TauCeti/Algebra/WordFiltration.lean`, specialized to `ι Q`, and the lemmas below that do not use
-the Clifford relation are specializations of the generic ones. The universal enveloping algebra
-carries the same construction as its PBW filtration.
+The construction itself is not special to Clifford algebras: `filtration` is
+`TauCeti.Algebra.wordFiltration` specialized to `ι Q`, and the lemmas below that do not use the
+Clifford relation are specializations of the generic ones. Its successive quotients use
+`TauCeti.Algebra.wordFiltration.GradedPiece`; the universal enveloping algebra carries the same
+construction as its PBW filtration.
 
 Following the roadmap, the filtration is *not* the submodule power `LinearMap.range (ι Q) ^ k`:
 powers of a submodule of a noncommutative algebra collect the products of *exactly* `k` generators.
@@ -44,7 +44,6 @@ supremum over the `i` of a fixed parity.
 ## Main definitions
 
 * `CliffordAlgebra.filtration Q k`: the span of the products of at most `k` generators.
-* `CliffordAlgebra.FiltrationGradedPiece Q k`: the degree-`k` successive quotient.
 
 ## Main results
 
@@ -52,9 +51,6 @@ supremum over the `i` of a fixed parity.
   `CliffordAlgebra.filtration_le_iff`: the products of at most `k` generators lie in the
   `k`-th step and generate it, which is how memberships and bounds are proved.
 * `CliffordAlgebra.filtration_eq_pow`: the defining equation, as the `k`-th power of the
-  scalars together with `LinearMap.range (ι Q)`.
-* `CliffordAlgebra.filtration_zero` and
-  `CliffordAlgebra.filtration_one` compute the first two steps, as the scalars and the
   scalars together with `LinearMap.range (ι Q)`.
 * `CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
   so: `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes
@@ -101,6 +97,8 @@ universe u v w
 
 namespace CliffordAlgebra
 
+open TauCeti.Algebra TauCeti.Algebra.wordFiltration
+
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
 /-- The degree filtration of a Clifford algebra: `filtration Q k` is the `R`-submodule spanned by
@@ -109,9 +107,11 @@ the products `ι Q v₁ * ⋯ * ι Q vₙ` of at most `k` generators, the empty 
 This is deliberately not the submodule power `LinearMap.range (ι Q) ^ k`, which spans the products
 of exactly `k` generators; see `filtration_eq_iSup_pow` for the comparison.
 
-This is `TauCeti.Algebra.wordFiltration` specialized to `ι Q`; the shared API is in
-`TauCeti/Algebra/WordFiltration.lean`. -/
-def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
+This is `TauCeti.Algebra.wordFiltration` specialized to `ι Q`. It is an `abbrev`, so that the
+generic construction of `TauCeti/Algebra/WordFiltration/AssociatedGraded.lean` applies to the
+Clifford filtration: instance synthesis and the rewriting tactics only see through reducible
+definitions. -/
+abbrev filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltration (ι Q) k
 
 /-- The defining equation of the filtration: degree `k` is the `k`-th submodule power of the
@@ -120,60 +120,6 @@ with the powers of `LinearMap.range (ι Q)` alone. -/
 theorem filtration_eq_pow (Q : QuadraticForm R M) (k : ℕ) :
     filtration Q k = (1 ⊔ LinearMap.range (ι Q)) ^ k :=
   TauCeti.Algebra.wordFiltration_eq_pow (ι Q) k
-
-/-- The filtration step preceding degree `k`, that is `TauCeti.Algebra.wordFiltrationPrevious`
-specialized to `ι Q`. At degree zero it is bottom, so the degree-zero piece remains the scalar
-filtration step rather than a zero quotient. -/
-def filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q) :=
-  TauCeti.Algebra.wordFiltrationPrevious (ι Q)
-
-@[simp]
-theorem filtrationPrevious_zero (Q : QuadraticForm R M) : filtrationPrevious Q 0 = ⊥ :=
-  TauCeti.Algebra.wordFiltrationPrevious_zero (ι Q)
-
-@[simp]
-theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
-    filtrationPrevious Q (k + 1) = filtration Q k :=
-  TauCeti.Algebra.wordFiltrationPrevious_succ (ι Q) k
-
-/-- The Clifford filtration carries Mathlib's bundled ring-filtration structure. -/
-instance instIsRingFiltration (Q : QuadraticForm R M) :
-    IsRingFiltration (filtration Q) (filtrationPrevious Q) :=
-  TauCeti.Algebra.wordFiltration.instIsRingFiltration (ι Q)
-
-/-- The filtration step preceding degree `k`, viewed inside the degree-`k` filtration step. This is
-the relation defining the degree-`k` associated-graded quotient. -/
-def filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
-    Submodule R (filtration Q k) :=
-  (filtrationPrevious Q k).submoduleOf (filtration Q k)
-
-/-- Membership in the restricted preceding filtration is ambient membership in the preceding
-filtration step. -/
-@[simp]
-theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
-    (x : filtration Q k) :
-    x ∈ filtrationPreviousRestricted Q k ↔
-      (x : CliffordAlgebra Q) ∈ filtrationPrevious Q k :=
-  Iff.rfl
-
-/-- The restricted preceding filtration is trivial in degree zero. -/
-@[simp]
-theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
-    filtrationPreviousRestricted Q 0 = ⊥ := by
-  ext x
-  simp [filtrationPreviousRestricted, Submodule.submoduleOf]
-
-/-- In successor degree, the restricted preceding filtration is the preceding filtration step
-viewed inside the successor step. -/
-@[simp]
-theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
-    filtrationPreviousRestricted Q (k + 1) =
-      Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k) := by
-  simp only [filtrationPreviousRestricted, Submodule.submoduleOf, filtrationPrevious_succ]
-
-/-- The degree-`k` piece of the associated graded Clifford filtration. -/
-abbrev FiltrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
-  filtration Q k ⧸ filtrationPreviousRestricted Q k
 
 variable (Q : QuadraticForm R M)
 
@@ -194,15 +140,6 @@ theorem filtration_le_iff {k : ℕ} {p : Submodule R (CliffordAlgebra Q)} :
 of them whenever `i ≤ j`. -/
 theorem filtration_mono : Monotone (filtration Q) :=
   TauCeti.Algebra.wordFiltration_mono (ι Q)
-
-/-- The zeroth step of the filtration is the module of scalars, the span of the empty product. -/
-@[simp]
-theorem filtration_zero : filtration Q 0 = 1 :=
-  TauCeti.Algebra.wordFiltration_zero (ι Q)
-
-/-- `1` is the empty product of generators, so it lies in every step of the filtration. -/
-theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k :=
-  TauCeti.Algebra.one_mem_wordFiltration (ι Q) k
 
 /-- Scalars lie in every step of the filtration, being multiples of the empty product. -/
 theorem algebraMap_mem_filtration (r : R) (k : ℕ) :
@@ -237,18 +174,6 @@ theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ fil
     (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) :=
   TauCeti.Algebra.mul_mem_wordFiltration (ι Q) hx hy
 
-/-- Multiplication preserves a strict degree drop in the left factor of the Clifford filtration. -/
-theorem mul_mem_filtrationPrevious_left {i j : ℕ} {x y : CliffordAlgebra Q}
-    (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
-    x * y ∈ filtrationPrevious Q (i + j) :=
-  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left (ι Q) hx hy
-
-/-- Multiplication preserves a strict degree drop in the right factor of the Clifford filtration. -/
-theorem mul_mem_filtrationPrevious_right {i j : ℕ} {x y : CliffordAlgebra Q}
-    (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
-    x * y ∈ filtrationPrevious Q (i + j) :=
-  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right (ι Q) hx hy
-
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
 theorem filtration_pow (i n : ℕ) : filtration Q i ^ n = filtration Q (i * n) :=
@@ -276,11 +201,6 @@ theorem filtration_eq_iSup_pow (k : ℕ) :
 theorem filtration_succ_eq_sup (k : ℕ) :
     filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) :=
   TauCeti.Algebra.wordFiltration_succ_eq_sup (ι Q) k
-
-/-- The first step of the filtration is the scalars together with the generators. -/
-@[simp]
-theorem filtration_one : filtration Q 1 = 1 ⊔ LinearMap.range (ι Q) :=
-  TauCeti.Algebra.wordFiltration_one (ι Q)
 
 /-- **The filtration is exhaustive.** Every element of the Clifford algebra is a combination of
 products of generators, so it lies in some step. -/
@@ -385,8 +305,8 @@ private theorem filtrationLeadingTermRaw_mem_previous (k : ℕ) (v : Fin (k + 1)
     prod_map_ι_mem_filtration_pred_of_not_nodup Q (List.ofFn v) hnot
 
 private noncomputable def filtrationLeadingTermAlternating (k : ℕ) :
-    M [⋀^Fin (k + 1)]→ₗ[R] FiltrationGradedPiece Q (k + 1) :=
-  let P := filtrationPreviousRestricted Q (k + 1)
+    M [⋀^Fin (k + 1)]→ₗ[R] GradedPiece (ι Q) (k + 1) :=
+  let P := previousRestricted (ι Q) (k + 1)
   { toMultilinearMap :=
       P.mkQ.compMultilinearMap
         ((filtrationLeadingTermRaw Q k).codRestrict (filtration Q (k + 1))
@@ -396,8 +316,8 @@ private noncomputable def filtrationLeadingTermAlternating (k : ℕ) :
       -- Expose the quotient/subtype wrapper so zero is membership in the lower filtration.
       change P.mkQ ⟨filtrationLeadingTermRaw Q k v, filtrationLeadingTermRaw_mem Q k v⟩ = 0
       rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
-      change filtrationLeadingTermRaw Q k v ∈ filtrationPrevious Q (k + 1)
-      simpa only [filtrationPrevious_succ] using
+      change filtrationLeadingTermRaw Q k v ∈ wordFiltrationPrevious (ι Q) (k + 1)
+      simpa only [wordFiltrationPrevious_succ] using
         filtrationLeadingTermRaw_mem_previous Q k v hij hijne }
 
 /-- The degree-`k + 1` leading-term map from the exterior power to the corresponding Clifford
@@ -407,7 +327,7 @@ relation, so the product descends to an alternating map.
 This is the `CommRing`-level half of the Layer 0 `filtrationGradedEquiv` target in the
 [spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean#L62-L68). -/
 noncomputable def filtrationLeadingTerm (k : ℕ) : ExteriorAlgebra.exteriorPower R (k + 1) M →ₗ[R]
-    FiltrationGradedPiece Q (k + 1) :=
+    GradedPiece (ι Q) (k + 1) :=
   exteriorPower.alternatingMapLinearEquiv (filtrationLeadingTermAlternating Q k)
 
 /-- The leading-term map sends an exterior product to the class of the corresponding product of
@@ -428,7 +348,7 @@ An element of `filtration Q (k + 1)` lies in its image under the inclusion exact
 modulo `filtration Q k` is a leading term. -/
 private noncomputable def leadingTermPreimage (k : ℕ) : Submodule R (filtration Q (k + 1)) :=
   (LinearMap.range (filtrationLeadingTerm Q k)).comap
-    (filtrationPreviousRestricted Q (k + 1)).mkQ
+    (previousRestricted (ι Q) (k + 1)).mkQ
 
 /-- **The lower filtration consists of leading terms, trivially.** An element of `filtration Q k`
 has zero class modulo `filtration Q k`, and zero is a leading term. -/
@@ -438,9 +358,9 @@ private theorem filtration_le_map_leadingTermPreimage (k : ℕ) :
   have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
   refine Submodule.mem_map.2 ⟨⟨z, hz'⟩, ?_, rfl⟩
   have hzero :
-      (filtrationPreviousRestricted Q (k + 1)).mkQ ⟨z, hz'⟩ = 0 :=
+      (previousRestricted (ι Q) (k + 1)).mkQ ⟨z, hz'⟩ = 0 :=
     (Submodule.Quotient.mk_eq_zero _).mpr (by
-      rw [mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ]
+      rw [mem_previousRestricted_iff, wordFiltrationPrevious_succ]
       exact hz)
   simp [leadingTermPreimage, hzero]
 
@@ -479,7 +399,7 @@ theorem filtrationLeadingTerm_surjective (k : ℕ) :
   intro z
   obtain ⟨x, rfl⟩ :=
     Submodule.Quotient.mk_surjective
-      (filtrationPreviousRestricted Q (k + 1)) z
+      (previousRestricted (ι Q) (k + 1)) z
   obtain ⟨y, hy, hxy⟩ := Submodule.mem_map.1 (hle x.property)
   obtain rfl : y = x := Subtype.ext hxy
   simpa [leadingTermPreimage] using hy
@@ -638,7 +558,9 @@ theorem fg_filtration [Module.Finite R M] (k : ℕ) : (filtration Q k).FG := by
     exact (Module.finite_def.1 ‹Module.Finite R M›).map _
   induction k with
   | zero =>
-    rw [filtration_zero, Submodule.one_eq_span]
+    -- Unfold the reducible Clifford alias so the generic degree-zero equation can rewrite.
+    change (wordFiltration (ι Q) 0).FG
+    rw [wordFiltration_zero, Submodule.one_eq_span]
     exact Submodule.fg_span_singleton 1
   | succ k ih =>
     rw [filtration_succ_eq_sup]

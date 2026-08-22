@@ -23,7 +23,7 @@ cycle representative at `x`.
 
 At size two, the basis has the two states `GridState.twoByTwoId` and
 `GridState.twoByTwoSwap`. For the standard two-by-two unknot diagram their already-computed
-`(M_O, A)` bigradings are `(1, -1)` and `(2, 0)`, respectively
+`(M_O, A)` bigradings are `(-1, -1)` and `(0, 0)`, respectively
 (`maslovOℤ_twoByTwo_twoByTwoId`, `alexander_twoByTwo_twoByTwoId`,
 `maslovOℤ_twoByTwo_twoByTwoSwap`, and `alexander_twoByTwo_twoByTwoSwap`). Thus the basis here
 turns the separate dimension and grading calculations into an explicit computation of the

@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basic
+public import TauCeti.RingTheory.Valuation.ValuativeRel.Basic
 
 /-!
 # Pullbacks and quotient embeddings of sub-unit valuation loci
@@ -34,6 +35,8 @@ No Huber-ring hypotheses are needed. The bundled version for morphisms of Huber 
 * `TauCeti.ValuationSpectrum.spaComap_id`, `spaComap_comp`: contravariant functoriality.
 * `TauCeti.ValuationSpectrum.comap_preimage_rationalSubset_inter_spa`,
   `spaComap_preimage_rationalSubset`: preimages of rational subsets.
+* `TauCeti.ValuationSpectrum.comap_mem_rationalSubset`,
+  `rationalSubset_image_eq_spa`: elementwise criteria for rational subsets under pullback.
 * `TauCeti.ValuationSpectrum.isEmbedding_spaComap`: an embedding of valuation spectra restricts
   to an embedding of sub-unit loci.
 * `TauCeti.ValuationSpectrum.isEmbedding_spaComap_quotientMk`,
@@ -48,10 +51,11 @@ No Huber-ring hypotheses are needed. The bundled version for morphisms of Huber 
 
 AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0), branch `dev/adic-spaces` at commit
 `37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`, files `AffinoidRings.lean` and
-`AdicSpectrum.lean`, was consulted rather than copied. It bundles the plus ring into its affinoid
-ring and phrases the induced map and quotient embedding at that level. Here the plus subrings are
-explicit, the generic results require no Huber hypotheses, and the bundled Huber-pair interface is
-provided separately.
+`AdicSpectrum.lean`, was consulted rather than copied for the induced map and quotient embedding.
+It bundles the plus ring into its affinoid ring and phrases those results at that level. Here the
+plus subrings are explicit, the generic results require no Huber hypotheses, and the bundled
+Huber-pair interface is provided separately. The rational-subset criteria are direct proofs;
+AINTLIB was not consulted for them.
 -/
 
 public section
@@ -131,6 +135,38 @@ theorem comap_preimage_rationalSubset_inter_spa (φ : A →+* B) (hφ : Continuo
       simpa only [comap_vle, map_one] using hcomap_spa
     exact ⟨⟨hcomap_spa', fun a ha ↦ hT (φ a) (Finset.mem_image_of_mem φ ha), hs⟩,
       hv_cont, hv_plus⟩
+
+/-- A point of `Spa (B, B⁺)` pulls back into `R(T/s)` if `φ` inverts `s` and makes the
+fractions `t/s` sub-unit. No Huber hypothesis is needed, and `T` is arbitrary. -/
+theorem comap_mem_rationalSubset {φ : A →+* B} (hφ : Continuous φ) {Aplus : Subring A}
+    {Bplus : Subring B} (hplus : ∀ a ∈ Aplus, φ a ∈ Bplus) (T : Finset A) (s : A) {c : B}
+    (hc : φ s * c = 1) (hT : ∀ t ∈ T, φ t * c ∈ Bplus) {v : Spv B} (hv : v ∈ spa Bplus) :
+    comap φ v ∈ rationalSubset Aplus T s := by
+  rw [mem_rationalSubset_iff]
+  refine ⟨comap_mem_spa hφ hplus hv, fun t ht ↦ ?_, ?_⟩
+  · have hsub : v.toValuativeRel.vle (φ t * c) 1 := ((mem_spa_iff Bplus v).mp hv).2 _ (hT t ht)
+    have hclear : φ t * c * φ s = φ t := by
+      rw [mul_assoc, mul_comm c, hc, mul_one]
+    rw [comap_vle]
+    simpa only [hclear, one_mul] using v.toValuativeRel.mul_vle_mul_left hsub (φ s)
+  · have hunit : IsUnit (φ s) := ⟨⟨φ s, c, hc, by rw [mul_comm]; exact hc⟩, rfl⟩
+    rw [comap_vle, map_zero]
+    exact @TauCeti.ValuativeRel.not_vle_zero_of_isUnit B _ v.toValuativeRel _ hunit
+
+open scoped Classical in
+omit [TopologicalSpace A] in
+/-- If `φ` inverts `s` and makes every fraction `φ(t) / φ(s)` sub-unit, the rational subset
+presented by the images of `T` and `s` is the whole target adic spectrum. -/
+theorem rationalSubset_image_eq_spa (φ : A →+* B) (Bplus : Subring B) (T : Finset A) (s : A)
+    {c : B} (hc : φ s * c = 1) (hT : ∀ t ∈ T, φ t * c ∈ Bplus) :
+    rationalSubset Bplus (T.image φ) (φ s) = spa Bplus := by
+  refine Set.Subset.antisymm (rationalSubset_subset_spa _ _ _) fun v hv ↦ ?_
+  have hmem := comap_mem_rationalSubset (φ := RingHom.id B) continuous_id
+    (Aplus := Bplus) (Bplus := Bplus) (fun _ ha ↦ ha) (T.image φ) (φ s) (by simpa using hc)
+    (fun _ ht ↦ by
+      obtain ⟨t, htT, rfl⟩ := Finset.mem_image.mp ht
+      simpa using hT t htT) hv
+  rwa [congr_fun comap_id v] at hmem
 
 open scoped Classical in
 /-- The preimage of `R(T/s)` under `spaComap φ` is `R(φ(T)/φ(s))`. -/

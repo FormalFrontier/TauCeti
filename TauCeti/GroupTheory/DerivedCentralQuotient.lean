@@ -34,10 +34,15 @@ does nothing once it has succeeded: on a perfect group with trivial centre — i
 nonabelian simple group — it returns the group itself, and by Grün's lemma its output is centreless
 as soon as `[G, G]` is perfect, so a second application changes nothing.
 
+Transport says that isomorphic groups have isomorphic derived central quotients, so the output
+depends only on the isomorphism class of `G`.
+
 ## Main definitions
 
 * `TauCeti.DerivedCentralQuotient`: the group `[G, G] / Z([G, G])`.
 * `TauCeti.DerivedCentralQuotient.lift`: the factorisation of a surjection onto a centreless group.
+* `TauCeti.DerivedCentralQuotient.congr`: transport of the derived central quotient along an
+  isomorphism of groups, built from the transport `TauCeti.commutatorCongr` of the derived subgroup.
 
 ## Main results
 
@@ -196,6 +201,45 @@ theorem mulEquivSelf_mk [Group.IsPerfect ↥(commutator G)]
     mulEquivSelf (G := G) (x : DerivedCentralQuotient (DerivedCentralQuotient G)) =
       (x : DerivedCentralQuotient G) :=
   mulEquivOfCenterEqBot_mk center_eq_bot x
+
+/-! ### Transport along an isomorphism -/
+
+variable {G' G'' : Type*} [Group G'] [Group G'']
+
+/-- The derived central quotient transported along an isomorphism of groups.
+
+Both steps of the recipe are transported: the isomorphism restricts to the derived subgroups, and
+that restriction carries the centre of the one onto the centre of the other. So the recipe depends
+only on the isomorphism class of `G`. -/
+def congr (ψ : G ≃* G') : DerivedCentralQuotient G ≃* DerivedCentralQuotient G' :=
+  QuotientGroup.congr _ _ (commutatorCongr ψ)
+    (TauCeti.Subgroup.map_center_eq_center (commutatorCongr ψ))
+
+@[simp]
+theorem congr_mk (ψ : G ≃* G') (x : ↥(commutator G)) :
+    DerivedCentralQuotient.congr ψ (x : DerivedCentralQuotient G) =
+      (commutatorCongr ψ x : DerivedCentralQuotient G') := by
+  simp only [DerivedCentralQuotient.congr, QuotientGroup.congr_mk]
+
+@[simp]
+theorem congr_refl :
+    DerivedCentralQuotient.congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuotient G) :=
+  MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by simp
+
+@[simp]
+theorem congr_trans (ψ : G ≃* G') (χ : G' ≃* G'') :
+    (DerivedCentralQuotient.congr ψ).trans (DerivedCentralQuotient.congr χ) =
+      DerivedCentralQuotient.congr (ψ.trans χ) :=
+  MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by
+    simp only [MulEquiv.trans_apply, congr_mk]
+    exact congrArg _ (Subtype.ext (by simp))
+
+@[simp]
+theorem congr_symm (ψ : G ≃* G') :
+    (DerivedCentralQuotient.congr ψ).symm = DerivedCentralQuotient.congr ψ.symm :=
+  MulEquiv.ext fun x => QuotientGroup.induction_on x fun y => by
+    simp only [DerivedCentralQuotient.congr, QuotientGroup.congr_symm, QuotientGroup.congr_mk,
+      commutatorCongr_symm]
 
 end DerivedCentralQuotient
 

@@ -27,9 +27,12 @@ membership lemmas state both constructions on representatives. The interval of i
 carriers is a bounded order, with `⊥` the carrier of `L` and `⊤` its dual carrier. Every
 intermediate carrier is also proved to be a full `ℤ`-lattice in the common rational ambient space
 when `L` is nondegenerate. The correspondence and its membership, inverse, and order lemmas do not
-require nondegeneracy; only this fullness result does.
+require nondegeneracy; only this fullness result does, and even it is unconditional for `⊥`, which
+is the carrier of `L` itself.
 
-Integrality and evenness of an intermediate carrier are deliberately not assumed here.
+Integrality and evenness of an intermediate carrier are deliberately not assumed here; the
+restrictions of the correspondence they cut out live in
+`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic`.
 
 ## Main declarations
 
@@ -40,12 +43,6 @@ Integrality and evenness of an intermediate carrier are deliberately not assumed
   intermediate carrier in `A_L`.
 * `TauCeti.IntegralLattice.intermediateCarrierOfDiscriminantSubgroup`: the inverse-image carrier
   `L_H` attached to a subgroup `H` of `A_L`.
-
-## TODO
-
-Restrict this correspondence to the bilinear-isotropic subgroups of `A_L`, which cut out the
-integral intermediate carriers, and to the quadratic-isotropic subgroups, which cut out the even
-ones. Neither refinement is formalized yet.
 
 ## References
 
@@ -234,6 +231,12 @@ theorem intermediateCarrierOfDiscriminantSubgroup_le_iff
     L.intermediateCarrierOfDiscriminantSubgroup H ≤
         L.intermediateCarrierOfDiscriminantSubgroup K ↔ H ≤ K :=
   L.intermediateCarrierOrderIsoDiscriminantSubgroup.symm.le_iff_le
+
+/-- The bottom intermediate carrier is the carrier of `L` itself, hence a full `ℤ`-lattice in the
+ambient rational space. No nondegeneracy is required. -/
+instance instIsLatticeBotIntermediateCarrier : (⊥ : L.IntermediateCarrier).1.IsLattice ℚ := by
+  rw [Set.Icc.coe_bot]
+  infer_instance
 
 variable [L.IsNondegenerate]
 

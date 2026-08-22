@@ -42,13 +42,9 @@ shrinking it to a product neighbourhood `V × [0, 1)` is not proved here.
 
 This serves the collar-neighbourhood target in Layer 1 of the GeometricTopology roadmap
 (`TauCetiRoadmap/GeometricTopology/README.md`), after `Boundary.Collar.Basic`'s standard-model
-calculation. Two steps remain, neither proved here.
-
-* That the collar charts have `C^k` transitions, so `M` is also a manifold for the product model
-  `(𝓡 n).prod (𝓡∂ 1)` via `collarChartedSpace`. The two lemmas above bring this within reach —
-  they are about single charts against the half-space model, not about the transitions — but no
-  `HasGroupoid` or `IsManifold` instance for `collarChartedSpace` exists yet.
-* The global statement, that a whole neighbourhood of `I.boundary M` is diffeomorphic to
+calculation. `Boundary.Collar.Manifold` uses the two smoothness lemmas above to prove that these
+charts have `C^k` transitions. The remaining global statement is that a whole neighbourhood of
+`I.boundary M` is diffeomorphic to
   `I.boundary M × [0, 1)`. The two textbook routes differ in what they need. Lee Thm 9.25 goes
   through the Boundary Flowout Theorem, gluing an inward-pointing vector field and flowing it,
   which needs flows from boundary points; Mathlib's integral curves are still restricted to
@@ -216,8 +212,8 @@ the one-dimensional half-space.
 
 It is `ChartedSpace.comp` applied to `EuclideanHalfSpace.collarModelChartedSpace`, rather than an
 atlas written out by hand, so that `chartAt_comp`, the `extChartAt` composition lemmas and
-`HasGroupoid.comp` all apply to it — `HasGroupoid.comp` is the route to the `C^k` transitions that
-would make `M` a manifold for the product model, which is not proved yet.
+`HasGroupoid.comp` all apply to it. Its `C^k` manifold structure is proved in
+`Boundary.Collar.Manifold`.
 
 `n` and `M` are explicit so that `letI := collarChartedSpace n M` determines both; there is no
 expected type at a `letI` to solve them from.

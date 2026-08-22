@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FrobeniusTower
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.FrobeniusTower
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Separability
 public import TauCeti.FieldTheory.Finite.Frobenius
 
@@ -19,9 +19,9 @@ that pullback maps infinity to infinity, so it is an isogeny of `W` with itself.
 inseparable of degree `q`.
 
 The declarations take `[Finite F]` rather than `[Fintype F]`, matching
-`Affine/FrobeniusTower.lean`, and state the exponent as `Nat.card F`: a `Fintype` instance is
-chosen enumeration data, and neither the definitions nor the statements should depend on it. The
-instance Mathlib's map needs is installed locally where it is required.
+`Affine/FunctionField/FrobeniusTower.lean`, and state the exponent as `Nat.card F`: a `Fintype`
+instance is chosen enumeration data, and neither the definitions nor the statements should depend
+on it. The instance Mathlib's map needs is installed locally where it is required.
 
 ## Main definitions
 
@@ -49,7 +49,7 @@ fixes the point at infinity" amounts to here.
 Pure inseparability follows because every function `x` has its `q`-th power in the image of the
 pullback, and `q` is a power of the exponential characteristic of `F`. The degree is the
 field-theoretic
-`TauCeti.WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`, `[K(W) : K(W)^q] = q`,
+`WeierstrassCurve.Affine.finrank_fieldRange_frobeniusAlgHom`, `[K(W) : K(W)^q] = q`,
 transported along the identification of `fieldPullback` with the `q`-power map on `K(W)`. That
 identification is `Isogeny.fieldPullback_unique`: both maps restrict to `x ↦ x ^ q` on the
 coordinate ring, and only one extension to the fraction field exists.
@@ -93,12 +93,9 @@ theorem frobeniusPullback_apply (x : W.CoordinateRing) :
 /-- **Frobenius maps the point at infinity to itself.** An element of the coordinate ring is a
 `q`-th root of its own pullback, so it is integral over the pulled-back copy. -/
 theorem mapsInfinity_frobeniusPullback : (frobeniusPullback W).MapsInfinity := by
-  rw [CoordinatePullback.mapsInfinity_iff]
-  let _ := (frobeniusPullback W).toRingHom.toAlgebra
-  intro x
-  refine IsIntegral.of_pow (n := Nat.card F) Nat.card_pos ?_
-  rw [← map_pow, ← frobeniusPullback_apply]
-  exact isIntegral_algebraMap
+  refine CoordinatePullback.mapsInfinity_of_pow (F := F) (n := Nat.card F)
+    (frobeniusPullback W) Nat.card_pos fun x ↦ ?_
+  exact ⟨x, by rw [frobeniusPullback_apply, map_pow]⟩
 
 /-- **The Frobenius isogeny** of a Weierstrass curve over a finite field. -/
 noncomputable def frobeniusIsogeny : Isogeny W W where

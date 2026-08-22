@@ -11,10 +11,11 @@ public import TauCeti.NumberTheory.ModularForms.SlashActionRat
 /-!
 # The upper-triangular part of the Hecke operator
 
-The classical `T_p` is a sum of slashes by the representatives `!![1, b; 0, p]` for `b < p`,
-together with one further term when `p ∤ N`. This file defines that first sum, `heckeSlashUpperTri`,
-and records that `f ↦ heckeSlashUpperTri k p f` is `ℂ`-linear: it preserves zero, addition and
-scalar multiplication. (Linearity in `f` only; this is not yet bundled as a `LinearMap`.)
+The classical `T_p` contains a sum of slashes by the representatives `!![1, b; 0, p]` for
+`b < p`, together with one further, diamond-twisted term when `p ∤ N`. This file defines the
+triangular sum `heckeSlashUpperTri` and records its `ℂ`-linearity in `f`: zero, addition and
+scalar multiplication are preserved. (Linearity in `f` only; it is not yet bundled as a
+`LinearMap`.)
 
 Why these representatives: mathlib's `IsBoundedAtImInfty.slash` requires `g 1 0 = 0`, so it
 applies when `g` is upper triangular. (Sufficient, not necessary — the zero function stays
@@ -27,7 +28,6 @@ the entrywise description of the representatives is not restated.
 ## Main definitions
 
 * `HeckeRing.GL2.heckeSlashUpperTri`: the sum `∑ b < p, f ∣[k] !![1, b; 0, p]`.
-
 ## Main results
 
 * `HeckeRing.GL2.heckeSlashUpperTri_def` and `heckeSlashUpperTri_apply`: the characteristic
@@ -51,6 +51,7 @@ representatives — `T_p_upper p _ b` is `upperTriGL` at `n = 2`, `a = ![1, p]` 
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
   §3.4.
+* [DS] Diamond–Shurman, *A first course in modular forms*, Proposition 5.2.1.
 -/
 
 public section

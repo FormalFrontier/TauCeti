@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Etale.Pi
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Functoriality
+import TauCeti.Algebra.Algebra.Pi
 
 /-!
 # Constant finite groups
@@ -170,18 +171,13 @@ theorem toPoints_apply (g : G) : (toPoints R G g).ofConv = eval R G g := by
 
 /-- Over a nontrivial base ring, evaluation distinguishes the elements of the constant group. -/
 theorem toPoints_injective [Nontrivial R] : Function.Injective (toPoints R G) := by
-  classical
   intro g h hgh
-  by_contra hne
   have hmaps := congrArg WithConv.ofConv hgh
   rw [toPoints_apply, toPoints_apply] at hmaps
-  have := congrArg
-    (fun q : coordinateRing R G →ₐ[R] R ↦
-      q ((functionAlgEquiv R G).symm (Pi.single g (1 : R)))) hmaps
-  rw [eval_apply, eval_apply] at this
-  rw [AlgEquiv.apply_symm_apply] at this
-  rw [Pi.single_eq_same, Pi.single_eq_of_ne' hne] at this
-  exact one_ne_zero this
+  apply Pi.evalAlgHom_injective R G
+  ext f
+  obtain ⟨x, rfl⟩ := (functionAlgEquiv R G).surjective f
+  simpa only [eval_apply, Pi.evalAlgHom_apply] using DFunLike.congr_fun hmaps x
 
 section Functoriality
 

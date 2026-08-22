@@ -82,6 +82,13 @@ def cohomologyZeroEquiv (M : X.Modules) :
   CategoryTheory.Sheaf.H.equiv₀
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) isTerminalTop
 
+/-- The degree-zero cohomology equivalence is natural in the coefficient sheaf. -/
+lemma cohomologyZeroEquiv_naturality {M N : X.Modules} (f : M ⟶ N) (x : Cohomology M 0) :
+    cohomologyZeroEquiv N ((cohomologyFunctor X 0).map f x) =
+      f.app ⊤ (cohomologyZeroEquiv M x) :=
+  (CategoryTheory.Sheaf.H.equiv₀_naturality isTerminalTop
+    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x).symm
+
 section Opens
 
 variable (M : X.Modules)

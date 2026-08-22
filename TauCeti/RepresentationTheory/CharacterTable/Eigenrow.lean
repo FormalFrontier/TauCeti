@@ -50,7 +50,9 @@ to a block, hence has the same central character as one.
   irreducibles have distinct central characters**.
 * `TauCeti.isClassEigenrow_iff_exists_centralCharacterTable_eq`: **the normalized common left
   eigenrows of the class-multiplication matrices are exactly the rows of `Ω`**, and
-  `TauCeti.card_normalized_isClassEigenrow`: there are as many of them as conjugacy classes.
+  `TauCeti.card_normalized_isClassEigenrow`: there are as many of them as conjugacy classes. The
+  version requiring only a split centre is
+  `TauCeti.card_normalized_isClassEigenrow_of_nonempty_center_algEquiv`.
   Dropping the normalization only adds scalar multiples:
   `TauCeti.exists_eq_smul_centralCharacterTable` says **every nonzero common left eigenvector of the
   class-multiplication matrices is a multiple of a row of `Ω`**, and
@@ -326,7 +328,9 @@ theorem coe_finEquivEigenrow (i : Fin (Nat.card (ConjClasses G))) :
 
 /-- **A finite group has as many normalized common left eigenrows as conjugacy classes.** The
 normalization `v (ConjClasses.mk 1) = 1` cannot be dropped: the zero row is a common left eigenrow
-too (`TauCeti.isClassEigenrow_zero`). -/
+too (`TauCeti.isClassEigenrow_zero`). See
+`TauCeti.card_normalized_isClassEigenrow_of_nonempty_center_algEquiv` for the version that requires
+only an explicit splitting of the centre. -/
 theorem card_normalized_isClassEigenrow :
     Nat.card {v : ConjClasses G → k // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} =
       Nat.card (ConjClasses G) := by

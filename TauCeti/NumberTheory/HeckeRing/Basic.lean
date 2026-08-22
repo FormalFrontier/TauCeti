@@ -37,7 +37,8 @@ merges. The degree section is instead ported from the AINTLIB `LeanModularForms`
 * `HeckeCoset.toSet`: the underlying set `H₁gH₂` of a double coset.
 * `HeckeCoset.rep`: a chosen representative in `Δ`.
 * `DoubleCoset.DecompQuotient`: the quotient `Γ₁ ⧸ (Γ₁ ∩ gΓ₂g⁻¹)` indexing the left cosets
-  in `Γ₁gΓ₂`; finite for a Hecke triple.
+  in `Γ₁gΓ₂`; finite for a Hecke triple. Its mirror `DecompQuotient Γ₂ Γ₁ g⁻¹` indexes the
+  right cosets `Γ₁a`, and is finite too.
 * `HeckeCosetModule.single`: the basis element `b • [D]` of the Hecke coset module, with
   `single_apply`, `sum_single_index`, `smul_single_one`, `single_add`, `induction_linear`,
   and the `Module R` instance `HeckeCosetModule.instModule`.
@@ -61,6 +62,14 @@ merges. The degree section is instead ported from the AINTLIB `LeanModularForms`
 
 * `HeckeCoset.eq_iff`: `mk H₁ H₂ g = mk H₁ H₂ h ↔ H₁gH₂ = H₁hH₂`.
 * `HeckeCoset.toSet_injective`: a double coset is determined by its underlying set.
+* `DoubleCoset.doubleCoset_eq_iUnion_rightCosets` and
+  `DoubleCoset.op_mul_out_inv_smul_injective`: Shimura's decomposition `Γ₁gΓ₂ = ⊔ᵥ Γ₁(gτᵥ⁻¹)`
+  into *right* cosets, indexed without repetition by `DecompQuotient Γ₂ Γ₁ g⁻¹` — the mirror of
+  `DoubleCoset.doubleCoset_eq_iUnion_leftCosets` and `mk_out_mul_injective`.
+* `DoubleCoset.doubleCoset_eq_iUnion_rightCosets_of_forall_exists`: a criterion for a supplied
+  family of right-coset representatives to cover a double coset.
+* `IsHeckeTriple.commensurable_conjAct_inv_left`, and the `Finite` instance beside it: that
+  right-coset index is finite, the mirror of the `Fintype` instance on `DecompQuotient H₁ H₂ g`.
 
 ## References
 
@@ -207,6 +216,66 @@ lemma conj_mem_of_mk_eq {H₁ H₂ : Subgroup G} (g : G) {u₁ u₂ : H₁}
     g⁻¹ * ((u₁ : G)⁻¹ * u₂) * g ∈ H₂ :=
   conj_mem_of_stabilizer g ⟨_, QuotientGroup.eq.mp h⟩
 
+/-- **Shimura's decomposition of a double coset into right cosets.** `Γ₁gΓ₂` is the union of the
+right cosets `Γ₁ · (g τᵥ⁻¹)`, where `τᵥ` runs over representatives of `Γ₂ ⧸ (Γ₂ ∩ g⁻¹Γ₁g)` — the
+mirror of `DoubleCoset.doubleCoset_eq_iUnion_leftCosets`, and of Mathlib's
+`doubleCoset_union_rightCoset`, which is indexed by all of `Γ₂` and so repeats each coset.
+
+The inverse on `τᵥ` is what converts the *left*-coset quotient `Γ₂ ⧸ (Γ₂ ∩ g⁻¹Γ₁g)` into an index
+for the right cosets: `Γ₁ g τ = Γ₁ g τ'` exactly when `τ'τ⁻¹ ∈ Γ₂ ∩ g⁻¹Γ₁g`.
+
+It lives here rather than beside `doubleCoset_eq_iUnion_leftCosets` because it is phrased with
+`DecompQuotient`, which this file defines. -/
+lemma doubleCoset_eq_iUnion_rightCosets (Γ₁ Γ₂ : Subgroup G) (g : G) :
+    doubleCoset g Γ₁ Γ₂ =
+      ⋃ v : DecompQuotient Γ₂ Γ₁ g⁻¹,
+        MulOpposite.op (g * ((v.out : G))⁻¹) • (Γ₁ : Set G) := by
+  rw [← doubleCoset_union_rightCoset]
+  refine le_antisymm (Set.iUnion_subset fun t ↦ ?_) (Set.iUnion_subset fun v ↦ ?_)
+  · -- `t : Γ₂` lands in the coset of the class of `t⁻¹`
+    refine Set.subset_iUnion_of_subset (QuotientGroup.mk t⁻¹) (le_of_eq ?_)
+    refine (rightCoset_eq_iff Γ₁).mpr ?_
+    have h := conj_mem_of_mk_eq (H₁ := Γ₂) (H₂ := Γ₁) g⁻¹ (Quotient.out_eq (QuotientGroup.mk t⁻¹))
+    simpa [mul_assoc] using h
+  · exact Set.subset_iUnion_of_subset ((v.out)⁻¹) (le_of_eq (by simp))
+
+/-- **A right-coset decomposition criterion.** Suppose every product `a * g` with `g ∈ Γ₂`
+factors as `d * rep i` with `d ∈ Γ₁`, and conversely every `rep i` equals `a * g` for some
+`g ∈ Γ₂`. Then the double coset `Γ₁ a Γ₂` is the union of the right cosets
+`Γ₁ · rep i`.
+
+This criterion proves coverage only; injectivity of the representative family is a separate
+property. -/
+lemma doubleCoset_eq_iUnion_rightCosets_of_forall_exists {ι : Type*} (Γ₁ Γ₂ : Subgroup G)
+    (a : G) (rep : ι → G)
+    (hforward : ∀ g : G, g ∈ Γ₂ → ∃ (i : ι) (d : G), d ∈ Γ₁ ∧ a * g = d * rep i)
+    (hreverse : ∀ i : ι, ∃ g : G, g ∈ Γ₂ ∧ a * g = rep i) :
+    doubleCoset a Γ₁ Γ₂ = ⋃ i : ι, MulOpposite.op (rep i) • (Γ₁ : Set G) := by
+  refine Set.Subset.antisymm (fun x hx ↦ ?_) (Set.iUnion_subset fun i x hx ↦ ?_)
+  · obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := mem_doubleCoset.mp hx
+    obtain ⟨i, d, hd, heq⟩ := hforward g₂ hg₂
+    refine Set.mem_iUnion.mpr ⟨i, (mem_rightCoset_iff _).mpr ?_⟩
+    have hx' : g₁ * a * g₂ * (rep i)⁻¹ = g₁ * d := by
+      rw [mul_assoc g₁, heq, mul_assoc, mul_inv_cancel_right]
+    rw [hx']
+    exact Γ₁.mul_mem hg₁ hd
+  · obtain ⟨g, hg, hgeq⟩ := hreverse i
+    refine mem_doubleCoset.mpr ⟨x * (rep i)⁻¹, (mem_rightCoset_iff _).mp hx,
+      g, hg, ?_⟩
+    rw [mul_assoc, hgeq, inv_mul_cancel_right]
+
+/-- The right cosets of `doubleCoset_eq_iUnion_rightCosets` are pairwise distinct, so that union
+is a partition and the sum of a `Γ₁`-invariant function over it counts each coset once. -/
+lemma op_mul_out_inv_smul_injective (Γ₁ Γ₂ : Subgroup G) (g : G) :
+    Function.Injective fun v : DecompQuotient Γ₂ Γ₁ g⁻¹ ↦
+      MulOpposite.op (g * ((v.out : G))⁻¹) • (Γ₁ : Set G) := by
+  intro v w hvw
+  have h := (rightCoset_eq_iff Γ₁).mp hvw.symm
+  rw [← QuotientGroup.out_eq' v, ← QuotientGroup.out_eq' w, QuotientGroup.eq,
+    Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← ConjAct.toConjAct_inv,
+    ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv]
+  simpa [mul_assoc] using h
+
 end DoubleCoset
 
 namespace IsHeckeTriple
@@ -222,6 +291,30 @@ commensurates `H₂`, which is commensurable with `H₁`. -/
 noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂]
     (g : Δ) : Fintype (DecompQuotient H₁ H₂ (g : G)) :=
   Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_right g).1
+
+/-- Conjugating the *left* subgroup by the inverse of an element of `Δ` gives a subgroup
+commensurable with the right one. This is `commensurable_conjAct_right` on the other flank:
+the commensurator is a subgroup, so it contains `g⁻¹` along with `g`.
+
+It is what makes `DecompQuotient H₂ H₁ g⁻¹` — the index of Shimura's decomposition of `H₁gH₂`
+into *right* cosets `H₁a` — finite. -/
+theorem commensurable_conjAct_inv_left {Δ : Submonoid G} {H₁ H₂ : Subgroup G}
+    [IsHeckeTriple Δ H₁ H₂] (g : Δ) :
+    Commensurable (ConjAct.toConjAct (g : G)⁻¹ • H₁) H₂ := by
+  have hg : Commensurable (ConjAct.toConjAct ((g : G)⁻¹) • H₁) H₁ :=
+    inv_mem (mem_commensurator_left H₂ g)
+  exact hg.trans (commensurable (Δ := Δ))
+
+/-- For a Hecke triple, the *right*-coset decomposition quotient of any `g : Δ` is finite.
+
+This is the companion of the instance above on the other flank, and it is the finiteness the
+slash sum over Shimura's decomposition `H₁gH₂ = ⊔ᵥ H₁aᵥ` needs. `Finite` rather than `Fintype`:
+no enumeration is chosen here, and a second `Fintype` on a quotient of the same shape would
+compete with the one above. -/
+instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂] (g : Δ) :
+    Finite (DecompQuotient H₂ H₁ (g : G)⁻¹) :=
+  @Finite.of_fintype _
+    (Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_inv_left g).1)
 
 end IsHeckeTriple
 

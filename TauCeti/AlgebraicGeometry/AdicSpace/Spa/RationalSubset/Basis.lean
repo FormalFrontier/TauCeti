@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Bases
+public import TauCeti.Topology.Sets.Opens
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basic
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Spectral
 import TauCeti.RingTheory.Huber.OpenIdeal
@@ -36,13 +36,16 @@ the basis arguments uses it.
 
 * `TauCeti.ValuationSpectrum.spaRationalFamily`: the family of rational subsets with open
   numerator ideal, viewed as subsets of `spa Aplus`.
+* `TauCeti.ValuationSpectrum.spaRationalOpens`: the same family presented as a set of `Opens`,
+  the form the sheaf-theoretic consumers take.
 
 ## Main results
 
 * `TauCeti.ValuationSpectrum.inter_mem_spaRationalFamily`: the family is closed under binary
   intersections, completing Wedhorn Remark 7.30(5).
 * `TauCeti.ValuationSpectrum.isTopologicalBasis_spaRationalFamily`: the family is a basis for
-  the topology of `spa Aplus`.
+  the topology of `spa Aplus`, with `TauCeti.ValuationSpectrum.isBasis_spaRationalOpens` the same
+  statement in the `Opens.IsBasis` form.
 * `TauCeti.ValuationSpectrum.isCompact_of_mem_spaRationalFamily`: every member of the family is
   quasi-compact. Each result also has an `_of_pairOfDefinition` form for use with a specified
   pair of definition.
@@ -63,7 +66,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open Set Topology TopologicalSpace TauCeti TauCeti.Huber
+open Set Topology _root_.TopologicalSpace TauCeti TauCeti.Huber
 open scoped Pointwise
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
@@ -257,6 +260,26 @@ theorem isCompact_of_mem_spaRationalFamily [IsHuberRing A] {Aplus : Subring A}
     {U : Set (spa Aplus)} (hU : U ∈ spaRationalFamily Aplus) : IsCompact U :=
   (IsHuberRing.nonempty_pairOfDefinition (A := A)).elim
     fun P ↦ isCompact_of_mem_spaRationalFamily_of_pairOfDefinition P hU
+
+/-! ### The rational basis as a family of opens -/
+
+/-- The rational family of `Spa(A,A⁺)`, presented as a set of `Opens` rather than of sets. This is
+the form `Opens.IsBasis` and the sheaf criteria on a basis take. -/
+def spaRationalOpens (Aplus : Subring A) : Set (Opens (spa Aplus)) :=
+  {U : Opens (spa Aplus) | (U : Set (spa Aplus)) ∈ spaRationalFamily Aplus}
+
+omit [IsTopologicalRing A] in
+/-- An open lies in `spaRationalOpens` exactly when its underlying set is rational. -/
+@[simp]
+theorem mem_spaRationalOpens {Aplus : Subring A} {U : Opens (spa Aplus)} :
+    U ∈ spaRationalOpens Aplus ↔ (U : Set (spa Aplus)) ∈ spaRationalFamily Aplus := Iff.rfl
+
+/-- **The rational opens are a basis** in the `Opens.IsBasis` sense, which is the form the sheaf
+criterion on a basis consumes. -/
+theorem isBasis_spaRationalOpens [IsHuberRing A] (Aplus : Subring A) :
+    Opens.IsBasis (spaRationalOpens Aplus) :=
+  TauCeti.TopologicalSpace.Opens.isBasis_of_isTopologicalBasis
+    (isTopologicalBasis_spaRationalFamily Aplus)
 
 /-! ### Finite rational refinements -/
 

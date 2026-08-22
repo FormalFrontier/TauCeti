@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
 
 /-!
@@ -95,29 +95,8 @@ theorem smooth_of_smoothUnipotentAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : smoothUnipotentAffineGroupSchemeProperty k G) :
     Smooth G.obj.obj.X.hom := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  have hH : (smoothCommHopfAlgProperty k).op H₀ :=
-    (smoothCommHopfAlgProperty_iff H₀.unop).mpr
-      ((smoothUnipotentAffineGroupSchemeProperty_iff k G).mp hG |>.1)
-  rw [← smoothAffineGroupSchemeProperty_inverseImage k] at hH
-  let eSpec :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat
-          (CommRingCat.of k)).functor.obj H₀ :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H ≪≫
-        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-          (CommRingCat.of k)).app H₀).symm)
-  have hEF : smoothAffineGroupSchemeProperty (CommRingCat.of k)
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso eSpec.symm hH
-  exact (smoothAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).mp <|
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-        (E.counitIso.app G)) hEF
+  exact (smooth_iff_algebraSmooth_coordinate k G).mpr
+    ((smoothUnipotentAffineGroupSchemeProperty_iff k G).mp hG).1
 
 /-- Objects of `SmoothUnipotentAffineGroupSchemeCat k` have smooth structural morphism. -/
 instance (k : Type u) [Field k] (G : SmoothUnipotentAffineGroupSchemeCat k) :
@@ -131,9 +110,8 @@ theorem smoothUnipotentAffineGroupSchemeProperty_inverseImage
     (smoothUnipotentAffineGroupSchemeProperty k).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       (smoothUnipotentCommHopfAlgProperty k).op := by
-  ext H
-  exact ((smoothUnipotentCommHopfAlgProperty k).op.prop_iff_of_iso
-    ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).unitIso.app H)).symm
+  unfold smoothUnipotentAffineGroupSchemeProperty
+  exact ObjectProperty.inverseImage_functor_inverseImage_inverse _ _
 
 /-- `Spec` restricts to an anti-equivalence from smooth unipotent finite-type commutative Hopf
 algebras to smooth unipotent affine group schemes. -/

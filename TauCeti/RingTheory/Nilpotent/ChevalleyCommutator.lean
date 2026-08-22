@@ -253,15 +253,12 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq
     simp only [map_mul, map_sum] at h
     exact h
   · -- Outside the truncation the reordered triple has a vanishing factor.
-    have hvx : ∀ q, kx ≤ q → (integralDividedPower x M q (hMx q)).baseChange R = 0 := by
-      intro q hq
-      rw [integralDividedPower_eq_zero_of_le x M q (hMx q) hkx hq, LinearMap.baseChange_zero]
-    have hvy : ∀ p, ky ≤ p → (integralDividedPower y M p (hMy p)).baseChange R = 0 := by
-      intro p hp
-      rw [integralDividedPower_eq_zero_of_le y M p (hMy p) hky hp, LinearMap.baseChange_zero]
-    have hvz : ∀ k, kz ≤ k → (integralDividedPower z M k (hMz k)).baseChange R = 0 := by
-      intro k hk
-      rw [integralDividedPower_eq_zero_of_le z M k (hMz k) hkz hk, LinearMap.baseChange_zero]
+    have hvx : ∀ q, kx ≤ q → (integralDividedPower x M q (hMx q)).baseChange R = 0 :=
+      fun q hq => baseChange_integralDividedPower_eq_zero_of_le x M (hMx q) hkx hq
+    have hvy : ∀ p, ky ≤ p → (integralDividedPower y M p (hMy p)).baseChange R = 0 :=
+      fun p hp => baseChange_integralDividedPower_eq_zero_of_le y M (hMy p) hky hp
+    have hvz : ∀ k, kz ≤ k → (integralDividedPower z M k (hMz k)).baseChange R = 0 :=
+      fun k hk => baseChange_integralDividedPower_eq_zero_of_le z M (hMz k) hkz hk
     rintro p k q (hpk | hqk)
     · rcases le_or_gt ky p with hp | hp
       · rw [hvy p hp, zero_mul, zero_mul]

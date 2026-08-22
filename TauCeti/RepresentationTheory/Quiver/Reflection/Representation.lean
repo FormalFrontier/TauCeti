@@ -65,6 +65,11 @@ representation concentrated at `i` whose space at `i` is nontrivial, of which th
   at `i` with nontrivial space there, and `TauCeti.subsingleton_reflectRep_obj_self`: the reflected
   space at `i` vanishes under the same source-vanishing hypothesis. Together they describe the
   vertex simple `Sᵢ`, the boundary case of the previous result.
+* `TauCeti.forall_subsingleton_reflectRep_obj` and `TauCeti.isZero_reflectRep`: a representation
+  concentrated at the sink reflects to the zero representation, the same boundary case read at
+  every vertex and on the whole reflection.
+* `TauCeti.finiteDimensional_reflectRep_obj`: reflection preserves finite-dimensionality of the
+  vertex spaces.
 
 ## Implementation notes
 
@@ -742,6 +747,46 @@ theorem subsingleton_reflectRep_obj_self {i : Q} (hi : IsSink i)
   have hker : Subsingleton (LinearMap.ker (incomingSum M i)) :=
     ⟨fun a b ↦ Subtype.ext (hdom.elim _ _)⟩
   exact reflectRep_obj_self M hi ▸ hker
+
+/-- **Reflection annihilates a representation concentrated at the sink.** If every vertex space of
+`M` away from `i` vanishes, then the reflection is the zero representation: at `i` by
+`TauCeti.subsingleton_reflectRep_obj_self`, since no arrow into a sink is a loop, and away from
+`i` because the vertex space is unchanged there. This is the boundary case in which reflection
+does not act by the simple reflection on dimension vectors -- for an indecomposable
+representation it is the vertex simple `Sᵢ`, which `TauCeti.incomingSum_not_surjective`
+describes -- and it is what makes a composite of reflections vanish once one of its stages
+does. -/
+theorem forall_subsingleton_reflectRep_obj {i : Q} (hi : IsSink i)
+    (h : ∀ a : Q, a ≠ i → Subsingleton (M.obj a)) (j : Q) :
+    Subsingleton ((reflectRep M hi).obj j) := by
+  rcases eq_or_ne j i with rfl | hj
+  · exact subsingleton_reflectRep_obj_self M hi fun b e ↦ h b (hi.ne_of_hom e)
+  · rw [reflectRep_obj_of_ne M hi hj]
+    exact h j hj
+
+/-- **Reflection annihilates a representation concentrated at the sink**, read on the whole
+reflection: `TauCeti.forall_subsingleton_reflectRep_obj` says every vertex space of the reflection
+vanishes, and a representation with vanishing vertex spaces is a zero object. -/
+theorem isZero_reflectRep {i : Q} (hi : IsSink i)
+    (h : ∀ a : Q, a ≠ i → Subsingleton (M.obj a)) :
+    Limits.IsZero (reflectRep M hi) :=
+  (Functor.isZero_iff _).mpr fun j ↦
+    have := forall_subsingleton_reflectRep_obj M hi h j
+    ModuleCat.isZero_of_subsingleton _
+
+/-- **Reflection preserves finite-dimensionality.** The reflected space at the sink is a subspace
+of a finite product of vertex spaces of `M`, and away from the sink the vertex spaces are those of
+`M`. This is what carries the finite-dimensionality hypothesis of
+`TauCeti.dimVector_reflectRep` through a sequence of reflections. -/
+theorem finiteDimensional_reflectRep_obj {i : Q} (hi : IsSink i)
+    (h : ∀ a : Q, FiniteDimensional k (M.obj a)) (j : Q) :
+    FiniteDimensional k ((reflectRep M hi).obj j) := by
+  rcases eq_or_ne j i with rfl | hj
+  · have hpi : ∀ e : Σ b : Q, (b ⟶ j), FiniteDimensional k (M.obj e.1) := fun e ↦ h e.1
+    rw [reflectRep_obj_self M hi]
+    exact FiniteDimensional.finiteDimensional_submodule _
+  · rw [reflectRep_obj_of_ne M hi hj]
+    exact h j
 
 /-- If every source of an arrow into the sink vanishes, the reflected dimension at the sink is
 zero. -/

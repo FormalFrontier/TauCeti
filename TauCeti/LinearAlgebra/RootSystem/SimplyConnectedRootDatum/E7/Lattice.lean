@@ -48,10 +48,10 @@ private def e7Extend (v : Fin 7 → ℤ) : Fin 8 → ℤ :=
   fun i => if hi : (i : ℕ) < 7 then v ⟨i, hi⟩ else 0
 
 private theorem norm_e7Extend (v : Fin 7 → ℤ) :
-    (e7Extend v ᵥ* CartanMatrix.E₈) ⬝ᵥ e7Extend v =
-      (v ᵥ* CartanMatrix.E₇) ⬝ᵥ v := by
+    (e7Extend v ᵥ* CartanMatrix.E 8) ⬝ᵥ e7Extend v =
+      (v ᵥ* CartanMatrix.E 7) ⬝ᵥ v := by
   simp only [dotProduct, Matrix.vecMul, Fin.sum_univ_succ]
-  simp [e7Extend, CartanMatrix.E₈, CartanMatrix.E₇]
+  simp [e7Extend, CartanMatrix.E]
 
 private theorem e7Extend_injective : Function.Injective e7Extend := by
   intro v w h
@@ -71,7 +71,7 @@ private theorem e7PositiveCoroot_sum_pos (i : Fin 63) :
 private theorem exists_e8PositiveCoroot_eq_e7Extend (i : Fin 63) :
     ∃ j : Fin 120, e8PositiveCoroot j = e7Extend (e7PositiveCoroot i) := by
   have hnorm :
-      (e7PositiveCoroot i ᵥ* CartanMatrix.E₇) ⬝ᵥ e7PositiveCoroot i = 2 := by
+      (e7PositiveCoroot i ᵥ* CartanMatrix.E 7) ⬝ᵥ e7PositiveCoroot i = 2 := by
     have h := e7Root_dotProduct_coroot (Fin.castAdd 63 i)
     rw [e7Root_apply] at h
     have he7 : e7Coroot (Fin.castAdd 63 i) = e7PositiveCoroot i := by
@@ -133,7 +133,7 @@ private theorem exists_e7PositiveToE8Index_of_last_eq_zero (j : Fin 120)
 /-- **The listed `E₇` coroots are all the norm-two vectors of the simple-coroot lattice.** The
 enumeration of 126 coroots is complete. -/
 theorem exists_e7Coroot_eq {v : Fin 7 → ℤ}
-    (hv : (v ᵥ* CartanMatrix.E₇) ⬝ᵥ v = 2) : ∃ k, e7Coroot k = v := by
+    (hv : (v ᵥ* CartanMatrix.E 7) ⬝ᵥ v = 2) : ∃ k, e7Coroot k = v := by
   obtain ⟨j, hj⟩ := exists_e8Coroot_eq (norm_e7Extend v |>.trans hv)
   have hj0 : e8Coroot j 7 = 0 := by rw [hj]; rfl
   induction j using Fin.addCases (m := 120) (n := 120) with

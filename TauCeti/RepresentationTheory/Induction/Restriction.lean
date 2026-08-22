@@ -62,9 +62,9 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe u
+universe u v
 
-variable {k G : Type u} [Group G]
+variable {k : Type u} {G : Type v} [Group G]
 
 section Functor
 
@@ -120,7 +120,7 @@ end Functor
 
 section Intertwining
 
-variable [Field k] {M M' : Type u} [Group M] [Group M']
+variable [Field k] {M M' : Type*} [Group M] [Group M']
 
 /-- Restriction along an isomorphism of groups is an equivalence of representation categories, so
 it leaves the dimension of an intertwining space unchanged. -/

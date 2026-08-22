@@ -6,10 +6,14 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.Contractability
+public import TauCeti.Probability.Exchangeability.MixedMarkovChain
 public import TauCeti.Probability.Exchangeability.PathSpace.Shift
 public import Mathlib.MeasureTheory.Group.Measure
+public import Mathlib.MeasureTheory.Measure.DiracProba
 public import Mathlib.Probability.UniformOn
 public import Mathlib.Data.ZMod.Basic
+-- Non-public: used only inside proofs — a mixed i.i.d. process is exchangeable.
+import TauCeti.Probability.Exchangeability.MixedIID.Implications
 
 /-!
 # A stationary process that is not exchangeable: the deterministic 3-cycle
@@ -29,16 +33,23 @@ its path law is invariant under the one-sided shift
 (`threeCycle_measurePreserving_shift`), because shifting the sample path of `ω` gives the sample
 path of `ω + 1`, and the uniform law is translation invariant.
 
+It is a deterministic Markov chain, hence a mixture of Markov chains
+(`threeCycle_mixedMarkovChain`) and so Markov exchangeable (`threeCycle_markovExchangeable`); since
+it is not exchangeable, this is also the example showing that `Exchangeable` is strictly stronger
+than `MarkovExchangeable`, and — through `threeCycle_not_mixedIID` — that `MixedIID` is strictly
+stronger than `MixedMarkovChain`.
+
 It is, however, neither exchangeable (`threeCycle_not_exchangeable`) nor contractable
 (`threeCycle_not_contractable`): the pair `(X₀, X₁) = (ω, ω + 1)` lands in
 `{(0, 1), (1, 2), (2, 0)}`, so swapping the two coordinates — or reading off the pair `(X₀, X₂)`
 instead — produces a different two-dimensional law. This separates stationarity and
 shift-invariance from the symmetry notions, as the roadmap example asks.
 
-The example uses only the Layer 0 API (`Exchangeable`, `Contractable`, `pathLaw`, `blockLaw`,
-`shift`) together with Mathlib's translation invariance of the counting measure on a group
-(`MeasureTheory.map_add_right_eq_self`); it needs no material from
-`cameronfreer/exchangeability`.
+The example uses the Layer 0 API (`Exchangeable`, `Contractable`, `pathLaw`, `blockLaw`, `shift`)
+together with the Layer 8 `MarkovExchangeable` / `MixedMarkovChain` interface and `MixedIID`, and
+Mathlib's translation invariance of the counting measure on a group
+(`MeasureTheory.map_add_right_eq_self`) and its `MeasureTheory.diracProba`; it needs no material
+from `cameronfreer/exchangeability`.
 -/
 
 public section
@@ -70,6 +81,10 @@ and stays scoped to this example, rather than leaking to the general `uniformOn 
 @[simp]
 theorem threeCycleMeasure_def : threeCycleMeasure = uniformOn Set.univ :=
   rfl
+
+/-- The stationary law of the 3-cycle is a probability measure. -/
+instance : IsProbabilityMeasure threeCycleMeasure :=
+  isProbabilityMeasure_uniformOn Set.finite_univ Set.univ_nonempty
 
 /-- The uniform law on `ZMod 3` is invariant under right addition, supplying the translation
 invariance used in the shift-stationarity proof. -/
@@ -157,6 +172,118 @@ exchangeability symmetry: the pair `(X₀, X₁) = (ω, ω + 1)` ranges over
 theorem threeCycle_not_exchangeable : ¬ Exchangeable threeCycleMeasure threeCycle := by
   intro hE
   exact threeCycle_not_contractable (hE.contractable (fun _ => Measurable.of_discrete.aemeasurable))
+
+/-- **The 3-cycle has the finite-dimensional laws of a Markov chain.** A path of length `n + 1` is
+possible only if every step advances the state by one, in which case it is determined by its
+starting state and carries the uniform mass `3⁻¹`. -/
+theorem threeCycle_prefixLaw_singleton (n : ℕ) (w : Fin (n + 1) → ZMod 3) :
+    prefixLaw threeCycleMeasure threeCycle (n + 1) {w} =
+      3⁻¹ * ∏ i : Fin n, (if w i.succ = w i.castSucc + 1 then 1 else 0 : ℝ≥0∞) := by
+  classical
+  have hmap : prefixLaw threeCycleMeasure threeCycle (n + 1) {w} =
+      threeCycleMeasure ((fun (ω : ZMod 3) (i : Fin (n + 1)) => threeCycle i.val ω) ⁻¹' {w}) := by
+    rw [prefixLaw_def, blockLaw_def,
+      Measure.map_apply Measurable.of_discrete MeasurableSet.of_discrete]
+  by_cases hstep : ∀ i : Fin n, w i.succ = w i.castSucc + 1
+  · have hprod : (∏ i : Fin n, (if w i.succ = w i.castSucc + 1 then 1 else 0 : ℝ≥0∞)) = 1 :=
+      Finset.prod_eq_one fun i _ => by simp [hstep i]
+    have hw : ∀ i : Fin (n + 1), w i = w 0 + (i.val : ZMod 3) := by
+      intro i
+      induction i using Fin.induction with
+      | zero => simp
+      | succ j ih =>
+        rw [hstep j, ih]
+        simp only [Fin.val_succ, Fin.val_castSucc]
+        push_cast
+        ring
+    have hset : (fun (ω : ZMod 3) (i : Fin (n + 1)) => threeCycle i.val ω) ⁻¹' {w} = {w 0} := by
+      ext ω
+      simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, threeCycle_apply]
+      refine ⟨fun h => by simpa using h 0, ?_⟩
+      rintro rfl i
+      exact (hw i).symm
+    rw [hmap, hset, threeCycleMeasure_singleton, hprod, mul_one]
+  · obtain ⟨i, hi⟩ := not_forall.mp hstep
+    have hprod : (∏ i : Fin n, (if w i.succ = w i.castSucc + 1 then 1 else 0 : ℝ≥0∞)) = 0 :=
+      Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi])
+    have hset : (fun (ω : ZMod 3) (i : Fin (n + 1)) => threeCycle i.val ω) ⁻¹' {w} = ∅ := by
+      ext ω
+      simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, threeCycle_apply,
+        Set.mem_empty_iff_false, iff_false]
+      intro h
+      refine hi ?_
+      rw [← h i.succ, ← h i.castSucc]
+      simp only [Fin.val_succ, Fin.val_castSucc]
+      push_cast
+      ring
+    rw [hmap, hset, measure_empty, hprod, mul_zero]
+
+/-- The uniform initial law of the 3-cycle, bundled as a probability measure. -/
+def threeCycleInitial : ProbabilityMeasure (ZMod 3) :=
+  ⟨threeCycleMeasure, inferInstance⟩
+
+/-- The measure underlying the bundled initial law is `threeCycleMeasure`. -/
+@[simp]
+theorem threeCycleInitial_toMeasure :
+    (threeCycleInitial : Measure (ZMod 3)) = threeCycleMeasure := by
+  simp only [threeCycleInitial, ProbabilityMeasure.coe_mk]
+
+-- Not `@[simp]`: `threeCycleInitial_toMeasure` already simplifies this lemma's left-hand side, so
+-- the `simpNF` linter rejects the tag.
+/-- The bundled initial law gives mass `3⁻¹` to each singleton. -/
+theorem threeCycleInitial_singleton (a : ZMod 3) :
+    (threeCycleInitial : Measure (ZMod 3)) {a} = 3⁻¹ := by
+  rw [threeCycleInitial_toMeasure]
+  exact threeCycleMeasure_singleton a
+
+/-- The deterministic transition matrix of the 3-cycle, sending the state `a` to the point mass at
+its successor `a + 1`. -/
+def threeCycleStep (a : ZMod 3) : ProbabilityMeasure (ZMod 3) :=
+  diracProba (a + 1)
+
+/-- The measure underlying the bundled deterministic step is the Dirac mass at the successor
+state. -/
+@[simp]
+theorem threeCycleStep_toMeasure (a : ZMod 3) :
+    (threeCycleStep a : Measure (ZMod 3)) = Measure.dirac (a + 1) := by
+  simp only [threeCycleStep, diracProba, ProbabilityMeasure.coe_mk]
+
+-- Not `@[simp]`: `threeCycleStep_toMeasure` already simplifies this lemma's left-hand side, so the
+-- `simpNF` linter rejects the tag.
+/-- The deterministic step gives mass one to the successor state and mass zero to every other
+state. -/
+theorem threeCycleStep_singleton (a b : ZMod 3) :
+    (threeCycleStep a : Measure (ZMod 3)) {b} = if b = a + 1 then 1 else 0 := by
+  rw [threeCycleStep_toMeasure, Measure.dirac_apply]
+  simp [Set.indicator_apply, eq_comm]
+
+/-- **The 3-cycle is a mixture of Markov chains, with named witnesses** — degenerately, being a
+single Markov chain: the uniform initial law and the deterministic successor step reproduce its
+finite path laws. -/
+theorem threeCycle_mixedMarkovChainWith :
+    MixedMarkovChainWith threeCycleMeasure threeCycle (fun _ => threeCycleInitial)
+      fun _ => threeCycleStep :=
+  mixedMarkovChainWith_const_of_prefixLaw_singleton_eq
+    (fun _ => Measurable.of_discrete.aemeasurable) threeCycleInitial threeCycleStep fun n w => by
+      rw [threeCycle_prefixLaw_singleton n w, threeCycleInitial_singleton]
+      exact congrArg _ (Finset.prod_congr rfl fun i _ =>
+        (threeCycleStep_singleton (w i.castSucc) (w i.succ)).symm)
+
+/-- **The 3-cycle is a mixture of Markov chains.** With `threeCycle_not_mixedIID`, this shows that
+mixing over Markov chains is strictly more general than mixing over i.i.d. laws. -/
+theorem threeCycle_mixedMarkovChain : MixedMarkovChain threeCycleMeasure threeCycle :=
+  MixedMarkovChain.of_witnesses threeCycle_mixedMarkovChainWith
+
+/-- **The 3-cycle is Markov exchangeable**, being a mixture of Markov chains: its finite path
+probabilities factor through the starting state and the transition counts. With
+`threeCycle_not_exchangeable`, this separates `MarkovExchangeable` from `Exchangeable`. -/
+theorem threeCycle_markovExchangeable : MarkovExchangeable threeCycleMeasure threeCycle :=
+  threeCycle_mixedMarkovChainWith.markovExchangeable
+
+/-- **The 3-cycle is not mixed i.i.d.**, since a mixed i.i.d. process is exchangeable and the
+3-cycle is not. -/
+theorem threeCycle_not_mixedIID : ¬ MixedIID threeCycleMeasure threeCycle :=
+  fun h => threeCycle_not_exchangeable h.exchangeable
 
 end Probability
 

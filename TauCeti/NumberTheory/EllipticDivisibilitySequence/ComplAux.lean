@@ -38,8 +38,8 @@ the division polynomials.
   bookkeeping; the `b ^ 4` rescaling is untouched, being the same inside `complEDS₂Aux` as inside
   `normEDS`. This is the companion of Mathlib's `complEDS₂_mul_b`, and it is why the definition is
   stated with `preNormEDS` rather than `normEDS`.
-* `complEDS₂Aux_two`: the auxiliary term vanishes at `2`, since `preNormEDS _ _ _ 0`
-  does.
+* `complEDS₂Aux_zero`, `complEDS₂Aux_one`, `complEDS₂Aux_two`: the values at the base indices,
+  `-1`, `-b` and `0` — the last since `preNormEDS _ _ _ 0` vanishes.
 * `map_complEDS₂Aux`: it is natural in the coefficient ring.
 
 ## Implementation notes
@@ -91,6 +91,14 @@ have `simp` unfold `complEDS₂Aux` everywhere and defeat the point of naming th
 theorem complEDS₂Aux_def : complEDS₂Aux b c d m =
     preNormEDS (b ^ 4) c d (m - 2) * preNormEDS (b ^ 4) c d (m + 1) ^ 2 *
       if Even m then 1 else b := (rfl)
+
+/-- The auxiliary term at `0` is `-1`. -/
+@[simp]
+theorem complEDS₂Aux_zero : complEDS₂Aux b c d 0 = -1 := by simp [complEDS₂Aux_def]
+
+/-- The auxiliary term at `1` is `-b`. -/
+@[simp]
+theorem complEDS₂Aux_one : complEDS₂Aux b c d 1 = -b := by simp [complEDS₂Aux_def]
 
 /-- The auxiliary term vanishes at `2`: its first factor is `preNormEDS _ _ _ 0`. -/
 @[simp]

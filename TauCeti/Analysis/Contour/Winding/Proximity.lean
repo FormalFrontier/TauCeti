@@ -27,10 +27,8 @@ winding number about `0` therefore vanishes, because the closed left half-plane 
 connected subset of the complement of its image. Since the index integrands satisfy
 `σ' / σ = γ₁' / (γ₁ - w) - γ₀' / (γ₀ - w)` pointwise, that vanishing is the asserted equality.
 
-The Layer 0 item this serves is homotopy invariance of the winding number off the curve. What was
-already available (`Contour.windingNumber_eq_of_pathHomotopy`) needs a path homotopy whose
-extension to the square is `C²`; the results here need no regularity of the homotopy whatsoever.
-In particular `Contour.IsPiecewiseC1On.windingNumber_eq_of_notMem_segment` deduces invariance
+The Layer 0 item this serves is homotopy invariance of the winding number off the curve.
+`Contour.IsPiecewiseC1On.windingNumber_eq_of_notMem_segment` deduces invariance
 along the straight-line homotopy `s ↦ (1 - s) • γ₀ + s • γ₁` from the purely geometric hypothesis
 that the segment `[γ₀ t, γ₁ t]` misses `w` for every parameter `t`: the intermediate curves are
 piecewise `C¹` because that predicate is stable under affine combinations, and a compactness
@@ -43,6 +41,8 @@ estimate lets finitely many of them be chained together by the leash lemma.
   `dist (γ₁ t) (γ₀ t) < dist (γ₀ t) w` throughout, have equal winding numbers about `w`.
 * `Contour.IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist` — the same for closed piecewise-`C¹`
   curves, whose regularity supplies the raw hypotheses on its own.
+* `Contour.IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist_of_eq_endpoints` — the common-endpoint
+  version for paths that need not be closed.
 * `Contour.IsPiecewiseC1On.windingNumber_eq_of_notMem_segment` — invariance along the
   straight-line homotopy: if `w ∉ [γ₀ t, γ₁ t]` for every `t`, the winding numbers agree.
 
@@ -127,18 +127,16 @@ private theorem not_isBounded_connectedComponentIn_compl {S : Set ℂ} (hS : ∀
   rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonpos (by linarith), neg_neg] at hle
   linarith
 
-/-- **Proximity invariance of the winding number** (the "dog on a leash" lemma). Let `γ₀` and `γ₁`
-be closed curves on the oriented interval with endpoints `a`, `b`, each continuous on
-`Set.uIcc a b`, differentiable off a common countable set `P`, and with interval-integrable
-derivative. If at every parameter the two curves are closer to each other than `γ₀` is to `w`,
-then they have the same winding number about `w`.
+/-- Core comparison-quotient form of proximity invariance. The raw curves are regular enough to
+integrate, stay within leash distance, and have a closed comparison quotient. The public closed
+curve and common-endpoint forms below supply the last hypothesis.
 
 The comparison quotient `σ = (γ₁ - w) / (γ₀ - w)` is then a closed curve inside the open right
 half-plane, so `0` lies in an unbounded component of the complement of its image and
 `n_0(σ) = 0`; pointwise `σ' / σ = γ₁' / (γ₁ - w) - γ₀' / (γ₀ - w)`, so `n_0(σ)` is the difference
 of the two winding numbers. -/
-theorem windingNumber_eq_of_dist_lt_dist {P : Set ℝ} (hP : P.Countable)
-    (h₀closed : γ₀ a = γ₀ b) (h₁closed : γ₁ a = γ₁ b)
+private theorem windingNumber_eq_of_dist_lt_dist_aux {P : Set ℝ} (hP : P.Countable)
+    (hσclosed : compRatio γ₀ γ₁ w a = compRatio γ₀ γ₁ w b)
     (h₀cont : ContinuousOn γ₀ (uIcc a b)) (h₁cont : ContinuousOn γ₁ (uIcc a b))
     (h₀diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ₀ t)
     (h₁diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ₁ t)
@@ -158,8 +156,6 @@ theorem windingNumber_eq_of_dist_lt_dist {P : Set ℝ} (hP : P.Countable)
   -- Regularity of the comparison quotient.
   have hσcont : ContinuousOn (compRatio γ₀ γ₁ w) (uIcc a b) :=
     (h₁cont.sub continuousOn_const).div (h₀cont.sub continuousOn_const) h₀ne
-  have hσclosed : compRatio γ₀ γ₁ w a = compRatio γ₀ γ₁ w b := by
-    rw [compRatio_apply, compRatio_apply, h₀closed, h₁closed]
   have hσhas : ∀ t ∈ Ioo (min a b) (max a b) \ P, HasDerivAt (compRatio γ₀ γ₁ w)
       ((deriv γ₁ t * (γ₀ t - w) - (γ₁ t - w) * deriv γ₀ t) / (γ₀ t - w) ^ 2) t := by
     intro t ht
@@ -221,6 +217,24 @@ theorem windingNumber_eq_of_dist_lt_dist {P : Set ℝ} (hP : P.Countable)
       (fun t ht => sub_ne_zero.mp (h₀ne t ht)) hint₀] at hσzero
   exact sub_eq_zero.mp hσzero
 
+/-- **Proximity invariance of the winding number** (the "dog on a leash" lemma). Let `γ₀` and `γ₁`
+be closed curves on the oriented interval with endpoints `a`, `b`, each continuous on
+`Set.uIcc a b`, differentiable off a common countable set `P`, and with interval-integrable
+derivative. If at every parameter the two curves are closer to each other than `γ₀` is to `w`,
+then they have the same winding number about `w`. -/
+theorem windingNumber_eq_of_dist_lt_dist {P : Set ℝ} (hP : P.Countable)
+    (h₀closed : γ₀ a = γ₀ b) (h₁closed : γ₁ a = γ₁ b)
+    (h₀cont : ContinuousOn γ₀ (uIcc a b)) (h₁cont : ContinuousOn γ₁ (uIcc a b))
+    (h₀diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ₀ t)
+    (h₁diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ₁ t)
+    (h₀int : IntervalIntegrable (fun t => deriv γ₀ t) volume a b)
+    (h₁int : IntervalIntegrable (fun t => deriv γ₁ t) volume a b)
+    (hlt : ∀ t ∈ uIcc a b, dist (γ₁ t) (γ₀ t) < dist (γ₀ t) w) :
+    windingNumber γ₁ a b w = windingNumber γ₀ a b w := by
+  apply windingNumber_eq_of_dist_lt_dist_aux hP
+    (by rw [compRatio_apply, compRatio_apply, h₀closed, h₁closed])
+    h₀cont h₁cont h₀diff h₁diff h₀int h₁int hlt
+
 /-- **Proximity invariance for closed piecewise-`C¹` curves.** If two closed piecewise-`C¹` curves
 stay closer to each other than the first stays to `w`, they have the same winding number about `w`.
 Piecewise-`C¹` regularity supplies the continuity, differentiability and integrability hypotheses
@@ -236,6 +250,25 @@ theorem IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist (h₀ : IsPiecewiseC1On
     (fun t ht => hdiff₀ t ⟨ht.1, fun hmem => ht.2 (Or.inl hmem)⟩)
     (fun t ht => hdiff₁ t ⟨ht.1, fun hmem => ht.2 (Or.inr hmem)⟩)
     h₀.intervalIntegrable_deriv h₁.intervalIntegrable_deriv hlt
+
+/-- **Proximity invariance for paths with common endpoints.** If two piecewise-`C¹` paths agree at
+both endpoints and stay closer to each other than the first stays to `w`, then they have the same
+winding number about `w`. Unlike `IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist`, the paths need
+not be closed; their common endpoints make the comparison quotient a closed curve. -/
+theorem IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist_of_eq_endpoints
+    (h₀ : IsPiecewiseC1On γ₀ a b) (h₁ : IsPiecewiseC1On γ₁ a b)
+    (ha : γ₀ a = γ₁ a) (hb : γ₀ b = γ₁ b)
+    (hlt : ∀ t ∈ uIcc a b, dist (γ₁ t) (γ₀ t) < dist (γ₀ t) w) :
+    windingNumber γ₁ a b w = windingNumber γ₀ a b w := by
+  obtain ⟨P₀, hP₀, hdiff₀⟩ := h₀.exists_countable_differentiableAt
+  obtain ⟨P₁, hP₁, hdiff₁⟩ := h₁.exists_countable_differentiableAt
+  apply windingNumber_eq_of_dist_lt_dist_aux (hP₀.union hP₁) ?_ h₀.continuousOn h₁.continuousOn
+    (fun t ht => hdiff₀ t ⟨ht.1, fun hmem => ht.2 (Or.inl hmem)⟩)
+    (fun t ht => hdiff₁ t ⟨ht.1, fun hmem => ht.2 (Or.inr hmem)⟩)
+    h₀.intervalIntegrable_deriv h₁.intervalIntegrable_deriv hlt
+  have h₀a : γ₀ a - w ≠ 0 := sub_ne_zero.mpr (ne_of_dist_lt_dist (hlt a left_mem_uIcc))
+  have h₀b : γ₀ b - w ≠ 0 := sub_ne_zero.mpr (ne_of_dist_lt_dist (hlt b right_mem_uIcc))
+  rw [compRatio_apply, compRatio_apply, ← ha, ← hb, div_self h₀a, div_self h₀b]
 
 /-- The stage at time `s` of the straight-line homotopy `(1 - s) • γ₀ + s • γ₁`. -/
 private def lineHomotopy (γ₀ γ₁ : ℝ → ℂ) (s : ℝ) : ℝ → ℂ := fun t => (1 - s) • γ₀ t + s • γ₁ t

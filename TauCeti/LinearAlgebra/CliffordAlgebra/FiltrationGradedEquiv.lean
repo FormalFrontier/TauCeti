@@ -60,6 +60,8 @@ universe u v
 
 namespace CliffordAlgebra
 
+open TauCeti.Algebra TauCeti.Algebra.wordFiltration
+
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]
 
@@ -86,12 +88,12 @@ theorem coe_equivExteriorFiltration_symm_apply
 
 private theorem equivExteriorFiltration_map_previous
     (k : ℕ) :
-    (filtrationPreviousRestricted Q (k + 1)).map
+    (previousRestricted (ι Q) (k + 1)).map
         (equivExteriorFiltration Q (k + 1)).toLinearMap =
-      filtrationPreviousRestricted (0 : QuadraticForm R M) (k + 1) := by
+      previousRestricted (ι (0 : QuadraticForm R M)) (k + 1) := by
   ext x
-  rw [Submodule.mem_map_equiv, mem_filtrationPreviousRestricted_iff,
-    mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ, filtrationPrevious_succ]
+  rw [Submodule.mem_map_equiv, mem_previousRestricted_iff,
+    mem_previousRestricted_iff, wordFiltrationPrevious_succ, wordFiltrationPrevious_succ]
   -- The two submodules are over filtration subtypes, so expose their ambient carrier predicates.
   change (changeFormEquiv changeForm.associated_neg_proof).symm
       (x : CliffordAlgebra (0 : QuadraticForm R M)) ∈ filtration Q k ↔
@@ -100,8 +102,8 @@ private theorem equivExteriorFiltration_map_previous
     Submodule.mem_map_equiv]
 
 private noncomputable def equivExteriorFiltrationQuotient (k : ℕ) :
-    FiltrationGradedPiece Q (k + 1) ≃ₗ[R]
-      FiltrationGradedPiece (0 : QuadraticForm R M) (k + 1) :=
+    GradedPiece (ι Q) (k + 1) ≃ₗ[R]
+      GradedPiece (ι (0 : QuadraticForm R M)) (k + 1) :=
   Submodule.Quotient.equiv _ _ (equivExteriorFiltration Q (k + 1))
     (equivExteriorFiltration_map_previous Q k)
 
@@ -122,7 +124,7 @@ theorem equivExterior_symm_mem_filtration {k : ℕ}
 
 /-- The successive degree quotient of a Clifford algebra is the corresponding exterior power. -/
 noncomputable def filtrationGradedEquiv (k : ℕ) :
-    FiltrationGradedPiece Q (k + 1) ≃ₗ[R] ⋀[R]^(k + 1) M :=
+    GradedPiece (ι Q) (k + 1) ≃ₗ[R] ⋀[R]^(k + 1) M :=
   (equivExteriorFiltrationQuotient Q k).trans (zeroFormFiltrationQuotientEquivExteriorPower k)
 
 /-- On quotient representatives, `filtrationGradedEquiv` first applies `equivExterior`. -/
@@ -169,7 +171,7 @@ theorem filtrationGradedEquiv_comp_filtrationLeadingTerm (k : ℕ) :
     LinearMap.id_coe, id_eq, filtrationLeadingTerm_apply_ιMulti, filtrationGradedEquiv_apply_mk]
   rw [← zeroFormFiltrationQuotientEquivExteriorPower_apply k (exteriorPower.ιMulti R (k + 1) v)]
   congr 1
-  rw [Submodule.Quotient.eq, mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ]
+  rw [Submodule.Quotient.eq, mem_previousRestricted_iff, wordFiltrationPrevious_succ]
   -- What remains is `changeForm`'s symbol computation at `Q' = 0`, read through `equivExterior`.
   simpa only [equivExterior, changeFormEquiv_apply, exteriorPower.ιMulti_apply_coe,
     ExteriorAlgebra.ιMulti_apply, Function.comp_def, AddSubgroupClass.coe_sub,

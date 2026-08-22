@@ -8,6 +8,7 @@ module
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.OrthogonalSum
 public import TauCeti.LinearAlgebra.IntegralLattice.Scaling
+public import TauCeti.LinearAlgebra.Quotient.Prod
 
 /-!
 # Discriminant forms under orthogonal sums and negation
@@ -57,7 +58,6 @@ variable [AddCommGroup V] [Module ℚ V] [AddCommGroup W] [Module ℚ W]
 
 /-- Membership in the dual carrier of an orthogonal sum is componentwise membership in the two
 dual carriers. -/
-@[simp]
 theorem mem_dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W)
     (x : V × W) :
     x ∈ (L.orthogonalSum M).dualCarrier ↔ x.1 ∈ L.dualCarrier ∧ x.2 ∈ M.dualCarrier := by
@@ -83,6 +83,13 @@ theorem mem_dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLatti
     rw [orthogonalSum_carrier, Submodule.mem_prod] at hz
     rw [orthogonalSum_form, orthogonalSumForm_apply]
     exact Submodule.add_mem _ (hx z.1 hz.1) (hy z.2 hz.2)
+
+/-- The dual carrier of an orthogonal sum is the product of the two dual carriers. -/
+@[simp]
+theorem dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).dualCarrier = L.dualCarrier.prod M.dualCarrier := by
+  ext x
+  rw [L.mem_dualCarrier_orthogonalSum M x, Submodule.mem_prod]
 
 /-- The dual carrier of an orthogonal sum is canonically the product of the dual carriers. -/
 def orthogonalSumDualCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -127,31 +134,16 @@ theorem map_carrierInDual_orthogonalSum (L : IntegralLattice V) (M : IntegralLat
   rw [orthogonalSum_carrier, Submodule.mem_prod]
   rfl
 
-private def quotientProdLinearEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
-    ((L.dualCarrier × M.dualCarrier) ⧸
-        L.carrierInDual.prod M.carrierInDual) ≃ₗ[ℤ]
-      L.DiscriminantGroup × M.DiscriminantGroup :=
-  { QuotientAddGroup.prodAddEquiv L.carrierInDual.toAddSubgroup
-      M.carrierInDual.toAddSubgroup with
-    map_smul' := fun n x ↦ by
-      exact map_zsmul
-        (QuotientAddGroup.prodAddEquiv L.carrierInDual.toAddSubgroup
-          M.carrierInDual.toAddSubgroup) n x }
-
-private theorem quotientProdLinearEquiv_mk (L : IntegralLattice V) (M : IntegralLattice W)
-    (x : L.dualCarrier × M.dualCarrier) :
-    L.quotientProdLinearEquiv M (Submodule.Quotient.mk x) =
-      (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2) := by
-  rfl
-
 /-- The discriminant group of an orthogonal sum is canonically the product of the discriminant
 groups of its summands. -/
-def discriminantGroupOrthogonalSumEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
+def discriminantGroupOrthogonalSumEquiv
+    (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).DiscriminantGroup ≃ₗ[ℤ]
       L.DiscriminantGroup × M.DiscriminantGroup :=
   (Submodule.Quotient.equiv (L.orthogonalSum M).carrierInDual
       (L.carrierInDual.prod M.carrierInDual) (L.orthogonalSumDualCarrierEquiv M)
-      (L.map_carrierInDual_orthogonalSum M)).trans (quotientProdLinearEquiv L M)
+      (L.map_carrierInDual_orthogonalSum M)).trans
+    (Submodule.quotientProdEquiv L.carrierInDual M.carrierInDual)
 
 /-- The orthogonal-sum discriminant-group equivalence maps a representative to the pair of its
 component classes. -/
@@ -163,8 +155,7 @@ theorem discriminantGroupOrthogonalSumEquiv_mk (L : IntegralLattice V) (M : Inte
         Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).2) := by
   rw [discriminantGroupOrthogonalSumEquiv, LinearEquiv.trans_apply]
   rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply,
-    quotientProdLinearEquiv_mk]
-  congr 1
+    Submodule.quotientProdEquiv_apply_mk, LinearEquiv.coe_coe]
 
 /-- The product equivalence of discriminant groups is an isometry from the discriminant pairing
 of an orthogonal sum to the orthogonal product of the two discriminant pairings. -/

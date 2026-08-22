@@ -220,6 +220,13 @@ theorem map_prefixProj_pathLaw (μ : Measure Ω) {X : ℕ → Ω → α}
     Function.comp_def]
   rfl
 
+/-- The prefix laws of a path law are the prefix laws of the process. -/
+theorem prefixLaw_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α} (hX : ∀ i, AEMeasurable (X i) μ)
+    (n : ℕ) : prefixLaw (pathLaw μ X) (fun n (x : ℕ → α) => x n) n = prefixLaw μ X n := by
+  rw [prefixLaw_def, blockLaw_def,
+    ← map_prefixProj_pathLaw μ (aemeasurable_pi_lambda (fun ω => fun i => X i ω) hX) n]
+  rfl
+
 /-- A coordinatewise measurable map sends block laws to block laws. -/
 theorem map_blockLaw (μ : Measure Ω) {X : ι → Ω → α} {m : ℕ} (k : Fin m → ι)
     {f : α → β} [MeasurableSpace β] (hf : Measurable f)
@@ -311,6 +318,28 @@ theorem ExchangeableAt.permute {μ : Measure Ω} {X : ℕ → Ω → α} {n : �
     (h : ExchangeableAt μ X n) (σ : Equiv.Perm (Fin n)) :
     blockLaw μ X (fun i : Fin n => (σ i).val) = prefixLaw μ X n :=
   h σ
+
+/-- Under finite exchangeability at `n`, rearranging a path leaves its probability unchanged. -/
+theorem ExchangeableAt.prefixLaw_singleton_comp [MeasurableSingletonClass α]
+    {μ : Measure Ω} {X : ℕ → Ω → α} {n : ℕ} (h : ExchangeableAt μ X n)
+    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) (w : Fin n → α)
+    (σ : Equiv.Perm (Fin n)) :
+    prefixLaw μ X n {w ∘ σ} = prefixLaw μ X n {w} := by
+  have hmeas : Measurable fun x : Fin n → α => fun i => x (σ⁻¹ i) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply (σ⁻¹ i)
+  have hmap : (prefixLaw μ X n).map (fun x : Fin n → α => fun i => x (σ⁻¹ i)) =
+      prefixLaw μ X n := by
+    conv_lhs => rw [prefixLaw_def]
+    rw [map_blockLaw_reindex μ (fun i : Fin n => i.val) (fun i => σ⁻¹ i) hX]
+    exact h σ⁻¹
+  conv_rhs => rw [← hmap]
+  rw [Measure.map_apply hmeas (measurableSet_singleton w)]
+  congr 1
+  ext x
+  simp only [Set.mem_preimage, Set.mem_singleton_iff, funext_iff, Function.comp_apply]
+  refine ⟨fun hx j => ?_, fun hx i => ?_⟩
+  · simpa using hx (σ⁻¹ j)
+  · simpa using hx (σ i)
 
 theorem FullyExchangeable.permute {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : FullyExchangeable μ X) (π : Equiv.Perm ℕ) :

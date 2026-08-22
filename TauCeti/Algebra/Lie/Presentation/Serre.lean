@@ -407,6 +407,33 @@ theorem serreLift_serreF (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreF R CM i) = F i :=
   (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
+/-- A nonzero Cartan element in a Serre system has a nonzero preimage among the presented Cartan
+generators. -/
+theorem serreH_ne_zero (h : IsSerreSystem R CM H E F) {i : B} (hi : H i ≠ 0) :
+    serreH R CM i ≠ 0 := fun hzero =>
+  hi <| by rw [← serreLift_serreH h i, hzero, map_zero]
+
+/-- A nonzero raising element in a Serre system has a nonzero preimage among the presented raising
+generators. -/
+theorem serreE_ne_zero (h : IsSerreSystem R CM H E F) {i : B} (hi : E i ≠ 0) :
+    serreE R CM i ≠ 0 := fun hzero =>
+  hi <| by rw [← serreLift_serreE h i, hzero, map_zero]
+
+/-- A nonzero lowering element in a Serre system has a nonzero preimage among the presented
+lowering generators. -/
+theorem serreF_ne_zero (h : IsSerreSystem R CM H E F) {i : B} (hi : F i ≠ 0) :
+    serreF R CM i ≠ 0 := fun hzero =>
+  hi <| by rw [← serreLift_serreF h i, hzero, map_zero]
+
+/-- Linear independence of the Cartan family of a Serre system lifts to the presented Cartan
+generators. -/
+theorem linearIndependent_serreH (h : IsSerreSystem R CM H E F)
+    (hH : LinearIndependent R H) : LinearIndependent R (serreH R CM) := by
+  refine LinearIndependent.of_comp (serreLift h).toLinearMap ?_
+  have : ⇑(serreLift h).toLinearMap ∘ serreH R CM = H :=
+    funext fun i => serreLift_serreH h i
+  rwa [this]
+
 /-- Two homomorphisms out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
 @[ext]
 theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
@@ -438,6 +465,16 @@ theorem eq_serreLift {h : IsSerreSystem R CM H E F} {g : Matrix.ToLieAlgebra R C
     (hF : ∀ i, g (serreF R CM i) = F i) : g = serreLift h :=
   serre_hom_ext (fun i => by rw [hH, serreLift_serreH]) (fun i => by rw [hE, serreLift_serreE])
     fun i => by rw [hF, serreLift_serreF]
+
+/-- A Serre system whose raising and lowering families generate the ambient Lie algebra presents
+it: the homomorphism it determines is surjective. -/
+theorem serreLift_surjective (h : IsSerreSystem R CM H E F)
+    (hspan : LieSubalgebra.lieSpan R L (Set.range E ∪ Set.range F) = ⊤) :
+    Function.Surjective (serreLift h) := by
+  rw [← LieHom.range_eq_top, eq_top_iff, ← hspan, LieSubalgebra.lieSpan_le]
+  rintro _ (⟨i, rfl⟩ | ⟨i, rfl⟩)
+  · exact ⟨serreE R CM i, serreLift_serreE h i⟩
+  · exact ⟨serreF R CM i, serreLift_serreF h i⟩
 
 variable (R CM)
 

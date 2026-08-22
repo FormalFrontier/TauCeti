@@ -23,9 +23,17 @@ algebraic group. Nothing here asserts that the result is finite or simple, and n
 involved: the composite is a carrier-independent prerequisite for the later family-by-family
 construction.
 
+Both steps of the recipe transport along an isomorphism, so the composite does too:
+`TauCeti.FixedPointCandidate.congr` turns an isomorphism `ψ : G ≃* G'` intertwining `F` with an
+endomorphism `F'` of `G'` into an isomorphism of the two candidates. The candidate therefore
+depends only on the isomorphism class of the *pair* `(G, F)`, which is what lets a construction of
+`(G, F)` be replaced by another realization of it without changing the group named.
+
 ## Main definitions
 
 * `TauCeti.FixedPointCandidate`: the derived central quotient of a fixed subgroup.
+* `TauCeti.FixedPointCandidate.congr`: its transport along an isomorphism intertwining the two
+  endomorphisms.
 
 ## References
 
@@ -51,5 +59,49 @@ parameters it can be trivial, nonsimple, a duplicate, or the separately indexed 
 these properties is asserted here. -/
 abbrev FixedPointCandidate (F : G →* G) : Type _ :=
   DerivedCentralQuotient ↥(fixedSubgroup F)
+
+namespace FixedPointCandidate
+
+variable {G' G'' : Type*} [Group G'] [Group G'']
+variable {F : G →* G} {F' : G' →* G'} {F'' : G'' →* G''}
+
+/-- The candidate simple group transported along an isomorphism intertwining the two
+endomorphisms.
+
+The isomorphism carries the fixed subgroup of the one onto the fixed subgroup of the other, and the
+derived central quotient of isomorphic groups are isomorphic, so the candidate depends only on the
+isomorphism class of the pair `(G, F)`. -/
+def congr (ψ : G ≃* G') (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
+    FixedPointCandidate F ≃* FixedPointCandidate F' :=
+  DerivedCentralQuotient.congr (fixedSubgroupCongr ψ hψ)
+
+@[simp]
+theorem congr_mk (ψ : G ≃* G') (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G'))
+    (x : ↥(commutator ↥(fixedSubgroup F))) :
+    FixedPointCandidate.congr ψ hψ (x : FixedPointCandidate F) =
+      (commutatorCongr (fixedSubgroupCongr ψ hψ) x : FixedPointCandidate F') := by
+  simp only [FixedPointCandidate.congr, DerivedCentralQuotient.congr_mk]
+
+@[simp]
+theorem congr_refl (hψ : (MulEquiv.refl G : G →* G).comp F = F.comp (MulEquiv.refl G : G →* G)) :
+    FixedPointCandidate.congr (MulEquiv.refl G) hψ = MulEquiv.refl (FixedPointCandidate F) := by
+  rw [FixedPointCandidate.congr, fixedSubgroupCongr_refl, DerivedCentralQuotient.congr_refl]
+
+@[simp]
+theorem congr_trans (ψ : G ≃* G') (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G'))
+    (χ : G' ≃* G'') (hχ : (χ : G' →* G'').comp F' = F''.comp (χ : G' →* G'')) :
+    (FixedPointCandidate.congr ψ hψ).trans (FixedPointCandidate.congr χ hχ) =
+      FixedPointCandidate.congr (ψ.trans χ) (trans_comp_eq_comp_trans_of_comp_eq_comp hψ hχ) := by
+  rw [FixedPointCandidate.congr, FixedPointCandidate.congr, FixedPointCandidate.congr,
+    DerivedCentralQuotient.congr_trans, fixedSubgroupCongr_trans]
+
+@[simp]
+theorem congr_symm (ψ : G ≃* G') (hψ : (ψ : G →* G').comp F = F'.comp (ψ : G →* G')) :
+    (FixedPointCandidate.congr ψ hψ).symm =
+      FixedPointCandidate.congr ψ.symm (symm_comp_eq_comp_symm_of_comp_eq_comp ψ hψ) := by
+  rw [FixedPointCandidate.congr, FixedPointCandidate.congr, DerivedCentralQuotient.congr_symm,
+    fixedSubgroupCongr_symm]
+
+end FixedPointCandidate
 
 end TauCeti

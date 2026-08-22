@@ -10,22 +10,27 @@ public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.LinearAlgebra.Matrix.Notation
 public import TauCeti.FieldTheory.Trace
+import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 
 /-!
 # Basics for quadratic number fields
 
 Shared facts about a quadratic number field `K` presented by an algebraic integer `θ : 𝓞 K` whose
 minimal polynomial over `ℤ` is `X² - d`. These feed the prime-splitting law
-(`Quadratic/Splitting.lean`), the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`), and
-the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
+(`Quadratic/Splitting.lean`), the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`), the
+ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`), and the field-norm
+computation (`Quadratic/Norm.lean`).
 
 ## Main results
 
 * `NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
 * `NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
+* `NumberField.gen_sq`: the integral generator squares to the radicand in `𝓞 K`.
 * `NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
 * `NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
 * `NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `NumberField.coe_gen_ne_zero`: the generator is nonzero.
+* `NumberField.exists_eq_add_mul_gen`: every element of `K` is `b + aθ`.
 * `NumberField.not_isSquare_radicand`: the radicand is not a rational square.
 * `NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
 * `NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
@@ -62,16 +67,20 @@ theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
     minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
 
 omit [NumberField K] in
+/-- The integral generator squares to the radicand: `θ² = d` in `𝓞 K`. -/
+@[simp] theorem gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
+  have hae := minpoly.aeval ℤ θ
+  rw [hmin] at hae
+  have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
+    simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
+  linear_combination h2
+
+omit [NumberField K] in
 /-- The generator squares to the radicand in `K`: `θ² = d`. -/
 @[simp] theorem coe_gen_sq (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℤ K d := by
-  have h : θ ^ 2 = algebraMap ℤ (𝓞 K) d := by
-    have hae := minpoly.aeval ℤ θ
-    rw [hmin] at hae
-    have h2 : θ ^ 2 - algebraMap ℤ (𝓞 K) d = 0 := by
-      simpa [map_sub, map_pow, aeval_X, aeval_C] using hae
-    linear_combination h2
-  have := congrArg (algebraMap (𝓞 K) K) h
+  have := congrArg (algebraMap (𝓞 K) K) (gen_sq hmin)
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
 omit [NumberField K] in
@@ -92,6 +101,19 @@ theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     simpa [natDegree_X_sub_C] using Polynomial.natDegree_le_of_dvd hdvd (X_sub_C_ne_zero q)
   rw [hq, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C] at h1
   norm_num at h1
+
+/-- The generator of a quadratic presentation is **nonzero**: it is irrational
+(`gen_notMem_range`), whereas `0` is rational. -/
+theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := fun h0 =>
+  gen_notMem_range hmin ⟨0, by rw [map_zero, h0]⟩
+
+/-- **Every element of a quadratic field is `b + aθ`** for rationals `a, b`. -/
+theorem exists_eq_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : K) :
+    ∃ a b : ℚ, x = algebraMap ℚ K b + algebraMap ℚ K a * (θ : K) := by
+  have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
+  exact Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul ℚ K
+    (gen_notMem_range hmin) x
 
 /-- **The radicand of a quadratic presentation is not a rational square.** Were `d = q²`, the
 factorization `(θ - q)(θ + q) = θ² - d = 0` would force `θ = ±q ∈ ℚ`. -/

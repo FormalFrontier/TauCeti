@@ -333,6 +333,16 @@ private lemma pairing_typeDSimplyConnectedRootDatum (hn : 4 ≤ n)
         (typeDSimplyConnectedRootDatum n hn).coroot l :=
   rfl
 
+/-- The root--coroot pairing of the pinned type `D` datum is symmetric. -/
+theorem pairing_typeDSimplyConnectedRootDatum_comm (hn : 4 ≤ n)
+    (k l : Fin (2 * n * (n - 1))) :
+    (typeDSimplyConnectedRootDatum n hn).pairing k l =
+      (typeDSimplyConnectedRootDatum n hn).pairing l k := by
+  rw [pairing_typeDSimplyConnectedRootDatum, pairing_typeDSimplyConnectedRootDatum,
+    root_eq_typeDWeight, root_eq_typeDWeight, coroot_eq_typeDSimpleRootCoordinates,
+    coroot_eq_typeDSimpleRootCoordinates, typeDWeight_dotProduct_coordinates,
+    typeDWeight_dotProduct_coordinates, dotProduct_comm]
+
 /-- **The simple roots are the rows of the Cartan matrix.** In the fundamental-weight basis the
 `i`-th simple root of the pinned type `Dₙ` datum is the `i`-th row of `CartanMatrix.D n`, which is
 what pins the character lattice as the weight lattice. -/

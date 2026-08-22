@@ -200,4 +200,15 @@ theorem awayLift_divBy {V W : Type*} [CommSemiring V] [CommSemiring W] [Algebra 
   rw [divBy_def, IsLocalization.Away.lift, IsLocalization.lift_mk'_spec, ← divBy_mul,
     show u * (a * r) = a * w by rw [hw]; ring, divBy_mul_cancel_right]
 
+/-! ### The trivial denominator
+
+A ring is its own localisation away from `1`, and there the fraction `t/1` is `t`. This is the
+degenerate presentation `(T, 1)`, which the adic structure presheaf uses to present the whole
+adic spectrum. -/
+
+/-- **A ring is its own localisation away from `1`**: `1` is already a unit and the identity is
+bijective. -/
+instance isLocalizationAwayOne (R : Type*) [CommSemiring R] : IsLocalization.Away (1 : R) R :=
+  IsLocalization.away_of_isUnit_of_bijective _ isUnit_one (Equiv.refl _).bijective
+
 end TauCeti.Localization
