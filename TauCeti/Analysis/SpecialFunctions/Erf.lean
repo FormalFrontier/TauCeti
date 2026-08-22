@@ -59,16 +59,9 @@ theorem erf_def (x : ℝ) : erf x = 2 / √π * ∫ t in (0 : ℝ)..x, rexp (-t 
 /-- The defining formula for the complementary error function. -/
 theorem erfc_def (x : ℝ) : erfc x = 1 - erf x := (rfl)
 
-/-- The complementary error function as a function, for rewriting under binders. -/
-theorem erfc_eq_one_sub_erf : erfc = fun x => 1 - erf x := funext erfc_def
-
 /-- The Gaussian kernel `t ↦ exp (-t ^ 2)` is continuous. -/
 @[fun_prop]
 theorem continuous_exp_neg_sq : Continuous fun t : ℝ => rexp (-t ^ 2) := by fun_prop
-
-/-- The Gaussian kernel `t ↦ exp (-t ^ 2)` is integrable. -/
-theorem integrable_exp_neg_sq : Integrable fun t : ℝ => rexp (-t ^ 2) := by
-  simpa using integrable_exp_neg_mul_sq (b := 1) one_pos
 
 /-- The error function vanishes at the origin. -/
 @[simp]
@@ -118,7 +111,8 @@ theorem continuous_erf : Continuous erf := differentiable_erf.continuous
 `-(2 / √π * exp (-x ^ 2))`. -/
 theorem hasStrictDerivAt_erfc (x : ℝ) :
     HasStrictDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x := by
-  simpa only [erfc_eq_one_sub_erf] using (hasStrictDerivAt_erf x).const_sub 1
+  change HasStrictDerivAt (fun y => 1 - erf y) (-(2 / √π * rexp (-x ^ 2))) x
+  exact (hasStrictDerivAt_erf x).const_sub 1
 
 /-- The derivative of the complementary error function. -/
 theorem hasDerivAt_erfc (x : ℝ) : HasDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x :=
@@ -155,7 +149,8 @@ theorem erf_nonneg {x : ℝ} (hx : 0 ≤ x) : 0 ≤ erf x := by simpa using stri
 theorem tendsto_intervalIntegral_exp_neg_sq_atTop :
     Tendsto (fun x : ℝ => ∫ t in (0 : ℝ)..x, rexp (-t ^ 2)) atTop (𝓝 (√π / 2)) := by
   have h := intervalIntegral_tendsto_integral_Ioi (μ := volume)
-    (f := fun t : ℝ => rexp (-t ^ 2)) 0 integrable_exp_neg_sq.integrableOn tendsto_id
+    (f := fun t : ℝ => rexp (-t ^ 2)) 0
+      (by simpa using (integrable_exp_neg_mul_sq (b := 1) one_pos).integrableOn) tendsto_id
   have hgauss : ∫ t in Ioi (0 : ℝ), rexp (-t ^ 2) = √π / 2 := by
     simpa using integral_gaussian_Ioi 1
   rwa [hgauss] at h
