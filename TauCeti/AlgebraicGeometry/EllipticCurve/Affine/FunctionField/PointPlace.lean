@@ -34,7 +34,7 @@ the normalized adic place of the maximal ideal `(X - x, Y - y)`.
 ## Main definitions
 
 * `TauCeti.Place.infinity`: the normalized place at infinity of an affine Weierstrass curve.
-* `TauCeti.WeierstrassCurve.Affine.pointEquivDegreeOnePlace`: the point--place dictionary.
+* `WeierstrassCurve.Affine.pointEquivDegreeOnePlace`: the point--place dictionary.
 
 ## Main results
 
@@ -319,7 +319,11 @@ theorem coe_degreeOneAffineOrInfinityEquiv_some
 
 end Place
 
+end TauCeti
+
 namespace WeierstrassCurve.Affine
+
+open TauCeti TauCeti.WeierstrassCurve.Affine
 
 variable {F : Type*} [Field F] (W : _root_.WeierstrassCurve.Affine F) [W.IsElliptic]
 
@@ -380,7 +384,5 @@ theorem pointEquivDegreeOnePlace_symm_ofPrime {x y : F} (h : W.Equation x y) :
   simp
 
 end WeierstrassCurve.Affine
-
-end TauCeti
 
 end
