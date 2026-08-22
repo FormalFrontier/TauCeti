@@ -103,6 +103,12 @@ without a separate membership hypothesis. -/
 theorem coind_apply_mul (f : coind G U A) (u : U) (g : G) :
     (f : G → A) ((u : G) * g) = u • (f : G → A) g := apply_mul_of_mem_coind f.2 u g
 
+/-- Equivariance at an element of `U`, in simp-normal form. -/
+@[simp]
+theorem coind_apply_coe (f : coind G U A) (u : U) :
+    (f : G → A) (u : G) = u • (f : G → A) 1 := by
+  simpa using coind_apply_mul f u 1
+
 end Defs
 
 section Action
@@ -173,8 +179,7 @@ theorem coindEval_apply (f : coind G U A) : coindEval G U f = (f : G → A) 1 :=
 
 /-- The counit is `U`-equivariant for the restriction of the right-translation action. -/
 theorem coindEval_smul [ContinuousMul G] (u : U) (f : coind G U A) :
-    coindEval G U ((u : G) • f) = u • coindEval G U f := by
-  simpa using apply_mul_of_mem_coind f.2 u 1
+    coindEval G U ((u : G) • f) = u • coindEval G U f := by simp
 
 variable (G U) in
 /-- **Coinduction is functorial in the coefficients**: a `U`-equivariant additive map `φ : A →+ B`
