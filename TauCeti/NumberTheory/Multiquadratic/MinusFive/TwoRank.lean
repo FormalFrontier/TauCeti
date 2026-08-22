@@ -6,9 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
-import TauCeti.NumberTheory.Multiquadratic.Quadratic.Ramification
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminants
-import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.OfSquarefree
+import TauCeti.NumberTheory.Multiquadratic.MinusFive.ClassNumber
 
 /-!
 # The `2`-rank of the class group of `ℚ(√-5)`
@@ -20,11 +19,14 @@ rational primes ramify (`2` and `5`) and the `2`-rank of the class group is `1`.
 This corroborates the independently proved `NumberField.classNumber ℚ(√-5) = 2`
 (`MinusFive/ClassNumber.lean`): the class group is `ℤ/2ℤ`, whose `2`-rank is indeed `1`, so genus
 theory (predicting `t - 1 = 1` purely from ramification) and the direct class-number computation
-agree.
+agree. The concrete corollary reuses the shared integral-generator construction
+`NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_five`.
 
-## Main result
+## Main results
 
-* `TauCeti.Multiquadratic.twoRank_eq_one_of_minpoly_eq_X_sq_add_five`.
+* `TauCeti.Multiquadratic.twoRank_eq_one_of_minpoly_eq_X_sq_add_five`: presentation-independent.
+* `TauCeti.Multiquadratic.twoRank_adjoinRoot_sqrt_neg_five_eq_one`: on the concrete model
+  `AdjoinRoot (X² + 5)`.
 -/
 
 public section
@@ -61,5 +63,17 @@ theorem twoRank_eq_one_of_minpoly_eq_X_sq_add_five
     rw [ncard_ramifiedPrimes_eq_card hmin hgen hsf hs heven hprod,
       Finset.card_pair (show (-4 : ℤ) ≠ 5 by decide)]
   rw [twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by norm_num), hncard]
+
+local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
+  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
+    (fun q _ => by nlinarith [sq_nonneg q])⟩
+
+/-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`, has
+class-group `2`-rank `1`. Reuses the shared integral-generator construction. -/
+@[simp]
+theorem twoRank_adjoinRoot_sqrt_neg_five_eq_one :
+    TauCeti.ClassGroup.twoRank (𝓞 (AdjoinRoot (X ^ 2 - C (-5 : ℚ)))) = 1 := by
+  obtain ⟨θ, hmin, hgen⟩ := NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_five
+  exact twoRank_eq_one_of_minpoly_eq_X_sq_add_five hmin hgen
 
 end TauCeti.Multiquadratic
