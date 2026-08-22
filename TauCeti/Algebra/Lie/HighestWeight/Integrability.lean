@@ -27,9 +27,9 @@ irreducible: an irreducible module has highest weight vectors of only one weight
 
 The relation is the mechanism by which dominance makes a highest weight module small.  In the Verma
 module `M(lam)` the vector `w` is nonzero, and the submodule it generates is the one that has to be
-divided out; in the irreducible quotient `L(lam)` it vanishes, which is the statement that `L(lam)`
-is `sl₂`-finite along every simple root.  The vanishing is proved here for every irreducible
-highest weight module, which is what `L(lam)` will be.
+divided out; in the irreducible quotient `L(lam)` it vanishes.  This relation on the highest-weight
+generator is the first step toward proving local nilpotence along every simple root.  The vanishing
+is proved here for every irreducible highest weight module, which is what `L(lam)` will be.
 
 ## The argument
 
@@ -51,16 +51,17 @@ Three facts have to be checked about `w`, and they use different parts of the th
 
 ## Main results
 
-* `TauCeti.lie_pow_toEnd_eq_smul_of_mem_rootSpace`: lowering an eigenvector of weight `chi` by a
-  root vector of `psi`, `k` times, gives an eigenvector of weight `chi + k psi`.
+* `TauCeti.lie_pow_toEnd_eq_smul`: applying an adjoint eigenvector of weight `psi` to an
+  eigenvector of weight `chi`, `k` times, gives an eigenvector of weight `chi + k psi`.
+* `TauCeti.lie_pow_toEnd_eq_smul_of_mem_rootSpace`: the specialization to a root vector.
 * `TauCeti.isHighestWeightVector_pow_toEnd_of_ne_zero`: **the integrability relation**, that
   `fᵢ^{n + 1} v` is a highest weight vector of weight `lam - (n + 1) αᵢ` when it is nonzero.
 * `TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector`: it lies in the maximal
   submodule of a highest weight module, so it dies in the irreducible quotient.
 * `TauCeti.pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible`: in an irreducible highest
   weight module it is therefore zero, and
-  `TauCeti.pow_toEnd_eq_zero_of_isHighestWeightVector_of_isDominantIntegral` states that for a
-  dominant integral highest weight, at every simple root at once.
+  `TauCeti.exists_pow_toEnd_eq_zero_of_isHighestWeightVector_of_isDominantIntegral` states the
+  result for a dominant integral highest weight, at every simple root at once.
 
 ## References
 
@@ -85,28 +86,40 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 
 /-! ### Lowering an eigenvector -/
 
-/-- **Lowering shifts the weight.** If `H` acts on `v` through the linear form `chi` and `f` lies
-in the root space of `psi`, then `H` acts on `fᵏ v` through `chi + k psi`.
+/-- **Applying an adjoint eigenvector shifts the weight.** If `H` acts on `v` through `chi` and
+`f` is a common adjoint eigenvector of weight `psi`, then `H` acts on `fᵏ v` through
+`chi + k psi`.
 
 Each application of `f` costs one `psi` by the Leibniz rule, and the statement is the induction on
 `k` that accumulates the cost. The vector `fᵏ v` is allowed to be zero, when the statement is
 vacuous. -/
-theorem lie_pow_toEnd_eq_smul_of_mem_rootSpace {chi psi : H → K} {v : M}
-    (hv : ∀ x : H, ⁅(x : L), v⁆ = chi x • v) {f : L} (hf : f ∈ rootSpace H psi) (k : ℕ) (x : H) :
-    ⁅(x : L), ((toEnd K L M f) ^ k) v⁆ = (chi x + k * psi x) • ((toEnd K L M f) ^ k) v := by
+theorem lie_pow_toEnd_eq_smul {R : Type u} {L' : Type v} [CommRing R] [LieRing L']
+    [LieAlgebra R L'] {H' : LieSubalgebra R L'} {M' : Type w} [AddCommGroup M'] [Module R M']
+    [LieRingModule L' M'] [LieModule R L' M'] {chi psi : H' → R} {v' : M'}
+    (hv : ∀ x : H', ⁅(x : L'), v'⁆ = chi x • v') {f : L'}
+    (hf : ∀ x : H', ⁅(x : L'), f⁆ = psi x • f) (k : ℕ) (x : H') :
+    ⁅(x : L'), ((toEnd R L' M' f) ^ k) v'⁆ =
+      (chi x + k * psi x) • ((toEnd R L' M' f) ^ k) v' := by
   induction k with
   | zero => simpa using hv x
   | succ k ih =>
-      have hstep : ∀ m : M, ((toEnd K L M f) ^ (k + 1)) m = ⁅f, ((toEnd K L M f) ^ k) m⁆ := by
+      have hstep : ∀ m : M', ((toEnd R L' M' f) ^ (k + 1)) m =
+          ⁅f, ((toEnd R L' M' f) ^ k) m⁆ := by
         intro m
         rw [pow_succ', Module.End.mul_apply, toEnd_apply_apply]
-      have hxf : ⁅(x : L), f⁆ = psi x • f := by
-        rw [← LieSubalgebra.coe_bracket_of_module]
-        exact IsKilling.lie_eq_smul_of_mem_rootSpace hf x
-      rw [hstep, leibniz_lie, hxf, ih, smul_lie, lie_smul, ← add_smul]
+      rw [hstep, leibniz_lie, hf, ih, smul_lie, lie_smul, ← add_smul]
       congr 1
       push_cast
       ring
+
+/-- **Lowering by a root vector shifts the weight.** If `H` acts on `v` through the linear form
+`chi` and `f` lies in the root space of `psi`, then `H` acts on `fᵏ v` through `chi + k psi`. -/
+theorem lie_pow_toEnd_eq_smul_of_mem_rootSpace {chi psi : H → K} {v : M}
+    (hv : ∀ x : H, ⁅(x : L), v⁆ = chi x • v) {f : L} (hf : f ∈ rootSpace H psi) (k : ℕ) (x : H) :
+    ⁅(x : L), ((toEnd K L M f) ^ k) v⁆ = (chi x + k * psi x) • ((toEnd K L M f) ^ k) v := by
+  apply lie_pow_toEnd_eq_smul hv (fun y => ?_) k x
+  rw [← LieSubalgebra.coe_bracket_of_module]
+  exact IsKilling.lie_eq_smul_of_mem_rootSpace hf y
 
 /-! ### The integrability relation -/
 
@@ -241,10 +254,10 @@ theorem pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector
 with highest weight vector `v` of weight `lam`, and `lam (αᵢ^∨) = n` is a natural number, then
 `fᵢ^{n + 1} v = 0`.
 
-This is the statement that an irreducible highest weight module of dominant integral weight is
-`sl₂`-finite along each simple root: the maximal submodule of an irreducible highest weight module
-is trivial, and `TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector` puts the lowered
-vector into it. -/
+This is the integrability relation on the highest-weight generator. The maximal submodule of an
+irreducible highest weight module is trivial, and
+`TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector` puts the lowered vector into
+it. -/
 theorem pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v) {i : H.root}
     (hi : i ∈ b.support) {n : ℕ} (hn : lam ((IsKilling.rootSystem H).coroot i) = (n : K))
@@ -263,7 +276,7 @@ theorem pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible
 /-- **The integrability relation at every simple root at once.** For an irreducible highest weight
 module whose highest weight `lam` is dominant integral, the lowering operator of each simple root
 kills the generator after `lam (αᵢ^∨) + 1` steps. -/
-theorem pow_toEnd_eq_zero_of_isHighestWeightVector_of_isDominantIntegral
+theorem exists_pow_toEnd_eq_zero_of_isHighestWeightVector_of_isDominantIntegral
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v)
     (hlam : IsDominantIntegral b lam) {i : H.root} (hi : i ∈ b.support)
     {f : L} (hf : f ∈ rootSpace H ((-(i : Weight K H L) : Weight K H L) : H → K)) :
