@@ -363,98 +363,141 @@ theorem IsIsotropic.toIntSubmodule_le_quadraticRadical {K : AddSubgroup A}
   rw [QuadraticMap.polarBilin_apply_apply, A.polar_eq_pairing, LinearMap.zero_apply]
   exact A.toFiniteBilinearModule.mem_radical_iff x |>.mp (hKrad hx) y
 
-/-- The finite quadratic module obtained by quotienting a quadratic-isotropic subgroup contained
-in the radical of the polar pairing.
+/-- A subgroup contained in the radical of the quadratic map is quadratic-isotropic. -/
+theorem isIsotropic_of_toIntSubmodule_le_quadraticRadical {K : AddSubgroup A}
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) : A.IsIsotropic K :=
+  fun _ hx ↦ (hK hx).1
+
+/-- A subgroup contained in the radical of the quadratic map is contained in the radical of the
+polar pairing. -/
+theorem le_radical_of_toIntSubmodule_le_quadraticRadical {K : AddSubgroup A}
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
+    K ≤ A.toFiniteBilinearModule.radical := by
+  intro x hx
+  rw [A.toFiniteBilinearModule.mem_radical_iff]
+  intro y
+  rw [← A.polar_eq_pairing, ← QuadraticMap.polarBilin_apply_apply, (hK hx).2,
+    LinearMap.zero_apply]
+
+/-- The finite quadratic module obtained by quotienting by a subgroup contained in the radical of
+the quadratic map. That radical consists of the isotropic elements of the radical of the polar
+pairing, so this is exactly the condition making the quadratic map descend.
 
 The underlying bilinear module is the corresponding quotient of the polar pairing, while the
-quadratic map is Mathlib's `QuadraticMap.lift`. -/
+quadratic map is Mathlib's `QuadraticMap.lift`.
+
+Exposed for the same reason as `FiniteBilinearModule.quotientOfLeRadical`: so that its carrier
+reduces to the `Submodule` quotient and maps out of it are definable. -/
 @[expose] noncomputable def quotientOfIsotropicRadical (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) :
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
     FiniteQuadraticModule where
-  toFiniteBilinearModule := A.toFiniteBilinearModule.quotientOfLeRadical K hKrad
-  quadratic := A.quadratic.lift K.toIntSubmodule
-    (IsIsotropic.toIntSubmodule_le_quadraticRadical A hK hKrad)
+  toFiniteBilinearModule := A.toFiniteBilinearModule.quotientOfLeRadical K
+    (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK)
+  quadratic := A.quadratic.lift K.toIntSubmodule hK
   polar_eq_pairing' x y := by
     unfold FiniteBilinearModule.quotientOfLeRadical
     induction x using Submodule.Quotient.induction_on with | H x =>
     induction y using Submodule.Quotient.induction_on with | H y =>
     -- Expose the two quotient lifts; their public representative lemmas then determine both sides.
-    change (A.quadratic.lift K.toIntSubmodule
-        (IsIsotropic.toIntSubmodule_le_quadraticRadical A hK hKrad))
+    change (A.quadratic.lift K.toIntSubmodule hK)
           (Submodule.Quotient.mk x + Submodule.Quotient.mk y) -
         A.quadratic x - A.quadratic y =
-      A.toFiniteBilinearModule.quotientOfLeRadicalBilin K hKrad
+      A.toFiniteBilinearModule.quotientOfLeRadicalBilin K
+          (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK)
         (Submodule.Quotient.mk x) (Submodule.Quotient.mk y)
     rw [← Submodule.Quotient.mk_add, QuadraticMap.lift_mk,
       A.toFiniteBilinearModule.quotientOfLeRadicalBilin_mk]
     exact A.polar_eq_pairing x y
 
-/-- The quotient map onto a quadratic quotient by an isotropic subgroup of the radical. -/
+/-- The quotient map onto a quadratic quotient by a subgroup of the quadratic radical. -/
 noncomputable def quotientOfIsotropicRadicalMk (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) :
-    A →+ A.quotientOfIsotropicRadical K hK hKrad :=
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
+    A →+ A.quotientOfIsotropicRadical K hK :=
   K.toIntSubmodule.mkQ.toAddMonoidHom
 
 /-- The quotient quadratic map is represented by the original quadratic map. -/
 @[simp]
 theorem quotientOfIsotropicRadical_quadratic_mk (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) (x : A) :
-    (A.quotientOfIsotropicRadical K hK hKrad).quadratic
-      (A.quotientOfIsotropicRadicalMk K hK hKrad x) = A.quadratic x := by
-  exact QuadraticMap.lift_mk (IsIsotropic.toIntSubmodule_le_quadraticRadical A hK hKrad) x
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) (x : A) :
+    (A.quotientOfIsotropicRadical K hK).quadratic
+      (A.quotientOfIsotropicRadicalMk K hK x) = A.quadratic x := by
+  exact QuadraticMap.lift_mk hK x
 
 /-- The quotient polar pairing is represented by the original pairing. -/
 @[simp]
 theorem quotientOfIsotropicRadical_pairing_mk (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) (x y : A) :
-    (A.quotientOfIsotropicRadical K hK hKrad).toFiniteBilinearModule.pairing
-      (A.quotientOfIsotropicRadicalMk K hK hKrad x)
-      (A.quotientOfIsotropicRadicalMk K hK hKrad y) =
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) (x y : A) :
+    (A.quotientOfIsotropicRadical K hK).toFiniteBilinearModule.pairing
+      (A.quotientOfIsotropicRadicalMk K hK x)
+      (A.quotientOfIsotropicRadicalMk K hK y) =
         A.toFiniteBilinearModule.pairing x y := by
-  rw [← (A.quotientOfIsotropicRadical K hK hKrad).polar_eq_pairing,
-    QuadraticMap.polar, ← map_add, A.quotientOfIsotropicRadical_quadratic_mk,
-    A.quotientOfIsotropicRadical_quadratic_mk,
-    A.quotientOfIsotropicRadical_quadratic_mk]
-  exact A.polar_eq_pairing x y
+  -- The quotient pairing *is* the descended polar pairing; unfold the opaque `CharacterModule`
+  -- alias so that its representative lemma applies.
+  change A.toFiniteBilinearModule.quotientOfLeRadicalBilin K
+      (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK)
+      (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) = _
+  exact A.toFiniteBilinearModule.quotientOfLeRadicalBilin_mk K
+    (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK) x y
 
 /-- The quotient map onto a quadratic quotient is surjective. -/
 theorem quotientOfIsotropicRadicalMk_surjective (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) :
-    Function.Surjective (A.quotientOfIsotropicRadicalMk K hK hKrad) :=
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
+    Function.Surjective (A.quotientOfIsotropicRadicalMk K hK) :=
   K.toIntSubmodule.mkQ_surjective
+
+/-- Every element of a quadratic quotient is the class of a representative. -/
+@[elab_as_elim]
+theorem quotientOfIsotropicRadical_induction_on (K : AddSubgroup A)
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical)
+    {motive : A.quotientOfIsotropicRadical K hK → Prop}
+    (q : A.quotientOfIsotropicRadical K hK)
+    (mk : ∀ x : A, motive (A.quotientOfIsotropicRadicalMk K hK x)) : motive q := by
+  obtain ⟨x, rfl⟩ := A.quotientOfIsotropicRadicalMk_surjective K hK q
+  exact mk x
 
 /-- A representative has zero class in a quadratic quotient exactly when it belongs to the
 subgroup being divided out. -/
 @[simp]
 theorem quotientOfIsotropicRadicalMk_eq_zero_iff (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) (x : A) :
-    A.quotientOfIsotropicRadicalMk K hK hKrad x = 0 ↔ x ∈ K := by
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) (x : A) :
+    A.quotientOfIsotropicRadicalMk K hK x = 0 ↔ x ∈ K := by
   -- Expose the canonical quotient map to apply Mathlib's zero-class criterion.
   change Submodule.Quotient.mk x = 0 ↔ x ∈ K.toIntSubmodule
   exact Submodule.Quotient.mk_eq_zero K.toIntSubmodule
 
-/-- Taking the polar bilinear module commutes with quotienting by a quadratic-isotropic subgroup
-of the radical. -/
+/-- Two representatives have the same class in a quadratic quotient exactly when they differ by an
+element of the subgroup being divided out. -/
+@[simp]
+theorem quotientOfIsotropicRadicalMk_eq_iff (K : AddSubgroup A)
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) (x y : A) :
+    A.quotientOfIsotropicRadicalMk K hK x = A.quotientOfIsotropicRadicalMk K hK y ↔ x - y ∈ K := by
+  rw [← sub_eq_zero, ← map_sub, A.quotientOfIsotropicRadicalMk_eq_zero_iff K hK]
+
+/-- Taking the polar bilinear module commutes with quotienting by a subgroup of the quadratic
+radical. -/
 @[simp]
 theorem quotientOfIsotropicRadical_toFiniteBilinearModule (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) :
-    (A.quotientOfIsotropicRadical K hK hKrad).toFiniteBilinearModule =
-      A.toFiniteBilinearModule.quotientOfLeRadical K hKrad := by
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
+    (A.quotientOfIsotropicRadical K hK).toFiniteBilinearModule =
+      A.toFiniteBilinearModule.quotientOfLeRadical K
+        (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK) := by
   rfl
 
 /-- The quadratic quotient is nondegenerate exactly when the subgroup contains the radical of the
 polar pairing. -/
 theorem isNondegenerate_quotientOfIsotropicRadical_iff (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) :
-    (A.quotientOfIsotropicRadical K hK hKrad).IsNondegenerate ↔
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
+    (A.quotientOfIsotropicRadical K hK).IsNondegenerate ↔
       A.toFiniteBilinearModule.radical ≤ K := by
-  exact A.toFiniteBilinearModule.isNondegenerate_quotientOfLeRadical_iff K hKrad
+  exact A.toFiniteBilinearModule.isNondegenerate_quotientOfLeRadical_iff K
+    (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK)
 
 /-- The order of a quadratic quotient is the index of the subgroup being divided out. -/
 theorem card_quotientOfIsotropicRadical (K : AddSubgroup A)
-    (hK : A.IsIsotropic K) (hKrad : K ≤ A.toFiniteBilinearModule.radical) :
-    Nat.card (A.quotientOfIsotropicRadical K hK hKrad) = K.index := by
-  exact A.toFiniteBilinearModule.card_quotientOfLeRadical K hKrad
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
+    Nat.card (A.quotientOfIsotropicRadical K hK) = K.index := by
+  exact A.toFiniteBilinearModule.card_quotientOfLeRadical K
+    (A.le_radical_of_toIntSubmodule_le_quadraticRadical hK)
 
 /-! ### The induced quadratic form on `H^⊥ / H` -/
 
@@ -502,16 +545,28 @@ theorem subgroupInOrthogonalComplement_le_radical {H : AddSubgroup A}
   exact A.toFiniteBilinearModule.mem_orthogonalComplement_iff H y.1 |>.mp y.2 x.1
     (A.mem_subgroupInOrthogonalComplement_iff H x |>.mp hx)
 
+/-- The copy of a quadratic-isotropic subgroup in its orthogonal complement lies in the radical of
+the quadratic map restricted to that complement. -/
+theorem subgroupInOrthogonalComplement_le_quadraticRadical {H : AddSubgroup A}
+    (hH : A.IsIsotropic H) :
+    (A.subgroupInOrthogonalComplement H).toIntSubmodule ≤
+      (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).quadratic.radical :=
+  IsIsotropic.toIntSubmodule_le_quadraticRadical _
+    (A.isIsotropic_subgroupInOrthogonalComplement hH)
+    A.subgroupInOrthogonalComplement_le_radical
+
 /-- The finite quadratic module induced on `H^⊥ / H` by a quadratic-isotropic subgroup `H`.
 
-The form is first restricted to `H^⊥`; the copy of `H` there lies in both its quadratic and
-bilinear radicals, so the restricted form descends to the quotient. -/
+The form is first restricted to `H^⊥`; the copy of `H` there lies in the radical of the restricted
+quadratic map, so the restricted form descends to the quotient.
+
+Exposed for the same reason as `quotientOfIsotropicRadical`: so that its carrier reduces to the
+`Submodule` quotient and maps out of it are definable. -/
 @[expose] noncomputable def orthogonalQuotient (H : AddSubgroup A) (hH : A.IsIsotropic H) :
     FiniteQuadraticModule :=
   (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).quotientOfIsotropicRadical
     (A.subgroupInOrthogonalComplement H)
-    (A.isIsotropic_subgroupInOrthogonalComplement hH)
-    A.subgroupInOrthogonalComplement_le_radical
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
 
 /-- The quotient map from `H^⊥` onto its induced quadratic quotient. -/
 noncomputable def orthogonalQuotientMk (H : AddSubgroup A) (hH : A.IsIsotropic H) :
@@ -520,20 +575,18 @@ noncomputable def orthogonalQuotientMk (H : AddSubgroup A) (hH : A.IsIsotropic H
   quotientOfIsotropicRadicalMk
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
-    (A.isIsotropic_subgroupInOrthogonalComplement hH)
-    A.subgroupInOrthogonalComplement_le_radical
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
 
 /-- The quadratic form on `H^⊥ / H` is represented by the original quadratic form. -/
 @[simp]
 theorem orthogonalQuotient_quadratic_mk (H : AddSubgroup A) (hH : A.IsIsotropic H)
     (x : A.toFiniteBilinearModule.orthogonalComplement H) :
     (A.orthogonalQuotient H hH).quadratic (A.orthogonalQuotientMk H hH x) =
-      A.quadratic x.1 := by
-  exact quotientOfIsotropicRadical_quadratic_mk
+      A.quadratic x.1 :=
+  quotientOfIsotropicRadical_quadratic_mk
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
-    (A.isIsotropic_subgroupInOrthogonalComplement hH)
-    A.subgroupInOrthogonalComplement_le_radical x
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x
 
 /-- The pairing on `H^⊥ / H` is represented by the original polar pairing. -/
 @[simp]
@@ -541,12 +594,11 @@ theorem orthogonalQuotient_pairing_mk (H : AddSubgroup A) (hH : A.IsIsotropic H)
     (x y : A.toFiniteBilinearModule.orthogonalComplement H) :
     (A.orthogonalQuotient H hH).toFiniteBilinearModule.pairing
       (A.orthogonalQuotientMk H hH x) (A.orthogonalQuotientMk H hH y) =
-      A.toFiniteBilinearModule.pairing x.1 y.1 := by
-  exact quotientOfIsotropicRadical_pairing_mk
+      A.toFiniteBilinearModule.pairing x.1 y.1 :=
+  quotientOfIsotropicRadical_pairing_mk
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
-    (A.isIsotropic_subgroupInOrthogonalComplement hH)
-    A.subgroupInOrthogonalComplement_le_radical x y
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x y
 
 /-- The quotient map from `H^⊥` is surjective. -/
 theorem orthogonalQuotientMk_surjective (H : AddSubgroup A) (hH : A.IsIsotropic H) :
@@ -554,8 +606,37 @@ theorem orthogonalQuotientMk_surjective (H : AddSubgroup A) (hH : A.IsIsotropic 
   quotientOfIsotropicRadicalMk_surjective
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
-    (A.isIsotropic_subgroupInOrthogonalComplement hH)
-    A.subgroupInOrthogonalComplement_le_radical
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
+
+/-- Every element of `H^⊥ / H` is the class of an element of `H^⊥`. -/
+@[elab_as_elim]
+theorem orthogonalQuotient_induction_on (H : AddSubgroup A) (hH : A.IsIsotropic H)
+    {motive : A.orthogonalQuotient H hH → Prop} (q : A.orthogonalQuotient H hH)
+    (mk : ∀ x : A.toFiniteBilinearModule.orthogonalComplement H,
+      motive (A.orthogonalQuotientMk H hH x)) : motive q := by
+  obtain ⟨x, rfl⟩ := A.orthogonalQuotientMk_surjective H hH q
+  exact mk x
+
+/-- An element of `H^⊥` has zero class in `H^⊥ / H` exactly when it lies in `H`. -/
+@[simp]
+theorem orthogonalQuotientMk_eq_zero_iff (H : AddSubgroup A) (hH : A.IsIsotropic H)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    A.orthogonalQuotientMk H hH x = 0 ↔ (x : A) ∈ H :=
+  quotientOfIsotropicRadicalMk_eq_zero_iff
+    (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
+    (A.subgroupInOrthogonalComplement H)
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x
+
+/-- Two elements of `H^⊥` have the same class in `H^⊥ / H` exactly when they differ by an element
+of `H`. -/
+@[simp]
+theorem orthogonalQuotientMk_eq_iff (H : AddSubgroup A) (hH : A.IsIsotropic H)
+    (x y : A.toFiniteBilinearModule.orthogonalComplement H) :
+    A.orthogonalQuotientMk H hH x = A.orthogonalQuotientMk H hH y ↔ (x : A) - y ∈ H :=
+  quotientOfIsotropicRadicalMk_eq_iff
+    (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
+    (A.subgroupInOrthogonalComplement H)
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x y
 
 /-- If `A` is nondegenerate, the quadratic module induced on `H^⊥ / H` is nondegenerate. -/
 theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenerate)
@@ -564,8 +645,7 @@ theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenera
   apply (isNondegenerate_quotientOfIsotropicRadical_iff
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
-    (A.isIsotropic_subgroupInOrthogonalComplement hH)
-    A.subgroupInOrthogonalComplement_le_radical).mpr
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)).mpr
   intro x hx
   have hx' : (x.1 : A) ∈ A.toFiniteBilinearModule.orthogonalComplement
       (A.toFiniteBilinearModule.orthogonalComplement H) := by
@@ -591,8 +671,7 @@ theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegener
     exact card_quotientOfIsotropicRadical
       (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
       (A.subgroupInOrthogonalComplement H)
-      (A.isIsotropic_subgroupInOrthogonalComplement hH)
-      A.subgroupInOrthogonalComplement_le_radical
+      (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
   have hquot : Nat.card (A.orthogonalQuotient H hH) * Nat.card H =
       Nat.card (A.toFiniteBilinearModule.orthogonalComplement H) := by
     calc
