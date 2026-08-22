@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Normed.Module.Trace
 public import TauCeti.RepresentationTheory.Compact.Averaging
 public import TauCeti.RepresentationTheory.Compact.MatrixCoefficient
+public import TauCeti.RepresentationTheory.Continuous.LinHom
 import Mathlib.Analysis.Normed.Operator.BoundedLinearMaps
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
@@ -187,17 +188,18 @@ averaging, and on the integrand it acts as right translation of the group variab
 average does not see. -/
 
 omit hπ hρ [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [CompleteSpace W] in
-/-- Conjugation `S ↦ ρ g⁻¹ ∘ S ∘ π g`, packaged as a continuous linear map on operators. -/
+/-- Conjugation `S ↦ ρ g⁻¹ ∘ S ∘ π g`, packaged as a continuous linear map on operators. It is the
+action operator at `g⁻¹` of the Hom representation of
+`TauCeti/RepresentationTheory/Continuous/LinHom.lean`, which is what makes it linear. -/
 private noncomputable def conjAction (g : G) : (V →L[𝕜] W) →L[𝕜] V →L[𝕜] W :=
-  (ContinuousLinearMap.compL 𝕜 V W W (ρ g⁻¹)).comp
-    ((ContinuousLinearMap.compL 𝕜 V V W).flip (π g))
+  ContRepresentation.linHom π ρ g⁻¹
 
 omit hπ hρ [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
   [BorelSpace G] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace W] in
 /-- `conjAction` is conjugation, unfolded. -/
 private theorem conjAction_apply (g : G) (S : V →L[𝕜] W) :
     conjAction π ρ g S = (ρ g⁻¹).comp (S.comp (π g)) := by
-  simp [conjAction, ContinuousLinearMap.compL_apply]
+  rw [conjAction, ContRepresentation.linHom_apply, inv_inv]
 
 omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W]
   [CompleteSpace W] in
