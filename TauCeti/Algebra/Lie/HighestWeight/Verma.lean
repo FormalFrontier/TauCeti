@@ -65,6 +65,11 @@ highest weight vector of weight `lam` exists anywhere. So `M(lam) ≠ 0` and "so
 highest weight vector of weight `lam`" are the same statement, and the irreducible quotient
 `L(lam)` of `TauCeti/Algebra/Lie/HighestWeight/Maximal.lean` follows from either.
 
+For `lam = 0` that input is available: the trivial one-dimensional module is a highest weight
+module of weight `0`, so `TauCeti.isHighestWeightVector_vermaGenerator_zero` proves *without any
+hypothesis* that `M(0)` is nonzero and that its canonical generator is a highest weight vector.
+The construction therefore is not the zero quotient, and `L(0)` exists outright.
+
 ## Main definitions
 
 * `TauCeti.vermaRelations b lam` and `TauCeti.vermaIdeal b lam`: the defining relations of weight
@@ -85,6 +90,8 @@ highest weight vector of weight `lam`" are the same statement, and the irreducib
 * `TauCeti.exists_surjective_lieModuleHom_of_isHighestWeightVector`: **every highest weight module
   of weight `lam` is a quotient of `M(lam)`**, which is what makes `M(lam)` universal in the sense
   the classification uses.
+* `TauCeti.isHighestWeightVector_vermaGenerator_zero`: **`M(0) ≠ 0`, unconditionally**, its
+  canonical generator being a highest weight vector of weight `0`.
 * `TauCeti.isHighestWeightVector_vermaGenerator_iff`,
   `TauCeti.vermaGenerator_ne_zero_of_isHighestWeightVector`,
   `TauCeti.vermaGenerator_eq_zero_iff` and `TauCeti.subsingleton_vermaModule_iff`: the isolation of
@@ -170,8 +177,10 @@ theorem exists_ι_sub_algebraMap_mem_vermaIdeal_of_mem_borelSubalgebra {x : L}
 
 /-! ### The Verma module and its structures -/
 
-/-- **The Verma module** `M(lam) = U(L) ⊗_{U(𝔟)} K_lam`, presented as the quotient of `U(L)` by
-the left ideal `TauCeti.vermaIdeal` of Verma relations. -/
+/-- **The Verma module** `M(lam)`, classically `U(L) ⊗_{U(𝔟)} K_lam`, presented here as the
+quotient of `U(L)` by the left ideal `TauCeti.vermaIdeal` of Verma relations; the two presentations
+have the same defining relations, by
+`TauCeti.exists_ι_sub_algebraMap_mem_vermaIdeal_of_mem_borelSubalgebra`. -/
 def VermaModule : Type max u v :=
   U ⧸ vermaIdeal b lam
 
@@ -317,6 +326,25 @@ theorem vermaGenerator_ne_zero_of_isHighestWeightVector {v : N}
     fun _ hx => hv.lie_eq_zero_of_mem_positiveNilradical hx
   intro h
   exact hv.ne_zero (by rw [← hφ, h, map_zero])
+
+/-- **The Verma module of weight zero is nonzero, and its canonical generator really is a highest
+weight vector.** The trivial one-dimensional module `K` carries the nonzero vector `1`, on which
+the Cartan subalgebra acts through `0` and which the positive nilradical annihilates, so the
+universal property produces a homomorphism `M(0) → K` sending the canonical generator to `1`.
+This is the unconditional witness that the construction is not the zero module: `M(0) ≠ 0` and
+`M(0) ⧸ maximalSubmodule` is the irreducible module `L(0)`, with no appeal to
+Poincaré--Birkhoff--Witt. -/
+theorem isHighestWeightVector_vermaGenerator_zero :
+    IsHighestWeightVector b (0 : Dual K H) (vermaGenerator b (0 : Dual K H)) := by
+  rw [isHighestWeightVector_vermaGenerator_iff]
+  refine vermaGenerator_ne_zero_of_isHighestWeightVector b 0 (N := TrivialLieModule K L K)
+    (v := (TrivialLieModule.equiv K L K).symm 1) (isHighestWeightVector_iff.mpr ⟨?_, ?_, ?_⟩)
+  · simp
+  · intro x
+    rw [trivial_lie_zero]
+    simp
+  · intro x _
+    rw [trivial_lie_zero]
 
 /-- **Every highest weight module of weight `lam` is a quotient of the Verma module.** This is the
 sense in which `M(lam)` is the universal highest weight module of weight `lam`, and the form in
