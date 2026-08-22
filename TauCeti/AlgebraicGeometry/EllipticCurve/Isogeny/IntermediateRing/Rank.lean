@@ -8,8 +8,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Degree
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.IntermediateRing.Basic
 public import Mathlib.RingTheory.RamificationInertia.Basic
--- Proof-only: the fraction field of the intermediate ring and the comparison of the two ranks.
-import Mathlib.LinearAlgebra.Dimension.Localization
+-- Proof-only: the fraction field of the intermediate ring.
 import Mathlib.RingTheory.Localization.Integral
 
 /-!
@@ -62,9 +61,10 @@ record for their own conclusions.
 
 **Why not `IsIntegralClosure.rank`.** Mathlib states the same comparison for an integral closure,
 but only over a *principal ideal* base (`Mathlib/RingTheory/DedekindDomain/IntegralClosure.lean`),
-which a Weierstrass coordinate ring is not: it is Dedekind, and its class group is the point group.
-`IsFractionRing.finrank_eq` compares the ranks with no hypothesis on the base at all, so it is the
-route taken here.
+a hypothesis unavailable from the current assumptions. The roadmap's intended identification of
+the coordinate ring's class group with the point group is context for this limitation, not an
+obstruction established here. `IsFractionRing.finrank_eq` compares the ranks with no hypothesis on
+the base at all, so it is the route taken here.
 
 **Module-finiteness is an instance argument of the fibre count, not a derived fact.** The two
 statements below that do need it take `[Module.Finite W₂.CoordinateRing φ.intermediateRing]`
