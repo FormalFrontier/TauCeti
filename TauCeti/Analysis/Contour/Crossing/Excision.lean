@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Contour.ModelSector.Closed
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 import TauCeti.Analysis.Contour.Winding.Integer
@@ -39,9 +39,10 @@ What the surgery buys is an exact accounting of the crossing
 the bracket being the winding number of the local loop `Γ` that runs along `γ` across the window and
 returns along the cap reversed. Since `n_s(\tilde{γ}) ∈ ℤ`, this says the generalized winding
 number of `γ` is an integer plus the crossing's own local contribution — HW Proposition 2.2 with the
-integer no longer abstract. On the model sector, where the curve crosses along two straight radii,
-the local contribution is exactly the opening angle over `2π` and the excised curve has winding
-number `0` (`windingNumber_exciseCrossing_modelSector`).
+integer exhibited concretely, as the winding number of a curve that is actually built, rather than
+produced abstractly. `exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` is the
+purely existential reading of that identity; it asserts only that some integer works, the
+identification staying with the displayed decomposition above.
 
 What remains of HW Proposition 2.2 is the identification of the local contribution with the crossing
 angle `α_ℓ / 2π` for a general immersion. It is congruent to `α_ℓ / 2π` modulo `1` — that is exactly
@@ -51,8 +52,9 @@ once.
 
 ## Main definitions
 
-* `TauCeti.Contour.circleCap` — the arc of the circle of radius `r` about `s` sweeping from angle
-  `θ` to angle `θ'`, parametrised affinely over `[l, u]`.
+* `TauCeti.Contour.circleCap` — for a nondegenerate window `l ≠ u`, the arc of the circle of radius
+  `r` about `s` sweeping from angle `θ` to angle `θ'`, parametrised affinely over `[l, u]`; when
+  `l = u` the affine change of parameter degenerates and the arc is constantly `circleMap s r θ`.
 * `TauCeti.Contour.exciseCrossing` — the curve `γ` with the window `[l, u]` replaced by that cap.
 
 ## Main results
@@ -62,17 +64,24 @@ once.
   `TauCeti.Contour.exciseCrossing_ne` — it avoids `s`.
 * `TauCeti.Contour.windingNumber_eq_exciseCrossing_add` — the winding number of `γ` is that of the
   excised curve plus the local contribution of the window.
-* `TauCeti.Contour.exists_int_windingNumber_eq_add_crossing_excess` — hence it is an integer plus
-  that local contribution.
-* `TauCeti.Contour.windingNumber_exciseCrossing_modelSector` — excising the corner of a model sector
-  leaves winding number `0`, the sector's whole index `α / 2π` being its local contribution.
+* `TauCeti.Contour.exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` — hence it is
+  an integer plus that local contribution.
 
 ## Provenance
 
-No formalization is vendored. The excise-and-cap surgery is the construction behind
-Hungerbühler–Wasem Proposition 2.2; everything here is assembled from Tau Ceti's existing winding
-number API (concatenation, reparametrisation, the circle, the model sector) and its integrality
-theorem for closed avoiding curves.
+Independently reconstructed; no formalization is vendored. The `ContourIntegration` roadmap
+designates the AINTLIB `LeanModularForms` development
+([github.com/CBirkbeck/AINTLIB](https://github.com/CBirkbeck/AINTLIB), Apache-2.0) as the existing
+source for this area, and assigns `LeanModularForms/ForMathlib/HungerbuhlerWasem/Crossing.lean` to
+"Prop 2.2 / sector geometry". That file was consulted and carries no excise-and-cap construction:
+at revision `340875a` it is the per-pole principal-value composition (`HasCauchyPV.add`,
+`HasCauchyPV.finset_sum`, `cpv_polarPart_at_pole_under_conditions`) together with the crossing
+angle-compatibility lemmas, and the surgered curve `\tilde{Λ}` is never built there either. The
+one place AINTLIB names this excision, `ForMathlib/ExitTime.lean`, constructs only the exit-time
+parameters bounding the window (`firstExitTimeLeft`, `firstExitTimeRight`), not the spliced curve.
+So the definitions and proofs below are new, assembled from Tau Ceti's existing winding number API
+(concatenation, reparametrisation, the circle) and its integrality theorem for closed avoiding
+curves.
 
 ## References
 
@@ -92,8 +101,11 @@ variable {γ : ℝ → ℂ} {s : ℂ} {a b l u r θ θ' t : ℝ}
 
 /-! ### The circular cap -/
 
-/-- **The circular cap** of radius `r` about `s`: the arc of the circle `|z - s| = r` running from
-angle `θ` to angle `θ'`, parametrised affinely over the window `[l, u]`.
+/-- **The circular cap** of radius `r` about `s`: the arc of the circle `|z - s| = r` parametrised
+affinely over the window `[l, u]`, running from angle `θ` at `l` (`circleCap_left`) to angle `θ'`
+at `u` (`circleCap_right`) whenever the window is nondegenerate, `l ≠ u`. For `l = u` the affine
+change of parameter divides by zero, so the cap is constantly `circleMap s r θ` and does not reach
+angle `θ'`; every result below that needs the far endpoint assumes `l < u` or `l ≠ u`.
 
 It is written as `circleMap s r` precomposed with an affine change of parameter, which is the shape
 the reparametrisation and principal-value lemmas for circular arcs consume. -/
@@ -101,7 +113,10 @@ def circleCap (s : ℂ) (r l u θ θ' : ℝ) : ℝ → ℂ :=
   circleMap s r ∘ fun t => (θ' - θ) / (u - l) * t + (θ - (θ' - θ) / (u - l) * l)
 
 /-- **Characteristic value lemma** for the circular cap: at parameter `t` it is the point of the
-circle at angle `θ` advanced by the fraction `(t - l) / (u - l)` of the sweep `θ' - θ`. -/
+circle at angle `θ` advanced by the fraction `(t - l) / (u - l)` of the sweep `θ' - θ`.
+
+Deliberately not `@[simp]`: it rewrites the left-hand sides of the endpoint lemmas `circleCap_left`
+and `circleCap_right`, which are the simp-normal forms this file's consumers actually meet. -/
 theorem circleCap_apply (s : ℂ) (r l u θ θ' t : ℝ) :
     circleCap s r l u θ θ' t = circleMap s r (θ + (θ' - θ) / (u - l) * (t - l)) := by
   simp only [circleCap, Function.comp_apply]
@@ -172,11 +187,13 @@ def exciseCrossing (γ : ℝ → ℂ) (s : ℂ) (r l u θ θ' : ℝ) : ℝ → �
   fun t => if l ≤ t ∧ t ≤ u then circleCap s r l u θ θ' t else γ t
 
 /-- **Characteristic value lemma** inside the window: there the excised curve is the cap. -/
+@[simp]
 theorem exciseCrossing_of_mem (ht : t ∈ Icc l u) :
     exciseCrossing γ s r l u θ θ' t = circleCap s r l u θ θ' t :=
   ite_eq_left (mem_Icc.mp ht)
 
 /-- **Characteristic value lemma** outside the window: there the excised curve is `γ`. -/
+@[simp]
 theorem exciseCrossing_of_notMem (ht : t ∉ Icc l u) :
     exciseCrossing γ s r l u θ θ' t = γ t :=
   ite_eq_right fun h => ht (mem_Icc.mpr h)
@@ -359,17 +376,21 @@ theorem windingNumber_eq_exciseCrossing_add (hγ : IsPiecewiseC1On γ a b) (hal 
     ← windingNumber_congr_curve heq_lu, windingNumber_circleCap hr hlu.ne θ θ']
   ring
 
-/-- **Hungerbühler–Wasem Proposition 2.2 with the integer identified, for one crossing window.**
+/-- **Hungerbühler–Wasem Proposition 2.2 for one crossing window, in existential form.**
 Under the hypotheses of `windingNumber_eq_exciseCrossing_add` on a *closed* curve, the winding
-number of `γ` about `s` is an integer plus the local contribution of the window, the integer being
-the winding number of the excised curve — which is an integer precisely because the surgery has
-pushed the curve off `s`.
+number of `γ` about `s` is *some* integer plus the local contribution of the window. Only that
+existence is asserted here: the integer is not exposed by the statement. The witness the proof
+supplies is the winding number of the excised curve, which is an integer precisely because the
+surgery has pushed the curve off `s`; a consumer that needs the identification should use
+`windingNumber_eq_exciseCrossing_add` together with `IsPiecewiseC1On.exists_int_windingNumber`,
+exactly as this proof does.
 
 What is still missing for HW Proposition 2.2 is the evaluation of the local contribution as
 `crossingAngle γ t₀ / 2π`; combined with
 `TauCeti.Contour.IsPwC1ImmersionOn.exists_int_windingNumber_eq_add_sum_crossingAngle` this statement
 already gives that the two agree modulo `1`. -/
-theorem exists_int_windingNumber_eq_add_crossing_excess (hγ : IsPiecewiseC1On γ a b) (hal : a < l)
+theorem exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi
+    (hγ : IsPiecewiseC1On γ a b) (hal : a < l)
     (hlu : l < u) (hub : u < b) (hr : r ≠ 0) (hclosed : γ a = γ b) (hθ : γ l = circleMap s r θ)
     (hθ' : γ u = circleMap s r θ') (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s)
     (hpv : CauchyPVExistsAt γ l u (fun z => (z - s)⁻¹) s) :
@@ -383,71 +404,6 @@ theorem exists_int_windingNumber_eq_add_crossing_excess (hγ : IsPiecewiseC1On �
   obtain ⟨k, hk⟩ := hE.exists_int_windingNumber hEclosed
     (fun t ht => exciseCrossing_ne hr θ θ' havoid t ((uIcc_of_le hab) ▸ ht))
   exact ⟨k, by rw [windingNumber_eq_exciseCrossing_add hγ hal hlu hub hr hθ hθ' havoid hpv, hk]⟩
-
-/-! ### The model sector, excised -/
-
-/-- **Excising the corner of a model sector leaves nothing.** The model sector of radius `r` and
-opening angle `α` crosses its own corner along two straight radii; deleting the window `[-ε, ε]` and
-capping it with the arc from angle `φ + α` back to angle `φ` produces a closed curve of winding
-number `0`.
-
-Equivalently, the sector's entire index `α / 2π` is the local contribution of its crossing, which is
-the model case of the identification that HW Proposition 2.2 asserts for a general immersion. -/
-theorem windingNumber_exciseCrossing_modelSector {z₀ : ℂ} {ε φ α : ℝ} (hε : 0 < ε) (hεr : ε < r)
-    (hα : 0 ≤ α) :
-    windingNumber (exciseCrossing (modelSector z₀ r φ α) z₀ ε (-ε) ε (φ + α) φ)
-      (-r) (r + α) z₀ = 0 := by
-  have hr : 0 < r := hε.trans hεr
-  set U : ℂ := Complex.exp ((φ + α : ℝ) * Complex.I) with hU
-  set V : ℂ := Complex.exp ((φ : ℝ) * Complex.I) with hV
-  have hVnorm : ‖V‖ = 1 := by rw [hV, Complex.norm_exp_ofReal_mul_I]
-  have hUnorm : ‖U‖ = 1 := by rw [hU, Complex.norm_exp_ofReal_mul_I]
-  have hUV : ‖U‖ = ‖V‖ := by rw [hUnorm, hVnorm]
-  -- on the corner interval the sector is its two-ray corner
-  have hcorner : EqOn (twoRayCorner z₀ U V) (modelSector z₀ r φ α) (uIoo (-ε) ε) := by
-    intro t ht
-    refine modelSector_eqOn_corner z₀ hr.le φ α ?_
-    rw [uIoo_of_le (by linarith : -ε ≤ ε)] at ht
-    rw [uIoo_of_le (by linarith : -r ≤ r)]
-    exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
-  -- the two window endpoints lie on the circle of radius `ε`
-  have hθ : modelSector z₀ r φ α (-ε) = circleMap z₀ ε (φ + α) := by
-    rw [modelSector_of_le (by linarith : -ε ≤ r), twoRayCorner_of_neg (by linarith : -ε < 0),
-      circleMap]
-    push_cast
-    ring
-  have hθ' : modelSector z₀ r φ α ε = circleMap z₀ ε φ := by
-    rw [modelSector_of_le (by linarith : ε ≤ r), twoRayCorner_of_nonneg hε.le, circleMap]
-  -- off the window the sector misses its corner
-  have havoid : ∀ t ∈ Icc (-r) (r + α), t ∉ Ioo (-ε) ε → modelSector z₀ r φ α t ≠ z₀ := by
-    intro t _ ht
-    have habs : ε ≤ |t| := by
-      rcases le_or_gt t 0 with h | h
-      · rw [abs_of_nonpos h]
-        by_contra hcon
-        exact ht ⟨by linarith [not_le.mp hcon], by linarith⟩
-      · rw [abs_of_pos h]
-        by_contra hcon
-        exact ht ⟨by linarith, not_le.mp hcon⟩
-    rcases le_or_gt t r with hle | hgt
-    · rw [modelSector_of_le hle, ← sub_ne_zero, ← norm_ne_zero_iff, norm_twoRayCorner_sub hUV,
-        hVnorm, mul_one]
-      exact fun h => absurd (h ▸ habs) (by simpa using hε)
-    · rw [modelSector_of_lt hgt]
-      exact circleMap_ne_center hr.ne'
-  -- the corner's own index vanishes, and its principal value exists
-  have hpv : CauchyPVExistsAt (modelSector z₀ r φ α) (-ε) ε (fun z => (z - z₀)⁻¹) z₀ :=
-    (cauchyPVExistsAt_inv_sub_twoRayCorner hUV ε).congr_curve hcorner
-  have hzero : windingNumber (modelSector z₀ r φ α) (-ε) ε z₀ = 0 := by
-    rw [← windingNumber_congr_curve hcorner]
-    exact windingNumber_eq_zero_twoRayCorner hUV ε
-  have hmain := windingNumber_eq_exciseCrossing_add
-    (isPiecewiseC1On_modelSector hr.le φ α) (by linarith : -r < -ε) (by linarith : -ε < ε)
-    (by linarith : ε < r + α) hε.ne' hθ hθ' havoid hpv
-  rw [windingNumber_closedModelSector hr φ hα, hzero] at hmain
-  have hcast : ((φ - (φ + α) : ℝ) : ℂ) = -(α : ℂ) := by push_cast; ring
-  rw [hcast] at hmain
-  linear_combination -hmain
 
 end TauCeti.Contour
 
