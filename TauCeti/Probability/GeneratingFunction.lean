@@ -23,12 +23,12 @@ import Mathlib.Probability.Independence.Integration
 This file defines the probability-generating function of a natural-number-valued random variable
 and establishes its basic measure-theoretic API.  The central results relate it to Mathlib's
 moment-generating function and show that it turns sums of independent random variables into
-products.  The file then identifies a finite measure on `ℕ` with the sum of the power series
-carrying its singleton masses, so that the generating function is analytic on the open unit
-interval and its Taylor coefficients at the origin recover those masses; consequently a law on `ℕ`
-is determined by its generating function near `0`.  Finally it computes the generating functions of
-the standard discrete families: Bernoulli, binomial, Poisson, and geometric, the last one on its
-exact integrability domain.
+products.  The file then identifies the generating function of a finite measure on `ℕ` with the
+sum of the power series carrying its singleton masses, so that the generating function is analytic
+on the open unit interval and its Taylor coefficients at the origin recover those masses;
+consequently a law on `ℕ` is determined by its generating function near `0`.  Finally it computes
+the generating functions of the standard discrete families: Bernoulli, binomial, Poisson, and
+geometric, the last one on its exact integrability domain.
 
 These results implement the definition, the generic API, the coefficient-recovery and uniqueness
 statements, and the distribution-specific formulas of the probability-generating-function target
@@ -48,11 +48,12 @@ corresponding measure-integral formulas directly.
 * `TauCeti.Probability.IndepFun.pgf_add` and `TauCeti.Probability.iIndepFun.pgf_sum` —
   multiplicativity over binary and finite sums of independent random variables.
 * `TauCeti.Probability.hasSum_pgf` and `TauCeti.Probability.pgf_eq_tsum` — the power-series
-  expansion in the singleton masses, valid on the open unit interval.
+  expansion in the singleton masses, valid on the closed unit interval.
 * `TauCeti.Probability.hasFPowerSeriesOnBall_pgf` and `TauCeti.Probability.analyticOnNhd_pgf` —
   analyticity on the open unit ball.
 * `TauCeti.Probability.iteratedDeriv_pgf_zero` — the Taylor coefficients at the origin are the
-  singleton masses.
+  singleton masses, with `TauCeti.Probability.pgf_zero` and `TauCeti.Probability.deriv_pgf_zero`
+  reading off the first two.
 * `TauCeti.Probability.measure_eq_of_pgf_eventuallyEq` and
   `TauCeti.Probability.identDistrib_of_pgf_eventuallyEq` — uniqueness of the law from the germ of
   the generating function at `0`, with the corollaries
@@ -167,26 +168,27 @@ A finite measure on `ℕ` is the weighted sum of Dirac masses `∑ ν {n} • δ
 generating function is the sum of the power series `∑ ν.real {n} * t ^ n`.  The masses are
 bounded by the total mass, so that series converges on the whole open unit ball and the generating
 function is analytic there.  Reading its Taylor coefficients at the origin returns the masses, and
-hence a probability measure on `ℕ` is determined by its generating function near `0`. -/
+hence a finite measure on `ℕ`, in particular a probability measure, is determined by its generating
+function near `0`. -/
 
 section Coefficients
 
 open FormalMultilinearSeries
 
 /-- Under a finite measure on `ℕ`, the probability-generating function is the sum of the power
-series whose coefficients are the singleton masses, on the open unit interval. -/
-theorem hasSum_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| < 1) :
+series whose coefficients are the singleton masses, on the closed unit interval. -/
+theorem hasSum_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| ≤ 1) :
     HasSum (fun n => ν.real {n} * t ^ n) (pgf id ν t) := by
-  have hbound : ∀ n : ℕ, ‖ν.real {n} * t ^ n‖ ≤ ν.real Set.univ * |t| ^ n := by
+  have hbound : ∀ n : ℕ, ‖ν.real {n} * t ^ n‖ ≤ ν.real {n} := by
     intro n
     rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_pow,
       abs_of_nonneg measureReal_nonneg]
-    have hmass : ν.real {n} ≤ ν.real Set.univ := measureReal_mono (Set.subset_univ _)
-    exact mul_le_mul_of_nonneg_right hmass (by positivity)
+    exact mul_le_of_le_one_right measureReal_nonneg (pow_le_one₀ (abs_nonneg t) ht)
   have hsum : Summable fun n => ν.real {n} * t ^ n :=
-    Summable.of_norm_bounded ((summable_geometric_of_lt_one (abs_nonneg t) ht).mul_left _) hbound
+    Summable.of_norm_bounded (summable_measure_toReal (fun n => measurableSet_singleton n)
+      fun _ _ hmn => Set.disjoint_singleton.mpr hmn) hbound
   have hint : Integrable (fun n : ℕ => t ^ n) ν :=
-    integrable_pow_of_abs_le_one (X := id) aemeasurable_id ht.le
+    integrable_pow_of_abs_le_one (X := id) aemeasurable_id ht
   have hpgf : pgf id ν t = ∑' n : ℕ, ν.real {n} * t ^ n := by
     rw [pgf_def]
     simp only [id_eq]
@@ -196,8 +198,8 @@ theorem hasSum_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| <
   exact hsum.hasSum
 
 /-- The power-series expansion of the probability-generating function of a finite measure on `ℕ`
-on the open unit interval. -/
-theorem pgf_eq_tsum (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| < 1) :
+on the closed unit interval. -/
+theorem pgf_eq_tsum (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| ≤ 1) :
     pgf id ν t = ∑' n : ℕ, ν.real {n} * t ^ n :=
   (hasSum_pgf ν ht).tsum_eq.symm
 
@@ -220,7 +222,7 @@ theorem hasFPowerSeriesOnBall_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] :
       rw [mem_eball_zero_iff, ← ofReal_norm, ENNReal.ofReal_lt_one] at hy
       simpa using hy
     simpa only [ofScalars_apply_eq, smul_eq_mul, zero_add] using
-      hasSum_pgf ν hy'
+      hasSum_pgf ν hy'.le
 
 /-- The probability-generating function of a finite measure on `ℕ` is analytic on the open unit
 interval. -/
@@ -243,17 +245,31 @@ theorem iteratedDeriv_pgf_zero (ν : Measure ℕ) [IsFiniteMeasure ν] (n : ℕ)
   rw [eq_comm, div_eq_iff (Nat.cast_ne_zero.mpr n.factorial_ne_zero)] at hcoeff
   rw [hcoeff, mul_comm]
 
+/-- Evaluating at the origin the probability-generating function of a finite measure on `ℕ` gives
+the mass of `{0}`.  This is the `n = 0` case of `iteratedDeriv_pgf_zero`, which `simp` normalises
+away from `iteratedDeriv`. -/
+@[simp]
+theorem pgf_zero (ν : Measure ℕ) [IsFiniteMeasure ν] : pgf id ν 0 = ν.real {0} := by
+  refine (hasSum_pgf ν (by norm_num)).unique ?_
+  simpa using hasSum_single (f := fun n : ℕ => ν.real {n} * (0 : ℝ) ^ n) 0
+    fun n hn => by simp [zero_pow hn]
+
+/-- The derivative at the origin of the probability-generating function of a finite measure on `ℕ`
+is the mass of `{1}`.  This is the `n = 1` case of `iteratedDeriv_pgf_zero`, which `simp`
+normalises away from `iteratedDeriv`. -/
+@[simp]
+theorem deriv_pgf_zero (ν : Measure ℕ) [IsFiniteMeasure ν] : deriv (pgf id ν) 0 = ν.real {1} := by
+  rw [← iteratedDeriv_one, iteratedDeriv_pgf_zero]
+  simp
+
 /-- A finite measure on `ℕ`, in particular a probability measure, is determined by the germ at the
 origin of its probability-generating function. -/
 theorem measure_eq_of_pgf_eventuallyEq {ν ν' : Measure ℕ} [IsFiniteMeasure ν] [IsFiniteMeasure ν']
     (h : pgf id ν =ᶠ[nhds 0] pgf id ν') : ν = ν' := by
-  refine Measure.ext_of_singleton fun n => ?_
+  refine ext_iff_measureReal_singleton.mpr fun n => ?_
   have hderiv := h.iteratedDeriv_eq n
   rw [iteratedDeriv_pgf_zero, iteratedDeriv_pgf_zero] at hderiv
-  have hmass : ν.real {n} = ν'.real {n} :=
-    mul_left_cancel₀ (Nat.cast_ne_zero.mpr n.factorial_ne_zero) hderiv
-  rwa [measureReal_def, measureReal_def,
-    ENNReal.toReal_eq_toReal_iff' (measure_ne_top _ _) (measure_ne_top _ _)] at hmass
+  exact mul_left_cancel₀ (Nat.cast_ne_zero.mpr n.factorial_ne_zero) hderiv
 
 /-- A finite measure on `ℕ`, in particular a probability measure, is determined by its
 probability-generating function on the open unit interval. -/
