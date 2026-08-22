@@ -377,10 +377,8 @@ theorem vermaGenerator_eq_zero_iff : vermaGenerator b lam = 0 ↔ vermaIdeal b l
 spanning it. -/
 theorem subsingleton_vermaModule_iff :
     Subsingleton (VermaModule b lam) ↔ vermaGenerator b lam = 0 := by
-  refine ⟨fun _ => Subsingleton.elim _ _, fun h => ⟨fun x y => ?_⟩⟩
-  obtain ⟨u, rfl⟩ := vermaMk_surjective b lam x
-  obtain ⟨w, rfl⟩ := vermaMk_surjective b lam y
-  rw [← smul_vermaGenerator, ← smul_vermaGenerator, h, smul_zero, smul_zero]
+  change Subsingleton (U ⧸ vermaIdeal b lam) ↔ vermaGenerator b lam = 0
+  rw [Submodule.Quotient.subsingleton_iff, ← vermaGenerator_eq_zero_iff]
 
 /-- **The irreducible quotient `L(lam)`.** As soon as the Verma module is nonzero, it is a highest
 weight module of weight `lam`, so its quotient by the maximal submodule of
