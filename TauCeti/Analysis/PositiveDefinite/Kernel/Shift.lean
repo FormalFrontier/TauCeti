@@ -11,8 +11,8 @@ public import TauCeti.Analysis.Matrix.PosSemidef
 # Bounded positive-definite kernels decrease along a symmetric shift
 
 Let `K` be a positive-definite kernel on a type `α` and let `σ : α → α` be a *symmetric shift*,
-meaning `K (σ p) q = K p (σ q)`. If `K` is bounded, then the shifted kernel is dominated by `K`:
-the difference
+meaning `K (σ p) q = K p (σ q)`. If the diagonal of `K` is bounded — which by Cauchy--Schwarz is
+the same as `K` being bounded — then the shifted kernel is dominated by `K`: the difference
 
 `(p, q) ↦ K p q - K (σ p) q`
 
@@ -22,8 +22,8 @@ is again positive definite. Boundedness cannot be dropped — for `K p q = exp (
 The mechanism is a moment-problem estimate. Fixing a finite family of points and coefficients, the
 numbers `a n = ∑ᵢⱼ conj (cᵢ) K (σⁿ pᵢ) (pⱼ) c ⱼ` form a positive-semidefinite Hankel matrix
 `(m, n) ↦ a (m + n)`, because the shift can be moved from one argument to the other, and they are
-bounded. The matrix estimate `TauCeti.sub_nonneg_of_posSemidef_hankel` then gives `a 0 - a 1 ≥ 0`,
-which is the quadratic form of the difference kernel.
+bounded above. The matrix estimate `TauCeti.sub_nonneg_of_posSemidef_hankel` then gives
+`a 0 - a 1 ≥ 0`, which is the quadratic form of the difference kernel.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, Milestone 2
 ("BCR semigroup--Bochner"): applied to the Berg--Christensen--Ressel kernel of a bounded
@@ -118,11 +118,12 @@ private theorem posSemidef_hankel_of_iterate_shift {ι : Type v} [Fintype ι] {a
           simp only [hexp]
 
 /-- **The difference of a bounded positive-definite kernel and its shift is positive definite.**
-Here `σ` is a *symmetric* shift, `K (σ p) q = K p (σ q)`, and `K` is bounded in norm by `C`.
-Boundedness is essential: for the (unbounded) kernel `(p, q) ↦ exp (p + q)` on `ℝ` and the shift
-`σ = (· + 1)` the difference below is the negative of a positive-definite kernel. -/
+Here `σ` is a *symmetric* shift, `K (σ p) q = K p (σ q)`, and the diagonal of `K` is bounded in
+norm by `C` — which by Cauchy--Schwarz bounds `K` everywhere. Boundedness is essential: for the
+(unbounded) kernel `(p, q) ↦ exp (p + q)` on `ℝ` and the shift `σ = (· + 1)` the difference below
+is the negative of a positive-definite kernel. -/
 theorem posSemidef_sub_comp_shift {C : ℝ} (hK : Matrix.PosSemidef K)
-    (hshift : ∀ p q, K (σ p) q = K p (σ q)) (hbdd : ∀ p q, ‖K p q‖ ≤ C) :
+    (hshift : ∀ p q, K (σ p) q = K p (σ q)) (hbdd : ∀ p, ‖K p p‖ ≤ C) :
     Matrix.PosSemidef fun p q : α => K p q - K (σ p) q := by
   have hherm : ∀ p q : α, star (K p q) = K q p :=
     (posSemidef_iff_finite_sum.{u, v, v}.mp hK).1
@@ -133,13 +134,16 @@ theorem posSemidef_sub_comp_shift {C : ℝ} (hK : Matrix.PosSemidef K)
   let a : ℕ → 𝕜 := fun n => ∑ i, ∑ j, star (c i) * K (σ^[n] (v i)) (v j) * c j
   have hadef : ∀ n, a n = ∑ i, ∑ j, star (c i) * K (σ^[n] (v i)) (v j) * c j := fun _ => rfl
   have hHankel := posSemidef_hankel_of_iterate_shift hK hshift hadef
-  have hbda : ∀ n, ‖a n‖ ≤ ∑ i, ∑ j, ‖c i‖ * ‖c j‖ * C := by
+  have hbda : ∀ n, RCLike.re (a n) ≤ ∑ i, ∑ j, ‖c i‖ * ‖c j‖ * C := by
     intro n
+    refine (RCLike.re_le_norm _).trans ?_
     refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun i _ => ?_)
     refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun j _ => ?_)
     calc ‖star (c i) * K (σ^[n] (v i)) (v j) * c j‖
         = ‖c i‖ * ‖K (σ^[n] (v i)) (v j)‖ * ‖c j‖ := by simp [norm_mul]
-      _ ≤ ‖c i‖ * C * ‖c j‖ := by gcongr; exact hbdd _ _
+      _ ≤ ‖c i‖ * C * ‖c j‖ := by
+          gcongr
+          exact hK.norm_le_of_norm_apply_self_le hbdd _ _
       _ = ‖c i‖ * ‖c j‖ * C := by ring
   have hstep := sub_nonneg_of_posSemidef_hankel hHankel hbda
   have hsub : a 0 - a 1 = ∑ i, ∑ j, star (c i) * (K (v i) (v j) - K (σ (v i)) (v j)) * c j := by

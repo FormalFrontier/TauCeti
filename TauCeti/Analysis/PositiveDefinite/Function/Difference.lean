@@ -30,8 +30,10 @@ form and in the explicit binomial form
 Positive definiteness is a statement about quadratic forms, not a pointwise sign; the values
 themselves are nonnegative at the "norm points" `a + star a`.
 
-Boundedness is essential and is not a technical artefact: `t ↦ exp t` is positive definite on the
-involutive monoid `(ℝ≥0, +)` with the trivial involution, and it *increases*. The statement is
+Boundedness is only ever assumed at the "norm points" `a + star a`, the diagonal of the kernel:
+Cauchy--Schwarz propagates a bound there to every point of the form `p + star q`. It is essential
+and is not a technical artefact: `t ↦ exp t` is positive definite on the involutive monoid
+`(ℝ≥0, +)` with the trivial involution, and it *increases*. The statement is
 proved by a purely numerical moment-problem estimate on the finite quadratic forms; no topology,
 measurability, or representing measure is assumed or produced here.
 
@@ -48,12 +50,12 @@ forward-difference bookkeeping below is shared.
 
 ## Main declarations
 
-* `TauCeti.sub_shift_eq_neg_fwdDiff`: the difference `x ↦ F x - F (x + s)` is the negative of
-  Mathlib's forward difference `Δ_[s] F`.
 * `TauCeti.neg_one_pow_mul_fwdDiff_iter_succ`: one differencing step advances the alternating
   iterated forward difference by one.
 * `TauCeti.neg_one_pow_mul_fwdDiff_iter_eq_alternating_sum`: the binomial expansion of the
   alternating iterated forward difference.
+* `TauCeti.IsPositiveDefinite.norm_apply_add_star_le`: a bound at the "norm points" `a + star a`
+  bounds a positive-definite function at every point `p + star q`.
 * `TauCeti.IsPositiveDefinite.sub_shift`: the difference of a bounded positive-definite function
   and its translate by a self-adjoint element is positive definite.
 * `TauCeti.IsPositiveDefinite.neg_one_pow_mul_fwdDiff_iter` and
@@ -85,16 +87,8 @@ section FwdDiff
 
 variable {M : Type*} [AddCommMonoid M]
 
-/-- The difference `x ↦ F x - F (x + s)` is the negative of Mathlib's forward difference along
-`s`. -/
-theorem sub_shift_eq_neg_fwdDiff (F : M → ℂ) (s : M) :
-    (fun x => F x - F (x + s)) = -Δ_[s] F := by
-  funext x
-  simp [fwdDiff]
-
-/-- Differencing once advances the alternating iterated forward difference by one step. Together
-with `TauCeti.sub_shift_eq_neg_fwdDiff` this is the bookkeeping behind every induction on the
-number of differencing steps. -/
+/-- Differencing once advances the alternating iterated forward difference by one step. This is the
+bookkeeping behind every induction on the number of differencing steps. -/
 theorem neg_one_pow_mul_fwdDiff_iter_succ (n : ℕ) (F : M → ℂ) (s : M) :
     (fun x : M => (-1 : ℂ) ^ n * Δ_[s]^[n] (-Δ_[s] F) x)
       = fun x : M => (-1 : ℂ) ^ (n + 1) * Δ_[s]^[n + 1] F x := by
@@ -129,14 +123,21 @@ namespace IsPositiveDefinite
 
 variable {M : Type*} [AddCommMonoid M] [StarAddMonoid M] {F : M → ℂ} {C : ℝ} {s : M}
 
+/-- A positive-definite function bounded at the "norm points" `a + star a` is bounded at every
+point of the form `p + star q`, by Cauchy--Schwarz for its kernel. -/
+theorem norm_apply_add_star_le (hF : IsPositiveDefinite F)
+    (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C) (p q : M) : ‖F (p + star q)‖ ≤ C :=
+  hF.posSemidef.norm_le_of_norm_apply_self_le hbdd p q
+
 /-- **A bounded positive-definite function dominates its translate by a self-adjoint element.**
 Translation by `s` with `star s = s` is a symmetric shift of the kernel `(a, b) ↦ F (a + star b)`,
-so the bounded-kernel estimate `TauCeti.posSemidef_sub_comp_shift` applies. Boundedness cannot be
+so the bounded-kernel estimate `TauCeti.posSemidef_sub_comp_shift` applies; only the diagonal of
+that kernel, the values at the "norm points" `a + star a`, has to be bounded. Boundedness cannot be
 dropped: `t ↦ exp t` is positive definite on `ℝ≥0` with the trivial involution and increases. -/
-theorem sub_shift (hF : IsPositiveDefinite F) (hbdd : ∀ x, ‖F x‖ ≤ C) (hs : star s = s) :
-    IsPositiveDefinite fun x => F x - F (x + s) := by
+theorem sub_shift (hF : IsPositiveDefinite F) (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C)
+    (hs : star s = s) : IsPositiveDefinite fun x => F x - F (x + s) := by
   have hkey := posSemidef_sub_comp_shift (K := fun a b : M => F (a + star b))
-    (σ := fun a : M => a + s) hF.posSemidef (fun p q => ?_) (fun p q => hbdd _)
+    (σ := fun a : M => a + s) hF.posSemidef (fun p q => ?_) (fun p => hbdd p)
   · refine IsPositiveDefinite.of_posSemidef ?_
     have heq : (fun a b : M => F (a + star b) - F (a + s + star b)) =
         fun a b : M => F (a + star b) - F (a + star b + s) := by
@@ -148,42 +149,50 @@ theorem sub_shift (hF : IsPositiveDefinite F) (hbdd : ∀ x, ‖F x‖ ≤ C) (h
 
 /-- The difference of a bounded positive-definite function and its translate by a self-adjoint
 element is nonnegative at every "norm point" `a + star a`. -/
-theorem sub_shift_add_star_self_nonneg (hF : IsPositiveDefinite F) (hbdd : ∀ x, ‖F x‖ ≤ C)
-    (hs : star s = s) (a : M) : 0 ≤ F (a + star a) - F (a + star a + s) :=
+theorem sub_shift_add_star_self_nonneg (hF : IsPositiveDefinite F)
+    (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C) (hs : star s = s) (a : M) :
+    0 ≤ F (a + star a) - F (a + star a + s) :=
   (hF.sub_shift hbdd hs).add_star_self_nonneg a
 
-omit [StarAddMonoid M] in
-/-- The difference of a function bounded by `C` and its translate is bounded by `2 * C`. Only used
-to propagate the bound through the induction in `neg_one_pow_mul_fwdDiff_iter`. -/
-private theorem norm_sub_shift_le (hbdd : ∀ x, ‖F x‖ ≤ C) (x : M) :
-    ‖F x - F (x + s)‖ ≤ 2 * C := by
+/-- If `F` is bounded by `C` at the "norm points", so is its translate by `s`; hence the difference
+is bounded there by `2 * C`. Only used to propagate the bound through the induction in
+`neg_one_pow_mul_fwdDiff_iter`. -/
+private theorem norm_sub_shift_add_star_self_le (hF : IsPositiveDefinite F)
+    (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C) (a : M) :
+    ‖F (a + star a) - F (a + star a + s)‖ ≤ 2 * C := by
   refine (norm_sub_le _ _).trans ?_
-  have h₁ := hbdd x
-  have h₂ := hbdd (x + s)
+  have h₁ := hbdd a
+  have h₂ : ‖F (a + star a + s)‖ ≤ C := by
+    have h := hF.norm_apply_add_star_le hbdd (a + s) a
+    rwa [add_right_comm] at h
   linarith
 
 /-- **The alternating iterated differences of a bounded positive-definite function are positive
 definite.** This is the iterate of `IsPositiveDefinite.sub_shift`: each differencing step doubles
 the admissible bound, which is harmless because only the existence of *some* bound is used. -/
-theorem neg_one_pow_mul_fwdDiff_iter (n : ℕ) (hF : IsPositiveDefinite F) (hbdd : ∀ x, ‖F x‖ ≤ C)
-    (hs : star s = s) : IsPositiveDefinite fun x : M => (-1 : ℂ) ^ n * Δ_[s]^[n] F x := by
+theorem neg_one_pow_mul_fwdDiff_iter (n : ℕ) (hF : IsPositiveDefinite F)
+    (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C) (hs : star s = s) :
+    IsPositiveDefinite fun x : M => (-1 : ℂ) ^ n * Δ_[s]^[n] F x := by
   induction n generalizing F C with
   | zero => simpa using hF
   | succ n ih =>
-      have hG := ih (hF.sub_shift hbdd hs) (norm_sub_shift_le hbdd)
-      rwa [sub_shift_eq_neg_fwdDiff, neg_one_pow_mul_fwdDiff_iter_succ] at hG
+      have hG := ih (hF.sub_shift hbdd hs) (norm_sub_shift_add_star_self_le hF hbdd)
+      have hneg : (fun x => F x - F (x + s)) = -Δ_[s] F := by
+        funext x
+        simp [fwdDiff]
+      rwa [hneg, neg_one_pow_mul_fwdDiff_iter_succ] at hG
 
 /-- The alternating iterated difference of a bounded positive-definite function is nonnegative at
 every "norm point" `a + star a`. -/
 theorem neg_one_pow_mul_fwdDiff_iter_add_star_self_nonneg (n : ℕ) (hF : IsPositiveDefinite F)
-    (hbdd : ∀ x, ‖F x‖ ≤ C) (hs : star s = s) (a : M) :
+    (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C) (hs : star s = s) (a : M) :
     0 ≤ (-1 : ℂ) ^ n * Δ_[s]^[n] F (a + star a) :=
   (hF.neg_one_pow_mul_fwdDiff_iter n hbdd hs).add_star_self_nonneg a
 
 /-- **The alternating iterated differences, expanded as binomial sums, are positive definite.**
 This is `IsPositiveDefinite.neg_one_pow_mul_fwdDiff_iter` with the forward-difference operator
 resolved into the explicit alternating sum over an arithmetic progression of translates. -/
-theorem alternating_sum (n : ℕ) (hF : IsPositiveDefinite F) (hbdd : ∀ x, ‖F x‖ ≤ C)
+theorem alternating_sum (n : ℕ) (hF : IsPositiveDefinite F) (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C)
     (hs : star s = s) :
     IsPositiveDefinite fun x : M =>
       ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (x + k • s) := by
@@ -194,7 +203,7 @@ theorem alternating_sum (n : ℕ) (hF : IsPositiveDefinite F) (hbdd : ∀ x, ‖
 "norm point" `a + star a`: complete monotonicity in the finite-difference sense, along the
 arithmetic progression starting there. -/
 theorem alternating_sum_add_star_self_nonneg (n : ℕ) (hF : IsPositiveDefinite F)
-    (hbdd : ∀ x, ‖F x‖ ≤ C) (hs : star s = s) (a : M) :
+    (hbdd : ∀ a, ‖F (a + star a)‖ ≤ C) (hs : star s = s) (a : M) :
     0 ≤ ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (a + star a + k • s) :=
   (hF.alternating_sum n hbdd hs).add_star_self_nonneg a
 

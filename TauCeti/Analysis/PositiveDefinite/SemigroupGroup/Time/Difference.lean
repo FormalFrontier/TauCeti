@@ -35,8 +35,9 @@ An iterated time difference expands into the alternating binomial sum
 `(t, v) ↦ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k • h, v)`, so that sum is positive definite too.
 Positive definiteness is a statement about quadratic forms, not a pointwise sign: nonnegativity of
 the values themselves is asserted only along the zero-spatial axis, where positive definiteness
-specializes to the sign law `0 ≤ Δⁿ F (t, 0)` and hence to the classical statement that
-`t ↦ F (t, 0)` is *completely monotone in the finite-difference sense*:
+specializes to the alternating sign law `0 ≤ (-1) ^ n * Δ_[h]^[n] (fun s => F (s, 0)) t` and hence
+to the classical statement that `t ↦ F (t, 0)` is *completely monotone in the finite-difference
+sense*:
 
 `0 ≤ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k h, 0)`.
 
@@ -414,7 +415,7 @@ theorem timeAxis_alternating_sum_nonneg (n : ℕ) (hF : IsSemigroupGroupPD F)
     (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
     0 ≤ ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (t + k • h, (0 : V)) := by
   have haxis := hF.timeAxis_isPositiveDefinite.alternating_sum_add_star_self_nonneg n (C := C)
-    hbdd (star_trivial h) (t / 2)
+    (fun a => hbdd _) (star_trivial h) (t / 2)
   simpa only [star_trivial, add_halves] using haxis
 
 /-- The iterated time difference of a semigroup-group positive-definite function whose time axis is
@@ -445,7 +446,7 @@ bounded time axis is dominated by an earlier one, in the order of `ℂ`. -/
 theorem timeAxis_sub_nonneg (hF : IsSemigroupGroupPD F) (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C)
     (h t : ℝ≥0) : 0 ≤ F (t, (0 : V)) - F (t + h, 0) := by
   have haxis := hF.timeAxis_isPositiveDefinite.sub_shift_add_star_self_nonneg (C := C)
-    hbdd (star_trivial h) (t / 2)
+    (fun a => hbdd _) (star_trivial h) (t / 2)
   simpa only [star_trivial, add_halves] using haxis
 
 /-- The bounded time axis of a semigroup-group positive-definite function is nonincreasing: its

@@ -12,8 +12,8 @@ public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 
 This file supplements the foundational API in `TauCeti.LinearAlgebra.Matrix.PosSemidef` with
 scalar Cauchy--Schwarz and vanishing bounds for `RCLike`-valued positive-semidefinite matrices,
-together with the resulting estimate for *Hankel* matrices: a bounded sequence whose Hankel matrix
-`(m, n) ↦ a (m + n)` is positive semidefinite cannot increase at the first step.
+together with the resulting estimate for *Hankel* matrices: a sequence bounded above whose Hankel
+matrix `(m, n) ↦ a (m + n)` is positive semidefinite cannot increase at the first step.
 
 The results apply in particular to positive-definite kernels, represented directly as matrices,
 but do not depend on Tau Ceti's positive-definite-function theory.
@@ -28,8 +28,9 @@ Mathlib code is vendored.
 * `Matrix.PosSemidef.eq_zero_of_apply_self_eq_zero_left` and
   `Matrix.PosSemidef.eq_zero_of_apply_self_eq_zero_right`: zero-diagonal vanishing.
 * `Matrix.PosSemidef.norm_le_one_of_apply_self_eq_one`: the normalized scalar bound.
-* `TauCeti.sub_nonneg_of_posSemidef_hankel`: a bounded positive-semidefinite Hankel sequence does
-  not increase at the first step.
+* `Matrix.PosSemidef.norm_le_of_norm_apply_self_le`: the diagonal bounds every entry.
+* `TauCeti.sub_nonneg_of_posSemidef_hankel`: a positive-semidefinite Hankel sequence bounded above
+  does not increase at the first step.
 
 ## References
 
@@ -110,6 +111,19 @@ theorem norm_le_one_of_apply_self_eq_one {K : α → α → 𝕜}
   refine le_of_sq_le_sq ?_ zero_le_one
   simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using hK.normSq_le a b
 
+/-- **The diagonal of a positive-semidefinite matrix bounds all of its entries.** Cauchy--Schwarz
+turns a uniform bound on the (nonnegative real) diagonal entries into the same bound everywhere. -/
+theorem norm_le_of_norm_apply_self_le {K : α → α → 𝕜} {C : ℝ}
+    (hK : Matrix.PosSemidef K) (hdiag : ∀ i, ‖K i i‖ ≤ C) (a b : α) : ‖K a b‖ ≤ C := by
+  have hnonneg : ∀ i : α, 0 ≤ RCLike.re (K i i) := fun i =>
+    (RCLike.nonneg_iff.mp (by simpa using hK.diag_nonneg (i := i))).1
+  have hre : ∀ i : α, RCLike.re (K i i) ≤ C := fun i => (RCLike.re_le_norm _).trans (hdiag i)
+  refine le_of_sq_le_sq ?_ ((hnonneg a).trans (hre a))
+  calc ‖K a b‖ ^ 2 = RCLike.normSq (K a b) := (RCLike.normSq_eq_def' _).symm
+    _ ≤ RCLike.re (K a a) * RCLike.re (K b b) := hK.normSq_le a b
+    _ ≤ C * C := mul_le_mul (hre a) (hre b) (hnonneg b) ((hnonneg a).trans (hre a))
+    _ = C ^ 2 := (sq C).symm
+
 end Matrix.PosSemidef
 
 namespace TauCeti
@@ -161,12 +175,13 @@ private theorem apply_one_le_apply_zero_of_sq_le_mul {b : ℕ → ℝ} {D : ℝ}
     le_trans (le_trans (mul_le_mul_of_nonneg_left hmono hb0pos.le) (key k)) (hbd _)
   linarith
 
-/-- **A bounded positive-semidefinite Hankel sequence does not increase at the first step.**
-If `(m, n) ↦ a (m + n)` is positive semidefinite and `a` is bounded in norm, then `a 1 ≤ a 0`
-in the `RCLike` order. Cauchy--Schwarz alone gives `a n ^ 2 ≤ a 0 * a (2 n)`, and boundedness
-rules out a ratio `a 1 / a 0` greater than `1`. -/
+/-- **A positive-semidefinite Hankel sequence bounded above does not increase at the first step.**
+If `(m, n) ↦ a (m + n)` is positive semidefinite and the real parts of `a` are bounded above by `D`
+— the entries are automatically real — then `a 1 ≤ a 0` in the `RCLike` order. Cauchy--Schwarz
+alone gives `a n ^ 2 ≤ a 0 * a (2 n)`, and the bound rules out a ratio `a 1 / a 0` greater
+than `1`. -/
 theorem sub_nonneg_of_posSemidef_hankel {a : ℕ → 𝕜} {D : ℝ}
-    (ha : Matrix.PosSemidef fun m n : ℕ => a (m + n)) (hbd : ∀ n, ‖a n‖ ≤ D) :
+    (ha : Matrix.PosSemidef fun m n : ℕ => a (m + n)) (hbd : ∀ n, RCLike.re (a n) ≤ D) :
     0 ≤ a 0 - a 1 := by
   have hreal : ∀ n, (starRingEnd 𝕜) (a n) = a n := by
     intro n
@@ -184,9 +199,7 @@ theorem sub_nonneg_of_posSemidef_hankel {a : ℕ → 𝕜} {D : ℝ}
     intro n
     have h := ha.normSq_le 0 n
     simpa [hnormSq, hbdef] using h
-  have hbdb : ∀ n, b n ≤ D := fun n =>
-    le_trans (RCLike.re_le_norm (a n)) (hbd n)
-  have hmain : b 1 ≤ b 0 := apply_one_le_apply_zero_of_sq_le_mul hb0 hsq hbdb
+  have hmain : b 1 ≤ b 0 := apply_one_le_apply_zero_of_sq_le_mul hb0 hsq hbd
   rw [RCLike.nonneg_iff]
   constructor
   · simpa [hbdef] using sub_nonneg.mpr hmain
