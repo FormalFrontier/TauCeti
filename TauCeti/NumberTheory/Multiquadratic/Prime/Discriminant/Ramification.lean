@@ -7,7 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Compositum
 public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-public import TauCeti.NumberTheory.RamificationInertia.Tower
+import TauCeti.NumberTheory.RamificationInertia.Tower
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
 import TauCeti.NumberTheory.Multiquadratic.RelativeDegree
 import TauCeti.NumberTheory.NumberField.IntegralSqrt
@@ -114,9 +114,7 @@ theorem mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff
   · intro hram
     by_contra hnot
     simp only [not_exists] at hnot
-    have htopM : adjoin ℚ (Set.range rootM) = ⊤ := by
-      change adjoin ℚ (Set.range (gen (K := ℚ) root)) = ⊤
-      exact adjoin_gen_eq_top
+    have htopM : adjoin ℚ (Set.range rootM) = ⊤ := adjoin_gen_eq_top
     have hG' := isGalois (K := ℚ) (L := M)
       (d := fun i => ((primeDiscriminantRadicand (D i) : ℤ) : ℚ))
       (root := rootM) hrootM
@@ -173,10 +171,10 @@ theorem mem_ramifiedPrimes_adjoin_range_primeDiscriminantRadicands_iff
                 let W : 𝓞 M := ⟨(1 + rootM i) / 2,
                   isIntegral_one_add_sqrt_div_two (hrootM_int i) hd4⟩
                 have hW : σ • W - W ∈ P := hσ W
+                -- `W` is given by its value, so its image in `M` is that value definitionally.
+                have hWval : algebraMap (𝓞 M) M W = (1 + rootM i) / 2 := rfl
                 have hWcoe : algebraMap (𝓞 M) M (σ • W - W) = -rootM i := by
-                  rw [map_sub, hbridge]
-                  change σ ((1 + rootM i) / 2) - (1 + rootM i) / 2 = -rootM i
-                  rw [map_div₀, map_add, map_one, hi, map_ofNat]
+                  rw [map_sub, hbridge, hWval, map_div₀, map_add, map_one, hi, map_ofNat]
                   ring
                 have hWsq : (σ • W - W) ^ 2 =
                     algebraMap ℤ (𝓞 M) (primeDiscriminantRadicand (D i)) := by
