@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Subsystem
 
 /-!
 # Root subgroups on points of the toral Kostant closure
@@ -18,7 +18,7 @@ records the resulting map on algebra-valued points. Thus, for every commutative 
 index `i`, it supplies the intrinsic homomorphism
 
 ```text
-𝔾ₐ(A) → kostantToralGroupScheme(A).
+𝔾ₐ(A) → kostantToralSubsystemGroupScheme(Set.univ)(A).
 ```
 
 Composing this homomorphism with the quotient-points inclusion recovers the previously constructed
@@ -74,7 +74,8 @@ variable (wt : Fin n → κ → ℤ)
 
 /-- The `i`th represented root subgroup on algebra-valued points of the toral Kostant closure.
 
-Its coordinate morphism is `kostantRootSubgroupToralCoordinateMap`; contravariance of the functor
+Its coordinate morphism is the `Set.univ` specialization of
+`kostantRootSubgroupToralSubsystemCoordinateMap`; contravariance of the functor
 of points turns that morphism into a homomorphism from the additive-group points to the intrinsic
 points of the quotient coordinate Hopf algebra. -/
 noncomputable def kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat.{v} ℤ) :
@@ -83,9 +84,11 @@ noncomputable def kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat.{v} ℤ
       HopfAlgebra.points
         (R := ℤ)
         (H := CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantToralDefiningIdeal e h ρ M hM hnil b wt)) A :=
+          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
+            (fun j _ ↦ hnil j))) A :=
   ((CommHopfAlgCat.mapPointsFunctor
-    (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).app A).hom
+    (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩)).app A).hom
 
 /-- The intrinsic root-subgroup point map is precomposition by its factored coordinate map. -/
 @[simp]
@@ -94,7 +97,8 @@ theorem kostantRootSubgroupToralPoints_apply (i : I) (A : CommAlgCat.{v} ℤ)
       (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) A) :
     kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A q =
       (CommHopfAlgCat.mapPointsFunctor
-        (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).app A q :=
+        (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩)).app A q :=
   (rfl)
 
 /-- Including an intrinsic toral-closure root point into the ambient general linear group recovers
@@ -104,7 +108,8 @@ theorem quotientPointsHom_kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat
     (q : HopfAlgebra.points
       (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) A) :
     CommHopfAlgCat.quotientPointsHom (GeneralLinear.coordinateHopfAlgebra ℤ n)
-        (kostantToralDefiningIdeal e h ρ M hM hnil b wt) A
+        (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j)) A
         (kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A q) =
       (CommHopfAlgCat.mapPointsFunctor
         (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).app A q := by
@@ -119,9 +124,11 @@ theorem quotientPointsHom_kostantRootSubgroupToralPoints (i : I) (A : CommAlgCat
   -- underlying algebra homomorphism is definitionally `AlgHom.comp`.
   change q.ofConv
       (((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-        (kostantToralDefiningIdeal e h ρ M hM hnil b wt) ≫
-          kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom) x) = _
-  rw [mkQuotient_comp_kostantRootSubgroupToralCoordinateMap]
+        (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j)) ≫
+          kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt Set.univ
+            (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom) x) = _
+  rw [mkQuotient_comp_kostantRootSubgroupToralSubsystemCoordinateMap]
 
 /-- In general-linear coordinates, the intrinsic root point is the divided-power exponential
 matrix previously attached to the represented Kostant root subgroup.
@@ -135,7 +142,8 @@ theorem pointsMulEquiv_quotientPointsHom_kostantRootSubgroupToralPoints
       (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) (CommAlgCat.of ℤ A)) :
     GeneralLinear.pointsMulEquiv n
         (CommHopfAlgCat.quotientPointsHom (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantToralDefiningIdeal e h ρ M hM hnil b wt) (CommAlgCat.of ℤ A)
+          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
+            (fun j _ ↦ hnil j)) (CommAlgCat.of ℤ A)
           (kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i
             (CommAlgCat.of ℤ A) q)) =
       kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b q := by
@@ -151,7 +159,8 @@ noncomputable def kostantRootSubgroupToralParam (i : I) (A : CommAlgCat.{v} ℤ)
       HopfAlgebra.points
         (R := ℤ)
         (H := CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantToralDefiningIdeal e h ρ M hM hnil b wt)) A :=
+          (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
+            (fun j _ ↦ hnil j))) A :=
   (kostantRootSubgroupToralPoints e h ρ M hM hnil b wt i A).comp
     (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom
 
@@ -177,7 +186,8 @@ theorem mapPoints_kostantRootSubgroupToralPoints
         (HopfAlgebra.mapPoints φ q) := by
   rw [kostantRootSubgroupToralPoints_apply, kostantRootSubgroupToralPoints_apply]
   exact CommHopfAlgCat.mapPointsFunctor_naturality_apply
-    (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i) φ q
+    (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩) φ q
 
 /-- Base change sends the intrinsic root element with parameter `t` to the root element whose
 parameter is the image of `t`. -/
@@ -202,7 +212,8 @@ theorem mapPoints_iterateFrobeniusValueHom_kostantRootSubgroupToralParam
     (t : Multiplicative A) :
     HopfAlgebra.mapPoints (H := CommHopfAlgCat.quotient
         (GeneralLinear.coordinateHopfAlgebra ℤ n)
-        (kostantToralDefiningIdeal e h ρ M hM hnil b wt))
+        (kostantToralSubsystemDefiningIdeal e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j)))
         (iterateFrobeniusValueHom p m A)
         (kostantRootSubgroupToralParam e h ρ M hM hnil b wt i A t) =
       kostantRootSubgroupToralParam e h ρ M hM hnil b wt i A

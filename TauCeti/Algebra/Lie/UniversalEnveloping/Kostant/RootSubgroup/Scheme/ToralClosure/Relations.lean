@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Subsystem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Torus
 
 /-!
@@ -89,22 +89,30 @@ theorem kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
     (hv : Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A v) =
       (torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) *
         Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A u)) :
-    (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom) *
-        (u ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) =
-      (v ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) *
-        (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom) := by
-  let _ : Mono (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom :=
+    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j)).hom.hom) *
+        (u ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) =
+      (v ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
+        (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) *
+        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j)).hom.hom) := by
+  let _ : Mono (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j)).hom.hom :=
     Over.mono_of_mono_left _
   let f := IsMonHom.monoidHom
-    (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom
+    (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j)).hom.hom
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)))
   have hf : Function.Injective f := by
     intro p q hpq
-    exact (cancel_mono (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom).1 hpq
+    exact (cancel_mono (kostantToralSubsystemGroupSchemeι e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j)).hom.hom).1 hpq
   apply hf
   dsimp only [f]
   simp only [map_mul, IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
-    kostantWeightTorusToToral_comp_ι, kostantRootSubgroupToToral_comp_ι]
+    kostantWeightTorusToToralSubsystem_comp_ι,
+    kostantRootSubgroupToToralSubsystem_comp_ι]
   apply (GeneralLinear.schemePointsMulEquiv n A).injective
   simp only [map_mul]
   rw [schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix M b wt A,
@@ -138,14 +146,18 @@ theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToral
       (SplitTorus.groupScheme ℤ κ).X)
     (u : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (AdditiveGroup.groupScheme ℤ).X) :
-    (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom) *
-        (u ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) *
-        (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom)⁻¹ =
+    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j)).hom.hom) *
+        (u ≫ (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) *
+        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j)).hom.hom)⁻¹ =
       (AdditiveGroup.schemePointsMulEquiv A).symm
           (Multiplicative.ofAdd
             ((torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) *
               Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A u))) ≫
-        (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom := by
+        (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom := by
   rw [mul_inv_eq_iff_eq_mul]
   apply kostantWeightTorusToToral_mul_kostantRootSubgroupToToral
     e h ρ M hM b wt hwt hnil A hα s u
@@ -160,15 +172,19 @@ theorem kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ κ).X)
     (u : A) :
-    (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom) *
+    (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
+      (fun j _ ↦ hnil j)).hom.hom) *
         ((AdditiveGroup.groupSchemePointMulEquiv A)
             ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm (Multiplicative.ofAdd u)) ≫
-          (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) *
-        (s ≫ (kostantWeightTorusToToral e h ρ M hM hnil b wt).hom.hom)⁻¹ =
+          (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
+            (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom) *
+        (s ≫ (kostantWeightTorusToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j)).hom.hom)⁻¹ =
       (AdditiveGroup.schemePointsMulEquiv A).symm
           (Multiplicative.ofAdd
             ((torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s) α : A) * u)) ≫
-        (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom := by
+        (kostantRootSubgroupToToralSubsystem e h ρ M hM b wt Set.univ
+          (fun j _ ↦ hnil j) ⟨i, Set.mem_univ i⟩).hom.hom := by
   rw [← AdditiveGroup.schemePointsMulEquiv_symm_apply]
   simpa only [MulEquiv.apply_symm_apply, toAdd_ofAdd] using
     kostantWeightTorusToToral_conj_kostantRootSubgroupToToral

@@ -71,7 +71,9 @@ consumer is milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md`, whose untw
 is `Frob_q` on the points of a pinned Chevalley--Demazure group, and milestone L3, which sets
 `H_d = fixedSubgroup d.steinberg`. The Chevalley carrier those milestones use is the closed subgroup
 scheme of `GLₙ` over `ℤ` built by
-`TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme`, which is presented by a Hopf ideal, so
+the `Set.univ` specialization of
+`TauCeti.UniversalEnvelopingAlgebra.kostantToralSubsystemGroupScheme`, which is presented by a
+Hopf ideal, so
 it is an instance of the subgroup schemes treated here.
 
 ## References
