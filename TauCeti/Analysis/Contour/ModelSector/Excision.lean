@@ -19,15 +19,15 @@ radius `r` and opening angle `α`, whose two rays leave the corner at the angles
 
 Deleting the window `[-ε, ε]` about the corner and capping it with the arc of the circle of radius
 `ε` running from angle `φ + α` back to angle `φ` leaves a closed curve of winding number `0`
-(`TauCeti.Contour.windingNumber_exciseCrossing_modelSector`). Equivalently, the sector's entire
-index `α / 2π` is the local contribution of its crossing — the model case of the identification
-that Hungerbühler–Wasem Proposition 2.2 asserts for a general immersion, and hence an acceptance
-test for the surgery.
+(`TauCeti.Contour.windingNumber_eq_zero_exciseCrossing_modelSector`). Equivalently, the sector's
+entire index `α / 2π` is the local contribution of its crossing — the model case of the
+identification that Hungerbühler–Wasem Proposition 2.2 asserts for a general immersion, and hence
+an acceptance test for the surgery.
 
 ## Main results
 
-* `TauCeti.Contour.windingNumber_exciseCrossing_modelSector` — excising the corner of a model
-  sector leaves winding number `0`.
+* `TauCeti.Contour.windingNumber_eq_zero_exciseCrossing_modelSector` — excising the corner of a
+  model sector leaves winding number `0`.
 
 ## Provenance
 
@@ -53,8 +53,8 @@ number `0`.
 
 Equivalently, the sector's entire index `α / 2π` is the local contribution of its crossing, which is
 the model case of the identification that HW Proposition 2.2 asserts for a general immersion. -/
-theorem windingNumber_exciseCrossing_modelSector {z₀ : ℂ} {r ε φ α : ℝ} (hε : 0 < ε) (hεr : ε < r)
-    (hα : 0 ≤ α) :
+theorem windingNumber_eq_zero_exciseCrossing_modelSector {z₀ : ℂ} {r ε φ α : ℝ} (hε : 0 < ε)
+    (hεr : ε < r) (hα : 0 ≤ α) :
     windingNumber (exciseCrossing (modelSector z₀ r φ α) z₀ ε (-ε) ε (φ + α) φ)
       (-r) (r + α) z₀ = 0 := by
   have hr : 0 < r := hε.trans hεr
