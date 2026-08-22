@@ -289,7 +289,7 @@ form `∫_Ω ∇v · ∇u`. -/
 
 /-- The weak formulation of the Laplacian model `-Δ` is the classical one: `u ∈ H¹₀(Ω)` solves
 `-Δu = f` weakly exactly when `∫_Ω ∇v · ∇u = ∫_Ω f v` for every `v ∈ H¹₀(Ω)`. -/
-@[simp] theorem isWeakSolutionDirichlet_one_zero_zero_iff [DecidableEq ι]
+theorem isWeakSolutionDirichlet_one_zero_zero_iff [DecidableEq ι]
     (f : Lp ℝ 2 (mu.restrict Omega))
     (u : W1p0 mu Omega 2) :
     IsWeakSolutionDirichlet (fun _ => 1) 0 0 f u ↔
