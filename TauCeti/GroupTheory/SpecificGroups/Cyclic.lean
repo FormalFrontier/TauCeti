@@ -20,7 +20,6 @@ For `n ≠ 0`, this file gives the standard computable enumeration of
 ## Main results
 
 * `TauCeti.mem_cyclicElements`: the enumeration exhausts the group when `n ≠ 0`.
-* `TauCeti.natCard_multiplicative_zmod`: the group has order `n` when `n ≠ 0`.
 
 ## References
 
@@ -47,11 +46,5 @@ theorem mem_cyclicElements (n : ℕ) [NeZero n] (g : Multiplicative (ZMod n)) :
   exact List.mem_map_of_mem
     (f := fun i : ℕ => Multiplicative.ofAdd (i : ZMod n))
     (List.mem_range.mpr (ZMod.val_lt g.toAdd))
-
-/-- The finite cyclic group `Multiplicative (ZMod n)` has order `n` when `n` is nonzero. -/
-theorem natCard_multiplicative_zmod (n : ℕ) [NeZero n] :
-    Nat.card (Multiplicative (ZMod n)) = n := by
-  rw [Nat.card_eq_fintype_card]
-  exact (Fintype.card_congr Multiplicative.toAdd).trans (ZMod.card n)
 
 end TauCeti

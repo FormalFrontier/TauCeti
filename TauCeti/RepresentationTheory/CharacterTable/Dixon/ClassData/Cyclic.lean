@@ -18,8 +18,7 @@ each conjugacy class is a singleton.
 
 The order produced by `TauCeti.ClassData.ofList` is the order of the retained representatives in
 the input enumeration.  For `n = 2` the resulting representatives are `0, 1`, which in
-multiplicative notation are the identity and the nontrivial element.  The concrete `C₂` class sizes
-and structure constants below are kernel-checked acceptance tests of the general class data.
+multiplicative notation are the identity and the nontrivial element.
 
 ## Main definitions
 
@@ -30,9 +29,6 @@ and structure constants below are kernel-checked acceptance tests of the general
 * `TauCeti.numClasses_cyclicClassData`: a cyclic group of order `n` has `n` numbered classes.
 * `TauCeti.classFinset_cyclicClassData`: every numbered cyclic class is a singleton.
 * `TauCeti.structureConstant_cyclicClassData`: the structure constants are cyclic convolution.
-* `TauCeti.card_classFinset_cyclicClassData_two`: both classes are singletons.
-* `TauCeti.structureConstantTable_cyclicClassData_two`: the complete multiplication table of the
-  two class sums.
 
 ## References
 
@@ -107,15 +103,17 @@ theorem card_classFinset_cyclicClassData (n : ℕ) [NeZero n]
 theorem card_classes_cyclicClassData (n : ℕ) [NeZero n] :
     (cyclicClassData n).classes.map Finset.card = List.replicate n 1 := by
   rw [ClassData.classes, List.map_map]
-  change (List.finRange (cyclicClassData n).numClasses).map
-    (fun i => ((cyclicClassData n).classFinset i).card) = List.replicate n 1
-  simp only [card_classFinset_cyclicClassData]
-  change List.map (Function.const _ 1) (List.finRange (cyclicClassData n).numClasses) =
-    List.replicate n 1
-  rw [List.map_const, List.length_finRange, numClasses_cyclicClassData]
+  calc
+    _ = (List.finRange (cyclicClassData n).numClasses).map (Function.const _ 1) := by
+      apply List.map_congr_left
+      intro i _
+      exact card_classFinset_cyclicClassData n i
+    _ = List.replicate n 1 := by
+      rw [List.map_const, List.length_finRange, numClasses_cyclicClassData]
 
 /-- The cyclic class-sum structure constant is one exactly when the indices add to the output
 index, and zero otherwise. -/
+@[simp]
 theorem structureConstant_cyclicClassData (n : ℕ) [NeZero n]
     (i j k : Fin (cyclicClassData n).numClasses) :
     (cyclicClassData n).structureConstant i j k =
@@ -147,21 +145,5 @@ theorem structureConstant_cyclicClassData (n : ℕ) [NeZero n]
         Multiplicative.ofAdd (k : ZMod n)) = j
   · simp only [h, ↓reduceIte, Finset.card_singleton, hindex.mp h]
   · simp only [h, ↓reduceIte, Finset.card_empty, mt hindex.mpr h]
-
-/-- **Both conjugacy classes of the cyclic group of order two are singletons.** The numbered
-representatives are the identity followed by the nontrivial element. -/
-theorem card_classFinset_cyclicClassData_two :
-    (cyclicClassData 2).classes.map Finset.card = [1, 1] := by
-  simpa using card_classes_cyclicClassData 2
-
-/-- **The class-sum structure constants of the cyclic group of order two.** In the numbering
-above, the identity class is first and the nontrivial class squares to it. -/
-theorem structureConstantTable_cyclicClassData_two :
-    (cyclicClassData 2).structureConstantTable =
-      [[[1, 0], [0, 1]],
-       [[0, 1], [1, 0]]] := by
-  rw [ClassData.structureConstantTable]
-  simp only [structureConstant_cyclicClassData]
-  decide
 
 end TauCeti

@@ -5,11 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.SpecificGroups.Cyclic
-public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Cyclic
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Prime
 
 /-!
 # The rational Dixon computation for the cyclic group of order two
@@ -223,15 +220,14 @@ theorem cyclicGroupTwoCharacterDegrees_eq_one (i : CyclicGroupTwoClassIndex) :
 group of order two.** -/
 def cyclicGroupTwoCharacterTable :
     Matrix CyclicGroupTwoClassIndex CyclicGroupTwoClassIndex ℤ :=
-  !![1,  1;
-     1, -1]
+  cyclicGroupTwoCentralCharacterTable
 
 /-- The entries of the ordinary integral character table. -/
 theorem cyclicGroupTwoCharacterTable_apply (i j : CyclicGroupTwoClassIndex) :
     cyclicGroupTwoCharacterTable i j =
       !![1,  1;
          1, -1] i j := by
-  rfl
+  exact cyclicGroupTwoCentralCharacterTable_apply i j
 
 /-- The displayed ordinary and central-character tables agree entrywise for `C₂`. -/
 @[simp]
@@ -252,13 +248,13 @@ theorem cyclicGroupTwo_degree_mul_centralCharacterTable
 theorem cyclicGroupTwo_characterDegrees_pos_and_dvd (i : CyclicGroupTwoClassIndex) :
     0 < cyclicGroupTwoCharacterDegrees i ∧
       cyclicGroupTwoCharacterDegrees i ∣ Nat.card (Multiplicative (ZMod 2)) := by
-  rw [natCard_multiplicative_zmod]
+  simp only [Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
   fin_cases i <;> decide
 
 /-- The squares of the displayed degrees sum to the group order. -/
 theorem cyclicGroupTwo_sum_characterDegrees_sq :
     ∑ i, cyclicGroupTwoCharacterDegrees i ^ 2 = Nat.card (Multiplicative (ZMod 2)) := by
-  rw [natCard_multiplicative_zmod]
+  simp only [Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
   decide
 
 /-- The displayed ordinary character rows satisfy the class-size weighted orthogonality
@@ -267,7 +263,7 @@ theorem cyclicGroupTwo_characterTable_orthogonal (i j : CyclicGroupTwoClassIndex
     ∑ k, ((cyclicClassData 2).classFinset k).card *
         cyclicGroupTwoCharacterTable i k * cyclicGroupTwoCharacterTable j k =
       if i = j then Nat.card (Multiplicative (ZMod 2)) else 0 := by
-  rw [natCard_multiplicative_zmod]
+  simp only [Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
   fin_cases i <;> fin_cases j <;> decide
 
 end TauCeti
