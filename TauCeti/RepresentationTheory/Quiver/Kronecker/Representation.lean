@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.Quiver.Kronecker.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.Basic
+public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
 /-!
 # Representations of the generalized Kronecker quiver
@@ -14,8 +15,9 @@ public import TauCeti.RepresentationTheory.Quiver.Representation.Basic
 A representation of the generalized Kronecker quiver is a pair of vector spaces together with one
 linear map between them for each arrow: no two arrows compose, so the only paths are the identities
 and the arrows themselves. This file builds such a representation from that datum, as
-`TauCeti.kroneckerRep`, computes its two vertex spaces and the action of each arrow, and records
-that a morphism between two representations of the quiver is its two components.
+`TauCeti.kroneckerRep`, computes its two vertex spaces and the action of each arrow, and identifies
+the morphisms between two such representations with the pairs of linear maps making a commuting
+square along every arrow.
 
 The representation type of the quiver -- infinite as soon as there are two arrows -- is
 `TauCeti.RepresentationTheory.Quiver.Kronecker.FiniteRepType`, which builds its Jordan blocks with
@@ -25,12 +27,18 @@ the definition below.
 
 * `TauCeti.kroneckerRep`: the representation of the generalized Kronecker quiver with prescribed
   vertex spaces and a prescribed linear map along each arrow.
+* `TauCeti.kroneckerRepHom`: the morphism between two such representations attached to a pair of
+  linear maps making a commuting square along every arrow.
 
 ## Main results
 
 * `TauCeti.kroneckerRep_map_arrowPath`: the arrow indexed by `a` acts by the prescribed map.
 * `TauCeti.kronecker_hom_ext`: a morphism of representations of the generalized Kronecker quiver is
   determined by its two components.
+* `TauCeti.kroneckerRepHom_eta`: conversely, every morphism between two representations built by
+  `TauCeti.kroneckerRep` is the one attached to its two components. Together with
+  `TauCeti.kronecker_hom_ext` this is the promised identification, mirroring the pair
+  `TauCeti.oneLoopRepHom_oneLoopRepScalar` / `TauCeti.oneLoopRep_hom_ext` of the loop quiver.
 
 ## Implementation notes
 
@@ -78,6 +86,8 @@ def kroneckerRep (M N : ModuleCat.{t} k) (f : A → (M ⟶ N)) :
         | .tgt, .src, e => isEmptyElim e
         | .tgt, .tgt, e => isEmptyElim e }
 
+section Rep
+
 variable (M N : ModuleCat.{t} k) (f : A → (M ⟶ N))
 
 @[simp]
@@ -98,6 +108,8 @@ theorem kroneckerRep_map_arrowPath (a : A) :
   exact (Paths.lift_toPath _ (Quiver.Kronecker.arrow a)).trans
     (congrArg f (Quiver.Kronecker.arrow_def a))
 
+end Rep
+
 /-- **A morphism of representations of the generalized Kronecker quiver is determined by its two
 components.** The quiver has two vertices, so a natural transformation is a pair of linear maps. -/
 theorem kronecker_hom_ext {ρ σ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)} {e e' : ρ ⟶ σ}
@@ -109,5 +121,61 @@ theorem kronecker_hom_ext {ρ σ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)
   cases w
   · exact hsrc
   · exact htgt
+
+section Hom
+
+variable {M N M' N' : ModuleCat.{t} k} {f : A → (M ⟶ N)} {f' : A → (M' ⟶ N')}
+
+/-- **The morphism of representations of the generalized Kronecker quiver attached to a commuting
+square along every arrow**: a linear map at each of the two vertices, intertwining the two actions
+of each arrow. Together with `TauCeti.kronecker_hom_ext` and `TauCeti.kroneckerRepHom_eta` this
+identifies the morphisms `kroneckerRep k M N f ⟶ kroneckerRep k M' N' f'` with such pairs. -/
+def kroneckerRepHom (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
+    kroneckerRep k M N f ⟶ kroneckerRep k M' N' f' :=
+  Paths.liftNatTrans
+    (fun v ↦ match v with
+      | Quiver.Kronecker.src => g
+      | Quiver.Kronecker.tgt => h)
+    fun {a b} e ↦ match a, b, e with
+      | .src, .tgt, e => by
+          have hl : (kroneckerRep k M N f).map (Quiver.Hom.toPath e) = f e :=
+            Paths.lift_toPath _ e
+          have hr : (kroneckerRep k M' N' f').map (Quiver.Hom.toPath e) = f' e :=
+            Paths.lift_toPath _ e
+          rw [hl, hr]
+          exact w e
+      | .src, .src, e => isEmptyElim e
+      | .tgt, .src, e => isEmptyElim e
+      | .tgt, .tgt, e => isEmptyElim e
+
+@[simp]
+theorem kroneckerRepHom_app_src (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
+    (kroneckerRepHom g h w).app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) = g :=
+  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
+  -- would force `kroneckerRepHom` to be `@[expose]`.
+  (rfl)
+
+@[simp]
+theorem kroneckerRepHom_app_tgt (g : M ⟶ M') (h : N ⟶ N') (w : ∀ a, f a ≫ h = g ≫ f' a) :
+    (kroneckerRepHom g h w).app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) = h := (rfl)
+
+/-- **The two components of a morphism make a commuting square along every arrow**, by naturality
+along the path of that arrow. -/
+theorem kroneckerRep_hom_naturality (e : kroneckerRep k M N f ⟶ kroneckerRep k M' N' f') (a : A) :
+    f a ≫ e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) =
+      e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) ≫ f' a := by
+  have hnat := e.naturality (Quiver.Kronecker.arrowPath a)
+  rwa [kroneckerRep_map_arrowPath, kroneckerRep_map_arrowPath] at hnat
+
+/-- **Every morphism between representations of the generalized Kronecker quiver is the one
+attached to its two components.** This is the converse of `TauCeti.kronecker_hom_ext`: the two
+together identify such morphisms with the commuting squares. -/
+theorem kroneckerRepHom_eta (e : kroneckerRep k M N f ⟶ kroneckerRep k M' N' f') :
+    kroneckerRepHom (e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
+      (e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
+      (kroneckerRep_hom_naturality e) = e :=
+  kronecker_hom_ext (kroneckerRepHom_app_src _ _ _) (kroneckerRepHom_app_tgt _ _ _)
+
+end Hom
 
 end TauCeti
