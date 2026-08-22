@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Weights.Borel
+public import TauCeti.Algebra.Lie.Weights.Eigenvector
 public import TauCeti.Algebra.Lie.Weights.Integrality
 
 public section
@@ -53,8 +54,6 @@ combination of the simple coroots.
   weight.
 * `TauCeti.IsHighestWeightVector.map` and `TauCeti.IsHighestWeightVector.congr`: morphisms with
   nonzero image, and in particular equivalences, preserve highest weight vectors and their weights.
-* `TauCeti.mem_genWeightSpace_of_forall_lie_eq_smul`: a simultaneous eigenvector of `H` lies in the
-  generalized weight space of its eigenvalue.
 * `TauCeti.IsHighestWeightVector.mem_genWeightSpace` and
   `TauCeti.IsHighestWeightVector.weight`: a highest weight vector really does exhibit `lam` as a
   weight of `M`, so the vocabulary is not vacuous.
@@ -225,17 +224,6 @@ theorem isHighestWeightVector_iff_forall_rootSpace {lam : Dual K H} {v : M} :
           ∀ x ∈ rootSpace H (α : H → K), ⁅x, v⁆ = 0 :=
   ⟨fun hv => ⟨hv.ne_zero, hv.lie_eq_smul, fun _ hα _ hx => hv.lie_eq_zero_of_mem_rootSpace hα hx⟩,
     fun ⟨hv0, hcartan, hpos⟩ => isHighestWeightVector_of_forall_rootSpace hv0 hcartan hpos⟩
-
-/-! ### Eigenvectors of the Cartan subalgebra -/
-
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [IsTriangularizable K H L] in
-/-- An eigenvector for the whole Cartan subalgebra lies in the generalized weight space of its
-eigenvalue: an honest simultaneous eigenvector is a generalized one, at nilpotency index one. -/
-theorem mem_genWeightSpace_of_forall_lie_eq_smul {chi : H → K} {v : M}
-    (hv : ∀ x : H, ⁅(x : L), v⁆ = chi x • v) : v ∈ genWeightSpace M chi :=
-  weightSpace_le_genWeightSpace (M := M) chi <| (mem_weightSpace chi v).mpr fun x => by
-    rw [LieSubalgebra.coe_bracket_of_module]
-    exact hv x
 
 /-! ### The weight exhibited by a highest weight vector -/
 

@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Maximal
 public import TauCeti.Algebra.Lie.Submodule.Atom
+public import TauCeti.Algebra.Lie.Weights.Eigenvector
 
 public section
 
@@ -26,10 +27,12 @@ of weight `lam - (n + 1) αᵢ`, as soon as it is nonzero.  Consequently it *is*
 irreducible: an irreducible module has highest weight vectors of only one weight.
 
 The relation is the mechanism by which dominance makes a highest weight module small.  In the Verma
-module `M(lam)` the vector `w` is nonzero, and the submodule it generates is the one that has to be
-divided out; in the irreducible quotient `L(lam)` it vanishes.  This relation on the highest-weight
-generator is the first step toward proving local nilpotence along every simple root.  The vanishing
-is proved here for every irreducible highest weight module, which is what `L(lam)` will be.
+module `M(lam)` the vector `w` is nonzero, for a nonzero lowering vector `fᵢ`, and the submodule it
+generates is then a proper submodule, hence one contained in the maximal submodule that the
+irreducible quotient `L(lam)` divides out; in `L(lam)` the vector itself vanishes.  This relation
+on the highest-weight generator is the first step toward proving local nilpotence along every
+simple root.  The vanishing is proved here for every irreducible highest weight module, which is
+what `L(lam)` will be.
 
 ## The argument
 
@@ -51,9 +54,6 @@ Three facts have to be checked about `w`, and they use different parts of the th
 
 ## Main results
 
-* `TauCeti.lie_pow_toEnd_eq_smul`: applying an adjoint eigenvector of weight `psi` to an
-  eigenvector of weight `chi`, `k` times, gives an eigenvector of weight `chi + k psi`.
-* `TauCeti.lie_pow_toEnd_eq_smul_of_mem_rootSpace`: the specialization to a root vector.
 * `TauCeti.isHighestWeightVector_pow_toEnd_of_ne_zero`: **the integrability relation**, that
   `fᵢ^{n + 1} v` is a highest weight vector of weight `lam - (n + 1) αᵢ` when it is nonzero.
 * `TauCeti.pow_toEnd_mem_maximalSubmodule_of_isHighestWeightVector`: it lies in the maximal
@@ -83,43 +83,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   [IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-
-/-! ### Lowering an eigenvector -/
-
-/-- **Applying an adjoint eigenvector shifts the weight.** If `H` acts on `v` through `chi` and
-`f` is a common adjoint eigenvector of weight `psi`, then `H` acts on `fᵏ v` through
-`chi + k psi`.
-
-Each application of `f` costs one `psi` by the Leibniz rule, and the statement is the induction on
-`k` that accumulates the cost. The vector `fᵏ v` is allowed to be zero, when the statement is
-vacuous. -/
-theorem lie_pow_toEnd_eq_smul {R : Type u} {L' : Type v} [CommRing R] [LieRing L']
-    [LieAlgebra R L'] {H' : LieSubalgebra R L'} {M' : Type w} [AddCommGroup M'] [Module R M']
-    [LieRingModule L' M'] [LieModule R L' M'] {chi psi : H' → R} {v' : M'}
-    (hv : ∀ x : H', ⁅(x : L'), v'⁆ = chi x • v') {f : L'}
-    (hf : ∀ x : H', ⁅(x : L'), f⁆ = psi x • f) (k : ℕ) (x : H') :
-    ⁅(x : L'), ((toEnd R L' M' f) ^ k) v'⁆ =
-      (chi x + k * psi x) • ((toEnd R L' M' f) ^ k) v' := by
-  induction k with
-  | zero => simpa using hv x
-  | succ k ih =>
-      have hstep : ∀ m : M', ((toEnd R L' M' f) ^ (k + 1)) m =
-          ⁅f, ((toEnd R L' M' f) ^ k) m⁆ := by
-        intro m
-        rw [pow_succ', Module.End.mul_apply, toEnd_apply_apply]
-      rw [hstep, leibniz_lie, hf, ih, smul_lie, lie_smul, ← add_smul]
-      congr 1
-      push_cast
-      ring
-
-/-- **Lowering by a root vector shifts the weight.** If `H` acts on `v` through the linear form
-`chi` and `f` lies in the root space of `psi`, then `H` acts on `fᵏ v` through `chi + k psi`. -/
-theorem lie_pow_toEnd_eq_smul_of_mem_rootSpace {chi psi : H → K} {v : M}
-    (hv : ∀ x : H, ⁅(x : L), v⁆ = chi x • v) {f : L} (hf : f ∈ rootSpace H psi) (k : ℕ) (x : H) :
-    ⁅(x : L), ((toEnd K L M f) ^ k) v⁆ = (chi x + k * psi x) • ((toEnd K L M f) ^ k) v := by
-  apply lie_pow_toEnd_eq_smul hv (fun y => ?_) k x
-  rw [← LieSubalgebra.coe_bracket_of_module]
-  exact IsKilling.lie_eq_smul_of_mem_rootSpace hf y
 
 /-! ### The integrability relation -/
 
@@ -219,13 +182,10 @@ theorem isHighestWeightVector_pow_toEnd_of_ne_zero (hv : IsHighestWeightVector b
 
 /-- A weight is not obtained from itself by subtracting a positive multiple of a root. -/
 private theorem ne_sub_nsmul_root (lam : Dual K H) (i : H.root) (n : ℕ) :
-    lam ≠ lam - (n + 1) • (IsKilling.rootSystem H).root i := by
-  intro heq
-  have hnsmul : (n + 1) • (IsKilling.rootSystem H).root i = 0 := sub_eq_self.mp heq.symm
-  have hcast : ((n + 1 : ℕ) : K) • (IsKilling.rootSystem H).root i = 0 := by
-    rwa [Nat.cast_smul_eq_nsmul]
-  have hne : ((n + 1 : ℕ) : K) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.succ_ne_zero n)
-  exact (IsKilling.rootSystem H).ne_zero i ((smul_eq_zero.mp hcast).resolve_left hne)
+    lam ≠ lam - (n + 1) • (IsKilling.rootSystem H).root i := fun heq => by
+  have : IsAddTorsionFree (Dual K H) := IsAddTorsionFree.of_isTorsionFree K _
+  exact (IsKilling.rootSystem H).ne_zero i
+    ((nsmul_eq_zero_iff_right n.succ_ne_zero).mp (sub_eq_self.mp heq.symm))
 
 /-- **The lowered vector dies in the irreducible quotient.** In a highest weight module of weight
 `lam` generated by `v`, the vector `fᵢ^{n + 1} v` lies in the maximal submodule
