@@ -185,22 +185,13 @@ theorem mk_mem_ker_baseChange_iff (A : CSA.{u, u} K) :
 variable {A : Type u} [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
   [FiniteDimensional K A]
 
-/-- **An algebra split by `L` has trivial class over `L`.** -/
-theorem baseChange_mk_eq_one_of_isSplittingField (h : Algebra.IsSplittingField K A L) :
-    baseChange K L (mk (CSA.of K A)) = 1 :=
-  mk_eq_one_of_isSplittingField ((Algebra.isSplittingField_baseChange_self_iff K A L).2 h)
-
-/-- **An algebra split by `L` has its class in the kernel of base change to `L`.** -/
-theorem mk_mem_ker_baseChange_of_isSplittingField (h : Algebra.IsSplittingField K A L) :
-    mk (CSA.of K A) ∈ (baseChange K L).ker :=
-  MonoidHom.mem_ker.2 (baseChange_mk_eq_one_of_isSplittingField K L h)
-
 /-- **The kernel of Brauer-group base change consists exactly of the classes split by the
 extension field.**
 
 The forward implication is the substantive one: membership says that the scalar extension
 `L ⊗[K] A` is Brauer trivial, and Wedderburn uniqueness identifies Brauer triviality with being a
 matrix algebra over `L`. -/
+@[simp]
 theorem mk_mem_ker_baseChange_iff_isSplittingField :
     mk (CSA.of K A) ∈ (baseChange K L).ker ↔ Algebra.IsSplittingField K A L := by
   rw [mk_mem_ker_baseChange_iff, isBrauerTrivial_iff_isSplittingField,
