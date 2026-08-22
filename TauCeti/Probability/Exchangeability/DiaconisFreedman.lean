@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.DiracProba
-public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Marginal
 public import TauCeti.Probability.Exchangeability.MixedMarkovChain
 public import TauCeti.Probability.Exchangeability.RowExchangeable
 public import TauCeti.Probability.Exchangeability.SuccessorArray
@@ -75,8 +74,6 @@ noncomputable section
 
 open MeasureTheory
 
-open TauCeti.MeasureTheory
-
 namespace TauCeti
 
 namespace Probability
@@ -119,12 +116,17 @@ theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
     (hX : ∀ i, Measurable (X i)) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀)
     (hrow : RowExchangeable μ (successorProcess X))
     (hlam : MixedIIDWith μ (arrayColumn (successorProcess X)) lam) :
-    MixedMarkovChainWith μ X (fun _ => diracProba a₀) fun ω a => coordMarginal (lam ω) a := by
+    MixedMarkovChainWith μ X (fun _ => diracProba a₀) fun ω a =>
+      (lam ω).map (measurable_pi_apply a).aemeasurable := by
   classical
   have hSA : ∀ p, AEMeasurable (successorProcess X p) μ := fun p =>
     (measurable_successorProcess hX p).aemeasurable
+  -- Taking the `a`-th row marginal is measurable in the Giry structure.
+  have hmarg : ∀ a : α, Measurable fun P : ProbabilityMeasure (α → α) =>
+      P.map (measurable_pi_apply a).aemeasurable := fun a =>
+    ((Measure.measurable_map _ (measurable_pi_apply a)).comp measurable_subtype_coe).subtype_mk
   refine MixedMarkovChainWith.intro (fun i => (hX i).aemeasurable) measurable_const
-    (fun a => (measurable_coordMarginal a).comp hlam.measurable_mixingRepresentative) ?_
+    (fun a => (hmarg a).comp hlam.measurable_mixingRepresentative) ?_
   intro n w
   -- Extend the finite path to a reference sequence, so the combinatorial lemmas apply.
   obtain ⟨w', hfin⟩ : ∃ w' : ℕ → α, ∀ (j : ℕ) (hj : j < n + 1), w' j = w ⟨j, hj⟩ := by
@@ -182,8 +184,9 @@ theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
     refine lintegral_congr fun ω => ?_
     rw [hdirac, one_mul]
     refine Finset.prod_congr rfl fun t _ => ?_
-    rw [coordMarginal_apply (lam ω) (w t.castSucc) (measurableSet_singleton (w t.succ)),
-      ← hwc t, ← hws t, visitCell_def]
+    rw [ProbabilityMeasure.map_apply' (lam ω) (measurable_pi_apply (w t.castSucc)).aemeasurable
+      (measurableSet_singleton (w t.succ)), ← hwc t, ← hws t, visitCell_def]
+    rfl
   · -- A path with the wrong initial state is null, and so is its Dirac weight.
     have hnull : μ {ω | ∀ j ≤ n, X j ω = w' j} = 0 := by
       refine measure_mono_null ?_ (ae_iff.1 h0)
