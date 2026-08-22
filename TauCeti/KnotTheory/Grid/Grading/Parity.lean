@@ -44,17 +44,18 @@ the two marking permutations, hence the sign of the component permutation `𝕏�
   the number of link components minus one.
 * `TauCeti.GridDiagram.even_alexanderTwoℤ_iff`: the Alexander grading is an integer exactly when
   the number of link components is odd.
-* `TauCeti.GridDiagram.alexander_exists_int_iff`: the direct integrality characterization.
-* `TauCeti.GridDiagram.alexander_exists_int`: the Alexander grading of a knot grid is an integer.
+* `TauCeti.GridDiagram.exists_int_alexander_iff`: the direct integrality characterization.
+* `TauCeti.GridDiagram.exists_int_alexander_of_isKnot`: the Alexander grading of a knot grid is
+  an integer.
 
 ## References
 
-This completes `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.2, "Gradings. The
-`J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`; grading-change formulas across a
-rectangle." Integrality of `A` on a knot diagram, and the half-integer shift for an even number
-of components, are from Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter
-4.3. The Lean proof is adapted to current `main` from the earlier Tau Ceti split-branch commit
-`05c2722248`.
+This completes the integer-valuedness and parity portion of
+`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.2; the rectangle marking-count
+formulas are separate. Integrality of `A` on a knot diagram, and the half-integer shift for an
+even number of components, are from Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
+Chapter 4.3. The Lean proof is adapted to current `main` from the earlier Tau Ceti split-branch
+commit `05c2722248`.
 -/
 
 public section
@@ -137,7 +138,7 @@ private theorem card_lt_split (x y : GridState n) (c : Fin n) :
   rw [← e₁, ← e₂, Finset.card_filter_add_card_filter_not, hIio, Fin.card_Iio]
 
 /-- The marking-pairing numerator of two grid states differs from `n²` by an even amount. -/
-theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
+private theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
     GridPoint.JNumCenter x.pointSet y.pointSet
         + 2 * ∑ c : Fin n,
           (Finset.univ.filter fun d : Fin n => d < c ∧ x c ≤ y d).card =
@@ -285,7 +286,7 @@ theorem even_alexanderTwoℤ_iff (x : GridState n) :
 /-- The Alexander grading of a state is an integer exactly when the diagram has an odd number of
 link components. For an even number of components, every Alexander grading is a strict
 half-integer. -/
-theorem alexander_exists_int_iff (x : GridState n) :
+theorem exists_int_alexander_iff (x : GridState n) :
     (∃ a : ℤ, G.alexander x = (a : ℚ)) ↔ Odd G.componentCount := by
   rw [← G.even_alexanderTwoℤ_iff x]
   constructor
@@ -316,9 +317,9 @@ theorem even_alexanderTwoℤ_of_isKnot (hG : G.IsKnot) (x : GridState n) :
   exact odd_one
 
 /-- **The Alexander grading of a knot grid diagram is an integer.** -/
-theorem alexander_exists_int (hG : G.IsKnot) (x : GridState n) :
+theorem exists_int_alexander_of_isKnot (hG : G.IsKnot) (x : GridState n) :
     ∃ a : ℤ, G.alexander x = (a : ℚ) := by
-  rw [G.alexander_exists_int_iff]
+  rw [G.exists_int_alexander_iff]
   rw [G.isKnot_def.mp hG]
   exact odd_one
 
