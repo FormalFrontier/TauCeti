@@ -69,28 +69,24 @@ variable {α : Type*} {x : ℕ → α} {a : α} {k m : ℕ}
 the `k`-th and `(k + 1)`-st visits to `a`.
 
 If either visit does not exist, `visitTime` uses its documented junk value and this interval may
-be empty.
-
-Exposed so that `TauCeti.excursion_def` is a `rfl` proof of an exported equation. -/
-@[expose] def excursion (x : ℕ → α) (a : α) (k : ℕ) : List α :=
+be empty. -/
+def excursion (x : ℕ → α) (a : α) (k : ℕ) : List α :=
   (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x
 
 /-- The defining equation of an excursion. -/
 theorem excursion_def (x : ℕ → α) (a : α) (k : ℕ) :
     excursion x a k =
       (List.Ico (visitTime x a k + 1) (visitTime x a (k + 1))).map x :=
-  rfl
+  (rfl)
 
-/-- The list of the first `m` excursions of `x` from `a`.
-
-Exposed so that `TauCeti.excursionPrefix_def` is a `rfl` proof of an exported equation. -/
-@[expose] def excursionPrefix (x : ℕ → α) (a : α) (m : ℕ) : List (List α) :=
+/-- The list of the first `m` excursions of `x` from `a`. -/
+def excursionPrefix (x : ℕ → α) (a : α) (m : ℕ) : List (List α) :=
   (List.range m).map (excursion x a)
 
 /-- The defining equation of a finite excursion prefix. -/
 theorem excursionPrefix_def (x : ℕ → α) (a : α) (m : ℕ) :
     excursionPrefix x a m = (List.range m).map (excursion x a) :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem excursionPrefix_zero (x : ℕ → α) (a : α) : excursionPrefix x a 0 = [] := by
