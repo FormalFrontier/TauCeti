@@ -58,6 +58,14 @@ The hypothesis relating the two plans is stated as `π.snd = σ.fst` rather than
 predicate: gluing needs neither of the two outer marginals, only the agreement of the middle one,
 and stating it this way keeps the theorems usable by any packaging of couplings built on
 `MeasureTheory.Measure.fst`/`MeasureTheory.Measure.snd`.
+
+## References
+
+* C. Villani, *Topics in Optimal Transportation*, Graduate Studies in Mathematics 58, 2003,
+  Lemma 7.6 ("Gluing lemma"), and *Optimal Transport: Old and New*, Grundlehren 338, 2009,
+  Chapter 1. Both state it for three Polish probability spaces; the versions here ask for a
+  standard Borel structure on one outer space only, nothing on the middle space `Y`, and no
+  normalisation of the plans.
 -/
 
 public section

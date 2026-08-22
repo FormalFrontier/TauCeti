@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Cartan
 import Mathlib.Tactic.NoncommRing
 import Mathlib.Tactic.Push
+import TauCeti.Data.Fin.Basic
 
 public section
 
@@ -91,30 +92,41 @@ lemma chainBEntry_eq_cartanMatrix_B {n : ℕ} (i j : Fin n) :
     chainBEntry (n - 1) i j = CartanMatrix.B n i j := by
   simp only [CartanMatrix.B, chainBEntry_def, Matrix.of_apply, Fin.ext_iff]
 
+/-- **A single entry of a chain of type `B`, against a weight, split into its three positions.**
+The entry at `(a, s)` contributes only when `s` is `a`, its predecessor, or its successor, and the
+successor contribution is doubled at the short end.
+
+The identity is pointwise in `s`: it mentions neither the summation range of the row it is used in
+nor any bound on `a`. The last position `L` does appear, in the doubled coefficient at the short
+end. -/
+private theorem chainBEntry_mul_eq_add_add {R : Type*} [NonAssocRing R] (L a s : ℕ) (g : ℕ → R) :
+    ((chainBEntry L a s : ℤ) : R) * g s
+      = (if s = a then 2 * g a else 0) + (if s + 1 = a then -g s else 0)
+        + (if s = a + 1 then -((if a + 1 = L then 2 else 1) * g (a + 1)) else 0) := by
+  -- the four cases `s = a`, `s + 1 = a`, `s = a + 1` and otherwise each pin the entry
+  rcases eq_or_ne s a with rfl | h1
+  · rw [chainBEntry_self]
+    split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
+  rcases eq_or_ne (s + 1) a with rfl | h2
+  · rw [chainBEntry_succ_left]
+    split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
+  rcases eq_or_ne s (a + 1) with rfl | h3
+  · rw [chainBEntry_succ_right]
+    split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
+  · rw [chainBEntry_eq_zero (Ne.symm h1) (fun h ↦ h3 h.symm) h2]
+    split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
+
 /-- **A row of a chain of type `B`, against an arbitrary weighting of its positions.** The row `a`
 collects `2 g a`, the weight of the position before it - absent at the head of the chain - and the
 weight of the position after it, doubled when that position is the short end and absent when the row
 is the short end itself. Only ring operations and integer casts are used. -/
-theorem sum_range_chainBEntry_mul {R : Type*} [Ring R] {L m a : ℕ} (ha : a < m) (g : ℕ → R) :
+theorem sum_range_chainBEntry_mul {R : Type*} [NonAssocRing R] {L m a : ℕ} (ha : a < m)
+    (g : ℕ → R) :
     ∑ s ∈ Finset.range m, (chainBEntry L a s : R) * g s
       = 2 * g a - (if a = 0 then 0 else g (a - 1))
         - (if a + 1 = m then 0 else (if a + 1 = L then 2 else 1) * g (a + 1)) := by
-  have key : ∀ s ∈ Finset.range m, ((chainBEntry L a s : ℤ) : R) * g s
-      = (if s = a then 2 * g a else 0) + (if s + 1 = a then -g s else 0)
-        + (if s = a + 1 then -((if a + 1 = L then 2 else 1) * g (a + 1)) else 0) := by
-    intro s _
-    rcases eq_or_ne s a with rfl | h1
-    · rw [chainBEntry_self]
-      split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
-    rcases eq_or_ne (s + 1) a with rfl | h2
-    · rw [chainBEntry_succ_left]
-      split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
-    rcases eq_or_ne s (a + 1) with rfl | h3
-    · rw [chainBEntry_succ_right]
-      split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
-    · rw [chainBEntry_eq_zero (Ne.symm h1) (fun h ↦ h3 h.symm) h2]
-      split_ifs <;> first | (exfalso; omega) | (push_cast; noncomm_ring)
-  rw [Finset.sum_congr rfl key, Finset.sum_add_distrib, Finset.sum_add_distrib]
+  rw [Finset.sum_congr rfl (fun s _ ↦ chainBEntry_mul_eq_add_add L a s g),
+    Finset.sum_add_distrib, Finset.sum_add_distrib]
   have h1 : ∑ s ∈ Finset.range m, (if s = a then 2 * g a else 0) = 2 * g a := by
     rw [Finset.sum_ite_eq' (Finset.range m) a fun _ ↦ 2 * g a]
     simp [Finset.mem_range, ha]
@@ -128,16 +140,9 @@ theorem sum_range_chainBEntry_mul {R : Type*} [Ring R] {L m a : ℕ} (ha : a < m
     · rw [ite_eq_left (Finset.mem_range.2 (by omega)), ite_eq_right hm]
   have h2 : ∑ s ∈ Finset.range m, (if s + 1 = a then -g s else 0)
       = -(if a = 0 then 0 else g (a - 1)) := by
-    match a with
-    | 0 => simp
-    | k + 1 =>
-      have hcongr : ∀ s ∈ Finset.range m, (if s + 1 = k + 1 then -g s else 0)
-          = (if s = k then -g k else 0) := by
-        intro s _
-        by_cases h : s = k <;> simp [h]
-      rw [Finset.sum_congr rfl hcongr, Finset.sum_ite_eq' (Finset.range m) k fun _ ↦ -g k,
-        ite_eq_left (Finset.mem_range.2 (by omega)), ite_eq_right (Nat.succ_ne_zero k)]
-      norm_num
+    rw [← Fin.sum_univ_eq_sum_range]
+    have hcond : (a - 1 < m ∧ 1 ≤ a) ↔ a ≠ 0 := by omega
+    simpa [eq_comm, hcond, neg_ite] using sum_ite_val_add (n := m) (fun i : Fin m ↦ -g i) a 1
   rw [h1, h2, h3]
   noncomm_ring
 

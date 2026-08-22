@@ -91,7 +91,7 @@ noncomputable def diagonalTorusPoints :
     WithConv (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ)) →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R N →ₐ[R] A) :=
   (pointsMulEquiv (R := R) (A := A) N).symm.toMonoidHom.comp
-    ((diagGL (k := A) (n := N)).comp
+    ((diagGL (k := A)).comp
       ((diagonalTorusCoordinates (N := N) (A := A)).comp
         (SplitTorus.pointsMulEquiv (R := R) (A := A)).toMonoidHom))
 
@@ -302,8 +302,14 @@ private lemma groupSchemePointsMulEquiv_comp_diagonalTorus
             (SplitTorus.characterGroup (ULift.{u} (Fin N))) p)) := by
   let q := DiagonalizableGroup.groupSchemePointsMulEquiv (R := R) (A := A)
     (SplitTorus.characterGroup (ULift.{u} (Fin N))) p
-  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
-    (diagonalTorusCoordinateMap (R := R) (N := N)) q
+  have hmap : AlgebraicGeometry.Spec.mapMulEquiv
+      ((CommHopfAlgCat.mapPointsFunctor
+        (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R A) q) =
+      AlgebraicGeometry.Spec.mapMulEquiv q ≫
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap (R := R) (N := N)).op).hom.hom :=
+    CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
+      (diagonalTorusCoordinateMap (R := R) (N := N)).hom q
   rw [mapPointsFunctor_diagonalTorusCoordinateMap_app] at hmap
   apply Over.OverMorphism.ext
   rw [groupSchemePointMulEquiv_apply_left, Over.comp_left]
