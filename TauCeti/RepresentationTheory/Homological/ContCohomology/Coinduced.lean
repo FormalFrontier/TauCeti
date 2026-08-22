@@ -32,8 +32,9 @@ argument consume:
 * it is **exact** in `A`: `TauCeti.coindMap_injective`, `TauCeti.coindMap_surjective` and
   `TauCeti.coindMap_range_eq_ker` send a short exact sequence of discrete `U`-modules to a short
   exact sequence;
-* the two degenerate subgroups are computed: `TauCeti.coind_bot` says `Coind_1^G A` is all locally
-  constant maps `G → A`, the acyclic module of the dimension-shifting argument, and
+* the two degenerate subgroups are computed: `TauCeti.mem_coind_bot_iff` characterizes membership
+  in `Coind_1^G A` as local constancy, so it is the group of all locally constant maps `G → A`,
+  the acyclic module of the dimension-shifting argument, and
   `TauCeti.coindEvalTopEquiv` says `Coind_G^G A` is `A`.
 
 Surjectivity is where the topology does real work. Lifting a locally constant `U`-equivariant map
@@ -200,6 +201,7 @@ theorem coindEval_coindMap (φ : A →+ B) (hφ : ∀ (u : U) (a : A), φ (u •
     (f : coind G U A) : coindEval G U (coindMap G U φ hφ f) = φ (coindEval G U f) := (rfl)
 
 /-- `coindMap` is `G`-equivariant. -/
+@[simp]
 theorem coindMap_smul [ContinuousMul G] (φ : A →+ B)
     (hφ : ∀ (u : U) (a : A), φ (u • a) = u • φ a) (g : G) (f : coind G U A) :
     coindMap G U φ hφ (g • f) = g • coindMap G U φ hφ f := by
@@ -305,7 +307,7 @@ variable {A : Type*} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A]
 
 /-- For `U = ⊤` the orbit map `g ↦ g • a` is a member of the coinduced module: it is locally
 constant because the action is continuous and `A` is discrete. -/
-theorem coind_top_mem {a : A} :
+theorem smul_mem_coind_top {a : A} :
     (fun g : G => (⟨g, Subgroup.mem_top g⟩ : (⊤ : Subgroup G)) • a) ∈ coind G ⊤ A := by
   refine ⟨(IsLocallyConstant.iff_continuous _).2 (continuous_smul.comp
     ((Continuous.subtype_mk continuous_id fun g : G => Subgroup.mem_top g).prodMk
@@ -320,7 +322,7 @@ The inverse is where continuity of the action is used; without it `g ↦ g • a
 constant. -/
 def coindEvalTopEquiv : coind G ⊤ A ≃+ A where
   toFun f := (f : G → A) 1
-  invFun a := ⟨_, coind_top_mem (a := a)⟩
+  invFun a := ⟨_, smul_mem_coind_top (a := a)⟩
   left_inv f := Subtype.ext (funext fun g => by
     simpa using (apply_mul_of_mem_coind f.2 ⟨g, Subgroup.mem_top g⟩ 1).symm)
   right_inv a := by

@@ -57,7 +57,7 @@ theorem mem_rightTranslationStabilizer {f : G → A} {g : G} :
 its right-translation stabilizer is an open subgroup, so a single open neighbourhood of `1` makes
 `f (x * g) = f x` hold for every `x` simultaneously. -/
 theorem isOpen_rightTranslationStabilizer [TopologicalSpace G] [ContinuousMul G]
-    [SeparatelyContinuousMul G] [CompactSpace G] {f : G → A} (hf : IsLocallyConstant f) :
+    [CompactSpace G] {f : G → A} (hf : IsLocallyConstant f) :
     IsOpen (rightTranslationStabilizer f : Set G) := by
   -- the locus where the two locally constant functions `(x, g) ↦ f (x * g)` and `(x, g) ↦ f x`
   -- agree is open, and it contains the tube `G × {1}`
