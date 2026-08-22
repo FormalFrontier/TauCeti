@@ -62,20 +62,32 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
   let unionEquiv := MeasurableEquiv.piFinsetUnion α hdis
   let singleA := (MeasurableEquiv.piUnique fun i : s => α i).symm
   let singleB := (MeasurableEquiv.piUnique fun i : t => α i).symm
+  have singleA_apply (u : α a) : singleA u ⟨a, by simp [s]⟩ = u := by
+    simp only [singleA, MeasurableEquiv.piUnique_symm_apply]
+    unfold uniqueElim
+    rfl
+  have singleB_apply (v : α b) : singleB v ⟨b, by simp [t]⟩ = v := by
+    simp only [singleB, MeasurableEquiv.piUnique_symm_apply]
+    unfold uniqueElim
+    rfl
   have unionEquiv_a (u : α a) (v : α b) (ha : a ∈ s ∪ t) :
       unionEquiv (singleA u, singleB v) ⟨a, ha⟩ = u := by
-    change (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨a, ha⟩ = u
+    rw [show unionEquiv (singleA u, singleB v) ⟨a, ha⟩ =
+      (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨a, ha⟩ from rfl]
     rw [Equiv.piFinsetUnion_left α hdis (by simp [s]) ha]
-    change uniqueElim (α := fun i : s => α i) u (⟨a, by simp [s]⟩ : s) = u
-    unfold uniqueElim
-    rfl
+    exact singleA_apply u
   have unionEquiv_b (u : α a) (v : α b) (hb : b ∈ s ∪ t) :
       unionEquiv (singleA u, singleB v) ⟨b, hb⟩ = v := by
-    change (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨b, hb⟩ = v
+    rw [show unionEquiv (singleA u, singleB v) ⟨b, hb⟩ =
+      (Equiv.piFinsetUnion α hdis) (singleA u, singleB v) ⟨b, hb⟩ from rfl]
     rw [Equiv.piFinsetUnion_right α hdis (by simp [t]) hb]
-    change uniqueElim (α := fun i : t => α i) v (⟨b, by simp [t]⟩ : t) = v
-    unfold uniqueElim
-    rfl
+    exact singleB_apply v
+  have splitEquiv_symm_apply (x : ∀ i : Subtype p, α i)
+      (y : ∀ i : {i // ¬p i}, α i) (i : ι) :
+      splitEquiv.symm (x, y) i = if hi : p i then x ⟨i, hi⟩ else y ⟨i, hi⟩ :=
+    Equiv.piEquivPiSubtypeProd_symm_apply p α (x, y) i
+  have splitEquiv_snd_apply (z : ∀ i, α i) (i : ι) (hi : ¬p i) :
+      (splitEquiv z).2 ⟨i, hi⟩ = z i := rfl
   have hsplit := measurePreserving_piEquivPiSubtypeProd μ p
   have hsingleA : MeasurePreserving singleA (μ a) (Measure.pi fun i : s => μ i) := by
     simpa [singleA, s] using MeasurePreserving.symm
@@ -108,36 +120,25 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
   have hrefresh := (MeasurePreserving.symm splitEquiv hsplit).comp hcombine'
   refine hrefresh.congr (by fun_prop) (ae_of_all _ fun w => ?_)
   funext i
+  -- `MeasurePreserving.comp` stores this composite function definitionally; expose it once, then
+  -- use the application lemmas above for all measurable-equivalence wrappers.
   change splitEquiv.symm
       (unionEquiv (singleA w.2.1, singleB w.2.2), (splitEquiv w.1).2) i =
     update (update w.1 a w.2.1) b w.2.2 i
+  rw [splitEquiv_symm_apply]
   by_cases hia : i = a
   · subst i
-    change (Equiv.piEquivPiSubtypeProd p α).symm
-      (unionEquiv (singleA w.2.1, singleB w.2.2),
-        ((Equiv.piEquivPiSubtypeProd p α) w.1).2) a =
-      update (update w.1 a w.2.1) b w.2.2 a
-    rw [Equiv.piEquivPiSubtypeProd_symm_apply]
     simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, true_or, dite_true]
     rw [unionEquiv_a]
     simp [hab]
   · by_cases hib : i = b
     · subst i
       rw [update_self]
-      change (Equiv.piEquivPiSubtypeProd p α).symm
-        (unionEquiv (singleA w.2.1, singleB w.2.2),
-          ((Equiv.piEquivPiSubtypeProd p α) w.1).2) b = w.2.2
-      rw [Equiv.piEquivPiSubtypeProd_symm_apply]
       simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, or_true, dite_true]
       rw [unionEquiv_b]
-    · change (Equiv.piEquivPiSubtypeProd p α).symm
-        (unionEquiv (singleA w.2.1, singleB w.2.2),
-          ((Equiv.piEquivPiSubtypeProd p α) w.1).2) i =
-        update (update w.1 a w.2.1) b w.2.2 i
-      rw [Equiv.piEquivPiSubtypeProd_symm_apply]
-      simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, hia, hib, false_or,
+    · simp only [p, s, t, Finset.mem_union, Finset.mem_singleton, hia, hib, false_or,
         dite_false]
-      change w.1 i = update (update w.1 a w.2.1) b w.2.2 i
+      rw [splitEquiv_snd_apply]
       rw [update_of_ne hib, update_of_ne hia]
 
 end TauCeti
