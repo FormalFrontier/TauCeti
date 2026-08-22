@@ -20,10 +20,10 @@ available only after mapping back into `GL_n`:
 t(s) x_i(u) t(s)⁻¹ = x_i(α(s) u).
 ```
 
-This file proves the equation intrinsically in the toral carrier, on points over every commutative
-ring. The proof uses the closed immersion into `GL_n` only to reflect equality. Its input is the
-mathematical weight equation `[h_j, e_i] = α_j e_i`; no compatibility is added as an
-assumption on the constructed group scheme.
+This file proves the equation intrinsically in the toral-subsystem carrier indexed by `S`, on
+points over every commutative ring. The proof uses the closed immersion into `GL_n` only to
+reflect equality. Its input is the mathematical weight equation `[h_j, e_i] = α_j e_i`; no
+compatibility is added as an assumption on the constructed group scheme.
 
 ## Main results
 

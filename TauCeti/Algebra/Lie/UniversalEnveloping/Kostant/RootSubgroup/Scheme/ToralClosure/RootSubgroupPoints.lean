@@ -97,8 +97,8 @@ theorem kostantRootSubgroupToralSubsystemPoints_apply (i : S) (A : CommAlgCat.{v
         (kostantRootSubgroupToralSubsystemCoordinateMap e h ρ M hM b wt S hnil i)).app A q :=
   (rfl)
 
-/-- Including an intrinsic toral-closure root point into the ambient general linear group recovers
-the original represented root-subgroup point. -/
+/-- Including an intrinsic toral-subsystem root point into the ambient general linear group
+recovers the original represented root-subgroup point. -/
 @[simp]
 theorem quotientPointsHom_kostantRootSubgroupToralSubsystemPoints
     (i : S) (A : CommAlgCat.{v} ℤ)
@@ -145,7 +145,7 @@ theorem pointsMulEquiv_quotientPointsHom_kostantRootSubgroupToralSubsystemPoints
   exact pointsMulEquiv_kostantRootSubgroupCoordinateMap
     e h ρ M hM i.1 (hnil i.1 i.2) b A q
 
-/-- The intrinsic toral-closure root subgroup with its parameter read in the value ring through
+/-- The intrinsic toral-subsystem root subgroup with its parameter read in the value ring through
 the canonical identification `𝔾ₐ(A) ≃ A⁺`. -/
 noncomputable def kostantRootSubgroupToralSubsystemParam (i : S) (A : CommAlgCat.{v} ℤ) :
     Multiplicative A →*
