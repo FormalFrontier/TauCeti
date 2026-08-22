@@ -106,15 +106,15 @@ private theorem tendsto_log_far (hs : s < b) (σ : ℝ) :
     Tendsto (fun h : ℝ => log ((b : ℂ) - (s + (σ * h : ℝ) * I))) (𝓝[>] 0)
       (𝓝 (log ((b : ℂ) - s))) := by
   have hmem : (b : ℂ) - s ∈ slitPlane :=
-    mem_slitPlane_iff.mpr (Or.inl (by simp only [sub_re, ofReal_re]; linarith))
+    mem_slitPlane_iff.mpr (Or.inl (by simp only [sub_re, ofReal_re]; linarith only [hs]))
   exact (continuousAt_clog hmem).tendsto.comp (tendsto_ofReal_sub_add_mul_I b s σ)
 
 private theorem re_neg_of_mem_Ioo (hs : s ∈ Ioo a b) : ((a : ℂ) - s).re < 0 := by
-  simp only [sub_re, ofReal_re]; linarith [hs.1]
+  simp only [sub_re, ofReal_re]; linarith only [hs.1]
 
 private theorem norm_ofReal_sub_of_mem_Ioo (hs : s ∈ Ioo a b) : ‖(a : ℂ) - s‖ = s - a := by
   simp only [← ofReal_sub, norm_real, Real.norm_eq_abs]
-  rw [abs_sub_comm, abs_of_pos (by linarith [hs.1])]
+  rw [abs_sub_comm, abs_of_pos (by linarith only [hs.1])]
 
 /-- **The winding number of a segment about a point approaching from the left.** The near endpoint
 term approaches the negative real axis from below. -/
