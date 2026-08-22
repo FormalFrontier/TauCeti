@@ -97,7 +97,8 @@ theorem newtonianKernel_smul (n : ℕ) (r : ℝ)
     Real.mul_rpow (norm_nonneg r) (norm_nonneg x)]
   ring
 
-private theorem volume_real_unitBall_pos (n : ℕ) :
+/-- The Euclidean unit ball has positive real volume in every dimension. -/
+theorem volume_real_unitBall_pos (n : ℕ) :
     0 < volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1) := by
   exact ENNReal.toReal_pos
     (measure_ball_pos volume (0 : EuclideanSpace ℝ (Fin n)) zero_lt_one).ne'
