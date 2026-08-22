@@ -137,7 +137,7 @@ def dirichletForcing (f : Lp ℝ 2 (mu.restrict Omega)) : StrongDual ℝ (W1p0 m
   (innerSL ℝ f).comp (W1p.valueL.comp (w1p0Submodule mu Omega 2).toSubmodule.subtypeL)
 
 /-- The forcing functional is the `L²` inner product against the value component. -/
-theorem dirichletForcing_apply (f : Lp ℝ 2 (mu.restrict Omega)) (v : W1p0 mu Omega 2) :
+@[simp] theorem dirichletForcing_apply (f : Lp ℝ 2 (mu.restrict Omega)) (v : W1p0 mu Omega 2) :
     dirichletForcing f v = ⟪f, W1p.value (v : W1p mu Omega 2)⟫_ℝ := by
   rw [dirichletForcing, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
     Submodule.subtypeL_apply, innerSL_apply_apply, W1p.valueL_apply]
@@ -181,7 +181,8 @@ def IsWeakSolutionDirichlet (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
     energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) = dirichletForcing f v
 
 /-- Being a weak solution, written out as the integral identity `a(u, v) = ∫_Ω f v`. -/
-theorem isWeakSolutionDirichlet_iff (f : Lp ℝ 2 (mu.restrict Omega)) (u : W1p0 mu Omega 2) :
+@[simp] theorem isWeakSolutionDirichlet_iff (f : Lp ℝ 2 (mu.restrict Omega))
+    (u : W1p0 mu Omega 2) :
     IsWeakSolutionDirichlet a b c f u ↔
       ∀ v : W1p0 mu Omega 2,
         energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2)
@@ -279,7 +280,7 @@ theorem existsUnique_isWeakSolutionDirichlet_of_mul_norm_sq_le
 
 /-- The energy form of the Laplacian model `-Δ` (`a = 1`, no drift, no mass) is the Dirichlet
 form `∫_Ω ∇v · ∇u`. -/
-theorem energyFormH1_one_zero_zero_apply [DecidableEq ι] (u v : W1p mu Omega 2) :
+@[simp] theorem energyFormH1_one_zero_zero_apply [DecidableEq ι] (u v : W1p mu Omega 2) :
     energyFormH1 (fun _ => 1) 0 0 u v =
       ∫ x in Omega, W1p.gradient v x ⬝ᵥ W1p.gradient u x ∂mu := by
   rw [energyFormH1_def]
@@ -288,7 +289,7 @@ theorem energyFormH1_one_zero_zero_apply [DecidableEq ι] (u v : W1p mu Omega 2)
 
 /-- The weak formulation of the Laplacian model `-Δ` is the classical one: `u ∈ H¹₀(Ω)` solves
 `-Δu = f` weakly exactly when `∫_Ω ∇v · ∇u = ∫_Ω f v` for every `v ∈ H¹₀(Ω)`. -/
-theorem isWeakSolutionDirichlet_one_zero_zero_iff [DecidableEq ι]
+@[simp] theorem isWeakSolutionDirichlet_one_zero_zero_iff [DecidableEq ι]
     (f : Lp ℝ 2 (mu.restrict Omega))
     (u : W1p0 mu Omega 2) :
     IsWeakSolutionDirichlet (fun _ => 1) 0 0 f u ↔
