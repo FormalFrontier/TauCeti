@@ -455,6 +455,15 @@ private noncomputable def lieAlgebraBaseChangeLieHom :
   map_smul' a x := Subtype.ext (map_smul (t.lieAlgebraBaseChangeHom ht K) a x)
   map_lie' {x y} := Subtype.ext ((t.lieAlgebraBaseChangeHom ht K).map_lie x y)
 
+@[simp] private theorem coe_lieAlgebraBaseChangeLieHom_apply
+    (x : K ⊗[ℚ] t.lieAlgebra ht) :
+    (t.lieAlgebraBaseChangeLieHom ht K x :
+      Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
+        ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) =
+      t.ambientLieAlgebraBaseChangeEquiv ht K
+        (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) :=
+  rfl
+
 private theorem lieAlgebraBaseChangeLieHom_bijective :
     Function.Bijective (t.lieAlgebraBaseChangeLieHom ht K) := by
   constructor
@@ -485,12 +494,10 @@ noncomputable def lieAlgebraBaseChangeEquiv :
         ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) =
       t.ambientLieAlgebraBaseChangeEquiv ht K
         (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) := by
-  change t.lieAlgebraBaseChangeHom ht K x = _
-  change t.ambientLieAlgebraBaseChangeEquiv ht K
-    (t.lieAlgebraBaseChangeIncl ht K x) = _
-  change t.ambientLieAlgebraBaseChangeEquiv ht K
-    (LinearMap.baseChange K (t.lieAlgebra ht).incl.toLinearMap x) = _
-  rfl
+  change (t.lieAlgebraBaseChangeLieHom ht K x :
+    Matrix ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots)
+      ((t.baseChangeBase ht K).support ⊕ Fin t.numRoots) K) = _
+  exact coe_lieAlgebraBaseChangeLieHom_apply t ht K x
 
 /-- The base-change equivalence sends a pure tensor of a Cartan generator to the corresponding
 generator for the scalar-extended root system. -/
