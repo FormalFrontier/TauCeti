@@ -46,7 +46,8 @@ are well behaved, as `StrongRankCondition` and nothing more.
 ## Main definitions
 
 * `TauCeti.AlbertAlgebra`: the split Albert algebra over `R`, with its `NonAssocCommRing` and
-  `Module R` structure and the two scalar towers.
+  `Module R` structure and the `SMulCommClass` and `IsScalarTower` instances that say the product
+  is `R`-bilinear.
 * `TauCeti.AlbertAlgebra.trace`: the trace `d 0 + d 1 + d 2`, an `R`-linear functional.
 * `TauCeti.AlbertAlgebra.traceZero`: the trace-zero subspace `J₀`, the kernel of the trace.
 * `TauCeti.AlbertAlgebra.diagIdempotent`: the three diagonal idempotents `E₀`, `E₁`, `E₂`.
@@ -361,7 +362,7 @@ theorem finrank_traceZero (R : Type*) [CommRing R] [StrongRankCondition R] :
 
 /-- The `i`-th **diagonal idempotent** `Eᵢ` of `H₃(𝕆)`: the Hermitian matrix with a single `1` in
 position `(i, i)`. -/
-def diagIdempotent (R : Type*) [CommRing R] (i : Fin 3) : AlbertAlgebra R := ⟨Pi.single i 1, 0⟩
+def diagIdempotent (R : Type*) [Zero R] [One R] (i : Fin 3) : AlbertAlgebra R := ⟨Pi.single i 1, 0⟩
 
 @[simp] theorem diagIdempotent_diag (i : Fin 3) : (diagIdempotent R i).diag = Pi.single i 1 := (rfl)
 @[simp] theorem diagIdempotent_offDiag (i : Fin 3) : (diagIdempotent R i).offDiag = 0 := (rfl)
