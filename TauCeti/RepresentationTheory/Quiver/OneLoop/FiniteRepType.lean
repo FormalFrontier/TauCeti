@@ -9,10 +9,10 @@ public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.OneLoop.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+public import TauCeti.RingTheory.AdjoinRoot
 public import TauCeti.RingTheory.LocalRing.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
-public import Mathlib.RingTheory.AdjoinRoot
 
 /-!
 # The loop quiver has infinite representation type
@@ -65,8 +65,9 @@ constructions inverse to each other.
 Indecomposability is proved throughout from `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`
 rather than from the brick criterion: for the Jordan blocks the endomorphism algebra is
 `k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick criterion does not apply, and an endomorphism is
-pinned down instead by its value at `1` (`TauCeti.eq_mulRight_of_root_mul`). That the value is then
-`0` or `1` is locality of the truncated polynomial algebra; both facts come from
+pinned down instead by its value at `1` (`AdjoinRoot.eq_mulRight_of_root_mul`, from
+`TauCeti.RingTheory.AdjoinRoot`). That the value is then `0` or `1` is locality of the truncated
+polynomial algebra, `TauCeti.isLocalRing_adjoinRoot_X_pow` from
 `TauCeti.RingTheory.Polynomial.Truncated`.
 
 The quiver `•↺` itself -- `TauCeti.Quiver.OneLoop`, with its `Quiver` instance and its loop
@@ -322,18 +323,17 @@ theorem isFinDim_oneLoopNilpotentRep (n : ℕ) :
 theorem dimVector_oneLoopNilpotentRep (n : ℕ) (v : Quiver.OneLoop) :
     dimVector (oneLoopNilpotentRep.{u, w} k n) v = n + 1 := by
   rw [dimVector_apply, oneLoopNilpotentRep_obj]
-  exact finrank_adjoinRoot_X_pow k (n + 1)
+  -- `AdjoinRoot f` *is* `k[X] ⧸ (f)`, so Mathlib's dimension formula for such a quotient applies.
+  exact finrank_quotient_span_eq_natDegree.trans (natDegree_X_pow (n + 1))
 
-/-- `TauCeti.oneLoopNilpotentRep k n` is nonzero: its vertex space has dimension `n + 1`. -/
+/-- `TauCeti.oneLoopNilpotentRep k n` is nonzero: its vertex space is the nontrivial ring
+`k[X]/(Xⁿ⁺¹)`. -/
 theorem not_isZero_oneLoopNilpotentRep (n : ℕ) :
     ¬ IsZero (oneLoopNilpotentRep.{u, w} k n) := by
   intro h
-  have hsub : Subsingleton (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
+  have : Subsingleton (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
     ModuleCat.subsingleton_of_isZero (h.obj (Quiver.OneLoop.vertex : Paths Quiver.OneLoop))
-  have hfin : Module.finrank k (AdjoinRoot ((X : k[X]) ^ (n + 1))) = 0 :=
-    Module.finrank_zero_of_subsingleton
-  rw [finrank_adjoinRoot_X_pow] at hfin
-  omega
+  exact false_of_nontrivial_of_subsingleton (AdjoinRoot ((X : k[X]) ^ (n + 1)))
 
 /-- The single component of an endomorphism of a nilpotent Jordan block, as a linear map on
 `k[X]/(Xⁿ⁺¹)`. The quiver has one vertex, so a natural transformation is this one linear map. -/
@@ -390,7 +390,8 @@ theorem indecomposable_oneLoopNilpotentRep (n : ℕ) :
     Indecomposable (oneLoopNilpotentRep.{u, w} k n) := by
   refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_oneLoopNilpotentRep n) fun e he ↦ ?_
   have hmul : oneLoopNilpotentRepApp e = LinearMap.mulRight k (oneLoopNilpotentRepApp e 1) :=
-    eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1)) (oneLoopNilpotentRepApp_root_mul e)
+    AdjoinRoot.eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1))
+      (oneLoopNilpotentRepApp_root_mul e)
   have hmul_apply : ∀ x, oneLoopNilpotentRepApp e x = x * oneLoopNilpotentRepApp e 1 := by
     intro x
     rw [hmul]

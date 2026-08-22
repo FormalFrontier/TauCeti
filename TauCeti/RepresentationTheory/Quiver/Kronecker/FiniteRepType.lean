@@ -9,6 +9,7 @@ public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.Kronecker.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+public import TauCeti.RingTheory.AdjoinRoot
 public import TauCeti.RingTheory.LocalRing.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
@@ -60,9 +61,13 @@ indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`.
 
 `TauCeti.kroneckerRep` and `TauCeti.kroneckerJordanRep` carry `@[expose]`, for the reason the
 loop-quiver file `TauCeti.RepresentationTheory.Quiver.OneLoop.FiniteRepType` records: a functor
-built by `CategoryTheory.Paths.lift` reveals its value on objects only through its definition, so
-without it the statements below -- which read an endomorphism as a linear map on `k[X]/(Xⁿ⁺¹)` --
-do not even elaborate.
+built by `CategoryTheory.Paths.lift` reveals its value on objects only through its definition. The
+obstruction is at the level of *statements*, not of proofs, so no characteristic lemma can remove
+it: without `@[expose]` on `kroneckerRep`, already `kroneckerRep_map_arrowPath` fails to elaborate,
+`f a : M ⟶ N` not being accepted where `(kroneckerRep k M N f).obj Quiver.Kronecker.src ⟶
+(kroneckerRep k M N f).obj Quiver.Kronecker.tgt` is expected, and likewise for the two components
+of `kroneckerRepHom` and for every statement below reading an endomorphism of a Jordan block as a
+linear map on `k[X]/(Xⁿ⁺¹)`.
 
 Indecomposability runs through `TauCeti.indecomposable_of_idempotent_eq_zero_or_id` rather than the
 brick criterion: the endomorphism algebra of a Jordan block is `k[X]/(Xⁿ⁺¹)`, which is not a field.
@@ -72,11 +77,11 @@ It is a *local* ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), and that is exact
 The two components of an endomorphism are forced to agree by naturality along an arrow acting as
 the identity, which is why a second arrow is needed; the distinguished arrow then contributes the
 one genuine relation, that the common component commutes with multiplication by the class of `X`,
-and `TauCeti.eq_mulRight_of_root_mul` turns that relation into the description of the endomorphism
-algebra. Taking the vertex spaces to be a truncated polynomial algebra rather than a line is what
-makes the result uniform in the base field: the one-dimensional representations `k ⇉ k`, with the
-two arrows acting by `1` and by a scalar, are indecomposable and pairwise non-isomorphic, but over
-a finite field there are only finitely many of them.
+and `AdjoinRoot.eq_mulRight_of_root_mul` turns that relation into the description of the
+endomorphism algebra. Taking the vertex spaces to be a truncated polynomial algebra rather than a
+line is what makes the result uniform in the base field: the one-dimensional representations
+`k ⇉ k`, with the two arrows acting by `1` and by a scalar, are indecomposable and pairwise
+non-isomorphic, but over a finite field there are only finitely many of them.
 
 ## References
 
@@ -105,8 +110,9 @@ section Rep
 
 variable (k) in
 /-- **A representation of the generalized Kronecker quiver**: a vector space `M` at the source, a
-vector space `N` at the target, and a linear map `f a : M ⟶ N` along the arrow indexed by `a`.
-There are no other arrows and no nontrivial paths, so this is the whole datum. -/
+vector space `N` at the target, and a linear map `f a : M ⟶ N` along the arrow indexed by `a`. No
+two arrows compose, so the only paths are the identities and the arrows themselves, and this is the
+whole datum. -/
 @[expose]
 def kroneckerRep (M N : ModuleCat.{t} k) (f : A → (M ⟶ N)) :
     QuiverRep k (Quiver.Kronecker A) :=
@@ -195,12 +201,17 @@ theorem kronecker_hom_ext {ρ σ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)
 
 /-! ### The Jordan blocks -/
 
+-- The distinguished arrow is singled out by an `if`, so a `Decidable` instance for equality in `A`
+-- is needed; the Jordan blocks are noncomputable anyway, so it is taken classically rather than
+-- imposed as a hypothesis on `A`. The two lemmas below discharge the `if` in either direction, so
+-- no statement in this file mentions the instance.
+open Classical in
 variable (k) in
 /-- **The Kronecker Jordan block of size `n + 1`**: the truncated polynomial algebra `k[X]/(Xⁿ⁺¹)`
 at both vertices of the generalized Kronecker quiver, with the arrow `a₁` acting by multiplication
 by the class of `X` and every other arrow by the identity. -/
 @[expose]
-noncomputable def kroneckerJordanRep [DecidableEq A] (a₁ : A) (n : ℕ) :
+noncomputable def kroneckerJordanRep (a₁ : A) (n : ℕ) :
     QuiverRep k (Quiver.Kronecker A) :=
   kroneckerRep k (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))))
     (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))))
@@ -208,7 +219,7 @@ noncomputable def kroneckerJordanRep [DecidableEq A] (a₁ : A) (n : ℕ) :
         ModuleCat.ofHom (LinearMap.mulLeft k (AdjoinRoot.root ((X : k[X]) ^ (n + 1))))
       else 𝟙 _
 
-variable [DecidableEq A] {a₀ a₁ : A} {n : ℕ}
+variable {a₀ a₁ : A} {n : ℕ}
 
 -- Not `@[simp]`: these two rewrite the vertex spaces inside the implicit arguments of
 -- `ModuleCat.Hom.hom`, which would take the left-hand sides of the two `_apply` lemmas below out
@@ -223,20 +234,11 @@ theorem kroneckerJordanRep_obj_tgt :
       ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
   rfl
 
-/-- The action of an arrow on a Jordan block: multiplication by the class of `X` along the
-distinguished arrow, and the identity along every other arrow. -/
-theorem kroneckerJordanRep_map_arrowPath (a : A) :
-    (kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a) =
-      if a = a₁ then
-          ModuleCat.ofHom (LinearMap.mulLeft k (AdjoinRoot.root ((X : k[X]) ^ (n + 1))))
-        else 𝟙 (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1)))) :=
-  kroneckerRep_map_arrowPath _ _ _ a
-
 /-- The distinguished arrow acts on a Jordan block by multiplication by the class of `X`. -/
 theorem kroneckerJordanRep_map_arrowPath_self :
     (kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₁) =
       ModuleCat.ofHom (LinearMap.mulLeft k (AdjoinRoot.root ((X : k[X]) ^ (n + 1)))) :=
-  (kroneckerJordanRep_map_arrowPath a₁).trans (ite_eq_left rfl)
+  (kroneckerRep_map_arrowPath _ _ _ a₁).trans (ite_eq_left rfl)
 
 /-- The action of the distinguished arrow, read on an element. -/
 @[simp]
@@ -250,7 +252,7 @@ theorem kroneckerJordanRep_map_arrowPath_self_apply (x : AdjoinRoot ((X : k[X]) 
 theorem kroneckerJordanRep_map_arrowPath_of_ne (h : a₀ ≠ a₁) :
     (kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₀) =
       𝟙 (ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1)))) :=
-  (kroneckerJordanRep_map_arrowPath a₀).trans (ite_eq_right h)
+  (kroneckerRep_map_arrowPath _ _ _ a₀).trans (ite_eq_right h)
 
 /-- The action of any other arrow, read on an element. -/
 @[simp]
@@ -315,7 +317,7 @@ private theorem jordanApp_root_mul (h : a₀ ≠ a₁)
 private theorem jordanApp_eq_mulRight (h : a₀ ≠ a₁)
     (e : kroneckerJordanRep k a₁ n ⟶ kroneckerJordanRep k a₁ n) :
     jordanApp e = LinearMap.mulRight k (jordanApp e 1) :=
-  eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1)) (jordanApp_root_mul h e)
+  AdjoinRoot.eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1)) (jordanApp_root_mul h e)
 
 /-- **An endomorphism of a Jordan block is determined by its component at the source vertex**: the
 component at the target agrees with it, by `app_tgt_eq_app_src`. -/
@@ -337,7 +339,8 @@ theorem isFinDim_kroneckerJordanRep :
 theorem dimVector_kroneckerJordanRep (w : Quiver.Kronecker A) :
     dimVector (kroneckerJordanRep k a₁ n) w = n + 1 := by
   rw [dimVector_apply]
-  cases w <;> exact finrank_adjoinRoot_X_pow k (n + 1)
+  -- `AdjoinRoot f` *is* `k[X] ⧸ (f)`, so Mathlib's dimension formula for such a quotient applies.
+  cases w <;> exact finrank_quotient_span_eq_natDegree.trans (natDegree_X_pow (n + 1))
 
 /-- A Jordan block is nonzero: its vertex spaces are the nontrivial ring `k[X]/(Xⁿ⁺¹)`. -/
 theorem not_isZero_kroneckerJordanRep :
@@ -391,7 +394,6 @@ For a one-element arrow type this fails, and must: that is the `A₂` quiver `�
 which has exactly three indecomposables. -/
 theorem not_isFiniteRepType_kronecker (k : Type u) [Field k] (A : Type v) [Nontrivial A] :
     ¬ IsFiniteRepType.{u, 0, v, u} k (Quiver.Kronecker A) := by
-  classical
   obtain ⟨a₀, a₁, h⟩ := exists_pair_ne A
   exact not_isFiniteRepType_of_infinite (M := kroneckerJordanRep k a₁)
     (fun _ ↦ isFinDim_kroneckerJordanRep)
