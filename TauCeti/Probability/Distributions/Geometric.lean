@@ -9,7 +9,8 @@ public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Probability.Distributions.Geometric
 public import Mathlib.Probability.HasLaw
-public import Mathlib.Probability.Moments.MGFAnalytic
+public import Mathlib.Probability.Moments.Basic
+public import Mathlib.Probability.Moments.IntegrableExpMul
 
 import TauCeti.Probability.GeneratingFunction
 
@@ -20,14 +21,14 @@ This file develops moments and transforms of Mathlib's geometric measure, using 
 that the random variable counts failures before the first success.  It also records its cumulative
 mass and memoryless tail identity.  Mathlib totalizes the zero-success parameter by
 `geometricMeasure 0 = Measure.dirac 0`; the boundary formulas are stated separately.  The
-hypothesis `p ≠ 0` used throughout only excludes that totalized boundary: it still admits the
-degenerate endpoint `p = 1`, where the law is Dirac at zero and the formulas below specialize to
-the constant random variable `0`.
+hypotheses `p ≠ 0` below only exclude that totalized boundary: they still admit the degenerate
+endpoint `p = 1`, where the law is Dirac at zero and the formulas below specialize to the constant
+random variable `0`.
 
 ## Main results
 
 * `integral_id_map_cast_geometricMeasure` and `variance_id_map_cast_geometricMeasure` compute the
-  mean and variance of the real cast of a nonzero-parameter geometric law.
+  mean and variance of the real cast of a geometric law.
 * `integrableExpSet_id_map_cast_geometricMeasure` and `mgf_id_map_cast_geometricMeasure` give its
   exact moment-generating domain and moment-generating function.
 * `charFun_map_cast_geometricMeasure` computes its characteristic function.
@@ -36,6 +37,7 @@ the constant random variable `0`.
 
 ## References
 
+* `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, Geometric.
 * N. L. Johnson, A. W. Kemp, S. Kotz, *Univariate Discrete Distributions*, 3rd ed.,
   Wiley, 2005, Chapter 5.
 -/
@@ -101,20 +103,23 @@ theorem cgf_id_map_cast_geometricMeasure (hp : p ≠ 0)
       log ((p : ℝ) / (1 - (1 - (p : ℝ)) * exp t)) := by
   rw [cgf, mgf_id_map_cast_geometricMeasure hp ht]
 
-/-- The mean of the real cast of a nonzero-parameter geometric law. -/
-theorem integral_id_map_cast_geometricMeasure (hp : p ≠ 0) :
+/-- The mean of the real cast of a geometric law. -/
+theorem integral_id_map_cast_geometricMeasure :
     ∫ x, x ∂((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       (1 - (p : ℝ)) / (p : ℝ) := by
-  rw [integral_map (by fun_prop) (by fun_prop), integral_geometricMeasure hp]
-  simp_rw [smul_eq_mul]
-  have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * (n : ℝ)) =
-      fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) * (1 - (p : ℝ)) ^ n) := by
-    funext n
+  by_cases hp : p = 0
+  · subst p
+    norm_num [geometricMeasure]
+  · rw [integral_map (by fun_prop) (by fun_prop), integral_geometricMeasure hp]
+    simp_rw [smul_eq_mul]
+    have hfun : (fun n : ℕ ↦ (1 - (p : ℝ)) ^ n * p * (n : ℝ)) =
+        fun n : ℕ ↦ (p : ℝ) * ((n : ℝ) * (1 - (p : ℝ)) ^ n) := by
+      funext n
+      ring
+    rw [hfun, tsum_mul_left,
+      tsum_coe_mul_geometric_of_norm_lt_one (abs_one_sub_coe_lt_one hp)]
+    field_simp [coe_ne_zero hp]
     ring
-  rw [hfun, tsum_mul_left,
-    tsum_coe_mul_geometric_of_norm_lt_one (abs_one_sub_coe_lt_one hp)]
-  field_simp [coe_ne_zero hp]
-  ring
 
 /-- The second raw moment of the real cast of a nonzero-parameter geometric law. -/
 private theorem integral_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
@@ -147,20 +152,23 @@ private theorem integrable_sq_id_map_cast_geometricMeasure (hp : p ≠ 0) :
   rw [hfun]
   exact hs.mul_left (p : ℝ)
 
-/-- The variance of the real cast of a nonzero-parameter geometric law. -/
-theorem variance_id_map_cast_geometricMeasure (hp : p ≠ 0) :
+/-- The variance of the real cast of a geometric law. -/
+theorem variance_id_map_cast_geometricMeasure :
     variance id ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) =
       (1 - (p : ℝ)) / (p : ℝ) ^ 2 := by
-  let _ : IsProbabilityMeasure ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) :=
-    Measure.isProbabilityMeasure_map (by fun_prop)
-  have hmem : MemLp id 2 ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) :=
-    (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
-      (integrable_sq_id_map_cast_geometricMeasure hp)
-  rw [variance_eq_sub hmem]
-  simp only [Pi.pow_apply, id_eq]
-  rw [integral_sq_id_map_cast_geometricMeasure hp, integral_id_map_cast_geometricMeasure hp]
-  field_simp [coe_ne_zero hp]
-  ring
+  by_cases hp : p = 0
+  · subst p
+    norm_num [geometricMeasure]
+  · let _ : IsProbabilityMeasure ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) :=
+      Measure.isProbabilityMeasure_map (by fun_prop)
+    have hmem : MemLp id 2 ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) :=
+      (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
+        (integrable_sq_id_map_cast_geometricMeasure hp)
+    rw [variance_eq_sub hmem]
+    simp only [Pi.pow_apply, id_eq]
+    rw [integral_sq_id_map_cast_geometricMeasure hp, integral_id_map_cast_geometricMeasure]
+    field_simp [coe_ne_zero hp]
+    ring
 
 /-- The characteristic function of the real cast of a nonzero-parameter geometric law. -/
 theorem charFun_map_cast_geometricMeasure (hp : p ≠ 0) (t : ℝ) :
@@ -307,19 +315,19 @@ theorem geometricMeasure_zero : geometricMeasure (0 : unitInterval) = Measure.di
   rw [measureReal_def, Measure.dirac_apply_of_mem (by simp)]
   simp
 
-/-- A real random variable with a nonzero-parameter geometric law has mean `(1 - p) / p`. -/
+/-- A real random variable with a geometric law has mean `(1 - p) / p`. -/
 theorem integral_of_hasLaw_map_cast_geometricMeasure {Ω : Type*} [MeasurableSpace Ω]
-    {P : Measure Ω} {X : Ω → ℝ} (hp : p ≠ 0)
+    {P : Measure Ω} {X : Ω → ℝ}
     (hX : HasLaw X ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) P) :
     P[X] = (1 - (p : ℝ)) / (p : ℝ) := by
-  rw [hX.integral_eq, integral_id_map_cast_geometricMeasure hp]
+  rw [hX.integral_eq, integral_id_map_cast_geometricMeasure]
 
-/-- A real random variable with a nonzero-parameter geometric law has variance `(1 - p) / p²`. -/
+/-- A real random variable with a geometric law has variance `(1 - p) / p²`. -/
 theorem variance_of_hasLaw_map_cast_geometricMeasure {Ω : Type*} [MeasurableSpace Ω]
-    {P : Measure Ω} {X : Ω → ℝ} (hp : p ≠ 0)
+    {P : Measure Ω} {X : Ω → ℝ}
     (hX : HasLaw X ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) P) :
     variance X P = (1 - (p : ℝ)) / (p : ℝ) ^ 2 := by
-  rw [hX.variance_eq, variance_id_map_cast_geometricMeasure hp]
+  rw [hX.variance_eq, variance_id_map_cast_geometricMeasure]
 
 end Probability
 
