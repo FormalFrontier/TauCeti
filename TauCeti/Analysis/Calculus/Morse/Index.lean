@@ -171,15 +171,6 @@ theorem IsNondegenerateCriticalPoint.neg_hessianQuadraticForm_posDef_iff_morseIn
   have hsum := h.sigPos_hessianQuadraticForm_add_morseIndex_eq_finrank
   omega
 
-/-- If the Hessian is equivalent to a weighted sum of squares, its Morse index is the number of
-strictly negative weights. -/
-theorem morseIndex_eq_ncard_of_hessianQuadraticForm_equivalent_weightedSumSquares
-    {ι : Type*} [Fintype ι] (w : ι → ℝ)
-    (hequiv : QuadraticMap.Equivalent (hessianQuadraticForm f x)
-      (QuadraticMap.weightedSumSquares ℝ w)) :
-    morseIndex f x = {i | w i < 0}.ncard := by
-  rw [morseIndex, hequiv.sigNeg_eq, QuadraticForm.sigNeg_weightedSumSquares]
-
 /-- At a nondegenerate critical point, the Hessian quadratic form has a diagonal normal form with
 every weight equal to `-1` or `1`, and the negative weights are counted by the Morse index.  This
 is Sylvester's law of inertia applied to the Hessian. -/
@@ -201,6 +192,6 @@ theorem IsNondegenerateCriticalPoint.exists_hessianQuadraticForm_equivalent_weig
     QuadraticForm.equivalent_one_neg_one_weighted_sum_squared
       (hessianQuadraticForm f x) hassoc
   refine ⟨w, hw, hequiv, ?_⟩
-  exact morseIndex_eq_ncard_of_hessianQuadraticForm_equivalent_weightedSumSquares w hequiv
+  simpa only [morseIndex] using QuadraticForm.sigNeg_of_equiv_weightedSumSquares hequiv
 
 end TauCeti
