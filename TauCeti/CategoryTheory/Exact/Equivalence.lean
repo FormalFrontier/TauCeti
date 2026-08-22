@@ -28,6 +28,9 @@ shows that both functors of the equivalence preserve and reflect conflations.
 * `TauCeti.ExactStructure.isConflationExact_functor_transport` and
   `TauCeti.ExactStructure.reflectsConflations_functor_transport`: the forward equivalence
   preserves and reflects conflations.
+* `TauCeti.ExactStructure.isConflationExact_inverse_iff_reflectsConflations`: for an equivalence
+  between two *given* exact structures, conflation-exactness of the inverse is the same
+  condition as reflection of conflations by the forward functor.
 
 ## References
 
@@ -300,6 +303,36 @@ theorem transport_symm (E : ExactStructure C) (e : C ≌ D) [e.functor.Additive]
     simpa only [ShortComplex.map_comp, ShortComplex.map_id] using
       (S.mapNatIso e.unitIso)
   exact (E.conflation_iff_of_iso i).symm
+
+section InverseExactness
+
+variable {E : ExactStructure C} {E' : ExactStructure D}
+
+/-- An additive equivalence whose inverse is conflation-exact reflects conflations. -/
+theorem reflectsConflations_of_isConflationExact_inverse (e : C ≌ D) [e.functor.Additive]
+    (hG : E'.IsConflationExact E e.inverse) : E.ReflectsConflations E' e.functor where
+  reflects_conflation {S} hS := by
+    have h := hG.map_conflation hS
+    rw [← ShortComplex.map_comp] at h
+    simpa using E.conflation_of_iso (S.mapNatIso e.unitIso.symm) h
+
+/-- An additive equivalence which reflects conflations has a conflation-exact inverse.  No
+exactness of the equivalence itself is used. -/
+theorem isConflationExact_inverse_of_reflectsConflations (e : C ≌ D) [e.functor.Additive]
+    (hR : E.ReflectsConflations E' e.functor) : E'.IsConflationExact E e.inverse where
+  map_conflation {S} hS := by
+    apply hR.reflects_conflation
+    rw [← ShortComplex.map_comp]
+    exact E'.conflation_of_iso (S.mapNatIso e.counitIso.symm) (by simpa using hS)
+
+/-- For an additive equivalence, conflation-exactness of the inverse and reflection of
+conflations are the same condition. -/
+theorem isConflationExact_inverse_iff_reflectsConflations (e : C ≌ D) [e.functor.Additive] :
+    E'.IsConflationExact E e.inverse ↔ E.ReflectsConflations E' e.functor :=
+  ⟨reflectsConflations_of_isConflationExact_inverse e,
+    isConflationExact_inverse_of_reflectsConflations e⟩
+
+end InverseExactness
 
 end ExactStructure
 
