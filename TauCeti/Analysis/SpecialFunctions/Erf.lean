@@ -108,7 +108,7 @@ theorem continuous_erf : Continuous erf := differentiable_erf.continuous
 `-(2 / √π * exp (-x ^ 2))`. -/
 theorem hasStrictDerivAt_erfc (x : ℝ) :
     HasStrictDerivAt erfc (-(2 / √π * rexp (-x ^ 2))) x := by
-  rw [show erfc = fun y => 1 - erf y from rfl]
+  rw [funext erfc_def]
   exact (hasStrictDerivAt_erf x).const_sub 1
 
 /-- The derivative of the complementary error function. -/
