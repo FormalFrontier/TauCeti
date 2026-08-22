@@ -154,6 +154,8 @@ theorem latticeDifferential_single_mk_singleton (P : PlumbingGraph V)
       {w // w ∈ ({v} : Finset V)}) (Finset.mem_attach _ _)
       (fun w _ hw => absurd (Subtype.ext (Finset.mem_singleton.mp w.property)) hw)]
   rw [PlumbingCube.lowerFace_mk, PlumbingCube.upperFace_mk, Finset.erase_singleton,
+    PlumbingCube.characteristicLowerFaceExponent_mk,
+    PlumbingCube.characteristicUpperFaceExponent_mk,
     PlumbingCube.characteristicLowerFaceExponent_mk_singleton,
     PlumbingCube.characteristicUpperFaceExponent_mk_singleton]
 

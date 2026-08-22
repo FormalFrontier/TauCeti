@@ -320,30 +320,31 @@ theorem characteristicWeight_mk_singleton (P : PlumbingGraph V)
 
 /-- The lower-face exponent of a one-dimensional cube is the drop from its weight to the weight
 of its base point. -/
+@[simp]
 theorem characteristicLowerFaceExponent_mk_singleton (P : PlumbingGraph V)
     (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
-    characteristicLowerFaceExponent P k ⟨x, {v}⟩ v =
+    P.characteristicLowerFaceExponent k x {v} v =
       (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
         P.characteristicWeight k x).toNat := by
   have h := characteristicLowerFaceExponent_natCast P k ⟨x, {v}⟩ v
   rw [characteristicWeight_mk_singleton] at h
-  simp only [eraseDirection_mk, Finset.erase_singleton, characteristicWeight_mk,
-    PlumbingGraph.characteristicCubeWeight_empty] at h
+  simp only [characteristicLowerFaceExponent_mk, eraseDirection_mk, Finset.erase_singleton,
+    characteristicWeight_mk, PlumbingGraph.characteristicCubeWeight_empty] at h
   omega
 
 /-- The upper-face exponent of a one-dimensional cube is the drop from its weight to the weight
 of its far endpoint. -/
+@[simp]
 theorem characteristicUpperFaceExponent_mk_singleton (P : PlumbingGraph V)
     (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
-    characteristicUpperFaceExponent P k
-        (⟨x, {v}⟩ : PlumbingCube V) (Finset.mem_singleton_self v) =
+    P.characteristicUpperFaceExponent k x {v} (Finset.mem_singleton_self v) =
       (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
         P.characteristicWeight k (x + Pi.single v 1)).toNat := by
   have h := characteristicUpperFaceExponent_natCast P k
     (⟨x, {v}⟩ : PlumbingCube V) (Finset.mem_singleton_self v)
   rw [characteristicWeight_mk_singleton] at h
-  simp only [upperFace_mk, Finset.erase_singleton, characteristicWeight_mk,
-    PlumbingGraph.characteristicCubeWeight_empty] at h
+  simp only [characteristicUpperFaceExponent_mk, upperFace_mk, Finset.erase_singleton,
+    characteristicWeight_mk, PlumbingGraph.characteristicCubeWeight_empty] at h
   omega
 
 end Singleton
