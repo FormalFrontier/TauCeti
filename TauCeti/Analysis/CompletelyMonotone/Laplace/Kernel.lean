@@ -15,7 +15,7 @@ The exponential kernel `p ↦ e^{-xp}` of the Laplace transform on `ℝ≥0`, as
 and as a bundled bounded continuous function, together with its basic bounds and its
 integrability against finite measures. Its extended-nonnegative-valued integral against a measure
 is `TauCeti.laplaceTransformENN`. Applying this transform fibrewise to a transition kernel gives
-`TauCeti.Kernel.laplaceTransform`. This lightweight module is shared by the Chafaï
+`ProbabilityTheory.Kernel.laplaceTransform`. This lightweight module is shared by the Chafaï
 approximating-measure machinery and the Laplace-representation theory, which otherwise do not
 depend on each other.
 
@@ -24,7 +24,7 @@ depend on each other.
 * `TauCeti.laplaceKernelBoundedContinuous`: the kernel as a bounded continuous function.
 * `TauCeti.integrable_exp_neg_mul`: the kernel is integrable against any finite measure.
 * `TauCeti.laplaceTransformENN`: the extended-nonnegative-valued Laplace transform of a measure.
-* `TauCeti.Kernel.laplaceTransform`: the fibrewise Laplace transform
+* `ProbabilityTheory.Kernel.laplaceTransform`: the fibrewise Laplace transform
   `q ↦ ∫⁻ p, exp (-t p) ∂(κ q)` of a transition kernel `κ` into `ℝ≥0`.
 -/
 
@@ -124,33 +124,33 @@ end TauCeti
 
 /-! ## The fibrewise Laplace transform of a kernel -/
 
-namespace TauCeti.Kernel
+namespace ProbabilityTheory.Kernel
 
 variable {V : Type*} [MeasurableSpace V]
 
 /-- The **fibrewise Laplace transform** of a kernel `κ` from `V` to `ℝ≥0`: the function
 `q ↦ ∫⁻ p, exp (-t p) ∂(κ q)` on `V`. -/
-noncomputable def laplaceTransform (κ : ProbabilityTheory.Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
+noncomputable def laplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
     ℝ≥0∞ :=
   TauCeti.laplaceTransformENN (κ q) t
 
-/-- The defining formula for `TauCeti.Kernel.laplaceTransform`. -/
-theorem laplaceTransform_apply (κ : ProbabilityTheory.Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
+/-- The defining formula for `ProbabilityTheory.Kernel.laplaceTransform`. -/
+theorem laplaceTransform_apply (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
     laplaceTransform κ t q = TauCeti.laplaceTransformENN (κ q) t :=
   (rfl)
 
 @[fun_prop]
-theorem measurable_laplaceTransform (κ : ProbabilityTheory.Kernel V ℝ≥0) (t : ℝ≥0) :
+theorem measurable_laplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) :
     Measurable (laplaceTransform κ t) := by
-  unfold laplaceTransform laplaceTransformENN
+  unfold laplaceTransform TauCeti.laplaceTransformENN
   fun_prop
 
 /-- A Markov kernel has fibrewise Laplace transform `1` at time `0`. -/
 @[simp]
-theorem laplaceTransform_zero_of_isMarkovKernel (κ : ProbabilityTheory.Kernel V ℝ≥0)
+theorem laplaceTransform_zero_of_isMarkovKernel (κ : Kernel V ℝ≥0)
     [IsMarkovKernel κ] :
     laplaceTransform κ 0 = 1 := by
   funext q
-  rw [laplaceTransform_apply, laplaceTransformENN_zero, measure_univ, Pi.one_apply]
+  rw [laplaceTransform_apply, TauCeti.laplaceTransformENN_zero, measure_univ, Pi.one_apply]
 
-end TauCeti.Kernel
+end ProbabilityTheory.Kernel
