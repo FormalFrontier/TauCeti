@@ -66,42 +66,49 @@ namespace HeckeRing.GL2
 variable {N p : ℕ} [NeZero N] (k : ℤ)
 
 /-- **The Hecke operator `T_n` on `M_k(Γ₁(N))`.** It is the slash operator of the canonical
-double coset `Γ₁(N) · diag(1, n) · Γ₁(N)`. -/
-noncomputable def heckeTNat (n : ℕ) :
+double coset `Γ₁(N) · diag(1, n) · Γ₁(N)`.
+
+The `NeZero n` binder records the classical convention that Hecke operators are indexed by
+positive integers, and it is not optional: at `n = 0` the entry tuple `![1, 0]` fails the
+positivity side condition of `natDiagGL`, which then returns its junk value `1`, so the double
+coset degenerates to `Γ₁(N)` itself and the construction would silently be the identity operator
+rather than `T₀`. The binder is `_`-named because only the *statements* below use it — the body
+is the same slash operator either way, and it is the index that is being constrained. -/
+noncomputable def heckeTNat (n : ℕ) [_hn : NeZero n] :
     Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N n)
 
 /-- **The Hecke operator `T_n` on `S_k(Γ₁(N))`.** This is the cusp-form operator attached to
 the same double coset as `heckeTNat`; in particular, it records that `T_n` preserves
-cuspidality. -/
-noncomputable def heckeTCuspNat (n : ℕ) :
+cuspidality. The index is nonzero for the reason explained on `heckeTNat`. -/
+noncomputable def heckeTCuspNat (n : ℕ) [_hn : NeZero n] :
     Module.End ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N n)
 
 /-- The defining equation of `heckeTNat`. -/
-lemma heckeTNat_def (n : ℕ) :
+lemma heckeTNat_def (n : ℕ) [NeZero n] :
     heckeTNat (N := N) k n = heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N n) :=
   (rfl)
 
 /-- The defining equation of `heckeTCuspNat`. -/
-lemma heckeTCuspNat_def (n : ℕ) :
+lemma heckeTCuspNat_def (n : ℕ) [NeZero n] :
     heckeTCuspNat (N := N) k n = heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N n) :=
   (rfl)
 
 /-- On underlying functions, `T_n` is the slash sum of its defining double coset. -/
-@[simp] lemma coe_heckeTNat (n : ℕ)
+@[simp] lemma coe_heckeTNat (n : ℕ) [NeZero n]
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeTNat (N := N) k n f) = heckeSlashSum k (diagCosetGamma1 N n) f := by
   rw [heckeTNat_def, coe_heckeSlashGamma1ModularFormEnd]
 
 /-- On underlying functions, the cusp-form `T_n` is the same slash sum. -/
-@[simp] lemma coe_heckeTCuspNat (n : ℕ)
+@[simp] lemma coe_heckeTCuspNat (n : ℕ) [NeZero n]
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeTCuspNat (N := N) k n f) = heckeSlashSum k (diagCosetGamma1 N n) f := by
   rw [heckeTCuspNat_def, coe_heckeSlashGamma1CuspFormEnd]
 
 /-- **The classical `T_p` formula on modular forms, at every prime.** -/
-theorem coe_heckeTNat_prime (hp : p.Prime)
+theorem coe_heckeTNat_prime [NeZero p] (hp : p.Prime)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeTNat (N := N) k p f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpNat k p f) ∣[k] scaleRep p := by
@@ -109,7 +116,7 @@ theorem coe_heckeTNat_prime (hp : p.Prime)
   rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp]
 
 /-- **The classical `T_p` formula on cusp forms, at every prime.** -/
-theorem coe_heckeTCuspNat_prime (hp : p.Prime)
+theorem coe_heckeTCuspNat_prime [NeZero p] (hp : p.Prime)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeTCuspNat (N := N) k p f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpCuspNat k p f) ∣[k] scaleRep p := by
@@ -118,14 +125,14 @@ theorem coe_heckeTCuspNat_prime (hp : p.Prime)
 
 /-- At a positive index dividing the level, `T_p` is the upper-triangular operator. This is the
 operator modern sources denote by `U_p`. -/
-theorem heckeTNat_eq_upperTri (hpN : p ∣ N) :
+theorem heckeTNat_eq_upperTri [NeZero p] (hpN : p ∣ N) :
     heckeTNat (N := N) k p = heckeSlashUpperTriModularFormEnd k hpN := by
   unfold heckeTNat
   rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
 
 /-- At a positive index dividing the level, the cusp-form `T_p` is the upper-triangular
 operator. -/
-theorem heckeTCuspNat_eq_upperTri (hpN : p ∣ N) :
+theorem heckeTCuspNat_eq_upperTri [NeZero p] (hpN : p ∣ N) :
     heckeTCuspNat (N := N) k p = heckeSlashUpperTriCuspFormEnd k hpN := by
   unfold heckeTCuspNat
   rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
