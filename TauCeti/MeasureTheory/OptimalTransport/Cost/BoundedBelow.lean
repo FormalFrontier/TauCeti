@@ -77,8 +77,14 @@ variable (h : IntegrableSplitLowerBound c μ ν)
 def residual (z : X × Y) : ℝ≥0∞ :=
   (c z - (h.fst z.1 + h.snd z.2 : ℝ)).toENNReal
 
+/-- The characteristic formula for the residual of an integrable split lower bound. -/
+theorem residual_def (z : X × Y) :
+    h.residual z = (c z - (h.fst z.1 + h.snd z.2 : ℝ)).toENNReal :=
+  (rfl)
+
 /-- The residual is the exact nonnegative part of the normalized cost: adding the split lower
 bound back in `EReal` recovers the original cost, including when that cost is `∞`. -/
+@[simp]
 theorem coe_residual_add (z : X × Y) :
     (h.residual z : EReal) + (h.fst z.1 + h.snd z.2 : ℝ) = c z := by
   rw [residual, EReal.coe_toENNReal]
@@ -109,6 +115,14 @@ def transportCostBddBelow (c : X × Y → EReal) (μ : Measure X) (ν : Measure 
   ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν),
     ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
       ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal)
+
+/-- The characteristic formula for the bounded-below signed transport cost. -/
+theorem transportCostBddBelow_def :
+    transportCostBddBelow c μ ν h =
+      ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν),
+        ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
+          ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) :=
+  (rfl)
 
 /-- The signed transport cost is bounded above by the normalized cost of every feasible plan. -/
 theorem transportCostBddBelow_le (hπ : IsCoupling π μ ν)
@@ -176,6 +190,7 @@ private theorem normalizedPlanCost_eq
         ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) =
       ((∫⁻ z, k.residual z ∂π : ℝ≥0∞) : EReal) +
         ((∫ x, k.fst x ∂μ : ℝ) : EReal) + ((∫ y, k.snd y ∂ν : ℝ) : EReal) := by
+  -- Split the change of normalization into its positive and negative marginal parts.
   let fx : X → ℝ := fun x ↦ h.fst x - k.fst x
   let fy : Y → ℝ := fun y ↦ h.snd y - k.snd y
   let px : ℝ≥0∞ := ∫⁻ x, ENNReal.ofReal (fx x) ∂μ
@@ -196,6 +211,7 @@ private theorem normalizedPlanCost_eq
     hfx.neg.aestronglyMeasurable.aemeasurable.ennreal_ofReal
   have hnfym : AEMeasurable (fun y ↦ ENNReal.ofReal (-fy y)) ν :=
     hfy.neg.aestronglyMeasurable.aemeasurable.ennreal_ofReal
+  -- Pull all four parts back to the coupling through its two fixed marginals.
   have hpxmap : ∫⁻ z, ENNReal.ofReal (fx z.1) ∂π = px := by
     have hm : AEMeasurable (fun x ↦ ENNReal.ofReal (fx x)) π.fst := by
       rwa [hπ.fst_eq]
@@ -230,6 +246,7 @@ private theorem normalizedPlanCost_eq
     hnfxm.comp_quasiMeasurePreserving mpfst.quasiMeasurePreserving
   have hnfymp : AEMeasurable (fun z : X × Y ↦ ENNReal.ofReal (-fy z.2)) π :=
     hnfym.comp_quasiMeasurePreserving mpsnd.quasiMeasurePreserving
+  -- Integrate the pointwise residual balance after adjoining those four parts.
   have hres : (∫⁻ z, h.residual z ∂π) + px + py =
       (∫⁻ z, k.residual z ∂π) + nx + ny := by
     rw [← hpxmap, ← hpymap, ← hnxmap, ← hnymap,
@@ -254,6 +271,7 @@ private theorem normalizedPlanCost_eq
           ((nx.toReal + ny.toReal : ℝ) : EReal) := by
     simpa [EReal.coe_ennreal_add, EReal.coe_add, EReal.coe_ennreal_toReal, hpx, hnx, hpy, hny,
       add_assoc] using congrArg (fun t : ℝ≥0∞ ↦ (t : EReal)) hres
+  -- Recombine the positive/negative parts with the finite marginal integrals.
   calc
     ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
           ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) =
