@@ -24,8 +24,10 @@ it is the free module on grid states over the polynomial ring `R[V₀, …, V_{n
 
 runs over the empty rectangles `r` from `x` to `y` carrying no `X`-marking, each weighted by the
 monomial `V^{O(r)} = ∏ V_c` over the columns whose `O`-marking the rectangle covers. This is the
-theory that survives (de)stabilization and whose homology is a module over `R[U]`; the fully
-blocked and simply blocked theories are its specializations at `V = 0`.
+theory that survives (de)stabilization and whose homology is a module over `R[U]`. The simply
+blocked theory is obtained by setting one selected variable, conventionally `V₀`, to zero; setting
+every variable to zero gives the square-centred fully blocked count once the canonical
+`GridRectangle.AvoidsMarkings` predicate uses that same marking region.
 
 Two conventions are fixed here.
 
@@ -240,9 +242,9 @@ theorem unblockedCoefficient_self (x : GridState n) : G.unblockedCoefficient R x
 /-- The constant term of a matrix coefficient of the unblocked differential counts those
 contributing rectangles that carry no `O`-marking either.
 
-Those are exactly the rectangles a fully blocked differential counts, once "carries a marking" is
-read in the square-centred region `GridRectangle.coveredSquares`; so the fully blocked theory is
-the specialization of this one at `V = 0`. -/
+This is the square-centred count obtained by setting every variable to zero. It is not identified
+here with the current canonical fully blocked coefficient, whose `GridRectangle.AvoidsMarkings`
+predicate still uses the smaller open interior. -/
 theorem constantCoeff_unblockedCoefficient (x y : GridState n) :
     constantCoeff (G.unblockedCoefficient R x y) =
       (((G.unblockedRectangles x y).filter fun r =>
