@@ -85,6 +85,11 @@ variable (A : Action G N)
 def act {X : C} (g : X ⟶ G) (n : X ⟶ N) : X ⟶ N :=
   lift g n ≫ A.hom
 
+/-- The action on generalized points is induced by the action morphism. -/
+theorem act_def {X : C} (g : X ⟶ G) (n : X ⟶ N) :
+    A.act g n = lift g n ≫ A.hom :=
+  (rfl)
+
 @[simp]
 theorem one_act_apply {X : C} (n : X ⟶ N) : A.act (1 : X ⟶ G) n = n :=
   A.one_act X n
@@ -316,6 +321,46 @@ theorem pointMulEquiv_comp_inr {X : C} (g : X ⟶ G) :
     A.pointIso.inv.app (op X) (SemidirectProduct.inr g) at h
   rw [h]
   exact A.pointIso.inv_hom_id_app_apply (op X) (SemidirectProduct.inr g)
+
+/-- The first projection of the canonical inclusion of the normal factor is the identity. -/
+@[simp, reassoc]
+theorem inl_hom_fst :
+    letI := A.semidirectProductGrpObj
+    A.inl.hom.hom ≫ fst N G = 𝟙 N := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.left
+    (A.pointMulEquiv_comp_inl (X := N) (𝟙 N))
+  simpa only [pointMulEquiv_left, SemidirectProduct.left_inl, Category.id_comp] using h
+
+/-- The second projection of the canonical inclusion of the normal factor is the unit. -/
+@[simp, reassoc]
+theorem inl_hom_snd :
+    letI := A.semidirectProductGrpObj
+    A.inl.hom.hom ≫ snd N G = (1 : N ⟶ G) := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.right
+    (A.pointMulEquiv_comp_inl (X := N) (𝟙 N))
+  simpa only [pointMulEquiv_right, SemidirectProduct.right_inl, Category.id_comp] using h
+
+/-- The first projection of the canonical inclusion of the acting factor is the unit. -/
+@[simp, reassoc]
+theorem inr_hom_fst :
+    letI := A.semidirectProductGrpObj
+    A.inr.hom.hom ≫ fst N G = (1 : G ⟶ N) := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.left
+    (A.pointMulEquiv_comp_inr (X := G) (𝟙 G))
+  simpa only [pointMulEquiv_left, SemidirectProduct.left_inr, Category.id_comp] using h
+
+/-- The second projection of the canonical inclusion of the acting factor is the identity. -/
+@[simp, reassoc]
+theorem inr_hom_snd :
+    letI := A.semidirectProductGrpObj
+    A.inr.hom.hom ≫ snd N G = 𝟙 G := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.right
+    (A.pointMulEquiv_comp_inr (X := G) (𝟙 G))
+  simpa only [pointMulEquiv_right, SemidirectProduct.right_inr, Category.id_comp] using h
 
 /-- On generalized points, the canonical projection is `SemidirectProduct.rightHom`. -/
 @[simp]

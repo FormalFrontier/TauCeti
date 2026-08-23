@@ -73,6 +73,12 @@ noncomputable def Gamma0Image : Subgroup (GL (Fin 2) ℚ) :=
     g ∈ Gamma0Image N ↔ ∃ σ ∈ Gamma0 N, mapGL ℚ σ = g := by
   rw [Gamma0Image, Subgroup.mem_map]
 
+/-- `Gamma0Image N` unfolded. Stated here, in the file where the definition lives, because
+downstream modules cannot see through the `def`: without this lemma a containment proved for
+`Gamma0Image N` cannot be reused where `(Gamma0 N).map (mapGL ℚ)` is expected. -/
+lemma Gamma0Image_def : Gamma0Image N = (Gamma0 N).map (mapGL ℚ) := by
+  rw [Gamma0Image]
+
 /-- `Γ₀(N) ≤ Δ₀(N)`: an element of `Γ₀(N)` has `ad ≡ 1` modulo `N`, since `c ≡ 0` and the
 determinant is one, so its upper-left entry is a unit — which is exactly what `Δ₀(N)` asks.
 This containment is also what puts the diamond operators into the Hecke ring of `Γ₁(N)`. -/
@@ -85,6 +91,12 @@ lemma Gamma0Image_le_Delta0 : (Gamma0Image N).toSubmonoid ≤ Delta0 N := by
   · rw [mapGL_coe_matrix, (SpecialLinearGroup.map (algebraMap ℤ ℚ) σ).prop]
     exact one_pos
   · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hσ)
+
+/-- `Γ₀(N)` lands in `Δ₀(N)`: its elements are integral of determinant one, with lower-left
+entry divisible by `N` and upper-left entry a unit because `ad ≡ 1`. -/
+lemma mapGL_mem_Delta0 (γ : Gamma0 N) :
+    (mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ Delta0 N :=
+  Gamma0Image_le_Delta0 N ((mem_Gamma0Image_iff N).mpr ⟨(γ : SL(2, ℤ)), γ.2, rfl⟩)
 
 variable [NeZero N]
 
