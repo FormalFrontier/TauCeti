@@ -205,6 +205,7 @@ theorem comp_id (f : Hom source target) : f.comp (id source) = f := by
   rfl
 
 /-- Associativity of composition of morphisms of mixed Hodge structures. -/
+@[simp]
 theorem comp_assoc {V₄ℤ V₄ℚ V₄ℂ : Type*} [AddCommGroup V₄ℤ] [AddCommGroup V₄ℚ] [Module ℚ V₄ℚ]
     [AddCommGroup V₄ℂ] [Module ℂ V₄ℂ]
     {ι₄ℚ : V₄ℤ →ₗ[ℤ] V₄ℚ} {ι₄ℂ : V₄ℤ →ₗ[ℤ] V₄ℂ}
@@ -391,6 +392,20 @@ theorem comp_add (g : Hom target third) (f h : Hom source target) :
     g.comp (f + h) = g.comp f + g.comp h := by
   ext x
   exact g.toRatLinearMap.map_add (f.toRatLinearMap x) (h.toRatLinearMap x)
+
+/-- A rational multiple in the outer factor can be pulled out of a composition. -/
+@[simp]
+theorem smul_comp (q : ℚ) (g : Hom target third) (f : Hom source target) :
+    (q • g).comp f = q • g.comp f := by
+  ext x
+  rfl
+
+/-- A rational multiple in the inner factor can be pulled out of a composition. -/
+@[simp]
+theorem comp_smul (g : Hom target third) (q : ℚ) (f : Hom source target) :
+    g.comp (q • f) = q • g.comp f := by
+  ext x
+  exact g.toRatLinearMap.map_smul q (f.toRatLinearMap x)
 
 /-- Composing with a zero morphism on the left gives zero. -/
 @[simp]
