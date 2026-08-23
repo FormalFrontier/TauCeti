@@ -66,7 +66,9 @@ theorem rTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) 
   have hcd : c - d = 0 := by omega
   rw [hcd, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
 
-/-- Cutting the right block again gives the sum indexed by the relative second cut position. -/
+/-- Cutting the right block again gives the sum over the absolute position `q` of the second cut
+inside the length-`b` block; inside the right block that cut sits at the relative position
+`q - c`. -/
 theorem lTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
     (hc : c ∈ Finset.Ioo 0 b) :
     LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)

@@ -203,9 +203,8 @@ theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :
       _ = ∑ c ∈ Finset.Ico (0 + 1) (b - 1 + 1), g c :=
         Finset.sum_Ico_add g 0 (b - 1) 1
       _ = ∑ c ∈ Finset.Ioo 0 b, g c := by
-        rw [Nat.zero_add, Nat.sub_add_cancel (by omega)]
-        change ∑ c ∈ Finset.Ico (Order.succ 0) b, g c = _
-        rw [Finset.Ico_succ_left_eq_Ioo]
+        rw [Nat.sub_add_cancel (by omega), ← Order.succ_eq_add_one (0 : ℕ),
+          Finset.Ico_succ_left_eq_Ioo]
   · rw [subword_eq_zero_of_lt_add R x (by omega), map_zero]
     symm
     refine Finset.sum_eq_zero fun c hc ↦ ?_
