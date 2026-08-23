@@ -126,6 +126,7 @@ theorem deconcatenation_of (n : {n : ℕ // 0 < n}) (x : TensorPower R n.1 M) :
   simp [deconcatenation, of]
 
 /-- On tensor words of length one, reduced deconcatenation is zero. -/
+@[simp]
 theorem deconcatenation_of_length_one (x : TensorPower R 1 M) :
     deconcatenation R M (of R M ⟨1, by omega⟩ x) = 0 := by
   rw [deconcatenation_of]

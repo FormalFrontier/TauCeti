@@ -47,7 +47,7 @@ namespace ReducedTensorWords
 variable (R : Type uR) {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
 
 /-- Cutting the left block again gives the sum over all possible earlier cut positions. -/
-theorem rTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
+private theorem rTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
     (hc : c ∈ Finset.Ioo 0 b) :
     TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
         (ReducedTensorWords R M)
@@ -69,7 +69,7 @@ theorem rTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) 
 /-- Cutting the right block again gives the sum over the absolute position `q` of the second cut
 inside the length-`b` block; inside the right block that cut sits at the relative position
 `q - c`. -/
-theorem lTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
+private theorem lTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
     (hc : c ∈ Finset.Ioo 0 b) :
     LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
         (subword R y a c ⊗ₜ[R] subword R y (a + c) (b - c)) =
