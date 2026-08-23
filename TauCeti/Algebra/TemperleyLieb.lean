@@ -8,12 +8,11 @@ module
 public import Mathlib.Algebra.FreeAlgebra
 public import Mathlib.Algebra.RingQuot
 public import Mathlib.LinearAlgebra.Matrix.Notation
-public import TauCeti.GroupTheory.SpecificGroups.Braid
 import Mathlib.Tactic.LinearCombination
 import Mathlib.Tactic.Module
 
 /-!
-# The Temperley-Lieb algebra and the Jones representation of the braid group
+# The Temperley-Lieb algebra
 
 The Temperley-Lieb algebra `TemperleyLieb R δ n` on `n` strands, over a commutative semiring `R` and
 with loop value `δ : R`, is the associative unital `R`-algebra on generators `e 0, …, e (n - 2)`
@@ -30,40 +29,22 @@ records the isotopy that straightens a zig-zag.
 The algebra is built here as a quotient of the free algebra by the relations, which is what makes
 the universal property `TauCeti.TemperleyLieb.lift` available: an assignment of the
 generators satisfying the three relations extends uniquely to an algebra map out of
-`TemperleyLieb R δ n`. That universal property is the whole point of the construction, and it is
-what the Jones representation below is built from.
-
-## The Jones representation
-
-Jones' discovery is that for `δ = -(a ^ 2 + a⁻¹ ^ 2)` with `a : Rˣ` a unit, the assignment
-
-`σ i ↦ a • 1 + a⁻¹ • e i`
-
-satisfies the braid relations, so it defines a representation
-`TauCeti.TemperleyLieb.jones` of the braid group `TauCeti.BraidGroup n` in the units of
-`TemperleyLieb R (jonesDelta a) n`. This is exactly the Kauffman-bracket expansion of a crossing
-as `a` times the identity tangle plus `a⁻¹` times the cap-cup tangle. At this loop value the
-coefficient-swapped element `a⁻¹ • 1 + a • e i` is its inverse. Composing this representation
-with the Markov trace on the Temperley-Lieb
-algebra is the braid route to the Jones polynomial; the trace is not built here.
+`TemperleyLieb R δ n`. That universal property is the whole point of the construction.
 
 ## Indexing convention
 
 `TemperleyLieb R δ n` is indexed by the number `n` of *strands*, so its generators are indexed by
-`Fin (n - 1)`, exactly matching `TauCeti.BraidGroup n` and its generators
-`TauCeti.BraidGroup.sigma`. In particular `TemperleyLieb R δ 0` and `TemperleyLieb R δ 1` are the
-base ring `R` (`TauCeti.TemperleyLieb.algEquivOfLeOne`), matching the triviality of
-`BraidGroup 0` and `BraidGroup 1`, and the adjacency relation is vacuous for `n ≤ 2`.
+`Fin (n - 1)`. In particular `TemperleyLieb R δ 0` and `TemperleyLieb R δ 1` are the base ring `R`
+(`TauCeti.TemperleyLieb.algEquivOfLeOne`), and the adjacency relation is vacuous for `n ≤ 2`.
 
 ## Non-degeneracy
 
-A presentation is only worth having if it does not collapse. Three theorems here rule that out:
+A presentation is only worth having if it does not collapse. Two theorems here rule that out:
 the base ring embeds (`TauCeti.TemperleyLieb.algebraMap_injective`, from the
 augmentation killing every generator), the generator of the two-strand algebra is nonzero over a
 nontrivial base ring (`TauCeti.TemperleyLieb.e_ne_zero_two`, from an explicit
-two-dimensional representation), and the Jones representation of `BraidGroup 2` is nontrivial
-(`TauCeti.TemperleyLieb.jones_sigma_ne_one_two`). The last two assume
-`[Nontrivial R]`, as they must: over the zero ring the whole algebra is zero.
+two-dimensional representation). The latter assumes `[Nontrivial R]`, as it must: over the zero
+ring the whole algebra is zero.
 
 That `e i ≠ 0` for *every* `n` over a nontrivial base ring — indeed that `TemperleyLieb R δ n` is
 free of rank the Catalan number `catalan n` on the planar-matching diagrams, so that `TL_1` has
@@ -84,10 +65,6 @@ two-strand case above is the part of it that the presentation alone can see.
   base ring.
 * `TauCeti.TemperleyLieb.crossing`: the Kauffman-bracket expansion `α • 1 + β • e i`
   of a crossing.
-* `TauCeti.TemperleyLieb.jonesUnit`: a crossing as a unit, at the Jones loop value.
-* `TauCeti.TemperleyLieb.jonesDelta`: the loop value `-(a ^ 2 + a⁻¹ ^ 2)`.
-* `TauCeti.TemperleyLieb.jones`: the Jones representation
-  `BraidGroup n →* (TemperleyLieb R (jonesDelta a) n)ˣ`.
 
 ## Main results
 
@@ -99,9 +76,8 @@ two-strand case above is the part of it that the presentation alone can see.
 * `TauCeti.TemperleyLieb.algebraMap_injective`: the base ring embeds.
 * `TauCeti.TemperleyLieb.crossing_mul_crossing_swap_eq_one` and
   `TauCeti.TemperleyLieb.crossing_braid`: a crossing is invertible and crossings satisfy the braid
-  relation when the loop value is `-(α ^ 2 + β ^ 2)`.
-* `TauCeti.TemperleyLieb.e_ne_zero_two` and
-  `TauCeti.TemperleyLieb.jones_sigma_ne_one_two`: non-degeneracy on two strands.
+  relation under their respective scalar hypotheses.
+* `TauCeti.TemperleyLieb.e_ne_zero_two`: non-degeneracy on two strands.
 
 ## References
 
@@ -112,6 +88,8 @@ two-strand case above is the part of it that the presentation alone can see.
 * W. B. R. Lickorish, *An Introduction to Knot Theory*, Springer GTM 175 (1997), Chapter 3
   (the Kauffman bracket and Jones polynomial).
 * L. H. Kauffman, *State models and the Jones polynomial*, Topology 26 (1987), 395-407.
+* The quotient presentation and universal-property API follow the construction pattern in
+  `Mathlib.LinearAlgebra.CliffordAlgebra.Basic`.
 
 This is Layer 4 ("knot theory, done properly") of the geometric-topology roadmap
 (`TauCetiRoadmap/GeometricTopology/README.md`), whose knot-polynomial bullet asks for the Jones
@@ -332,6 +310,7 @@ plus `β` times the tangle that caps off the two strands. -/
 def crossing (α β : R) (i : Fin (n - 1)) : TemperleyLieb R δ n := α • 1 + β • e δ i
 
 /-- A crossing is the indicated linear combination of the identity and one generator. -/
+@[simp]
 theorem crossing_def (α β : R) (i : Fin (n - 1)) :
     crossing δ α β i = α • 1 + β • e δ i := (rfl)
 
@@ -374,105 +353,33 @@ theorem crossing_mul_crossing_swap_eq_one (hαβ : α * β = 1) (hδ : δ = -(α
   · linear_combination hαβ
   · linear_combination (α * β) * hδ + (-(α ^ 2 + β ^ 2)) * hαβ
 
-/-- The triple product of crossings on two strands sharing a strand, in a form visibly symmetric
-in `i` and `j`. This is where the loop value earns its keep a second time: the coefficient of
-`e i` collapses from `2 α ^ 2 β + α β ^ 2 δ + β ^ 3` to `α` exactly because
-`δ = -(α ^ 2 + β ^ 2)`. -/
-theorem crossing_mul_crossing_mul_crossing (hαβ : α * β = 1)
-    (hδ : δ = -(α ^ 2 + β ^ 2)) {i j : Fin (n - 1)}
+/-- The triple product of crossings on two adjacent pairs of strands, reduced using the
+Temperley-Lieb relations to a linear combination of five standard monomials. -/
+theorem crossing_mul_crossing_mul_crossing {i j : Fin (n - 1)}
     (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     crossing δ α β i * crossing δ α β j * crossing δ α β i
-      = (α ^ 3) • 1 + α • e δ i + α • e δ j + β • (e δ i * e δ j) + β • (e δ j * e δ i) := by
+      = (α ^ 3) • 1 + (2 * α ^ 2 * β + α * β ^ 2 * δ + β ^ 3) • e δ i
+        + (α ^ 2 * β) • e δ j + (α * β ^ 2) • (e δ i * e δ j)
+        + (α * β ^ 2) • (e δ j * e δ i) := by
   have hEF : e δ i * e δ j * e δ i = e δ i := e_mul_e_mul_e h
   rw [crossing_mul_crossing, crossing_def]
   simp only [add_mul, mul_add, smul_mul_assoc, mul_smul_comm, smul_smul, one_mul, mul_one,
     hEF, e_mul_self]
   match_scalars
-  · ring
-  · linear_combination α * hαβ
-  · linear_combination (α * β ^ 2) * hδ + (-(α ^ 2 * β) + α - β ^ 3) * hαβ
-  · linear_combination β * hαβ
-  · linear_combination β * hαβ
+  all_goals ring
 
-/-- Crossings on two strands sharing a strand satisfy the braid relation. -/
-theorem crossing_braid (hαβ : α * β = 1) (hδ : δ = -(α ^ 2 + β ^ 2)) {i j : Fin (n - 1)}
+/-- Crossings on two strands sharing a strand satisfy the braid relation when their coefficients
+obey the natural polynomial relation. -/
+theorem crossing_braid (hpoly : β * (α ^ 2 + α * β * δ + β ^ 2) = 0)
+    {i j : Fin (n - 1)}
     (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     crossing δ α β i * crossing δ α β j * crossing δ α β i
       = crossing δ α β j * crossing δ α β i * crossing δ α β j := by
-  rw [crossing_mul_crossing_mul_crossing hαβ hδ h,
-    crossing_mul_crossing_mul_crossing hαβ hδ h.symm]
+  have hcoeff : 2 * α ^ 2 * β + α * β ^ 2 * δ + β ^ 3 = α ^ 2 * β := by
+    linear_combination hpoly
+  rw [crossing_mul_crossing_mul_crossing h, crossing_mul_crossing_mul_crossing h.symm, hcoeff]
   abel
 
 end Kauffman
-
-section Jones
-
-/-- The loop value `-(a ^ 2 + a⁻¹ ^ 2)` at which the Jones representation is defined. -/
-def jonesDelta (a : Rˣ) : R := -((a : R) ^ 2 + ((a⁻¹ : Rˣ) : R) ^ 2)
-
-/-- The defining equation of the Jones loop value. -/
-theorem jonesDelta_def (a : Rˣ) :
-    jonesDelta a = -((a : R) ^ 2 + ((a⁻¹ : Rˣ) : R) ^ 2) := (rfl)
-
-/-- The Jones loop value is symmetric in `a` and `a⁻¹`, which is what lets the two coefficients
-of a crossing be swapped. -/
-theorem jonesDelta_def_swap (a : Rˣ) :
-    jonesDelta a = -((((a⁻¹ : Rˣ) : R)) ^ 2 + (a : R) ^ 2) := by
-  rw [jonesDelta]
-  ring
-
-/-- The Kauffman-bracket expansion of an elementary braid, as a unit of the Temperley-Lieb
-algebra: `a • 1 + a⁻¹ • e i`, with inverse `a⁻¹ • 1 + a • e i`. -/
-def jonesUnit (a : Rˣ) (i : Fin (n - 1)) : (TemperleyLieb R (jonesDelta a) n)ˣ where
-  val := crossing (jonesDelta a) (a : R) ((a⁻¹ : Rˣ) : R) i
-  inv := crossing (jonesDelta a) ((a⁻¹ : Rˣ) : R) (a : R) i
-  val_inv := crossing_mul_crossing_swap_eq_one a.mul_inv (jonesDelta_def a) i
-  inv_val := crossing_mul_crossing_swap_eq_one a.inv_mul (jonesDelta_def_swap a) i
-
-/-- The value of the Kauffman-bracket unit. -/
-@[simp]
-theorem jonesUnit_val (a : Rˣ) (i : Fin (n - 1)) :
-    ((jonesUnit a i : (TemperleyLieb R (jonesDelta a) n)ˣ) : TemperleyLieb R (jonesDelta a) n)
-      = crossing (jonesDelta a) (a : R) ((a⁻¹ : Rˣ) : R) i := (rfl)
-
-/-- The value of the inverse of the Kauffman-bracket unit. -/
-@[simp]
-theorem jonesUnit_inv_val (a : Rˣ) (i : Fin (n - 1)) :
-    (((jonesUnit a i : (TemperleyLieb R (jonesDelta a) n)ˣ)⁻¹ :
-        (TemperleyLieb R (jonesDelta a) n)ˣ) : TemperleyLieb R (jonesDelta a) n)
-      = crossing (jonesDelta a) ((a⁻¹ : Rˣ) : R) (a : R) i := (rfl)
-
-variable (n) in
-/-- The Jones representation of the braid group in the units of the Temperley-Lieb algebra: the
-elementary braid `σ i` goes to the Kauffman-bracket expansion `a • 1 + a⁻¹ • e i` of a crossing.
-Composing it with the Markov trace is the braid route to the Jones polynomial. -/
-def jones (a : Rˣ) : BraidGroup n →* (TemperleyLieb R (jonesDelta a) n)ˣ :=
-  BraidGroup.lift (fun i => jonesUnit a i)
-    (fun h => Units.ext <| by
-      simp only [Units.val_mul, jonesUnit_val]
-      exact crossing_mul_crossing_comm _ _ _ _ h)
-    (fun h => Units.ext <| by
-      simp only [Units.val_mul, jonesUnit_val]
-      exact crossing_braid a.mul_inv (jonesDelta_def a) h)
-
-/-- The Jones representation takes an elementary braid to the Kauffman-bracket unit. -/
-@[simp]
-theorem jones_sigma (a : Rˣ) (i : Fin (n - 1)) :
-    jones n a (BraidGroup.sigma i) = jonesUnit a i :=
-  BraidGroup.lift_sigma _ _ _ i
-
-/-- The Jones representation of the two-strand braid group is nontrivial: the elementary braid
-does not go to the identity. -/
-theorem jones_sigma_ne_one_two [Nontrivial R] (a : Rˣ) (i : Fin (2 - 1)) :
-    jones 2 a (BraidGroup.sigma i) ≠ 1 := by
-  intro h
-  have hval : (a : R) • (1 : TemperleyLieb R (jonesDelta a) 2)
-      + ((a⁻¹ : Rˣ) : R) • e (jonesDelta a) i = 1 := by
-    rw [← crossing_def, ← jonesUnit_val, ← jones_sigma, h, Units.val_one]
-  have hone : (1 : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 := Matrix.one_apply_ne (by decide)
-  have hmat := congrArg (fun x => twoStrandRep (jonesDelta a) x 1 0) hval
-  simp [hone] at hmat
-
-end Jones
 
 end TauCeti.TemperleyLieb
