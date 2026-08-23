@@ -63,7 +63,8 @@ triangulated.
 * `TauCeti.TriangulatedK0.shiftZPow_of_shift`: the grading shift and the suspension act on
   triangulated `K₀` by commuting operators, the suspension acting by the sign `(-1)ⁿ`.
 * `TauCeti.TriangulatedK0.shiftZPow_apply_of_iso_shiftFunctor`: a grading shift isomorphic to the
-  suspension acts by `(-1)ⁿ`, so the action is neither trivial nor free in general.
+  suspension acts by `(-1)ⁿ`, so the action factors through the parity of `n`; it is never free,
+  and it is nontrivial whenever some class is not its own negative.
 * `TauCeti.GradedExactStructure.fromSplit_shiftZPow` and
   `TauCeti.TriangulatedK0.fromSplit_shiftZPow`: the comparisons out of graded split `K₀` are
   equivariant.
@@ -624,9 +625,11 @@ theorem mapEquiv_symm_apply_of_iso_shiftFunctor (h : e.functor ≅ shiftFunctor 
   rw [mapEquiv_apply_of_iso_shiftFunctor e h, neg_neg]
 
 /-- **The `ℤ`-action of a grading shift isomorphic to the suspension is the sign action**,
-`[M{n}] = (-1)ⁿ[M]`.  So the action on triangulated `K₀` is in general neither trivial nor free:
-this one has order two.  Contrast `TauCeti.GradedExactStructure.shiftZPow`, where no such
-collapse is available, exact `K₀` having no suspension to be isomorphic to. -/
+`[M{n}] = (-1)ⁿ[M]`.  The generator acts by negation, so the action factors through the parity of
+`n`: it is never free, and it is nontrivial exactly when some class is not its own negative — on
+a `K₀` of exponent two, negation is the identity and the action collapses.  Contrast
+`TauCeti.GradedExactStructure.shiftZPow`, where no such factorization is available, exact `K₀`
+having no suspension to be isomorphic to. -/
 theorem shiftZPow_apply_of_iso_shiftFunctor (h : e.functor ≅ shiftFunctor C (1 : ℤ)) (n : ℤ)
     (x : TriangulatedK0 C) : shiftZPow e n x = (n.negOnePow : ℤ) • x := by
   have hpred : ∀ m : ℤ, (m - 1).negOnePow = -m.negOnePow := fun m => by
