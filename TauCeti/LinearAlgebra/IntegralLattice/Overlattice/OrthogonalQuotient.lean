@@ -267,7 +267,6 @@ theorem discriminantOrthogonalQuotientIsometry_apply
 
 /-- **The representative formula.** The comparison isometry sends the class in `A_M` of a dual
 vector of `M` to the class in `H⊥ / H` of its discriminant class in `A_L`. -/
-@[simp]
 theorem discriminantOrthogonalQuotientIsometry_mk
     (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
     discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y) =
