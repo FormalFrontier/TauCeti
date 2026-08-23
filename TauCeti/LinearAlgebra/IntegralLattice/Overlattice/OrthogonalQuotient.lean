@@ -333,19 +333,24 @@ theorem discriminantOrthogonalQuotientIsometryOfSubgroup_mk (hL : L.IsEven)
         (L.discriminantQuadraticModule hL).orthogonalQuotientMk H hH
           ⟨hM.isIntegral.dualClassHom y,
             by
-              change hM.isIntegral.dualClassHom y ∈
-                L.discriminantBilinearModule.orthogonalComplement H
-              simpa only [L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup] using
-                hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩ := by
+              have hmem := hM.isIntegral.dualClassHom_mem_orthogonalComplement y
+              rw [L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup] at hmem
+              exact hmem⟩ := by
   dsimp only
   intro y
   let hM := (L.isEven_intermediateCarrierOfDiscriminantSubgroup_iff hL H).mpr hH
   rw [discriminantOrthogonalQuotientIsometryOfSubgroup]
-  change ((L.discriminantQuadraticModule hL).orthogonalQuotientCongr
-      (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
-      (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H))
-        (discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y)) = _
-  rw [discriminantOrthogonalQuotientIsometry_mk]
+  rw [show
+    ((discriminantOrthogonalQuotientIsometry hL hM).trans
+      ((L.discriminantQuadraticModule hL).orthogonalQuotientCongr
+        (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
+        (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)))
+          (Submodule.Quotient.mk y) =
+      (L.discriminantQuadraticModule hL).orthogonalQuotientCongr
+        (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
+        (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)
+        (discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y)) by rfl,
+    discriminantOrthogonalQuotientIsometry_mk]
   exact (L.discriminantQuadraticModule hL).orthogonalQuotientCongr_orthogonalQuotientMk
     (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
     (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)
