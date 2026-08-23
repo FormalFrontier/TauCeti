@@ -76,17 +76,20 @@ theorem intervalIntegrable_rpow_mul_one_sub_rpow (ha : 0 < a) (hb : 0 < b) {u v 
       refine (intervalIntegral.intervalIntegrable_rpow' (by linarith)).mul_continuousOn ?_
       refine ContinuousOn.rpow_const (by fun_prop) fun t ht => Or.inl ?_
       rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1 / 2)] at ht
-      exact sub_ne_zero_of_ne (show t < 1 by linarith [ht.2]).ne'
+      have ht1 : t < 1 := by linarith [ht.2]
+      exact sub_ne_zero_of_ne ht1.ne'
     have hright : IntervalIntegrable (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1))
         volume (1 / 2) 1 := by
       have hbase : IntervalIntegrable (fun t : ℝ => (1 - t) ^ (b - 1)) volume 1 (1 / 2) := by
         have h := (intervalIntegral.intervalIntegrable_rpow' (a := 0) (b := 1 / 2)
           (r := b - 1) (by linarith)).comp_sub_left 1
-        rwa [sub_zero, show (1 : ℝ) - 1 / 2 = 1 / 2 by norm_num] at h
+        have hhalf : (1 : ℝ) - 1 / 2 = 1 / 2 := by norm_num
+        rwa [sub_zero, hhalf] at h
       refine (hbase.continuousOn_mul ?_).symm
       refine ContinuousOn.rpow_const (by fun_prop) fun t ht => Or.inl ?_
       rw [uIcc_of_ge (by norm_num : (1 / 2 : ℝ) ≤ 1)] at ht
-      exact (show (0 : ℝ) < t by linarith [ht.1]).ne'
+      have ht0 : (0 : ℝ) < t := by linarith [ht.1]
+      exact ht0.ne'
     exact hleft.trans hright
   refine key.mono_set (uIcc_subset_uIcc ?_ ?_) <;>
     rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
@@ -383,10 +386,10 @@ theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
     · rw [Real.one_rpow, Real.one_rpow, sub_self, Real.zero_rpow hb.ne']
       ring
     · have h1t : (0 : ℝ) < 1 - t := by linarith
-      rw [show b = b - 1 + 1 by ring, Real.rpow_add h1t, Real.rpow_one]
-      nth_rewrite 3 [show a = a - 1 + 1 by ring]
-      rw [Real.rpow_add ht0, Real.rpow_one]
-      ring_nf
+      have hapow : t ^ (a - 1) = t ^ a / t := Real.rpow_sub_one ht0.ne' a
+      have hbpow : (1 - t) ^ (b - 1) = (1 - t) ^ b / (1 - t) := Real.rpow_sub_one h1t.ne' b
+      rw [hapow, hbpow]
+      field_simp
   -- the fundamental theorem of calculus applied to `t ^ a * (1 - t) ^ b`
   have hftc : ∫ t in (0 : ℝ)..x, (a * (t ^ (a - 1) * (1 - t) ^ b) -
       b * (t ^ a * (1 - t) ^ (b - 1))) = x ^ a * (1 - x) ^ b := by
@@ -397,7 +400,8 @@ theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
         (a * (t ^ (a - 1) * (1 - t) ^ b) - b * (t ^ a * (1 - t) ^ (b - 1))) (Ioi t) t := by
       intro t ht
       have ht0 : t ≠ 0 := ht.1.ne'
-      have h1t : (1 : ℝ) - t ≠ 0 := sub_ne_zero_of_ne (show t < 1 by linarith [ht.2]).ne'
+      have ht1 : t < 1 := by linarith [ht.2]
+      have h1t : (1 : ℝ) - t ≠ 0 := sub_ne_zero_of_ne ht1.ne'
       have h₁ : HasDerivAt (fun t : ℝ => t ^ a) (a * t ^ (a - 1)) t :=
         Real.hasDerivAt_rpow_const (Or.inl ht0)
       have h₂ : HasDerivAt (fun t : ℝ => (1 - t) ^ b) (b * (1 - t) ^ (b - 1) * (-1)) t :=
