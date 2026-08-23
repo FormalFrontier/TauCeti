@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.Submodule.Map
 public import Mathlib.Data.Complex.Basic
+public import Mathlib.LinearAlgebra.Quotient.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Map
 public import Mathlib.RingTheory.IsTensorProduct
 
@@ -28,6 +29,10 @@ complexification models.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
   module.
 * `TauCeti.Hodge.Conjugation.restrict`: the conjugation induced on a stable complex subspace.
+* `TauCeti.Hodge.Conjugation.quotient`: the conjugation induced on the quotient by a stable
+  complex subspace.
+* `TauCeti.Hodge.Conjugation.map_comap_eq_comap_map`: an equivalence intertwining two conjugations
+  exchanges conjugation with taking preimages of subspaces.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
 * `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
   complexification models.
@@ -78,18 +83,16 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
 
-/-- A conjugation restricted to a stable complex subspace is involutive. -/
-private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
-    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
-    Function.Involutive (ω.toEquiv.toLinearMap.restrict hU) := fun x ↦ by
-  ext
-  simp
+/-- The conjugation induced on a complex subspace stable under a given conjugation.
 
-/-- The conjugation induced on a complex subspace stable under a given conjugation. -/
+It is `@[expose]`d so that a conjugation built from it — such as the one induced on a graded
+piece of a filtration — remains definitionally the ambient one on representatives. -/
+@[expose]
 noncomputable def restrict (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation U where
-  toEquiv := LinearEquiv.ofInvolutive _ (ω.restrict_involutive hU)
-  involutive := ω.restrict_involutive hU
+  toEquiv := LinearEquiv.ofInvolutive (ω.toEquiv.toLinearMap.restrict hU)
+    fun x ↦ Subtype.ext (ω.apply_apply (x : W))
+  involutive x := Subtype.ext (ω.apply_apply (x : W))
 
 /-- A restricted conjugation acts as the ambient one. -/
 @[simp]
@@ -108,6 +111,44 @@ theorem map_restrict_comap_subtype (ω : Conjugation W) {U : Submodule ℂ W}
       (A.map ω.toEquiv.toLinearMap).comap U.subtype := by
   ext x
   simp
+
+/-- A linear equivalence intertwining two conjugations exchanges conjugating a preimage with
+taking the preimage of the conjugate. -/
+theorem map_comap_eq_comap_map {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+    (ω : Conjugation W) (ω' : Conjugation W') (e : W ≃ₗ[ℂ] W')
+    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (A : Submodule ℂ W') :
+    (A.comap e.toLinearMap).map ω.toEquiv.toLinearMap =
+      (A.map ω'.toEquiv.toLinearMap).comap e.toLinearMap := by
+  ext y
+  simp only [Submodule.mem_map, Submodule.mem_comap, LinearEquiv.coe_coe]
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨e x, hx, (he x).symm⟩
+  · rintro ⟨z, hz, hzy⟩
+    refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
+    rw [he y, ← hzy, ω'.apply_apply]
+    exact hz
+
+/-- The conjugation induced on the quotient of a complex vector space by a stable subspace.
+
+It is `@[expose]`d for the same reason as `TauCeti.Hodge.Conjugation.restrict`: a conjugation
+assembled from it must still compute on classes of representatives. -/
+@[expose]
+noncomputable def quotient (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation (W ⧸ U) where
+  toEquiv := LinearEquiv.ofInvolutive (U.mapQ U ω.toEquiv.toLinearMap fun x hx ↦ hU x hx)
+    fun x ↦ Submodule.Quotient.induction_on _ x fun y ↦
+      congrArg Submodule.Quotient.mk (ω.apply_apply y)
+  involutive x := Submodule.Quotient.induction_on _ x fun y ↦
+    congrArg Submodule.Quotient.mk (ω.apply_apply y)
+
+/-- The induced conjugation on a quotient acts on classes through the ambient conjugation. -/
+@[simp]
+theorem quotient_toEquiv_mk (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (x : W) :
+    (ω.quotient hU).toEquiv (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (ω.toEquiv x) :=
+  (rfl)
 
 end Conjugation
 

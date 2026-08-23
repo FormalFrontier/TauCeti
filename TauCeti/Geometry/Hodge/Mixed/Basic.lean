@@ -95,8 +95,12 @@ namespace MixedHodgeStructure
 
 variable {hℚ : IsBaseChange ℚ ιℚ} {hℂ : IsBaseChange ℂ ιℂ} (mhs : MixedHodgeStructure hℚ hℂ)
 
-/-- The complexified weight filtration of a mixed Hodge structure. -/
-noncomputable def WC (k : ℤ) : Submodule ℂ Vℂ :=
+/-- The complexified weight filtration of a mixed Hodge structure.
+
+It is an `abbrev` because it is a name for the complexification of `WQ` rather than a new
+construction: the graded pieces of `WC` have to be *definitionally* those of the complexified
+rational filtration for the pure structure on a graded piece to transport onto them. -/
+noncomputable abbrev WC (k : ℤ) : Submodule ℂ Vℂ :=
   rationalToComplexSubmodule hℚ hℂ (mhs.WQ k)
 
 /-- The complex weight filtration is obtained by complexifying the rational weight filtration. -/

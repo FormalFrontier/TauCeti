@@ -230,6 +230,18 @@ theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange �
   | add x y hx hy =>
       simpa only [TensorProduct.tmul_add, map_add] using congrArg₂ (fun a b ↦ a + b) hx hy
 
+/-- Lattice conjugation of the image in `Vℂ` of a pure tensor `z ⊗ₜ x` with `x` rational
+conjugates the scalar. -/
+theorem latticeConj_rationalToComplexLinearEquiv_tmul (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (z : ℂ) (x : Vℚ) :
+    latticeConj hℂ (rationalToComplexLinearEquiv hℚ hℂ (z ⊗ₜ[ℚ] x)) =
+      rationalToComplexLinearEquiv hℚ hℂ ((starRingEnd ℂ) z ⊗ₜ[ℚ] x) := by
+  have hz : ∀ w : ℂ, w ⊗ₜ[ℚ] x = w • (1 : ℂ) ⊗ₜ[ℚ] x := by
+    intro w
+    rw [TensorProduct.smul_tmul', smul_eq_mul, mul_one]
+  rw [hz z, hz ((starRingEnd ℂ) z), map_smul, map_smulₛₗ, map_smul,
+    latticeConj_rationalToComplexLinearEquiv_one_tmul]
+
 /-- The complexification of a rational subspace is stable under lattice-induced conjugation. -/
 @[simp]
 theorem rationalToComplexSubmodule_conj (hℚ : IsBaseChange ℚ ιℚ)
@@ -248,6 +260,14 @@ theorem rationalToComplexSubmodule_conj (hℚ : IsBaseChange ℚ ιℚ)
   intro x hx
   refine ⟨latticeConj hℂ x, hle ⟨x, hx, rfl⟩, ?_⟩
   simp
+
+/-- Elementwise form of the stability of a complexified rational subspace under lattice-induced
+conjugation. -/
+theorem latticeConj_mem_rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) {x : Vℂ}
+    (hx : x ∈ rationalToComplexSubmodule hℚ hℂ W) :
+    latticeConj hℂ x ∈ rationalToComplexSubmodule hℚ hℂ W :=
+  (rationalToComplexSubmodule_conj hℚ hℂ W).le ⟨x, hx, rfl⟩
 
 section Map
 
