@@ -18,7 +18,8 @@ and `b` integrable against the two marginals, subtracting that lower bound leave
 residual. Its `lintegral` is well-defined, and adding back the two fixed marginal integrals gives
 the signed extended cost of a plan.
 
-This file packages the lower-bound hypothesis as `TauCeti.IntegrableSplitLowerBound` and defines
+This file packages the lower-bound hypothesis as `TauCeti.IntegrableSplitLowerBound`, defines the
+cost `TauCeti.planCostBddBelow` of an individual plan, and defines its infimum
 `TauCeti.transportCostBddBelow`. The main theorem
 `TauCeti.transportCostBddBelow_congr_lowerBound` proves that the value is independent of the
 chosen split lower bound. The specialization
@@ -93,7 +94,7 @@ theorem coe_residual_add (z : X × Y) :
       (Or.inr (EReal.coe_ne_bot _))).2 (h.le_cost z.1 z.2)
 
 /-- Every nonnegative extended-real cost has the zero split lower bound. -/
-def ofNonnegative (hc : ∀ z, 0 ≤ c z) (μ : Measure X) (ν : Measure Y) :
+def ofNonneg (hc : ∀ z, 0 ≤ c z) (μ : Measure X) (ν : Measure Y) :
     IntegrableSplitLowerBound c μ ν where
   fst := 0
   snd := 0
@@ -102,6 +103,18 @@ def ofNonnegative (hc : ∀ z, 0 ≤ c z) (μ : Measure X) (ν : Measure Y) :
   le_cost x y := by simpa using hc (x, y)
 
 end IntegrableSplitLowerBound
+
+/-- The signed cost of a plan, normalized using an integrable split lower bound. -/
+def planCostBddBelow (π : Measure (X × Y)) (h : IntegrableSplitLowerBound c μ ν) : EReal :=
+  ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
+    ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal)
+
+/-- The characteristic formula for the normalized signed cost of a plan. -/
+theorem planCostBddBelow_def (π : Measure (X × Y)) (h : IntegrableSplitLowerBound c μ ν) :
+    planCostBddBelow π h =
+      ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
+        ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) :=
+  (rfl)
 
 /-- The transport cost of `μ` and `ν` for an extended-real cost bounded below by integrable
 marginal terms.
@@ -112,32 +125,25 @@ last two summands are finite real numbers. The value does not depend on `h`; see
 `transportCostBddBelow_congr_lowerBound`. -/
 def transportCostBddBelow (c : X × Y → EReal) (μ : Measure X) (ν : Measure Y)
     (h : IntegrableSplitLowerBound c μ ν) : EReal :=
-  ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν),
-    ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
-      ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal)
+  ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν), planCostBddBelow π h
 
 /-- The characteristic formula for the bounded-below signed transport cost. -/
 theorem transportCostBddBelow_def :
     transportCostBddBelow c μ ν h =
       ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν),
-        ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
-          ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) :=
+        planCostBddBelow π h :=
   (rfl)
 
 /-- The signed transport cost is bounded above by the normalized cost of every feasible plan. -/
 theorem transportCostBddBelow_le (hπ : IsCoupling π μ ν)
     (h : IntegrableSplitLowerBound c μ ν) :
-    transportCostBddBelow c μ ν h ≤
-      ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
-        ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) :=
+    transportCostBddBelow c μ ν h ≤ planCostBddBelow π h :=
   iInf₂_le π hπ
 
 /-- A lower bound valid for the normalized cost of every coupling bounds the signed transport
 cost from below. -/
 theorem le_transportCostBddBelow {d : EReal} (h : IntegrableSplitLowerBound c μ ν)
-    (hd : ∀ π, IsCoupling π μ ν →
-      d ≤ ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
-        ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal)) :
+    (hd : ∀ π, IsCoupling π μ ν → d ≤ planCostBddBelow π h) :
     d ≤ transportCostBddBelow c μ ν h :=
   le_iInf₂ hd
 
@@ -184,12 +190,11 @@ private theorem residual_add_lowerBoundParts
   rw [max_eq_left (sub_nonneg.2 hh), max_eq_left (sub_nonneg.2 hk)]
   grind [max_zero_sub_max_neg_zero_eq_self]
 
-private theorem normalizedPlanCost_eq
+/-- On a coupling, the signed plan cost is independent of the chosen split lower bound. -/
+theorem planCostBddBelow_congr_lowerBound
     (h k : IntegrableSplitLowerBound c μ ν) (hπ : IsCoupling π μ ν) :
-    ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
-        ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) =
-      ((∫⁻ z, k.residual z ∂π : ℝ≥0∞) : EReal) +
-        ((∫ x, k.fst x ∂μ : ℝ) : EReal) + ((∫ y, k.snd y ∂ν : ℝ) : EReal) := by
+    planCostBddBelow π h = planCostBddBelow π k := by
+  simp only [planCostBddBelow]
   -- Split the change of normalization into its positive and negative marginal parts.
   let fx : X → ℝ := fun x ↦ h.fst x - k.fst x
   let fy : Y → ℝ := fun y ↦ h.snd y - k.snd y
@@ -298,7 +303,7 @@ theorem transportCostBddBelow_congr_lowerBound
     (h k : IntegrableSplitLowerBound c μ ν) :
     transportCostBddBelow c μ ν h = transportCostBddBelow c μ ν k := by
   simp only [transportCostBddBelow]
-  exact iInf_congr fun π ↦ iInf_congr fun hπ ↦ normalizedPlanCost_eq h k hπ
+  exact iInf_congr fun π ↦ iInf_congr fun hπ ↦ planCostBddBelow_congr_lowerBound h k hπ
 
 private theorem coe_iInf_ennreal {ι : Sort*} (f : ι → ℝ≥0∞) :
     ((⨅ i, f i : ℝ≥0∞) : EReal) = ⨅ i, (f i : EReal) := by
@@ -311,18 +316,21 @@ private theorem coe_iInf_ennreal {ι : Sort*} (f : ι → ℝ≥0∞) :
       (EReal.toENNReal_le_toENNReal (iInf_le (fun j ↦ (f j : EReal)) i)).trans_eq
         EReal.toENNReal_coe
 
-/-- For a nonnegative `ℝ≥0∞`-valued cost, the bounded-below signed interface with the zero
-normalization agrees exactly with the original nonnegative transport cost. -/
+/-- For a nonnegative `ℝ≥0∞`-valued cost, the bounded-below signed interface agrees exactly
+with the original nonnegative transport cost, for any valid split lower bound. -/
 theorem transportCostBddBelow_coe_eq_transportCost (c : X × Y → ℝ≥0∞)
-    (μ : Measure X) (ν : Measure Y) :
-    transportCostBddBelow (fun z ↦ (c z : EReal)) μ ν
-        (IntegrableSplitLowerBound.ofNonnegative (fun _ ↦ EReal.coe_ennreal_nonneg _) μ ν) =
+    (μ : Measure X) (ν : Measure Y)
+    (h : IntegrableSplitLowerBound (fun z ↦ (c z : EReal)) μ ν) :
+    transportCostBddBelow (fun z ↦ (c z : EReal)) μ ν h =
       (transportCost c μ ν : EReal) := by
+  rw [transportCostBddBelow_congr_lowerBound h
+    (IntegrableSplitLowerBound.ofNonneg (fun _ ↦ EReal.coe_ennreal_nonneg _) μ ν)]
   rw [transportCost_def, coe_iInf_ennreal]
   apply iInf_congr
   intro π
   rw [coe_iInf_ennreal]
-  simp only [IntegrableSplitLowerBound.residual, IntegrableSplitLowerBound.ofNonnegative,
+  simp only [planCostBddBelow, IntegrableSplitLowerBound.residual,
+    IntegrableSplitLowerBound.ofNonneg,
     Pi.zero_apply, sub_zero,
     EReal.toENNReal_coe, integral_zero, EReal.coe_zero, add_zero]
 
