@@ -82,7 +82,6 @@ noncomputable def idealTerm (f : IdealArithmeticFunction K) (s : ℂ) (I : (Idea
   f I / (Ideal.absNorm (I : Ideal (𝓞 K)) : ℂ) ^ s
 
 /-- Defining equation of `TauCeti.idealTerm`. -/
-@[simp]
 theorem idealTerm_def (f : IdealArithmeticFunction K) (s : ℂ) (I : (Ideal (𝓞 K))⁰) :
     idealTerm K f s I = f I / (Ideal.absNorm (I : Ideal (𝓞 K)) : ℂ) ^ s :=
   (rfl)
