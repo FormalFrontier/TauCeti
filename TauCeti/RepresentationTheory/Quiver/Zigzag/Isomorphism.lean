@@ -66,7 +66,7 @@ theorem bijective_map_obj (e : G ≃g H) : Function.Bijective (map e.toHom).obj 
   (map e.toHom).bijective_obj_of_comp_eq_id _ (map_toHom_comp_symm_toHom e)
     (map_symm_toHom_comp_toHom e)
 
-variable (k : Type w) [CommRing k] [Finite V] [Finite W]
+variable (k : Type w) [CommSemiring k] [Finite V] [Finite W]
 
 /-- **The isomorphism of doubled path algebras induced by a graph isomorphism**: it relabels the
 basis path by path of the doubled quiver. -/
@@ -75,11 +75,15 @@ noncomputable def pathAlgebraEquiv (e : G ≃g H) :
   PathAlgebra.mapAlgEquiv k (map e.toHom) (map e.symm.toHom) (map_toHom_comp_symm_toHom e)
     (map_symm_toHom_comp_toHom e)
 
+/-- The relabelling sends the basis element of a path of the doubled quiver of `G` to the basis
+element of the relabelled path of the doubled quiver of `H`. -/
 @[simp]
 theorem pathAlgebraEquiv_ofPath (e : G ≃g H) (x : Quiver.TotalPath (DoubledQuiver G)) :
     pathAlgebraEquiv k e (ofPath x) = ofPath (mapTotalPath (map e.toHom) x) := by
   rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply, mapAlgHom_ofPath]
 
+/-- The relabelling carries the idempotent of a vertex of `G` to the idempotent of the image
+vertex of `H`. -/
 @[simp]
 theorem pathAlgebraEquiv_vertexIdempotent (e : G ≃g H) (i : V) :
     pathAlgebraEquiv k e (vertexIdempotent k (vertex G i)) =
@@ -172,6 +176,7 @@ noncomputable def zigzagQuotientHom (e : G ≃g H) :
     rw [AlgHom.comp_apply]
     exact zigzagMk_eq_zero_of_isZigzagRelator k H (isZigzagRelator_pathAlgebraEquiv k e hx)
 
+/-- The induced map of quotients sends the class of an element to the class of its relabelling. -/
 @[simp]
 theorem zigzagQuotientHom_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
     zigzagQuotientHom k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) :=
@@ -191,6 +196,8 @@ noncomputable def zigzagQuotientEquiv (e : G ≃g H) :
         zigzagQuotientHom_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.symm_apply_apply,
         AlgHom.id_apply]))
 
+/-- The induced isomorphism of quotients sends the class of an element to the class of its
+relabelling. -/
 @[simp]
 theorem zigzagQuotientEquiv_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
     zigzagQuotientEquiv k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) := by

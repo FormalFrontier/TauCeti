@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Combinatorics.Quiver.Prefunctor
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
 public section
@@ -44,9 +45,6 @@ arrows still gives an algebra homomorphism, just not an injective one.
   its values on the paths.
 * `TauCeti.PathAlgebra.ofArrow_homOfEq`: transporting an arrow along equalities of its endpoints
   does not change the basis element it names.
-* `Prefunctor.length_mapPath`: pushing a path along a prefunctor preserves its length.
-* `Prefunctor.bijective_obj_of_comp_eq_id`: mutually inverse prefunctors are bijective on
-  vertices, which is what feeds `TauCeti.PathAlgebra.mapAlgEquiv`.
 
 ## References
 
@@ -60,23 +58,6 @@ namespace TauCeti
 
 universe u u' u'' v v' v'' w
 
-/-- **Pushing a path along a prefunctor preserves its length**: the image path traverses the image
-of each arrow of the original, in order. -/
-theorem _root_.Prefunctor.length_mapPath {Q : Type u} {R : Type u'} [Quiver.{v} Q] [Quiver.{v'} R]
-    (φ : Q ⥤q R) {a b : Q} (p : Quiver.Path a b) : (φ.mapPath p).length = p.length := by
-  induction p with
-  | nil => rfl
-  | cons p e ih => rw [Prefunctor.mapPath_cons, Quiver.Path.length_cons, ih,
-      Quiver.Path.length_cons]
-
-/-- **Mutually inverse prefunctors are bijective on vertices.** -/
-theorem _root_.Prefunctor.bijective_obj_of_comp_eq_id {Q : Type u} {R : Type u'} [Quiver.{v} Q]
-    [Quiver.{v'} R] (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = Prefunctor.id Q)
-    (hψφ : ψ.comp φ = Prefunctor.id R) : Function.Bijective φ.obj :=
-  Function.bijective_iff_has_inverse.mpr
-    ⟨ψ.obj, fun a ↦ congrArg (fun F : Q ⥤q Q ↦ F.obj a) hφψ,
-      fun b ↦ congrArg (fun F : R ⥤q R ↦ F.obj b) hψφ⟩
-
 namespace PathAlgebra
 
 section Map
@@ -84,34 +65,42 @@ section Map
 variable {Q : Type u} {R : Type u'} {S : Type u''} [Quiver.{v} Q] [Quiver.{v'} R] [Quiver.{v''} S]
 
 /-- The indexed path of `R` obtained by pushing an indexed path of `Q` along a prefunctor. This is
-the map on the path bases which `TauCeti.PathAlgebra.mapAlgHom` extends. It is exposed so that its
-three components reduce, which is what the projection lemmas below record. -/
+the map on the path bases which `TauCeti.PathAlgebra.mapAlgHom` extends. Its three components are
+`TauCeti.PathAlgebra.mapTotalPath_fst`, `TauCeti.PathAlgebra.mapTotalPath_snd_fst` and
+`TauCeti.PathAlgebra.mapTotalPath_mk`; those projection lemmas are exported and hold by `rfl`, so
+the module system requires the body to be exposed for them to be provable at all. -/
 @[expose] def mapTotalPath (φ : Q ⥤q R) (x : Quiver.TotalPath Q) : Quiver.TotalPath R :=
   ⟨φ.obj x.1, φ.obj x.2.1, φ.mapPath x.2.2⟩
 
+/-- Pushing an indexed path along a prefunctor pushes its two endpoints and its path. -/
 @[simp]
 theorem mapTotalPath_mk (φ : Q ⥤q R) {a b : Q} (p : Quiver.Path a b) :
     mapTotalPath φ ⟨a, b, p⟩ = ⟨φ.obj a, φ.obj b, φ.mapPath p⟩ := rfl
 
+/-- The target of a pushed indexed path is the image of the target. -/
 @[simp]
 theorem mapTotalPath_fst (φ : Q ⥤q R) (x : Quiver.TotalPath Q) :
     (mapTotalPath φ x).1 = φ.obj x.1 := rfl
 
+/-- The source of a pushed indexed path is the image of the source. -/
 @[simp]
 theorem mapTotalPath_snd_fst (φ : Q ⥤q R) (x : Quiver.TotalPath Q) :
     (mapTotalPath φ x).2.1 = φ.obj x.2.1 := rfl
 
+/-- Pushing an indexed path along a prefunctor preserves its length. -/
 @[simp]
 theorem length_mapTotalPath (φ : Q ⥤q R) (x : Quiver.TotalPath Q) :
     (mapTotalPath φ x).2.2.length = x.2.2.length :=
   φ.length_mapPath x.2.2
 
+/-- The identity prefunctor leaves an indexed path unchanged. -/
 @[simp]
 theorem mapTotalPath_id (x : Quiver.TotalPath Q) : mapTotalPath (Prefunctor.id Q) x = x := by
   obtain ⟨a, b, p⟩ := x
   rw [mapTotalPath_mk, Prefunctor.mapPath_id]
   rfl
 
+/-- Pushing along a composite of prefunctors is pushing along each in turn. -/
 theorem mapTotalPath_comp (φ : Q ⥤q R) (ψ : R ⥤q S) (x : Quiver.TotalPath Q) :
     mapTotalPath (φ.comp ψ) x = mapTotalPath ψ (mapTotalPath φ x) := by
   obtain ⟨a, b, p⟩ := x
@@ -158,12 +147,16 @@ noncomputable def mapAlgHom (φ : Q ⥤q R) (hφ : Function.Bijective φ.obj) :
   liftAlgHom k (fun x ↦ ofPath (mapTotalPath φ x)) (mapAlgHom_hcomp k φ)
     (mapAlgHom_hzero k φ hφ.1) (mapAlgHom_hone k φ hφ)
 
+/-- The induced homomorphism sends the basis element of an indexed path to the basis element of the
+pushed-forward path. -/
 @[simp]
 theorem mapAlgHom_ofPath (φ : Q ⥤q R) (hφ : Function.Bijective φ.obj)
     (x : Quiver.TotalPath Q) :
     mapAlgHom k φ hφ (ofPath x) = ofPath (mapTotalPath φ x) :=
   liftAlgHom_ofPath k _ (mapAlgHom_hcomp k φ) (mapAlgHom_hzero k φ hφ.1) (mapAlgHom_hone k φ hφ) x
 
+/-- The induced homomorphism sends a scalar multiple of a basis path to the same scalar multiple of
+the pushed-forward basis path. -/
 @[simp]
 theorem mapAlgHom_single (φ : Q ⥤q R) (hφ : Function.Bijective φ.obj)
     (x : Quiver.TotalPath Q) (c : k) :
@@ -172,6 +165,8 @@ theorem mapAlgHom_single (φ : Q ⥤q R) (hφ : Function.Bijective φ.obj)
     rw [ofPath_eq_single, smul_single, mul_one]
   rw [hx, map_smul, mapAlgHom_ofPath, ofPath_eq_single, smul_single, mul_one]
 
+/-- The induced homomorphism sends the idempotent of a vertex to the idempotent of the image
+vertex. -/
 @[simp]
 theorem mapAlgHom_vertexIdempotent (φ : Q ⥤q R) (hφ : Function.Bijective φ.obj) (v : Q) :
     mapAlgHom k φ hφ (vertexIdempotent k v) = vertexIdempotent k (φ.obj v) := by
@@ -226,6 +221,7 @@ noncomputable def mapAlgEquiv (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp �
       rw [AlgHom.comp_apply, mapAlgHom_ofPath, mapAlgHom_ofPath, ← mapTotalPath_comp, hφψ,
         mapTotalPath_id, AlgHom.id_apply])
 
+/-- The induced isomorphism acts as the homomorphism induced by the forward prefunctor. -/
 @[simp]
 theorem mapAlgEquiv_apply (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = Prefunctor.id Q)
     (hψφ : ψ.comp φ = Prefunctor.id R) (x : pathAlgebra k Q) :
@@ -239,6 +235,8 @@ theorem algEquiv_ext {B : Type*} [Semiring B] [Algebra k B]
     congrArg (fun F : pathAlgebra k Q →ₐ[k] B ↦ F y)
       (algHom_ext k (f := (f : pathAlgebra k Q →ₐ[k] B)) (g := (g : pathAlgebra k Q →ₐ[k] B)) h)
 
+/-- The inverse of the induced isomorphism acts as the homomorphism induced by the inverse
+prefunctor. -/
 @[simp]
 theorem mapAlgEquiv_symm_apply (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = Prefunctor.id Q)
     (hψφ : ψ.comp φ = Prefunctor.id R) (y : pathAlgebra k R) :
