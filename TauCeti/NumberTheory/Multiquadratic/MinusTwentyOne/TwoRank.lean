@@ -16,10 +16,10 @@ Applying the genus-theoretic `2`-rank formula `2-rank Cl(K) = t - 1` to `K = ℚ
 fundamental discriminant is `-84 = (-4) · (-3) · (-7)`, a product of three prime discriminants, so
 `t = 3` rational primes ramify (`2`, `3` and `7`) and the `2`-rank of the class group is `2`.
 
-This corroborates the independently proved `NumberField.classNumber ℚ(√-21) = 4`
-(`MinusTwentyOne/ClassNumber.lean`): the class group is `(ℤ/2ℤ)²`, whose `2`-rank is indeed `2`, so
-genus theory (predicting `t - 1 = 2` purely from ramification) and the direct class-number
-computation agree.
+Combined with `NumberField.classNumber ℚ(√-21) = 4` (`MinusTwentyOne/ClassNumber.lean`), this pins
+down the group structure: a group of order `4` and `2`-rank `2` is `(ℤ/2ℤ)²`, so `Cl ≅ (ℤ/2ℤ)²`.
+This is not an independent check — that class-number proof itself uses the ramified-prime lower
+bound `ncard_ramifiedPrimes_sub_one_le_twoRank` to get divisibility by `4`.
 
 ## Main results
 
@@ -40,8 +40,8 @@ variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K}
 
 /-- **The `2`-rank of the class group of `ℚ(√-21)` is `2`.** Its fundamental discriminant `-84`
 factors as `(-4) · (-3) · (-7)` into three prime discriminants, so three rational primes ramify
-(`t = 3`) and `2-rank Cl = t - 1 = 2`. This corroborates `NumberField.classNumber ℚ(√-21) = 4`
-(`Cl ≅ (ℤ/2ℤ)²`). -/
+(`t = 3`) and `2-rank Cl = t - 1 = 2`. With `NumberField.classNumber ℚ(√-21) = 4` this pins down
+`Cl ≅ (ℤ/2ℤ)²`. -/
 theorem twoRank_eq_two_of_minpoly_eq_X_sq_add_twenty_one
     (hmin : minpoly ℤ θ = X ^ 2 - C (-21 : ℤ)) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     TauCeti.ClassGroup.twoRank (𝓞 K) = 2 := by
