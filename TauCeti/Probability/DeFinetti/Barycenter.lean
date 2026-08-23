@@ -173,8 +173,7 @@ theorem map_pi_deFinettiBarycenter {β : Type*} [MeasurableSpace β]
           simp)
     _ = deFinettiBarycenter (π.map fun P => P.map hf.aemeasurable) := by
         rw [deFinettiBarycenter_def, TauCeti.MeasureTheory.bind_map hmap.aemeasurable
-          TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable]
-        rfl
+          TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable, Function.comp_def]
 
 /-- **A barycenter is an exchangeable path law.** Drawing `P` from `π` and then an i.i.d.
 `P`-sequence produces a law invariant under every permutation of the time coordinate.

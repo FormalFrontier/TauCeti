@@ -52,6 +52,8 @@ hypothesis is needed beyond the ones de Finetti already asks of `α`.
   two symmetries.
 * `TauCeti.Probability.separatelyExchangeable_iff_map_pairReindex` — the bridge to the array law:
   separate exchangeability is invariance of the law on `ℕ × ℕ → α` under every pair reindexing.
+* `TauCeti.Probability.map_uncurry_pathLaw_arrayRow` — the array law is the uncurried path law of
+  the row process.
 * `TauCeti.Probability.separatelyExchangeable_iff_axes` — separate exchangeability splits into
   invariance under row permutations and invariance under column permutations.
 * `TauCeti.Probability.SeparatelyExchangeable.fullyExchangeable_arrayRow` and
@@ -257,8 +259,21 @@ theorem separatelyExchangeable_iff_map_pairReindex {μ : Measure Ω} {X : ℕ ×
       ∀ σ τ : Equiv.Perm ℕ,
         (μ.map fun ω p => X p ω).map (pairReindex σ τ) = μ.map fun ω p => X p ω :=
   forall_congr' fun σ => forall_congr' fun τ => by
-    rw [map_map_array hX (measurable_pairReindex σ τ)]
-    rfl
+    have hread : (fun ω => pairReindex σ τ fun p => X p ω) = fun ω p => X (σ p.1, τ p.2) ω := by
+      funext ω p
+      rw [pairReindex_apply]
+    rw [map_map_array hX (measurable_pairReindex σ τ), hread]
+
+/-- **An array law is the uncurried path law of its row process.** A statement about the law of the
+row process therefore transports to one about the law of the array. -/
+theorem map_uncurry_pathLaw_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+    (hX : ∀ p, AEMeasurable (X p) μ) :
+    (pathLaw μ (arrayRow X)).map Function.uncurry = μ.map fun ω p => X p ω := by
+  rw [pathLaw_def, AEMeasurable.map_map_of_aemeasurable measurable_uncurry.aemeasurable
+    (aemeasurable_pi_lambda _ fun i => aemeasurable_arrayRow hX i)]
+  refine congrArg (Measure.map · _) ?_
+  funext ω ⟨i, j⟩
+  simp
 
 /-! ## Splitting separate exchangeability into its two axes -/
 

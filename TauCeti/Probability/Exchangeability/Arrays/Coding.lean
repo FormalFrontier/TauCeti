@@ -41,8 +41,6 @@ a permutation-invariant mixing law (`separatelyExchangeable_iff_exists_coding`).
 
 ## Main results
 
-* `TauCeti.Probability.map_uncurry_pathLaw_arrayRow` — the law of an array is the uncurried path
-  law of its row process, the transport along which every statement below is read.
 * `TauCeti.Probability.SeparatelyExchangeable.exists_arrayLaw_eq_map_unitIntervalCoding` — **the
   representation**: the law of a separately exchangeable array is the law of the array coded by a
   permutation-invariant mixing law.
@@ -58,7 +56,9 @@ de Finetti barycenter of the mixing law (`map_prod_unitIntervalCoding_eq_deFinet
 value space `ℕ → α`). Both array symmetries are therefore read off that barycenter: permuting the
 rows is exchangeability of the barycenter (`exchangeableLaw_deFinettiBarycenter`), and permuting
 the columns is a coordinatewise pushforward, which by naturality (`map_pi_deFinettiBarycenter`) is
-the barycenter of the pushed-forward mixing law. Only the second uses the hypothesis on `π`.
+the barycenter of the pushed-forward mixing law. Only the second uses the hypothesis on `π`. The
+transport from the row process back to the array is `map_uncurry_pathLaw_arrayRow`, along which
+every statement here is read.
 
 The unit interval is written out rather than through the `unitInterval` scoped notation `I`, whose
 namespace also carries a `σ` notation that would collide with the permutation names used by the
@@ -87,17 +87,6 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **An array law is the uncurried path law of its row process.** A statement about the law of the
-row process therefore transports to one about the law of the array. -/
-theorem map_uncurry_pathLaw_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
-    (hX : ∀ p, AEMeasurable (X p) μ) :
-    (pathLaw μ (arrayRow X)).map Function.uncurry = μ.map fun ω p => X p ω := by
-  rw [pathLaw_def, AEMeasurable.map_map_of_aemeasurable measurable_uncurry.aemeasurable
-    (aemeasurable_pi_lambda _ fun i => aemeasurable_arrayRow hX i)]
-  congr 1
-  funext ω ⟨i, j⟩
-  simp
-
 section Coding
 
 variable [StandardBorelSpace α] [Nonempty α]
@@ -111,7 +100,9 @@ private theorem map_prod_unitIntervalCoding_array
       = (deFinettiBarycenter π).map Function.uncurry := by
   rw [← map_prod_unitIntervalCoding_eq_deFinettiBarycenter (α := ℕ → α) π,
     Measure.map_map measurable_uncurry (measurable_unitIntervalCodingPath (α := ℕ → α))]
-  rfl
+  refine congrArg (Measure.map · _) ?_
+  funext q ⟨i, j⟩
+  simp
 
 /-- The same computation after reindexing the two axes: permuting the rows reindexes the sequence
 of coded paths, and permuting the columns pushes every coded path forward by the time
@@ -129,7 +120,9 @@ private theorem map_prod_unitIntervalCoding_array_pairReindex
   rw [← map_prod_unitIntervalCoding_eq_deFinettiBarycenter (α := ℕ → α) π,
     Measure.map_map hS hR, Measure.map_map hT (hS.comp hR),
     Measure.map_map measurable_uncurry (hT.comp (hS.comp hR))]
-  rfl
+  refine congrArg (Measure.map · _) ?_
+  funext q ⟨i, j⟩
+  simp
 
 /-- **Coding a permutation-invariant mixing law gives a separately exchangeable array.** Draw a
 path law `P` from `π` and one uniform variable `ϑ i` per row, and let the `(i, j)`-entry be
