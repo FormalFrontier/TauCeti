@@ -8,7 +8,6 @@ module
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
-public import Mathlib.RingTheory.RootsOfUnity.Basic
 import Mathlib.Tactic.LinearCombination
 import TauCeti.Data.ZMod.Units
 
