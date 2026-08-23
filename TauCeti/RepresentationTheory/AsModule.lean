@@ -35,7 +35,7 @@ theory counts, while the objects being classified are representations.
 * `TauCeti.nonempty_fdRepIso_iff`: the two notions of isomorphism agree on `FDRep k G`, so a
   classification proved for representations reads off as a classification of objects.
 * `TauCeti.toSkeleton_fdRepOf_toRepresentation_eq_iff`: two subrepresentations determine the same
-  finite-dimensional representation class exactly when their associated submodules are linearly
+  module-finite representation class exactly when their associated submodules are linearly
   equivalent.
 -/
 
@@ -134,12 +134,12 @@ theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
       rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
       exact ⟨i⟩
 
-/-- **The finite-dimensional representation classes carried by two subrepresentations agree
+/-- **The module-finite representation classes carried by two subrepresentations agree
 exactly when their associated group-algebra submodules are linearly equivalent.** -/
 theorem toSkeleton_fdRepOf_toRepresentation_eq_iff
-    {K X : Type u} [Field K] [AddCommGroup X] [Module K X]
+    {K X : Type u} [CommRing K] [AddCommGroup X] [Module K X]
     {π : _root_.Representation K G X} (S T : Subrepresentation π)
-    [FiniteDimensional K S.toSubmodule] [FiniteDimensional K T.toSubmodule] :
+    [Module.Finite K S.toSubmodule] [Module.Finite K T.toSubmodule] :
     toSkeleton (FDRep.of S.toRepresentation) = toSkeleton (FDRep.of T.toRepresentation) ↔
       Nonempty (S.asSubmodule ≃ₗ[K[G]] T.asSubmodule) := by
   rw [toSkeleton_eq_toSkeleton_iff, nonempty_fdRepIso_iff,
