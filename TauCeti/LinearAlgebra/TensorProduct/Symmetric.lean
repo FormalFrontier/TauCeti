@@ -13,10 +13,11 @@ public import TauCeti.LinearAlgebra.Trace.Square
 /-!
 # Symmetric and antisymmetric tensors in a tensor square
 
-The flip `x ⊗ y ↦ y ⊗ x` is an involution of `M ⊗[R] M`, and its two eigenvalues cut the tensor
-square into the **symmetric tensors** `TauCeti.symmetricTensors` and the **antisymmetric tensors**
-`TauCeti.antisymmetricTensors`. When `2` is invertible they are complementary, so the tensor square
-is their internal direct sum; the two submodules are the concrete models of `Sym²M` and `⋀²M`
+The flip `x ⊗ y ↦ y ⊗ x` is an involution of `M ⊗[R] M`, and the tensors it fixes and the tensors
+it negates cut the tensor square into the **symmetric tensors** `TauCeti.symmetricTensors` and the
+**antisymmetric tensors** `TauCeti.antisymmetricTensors`. When `2` is invertible they are
+complementary, so the tensor square is their internal direct sum; the two submodules are the
+concrete models of `Sym²M` and `⋀²M`
 *inside* `M ⊗[R] M`, which is what a construction carrying extra structure on the tensor square —
 a topology, say — needs, the quotient and subobject constructions `Sym[R]^2 M` and `⋀[R]^2 M`
 living outside it.
@@ -26,8 +27,7 @@ The point of the file is the trace identity `TauCeti.trace_map_self_comp_comm`: 
 composite at `eᵢ ⊗ eⱼ` is `aᵢⱼ aⱼᵢ`, and summing those is
 `TauCeti.trace_eq_trace_comp_self_of_toMatrix_diag`, the step shared with the `Fin 2`-indexed
 tensor square of `TauCeti/RepresentationTheory/Tensor/Square.lean`. Splitting that trace along the
-eigenspaces of the flip, where
-the flip is `+1` and `-1`, gives
+symmetric and the antisymmetric tensors, where the flip is `+1` and `-1`, gives
 `TauCeti.trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict`: the traces of
 `f ⊗ f` on the symmetric and on the antisymmetric tensors differ by `tr (f ∘ f)`. That is the
 character identity `χ_{Sym²}(g) - χ_{⋀²}(g) = χ(g²)` behind the Frobenius-Schur indicator, read on
@@ -35,8 +35,8 @@ the tensor square rather than on the symmetric and exterior powers.
 
 ## Main definitions
 
-* `TauCeti.symmetricTensors`: the `+1`-eigenspace of the flip of `M ⊗[R] M`.
-* `TauCeti.antisymmetricTensors`: its `-1`-eigenspace.
+* `TauCeti.symmetricTensors`: the tensors of `M ⊗[R] M` fixed by the flip.
+* `TauCeti.antisymmetricTensors`: the `-1`-eigenspace of the flip.
 
 ## Main results
 
@@ -49,12 +49,19 @@ the tensor square rather than on the symmetric and exterior powers.
 
 ## Implementation notes
 
-The two submodules are `Module.End.eigenspace` of the flip, not fresh kernels, so that Mathlib's
-eigenspace API applies to them unchanged; the membership lemmas below are the only interface the
-rest of the development uses. That choice fixes the scalars: `Module.End.eigenspace` subtracts a
-scalar from an endomorphism, so it is stated over `[CommRing R] [AddCommGroup M]`, and neither
-submodule — the symmetric one included — can be formed over a commutative semiring. The trace
-identity uses no eigenspace and is stated over `[CommSemiring K] [AddCommMonoid M]`.
+Neither submodule is a fresh kernel: the symmetric tensors are `LinearMap.eqLocus` of the flip
+against the identity and the antisymmetric tensors are `Module.End.eigenspace` of the flip, so
+Mathlib's API applies to both unchanged. The membership lemmas below are the only interface the
+rest of the development uses, and they present the two submodules symmetrically.
+
+The asymmetry between the two constructions is a matter of scalars, and it is deliberate.
+`Module.End.eigenspace` subtracts a scalar from an endomorphism, so it is stated over
+`[CommRing R] [AddCommGroup M]`; negation is genuinely needed for the antisymmetric tensors — the
+eigenvalue is `-1` — but not for the symmetric ones, and `LinearMap.eqLocus` asks only for
+`[CommSemiring R] [AddCommMonoid M]`. So the symmetric half of the API, up to the restriction of
+`f ⊗ f`, is available over a commutative semiring, and only the antisymmetric half and the
+splitting theorems need a ring. The trace identity uses neither and is stated over
+`[CommSemiring K] [AddCommMonoid M]`.
 -/
 
 public section
@@ -63,17 +70,13 @@ namespace TauCeti
 
 open scoped TensorProduct
 
-section Defs
+section Symmetric
 
-variable (R M : Type*) [CommRing R] [AddCommGroup M] [Module R M]
+variable (R M : Type*) [CommSemiring R] [AddCommMonoid M] [Module R M]
 
-/-- **The symmetric tensors** of `M ⊗[R] M`: the `+1`-eigenspace of the flip `x ⊗ y ↦ y ⊗ x`. -/
+/-- **The symmetric tensors** of `M ⊗[R] M`: the tensors the flip `x ⊗ y ↦ y ⊗ x` fixes. -/
 def symmetricTensors : Submodule R (M ⊗[R] M) :=
-  Module.End.eigenspace (TensorProduct.comm R M M).toLinearMap 1
-
-/-- **The antisymmetric tensors** of `M ⊗[R] M`: the `-1`-eigenspace of the flip. -/
-def antisymmetricTensors : Submodule R (M ⊗[R] M) :=
-  Module.End.eigenspace (TensorProduct.comm R M M).toLinearMap (-1)
+  LinearMap.eqLocus (TensorProduct.comm R M M).toLinearMap LinearMap.id
 
 variable {R M}
 
@@ -81,14 +84,7 @@ variable {R M}
 @[simp]
 theorem mem_symmetricTensors {x : M ⊗[R] M} :
     x ∈ symmetricTensors R M ↔ TensorProduct.comm R M M x = x := by
-  rw [symmetricTensors, Module.End.mem_eigenspace_iff, one_smul]
-  exact Iff.rfl
-
-/-- A tensor is antisymmetric exactly when the flip negates it. -/
-@[simp]
-theorem mem_antisymmetricTensors {x : M ⊗[R] M} :
-    x ∈ antisymmetricTensors R M ↔ TensorProduct.comm R M M x = -x := by
-  rw [antisymmetricTensors, Module.End.mem_eigenspace_iff, neg_one_smul]
+  rw [symmetricTensors, LinearMap.mem_eqLocus]
   exact Iff.rfl
 
 /-- `f ⊗ f` preserves the symmetric tensors, because it commutes with the flip. -/
@@ -97,11 +93,50 @@ theorem map_self_mem_symmetricTensors (f : M →ₗ[R] M) {x : M ⊗[R] M}
   rw [mem_symmetricTensors] at hx ⊢
   rw [← TensorProduct.map_comm, hx]
 
+/-- The restriction of `f ⊗ f` to the symmetric tensors, as an endomorphism. -/
+noncomputable def symmetricTensorsRestrict (f : M →ₗ[R] M) :
+    symmetricTensors R M →ₗ[R] symmetricTensors R M :=
+  (TensorProduct.map f f).restrict fun _ hx ↦ map_self_mem_symmetricTensors f hx
+
+@[simp]
+theorem coe_symmetricTensorsRestrict_apply (f : M →ₗ[R] M) (x : symmetricTensors R M) :
+    (symmetricTensorsRestrict f x : M ⊗[R] M) = TensorProduct.map f f x :=
+  (rfl)
+
+end Symmetric
+
+section Antisymmetric
+
+variable (R M : Type*) [CommRing R] [AddCommGroup M] [Module R M]
+
+/-- **The antisymmetric tensors** of `M ⊗[R] M`: the `-1`-eigenspace of the flip. -/
+def antisymmetricTensors : Submodule R (M ⊗[R] M) :=
+  Module.End.eigenspace (TensorProduct.comm R M M).toLinearMap (-1)
+
+variable {R M}
+
+/-- A tensor is antisymmetric exactly when the flip negates it. -/
+@[simp]
+theorem mem_antisymmetricTensors {x : M ⊗[R] M} :
+    x ∈ antisymmetricTensors R M ↔ TensorProduct.comm R M M x = -x := by
+  rw [antisymmetricTensors, Module.End.mem_eigenspace_iff, neg_one_smul]
+  exact Iff.rfl
+
 /-- `f ⊗ f` preserves the antisymmetric tensors, because it commutes with the flip. -/
 theorem map_self_mem_antisymmetricTensors (f : M →ₗ[R] M) {x : M ⊗[R] M}
     (hx : x ∈ antisymmetricTensors R M) : TensorProduct.map f f x ∈ antisymmetricTensors R M := by
   rw [mem_antisymmetricTensors] at hx ⊢
   rw [← TensorProduct.map_comm, hx, map_neg]
+
+/-- The restriction of `f ⊗ f` to the antisymmetric tensors, as an endomorphism. -/
+noncomputable def antisymmetricTensorsRestrict (f : M →ₗ[R] M) :
+    antisymmetricTensors R M →ₗ[R] antisymmetricTensors R M :=
+  (TensorProduct.map f f).restrict fun _ hx ↦ map_self_mem_antisymmetricTensors f hx
+
+@[simp]
+theorem coe_antisymmetricTensorsRestrict_apply (f : M →ₗ[R] M) (x : antisymmetricTensors R M) :
+    (antisymmetricTensorsRestrict f x : M ⊗[R] M) = TensorProduct.map f f x :=
+  (rfl)
 
 variable (R M) in
 /-- **The tensor square is the sum of its symmetric and antisymmetric parts**, when `2` is
@@ -146,7 +181,7 @@ theorem isInternal_symmetricTensors_antisymmetricTensors [Invertible (2 : R)] :
   ext b
   cases b <;> simp
 
-end Defs
+end Antisymmetric
 
 section Trace
 
@@ -167,32 +202,6 @@ theorem trace_map_self_comp_comm [Module.Free K M] [Module.Finite K M] (f : M �
     Module.Basis.tensorProduct_repr_tmul_apply, mul_comm]
 
 end Trace
-
-section Restrict
-
-variable {K M : Type*} [CommRing K] [AddCommGroup M] [Module K M]
-
-/-- The restriction of `f ⊗ f` to the symmetric tensors, as an endomorphism. -/
-noncomputable def symmetricTensorsRestrict (f : M →ₗ[K] M) :
-    symmetricTensors K M →ₗ[K] symmetricTensors K M :=
-  (TensorProduct.map f f).restrict fun _ hx ↦ map_self_mem_symmetricTensors f hx
-
-/-- The restriction of `f ⊗ f` to the antisymmetric tensors, as an endomorphism. -/
-noncomputable def antisymmetricTensorsRestrict (f : M →ₗ[K] M) :
-    antisymmetricTensors K M →ₗ[K] antisymmetricTensors K M :=
-  (TensorProduct.map f f).restrict fun _ hx ↦ map_self_mem_antisymmetricTensors f hx
-
-@[simp]
-theorem coe_symmetricTensorsRestrict_apply (f : M →ₗ[K] M) (x : symmetricTensors K M) :
-    (symmetricTensorsRestrict f x : M ⊗[K] M) = TensorProduct.map f f x :=
-  (rfl)
-
-@[simp]
-theorem coe_antisymmetricTensorsRestrict_apply (f : M →ₗ[K] M) (x : antisymmetricTensors K M) :
-    (antisymmetricTensorsRestrict f x : M ⊗[K] M) = TensorProduct.map f f x :=
-  (rfl)
-
-end Restrict
 
 section TraceSplit
 

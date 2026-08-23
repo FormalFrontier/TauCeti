@@ -8,7 +8,7 @@ module
 public import TauCeti.LinearAlgebra.TensorProduct.Symmetric
 public import TauCeti.RepresentationTheory.Compact.FrobeniusSchur.Basic
 public import TauCeti.RepresentationTheory.Compact.Invariants
-public import TauCeti.RepresentationTheory.Continuous.Square
+public import TauCeti.RepresentationTheory.Continuous.Square.Basic
 
 /-!
 # The Frobenius-Schur indicator counts invariant tensors
@@ -41,7 +41,7 @@ that pointwise identity and reading each character integral as a dimension of in
 
 The two squares themselves need none of the analysis, so they are not built here: they are defined,
 and shown continuous, for a continuous representation of a monoid on an inner product space over
-`RCLike 𝕜` in `TauCeti/RepresentationTheory/Continuous/Square.lean`. Only the character and
+`RCLike 𝕜` in `TauCeti/RepresentationTheory/Continuous/Square/Basic.lean`. Only the character and
 indicator statements below ask for a compact group, finite dimension, and `𝕜 = ℂ`.
 
 ## Main statements
