@@ -56,7 +56,8 @@ theorem exists_minpoly_eq_X_sq_add_twenty_one_and_adjoin_eq_top :
   refine ⟨integralSqrt hx, minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
       norm_num at hq
       nlinarith [mul_self_nonneg q]), ?_⟩
-  rw [algebraMap_integralSqrt hx]
+  have hθx : ((integralSqrt hx : 𝓞 K) : K) = x := algebraMap_integralSqrt hx
+  rw [hθx]
   exact AdjoinRoot.adjoinRoot_eq_top
 
 end TauCeti.NumberField
