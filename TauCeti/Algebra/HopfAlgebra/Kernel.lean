@@ -39,6 +39,8 @@ dictionary.
   by the kernel to the codomain.
 * `TauCeti.HopfIdeal.kerOfSurjective_mkBialgHom`: the kernel of the quotient morphism by `I`
   is `I`.
+* `TauCeti.HopfIdeal.ker_lTensor_eq_rightTensorIdeal`: tensoring on the left by a flat algebra
+  carries the kernel of an algebra map to the corresponding right tensor ideal.
 
 ## References
 
@@ -73,6 +75,34 @@ private theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring
   -- and `rightTensorIdeal_def` use their `toRingHom`; after the named coercion rewrite
   -- these are the same ideal maps definitionally.
   apply congr_arg₂ (· ⊔ ·) <;> rfl
+
+/-- Tensoring on the left by a flat algebra carries the kernel of an algebra map to the
+corresponding right tensor ideal, provided the codomain is flat. -/
+theorem ker_lTensor_eq_rightTensorIdeal {A B : Type*} [CommRing A] [CommRing B]
+    [Algebra R A] [Algebra R B] [Module.Flat R A] [Module.Flat R B] (f : A →ₐ[R] B) :
+    RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R A) f) =
+      rightTensorIdeal (R := R) (H := A) (RingHom.ker f) := by
+  let I := RingHom.ker f
+  let q : A →ₐ[R] A ⧸ I := Ideal.Quotient.mkₐ R I
+  let f' : (A ⧸ I) →ₐ[R] B := Ideal.kerLiftAlg f
+  have hf' : Function.Injective f' := Ideal.kerLiftAlg_injective f
+  have htensor : Function.Injective
+      (Algebra.TensorProduct.map (AlgHom.id R A) f') := by
+    have h := TensorProduct.map_injective_of_flat_flat'
+      (AlgHom.id R A).toLinearMap f'.toLinearMap Function.injective_id hf'
+    rw [← TensorProduct.AlgebraTensorModule.map_eq,
+      ← Algebra.TensorProduct.toLinearMap_map] at h
+    exact h
+  have hcomp :
+      (Algebra.TensorProduct.map (AlgHom.id R A) f').comp
+          (Algebra.TensorProduct.map (AlgHom.id R A) q) =
+        Algebra.TensorProduct.map (AlgHom.id R A) f := by
+    have hright : f'.comp q = f := by
+      ext x
+      exact Ideal.kerLiftAlg_mk f x
+    rw [← Algebra.TensorProduct.map_comp, AlgHom.id_comp, hright]
+  rw [← ker_tensorProduct_map_id_quotient I, ← hcomp]
+  exact RingHom.ker_comp_of_injective _ htensor
 
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
