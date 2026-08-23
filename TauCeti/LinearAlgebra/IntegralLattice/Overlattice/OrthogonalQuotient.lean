@@ -1,0 +1,356 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
+public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Dual
+public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Index
+
+/-!
+# The discriminant form of an even overlattice
+
+Let `L` be an even nondegenerate integral lattice and let `L ≤ M ≤ Lᵛ` be an even intermediate
+carrier, that is an even overlattice of `L` inside the common rational ambient space. The
+correspondence of `TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Isotropic` attaches to `M`
+the subgroup `H = M / L` of the discriminant group `A_L = Lᵛ / L`, and evenness of `M` is exactly
+isotropy of `H` for the discriminant quadratic form. This file computes the discriminant quadratic
+module of `M` itself:
+
+```text
+A_M ≅ H⊥ / H,   H = M / L ≤ A_L.
+```
+
+This is the last step of Nikulin's gluing recipe, and it is what identifies the discriminant form
+of a glued lattice without recomputing a dual lattice from scratch. The proof is the composite
+
+```text
+Mᵛ ↪ Lᵛ ↠ A_L,
+```
+
+which lands in `H⊥` because the dual of an intermediate carrier corresponds to the orthogonal
+complement of its subgroup, is surjective onto `H⊥` for the same reason, and whose fibre over `H`
+is exactly `M`. The composite therefore descends to an additive bijection `A_M ≃ H⊥ / H`, and it
+preserves the half-norm quadratic form because both sides are represented by `B(x, x) / 2` modulo
+`ℤ` at the same ambient vector `x`.
+
+Two consequences are recorded. The order of `H⊥ / H` is the discriminant of `M`, and `M` is
+unimodular exactly when `H⊥ / H` is trivial — the quotient-side reading of the Lagrangian
+criterion of `TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Dual`. The isometry is also
+restated for the overlattice `L_H` glued along a quadratic-isotropic subgroup `H ≤ A_L`, which is
+the form in which the ADE glue calculations use it.
+
+Two things are deliberately left out. The bilinear analogue for a merely integral overlattice of
+an odd lattice needs the orthogonal quotient of a finite *bilinear* module, which the library does
+not yet have. And naturality of the comparison isometry under a lattice isometry needs the induced
+map of orthogonal quotients, which is likewise still missing from the finite-quadratic-module
+layer.
+
+## Main declarations
+
+* `TauCeti.IntegralLattice.IntermediateCarrier.discriminantOrthogonalQuotientIsometry`: the
+  isometry `A_M ≅ H⊥ / H` of finite quadratic modules.
+* `TauCeti.IntegralLattice.IntermediateCarrier.discriminantOrthogonalQuotientIsometry_mk`: its
+  value on the class of a vector of `Mᵛ`.
+* `TauCeti.IntegralLattice.IntermediateCarrier.natCard_orthogonalQuotient`: the order of
+  `H⊥ / H` is the discriminant of `M`.
+* `TauCeti.IntegralLattice.IntermediateCarrier.subsingleton_orthogonalQuotient_iff_isUnimodular`:
+  `M` is unimodular exactly when `H⊥ / H` is trivial.
+* `TauCeti.IntegralLattice.discriminantOrthogonalQuotientIsometryOfSubgroup`: the same isometry
+  read as `A_(L_H) ≅ H⊥ / H` for a quadratic-isotropic subgroup `H` of `A_L`.
+
+## References
+
+* V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.4,
+  Proposition 1.4.1, stated there in the full-norm `ℚ/2ℤ` convention.
+* W. Ebeling, *Lattices and Codes*, Chapter 1.
+* `TauCetiRoadmap/IntegralLattices/README.md`, Layer 4.
+-/
+
+public section
+
+namespace TauCeti
+
+universe u
+
+namespace IntegralLattice
+
+variable {V : Type u} [AddCommGroup V] [Module ℚ V]
+variable {L : IntegralLattice V} [L.IsNondegenerate] {M : L.IntermediateCarrier}
+
+namespace IntermediateCarrier
+
+/-! ## The dual carrier of an overlattice -/
+
+/-- The dual carrier of the lattice carried by an integral intermediate carrier is the dual
+intermediate carrier. -/
+theorem IsIntegral.toIntegralLattice_dualCarrier (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier = (dual M).1 := by
+  rw [coe_dual, IntegralLattice.dualCarrier, hM.toIntegralLattice_form,
+    hM.toIntegralLattice_carrier]
+
+/-- A vector of `Mᵛ` belongs to the dual intermediate carrier. -/
+theorem IsIntegral.mem_dual_of_mem_dualCarrier (hM : IsIntegral M) {x : V}
+    (hx : x ∈ hM.toIntegralLattice.dualCarrier) : x ∈ (dual M).1 := by
+  rwa [hM.toIntegralLattice_dualCarrier] at hx
+
+/-- Since `L ≤ M`, the dual carrier of `M` is contained in the dual carrier of `L`. -/
+theorem IsIntegral.dualCarrier_le (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier ≤ L.dualCarrier := fun _ hx ↦
+  (dual M).2.2 (hM.mem_dual_of_mem_dualCarrier hx)
+
+/-- The discriminant class in `A_L` of a vector of `Mᵛ`. -/
+noncomputable def IsIntegral.dualClassHom (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier →ₗ[ℤ] L.DiscriminantGroup :=
+  L.carrierInDual.mkQ.comp (Submodule.inclusion hM.dualCarrier_le)
+
+@[simp]
+theorem IsIntegral.dualClassHom_apply (hM : IsIntegral M)
+    (y : hM.toIntegralLattice.dualCarrier) :
+    hM.dualClassHom y = Submodule.Quotient.mk ⟨(y : V), hM.dualCarrier_le y.2⟩ := (rfl)
+
+/-- The discriminant class of a vector of `Mᵛ` is orthogonal to `H = M / L`, because the dual
+of an intermediate carrier corresponds to the orthogonal complement of its subgroup. -/
+theorem IsIntegral.dualClassHom_mem_orthogonalComplement (hM : IsIntegral M)
+    (y : hM.toIntegralLattice.dualCarrier) :
+    hM.dualClassHom y ∈
+      L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M) := by
+  rw [← discriminantSubgroup_dual, hM.dualClassHom_apply]
+  exact (L.mk_mem_discriminantSubgroup_iff (dual M) _).mpr
+    (hM.mem_dual_of_mem_dualCarrier y.2)
+
+/-- **Evenness of an overlattice is quadratic isotropy of its subgroup**, packaged for use as the
+isotropy hypothesis of the orthogonal quotient. -/
+theorem IsEven.isIsotropic_discriminantSubgroup (hL : L.IsEven) (hM : IsEven M) :
+    (L.discriminantQuadraticModule hL).IsIsotropic (L.discriminantSubgroup M) :=
+  (isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM
+
+/-! ## The comparison isometry -/
+
+variable (hL : L.IsEven) (hM : IsEven M)
+
+/-- The homomorphism `Mᵛ → H⊥ / H` sending a dual vector of `M` to the class of its discriminant
+class in `A_L`. -/
+noncomputable def dualCarrierToOrthogonalQuotient :
+    hM.isIntegral.toIntegralLattice.dualCarrier →+
+      (L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
+        (IsEven.isIsotropic_discriminantSubgroup hL hM) :=
+  ((L.discriminantQuadraticModule hL).orthogonalQuotientMk _
+      (IsEven.isIsotropic_discriminantSubgroup hL hM)).comp
+    (AddMonoidHom.codRestrict hM.isIntegral.dualClassHom.toAddMonoidHom
+      (L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M))
+      hM.isIntegral.dualClassHom_mem_orthogonalComplement)
+
+/-- The homomorphism `Mᵛ → H⊥ / H` unfolded on a vector of `Mᵛ`. -/
+theorem dualCarrierToOrthogonalQuotient_apply
+    (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    dualCarrierToOrthogonalQuotient hL hM y =
+      (L.discriminantQuadraticModule hL).orthogonalQuotientMk _
+        (IsEven.isIsotropic_discriminantSubgroup hL hM)
+        ⟨hM.isIntegral.dualClassHom y,
+          hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩ := (rfl)
+
+/-- A dual vector of `M` has trivial class in `H⊥ / H` exactly when it already lies in `M`. -/
+theorem dualCarrierToOrthogonalQuotient_eq_zero_iff
+    (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    dualCarrierToOrthogonalQuotient hL hM y = 0 ↔ (y : V) ∈ M.1 :=
+  ((L.discriminantQuadraticModule hL).orthogonalQuotientMk_eq_zero_iff
+      (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      ⟨hM.isIntegral.dualClassHom y,
+        hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩).trans
+    (L.mk_mem_discriminantSubgroup_iff M _)
+
+/-- The induced homomorphism `A_M → H⊥ / H` on the discriminant group of the overlattice. -/
+noncomputable def discriminantOrthogonalQuotientHom :
+    hM.isIntegral.toIntegralLattice.DiscriminantGroup →ₗ[ℤ]
+      (L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
+        (IsEven.isIsotropic_discriminantSubgroup hL hM) :=
+  Submodule.liftQ _ (dualCarrierToOrthogonalQuotient hL hM).toIntLinearMap (by
+    intro y hy
+    rw [LinearMap.mem_ker]
+    refine (dualCarrierToOrthogonalQuotient_eq_zero_iff hL hM y).mpr ?_
+    rw [← hM.isIntegral.toIntegralLattice_carrier]
+    exact (hM.isIntegral.toIntegralLattice.mem_carrierInDual_iff y).mp hy)
+
+/-- The induced homomorphism on `A_M` is computed by its representative homomorphism. -/
+@[simp]
+theorem discriminantOrthogonalQuotientHom_mk
+    (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    discriminantOrthogonalQuotientHom hL hM (Submodule.Quotient.mk y) =
+      dualCarrierToOrthogonalQuotient hL hM y := (rfl)
+
+/-- A vector of `Mᵛ` whose discriminant class lies in `H` already lies in `M`, so the induced
+homomorphism is injective. -/
+theorem discriminantOrthogonalQuotientHom_injective :
+    Function.Injective (discriminantOrthogonalQuotientHom hL hM) := by
+  refine (injective_iff_map_eq_zero _).mpr fun a ha ↦ ?_
+  induction a using Submodule.Quotient.induction_on with
+  | _ y =>
+    rw [discriminantOrthogonalQuotientHom_mk,
+      dualCarrierToOrthogonalQuotient_eq_zero_iff] at ha
+    rw [Submodule.Quotient.mk_eq_zero, hM.isIntegral.toIntegralLattice.mem_carrierInDual_iff,
+      hM.isIntegral.toIntegralLattice_carrier]
+    exact ha
+
+/-- Every class of `H⊥` is the discriminant class of a vector of `Mᵛ`, so the induced
+homomorphism is surjective. -/
+theorem discriminantOrthogonalQuotientHom_surjective :
+    Function.Surjective (discriminantOrthogonalQuotientHom hL hM) := by
+  intro q
+  obtain ⟨z, rfl⟩ := (L.discriminantQuadraticModule hL).orthogonalQuotientMk_surjective
+    (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM) q
+  obtain ⟨x, hx⟩ := Submodule.Quotient.mk_surjective L.carrierInDual z.1
+  have hxdual : (x : V) ∈ (dual M).1 := by
+    refine (L.mk_mem_discriminantSubgroup_iff (dual M) x).mp ?_
+    rw [discriminantSubgroup_dual, hx]
+    exact z.2
+  have hy : (x : V) ∈ hM.isIntegral.toIntegralLattice.dualCarrier := by
+    rw [hM.isIntegral.toIntegralLattice_dualCarrier]
+    exact hxdual
+  refine ⟨Submodule.Quotient.mk ⟨(x : V), hy⟩, ?_⟩
+  rw [discriminantOrthogonalQuotientHom_mk, dualCarrierToOrthogonalQuotient_apply]
+  exact congrArg _ (Subtype.ext hx)
+
+/-- The quadratic value in `H⊥ / H` of the class of a dual vector of `M` is the ambient
+half-norm. -/
+theorem quadratic_dualCarrierToOrthogonalQuotient
+    (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
+        (IsEven.isIsotropic_discriminantSubgroup hL hM)).quadratic
+        (dualCarrierToOrthogonalQuotient hL hM y) =
+      ((L.form y y / 2 : ℚ) : AddCircle (1 : ℚ)) :=
+  ((L.discriminantQuadraticModule hL).orthogonalQuotient_quadratic_mk
+      (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      ⟨hM.isIntegral.dualClassHom y,
+        hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩).trans
+    ((L.discriminantQuadraticModule_quadratic hL _).trans
+      (L.discriminantQuadraticMap_mk hL ⟨(y : V), hM.isIntegral.dualCarrier_le y.2⟩))
+
+/-- The pairing in `H⊥ / H` of the classes of two dual vectors of `M` is the ambient form
+modulo `ℤ`. -/
+theorem pairing_dualCarrierToOrthogonalQuotient
+    (y z : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
+        (IsEven.isIsotropic_discriminantSubgroup hL hM)).toFiniteBilinearModule.pairing
+        (dualCarrierToOrthogonalQuotient hL hM y) (dualCarrierToOrthogonalQuotient hL hM z) =
+      ((L.form y z : ℚ) : AddCircle (1 : ℚ)) :=
+  ((L.discriminantQuadraticModule hL).orthogonalQuotient_pairing_mk
+      (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      ⟨hM.isIntegral.dualClassHom y,
+        hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩
+      ⟨hM.isIntegral.dualClassHom z,
+        hM.isIntegral.dualClassHom_mem_orthogonalComplement z⟩).trans
+    ((L.discriminantBilinearModule_pairing _ _).trans
+      (L.discriminantPairing_mk ⟨(y : V), hM.isIntegral.dualCarrier_le y.2⟩
+        ⟨(z : V), hM.isIntegral.dualCarrier_le z.2⟩))
+
+/-- The quadratic value in `A_M` of the class of a dual vector of `M` is the ambient
+half-norm. -/
+theorem quadratic_discriminantQuadraticModule_toIntegralLattice_mk
+    (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    (hM.isIntegral.toIntegralLattice.discriminantQuadraticModule
+        hM.isEven_toIntegralLattice).quadratic (Submodule.Quotient.mk y) =
+      ((L.form y y / 2 : ℚ) : AddCircle (1 : ℚ)) := by
+  rw [discriminantQuadraticModule_quadratic, discriminantQuadraticMap_mk,
+    hM.isIntegral.toIntegralLattice_form]
+
+/-- **The discriminant form of an even overlattice.** For an even overlattice `L ≤ M ≤ Lᵛ` with
+subgroup `H = M / L` of the discriminant group of `L`, the discriminant quadratic module of `M`
+is `H⊥ / H`.
+
+This is Nikulin's Proposition 1.4.1, in the half-norm `ℚ/ℤ` convention. -/
+noncomputable def discriminantOrthogonalQuotientIsometry :
+    FiniteQuadraticModule.Isometry
+      (hM.isIntegral.toIntegralLattice.discriminantQuadraticModule
+        hM.isEven_toIntegralLattice)
+      ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
+        (IsEven.isIsotropic_discriminantSubgroup hL hM)) where
+  toLinearEquiv :=
+    LinearEquiv.ofBijective (discriminantOrthogonalQuotientHom hL hM)
+      ⟨discriminantOrthogonalQuotientHom_injective hL hM,
+        discriminantOrthogonalQuotientHom_surjective hL hM⟩
+  map_app' a := by
+    induction a using Submodule.Quotient.induction_on with
+    | _ y =>
+      exact (quadratic_dualCarrierToOrthogonalQuotient hL hM y).trans
+        (quadratic_discriminantQuadraticModule_toIntegralLattice_mk hM y).symm
+
+/-- The comparison isometry acts through its underlying homomorphism. -/
+@[simp]
+theorem discriminantOrthogonalQuotientIsometry_apply
+    (a : hM.isIntegral.toIntegralLattice.DiscriminantGroup) :
+    discriminantOrthogonalQuotientIsometry hL hM a =
+      discriminantOrthogonalQuotientHom hL hM a := (rfl)
+
+/-- **The representative formula.** The comparison isometry sends the class in `A_M` of a dual
+vector of `M` to the class in `H⊥ / H` of its discriminant class in `A_L`. -/
+theorem discriminantOrthogonalQuotientIsometry_mk
+    (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
+    discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y) =
+      (L.discriminantQuadraticModule hL).orthogonalQuotientMk _
+        (IsEven.isIsotropic_discriminantSubgroup hL hM)
+        ⟨hM.isIntegral.dualClassHom y,
+          hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩ := (rfl)
+
+/-! ## Numerical consequences -/
+
+/-- **The order of `H⊥ / H` is the discriminant of the overlattice.** -/
+theorem natCard_orthogonalQuotient :
+    Nat.card ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
+        (IsEven.isIsotropic_discriminantSubgroup hL hM)) =
+      hM.isIntegral.toIntegralLattice.discriminant :=
+  (Nat.card_congr
+      (discriminantOrthogonalQuotientIsometry hL hM).toLinearEquiv.toEquiv).symm.trans
+    hM.isIntegral.toIntegralLattice.natCard_discriminantGroup
+
+/-- **An even overlattice is unimodular exactly when `H⊥ / H` is trivial.** -/
+theorem subsingleton_orthogonalQuotient_iff_isUnimodular :
+    Subsingleton ((L.discriminantQuadraticModule hL).orthogonalQuotient
+        (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)) ↔
+      hM.isIntegral.toIntegralLattice.IsUnimodular := by
+  rw [hM.isIntegral.toIntegralLattice.isUnimodular_iff_subsingleton_discriminantGroup]
+  exact Equiv.subsingleton_congr
+    (discriminantOrthogonalQuotientIsometry hL hM).toLinearEquiv.toEquiv.symm
+
+end IntermediateCarrier
+
+/-! ## The comparison isometry read on subgroups -/
+
+open IntermediateCarrier
+
+variable (L)
+
+/-- **The discriminant form of a glued even overlattice:** `A_(L_H) ≅ H⊥ / H` for a
+quadratic-isotropic subgroup `H` of the discriminant group of an even nondegenerate lattice.
+
+This is the form in which the ADE glue calculations use the comparison isometry. -/
+noncomputable def discriminantOrthogonalQuotientIsometryOfSubgroup (hL : L.IsEven)
+    {H : AddSubgroup L.DiscriminantGroup}
+    (hM : IntermediateCarrier.IsEven (L.intermediateCarrierOfDiscriminantSubgroup H)) :
+    FiniteQuadraticModule.Isometry
+      (hM.isIntegral.toIntegralLattice.discriminantQuadraticModule
+        hM.isEven_toIntegralLattice)
+      ((L.discriminantQuadraticModule hL).orthogonalQuotient H
+        ((L.isEven_intermediateCarrierOfDiscriminantSubgroup_iff hL H).mp hM)) :=
+  (discriminantOrthogonalQuotientIsometry hL hM).trans
+    ((L.discriminantQuadraticModule hL).orthogonalQuotientCongr
+      (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      ((L.isEven_intermediateCarrierOfDiscriminantSubgroup_iff hL H).mp hM)
+      (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H))
+
+/-- **The order of `H⊥ / H` is the discriminant of the overlattice glued along `H`.** -/
+theorem natCard_orthogonalQuotient_of_subgroup (hL : L.IsEven)
+    {H : AddSubgroup L.DiscriminantGroup}
+    (hM : IntermediateCarrier.IsEven (L.intermediateCarrierOfDiscriminantSubgroup H)) :
+    Nat.card ((L.discriminantQuadraticModule hL).orthogonalQuotient H
+        ((L.isEven_intermediateCarrierOfDiscriminantSubgroup_iff hL H).mp hM)) =
+      hM.isIntegral.toIntegralLattice.discriminant :=
+  (Nat.card_congr (L.discriminantOrthogonalQuotientIsometryOfSubgroup hL
+      hM).toLinearEquiv.toEquiv).symm.trans
+    hM.isIntegral.toIntegralLattice.natCard_discriminantGroup
+
+end IntegralLattice
+
+end TauCeti
