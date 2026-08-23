@@ -303,6 +303,11 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
   obtain ⟨n, hn⟩ := hfourdvd
   omega
 
+local instance irreducible_sqrt_neg_twenty_one :
+    Fact (Irreducible (X ^ 2 - C (-21 : ℚ))) := ⟨by
+  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
+    (fun q _ => by nlinarith [sq_nonneg q])⟩
+
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 21)`, modelling `ℚ(√-21)`,
 has class number `4`. -/
 @[simp]
