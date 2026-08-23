@@ -235,6 +235,13 @@ noncomputable def tateMixed (m : ℤ) :
       isBaseChange_tateLatticeMap :=
   MixedHodgeStructure.ofPure _ _ (tate m)
 
+/-- The Tate mixed Hodge structure is the Tate Hodge structure viewed as mixed. Stated because the
+body of `TauCeti.Hodge.tateMixed` is not exposed, so downstream modules cannot unfold it. -/
+theorem tateMixed_eq_ofPure (m : ℤ) :
+    tateMixed m = MixedHodgeStructure.ofPure (IsBaseChange.linearMap ℤ ℚ)
+      isBaseChange_tateLatticeMap (tate m) :=
+  (rfl)
+
 end OfPure
 
 end TauCeti.Hodge
