@@ -22,7 +22,7 @@ canonical bivector action rather than from a basis-dependent inverse.
 
 * `CliffordAlgebra.soEquivQuadratic`: the quadratic realization Lie equivalence.
 * `CliffordAlgebra.soEquivQuadratic_lie_ι`: its defining generator-action equation.
-* `CliffordAlgebra.quadraticLieSubalgebra_ext_lie_ι`: quadratic elements are
+* `CliffordAlgebra.quadraticLieSubalgebra_ext`: quadratic elements are
   determined by their commutator action on Clifford generators.
 
 ## References
@@ -178,7 +178,7 @@ theorem soEquivQuadratic_lie_ι (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
 /-- Two quadratic Clifford elements are equal when their commutator actions agree on every
 generator. -/
 @[ext]
-theorem quadraticLieSubalgebra_ext_lie_ι (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+theorem quadraticLieSubalgebra_ext (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     {a b : quadraticLieSubalgebra Q}
     (h : ∀ x : V, ⁅(a : CliffordAlgebra Q), ι Q x⁆ = ⁅(b : CliffordAlgebra Q), ι Q x⁆) :
     a = b := by

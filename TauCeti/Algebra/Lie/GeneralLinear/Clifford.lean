@@ -148,7 +148,7 @@ private theorem traceQuadraticLift_single (i j : n) :
   -- Expose the generic quadratic lift through the local equivalence `e`.
   change (e (traceAdjointSO K n (Matrix.single i j 1)) : CliffordAlgebra Q) = _
   have heq : e (traceAdjointSO K n (Matrix.single i j 1)) = matrixUnitQuadratic i j := by
-    apply quadraticLieSubalgebra_ext_lie_ι Q hQ
+    apply quadraticLieSubalgebra_ext Q hQ
     intro Y
     rw [soEquivQuadratic_lie_ι, matrixUnitQuadratic_lie_ι, coe_traceAdjointSO,
       _root_.LieAlgebra.ad_apply]
