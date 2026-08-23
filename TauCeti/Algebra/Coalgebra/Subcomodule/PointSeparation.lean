@@ -61,7 +61,7 @@ variable [AddCommGroup M] [Module k M] [Comodule k C M]
 variable [Field K] [Algebra k K] [IsAlgClosed K]
 
 /-- If every geometric point preserves the scalar extension of a submodule, the coaction of
-each element of that submodule belongs to its tensor product with the coefficient bialgebra.
+each element of that submodule belongs to its tensor product with the coefficient coalgebra.
 
 It is enough to test the pure tensors `1 ⊗ m`: the point action is linear over the value field,
 so this is equivalent to preservation of the whole scalar-extended submodule. -/
@@ -94,26 +94,17 @@ theorem coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange
         rw [← LinearMap.comp_apply, ← LinearMap.baseChange_comp]
         have hcomp : q.comp N.subtype = 0 := by
           ext n
-          change N.mkQ (n : M) = 0
-          rw [N.mkQ_apply, Submodule.Quotient.mk_eq_zero]
-          exact n.2
+          rw [LinearMap.comp_apply, LinearMap.zero_apply, Submodule.subtype_apply]
+          exact (N.mkQ_apply (n : M)).trans
+            ((Submodule.Quotient.mk_eq_zero N).mpr n.2)
         rw [hcomp, LinearMap.baseChange_zero, LinearMap.zero_apply]
       have heval := congrArg
         (fun t ↦ TauCeti.Module.Dual.baseChangeEvaluation
           (R := k) (M := Q) (A := K) (1 ⊗ₜ[k] φ) t) hyq
       rw [map_zero] at heval
-      have heval_natural (t : K ⊗[k] M) :
-          TauCeti.Module.Dual.baseChangeEvaluation
-              (R := k) (M := Q) (A := K) (1 ⊗ₜ[k] φ) (q.baseChange K t) =
-            TauCeti.Module.Dual.baseChangeEvaluation
-              (R := k) (M := M) (A := K) (1 ⊗ₜ[k] (φ.comp q)) t := by
-        induction t using TensorProduct.induction_on with
-        | zero => simp
-        | add s t hs ht => simpa only [map_add] using congrArg₂ (· + ·) hs ht
-        | tmul a n => simp [TauCeti.Module.Dual.baseChangeEvaluation_tmul]
       have hcoeff :
           g (Comodule.matrixCoefficient (R := k) (C := C) (φ.comp q) m) = 0 := by
-        rw [heval_natural] at heval
+        rw [TauCeti.Module.Dual.baseChangeEvaluation_one_tmul_baseChange] at heval
         simpa using heval
       rw [map_zero]
       rw [← hcoeff]
