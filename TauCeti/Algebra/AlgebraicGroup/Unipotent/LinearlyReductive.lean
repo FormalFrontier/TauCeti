@@ -77,7 +77,7 @@ namespace TauCeti
 
 open WithConv
 
-universe u
+universe u w
 
 noncomputable section
 
@@ -216,7 +216,7 @@ theorem subsingleton_algHom_of_isLinearlyReductive_of_forall_isUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
     (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g)
-    (A : Type u) [CommRing A] [Algebra k A] :
+    (A : Type w) [CommRing A] [Algebra k A] :
     Subsingleton (H →ₐ[k] A) := by
   refine ⟨fun f g ↦ AlgHom.ext fun h ↦ ?_⟩
   rw [eq_counit_smul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint k H hlr hH h]

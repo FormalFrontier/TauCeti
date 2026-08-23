@@ -54,9 +54,12 @@ def fixedSubcomodule : Subcomodule R C M where
   coact_mem' := by
     intro m hm
     have hm' : coact (R := R) (C := C) (M := M) m = m ⊗ₜ[R] (1 : C) := by
-      simpa using LinearMap.mem_eqLocus.mp hm
+      simpa only [LinearMap.flip_apply, TensorProduct.mk_apply] using
+        LinearMap.mem_eqLocus.mp hm
     exact ⟨(⟨m, hm⟩ : LinearMap.eqLocus (coact (R := R) (C := C) (M := M))
-        ((TensorProduct.mk R M C).flip 1)) ⊗ₜ[R] (1 : C), by simpa using hm'.symm⟩
+        ((TensorProduct.mk R M C).flip 1)) ⊗ₜ[R] (1 : C), by
+          simpa only [TensorProduct.map_tmul, LinearMap.id_apply, Submodule.coe_subtype] using
+            hm'.symm⟩
 
 variable {R C M}
 
@@ -65,6 +68,7 @@ theorem mem_fixedSubcomodule {m : M} :
     m ∈ fixedSubcomodule R C M ↔ coact (R := R) (C := C) (M := M) m = m ⊗ₜ[R] (1 : C) :=
   Iff.rfl
 
+@[simp]
 theorem fixedSubcomodule_eq_top_iff :
     fixedSubcomodule R C M = ⊤ ↔
       ∀ m : M, coact (R := R) (C := C) (M := M) m = m ⊗ₜ[R] (1 : C) :=
