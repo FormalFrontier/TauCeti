@@ -22,9 +22,9 @@ standard matrix subgroups. They also show that every such point comes from the e
 torus or root-subgroup point homomorphism. Thus the abstract dynamic decomposition agrees with
 the standard `B = T U` decomposition of `GL₂`.
 
-The proofs use the already computed dynamic limit: an upper-triangular matrix is sent to its
-diagonal part. A point is in the Levi precisely when it equals that limit, while it is in the
-unipotent subgroup precisely when the limit is one.
+The proofs specialize the general weight-cocharacter criteria for Levi and unipotent membership
+to the weights `(1, 0)`, then identify the resulting matrix conditions with the standard diagonal
+torus and positive root subgroup.
 
 ## Main declarations
 
