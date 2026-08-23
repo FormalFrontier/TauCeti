@@ -20,7 +20,7 @@ the prescribed cap on each window and the original curve off their union. Conseq
 result remains piecewise `C¹` and closed, and it avoids the crossing centre when the windows
 cover every parameter at which the original curve meets that centre.
 
-This is the finite geometric surgery producing the curve `Λ̃` in Proposition 2.2. The winding
+This is the finite geometric surgery producing the modified curve in Proposition 2.2. The winding
 number accounting is deliberately separate: `Winding.Number.Partition` supplies finite
 additivity, while the local crossing contribution is computed by the crossing-angle theory.
 
