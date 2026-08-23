@@ -34,6 +34,8 @@ vector of the comodule itself.
   a fixed vector for a bialgebra comodule.
 * `TauCeti.Comodule.coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq`: the same criterion for the
   convolution-group action of a Hopf algebra.
+* `TauCeti.Comodule.coact_eq_tmul_one_iff_forall_basePointsRepresentation_eq`: base-valued points
+  detect fixed vectors over an algebraically closed base field.
 
 ## References
 
@@ -121,6 +123,31 @@ theorem coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (m : M) :
     simpa only [ofConv_toConv] using hg
 
 end HopfAlgebra
+
+section BasePointsRepresentation
+
+variable {k : Type u} {H : Type v} {M : Type w}
+variable [Field k] [CommRing H] [HopfAlgebra k H] [Algebra.FiniteType k H] [IsReduced H]
+variable [AddCommGroup M] [Module k M] [Comodule k H M] [IsAlgClosed k]
+
+/-- Over an algebraically closed base field, base-valued points detect fixed vectors of a
+reduced finite-type Hopf-algebra comodule. -/
+theorem coact_eq_tmul_one_iff_forall_basePointsRepresentation_eq (m : M) :
+    coact (R := k) (C := H) m = m ⊗ₜ[k] (1 : H) ↔
+      ∀ g : HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k),
+        basePointsRepresentation (R := k) (H := H) M g m = m := by
+  rw [coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (K := k)]
+  constructor
+  · intro h g
+    have hg := h g
+    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap] at hg
+    have := congrArg (TensorProduct.lid k M) hg
+    exact (basePointsRepresentation_apply g m).trans (by simpa using this)
+  · intro h g
+    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap,
+      endOfPoint_one_tmul_eq_tmul_basePointsRepresentation, h g]
+
+end BasePointsRepresentation
 
 end
 

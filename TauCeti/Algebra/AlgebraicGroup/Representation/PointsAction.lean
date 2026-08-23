@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
+public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
@@ -20,7 +21,8 @@ a comodule (`TauCeti.Comodule.endOfPoint`,
 `TauCeti.Comodule.pointsRepresentation`) lands in the units of the endomorphism
 monoid: the action upgrades to linear automorphisms of the scalar extension via
 `Representation.asGroupHom`, with inverses provided by the group structure rather
-than by an antipode computation.
+than by an antipode computation. For points valued in the base ring, the scalar-extension
+action transports across `R ⊗[R] V ≃ₗ[R] V` to a representation on `V` itself.
 
 ## Main declarations
 
@@ -29,9 +31,13 @@ than by an antipode computation.
 * `TauCeti.Comodule.pointsAction_corestrict`: compatibility of point actions with
   corestriction and precomposition, also provided for bundled finite comodules by
   `TauCeti.Comodule.pointsAction_corestrict_obj`.
+* `TauCeti.Comodule.basePointsRepresentation`: the action of base-valued points on the original
+  comodule.
 -/
 
 public section
+
+open scoped TensorProduct
 
 namespace TauCeti
 
@@ -64,6 +70,80 @@ lemma pointsAction_toLinearMap (g : WithConv (H →ₐ[R] A)) :
     Representation.asGroupHom_apply, pointsRepresentation_apply]
 
 universe u v w x y
+
+section BasePointsRepresentation
+
+variable {R : Type u} {H : Type v}
+variable [CommRing R] [Semiring H] [HopfAlgebra R H]
+
+/-- The representation of the group of base-valued points on the original comodule.
+
+`pointsRepresentation` acts on `R ⊗[R] M`; this is its transport across the canonical
+equivalence `R ⊗[R] M ≃ₗ[R] M`. -/
+noncomputable def basePointsRepresentation
+    (M : Type w) [AddCommMonoid M] [Module R M] [Comodule R H M] :
+    Representation R (HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) M where
+  toFun g :=
+    (TensorProduct.lid R M).toLinearMap ∘ₗ
+      pointsRepresentation M g ∘ₗ
+        (TensorProduct.lid R M).symm.toLinearMap
+  map_one' := by
+    rw [map_one]
+    ext m
+    simp
+  map_mul' g h := by
+    rw [map_mul]
+    ext m
+    simp only [LinearMap.comp_apply, LinearEquiv.coe_toLinearMap, Module.End.mul_apply,
+      LinearEquiv.symm_apply_apply]
+
+variable {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R H M]
+
+/-- A base-valued point acts on `m` by contracting the coefficient leg of its coaction. -/
+@[simp]
+theorem basePointsRepresentation_apply (g : HopfAlgebra.points
+    (R := R) (H := H) (CommAlgCat.of R R)) (m : M) :
+    basePointsRepresentation (H := H) M g m =
+      TensorProduct.lid R M (endOfPoint M g.ofConv (1 ⊗ₜ[R] m)) := by
+  -- Expose the transported action once so `pointsRepresentation_apply` can rewrite it.
+  change (TensorProduct.lid R M)
+    (pointsRepresentation M g ((TensorProduct.lid R M).symm m)) = _
+  rw [pointsRepresentation_apply]
+  simp
+
+/-- The scalar-extension action of a base-valued point is the pure tensor of its action on the
+original comodule. -/
+theorem endOfPoint_one_tmul_eq_tmul_basePointsRepresentation
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (m : M) :
+    endOfPoint M g.ofConv (1 ⊗ₜ[R] m) =
+      1 ⊗ₜ[R] basePointsRepresentation (H := H) M g m := by
+  apply (TensorProduct.lid R M).injective
+  rw [basePointsRepresentation_apply]
+  simp
+
+section Corestrict
+
+variable {H₁ : Type v} {H₂ : Type x} [Semiring H₁] [Semiring H₂]
+variable [HopfAlgebra R H₁] [HopfAlgebra R H₂]
+variable {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R H₁ M]
+
+/-- Acting by a base-valued point on a corestricted comodule agrees with acting by the point
+precomposed with the bialgebra morphism. -/
+theorem basePointsRepresentation_corestrict (φ : H₁ →ₐc[R] H₂)
+    (g : HopfAlgebra.points (R := R) (H := H₂) (CommAlgCat.of R R)) :
+    (letI : Comodule R H₂ M := Corestrict φ.toCoalgHom
+     basePointsRepresentation (R := R) (H := H₂) M g) =
+      basePointsRepresentation (R := R) (H := H₁) M (AlgHom.mapDomain φ g) := by
+  let _ : Comodule R H₂ M := Corestrict φ.toCoalgHom
+  apply LinearMap.ext
+  intro m
+  rw [basePointsRepresentation_apply, basePointsRepresentation_apply]
+  congr 1
+  exact LinearMap.congr_fun (endOfPoint_corestrict φ g.ofConv) (1 ⊗ₜ[R] m)
+
+end Corestrict
+
+end BasePointsRepresentation
 
 section Corestrict
 
