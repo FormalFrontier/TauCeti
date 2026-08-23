@@ -41,6 +41,8 @@ overlattice with this quotient is the lattice-side statement and is not yet form
 * `TauCeti.FiniteBilinearModule.isNondegenerate_orthogonalQuotient_iff`: the orthogonal quotient
   is nondegenerate exactly when `H` contains the radical.
 * `TauCeti.FiniteBilinearModule.card_orthogonalQuotient`: the order of the quotient as an index.
+* `IsNondegenerate.card_orthogonalQuotient_mul_card_addSubgroupOf_mul_card`: the order of the
+  quotient for an arbitrary subgroup, in the `TauCeti.FiniteBilinearModule` namespace.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq`: the order
   computation `|H^⊥/H| · |H|² = |A|` for isotropic `H`.
 * `TauCeti.FiniteBilinearModule.card_orthogonalQuotient_eq_one_iff`: triviality of the quotient,
@@ -188,22 +190,37 @@ theorem card_orthogonalQuotient (H : AddSubgroup A) :
     (H.addSubgroupOf (A.orthogonalComplement H))
     (A.addSubgroupOf_orthogonalComplement_le_radical_restrict H)
 
+/-- **The order of the orthogonal quotient**, for an arbitrary subgroup of a nondegenerate module:
+the quotient, the part of `H` lying in `H^⊥`, and `H` itself have orders multiplying to `|A|`.
+
+No isotropy is needed; `IsNondegenerate.card_orthogonalQuotient_mul_card_sq` is the isotropic
+case, where the middle factor is a copy of `H`. -/
+theorem IsNondegenerate.card_orthogonalQuotient_mul_card_addSubgroupOf_mul_card
+    (hA : A.IsNondegenerate) (H : AddSubgroup A) :
+    Nat.card (A.orthogonalQuotient H) *
+        Nat.card (H.addSubgroupOf (A.orthogonalComplement H)) * Nat.card H = Nat.card A := by
+  have hcompl := AddSubgroup.card_mul_index (H.addSubgroupOf (A.orthogonalComplement H))
+  rw [← A.card_orthogonalQuotient H] at hcompl
+  calc Nat.card (A.orthogonalQuotient H) *
+        Nat.card (H.addSubgroupOf (A.orthogonalComplement H)) * Nat.card H
+      = Nat.card (H.addSubgroupOf (A.orthogonalComplement H)) *
+          Nat.card (A.orthogonalQuotient H) * Nat.card H := by ring
+    _ = Nat.card (A.orthogonalComplement H) * Nat.card H := by rw [hcompl]
+    _ = Nat.card H * Nat.card (A.orthogonalComplement H) := by ring
+    _ = Nat.card A := IsNondegenerate.card_mul_card_orthogonalComplement A hA H
+
 /-- For an isotropic subgroup of a nondegenerate module, the order of the orthogonal quotient
 satisfies `|H^⊥/H| · |H|² = |A|`. -/
 theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegenerate)
     {H : AddSubgroup A} (hH : A.IsIsotropic H) :
     Nat.card (A.orthogonalQuotient H) * Nat.card H ^ 2 = Nat.card A := by
-  have hle : H ≤ A.orthogonalComplement H :=
-    (A.isIsotropic_iff_le_orthogonalComplement H).mp hH
   have hKcard : Nat.card (H.addSubgroupOf (A.orthogonalComplement H)) = Nat.card H :=
-    Nat.card_congr (AddSubgroup.addSubgroupOfEquivOfLe hle).toEquiv
-  have hindex : (H.addSubgroupOf (A.orthogonalComplement H)).index =
-      Nat.card (A.orthogonalQuotient H) := (A.card_orthogonalQuotient H).symm
-  have hlag := AddSubgroup.card_mul_index (H.addSubgroupOf (A.orthogonalComplement H))
-  rw [hKcard, hindex] at hlag
-  have hAcard := IsNondegenerate.card_mul_card_orthogonalComplement A hA H
-  rw [← hlag] at hAcard
-  rw [← hAcard]
+    Nat.card_congr (AddSubgroup.addSubgroupOfEquivOfLe
+      ((A.isIsotropic_iff_le_orthogonalComplement H).mp hH)).toEquiv
+  have hgen :=
+    IsNondegenerate.card_orthogonalQuotient_mul_card_addSubgroupOf_mul_card A hA H
+  rw [hKcard] at hgen
+  rw [← hgen]
   ring
 
 /-- **Triviality of the orthogonal quotient.** The quotient collapses exactly when `H^⊥` is
