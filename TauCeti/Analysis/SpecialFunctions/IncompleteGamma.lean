@@ -6,9 +6,6 @@ Authors: Claude
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
-public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 /-!
 # The lower incomplete gamma function
@@ -152,20 +149,6 @@ theorem regularizedGamma_eq_div (s x : ℝ) :
 theorem regularizedGamma_eq_zero_of_nonpos_right (s : ℝ) (hx : x ≤ 0) :
     regularizedGamma s x = 0 := by
   rw [regularizedGamma_eq_div, lowerIncompleteGamma_eq_zero_of_nonpos_right s hx, zero_div]
-
-/-- `γ(s, 0) = 0`, the value at the left endpoint of the support.
-
-This is not itself a `simp` lemma: `simp` discharges `(0 : ℝ) ≤ 0` and so already rewrites with
-`TauCeti.lowerIncompleteGamma_eq_zero_of_nonpos_right` here. -/
-theorem lowerIncompleteGamma_zero_right (s : ℝ) : lowerIncompleteGamma s 0 = 0 :=
-  lowerIncompleteGamma_eq_zero_of_nonpos_right s le_rfl
-
-/-- `P(s, 0) = 0`, the value at the left endpoint of the support.
-
-As for `TauCeti.lowerIncompleteGamma_zero_right`, `simp` reaches this through
-`TauCeti.regularizedGamma_eq_zero_of_nonpos_right`, so it carries no `@[simp]` of its own. -/
-theorem regularizedGamma_zero_right (s : ℝ) : regularizedGamma s 0 = 0 :=
-  regularizedGamma_eq_zero_of_nonpos_right s le_rfl
 
 /-- `γ(s, ·)` is the truncated Euler integral read at `max x 0`.
 
@@ -367,6 +350,7 @@ theorem regularizedGamma_le_one (s x : ℝ) : regularizedGamma s x ≤ 1 := by
 /-! ### The exponential case `s = 1` -/
 
 /-- `γ(1, x) = 1 - exp (-x)` for `0 ≤ x`. -/
+@[simp]
 theorem lowerIncompleteGamma_one (hx : 0 ≤ x) :
     lowerIncompleteGamma 1 x = 1 - Real.exp (-x) := by
   rw [lowerIncompleteGamma_eq_integral one_pos hx]
@@ -376,6 +360,7 @@ theorem lowerIncompleteGamma_one (hx : 0 ≤ x) :
 
 /-- `P(1, x) = 1 - exp (-x)` for `0 ≤ x`: the regularized lower incomplete gamma function at shape
 `1` is the cumulative distribution function of the standard exponential law. -/
+@[simp]
 theorem regularizedGamma_one (hx : 0 ≤ x) : regularizedGamma 1 x = 1 - Real.exp (-x) := by
   rw [regularizedGamma_eq_div, lowerIncompleteGamma_one hx, Real.Gamma_one, div_one]
 
