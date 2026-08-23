@@ -206,16 +206,21 @@ theorem diagramRootGeneratorPerm_apply_inr (i : Fin t.rank) :
 the generator carrying the permuted number.** This is exactly the additive pinning equation
 required to construct the corresponding automorphism of the root-generated Kostant group scheme.
 -/
+@[simp]
 theorem geckDiagramModuleEquiv_geckRepresentation_rootGenerator
     (hsigma : sigma ∈ t.diagramSymmetry) (i : Fin t.rank ⊕ Fin t.rank)
     (v : t.GeckIndex ht → ℚ) :
     t.geckDiagramModuleEquiv ht hsigma
         (t.geckRepresentation ht
-          (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i)) v) =
+          (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ (t.lieAlgebra ht)
+            (_root_.TensorAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i))) v) =
       t.geckRepresentation ht
-          (_root_.UniversalEnvelopingAlgebra.ι ℚ
-            ((t.lieBasis ht).rootGenerator (diagramRootGeneratorPerm sigma i)))
+          (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ (t.lieAlgebra ht)
+            (_root_.TensorAlgebra.ι ℚ
+              ((t.lieBasis ht).rootGenerator (diagramRootGeneratorPerm sigma i))))
         (t.geckDiagramModuleEquiv ht hsigma v) := by
+  rw [← _root_.UniversalEnvelopingAlgebra.ι_apply,
+    ← _root_.UniversalEnvelopingAlgebra.ι_apply]
   cases i with
   | inl i =>
       simp only [LieAlgebra.Basis.rootGenerator_inl, diagramRootGeneratorPerm_apply_inl,
