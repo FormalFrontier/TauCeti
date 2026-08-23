@@ -209,9 +209,7 @@ noncomputable def linearHomComplexOfHom {F G : CochainComplex C ℤ} (φ : F ⟶
       change δ 0 i (r • Cochain.ofHom φ) = 0
       rw [δ_smul, δ_ofHom, smul_zero]))
 
-/-- The degree-zero component of `linearHomComplexOfHom` sends a scalar to that scalar multiple
-of the associated cochain. -/
-@[simp]
+/-- The degree-zero component of `linearHomComplexOfHom` as a morphism in `ModuleCat`. -/
 lemma linearHomComplexOfHom_f_zero {F G : CochainComplex C ℤ} (φ : F ⟶ G) :
     (linearHomComplexOfHom R φ).f 0 =
       (HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0 (𝟙_ (ModuleCat.{v} R))).hom ≫
