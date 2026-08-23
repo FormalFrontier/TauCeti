@@ -6,7 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.IsSepClosed
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Pin.Action
+-- Private: `Algebra.adjoin_eq_span` supplies multiplication closure for the Spin-group span.
+import Mathlib.Algebra.Algebra.Subalgebra.Lattice
 
 /-!
 # Lifting reflections to the Pin and Spin groups
@@ -16,7 +19,8 @@ When the inverse negative norm of a vector is a square, the vector can be rescal
 reflection in the original vector. A pair of reflections needs only that the product of the
 inverse norms be a square: rescaling one vector then gives a unitary even product and hence a
 lift to the Spin group. Over a separably closed field, the required square conditions hold
-automatically.
+automatically. When the quadratic form is nondegenerate, the same lifts show that the Spin group
+linearly spans the even Clifford algebra.
 
 ## Main results
 
@@ -25,11 +29,14 @@ automatically.
 * `CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
   product of two reflections lifts through the Spin action when the product of its normalization
   scalars is a square. The version without the suffix is a separably closed-field corollary.
+* `CliffordAlgebra.span_spinGroup_eq_even`: the Spin group spans the even Clifford algebra over a
+  separably closed field.
 
 ## References
 
-This supplies the reflection-lift prerequisite for Layer 2's "The double cover (the summit of the
-layer), over ℂ" target in `TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`.
+This supplies the reflection-lift prerequisite for Layer 2's double-cover target and the
+Spin-group spanning prerequisite for Layer 4's irreducibility target in
+`TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`.
 See H. B. Lawson and M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 -/
 
@@ -226,6 +233,132 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal
         (spinToOrthogonal Q).range := by
   exact reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare Q v w
     (IsSepClosed.exists_eq_mul_self (⅟(Q v) * ⅟(Q w)))
+
+/-! ### Linear generation of the even Clifford algebra -/
+
+omit [IsSepClosed K] [Invertible (2 : K)] in
+private theorem mem_span_anisotropic [NeZero (2 : K)] (hQ : Q.Nondegenerate) (x : V) :
+    x ∈ Submodule.span K {v | Q v ≠ 0} := by
+  classical
+  let _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
+  rcases eq_or_ne x 0 with rfl | hx
+  · exact Submodule.zero_mem _
+  by_cases hxQ : Q x = 0
+  · have hxrad : x ∉ Q.radical := by
+      rw [hQ.radical_eq_bot, Submodule.mem_bot]
+      exact hx
+    have hxker : x ∉ Q.polarBilin.ker := by
+      rw [← Q.radical_eq_ker_polarBilin]
+      exact hxrad
+    obtain ⟨y, hxy⟩ : ∃ y, polar Q x y ≠ 0 := by
+      rw [LinearMap.mem_ker, LinearMap.ext_iff] at hxker
+      push Not at hxker
+      simpa only [QuadraticMap.polarBilin_apply_apply, LinearMap.zero_apply] using hxker
+    let y' := if _hy : Q y = 0 then x + y else y
+    have hy'Q : Q y' ≠ 0 := by
+      dsimp only [y']
+      split_ifs with hyQ
+      · simpa only [polar, hxQ, hyQ, sub_zero, sub_self] using hxy
+      · exact hyQ
+    have hxy' : polar Q x y' ≠ 0 := by
+      dsimp only [y']
+      split_ifs with hyQ
+      · simpa only [polar_add_right, polar_self, hxQ, smul_zero, zero_add] using hxy
+      · exact hxy
+    let a := polar Q x y' / Q y'
+    have ha : a ≠ 0 := div_ne_zero hxy' hy'Q
+    let z := x + a • y'
+    have hzQ_eq : Q z = 2 * (polar Q x y') ^ 2 / Q y' := by
+      dsimp only [z, a]
+      rw [QuadraticMap.map_add Q, Q.map_smul, polar_smul_right, hxQ, zero_add]
+      simp only [smul_eq_mul]
+      field_simp [hy'Q]
+      ring
+    have hzQ : Q z ≠ 0 := by
+      rw [hzQ_eq]
+      exact div_ne_zero (mul_ne_zero (NeZero.ne (2 : K)) (pow_ne_zero 2 hxy')) hy'Q
+    have hy'mem : y' ∈ Submodule.span K {v | Q v ≠ 0} :=
+      Submodule.subset_span hy'Q
+    have hzmem : z ∈ Submodule.span K {v | Q v ≠ 0} :=
+      Submodule.subset_span hzQ
+    have hsub := Submodule.sub_mem _ hzmem (Submodule.smul_mem _ a hy'mem)
+    simpa only [z, add_sub_cancel_right] using hsub
+  · exact Submodule.subset_span hxQ
+
+omit [IsSepClosed K] [Invertible (2 : K)] in
+private theorem mul_mem_span_spinGroup {x y : CliffordAlgebra Q}
+    (hx : x ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)))
+    (hy : y ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q))) :
+    x * y ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
+  rw [← Submonoid.closure_eq (spinGroup Q), ← Algebra.adjoin_eq_span] at hx hy ⊢
+  exact (Algebra.adjoin K (spinGroup Q : Set (CliffordAlgebra Q))).mul_mem hx hy
+
+omit [Invertible (2 : K)] in
+private theorem ι_mul_ι_mem_span_spinGroup_of_ne_zero [NeZero (2 : K)]
+    (v w : V) (hv : Q v ≠ 0)
+    (hw : Q w ≠ 0) :
+    ι Q v * ι Q w ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
+  let _ : Invertible (Q v) := invertibleOfNonzero hv
+  let _ : Invertible (Q w) := invertibleOfNonzero hw
+  let hsq : IsSquare (⅟(Q v) * ⅟(Q w)) :=
+    IsSepClosed.exists_eq_mul_self (⅟(Q v) * ⅟(Q w))
+  let a := sqrtOfIsSquare hsq
+  have ha : IsUnit a := isUnit_sqrtOfIsSquare Q v w hsq
+  let _ : Invertible a := ha.invertible
+  let g := spinReflectionPairLift Q v w hsq
+  have hg : (g : CliffordAlgebra Q) ∈
+      Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) :=
+    Submodule.subset_span g.2
+  have hcoe : (g : CliffordAlgebra Q) = a • (ι Q v * ι Q w) := by
+    simp only [g, spinReflectionPairLift, a, map_smul, smul_mul_assoc]
+  have := Submodule.smul_mem _ (⅟a) hg
+  rw [hcoe, invOf_smul_smul] at this
+  exact this
+
+omit [Invertible (2 : K)] in
+private theorem ι_mul_ι_mem_span_spinGroup [NeZero (2 : K)]
+    (hQ : Q.Nondegenerate) (v w : V) :
+    ι Q v * ι Q w ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
+  have hv := mem_span_anisotropic Q hQ v
+  have hw := mem_span_anisotropic Q hQ w
+  induction hv, hw using Submodule.span_induction₂ with
+  | mem_mem v w hv hw => exact ι_mul_ι_mem_span_spinGroup_of_ne_zero Q v w hv hw
+  | zero_left => simp
+  | zero_right => simp
+  | add_left x y z _ _ _ hx hy =>
+      simpa only [map_add, add_mul] using Submodule.add_mem _ hx hy
+  | add_right x y z _ _ _ hx hy =>
+      simpa only [map_add, mul_add] using Submodule.add_mem _ hx hy
+  | smul_left r x y _ _ h =>
+      simpa only [map_smul, smul_mul_assoc] using Submodule.smul_mem _ r h
+  | smul_right r x y _ _ h =>
+      simpa only [map_smul, mul_smul_comm] using Submodule.smul_mem _ r h
+
+omit [Invertible (2 : K)] in
+/-- **The Spin group linearly spans the even Clifford algebra** over a separably closed field.
+Every even Clifford element is a linear combination of repeated products of normalized
+anisotropic pairs. Each pair is a scalar multiple of a Spin element, and products of those
+elements remain in `spinGroup Q`. -/
+theorem span_spinGroup_eq_even [NeZero (2 : K)] (hQ : Q.Nondegenerate) :
+    Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) = (even Q).toSubmodule := by
+  apply le_antisymm
+  · exact Submodule.span_le.2 fun _ hx => spinGroup.mem_even hx
+  · rintro x hx
+    have hx' : x ∈ evenOdd Q 0 := by
+      rw [← even_toSubmodule Q]
+      exact hx
+    refine even_induction (Q := Q) (motive := fun x _ =>
+      x ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q))) ?_ ?_ ?_ x hx'
+    · intro r
+      have hone : (1 : CliffordAlgebra Q) ∈
+          Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) :=
+        Submodule.subset_span (one_mem (spinGroup Q))
+      simpa only [Algebra.smul_def, mul_one] using Submodule.smul_mem _ r hone
+    · intro x y hx hy ihx ihy
+      exact Submodule.add_mem _ ihx ihy
+    · intro v w x hx ih
+      exact mul_mem_span_spinGroup (Q := Q)
+        (ι_mul_ι_mem_span_spinGroup Q hQ v w) ih
 
 end IsSepClosed
 
