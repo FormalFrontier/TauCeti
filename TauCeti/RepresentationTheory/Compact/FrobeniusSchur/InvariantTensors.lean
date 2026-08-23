@@ -8,7 +8,7 @@ module
 public import TauCeti.LinearAlgebra.TensorProduct.Symmetric
 public import TauCeti.RepresentationTheory.Compact.FrobeniusSchur.Basic
 public import TauCeti.RepresentationTheory.Compact.Invariants
-public import TauCeti.RepresentationTheory.Continuous.Square.Basic
+public import TauCeti.RepresentationTheory.Continuous.Square.Character
 
 /-!
 # The Frobenius-Schur indicator counts invariant tensors
@@ -34,20 +34,20 @@ exterior squares, so nothing is lost.
 With the squares realized that way the proof is short. The tensor square of `π` is
 `TauCeti.ContRepresentation.tprod π π`, the flip commutes with it, so each eigenspace is a
 subrepresentation, and their characters differ by `χ_π(g²)`: this is
-`TauCeti.trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict`, whose
-linear-algebra content is that composing `f ⊗ f` with the flip has trace `tr (f ∘ f)`. Integrating
-that pointwise identity and reading each character integral as a dimension of invariants
+`ContRepresentation.character_symmetricSquare_sub_character_exteriorSquare`, whose linear-algebra
+content is that composing `f ⊗ f` with the flip has trace `tr (f ∘ f)`. Integrating that pointwise
+identity and reading each character integral as a dimension of invariants
 (`ContRepresentation.integral_character_eq_finrank_invariants`) is the theorem.
 
-The two squares themselves need none of the analysis, so they are not built here: they are defined,
-and shown continuous, for a continuous representation of a monoid on an inner product space over
-`RCLike 𝕜` in `TauCeti/RepresentationTheory/Continuous/Square/Basic.lean`. Only the character and
-indicator statements below ask for a compact group, finite dimension, and `𝕜 = ℂ`.
+Neither the two squares nor their character identity needs any of the analysis, so neither is built
+here: the squares are defined and shown continuous, and their characters are compared, for a
+continuous representation of a monoid on an inner product space over `RCLike 𝕜` in
+`TauCeti/RepresentationTheory/Continuous/Square/Basic.lean` and
+`TauCeti/RepresentationTheory/Continuous/Square/Character.lean`. Only the indicator statements
+below ask for a compact group and `𝕜 = ℂ`.
 
 ## Main statements
 
-* `ContRepresentation.character_symmetricSquare_sub_character_exteriorSquare`: the two square
-  characters differ by the character at the square, `χ_{Sym²}(g) - χ_{Λ²}(g) = χ_π(g²)`.
 * `ContRepresentation.frobeniusSchurIndicator_eq_sub_finrank_invariants`: **the Frobenius-Schur
   indicator is the signed count of invariant tensors**,
   `ν₂(π) = dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
@@ -91,24 +91,6 @@ variable {G V : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 variable (π : ContRepresentation ℂ G V) (hπ : Continuous π)
 
 include hπ
-
-omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-/-- **The two square characters differ by the character at the square**,
-`χ_{Sym²π}(g) - χ_{Λ²π}(g) = χ_π(g²)`.
-
-This is `TauCeti.trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict` applied to
-the operator `π g`, whose square is `π (g * g)`. -/
-theorem character_symmetricSquare_sub_character_exteriorSquare (g : G) :
-    character (𝕜 := ℂ) (V := symmetricTensors ℂ V) (symmetricSquare π)
-          (continuous_symmetricSquare π hπ) g
-        - character (𝕜 := ℂ) (V := antisymmetricTensors ℂ V) (exteriorSquare π)
-          (continuous_exteriorSquare π hπ) g
-      = character π hπ (g * g) := by
-  rw [character_apply, character_apply, character_apply, symmetricSquare_apply π g,
-    exteriorSquare_apply π g,
-    trace_symmetricTensorsRestrict_sub_trace_antisymmetricTensorsRestrict (π g : V →ₗ[ℂ] V)]
-  congr 1
-  rw [map_mul, ContinuousLinearMap.toLinearMap_mul, Module.End.mul_eq_comp]
 
 /-- **The Frobenius-Schur indicator is the signed count of invariant tensors**,
 `ν₂(π) = dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
