@@ -42,9 +42,13 @@ factors is. That it is a *further* central element, and that the centre is then 
 algebra rather than the scalars, is *not* proved here and needs hypotheses this file does not make
 — a nondegenerate form over a field away from characteristic two, with the list an orthogonal
 basis. For `Q = 0` on `R ^ 3` the Clifford algebra is the exterior algebra and its centre is much
-larger instead. `TauCeti/RepresentationTheory/Spin/Structure.lean` proves the
-even-dimensional structure theorem only and records the odd-dimensional splitting as separate,
-unproved work; the volume element is the element that splitting is expected to run on.
+larger instead. The odd-dimensional splitting does run on the volume element:
+`TauCeti/LinearAlgebra/CliffordAlgebra/OddSplitting.lean` splits the Clifford algebra as two copies
+of its even subalgebra along a central odd square root of one, and
+`CliffordAlgebra.equivEvenProdOfOddLength` feeds it the volume element of an orthogonal spanning
+list of odd length, rescaled so that the square below is `1`. What remains open there is the
+identification of `even Q` with a matrix algebra, for which
+`TauCeti/RepresentationTheory/Spin/Structure.lean` proves the even-dimensional structure theorem.
 
 The square is a scalar,
 `ω * ω = (-1) ^ (n.choose 2) * Q v₁ ⋯ Q vₙ` (`CliffordAlgebra.prod_map_ι_sq_scalar`), the sign

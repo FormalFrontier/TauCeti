@@ -75,7 +75,9 @@ the maximum modulus principle is applied against. None of that is used here.
   `TauCeti.inter_sphere_subset_closure_sdiff_closedBall` — the part of the cutting sphere inside an
   open set is adherent to both sides of the cut.
 * `TauCeti.frontier_ball_inter_ball_subset` — the frontier of the near side lies on the two spheres.
-* `TauCeti.nonempty_ball_inter_ball` — two balls that overlap meet.
+* `TauCeti.nonempty_ball_inter_ball` — two balls that overlap meet, and
+  `TauCeti.nonempty_ball_inter_sphere` — a sphere about a boundary point of a ball, of radius below
+  the diameter of the ball, meets it.
 * `TauCeti.isConnected_ball_inter_ball` — the near side is connected.
 * `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` — the near side is a connected
   component of the cut ball.
@@ -158,6 +160,30 @@ theorem nonempty_ball_inter_ball (hr : 0 < r) (hρ : 0 < ρ) (h : dist c ζ < r 
     (ball c r ∩ ball ζ ρ).Nonempty := by
   obtain ⟨w, hcw, hwζ⟩ := exists_dist_lt_lt hr hρ (by rwa [add_comm] at h)
   exact ⟨w, mem_ball'.2 hcw, mem_ball.2 hwζ⟩
+
+/-- **A sphere about a boundary point of a ball meets that ball** as soon as its radius is positive
+and below the diameter of the ball. Together with
+`TauCeti.nonempty_ball_inter_ball` this says that a circular crosscut of a ball at a boundary point
+is a genuine, nonempty cut.
+
+The witness is the point `ζ + (ρ / r) • (c - ζ)` reached by walking from the cut centre `ζ` towards
+the centre `c` of the ball for a distance `ρ`. It sits on `sphere ζ ρ` because `‖c - ζ‖ = r`, and at
+distance `|r - ρ|` from `c`, which is below `r` exactly when `0 < ρ < 2 * r`; positivity of `r` is
+not a separate hypothesis, being forced by those two bounds. -/
+theorem nonempty_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρ' : ρ < 2 * r) :
+    (ball c r ∩ sphere ζ ρ).Nonempty := by
+  have hr : 0 < r := by linarith
+  have hnorm : ‖ζ - c‖ = r := by rw [← dist_eq_norm, hζ]
+  have hpos : 0 < ρ / r := by positivity
+  have hlt : ρ / r < 2 := (div_lt_iff₀ hr).mpr (by linarith)
+  refine ⟨ζ + (ρ / r) • (c - ζ), ?_, ?_⟩
+  · have hsub : ζ + (ρ / r) • (c - ζ) - c = (1 - ρ / r) • (ζ - c) := by module
+    rw [mem_ball, dist_eq_norm, hsub, norm_smul, Real.norm_eq_abs, hnorm]
+    calc |1 - ρ / r| * r < 1 * r := by
+          refine mul_lt_mul_of_pos_right (abs_lt.mpr ⟨by linarith, by linarith⟩) hr
+      _ = r := one_mul r
+  · rw [mem_sphere, dist_eq_norm, add_sub_cancel_left, norm_smul, Real.norm_eq_abs,
+      abs_of_pos hpos, ← dist_eq_norm, dist_comm, hζ, div_mul_cancel₀ _ hr.ne']
 
 /-- **The near side of a cut ball is connected**, being an intersection of two balls, hence convex.
 Its nonemptiness is `TauCeti.nonempty_ball_inter_ball`, and that is the only role the overlap

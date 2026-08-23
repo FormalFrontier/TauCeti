@@ -6,6 +6,8 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
+-- `Matrix.map_mul_intCast`: the entrywise integer cast is multiplicative on matrices.
+public import Mathlib.LinearAlgebra.Matrix.Integer
 
 /-!
 # The semigroup `Δ₀(N)`
@@ -31,7 +33,9 @@ as that entire fibre.
 Ported from the AINTLIB `LeanModularForms` project
 ([`LeanModularForms/HeckeRIngs/GL2/Gamma1Pair.lean`](https://github.com/CBirkbeck/AINTLIB),
 Chris Birkbeck), with `CoprimeDet` and `coprimeDet_iff` from the `CoprimeDet` section of
-`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/Props.lean` (Chris Birkbeck).
+`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/Props.lean`, and
+`exists_primitive_content_quotient` from `Gamma0_content_quotient` of
+`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/AtkinLehner.lean` (all Chris Birkbeck).
 
 ## Main definitions
 
@@ -44,6 +48,8 @@ Chris Birkbeck), with `CoprimeDet` and `coprimeDet_iff` from the `CoprimeDet` se
   representative has determinant coprime to `N`, and the fact that one witness decides it.
 * `HeckeRing.GL2.Delta0_le_posDetInt`: `Δ₀(N)` consists of integral matrices of positive
   determinant, which is what puts it in the commensurator of `SL₂(ℤ)`.
+* `HeckeRing.GL2.exists_primitive_content_quotient`: dividing a matrix of the `Δ₀(N)` shape by
+  the gcd of its entries leaves a primitive matrix of the same shape.
 
 ## References
 
@@ -112,10 +118,158 @@ lemma coprimeDet_iff {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
   have : A' = A := Matrix.map_injective Int.cast_injective (hA'.symm.trans hA)
   exact this ▸ h
 
+/-! ### The upper-left unit character -/
+
+/-- The chosen integral witness of an element of `Δ₀(N)`.
+
+`Δ₀(N)`-membership is an existential over integral matrices, so a value-level map out of it
+must choose. The choice is harmless: `delta0Witness_eq` shows the witness is unique, and
+`Delta0UpperUnit_apply_val` states the resulting API against an arbitrary witness, so this
+definition never escapes into a consumer's proof obligation. -/
+private noncomputable def delta0Witness (g : Delta0 N) : Matrix (Fin 2) (Fin 2) ℤ :=
+  Classical.choose ((mem_Delta0_iff N).mp g.2)
+
+private lemma delta0Witness_spec (g : Delta0 N) :
+    ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      (delta0Witness N g).map (Int.cast : ℤ → ℚ) :=
+  (Classical.choose_spec ((mem_Delta0_iff N).mp g.2)).1
+
+private lemma delta0Witness_lowerLeft (g : Delta0 N) : (N : ℤ) ∣ delta0Witness N g 1 0 :=
+  (Classical.choose_spec ((mem_Delta0_iff N).mp g.2)).2.2.1
+
+private lemma isUnit_delta0Witness_upperLeft (g : Delta0 N) :
+    IsUnit ((delta0Witness N g 0 0 : ℤ) : ZMod N) :=
+  (Classical.choose_spec ((mem_Delta0_iff N).mp g.2)).2.2.2
+
+/-- The integral witness of an element of `Δ₀(N)` is unique: the entrywise cast `ℤ → ℚ` is
+injective, so two witnesses for the same matrix agree. This is the same observation that lets
+`CoprimeDet` be decided by a single witness. -/
+private lemma delta0Witness_eq {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
+    (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    delta0Witness N g = A :=
+  Matrix.map_injective Int.cast_injective ((delta0Witness_spec N g).symm.trans hA)
+
+/-- **The upper-left unit character of `Δ₀(N)`**, reducing the upper-left entry of an integral
+witness modulo `N`. It is multiplicative because the lower-left entry of a `Δ₀(N)` matrix
+vanishes mod `N`, killing the cross term in the product. -/
+noncomputable def Delta0UpperUnit : Delta0 N →* (ZMod N)ˣ where
+  toFun g := (isUnit_delta0Witness_upperLeft N g).unit
+  map_one' := by
+    ext
+    rw [IsUnit.unit_spec, delta0Witness_eq N (A := 1) (by simp)]
+    simp
+  map_mul' g h := by
+    ext
+    rw [Units.val_mul, IsUnit.unit_spec, IsUnit.unit_spec, IsUnit.unit_spec,
+      delta0Witness_eq N (A := delta0Witness N g * delta0Witness N h) (by
+        rw [Submonoid.coe_mul, Units.val_mul, delta0Witness_spec N g,
+          delta0Witness_spec N h, Matrix.map_mul_intCast])]
+    have hzero : ((delta0Witness N g 0 1 * delta0Witness N h 1 0 : ℤ) : ZMod N) = 0 := by
+      rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+      exact Dvd.dvd.mul_left (delta0Witness_lowerLeft N h) _
+    simp only [Matrix.mul_apply, Fin.sum_univ_two, Int.cast_add, Int.cast_mul, hzero, add_zero]
+
+/-- **The eliminator.** Any integral witness computes the upper-left unit, so a consumer never
+has to reach for the chosen one.
+
+Not `@[simp]`: `A` occurs only in the hypothesis and the right-hand side, so `simp` cannot
+infer it — the same reason `diamondOp_apply_of_mem_modFormCharSpace` is not a simp lemma. -/
+lemma Delta0UpperUnit_apply_val {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
+    (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    (Delta0UpperUnit N g : ZMod N) = (A 0 0 : ZMod N) := by
+  rw [Delta0UpperUnit, MonoidHom.coe_mk, OneHom.coe_mk, IsUnit.unit_spec,
+    delta0Witness_eq N hA]
+
 /-- `Δ₀(N)` consists of integral matrices with positive determinant. -/
 lemma Delta0_le_posDetInt : Delta0 N ≤ posDetInt 2 := by
   intro g hg
   obtain ⟨A, hA, hdet, -, -⟩ := (mem_Delta0_iff N).mp hg
   exact (mem_posDetInt_iff 2).mpr ⟨(hasIntEntries_iff 2).mpr ⟨A, hA⟩, hdet⟩
+
+/-- The gcd of the four entries, as a natural number. -/
+private def entryGCD (A : Matrix (Fin 2) (Fin 2) ℤ) : ℕ :=
+  Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs) (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs)
+
+/-- The gcd of the entries divides each of them. -/
+private lemma entryGCD_dvd (A : Matrix (Fin 2) (Fin 2) ℤ) (i j : Fin 2) :
+    ((entryGCD A : ℕ) : ℤ) ∣ A i j := by
+  refine Int.natAbs_dvd_natAbs.mp ?_
+  rw [Int.natAbs_natCast]
+  fin_cases i <;> fin_cases j
+  · exact (Nat.gcd_dvd_left _ _).trans (Nat.gcd_dvd_left _ _)
+  · exact (Nat.gcd_dvd_left _ _).trans (Nat.gcd_dvd_right _ _)
+  · exact (Nat.gcd_dvd_right _ _).trans (Nat.gcd_dvd_left _ _)
+  · exact (Nat.gcd_dvd_right _ _).trans (Nat.gcd_dvd_right _ _)
+
+/-- A matrix with nonzero determinant has a nonzero entry, so its entry gcd is positive. -/
+private lemma entryGCD_pos {A : Matrix (Fin 2) (Fin 2) ℤ} (hA_det_pos : 0 < A.det) :
+    0 < entryGCD A := by
+  refine Nat.pos_of_ne_zero fun h ↦ hA_det_pos.ne' ?_
+  simp only [entryGCD, Nat.gcd_eq_zero_iff, Int.natAbs_eq_zero] at h
+  rw [Matrix.det_fin_two, h.1.1, h.1.2, h.2.1, h.2.2]
+  ring
+
+/-- If `d` is the gcd of the entries of `A` and `A = d • A₀`, no prime divides every entry of
+`A₀`: such a prime `q` would make `q * d` a common divisor of `A`'s entries, exceeding `d`. -/
+private lemma not_prime_dvd_entries_of_isGCD {A A₀ : Matrix (Fin 2) (Fin 2) ℤ} {d : ℕ}
+    (hd_pos : 0 < d) (hA_eq : ∀ i j, A i j = (d : ℤ) * A₀ i j)
+    (hd_is_gcd : d = Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
+      (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs)) (q : ℕ) (hq : q.Prime) :
+    ¬((q : ℤ) ∣ A₀ 0 0 ∧ (q : ℤ) ∣ A₀ 0 1 ∧ (q : ℤ) ∣ A₀ 1 0 ∧ (q : ℤ) ∣ A₀ 1 1) := by
+  rintro ⟨hq00, hq01, hq10, hq11⟩
+  have hqd_nat : ∀ i j : Fin 2, q * d ∣ (A i j).natAbs := fun i j ↦ by
+    have h : (q : ℤ) ∣ A₀ i j := by fin_cases i <;> fin_cases j <;> assumption
+    rw [hA_eq i j, Int.natAbs_mul, Int.natAbs_natCast, mul_comm]
+    exact Nat.mul_dvd_mul_left d (Int.natAbs_dvd_natAbs.mpr h)
+  have hqd_dvd_d : q * d ∣ d := by
+    conv_rhs => rw [hd_is_gcd]
+    exact Nat.dvd_gcd (Nat.dvd_gcd (hqd_nat 0 0) (hqd_nat 0 1))
+      (Nat.dvd_gcd (hqd_nat 1 0) (hqd_nat 1 1))
+  have hq_le : q ≤ 1 :=
+    Nat.le_of_mul_le_mul_right (by linarith [Nat.le_of_dvd hd_pos hqd_dvd_d]) hd_pos
+  exact absurd hq.two_le (by omega)
+
+/-- **Content factorisation for the `Δ₀(N)` shape.** Dividing an integral matrix by the gcd `d`
+of its entries leaves a *primitive* matrix — one no prime divides entrywise — that still has
+positive determinant, `N ∣ c`, and upper-left entry coprime to `N`.
+
+The `Δ₀(N)` conditions survive the division because `d` is coprime to `N`: it divides `A 0 0`,
+which is coprime to `N` by hypothesis. This is the reduction step that lets a statement about
+`Δ₀(N)` double cosets be proved for primitive representatives first.
+
+Ported from the AINTLIB `LeanModularForms` project
+(`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/AtkinLehner.lean`, Chris Birkbeck,
+<https://github.com/CBirkbeck/AINTLIB>), where it is `Gamma0_content_quotient`. -/
+lemma exists_primitive_content_quotient (A : Matrix (Fin 2) (Fin 2) ℤ) (hA_det_pos : 0 < A.det)
+    (hAN : (N : ℤ) ∣ A 1 0) (hAco : Int.gcd (A 0 0) N = 1) (d : ℕ)
+    (hd_is_gcd : d = Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
+      (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs)) :
+    ∃ A₀ : Matrix (Fin 2) (Fin 2) ℤ, (∀ i j, A i j = (d : ℤ) * A₀ i j) ∧ 0 < A₀.det ∧
+      (N : ℤ) ∣ A₀ 1 0 ∧ Int.gcd (A₀ 0 0) N = 1 ∧
+      ∀ q : ℕ, q.Prime → ¬((q : ℤ) ∣ A₀ 0 0 ∧ (q : ℤ) ∣ A₀ 0 1 ∧ (q : ℤ) ∣ A₀ 1 0 ∧
+        (q : ℤ) ∣ A₀ 1 1) := by
+  -- both facts the caller might have supplied are consequences of `hd_is_gcd`
+  have hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j := fun i j ↦ hd_is_gcd ▸ entryGCD_dvd A i j
+  have hd_pos : 0 < d := hd_is_gcd ▸ entryGCD_pos hA_det_pos
+  set A₀ : Matrix (Fin 2) (Fin 2) ℤ := fun i j ↦ A i j / d with hA₀
+  have hA_eq : ∀ i j, A i j = (d : ℤ) * A₀ i j := fun i j ↦ by
+    simp only [hA₀]; rw [mul_comm]; exact (Int.ediv_mul_cancel (hd_dvd i j)).symm
+  -- `d` divides the upper-left entry, which is coprime to `N`, so `d` is too
+  have hd_Nco : Int.gcd (d : ℤ) N = 1 := by
+    refine Nat.eq_one_of_dvd_one (hAco ▸ Nat.dvd_gcd ?_ ?_)
+    · exact Int.natAbs_dvd_natAbs.mpr ((Int.gcd_dvd_left (d : ℤ) N).trans (hd_dvd 0 0))
+    · exact Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_right (d : ℤ) N)
+  -- the entrywise equation, repackaged as a scalar multiple so that `Matrix.det_smul` applies
+  have hA_smul : A = (d : ℤ) • A₀ := Matrix.ext fun i j ↦ hA_eq i j
+  -- the scaling is `Matrix.det_smul` at `Fintype.card (Fin 2) = 2`
+  have hdet : A.det = (d : ℤ) ^ 2 * A₀.det := by
+    rw [hA_smul, Matrix.det_smul, Fintype.card_fin]
+  refine ⟨A₀, hA_eq, ?_, ?_, ?_, not_prime_dvd_entries_of_isGCD hd_pos hA_eq hd_is_gcd⟩
+  · exact (mul_pos_iff.mp (hdet ▸ hA_det_pos)).elim (fun h ↦ h.2)
+      fun h ↦ absurd h.1 (not_lt.mpr (sq_nonneg (d : ℤ)))
+  · exact (Int.isCoprime_iff_gcd_eq_one.mpr hd_Nco).symm.dvd_of_dvd_mul_left (hA_eq 1 0 ▸ hAN)
+  · exact Int.isCoprime_iff_gcd_eq_one.mp
+      ((Int.isCoprime_iff_gcd_eq_one.mpr (hA_eq 0 0 ▸ hAco)).of_isCoprime_of_dvd_left
+        (dvd_mul_left (A₀ 0 0) (d : ℤ)))
 
 end HeckeRing.GL2
