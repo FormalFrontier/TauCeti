@@ -31,6 +31,8 @@ and does not lie in `Place k F →₀ ℤ`.
   `∑ P ∈ S, ord_P x · deg P ≤ [F : k(x)]`.
 * `TauCeti.Place.card_le_finrank_of_forall_ord_pos`: in particular `x` has at most `[F : k(x)]`
   zeros.
+* `TauCeti.Place.finite_setOf_ord_pos_of_finiteDimensional`: finiteness of the zeros when
+  `F / k(x)` is finite-dimensional.
 * `TauCeti.Place.finite_setOf_ord_pos`, `TauCeti.Place.finite_setOf_ord_neg` and
   `TauCeti.Place.finite_setOf_ord_ne_zero`: **Stichtenoth, Corollary 1.3.4**. Every element of
   an algebraic function field has finitely many zeros and finitely many poles.
@@ -175,11 +177,14 @@ private theorem valuation_sum_eq_exp_neg {x t : F} (hx : 0 < P.ord x) (ht : P.or
     obtain ⟨j, hj⟩ := hA
     exact hj (Fintype.linearIndependent_iff.mp hu _ h j)
   have hYne : (Y A : F) ≠ 0 := fun h ↦ hresYne (by
-    rw [show Y A = 0 from Subtype.ext h]; exact map_zero _)
+    have hYzero : Y A = 0 := Subtype.ext h
+    rw [hYzero]
+    exact map_zero _)
   have hvY : P.valuation (Y A : F) = 1 := by
     have h1 : 0 ≤ P.ord (Y A : F) := P.mem_integers_iff_ord_nonneg.mp (Y A).2
     have h2 : ¬ 0 < P.ord (Y A : F) := fun h ↦ hresYne ((P.residue_eq_zero_iff_ord_pos hYne).mpr h)
-    rw [P.valuation_eq_exp_neg_ord hYne, show P.ord (Y A : F) = 0 by omega]
+    have hordY : P.ord (Y A : F) = 0 := by omega
+    rw [P.valuation_eq_exp_neg_ord hYne, hordY]
     simp
   -- Every other exponent contributes strictly less.
   have hsmall : ∀ a ∈ Finset.univ \ {A},
@@ -245,7 +250,8 @@ private theorem sum_toNat_mul_finrank_le {x : F} [FiniteDimensional k⟮x⟯ F]
   have hune : ∀ (P : {P : Place k F // P ∈ S}) j, u P j ≠ 0 := by
     intro P j h
     refine (b P).ne_zero j ?_
-    rw [← hures P j, show (⟨u P j, humem P j⟩ : (P : Place k F).integers) = 0 from Subtype.ext h]
+    have hu_zero : (⟨u P j, humem P j⟩ : (P : Place k F).integers) = 0 := Subtype.ext h
+    rw [← hures P j, hu_zero]
     exact map_zero _
   have hlib : ∀ P : {P : Place k F // P ∈ S}, LinearIndependent k
       fun j ↦ IsLocalRing.residue (P : Place k F).integers ⟨u P j, humem P j⟩ := fun P ↦ by
@@ -369,7 +375,8 @@ theorem card_le_finrank_of_forall_ord_pos {x : F} [FiniteDimensional k⟮x⟯ F]
     S.card ≤ Module.finrank k⟮x⟯ F := by
   have key := sum_ord_mul_degree_le_finrank hS
   have hlow : (S.card : ℤ) ≤ ∑ P ∈ S, P.ord x * (P.degree : ℤ) := by
-    rw [show (S.card : ℤ) = ∑ _P ∈ S, (1 : ℤ) by simp]
+    have hcard : (S.card : ℤ) = ∑ _P ∈ S, (1 : ℤ) := by simp
+    rw [hcard]
     refine Finset.sum_le_sum fun P hP ↦ ?_
     let _ := P.finiteDimensional_residueField_of_ord_ne_zero (x := x) (hS P hP).ne'
     have h1 : 1 ≤ P.degree := P.one_le_degree
@@ -379,21 +386,28 @@ theorem card_le_finrank_of_forall_ord_pos {x : F} [FiniteDimensional k⟮x⟯ F]
 
 /-! ### Corollary 1.3.4: the zeros and the poles are finite in number -/
 
+/-- An element `x` has only finitely many zeros whenever `F / k(x)` is finite-dimensional. -/
+theorem finite_setOf_ord_pos_of_finiteDimensional {x : F} [FiniteDimensional k⟮x⟯ F] :
+    {P : Place k F | 0 < P.ord x}.Finite := by
+  rw [← Set.not_infinite]
+  intro hinf
+  obtain ⟨T, hTsub, hTcard⟩ := hinf.exists_subset_card_eq (Module.finrank k⟮x⟯ F + 1)
+  have := card_le_finrank_of_forall_ord_pos (S := T) fun P hP ↦ hTsub hP
+  omega
+
 /-- **Stichtenoth, Corollary 1.3.4**: an element of an algebraic function field has only
 finitely many zeros. -/
 theorem finite_setOf_ord_pos (hF : IsFunctionField k F) (x : F) :
     {P : Place k F | 0 < P.ord x}.Finite := by
   by_cases hx : IsAlgebraic k x
   · -- An element algebraic over the constants is a unit at every place.
-    rw [show {P : Place k F | 0 < P.ord x} = ∅ by
-      ext P; simp [P.ord_eq_zero_of_isAlgebraic hx]]
+    have hzeros : {P : Place k F | 0 < P.ord x} = ∅ := by
+      ext P
+      simp [P.ord_eq_zero_of_isAlgebraic hx]
+    rw [hzeros]
     exact Set.finite_empty
   · let _ := hF.finiteDimensional_adjoin (y := x) hx
-    rw [← Set.not_infinite]
-    intro hinf
-    obtain ⟨T, hTsub, hTcard⟩ := hinf.exists_subset_card_eq (Module.finrank k⟮x⟯ F + 1)
-    have := card_le_finrank_of_forall_ord_pos (S := T) fun P hP ↦ hTsub hP
-    omega
+    exact finite_setOf_ord_pos_of_finiteDimensional (x := x)
 
 /-- **Stichtenoth, Corollary 1.3.4**: an element of an algebraic function field has only
 finitely many poles. A pole of `x` is a zero of `x⁻¹`. -/

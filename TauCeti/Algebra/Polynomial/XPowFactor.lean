@@ -11,9 +11,9 @@ public import Mathlib.Data.Finset.Max
 /-!
 # Dividing a family of polynomials by the largest common power of `X`
 
-A finite family of polynomials over a field, not all zero, has a largest power of `X` dividing
-every member; after dividing it out, at least one quotient has a nonzero constant term. The
-exponent is the least `Polynomial.rootMultiplicity 0` over the nonzero members of the family.
+A finite family of polynomials over a commutative ring, not all zero, has a largest power of `X`
+dividing every member; after dividing it out, at least one quotient has a nonzero constant term.
+The exponent is the least `Polynomial.rootMultiplicity 0` over the nonzero members of the family.
 
 This is the step that clears a common factor `x` from a linear relation with coefficients in
 `k[x]`, so that "not every coefficient is divisible by `x`" may be assumed. Stichtenoth,
@@ -33,7 +33,7 @@ open Polynomial
 
 namespace TauCeti.Polynomial
 
-variable {k : Type*} [Field k]
+variable {k : Type*} [CommRing k]
 
 /-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
 divides every member leaves at least one quotient with nonzero constant term. The exponent is

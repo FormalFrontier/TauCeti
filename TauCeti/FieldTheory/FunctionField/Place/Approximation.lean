@@ -176,8 +176,10 @@ theorem exists_residue_eq_and_forall_mem_ord_eq (y : P.ResidueField) (r : Place 
   · have hne : g - (z : F) ≠ 0 := fun h ↦ by simp [h] at hgP
     have key : IsLocalRing.residue P.integers (⟨g, hmem⟩ - z) = 0 := by
       rw [P.residue_eq_zero_iff_valuation_lt_one]
-      rw [show ((⟨g, hmem⟩ - z : P.integers) : F) = g - (z : F) from rfl,
-        P.valuation_eq_exp_neg_ord hne, hgP, ← WithZero.exp_zero (M := ℤ), WithZero.exp_lt_exp]
+      -- Coercion from the valuation subring preserves subtraction definitionally.
+      change P.valuation (g - (z : F)) < 1
+      rw [P.valuation_eq_exp_neg_ord hne, hgP, ← WithZero.exp_zero (M := ℤ),
+        WithZero.exp_lt_exp]
       norm_num
     rw [map_sub, sub_eq_zero] at key
     rw [key, hz]

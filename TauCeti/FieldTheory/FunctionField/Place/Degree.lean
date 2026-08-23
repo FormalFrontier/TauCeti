@@ -89,7 +89,7 @@ variable {P : Place k F}
 
 /-- If `t` lies in the maximal ideal of `𝒪_P`, then the value of a polynomial `p` at `t` reduces
 to the constant term of `p`. -/
-theorem residue_aeval_of_residue_eq_zero {t : P.integers}
+@[simp] theorem residue_aeval_of_residue_eq_zero {t : P.integers}
     (ht : IsLocalRing.residue P.integers t = 0) (p : k[X]) :
     IsLocalRing.residue P.integers (aeval t p) =
       algebraMap k P.ResidueField (p.coeff 0) := by
