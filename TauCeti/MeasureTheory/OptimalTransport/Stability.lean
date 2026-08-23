@@ -119,12 +119,14 @@ theorem isCoupling_of_tendsto [l.NeBot]
   refine isCoupling_toMeasure_iff.mpr ⟨?_, ?_⟩
   · have h₁ : Tendsto (fun i ↦ (πs i).map measurable_fst.aemeasurable) l
         (𝓝 (π.map measurable_fst.aemeasurable)) :=
-      (continuous_map_fst_probabilityMeasure.tendsto π).comp hπ
+      ((ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X))
+        continuous_fst).tendsto π).comp hπ
     refine tendsto_nhds_unique h₁ (hμ.congr' ?_)
     exact hπs.mono fun i hi ↦ (isCoupling_toMeasure_iff.mp hi).1.symm
   · have h₂ : Tendsto (fun i ↦ (πs i).map measurable_snd.aemeasurable) l
         (𝓝 (π.map measurable_snd.aemeasurable)) :=
-      (continuous_map_snd_probabilityMeasure.tendsto π).comp hπ
+      ((ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y))
+        continuous_snd).tendsto π).comp hπ
     refine tendsto_nhds_unique h₂ (hν.congr' ?_)
     exact hπs.mono fun i hi ↦ (isCoupling_toMeasure_iff.mp hi).2.symm
 

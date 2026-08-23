@@ -39,8 +39,6 @@ only when Prokhorov's theorem is applied.
 
 ## Main statements
 
-* `TauCeti.continuous_map_fst_probabilityMeasure` and
-  `TauCeti.continuous_map_snd_probabilityMeasure` — continuity of the two marginal maps;
 * `TauCeti.isClosed_setOfPred_isCoupling` — the couplings of `μ` and `ν` are a weakly closed set of
   probability measures on the product, with canonical Polish and compact-metrizable
   specialisations;
@@ -76,16 +74,6 @@ section Closed
 variable {X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
   [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y] [SecondCountableTopologyEither X Y]
 
-/-- The first-marginal map on probability measures is continuous for the weak topology. -/
-theorem continuous_map_fst_probabilityMeasure :
-    Continuous fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_fst.aemeasurable :=
-  ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X)) continuous_fst
-
-/-- The second-marginal map on probability measures is continuous for the weak topology. -/
-theorem continuous_map_snd_probabilityMeasure :
-    Continuous fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_snd.aemeasurable :=
-  ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y)) continuous_snd
-
 /-- **The couplings of two probability measures are weakly closed.** The coupling set is the
 intersection of the preimages of `{μ}` and `{ν}` under the two marginal maps, both of which are
 continuous for the topology of convergence in distribution. The `T1Space` hypotheses are what make
@@ -102,8 +90,10 @@ theorem isClosed_setOfPred_isCoupling [T1Space (ProbabilityMeasure X)]
     simpa only [mem_ofPred_eq, mem_inter_iff, mem_preimage, mem_singleton_iff] using
       isCoupling_toMeasure_iff
   rw [hset]
-  exact (isClosed_singleton.preimage continuous_map_fst_probabilityMeasure).inter
-    (isClosed_singleton.preimage continuous_map_snd_probabilityMeasure)
+  exact (isClosed_singleton.preimage
+      (ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X)) continuous_fst)).inter
+    (isClosed_singleton.preimage
+      (ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y)) continuous_snd))
 
 end Closed
 
