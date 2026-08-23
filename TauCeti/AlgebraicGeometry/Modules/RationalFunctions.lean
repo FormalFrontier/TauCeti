@@ -76,7 +76,7 @@ integral scheme, that is, the morphism from the spectrum of the stalk at the gen
 @[expose] def fromSpecFunctionField : Spec X.functionField ⟶ X :=
   X.fromSpecStalk (genericPoint X)
 
-instance : Unique (Spec X.functionField) :=
+instance instUniqueSpecFunctionField : Unique (Spec X.functionField) :=
   inferInstanceAs (Unique (PrimeSpectrum X.functionField))
 
 /-- The sheaf `𝒦_X` of rational functions on an integral scheme `X`: the constant sheaf with
