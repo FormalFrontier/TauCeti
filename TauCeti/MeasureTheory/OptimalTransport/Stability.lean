@@ -372,6 +372,12 @@ theorem exists_isOptimalCoupling_tendsto [l.NeBot] (hcs : IsCostLiminfStable l c
 
 end Stability
 
+private theorem exists_isTightMeasureSet_image {ι X : Type*} [TopologicalSpace X]
+    [MeasurableSpace X] {l : Filter ι} {f : ι → Measure X} {S : Set (Measure X)}
+    (hS : IsTightMeasureSet S) (hf : ∀ i, f i ∈ S) :
+    ∃ s ∈ l, IsTightMeasureSet (f '' s) :=
+  ⟨univ, univ_mem, hS.subset (by rintro - ⟨i, -, rfl⟩; exact hf i)⟩
+
 section Polish
 
 /-! The Polish specialisation. On a Polish space a weakly convergent *sequence* of probability

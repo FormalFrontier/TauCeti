@@ -135,13 +135,6 @@ theorem isTightMeasureSet_setOfPred_isCoupling (hμ : IsTightMeasureSet {μ})
     IsTightMeasureSet {π : Measure (X × Y) | IsCoupling π μ ν} :=
   (isTightMeasureSet_setOfPred_exists_isCoupling hμ hν).subset fun _ hπ ↦ ⟨μ, rfl, ν, rfl, hπ⟩
 
-/-- A family contained in a tight set is tight on some member of any filter. This converts the
-usual range-tightness hypothesis into the tail-tightness form used for moving marginals. -/
-theorem exists_isTightMeasureSet_image {ι : Type*} {l : Filter ι} {f : ι → Measure X}
-    {S : Set (Measure X)} (hS : IsTightMeasureSet S) (hf : ∀ i, f i ∈ S) :
-    ∃ s ∈ l, IsTightMeasureSet (f '' s) :=
-  ⟨univ, univ_mem, hS.subset (by rintro - ⟨i, -, rfl⟩; exact hf i)⟩
-
 end Tight
 
 section AbstractCompact
