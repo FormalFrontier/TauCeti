@@ -28,7 +28,7 @@ measurability immediate and does not choose a distinguished index for each point
 ## Main results
 
 * `TauCeti.DenseGraphLimits.stepGraphon_apply` evaluates the graphon on a specified block;
-* `TauCeti.DenseGraphLimits.stepGraphon_eq_iff` says that, for a fixed partition, two step graphons
+* `TauCeti.DenseGraphLimits.stepGraphon_inj` says that, for a fixed partition, two step graphons
   are equal exactly when their block values agree;
 * `TauCeti.DenseGraphLimits.stepGraphon_const` identifies a constant block matrix with the
   constant graphon.
@@ -138,7 +138,8 @@ theorem stepGraphon_apply (P : Finpartition (Set.univ : Set Ω))
   stepValue_apply P val hx hy
 
 /-- Two step graphons on a fixed partition are equal exactly when their block matrices agree. -/
-theorem stepGraphon_eq_iff (P : Finpartition (Set.univ : Set Ω))
+@[simp]
+theorem stepGraphon_inj (P : Finpartition (Set.univ : Set Ω))
     (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (val val' : P.parts → P.parts → Set.Icc (0 : ℝ) 1)
     (hsymm : ∀ p q, val p q = val q p) (hsymm' : ∀ p q, val' p q = val' q p) :
