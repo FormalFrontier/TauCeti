@@ -179,16 +179,18 @@ theorem isZigzagRelator_pathAlgebraEquiv (e : G ≃g H) {x : pathAlgebra k (Doub
 
 /-! ### The quotients are isomorphic -/
 
-/-- **The map of nonisolated zigzag quotients induced by a graph isomorphism.** -/
-noncomputable def nonisolatedZigzagQuotientHom (e : G ≃g H) :
+/-- The map of nonisolated zigzag quotients induced by a graph isomorphism. This is only the
+forward direction of `TauCeti.nonisolatedZigzagQuotientEquiv`, which is the public API; it is
+private so as not to duplicate it. -/
+private noncomputable def nonisolatedZigzagQuotientHom (e : G ≃g H) :
     nonisolatedZigzagQuotient k G →ₐ[k] nonisolatedZigzagQuotient k H :=
   zigzagLift k G ((zigzagMk k H).comp (pathAlgebraEquiv k e).toAlgHom) fun x hx ↦ by
     rw [AlgHom.comp_apply]
     exact zigzagMk_eq_zero_of_isZigzagRelator k H (isZigzagRelator_pathAlgebraEquiv k e hx)
 
 /-- The induced map of quotients sends the class of an element to the class of its relabelling. -/
-@[simp]
-theorem nonisolatedZigzagQuotientHom_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
+private theorem nonisolatedZigzagQuotientHom_zigzagMk (e : G ≃g H)
+    (x : pathAlgebra k (DoubledQuiver G)) :
     nonisolatedZigzagQuotientHom k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) :=
   zigzagLift_zigzagMk k G _ _ x
 
@@ -218,11 +220,6 @@ theorem nonisolatedZigzagQuotientEquiv_zigzagMk (e : G ≃g H)
       zigzagMk k H (pathAlgebraEquiv k e x) := by
   rw [nonisolatedZigzagQuotientEquiv, AlgEquiv.ofAlgHom_apply,
     nonisolatedZigzagQuotientHom_zigzagMk]
-
-/-- The forward homomorphism of the quotient isomorphism is the map used to construct it. -/
-@[simp]
-theorem nonisolatedZigzagQuotientEquiv_toAlgHom (e : G ≃g H) :
-    (nonisolatedZigzagQuotientEquiv k e).toAlgHom = nonisolatedZigzagQuotientHom k e := (rfl)
 
 /-- The inverse quotient isomorphism is induced by the inverse graph relabelling. -/
 @[simp]

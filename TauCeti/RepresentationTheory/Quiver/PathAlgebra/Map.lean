@@ -202,14 +202,16 @@ theorem mapAlgHom_congr {φ φ' : Q ⥤q R} (h : φ = φ') (hφ : Function.Bijec
 
 /-- **The identity prefunctor induces the identity**. -/
 @[simp]
-theorem mapAlgHom_id (hφ : Function.Bijective (Prefunctor.id Q).obj) :
-    mapAlgHom k (Prefunctor.id Q) hφ = AlgHom.id k (pathAlgebra k Q) :=
+theorem mapAlgHom_id :
+    mapAlgHom k (Prefunctor.id Q) Prefunctor.obj_bijective_id = AlgHom.id k (pathAlgebra k Q) :=
   algHom_ext k fun x ↦ by rw [mapAlgHom_ofPath, mapTotalPath_id, AlgHom.id_apply]
 
-/-- **Composition of prefunctors induces composition**. -/
+/-- **Composition of prefunctors induces composition**. The bijectivity of the composite is that
+of the two factors. -/
 theorem mapAlgHom_comp (φ : Q ⥤q R) (ψ : R ⥤q S) (hφ : Function.Bijective φ.obj)
-    (hψ : Function.Bijective ψ.obj) (hφψ : Function.Bijective (φ.comp ψ).obj) :
-    mapAlgHom k (φ.comp ψ) hφψ = (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) :=
+    (hψ : Function.Bijective ψ.obj) :
+    mapAlgHom k (φ.comp ψ) (φ.obj_bijective_comp ψ hφ hψ) =
+      (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) :=
   algHom_ext k fun x ↦ by
     rw [mapAlgHom_ofPath, AlgHom.comp_apply, mapAlgHom_ofPath, mapAlgHom_ofPath,
       mapTotalPath_comp_apply]
@@ -220,10 +222,9 @@ identity. This is the pair of coherence hypotheses of `AlgEquiv.ofAlgHom` for
 private theorem mapAlgHom_comp_eq_id (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφ : Function.Bijective φ.obj)
     (hψ : Function.Bijective ψ.obj) (hφψ : φ.comp ψ = Prefunctor.id Q) :
     (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) = AlgHom.id k (pathAlgebra k Q) :=
-  have hid : Function.Bijective (Prefunctor.id Q).obj := Function.bijective_id
-  have hcomp : Function.Bijective (φ.comp ψ).obj := hφψ ▸ hid
-  (mapAlgHom_comp k φ ψ hφ hψ hcomp).symm.trans
-    ((mapAlgHom_congr k hφψ hcomp hid).trans (mapAlgHom_id k hid))
+  (mapAlgHom_comp k φ ψ hφ hψ).symm.trans
+    ((mapAlgHom_congr k hφψ (φ.obj_bijective_comp ψ hφ hψ) Prefunctor.obj_bijective_id).trans
+      (mapAlgHom_id k))
 
 /-- **The algebra isomorphism of path algebras induced by an isomorphism of quivers**, presented as
 a pair of mutually inverse prefunctors. -/
@@ -260,8 +261,9 @@ theorem mapAlgEquiv_congr {φ φ' : Q ⥤q R} {ψ ψ' : R ⥤q Q} (hφ : φ = φ
 
 /-- **The identity prefunctor induces the identity isomorphism**. -/
 @[simp]
-theorem mapAlgEquiv_id (h h' : (Prefunctor.id Q).comp (Prefunctor.id Q) = Prefunctor.id Q) :
-    mapAlgEquiv k (Prefunctor.id Q) (Prefunctor.id Q) h h' = AlgEquiv.refl :=
+theorem mapAlgEquiv_id :
+    mapAlgEquiv k (Prefunctor.id Q) (Prefunctor.id Q) (Prefunctor.comp_id (Prefunctor.id Q))
+      (Prefunctor.comp_id (Prefunctor.id Q)) = AlgEquiv.refl :=
   algEquiv_ext k fun x ↦ by
     rw [mapAlgEquiv_apply, mapAlgHom_ofPath, mapTotalPath_id]
     rfl
@@ -273,13 +275,14 @@ theorem mapAlgEquiv_symm (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = P
     (mapAlgEquiv k φ ψ hφψ hψφ).symm = mapAlgEquiv k ψ φ hψφ hφψ :=
   AlgEquiv.ext fun y ↦ by rw [mapAlgEquiv_symm_apply, mapAlgEquiv_apply]
 
-/-- **Composition of prefunctors induces composition of the isomorphisms**. -/
+/-- **Composition of prefunctors induces composition of the isomorphisms**. The two inverse laws
+of the composite pair are those of the two factor pairs, by
+`Prefunctor.comp_comp_comp_eq_id`. -/
 theorem mapAlgEquiv_comp (φ : Q ⥤q R) (ψ : R ⥤q Q) (φ' : R ⥤q S) (ψ' : S ⥤q R)
     (hφψ : φ.comp ψ = Prefunctor.id Q) (hψφ : ψ.comp φ = Prefunctor.id R)
-    (hφψ' : φ'.comp ψ' = Prefunctor.id R) (hψφ' : ψ'.comp φ' = Prefunctor.id S)
-    (h : (φ.comp φ').comp (ψ'.comp ψ) = Prefunctor.id Q)
-    (h' : (ψ'.comp ψ).comp (φ.comp φ') = Prefunctor.id S) :
-    mapAlgEquiv k (φ.comp φ') (ψ'.comp ψ) h h' =
+    (hφψ' : φ'.comp ψ' = Prefunctor.id R) (hψφ' : ψ'.comp φ' = Prefunctor.id S) :
+    mapAlgEquiv k (φ.comp φ') (ψ'.comp ψ) (φ.comp_comp_comp_eq_id ψ φ' ψ' hφψ hφψ')
+        (ψ'.comp_comp_comp_eq_id φ' ψ φ hψφ' hψφ) =
       (mapAlgEquiv k φ ψ hφψ hψφ).trans (mapAlgEquiv k φ' ψ' hφψ' hψφ') :=
   algEquiv_ext k fun x ↦ by
     rw [AlgEquiv.trans_apply, mapAlgEquiv_apply, mapAlgEquiv_apply, mapAlgEquiv_apply,
