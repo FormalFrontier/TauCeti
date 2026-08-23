@@ -28,12 +28,11 @@ against `μ`, hence against every restriction of `μ`.
 
 ## Main declarations
 
-* `TauCeti.eLpNorm_indicator_restrict_eq_eLpNorm_restrict` and
-  `TauCeti.memLp_indicator_restrict_of_memLp_restrict`: extension by zero preserves the `Lᵖ`
-  seminorm, and hence `Lᵖ` membership.
 * `TauCeti.extendByZeroLpₗᵢ`: extension by zero as a linear isometry.
 * `TauCeti.coeFn_extendByZeroLpₗᵢ` and `TauCeti.coeFn_extendByZeroLpₗᵢ_restrict`: the values of
   the extension, on `t` and back on `s`.
+* `TauCeti.extendByZeroLpₗᵢ_self` and `TauCeti.extendByZeroLpₗᵢ_extendByZeroLpₗᵢ`: extending
+  along `s ⊆ s` is the identity, and extending twice is extending once.
 * `TauCeti.extendByZeroLpₗᵢ_eq_of_ae_eq` and `TauCeti.coeFn_extendByZeroLpₗᵢ_comp`: the two ways
   an extension is recognised in practice — from a representative that already vanishes off `s`,
   and through pointwise postcomposition by a map fixing `0`.
@@ -52,15 +51,11 @@ open scoped ENNReal
 variable {α : Type*} [MeasurableSpace α] {F : Type*} [NormedAddCommGroup F] (𝕜 : Type*)
   [NormedRing 𝕜] [Module 𝕜 F] [IsBoundedSMul 𝕜 F] {p : ℝ≥0∞} {μ : Measure α} {s t : Set α}
 
-/-- **Extension by zero preserves the `Lᵖ` seminorm.**  Enlarging the domain from `s` to `t ⊇ s`
-adds only a region on which the extended function vanishes. -/
-theorem eLpNorm_indicator_restrict_eq_eLpNorm_restrict (hs : MeasurableSet s) (hst : s ⊆ t)
-    (g : α → F) :
-    eLpNorm (s.indicator g) p (μ.restrict t) = eLpNorm g p (μ.restrict s) := by
-  rw [eLpNorm_indicator_eq_eLpNorm_restrict hs, Measure.restrict_restrict_of_subset hst]
-
-/-- **Extension by zero preserves `Lᵖ` membership.** -/
-theorem memLp_indicator_restrict_of_memLp_restrict (hs : MeasurableSet s) (hst : s ⊆ t)
+/-- **Extension by zero preserves `Lᵖ` membership**: Mathlib's
+`MeasureTheory.memLp_indicator_iff_restrict` against `μ.restrict t`, followed by
+`MeasureTheory.Measure.restrict_restrict_of_subset`.  It is needed as a *term* at each of the
+three places where the extension is built or computed, so it is named rather than inlined. -/
+private theorem memLp_indicator_restrict (hs : MeasurableSet s) (hst : s ⊆ t)
     {g : α → F} (hg : MemLp g p (μ.restrict s)) : MemLp (s.indicator g) p (μ.restrict t) := by
   rw [memLp_indicator_iff_restrict hs, Measure.restrict_restrict_of_subset hst]
   exact hg
@@ -76,7 +71,7 @@ variable (μ) in
 /-- Extension by zero as a linear map; `TauCeti.extendByZeroLpₗᵢ` upgrades it to an isometry. -/
 private def extendByZeroLpₗ (hs : MeasurableSet s) (hst : s ⊆ t) :
     Lp F p (μ.restrict s) →ₗ[𝕜] Lp F p (μ.restrict t) where
-  toFun f := (memLp_indicator_restrict_of_memLp_restrict hs hst (Lp.memLp f)).toLp _
+  toFun f := (memLp_indicator_restrict hs hst (Lp.memLp f)).toLp _
   map_add' f g := by
     rw [← MemLp.toLp_add]
     exact MemLp.toLp_congr _ _
@@ -99,14 +94,15 @@ def extendByZeroLpₗᵢ [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t)
   norm_map' f := by
     -- `Lp.norm_toLp` is stated for the unbundled `MemLp.toLp`; expose that implementation of
     -- `extendByZeroLpₗ`, which the bundled `toLinearMap` field hides.
-    change ‖(memLp_indicator_restrict_of_memLp_restrict hs hst (Lp.memLp f)).toLp _‖ = ‖f‖
-    rw [Lp.norm_toLp, eLpNorm_indicator_restrict_eq_eLpNorm_restrict hs hst, ← Lp.norm_def]
+    change ‖(memLp_indicator_restrict hs hst (Lp.memLp f)).toLp _‖ = ‖f‖
+    rw [Lp.norm_toLp, eLpNorm_indicator_eq_eLpNorm_restrict hs,
+      Measure.restrict_restrict_of_subset hst, ← Lp.norm_def]
 
 /-- **The extension by zero is the indicator of the original representative.** -/
 theorem coeFn_extendByZeroLpₗᵢ [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t)
     (f : Lp F p (μ.restrict s)) :
     (extendByZeroLpₗᵢ 𝕜 μ hs hst f : α → F) =ᵐ[μ.restrict t] s.indicator (f : α → F) :=
-  MemLp.coeFn_toLp (memLp_indicator_restrict_of_memLp_restrict hs hst (Lp.memLp f))
+  MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp f))
 
 /-- **The extension by zero restricts back to the original function.** -/
 theorem coeFn_extendByZeroLpₗᵢ_restrict [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t)
@@ -114,6 +110,25 @@ theorem coeFn_extendByZeroLpₗᵢ_restrict [Fact (1 ≤ p)] (hs : MeasurableSet
     (extendByZeroLpₗᵢ 𝕜 μ hs hst f : α → F) =ᵐ[μ.restrict s] (f : α → F) :=
   ((coeFn_extendByZeroLpₗᵢ 𝕜 hs hst f).filter_mono
     (ae_mono (Measure.restrict_mono hst le_rfl))).trans (indicator_ae_eq_restrict hs)
+
+/-- **Extending by zero along `s ⊆ s` does nothing.** -/
+@[simp]
+theorem extendByZeroLpₗᵢ_self [Fact (1 ≤ p)] (hs : MeasurableSet s)
+    (f : Lp F p (μ.restrict s)) : extendByZeroLpₗᵢ 𝕜 μ hs Subset.rfl f = f :=
+  Lp.ext (coeFn_extendByZeroLpₗᵢ_restrict 𝕜 hs Subset.rfl f)
+
+/-- **Extending by zero twice is extending by zero once.**  Zero-extending from `s` to `t` and
+then from `t` to `u` is the zero-extension from `s` to `u`. -/
+@[simp]
+theorem extendByZeroLpₗᵢ_extendByZeroLpₗᵢ [Fact (1 ≤ p)] {u : Set α} (hs : MeasurableSet s)
+    (ht : MeasurableSet t) (hst : s ⊆ t) (htu : t ⊆ u) (f : Lp F p (μ.restrict s)) :
+    extendByZeroLpₗᵢ 𝕜 μ ht htu (extendByZeroLpₗᵢ 𝕜 μ hs hst f) =
+      extendByZeroLpₗᵢ 𝕜 μ hs (hst.trans htu) f := by
+  refine Lp.ext ?_
+  filter_upwards [coeFn_extendByZeroLpₗᵢ 𝕜 ht htu (extendByZeroLpₗᵢ 𝕜 μ hs hst f),
+    indicator_ae_eq (t := u) ht (coeFn_extendByZeroLpₗᵢ 𝕜 hs hst f),
+    coeFn_extendByZeroLpₗᵢ 𝕜 hs (hst.trans htu) f] with x h1 h2 h3
+  rw [h1, h2, h3, indicator_indicator, inter_eq_self_of_subset_right hst]
 
 /-- **Recognising an extension by zero from a common representative.**  A function `h` supported
 in `s` that represents `f` on `s` and `g` on `t` exhibits `g` as the zero-extension of `f`; this
