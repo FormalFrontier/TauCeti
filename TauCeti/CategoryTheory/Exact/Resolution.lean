@@ -59,8 +59,8 @@ property, before any projectivity hypothesis is available.
 * `TauCeti.ExactStructure.FiniteResolution.length_biprod`: a direct sum of resolutions has the
   larger of the two lengths, the shorter chain being padded against the longer one.
 * `TauCeti.ExactStructure.exists_conflation_of_exists_length_le_succ`: a resolution of length at
-  most `n + 1` is the same as a first conflation `K ↪ Q ↠ X` together with a resolution of `K` of
-  length at most `n`; this is how an induction on the length peels off one step.
+  most `n + 1` yields a first conflation `K ↪ Q ↠ X` together with a resolution of `K` of length
+  at most `n`; this is how an induction on the length peels off one step.
 * `TauCeti.ExactStructure.admitsFiniteResolution_induction`: the object property of admitting a
   finite `P`-resolution is the smallest one containing `P` and closed under passing from the
   subobject of a conflation with resolving middle term to its quotient.

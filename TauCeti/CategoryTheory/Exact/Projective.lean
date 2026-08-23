@@ -58,7 +58,8 @@ by the projectives themselves.
   an abelian category the notion is Mathlib's `CategoryTheory.Projective`.
 * `TauCeti.ExactStructure.nonempty_iso_biprod_of_projective`: **Schanuel's lemma**, that two
   conflations over the same object with projective middle terms have stably isomorphic kernels.
-* `TauCeti.ExactStructure.exists_conflations_biprod_of_conflations`: **the horseshoe lemma**.
+* `TauCeti.ExactStructure.exists_conflation_biprod_of_conflation_of_projective`: **the horseshoe
+  lemma**.
 * `TauCeti.ExactStructure.exists_finiteResolution_length_le_of_conflation`: the middle term of a
   conflation admits a finite `P`-resolution of length at most the common bound on the lengths of
   resolutions of the two outer terms, when `P` consists of projectives, contains a zero object
@@ -87,7 +88,7 @@ identifies its kernel in one step.
 * `Mathlib/CategoryTheory/Preadditive/Projective/Basic.lean`, whose `factorThru`,
   `factorThru_comp` and isomorphism, zero-object and biproduct closure API for absolute
   projectivity is the layout adapted here to the relative setting, and
-  `Mathlib/Algebra/Homology/ShortComplex/Exact.lean`, whose
+  `Mathlib/Algebra/Homology/ShortComplex/ShortExact.lean`, whose
   `CategoryTheory.ShortComplex.ShortExact.splittingOfProjective` is the balanced-category
   ancestor of `TauCeti.ExactStructure.splittingOfProjective`.
 * [The Tau Ceti Grothendieck groups, Cartan maps, and Euler forms roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/README.md),
@@ -180,6 +181,12 @@ noncomputable def splittingOfProjective (E : ExactStructure C) {S : ShortComplex
     (E.splittingOfProjective hS h₃).s = h₃.factorThru (E.isDeflation_g hS) (𝟙 S.X₃) :=
   (E.isKernelCokernelPair S hS).splittingOfSection_s _ _
 
+@[simp] theorem splittingOfProjective_r (E : ExactStructure C) {S : ShortComplex C}
+    (hS : E.Conflation S) (h₃ : E.projectives S.X₃) :
+    (E.splittingOfProjective hS h₃).r = (E.isKernelCokernelPair S hS).lift
+      (𝟙 S.X₂ - S.g ≫ h₃.factorThru (E.isDeflation_g hS) (𝟙 S.X₃)) (by simp) :=
+  (E.isKernelCokernelPair S hS).splittingOfSection_r _ _
+
 /-- **Every object is projective for the split exact structure.** Its deflations are split
 epimorphisms, along which every morphism visibly lifts. -/
 @[simp]
@@ -213,8 +220,10 @@ theorem nonempty_iso_biprod_of_projective {X K Q : C} {m : K ⟶ Q} {a : Q ⟶ X
   have sq : IsPullback (pullback.fst a a') (pullback.snd a a') a a' :=
     IsPullback.of_hasPullback _ _
   -- the pullback as an extension of `Q'` by `K`, and as an extension of `Q` by `K'`
-  have h₁ := E.conflation_baseChange' hc sq
-  have h₂ := E.conflation_baseChange' hc' sq.flip
+  have h₁ := E.conflation_baseChange hc sq
+  rw [baseChange_def] at h₁
+  have h₂ := E.conflation_baseChange hc' sq.flip
+  rw [baseChange_def] at h₂
   exact ⟨(E.splittingOfProjective h₁ hQ').isoBinaryBiproduct.symm.trans
     (E.splittingOfProjective h₂ hQ).isoBinaryBiproduct⟩
 
@@ -231,8 +240,8 @@ restricts on `K_X` to `K_X ↪ Q_X ↪ Q_X ⊞ Q_Z` and covers `K_Z ↪ Q_Z` on 
 
 Iterating this is what lifts resolutions of `X` and of `Z` to a resolution of `Y`; see
 `TauCeti.ExactStructure.exists_finiteResolution_length_le_of_conflation`. -/
-theorem exists_conflations_biprod_of_conflations {S : ShortComplex C} (hS : E.Conflation S)
-    {KX QX : C} {mX : KX ⟶ QX} {aX : QX ⟶ S.X₁} {hmX : mX ≫ aX = 0}
+theorem exists_conflation_biprod_of_conflation_of_projective {S : ShortComplex C}
+    (hS : E.Conflation S) {KX QX : C} {mX : KX ⟶ QX} {aX : QX ⟶ S.X₁} {hmX : mX ≫ aX = 0}
     (hcX : E.Conflation (ShortComplex.mk mX aX hmX))
     {KZ QZ : C} {mZ : KZ ⟶ QZ} {aZ : QZ ⟶ S.X₃} {hmZ : mZ ≫ aZ = 0}
     (hcZ : E.Conflation (ShortComplex.mk mZ aZ hmZ)) (hQZ : E.projectives QZ) :
@@ -246,10 +255,12 @@ theorem exists_conflations_biprod_of_conflations {S : ShortComplex C} (hS : E.Co
   have sq : IsPullback (pullback.fst aZ S.g) (pullback.snd aZ S.g) aZ S.g :=
     IsPullback.of_hasPullback _ _
   -- Pulling `S` back along `aZ` exhibits the pullback as an extension of `QZ` by `S.X₁` …
-  have hspl := E.conflation_baseChange' hS sq.flip
+  have hspl := E.conflation_baseChange hS sq.flip
+  rw [baseChange_def] at hspl
   -- … and pulling the resolving conflation of `Z` back along `S.g` exhibits the same pullback as
   -- an extension of `S.X₂` by `KZ`.
-  have hker := E.conflation_baseChange' hcZ sq
+  have hker := E.conflation_baseChange hcZ sq
+  rw [baseChange_def] at hker
   -- Projectivity of `QZ` splits the first of these two conflations, and under that splitting the
   -- deflation of the pullback onto `QZ` is the second projection.
   have sp : (ShortComplex.mk (baseChangeι S sq.flip) (pullback.fst aZ S.g)
@@ -322,21 +333,15 @@ theorem exists_finiteResolution_length_le_of_conflation (hP : P ≤ E.projective
   | zero =>
       obtain ⟨r, hr⟩ := h₁
       obtain ⟨t, ht⟩ := h₃
-      have hX₁ : P S.X₁ := by
-        cases r with
-        | base hX => exact hX
-        | step _ _ _ _ _ _ => simp at hr
-      have hX₃ : P S.X₃ := by
-        cases t with
-        | base hZ => exact hZ
-        | step _ _ _ _ _ _ => simp at ht
+      have hX₁ : P S.X₁ := by simpa using r.prop_syzygy hr
+      have hX₃ : P S.X₃ := by simpa using t.prop_syzygy ht
       refine ⟨.base (P.prop_of_iso (E.splittingOfProjective hS (hP _ hX₃)).isoBinaryBiproduct.symm
         (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX₁ hX₃)), by simp⟩
   | succ n ih =>
       obtain ⟨KX, QX, mX, aX, hmX, hQX, hcX, hKX⟩ := E.exists_conflation_of_exists_length_le_succ h₁
       obtain ⟨KZ, QZ, mZ, aZ, hmZ, hQZ, hcZ, hKZ⟩ := E.exists_conflation_of_exists_length_le_succ h₃
       obtain ⟨K, u, a, hu, v, w, hv, hKu, hKv, -, -, -, -⟩ :=
-        E.exists_conflations_biprod_of_conflations hS hcX hcZ (hP _ hQZ)
+        E.exists_conflation_biprod_of_conflation_of_projective hS hcX hcZ (hP _ hQZ)
       obtain ⟨s, hs⟩ := ih (S := ShortComplex.mk v w hv) hKv hKX hKZ
       have hQ : P (QX ⊞ QZ) :=
         P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQX hQZ
