@@ -106,6 +106,7 @@ theorem kernelLaplaceTransform_zero (κ : Kernel V ℝ≥0) (q : V) :
   simp
 
 /-- A Markov kernel has fibrewise Laplace transform `1` at time `0`. -/
+@[simp]
 theorem kernelLaplaceTransform_zero_of_isMarkovKernel (κ : Kernel V ℝ≥0) [IsMarkovKernel κ] :
     kernelLaplaceTransform κ 0 = 1 := by
   funext q

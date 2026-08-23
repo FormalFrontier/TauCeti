@@ -137,10 +137,10 @@ theorem spatialSlice_timeKernelMeasure (μ : Measure V) [SFinite μ] (κ : Kerne
   by_cases hq : q ∈ B
   · rw [indicator_of_mem hq, kernelLaplaceTransform_apply]
     exact lintegral_congr fun p =>
-      indicator_of_mem (show (p, q) ∈ Prod.snd ⁻¹' B from hq) _
+      indicator_of_mem (Set.mem_preimage.mpr hq) _
   · rw [indicator_of_notMem hq]
     refine (lintegral_congr (μ := κ q) fun p => ?_).trans lintegral_zero
-    exact indicator_of_notMem (show (p, q) ∉ Prod.snd ⁻¹' B from hq) _
+    exact indicator_of_notMem (fun h => hq (Set.mem_preimage.mp h)) _
 
 /-- The spatial marginal of an assembled measure is the spatial measure it was assembled
 from. -/
@@ -176,7 +176,7 @@ theorem bochnerMeasure_timeSlice_absolutelyContinuous (hFpd : IsSemigroupGroupPD
     (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (t : ℝ≥0) :
     (bochnerMeasure fun a => F (t, a)) ≪ bochnerMeasure fun a => F (0, a) :=
   Measure.absolutelyContinuous_of_le
-    (bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd (show (0 : ℝ≥0) ≤ t from zero_le))
+    (bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd zero_le)
 
 /-- The spatial Bochner measure at time `t` is the time-`0` one weighted by a Radon--Nikodym
 derivative. These derivatives are the densities the representation problem must realize as
