@@ -48,7 +48,9 @@ equivalence is needed and equality of places *is* equality of valuations
 * `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
   `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
   those whose residue field is exhausted by the constants, equivalently those at which every
-  integral function agrees with a constant to first order.
+  integral function agrees with a constant to first order;
+  `TauCeti.Place.residueFieldEquivOfDegreeEqOne` identifies the residue field of such a place
+  with `k`.
 
 ## Implementation notes
 
@@ -290,6 +292,12 @@ theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : 
   ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
 
+@[simp]
+theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
+  refine ⟨eq_of_isEquiv, ?_⟩
+  rintro rfl
+  exact Valuation.IsEquiv.refl
+
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
   fun _ _ h => eq_of_isEquiv ((Valuation.isEquiv_iff_valuationSubring _ _).mpr h)
@@ -368,6 +376,18 @@ theorem degree_eq_one_iff_forall_exists_valuation_sub_lt_one :
     obtain ⟨a, rfl⟩ := IsLocalRing.residue_surjective y
     obtain ⟨c, hc⟩ := h (a : F) a.2
     exact ⟨c, ((key a c).mp hc).symm⟩
+
+/-- **A rational place has residue field `k`**: at a place of degree one the constants map
+isomorphically onto the residue field, so `f(P)` really is an element of `k`. -/
+noncomputable def residueFieldEquivOfDegreeEqOne (h : P.degree = 1) : k ≃ₐ[k] P.ResidueField :=
+  AlgEquiv.ofBijective (Algebra.ofId k P.ResidueField)
+    ⟨(algebraMap k P.ResidueField).injective,
+      (degree_eq_one_iff_algebraMap_surjective P).mp h⟩
+
+@[simp]
+theorem residueFieldEquivOfDegreeEqOne_apply (h : P.degree = 1) (c : k) :
+    residueFieldEquivOfDegreeEqOne P h c = algebraMap k P.ResidueField c :=
+  AlgEquiv.ofBijective_apply _ _ _
 
 /-- If the residue field of a place is algebraic over an algebraically closed field of constants,
 then the place is rational (Stichtenoth, Remark 1.1.17). -/

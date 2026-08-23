@@ -169,35 +169,35 @@ edge; only the far end of the second chain is left, and there the bound is read 
 -/
 
 /-- A chain, evaluated at a weight linear in the position: the row vanishes except at the far end,
-where it is `(n + 1) c`. This is `TauCeti.sum_range_chainEntry_mul` with `g u = u * c`, whose two
-truncation terms cancel the second difference at the near end and leave the far end standing. -/
+where it is `(n + 1) c`. This is `TauCeti.sum_range_chainEntry_mul_affine` at `a = b = c`, the
+weight `(w + 1) c` being `c w + c`; the near end contributes nothing because that weight vanishes
+one step before the chain starts. -/
 private theorem sum_fin_chainEntry_mul_linear {n : ℕ} (m : Fin n) (c : ℚ) :
     ∑ w : Fin n, ((chainEntry (m : ℕ) (w : ℕ) : ℤ) : ℚ) * ((((w : ℕ) : ℚ) + 1) * c)
       = if (m : ℕ) + 1 = n then ((n : ℚ) + 1) * c else 0 := by
   have hcongr : ∀ w : Fin n,
       ((chainEntry (m : ℕ) (w : ℕ) : ℤ) : ℚ) * ((((w : ℕ) : ℚ) + 1) * c)
-        = ((chainEntry (m : ℕ) (w : ℕ) : ℤ) : ℚ) * ((fun u : ℕ ↦ (u : ℚ) * c) ((w : ℕ) + 1)) := by
+        = ((chainEntry (m : ℕ) (w : ℕ) : ℤ) : ℚ) * (c * ((w : ℕ) : ℚ) + c) := by
     intro w
-    push_cast
     ring
   rw [Finset.sum_congr rfl fun w _ ↦ hcongr w,
     Fin.sum_univ_eq_sum_range
-      (fun s ↦ ((chainEntry (m : ℕ) s : ℤ) : ℚ) * ((fun u : ℕ ↦ (u : ℚ) * c) (s + 1))) n,
-    sum_range_chainEntry_mul m.isLt fun u : ℕ ↦ (u : ℚ) * c]
-  -- The term the chain omits at the near end is zero anyway, since the weight vanishes there.
-  have hnear : (if (m : ℕ) = 0 then (0 : ℚ) else ((m : ℕ) : ℚ) * c) = ((m : ℕ) : ℚ) * c := by
-    rcases eq_or_ne (m : ℕ) 0 with h0 | h0
-    · rw [ite_eq_left h0, h0]
+      (fun s ↦ ((chainEntry (m : ℕ) s : ℤ) : ℚ) * (c * (s : ℚ) + c)) n,
+    sum_range_chainEntry_mul_affine m.isLt c c]
+  rcases eq_or_ne (m : ℕ) 0 with h0 | h0
+  · rw [ite_eq_left h0]
+    rcases eq_or_ne ((m : ℕ) + 1) n with hm | hm
+    · -- A one-vertex chain: the two ends coincide, so `n = 1` and both readings give `2 c`.
+      have hnQ : (n : ℚ) = 1 := by rw [← hm, h0]; norm_num
+      rw [ite_eq_left hm, ite_eq_left hm, hnQ]
       norm_num
-    · rw [ite_eq_right h0]
-  rcases eq_or_ne ((m : ℕ) + 1) n with hm | hm
-  · have hmQ : ((m : ℕ) : ℚ) + 1 = (n : ℚ) := by exact_mod_cast hm
-    rw [ite_eq_left hm, ite_eq_left hm, hnear]
-    push_cast
-    linear_combination c * hmQ
-  · rw [ite_eq_right hm, ite_eq_right hm, hnear]
-    push_cast
-    ring
+    · rw [ite_eq_right hm, ite_eq_right hm]
+      ring
+  · rw [ite_eq_right h0]
+    rcases eq_or_ne ((m : ℕ) + 1) n with hm | hm
+    · rw [ite_eq_left hm, ite_eq_left hm]
+      ring
+    · rw [ite_eq_right hm, ite_eq_right hm]
 
 /-- The double edge, evaluated at a weight linear in the position: the row at a vertex `v` of one
 chain meets the other chain only if `v` is the last vertex of its own, and then only at the far end

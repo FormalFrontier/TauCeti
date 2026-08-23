@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
-public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
 
 /-!
 # Weight tori in the general linear group scheme
