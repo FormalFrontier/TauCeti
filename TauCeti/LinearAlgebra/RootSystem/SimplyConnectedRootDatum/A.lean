@@ -50,12 +50,38 @@ inside the weight lattice with index `n + 1` (Bourbaki, Plate I), so the datum i
 carrying no `RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected" means
 here.
 
+## The graph automorphism
+
+The `Aₙ` diagram is a chain, so reversing it is a symmetry, and the last part of this file realizes
+that symmetry on the pinned datum itself rather than only on the Cartan matrix. On the classical
+model the realization is `e_a ↦ -e_{rev a}`, whose effect on a root is
+
+```text
+e_a - e_b ↦ e_{rev b} - e_{rev a},
+```
+
+and on both pinned lattices, whose coordinates are indexed by the simple nodes, it is the reversal
+of coordinates. So a single linear automorphism of `Fin n → ℤ` serves as both the character and the
+cocharacter map, and `TauCeti.DynkinType.typeAGraphAut` bundles it with the induced permutation of
+the `n * (n + 1)` root indices as an element of `RootPairing.Aut`. It restricts to the reversal
+`Fin.revPerm` on the Bourbaki-numbered simple roots, which is `TauCeti.graphPermA n`, the
+permutation that
+`TauCeti/LinearAlgebra/RootSystem/DiagramPermutations.lean` pins for the `²Aₙ` family; that module
+is deliberately not imported here, since only the `Fin`-level reversal is used.
+
+The sign in `e_a ↦ -e_{rev a}` is forced: `e_a ↦ e_{rev a}` sends `αᵢ = e_i - e_{i+1}` to
+`e_{rev i} - e_{rev (i + 1)} = -α_{rev i}`, a negative root, so it does not preserve the base. The
+composite with the opposition `-1` is the automorphism below. This is unrelated to
+`TauCeti.opposition`, which is built from the longest Weyl element and needs the root-system
+hypotheses this simply connected datum does not carry.
+
 ## Main definitions
 
 * `TauCeti.DynkinType.typeASimplyConnectedRootDatum`: the pinned root datum of type `Aₙ`.
 * `TauCeti.DynkinType.typeASimpleIndex`: the first `n` root indices, the Bourbaki-numbered simple
   roots.
 * `TauCeti.DynkinType.typeASimplyConnectedBase`: the base they form.
+* `TauCeti.DynkinType.typeAGraphAut`: the graph automorphism of the pinned datum.
 
 ## Main results
 
@@ -69,6 +95,15 @@ here.
   cocharacter lattice, the simply connected condition.
 * `TauCeti.DynkinType.ncard_posRoots_typeASimplyConnectedRootDatum`: the number of positive roots
   is `(n + 1).choose 2`, for any base.
+* `TauCeti.DynkinType.weightMap_typeAGraphAut_apply` and
+  `TauCeti.DynkinType.coweightMap_typeAGraphAut_apply`: the graph automorphism reverses the
+  coordinates of both lattices.
+* `TauCeti.DynkinType.indexEquiv_typeAGraphAut_typeASimpleIndex`: on the Bourbaki-numbered simple
+  roots it is the chain reversal.
+* `TauCeti.DynkinType.typeAGraphAut_sq` and `TauCeti.DynkinType.typeAGraphAut_ne_one`: it is an
+  involution, and is nontrivial as soon as the chain has two nodes.
+* `TauCeti.DynkinType.support_map_typeASimplyConnectedBase_typeAGraphAut`: it preserves the pinned
+  base.
 
 ## References
 
@@ -78,6 +113,12 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The positive-root count is the
 corresponding clause of the `Aₙ` worked example in the "Worked examples (acceptance criteria)"
 section of that README; it agrees with the count in Bourbaki, Plate I.
+
+The graph automorphism is the root-datum input to the isomorphism theorem for pinned groups in
+Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, whose consumer is the graph-twisted
+Steinberg map of milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md`. The description of the
+type-`A` diagram automorphism as `X ↦ -J Xᵀ J` on `sl_{n+1}`, of which the map below is the
+root-datum shadow, is in R. W. Carter, *Simple Groups of Lie Type*, §12.2.
 -/
 
 namespace TauCeti
@@ -596,6 +637,190 @@ theorem ncard_posRoots_typeASimplyConnectedRootDatum (n : ℕ)
     (posRoots (typeASimplyConnectedRootDatum n) b).ncard = (n + 1).choose 2 := by
   rw [ncard_posRoots_eq_natCard_div_two]
   simp [Nat.choose_two_right, Nat.mul_comm]
+
+/-! ## The graph automorphism -/
+
+/-- The graph automorphism of type `Aₙ` read on the classical ordered pairs: it exchanges the two
+entries and reverses each, `(a, b) ↦ (rev b, rev a)`. This is the effect of `e_a ↦ -e_{rev a}` on
+the root `e_a - e_b`. -/
+private def typeAGraphPairMap (p : TypeAIndex n) : TypeAIndex n :=
+  ⟨(p.val.2.rev, p.val.1.rev), fun h => p.2 (Fin.rev_injective h).symm⟩
+
+private lemma typeAGraphPairMap_involutive : Involutive (typeAGraphPairMap (n := n)) :=
+  fun _ => Subtype.ext (Prod.ext (Fin.rev_rev _) (Fin.rev_rev _))
+
+private lemma val_rev_succ (a : Fin (n + 1)) : ((a.rev : Fin (n + 1)) : ℕ) = n - (a : ℕ) := by
+  rw [Fin.val_rev]
+  omega
+
+/-- Reversing the classical index negates the character coordinates read at the reversed node. The
+sign is the `-1` in `e_a ↦ -e_{rev a}`. -/
+private lemma typeAWeight_rev {a : ℕ} (ha : a ≤ n) (k : Fin n) :
+    typeAWeight n (n - a) k = -typeAWeight n a k.rev := by
+  have hk : ((k.rev : Fin n) : ℕ) = n - 1 - (k : ℕ) := by rw [Fin.val_rev]; omega
+  have hkn := k.isLt
+  simp only [typeAWeight, hk]
+  split_ifs <;> omega
+
+/-- Reversing the classical index reflects the chosen cocharacter potential at the reversed node.
+The additive constant is harmless: only differences of potentials are coroots. -/
+private lemma typeACoweight_rev {a : ℕ} (ha : a ≤ n) (k : Fin n) :
+    typeACoweight n (n - a) k = 1 - typeACoweight n a k.rev := by
+  have hk : ((k.rev : Fin n) : ℕ) = n - 1 - (k : ℕ) := by rw [Fin.val_rev]; omega
+  have hkn := k.isLt
+  simp only [typeACoweight, hk]
+  split_ifs <;> omega
+
+private lemma typeAPairRoot_typeAGraphPairMap (p : TypeAIndex n) (k : Fin n) :
+    typeAPairRoot (typeAGraphPairMap p) k = typeAPairRoot p k.rev := by
+  have hle : ∀ x : Fin (n + 1), (x : ℕ) ≤ n := fun x => Nat.lt_succ_iff.mp x.isLt
+  simp only [typeAPairRoot, typeAGraphPairMap, Pi.sub_apply, val_rev_succ,
+    typeAWeight_rev (hle _) k]
+  ring
+
+private lemma typeAPairCoroot_typeAGraphPairMap (p : TypeAIndex n) (k : Fin n) :
+    typeAPairCoroot (typeAGraphPairMap p) k = typeAPairCoroot p k.rev := by
+  have hle : ∀ x : Fin (n + 1), (x : ℕ) ≤ n := fun x => Nat.lt_succ_iff.mp x.isLt
+  simp only [typeAPairCoroot, typeAGraphPairMap, Pi.sub_apply, val_rev_succ,
+    typeACoweight_rev (hle _) k]
+  ring
+
+/-- The permutation of the pinned root indices induced by the graph automorphism. -/
+private def typeAGraphIndexPerm (n : ℕ) : Equiv.Perm (Fin (n * (n + 1))) :=
+  ((typeAIndexEquiv n).symm.trans (typeAGraphPairMap_involutive (n := n)).toPerm).trans
+    (typeAIndexEquiv n)
+
+private lemma typeAIndexEquiv_symm_typeAGraphIndexPerm (k : Fin (n * (n + 1))) :
+    (typeAIndexEquiv n).symm (typeAGraphIndexPerm n k) =
+      typeAGraphPairMap ((typeAIndexEquiv n).symm k) := by
+  simp [typeAGraphIndexPerm, Involutive.coe_toPerm]
+
+private lemma typeAGraphIndexPerm_involutive : Involutive (typeAGraphIndexPerm n) := fun k =>
+  (typeAIndexEquiv n).symm.injective <| by
+    rw [typeAIndexEquiv_symm_typeAGraphIndexPerm, typeAIndexEquiv_symm_typeAGraphIndexPerm,
+      typeAGraphPairMap_involutive]
+
+private lemma typeAGraphIndexPerm_symm :
+    (typeAGraphIndexPerm n).symm = typeAGraphIndexPerm n :=
+  Equiv.ext fun k => by
+    rw [Equiv.symm_apply_eq]
+    exact (typeAGraphIndexPerm_involutive k).symm
+
+/-- Reversing the coordinates of `Fin n → ℤ`, the common character- and cocharacter-lattice map of
+the type `Aₙ` graph automorphism. -/
+private def typeARevEquiv (n : ℕ) : (Fin n → ℤ) ≃ₗ[ℤ] (Fin n → ℤ) :=
+  LinearEquiv.funCongrLeft ℤ ℤ (Fin.revPerm : Equiv.Perm (Fin n))
+
+private lemma typeARevEquiv_eq (x : Fin n → ℤ) : typeARevEquiv n x = fun k => x k.rev := (rfl)
+
+/-- **The graph automorphism of the pinned simply connected root datum of type `Aₙ`.** It reverses
+the coordinates of the character and cocharacter lattices, which on the classical model is
+`e_a ↦ -e_{rev a}`, and permutes the roots accordingly. It is the root-datum shadow of the
+diagram automorphism of `sl_{n + 1}`, and the `Fin`-level datum a pinned group automorphism of the
+`²Aₙ` family is built from. -/
+def typeAGraphAut (n : ℕ) : RootPairing.Aut (typeASimplyConnectedRootDatum n) where
+  weightMap := (typeARevEquiv n).toLinearMap
+  coweightMap := (typeARevEquiv n).toLinearMap
+  indexEquiv := typeAGraphIndexPerm n
+  weight_coweight_transpose := by
+    -- Both sides evaluate to a dot product against a reversed vector; reindexing the sum by the
+    -- reversal, an involution, exchanges the two.
+    have key : ∀ u v : Fin n → ℤ, (fun k => u k.rev) ⬝ᵥ v = u ⬝ᵥ fun k => v k.rev := fun u v =>
+      Fintype.sum_equiv (Fin.revPerm : Equiv.Perm (Fin n)) _ _ fun k => by simp
+    refine LinearMap.ext fun y => LinearMap.ext fun x => ?_
+    simpa [typeARevEquiv_eq] using key x y
+  root_weightMap := by
+    funext k j
+    simpa [typeARevEquiv_eq, root_typeASimplyConnectedRootDatum,
+      typeAIndexEquiv_symm_typeAGraphIndexPerm] using
+      (typeAPairRoot_typeAGraphPairMap ((typeAIndexEquiv n).symm k) j).symm
+  coroot_coweightMap := by
+    funext k j
+    simpa [typeARevEquiv_eq, coroot_typeASimplyConnectedRootDatum, typeAGraphIndexPerm_symm,
+      typeAIndexEquiv_symm_typeAGraphIndexPerm] using
+      (typeAPairCoroot_typeAGraphPairMap ((typeAIndexEquiv n).symm k) j).symm
+  bijective_weightMap := (typeARevEquiv n).bijective
+  bijective_coweightMap := (typeARevEquiv n).bijective
+
+private lemma indexEquiv_typeAGraphAut :
+    (typeAGraphAut n).indexEquiv = typeAGraphIndexPerm n := (rfl)
+
+/-- The graph automorphism reverses the fundamental-weight coordinates of a character. -/
+@[simp] theorem weightMap_typeAGraphAut_apply (x : Fin n → ℤ) (k : Fin n) :
+    (typeAGraphAut n).toHom.weightMap x k = x k.rev := by
+  unfold typeAGraphAut
+  exact congrFun (typeARevEquiv_eq x) k
+
+/-- The graph automorphism reverses the simple-coroot coordinates of a cocharacter. -/
+@[simp] theorem coweightMap_typeAGraphAut_apply (x : Fin n → ℤ) (k : Fin n) :
+    (typeAGraphAut n).toHom.coweightMap x k = x k.rev := by
+  unfold typeAGraphAut
+  exact congrFun (typeARevEquiv_eq x) k
+
+/-- **The graph automorphism reverses the Bourbaki-numbered chain.** On the first `n` root indices,
+the simple roots in Bourbaki order, the induced permutation is `Fin.revPerm`, which is
+`TauCeti.graphPermA n`. -/
+@[simp] theorem indexEquiv_typeAGraphAut_typeASimpleIndex (i : Fin n) :
+    (typeAGraphAut n).indexEquiv (typeASimpleIndex n i) = typeASimpleIndex n i.rev := by
+  refine (typeAIndexEquiv n).symm.injective ?_
+  have hi : (i : ℕ) < n := i.isLt
+  rw [indexEquiv_typeAGraphAut,
+    typeAIndexEquiv_symm_typeAGraphIndexPerm, typeAIndexEquiv_symm_typeASimpleIndex,
+    typeAIndexEquiv_symm_typeASimpleIndex]
+  refine Subtype.ext (Prod.ext (Fin.ext ?_) (Fin.ext ?_)) <;>
+    simp only [typeAGraphPairMap, Fin.val_rev] <;> omega
+
+/-- **The type `Aₙ` graph automorphism is an involution.** It is the automorphism attached to the
+order-two symmetry of the `Aₙ` diagram, so a Steinberg endomorphism of the `²Aₙ` family built from
+it composes with the field Frobenius to something whose square is an ordinary Frobenius. -/
+@[simp] theorem typeAGraphAut_sq (n : ℕ) : typeAGraphAut n ^ 2 = 1 := by
+  rw [sq]
+  ext x k
+  · simp
+  · simp
+  · simp only [RootPairing.Equiv.mul_eq_comp, RootPairing.Equiv.toHom_comp,
+      RootPairing.Hom.comp, Equiv.trans_apply, RootPairing.Equiv.toHom_one,
+      RootPairing.Hom.indexEquiv_one, Equiv.refl_apply, indexEquiv_typeAGraphAut]
+    rw [typeAGraphIndexPerm_involutive]
+
+/-- **The type `Aₙ` graph automorphism is nontrivial once the chain has two nodes.** The bound is
+the one carried by `TauCeti.graphPermA_ne_one`: on fewer nodes the reversal of `Fin n` is the
+identity, and there is nothing to prove nontrivial. -/
+theorem typeAGraphAut_ne_one {n : ℕ} (hn : 2 ≤ n) : typeAGraphAut n ≠ 1 := by
+  intro h
+  have hz : (0 : ℕ) < n := by omega
+  have h0 := congrArg (fun g : RootPairing.Aut (typeASimplyConnectedRootDatum n) =>
+    g.indexEquiv (typeASimpleIndex n ⟨0, hz⟩)) h
+  simp only [indexEquiv_typeAGraphAut_typeASimpleIndex, RootPairing.Equiv.toHom_one,
+    RootPairing.Hom.indexEquiv_one, Equiv.refl_apply] at h0
+  have h1 : ((⟨0, hz⟩ : Fin n).rev : Fin n) = ⟨0, hz⟩ := typeASimpleIndex_injective h0
+  have h2 : ((⟨0, hz⟩ : Fin n).rev : Fin n).val = 0 := congrArg Fin.val h1
+  simp only [Fin.val_rev] at h2
+  omega
+
+/-- **The graph automorphism preserves the pinned base.** Its permutation of root indices maps the
+first `n` indices onto themselves, so the automorphism is a symmetry of the pinning and not merely
+of the root system. -/
+@[simp] theorem support_map_typeASimplyConnectedBase_typeAGraphAut (n : ℕ) :
+    Finset.image (typeAGraphAut n).indexEquiv (typeASimplyConnectedBase n).support =
+      (typeASimplyConnectedBase n).support := by
+  classical
+  have hmem : ∀ k : Fin (n * (n + 1)), (k : ℕ) < n →
+      (((typeAGraphAut n).indexEquiv k : Fin (n * (n + 1))) : ℕ) < n := by
+    intro k hk
+    have hk' : k = typeASimpleIndex n ⟨k, hk⟩ := Fin.ext (by simp)
+    rw [hk', indexEquiv_typeAGraphAut_typeASimpleIndex, typeASimpleIndex_val]
+    exact (⟨(k : ℕ), hk⟩ : Fin n).rev.isLt
+  have hsymm : (typeAGraphAut n).indexEquiv.symm = (typeAGraphAut n).indexEquiv :=
+    typeAGraphIndexPerm_symm
+  refine Finset.ext fun k => ?_
+  rw [Finset.mem_image]
+  refine ⟨?_, fun hk => ⟨(typeAGraphAut n).indexEquiv.symm k, ?_, Equiv.apply_symm_apply _ _⟩⟩
+  · rintro ⟨l, hl, rfl⟩
+    exact mem_typeASimplyConnectedBase_support.mpr
+      (hmem l (mem_typeASimplyConnectedBase_support.mp hl))
+  · rw [mem_typeASimplyConnectedBase_support, hsymm]
+    exact hmem k (mem_typeASimplyConnectedBase_support.mp hk)
 
 end DynkinType
 

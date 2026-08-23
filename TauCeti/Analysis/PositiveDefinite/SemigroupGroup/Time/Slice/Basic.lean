@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Analysis.PositiveDefinite.AddGroup
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 public import Mathlib.Topology.Constructions.SumProd
 
@@ -38,8 +39,9 @@ positive-definite function on `[0,∞) × V` to spatial positive-definite functi
   `‖F (t, v)‖ ≤ (F (t, 0)).re`.
 * `TauCeti.IsSemigroupGroupPD.timeSlice_eq_zero_of_timeSlice_diagonal_eq_zero`: a zero
   fixed-time diagonal value kills the whole fixed-time spatial slice.
-* `TauCeti.IsSemigroupGroupPD.timeSlice_isPositiveDefinite`: the predicate form when the
-  spatial involution is negation.
+* `TauCeti.IsSemigroupGroupPD.timeSlice_isPositiveDefinite` and
+  `TauCeti.IsSemigroupGroupPD.isPositiveDefiniteSub_timeSlice`: the predicate forms, for the
+  negation involution and in the subtraction form Bochner's theorem uses.
 * `TauCeti.IsSemigroupGroupPD.posSemidef_timeSlice_and_continuous`: packages
   the fixed-time positive-definite kernel with continuity of the fixed-time slice.
 
@@ -146,6 +148,12 @@ theorem timeSlice_isPositiveDefinite [StarAddMonoid V]
     IsPositiveDefinite fun v : V => F (t, v) :=
   (isPositiveDefinite_iff_posSemidef_sub hstar).mpr
     (hF.posSemidef_timeSlice t)
+
+/-- Each fixed-time slice is positive definite in the subtraction form, the predicate that
+Bochner's theorem on a finite-dimensional real inner-product space takes as its hypothesis. -/
+theorem isPositiveDefiniteSub_timeSlice (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
+    IsPositiveDefiniteSub fun v : V => F (t, v) :=
+  .of_posSemidef (hF.posSemidef_timeSlice t)
 
 end IsSemigroupGroupPD
 
