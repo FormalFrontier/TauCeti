@@ -102,12 +102,6 @@ theorem IsIntegral.dualClassHom_mem_orthogonalComplement (hM : IsIntegral M)
   exact (L.mk_mem_discriminantSubgroup_iff (dual M) _).mpr
     (by rw [← hM.toIntegralLattice_dualCarrier]; exact y.2)
 
-/-- Evenness of an overlattice implies quadratic isotropy of its discriminant subgroup, packaged
-for use as the isotropy hypothesis of the orthogonal quotient. -/
-theorem IsEven.isIsotropic_discriminantSubgroup (hL : L.IsEven) (hM : IsEven M) :
-    (L.discriminantQuadraticModule hL).IsIsotropic (L.discriminantSubgroup M) :=
-  (isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM
-
 /-! ## The comparison isometry -/
 
 variable (hL : L.IsEven) (hM : IsEven M)
@@ -117,19 +111,20 @@ class in `A_L`. -/
 noncomputable def dualCarrierToOrthogonalQuotient :
     hM.isIntegral.toIntegralLattice.dualCarrier →+
       (L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
-        (IsEven.isIsotropic_discriminantSubgroup hL hM) :=
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM) :=
   ((L.discriminantQuadraticModule hL).orthogonalQuotientMk _
-      (IsEven.isIsotropic_discriminantSubgroup hL hM)).comp
+      ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)).comp
     (AddMonoidHom.codRestrict hM.isIntegral.dualClassHom.toAddMonoidHom
       (L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M))
       hM.isIntegral.dualClassHom_mem_orthogonalComplement)
 
 /-- The homomorphism `Mᵛ → H⊥ / H` unfolded on a vector of `Mᵛ`. -/
+@[simp]
 theorem dualCarrierToOrthogonalQuotient_apply
     (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
     dualCarrierToOrthogonalQuotient hL hM y =
       (L.discriminantQuadraticModule hL).orthogonalQuotientMk _
-        (IsEven.isIsotropic_discriminantSubgroup hL hM)
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
         ⟨hM.isIntegral.dualClassHom y,
           hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩ := (rfl)
 
@@ -138,7 +133,7 @@ theorem dualCarrierToOrthogonalQuotient_eq_zero_iff
     (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
     dualCarrierToOrthogonalQuotient hL hM y = 0 ↔ (y : V) ∈ M.1 :=
   ((L.discriminantQuadraticModule hL).orthogonalQuotientMk_eq_zero_iff
-      (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
       ⟨hM.isIntegral.dualClassHom y,
         hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩).trans
     (L.mk_mem_discriminantSubgroup_iff M _)
@@ -147,7 +142,7 @@ theorem dualCarrierToOrthogonalQuotient_eq_zero_iff
 noncomputable def discriminantOrthogonalQuotientHom :
     hM.isIntegral.toIntegralLattice.DiscriminantGroup →ₗ[ℤ]
       (L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
-        (IsEven.isIsotropic_discriminantSubgroup hL hM) :=
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM) :=
   Submodule.liftQ _ (dualCarrierToOrthogonalQuotient hL hM).toIntLinearMap (by
     intro y hy
     rw [LinearMap.mem_ker]
@@ -181,7 +176,7 @@ theorem discriminantOrthogonalQuotientHom_surjective :
     Function.Surjective (discriminantOrthogonalQuotientHom hL hM) := by
   intro q
   obtain ⟨z, rfl⟩ := (L.discriminantQuadraticModule hL).orthogonalQuotientMk_surjective
-    (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM) q
+    (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM) q
   obtain ⟨x, hx⟩ := Submodule.Quotient.mk_surjective L.carrierInDual z.1
   have hxdual : (x : V) ∈ (dual M).1 := by
     refine (L.mk_mem_discriminantSubgroup_iff (dual M) x).mp ?_
@@ -199,11 +194,11 @@ half-norm. -/
 theorem quadratic_dualCarrierToOrthogonalQuotient
     (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
     ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
-        (IsEven.isIsotropic_discriminantSubgroup hL hM)).quadratic
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)).quadratic
         (dualCarrierToOrthogonalQuotient hL hM y) =
       ((L.form y y / 2 : ℚ) : AddCircle (1 : ℚ)) :=
   ((L.discriminantQuadraticModule hL).orthogonalQuotient_quadratic_mk
-      (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
       ⟨hM.isIntegral.dualClassHom y,
         hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩).trans
     ((L.discriminantQuadraticModule_quadratic hL _).trans
@@ -214,11 +209,11 @@ modulo `ℤ`. -/
 theorem pairing_dualCarrierToOrthogonalQuotient
     (y z : hM.isIntegral.toIntegralLattice.dualCarrier) :
     ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
-        (IsEven.isIsotropic_discriminantSubgroup hL hM)).toFiniteBilinearModule.pairing
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)).toFiniteBilinearModule.pairing
         (dualCarrierToOrthogonalQuotient hL hM y) (dualCarrierToOrthogonalQuotient hL hM z) =
       ((L.form y z : ℚ) : AddCircle (1 : ℚ)) :=
   ((L.discriminantQuadraticModule hL).orthogonalQuotient_pairing_mk
-      (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)
+      (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
       ⟨hM.isIntegral.dualClassHom y,
         hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩
       ⟨hM.isIntegral.dualClassHom z,
@@ -247,7 +242,7 @@ noncomputable def discriminantOrthogonalQuotientIsometry :
       (hM.isIntegral.toIntegralLattice.discriminantQuadraticModule
         hM.isEven_toIntegralLattice)
       ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
-        (IsEven.isIsotropic_discriminantSubgroup hL hM)) where
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)) where
   toLinearEquiv :=
     LinearEquiv.ofBijective (discriminantOrthogonalQuotientHom hL hM)
       ⟨discriminantOrthogonalQuotientHom_injective hL hM,
@@ -271,7 +266,7 @@ theorem discriminantOrthogonalQuotientIsometry_mk
     (y : hM.isIntegral.toIntegralLattice.dualCarrier) :
     discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y) =
       (L.discriminantQuadraticModule hL).orthogonalQuotientMk _
-        (IsEven.isIsotropic_discriminantSubgroup hL hM)
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
         ⟨hM.isIntegral.dualClassHom y,
           hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩ := (rfl)
 
@@ -280,7 +275,7 @@ theorem discriminantOrthogonalQuotientIsometry_mk
 /-- **The order of `H⊥ / H` is the discriminant of the overlattice.** -/
 theorem natCard_orthogonalQuotient :
     Nat.card ((L.discriminantQuadraticModule hL).orthogonalQuotient (L.discriminantSubgroup M)
-        (IsEven.isIsotropic_discriminantSubgroup hL hM)) =
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)) =
       hM.isIntegral.toIntegralLattice.discriminant :=
   (Nat.card_congr
       (discriminantOrthogonalQuotientIsometry hL hM).toLinearEquiv.toEquiv).symm.trans
@@ -289,7 +284,7 @@ theorem natCard_orthogonalQuotient :
 /-- **An even overlattice is unimodular exactly when `H⊥ / H` is trivial.** -/
 theorem subsingleton_orthogonalQuotient_iff_isUnimodular :
     Subsingleton ((L.discriminantQuadraticModule hL).orthogonalQuotient
-        (L.discriminantSubgroup M) (IsEven.isIsotropic_discriminantSubgroup hL hM)) ↔
+        (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)) ↔
       hM.isIntegral.toIntegralLattice.IsUnimodular := by
   rw [hM.isIntegral.toIntegralLattice.isUnimodular_iff_subsingleton_discriminantGroup]
   exact Equiv.subsingleton_congr
@@ -318,7 +313,7 @@ noncomputable def discriminantOrthogonalQuotientIsometryOfSubgroup (hL : L.IsEve
   let hM := (L.isEven_intermediateCarrierOfDiscriminantSubgroup_iff hL H).mpr hH
   exact (discriminantOrthogonalQuotientIsometry hL hM).trans
     ((L.discriminantQuadraticModule hL).orthogonalQuotientCongr
-      (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
+      ((isEven_iff_isIsotropic_discriminantSubgroup hL _).mp hM) hH
       (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H))
 
 /-- The subgroup-level comparison isometry sends a representative to its discriminant class in
@@ -343,16 +338,17 @@ theorem discriminantOrthogonalQuotientIsometryOfSubgroup_mk (hL : L.IsEven)
   rw [show
     ((discriminantOrthogonalQuotientIsometry hL hM).trans
       ((L.discriminantQuadraticModule hL).orthogonalQuotientCongr
-        (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL _).mp hM) hH
         (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)))
           (Submodule.Quotient.mk y) =
       (L.discriminantQuadraticModule hL).orthogonalQuotientCongr
-        (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL _).mp hM) hH
         (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)
-        (discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y)) by rfl,
+        (discriminantOrthogonalQuotientIsometry hL hM (Submodule.Quotient.mk y)) by
+      apply FiniteQuadraticModule.Isometry.trans_apply,
     discriminantOrthogonalQuotientIsometry_mk]
   exact (L.discriminantQuadraticModule hL).orthogonalQuotientCongr_orthogonalQuotientMk
-    (IsEven.isIsotropic_discriminantSubgroup hL hM) hH
+    ((isEven_iff_isIsotropic_discriminantSubgroup hL _).mp hM) hH
     (L.discriminantSubgroup_intermediateCarrierOfDiscriminantSubgroup H)
     ⟨hM.isIntegral.dualClassHom y,
       hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩

@@ -107,6 +107,12 @@ namespace Isometry
 
 variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
 
+/-- Applying a composite quadratic isometry applies its two factors in order. -/
+@[simp]
+theorem trans_apply {C : FiniteQuadraticModule} (f : Isometry A B) (g : Isometry B C) (x : A) :
+    (f.trans g) x = g (f x) :=
+  rfl
+
 /-- A quadratic isometry induces an isometry of the canonical polar bilinear modules. -/
 def toFiniteBilinearModule (f : Isometry A B) :
     FiniteBilinearModule.Isometry A.toFiniteBilinearModule B.toFiniteBilinearModule where
