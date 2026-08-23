@@ -86,8 +86,8 @@ theorem residual_def (z : X × Y) :
 bound back in `EReal` recovers the original cost, including when that cost is `∞`. -/
 @[simp]
 theorem coe_residual_add (z : X × Y) :
-    (h.residual z : EReal) + (h.fst z.1 + h.snd z.2 : ℝ) = c z := by
-  rw [residual, EReal.coe_toENNReal]
+    (h.residual z : EReal) + ((h.fst z.1 : EReal) + (h.snd z.2 : EReal)) = c z := by
+  rw [← EReal.coe_add, residual, EReal.coe_toENNReal]
   · exact EReal.sub_add_cancel
   · exact (EReal.sub_nonneg (Or.inr (EReal.coe_ne_top _))
       (Or.inr (EReal.coe_ne_bot _))).2 (h.le_cost z.1 z.2)
