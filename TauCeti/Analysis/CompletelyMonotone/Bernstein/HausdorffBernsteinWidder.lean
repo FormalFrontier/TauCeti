@@ -6,12 +6,12 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
--- Non-public: the metrizability class of the finite-set tightness lemmas.
-import Mathlib.Topology.Metrizable.CompletelyMetrizable
 -- Non-public: Bernstein's existence theorem supplies the representing measures of the shifts.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Theorem
 -- Non-public: `finite_measure_cluster_limit` extracts the weak cluster point.
 import TauCeti.MeasureTheory.Measure.Prokhorov
+-- Non-public: tightness of the finitely many shifts that the uniform tail bound misses.
+import TauCeti.MeasureTheory.Measure.Tight
 
 /-!
 # Hausdorff--Bernstein--Widder theorem
@@ -53,29 +53,6 @@ namespace TauCeti
 
 /-! ## Hard direction: tightness of the shifted representing measures -/
 
-/-- A finite set of finite measures is tight: singletons are tight and tightness is closed
-under unions. (The empty case routes through an arbitrary singleton, as Mathlib has no
-dedicated empty-set tightness lemma.) -/
-private lemma isTightMeasureSet_of_finite {α : Type*} [MeasurableSpace α] [TopologicalSpace α]
-    [TopologicalSpace.IsCompletelyPseudoMetrizableSpace α] [SecondCountableTopology α]
-    [BorelSpace α] {S : Set (Measure α)} (hS : S.Finite)
-    (hfin : ∀ ν ∈ S, IsFiniteMeasure ν) : IsTightMeasureSet S := by
-  induction S, hS using Set.Finite.induction_on with
-  | empty => exact (isTightMeasureSet_singleton (μ := (0 : Measure α))).subset (empty_subset _)
-  | @insert ν S _ _ ih =>
-      have : IsFiniteMeasure ν := hfin ν (mem_insert _ _)
-      rw [insert_eq]
-      exact isTightMeasureSet_singleton.union (ih fun ρ hρ => hfin ρ (mem_insert_of_mem _ hρ))
-
-/-- A finite family of finite measures is tight. -/
-private lemma isTightMeasureSet_range_finite
-    {α ι : Type*} [MeasurableSpace α] [TopologicalSpace α]
-    [TopologicalSpace.IsCompletelyPseudoMetrizableSpace α] [SecondCountableTopology α]
-    [BorelSpace α] [Finite ι] (μ : ι → Measure α)
-    (hfin : ∀ i, IsFiniteMeasure (μ i)) :
-    IsTightMeasureSet (Set.range μ) :=
-  isTightMeasureSet_of_finite (finite_range μ) (by rintro ν ⟨i, rfl⟩; exact hfin i)
-
 /-- Along a positive null sequence `aₙ ↓ 0`, the values `f (c + aₙ)` of a function continuous
 within `[0, ∞)` converge to `f c`, for any `c ≥ 0`. -/
 private lemma tendsto_apply_add_of_continuousOn
@@ -88,101 +65,24 @@ private lemma tendsto_apply_add_of_continuousOn
         .of_forall fun n => mem_Ici.mpr (add_nonneg hc (ha_pos n).le)⟩
   exact (hf.continuousWithinAt (mem_Ici.mpr hc)).tendsto.comp hmem
 
-/-- The Markov denominator `1 - e^{-xR}` is positive for `x, R > 0`. -/
-private lemma one_sub_exp_neg_mul_pos {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
-    0 < 1 - Real.exp (-(x * R)) := by
-  have : Real.exp (-(x * R)) < 1 := Real.exp_lt_one_iff.mpr (by nlinarith)
-  linarith
-
-/-- The `∫⁻` of the bounded coordinate `p ↦ 1 - exp(-x·p)` against a measure that represents
-`t ↦ f (t + δ)` by its Laplace transform equals `f δ - f (x + δ)` (for `x > 0`). This is the
-Laplace-value identity behind the shifted-measure tail estimate. -/
-private lemma lintegral_ofReal_one_sub_exp_eq_of_representsLaplace
-    {f : ℝ → ℝ} {μ : Measure ℝ≥0}
-    {δ x : ℝ} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ))) (hx : 0 < x) :
-    ∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ
-      = ENNReal.ofReal (f δ - f (x + δ)) := by
-  have := hμ.isFiniteMeasure
-  have h_one : Integrable (fun _ : ℝ≥0 => (1 : ℝ)) μ := integrable_const 1
-  have h_exp : Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ :=
-    integrable_exp_neg_mul μ hx.le
-  have h_nonneg : 0 ≤ᵐ[μ] fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ))) := by
-    refine Filter.Eventually.of_forall fun p => ?_
-    exact sub_nonneg.mpr (exp_neg_mul_le_one hx.le p)
-  have hint : Integrable (fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ)))) μ :=
-    h_one.sub h_exp
-  have h_int :
-      ∫ p : ℝ≥0, (1 - Real.exp (-(x * (p : ℝ)))) ∂μ = f δ - f (x + δ) := by
-    calc
-      ∫ p : ℝ≥0, (1 - Real.exp (-(x * (p : ℝ)))) ∂μ
-          = (∫ _p : ℝ≥0, (1 : ℝ) ∂μ) -
-              ∫ p : ℝ≥0, Real.exp (-(x * (p : ℝ))) ∂μ := by
-            rw [integral_sub h_one h_exp]
-      _ = μ.real univ - laplaceTransform μ x := by
-            simp [laplaceTransform_apply]
-      _ = f δ - f (x + δ) := by
-            have h0 := hμ.eq_laplaceTransform (t := 0) le_rfl
-            have hxrep := hμ.eq_laplaceTransform (t := x) hx.le
-            have h0' : f δ = μ.real univ := by
-              simpa [laplaceTransform_zero] using h0
-            rw [← h0', ← hxrep]
-  rw [← ofReal_integral_eq_lintegral_ofReal hint h_nonneg, h_int]
-
-/-- Markov tail bound: the mass outside the closed ball of radius `R` is controlled by the `∫⁻`
-of `p ↦ 1 - exp(-x·p)` divided by its boundary value `1 - exp(-x·R)` (for `x, R > 0`). -/
-private lemma measure_closedBall_compl_le_lintegral_div
-    {μ : Measure ℝ≥0} {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
-    μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ ≤
-      (∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ)
-        / ENNReal.ofReal (1 - Real.exp (-(x * R))) := by
-  set c : ℝ := 1 - Real.exp (-(x * R)) with hc_def
-  have hc_pos : 0 < c := one_sub_exp_neg_mul_pos hx hR
-  have hc_ne_zero : ENNReal.ofReal c ≠ 0 := ENNReal.ofReal_ne_zero_iff.mpr hc_pos
-  have hc_ne_top : ENNReal.ofReal c ≠ (∞ : ENNReal) := ENNReal.ofReal_ne_top
-  have hcoord_meas :
-      AEMeasurable (fun p : ℝ≥0 => ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ))))) μ :=
-    (ENNReal.measurable_ofReal.comp
-      (by fun_prop : Measurable fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ)))))
-        |>.aemeasurable
-  refine (measure_mono ?_).trans (meas_ge_le_lintegral_div hcoord_meas hc_ne_zero hc_ne_top)
-  intro p hp
-  have hpdist : R < dist p (0 : ℝ≥0) := by
-    simpa [Metric.mem_closedBall, not_le] using hp
-  have hdist : dist p (0 : ℝ≥0) = (p : ℝ) := by
-    simp [NNReal.dist_eq]
-  have hRp : R ≤ (p : ℝ) := by linarith
-  have hxp : x * R ≤ x * (p : ℝ) := mul_le_mul_of_nonneg_left hRp hx.le
-  have hexp_le : Real.exp (-(x * (p : ℝ))) ≤ Real.exp (-(x * R)) :=
-    Real.exp_le_exp.mpr (neg_le_neg hxp)
-  have hreal : c ≤ 1 - Real.exp (-(x * (p : ℝ))) := by
-    rw [hc_def]; linarith
-  exact ENNReal.ofReal_le_ofReal hreal
-
 /-- Tail bound for a Laplace-representing measure of a positive shift: the mass outside the
 ball of radius `R` is controlled by the Laplace gap `f δ - f (x + δ)`. This is the tightness
 input, not a decay rate in `R`: the denominator tends to `1` as `R → ∞`.
 
-The estimate is Markov's inequality on the bounded coordinate `p ↦ 1 - exp (-x * p)`, factored into
-`measure_closedBall_compl_le_lintegral_div` (the Markov bound) and
-`lintegral_ofReal_one_sub_exp_eq_of_representsLaplace` (the Laplace-value identity). It is the
-tightness input for shifting Bernstein's existence theorem back to the closed-half-line
-theorem. -/
+It is `TauCeti.measure_compl_closedBall_le_of_laplaceTransform` read through the representation,
+which turns the total mass into `f δ` and the Laplace transform at `x` into `f (x + δ)`. -/
 private lemma measure_closedBall_compl_le_of_representsLaplace_shift
     {f : ℝ → ℝ} {μ : Measure ℝ≥0}
     {δ x R : ℝ} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ)))
     (hx : 0 < x) (hR : 0 < R) :
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ ≤
       ENNReal.ofReal ((f δ - f (x + δ)) / (1 - Real.exp (-(x * R)))) := by
-  have hc_pos : 0 < 1 - Real.exp (-(x * R)) := one_sub_exp_neg_mul_pos hx hR
-  calc
-    μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ
-        ≤ (∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ)
-            / ENNReal.ofReal (1 - Real.exp (-(x * R))) :=
-          measure_closedBall_compl_le_lintegral_div hx hR
-    _ = ENNReal.ofReal (f δ - f (x + δ)) / ENNReal.ofReal (1 - Real.exp (-(x * R))) := by
-          rw [lintegral_ofReal_one_sub_exp_eq_of_representsLaplace hμ hx]
-    _ = ENNReal.ofReal ((f δ - f (x + δ)) / (1 - Real.exp (-(x * R)))) := by
-          rw [ENNReal.ofReal_div_of_pos hc_pos]
+  have := hμ.isFiniteMeasure
+  have hmass : μ.real univ = f δ := by
+    simpa [laplaceTransform_zero] using (hμ.eq_laplaceTransform (t := 0) le_rfl).symm
+  have hlap : laplaceTransform μ x = f (x + δ) := (hμ.eq_laplaceTransform hx.le).symm
+  rw [← hmass, ← hlap]
+  exact measure_compl_closedBall_le_of_laplaceTransform μ hx hR
 
 /-- The continuity-at-`0` step behind the tightness of the shifted representing measures: for any
 `η > 0` there is a positive shift `x` and an index `N` beyond which the Laplace gap-quotient
