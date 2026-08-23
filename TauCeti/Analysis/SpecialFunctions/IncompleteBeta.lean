@@ -116,12 +116,11 @@ theorem beta_comm (a b : ℝ) : beta a b = beta b a := by
   rw [ProbabilityTheory.beta, ProbabilityTheory.beta, mul_comm, add_comm]
 
 /-- The unit step of Euler's beta function in its first parameter. -/
-theorem beta_add_one_left (ha : 0 < a) (hb : 0 < b) :
+theorem beta_add_one_left (ha : a ≠ 0) (hab : a + b ≠ 0) :
     beta (a + 1) b = a / (a + b) * beta a b := by
-  have hab : (0 : ℝ) < a + b := by linarith
   have hshift : a + 1 + b = a + b + 1 := by ring
-  rw [ProbabilityTheory.beta, ProbabilityTheory.beta, hshift, Real.Gamma_add_one ha.ne',
-    Real.Gamma_add_one hab.ne']
+  rw [ProbabilityTheory.beta, ProbabilityTheory.beta, hshift, Real.Gamma_add_one ha,
+    Real.Gamma_add_one hab]
   field_simp
 
 /-! ## The regularized incomplete beta function -/
@@ -417,7 +416,8 @@ theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
   rw [intervalIntegral.integral_sub (hA.const_mul a) (hJ.const_mul b),
     intervalIntegral.integral_const_mul, intervalIntegral.integral_const_mul, hsplit] at hftc
   rw [regularizedIncompleteBeta_of_pos ha1 hb, regularizedIncompleteBeta_of_pos ha hb,
-    max_eq_left hx0, min_eq_right hx1, add_sub_cancel_right, beta_add_one_left ha hb]
+    max_eq_left hx0, min_eq_right hx1, add_sub_cancel_right,
+    beta_add_one_left ha.ne' hab.ne']
   have hbeta := (beta_pos ha hb).ne'
   field_simp
   linarith [hftc]
