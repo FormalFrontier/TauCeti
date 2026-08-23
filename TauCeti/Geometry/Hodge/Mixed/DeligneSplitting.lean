@@ -251,7 +251,6 @@ theorem ofPure_conjF (p : ℤ) :
 
 /-- The weight filtration of a pure Hodge structure of weight `n`, viewed as a mixed one, is the
 whole space from degree `n` on. -/
-@[simp]
 theorem ofPure_WC_eq_top_of_le {k : ℤ} (hk : n ≤ k) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC k = ⊤ := by
   rw [WC_def, MixedHodgeStructure.ofPure_WQ, concentratedWeightFiltration_of_le hk,
@@ -259,7 +258,6 @@ theorem ofPure_WC_eq_top_of_le {k : ℤ} (hk : n ≤ k) :
 
 /-- The weight filtration of a pure Hodge structure of weight `n`, viewed as a mixed one, vanishes
 below degree `n`. -/
-@[simp]
 theorem ofPure_WC_eq_bot_of_lt {k : ℤ} (hk : k < n) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC k = ⊥ := by
   rw [WC_def, MixedHodgeStructure.ofPure_WQ, concentratedWeightFiltration_of_lt hk,
