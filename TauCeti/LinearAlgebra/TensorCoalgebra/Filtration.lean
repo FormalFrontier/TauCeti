@@ -69,7 +69,10 @@ theorem filtration_zero : filtration R M 0 = ⊥ :=
 /-- The conilpotence filtration is exhaustive. -/
 theorem iSup_filtration : ⨆ n : ℕ, filtration R M n = ⊤ := by
   refine le_antisymm le_top ?_
-  rw [← iSup_range_of R M]
+  rw [← show ⨆ k : {k : ℕ // 0 < k}, LinearMap.range (of R M k) = ⊤ by
+    simpa [of, DirectSum.lof] using
+      (DFinsupp.iSup_range_lsingle (R := R)
+        (M := fun k : {k : ℕ // 0 < k} ↦ TensorPower R k.1 M))]
   refine iSup_le fun k ↦ le_iSup_of_le k.1 ?_
   rintro _ ⟨x, rfl⟩
   exact of_mem_filtration R M le_rfl x

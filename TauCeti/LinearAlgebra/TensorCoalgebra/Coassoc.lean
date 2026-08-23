@@ -194,10 +194,19 @@ theorem deconcatenation_coassoc :
         rw [h1, h2]
     rw [Finset.sum_congr rfl hL, Finset.sum_congr rfl hR]
     exact Finset.sum_comm
-  refine linearMap_ext R M fun k ↦ LinearMap.ext fun z ↦ ?_
+  apply DirectSum.linearMap_ext R
+  intro k
+  apply LinearMap.ext
+  intro z
   induction z using PiTensorProduct.induction_on with
   | smul_tprod r y =>
       simp only [LinearMap.comp_apply, map_smul, LinearEquiv.coe_coe]
+      change r • TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
+          (ReducedTensorWords R M)
+          (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
+            (deconcatenation R M (of R M k (PiTensorProduct.tprod R y)))) =
+        r • LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
+          (deconcatenation R M (of R M k (PiTensorProduct.tprod R y)))
       exact congrArg _ (key k.1 k.2 y)
   | add u v hu hv =>
       simp only [LinearMap.comp_apply, map_add] at hu hv ⊢
