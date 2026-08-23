@@ -190,11 +190,8 @@ variable {A G W : Type*} [CommSemiring A] [Monoid G] [AddCommMonoid W] [Module A
   {ρ : Representation A G W}
 
 /-- **The module carried by a subrepresentation is canonically its associated submodule.**
-The equivalence identifies both with the same invariant subset of the ambient representation.
-
-The additive and inverse laws below use that `Representation.asModuleEquiv` is definitionally the
-identity linear equivalence, while the carrier identification uses that
-`Subrepresentation.mem_asSubmodule_iff` is definitionally `rfl`. -/
+The equivalence identifies both with the same invariant subset of the ambient representation. -/
+@[expose]
 noncomputable def asModuleEquivAsSubmodule (σ : Subrepresentation ρ) :
     σ.toRepresentation.asModule ≃ₗ[A[G]] σ.asSubmodule where
   toFun x := ⟨(_root_.Representation.asModuleEquiv ρ).symm
@@ -216,6 +213,20 @@ noncomputable def asModuleEquivAsSubmodule (σ : Subrepresentation ρ) :
       _root_.Representation.asModuleEquiv_map_smul]
     exact coe_toRepresentation_asAlgebraHom_apply σ a
       (σ.toRepresentation.asModuleEquiv x)
+
+@[simp]
+theorem coe_asModuleEquivAsSubmodule_apply (σ : Subrepresentation ρ)
+    (x : σ.toRepresentation.asModule) :
+    _root_.Representation.asModuleEquiv ρ (σ.asModuleEquivAsSubmodule x).1 =
+      (σ.toRepresentation.asModuleEquiv x).1 :=
+  rfl
+
+@[simp]
+theorem coe_asModuleEquivAsSubmodule_symm_apply (σ : Subrepresentation ρ)
+    (x : σ.asSubmodule) :
+    (σ.toRepresentation.asModuleEquiv (σ.asModuleEquivAsSubmodule.symm x)).1 =
+      _root_.Representation.asModuleEquiv ρ x.1 :=
+  rfl
 
 end AsSubmoduleEquiv
 

@@ -317,10 +317,12 @@ theorem isotypicComponentsEquivQuotientInertia_conjSubrepIsotypicComponent
   simp only [isotypicComponentsEquivQuotientInertia]
   have horbit :
       componentsEquivOrbit ρ hσ (conjSubrepIsotypicComponent ρ σ hσ g) =
-        eo.symm (QuotientGroup.mk g) := by
+        (MulAction.orbitEquivQuotientStabilizer G
+          (toSkeleton (FDRep.of σ.toRepresentation))).symm (QuotientGroup.mk g) := by
     apply Subtype.ext
     rw [componentsEquivOrbit_apply]
-    simpa [componentOrbitMap, eo] using
+    simpa only [componentOrbitMap,
+      MulAction.orbitEquivQuotientStabilizer_symm_apply] using
       componentClassMap_conjSubrepIsotypicComponent ρ σ hσ g
   calc
     _ = Subgroup.quotientEquivOfEq (stabilizer_toSkeleton_fdRepOf_eq_inertia ρ σ)
@@ -339,6 +341,7 @@ theorem isotypicComponentsEquivQuotientInertia_symm_mk [ρ.IsIrreducible]
 
 /-- Two translates cut out the same isotypic component exactly when they determine the same
 inertia coset. -/
+@[simp]
 theorem conjSubrepIsotypicComponent_eq_iff [ρ.IsIrreducible]
     (σ : Subrepresentation (ρ.comp N.subtype)) (hσ : IsAtom σ) (g h : G) :
     conjSubrepIsotypicComponent ρ σ hσ g = conjSubrepIsotypicComponent ρ σ hσ h ↔
