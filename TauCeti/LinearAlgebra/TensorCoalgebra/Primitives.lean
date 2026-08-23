@@ -62,6 +62,19 @@ noncomputable def letter : ReducedTensorWords R M →ₗ[R] M :=
 noncomputable def ofLetter : M →ₗ[R] ReducedTensorWords R M :=
   of R M lengthOne ∘ₗ (tensorPowerOne R M).symm.toLinearMap
 
+/-- The length-one component of a single letter is that letter under the tensor-power
+identification. -/
+@[simp]
+theorem component_ofLetter (a : M) :
+    component R M lengthOne (ofLetter R M a) = (tensorPowerOne R M).symm a := by
+  rw [ofLetter, LinearMap.comp_apply, component_of, LinearEquiv.coe_coe]
+
+/-- Every component of a single letter away from length one vanishes. -/
+@[simp]
+theorem component_ofLetter_of_ne {n : {n : ℕ // 0 < n}} (hn : n ≠ lengthOne) (a : M) :
+    component R M n (ofLetter R M a) = 0 := by
+  rw [ofLetter, LinearMap.comp_apply, component_of_of_ne R M hn.symm]
+
 /-- The letter of a tensor word is its length-one component, read through the length-one
 identification. -/
 theorem letter_apply (x : ReducedTensorWords R M) :
@@ -124,7 +137,7 @@ theorem map_component_deconcatenation (n : {n : ℕ // 0 < n}) (hn : 2 ≤ n.1) 
     TensorProduct.map (component R M lengthOne) (component R M ⟨n.1 - 1, by omega⟩) ∘ₗ
         deconcatenation R M =
       TensorPower.splitAt R M n.1 1 (by omega) ∘ₗ component R M n := by
-  refine DirectSum.linearMap_ext R fun m ↦ LinearMap.ext fun x ↦ ?_
+  refine linearMap_ext R M fun m x ↦ ?_
   induction x using PiTensorProduct.induction_on with
   | smul_tprod r y =>
       simp only [LinearMap.comp_apply, map_smul]
@@ -141,7 +154,8 @@ theorem eq_of_deconcatenation_eq_of_letter_eq {x y : ReducedTensorWords R M}
     x = y := by
   apply DirectSum.ext_component R
   intro n
-  change component R M n x = component R M n y
+  rw [← DirectSum.apply_eq_component R x n, ← DirectSum.apply_eq_component R y n]
+  rw [apply_eq_component R M x n, apply_eq_component R M y n]
   rcases eq_or_ne n lengthOne with rfl | hn
   · have h := congrArg (tensorPowerOne R M).symm hl
     rwa [letter_apply, letter_apply, LinearEquiv.symm_apply_apply,

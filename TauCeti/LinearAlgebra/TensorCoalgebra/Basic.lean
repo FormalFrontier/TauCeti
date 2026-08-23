@@ -47,14 +47,19 @@ abbrev ReducedTensorWords : Type _ := ⨁ n : {n : ℕ // 0 < n}, TensorPower R 
 namespace ReducedTensorWords
 
 /-- Include a positive tensor power into reduced tensor words. -/
-@[expose] noncomputable def of (n : {n : ℕ // 0 < n}) :
+noncomputable def of (n : {n : ℕ // 0 < n}) :
     TensorPower R n.1 M →ₗ[R] ReducedTensorWords R M :=
   DirectSum.lof R {n : ℕ // 0 < n} (fun n ↦ TensorPower R n.1 M) n
 
 /-- Project reduced tensor words to a fixed positive tensor length. -/
-@[expose] noncomputable def component (n : {n : ℕ // 0 < n}) :
+noncomputable def component (n : {n : ℕ // 0 < n}) :
     ReducedTensorWords R M →ₗ[R] TensorPower R n.1 M :=
   DirectSum.component R {n : ℕ // 0 < n} (fun n ↦ TensorPower R n.1 M) n
+
+/-- Evaluating a reduced tensor word at a length agrees with its named component projection. -/
+theorem apply_eq_component (x : ReducedTensorWords R M) (n : {n : ℕ // 0 < n}) :
+    x n = component R M n x :=
+  DirectSum.apply_eq_component R x n
 
 @[simp]
 theorem component_of (n : {n : ℕ // 0 < n}) (x : TensorPower R n.1 M) :
@@ -66,6 +71,13 @@ theorem component_of (n : {n : ℕ // 0 < n}) (x : TensorPower R n.1 M) :
 theorem component_of_of_ne {m n : {n : ℕ // 0 < n}} (h : m ≠ n) (x : TensorPower R m.1 M) :
     component R M n (of R M m x) = 0 := by
   simp [component, of, DirectSum.component.of, h]
+
+/-- Two linear maps out of reduced tensor words are equal if they agree on every homogeneous
+tensor word. -/
+theorem linearMap_ext {N : Type*} [AddCommMonoid N] [Module R N]
+    {f g : ReducedTensorWords R M →ₗ[R] N}
+    (h : ∀ n x, f (of R M n x) = g (of R M n x)) : f = g :=
+  DirectSum.linearMap_ext R fun n ↦ LinearMap.ext fun x ↦ h n x
 
 /-- Deconcatenation on words of one fixed length, summed over all nontrivial cuts. -/
 noncomputable def deconcatenationComponent (n : {n : ℕ // 0 < n}) :
