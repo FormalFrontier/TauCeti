@@ -180,9 +180,7 @@ theorem exists_residue_eq_and_forall_mem_ord_eq (y : P.ResidueField) (r : Place 
       norm_num
     have key : IsLocalRing.residue P.integers (⟨g, hmem⟩ - z) = 0 := by
       rw [P.residue_eq_zero_iff_valuation_lt_one]
-      rw [show ((↑(⟨g, hmem⟩ - z) : F)) = g - (z : F) by
-        exact map_sub P.integers.subtype ⟨g, hmem⟩ z]
-      exact hvaluation
+      simpa only [AddSubgroupClass.coe_sub] using hvaluation
     rw [map_sub, sub_eq_zero] at key
     rw [key, hz]
   · simpa [hQP] using hg Q (Finset.mem_insert_of_mem hQ)
