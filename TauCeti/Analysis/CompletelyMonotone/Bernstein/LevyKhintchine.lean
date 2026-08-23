@@ -62,6 +62,7 @@ def IsBernsteinLevyMeasure (μ : Measure ℝ≥0) : Prop :=
   μ {0} = 0 ∧ Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ
 
 /-- Characterization of a Bernstein Levy measure by its two defining conditions. -/
+@[simp]
 theorem isBernsteinLevyMeasure_iff {μ : Measure ℝ≥0} :
     IsBernsteinLevyMeasure μ ↔
       μ {0} = 0 ∧ Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ :=
@@ -107,6 +108,7 @@ noncomputable def bernsteinLevyJumpExponent (μ : Measure ℝ≥0) (t : ℝ) : �
   ∫ x : ℝ≥0, (1 - Real.exp (-(t * (x : ℝ)))) ∂μ
 
 /-- The defining integral of the Bernstein Levy exponent. -/
+@[simp]
 lemma bernsteinLevyJumpExponent_apply (μ : Measure ℝ≥0) (t : ℝ) :
     bernsteinLevyJumpExponent μ t =
       ∫ x : ℝ≥0, (1 - Real.exp (-(t * (x : ℝ)))) ∂μ := by
@@ -118,6 +120,7 @@ noncomputable def bernsteinLevyKhintchineExponent (a b : ℝ) (μ : Measure ℝ�
   a + b * t + bernsteinLevyJumpExponent μ t
 
 /-- The defining formula for the Bernstein Levy--Khintchine function. -/
+@[simp]
 lemma bernsteinLevyKhintchineExponent_apply (a b : ℝ) (μ : Measure ℝ≥0) (t : ℝ) :
     bernsteinLevyKhintchineExponent a b μ t = a + b * t + bernsteinLevyJumpExponent μ t := by
   rw [bernsteinLevyKhintchineExponent]
