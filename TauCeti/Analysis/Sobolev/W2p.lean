@@ -5,8 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Sobolev.GraphStep
-public import TauCeti.Analysis.Sobolev.W1p.Basic
+public import TauCeti.Analysis.Sobolev.Wkp
 
 /-!
 # Second-order weak Sobolev spaces
@@ -36,6 +35,7 @@ derivatives, rather than an extra field of the definition, and is left to the hi
 * `TauCeti.W2p`: the complete second-order weak Sobolev space.
 * `TauCeti.W2p.hasWeakFDerivOn_gradient`: the recorded Hessian is the weak derivative of the
   recorded weak gradient.
+* `TauCeti.Wkp.orderTwoEquivW2p`: the canonical identification with the arbitrary-order space.
 
 ## References
 
@@ -105,6 +105,15 @@ theorem mem_w2pSubmodule_iff_hasWeakFDerivOn (J : Sobolev2JetLp mu Omega p) :
 Sobolev jet and weak Hessian. -/
 abbrev W2p (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] := (w2pSubmodule mu Omega p).toSubmodule
+
+/-- The arbitrary-order Sobolev space at order two is canonically the specialized `W2p` space. -/
+noncomputable def Wkp.orderTwoEquivW2p : Wkp mu Omega p 2 ≃L[ℝ] W2p mu Omega p := by
+  exact ContinuousLinearEquiv.ofEq
+    (weakDerivStepSubmodule mu Omega p
+      (W1p.gradientL (mu := mu) (Omega := Omega) (p := p))).toSubmodule
+    (w2pSubmodule mu Omega p).toSubmodule
+    (congrArg ClosedSubmodule.toSubmodule
+      (w2pSubmodule_def (mu := mu) (Omega := Omega) (p := p)).symm)
 
 /-- The continuous linear projection from `W2p` to its first-order Sobolev component.  Its value
 and weak gradient are the value and weak gradient of the second-order function. -/
