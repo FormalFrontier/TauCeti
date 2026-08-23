@@ -92,7 +92,12 @@ junk value of `Module.finrank`, is `TauCeti.finiteDimensional_riemannRochSpace`.
 noncomputable def Divisor.dim (D : Divisor k F) : ℕ :=
   Module.finrank k (riemannRochSpace D)
 
+/-- `ℓ(D)` unfolded to the dimension of `L(D)`. -/
+theorem Divisor.dim_def (D : Divisor k F) :
+    Divisor.dim D = Module.finrank k (riemannRochSpace D) := (rfl)
+
 /-- Membership in `L(D)`, unfolded: the poles of `f` are bounded by `D` at every place. -/
+@[simp]
 theorem mem_riemannRochSpace_iff {D : Divisor k F} {f : F} :
     f ∈ riemannRochSpace D ↔ ∀ P : Place k F, P.valuation f ≤ WithZero.exp (D.coeff P) :=
   (Iff.rfl)
@@ -172,14 +177,6 @@ private lemma le_add_ofPoint (D : Divisor k F) (P : Place k F) :
   le_add_of_nonneg_right
     (WeilDivisor.isEffective_iff_zero_le.mp (WeilDivisor.isEffective_ofPoint P))
 
-private lemma exists_ne_zero_ord_eq (P : Place k F) (n : ℤ) : ∃ t : F, t ≠ 0 ∧ P.ord t = n := by
-  obtain ⟨s, hs⟩ := P.exists_isUniformizer
-  rw [P.isUniformizer_iff_ord_eq_one] at hs
-  have hs0 : s ≠ 0 := by
-    rintro rfl
-    simp at hs
-  exact ⟨s ^ n, zpow_ne_zero _ hs0, by rw [P.ord_zpow, hs, mul_one]⟩
-
 private lemma coe_algebraMap_integers (P : Place k F) (c : k) :
     ((algebraMap k P.integers c : P.integers) : F) = algebraMap k F c := by
   rw [IsScalarTower.algebraMap_apply k P.integers F, ValuationSubring.algebraMap_apply]
@@ -235,47 +232,46 @@ private lemma mem_riemannRochSpace_iff_residueEval_eq_zero (ht : P.ord t = D.coe
       · have hQ' := (mem_riemannRochSpace_iff_neg_le_ord hx0).mp x.2 Q
         rwa [WeilDivisor.coeff_add, WeilDivisor.coeff_ofPoint_of_ne hQ, add_zero] at hQ'
 
-/-- Adding one place to a divisor keeps its Riemann–Roch space finite-dimensional. -/
-theorem finiteDimensional_riemannRochSpace_add_ofPoint (hF : IsFunctionField k F)
-    (D : Divisor k F) (P : Place k F) (h : FiniteDimensional k (riemannRochSpace D)) :
-    FiniteDimensional k (riemannRochSpace (D + WeilDivisor.ofPoint P)) := by
-  have : FiniteDimensional k P.ResidueField := Place.finiteDimensional_residueField P hF
-  obtain ⟨t, ht0, ht⟩ := exists_ne_zero_ord_eq P (D.coeff P + 1)
-  have hker : LinearMap.ker (residueEval D P ht ht0) =
+/-- The kernel of `TauCeti.residueEval` is `L(D)`, sitting inside `L(D + P)` as the comap of the
+inclusion `TauCeti.riemannRochSpace_mono`.  This is the structural heart of Stichtenoth's proof of
+Lemma 1.4.8. -/
+private lemma ker_residueEval (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) :
+    LinearMap.ker (residueEval D P ht ht0) =
       Submodule.comap (riemannRochSpace (D + WeilDivisor.ofPoint P)).subtype
         (riemannRochSpace D) := by
-    ext x
-    exact (mem_riemannRochSpace_iff_residueEval_eq_zero ht ht0 x).symm
-  have : FiniteDimensional k (LinearMap.ker (residueEval D P ht ht0)) := by
-    rw [hker]
-    exact Module.Finite.equiv
-      (Submodule.comapSubtypeEquivOfLe (riemannRochSpace_mono (le_add_ofPoint D P))).symm
-  have : FiniteDimensional k
-      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) :=
-    Module.Finite.equiv (LinearMap.quotKerEquivRange (residueEval D P ht ht0)).symm
-  exact Module.Finite.of_submodule_quotient (LinearMap.ker (residueEval D P ht ht0))
+  ext x
+  exact (mem_riemannRochSpace_iff_residueEval_eq_zero ht ht0 x).symm
 
-/-- **Stichtenoth, Lemma 1.4.8**, in its one-place form: passing from `D` to `D + P` raises the
-dimension of the Riemann–Roch space by at most `deg P`.  The proof embeds the quotient
-`L(D + P) / L(D)` in the residue field of `P` by evaluating `t · f` at `P`, for `t` a function
-of order `D P + 1` there. -/
-theorem finrank_riemannRochSpace_add_ofPoint_le (hF : IsFunctionField k F) (D : Divisor k F)
-    (P : Place k F) (h : FiniteDimensional k (riemannRochSpace D)) :
-    Module.finrank k (riemannRochSpace (D + WeilDivisor.ofPoint P)) ≤
-      Module.finrank k (riemannRochSpace D) + P.degree := by
-  have := finiteDimensional_riemannRochSpace_add_ofPoint hF D P h
+/-- Stichtenoth's proof of Lemma 1.4.8 in its one-place form, carrying both conclusions the two
+public statements below project out of: `L(D + P)` stays finite-dimensional, and its dimension
+exceeds that of `L(D)` by at most `deg P`.  The evaluation map `x ↦ (t · x)(P)` embeds the
+quotient `L(D + P) / L(D)` in the residue field of `P`, for `t` of order `D P + 1` there. -/
+private lemma finiteDimensional_and_finrank_add_ofPoint_le (hF : IsFunctionField k F)
+    (D : Divisor k F) (P : Place k F) (h : FiniteDimensional k (riemannRochSpace D)) :
+    FiniteDimensional k (riemannRochSpace (D + WeilDivisor.ofPoint P)) ∧
+      Module.finrank k (riemannRochSpace (D + WeilDivisor.ofPoint P)) ≤
+        Module.finrank k (riemannRochSpace D) + P.degree := by
   have : FiniteDimensional k P.ResidueField := Place.finiteDimensional_residueField P hF
-  obtain ⟨t, ht0, ht⟩ := exists_ne_zero_ord_eq P (D.coeff P + 1)
-  have hker : LinearMap.ker (residueEval D P ht ht0) =
-      Submodule.comap (riemannRochSpace (D + WeilDivisor.ofPoint P)).subtype
-        (riemannRochSpace D) := by
-    ext x
-    exact (mem_riemannRochSpace_iff_residueEval_eq_zero ht ht0 x).symm
+  obtain ⟨t, ht0, ht⟩ : ∃ t : F, t ≠ 0 ∧ P.ord t = D.coeff P + 1 := by
+    obtain ⟨t, ht⟩ := P.ord_surjective (D.coeff P + 1)
+    rcases eq_or_ne t 0 with rfl | ht0
+    · exact ⟨1, one_ne_zero, by rw [P.ord_one, ← ht, P.ord_zero]⟩
+    · exact ⟨t, ht0, ht⟩
+  have hle : riemannRochSpace D ≤ riemannRochSpace (D + WeilDivisor.ofPoint P) :=
+    riemannRochSpace_mono (le_add_ofPoint D P)
+  have hkerfin : FiniteDimensional k (LinearMap.ker (residueEval D P ht ht0)) := by
+    rw [ker_residueEval]
+    exact Module.Finite.equiv (Submodule.comapSubtypeEquivOfLe hle).symm
   have hkerrank : Module.finrank k (LinearMap.ker (residueEval D P ht ht0)) =
       Module.finrank k (riemannRochSpace D) := by
-    rw [hker]
-    exact (Submodule.comapSubtypeEquivOfLe
-      (riemannRochSpace_mono (le_add_ofPoint D P))).finrank_eq
+    rw [ker_residueEval]
+    exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
+  have hquotfin : FiniteDimensional k
+      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) :=
+    Module.Finite.equiv (LinearMap.quotKerEquivRange (residueEval D P ht ht0)).symm
+  have hfin : FiniteDimensional k (riemannRochSpace (D + WeilDivisor.ofPoint P)) :=
+    Module.Finite.of_submodule_quotient (LinearMap.ker (residueEval D P ht ht0))
+  refine ⟨hfin, ?_⟩
   have hquot := Submodule.finrank_quotient_add_finrank (LinearMap.ker (residueEval D P ht ht0))
   have hrange : Module.finrank k
       (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) ≤
@@ -284,6 +280,22 @@ theorem finrank_riemannRochSpace_add_ofPoint_le (hF : IsFunctionField k F) (D : 
     exact Submodule.finrank_le _
   omega
 
+/-- Adding one place to a divisor keeps its Riemann–Roch space finite-dimensional. -/
+theorem finiteDimensional_riemannRochSpace_add_ofPoint (hF : IsFunctionField k F)
+    (D : Divisor k F) (P : Place k F) (h : FiniteDimensional k (riemannRochSpace D)) :
+    FiniteDimensional k (riemannRochSpace (D + WeilDivisor.ofPoint P)) :=
+  (finiteDimensional_and_finrank_add_ofPoint_le hF D P h).1
+
+/-- **Stichtenoth, Lemma 1.4.8**, in its one-place form: passing from `D` to `D + P` raises the
+dimension of the Riemann–Roch space by at most `deg P`.  The proof embeds the quotient
+`L(D + P) / L(D)` in the residue field of `P` by evaluating `t · f` at `P`, for `t` a function
+of order `D P + 1` there. -/
+theorem finrank_riemannRochSpace_add_ofPoint_le (hF : IsFunctionField k F) (D : Divisor k F)
+    (P : Place k F) (h : FiniteDimensional k (riemannRochSpace D)) :
+    Module.finrank k (riemannRochSpace (D + WeilDivisor.ofPoint P)) ≤
+      Module.finrank k (riemannRochSpace D) + P.degree :=
+  (finiteDimensional_and_finrank_add_ofPoint_le hF D P h).2
+
 end OnePlace
 
 /-! ### Finite-dimensionality -/
@@ -291,7 +303,7 @@ end OnePlace
 /-- `ℓ(0) = [algebraicClosure k F : k]`: the functions without poles are the constants. -/
 theorem Divisor.dim_zero (hF : IsFunctionField k F) :
     Divisor.dim (0 : Divisor k F) = Module.finrank k (algebraicClosure k F) := by
-  rw [Divisor.dim, riemannRochSpace_zero hF, Subalgebra.finrank_toSubmodule]
+  rw [Divisor.dim_def, riemannRochSpace_zero hF, Subalgebra.finrank_toSubmodule]
   rfl
 
 /-- `L(0) = algebraicClosure k F` is finite-dimensional: the constants form a finite extension of
@@ -384,10 +396,11 @@ theorem finrank_quotient_riemannRochSpace_le_degree_sub (hF : IsFunctionField k 
   have := finiteDimensional_riemannRochSpace hF E
   have hsub : Module.finrank k
       (Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D)) = Divisor.dim D :=
-    (Submodule.comapSubtypeEquivOfLe (riemannRochSpace_mono h)).finrank_eq
+    (Submodule.comapSubtypeEquivOfLe (riemannRochSpace_mono h)).finrank_eq.trans
+      (Divisor.dim_def D).symm
   have hquot := Submodule.finrank_quotient_add_finrank
     (Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D))
-  have hE : Module.finrank k (riemannRochSpace E) = Divisor.dim E := rfl
+  have hE : Module.finrank k (riemannRochSpace E) = Divisor.dim E := (Divisor.dim_def E).symm
   have hle := Divisor.dim_le_dim_add_degree_sub hF h
   omega
 
@@ -420,6 +433,6 @@ theorem Divisor.dim_zero_of_isIntegrallyClosedIn (hF : IsFunctionField k F)
 /-- `ℓ(D) = 0` for a negative divisor (Stichtenoth, Lemma 1.4.7(b)). -/
 theorem Divisor.dim_eq_zero_of_lt_zero (hF : IsFunctionField k F) {D : Divisor k F} (hD : D < 0) :
     Divisor.dim D = 0 := by
-  rw [Divisor.dim, riemannRochSpace_eq_bot_of_lt_zero hF hD, finrank_bot]
+  rw [Divisor.dim_def, riemannRochSpace_eq_bot_of_lt_zero hF hD, finrank_bot]
 
 end TauCeti
