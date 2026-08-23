@@ -121,14 +121,16 @@ private theorem surjective_add_coe_iff {X₁ Y₀ : Submodule ℝ F} (h : Submod
     obtain ⟨⟨p₁, p₂⟩, hp⟩ := (Submodule.prodEquivOfIsTopCompl X₁ Y₀ h).surjective y
     obtain ⟨z, hz⟩ := hs (p₂ - D (p₁, 0))
     have hz' : D (0, z) = p₂ - D (p₁, 0) := hz
-    refine ⟨(p₁, z), ?_⟩
-    change ((p₁ : F) + (D (p₁, z) : F)) = y
-    rw [hu p₁ z, ← hp]
-    congr 1
-    rw [Prod.mk.injEq]
-    refine ⟨rfl, ?_⟩
-    rw [hsplit, hz']
-    abel
+    -- The goal is the value of the displayed function at `(p₁, z)`; state that value as a typed
+    -- `have`, which is rewritable, and let `exact` cross the beta reduction.
+    have hval : ((p₁ : F) + (D (p₁, z) : F)) = y := by
+      rw [hu p₁ z, ← hp]
+      congr 1
+      rw [Prod.mk.injEq]
+      refine ⟨rfl, ?_⟩
+      rw [hsplit, hz']
+      abel
+    exact ⟨(p₁, z), hval⟩
 
 /-- The inclusion of the inessential domain summand as the second factor of the normal-form
 coordinates. Slicing the obstruction map through a fixed essential coordinate differentiates along
@@ -137,9 +139,6 @@ private noncomputable def sliceIncl {T : E →L[ℝ] F}
     (pkg : ContinuousLinearMap.FredholmPackage T) :
     pkg.decDom.X₀ →L[ℝ] (pkg.decCodom.X₁ × pkg.decDom.X₀) :=
   (0 : pkg.decDom.X₀ →L[ℝ] pkg.decCodom.X₁).prod (ContinuousLinearMap.id ℝ pkg.decDom.X₀)
-
-private theorem sliceIncl_apply {T : E →L[ℝ] F} (pkg : ContinuousLinearMap.FredholmPackage T)
-    (z : pkg.decDom.X₀) : sliceIncl pkg z = (0, z) := rfl
 
 section Local
 
@@ -208,7 +207,7 @@ private theorem surjective_fderiv_iff_slice (pkg : ContinuousLinearMap.FredholmP
       (hasFDerivAt_const y.1 y.2).prodMk (hasFDerivAt_id y.2)
     exact hq.hasFDerivAt.comp y.2 h0
   rw [hstep₁, hufun, surjective_add_coe_iff pkg.decCodom.isTopCompl, hslice.fderiv]
-  simp only [ContinuousLinearMap.coe_comp, Function.comp_def, sliceIncl_apply]
+  simp [ContinuousLinearMap.coe_comp, Function.comp_def, sliceIncl]
 
 /-- **Sard--Smale, locally.** Near a point where a sufficiently smooth map has Fredholm
 derivative there is a neighbourhood on which the critical values form a closed nowhere dense set.
@@ -349,8 +348,6 @@ theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
       rw [← h2, hAint, Set.image_empty]
     exact Set.eq_empty_of_subset_empty (h1 ▸ interior_mono himg)
   -- The critical locus is relatively closed in `N`, again read off the finite-dimensional slice.
-  set R := (ContinuousLinearMap.compL ℝ pkg.decDom.X₀ (pkg.decCodom.X₁ × pkg.decDom.X₀)
-    pkg.decCodom.X₀).flip (sliceIncl pkg) with hRdef
   have hWopen : IsOpen {y | y ∈ V ∧ Surjective ((fderiv ℝ q y).comp (sliceIncl pkg))} := by
     rw [isOpen_iff_mem_nhds]
     rintro y ⟨hyV, hys⟩
@@ -430,20 +427,26 @@ section Global
 variable [CompleteSpace E] [CompleteSpace F] [SecondCountableTopology E]
   {U : Set E} {f : E → F}
 
-/-- **The Sard--Smale theorem.** The critical values of a smooth Fredholm map on an open subset of
-a separable Banach space form a meagre set.
+/-- **The Sard--Smale theorem.** The critical values of a sufficiently smooth Fredholm map on an
+open subset of a separable Banach space form a meagre set.
 
 Sard's theorem itself is false in infinite dimensions, and "measure zero" has no meaning there;
 what survives is that the Fredholm condition confines the failure of regularity to a
-finite-dimensional direction, in which the finite-dimensional theorem applies fibrewise. -/
-theorem isMeagre_image_criticalPoints_of_isFredholm (hU : IsOpen U)
-    (hf : ∀ x ∈ U, ContDiffAt ℝ ∞ f x) (hFred : ∀ x ∈ U, (fderiv ℝ f x).IsFredholm) :
+finite-dimensional direction, in which the finite-dimensional theorem applies fibrewise.
+
+The regularity threshold is the pointwise one of
+`TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints`: at each point `C^k` with
+`k ≥ (dim ker)² + 1`. In particular `n = ∞` needs no side condition. -/
+theorem isMeagre_image_criticalPoints_of_isFredholm {n : ℕ∞ω} (hU : IsOpen U)
+    (hf : ∀ x ∈ U, ContDiffAt ℝ n f x) (hFred : ∀ x ∈ U, (fderiv ℝ f x).IsFredholm)
+    (hn : ∀ x ∈ U, ((finrank ℝ (fderiv ℝ f x).ker * finrank ℝ (fderiv ℝ f x).ker + 1 : ℕ) : ℕ∞ω)
+      ≤ n) :
     IsMeagre (f '' (U ∩ {x | ¬ Surjective (fderiv ℝ f x)})) := by
   have hloc : ∀ x ∈ U, ∃ N ⊆ U, N ∈ 𝓝 x ∧
       IsNowhereDense (f '' (N ∩ {x | ¬ Surjective (fderiv ℝ f x)})) := by
     intro x hx
     obtain ⟨N, hN, -, hNnd⟩ := exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
-      (hf x hx) (hFred x hx) (by exact_mod_cast le_top)
+      (hf x hx) (hFred x hx) (hn x hx)
     refine ⟨N ∩ U, Set.inter_subset_right, Filter.inter_mem hN (hU.mem_nhds hx), ?_⟩
     exact hNnd.mono (Set.image_mono (Set.inter_subset_inter Set.inter_subset_left le_rfl))
   choose! N hNU hNnhds hNnd using hloc
@@ -456,12 +459,16 @@ theorem isMeagre_image_criticalPoints_of_isFredholm (hU : IsOpen U)
     exact Set.mem_iUnion₂.2 ⟨x, hx, ⟨z, ⟨hzN, hzc⟩, rfl⟩⟩
   exact IsMeagre.mono hsub (isMeagre_biUnion htc fun x hx ↦ (hNnd x (htU hx)).isMeagre)
 
-/-- **Sard--Smale**, in the form transversality arguments consume: the regular values of a smooth
-Fredholm map are dense, being the complement of a meagre set in a Baire space. -/
-theorem dense_compl_image_criticalPoints_of_isFredholm (hU : IsOpen U)
-    (hf : ∀ x ∈ U, ContDiffAt ℝ ∞ f x) (hFred : ∀ x ∈ U, (fderiv ℝ f x).IsFredholm) :
+/-- **Sard--Smale**, in the form transversality arguments consume: the regular values of a
+sufficiently smooth Fredholm map are dense, being the complement of a meagre set in a Baire
+space. The regularity threshold is that of
+`TauCeti.isMeagre_image_criticalPoints_of_isFredholm`. -/
+theorem dense_compl_image_criticalPoints_of_isFredholm {n : ℕ∞ω} (hU : IsOpen U)
+    (hf : ∀ x ∈ U, ContDiffAt ℝ n f x) (hFred : ∀ x ∈ U, (fderiv ℝ f x).IsFredholm)
+    (hn : ∀ x ∈ U, ((finrank ℝ (fderiv ℝ f x).ker * finrank ℝ (fderiv ℝ f x).ker + 1 : ℕ) : ℕ∞ω)
+      ≤ n) :
     Dense (f '' (U ∩ {x | ¬ Surjective (fderiv ℝ f x)}))ᶜ :=
-  dense_of_mem_residual (isMeagre_image_criticalPoints_of_isFredholm hU hf hFred)
+  dense_of_mem_residual (isMeagre_image_criticalPoints_of_isFredholm hU hf hFred hn)
 
 end Global
 
