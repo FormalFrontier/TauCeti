@@ -5,24 +5,41 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Analysis.Fourier.Inversion
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 public import Mathlib.Probability.Distributions.Cauchy
+public import Mathlib.Probability.HasLaw
+public import Mathlib.Probability.Independence.CharacteristicFunction
 public import Mathlib.Probability.Moments.Variance
+public import TauCeti.Analysis.Fourier.ExpNegAbs
 public import TauCeti.Probability.Distributions.Dirac
 
 /-!
-# The cumulative distribution function of the Cauchy distribution
+# The cumulative distribution function and the characteristic function of the Cauchy law
 
-This file computes the cumulative distribution function of Mathlib's Cauchy law. For nonzero
-scale `γ`, its value at `x` is
+This file develops the elementary transform theory of Mathlib's Cauchy law. For nonzero scale
+`γ` the cumulative distribution function at `x` is
 
-`1 / 2 + arctan ((x - x₀) / γ) / π`.
+`1 / 2 + arctan ((x - x₀) / γ) / π`,
+
+and for every scale, including the degenerate one, the characteristic function is
+
+`t ↦ exp (t x₀ i - γ |t|)`.
 
 At scale zero Mathlib defines `cauchyMeasure x₀ 0` to be the Dirac mass at `x₀`. The file records
 the corresponding cumulative distribution function, mean, variance, exponential-integrability
 domain, moment-generating function, and cumulant-generating function. Keeping the singular case
 separate prevents the density calculation for positive scale from being applied where the law is
-not absolutely continuous.
+not absolutely continuous; the characteristic function, by contrast, is a single formula covering
+both cases.
+
+The characteristic function is obtained from the Fourier inversion theorem applied to
+`TauCeti.fourier_exp_neg_mul_abs`: the Fourier transform of the two-sided exponential of rate
+`2 π γ` is the centred Cauchy density of scale `γ`, so inverting it pairs that density against
+`exp (i t x)` and returns the two-sided exponential again. Because the resulting formula is
+multiplicative in `γ` and linear in `x₀`, it immediately gives the classical stability of the
+Cauchy family under averaging: the sample mean of independent Cauchy variables with a common
+location and scale has exactly the parent law.
 
 ## Main results
 
@@ -35,7 +52,11 @@ not absolutely continuous.
   `TauCeti.variance_id_cauchyMeasure_zero_scale` — its mean and variance;
 * `TauCeti.integrableExpSet_id_cauchyMeasure_zero_scale`,
   `TauCeti.mgf_id_cauchyMeasure_zero_scale`, and
-  `TauCeti.cgf_id_cauchyMeasure_zero_scale` — its exponential moments.
+  `TauCeti.cgf_id_cauchyMeasure_zero_scale` — its exponential moments;
+* `TauCeti.fourier_exp_neg_mul_abs_eq_cauchyPDFReal` and
+  `TauCeti.integral_exp_mul_I_mul_cauchyPDFReal` — the Fourier pair behind the transform;
+* `TauCeti.charFun_cauchyMeasure` — the characteristic function of `cauchyMeasure x₀ γ`;
+* `TauCeti.hasLaw_average_of_iIndepFun_cauchyMeasure` — stability of the family under averaging.
 
 ## References
 
@@ -132,5 +153,125 @@ theorem mgf_id_cauchyMeasure_zero_scale (x₀ t : ℝ) :
 theorem cgf_id_cauchyMeasure_zero_scale (x₀ t : ℝ) :
     cgf id (cauchyMeasure x₀ 0) t = t * x₀ := by
   rw [cauchyMeasure_zero_scale, cgf_dirac', id_eq]
+
+section CharFun
+
+open scoped FourierTransform
+
+variable {γ : ℝ≥0}
+
+/-- The Fourier transform of the two-sided exponential of rate `2 π γ` is the Cauchy density of
+scale `γ` centred at the origin. This is `TauCeti.fourier_exp_neg_mul_abs` at the rate that makes
+the Lorentzian a probability density. -/
+theorem fourier_exp_neg_mul_abs_eq_cauchyPDFReal (hγ : γ ≠ 0) (ξ : ℝ) :
+    𝓕 (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ)) ξ = (cauchyPDFReal 0 γ ξ : ℂ) := by
+  have hγ' : (0 : ℝ) < (γ : ℝ) := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hγ)
+  have ha : (0 : ℝ) < 2 * Real.pi * γ := mul_pos (by positivity) hγ'
+  have h₁ : (0 : ℝ) < (2 * Real.pi * (γ : ℝ)) ^ 2 + (2 * Real.pi * ξ) ^ 2 :=
+    add_pos_of_pos_of_nonneg (pow_pos ha 2) (sq_nonneg _)
+  have h₂ : (0 : ℝ) < (ξ - 0) ^ 2 + (γ : ℝ) ^ 2 :=
+    add_pos_of_nonneg_of_pos (sq_nonneg _) (pow_pos hγ' 2)
+  rw [fourier_exp_neg_mul_abs ha, Complex.ofReal_inj, cauchyPDFReal_def]
+  field_simp
+  ring
+
+/-- **The oscillatory integral of the centred Cauchy density.** Fourier inversion turns
+`TauCeti.fourier_exp_neg_mul_abs_eq_cauchyPDFReal` around: pairing the Cauchy density of scale
+`γ` against `exp (i t x)` returns the two-sided exponential `exp (-(γ * |t|))`. -/
+theorem integral_exp_mul_I_mul_cauchyPDFReal (hγ : γ ≠ 0) (t : ℝ) :
+    (∫ x : ℝ, Complex.exp ((t : ℂ) * x * Complex.I) * (cauchyPDFReal 0 γ x : ℂ))
+      = (Real.exp (-((γ : ℝ) * |t|)) : ℂ) := by
+  have hγ' : (0 : ℝ) < (γ : ℝ) := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hγ)
+  have hπ : (0 : ℝ) < 2 * Real.pi := by positivity
+  have ha : (0 : ℝ) < 2 * Real.pi * γ := mul_pos hπ hγ'
+  have hcont : Continuous (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ)) := by fun_prop
+  have hint : Integrable (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ)) :=
+    (integrable_exp_neg_mul_abs ha).ofReal
+  have hFf : 𝓕 (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ))
+      = fun ξ : ℝ ↦ (cauchyPDFReal 0 γ ξ : ℂ) :=
+    funext (fourier_exp_neg_mul_abs_eq_cauchyPDFReal hγ)
+  have hintF : Integrable (𝓕 (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ))) := by
+    rw [hFf]
+    exact (integrable_cauchyPDFReal 0).ofReal
+  have hinv := congrFun (hcont.fourierInv_fourier_eq hint hintF) (t / (2 * Real.pi))
+  rw [hFf, Real.fourierInv_eq'] at hinv
+  have habs : 2 * Real.pi * (γ : ℝ) * |t / (2 * Real.pi)| = (γ : ℝ) * |t| := by
+    rw [abs_div, abs_of_pos hπ]
+    field_simp
+  rw [← habs, ← hinv]
+  refine integral_congr_ae (.of_forall fun v ↦ ?_)
+  simp only [smul_eq_mul]
+  congr 2
+  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
+  field_simp
+
+/-- **The characteristic function of the Cauchy distribution.** For location `x₀` and scale `γ`
+it is `t ↦ exp (t x₀ i - γ |t|)`. The formula is uniform in the scale: at `γ = 0` Mathlib's
+`cauchyMeasure x₀ 0` is the Dirac mass at `x₀`, whose characteristic function is
+`t ↦ exp (t x₀ i)`. -/
+theorem charFun_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) (t : ℝ) :
+    charFun (cauchyMeasure x₀ γ) t
+      = Complex.exp ((t : ℂ) * x₀ * Complex.I - ((γ : ℝ) : ℂ) * |t|) := by
+  rcases eq_or_ne γ 0 with rfl | hγ
+  · rw [cauchyMeasure_zero_scale, charFun_dirac]
+    simp [RCLike.inner_apply, mul_comm]
+  · have hltop : ∀ᵐ x : ℝ ∂volume, cauchyPDF x₀ γ x < ⊤ :=
+      .of_forall fun x ↦ by rw [cauchyPDF_def]; exact ENNReal.ofReal_lt_top
+    rw [charFun_apply_real, cauchyMeasure_of_scale_ne_zero x₀ hγ,
+      integral_withDensity_eq_integral_toReal_smul (measurable_cauchyPDF x₀ γ) hltop]
+    have htoReal : ∀ x : ℝ, (cauchyPDF x₀ γ x).toReal = cauchyPDFReal x₀ γ x := fun x ↦ by
+      rw [cauchyPDF_def, ENNReal.toReal_ofReal (cauchyPDF_pos x₀ hγ x).le]
+    simp_rw [htoReal]
+    rw [← integral_add_right_eq_self
+      (fun x : ℝ ↦ cauchyPDFReal x₀ γ x • Complex.exp ((t : ℂ) * x * Complex.I)) x₀]
+    have hshift : ∀ x : ℝ, cauchyPDFReal x₀ γ (x + x₀) •
+        Complex.exp ((t : ℂ) * ((x + x₀ : ℝ) : ℂ) * Complex.I)
+        = Complex.exp ((t : ℂ) * x₀ * Complex.I) *
+          (Complex.exp ((t : ℂ) * x * Complex.I) * (cauchyPDFReal 0 γ x : ℂ)) := by
+      intro x
+      have hpdf : cauchyPDFReal x₀ γ (x + x₀) = cauchyPDFReal 0 γ x := by
+        simp [cauchyPDFReal_def]
+      rw [hpdf, Complex.real_smul]
+      push_cast
+      rw [show (t : ℂ) * ((x : ℂ) + (x₀ : ℂ)) * Complex.I
+        = (t : ℂ) * x₀ * Complex.I + (t : ℂ) * x * Complex.I from by ring, Complex.exp_add]
+      ring
+    simp_rw [hshift]
+    rw [integral_const_mul, integral_exp_mul_I_mul_cauchyPDFReal hγ, Complex.ofReal_exp,
+      ← Complex.exp_add]
+    push_cast
+    ring_nf
+
+/-- **The Cauchy family is stable under averaging.** The sample mean of `n` independent Cauchy
+variables with common location `x₀` and scale `γ` has exactly the same law. -/
+theorem hasLaw_average_of_iIndepFun_cauchyMeasure {Ω : Type*} [MeasurableSpace Ω]
+    {P : Measure Ω} [IsProbabilityMeasure P] {n : ℕ} (hn : 0 < n) {x₀ : ℝ} {γ : ℝ≥0}
+    {X : Fin n → Ω → ℝ} (hindep : iIndepFun X P)
+    (hlaw : ∀ i, HasLaw (X i) (cauchyMeasure x₀ γ) P) :
+    HasLaw (fun ω ↦ (n : ℝ)⁻¹ * ∑ i, X i ω) (cauchyMeasure x₀ γ) P where
+  aemeasurable :=
+    (Finset.aemeasurable_fun_sum _ fun i _ ↦ (hlaw i).aemeasurable).const_mul _
+  map_eq := by
+    have hmeas : AEMeasurable (fun ω ↦ ∑ i, X i ω) P :=
+      Finset.aemeasurable_fun_sum _ fun i _ ↦ (hlaw i).aemeasurable
+    refine Measure.ext_of_charFun (funext fun t ↦ ?_)
+    rw [charFun_map_mul_comp hmeas,
+      hindep.charFun_map_fun_sum_eq_prod (fun i ↦ (hlaw i).aemeasurable)]
+    have hone : ∀ i : Fin n, charFun (P.map (X i)) ((n : ℝ)⁻¹ * t)
+        = Complex.exp ((((n : ℝ)⁻¹ * t : ℝ) : ℂ) * x₀ * Complex.I
+          - ((γ : ℝ) : ℂ) * |(n : ℝ)⁻¹ * t|) := fun i ↦ by
+      rw [(hlaw i).map_eq, charFun_cauchyMeasure]
+    rw [Finset.prod_apply, Finset.prod_congr rfl fun i _ ↦ hone i, Finset.prod_const,
+      Finset.card_univ, Fintype.card_fin, ← Complex.exp_nat_mul, charFun_cauchyMeasure]
+    congr 1
+    have hnpos : (0 : ℝ) < (n : ℝ) := Nat.cast_pos.mpr hn
+    have habs : |(n : ℝ)⁻¹ * t| = (n : ℝ)⁻¹ * |t| := by
+      rw [abs_mul, abs_of_pos (by positivity)]
+    have hnc : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hn.ne'
+    rw [habs]
+    push_cast
+    field_simp
+
+end CharFun
 
 end TauCeti
