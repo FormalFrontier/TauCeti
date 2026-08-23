@@ -62,7 +62,6 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.subtype_surjective_iff`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.asModuleEquivAsSubmodule`
-* `Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
 -/
 
@@ -217,14 +216,6 @@ noncomputable def asModuleEquivAsSubmodule (σ : Subrepresentation ρ) :
       _root_.Representation.asModuleEquiv_map_smul]
     exact coe_toRepresentation_asAlgebraHom_apply σ a
       (σ.toRepresentation.asModuleEquiv x)
-
-/-- Converting a group-algebra submodule to a subrepresentation and back returns the original
-submodule. -/
-@[simp]
-theorem asSubmodule_subrepresentationSubmoduleOrderIso_symm
-    (T : Submodule A[G] ρ.asModule) :
-    (subrepresentationSubmoduleOrderIso.symm T).asSubmodule = T := by
-  rw [← subrepresentationSubmoduleOrderIso_apply, OrderIso.apply_symm_apply]
 
 end AsSubmoduleEquiv
 

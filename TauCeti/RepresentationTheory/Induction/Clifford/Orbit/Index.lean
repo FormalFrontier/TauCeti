@@ -130,10 +130,12 @@ private noncomputable def submoduleClassToSkeleton :
       apply (toSkeleton_fdRepOf_toRepresentation_eq_iff _ _).mpr
       obtain ⟨e⟩ := e
       exact ⟨(LinearEquiv.ofEq _ _
-          (Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm T)).trans e
+          (OrderIso.apply_symm_apply
+            Subrepresentation.subrepresentationSubmoduleOrderIso T)).trans e
         |>.trans
         (LinearEquiv.ofEq _ _
-          (Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm U).symm)⟩)
+          (OrderIso.apply_symm_apply
+            Subrepresentation.subrepresentationSubmoduleOrderIso U).symm)⟩)
 
 omit [N.Normal] in
 @[simp]
@@ -165,9 +167,11 @@ private theorem submoduleClassToSkeleton_injective :
         simpa only [submoduleClassToSkeleton_mk] using h
       obtain ⟨e⟩ := (toSkeleton_fdRepOf_toRepresentation_eq_iff _ _).mp h'
       exact ⟨(LinearEquiv.ofEq _ _
-          (Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm T).symm).trans e
+          (OrderIso.apply_symm_apply
+            Subrepresentation.subrepresentationSubmoduleOrderIso T).symm).trans e
         |>.trans (LinearEquiv.ofEq _ _
-          (Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm U))⟩
+          (OrderIso.apply_symm_apply
+            Subrepresentation.subrepresentationSubmoduleOrderIso U))⟩
 
 /-- The isomorphism class attached to an isotypic component, obtained through the generic
 equivalence between components and simple-submodule classes. -/
@@ -208,7 +212,8 @@ private theorem componentClassMap_conjSubrepIsotypicComponent [ρ.IsIrreducible]
     _ = toSkeleton (FDRep.of (conjSubrep ρ g σ).toRepresentation) :=
       (toSkeleton_fdRepOf_toRepresentation_eq_iff _ _).mpr <| by
         exact ⟨LinearEquiv.ofEq _ _
-          (Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm _)⟩
+          (OrderIso.apply_symm_apply
+            Subrepresentation.subrepresentationSubmoduleOrderIso _)⟩
     _ = _ := toSkeleton_fdRepOf_conjSubrep ρ g σ
 
 private theorem submoduleClassToSkeleton_mem_orbit [ρ.IsIrreducible]
@@ -226,7 +231,8 @@ private theorem submoduleClassToSkeleton_mem_orbit [ρ.IsIrreducible]
       rw [submoduleClassToSkeleton_mk]
       apply (toSkeleton_fdRepOf_toRepresentation_eq_iff _ _).mpr
       exact ⟨e.symm.trans (LinearEquiv.ofEq _ _
-        (Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm _).symm)⟩
+        (OrderIso.apply_symm_apply
+          Subrepresentation.subrepresentationSubmoduleOrderIso _).symm)⟩
 
 /-- Every component class is in the conjugation orbit of a fixed constituent. -/
 private theorem componentClassMap_mem_orbit [ρ.IsIrreducible]
