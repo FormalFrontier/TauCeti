@@ -34,6 +34,8 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
   bilinear orthogonal complement.
 * `TauCeti.FiniteQuadraticModule.orthogonalQuotient`: the quadratic module induced on
   `H^⊥ / H` by a quadratic-isotropic subgroup `H`.
+* `TauCeti.FiniteQuadraticModule.orthogonalQuotientCongr`: the canonical isometry between the
+  orthogonal quotients along equal subgroups.
 
 ## References
 
@@ -104,6 +106,12 @@ abbrev Isometry (A : FiniteQuadraticModule.{u}) (B : FiniteQuadraticModule.{v}) 
 namespace Isometry
 
 variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
+
+/-- Applying a composite quadratic isometry applies its two factors in order. -/
+@[simp]
+theorem trans_apply {C : FiniteQuadraticModule} (f : Isometry A B) (g : Isometry B C) (x : A) :
+    (f.trans g) x = g (f x) :=
+  rfl
 
 /-- A quadratic isometry induces an isometry of the canonical polar bilinear modules. -/
 def toFiniteBilinearModule (f : Isometry A B) :
@@ -639,6 +647,25 @@ theorem orthogonalQuotientMk_eq_iff (H : AddSubgroup A) (hH : A.IsIsotropic H)
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
     (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x y
+
+/-- Equal quadratic-isotropic subgroups induce the same orthogonal quotient, up to the canonical
+isometry. -/
+noncomputable def orthogonalQuotientCongr {H K : AddSubgroup A} (hH : A.IsIsotropic H)
+    (hK : A.IsIsotropic K) (h : H = K) :
+    Isometry (A.orthogonalQuotient H hH) (A.orthogonalQuotient K hK) := by
+  subst h
+  exact QuadraticMap.IsometryEquiv.refl _
+
+/-- The canonical isometry between the orthogonal quotients along equal subgroups is the identity
+on representatives. -/
+@[simp]
+theorem orthogonalQuotientCongr_orthogonalQuotientMk {H K : AddSubgroup A} (hH : A.IsIsotropic H)
+    (hK : A.IsIsotropic K) (h : H = K)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    A.orthogonalQuotientCongr hH hK h (A.orthogonalQuotientMk H hH x) =
+      A.orthogonalQuotientMk K hK ⟨x.1, h ▸ x.2⟩ := by
+  subst h
+  rfl
 
 /-- If `A` is nondegenerate, the quadratic module induced on `H^⊥ / H` is nondegenerate. -/
 theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenerate)
