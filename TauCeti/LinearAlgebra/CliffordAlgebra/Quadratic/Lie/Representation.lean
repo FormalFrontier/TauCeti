@@ -66,7 +66,6 @@ theorem quadraticLift_apply {K : Type u} [Field K]
   rfl
 
 /-- Values of the quadratic lift lie in the quadratic Lie subalgebra. -/
-@[simp]
 theorem quadraticLift_mem_quadraticLieSubalgebra {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
     [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
