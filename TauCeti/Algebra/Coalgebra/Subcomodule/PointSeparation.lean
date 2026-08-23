@@ -28,7 +28,7 @@ product then identifies `coact m` with a tensor in `N ⊗ C`.
 
 ## Main declarations
 
-* `TauCeti.Submodule.coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange`: pointwise
+* `Submodule.coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange`: pointwise
   stability implies the tensor-product stability condition defining a subcomodule.
 * `TauCeti.Subcomodule.ofEndOfPointStable`: promote a point-stable submodule to a subcomodule.
 
@@ -46,13 +46,13 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti
-
 universe u v w x
 
 noncomputable section
 
 namespace Submodule
+
+open TauCeti
 
 variable {k : Type u} {C : Type v} {M : Type w} {K : Type x}
 variable [Field k] [CommRing C] [Algebra k C] [Coalgebra k C]
@@ -152,6 +152,8 @@ theorem coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange
 
 end Submodule
 
+namespace TauCeti
+
 namespace Subcomodule
 
 section Preservation
@@ -197,7 +199,7 @@ def ofEndOfPointStable (N : Submodule k M)
     Subcomodule k C M :=
   ofSubmodule N
     (fun _ hm ↦
-      TauCeti.Submodule.coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange N hN hm)
+      Submodule.coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange N hN hm)
 
 /-- The point-stable subcomodule has the prescribed underlying submodule. -/
 @[simp]
@@ -209,6 +211,6 @@ theorem ofEndOfPointStable_toSubmodule (N : Submodule k M)
 
 end Subcomodule
 
-end
-
 end TauCeti
+
+end
