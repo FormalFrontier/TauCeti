@@ -177,10 +177,10 @@ end IsHighestWeightVector
 /-- The elements of `L` annihilating a fixed vector `v` form a Lie subalgebra: the bracket is
 linear in its left argument, and the Leibniz rule `lie_lie` closes the set under brackets.
 
-This is the Lie subalgebra that the universal property `TauCeti.positiveNilradical_le_iff`, whose
-target is a Lie subalgebra rather than a submodule, is applied to in
-`TauCeti.isHighestWeightVector_of_forall_rootSpace`. -/
-private def annihilator (v : M) : LieSubalgebra K L where
+This is the Lie subalgebra to which the universal properties
+`TauCeti.positiveNilradical_le_iff` and `TauCeti.negativeNilradical_le_iff` are applied when
+root-space annihilation is extended to a nilradical. -/
+def annihilator (v : M) : LieSubalgebra K L where
   carrier := {x : L | ⁅x, v⁆ = 0}
   add_mem' {x y} hx hy := by
     simp only [Set.mem_ofPred_eq] at hx hy ⊢
@@ -196,7 +196,8 @@ private def annihilator (v : M) : LieSubalgebra K L where
     rw [lie_lie, hx, hy, lie_zero, lie_zero, sub_zero]
 
 omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] in
-private theorem mem_annihilator {v : M} {x : L} :
+/-- Membership in the annihilator of a vector is exactly vanishing of the Lie action. -/
+theorem mem_annihilator {v : M} {x : L} :
     x ∈ (annihilator v : LieSubalgebra K L) ↔ ⁅x, v⁆ = 0 :=
   Iff.rfl
 
