@@ -151,7 +151,7 @@ theorem burauRow_dotProduct_burauCol_of_succ_rev (t : R) {i j : Fin (n - 1)} (h 
   split_ifs <;> first | (exfalso; omega) | ring
 
 /-- Two elementary braids that share no strand have orthogonal rows and columns. -/
-theorem burauRow_dotProduct_burauCol_of_dist (t : R) {i j : Fin (n - 1)}
+theorem burauRow_dotProduct_burauCol_of_not_adjacent (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : burauRow R i ⬝ᵥ burauCol t j = 0 := by
   rw [burauRow_dotProduct, burauCol_apply, burauCol_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
@@ -230,7 +230,8 @@ theorem burauMatrix_mul_comm (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
     burauMatrix t i * burauMatrix t j = burauMatrix t j * burauMatrix t i := by
   rw [burauMatrix_mul_burauMatrix, burauMatrix_mul_burauMatrix,
-    burauRow_dotProduct_burauCol_of_dist t h, burauRow_dotProduct_burauCol_of_dist t h.symm]
+    burauRow_dotProduct_burauCol_of_not_adjacent t h,
+    burauRow_dotProduct_burauCol_of_not_adjacent t h.symm]
   simp only [zero_smul, add_zero]
   abel
 
@@ -255,8 +256,8 @@ theorem burauMatrix_braid (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j ∨
   · exact burauMatrix_braid_of_succ t h
   · exact (burauMatrix_braid_of_succ t h).symm
 
-/-- The inverse of an elementary Burau matrix is again `1` minus a multiple of the same rank-one
-rank-one matrix, with `t` replaced by `t⁻¹`. -/
+/-- The inverse of an elementary Burau matrix is
+`1 - t⁻¹ • vecMulVec (burauCol t i) (burauRow R i)`. -/
 theorem burauMatrix_mul_inv (t : Rˣ) (i : Fin (n - 1)) :
     burauMatrix (t : R) i *
       (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)) = 1 := by
@@ -299,14 +300,9 @@ theorem burauMatrix_ne_one [Nontrivial R] (t : R) (i : Fin (n - 1)) : burauMatri
 
 /-! ### The Burau representation -/
 
-/-- An elementary Burau matrix as an element of the general linear group: the matrix
-`TauCeti.KnotTheory.burauMatrix t i`, whose inverse is again `1` minus a multiple of the same
-rank-one matrix, with `t` replaced by `t⁻¹`.
-
-The definition is `@[expose]`d, so that downstream the underlying matrix and the underlying matrix
-of the inverse are definitionally the two formulas named by `TauCeti.KnotTheory.coe_burauGL` and
-`TauCeti.KnotTheory.coe_inv_burauGL`. -/
-@[expose]
+/-- An elementary Burau matrix as an element of the general linear group: its underlying matrix is
+`TauCeti.KnotTheory.burauMatrix t i`, with inverse
+`1 - t⁻¹ • vecMulVec (burauCol t i) (burauRow R i)`. -/
 def burauGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin n) R where
   val := burauMatrix (t : R) i
   inv := 1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)
@@ -317,14 +313,14 @@ def burauGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin n) R where
 @[simp]
 theorem coe_burauGL (t : Rˣ) (i : Fin (n - 1)) :
     (burauGL t i : Matrix (Fin n) (Fin n) R) = burauMatrix (t : R) i :=
-  rfl
+  (rfl)
 
 /-- The matrix underlying the inverse of `TauCeti.KnotTheory.burauGL`. -/
 @[simp]
 theorem coe_inv_burauGL (t : Rˣ) (i : Fin (n - 1)) :
     ((burauGL t i)⁻¹ : GL (Fin n) R).val =
       1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i) :=
-  rfl
+  (rfl)
 
 /-- **The unreduced Burau representation** of the braid group on `n` strands at a unit `t`, sending
 the elementary braid `sigma i` to `TauCeti.KnotTheory.burauGL t i`. -/
@@ -401,7 +397,7 @@ theorem coe_burau_one (b : BraidGroup n) :
     (burau n (1 : Rˣ) b : Matrix (Fin n) (Fin n) R) =
       Matrix.permMatrixHom (BraidGroup.permHom n b) := by
   rw [burau_one]
-  rfl
+  simp only [MonoidHom.coe_comp, Function.comp_apply, MonoidHom.coe_toHomUnits]
 
 /-! ### Reducibility: the invariant vector and covector -/
 
