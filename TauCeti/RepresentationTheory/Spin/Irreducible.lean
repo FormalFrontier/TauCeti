@@ -46,8 +46,9 @@ The invariant-subspace conclusions for the even Clifford algebra are stated in l
 "an invariant subspace is `⊥` or everything", rather than as `IsSimpleModule`: `S⁺` and `S⁻`
 carry no `Module (even Q)` instance, and manufacturing one would mean a type synonym for a
 statement that reads no better through it. Over a separably closed field, the Spin group linearly
-spans the even Clifford algebra. The same dichotomies therefore prove that the two half-spin
-subrepresentations carry irreducible and inequivalent group representations.
+spans the even Clifford algebra when the quadratic form is nondegenerate and the characteristic
+is not two. The same dichotomies therefore prove that the even half-spin subrepresentation is
+irreducible, that the odd half is irreducible when `P.W ≠ ⊥`, and that the two are inequivalent.
 
 The actions themselves — `TauCeti.spinPlusAction`, `TauCeti.spinMinusAction` and their pair
 `TauCeti.evenSpinActionProd` — are defined in
@@ -82,10 +83,8 @@ central summands, for which the results here are the even-dimensional half.
   way intertwining the two actions, and hence
   `TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`: **the half-spin summands
   are inequivalent.**
-* `CliffordAlgebra.span_spinGroup_eq_even`: **the Spin group linearly spans the even Clifford
-  algebra** over a separably closed field.
 * `TauCeti.isIrreducible_spinPlusSubrep` and `TauCeti.isIrreducible_spinMinusSubrep`: **the two
-  half-spin group representations are irreducible.**
+  half-spin group representations are irreducible**, with `P.W ≠ ⊥` required for the odd half.
 * `TauCeti.isEmpty_equiv_spinPlusSubrep_spinMinusSubrep`: **the two half-spin group
   representations are inequivalent.**
 
@@ -125,9 +124,7 @@ private theorem eq_bot_or_eq_top_of_surjective_action {K : Type u} [Field K]
 private def spinGroupToEven {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} :
     spinGroup Q →* CliffordAlgebra.even Q :=
-    { toFun := fun g => ⟨g, spinGroup.mem_even g.2⟩
-      map_one' := rfl
-      map_mul' := fun _ _ => rfl }
+  Submonoid.inclusion fun _ hx => spinGroup.mem_even hx
 
 private def spinGroupRepresentation {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
@@ -140,13 +137,6 @@ private noncomputable def spinGroupAlgebraHom {K : Type u} [Field K]
     MonoidAlgebra K (spinGroup Q) →ₐ[K] CliffordAlgebra.even Q :=
   MonoidAlgebra.lift K (CliffordAlgebra.even Q) (spinGroup Q) spinGroupToEven
 
-private theorem spinGroupAlgebraHom_of {K : Type u} [Field K]
-    {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
-    (g : spinGroup Q) :
-    spinGroupAlgebraHom (K := K) (Q := Q) (MonoidAlgebra.of K (spinGroup Q) g) =
-      spinGroupToEven g := by
-  exact MonoidAlgebra.lift_of spinGroupToEven g
-
 private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
     [IsSepClosed K] {V : Type v} [AddCommGroup V] [Module K V]
     {Q : QuadraticForm K V} [Invertible (2 : K)] (hQ : Q.Nondegenerate) :
@@ -156,31 +146,26 @@ private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
       Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
     rw [CliffordAlgebra.span_spinGroup_eq_even Q hQ]
     exact x.2
-  have hpre : ∀ z : CliffordAlgebra Q,
-      z ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) →
-        ∃ a : MonoidAlgebra K (spinGroup Q),
-          ((spinGroupAlgebraHom (K := K) (Q := Q) a : CliffordAlgebra.even Q) :
-            CliffordAlgebra Q) = z := by
-    intro z hz
-    induction hz using Submodule.span_induction with
-    | mem z hz =>
-        refine ⟨MonoidAlgebra.of K (spinGroup Q) ⟨z, hz⟩, ?_⟩
-        rw [spinGroupAlgebraHom_of]
-        rfl
-    | zero => exact ⟨0, by simp only [map_zero, Subalgebra.coe_zero]⟩
-    | add y z _ _ hy hz =>
-        obtain ⟨a, ha⟩ := hy
-        obtain ⟨b, hb⟩ := hz
-        exact ⟨a + b, by
-          simpa only [map_add, Subalgebra.coe_add] using
-            congrArg₂ (fun y z : CliffordAlgebra Q => y + z) ha hb⟩
-    | smul r z _ hz =>
-        obtain ⟨a, ha⟩ := hz
-        exact ⟨r • a, by
-          simpa only [map_smul, Subalgebra.coe_smul] using
-            congrArg (fun z : CliffordAlgebra Q => r • z) ha⟩
-  obtain ⟨a, ha⟩ := hpre x hx
-  exact ⟨a, Subtype.ext ha⟩
+  obtain ⟨a, ha⟩ := (Finsupp.mem_span_iff_linearCombination K
+    (spinGroup Q : Set (CliffordAlgebra Q)) x).1 hx
+  refine ⟨(MonoidAlgebra.coeffLinearEquiv K).symm a, Subtype.ext ?_⟩
+  rw [spinGroupAlgebraHom, MonoidAlgebra.lift_apply]
+  have hcoeff : ((MonoidAlgebra.coeffLinearEquiv K).symm a).coeff = a :=
+    (MonoidAlgebra.coeffLinearEquiv K).apply_symm_apply a
+  rw [hcoeff]
+  -- `lift_apply` leaves the finite sum in the even subtype. Expose the subtype map so
+  -- `map_sum` can compare it with the ambient Clifford-algebra linear combination.
+  change (CliffordAlgebra.even Q).subtype (a.sum fun g r => r • spinGroupToEven g) =
+    (x : CliffordAlgebra Q)
+  rw [Finsupp.sum, map_sum]
+  rw [Finsupp.linearCombination_apply, Finsupp.sum] at ha
+  calc
+    ∑ g ∈ a.support, (CliffordAlgebra.even Q).subtype (a g • spinGroupToEven g) =
+        ∑ g ∈ a.support, a g • (g : CliffordAlgebra Q) := by
+      apply Finset.sum_congr rfl
+      intro g _
+      rfl
+    _ = (x : CliffordAlgebra Q) := ha
 
 private theorem asAlgebraHom_spinGroupRepresentation {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
@@ -188,14 +173,10 @@ private theorem asAlgebraHom_spinGroupRepresentation {K : Type u} [Field K]
     (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M) :
     (spinGroupRepresentation F).asAlgebraHom =
       F.comp (spinGroupAlgebraHom (K := K) (Q := Q)) := by
-  refine AlgHom.ext fun a => ?_
-  induction a using MonoidAlgebra.induction_on with
-  | of g =>
-      rw [Representation.asAlgebraHom_of, AlgHom.comp_apply]
-      rw [spinGroupAlgebraHom_of]
-      rfl
-  | add x y hx hy => rw [map_add, map_add, hx, hy]
-  | smul r x hx => rw [map_smul, map_smul, hx]
+  apply MonoidAlgebra.algHom_ext
+  · intro g
+    simp [spinGroupRepresentation, spinGroupAlgebraHom]
+  · ext
 
 private theorem isIrreducible_spinGroupRepresentation {K : Type u} [Field K]
     [IsSepClosed K] {V : Type v} [AddCommGroup V] [Module K V]
@@ -217,14 +198,15 @@ private theorem intertwines_even_of_intertwines_spinGroup {K : Type u} [Field K]
       φ (F ⟨g, spinGroup.mem_even g.2⟩ m) = G ⟨g, spinGroup.mem_even g.2⟩ (φ m))
     (x : CliffordAlgebra.even Q) (m : M) : φ (F x m) = G x (φ m) := by
   obtain ⟨a, rfl⟩ := spinGroupAlgebraHom_surjective hQ x
-  induction a using MonoidAlgebra.induction_on with
-  | of g =>
-      rw [spinGroupAlgebraHom_of]
-      convert hφ g m using 1 <;> rfl
-  | add y z hy hz =>
-      simp only [map_add, LinearMap.add_apply, φ.map_add, hy, hz]
-  | smul r z hz =>
-      simp only [map_smul, LinearMap.smul_apply, φ.map_smul, hz]
+  let φ' : (spinGroupRepresentation F).IntertwiningMap (spinGroupRepresentation G) :=
+    ⟨φ, fun g => LinearMap.ext fun m => hφ g m⟩
+  have h := (Representation.IntertwiningMap.equivLinearMapAsModule
+    (spinGroupRepresentation F) (spinGroupRepresentation G) φ').map_smul' a m
+  -- The module equivalence is definitionally the identity on carriers. Expose the algebra
+  -- actions so the two `asAlgebraHom_spinGroupRepresentation` rewrites can be applied.
+  change φ ((spinGroupRepresentation F).asAlgebraHom a m) =
+    (spinGroupRepresentation G).asAlgebraHom a (φ m) at h
+  simpa only [asAlgebraHom_spinGroupRepresentation, AlgHom.comp_apply] using h
 
 /-! ### The spinor module is a simple Clifford module
 
@@ -340,11 +322,11 @@ variable {K : Type u} [Field K] [IsSepClosed K]
   {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
   [Invertible (2 : K)] [FiniteDimensional K V] (P : SpinPolarizationData Q)
 
-/-- **The even half-spin representation of the Spin group is irreducible.** The Spin group spans
-the even Clifford algebra, whose action on the even half-spin summand is the full endomorphism
-algebra. -/
-theorem isIrreducible_spinPlusSubrep (hQ : Q.Nondegenerate) (hline : P.line = ⊥) :
+/-- **The even half-spin representation of the Spin group is irreducible** for polarization data
+without a line remainder. -/
+theorem isIrreducible_spinPlusSubrep (hline : P.line = ⊥) :
     (spinPlusSubrep P hline).toRepresentation.IsIrreducible := by
+  have hQ := P.nondegenerate_of_line_eq_bot hline
   let _ : Nontrivial (spinPlus Q P) := nontrivial_spinPlus P
   have hρ : (spinGroupRepresentation (spinPlusAction Q P hline)).IsIrreducible :=
     isIrreducible_spinGroupRepresentation hQ (spinPlusAction Q P hline)
@@ -358,8 +340,9 @@ theorem isIrreducible_spinPlusSubrep (hQ : Q.Nondegenerate) (hline : P.line = �
 
 /-- **The odd half-spin representation of the Spin group is irreducible** when the odd summand is
 nonzero. -/
-theorem isIrreducible_spinMinusSubrep (hQ : Q.Nondegenerate) (hline : P.line = ⊥)
+theorem isIrreducible_spinMinusSubrep (hline : P.line = ⊥)
     (hW : P.W ≠ ⊥) : (spinMinusSubrep P hline).toRepresentation.IsIrreducible := by
+  have hQ := P.nondegenerate_of_line_eq_bot hline
   let _ : Nontrivial (spinMinus Q P) := nontrivial_spinMinus P hW
   have hρ : (spinGroupRepresentation (spinMinusAction Q P hline)).IsIrreducible :=
     isIrreducible_spinGroupRepresentation hQ (spinMinusAction Q P hline)
@@ -373,9 +356,10 @@ theorem isIrreducible_spinMinusSubrep (hQ : Q.Nondegenerate) (hline : P.line = �
 
 /-- **The two half-spin representations of the Spin group are inequivalent.** -/
 theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep
-    (hQ : Q.Nondegenerate) (hline : P.line = ⊥) :
+    (hline : P.line = ⊥) :
     IsEmpty ((spinPlusSubrep P hline).toRepresentation.Equiv
       (spinMinusSubrep P hline).toRepresentation) := by
+  have hQ := P.nondegenerate_of_line_eq_bot hline
   refine ⟨fun e => ?_⟩
   let ePlus : spinPlus Q P ≃ₗ[K] (spinPlusSubrep P hline).toSubmodule :=
     LinearEquiv.ofEq _ _ (toSubmodule_spinPlusSubrep P hline).symm
