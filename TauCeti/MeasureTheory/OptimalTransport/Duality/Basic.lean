@@ -132,12 +132,13 @@ theorem kantorovichDualValue_zero :
     kantorovichDualValue μ ν (fun _ ↦ 0) (fun _ ↦ 0) = 0 := by
   simp [kantorovichDualValue]
 
-/-- Opposite additive shifts do not change the dual value when the two finite marginals have the
-same mass. -/
-theorem kantorovichDualValue_add_const_sub_const [IsFiniteMeasure μ] [IsFiniteMeasure ν]
+/-- Opposite additive shifts do not change the dual value when the first marginal is finite and
+the two marginals have the same mass. -/
+theorem kantorovichDualValue_add_const_sub_const [IsFiniteMeasure μ]
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) (hmass : μ Set.univ = ν Set.univ) (a : ℝ) :
     kantorovichDualValue μ ν (fun x ↦ φ x + a) (fun y ↦ ψ y - a) =
       kantorovichDualValue μ ν φ ψ := by
+  let _ : IsFiniteMeasure ν := ⟨by rw [← hmass]; exact IsFiniteMeasure.measure_univ_lt_top⟩
   rw [kantorovichDualValue, kantorovichDualValue, integral_add hφ (integrable_const a),
     integral_sub hψ (integrable_const a), integral_const, integral_const]
   have hmassReal : μ.real Set.univ = ν.real Set.univ := congrArg ENNReal.toReal hmass
