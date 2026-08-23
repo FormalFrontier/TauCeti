@@ -18,15 +18,15 @@ on `Ω × V`, the kernel coordinate first, which is the order some product semig
 Everything Mathlib proves about `⊗ₘ` transports across the swap, and this file records the
 transported statements that are awkward to reconstruct at each use: the mass of a measurable
 rectangle, the integral of a general function, the second marginal of a Markov composition, and
-— for a standard Borel kernel target — the converse, that *every* finite measure on `Ω × V` is
-such a composition over its second marginal.
+— for a nonempty standard Borel kernel target — the converse, that *every* finite measure on
+`Ω × V` is such a composition over its second marginal.
 
 ## Main declarations
 
 * `TauCeti.swapCompProd`: the measure `(μ ⊗ₘ κ).map Prod.swap` on `Ω × V`, with
   `TauCeti.swapCompProd_prod` and `TauCeti.lintegral_swapCompProd` evaluating it.
-* `TauCeti.exists_eq_swapCompProd`: every finite measure whose first coordinate is standard
-  Borel is a `TauCeti.swapCompProd` over its second marginal, by disintegration.
+* `TauCeti.exists_eq_swapCompProd`: every finite measure whose first coordinate is nonempty
+  standard Borel is a `TauCeti.swapCompProd` over its second marginal, by disintegration.
 -/
 
 public section
@@ -82,7 +82,7 @@ theorem snd_swapCompProd (μ : Measure V) [SFinite μ] (κ : Kernel V Ω) [IsMar
 
 /-- **Every finite measure on `Ω × V` is assembled from its second marginal and a Markov
 kernel.** The kernel is the conditional distribution of the first coordinate given the second,
-which exists because `Ω` is a standard Borel space. -/
+which exists because `Ω` is a nonempty standard Borel space. -/
 theorem exists_eq_swapCompProd [StandardBorelSpace Ω] [Nonempty Ω]
     (μ : Measure (Ω × V)) [IsFiniteMeasure μ] :
     ∃ κ : Kernel V Ω, IsMarkovKernel κ ∧ μ = swapCompProd μ.snd κ := by
