@@ -39,13 +39,14 @@ vanishing of `CovariantDerivative.difference` rather than equality of bundled co
 * `CovariantDerivative.koszulHom`: the Koszul expression of a section differentiable at `x`, as a
   continuous bilinear form on `T_x M`.
 * `CovariantDerivative.leviCivitaFun` and `CovariantDerivative.leviCivita`: the Levi-Civita
-  connection of the canonical Riemannian bundle instance, unbundled and bundled.
-* `CovariantDerivative.two_inner_leviCivitaFun_eq_koszul`: it obeys the Koszul formula.
+  connection of the supplied Riemannian bundle instance, unbundled and bundled.
+* `CovariantDerivative.two_inner_leviCivita_eq_koszul`: it obeys the Koszul formula.
 * `CovariantDerivative.isLeviCivita_leviCivita`: it is torsion free and metric.
 * `CovariantDerivative.exists_isLeviCivita` and
-  `CovariantDerivative.existsUnique_isLeviCivita`: **existence and uniqueness of the Levi-Civita
-  connection**, the second in the form "a Levi-Civita connection exists, and every Levi-Civita
-  connection differs from it by the zero endomorphism-valued one-form".
+  `CovariantDerivative.exists_isLeviCivita_and_forall_difference_eq_zero`: **existence and
+  uniqueness of the Levi-Civita connection**, the second in the form "a Levi-Civita connection
+  exists, and every Levi-Civita connection differs from it by the zero endomorphism-valued
+  one-form".
 
 ## References
 
@@ -92,7 +93,7 @@ theorem koszulHom_apply (hY : MDiffAt (T% Y) x) (hX : MDiffAt (T% X) x)
 /-! ### The connection -/
 
 open scoped Classical in
-/-- The Levi-Civita connection of the canonical Riemannian bundle instance, as a function on
+/-- The Levi-Civita connection of the supplied Riemannian bundle instance, as a function on
 sections. At a section `Y` differentiable at `x` its value is the vector representing half the
 Koszul form, in accordance with the Koszul formula `2 ⟪∇_X Y, Z⟫ = koszul I X Y Z`; elsewhere it is
 the junk value `0`, which the covariant-derivative axioms never see. -/
@@ -103,8 +104,8 @@ def leviCivitaFun (Y : Π y : M, TangentSpace I y) (x : M) :
       koszulHom Y hY)
   else 0
 
-/-- **The Koszul formula** for the connection under construction. -/
-theorem two_inner_leviCivitaFun_eq_koszul (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+private theorem two_inner_leviCivitaFun_eq_koszul (hX : MDiffAt (T% X) x)
+    (hY : MDiffAt (T% Y) x)
     (hZ : MDiffAt (T% Z) x) :
     2 * inner ℝ (leviCivitaFun Y x (X x)) (Z x) = koszul I X Y Z x := by
   rw [leviCivitaFun, dite_eq_left hY]
@@ -149,15 +150,21 @@ theorem isCovariantDerivativeOn_leviCivitaFun :
     linear_combination h₁ / 2 - (g x / 2) * h₂ + h₃ / 2
 
 variable (I M) in
-/-- **The Levi-Civita connection** of the canonical Riemannian bundle instance: the torsion-free
+/-- **The Levi-Civita connection** of the supplied Riemannian bundle instance: the torsion-free
 covariant derivative on the tangent bundle which is compatible with the metric. -/
 def leviCivita : CovariantDerivative I E (fun x : M ↦ TangentSpace I x) where
   toFun := leviCivitaFun
   isCovariantDerivativeOnUniv := isCovariantDerivativeOn_leviCivitaFun
 
-@[simp]
-theorem leviCivita_apply (Y : Π y : M, TangentSpace I y) (x : M) :
-    leviCivita I M Y x = leviCivitaFun Y x := (rfl)
+private theorem leviCivita_apply (Y : Π y : M, TangentSpace I y) (x : M) :
+    leviCivita I M Y x = leviCivitaFun Y x := rfl
+
+/-- **The Koszul formula** for the Levi-Civita connection. -/
+theorem two_inner_leviCivita_eq_koszul (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hZ : MDiffAt (T% Z) x) :
+    2 * inner ℝ (leviCivita I M Y x (X x)) (Z x) = koszul I X Y Z x := by
+  rw [leviCivita_apply]
+  exact two_inner_leviCivitaFun_eq_koszul hX hY hZ
 
 /-! ### Existence and uniqueness -/
 
@@ -165,8 +172,7 @@ theorem leviCivita_apply (Y : Π y : M, TangentSpace I y) (x : M) :
 torsion free and compatible with the metric. -/
 theorem isLeviCivita_leviCivita : IsLeviCivita (leviCivita I M) := by
   refine isLeviCivita_iff.mpr fun x X Y Z hX hY hZ ↦ ?_
-  rw [leviCivita_apply]
-  exact two_inner_leviCivitaFun_eq_koszul hX hY hZ
+  exact two_inner_leviCivita_eq_koszul hX hY hZ
 
 variable (I M) in
 /-- **Existence of the Levi-Civita connection**, in existential form. -/
@@ -174,29 +180,16 @@ theorem exists_isLeviCivita :
     ∃ cov : CovariantDerivative I E (fun x : M ↦ TangentSpace I x), IsLeviCivita cov :=
   ⟨leviCivita I M, isLeviCivita_leviCivita⟩
 
-variable {cov : CovariantDerivative I E (fun x : M ↦ TangentSpace I x)}
-
-/-- Every Levi-Civita connection agrees with the canonical one on the sections which are
-differentiable at the point under consideration. -/
-theorem IsLeviCivita.eq_leviCivita (h : IsLeviCivita cov) (hY : MDiffAt (T% Y) x) :
-    cov Y x = leviCivita I M Y x :=
-  h.unique isLeviCivita_leviCivita hY
-
-/-- Every Levi-Civita connection differs from the canonical one by the zero endomorphism-valued
-one-form. -/
-theorem IsLeviCivita.difference_leviCivita_eq_zero (h : IsLeviCivita cov) :
-    cov.difference (leviCivita I M) = 0 :=
-  h.difference_eq_zero isLeviCivita_leviCivita
-
 variable (I M) in
 /-- **Existence and uniqueness of the Levi-Civita connection**: a torsion-free metric covariant
 derivative on the tangent bundle exists, and every one differs from it by the zero
 endomorphism-valued one-form. Uniqueness cannot be phrased as equality of the bundled connections,
 since a covariant derivative is unconstrained at sections which are nowhere differentiable. -/
-theorem existsUnique_isLeviCivita :
+theorem exists_isLeviCivita_and_forall_difference_eq_zero :
     ∃ cov : CovariantDerivative I E (fun x : M ↦ TangentSpace I x), IsLeviCivita cov ∧
       ∀ cov' : CovariantDerivative I E (fun x : M ↦ TangentSpace I x), IsLeviCivita cov' →
         cov'.difference cov = 0 :=
-  ⟨leviCivita I M, isLeviCivita_leviCivita, fun _ h ↦ h.difference_leviCivita_eq_zero⟩
+  ⟨leviCivita I M, isLeviCivita_leviCivita,
+    fun _ h ↦ h.difference_eq_zero isLeviCivita_leviCivita⟩
 
 end CovariantDerivative
