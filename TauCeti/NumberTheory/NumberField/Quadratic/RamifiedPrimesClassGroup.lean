@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.NumberField.PrimeIdeal
+public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Basic
 public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 
 /-!
@@ -14,7 +15,9 @@ public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 For a degree-two number field `K`, the unique prime `𝔭` of `𝓞 K` above a ramified rational prime `p`
 satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal `(p)`, so its class `[𝔭]` in
 `Cl(𝓞 K)` squares to `1`: it is an explicit element of the 2-torsion `Cl(𝓞 K)[2]`, the object
-measured by `card_elementaryTwoQuotient_eq_card_twoTorsion`.
+measured by `card_elementaryTwoQuotient_eq_card_twoTorsion`. The generator `p` of that principal
+ideal is a *positive* rational integer, hence totally positive, so the same computation bounds the
+order of `[𝔭]⁺` in the narrow class group `Cl⁺(K)`.
 
 Any ring automorphism of `𝓞 K` fixes `𝔭` (`map_eq_self_of_mem_ramifiedPrimes`); applied to quadratic
 conjugation this says `𝔭` is an *ambiguous* ideal, so the ramified primes furnish *individual*
@@ -29,6 +32,7 @@ classical genus theory this result underlies.
 
 * `NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
   is 2-torsion.
+* `NumberField.NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes`: so is its narrow class.
 -/
 
 public section
@@ -56,5 +60,27 @@ theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
   rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2, ClassGroup.mk0_eq_one_iff,
     ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
   exact ⟨_, rfl⟩
+
+/-- **The narrow class of a ramified prime is 2-torsion.** In a degree-two number field, the prime
+`𝔭` above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, and the rational integer `p` is
+positive, hence totally positive; so the narrow class of `𝔭` squares to `1` in `Cl⁺(K)`. -/
+theorem NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
+    {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
+    [𝔭.LiesOver (span {(p : ℤ)})] :
+    NarrowClassGroup.mk0 ⟨𝔭,
+      mem_nonZeroDivisors_of_prime_of_liesOver (prime_of_mem_ramifiedPrimes hmem) 𝔭⟩ ^ 2 =
+      1 := by
+  have hprime := prime_of_mem_ramifiedPrimes hmem
+  have hnzd := mem_nonZeroDivisors_of_prime_of_liesOver hprime 𝔭
+  have hp0 : (algebraMap ℤ (𝓞 K) (p : ℤ)) ≠ 0 := by
+    simpa using fun h ↦ hprime.ne_zero (by exact_mod_cast h)
+  -- `𝔭² = p 𝓞 K = (p)`, the principal ideal on the positive rational integer `p`. This is the
+  -- underlying ideal of the nonzero-ideal wrapper `⟨𝔭 ^ 2, _⟩` that `mk0` is applied to; no
+  -- rewrite can reach it inside that wrapper, since the membership proof depends on `𝔭 ^ 2`.
+  have hspan : 𝔭 ^ 2 = span {algebraMap ℤ (𝓞 K) (p : ℤ)} := by
+    rw [← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
+  rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2]
+  refine NarrowClassGroup.mk0_eq_one_of_isTotallyPositive hp0 ?_ hspan
+  simpa using isTotallyPositive_intCast (K := K) (n := (p : ℤ)) (by exact_mod_cast hprime.pos)
 
 end NumberField

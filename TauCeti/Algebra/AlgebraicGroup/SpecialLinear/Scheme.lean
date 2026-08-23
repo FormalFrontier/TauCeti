@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Kernel
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The special linear group scheme
@@ -105,24 +106,14 @@ instance isClosedImmersion_groupSchemeι :
   let e1 := (eqToHom (groupScheme_def R n)).hom.hom.left
   let c := (CommHopfAlgCat.kernelSpecι (GeneralLinear.determinantCoordinateMap R n)).hom.hom.left
   let e2 := (eqToHom (GeneralLinear.groupScheme_def R n).symm).hom.hom.left
-  have he1 : IsIso e1 :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R n)))).isIso_hom
-  have he2 : IsIso e2 :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (GeneralLinear.groupScheme_def R n).symm))).isIso_hom
   have hc : AlgebraicGeometry.IsClosedImmersion c := by
     dsimp only [c]
     rw [CommHopfAlgCat.kernelSpecι_def]
     infer_instance
   have hec : AlgebraicGeometry.IsClosedImmersion (e1 ≫ c) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      Scheme _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ e1 c he1).2 hc
+    (MorphismProperty.cancel_left_of_respectsIso _ e1 c).2 hc
   have hece : AlgebraicGeometry.IsClosedImmersion ((e1 ≫ c) ≫ e2) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      Scheme _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ (e1 ≫ c) e2 he2).2 hec
+    (MorphismProperty.cancel_right_of_respectsIso _ (e1 ≫ c) e2).2 hec
   rw [groupSchemeι_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   exact hece

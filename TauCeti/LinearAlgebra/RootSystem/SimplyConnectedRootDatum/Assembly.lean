@@ -13,8 +13,8 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.Basic
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.Basic
 
 public section
 

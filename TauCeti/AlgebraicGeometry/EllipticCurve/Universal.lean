@@ -47,6 +47,10 @@ polynomial) with distinguished point `(X,Y)`.
   `Universal.Ring`, so it transports identities over `curveRing`, not over `pointedCurve`, which
   lives over `Universal.Field`. An identity stated there needs its denominators cleared into
   `Universal.Ring` first.
+* `WeierstrassCurve.Universal.map_polyToField`: `curvePoly` pushed along `polyToField` is
+  `pointedCurve`. Named rather than left definitional, because the module system does not expose
+  `polyToField`'s body; this is what lands a Jacobian formula transported from `Poly` on
+  `pointedCurve` rather than on an unreduced base change.
 * `WeierstrassCurve.Universal.ringHom_ext`: two homomorphisms out of `Universal.Ring` agreeing on
   the coefficient ring and on the two distinguished coordinates are equal — the uniqueness half of
   the universal property, since those generate.
@@ -85,7 +89,9 @@ their lemmas), and the specialization API (`specialize`, `polyEval`, `ringEval` 
 compatibility lemmas).
 
 Three groups are **not** simple ports, and are listed among the adaptations below: `ringHom_ext`
-is new; the `CharZero Universal.Ring` instance **replaces** the source's `Poly.two_ne_zero` and
+is new, and so is `map_polyToField` — upstream that identity is definitional and is taken as `rfl`
+inside the `ZSMul.lean` proofs that need it, which this repository's unexposed `polyToField` makes
+impossible; the `CharZero Universal.Ring` instance **replaces** the source's `Poly.two_ne_zero` and
 `Field.two_ne_zero` rather than porting them, and carries the field case with it — Mathlib derives
 `CharZero Universal.Field` from it through `IsFractionRing.charZero`, so no second instance is
 declared. That derivation is why `Mathlib.Algebra.CharP.Algebra` is imported: without it
@@ -321,6 +327,21 @@ abbrev curvePoly : WeierstrassCurve Poly := curve.baseChange Poly
 /-- The base change of the universal curve from `ℤ[A₁,⋯,A₆]` to `ℤ[A₁,⋯,A₆,X,Y]/⟨P⟩`
 (the universal ring), where `P` is the Weierstrass polynomial. -/
 abbrev curveRing : WeierstrassCurve Universal.Ring := curve.baseChange Universal.Ring
+
+/-- Pushing `curvePoly` along `polyToField` gives `pointedCurve`: the base change of the universal
+curve to `ℤ[A₁,⋯,A₆,X,Y]` and its base change to the universal field agree along `polyToField`.
+
+The **curve-dependent** Jacobian transports state their left-hand side over `W.map f`, so pushing
+one from `Poly` to `Universal.Field` produces `curvePoly.map polyToField` and needs this lemma to
+land on `pointedCurve`: `map_dblZ`, `map_dblXYZ`, `map_addX`, `map_addY`, `map_addXYZ`. `map_addZ`
+is **not** among them — `addZ` takes no curve argument, so its transport is curve-free. -/
+-- Upstream this identity is `rfl` and is never named. It has to be named here — not because it
+-- fails to be definitional in this file, where `algebraMap_field_eq_comp` is itself proved
+-- `(rfl)`, but because `polyToField`'s body is unexposed, so no consumer outside this file can
+-- compare the two coefficient families by unfolding. The proof is `congrArg` of that equation.
+@[simp] lemma map_polyToField : curvePoly.map polyToField = pointedCurve :=
+  (congrArg (WeierstrassCurve.map curve) algebraMap_field_eq_comp).symm
+
 end Universal
 
 open Universal

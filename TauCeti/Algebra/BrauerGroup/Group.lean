@@ -82,8 +82,9 @@ the divisibility `orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` to the equality `= 2
 `BrauerGroup` under base change is not taken here either, but it is on record one file up:
 `TauCeti.BrauerGroup.baseChange` in `TauCeti/Algebra/BrauerGroup/BaseChange.lean`, whose kernel is
 described there as the classes that become Brauer trivial over the extension
-(`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff`). Identifying that kernel with the classes *split*
-by the extension is the converse above again, one field up, and is not proved anywhere yet.
+(`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff`). The converse above, one field up, is assembled in
+`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff_isSplittingField`, which identifies that kernel with
+the classes *split* by the extension.
 
 ## References
 
