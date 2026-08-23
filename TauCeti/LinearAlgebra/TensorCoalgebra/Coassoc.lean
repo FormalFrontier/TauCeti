@@ -1,0 +1,208 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.LinearAlgebra.TensorProduct.Associator
+public import Mathlib.Order.Interval.Finset.Nat
+public import TauCeti.LinearAlgebra.TensorCoalgebra.Basic
+
+/-!
+# Reduced deconcatenation is coassociative
+
+`TauCeti.ReducedTensorWords.deconcatenation` cuts a nonempty tensor word at every nontrivial
+position.  This file proves that it is coassociative, so that reduced tensor words carry the
+structure of a (non-counital) coalgebra: cutting twice is the same operation whether the second
+cut is made in the left or in the right factor of the first one, both sides being the sum over
+all pairs of nested cuts.
+
+The bookkeeping runs through `TauCeti.ReducedTensorWords.subword`, the length-`b` block of a
+tuple starting at position `a`.  Storing the block length as a plain natural-number argument,
+rather than as the tensor-power index it names, keeps every reindexing of the sums below an
+ordinary computation with natural numbers.  In these terms deconcatenation is
+`Δ (subword x a b) = ∑ c, subword x a c ⊗ subword x (a + c) (b - c)`, and coassociativity becomes
+`Finset.sum_comm` after both double sums have been extended over the same square of cut positions.
+
+## Main definitions
+
+* `TauCeti.ReducedTensorWords.subword`: the tensor word cut out of a tuple by a starting position
+  and a length.
+
+## Main results
+
+* `TauCeti.ReducedTensorWords.deconcatenation_subword`: deconcatenation of a block is the sum over
+  its nontrivial cuts.
+* `TauCeti.ReducedTensorWords.deconcatenation_coassoc`: reduced deconcatenation is coassociative.
+
+## References
+
+* E. Getzler and J. D. S. Jones, *A-infinity algebras and the cyclic bar complex*, Sections 1--2.
+* B. Keller, *Introduction to A-infinity algebras and modules*, Sections 3.1 and 3.6.
+-/
+
+public section
+
+open scoped BigOperators DirectSum TensorProduct
+
+universe uR uM
+
+namespace TauCeti
+
+namespace ReducedTensorWords
+
+variable (R : Type uR) {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- The tensor word `x a ⊗ ⋯ ⊗ x (a + b - 1)`, of length `b` and starting at position `a`.
+
+It is zero when the requested block is empty or runs past the end of `x`; the intended range of
+the definition is `0 < b` and `a + b ≤ n`. -/
+noncomputable def subword {n : ℕ} (x : Fin n → M) (a b : ℕ) : ReducedTensorWords R M :=
+  if h : 0 < b ∧ a + b ≤ n then
+    of R M ⟨b, h.1⟩ (PiTensorProduct.tprod R fun j : Fin b ↦ x ⟨a + j.1, by have := j.isLt; omega⟩)
+  else 0
+
+/-- On its intended range, a subword is the pure tensor of the selected block of letters. -/
+theorem subword_eq_of_tprod {n : ℕ} (x : Fin n → M) {a b : ℕ} (hb : 0 < b) (hab : a + b ≤ n) :
+    subword R x a b =
+      of R M ⟨b, hb⟩
+        (PiTensorProduct.tprod R fun j : Fin b ↦ x ⟨a + j.1, by have := j.isLt; omega⟩) := by
+  rw [subword, dite_eq_left ⟨hb, hab⟩]
+
+@[simp]
+theorem subword_length_zero {n : ℕ} (x : Fin n → M) (a : ℕ) : subword R x a 0 = 0 := by
+  simp [subword]
+
+/-- A block running past the end of the tuple is zero. -/
+theorem subword_eq_zero_of_lt {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab : n < a + b) :
+    subword R x a b = 0 := by
+  rw [subword, dite_eq_right (by omega)]
+
+/-- A whole tuple is the subword of full length starting at its beginning. -/
+theorem of_tprod_eq_subword {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
+    of R M ⟨n, hn⟩ (PiTensorProduct.tprod R x) = subword R x 0 n := by
+  rw [subword_eq_of_tprod R x hn (by omega)]
+  congr 1
+  exact congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm)
+
+/-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
+theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab : a + b ≤ n) :
+    deconcatenation R M (subword R x a b) =
+      ∑ c ∈ Finset.Ioo 0 b, subword R x a c ⊗ₜ[R] subword R x (a + c) (b - c) := by
+  rcases Nat.eq_zero_or_pos b with hb | hb
+  · subst hb
+    simp
+  rw [subword_eq_of_tprod R x hb hab, deconcatenation_of, deconcatenationComponent_tprod]
+  dsimp only
+  refine Finset.sum_bij' (fun i _ ↦ i.1 + 1) (fun c hc ↦ ⟨c - 1, by
+      simp only [Finset.mem_Ioo] at hc; omega⟩) ?_ ?_ ?_ ?_ ?_
+  · intro i _
+    have := i.isLt
+    simp only [Finset.mem_Ioo]
+    omega
+  · intro c _
+    exact Finset.mem_univ _
+  · intro i _
+    ext
+    simp
+  · intro c hc
+    simp only [Finset.mem_Ioo] at hc
+    dsimp only
+    omega
+  · intro i _
+    have hi := i.isLt
+    rw [subword_eq_of_tprod R x (a := a) (b := i.1 + 1) (by omega) (by omega),
+      subword_eq_of_tprod R x (a := a + (i.1 + 1)) (b := b - (i.1 + 1)) (by omega) (by omega)]
+    congr 1
+    refine congrArg _ (congrArg _ (funext fun j ↦ congrArg x (Fin.ext ?_)))
+    dsimp only
+    omega
+
+variable (M)
+
+/-- Reduced deconcatenation is coassociative: cutting a tensor word twice gives the same sum of
+triples of blocks whether the second cut is taken in the left or in the right factor of the
+first. -/
+theorem deconcatenation_coassoc :
+    (TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
+          (ReducedTensorWords R M)).toLinearMap ∘ₗ
+        LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M) ∘ₗ
+          deconcatenation R M =
+      LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M) ∘ₗ deconcatenation R M := by
+  have key : ∀ (n : ℕ) (hn : 0 < n) (y : Fin n → M),
+      TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
+          (ReducedTensorWords R M)
+          (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
+            (deconcatenation R M (of R M ⟨n, hn⟩ (PiTensorProduct.tprod R y)))) =
+        LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
+          (deconcatenation R M (of R M ⟨n, hn⟩ (PiTensorProduct.tprod R y))) := by
+    intro n hn y
+    rw [of_tprod_eq_subword R hn y, deconcatenation_subword R y (a := 0) (b := n) (by omega)]
+    simp only [Nat.zero_add, map_sum]
+    -- Cutting the left factor again, then extending the inner sum by vanishing terms.
+    have hL : ∀ c ∈ Finset.Ioo 0 n,
+        TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
+            (ReducedTensorWords R M)
+            (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
+              (subword R y 0 c ⊗ₜ[R] subword R y c (n - c))) =
+          ∑ d ∈ Finset.Ioo 0 n,
+            subword R y 0 d ⊗ₜ[R] (subword R y d (c - d) ⊗ₜ[R] subword R y c (n - c)) := by
+      intro c hc
+      simp only [Finset.mem_Ioo] at hc
+      rw [LinearMap.rTensor_tmul, deconcatenation_subword R y (a := 0) (b := c) (by omega),
+        TensorProduct.sum_tmul, map_sum]
+      simp only [Nat.zero_add, TensorProduct.assoc_tmul]
+      refine Finset.sum_subset (Finset.Ioo_subset_Ioo le_rfl (by omega)) ?_
+      intro d hd hd'
+      simp only [Finset.mem_Ioo] at hd hd'
+      have hcd : c - d = 0 := by omega
+      rw [hcd, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
+    -- Cutting the right factor again, reindexing by the absolute position of the second cut.
+    have hR : ∀ c ∈ Finset.Ioo 0 n,
+        LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
+            (subword R y 0 c ⊗ₜ[R] subword R y c (n - c)) =
+          ∑ q ∈ Finset.Ioo 0 n,
+            subword R y 0 c ⊗ₜ[R] (subword R y c (q - c) ⊗ₜ[R] subword R y q (n - q)) := by
+      intro c hc
+      simp only [Finset.mem_Ioo] at hc
+      rw [LinearMap.lTensor_tmul, deconcatenation_subword R y (a := c) (b := n - c) (by omega),
+        TensorProduct.tmul_sum]
+      rw [Finset.sum_nbij' (t := Finset.Ioo c n) (fun e ↦ c + e) (fun q ↦ q - c)
+        (g := fun q ↦ subword R y 0 c ⊗ₜ[R]
+          (subword R y c (q - c) ⊗ₜ[R] subword R y q (n - q)))]
+      · refine Finset.sum_subset (Finset.Ioo_subset_Ioo (Nat.zero_le c) le_rfl) ?_
+        intro q hq hq'
+        simp only [Finset.mem_Ioo] at hq hq'
+        have hqc : q - c = 0 := by omega
+        rw [hqc, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
+      · intro e he
+        simp only [Finset.mem_Ioo] at he ⊢
+        omega
+      · intro q hq
+        simp only [Finset.mem_Ioo] at hq ⊢
+        omega
+      · intro e _
+        omega
+      · intro q hq
+        simp only [Finset.mem_Ioo] at hq
+        omega
+      · intro e he
+        simp only [Finset.mem_Ioo] at he
+        have h1 : c + e - c = e := by omega
+        have h2 : n - (c + e) = n - c - e := by omega
+        rw [h1, h2]
+    rw [Finset.sum_congr rfl hL, Finset.sum_congr rfl hR]
+    exact Finset.sum_comm
+  refine linearMap_ext R M fun k ↦ LinearMap.ext fun z ↦ ?_
+  induction z using PiTensorProduct.induction_on with
+  | smul_tprod r y =>
+      simp only [LinearMap.comp_apply, map_smul, LinearEquiv.coe_coe]
+      exact congrArg _ (key k.1 k.2 y)
+  | add u v hu hv =>
+      simp only [LinearMap.comp_apply, map_add] at hu hv ⊢
+      rw [hu, hv]
+
+end ReducedTensorWords
+
+end TauCeti
