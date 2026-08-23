@@ -167,12 +167,15 @@ private theorem cauchyMeasure_apply_eq_integral (x₀ : ℝ) (hγ : γ ≠ 0)
     {s : Set ℝ} (hs : MeasurableSet s) :
     cauchyMeasure x₀ γ s = ENNReal.ofReal (∫ x in s, cauchyPDFReal x₀ γ x) := by
   rw [cauchyMeasure_of_scale_ne_zero x₀ hγ]
+  -- `cauchyPDF` is the `ofReal` lift of `cauchyPDFReal`; exposing it lets the
+  -- with-density integral API apply.
   change (volume.withDensity (fun x ↦ ENNReal.ofReal (cauchyPDFReal x₀ γ x))) s = _
   rw [withDensity_apply _ hs,
     ← ofReal_integral_eq_lintegral_ofReal (integrable_cauchyPDFReal x₀).integrableOn
       (.of_forall fun x ↦ (cauchyPDF_pos x₀ hγ x).le)]
 
 /-- Translating a Cauchy distribution changes its location parameter by the same amount. -/
+@[simp]
 theorem cauchyMeasure_map_add_const (x₀ y : ℝ) (γ : ℝ≥0) :
     (cauchyMeasure x₀ γ).map (· + y) = cauchyMeasure (x₀ + y) γ := by
   by_cases hγ : γ = 0
@@ -180,9 +183,11 @@ theorem cauchyMeasure_map_add_const (x₀ y : ℝ) (γ : ℝ≥0) :
     simp [cauchyMeasure_zero_scale]
   let e : ℝ ≃ᵐ ℝ := (Homeomorph.addRight y).symm.toMeasurableEquiv
   have he' : ∀ x, HasDerivAt e ((fun _ ↦ 1) x) x := fun x ↦ (hasDerivAt_id x).sub_const y
+  -- By construction, `e.symm` is the translation `fun x ↦ x + y`.
   change (cauchyMeasure x₀ γ).map e.symm = cauchyMeasure (x₀ + y) γ
   ext s hs
   rw [cauchyMeasure_of_scale_ne_zero x₀ hγ]
+  -- As above, unfold the density wrapper to use the Jacobian formula stated for `ofReal`.
   change (volume.withDensity (fun x ↦ ENNReal.ofReal (cauchyPDFReal x₀ γ x))).map e.symm s = _
   rw [
     e.withDensity_ofReal_map_symm_apply_eq_integral_abs_deriv_mul' hs he'
@@ -229,13 +234,16 @@ theorem integral_exp_mul_I_mul_cauchyPDFReal_zero_loc (hγ : γ ≠ 0) (t : ℝ)
     rw [hFf]
     exact (integrable_cauchyPDFReal 0).ofReal
   have hinv := congrFun (hcont.fourierInv_fourier_eq hint hintF) (t / (2 * Real.pi))
-  rw [hFf, fourierInv_eq_integral_exp_mul_I] at hinv
+  rw [hFf, Real.fourierInv_eq'] at hinv
   have habs : 2 * Real.pi * (γ : ℝ) * |t / (2 * Real.pi)| = (γ : ℝ) * |t| := by
     rw [abs_div, abs_of_pos hπ]
     field_simp
   rw [← habs, ← hinv]
   refine integral_congr_ae (.of_forall fun v ↦ ?_)
-  push_cast
+  dsimp only
+  rw [smul_eq_mul]
+  congr 2
+  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
   field_simp
 
 private theorem charFun_cauchyMeasure_zero_loc (hγ : γ ≠ 0) (t : ℝ) :

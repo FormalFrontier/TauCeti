@@ -36,30 +36,6 @@ namespace TauCeti
 
 variable {a : ℝ}
 
-/-- Mathlib's Fourier transform on `ℝ`, written with complex multiplication and the frequency
-collected before the integration variable. -/
-theorem fourier_eq_integral_exp_mul_I (f : ℝ → ℂ) (ξ : ℝ) :
-    𝓕 f ξ = ∫ x : ℝ, Complex.exp (((-(2 * π * ξ) : ℝ) : ℂ) * x * Complex.I) * f x := by
-  rw [Real.fourier_eq']
-  refine integral_congr_ae (.of_forall fun x ↦ ?_)
-  change Complex.exp ((↑(-2 * π * (inner ℝ x ξ : ℝ)) * Complex.I)) • f x = _
-  rw [smul_eq_mul]
-  congr 2
-  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
-  ring
-
-/-- Mathlib's inverse Fourier transform on `ℝ`, written with complex multiplication and the
-frequency collected before the integration variable. -/
-theorem fourierInv_eq_integral_exp_mul_I (f : ℝ → ℂ) (ξ : ℝ) :
-    𝓕⁻ f ξ = ∫ x : ℝ, Complex.exp ((((2 * π * ξ) : ℝ) : ℂ) * x * Complex.I) * f x := by
-  rw [Real.fourierInv_eq']
-  refine integral_congr_ae (.of_forall fun x ↦ ?_)
-  change Complex.exp ((↑(2 * π * (inner ℝ x ξ : ℝ)) * Complex.I)) • f x = _
-  rw [smul_eq_mul]
-  congr 2
-  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
-  ring
-
 /-- **The Lorentzian pairing of the two-sided exponential with a complex oscillation.** -/
 theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
     (∫ x : ℝ, Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
@@ -123,8 +99,19 @@ theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
 theorem fourier_exp_neg_mul_abs (ha : 0 < a) (ξ : ℝ) :
     𝓕 (fun x : ℝ ↦ (Real.exp (-(a * |x|)) : ℂ)) ξ
       = ((2 * a / (a ^ 2 + (2 * π * ξ) ^ 2) : ℝ) : ℂ) := by
-  rw [fourier_eq_integral_exp_mul_I]
-  rw [integral_exp_mul_I_mul_exp_neg_mul_abs ha]
-  norm_num
+  rw [Real.fourier_eq']
+  -- Unfold the real inner product and scalar action to match the oscillatory-integral lemma.
+  calc
+    _ = ∫ x : ℝ, Complex.exp (((-(2 * π * ξ) : ℝ) : ℂ) * x * Complex.I) *
+        (Real.exp (-(a * |x|)) : ℂ) := integral_congr_ae (.of_forall fun x ↦ by
+      change Complex.exp ((↑(-2 * π * (inner ℝ x ξ : ℝ)) * Complex.I)) •
+        (Real.exp (-(a * |x|)) : ℂ) = _
+      rw [smul_eq_mul]
+      congr 2
+      push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
+      ring)
+    _ = _ := by
+      rw [integral_exp_mul_I_mul_exp_neg_mul_abs ha]
+      norm_num
 
 end TauCeti
