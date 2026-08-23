@@ -146,8 +146,11 @@ theorem geckDiagramModuleEquiv_single (hsigma : sigma ∈ t.diagramSymmetry)
 
 /-- **A diagram symmetry preserves the pinned integral Geck lattice.** Membership is equivalent in
 both directions because the symmetry merely permutes the integer-valued coordinates. This is the
-lattice-stability hypothesis used by the Kostant group-scheme symmetry construction. -/
-@[simp]
+lattice-stability hypothesis used by the Kostant group-scheme symmetry construction.
+
+This is deliberately not a `simp` lemma: `TauCeti.DynkinType.mem_geckCoordinateLattice_iff` is
+itself `simp`, so both sides are unfolded into coordinate conditions before this statement could
+ever fire. -/
 theorem geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff
     (hsigma : sigma ∈ t.diagramSymmetry) (v : t.GeckIndex ht → ℚ) :
     t.geckDiagramModuleEquiv ht hsigma v ∈ t.geckCoordinateLattice ht ↔
