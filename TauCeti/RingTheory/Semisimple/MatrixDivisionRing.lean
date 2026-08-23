@@ -55,8 +55,7 @@ fixed.
 * `TauCeti.card_eq_of_ringEquiv_matrix`, `TauCeti.nonempty_ringEquiv_of_ringEquiv_matrix` and the
   packaged `TauCeti.wedderburn_data_unique`: **two matrix presentations of the same ring have the
   same size and isomorphic division rings.** Their algebra-linear counterparts are
-  `TauCeti.nonempty_algEquiv_of_algEquiv_matrix` and
-  `TauCeti.wedderburn_data_unique_of_algEquiv`.
+  `TauCeti.nonempty_algEquiv_of_algEquiv_matrix` and `TauCeti.nonempty_algEquiv_matrix_iff`.
 * `TauCeti.nonempty_ringEquiv_matrix_iff`: the resulting classification, that `Matᵢ(D) ≃+* Mat_κ(E)`
   holds exactly when `ι` and `κ` have the same cardinality and `D ≃+* E`, with
   `TauCeti.nonempty_algEquiv_matrix_iff` its algebra-linear counterpart.
@@ -393,17 +392,6 @@ theorem nonempty_algEquiv_matrix_iff [Nonempty ι] [Nonempty κ] :
   · rintro ⟨hcard, ⟨d⟩⟩
     exact ⟨(Matrix.reindexAlgEquiv K D (Fintype.equivOfCardEq hcard)).trans d.mapMatrix⟩
 
-/-- **Uniqueness of the Wedderburn data of a simple Artinian algebra.** Two `K`-algebra
-presentations as matrix algebras over division algebras have the same matrix size and
-`K`-isomorphic division algebras. -/
-theorem wedderburn_data_unique_of_algEquiv {n m : ℕ} [NeZero n] [NeZero m]
-    (f : R ≃ₐ[K] Matrix (Fin n) (Fin n) D)
-    (g : R ≃ₐ[K] Matrix (Fin m) (Fin m) E) : n = m ∧ Nonempty (D ≃ₐ[K] E) := by
-  have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne n))
-  have : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne m))
-  exact ⟨by simpa using card_eq_of_ringEquiv_matrix f.toRingEquiv g.toRingEquiv,
-    nonempty_algEquiv_of_algEquiv_matrix f g⟩
-
 end Algebra
 
 /-- **The division ring of a matrix presentation is unique up to isomorphism**: two presentations of
@@ -447,8 +435,11 @@ theorem wedderburn_data_unique {n m : ℕ} [NeZero n] [NeZero m]
     (f : R ≃+* Matrix (Fin n) (Fin n) D) (g : R ≃+* Matrix (Fin m) (Fin m) E) :
     n = m ∧ Nonempty (D ≃+* E) := by
   classical
-  obtain ⟨hnm, ⟨e⟩⟩ := wedderburn_data_unique_of_algEquiv f.toIntAlgEquiv g.toIntAlgEquiv
-  exact ⟨hnm, ⟨e.toRingEquiv⟩⟩
+  have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne n))
+  have : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp (Nat.pos_of_ne_zero (NeZero.ne m))
+  refine ⟨by simpa using card_eq_of_ringEquiv_matrix f g, ?_⟩
+  obtain ⟨e⟩ := nonempty_algEquiv_of_algEquiv_matrix f.toIntAlgEquiv g.toIntAlgEquiv
+  exact ⟨e.toRingEquiv⟩
 
 end Uniqueness
 
