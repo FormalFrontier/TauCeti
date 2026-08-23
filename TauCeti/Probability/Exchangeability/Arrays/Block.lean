@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.Arrays.Basic
--- Non-public: the permutation combining two disjoint injections, and the reduction of an array law
--- to its finite-dimensional marginals, are used only inside proofs.
+-- Non-public: the permutations transported along injections, the permutation combining two
+-- disjoint injections, and the reduction of an array law to its finite-dimensional marginals, are
+-- used only inside proofs.
 import TauCeti.GroupTheory.Perm.Basic
+import Mathlib.GroupTheory.Perm.ViaEmbedding
 import Mathlib.Probability.Process.FiniteDimensionalLaws
 
 /-!

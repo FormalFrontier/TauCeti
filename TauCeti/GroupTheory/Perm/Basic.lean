@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Group.End
-public import Mathlib.GroupTheory.Perm.ViaEmbedding
+import Mathlib.GroupTheory.Perm.ViaEmbedding
 
 /-!
 # Elementary facts about permutations
