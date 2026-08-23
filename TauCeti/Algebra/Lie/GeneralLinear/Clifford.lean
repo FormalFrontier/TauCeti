@@ -81,6 +81,16 @@ noncomputable def glCliffordHom :
       rw [hright]
       simp }
 
+/-- The normal-ordered lift is the sum of the quadratic lift and its scalar trace correction. -/
+theorem glCliffordHom_apply (X : Matrix n n K) :
+    glCliffordHom X =
+      CliffordAlgebra.quadraticLift (traceQuadraticForm K n)
+          (traceQuadraticForm_nondegenerate K n) (traceAdjointSO K n) X +
+        algebraMap K _ ((Fintype.card n / 2 : K) * X.trace) := by
+  -- Expose the two private summands used to assemble the public homomorphism.
+  change traceQuadraticLift X + scalarTrace X = _
+  rfl
+
 /-- The normal-ordered lift acts on Clifford generators by the matrix commutator. -/
 @[simp, grind =]
 theorem glCliffordHom_lie_ι (X Y : Matrix n n K) :
