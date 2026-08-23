@@ -400,6 +400,8 @@ private theorem mapPointsFunctor_weightCocharacterCoordinateMap_app (w : Fin N �
         (rankOneCharacterBialgEquiv (R := R)).toBialgHom)).app A f
   rw [weightCocharacterCoordinateMap,
     CommHopfAlgCat.mapPointsFunctor_comp_app_apply]
+  -- Normalize the remaining functorial precomposition to the map induced by the weight torus;
+  -- the categorical wrapper has no application lemma at this expression.
   change (CommHopfAlgCat.mapPointsFunctor
     (weightTorusCoordinateMap (R := R) (fun i (_ : ULift.{u} Unit) ↦ w i))).app A q = _
   rw [mapPointsFunctor_weightTorusCoordinateMap_app]
@@ -427,6 +429,8 @@ theorem mapDomain_weightCocharacter (w : Fin N → ℤ)
     (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
     AlgHom.mapDomain (weightCocharacter (R := R) w) f =
       weightCocharacterPoints w f := by
+  -- `mapDomain` and the points functor are definitionally the same precomposition here; there is
+  -- no bridge lemma for the bundled coordinate morphism.
   change (CommHopfAlgCat.mapPointsFunctor
       (weightCocharacterCoordinateMap (R := R) w)).app (CommAlgCat.of R A) f = _
   exact mapPointsFunctor_weightCocharacterCoordinateMap_app w (CommAlgCat.of R A) f

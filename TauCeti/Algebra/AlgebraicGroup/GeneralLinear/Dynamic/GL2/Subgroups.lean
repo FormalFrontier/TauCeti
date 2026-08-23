@@ -73,12 +73,12 @@ theorem mem_dynamicLevi_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.levi A (GL2.dynamicCocharacter (R := R)) ↔
       pointsMulEquiv 2 g ∈ TauCeti.diagonalTorus A 2 := by
-  rw [GL2.dynamicCocharacter, mem_levi_weightCocharacter_iff,
+  rw [GL2.dynamicCocharacter_eq_weightCocharacter, mem_levi_weightCocharacter_iff,
     mem_diagonalTorus_iff]
   constructor
   · intro h i j hij
     apply h i j
-    fin_cases i <;> fin_cases j <;> simp_all [GL2.dynamicWeights]
+    fin_cases i <;> fin_cases j <;> simp_all
   · intro h i j hij
     apply h
     intro hij'
@@ -129,8 +129,8 @@ theorem mem_dynamicUnipotent_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.unipotent A (GL2.dynamicCocharacter (R := R)) ↔
       ∃ b : A, pointsMulEquiv 2 g = Matrix.GeneralLinearGroup.upperRightHom b := by
-  rw [GL2.dynamicCocharacter, mem_unipotent_weightCocharacter_iff,
-    blockTriangular_toDual_weights_iff]
+  rw [GL2.dynamicCocharacter_eq_weightCocharacter, mem_unipotent_weightCocharacter_iff]
+  simp only [Matrix.BlockTriangular, Function.comp_apply, OrderDual.toDual_lt_toDual]
   constructor
   · rintro ⟨hblock, hgraded⟩
     refine ⟨(pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 0 1, ?_⟩
@@ -140,18 +140,18 @@ theorem mem_dynamicUnipotent_iff
     · simpa [Matrix.GeneralLinearGroup.upperRightHom] using hgraded 0 0 (by rfl)
     · simp [Matrix.GeneralLinearGroup.upperRightHom]
     · simpa [Matrix.GeneralLinearGroup.upperRightHom] using
-        hblock 1 0 (by simp [GL2.dynamicWeights])
+        hblock (i := 1) (j := 0) (by simp)
     · simpa [Matrix.GeneralLinearGroup.upperRightHom] using hgraded 1 1 (by rfl)
   · rintro ⟨b, hb⟩
     constructor
     · intro i j hij
       rw [hb]
       fin_cases i <;> fin_cases j <;>
-        simp_all [GL2.dynamicWeights, Matrix.GeneralLinearGroup.upperRightHom]
+        simp_all [Matrix.GeneralLinearGroup.upperRightHom]
     · intro i j hij
       rw [hb]
       fin_cases i <;> fin_cases j <;>
-        simp_all [GL2.dynamicWeights, Matrix.GeneralLinearGroup.upperRightHom]
+        simp_all [Matrix.GeneralLinearGroup.upperRightHom]
 
 /-- The dynamic unipotent subgroup for `t ↦ diag(t, 1)` is the preimage of the standard
 upper-unitriangular subgroup `U₂` under the general-linear point equivalence. -/

@@ -59,17 +59,6 @@ universe u v
 
 variable {R : Type u} [CommRing R] {N : ℕ}
 
-/-- Block triangularity for the dual order on integer weights is exactly vanishing of entries
-whose row weight is smaller than their column weight. -/
-@[simp]
-theorem blockTriangular_toDual_weights_iff
-    {A : Type v} [Zero A] (M : Matrix (Fin N) (Fin N) A) (w : Fin N → ℤ) :
-    M.BlockTriangular (OrderDual.toDual ∘ w) ↔
-      ∀ i j, w i < w j → M i j = 0 := by
-  constructor <;> intro h i j hij
-  · exact h (by simpa only [Function.comp_apply, OrderDual.toDual_lt_toDual] using hij)
-  · exact h i j (by simpa only [Function.comp_apply, OrderDual.toDual_lt_toDual] using hij)
-
 section Points
 
 variable {A : Type v} [CommRing A] [Algebra R A]
@@ -240,7 +229,7 @@ theorem mem_parabolic_weightCocharacter_iff (w : Fin N → ℤ)
     g ∈ Cocharacter.parabolic A (weightCocharacter (R := R) w) ↔
       (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A).BlockTriangular
         (OrderDual.toDual ∘ w) := by
-  rw [blockTriangular_toDual_weights_iff]
+  simp only [Matrix.BlockTriangular, Function.comp_apply, OrderDual.toDual_lt_toDual]
   constructor
   · rw [Cocharacter.mem_parabolic_iff]
     rintro ⟨F, hF⟩ i j hij
@@ -283,7 +272,8 @@ theorem mem_parabolic_weightCocharacter_iff (w : Fin N → ℤ)
   · intro hg
     exact Cocharacter.mem_parabolic_of_eq
       (ofPolyPoint_weightPolynomialExtension w g
-        ((blockTriangular_toDual_weights_iff _ _).mpr hg))
+        (by simpa only [Matrix.BlockTriangular, Function.comp_apply,
+          OrderDual.toDual_lt_toDual] using hg))
 
 private theorem evalZero_weightPolynomialMatrix_apply (w : Fin N → ℤ)
     (g : WithConv (coordinateHopfAlgebra R N →ₐ[R] A)) (i j : Fin N) :

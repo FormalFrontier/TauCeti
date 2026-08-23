@@ -59,15 +59,28 @@ namespace GL2
 section Coordinate
 
 /-- The rank-one weights `(1, 0)` defining the standard dynamic cocharacter of `GL₂`. -/
-@[expose]
 def dynamicWeights : Fin 2 → ℤ :=
   fun i => if i = 0 then 1 else 0
 
+/-- The first weight of the standard dynamic cocharacter is one. -/
+@[simp]
+theorem dynamicWeights_zero : dynamicWeights 0 = 1 := by
+  simp [dynamicWeights]
+
+/-- The second weight of the standard dynamic cocharacter is zero. -/
+@[simp]
+theorem dynamicWeights_one : dynamicWeights 1 = 0 := by
+  simp [dynamicWeights]
+
 /-- The bialgebra morphism representing the standard cocharacter `t ↦ diag(t, 1)`. -/
-@[expose]
 noncomputable def dynamicCocharacter :
     coordinateHopfAlgebra R 2 →ₐc[R] LaurentPolynomial R :=
   weightCocharacter (R := R) dynamicWeights
+
+/-- The standard dynamic cocharacter is the weight cocharacter for weights `(1, 0)`. -/
+theorem dynamicCocharacter_eq_weightCocharacter :
+    dynamicCocharacter (R := R) = weightCocharacter (R := R) dynamicWeights := by
+  rfl
 
 end Coordinate
 
@@ -81,20 +94,20 @@ theorem mem_dynamicParabolic_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.parabolic A (dynamicCocharacter (R := R)) ↔
       pointsMulEquiv 2 g ∈ GL2Borel A := by
-  rw [dynamicCocharacter, mem_parabolic_weightCocharacter_iff,
-    blockTriangular_toDual_weights_iff]
+  rw [dynamicCocharacter_eq_weightCocharacter, mem_parabolic_weightCocharacter_iff]
+  simp only [Matrix.BlockTriangular, Function.comp_apply, OrderDual.toDual_lt_toDual]
   constructor
   · intro h
     apply GL2Borel.mem_iff.mpr
-    exact h 1 0 (by simp [dynamicWeights])
+    exact h (i := 1) (j := 0) (by simp)
   · intro h i j hij
     have hzero : (pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0 = 0 := by
       exact GL2Borel.mem_iff.mp h
     fin_cases i <;> fin_cases j
-    · simp [dynamicWeights] at hij
-    · simp [dynamicWeights] at hij
+    · simp at hij
+    · simp at hij
     · exact hzero
-    · simp [dynamicWeights] at hij
+    · simp at hij
 
 /-- The dynamic limit of an upper-triangular matrix is its diagonal part. -/
 theorem pointsMulEquiv_limit_dynamicCocharacter
@@ -106,9 +119,6 @@ theorem pointsMulEquiv_limit_dynamicCocharacter
           (GL2Borel.diag
             (⟨pointsMulEquiv 2 g, (mem_dynamicParabolic_iff g).mp hg⟩ : GL2Borel A)) :
         GL2Borel A) : GL (Fin 2) A) := by
-  -- The cocharacter also occurs in the type of `hg`, which is used in the dependent pair passed
-  -- to `limit`; unfold both occurrences so that pair remains well typed after specialization.
-  unfold dynamicCocharacter at hg ⊢
   have hb : pointsMulEquiv 2 g ∈ GL2Borel A := (mem_dynamicParabolic_iff g).mp hg
   obtain ⟨a, d, b, hmatrix⟩ := GL2Borel.mem_iff_exists_mk.mp hb
   have hdiag :
@@ -116,12 +126,27 @@ theorem pointsMulEquiv_limit_dynamicCocharacter
     have hB : (⟨pointsMulEquiv 2 g, hb⟩ : GL2Borel A) =
         ⟨GL2Borel.mk a d b, GL2Borel.mk_mem a d b⟩ := Subtype.ext hmatrix
     rw [hB, GL2Borel.diag_mk]
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  rw [pointsMulEquiv_limit_weightCocharacter_apply dynamicWeights g hg i j]
-  rw [GL2Borel.coe_torusHom, hdiag]
-  fin_cases i <;> fin_cases j <;>
-    simp [dynamicWeights, hmatrix, GL2Borel.coe_mk]
+  have hnormalized : ∀ hg' : g ∈ Cocharacter.parabolic A
+      (weightCocharacter (R := R) dynamicWeights),
+      pointsMulEquiv 2
+          (Cocharacter.limit A (weightCocharacter (R := R) dynamicWeights) ⟨g, hg'⟩) =
+        ((GL2Borel.torusHom
+            (GL2Borel.diag ⟨pointsMulEquiv 2 g, hb⟩) : GL2Borel A) : GL (Fin 2) A) := by
+    intro hg'
+    apply Matrix.GeneralLinearGroup.ext
+    intro i j
+    rw [pointsMulEquiv_limit_weightCocharacter_apply dynamicWeights g hg' i j]
+    rw [GL2Borel.coe_torusHom, hdiag]
+    fin_cases i <;> fin_cases j <;>
+      simp [hmatrix, GL2Borel.coe_mk]
+  have hdynamic : ∀ hg' : g ∈ Cocharacter.parabolic A
+      (dynamicCocharacter (R := R)),
+      pointsMulEquiv 2 (Cocharacter.limit A (dynamicCocharacter (R := R)) ⟨g, hg'⟩) =
+        ((GL2Borel.torusHom
+            (GL2Borel.diag ⟨pointsMulEquiv 2 g, hb⟩) : GL2Borel A) : GL (Fin 2) A) := by
+    rw [dynamicCocharacter_eq_weightCocharacter]
+    exact hnormalized
+  exact hdynamic hg
 
 /-- As subgroups of convolution points, the dynamic parabolic for `t ↦ diag(t, 1)` is the
 preimage of the upper-triangular Borel under the general-linear point equivalence. -/
