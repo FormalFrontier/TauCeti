@@ -20,7 +20,7 @@ unique.
 
 The construction has three steps. The Koszul expression is tensorial in its first argument as
 well as in its third, so Mathlib's `TensorialAt.mkHom₂` packages `(X, Z) ↦ koszul I X Y Z x` as a
-continuous bilinear form `CovariantDerivative.koszulHom` on the fibre `T_x M`. The fibrewise
+continuous bilinear form `TauCeti.Manifold.koszulHom` on the fibre `T_x M`. The fibrewise
 Fréchet–Riesz equivalence `Riemannian.Tensor.rieszDual` then converts the last slot of that
 bilinear form into a vector, giving the unbundled candidate. Finally the covariant-derivative
 axioms for the candidate are read off the behaviour of the Koszul expression in its *second*
@@ -36,7 +36,7 @@ is the vanishing of `CovariantDerivative.difference` rather than equality of bun
 
 ## Main definitions and results
 
-* `CovariantDerivative.koszulHom`: the Koszul expression of a section differentiable at `x`, as a
+* `TauCeti.Manifold.koszulHom`: the Koszul expression of a section differentiable at `x`, as a
   continuous bilinear form on `T_x M`.
 * `CovariantDerivative.leviCivita`: the Levi-Civita connection of the supplied Riemannian bundle
   instance.
@@ -62,7 +62,7 @@ open scoped Manifold ContDiff
 
 noncomputable section
 
-namespace CovariantDerivative
+namespace TauCeti.Manifold
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -77,16 +77,38 @@ variable {X Y Z : Π x : M, TangentSpace I x} {x : M}
 /-! ### The Koszul form of a section -/
 
 /-- The Koszul expression of a section `Y` differentiable at `x`, as a continuous bilinear form on
-the tangent fibre at `x`: it sends `(X x, Z x)` to `koszul I X Y Z x`. -/
+the tangent fibre at `x`. For sections `X` and `Z` differentiable at `x`, its value at
+`(X x, Z x)` is `koszul I X Y Z x`; see `koszulHom_apply`. -/
 def koszulHom (Y : Π y : M, TangentSpace I y) {x : M} (hY : MDiffAt (T% Y) x) :
     TangentSpace I x →L[ℝ] TangentSpace I x →L[ℝ] ℝ :=
   TensorialAt.mkHom₂ (fun X Z ↦ koszul I X Y Z x) x
-    (fun _ hZ ↦ tensorialAt_koszul_first hY hZ) (fun _ hX ↦ tensorialAt_koszul hX hY)
+    (fun _ hZ ↦ tensorialAt_koszul_first hY hZ) (fun _ hX ↦ tensorialAt_koszul_third hX hY)
 
 @[simp]
 theorem koszulHom_apply (hY : MDiffAt (T% Y) x) (hX : MDiffAt (T% X) x)
     (hZ : MDiffAt (T% Z) x) : koszulHom Y hY (X x) (Z x) = koszul I X Y Z x :=
   TensorialAt.mkHom₂_apply _ _ hX hZ
+
+/-- The Koszul form evaluated at arbitrary tangent vectors, expressed using their canonical local
+extensions. -/
+theorem koszulHom_apply_eq_extend (Y : Π y : M, TangentSpace I y)
+    (hY : MDiffAt (T% Y) x) (v w : TangentSpace I x) :
+    koszulHom Y hY v w = koszul I (extend E v) Y (extend E w) x :=
+  TensorialAt.mkHom₂_apply_eq_extend _ _ v w
+
+end TauCeti.Manifold
+
+namespace CovariantDerivative
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+  [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+  [FiniteDimensional ℝ E] [IsManifold I 2 M]
+  [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
+
+variable {X Y Z : Π x : M, TangentSpace I x} {x : M}
 
 /-! ### The connection -/
 
@@ -99,7 +121,7 @@ private def leviCivitaFun (Y : Π y : M, TangentSpace I y) (x : M) :
     TangentSpace I x →L[ℝ] TangentSpace I x :=
   if hY : MDiffAt (T% Y) x then
     (2 : ℝ)⁻¹ • ((Riemannian.Tensor.rieszDual (I := I) x).toLinearIsometry.toContinuousLinearMap ∘L
-      koszulHom Y hY)
+      TauCeti.Manifold.koszulHom Y hY)
   else 0
 
 private theorem two_inner_leviCivitaFun_eq_koszul (hX : MDiffAt (T% X) x)
@@ -109,20 +131,9 @@ private theorem two_inner_leviCivitaFun_eq_koszul (hX : MDiffAt (T% X) x)
   rw [leviCivitaFun, dite_eq_left hY]
   simp only [smul_apply, ContinuousLinearMap.coe_comp, Function.comp_apply,
     LinearIsometry.coe_toContinuousLinearMap, LinearIsometryEquiv.coe_toLinearIsometry,
-    real_inner_smul_left, Riemannian.Tensor.inner_rieszDual, koszulHom_apply hY hX hZ]
+    real_inner_smul_left, Riemannian.Tensor.inner_rieszDual,
+    TauCeti.Manifold.koszulHom_apply hY hX hZ]
   ring
-
-omit [FiniteDimensional ℝ E] [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)] in
-/-- Two endomorphisms of a tangent fibre which agree on all inner products of values at sections
-differentiable at the base point are equal. -/
-private theorem ext_of_forall_inner_eq {A B : TangentSpace I x →L[ℝ] TangentSpace I x}
-    (h : ∀ ⦃W Z : Π y : M, TangentSpace I y⦄, MDiffAt (T% W) x → MDiffAt (T% Z) x →
-      inner ℝ (A (W x)) (Z x) = inner ℝ (B (W x)) (Z x)) : A = B := by
-  refine VectorBundle.injective_eval_mdifferentiableAt_sec I E (fun x : M ↦ TangentSpace I x)
-    (TangentSpace I x) x ?_
-  ext W hW
-  exact eq_of_forall_inner_section_eq (I := I) (V := fun x : M ↦ TangentSpace I x) E
-    fun Z hZ ↦ h hW hZ
 
 /-- The Koszul recipe defines a covariant derivative on the tangent bundle: additivity comes from
 `TauCeti.Manifold.koszul_add_second` and the Leibniz rule from
@@ -131,7 +142,8 @@ private theorem isCovariantDerivativeOn_leviCivitaFun :
     IsCovariantDerivativeOn (I := I) E (leviCivitaFun (M := M)) Set.univ := by
   constructor
   · intro σ σ' x hσ hσ' _
-    refine ext_of_forall_inner_eq fun W Z hW hZ ↦ ?_
+    refine continuousLinearMap_ext_of_forall_inner_section_eq (I := I)
+      (V := fun x : M ↦ TangentSpace I x) E E fun W hW Z hZ ↦ ?_
     have h₁ := two_inner_leviCivitaFun_eq_koszul hW (mdifferentiableAt_add_section hσ hσ') hZ
     have h₂ := two_inner_leviCivitaFun_eq_koszul hW hσ hZ
     have h₃ := two_inner_leviCivitaFun_eq_koszul hW hσ' hZ
@@ -139,7 +151,8 @@ private theorem isCovariantDerivativeOn_leviCivitaFun :
     simp only [add_apply, inner_add_left]
     linarith
   · intro σ g x hσ hg _
-    refine ext_of_forall_inner_eq fun W Z hW hZ ↦ ?_
+    refine continuousLinearMap_ext_of_forall_inner_section_eq (I := I)
+      (V := fun x : M ↦ TangentSpace I x) E E fun W hW Z hZ ↦ ?_
     have h₁ := two_inner_leviCivitaFun_eq_koszul hW (hg.smul_section hσ) hZ
     have h₂ := two_inner_leviCivitaFun_eq_koszul hW hσ hZ
     have h₃ := koszul_smul_second (X := W) (Y := σ) (Z := Z) hg hW hσ hZ
@@ -157,14 +170,22 @@ def leviCivita : CovariantDerivative I E (fun x : M ↦ TangentSpace I x) where
 private theorem leviCivita_apply (Y : Π y : M, TangentSpace I y) (x : M) :
     leviCivita I M Y x = leviCivitaFun Y x := rfl
 
+/-- The defining identity for the Levi-Civita connection at arbitrary tangent vectors. -/
+theorem two_inner_leviCivita_apply (hY : MDiffAt (T% Y) x) (v w : TangentSpace I x) :
+    2 * inner ℝ (leviCivita I M Y x v) w = TauCeti.Manifold.koszulHom Y hY v w := by
+  rw [leviCivita_apply, leviCivitaFun, dite_eq_left hY]
+  simp only [smul_apply, ContinuousLinearMap.coe_comp, Function.comp_apply,
+    LinearIsometry.coe_toContinuousLinearMap, LinearIsometryEquiv.coe_toLinearIsometry,
+    real_inner_smul_left, Riemannian.Tensor.inner_rieszDual]
+  ring
+
 /-- **The Koszul formula** for the Levi-Civita connection. -/
 theorem two_inner_leviCivita_eq_koszul (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
     (hZ : MDiffAt (T% Z) x) :
     2 * inner ℝ (leviCivita I M Y x (X x)) (Z x) = koszul I X Y Z x := by
-  rw [leviCivita_apply]
-  exact two_inner_leviCivitaFun_eq_koszul hX hY hZ
+  rw [two_inner_leviCivita_apply hY, TauCeti.Manifold.koszulHom_apply hY hX hZ]
 
-/-! ### Existence and uniqueness -/
+/-! ### Existence -/
 
 /-- **Existence of the Levi-Civita connection**: the connection built from the Koszul formula is
 torsion free and compatible with the metric. -/
