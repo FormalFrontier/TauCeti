@@ -30,16 +30,17 @@ measure on `ℝ≥0 × V` represents a function `F` exactly when its spatial sli
 measures of the time slices of `F`
 (`TauCeti.representsLaplaceFourier_iff_forall_spatialSlice_eq`), and since those Bochner
 measures decrease in time and are therefore all absolutely continuous with respect to the one at
-time `0`, the existence half of the representation theorem becomes a *fibrewise* Bernstein
-problem: find a Markov kernel whose fibrewise Laplace transforms are the Radon--Nikodym
-densities `d(bochnerMeasure (F (t, ·))) / d(bochnerMeasure (F (0, ·)))`
+time `0` (`TauCeti.bochnerMeasure_timeSlice_absolutelyContinuous`), the existence half of the
+representation theorem becomes a *fibrewise* Bernstein problem: find a Markov kernel whose
+fibrewise Laplace transforms are the Radon--Nikodym densities
+`d(bochnerMeasure (F (t, ·))) / d(bochnerMeasure (F (0, ·)))`
 (`TauCeti.representsLaplaceFourier_timeKernelMeasure_of_ae_rnDeriv`). The reduction is exact:
 `TauCeti.exists_representsLaplaceFourier_iff_exists_timeKernel` states it as an equivalence, so
 nothing is lost in passing from the measure to the kernel.
 
-The time-regularity input that a fibrewise Bernstein argument consumes — antitonicity,
-continuity and alternating finite differences of the slab masses — is in
-`TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Measure`.
+The time-regularity input that a fibrewise Bernstein argument consumes — antitonicity, the
+resulting absolute continuity, continuity and alternating finite differences of the slab
+masses — is in `TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Measure`.
 
 ## Main declarations
 
@@ -57,10 +58,6 @@ continuity and alternating finite differences of the slab masses — is in
 * `TauCeti.exists_representsLaplaceFourier_iff_exists_timeKernel`: **the reduction**, as an
   equivalence between the existence of a representing measure and the existence of such a
   Markov kernel.
-* `TauCeti.bochnerMeasure_timeSlice_absolutelyContinuous` and
-  `TauCeti.withDensity_rnDeriv_bochnerMeasure_timeSlice`: the spatial Bochner measures of a
-  bounded continuous positive-definite `F` are absolutely continuous with respect to the one at
-  time `0`, so the densities the reduction asks for are Radon--Nikodym derivatives.
 
 ## References
 
@@ -169,25 +166,6 @@ section Reduction
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
   [MeasurableSpace V] [BorelSpace V] {F : ℝ≥0 × V → ℂ}
-
-/-- **The spatial Bochner measures are absolutely continuous with respect to the one at time
-`0`.** They decrease in time, and the time-`0` measure dominates them all. -/
-theorem bochnerMeasure_timeSlice_absolutelyContinuous (hFpd : IsSemigroupGroupPD F)
-    (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (t : ℝ≥0) :
-    (bochnerMeasure fun a => F (t, a)) ≪ bochnerMeasure fun a => F (0, a) :=
-  Measure.absolutelyContinuous_of_le
-    (bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd zero_le)
-
-/-- The spatial Bochner measure at time `t` is the time-`0` one weighted by a Radon--Nikodym
-derivative. These derivatives are the densities the representation problem must realize as
-fibrewise Laplace transforms. -/
-theorem withDensity_rnDeriv_bochnerMeasure_timeSlice (hFpd : IsSemigroupGroupPD F)
-    (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (t : ℝ≥0) :
-    (bochnerMeasure fun a => F (0, a)).withDensity
-        ((bochnerMeasure fun a => F (t, a)).rnDeriv (bochnerMeasure fun a => F (0, a)))
-      = bochnerMeasure fun a => F (t, a) :=
-  Measure.withDensity_rnDeriv_eq _ _
-    (bochnerMeasure_timeSlice_absolutelyContinuous hFpd hFcont hFbdd t)
 
 /-- **A time kernel with the prescribed fibrewise Laplace transforms represents `F`.** If the
 fibrewise Laplace transform of `κ` at every time `t` is a density of the spatial Bochner measure
