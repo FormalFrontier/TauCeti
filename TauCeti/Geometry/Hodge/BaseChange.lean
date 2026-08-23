@@ -10,6 +10,7 @@ public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 public import Mathlib.RingTheory.Flat.Basic
+import Mathlib.RingTheory.Flat.FaithfullyFlat.Basic
 public import TauCeti.Geometry.Hodge.Conjugation
 public import TauCeti.RingTheory.IsTensorProduct
 
@@ -44,6 +45,10 @@ imposed later as structure data.
   every purely rational vector of the ambient complexification.
 * `TauCeti.Hodge.rationalToComplexSubmodule_conj`: the complexification of a rational subspace is
   stable under lattice-induced conjugation.
+* `TauCeti.Hodge.rationalToComplexSubmodule_sup`: complexification preserves joins of rational
+  subspaces.
+* `TauCeti.Hodge.rationalToComplexSubmodule_eq_bot_iff`: only the zero subspace has trivial
+  complexification.
 
 The design follows the base-change interface specified in the Hodge structures roadmap. Its only
 nontrivial comparison map is Mathlib's
@@ -145,11 +150,39 @@ theorem rationalToComplexSubmodule_bot (hℚ : IsBaseChange ℚ ιℚ)
     rationalToComplexSubmodule hℚ hℂ (⊥ : Submodule ℚ Vℚ) = ⊥ := by
   simp [rationalToComplexSubmodule]
 
+/-- A rational subspace is trivial as soon as its complexification is: `ℂ` is faithfully flat
+over `ℚ`. -/
+@[simp]
+theorem rationalToComplexSubmodule_eq_bot_iff (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
+    rationalToComplexSubmodule hℚ hℂ W = ⊥ ↔ W = ⊥ := by
+  rw [rationalToComplexSubmodule, Submodule.map_eq_bot_iff]
+  refine ⟨fun h ↦ Submodule.baseChange_injective (A := ℂ) (by simp [h]), ?_⟩
+  rintro rfl
+  simp
+
 @[simp]
 theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) :
     rationalToComplexSubmodule hℚ hℂ (⊤ : Submodule ℚ Vℚ) = ⊤ := by
   simp [rationalToComplexSubmodule]
+
+/-- Complexification of rational subspaces preserves joins. -/
+@[simp]
+theorem rationalToComplexSubmodule_sup (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W₁ W₂ : Submodule ℚ Vℚ) :
+    rationalToComplexSubmodule hℚ hℂ (W₁ ⊔ W₂) =
+      rationalToComplexSubmodule hℚ hℂ W₁ ⊔ rationalToComplexSubmodule hℚ hℂ W₂ := by
+  refine le_antisymm ?_ (sup_le (rationalToComplexSubmodule_mono hℚ hℂ le_sup_left)
+    (rationalToComplexSubmodule_mono hℚ hℂ le_sup_right))
+  rw [rationalToComplexSubmodule_eq_span]
+  refine Submodule.span_le.2 ?_
+  rintro _ ⟨x, hx, rfl⟩
+  obtain ⟨y, hy, z, hz, rfl⟩ := Submodule.mem_sup.1 hx
+  simp only [TensorProduct.tmul_add, map_add, SetLike.mem_coe]
+  exact Submodule.add_mem _
+    (Submodule.mem_sup_left (rationalToComplexLinearEquiv_one_tmul_mem hℚ hℂ hy))
+    (Submodule.mem_sup_right (rationalToComplexLinearEquiv_one_tmul_mem hℚ hℂ hz))
 
 /-- The canonical equivalence from the concrete complexification `ℂ ⊗[ℚ] W` of a rational
 subspace onto the complexification of `W` inside the ambient complexification. -/
@@ -180,24 +213,8 @@ theorem latticeConj_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange �
   | zero => simp
   | tmul x => simp
   | smul q x hx =>
-      have h_tmul : (1 ⊗ₜ[ℚ] (q • x) : ℂ ⊗[ℚ] Vℚ) =
-          (q : ℂ) • (1 ⊗ₜ[ℚ] x) := by
-        rw [TensorProduct.tmul_smul, TensorProduct.smul_tmul']
-        congr 1
-        simp
-      calc
-        latticeConj hℂ (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] (q • x))) =
-            latticeConj hℂ ((q : ℂ) •
-              rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) := by
-          rw [h_tmul, map_smul]
-        _ = starRingEnd ℂ (q : ℂ) • latticeConj hℂ
-              (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) := by
-          rw [map_smulₛₗ]
-        _ = (q : ℂ) • rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) := by
-          rw [hx]
-          simp
-        _ = rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] (q • x)) := by
-          rw [h_tmul, map_smul]
+      rw [TensorProduct.tmul_smul, ← algebraMap_smul ℂ q, map_smul, map_smulₛₗ, hx]
+      simp
   | add x y hx hy =>
       simpa only [TensorProduct.tmul_add, map_add] using congrArg₂ (fun a b ↦ a + b) hx hy
 
