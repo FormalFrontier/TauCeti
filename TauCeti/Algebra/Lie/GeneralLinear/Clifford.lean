@@ -39,7 +39,9 @@ open CliffordAlgebra
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
-variable {K n : Type*} [Field K] [Fintype n] [DecidableEq n] [Invertible (2 : K)]
+variable {K n : Type*} [Field K] [Fintype n] [Invertible (2 : K)]
+
+attribute [local instance] Classical.decEq
 
 private noncomputable def traceQuadraticLift :
     Matrix n n K →ₗ⁅K⁆ CliffordAlgebra (traceQuadraticForm K n) :=
@@ -51,7 +53,7 @@ private noncomputable def scalarTrace :
   (Algebra.linearMap K (CliffordAlgebra (traceQuadraticForm K n))).comp <|
     (Fintype.card n / 2 : K) • Matrix.traceLinearMap n K K
 
-omit [DecidableEq n] [Invertible (2 : K)] in
+omit [Invertible (2 : K)] in
 private theorem scalarTrace_lie (X : Matrix n n K)
     (c : CliffordAlgebra (traceQuadraticForm K n)) :
     ⁅scalarTrace (K := K) (n := n) X, c⁆ = 0 := by
