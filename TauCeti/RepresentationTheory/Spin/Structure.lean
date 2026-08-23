@@ -56,7 +56,13 @@ from characteristic two the centre of the Clifford algebra of a nondegenerate od
 is a quadratic étale algebra over `K`, so over a separably closed field it is `K × K`, the Clifford
 algebra is a product of two matrix algebras, and the action factors through one of the two central
 idempotents. Over a general field that centre can be a field, and then there is no such product
-decomposition. Identifying the splitting is separate work.
+decomposition. The idempotent half of that splitting is proved in
+`TauCeti/LinearAlgebra/CliffordAlgebra/OddSplitting.lean`: `CliffordAlgebra.equivEvenProd` splits
+the Clifford algebra of a central odd square root of one as two copies of its even subalgebra, and
+`CliffordAlgebra.nonempty_algEquiv_even_prod_of_isSepClosed` supplies that square root over a
+separably closed field. What is still separate work is identifying `even Q` for an odd-dimensional
+form with a matrix algebra, which is what would turn that product into the product of two matrix
+algebras.
 
 ## Main definitions
 

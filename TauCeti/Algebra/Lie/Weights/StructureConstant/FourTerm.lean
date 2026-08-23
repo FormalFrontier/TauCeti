@@ -54,8 +54,6 @@ it is an input to.
 
 ## Main results
 
-* `TauCeti.Weight.coe_neg_eq_add_of_coe_eq_add`: reading a vanishing sum of four weights as an
-  equation between opposite pair sums.
 * `TauCeti.IsSl2System.killingForm_lie_lie_eq_mul_mul` and
   `TauCeti.IsSl2System.killingForm_lie_lie_eq_zero_of_rootSpace_add_eq_bot`: the evaluation of a
   paired Killing bracket, in the case where the first pair sums to a root and in the case where it
@@ -97,20 +95,6 @@ universe u v
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
-
-omit [CharZero K] in
-/-- If four weights sum to zero and a weight `μ` names the sum of the first two, then `-μ` names
-the sum of the last two.
-
-This derives the equations pairing `δ` with one of `α`, `β` and `γ` inside
-`TauCeti.IsSl2System.structureConstant_four_term`. -/
-theorem Weight.coe_neg_eq_add_of_coe_eq_add {μ : Weight K H L} {a b c d : H → K}
-    (hsum : a + b + c + d = 0) (hμ : (μ : H → K) = a + b) :
-    ((-μ : Weight K H L) : H → K) = c + d := by
-  funext y
-  have hy := congrFun hsum y
-  simp only [Weight.coe_neg, hμ, Pi.add_apply, Pi.neg_apply, Pi.zero_apply] at hy ⊢
-  linear_combination -hy
 
 namespace IsSl2System
 

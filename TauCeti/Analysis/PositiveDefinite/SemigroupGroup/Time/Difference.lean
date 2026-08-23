@@ -8,7 +8,7 @@ module
 import Mathlib.Analysis.Normed.Group.Pointwise
 import TauCeti.Analysis.PositiveDefinite.Kernel.Kolmogorov
 public import TauCeti.Analysis.PositiveDefinite.Function.Difference
-public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Axis
+public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 
 /-!
 # Time differences of bounded semigroup-group positive-definite functions
@@ -34,18 +34,10 @@ representing measure.
 An iterated time difference expands into the alternating binomial sum
 `(t, v) ↦ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k • h, v)`, so that sum is positive definite too.
 Positive definiteness is a statement about quadratic forms, not a pointwise sign: nonnegativity of
-the values themselves is asserted only along the zero-spatial axis, where positive definiteness
-specializes to the alternating sign law `0 ≤ (-1) ^ n * Δ_[h]^[n] (fun s => F (s, 0)) t` and hence
-to the classical statement that `t ↦ F (t, 0)` is *completely monotone in the finite-difference
-sense*:
-
-`0 ≤ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k h, 0)`.
-
-Those one-variable statements are exactly the generic `TauCeti.IsPositiveDefinite` theory of
-`TauCeti/Analysis/PositiveDefinite/Function/Difference.lean`, applied to the positive-definite
-function `t ↦ F (t, 0)` on `ℝ≥0` with its trivial involution, and are obtained from it here.
-Accordingly they assume only that the *time axis* is bounded, `‖F (t, 0)‖ ≤ C`, rather than that
-`F` is bounded on all of `ℝ≥0 × V`.
+the values themselves is asserted only along the zero-spatial axis, where it becomes the classical
+complete monotonicity of `t ↦ F (t, 0)` in the finite-difference sense. Those one-variable
+statements are read off the differences built here in
+`TauCeti/Analysis/PositiveDefinite/SemigroupGroup/Time/Axis.lean`.
 
 ## Main declarations
 
@@ -64,13 +56,8 @@ Accordingly they assume only that the *time axis* is bounded, `‖F (t, 0)‖ �
 * `TauCeti.isBounded_range_listTimeDifference` and
   `TauCeti.isBounded_range_iteratedTimeDifference`: those differences stay bounded, so they can be
   differenced again.
-* `TauCeti.IsSemigroupGroupPD.timeAxis_alternating_sum_nonneg`,
-  `TauCeti.IsSemigroupGroupPD.timeAxis_alternating_sum_re_nonneg` and
-  `TauCeti.IsSemigroupGroupPD.timeAxis_iteratedTimeDifference_nonneg`: a bounded time axis
-  `t ↦ F (t, 0)` is completely monotone in the finite-difference sense, in the order of `ℂ` and
-  for real parts.
-* `TauCeti.IsSemigroupGroupPD.timeAxis_sub_nonneg` and
-  `TauCeti.IsSemigroupGroupPD.timeAxis_re_antitone`: a bounded time axis is nonincreasing.
+* `TauCeti.continuous_listTimeDifference` and `TauCeti.continuous_iteratedTimeDifference`: those
+  differences stay continuous, so Bochner's theorem applies to each of their time slices.
 
 ## References
 
@@ -250,9 +237,34 @@ theorem isBounded_range_iteratedTimeDifference (hbounded : Bornology.IsBounded (
   rw [iteratedTimeDifference_eq_listTimeDifference]
   exact isBounded_range_listTimeDifference hbounded _
 
+section Continuity
+
+variable [TopologicalSpace V]
+
+/-- Continuity is preserved by taking a first time difference. -/
+theorem continuous_timeDifference (hF : Continuous F) (h : ℝ≥0) :
+    Continuous (timeDifference h F) := by
+  rw [funext (timeDifference_apply h F)]
+  exact hF.sub (hF.comp ((continuous_fst.add continuous_const).prodMk continuous_snd))
+
+/-- Continuity is preserved by differencing along any finite list of steps. -/
+theorem continuous_listTimeDifference (hF : Continuous F) (l : List ℝ≥0) :
+    Continuous (listTimeDifference l F) := by
+  induction l with
+  | nil => simpa using hF
+  | cons h l ih => simpa using continuous_timeDifference ih h
+
+/-- Continuity is preserved by every iterated time difference. -/
+theorem continuous_iteratedTimeDifference (hF : Continuous F) (n : ℕ) (h : ℝ≥0) :
+    Continuous (iteratedTimeDifference n h F) := by
+  rw [iteratedTimeDifference_eq_listTimeDifference]
+  exact continuous_listTimeDifference hF _
+
+end Continuity
+
 end
 
-variable {V : Type u} [AddCommGroup V] {F : ℝ≥0 × V → ℂ} {C : ℝ}
+variable {V : Type u} [AddCommGroup V] {F : ℝ≥0 × V → ℂ}
 
 namespace IsSemigroupGroupPD
 
@@ -397,67 +409,6 @@ theorem alternating_sum (hF : IsSemigroupGroupPD F)
       ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (p.1 + k • h, p.2) := by
   rw [← TauCeti.iteratedTimeDifference_eq_alternating_sum]
   exact hF.iteratedTimeDifference hbounded n h
-
-/-! ## The zero-spatial axis
-
-Positive definiteness constrains quadratic forms, not values. The values themselves are pinned
-down along the zero-spatial axis, where the results above specialize to the classical complete
-monotonicity of `t ↦ F (t, 0)`. Only that axis has to be bounded for this: the statements below are
-the generic one-variable theory applied to the positive-definite function `t ↦ F (t, 0)` on `ℝ≥0`
-with its trivial involution, evaluated at the norm point `t / 2 + star (t / 2) = t`.
--/
-
-/-- **A semigroup-group positive-definite function with bounded time axis is completely monotone
-along that axis, in the finite-difference sense:** all alternating binomial sums of its values
-along an arithmetic progression of times are nonnegative. This is the form in which the Laplace
-half of the Berg--Christensen--Ressel representation consumes positive definiteness. -/
-theorem timeAxis_alternating_sum_nonneg (n : ℕ) (hF : IsSemigroupGroupPD F)
-    (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
-    0 ≤ ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (t + k • h, (0 : V)) := by
-  have haxis := hF.timeAxis_isPositiveDefinite.alternating_sum_add_star_self_nonneg n (C := C)
-    (fun a => hbdd _) (star_trivial h) (t / 2)
-  simpa only [star_trivial, add_halves] using haxis
-
-/-- The iterated time difference of a semigroup-group positive-definite function whose time axis is
-bounded is nonnegative along the zero-spatial axis. Only the time axis has to be bounded, in
-contrast with `IsSemigroupGroupPD.iteratedTimeDifference`. -/
-theorem timeAxis_iteratedTimeDifference_nonneg (n : ℕ) (hF : IsSemigroupGroupPD F)
-    (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
-    0 ≤ TauCeti.iteratedTimeDifference n h F (t, (0 : V)) := by
-  rw [TauCeti.iteratedTimeDifference_eq_alternating_sum]
-  exact hF.timeAxis_alternating_sum_nonneg n hbdd h t
-
-/-- The real-part form of `IsSemigroupGroupPD.timeAxis_alternating_sum_nonneg`: the alternating
-binomial sums of `t ↦ (F (t, 0)).re` are nonnegative. This is the shape consumed by the
-real-valued complete-monotonicity API. -/
-theorem timeAxis_alternating_sum_re_nonneg (n : ℕ) (hF : IsSemigroupGroupPD F)
-    (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) (h t : ℝ≥0) :
-    0 ≤ ∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * n.choose k * (F (t + k • h, (0 : V))).re := by
-  have hre := (Complex.nonneg_iff.mp (hF.timeAxis_alternating_sum_nonneg n hbdd h t)).1
-  rw [Complex.re_sum] at hre
-  refine le_of_le_of_eq hre (Finset.sum_congr rfl fun k _ => ?_)
-  have hcast : ((-1 : ℂ) ^ k * (n.choose k) : ℂ) = (((-1 : ℝ) ^ k * n.choose k : ℝ) : ℂ) := by
-    push_cast
-    ring
-  rw [hcast, Complex.re_ofReal_mul]
-
-/-- Along the zero-spatial axis, a later value of a semigroup-group positive-definite function with
-bounded time axis is dominated by an earlier one, in the order of `ℂ`. -/
-theorem timeAxis_sub_nonneg (hF : IsSemigroupGroupPD F) (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C)
-    (h t : ℝ≥0) : 0 ≤ F (t, (0 : V)) - F (t + h, 0) := by
-  have haxis := hF.timeAxis_isPositiveDefinite.sub_shift_add_star_self_nonneg (C := C)
-    (fun a => hbdd _) (star_trivial h) (t / 2)
-  simpa only [star_trivial, add_halves] using haxis
-
-/-- The bounded time axis of a semigroup-group positive-definite function is nonincreasing: its
-real part is an antitone function of time. -/
-theorem timeAxis_re_antitone (hF : IsSemigroupGroupPD F) (hbdd : ∀ t : ℝ≥0, ‖F (t, 0)‖ ≤ C) :
-    Antitone fun t : ℝ≥0 => (F (t, (0 : V))).re := by
-  intro t u hle
-  obtain ⟨h, rfl⟩ : ∃ h : ℝ≥0, u = t + h := ⟨u - t, (add_tsub_cancel_of_le hle).symm⟩
-  have hre := (Complex.nonneg_iff.mp (hF.timeAxis_sub_nonneg hbdd h t)).1
-  simp only [Complex.sub_re] at hre
-  linarith
 
 end IsSemigroupGroupPD
 

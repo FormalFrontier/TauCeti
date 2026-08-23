@@ -88,6 +88,23 @@ theorem loopPath_cons (a₀ : α) (e : List α) (bs : List (List α)) :
     loopPath a₀ (e :: bs) = a₀ :: (e ++ loopPath a₀ bs) := by
   simp only [loopPath]
 
+/-- Concatenating two lists of excursions splices their loops at the shared base letter: the
+final letter of the first loop is the initial letter of the second. -/
+theorem loopPath_append (a₀ : α) (bs cs : List (List α)) :
+    loopPath a₀ (bs ++ cs) = (loopPath a₀ bs).dropLast ++ loopPath a₀ cs := by
+  induction bs with
+  | nil => simp
+  | cons e bs ih =>
+    have hne : loopPath a₀ bs ≠ [] := by cases bs <;> simp
+    have hdrop : (loopPath a₀ (e :: bs)).dropLast = a₀ :: (e ++ (loopPath a₀ bs).dropLast) := by
+      rw [loopPath_cons]
+      calc
+        (a₀ :: (e ++ loopPath a₀ bs)).dropLast = ((a₀ :: e) ++ loopPath a₀ bs).dropLast := by
+          simp
+        _ = (a₀ :: e) ++ (loopPath a₀ bs).dropLast := List.dropLast_append_of_ne_nil hne
+        _ = a₀ :: (e ++ (loopPath a₀ bs).dropLast) := by simp
+    rw [List.cons_append, loopPath_cons, ih, hdrop, List.cons_append, List.append_assoc]
+
 /-- The number of transitions of a loop with the given excursions: each excursion contributes its
 own length, plus the one step that returns to the base letter. -/
 def loopSteps (bs : List (List α)) : ℕ :=

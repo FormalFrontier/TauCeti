@@ -82,10 +82,10 @@ The a.e.-measurability hypothesis `∀ p, AEMeasurable (X p) μ` is what turns a
 array into a law identity for a read-off; the definitions themselves are hypothesis-free.
 
 This is the entry point of the Layer 8 target "exchangeable arrays and the Aldous–Hoover
-representation" in `TauCetiRoadmap/Exchangeability/README.md`. The Aldous–Hoover representation
-itself needs, beyond the row de Finetti theorem proved here, the identification of the rows'
-directing measure as an almost surely exchangeable law on `ℕ → α`, and a second application of
-de Finetti inside it.
+representation" in `TauCetiRoadmap/Exchangeability/README.md`. The next law-level consequence of
+the row and column decompositions is in `Arrays.MixingLaw`: the law of either directing measure is
+invariant when every path coordinate is permuted. This is deliberately weaker than saying that the
+directing measure is almost surely an exchangeable law, which is false in general.
 
 ## References
 
