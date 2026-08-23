@@ -58,7 +58,7 @@ theorem of_mem_filtration {k : {k : ℕ // 0 < k}} {n : ℕ} (hk : k.1 ≤ n)
   Submodule.mem_iSup_of_mem k (Submodule.mem_iSup_of_mem hk ⟨x, rfl⟩)
 
 /-- The conilpotence filtration is increasing. -/
-theorem filtration_mono : Monotone (filtration R M) := fun _ _ hmn ↦
+theorem filtration_monotone : Monotone (filtration R M) := fun _ _ hmn ↦
   iSup_le fun k ↦ iSup_le fun hk ↦ le_iSup_of_le k (le_iSup_of_le (hk.trans hmn) le_rfl)
 
 /-- A reduced tensor word has positive length, so the filtration starts at zero. -/
@@ -107,7 +107,7 @@ theorem deconcatenation_filtration_le (n : ℕ) :
   induction z using PiTensorProduct.induction_on with
   | smul_tprod r y =>
       rw [map_smul, map_smul, of_tprod_eq_subword R k.2 y,
-        deconcatenation_subword R y (a := 0) (b := k.1) (by omega)]
+        deconcatenation_subword R y (a := 0) (b := k.1)]
       refine Submodule.smul_mem _ _ (Submodule.sum_mem _ fun c hc ↦ ?_)
       simp only [Finset.mem_Ioo] at hc
       exact htmul _ _ (subword_mem_filtration R M y 0 (by omega))

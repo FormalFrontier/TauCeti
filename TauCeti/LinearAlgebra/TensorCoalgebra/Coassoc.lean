@@ -87,37 +87,48 @@ theorem of_tprod_eq_subword {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
   exact congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm)
 
 /-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
-theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab : a + b ≤ n) :
+theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :
     deconcatenation R M (subword R x a b) =
       ∑ c ∈ Finset.Ioo 0 b, subword R x a c ⊗ₜ[R] subword R x (a + c) (b - c) := by
-  rcases Nat.eq_zero_or_pos b with hb | hb
-  · subst hb
-    simp
-  rw [subword_eq_of_tprod R x hb hab, deconcatenation_of, deconcatenationComponent_tprod]
-  dsimp only
-  refine Finset.sum_bij' (fun i _ ↦ i.1 + 1) (fun c hc ↦ ⟨c - 1, by
-      simp only [Finset.mem_Ioo] at hc; omega⟩) ?_ ?_ ?_ ?_ ?_
-  · intro i _
-    have := i.isLt
-    simp only [Finset.mem_Ioo]
-    omega
-  · intro c _
-    exact Finset.mem_univ _
-  · intro i _
-    ext
-    simp
-  · intro c hc
+  by_cases hab : a + b ≤ n
+  · rcases Nat.eq_zero_or_pos b with hb | hb
+    · subst hb
+      simp
+    rw [subword_eq_of_tprod R x hb hab, deconcatenation_of, deconcatenationComponent_tprod]
+    dsimp only
+    refine Finset.sum_bij' (fun i _ ↦ i.1 + 1) (fun c hc ↦ ⟨c - 1, by
+        simp only [Finset.mem_Ioo] at hc; omega⟩) ?_ ?_ ?_ ?_ ?_
+    · intro i _
+      have := i.isLt
+      simp only [Finset.mem_Ioo]
+      omega
+    · intro c _
+      exact Finset.mem_univ _
+    · intro i _
+      ext
+      simp
+    · intro c hc
+      simp only [Finset.mem_Ioo] at hc
+      dsimp only
+      omega
+    · intro i _
+      have hi := i.isLt
+      rw [subword_eq_of_tprod R x (a := a) (b := i.1 + 1) (by omega) (by omega),
+        subword_eq_of_tprod R x (a := a + (i.1 + 1)) (b := b - (i.1 + 1)) (by omega)
+          (by omega)]
+      congr 1
+      refine congrArg _ (congrArg _ (funext fun j ↦ congrArg x (Fin.ext ?_)))
+      dsimp only
+      omega
+  · rw [subword_eq_zero_of_lt R x (by omega), map_zero]
+    symm
+    refine Finset.sum_eq_zero fun c hc ↦ ?_
     simp only [Finset.mem_Ioo] at hc
-    dsimp only
-    omega
-  · intro i _
-    have hi := i.isLt
-    rw [subword_eq_of_tprod R x (a := a) (b := i.1 + 1) (by omega) (by omega),
-      subword_eq_of_tprod R x (a := a + (i.1 + 1)) (b := b - (i.1 + 1)) (by omega) (by omega)]
-    congr 1
-    refine congrArg _ (congrArg _ (funext fun j ↦ congrArg x (Fin.ext ?_)))
-    dsimp only
-    omega
+    by_cases hac : a + c ≤ n
+    · rw [subword_eq_zero_of_lt R x (a := a + c) (b := b - c) (by omega),
+        TensorProduct.tmul_zero]
+    · rw [subword_eq_zero_of_lt R x (a := a) (b := c) (by omega),
+        TensorProduct.zero_tmul]
 
 variable (M)
 
@@ -138,7 +149,7 @@ theorem deconcatenation_coassoc :
         LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
           (deconcatenation R M (of R M ⟨n, hn⟩ (PiTensorProduct.tprod R y))) := by
     intro n hn y
-    rw [of_tprod_eq_subword R hn y, deconcatenation_subword R y (a := 0) (b := n) (by omega)]
+    rw [of_tprod_eq_subword R hn y, deconcatenation_subword R y (a := 0) (b := n)]
     simp only [Nat.zero_add, map_sum]
     -- Cutting the left factor again, then extending the inner sum by vanishing terms.
     have hL : ∀ c ∈ Finset.Ioo 0 n,
@@ -150,7 +161,7 @@ theorem deconcatenation_coassoc :
             subword R y 0 d ⊗ₜ[R] (subword R y d (c - d) ⊗ₜ[R] subword R y c (n - c)) := by
       intro c hc
       simp only [Finset.mem_Ioo] at hc
-      rw [LinearMap.rTensor_tmul, deconcatenation_subword R y (a := 0) (b := c) (by omega),
+      rw [LinearMap.rTensor_tmul, deconcatenation_subword R y (a := 0) (b := c),
         TensorProduct.sum_tmul, map_sum]
       simp only [Nat.zero_add, TensorProduct.assoc_tmul]
       refine Finset.sum_subset (Finset.Ioo_subset_Ioo le_rfl (by omega)) ?_
@@ -166,7 +177,7 @@ theorem deconcatenation_coassoc :
             subword R y 0 c ⊗ₜ[R] (subword R y c (q - c) ⊗ₜ[R] subword R y q (n - q)) := by
       intro c hc
       simp only [Finset.mem_Ioo] at hc
-      rw [LinearMap.lTensor_tmul, deconcatenation_subword R y (a := c) (b := n - c) (by omega),
+      rw [LinearMap.lTensor_tmul, deconcatenation_subword R y (a := c) (b := n - c),
         TensorProduct.tmul_sum]
       rw [Finset.sum_nbij' (t := Finset.Ioo c n) (fun e ↦ c + e) (fun q ↦ q - c)
         (g := fun q ↦ subword R y 0 c ⊗ₜ[R]
@@ -201,13 +212,7 @@ theorem deconcatenation_coassoc :
   induction z using PiTensorProduct.induction_on with
   | smul_tprod r y =>
       simp only [LinearMap.comp_apply, map_smul, LinearEquiv.coe_coe]
-      change r • TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
-          (ReducedTensorWords R M)
-          (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
-            (deconcatenation R M (of R M k (PiTensorProduct.tprod R y)))) =
-        r • LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
-          (deconcatenation R M (of R M k (PiTensorProduct.tprod R y)))
-      exact congrArg _ (key k.1 k.2 y)
+      convert congrArg (r • ·) (key k.1 k.2 y) using 1 <;> rfl
   | add u v hu hv =>
       simp only [LinearMap.comp_apply, map_add] at hu hv ⊢
       rw [hu, hv]
