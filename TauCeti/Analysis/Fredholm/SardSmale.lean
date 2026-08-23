@@ -5,12 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Calculus.Sard.OutermostStratum
-public import TauCeti.Analysis.Fredholm.NormalForm
-public import TauCeti.Analysis.Fredholm.Proper
-public import TauCeti.Analysis.Normed.Operator.Surjective
-public import Mathlib.Topology.Baire.Lemmas
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Mathlib.Analysis.Normed.Operator.Fredholm.Basic
 public import Mathlib.Topology.GDelta.Basic
+import Mathlib.Topology.Baire.Lemmas
+import TauCeti.Analysis.Calculus.Sard.OutermostStratum
+import TauCeti.Analysis.Fredholm.NormalForm
+import TauCeti.Analysis.Fredholm.Proper
+import TauCeti.Analysis.Normed.Operator.Surjective
 
 /-!
 # The Sard--Smale theorem
@@ -92,6 +94,22 @@ namespace TauCeti
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F]
+
+/-- A subset of a product has empty interior as soon as all of its vertical fibres do: an
+interior point of the subset would supply a whole box, whose second factor is an open subset of a
+fibre. This is the step of the Sard--Smale argument where the infinite dimension of the first
+factor is harmless. -/
+private theorem interior_eq_empty_of_forall_interior_fiber_eq_empty {X Z : Type*}
+    [TopologicalSpace X] [TopologicalSpace Z] {A : Set (X × Z)}
+    (h : ∀ x : X, interior {z | (x, z) ∈ A} = ∅) : interior A = ∅ := by
+  rw [Set.eq_empty_iff_forall_notMem]
+  rintro ⟨x, z⟩ hxz
+  have hopen : IsOpen {z' : Z | (x, z') ∈ interior A} := isOpen_interior.preimage (by fun_prop)
+  have hsub : {z' : Z | (x, z') ∈ interior A} ⊆ {z' : Z | (x, z') ∈ A} :=
+    fun _ hz' ↦ interior_subset (s := A) hz'
+  have hz : z ∈ interior {z' : Z | (x, z') ∈ A} := interior_maximal hsub hopen hxz
+  rw [h x] at hz
+  exact hz
 
 /-- Surjectivity of `w ↦ w.1 + D w`, where `D` takes values in a topological complement of the
 subspace `w.1` ranges over, is decided by the partial map `z ↦ D (0, z)`: the first coordinate is
@@ -312,27 +330,20 @@ theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
     {p | p.2 ∈ (fun z ↦ q (p.1, z)) ''
       ({z | (p.1, z) ∈ V} ∩ {z | ¬ Surjective (fderiv ℝ (fun z ↦ q (p.1, z)) z)})} with hAdef
   have hAint : interior A = ∅ := by
-    rw [Set.eq_empty_iff_forall_notMem]
-    rintro ⟨p₁, p₂⟩ hp
-    have hnhds : A ∈ 𝓝 ((p₁, p₂) : pkg.decCodom.X₁ × pkg.decCodom.X₀) :=
-      mem_interior_iff_mem_nhds.1 hp
-    rw [nhds_prod_eq, Filter.mem_prod_iff] at hnhds
-    obtain ⟨V₁, hV₁, W, hW, hsub⟩ := hnhds
-    have hWsub : W ⊆ (fun z ↦ q (p₁, z)) ''
+    refine interior_eq_empty_of_forall_interior_fiber_eq_empty fun p₁ ↦ ?_
+    -- The fibre of `A` over `p₁` is the image of the critical set of the slice at `p₁`.
+    have hfiber : {z | (p₁, z) ∈ A} = (fun z ↦ q (p₁, z)) ''
         ({z | (p₁, z) ∈ V} ∩ {z | ¬ Surjective (fderiv ℝ (fun z ↦ q (p₁, z)) z)}) := by
-      intro w hw
-      exact hsub (Set.mk_mem_prod (mem_of_mem_nhds hV₁) hw)
+      rw [hAdef]
+      ext z
+      simp only [Set.mem_ofPred_eq]
+    rw [hfiber]
     have hUopen : IsOpen {z : pkg.decDom.X₀ | (p₁, z) ∈ V} :=
       hVopen.preimage (by fun_prop)
     have hUC : ∀ z ∈ {z : pkg.decDom.X₀ | (p₁, z) ∈ V},
         ContDiffAt ℝ (k : ℕ∞ω) (fun z ↦ q (p₁, z)) z := fun z hz ↦
       ((hVP _ hz).2.1).comp z (contDiffAt_const.prodMk contDiffAt_id)
-    have hSard := interior_image_criticalPoints_eq_empty hUopen hUC hkbound
-    have hmem : p₂ ∈ interior ((fun z ↦ q (p₁, z)) ''
-        ({z | (p₁, z) ∈ V} ∩ {z | ¬ Surjective (fderiv ℝ (fun z ↦ q (p₁, z)) z)})) :=
-      mem_interior_iff_mem_nhds.2 (Filter.mem_of_superset hW hWsub)
-    rw [hSard] at hmem
-    exact hmem
+    exact interior_image_criticalPoints_eq_empty hUopen hUC hkbound
   have himg : f '' (N ∩ {x | ¬ Surjective (fderiv ℝ f x)}) ⊆ Λ '' A := by
     rintro _ ⟨x, ⟨hxN, hxc⟩, rfl⟩
     obtain ⟨c₁, -, -, -, -⟩ := hVP (Φ x) (hNV x hxN)
