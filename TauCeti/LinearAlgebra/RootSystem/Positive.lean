@@ -57,6 +57,8 @@ positive root is a nonnegative integer combination of the simple coroots.
   `TauCeti.root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone` specializes that to a positive root
   added to a member of `Q⁺`, and `TauCeti.sum_root_ne_zero_of_mem_posRoots` deduces that a nonempty
   sum of positive roots is nonzero.
+* `TauCeti.eq_of_nsmul_root_sub_root_mem_posRootCone` says that the only positive root lying below
+  a natural multiple of a simple root, in the order defined by `Q⁺`, is that simple root itself.
 * `TauCeti.one_le_height_of_mem_posRoots` says every positive root has height at least one.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
@@ -331,6 +333,60 @@ theorem sum_root_ne_zero_of_mem_posRoots {κ : Type*} {s : Finset κ} (hs : s.No
   exact root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone P b (hf x₀ hx₀)
     (AddSubmonoid.sum_mem _ fun x hx =>
       root_mem_posRootCone_of_mem_posRoots P b (hf x (Finset.mem_of_mem_erase hx)))
+
+/-- **A simple root dominates only itself.** If a natural multiple of a simple root `αᵢ` exceeds a
+positive root `αⱼ` inside the cone `Q⁺`, then `αⱼ` is `αᵢ`.
+
+Expanding both `αⱼ` and the difference in the simple roots and comparing coefficients, which is
+legitimate because the simple roots are linearly independent, leaves `αⱼ` a natural multiple of
+`αᵢ`; the multiple is `1` because a base contains no proper multiple of one of its members
+(`RootPairing.Base.eq_one_or_neg_one_of_mem_support_of_smul_mem`).
+
+This is the combinatorial input to the integrability relation of a highest weight module: it is
+what confines a positive root vector raising the weight `lam - (n + 1) αᵢ` to the single direction
+`αᵢ`. -/
+theorem eq_of_nsmul_root_sub_root_mem_posRootCone [Finite ι] [IsAddTorsionFree M]
+    [IsAddTorsionFree N] {i : ι} (hi : i ∈ b.support) {j : ι} (hj : j ∈ posRoots P b) {n : ℕ}
+    (h : n • P.root i - P.root j ∈ posRootCone P b) : j = i := by
+  classical
+  obtain ⟨c, -, hc⟩ := exists_root_eq_sum_nat_of_mem_posRoots P b hj
+  obtain ⟨d, hd⟩ := (mem_posRootCone P b).mp h
+  set g : ι → R := fun k => (c k : R) + (d k : R) - (if k = i then (n : R) else 0) with hgdef
+  have hsingle : ∑ k ∈ b.support, (if k = i then (n : R) else 0) • P.root k
+      = (n : R) • P.root i := by
+    rw [Finset.sum_eq_single i (fun k _ hk => by simp [hk]) (fun hni => absurd hi hni)]
+    simp
+  have hzero : ∑ k ∈ b.support, g k • P.root k = 0 := by
+    have hsplit : ∑ k ∈ b.support, g k • P.root k
+        = ((∑ k ∈ b.support, c k • P.root k) + ∑ k ∈ b.support, d k • P.root k)
+          - ∑ k ∈ b.support, (if k = i then (n : R) else 0) • P.root k := by
+      rw [← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun k _ => by
+        simp [hgdef, add_smul, sub_smul, Nat.cast_smul_eq_nsmul]
+    rw [hsplit, hsingle, ← hc, ← hd, Nat.cast_smul_eq_nsmul]
+    abel
+  have hg0 : ∀ k ∈ b.support, g k = 0 :=
+    linearIndepOn_iff'.mp b.linearIndepOn_root b.support g subset_rfl hzero
+  have hc0 : ∀ k ∈ b.support, k ≠ i → c k = 0 := by
+    intro k hk hki
+    have hif : (if k = i then (n : R) else 0) = 0 := by simp [hki]
+    have hgk := hg0 k hk
+    rw [hgdef] at hgk
+    simp only [hif, sub_zero] at hgk
+    have hcast : ((c k + d k : ℕ) : R) = 0 := by push_cast; exact hgk
+    have : c k + d k = 0 := by exact_mod_cast hcast
+    omega
+  have hroot : P.root j = (c i : ℕ) • P.root i := by
+    rw [hc, Finset.sum_eq_single i (fun k hk hki => by rw [hc0 k hk hki, zero_smul])
+      (fun hni => absurd hi hni)]
+  have hmem : (c i : R) • P.root i ∈ Set.range P.root := by
+    rw [Nat.cast_smul_eq_nsmul, ← hroot]
+    exact Set.mem_range_self j
+  rcases b.eq_one_or_neg_one_of_mem_support_of_smul_mem i hi _ hmem with h1 | h1
+  · have hci : c i = 1 := by exact_mod_cast h1
+    exact P.root.injective (by rw [hroot, hci, one_smul])
+  · have hcast : ((c i + 1 : ℕ) : R) = 0 := by push_cast [h1]; ring
+    exact absurd (by exact_mod_cast hcast : c i + 1 = 0) (Nat.succ_ne_zero (c i))
 
 /-- Root negation exchanges positive and negative roots. -/
 theorem image_reflectionPerm_self_posRoots :

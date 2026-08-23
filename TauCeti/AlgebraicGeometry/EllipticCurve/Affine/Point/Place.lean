@@ -65,16 +65,11 @@ an API of `ord_v` and uniformisers, and for the point–place dictionary: "for e
 `W.toAffine.Point` is in bijection with the degree-`1` places: `O ↦ infinityPlace`, and an affine
 nonsingular `(x₀, y₀) ↦` the maximal ideal `(X − x₀, Y − y₀)`". This is the affine half of that
 dictionary at the level of equation solutions; for elliptic `W`, `equation_iff_nonsingular`
-identifies its domain with the nonzero affine points. The place at infinity
-(`TauCeti.WeierstrassCurve.Affine.infinityPlace`) is a valuation on the function field rather than
-a prime of the coordinate ring, so the two are not yet terms of one type of places, although they
-are already known to be distinct places
-(`TauCeti.WeierstrassCurve.Affine.infinityPlace_ne_heightOneSpectrum_valuation`). The point at
-infinity therefore stays out of the dictionary here: reading it on the whole point group `W.Point`
-has to wait for Layer 0 to fix one type of places holding both `infinityPlace` and the affine ones,
-and is what remains of the milestone. The layer seeds no declaration this competes with, and
-records that the design is coordinated with D. Angdinata's in-flight upstream `CoordinateRing`
-work.
+identifies its domain with the nonzero affine points. The downstream file
+`Affine/FunctionField/PointPlace.lean` packages the valuation at infinity and these affine primes
+as one type of normalized places, and `pointEquivDegreeOnePlace` extends this affine equivalence to
+the whole point group. The layer seeds no declaration this competes with, and records that the
+design is coordinated with D. Angdinata's in-flight upstream `CoordinateRing` work.
 
 ## Provenance
 
