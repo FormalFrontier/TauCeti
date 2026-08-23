@@ -148,7 +148,7 @@ theorem mul?_eq_none_iff {x y : TotalPath Q} : mul? x y = none ↔ y.2.1 ≠ x.1
 
 /-- **Concatenation adds lengths**: a path produced by `mul?` is as long as its two factors
 together. -/
-theorem length_of_mul?_eq_some {x y z : TotalPath Q} (h : mul? x y = some z) :
+theorem length_eq_add_of_mul?_eq_some {x y z : TotalPath Q} (h : mul? x y = some z) :
     z.2.2.length = x.2.2.length + y.2.2.length := by
   obtain ⟨a, b, p⟩ := x
   obtain ⟨c, d, q⟩ := y

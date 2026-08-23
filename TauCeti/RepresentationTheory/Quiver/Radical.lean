@@ -199,7 +199,7 @@ theorem mul_mem_pathSpan {m n : ℕ} {f g : pathAlgebra k Q} (hf : f ∈ pathSpa
       | none => exact Submodule.zero_mem _
       | some z =>
         refine ofPath_mem_pathSpan ?_
-        rw [Quiver.TotalPath.length_of_mul?_eq_some hxy]
+        rw [Quiver.TotalPath.length_eq_add_of_mul?_eq_some hxy]
         omega
 
 /-- Powers of an element of the first step of the length filtration climb the filtration. -/

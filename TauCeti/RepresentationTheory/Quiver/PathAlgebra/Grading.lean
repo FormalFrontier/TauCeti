@@ -55,8 +55,7 @@ property `TauCeti.PathAlgebra.liftAlgHom` in the same way as
 `AddMonoidAlgebra.gradeBy.gradedAlgebra` is built from the universal property of an additive monoid
 algebra: an assignment of a homogeneous summand to each basis path is an algebra map to the direct
 sum as soon as it respects the three defining products of `kQ`. It is what
-`GradedAlgebra.ofAlgHom` installs as `DirectSum.decompose`, the two being identified by
-`TauCeti.PathAlgebra.decomposeAlgHom_eq_decompose`.
+`GradedAlgebra.ofAlgHom` installs as `DirectSum.decompose`; the two maps are definitionally equal.
 
 The unit of `kQ` is the sum of the vertex idempotents, which exists only for a finite vertex type,
 so the graded *pieces* are defined for every quiver while the grading itself asks for `[Finite Q]`.
@@ -159,7 +158,9 @@ theorem ofPath_mul_ofPath_mem_grade (x y : Quiver.TotalPath Q) :
   rw [ofPath_mul_ofPath]
   cases hxy : x.mul? y with
   | none => exact Submodule.zero_mem _
-  | some z => exact ofPath_mem_grade_of_length (Quiver.TotalPath.length_of_mul?_eq_some hxy)
+  | some z =>
+    exact ofPath_mem_grade_of_length
+      (Quiver.TotalPath.length_eq_add_of_mul?_eq_some (Q := Q) hxy)
 
 variable (k Q)
 
@@ -311,8 +312,8 @@ private theorem sum_gradeSummand_nil :
 
 /-- The algebra homomorphism into the direct sum of graded pieces that decomposes elements by path
 length. This is the map `GradedAlgebra.ofAlgHom` installs as `DirectSum.decompose` for the grading
-below, as `AddMonoidAlgebra.decomposeAux` is for the grading of a monoid algebra;
-`TauCeti.PathAlgebra.decomposeAlgHom_eq_decompose` identifies the two. -/
+below, as `AddMonoidAlgebra.decomposeAux` is for the grading of a monoid algebra; the two maps are
+definitionally equal. -/
 noncomputable def decomposeAlgHom : pathAlgebra k Q →ₐ[k] ⨁ n, grade k Q n :=
   liftAlgHom k (gradeSummand k Q) (gradeSummand_mul_gradeSummand k Q)
     (gradeSummand_mul_gradeSummand_of_not_composable k Q) (sum_gradeSummand_nil k Q)
@@ -363,12 +364,6 @@ noncomputable instance gradedAlgebra : GradedAlgebra (grade k Q) :=
         AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, decomposeAlgHom_ofPath,
         DirectSum.coeAlgHom_of, AlgHom.coe_id, id_eq])
     fun _ f => decomposeAlgHom_of_mem k Q f.2
-
-/-- The decomposition map is `DirectSum.decompose` for the path-length grading, as
-`AddMonoidAlgebra.decomposeAux_eq_decompose` records for a monoid algebra. -/
-@[simp]
-theorem decomposeAlgHom_eq_decompose :
-    ⇑(decomposeAlgHom k Q) = DirectSum.decompose (grade k Q) := (rfl)
 
 /-- **The path algebra is the internal direct sum of its graded pieces**: the direct-sum graded
 algebra is compared with `kQ` itself, not with a separate graded copy. -/

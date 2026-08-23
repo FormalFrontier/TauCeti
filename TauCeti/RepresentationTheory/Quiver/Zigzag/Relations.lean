@@ -105,7 +105,7 @@ noncomputable def quadraticZigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQu
 noncomputable def zigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQuiver G)) :=
   TwoSidedIdeal.span {x | IsZigzagRelator k G x}
 
-/-- A named unfolding lemma for the defining span of the quadratic relation ideal. -/
+/-- The quadratic relation ideal is the two-sided span of the quadratic relators. -/
 theorem quadraticZigzagIdeal_eq_span :
     quadraticZigzagIdeal k G = TwoSidedIdeal.span {x | IsQuadraticZigzagRelator k G x} := (rfl)
 
