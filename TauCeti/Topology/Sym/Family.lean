@@ -75,7 +75,9 @@ private theorem isOpenMap_regroup (hU : ∀ i, IsOpen (U i)) (e : (Σ i, Fin (m 
     (piCurryHomeomorph fun (i : ι) (_ : Fin (m i)) => ↥(U i)).symm.trans
       (Homeomorph.piCongrLeft (Y := fun k : (Σ i, Fin (m i)) => ↥(U k.1)) e.symm).symm
   have hfun : regroup U m e
-      = (Pi.map fun j : Fin n => (Subtype.val : ↥(U (e.symm j).1) → α)) ∘ R := rfl
+      = (Pi.map fun j : Fin n => (Subtype.val : ↥(U (e.symm j).1) → α)) ∘ R := by
+    funext f j
+    simp [regroup, R]
   rw [hfun]
   exact (IsOpenMap.piMap (fun j => (hU _).isOpenMap_subtype_val) (by simp)).comp R.isOpenMap
 
@@ -146,7 +148,10 @@ theorem exists_mem_range_sumSubtype_of_t2 {α : Type*} [TopologicalSpace α] [T2
     ∃ V : ↥(w : Multiset α).toFinset → Set α, (∀ i, IsOpen (V i)) ∧ (∀ i, (i : α) ∈ V i) ∧
       (∀ i, V i ⊆ W i) ∧ Pairwise (Function.onFun Disjoint V) ∧
       w ∈ Set.range (Sym.sumSubtype V (fun i => Multiset.count (i : α) (w : Multiset α))
-        (sum_count_toFinset_eq w.2)) := by
+        (by
+          rw [Finset.sum_coe_sort (w : Multiset α).toFinset
+            fun a => Multiset.count a (w : Multiset α), Multiset.toFinset_sum_count_eq]
+          exact w.2)) := by
   classical
   obtain ⟨V₀, hV₀, hdisj⟩ :=
     (((w : Multiset α).toFinset : Finset α) : Set α).toFinite.t2_separation (X := α)

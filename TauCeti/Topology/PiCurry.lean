@@ -31,11 +31,7 @@ public section
 
 namespace TauCeti
 
-/-- **Currying a sigma-indexed family of spaces**, as a homeomorphism.
-
-It is `@[expose]`d because both directions are used through their defining formulas, which a
-theorem exported from this file may not unfold otherwise. -/
-@[expose]
+/-- **Currying a sigma-indexed family of spaces**, as a homeomorphism. -/
 def piCurryHomeomorph {ι : Type*} {κ : ι → Type*} (Y : ∀ i, κ i → Type*)
     [∀ i j, TopologicalSpace (Y i j)] : (∀ p : Σ i, κ i, Y p.1 p.2) ≃ₜ (∀ i j, Y i j) where
   toEquiv := Equiv.piCurry Y

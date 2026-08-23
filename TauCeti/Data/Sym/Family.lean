@@ -39,8 +39,6 @@ enough there because `n + m` is already the sum.
   the family with exactly `m i` of their points in `U i`.
 * `TauCeti.Sym.sumSubtype_ofFn`: the concatenation read on ordered tuples, along a bijection
   `(Σ i, Fin (m i)) ≃ Fin n`.
-* `TauCeti.sum_count_toFinset_eq`: the multiplicities of the distinct points of a multiset of
-  cardinality `n` add up to `n`, the degree condition for a family indexed by those points.
 -/
 
 public section
@@ -202,14 +200,5 @@ theorem mem_range_sumSubtype [∀ i, DecidablePred (· ∈ U i)]
   exact ⟨fun a ha => exists_mem_of_mem_sumSubtype ha, card_filter_mem_sumSubtype h hn p⟩
 
 end Sym
-
-/-- **The multiplicities of the distinct points of a multiset of cardinality `n` add up to `n`.**
-This is the degree condition that `TauCeti.Sym.sumSubtype` needs when its family is indexed by the
-distinct points of a tuple, so it is stated with the cardinality as a hypothesis rather than as the
-conclusion. -/
-theorem sum_count_toFinset_eq {α : Type*} [DecidableEq α] {w : Multiset α} {n : ℕ}
-    (hw : Multiset.card w = n) : ∑ i : ↥w.toFinset, Multiset.count (i : α) w = n := by
-  rw [Finset.sum_coe_sort w.toFinset fun a => Multiset.count a w, Multiset.toFinset_sum_count_eq]
-  exact hw
 
 end TauCeti

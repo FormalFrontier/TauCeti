@@ -80,14 +80,18 @@ theorem exists_openPartialHomeomorph_sym (s : Sym α n) :
       (fun a => (chartAt K a).open_source) fun a => mem_chart_source K a
   set m : ↥(s : Multiset α).toFinset → ℕ :=
     fun i => Multiset.count (i : α) (s : Multiset α)
-  have hΦ : IsOpenEmbedding (Sym.sumSubtype V m (sum_count_toFinset_eq s.2)) :=
+  have hm : ∑ i, m i = n := by
+    rw [Finset.sum_coe_sort (s : Multiset α).toFinset
+      fun a => Multiset.count a (s : Multiset α), Multiset.toFinset_sum_count_eq]
+    exact s.2
+  have hΦ : IsOpenEmbedding (Sym.sumSubtype V m hm) :=
     Sym.isOpenEmbedding_sumSubtype hVo hVdisj _
   have hφ : ∀ i, IsOpenEmbedding fun x : ↥(V i) => chartAt K (i : α) (x : α) :=
     fun i => isOpenEmbedding_chartRestrict _ (hVo i) (hVsub i)
   have hΘ : IsOpenEmbedding (Pi.map fun i => fun t : Sym ↥(V i) (m i) =>
       Sym.coeffEquiv K (m i) (Sym.map (fun x : ↥(V i) => chartAt K (i : α) (x : α)) t)) :=
     IsOpenEmbedding.piMap fun i => Sym.isOpenEmbedding_coeffEquiv_comp_map (hφ i)
-  have hΨ := (piFinSumHomeomorph K (sum_count_toFinset_eq s.2)).isOpenEmbedding.comp hΘ
+  have hΨ := (piFinSumHomeomorph K hm).isOpenEmbedding.comp hΘ
   have : Nonempty (∀ i, Sym ↥(V i) (m i)) := ⟨hmem.choose⟩
   refine ⟨(hΦ.toOpenPartialHomeomorph _).symm.trans (hΨ.toOpenPartialHomeomorph _), ?_⟩
   simpa using hmem
