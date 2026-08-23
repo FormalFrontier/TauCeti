@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
-public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
+public import TauCeti.Algebra.Coalgebra.Comodule.PointAction
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 
 /-!
@@ -33,6 +33,10 @@ action transports across `R ⊗[R] V ≃ₗ[R] V` to a representation on `V` its
   `TauCeti.Comodule.pointsAction_corestrict_obj`.
 * `TauCeti.Comodule.basePointsRepresentation`: the action of base-valued points on the original
   comodule.
+* `TauCeti.Comodule.coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq`: geometric fixed-vector
+  detection in terms of the convolution-group action.
+* `TauCeti.Comodule.coact_eq_tmul_one_iff_forall_basePointsRepresentation_eq`: base-valued points
+  detect fixed vectors over an algebraically closed base field.
 -/
 
 public section
@@ -74,47 +78,34 @@ universe u v w x y
 section BasePointsRepresentation
 
 variable {R : Type u} {H : Type v}
-variable [CommRing R] [Semiring H] [HopfAlgebra R H]
+variable [CommSemiring R] [Semiring H] [HopfAlgebra R H]
 
 /-- The representation of the group of base-valued points on the original comodule.
 
 `pointsRepresentation` acts on `R ⊗[R] M`; this is its transport across the canonical
 equivalence `R ⊗[R] M ≃ₗ[R] M`. -/
 noncomputable def basePointsRepresentation
-    (M : Type w) [AddCommMonoid M] [Module R M] [Comodule R H M] :
-    Representation R (HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) M where
-  toFun g :=
-    (TensorProduct.lid R M).toLinearMap ∘ₗ
-      pointsRepresentation M g ∘ₗ
-        (TensorProduct.lid R M).symm.toLinearMap
-  map_one' := by
-    rw [map_one]
-    ext m
-    simp
-  map_mul' g h := by
-    rw [map_mul]
-    ext m
-    simp only [LinearMap.comp_apply, LinearEquiv.coe_toLinearMap, Module.End.mul_apply,
-      LinearEquiv.symm_apply_apply]
+    (M : Type w) [AddCommMonoid M] [Module R M] [Comodule R H M] :=
+  (TensorProduct.lid R M).conjRingEquiv.toMonoidHom.comp
+    (pointsRepresentation (R := R) (H := H) (A := R) M)
 
 variable {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R H M]
 
 /-- A base-valued point acts on `m` by contracting the coefficient leg of its coaction. -/
-@[simp]
-theorem basePointsRepresentation_apply (g : HopfAlgebra.points
-    (R := R) (H := H) (CommAlgCat.of R R)) (m : M) :
+theorem basePointsRepresentation_apply (g : WithConv (H →ₐ[R] R)) (m : M) :
     basePointsRepresentation (H := H) M g m =
       TensorProduct.lid R M (endOfPoint M g.ofConv (1 ⊗ₜ[R] m)) := by
-  -- Expose the transported action once so `pointsRepresentation_apply` can rewrite it.
-  change (TensorProduct.lid R M)
-    (pointsRepresentation M g ((TensorProduct.lid R M).symm m)) = _
-  rw [pointsRepresentation_apply]
+  -- Unpack the `conjRingEquiv` transport to apply its characteristic evaluation lemma.
+  change (TensorProduct.lid R M).conj
+    (pointsRepresentation (R := R) (H := H) (A := R) M g) m = _
+  rw [LinearEquiv.conj_apply_apply, pointsRepresentation_apply]
   simp
 
 /-- The scalar-extension action of a base-valued point is the pure tensor of its action on the
 original comodule. -/
-theorem endOfPoint_one_tmul_eq_tmul_basePointsRepresentation
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (m : M) :
+@[simp]
+theorem endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation
+    (g : WithConv (H →ₐ[R] R)) (m : M) :
     endOfPoint M g.ofConv (1 ⊗ₜ[R] m) =
       1 ⊗ₜ[R] basePointsRepresentation (H := H) M g m := by
   apply (TensorProduct.lid R M).injective
@@ -129,8 +120,9 @@ variable {M : Type w} [AddCommMonoid M] [Module R M] [Comodule R H₁ M]
 
 /-- Acting by a base-valued point on a corestricted comodule agrees with acting by the point
 precomposed with the bialgebra morphism. -/
+@[simp]
 theorem basePointsRepresentation_corestrict (φ : H₁ →ₐc[R] H₂)
-    (g : HopfAlgebra.points (R := R) (H := H₂) (CommAlgCat.of R R)) :
+    (g : WithConv (H₂ →ₐ[R] R)) :
     (letI : Comodule R H₂ M := Corestrict φ.toCoalgHom
      basePointsRepresentation (R := R) (H := H₂) M g) =
       basePointsRepresentation (R := R) (H := H₁) M (AlgHom.mapDomain φ g) := by
@@ -144,6 +136,62 @@ theorem basePointsRepresentation_corestrict (φ : H₁ →ₐc[R] H₂)
 end Corestrict
 
 end BasePointsRepresentation
+
+section BasePointsFixed
+
+variable {R : Type u} {H : Type v} {M : Type w}
+variable [CommSemiring R] [Semiring H] [HopfAlgebra R H]
+variable [AddCommMonoid M] [Module R M] [Comodule R H M]
+
+/-- A vector fixed by the coaction is fixed by every base-valued point. -/
+theorem basePointsRepresentation_eq_of_coact_eq_tmul_one
+    (m : M) (hm : coact (R := R) (C := H) m = m ⊗ₜ[R] (1 : H))
+    (g : WithConv (H →ₐ[R] R)) :
+    basePointsRepresentation (R := R) (H := H) M g m = m := by
+  rw [basePointsRepresentation_apply, endOfPoint_tmul, hm]
+  simp
+
+end BasePointsFixed
+
+section FixedVectorDetection
+
+variable {k : Type u} {H : Type v} {M : Type w} {K : Type x}
+variable [Field k] [CommRing H] [HopfAlgebra k H] [Algebra.FiniteType k H] [IsReduced H]
+variable [AddCommGroup M] [Module k M] [Comodule k H M]
+variable [Field K] [Algebra k K] [IsAlgClosed K]
+
+/-- For a Hopf-algebra comodule, a vector is fixed by the coaction exactly when every point in the
+convolution group fixes its scalar extension. -/
+theorem coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (m : M) :
+    coact (R := k) (C := H) m = m ⊗ₜ[k] (1 : H) ↔
+      ∀ g : WithConv (H →ₐ[k] K),
+        pointsAction M g ((1 : K) ⊗ₜ[k] m) = (1 : K) ⊗ₜ[k] m := by
+  rw [coact_eq_tmul_one_iff_forall_endOfPoint_tmul_eq (K := K)]
+  constructor
+  · intro h g
+    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap]
+    exact h g.ofConv
+  · intro h g
+    have hg := h (toConv g)
+    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap] at hg
+    simpa only [ofConv_toConv] using hg
+
+/-- Over an algebraically closed base field, base-valued points detect fixed vectors of a
+reduced finite-type Hopf-algebra comodule. -/
+theorem coact_eq_tmul_one_iff_forall_basePointsRepresentation_eq [IsAlgClosed k] (m : M) :
+    coact (R := k) (C := H) m = m ⊗ₜ[k] (1 : H) ↔
+      ∀ g : HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k),
+        basePointsRepresentation (R := k) (H := H) M g m = m := by
+  constructor
+  · intro hm g
+    exact basePointsRepresentation_eq_of_coact_eq_tmul_one m hm g
+  · intro h
+    rw [coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (K := k)]
+    intro g
+    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap,
+      endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation, h g]
+
+end FixedVectorDetection
 
 section Corestrict
 
