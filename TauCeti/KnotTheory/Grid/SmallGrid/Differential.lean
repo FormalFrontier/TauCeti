@@ -38,8 +38,8 @@ This supplies a prerequisite for
 `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`",
 and for the standing convention that the grid complexes compute on explicit small grids. The
 rectangle-count convention follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and
-Links*, Chapter 3; the fully blocked marking-avoidance condition follows Definition 4.1.1 and
-Chapter 4.6.
+Links*, Chapter 3; the fully blocked marking-avoidance condition defining `GC̃` is in Chapter 4,
+Section 4.4.
 -/
 
 public section

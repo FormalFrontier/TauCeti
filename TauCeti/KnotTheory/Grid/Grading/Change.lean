@@ -24,7 +24,7 @@ grading, leaving the clean marking-only identity
 relationship between `x` and `y`.
 
 When `y` is obtained from `x` by a rectangle move `R : GridRectangleBetween x y`, the two states
-share all but two of their occupied squares (`RectangleSwap.lean`), so each marking pairing
+share all but two of their occupied grid points (`RectangleSwap.lean`), so each marking pairing
 `J_O(x) - J_O(y)` collapses to a difference of four corner `J`-singletons: the source corners
 `(left, bottom)`, `(right, top)` against the target corners `(left, top)`, `(right, bottom)`.
 For Maslov gradings the state self-pairing does not cancel, so this file also localizes its
@@ -217,7 +217,7 @@ theorem JX_sub_JX_eq (R : GridRectangleBetween x y) :
 /-- The Alexander grading change across a rectangle move, localized to the four corners: it is the
 four `X`-corner pairings minus the four `O`-corner pairings, in each case the two source corners
 against the two target corners. The state self-pairing cancels (`alexander_sub_alexander_eq`) and
-the shared squares cancel (`JX_sub_JX_eq`, `JO_sub_JO_eq`). -/
+the shared grid points cancel (`JX_sub_JX_eq`, `JO_sub_JO_eq`). -/
 theorem alexander_change_rectangle (R : GridRectangleBetween x y) :
     G.alexander x - G.alexander y =
       ((GridPoint.J {(R.left, R.bottom)} G.XSet + GridPoint.J {(R.right, R.top)} G.XSet) -

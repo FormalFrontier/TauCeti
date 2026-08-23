@@ -31,7 +31,8 @@ rectangle-change theorems can refer to these names without unfolding the point-p
   under the diagonal reflection of a grid state and diagram.
 * `TauCeti.GridDiagram.maslovO_rotate`, `TauCeti.GridDiagram.maslovX_rotate`,
   `TauCeti.GridDiagram.alexander_rotate`: the Maslov and Alexander gradings are invariant
-  under the half-turn rotation of a grid state and diagram.
+  under simultaneous coordinate reversal of a grid state and diagram. As explained in
+  `TauCeti.KnotTheory.Grid.Rotation`, these are not one common half-turn of the torus.
 * `TauCeti.GridDiagram.maslovO_swapMarkings`, `TauCeti.GridDiagram.maslovX_swapMarkings`: the
   two Maslov gradings are exchanged by the marking swap.
 * `TauCeti.GridDiagram.alexander_swapMarkings`: the Alexander grading is negated up to the
@@ -39,7 +40,8 @@ rectangle-change theorems can refer to these names without unfolding the point-p
 
 ## References
 
-This supplies the grading-definition part of `TauCetiRoadmap/HeegaardFloer/README.md`,
+This supplies the grading-definition part of
+`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`,
 Lane G.2, "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`;
 grading-change formulas across a rectangle." The formulas follow
 Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.2:
@@ -146,20 +148,20 @@ theorem alexander_transpose (x : GridState n) :
     G.transpose.alexander x.transpose = G.alexander x := by
   rw [alexander_def, alexander_def, maslovO_transpose, maslovX_transpose]
 
-/-- The `O`-Maslov grading is invariant under the half-turn rotation. -/
+/-- The `O`-Maslov grading is invariant under simultaneous coordinate reversal. -/
 theorem maslovO_rotate (x : GridState n) :
     G.rotate.maslovO x.rotate = G.maslovO x := by
   rw [maslovO_def, maslovO_def, GridState.rotate_pointSet, rotate_OSet,
     GridPoint.JDiff_image_rev]
 
-/-- The `X`-Maslov grading is invariant under the half-turn rotation. -/
+/-- The `X`-Maslov grading is invariant under simultaneous coordinate reversal. -/
 theorem maslovX_rotate (x : GridState n) :
     G.rotate.maslovX x.rotate = G.maslovX x := by
   rw [maslovX_def, maslovX_def, GridState.rotate_pointSet, rotate_XSet,
     GridPoint.JDiff_image_rev]
 
-/-- The Alexander grading is invariant under the half-turn rotation. The normalization shift
-depends only on the common grid size, so it cancels between the two diagrams. -/
+/-- The Alexander grading is invariant under simultaneous coordinate reversal. The normalization
+shift depends only on the common grid size, so it cancels between the two diagrams. -/
 theorem alexander_rotate (x : GridState n) :
     G.rotate.alexander x.rotate = G.alexander x := by
   rw [alexander_def, alexander_def, maslovO_rotate, maslovX_rotate]

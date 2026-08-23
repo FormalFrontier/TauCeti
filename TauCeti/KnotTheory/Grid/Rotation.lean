@@ -8,9 +8,9 @@ public import Mathlib.Data.Fin.Rev
 public import TauCeti.KnotTheory.Grid.Diagram.Basic
 
 /-!
-# The half-turn rotation of grid states and diagrams
+# Coordinate reversal of grid states and diagrams
 
-This file adds the `180°` rotation of the toroidal grid to the grid-combinatorial lane of the
+This file adds coordinate reversal on the toroidal grid to the grid-combinatorial lane of the
 Heegaard Floer roadmap, alongside the already-developed diagonal reflection (`transpose`) and
 marking swap (`swapMarkings`). Rotation reverses both the column and the row coordinate by the
 map `(c, r) ↦ (cᵒ, rᵒ)` with `·ᵒ = Fin.rev`. It is the composition of the column and row
@@ -31,16 +31,16 @@ Only the basic state/diagram operation and its point-set lemmas live here, paral
 
 ## Main definitions
 
-* `TauCeti.GridState.rotate`: the half-turn rotation of a grid state.
-* `TauCeti.GridDiagram.rotate`: the half-turn rotation of a grid diagram.
+* `TauCeti.GridState.rotate`: coordinate reversal of a grid state.
+* `TauCeti.GridDiagram.rotate`: coordinate reversal of a grid diagram's marking-square names.
 
 ## Main results
 
 * `TauCeti.GridState.rotate_rotate`, `TauCeti.GridDiagram.rotate_rotate`: rotation is an
   involution on grid states and grid diagrams.
 * `TauCeti.GridState.rotate_pointSet`, `TauCeti.GridDiagram.rotate_OSet`,
-  `TauCeti.GridDiagram.rotate_XSet`: the point sets of a rotated state or diagram are the
-  half-turn rotation of the original point sets.
+  `TauCeti.GridDiagram.rotate_XSet`: the state point set and the diagram's marking-square sets
+  are the coordinate reversals of the original sets.
 * `TauCeti.GridState.relabelRows_rotate`, `TauCeti.GridState.relabelColumns_rotate`,
   `TauCeti.GridDiagram.swapMarkings_rotate`: rotation interacts predictably with the existing
   relabeling, swap, and marking-swap operations.
@@ -48,9 +48,8 @@ Only the basic state/diagram operation and its point-set lemmas live here, paral
 ## References
 
 This advances `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G item 8,
-"Symmetries and the genus bound": the half-turn rotation of a grid diagram is one of the
-standard grid symmetries of Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
-Chapter 3.
+"Symmetries and the genus bound": coordinate reversal is among the standard grid symmetries in
+Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.
 -/
 
 @[expose] public section
@@ -86,10 +85,12 @@ private theorem revPerm_trans_swap_trans_revPerm (a b : Fin n) :
 
 namespace GridState
 
-/-- The half-turn rotation of a grid state.
+/-- Coordinate reversal of a grid state.
 
-Rotating the occupied grid points by `180°` reverses both the column and the row coordinate. It is
-the composition of the column and row relabelings by the coordinate reversal `Fin.revPerm`. -/
+This reverses both coordinates of the occupied grid points and is the composition of the column
+and row relabelings by `Fin.revPerm`. Geometrically it is a half-turn about a square center; the
+same operation on lower-left square names in `GridDiagram.rotate` is a half-turn about a grid
+point, so the two operations do not together preserve marking avoidance. -/
 def rotate (x : GridState n) : GridState n :=
   (x.relabelColumns Fin.revPerm).relabelRows Fin.revPerm
 
@@ -100,20 +101,20 @@ theorem rotate_apply (x : GridState n) (c : Fin n) :
     x.rotate c = (x (Fin.rev c)).rev := by
   simp [rotate]
 
-/-- In the rotated state, the occupied square in row `r` lies in the reversed column of the
-occupied square in row `r.rev` of the original state. -/
+/-- In the rotated state, the occupied grid point in row `r` lies in the reversed column of the
+occupied grid point in row `r.rev` of the original state. -/
 theorem columnOfRow_rotate (x : GridState n) (r : Fin n) :
     x.rotate.columnOfRow r = (x.columnOfRow r.rev).rev := by
   apply x.rotate.toPerm.injective
   simp [GridState.rotate_apply, Fin.rev_rev]
 
-/-- A square lies in the rotated state exactly when its half-turn rotation lies in the original
-state. -/
+/-- A grid point lies in the rotated state exactly when its coordinate reversal lies in the
+original state. -/
 theorem mem_pointSet_rotate (x : GridState n) (p : Fin n × Fin n) :
     p ∈ x.rotate.pointSet ↔ Prod.map Fin.rev Fin.rev p ∈ x.pointSet := by
   simp only [mem_pointSet, rotate_apply, Prod.map_fst, Prod.map_snd, Fin.rev_eq_iff]
 
-/-- The point set of the rotated state is the half-turn rotation of the original point set. -/
+/-- The point set of the rotated state is the coordinate reversal of the original point set. -/
 theorem rotate_pointSet (x : GridState n) :
     x.rotate.pointSet = x.pointSet.image (Prod.map Fin.rev Fin.rev) := by
   ext p
@@ -124,13 +125,13 @@ theorem rotate_pointSet (x : GridState n) :
   · rintro ⟨q, hq, rfl⟩
     rwa [rev2_rev2 q]
 
-/-- The half-turn rotation is an involution on grid states. -/
+/-- Coordinate reversal is an involution on grid states. -/
 @[simp]
 theorem rotate_rotate (x : GridState n) : x.rotate.rotate = x := by
   ext c
   simp [Fin.rev_rev]
 
-/-- Diagonal reflection commutes with the half-turn rotation of a grid state. -/
+/-- Diagonal reflection commutes with coordinate reversal of a grid state. -/
 @[simp]
 theorem transpose_rotate (x : GridState n) : x.transpose.rotate = x.rotate.transpose := by
   simp [rotate, GridState.relabelRows_relabelColumns]
@@ -173,7 +174,7 @@ namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
 
-/-- The half-turn rotation of a grid diagram, rotating both marking states.
+/-- Coordinate reversal of a grid diagram's marking-square names.
 
 It is the composition of the column and row relabelings by the coordinate reversal `Fin.revPerm`,
 applied to both marking states at once. Each relabeling is again a grid diagram, so rotation
@@ -207,36 +208,36 @@ theorem XColumnOfRow_rotate (r : Fin n) :
     XColumnOfRow G.rotate r = (XColumnOfRow G r.rev).rev :=
   GridState.columnOfRow_rotate G.X r
 
-/-- The `O`-markings of the rotated diagram are the half-turn rotation of the original
+/-- The `O`-markings of the rotated diagram are the coordinate reversal of the original
 `O`-markings. -/
 theorem rotate_OSet : G.rotate.OSet = G.OSet.image (Prod.map Fin.rev Fin.rev) :=
   GridState.rotate_pointSet G.O
 
-/-- The `X`-markings of the rotated diagram are the half-turn rotation of the original
+/-- The `X`-markings of the rotated diagram are the coordinate reversal of the original
 `X`-markings. -/
 theorem rotate_XSet : G.rotate.XSet = G.XSet.image (Prod.map Fin.rev Fin.rev) :=
   GridState.rotate_pointSet G.X
 
-/-- A square lies in the rotated diagram's `O`-marking set exactly when its half-turn rotation
+/-- A square lies in the rotated diagram's `O`-marking set exactly when its coordinate reversal
 lies in the original `O`-marking set. -/
 theorem mem_OSet_rotate (p : Fin n × Fin n) :
     p ∈ G.rotate.OSet ↔ Prod.map Fin.rev Fin.rev p ∈ G.OSet := by
   rw [OSet, OSet, rotate_O]
   exact GridState.mem_pointSet_rotate G.O p
 
-/-- A square lies in the rotated diagram's `X`-marking set exactly when its half-turn rotation
+/-- A square lies in the rotated diagram's `X`-marking set exactly when its coordinate reversal
 lies in the original `X`-marking set. -/
 theorem mem_XSet_rotate (p : Fin n × Fin n) :
     p ∈ G.rotate.XSet ↔ Prod.map Fin.rev Fin.rev p ∈ G.XSet := by
   rw [XSet, XSet, rotate_X]
   exact GridState.mem_pointSet_rotate G.X p
 
-/-- The half-turn rotation is an involution on grid diagrams. -/
+/-- Coordinate reversal is an involution on grid diagrams. -/
 @[simp]
 theorem rotate_rotate : G.rotate.rotate = G := by
   ext c <;> simp
 
-/-- Diagonal reflection commutes with the half-turn rotation of a grid diagram. -/
+/-- Diagonal reflection commutes with coordinate reversal of a grid diagram. -/
 @[simp]
 theorem transpose_rotate : G.transpose.rotate = G.rotate.transpose := by
   ext c <;> simp [GridState.transpose_rotate]
@@ -270,7 +271,7 @@ theorem swapColumns_rotate (a b : Fin n) :
   rw [swapColumns, relabelColumns_rotate, revPerm_trans_swap_trans_revPerm]
   rfl
 
-/-- Exchanging the two marking states commutes with the half-turn rotation. -/
+/-- Exchanging the two marking states commutes with coordinate reversal. -/
 @[simp]
 theorem swapMarkings_rotate : G.swapMarkings.rotate = G.rotate.swapMarkings := by
   ext c <;> simp [GridDiagram.rotate]

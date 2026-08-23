@@ -20,13 +20,13 @@ homology. For finite sets of grid points, `GridPoint.I s t` counts ordered pairs
 `(p, q) ∈ s × t` with `p` strictly southwest of `q`, and `GridPoint.J s t` is the symmetrized
 half-count.
 
-The API is deliberately point-set level: later grading definitions apply it to grid-state and
-marking point sets, and then extend it to the formal differences appearing in `M_O`, `M_X`,
-and `A`.
+The API is deliberately point-set level: later grading definitions apply it to grid-state point
+sets and marking-square sets, and then extend it to the formal differences appearing in `M_O`,
+`M_X`, and `A`.
 
 ## Main definitions
 
-* `TauCeti.GridPoint.IsSouthWest`: the strict southwest relation on grid squares.
+* `TauCeti.GridPoint.IsSouthWest`: the strict southwest relation on grid points.
 * `TauCeti.GridPoint.I`: the ordered southwest pair count.
 * `TauCeti.GridPoint.JNum`: the numerator of the symmetrized `J`-function.
 * `TauCeti.GridPoint.J`: the rational-valued symmetrized `J`-function.
@@ -50,7 +50,7 @@ and `A`.
 
 ## References
 
-This supplies a prerequisite for `HeegaardFloer/README.md` in TauCetiRoadmap, Lane G.2,
+This supplies a prerequisite for `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.2,
 "Gradings. The `J`-function, `M_O`, `M_X`, `A`; integer-valuedness of `A`; grading-change
 formulas across a rectangle." The definition follows Ozsváth--Stipsicz--Szabó, *Grid Homology
 for Knots and Links*, Chapter 3.2, where `J` is the symmetrization of the northeast/southwest
@@ -427,7 +427,7 @@ theorem isSouthWest_swap (p q : Fin n × Fin n) :
   unfold IsSouthWest
   exact and_comm
 
-/-- The reflection map on pairs of grid squares is injective. -/
+/-- The reflection map on pairs of grid points is injective. -/
 private theorem prodMap_swap_injective :
     Function.Injective
       (Prod.map (Prod.swap (α := Fin n) (β := Fin n)) (Prod.swap (α := Fin n) (β := Fin n))) :=
@@ -475,12 +475,12 @@ theorem isSouthWest_rev (p q : Fin n × Fin n) :
   rw [Fin.val_rev, Fin.val_rev, Fin.val_rev, Fin.val_rev]
   omega
 
-/-- The coordinate-reversal map on grid squares is injective. -/
+/-- The coordinate-reversal map on grid points is injective. -/
 private theorem prodMap_rev_injective :
     Function.Injective (Prod.map (Fin.rev (n := n)) (Fin.rev (n := n))) :=
   Fin.rev_injective.prodMap Fin.rev_injective
 
-/-- The coordinate-reversal map on pairs of grid squares is injective. -/
+/-- The coordinate-reversal map on pairs of grid points is injective. -/
 private theorem prodMap_prodMap_rev_injective :
     Function.Injective
       (Prod.map (Prod.map (Fin.rev (n := n)) (Fin.rev (n := n)))
@@ -567,7 +567,7 @@ theorem J_transpose (x y : GridState n) :
     GridState.J x.transpose y.transpose = GridState.J x y := by
   rw [J_def, J_def, transpose_pointSet, transpose_pointSet, GridPoint.J_image_swap]
 
-/-- The state-level grid `J`-function is invariant under the half-turn rotation of both states. -/
+/-- The state-level grid `J`-function is invariant under coordinate reversal of both states. -/
 theorem J_rotate (x y : GridState n) :
     GridState.J x.rotate y.rotate = GridState.J x y := by
   rw [J_def, J_def, rotate_pointSet, rotate_pointSet, GridPoint.J_image_rev]
@@ -683,12 +683,14 @@ theorem JX_transpose (x : GridState n) :
     GridDiagram.JX G.transpose x.transpose = GridDiagram.JX G x := by
   rw [JX_def, JX_def, GridState.transpose_pointSet, transpose_XSet, GridPoint.J_image_swap]
 
-/-- `JO` is invariant under the half-turn rotation of the diagram and state. -/
+/-- `JO` is invariant under simultaneous coordinate reversal of the diagram and state, which is
+not one common half-turn of the torus; see `TauCeti.KnotTheory.Grid.Rotation`. -/
 theorem JO_rotate (x : GridState n) :
     GridDiagram.JO G.rotate x.rotate = GridDiagram.JO G x := by
   rw [JO_def, JO_def, GridState.rotate_pointSet, rotate_OSet, GridPoint.J_image_rev]
 
-/-- `JX` is invariant under the half-turn rotation of the diagram and state. -/
+/-- `JX` is invariant under simultaneous coordinate reversal of the diagram and state, which is
+not one common half-turn of the torus; see `TauCeti.KnotTheory.Grid.Rotation`. -/
 theorem JX_rotate (x : GridState n) :
     GridDiagram.JX G.rotate x.rotate = GridDiagram.JX G x := by
   rw [JX_def, JX_def, GridState.rotate_pointSet, rotate_XSet, GridPoint.J_image_rev]

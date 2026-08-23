@@ -54,8 +54,8 @@ This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
 states", asks for rectangles and empty rectangles `Rect°(x, y)`, and Lane G.3, "The complexes
 and `∂² = 0`", uses the opposite-rectangle bookkeeping in the rectangle-pairing arguments. The
 encoding follows the toroidal grid-diagram convention from Ozsváth--Stipsicz--Szabó, *Grid
-Homology for Knots and Links*, Chapter 3; the marking-avoidance region follows Definition 4.1.1
-and Chapter 4.6.
+Homology for Knots and Links*, Chapter 3; the fully blocked marking-avoidance condition defining
+`GC̃` is in Chapter 4, Section 4.4.
 -/
 
 @[expose] public section
@@ -220,7 +220,8 @@ theorem mem_rowSquares (r : Fin n) :
   rfl
 
 /-- The finite set of squares a toroidal grid rectangle covers, each square named by its
-lower-left grid point.
+lower-left grid point, following the marking-coordinate convention documented with
+`GridDiagram.OSet` and `GridDiagram.XSet`.
 
 Where `interior` records the grid points strictly inside the rectangle — what a grid state must
 avoid for the rectangle to be empty — `squares` records the region the rectangle covers, which

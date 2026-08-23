@@ -43,8 +43,8 @@ This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
 `CombinatorialHeegaardFloer/README.md` in TauCetiRoadmap, Lane G.3, "The complexes and
 `∂² = 0`", where the fully blocked grid complex over `𝔽₂` counts rectangles avoiding all
 markings. The objects and terminology follow Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots
-and Links*, Chapter 3; the fully blocked marking-avoidance condition follows Definition 4.1.1
-and Chapter 4.6.
+and Links*, Chapter 3; the fully blocked marking-avoidance condition defining `GC̃` is in Chapter
+4, Section 4.4.
 -/
 
 public section

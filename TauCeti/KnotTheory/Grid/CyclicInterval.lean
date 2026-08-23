@@ -125,10 +125,10 @@ theorem right_notMem_cIoo (a b : Fin n) : b ∉ cIoo a b := by
 /-- The clockwise half-open cyclic interval from `a` to `b` in `Fin n`: the initial endpoint
 together with the open cyclic interval. The interval from a point to itself is empty.
 
-Where `cIoo a b` names the grid points strictly between two grid lines, `cIco a b` names the
-squares between them: the square between the lines `c` and `c + 1` is named by its initial
-line `c`, so the squares between the lines `a` and `b` are named by `a` and the lines strictly
-between. -/
+Where `cIoo a b` names the grid lines strictly between two grid lines, `cIco a b` names the
+squares between them: the square between the lines `c` and `c + 1` is named by its initial line
+`c`, so the squares between the lines `a` and `b` are named by `a` and the lines strictly between.
+-/
 noncomputable def cIco (a b : Fin n) : Finset (Fin n) :=
   if a = b then ∅ else insert a (cIoo a b)
 
