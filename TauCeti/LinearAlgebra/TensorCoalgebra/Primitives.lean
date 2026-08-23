@@ -47,38 +47,34 @@ section Semiring
 
 variable (R : Type uR) (M : Type uM) [CommSemiring R] [AddCommMonoid M] [Module R M]
 
-/-- The tensor length of a single letter. -/
-abbrev lengthOne : {n : ℕ // 0 < n} := ⟨1, Nat.one_pos⟩
-
 /-- A tensor word of length one is a single letter. -/
 noncomputable def tensorPowerOne : TensorPower R 1 M ≃ₗ[R] M :=
   PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 ↦ M) 0
 
 /-- The letter of a reduced tensor word: its length-one component, read as an element of `M`. -/
 noncomputable def letter : ReducedTensorWords R M →ₗ[R] M :=
-  (tensorPowerOne R M).toLinearMap ∘ₗ component R M lengthOne
+  (tensorPowerOne R M).toLinearMap ∘ₗ component R M 1
 
 /-- A single letter, viewed as a reduced tensor word of length one. -/
 noncomputable def ofLetter : M →ₗ[R] ReducedTensorWords R M :=
-  of R M lengthOne ∘ₗ (tensorPowerOne R M).symm.toLinearMap
+  of R M 1 ∘ₗ (tensorPowerOne R M).symm.toLinearMap
 
 /-- The length-one component of a single letter is that letter under the tensor-power
 identification. -/
-@[simp]
 theorem component_ofLetter (a : M) :
-    component R M lengthOne (ofLetter R M a) = (tensorPowerOne R M).symm a := by
+    component R M 1 (ofLetter R M a) = (tensorPowerOne R M).symm a := by
   rw [ofLetter, LinearMap.comp_apply, component_of, LinearEquiv.coe_coe]
 
 /-- Every component of a single letter away from length one vanishes. -/
 @[simp]
-theorem component_ofLetter_of_ne {n : {n : ℕ // 0 < n}} (hn : n ≠ lengthOne) (a : M) :
+theorem component_ofLetter_of_ne {n : {n : ℕ // 0 < n}} (hn : n ≠ 1) (a : M) :
     component R M n (ofLetter R M a) = 0 := by
   rw [ofLetter, LinearMap.comp_apply, component_of_of_ne R M hn.symm]
 
 /-- The letter of a tensor word is its length-one component, read through the length-one
 identification. -/
 theorem letter_apply (x : ReducedTensorWords R M) :
-    letter R M x = tensorPowerOne R M (component R M lengthOne x) :=
+    letter R M x = tensorPowerOne R M (component R M 1 x) :=
   (rfl)
 
 /-- Reading off the letter of a single letter returns it. -/
@@ -98,7 +94,7 @@ length `m`: only the cut after the first letter can contribute, and it does so e
 `m = n`. -/
 theorem map_component_deconcatenation_tprod (n m : {n : ℕ // 0 < n}) (hn : 2 ≤ n.1)
     (x : Fin m.1 → M) :
-    TensorProduct.map (component R M lengthOne) (component R M ⟨n.1 - 1, by omega⟩)
+    TensorProduct.map (component R M 1) (component R M ⟨n.1 - 1, by omega⟩)
         (deconcatenation R M (of R M m (PiTensorProduct.tprod R x))) =
       TensorPower.splitAt R M n.1 1 (by omega)
         (component R M n (of R M m (PiTensorProduct.tprod R x))) := by
@@ -108,10 +104,11 @@ theorem map_component_deconcatenation_tprod (n m : {n : ℕ // 0 < n}) (hn : 2 �
   · rw [component_of, TensorPower.splitAt_tprod,
       Finset.sum_eq_single (⟨0, by omega⟩ : Fin (m.1 - 1))]
     · simp only [Fin.val_mk, Nat.zero_add]
-      rw [component_of, component_of]
+      erw [component_of, component_of]
     · intro i _ hi
       have hi0 : i.1 ≠ 0 := fun h ↦ hi (Fin.ext h)
-      rw [component_of_of_ne R M (by simp only [ne_eq, Subtype.mk.injEq]; omega),
+      rw [component_of_of_ne R M
+        (by intro h; have hval := congrArg Subtype.val h; change i.1 + 1 = 1 at hval; omega),
         TensorProduct.zero_tmul]
     · intro hi
       exact absurd (Finset.mem_univ _) hi
@@ -127,14 +124,14 @@ theorem map_component_deconcatenation_tprod (n m : {n : ℕ // 0 < n}) (hn : 2 �
         (by simp only [ne_eq, Subtype.mk.injEq]; omega)
       rw [h2, TensorProduct.tmul_zero]
     · have h1 := component_of_of_ne R M
-        (m := (⟨i.1 + 1, by omega⟩ : {n : ℕ // 0 < n})) (n := lengthOne)
-        (by simp only [ne_eq, Subtype.mk.injEq]; omega)
+        (m := (⟨i.1 + 1, by omega⟩ : {n : ℕ // 0 < n})) (n := 1)
+        (by intro h; have hval := congrArg Subtype.val h; change i.1 + 1 = 1 at hval; omega)
       rw [h1, TensorProduct.zero_tmul]
 
 /-- Reading off the `(1, n - 1)` bidegree part of reduced deconcatenation recovers the cut of a
 word of length `n` after its first letter. -/
 theorem map_component_deconcatenation (n : {n : ℕ // 0 < n}) (hn : 2 ≤ n.1) :
-    TensorProduct.map (component R M lengthOne) (component R M ⟨n.1 - 1, by omega⟩) ∘ₗ
+    TensorProduct.map (component R M 1) (component R M ⟨n.1 - 1, by omega⟩) ∘ₗ
         deconcatenation R M =
       TensorPower.splitAt R M n.1 1 (by omega) ∘ₗ component R M n := by
   refine linearMap_ext R M fun m x ↦ ?_
@@ -156,7 +153,7 @@ theorem eq_of_deconcatenation_eq_of_letter_eq {x y : ReducedTensorWords R M}
   intro n
   rw [← DirectSum.apply_eq_component R x n, ← DirectSum.apply_eq_component R y n]
   rw [apply_eq_component R M x n, apply_eq_component R M y n]
-  rcases eq_or_ne n lengthOne with rfl | hn
+  rcases eq_or_ne n 1 with rfl | hn
   · have h := congrArg (tensorPowerOne R M).symm hl
     rwa [letter_apply, letter_apply, LinearEquiv.symm_apply_apply,
       LinearEquiv.symm_apply_apply] at h
