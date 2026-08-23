@@ -106,7 +106,8 @@ original comodule. -/
 @[simp]
 theorem endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation
     (g : WithConv (H →ₐ[R] R)) (m : M) :
-    endOfPoint M g.ofConv (1 ⊗ₜ[R] m) =
+    (TensorProduct.comm R M R)
+        ((LinearMap.lTensor M g.ofConv.toLinearMap) (coact (R := R) (C := H) m)) =
       1 ⊗ₜ[R] basePointsRepresentation (H := H) M g m := by
   apply (TensorProduct.lid R M).injective
   rw [basePointsRepresentation_apply]
@@ -189,6 +190,7 @@ theorem coact_eq_tmul_one_iff_forall_basePointsRepresentation_eq [IsAlgClosed k]
     rw [coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (K := k)]
     intro g
     rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap,
+      endOfPoint_tmul, one_smul,
       endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation, h g]
 
 end FixedVectorDetection

@@ -223,7 +223,8 @@ theorem endOfPoint_le_comap_pointFixedSubmodule_baseChange (hI : I.IsNormal)
   rintro _ ⟨m, hm, rfl⟩
   change Comodule.endOfPoint M g.ofConv (1 ⊗ₜ[R] m) ∈
     Submodule.span R ((I.pointFixedSubmodule M).map (TensorProduct.mk R R M 1))
-  rw [Comodule.endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
+  rw [Comodule.endOfPoint_tmul, one_smul,
+    Comodule.endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
   exact Submodule.subset_span ⟨_, basePointsRepresentation_mem_pointFixedSubmodule hI g hm, rfl⟩
 
 /-- Scalar-extension form of the stability of normal-subgroup fixed vectors. This is the shape
