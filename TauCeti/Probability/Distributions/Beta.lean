@@ -9,7 +9,7 @@ public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
-import TauCeti.Analysis.SpecialFunctions.IncompleteBeta
+import TauCeti.Analysis.SpecialFunctions.Beta
 
 /-!
 # Elementary theory of the beta distribution
@@ -27,8 +27,9 @@ moment exists.
   `α * β / ((α + β) ^ 2 * (α + β + 1))`;
 * `TauCeti.integrableExpSet_id_betaMeasure` — every exponential moment exists.
 
-The integral calculation follows the normalization argument for `ProbabilityTheory.betaMeasure`
-in Mathlib: rewrite the density integral as Euler's beta integral, then use the Gamma quotient.
+The moment calculation rewrites the density integral as Euler's beta integral — the real-valued
+`TauCeti.integral_rpow_mul_one_sub_rpow`, proved in
+`TauCeti/Analysis/SpecialFunctions/Beta.lean` — and then uses the Gamma quotient.
 
 ## References
 
