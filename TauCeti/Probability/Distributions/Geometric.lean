@@ -293,14 +293,12 @@ theorem geometricMeasure_zero : geometricMeasure (0 : unitInterval) = Measure.di
 /-- The zero-parameter geometric law has mean zero after casting to the reals. -/
 @[simp] theorem integral_id_map_cast_geometricMeasure_zero :
     ∫ x, x ∂((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
-  norm_num
+  simpa using integral_id_map_cast_geometricMeasure (p := 0)
 
 /-- The zero-parameter geometric law has variance zero after casting to the reals. -/
 @[simp] theorem variance_id_map_cast_geometricMeasure_zero :
     variance id ((geometricMeasure (0 : unitInterval)).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  rw [geometricMeasure_zero, Measure.map_dirac' (by fun_prop)]
-  norm_num
+  simpa using variance_id_map_cast_geometricMeasure (p := 0)
 
 /-- The characteristic function at the zero parameter is identically one. -/
 @[simp] theorem charFun_map_cast_geometricMeasure_zero (t : ℝ) :
