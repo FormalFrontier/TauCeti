@@ -536,8 +536,8 @@ theorem isIsotropic_subgroupInOrthogonalComplement {H : AddSubgroup A}
 theorem subgroupInOrthogonalComplement_le_radical {H : AddSubgroup A}
     : A.subgroupInOrthogonalComplement H ≤
       FiniteBilinearModule.radical
-        (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).toFiniteBilinearModule := by
-  exact A.toFiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict H
+        (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).toFiniteBilinearModule :=
+  A.toFiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict H
 
 /-- The copy of a quadratic-isotropic subgroup in its orthogonal complement lies in the radical of
 the quadratic map restricted to that complement. -/
@@ -635,15 +635,15 @@ theorem orthogonalQuotientMk_eq_iff (H : AddSubgroup A) (hH : A.IsIsotropic H)
 /-- If `A` is nondegenerate, the quadratic module induced on `H^⊥ / H` is nondegenerate. -/
 theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenerate)
     {H : AddSubgroup A} (hH : A.IsIsotropic H) :
-    (A.orthogonalQuotient H hH).IsNondegenerate := by
-  exact FiniteBilinearModule.IsNondegenerate.isNondegenerate_orthogonalQuotient
+    (A.orthogonalQuotient H hH).IsNondegenerate :=
+  FiniteBilinearModule.IsNondegenerate.isNondegenerate_orthogonalQuotient
     A.toFiniteBilinearModule hA H
 
 /-- For nondegenerate `A`, the order of `H^⊥ / H` multiplied by `|H|²` is `|A|`. -/
 theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegenerate)
     {H : AddSubgroup A} (hH : A.IsIsotropic H) :
-    Nat.card (A.orthogonalQuotient H hH) * Nat.card H ^ 2 = Nat.card A := by
-  exact FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq
+    Nat.card (A.orthogonalQuotient H hH) * Nat.card H ^ 2 = Nat.card A :=
+  FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq
     A.toFiniteBilinearModule hA hH.toFiniteBilinearModule
 
 end FiniteQuadraticModule
