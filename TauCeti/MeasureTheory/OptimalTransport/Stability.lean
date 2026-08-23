@@ -43,21 +43,18 @@ The two bounds are separated on purpose: `TauCeti.transportCost_le_liminf_transp
 liminf hypothesis and compactness, `TauCeti.limsup_transportCost_le_transportCost` needs the
 recovery hypothesis and nothing else, and only `TauCeti.tendsto_transportCost` needs both.
 
-Compactness enters through `TauCeti.exists_isCoupling_tendsto_of_isTightMeasureSet`: a family of
-plans whose (varying) marginals are tight on a filter tail is relatively compact, and every weak
-limit along a finer filter is a coupling of the limiting marginals. This is the "tightness of
-optimizer subsequences" step, and it is what lets the arguments run along a filter rather than a
-sequence: passing to a subsequence is replaced by passing to a finer filter.
+Compactness enters through `TauCeti.exists_isCoupling_tendsto_of_isTightMeasureSet`, proved in
+`TauCeti.MeasureTheory.OptimalTransport.Compactness`: a family of plans whose (varying) marginals
+are tight on a filter tail is relatively compact, and every weak limit along a finer filter is a
+coupling of the limiting marginals. This is the "tightness of optimizer subsequences" step, and it
+is what lets the arguments run along a filter rather than a sequence: passing to a subsequence is
+replaced by passing to a finer filter.
 
 ## Main statements
 
-* `TauCeti.isCoupling_of_tendsto` — the coupling constraint passes to weak limits when the
-  marginals converge;
 * `TauCeti.IsCostLiminfStable` and `TauCeti.HasRecoveryPlans` — the two stability hypotheses, with
   `TauCeti.isCostLiminfStable_of_le` and `TauCeti.isCostLiminfStable_const` supplying the first one
   from lower semicontinuity;
-* `TauCeti.exists_isCoupling_tendsto_of_isTightMeasureSet` — relative compactness of a family of
-  plans with tight varying marginals;
 * `TauCeti.transportCost_le_liminf_transportCost` and
   `TauCeti.limsup_transportCost_le_transportCost` — the two one-sided bounds on the optimal values;
 * `TauCeti.hasRecoveryPlans_of_limsup_le` — the recovery hypothesis for a family with fixed
@@ -93,44 +90,6 @@ open Filter MeasureTheory Set
 open scoped ENNReal NNReal Topology
 
 namespace TauCeti
-
-section Limit
-
-/-! Weak limits of transport plans. The hypotheses are those of
-`TauCeti.isClosed_setOfPred_isCoupling`, strengthened from `T1` to `T2` on the two spaces of
-marginals because a limit is identified here, not merely trapped in a closed set. -/
-
-variable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
-  [T2Space (ProbabilityMeasure X)] [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y]
-  [T2Space (ProbabilityMeasure Y)] [SecondCountableTopologyEither X Y] {l l' : Filter ι}
-  {μs : ι → ProbabilityMeasure X} {νs : ι → ProbabilityMeasure Y} {μ : ProbabilityMeasure X}
-  {ν : ProbabilityMeasure Y} {πs : ι → ProbabilityMeasure (X × Y)}
-  {π : ProbabilityMeasure (X × Y)}
-
-/-- **The coupling constraint passes to weak limits.** If the plans `πs i` are eventually couplings
-of `μs i` and `νs i`, and the plans and both marginals converge weakly along the same filter,
-then the limiting plan is a coupling of the limiting marginals.
-The two marginal maps are weakly continuous, so this is uniqueness of weak limits applied to the
-two marginals of `πs`. -/
-theorem isCoupling_of_tendsto [l.NeBot]
-    (hπs : ∀ᶠ i in l, IsCoupling (πs i).toMeasure (μs i).toMeasure (νs i).toMeasure)
-    (hπ : Tendsto πs l (𝓝 π)) (hμ : Tendsto μs l (𝓝 μ)) (hν : Tendsto νs l (𝓝 ν)) :
-    IsCoupling π.toMeasure μ.toMeasure ν.toMeasure := by
-  refine isCoupling_toMeasure_iff.mpr ⟨?_, ?_⟩
-  · have h₁ : Tendsto (fun i ↦ (πs i).map measurable_fst.aemeasurable) l
-        (𝓝 (π.map measurable_fst.aemeasurable)) :=
-      ((ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X))
-        continuous_fst).tendsto π).comp hπ
-    refine tendsto_nhds_unique h₁ (hμ.congr' ?_)
-    exact hπs.mono fun i hi ↦ (isCoupling_toMeasure_iff.mp hi).1.symm
-  · have h₂ : Tendsto (fun i ↦ (πs i).map measurable_snd.aemeasurable) l
-        (𝓝 (π.map measurable_snd.aemeasurable)) :=
-      ((ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y))
-        continuous_snd).tendsto π).comp hπ
-    refine tendsto_nhds_unique h₂ (hν.congr' ?_)
-    exact hπs.mono fun i hi ↦ (isCoupling_toMeasure_iff.mp hi).2.symm
-
-end Limit
 
 section Hypotheses
 
@@ -227,77 +186,6 @@ theorem isCostLiminfStable_const (hc : LowerSemicontinuous c) :
 
 end LowerSemicontinuous
 
-section Compact
-
-/-! Relative compactness of a family of plans with moving marginals. The topological hypotheses are
-those of `TauCeti.isCompact_setOfPred_isCoupling`, with `T2` on the two spaces of marginals so that
-the limit is identified. -/
-
-variable {ι X Y : Type*} [TopologicalSpace X] [T2Space X] [MeasurableSpace X] [BorelSpace X]
-  [T2Space (ProbabilityMeasure X)] [TopologicalSpace Y] [T2Space Y] [MeasurableSpace Y]
-  [BorelSpace Y] [T2Space (ProbabilityMeasure Y)] [SecondCountableTopologyEither X Y]
-  {l : Filter ι} {μs : ι → ProbabilityMeasure X} {νs : ι → ProbabilityMeasure Y}
-  {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y} {πs : ι → ProbabilityMeasure (X × Y)}
-
-/-- **Relative compactness of a family of transport plans with moving marginals.** If a tail of
-each marginal family is tight, then any eventually feasible family of plans has a weakly convergent
-refinement whose limit is a coupling of the limiting marginals. -/
-theorem exists_isCoupling_tendsto_of_isTightMeasureSet
-    (hμt : ∃ s ∈ l, IsTightMeasureSet ((fun i ↦ (μs i).toMeasure) '' s))
-    (hνt : ∃ s ∈ l, IsTightMeasureSet ((fun i ↦ (νs i).toMeasure) '' s))
-    (hμ : Tendsto μs l (𝓝 μ)) (hν : Tendsto νs l (𝓝 ν)) [l.NeBot]
-    (hπs : ∀ᶠ i in l, IsCoupling (πs i).toMeasure (μs i).toMeasure (νs i).toMeasure) :
-    ∃ (l'' : Filter ι) (π : ProbabilityMeasure (X × Y)), l''.NeBot ∧ l'' ≤ l ∧
-      Tendsto πs l'' (𝓝 π) ∧ IsCoupling π.toMeasure μ.toMeasure ν.toMeasure := by
-  obtain ⟨s, hs, hμs⟩ := hμt
-  obtain ⟨t, ht, hνt⟩ := hνt
-  set S : Set (ProbabilityMeasure (X × Y)) :=
-    {σ | ∃ i ∈ s ∩ t, IsCoupling σ.toMeasure (μs i).toMeasure (νs i).toMeasure}
-  have htight : IsTightMeasureSet {(σ : ProbabilityMeasure (X × Y)).toMeasure | σ ∈ S} := by
-    refine (isTightMeasureSet_setOfPred_exists_isCoupling hμs hνt).subset ?_
-    rintro - ⟨σ, ⟨i, hi, hσ⟩, rfl⟩
-    exact ⟨(μs i).toMeasure, ⟨i, hi.1, rfl⟩, (νs i).toMeasure, ⟨i, hi.2, rfl⟩, hσ⟩
-  have hcompact : IsCompact (closure S) := isCompact_closure_of_isTightMeasureSet htight
-  have hmem : ∀ᶠ i in l, πs i ∈ closure S := by
-    filter_upwards [hπs, inter_mem hs ht] with i hi hit
-    exact subset_closure (show πs i ∈ S from ⟨i, hit, hi⟩)
-  obtain ⟨π, -, hπ⟩ := hcompact.exists_mapClusterPt_of_frequently
-    hmem.frequently
-  have hne : (l ⊓ comap πs (𝓝 π)).NeBot := by
-    rw [neBot_inf_comap_iff_map, inf_comm]
-    exact hπ.clusterPt.neBot
-  have := hne
-  have hconv : Tendsto πs (l ⊓ comap πs (𝓝 π)) (𝓝 π) :=
-    tendsto_comap.mono_left inf_le_right
-  exact ⟨_, π, hne, inf_le_left, hconv, isCoupling_of_tendsto
-    (hπs.filter_mono inf_le_left) hconv (hμ.mono_left inf_le_left) (hν.mono_left inf_le_left)⟩
-
-end Compact
-
-section ProbabilityMeasureTransportCost
-
-variable {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
-  {c : X × Y → ℝ≥0∞} {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
-
-private theorem le_transportCost_probabilityMeasure {a : ℝ≥0∞}
-    (h : ∀ π : ProbabilityMeasure (X × Y),
-      IsCoupling π.toMeasure μ.toMeasure ν.toMeasure → a ≤ ∫⁻ z, c z ∂π.toMeasure) :
-    a ≤ transportCost c μ.toMeasure ν.toMeasure := by
-  let : IsProbabilityMeasure μ.toMeasure := μ.2
-  refine le_transportCost fun σ hσ ↦ ?_
-  exact h ⟨σ, hσ.isProbabilityMeasure⟩ hσ
-
-private theorem exists_probabilityMeasure_isCoupling_lintegral_lt
-    (c : X × Y → ℝ≥0∞) (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) {a : ℝ≥0∞}
-    (h : transportCost c μ.toMeasure ν.toMeasure < a) :
-    ∃ π : ProbabilityMeasure (X × Y),
-      IsCoupling π.toMeasure μ.toMeasure ν.toMeasure ∧ ∫⁻ z, c z ∂π.toMeasure < a := by
-  let : IsProbabilityMeasure μ.toMeasure := μ.2
-  obtain ⟨σ, hσ, hσa⟩ := transportCost_lt_iff.mp h
-  exact ⟨⟨σ, hσ.isProbabilityMeasure⟩, hσ, hσa⟩
-
-end ProbabilityMeasureTransportCost
-
 section Lower
 
 /-! The lower bound on the optimal values: it is the half that consumes compactness. -/
@@ -331,8 +219,8 @@ theorem transportCost_le_liminf_transportCost (hcs : IsCostLiminfStable l cs μs
           ∫⁻ z, cs i z ∂σ.toMeasure < a) := by
     intro i
     by_cases hi : transportCost (cs i) (μs i).toMeasure (νs i).toMeasure < a
-    · obtain ⟨σ, hσ, hσa⟩ := exists_probabilityMeasure_isCoupling_lintegral_lt _ _ _ hi
-      exact ⟨σ, hσ, fun _ ↦ hσa⟩
+    · obtain ⟨σ, hσ, hσa⟩ := transportCost_lt_iff.mp hi
+      exact ⟨⟨σ, hσ.isProbabilityMeasure⟩, hσ, fun _ ↦ hσa⟩
     · exact ⟨(Coupling.prod (μs i) (νs i)).1, (Coupling.prod (μs i) (νs i)).2, fun h ↦ absurd h hi⟩
   choose πs hπs hπsa using hchoice
   set lb : Filter ι :=
@@ -374,8 +262,9 @@ separately against its own recovery family. -/
 theorem limsup_transportCost_le_transportCost (hrec : HasRecoveryPlans l cs μs νs c μ ν) :
     limsup (fun i ↦ transportCost (cs i) (μs i).toMeasure (νs i).toMeasure) l ≤
       transportCost c μ.toMeasure ν.toMeasure := by
-  refine le_transportCost_probabilityMeasure fun π hπ ↦ ?_
-  obtain ⟨πs, hπs, -, hlim⟩ := hrec.exists_recovery hπ
+  refine le_transportCost fun σ hσ ↦ ?_
+  obtain ⟨πs, hπs, -, hlim⟩ :=
+    hrec.exists_recovery (π := ⟨σ, hσ.isProbabilityMeasure⟩) hσ
   exact (limsup_le_limsup (hπs.mono fun i hi ↦ transportCost_le_lintegral hi _)).trans hlim
 
 /-- **Fixed marginals admit recovery plans as soon as the costs do.** When the marginals are
