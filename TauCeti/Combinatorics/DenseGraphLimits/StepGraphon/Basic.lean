@@ -130,7 +130,6 @@ def stepGraphon (P : Finpartition (Set.univ : Set Ω))
     exact (val p q).property
 
 /-- A step graphon takes its prescribed value on each rectangle of the partition. -/
-@[simp]
 theorem stepGraphon_apply (P : Finpartition (Set.univ : Set Ω))
     (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (val : P.parts → P.parts → Set.Icc (0 : ℝ) 1) (hsymm : ∀ p q, val p q = val q p)
