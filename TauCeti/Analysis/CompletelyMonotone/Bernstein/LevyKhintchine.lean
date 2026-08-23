@@ -69,7 +69,6 @@ theorem isBernsteinLevyMeasure_iff {μ : Measure ℝ≥0} :
   Iff.rfl
 
 /-- The zero measure is a Bernstein Levy measure. -/
-@[simp]
 theorem isBernsteinLevyMeasure_zero : IsBernsteinLevyMeasure (0 : Measure ℝ≥0) := by
   simp [isBernsteinLevyMeasure_iff]
 
@@ -189,12 +188,10 @@ theorem bernsteinLevyJumpExponent_nonneg (μ : Measure ℝ≥0) {t : ℝ} (ht : 
   exact integral_nonneg fun x => sub_nonneg.mpr (exp_neg_mul_le_one ht x)
 
 /-- Every Levy jump exponent vanishes at zero. -/
-@[simp]
 theorem bernsteinLevyJumpExponent_zero (μ : Measure ℝ≥0) : bernsteinLevyJumpExponent μ 0 = 0 := by
   simp [bernsteinLevyJumpExponent_apply]
 
 /-- The zero measure has identically zero Levy jump exponent. -/
-@[simp]
 theorem bernsteinLevyJumpExponent_zero_measure (t : ℝ) :
     bernsteinLevyJumpExponent (0 : Measure ℝ≥0) t = 0 := by
   simp [bernsteinLevyJumpExponent_apply]
@@ -377,14 +374,12 @@ theorem deriv_bernsteinLevyKhintchineExponent {μ : Measure ℝ≥0}
   exact (haffine.add (hasDerivAt_bernsteinLevyJumpExponent hμ ht)).deriv
 
 /-- A one-atom Levy measure gives the prototype jump exponent `1 - exp (-t x)`. -/
-@[simp]
 theorem bernsteinLevyJumpExponent_dirac (x : ℝ≥0) (t : ℝ) :
     bernsteinLevyJumpExponent (Measure.dirac x) t =
       1 - Real.exp (-(t * (x : ℝ))) := by
   simp [bernsteinLevyJumpExponent_apply]
 
 /-- At zero, the Levy--Khintchine function is its killing coefficient. -/
-@[simp]
 theorem bernsteinLevyKhintchineExponent_zero (a b : ℝ) (μ : Measure ℝ≥0) :
     bernsteinLevyKhintchineExponent a b μ 0 = a := by
   simp [bernsteinLevyKhintchineExponent_apply]
