@@ -59,6 +59,8 @@ is `ModularForm.rat_slash_mapGL`, from `ModularForms/SlashActionRat.lean`.
 * `HeckeRing.GL2.qExpansion_coeff_heckeSlashUpperTriModularFormEnd`,
   `HeckeRing.GL2.qExpansion_coeff_heckeSlashUpperTriCuspFormEnd`: the coefficient at `m` is the
   coefficient of the original form at `p m`.
+* `HeckeRing.GL2.one_mem_strictPeriods_Gamma1`: the width of `∞` for `Γ₁(N)` is `1`, which is
+  what pins the `q`-expansions above (and those of `HeckeSlash/Recurrence.lean`) to width `1`.
 
 ## References
 
@@ -85,8 +87,9 @@ private lemma rat_slash_eq_of_mem_Gamma1 {F : Type*} [FunLike F ℍ ℂ]
   rw [ModularForm.rat_slash_mapGL]
   exact SlashInvariantFormClass.slash_action_eq f _ (Subgroup.mem_map_of_mem _ hδ)
 
-/-- The width of `∞` for `Γ₁(N)` is `1`, so all `q`-expansions below are taken at width `1`. -/
-private lemma one_mem_strictPeriods_Gamma1 :
+/-- The width of `∞` for `Γ₁(N)` is `1`, so all `q`-expansions of forms of level `Γ₁(N)` are
+taken at width `1`. -/
+lemma one_mem_strictPeriods_Gamma1 :
     (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
   rw [strictPeriods_Gamma1]
   exact AddSubgroup.mem_zmultiples 1
