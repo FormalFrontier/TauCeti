@@ -294,7 +294,8 @@ theorem cTransform_add_const (c : X × Y → ℝ) (φ : X → EReal) (a : ℝ) :
 the opposite constant. -/
 theorem cTransformSymm_add_const (c : X × Y → ℝ) (ψ : Y → EReal) (a : ℝ) :
     cTransformSymm c (fun y => ψ y + (a : EReal)) = fun x => cTransformSymm c ψ x - (a : EReal) :=
-  cTransform_add_const (fun p : Y × X => c (p.2, p.1)) ψ a
+  by simpa only [cTransformSymm_eq_cTransform] using
+    cTransform_add_const (fun p : Y × X => c (p.2, p.1)) ψ a
 
 /-! ### `c`-concave potentials -/
 
