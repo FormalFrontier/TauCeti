@@ -22,36 +22,34 @@ The construction has three steps. The Koszul expression is tensorial in its firs
 well as in its third, so Mathlib's `TensorialAt.mkHom₂` packages `(X, Z) ↦ koszul I X Y Z x` as a
 continuous bilinear form `CovariantDerivative.koszulHom` on the fibre `T_x M`. The fibrewise
 Fréchet–Riesz equivalence `Riemannian.Tensor.rieszDual` then converts the last slot of that
-bilinear form into a vector, giving the candidate `CovariantDerivative.leviCivitaFun`. Finally the
-covariant-derivative axioms for the candidate are read off the behaviour of the Koszul expression
-in its *second* argument: `TauCeti.Manifold.koszul_add_second` gives additivity, and
+bilinear form into a vector, giving the unbundled candidate. Finally the covariant-derivative
+axioms for the candidate are read off the behaviour of the Koszul expression in its *second*
+argument: `TauCeti.Manifold.koszul_add_second` gives additivity, and
 `TauCeti.Manifold.koszul_smul_second` — which says that replacing `Y` by `f • Y` adds
 `2 (df X) ⟪Y, Z⟫` — gives the Leibniz rule.
 
 Since a covariant derivative in Mathlib is a *total* function on sections, constrained only at
-sections which are differentiable at the point under consideration, `leviCivitaFun Y x` is given by
-the Koszul recipe when `Y` is differentiable at `x` and is the junk value `0` otherwise. Every
-theorem about its value accordingly carries a differentiability hypothesis, and uniqueness is the
-vanishing of `CovariantDerivative.difference` rather than equality of bundled connections.
+sections which are differentiable at the point under consideration, the unbundled candidate is
+given by the Koszul recipe when `Y` is differentiable at `x` and is the junk value `0` otherwise.
+Every theorem about its value accordingly carries a differentiability hypothesis, and uniqueness
+is the vanishing of `CovariantDerivative.difference` rather than equality of bundled connections.
 
 ## Main definitions and results
 
 * `CovariantDerivative.koszulHom`: the Koszul expression of a section differentiable at `x`, as a
   continuous bilinear form on `T_x M`.
-* `CovariantDerivative.leviCivitaFun` and `CovariantDerivative.leviCivita`: the Levi-Civita
-  connection of the supplied Riemannian bundle instance, unbundled and bundled.
+* `CovariantDerivative.leviCivita`: the Levi-Civita connection of the supplied Riemannian bundle
+  instance.
 * `CovariantDerivative.two_inner_leviCivita_eq_koszul`: it obeys the Koszul formula.
 * `CovariantDerivative.isLeviCivita_leviCivita`: it is torsion free and metric.
-* `CovariantDerivative.exists_isLeviCivita` and
-  `CovariantDerivative.exists_isLeviCivita_and_forall_difference_eq_zero`: **existence and
-  uniqueness of the Levi-Civita connection**, the second in the form "a Levi-Civita connection
-  exists, and every Levi-Civita connection differs from it by the zero endomorphism-valued
-  one-form".
+* `CovariantDerivative.exists_isLeviCivita`: **existence of the Levi-Civita connection**.
 
 ## References
 
 * [Geodesics, the exponential map, and the Hopf–Rinow theorem roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md),
   Layer 1, "The Levi-Civita connection".
+* [mathlib4#36845](https://github.com/leanprover-community/mathlib4/pull/36845): this construction
+  follows its tensoriality-and-Riesz design, adapted to the APIs in Tau Ceti's Mathlib pin.
 * M. P. do Carmo, *Riemannian Geometry*, Birkhäuser, 1992, Ch. 2, Thm. 3.6.
 * J. M. Lee, *Introduction to Riemannian Manifolds*, GTM 176, 2018, Thm. 5.10.
 -/
@@ -97,7 +95,7 @@ open scoped Classical in
 sections. At a section `Y` differentiable at `x` its value is the vector representing half the
 Koszul form, in accordance with the Koszul formula `2 ⟪∇_X Y, Z⟫ = koszul I X Y Z`; elsewhere it is
 the junk value `0`, which the covariant-derivative axioms never see. -/
-def leviCivitaFun (Y : Π y : M, TangentSpace I y) (x : M) :
+private def leviCivitaFun (Y : Π y : M, TangentSpace I y) (x : M) :
     TangentSpace I x →L[ℝ] TangentSpace I x :=
   if hY : MDiffAt (T% Y) x then
     (2 : ℝ)⁻¹ • ((Riemannian.Tensor.rieszDual (I := I) x).toLinearIsometry.toContinuousLinearMap ∘L
@@ -129,7 +127,7 @@ private theorem ext_of_forall_inner_eq {A B : TangentSpace I x →L[ℝ] Tangent
 /-- The Koszul recipe defines a covariant derivative on the tangent bundle: additivity comes from
 `TauCeti.Manifold.koszul_add_second` and the Leibniz rule from
 `TauCeti.Manifold.koszul_smul_second`. -/
-theorem isCovariantDerivativeOn_leviCivitaFun :
+private theorem isCovariantDerivativeOn_leviCivitaFun :
     IsCovariantDerivativeOn (I := I) E (leviCivitaFun (M := M)) Set.univ := by
   constructor
   · intro σ σ' x hσ hσ' _
@@ -179,17 +177,5 @@ variable (I M) in
 theorem exists_isLeviCivita :
     ∃ cov : CovariantDerivative I E (fun x : M ↦ TangentSpace I x), IsLeviCivita cov :=
   ⟨leviCivita I M, isLeviCivita_leviCivita⟩
-
-variable (I M) in
-/-- **Existence and uniqueness of the Levi-Civita connection**: a torsion-free metric covariant
-derivative on the tangent bundle exists, and every one differs from it by the zero
-endomorphism-valued one-form. Uniqueness cannot be phrased as equality of the bundled connections,
-since a covariant derivative is unconstrained at sections which are nowhere differentiable. -/
-theorem exists_isLeviCivita_and_forall_difference_eq_zero :
-    ∃ cov : CovariantDerivative I E (fun x : M ↦ TangentSpace I x), IsLeviCivita cov ∧
-      ∀ cov' : CovariantDerivative I E (fun x : M ↦ TangentSpace I x), IsLeviCivita cov' →
-        cov'.difference cov = 0 :=
-  ⟨leviCivita I M, isLeviCivita_leviCivita,
-    fun _ h ↦ h.difference_eq_zero isLeviCivita_leviCivita⟩
 
 end CovariantDerivative
