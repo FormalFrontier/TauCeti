@@ -12,7 +12,8 @@ import Mathlib.GroupTheory.Perm.ViaEmbedding
 # Elementary facts about permutations
 
 This file records general-purpose facts about permutations: an identity between transpositions,
-and the combination of two permutations transported along injections with disjoint ranges.
+a permutation transported along an injection, and the combination of two permutations transported
+along injections with disjoint ranges.
 -/
 
 public section
@@ -34,6 +35,14 @@ theorem swap_braid {α : Type*} [DecidableEq α] {a b c : α} (hab : a ≠ b) (h
       _ = Equiv.swap c a := Equiv.swap_comm a c
       _ = Equiv.swap b c * Equiv.swap a b * Equiv.swap b c :=
           (Equiv.swap_mul_swap_mul_swap hab hac).symm
+
+/-- **A permutation along an injection extends to a permutation of the ambient type.** Given an
+injection `e : α → γ`, every permutation `σ` of `α` is realized along `e` by some
+`ρ : Equiv.Perm γ`. This is `Equiv.Perm.viaEmbedding` stated in terms of the underlying function
+of the injection, which is the form a consumer reindexing along `e` needs. -/
+theorem exists_perm_apply_eq {α γ : Type*} {e : α → γ} (he : Function.Injective e)
+    (σ : Equiv.Perm α) : ∃ ρ : Equiv.Perm γ, ∀ a, ρ (e a) = e (σ a) :=
+  ⟨σ.viaEmbedding ⟨e, he⟩, fun a => Equiv.Perm.viaEmbedding_apply (ι := ⟨e, he⟩) σ a⟩
 
 /-- **Two permutations along disjoint injections extend to one permutation of the ambient type.**
 Given injections `e : α → γ` and `f : β → γ` with disjoint ranges, every pair of permutations

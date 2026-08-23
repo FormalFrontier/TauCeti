@@ -60,8 +60,6 @@ hypothesis is needed beyond the ones de Finetti already asks of `α`.
   are conditionally i.i.d.
 * `TauCeti.Probability.JointlyExchangeable.fullyExchangeable_arrayDiag` — the diagonal of a jointly
   exchangeable array is a fully exchangeable sequence.
-* `TauCeti.Probability.JointlyExchangeable.map_entry_eq_of_ne_of_ne` — the off-diagonal entries of
-  a jointly exchangeable array are identically distributed.
 * `TauCeti.Probability.ExchangeableFamily.separatelyExchangeable` and
   `TauCeti.Probability.separatelyExchangeable_of_iIndepFun_identDistrib` — the sources: an
   exchangeable family indexed by `ℕ × ℕ`, in particular an i.i.d. array, is separately
@@ -346,27 +344,6 @@ theorem JointlyExchangeable.exchangeable_arrayDiag {μ : Measure Ω} {X : ℕ ×
     (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     Exchangeable μ (arrayDiag X) :=
   FullyExchangeable.exchangeable (h.fullyExchangeable_arrayDiag hX) fun i => hX (i, i)
-
-/-! ## Off-diagonal entries -/
-
-/-- **The off-diagonal entries of a jointly exchangeable array are identically distributed.** -/
-theorem JointlyExchangeable.map_entry_eq_of_ne_of_ne {μ : Measure Ω}
-    {X : ℕ × ℕ → Ω → α} (h : JointlyExchangeable μ X)
-    (hX : ∀ p, AEMeasurable (X p) μ) {i j k l : ℕ} (hij : i ≠ j) (hkl : k ≠ l) :
-    μ.map (X (i, j)) = μ.map (X (k, l)) := by
-  classical
-  -- `Equiv.swap i k` sends `i` to `k`, and the second transposition then fixes `k` and moves the
-  -- image of `j` to `l`.
-  have hne : Equiv.swap i k j ≠ k := by
-    intro hk
-    have hji := congrArg (Equiv.swap i k) hk
-    rw [Equiv.swap_apply_self, Equiv.swap_apply_right] at hji
-    exact hij hji.symm
-  have key := h.map_comp hX (Equiv.swap (Equiv.swap i k j) l * Equiv.swap i k)
-    (F := fun x => x (i, j)) (measurable_pi_apply _)
-  simp only [Equiv.Perm.mul_apply, Equiv.swap_apply_left,
-    Equiv.swap_apply_of_ne_of_ne (Ne.symm hne) hkl] at key
-  simpa using key.symm
 
 /-! ## De Finetti for the rows -/
 
