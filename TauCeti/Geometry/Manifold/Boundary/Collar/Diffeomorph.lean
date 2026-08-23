@@ -249,6 +249,7 @@ theorem map_diffeomorphProd_symm (h : IsProductCollarChart k φ V ε) (hk : k �
 
 /-- On the boundary, the smooth local collar is the identity in the boundary factor and has zero
 normal coordinate. -/
+@[simp]
 theorem diffeomorphProd_apply_of_mem_boundary (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0)
     (y : h.sourceOpens)
     (hy : (y : M) ∈ (𝓡∂ (n + 1)).boundary M) :
