@@ -8,46 +8,46 @@ module
 public import TauCeti.LinearAlgebra.TensorCoalgebra.Basic
 
 /-!
-# Coderivations of the reduced tensor coalgebra
+# Ungraded coderivations of the reduced tensor coalgebra
 
 For an `R`-module `M`, the reduced tensor words `⨁_{n ≥ 1} M^{⊗n}` carry the reduced
 deconcatenation coproduct `Δ` built in `TauCeti.ReducedTensorWords.deconcatenation`.  A
-*coderivation* is an endomorphism `D` of that module obeying the co-Leibniz rule
+*ungraded coderivation* is an endomorphism `D` of that module obeying the co-Leibniz rule
 `Δ ∘ D = (D ⊗ 1 + 1 ⊗ D) ∘ Δ`.  Its *Taylor components* are the maps `M^{⊗n} ⟶ M` obtained by
 restricting `D` to the words of length `n` and reading off the length-one part of the result.
 
-This file defines coderivations and Taylor components, and proves that a coderivation of the
-reduced tensor coalgebra is determined by its Taylor components.
+This file defines ungraded coderivations and Taylor components, and proves that an ungraded
+coderivation of the reduced tensor coalgebra is determined by its Taylor components.  Equivalently,
+for a graded module this is the degree-zero co-Leibniz rule.  It is not the signed rule for a map of
+degree one: that rule requires the Koszul action on tensor products and will be defined with the
+graded tensor-map infrastructure.
 
 The proof rests on a computation of the primitive elements: a tensor word killed by
 deconcatenation is a single letter.  Indeed the `(1, n - 1)` bidegree part of `Δ` on a word of
 length `n` is the cut after its first letter, and cutting is injective, so no component of
 length at least two can survive.  The uniqueness statement then follows by induction on the
 length of a word.  On words of length `n` the right-hand side of the co-Leibniz rule only sees the
-coderivation on strictly shorter words, so two coderivations with the same Taylor components send
-a word of length `n` to two tensor words with the same deconcatenation; their letters agree
-because they are the `n`-th Taylor components, and a tensor word is determined by that pair.
-
-An `A∞` structure on `A` is stored, in the suspended convention of the `DGAInfinity` roadmap, as
-a square-zero degree-one coderivation `b` of the tensor coalgebra of `sA`, and the operations
-`m_n` are the Taylor components of `b`.  Uniqueness is what makes the passage from `b` to the
-family `(m_n)` lossless.  The converse construction, extending a prescribed family of Taylor
-components to a coderivation, is not proved here.
+coderivation on strictly shorter words, so two ungraded coderivations with the same Taylor
+components send a word of length `n` to two tensor words with the same deconcatenation; their
+letters agree because they are the `n`-th Taylor components, and a tensor word is determined by
+that pair.
 
 ## Main definitions
 
 * `TauCeti.ReducedTensorWords.letter`, `TauCeti.ReducedTensorWords.ofLetter`: the length-one
   component of a tensor word, and a single letter viewed as a tensor word.
-* `TauCeti.ReducedTensorWords.IsCoderivation`: the co-Leibniz rule for deconcatenation.
-* `TauCeti.ReducedTensorWords.coderivations`: coderivations as a submodule of the endomorphisms.
+* `TauCeti.ReducedTensorWords.IsUngradedCoderivation`: the ungraded co-Leibniz rule for
+  deconcatenation.
+* `TauCeti.ReducedTensorWords.ungradedCoderivations`: ungraded coderivations as a submodule of the
+  endomorphisms.
 * `TauCeti.ReducedTensorWords.taylor`: the Taylor components of an endomorphism.
 
 ## Main results
 
 * `TauCeti.ReducedTensorWords.deconcatenation_eq_zero_iff`: the primitives of the reduced tensor
   coalgebra are exactly the single letters.
-* `TauCeti.ReducedTensorWords.IsCoderivation.eq_of_taylor_eq` and
-  `TauCeti.ReducedTensorWords.taylor_injOn`: a coderivation is determined by its Taylor
+* `TauCeti.ReducedTensorWords.IsUngradedCoderivation.eq_of_taylor_eq` and
+  `TauCeti.ReducedTensorWords.taylor_injOn`: an ungraded coderivation is determined by its Taylor
   components.
 
 ## References
@@ -237,49 +237,51 @@ theorem lTensor_comp_deconcatenation_comp_of_congr (f g : ReducedTensorWords R M
 
 end Congr
 
-/-- A coderivation of the reduced tensor coalgebra: an endomorphism obeying the co-Leibniz rule
-`Δ ∘ D = (D ⊗ 1 + 1 ⊗ D) ∘ Δ` for reduced deconcatenation. -/
-def IsCoderivation (D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) : Prop :=
+/-- An ungraded coderivation of the reduced tensor coalgebra: an endomorphism obeying the
+co-Leibniz rule `Δ ∘ D = (D ⊗ 1 + 1 ⊗ D) ∘ Δ` for reduced deconcatenation.  On a graded module
+this is the degree-zero rule, not the signed degree-one rule. -/
+def IsUngradedCoderivation (D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) : Prop :=
   deconcatenation R M ∘ₗ D =
     (LinearMap.rTensor (ReducedTensorWords R M) D +
       LinearMap.lTensor (ReducedTensorWords R M) D) ∘ₗ deconcatenation R M
 
-/-- The defining equation of a coderivation, restated for use outside this file. -/
-theorem isCoderivation_iff {D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M} :
-    IsCoderivation R M D ↔ deconcatenation R M ∘ₗ D =
+/-- The defining equation of an ungraded coderivation, restated for use outside this file. -/
+theorem isUngradedCoderivation_iff {D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M} :
+    IsUngradedCoderivation R M D ↔ deconcatenation R M ∘ₗ D =
       (LinearMap.rTensor (ReducedTensorWords R M) D +
         LinearMap.lTensor (ReducedTensorWords R M) D) ∘ₗ deconcatenation R M :=
   Iff.rfl
 
-/-- The co-Leibniz rule of a coderivation, evaluated at a tensor word. -/
-theorem IsCoderivation.apply {D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
-    (hD : IsCoderivation R M D) (x : ReducedTensorWords R M) :
+/-- The co-Leibniz rule of an ungraded coderivation, evaluated at a tensor word. -/
+theorem IsUngradedCoderivation.apply {D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hD : IsUngradedCoderivation R M D) (x : ReducedTensorWords R M) :
     deconcatenation R M (D x) =
       LinearMap.rTensor (ReducedTensorWords R M) D (deconcatenation R M x) +
         LinearMap.lTensor (ReducedTensorWords R M) D (deconcatenation R M x) := by
-  have h := congrArg (fun g ↦ g x) ((isCoderivation_iff R M).1 hD)
+  have h := congrArg (fun g ↦ g x) ((isUngradedCoderivation_iff R M).1 hD)
   simpa only [LinearMap.comp_apply, LinearMap.add_apply] using h
 
-/-- The coderivations of the reduced tensor coalgebra, as a submodule of its endomorphisms. -/
-def coderivations : Submodule R (Module.End R (ReducedTensorWords R M)) where
-  carrier := {D | IsCoderivation R M D}
+/-- The ungraded coderivations of the reduced tensor coalgebra, as a submodule of its
+endomorphisms. -/
+def ungradedCoderivations : Submodule R (Module.End R (ReducedTensorWords R M)) where
+  carrier := {D | IsUngradedCoderivation R M D}
   add_mem' {D E} hD hE := by
-    simp only [Set.mem_ofPred_eq, isCoderivation_iff] at hD hE ⊢
+    simp only [Set.mem_ofPred_eq, isUngradedCoderivation_iff] at hD hE ⊢
     rw [LinearMap.comp_add, hD, hE, LinearMap.rTensor_add, LinearMap.lTensor_add,
       ← LinearMap.add_comp]
     abel_nf
   zero_mem' := by
-    simp only [Set.mem_ofPred_eq, isCoderivation_iff, LinearMap.comp_zero,
+    simp only [Set.mem_ofPred_eq, isUngradedCoderivation_iff, LinearMap.comp_zero,
       LinearMap.rTensor_zero, LinearMap.lTensor_zero, add_zero, LinearMap.zero_comp]
   smul_mem' r D hD := by
-    simp only [Set.mem_ofPred_eq, isCoderivation_iff] at hD ⊢
+    simp only [Set.mem_ofPred_eq, isUngradedCoderivation_iff] at hD ⊢
     rw [LinearMap.comp_smul, hD, LinearMap.rTensor_smul, LinearMap.lTensor_smul, ← smul_add,
       LinearMap.smul_comp]
 
-/-- Membership in the submodule of coderivations is the co-Leibniz rule. -/
+/-- Membership in the submodule of ungraded coderivations is the ungraded co-Leibniz rule. -/
 @[simp]
-theorem mem_coderivations_iff {D : Module.End R (ReducedTensorWords R M)} :
-    D ∈ coderivations R M ↔ IsCoderivation R M D :=
+theorem mem_ungradedCoderivations_iff {D : Module.End R (ReducedTensorWords R M)} :
+    D ∈ ungradedCoderivations R M ↔ IsUngradedCoderivation R M D :=
   Iff.rfl
 
 /-- The `n`-th Taylor component of an endomorphism of reduced tensor words: its effect on words
@@ -295,10 +297,12 @@ theorem taylor_apply (D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R 
     taylor R M D n x = letter R M (D (of R M n x)) :=
   (rfl)
 
-/-- A coderivation of the reduced tensor coalgebra is determined by its Taylor components. -/
-theorem IsCoderivation.eq_of_taylor_eq
-    {D E : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M} (hD : IsCoderivation R M D)
-    (hE : IsCoderivation R M E) (h : ∀ n, taylor R M D n = taylor R M E n) : D = E := by
+/-- An ungraded coderivation of the reduced tensor coalgebra is determined by its Taylor
+components. -/
+theorem IsUngradedCoderivation.eq_of_taylor_eq
+    {D E : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hD : IsUngradedCoderivation R M D) (hE : IsUngradedCoderivation R M E)
+    (h : ∀ n, taylor R M D n = taylor R M E n) : D = E := by
   have key : ∀ k : ℕ, ∀ n : {n : ℕ // 0 < n}, n.1 ≤ k → D ∘ₗ of R M n = E ∘ₗ of R M n := by
     intro k
     induction k with
@@ -323,18 +327,21 @@ theorem IsCoderivation.eq_of_taylor_eq
   have hx := congrArg (fun g ↦ g x) (key n.1 n le_rfl)
   simpa only [LinearMap.comp_apply] using hx
 
-/-- A coderivation of the reduced tensor coalgebra whose Taylor components all vanish is zero. -/
-theorem IsCoderivation.eq_zero_of_taylor_eq_zero
-    {D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M} (hD : IsCoderivation R M D)
+/-- An ungraded coderivation of the reduced tensor coalgebra whose Taylor components all vanish is
+zero. -/
+theorem IsUngradedCoderivation.eq_zero_of_taylor_eq_zero
+    {D : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hD : IsUngradedCoderivation R M D)
     (h : ∀ n, taylor R M D n = 0) : D = 0 :=
-  hD.eq_of_taylor_eq R M ((coderivations R M).zero_mem) fun n ↦ by
+  hD.eq_of_taylor_eq R M ((ungradedCoderivations R M).zero_mem) fun n ↦ by
     rw [h n]
     exact (LinearMap.ext fun x ↦ by rw [taylor_apply, LinearMap.zero_apply, map_zero,
       LinearMap.zero_apply]).symm
 
-/-- Taking Taylor components is injective on coderivations of the reduced tensor coalgebra. -/
-theorem taylor_injOn : Set.InjOn (taylor R M) (coderivations R M) :=
-  fun _ hD _ hE h ↦ IsCoderivation.eq_of_taylor_eq R M hD hE (congrFun h)
+/-- Taking Taylor components is injective on ungraded coderivations of the reduced tensor
+coalgebra. -/
+theorem taylor_injOn : Set.InjOn (taylor R M) (ungradedCoderivations R M) :=
+  fun _ hD _ hE h ↦ IsUngradedCoderivation.eq_of_taylor_eq R M hD hE (congrFun h)
 
 end Semiring
 
