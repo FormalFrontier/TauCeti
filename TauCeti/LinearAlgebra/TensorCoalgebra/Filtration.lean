@@ -107,12 +107,7 @@ conilpotence of the reduced tensor coalgebra. -/
 theorem deconcatenation_filtration_le (n : ℕ) :
     Submodule.map (deconcatenation R M) (filtration R M (n + 1)) ≤
       LinearMap.range (TensorProduct.mapIncl (filtration R M n) (filtration R M n)) := by
-  have htmul : ∀ u v : ReducedTensorWords R M, u ∈ filtration R M n → v ∈ filtration R M n →
-      u ⊗ₜ[R] v ∈ LinearMap.range (TensorProduct.mapIncl (filtration R M n)
-        (filtration R M n)) := fun u v hu hv ↦
-    ⟨(⟨u, hu⟩ : filtration R M n) ⊗ₜ[R] (⟨v, hv⟩ : filtration R M n), by
-      simp [TensorProduct.mapIncl]⟩
-  rw [Submodule.map_le_iff_le_comap, filtration_le_iff]
+  rw [TensorProduct.range_mapIncl, Submodule.map_le_iff_le_comap, filtration_le_iff]
   intro k hk
   rintro _ ⟨z, rfl⟩
   simp only [Submodule.mem_comap]
@@ -122,7 +117,7 @@ theorem deconcatenation_filtration_le (n : ℕ) :
         deconcatenation_subword R y (a := 0) (b := k.1)]
       refine Submodule.smul_mem _ _ (Submodule.sum_mem _ fun c hc ↦ ?_)
       simp only [Finset.mem_Ioo] at hc
-      exact htmul _ _ (subword_mem_filtration R M y 0 (by omega))
+      exact Submodule.apply_mem_map₂ _ (subword_mem_filtration R M y 0 (by omega))
         (subword_mem_filtration R M y (0 + c) (by omega))
   | add u v hu hv =>
       rw [map_add, map_add]
