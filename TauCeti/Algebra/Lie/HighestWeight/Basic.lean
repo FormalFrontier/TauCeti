@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Weights.Borel
+import TauCeti.Algebra.Lie.Weights.Eigenvector
 public import TauCeti.Algebra.Lie.Weights.Integrality
 
 public section
@@ -242,12 +243,8 @@ theorem smul (hv : IsHighestWeightVector b lam v) {c : K} (hc : c ≠ 0) :
 /-- A highest weight vector lies in the generalized weight space of its weight; being an honest
 simultaneous eigenvector, it does so at nilpotency index one. -/
 theorem mem_genWeightSpace (hv : IsHighestWeightVector b lam v) :
-    v ∈ genWeightSpace M (lam : H → K) := by
-  rw [LieModule.mem_genWeightSpace]
-  refine fun x => ⟨1, ?_⟩
-  have hx : (toEnd K H M x) v = lam x • v := by
-    rw [toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module, hv.lie_eq_smul x]
-  simp [hx]
+    v ∈ genWeightSpace M (lam : H → K) :=
+  mem_genWeightSpace_of_forall_lie_eq_smul hv.lie_eq_smul
 
 /-- The weight of a highest weight vector is a weight of the module: the vocabulary is not
 vacuous. -/

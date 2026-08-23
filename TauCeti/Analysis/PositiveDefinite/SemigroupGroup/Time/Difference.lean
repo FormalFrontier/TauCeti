@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.Algebra.Group.ForwardDiff
+public import Mathlib.Algebra.Group.ForwardDiff
 import Mathlib.Analysis.Normed.Group.Pointwise
 import TauCeti.Analysis.PositiveDefinite.Kernel.Kolmogorov
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
@@ -45,6 +45,8 @@ representing measure.
 * `TauCeti.isBounded_range_listTimeDifference` and
   `TauCeti.isBounded_range_iteratedTimeDifference`: those differences stay bounded, so they can be
   differenced again.
+* `TauCeti.continuous_listTimeDifference` and `TauCeti.continuous_iteratedTimeDifference`: those
+  differences stay continuous, so Bochner's theorem applies to each of their time slices.
 
 ## References
 
@@ -193,6 +195,31 @@ theorem isBounded_range_iteratedTimeDifference (hbounded : Bornology.IsBounded (
     (h : ℝ≥0) : Bornology.IsBounded (range (iteratedTimeDifference n h F)) := by
   rw [iteratedTimeDifference_eq_listTimeDifference]
   exact isBounded_range_listTimeDifference hbounded _
+
+section Continuity
+
+variable [TopologicalSpace V]
+
+/-- Continuity is preserved by taking a first time difference. -/
+theorem continuous_timeDifference (hF : Continuous F) (h : ℝ≥0) :
+    Continuous (timeDifference h F) := by
+  rw [funext (timeDifference_apply h F)]
+  exact hF.sub (hF.comp ((continuous_fst.add continuous_const).prodMk continuous_snd))
+
+/-- Continuity is preserved by differencing along any finite list of steps. -/
+theorem continuous_listTimeDifference (hF : Continuous F) (l : List ℝ≥0) :
+    Continuous (listTimeDifference l F) := by
+  induction l with
+  | nil => simpa using hF
+  | cons h l ih => simpa using continuous_timeDifference ih h
+
+/-- Continuity is preserved by every iterated time difference. -/
+theorem continuous_iteratedTimeDifference (hF : Continuous F) (n : ℕ) (h : ℝ≥0) :
+    Continuous (iteratedTimeDifference n h F) := by
+  rw [iteratedTimeDifference_eq_listTimeDifference]
+  exact continuous_listTimeDifference hF _
+
+end Continuity
 
 end
 
