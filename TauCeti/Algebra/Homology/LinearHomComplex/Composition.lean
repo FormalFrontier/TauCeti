@@ -204,8 +204,8 @@ noncomputable def linearHomComplexOfHom {F G : CochainComplex C ℤ} (φ : F ⟶
   HomologicalComplex.mkHomFromSingle
     (ModuleCat.ofHom (LinearMap.toSpanSingleton R (Cochain F G 0) (Cochain.ofHom φ)))
     (fun i _ => ModuleCat.hom_ext (LinearMap.ext fun r => by
-      -- Evaluate the `ModuleCat` composite supplied by `mkHomFromSingle`; from here the
-      -- characteristic `δ` lemmas apply directly.
+      -- `mkHomFromSingle` has no evaluation lemma for its closure proof.  Unfold its
+      -- `ModuleCat.ofHom` composite once; the characteristic `δ` lemmas then apply directly.
       change δ 0 i (r • Cochain.ofHom φ) = 0
       rw [δ_smul, δ_ofHom, smul_zero]))
 
@@ -225,8 +225,9 @@ lemma linearHomComplexOfHom_f_zero_apply {F G : CochainComplex C ℤ} (φ : F �
           (𝟙_ (ModuleCat.{v} R))).inv r) =
       (r • Cochain.ofHom φ : ModuleCat.of R (Cochain F G 0)) := by
   rw [linearHomComplexOfHom_f_zero]
-  -- Unfold application of the `ModuleCat` composite; the remaining two rewrites use the
-  -- characteristic equations of the isomorphism and `LinearMap.toSpanSingleton`.
+  -- `ModuleCat.hom_comp` does not expose application through `ModuleCat.ofHom` in the form
+  -- expected by the two characteristic lemmas below.  Align that composite once; no
+  -- implementation detail remains after the rewrites.
   change LinearMap.toSpanSingleton R (Cochain F G 0) (Cochain.ofHom φ)
     ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
       (𝟙_ (ModuleCat.{v} R))).hom
@@ -322,6 +323,9 @@ lemma linearHomComplexComp_naturality_source (φ : F₁ ⟶ F₂) (G K : Cochain
   simp only [curriedTensor_obj_obj, HomologicalComplex.id_f, CategoryTheory.Functor.map_id,
     NatTrans.id_app, curriedTensor_obj_map, Category.id_comp, ModuleCat.hom_comp,
     LinearMap.coe_comp, Function.comp_apply]
+  -- The totalization and tensor APIs provide the preceding morphism equations but no combined
+  -- pure-tensor application lemma.  Align their `ModuleCat` wrappers with the advertised
+  -- element-level APIs before rewriting.
   change ModuleCat.Hom.hom (cochainCompTensor R F₁ G K p q j h)
       (z₂ ⊗ₜ ModuleCat.Hom.hom ((linearHomComplexPrecomp R φ G).f q) z₁) =
     ModuleCat.Hom.hom ((linearHomComplexPrecomp R φ K).f j)
@@ -350,6 +354,9 @@ lemma linearHomComplexComp_naturality_target (ψ : K₁ ⟶ K₂) (F G : Cochain
   simp only [curriedTensor_obj_obj, HomologicalComplex.id_f, CategoryTheory.Functor.map_id,
     curriedTensor_map_app, ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply,
     ConcreteCategory.id_apply]
+  -- The totalization and tensor APIs provide the preceding morphism equations but no combined
+  -- pure-tensor application lemma.  Align their `ModuleCat` wrappers with the advertised
+  -- element-level APIs before rewriting.
   change ModuleCat.Hom.hom (cochainCompTensor R F G K₂ p q j h)
       (ModuleCat.Hom.hom ((linearHomComplexPostcomp R G ψ).f p) z₂ ⊗ₜ z₁) =
     ModuleCat.Hom.hom ((linearHomComplexPostcomp R F ψ).f j)
@@ -379,6 +386,9 @@ lemma linearHomComplexComp_dinaturality_middle (ψ : G₁ ⟶ G₂) (F K : Cocha
     ι_linearHomComplexComp, Category.assoc, ι_linearHomComplexComp]
   simp only [curriedTensor_obj_obj, curriedTensor_map_app, curriedTensor_obj_map,
     ModuleCat.hom_comp, LinearMap.coe_comp, Function.comp_apply]
+  -- The totalization and tensor APIs provide the preceding morphism equations but no combined
+  -- pure-tensor application lemma.  Align their `ModuleCat` wrappers with the advertised
+  -- element-level APIs before rewriting.
   change ModuleCat.Hom.hom (cochainCompTensor R F G₁ K p q j h)
       (ModuleCat.Hom.hom ((linearHomComplexPrecomp R ψ K).f p) z₂ ⊗ₜ z₁) =
     ModuleCat.Hom.hom (cochainCompTensor R F G₂ K p q j h)
@@ -399,6 +409,8 @@ private lemma up_π_left_of_r (p q r j : ℤ)
       (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q, r) = j) :
     ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ)
       (p + q, r) = j := by
+  -- `ComplexShape.r` and `ComplexShape.π` are respectively a definition and an abbreviation;
+  -- Mathlib has no named specialization reducing either one at `ComplexShape.up ℤ`.
   change p + q + r = j at h
   exact h
 
@@ -407,6 +419,8 @@ private lemma up_π_right_of_r (p q r j : ℤ)
       (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q, r) = j) :
     ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ)
       (p, q + r) = j := by
+  -- `ComplexShape.r` and `ComplexShape.π` are respectively a definition and an abbreviation;
+  -- Mathlib has no named specialization reducing either one at `ComplexShape.up ℤ`.
   change p + q + r = j at h
   change p + (q + r) = j
   omega
@@ -507,6 +521,9 @@ lemma linearHomComplexComp_assoc :
   rw [ModuleCat.MonoidalCategory.whiskerLeft_apply
       ((linearHomComplex R K L).X p) (cochainCompTensor R F G K q r (q + r) rfl)
       z₃ (z₂ ⊗ₜ z₁)]
+  -- The three Mathlib application lemmas above leave nested tensor applications whose object
+  -- types are expressed through `.X`.  Align those wrappers with `ModuleCat.of` so the public
+  -- pure-tensor lemmas rewrite them without exposing `linearHomComplex`.
   change (ModuleCat.Hom.hom
       (cochainCompTensor R F G L (p + q) r j (up_π_left_of_r p q r j h))
       (ModuleCat.Hom.hom (cochainCompTensor R G K L p q (p + q) rfl)
@@ -577,6 +594,9 @@ lemma linearHomComplexOfHom_comp (ψ : G ⟶ K) :
     ModuleCat.MonoidalCategory.leftUnitor_inv_apply,
     ModuleCat.MonoidalCategory.whiskerRight_apply]
   let z' : ModuleCat.of R (Cochain F G j) := z
+  -- Mathlib has separate formulas for the unitor and whiskering applications but no formula for
+  -- their resulting composite with a totalized bidegree map.  Align the remaining `.X` wrappers
+  -- with the public `ModuleCat.of` application lemmas.
   change ModuleCat.Hom.hom (cochainCompTensor R F G K 0 j j (zero_add j))
       (ModuleCat.Hom.hom ((linearHomComplexOfHom R ψ).f 0)
           ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
@@ -623,6 +643,9 @@ lemma linearHomComplexComp_ofHom {F' : CochainComplex C ℤ} (φ : F' ⟶ F) :
     ModuleCat.MonoidalCategory.rightUnitor_inv_apply,
     ModuleCat.MonoidalCategory.whiskerLeft_apply]
   let z' : ModuleCat.of R (Cochain F G j) := z
+  -- Mathlib has separate formulas for the unitor and whiskering applications but no formula for
+  -- their resulting composite with a totalized bidegree map.  Align the remaining `.X` wrappers
+  -- with the public `ModuleCat.of` application lemmas.
   change ModuleCat.Hom.hom (cochainCompTensor R F' F G j 0 j (add_zero j))
       (z' ⊗ₜ ModuleCat.Hom.hom ((linearHomComplexOfHom R φ).f 0)
         ((HomologicalComplex.singleObjXSelf (ComplexShape.up ℤ) 0
