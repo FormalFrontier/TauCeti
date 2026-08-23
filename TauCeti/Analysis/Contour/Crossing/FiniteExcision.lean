@@ -18,9 +18,10 @@ this file iterates that construction over a finite list of pairwise disjoint win
 `exciseCrossings` to a pairwise disjoint list has the expected simultaneous description: it is
 the prescribed cap on each window and the original curve off their union. It remains piecewise
 `C¹` when the windows lie strictly inside the parameter interval and their cap endpoints match
-the original curve, and remains closed when the windows lie strictly inside. Without a
-disjointness assumption, it avoids the crossing centre on `Icc a b` when nonzero-radius windows
-cover every parameter there at which the original curve meets that centre.
+the original curve, and remains closed when the interval endpoints lie outside every window.
+Without a disjointness assumption, it avoids the crossing centre on `Icc a b` when every window
+meeting that interval has nonzero radius and the windows cover every parameter there at which the
+original curve meets that centre.
 
 This is the finite geometric surgery producing the modified curve in Proposition 2.2. The winding
 number accounting is deliberately separate: `Winding.Number.Partition` supplies finite
@@ -252,23 +253,21 @@ theorem IsPiecewiseC1On.exciseCrossings {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
         · exact fun hmem => Set.disjoint_left.mp (hpw.1 V hV) hmem
             (right_mem_Icc.mpr (hinside V (List.mem_cons_of_mem W hV)).2.1.le)
 
-/-- Finite excision preserves closedness when every replacement window lies strictly inside the
-parameter interval. -/
+/-- Finite excision preserves closedness when both parameter endpoints lie outside every
+replacement window. -/
 theorem exciseCrossings_closed {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     {windows : List CircularCapWindow} (hclosed : γ a = γ b)
-    (hinside : ∀ W ∈ windows, a < W.lower ∧ W.upper < b) :
+    (hendpoints : ∀ W ∈ windows, a ∉ W.interval ∧ b ∉ W.interval) :
     exciseCrossings γ s windows a = exciseCrossings γ s windows b := by
-  rw [exciseCrossings_apply_of_forall_notMem (fun W hW hmem =>
-      (not_le.mpr (hinside W hW).1) hmem.1),
-    exciseCrossings_apply_of_forall_notMem (fun W hW hmem =>
-      (not_le.mpr (hinside W hW).2) hmem.2), hclosed]
+  rw [exciseCrossings_apply_of_forall_notMem (fun W hW => (hendpoints W hW).1),
+    exciseCrossings_apply_of_forall_notMem (fun W hW => (hendpoints W hW).2), hclosed]
 
-/-- If closed windows cover every parameter in `Icc a b` where `γ` meets `s`, replacing all of
-them by nonzero-radius caps produces a curve avoiding `s` on `Icc a b`, even when the windows
-overlap. -/
+/-- If closed windows cover every parameter in `Icc a b` where `γ` meets `s`, and every window
+meeting `Icc a b` has nonzero radius, finite excision produces a curve avoiding `s` there, even
+when the windows overlap. -/
 theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     {windows : List CircularCapWindow}
-    (hr : ∀ W ∈ windows, W.radius ≠ 0)
+    (hr : ∀ W ∈ windows, (W.interval ∩ Icc a b).Nonempty → W.radius ≠ 0)
     (hcover : ∀ t ∈ Icc a b, γ t = s → ∃ W ∈ windows, t ∈ W.interval) :
     ∀ t ∈ Icc a b, exciseCrossings γ s windows t ≠ s := by
   induction windows generalizing γ with
@@ -282,7 +281,7 @@ theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
       intro t ht hexcise
       by_cases htW : t ∈ W.interval
       · rw [W.excise_of_mem htW] at hexcise
-        exact absurd hexcise (W.cap_ne_center (hr W List.mem_cons_self))
+        exact absurd hexcise (W.cap_ne_center (hr W List.mem_cons_self ⟨t, htW, ht⟩))
       · rw [W.excise_of_notMem htW] at hexcise
         obtain ⟨V, hV, htV⟩ := hcover t ht hexcise
         rcases List.mem_cons.mp hV with rfl | hV
