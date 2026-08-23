@@ -40,8 +40,9 @@ the parameter range.
   `TauCeti.regularizedGamma_le_one` — the range;
 * `TauCeti.hasDerivAt_lowerIncompleteGamma`, `TauCeti.hasDerivAt_regularizedGamma` and the
   companion `deriv` lemmas — differentiability, for `0 < x` only;
-* `TauCeti.lowerIncompleteGamma_add_one` — the recurrence
-  `γ(s + 1, x) = s * γ(s, x) - x ^ s * exp (-x)`, for `0 < s` and `0 ≤ x`;
+* `TauCeti.lowerIncompleteGamma_add_one` and `TauCeti.regularizedGamma_add_one` — the recurrence
+  `γ(s + 1, x) = s * γ(s, x) - x ^ s * exp (-x)` and its regularized form
+  `P(s + 1, x) = P(s, x) - x ^ s * exp (-x) / Γ(s + 1)`, both for `0 < s` and `0 ≤ x`;
 * `TauCeti.tendsto_lowerIncompleteGamma_atTop`, `TauCeti.tendsto_regularizedGamma_atTop` — the
   limits `Real.Gamma s` and `1` as `x → ∞`, with the resulting bounds
   `TauCeti.lowerIncompleteGamma_le_Gamma` and `TauCeti.regularizedGamma_le_one`;
@@ -308,6 +309,15 @@ theorem lowerIncompleteGamma_add_one (hs : 0 < s) (hx : 0 ≤ x) :
     ← Complex.ofReal_mul, ← Complex.ofReal_mul, ← Complex.ofReal_sub, Complex.ofReal_inj] at key
   rw [key]
   ring
+
+/-- The regularized form of the recurrence, `P(s + 1, x) = P(s, x) - x ^ s * exp (-x) / Γ(s + 1)`,
+for `0 < s` and `0 ≤ x`. The factor `s` of `TauCeti.lowerIncompleteGamma_add_one` is absorbed by
+`Real.Gamma_add_one`. -/
+theorem regularizedGamma_add_one (hs : 0 < s) (hx : 0 ≤ x) :
+    regularizedGamma (s + 1) x =
+      regularizedGamma s x - x ^ s * Real.exp (-x) / Real.Gamma (s + 1) := by
+  rw [regularizedGamma_eq_div, regularizedGamma_eq_div, lowerIncompleteGamma_add_one hs hx,
+    Real.Gamma_add_one hs.ne', sub_div, mul_div_mul_left _ _ hs.ne']
 
 /-! ### The limit at infinity -/
 
