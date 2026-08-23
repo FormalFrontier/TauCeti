@@ -23,25 +23,25 @@ condition and the `𝒪_X`-module structure automatic.
 
 ## Main declarations
 
-* `TauCeti.AlgebraicGeometry.fromSpecFunctionField`, the canonical morphism
+* `TauCeti.AlgebraicGeometry.Scheme.fromSpecFunctionField`, the canonical morphism
   `Spec K(X) ⟶ X` from the spectrum of the function field, and
-  `TauCeti.AlgebraicGeometry.fromSpecFunctionField_preimage`: it pulls a nonempty open subset
-  back to everything;
-* `TauCeti.AlgebraicGeometry.rationalFunctions X : X.Modules`, the sheaf `𝒦_X` of rational
-  functions;
-* `TauCeti.AlgebraicGeometry.rationalFunctionsEquiv`, the identification
+  `TauCeti.AlgebraicGeometry.Scheme.fromSpecFunctionField_preimage`: it pulls a nonempty open
+  subset back to everything;
+* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctions X : X.Modules`, the sheaf `𝒦_X` of
+  rational functions;
+* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv`, the identification
   `Γ(𝒦_X, U) ≃ₗ[Γ(X, U)] K(X)` of its sections over a nonempty open subset with the function
-  field, `TauCeti.AlgebraicGeometry.rationalFunctionsEquiv_map`, the compatibility of these
-  identifications with the restriction maps, and the two statements which say that `𝒦_X` really
-  is the constant sheaf: `TauCeti.AlgebraicGeometry.isIso_rationalFunctions_map`, the restriction
-  maps between nonempty open subsets are isomorphisms, and
-  `TauCeti.AlgebraicGeometry.subsingleton_rationalFunctions`, the sections over an empty open
-  subset vanish;
-* `TauCeti.AlgebraicGeometry.toRationalFunctions`, the canonical morphism `𝒪_X ⟶ 𝒦_X`, which
-  is `X.germToFunctionField` on sections
-  (`TauCeti.AlgebraicGeometry.rationalFunctionsEquiv_toRationalFunctions_app`), is injective on
-  sections over every open subset
-  (`TauCeti.AlgebraicGeometry.toRationalFunctions_app_injective`), and is therefore a
+  field, `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_map`, the compatibility of
+  these identifications with the restriction maps, and the two statements which say that `𝒦_X`
+  really is the constant sheaf: `TauCeti.AlgebraicGeometry.Scheme.isIso_rationalFunctions_map`,
+  the restriction maps between nonempty open subsets are isomorphisms, and
+  `TauCeti.AlgebraicGeometry.Scheme.subsingleton_rationalFunctions`, the sections over an empty
+  open subset vanish;
+* `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions`, the canonical morphism
+  `𝒪_X ⟶ 𝒦_X`, which is `X.germToFunctionField` on sections
+  (`TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_toRationalFunctions_app`), is
+  injective on sections over every open subset
+  (`TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions_app_injective`), and is therefore a
   monomorphism.
 
 The Cartier divisors of `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A ("Divisors on a
@@ -69,21 +69,14 @@ universe u
 
 noncomputable section
 
-variable (X : Scheme.{u}) [IsIntegral X]
+namespace Scheme
+
+variable (X : Scheme.{u}) [IrreducibleSpace X]
 
 /-- The canonical morphism `Spec K(X) ⟶ X` from the spectrum of the function field of an
-integral scheme, that is, the morphism from the spectrum of the stalk at the generic point. -/
-@[expose] def fromSpecFunctionField : Spec X.functionField ⟶ X :=
+irreducible scheme, that is, the morphism from the spectrum of the stalk at the generic point. -/
+def fromSpecFunctionField : Spec X.functionField ⟶ X :=
   X.fromSpecStalk (genericPoint X)
-
-instance instUniqueSpecFunctionField : Unique (Spec X.functionField) :=
-  inferInstanceAs (Unique (PrimeSpectrum X.functionField))
-
-/-- The sheaf `𝒦_X` of rational functions on an integral scheme `X`: the constant sheaf with
-value the function field, realized as the pushforward of the structure sheaf of `Spec K(X)`
-along `TauCeti.AlgebraicGeometry.fromSpecFunctionField`. -/
-@[expose] def rationalFunctions : X.Modules :=
-  (Scheme.Modules.pushforward (fromSpecFunctionField X)).obj (SheafOfModules.unit _)
 
 variable {X}
 
@@ -91,16 +84,15 @@ variable {X}
 theorem genericPoint_mem (U : X.Opens) [Nonempty U] : genericPoint X ∈ U :=
   ((genericPoint_spec X).mem_open_set_iff U.isOpen).mpr (by simpa using ‹Nonempty U›)
 
-/-- The morphism `Spec K(X) ⟶ X` pulls every nonempty open subset back to the whole of
-`Spec K(X)`, its source having a single point, which maps to the generic point. -/
-theorem fromSpecFunctionField_preimage (U : X.Opens) [Nonempty U] :
-    (fromSpecFunctionField X) ⁻¹ᵁ U = ⊤ := by
-  ext p
-  refine ⟨fun _ => trivial, fun _ => ?_⟩
-  obtain rfl : p = IsLocalRing.closedPoint X.functionField := Subsingleton.elim _ _
-  change (X.fromSpecStalk (genericPoint X)).base _ ∈ U
-  rw [Scheme.fromSpecStalk_closedPoint]
-  exact genericPoint_mem U
+instance instUniqueSpecFunctionField (X : Scheme.{u}) [IsIntegral X] :
+    Unique (Spec X.functionField) :=
+  inferInstanceAs (Unique (PrimeSpectrum X.functionField))
+
+/-- The sheaf `𝒦_X` of rational functions on an integral scheme `X`: the constant sheaf with
+value the function field, realized as the pushforward of the structure sheaf of `Spec K(X)`
+along `TauCeti.AlgebraicGeometry.Scheme.fromSpecFunctionField`. -/
+def rationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] : X.Modules :=
+  (Scheme.Modules.pushforward (fromSpecFunctionField X)).obj (SheafOfModules.unit _)
 
 /-- On a nonempty open subset, the morphism `Spec K(X) ⟶ X` acts on sections by the germ map to
 the function field. -/
@@ -110,16 +102,26 @@ theorem fromSpecFunctionField_app (U : X.Opens) [Nonempty U] :
         (Spec X.functionField).presheaf.map (homOfLE le_top).op :=
   Scheme.fromSpecStalk_app (genericPoint_mem U)
 
-/-- The sections of the structure sheaf of `Spec K(X)` over the preimage of a nonempty open
-subset of `X` are the function field. -/
-@[expose] def functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
+variable [IsIntegral X]
+
+/-- The morphism `Spec K(X) ⟶ X` pulls every nonempty open subset back to the whole of
+`Spec K(X)`, its source having a single point, which maps to the generic point. -/
+@[simp]
+theorem fromSpecFunctionField_preimage (U : X.Opens) [Nonempty U] :
+    (fromSpecFunctionField X) ⁻¹ᵁ U = ⊤ := by
+  apply top_unique
+  intro p _
+  apply TopologicalSpace.Opens.mem_map.mpr
+  rw [Subsingleton.elim p (IsLocalRing.closedPoint X.functionField),
+    fromSpecFunctionField, Scheme.fromSpecStalk_closedPoint]
+  exact genericPoint_mem U
+
+private def functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
     Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U) ≅ X.functionField :=
   ((Spec X.functionField).presheaf.mapIso
     (eqToIso (fromSpecFunctionField_preimage U)).op).symm ≪≫ Scheme.ΓSpecIso X.functionField
 
-/-- Under `TauCeti.AlgebraicGeometry.functionFieldSectionsIso`, the map on sections induced by
-`Spec K(X) ⟶ X` is the germ map to the function field. -/
-theorem app_comp_functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
+private theorem app_comp_functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
     (fromSpecFunctionField X).app U ≫ (functionFieldSectionsIso U).hom =
       X.germToFunctionField U := by
   rw [fromSpecFunctionField_app, functionFieldSectionsIso]
@@ -129,9 +131,8 @@ theorem app_comp_functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
       (eqToIso (fromSpecFunctionField_preimage U)).op.inv) (𝟙 _)]
   simp
 
-/-- The identifications `TauCeti.AlgebraicGeometry.functionFieldSectionsIso` are compatible with
-the restriction maps of the structure sheaf of `Spec K(X)`. -/
-theorem map_comp_functionFieldSectionsIso {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
+private theorem map_comp_functionFieldSectionsIso {U V : X.Opens} [Nonempty U] [Nonempty V]
+    (i : U ⟶ V) :
     (Spec X.functionField).presheaf.map
         ((Opens.map (fromSpecFunctionField X).base).map i).op ≫
       (functionFieldSectionsIso U).hom = (functionFieldSectionsIso V).hom := by
@@ -144,7 +145,7 @@ theorem map_comp_functionFieldSectionsIso {U V : X.Opens} [Nonempty U] [Nonempty
 
 /-- The sections of `𝒦_X` over a nonempty open subset `U` are the function field, as a module
 over the functions on `U`. -/
-@[expose] def rationalFunctionsEquiv (U : X.Opens) [Nonempty U] :
+def rationalFunctionsEquiv (U : X.Opens) [Nonempty U] :
     Γ(rationalFunctions X, U) ≃ₗ[Γ(X, U)] X.functionField where
   toFun s := (functionFieldSectionsIso U).hom s
   map_add' s t := map_add _ s t
@@ -164,19 +165,25 @@ over the functions on `U`. -/
 
 /-- The identifications of the sections of `𝒦_X` with the function field are compatible with the
 restriction maps: `𝒦_X` is the constant sheaf. -/
+@[simp]
 theorem rationalFunctionsEquiv_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V)
     (s : Γ(rationalFunctions X, V)) :
     rationalFunctionsEquiv U ((rationalFunctions X).presheaf.map i.op s) =
       rationalFunctionsEquiv V s := by
-  have h : rationalFunctionsEquiv U ((rationalFunctions X).presheaf.map i.op s) =
-      (functionFieldSectionsIso U).hom ((Spec X.functionField).presheaf.map
-        ((Opens.map (fromSpecFunctionField X).base).map i).op
-          (id s : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ V))) := rfl
-  rw [h, ← CategoryTheory.ConcreteCategory.comp_apply, map_comp_functionFieldSectionsIso]
+  unfold rationalFunctionsEquiv rationalFunctions
+  -- This normalization is exactly `Scheme.Modules.pushforward_obj_presheaf_map`. Rewriting by
+  -- that lemma cannot transport `s` across the opaque `Scheme.Modules` wrapper, so unfold the
+  -- local wrapper above and state the documented pushforward computation explicitly.
+  change (functionFieldSectionsIso U).hom
+    ((Spec X.functionField).presheaf.map
+      ((Opens.map (fromSpecFunctionField X).base).map i).op
+        (id s : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ V))) =
+      (functionFieldSectionsIso V).hom s
+  rw [← CategoryTheory.ConcreteCategory.comp_apply, map_comp_functionFieldSectionsIso]
   rfl
 
 /-- The restriction maps of `𝒦_X` between nonempty open subsets are bijective. -/
-theorem bijective_rationalFunctions_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
+theorem rationalFunctions_map_bijective {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
     Function.Bijective ((rationalFunctions X).presheaf.map i.op) := by
   constructor
   · intro a b hab
@@ -190,8 +197,9 @@ theorem bijective_rationalFunctions_map {U V : X.Opens} [Nonempty U] [Nonempty V
 /-- The restriction maps of `𝒦_X` between nonempty open subsets are isomorphisms. -/
 instance isIso_rationalFunctions_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
     IsIso ((rationalFunctions X).presheaf.map i.op) :=
-  (ConcreteCategory.isIso_iff_bijective _).mpr (bijective_rationalFunctions_map i)
+  (ConcreteCategory.isIso_iff_bijective _).mpr (rationalFunctions_map_bijective i)
 
+omit [IsIntegral X] in
 /-- The sheaf `𝒦_X` has no nonzero sections over an empty open subset. -/
 theorem subsingleton_rationalFunctions (U : X.Opens) (hU : U = ⊥) :
     Subsingleton Γ(rationalFunctions X, U) := by
@@ -201,34 +209,42 @@ theorem subsingleton_rationalFunctions (U : X.Opens) (hU : U = ⊥) :
       (fromSpecFunctionField X) ⁻¹ᵁ (⊥ : X.Opens)) := by rw [h]; infer_instance
   exact this
 
-variable (X)
-
 /-- The inclusion of the structure sheaf into the sheaf of rational functions, given by the
 global section `1` of `𝒦_X`. -/
 -- The source is spelled through `Quiver.Hom` because `SheafOfModules.unit X.ringCatSheaf` is not
 -- syntactically of type `X.Modules`; without this the `Scheme.Modules` API for morphisms of
 -- `𝒪_X`-modules does not apply to the result.
-@[expose] def toRationalFunctions :
+def toRationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] :
     @Quiver.Hom X.Modules _ (SheafOfModules.unit X.ringCatSheaf) (rationalFunctions X) :=
   (rationalFunctions X).unitHomEquiv.symm
     (PresheafOfModules.sectionsMk
       (fun V => (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ V.unop)))
       (fun _ _ _ => PresheafOfModules.unit_map_one _ _))
 
-variable {X}
+omit [IsIntegral X] in
+/-- Application of `toRationalFunctions` is scalar multiplication by its defining global
+section. This is definitional because `SheafOfModules.unitHomEquiv.symm` constructs the unique
+module morphism from the unit object with that value at `1`. -/
+private theorem toRationalFunctions_app (U : X.Opens) (r : Γ(X, U)) :
+    Scheme.Modules.Hom.app (toRationalFunctions X) U r =
+      r • (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
+        Γ(rationalFunctions X, U)) := rfl
+
+private theorem rationalFunctionsEquiv_one (U : X.Opens) [Nonempty U] :
+    rationalFunctionsEquiv U
+      (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
+        Γ(rationalFunctions X, U)) = 1 := by
+  change (ConcreteCategory.hom (functionFieldSectionsIso U).hom) 1 = 1
+  exact map_one _
 
 /-- On a nonempty open subset, the inclusion `𝒪_X ⟶ 𝒦_X` is the germ map to the function
 field. -/
+@[simp]
 theorem rationalFunctionsEquiv_toRationalFunctions_app (U : X.Opens) [Nonempty U]
     (r : Γ(X, U)) :
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       X.germToFunctionField U r := by
-  have h : Scheme.Modules.Hom.app (toRationalFunctions X) U r =
-      r • (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
-        Γ(rationalFunctions X, U)) := rfl
-  rw [h, map_smul]
-  change r • (ConcreteCategory.hom (functionFieldSectionsIso U).hom) 1 = _
-  rw [map_one, Algebra.smul_def, mul_one]
+  rw [toRationalFunctions_app, map_smul, rationalFunctionsEquiv_one, Algebra.smul_def, mul_one]
   rfl
 
 /-- The inclusion `𝒪_X ⟶ 𝒦_X` is injective on sections over every open subset: over a nonempty
@@ -255,6 +271,8 @@ instance : Mono (toRationalFunctions X) := by
       Mono (((Scheme.Modules.toPresheaf X).map (toRationalFunctions X)).app U) := fun U =>
     ConcreteCategory.mono_of_injective _ (toRationalFunctions_app_injective U.unop)
   exact (Scheme.Modules.toPresheaf X).mono_of_mono_map (NatTrans.mono_of_mono_app _)
+
+end Scheme
 
 end
 
