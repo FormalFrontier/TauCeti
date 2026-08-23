@@ -10,7 +10,6 @@ public import TauCeti.NumberTheory.NumberField.Quadratic.RamifiedPrimesClassGrou
 import TauCeti.Algebra.Group.Subgroup.TwoTorsionClosure
 import Mathlib.Data.Nat.Squarefree
 import Mathlib.Algebra.GroupWithZero.Torsion
-import Mathlib.Algebra.Group.Subgroup.Finite
 
 /-!
 # The relation between the ramified primes of a quadratic field
