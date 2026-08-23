@@ -22,13 +22,13 @@ its limiting point is fixed by the flow.  Time reversal exchanges the two constr
 
 ## Main declarations
 
-* `TauCeti.Flow.stableSet`: points converging to a given point in forward time.
-* `TauCeti.Flow.unstableSet`: points converging to a given point in backward time.
-* `TauCeti.Flow.isInvariant_stableSet` and `TauCeti.Flow.isInvariant_unstableSet`: invariance
+* `Flow.stableSet`: points converging to a given point in forward time.
+* `Flow.unstableSet`: points converging to a given point in backward time.
+* `Flow.isInvariant_stableSet` and `Flow.isInvariant_unstableSet`: invariance
   under time translation.
-* `TauCeti.Flow.fixed_of_mem_stableSet` and `TauCeti.Flow.fixed_of_mem_unstableSet`: a limiting
+* `Flow.fixed_of_mem_stableSet` and `Flow.fixed_of_mem_unstableSet`: a limiting
   point of a trajectory is fixed.
-* `TauCeti.Flow.stableSet_reverse` and `TauCeti.Flow.unstableSet_reverse`: time reversal exchanges
+* `Flow.stableSet_reverse` and `Flow.unstableSet_reverse`: time reversal exchanges
   stable and unstable sets.
 -/
 
@@ -36,7 +36,7 @@ public section
 
 open Filter Set Topology
 
-namespace TauCeti.Flow
+namespace Flow
 
 variable {α : Type*} [TopologicalSpace α]
 
@@ -166,4 +166,4 @@ theorem unstableSet_id [T2Space α] (x : α) :
   ext y
   simp [unstableSet]
 
-end TauCeti.Flow
+end Flow

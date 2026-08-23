@@ -27,16 +27,16 @@ and their intersections.
 
 ## Main declarations
 
-* `TauCeti.Flow.IsNegativeGradient`: every orbit of a flow solves the negative gradient equation.
-* `TauCeti.Flow.IsNegativeGradient.value_le_of_mem_stableSet`: stable-set points lie above the
+* `Flow.IsNegativeGradient`: every orbit of a flow solves the negative gradient equation.
+* `Flow.IsNegativeGradient.value_le_of_mem_stableSet`: stable-set points lie above the
   limiting critical value.
-* `TauCeti.Flow.IsNegativeGradient.value_ge_of_mem_unstableSet`: unstable-set points lie below
+* `Flow.IsNegativeGradient.value_ge_of_mem_unstableSet`: unstable-set points lie below
   the limiting critical value.
-* `TauCeti.Flow.IsNegativeGradient.value_le_of_mem_unstableSet_inter_stableSet`: a connecting
+* `Flow.IsNegativeGradient.value_le_of_mem_unstableSet_inter_stableSet`: a connecting
   trajectory goes from a weakly higher critical value to a lower one.
-* `TauCeti.Flow.IsNegativeGradient.value_lt_of_mem_unstableSet_inter_stableSet`: the inequality is
+* `Flow.IsNegativeGradient.value_lt_of_mem_unstableSet_inter_stableSet`: the inequality is
   strict for distinct endpoints.
-* `TauCeti.Flow.IsNegativeGradient.eq_of_mem_unstableSet_inter_stableSet`: there are no
+* `Flow.IsNegativeGradient.eq_of_mem_unstableSet_inter_stableSet`: there are no
   nonconstant homoclinic trajectories.
 
 ## References
@@ -52,7 +52,7 @@ public section
 open Filter Function InnerProductSpace Set Topology
 open scoped Gradient
 
-namespace TauCeti.Flow
+namespace Flow
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
   {φ : _root_.Flow ℝ E} {f : E → ℝ} {p q x : E}
@@ -195,4 +195,4 @@ theorem IsNegativeGradient.eq_of_mem_unstableSet_inter_stableSet
     simpa only [horbit] using mem_stableSet.mp hx.2
   exact tendsto_nhds_unique tendsto_const_nhds hlim
 
-end TauCeti.Flow
+end Flow
