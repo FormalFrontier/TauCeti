@@ -94,15 +94,10 @@ theorem ord_adicOfIrreducible {q : k[X]} (hq : Irreducible q) {f : RatFunc k} (h
       rw [ord_adicOfIrreducible_algebraMap hq (RatFunc.num_ne_zero hf),
         ord_adicOfIrreducible_algebraMap hq (RatFunc.denom_ne_zero f)]
 
-private theorem not_dvd_denom_of_dvd_num {q : k[X]} (hq : Irreducible q) (f : RatFunc k)
-    (hnum : q ∣ f.num) : ¬q ∣ f.denom := by
-  intro hden
-  exact hq.not_isUnit (f.isCoprime_num_denom.isUnit_of_dvd' hnum hden)
-
-private theorem not_dvd_num_of_dvd_denom {q : k[X]} (hq : Irreducible q) (f : RatFunc k)
-    (hden : q ∣ f.denom) : ¬q ∣ f.num := by
-  intro hnum
-  exact hq.not_isUnit (f.isCoprime_num_denom.isUnit_of_dvd' hnum hden)
+private theorem not_dvd_right_of_dvd_left {q a b : k[X]} (hq : Irreducible q)
+    (hab : IsCoprime a b) (ha : q ∣ a) : ¬q ∣ b := by
+  intro hb
+  exact hq.not_isUnit (hab.isUnit_of_dvd' ha hb)
 
 /-- A nonzero rational function has a zero at `P_q` exactly when `q` divides its reduced
 numerator. -/
@@ -118,7 +113,8 @@ theorem ord_adicOfIrreducible_pos_iff {q : k[X]} (hq : Irreducible q) {f : RatFu
   · intro hnum
     have hnum' : multiplicity q f.num ≠ 0 := multiplicity_ne_zero.mpr hnum
     have hden : multiplicity q f.denom = 0 :=
-      multiplicity_eq_zero.mpr (not_dvd_denom_of_dvd_num hq f hnum)
+      multiplicity_eq_zero.mpr
+        (not_dvd_right_of_dvd_left hq f.isCoprime_num_denom hnum)
     omega
 
 /-- A nonzero rational function has a pole at `P_q` exactly when `q` divides its reduced
@@ -134,7 +130,8 @@ theorem ord_adicOfIrreducible_neg_iff {q : k[X]} (hq : Irreducible q) {f : RatFu
     omega
   · intro hden
     have hnum : multiplicity q f.num = 0 :=
-      multiplicity_eq_zero.mpr (not_dvd_num_of_dvd_denom hq f hden)
+      multiplicity_eq_zero.mpr
+        (not_dvd_right_of_dvd_left hq f.isCoprime_num_denom.symm hden)
     have hden' : multiplicity q f.denom ≠ 0 := multiplicity_ne_zero.mpr hden
     omega
 
@@ -183,13 +180,6 @@ theorem valuation_adicOfIrreducible_le_one_iff {q : k[X]} (hq : Irreducible q)
       ¬q ∣ f.denom := by
   rw [← valuation_adicOfIrreducible hq, ← (adicOfIrreducible hq).mem_integers_iff,
     mem_integers_adicOfIrreducible_iff hq]
-
-/-- A rational function has a pole at `P_q` exactly when `q` divides its reduced denominator. -/
-theorem not_mem_integers_adicOfIrreducible_iff {q : k[X]} (hq : Irreducible q)
-    (f : RatFunc k) :
-    f ∉ (adicOfIrreducible hq).integers ↔ q ∣ f.denom := by
-  rw [mem_integers_adicOfIrreducible_iff hq]
-  tauto
 
 /-- A function regular at `P_q` has zero residue exactly when `q` divides its reduced numerator. -/
 theorem residue_adicOfIrreducible_eq_zero_iff {q : k[X]} (hq : Irreducible q)
