@@ -74,10 +74,13 @@ theorem NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K
   have hnzd := mem_nonZeroDivisors_of_prime_of_liesOver hprime 𝔭
   have hp0 : (algebraMap ℤ (𝓞 K) (p : ℤ)) ≠ 0 := by
     simpa using fun h ↦ hprime.ne_zero (by exact_mod_cast h)
-  rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2]
-  refine NarrowClassGroup.mk0_eq_one_of_isTotallyPositive hp0 ?_ ?_
-  · simpa using isTotallyPositive_intCast (K := K) (n := (p : ℤ)) (by exact_mod_cast hprime.pos)
-  · change 𝔭 ^ 2 = span {algebraMap ℤ (𝓞 K) (p : ℤ)}
+  -- `𝔭² = p 𝓞 K = (p)`, the principal ideal on the positive rational integer `p`. This is the
+  -- underlying ideal of the nonzero-ideal wrapper `⟨𝔭 ^ 2, _⟩` that `mk0` is applied to; no
+  -- rewrite can reach it inside that wrapper, since the membership proof depends on `𝔭 ^ 2`.
+  have hspan : 𝔭 ^ 2 = span {algebraMap ℤ (𝓞 K) (p : ℤ)} := by
     rw [← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
+  rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2]
+  refine NarrowClassGroup.mk0_eq_one_of_isTotallyPositive hp0 ?_ hspan
+  simpa using isTotallyPositive_intCast (K := K) (n := (p : ℤ)) (by exact_mod_cast hprime.pos)
 
 end NumberField
