@@ -35,9 +35,8 @@ with `H ⊗ ker f`, which is precisely normality of the image Hopf ideal.
 
 * J. S. Milne, *Algebraic Groups* (2017), §5.a and §10.20.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, §§16--17.
-* The quotient-factoring argument is `ker_lTensor_eq_rightTensorIdeal` from
-  `TauCeti.Algebra.HopfAlgebra.Kernel`, using Mathlib's
-  `TensorProduct.map_injective_of_flat_flat'` for the exactness step.
+* The tensor-kernel identity is `ker_lTensor_eq_rightTensorIdeal` from
+  `TauCeti.Algebra.HopfAlgebra.Kernel`, using Mathlib's `Module.Flat.ker_lTensor_eq`.
 
 This is the normality prerequisite for Layer 5, "The unipotent radical", of the ReductiveGroups
 roadmap. Applied to multiplication from the semidirect product of two normal closed subgroups,

@@ -7,7 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.TensorProduct.RightExactness
-public import Mathlib.RingTheory.Flat.Basic
+public import Mathlib.RingTheory.Flat.Equalizer
 public import TauCeti.Algebra.Bialgebra.Quotient
 public import TauCeti.Algebra.HopfAlgebra.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
@@ -44,8 +44,8 @@ dictionary.
 
 ## References
 
-The construction is the standard kernel Hopf ideal. The tensor-kernel exactness step uses
-Mathlib's `Algebra.TensorProduct.map_ker`.
+The construction is the standard kernel Hopf ideal. The tensor-kernel exactness steps use
+Mathlib's `Algebra.TensorProduct.map_ker` and `Module.Flat.ker_lTensor_eq`.
 -/
 
 public section
@@ -77,32 +77,23 @@ private theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring
   apply congr_arg₂ (· ⊔ ·) <;> rfl
 
 /-- Tensoring on the left by a flat algebra carries the kernel of an algebra map to the
-corresponding right tensor ideal, provided the codomain is flat. -/
+corresponding right tensor ideal. -/
 theorem ker_lTensor_eq_rightTensorIdeal {A B : Type*} [CommRing A] [CommRing B]
-    [Algebra R A] [Algebra R B] [Module.Flat R A] [Module.Flat R B] (f : A →ₐ[R] B) :
+    [Algebra R A] [Algebra R B] [Module.Flat R A] (f : A →ₐ[R] B) :
     RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R A) f) =
       rightTensorIdeal (R := R) (H := A) (RingHom.ker f) := by
-  let I := RingHom.ker f
-  let q : A →ₐ[R] A ⧸ I := Ideal.Quotient.mkₐ R I
-  let f' : (A ⧸ I) →ₐ[R] B := Ideal.kerLiftAlg f
-  have hf' : Function.Injective f' := Ideal.kerLiftAlg_injective f
-  have htensor : Function.Injective
-      (Algebra.TensorProduct.map (AlgHom.id R A) f') := by
-    have h := TensorProduct.map_injective_of_flat_flat'
-      (AlgHom.id R A).toLinearMap f'.toLinearMap Function.injective_id hf'
-    rw [← TensorProduct.AlgebraTensorModule.map_eq,
-      ← Algebra.TensorProduct.toLinearMap_map] at h
-    exact h
-  have hcomp :
-      (Algebra.TensorProduct.map (AlgHom.id R A) f').comp
-          (Algebra.TensorProduct.map (AlgHom.id R A) q) =
-        Algebra.TensorProduct.map (AlgHom.id R A) f := by
-    have hright : f'.comp q = f := by
-      ext x
-      exact Ideal.kerLiftAlg_mk f x
-    rw [← Algebra.TensorProduct.map_comp, AlgHom.id_comp, hright]
-  rw [← ker_tensorProduct_map_id_quotient I, ← hcomp]
-  exact RingHom.ker_comp_of_injective _ htensor
+  rw [← Submodule.restrictScalars_inj R]
+  change LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor R A f.toLinearMap) = _
+  rw [Module.Flat.ker_lTensor_eq]
+  have hker : f.toLinearMap.ker = (RingHom.ker f).restrictScalars R := rfl
+  rw [hker]
+  have hsubtype : ((RingHom.ker f).restrictScalars R).subtype =
+      (RingHom.ker f).subtype.restrictScalars R := by
+    ext
+    rfl
+  rw [hsubtype, rightTensorIdeal_def]
+  exact TensorProduct.AlgebraTensorModule.range_lTensor_idealMap
+    (R := R) A R (RingHom.ker f)
 
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
