@@ -391,7 +391,6 @@ theorem homotopyGroupMulEquivOfPath_apply [Nonempty N] [DecidableEq N] (γ : Pat
 
 /-- The inverse multiplicative base-point-change equivalence acts by transport along the
 reversed path. -/
-@[simp]
 theorem homotopyGroupMulEquivOfPath_symm_apply [Nonempty N] [DecidableEq N] (γ : Path x y)
     (a : HomotopyGroup N X y) :
     (homotopyGroupMulEquivOfPath γ).symm a = homotopyGroupTransport γ.symm a := by
