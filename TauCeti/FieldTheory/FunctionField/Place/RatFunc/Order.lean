@@ -108,6 +108,7 @@ private theorem not_dvd_num_of_dvd_denom {q : k[X]} (hq : Irreducible q) (f : Ra
 
 /-- A nonzero rational function has a zero at `P_q` exactly when `q` divides its reduced
 numerator. -/
+@[simp]
 theorem ord_adicOfIrreducible_pos_iff {q : k[X]} (hq : Irreducible q) {f : RatFunc k}
     (hf : f ≠ 0) :
     0 < (adicOfIrreducible hq).ord f ↔ q ∣ f.num := by
@@ -124,6 +125,7 @@ theorem ord_adicOfIrreducible_pos_iff {q : k[X]} (hq : Irreducible q) {f : RatFu
 
 /-- A nonzero rational function has a pole at `P_q` exactly when `q` divides its reduced
 denominator. -/
+@[simp]
 theorem ord_adicOfIrreducible_neg_iff {q : k[X]} (hq : Irreducible q) {f : RatFunc k}
     (hf : f ≠ 0) :
     (adicOfIrreducible hq).ord f < 0 ↔ q ∣ f.denom := by
@@ -140,6 +142,7 @@ theorem ord_adicOfIrreducible_neg_iff {q : k[X]} (hq : Irreducible q) {f : RatFu
 
 /-- A nonzero rational function is a unit at `P_q` exactly when `q` divides neither its reduced
 numerator nor its reduced denominator. -/
+@[simp]
 theorem ord_adicOfIrreducible_eq_zero_iff {q : k[X]} (hq : Irreducible q) {f : RatFunc k}
     (hf : f ≠ 0) :
     (adicOfIrreducible hq).ord f = 0 ↔ ¬q ∣ f.num ∧ ¬q ∣ f.denom := by
