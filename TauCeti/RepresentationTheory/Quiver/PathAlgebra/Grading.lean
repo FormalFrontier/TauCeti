@@ -202,11 +202,7 @@ theorem grade_le_pathSpan (n : ℕ) : grade k Q n ≤ pathSpan k Q n := by
   rintro _ ⟨x, hx, rfl⟩
   exact ofPath_mem_pathSpan hx.ge
 
-end Grade
-
-section GradeComm
-
-variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q]
+variable {k Q}
 
 /-- An arrow is homogeneous of degree `1`. -/
 theorem ofArrow_mem_grade_one {a b : Q} (e : a ⟶ b) :
@@ -226,6 +222,12 @@ theorem grade_one_eq_span_range_ofArrow : grade k Q 1 = Submodule.span k
     exact ⟨⟨a, c, e⟩, ofArrow_eq_ofPath e⟩
   · rintro ⟨⟨a, b, e⟩, rfl⟩
     exact ⟨⟨a, b, e.toPath⟩, rfl, (ofArrow_eq_ofPath e).symm⟩
+
+end Grade
+
+section GradeComm
+
+variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q]
 
 /-- **Multiplication adds degrees.** -/
 theorem grade_mul_grade_le [Finite Q] (i j : ℕ) :
