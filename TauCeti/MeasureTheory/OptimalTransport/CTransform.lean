@@ -5,10 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.EReal.Operations
 public import Mathlib.Order.GaloisConnection.Basic
 public import Mathlib.Topology.Instances.EReal.Lemmas
-public import Mathlib.Topology.Semicontinuity.Basic
 
 /-!
 # The infimal `c`-transform, `c`-concavity, and contact sets
@@ -18,7 +16,9 @@ against a cost `c : X × Y → ℝ` is the pointwise inequality `φ x + ψ y ≤
 fixed, the largest `ψ` satisfying it is the *infimal `c`-transform*
 `cTransform c φ y = ⨅ x, (c (x, y) - φ x)`, and symmetrically with `ψ` fixed. This file builds
 that transform, the two closure operations it generates, the `c`-concave potentials they fix,
-and the contact set on which the dual constraint is an equality.
+and the contact set on which the dual constraint is an equality. It is the finite-real algebraic
+slice of the roadmap's broader transform interface; the extended-cost and analytic/topological
+interfaces are separate follow-up slices.
 
 Even for a finite real cost and a finite real potential the infimum defining the transform can
 be `-∞`, so the transform must have an extended-real codomain; and once the codomain is
@@ -58,15 +58,15 @@ integrals of a dual pair meaningful.
   `TauCeti.cTransform_cTransformSymm_cTransform` — a transform is unchanged by a further double
   transform;
 * `TauCeti.isCConcave_iff` — `c`-concavity is exactly being fixed by the double transform;
-* `TauCeti.upperSemicontinuous_cTransform` — a cost with continuous sections has an upper
-  semicontinuous transform;
+* `TauCeti.upperSemicontinuous_cTransform` — an infimal transform of upper-semicontinuous
+  sections is upper semicontinuous;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
 * `TauCeti.contactSet_subset_contactSet_cTransform` — the improvement step only enlarges the
   contact set, and `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a
   potential agrees with its double transform at every point of its `c`-superdifferential.
 
-This is Layer 2, item 2 of the optimal-transport roadmap.
+This is the finite-real algebraic slice of Layer 2, item 2 of the optimal-transport roadmap.
 
 ## References
 
@@ -94,7 +94,6 @@ target that is dual feasible against `φ` for the cost `c`, namely
 `cTransform c φ y = ⨅ x, (c (x, y) - φ x)`. The cost is real and the potential is extended real,
 so the subtraction is always defined; the infimum can be `-∞`, and it is `⊤` when `X` is
 empty. -/
-@[expose]
 def cTransform (c : X × Y → ℝ) (φ : X → EReal) (y : Y) : EReal :=
   ⨅ x, ((c (x, y) : EReal) - φ x)
 
@@ -102,7 +101,6 @@ def cTransform (c : X × Y → ℝ) (φ : X → EReal) (y : Y) : EReal :=
 source that is dual feasible against `ψ` for the cost `c`, namely
 `cTransformSymm c ψ x = ⨅ y, (c (x, y) - ψ y)`. It is `TauCeti.cTransform` for the transposed
 cost, and is provided so that no user has to transpose a product by hand. -/
-@[expose]
 def cTransformSymm (c : X × Y → ℝ) (ψ : Y → EReal) (x : X) : EReal :=
   ⨅ y, ((c (x, y) : EReal) - ψ y)
 
@@ -110,15 +108,15 @@ variable {c c' : X × Y → ℝ} {φ φ' : X → EReal} {ψ ψ' : Y → EReal} {
 
 /-- The defining formula for the `c`-transform. -/
 theorem cTransform_apply (c : X × Y → ℝ) (φ : X → EReal) (y : Y) :
-    cTransform c φ y = ⨅ x, ((c (x, y) : EReal) - φ x) := rfl
+    cTransform c φ y = ⨅ x, ((c (x, y) : EReal) - φ x) := (rfl)
 
 /-- The defining formula for the symmetric `c`-transform. -/
 theorem cTransformSymm_apply (c : X × Y → ℝ) (ψ : Y → EReal) (x : X) :
-    cTransformSymm c ψ x = ⨅ y, ((c (x, y) : EReal) - ψ y) := rfl
+    cTransformSymm c ψ x = ⨅ y, ((c (x, y) : EReal) - ψ y) := (rfl)
 
 /-- The symmetric transform is the transform of the transposed cost. -/
 theorem cTransformSymm_eq_cTransform (c : X × Y → ℝ) (ψ : Y → EReal) :
-    cTransformSymm c ψ = cTransform (fun p : Y × X => c (p.2, p.1)) ψ := rfl
+    cTransformSymm c ψ = cTransform (fun p : Y × X => c (p.2, p.1)) ψ := (rfl)
 
 /-- Each source point bounds the `c`-transform at each target point. -/
 theorem cTransform_le (c : X × Y → ℝ) (φ : X → EReal) (x : X) (y : Y) :
@@ -235,15 +233,22 @@ theorem cTransform_of_isEmpty [IsEmpty X] (c : X × Y → ℝ) (φ : X → EReal
     cTransform c φ y = ⊤ := by
   simp [cTransform_apply]
 
-/-- If every section `y ↦ c (x, y)` of the cost is continuous, the `c`-transform is upper
-semicontinuous, being a pointwise infimum of functions each of which is continuous or constant.
-No finiteness of the potential is needed. -/
+/-- A `c`-transform is upper semicontinuous when each function in its defining infimum is upper
+semicontinuous. -/
 theorem upperSemicontinuous_cTransform [TopologicalSpace Y]
+    (h : ∀ x, UpperSemicontinuous fun y => (c (x, y) : EReal) - φ x) :
+    UpperSemicontinuous (cTransform c φ) := by
+  rw [show cTransform c φ = fun y => ⨅ x, ((c (x, y) : EReal) - φ x) by
+    funext y
+    rw [cTransform_apply]]
+  exact upperSemicontinuous_iInf h
+
+/-- If every section `y ↦ c (x, y)` of the cost is continuous, the `c`-transform is upper
+semicontinuous. No finiteness of the potential is needed. -/
+theorem upperSemicontinuous_cTransform_of_continuous [TopologicalSpace Y]
     (hc : ∀ x, Continuous fun y => c (x, y)) (φ : X → EReal) :
     UpperSemicontinuous (cTransform c φ) := by
-  have hφ : cTransform c φ = fun y => ⨅ x, ((c (x, y) : EReal) - φ x) := rfl
-  rw [hφ]
-  refine upperSemicontinuous_iInf fun x => ?_
+  refine upperSemicontinuous_cTransform fun x => ?_
   rcases eq_or_ne (φ x) ⊥ with h | h
   · simp only [h, EReal.coe_sub_bot]
     exact upperSemicontinuous_const
@@ -262,6 +267,14 @@ private theorem iInf_sub_coe {ι : Sort*} (f : ι → EReal) (a : ℝ) :
   rw [EReal.le_sub_iff_add_le (.inl (EReal.coe_ne_bot a)) (.inl (EReal.coe_ne_top a))]
   exact le_iInf fun i => EReal.add_le_of_le_sub (iInf_le _ i)
 
+/-- Subtracting a sum of coerced reals in `EReal` can be reassociated without encountering an
+indeterminate infinite value. -/
+private theorem coe_sub_add_coe (b d a : ℝ) :
+    (b : EReal) - ((d : EReal) + (a : EReal)) =
+      (b : EReal) - (d : EReal) - (a : EReal) := by
+  norm_cast
+  ring
+
 /-- Shifting a potential by a real constant shifts its `c`-transform by the opposite constant.
 This is the normalisation freedom of the Kantorovich dual problem: the pair `(φ + a, φᶜ - a)`
 satisfies the same dual constraint as `(φ, φᶜ)`. -/
@@ -275,9 +288,8 @@ theorem cTransform_add_const (c : X × Y → ℝ) (φ : X → EReal) (a : ℝ) :
   · simp [h]
   rcases eq_or_ne (φ x) ⊤ with h' | h'
   · simp [h']
-  rw [← EReal.coe_toReal h' h, ← EReal.coe_add, ← EReal.coe_sub, ← EReal.coe_sub,
-    ← EReal.coe_sub, EReal.coe_eq_coe_iff]
-  ring
+  rw [← EReal.coe_toReal h' h]
+  exact coe_sub_add_coe _ _ _
 
 /-- Shifting a potential on the target by a real constant shifts its symmetric `c`-transform by
 the opposite constant. -/
@@ -332,32 +344,37 @@ alias ⟨IsCConcaveSymm.cTransform_cTransformSymm, _⟩ := isCConcaveSymm_iff
 /-- The contact set of a pair of potentials: the set where the dual constraint
 `φ x + ψ y ≤ c (x, y)` holds with equality. For a dual feasible pair this is the set that a
 complementary slackness condition refers to. -/
-@[expose]
 def contactSet (c : X × Y → ℝ) (φ : X → EReal) (ψ : Y → EReal) : Set (X × Y) :=
   {z | φ z.1 + ψ z.2 = (c z : EReal)}
 
 /-- The `c`-superdifferential of a potential: its contact set against its own `c`-transform. -/
-@[expose]
 def cSuperdifferential (c : X × Y → ℝ) (φ : X → EReal) : Set (X × Y) :=
   contactSet c φ (cTransform c φ)
 
 /-- Membership in the contact set, for a point of the product. -/
+@[simp]
 theorem mem_contactSet_iff {z : X × Y} :
     z ∈ contactSet c φ ψ ↔ φ z.1 + ψ z.2 = (c z : EReal) := Iff.rfl
 
 /-- Membership in the contact set, for an explicit pair. -/
-@[simp]
 theorem mk_mem_contactSet_iff :
-    (x, y) ∈ contactSet c φ ψ ↔ φ x + ψ y = (c (x, y) : EReal) := Iff.rfl
+    (x, y) ∈ contactSet c φ ψ ↔ φ x + ψ y = (c (x, y) : EReal) :=
+  mem_contactSet_iff
 
 /-- The `c`-superdifferential is the contact set against the `c`-transform. -/
-theorem cSuperdifferential_eq (c : X × Y → ℝ) (φ : X → EReal) :
-    cSuperdifferential c φ = contactSet c φ (cTransform c φ) := rfl
+theorem cSuperdifferential_def (c : X × Y → ℝ) (φ : X → EReal) :
+    cSuperdifferential c φ = contactSet c φ (cTransform c φ) := (rfl)
+
+/-- Membership in the `c`-superdifferential, for a point of the product. -/
+@[simp]
+theorem mem_cSuperdifferential_iff {z : X × Y} :
+    z ∈ cSuperdifferential c φ ↔
+      φ z.1 + cTransform c φ z.2 = (c z : EReal) := Iff.rfl
 
 /-- Membership in the `c`-superdifferential, for an explicit pair. -/
-@[simp]
 theorem mk_mem_cSuperdifferential_iff :
-    (x, y) ∈ cSuperdifferential c φ ↔ φ x + cTransform c φ y = (c (x, y) : EReal) := Iff.rfl
+    (x, y) ∈ cSuperdifferential c φ ↔ φ x + cTransform c φ y = (c (x, y) : EReal) :=
+  mem_cSuperdifferential_iff
 
 /-- The contact set is invariant under transposing the cost and swapping the potentials. -/
 theorem mk_mem_contactSet_transpose_iff :
@@ -440,7 +457,7 @@ theorem contactSet_subset_cSuperdifferential (hfeas : ∀ x y, φ x + ψ y ≤ (
 /-- On its `c`-superdifferential, the infimum defining the `c`-transform is attained. -/
 theorem cTransform_eq_of_mem_cSuperdifferential (hz : (x, y) ∈ cSuperdifferential c φ) :
     cTransform c φ y = (c (x, y) : EReal) - φ x := by
-  rw [cSuperdifferential_eq] at hz
+  rw [cSuperdifferential_def] at hz
   obtain ⟨b, -, hb, -, -⟩ := exists_coe_of_mem_contactSet hz
   rw [mk_mem_contactSet_iff, hb] at hz
   rw [hb, ← hz, EReal.add_sub_cancel_left]
@@ -449,7 +466,7 @@ theorem cTransform_eq_of_mem_cSuperdifferential (hz : (x, y) ∈ cSuperdifferent
 `c`-superdifferential, whether or not it is `c`-concave elsewhere. -/
 theorem cTransformSymm_cTransform_eq_of_mem_cSuperdifferential
     (hz : (x, y) ∈ cSuperdifferential c φ) : cTransformSymm c (cTransform c φ) x = φ x := by
-  rw [cSuperdifferential_eq] at hz
+  rw [cSuperdifferential_def] at hz
   exact cTransformSymm_eq_of_mem_contactSet (fun x y => add_cTransform_le c φ x y) hz
 
 end TauCeti
