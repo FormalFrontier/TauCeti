@@ -126,7 +126,8 @@ end Comodule
 
 namespace HopfAlgebra
 
-variable (k H) in
+variable (k' : Type u) (H' : Type v) [Field k'] [AddCommGroup H'] [Module k' H']
+  [Coalgebra k' H'] [One H'] in
 /-- If `H` is linearly reductive and every nonzero subcomodule of a finite-dimensional comodule
 contains a nonzero fixed vector, then comultiplication sends every element `h` to `h ⊗ 1`: the
 regular comodule is trivial.
@@ -136,19 +137,20 @@ finite-dimensional subcoalgebra, hence in a finite-dimensional subcomodule of th
 comodule, on which complete reducibility and the supply of fixed vectors force the coaction to be
 trivial. Unipotence enters only through that supply of fixed vectors. -/
 theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_exists_fixed
-    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
-    (hfix : ∀ (V : Type v) [AddCommGroup V] [Module k V] [Comodule k H V]
-      [FiniteDimensional k V] (N : Subcomodule k H V), N ≠ ⊥ →
-        ∃ v ∈ N, v ≠ 0 ∧ Comodule.coact (R := k) (C := H) (M := V) v = v ⊗ₜ[k] (1 : H))
-    (h : H) : Coalgebra.comul (R := k) h = h ⊗ₜ[k] (1 : H) := by
-  obtain ⟨D, hDfin, hD⟩ := Subcoalgebra.exists_finiteDimensional_subcoalgebra_mem (k := k) h
-  set N : Subcomodule k H H := D.toRegularSubcomodule with hNdef
-  let _ : AddCommGroup N := Module.addCommMonoidToAddCommGroup k
-  have hNfin : FiniteDimensional k N.toSubmodule := by
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k' H')
+    (hfix : ∀ (V : Type v) [AddCommGroup V] [Module k' V] [Comodule k' H' V]
+      [FiniteDimensional k' V] (N : Subcomodule k' H' V), N ≠ ⊥ →
+        ∃ v ∈ N, v ≠ 0 ∧ Comodule.coact (R := k') (C := H') (M := V) v =
+          v ⊗ₜ[k'] (1 : H'))
+    (h : H') : Coalgebra.comul (R := k') h = h ⊗ₜ[k'] (1 : H') := by
+  obtain ⟨D, hDfin, hD⟩ := Subcoalgebra.exists_finiteDimensional_subcoalgebra_mem (k := k') h
+  set N : Subcomodule k' H' H' := D.toRegularSubcomodule with hNdef
+  let _ : AddCommGroup N := Module.addCommMonoidToAddCommGroup k'
+  have hNfin : FiniteDimensional k' N.toSubmodule := by
     rw [hNdef, Subcoalgebra.toRegularSubcomodule_toSubmodule]
     exact hDfin
   -- `↥N` and `↥N.toSubmodule` subtype the same carrier, so finite-dimensionality transfers.
-  have _ : FiniteDimensional k N := hNfin
+  have _ : FiniteDimensional k' N := hNfin
   have hmem : h ∈ N := Subcoalgebra.mem_toRegularSubcomodule.mpr hD
   have hfixN := Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed
     hlr.isCompletelyReducible (hfix N) ⟨h, hmem⟩
