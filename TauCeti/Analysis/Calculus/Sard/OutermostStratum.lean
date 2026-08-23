@@ -382,6 +382,27 @@ theorem ContDiff.dense_compl_image_criticalPoints {n : ℕ∞ω} (hf : ContDiff 
 
 end MorseSard
 
+section EmptyInterior
+
+variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+  {F : Type v} [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+  {U : Set E} {f : E → F}
+
+/-- **The Morse--Sard theorem**, in the form that carries no measure-theoretic data: the critical
+values taken on an open set have empty interior. The measure structure used to prove it is chosen
+inside the proof, so the target here carries no `MeasurableSpace` instance; this is the shape in
+which Sard is fed to the fibrewise step of the Sard--Smale theorem, where the target is a
+complement subspace with no measurable structure of its own. -/
+theorem interior_image_criticalPoints_eq_empty {n : ℕ∞ω} (hU : IsOpen U)
+    (hf : ∀ x ∈ U, ContDiffAt ℝ n f x)
+    (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
+    interior (f '' (U ∩ {x | ¬ Surjective (fderiv ℝ f x)})) = ∅ := by
+  borelize F
+  exact Measure.interior_eq_empty_of_null
+    (TauCeti.addHaar_image_criticalPoints_eq_zero (ν := addHaar) hU hf hk)
+
+end EmptyInterior
+
 end TauCeti
 
 end
