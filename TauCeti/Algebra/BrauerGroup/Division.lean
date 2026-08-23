@@ -38,8 +38,9 @@ fixes the chosen copy of `K`.
   finite-dimensional central division algebra.
 * `TauCeti.BrauerGroup.nonempty_algEquiv_of_mk_eq_mk`: two central division algebras representing
   the same class are isomorphic over the base field.
-* `TauCeti.BrauerGroup.mk_eq_mk_iff_nonempty_algEquiv`: equality of the two division-algebra
-  classes is equivalent to the existence of that algebra isomorphism.
+* `TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv` and
+  `TauCeti.BrauerGroup.mk_eq_mk_iff_nonempty_algEquiv`: Brauer equivalence, or equivalently equality
+  of the two division-algebra classes, is equivalent to the existence of that algebra isomorphism.
 
 ## References
 
@@ -100,19 +101,28 @@ theorem nonempty_algEquiv_of_mk_eq_mk
   exact (wedderburn_data_unique_of_algEquiv (K := K) (AlgEquiv.refl :
     Matrix (Fin n) (Fin n) D ≃ₐ[K] Matrix (Fin n) (Fin n) D) e).2
 
-/-- **Two central division algebras have the same Brauer class exactly when they are isomorphic
-as algebras over the base field.**
+/-- **Two central division algebras are Brauer equivalent exactly when they are isomorphic as
+algebras over the base field.**
 
 The reverse implication is the general fact that algebra isomorphisms preserve Brauer classes;
 the forward implication is the uniqueness of division-algebra representatives. -/
 @[simp]
+theorem isBrauerEquivalent_iff_nonempty_algEquiv
+    {D E : Type v} [DivisionRing D] [Algebra K D] [Algebra.IsCentral K D]
+    [FiniteDimensional K D] [DivisionRing E] [Algebra K E] [Algebra.IsCentral K E]
+    [FiniteDimensional K E] :
+    IsBrauerEquivalent (CSA.of K D) (CSA.of K E) ↔ Nonempty (D ≃ₐ[K] E) :=
+  ⟨fun h ↦ nonempty_algEquiv_of_mk_eq_mk (mk_eq_mk_iff.2 h),
+    fun ⟨e⟩ ↦ IsBrauerEquivalent.of_algEquiv K e⟩
+
+/-- **Two central division algebras have the same Brauer class exactly when they are isomorphic
+as algebras over the base field.** -/
 theorem mk_eq_mk_iff_nonempty_algEquiv
     {D E : Type v} [DivisionRing D] [Algebra K D] [Algebra.IsCentral K D]
     [FiniteDimensional K D] [DivisionRing E] [Algebra K E] [Algebra.IsCentral K E]
     [FiniteDimensional K E] :
     mk (CSA.of K D) = mk (CSA.of K E) ↔ Nonempty (D ≃ₐ[K] E) :=
-  ⟨nonempty_algEquiv_of_mk_eq_mk,
-    fun ⟨e⟩ ↦ mk_eq_mk_of_algEquiv e⟩
+  mk_eq_mk_iff.trans isBrauerEquivalent_iff_nonempty_algEquiv
 
 end BrauerGroup
 
