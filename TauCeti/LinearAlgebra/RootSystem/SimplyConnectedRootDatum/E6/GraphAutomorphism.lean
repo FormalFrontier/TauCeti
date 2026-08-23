@@ -245,21 +245,10 @@ noncomputable def e6GraphAut : _root_.RootPairing.Aut e6SimplyConnectedRootDatum
   bijective_weightMap := e6GraphLatticeEquiv.bijective
   bijective_coweightMap := e6GraphLatticeEquiv.bijective
 
-/-- The graph automorphism carries every root to the root selected by its public root-index
-permutation. -/
-@[simp] theorem e6GraphAut_weightMap_root (i : Fin 72) :
-    e6GraphAut.weightMap (e6Root i) = e6Root (e6GraphIndexEquiv i) := by
-  -- Expose the linear equivalence packaged as the automorphism's weight linear map.
-  change e6GraphLatticeEquiv (e6Root i) = e6Root (e6GraphIndexEquiv i)
-  simpa only [e6SimplyConnectedRootDatum_root] using e6GraphLatticeEquiv_root i
-
-/-- The graph automorphism carries every coroot to the coroot selected by its public root-index
-permutation. -/
-@[simp] theorem e6GraphAut_coweightMap_coroot (i : Fin 72) :
-    e6GraphAut.coweightMap (e6Coroot i) = e6Coroot (e6GraphIndexEquiv i) := by
-  -- Expose the linear equivalence packaged as the automorphism's coweight linear map.
-  change e6GraphLatticeEquiv (e6Coroot i) = e6Coroot (e6GraphIndexEquiv i)
-  simpa only [e6SimplyConnectedRootDatum_coroot] using e6GraphLatticeEquiv_coroot i
+/-- The root-index permutation packaged by the type-`E₆` graph automorphism is the separately
+named induced permutation of all roots. -/
+theorem e6GraphAut_indexEquiv : e6GraphAut.indexEquiv = e6GraphIndexEquiv := by
+  rw [e6GraphAut]
 
 /-- The character-lattice action of the type-`E₆` graph automorphism permutes the node
 coordinates. -/
