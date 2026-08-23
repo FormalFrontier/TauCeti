@@ -19,8 +19,8 @@ of them.
 
 ## Main results
 
-* `TauCeti.NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_five`: the model carries an integral
-  generator whose minimal polynomial is `X² + 5` and which generates the field over `ℚ`.
+* `TauCeti.NumberField.exists_minpoly_eq_X_sq_add_five_and_adjoin_eq_top`: the model has an
+  integral generator with minimal polynomial `X² + 5` generating the field over `ℚ`.
 -/
 
 public section
@@ -37,7 +37,7 @@ local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
 /-- The concrete model `AdjoinRoot (X² + 5)` of `ℚ(√-5)` carries an integral generator with minimal
 polynomial `X² + 5` generating the field over `ℚ`: the presentation data shared by the class-number
 and `2`-rank worked examples for this field. -/
-theorem exists_isIntegralGen_adjoinRoot_sqrt_neg_five :
+theorem exists_minpoly_eq_X_sq_add_five_and_adjoin_eq_top :
     ∃ θ : 𝓞 (AdjoinRoot (X ^ 2 - C (-5 : ℚ))),
       minpoly ℤ θ = X ^ 2 - C (-5 : ℤ) ∧
         Algebra.adjoin ℚ {(θ : AdjoinRoot (X ^ 2 - C (-5 : ℚ)))} = ⊤ := by

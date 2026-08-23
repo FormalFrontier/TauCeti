@@ -275,7 +275,7 @@ has class number `2`. -/
 @[simp]
 theorem classNumber_adjoinRoot_sqrt_neg_five_eq_two :
     NumberField.classNumber (AdjoinRoot (X ^ 2 - C (-5 : ℚ))) = 2 := by
-  obtain ⟨θ, hmin, hgen⟩ := exists_isIntegralGen_adjoinRoot_sqrt_neg_five
+  obtain ⟨θ, hmin, hgen⟩ := exists_minpoly_eq_X_sq_add_five_and_adjoin_eq_top
   exact classNumber_eq_two_of_minpoly_eq_X_sq_add_five hmin hgen
 
 end TauCeti.NumberField
