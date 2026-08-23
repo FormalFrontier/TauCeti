@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 public import TauCeti.Analysis.Bochner.BochnerTheorem
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Difference
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Basic
@@ -48,6 +49,10 @@ available for a function that *is* represented
 * `TauCeti.bochnerMeasure_timeSlice_antitone` and
   `TauCeti.bochnerMeasure_timeSlice_real_antitone`: the family of Bochner measures, and each of
   its slab masses, decrease in time.
+* `TauCeti.bochnerMeasure_timeSlice_absolutelyContinuous` and
+  `TauCeti.withDensity_rnDeriv_bochnerMeasure_timeSlice`: consequently every member of the
+  family is absolutely continuous with respect to the one at time `0`, and is recovered from it
+  by a Radon--Nikodym derivative.
 * `TauCeti.bochnerMeasure_timeSlice_real_univ`, `TauCeti.bochnerMeasure_timeSlice_real_le` and
   `TauCeti.isBounded_range_bochnerMeasure_timeSlice_real`: the total mass is `(F (t, 0)).re`, and
   every slab mass is bounded by `(F (0, 0)).re`, hence has bounded range.
@@ -121,6 +126,25 @@ theorem bochnerMeasure_timeSlice_real_antitone (hFpd : IsSemigroupGroupPD F)
   simp only [measureReal_def]
   exact ENNReal.toReal_mono (measure_ne_top _ _)
     (bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd hts B)
+
+/-- **The spatial Bochner measures are absolutely continuous with respect to the one at time
+`0`.** They decrease in time, and the time-`0` measure dominates them all. -/
+theorem bochnerMeasure_timeSlice_absolutelyContinuous (hFpd : IsSemigroupGroupPD F)
+    (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (t : ℝ≥0) :
+    (bochnerMeasure fun a => F (t, a)) ≪ bochnerMeasure fun a => F (0, a) :=
+  Measure.absolutelyContinuous_of_le
+    (bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd zero_le)
+
+/-- The spatial Bochner measure at time `t` is the time-`0` one weighted by a Radon--Nikodym
+derivative. These derivatives are the densities that the existence half of the
+Berg--Christensen--Ressel representation must realize. -/
+theorem withDensity_rnDeriv_bochnerMeasure_timeSlice (hFpd : IsSemigroupGroupPD F)
+    (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (t : ℝ≥0) :
+    (bochnerMeasure fun a => F (0, a)).withDensity
+        ((bochnerMeasure fun a => F (t, a)).rnDeriv (bochnerMeasure fun a => F (0, a)))
+      = bochnerMeasure fun a => F (t, a) :=
+  Measure.withDensity_rnDeriv_eq _ _
+    (bochnerMeasure_timeSlice_absolutelyContinuous hFpd hFcont hFbdd t)
 
 /-- The total mass of the Bochner measure of the time slice at `t` is `(F (t, 0)).re`. -/
 theorem bochnerMeasure_timeSlice_real_univ (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F)
