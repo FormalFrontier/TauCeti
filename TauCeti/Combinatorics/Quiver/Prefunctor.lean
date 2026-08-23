@@ -19,7 +19,7 @@ prefunctor with a two-sided inverse prefunctor is bijective on vertices.
 ## Main results
 
 * `Prefunctor.length_mapPath`: pushing a path along a prefunctor preserves its length.
-* `Prefunctor.bijective_obj_of_comp_eq_id`: mutually inverse prefunctors are bijective on vertices.
+* `Prefunctor.obj_bijective_of_comp_eq_id`: mutually inverse prefunctors are bijective on vertices.
 
 ## References
 
@@ -38,6 +38,7 @@ variable {Q : Type u} {R : Type u'} [Quiver.{v} Q] [Quiver.{v'} R]
 
 /-- **Pushing a path along a prefunctor preserves its length**: the image path traverses the image
 of each arrow of the original, in order. -/
+@[simp]
 theorem _root_.Prefunctor.length_mapPath (φ : Q ⥤q R) {a b : Q} (p : Quiver.Path a b) :
     (φ.mapPath p).length = p.length := by
   induction p with
@@ -46,7 +47,7 @@ theorem _root_.Prefunctor.length_mapPath (φ : Q ⥤q R) {a b : Q} (p : Quiver.P
       Quiver.Path.length_cons]
 
 /-- **Mutually inverse prefunctors are bijective on vertices.** -/
-theorem _root_.Prefunctor.bijective_obj_of_comp_eq_id (φ : Q ⥤q R) (ψ : R ⥤q Q)
+theorem _root_.Prefunctor.obj_bijective_of_comp_eq_id (φ : Q ⥤q R) (ψ : R ⥤q Q)
     (hφψ : φ.comp ψ = Prefunctor.id Q) (hψφ : ψ.comp φ = Prefunctor.id R) :
     Function.Bijective φ.obj :=
   Function.bijective_iff_has_inverse.mpr

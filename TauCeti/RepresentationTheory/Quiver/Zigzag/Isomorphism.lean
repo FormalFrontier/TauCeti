@@ -11,7 +11,7 @@ public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
 public section
 
 /-!
-# The zigzag algebra of a simple graph is an invariant of the graph
+# The zigzag relation quotient is an invariant of the graph
 
 An isomorphism `e : G ≃g H` of simple graphs relabels the doubled quiver of `G` as the doubled
 quiver of `H`, hence relabels the path basis of `k(DoubledQuiver G)` as the path basis of
@@ -27,12 +27,11 @@ what the transport lemmas below say, one constructor at a time.
 
 * `TauCeti.DoubledQuiver.pathAlgebraEquiv`: the isomorphism of doubled path algebras induced by a
   graph isomorphism.
-* `TauCeti.zigzagQuotientHom` and `TauCeti.zigzagQuotientEquiv`: the induced map, and isomorphism,
-  of zigzag relation quotients.
+* `TauCeti.zigzagQuotientEquiv`: the induced isomorphism of zigzag relation quotients.
 
 ## Main results
 
-* `TauCeti.DoubledQuiver.bijective_map_obj`: a graph isomorphism relabels the vertices of the
+* `TauCeti.DoubledQuiver.map_obj_bijective`: a graph isomorphism relabels the vertices of the
   doubled quiver bijectively, which is what `TauCeti.PathAlgebra.mapAlgHom` asks for.
 * `TauCeti.DoubledQuiver.pathAlgebraEquiv_vertexIdempotent`,
   `TauCeti.DoubledQuiver.pathAlgebraEquiv_ofArrow` and
@@ -61,11 +60,6 @@ namespace DoubledQuiver
 
 variable {V : Type u} {W : Type v} {G : SimpleGraph V} {H : SimpleGraph W}
 
-/-- **A graph isomorphism relabels the vertices of the doubled quiver bijectively.** -/
-theorem bijective_map_obj (e : G ≃g H) : Function.Bijective (map e.toHom).obj :=
-  (map e.toHom).bijective_obj_of_comp_eq_id _ (map_toHom_comp_symm_toHom e)
-    (map_symm_toHom_comp_toHom e)
-
 variable (k : Type w) [CommSemiring k] [Finite V] [Finite W]
 
 /-- **The isomorphism of doubled path algebras induced by a graph isomorphism**: it relabels the
@@ -79,7 +73,7 @@ noncomputable def pathAlgebraEquiv (e : G ≃g H) :
 element of the relabelled path of the doubled quiver of `H`. -/
 @[simp]
 theorem pathAlgebraEquiv_ofPath (e : G ≃g H) (x : Quiver.TotalPath (DoubledQuiver G)) :
-    pathAlgebraEquiv k e (ofPath x) = ofPath (mapTotalPath (map e.toHom) x) := by
+    pathAlgebraEquiv k e (ofPath x) = ofPath ((map e.toHom).mapTotalPath x) := by
   rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply, mapAlgHom_ofPath]
 
 /-- The relabelling carries the idempotent of a vertex of `G` to the idempotent of the image
@@ -89,7 +83,7 @@ theorem pathAlgebraEquiv_vertexIdempotent (e : G ≃g H) (i : V) :
     pathAlgebraEquiv k e (vertexIdempotent k (vertex G i)) =
       vertexIdempotent k (vertex H (e i)) := by
   rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply, mapAlgHom_vertexIdempotent, map_obj]
-  rfl
+  simp only [SimpleGraph.Embedding.coe_toHom, RelIso.coe_toRelEmbedding]
 
 /-- The relabelling carries an arrow along an edge of `G` to the arrow along the image edge of `H`.
 Deliberately not a `simp` lemma, `TauCeti.PathAlgebra.ofArrow_eq_ofPath` already rewriting its
@@ -113,19 +107,36 @@ theorem pathAlgebraEquiv_trans {X : Type*} [Finite X] {K : SimpleGraph X} (e : G
     (f : H ≃g K) :
     pathAlgebraEquiv k (e.trans f) = (pathAlgebraEquiv k e).trans (pathAlgebraEquiv k f) :=
   PathAlgebra.algEquiv_ext k fun x ↦ by
-    rw [pathAlgebraEquiv_ofPath, AlgEquiv.trans_apply, pathAlgebraEquiv_ofPath,
-      pathAlgebraEquiv_ofPath, ← mapTotalPath_comp, ← map_comp]
-    rfl
+    let he := map_obj_bijective e
+    let hf := map_obj_bijective f
+    let hef := map_obj_bijective (e.trans f)
+    have hcomp : Function.Bijective ((map e.toHom).comp (map f.toHom)).obj := by
+      rw [← map_trans e f]
+      exact hef
+    rw [pathAlgebraEquiv, pathAlgebraEquiv, pathAlgebraEquiv, AlgEquiv.trans_apply,
+      PathAlgebra.mapAlgEquiv_apply, PathAlgebra.mapAlgEquiv_apply,
+      PathAlgebra.mapAlgEquiv_apply]
+    calc
+      _ = PathAlgebra.mapAlgHom k ((map e.toHom).comp (map f.toHom)) hcomp (ofPath x) :=
+        DFunLike.congr_fun (PathAlgebra.mapAlgHom_congr k (map_trans e f) hef hcomp) (ofPath x)
+      _ = _ := DFunLike.congr_fun (PathAlgebra.mapAlgHom_comp k (map e.toHom) (map f.toHom)
+        he hf hcomp) (ofPath x)
 
 /-- **The identity relabelling induces the identity.** -/
 @[simp]
 theorem pathAlgebraEquiv_refl :
     pathAlgebraEquiv k (SimpleGraph.Iso.refl (G := G)) = AlgEquiv.refl :=
   PathAlgebra.algEquiv_ext k fun x ↦ by
-    have hmap : map (SimpleGraph.Iso.refl (G := G)).toHom = Prefunctor.id (DoubledQuiver G) :=
-      map_id
-    rw [pathAlgebraEquiv_ofPath, hmap, mapTotalPath_id]
-    rfl
+    let hrefl := map_obj_bijective (SimpleGraph.Iso.refl (G := G))
+    let hid := (Prefunctor.id (DoubledQuiver G)).obj_bijective_of_comp_eq_id
+      (Prefunctor.id (DoubledQuiver G)) rfl rfl
+    rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply]
+    calc
+      _ = PathAlgebra.mapAlgHom k (Prefunctor.id (DoubledQuiver G)) hid (ofPath x) :=
+        DFunLike.congr_fun (PathAlgebra.mapAlgHom_congr k map_refl hrefl hid) (ofPath x)
+      _ = AlgHom.id k (pathAlgebra k (DoubledQuiver G)) (ofPath x) :=
+        DFunLike.congr_fun (PathAlgebra.mapAlgHom_id k hid) (ofPath x)
+      _ = _ := by rfl
 
 /-- The inverse of the induced isomorphism is the isomorphism induced by the inverse
 relabelling. -/
@@ -150,13 +161,20 @@ theorem isQuadraticZigzagRelator_pathAlgebraEquiv (e : G ≃g H)
     IsQuadraticZigzagRelator k H (pathAlgebraEquiv k e x) := by
   cases hx with
   | nonreturn p hlen hne =>
-    rw [pathAlgebraEquiv_ofPath]
-    exact IsQuadraticZigzagRelator.nonreturn _ ((map e.toHom).length_mapPath p ▸ hlen)
-      fun h ↦ hne ((bijective_map_obj e).1 h)
+    rw [pathAlgebraEquiv_ofPath, Prefunctor.mapTotalPath_mk]
+    have hlen' := (map e.toHom).length_mapTotalPath ⟨_, _, p⟩
+    rw [Prefunctor.mapTotalPath_mk] at hlen'
+    exact IsQuadraticZigzagRelator.nonreturn _
+      (hlen'.trans hlen)
+      fun h ↦ hne ((map_obj_bijective e).1 h)
   | equal_backtracks p q hp hq =>
-    rw [map_sub, pathAlgebraEquiv_ofPath, pathAlgebraEquiv_ofPath]
-    exact IsQuadraticZigzagRelator.equal_backtracks _ _ ((map e.toHom).length_mapPath p ▸ hp)
-      ((map e.toHom).length_mapPath q ▸ hq)
+    rw [map_sub, pathAlgebraEquiv_ofPath, pathAlgebraEquiv_ofPath,
+      Prefunctor.mapTotalPath_mk, Prefunctor.mapTotalPath_mk]
+    have hp' := (map e.toHom).length_mapTotalPath ⟨_, _, p⟩
+    have hq' := (map e.toHom).length_mapTotalPath ⟨_, _, q⟩
+    rw [Prefunctor.mapTotalPath_mk] at hp' hq'
+    exact IsQuadraticZigzagRelator.equal_backtracks _ _
+      (hp'.trans hp) (hq'.trans hq)
 
 /-- **A graph isomorphism carries the uniform zigzag relators of `G` to those of `H`.** -/
 theorem isZigzagRelator_pathAlgebraEquiv (e : G ≃g H) {x : pathAlgebra k (DoubledQuiver G)}
@@ -165,7 +183,7 @@ theorem isZigzagRelator_pathAlgebraEquiv (e : G ≃g H) {x : pathAlgebra k (Doub
   | quadratic hq => exact .quadratic (isQuadraticZigzagRelator_pathAlgebraEquiv k e hq)
   | long_path x h3 =>
     rw [pathAlgebraEquiv_ofPath]
-    exact IsZigzagRelator.long_path _ (((map e.toHom).length_mapPath x.2.2).symm ▸ h3)
+    exact IsZigzagRelator.long_path _ ((map e.toHom).length_mapTotalPath x ▸ h3)
 
 /-! ### The quotients are isomorphic -/
 
@@ -202,6 +220,21 @@ relabelling. -/
 theorem zigzagQuotientEquiv_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
     zigzagQuotientEquiv k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) := by
   rw [zigzagQuotientEquiv, AlgEquiv.ofAlgHom_apply, zigzagQuotientHom_zigzagMk]
+
+/-- The forward homomorphism of the quotient isomorphism is the map used to construct it. -/
+@[simp]
+theorem zigzagQuotientEquiv_toAlgHom (e : G ≃g H) :
+    (zigzagQuotientEquiv k e).toAlgHom = zigzagQuotientHom k e := (rfl)
+
+/-- The inverse quotient isomorphism is induced by the inverse graph relabelling. -/
+@[simp]
+theorem zigzagQuotientEquiv_symm (e : G ≃g H) :
+    (zigzagQuotientEquiv k e).symm = zigzagQuotientEquiv k e.symm := by
+  refine AlgEquiv.ext fun z ↦ ?_
+  obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective z
+  apply (zigzagQuotientEquiv k e).injective
+  rw [AlgEquiv.apply_symm_apply, ← zigzagMk_apply, zigzagQuotientEquiv_zigzagMk,
+    zigzagQuotientEquiv_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.apply_symm_apply]
 
 /-- **The identity relabelling induces the identity of quotients.** -/
 @[simp]
