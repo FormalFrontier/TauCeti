@@ -42,6 +42,9 @@ form the roadmap's definitions are stated in, so it is also given for the object
 * `TauCeti.Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_isUnipotentPoint`: a
   unipotent group acts trivially on every completely reducible finite-dimensional
   representation.
+* `TauCeti.HopfAlgebra.comul_eq_tmul_one_of_isLinearlyReductive_of_forall_exists_fixed`: the
+  regular comodule of a linearly reductive coalgebra with enough fixed vectors is trivial; this is
+  the step of the argument that does not mention unipotence.
 * `TauCeti.HopfAlgebra.comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint` and
   `TauCeti.HopfAlgebra.eq_counit_smul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint`: the
   coordinate algebra of a linearly reductive unipotent group is spanned by `1`.
@@ -124,14 +127,20 @@ end Comodule
 namespace HopfAlgebra
 
 variable (k H) in
-/-- In a linearly reductive reduced finite-type commutative Hopf algebra over an algebraically
-closed field with unipotent points, comultiplication sends every element `h` to `h ⊗ 1`: the
-regular comodule is trivial. -/
-theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
-    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+/-- If `H` is linearly reductive and every nonzero subcomodule of a finite-dimensional comodule
+contains a nonzero fixed vector, then comultiplication sends every element `h` to `h ⊗ 1`: the
+regular comodule is trivial.
+
+This is the coalgebra-level core of the triviality theorem. The element `h` lies in a
+finite-dimensional subcoalgebra, hence in a finite-dimensional subcomodule of the regular
+comodule, on which complete reducibility and the supply of fixed vectors force the coaction to be
+trivial. Unipotence enters only through that supply of fixed vectors. -/
+theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_exists_fixed
     (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
-    (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (h : H) :
-    Coalgebra.comul (R := k) h = h ⊗ₜ[k] (1 : H) := by
+    (hfix : ∀ (V : Type v) [AddCommGroup V] [Module k V] [Comodule k H V]
+      [FiniteDimensional k V] (N : Subcomodule k H V), N ≠ ⊥ →
+        ∃ v ∈ N, v ≠ 0 ∧ Comodule.coact (R := k) (C := H) (M := V) v = v ⊗ₜ[k] (1 : H))
+    (h : H) : Coalgebra.comul (R := k) h = h ⊗ₜ[k] (1 : H) := by
   obtain ⟨D, hDfin, hD⟩ := Subcoalgebra.exists_finiteDimensional_subcoalgebra_mem (k := k) h
   set N : Subcomodule k H H := D.toRegularSubcomodule with hNdef
   let _ : AddCommGroup N := Module.addCommMonoidToAddCommGroup k
@@ -141,11 +150,23 @@ theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
   -- `↥N` and `↥N.toSubmodule` subtype the same carrier, so finite-dimensionality transfers.
   have _ : FiniteDimensional k N := hNfin
   have hmem : h ∈ N := Subcoalgebra.mem_toRegularSubcomodule.mpr hD
-  have hfix :=
-    Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_isUnipotentPoint
-      (M := N) hlr.isCompletelyReducible hH ⟨h, hmem⟩
-  have hpush := Subcomodule.coact_coe_eq_tmul_one N hfix
+  have hfixN := Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed
+    hlr.isCompletelyReducible (hfix N) ⟨h, hmem⟩
+  have hpush := Subcomodule.coact_coe_eq_tmul_one N hfixN
   rwa [Comodule.instSelf_coact] at hpush
+
+variable (k H) in
+/-- In a linearly reductive reduced finite-type commutative Hopf algebra over an algebraically
+closed field with unipotent points, comultiplication sends every element `h` to `h ⊗ 1`: the
+regular comodule is trivial. -/
+theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
+    (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (h : H) :
+    Coalgebra.comul (R := k) h = h ⊗ₜ[k] (1 : H) :=
+  comul_eq_tmul_one_of_isLinearlyReductive_of_forall_exists_fixed k H hlr
+    (fun _ _ _ _ _ N hN ↦
+      Comodule.exists_mem_ne_zero_coact_eq_tmul_one_of_forall_isUnipotentPoint hH N hN) h
 
 variable (k H) in
 /-- Under the same hypotheses every element is a scalar multiple of `1`, the scalar being its

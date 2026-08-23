@@ -213,12 +213,14 @@ instance : OrderBot (Subcomodule R C M) where
     rw [hm]
     exact zero_mem N
 
+/-- The underlying submodule detects the full subcomodule. -/
 @[simp]
 theorem toSubmodule_eq_top {N : Subcomodule R C M} : N.toSubmodule = ⊤ ↔ N = ⊤ :=
   ⟨fun h ↦ ext fun m ↦
       ⟨fun _ ↦ mem_top m, fun _ ↦ mem_toSubmodule.mp (h ▸ Submodule.mem_top)⟩,
     fun h ↦ by rw [h, top_toSubmodule]⟩
 
+/-- The underlying submodule detects the zero subcomodule. -/
 @[simp]
 theorem toSubmodule_eq_bot {N : Subcomodule R C M} : N.toSubmodule = ⊥ ↔ N = ⊥ :=
   ⟨fun h ↦ ext fun m ↦ by

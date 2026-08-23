@@ -40,7 +40,6 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.Comodule.IsCompletelyReducible`: every subcomodule has a subcomodule complement.
-* `TauCeti.Comodule.isCompletelyReducible_iff`: that definition restated for use downstream.
 * `TauCeti.Comodule.fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed` and
   `TauCeti.Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed`: a
   completely reducible comodule all of whose nonzero subcomodules contain nonzero fixed vectors
@@ -92,13 +91,6 @@ def IsCompletelyReducible : Prop :=
 
 variable {k C V}
 
-/-- Complete reducibility unfolded: every subcomodule admits a complementary subcomodule. -/
-theorem isCompletelyReducible_iff :
-    IsCompletelyReducible k C V ↔
-      ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
-        IsCompl W.toSubmodule Q.toSubmodule :=
-  Iff.rfl
-
 /-- If `V` is completely reducible and every nonzero subcomodule of `V` contains a nonzero fixed
 vector, then the fixed subcomodule is everything.
 
@@ -109,7 +101,7 @@ theorem fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed 
     (hfix : ∀ N : Subcomodule k C V, N ≠ ⊥ →
       ∃ v ∈ N, v ≠ 0 ∧ coact (R := k) (C := C) (M := V) v = v ⊗ₜ[k] (1 : C)) :
     fixedSubcomodule k C V = ⊤ := by
-  obtain ⟨Q, hQ⟩ := isCompletelyReducible_iff.mp hcr (fixedSubcomodule k C V)
+  obtain ⟨Q, hQ⟩ := hcr (fixedSubcomodule k C V)
   have hQbot : Q = ⊥ := by
     by_contra hne
     obtain ⟨v, hvQ, hv0, hvc⟩ := hfix Q hne

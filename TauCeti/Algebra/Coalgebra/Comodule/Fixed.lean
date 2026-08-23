@@ -63,11 +63,13 @@ def fixedSubcomodule : Subcomodule R C M where
 
 variable {R C M}
 
+/-- Membership in the fixed subcomodule: `m` is fixed exactly when `coact m = m ⊗ 1`. -/
 @[simp]
 theorem mem_fixedSubcomodule {m : M} :
     m ∈ fixedSubcomodule R C M ↔ coact (R := R) (C := C) (M := M) m = m ⊗ₜ[R] (1 : C) :=
   Iff.rfl
 
+/-- The fixed subcomodule is everything exactly when the coaction is trivial on every vector. -/
 @[simp]
 theorem fixedSubcomodule_eq_top_iff :
     fixedSubcomodule R C M = ⊤ ↔
