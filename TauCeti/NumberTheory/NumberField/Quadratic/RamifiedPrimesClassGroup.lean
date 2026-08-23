@@ -44,23 +44,6 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- **The class of a ramified prime is 2-torsion.** In a degree-two number field, the prime `𝔭`
-above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal
-`(p)`, so its class in `Cl(𝓞 K)` squares to `1`: `[𝔭]` is an explicit element of the 2-torsion
-`Cl(𝓞 K)[2]`. -/
-theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
-    {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    [𝔭.LiesOver (span {(p : ℤ)})] :
-    ClassGroup.mk0 ⟨𝔭,
-      mem_nonZeroDivisors_of_prime_of_liesOver (prime_of_mem_ramifiedPrimes hmem) 𝔭⟩ ^ 2 =
-      1 := by
-  have hnzd := mem_nonZeroDivisors_of_prime_of_liesOver
-    (prime_of_mem_ramifiedPrimes hmem) 𝔭
-  -- `[𝔭]² = [𝔭²] = [p 𝓞 K] = 1`, as `𝔭² = p 𝓞 K` is the extension of the principal ideal `(p)`.
-  rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2, ClassGroup.mk0_eq_one_iff,
-    ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
-  exact ⟨_, rfl⟩
-
 /-- **The narrow class of a ramified prime is 2-torsion.** In a degree-two number field, the prime
 `𝔭` above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, and the rational integer `p` is
 positive, hence totally positive; so the narrow class of `𝔭` squares to `1` in `Cl⁺(K)`. -/
@@ -82,5 +65,18 @@ theorem NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K
   rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2]
   refine NarrowClassGroup.mk0_eq_one_of_isTotallyPositive hp0 ?_ hspan
   simpa using isTotallyPositive_intCast (K := K) (n := (p : ℤ)) (by exact_mod_cast hprime.pos)
+
+/-- **The class of a ramified prime is 2-torsion.** In a degree-two number field, the prime `𝔭`
+above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal
+`(p)`, so its class in `Cl(𝓞 K)` squares to `1`: `[𝔭]` is an explicit element of the 2-torsion
+`Cl(𝓞 K)[2]`. -/
+theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
+    {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
+    [𝔭.LiesOver (span {(p : ℤ)})] :
+    ClassGroup.mk0 ⟨𝔭,
+      mem_nonZeroDivisors_of_prime_of_liesOver (prime_of_mem_ramifiedPrimes hmem) 𝔭⟩ ^ 2 =
+      1 := by
+  rw [← NarrowClassGroup.toClassGroup_mk0, ← map_pow,
+    NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes hK hmem 𝔭, map_one]
 
 end NumberField

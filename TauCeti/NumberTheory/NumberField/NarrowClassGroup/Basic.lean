@@ -264,6 +264,18 @@ theorem mk0_eq_one_of_isTotallyPositive {a : 𝓞 K} (ha : a ≠ 0)
     (hI : (I : Ideal (𝓞 K)) = Ideal.span {a}) : mk0 I = 1 := by
   exact mk0_eq_one_iff.mpr ⟨a, ha, hpos, hI⟩
 
+/-- **A principal ideal with a generator that is totally positive up to sign has trivial narrow
+class.** Negating a generator does not change its principal ideal. -/
+theorem mk0_eq_one_of_isTotallyPositive_or_isTotallyPositive_neg {a : 𝓞 K} (ha : a ≠ 0)
+    (hpos : IsTotallyPositive (a : K) ∨ IsTotallyPositive (-(a : K))) {I : (Ideal (𝓞 K))⁰}
+    (hI : (I : Ideal (𝓞 K)) = Ideal.span {a}) : mk0 I = 1 := by
+  rcases hpos with hpos | hpos
+  · exact mk0_eq_one_of_isTotallyPositive ha hpos hI
+  · refine mk0_eq_one_of_isTotallyPositive (a := -a) (neg_ne_zero.mpr ha) (by
+      push_cast
+      exact hpos) ?_
+    rwa [Ideal.span_singleton_neg]
+
 /-- **The narrow class of a principal ideal is `2`-torsion**, since the square of any generator is
 totally positive. -/
 theorem mk0_sq_eq_one_of_eq_span_singleton {a : 𝓞 K} (ha : a ≠ 0) {I : (Ideal (𝓞 K))⁰}

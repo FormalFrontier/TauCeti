@@ -21,7 +21,7 @@ consumed by `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 Along the way it records the elementwise norm identities
 `algebraMap_norm_eq_mul_quadraticConj` (`N(y) = y · σy` for `y : K`) and
 `algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj` (its form for `y : 𝓞 K`), and their
-consequence `mul_ringOfIntegersQuadraticConj_unit_eq_one_or_neg_one` for a unit of `𝓞 K`, whose
+consequence `mul_ringOfIntegersQuadraticConj_eq_one_or_neg_one` for a unit of `𝓞 K`, whose
 norm is a unit of `ℤ`.
 
 The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
@@ -73,11 +73,22 @@ private theorem algebraMap_intNorm_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
   rw [Algebra.intNorm_eq_norm, algebraMap_int_eq, eq_intCast]
   exact Algebra.coe_norm_int x
 
+/-- Coercing the conjugation norm of an algebraic integer to `K` gives its product with the field
+quadratic conjugate. -/
+theorem coe_mul_ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
+    ((x * ringOfIntegersQuadraticConj hmin hgen x : 𝓞 K) : K) =
+      (x : K) * quadraticConj hmin hgen (x : K) := by
+  change algebraMap (𝓞 K) K (x * ringOfIntegersQuadraticConj hmin hgen x) = _
+  rw [map_mul]
+  congr 1
+  exact coe_ringOfIntegersQuadraticConj hmin hgen x
+
 /-- **The conjugation norm of a unit is `±1`.** For a unit `u` of `𝓞 K` in a quadratic number
-field, `u σu` is the extension of the integral norm of `u`, which is a unit of `ℤ`. Which of the
-two signs occurs is a genuine invariant of `K`: `-1` is attained in `ℚ(√2)` and in no imaginary
+field, `u σu` is the extension of the integral norm of `u`, which is a unit of `ℤ`. Whether `-1`
+is attained by some unit is an invariant of `K`: it is attained in `ℚ(√2)` and in no imaginary
 quadratic field. -/
-theorem mul_ringOfIntegersQuadraticConj_unit_eq_one_or_neg_one
+theorem mul_ringOfIntegersQuadraticConj_eq_one_or_neg_one
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (u : (𝓞 K)ˣ) :
     (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = 1 ∨
       (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = -1 := by

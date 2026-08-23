@@ -176,13 +176,9 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one
         ⟨Ideal.span {ε}, mem_nonZeroDivisors_iff_ne_zero.mpr hspanε⟩ * J := rfl
     have hone : mk0 (⟨Ideal.span {ε}, mem_nonZeroDivisors_iff_ne_zero.mpr hspanε⟩ :
         (Ideal (𝓞 K))⁰) = 1 := by
-      rcases isTotallyPositive_or_isTotallyPositive_neg_of_isTotallyPositive_div_quadraticConj
-        hmin hgen hposε with hcase | hcase
-      · exact mk0_eq_one_of_isTotallyPositive hε0 hcase rfl
-      · refine mk0_eq_one_of_isTotallyPositive (a := -ε) (neg_ne_zero.mpr hε0) ?_ ?_
-        · push_cast
-          exact hcase
-        · rw [Ideal.span_singleton_neg]
+      exact mk0_eq_one_of_isTotallyPositive_or_isTotallyPositive_neg hε0
+        (isTotallyPositive_or_isTotallyPositive_neg_of_isTotallyPositive_div_quadraticConj
+          hmin hgen hposε) rfl
     rw [hprod, map_mul, hone, one_mul]
   refine ⟨⟨Ideal.span {ε} * (J : Ideal (𝓞 K)), mem_nonZeroDivisors_iff_ne_zero.mpr hI0⟩,
     ?_, hεpos⟩
