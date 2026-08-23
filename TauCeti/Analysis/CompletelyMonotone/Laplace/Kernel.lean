@@ -128,8 +128,9 @@ theorem kernelLaplaceTransform_antitone (κ : Kernel V ℝ≥0) (q : V) :
   refine lintegral_mono fun p => ENNReal.ofReal_le_ofReal (Real.exp_le_exp.mpr ?_)
   exact mul_le_mul_of_nonneg_right (neg_le_neg (mod_cast htu)) p.coe_nonneg
 
-/-- The fibrewise Laplace transform is finite against a finite kernel. -/
-theorem kernelLaplaceTransform_ne_top (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (t : ℝ≥0) (q : V) :
+/-- The fibrewise Laplace transform is finite when the corresponding fibre is finite. -/
+theorem kernelLaplaceTransform_ne_top (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V)
+    [IsFiniteMeasure (κ q)] :
     kernelLaplaceTransform κ t q ≠ ⊤ :=
   ((kernelLaplaceTransform_le κ t q).trans_lt (measure_lt_top _ _)).ne
 
