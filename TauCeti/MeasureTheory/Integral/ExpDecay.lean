@@ -16,9 +16,10 @@ whole real line: natural powers multiplied by an exponentially decaying factor, 
 which a bare exponential is integrable on a right half-line, and integrability of the two-sided
 exponential.
 
-Mathlib supplies the *sufficient* direction of that last one, `integrableOn_exp_mul_Ioi`, for a
-negative rate.  `integrableOn_exp_mul_Ioi_iff` adds the converse, which is what lets a caller
-describe an exponential-moment domain as an exact set rather than an inclusion.
+Mathlib supplies the *sufficient* direction of the right-half-line integrability criterion,
+`integrableOn_exp_mul_Ioi`, for a negative rate.  `integrableOn_exp_mul_Ioi_iff` adds the converse,
+which is what lets a caller describe an exponential-moment domain as an exact set rather than an
+inclusion.
 
 ## Main results
 
