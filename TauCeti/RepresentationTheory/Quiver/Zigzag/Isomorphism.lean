@@ -14,10 +14,10 @@ public section
 # The zigzag algebra of a simple graph is an invariant of the graph
 
 An isomorphism `e : G ≃g H` of simple graphs relabels the doubled quiver of `G` as the doubled
-quiver of `H`, hence relabels the path basis of `kG̅` as the path basis of `kH̅`. This file carries
-that relabelling through the zigzag relations: it is an isomorphism of path algebras, it matches
-the two relation families, and it therefore descends to an isomorphism of the two zigzag relation
-quotients.
+quiver of `H`, hence relabels the path basis of `k(DoubledQuiver G)` as the path basis of
+`k(DoubledQuiver H)`. This file carries that relabelling through the zigzag relations: it is an
+isomorphism of path algebras, it matches the two relation families, and it therefore descends to an
+isomorphism of the two zigzag relation quotients.
 
 Nothing here is specific to the *uniform* relation family beyond the fact that it is described by
 path lengths and by the endpoints of paths, both of which a relabelling preserves. That is exactly
