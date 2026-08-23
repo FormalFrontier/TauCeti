@@ -35,21 +35,10 @@ theorem swap_braid {α : Type*} [DecidableEq α] {a b c : α} (hab : a ≠ b) (h
       _ = Equiv.swap b c * Equiv.swap a b * Equiv.swap b c :=
           (Equiv.swap_mul_swap_mul_swap hab hac).symm
 
-/-- **A permutation transported along an injection extends to the ambient type.** The witness is
-`Equiv.Perm.viaEmbedding σ e`, the identity off the range of `e`; this restatement in terms of the
-underlying function of the injection is the form a consumer rewriting with it needs. -/
-theorem exists_perm_apply_eq {α γ : Type*} {e : α → γ} (he : Function.Injective e)
-    (σ : Equiv.Perm α) : ∃ ρ : Equiv.Perm γ, ∀ a, ρ (e a) = e (σ a) :=
-  ⟨σ.viaEmbedding ⟨e, he⟩, fun a => Equiv.Perm.viaEmbedding_apply (ι := ⟨e, he⟩) σ a⟩
-
 /-- **Two permutations along disjoint injections extend to one permutation of the ambient type.**
 Given injections `e : α → γ` and `f : β → γ` with disjoint ranges, every pair of permutations
 `σ` of `α` and `τ` of `β` is realized by a single `ρ : Equiv.Perm γ` which acts as `σ` along `e`
-and as `τ` along `f`.
-
-The witness is `Equiv.Perm.viaEmbedding σ e * Equiv.Perm.viaEmbedding τ f`, each factor being the
-identity off the range of its own injection; disjointness of the ranges is what keeps the two
-factors from interfering. -/
+and as `τ` along `f`. -/
 theorem exists_perm_apply_eq_of_disjoint_range {α β γ : Type*} {e : α → γ} {f : β → γ}
     (he : Function.Injective e) (hf : Function.Injective f)
     (hd : Disjoint (Set.range e) (Set.range f)) (σ : Equiv.Perm α) (τ : Equiv.Perm β) :

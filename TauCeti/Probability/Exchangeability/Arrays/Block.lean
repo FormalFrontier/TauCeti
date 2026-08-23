@@ -26,14 +26,11 @@ act differently on two disjoint sets — and the block is therefore *separately*
 exchangeable arrays is then available for it; in particular de Finetti's theorem makes the rows of
 the block conditionally i.i.d.
 
-The block only sees the entries `X (e i, f j)`, so a jointly exchangeable array that is not
-symmetric is not described by it: the transposed entries `X (f j, e i)` are lost. Reading the two
-together as one array of pairs repairs this, and the pair array is separately exchangeable for the
-same reason (`JointlyExchangeable.separatelyExchangeable_arrayBlockPair`). This is the form the
-Aldous–Hoover representation for jointly exchangeable arrays is proved in: the two triangles of the
-array are represented simultaneously, by the separately exchangeable theory applied to a block of
-pairs. For a *symmetric* array the two coordinates of a pair agree, and the plain block already
-carries the whole information.
+The block only sees the entries `X (e i, f j)`, so it omits the reverse-orientation entries
+`X (f j, e i)`. Reading the two together as an array of pairs retains both orientations of the
+selected rectangular cross-block, and the pair array is separately exchangeable
+(`JointlyExchangeable.separatelyExchangeable_arrayBlockPair`). For a *symmetric* array the two
+coordinates of each such pair agree.
 
 ## Main definitions
 
@@ -57,11 +54,11 @@ carries the whole information.
   is necessary;
 * `TauCeti.Probability.JointlyExchangeable.map_arrayBlock_eq` — the block law does not depend on
   the chosen pair of index maps;
+* `TauCeti.Probability.JointlyExchangeable.map_arrayBlockPair_eq` — the corresponding canonical-law
+  theorem for the pair-valued block;
 * `TauCeti.Probability.JointlyExchangeable.conditionallyIID_arrayRow_arrayBlock` and
   `TauCeti.Probability.JointlyExchangeable.conditionallyIID_arrayRow_arrayBlockPair` — de Finetti
-  for the rows of a block of a jointly exchangeable array;
-* `TauCeti.Probability.JointlyExchangeable.map_entry_eq_of_ne` — the off-diagonal entries of a
-  jointly exchangeable array are identically distributed.
+  for the rows of a block of a jointly exchangeable array.
 
 ## References
 
@@ -134,43 +131,55 @@ theorem measurable_blockPairReadOff (e f : ℕ → ℕ) :
 
 /-! ## Blocks inherit the symmetry of the array -/
 
-/-- **Separate exchangeability passes to every block along injections.** Both axes are reindexed
-independently already, so a permutation of the block's rows is realized by a permutation of the
-array's rows through `Equiv.Perm.viaEmbedding`, and likewise for the columns. No relation between
-the two ranges is needed. -/
+/-- **Separate exchangeability passes to every block along injections.** No relation between the
+two ranges is needed. -/
 theorem SeparatelyExchangeable.arrayBlock (h : SeparatelyExchangeable μ X)
     (hX : ∀ p, AEMeasurable (X p) μ) (he : Function.Injective e) (hf : Function.Injective f) :
     SeparatelyExchangeable μ (arrayBlock X e f) := by
   refine separatelyExchangeable_iff.mpr fun σ τ => ?_
-  obtain ⟨ρ, hρ⟩ := exists_perm_apply_eq he σ
-  obtain ⟨ρ', hρ'⟩ := exists_perm_apply_eq hf τ
-  have key := h.map_comp hX ρ ρ'
-    (F := fun (x : ℕ × ℕ → α) (p : ℕ × ℕ) => x (e p.1, f p.2)) (measurable_blockReadOff e f)
-  simp only [hρ, hρ'] at key
-  simpa only [arrayBlock_apply] using key
+  let ι : ℕ ↪ ℕ := ⟨e, he⟩
+  let κ : ℕ ↪ ℕ := ⟨f, hf⟩
+  have key := h.map_comp hX (σ.viaEmbedding ι) (τ.viaEmbedding κ)
+    (F := fun (x : ℕ × ℕ → α) (p : ℕ × ℕ) => x (ι p.1, κ p.2))
+    (measurable_blockReadOff ι κ)
+  change (μ.map fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
+    (τ.viaEmbedding κ) (κ p.2)) ω) = μ.map fun ω (p : ℕ × ℕ) => X (ι p.1, κ p.2) ω at key
+  have hσ : ∀ i, (σ.viaEmbedding ι) (ι i) = ι (σ i) :=
+    fun i => Equiv.Perm.viaEmbedding_apply (ι := ι) σ i
+  have hτ : ∀ j, (τ.viaEmbedding κ) (κ j) = κ (τ j) :=
+    fun j => Equiv.Perm.viaEmbedding_apply (ι := κ) τ j
+  have hfun : (fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
+      (τ.viaEmbedding κ) (κ p.2)) ω) = fun ω (p : ℕ × ℕ) => X (ι (σ p.1), κ (τ p.2)) ω := by
+    funext ω p
+    exact congrArg (fun q => X q ω) (Prod.ext (hσ p.1) (hτ p.2))
+  have key' := (congrArg (fun g => Measure.map g μ) hfun).symm.trans key
+  simpa [ι, κ, arrayBlock] using key'
 
-/-- **Joint exchangeability passes to the diagonal blocks.** One injection `e` is reindexed on both
-axes, so a permutation of the block's index set is realized by a permutation of `ℕ` acting along
-`e`. -/
+/-- **Joint exchangeability passes to diagonal blocks along an injection.** -/
 theorem JointlyExchangeable.arrayBlock_diag (h : JointlyExchangeable μ X)
     (hX : ∀ p, AEMeasurable (X p) μ) (he : Function.Injective e) :
     JointlyExchangeable μ (arrayBlock X e e) := by
   refine jointlyExchangeable_iff.mpr fun σ => ?_
-  obtain ⟨ρ, hρ⟩ := exists_perm_apply_eq he σ
-  have key := h.map_comp hX ρ
-    (F := fun (x : ℕ × ℕ → α) (p : ℕ × ℕ) => x (e p.1, e p.2)) (measurable_blockReadOff e e)
-  simp only [hρ] at key
-  simpa only [arrayBlock_apply] using key
+  let ι : ℕ ↪ ℕ := ⟨e, he⟩
+  have key := h.map_comp hX (σ.viaEmbedding ι)
+    (F := fun (x : ℕ × ℕ → α) (p : ℕ × ℕ) => x (ι p.1, ι p.2))
+    (measurable_blockReadOff ι ι)
+  change (μ.map fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
+    (σ.viaEmbedding ι) (ι p.2)) ω) = μ.map fun ω (p : ℕ × ℕ) => X (ι p.1, ι p.2) ω at key
+  have hσ : ∀ i, (σ.viaEmbedding ι) (ι i) = ι (σ i) :=
+    fun i => Equiv.Perm.viaEmbedding_apply (ι := ι) σ i
+  have hfun : (fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
+      (σ.viaEmbedding ι) (ι p.2)) ω) = fun ω (p : ℕ × ℕ) => X (ι (σ p.1), ι (σ p.2)) ω := by
+    funext ω p
+    exact congrArg (fun q => X q ω) (Prod.ext (hσ p.1) (hσ p.2))
+  have key' := (congrArg (fun g => Measure.map g μ) hfun).symm.trans key
+  simpa [ι, arrayBlock] using key'
 
 /-- **A block of a jointly exchangeable array along injections with disjoint ranges is separately
 exchangeable.**
 
-This is the device that makes the separately exchangeable theory — de Finetti for the rows, and the
-representations built on it — available to a jointly exchangeable array. Joint exchangeability
-supplies only one permutation for both axes, but a permutation of `ℕ` may act as one prescribed
-permutation on the range of `e` and as an unrelated one on the disjoint range of `f`
-(`TauCeti.exists_perm_apply_eq_of_disjoint_range`); on the block those two halves are exactly a
-permutation of the rows and an independent permutation of the columns. -/
+This makes separately exchangeable results, including de Finetti's theorem for the rows, available
+to the selected block. -/
 theorem JointlyExchangeable.separatelyExchangeable_arrayBlock (h : JointlyExchangeable μ X)
     (hX : ∀ p, AEMeasurable (X p) μ) (he : Function.Injective e) (hf : Function.Injective f)
     (hd : Disjoint (Set.range e) (Set.range f)) :
@@ -182,10 +191,8 @@ theorem JointlyExchangeable.separatelyExchangeable_arrayBlock (h : JointlyExchan
   simp only [hρe, hρf] at key
   simpa only [arrayBlock_apply] using key
 
-/-- **A block of a jointly exchangeable array, read together with its transpose, is separately
-exchangeable.** The read-off is the pair `(X (e i, f j), X (f j, e i))`, so the block retains both
-triangles of the array; the proof is that of
-`JointlyExchangeable.separatelyExchangeable_arrayBlock` with this pair-valued read-off. -/
+/-- **A block of a jointly exchangeable array, read in both orientations, is separately
+exchangeable.** Its `(i, j)`-entry is `(X (e i, f j), X (f j, e i))`. -/
 theorem JointlyExchangeable.separatelyExchangeable_arrayBlockPair (h : JointlyExchangeable μ X)
     (hX : ∀ p, AEMeasurable (X p) μ) (he : Function.Injective e) (hf : Function.Injective f)
     (hd : Disjoint (Set.range e) (Set.range f)) :
@@ -235,11 +242,8 @@ theorem JointlyExchangeable.separatelyExchangeable_arrayBlockPair_evenOdd
   h.separatelyExchangeable_arrayBlockPair hX injective_two_mul injective_two_mul_add_one
     disjoint_range_two_mul
 
-/-- **The disjointness hypothesis of `JointlyExchangeable.separatelyExchangeable_arrayBlock` is
-necessary**, and not merely an artefact of the proof. The identity index maps have equal, hence
-non-disjoint, ranges, and read a jointly exchangeable array as itself; the diagonal-indicator array
-of `TauCeti.Probability.diagIndicatorArray` is then a jointly exchangeable array whose block is not
-separately exchangeable. -/
+/-- **The disjointness hypothesis of `JointlyExchangeable.separatelyExchangeable_arrayBlock` cannot
+be omitted.** With identity index maps, the diagonal-indicator array gives a counterexample. -/
 theorem not_separatelyExchangeable_arrayBlock_id_id (μ : Measure Ω) [IsProbabilityMeasure μ] :
     ¬SeparatelyExchangeable μ (arrayBlock (diagIndicatorArray Ω) id id) := by
   rw [arrayBlock_id_id]
@@ -248,14 +252,8 @@ theorem not_separatelyExchangeable_arrayBlock_id_id (μ : Measure Ω) [IsProbabi
 /-! ## The block law is canonical -/
 
 /-- **The law of a block does not depend on the chosen pair of index maps.** Any two pairs of
-injections with disjoint ranges read the same array law off a jointly exchangeable array, so
-"the block law" is an invariant of the array rather than an artefact of the indexing, and the
-canonical even-odd block computes it.
-
-A single permutation of `ℕ` need not carry one pair of index maps to the other — the two ranges may
-have complements of different sizes — so the two blocks are compared one finite-dimensional
-marginal at a time, where `Equiv.Perm.exists_extending_pair` does supply a permutation, and
-Mathlib's `ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq` assembles the marginals. -/
+injections with disjoint ranges give the same law; in particular, the canonical even-odd block
+computes it. -/
 theorem JointlyExchangeable.map_arrayBlock_eq [IsFiniteMeasure μ] {e' f' : ℕ → ℕ}
     (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (he : Function.Injective e) (hf : Function.Injective f)
@@ -296,14 +294,58 @@ theorem JointlyExchangeable.map_arrayBlock_eq [IsFiniteMeasure μ] {e' f' : ℕ 
       (Prod.ext (hσe ⟨(p : ℕ × ℕ).1, hp₁⟩) (hσf ⟨(p : ℕ × ℕ).2, hp₂⟩))
   exact key.symm.trans (congrArg (fun g => Measure.map g μ) (funext hrew))
 
+/-- **The law of a pair-valued block does not depend on the chosen pair of index maps.** Any two
+pairs of injections with disjoint ranges give the same law. -/
+theorem JointlyExchangeable.map_arrayBlockPair_eq [IsFiniteMeasure μ] {e' f' : ℕ → ℕ}
+    (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
+    (he : Function.Injective e) (hf : Function.Injective f)
+    (hd : Disjoint (Set.range e) (Set.range f))
+    (he' : Function.Injective e') (hf' : Function.Injective f')
+    (hd' : Disjoint (Set.range e') (Set.range f')) :
+    (μ.map fun ω p => arrayBlockPair X e f p ω) =
+      μ.map fun ω p => arrayBlockPair X e' f' p ω := by
+  have hmeas : ∀ u v : ℕ → ℕ, AEMeasurable (fun ω p => arrayBlockPair X u v p ω) μ :=
+    fun _ _ => aemeasurable_pi_lambda _ fun _ => (hX _).prodMk (hX _)
+  refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
+    (hmeas e f) (hmeas e' f')).mpr fun I => ?_
+  obtain ⟨n, hbound⟩ : ∃ n : ℕ, ∀ p ∈ I, p.1 < n ∧ p.2 < n := by
+    refine ⟨(I.sup fun p => max p.1 p.2) + 1, fun p hp => ?_⟩
+    have hle := Finset.le_sup (f := fun p : ℕ × ℕ => max p.1 p.2) hp
+    omega
+  have hg₁ : Function.Injective
+      (Sum.elim (fun i : Fin n => e i.val) fun j : Fin n => f j.val) :=
+    (he.comp Fin.val_injective).sumElim (hf.comp Fin.val_injective)
+      fun a b hab => Set.disjoint_left.mp hd ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
+  have hg₂ : Function.Injective
+      (Sum.elim (fun i : Fin n => e' i.val) fun j : Fin n => f' j.val) :=
+    (he'.comp Fin.val_injective).sumElim (hf'.comp Fin.val_injective)
+      fun a b hab => Set.disjoint_left.mp hd' ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
+  obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ hg₁ hg₂
+  have hσe : ∀ i : Fin n, σ (e i.val) = e' i.val := fun i => hσ (Sum.inl i)
+  have hσf : ∀ j : Fin n, σ (f j.val) = f' j.val := fun j => hσ (Sum.inr j)
+  have key := h.map_comp hX σ
+    (F := fun x : ℕ × ℕ → α =>
+      I.restrict fun p : ℕ × ℕ => (x (e p.1, f p.2), x (f p.2, e p.1)))
+    ((Finset.measurable_restrict I).comp (measurable_blockPairReadOff e f))
+  have hrew : ∀ ω : Ω,
+      (I.restrict fun p : ℕ × ℕ =>
+        (X (σ (e p.1), σ (f p.2)) ω, X (σ (f p.2), σ (e p.1)) ω)) =
+        I.restrict fun p : ℕ × ℕ => (X (e' p.1, f' p.2) ω, X (f' p.2, e' p.1) ω) := by
+    intro ω
+    funext p
+    obtain ⟨hp₁, hp₂⟩ := hbound p.1 p.2
+    exact Prod.ext
+      (congrArg (fun q => X q ω)
+        (Prod.ext (hσe ⟨(p : ℕ × ℕ).1, hp₁⟩) (hσf ⟨(p : ℕ × ℕ).2, hp₂⟩)))
+      (congrArg (fun q => X q ω)
+        (Prod.ext (hσf ⟨(p : ℕ × ℕ).2, hp₂⟩) (hσe ⟨(p : ℕ × ℕ).1, hp₁⟩)))
+  exact key.symm.trans (congrArg (fun g => Measure.map g μ) (funext hrew))
+
 /-! ## De Finetti for the rows of a block -/
 
 /-- **De Finetti's theorem for the rows of a block of a jointly exchangeable array.** Over a
 nonempty standard Borel state space, the rows of a block along injections with disjoint ranges are
-conditionally i.i.d. as random elements of path space.
-
-This is the first step of the route to the Aldous–Hoover representation, transported from the
-separately exchangeable case to the jointly exchangeable one. -/
+conditionally i.i.d. as random elements of path space. -/
 theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlock [StandardBorelSpace α] [Nonempty α]
     [IsFiniteMeasure μ] (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (he : Function.Injective e) (hf : Function.Injective f)
@@ -312,9 +354,8 @@ theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlock [StandardBorelS
   (h.separatelyExchangeable_arrayBlock hX he hf hd).conditionallyIID_arrayRow
     (aemeasurable_arrayBlock hX)
 
-/-- **De Finetti's theorem for the rows of a block of pairs.** The value space is `α × α`, which is
-standard Borel and nonempty whenever `α` is, so no new hypothesis is needed; the conclusion
-describes both triangles of the array at once. -/
+/-- **De Finetti's theorem for the rows of a block of pairs.** The conclusion simultaneously
+describes both orientations of the selected rectangular cross-block. -/
 theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlockPair [StandardBorelSpace α]
     [Nonempty α] [IsFiniteMeasure μ] (h : JointlyExchangeable μ X)
     (hX : ∀ p, AEMeasurable (X p) μ) (he : Function.Injective e) (hf : Function.Injective f)
@@ -322,29 +363,6 @@ theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlockPair [StandardBo
     ConditionallyIID μ (arrayRow (arrayBlockPair X e f)) :=
   (h.separatelyExchangeable_arrayBlockPair hX he hf hd).conditionallyIID_arrayRow
     (aemeasurable_arrayBlockPair hX)
-
-/-! ## Off-diagonal entries -/
-
-/-- **The off-diagonal entries of a jointly exchangeable array are identically distributed.** Two
-ordered pairs of distinct indices are carried to one another by a single permutation of `ℕ`, which
-is all joint exchangeability offers; the diagonal entries form their own identically distributed
-family, through `JointlyExchangeable.fullyExchangeable_arrayDiag`. -/
-theorem JointlyExchangeable.map_entry_eq_of_ne (h : JointlyExchangeable μ X)
-    (hX : ∀ p, AEMeasurable (X p) μ) {i j k l : ℕ} (hij : i ≠ j) (hkl : k ≠ l) :
-    μ.map (X (i, j)) = μ.map (X (k, l)) := by
-  classical
-  -- `Equiv.swap i k` sends `i` to `k`, and the second transposition then fixes `k` and moves the
-  -- image of `j` to `l`.
-  have hne : Equiv.swap i k j ≠ k := by
-    intro hk
-    have hji := congrArg (Equiv.swap i k) hk
-    rw [Equiv.swap_apply_self, Equiv.swap_apply_right] at hji
-    exact hij hji.symm
-  have key := h.map_comp hX (Equiv.swap (Equiv.swap i k j) l * Equiv.swap i k)
-    (F := fun x => x (i, j)) (measurable_pi_apply _)
-  simp only [Equiv.Perm.mul_apply, Equiv.swap_apply_left,
-    Equiv.swap_apply_of_ne_of_ne (Ne.symm hne) hkl] at key
-  simpa using key.symm
 
 end Probability
 
