@@ -29,7 +29,7 @@ pairwise orthogonal vectors that the Clifford-algebra API asks for.
 
 ## Main results
 
-* `QuadraticMap.Nondegenerate.exists_basis_isOrtho`: a nondegenerate quadratic form on a
+* `QuadraticMap.Nondegenerate.exists_orthogonal_basis`: a nondegenerate quadratic form on a
   finite-dimensional space has an orthogonal basis none of whose members is isotropic.
 * `QuadraticMap.Nondegenerate.exists_list_pairwise_isOrtho`: the same basis read as a spanning list
   of pairwise orthogonal, non-isotropic vectors whose length is the dimension.
@@ -47,7 +47,7 @@ variable {F V : Type*} [Field F] [AddCommGroup V] [Module F V]
 /-- **A nondegenerate quadratic form has an anisotropic orthogonal basis.** Mathlib's
 `LinearMap.BilinForm.exists_orthogonal_basis` supplies the orthogonality; nondegeneracy rules out
 an isotropic member, since such a member would be orthogonal to the whole space. -/
-theorem Nondegenerate.exists_basis_isOrtho (hQ : Q.Nondegenerate) :
+theorem Nondegenerate.exists_orthogonal_basis (hQ : Q.Nondegenerate) :
     ∃ b : Basis (Fin (finrank F V)) F V,
       (∀ i j, i ≠ j → Q.IsOrtho (b i) (b j)) ∧ ∀ i, Q (b i) ≠ 0 := by
   obtain ⟨b, hb⟩ := LinearMap.BilinForm.exists_orthogonal_basis
@@ -64,12 +64,12 @@ theorem Nondegenerate.exists_basis_isOrtho (hQ : Q.Nondegenerate) :
     ((nondegenerate_associated_iff.mpr hQ).1 (b i) fun y => by rw [hzero]; rfl)
 
 /-- **A nondegenerate quadratic form has an anisotropic orthogonal spanning list.** This is
-`QuadraticMap.Nondegenerate.exists_basis_isOrtho` read as a list, the shape in which the Clifford
+`QuadraticMap.Nondegenerate.exists_orthogonal_basis` read as a list, the shape in which the Clifford
 volume element of `CliffordAlgebra.prod_map_ι_sq_scalar` consumes an orthogonal family. -/
 theorem Nondegenerate.exists_list_pairwise_isOrtho (hQ : Q.Nondegenerate) :
     ∃ l : List V, l.Pairwise Q.IsOrtho ∧ l.length = finrank F V ∧
       Submodule.span F {x : V | x ∈ l} = ⊤ ∧ ∀ v ∈ l, Q v ≠ 0 := by
-  obtain ⟨b, hortho, haniso⟩ := hQ.exists_basis_isOrtho
+  obtain ⟨b, hortho, haniso⟩ := hQ.exists_orthogonal_basis
   refine ⟨List.ofFn b, ?_, List.length_ofFn, ?_, ?_⟩
   · exact List.pairwise_ofFn.mpr fun i j hij => hortho i j (Fin.ne_of_lt hij)
   · have hset : {x : V | x ∈ List.ofFn b} = Set.range b := by
