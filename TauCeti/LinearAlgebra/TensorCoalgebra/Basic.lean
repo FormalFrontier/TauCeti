@@ -47,12 +47,12 @@ abbrev ReducedTensorWords : Type _ := ⨁ n : {n : ℕ // 0 < n}, TensorPower R 
 namespace ReducedTensorWords
 
 /-- Include a positive tensor power into reduced tensor words. -/
-noncomputable def of (n : {n : ℕ // 0 < n}) :
+@[expose] noncomputable def of (n : {n : ℕ // 0 < n}) :
     TensorPower R n.1 M →ₗ[R] ReducedTensorWords R M :=
   DirectSum.lof R {n : ℕ // 0 < n} (fun n ↦ TensorPower R n.1 M) n
 
 /-- Project reduced tensor words to a fixed positive tensor length. -/
-noncomputable def component (n : {n : ℕ // 0 < n}) :
+@[expose] noncomputable def component (n : {n : ℕ // 0 < n}) :
     ReducedTensorWords R M →ₗ[R] TensorPower R n.1 M :=
   DirectSum.component R {n : ℕ // 0 < n} (fun n ↦ TensorPower R n.1 M) n
 
