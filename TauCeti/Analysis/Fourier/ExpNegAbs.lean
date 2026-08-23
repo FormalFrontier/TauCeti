@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Fourier.FourierTransform
-import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+public import TauCeti.MeasureTheory.Integral.ExpDecay
 
 /-!
 # The Fourier transform of the two-sided exponential
@@ -23,7 +23,6 @@ resulting complex exponential integrals with `integral_exp_mul_complex_Iic` and
 
 ## Main results
 
-* `TauCeti.integrable_exp_neg_mul_abs`: integrability of `x ↦ exp (-(a * |x|))`;
 * `TauCeti.integral_exp_mul_I_mul_exp_neg_mul_abs`: the Lorentzian pairing;
 * `TauCeti.fourier_exp_neg_mul_abs`: the Fourier transform itself.
 -/
@@ -37,25 +36,35 @@ namespace TauCeti
 
 variable {a : ℝ}
 
-/-- The two-sided exponential is integrable on the line. -/
-theorem integrable_exp_neg_mul_abs (ha : 0 < a) :
-    Integrable (fun x : ℝ ↦ Real.exp (-(a * |x|))) := by
-  have hIic : IntegrableOn (fun x : ℝ ↦ Real.exp (-(a * |x|))) (Iic 0) := by
-    refine (integrableOn_exp_mul_Iic (a := a) ha 0).congr_fun (fun x hx ↦ ?_) measurableSet_Iic
-    rw [abs_of_nonpos (mem_Iic.mp hx)]
-    ring_nf
-  have hIoi : IntegrableOn (fun x : ℝ ↦ Real.exp (-(a * |x|))) (Ioi 0) := by
-    refine (integrableOn_exp_mul_Ioi (a := -a) (by linarith) 0).congr_fun
-      (fun x hx ↦ ?_) measurableSet_Ioi
-    rw [abs_of_pos (mem_Ioi.mp hx)]
-    ring_nf
-  rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
-  exact hIic.union hIoi
+/-- Mathlib's Fourier transform on `ℝ`, written with complex multiplication and the frequency
+collected before the integration variable. -/
+theorem fourier_eq_integral_exp_mul_I (f : ℝ → ℂ) (ξ : ℝ) :
+    𝓕 f ξ = ∫ x : ℝ, Complex.exp (((-(2 * π * ξ) : ℝ) : ℂ) * x * Complex.I) * f x := by
+  rw [Real.fourier_eq']
+  refine integral_congr_ae (.of_forall fun x ↦ ?_)
+  change Complex.exp ((↑(-2 * π * (inner ℝ x ξ : ℝ)) * Complex.I)) • f x = _
+  rw [smul_eq_mul]
+  congr 2
+  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
+  ring
+
+/-- Mathlib's inverse Fourier transform on `ℝ`, written with complex multiplication and the
+frequency collected before the integration variable. -/
+theorem fourierInv_eq_integral_exp_mul_I (f : ℝ → ℂ) (ξ : ℝ) :
+    𝓕⁻ f ξ = ∫ x : ℝ, Complex.exp ((((2 * π * ξ) : ℝ) : ℂ) * x * Complex.I) * f x := by
+  rw [Real.fourierInv_eq']
+  refine integral_congr_ae (.of_forall fun x ↦ ?_)
+  change Complex.exp ((↑(2 * π * (inner ℝ x ξ : ℝ)) * Complex.I)) • f x = _
+  rw [smul_eq_mul]
+  congr 2
+  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
+  ring
 
 /-- **The Lorentzian pairing of the two-sided exponential with a complex oscillation.** -/
 theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
     (∫ x : ℝ, Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
       = ((2 * a / (a ^ 2 + b ^ 2) : ℝ) : ℂ) := by
+  -- Rewrite the integrand as a single complex exponential on each half-line.
   have hre₁ : ((a : ℂ) + b * Complex.I).re = a := by simp
   have hre₂ : (-(a : ℂ) + b * Complex.I).re = -a := by simp
   have key : ∀ c x : ℝ, Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (c * x) : ℂ)
@@ -75,16 +84,11 @@ theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
     intro x hx
     have hxa : -(a * |x|) = -a * x := by rw [abs_of_pos (mem_Ioi.mp hx)]; ring
     simpa only [hxa, Complex.ofReal_neg] using key (-a) x
-  have hintm : IntegrableOn
+  -- Integrability comes from the real two-sided exponential, since the oscillation has norm one.
+  have hint : Integrable
       (fun x : ℝ ↦ Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
-      (Iic 0) :=
-    (integrableOn_exp_mul_complex_Iic (by rw [hre₁]; exact ha) 0).congr_fun
-      (fun x hx ↦ (hm hx).symm) measurableSet_Iic
-  have hintp : IntegrableOn
-      (fun x : ℝ ↦ Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
-      (Ioi 0) :=
-    (integrableOn_exp_mul_complex_Ioi (by rw [hre₂]; linarith) 0).congr_fun
-      (fun x hx ↦ (hp hx).symm) measurableSet_Ioi
+      := ((integrable_exp_neg_mul_abs ha).ofReal).bdd_mul (c := 1) (by fun_prop)
+        (.of_forall fun x ↦ by simp [Complex.norm_exp])
   have hne₁ : (a : ℂ) + b * Complex.I ≠ 0 := by
     intro h
     rw [h] at hre₁
@@ -95,7 +99,8 @@ theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
     simp only [Complex.zero_re] at hre₂
     exact ha.ne' (by linarith)
   have hsq : (0 : ℝ) < a ^ 2 + b ^ 2 := by positivity
-  rw [← intervalIntegral.integral_Iic_add_Ioi hintm hintp,
+  -- Evaluate the two half-line integrals and combine the resulting rational functions.
+  rw [← intervalIntegral.integral_Iic_add_Ioi hint.integrableOn hint.integrableOn,
     setIntegral_congr_fun measurableSet_Iic hm, setIntegral_congr_fun measurableSet_Ioi hp,
     integral_exp_mul_complex_Iic (by rw [hre₁]; exact ha),
     integral_exp_mul_complex_Ioi (by rw [hre₂]; linarith)]
@@ -118,16 +123,7 @@ theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
 theorem fourier_exp_neg_mul_abs (ha : 0 < a) (ξ : ℝ) :
     𝓕 (fun x : ℝ ↦ (Real.exp (-(a * |x|)) : ℂ)) ξ
       = ((2 * a / (a ^ 2 + (2 * π * ξ) ^ 2) : ℝ) : ℂ) := by
-  rw [Real.fourier_eq']
-  have hrw : ∀ x : ℝ, Complex.exp ((↑(-2 * π * (inner ℝ x ξ : ℝ)) * Complex.I)) •
-      ((Real.exp (-(a * |x|)) : ℝ) : ℂ)
-      = Complex.exp (((-(2 * π * ξ) : ℝ) : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ) := by
-    intro x
-    rw [smul_eq_mul]
-    congr 2
-    push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
-    ring
-  simp only [hrw]
+  rw [fourier_eq_integral_exp_mul_I]
   rw [integral_exp_mul_I_mul_exp_neg_mul_abs ha]
   norm_num
 

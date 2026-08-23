@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.Analysis.Fourier.Inversion
+import Mathlib.MeasureTheory.Function.JacobianOneDim
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 public import Mathlib.Probability.Distributions.Cauchy
 public import Mathlib.Probability.HasLaw
@@ -54,8 +55,9 @@ parent law.
 * `TauCeti.integrableExpSet_id_cauchyMeasure_zero_scale`,
   `TauCeti.mgf_id_cauchyMeasure_zero_scale`, and
   `TauCeti.cgf_id_cauchyMeasure_zero_scale` — its exponential moments;
-* `TauCeti.fourier_exp_neg_mul_abs_eq_cauchyPDFReal` and
-  `TauCeti.integral_exp_mul_I_mul_cauchyPDFReal` — the Fourier pair behind the transform;
+* `TauCeti.fourier_exp_neg_mul_abs_eq_cauchyPDFReal_zero_loc` and
+  `TauCeti.integral_exp_mul_I_mul_cauchyPDFReal_zero_loc` — the Fourier pair behind the transform;
+* `TauCeti.cauchyMeasure_map_add_const` — translation changes the location parameter;
 * `TauCeti.charFun_cauchyMeasure` — the characteristic function of `cauchyMeasure x₀ γ`;
 * `TauCeti.hasLaw_average_of_iIndepFun_cauchyMeasure` — stability of the family under averaging.
 
@@ -161,10 +163,42 @@ open scoped FourierTransform
 
 variable {γ : ℝ≥0}
 
+private theorem cauchyMeasure_apply_eq_integral (x₀ : ℝ) (hγ : γ ≠ 0)
+    {s : Set ℝ} (hs : MeasurableSet s) :
+    cauchyMeasure x₀ γ s = ENNReal.ofReal (∫ x in s, cauchyPDFReal x₀ γ x) := by
+  rw [cauchyMeasure_of_scale_ne_zero x₀ hγ]
+  change (volume.withDensity (fun x ↦ ENNReal.ofReal (cauchyPDFReal x₀ γ x))) s = _
+  rw [withDensity_apply _ hs,
+    ← ofReal_integral_eq_lintegral_ofReal (integrable_cauchyPDFReal x₀).integrableOn
+      (.of_forall fun x ↦ (cauchyPDF_pos x₀ hγ x).le)]
+
+/-- Translating a Cauchy distribution changes its location parameter by the same amount. -/
+theorem cauchyMeasure_map_add_const (x₀ y : ℝ) (γ : ℝ≥0) :
+    (cauchyMeasure x₀ γ).map (· + y) = cauchyMeasure (x₀ + y) γ := by
+  by_cases hγ : γ = 0
+  · subst γ
+    simp [cauchyMeasure_zero_scale]
+  let e : ℝ ≃ᵐ ℝ := (Homeomorph.addRight y).symm.toMeasurableEquiv
+  have he' : ∀ x, HasDerivAt e ((fun _ ↦ 1) x) x := fun x ↦ (hasDerivAt_id x).sub_const y
+  change (cauchyMeasure x₀ γ).map e.symm = cauchyMeasure (x₀ + y) γ
+  ext s hs
+  rw [cauchyMeasure_of_scale_ne_zero x₀ hγ]
+  change (volume.withDensity (fun x ↦ ENNReal.ofReal (cauchyPDFReal x₀ γ x))).map e.symm s = _
+  rw [
+    e.withDensity_ofReal_map_symm_apply_eq_integral_abs_deriv_mul' hs he'
+      (.of_forall fun x ↦ (cauchyPDF_pos x₀ hγ x).le) (integrable_cauchyPDFReal x₀),
+    cauchyMeasure_apply_eq_integral (x₀ + y) hγ hs]
+  simp only [abs_one, one_mul]
+  congr 2 with x
+  dsimp [e, Homeomorph.addRight]
+  rw [cauchyPDFReal_def, cauchyPDFReal_def]
+  congr 3
+  ring
+
 /-- The Fourier transform of the two-sided exponential of rate `2 π γ` is the Cauchy density of
 scale `γ` centred at the origin. This is `TauCeti.fourier_exp_neg_mul_abs` at the rate that makes
 the Lorentzian a probability density. -/
-theorem fourier_exp_neg_mul_abs_eq_cauchyPDFReal (hγ : γ ≠ 0) (ξ : ℝ) :
+theorem fourier_exp_neg_mul_abs_eq_cauchyPDFReal_zero_loc (hγ : γ ≠ 0) (ξ : ℝ) :
     𝓕 (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ)) ξ = (cauchyPDFReal 0 γ ξ : ℂ) := by
   have hγ' : (0 : ℝ) < (γ : ℝ) := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hγ)
   have ha : (0 : ℝ) < 2 * Real.pi * γ := mul_pos (by positivity) hγ'
@@ -177,9 +211,9 @@ theorem fourier_exp_neg_mul_abs_eq_cauchyPDFReal (hγ : γ ≠ 0) (ξ : ℝ) :
   ring
 
 /-- **The oscillatory integral of the centred Cauchy density.** Fourier inversion turns
-`TauCeti.fourier_exp_neg_mul_abs_eq_cauchyPDFReal` around: pairing the Cauchy density of scale
-`γ` against `exp (i t x)` returns the two-sided exponential `exp (-(γ * |t|))`. -/
-theorem integral_exp_mul_I_mul_cauchyPDFReal (hγ : γ ≠ 0) (t : ℝ) :
+`TauCeti.fourier_exp_neg_mul_abs_eq_cauchyPDFReal_zero_loc` around: pairing the Cauchy density of
+scale `γ` against `exp (i t x)` returns the two-sided exponential `exp (-(γ * |t|))`. -/
+theorem integral_exp_mul_I_mul_cauchyPDFReal_zero_loc (hγ : γ ≠ 0) (t : ℝ) :
     (∫ x : ℝ, Complex.exp ((t : ℂ) * x * Complex.I) * (cauchyPDFReal 0 γ x : ℂ))
       = (Real.exp (-((γ : ℝ) * |t|)) : ℂ) := by
   have hγ' : (0 : ℝ) < (γ : ℝ) := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hγ)
@@ -190,21 +224,31 @@ theorem integral_exp_mul_I_mul_cauchyPDFReal (hγ : γ ≠ 0) (t : ℝ) :
     (integrable_exp_neg_mul_abs ha).ofReal
   have hFf : 𝓕 (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ))
       = fun ξ : ℝ ↦ (cauchyPDFReal 0 γ ξ : ℂ) :=
-    funext (fourier_exp_neg_mul_abs_eq_cauchyPDFReal hγ)
+    funext (fourier_exp_neg_mul_abs_eq_cauchyPDFReal_zero_loc hγ)
   have hintF : Integrable (𝓕 (fun x : ℝ ↦ (Real.exp (-(2 * Real.pi * γ * |x|)) : ℂ))) := by
     rw [hFf]
     exact (integrable_cauchyPDFReal 0).ofReal
   have hinv := congrFun (hcont.fourierInv_fourier_eq hint hintF) (t / (2 * Real.pi))
-  rw [hFf, Real.fourierInv_eq'] at hinv
+  rw [hFf, fourierInv_eq_integral_exp_mul_I] at hinv
   have habs : 2 * Real.pi * (γ : ℝ) * |t / (2 * Real.pi)| = (γ : ℝ) * |t| := by
     rw [abs_div, abs_of_pos hπ]
     field_simp
   rw [← habs, ← hinv]
   refine integral_congr_ae (.of_forall fun v ↦ ?_)
-  simp only [smul_eq_mul]
-  congr 2
-  push_cast [RCLike.inner_apply, starRingEnd_apply, star_trivial]
+  push_cast
   field_simp
+
+private theorem charFun_cauchyMeasure_zero_loc (hγ : γ ≠ 0) (t : ℝ) :
+    charFun (cauchyMeasure 0 γ) t = (Real.exp (-((γ : ℝ) * |t|)) : ℂ) := by
+  have hltop : ∀ᵐ x : ℝ ∂volume, cauchyPDF 0 γ x < ⊤ :=
+    .of_forall fun x ↦ by rw [cauchyPDF_def]; exact ENNReal.ofReal_lt_top
+  rw [charFun_apply_real, cauchyMeasure_of_scale_ne_zero 0 hγ,
+    integral_withDensity_eq_integral_toReal_smul (measurable_cauchyPDF 0 γ) hltop]
+  have htoReal : ∀ x : ℝ, (cauchyPDF 0 γ x).toReal = cauchyPDFReal 0 γ x := fun x ↦ by
+    rw [cauchyPDF_def, ENNReal.toReal_ofReal (cauchyPDF_pos 0 hγ x).le]
+  simp_rw [htoReal]
+  simpa only [Complex.real_smul, mul_comm] using
+    integral_exp_mul_I_mul_cauchyPDFReal_zero_loc hγ t
 
 /-- **The characteristic function of the Cauchy distribution.** For location `x₀` and scale `γ`
 it is `t ↦ exp (t x₀ i - γ |t|)`. The formula is uniform in the scale: at `γ = 0` Mathlib's
@@ -217,33 +261,14 @@ theorem charFun_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) (t : ℝ) :
   rcases eq_or_ne γ 0 with rfl | hγ
   · rw [cauchyMeasure_zero_scale, charFun_dirac]
     simp [RCLike.inner_apply, mul_comm]
-  · have hltop : ∀ᵐ x : ℝ ∂volume, cauchyPDF x₀ γ x < ⊤ :=
-      .of_forall fun x ↦ by rw [cauchyPDF_def]; exact ENNReal.ofReal_lt_top
-    rw [charFun_apply_real, cauchyMeasure_of_scale_ne_zero x₀ hγ,
-      integral_withDensity_eq_integral_toReal_smul (measurable_cauchyPDF x₀ γ) hltop]
-    have htoReal : ∀ x : ℝ, (cauchyPDF x₀ γ x).toReal = cauchyPDFReal x₀ γ x := fun x ↦ by
-      rw [cauchyPDF_def, ENNReal.toReal_ofReal (cauchyPDF_pos x₀ hγ x).le]
-    simp_rw [htoReal]
-    rw [← integral_add_right_eq_self
-      (fun x : ℝ ↦ cauchyPDFReal x₀ γ x • Complex.exp ((t : ℂ) * x * Complex.I)) x₀]
-    have hshift : ∀ x : ℝ, cauchyPDFReal x₀ γ (x + x₀) •
-        Complex.exp ((t : ℂ) * ((x + x₀ : ℝ) : ℂ) * Complex.I)
-        = Complex.exp ((t : ℂ) * x₀ * Complex.I) *
-          (Complex.exp ((t : ℂ) * x * Complex.I) * (cauchyPDFReal 0 γ x : ℂ)) := by
-      intro x
-      have hpdf : cauchyPDFReal x₀ γ (x + x₀) = cauchyPDFReal 0 γ x := by
-        simp [cauchyPDFReal_def]
-      have hexp : (t : ℂ) * ((x : ℂ) + (x₀ : ℂ)) * Complex.I
-          = (t : ℂ) * x₀ * Complex.I + (t : ℂ) * x * Complex.I := by ring
-      rw [hpdf, Complex.real_smul]
-      push_cast
-      rw [hexp, Complex.exp_add]
-      ring
-    simp_rw [hshift]
-    rw [integral_const_mul, integral_exp_mul_I_mul_cauchyPDFReal hγ, Complex.ofReal_exp,
-      ← Complex.exp_add]
+  · have hmap := cauchyMeasure_map_add_const 0 x₀ γ
+    simp only [zero_add] at hmap
+    rw [← hmap, charFun_map_add_const, charFun_cauchyMeasure_zero_loc hγ,
+      Complex.ofReal_exp, ← Complex.exp_add]
+    congr 1
+    simp only [RCLike.inner_apply, conj_trivial]
     push_cast
-    ring_nf
+    ring
 
 /-- **The Cauchy family is stable under averaging.** The sample mean of `n` independent Cauchy
 variables with common location `x₀` and scale `γ` has exactly the same law. -/
