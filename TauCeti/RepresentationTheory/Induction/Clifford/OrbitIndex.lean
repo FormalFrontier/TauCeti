@@ -28,9 +28,9 @@ by `σ`.
 
 ## Main results
 
-* `TauCeti.Representation.isotypicComponentsEquivQuotientInertia`: the equivalence between the
+* `Representation.isotypicComponentsEquivQuotientInertia`: the equivalence between the
   isotypic components of the restriction and the inertia cosets.
-* `TauCeti.Representation.card_isotypicComponents_eq_inertia_index`: the number of irreducible
+* `Representation.card_isotypicComponents_eq_inertia_index`: the number of irreducible
   constituent classes is the index of the inertia group.
 
 ## References
@@ -51,9 +51,9 @@ open scoped MonoidAlgebra
 
 universe u v
 
-namespace TauCeti
-
 namespace Representation
+
+open TauCeti TauCeti.Representation
 
 section OrbitIndex
 
@@ -330,5 +330,3 @@ theorem card_isotypicComponents_eq_inertia_index [ρ.IsIrreducible]
 end OrbitIndex
 
 end Representation
-
-end TauCeti
