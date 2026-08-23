@@ -209,6 +209,7 @@ theorem integral_exp_mul_I_mul_cauchyPDFReal (hγ : γ ≠ 0) (t : ℝ) :
 it is `t ↦ exp (t x₀ i - γ |t|)`. The formula is uniform in the scale: at `γ = 0` Mathlib's
 `cauchyMeasure x₀ 0` is the Dirac mass at `x₀`, whose characteristic function is
 `t ↦ exp (t x₀ i)`. -/
+@[simp]
 theorem charFun_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) (t : ℝ) :
     charFun (cauchyMeasure x₀ γ) t
       = Complex.exp ((t : ℂ) * x₀ * Complex.I - ((γ : ℝ) : ℂ) * |t|) := by
@@ -231,10 +232,11 @@ theorem charFun_cauchyMeasure (x₀ : ℝ) (γ : ℝ≥0) (t : ℝ) :
       intro x
       have hpdf : cauchyPDFReal x₀ γ (x + x₀) = cauchyPDFReal 0 γ x := by
         simp [cauchyPDFReal_def]
+      have hexp : (t : ℂ) * ((x : ℂ) + (x₀ : ℂ)) * Complex.I
+          = (t : ℂ) * x₀ * Complex.I + (t : ℂ) * x * Complex.I := by ring
       rw [hpdf, Complex.real_smul]
       push_cast
-      rw [show (t : ℂ) * ((x : ℂ) + (x₀ : ℂ)) * Complex.I
-        = (t : ℂ) * x₀ * Complex.I + (t : ℂ) * x * Complex.I from by ring, Complex.exp_add]
+      rw [hexp, Complex.exp_add]
       ring
     simp_rw [hshift]
     rw [integral_const_mul, integral_exp_mul_I_mul_cauchyPDFReal hγ, Complex.ofReal_exp,

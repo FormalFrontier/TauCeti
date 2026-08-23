@@ -58,24 +58,23 @@ theorem integral_exp_mul_I_mul_exp_neg_mul_abs (ha : 0 < a) (b : ℝ) :
       = ((2 * a / (a ^ 2 + b ^ 2) : ℝ) : ℂ) := by
   have hre₁ : ((a : ℂ) + b * Complex.I).re = a := by simp
   have hre₂ : (-(a : ℂ) + b * Complex.I).re = -a := by simp
+  have key : ∀ c x : ℝ, Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (c * x) : ℂ)
+      = Complex.exp (((c : ℂ) + b * Complex.I) * x) := by
+    intro c x
+    rw [Complex.ofReal_exp, ← Complex.exp_add]
+    congr 1
+    push_cast
+    ring
   have hm : EqOn (fun x : ℝ ↦ Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
       (fun x : ℝ ↦ Complex.exp (((a : ℂ) + b * Complex.I) * x)) (Iic 0) := by
     intro x hx
-    change Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ)
-      = Complex.exp (((a : ℂ) + b * Complex.I) * x)
-    rw [abs_of_nonpos (mem_Iic.mp hx), Complex.ofReal_exp, ← Complex.exp_add]
-    congr 1
-    push_cast
-    ring
+    have hxa : -(a * |x|) = a * x := by rw [abs_of_nonpos (mem_Iic.mp hx)]; ring
+    simpa only [hxa] using key a x
   have hp : EqOn (fun x : ℝ ↦ Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
       (fun x : ℝ ↦ Complex.exp ((-(a : ℂ) + b * Complex.I) * x)) (Ioi 0) := by
     intro x hx
-    change Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ)
-      = Complex.exp ((-(a : ℂ) + b * Complex.I) * x)
-    rw [abs_of_pos (mem_Ioi.mp hx), Complex.ofReal_exp, ← Complex.exp_add]
-    congr 1
-    push_cast
-    ring
+    have hxa : -(a * |x|) = -a * x := by rw [abs_of_pos (mem_Ioi.mp hx)]; ring
+    simpa only [hxa, Complex.ofReal_neg] using key (-a) x
   have hintm : IntegrableOn
       (fun x : ℝ ↦ Complex.exp ((b : ℂ) * x * Complex.I) * (Real.exp (-(a * |x|)) : ℂ))
       (Iic 0) :=
