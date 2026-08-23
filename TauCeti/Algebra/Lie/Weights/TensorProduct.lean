@@ -231,29 +231,29 @@ theorem genWeightSpace_tensorProduct_eq_iSup (χ : L → K) :
     rwa [← LieSubmodule.iSupIndep_toSubmodule] at this
   exact (congr_fun ((hindep.le_iff_eq_of_iSup_eq_top hptop).mp hle) χ).symm
 
-/-- **Every weight of a tensor product is a sum of weights.** If the `χ`-weight space of `M ⊗ N` is
-nonzero, then `χ = μ + ν` for a weight `μ` of `M` and a weight `ν` of `N`. -/
-private theorem exists_add_eq_of_genWeightSpace_tensorProduct_ne_bot {χ : L → K}
-    (h : genWeightSpace (M ⊗[K] N) χ ≠ ⊥) :
-    ∃ μ ν : L → K, μ + ν = χ ∧ genWeightSpace M μ ≠ ⊥ ∧ genWeightSpace N ν ≠ ⊥ := by
-  by_contra hc
-  push Not at hc
-  refine h ?_
-  rw [← LieSubmodule.toSubmodule_eq_bot, genWeightSpace_tensorProduct_eq_iSup]
-  simp only [iSup_eq_bot]
-  intro μ ν hμν
-  by_cases hμ : genWeightSpace M μ = ⊥
-  · rw [hμ]
-    simp
-  · rw [hc μ ν hμν hμ]
-    simp
+/-- **Every weight of a tensor product is a sum of weights.** If `χ` is a weight of `M ⊗ N`, then
+`χ = μ + ν` for a weight `μ` of `M` and a weight `ν` of `N`. This is the converse of
+`TauCeti.genWeightSpace_tensorProduct_ne_bot`.
 
-/-- **Every weight of a tensor product is a sum of weights**, phrased with `LieModule.Weight`. -/
+If no such pair existed then every term of the decomposition
+`TauCeti.genWeightSpace_tensorProduct_eq_iSup` of the `χ`-weight space would have a zero factor, so
+that weight space would be zero. -/
 theorem exists_weight_add_eq (χ : Weight K L (M ⊗[K] N)) :
     ∃ (μ : Weight K L M) (ν : Weight K L N), (μ : L → K) + (ν : L → K) = (χ : L → K) := by
-  obtain ⟨μ, ν, hμν, hμ, hν⟩ :=
-    exists_add_eq_of_genWeightSpace_tensorProduct_ne_bot χ.genWeightSpace_ne_bot
-  exact ⟨⟨μ, hμ⟩, ⟨ν, hν⟩, hμν⟩
+  by_contra hc
+  push Not at hc
+  have hbot : genWeightSpace (M ⊗[K] N) (χ : L → K) = ⊥ := by
+    rw [← LieSubmodule.toSubmodule_eq_bot, genWeightSpace_tensorProduct_eq_iSup]
+    simp only [iSup_eq_bot]
+    intro μ ν hμν
+    by_cases hμ : genWeightSpace M μ = ⊥
+    · rw [hμ]
+      simp
+    by_cases hν : genWeightSpace N ν = ⊥
+    · rw [hν]
+      simp
+    exact absurd hμν (hc ⟨μ, hμ⟩ ⟨ν, hν⟩)
+  exact absurd hbot χ.genWeightSpace_ne_bot
 
 end Field
 
