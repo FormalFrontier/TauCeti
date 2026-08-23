@@ -65,7 +65,6 @@ theorem fderiv_newtonianKernel_sub_apply_sphere_normal (n : ℕ) (hn2 : n ≠ 2)
 /-- The outward flux of the Newtonian kernel through any sphere centered at its pole is `-1`.
 The factor `r ^ ((n : ℝ) - 1)` is the surface Jacobian for radial scaling from the unit
 sphere. -/
-@[simp]
 theorem integral_fderiv_newtonianKernel_sub_sphere_normal
     (n : ℕ) (hn0 : n ≠ 0) (hn2 : n ≠ 2)
     {a : EuclideanSpace ℝ (Fin n)} {r : ℝ} (hr : 0 < r) :
