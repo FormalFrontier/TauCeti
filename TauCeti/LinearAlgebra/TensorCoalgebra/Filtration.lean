@@ -26,8 +26,8 @@ reduced tensor word.
 ## Main results
 
 * `TauCeti.ReducedTensorWords.iSup_filtration_eq_top`: the filtration is exhaustive.
-* `TauCeti.ReducedTensorWords.deconcatenation_filtration_le`: deconcatenating a word of length at
-  most `n + 1` produces a sum of tensors of two words of length at most `n`.
+* `TauCeti.ReducedTensorWords.map_deconcatenation_filtration_succ_le`: deconcatenating a word of
+  length at most `n + 1` produces a sum of tensors of two words of length at most `n`.
 
 ## References
 
@@ -62,15 +62,11 @@ generating tensor powers of length at most `n`. -/
 theorem filtration_le_iff {n : ℕ} {p : Submodule R (ReducedTensorWords R M)} :
     filtration R M n ≤ p ↔
       ∀ k : {k : ℕ // 0 < k}, k.1 ≤ n → LinearMap.range (of R M k) ≤ p := by
-  constructor
-  · intro h k hk x hx
-    exact h (Submodule.mem_iSup_of_mem k (Submodule.mem_iSup_of_mem hk hx))
-  · intro h
-    exact iSup_le fun k ↦ iSup_le fun hk ↦ h k hk
+  rw [filtration, iSup₂_le_iff]
 
 /-- The conilpotence filtration is increasing. -/
 theorem filtration_monotone : Monotone (filtration R M) := fun _ _ hmn ↦
-  iSup_le fun k ↦ iSup_le fun hk ↦ le_iSup_of_le k (le_iSup_of_le (hk.trans hmn) le_rfl)
+  biSup_mono fun _ hk ↦ hk.trans hmn
 
 /-- A reduced tensor word has positive length, so the filtration starts at zero. -/
 @[simp]
@@ -80,11 +76,7 @@ theorem filtration_zero : filtration R M 0 = ⊥ :=
 /-- The conilpotence filtration is exhaustive. -/
 theorem iSup_filtration_eq_top : ⨆ n : ℕ, filtration R M n = ⊤ := by
   refine le_antisymm le_top ?_
-  have hgenerate : ⨆ k : {k : ℕ // 0 < k}, LinearMap.range (of R M k) = ⊤ := by
-    simpa [of, DirectSum.lof] using
-      (DFinsupp.iSup_range_lsingle (R := R)
-        (M := fun k : {k : ℕ // 0 < k} ↦ TensorPower R k.1 M))
-  rw [← hgenerate]
+  rw [← iSup_range_of]
   refine iSup_le fun k ↦ le_iSup_of_le k.1 ?_
   rintro _ ⟨x, rfl⟩
   exact of_mem_filtration R M le_rfl x
@@ -93,18 +85,18 @@ theorem iSup_filtration_eq_top : ⨆ n : ℕ, filtration R M n = ⊤ := by
 theorem subword_mem_filtration {l : ℕ} (x : Fin l → M) (a : ℕ) {b n : ℕ} (hb : b ≤ n) :
     subword R x a b ∈ filtration R M n := by
   rcases Nat.eq_zero_or_pos b with hb0 | hb0
-  · rw [hb0, subword_zero]
+  · rw [hb0, subword_length_zero]
     exact Submodule.zero_mem _
   by_cases hab : a + b ≤ l
   · rw [subword_eq_of_tprod R x hb0 hab]
     exact of_mem_filtration R M hb _
-  · rw [subword_eq_zero_of_lt R x (by omega)]
+  · rw [subword_eq_zero_of_lt_add R x (by omega)]
     exact Submodule.zero_mem _
 
 /-- Reduced deconcatenation strictly decreases tensor length: a word of length at most `n + 1` is
 sent into the image of `filtration n ⊗ filtration n`.  This is the length-lowering step behind the
 conilpotence of the reduced tensor coalgebra. -/
-theorem deconcatenation_filtration_le (n : ℕ) :
+theorem map_deconcatenation_filtration_succ_le (n : ℕ) :
     Submodule.map (deconcatenation R M) (filtration R M (n + 1)) ≤
       LinearMap.range (TensorProduct.mapIncl (filtration R M n) (filtration R M n)) := by
   rw [TensorProduct.range_mapIncl, Submodule.map_le_iff_le_comap, filtration_le_iff]

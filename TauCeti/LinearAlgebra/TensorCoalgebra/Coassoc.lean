@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.TensorProduct.Associator
-public import Mathlib.Order.Interval.Finset.Nat
 public import TauCeti.LinearAlgebra.TensorCoalgebra.Basic
 
 /-!
@@ -47,6 +46,79 @@ namespace ReducedTensorWords
 
 variable (R : Type uR) {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
 
+/-- Cutting the left block again gives the sum over all possible earlier cut positions. -/
+theorem rTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
+    (hc : c ∈ Finset.Ioo 0 b) :
+    TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
+        (ReducedTensorWords R M)
+        (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
+          (subword R y a c ⊗ₜ[R] subword R y (a + c) (b - c))) =
+      ∑ d ∈ Finset.Ioo 0 b,
+        subword R y a d ⊗ₜ[R]
+          (subword R y (a + d) (c - d) ⊗ₜ[R] subword R y (a + c) (b - c)) := by
+  simp only [Finset.mem_Ioo] at hc
+  rw [LinearMap.rTensor_tmul, deconcatenation_subword R y (a := a) (b := c),
+    TensorProduct.sum_tmul, map_sum]
+  simp only [TensorProduct.assoc_tmul]
+  refine Finset.sum_subset (Finset.Ioo_subset_Ioo le_rfl (by omega)) ?_
+  intro d hd hd'
+  simp only [Finset.mem_Ioo] at hd hd'
+  have hcd : c - d = 0 := by omega
+  rw [hcd, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
+
+/-- Cutting the right block again gives the sum indexed by the relative second cut position. -/
+theorem lTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) {c : ℕ}
+    (hc : c ∈ Finset.Ioo 0 b) :
+    LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
+        (subword R y a c ⊗ₜ[R] subword R y (a + c) (b - c)) =
+      ∑ q ∈ Finset.Ioo 0 b,
+        subword R y a c ⊗ₜ[R]
+          (subword R y (a + c) (q - c) ⊗ₜ[R] subword R y (a + q) (b - q)) := by
+  simp only [Finset.mem_Ioo] at hc
+  rw [LinearMap.lTensor_tmul, deconcatenation_subword R y (a := a + c) (b := b - c),
+    TensorProduct.tmul_sum]
+  let g := fun q ↦ subword R y a c ⊗ₜ[R]
+    (subword R y (a + c) (q - c) ⊗ₜ[R] subword R y (a + q) (b - q))
+  calc
+    _ = ∑ q ∈ Finset.Ioo c b, g q := by
+      rw [← Finset.Ico_succ_left_eq_Ioo 0 (b - c), ← Finset.Ico_succ_left_eq_Ioo c b]
+      calc
+        _ = ∑ e ∈ Finset.Ico 1 (b - c), g (c + e) := by
+          refine Finset.sum_congr rfl fun e he ↦ ?_
+          simp only [Finset.mem_Ico] at he
+          dsimp only [g]
+          have h1 : c + e - c = e := by omega
+          have h2 : b - (c + e) = b - c - e := by omega
+          rw [h1, h2, Nat.add_assoc]
+        _ = ∑ q ∈ Finset.Ico (1 + c) (b - c + c), g q :=
+          Finset.sum_Ico_add g 1 (b - c) c
+        _ = _ := by
+          congr 2
+          · simp only [Order.succ_eq_add_one]
+            omega
+          · omega
+    _ = ∑ q ∈ Finset.Ioo 0 b, g q := by
+      refine Finset.sum_subset (Finset.Ioo_subset_Ioo (Nat.zero_le c) le_rfl) ?_
+      intro q hq hq'
+      simp only [Finset.mem_Ioo] at hq hq'
+      have hqc : q - c = 0 := by omega
+      dsimp only [g]
+      rw [hqc, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
+
+/-- Both ways of iterating deconcatenation agree on every subword. -/
+theorem deconcatenation_coassoc_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) :
+    TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
+        (ReducedTensorWords R M)
+        (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
+          (deconcatenation R M (subword R y a b))) =
+      LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
+        (deconcatenation R M (subword R y a b)) := by
+  rw [deconcatenation_subword R y (a := a) (b := b)]
+  simp only [map_sum]
+  rw [Finset.sum_congr rfl fun c hc ↦ rTensor_deconcatenation_subword R y a b hc,
+    Finset.sum_congr rfl fun c hc ↦ lTensor_deconcatenation_subword R y a b hc]
+  exact Finset.sum_comm
+
 variable (M)
 
 /-- Reduced deconcatenation is coassociative: cutting a tensor word twice gives the same sum of
@@ -58,81 +130,11 @@ theorem deconcatenation_coassoc :
         LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M) ∘ₗ
           deconcatenation R M =
       LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M) ∘ₗ deconcatenation R M := by
-  have key : ∀ (n : ℕ) (hn : 0 < n) (y : Fin n → M),
-      TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
-          (ReducedTensorWords R M)
-          (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
-            (deconcatenation R M (of R M ⟨n, hn⟩ (PiTensorProduct.tprod R y)))) =
-        LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
-          (deconcatenation R M (of R M ⟨n, hn⟩ (PiTensorProduct.tprod R y))) := by
-    intro n hn y
-    rw [of_tprod_eq_subword R hn y, deconcatenation_subword R y (a := 0) (b := n)]
-    simp only [Nat.zero_add, map_sum]
-    -- Cutting the left factor again, then extending the inner sum by vanishing terms.
-    have hL : ∀ c ∈ Finset.Ioo 0 n,
-        TensorProduct.assoc R (ReducedTensorWords R M) (ReducedTensorWords R M)
-            (ReducedTensorWords R M)
-            (LinearMap.rTensor (ReducedTensorWords R M) (deconcatenation R M)
-              (subword R y 0 c ⊗ₜ[R] subword R y c (n - c))) =
-          ∑ d ∈ Finset.Ioo 0 n,
-            subword R y 0 d ⊗ₜ[R] (subword R y d (c - d) ⊗ₜ[R] subword R y c (n - c)) := by
-      intro c hc
-      simp only [Finset.mem_Ioo] at hc
-      rw [LinearMap.rTensor_tmul, deconcatenation_subword R y (a := 0) (b := c),
-        TensorProduct.sum_tmul, map_sum]
-      simp only [Nat.zero_add, TensorProduct.assoc_tmul]
-      refine Finset.sum_subset (Finset.Ioo_subset_Ioo le_rfl (by omega)) ?_
-      intro d hd hd'
-      simp only [Finset.mem_Ioo] at hd hd'
-      have hcd : c - d = 0 := by omega
-      rw [hcd, subword_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
-    -- Cutting the right factor again, reindexing by the absolute position of the second cut.
-    have hR : ∀ c ∈ Finset.Ioo 0 n,
-        LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
-            (subword R y 0 c ⊗ₜ[R] subword R y c (n - c)) =
-          ∑ q ∈ Finset.Ioo 0 n,
-            subword R y 0 c ⊗ₜ[R] (subword R y c (q - c) ⊗ₜ[R] subword R y q (n - q)) := by
-      intro c hc
-      simp only [Finset.mem_Ioo] at hc
-      rw [LinearMap.lTensor_tmul, deconcatenation_subword R y (a := c) (b := n - c),
-        TensorProduct.tmul_sum]
-      rw [Finset.sum_nbij' (t := Finset.Ioo c n) (fun e ↦ c + e) (fun q ↦ q - c)
-        (g := fun q ↦ subword R y 0 c ⊗ₜ[R]
-          (subword R y c (q - c) ⊗ₜ[R] subword R y q (n - q)))]
-      · refine Finset.sum_subset (Finset.Ioo_subset_Ioo (Nat.zero_le c) le_rfl) ?_
-        intro q hq hq'
-        simp only [Finset.mem_Ioo] at hq hq'
-        have hqc : q - c = 0 := by omega
-        rw [hqc, subword_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
-      · intro e he
-        simp only [Finset.mem_Ioo] at he ⊢
-        omega
-      · intro q hq
-        simp only [Finset.mem_Ioo] at hq ⊢
-        omega
-      · intro e _
-        omega
-      · intro q hq
-        simp only [Finset.mem_Ioo] at hq
-        omega
-      · intro e he
-        simp only [Finset.mem_Ioo] at he
-        have h1 : c + e - c = e := by omega
-        have h2 : n - (c + e) = n - c - e := by omega
-        rw [h1, h2]
-    rw [Finset.sum_congr rfl hL, Finset.sum_congr rfl hR]
-    exact Finset.sum_comm
-  apply DirectSum.linearMap_ext R
-  intro k
-  apply LinearMap.ext
-  intro z
-  induction z using PiTensorProduct.induction_on with
-  | smul_tprod r y =>
-      simp only [LinearMap.comp_apply, map_smul, LinearEquiv.coe_coe]
-      convert congrArg (r • ·) (key k.1 k.2 y) using 1 <;> rfl
-  | add u v hu hv =>
-      simp only [LinearMap.comp_apply, map_add] at hu hv ⊢
-      rw [hu, hv]
+  apply linearMap_ext R M
+  intro k y
+  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe]
+  rw [of_tprod_eq_subword R k.2 y]
+  exact deconcatenation_coassoc_subword R y 0 k.1
 
 end ReducedTensorWords
 
