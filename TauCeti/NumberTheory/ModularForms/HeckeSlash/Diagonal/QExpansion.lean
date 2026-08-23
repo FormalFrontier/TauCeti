@@ -95,13 +95,6 @@ lemma slash_natDiagGL_d_one_eq_smul_levelRaise {𝒢 𝒢' : Subgroup (GL (Fin 2
   ext τ
   rw [slash_natDiagGL_d_one_apply, Pi.smul_apply, smul_eq_mul, ModularForm.levelRaise_apply]
 
-private theorem analyticAt_cuspFunction_levelRaise
-    {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)} [𝒢'.HasDetOne] [NeZero d]
-    (h𝒢' : (1 : ℝ) ∈ 𝒢'.strictPeriods)
-    (hle : 𝒢' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢) (f : ModularForm 𝒢 k) :
-    AnalyticAt ℂ (cuspFunction 1 ⇑(ModularForm.levelRaise d hle f)) 0 :=
-  ModularFormClass.analyticAt_cuspFunction_zero (ModularForm.levelRaise d hle f) one_pos h𝒢'
-
 /-- The cusp function of a rational diagonal slash is analytic at `q = 0`. The target-group
 period is exactly the hypothesis needed to obtain this from the level-raised modular form. -/
 theorem _root_.ModularForm.analyticAt_cuspFunction_slash_natDiagGL_d_one
@@ -112,7 +105,8 @@ theorem _root_.ModularForm.analyticAt_cuspFunction_slash_natDiagGL_d_one
   set g := ModularForm.levelRaise d hle f with hg
   have hraise : AnalyticAt ℂ (cuspFunction 1 ⇑g) 0 := by
     rw [hg]
-    exact analyticAt_cuspFunction_levelRaise h𝒢' hle f
+    exact ModularFormClass.analyticAt_cuspFunction_zero
+      (ModularForm.levelRaise d hle f) one_pos h𝒢'
   rw [slash_natDiagGL_d_one_eq_smul_levelRaise hle f, ← hg,
     cuspFunction_smul hraise.continuousAt]
   exact hraise.const_smul
@@ -128,7 +122,8 @@ theorem _root_.ModularForm.qExpansion_slash_natDiagGL_d_one
       (d : ℂ) ^ (k - 1) • (qExpansion 1 f).expand d (NeZero.ne d) := by
   rw [slash_natDiagGL_d_one_eq_smul_levelRaise hle f,
     UpperHalfPlane.qExpansion_smul
-      (analyticAt_cuspFunction_levelRaise h𝒢' hle f),
+      (ModularFormClass.analyticAt_cuspFunction_zero
+        (ModularForm.levelRaise d hle f) one_pos h𝒢'),
     ModularForm.qExpansion_levelRaise h𝒢 h𝒢' hle]
 
 /-- The coefficient form of `qExpansion_slash_natDiagGL_d_one`: the diagonal term contributes
