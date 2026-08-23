@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.FiniteBilinearModule.OrthogonalComplement
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Complement
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality
 
 /-!
