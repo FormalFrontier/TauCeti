@@ -1,0 +1,338 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.Probability.Distributions.Beta
+
+/-!
+# The regularized incomplete beta function
+
+For positive shape parameters `a` and `b` the *regularized incomplete beta function* is
+`I_x(a, b) = (∫ t in 0..x, t ^ (a - 1) * (1 - t) ^ (b - 1)) / Β(a, b)`, where `Β` is Euler's beta
+function `ProbabilityTheory.beta`. It is the cumulative distribution function of the beta law, and
+it also expresses the cumulative distribution functions of Student's `t`, Fisher's `F` and the
+negative binomial law, together with the binomial tail.
+
+`TauCeti.regularizedIncompleteBeta` clamps its argument to `[0, 1]`, so it is defined — and equal
+to the cdf of the beta law — on all of `ℝ`. Outside the positive parameter range it is zero, with
+one deliberate exception: `regularizedIncompleteBeta 0 b x = 1` for `0 < b` and `0 ≤ x`. This
+records the cdf of the weak limit `betaMeasure a b → Measure.dirac 0` as `a → 0⁺`, and it is what
+makes the binomial-tail formula `(binomial n p).real {k | m ≤ k} = I_p(m, n - m + 1)` hold at
+`m = 0` without a separate case.
+
+## Main results
+
+* `TauCeti.regularizedIncompleteBeta` — the definition;
+* `TauCeti.regularizedIncompleteBeta_zero_left` — the value `1` at the boundary `a = 0`;
+* `TauCeti.regularizedIncompleteBeta_of_nonpos` and
+  `TauCeti.regularizedIncompleteBeta_of_one_le` — the values `0` and `1` off `(0, 1)`;
+* `TauCeti.monotone_regularizedIncompleteBeta` and
+  `TauCeti.continuous_regularizedIncompleteBeta` — monotonicity and continuity on all of `ℝ`;
+* `TauCeti.hasDerivAt_regularizedIncompleteBeta` — the derivative on `(0, 1)`;
+* `TauCeti.regularizedIncompleteBeta_reflect` — the reflection formula
+  `I_x(a, b) = 1 - I_{1-x}(b, a)`;
+* `TauCeti.regularizedIncompleteBeta_add_one_left` — the unit-step recurrence
+  `I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))`.
+
+Four auxiliary results about Euler's beta function itself are proved on the way and are stated for
+reuse: `TauCeti.intervalIntegrable_rpow_mul_one_sub_rpow` and
+`TauCeti.integral_rpow_mul_one_sub_rpow` for its integral — the latter replaces the private
+calculation previously used by `TauCeti/Probability/Distributions/Beta.lean` — together with
+`TauCeti.beta_comm` and `TauCeti.beta_add_one_left`, the two parameter identities behind the
+reflection formula and the recurrence.
+
+## References
+
+* Tau Ceti roadmap, `StandardDistributions`, Layer 2, "Regularized incomplete beta".
+* [NIST Digital Library of Mathematical Functions, §8.17](https://dlmf.nist.gov/8.17); the
+  recurrence is [8.17.20](https://dlmf.nist.gov/8.17.E20).
+-/
+
+public section
+
+namespace TauCeti
+
+open MeasureTheory ProbabilityTheory Set
+
+variable {a b x : ℝ}
+
+/-! ## Euler's beta integral -/
+
+/-- The integrand `t ^ (a - 1) * (1 - t) ^ (b - 1)` of Euler's beta integral is interval
+integrable between any two points of `[0, 1]`. Both endpoint singularities are integrable
+precisely because the exponents exceed `-1`. -/
+theorem intervalIntegrable_rpow_mul_one_sub_rpow (ha : 0 < a) (hb : 0 < b) {u v : ℝ}
+    (hu : u ∈ Icc (0 : ℝ) 1) (hv : v ∈ Icc (0 : ℝ) 1) :
+    IntervalIntegrable (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1)) volume u v := by
+  have key : IntervalIntegrable (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1)) volume 0 1 := by
+    have hleft : IntervalIntegrable (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1))
+        volume 0 (1 / 2) := by
+      refine (intervalIntegral.intervalIntegrable_rpow' (by linarith)).mul_continuousOn ?_
+      refine ContinuousOn.rpow_const (by fun_prop) fun t ht => Or.inl ?_
+      rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1 / 2)] at ht
+      exact sub_ne_zero_of_ne (show t < 1 by linarith [ht.2]).ne'
+    have hright : IntervalIntegrable (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1))
+        volume (1 / 2) 1 := by
+      have hbase : IntervalIntegrable (fun t : ℝ => (1 - t) ^ (b - 1)) volume 1 (1 / 2) := by
+        have h := (intervalIntegral.intervalIntegrable_rpow' (a := 0) (b := 1 / 2)
+          (r := b - 1) (by linarith)).comp_sub_left 1
+        rwa [sub_zero, show (1 : ℝ) - 1 / 2 = 1 / 2 by norm_num] at h
+      refine (hbase.continuousOn_mul ?_).symm
+      refine ContinuousOn.rpow_const (by fun_prop) fun t ht => Or.inl ?_
+      rw [uIcc_of_ge (by norm_num : (1 / 2 : ℝ) ≤ 1)] at ht
+      exact (show (0 : ℝ) < t by linarith [ht.1]).ne'
+    exact hleft.trans hright
+  refine key.mono_set (uIcc_subset_uIcc ?_ ?_) <;>
+    rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
+  exacts [hu, hv]
+
+/-- Euler's beta integral, in real-valued interval form: for positive parameters the integral of
+`t ^ (a - 1) * (1 - t) ^ (b - 1)` over `[0, 1]` is `Β(a, b)`. -/
+theorem integral_rpow_mul_one_sub_rpow (ha : 0 < a) (hb : 0 < b) :
+    ∫ t in (0 : ℝ)..1, t ^ (a - 1) * (1 - t) ^ (b - 1) = beta a b := by
+  rw [beta_eq_betaIntegralReal a b ha hb, Complex.betaIntegral,
+    intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1),
+    intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1),
+    ← RCLike.re_to_complex, ← integral_re]
+  · refine setIntegral_congr_fun measurableSet_Ioc fun t ⟨ht0, ht1⟩ ↦ ?_
+    norm_cast
+    rw [← Complex.ofReal_cpow, ← Complex.ofReal_cpow, RCLike.re_to_complex,
+      Complex.re_mul_ofReal, Complex.ofReal_re]
+    all_goals linarith
+  · convert! Complex.betaIntegral_convergent (u := a) (v := b) (by simpa) (by simpa)
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one : (0 : ℝ) ≤ 1), IntegrableOn]
+
+/-- Euler's beta function is symmetric in its two parameters. -/
+theorem beta_comm (a b : ℝ) : beta a b = beta b a := by
+  rw [ProbabilityTheory.beta, ProbabilityTheory.beta, mul_comm, add_comm]
+
+/-- The unit step of Euler's beta function in its first parameter. -/
+theorem beta_add_one_left (ha : 0 < a) (hb : 0 < b) :
+    beta (a + 1) b = a / (a + b) * beta a b := by
+  have hab : (0 : ℝ) < a + b := by linarith
+  have hshift : a + 1 + b = a + b + 1 := by ring
+  rw [ProbabilityTheory.beta, ProbabilityTheory.beta, hshift, Real.Gamma_add_one ha.ne',
+    Real.Gamma_add_one hab.ne']
+  field_simp
+
+/-! ## The regularized incomplete beta function -/
+
+/-- The regularized incomplete beta function `I_x(a, b)`, extended to all real arguments by
+clamping `x` to `[0, 1]`. It is zero outside the positive parameter range, except that
+`regularizedIncompleteBeta 0 b x = 1` for `0 < b` and `0 ≤ x`; that convention records the cdf of
+the weak limit of `betaMeasure a b` as `a → 0⁺`. -/
+noncomputable def regularizedIncompleteBeta (a b x : ℝ) : ℝ :=
+  if a = 0 ∧ 0 < b ∧ 0 ≤ x then 1
+  else if 0 < a ∧ 0 < b then
+    (∫ t in (0 : ℝ)..min 1 (max x 0), t ^ (a - 1) * (1 - t) ^ (b - 1)) / beta a b
+  else 0
+
+/-- The clamped argument of `TauCeti.regularizedIncompleteBeta` lies in `[0, 1]`. -/
+private lemma clamp_mem_Icc (x : ℝ) : min 1 (max x 0) ∈ Icc (0 : ℝ) 1 :=
+  ⟨le_min zero_le_one (le_max_right x 0), min_le_left _ _⟩
+
+/-- On the positive parameter range the regularized incomplete beta function is the normalized
+integral of the beta integrand up to the clamped argument. -/
+theorem regularizedIncompleteBeta_of_pos (ha : 0 < a) (hb : 0 < b) (x : ℝ) :
+    regularizedIncompleteBeta a b x =
+      (∫ t in (0 : ℝ)..min 1 (max x 0), t ^ (a - 1) * (1 - t) ^ (b - 1)) / beta a b := by
+  rw [regularizedIncompleteBeta]
+  split_ifs with h₁ h₂
+  · exact absurd h₁.1 ha.ne'
+  · rfl
+  · exact absurd ⟨ha, hb⟩ h₂
+
+/-- The boundary convention at `a = 0`: the regularized incomplete beta function is the cdf of
+`Measure.dirac 0`, the weak limit of `betaMeasure a b` as `a → 0⁺`. -/
+theorem regularizedIncompleteBeta_zero_left (hb : 0 < b) (hx : 0 ≤ x) :
+    regularizedIncompleteBeta 0 b x = 1 := by
+  rw [regularizedIncompleteBeta]
+  split_ifs with h₁ h₂
+  · rfl
+  · exact absurd ⟨rfl, hb, hx⟩ h₁
+  · exact absurd ⟨rfl, hb, hx⟩ h₁
+
+/-- The regularized incomplete beta function vanishes below the support of the beta law. -/
+theorem regularizedIncompleteBeta_of_nonpos (ha : 0 < a) (hb : 0 < b) (hx : x ≤ 0) :
+    regularizedIncompleteBeta a b x = 0 := by
+  rw [regularizedIncompleteBeta_of_pos ha hb, max_eq_right hx,
+    min_eq_right (zero_le_one : (0 : ℝ) ≤ 1), intervalIntegral.integral_same, zero_div]
+
+/-- The regularized incomplete beta function is `1` above the support of the beta law. -/
+theorem regularizedIncompleteBeta_of_one_le (ha : 0 < a) (hb : 0 < b) (hx : 1 ≤ x) :
+    regularizedIncompleteBeta a b x = 1 := by
+  rw [regularizedIncompleteBeta_of_pos ha hb, max_eq_left (by linarith : (0 : ℝ) ≤ x),
+    min_eq_left hx, integral_rpow_mul_one_sub_rpow ha hb, div_self (beta_pos ha hb).ne']
+
+/-- The beta integrand is nonnegative on `[0, 1]`. -/
+private lemma beta_integrand_nonneg {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
+    0 ≤ t ^ (a - 1) * (1 - t) ^ (b - 1) :=
+  mul_nonneg (Real.rpow_nonneg ht.1 _) (Real.rpow_nonneg (by linarith [ht.2]) _)
+
+/-- The regularized incomplete beta function is monotone. -/
+theorem monotone_regularizedIncompleteBeta (ha : 0 < a) (hb : 0 < b) :
+    Monotone (regularizedIncompleteBeta a b) := by
+  intro x y hxy
+  have hx := clamp_mem_Icc x
+  have hy := clamp_mem_Icc y
+  have hle : min 1 (max x 0) ≤ min 1 (max y 0) := min_le_min le_rfl (max_le_max hxy le_rfl)
+  have hadd := intervalIntegral.integral_add_adjacent_intervals
+    (f := fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1)) (μ := volume)
+    (intervalIntegrable_rpow_mul_one_sub_rpow ha hb (mem_Icc.2 ⟨le_rfl, zero_le_one⟩) hx)
+    (intervalIntegrable_rpow_mul_one_sub_rpow ha hb hx hy)
+  have hnonneg : 0 ≤ ∫ t in (min 1 (max x 0))..(min 1 (max y 0)),
+      t ^ (a - 1) * (1 - t) ^ (b - 1) :=
+    intervalIntegral.integral_nonneg hle fun t ht =>
+      beta_integrand_nonneg ⟨hx.1.trans ht.1, ht.2.trans hy.2⟩
+  rw [regularizedIncompleteBeta_of_pos ha hb, regularizedIncompleteBeta_of_pos ha hb]
+  gcongr
+  · exact (beta_pos ha hb).le
+  · linarith
+
+/-- The regularized incomplete beta function is nonnegative. -/
+theorem regularizedIncompleteBeta_nonneg (ha : 0 < a) (hb : 0 < b) (x : ℝ) :
+    0 ≤ regularizedIncompleteBeta a b x :=
+  (regularizedIncompleteBeta_of_nonpos ha hb (min_le_right x 0)).symm.trans_le
+    (monotone_regularizedIncompleteBeta ha hb (min_le_left x 0))
+
+/-- The regularized incomplete beta function is at most `1`. -/
+theorem regularizedIncompleteBeta_le_one (ha : 0 < a) (hb : 0 < b) (x : ℝ) :
+    regularizedIncompleteBeta a b x ≤ 1 :=
+  (monotone_regularizedIncompleteBeta ha hb (le_max_left x 1)).trans_eq
+    (regularizedIncompleteBeta_of_one_le ha hb (le_max_right x 1))
+
+/-- The regularized incomplete beta function is continuous on all of `ℝ`, including at the two
+endpoints of the support, where the integrand may blow up. -/
+theorem continuous_regularizedIncompleteBeta (ha : 0 < a) (hb : 0 < b) :
+    Continuous (regularizedIncompleteBeta a b) := by
+  have hII := intervalIntegrable_rpow_mul_one_sub_rpow ha hb
+    (u := 0) (v := 1) (mem_Icc.2 ⟨le_rfl, zero_le_one⟩) (mem_Icc.2 ⟨zero_le_one, le_rfl⟩)
+  have hc : Continuous fun x : ℝ =>
+      ∫ t in (0 : ℝ)..min 1 (max x 0), t ^ (a - 1) * (1 - t) ^ (b - 1) :=
+    (intervalIntegral.continuousOn_primitive_interval' hII left_mem_uIcc).comp_continuous
+      (by fun_prop) fun x => by
+        rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]; exact clamp_mem_Icc x
+  have hfun : regularizedIncompleteBeta a b =
+      fun x : ℝ => (∫ t in (0 : ℝ)..min 1 (max x 0), t ^ (a - 1) * (1 - t) ^ (b - 1)) / beta a b :=
+    funext (regularizedIncompleteBeta_of_pos ha hb)
+  rw [hfun]
+  exact hc.div_const (beta a b)
+
+/-- The derivative of the regularized incomplete beta function on the open unit interval is the
+normalized beta density. No differentiability is claimed at the endpoints: for `a < 1` or `b < 1`
+the density is unbounded there. -/
+theorem hasDerivAt_regularizedIncompleteBeta (ha : 0 < a) (hb : 0 < b)
+    (hx0 : 0 < x) (hx1 : x < 1) :
+    HasDerivAt (regularizedIncompleteBeta a b)
+      (x ^ (a - 1) * (1 - x) ^ (b - 1) / beta a b) x := by
+  have hII := intervalIntegrable_rpow_mul_one_sub_rpow ha hb
+    (u := 0) (v := x) (mem_Icc.2 ⟨le_rfl, zero_le_one⟩) (mem_Icc.2 ⟨hx0.le, hx1.le⟩)
+  have hmble : Measurable fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1) := by fun_prop
+  have hcont : ContinuousAt (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1)) x := by
+    refine ContinuousAt.mul (Real.continuousAt_rpow_const x (a - 1) (Or.inl hx0.ne')) ?_
+    exact ContinuousAt.rpow_const (by fun_prop) (Or.inl (sub_ne_zero_of_ne hx1.ne'))
+  have hderiv := (intervalIntegral.integral_hasDerivAt_right hII
+    hmble.stronglyMeasurable.stronglyMeasurableAtFilter hcont).div_const (beta a b)
+  refine hderiv.congr_of_eventuallyEq ?_
+  filter_upwards [Ioo_mem_nhds hx0 hx1] with y hy
+  rw [regularizedIncompleteBeta_of_pos ha hb, max_eq_left hy.1.le, min_eq_right hy.2.le]
+
+/-- The reflection formula `I_x(a, b) = 1 - I_{1-x}(b, a)`. It is stated only on `[0, 1]`: the two
+`a = 0` and `b = 0` boundary conventions record two different atomic limit laws, so no reflection
+identity can hold at both. -/
+theorem regularizedIncompleteBeta_reflect (ha : 0 < a) (hb : 0 < b)
+    (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    regularizedIncompleteBeta a b x = 1 - regularizedIncompleteBeta b a (1 - x) := by
+  have hmem : x ∈ Icc (0 : ℝ) 1 := ⟨hx0, hx1⟩
+  have hmem' : 1 - x ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith⟩
+  have hflip : (fun t : ℝ => t ^ (b - 1) * (1 - t) ^ (a - 1)) =
+      fun t : ℝ => (fun s : ℝ => s ^ (a - 1) * (1 - s) ^ (b - 1)) (1 - t) := by
+    funext t
+    simp only [sub_sub_cancel]
+    rw [mul_comm]
+  have hsub : ∫ t in (0 : ℝ)..(1 - x), t ^ (b - 1) * (1 - t) ^ (a - 1) =
+      ∫ t in x..1, t ^ (a - 1) * (1 - t) ^ (b - 1) := by
+    rw [hflip, intervalIntegral.integral_comp_sub_left
+      (fun s : ℝ => s ^ (a - 1) * (1 - s) ^ (b - 1)) 1]
+    norm_num
+  have hadd := intervalIntegral.integral_add_adjacent_intervals
+    (f := fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1)) (μ := volume)
+    (intervalIntegrable_rpow_mul_one_sub_rpow ha hb (mem_Icc.2 ⟨le_rfl, zero_le_one⟩) hmem)
+    (intervalIntegrable_rpow_mul_one_sub_rpow ha hb hmem (mem_Icc.2 ⟨zero_le_one, le_rfl⟩))
+  rw [integral_rpow_mul_one_sub_rpow ha hb] at hadd
+  rw [regularizedIncompleteBeta_of_pos ha hb, regularizedIncompleteBeta_of_pos hb ha,
+    max_eq_left hx0, min_eq_right hx1, max_eq_left hmem'.1, min_eq_right hmem'.2, hsub,
+    beta_comm b a, eq_sub_iff_add_eq, ← add_div, hadd, div_self (beta_pos ha hb).ne']
+
+/-! ## The unit-step recurrence -/
+
+/-- The unit-step recurrence in the first parameter,
+`I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))`, in the form of
+[DLMF 8.17.20](https://dlmf.nist.gov/8.17.E20). -/
+theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
+    (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    regularizedIncompleteBeta (a + 1) b x = regularizedIncompleteBeta a b x -
+      x ^ a * (1 - x) ^ b / (a * beta a b) := by
+  have ha1 : (0 : ℝ) < a + 1 := by linarith
+  have hb1 : (0 : ℝ) < b + 1 := by linarith
+  have hab : (0 : ℝ) < a + b := by linarith
+  have hmem : x ∈ Icc (0 : ℝ) 1 := ⟨hx0, hx1⟩
+  have hzero : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
+  -- the three integrals appearing in the recurrence
+  have hI := intervalIntegrable_rpow_mul_one_sub_rpow ha hb hzero hmem
+  have hJ : IntervalIntegrable (fun t : ℝ => t ^ a * (1 - t) ^ (b - 1)) volume 0 x := by
+    simpa using intervalIntegrable_rpow_mul_one_sub_rpow ha1 hb hzero hmem
+  have hA : IntervalIntegrable (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ b) volume 0 x := by
+    simpa using intervalIntegrable_rpow_mul_one_sub_rpow ha hb1 hzero hmem
+  -- splitting `(1 - t) ^ b = (1 - t) ^ (b - 1) * (1 - t)`
+  have hsplit : ∫ t in (0 : ℝ)..x, t ^ (a - 1) * (1 - t) ^ b =
+      (∫ t in (0 : ℝ)..x, t ^ (a - 1) * (1 - t) ^ (b - 1)) -
+        ∫ t in (0 : ℝ)..x, t ^ a * (1 - t) ^ (b - 1) := by
+    rw [← intervalIntegral.integral_sub hI hJ]
+    refine intervalIntegral.integral_congr_ae (Filter.Eventually.of_forall fun t ht => ?_)
+    rw [uIoc_of_le hx0] at ht
+    have ht0 : 0 < t := ht.1
+    have ht1 : t ≤ 1 := ht.2.trans hx1
+    rcases eq_or_lt_of_le ht1 with rfl | ht1'
+    · rw [Real.one_rpow, Real.one_rpow, sub_self, Real.zero_rpow hb.ne']
+      ring
+    · have h1t : (0 : ℝ) < 1 - t := by linarith
+      rw [show b = b - 1 + 1 by ring, Real.rpow_add h1t, Real.rpow_one]
+      nth_rewrite 3 [show a = a - 1 + 1 by ring]
+      rw [Real.rpow_add ht0, Real.rpow_one]
+      ring_nf
+  -- the fundamental theorem of calculus applied to `t ^ a * (1 - t) ^ b`
+  have hftc : ∫ t in (0 : ℝ)..x, (a * (t ^ (a - 1) * (1 - t) ^ b) -
+      b * (t ^ a * (1 - t) ^ (b - 1))) = x ^ a * (1 - x) ^ b := by
+    have hcontf : ContinuousOn (fun t : ℝ => t ^ a * (1 - t) ^ b) (Icc 0 x) :=
+      ((Real.continuous_rpow_const ha.le).mul
+        ((continuous_const.sub continuous_id).rpow_const fun _ => Or.inr hb.le)).continuousOn
+    have hderivf : ∀ t ∈ Ioo (0 : ℝ) x, HasDerivWithinAt (fun t : ℝ => t ^ a * (1 - t) ^ b)
+        (a * (t ^ (a - 1) * (1 - t) ^ b) - b * (t ^ a * (1 - t) ^ (b - 1))) (Ioi t) t := by
+      intro t ht
+      have ht0 : t ≠ 0 := ht.1.ne'
+      have h1t : (1 : ℝ) - t ≠ 0 := sub_ne_zero_of_ne (show t < 1 by linarith [ht.2]).ne'
+      have h₁ : HasDerivAt (fun t : ℝ => t ^ a) (a * t ^ (a - 1)) t :=
+        Real.hasDerivAt_rpow_const (Or.inl ht0)
+      have h₂ : HasDerivAt (fun t : ℝ => (1 - t) ^ b) (b * (1 - t) ^ (b - 1) * (-1)) t :=
+        (Real.hasDerivAt_rpow_const (Or.inl h1t)).comp t
+          ((hasDerivAt_id t).const_sub 1)
+      have := h₁.mul h₂
+      refine (this.congr_deriv ?_).hasDerivWithinAt
+      ring_nf
+    have hint : IntervalIntegrable (fun t : ℝ => a * (t ^ (a - 1) * (1 - t) ^ b) -
+        b * (t ^ a * (1 - t) ^ (b - 1))) volume 0 x := (hA.const_mul a).sub (hJ.const_mul b)
+    rw [intervalIntegral.integral_eq_sub_of_hasDeriv_right_of_le hx0 hcontf hderivf hint,
+      Real.zero_rpow ha.ne', zero_mul, sub_zero]
+  rw [intervalIntegral.integral_sub (hA.const_mul a) (hJ.const_mul b),
+    intervalIntegral.integral_const_mul, intervalIntegral.integral_const_mul, hsplit] at hftc
+  rw [regularizedIncompleteBeta_of_pos ha1 hb, regularizedIncompleteBeta_of_pos ha hb,
+    max_eq_left hx0, min_eq_right hx1, add_sub_cancel_right, beta_add_one_left ha hb]
+  have hbeta := (beta_pos ha hb).ne'
+  field_simp
+  linarith [hftc]
+
+end TauCeti
