@@ -60,8 +60,11 @@ variable {E : Type u} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSp
 
 /-- The normed-space data underlying an iterated weak gradient. -/
 structure IteratedGradientModel (E : Type u) [NormedAddCommGroup E] [NormedSpace ℝ E] where
+  /-- The carrier space for the iterated weak gradient. -/
   Space : Type u
+  /-- The normed additive commutative group structure on `Space`. -/
   [normedAddCommGroup : NormedAddCommGroup Space]
+  /-- The normed `ℝ`-space structure on `Space`. -/
   [normedSpace : NormedSpace ℝ Space]
 
 /-- The recursively bundled target of an iterated weak gradient. -/
@@ -96,14 +99,23 @@ noncomputable instance [CompleteSpace E] (j : ℕ) : CompleteSpace (IteratedGrad
 space of order `j + 1`, its one-order-lower projection, and its highest derivative projection. -/
 structure SobolevStage (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E)
     (p : ENNReal) [Fact (1 <= p)] (j : ℕ) where
+  /-- The Sobolev space of order `j + 1`. -/
   Space : Type u
+  /-- The normed additive commutative group structure on the order-`j + 1` Sobolev space. -/
   [normedAddCommGroup : NormedAddCommGroup Space]
+  /-- The normed `ℝ`-space structure on the order-`j + 1` Sobolev space. -/
   [normedSpace : NormedSpace ℝ Space]
+  /-- The completeness instance for the order-`j + 1` Sobolev space. -/
   [completeSpace : CompleteSpace Space]
+  /-- The Sobolev space of order `j`. -/
   Lower : Type u
+  /-- The normed additive commutative group structure on the order-`j` Sobolev space. -/
   [lowerNormedAddCommGroup : NormedAddCommGroup Lower]
+  /-- The normed `ℝ`-space structure on the order-`j` Sobolev space. -/
   [lowerNormedSpace : NormedSpace ℝ Lower]
+  /-- The continuous projection to the one-order-lower Sobolev space. -/
   lowerL : Space →L[ℝ] Lower
+  /-- The continuous projection to the highest weak derivative field. -/
   derivL : Space →L[ℝ] Lp (IteratedGradient E j) p (mu.restrict Omega)
 
 /-- The first stage of the arbitrary-order construction is `W1p`, with value and gradient as
@@ -193,7 +205,7 @@ namespace Wkp
 @[expose] def lowerOrder (k : ℕ) (u : Wkp mu Omega p (k + 1)) : Wkp mu Omega p k :=
   lowerOrderL k u
 
-@[simp]
+/-- Evaluating the continuous lower-order projection equals `lowerOrder`. -/
 theorem lowerOrderL_apply (k : ℕ) (u : Wkp mu Omega p (k + 1)) :
     lowerOrderL k u = lowerOrder k u :=
   (rfl)
@@ -209,7 +221,7 @@ function.  For `W^{k+1,p}` its target is `Lᵖ(Ω; IteratedGradient E k)`. -/
     Lp (IteratedGradient E k) p (mu.restrict Omega) :=
   derivL k u
 
-@[simp]
+/-- Evaluating the continuous highest-derivative projection equals `deriv`. -/
 theorem derivL_apply (k : ℕ) (u : Wkp mu Omega p (k + 1)) : derivL k u = deriv k u :=
   (rfl)
 
