@@ -176,8 +176,7 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
     (g : Matrix (Fin n) (Fin n) R) *ᵥ w ∈ N := by
   have h := N.rid_lTensor_coact_mem
     (generalLinearToPoint (R := R) n g).ofConv.toLinearMap hw
-  rw [show Comodule.coact (R := R) (C := coordinateHopfAlgebra R n) w = standardCoact R n w from
-    congrArg (fun p ↦ p w) (standardComodule_coact R n)] at h
+  rw [standardComodule_coact R n] at h
   have hf := DFunLike.congr_fun
     (rid_lTensor_comp_standardCoact R n (generalLinearToPoint (R := R) n g).ofConv.toLinearMap) w
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe] at hf
@@ -234,10 +233,11 @@ private theorem exists_generalLinearGroup_mulVec {v w : Fin m → k} (hv : v ≠
     have he : e ⟨w, Submodule.mem_span_singleton_self w⟩ =
         ⟨v, Submodule.mem_span_singleton_self v⟩ := by
       simp only [e, LinearEquiv.trans_apply]
-      rw [show (LinearEquiv.toSpanNonzeroSingleton k (Fin m → k) w hw).symm
-          ⟨w, Submodule.mem_span_singleton_self w⟩ = 1 from
-        (LinearEquiv.toSpanNonzeroSingleton k (Fin m → k) w hw).symm_apply_eq.mpr
-          (LinearEquiv.toSpanNonzeroSingleton_one k (Fin m → k) w hw).symm]
+      have hw_coord :
+          (LinearEquiv.toSpanNonzeroSingleton k (Fin m → k) w hw).symm
+              ⟨w, Submodule.mem_span_singleton_self w⟩ = 1 :=
+        LinearEquiv.coord_self k (Fin m → k) w hw
+      rw [hw_coord]
       exact LinearEquiv.toSpanNonzeroSingleton_one k (Fin m → k) v hv
     rw [he] at hone
     exact hone.symm
