@@ -118,6 +118,7 @@ at `P` (Stichtenoth, Definition 3.1.5). -/
 noncomputable def ramificationIdx : ℕ :=
   Valuation.ordIndex (P'.valuation.comap (algebraMap F F'))
 
+/-- The ramification index of a restricted place is positive. -/
 theorem ramificationIdx_pos : 0 < ramificationIdx F P' :=
   Nat.pos_of_ne_zero (ordIndex_comap_ne_zero F P')
 
@@ -230,7 +231,8 @@ instance : IsLocalHom (algebraMap (P'.restrict k F).integers P'.integers) where
   map_nonunit a ha := by
     have ha0 : (a : F) ≠ 0 := by
       rintro h
-      rw [show a = 0 from Subtype.ext h] at ha
+      have ha_eq_zero : a = 0 := Subtype.ext h
+      rw [ha_eq_zero] at ha
       simp at ha
     have hmap0 : algebraMap F F' (a : F) ≠ 0 := by simpa using ha0
     have h1 : P'.ord (algebraMap F F' (a : F)) = 0 :=
@@ -295,7 +297,8 @@ private theorem ord_sum_eq_zero {ι : Type*} [Fintype ι] (s : ι → P'.integer
     rw [IsLocalRing.residue_eq_zero_iff, IsLocalRing.mem_maximalIdeal, mem_nonunits_iff] at hz
     exact hz hb₀
   have hB0 : (B : F') ≠ 0 := fun h ↦ hne (by
-    rw [show B = 0 from Subtype.ext h, map_zero])
+    have hB_eq_zero : B = 0 := Subtype.ext h
+    rw [hB_eq_zero, map_zero])
   have hunit : IsUnit B := by
     by_contra hu
     exact hne (by
@@ -329,7 +332,8 @@ private theorem exists_ord_sum_eq_mul {ι : Type*} [Fintype ι] (s : ι → P'.i
       omega
   set b : ι → P.integers := fun i ↦ ⟨c i / c i₀, hb i⟩ with hbdef
   have hb₀ : IsUnit (b i₀) := by
-    rw [show b i₀ = 1 from Subtype.ext (by simp [hbdef, div_self hd])]
+    have hb_eq_one : b i₀ = 1 := Subtype.ext (by simp [hbdef, div_self hd])
+    rw [hb_eq_one]
     exact isUnit_one
   have hsum : ∑ i, algebraMap F F' (c i) * (s i : F') =
       algebraMap F F' (c i₀) * ∑ i, algebraMap F F' (b i : F) * (s i : F') := by
@@ -416,6 +420,70 @@ theorem linearIndependent_mul_pow_of_linearIndependent_residue {ι : Type*} [Fin
 
 end Independence
 
+section RamificationIdxBound
+
+variable (F) (P' : Place k' F')
+
+private theorem linearIndependent_pow_fin_ramificationIdx {t : F'} (ht : P'.ord t = 1) :
+    LinearIndependent F fun j : Fin (ramificationIdx F P') ↦ t ^ (j : ℕ) := by
+  classical
+  have ht0 : t ≠ 0 := by rintro rfl; simp at ht
+  set e := ramificationIdx F P' with he
+  rw [Fintype.linearIndependent_iff]
+  intro c hc
+  by_contra hex
+  rw [not_forall] at hex
+  obtain ⟨j₁, hj₁⟩ := hex
+  set A : Fin e → F' := fun j ↦ algebraMap F F' (c j) * t ^ (j : ℕ) with hA
+  have hsum : ∑ j, A j = 0 := by
+    simpa only [hA, Algebra.smul_def] using hc
+  have hAord : ∀ j : Fin e, c j ≠ 0 →
+      ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ) := by
+    intro j hj
+    obtain ⟨m, hm⟩ := Valuation.ordIndex_dvd_ord
+      (P'.valuation.comap (algebraMap F F')) (c j)
+    have hmap : algebraMap F F' (c j) ≠ 0 := by simpa using hj
+    refine ⟨m, ?_⟩
+    rw [hA, P'.ord_mul hmap (pow_ne_zero _ ht0), P'.ord_pow, ht, mul_one,
+      ← ord_comap F P' (c j), hm]
+    have hidx : Valuation.ordIndex (P'.valuation.comap (algebraMap F F')) = e :=
+      rfl.trans he.symm
+    have hidx' : (Valuation.ordIndex (P'.valuation.comap (algebraMap F F')) : ℤ) = e := by
+      exact_mod_cast hidx
+    rw [hidx']
+  set J : Finset (Fin e) := {j | c j ≠ 0} with hJdef
+  have hJ : J.Nonempty := ⟨j₁, by simp [hJdef, hj₁]⟩
+  obtain ⟨j₀, hj₀J, hj₀⟩ := J.exists_min_image (fun j ↦ P'.ord (A j)) hJ
+  have hj₀c : c j₀ ≠ 0 := by simpa [hJdef] using hj₀J
+  have hj₀A : A j₀ ≠ 0 := by simp [hA, hj₀c, ht0]
+  have hlt : ∀ j ∈ (Finset.univ : Finset (Fin e)) \ {j₀},
+      P'.valuation (A j) < P'.valuation (A j₀) := by
+    intro j hj
+    simp only [Finset.mem_sdiff, Finset.mem_singleton] at hj
+    by_cases hjc : c j = 0
+    · simp only [hA, hjc, map_zero, zero_mul]
+      exact zero_lt_iff.mpr ((Valuation.ne_zero_iff _).mpr hj₀A)
+    · obtain ⟨m, hm⟩ := hAord j hjc
+      obtain ⟨m₀, hm₀⟩ := hAord j₀ hj₀c
+      have hne : P'.ord (A j) ≠ P'.ord (A j₀) := by
+        rw [hm, hm₀]
+        exact fun hcontra ↦ hj.2 (eq_of_mul_add_natCast_eq hcontra)
+      have hge := hj₀ j (by simp [hJdef, hjc])
+      exact valuation_lt_of_ord_lt P' (by simp [hA, hjc, ht0]) hj₀A (by omega)
+  have hval := P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt
+  rw [hsum, map_zero] at hval
+  exact (Valuation.ne_zero_iff _).mpr hj₀A hval.symm
+
+variable [FiniteDimensional F F']
+
+/-- The ramification index of a place is at most the degree of the field extension. -/
+theorem ramificationIdx_le_finrank : ramificationIdx F P' ≤ Module.finrank F F' := by
+  obtain ⟨t, ht⟩ := P'.exists_isUniformizer
+  rw [P'.isUniformizer_iff_ord_eq_one] at ht
+  simpa using (linearIndependent_pow_fin_ramificationIdx F P' ht).fintype_card_le_finrank
+
+end RamificationIdxBound
+
 section Bound
 
 variable (k F) (P' : Place k' F') [Algebra.IsIntegral F F'] [FiniteDimensional F F']
@@ -443,6 +511,7 @@ instance finiteDimensional_residueField_restrict :
   Module.rank_lt_aleph0_iff.mp
     (lt_of_le_of_lt (rank_residueField_le k F P') (Cardinal.natCast_lt_aleph0))
 
+/-- The relative degree is positive because a residue field extension is nontrivial. -/
 theorem one_le_relativeDegree : 1 ≤ relativeDegree k F P' :=
   Module.finrank_pos
 
@@ -458,13 +527,9 @@ theorem ramificationIdx_mul_relativeDegree_le_finrank :
         rw [mul_comm]
         exact Nat.div_mul_le_self _ _
 
+/-- The relative degree of a place is at most the degree of the field extension. -/
 theorem relativeDegree_le_finrank : relativeDegree k F P' ≤ Module.finrank F F' :=
   le_trans (Nat.le_mul_of_pos_left _ (ramificationIdx_pos F P'))
-    (ramificationIdx_mul_relativeDegree_le_finrank k F P')
-
-include k in
-theorem ramificationIdx_le_finrank : ramificationIdx F P' ≤ Module.finrank F F' :=
-  le_trans (Nat.le_mul_of_pos_right _ (one_le_relativeDegree k F P'))
     (ramificationIdx_mul_relativeDegree_le_finrank k F P')
 
 end Bound
@@ -472,4 +537,3 @@ end Bound
 end Place
 
 end TauCeti
-
