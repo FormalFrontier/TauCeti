@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Functor
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Subgroups
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.GL2.Subgroups
 
 /-!
 # Representability of the dynamic subgroups of `GL₂`
@@ -15,7 +15,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Subgroups
 For the cocharacter `t ↦ diag(t, 1)`, the dynamic parabolic, Levi, and unipotent subgroup
 functors are represented by the standard upper-triangular Borel, diagonal torus, and positive
 root subgroup. This upgrades the pointwise calculations in
-`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Subgroups` to natural isomorphisms of
+`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.GL2.Subgroups` to natural isomorphisms of
 group-valued functors.
 
 Concretely, the three representing coordinate Hopf algebras are
