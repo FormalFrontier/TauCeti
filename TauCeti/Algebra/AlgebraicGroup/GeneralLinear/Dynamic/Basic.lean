@@ -189,12 +189,16 @@ theorem mem_dynamicParabolic_iff
   constructor
   · intro h
     apply GL2Borel.mem_iff.mpr
+    -- `BlockTriangular` states its comparison through `OrderDual.toDual ∘ dynamicWeights`;
+    -- no lemma exposes this particular `Fin 2` comparison in the original weight order.
     exact @h 1 0 (by
       change dynamicWeights 1 < dynamicWeights 0
       simp [dynamicWeights])
   · intro h i j hij
     have hzero : (pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0 = 0 := by
       exact GL2Borel.mem_iff.mp h
+    -- As in the generic weight theorem, reducing the dual block order definitionally is
+    -- necessary because `BlockTriangular` has no lemma restating this hypothesis for the weights.
     change dynamicWeights i < dynamicWeights j at hij
     fin_cases i <;> fin_cases j
     · simp [dynamicWeights] at hij
