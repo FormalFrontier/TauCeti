@@ -261,6 +261,11 @@ place `P` of `F / k` it lies over (Stichtenoth, Definition 3.1.5). -/
 noncomputable def relativeDegree : ℕ :=
   Module.finrank (P'.restrict k F).ResidueField P'.ResidueField
 
+/-- The relative degree is the finrank of the extension of residue fields. -/
+theorem relativeDegree_def :
+    relativeDegree k F P' = Module.finrank (P'.restrict k F).ResidueField P'.ResidueField := by
+  rw [relativeDegree]
+
 end ResidueField
 
 section Independence
