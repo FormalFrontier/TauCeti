@@ -35,8 +35,8 @@ rather than several: its character has norm `1` for the character pairing of
 
 ## Main statements
 
-* `TauCeti.finrank_GL2Steinberg` and `TauCeti.character_one_GL2Steinberg`: the Steinberg
-  representation has dimension `q`.
+* `TauCeti.finrank_GL2Steinberg`: the Steinberg representation has dimension `q`. Its character at
+  the identity is that dimension, by Mathlib's `FDRep.char_one`.
 * `TauCeti.character_GL2Steinberg`: its character at `g` is the number of cosets of `B` fixed by
   `g`, less one.
 * `TauCeti.character_ofMulAction_quotient_gl2Borel`: the character of `ℂ[GL₂ ⧸ B]` is `1` plus the
@@ -94,16 +94,11 @@ noncomputable def GL2Steinberg : FDRep ℂ (GL (Fin 2) F) :=
   FDRep.ofShrink (augmentationSubrepresentation ℂ (GL (Fin 2) F)
     (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation
 
-/-- **The Steinberg representation is the shrunk augmentation subrepresentation.** This is the
-characterization the results below reason from, so none of them unfolds the definition. -/
-theorem GL2Steinberg_def :
-    GL2Steinberg F = FDRep.ofShrink (augmentationSubrepresentation ℂ (GL (Fin 2) F)
-      (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation :=
-  (rfl)
-
 /-- **The projective line over `𝔽_q` has `q + 1` points.**  This is `TauCeti.GL2Borel.index_eq` at
 the coset-space spelling of `Subgroup.index`, which is the spelling the dimension and character
-computations below rewrite with. -/
+computations below rewrite with. It is deliberately not a `simp` lemma: with a `Fintype` structure
+on the coset space in scope, `Nat.card_eq_fintype_card` rewrites its left-hand side to
+`Fintype.card`, so the `Nat.card` spelling is not in simp-normal form. -/
 theorem natCard_quotient_gl2Borel :
     Nat.card (GL (Fin 2) F ⧸ GL2Borel F) = Fintype.card F + 1 :=
   GL2Borel.index_eq F
@@ -118,13 +113,9 @@ projective line. -/
 @[simp]
 theorem finrank_GL2Steinberg : Module.finrank ℂ (GL2Steinberg F) = Fintype.card F := by
   let _ : Fintype (GL (Fin 2) F ⧸ GL2Borel F) := Fintype.ofFinite _
-  rw [GL2Steinberg_def, FDRep.finrank_ofShrink, finrank_augmentationSubrepresentation,
+  rw [GL2Steinberg, FDRep.finrank_ofShrink, finrank_augmentationSubrepresentation,
     fintypeCard_quotient_gl2Borel]
   omega
-
-/-- **The Steinberg representation has dimension `q`**, read off its character at the identity. -/
-theorem character_one_GL2Steinberg : (GL2Steinberg F).character 1 = (Fintype.card F : ℂ) := by
-  rw [FDRep.char_one, finrank_GL2Steinberg]
 
 /-! ### The character -/
 
@@ -138,7 +129,7 @@ theorem character_GL2Steinberg (g : GL (Fin 2) F) :
   have hne : ((Fintype.card (GL (Fin 2) F ⧸ GL2Borel F) : ℂ)) ≠ 0 := by
     rw [fintypeCard_quotient_gl2Borel]
     exact Nat.cast_ne_zero.mpr (Nat.succ_ne_zero _)
-  rw [GL2Steinberg_def, FDRep.character_ofShrink, character_augmentationSubrepresentation hne,
+  rw [GL2Steinberg, FDRep.character_ofShrink, character_augmentationSubrepresentation hne,
     char_ofMulAction]
 
 /-! ### The splitting of the boundary principal series -/
@@ -159,13 +150,13 @@ section Pairing
 
 variable [DecidableEq F]
 
-/-- A pretransitive action on a nonempty type has one orbit. -/
+/-- A pretransitive action on a nonempty type has one orbit. This is Mathlib's
+`MulAction.pretransitive_iff_unique_quotient_of_nonempty` in counting form, named because the
+pairing computation below uses it four times, at four different actions. -/
 private theorem card_orbitQuotient_eq_one (G α : Type*) [Group G] [MulAction G α] [Nonempty α]
-    [IsPretransitive G α] : Nat.card (orbitRel.Quotient G α) = 1 := by
-  have hs : Subsingleton (orbitRel.Quotient G α) :=
-    (MulAction.pretransitive_iff_subsingleton_quotient G α).mp ‹_›
-  have hn : Nonempty (orbitRel.Quotient G α) := ⟨Quotient.mk _ (Classical.arbitrary α)⟩
-  exact Nat.card_eq_one_iff_unique.mpr ⟨hs, hn⟩
+    [IsPretransitive G α] : Nat.card (orbitRel.Quotient G α) = 1 :=
+  let _ := ((MulAction.pretransitive_iff_unique_quotient_of_nonempty G α).mp ‹_›).some
+  Nat.card_unique
 
 /-- Pairing a pretransitive action with a one-point one leaves it pretransitive. -/
 private theorem isPretransitive_prod_left (G α β : Type*) [Group G] [MulAction G α]
