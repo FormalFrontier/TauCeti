@@ -108,30 +108,40 @@ lemma heckeTCuspNat_def (n : ℕ) [NeZero n] :
   rw [heckeTCuspNat_def, coe_heckeSlashGamma1CuspFormEnd]
 
 /-- **The classical `T_p` formula on modular forms, at every prime.** -/
-theorem coe_heckeTNat_prime [NeZero p] (hp : p.Prime)
+theorem coe_heckeTNat_prime (hp : p.Prime)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑(heckeTNat (N := N) k p f) =
+    ⇑(heckeTNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpNat k p f) ∣[k] scaleRep p := by
-  rw [heckeTNat_def, coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp]
+  let _ : NeZero p := ⟨hp.ne_zero⟩
+  unfold heckeTNat
+  rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp]
 
 /-- **The classical `T_p` formula on cusp forms, at every prime.** -/
-theorem coe_heckeTCuspNat_prime [NeZero p] (hp : p.Prime)
+theorem coe_heckeTCuspNat_prime (hp : p.Prime)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑(heckeTCuspNat (N := N) k p f) =
+    ⇑(heckeTCuspNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpCuspNat k p f) ∣[k] scaleRep p := by
-  rw [heckeTCuspNat_def, coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp]
+  let _ : NeZero p := ⟨hp.ne_zero⟩
+  unfold heckeTCuspNat
+  rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp]
 
 /-- At a positive index dividing the level, `T_p` is the upper-triangular operator. This is the
 operator modern sources denote by `U_p`. -/
-theorem heckeTNat_eq_upperTri [NeZero p] (hpN : p ∣ N) :
-    heckeTNat (N := N) k p = heckeSlashUpperTriModularFormEnd k hpN := by
+theorem heckeTNat_eq_upperTri (hpN : p ∣ N) :
+    heckeTNat (N := N) k p
+      (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) =
+      heckeSlashUpperTriModularFormEnd k hpN := by
+  let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   unfold heckeTNat
   rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
 
 /-- At a positive index dividing the level, the cusp-form `T_p` is the upper-triangular
 operator. -/
-theorem heckeTCuspNat_eq_upperTri [NeZero p] (hpN : p ∣ N) :
-    heckeTCuspNat (N := N) k p = heckeSlashUpperTriCuspFormEnd k hpN := by
+theorem heckeTCuspNat_eq_upperTri (hpN : p ∣ N) :
+    heckeTCuspNat (N := N) k p
+      (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) =
+      heckeSlashUpperTriCuspFormEnd k hpN := by
+  let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   unfold heckeTCuspNat
   rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
 
