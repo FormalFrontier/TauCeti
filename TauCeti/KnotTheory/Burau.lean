@@ -316,9 +316,9 @@ theorem vecMul_burauMatrix (t : R) (i : Fin (n - 1)) (w : Fin n → R) :
 @[simp]
 theorem burauMatrix_mulVec_one (t : R) (i : Fin (n - 1)) :
     burauMatrix t i *ᵥ (1 : Fin n → R) = 1 := by
-  change burauMatrix t i *ᵥ (fun _ => 1 : Fin n → R) = fun _ => 1
   rw [burauMatrix_def, Matrix.sub_mulVec, Matrix.one_mulVec, vecMulVec_mulVec,
-    burauRow_dotProduct, sub_self]
+    burauRow_dotProduct]
+  simp only [Pi.one_apply, sub_self]
   simp
 
 /-- The geometric row vector `(1, t, …, t ^ (n - 1))` is fixed by every elementary Burau matrix. -/
