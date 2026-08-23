@@ -83,14 +83,32 @@ theorem ker_lTensor_eq_rightTensorIdeal {A B : Type*} [CommRing A] [CommRing B]
     RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R A) f) =
       rightTensorIdeal (R := R) (H := A) (RingHom.ker f) := by
   rw [← Submodule.restrictScalars_inj R]
-  change LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor R A f.toLinearMap) = _
+  have hmap :
+      (RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R A) f)).restrictScalars R =
+        LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor R A f.toLinearMap) := by
+    have hlinear :
+        (Algebra.TensorProduct.map (AlgHom.id R A) f).toLinearMap =
+          TensorProduct.AlgebraTensorModule.lTensor R A f.toLinearMap := by
+      apply TensorProduct.AlgebraTensorModule.ext
+      intro x y
+      simp only [Algebra.TensorProduct.toLinearMap_map, AlgHom.toLinearMap_id,
+        TensorProduct.AlgebraTensorModule.map_tmul,
+        TensorProduct.AlgebraTensorModule.lTensor_tmul, LinearMap.id_apply]
+    ext x
+    simp only [Submodule.restrictScalars_mem, RingHom.mem_ker, LinearMap.mem_ker]
+    rw [← LinearMap.congr_fun hlinear x]
+    simp only [AlgHom.toLinearMap_apply]
+  rw [hmap]
   rw [Module.Flat.ker_lTensor_eq]
-  have hker : f.toLinearMap.ker = (RingHom.ker f).restrictScalars R := rfl
+  have hker : f.toLinearMap.ker = (RingHom.ker f).restrictScalars R := by
+    ext x
+    simp only [LinearMap.mem_ker, Submodule.restrictScalars_mem, RingHom.mem_ker,
+      AlgHom.toLinearMap_apply]
   rw [hker]
   have hsubtype : ((RingHom.ker f).restrictScalars R).subtype =
       (RingHom.ker f).subtype.restrictScalars R := by
-    ext
-    rfl
+    ext x
+    exact (LinearMap.restrictScalars_apply R (RingHom.ker f).subtype x).symm
   rw [hsubtype, rightTensorIdeal_def]
   exact TensorProduct.AlgebraTensorModule.range_lTensor_idealMap
     (R := R) A R (RingHom.ker f)
