@@ -106,7 +106,7 @@ theorem coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange
       rw [map_zero] at heval
       have hcoeff :
           g (Comodule.matrixCoefficient (R := k) (C := C) (φ.comp q) m) = 0 := by
-        rw [TauCeti.Module.Dual.baseChangeEvaluation_one_tmul_baseChange] at heval
+        rw [Module.Dual.baseChangeEvaluation_one_tmul_baseChange] at heval
         simpa only [Comodule.baseChangeEvaluation_endOfPoint_tmul, one_mul] using heval
       rw [map_zero]
       rw [← hcoeff]
