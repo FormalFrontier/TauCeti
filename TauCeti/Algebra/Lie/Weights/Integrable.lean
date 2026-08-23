@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.Sl2.Spectrum
 public import TauCeti.Algebra.Lie.Sl2.WeightMultiplicity
 public import TauCeti.Algebra.Lie.Submodule.LocallyFinite
+public import TauCeti.LinearAlgebra.Eigenspace.Semisimple
 public import TauCeti.LinearAlgebra.Eigenspace.Separation
 public import Mathlib.Algebra.Lie.Weights.Killing
 
@@ -45,8 +46,9 @@ is a finite-dimensional module over that triple: the raising and lowering vector
 
 * The Cartan element `α^∨` acts diagonalizably on a finite-dimensional module over an `sl₂` triple
   (`TauCeti.iSup_eigenspace_toEnd_eq_top`), with integer eigenvalues
-  (`TauCeti.exists_int_of_hasEigenvalue`). So the generalized eigenvectors lying in `W` are honest
-  eigenvectors, and `χ (α^∨) = m` is an integer.
+  (`TauCeti.exists_int_of_hasEigenvalue`). Diagonalizable endomorphisms are semisimple
+  (`TauCeti.isSemisimple_of_iSup_eigenspace_eq_top`), so the generalized eigenvectors lying in `W`
+  are honest eigenvectors, and `χ (α^∨) = m` is an integer.
 * Its eigenspaces at opposite eigenvalues have equal dimension
   (`TauCeti.finrank_eigenspace_toEnd_neg`). The eigenvalue `m` is attained, by `v`, so `-m` is
   attained too.
@@ -81,30 +83,6 @@ namespace TauCeti
 open LieAlgebra LieModule Module
 
 universe u v w
-
-/-! ### Diagonalizable endomorphisms have no further generalized eigenvectors -/
-
-/-- An endomorphism whose eigenspaces span has no generalized eigenvectors beyond its
-eigenvectors: the generalized eigenspaces at the other eigenvalues are independent from the one at
-hand, so nothing outside the eigenspace survives.
-
-Mathlib's `Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace` is the same conclusion
-from semisimplicity of the endomorphism, which is not what the spanning eigenspaces of an `sl₂`
-Cartan element (`TauCeti.iSup_eigenspace_toEnd_eq_top`) hand over. -/
-private theorem maxGenEigenspace_eq_eigenspace_of_iSup_eigenspace_eq_top {K V : Type*} [Field K]
-    [AddCommGroup V] [Module K V] {A : Module.End K V} (hA : ⨆ c : K, A.eigenspace c = ⊤) (c : K) :
-    A.maxGenEigenspace c = A.eigenspace c := by
-  refine le_antisymm ?_ Module.End.eigenspace_le_maxGenEigenspace
-  have hdisj : Disjoint (A.maxGenEigenspace c) (⨆ d, ⨆ _ : d ≠ c, A.eigenspace d) :=
-    (A.independent_maxGenEigenspace c).mono_right
-      (iSup₂_mono fun _ _ ↦ Module.End.eigenspace_le_maxGenEigenspace)
-  calc A.maxGenEigenspace c
-      = A.maxGenEigenspace c ⊓ ⊤ := (inf_top_eq _).symm
-    _ = A.maxGenEigenspace c ⊓ (A.eigenspace c ⊔ ⨆ d, ⨆ _ : d ≠ c, A.eigenspace d) := by
-        rw [← hA, iSup_split_single (fun d ↦ A.eigenspace d) c]
-    _ = A.eigenspace c ⊔ (⨆ d, ⨆ _ : d ≠ c, A.eigenspace d) ⊓ A.maxGenEigenspace c := by
-        rw [inf_comm, sup_inf_assoc_of_le _ Module.End.eigenspace_le_maxGenEigenspace]
-    _ ≤ A.eigenspace c := by rw [hdisj.symm.eq_bot, sup_bot_eq]
 
 /-! ### Reflection stability of the weights of an integrable module -/
 
@@ -193,14 +171,15 @@ private theorem exists_int_apply_coroot_and_genWeightSpace_zsmul_add_ne_bot (hα
   -- generalized eigenvectors of `A` inside `W` are honest eigenvectors of `A`
   have hdiag : ⨆ c : K, B.eigenspace c = ⊤ :=
     iSup_eigenspace_toEnd_eq_top (M := 𝒲) t.isSl2Triple_restrict
+  have hss : B.IsFinitelySemisimple :=
+    (isSemisimple_of_iSup_eigenspace_eq_top hdiag).isFinitelySemisimple
   have hhonest : ∀ (c : K) (u : M) (hu : u ∈ W), u ∈ A.maxGenEigenspace c → A u = c • u := by
     intro c u hu hgen
     obtain ⟨k, hk⟩ := (Module.End.mem_maxGenEigenspace _ _ _).1 hgen
     have hmem : (⟨u, hmem𝒲.2 hu⟩ : 𝒲) ∈ B.maxGenEigenspace c :=
       (Module.End.mem_maxGenEigenspace _ _ _).2
         ⟨k, Subtype.ext (by rw [hcoePow c k]; simpa using hk)⟩
-    rw [maxGenEigenspace_eq_eigenspace_of_iSup_eigenspace_eq_top hdiag c,
-      Module.End.mem_eigenspace_iff] at hmem
+    rw [hss.maxGenEigenspace_eq_eigenspace c, Module.End.mem_eigenspace_iff] at hmem
     have := congrArg (fun w : 𝒲 ↦ (w : M)) hmem
     simpa [hcoeB] using this
   -- the coroot acts on the `k`-th summand of the string by `2 k + n`
