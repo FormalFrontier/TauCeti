@@ -34,9 +34,10 @@ the parameter range.
 ## Main results
 
 * `TauCeti.lowerIncompleteGamma_eq_integral` and `TauCeti.regularizedGamma_eq_div` — the
-  characteristic descriptions in the valid range, replacing the clamped definitions;
-* `TauCeti.intervalIntegrable_rpow_mul_exp_neg` — convergence: the integrand is interval
-  integrable on every interval in `[0, ∞)`, including at the singularity `0` for `s < 1`;
+  characteristic descriptions replacing the clamped definitions;
+* `TauCeti.intervalIntegrable_rpow_mul_exp_neg` and `TauCeti.integrableOn_rpow_mul_exp_neg` —
+  convergence of Euler's integrand, including at the singularity `0` for `s < 1`, together with
+  `TauCeti.integral_Ioi_rpow_mul_exp_neg_eq_Gamma` for the value of the complete integral;
 * `TauCeti.continuous_lowerIncompleteGamma`, `TauCeti.continuous_regularizedGamma` — continuity on
   all of `ℝ`, in particular at `x = 0`, where for `s < 1` the integrand blows up;
 * `TauCeti.monotone_lowerIncompleteGamma`, `TauCeti.monotone_regularizedGamma` — monotonicity,
@@ -53,13 +54,16 @@ the parameter range.
 
 ## Implementation
 
-`Real.Gamma` is *not* the value of Euler's integral outside `0 < s`, so the definition of
-`regularizedGamma` guards on `0 < s` rather than dividing by `Real.Gamma s` unconditionally.
+The guard `0 < s` in the definition of `regularizedGamma` mirrors the one built into
+`TauCeti.lowerIncompleteGamma`, which is the definition shape the roadmap prescribes. It changes no
+value: `γ(s, x)` already vanishes for `s ≤ 0`, so dividing unconditionally would give the same
+function, and `TauCeti.regularizedGamma_eq_div` accordingly needs no hypothesis on `s`.
 
 The recurrence is obtained from Mathlib's `Complex.partialGamma_add_one`, whose proof performs the
 integration by parts on `Set.Ioo 0 x` — the endpoint `0` has to be avoided because `t ^ s` is not
-differentiable there for `s < 1`. The bridge is `TauCeti.ofReal_lowerIncompleteGamma`, which
-identifies `γ(s, x)` with `Complex.partialGamma s x` for real `s`.
+differentiable there for `s < 1`. The bridge is
+`TauCeti.ofReal_lowerIncompleteGamma_eq_partialGamma`, which identifies `γ(s, x)` with
+`Complex.partialGamma s x` for real `s`.
 
 ## References
 
@@ -83,25 +87,34 @@ variable {s x : ℝ}
 
 /-! ### Convergence of the truncated Euler integral -/
 
-/-- Euler's integrand `t ^ p * exp (-t)` is interval integrable on any interval contained in
-`[0, ∞)`, for `-1 < p`.
+/-- Euler's integrand `t ^ p * exp (-t)` is interval integrable, for `-1 < p`.
 
-This is the interval form of Mathlib's `Real.GammaIntegral_convergent`; for `p < 0` the integrand
-is unbounded at `0`, so the statement is not a mere continuity argument. The shape parameter `s` of
+This composes Mathlib's `intervalIntegral.intervalIntegrable_rpow'`, which carries the singularity
+at `0` for `p < 0`, with the continuous factor. The shape parameter `s` of
 `TauCeti.lowerIncompleteGamma` enters as `p = s - 1`. -/
-theorem intervalIntegrable_rpow_mul_exp_neg {p : ℝ} (hp : -1 < p) {a b : ℝ} (ha : 0 ≤ a)
-    (hb : 0 ≤ b) :
-    IntervalIntegrable (fun t : ℝ => t ^ p * Real.exp (-t)) volume a b := by
-  have hsub : Ι a b ⊆ Ioi (0 : ℝ) := by
-    intro t ht
-    rw [Set.uIoc_eq_union] at ht
-    rcases ht with ht | ht
-    · exact lt_of_le_of_lt ha ht.1
-    · exact lt_of_le_of_lt hb ht.1
+theorem intervalIntegrable_rpow_mul_exp_neg {p : ℝ} (hp : -1 < p) (a b : ℝ) :
+    IntervalIntegrable (fun t : ℝ => t ^ p * Real.exp (-t)) volume a b :=
+  (intervalIntegral.intervalIntegrable_rpow' hp).mul_continuousOn
+    (Real.continuous_exp.comp continuous_neg).continuousOn
+
+/-- Euler's integrand `t ^ p * exp (-t)` is integrable on all of `Ioi 0`, for `-1 < p`.
+
+This is Mathlib's `Real.GammaIntegral_convergent` with the two factors in the order used
+throughout this file. -/
+theorem integrableOn_rpow_mul_exp_neg {p : ℝ} (hp : -1 < p) :
+    IntegrableOn (fun t : ℝ => t ^ p * Real.exp (-t)) (Ioi 0) := by
   have h := Real.GammaIntegral_convergent (s := p + 1) (by linarith)
   rw [add_sub_cancel_right] at h
-  rw [intervalIntegrable_iff]
-  exact (h.mono_set hsub).congr_fun (fun t _ => mul_comm _ _) measurableSet_uIoc
+  exact h.congr_fun (fun t _ => mul_comm _ _) measurableSet_Ioi
+
+/-- The complete Euler integral evaluates to `Real.Gamma s`.
+
+This is Mathlib's `Real.Gamma_eq_integral` with the two factors in the order used throughout this
+file; `TauCeti.lowerIncompleteGamma` is the truncation of the left-hand side. -/
+theorem integral_Ioi_rpow_mul_exp_neg_eq_Gamma (hs : 0 < s) :
+    ∫ t in Ioi (0 : ℝ), t ^ (s - 1) * Real.exp (-t) = Real.Gamma s := by
+  rw [Real.Gamma_eq_integral hs]
+  exact setIntegral_congr_fun measurableSet_Ioi fun t _ => mul_comm _ _
 
 /-! ### The definitions -/
 
@@ -122,38 +135,44 @@ theorem lowerIncompleteGamma_eq_integral (hs : 0 < s) (hx : 0 ≤ x) :
     lowerIncompleteGamma s x = ∫ t in (0 : ℝ)..x, t ^ (s - 1) * Real.exp (-t) := by
   rw [lowerIncompleteGamma, ite_eq_left hs, max_eq_left hx]
 
-/-- In the valid range of the shape parameter, `P(s, x)` is `γ(s, x)` normalized by `Γ(s)`. -/
-theorem regularizedGamma_eq_div (hs : 0 < s) (x : ℝ) :
-    regularizedGamma s x = lowerIncompleteGamma s x / Real.Gamma s := by
-  rw [regularizedGamma, ite_eq_left hs]
-
 /-- Outside the valid range of the shape parameter, `γ(s, x)` is `0`. -/
-theorem lowerIncompleteGamma_of_nonpos_left (hs : s ≤ 0) (x : ℝ) :
+theorem lowerIncompleteGamma_eq_zero_of_nonpos_left (hs : s ≤ 0) (x : ℝ) :
     lowerIncompleteGamma s x = 0 :=
   ite_eq_right (not_lt.2 hs)
 
-/-- Outside the valid range of the shape parameter, `P(s, x)` is `0`. -/
-theorem regularizedGamma_of_nonpos_left (hs : s ≤ 0) (x : ℝ) : regularizedGamma s x = 0 :=
-  ite_eq_right (not_lt.2 hs)
-
 /-- Below the support, `γ(s, x)` is `0`. -/
-theorem lowerIncompleteGamma_of_nonpos_right (s : ℝ) (hx : x ≤ 0) :
+theorem lowerIncompleteGamma_eq_zero_of_nonpos_right (s : ℝ) (hx : x ≤ 0) :
     lowerIncompleteGamma s x = 0 := by
   rw [lowerIncompleteGamma, max_eq_right hx]
   simp
 
+/-- Outside the valid range of the shape parameter, `P(s, x)` is `0`. -/
+theorem regularizedGamma_eq_zero_of_nonpos_left (hs : s ≤ 0) (x : ℝ) : regularizedGamma s x = 0 :=
+  ite_eq_right (not_lt.2 hs)
+
+/-- `P(s, x)` is `γ(s, x)` normalized by `Γ(s)`.
+
+No hypothesis on the shape parameter is needed: for `s ≤ 0` both sides are `0`, since `γ(s, ·)`
+is. -/
+theorem regularizedGamma_eq_div (s x : ℝ) :
+    regularizedGamma s x = lowerIncompleteGamma s x / Real.Gamma s := by
+  rcases le_or_gt s 0 with hs | hs
+  · rw [regularizedGamma_eq_zero_of_nonpos_left hs, lowerIncompleteGamma_eq_zero_of_nonpos_left hs,
+      zero_div]
+  · rw [regularizedGamma, ite_eq_left hs]
+
 /-- Below the support, `P(s, x)` is `0`. -/
-theorem regularizedGamma_of_nonpos_right (s : ℝ) (hx : x ≤ 0) : regularizedGamma s x = 0 := by
-  rw [regularizedGamma, lowerIncompleteGamma_of_nonpos_right s hx]
-  simp
+theorem regularizedGamma_eq_zero_of_nonpos_right (s : ℝ) (hx : x ≤ 0) :
+    regularizedGamma s x = 0 := by
+  rw [regularizedGamma_eq_div, lowerIncompleteGamma_eq_zero_of_nonpos_right s hx, zero_div]
 
 @[simp]
 theorem lowerIncompleteGamma_zero_right (s : ℝ) : lowerIncompleteGamma s 0 = 0 :=
-  lowerIncompleteGamma_of_nonpos_right s le_rfl
+  lowerIncompleteGamma_eq_zero_of_nonpos_right s le_rfl
 
 @[simp]
 theorem regularizedGamma_zero_right (s : ℝ) : regularizedGamma s 0 = 0 :=
-  regularizedGamma_of_nonpos_right s le_rfl
+  regularizedGamma_eq_zero_of_nonpos_right s le_rfl
 
 /-- `γ(s, ·)` is the truncated Euler integral read at `max x 0`.
 
@@ -169,92 +188,77 @@ private theorem lowerIncompleteGamma_eq_comp (hs : 0 < s) :
 
 /-- `γ(s, x)` is nonnegative, for every parameter value. -/
 theorem lowerIncompleteGamma_nonneg (s x : ℝ) : 0 ≤ lowerIncompleteGamma s x := by
-  rw [lowerIncompleteGamma]
-  split
-  · exact intervalIntegral.integral_nonneg (le_max_right x 0) fun t ht =>
+  rcases le_or_gt s 0 with hs | hs
+  · rw [lowerIncompleteGamma_eq_zero_of_nonpos_left hs]
+  rcases le_or_gt x 0 with hx | hx
+  · rw [lowerIncompleteGamma_eq_zero_of_nonpos_right _ hx]
+  · rw [lowerIncompleteGamma_eq_integral hs hx.le]
+    exact intervalIntegral.integral_nonneg hx.le fun t ht =>
       mul_nonneg (Real.rpow_nonneg ht.1 _) (Real.exp_pos _).le
-  · exact le_rfl
 
 /-- `P(s, x)` is nonnegative, for every parameter value. -/
 theorem regularizedGamma_nonneg (s x : ℝ) : 0 ≤ regularizedGamma s x := by
-  rw [regularizedGamma]
-  split
-  · exact div_nonneg (lowerIncompleteGamma_nonneg s x) (Real.Gamma_nonneg_of_nonneg (by linarith))
-  · exact le_rfl
+  rcases le_or_gt s 0 with hs | hs
+  · rw [regularizedGamma_eq_zero_of_nonpos_left hs]
+  · rw [regularizedGamma_eq_div]
+    exact div_nonneg (lowerIncompleteGamma_nonneg s x) (Real.Gamma_nonneg_of_nonneg hs.le)
 
 /-- `γ(s, ·)` is monotone: it accumulates a nonnegative integrand. -/
 theorem monotone_lowerIncompleteGamma (s : ℝ) : Monotone (lowerIncompleteGamma s) := by
   rcases le_or_gt s 0 with hs | hs
-  · rw [funext (lowerIncompleteGamma_of_nonpos_left hs)]
+  · rw [funext (lowerIncompleteGamma_eq_zero_of_nonpos_left hs)]
     exact monotone_const
   intro u v huv
   rcases le_or_gt v 0 with hv | hv
-  · rw [lowerIncompleteGamma_of_nonpos_right _ (huv.trans hv),
-      lowerIncompleteGamma_of_nonpos_right _ hv]
+  · rw [lowerIncompleteGamma_eq_zero_of_nonpos_right _ (huv.trans hv),
+      lowerIncompleteGamma_eq_zero_of_nonpos_right _ hv]
   rcases le_or_gt u 0 with hu | hu
-  · rw [lowerIncompleteGamma_of_nonpos_right _ hu]
+  · rw [lowerIncompleteGamma_eq_zero_of_nonpos_right _ hu]
     exact lowerIncompleteGamma_nonneg _ _
-  · rw [lowerIncompleteGamma_eq_integral hs hu.le, lowerIncompleteGamma_eq_integral hs hv.le,
-      ← intervalIntegral.integral_add_adjacent_intervals
-        (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1) le_rfl hu.le)
-        (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1) hu.le hv.le)]
-    refine le_add_of_nonneg_right (intervalIntegral.integral_nonneg huv fun t ht => ?_)
-    exact mul_nonneg (Real.rpow_nonneg (hu.le.trans ht.1) _) (Real.exp_pos _).le
+  · rw [lowerIncompleteGamma_eq_integral hs hu.le, lowerIncompleteGamma_eq_integral hs hv.le]
+    refine intervalIntegral.integral_mono_interval le_rfl hu.le huv ?_
+      (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1) 0 v)
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    exact mul_nonneg (Real.rpow_nonneg ht.1.le _) (Real.exp_pos _).le
 
-/-- `P(s, ·)` is monotone. Together with `TauCeti.regularizedGamma_nonneg`,
-`TauCeti.regularizedGamma_le_one`, `TauCeti.continuous_regularizedGamma` and
-`TauCeti.tendsto_regularizedGamma_atTop` this is everything a cumulative distribution function
-must satisfy. -/
+/-- `P(s, ·)` is monotone. For `0 < s`, this together with `TauCeti.regularizedGamma_nonneg`,
+`TauCeti.regularizedGamma_le_one`, `TauCeti.regularizedGamma_eq_zero_of_nonpos_right`,
+`TauCeti.continuous_regularizedGamma` and `TauCeti.tendsto_regularizedGamma_atTop` is everything a
+cumulative distribution function must satisfy. -/
 theorem monotone_regularizedGamma (s : ℝ) : Monotone (regularizedGamma s) := by
   rcases le_or_gt s 0 with hs | hs
-  · rw [funext (regularizedGamma_of_nonpos_left hs)]
+  · rw [funext (regularizedGamma_eq_zero_of_nonpos_left hs)]
     exact monotone_const
   intro u v huv
-  rw [regularizedGamma_eq_div hs, regularizedGamma_eq_div hs]
+  rw [regularizedGamma_eq_div, regularizedGamma_eq_div]
   gcongr
   exact monotone_lowerIncompleteGamma s huv
-
-/-- The truncated Euler integral is continuous in its upper limit on `[0, ∞)`. -/
-private theorem continuousOn_intervalIntegral_rpow_mul_exp_neg (hs : 0 < s) :
-    ContinuousOn (fun y : ℝ => ∫ t in (0 : ℝ)..y, t ^ (s - 1) * Real.exp (-t)) (Ici 0) := by
-  intro y hy
-  have hy' : (0 : ℝ) ≤ y := hy
-  have hmem : Icc (0 : ℝ) (y + 1) ∈ 𝓝[Ici (0 : ℝ)] y := by
-    rw [← Set.Ici_inter_Iic]
-    exact inter_mem_nhdsWithin _ (Iic_mem_nhds (by linarith))
-  refine ContinuousWithinAt.mono_of_mem_nhdsWithin ?_ hmem
-  have huIcc : Set.uIcc (0 : ℝ) (y + 1) = Icc 0 (y + 1) := Set.uIcc_of_le (by linarith)
-  have := intervalIntegral.continuousOn_primitive_interval' (a := (0 : ℝ)) (b₁ := (0 : ℝ))
-    (b₂ := y + 1) (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1) le_rfl
-      (by linarith))
-    (by rw [huIcc]; exact ⟨le_rfl, by linarith⟩)
-  rw [huIcc] at this
-  exact this y ⟨hy', by linarith⟩
 
 /-- `γ(s, ·)` is continuous on all of `ℝ`.
 
 For `s < 1` this includes the point `x = 0`, where the integrand is unbounded; the integral is
 nevertheless convergent there, by `TauCeti.intervalIntegrable_rpow_mul_exp_neg`. -/
+@[fun_prop]
 theorem continuous_lowerIncompleteGamma (s : ℝ) : Continuous (lowerIncompleteGamma s) := by
   rcases le_or_gt s 0 with hs | hs
-  · rw [funext (lowerIncompleteGamma_of_nonpos_left hs)]
+  · rw [funext (lowerIncompleteGamma_eq_zero_of_nonpos_left hs)]
     exact continuous_const
   rw [lowerIncompleteGamma_eq_comp hs]
-  exact (continuousOn_intervalIntegral_rpow_mul_exp_neg hs).comp_continuous
-    (continuous_id.max continuous_const) fun x => le_max_right x 0
+  exact (intervalIntegral.continuous_primitive
+    (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1)) 0).comp
+      (continuous_id.max continuous_const)
 
 /-- `P(s, ·)` is continuous on all of `ℝ`. -/
+@[fun_prop]
 theorem continuous_regularizedGamma (s : ℝ) : Continuous (regularizedGamma s) := by
-  rcases le_or_gt s 0 with hs | hs
-  · rw [funext (regularizedGamma_of_nonpos_left hs)]
-    exact continuous_const
-  rw [funext fun x => regularizedGamma_eq_div hs x]
+  rw [funext fun x => regularizedGamma_eq_div s x]
   exact (continuous_lowerIncompleteGamma s).div_const _
 
 /-- `γ(s, ·)` is differentiable at every positive `x`, with the expected derivative.
 
-Differentiability at `0` fails for `s < 1`, where the integrand is unbounded there, so the
-hypothesis `0 < x` cannot be weakened to `0 ≤ x`. -/
+The hypothesis `0 < x` cannot be weakened to `0 ≤ x`: differentiability at `0` holds exactly for
+`1 < s`. For `s < 1` the integrand is unbounded at `0`, and at `s = 1` the clamped function is
+`x ↦ 1 - exp (-max x 0)`, whose one-sided derivatives at `0` are `0` and `1`. -/
 theorem hasDerivAt_lowerIncompleteGamma (hs : 0 < s) (hx : 0 < x) :
     HasDerivAt (lowerIncompleteGamma s) (x ^ (s - 1) * Real.exp (-x)) x := by
   have hcont : ContinuousOn (fun t : ℝ => t ^ (s - 1) * Real.exp (-t)) (Ioi 0) := fun t ht =>
@@ -263,7 +267,7 @@ theorem hasDerivAt_lowerIncompleteGamma (hs : 0 < s) (hx : 0 < x) :
   have hderiv : HasDerivAt (fun y : ℝ => ∫ t in (0 : ℝ)..y, t ^ (s - 1) * Real.exp (-t))
       (x ^ (s - 1) * Real.exp (-x)) x :=
     intervalIntegral.integral_hasDerivAt_right
-      (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1) le_rfl hx.le)
+      (intervalIntegrable_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1) 0 x)
       (hcont.stronglyMeasurableAtFilter isOpen_Ioi x hx)
       ((Real.continuousAt_rpow_const x (s - 1) (Or.inl (ne_of_gt hx))).mul
         (Real.continuous_exp.comp continuous_neg).continuousAt)
@@ -277,10 +281,10 @@ theorem deriv_lowerIncompleteGamma (hs : 0 < s) (hx : 0 < x) :
   (hasDerivAt_lowerIncompleteGamma hs hx).deriv
 
 /-- `P(s, ·)` is differentiable at every positive `x`, with the expected derivative. As for
-`TauCeti.hasDerivAt_lowerIncompleteGamma`, the hypothesis `0 < x` is needed for `s < 1`. -/
+`TauCeti.hasDerivAt_lowerIncompleteGamma`, the hypothesis `0 < x` is needed for every `s ≤ 1`. -/
 theorem hasDerivAt_regularizedGamma (hs : 0 < s) (hx : 0 < x) :
     HasDerivAt (regularizedGamma s) (x ^ (s - 1) * Real.exp (-x) / Real.Gamma s) x := by
-  rw [funext fun y => regularizedGamma_eq_div hs y]
+  rw [funext fun y => regularizedGamma_eq_div s y]
   exact (hasDerivAt_lowerIncompleteGamma hs hx).div_const _
 
 /-- The derivative of `P(s, ·)` at a positive point is the normalized integrand. -/
@@ -295,7 +299,7 @@ theorem deriv_regularizedGamma (hs : 0 < s) (hx : 0 < x) :
 The complex partial gamma function carries the integration by parts behind
 `TauCeti.lowerIncompleteGamma_add_one`, so this identification is what lets that recurrence be
 imported rather than reproved. -/
-theorem ofReal_lowerIncompleteGamma (hs : 0 < s) (hx : 0 ≤ x) :
+theorem ofReal_lowerIncompleteGamma_eq_partialGamma (hs : 0 < s) (hx : 0 ≤ x) :
     ((lowerIncompleteGamma s x : ℝ) : ℂ) = Complex.partialGamma (s : ℂ) x := by
   rw [lowerIncompleteGamma_eq_integral hs hx, Complex.partialGamma,
     ← intervalIntegral.integral_ofReal]
@@ -313,9 +317,10 @@ theorem lowerIncompleteGamma_add_one (hs : 0 < s) (hx : 0 ≤ x) :
     lowerIncompleteGamma (s + 1) x = s * lowerIncompleteGamma s x - x ^ s * Real.exp (-x) := by
   have hs1 : (0 : ℝ) < s + 1 := by linarith
   have key := Complex.partialGamma_add_one (s := (s : ℂ)) (by simpa using hs) hx
-  rw [show (s : ℂ) + 1 = ((s + 1 : ℝ) : ℂ) by push_cast; ring, ← ofReal_lowerIncompleteGamma hs1 hx,
-    ← ofReal_lowerIncompleteGamma hs hx, ← Complex.ofReal_cpow hx s, ← Complex.ofReal_mul,
-    ← Complex.ofReal_mul, ← Complex.ofReal_sub, Complex.ofReal_inj] at key
+  rw [show (s : ℂ) + 1 = ((s + 1 : ℝ) : ℂ) by push_cast; ring,
+    ← ofReal_lowerIncompleteGamma_eq_partialGamma hs1 hx,
+    ← ofReal_lowerIncompleteGamma_eq_partialGamma hs hx, ← Complex.ofReal_cpow hx s,
+    ← Complex.ofReal_mul, ← Complex.ofReal_mul, ← Complex.ofReal_sub, Complex.ofReal_inj] at key
   rw [key]
   ring
 
@@ -324,15 +329,11 @@ theorem lowerIncompleteGamma_add_one (hs : 0 < s) (hx : 0 ≤ x) :
 /-- `γ(s, x)` increases to the complete Euler integral `Real.Gamma s` as `x → ∞`. -/
 theorem tendsto_lowerIncompleteGamma_atTop (hs : 0 < s) :
     Tendsto (lowerIncompleteGamma s) atTop (𝓝 (Real.Gamma s)) := by
-  have hint : IntegrableOn (fun t : ℝ => t ^ (s - 1) * Real.exp (-t)) (Ioi 0) :=
-    (Real.GammaIntegral_convergent hs).congr_fun (fun t _ => mul_comm _ _) measurableSet_Ioi
-  have hGamma : ∫ t in Ioi (0 : ℝ), t ^ (s - 1) * Real.exp (-t) = Real.Gamma s := by
-    rw [Real.Gamma_eq_integral hs]
-    exact setIntegral_congr_fun measurableSet_Ioi fun t _ => mul_comm _ _
   have hmax : Tendsto (fun x : ℝ => max x 0) atTop atTop :=
     tendsto_atTop_mono (fun x => le_max_left x 0) tendsto_id
-  rw [lowerIncompleteGamma_eq_comp hs, ← hGamma]
-  exact (intervalIntegral_tendsto_integral_Ioi 0 hint tendsto_id).comp hmax
+  rw [lowerIncompleteGamma_eq_comp hs, ← integral_Ioi_rpow_mul_exp_neg_eq_Gamma hs]
+  exact (intervalIntegral_tendsto_integral_Ioi 0
+    (integrableOn_rpow_mul_exp_neg (by linarith : (-1 : ℝ) < s - 1)) tendsto_id).comp hmax
 
 /-- A truncated Euler integral is at most the complete one. -/
 theorem lowerIncompleteGamma_le_Gamma (hs : 0 < s) (x : ℝ) :
@@ -343,16 +344,16 @@ theorem lowerIncompleteGamma_le_Gamma (hs : 0 < s) (x : ℝ) :
 probability law. -/
 theorem tendsto_regularizedGamma_atTop (hs : 0 < s) :
     Tendsto (regularizedGamma s) atTop (𝓝 1) := by
-  rw [funext fun x => regularizedGamma_eq_div hs x]
+  rw [funext fun x => regularizedGamma_eq_div s x]
   have := (tendsto_lowerIncompleteGamma_atTop hs).div_const (Real.Gamma s)
   rwa [div_self (Real.Gamma_pos_of_pos hs).ne'] at this
 
 /-- `P(s, x)` is at most `1`, for every parameter value. -/
 theorem regularizedGamma_le_one (s x : ℝ) : regularizedGamma s x ≤ 1 := by
   rcases le_or_gt s 0 with hs | hs
-  · rw [regularizedGamma_of_nonpos_left hs]
+  · rw [regularizedGamma_eq_zero_of_nonpos_left hs]
     exact zero_le_one
-  · rw [regularizedGamma_eq_div hs]
+  · rw [regularizedGamma_eq_div]
     exact (div_le_one (Real.Gamma_pos_of_pos hs)).2 (lowerIncompleteGamma_le_Gamma hs x)
 
 /-! ### The exponential case `s = 1` -/
@@ -368,7 +369,7 @@ theorem lowerIncompleteGamma_one (hx : 0 ≤ x) :
 /-- `P(1, x) = 1 - exp (-x)` for `0 ≤ x`: the regularized lower incomplete gamma function at shape
 `1` is the cumulative distribution function of the standard exponential law. -/
 theorem regularizedGamma_one (hx : 0 ≤ x) : regularizedGamma 1 x = 1 - Real.exp (-x) := by
-  rw [regularizedGamma_eq_div one_pos, lowerIncompleteGamma_one hx, Real.Gamma_one, div_one]
+  rw [regularizedGamma_eq_div, lowerIncompleteGamma_one hx, Real.Gamma_one, div_one]
 
 end TauCeti
 
