@@ -95,10 +95,7 @@ theorem coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange
         rw [← hy]
         rw [← LinearMap.comp_apply, ← LinearMap.baseChange_comp]
         have hcomp : q.comp N.subtype = 0 := by
-          ext n
-          rw [LinearMap.comp_apply, LinearMap.zero_apply, Submodule.subtype_apply]
-          exact (N.mkQ_apply (n : M)).trans
-            ((Submodule.Quotient.mk_eq_zero N).mpr n.2)
+          simpa [q] using (LinearMap.exact_subtype_mkQ N).linearMap_comp_eq_zero
         rw [hcomp, LinearMap.baseChange_zero, LinearMap.zero_apply]
       have heval := congrArg
         (fun t ↦ TauCeti.Module.Dual.baseChangeEvaluation

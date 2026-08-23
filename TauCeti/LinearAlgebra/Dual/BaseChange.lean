@@ -76,6 +76,7 @@ theorem baseChangeEvaluation_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
 
 /-- Evaluation against a base-changed functional is natural with respect to the base change of
 a linear map. -/
+@[simp]
 theorem _root_.Module.Dual.baseChangeEvaluation_one_tmul_baseChange
     {N : Type*} [AddCommMonoid N] [Module R N]
     (f : M →ₗ[R] N) (φ : Module.Dual R N) (t : A ⊗[R] M) :
