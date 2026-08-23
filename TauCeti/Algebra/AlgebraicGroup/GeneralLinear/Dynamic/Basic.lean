@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weights
 
 /-!
 # The upper-triangular Borel as a dynamic parabolic of `GL₂`
@@ -93,76 +92,13 @@ end Points
 section Coordinate
 
 /-- The rank-one weights `(1, 0)` defining the standard dynamic cocharacter of `GL₂`. -/
-private def dynamicWeights : Fin 2 → ULift.{u} Unit → ℤ :=
-  fun i _ => if i = 0 then 1 else 0
-
-/-- The group algebra of the rank-one character lattice in its Laurent-polynomial
-presentation. -/
-private noncomputable def rankOneCharacterBialgEquiv :
-    MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) ≃ₐc[R]
-      LaurentPolynomial R :=
-  (MonoidAlgebra.domCongrBialgEquiv R R
-      (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))).trans
-    (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
-
-/-- The coordinate Hopf-algebra morphism of the cocharacter `t ↦ diag(t, 1)`. -/
-private noncomputable def dynamicCocharacterCoordinateMap :
-    coordinateHopfAlgebra R 2 ⟶ _root_.CommHopfAlgCat.of R (LaurentPolynomial R) :=
-  weightTorusCoordinateMap (R := R) dynamicWeights ≫
-    _root_.CommHopfAlgCat.ofHom (rankOneCharacterBialgEquiv (R := R)).toBialgHom
-
-/-- On every value algebra, the coordinate cocharacter induces `t ↦ diag(t, 1)` on points. -/
-@[simp]
-private theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
-    (A : CommAlgCat.{v} R) (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
-    (CommHopfAlgCat.mapPointsFunctor
-      (dynamicCocharacterCoordinateMap (R := R))).app A f =
-      dynamicCocharacterPoints f := by
-  let q : WithConv
-      (MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) →ₐ[R] A) :=
-    (CommHopfAlgCat.mapPointsFunctor
-      (_root_.CommHopfAlgCat.ofHom
-        (rankOneCharacterBialgEquiv (R := R)).toBialgHom)).app A f
-  rw [dynamicCocharacterCoordinateMap,
-    CommHopfAlgCat.mapPointsFunctor_comp_app_apply]
-  -- No rewrite lemma names the let-bound intermediate point left by the composition lemma.
-  change (CommHopfAlgCat.mapPointsFunctor
-    (weightTorusCoordinateMap (R := R) dynamicWeights)).app A q = _
-  rw [mapPointsFunctor_weightTorusCoordinateMap_app]
-  have hq : SplitTorus.pointsMulEquiv q (ULift.up ()) =
-      MultiplicativeGroup.pointsMulEquiv f := by
-    ext
-    rw [SplitTorus.pointsMulEquiv_apply_coe,
-      MultiplicativeGroup.pointsMulEquiv_apply,
-      MultiplicativeGroup.unitOfPoint_val]
-    simp only [q, CommHopfAlgCat.mapPointsFunctor_app_apply,
-      WithConv.ofConv_toConv, AlgHom.comp_apply]
-    congr 1
-    rw [rankOneCharacterBialgEquiv]
-    simp only [CommHopfAlgCat.hom_ofHom]
-    apply (AlgEquiv.symm_apply_eq
-      (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv).mpr
-    -- `simp` does not unfold `domCongrBialgEquiv`, so expose its underlying `domCongr`.
-    change MonoidAlgebra.domCongr R R
-        (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))
-          (MonoidAlgebra.single
-            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1) =
-      (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv (LaurentPolynomial.T 1)
-    simpa using
-      (AddMonoidAlgebra.toMultiplicativeBialgEquiv_single (R := R) (A := R) (M := ℤ) 1 1).symm
-  apply (pointsMulEquiv (R := R) (A := A) 2).injective
-  rw [pointsMulEquiv_diagonalTorusPoints,
-    pointsMulEquiv_dynamicCocharacterPoints]
-  congr 1
-  funext i
-  rw [diagonalTorusCoordinates_pointsMap_weightCharacterMap]
-  fin_cases i <;>
-    simp [dynamicWeights, dynamicDiagonalUnits, torusCharacter_def, hq]
+private def dynamicWeights : Fin 2 → ℤ :=
+  fun i => if i = 0 then 1 else 0
 
 /-- The bialgebra morphism representing the standard cocharacter `t ↦ diag(t, 1)`. -/
 noncomputable def dynamicCocharacter :
     coordinateHopfAlgebra R 2 →ₐc[R] LaurentPolynomial R :=
-  (dynamicCocharacterCoordinateMap (R := R)).hom
+  weightCocharacter (R := R) dynamicWeights
 
 end Coordinate
 
@@ -175,12 +111,12 @@ theorem pointsHom_dynamicCocharacter (t : Aˣ) :
     Cocharacter.pointsHom A (dynamicCocharacter (R := R)) t =
       dynamicCocharacterPoints
         ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) := by
-  rw [Cocharacter.pointsHom_apply]
-  -- The private coordinate map has no public rewrite lemma, so unfold the cocharacter locally.
-  change (CommHopfAlgCat.mapPointsFunctor
-      (dynamicCocharacterCoordinateMap (R := R))).app (CommAlgCat.of R A)
-        ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) = _
-  rw [mapPointsFunctor_dynamicCocharacterCoordinateMap_app]
+  rw [dynamicCocharacter, pointsHom_weightCocharacter]
+  apply (pointsMulEquiv (R := R) (A := A) 2).injective
+  rw [pointsMulEquiv_weightCocharacterPoints, pointsMulEquiv_dynamicCocharacterPoints]
+  congr 1
+  funext i
+  fin_cases i <;> simp [dynamicWeights, dynamicDiagonalUnits]
 
 /-- The standard cocharacter sends `t` to the diagonal matrix `diag(t, 1)`. -/
 theorem pointsMulEquiv_pointsHom_dynamicCocharacter (t : Aˣ) :
@@ -283,29 +219,6 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_one
 end Dynamic
 
 end GL2
-
-section PointMaps
-
-variable {A : Type v} [CommRing A] [Algebra R A]
-
-/-- Applying the inclusion `A[X] → A[T;T⁻¹]` to a general-linear point applies that
-inclusion entrywise to its matrix. -/
-theorem pointsMulEquiv_ofPolyPoint
-    {n : ℕ} (F : WithConv (coordinateHopfAlgebra R n →ₐ[R] Polynomial A)) :
-    pointsMulEquiv n (Cocharacter.ofPolyPoint A F) =
-      Matrix.GeneralLinearGroup.map
-        (Polynomial.toLaurentAlg.restrictScalars R).toRingHom (pointsMulEquiv n F) := by
-  rw [Cocharacter.ofPolyPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
-
-/-- Evaluating a polynomial-valued point at zero evaluates every matrix entry at zero. -/
-theorem pointsMulEquiv_evalZeroPoint
-    {n : ℕ} (F : WithConv (coordinateHopfAlgebra R n →ₐ[R] Polynomial A)) :
-    pointsMulEquiv n (Cocharacter.evalZeroPoint A F) =
-      Matrix.GeneralLinearGroup.map
-        ((Polynomial.aeval (0 : A)).restrictScalars R).toRingHom (pointsMulEquiv n F) := by
-  rw [Cocharacter.evalZeroPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
-
-end PointMaps
 
 namespace GL2
 
