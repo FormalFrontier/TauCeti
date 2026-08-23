@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Calculus.ContDiff.Defs
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import Mathlib.Analysis.ODE.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
@@ -47,7 +46,8 @@ route to Morse homology.
 * `TauCeti.IsIntegralCurveOn.antitoneOn_comp_neg_gradient` and
   `TauCeti.IsIntegralCurveOn.strictAntiOn_comp_neg_gradient`: Lyapunov monotonicity and strict
   descent away from critical points.
-* `TauCeti.IsIntegralCurve.integral_norm_gradient_sq_eq_sub`: the energy identity.
+* `TauCeti.IsIntegralCurveOn.integral_norm_gradient_sq_eq_sub` and
+  `TauCeti.IsIntegralCurve.integral_norm_gradient_sq_eq_sub`: the energy identity.
 * `TauCeti.IsIntegralCurve.gradient_eq_zero_of_periodic` and
   `TauCeti.IsIntegralCurve.eq_of_periodic_neg_gradient`: a periodic negative gradient trajectory
   consists entirely of critical points and is constant.
@@ -62,7 +62,7 @@ route to Morse homology.
 
 public section
 
-open Filter Function InnerProductSpace Set
+open Filter Function InnerProductSpace MeasureTheory Set
 open scoped Gradient Interval Topology
 
 namespace TauCeti
@@ -72,6 +72,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteS
 
 /-- A constant curve is an integral curve of the negative gradient field exactly when its value
 is a critical point of that field. -/
+@[simp]
 theorem isIntegralCurve_const_neg_gradient_iff {x : E} :
     IsIntegralCurve (fun _ : ℝ ↦ x) (fun _ y ↦ -∇ f y) ↔ ∇ f x = 0 := by
   constructor
@@ -124,6 +125,29 @@ theorem strictAntiOn_comp_neg_gradient
   · intro t ht
     exact neg_lt_zero.mpr (sq_pos_of_ne_zero (norm_ne_zero_iff.mpr (hcrit t ht)))
 
+/-- **Energy identity for a negative gradient trajectory.**  Between two times of the trajectory's
+time domain, the drop in `f` equals the integral of the squared norm of its gradient along the
+trajectory. -/
+theorem integral_norm_gradient_sq_eq_sub
+    (hγ : IsIntegralCurveOn γ (fun _ x ↦ -∇ f x) s) (hsub : [[a, b]] ⊆ s)
+    (hf : ∀ t ∈ [[a, b]], DifferentiableAt ℝ f (γ t))
+    (hint : IntervalIntegrable (fun t ↦ ‖∇ f (γ t)‖ ^ 2) volume a b) :
+    ∫ t in a..b, ‖∇ f (γ t)‖ ^ 2 = f (γ a) - f (γ b) := by
+  have huIcc : [[a, b]] = Icc (min a b) (max a b) := by
+    rcases le_total a b with hab | hab <;> simp [hab, uIcc_of_le, uIcc_of_ge]
+  have hcont : ContinuousOn (f ∘ γ) [[a, b]] := fun t ht ↦
+    ((hf t ht).continuousAt.comp_continuousWithinAt (hγ.continuousWithinAt (hsub ht))).mono hsub
+  have hmax : max a b ∈ [[a, b]] := by rw [huIcc]; exact right_mem_Icc.2 min_le_max
+  have hderiv : ∀ t ∈ Ioo (min a b) (max a b),
+      HasDerivWithinAt (f ∘ γ) (-‖∇ f (γ t)‖ ^ 2) (Ioi t) t := by
+    intro t ht
+    have htmem : t ∈ [[a, b]] := by rw [huIcc]; exact Ioo_subset_Icc_self ht
+    exact ((hasDerivWithinAt_comp_neg_gradient hγ (hsub htmem) (hf t htmem)).mono
+      hsub).mono_of_mem_nhdsWithin (ordConnected_uIcc.mem_nhdsGT htmem hmax ht.2)
+  have hFTC := intervalIntegral.integral_eq_sub_of_hasDeriv_right hcont hderiv hint.neg
+  rw [intervalIntegral.integral_neg] at hFTC
+  simpa only [Function.comp_apply, neg_neg, neg_sub] using congrArg Neg.neg hFTC
+
 end IsIntegralCurveOn
 
 namespace IsIntegralCurve
@@ -138,41 +162,33 @@ theorem hasDerivAt_comp_neg_gradient
 
 /-- The value of `f` is antitone along a global negative gradient trajectory. -/
 theorem antitone_comp_neg_gradient
-    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : Differentiable ℝ f) :
+    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : ∀ t, DifferentiableAt ℝ f (γ t)) :
     Antitone (f ∘ γ) :=
   antitone_of_hasDerivAt_nonpos
-    (fun t ↦ hasDerivAt_comp_neg_gradient hγ (hf (γ t))) fun _ ↦ neg_nonpos.mpr (sq_nonneg _)
+    (fun t ↦ hasDerivAt_comp_neg_gradient hγ (hf t)) fun _ ↦ neg_nonpos.mpr (sq_nonneg _)
 
 /-- If a global negative gradient trajectory contains no critical point, then the value of `f` is
 strictly decreasing along it. -/
 theorem strictAnti_comp_neg_gradient
-    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : Differentiable ℝ f)
+    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : ∀ t, DifferentiableAt ℝ f (γ t))
     (hcrit : ∀ t, ∇ f (γ t) ≠ 0) :
     StrictAnti (f ∘ γ) :=
-  strictAnti_of_hasDerivAt_neg (fun t ↦ hasDerivAt_comp_neg_gradient hγ (hf (γ t)))
+  strictAnti_of_hasDerivAt_neg (fun t ↦ hasDerivAt_comp_neg_gradient hγ (hf t))
     fun t ↦ neg_lt_zero.mpr (sq_pos_of_ne_zero (norm_ne_zero_iff.mpr (hcrit t)))
 
-/-- **Energy identity for a negative gradient trajectory.**  The drop in `f` between two times
-equals the integral of the squared norm of its gradient along the trajectory. -/
+/-- **Energy identity for a global negative gradient trajectory.**  The drop in `f` between two
+times equals the integral of the squared norm of its gradient along the trajectory. -/
 theorem integral_norm_gradient_sq_eq_sub
-    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : ContDiff ℝ 1 f) :
-    ∫ t in a..b, ‖∇ f (γ t)‖ ^ 2 = f (γ a) - f (γ b) := by
-  have hgrad : Continuous (fun x ↦ ∇ f x) := by
-    exact (toDual ℝ E).symm.continuous.comp (hf.continuous_fderiv one_ne_zero)
-  have henergy : Continuous (fun t ↦ ‖∇ f (γ t)‖ ^ 2) :=
-    ((hgrad.comp hγ.continuous).norm.pow 2)
-  have henergy_neg : Continuous (fun t ↦ -‖∇ f (γ t)‖ ^ 2) := henergy.neg
-  have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt
-    (a := a) (b := b) (f := f ∘ γ) (f' := fun t ↦ -‖∇ f (γ t)‖ ^ 2)
-    (fun t _ ↦ hasDerivAt_comp_neg_gradient hγ (hf.differentiable one_ne_zero (γ t)))
-    (henergy_neg.intervalIntegrable a b)
-  rw [intervalIntegral.integral_neg] at hFTC
-  simpa only [Function.comp_apply, neg_neg, neg_sub] using congrArg Neg.neg hFTC
+    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : ∀ t, DifferentiableAt ℝ f (γ t))
+    (hint : IntervalIntegrable (fun t ↦ ‖∇ f (γ t)‖ ^ 2) volume a b) :
+    ∫ t in a..b, ‖∇ f (γ t)‖ ^ 2 = f (γ a) - f (γ b) :=
+  IsIntegralCurveOn.integral_norm_gradient_sq_eq_sub (hγ.isIntegralCurveOn univ)
+    (subset_univ _) (fun t _ ↦ hf t) hint
 
 /-- A periodic negative gradient trajectory consists entirely of critical points.  Thus negative
 gradient dynamics has no nonconstant periodic orbit. -/
 theorem gradient_eq_zero_of_periodic
-    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : Differentiable ℝ f)
+    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : ∀ t, DifferentiableAt ℝ f (γ t))
     {T : ℝ} (hT : 0 < T) (hper : Periodic γ T) (t : ℝ) :
     ∇ f (γ t) = 0 := by
   have hanti := antitone_comp_neg_gradient hγ hf
@@ -197,12 +213,12 @@ theorem gradient_eq_zero_of_periodic
     · exact hright u ⟨htu, hu.2.le⟩
   have hzero : deriv (f ∘ γ) t = 0 := by
     rw [hlocal.deriv_eq, deriv_const]
-  rw [(hasDerivAt_comp_neg_gradient hγ (hf (γ t))).deriv] at hzero
+  rw [(hasDerivAt_comp_neg_gradient hγ (hf t)).deriv] at hzero
   simpa only [neg_eq_zero, sq_eq_zero_iff, norm_eq_zero] using hzero
 
 /-- A periodic negative gradient trajectory is constant. -/
 theorem eq_of_periodic_neg_gradient
-    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : Differentiable ℝ f)
+    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : ∀ t, DifferentiableAt ℝ f (γ t))
     {T : ℝ} (hT : 0 < T) (hper : Periodic γ T) (t u : ℝ) :
     γ t = γ u := by
   apply is_const_of_deriv_eq_zero (fun v ↦ (hγ v).differentiableAt) _ t u
