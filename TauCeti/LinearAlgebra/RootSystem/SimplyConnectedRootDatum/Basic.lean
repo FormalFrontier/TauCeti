@@ -19,7 +19,7 @@ lattices `Fin n → ℤ` with the dot product as pairing, and each carrying a ba
 image of an injective *simple index* map `e` naming the simple roots in Bourbaki order. This file
 holds the part of that construction which carries no information about the type: only the per-type
 files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
-`...SimplyConnectedRootDatum.D`, supply the mathematics of their own root system.
+`...SimplyConnectedRootDatum.D.Basic`, supply the mathematics of their own root system.
 
 ## Main definitions
 

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.Cohomology.Basic
+public import TauCeti.AlgebraicGeometry.Cohomology.Module
 public import TauCeti.AlgebraicGeometry.Modules.Sheaf
 public import TauCeti.CategoryTheory.Sites.SheafCohomology.LongExactSequence
 
@@ -36,7 +37,12 @@ varies the coefficients.
   `Scheme.Modules.subsingleton_cohomology_X₁`, the vanishing consequences;
 * `Scheme.Modules.exact_sections` and `Scheme.Modules.sections_injective`: global sections are
   left exact, and `Scheme.Modules.sections_surjective`: they are exact on the right as soon as
-  `H¹(X, M₁)` vanishes. This last statement is the form in which the sequence is normally used.
+  `H¹(X, M₁)` vanishes. This last statement is the form in which the sequence is normally used;
+* `Scheme.Modules.cohomologyδ_naturality`, the naturality of the connecting map in the short
+  exact sequence, and the linearity it gives: `Scheme.Modules.cohomologyδLinear` over the ring
+  of global functions and `Scheme.Modules.cohomologyδBaseLinear` over the base ring of a scheme
+  over a commutative ring. The maps induced by morphisms of sheaves are already linear, so this
+  makes the whole long exact sequence one of modules; a dimension count in it needs that.
 
 Additivity of the Euler characteristic, and with it Riemann-Roch, rest on this sequence, so it
 is Layer B infrastructure for `TauCetiRoadmap/JacobianChallenge/README.md`. No formalization is
@@ -48,7 +54,7 @@ degree-zero cohomology with global sections is `Scheme.Modules.cohomologyZeroEqu
 
 public section
 
-open CategoryTheory Limits TopologicalSpace AlgebraicGeometry
+open CategoryTheory Limits TopologicalSpace AlgebraicGeometry Scheme.Modules
 
 namespace TauCeti
 
@@ -175,6 +181,80 @@ theorem sections_surjective (h₁ : Subsingleton (Cohomology S.X₁ 1)) :
     ((cohomologyZeroEquiv S.X₃).symm y)
   refine ⟨cohomologyZeroEquiv S.X₂ x, ?_⟩
   rw [← cohomologyZeroEquiv_cohomologyMap, hx, AddEquiv.apply_symm_apply]
+
+omit hS in
+/-- Multiplication by a global function on cohomology is the map induced by multiplication by
+that function on the coefficient sheaf. -/
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMap_globalSectionsSmul_apply (M : X.Modules)
+    (i : ℕ) (r : Γ(X, ⊤)) (x : Cohomology M i) :
+    cohomologyMap (globalSectionsSmul M r) i x = r • x := by
+  rw [cohomology_smul, cohomologyFunctor_map]
+  rfl
+
+omit hS in
+/-- The connecting map is natural in the short exact sequence: a morphism `φ : S₁ ⟶ S₂` of short
+exact sequences of sheaves of modules makes the square formed by the two connecting maps and the
+maps induced by `φ.τ₃` and `φ.τ₁` commute. -/
+theorem cohomologyδ_naturality {S₁ S₂ : ShortComplex X.Modules} (h₁ : S₁.ShortExact)
+    (h₂ : S₂.ShortExact) (φ : S₁ ⟶ S₂) (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) (x : Cohomology S₁.X₃ n₀) :
+    cohomologyMap φ.τ₁ n₁ (cohomologyδ h₁ n₀ n₁ h x) =
+      cohomologyδ h₂ n₀ n₁ h (cohomologyMap φ.τ₃ n₀ x) :=
+  TauCeti.CategoryTheory.Sheaf.H.δ_naturality (shortExact_map_toSheaf h₁)
+    (shortExact_map_toSheaf h₂) ((toSheaf X).mapShortComplex.map φ) n₀ n₁ h x
+
+/-- The connecting map of the long exact cohomology sequence is linear over the ring of global
+functions. -/
+def cohomologyδLinear (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
+    Cohomology S.X₃ n₀ →ₗ[Γ(X, ⊤)] Cohomology S.X₁ n₁ where
+  toFun := cohomologyδ hS n₀ n₁ h
+  map_add' := map_add _
+  map_smul' r x := by
+    -- `Module.compHom` exposes its action definitionally, so the goal is the naturality of the
+    -- connecting map for multiplication by `r` on all three terms.
+    change cohomologyδ hS n₀ n₁ h (r • x) = r • cohomologyδ hS n₀ n₁ h x
+    rw [← cohomologyMap_globalSectionsSmul_apply, ← cohomologyMap_globalSectionsSmul_apply]
+    -- Multiplication by `r` on all three terms is an endomorphism of the short complex.
+    exact (cohomologyδ_naturality hS hS
+      { τ₁ := globalSectionsSmul S.X₁ r
+        τ₂ := globalSectionsSmul S.X₂ r
+        τ₃ := globalSectionsSmul S.X₃ r
+        comm₁₂ := globalSectionsSmul_naturality S.f r
+        comm₂₃ := globalSectionsSmul_naturality S.g r } n₀ n₁ h x).symm
+
+@[simp]
+lemma cohomologyδLinear_apply (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) (x : Cohomology S.X₃ n₀) :
+    cohomologyδLinear hS n₀ n₁ h x = cohomologyδ hS n₀ n₁ h x :=
+  (rfl)
+
+section Base
+
+variable (R : Type u) [CommRing R] (X : Scheme.{u}) [X.Over (Spec (.of R))]
+  {S : ShortComplex X.Modules}
+
+omit hS in
+/-- For a scheme over a commutative ring, the connecting map of the long exact cohomology
+sequence is linear over the base ring. -/
+def cohomologyδBaseLinear (hS : S.ShortExact) (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
+    Cohomology S.X₃ n₀ →ₗ[R] Cohomology S.X₁ n₁ where
+  toFun := cohomologyδ hS n₀ n₁ h
+  map_add' := map_add _
+  map_smul' r x := by
+    rw [base_smul_cohomology]
+    -- As for `cohomologyMapBaseLinear`, normalize the restricted action to the action of global
+    -- functions and apply the linearity already proved there.
+    change cohomologyδLinear hS n₀ n₁ h ((baseRingToGlobalSections R X r) • x) =
+      (baseRingToGlobalSections R X r) • cohomologyδLinear hS n₀ n₁ h x
+    exact (cohomologyδLinear hS n₀ n₁ h).map_smul _ x
+
+omit hS in
+@[simp]
+lemma cohomologyδBaseLinear_apply (hS : S.ShortExact) (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
+    (x : Cohomology S.X₃ n₀) :
+    cohomologyδBaseLinear R X hS n₀ n₁ h x = cohomologyδ hS n₀ n₁ h x :=
+  (rfl)
+
+end Base
 
 end Scheme.Modules
 

@@ -37,18 +37,23 @@ incompatible, bump `mathlib-ltar-v1` once in
 
 ## Cloudflare account
 
+This table records the required destination. During the 2026 account migration,
+the live cache and repository variables remain on the older personal account
+until the destination copy has passed verification and the upload key is
+rotated in the same cutover.
+
 | | |
 |---|---|
-| Account | `kim@lean-fro.org` |
-| Account ID | `d789bf36d237e0cb313be59b927c82bd` |
-| Dashboard | https://dash.cloudflare.com/d789bf36d237e0cb313be59b927c82bd |
+| Account | `tauceti` (accessible to `kim@lean-fro.org`) |
+| Account ID | `ec2169bdf033f56b009956d4b64ba8ef` |
+| Dashboard | https://dash.cloudflare.com/ec2169bdf033f56b009956d4b64ba8ef |
 | R2 bucket | `tauceti-cache` |
 | Registrar | `taucetiproject.org`, bought through Cloudflare Registrar in this same account |
 
 The account ID is not a secret: it is the subdomain of the S3 endpoint below. If the dashboard
 link 404s, the login you used is not a member of that account.
 
-The account holds other buckets unrelated to this project. Only `tauceti-cache` is ours.
+This account is the TauCeti boundary. It should contain no Hex or Palomar resources.
 
 ## Endpoints
 
@@ -59,8 +64,8 @@ to sign them, so the read host must be public; only uploads use a key.
 |---|---|---|
 | `LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | `https://cache.taucetiproject.org/artifacts` | `pr-build.yml` read |
 | `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://cache.taucetiproject.org/revisions` | `pr-build.yml` read |
-| `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/artifacts` | `ci.yml` upload |
-| `LAKE_CACHE_REVISION_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/revisions` | `ci.yml` upload |
+| `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://ec2169bdf033f56b009956d4b64ba8ef.r2.cloudflarestorage.com/tauceti-cache/artifacts` | `ci.yml` upload |
+| `LAKE_CACHE_REVISION_ENDPOINT` | `https://ec2169bdf033f56b009956d4b64ba8ef.r2.cloudflarestorage.com/tauceti-cache/revisions` | `ci.yml` upload |
 | `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml`, `publish-lake-cache` job only |
 
 Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object keys are

@@ -292,6 +292,12 @@ theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : 
   ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
 
+@[simp]
+theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
+  refine ⟨eq_of_isEquiv, ?_⟩
+  rintro rfl
+  exact Valuation.IsEquiv.refl
+
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
   fun _ _ h => eq_of_isEquiv ((Valuation.isEquiv_iff_valuationSubring _ _).mpr h)

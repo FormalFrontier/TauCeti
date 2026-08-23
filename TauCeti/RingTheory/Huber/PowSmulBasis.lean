@@ -27,8 +27,11 @@ so this is a construction of that topology's neighbourhood basis together with t
 properties, not an identification with the topology 6.18(1) characterises.
 
 **The hypotheses are weaker than Wedhorn's, deliberately.** Remark 6.19 assumes `A` noetherian
-and `M₀` finitely generated; no declaration below uses either — only `A · M₀ = M`. Finite
-generation first does work one layer up, where a single exponent has to serve a whole submodule.
+and `M₀` finitely generated. The basis and topology declarations use neither — only `A · M₀ = M`,
+and the comparison results below not even that. Finite generation enters only in
+`exists_pow_smul_le` and `exists_pow_smul_le_pow_smul`, as a hypothesis on the submodule being
+compared, where a single exponent has to serve a whole submodule at once. `A` noetherian is used
+nowhere in this file.
 Several declarations are weaker still, taking an arbitrary `S : Subring A` rather than a ring of
 definition, so a caller holding `powerBoundedSubring A` can use them.
 
@@ -39,6 +42,11 @@ definition, so a caller holding `powerBoundedSubring A` can use them.
 * `TauCeti.Huber.PairOfDefinition.submodulesBasis_pow_smul`: the family is a `SubmodulesBasis`.
 * `TauCeti.Huber.PairOfDefinition.powSmulModuleFilterBasis`: the same family as a filter basis
   for scalars from `A`, not just from `A₀` — Proposition 6.18(1)'s `A`-module clause.
+* `TauCeti.Huber.PairOfDefinition.exists_pow_smul_le` and
+  `TauCeti.Huber.PairOfDefinition.exists_pow_smul_le_pow_smul`: the family built from a finitely
+  generated lattice is cofinal in the one built from `M₀`. This is one direction of the comparison
+  behind Remark 6.19's well-definedness; the reverse instance and the equality of topologies are
+  not proved here.
 * `TauCeti.Huber.PairOfDefinition.isCountablyGenerated_nhds_zero`: the induced topology has a
   countable fundamental system of neighbourhoods of `0` — 6.18(1)'s first-countability clause.
 
@@ -235,5 +243,67 @@ theorem isCountablyGenerated_nhds_zero (P : PairOfDefinition A) {s : A}
     · rintro n -
       exact ⟨_, (P.mem_powSmulModuleFilterBasis hs hs0 M₀ hspan).mpr ⟨n, rfl⟩, subset_rfl⟩
   exact hbasis.isCountablyGenerated
+
+/-- **A power of `ϖ` carries a finitely generated `A₀`-submodule into `M₀` wholesale.**
+
+A *single* exponent serves all of `M₁` at once. That uniformity is exactly what finite generation
+buys: without it `exists_pow_smul_mem` still gives an exponent for each element separately, but
+those exponents need not be bounded, and no power of `ϖ` need carry the whole submodule.
+
+`M₀` is not required to span `M`; only `M₁` need lie in its span. -/
+theorem exists_pow_smul_le (P : PairOfDefinition A) {s : A} (hs : IsTopologicallyNilpotent s)
+    (hs0 : s ∈ P.ringOfDefinition) (M₀ M₁ : Submodule P.ringOfDefinition M)
+    (hspan : (M₁ : Set M) ⊆ Submodule.span A (M₀ : Set M)) (hfg : M₁.FG) :
+    ∃ k : ℕ, (⟨s, hs0⟩ : P.ringOfDefinition) ^ k • M₁ ≤ M₀ := by
+  obtain ⟨G, hG⟩ := hfg
+  choose! f hf using fun (z : M) (hz : z ∈ Submodule.span A (M₀ : Set M)) ↦
+    P.exists_pow_smul_mem hs hs0 M₀ hz
+  have hGmem : ∀ g ∈ (G : Set M), g ∈ Submodule.span A (M₀ : Set M) := fun g hg ↦
+    hspan (hG ▸ Submodule.subset_span hg)
+  refine ⟨G.sup f, ?_⟩
+  have key : ∀ x ∈ M₁, s ^ G.sup f • x ∈ M₀ := by
+    intro x hx
+    rw [← hG] at hx
+    induction hx using Submodule.span_induction with
+    | mem g hg =>
+        obtain ⟨d, hd⟩ := Nat.exists_eq_add_of_le (Finset.le_sup (f := f) hg)
+        rw [hd, Nat.add_comm]
+        exact M₀.pow_add_smul_mem hs0 d (f g) g (hf g (hGmem g hg))
+    | zero => simp
+    | add x y _ _ ihx ihy => simpa [smul_add] using M₀.add_mem ihx ihy
+    | smul a x _ ih =>
+        rw [smul_comm]
+        exact M₀.smul_mem _ ih
+  rintro _ ⟨x, hx, rfl⟩
+  simp only [DistribSMul.toLinearMap_apply]
+  have hcast : (((⟨s, hs0⟩ : P.ringOfDefinition) ^ G.sup f : P.ringOfDefinition) : A) • x
+      = s ^ G.sup f • x := by
+    rw [SubmonoidClass.coe_pow]
+  exact hcast ▸ key x hx
+
+/-- **One-sided cofinality of the two `ϖ`-adic filtrations.** Every member of the family built
+from `M₀` contains a member of the family built from a finitely generated `M₁`.
+
+This is the comparison Remark 6.19's well-definedness rests on, in one direction only: it gives
+the inclusion of the induced neighbourhood filters, not their equality. The reverse inclusion is
+this same theorem with the roles of `M₀` and `M₁` exchanged, which asks instead that `M₀` lie in
+the `A`-span of `M₁` and that `M₀` be finitely generated. Note it is not that `M₁` spans `M`:
+the hypothesis is one containment, not a spanning condition. Neither that instance nor the
+resulting equality of topologies is proved here.
+
+`submodulesBasis_pow_smul` proves the basis half of Remark 6.19 without finite generation; this is
+where `M₁.FG` does its work. -/
+theorem exists_pow_smul_le_pow_smul (P : PairOfDefinition A) {s : A}
+    (hs : IsTopologicallyNilpotent s) (hs0 : s ∈ P.ringOfDefinition)
+    (M₀ M₁ : Submodule P.ringOfDefinition M) (hspan : (M₁ : Set M) ⊆ Submodule.span A (M₀ : Set M))
+    (hfg : M₁.FG) (n : ℕ) : ∃ k : ℕ, (⟨s, hs0⟩ : P.ringOfDefinition) ^ k • M₁
+      ≤ (⟨s, hs0⟩ : P.ringOfDefinition) ^ n • M₀ := by
+  obtain ⟨k, hk⟩ := P.exists_pow_smul_le hs hs0 M₀ M₁ hspan hfg
+  refine ⟨n + k, ?_⟩
+  have hsplit : (⟨s, hs0⟩ : P.ringOfDefinition) ^ (n + k) • M₁
+      = (⟨s, hs0⟩ : P.ringOfDefinition) ^ n • ((⟨s, hs0⟩ : P.ringOfDefinition) ^ k • M₁) := by
+    rw [pow_add, mul_smul]
+  rw [hsplit]
+  exact smul_mono_right ((⟨s, hs0⟩ : P.ringOfDefinition) ^ n) hk
 
 end TauCeti.Huber.PairOfDefinition

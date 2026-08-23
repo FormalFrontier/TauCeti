@@ -21,6 +21,8 @@ commutativity. What the automorphism does to the root spaces of `H` is in
 
 ## Main results
 
+* `LieSubalgebra.map_eq_self_of_forall_mem_apply_eq_neg`: an automorphism acting by `-1` on a
+  subalgebra normalises it.
 * `LieSubalgebra.map_symm_eq_self_of_map_eq_self`: the inverse of a normalising automorphism
   normalises the subalgebra as well.
 * `TauCeti.ofSubalgebras_symm`: restricting the inverse gives the inverse of Mathlib's restriction.
@@ -37,10 +39,19 @@ variable {R : Type u} {L : Type v} [CommRing R] [LieRing L] [LieAlgebra R L]
 
 variable (e : LieEquiv R L L) (he : H.map e = H)
 
-include he
-
 namespace LieSubalgebra
 
+/-- An automorphism acting by `-1` on a subalgebra normalises it, since a subalgebra is closed
+under negation. -/
+theorem map_eq_self_of_forall_mem_apply_eq_neg (hneg : ∀ y ∈ H, e y = -y) : H.map e = H := by
+  refine le_antisymm (fun z hz ↦ ?_) (fun z hz ↦ ?_)
+  · rw [LieSubalgebra.mem_map] at hz
+    obtain ⟨y, hy, rfl⟩ := hz
+    simpa [hneg y hy] using neg_mem hy
+  · rw [LieSubalgebra.mem_map]
+    exact ⟨-z, neg_mem hz, by simp [hneg (-z) (neg_mem hz)]⟩
+
+include he in
 /-- The inverse of a normalising automorphism normalises `H` as well. -/
 theorem map_symm_eq_self_of_map_eq_self : H.map e.symm = H := by
   apply LieSubalgebra.toSubmodule_injective
@@ -51,6 +62,7 @@ end LieSubalgebra
 
 namespace TauCeti
 
+include he in
 /-- The inverse of the restriction of a normalising automorphism is the restriction of the inverse
 automorphism. -/
 theorem ofSubalgebras_symm :
