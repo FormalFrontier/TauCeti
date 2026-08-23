@@ -8,9 +8,9 @@ module
 public import Mathlib.NumberTheory.NumberField.ClassNumber
 public import Mathlib.RingTheory.AdjoinRoot
 import Mathlib.Analysis.Real.Pi.Bounds
+import TauCeti.NumberTheory.Multiquadratic.MinusTwentyOne.Basic
 import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Independence
 import TauCeti.NumberTheory.NumberField.ClassGroupElementaryTwoQuotient
-import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import TauCeti.NumberTheory.NumberField.PrimeIdeal
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
@@ -313,26 +313,7 @@ has class number `4`. -/
 @[simp]
 theorem classNumber_adjoinRoot_sqrt_neg_twenty_one_eq_four :
     NumberField.classNumber (AdjoinRoot (X ^ 2 - C (-21 : ℚ))) = 4 := by
-  let K := AdjoinRoot (X ^ 2 - C (-21 : ℚ))
-  let x : K := AdjoinRoot.root (X ^ 2 - C (-21 : ℚ))
-  have hx : x ^ 2 = algebraMap ℤ K (-21 : ℤ) := by
-    have hroot := AdjoinRoot.eval₂_root (X ^ 2 - C (-21 : ℚ))
-    rw [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C, ← AdjoinRoot.algebraMap_eq, sub_eq_zero] at hroot
-    rw [hroot, IsScalarTower.algebraMap_apply ℤ ℚ K]
-    norm_num
-  let θ : 𝓞 K := integralSqrt hx
-  have hmin : minpoly ℤ θ = X ^ 2 - C (-21 : ℤ) :=
-    minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
-      norm_num at hq
-      nlinarith [mul_self_nonneg q])
-  have hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
-    have hfne : (X ^ 2 - C (-21 : ℚ)) ≠ 0 :=
-      (monic_X_pow_sub_C (-21 : ℚ) (by norm_num)).ne_zero
-    have hpb := (AdjoinRoot.powerBasis (f := X ^ 2 - C (-21 : ℚ)) hfne).adjoin_gen_eq_top
-    rw [AdjoinRoot.powerBasis_gen] at hpb
-    have hθx : (θ : K) = x := algebraMap_integralSqrt hx
-    rw [hθx]
-    exact hpb
+  obtain ⟨θ, hmin, hgen⟩ := exists_isIntegralGen_adjoinRoot_sqrt_neg_twenty_one
   exact classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one hmin hgen
 
 end TauCeti.NumberField
