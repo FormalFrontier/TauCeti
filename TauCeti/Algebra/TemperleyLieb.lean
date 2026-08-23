@@ -339,19 +339,25 @@ end TauCeti
 
 namespace TauCeti.TemperleyLieb
 
-variable (R : Type*) [CommRing R] (δ : R) (n : ℕ)
+variable (R : Type*) (δ : R) (n : ℕ)
 variable {R δ n}
 
 section Kauffman
 
-/-- Swapping the two coefficients inverts a crossing, provided the coefficients are inverse to
-one another and the loop value is `-(α ^ 2 + β ^ 2)`. -/
-theorem crossing_mul_crossing_swap_eq_one (hαβ : α * β = 1) (hδ : δ = -(α ^ 2 + β ^ 2))
+variable [CommSemiring R]
+
+/-- Swapping the two coefficients inverts a crossing when the coefficients are inverse and obey
+the indicated polynomial relation with the loop value. -/
+theorem crossing_mul_crossing_swap_eq_one_of_polynomial (hαβ : α * β = 1)
+    (hpoly : α ^ 2 + α * β * δ + β ^ 2 = 0)
     (i : Fin (n - 1)) : crossing δ α β i * crossing δ β α i = 1 := by
   rw [crossing_mul_crossing, e_mul_self, smul_smul]
   match_scalars
-  · linear_combination hαβ
-  · linear_combination (α * β) * hδ + (-(α ^ 2 + β ^ 2)) * hαβ
+  · simpa only [mul_one] using hαβ
+  · calc
+      α * α * 1 + β * β * 1 + β * α * δ * 1 = α ^ 2 + α * β * δ + β ^ 2 := by
+        ring
+      _ = 0 := hpoly
 
 /-- The triple product of crossings on two adjacent pairs of strands, reduced using the
 Temperley-Lieb relations to a linear combination of five standard monomials. -/
@@ -376,10 +382,27 @@ theorem crossing_braid (hpoly : β * (α ^ 2 + α * β * δ + β ^ 2) = 0)
     crossing δ α β i * crossing δ α β j * crossing δ α β i
       = crossing δ α β j * crossing δ α β i * crossing δ α β j := by
   have hcoeff : 2 * α ^ 2 * β + α * β ^ 2 * δ + β ^ 3 = α ^ 2 * β := by
-    linear_combination hpoly
+    calc
+      2 * α ^ 2 * β + α * β ^ 2 * δ + β ^ 3
+          = α ^ 2 * β + β * (α ^ 2 + α * β * δ + β ^ 2) := by ring
+      _ = α ^ 2 * β := by rw [hpoly, add_zero]
   rw [crossing_mul_crossing_mul_crossing h, crossing_mul_crossing_mul_crossing h.symm, hcoeff]
   abel
 
 end Kauffman
+
+section KauffmanRing
+
+variable [CommRing R]
+
+/-- Swapping the two coefficients inverts a crossing, provided the coefficients are inverse to
+one another and the loop value is `-(α ^ 2 + β ^ 2)`. -/
+theorem crossing_mul_crossing_swap_eq_one (hαβ : α * β = 1) (hδ : δ = -(α ^ 2 + β ^ 2))
+    (i : Fin (n - 1)) : crossing δ α β i * crossing δ β α i = 1 := by
+  apply crossing_mul_crossing_swap_eq_one_of_polynomial hαβ
+  rw [hδ, hαβ]
+  ring
+
+end KauffmanRing
 
 end TauCeti.TemperleyLieb
