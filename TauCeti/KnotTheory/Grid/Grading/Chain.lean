@@ -71,11 +71,20 @@ private noncomputable def sigmaFiberLinearEquiv {R : Type*} [Semiring R]
   (DirectSum.lequivCongrLeft R (Equiv.sigmaFiberEquiv f).symm).trans
     (DirectSum.sigmaLcurryEquiv R (δ := fun _ (_ : {i // f i = _}) => R))
 
-/-- The linear sigma-fibre equivalence preserves every coefficient. -/
-private theorem sigmaFiberLinearEquiv_apply_apply {R : Type*} [Semiring R]
-    {ι κ : Type*} [DecidableEq κ] (f : ι → κ) (x : ⨁ _ : ι, R) (k : κ)
-    (i : {i : ι // f i = k}) : sigmaFiberLinearEquiv f x k i = x i :=
-  rfl
+/-- The linear sigma-fibre equivalence has the same underlying function as Mathlib's additive
+sigma-fibre equivalence. -/
+private theorem sigmaFiberLinearEquiv_apply {R : Type*} [Semiring R]
+    {ι κ : Type u} [DecidableEq κ] (f : ι → κ) (x : ⨁ _ : ι, R) :
+    sigmaFiberLinearEquiv f x =
+      DirectSum.sigmaFiberAddEquiv (β := fun _ : ι => R) f x := by
+  ext k i
+  rw [sigmaFiberLinearEquiv, LinearEquiv.trans_apply]
+  -- `sigmaLcurryEquiv` has no application lemma, so expose its forward linear map.
+  change DirectSum.sigmaLcurry R (α := fun k : κ => {i : ι // f i = k})
+      (δ := fun _ _ => R)
+      (DirectSum.lequivCongrLeft R (Equiv.sigmaFiberEquiv f).symm x) k i = _
+  rw [DirectSum.sigmaLcurry_apply, DirectSum.lequivCongrLeft_apply,
+    DirectSum.sigmaFiberAddEquiv_apply_apply, Equiv.symm_symm, Equiv.sigmaFiberEquiv_apply]
 
 /-- The grid chain module decomposed as the direct sum of its (`O`-Maslov, Alexander)-homogeneous
 pieces. -/
@@ -90,8 +99,8 @@ chain coefficient. -/
 theorem bigradedChainEquiv_apply_apply (R : Type*) [Semiring R]
     (c : GridChain R n) (g : ℤ × ℤ) (x : {x : GridState n // G.bidegree x = g}) :
     G.bigradedChainEquiv R c g x = c x := by
-  rw [bigradedChainEquiv, LinearEquiv.trans_apply, sigmaFiberLinearEquiv_apply_apply,
-    finsuppLEquivDirectSum_apply]
+  rw [bigradedChainEquiv, LinearEquiv.trans_apply, sigmaFiberLinearEquiv_apply,
+    DirectSum.sigmaFiberAddEquiv_apply_apply, finsuppLEquivDirectSum_apply]
 
 /-- Reading a chain back off its homogeneous components: the coefficient at a state is the
 component of the state's own bidegree, at that state. -/
@@ -110,21 +119,10 @@ theorem bigradedChainEquiv_single (R : Type*) [Semiring R] (x : GridState n) (r 
       DirectSum.lof R (ℤ × ℤ) (fun g => G.BigradedChainPiece R g) (G.bidegree x)
         (DirectSum.lof R {y : GridState n // G.bidegree y = G.bidegree x}
           (fun _ => R) ⟨x, rfl⟩ r) := by
-  ext g y
-  by_cases h : G.bidegree x = g
-  · subst g
-    by_cases hxy : x = (y : GridState n)
-    · simp [G.bigradedChainEquiv_apply_apply, DirectSum.lof_eq_of, hxy]
-    · have hsub : (⟨x, rfl⟩ : {z : GridState n // G.bidegree z = G.bidegree x}) ≠ y :=
-        fun hsub => hxy (congrArg Subtype.val hsub)
-      simp [G.bigradedChainEquiv_apply_apply, DirectSum.lof_eq_of, DirectSum.of_apply,
-        hxy, hsub]
-  · have hxy : x ≠ (y : GridState n) := by
-      intro hxy
-      apply h
-      rw [hxy]
-      exact y.property
-    simp [G.bigradedChainEquiv_apply_apply, DirectSum.lof_eq_of, DirectSum.of_apply, h, hxy]
+  rw [bigradedChainEquiv, LinearEquiv.trans_apply, finsuppLEquivDirectSum_single,
+    sigmaFiberLinearEquiv_apply]
+  simpa only [DirectSum.lof_eq_of] using
+    (DirectSum.sigmaFiberAddEquiv_of (β := fun _ : GridState n => R) G.bidegree x r)
 
 /-- The rank of a homogeneous grid-chain piece is the number of states in its bidegree. -/
 theorem finrank_bigradedChainPiece (R : Type*) [Semiring R] [StrongRankCondition R]
