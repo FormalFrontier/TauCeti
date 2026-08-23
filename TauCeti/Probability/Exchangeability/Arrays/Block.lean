@@ -144,8 +144,6 @@ theorem SeparatelyExchangeable.arrayBlock (h : SeparatelyExchangeable μ X)
   have key := h.map_comp hX (σ.viaEmbedding ι) (τ.viaEmbedding κ)
     (F := fun (x : ℕ × ℕ → α) (p : ℕ × ℕ) => x (ι p.1, κ p.2))
     (measurable_blockReadOff ι κ)
-  change (μ.map fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
-    (τ.viaEmbedding κ) (κ p.2)) ω) = μ.map fun ω (p : ℕ × ℕ) => X (ι p.1, κ p.2) ω at key
   have hσ : ∀ i, (σ.viaEmbedding ι) (ι i) = ι (σ i) :=
     fun i => Equiv.Perm.viaEmbedding_apply (ι := ι) σ i
   have hτ : ∀ j, (τ.viaEmbedding κ) (κ j) = κ (τ j) :=
@@ -166,8 +164,6 @@ theorem JointlyExchangeable.arrayBlock_diag (h : JointlyExchangeable μ X)
   have key := h.map_comp hX (σ.viaEmbedding ι)
     (F := fun (x : ℕ × ℕ → α) (p : ℕ × ℕ) => x (ι p.1, ι p.2))
     (measurable_blockReadOff ι ι)
-  change (μ.map fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
-    (σ.viaEmbedding ι) (ι p.2)) ω) = μ.map fun ω (p : ℕ × ℕ) => X (ι p.1, ι p.2) ω at key
   have hσ : ∀ i, (σ.viaEmbedding ι) (ι i) = ι (σ i) :=
     fun i => Equiv.Perm.viaEmbedding_apply (ι := ι) σ i
   have hfun : (fun ω (p : ℕ × ℕ) => X ((σ.viaEmbedding ι) (ι p.1),
@@ -253,6 +249,68 @@ theorem not_separatelyExchangeable_arrayBlock_id_id (μ : Measure Ω) [IsProbabi
 
 /-! ## The block law is canonical -/
 
+/-- **Below any bound, one permutation carries a pair of injections with disjoint ranges to
+another such pair.** The agreement is only finite by necessity: a single permutation need not
+carry one pair of index maps to another globally, since their ranges may have complements of
+different sizes, as `(2 · , 2 · + 1)` and `(4 · , 4 · + 1)` do. -/
+private theorem exists_perm_apply_eq_of_lt {e' f' : ℕ → ℕ} (n : ℕ)
+    (he : Function.Injective e) (hf : Function.Injective f)
+    (hd : Disjoint (Set.range e) (Set.range f))
+    (he' : Function.Injective e') (hf' : Function.Injective f')
+    (hd' : Disjoint (Set.range e') (Set.range f')) :
+    ∃ σ : Equiv.Perm ℕ, (∀ i < n, σ (e i) = e' i) ∧ ∀ j < n, σ (f j) = f' j := by
+  have hg : Function.Injective (Sum.elim (fun i : Fin n => e i.val) fun j : Fin n => f j.val) :=
+    (he.comp Fin.val_injective).sumElim (hf.comp Fin.val_injective)
+      fun a b hab => Set.disjoint_left.mp hd ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
+  have hg' : Function.Injective (Sum.elim (fun i : Fin n => e' i.val) fun j : Fin n => f' j.val) :=
+    (he'.comp Fin.val_injective).sumElim (hf'.comp Fin.val_injective)
+      fun a b hab => Set.disjoint_left.mp hd' ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
+  obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ hg hg'
+  exact ⟨σ, fun i hi => hσ (Sum.inl ⟨i, hi⟩), fun j hj => hσ (Sum.inr ⟨j, hj⟩)⟩
+
+/-- The common argument behind the two canonical-law theorems below, stated for an arbitrary
+read-off `B u v` of the array's sample path along the index maps `u` and `v`. Besides being
+measurable, `B` has to commute with a permutation of both axes (`hBperm`) and to read the entry at
+`p` through the index maps only at `p.1` and `p.2` (`hBapply`); the block and the block of pairs
+both satisfy these by `rfl` and by congruence.
+
+The two laws are compared one finite-dimensional marginal at a time, because a single permutation
+matches the two pairs of index maps only below a finite bound (`exists_perm_apply_eq_of_lt`). -/
+private theorem map_blockReadOff_eq {β : Type*} [MeasurableSpace β] [IsFiniteMeasure μ]
+    {e' f' : ℕ → ℕ} {B : (ℕ → ℕ) → (ℕ → ℕ) → (ℕ × ℕ → α) → ℕ × ℕ → β}
+    (hBmeas : ∀ u v, Measurable (B u v))
+    (hBperm : ∀ (σ : Equiv.Perm ℕ) (u v : ℕ → ℕ) (x : ℕ × ℕ → α),
+      (B u v fun q => x (σ q.1, σ q.2)) = B (fun i => σ (u i)) (fun j => σ (v j)) x)
+    (hBapply : ∀ (u v u' v' : ℕ → ℕ) (x : ℕ × ℕ → α) (p : ℕ × ℕ),
+      u p.1 = u' p.1 → v p.2 = v' p.2 → B u v x p = B u' v' x p)
+    (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
+    (he : Function.Injective e) (hf : Function.Injective f)
+    (hd : Disjoint (Set.range e) (Set.range f))
+    (he' : Function.Injective e') (hf' : Function.Injective f')
+    (hd' : Disjoint (Set.range e') (Set.range f')) :
+    (μ.map fun ω => B e f fun q => X q ω) = μ.map fun ω => B e' f' fun q => X q ω := by
+  have hmeas : ∀ u v : ℕ → ℕ, AEMeasurable (fun ω => B u v fun q => X q ω) μ :=
+    fun u v => (hBmeas u v).comp_aemeasurable (aemeasurable_pi_lambda _ hX)
+  refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
+    (hmeas e f) (hmeas e' f')).mpr fun I => ?_
+  -- Every index occurring in `I` is below `n`, so a permutation matching the two pairs of index
+  -- maps below `n` already matches the marginal.
+  obtain ⟨n, hbound⟩ : ∃ n : ℕ, ∀ p ∈ I, p.1 < n ∧ p.2 < n := by
+    refine ⟨(I.sup fun p => max p.1 p.2) + 1, fun p hp => ?_⟩
+    have hle := Finset.le_sup (f := fun p : ℕ × ℕ => max p.1 p.2) hp
+    omega
+  obtain ⟨σ, hσe, hσf⟩ := exists_perm_apply_eq_of_lt n he hf hd he' hf' hd'
+  have key := h.map_comp hX σ (F := fun x : ℕ × ℕ → α => I.restrict (B e f x))
+    ((Finset.measurable_restrict I).comp (hBmeas e f))
+  have hrew : ∀ ω : Ω, (I.restrict (B e f fun q => X (σ q.1, σ q.2) ω))
+      = I.restrict (B e' f' fun q => X q ω) := by
+    intro ω
+    funext p
+    obtain ⟨hp₁, hp₂⟩ := hbound p.1 p.2
+    exact (congrFun (hBperm σ e f fun q => X q ω) _).trans
+      (hBapply _ _ _ _ _ _ (hσe _ hp₁) (hσf _ hp₂))
+  exact key.symm.trans (congrArg (fun g => Measure.map g μ) (funext hrew))
+
 /-- **The law of a block does not depend on the chosen pair of index maps.** Any two pairs of
 injections with disjoint ranges give the same law; in particular, the canonical even-odd block
 computes it. -/
@@ -262,39 +320,10 @@ theorem JointlyExchangeable.map_arrayBlock_eq [IsFiniteMeasure μ] {e' f' : ℕ 
     (hd : Disjoint (Set.range e) (Set.range f))
     (he' : Function.Injective e') (hf' : Function.Injective f')
     (hd' : Disjoint (Set.range e') (Set.range f')) :
-    (μ.map fun ω p => arrayBlock X e f p ω) = μ.map fun ω p => arrayBlock X e' f' p ω := by
-  have hmeas : ∀ u v : ℕ → ℕ, AEMeasurable (fun ω p => arrayBlock X u v p ω) μ :=
-    fun _ _ => aemeasurable_pi_lambda _ fun _ => hX _
-  refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
-    (hmeas e f) (hmeas e' f')).mpr fun I => ?_
-  -- Every index occurring in `I` is below `n`, so a permutation matching the two pairs of index
-  -- maps below `n` already matches the marginal.
-  obtain ⟨n, hbound⟩ : ∃ n : ℕ, ∀ p ∈ I, p.1 < n ∧ p.2 < n := by
-    refine ⟨(I.sup fun p => max p.1 p.2) + 1, fun p hp => ?_⟩
-    have hle := Finset.le_sup (f := fun p : ℕ × ℕ => max p.1 p.2) hp
-    omega
-  have hg₁ : Function.Injective
-      (Sum.elim (fun i : Fin n => e i.val) fun j : Fin n => f j.val) :=
-    (he.comp Fin.val_injective).sumElim (hf.comp Fin.val_injective)
-      fun a b hab => Set.disjoint_left.mp hd ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
-  have hg₂ : Function.Injective
-      (Sum.elim (fun i : Fin n => e' i.val) fun j : Fin n => f' j.val) :=
-    (he'.comp Fin.val_injective).sumElim (hf'.comp Fin.val_injective)
-      fun a b hab => Set.disjoint_left.mp hd' ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
-  obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ hg₁ hg₂
-  have hσe : ∀ i : Fin n, σ (e i.val) = e' i.val := fun i => hσ (Sum.inl i)
-  have hσf : ∀ j : Fin n, σ (f j.val) = f' j.val := fun j => hσ (Sum.inr j)
-  have key := h.map_comp hX σ
-    (F := fun x : ℕ × ℕ → α => I.restrict fun p : ℕ × ℕ => x (e p.1, f p.2))
-    ((Finset.measurable_restrict I).comp (measurable_blockReadOff e f))
-  have hrew : ∀ ω : Ω, (I.restrict fun p : ℕ × ℕ => X (σ (e p.1), σ (f p.2)) ω)
-      = I.restrict fun p : ℕ × ℕ => X (e' p.1, f' p.2) ω := by
-    intro ω
-    funext p
-    obtain ⟨hp₁, hp₂⟩ := hbound p.1 p.2
-    exact congrArg (fun q => X q ω)
-      (Prod.ext (hσe ⟨(p : ℕ × ℕ).1, hp₁⟩) (hσf ⟨(p : ℕ × ℕ).2, hp₂⟩))
-  exact key.symm.trans (congrArg (fun g => Measure.map g μ) (funext hrew))
+    (μ.map fun ω p => arrayBlock X e f p ω) = μ.map fun ω p => arrayBlock X e' f' p ω :=
+  map_blockReadOff_eq (B := fun u v x p => x (u p.1, v p.2)) measurable_blockReadOff
+    (fun _ _ _ _ => rfl) (fun _ _ _ _ x _ hu hv => congrArg x (Prod.ext hu hv))
+    h hX he hf hd he' hf' hd'
 
 /-- **The law of a pair-valued block does not depend on the chosen pair of index maps.** Any two
 pairs of injections with disjoint ranges give the same law. -/
@@ -305,43 +334,12 @@ theorem JointlyExchangeable.map_arrayBlockPair_eq [IsFiniteMeasure μ] {e' f' : 
     (he' : Function.Injective e') (hf' : Function.Injective f')
     (hd' : Disjoint (Set.range e') (Set.range f')) :
     (μ.map fun ω p => arrayBlockPair X e f p ω) =
-      μ.map fun ω p => arrayBlockPair X e' f' p ω := by
-  have hmeas : ∀ u v : ℕ → ℕ, AEMeasurable (fun ω p => arrayBlockPair X u v p ω) μ :=
-    fun _ _ => aemeasurable_pi_lambda _ fun _ => (hX _).prodMk (hX _)
-  refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
-    (hmeas e f) (hmeas e' f')).mpr fun I => ?_
-  obtain ⟨n, hbound⟩ : ∃ n : ℕ, ∀ p ∈ I, p.1 < n ∧ p.2 < n := by
-    refine ⟨(I.sup fun p => max p.1 p.2) + 1, fun p hp => ?_⟩
-    have hle := Finset.le_sup (f := fun p : ℕ × ℕ => max p.1 p.2) hp
-    omega
-  have hg₁ : Function.Injective
-      (Sum.elim (fun i : Fin n => e i.val) fun j : Fin n => f j.val) :=
-    (he.comp Fin.val_injective).sumElim (hf.comp Fin.val_injective)
-      fun a b hab => Set.disjoint_left.mp hd ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
-  have hg₂ : Function.Injective
-      (Sum.elim (fun i : Fin n => e' i.val) fun j : Fin n => f' j.val) :=
-    (he'.comp Fin.val_injective).sumElim (hf'.comp Fin.val_injective)
-      fun a b hab => Set.disjoint_left.mp hd' ⟨a.val, rfl⟩ ⟨b.val, hab.symm⟩
-  obtain ⟨σ, hσ⟩ := Equiv.Perm.exists_extending_pair _ _ hg₁ hg₂
-  have hσe : ∀ i : Fin n, σ (e i.val) = e' i.val := fun i => hσ (Sum.inl i)
-  have hσf : ∀ j : Fin n, σ (f j.val) = f' j.val := fun j => hσ (Sum.inr j)
-  have key := h.map_comp hX σ
-    (F := fun x : ℕ × ℕ → α =>
-      I.restrict fun p : ℕ × ℕ => (x (e p.1, f p.2), x (f p.2, e p.1)))
-    ((Finset.measurable_restrict I).comp (measurable_blockPairReadOff e f))
-  have hrew : ∀ ω : Ω,
-      (I.restrict fun p : ℕ × ℕ =>
-        (X (σ (e p.1), σ (f p.2)) ω, X (σ (f p.2), σ (e p.1)) ω)) =
-        I.restrict fun p : ℕ × ℕ => (X (e' p.1, f' p.2) ω, X (f' p.2, e' p.1) ω) := by
-    intro ω
-    funext p
-    obtain ⟨hp₁, hp₂⟩ := hbound p.1 p.2
-    exact Prod.ext
-      (congrArg (fun q => X q ω)
-        (Prod.ext (hσe ⟨(p : ℕ × ℕ).1, hp₁⟩) (hσf ⟨(p : ℕ × ℕ).2, hp₂⟩)))
-      (congrArg (fun q => X q ω)
-        (Prod.ext (hσf ⟨(p : ℕ × ℕ).2, hp₂⟩) (hσe ⟨(p : ℕ × ℕ).1, hp₁⟩)))
-  exact key.symm.trans (congrArg (fun g => Measure.map g μ) (funext hrew))
+      μ.map fun ω p => arrayBlockPair X e' f' p ω :=
+  map_blockReadOff_eq (B := fun u v x p => (x (u p.1, v p.2), x (v p.2, u p.1)))
+    measurable_blockPairReadOff (fun _ _ _ _ => rfl)
+    (fun _ _ _ _ x _ hu hv =>
+      Prod.ext (congrArg x (Prod.ext hu hv)) (congrArg x (Prod.ext hv hu)))
+    h hX he hf hd he' hf' hd'
 
 /-! ## De Finetti for the rows of a block -/
 
