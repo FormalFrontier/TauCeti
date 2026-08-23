@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Unipotent
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.LinearlyReductive
-import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
 /-!
 # The additive group is not linearly reductive
@@ -50,7 +49,6 @@ reducible, since otherwise every element of `k[x]` would be a scalar. -/
 theorem not_isLinearlyReductive (k : Type u) [Field k] [IsAlgClosed k] :
     ¬ Coalgebra.IsLinearlyReductive.{u, u, u} k (SymmetricAlgebra k k) := by
   intro hlr
-  let : IsReduced (SymmetricAlgebra k k) := isReduced_of_smooth_of_field k _
   have hx := HopfAlgebra.eq_counit_smul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
     k (SymmetricAlgebra k k) hlr (fun g ↦ isUnipotentPoint k g) (monomialBasis k 1)
   have hcounit :

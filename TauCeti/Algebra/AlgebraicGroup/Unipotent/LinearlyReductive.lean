@@ -7,9 +7,9 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.LinearlyReductive
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Embedding
-public import TauCeti.Algebra.Coalgebra.Comodule.Fixed
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.RegularSubcomodule
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
+import TauCeti.Algebra.Coalgebra.Basic
 import TauCeti.Algebra.Coalgebra.Subcoalgebra.Finite
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
@@ -100,15 +100,13 @@ theorem exists_mem_ne_zero_coact_eq_tmul_one_of_forall_isUnipotentPoint
     ∃ v ∈ N, v ≠ 0 ∧ coact (R := k) (C := H) (M := M) v = v ⊗ₜ[k] (1 : H) := by
   obtain ⟨w, hwN, hw0⟩ := Subcomodule.ne_bot_iff.mp hN
   let _ : AddCommGroup N := Module.addCommMonoidToAddCommGroup k
+  -- `↥N` and `↥N.toSubmodule` subtype the same carrier, so finite-dimensionality transfers.
   have _ : FiniteDimensional k N := inferInstanceAs (FiniteDimensional k N.toSubmodule)
   have _ : Nontrivial N := ⟨⟨⟨w, hwN⟩, 0, fun hc ↦ hw0 (congrArg Subtype.val hc)⟩⟩
   obtain ⟨v, hv, hvc⟩ :=
     (hasNonzeroFixedVector_iff (k := k) (H := H) (M := N)).mp
       (hasNonzeroFixedVector_of_forall_isUnipotentPoint (M := N) hH)
-  refine ⟨v, v.2, fun hc ↦ hv (Subtype.ext hc), ?_⟩
-  have := congrArg ((SMulMemClass.subtype N).rTensor H) hvc
-  rwa [Subcomodule.subtype_rTensor_coact, LinearMap.rTensor_tmul,
-    SMulMemClass.subtype_apply] at this
+  exact ⟨v, v.2, fun hc ↦ hv (Subtype.ext hc), Subcomodule.coact_coe_eq_tmul_one N hvc⟩
 
 /-- If a finite-dimensional comodule over a reduced finite-type commutative Hopf algebra with
 unipotent points is completely reducible, then the coaction is trivial on it: the represented
@@ -118,7 +116,7 @@ theorem coact_eq_tmul_one_of_isCompletelyReducible_of_forall_isUnipotentPoint
     (hcr : IsCompletelyReducible k H M)
     (hH : ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g) (m : M) :
     coact (R := k) (C := H) (M := M) m = m ⊗ₜ[k] (1 : H) :=
-  coact_eq_tmul_one_of_isCompletelyReducible hcr
+  coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed hcr
     (exists_mem_ne_zero_coact_eq_tmul_one_of_forall_isUnipotentPoint hH) m
 
 end Comodule
@@ -140,14 +138,14 @@ theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
   have hNfin : FiniteDimensional k N.toSubmodule := by
     rw [hNdef, Subcoalgebra.toRegularSubcomodule_toSubmodule]
     exact hDfin
+  -- `↥N` and `↥N.toSubmodule` subtype the same carrier, so finite-dimensionality transfers.
   have _ : FiniteDimensional k N := hNfin
   have hmem : h ∈ N := Subcoalgebra.mem_toRegularSubcomodule.mpr hD
   have hfix :=
     Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_isUnipotentPoint
       (M := N) hlr.isCompletelyReducible hH ⟨h, hmem⟩
-  have hpush := congrArg ((SMulMemClass.subtype N).rTensor H) hfix
-  rwa [Subcomodule.subtype_rTensor_coact, LinearMap.rTensor_tmul, SMulMemClass.subtype_apply,
-    Comodule.instSelf_coact] at hpush
+  have hpush := Subcomodule.coact_coe_eq_tmul_one N hfix
+  rwa [Comodule.instSelf_coact] at hpush
 
 variable (k H) in
 /-- Under the same hypotheses every element is a scalar multiple of `1`, the scalar being its
@@ -156,13 +154,9 @@ theorem eq_counit_smul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
     (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (h : H) :
-    h = Coalgebra.counit (R := k) h • (1 : H) := by
-  have hcomul :=
-    comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint k H hlr hH h
-  have hc := congrArg ((Coalgebra.counit (R := k) (A := H)).rTensor H) hcomul
-  rw [Coalgebra.rTensor_counit_comul, LinearMap.rTensor_tmul] at hc
-  have hlid := congrArg (TensorProduct.lid k H) hc
-  simpa using hlid
+    h = Coalgebra.counit (R := k) h • (1 : H) :=
+  Coalgebra.eq_counit_smul_of_comul_eq_tmul
+    (comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint k H hlr hH h)
 
 variable (k H) in
 /-- Under the same hypotheses the augmentation ideal vanishes: the counit is injective. -/
@@ -192,6 +186,30 @@ def counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint
     (augmentation_eq_bot_of_isLinearlyReductive_of_forall_isUnipotentPoint k H hlr hH)
 
 variable (k H) in
+/-- The triviality equivalence is the counit. -/
+@[simp]
+theorem counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint_apply
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (x : H) :
+    counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hlr hH x =
+      Bialgebra.counitBialgHom k H x := by
+  rw [counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint]
+  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_apply _ _
+
+variable (k H) in
+/-- The inverse of the triviality equivalence is the structure map. -/
+@[simp]
+theorem counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint_symm_apply
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (r : k) :
+    (counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hlr hH).symm r =
+      algebraMap k H r := by
+  rw [counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint]
+  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_symm_apply _ _
+
+variable (k H) in
 /-- Under the same hypotheses the group of points over every commutative value algebra is
 trivial: this is the functor-of-points form of the statement that the group is trivial. -/
 theorem subsingleton_algHom_of_isLinearlyReductive_of_forall_isUnipotentPoint
@@ -217,6 +235,34 @@ def counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint
   letI : IsReduced H := isReduced_of_smooth_of_field k H
   counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hlr hH
 
+variable (k H) in
+/-- The smooth triviality equivalence is the counit. -/
+@[simp]
+theorem counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint_apply
+    [IsAlgClosed k] [Algebra.FiniteType k H] (hsm : Algebra.Smooth k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (x : H) :
+    counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hsm hlr hH x =
+      Bialgebra.counitBialgHom k H x := by
+  let _ := hsm
+  let _ : IsReduced H := isReduced_of_smooth_of_field k H
+  rw [counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint]
+  exact counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint_apply k H hlr hH x
+
+variable (k H) in
+/-- The inverse of the smooth triviality equivalence is the structure map. -/
+@[simp]
+theorem counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint_symm_apply
+    [IsAlgClosed k] [Algebra.FiniteType k H] (hsm : Algebra.Smooth k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (r : k) :
+    (counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hsm hlr hH).symm
+        r = algebraMap k H r := by
+  let _ := hsm
+  let _ : IsReduced H := isReduced_of_smooth_of_field k H
+  rw [counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint]
+  exact counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint_symm_apply k H hlr hH r
+
 end HopfAlgebra
 
 namespace geometricallyUnipotentPointsCommHopfAlgProperty
@@ -232,6 +278,29 @@ def counitBialgEquivOfLinearlyReductive [IsAlgClosed k] [Algebra.FiniteType k H]
   HopfAlgebra.counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hsm
     ((linearlyReductiveCommHopfAlgProperty_iff k (CommHopfAlgCat.of k H)).mp hlr)
     (forall_isUnipotentPoint hu)
+
+/-- The object-property triviality equivalence is the counit. -/
+@[simp]
+theorem counitBialgEquivOfLinearlyReductive_apply [IsAlgClosed k] [Algebra.FiniteType k H]
+    (hu : geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H))
+    (hsm : Algebra.Smooth k H)
+    (hlr : linearlyReductiveCommHopfAlgProperty k (CommHopfAlgCat.of k H)) (x : H) :
+    counitBialgEquivOfLinearlyReductive hu hsm hlr x = Bialgebra.counitBialgHom k H x := by
+  rw [counitBialgEquivOfLinearlyReductive]
+  exact HopfAlgebra.counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint_apply
+    k H hsm _ _ x
+
+/-- The inverse of the object-property triviality equivalence is the structure map. -/
+@[simp]
+theorem counitBialgEquivOfLinearlyReductive_symm_apply [IsAlgClosed k] [Algebra.FiniteType k H]
+    (hu : geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H))
+    (hsm : Algebra.Smooth k H)
+    (hlr : linearlyReductiveCommHopfAlgProperty k (CommHopfAlgCat.of k H)) (r : k) :
+    (counitBialgEquivOfLinearlyReductive hu hsm hlr).symm r = algebraMap k H r := by
+  rw [counitBialgEquivOfLinearlyReductive]
+  exact
+    HopfAlgebra.counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint_symm_apply
+      k H hsm _ _ r
 
 end geometricallyUnipotentPointsCommHopfAlgProperty
 

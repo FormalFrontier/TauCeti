@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Coalgebra.Comodule.Fixed
 public import TauCeti.Algebra.Coalgebra.Comodule.Flag.Extension
 
 /-!
@@ -26,6 +27,8 @@ upper-unitriangular group.
 
 * `TauCeti.Comodule.HasNonzeroFixedVector`: a comodule contains a nonzero vector with coaction
   `v ↦ v ⊗ 1`.
+* `TauCeti.Comodule.hasNonzeroFixedVector_iff_fixedSubcomodule_ne_bot`: that happens exactly when
+  the fixed subcomodule is nonzero.
 * `TauCeti.Comodule.exists_basis_coefficientMatrix_isUpperUnitriangular_of_fixed_vectors`:
   if every nonzero finite-dimensional comodule has such a vector, every finite-dimensional
   comodule admits an upper-unitriangular basis.
@@ -69,6 +72,13 @@ theorem hasNonzeroFixedVector_iff :
     HasNonzeroFixedVector k H M ↔
       ∃ v : M, v ≠ 0 ∧ coact (R := k) (C := H) (M := M) v = v ⊗ₜ[k] (1 : H) :=
   Iff.rfl
+
+/-- A comodule has a nonzero fixed vector exactly when its fixed subcomodule is nonzero. -/
+theorem hasNonzeroFixedVector_iff_fixedSubcomodule_ne_bot :
+    HasNonzeroFixedVector k H M ↔ fixedSubcomodule k H M ≠ ⊥ := by
+  rw [hasNonzeroFixedVector_iff, Subcomodule.ne_bot_iff]
+  exact ⟨fun ⟨v, hv, hvc⟩ ↦ ⟨v, mem_fixedSubcomodule.mpr hvc, hv⟩,
+    fun ⟨v, hvm, hv⟩ ↦ ⟨v, hv, mem_fixedSubcomodule.mp hvm⟩⟩
 
 /-- The span of a fixed vector, bundled as a subcomodule. -/
 private def fixedSpan (v : M)
