@@ -71,6 +71,7 @@ variable [AddCommMonoid M] [Module R M] [Comodule R H M]
 
 /-- The coordinate morphism of a comodule corestricted along a bialgebra morphism is the
 composite of the original coordinate morphism with that bialgebra morphism. -/
+@[simp]
 theorem coordinateBialgHom_corestrict (f : H →ₐc[R] K) (b : Basis (Fin n) R M) :
     letI : Comodule R K M := Corestrict f.toCoalgHom
     coordinateBialgHom (H := K) b = f.comp (coordinateBialgHom (H := H) b) := by
@@ -130,6 +131,7 @@ variable [AddCommMonoid M] [Module R M] [Comodule R H M]
 
 /-- If every vector has trivial coaction, the coordinate morphism of the representation factors
 through the counit of `O(GLₙ)` and the unit of the coefficient Hopf algebra. -/
+@[simp]
 theorem coordinateBialgHom_eq_unit_comp_counit_of_coact_eq_tmul_one
     (b : Basis (Fin n) R M)
     (htrivial : ∀ m : M, coact (R := R) (C := H) m = m ⊗ₜ[R] (1 : H)) :
@@ -207,7 +209,7 @@ theorem eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one
     isFaithful_corestrict_of_surjective q hq b hM
   have htrivialQ : ∀ m : M, coact (R := R) (C := Q) m = m ⊗ₜ[R] (1 : Q) := by
     intro m
-    exact htrivial m
+    simpa only [corestrict_coact_apply] using htrivial m
   have haugmentationQ : HopfIdeal.augmentation R Q = ⊥ :=
     augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one b hfaithfulQ htrivialQ
   have hcomapBot : (⊥ : HopfIdeal R Q).comap q hq = I := by
