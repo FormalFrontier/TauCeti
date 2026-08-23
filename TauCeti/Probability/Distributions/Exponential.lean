@@ -53,7 +53,8 @@ zero case is discharged from the probability-measure instance instead.
 * `integral_id_expMeasure`, `integral_sq_expMeasure` — the mean and the second moment;
 * `variance_id_expMeasure` — the variance;
 * `integrableExpSet_id_expMeasure` — the moment-generating domain is exactly `Iio r`;
-* `mgf_id_expMeasure`, `cgf_id_expMeasure` — the mgf on that domain, and the cgf;
+* `mgf_id_expMeasure`, `mgf_id_expMeasure_pos`, `cgf_id_expMeasure` — the mgf on that domain, its
+  strict positivity, and the cgf;
 * `charFun_expMeasure` — the characteristic function, at every real `t`.
 
 ## References
@@ -210,7 +211,9 @@ private theorem expIntegrand_eq_indicator (t : ℝ) :
   by_cases hx : (0:ℝ) ≤ x
   · rw [Set.indicator_of_mem (mem_Ici.mpr hx)]
     split_ifs
-    rw [show (t - r) * x = t * x + -(r * x) by ring, Real.exp_add]
+    -- split the single exponential at rate `t - r` into the density and mgf factors
+    have hsplit : (t - r) * x = t * x + -(r * x) := by ring
+    rw [hsplit, Real.exp_add]
     ring
   · rw [Set.indicator_of_notMem (by simpa using hx)]
     split_ifs
@@ -232,7 +235,8 @@ theorem integrableExpSet_id_expMeasure (hr : 0 < r) :
 /-- The exponential moment at `t` exists exactly when `t < r`.  This is
 `integrableExpSet_id_expMeasure` in the form a caller actually applies, without unfolding
 `integrableExpSet` or stripping `id`. -/
-theorem integrable_exp_mul_expMeasure_iff (hr : 0 < r) :
+@[simp]
+theorem integrable_exp_mul_id_expMeasure_iff (hr : 0 < r) :
     Integrable (fun x => exp (t * x)) (expMeasure r) ↔ t < r := by
   have h := integrableExpSet_id_expMeasure (r := r) hr
   have ht : t ∈ integrableExpSet id (expMeasure r) ↔ t ∈ Set.Iio r := by rw [h]
@@ -241,6 +245,7 @@ theorem integrable_exp_mul_expMeasure_iff (hr : 0 < r) :
 /-! ### The moment generating function and its logarithm -/
 
 /-- **The moment generating function of the exponential law**, on its domain `t < r`. -/
+@[simp]
 theorem mgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
     mgf id (expMeasure r) t = r / (r - t) := by
   unfold mgf
@@ -249,10 +254,23 @@ theorem mgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
   simp only [smul_eq_mul]
   rw [expIntegrand_eq_indicator t, integral_indicator measurableSet_Ici,
     integral_Ici_eq_integral_Ioi, integral_const_mul, integral_exp_mul_Ioi (sub_neg.2 ht) 0]
+  -- `integral_exp_mul_Ioi` reports the value at rate `t - r`; the statement is oriented at `r - t`,
+  -- so the sign is flipped once, explicitly, rather than left to `field_simp` to guess.
+  have hflip : (t : ℝ) - r = -(r - t) := by ring
   simp only [mul_zero, Real.exp_zero]
-  rw [show ((t : ℝ) - r) = -(r - t) by ring, div_neg, neg_div, neg_neg, mul_one_div]
+  rw [hflip, div_neg, neg_div, neg_neg, mul_one_div]
+
+/-- The moment generating function is strictly positive on its domain.
+
+Proved from Mathlib's `mgf_pos` and the integrability characterization, not by `div_pos` on the
+closed form: positivity is a consequence of the exponential moment *existing*, which is what a
+consumer reasoning about the cgf's domain actually has. -/
+theorem mgf_id_expMeasure_pos (hr : 0 < r) (ht : t < r) : 0 < mgf id (expMeasure r) t := by
+  have : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+  exact mgf_pos ((integrable_exp_mul_id_expMeasure_iff hr).2 ht)
 
 /-- **The cumulant generating function of the exponential law**, on its domain `t < r`. -/
+@[simp]
 theorem cgf_id_expMeasure (hr : 0 < r) (ht : t < r) :
     cgf id (expMeasure r) t = Real.log (r / (r - t)) := by
   unfold cgf
@@ -276,6 +294,7 @@ private theorem charIntegrand_eq (t : ℝ) {x : ℝ} (hx : 0 < x) :
 
 Unlike the mgf this needs no hypothesis on `t`: the density-transported integrand has modulus
 `r * exp (-(r * x))` on `[0, ∞)` whatever `t` is, so the integral converges at every real `t`. -/
+@[simp]
 theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
     charFun (expMeasure r) t = (r : ℂ) / (r - Complex.I * t) := by
   have ha : ((t : ℂ) * Complex.I - r).re < 0 := by simp [hr]
@@ -292,9 +311,10 @@ theorem charFun_expMeasure (hr : 0 < r) (t : ℝ) :
     ← setIntegral_eq_integral_of_forall_compl_eq_zero hzero, integral_Ici_eq_integral_Ioi,
     setIntegral_congr_fun measurableSet_Ioi (fun x hx => charIntegrand_eq t (mem_Ioi.mp hx)),
     integral_const_mul, integral_exp_mul_complex_Ioi ha 0]
+  -- as in the mgf: the integral is reported at rate `t * I - r`, the statement at `r - I * t`.
+  have hflip : (t : ℂ) * Complex.I - r = -((r : ℂ) - Complex.I * t) := by ring
   simp only [Complex.ofReal_zero, mul_zero, Complex.exp_zero]
-  rw [show ((t : ℂ) * Complex.I - r) = -((r : ℂ) - Complex.I * t) by ring, div_neg, neg_div,
-    neg_neg, mul_one_div]
+  rw [hflip, div_neg, neg_div, neg_neg, mul_one_div]
 
 end Probability
 
