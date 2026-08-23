@@ -278,6 +278,21 @@ theorem div_norm_eq_exp_arg_mul_I {w : ℂ} (hw : w ≠ 0) :
   rw [div_eq_iff (Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hw)), mul_comm]
   exact (Complex.norm_mul_exp_arg_mul_I w).symm
 
+/-- Two real representatives of the same angle have the same complex exponential after
+multiplication by `I`. -/
+theorem exp_mul_I_congr_angle {x y : ℝ} (h : (x : Real.Angle) = (y : Real.Angle)) :
+    Complex.exp ((x : ℂ) * Complex.I) = Complex.exp ((y : ℂ) * Complex.I) := by
+  obtain ⟨k, hk⟩ := Real.Angle.angle_eq_iff_two_pi_dvd_sub.mp h
+  have hxy : (x : ℂ) = (y : ℂ) + (k : ℂ) * (2 * (Real.pi : ℂ)) := by
+    have hxy_real : x = y + (k : ℝ) * (2 * Real.pi) := by linarith [hk]
+    rw [hxy_real]
+    push_cast
+    ring
+  rw [hxy, add_mul, Complex.exp_add]
+  have hkI : ((k : ℂ) * (2 * (Real.pi : ℂ))) * Complex.I =
+      (k : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) := by ring
+  rw [hkI, Complex.exp_int_mul_two_pi_mul_I, mul_one]
+
 /-- For a nonzero complex number `z`, `exp(I · Im(log z)) = z / ↑‖z‖`. -/
 private lemma exp_I_log_im_eq_div_norm {z : ℂ} (hz : z ≠ 0) :
     Complex.exp (Complex.I * ((Complex.log z).im : ℂ)) = z / (‖z‖ : ℂ) := by
