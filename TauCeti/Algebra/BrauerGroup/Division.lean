@@ -116,7 +116,11 @@ theorem isBrauerEquivalent_iff_nonempty_algEquiv
     fun ⟨e⟩ ↦ IsBrauerEquivalent.of_algEquiv K e⟩
 
 /-- **Two central division algebras have the same Brauer class exactly when they are isomorphic
-as algebras over the base field.** -/
+as algebras over the base field.**
+
+Not a `simp` lemma: `TauCeti.BrauerGroup.mk_eq_mk_iff` is one already, so `simp` rewrites the
+left-hand side through it and reaches the same right-hand side by
+`TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv`. -/
 theorem mk_eq_mk_iff_nonempty_algEquiv
     {D E : Type v} [DivisionRing D] [Algebra K D] [Algebra.IsCentral K D]
     [FiniteDimensional K D] [DivisionRing E] [Algebra K E] [Algebra.IsCentral K E]

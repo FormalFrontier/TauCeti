@@ -70,14 +70,17 @@ that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sharpen
 The algebra-level Wedderburn uniqueness theorem
 `TauCeti.wedderburn_data_unique_of_algEquiv` is used directly: it keeps the base field fixed and
 removes the earlier need to recover the coefficient division algebra from a separate dimension
-count.  The remaining `Module.finrank` criterion is obtained from the resulting linear equivalence.
+count.  The remaining `Module.finrank` criterion is read off the resulting algebra equivalence.
 
 For a general central simple algebra, `TauCeti.isBrauerTrivial_iff_isSplittingField` is the `simp`
 normal form of `TauCeti.IsBrauerTrivial`. For a division algebra, simplification instead passes
-through `TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv` and
-`TauCeti.nonempty_algEquiv_base_iff_finrank_eq_one`. The two `TauCeti.BrauerGroup.mk` forms are
-deliberately *not* additional `simp` lemmas: `TauCeti.BrauerGroup.mk_eq_one_iff` is one already, so
-`simp` normalizes `mk (CSA.of K A) = 1` through it and reaches the same right-hand sides.
+through `TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv` and stops at
+`Nonempty (D ≃ₐ[K] K)`, which Mathlib's `Module.nonempty_algEquiv_iff_finrank_eq_one` -- stated for
+`Nonempty (K ≃ₐ[K] D)`, hence read through `AlgEquiv.symm` -- converts into the `Module.finrank`
+criterion `TauCeti.isBrauerTrivial_iff_finrank_eq_one`. Neither that criterion nor the two
+`TauCeti.BrauerGroup.mk` forms is an additional `simp` lemma: each has a left-hand side that the
+rules already in the set rewrite, `TauCeti.BrauerGroup.mk_eq_one_iff` in the case of
+`mk (CSA.of K A) = 1`.
 
 As in `TauCeti/Algebra/BrauerGroup/Trivial.lean`, the statements mentioning `TauCeti.CSA.base K`
 are for a `CSA.{u, u} K`, an algebra in the universe of its own base field, because Mathlib's
@@ -155,28 +158,20 @@ section DivisionRing
 variable (K : Type u) [Field K] (D : Type u) [DivisionRing D] [Algebra K D]
   [Algebra.IsCentral K D] [FiniteDimensional K D]
 
-omit [Algebra.IsCentral K D] in
-/-- A finite-dimensional division algebra is isomorphic over `K` to `K` exactly when it
-has dimension one over `K`. -/
-@[simp]
-theorem nonempty_algEquiv_base_iff_finrank_eq_one :
-    Nonempty (D ≃ₐ[K] K) ↔ Module.finrank K D = 1 := by
-  constructor
-  · rintro ⟨e⟩
-    simpa using e.toLinearEquiv.finrank_eq
-  · intro h
-    exact ⟨(AlgEquiv.ofBijective (_root_.Algebra.ofId K D)
-      (_root_.Algebra.finrank_eq_one_iff_bijective_algebraMap.1 h)).symm⟩
-
 /-- **A central division algebra is Brauer trivial exactly when it is the base field.**
 
 This is the base case of the statement that every Brauer class has a unique division-algebra
 representative, and it is what makes a Brauer group nontrivial in practice: exhibiting a central
-division algebra of dimension greater than one exhibits a nonidentity class. -/
+division algebra of dimension greater than one exhibits a nonidentity class.
+
+Not a `simp` lemma: `TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv` already rewrites
+the left-hand side, and `Module.nonempty_algEquiv_iff_finrank_eq_one` is the dimension criterion for
+what it leaves. -/
 theorem isBrauerTrivial_iff_finrank_eq_one :
     IsBrauerTrivial (CSA.of K D) ↔ Module.finrank K D = 1 :=
   BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv.trans
-    (nonempty_algEquiv_base_iff_finrank_eq_one K D)
+    ⟨fun h ↦ Module.nonempty_algEquiv_iff_finrank_eq_one.1 (h.map AlgEquiv.symm),
+      fun h ↦ (Module.nonempty_algEquiv_iff_finrank_eq_one.2 h).map AlgEquiv.symm⟩
 
 /-- **A Brauer-trivial central division algebra is the base field**, as an isomorphism of
 `K`-algebras. This is the division-algebra companion of `TauCeti.baseFieldAlgEquivOfFinite`, with
