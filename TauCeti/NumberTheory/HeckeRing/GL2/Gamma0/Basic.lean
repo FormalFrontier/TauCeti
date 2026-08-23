@@ -92,6 +92,12 @@ lemma Gamma0Image_le_Delta0 : (Gamma0Image N).toSubmonoid ≤ Delta0 N := by
     exact one_pos
   · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hσ)
 
+/-- `Γ₀(N)` lands in `Δ₀(N)`: its elements are integral of determinant one, with lower-left
+entry divisible by `N` and upper-left entry a unit because `ad ≡ 1`. -/
+lemma mapGL_mem_Delta0 (γ : Gamma0 N) :
+    (mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ Delta0 N :=
+  Gamma0Image_le_Delta0 N ((mem_Gamma0Image_iff N).mpr ⟨(γ : SL(2, ℤ)), γ.2, rfl⟩)
+
 variable [NeZero N]
 
 /-- `Γ₀(N)` is commensurable with `SL₂(ℤ)`: it has finite index in it. -/

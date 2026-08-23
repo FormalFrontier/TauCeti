@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Contour.Crossing.Finiteness
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 public import TauCeti.Analysis.Contour.RegularityConditions
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
-import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import TauCeti.Analysis.Contour.Argument.Lift
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.InvSubCPVExistence
 import TauCeti.Analysis.Contour.PerWindow.CPV
@@ -82,22 +82,6 @@ noncomputable section
 open Filter MeasureTheory Set Topology
 
 namespace TauCeti.Contour
-
-/-- Two reals equal in `Real.Angle` have the same `exp (· * I)`: the multiple of `2π` between
-them is invisible to the complex exponential. -/
-private theorem exp_mul_I_congr_angle {x y : ℝ} (h : (x : Real.Angle) = (y : Real.Angle)) :
-    Complex.exp ((x : ℂ) * Complex.I) = Complex.exp ((y : ℂ) * Complex.I) := by
-  obtain ⟨k, hk⟩ := Real.Angle.angle_eq_iff_two_pi_dvd_sub.mp h
-  have hx : (x : ℂ) = (y : ℂ) + (k : ℂ) * (2 * (Real.pi : ℂ)) := by
-    have hxy : x = y + (k : ℝ) * (2 * Real.pi) := by linarith [hk]
-    rw [hxy]
-    push_cast
-    ring
-  have hk_exp : ((k : ℂ) * (2 * (Real.pi : ℂ))) * Complex.I
-      = (k : ℂ) * (2 * (Real.pi : ℂ) * Complex.I) := by
-    ring
-  rw [hx, add_mul, Complex.exp_add, hk_exp,
-    Complex.exp_int_mul_two_pi_mul_I, mul_one]
 
 /-- **The per-window principal value exponentiates to the chord ratio times the crossing angle.**
 `TauCeti.Contour.perWindow_truncated_integral_tendsto` evaluates the `ε`-truncated integral of

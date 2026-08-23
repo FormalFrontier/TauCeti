@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.CategoryTheory.Skeletal
 public import Mathlib.RepresentationTheory.Intertwining
 public import TauCeti.RepresentationTheory.FDRep
+public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # Isomorphism of representations and of the modules they carry
@@ -32,12 +34,16 @@ theory counts, while the objects being classified are representations.
   representations name.
 * `TauCeti.nonempty_fdRepIso_iff`: the two notions of isomorphism agree on `FDRep k G`, so a
   classification proved for representations reads off as a classification of objects.
+* `TauCeti.toSkeleton_fdRepOf_toRepresentation_eq_iff`: two subrepresentations determine the same
+  module-finite representation class exactly when their associated submodules are linearly
+  equivalent.
 -/
 
 public section
 
 namespace TauCeti
 
+open CategoryTheory
 open scoped MonoidAlgebra
 
 namespace Representation
@@ -127,5 +133,21 @@ theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
       -- `FDRep.of_ρ_eq_self` records the definitional object identifications here.
       rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
       exact ⟨i⟩
+
+/-- **The module-finite representation classes carried by two subrepresentations agree
+exactly when their associated group-algebra submodules are linearly equivalent.** -/
+theorem toSkeleton_fdRepOf_toRepresentation_eq_iff
+    {K X : Type u} [CommRing K] [AddCommGroup X] [Module K X]
+    {π : _root_.Representation K G X} (S T : Subrepresentation π)
+    [Module.Finite K S.toSubmodule] [Module.Finite K T.toSubmodule] :
+    toSkeleton (FDRep.of S.toRepresentation) = toSkeleton (FDRep.of T.toRepresentation) ↔
+      Nonempty (S.asSubmodule ≃ₗ[K[G]] T.asSubmodule) := by
+  rw [toSkeleton_eq_toSkeleton_iff, nonempty_fdRepIso_iff,
+    Representation.nonempty_equiv_iff]
+  exact Nonempty.congr
+    (fun e => (S.asModuleEquivAsSubmodule).symm.trans e |>.trans
+      T.asModuleEquivAsSubmodule)
+    (fun e => S.asModuleEquivAsSubmodule.trans e |>.trans
+      T.asModuleEquivAsSubmodule.symm)
 
 end TauCeti

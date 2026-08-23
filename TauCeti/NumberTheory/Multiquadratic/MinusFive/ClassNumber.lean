@@ -6,11 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
-public import Mathlib.RingTheory.AdjoinRoot
+public import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -265,35 +264,12 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
     exact Fintype.one_lt_card
   omega
 
-local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
-  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
-    (fun q _ => by nlinarith [sq_nonneg q])⟩
-
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`,
 has class number `2`. -/
 @[simp]
 theorem classNumber_adjoinRoot_sqrt_neg_five_eq_two :
     NumberField.classNumber (AdjoinRoot (X ^ 2 - C (-5 : ℚ))) = 2 := by
-  let K := AdjoinRoot (X ^ 2 - C (-5 : ℚ))
-  let x : K := AdjoinRoot.root (X ^ 2 - C (-5 : ℚ))
-  have hx : x ^ 2 = algebraMap ℤ K (-5 : ℤ) := by
-    have hroot := AdjoinRoot.eval₂_root (X ^ 2 - C (-5 : ℚ))
-    rw [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C, ← AdjoinRoot.algebraMap_eq, sub_eq_zero] at hroot
-    rw [hroot, IsScalarTower.algebraMap_apply ℤ ℚ K]
-    norm_num
-  let θ : 𝓞 K := integralSqrt hx
-  have hmin : minpoly ℤ θ = X ^ 2 - C (-5 : ℤ) :=
-    minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
-      norm_num at hq
-      nlinarith [mul_self_nonneg q])
-  have hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
-    have hfne : (X ^ 2 - C (-5 : ℚ)) ≠ 0 :=
-      (monic_X_pow_sub_C (-5 : ℚ) (by norm_num)).ne_zero
-    have hpb := (AdjoinRoot.powerBasis (f := X ^ 2 - C (-5 : ℚ)) hfne).adjoin_gen_eq_top
-    rw [AdjoinRoot.powerBasis_gen] at hpb
-    have hθx : (θ : K) = x := algebraMap_integralSqrt hx
-    rw [hθx]
-    exact hpb
+  obtain ⟨θ, hmin, hgen⟩ := exists_minpoly_eq_X_sq_add_five_and_adjoin_eq_top
   exact classNumber_eq_two_of_minpoly_eq_X_sq_add_five hmin hgen
 
 end TauCeti.NumberField

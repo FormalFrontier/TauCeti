@@ -784,12 +784,29 @@ theorem liftAlgHom_single (x : Quiver.TotalPath Q) (c : k) :
     liftAlgHom k F hcomp hzero hone (single x c) = c • F x :=
   liftLinear_single k F x c
 
+/-- **Algebra homomorphisms out of a path algebra are determined by their values on the paths**,
+the basis paths spanning `kQ`. This is `TauCeti.PathAlgebra.liftAlgHom_unique` in the form which
+compares two given homomorphisms, with no assignment `F` to name. -/
+@[ext high]
+theorem algHom_ext ⦃f g : pathAlgebra k Q →ₐ[k] B⦄ (h : ∀ x, f (ofPath x) = g (ofPath x)) :
+    f = g :=
+  AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
+    simpa only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis] using h x
+
 /-- **The lift is the only one**: an algebra homomorphism out of `kQ` taking the value `F x` on
 each basis path is `TauCeti.PathAlgebra.liftAlgHom`, since the basis paths span. -/
 theorem liftAlgHom_unique (G : pathAlgebra k Q →ₐ[k] B) (hG : ∀ x, G (ofPath x) = F x) :
     G = liftAlgHom k F hcomp hzero hone :=
-  AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
-    simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, hG, liftAlgHom_ofPath]
+  algHom_ext k fun x ↦ (hG x).trans (liftAlgHom_ofPath k F hcomp hzero hone x).symm
+
+/-- **Algebra isomorphisms out of a path algebra are determined by their values on the paths.** -/
+@[ext high]
+theorem algEquiv_ext ⦃f g : pathAlgebra k Q ≃ₐ[k] B⦄
+    (h : ∀ x, f (ofPath x) = g (ofPath x)) : f = g :=
+  AlgEquiv.ext fun y ↦
+    congrArg (fun F : pathAlgebra k Q →ₐ[k] B ↦ F y)
+      (algHom_ext k (f := (f : pathAlgebra k Q →ₐ[k] B))
+        (g := (g : pathAlgebra k Q →ₐ[k] B)) h)
 
 end Lift
 
@@ -822,6 +839,15 @@ omit [Finite Q] in
 theorem ofArrow_eq_ofPath {a b : Q} (e : a ⟶ b) :
     (ofArrow e : pathAlgebra k Q) = ofPath ⟨a, b, e.toPath⟩ := by
   rw [ofArrow]
+
+omit [Finite Q] in
+/-- Transporting an arrow along equalities of its source and target does not change the basis
+element it names, the endpoints of a path being recorded in the path itself. -/
+theorem ofArrow_homOfEq {a b a' b' : Q} (f : a ⟶ b) (ha : a = a') (hb : b = b') :
+    (ofArrow (Quiver.homOfEq f ha hb) : pathAlgebra k Q) = ofArrow f := by
+  subst ha
+  subst hb
+  rfl
 
 /-- The vertex idempotents and arrows generate the path algebra. Vertex idempotents are necessary:
 arrows alone do not generate the path algebra of, for example, a discrete multi-vertex quiver. -/
