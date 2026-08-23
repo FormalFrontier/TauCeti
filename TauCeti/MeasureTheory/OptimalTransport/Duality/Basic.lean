@@ -126,11 +126,16 @@ The weak-duality theorems require both potentials to be integrable. -/
 def kantorovichDualValue (μ : Measure X) (ν : Measure Y) (φ : X → ℝ) (ψ : Y → ℝ) : ℝ :=
   ∫ x, φ x ∂μ + ∫ y, ψ y ∂ν
 
+/-- The dual value is the sum of the two marginal integrals. The definition's body is not
+exposed, so this is the lemma downstream modules should rewrite with. -/
+theorem kantorovichDualValue_def (μ : Measure X) (ν : Measure Y) (φ : X → ℝ) (ψ : Y → ℝ) :
+    kantorovichDualValue μ ν φ ψ = ∫ x, φ x ∂μ + ∫ y, ψ y ∂ν := (rfl)
+
 /-- The zero potentials have dual value zero. -/
 @[simp]
 theorem kantorovichDualValue_zero :
     kantorovichDualValue μ ν (fun _ ↦ 0) (fun _ ↦ 0) = 0 := by
-  simp [kantorovichDualValue]
+  simp [kantorovichDualValue_def]
 
 /-- Opposite additive shifts do not change the dual value when the first marginal is finite and
 the two marginals have the same mass. -/
@@ -139,7 +144,7 @@ theorem kantorovichDualValue_add_const_sub_const [IsFiniteMeasure μ]
     kantorovichDualValue μ ν (fun x ↦ φ x + a) (fun y ↦ ψ y - a) =
       kantorovichDualValue μ ν φ ψ := by
   let _ : IsFiniteMeasure ν := ⟨by rw [← hmass]; exact IsFiniteMeasure.measure_univ_lt_top⟩
-  rw [kantorovichDualValue, kantorovichDualValue, integral_add hφ (integrable_const a),
+  rw [kantorovichDualValue_def, kantorovichDualValue_def, integral_add hφ (integrable_const a),
     integral_sub hψ (integrable_const a), integral_const, integral_const]
   have hmassReal : μ.real Set.univ = ν.real Set.univ := congrArg ENNReal.toReal hmass
   rw [hmassReal]
@@ -165,7 +170,7 @@ theorem DualFeasible.ofReal_kantorovichDualValue_le_lintegral (h : DualFeasible 
   have hψπ : Integrable (fun z : X × Y ↦ ψ z.2) π :=
     hπ.measurePreserving_snd.integrable_comp_of_integrable hψ
   have hvalue : kantorovichDualValue μ ν φ ψ = ∫ z, φ z.1 + ψ z.2 ∂π := by
-    rw [kantorovichDualValue, integral_add hφπ hψπ,
+    rw [kantorovichDualValue_def, integral_add hφπ hψπ,
       hπ.integral_comp_fst hφ.aestronglyMeasurable,
       hπ.integral_comp_snd hψ.aestronglyMeasurable]
   rw [hvalue]
