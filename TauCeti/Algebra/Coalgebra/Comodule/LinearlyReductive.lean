@@ -33,6 +33,7 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.Comodule.IsCompletelyReducible`: every subcomodule has a subcomodule complement.
+* `TauCeti.Comodule.isCompletelyReducible_iff`: that definition restated for use downstream.
 * `TauCeti.Comodule.isCompletelyReducible_of_orderIso`: transfer complete reducibility across
   compatible order isomorphisms of subcomodules and underlying submodules.
 * `TauCeti.Comodule.isCompletelyReducible_transport_iff`: complete reducibility is invariant
@@ -77,6 +78,15 @@ comodule. -/
 def IsCompletelyReducible : Prop :=
   ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
     IsCompl W.toSubmodule Q.toSubmodule
+
+variable {k C V}
+
+/-- Complete reducibility unfolded: every subcomodule admits a complementary subcomodule. -/
+theorem isCompletelyReducible_iff :
+    IsCompletelyReducible k C V ↔
+      ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
+        IsCompl W.toSubmodule Q.toSubmodule :=
+  Iff.rfl
 
 end Comodule
 

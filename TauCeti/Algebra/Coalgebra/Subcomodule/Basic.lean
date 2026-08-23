@@ -28,6 +28,10 @@ subcomodules and the fundamental theorem of comodules. Later work can use
 * `TauCeti.Subcomodule.toSubmodule`: the underlying submodule.
 * `TauCeti.Subcomodule.finite`: subcomodules of noetherian modules are finite.
 * `⊤` and `⊥`: the full and zero subcomodules.
+* `TauCeti.Subcomodule.toSubmodule_eq_top` and `TauCeti.Subcomodule.toSubmodule_eq_bot`: the
+  underlying submodule detects the extreme subcomodules.
+* `TauCeti.Subcomodule.ne_bot_iff`: a subcomodule is nonzero exactly when it contains a nonzero
+  vector.
 * `TauCeti.Subcomodule.map`: the image of a subcomodule under a comodule morphism.
 * `TauCeti.Subcomodule.map_finite`: images preserve finite generation of the underlying
   submodule.
@@ -208,6 +212,22 @@ instance : OrderBot (Subcomodule R C M) where
     rw [mem_bot] at hm
     rw [hm]
     exact zero_mem N
+
+@[simp]
+theorem toSubmodule_eq_top {N : Subcomodule R C M} : N.toSubmodule = ⊤ ↔ N = ⊤ :=
+  ⟨fun h ↦ ext fun m ↦
+      ⟨fun _ ↦ mem_top m, fun _ ↦ mem_toSubmodule.mp (h ▸ Submodule.mem_top)⟩,
+    fun h ↦ by rw [h, top_toSubmodule]⟩
+
+@[simp]
+theorem toSubmodule_eq_bot {N : Subcomodule R C M} : N.toSubmodule = ⊥ ↔ N = ⊥ :=
+  ⟨fun h ↦ ext fun m ↦ by
+      rw [mem_bot, ← mem_toSubmodule, h, Submodule.mem_bot],
+    fun h ↦ by rw [h, bot_toSubmodule]⟩
+
+/-- A subcomodule is nonzero exactly when it contains a nonzero vector. -/
+theorem ne_bot_iff {N : Subcomodule R C M} : N ≠ ⊥ ↔ ∃ m ∈ N, m ≠ 0 :=
+  (not_congr toSubmodule_eq_bot).symm.trans (Submodule.ne_bot_iff N.toSubmodule)
 
 variable {N : Type x} [AddCommMonoid N] [Module R N] [Comodule R C N]
 
