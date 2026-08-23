@@ -107,13 +107,21 @@ abbrev W2p (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal
     [Fact (1 <= p)] := (w2pSubmodule mu Omega p).toSubmodule
 
 /-- The arbitrary-order Sobolev space at order two is canonically the specialized `W2p` space. -/
-noncomputable def Wkp.orderTwoEquivW2p : Wkp mu Omega p 2 ≃L[ℝ] W2p mu Omega p := by
+@[expose] noncomputable def Wkp.orderTwoEquivW2p :
+    Wkp mu Omega p 2 ≃L[ℝ] W2p mu Omega p := by
   exact ContinuousLinearEquiv.ofEq
     (weakDerivStepSubmodule mu Omega p
       (W1p.gradientL (mu := mu) (Omega := Omega) (p := p))).toSubmodule
     (w2pSubmodule mu Omega p).toSubmodule
     (congrArg ClosedSubmodule.toSubmodule
       (w2pSubmodule_def (mu := mu) (Omega := Omega) (p := p)).symm)
+
+/-- The order-two equivalence preserves the underlying second-order Sobolev jet. -/
+theorem Wkp.coe_orderTwoEquivW2p (u : Wkp mu Omega p 2) :
+    ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p) u : W2p mu Omega p) :
+        Sobolev2JetLp mu Omega p) =
+      (u : Sobolev2JetLp mu Omega p) :=
+  rfl
 
 /-- The continuous linear projection from `W2p` to its first-order Sobolev component.  Its value
 and weak gradient are the value and weak gradient of the second-order function. -/
@@ -155,16 +163,16 @@ theorem Wkp.firstOrder_orderTwoEquivW2p (u : Wkp mu Omega p 2) :
     W2p.firstOrder
         (Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p) u) =
       Wkp.lowerOrder 1 u := by
-  rw [W2p.firstOrder_coe, Wkp.lowerOrder_succ, WeakDerivStep.prev_coe]
-  congr 1
+  rw [W2p.firstOrder_coe, Wkp.coe_orderTwoEquivW2p, Wkp.lowerOrder_succ,
+    WeakDerivStep.prev_coe]
 
 /-- The order-two equivalence identifies the generic highest derivative with the Hessian. -/
 theorem Wkp.hessian_orderTwoEquivW2p (u : Wkp mu Omega p 2) :
     W2p.hessian
         (Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p) u) =
       Wkp.deriv 1 u := by
-  rw [W2p.hessian_coe, Wkp.deriv_succ, WeakDerivStep.weakFDeriv_coe]
-  congr 1
+  rw [W2p.hessian_coe, Wkp.coe_orderTwoEquivW2p, Wkp.deriv_succ,
+    WeakDerivStep.weakFDeriv_coe]
 
 /-- The inverse order-two equivalence identifies `firstOrder` with the generic lower-order
 projection. -/

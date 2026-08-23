@@ -11,7 +11,7 @@ public import TauCeti.Analysis.Sobolev.W1p.Basic
 /-!
 # Arbitrary-order weak Sobolev spaces
 
-This file constructs the real-valued Sobolev space `W^{k,p}(Ω)` for every positive integer
+This file constructs the real-valued Sobolev space `W^{k,p}(Ω)` for every natural number
 `k`, on an open subset of a finite-dimensional real inner product space.  The first-order stage
 is `TauCeti.W1p`.  Every successor stage applies `TauCeti.WeakDerivStep` to the highest weak
 derivative of the preceding stage.  Thus an element of `W^{k+1,p}(Ω)` records an element of
