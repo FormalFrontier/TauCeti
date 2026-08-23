@@ -320,7 +320,7 @@ theorem _root_.EReal.iInf_sub_coe {ι : Sort*} (f : ι → EReal) (a : ℝ) :
   exact le_iInf fun i => EReal.add_le_of_le_sub (iInf_le _ i)
 
 /-- Subtracting a sum whose final term is real can be reassociated when the minuend is real. -/
-theorem _root_.EReal.coe_sub_add_coe (b : EReal) (d a : ℝ) :
+private theorem coe_sub_add_coe (b : EReal) (d a : ℝ) :
     (d : EReal) - (b + (a : EReal)) = (d : EReal) - b - (a : EReal) := by
   induction b with
   | bot => simp
@@ -334,7 +334,7 @@ theorem cTransform_add_const (c : X × Y → ℝ) (φ : X → EReal) (a : ℝ) (
     cTransform c (fun x => φ x + (a : EReal)) y = cTransform c φ y - (a : EReal) := by
   simp only [cTransform_apply]
   rw [← EReal.iInf_sub_coe]
-  exact iInf_congr fun x => EReal.coe_sub_add_coe (φ x) (c (x, y)) a
+  exact iInf_congr fun x => coe_sub_add_coe (φ x) (c (x, y)) a
 
 /-- Shifting a potential on the target by a real constant shifts its symmetric `c`-transform by
 the opposite constant. -/
@@ -463,23 +463,30 @@ theorem ne_top_right_of_mem_contactSet (hz : (x, y) ∈ contactSet c φ ψ) : ψ
   obtain ⟨-, b', -, hb', -⟩ := exists_coe_of_mem_contactSet hz
   simp [hb']
 
-/-- At a contact point of a dual feasible pair, the second potential already agrees with the
-`c`-transform of the first: the infimum defining that transform is attained there. -/
-theorem cTransform_eq_of_mem_contactSet (hfeas : ∀ x y, φ x + ψ y ≤ (c (x, y) : EReal))
+/-- At a contact point, if dual feasibility holds along the corresponding target section, the
+second potential already agrees with the `c`-transform of the first: the infimum defining that
+transform is attained there. -/
+theorem cTransform_eq_of_mem_contactSet
+    (hfeas : ∀ x', φ x' + ψ y ≤ (c (x', y) : EReal))
     (hz : (x, y) ∈ contactSet c φ ψ) : cTransform c φ y = ψ y := by
   obtain ⟨b, b', hb, hb', -⟩ := exists_coe_of_mem_contactSet hz
-  refine le_antisymm ?_ (le_cTransform_iff.2 hfeas y)
-  have h := cTransform_le c φ x y
-  rw [mk_mem_contactSet_iff, hb] at hz
-  rwa [hb, ← hz, EReal.add_sub_cancel_left] at h
+  refine le_antisymm ?_ ?_
+  · have h := cTransform_le c φ x y
+    rw [mk_mem_contactSet_iff, hb] at hz
+    rwa [hb, ← hz, EReal.add_sub_cancel_left] at h
+  · refine le_cTransform fun x' => ?_
+    rw [EReal.le_sub_iff_add_le (.inr (EReal.coe_ne_bot _)) (.inr (EReal.coe_ne_top _)),
+      add_comm]
+    exact hfeas x'
 
-/-- At a contact point of a dual feasible pair, the first potential already agrees with the
-symmetric `c`-transform of the second. -/
-theorem cTransformSymm_eq_of_mem_contactSet (hfeas : ∀ x y, φ x + ψ y ≤ (c (x, y) : EReal))
+/-- At a contact point, if dual feasibility holds along the corresponding source section, the
+first potential already agrees with the symmetric `c`-transform of the second. -/
+theorem cTransformSymm_eq_of_mem_contactSet
+    (hfeas : ∀ y', φ x + ψ y' ≤ (c (x, y') : EReal))
     (hz : (x, y) ∈ contactSet c φ ψ) : cTransformSymm c ψ x = φ x := by
   rw [cTransformSymm_eq_cTransform]
   exact cTransform_eq_of_mem_contactSet (c := fun p : Y × X => c (p.2, p.1))
-    (fun y x => by rw [add_comm]; exact hfeas x y) (mk_mem_contactSet_swap_iff.2 hz)
+    (fun y' => by rw [add_comm]; exact hfeas y') (mk_mem_contactSet_swap_iff.2 hz)
 
 /-- Replacing first the target potential by the transform of the source and then the source by
 the symmetric transform of that new target only enlarges the contact set. -/
@@ -488,12 +495,12 @@ theorem contactSet_subset_contactSet_cTransformSymm_cTransform
     contactSet c φ ψ ⊆
       contactSet c (cTransformSymm c (cTransform c φ)) (cTransform c φ) := by
   rintro ⟨x, y⟩ hz
-  have htarget := cTransform_eq_of_mem_contactSet hfeas hz
+  have htarget := cTransform_eq_of_mem_contactSet (fun x' => hfeas x' y) hz
   have hz' : (x, y) ∈ contactSet c φ (cTransform c φ) := by
     rw [mk_mem_contactSet_iff, htarget]
     exact hz
   rw [mk_mem_contactSet_iff,
-    cTransformSymm_eq_of_mem_contactSet (fun x y => add_cTransform_le c φ x y) hz', htarget]
+    cTransformSymm_eq_of_mem_contactSet (fun y' => add_cTransform_le c φ x y') hz', htarget]
   exact hz
 
 /-- The contact set of a potential against its own `c`-transform is the largest one available:
@@ -501,7 +508,8 @@ every dual feasible pair with the same source potential has a smaller contact se
 theorem contactSet_subset_cSuperdifferential (hfeas : ∀ x y, φ x + ψ y ≤ (c (x, y) : EReal)) :
     contactSet c φ ψ ⊆ cSuperdifferential c φ := by
   rintro ⟨x, y⟩ hz
-  rw [mk_mem_cSuperdifferential_iff, cTransform_eq_of_mem_contactSet hfeas hz]
+  rw [mk_mem_cSuperdifferential_iff,
+    cTransform_eq_of_mem_contactSet (fun x' => hfeas x' y) hz]
   exact hz
 
 /-- On its `c`-superdifferential, the infimum defining the `c`-transform is attained. -/
@@ -524,7 +532,7 @@ theorem mem_cSuperdifferential_of_cTransform_eq {b : ℝ} (hb : φ x = (b : ERea
 theorem cTransformSymm_cTransform_eq_of_mem_cSuperdifferential
     (hz : (x, y) ∈ cSuperdifferential c φ) : cTransformSymm c (cTransform c φ) x = φ x := by
   rw [cSuperdifferential_def] at hz
-  exact cTransformSymm_eq_of_mem_contactSet (fun x y => add_cTransform_le c φ x y) hz
+  exact cTransformSymm_eq_of_mem_contactSet (fun y' => add_cTransform_le c φ x y') hz
 
 end TauCeti
 
