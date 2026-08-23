@@ -108,7 +108,7 @@ lemma map_negLogNNReal_map_expNegUnitInterval (μ : Measure ℝ≥0) :
 
 /-- Under the exponential change of variables the Laplace transform of `μ` at a natural number
 `n` is the `n`-th moment of the image measure. -/
-lemma integral_pow_map_expNegUnitInterval (μ : Measure ℝ≥0) [IsFiniteMeasure μ] (n : ℕ) :
+lemma integral_pow_map_expNegUnitInterval (μ : Measure ℝ≥0) (n : ℕ) :
     ∫ x, ((x : ℝ)) ^ n ∂(μ.map expNegUnitInterval) = laplaceTransform μ n := by
   have hsm : AEStronglyMeasurable (fun x : ↥(Set.Icc (0 : ℝ) 1) => ((x : ℝ)) ^ n)
       (μ.map expNegUnitInterval) := Continuous.aestronglyMeasurable (by fun_prop)
