@@ -13,11 +13,13 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2
 /-!
 # The special isogenies of `G₂` in characteristic three and of `F₄` in characteristic two
 
-A non-simply-laced irreducible root system whose two root lengths differ by the factor `p` admits,
-over a field of characteristic `p`, an isogeny of its root datum with itself which exchanges the
-two lengths. This happens for `B₂` and `F₄` at `p = 2` and for `G₂` at `p = 3`, and nowhere else.
-The resulting *special isogenies* of the pinned Chevalley groups are the ones whose odd powers cut
-out the Suzuki and Ree groups. This file constructs the two whose underlying pinned root data
+The root data of `B₂` and `F₄` over a field of characteristic two, and that of `G₂` over a
+field of characteristic three, admit an isogeny with themselves which exchanges the two root
+lengths. These three types are the only ones: exchanging the two lengths identifies the root
+system with its dual, and among the non-simply-laced irreducible types only `B₂`, `F₄` and `G₂`
+are self-dual, the ratio of the two lengths then fixing the characteristic. The resulting
+*special isogenies* of the pinned Chevalley groups are the ones whose odd powers cut out the
+Suzuki and Ree groups. This file constructs the two whose underlying pinned root data
 `TauCeti.DynkinType.g2SimplyConnectedRootDatum` and `TauCeti.DynkinType.f4SimplyConnectedRootDatum`
 are already available in explicit coordinates.
 
@@ -69,18 +71,18 @@ here, against `TauCeti.DynkinType.g2Root_specialIsogenyAction` and its coroot co
 * `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and
   `TauCeti.DynkinType.f4SpecialIsogeny_comp_self`: composing the special isogeny with itself gives
   scaling by the characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
-* `TauCeti.DynkinType.g2SpecialIsogeny_indexEquiv_castAdd`: on the simple roots the index bijection
+* `TauCeti.DynkinType.g2SpecialIsogenyIndex_castAdd`: on the simple roots the index bijection
   is the pinned length-exchanging permutation, which for `F₄` is
   `TauCeti.DynkinType.f4SpecialIsogenyIndex_castAdd`.
 * `TauCeti.DynkinType.g2SpecialIsogeny_weightMap_root_castAdd` and
   `TauCeti.DynkinType.f4SpecialIsogeny_weightMap_root_castAdd`: the defining relation on the simple
   roots, in the form the group-scheme isogeny is pinned by.
-* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castAdd`: on the simple roots the exponent is the
+* `TauCeti.DynkinType.g2SpecialIsogenyExponent_castAdd`: on the simple roots the exponent is the
   normalised squared root length, which for `F₄` is `TauCeti.DynkinType.f4Length_castAdd`, and
   `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castAdd_eq_one_iff` and its `F₄` counterpart read
   that off as `TauCeti.DynkinType.IsLongSimpleRoot`.
-* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_mul_exponent`: the exponents at a root and at its
-  image multiply to the characteristic, which for `F₄` is
+* `TauCeti.DynkinType.g2SpecialIsogenyExponent_mul_g2SpecialIsogenyExponent_index`: the exponents
+  at a root and at its image multiply to the characteristic, which for `F₄` is
   `TauCeti.DynkinType.f4Length_mul_f4Length_specialIsogenyIndex`.
 
 ## Roadmap and references
@@ -176,21 +178,21 @@ def g2SpecialIsogeny :
 
 /-- On the two simple roots, the index bijection of the special isogeny of `G₂` is the pinned
 length-exchanging permutation. -/
-@[simp] theorem g2SpecialIsogeny_indexEquiv_castAdd (i : Fin 2) :
+@[simp] theorem g2SpecialIsogenyIndex_castAdd (i : Fin 2) :
     g2SpecialIsogenyIndex (Fin.castAdd 10 i) = Fin.castAdd 10 (lengthPermRankTwo i) := by
   simp only [lengthPermRankTwo_apply]
   revert i; decide
 
 /-- On the two simple roots, the exponent of the special isogeny of `G₂` is the normalised squared
 root length: `1` at the short node `0` and `3` at the long node `1`. -/
-@[simp] theorem g2SpecialIsogeny_exponent_castAdd (i : Fin 2) :
+@[simp] theorem g2SpecialIsogenyExponent_castAdd (i : Fin 2) :
     g2SpecialIsogenyExponent (Fin.castAdd 10 i) = G2.rootLength i := by
   rw [rootLength_G2]
   revert i; decide
 
 /-- The exponents of the special isogeny of `G₂` at a root and at its image multiply to the
 characteristic. -/
-@[simp] theorem g2SpecialIsogeny_exponent_mul_exponent (i : Fin 12) :
+@[simp] theorem g2SpecialIsogenyExponent_mul_g2SpecialIsogenyExponent_index (i : Fin 12) :
     g2SpecialIsogenyExponent i *
       g2SpecialIsogenyExponent (g2SpecialIsogenyIndex i) = 3 := by
   revert i; decide
@@ -218,7 +220,7 @@ theorem g2SpecialIsogeny_comp_self :
     have hthree : ((3 : ℕ+) : ℤ) = 3 := by norm_num
     rw [hthree]
     simpa only [g2SpecialIsogeny_exponent, g2SpecialIsogeny_indexEquiv_apply] using
-      g2SpecialIsogeny_exponent_mul_exponent i
+      g2SpecialIsogenyExponent_mul_g2SpecialIsogenyExponent_index i
 
 /-- **The defining relation of the special isogeny of `G₂` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
@@ -230,7 +232,7 @@ theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
       G2.rootLength (lengthPermRankTwo i) • g2SimplyConnectedRootDatum.root (Fin.castAdd 10 i) := by
   rw [g2SpecialIsogeny.root_weightMap]
   simp only [g2SpecialIsogeny_exponent, g2SpecialIsogeny_indexEquiv_apply,
-    g2SpecialIsogeny_exponent_castAdd, g2SpecialIsogeny_indexEquiv_castAdd,
+    g2SpecialIsogenyExponent_castAdd, g2SpecialIsogenyIndex_castAdd,
     lengthPermRankTwo_lengthPermRankTwo]
   simp only [Int.cast_id]
 
@@ -240,7 +242,7 @@ first power and a short one to the characteristic. -/
 theorem g2SpecialIsogeny_exponent_castAdd_eq_one_iff (i : Fin 2) :
     g2SpecialIsogeny.exponent (Fin.castAdd 10 i) = 1 ↔ ¬ G2.IsLongSimpleRoot i := by
   rw [g2SpecialIsogeny_exponent]
-  rw [g2SpecialIsogeny_exponent_castAdd, rootLength_G2, isLongSimpleRoot_G2]
+  rw [g2SpecialIsogenyExponent_castAdd, rootLength_G2, isLongSimpleRoot_G2]
   fin_cases i <;> simp
 
 /-! ## `F₄` in characteristic two -/
