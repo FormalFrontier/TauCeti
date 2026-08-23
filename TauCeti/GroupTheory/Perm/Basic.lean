@@ -52,8 +52,12 @@ theorem exists_perm_apply_eq_of_disjoint_range {α β γ : Type*} {e : α → γ
     (he : Function.Injective e) (hf : Function.Injective f)
     (hd : Disjoint (Set.range e) (Set.range f)) (σ : Equiv.Perm α) (τ : Equiv.Perm β) :
     ∃ ρ : Equiv.Perm γ, (∀ a, ρ (e a) = e (σ a)) ∧ ∀ b, ρ (f b) = f (τ b) := by
-  have hrange_e : Set.range (⟨e, he⟩ : α ↪ γ) = Set.range e := rfl
-  have hrange_f : Set.range (⟨f, hf⟩ : β ↪ γ) = Set.range f := rfl
+  -- `Function.Embedding.coeFn_mk` is what carries a statement about the bundled embedding
+  -- `⟨e, he⟩` over to the function `e` it is built from.
+  have hrange_e : Set.range (⟨e, he⟩ : α ↪ γ) = Set.range e := by
+    rw [Function.Embedding.coeFn_mk]
+  have hrange_f : Set.range (⟨f, hf⟩ : β ↪ γ) = Set.range f := by
+    rw [Function.Embedding.coeFn_mk]
   have hone : ∀ a, σ.viaEmbedding ⟨e, he⟩ (e a) = e (σ a) :=
     fun a => Equiv.Perm.viaEmbedding_apply (ι := ⟨e, he⟩) σ a
   have htwo : ∀ b, τ.viaEmbedding ⟨f, hf⟩ (f b) = f (τ b) :=

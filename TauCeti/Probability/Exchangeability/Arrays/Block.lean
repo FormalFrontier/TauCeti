@@ -15,14 +15,15 @@ import Mathlib.Probability.Process.FiniteDimensionalLaws
 /-!
 # Rectangular blocks of an exchangeable array
 
-A **jointly** exchangeable array is invariant only under the diagonal reindexing
-`(i, j) ↦ (σ i, σ j)`, so its rows are not exchangeable and none of the separately exchangeable
-theory applies to it directly. This file supplies the standard device that repairs this: read the
-array on a **rectangular block** `arrayBlock X e f`, whose `(i, j)`-entry is `X (e i, f j)`, along
-two injections `e, f : ℕ → ℕ` **with disjoint ranges**. On such a block the single permutation the
-array is invariant under has two independent halves — one permutation may be prescribed on the
-range of `e` and another, unrelated one on the range of `f`, because a permutation of `ℕ` is free to
-act differently on two disjoint sets — and the block is therefore *separately* exchangeable
+Joint exchangeability alone guarantees only invariance under the diagonal reindexing
+`(i, j) ↦ (σ i, σ j)`, so the rows of a jointly exchangeable array need not be exchangeable and the
+separately exchangeable theory does not apply to it in general. This file supplies the standard
+device that repairs this: read the array on a **rectangular block** `arrayBlock X e f`, whose
+`(i, j)`-entry is `X (e i, f j)`, along two injections `e, f : ℕ → ℕ` **with disjoint ranges**. On
+such a block the single permutation the array is invariant under has two independent halves — one
+permutation may be prescribed on the range of `e` and another, unrelated one on the range of `f`,
+because a permutation of `ℕ` is free to act differently on two disjoint sets — and the block is
+therefore *separately* exchangeable
 (`JointlyExchangeable.separatelyExchangeable_arrayBlock`). Every theorem about separately
 exchangeable arrays is then available for it; in particular de Finetti's theorem makes the rows of
 the block conditionally i.i.d.
@@ -107,6 +108,15 @@ theorem arrayBlockPair_apply (X : ℕ × ℕ → Ω → α) (e f : ℕ → ℕ) 
 
 variable [MeasurableSpace α] [MeasurableSpace Ω] {μ : Measure Ω} {X : ℕ × ℕ → Ω → α} {e f : ℕ → ℕ}
 
+/-- Entrywise measurability passes to a block: the `p`-entry of `arrayBlock X e f` is the
+`(e p.1, f p.2)`-entry of `X`. A consumer cannot read this off the hypothesis on its own, since
+`arrayBlock` does not unfold outside this file. -/
+theorem aemeasurable_arrayBlock (hX : ∀ p, AEMeasurable (X p) μ) (p : ℕ × ℕ) :
+    AEMeasurable (arrayBlock X e f p) μ :=
+  hX _
+
+/-- Entrywise measurability passes to a block read together with its transpose: the `p`-entry of
+`arrayBlockPair X e f` pairs two entries of `X`. -/
 theorem aemeasurable_arrayBlockPair (hX : ∀ p, AEMeasurable (X p) μ) (p : ℕ × ℕ) :
     AEMeasurable (arrayBlockPair X e f p) μ :=
   (hX _).prodMk (hX _)
@@ -324,7 +334,8 @@ theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlock [StandardBorelS
     (he : Function.Injective e) (hf : Function.Injective f)
     (hd : Disjoint (Set.range e) (Set.range f)) :
     ConditionallyIID μ (arrayRow (arrayBlock X e f)) :=
-  (h.separatelyExchangeable_arrayBlock hX he hf hd).conditionallyIID_arrayRow fun _ => hX _
+  (h.separatelyExchangeable_arrayBlock hX he hf hd).conditionallyIID_arrayRow
+    (aemeasurable_arrayBlock hX)
 
 /-- **De Finetti's theorem for the rows of a block of pairs.** The conclusion simultaneously
 describes both orientations of the selected rectangular cross-block. -/
