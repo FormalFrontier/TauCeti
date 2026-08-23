@@ -8,7 +8,8 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.NumberedSymmetry
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
 
 /-!
 # Numbered symmetries of the generated Kostant group scheme
@@ -496,6 +497,22 @@ noncomputable local instance generatedGroupSchemeIsoGroup :
       kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
   Aut.instGroup _
 
+/-- The unit of the group structure above is the identity isomorphism. This is
+`CategoryTheory.Iso.refl_hom` for the `Aut` structure, stated for the unfolded type. -/
+private theorem generatedGroupSchemeIso_one_hom :
+    (1 : kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
+        kostantGeneratedGroupScheme e h ρ M hM hnil b).hom =
+      𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
+  Iso.refl_hom _
+
+/-- Multiplication for the group structure above composes in the `Function.comp` order. This is
+`CategoryTheory.Aut.Aut_mul_def` for the `Aut` structure, stated for the unfolded type. -/
+private theorem generatedGroupSchemeIso_mul_hom
+    (f g : kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
+      kostantGeneratedGroupScheme e h ρ M hM hnil b) :
+    (f * g).hom = g.hom ≫ f.hom := by
+  rw [show f * g = g.trans f from Aut.Aut_mul_def _ f g, Iso.trans_hom]
+
 include hθe hσ in
 /-- Iterating the generated group-scheme symmetry carries the `i`th root subgroup to the root
 subgroup numbered by the corresponding iterate of `σ`. -/
@@ -507,19 +524,10 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ
       kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) := by
   induction m generalizing i with
   | zero =>
-      change kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫
-        𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) =
-          kostantRootSubgroupToGenerated e h ρ M hM hnil b i
-      simp only [Category.comp_id]
+      rw [pow_zero, generatedGroupSchemeIso_one_hom, Category.comp_id,
+        Function.iterate_zero_apply]
   | succ m ih =>
-      rw [pow_succ]
-      change kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫
-          (kostantGeneratedNumberedSymmetryIso
-            e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
-            ((kostantGeneratedNumberedSymmetryIso
-              e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom =
-        kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m + 1]) i)
-      rw [← Category.assoc,
+      rw [pow_succ, generatedGroupSchemeIso_mul_hom, ← Category.assoc,
         kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom, ih,
         Function.iterate_succ_apply]
 
@@ -531,13 +539,10 @@ theorem kostantGeneratedNumberedSymmetryIso_pow_eq_one (m : ℕ)
     (hσm : σ^[m] = id) :
     (kostantGeneratedNumberedSymmetryIso
       e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m = 1 := by
-  apply Aut.ext
+  apply Iso.ext
   apply kostantGeneratedGroupScheme_hom_ext e h ρ M hM hnil b
   intro i
-  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom]
-  change kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) =
-    kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫
-      𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b)
-  simp only [hσm, id_eq, Category.comp_id]
+  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq,
+    generatedGroupSchemeIso_one_hom, Category.comp_id]
 
 end TauCeti.UniversalEnvelopingAlgebra
