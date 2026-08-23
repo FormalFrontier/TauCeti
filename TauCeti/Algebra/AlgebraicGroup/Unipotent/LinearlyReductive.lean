@@ -77,18 +77,18 @@ namespace TauCeti
 
 open WithConv
 
-universe u w
+universe u v w
 
 noncomputable section
 
-variable {k H : Type u}
+variable {k : Type u} {H : Type v}
 variable [Field k] [CommRing H] [HopfAlgebra k H]
 
 attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
 
 namespace Comodule
 
-variable {M : Type u} [AddCommGroup M] [Module k M] [Comodule k H M]
+variable {M : Type w} [AddCommGroup M] [Module k M] [Comodule k H M]
 
 /-- Kolchin's theorem, applied to a nonzero subcomodule: over a reduced finite-type commutative
 Hopf algebra with unipotent points, every nonzero subcomodule of a finite-dimensional comodule
@@ -129,7 +129,7 @@ closed field with unipotent points, comultiplication sends every element `h` to 
 regular comodule is trivial. -/
 theorem comul_eq_tmul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (h : H) :
     Coalgebra.comul (R := k) h = h ⊗ₜ[k] (1 : H) := by
   obtain ⟨D, hDfin, hD⟩ := Subcoalgebra.exists_finiteDimensional_subcoalgebra_mem (k := k) h
@@ -152,7 +152,7 @@ variable (k H) in
 counit. -/
 theorem eq_counit_smul_one_of_isLinearlyReductive_of_forall_isUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (h : H) :
     h = Coalgebra.counit (R := k) h • (1 : H) :=
   Coalgebra.eq_counit_smul_of_comul_eq_tmul
@@ -162,7 +162,7 @@ variable (k H) in
 /-- Under the same hypotheses the augmentation ideal vanishes: the counit is injective. -/
 theorem augmentation_eq_bot_of_isLinearlyReductive_of_forall_isUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) :
     HopfIdeal.augmentation k H = ⊥ := by
   refine HopfIdeal.ext fun x ↦ ?_
@@ -179,7 +179,7 @@ points are unipotent, is bialgebra-equivalent to the ground field via its counit
 linearly reductive. -/
 def counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) :
     H ≃ₐc[k] k :=
   HopfIdeal.counitBialgEquivOfAugmentationEqBot
@@ -190,7 +190,7 @@ variable (k H) in
 @[simp]
 theorem counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint_apply
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (x : H) :
     counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hlr hH x =
       Bialgebra.counitBialgHom k H x := by
@@ -202,7 +202,7 @@ variable (k H) in
 @[simp]
 theorem counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint_symm_apply
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (r : k) :
     (counitBialgEquivOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hlr hH).symm r =
       algebraMap k H r := by
@@ -214,7 +214,7 @@ variable (k H) in
 trivial: this is the functor-of-points form of the statement that the group is trivial. -/
 theorem subsingleton_algHom_of_isLinearlyReductive_of_forall_isUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g)
     (A : Type w) [CommRing A] [Algebra k A] :
     Subsingleton (H →ₐ[k] A) := by
@@ -228,7 +228,7 @@ variable (k H) in
 field, smoothness supplies the reducedness hypothesis. -/
 def counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint
     [IsAlgClosed k] [Algebra.FiniteType k H] (hsm : Algebra.Smooth k H)
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) :
     H ≃ₐc[k] k :=
   letI := hsm
@@ -240,7 +240,7 @@ variable (k H) in
 @[simp]
 theorem counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint_apply
     [IsAlgClosed k] [Algebra.FiniteType k H] (hsm : Algebra.Smooth k H)
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (x : H) :
     counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hsm hlr hH x =
       Bialgebra.counitBialgHom k H x := by
@@ -254,7 +254,7 @@ variable (k H) in
 @[simp]
 theorem counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint_symm_apply
     [IsAlgClosed k] [Algebra.FiniteType k H] (hsm : Algebra.Smooth k H)
-    (hlr : Coalgebra.IsLinearlyReductive.{u, u, u} k H)
+    (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
     (hH : ∀ g : WithConv (H →ₐ[k] k), IsUnipotentPoint g) (r : k) :
     (counitBialgEquivOfSmoothOfIsLinearlyReductiveOfForallIsUnipotentPoint k H hsm hlr hH).symm
         r = algebraMap k H r := by
