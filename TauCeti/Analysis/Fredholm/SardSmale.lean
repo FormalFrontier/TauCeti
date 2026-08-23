@@ -59,7 +59,8 @@ interior need not be meagre.
 
 The global statement follows by covering: a second-countable domain is Lindelöf, so countably many
 of these balls suffice, and a countable union of closed nowhere dense sets is meagre. Density of
-the regular values is then the Baire category theorem in the complete space `F`.
+the regular values is then the Baire category theorem. The `CompleteSpace F` assumption supplies
+both the Baire instance and the local properness used above to prove closedness.
 
 The regularity threshold is inherited unchanged from the finite-dimensional theorem: `C^k` with
 `k ≥ (dim ker)² + 1`, rather than Smale's sharp `k > index`, because the underlying
@@ -229,6 +230,9 @@ private theorem surjective_fderiv_iff_slice (pkg : ContinuousLinearMap.FredholmP
 
 /-- **Sard--Smale, locally.** Near a point where a sufficiently smooth map has Fredholm
 derivative there is a neighbourhood on which the critical values form a closed nowhere dense set.
+
+Completeness of the target enters through Smale's local properness lemma, which supplies the
+compactness used to prove that the local critical-value image is closed.
 
 The regularity threshold `(dim ker)² + 1` is the one inherited from the finite-dimensional
 Morse--Sard theorem `TauCeti.interior_image_criticalPoints_eq_empty`, which the fibrewise step
