@@ -58,8 +58,9 @@ statement is asserted.
 * `TauCeti.DynkinType.geckRootSubgroup_comp_ι` and `TauCeti.DynkinType.geckWeightTorus_comp_ι`:
   both families recover their represented morphisms into `GLₙ`.
 * `TauCeti.DynkinType.geckWeightTorus_conj_geckRootSubgroup`: the scheme-level pinning equation.
-* `TauCeti.DynkinType.geckGroupScheme_hom_ext`: morphisms out of the carrier are determined by
-  their composites with the root subgroups and weight torus.
+* `TauCeti.DynkinType.geckGroupScheme_hom_ext`: morphisms from the carrier into affine group
+  schemes represented by commutative Hopf algebras are determined by their composites with the
+  root subgroups and weight torus.
 * `TauCeti.DynkinType.geckTorusPoints_conj_geckRootSubgroupParam`: the pinning equation, with the
   root of a raising generator the corresponding pinned Cartan-matrix row and that of a lowering
   generator its negative.
@@ -282,8 +283,9 @@ theorem geckWeightTorus_conj_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank)
   simpa only [geckWeightTorus_def, geckRootSubgroup_def, Grp.comp', Mon.comp_hom',
     Category.assoc, MonObj.mul_comp, GrpObj.inv_comp] using h'
 
-/-- **Rigidity of the Geck carrier.** Two homomorphisms out of the carrier are equal if they
-agree on every numbered root subgroup and on the represented weight torus. -/
+/-- **Rigidity of the Geck carrier.** Two homomorphisms from the carrier into an affine group
+scheme represented by a commutative Hopf algebra are equal if they agree on every numbered root
+subgroup and on the represented weight torus. -/
 @[ext]
 theorem geckGroupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (φ ψ : t.geckGroupScheme ht ⟶
