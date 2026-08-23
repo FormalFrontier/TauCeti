@@ -53,7 +53,7 @@ than over `k(x)`: the family is shown to be linearly independent over the `k`-su
 `k(x) = k⟮x⟯`, which is the fraction field of `k[x]` by Mathlib's
 `IntermediateField.algebraAdjoinAdjoin` instances. Clearing the common power of `x` from a
 relation is `TauCeti.Polynomial.exists_common_X_pow_factor`, which runs on
-`Polynomial.rootMultiplicity 0`, so no denominators ever appear.
+the least exponent with a nonzero coefficient across the family, so no denominators ever appear.
 
 ## References
 

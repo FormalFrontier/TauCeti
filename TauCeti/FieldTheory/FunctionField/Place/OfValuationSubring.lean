@@ -165,7 +165,7 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
 /-- The chain bound of Stichtenoth's Lemma 1.1.7, in the form used twice below: an algebraic
 function field admits no infinite sequence of nonunits of a valuation subring whose valuations
 increase strictly and stay at or above the valuation of a fixed nonzero element. -/
-theorem not_exists_seq_valuation_strictMono (hF : IsFunctionField k F)
+private theorem not_exists_seq_valuation_strictMono (hF : IsFunctionField k F)
     (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F} (hx0 : x ≠ 0)
     {y : ℕ → F} (hy : ∀ n, A.valuation (y n) < 1)
     (hstep : ∀ n, A.valuation (y n) < A.valuation (y (n + 1)))
@@ -184,7 +184,7 @@ theorem not_exists_seq_valuation_strictMono (hF : IsFunctionField k F)
 /-- **Stichtenoth, Theorem 1.1.6**, key step: the valuations of the nonzero nonunits of a proper
 valuation subring of an algebraic function field attain a maximum. In additive notation, the
 orders of the nonunits attain a minimum, at a prime element. -/
-theorem exists_max_valuation_lt_one (hF : IsFunctionField k F)
+private theorem exists_max_valuation_lt_one (hF : IsFunctionField k F)
     (hk : ∀ c : k, algebraMap k F c ∈ A) (hA : A ≠ ⊤) :
     ∃ t : F, t ≠ 0 ∧ A.valuation t < 1 ∧
       ∀ z : F, z ≠ 0 → A.valuation z < 1 → A.valuation z ≤ A.valuation t := by
