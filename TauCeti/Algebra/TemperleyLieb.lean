@@ -256,12 +256,14 @@ def algEquivOfLeOne (h : n ≤ 1) : TemperleyLieb R δ n ≃ₐ[R] R :=
 /-- On at most one strand, the forward map of `algEquivOfLeOne` is the augmentation. -/
 @[simp]
 theorem algEquivOfLeOne_apply (h : n ≤ 1) (x : TemperleyLieb R δ n) :
-    algEquivOfLeOne δ h x = aug x := (rfl)
+    algEquivOfLeOne δ h x = aug x := by
+  simp only [algEquivOfLeOne, AlgEquiv.ofAlgHom_apply]
 
 /-- On at most one strand, the inverse of `algEquivOfLeOne` is the algebra structure map. -/
 @[simp]
 theorem algEquivOfLeOne_symm_apply (h : n ≤ 1) (r : R) :
-    (algEquivOfLeOne δ h).symm r = algebraMap R (TemperleyLieb R δ n) r := (rfl)
+    (algEquivOfLeOne δ h).symm r = algebraMap R (TemperleyLieb R δ n) r := by
+  simp only [algEquivOfLeOne, AlgEquiv.ofAlgHom_symm_apply, Algebra.ofId_apply]
 
 /-- The matrix `!![0, 0; 1, δ]`, idempotent up to `δ`: the matrix of left multiplication by the
 single Temperley-Lieb generator on two strands, read in the pair `(1, e)`. -/

@@ -67,7 +67,7 @@ theorem jonesDelta_def (a : Rˣ) :
 
 /-- The Jones loop value is symmetric in `a` and `a⁻¹`, which is what lets the two coefficients
 of a crossing be swapped. -/
-theorem jonesDelta_def_swap (a : Rˣ) :
+theorem jonesDelta_eq_neg_inv_sq_add_sq (a : Rˣ) :
     jonesDelta a = -((((a⁻¹ : Rˣ) : R)) ^ 2 + (a : R) ^ 2) := by
   rw [jonesDelta_def]
   ring
@@ -78,7 +78,7 @@ def jonesUnit (a : Rˣ) (i : Fin (n - 1)) : (TemperleyLieb R (jonesDelta a) n)ˣ
   val := crossing (jonesDelta a) (a : R) ((a⁻¹ : Rˣ) : R) i
   inv := crossing (jonesDelta a) ((a⁻¹ : Rˣ) : R) (a : R) i
   val_inv := crossing_mul_crossing_swap_eq_one a.mul_inv (jonesDelta_def a) i
-  inv_val := crossing_mul_crossing_swap_eq_one a.inv_mul (jonesDelta_def_swap a) i
+  inv_val := crossing_mul_crossing_swap_eq_one a.inv_mul (jonesDelta_eq_neg_inv_sq_add_sq a) i
 
 /-- The value of the Kauffman-bracket unit. -/
 @[simp]
