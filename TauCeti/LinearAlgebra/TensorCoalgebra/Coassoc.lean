@@ -27,8 +27,6 @@ ordinary computation with natural numbers.  In these terms deconcatenation is
 
 ## Main results
 
-* `TauCeti.ReducedTensorWords.deconcatenation_subword`: deconcatenation of a block is the sum over
-  its nontrivial cuts.
 * `TauCeti.ReducedTensorWords.deconcatenation_coassoc`: reduced deconcatenation is coassociative.
 
 ## References
@@ -48,50 +46,6 @@ namespace TauCeti
 namespace ReducedTensorWords
 
 variable (R : Type uR) {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
-
-/-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
-theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :
-    deconcatenation R M (subword R x a b) =
-      ∑ c ∈ Finset.Ioo 0 b, subword R x a c ⊗ₜ[R] subword R x (a + c) (b - c) := by
-  by_cases hab : a + b ≤ n
-  · rcases Nat.eq_zero_or_pos b with hb | hb
-    · subst hb
-      simp
-    rw [subword_eq_of_tprod R x hb hab, deconcatenation_of, deconcatenationComponent_tprod]
-    dsimp only
-    refine Finset.sum_bij' (fun i _ ↦ i.1 + 1) (fun c hc ↦ ⟨c - 1, by
-        simp only [Finset.mem_Ioo] at hc; omega⟩) ?_ ?_ ?_ ?_ ?_
-    · intro i _
-      have := i.isLt
-      simp only [Finset.mem_Ioo]
-      omega
-    · intro c _
-      exact Finset.mem_univ _
-    · intro i _
-      ext
-      simp
-    · intro c hc
-      simp only [Finset.mem_Ioo] at hc
-      dsimp only
-      omega
-    · intro i _
-      have hi := i.isLt
-      rw [subword_eq_of_tprod R x (a := a) (b := i.1 + 1) (by omega) (by omega),
-        subword_eq_of_tprod R x (a := a + (i.1 + 1)) (b := b - (i.1 + 1)) (by omega)
-          (by omega)]
-      congr 1
-      refine congrArg _ (congrArg _ (funext fun j ↦ congrArg x (Fin.ext ?_)))
-      dsimp only
-      omega
-  · rw [subword_eq_zero_of_lt R x (by omega), map_zero]
-    symm
-    refine Finset.sum_eq_zero fun c hc ↦ ?_
-    simp only [Finset.mem_Ioo] at hc
-    by_cases hac : a + c ≤ n
-    · rw [subword_eq_zero_of_lt R x (a := a + c) (b := b - c) (by omega),
-        TensorProduct.tmul_zero]
-    · rw [subword_eq_zero_of_lt R x (a := a) (b := c) (by omega),
-        TensorProduct.zero_tmul]
 
 variable (M)
 

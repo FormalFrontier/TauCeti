@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.DirectSum.Module
 public import Mathlib.LinearAlgebra.TensorProduct.Map
+public import Mathlib.Order.Interval.Finset.Nat
 public import TauCeti.LinearAlgebra.TensorPower.Basic
 
 /-!
@@ -129,6 +130,7 @@ noncomputable def subword {n : ℕ} (x : Fin n → M) (a b : ℕ) : ReducedTenso
   else 0
 
 /-- On its intended range, a subword is the pure tensor of the selected block of letters. -/
+@[simp]
 theorem subword_eq_of_tprod {n : ℕ} (x : Fin n → M) {a b : ℕ} (hb : 0 < b) (hab : a + b ≤ n) :
     subword R x a b =
       of R M ⟨b, hb⟩
@@ -140,6 +142,7 @@ theorem subword_zero {n : ℕ} (x : Fin n → M) (a : ℕ) : subword R x a 0 = 0
   simp [subword]
 
 /-- A block running past the end of the tuple is zero. -/
+@[simp]
 theorem subword_eq_zero_of_lt {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab : n < a + b) :
     subword R x a b = 0 := by
   rw [subword, dite_eq_right (by omega)]
@@ -150,6 +153,50 @@ theorem of_tprod_eq_subword {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
   rw [subword_eq_of_tprod R x hn (by omega)]
   congr 1
   exact congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm)
+
+/-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
+theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :
+    deconcatenation R M (subword R x a b) =
+      ∑ c ∈ Finset.Ioo 0 b, subword R x a c ⊗ₜ[R] subword R x (a + c) (b - c) := by
+  by_cases hab : a + b ≤ n
+  · rcases Nat.eq_zero_or_pos b with hb | hb
+    · subst hb
+      simp
+    rw [subword_eq_of_tprod R x hb hab, deconcatenation_of, deconcatenationComponent_tprod]
+    dsimp only
+    refine Finset.sum_bij' (fun i _ ↦ i.1 + 1) (fun c hc ↦ ⟨c - 1, by
+        simp only [Finset.mem_Ioo] at hc; omega⟩) ?_ ?_ ?_ ?_ ?_
+    · intro i _
+      have := i.isLt
+      simp only [Finset.mem_Ioo]
+      omega
+    · intro c _
+      exact Finset.mem_univ _
+    · intro i _
+      ext
+      simp
+    · intro c hc
+      simp only [Finset.mem_Ioo] at hc
+      dsimp only
+      omega
+    · intro i _
+      have hi := i.isLt
+      rw [subword_eq_of_tprod R x (a := a) (b := i.1 + 1) (by omega) (by omega),
+        subword_eq_of_tprod R x (a := a + (i.1 + 1)) (b := b - (i.1 + 1)) (by omega)
+          (by omega)]
+      congr 1
+      refine congrArg _ (congrArg _ (funext fun j ↦ congrArg x (Fin.ext ?_)))
+      dsimp only
+      omega
+  · rw [subword_eq_zero_of_lt R x (by omega), map_zero]
+    symm
+    refine Finset.sum_eq_zero fun c hc ↦ ?_
+    simp only [Finset.mem_Ioo] at hc
+    by_cases hac : a + c ≤ n
+    · rw [subword_eq_zero_of_lt R x (a := a + c) (b := b - c) (by omega),
+        TensorProduct.tmul_zero]
+    · rw [subword_eq_zero_of_lt R x (a := a) (b := c) (by omega),
+        TensorProduct.zero_tmul]
 
 end Subword
 

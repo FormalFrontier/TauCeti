@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.TensorCoalgebra.Coassoc
+public import TauCeti.LinearAlgebra.TensorCoalgebra.Basic
 
 /-!
 # The conilpotence filtration of reduced tensor words
