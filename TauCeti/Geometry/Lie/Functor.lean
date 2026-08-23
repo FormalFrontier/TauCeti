@@ -7,13 +7,16 @@ module
 
 public import TauCeti.Geometry.Lie.Tangent.LieEquiv
 public import TauCeti.Geometry.Lie.Exponential.Basic
+public import TauCeti.Geometry.Manifold.Algebra.Monoid
 
 /-!
 # The Lie functor on smooth homomorphisms
 
 The differential at the identity of a smooth Lie-group homomorphism induces a Lie-algebra
-homomorphism between left-invariant derivations. The resulting map preserves identities and
-composition and is natural with respect to the Lie-group exponential.
+homomorphism between left-invariant derivations. Smooth homomorphisms carry their differentiability
+proof in `ContMDiffMonoidMorphism`; identity and composition complete that bundled morphism API.
+The resulting Lie map preserves identities and composition and is natural with respect to the
+Lie-group exponential.
 
 This advances Layer 3 of the Lie-groups roadmap.
 
@@ -24,7 +27,7 @@ This advances Layer 3 of the Lie-groups roadmap.
 
 ## Main results
 
-* `lieMap`: the Lie-algebra homomorphism induced by a smooth group homomorphism.
+* `lieMap`: the Lie-algebra homomorphism induced by a smooth monoid morphism.
 * `lieMap_id`, `lieMap_comp`: the identity and composition laws.
 * `lieMap_lieExp`: naturality with respect to the Lie-group exponential.
 -/
@@ -42,16 +45,11 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
   {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners ℝ E' H'}
   {G' : Type*} [TopologicalSpace G'] [ChartedSpace H' G'] [Group G']
-  [LieGroup I ∞ G] [LieGroup I' ∞ G']
 
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-private noncomputable def smoothMonoidHom (φ : G →* G')
-    (hφ : ContMDiff I I' ∞ (φ : G → G')) :
-    ContMDiffMonoidMorphism I I' ∞ G G' where
-  toMonoidHom := φ
-  contMDiff_toFun := hφ
+variable [LieGroup I ∞ G] [LieGroup I' ∞ G']
 
 private noncomputable def lieMapTangent
     (φ : ContMDiffMonoidMorphism I I' ∞ G G') :
@@ -174,14 +172,13 @@ private theorem lieMapTangent_map_lie
 
 /-- The Lie functor on morphisms: the differential at the identity of a smooth homomorphism. -/
 noncomputable def lieMap [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
-    (φ : G →* G') (hφ : ContMDiff I I' ∞ (φ : G → G')) :
+    (φ : ContMDiffMonoidMorphism I I' ∞ G G') :
     LeftInvariantDerivation I G →ₗ⁅ℝ⁆ LeftInvariantDerivation I' G' :=
-  let φ' := smoothMonoidHom φ hφ
   let tangentMap : GroupLieAlgebra I G →ₗ⁅ℝ⁆ GroupLieAlgebra I' G' :=
-    { toLinearMap := lieMapTangent φ'
+    { toLinearMap := lieMapTangent φ
       map_lie' := by
         intro X Y
-        exact lieMapTangent_map_lie φ' X Y }
+        exact lieMapTangent_map_lie φ X Y }
   (leftInvariantDerivationLieEquivGroupLieAlgebra
       (I := I') (G := G') (ContMDiffMul.isInteriorPoint (n := ∞) (by simp) 1)).symm.toLieHom.comp
     (tangentMap.comp
@@ -192,11 +189,11 @@ noncomputable def lieMap [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
 @[simp]
 theorem leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap
     [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
-    (φ : G →* G') (hφ : ContMDiff I I' ∞ (φ : G → G'))
+    (φ : ContMDiffMonoidMorphism I I' ∞ G G')
     (D : LeftInvariantDerivation I G) :
     leftInvariantDerivationLieEquivGroupLieAlgebra
         (ContMDiffMul.isInteriorPoint (I := I') (n := ∞) (by simp) (1 : G'))
-        (lieMap φ hφ D) =
+        (lieMap φ D) =
       mfderiv I I' φ 1
         (leftInvariantDerivationLieEquivGroupLieAlgebra
           (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)) D) := by
@@ -206,37 +203,38 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap
   let e' := leftInvariantDerivationLieEquivGroupLieAlgebra hG'
   -- Unfold the transported `LieHom` application once to expose the two canonical Lie
   -- equivalences; their inverse law then characterizes `lieMap` without exposing its body publicly.
-  change e' (e'.symm (lieMapTangent (smoothMonoidHom φ hφ) (e D))) = _
+  change e' (e'.symm (lieMapTangent φ (e D))) = _
   rw [e'.apply_symm_apply]
   rfl
 
 /-- The Lie map of the identity homomorphism is the identity Lie-algebra homomorphism. -/
 @[simp]
 theorem lieMap_id [FiniteDimensional ℝ E] :
-    lieMap (MonoidHom.id G) (contMDiff_id : ContMDiff I I ∞ (id : G → G)) = 1 := by
+    lieMap (ContMDiffMonoidMorphism.id (I := I) (G := G)) = 1 := by
   apply LieHom.ext
   intro D
   let hG := ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra hG
   apply e.injective
-  calc
-    e (lieMap (MonoidHom.id G) (contMDiff_id : ContMDiff I I ∞ (id : G → G)) D) =
-        mfderiv I I (MonoidHom.id G) 1 (e D) :=
-      leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _ _
-    _ = e D := by simp
-    _ = e ((1 : LeftInvariantDerivation I G →ₗ⁅ℝ⁆ LeftInvariantDerivation I G) D) := by
-      rw [LieHom.one_apply]
+  rw [LieHom.one_apply]
+  -- Expose the transported `LieHom` application so the coordinate theorem matches the target.
+  change e (lieMap (ContMDiffMonoidMorphism.id (I := I) (G := G)) D) = e D
+  rw [leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap]
+  rw [ContMDiffMonoidMorphism.coe_id]
+  simp
+  rfl
 
 /-- The Lie map of a composite is the composite of the two Lie maps. -/
+@[simp]
 theorem lieMap_comp
     {E'' : Type*} [NormedAddCommGroup E''] [NormedSpace ℝ E'']
     {H'' : Type*} [TopologicalSpace H''] {I'' : ModelWithCorners ℝ E'' H''}
     {G'' : Type*} [TopologicalSpace G''] [ChartedSpace H'' G''] [Group G'']
     [LieGroup I'' ∞ G''] [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
     [FiniteDimensional ℝ E'']
-    (φ : G →* G') (hφ : ContMDiff I I' ∞ (φ : G → G'))
-    (ψ : G' →* G'') (hψ : ContMDiff I' I'' ∞ (ψ : G' → G'')) :
-    lieMap (ψ.comp φ) (hψ.comp hφ) = (lieMap ψ hψ).comp (lieMap φ hφ) := by
+    (φ : ContMDiffMonoidMorphism I I' ∞ G G')
+    (ψ : ContMDiffMonoidMorphism I' I'' ∞ G' G'') :
+    lieMap (ψ.comp φ) = (lieMap ψ).comp (lieMap φ) := by
   apply LieHom.ext
   intro D
   let hG := ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)
@@ -246,41 +244,40 @@ theorem lieMap_comp
   let e' := leftInvariantDerivationLieEquivGroupLieAlgebra hG'
   let e'' := leftInvariantDerivationLieEquivGroupLieAlgebra hG''
   apply e''.injective
-  have hleft : e'' (lieMap (ψ.comp φ) (hψ.comp hφ) D) =
+  have hleft : e'' (lieMap (ψ.comp φ) D) =
       mfderiv I I'' (ψ.comp φ) 1 (e D) :=
-    leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _ _
-  have hφD : e' (lieMap φ hφ D) = mfderiv I I' φ 1 (e D) :=
-    leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _ _
-  have hψD : e'' (lieMap ψ hψ (lieMap φ hφ D)) =
-      mfderiv I' I'' ψ 1 (e' (lieMap φ hφ D)) :=
-    leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _ _
+    leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _
+  have hφD : e' (lieMap φ D) = mfderiv I I' φ 1 (e D) :=
+    leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _
+  have hψD : e'' (lieMap ψ (lieMap φ D)) =
+      mfderiv I' I'' ψ 1 (e' (lieMap φ D)) :=
+    leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap _ _
   have hchain := mfderiv_comp_apply (I := I) (I' := I') (I'' := I'') (x := (1 : G))
     (g := (ψ : G' → G'')) (f := (φ : G → G'))
-    (hψ.mdifferentiable (by simp)).mdifferentiableAt
-    (hφ.mdifferentiable (by simp)).mdifferentiableAt (e D)
+    (ψ.contMDiff_toFun.mdifferentiable (by simp)).mdifferentiableAt
+    (φ.contMDiff_toFun.mdifferentiable (by simp)).mdifferentiableAt (e D)
   have hchain' : mfderiv I I'' (ψ.comp φ) 1 (e D) =
       mfderiv I' I'' ψ 1 (mfderiv I I' φ 1 (e D)) := by
-    simpa only [MonoidHom.coe_comp, map_one] using
-      hchain.trans (by rw [map_one])
+    rw [ContMDiffMonoidMorphism.coe_comp]
+    exact hchain.trans (by rw [map_one])
   have hright : mfderiv I' I'' ψ 1 (mfderiv I I' φ 1 (e D)) =
-      e'' (lieMap ψ hψ (lieMap φ hφ D)) := by
+      e'' (lieMap ψ (lieMap φ D)) := by
     rw [← hφD, ← hψD]
   rw [LieHom.comp_apply]
   exact hleft.trans (hchain'.trans hright)
 
 private theorem monoidHom_mulInvariantExp
     [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
-    (φ : G →* G') (hφ : ContMDiff I I' ∞ (φ : G → G')) (X : GroupLieAlgebra I G) :
+    (φ : ContMDiffMonoidMorphism I I' ∞ G G') (X : GroupLieAlgebra I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : T2Space G' := t2Space_of_lieGroup (I := I') (n := ∞)
     φ (mulInvariantExp (I := I) (G := G) X) =
       mulInvariantExp (I := I') (G := G')
-        (lieMapTangent (smoothMonoidHom φ hφ) X) := by
+        (lieMapTangent φ X) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let _ : T2Space G' := t2Space_of_lieGroup (I := I') (n := ∞)
   dsimp only
-  let φ' := smoothMonoidHom φ hφ
-  let Y := lieMapTangent φ' X
+  let Y := lieMapTangent φ X
   let γ := mulInvariantIntegralCurve (I := I) (G := G) X 1
   have hcurve : IsMIntegralCurve (φ ∘ γ)
       (mulInvariantVectorField (I := I') (G := G') Y) := by
@@ -290,9 +287,9 @@ private theorem monoidHom_mulInvariantExp
       (V := mulInvariantVectorField (I := I) (G := G) X)
       (W := mulInvariantVectorField (I := I') (G := G') Y)
       (γ := γ) (s := Set.univ)
-      (fun t _ => hφ.mdifferentiable (by simp) (γ t))
+      (fun t _ => φ.contMDiff_toFun.mdifferentiable (by simp) (γ t))
       (fun t _ => mfderiv_monoidHom_mulInvariantVectorField
-        (I := I) (I' := I') φ' (γ t) X)
+        (I := I) (I' := I') φ (γ t) X)
       ((isMIntegralCurve_mulInvariantIntegralCurve
         (I := I) (G := G) X 1).isMIntegralCurveOn Set.univ)
   have hzero : (φ ∘ γ) 0 = (1 : G') := by simp [γ]
@@ -304,19 +301,20 @@ private theorem monoidHom_mulInvariantExp
   exact congrFun heq 1
 
 /-- A smooth group homomorphism intertwines the Lie-group exponentials through its Lie map. -/
+@[simp]
 theorem lieMap_lieExp [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
-    (φ : G →* G') (hφ : ContMDiff I I' ∞ (φ : G → G'))
+    (φ : ContMDiffMonoidMorphism I I' ∞ G G')
     (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : T2Space G' := t2Space_of_lieGroup (I := I') (n := ∞)
-    φ (lieExp X) = lieExp (lieMap φ hφ X) := by
+    φ (lieExp X) = lieExp (lieMap φ X) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let _ : T2Space G' := t2Space_of_lieGroup (I := I') (n := ∞)
   dsimp only
   rw [lieExp_eq_mulInvariantExp, lieExp_eq_mulInvariantExp]
-  rw [monoidHom_mulInvariantExp (I := I) (I' := I') φ hφ]
+  rw [monoidHom_mulInvariantExp (I := I) (I' := I') φ]
   congr 1
   rw [← leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
     ← leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
   exact (leftInvariantDerivationLieEquivGroupLieAlgebra_lieMap
-    (I := I) (I' := I') φ hφ X).symm
+    (I := I) (I' := I') φ X).symm
