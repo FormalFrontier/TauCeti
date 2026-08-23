@@ -84,10 +84,11 @@ namespace ContRepresentation
 
 section Contraction
 
-variable {𝕜 ι G V : Type*} [RCLike 𝕜] [Fintype ι] [Monoid G]
+variable {𝕜 ι G V : Type*} [RCLike 𝕜] [Fintype ι] [DecidableEq ι] [Monoid G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
   (e : OrthonormalBasis ι 𝕜 V) (π : ContRepresentation 𝕜 G V)
 
+omit [DecidableEq ι] in
 /-- **The bilinear form of an orthonormal basis is invariant for `π` against its conjugate.** The
 two conjugations cancel against the unitarity of `π`, which is the identity that makes the
 contraction of an invariant tensor an intertwiner. -/
@@ -136,7 +137,7 @@ end Contraction
 
 section Irreducible
 
-variable {𝕜 ι G V : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Fintype ι] [Monoid G]
+variable {𝕜 ι G V : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Fintype ι] [DecidableEq ι] [Monoid G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
   (e : OrthonormalBasis ι 𝕜 V) (π : ContRepresentation 𝕜 G V)
 
