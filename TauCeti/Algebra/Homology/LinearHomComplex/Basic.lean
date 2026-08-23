@@ -49,13 +49,11 @@ the enrichment, and compare its underlying additive-group complex with Mathlib's
 ## Implementation notes
 
 `linearHomComplex` and `linearHomComplexFunctor` carry `@[expose]`, while every operation built
-from them is sealed and used only through its characteristic lemmas.  The two exposures are
-forced by the statements of the API, not by its proofs: `(linearHomComplex R F G).X n` is the
-type at which every application lemma below is stated, and
-`((linearHomComplexFunctor R).obj F).obj G` is the pair of types between which the object and
-map equations of the bifunctor are stated.  Sealing either makes those statements ill-typed
-(`Type mismatch ... not unfolded because their definition is not exposed`), so no proof syntax
-recovers them.
+from them is sealed and used only through its characteristic lemmas.  The exposures permit the
+dependent component types `(linearHomComplex R F G).X n` and
+`((linearHomComplexFunctor R).obj F).obj G` to elaborate against their advertised values.  The
+element-level API itself is normalized to `ModuleCat.of R (Cochain F G n)` and explicit `.hom`
+application, so ordinary `simp` and `rw` use it without unfolding either construction.
 
 ## References
 
@@ -87,9 +85,9 @@ def linearHomComplex (F G : CochainComplex C ℤ) : CochainComplex (ModuleCat.{v
 
 @[simp]
 lemma linearHomComplex_d_apply (F G : CochainComplex C ℤ) (n m : ℤ)
-    (z : (linearHomComplex R F G).X n) :
-    (linearHomComplex R F G).d n m z =
-      (δ n m (z : Cochain F G n) : (linearHomComplex R F G).X m) :=
+    (z : ModuleCat.of R (Cochain F G n)) :
+    ModuleCat.Hom.hom ((linearHomComplex R F G).d n m) z =
+      (δ n m z : ModuleCat.of R (Cochain F G m)) :=
   rfl
 
 /-- Forgetting the `R`-module structure of the `R`-linear Hom complex recovers Mathlib's
@@ -148,18 +146,16 @@ variable {R}
 
 @[simp]
 lemma linearHomComplexPrecomp_f_apply (φ : F₁ ⟶ F₂) (G : CochainComplex C ℤ) (n : ℤ)
-    (z : (linearHomComplex R F₂ G).X n) :
-    (linearHomComplexPrecomp R φ G).f n z =
-      ((Cochain.ofHom φ).comp (z : Cochain F₂ G n) (zero_add n) :
-        (linearHomComplex R F₁ G).X n) :=
+    (z : ModuleCat.of R (Cochain F₂ G n)) :
+    ModuleCat.Hom.hom ((linearHomComplexPrecomp R φ G).f n) z =
+      ((Cochain.ofHom φ).comp z (zero_add n) : ModuleCat.of R (Cochain F₁ G n)) :=
   (rfl)
 
 @[simp]
 lemma linearHomComplexPostcomp_f_apply (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) (n : ℤ)
-    (z : (linearHomComplex R F G₁).X n) :
-    (linearHomComplexPostcomp R F ψ).f n z =
-      ((z : Cochain F G₁ n).comp (Cochain.ofHom ψ) (add_zero n) :
-        (linearHomComplex R F G₂).X n) :=
+    (z : ModuleCat.of R (Cochain F G₁ n)) :
+    ModuleCat.Hom.hom ((linearHomComplexPostcomp R F ψ).f n) z =
+      (z.comp (Cochain.ofHom ψ) (add_zero n) : ModuleCat.of R (Cochain F G₂ n)) :=
   (rfl)
 
 variable (R)
@@ -167,14 +163,14 @@ variable (R)
 @[simp]
 lemma linearHomComplexPrecomp_id (F G : CochainComplex C ℤ) :
     linearHomComplexPrecomp R (𝟙 F) G = 𝟙 _ := by
-  ext n (z : (linearHomComplex R F G).X n)
+  ext n (z : ModuleCat.of R (Cochain F G n))
   exact Cochain.id_comp z
 
 @[simp]
 lemma linearHomComplexPrecomp_comp (φ : F₁ ⟶ F₂) (φ' : F₂ ⟶ F₃) (G : CochainComplex C ℤ) :
     linearHomComplexPrecomp R (φ ≫ φ') G =
       linearHomComplexPrecomp R φ' G ≫ linearHomComplexPrecomp R φ G := by
-  ext n (z : (linearHomComplex R F₃ G).X n)
+  ext n (z : ModuleCat.of R (Cochain F₃ G n))
   simp only [linearHomComplexPrecomp_f_apply, HomologicalComplex.comp_f, ModuleCat.hom_comp,
     LinearMap.coe_comp]
   rw [Cochain.ofHom_comp]
@@ -183,14 +179,14 @@ lemma linearHomComplexPrecomp_comp (φ : F₁ ⟶ F₂) (φ' : F₂ ⟶ F₃) (G
 @[simp]
 lemma linearHomComplexPostcomp_id (F G : CochainComplex C ℤ) :
     linearHomComplexPostcomp R F (𝟙 G) = 𝟙 _ := by
-  ext n (z : (linearHomComplex R F G).X n)
+  ext n (z : ModuleCat.of R (Cochain F G n))
   exact Cochain.comp_id z
 
 @[simp]
 lemma linearHomComplexPostcomp_comp (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G₂) (ψ' : G₂ ⟶ G₃) :
     linearHomComplexPostcomp R F (ψ ≫ ψ') =
       linearHomComplexPostcomp R F ψ ≫ linearHomComplexPostcomp R F ψ' := by
-  ext n (z : (linearHomComplex R F G₁).X n)
+  ext n (z : ModuleCat.of R (Cochain F G₁ n))
   simp only [linearHomComplexPostcomp_f_apply, HomologicalComplex.comp_f, ModuleCat.hom_comp,
     LinearMap.coe_comp]
   rw [Cochain.ofHom_comp]
@@ -200,7 +196,7 @@ lemma linearHomComplexPostcomp_comp (F : CochainComplex C ℤ) (ψ : G₁ ⟶ G�
 lemma linearHomComplexPrecomp_postcomp_comm (φ : F₁ ⟶ F₂) (ψ : G₁ ⟶ G₂) :
     linearHomComplexPrecomp R φ G₁ ≫ linearHomComplexPostcomp R F₁ ψ =
       linearHomComplexPostcomp R F₂ ψ ≫ linearHomComplexPrecomp R φ G₂ := by
-  ext n (z : (linearHomComplex R F₂ G₁).X n)
+  ext n (z : ModuleCat.of R (Cochain F₂ G₁ n))
   simp only [HomologicalComplex.comp_f, ModuleCat.hom_comp, LinearMap.coe_comp]
   exact Cochain.comp_assoc _ _ _ (zero_add n) (add_zero n) (by omega)
 
