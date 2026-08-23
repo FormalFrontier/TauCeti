@@ -22,12 +22,15 @@ rational function field.
   is its multiplicity of `q`.
 * `TauCeti.Place.ord_adicOfIrreducible`: the order of a nonzero rational function at `P_q` is the
   difference of the multiplicities in its numerator and denominator.
-* `TauCeti.Place.ord_adicOfIrreducible_pos_iff` and
-  `TauCeti.Place.ord_adicOfIrreducible_neg_iff`: the zeros and poles at `P_q` are detected by
-  divisibility of the reduced numerator and denominator by `q`.
-* `TauCeti.Place.ord_adicOfIrreducible_X`: among the finite places, `X` has order one at `P_X`
-  and order zero everywhere else.
-* `TauCeti.Place.mem_integers_adicOfIrreducible_iff` and
+* `TauCeti.Place.ord_adicOfIrreducible_pos_iff`,
+  `TauCeti.Place.ord_adicOfIrreducible_neg_iff` and
+  `TauCeti.Place.ord_adicOfIrreducible_eq_zero_iff`: the zeros, poles and units at `P_q` are
+  detected by divisibility of the reduced numerator and denominator by `q`.
+* `TauCeti.Place.ord_adicOfIrreducible_algebraMap_irreducible`: an irreducible polynomial has
+  order one at the place it defines and order zero elsewhere;
+  `TauCeti.Place.ord_adicOfIrreducible_X` and its two `simp` specializations spell this out
+  for `X`.
+* `TauCeti.Place.valuation_ofIrreducible_le_one_iff` and
   `TauCeti.Place.residue_adicOfIrreducible_eq_zero_iff`: regularity and vanishing in the residue
   field are detected by the denominator and numerator respectively.
 
@@ -55,12 +58,19 @@ theorem ord_adicOfIrreducible_algebraMap {q r : k[X]} (hq : Irreducible q) (hr :
     HeightOneSpectrum.ofIrreducible_asIdeal]
   exact_mod_cast multiplicity_eq_of_emultiplicity_eq Ideal.emultiplicity_eq_emultiplicity_span
 
-/-- An irreducible polynomial has order one at the finite place it defines. -/
-@[simp]
-theorem ord_adicOfIrreducible_self {q : k[X]} (hq : Irreducible q) :
-    (adicOfIrreducible hq).ord (algebraMap k[X] (RatFunc k) q) = 1 := by
-  rw [ord_adicOfIrreducible_algebraMap hq hq.ne_zero, multiplicity_self]
-  norm_num
+open scoped Classical in
+/-- An irreducible polynomial has order one at the finite place defined by an associated
+polynomial, and order zero at every other finite place. -/
+theorem ord_adicOfIrreducible_algebraMap_irreducible {q p : k[X]} (hq : Irreducible q)
+    (hp : Irreducible p) :
+    (adicOfIrreducible hq).ord (algebraMap k[X] (RatFunc k) p) =
+      if Associated q p then 1 else 0 := by
+  rw [ord_adicOfIrreducible_algebraMap hq hp.ne_zero]
+  split_ifs with h
+  · rw [← multiplicity_eq_of_associated_left h, multiplicity_self]
+    norm_num
+  · rw [Nat.cast_eq_zero, multiplicity_eq_zero]
+    exact fun hdiv ↦ h (hq.associated_of_dvd hp hdiv)
 
 open scoped Classical in
 /-- Among the finite places, `X` has order one at the place defined by a polynomial associated to
@@ -68,13 +78,22 @@ open scoped Classical in
 theorem ord_adicOfIrreducible_X {q : k[X]} (hq : Irreducible q) :
     (adicOfIrreducible hq).ord (RatFunc.X : RatFunc k) =
       if Associated q X then 1 else 0 := by
-  rw [← RatFunc.algebraMap_X, ord_adicOfIrreducible_algebraMap hq Polynomial.X_ne_zero]
-  split_ifs with h
-  · rw [← multiplicity_eq_of_associated_left h, multiplicity_self]
-    norm_num
-  · norm_num
-    rw [multiplicity_eq_zero]
-    exact fun hdiv ↦ h (hq.associated_of_dvd irreducible_X hdiv)
+  rw [← RatFunc.algebraMap_X, ord_adicOfIrreducible_algebraMap_irreducible hq irreducible_X]
+
+/-- `X` has order one at its own finite place. -/
+@[simp]
+theorem ord_adicOfIrreducible_X_self :
+    (adicOfIrreducible (irreducible_X (R := k))).ord (RatFunc.X : RatFunc k) = 1 := by
+  classical
+  rw [ord_adicOfIrreducible_X, ite_eq_left (Associated.refl _)]
+
+/-- `X` has order zero at every finite place other than its own. -/
+@[simp]
+theorem ord_adicOfIrreducible_X_of_not_associated {q : k[X]} (hq : Irreducible q)
+    (h : ¬Associated q X) :
+    (adicOfIrreducible hq).ord (RatFunc.X : RatFunc k) = 0 := by
+  classical
+  rw [ord_adicOfIrreducible_X, ite_eq_right h]
 
 /-- The order of a nonzero rational function at the finite place associated to `q` is the
 multiplicity of `q` in its numerator minus its multiplicity in its denominator. -/
@@ -88,8 +107,8 @@ theorem ord_adicOfIrreducible {q : k[X]} (hq : Irreducible q) {f : RatFunc k} (h
       congrArg (adicOfIrreducible hq).ord (RatFunc.num_div_denom f).symm
     _ = (adicOfIrreducible hq).ord (algebraMap k[X] (RatFunc k) f.num) -
           (adicOfIrreducible hq).ord (algebraMap k[X] (RatFunc k) f.denom) :=
-      (adicOfIrreducible hq).ord_div (by simpa using RatFunc.num_ne_zero hf)
-        (by simpa using RatFunc.denom_ne_zero f)
+      (adicOfIrreducible hq).ord_div (RatFunc.algebraMap_ne_zero (RatFunc.num_ne_zero hf))
+        (RatFunc.algebraMap_ne_zero f.denom_ne_zero)
     _ = (multiplicity q f.num : ℤ) - multiplicity q f.denom := by
       rw [ord_adicOfIrreducible_algebraMap hq (RatFunc.num_ne_zero hf),
         ord_adicOfIrreducible_algebraMap hq (RatFunc.denom_ne_zero f)]
@@ -117,23 +136,25 @@ theorem ord_adicOfIrreducible_pos_iff {q : k[X]} (hq : Irreducible q) {f : RatFu
         (not_dvd_right_of_dvd_left hq f.isCoprime_num_denom hnum)
     omega
 
-/-- A nonzero rational function has a pole at `P_q` exactly when `q` divides its reduced
-denominator. -/
+/-- A rational function has a pole at `P_q` exactly when `q` divides its reduced denominator.
+This statement includes the zero rational function, whose reduced denominator is `1`. -/
 @[simp]
-theorem ord_adicOfIrreducible_neg_iff {q : k[X]} (hq : Irreducible q) {f : RatFunc k}
-    (hf : f ≠ 0) :
+theorem ord_adicOfIrreducible_neg_iff {q : k[X]} (hq : Irreducible q) {f : RatFunc k} :
     (adicOfIrreducible hq).ord f < 0 ↔ q ∣ f.denom := by
-  rw [ord_adicOfIrreducible hq hf]
-  constructor
-  · intro h
-    apply multiplicity_ne_zero.mp
-    omega
-  · intro hden
-    have hnum : multiplicity q f.num = 0 :=
-      multiplicity_eq_zero.mpr
-        (not_dvd_right_of_dvd_left hq f.isCoprime_num_denom.symm hden)
-    have hden' : multiplicity q f.denom ≠ 0 := multiplicity_ne_zero.mpr hden
-    omega
+  rcases eq_or_ne f 0 with rfl | hf
+  · simp only [ord_zero, lt_self_iff_false, RatFunc.denom_zero, false_iff]
+    exact hq.not_dvd_one
+  · rw [ord_adicOfIrreducible hq hf]
+    constructor
+    · intro h
+      apply multiplicity_ne_zero.mp
+      omega
+    · intro hden
+      have hnum : multiplicity q f.num = 0 :=
+        multiplicity_eq_zero.mpr
+          (not_dvd_right_of_dvd_left hq f.isCoprime_num_denom.symm hden)
+      have hden' : multiplicity q f.denom ≠ 0 := multiplicity_ne_zero.mpr hden
+      omega
 
 /-- A nonzero rational function is a unit at `P_q` exactly when `q` divides neither its reduced
 numerator nor its reduced denominator. -/
@@ -141,45 +162,21 @@ numerator nor its reduced denominator. -/
 theorem ord_adicOfIrreducible_eq_zero_iff {q : k[X]} (hq : Irreducible q) {f : RatFunc k}
     (hf : f ≠ 0) :
     (adicOfIrreducible hq).ord f = 0 ↔ ¬q ∣ f.num ∧ ¬q ∣ f.denom := by
-  constructor
-  · intro hord
-    constructor
-    · intro hnum
-      have : 0 < (adicOfIrreducible hq).ord f :=
-        (ord_adicOfIrreducible_pos_iff hq hf).mpr hnum
-      omega
-    · intro hden
-      have : (adicOfIrreducible hq).ord f < 0 :=
-        (ord_adicOfIrreducible_neg_iff hq hf).mpr hden
-      omega
-  · rintro ⟨hnum, hden⟩
-    have hnpos : ¬0 < (adicOfIrreducible hq).ord f :=
-      mt (ord_adicOfIrreducible_pos_iff hq hf).mp hnum
-    have hnneg : ¬(adicOfIrreducible hq).ord f < 0 :=
-      mt (ord_adicOfIrreducible_neg_iff hq hf).mp hden
-    omega
+  simp only [← ord_adicOfIrreducible_pos_iff hq hf, ← ord_adicOfIrreducible_neg_iff hq]
+  omega
 
 /-! ### The valuation ring and residue field -/
 
 /-- A rational function is regular at the finite place `P_q` exactly when `q` does not divide
 its reduced denominator. This statement includes the zero rational function. -/
-theorem mem_integers_adicOfIrreducible_iff {q : k[X]} (hq : Irreducible q) (f : RatFunc k) :
-    f ∈ (adicOfIrreducible hq).integers ↔ ¬q ∣ f.denom := by
-  rcases eq_or_ne f 0 with rfl | hf
-  · simp only [zero_mem, RatFunc.denom_zero, true_iff]
-    exact hq.not_dvd_one
-  · rw [(adicOfIrreducible hq).mem_integers_iff_ord_nonneg, ← not_lt,
-      ord_adicOfIrreducible_neg_iff hq hf]
-
-/-- The valuation at `P_q` is at most one exactly when `q` does not divide the reduced
-denominator. This is the simp-normal form of `mem_integers_adicOfIrreducible_iff`. -/
 @[simp]
-theorem valuation_adicOfIrreducible_le_one_iff {q : k[X]} (hq : Irreducible q)
+theorem valuation_ofIrreducible_le_one_iff {q : k[X]} (hq : Irreducible q)
     (f : RatFunc k) :
     (HeightOneSpectrum.ofIrreducible hq).valuation (RatFunc k) f ≤ 1 ↔
       ¬q ∣ f.denom := by
   rw [← valuation_adicOfIrreducible hq, ← (adicOfIrreducible hq).mem_integers_iff,
-    mem_integers_adicOfIrreducible_iff hq]
+    (adicOfIrreducible hq).mem_integers_iff_ord_nonneg, ← not_lt,
+    ord_adicOfIrreducible_neg_iff hq]
 
 /-- A function regular at `P_q` has zero residue exactly when `q` divides its reduced numerator. -/
 theorem residue_adicOfIrreducible_eq_zero_iff {q : k[X]} (hq : Irreducible q)
@@ -192,14 +189,5 @@ theorem residue_adicOfIrreducible_eq_zero_iff {q : k[X]} (hq : Irreducible q)
     simp [RatFunc.num_zero]
   · rw [(adicOfIrreducible hq).residue_eq_zero_iff_ord_pos hf,
       ord_adicOfIrreducible_pos_iff hq hf]
-
-/-- An element of the valuation ring at `P_q` is a nonunit exactly when `q` divides its reduced
-numerator. This is the simp-normal form of `residue_adicOfIrreducible_eq_zero_iff`. -/
-@[simp]
-theorem not_isUnit_integers_adicOfIrreducible_iff {q : k[X]} (hq : Irreducible q)
-    (f : (adicOfIrreducible hq).integers) :
-    ¬IsUnit f ↔ q ∣ (f : RatFunc k).num := by
-  rw [← mem_nonunits_iff, ← IsLocalRing.mem_maximalIdeal,
-    ← IsLocalRing.residue_eq_zero_iff, residue_adicOfIrreducible_eq_zero_iff hq]
 
 end TauCeti.Place
