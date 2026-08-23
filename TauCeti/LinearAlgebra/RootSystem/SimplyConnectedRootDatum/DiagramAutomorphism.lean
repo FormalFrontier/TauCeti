@@ -55,11 +55,15 @@ The group of node permutations that the construction consumes is
 
 * `TauCeti.DynkinType.diagramRootPerm_simpleIndex`: the induced permutation extends `σ` along the
   Bourbaki numbering of the simple roots.
+* `TauCeti.DynkinType.image_diagramRootPerm_simplyConnectedBase_support`: the induced permutation
+  preserves the support of the pinned base.
 * `TauCeti.DynkinType.root_diagramRootPerm` and `TauCeti.DynkinType.coroot_diagramRootPerm`: every
   root and coroot has its coordinates permuted by `σ`.
 * `TauCeti.DynkinType.eq_diagramAut`: an automorphism of the pinned datum whose weight map is the
   coordinate permutation is the diagram automorphism, so the construction is the unique such
   automorphism.
+* `TauCeti.DynkinType.diagramAut_eq_one_iff`: the induced automorphism is trivial exactly when the
+  node permutation is trivial.
 * `TauCeti.DynkinType.diagramAut_pow_eq_one`: a node permutation of finite order induces an
   automorphism of the same finite order relation.
 
@@ -126,6 +130,32 @@ numbering of the simple roots. -/
     (t.simpleSupportEquiv ht i)
   rw [diagramRootPerm, rationalDiagramAut, ← coe_simpleSupportEquiv, h]
   simp
+
+/-- The induced root permutation preserves the support of the pinned simply connected base. -/
+@[simp] theorem image_diagramRootPerm_simplyConnectedBase_support
+    (hσ : σ ∈ t.diagramSymmetry) :
+    (t.simplyConnectedBase ht).support.image (diagramRootPerm ht hσ) =
+      (t.simplyConnectedBase ht).support := by
+  ext i
+  simp only [Finset.mem_image]
+  constructor
+  · rintro ⟨j, hj, rfl⟩
+    rw [mem_support_simplyConnectedBase] at hj ⊢
+    let a : Fin t.rank := ⟨j, hj⟩
+    have hja : j = t.simpleIndex ht a := by
+      apply Fin.ext
+      rw [simpleIndex_val]
+    rw [hja, diagramRootPerm_simpleIndex, simpleIndex_val]
+    exact (σ a).isLt
+  · intro hi
+    rw [mem_support_simplyConnectedBase] at hi
+    let a : Fin t.rank := ⟨i, hi⟩
+    refine ⟨t.simpleIndex ht (σ.symm a), ?_, ?_⟩
+    · rw [mem_support_simplyConnectedBase, simpleIndex_val]
+      exact (σ.symm a).isLt
+    · rw [diagramRootPerm_simpleIndex, Equiv.apply_symm_apply]
+      apply Fin.ext
+      rw [simpleIndex_val]
 
 /-! ## The coordinates are permuted by the node permutation -/
 
@@ -312,6 +342,24 @@ theorem eq_diagramAut {g : (t.simplyConnectedRootDatum ht).Aut} (hσ : σ ∈ t.
   apply LinearEquiv.toLinearMap_injective
   refine LinearMap.ext fun x => funext fun j => ?_
   simp [Equiv.Perm.one_def]
+
+/-- The diagram automorphism is trivial exactly when its node permutation is trivial. In
+particular, the construction is faithful on diagram symmetries. -/
+@[simp] theorem diagramAut_eq_one_iff (hσ : σ ∈ t.diagramSymmetry) :
+    diagramAut ht hσ = 1 ↔ σ = 1 := by
+  constructor
+  · intro h
+    apply Equiv.ext
+    intro i
+    have hindex := congrArg (fun g : (t.simplyConnectedRootDatum ht).Aut =>
+      g.indexEquiv (t.simpleIndex ht i)) h
+    simp only [diagramAut_indexEquiv, diagramRootPerm_simpleIndex,
+      RootPairing.Equiv.toHom_one, RootPairing.Hom.indexEquiv_one, Equiv.refl_apply] at hindex
+    have hval := congrArg Fin.val hindex
+    apply Fin.ext
+    simpa only [simpleIndex_val, Equiv.Perm.one_def, Equiv.refl_apply] using hval
+  · rintro rfl
+    exact diagramAut_one ht
 
 /-- The construction is multiplicative in the node permutation. -/
 @[simp] theorem diagramAut_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramSymmetry) :
