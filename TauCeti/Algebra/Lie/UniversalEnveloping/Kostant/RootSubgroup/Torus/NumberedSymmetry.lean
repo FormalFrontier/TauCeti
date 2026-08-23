@@ -80,7 +80,7 @@ theorem baseChangeInvariantRestrictUnit_mul_kostantTorusPoints
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Aˣ) :
     AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM *
         kostantTorusPoints M b wt A s =
-      kostantTorusPoints M b wt A (reindexTorusPoint σ s) *
+      kostantTorusPoints M b wt A (MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ) s) *
         AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM := by
   apply Units.ext
   apply LinearMap.ext
@@ -102,7 +102,7 @@ theorem baseChangeInvariantRestrictUnit_conj_kostantTorusPoints
     AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM *
           kostantTorusPoints M b wt A s *
         (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM)⁻¹ =
-      kostantTorusPoints M b wt A (reindexTorusPoint σ s) := by
+      kostantTorusPoints M b wt A (MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ) s) := by
   rw [baseChangeInvariantRestrictUnit_mul_kostantTorusPoints M b wt θ hθM τ σ hθb hwt s,
     mul_assoc, mul_inv_cancel, mul_one]
 
@@ -127,16 +127,17 @@ theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
   ext g
   constructor
   · rintro ⟨_, ⟨s, rfl⟩, rfl⟩
-    refine ⟨reindexTorusPoint σ s, ?_⟩
+    refine ⟨MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ) s, ?_⟩
     simpa only [MulEquiv.coe_toMonoidHom, MulAut.conj_apply] using
       (baseChangeInvariantRestrictUnit_conj_kostantTorusPoints M b wt θ hθM τ σ hθb hwt s).symm
   · rintro ⟨s, rfl⟩
-    let t := (reindexTorusPoint (R := A) σ).symm s
+    let e := MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ)
+    let t := e.symm s
     refine ⟨kostantTorusPoints M b wt A t, ⟨t, rfl⟩, ?_⟩
     rw [MulEquiv.coe_toMonoidHom, MulAut.conj_apply,
       baseChangeInvariantRestrictUnit_conj_kostantTorusPoints M b wt θ hθM τ σ hθb hwt t]
     exact congrArg (kostantTorusPoints M b wt A)
-      ((reindexTorusPoint (R := A) σ).apply_symm_apply s)
+      (e.apply_symm_apply s)
 
 end Subgroup
 
