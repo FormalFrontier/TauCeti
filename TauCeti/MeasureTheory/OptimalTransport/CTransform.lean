@@ -62,9 +62,10 @@ integrals of a dual pair meaningful.
   sections is upper semicontinuous;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
-* `TauCeti.contactSet_subset_contactSet_cTransform` — the improvement step only enlarges the
-  contact set, and `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a
-  potential agrees with its double transform at every point of its `c`-superdifferential.
+* `TauCeti.cTransform_improves` — sequentially transforming a feasible pair gives a dominating
+  feasible pair with a larger contact set, and
+  `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a potential agrees with its
+  double transform at every point of its `c`-superdifferential.
 
 This is the finite-real algebraic slice of Layer 2, item 2 of the optimal-transport roadmap.
 
@@ -433,16 +434,32 @@ theorem cTransformSymm_eq_of_mem_contactSet (hfeas : ∀ x y, φ x + ψ y ≤ (c
   exact cTransform_eq_of_mem_contactSet (c := fun p : Y × X => c (p.2, p.1))
     (fun y x => by rw [add_comm]; exact hfeas x y) (mk_mem_contactSet_transpose_iff.2 hz)
 
-/-- Transforming a dual feasible pair only enlarges its contact set. This is the sense in which
-the `c`-transform *improves* a dual feasible pair: the new pair dominates the old one pointwise,
-is still dual feasible, and still touches the cost wherever the old one did. -/
+/-- Replacing first the target potential by the transform of the source and then the source by
+the symmetric transform of that new target only enlarges the contact set. -/
 theorem contactSet_subset_contactSet_cTransform
     (hfeas : ∀ x y, φ x + ψ y ≤ (c (x, y) : EReal)) :
-    contactSet c φ ψ ⊆ contactSet c (cTransformSymm c ψ) (cTransform c φ) := by
+    contactSet c φ ψ ⊆
+      contactSet c (cTransformSymm c (cTransform c φ)) (cTransform c φ) := by
   rintro ⟨x, y⟩ hz
-  rw [mk_mem_contactSet_iff, cTransformSymm_eq_of_mem_contactSet hfeas hz,
-    cTransform_eq_of_mem_contactSet hfeas hz]
+  have htarget := cTransform_eq_of_mem_contactSet hfeas hz
+  have hz' : (x, y) ∈ contactSet c φ (cTransform c φ) := by
+    rw [mk_mem_contactSet_iff, htarget]
+    exact hz
+  rw [mk_mem_contactSet_iff,
+    cTransformSymm_eq_of_mem_contactSet (fun x y => add_cTransform_le c φ x y) hz', htarget]
   exact hz
+
+/-- Sequentially `c`-transforming a dual feasible pair improves it: both new potentials dominate
+the old ones, the new pair is dual feasible, and its contact set contains the old contact set. -/
+theorem cTransform_improves (hfeas : ∀ x y, φ x + ψ y ≤ (c (x, y) : EReal)) :
+    φ ≤ cTransformSymm c (cTransform c φ) ∧
+      ψ ≤ cTransform c φ ∧
+      (∀ x y, cTransformSymm c (cTransform c φ) x + cTransform c φ y ≤
+        (c (x, y) : EReal)) ∧
+      contactSet c φ ψ ⊆
+        contactSet c (cTransformSymm c (cTransform c φ)) (cTransform c φ) :=
+  ⟨le_cTransformSymm_cTransform c φ, le_cTransform_iff.2 hfeas,
+    cTransformSymm_add_le c (cTransform c φ), contactSet_subset_contactSet_cTransform hfeas⟩
 
 /-- The contact set of a potential against its own `c`-transform is the largest one available:
 every dual feasible pair with the same source potential has a smaller contact set. -/
