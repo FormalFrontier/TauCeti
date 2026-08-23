@@ -8,7 +8,7 @@ module
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Basic
 public import Mathlib.RingTheory.UniqueFactorizationDomain.Finite
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Basic
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.NormCoeff
 
 /-!
 # Ideal convolution of ideal arithmetic functions
@@ -18,6 +18,8 @@ of a number field `K` sums over the factorizations `B * C = A` of a nonzero idea
 constructs that index set, defines the convolution, and proves that it makes
 `TauCeti.IdealArithmeticFunction K` a commutative monoid with identity
 `TauCeti.IdealArithmeticFunction.delta`, bilinear over the pointwise additive structure.
+It also transports this operation through `TauCeti.normCoeff` to Mathlib's Dirichlet convolution
+on `ArithmeticFunction ℂ`.
 
 ## Main definitions
 
@@ -38,6 +40,9 @@ constructs that index set, defines the convolution, and proves that it makes
   `TauCeti.IdealArithmeticFunction.add_convolution`: bilinearity over pointwise addition.
 * `TauCeti.IdealArithmeticFunction.convolution_one_one_ne_mul`: ideal convolution is not the
   pointwise product.
+* `TauCeti.normCoeff_delta`, `TauCeti.normCoeff_convolution`, and
+  `TauCeti.normCoeff_convolutionPow`: regrouping by absolute norm transports the convolution
+  identity, convolution, and convolution powers to Mathlib arithmetic functions.
 
 ## Implementation notes
 
@@ -374,5 +379,58 @@ theorem convolution_one_one_ne_mul :
   exact absurd (by exact_mod_cast hcard) (Ideal.one_lt_card_divisorsAntidiagonal hAne).ne'
 
 end IdealArithmeticFunction
+
+/-! ## Compatibility with Dirichlet convolution -/
+
+variable (K : Type*) [Field K] [NumberField K]
+
+/-- Regrouping sends the identity for ideal convolution to the identity for Mathlib's Dirichlet
+convolution. -/
+@[simp]
+theorem normCoeff_delta : normCoeff K IdealArithmeticFunction.delta = 1 := by
+  classical
+  ext n
+  by_cases hn : n = 1
+  · subst n
+    rw [normCoeff_apply_one, IdealArithmeticFunction.delta_one]
+    simp
+  · simp only [normCoeff_eq_sum_normFiber, ArithmeticFunction.one_apply, hn]
+    apply Finset.sum_eq_zero
+    intro I hI
+    apply IdealArithmeticFunction.delta_of_ne_one
+    intro hI_one
+    subst I
+    have hnorm := (mem_normFiber K).mp hI
+    exact hn (by simpa using hnorm.symm)
+
+/-- Regrouping by absolute norm transports ideal convolution to Mathlib's Dirichlet convolution
+of arithmetic functions. -/
+@[simp]
+theorem normCoeff_convolution (f g : IdealArithmeticFunction K) :
+    normCoeff K (f.convolution g) = normCoeff K f * normCoeff K g := by
+  ext n
+  rcases n with _ | n
+  · simp
+  simp only [normCoeff_eq_sum_normFiber, IdealArithmeticFunction.convolution_apply,
+    ArithmeticFunction.mul_apply, Finset.sum_mul_sum, Finset.sum_sigma']
+  -- Reindex `(A, (B, C))` by `((N B, N C), (B, C))`, with inverse
+  -- `(d, (B, C)) ↦ (B * C, (B, C))`; `map_mul` makes both maps preserve the norm fibre.
+  refine Finset.sum_nbij'
+    (fun ⟨A, p⟩ ↦
+      ⟨(Ideal.absNorm (p.1 : Ideal (𝓞 K)), Ideal.absNorm (p.2 : Ideal (𝓞 K))),
+        ⟨p.1, p.2⟩⟩)
+    (fun ⟨_d, ⟨B, C⟩⟩ ↦ ⟨B * C, (B, C)⟩) ?_ ?_ ?_ ?_ ?_ <;>
+    simp only [Finset.mem_sigma, mem_normFiber, Ideal.mem_divisorsAntidiagonal,
+      Nat.mem_divisorsAntidiagonal] <;>
+    aesop (add simp [map_mul])
+
+/-- Regrouping transports iterated ideal convolution to powers under Mathlib's Dirichlet
+convolution. -/
+theorem normCoeff_convolutionPow (f : IdealArithmeticFunction K) (n : ℕ) :
+    normCoeff K (f.convolutionPow n) = normCoeff K f ^ n := by
+  induction n with
+  | zero => simp
+  | succ n ih => rw [IdealArithmeticFunction.convolutionPow_succ, normCoeff_convolution, ih,
+      pow_succ]
 
 end TauCeti

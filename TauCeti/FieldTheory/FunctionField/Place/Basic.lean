@@ -276,6 +276,13 @@ theorem mem_maximalIdeal_iff_valuation_lt_one {f : P.integers} :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ P.valuation (f : F) < 1 :=
   Valuation.mem_maximalIdeal_iff (v := P.valuation)
 
+/-- The elements of positive order are exactly those of valuation less than one: the maximal
+ideal of `𝒪_P`, read at the level of `F`. -/
+theorem valuation_lt_one_iff_ord_pos {f : F} (hf : f ≠ 0) :
+    P.valuation f < 1 ↔ 0 < P.ord f := by
+  rw [P.valuation_eq_exp_neg_ord hf, ← WithZero.exp_zero, WithZero.exp_lt_exp]
+  omega
+
 theorem mem_maximalIdeal_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ 0 < P.ord (f : F) :=
   Valuation.mem_maximalIdeal_iff_ord_pos P.valuation hf
@@ -291,6 +298,12 @@ Theorem 1.1.13. -/
 theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : P = Q :=
   ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
+
+@[simp]
+theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
+  refine ⟨eq_of_isEquiv, ?_⟩
+  rintro rfl
+  exact Valuation.IsEquiv.refl
 
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
