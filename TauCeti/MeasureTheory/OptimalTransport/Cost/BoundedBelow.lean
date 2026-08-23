@@ -104,7 +104,11 @@ def ofNonneg (hc : ∀ z, 0 ≤ c z) (μ : Measure X) (ν : Measure Y) :
 
 end IntegrableSplitLowerBound
 
-/-- The signed cost of a coupling, normalized using an integrable split lower bound. -/
+/-- The signed cost of a coupling, normalized using an integrable split lower bound.
+
+The coupling witness is part of the domain because the fixed marginal correction terms reconstruct
+the plan's cost only when `π` has marginals `μ` and `ν`; for an arbitrary measure, this expression
+can depend on the chosen lower bound. -/
 def planCostBddBelow (π : Measure (X × Y)) (_hπ : IsCoupling π μ ν)
     (h : IntegrableSplitLowerBound c μ ν) : EReal :=
   ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
