@@ -38,7 +38,7 @@ makes the binomial-tail formula `(binomial n p).real {k | m ≤ k} = I_p(m, n - 
 * `TauCeti.regularizedIncompleteBeta_reflect` — the reflection formula
   `I_x(a, b) = 1 - I_{1-x}(b, a)`;
 * `TauCeti.regularizedIncompleteBeta_add_one_left` — the unit-step recurrence
-  `I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))`.
+  `I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))`, for `0 ≤ x ≤ 1`.
 
 Four auxiliary results about Euler's beta function itself are proved on the way and are stated for
 reuse: `TauCeti.intervalIntegrable_rpow_mul_one_sub_rpow` and
@@ -356,7 +356,11 @@ theorem regularizedIncompleteBeta_reflect (ha : 0 < a) (hb : 0 < b) (x : ℝ) :
 
 /-- The unit-step recurrence in the first parameter,
 `I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))`, in the form of
-[DLMF 8.17.20](https://dlmf.nist.gov/8.17.E20). -/
+[DLMF 8.17.20](https://dlmf.nist.gov/8.17.E20).
+
+The argument is restricted to `0 ≤ x ≤ 1`: outside `[0, 1]` the clamping freezes both regularized
+values at `0` or at `1` while the subtracted term keeps varying with `x`, so the displayed formula
+fails there. -/
 theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
     (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
     regularizedIncompleteBeta (a + 1) b x = regularizedIncompleteBeta a b x -
