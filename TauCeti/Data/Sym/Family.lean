@@ -5,18 +5,17 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.BigOperators
 public import TauCeti.Data.Sym.Disjoint
 
 /-!
 # Splitting an unordered tuple along a pairwise disjoint family of sets
 
-`TauCeti.Sym.appendSubtype` splits an unordered tuple along *two* disjoint sets. This file does the
-same along a finite *family* `U : ι → Set α` of pairwise disjoint sets: a family of unordered
-tuples, the `i`-th of them an `m i`-tuple of points of `U i`, concatenates into an unordered
-`n`-tuple of points of `α` as soon as `∑ i, m i = n`, and the parts are recovered from the whole by
-filtering on membership in `U i`.
+`TauCeti.Sym.appendSubtype` concatenates unordered tuples drawn from *two* disjoint sets. This file
+does the same along a finite *family* `U : ι → Set α` of pairwise disjoint sets: a family of
+unordered tuples, the `i`-th of them an `m i`-tuple of points of `U i`, concatenates into an
+unordered `n`-tuple of points of `α` as soon as `∑ i, m i = n`, and the parts are recovered from the
+whole by filtering on membership in `U i`.
 
 Nothing here is topological. `TauCeti/Topology/Sym/Family.lean` upgrades the concatenation to an
 open embedding when the `U i` are open, and shows that in a Hausdorff space every unordered tuple

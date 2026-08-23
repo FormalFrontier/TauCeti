@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Geometry.Manifold.ChartedSpace
 public import TauCeti.Analysis.Polynomial.SymmetricPower
-public import TauCeti.Topology.PiCurry
 public import TauCeti.Topology.Sym.Family
 
 /-!
@@ -94,7 +93,10 @@ theorem exists_openPartialHomeomorph_sym (s : Sym α n) :
   have hΨ := (piFinSumHomeomorph K hm).isOpenEmbedding.comp hΘ
   have : Nonempty (∀ i, Sym ↥(V i) (m i)) := ⟨hmem.choose⟩
   refine ⟨(hΦ.toOpenPartialHomeomorph _).symm.trans (hΨ.toOpenPartialHomeomorph _), ?_⟩
-  simpa using hmem
+  rw [OpenPartialHomeomorph.trans_source, OpenPartialHomeomorph.symm_source,
+    IsOpenEmbedding.toOpenPartialHomeomorph_target,
+    IsOpenEmbedding.toOpenPartialHomeomorph_source, Set.preimage_univ, Set.inter_univ]
+  exact hmem
 
 /-- **The symmetric power of a Hausdorff space charted by `K` is charted by `Fin n → K`.** For a
 Riemann surface `Σ` and `K = ℂ` this says that `Sym^g(Σ)` is a topological `2g`-manifold. -/

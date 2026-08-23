@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Separation.Hausdorff
 public import TauCeti.Data.Sym.Family
 public import TauCeti.Topology.PiCurry
 public import TauCeti.Topology.Sym.Basic
