@@ -16,6 +16,9 @@ product. This file packages that form as `InnerProductSpace.Core` data. It does 
 instance, since different choices of polarization on the same Hodge structure can give different
 inner products.
 
+The construction and sign convention follow Voisin, *Hodge Theory and Complex Algebraic Geometry I*,
+§7.1.2, and Peters--Steenbrink, *Mixed Hodge Structures*, §2.
+
 ## Main declarations
 
 * `TauCeti.Hodge.Polarization.hodgeInnerProductCore`: the Hodge form packaged as an
