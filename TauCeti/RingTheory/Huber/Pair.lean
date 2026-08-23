@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RingTheory.Huber.Basic
+public import TauCeti.Topology.Algebra.Ring.Subring
 
 /-!
 # Huber pairs
@@ -211,9 +212,7 @@ theorem isRingOfIntegralElements_integralClosure [NonarchimedeanRing A] {R : Sub
     IsRingOfIntegralElements (integralClosure R A).toSubring where
   -- `R` is open, and it sits inside its own integral closure via `algebraMap`, so the closure
   -- contains an open additive subgroup.
-  isOpen := AddSubgroup.isOpen_mono (H₁ := R.toAddSubgroup)
-      (H₂ := (integralClosure R A).toSubring.toAddSubgroup)
-      (fun x hx ↦ algebraMap_mem (integralClosure R A) ⟨x, hx⟩) hopen
+  isOpen := isOpen_integralClosure_toSubring hopen
   isIntegrallyClosedIn := inferInstance
   le_powerBoundedSubring := Subring.integralClosure_subring_le_iff.mpr hpb
 

@@ -51,7 +51,7 @@ Continuity of the trace is not automatic from continuity of `π` alone: it is co
 functional `T ↦ trace T` on `V →L[𝕜] V`, which holds because that space is finite-dimensional over
 the complete field `𝕜`. That functional is `TauCeti.traceCLM` of
 `TauCeti/Analysis/Normed/Module/Trace.lean`, shared with
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean`, which uses it to average a trace.
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean`, which uses it to average a trace.
 
 Only the trace is at stake in the sections without an inner product, so they ask no more of the
 scalars than that functional does: `𝕜` is a complete nontrivially normed field there, and becomes

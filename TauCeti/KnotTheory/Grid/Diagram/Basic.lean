@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+public import Mathlib.Algebra.Ring.Defs
 public import Mathlib.Data.Fin.Basic
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Data.Finset.Prod
@@ -136,6 +138,29 @@ theorem card_pointSet (x : GridState n) : x.pointSet.card = n := by
   · rw [Finset.card_univ, Fintype.card_fin]
   · intro a b hab
     exact Prod.mk.inj hab |>.1
+
+/-- A sum over the occupied squares of a grid state is a sum over the columns. -/
+theorem sum_pointSet {M : Type*} [AddCommMonoid M] (x : GridState n)
+    (f : Fin n × Fin n → M) : ∑ p ∈ x.pointSet, f p = ∑ c : Fin n, f (c, x c) := by
+  rw [pointSet, Finset.sum_image]
+  intro c _ c' _ hc
+  exact (Prod.ext_iff.mp hc).1
+
+/-- A grid state meets a set of columns in as many occupied squares as there are columns. -/
+theorem sum_ite_mem_columns {R : Type*} [Semiring R] (x : GridState n)
+    (C : Finset (Fin n)) :
+    ∑ p ∈ x.pointSet, (if p.1 ∈ C then (1 : R) else 0) = (C.card : R) := by
+  classical
+  rw [sum_pointSet]
+  simp
+
+/-- A grid state meets a set of rows in as many occupied squares as there are rows. -/
+theorem sum_ite_mem_rows {R : Type*} [Semiring R] (x : GridState n)
+    (D : Finset (Fin n)) :
+    ∑ p ∈ x.pointSet, (if p.2 ∈ D then (1 : R) else 0) = (D.card : R) := by
+  classical
+  rw [sum_pointSet, Equiv.sum_comp x.toPerm fun r => if r ∈ D then (1 : R) else 0]
+  simp
 
 /-- A grid state has a unique occupied row in each column. -/
 theorem existsUnique_row_of_column (x : GridState n) (c : Fin n) :
