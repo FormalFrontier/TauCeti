@@ -110,11 +110,11 @@ theorem conjF_conjF (p : ℤ) : (mhs.conjF p).map (latticeConj hℂ) = mhs.F p :
   exact (mhs.mem_conjF_iff p y).1 hy
 
 /-- The conjugate Hodge filtration is exhaustive wherever the Hodge filtration is. -/
-theorem conjF_of_eq_top {p : ℤ} (hp : mhs.F p = ⊤) : mhs.conjF p = ⊤ :=
+theorem conjF_eq_top_of_F_eq_top {p : ℤ} (hp : mhs.F p = ⊤) : mhs.conjF p = ⊤ :=
   Submodule.eq_top_iff'.2 fun x ↦ (mhs.mem_conjF_iff p x).2 (hp ▸ Submodule.mem_top)
 
 /-- The conjugate Hodge filtration is separated wherever the Hodge filtration is. -/
-theorem conjF_of_eq_bot {p : ℤ} (hp : mhs.F p = ⊥) : mhs.conjF p = ⊥ := by
+theorem conjF_eq_bot_of_F_eq_bot {p : ℤ} (hp : mhs.F p = ⊥) : mhs.conjF p = ⊥ := by
   rw [conjF_def, hp, Submodule.map_bot]
 
 /-! ### The bigrading -/
@@ -143,6 +143,7 @@ noncomputable def deligneSplittingFamily (pq : ℤ × ℤ) : Submodule ℂ Vℂ 
   mhs.deligneSplitting pq.1 pq.2
 
 /-- The bidegree-indexed family is Deligne's bigrading. -/
+@[simp]
 theorem deligneSplittingFamily_apply (pq : ℤ × ℤ) :
     mhs.deligneSplittingFamily pq = mhs.deligneSplitting pq.1 pq.2 :=
   (rfl)
@@ -250,38 +251,42 @@ theorem ofPure_conjF (p : ℤ) :
 
 /-- The weight filtration of a pure Hodge structure of weight `n`, viewed as a mixed one, is the
 whole space from degree `n` on. -/
-theorem ofPure_WC_of_le {k : ℤ} (hk : n ≤ k) :
+@[simp]
+theorem ofPure_WC_eq_top_of_le {k : ℤ} (hk : n ≤ k) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC k = ⊤ := by
   rw [WC_def, MixedHodgeStructure.ofPure_WQ, concentratedWeightFiltration_of_le hk,
     rationalToComplexSubmodule_top]
 
 /-- The weight filtration of a pure Hodge structure of weight `n`, viewed as a mixed one, vanishes
 below degree `n`. -/
-theorem ofPure_WC_of_lt {k : ℤ} (hk : k < n) :
+@[simp]
+theorem ofPure_WC_eq_bot_of_lt {k : ℤ} (hk : k < n) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC k = ⊥ := by
   rw [WC_def, MixedHodgeStructure.ofPure_WQ, concentratedWeightFiltration_of_lt hk,
     rationalToComplexSubmodule_bot]
 
 /-- **On the antidiagonal the Deligne bigrading of a pure Hodge structure is its Hodge
 decomposition:** for `p + q = n` the piece `I^{p,q}` is the Hodge component `H^{p,q}`. -/
+@[simp]
 theorem deligneSplitting_ofPure_of_add_eq {p q : ℤ} (hpq : p + q = n) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplitting p q = hs.piece p := by
   obtain rfl : q = n - p := by omega
   have hbot : ∀ j : ℕ, (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).conjF
       (n - p - (j : ℤ) - 1) ⊓
       (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC (p + (n - p) - (j : ℤ) - 2) = ⊥ :=
-    fun j ↦ by rw [ofPure_WC_of_lt hℚ hℂ hs (by omega), inf_bot_eq]
-  rw [deligneSplitting_def, ofPure_WC_of_le hℚ hℂ hs (by omega)]
+    fun j ↦ by rw [ofPure_WC_eq_bot_of_lt hℚ hℂ hs (by omega), inf_bot_eq]
+  rw [deligneSplitting_def, ofPure_WC_eq_top_of_le hℚ hℂ hs (by omega)]
   simp only [hbot, iSup_bot, sup_bot_eq, inf_top_eq]
   rw [MixedHodgeStructure.ofPure_F, ofPure_conjF, HodgeStructureOn.piece_def]
 
 /-- **Off the antidiagonal the Deligne bigrading of a pure Hodge structure vanishes.** Below it
 the weight filtration is zero; above it the defining intersection is cut out by two complementary
 filtration steps. -/
+@[simp]
 theorem deligneSplitting_ofPure_of_add_ne {p q : ℤ} (hpq : p + q ≠ n) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplitting p q = ⊥ := by
   rcases lt_or_gt_of_ne hpq with hlt | hgt
-  · exact deligneSplitting_eq_bot_of_WC_eq_bot _ (ofPure_WC_of_lt hℚ hℂ hs hlt) le_rfl
+  · exact deligneSplitting_eq_bot_of_WC_eq_bot _ (ofPure_WC_eq_bot_of_lt hℚ hℂ hs hlt) le_rfl
   · refine le_bot_iff.1 ?_
     have hsecond :
         ((MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).conjF q ⊓
@@ -292,7 +297,7 @@ theorem deligneSplitting_ofPure_of_add_ne {p q : ℤ} (hpq : p + q ≠ n) :
       refine sup_le (inf_le_left.trans (conjF_antitone _ (by omega))) (iSup_le fun j ↦ ?_)
       rcases le_or_gt n (p + q - (j : ℤ) - 2) with h | h
       · exact inf_le_left.trans (conjF_antitone _ (by omega))
-      · rw [ofPure_WC_of_lt hℚ hℂ hs h, inf_bot_eq]
+      · rw [ofPure_WC_eq_bot_of_lt hℚ hℂ hs h, inf_bot_eq]
         exact bot_le
     rw [deligneSplitting_def]
     refine (inf_le_inf inf_le_left hsecond).trans ?_
