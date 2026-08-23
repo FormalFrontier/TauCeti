@@ -68,7 +68,8 @@ this lives here rather than in the stability file that consumes it.
 * F. Santambrogio, *Optimal Transport for Applied Mathematicians*, Springer 2015, Chapter 1 — the
   same compactness argument, run through Prokhorov's theorem.
 
-This is Layer 1, items 2 and 3 of the optimal-transport roadmap.
+This is Layer 1, items 2 and 3 of the optimal-transport roadmap, with the moving-marginal
+compactness used by item 6.
 -/
 
 public section
@@ -133,6 +134,13 @@ theorem isTightMeasureSet_setOfPred_isCoupling (hμ : IsTightMeasureSet {μ})
     (hν : IsTightMeasureSet {ν}) :
     IsTightMeasureSet {π : Measure (X × Y) | IsCoupling π μ ν} :=
   (isTightMeasureSet_setOfPred_exists_isCoupling hμ hν).subset fun _ hπ ↦ ⟨μ, rfl, ν, rfl, hπ⟩
+
+/-- A family contained in a tight set is tight on some member of any filter. This converts the
+usual range-tightness hypothesis into the tail-tightness form used for moving marginals. -/
+theorem exists_isTightMeasureSet_image {ι : Type*} {l : Filter ι} {f : ι → Measure X}
+    {S : Set (Measure X)} (hS : IsTightMeasureSet S) (hf : ∀ i, f i ∈ S) :
+    ∃ s ∈ l, IsTightMeasureSet (f '' s) :=
+  ⟨univ, univ_mem, hS.subset (by rintro - ⟨i, -, rfl⟩; exact hf i)⟩
 
 end Tight
 
@@ -252,14 +260,9 @@ theorem exists_isCoupling_tendsto_of_isTightMeasureSet [T2Space X] [T2Space Y]
     exact subset_closure hiS
   obtain ⟨π, -, hπ⟩ := hcompact.exists_mapClusterPt_of_frequently
     hmem.frequently
-  have hne : (l ⊓ comap πs (𝓝 π)).NeBot := by
-    rw [neBot_inf_comap_iff_map, inf_comm]
-    exact hπ.clusterPt.neBot
-  have := hne
-  have hconv : Tendsto πs (l ⊓ comap πs (𝓝 π)) (𝓝 π) :=
-    tendsto_comap.mono_left inf_le_right
-  exact ⟨_, π, hne, inf_le_left, hconv, isCoupling_of_tendsto
-    (hπs.filter_mono inf_le_left) hconv (hμ.mono_left inf_le_left) (hν.mono_left inf_le_left)⟩
+  obtain ⟨U, hUle, hUtend⟩ := mapClusterPt_iff_ultrafilter.mp hπ
+  exact ⟨U, π, U.neBot, hUle, hUtend, isCoupling_of_tendsto
+    (hπs.filter_mono hUle) hUtend (hμ.mono_left hUle) (hν.mono_left hUle)⟩
 
 end MovingMarginals
 

@@ -60,11 +60,10 @@ replaced by passing to a finer filter.
 * `TauCeti.hasRecoveryPlans_of_limsup_le` — the recovery hypothesis for a family with fixed
   marginals;
 * `TauCeti.tendsto_transportCost` — convergence of the optimal values, with
-  `TauCeti.tendsto_transportCost_of_const_marginals` as a directly checkable instance;
+  `TauCeti.tendsto_transportCost_of_const_marginals` as a topology-free fixed-marginal criterion;
 * `TauCeti.isOptimalCoupling_of_tendsto` and `TauCeti.exists_isOptimalCoupling_tendsto` —
   subsequential convergence of optimal plans to an optimal plan of the limiting problem;
-* `TauCeti.isTightMeasureSet_range_of_tendsto`,
-  `TauCeti.tendsto_transportCost_of_polishSpace`, and
+* `TauCeti.tendsto_transportCost_of_polishSpace` and
   `TauCeti.exists_isOptimalCoupling_tendsto_of_polishSpace` — the Polish sequential forms, where
   weak convergence supplies tightness and the stability theorems need no tightness hypothesis;
 * `TauCeti.transportCost_le_liminf_transportCost_of_lowerSemicontinuous` — the fixed-cost
@@ -152,14 +151,13 @@ end Hypotheses
 section LowerSemicontinuous
 
 /-! Lower semicontinuity of the limiting cost, together with domination by the family, is the
-standard source of `TauCeti.IsCostLiminfStable`. The two factors are metrizable Borel spaces, one
-of them second countable: the hypotheses under which the product carries a compatible pseudometric
-and the weak-topology lower semicontinuity of
-`TauCeti.lowerSemicontinuous_lintegral_probabilityMeasure` applies to it. -/
+standard source of `TauCeti.IsCostLiminfStable`. Only a compatible pseudometric and measurable
+opens on the product are needed for the weak-topology lower semicontinuity of
+`TauCeti.lowerSemicontinuous_lintegral_probabilityMeasure`. -/
 
-variable {ι X Y : Type*} [TopologicalSpace X] [TopologicalSpace.MetrizableSpace X]
-  [MeasurableSpace X] [BorelSpace X] [TopologicalSpace Y] [TopologicalSpace.MetrizableSpace Y]
-  [MeasurableSpace Y] [BorelSpace Y] [SecondCountableTopologyEither X Y] {l : Filter ι}
+variable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [TopologicalSpace Y]
+  [MeasurableSpace Y] [OpensMeasurableSpace (X × Y)]
+  [TopologicalSpace.PseudoMetrizableSpace (X × Y)] {l : Filter ι}
   {μs : ι → ProbabilityMeasure X} {νs : ι → ProbabilityMeasure Y} {cs : ι → X × Y → ℝ≥0∞}
   {c : X × Y → ℝ≥0∞}
 
@@ -169,8 +167,7 @@ domination `c ≤ cs i` upgrades it to the moving costs. The feasibility of the 
 the bound holds for every weakly convergent family. -/
 theorem isCostLiminfStable_of_le (hc : LowerSemicontinuous c) (hcs : ∀ᶠ i in l, c ≤ cs i) :
     IsCostLiminfStable l cs μs νs c := by
-  -- The lower semicontinuity theorem asks the underlying space for a pseudometric; metrizability
-  -- of the two factors supplies one on the product.
+  -- The lower semicontinuity theorem is phrased for a chosen compatible pseudometric.
   let : PseudoMetricSpace (X × Y) := TopologicalSpace.pseudoMetrizableSpacePseudoMetric (X × Y)
   refine ⟨fun {l'} hne hle {πs} {π} _ hπ ↦ ?_⟩
   have := hne
@@ -231,11 +228,8 @@ theorem transportCost_le_liminf_transportCost (hcs : IsCostLiminfStable l cs μs
     eventually_inf_principal.mpr (Eventually.of_forall fun _ hi ↦ hi)
   obtain ⟨s, hs, hμs⟩ := hμt
   obtain ⟨t, ht, hνt⟩ := hνt
-  have hs' : ∀ᶠ i in l, i ∈ s := hs
-  have ht' : ∀ᶠ i in l, i ∈ t := ht
   obtain ⟨l'', π, hne'', hle'', hconv, hπcoup⟩ := exists_isCoupling_tendsto_of_isTightMeasureSet
-    (l := lb) ⟨s, hs'.filter_mono inf_le_left, hμs⟩
-    ⟨t, ht'.filter_mono inf_le_left, hνt⟩
+    (l := lb) ⟨s, mem_inf_of_left hs, hμs⟩ ⟨t, mem_inf_of_left ht, hνt⟩
     (hμ.mono_left inf_le_left) (hν.mono_left inf_le_left) (Eventually.of_forall hπs)
   have := hne''
   have hbd : liminf (fun i ↦ ∫⁻ z, cs i z ∂(πs i).toMeasure) l'' ≤ a :=
@@ -283,6 +277,27 @@ theorem hasRecoveryPlans_of_limsup_le (hμs : ∀ᶠ i in l, μs i = μ) (hνs :
 
 end Upper
 
+section FixedMarginals
+
+variable {ι X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y] {l : Filter ι}
+  {cs : ι → X × Y → ℝ≥0∞} {c : X × Y → ℝ≥0∞} {μ : Measure X} {ν : Measure Y}
+
+/-- **Convergence of transport costs with fixed marginals.** If the moving costs eventually
+dominate the limiting cost, this supplies the `liminf` bound by monotonicity. A pointwise `limsup`
+bound on the integral along every coupling supplies the reverse bound. No topology, tightness, or
+lower semicontinuity is needed. -/
+theorem tendsto_transportCost_of_const_marginals (hle : ∀ᶠ i in l, c ≤ cs i)
+    (hlim : ∀ π, IsCoupling π μ ν →
+      limsup (fun i ↦ ∫⁻ z, cs i z ∂π) l ≤ ∫⁻ z, c z ∂π) :
+    Tendsto (fun i ↦ transportCost (cs i) μ ν) l (𝓝 (transportCost c μ ν)) := by
+  refine tendsto_of_le_liminf_of_limsup_le
+    (le_liminf_of_le (by isBoundedDefault) (hle.mono fun _ hi ↦ transportCost_mono hi)) ?_
+  exact le_transportCost fun π hπ ↦
+    (limsup_le_limsup (Eventually.of_forall fun i ↦ transportCost_le_lintegral hπ _)).trans
+      (hlim π hπ)
+
+end FixedMarginals
+
 section Stability
 
 /-! Both bounds together. -/
@@ -310,9 +325,11 @@ theorem tendsto_transportCost (hcs : IsCostLiminfStable l cs μs νs c)
 omit [T2Space X] [T2Space Y] in
 /-- **A weak limit of optimal plans is optimal.** If the plans `πs i` are eventually optimal for the
 moving problems along a filter `l'` refining `l` and converge weakly to `π`, then `π` is an optimal
-plan of the limiting problem. -/
+plan of the limiting problem, provided the moving optimal values have the required `limsup` upper
+bound. -/
 theorem isOptimalCoupling_of_tendsto (hcs : IsCostLiminfStable l cs μs νs c)
-    (hrec : HasRecoveryPlans l cs μs νs c μ ν) (hμ : Tendsto μs l (𝓝 μ))
+    (hval : limsup (fun i ↦ transportCost (cs i) (μs i).toMeasure (νs i).toMeasure) l ≤
+      transportCost c μ.toMeasure ν.toMeasure) (hμ : Tendsto μs l (𝓝 μ))
     (hν : Tendsto νs l (𝓝 ν)) {l' : Filter ι} (hne : l'.NeBot) (hl' : l' ≤ l)
     {πs : ι → ProbabilityMeasure (X × Y)} {π : ProbabilityMeasure (X × Y)}
     (hopt : ∀ᶠ i in l',
@@ -329,13 +346,15 @@ theorem isOptimalCoupling_of_tendsto (hcs : IsCostLiminfStable l cs μs νs c)
     rw [liminf_congr (hopt.mono fun i hi ↦ hi.lintegral_eq)]
     exact le_trans liminf_le_limsup (limsup_le_limsup_of_le hl')
   refine ⟨hπcoup, le_antisymm (((hcs.le_liminf hne hl' hfeas hπ).trans hcost).trans
-    (limsup_transportCost_le_transportCost hrec)) (transportCost_le_lintegral hπcoup c)⟩
+    hval) (transportCost_le_lintegral hπcoup c)⟩
 
 /-- **Subsequential convergence of optimal plans.** A family of optimal plans of the moving problems
 has a refinement along which the plans converge to an optimal plan of the limiting problem. The
-theorem `TauCeti.isOptimalCoupling_of_tendsto` says that every such weak limit is optimal. -/
+theorem `TauCeti.isOptimalCoupling_of_tendsto` says that every such weak limit is optimal under the
+explicit `limsup` upper bound on the moving optimal values. -/
 theorem exists_isOptimalCoupling_tendsto [l.NeBot] (hcs : IsCostLiminfStable l cs μs νs c)
-    (hrec : HasRecoveryPlans l cs μs νs c μ ν)
+    (hval : limsup (fun i ↦ transportCost (cs i) (μs i).toMeasure (νs i).toMeasure) l ≤
+      transportCost c μ.toMeasure ν.toMeasure)
     (hμt : ∃ s ∈ l, IsTightMeasureSet ((fun i ↦ (μs i).toMeasure) '' s))
     (hνt : ∃ s ∈ l, IsTightMeasureSet ((fun i ↦ (νs i).toMeasure) '' s))
     (hμ : Tendsto μs l (𝓝 μ)) (hν : Tendsto νs l (𝓝 ν))
@@ -349,26 +368,7 @@ theorem exists_isOptimalCoupling_tendsto [l.NeBot] (hcs : IsCostLiminfStable l c
     hμ hν (hopt.mono fun i hi ↦ hi.toIsCoupling)
   have := hne
   exact ⟨l', π, hne, hle, hconv, hconv.mapClusterPt.mono hle,
-    isOptimalCoupling_of_tendsto hcs hrec hμ hν hne hle (hopt.filter_mono hle) hconv⟩
-
-/-- **Stability for costs above a lower semicontinuous limit, with fixed marginals.** The result
-holds along an arbitrary filter as soon as the two fixed marginals form tight singleton families. -/
-theorem tendsto_transportCost_of_const_marginals [TopologicalSpace.MetrizableSpace X]
-    [TopologicalSpace.MetrizableSpace Y] (hμt : IsTightMeasureSet {μ.toMeasure})
-    (hνt : IsTightMeasureSet {ν.toMeasure}) (hc : LowerSemicontinuous c)
-    (hle : ∀ᶠ i in l, c ≤ cs i)
-    (hlim : ∀ π : ProbabilityMeasure (X × Y), IsCoupling π.toMeasure μ.toMeasure ν.toMeasure →
-      limsup (fun i ↦ ∫⁻ z, cs i z ∂π.toMeasure) l ≤ ∫⁻ z, c z ∂π.toMeasure) :
-    Tendsto (fun i ↦ transportCost (cs i) μ.toMeasure ν.toMeasure) l
-      (𝓝 (transportCost c μ.toMeasure ν.toMeasure)) := by
-  have hμtail : ∃ s ∈ l, IsTightMeasureSet ((fun _ : ι ↦ μ.toMeasure) '' s) :=
-    ⟨Set.univ, univ_mem, hμt.subset (by rintro _ ⟨i, -, rfl⟩; exact rfl)⟩
-  have hνtail : ∃ s ∈ l, IsTightMeasureSet ((fun _ : ι ↦ ν.toMeasure) '' s) :=
-    ⟨Set.univ, univ_mem, hνt.subset (by rintro _ ⟨i, -, rfl⟩; exact rfl)⟩
-  exact tendsto_transportCost (isCostLiminfStable_of_le hc hle)
-    (hasRecoveryPlans_of_limsup_le (Eventually.of_forall fun _ ↦ rfl)
-      (Eventually.of_forall fun _ ↦ rfl) hlim)
-    hμtail hνtail tendsto_const_nhds tendsto_const_nhds
+    isOptimalCoupling_of_tendsto hcs hval hμ hν hne hle (hopt.filter_mono hle) hconv⟩
 
 end Stability
 
@@ -392,26 +392,24 @@ theorem tendsto_transportCost_of_polishSpace (hcs : IsCostLiminfStable atTop cs 
     Tendsto (fun n ↦ transportCost (cs n) (μs n).toMeasure (νs n).toMeasure) atTop
       (𝓝 (transportCost c μ.toMeasure ν.toMeasure)) :=
   tendsto_transportCost hcs hrec
-    ⟨Set.univ, univ_mem, by simpa only [Set.image_univ] using
-      isTightMeasureSet_range_of_tendsto hμ⟩
-    ⟨Set.univ, univ_mem, by simpa only [Set.image_univ] using
-      isTightMeasureSet_range_of_tendsto hν⟩ hμ hν
+    (exists_isTightMeasureSet_image (isTightMeasureSet_range_of_tendsto hμ) mem_range_self)
+    (exists_isTightMeasureSet_image (isTightMeasureSet_range_of_tendsto hν) mem_range_self) hμ hν
 
-/-- **Subsequential convergence of optimal plans on Polish spaces**, with no tightness
-hypothesis. -/
+/-- **Subsequential convergence of optimal plans on Polish spaces**, with no tightness hypothesis.
+The `limsup` upper bound on the moving optimal values is still assumed explicitly. -/
 theorem exists_isOptimalCoupling_tendsto_of_polishSpace (hcs : IsCostLiminfStable atTop cs μs νs c)
-    (hrec : HasRecoveryPlans atTop cs μs νs c μ ν) (hμ : Tendsto μs atTop (𝓝 μ))
+    (hval : limsup (fun n ↦ transportCost (cs n) (μs n).toMeasure (νs n).toMeasure) atTop ≤
+      transportCost c μ.toMeasure ν.toMeasure) (hμ : Tendsto μs atTop (𝓝 μ))
     (hν : Tendsto νs atTop (𝓝 ν)) {πs : ℕ → ProbabilityMeasure (X × Y)}
     (hopt : ∀ᶠ n in atTop,
       IsOptimalCoupling (cs n) (πs n).toMeasure (μs n).toMeasure (νs n).toMeasure) :
     ∃ (π : ProbabilityMeasure (X × Y)) (φ : ℕ → ℕ), StrictMono φ ∧
       Tendsto (πs ∘ φ) atTop (𝓝 π) ∧
         IsOptimalCoupling c π.toMeasure μ.toMeasure ν.toMeasure := by
-  obtain ⟨-, π, -, -, -, hcluster, hπ⟩ := exists_isOptimalCoupling_tendsto hcs hrec
-    ⟨Set.univ, univ_mem, by simpa only [Set.image_univ] using
-      isTightMeasureSet_range_of_tendsto hμ⟩
-    ⟨Set.univ, univ_mem, by simpa only [Set.image_univ] using
-      isTightMeasureSet_range_of_tendsto hν⟩ hμ hν hopt
+  obtain ⟨-, π, -, -, -, hcluster, hπ⟩ := exists_isOptimalCoupling_tendsto hcs hval
+    (exists_isTightMeasureSet_image (isTightMeasureSet_range_of_tendsto hμ) mem_range_self)
+    (exists_isTightMeasureSet_image (isTightMeasureSet_range_of_tendsto hν) mem_range_self)
+    hμ hν hopt
   obtain ⟨φ, hφ, hconv⟩ := hcluster.tendsto_subseq
   exact ⟨π, φ, hφ, hconv, hπ⟩
 
@@ -425,10 +423,8 @@ theorem transportCost_le_liminf_transportCost_of_lowerSemicontinuous (hc : Lower
       liminf (fun n ↦ transportCost c (μs n).toMeasure (νs n).toMeasure) atTop :=
   transportCost_le_liminf_transportCost
     (isCostLiminfStable_const (μs := μs) (νs := νs) hc)
-    ⟨Set.univ, univ_mem, by simpa only [Set.image_univ] using
-      isTightMeasureSet_range_of_tendsto hμ⟩
-    ⟨Set.univ, univ_mem, by simpa only [Set.image_univ] using
-      isTightMeasureSet_range_of_tendsto hν⟩ hμ hν
+    (exists_isTightMeasureSet_image (isTightMeasureSet_range_of_tendsto hμ) mem_range_self)
+    (exists_isTightMeasureSet_image (isTightMeasureSet_range_of_tendsto hν) mem_range_self) hμ hν
 
 end Polish
 

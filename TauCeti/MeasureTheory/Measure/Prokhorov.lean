@@ -166,7 +166,7 @@ theorem isTightMeasureSet_range_of_tendsto (hμ : Tendsto μs atTop (𝓝 μ)) :
   refine (MeasureTheory.isTightMeasureSet_of_isCompact_closure
     (S := insert μ (Set.range μs)) (by rwa [hcompact.isClosed.closure_eq])).subset ?_
   rintro - ⟨n, rfl⟩
-  exact ⟨μs n, Or.inr (mem_range_self n), rfl⟩
+  exact ⟨μs n, mem_insert_of_mem _ (mem_range_self n), rfl⟩
 
 end ProbabilityMeasure
 
