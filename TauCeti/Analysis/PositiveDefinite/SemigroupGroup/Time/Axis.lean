@@ -6,8 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
+public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Difference
 public import Mathlib.Data.NNReal.Star
 public import Mathlib.Topology.Constructions.SumProd
+import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Basic
 
 /-!
 # The time axis of semigroup-group positive-definite functions
@@ -22,6 +24,10 @@ semigroup--Bochner representation milestone in the `OneParameterSemigroups` road
 can separate the spatial Bochner slices from the remaining one-dimensional time-axis structure.
 When the spatial variable is trivial, this is the positive-definiteness statement left before the
 Bernstein/Laplace component of BCR.
+
+Reading the alternating time differences of `TauCeti.timeDifference` on the axis `v = 0` gives the
+regularity of that one-dimensional function: it is antitone and all of its iterated forward
+differences carry the sign `(-1)ⁿ`, which is complete monotonicity in the finite-difference sense.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, Milestone 2
 ("BCR semigroup--Bochner"), specifically the reduction of a positive-definite function on
@@ -39,6 +45,11 @@ This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, Milesto
 * `TauCeti.IsSemigroupGroupPD.timeAxis_normSq_le`: the time-axis Cauchy--Schwarz estimate.
 * `TauCeti.IsSemigroupGroupPD.posSemidef_timeAxis_and_continuous`: packages the
   kernel result with continuity of the zero-spatial slice.
+* `TauCeti.iteratedTimeDifference_timeAxis_re`: the time-axis value of an iterated time difference
+  of `F` is, up to the sign `(-1)ⁿ`, an iterated forward difference of `t ↦ (F (t, 0)).re`.
+* `TauCeti.IsSemigroupGroupPD.timeAxis_re_antitone` and
+  `TauCeti.IsSemigroupGroupPD.neg_one_pow_mul_fwdDiff_timeAxis_re_nonneg`: for a bounded `F` the
+  time-axis function `t ↦ (F (t, 0)).re` is antitone with alternating forward differences.
 
 ## References
 
@@ -53,6 +64,25 @@ open scoped ComplexOrder
 open scoped NNReal
 
 namespace TauCeti
+
+section Zero
+
+variable {V : Type*} [Zero V] {F : ℝ≥0 × V → ℂ}
+
+/-- The `n`-th iterated forward difference of the time-axis function `t ↦ (F (t, 0)).re`, with
+the sign `(-1)ⁿ`, is the time-axis value of the `n`-th iterated time difference of `F`. -/
+theorem iteratedTimeDifference_timeAxis_re (n : ℕ) (h t : ℝ≥0) :
+    (iteratedTimeDifference n h F (t, 0)).re
+      = (-1) ^ n * (fwdDiff h)^[n] (fun s : ℝ≥0 => (F (s, 0)).re) t := by
+  induction n generalizing t with
+  | zero => simp
+  | succ n ih =>
+      rw [iteratedTimeDifference_succ, timeDifference_apply, Function.iterate_succ_apply']
+      simp only [Complex.sub_re, fwdDiff]
+      rw [ih t, ih (t + h)]
+      ring
+
+end Zero
 
 variable {V : Type*} [AddCommGroup V] {F : ℝ≥0 × V → ℂ}
 
@@ -100,6 +130,33 @@ theorem timeAxis_normSq_le (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) :
     RCLike.normSq (F (t + u, 0))
       ≤ RCLike.re (F (t + t, 0)) * RCLike.re (F (u + u, 0)) :=
   hF.posSemidef_timeAxis.normSq_le t u
+
+/-! ### Alternating differences along the time axis
+
+Reading the alternating time differences of a bounded BCR-positive-definite function on the time
+axis `v = 0` leaves a statement about the real function `t ↦ (F (t, 0)).re` alone, the case with
+no spatial variable. -/
+
+/-- **The time-axis function of a bounded BCR-positive-definite function decreases.** Its drop
+over a step `h` is the time-axis value of the first time difference, which is again positive
+definite and therefore has a nonnegative real part there. -/
+theorem timeAxis_re_antitone (hF : IsSemigroupGroupPD F)
+    (hbounded : Bornology.IsBounded (Set.range F)) :
+    Antitone fun t : ℝ≥0 => (F (t, 0)).re := by
+  intro t s hts
+  have hdrop := (hF.timeDifference hbounded (s - t)).timeSlice_diagonal_re_nonneg t
+  simp only [timeDifference_apply, Complex.sub_re] at hdrop
+  rw [add_tsub_cancel_of_le hts] at hdrop
+  linarith
+
+/-- **The time-axis function of a bounded BCR-positive-definite function has alternating forward
+differences.** Its `n`-th forward difference with any step has the sign `(-1)ⁿ`, which is complete
+monotonicity in the finite-difference sense. -/
+theorem neg_one_pow_mul_fwdDiff_timeAxis_re_nonneg (hF : IsSemigroupGroupPD F)
+    (hbounded : Bornology.IsBounded (Set.range F)) (n : ℕ) (h t : ℝ≥0) :
+    0 ≤ (-1) ^ n * (fwdDiff h)^[n] (fun s : ℝ≥0 => (F (s, 0)).re) t := by
+  rw [← TauCeti.iteratedTimeDifference_timeAxis_re n h t]
+  exact (hF.iteratedTimeDifference hbounded n h).timeSlice_diagonal_re_nonneg t
 
 end IsSemigroupGroupPD
 
